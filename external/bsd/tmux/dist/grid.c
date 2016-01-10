@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,15 +49,16 @@ const struct grid_cell grid_default_cell = { 0, 0, 8, 8, (1 << 4) | 1, " " };
 
 int	grid_check_y(struct grid *, u_int);
 
-#ifdef DEBUG
-int
-grid_check_y(struct grid *gd, u_int py)
-{
-	if ((py) >= (gd)->hsize + (gd)->sy)
-		log_fatalx("y out of range: %u", py);
-	return (0);
-}
-#else
+void	grid_reflow_join(struct grid *, u_int *, struct grid_line *, u_int);
+void	grid_reflow_split(struct grid *, u_int *, struct grid_line *, u_int,
+	    u_int);
+void	grid_reflow_move(struct grid *, u_int *, struct grid_line *);
+size_t	grid_string_cells_fg(const struct grid_cell *, int *);
+size_t	grid_string_cells_bg(const struct grid_cell *, int *);
+void	grid_string_cells_code(const struct grid_cell *,
+	    const struct grid_cell *, char *, size_t, int);
+
+/* Check grid y position. */
 int
 grid_check_y(struct grid *gd, u_int py)
 {
@@ -67,16 +68,6 @@ grid_check_y(struct grid *gd, u_int py)
 	}
 	return (0);
 }
-#endif
-
-void	grid_reflow_join(struct grid *, u_int *, struct grid_line *, u_int);
-void	grid_reflow_split(struct grid *, u_int *, struct grid_line *, u_int,
-	    u_int);
-void	grid_reflow_move(struct grid *, u_int *, struct grid_line *);
-size_t	grid_string_cells_fg(const struct grid_cell *, int *);
-size_t	grid_string_cells_bg(const struct grid_cell *, int *);
-void	grid_string_cells_code(const struct grid_cell *,
-	    const struct grid_cell *, char *, size_t, int);
 
 /* Create a new grid. */
 struct grid *
@@ -151,8 +142,6 @@ grid_collect_history(struct grid *gd)
 {
 	u_int	yy;
 
-	GRID_DEBUG(gd, "");
-
 	if (gd->hsize < gd->hlimit)
 		return;
 
@@ -173,13 +162,24 @@ grid_scroll_history(struct grid *gd)
 {
 	u_int	yy;
 
-	GRID_DEBUG(gd, "");
-
 	yy = gd->hsize + gd->sy;
-	gd->linedata = xrealloc(gd->linedata, yy + 1, sizeof *gd->linedata);
+	gd->linedata = xreallocarray(gd->linedata, yy + 1,
+	    sizeof *gd->linedata);
 	memset(&gd->linedata[yy], 0, sizeof gd->linedata[yy]);
 
 	gd->hsize++;
+}
+
+/* Clear the history. */
+void
+grid_clear_history(struct grid *gd)
+{
+	grid_clear_lines(gd, 0, gd->hsize);
+	grid_move_lines(gd, 0, gd->hsize, gd->sy);
+
+	gd->hsize = 0;
+	gd->linedata = xreallocarray(gd->linedata, gd->sy,
+	    sizeof *gd->linedata);
 }
 
 /* Scroll a region up, moving the top line into the history. */
@@ -189,11 +189,10 @@ grid_scroll_history_region(struct grid *gd, u_int upper, u_int lower)
 	struct grid_line	*gl_history, *gl_upper, *gl_lower;
 	u_int			 yy;
 
-	GRID_DEBUG(gd, "upper=%u, lower=%u", upper, lower);
-
 	/* Create a space for a new line. */
 	yy = gd->hsize + gd->sy;
-	gd->linedata = xrealloc(gd->linedata, yy + 1, sizeof *gd->linedata);
+	gd->linedata = xreallocarray(gd->linedata, yy + 1,
+	    sizeof *gd->linedata);
 
 	/* Move the entire screen down to free a space for this line. */
 	gl_history = &gd->linedata[gd->hsize];
@@ -227,7 +226,7 @@ grid_expand_line(struct grid *gd, u_int py, u_int sx)
 	if (sx <= gl->cellsize)
 		return;
 
-	gl->celldata = xrealloc(gl->celldata, sx, sizeof *gl->celldata);
+	gl->celldata = xreallocarray(gl->celldata, sx, sizeof *gl->celldata);
 	for (xx = gl->cellsize; xx < sx; xx++)
 		grid_put_cell(gd, xx, py, &grid_default_cell);
 	gl->cellsize = sx;
@@ -282,8 +281,6 @@ grid_clear(struct grid *gd, u_int px, u_int py, u_int nx, u_int ny)
 {
 	u_int	xx, yy;
 
-	GRID_DEBUG(gd, "px=%u, py=%u, nx=%u, ny=%u", px, py, nx, ny);
-
 	if (nx == 0 || ny == 0)
 		return;
 
@@ -319,8 +316,6 @@ grid_clear_lines(struct grid *gd, u_int py, u_int ny)
 	struct grid_line	*gl;
 	u_int			 yy;
 
-	GRID_DEBUG(gd, "py=%u, ny=%u", py, ny);
-
 	if (ny == 0)
 		return;
 
@@ -342,8 +337,6 @@ grid_move_lines(struct grid *gd, u_int dy, u_int py, u_int ny)
 {
 	u_int	yy;
 
-	GRID_DEBUG(gd, "dy=%u, py=%u, ny=%u", dy, py, ny);
-
 	if (ny == 0 || py == dy)
 		return;
 
@@ -363,8 +356,8 @@ grid_move_lines(struct grid *gd, u_int dy, u_int py, u_int ny)
 		grid_clear_lines(gd, yy, 1);
 	}
 
-	memmove(
-	    &gd->linedata[dy], &gd->linedata[py], ny * (sizeof *gd->linedata));
+	memmove(&gd->linedata[dy], &gd->linedata[py],
+	    ny * (sizeof *gd->linedata));
 
 	/* Wipe any lines that have been moved (without freeing them). */
 	for (yy = py; yy < py + ny; yy++) {
@@ -381,8 +374,6 @@ grid_move_cells(struct grid *gd, u_int dx, u_int px, u_int py, u_int nx)
 	struct grid_line	*gl;
 	u_int			 xx;
 
-	GRID_DEBUG(gd, "dx=%u, px=%u, py=%u, nx=%u", dx, px, py, nx);
-
 	if (nx == 0 || px == dx)
 		return;
 
@@ -392,8 +383,8 @@ grid_move_cells(struct grid *gd, u_int dx, u_int px, u_int py, u_int nx)
 
 	grid_expand_line(gd, py, px + nx);
 	grid_expand_line(gd, py, dx + nx);
-	memmove(
-	    &gl->celldata[dx], &gl->celldata[px], nx * sizeof *gl->celldata);
+	memmove(&gl->celldata[dx], &gl->celldata[px],
+	    nx * sizeof *gl->celldata);
 
 	/* Wipe any cells that have been moved. */
 	for (xx = px; xx < px + nx; xx++) {
@@ -416,29 +407,29 @@ grid_string_cells_fg(const struct grid_cell *gc, int *values)
 		values[n++] = gc->fg;
 	} else {
 		switch (gc->fg) {
-			case 0:
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-			case 6:
-			case 7:
-				values[n++] = gc->fg + 30;
-				break;
-			case 8:
-				values[n++] = 39;
-				break;
-			case 90:
-			case 91:
-			case 92:
-			case 93:
-			case 94:
-			case 95:
-			case 96:
-			case 97:
-				values[n++] = gc->fg;
-				break;
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			values[n++] = gc->fg + 30;
+			break;
+		case 8:
+			values[n++] = 39;
+			break;
+		case 90:
+		case 91:
+		case 92:
+		case 93:
+		case 94:
+		case 95:
+		case 96:
+		case 97:
+			values[n++] = gc->fg;
+			break;
 		}
 	}
 	return (n);
@@ -528,20 +519,18 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 			s[n++] = attrs[i].code;
 	}
 
-	/* If the foreground c changed, append its parameters. */
+	/* If the foreground colour changed, append its parameters. */
 	nnewc = grid_string_cells_fg(gc, newc);
 	noldc = grid_string_cells_fg(lastgc, oldc);
-	if (nnewc != noldc ||
-	    memcmp(newc,oldc, nnewc * sizeof newc[0]) != 0) {
+	if (nnewc != noldc || memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
 		for (i = 0; i < nnewc; i++)
 			s[n++] = newc[i];
 	}
 
-	/* If the background c changed, append its parameters. */
+	/* If the background colour changed, append its parameters. */
 	nnewc = grid_string_cells_bg(gc, newc);
 	noldc = grid_string_cells_bg(lastgc, oldc);
-	if (nnewc != noldc ||
-	    memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
+	if (nnewc != noldc || memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
 		for (i = 0; i < nnewc; i++)
 			s[n++] = newc[i];
 	}
@@ -586,13 +575,11 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 	const struct grid_cell	*gc;
 	static struct grid_cell	 lastgc1;
 	struct utf8_data	 ud;
-	const char*		 data;
+	const char		*data;
 	char			*buf, code[128];
 	size_t			 len, off, size, codelen;
 	u_int			 xx;
 	const struct grid_line	*gl;
-
-	GRID_DEBUG(gd, "px=%u, py=%u, nx=%u", px, py, nx);
 
 	if (lastgc != NULL && *lastgc == NULL) {
 		memcpy(&lastgc1, &grid_default_cell, sizeof lastgc1);
@@ -628,7 +615,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 		}
 
 		while (len < off + size + codelen + 1) {
-			buf = xrealloc(buf, 2, len);
+			buf = xreallocarray(buf, 2, len);
 			len *= 2;
 		}
 
@@ -640,7 +627,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 		off += size;
 	}
 
-        if (trim) {
+	if (trim) {
 		while (off > 0 && buf[off - 1] == ' ')
 			off--;
 	}
@@ -661,8 +648,6 @@ grid_duplicate_lines(struct grid *dst, u_int dy, struct grid *src, u_int sy,
 	struct grid_line	*dstl, *srcl;
 	u_int			 yy;
 
-	GRID_DEBUG(src, "dy=%u, sy=%u, ny=%u", dy, sy, ny);
-
 	if (dy + ny > dst->hsize + dst->sy)
 		ny = dst->hsize + dst->sy - dy;
 	if (sy + ny > src->hsize + src->sy)
@@ -675,11 +660,12 @@ grid_duplicate_lines(struct grid *dst, u_int dy, struct grid *src, u_int sy,
 
 		memcpy(dstl, srcl, sizeof *dstl);
 		if (srcl->cellsize != 0) {
-			dstl->celldata = xcalloc(
+			dstl->celldata = xreallocarray(NULL,
 			    srcl->cellsize, sizeof *dstl->celldata);
 			memcpy(dstl->celldata, srcl->celldata,
 			    srcl->cellsize * sizeof *dstl->celldata);
-		}
+		} else
+			dstl->celldata = NULL;
 
 		sy++;
 		dy++;
@@ -705,7 +691,7 @@ grid_reflow_join(struct grid *dst, u_int *py, struct grid_line *src_gl,
 	nx = ox + to_copy;
 
 	/* Resize the destination line. */
-	dst_gl->celldata = xrealloc(dst_gl->celldata, nx,
+	dst_gl->celldata = xreallocarray(dst_gl->celldata, nx,
 	    sizeof *dst_gl->celldata);
 	dst_gl->cellsize = nx;
 
@@ -744,7 +730,8 @@ grid_reflow_split(struct grid *dst, u_int *py, struct grid_line *src_gl,
 			to_copy = src_gl->cellsize;
 
 		/* Expand destination line. */
-		dst_gl->celldata = xmalloc(to_copy * sizeof *dst_gl->celldata);
+		dst_gl->celldata = xreallocarray(NULL, to_copy,
+		    sizeof *dst_gl->celldata);
 		dst_gl->cellsize = to_copy;
 		dst_gl->flags |= GRID_LINE_WRAPPED;
 

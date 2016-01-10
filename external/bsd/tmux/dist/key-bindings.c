@@ -75,7 +75,7 @@ key_bindings_unref_table(struct key_table *table)
 		free(bd);
 	}
 
-	free((void *)table->name);
+	free(__UNCONST(table->name));
 	free(table);
 }
 

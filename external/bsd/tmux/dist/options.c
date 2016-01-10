@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -99,7 +99,7 @@ options_remove(struct options *oo, const char *name)
 	free(o);
 }
 
-struct options_entry *printflike3
+struct options_entry *
 options_set_string(struct options *oo, const char *name, const char *fmt, ...)
 {
 	struct options_entry	*o;
@@ -167,20 +167,26 @@ options_set_style(struct options *oo, const char *name, const char *value,
     int append)
 {
 	struct options_entry	*o;
+	struct grid_cell	 tmpgc;
 
-	if ((o = options_find1(oo, name)) == NULL) {
+	o = options_find1(oo, name);
+	if (o == NULL || !append)
+		memcpy(&tmpgc, &grid_default_cell, sizeof tmpgc);
+	else
+		memcpy(&tmpgc, &o->style, sizeof tmpgc);
+
+	if (style_parse(&grid_default_cell, &tmpgc, value) == -1)
+		return (NULL);
+
+	if (o == NULL) {
 		o = xmalloc(sizeof *o);
 		o->name = xstrdup(name);
 		RB_INSERT(options_tree, &oo->tree, o);
 	} else if (o->type == OPTIONS_STRING)
 		free(o->str);
 
-	if (!append)
-		memcpy(&o->style, &grid_default_cell, sizeof o->style);
-
 	o->type = OPTIONS_STYLE;
-	if (style_parse(&grid_default_cell, &o->style, value) == -1)
-		return (NULL);
+	memcpy(&o->style, &tmpgc, sizeof o->style);
 	return (o);
 }
 

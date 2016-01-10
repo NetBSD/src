@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,7 +41,6 @@ struct tty_key *tty_keys_find1(
 struct tty_key *tty_keys_find(struct tty *, const char *, size_t, size_t *);
 void		tty_keys_callback(int, short, void *);
 int		tty_keys_mouse(struct tty *, const char *, size_t, size_t *);
-int		tty_keys_device(struct tty *, const char *, size_t, size_t *);
 
 /* Default raw keys. */
 struct tty_default_key_raw {
@@ -113,14 +112,6 @@ const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[21^", KEYC_F10|KEYC_CTRL },
 	{ "\033[23^", KEYC_F11|KEYC_CTRL },
 	{ "\033[24^", KEYC_F12|KEYC_CTRL },
-	{ "\033[25^", KEYC_F13|KEYC_CTRL },
-	{ "\033[26^", KEYC_F14|KEYC_CTRL },
-	{ "\033[28^", KEYC_F15|KEYC_CTRL },
-	{ "\033[29^", KEYC_F16|KEYC_CTRL },
-	{ "\033[31^", KEYC_F17|KEYC_CTRL },
-	{ "\033[32^", KEYC_F18|KEYC_CTRL },
-	{ "\033[33^", KEYC_F19|KEYC_CTRL },
-	{ "\033[34^", KEYC_F20|KEYC_CTRL },
 	{ "\033[2^", KEYC_IC|KEYC_CTRL },
 	{ "\033[3^", KEYC_DC|KEYC_CTRL },
 	{ "\033[7^", KEYC_HOME|KEYC_CTRL },
@@ -140,14 +131,6 @@ const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[21$", KEYC_F10|KEYC_SHIFT },
 	{ "\033[23$", KEYC_F11|KEYC_SHIFT },
 	{ "\033[24$", KEYC_F12|KEYC_SHIFT },
-	{ "\033[25$", KEYC_F13|KEYC_SHIFT },
-	{ "\033[26$", KEYC_F14|KEYC_SHIFT },
-	{ "\033[28$", KEYC_F15|KEYC_SHIFT },
-	{ "\033[29$", KEYC_F16|KEYC_SHIFT },
-	{ "\033[31$", KEYC_F17|KEYC_SHIFT },
-	{ "\033[32$", KEYC_F18|KEYC_SHIFT },
-	{ "\033[33$", KEYC_F19|KEYC_SHIFT },
-	{ "\033[34$", KEYC_F20|KEYC_SHIFT },
 	{ "\033[2$", KEYC_IC|KEYC_SHIFT },
 	{ "\033[3$", KEYC_DC|KEYC_SHIFT },
 	{ "\033[7$", KEYC_HOME|KEYC_SHIFT },
@@ -167,14 +150,6 @@ const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[21@", KEYC_F10|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[23@", KEYC_F11|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[24@", KEYC_F12|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[25@", KEYC_F13|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[26@", KEYC_F14|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[28@", KEYC_F15|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[29@", KEYC_F16|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[31@", KEYC_F17|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[32@", KEYC_F18|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[33@", KEYC_F19|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[34@", KEYC_F20|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[2@", KEYC_IC|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[3@", KEYC_DC|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[7@", KEYC_HOME|KEYC_CTRL|KEYC_SHIFT },
@@ -206,14 +181,63 @@ const struct tty_default_key_code tty_default_code_keys[] = {
 	{ TTYC_KF10, KEYC_F10 },
 	{ TTYC_KF11, KEYC_F11 },
 	{ TTYC_KF12, KEYC_F12 },
-	{ TTYC_KF13, KEYC_F13 },
-	{ TTYC_KF14, KEYC_F14 },
-	{ TTYC_KF15, KEYC_F15 },
-	{ TTYC_KF16, KEYC_F16 },
-	{ TTYC_KF17, KEYC_F17 },
-	{ TTYC_KF18, KEYC_F18 },
-	{ TTYC_KF19, KEYC_F19 },
-	{ TTYC_KF20, KEYC_F20 },
+
+	{ TTYC_KF13, KEYC_F1|KEYC_SHIFT },
+	{ TTYC_KF14, KEYC_F2|KEYC_SHIFT },
+	{ TTYC_KF15, KEYC_F3|KEYC_SHIFT },
+	{ TTYC_KF16, KEYC_F4|KEYC_SHIFT },
+	{ TTYC_KF17, KEYC_F5|KEYC_SHIFT },
+	{ TTYC_KF18, KEYC_F6|KEYC_SHIFT },
+	{ TTYC_KF19, KEYC_F7|KEYC_SHIFT },
+	{ TTYC_KF20, KEYC_F8|KEYC_SHIFT },
+	{ TTYC_KF21, KEYC_F9|KEYC_SHIFT },
+	{ TTYC_KF22, KEYC_F10|KEYC_SHIFT },
+	{ TTYC_KF23, KEYC_F11|KEYC_SHIFT },
+	{ TTYC_KF24, KEYC_F12|KEYC_SHIFT },
+
+	{ TTYC_KF25, KEYC_F1|KEYC_CTRL },
+	{ TTYC_KF26, KEYC_F2|KEYC_CTRL },
+	{ TTYC_KF27, KEYC_F3|KEYC_CTRL },
+	{ TTYC_KF28, KEYC_F4|KEYC_CTRL },
+	{ TTYC_KF29, KEYC_F5|KEYC_CTRL },
+	{ TTYC_KF30, KEYC_F6|KEYC_CTRL },
+	{ TTYC_KF31, KEYC_F7|KEYC_CTRL },
+	{ TTYC_KF32, KEYC_F8|KEYC_CTRL },
+	{ TTYC_KF33, KEYC_F9|KEYC_CTRL },
+	{ TTYC_KF34, KEYC_F10|KEYC_CTRL },
+	{ TTYC_KF35, KEYC_F11|KEYC_CTRL },
+	{ TTYC_KF36, KEYC_F12|KEYC_CTRL },
+
+	{ TTYC_KF37, KEYC_F1|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF38, KEYC_F2|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF39, KEYC_F3|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF40, KEYC_F4|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF41, KEYC_F5|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF42, KEYC_F6|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF43, KEYC_F7|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF44, KEYC_F8|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF45, KEYC_F9|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF46, KEYC_F10|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF47, KEYC_F11|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF48, KEYC_F12|KEYC_SHIFT|KEYC_CTRL },
+
+	{ TTYC_KF49, KEYC_F1|KEYC_ESCAPE },
+	{ TTYC_KF50, KEYC_F2|KEYC_ESCAPE },
+	{ TTYC_KF51, KEYC_F3|KEYC_ESCAPE },
+	{ TTYC_KF52, KEYC_F4|KEYC_ESCAPE },
+	{ TTYC_KF53, KEYC_F5|KEYC_ESCAPE },
+	{ TTYC_KF54, KEYC_F6|KEYC_ESCAPE },
+	{ TTYC_KF55, KEYC_F7|KEYC_ESCAPE },
+	{ TTYC_KF56, KEYC_F8|KEYC_ESCAPE },
+	{ TTYC_KF57, KEYC_F9|KEYC_ESCAPE },
+	{ TTYC_KF58, KEYC_F10|KEYC_ESCAPE },
+	{ TTYC_KF59, KEYC_F11|KEYC_ESCAPE },
+	{ TTYC_KF60, KEYC_F12|KEYC_ESCAPE },
+
+	{ TTYC_KF61, KEYC_F1|KEYC_ESCAPE|KEYC_SHIFT },
+	{ TTYC_KF62, KEYC_F2|KEYC_ESCAPE|KEYC_SHIFT },
+	{ TTYC_KF63, KEYC_F3|KEYC_ESCAPE|KEYC_SHIFT },
+
 	{ TTYC_KICH1, KEYC_IC },
 	{ TTYC_KDCH1, KEYC_DC },
 	{ TTYC_KHOME, KEYC_HOME },
@@ -357,7 +381,7 @@ tty_keys_build(struct tty *tty)
 	const char				*s;
 
 	if (tty->key_tree != NULL)
-		tty_keys_free (tty);
+		tty_keys_free(tty);
 	tty->key_tree = NULL;
 
 	for (i = 0; i < nitems(tty_default_raw_keys); i++) {
@@ -457,17 +481,6 @@ tty_keys_next(struct tty *tty)
 		return (0);
 	log_debug("keys are %zu (%.*s)", len, (int) len, buf);
 
-	/* Is this device attributes response? */
-	switch (tty_keys_device(tty, buf, len, &size)) {
-	case 0:		/* yes */
-		key = KEYC_NONE;
-		goto complete_key;
-	case -1:	/* no, or not valid */
-		break;
-	case 1:		/* partial */
-		goto partial_key;
-	}
-
 	/* Is this a mouse key press? */
 	switch (tty_keys_mouse(tty, buf, len, &size)) {
 	case 0:		/* yes */
@@ -475,6 +488,9 @@ tty_keys_next(struct tty *tty)
 		goto complete_key;
 	case -1:	/* no, or not valid */
 		break;
+	case -2:	/* yes, but we don't care. */
+		key = KEYC_MOUSE;
+		goto discard_key;
 	case 1:		/* partial */
 		goto partial_key;
 	}
@@ -586,6 +602,14 @@ complete_key:
 		server_client_handle_key(tty->client, key);
 
 	return (1);
+
+discard_key:
+	log_debug("discard key %.*s %#x", (int) size, buf, key);
+
+	/* Remove data from buffer. */
+	evbuffer_drain(tty->event->input, size);
+
+	return (1);
 }
 
 /* Key timer callback. */
@@ -609,8 +633,8 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 {
 	struct mouse_event	*m = &tty->mouse;
 	struct utf8_data	 utf8data;
-	u_int			 i, value, x, y, b, sgr, sgr_b, sgr_rel;
-	unsigned char		 c;
+	u_int			 i, value, x, y, b, sgr_b;
+	u_char			 sgr_type, c;
 
 	/*
 	 * Standard mouse sequences are \033[M followed by three characters
@@ -626,7 +650,8 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 	 */
 
 	*size = 0;
-	x = y = b = sgr = sgr_b = sgr_rel = 0;
+	x = y = b = sgr_b = 0;
+	sgr_type = ' ';
 
 	/* First two bytes are always \033[. */
 	if (buf[0] != '\033')
@@ -673,7 +698,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 			else
 				y = value;
 		}
-		log_debug("mouse input: %.*s", (int) *size, buf);
+		log_debug("mouse input: %.*s", (int)*size, buf);
 
 		/* Check and return the mouse input. */
 		if (b < 32)
@@ -713,125 +738,47 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 		while (1) {
 			if (len <= *size)
 				return (1);
-			c = (u_char) buf[(*size)++];
+			c = (u_char)buf[(*size)++];
 			if (c == 'M' || c == 'm')
 				break;
 			if (c < '0' || c > '9')
 				return (-1);
 			y = 10 * y + (c - '0');
 		}
-		log_debug("mouse input (sgr): %.*s", (int) *size, buf);
+		log_debug("mouse input (SGR): %.*s", (int)*size, buf);
 
 		/* Check and return the mouse input. */
 		if (x < 1 || y < 1)
 			return (-1);
 		x--;
 		y--;
-		sgr = 1;
-		sgr_rel = (c == 'm');
-
-		/* Figure out what b would be in old format. */
 		b = sgr_b;
-		if (sgr_rel)
+
+		/* Type is M for press, m for release. */
+		sgr_type = c;
+		if (sgr_type == 'm')
 			b |= 3;
+
+		/*
+		 * Some terminals (like PuTTY 0.63) mistakenly send
+		 * button-release events for scroll-wheel button-press event.
+		 * Discard it before it reaches any program running inside
+		 * tmux.
+		 */
+		if (sgr_type == 'm' && (sgr_b & 64))
+		    return (-2);
 	} else
 		return (-1);
 
-	/* Fill in mouse structure. */
-	if (~m->event & MOUSE_EVENT_WHEEL) {
-		m->lx = m->x;
-		m->ly = m->y;
-	}
-	m->xb = b;
-	m->sgr = sgr;
-	m->sgr_xb = sgr_b;
-	m->sgr_rel = sgr_rel;
+	/* Fill mouse event. */
+	m->lx = m->x;
 	m->x = x;
+	m->ly = m->y;
 	m->y = y;
-	if (b & 64) { /* wheel button */
-		b &= 3;
-		if (b == 0)
-			m->wheel = MOUSE_WHEEL_UP;
-		else if (b == 1)
-			m->wheel = MOUSE_WHEEL_DOWN;
-		m->event = MOUSE_EVENT_WHEEL;
-	} else if ((b & 3) == 3) {
-		if (~m->event & MOUSE_EVENT_DRAG && x == m->x && y == m->y) {
-			m->event = MOUSE_EVENT_CLICK;
-		} else
-			m->event = MOUSE_EVENT_DRAG;
-		m->event |= MOUSE_EVENT_UP;
-	} else {
-		if (b & 32) /* drag motion */
-			m->event = MOUSE_EVENT_DRAG;
-		else {
-			if (m->event & MOUSE_EVENT_UP && x == m->x && y == m->y)
-				m->clicks = (m->clicks + 1) % 3;
-			else
-				m->clicks = 0;
-			m->sx = x;
-			m->sy = y;
-			m->event = MOUSE_EVENT_DOWN;
-		}
-		m->button = (b & 3);
-	}
-
-	return (0);
-}
-
-/*
- * Handle device attributes input. Returns 0 for success, -1 for failure, 1 for
- * partial.
- */
-int
-tty_keys_device(struct tty *tty, const char *buf, size_t len, size_t *size)
-{
-	u_int i, class;
-	char  tmp[64], *endptr;
-
-	/*
-	 * Primary device attributes are \033[?a;b and secondary are
-	 * \033[>a;b;c.
-	 */
-
-	*size = 0;
-
-	/* First three bytes are always \033[?. */
-	if (buf[0] != '\033')
-		return (-1);
-	if (len == 1)
-		return (1);
-	if (buf[1] != '[')
-		return (-1);
-	if (len == 2)
-		return (1);
-	if (buf[2] != '>' && buf[2] != '?')
-		return (-1);
-	if (len == 3)
-		return (1);
-
-	/* Copy the rest up to a 'c'. */
-	for (i = 0; i < (sizeof tmp) - 1 && buf[3 + i] != 'c'; i++) {
-		if (3 + i == len)
-			return (1);
-		tmp[i] = buf[3 + i];
-	}
-	if (i == (sizeof tmp) - 1)
-		return (-1);
-	tmp[i] = '\0';
-	*size = 4 + i;
-
-	/* Only primary is of interest. */
-	if (buf[2] != '?')
-		return (0);
-
-	/* Convert service class. */
-	class = strtoul(tmp, &endptr, 10);
-	if (*endptr != ';')
-		class = 0;
-
-	log_debug("received service class %u", class);
-	tty_set_class(tty, class);
+	m->lb = m->b;
+	m->b = b;
+	m->sgr_type = sgr_type;
+	m->sgr_b = sgr_b;
 
 	return (0);
 }

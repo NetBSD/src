@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -22,41 +22,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
-#include <time.h>
 
 #include "tmux.h"
 
-/* Log file, if needed. */
-FILE		*log_file;
+FILE	*log_file;
 
-/* Debug level. */
-int		 log_level = 0;
-
-void		 log_event_cb(int, const char *);
-void		 log_vwrite(const char *, va_list) __printflike(1, 0);
-__dead void	 log_vfatal(const char *, va_list);
+void	 log_event_cb(int, const char *);
+void	 log_vwrite(const char *, va_list) __printflike(1, 0);
 
 /* Log callback for libevent. */
 void
 log_event_cb(unused int severity, const char *msg)
 {
-	log_warnx("%s", msg);
+	log_debug("%s", msg);
 }
 
 /* Open logging to file. */
 void
-log_open(int level, const char *path)
+log_open(const char *path)
 {
+	if (log_file != NULL)
+		fclose(log_file);
+
 	log_file = fopen(path, "w");
 	if (log_file == NULL)
 		return;
-	log_level = level;
 
-	setlinebuf(log_file);
+	setvbuf(log_file, NULL, _IOLBF, 0);
 	event_set_log_callback(log_event_cb);
-
-	tzset();
 }
 
 /* Close logging. */
@@ -65,6 +58,7 @@ log_close(void)
 {
 	if (log_file != NULL)
 		fclose(log_file);
+	log_file = NULL;
 
 	event_set_log_callback(NULL);
 }
@@ -73,43 +67,39 @@ log_close(void)
 void
 log_vwrite(const char *msg, va_list ap)
 {
+	char		*fmt, *out;
+	struct timeval	 tv;
+
 	if (log_file == NULL)
 		return;
 
-	if (vfprintf(log_file, msg, ap) == -1)
+	if (vasprintf(&fmt, msg, ap) == -1)
 		exit(1);
-	if (fprintf(log_file, "\n") == -1)
+#ifdef notyet
+	if (stravis(&out, fmt, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL) == -1)
+		exit(1);
+#else
+	size_t len = strlen(fmt) * 4 + 1;
+	out = xmalloc(len);
+	if (strnvis(out, len, fmt, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL) == -1)
+		exit(1);
+#endif
+
+	gettimeofday(&tv, NULL);
+	if (fprintf(log_file, "%lld.%06d %s\n", (long long)tv.tv_sec,
+	    (int)tv.tv_usec, out) == -1)
 		exit(1);
 	fflush(log_file);
-}
-
-/* Log a warning with error string. */
-#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
-#pragma GCC diagnostic push
-#endif
-#if __GNUC_PREREQ__(4, 5) || defined(__clang__)
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#endif
-void printflike1
-log_warn(const char *msg, ...)
-{
-	va_list	 ap;
-	char	*fmt;
-
-	va_start(ap, msg);
-	if (asprintf(&fmt, "%s: %s", msg, strerror(errno)) == -1)
-		exit(1);
-	log_vwrite(fmt, ap);
+	free(out);
 	free(fmt);
-	va_end(ap);
 }
 #if __GNUC_PREREQ__(4, 6) || defined(__clang__)
 #pragma GCC diagnostic push
 #endif
 
-/* Log a warning. */
-void printflike1
-log_warnx(const char *msg, ...)
+/* Log a debug message. */
+void
+log_debug(const char *msg, ...)
 {
 	va_list	ap;
 
@@ -118,82 +108,30 @@ log_warnx(const char *msg, ...)
 	va_end(ap);
 }
 
-/* Log an informational message. */
-void printflike1
-log_info(const char *msg, ...)
-{
-	va_list	ap;
-
-	if (log_level > -1) {
-		va_start(ap, msg);
-		log_vwrite(msg, ap);
-		va_end(ap);
-	}
-}
-
-/* Log a debug message. */
-void printflike1
-log_debug(const char *msg, ...)
-{
-	va_list	ap;
-
-	if (log_level > 0) {
-		va_start(ap, msg);
-		log_vwrite(msg, ap);
-		va_end(ap);
-	}
-}
-
-/* Log a debug message at level 2. */
-void printflike1
-log_debug2(const char *msg, ...)
-{
-	va_list	ap;
-
-	if (log_level > 1) {
-		va_start(ap, msg);
-		log_vwrite(msg, ap);
-		va_end(ap);
-	}
-}
-
-/* Log a critical error, with error string if necessary, and die. */
+/* Log a critical error with error string and die. */
 __dead void
-log_vfatal(const char *msg, va_list ap)
+log_fatal(const char *msg, ...)
 {
 	char	*fmt;
+	va_list	 ap;
 
-	if (errno != 0) {
-		if (asprintf(&fmt, "fatal: %s: %s", msg, strerror(errno)) == -1)
-			exit(1);
-		log_vwrite(fmt, ap);
-	} else {
-		if (asprintf(&fmt, "fatal: %s", msg) == -1)
-			exit(1);
-		log_vwrite(fmt, ap);
-	}
-	free(fmt);
-
+	va_start(ap, msg);
+	if (asprintf(&fmt, "fatal: %s: %s", msg, strerror(errno)) == -1)
+		exit(1);
+	log_vwrite(fmt, ap);
 	exit(1);
 }
 
-/* Log a critical error, with error string, and die. */
-__dead void printflike1
-log_fatal(const char *msg, ...)
-{
-	va_list	ap;
-
-	va_start(ap, msg);
-	log_vfatal(msg, ap);
-}
-
 /* Log a critical error and die. */
-__dead void printflike1
+__dead void
 log_fatalx(const char *msg, ...)
 {
-	va_list	ap;
+	char	*fmt;
+	va_list	 ap;
 
-	errno = 0;
 	va_start(ap, msg);
-	log_vfatal(msg, ap);
+	if (asprintf(&fmt, "fatal: %s", msg) == -1)
+		exit(1);
+	log_vwrite(fmt, ap);
+	exit(1);
 }

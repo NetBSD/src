@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -25,13 +25,13 @@
 
 void	screen_write_initctx(struct screen_write_ctx *, struct tty_ctx *, int);
 void	screen_write_overwrite(struct screen_write_ctx *, u_int);
-int	screen_write_combine(
-	    struct screen_write_ctx *, const struct utf8_data *);
+int	screen_write_combine(struct screen_write_ctx *,
+	    const struct utf8_data *);
 
 /* Initialise writing with a window. */
 void
-screen_write_start(
-    struct screen_write_ctx *ctx, struct window_pane *wp, struct screen *s)
+screen_write_start(struct screen_write_ctx *ctx, struct window_pane *wp,
+    struct screen *s)
 {
 	ctx->wp = wp;
 	if (wp != NULL && s == NULL)
@@ -45,7 +45,6 @@ void
 screen_write_stop(unused struct screen_write_ctx *ctx)
 {
 }
-
 
 /* Reset screen state. */
 void
@@ -65,14 +64,15 @@ screen_write_reset(struct screen_write_ctx *ctx)
 
 /* Write character. */
 void
-screen_write_putc(struct screen_write_ctx *ctx, struct grid_cell *gc, u_char ch)
+screen_write_putc(struct screen_write_ctx *ctx, struct grid_cell *gc,
+    u_char ch)
 {
 	grid_cell_one(gc, ch);
 	screen_write_cell(ctx, gc);
 }
 
 /* Calculate string length, with embedded formatting. */
-size_t printflike2
+size_t
 screen_write_cstrlen(int utf8flag, const char *fmt, ...)
 {
 	va_list	ap;
@@ -107,7 +107,7 @@ screen_write_cstrlen(int utf8flag, const char *fmt, ...)
 }
 
 /* Calculate string length. */
-size_t printflike2
+size_t
 screen_write_strlen(int utf8flag, const char *fmt, ...)
 {
 	va_list			ap;
@@ -144,9 +144,9 @@ screen_write_strlen(int utf8flag, const char *fmt, ...)
 }
 
 /* Write simple string (no UTF-8 or maximum length). */
-void printflike3
-screen_write_puts(
-    struct screen_write_ctx *ctx, struct grid_cell *gc, const char *fmt, ...)
+void
+screen_write_puts(struct screen_write_ctx *ctx, struct grid_cell *gc,
+    const char *fmt, ...)
 {
 	va_list	ap;
 
@@ -156,9 +156,9 @@ screen_write_puts(
 }
 
 /* Write string with length limit (-1 for unlimited). */
-void printflike5
-screen_write_nputs(struct screen_write_ctx *ctx,
-    ssize_t maxlen, struct grid_cell *gc, int utf8flag, const char *fmt, ...)
+void
+screen_write_nputs(struct screen_write_ctx *ctx, ssize_t maxlen,
+    struct grid_cell *gc, int utf8flag, const char *fmt, ...)
 {
 	va_list	ap;
 
@@ -220,7 +220,7 @@ screen_write_vnputs(struct screen_write_ctx *ctx, ssize_t maxlen,
 }
 
 /* Write string, similar to nputs, but with embedded formatting (#[]). */
-void printflike5
+void
 screen_write_cnputs(struct screen_write_ctx *ctx,
     ssize_t maxlen, struct grid_cell *gc, int utf8flag, const char *fmt, ...)
 {
@@ -989,6 +989,8 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		memcpy(&tmp_gc, &s->sel.cell, sizeof tmp_gc);
 		grid_cell_get(gc, &ud);
 		grid_cell_set(&tmp_gc, &ud);
+		tmp_gc.attr = tmp_gc.attr & ~GRID_ATTR_CHARSET;
+		tmp_gc.attr |= gc->attr & GRID_ATTR_CHARSET;
 		tmp_gc.flags = gc->flags & ~(GRID_FLAG_FG256|GRID_FLAG_BG256);
 		tmp_gc.flags |= s->sel.cell.flags &
 		    (GRID_FLAG_FG256|GRID_FLAG_BG256);

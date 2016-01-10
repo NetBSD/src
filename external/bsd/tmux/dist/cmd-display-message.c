@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -27,6 +27,11 @@
  * Displays a message in the status line.
  */
 
+#define DISPLAY_MESSAGE_TEMPLATE			\
+	"[#{session_name}] #{window_index}:"		\
+	"#{window_name}, current pane #{pane_index} "	\
+	"- (%H:%M %d-%b-%y)"
+
 enum cmd_retval	 cmd_display_message_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_display_message_entry = {
@@ -35,7 +40,6 @@ const struct cmd_entry cmd_display_message_entry = {
 	"[-p] [-c target-client] [-F format] " CMD_TARGET_PANE_USAGE
 	" [message]",
 	0,
-	NULL,
 	cmd_display_message_exec
 };
 
@@ -74,7 +78,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 		if (c == NULL)
 			return (CMD_RETURN_ERROR);
 	} else {
-		c = cmd_current_client(cmdq);
+		c = cmd_find_client(cmdq, NULL, 1);
 		if (c == NULL && !args_has(self->args, 'p')) {
 			cmdq_error(cmdq, "no client available");
 			return (CMD_RETURN_ERROR);
@@ -88,11 +92,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 		template = DISPLAY_MESSAGE_TEMPLATE;
 
 	ft = format_create();
-	if (c != NULL)
-		format_client(ft, c);
-	format_session(ft, s);
-	format_winlink(ft, s, wl);
-	format_window_pane(ft, wp);
+	format_defaults(ft, c, s, wl, wp);
 
 	t = time(NULL);
 	len = strftime(out, sizeof out, template, localtime(&t));

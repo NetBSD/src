@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2015/01/29 03:26:27 christos Exp $
+# $NetBSD: Makefile,v 1.16 2016/01/10 19:02:14 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,36 +16,30 @@ SRCS=		arguments.c
 SRCS+=		attributes.c
 SRCS+=		cfg.c
 SRCS+=		client.c
-SRCS+=		clock.c
 SRCS+=		cmd-attach-session.c
 SRCS+=		cmd-bind-key.c
 SRCS+=		cmd-break-pane.c
 SRCS+=		cmd-capture-pane.c
 SRCS+=		cmd-choose-buffer.c
 SRCS+=		cmd-choose-client.c
-SRCS+=		cmd-choose-list.c
 SRCS+=		cmd-choose-tree.c
 SRCS+=		cmd-clear-history.c
-SRCS+=		cmd-clock-mode.c
 SRCS+=		cmd-command-prompt.c
 SRCS+=		cmd-confirm-before.c
 SRCS+=		cmd-copy-mode.c
-SRCS+=		cmd-delete-buffer.c
 SRCS+=		cmd-detach-client.c
 SRCS+=		cmd-display-message.c
 SRCS+=		cmd-display-panes.c
+SRCS+=		cmd-find.c
 SRCS+=		cmd-find-window.c
-SRCS+=		cmd-has-session.c
 SRCS+=		cmd-if-shell.c
 SRCS+=		cmd-join-pane.c
 SRCS+=		cmd-kill-pane.c
 SRCS+=		cmd-kill-server.c
 SRCS+=		cmd-kill-session.c
 SRCS+=		cmd-kill-window.c
-SRCS+=		cmd-link-window.c
 SRCS+=		cmd-list-buffers.c
 SRCS+=		cmd-list-clients.c
-SRCS+=		cmd-list-commands.c
 SRCS+=		cmd-list-keys.c
 SRCS+=		cmd-list-panes.c
 SRCS+=		cmd-list-sessions.c
@@ -81,13 +75,12 @@ SRCS+=		cmd-show-options.c
 SRCS+=		cmd-source-file.c
 SRCS+=		cmd-split-window.c
 SRCS+=		cmd-string.c
-SRCS+=		cmd-suspend-client.c
 SRCS+=		cmd-swap-pane.c
 SRCS+=		cmd-swap-window.c
 SRCS+=		cmd-switch-client.c
 SRCS+=		cmd-unbind-key.c
-SRCS+=		cmd-unlink-window.c
 SRCS+=		cmd-wait-for.c
+SRCS+=		alerts.c
 SRCS+=		cmd.c
 SRCS+=		colour.c
 SRCS+=		control-notify.c
@@ -119,7 +112,6 @@ SRCS+=		screen-write.c
 SRCS+=		screen.c
 SRCS+=		server-client.c
 SRCS+=		server-fn.c
-SRCS+=		server-window.c
 SRCS+=		server.c
 SRCS+=		session.c
 SRCS+=		signal.c
@@ -154,12 +146,10 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
-CPPFLAGS+=	-DHAVE_STRTONUM=1 -D_OPENBSD_SOURCE
 CPPFLAGS+=	-DHAVE_ASPRINTF=1
 CPPFLAGS+=	-DHAVE_B64_NTOP=1
 CPPFLAGS+=	-DHAVE_BITSTRING_H=1
 CPPFLAGS+=	-DHAVE_BSD_TYPES=1
-CPPFLAGS+=	-DHAVE_BZERO=1
 CPPFLAGS+=	-DHAVE_CFMAKERAW=1
 CPPFLAGS+=	-DHAVE_CLOSEFROM=1
 CPPFLAGS+=	-DHAVE_CURSES_H=1
@@ -168,14 +158,14 @@ CPPFLAGS+=	-DHAVE_DECL_OPTARG=1
 CPPFLAGS+=	-DHAVE_DECL_OPTIND=1
 CPPFLAGS+=	-DHAVE_DECL_OPTRESET=1
 CPPFLAGS+=	-DHAVE_DIRENT_H=1
-CPPFLAGS+=	-DHAVE_DIRFD=1
 CPPFLAGS+=	-DHAVE_FCNTL_CLOSEM=1
 CPPFLAGS+=	-DHAVE_FCNTL_H=1
 CPPFLAGS+=	-DHAVE_FGETLN=1
+CPPFLAGS+=	-DHAVE_FLOCK=1
 CPPFLAGS+=	-DHAVE_FORKPTY=1
+CPPFLAGS+=	-DHAVE_FPARSELN=1
 CPPFLAGS+=	-DHAVE_GETOPT=1
 CPPFLAGS+=	-DHAVE_INTTYPES_H=1
-CPPFLAGS+=	-DHAVE_LIBRT=1
 CPPFLAGS+=	-DHAVE_MEMORY_H=1
 CPPFLAGS+=	-DHAVE_OPENAT=1
 CPPFLAGS+=	-DHAVE_PATHS_H=1
@@ -191,13 +181,14 @@ CPPFLAGS+=	-DHAVE_STRING_H=1
 CPPFLAGS+=	-DHAVE_STRLCAT=1
 CPPFLAGS+=	-DHAVE_STRLCPY=1
 CPPFLAGS+=	-DHAVE_STRSEP=1
+CPPFLAGS+=	-DHAVE_STRTONUM=1 -D_OPENBSD_SOURCE
 CPPFLAGS+=	-DHAVE_SYSCONF=1
 CPPFLAGS+=	-DHAVE_SYS_DIR_H=1
 CPPFLAGS+=	-DHAVE_SYS_STAT_H=1
 CPPFLAGS+=	-DHAVE_SYS_TREE_H=1
 CPPFLAGS+=	-DHAVE_SYS_TYPES_H=1
-CPPFLAGS+=	-DHAVE_TREE_H=1
 CPPFLAGS+=	-DHAVE_TERM_H=1
+CPPFLAGS+=	-DHAVE_TREE_H=1
 CPPFLAGS+=	-DHAVE_UNISTD_H=1
 CPPFLAGS+=	-DHAVE_UTIL_H=1
 CPPFLAGS+=	-DHAVE_VIS=1
@@ -205,22 +196,23 @@ CPPFLAGS+=	-DHAVE___PROGNAME=1
 CPPFLAGS+=	-DPACKAGE=\"tmux\"
 CPPFLAGS+=	-DPACKAGE_BUGREPORT=\"\"
 CPPFLAGS+=	-DPACKAGE_NAME=\"tmux\"
-CPPFLAGS+=	-DPACKAGE_STRING=\"tmux\ 1.9a\"
+CPPFLAGS+=	-DPACKAGE_STRING=\"tmux\ 2.1\"
 CPPFLAGS+=	-DPACKAGE_TARNAME=\"tmux\"
 CPPFLAGS+=	-DPACKAGE_URL=\"\"
-CPPFLAGS+=	-DPACKAGE_VERSION=\"1.9a\"
+CPPFLAGS+=	-DPACKAGE_VERSION=\"2.1\"
 CPPFLAGS+=	-DSTDC_HEADERS=1
 CPPFLAGS+=	-DSUPPORT_UTMP
 CPPFLAGS+=	-DSUPPORT_UTMPX
 CPPFLAGS+=	-DTMUX_CONF="\"/etc/tmux.conf\""
-CPPFLAGS+=	-DVERSION=\"1.9a\"
+CPPFLAGS+=	-DVERSION=\"2.1\"
 
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
+COPTS.format.c += -Wno-format-nonliteral
 COPTS.cmd-display-message.c += -Wno-format-nonliteral
-COPTS.cmd-pipe-pane.c += -Wno-format-nonliteral
-COPTS.server-client.c += -Wno-format-nonliteral
-COPTS.status.c += -Wno-format-nonliteral
+#COPTS.cmd-pipe-pane.c += -Wno-format-nonliteral
+#COPTS.server-client.c += -Wno-format-nonliteral
+#COPTS.status.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>

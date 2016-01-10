@@ -119,7 +119,7 @@ paste_get_name(const char *name)
 	if (name == NULL || *name == '\0')
 		return (NULL);
 
-	pbfind.name = (char *)name;
+	pbfind.name = __UNCONST(name);
 	return (RB_FIND(paste_name_tree, &paste_by_name, &pbfind));
 }
 
