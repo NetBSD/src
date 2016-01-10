@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.41 2016/01/09 21:45:20 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.42 2016/01/10 10:16:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.41 2016/01/09 21:45:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.42 2016/01/10 10:16:00 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1527,11 +1527,11 @@ ohci_softintr(void *v)
 
 		cc = OHCI_TD_GET_CC(O32TOH(std->td.td_flags));
 		if (cc == OHCI_CC_NO_ERROR) {
+			ohci_hash_rem_td(sc, std);
 			if (std->flags & OHCI_CALL_DONE) {
 				xfer->ux_status = USBD_NORMAL_COMPLETION;
 				usb_transfer_complete(xfer);
 			}
-			ohci_hash_rem_td(sc, std);
 		} else {
 			/*
 			 * Endpoint is halted.  First unlink all the TDs
@@ -1686,7 +1686,10 @@ ohci_device_intr_done(struct usbd_xfer *xfer)
 	    	ohci_soft_td_t *data, *last, *tail;
 		int len = xfer->ux_length;
 
-	    	/* Use "tail" TD and loan our first TD to next transfer */
+		/*
+		 * Use the pipe "tail" TD as our first and loan our first TD
+		 * to the next transfer.
+		 */
 		data = opipe->tail.td;
 		opipe->tail.td = ox->ox_stds[0];
 		ox->ox_stds[0] = data;
@@ -2728,26 +2731,24 @@ ohci_device_ctrl_init(struct usbd_xfer *xfer)
 	struct ohci_xfer *ox = OHCI_XFER2OXFER(xfer);
 	usb_device_request_t *req = &xfer->ux_request;
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
-	ohci_soft_td_t *stat, *tail;
+	ohci_soft_td_t *stat, *setup;
 	int isread = req->bmRequestType & UT_READ;
 	int len = xfer->ux_bufsize;
 	int err = ENOMEM;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
-	/* The TD for setup will be a 'tail' from elsewhere */
-	stat = ohci_alloc_std(sc);
-	if (stat == NULL) {
+	setup = ohci_alloc_std(sc);
+	if (setup == NULL) {
 		goto bad1;
 	}
-	tail = ohci_alloc_std(sc);
-	if (tail == NULL) {
+	stat = ohci_alloc_std(sc);
+	if (stat == NULL) {
 		goto bad2;
 	}
-	tail->xfer = NULL;
 
+	ox->ox_setup = setup;
 	ox->ox_stat = stat;
-	ox->ox_tdtail = tail;
 	ox->ox_nstd = 0;
 
 	/* Set up data transaction */
@@ -2760,9 +2761,9 @@ ohci_device_ctrl_init(struct usbd_xfer *xfer)
 	return 0;
 
  bad3:
-	ohci_free_std(sc, tail);
- bad2:
 	ohci_free_std(sc, stat);
+ bad2:
+	ohci_free_std(sc, setup);
  bad1:
 	return err;
 }
@@ -2778,8 +2779,8 @@ ohci_device_ctrl_fini(struct usbd_xfer *xfer)
 	DPRINTFN(8, "xfer %p nstd %d", xfer, ox->ox_nstd, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
-	if (ox->ox_tdtail != opipe->tail.td) {
-		ohci_free_std_locked(sc, ox->ox_tdtail);
+	if (ox->ox_setup != opipe->tail.td) {
+		ohci_free_std_locked(sc, ox->ox_setup);
 	}
 	for (size_t i = 0; i < ox->ox_nstd; i++) {
 		ohci_soft_td_t *std = ox->ox_stds[i];
@@ -2845,10 +2846,16 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	/* Need to take lock here for pipe->tail.td */
 	mutex_enter(&sc->sc_lock);
 
+	/*
+	 * Use the pipe "tail" TD as our first and loan our first TD to the
+	 * next transfer
+	 */
 	setup = opipe->tail.td;
+	opipe->tail.td = ox->ox_setup;
+	ox->ox_setup = setup;
+
 	stat = ox->ox_stat;
-	tail = ox->ox_tdtail;
-	opipe->tail.td = tail;
+	tail = opipe->tail.td;	/* point at sentinel */
 
 	sed = opipe->sed;
 
@@ -3125,7 +3132,10 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 
 	mutex_enter(&sc->sc_lock);
 
-	/* Use "tail" TD and loan our first TD to next transfer */
+	/*
+	 * Use the pipe "tail" TD as our first and loan our first TD to the
+	 * next transfer
+	 */
 	data = opipe->tail.td;
 	opipe->tail.td = ox->ox_stds[0];
 	ox->ox_stds[0] = data;
@@ -3319,7 +3329,10 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 
 	mutex_enter(&sc->sc_lock);
 
-	/* Use "tail" TD and loan our first TD to next transfer */
+	/*
+	 * Use the pipe "tail" TD as our first and loan our first TD to the
+	 * next transfer.
+	 */
 	data = opipe->tail.td;
 	opipe->tail.td = ox->ox_stds[0];
 	ox->ox_stds[0] = data;
