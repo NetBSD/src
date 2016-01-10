@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,6 @@ const struct cmd_entry cmd_clear_history_entry = {
 	"t:", 0, 0,
 	CMD_TARGET_PANE_USAGE,
 	0,
-	NULL,
 	cmd_clear_history_exec
 };
 
@@ -46,8 +45,9 @@ cmd_clear_history_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_ERROR);
 	gd = wp->base.grid;
 
-	grid_move_lines(gd, 0, gd->hsize, gd->sy);
-	gd->hsize = 0;
+	if (wp->mode == &window_copy_mode)
+		window_pane_reset_mode(wp);
+	grid_clear_history(gd);
 
 	return (CMD_RETURN_NORMAL);
 }
