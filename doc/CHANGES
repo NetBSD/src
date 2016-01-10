@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2129 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2130 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -242,3 +242,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	flex(1): Import flex-2.6.0 [christos 20160109]
 	acpi(4): Updated ACPICA to 20160108. [christos 20160109]
 	byacc: update to 20150711 [christos 20160109]
+	tmux(1): Import of tmux 2.1 [christos 20160110]

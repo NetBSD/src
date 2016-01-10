@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1289 2016/01/09 22:07:53 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1290 2016/01/10 19:06:08 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1299,13 +1299,13 @@ Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
 
 Package:	tmux
-Version:	1.9a
+Version:	2.1
 Current Vers:	2.1
-Maintainer:	Nicholas Marriott <nicm@users.sourceforge.net>
-Archive site:	http://downloads.sourceforge.net/tmux/
-Home page:	http://tmux.sourceforge.net/
-Mailing List:	tmux-users@lists.sourceforge.net
-Responsible:	jmmv
+Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
+Archive site:	https://github.com/tmux/tmux
+Home page:	http://tmux.github.io
+Mailing List:	tmux-users@googlegroups.com
+Responsible:	christos
 License:	BSD
 Location:	external/bsd/tmux/dist
 Notes:
