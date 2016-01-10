@@ -1,4 +1,4 @@
-/*	$NetBSD: hard-locale.c,v 1.1.1.1 2016/01/10 21:36:18 christos Exp $	*/
+/*	$NetBSD: hard-locale.c,v 1.2 2016/01/10 22:16:40 christos Exp $	*/
 
 /* hard-locale.c -- Determine whether a locale is hard.
    Copyright 1997, 1998, 1999 Free Software Foundation, Inc.
@@ -46,6 +46,10 @@ char *alloca ();
 
 #if HAVE_STRING_H
 # include <string.h>
+#endif
+
+#if HAVE_STDLIB_H
+# include <stdlib.h>
 #endif
 
 /* Return nonzero if the current CATEGORY locale is hard, i.e. if you
