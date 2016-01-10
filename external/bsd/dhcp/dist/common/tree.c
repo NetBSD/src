@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.1.1.3 2014/07/12 11:57:48 spz Exp $	*/
+/*	$NetBSD: tree.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $	*/
 /* tree.c
 
    Routines for manipulating parse trees... */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tree.c,v 1.1.1.3 2014/07/12 11:57:48 spz Exp $");
+__RCSID("$NetBSD: tree.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -1071,6 +1071,7 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 	      case expr_sname:
 	      case expr_gethostname:
 	      case expr_v6relay:
+	      case expr_concat_dclist:
 		log_error ("Data opcode in evaluate_boolean_expression: %d",
 		      expr -> op);
 		return 0;
@@ -2076,7 +2077,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 		     ((packet == NULL) ||
 		      (packet->dhcpv6_container_packet == NULL)))) {
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug("data: v6relay(%d) = NULL", len);
+			log_debug("data: v6relay(%lu) = NULL", len);
 #endif
 			return (0);
 		}
@@ -2094,7 +2095,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 		/* We wanted a specific relay but were unable to find it */
 		if ((len <= MAX_V6RELAY_HOPS) && (i != 0)) {
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug("data: v6relay(%d) = NULL", len);
+			log_debug("data: v6relay(%lu) = NULL", len);
 #endif
 			return (0);
 		}
@@ -2111,11 +2112,54 @@ int evaluate_data_expression (result, packet, lease, client_state,
 		}
 
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug("data: v6relay(%d) = %s", len, 
+		log_debug("data: v6relay(%lu) = %s", len,
 			  s1 ? print_hex_3(result->len, result->data, 30)
 			  : "NULL");
 #endif
 		return (s1);
+
+	      case expr_concat_dclist: {
+		/* Operands are compressed domain-name lists ("Dc" format)
+		 * Fetch both compressed lists then call concat_dclists which
+		 * combines them into a single compressed list. */
+		memset(&data, 0, sizeof data);
+		int outcome = 0;
+		s0 = evaluate_data_expression(&data, packet, lease,
+					      client_state,
+					      in_options, cfg_options, scope,
+					      expr->data.concat[0], MDL);
+
+		memset (&other, 0, sizeof other);
+		s1 = evaluate_data_expression (&other, packet, lease,
+					       client_state,
+					       in_options, cfg_options, scope,
+					       expr->data.concat[1], MDL);
+
+		if (s0 && s1) {
+			outcome = concat_dclists(result, &data, &other);
+			if (outcome == 0) {
+				log_error ("data: concat_dclist failed");
+			}
+		}
+
+#if defined (DEBUG_EXPRESSIONS)
+		log_debug ("data: concat_dclists (%s, %s) = %s",
+		      (s0 ? print_hex_1(data.len, data.data, data.len)
+			  : "NULL"),
+		      (s1 ? print_hex_2(other.len, other.data, other.len)
+			  : "NULL"),
+		      (((s0 && s1) && result->len > 0)
+		       ? print_hex_3 (result->len, result->data, result->len)
+		       : "NULL"));
+#endif
+		if (s0)
+			data_string_forget (&data, MDL);
+
+		if (s1)
+			data_string_forget (&other, MDL);
+
+		return (outcome);
+		} /* expr_concat_dclist */
 
 	      case expr_check:
 	      case expr_equal:
@@ -2168,6 +2212,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 
 	      case expr_arg:
 		break;
+
 	}
 
 	log_error ("Bogus opcode in evaluate_data_expression: %d", expr -> op);
@@ -2668,9 +2713,16 @@ int evaluate_option_cache (result, packet, lease, client_state,
 					 oc -> expression, file, line);
 }
 
-/* Evaluate an option cache and extract a boolean from the result,
-   returning the boolean.   Return false if there is no data. */
-
+/* Evaluate an option cache and extract a boolean from the result.
+ * The boolean option cache is actually a trinary value where:
+ *
+ *     0 = return 0, ignore parameter 0 (also the case for no data)
+ *     1 = return 1, ignore parameter 0
+ *     2 = return 0, ignore parameter 1
+ *
+ * This supports both classic boolean flags on/off as well as the
+ * allow/deny/ignore keywords
+*/
 int evaluate_boolean_option_cache (ignorep, packet,
 				   lease, client_state, in_options,
 				   cfg_options, scope, oc, file, line)
@@ -2685,36 +2737,35 @@ int evaluate_boolean_option_cache (ignorep, packet,
 	const char *file;
 	int line;
 {
-	struct data_string ds;
-	int result;
+	int result = 0;
+	if (ignorep)
+		*ignorep = 0;
 
-	/* So that we can be called with option_lookup as an argument. */
-	if (!oc || !in_options)
-		return 0;
-	
-	memset (&ds, 0, sizeof ds);
-	if (!evaluate_option_cache (&ds, packet,
-				    lease, client_state, in_options,
-				    cfg_options, scope, oc, file, line))
-		return 0;
+	/* Only attempt to evaluate if option_cache is not null. This permits
+	 * us to be called with option_lookup() as an argument. */
+	if (oc && in_options) {
+		struct data_string ds;
 
-	/* The boolean option cache is actually a trinary value.  Zero is
-	 * off, one is on, and 2 is 'ignore'.
-	 */
-	if (ds.len) {
-		result = ds.data [0];
-		if (result == 2) {
-			result = 0;
-			if (ignorep != NULL)
-				*ignorep = 1;
-		} else if (ignorep != NULL)
-			*ignorep = 0;
-	} else
-		result = 0;
-	data_string_forget (&ds, MDL);
-	return result;
+		memset(&ds, 0, sizeof ds);
+		if (evaluate_option_cache(&ds, packet,
+					  lease, client_state, in_options,
+					  cfg_options, scope, oc, file,
+					  line)) {
+			/* We have a value for the option set result and
+			 * ignore parameter accordingly. */
+			if (ds.len) {
+				if (ds.data[0] == 1)
+					result = 1;
+				else if ((ds.data[0] == 2) && (ignorep != NULL))
+					*ignorep = 1;
+			}
+
+			data_string_forget(&ds, MDL);
+		}
+	}
+
+	return (result);
 }
-		
 
 /* Evaluate a boolean expression and return the result of the evaluation,
    or FALSE if it failed. */
@@ -3114,6 +3165,7 @@ static int op_val (op)
 	      case expr_client_state:
 	      case expr_gethostname:
 	      case expr_v6relay:
+	      case expr_concat_dclist:
 		return 100;
 
 	      case expr_equal:
@@ -3207,6 +3259,7 @@ enum expression_context op_context (op)
 	      case expr_function:
 	      case expr_gethostname:
 	      case expr_v6relay:
+	      case expr_concat_dclist:
 		return context_any;
 
 	      case expr_equal:
@@ -4083,6 +4136,131 @@ int unset (struct binding_scope *scope, const char *name)
 		return 1;
 	}
 	return 0;
+}
+
+/*!
+ * \brief Adds two Dc-formatted lists into a single Dc-formatted list
+ *
+ * Given two data_strings containing compressed lists, it constructs a 
+ * third data_string containing a single compressed list:
+ *
+ * 1. Decompressing the first list into a buffer
+ * 2. Decompressing the second list onto the end of the buffer 
+ * 3. Compressing the buffer into the result
+ *
+ * If either list is empty, the result will be the equal to the compressed
+ * content of the non-empty list.  If both lists are empty, the result will
+ * be an "empty" list: a 1 byte buffer containing 0x00.
+ *
+ * It relies on two functions to decompress and compress:
+ *
+ *  - MRns_name_uncompress_list() - produces a null-terminated string of 
+ *  comma-separated domain-names from a buffer containing  "Dc" formatted
+ *  data
+ *
+ *  - MRns_name_compress_list() - produces a buffer containing "Dc" formatted
+ *  data from a null-terminated string containing comma-separated domain-names
+ * 
+ * \param result data_string which will contain the combined list
+ * in Dc format
+ * \param list1 data_string containing first Dc formatted list 
+ * \param list2 data_string containing second Dc formatted list 
+ * \return 0 if there is an error, the length of the new list when successful
+ */
+int concat_dclists (struct data_string* result,
+	struct data_string* list1,
+	struct data_string* list2)
+{
+	char uncompbuf[32*NS_MAXCDNAME];
+	char *uncomp = uncompbuf;
+	int uncomp_len = 0;
+	int compbuf_max = 0;
+	int list_len = 0;
+	int i;
+
+	/* If not empty, uncompress first list into the uncompressed buffer */
+	if (list1 && (list1->data) && (list1->len)) {
+		list_len = MRns_name_uncompress_list(list1->data,
+						     list1->len, uncomp,
+						     sizeof(uncompbuf));
+		if (list_len < 0) {
+			log_error ("concat_dclists:"
+				   " error decompressing domain list 1");
+			return (0);
+		}
+
+		uncomp_len = list_len;
+		uncomp += list_len;
+	}
+
+	/* If not empty, uncompress second list into the uncompressed buffer */
+	if (list2 && (list2->data) && (list2->len)) {
+		/* If first list wasn't empty, add a comma */
+		if (uncomp_len > 0)  {
+			*uncomp++ =  ',';
+			uncomp_len++;
+		}
+
+		list_len = MRns_name_uncompress_list(list2->data, list2->len,
+						      uncomp, (sizeof(uncompbuf)
+							       - uncomp_len));
+		if (list_len < 0) {
+			log_error ("concat_dclists:"
+				   " error decompressing domain list 2");
+			return (0);
+		}
+
+		uncomp_len += list_len;
+		uncomp += list_len;
+	}
+
+	/* If both lists were empty, return an "empty" result */
+	if (uncomp_len == 0) {
+		if (!buffer_allocate (&result->buffer, 1, MDL)) {
+			log_error ("concat_dclists: empty list allocate fail");
+			result->len = 0;
+			return (0);
+		}
+
+		result->len = 1;
+		result->data = result->buffer->data;
+		return (1);
+	}
+
+	/* Estimate the buffer size needed for decompression. The largest
+	 * decompression would if one where there are no repeated portions,
+	 * (i.e. no compressions). Therefore that size should be the
+	 * decompressed string length + 2 for each comma + a final null. Each
+	 * dot gets replaced with a length byte and is accounted for in string
+	 * length. Mininum length is * uncomp_len + 3. */
+	compbuf_max = uncomp_len + 3;
+	uncomp = uncompbuf;
+	for (i = 0; i < uncomp_len; i++)
+		if (*uncomp++ == ',')
+			compbuf_max += 2;
+
+	/* Allocate compression buffer based on estimated max */
+	if (!buffer_allocate (&result->buffer, compbuf_max, MDL)) {
+		log_error ("concat_dclists: No memory for result");
+		result->len = 0;
+		return (0);
+	}
+
+	/* Compress the combined list into result */
+	list_len = MRns_name_compress_list(uncompbuf, uncomp_len,
+					   result->buffer->data, compbuf_max);
+
+	if (list_len <= 0) {
+		log_error ("concat_dlists: error compressing result");
+		data_string_forget(result, MDL);
+		result->len = 0;
+		return (0);
+	}
+
+	/* Update result length to actual size */
+	result->len = list_len;
+	result->data = result->buffer->data;
+	return (list_len);
 }
 
 /* vim: set tabstop=8: */

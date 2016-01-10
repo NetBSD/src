@@ -1,4 +1,4 @@
-/*	$NetBSD: clparse.c,v 1.1.1.3 2014/07/12 11:57:35 spz Exp $	*/
+/*	$NetBSD: clparse.c,v 1.1.1.4 2016/01/10 19:44:29 christos Exp $	*/
 /* clparse.c
 
    Parser for dhclient config and lease files... */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: clparse.c,v 1.1.1.3 2014/07/12 11:57:35 spz Exp $");
+__RCSID("$NetBSD: clparse.c,v 1.1.1.4 2016/01/10 19:44:29 christos Exp $");
 
 #include "dhcpd.h"
 #include <errno.h>
@@ -247,6 +247,45 @@ int read_client_conf_file (const char *name, struct interface_info *ip,
 	return status;
 }
 
+
+/* lease-file :== client-lease-statements END_OF_FILE
+   client-lease-statements :== <nil>
+		     | client-lease-statements LEASE client-lease-statement
+ * This routine looks through a lease file and only tries to parse
+ * the duid statements.
+ */
+
+void read_client_duid ()
+{
+	int file;
+	isc_result_t status;
+	struct parse *cfile;
+	const char *val;
+	int token;
+
+	/* Open the lease file.   If we can't open it, just return -
+	   we can safely trust the server to remember our state. */
+	if ((file = open (path_dhclient_duid, O_RDONLY)) < 0)
+		return;
+
+	cfile = NULL;
+	status = new_parse(&cfile, file, NULL, 0, path_dhclient_duid, 0);
+	if (status != ISC_R_SUCCESS || cfile == NULL)
+		return;
+
+	while ((token = next_token(&val, NULL, cfile)) != END_OF_FILE) {
+		/*
+		 * All we care about is DUIDs - if we get anything else
+		 * just toss it and continue looking for DUIDs until we
+		 * run out of file.  
+		 */
+		if (token == DEFAULT_DUID) {
+			parse_client_default_duid(cfile);
+		}
+	}
+
+	end_parse(&cfile);
+}
 
 /* lease-file :== client-lease-statements END_OF_FILE
    client-lease-statements :== <nil>

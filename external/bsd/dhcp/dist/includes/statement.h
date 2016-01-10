@@ -1,10 +1,11 @@
-/*	$NetBSD: statement.h,v 1.1.1.3 2014/07/12 11:57:56 spz Exp $	*/
+/*	$NetBSD: statement.h,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $	*/
 /* statement.h
 
    Definitions for executable statements... */
 
 /*
- * Copyright (c) 2004,2007,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2014-2015 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -52,7 +53,8 @@ struct executable_statement {
 		define_statement,
 		log_statement,
 		return_statement,
-		execute_statement
+		execute_statement,
+		vendor_opt_statement
 	} op;
 	union {
 		struct {

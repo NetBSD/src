@@ -1,10 +1,10 @@
-/*	$NetBSD: dlpi.c,v 1.1.1.3 2014/07/12 11:57:43 spz Exp $	*/
+/*	$NetBSD: dlpi.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $	*/
 /* dlpi.c
  
    Data Link Provider Interface (DLPI) network interface code. */
 
 /*
- * Copyright (c) 2009-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2011,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dlpi.c,v 1.1.1.3 2014/07/12 11:57:43 spz Exp $");
+__RCSID("$NetBSD: dlpi.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $");
 
 /*
  * Based largely in part to the existing NIT code in nit.c.
@@ -695,7 +695,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	length -= offset;
 #endif
 	offset = decode_udp_ip_header (interface, dbuf, bufix,
-				       from, length, &paylen);
+				       from, length, &paylen, 1);
 
 	/*
 	 * If the IP or UDP checksum was bad, skip the packet...

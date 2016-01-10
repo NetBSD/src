@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcp-options.5,v 1.1.1.3 2014/07/12 11:57:42 spz Exp $
+.\"	$NetBSD: dhcp-options.5,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $
 .\"
 .\"	Id: dhcp-options.5,v 1.50 2011/05/20 13:48:32 tomasz Exp 
 .\"
-.\" Copyright (c) 2012-2014 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2012-2015 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004-2010 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
@@ -179,6 +179,16 @@ some subnets of the directly connected network may have smaller MTUs.
 This option specifies the timeout in seconds for ARP cache entries.
 .RE
 .PP
+.B option \fBassociated-ip\fR \fIip-address\fR [\fB,\fR
+\fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+This option is part of lease query.  It is used to
+return all of the IP addresses associated with a given DHCP client.
+.PP
+This option is not user configurable.
+.RE
+.PP
 .B option \fBbcms-controller-address\fR \fIip-address\fR [\fB,\fR
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
@@ -230,6 +240,17 @@ A list of IPv4 addresses of CAPWAP ACs that the WTP may use.
 The addresses are listed in preference order.
 .PP
 This option is included based on RFC 5417.
+.RE
+.PP
+.B option \fBclient-last-transaction-time\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+This option is part of lease query.  It allows the
+receiver to determine the time of the most recent access by the
+client.  The value is a duration in seconds from when the client
+last communicated with the DHCP server.
+.PP
+This option is not user configurable.
 .RE
 .PP
 .B option \fBcookie-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
@@ -363,8 +384,8 @@ This option is not user configurable.
 .PP
 .RE
 .PP
-.B option \fBdhcp-parameter-request-list\fR \fIuint16\fR [\fB,\fR
-\fIuint16\fR... ]\fB;\fR
+.B option \fBdhcp-parameter-request-list\fR \fIuint8\fR [\fB,\fR
+\fIuint8\fR... ]\fB;\fR
 .RS 0.25i
 .PP
 This option, when sent by the client, specifies which options the
@@ -752,7 +773,7 @@ preference.
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The NNTP server option specifies a list of NNTP servesr available
+The NNTP server option specifies a list of NNTP servers available
 to the client.  Servers should be listed in order of preference.
 .RE
 .PP
@@ -795,7 +816,7 @@ information.
 .I ip-address \fR...]\fB;\fR
 .RS 0.25i
 .PP
-This option contains infomration about the rapid deployment option.  It is
+This option contains information about the rapid deployment option.  It is
 8 bits of ipv4 mask length, 8 bits of 6rd prefix length, an ipv6 prefix as
 an ipv6 address and a list of one or more ipv4 addresses.
 .PP
@@ -877,8 +898,8 @@ to the client.  Servers should be listed in order of preference.
 .RS 0.25i
 .PP
 The rdnss-selection option specifies an 8 bit flags field, a primary and secondary
-ip address for the name server and a domainlist of domains for whcih the RDNSS has
-sepcial knowledge.
+ip address for the name server and a domainlist of domains for which the RDNSS has
+special knowledge.
 .PP
 This option is included based on RFC 6731.
 .RE
@@ -1028,7 +1049,7 @@ assigned will override the subnet mask specified in the subnet
 declaration.
 .RE
 .PP
-.B option \fBsubnet-selection\fR \fIstring\fR\fB;\fR
+.B option \fBsubnet-selection\fR \fIip-address\fR\fB;\fR
 .RS 0.25i
 .PP
 Sent by the client if an address is required in a subnet other than the one
@@ -1365,7 +1386,7 @@ This option should never be set, but it can be read back using the \fBoption\fR
 and \fBconfig-option\fR operators in an expression, in which case it returns
 all labels after the first label in the \fBfqdn.fqdn\fR suboption - for
 example, if the value of \fBfqdn.fqdn\fR is "foo.example.com.",
-then \fBfqdn.hostname\fR will be "example.com.".  If this suboption value
+then \fBfqdn.domainname\fR will be "example.com.".  If this suboption value
 is not set, it means that an unqualified name was sent in the \fBfqdn\fR option,
 or that no \fBfqdn\fR option was sent at all.
 .RE
@@ -1537,11 +1558,14 @@ software, and is not meant for user configuration.
 .RS 0.25i
 .PP
 The \fBunicast\fR option is provided by DHCPv6 servers which are
-willing (or prefer) to receive Renew packets from their clients
-by exchanging UDP unicasts with them.  Normally, DHCPv6 clients
-will multicast their Renew messages.  This may be configured on
-the server, and should be configured as an address the server
-is ready to reply to.
+willing (or prefer) to receive Request, Renew, Decline, and Release packets
+from their clients via unicast.  Normally, DHCPv6 clients will multicast
+these messages.  Per RFC 3315, the server will reject a unicast message received
+from a client unless it previously sent (or would have sent) the unicast option
+to that client.  This option may be configured on the server at the global and
+shared network level.  When a unicast message is received, the server will
+check for an applicable definition of the unicast option.  If such an option
+is found the message will be accepted, if not it will be rejected.
 .RE
 .PP
 .B option \fBdhcp6.status-code\fR \fIstatus-code\fR [ \fIstring\fR ] \fB;\fR
@@ -1596,7 +1620,7 @@ informationally only.
 .RS 0.25i
 .PP
 The \fBreconf-accept\fR option is included by DHCPv6 clients that
-support the Reconfigure extentions, advertising that they will
+support the Reconfigure extensions, advertising that they will
 respond if the server were to ask them to Reconfigure.  There is
 no support for DHCPv6 Reconfigure extensions, and this option is
 documented informationally only.
@@ -1773,7 +1797,7 @@ have some vendor-specific structure (similar to VSIO), but we have chosen
 to treat this option as an opaque field.
 .RE
 .PP
-.B option \fBdhcp6.subscriber-id\fR\fB;\fR
+.B option \fBdhcp6.subscriber-id\fR \fIstring\fR\fB;\fR
 .RS 0.25i
 .PP
 The \fBsubscriber-id\fR option is an opaque field provided by the relay agent,

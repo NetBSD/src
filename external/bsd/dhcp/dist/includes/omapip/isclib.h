@@ -1,10 +1,10 @@
-/*	$NetBSD: isclib.h,v 1.1.1.2 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: isclib.h,v 1.1.1.3 2016/01/10 19:44:43 christos Exp $	*/
 /* isclib.h
 
    connections to the isc and dns libraries */
 
 /*
- * Copyright (c) 2009,2013 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2013,2014 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -107,6 +107,11 @@ extern dhcp_context_t dhcp_gbl_ctx;
 #define DHCP_MAXDNS_WIRE 256
 #define DHCP_MAXNS         3
 #define DHCP_HMAC_MD5_NAME "HMAC-MD5.SIG-ALG.REG.INT."
+#define DHCP_HMAC_SHA1_NAME "HMAC-SHA1.SIG-ALG.REG.INT."
+#define DHCP_HMAC_SHA224_NAME "HMAC-SHA224.SIG-ALG.REG.INT."
+#define DHCP_HMAC_SHA256_NAME "HMAC-SHA256.SIG-ALG.REG.INT."
+#define DHCP_HMAC_SHA384_NAME "HMAC-SHA384.SIG-ALG.REG.INT."
+#define DHCP_HMAC_SHA512_NAME "HMAC-SHA512.SIG-ALG.REG.INT."
 
 isc_result_t dhcp_isc_name(unsigned char    *namestr,
 			   dns_fixedname_t  *namefix,

@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcp-eval.5,v 1.1.1.3 2014/07/12 11:57:40 spz Exp $
+.\"	$NetBSD: dhcp-eval.5,v 1.1.1.4 2016/01/10 19:44:38 christos Exp $
 .\"
 .\"	Id: dhcp-eval.5,v 1.33 2012/05/17 15:50:14 sar Exp 
 .\"
-.\" Copyright (c) 2009-2012,2014 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2009-2012,2014-2015 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
@@ -36,11 +36,15 @@ the ability to perform conditional behavior depending on the contents
 of packets they receive.  The syntax for specifying this conditional
 behaviour is documented here.
 .SH REFERENCE: CONDITIONAL BEHAVIOUR
-Conditional behaviour is specified using the if statement and the else
-or elsif statements.  A conditional statement can appear anywhere
+Conditional behaviour may be  specified using the if statement and the else
+or elsif statements or the switch and case statements.
+A conditional statement can appear anywhere
 that a regular statement (e.g., an option statement) can appear, and
-can enclose one or more such statements.  A typical conditional
-statement in a server might be:
+can enclose one or more such statements.
+.PP
+.B CONDITIONAL BEHAVIOUR: IF
+.PP
+A typical conditional if statement in a server might be:
 .PP
 .nf
 if option dhcp-user-class = "accounting" {
@@ -110,6 +114,53 @@ clause, the statements enclosed in braces following the
 .B else
 are evaluated.  Boolean expressions that evaluate to null are
 treated as false in conditionals.
+.PP
+.B CONDITIONAL BEHAVIOUR: SWITCH
+.PP
+The above example can be rewritten using a switch construct as well.
+.PP
+.nf
+switch (option dhcp-user-class) {
+  case "accounting":
+    max-lease-time 17600;
+    option domain-name "accounting.example.org";
+    option domain-name-servers ns1.accounting.example.org,
+			       ns2.accounting.example.org;
+  case "sales":
+    max-lease-time 17600;
+    option domain-name "sales.example.org";
+    option domain-name-servers ns1.sales.example.org,
+			       ns2.sales.example.org;
+    break;
+  case "engineering":
+    max-lease-time 17600;
+    option domain-name "engineering.example.org";
+    option domain-name-servers ns1.engineering.example.org,
+			       ns2.engineering.example.org;
+    break;
+  default:
+    max-lease-time 600;
+    option domain-name "misc.example.org";
+    option domain-name-servers ns1.misc.example.org,
+			       ns2.misc.example.org;
+    break;
+}
+.fi
+.PP
+The
+.B switch
+statement and the
+.B case
+statements can both be data expressions or numeric expressions.  Within
+a switch statement they all must be the same type.  The server 
+evaluates the expression from the switch statement and then it evaluates
+the expressions from the case statements until it finds a match.
+.PP
+If it finds a match it starts executing statements from that case
+until the next break statement.  If it doesn't find a match it
+starts from the default statement and again proceeds to the next
+break statement.  If there is no match and no default it does nothing.
+.PP
 .SH BOOLEAN EXPRESSIONS
 The following is the current list of boolean expressions that are
 supported by the DHCP distribution.
@@ -386,6 +437,20 @@ general, the maximum size of such an integer should not be assumed to
 be representable in fewer than 32 bits, but the precision of such
 integers may be more than 32 bits.
 .PP
+In addition to the following operators several standard math functions
+are available.  They are:
+.nf
+operation    symbol
+add            \fB+\fR
+subtract       \fB-\fR
+divide         \fB/\fR
+multiply       \fB*\fR
+modulus        \fB%\fR
+bitwise and    \fB&\fR
+bitwise or     \fB|\fR
+bitwise xor    \fB^\fR
+.fi
+.PP
 .B extract-int (\fIdata-expr\fB, \fIwidth\fB)\fR
 .PP
 .RS 0.25i
@@ -493,6 +558,21 @@ such.
 It is possible to use the execute statement in any context, not only
 on events.  If you put it in a regular scope in the configuration file
 you will execute that command every time a scope is evaluated.
+.RE
+.PP
+.B parse-vendor-option;\fR
+.RS 0.25i
+.PP
+The \fBparse-vendor-option\fR statement attempts to parse a vendor
+option (code 43).  It is only useful while processing a packet on the server
+and requires that the administrator has already used the
+\fBvendor-option-space\fR statement to select a valid vendor space.
+.PP
+This functionality may be used if the server needs to take different
+actions depending on the values the client placed in the vendor option
+and the sub-options are not at fixed locations.  It is handled as an
+action to allow an administrator to examine the incoming options and
+choose the correct vendor space.
 .RE
 .SH REFERENCE: DYNAMIC DNS UPDATES
 .PP

@@ -1,8 +1,9 @@
-.\"	$NetBSD: dhcpd.leases.5,v 1.1.1.3 2014/07/12 11:58:10 spz Exp $
+.\"	$NetBSD: dhcpd.leases.5,v 1.1.1.4 2016/01/10 19:44:46 christos Exp $
 .\"
 .\"	dhcpd.leases.5
 .\"
-.\" Copyright (c) 2004,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2014-2015 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -50,6 +51,12 @@ file is rewritten from time to time.   First, a temporary lease
 database is created and all known leases are dumped to it.   Then, the
 old lease database is renamed DBDIR/dhcpd.leases~.   Finally, the
 newly written lease database is moved into place.
+.PP
+In order to process both DHCPv4 and DHCPv6 messages you will need to
+run two separate instances of the dhcpd process.  Each of these
+instances will need it's own lease file.  You can use the \fI-lf\fR
+option on the server's command line to specify a different lease file
+name for one or both servers.
 .SH FORMAT
 Lease descriptions are stored in a format that is parsed by the same
 recursive descent parser used to read the
@@ -76,34 +83,15 @@ declaration.   When the lease file is rewritten, any such rubouts that
 can be eliminated are eliminated.   It is possible to delete a
 declaration in the \fBdhcpd.conf\fR file; in this case, the rubout
 can never be eliminated from the \fBdhcpd.leases\fR file.
-.SH THE LEASE DECLARATION
+.SH COMMON STATEMENTS FOR LEASE DECLARATIONS
+While the lease file formats for DHCPv4 and DHCPv6 are different
+they share many common statements and structures.  This section
+describes the common statements while the succeeding sections
+describe the protocol specific statements.
 .PP
-.B lease \fIip-address\fB { \fIstatements...\fB }
+.B Dates
 .PP
-Each lease declaration includes the single IP address that has been
-leased to the client.   The statements within the braces define the
-duration of the lease and to whom it is assigned.
-.PP
-.nf
-.B starts \fIdate\fB;\fR
-.B ends \fIdate\fB;\fR
-.B tstp \fIdate\fB;\fR
-.B tsfp \fIdate\fB;\fR
-.B atsfp \fIdate\fB;\fR
-.B cltt \fIdate\fB;\fR
-.fi
-.PP
-The start and end time of a lease are recorded using the \fBstarts\fR
-and \fBends\fR statements.   The \fBtstp\fR statement is specified if
-the failover protocol is being used, and indicates what time the peer
-has been told the lease expires.   The \fBtsfp\fR statement is
-also specified if the failover protocol is being used, and indicates
-the lease expiry time that the peer has acknowledged.
-The \fBatsfp\fR statement is the actual time sent from the failover
-partner.
-The \fBcltt\fR statement is the client's last transaction time.
-.PP
-The \fIdate\fR is specified in two ways, depending on the configuration
+A \fIdate\fR is specified in two ways, depending on the configuration
 value for the \fBdb-time-format\fR parameter.  If it was set to \fIdefault\fR,
 then the \fIdate\fR fields appear as follows:
 .PP
@@ -140,6 +128,90 @@ inspection.
 If a lease will never expire, \fIdate\fR is \fBnever\fR instead of an
 actual date.
 .PP
+.B General Variables
+.PP
+As part of the processing of a lease information may be attached to the
+lease structure, for example the DDNS information or if you specify a
+variable in your configuration file.  Some of these, like the DDNS
+information, have specific descriptions below.  For others, such as
+any you might define, a generic line of the following will be included.
+.PP
+.B set \fIvariable\fB = \fIvalue\fB;
+.PP
+The \fBset\fR statement sets the value of a variable on the lease.
+For general information on variables, see the \fBdhcp-eval(5)\fR
+manual page.
+.PP
+.B DDNS Variables
+.PP
+.nf
+.B The \fIddns-text\fB and \fIddns-dhcid\fB variables
+.PP
+These variables are used to record the value of the client's identification
+record when the server has updated DNS for a particular lease.  The text
+record is used with the interim DDNS update style while the dhcid record
+is used for the standard DDNS update style.
+.PP
+.B The \fIddns-fwd-name\fB variable
+.PP
+This variable records the value of the name used in
+updating the client's A record if a DDNS update has been successfully
+done by the server.   The server may also have used this name to
+update the client's PTR record.
+.PP
+.B The \fIddns-client-fqdn\fB variable
+.PP
+If the server is configured both to use the interim or standard DDNS update
+style, and to allow clients to update their own FQDNs, then if the
+client did in fact update its own FQDN, the
+\fIddns-client-fqdn\fR variable records the name that the client has
+indicated it is using.   This is the name that the server will have
+used to update the client's PTR record in this case.
+.PP
+.B The \fIddns-rev-name\fB variable
+.PP
+If the server successfully updates the client's PTR record, this
+variable will record the name that the DHCP server used for the PTR
+record.   The name to which the PTR record points will be either the
+\fIddns-fwd-name\fR or the \fIddns-client-fqdn\fR.
+.PP
+.B Executable Statements
+.PP
+.B on \fIevents\fB { \fIstatements...\fB }
+The \fBon\fR statement records a list of statements to execute if a
+certain event occurs.   The possible events that can occur for an
+active lease are \fBrelease\fR and \fBexpiry\fR.   More than one event
+can be specified - if so, the events are separated by '|' characters.
+.PP
+.SH THE DHCPv4 LEASE DECLARATION
+.PP
+.B lease \fIip-address\fB { \fIstatements...\fB }
+.PP
+Each lease declaration includes the single IP address that has been
+leased to the client.   The statements within the braces define the
+duration of the lease and to whom it is assigned.
+.PP
+.nf
+.B starts \fIdate\fB;\fR
+.B ends \fIdate\fB;\fR
+.B tstp \fIdate\fB;\fR
+.B tsfp \fIdate\fB;\fR
+.B atsfp \fIdate\fB;\fR
+.B cltt \fIdate\fB;\fR
+.fi
+.PP
+The start and end time of a lease are recorded using the \fBstarts\fR
+and \fBends\fR statements.   The \fBtstp\fR statement is present if
+the failover protocol is being used, and indicates what time the peer
+has been told the lease expires.   The \fBtsfp\fR statement is
+also present if the failover protocol is being used, and indicates
+the lease expiry time that the peer has acknowledged.
+The \fBatsfp\fR statement is the actual time sent from the failover
+partner.
+The \fBcltt\fR statement is the client's last transaction time.
+.PP
+See the description of dates in the section on common structures.
+.PP
 .B hardware \fIhardware-type mac-address\fB;\fR
 .PP
 The hardware statement records the MAC address of the network
@@ -169,90 +241,115 @@ recorded on the lease with a \fBclient-hostname\fR statement.   This
 is not required by the protocol, however, so many specialized DHCP
 clients do not send a host-name option.
 .PP
-.B abandoned;
-.PP
-The \fBabandoned\fR statement indicates that the DHCP server has
-abandoned the lease.   In that case, the \fBabandoned\fR statement
-will be used to indicate that the lease should not be reassigned.
-Please see the \fBdhcpd.conf(5)\fR manual page for information about
-abandoned leases.
-.PP
+.nf
 .B binding state \fIstate\fB;
 .B next binding state \fIstate\fB;
+.fi
 .PP
 The \fBbinding state\fR statement declares the lease's binding state.
 When the DHCP server is not configured to use the failover protocol, a
-lease's binding state will be either \fBactive\fR or \fBfree\fR.   The
-failover protocol adds some additional transitional states, as well as
+lease's binding state may be \fBactive\fR, \fBfree\fR or \fBabandoned\fR.
+The failover protocol adds some additional transitional states, as well as
 the \fBbackup\fR state, which indicates that the lease is available
-for allocation by the failover secondary.
+for allocation by the failover secondary. Please see the \fBdhcpd.conf(5)\fR
+manual page for more information about abandoned leases.
 .PP
 The \fBnext binding state\fR statement indicates what state the lease
 will move to when the current state expires.   The time when the
 current state expires is specified in the \fIends\fR statement.
 .PP
+.B rewind binding state \fIstate\fB;
+.PP
+This statement is part of an optimization for
+use with failover.  This helps a server rewind a lease to the state most
+recently transmitted to its peer.
+.PP
+.nf
 .B option agent.circuit-id \fIstring\fR;
 .B option agent.remote-id \fIstring\fR;
+.fi
 .PP
-The \fBoption agent.circuit-id\fR and \fBoption agent.remote-id\fR
-statements are used to record the circuit ID and remote ID options
-send by the relay agent, if the relay agent uses the \fIrelay agent
+These statements are used to record the circuit ID and remote ID options
+sent by the relay agent, if the relay agent uses the \fIrelay agent
 information option\fR.   This allows these options to be used
 consistently in conditional evaluations even when the client is
 contacting the server directly rather than through its relay agent.
-.PP
-.B set \fIvariable\fB = \fIvalue\fB;
-.PP
-The \fBset\fR statement sets the value of a variable on the lease.
-For general information on variables, see the \fBdhcp-eval(5)\fR
-manual page.
-.PP
-.B The \fIddns-text\fB variable
-.PP
-The \fIddns-text\fR variable is used to record the value of the
-client's TXT identification record when the interim DDNS update
-style has been used to update the DNS for a particular lease.
-.PP
-.B The \fIddns-fwd-name\fB variable
-.PP
-The \fIddns-fwd-name\fB variable records the value of the name used in
-updating the client's A record if a DDNS update has been successfully
-done by the server.   The server may also have used this name to
-update the client's PTR record.
-.PP
-.B The \fIddns-client-fqdn\fB variable
-.PP
-If the server is configured to use the interim DDNS update style, and
-is also configured to allow clients to update their own FQDNs, and the
-client did in fact update its own FQDN, then the
-\fIddns-client-fqdn\fR variable records the name that the client has
-indicated it is using.   This is the name that the server will have
-used to update the client's PTR record in this case.
-.PP
-.B The \fIddns-rev-name\fB variable
-.PP
-If the server successfully updates the client's PTR record, this
-variable will record the name that the DHCP server used for the PTR
-record.   The name to which the PTR record points will be either the
-\fIddns-fwd-name\fR or the \fIddns-client-fqdn\fR.
 .PP
 .B The \fIvendor-class-identifier\fB variable
 .PP
 The server retains the client-supplied Vendor Class Identifier option
 for informational purposes, and to render them in DHCPLEASEQUERY responses.
 .PP
-.B on \fIevents\fB { \fIstatements...\fB }
-The \fBon\fI statement records a list of statements to execute if a
-certain event occurs.   The possible events that can occur for an
-active lease are \fBrelease\fR and \fBexpiry\fR.   More than one event
-can be specified - if so, the events are separated by '|' characters.
-.PP
+.nf
 .B bootp;
 .B reserved;
-These two statements are effectively flags.  If present, they indicate that
-the BOOTP and RESERVED failover flags, respectively, should be set.  BOOTP
+.fi
+.PP
+If present, they indicate that the BOOTP and RESERVED failover flags
+(respectively) should be set.  BOOTP
 and RESERVED dynamic leases are treated differently than normal dynamic leases,
 as they may only be used by the client to which they are currently allocated.
+.PP
+.B Other
+Additional options or executable statements may be included, see the description
+of them in the section on common structures.
+.RE
+.PP
+.SH THE DHCPv6 LEASE (IA) DECLARATION
+.PP
+.nf
+.B ia_ta \fI IAID_DUID\fB { \fIstatements...\fB }
+.B ia_na \fI IAID_DUID\fB { \fIstatements...\fB }
+.B ia_pd \fI IAID_DUID\fB { \fIstatements...\fB }
+.fi
+.PP
+Each lease declaration starts with a tag indicating the type of the lease.
+ia_ta is for temporary addresses, ia_na is for non-temporary addresses and
+ia_pd is for prefix delegation.  Following this tag is the combined IAID
+and DUID from the client for this lease.
+.PP
+The IAID_DUID value is recorded as a colon-separated hexadecimal
+list or as a quoted string.   If it is recorded as a quoted string and
+it contains one or more non-printable characters, those characters are
+represented as octal escapes - a backslash character followed by three
+octal digits.
+.PP
+.B cltt \fIdate\fB;\fR
+.PP
+The \fBcltt\fR statement is the client's last transaction time.
+.PP
+See the description of dates in the section on common structures.
+.PP
+.nf
+.B iaaddr \fIipv6-address\fB { \fIstatements...\fB }
+.B iaprefix \fIipv6-address/prefix-length\fB { \fIstatements...\fB }
+.PP
+Within a given lease there can be multiple iaaddr and iaprefix statements.
+Each will have either an IPv6 address or an IPv6 prefix (an address and
+a prefix length indicating a CIDR style block of addresses).  The following
+statements may occur Within each iaaddr or iaprefix.
+.PP
+.B binding state \fIstate\fB;
+.PP
+The \fBbinding state\fR statement declares the lease's binding state.
+In DHCPv6 you will normally see this as \fIactive\fR or \fIexpired\fR.
+.PP
+.B  preferred-life \fIlifetime\fB;
+.PP
+The IPv6 preferred lifetime associated with this address, in seconds.
+.PP
+.B max-life \fIlifetime\fB;
+.PP
+The valid lifetime associated with this address, in seconds.
+.PP
+.B ends \fIdate\fB;\fR
+.PP
+The end time of the lease.  See the description of dates in the section on
+common structures.
+.PP
+Additional options or executable statements may be included.  See the description
+of them in the section on common structures.
+.PP
 .RE
 .SH THE FAILOVER PEER STATE DECLARATION
 The state of any failover peering arrangements is also recorded in the

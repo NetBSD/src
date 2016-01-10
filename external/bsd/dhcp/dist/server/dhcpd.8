@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcpd.8,v 1.1.1.3 2014/07/12 11:58:08 spz Exp $
+.\"	$NetBSD: dhcpd.8,v 1.1.1.4 2016/01/10 19:44:46 christos Exp $
 .\"
 .\"	dhcpd.8
 .\"
-.\" Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2009-2012,2015 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
@@ -78,6 +78,18 @@ dhcpd - Dynamic Host Configuration Protocol Server
 ]
 [
 .B --no-pid
+]
+[
+.B -user
+.I user
+]
+[
+.B -group
+.I group
+]
+[
+.B -chroot
+.I dir
 ]
 [
 .B -tf
@@ -251,6 +263,28 @@ for correct syntax, but will not attempt to perform any network
 operations.  This can be used to test a new lease file
 automatically before installing it.
 .TP
+.BI \-user \ user
+Setuid to user after completing privileged operations,
+such as creating sockets that listen on privileged ports.
+This also causes the lease file to be owned by user.
+This option is only available if the code was compiled
+with the PARANOIA patch (./configure --enable-paranoia).
+.TP
+.BI \-group \ group
+Setgid to group after completing privileged operations,
+such as creating sockets that listen on privileged ports.
+This also causes the lease file to use group.
+This option is only available if the code was compiled
+with the PARANOIA patch (./configure --enable-paranoia).
+.TP
+.BI \-chroot \ dir
+Chroot to directory.  This may occur before or after
+reading the configuration files depending on whether
+the code was compiled with the EARLY_CHROOT option
+enabled (./configure --enable-early-chroot).
+This option is only available if the code was compiled
+with the PARANOIA patch (./configure --enable-paranoia).
+.TP
 .BI \-tf \ tracefile
 Specify a file into which the entire startup state of the server and
 all the transactions it processes are logged.  This can be
@@ -293,6 +327,41 @@ Path to alternate pid file.
 Option to disable writing pid files.  By default the program
 will write a pid file.  If the program is invoked with this
 option it will not check for an existing server process.
+.PP
+.SH PORTS
+During operations the server may use multiple UDP and TCP ports
+to provide different functions.  Which ports are opened depends
+on both the way you compiled your code and the configuration you
+supply.  The following should provide you an idea of what
+ports may be in use.
+
+Normally a DHCPv4 server will open a raw UDP socket to receive
+and send most DHCPv4 packets.  It also opens a fallback UDP socket
+for use in sending unicast packets.  Normally these will both
+use the well known port number for BOOTPS.
+
+For each DHCPv4 failover peer you list in the configuartion file
+there will be a TCP socket listening for connections on the
+ports specififed in the configuration file.  When the peer connects
+there will be another socket for the established connection.
+For the established connection the side (primary or secondary)
+opening the connection will use a random port.
+
+For DHCPv6 the server opens a UDP socket on the well known
+dhcpv6-server port.
+
+The server opens an icmp socket for doing ping requests to check
+if addresses are in use.
+
+If you have included an omapi-port statement in your configuration
+file then the server will open a TCP socket on that port to
+listen for OMPAI connections.  When something connects another
+port will be used for the established connection.
+
+When DDNS is enabled at compile time (see includes/site.h)
+the server will open both a v4 and a v6 UDP socket on
+random ports.  These ports are opened even if DDNS is disabled
+in the configuration file.
 .PP
 .SH CONFIGURATION
 The syntax of the dhcpd.conf(5) file is discussed separately.  This

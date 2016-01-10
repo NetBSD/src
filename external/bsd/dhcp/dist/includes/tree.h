@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.1.1.3 2014/07/12 11:57:56 spz Exp $	*/
+/*	$NetBSD: tree.h,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $	*/
 /* tree.h
 
    Definitions for address trees... */
@@ -192,7 +192,8 @@ enum expr_op {
 	expr_regex_match,
 	expr_iregex_match,
 	expr_gethostname,
-	expr_v6relay
+	expr_v6relay,
+	expr_concat_dclist
 };
 
 struct expression {

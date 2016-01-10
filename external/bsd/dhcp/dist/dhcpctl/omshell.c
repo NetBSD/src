@@ -1,4 +1,4 @@
-/*	$NetBSD: omshell.c,v 1.1.1.2 2014/07/12 11:57:52 spz Exp $	*/
+/*	$NetBSD: omshell.c,v 1.1.1.3 2016/01/10 19:44:41 christos Exp $	*/
 /* omshell.c
 
    Examine and modify omapi objects. */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omshell.c,v 1.1.1.2 2014/07/12 11:57:52 spz Exp $");
+__RCSID("$NetBSD: omshell.c,v 1.1.1.3 2016/01/10 19:44:41 christos Exp $");
 
 #include "config.h"
 
@@ -104,7 +104,7 @@ main(int argc, char **argv) {
 	}
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog ("omshell", LOG_NDELAY, DHCPD_LOG_FACILITY);
+	openlog ("omshell", DHCP_LOG_OPTIONS, DHCPD_LOG_FACILITY);
 	status = dhcpctl_initialize ();
 	if (status != ISC_R_SUCCESS) {
 		fprintf (stderr, "dhcpctl_initialize: %s\n",

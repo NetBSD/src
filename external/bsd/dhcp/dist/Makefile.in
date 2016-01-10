@@ -81,6 +81,7 @@ host_triplet = @host@
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
+	$(top_srcdir)/bind/Makefile.in \
 	$(top_srcdir)/doc/devel/doxyfile.in $(nobase_include_HEADERS) \
 	README compile config.guess config.sub depcomp install-sh \
 	missing
@@ -92,7 +93,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/includes/config.h
-CONFIG_CLEAN_FILES = doc/devel/doxyfile
+CONFIG_CLEAN_FILES = bind/Makefile doc/devel/doxyfile
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -224,12 +225,14 @@ distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+ATF_BIN = @ATF_BIN@
 ATF_CFLAGS = @ATF_CFLAGS@
 ATF_LDFLAGS = @ATF_LDFLAGS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINDCONFIG = @BINDCONFIG@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -250,6 +253,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDAP_CFLAGS = @LDAP_CFLAGS@
+LDAP_LIBS = @LDAP_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -343,10 +347,10 @@ EXTRA_DIST = RELNOTES LICENSE \
 	     doc/devel/arch.dox doc/devel/atf.dox doc/devel/contrib.dox \
 	     doc/devel/debug.dox doc/devel/isc-logo.jpg doc/devel/mainpage.dox \
 	     doc/devel/omapi.dox doc/devel/qa.dox util/bindvar.sh \
-	     bind/Makefile bind/bind.tar.gz bind/version.tmp \
+	     bind/Makefile.in bind/bind.tar.gz bind/version.tmp \
 	     common/tests/Atffile server/tests/Atffile
 
-SUBDIRS = bind includes tests common dst omapip client dhcpctl relay server
+SUBDIRS = bind includes tests common omapip client dhcpctl relay server
 nobase_include_HEADERS = dhcpctl/dhcpctl.h
 all: all-recursive
 
@@ -376,6 +380,8 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+bind/Makefile: $(top_builddir)/config.status $(top_srcdir)/bind/Makefile.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 doc/devel/doxyfile: $(top_builddir)/config.status $(top_srcdir)/doc/devel/doxyfile.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-nobase_includeHEADERS: $(nobase_include_HEADERS)

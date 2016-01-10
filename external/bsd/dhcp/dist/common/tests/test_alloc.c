@@ -1,6 +1,6 @@
-/*	$NetBSD: test_alloc.c,v 1.1.1.3 2014/07/12 11:57:48 spz Exp $	*/
+/*	$NetBSD: test_alloc.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $	*/
 /*
- * Copyright (c) 2007,2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2007,2009-2014 by Internet Systems Consortium, Inc. ("ISC")
  *
  * We test the functions provided in alloc.c here. These are very
  * basic functions, and it is very important that they work correctly.
@@ -27,6 +27,8 @@
 #include "config.h"
 #include <atf-c.h>
 #include "dhcpd.h"
+
+static const char* checkString (struct data_string* ds, const char *src);
 
 ATF_TC(buffer_allocate);
 
@@ -188,7 +190,7 @@ ATF_TC_BODY(buffer_dereference, tc) {
     if (!buffer_reference(&b, a, MDL)) {
         atf_tc_fail("buffer_reference() failed");
     }
-    a->refcnt = 0;	/* purposely set to invalid value */
+    a->refcnt = 0;    /* purposely set to invalid value */
     if (buffer_dereference(&a, MDL)) {
         atf_tc_fail("buffer_dereference() succeeded on error input");
     }
@@ -388,6 +390,103 @@ ATF_TC_BODY(data_string_copy_nobuf, tc) {
 
 }
 
+
+ATF_TC(data_string_new);
+
+ATF_TC_HEAD(data_string_new, tc) {
+    atf_tc_set_md_var(tc, "descr", "data_string_new test, "
+                      "exercises data_string_new function");
+}
+
+ATF_TC_BODY(data_string_new, tc) {
+    struct data_string new_string;
+    const char *src = "Really? Latin? ... geeks";
+    int len_arg = 0;
+    const char *error;
+
+    /* Case 1: Call with an invalid data_string pointer, should fail */
+    if (data_string_new(NULL, src, len_arg, MDL)) {
+        atf_tc_fail("case 1: call should have failed");
+    }
+
+    /* Case 2: Passing in NULL src should fail */
+    if (data_string_new(&new_string, NULL, 10, MDL)) {
+        atf_tc_fail("case 2: did not return success");
+    }
+
+    /* Case 3: Call with valid params, length includes NULL */
+    len_arg = strlen(src) + 1;
+    if (data_string_new(&new_string, src, len_arg, MDL) == 0) {
+        atf_tc_fail("case 3: did not return success");
+    }
+
+    error = checkString(&new_string, src);
+    ATF_REQUIRE_MSG((error == NULL), "case 3: %s", error);
+    data_string_forget(&new_string, MDL);
+
+
+    /* Case 4: Call with valid params, length does not include NULL */
+    len_arg = 7;
+    if (data_string_new(&new_string, src, len_arg, MDL) == 0) {
+        atf_tc_fail("case 4: did not return success");
+    }
+
+    error = checkString(&new_string, "Really?");
+    ATF_REQUIRE_MSG((error == NULL), "case 4: %s", error);
+    data_string_forget(&new_string, MDL);
+
+
+    /* Case 5: Call with valid params, source string is "" */
+    len_arg = 0;
+    if (data_string_new(&new_string, "", len_arg, MDL) == 0) {
+        atf_tc_fail("case 5: did not return success");
+    }
+
+    error = checkString(&new_string, "");
+    ATF_REQUIRE_MSG((error == NULL), "case 4: %s", error);
+    data_string_forget(&new_string, MDL);
+
+
+}
+
+/* Helper function which tests validity of a data_string
+*
+* Verifies that the given data_string contains a null-terminated string
+* equal to a given string.
+*
+* \param string data_string to test
+* \param src text content string should contain
+* \return returns NULL if data_string is validate or an error message
+* describing why it is invalid
+*/
+const char* checkString (struct data_string* string,
+    const char* src) {
+    int src_len = strlen(src);
+
+    if (string->buffer == NULL) {
+        return ("buffer is NULL");
+    }
+
+    if (string->data != string->buffer->data) {
+        return ("data not set to buffer->data");
+    }
+
+    if (string->len != src_len) {
+        return ("len is wrong ");
+    }
+
+    if (string->terminated != 1)  {
+        return ("terminated flag not set");
+    }
+
+    if (memcmp(string->data, src, src_len + 1)) {
+        return ("data content wrong");
+    }
+
+    return (NULL);
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, buffer_allocate);
@@ -397,6 +496,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, data_string_forget_nobuf);
     ATF_TP_ADD_TC(tp, data_string_copy);
     ATF_TP_ADD_TC(tp, data_string_copy_nobuf);
+    ATF_TP_ADD_TC(tp, data_string_new);
 
     return (atf_no_error());
 }

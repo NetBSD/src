@@ -1,6 +1,6 @@
 	      Internet Systems Consortium DHCP Distribution
-			      Version 4.3.0
-			     3 February 2014
+			     Version 4.3.3
+			   03 September 2015
 
 			      README FILE
 
@@ -38,6 +38,7 @@ the ISC DHCP Distribution.
 	  5.8.3 Other Solaris Items
 	 5.9	 AIX
 	 5.10	 MacOS X
+         5.11    ATF
 	6	SUPPORT
 	 6.1	 HOW TO REPORT BUGS
 	7	HISTORY
@@ -99,7 +100,7 @@ directory, it may not have up-to-date information).
 
 			    RELEASE STATUS
 
-This is ISC DHCP 4.3.0.  The major theme for this release is "ipv6 uplift",
+This is ISC DHCP 4.3.x  The major theme for this release is "ipv6 uplift",
 in which we enhance the v6 code to support many of the features found
 in the v4 code.  These include: support for v6, support for on_commit,
 on_expiry and on_release in v6, support for accessing v6 relay options
@@ -141,12 +142,12 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.3.0.tar.gz
-	tar xvf dhcp-4.3.0.tar
+	gunzip dhcp-4.3.3.tar.gz
+	tar xvf dhcp-4.3.3.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.3.0 subdirectory that you've just created and
+Now, cd to the dhcp-4.3.3 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure
@@ -584,6 +585,18 @@ Note the Dynamic Store (from which /var/run/resolv.conf is built) is
 recomputed from scratch when the current location/set is changed.
 Running the dhclient-script reinstalls the resolv.conf.dhclient6
 configuration.
+
+
+			       ATF
+
+Please see the file DHCP/doc/devel/atf.dox for a description of building
+and using these tools.  
+
+The optional unit tests use ATF (Automated Testing Framework) including
+the atf-run and atf-report tools. ATF deprecated these tools in
+version 0.19 and removed these tools from its sources in version 0.20,
+requiring you to get an older version, use Kyua with an ATF compatibility
+package or use the version included in the Bind sources.
 
 			       SUPPORT
 

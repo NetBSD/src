@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.1.1.3 2014/07/12 11:58:01 spz Exp $	*/
+/*	$NetBSD: trace.c,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $	*/
 /* trace.c
 
    Subroutines that support tracing of OMAPI wire transactions and
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.1.1.3 2014/07/12 11:58:01 spz Exp $");
+__RCSID("$NetBSD: trace.c,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -610,7 +610,9 @@ isc_result_t trace_get_next_packet (trace_type_t **ttp,
 	paylen = tpkt -> length;
 	if (paylen % 8)
 		paylen += 8 - (tpkt -> length % 8);
-	if (paylen > (*bufmax)) {
+
+	/* allocate a buffer if we need one or current buffer is too small */
+	if ((*buf == NULL) || (paylen > (*bufmax))) {
 		if ((*buf))
 			dfree ((*buf), MDL);
 		(*bufmax) = ((paylen + 1023) & ~1023U);
@@ -621,7 +623,7 @@ isc_result_t trace_get_next_packet (trace_type_t **ttp,
 			return ISC_R_NOMEMORY;
 		}
 	}
-	
+
 	status = fread ((*buf), 1, paylen, traceinfile);
 	if (status < paylen) {
 		if (ferror (traceinfile))

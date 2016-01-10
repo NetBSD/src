@@ -102,12 +102,14 @@ am_dhcpd_OBJECTS = dhcpd-dhcpd.$(OBJEXT) dhcpd-dhcp.$(OBJEXT) \
 	dhcpd-salloc.$(OBJEXT) dhcpd-ddns.$(OBJEXT) \
 	dhcpd-dhcpleasequery.$(OBJEXT) dhcpd-dhcpv6.$(OBJEXT) \
 	dhcpd-mdb6.$(OBJEXT) dhcpd-ldap.$(OBJEXT) \
-	dhcpd-ldap_casa.$(OBJEXT)
+	dhcpd-ldap_casa.$(OBJEXT) dhcpd-leasechain.$(OBJEXT) \
+	dhcpd-ldap_krb_helper.$(OBJEXT)
 dhcpd_OBJECTS = $(am_dhcpd_OBJECTS)
+am__DEPENDENCIES_1 =
 dhcpd_DEPENDENCIES = ../common/libdhcp.a ../omapip/libomapi.a \
 	../dhcpctl/libdhcpctl.a ../bind/lib/libirs.a \
 	../bind/lib/libdns.a ../bind/lib/libisccfg.a \
-	../bind/lib/libisc.a
+	../bind/lib/libisc.a $(am__DEPENDENCIES_1)
 dhcpd_LINK = $(CCLD) $(dhcpd_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -246,12 +248,14 @@ am__relativize = \
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+ATF_BIN = @ATF_BIN@
 ATF_CFLAGS = @ATF_CFLAGS@
 ATF_LDFLAGS = @ATF_LDFLAGS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINDCONFIG = @BINDCONFIG@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -272,6 +276,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDAP_CFLAGS = @LDAP_CFLAGS@
+LDAP_LIBS = @LDAP_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -355,12 +360,13 @@ AM_CPPFLAGS = -I.. -DLOCALSTATEDIR='"@localstatedir@"'
 dist_sysconf_DATA = dhcpd.conf.example
 dhcpd_SOURCES = dhcpd.c dhcp.c bootp.c confpars.c db.c class.c failover.c \
 		omapi.c mdb.c stables.c salloc.c ddns.c dhcpleasequery.c \
-		dhcpv6.c mdb6.c ldap.c ldap_casa.c
+		dhcpv6.c mdb6.c ldap.c ldap_casa.c leasechain.c ldap_krb_helper.c
 
 dhcpd_CFLAGS = $(LDAP_CFLAGS)
 dhcpd_LDADD = ../common/libdhcp.a ../omapip/libomapi.a \
 	      ../dhcpctl/libdhcpctl.a ../bind/lib/libirs.a \
-	      ../bind/lib/libdns.a ../bind/lib/libisccfg.a ../bind/lib/libisc.a
+	      ../bind/lib/libdns.a ../bind/lib/libisccfg.a ../bind/lib/libisc.a \
+	      $(LDAP_LIBS)		
 
 man_MANS = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 EXTRA_DIST = $(man_MANS)
@@ -463,6 +469,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-failover.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-ldap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-ldap_casa.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-ldap_krb_helper.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-leasechain.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-mdb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-mdb6.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcpd-omapi.Po@am__quote@
@@ -720,6 +728,34 @@ dhcpd-ldap_casa.obj: ldap_casa.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ldap_casa.c' object='dhcpd-ldap_casa.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -c -o dhcpd-ldap_casa.obj `if test -f 'ldap_casa.c'; then $(CYGPATH_W) 'ldap_casa.c'; else $(CYGPATH_W) '$(srcdir)/ldap_casa.c'; fi`
+
+dhcpd-leasechain.o: leasechain.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -MT dhcpd-leasechain.o -MD -MP -MF $(DEPDIR)/dhcpd-leasechain.Tpo -c -o dhcpd-leasechain.o `test -f 'leasechain.c' || echo '$(srcdir)/'`leasechain.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dhcpd-leasechain.Tpo $(DEPDIR)/dhcpd-leasechain.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='leasechain.c' object='dhcpd-leasechain.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -c -o dhcpd-leasechain.o `test -f 'leasechain.c' || echo '$(srcdir)/'`leasechain.c
+
+dhcpd-leasechain.obj: leasechain.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -MT dhcpd-leasechain.obj -MD -MP -MF $(DEPDIR)/dhcpd-leasechain.Tpo -c -o dhcpd-leasechain.obj `if test -f 'leasechain.c'; then $(CYGPATH_W) 'leasechain.c'; else $(CYGPATH_W) '$(srcdir)/leasechain.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dhcpd-leasechain.Tpo $(DEPDIR)/dhcpd-leasechain.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='leasechain.c' object='dhcpd-leasechain.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -c -o dhcpd-leasechain.obj `if test -f 'leasechain.c'; then $(CYGPATH_W) 'leasechain.c'; else $(CYGPATH_W) '$(srcdir)/leasechain.c'; fi`
+
+dhcpd-ldap_krb_helper.o: ldap_krb_helper.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -MT dhcpd-ldap_krb_helper.o -MD -MP -MF $(DEPDIR)/dhcpd-ldap_krb_helper.Tpo -c -o dhcpd-ldap_krb_helper.o `test -f 'ldap_krb_helper.c' || echo '$(srcdir)/'`ldap_krb_helper.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dhcpd-ldap_krb_helper.Tpo $(DEPDIR)/dhcpd-ldap_krb_helper.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ldap_krb_helper.c' object='dhcpd-ldap_krb_helper.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -c -o dhcpd-ldap_krb_helper.o `test -f 'ldap_krb_helper.c' || echo '$(srcdir)/'`ldap_krb_helper.c
+
+dhcpd-ldap_krb_helper.obj: ldap_krb_helper.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -MT dhcpd-ldap_krb_helper.obj -MD -MP -MF $(DEPDIR)/dhcpd-ldap_krb_helper.Tpo -c -o dhcpd-ldap_krb_helper.obj `if test -f 'ldap_krb_helper.c'; then $(CYGPATH_W) 'ldap_krb_helper.c'; else $(CYGPATH_W) '$(srcdir)/ldap_krb_helper.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dhcpd-ldap_krb_helper.Tpo $(DEPDIR)/dhcpd-ldap_krb_helper.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ldap_krb_helper.c' object='dhcpd-ldap_krb_helper.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dhcpd_CFLAGS) $(CFLAGS) -c -o dhcpd-ldap_krb_helper.obj `if test -f 'ldap_krb_helper.c'; then $(CYGPATH_W) 'ldap_krb_helper.c'; else $(CYGPATH_W) '$(srcdir)/ldap_krb_helper.c'; fi`
 install-man5: $(man_MANS)
 	@$(NORMAL_INSTALL)
 	@list1=''; \

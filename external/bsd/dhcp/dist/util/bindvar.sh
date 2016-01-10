@@ -16,7 +16,7 @@
 
 # Id: bindvar.sh,v 1.2 2009/12/02 20:43:52 sar Exp 
 
-# Create a file with the base directory and gmake pat for
+# Create a file with the base directory and gmake path for
 # use by the bind/Makefile, we do this to minimize portability
 # concerns.
 

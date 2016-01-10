@@ -1,10 +1,10 @@
-/*	$NetBSD: class.c,v 1.1.1.3 2014/07/12 11:58:04 spz Exp $	*/
+/*	$NetBSD: class.c,v 1.1.1.4 2016/01/10 19:44:44 christos Exp $	*/
 /* class.c
 
    Handling for client classes. */
 
 /*
- * Copyright (c) 2009,2012-2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012-2015 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1998-2003 by Internet Software Consortium
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: class.c,v 1.1.1.3 2014/07/12 11:58:04 spz Exp $");
+__RCSID("$NetBSD: class.c,v 1.1.1.4 2016/01/10 19:44:44 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -239,7 +239,7 @@ isc_result_t unlink_class(struct class **class) {
 	return ISC_R_NOTFOUND;
 }
 
-	
+
 isc_result_t find_class (struct class **class, const char *name,
 			 const char *file, int line)
 {
@@ -255,24 +255,53 @@ isc_result_t find_class (struct class **class, const char *name,
 	return ISC_R_NOTFOUND;
 }
 
-int unbill_class (lease, class)
+/* Removes the billing class from a lease
+ *
+ * Note that because classes can be created and removed dynamically, it is
+ * possible that the class to which a lease was billed has since been deleted.
+ * To cover the case where the lease is the last reference to a deleted class
+ * we remove the lease reference from the class first, then the class from the
+ * lease.  To protect ourselves from the reverse situation, where the class is
+ * the last reference to the lease (unlikely), we create a guard reference to
+ * the lease, then remove it at the end.
+ */
+void unbill_class (lease)
 	struct lease *lease;
-	struct class *class;
 {
 	int i;
+	struct class* class = lease->billing_class;
+	struct lease* refholder = NULL;
 
-	for (i = 0; i < class -> lease_limit; i++)
-		if (class -> billed_leases [i] == lease)
-			break;
-	if (i == class -> lease_limit) {
-		log_error ("lease %s unbilled with no billing arrangement.",
-		      piaddr (lease -> ip_addr));
-		return 0;
+	/* if there's no billing to remove, nothing to do */
+	if (class == NULL) {
+		return;
 	}
-	class_dereference (&lease -> billing_class, MDL);
-	lease_dereference (&class -> billed_leases [i], MDL);
-	class -> leases_consumed--;
-	return 1;
+
+	/* Find the lease in the list of the class's billed leases */
+	for (i = 0; i < class->lease_limit; i++) {
+		if (class->billed_leases[i] == lease)
+			break;
+	}
+
+	/* Create guard reference, so class cannot be last reference to lease */
+	lease_reference(&refholder, lease, MDL);
+
+	/* If the class doesn't have the lease, then something is broken
+	 * programmatically.  We'll log it but skip the lease dereference. */
+	if (i == class->lease_limit) {
+		log_error ("lease %s unbilled with no billing arrangement.",
+			   piaddr(lease->ip_addr));
+	} else {
+		/* Remove the lease from the class */
+		lease_dereference(&class->billed_leases[i], MDL);
+		class->leases_consumed--;
+	}
+
+	/* Remove the class from the lease */
+	class_dereference(&lease->billing_class, MDL);
+
+	/* Ditch our guard reference */
+	lease_dereference(&refholder, MDL);
 }
 
 int bill_class (lease, class)
@@ -283,7 +312,7 @@ int bill_class (lease, class)
 
 	if (lease -> billing_class) {
 		log_error ("lease billed with existing billing arrangement.");
-		unbill_class (lease, lease -> billing_class);
+		unbill_class (lease);
 	}
 
 	if (class -> leases_consumed == class -> lease_limit)

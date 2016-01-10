@@ -244,12 +244,10 @@ if [ x$reason = xBOUND6 ]; then
 fi
 
 if [ x$reason = xRENEW6 ] || [ x$reason = xREBIND6 ]; then
-  if [ x${new_ip6_address} = x ] || [ x${new_ip6_prefixlen} = x ] ; then
-    exit_with_hooks 2;
+  if [ x${new_ip6_address} != x ] && [ x${new_ip6_prefixlen} != x ] ; then
+    ${ip} -f inet6 addr add ${new_ip6_address}/${new_ip6_prefixlen} \
+	   dev ${interface} scope global
   fi
-
-  ${ip} -f inet6 addr add ${new_ip6_address}/${new_ip6_prefixlen} \
-	dev ${interface} scope global
 
   # Make sure nothing has moved around on us.
 

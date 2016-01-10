@@ -1,3 +1,9 @@
+# We want to build this directory first, before descending into tests subdir.
+# The reason is that ideally the tests should link existing objects from this
+# directory. That eliminates any discrepancies between tested code and
+# production code. Sadly, we are not there yet.
+SUBDIRS = . tests
+
 dist_sysconf_DATA = dhclient.conf.example
 sbin_PROGRAMS = dhclient
 dhclient_SOURCES = clparse.c dhclient.c dhc6.c \

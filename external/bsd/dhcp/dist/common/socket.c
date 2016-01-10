@@ -1,10 +1,10 @@
-/*	$NetBSD: socket.c,v 1.1.1.3 2014/07/12 11:57:46 spz Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $	*/
 /* socket.c
 
    BSD socket interface code... */
 
 /*
- * Copyright (c) 2004-2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2015 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socket.c,v 1.1.1.3 2014/07/12 11:57:46 spz Exp $");
+__RCSID("$NetBSD: socket.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $");
 
 /* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
  * This sockopt allows a socket to be bound to a particular interface,
@@ -304,18 +304,24 @@ if_register_socket(struct interface_info *info, int family,
 #endif
 	}
 
-	if ((family == AF_INET6) &&
-	    ((info->flags & INTERFACE_UPSTREAM) != 0)) {
-		int hop_limit = 32;
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
-			       &hop_limit, sizeof(int)) < 0) {
-			log_fatal("setsockopt: IPV6_MULTICAST_HOPS: %m");
-		}
-	}
 #endif /* DHCPv6 */
 
 	return sock;
 }
+
+#ifdef DHCPv6
+void set_multicast_hop_limit(struct interface_info* info, int hop_limit) {
+	if (setsockopt(info->wfdesc, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+		       &hop_limit, sizeof(int)) < 0) {
+		log_fatal("setMulticaseHopLimit: IPV6_MULTICAST_HOPS: %m");
+	}
+
+	log_debug("Setting hop count limit to %d for interface %s",
+		  hop_limit, info->name);
+
+}
+#endif /* DHCPv6 */
+
 #endif /* USE_SOCKET_SEND || USE_SOCKET_RECEIVE || USE_SOCKET_FALLBACK */
 
 #if defined (USE_SOCKET_SEND) || defined (USE_SOCKET_FALLBACK)
@@ -823,7 +829,6 @@ ssize_t send_packet6(struct interface_info *interface,
 	pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 	memset(pktinfo, 0, sizeof(*pktinfo));
 	pktinfo->ipi6_ifindex = ifindex;
-	m.msg_controllen = cmsg->cmsg_len;
 
 	result = sendmsg(interface->wfdesc, &m, 0);
 	if (result < 0) {

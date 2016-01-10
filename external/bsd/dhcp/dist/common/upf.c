@@ -1,4 +1,4 @@
-/*	$NetBSD: upf.c,v 1.1.1.2 2014/07/12 11:57:48 spz Exp $	*/
+/*	$NetBSD: upf.c,v 1.1.1.3 2016/01/10 19:44:40 christos Exp $	*/
 /* upf.c
 
    Ultrix PacketFilter interface code. */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: upf.c,v 1.1.1.2 2014/07/12 11:57:48 spz Exp $");
+__RCSID("$NetBSD: upf.c,v 1.1.1.3 2016/01/10 19:44:40 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_UPF_SEND) || defined (USE_UPF_RECEIVE)
@@ -318,7 +318,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 	/* Decode the IP and UDP headers... */
 	offset = decode_udp_ip_header (interface, ibuf, bufix,
-				       from, length, &paylen);
+				       from, length, &paylen, 1);
 
 	/* If the IP or UDP checksum was bad, skip the packet... */
 	if (offset < 0)

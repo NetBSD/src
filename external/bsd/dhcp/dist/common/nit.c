@@ -1,4 +1,4 @@
-/*	$NetBSD: nit.c,v 1.1.1.2 2014/07/12 11:57:45 spz Exp $	*/
+/*	$NetBSD: nit.c,v 1.1.1.3 2016/01/10 19:44:39 christos Exp $	*/
 /* nit.c
 
    Network Interface Tap (NIT) network interface code, by Ted Lemon
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nit.c,v 1.1.1.2 2014/07/12 11:57:45 spz Exp $");
+__RCSID("$NetBSD: nit.c,v 1.1.1.3 2016/01/10 19:44:39 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_NIT_SEND) || defined (USE_NIT_RECEIVE)
@@ -367,7 +367,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 	/* Decode the IP and UDP headers... */
 	offset = decode_udp_ip_header (interface, ibuf, bufix,
-				       from, length, &paylen);
+				       from, length, &paylen, 1);
 
 	/* If the IP or UDP checksum was bad, skip the packet... */
 	if (offset < 0)
