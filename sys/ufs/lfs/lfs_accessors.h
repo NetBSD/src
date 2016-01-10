@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.41 2016/01/10 02:40:21 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.42 2016/01/10 16:14:27 christos Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -255,7 +255,7 @@
 #define LFS_NEXTDIR(fs, dp) \
 	((LFS_DIRHEADER *)((char *)(dp) + lfs_dir_getreclen(fs, dp)))
 
-static __unused inline char *
+static __inline char *
 lfs_dir_nameptr(const STRUCT_LFS *fs, LFS_DIRHEADER *dh)
 {
 	if (fs->lfs_is64) {
@@ -265,7 +265,7 @@ lfs_dir_nameptr(const STRUCT_LFS *fs, LFS_DIRHEADER *dh)
 	}
 }
 
-static __unused inline uint64_t
+static __inline uint64_t
 lfs_dir_getino(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
 	if (fs->lfs_is64) {
@@ -285,7 +285,7 @@ lfs_dir_getino(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 	}
 }
 
-static __unused inline uint16_t
+static __inline uint16_t
 lfs_dir_getreclen(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
 	if (fs->lfs_is64) {
@@ -295,7 +295,7 @@ lfs_dir_getreclen(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 	}
 }
 
-static __unused inline uint8_t
+static __inline uint8_t
 lfs_dir_gettype(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
 	if (fs->lfs_is64) {
@@ -308,7 +308,7 @@ lfs_dir_gettype(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 	}
 }
 
-static __unused inline uint8_t
+static __inline uint8_t
 lfs_dir_getnamlen(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
 	if (fs->lfs_is64) {
@@ -322,7 +322,7 @@ lfs_dir_getnamlen(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_dir_setino(STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint64_t ino)
 {
 	if (fs->lfs_is64) {
@@ -341,7 +341,7 @@ lfs_dir_setino(STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint64_t ino)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_dir_setreclen(STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint16_t reclen)
 {
 	if (fs->lfs_is64) {
@@ -351,7 +351,7 @@ lfs_dir_setreclen(STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint16_t reclen)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_dir_settype(const STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint8_t type)
 {
 	if (fs->lfs_is64) {
@@ -365,7 +365,7 @@ lfs_dir_settype(const STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint8_t type)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_dir_setnamlen(const STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint8_t namlen)
 {
 	if (fs->lfs_is64) {
@@ -379,7 +379,7 @@ lfs_dir_setnamlen(const STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint8_t namlen)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_copydirname(STRUCT_LFS *fs, char *dest, const char *src,
 		unsigned namlen, unsigned reclen)
 {
@@ -395,7 +395,7 @@ lfs_copydirname(STRUCT_LFS *fs, char *dest, const char *src,
 	memset(dest + namlen, '\0', spacelen - namlen);
 }
 
-static __unused inline LFS_DIRHEADER *
+static __inline LFS_DIRHEADER *
 lfs_dirtemplate_dotdot(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
 {
 	/* XXX blah, be nice to have a way to do this w/o casts */
@@ -406,7 +406,7 @@ lfs_dirtemplate_dotdot(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
 	}
 }
 
-static __unused inline char *
+static __inline char *
 lfs_dirtemplate_dotdotname(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
 {
 	if (fs->lfs_is64) {
@@ -434,7 +434,7 @@ lfs_dirtemplate_dotdotname(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
 #define DINO_IN_BLOCK(fs, base, ix) \
 	((union lfs_dinode *)((char *)(base) + DINOSIZE(fs) * (ix)))
 
-static __unused inline void
+static __inline void
 lfs_copy_dinode(STRUCT_LFS *fs,
     union lfs_dinode *dst, const union lfs_dinode *src)
 {
@@ -452,7 +452,7 @@ lfs_copy_dinode(STRUCT_LFS *fs,
 }
 
 #define LFS_DEF_DINO_ACCESSOR(type, type32, field) \
-	static __unused inline type				\
+	static __inline type				\
 	lfs_dino_get##field(STRUCT_LFS *fs, union lfs_dinode *dip) \
 	{							\
 		if (fs->lfs_is64) {				\
@@ -461,7 +461,7 @@ lfs_copy_dinode(STRUCT_LFS *fs,
 			return LFS_SWAP_##type32(fs, dip->u_32.di_##field); \
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_dino_set##field(STRUCT_LFS *fs, union lfs_dinode *dip, type val) \
 	{							\
 		if (fs->lfs_is64) {				\
@@ -494,7 +494,7 @@ LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, gid);
 /* XXX this should be done differently (it's a fake field) */
 LFS_DEF_DINO_ACCESSOR(uint64_t, int32_t, rdev);
 
-static __unused inline daddr_t
+static __inline daddr_t
 lfs_dino_getdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 {
 	KASSERT(ix < ULFS_NDADDR);
@@ -506,7 +506,7 @@ lfs_dino_getdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 	}
 }
 
-static __unused inline daddr_t
+static __inline daddr_t
 lfs_dino_getib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 {
 	KASSERT(ix < ULFS_NIADDR);
@@ -518,7 +518,7 @@ lfs_dino_getib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_dino_setdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
 {
 	KASSERT(ix < ULFS_NDADDR);
@@ -529,7 +529,7 @@ lfs_dino_setdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_dino_setib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
 {
 	KASSERT(ix < ULFS_NIADDR);
@@ -541,7 +541,7 @@ lfs_dino_setib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
 }
 
 /* birthtime is present only in the 64-bit inode */
-static __unused inline void
+static __inline void
 lfs_dino_setbirthtime(STRUCT_LFS *fs, union lfs_dinode *dip,
     const struct timespec *ts)
 {
@@ -557,7 +557,7 @@ lfs_dino_setbirthtime(STRUCT_LFS *fs, union lfs_dinode *dip,
  * indirect blocks
  */
 
-static __unused inline daddr_t
+static __inline daddr_t
 lfs_iblock_get(STRUCT_LFS *fs, void *block, unsigned ix)
 {
 	if (fs->lfs_is64) {
@@ -571,7 +571,7 @@ lfs_iblock_get(STRUCT_LFS *fs, void *block, unsigned ix)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 {
 	if (fs->lfs_is64) {
@@ -713,7 +713,7 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 	((FINFO *)((char *)(fip) + FINFO_FULLSIZE(fs, fip)))
 
 #define LFS_DEF_FI_ACCESSOR(type, type32, field) \
-	static __unused inline type				\
+	static __inline type				\
 	lfs_fi_get##field(STRUCT_LFS *fs, FINFO *fip)		\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -722,7 +722,7 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 			return fip->u_32.fi_##field; 		\
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_fi_set##field(STRUCT_LFS *fs, FINFO *fip, type val) \
 	{							\
 		if (fs->lfs_is64) {				\
@@ -741,7 +741,7 @@ LFS_DEF_FI_ACCESSOR(uint32_t, uint32_t, version);
 LFS_DEF_FI_ACCESSOR(uint64_t, uint32_t, ino);
 LFS_DEF_FI_ACCESSOR(uint32_t, uint32_t, lastlength);
 
-static __unused inline daddr_t
+static __inline daddr_t
 lfs_fi_getblock(STRUCT_LFS *fs, FINFO *fip, unsigned index)
 {
 	void *firstblock;
@@ -755,7 +755,7 @@ lfs_fi_getblock(STRUCT_LFS *fs, FINFO *fip, unsigned index)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
 {
 	void *firstblock;
@@ -785,7 +785,7 @@ lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
 #define NTH_IINFO(fs, buf, n) \
 	((IINFO *)((char *)SEGSUM_IINFOSTART(fs, buf) - (n)*IINFOSIZE(fs)))
 
-static __unused inline uint64_t
+static __inline uint64_t
 lfs_ii_getblock(STRUCT_LFS *fs, IINFO *iip)
 {
 	if (fs->lfs_is64) {
@@ -795,7 +795,7 @@ lfs_ii_getblock(STRUCT_LFS *fs, IINFO *iip)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 {
 	if (fs->lfs_is64) {
@@ -848,7 +848,7 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 } while (0)
 
 #define LFS_DEF_IF_ACCESSOR(type, type32, field) \
-	static __unused inline type				\
+	static __inline type				\
 	lfs_if_get##field(STRUCT_LFS *fs, IFILE *ifp)		\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -857,7 +857,7 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 			return ifp->u_32.if_##field; 		\
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_if_set##field(STRUCT_LFS *fs, IFILE *ifp, type val) \
 	{							\
 		if (fs->lfs_is64) {				\
@@ -887,7 +887,7 @@ LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_nsec);
 		lfs_sb_getbsize(fs) - 1) >> lfs_sb_getbshift(fs))
 
 #define LFS_DEF_CI_ACCESSOR(type, type32, field) \
-	static __unused inline type				\
+	static __inline type				\
 	lfs_ci_get##field(STRUCT_LFS *fs, CLEANERINFO *cip)	\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -896,7 +896,7 @@ LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_nsec);
 			return cip->u_32.field; 		\
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_ci_set##field(STRUCT_LFS *fs, CLEANERINFO *cip, type val) \
 	{							\
 		if (fs->lfs_is64) {				\
@@ -918,14 +918,14 @@ LFS_DEF_CI_ACCESSOR(u_int64_t, u_int32_t, free_head);
 LFS_DEF_CI_ACCESSOR(u_int64_t, u_int32_t, free_tail);
 LFS_DEF_CI_ACCESSOR(u_int32_t, u_int32_t, flags);
 
-static __unused inline void
+static __inline void
 lfs_ci_shiftcleantodirty(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 {
 	lfs_ci_setclean(fs, cip, lfs_ci_getclean(fs, cip) - num);
 	lfs_ci_setdirty(fs, cip, lfs_ci_getdirty(fs, cip) + num);
 }
 
-static __unused inline void
+static __inline void
 lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 {
 	lfs_ci_setdirty(fs, cip, lfs_ci_getdirty(fs, cip) - num);
@@ -1022,7 +1022,7 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
  * XXX this can't be a macro yet; this file needs to be resorted.
  */
 #if 0
-static __unused inline FINFO *
+static __inline FINFO *
 segsum_finfobase(STRUCT_LFS *fs, SEGSUM *ssp)
 {
 	return (FINFO *)((char *)ssp + SEGSUM_SIZE(fs));
@@ -1033,7 +1033,7 @@ segsum_finfobase(STRUCT_LFS *fs, SEGSUM *ssp)
 #endif
 
 #define LFS_DEF_SS_ACCESSOR(type, type32, field) \
-	static __unused inline type				\
+	static __inline type				\
 	lfs_ss_get##field(STRUCT_LFS *fs, SEGSUM *ssp)		\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -1042,7 +1042,7 @@ segsum_finfobase(STRUCT_LFS *fs, SEGSUM *ssp)
 			return ssp->u_32.ss_##field; 		\
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_ss_set##field(STRUCT_LFS *fs, SEGSUM *ssp, type val) \
 	{							\
 		if (fs->lfs_is64) {				\
@@ -1068,7 +1068,7 @@ LFS_DEF_SS_ACCESSOR(uint64_t, uint32_t, reclino);
 LFS_DEF_SS_ACCESSOR(uint64_t, uint64_t, serial);
 LFS_DEF_SS_ACCESSOR(uint64_t, uint64_t, create);
 
-static __unused inline size_t
+static __inline size_t
 lfs_ss_getsumstart(STRUCT_LFS *fs)
 {
 	/* These are actually all the same. */
@@ -1085,7 +1085,7 @@ lfs_ss_getsumstart(STRUCT_LFS *fs)
 	 */
 }
 
-static __unused inline uint32_t
+static __inline uint32_t
 lfs_ss_getocreate(STRUCT_LFS *fs, SEGSUM *ssp)
 {
 	KASSERT(fs->lfs_is64 == 0);
@@ -1095,7 +1095,7 @@ lfs_ss_getocreate(STRUCT_LFS *fs, SEGSUM *ssp)
 	return ssp->u_v1.ss_create;
 }
 
-static __unused inline void
+static __inline void
 lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
 {
 	KASSERT(fs->lfs_is64 == 0);
@@ -1115,7 +1115,7 @@ lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
  */
 
 #define LFS_DEF_SB_ACCESSOR_FULL(type, type32, field) \
-	static __unused inline type				\
+	static __inline type				\
 	lfs_sb_get##field(STRUCT_LFS *fs)			\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -1124,7 +1124,7 @@ lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
 			return fs->lfs_dlfs_u.u_32.dlfs_##field; \
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_sb_set##field(STRUCT_LFS *fs, type val)		\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -1133,7 +1133,7 @@ lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
 			fs->lfs_dlfs_u.u_32.dlfs_##field = val;	\
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_sb_add##field(STRUCT_LFS *fs, type val)		\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -1144,7 +1144,7 @@ lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
 			*p32 += val;				\
 		}						\
 	}							\
-	static __unused inline void				\
+	static __inline void				\
 	lfs_sb_sub##field(STRUCT_LFS *fs, type val)		\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -1159,7 +1159,7 @@ lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
 #define LFS_DEF_SB_ACCESSOR(t, f) LFS_DEF_SB_ACCESSOR_FULL(t, t, f)
 
 #define LFS_DEF_SB_ACCESSOR_32ONLY(type, field, val64) \
-	static __unused inline type				\
+	static __inline type				\
 	lfs_sb_get##field(STRUCT_LFS *fs)			\
 	{							\
 		if (fs->lfs_is64) {				\
@@ -1238,7 +1238,7 @@ LFS_DEF_SB_ACCESSOR(u_int32_t, resvseg);
 /*
  * lfs_sboffs is an array
  */
-static __unused inline int32_t
+static __inline int32_t
 lfs_sb_getsboff(STRUCT_LFS *fs, unsigned n)
 {
 #ifdef KASSERT /* ugh */
@@ -1250,7 +1250,7 @@ lfs_sb_getsboff(STRUCT_LFS *fs, unsigned n)
 		return fs->lfs_dlfs_u.u_32.dlfs_sboffs[n];
 	}
 }
-static __unused inline void
+static __inline void
 lfs_sb_setsboff(STRUCT_LFS *fs, unsigned n, int32_t val)
 {
 #ifdef KASSERT /* ugh */
@@ -1266,7 +1266,7 @@ lfs_sb_setsboff(STRUCT_LFS *fs, unsigned n, int32_t val)
 /*
  * lfs_fsmnt is a string
  */
-static __unused inline const char *
+static __inline const char *
 lfs_sb_getfsmnt(STRUCT_LFS *fs)
 {
 	if (fs->lfs_is64) {
@@ -1276,7 +1276,7 @@ lfs_sb_getfsmnt(STRUCT_LFS *fs)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_sb_setfsmnt(STRUCT_LFS *fs, const char *str)
 {
 	if (fs->lfs_is64) {
@@ -1306,7 +1306,7 @@ lfs_sb_setfsmnt(STRUCT_LFS *fs, const char *str)
 
 /* XXX: lowercase these as they're no longer macros */
 /* Frags to diskblocks */
-static __unused inline uint64_t
+static __inline uint64_t
 LFS_FSBTODB(STRUCT_LFS *fs, uint64_t b)
 {
 #if defined(_KERNEL)
@@ -1316,7 +1316,7 @@ LFS_FSBTODB(STRUCT_LFS *fs, uint64_t b)
 #endif
 }
 /* Diskblocks to frags */
-static __unused inline uint64_t
+static __inline uint64_t
 LFS_DBTOFSB(STRUCT_LFS *fs, uint64_t b)
 {
 #if defined(_KERNEL)
@@ -1330,13 +1330,13 @@ LFS_DBTOFSB(STRUCT_LFS *fs, uint64_t b)
 #define	lfs_lblktosize(fs, blk)	((blk) << lfs_sb_getbshift(fs))
 
 /* Frags to bytes */
-static __unused inline uint64_t
+static __inline uint64_t
 lfs_fsbtob(STRUCT_LFS *fs, uint64_t b)
 {
 	return b << lfs_sb_getffshift(fs);
 }
 /* Bytes to frags */
-static __unused inline uint64_t
+static __inline uint64_t
 lfs_btofsb(STRUCT_LFS *fs, uint64_t b)
 {
 	return b >> lfs_sb_getffshift(fs);
@@ -1373,7 +1373,7 @@ lfs_btofsb(STRUCT_LFS *fs, uint64_t b)
 
 /* XXX, blah. make this appear only if struct inode is defined */
 #ifdef _UFS_LFS_LFS_INODE_H_
-static __unused inline uint32_t
+static __inline uint32_t
 lfs_blksize(STRUCT_LFS *fs, struct inode *ip, uint64_t lbn)
 {
 	if (lbn >= ULFS_NDADDR || lfs_dino_getsize(fs, ip->i_din) >= (lbn + 1) << lfs_sb_getbshift(fs)) {
@@ -1388,7 +1388,7 @@ lfs_blksize(STRUCT_LFS *fs, struct inode *ip, uint64_t lbn)
  * union lfs_blocks
  */
 
-static __unused inline void
+static __inline void
 lfs_blocks_fromvoid(STRUCT_LFS *fs, union lfs_blocks *bp, void *p)
 {
 	if (fs->lfs_is64) {
@@ -1398,7 +1398,7 @@ lfs_blocks_fromvoid(STRUCT_LFS *fs, union lfs_blocks *bp, void *p)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_blocks_fromfinfo(STRUCT_LFS *fs, union lfs_blocks *bp, FINFO *fip)
 {
 	void *firstblock;
@@ -1411,7 +1411,7 @@ lfs_blocks_fromfinfo(STRUCT_LFS *fs, union lfs_blocks *bp, FINFO *fip)
 	}
 }
 
-static __unused inline daddr_t
+static __inline daddr_t
 lfs_blocks_get(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index)
 {
 	if (fs->lfs_is64) {
@@ -1421,7 +1421,7 @@ lfs_blocks_get(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index)
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_blocks_set(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index, daddr_t val)
 {
 	if (fs->lfs_is64) {
@@ -1431,7 +1431,7 @@ lfs_blocks_set(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index, daddr_t val
 	}
 }
 
-static __unused inline void
+static __inline void
 lfs_blocks_inc(STRUCT_LFS *fs, union lfs_blocks *bp)
 {
 	if (fs->lfs_is64) {
@@ -1441,7 +1441,7 @@ lfs_blocks_inc(STRUCT_LFS *fs, union lfs_blocks *bp)
 	}
 }
 
-static __unused inline int
+static __inline int
 lfs_blocks_eq(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
 {
 	if (fs->lfs_is64) {
@@ -1451,7 +1451,7 @@ lfs_blocks_eq(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
 	}
 }
 
-static __unused inline int
+static __inline int
 lfs_blocks_sub(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
 {
 	/* (remember that the pointers are typed) */
