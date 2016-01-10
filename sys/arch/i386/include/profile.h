@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.33 2007/12/20 23:46:13 ad Exp $	*/
+/*	$NetBSD: profile.h,v 1.34 2016/01/10 09:04:32 ryo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,13 +31,8 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
-
 #ifdef _KERNEL
 #include <machine/cpufunc.h>
-#include <machine/lock.h>
 #endif
 
 #define	_MCOUNT_DECL static __inline void _mcount
@@ -83,27 +78,6 @@ mcount(void)								\
 }
 
 #ifdef _KERNEL
-#ifdef MULTIPROCESSOR
-__cpu_simple_lock_t __mcount_lock;
-
-static inline void
-MCOUNT_ENTER_MP(void)
-{
-	__cpu_simple_lock(&__mcount_lock);
-	__insn_barrier();
-}
-
-static inline void
-MCOUNT_EXIT_MP(void)
-{
-	__insn_barrier();
-	__mcount_lock = __SIMPLELOCK_UNLOCKED;
-}
-#else
-#define MCOUNT_ENTER_MP()
-#define MCOUNT_EXIT_MP()
-#endif
-
 static inline void
 mcount_disable_intr(void)
 {
@@ -125,13 +99,8 @@ mcount_write_psl(u_long ef)
 	__asm volatile("pushl %0; popfl" : : "r" (ef));
 }
 
-#define	MCOUNT_ENTER							\
-	s = (int)mcount_read_psl();					\
-	mcount_disable_intr();						\
-	MCOUNT_ENTER_MP();
-
-#define	MCOUNT_EXIT							\
-	MCOUNT_EXIT_MP();						\
-	mcount_write_psl(s);
+#define MCOUNT_ENTER	\
+	do { s = (int)mcount_read_psl(); mcount_disable_intr(); } while (0)
+#define MCOUNT_EXIT	do { mcount_write_psl(s); } while (0)
 
 #endif /* _KERNEL */
