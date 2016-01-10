@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcp.c,v 1.1.1.4 2016/01/10 19:44:46 christos Exp $	*/
+/*	$NetBSD: dhcp.c,v 1.2 2016/01/10 20:10:45 christos Exp $	*/
 /* dhcp.c
 
    DHCP Protocol engine. */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcp.c,v 1.1.1.4 2016/01/10 19:44:46 christos Exp $");
+__RCSID("$NetBSD: dhcp.c,v 1.2 2016/01/10 20:10:45 christos Exp $");
 
 #include "dhcpd.h"
 #include <errno.h>
@@ -1850,10 +1850,8 @@ void echo_client_id(packet, lease, in_options, out_options)
 	}
 }
 
-void check_pool_threshold (packet, lease, state)
-     struct packet *packet;
-     struct lease *lease;
-     struct lease_state *state;
+static void check_pool_threshold (struct packet *packet, struct lease *lease,
+     struct lease_state *state)
 
 {
 

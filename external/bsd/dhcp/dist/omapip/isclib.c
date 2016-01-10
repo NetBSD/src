@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.c,v 1.2 2014/07/12 12:09:37 spz Exp $	*/
+/*	$NetBSD: isclib.c,v 1.3 2016/01/10 20:10:45 christos Exp $	*/
 /*
  * Copyright(c) 2009-2010,2013-2014 by Internet Systems Consortium, Inc.("ISC")
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.2 2014/07/12 12:09:37 spz Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.3 2016/01/10 20:10:45 christos Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the export library but need the fdwatchcommand
@@ -124,6 +124,20 @@ isclib_cleanup(void)
 	return;
 }
 
+/* Installs a handler for a signal using sigaction */
+static void
+handle_signal(int sig, void (*handler)(int)) {
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = handler;
+	sigfillset(&sa.sa_mask);
+	if (sigaction(sig, &sa, NULL) != 0) {
+		log_debug("handle_signal() failed for signal %d error: %s",
+                          sig, strerror(errno));
+	}
+}
+
 isc_result_t
 dhcp_context_create(int flags,
 		    struct in_addr  *local4,
@@ -148,6 +162,15 @@ dhcp_context_create(int flags,
 		gettimeofday(&cur_tv, (struct timezone *)0);
 		isc_random_seed(cur_tv.tv_sec);
 
+		/* we need to create the memory context before
+		 * the lib inits in case we aren't doing NSUPDATE
+		 * in which case dst needs a memory context
+		 */
+		result = isc_mem_create(0, 0, &dhcp_gbl_ctx.mctx);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+
 #if defined (NSUPDATE)
 		result = dns_lib_init();
 		if (result != ISC_R_SUCCESS)
@@ -160,9 +183,6 @@ dhcp_context_create(int flags,
 			goto cleanup;
 
 #endif
-		result = isc_mem_create(0, 0, &dhcp_gbl_ctx.mctx);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
 
 		result = isc_appctx_create(dhcp_gbl_ctx.mctx,
 					   &dhcp_gbl_ctx.actx);
@@ -173,6 +193,11 @@ dhcp_context_create(int flags,
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		dhcp_gbl_ctx.actx_started = ISC_TRUE;
+
+		/* Not all OSs support suppressing SIGPIPE through socket
+		 * options, so set the sigal action to be ignore.  This allows
+		 * broken connections to fail gracefully with EPIPE on writes */
+		handle_signal(SIGPIPE, SIG_IGN);
 
 		result = isc_taskmgr_createinctx(dhcp_gbl_ctx.mctx,
 						 dhcp_gbl_ctx.actx,
@@ -223,9 +248,17 @@ dhcp_context_create(int flags,
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
+		/*
+		 * If we can't set up the servers we may not be able to
+		 * do DDNS but we should continue to try and perform
+		 * our basic functions and let the user sort it out.
+		 */
 		result = dhcp_dns_client_setservers();
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
+		if (result != ISC_R_SUCCESS) {
+			log_error("Unable to set resolver from resolv.conf; "
+				  "startup continuing but DDNS support "
+				  "may be affected");
+		}
 	}
 #endif
 
@@ -279,12 +312,24 @@ isclib_make_dst_key(char          *inname,
 	dns_name_t *name;
 	dns_fixedname_t name0;
 	isc_buffer_t b;
+	unsigned int algorithm_code;
 
 	isc_buffer_init(&b, secret, length);
 	isc_buffer_add(&b, length);
 
-	/* We only support HMAC_MD5 currently */
-	if (strcasecmp(algorithm, DHCP_HMAC_MD5_NAME) != 0) {
+	if (strcasecmp(algorithm, DHCP_HMAC_MD5_NAME) == 0) {
+		algorithm_code =  DST_ALG_HMACMD5;
+	} else if (strcasecmp(algorithm, DHCP_HMAC_SHA1_NAME) == 0) {
+		algorithm_code =  DST_ALG_HMACSHA1;
+	} else if (strcasecmp(algorithm, DHCP_HMAC_SHA224_NAME) == 0) {
+		algorithm_code =  DST_ALG_HMACSHA224;
+	} else if (strcasecmp(algorithm, DHCP_HMAC_SHA256_NAME) == 0) {
+		algorithm_code =  DST_ALG_HMACSHA256;
+	} else if (strcasecmp(algorithm, DHCP_HMAC_SHA384_NAME) == 0) {
+		algorithm_code =  DST_ALG_HMACSHA384;
+	} else if (strcasecmp(algorithm, DHCP_HMAC_SHA512_NAME) == 0) {
+		algorithm_code =  DST_ALG_HMACSHA512;
+	} else {
 		return(DHCP_R_INVALIDARG);
 	}
 
@@ -293,7 +338,7 @@ isclib_make_dst_key(char          *inname,
 		return(result);
 	}
 
-	return(dst_key_frombuffer(name, DST_ALG_HMACMD5, DNS_KEYOWNER_ENTITY,
+	return(dst_key_frombuffer(name, algorithm_code, DNS_KEYOWNER_ENTITY,
 				  DNS_KEYPROTO_DNSSEC, dns_rdataclass_in,
 				  &b, dhcp_gbl_ctx.mctx, dstkey));
 }

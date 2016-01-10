@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 2013/03/24 15:54:31 christos Exp $
+# $NetBSD: Makefile,v 1.2 2016/01/10 20:10:45 christos Exp $
 
-SUBDIR=	common dhcpctl dst omapip
+SUBDIR=	common dhcpctl omapip
 
 .include <bsd.subdir.mk>

@@ -1,10 +1,10 @@
-/*	$NetBSD: omapi.c,v 1.2 2014/07/12 12:09:38 spz Exp $	*/
+/*	$NetBSD: omapi.c,v 1.3 2016/01/10 20:10:45 christos Exp $	*/
 /* omapi.c
 
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 2012-2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2012-2015 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omapi.c,v 1.2 2014/07/12 12:09:38 spz Exp $");
+__RCSID("$NetBSD: omapi.c,v 1.3 2016/01/10 20:10:45 christos Exp $");
 
 /* Many, many thanks to Brian Murrell and BCtel for this code - BCtel
    provided the funding that resulted in this code and the entire
@@ -231,7 +231,7 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 
 	    if (lease -> binding_state != bar) {
 		lease -> next_binding_state = bar;
-		if (supersede_lease (lease, 0, 1, 1, 1)) {
+		if (supersede_lease (lease, NULL, 1, 1, 1, 0)) {
 			log_info ("lease %s state changed from %s to %s",
 				  piaddr(lease->ip_addr), ols, nls);
 			return ISC_R_SUCCESS;
@@ -264,7 +264,7 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 		return status;
 	    old_lease_end = lease->ends;
 	    lease->ends = lease_end;
-	    if (supersede_lease (lease, 0, 1, 1, 1)) {
+	    if (supersede_lease (lease, NULL, 1, 1, 1, 0)) {
 		log_info ("lease %s end changed from %lu to %lu",
 			  piaddr(lease->ip_addr), old_lease_end, lease_end);
 		return ISC_R_SUCCESS;
@@ -283,7 +283,7 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 			   (lease->flags & ~EPHEMERAL_FLAGS);
 	    if(oldflags == lease->flags)
 		return ISC_R_SUCCESS;
-	    if (!supersede_lease(lease, NULL, 1, 1, 1)) {
+	    if (!supersede_lease(lease, NULL, 1, 1, 1, 0)) {
 		log_error("Failed to update flags for lease %s.",
 			  piaddr(lease->ip_addr));
 		return ISC_R_IOERROR;
@@ -461,10 +461,13 @@ isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 
 #if defined (DEBUG_MEMORY_LEAKAGE) || \
 		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
-	/* XXX we should never be destroying a lease with a next
-	   XXX pointer except on exit... */
+	/* We no longer check for a next pointer as that should
+	 * be cleared when we destroy the pool and as before we
+	 * should only ever be doing that on exit.
 	if (lease->next)
 		lease_dereference (&lease->next, file, line);
+	 */
+
 	if (lease->n_hw)
 		lease_dereference (&lease->n_hw, file, line);
 	if (lease->n_uid)
@@ -1600,16 +1603,14 @@ isc_result_t dhcp_pool_destroy (omapi_object_t *h, const char *file, int line)
 		group_dereference (&pool -> group, file, line);
 	if (pool -> shared_network)
 	    shared_network_dereference (&pool -> shared_network, file, line);
-	if (pool -> active)
-		lease_dereference (&pool -> active, file, line);
-	if (pool -> expired)
-		lease_dereference (&pool -> expired, file, line);
-	if (pool -> free)
-		lease_dereference (&pool -> free, file, line);
-	if (pool -> backup)
-		lease_dereference (&pool -> backup, file, line);
-	if (pool -> abandoned)
-		lease_dereference (&pool -> abandoned, file, line);
+
+	POOL_DESTROYP(&pool->active);
+	POOL_DESTROYP(&pool->expired);
+	POOL_DESTROYP(&pool->free);
+	POOL_DESTROYP(&pool->backup);
+	POOL_DESTROYP(&pool->abandoned);
+	POOL_DESTROYP(&pool->reserved);
+
 #if defined (FAILOVER_PROTOCOL)
 	if (pool -> failover_peer)
 		dhcp_failover_state_dereference (&pool -> failover_peer,
@@ -1737,21 +1738,14 @@ class_set_value (omapi_object_t *h,
 	class = (struct class *)h;
 
 	if (!omapi_ds_strcmp(name, "name")) {
-		char *tname;
-
 		if (class->name)
 			return ISC_R_EXISTS;
 
-		if ((tname = dmalloc(value->u.buffer.len + 1, MDL)) == NULL) {
-			return ISC_R_NOMEMORY;
-		}
-
-		/* tname is null terminated from dmalloc() */
-		memcpy(tname, value->u.buffer.value, value->u.buffer.len);
-
 		if (issubclass) {
+			char tname[value->u.buffer.len + 1];
+			memcpy(tname, value->u.buffer.value, value->u.buffer.len);
+			tname[sizeof(tname)-1] = '\0';
 			status = find_class(&superclass, tname, MDL);
-			dfree(tname, MDL);
 
 			if (status == ISC_R_NOTFOUND)
 				return status;
@@ -2201,7 +2195,9 @@ isc_result_t dhcp_class_create (omapi_object_t **lp,
 	if (status != ISC_R_SUCCESS)
 		return (status);
 
-	clone_group(&cp->group, root_group, MDL);
+	if (clone_group(&cp->group, root_group, MDL) == 0)
+		return (ISC_R_NOMEMORY);
+
 	cp->flags = CLASS_DECL_DYNAMIC;
 	status = omapi_object_reference(lp, (omapi_object_t *)cp, MDL);
 	class_dereference(&cp, MDL);

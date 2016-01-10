@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.3 2014/07/12 12:09:37 spz Exp $	*/
+/*	$NetBSD: alloc.c,v 1.4 2016/01/10 20:10:44 christos Exp $	*/
 /* alloc.c
 
    Memory allocation... */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alloc.c,v 1.3 2014/07/12 12:09:37 spz Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.4 2016/01/10 20:10:44 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -1255,6 +1255,70 @@ int binding_scope_reference (ptr, bp, file, line)
 	bp -> refcnt++;
 	rc_register (file, line, ptr, bp, bp -> refcnt, 0, RC_MISC);
 	return 1;
+}
+
+/*!
+ * \brief  Constructs a null-terminated data_string from a char* and length.
+ *
+ * Allocates a data_string and copies into it the given length of bytes
+ * from the given source, adding a terminating null if not present in the source
+ * at length-1.
+ *
+ * \param new_string  pointer to the data_string to construct. Cannot be
+ * NULL. Note that its contents will be overwritten. Passing in the address
+ * of an allocated data_string will result in memory leaks.
+ * \param src data to be copied. Cannot be NULL.
+ * \param len length of the data to copied
+ *
+ * \return 1 - if the data_string is constructed successfully, 0 if
+ * target data_struct is NULL or the buffer allocation fails.
+ */
+int
+data_string_new(struct data_string *new_string,
+		 const char *src, unsigned int len,
+		 const char *file, int line)
+{
+	unsigned int copy_len = 0;
+
+	if (new_string == NULL) {
+		log_error("data_string_new: new_string cannot be NULL %s(%d)",
+			  file, line);
+                return (0);
+	}
+
+	if (src == NULL) {
+		log_error("data_string_new: src cannot be NULL %s(%d)",
+			  file, line);
+                return (0);
+	}
+
+	memset(new_string, 0, sizeof (struct data_string));
+
+	/* If we already have a NULL back off length by one. This lets
+	 * us always just add a NULL at the end. */
+	copy_len = (len > 0 && src[len - 1 ] == 0) ? len - 1 : len;
+
+	/* Allocate the buffer, accounting for terminating null */
+	if (!buffer_allocate(&(new_string->buffer), copy_len + 1,  MDL)) {
+		log_error("data_string_new: No memory %s(%d)", file, line);
+                return (0);
+	}
+
+	/* Only copy if there's something to copy */
+	if (copy_len > 0) {
+		memcpy(new_string->buffer->data, src, copy_len);
+	}
+
+	/* Always tack on the null */
+	new_string->buffer->data[copy_len + 1] = 0;
+
+	/* Update data_string accessor values.  Note len does NOT include
+	 * the NULL.  */
+	new_string->data = new_string->buffer->data;
+	new_string->len = copy_len;
+	new_string->terminated = 1;
+
+	return (1);
 }
 
 /* Make a copy of the data in data_string, upping the buffer reference

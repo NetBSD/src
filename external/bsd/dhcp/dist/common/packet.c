@@ -1,10 +1,10 @@
-/*	$NetBSD: packet.c,v 1.2 2016/01/08 23:09:41 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.3 2016/01/10 20:10:44 christos Exp $	*/
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.2 2016/01/08 23:09:41 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.3 2016/01/10 20:10:44 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -251,20 +251,19 @@ ssize_t
 decode_udp_ip_header(struct interface_info *interface,
 		     unsigned char *buf, unsigned bufix,
 		     struct sockaddr_in *from, unsigned buflen,
-		     unsigned *rbuflen)
+		     unsigned *rbuflen, int csum_ready)
 {
   unsigned char *data;
   struct ip ip;
   struct udphdr udp;
   unsigned char *upp;
   u_int32_t ip_len, ulen, pkt_len;
-  u_int32_t sum, usum;
-  static int ip_packets_seen;
-  static int ip_packets_bad_checksum;
-  static int udp_packets_seen;
-  static int udp_packets_bad_checksum;
-  static int udp_packets_length_checked;
-  static int udp_packets_length_overflow;
+  static unsigned int ip_packets_seen = 0;
+  static unsigned int ip_packets_bad_checksum = 0;
+  static unsigned int udp_packets_seen = 0;
+  static unsigned int udp_packets_bad_checksum = 0;
+  static unsigned int udp_packets_length_checked = 0;
+  static unsigned int udp_packets_length_overflow = 0;
   unsigned len;
 
   /* Assure there is at least an IP header there. */
@@ -314,10 +313,10 @@ decode_udp_ip_header(struct interface_info *interface,
   /* verify that the payload length from the udp packet fits in the buffer */
   if ((ip_len + ulen) > buflen) {
 	udp_packets_length_overflow++;
-	if ((udp_packets_length_checked > 4) &&
-	    ((udp_packets_length_checked /
-	      udp_packets_length_overflow) < 2)) {
-		log_info("%d udp packets in %d too long - dropped",
+	if (((udp_packets_length_checked > 4) &&
+	     (udp_packets_length_overflow != 0)) &&
+	    ((udp_packets_length_checked / udp_packets_length_overflow) < 2)) {
+		log_info("%u udp packets in %u too long - dropped",
 			 udp_packets_length_overflow,
 			 udp_packets_length_checked);
 		udp_packets_length_overflow = 0;
@@ -326,50 +325,64 @@ decode_udp_ip_header(struct interface_info *interface,
 	return -1;
   }
 
+  /* If at least 5 with less than 50% bad, start over */
+  if (udp_packets_length_checked > 4) {
+	udp_packets_length_overflow = 0;
+	udp_packets_length_checked = 0;
+  }
+
   /* Check the IP header checksum - it should be zero. */
-  ++ip_packets_seen;
+  ip_packets_seen++;
   if (wrapsum (checksum (buf + bufix, ip_len, 0))) {
 	  ++ip_packets_bad_checksum;
-	  if (ip_packets_seen > 4 &&
-	      (ip_packets_seen / ip_packets_bad_checksum) < 2) {
-		  log_info ("%d bad IP checksums seen in %d packets",
+	  if (((ip_packets_seen > 4) && (ip_packets_bad_checksum != 0)) &&
+	      ((ip_packets_seen / ip_packets_bad_checksum) < 2)) {
+		  log_info ("%u bad IP checksums seen in %u packets",
 			    ip_packets_bad_checksum, ip_packets_seen);
 		  ip_packets_seen = ip_packets_bad_checksum = 0;
 	  }
 	  return -1;
   }
 
+  /* If at least 5 with less than 50% bad, start over */
+  if (ip_packets_seen > 4) {
+	ip_packets_bad_checksum = 0;
+	ip_packets_seen = 0;
+  }
+
   /* Copy out the IP source address... */
   memcpy(&from->sin_addr, &ip.ip_src, 4);
-
-  /* Compute UDP checksums, including the ``pseudo-header'', the UDP
-     header and the data.   If the UDP checksum field is zero, we're
-     not supposed to do a checksum. */
 
   data = upp + sizeof(udp);
   len = ulen - sizeof(udp);
 
-  usum = udp.uh_sum;
-  udp.uh_sum = 0;
-
-  /* XXX: We have to pass &udp, because we have to zero the checksum
-   * field before calculating the sum...'upp' isn't zeroed.
-   */
-  sum = wrapsum(checksum((unsigned char *)&udp, sizeof(udp),
-			 checksum(data, len,
-				  checksum((unsigned char *)&ip.ip_src,
-					   8, IPPROTO_UDP + ulen))));
-
+  /* UDP check sum may be optional (udp.uh_sum == 0) or not ready if checksum
+   * offloading is in use */
   udp_packets_seen++;
-  if (usum && usum != sum) {
-	  udp_packets_bad_checksum++;
-	  if (udp_packets_seen > 4 &&
-	      (udp_packets_seen / udp_packets_bad_checksum) < 2) {
-		  log_info ("%d bad udp checksums in %d packets",
-			    udp_packets_bad_checksum, udp_packets_seen);
-		  udp_packets_seen = udp_packets_bad_checksum = 0;
-	  }
-	  return -1;
+  if (udp.uh_sum && csum_ready) {
+	/* Check the UDP header checksum - since the received packet header
+	 * contains the UDP checksum calculated by the transmitter, calculating
+	 * it now should come out to zero. */
+	if (wrapsum(checksum((unsigned char *)&udp, sizeof(udp),
+			       checksum(data, len,
+				        checksum((unsigned char *)&ip.ip_src,
+					         8, IPPROTO_UDP + ulen))))) {
+		udp_packets_bad_checksum++;
+		if (((udp_packets_seen > 4) && (udp_packets_bad_checksum != 0))
+		    && ((udp_packets_seen / udp_packets_bad_checksum) < 2)) {
+			log_info ("%u bad udp checksums in %u packets",
+			          udp_packets_bad_checksum, udp_packets_seen);
+			udp_packets_seen = udp_packets_bad_checksum = 0;
+		}
+
+		return -1;
+	}
+  }
+
+  /* If at least 5 with less than 50% bad, start over */
+  if (udp_packets_seen > 4) {
+	udp_packets_bad_checksum = 0;
+	udp_packets_seen = 0;
   }
 
   /* Copy out the port... */
