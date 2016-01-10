@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.77 2016/01/09 21:47:23 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.78 2016/01/10 16:06:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.77 2016/01/09 21:47:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.78 2016/01/10 16:06:07 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1863,10 +1863,30 @@ ehci_dump_exfer(struct ehci_xfer *ex)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
-	USBHIST_LOG(ehcidebug, "ex = %p sqtdstart = %p end = %p",
-	    ex, ex->ex_sqtdstart, ex->ex_sqtdend, 0);
-	USBHIST_LOG(ehcidebug, "     itdstart = %p end = %p isdone = %d",
-	    ex->ex_itdstart, ex->ex_itdend, ex->ex_isdone, 0);
+	USBHIST_LOG(ehcidebug, "ex = %p type %d isdone", ex, ex->ex_type,
+	    ex->ex_isdone, 0);
+
+	switch (ex->ex_type) {
+	case EX_CTRL:
+		USBHIST_LOG(ehcidebug, "   setup = %p data = %p status = %p",
+		    ex->ex_setup, ex->ex_data, ex->ex_status, 0);
+		break;
+	case EX_BULK:
+	case EX_INTR:
+		USBHIST_LOG(ehcidebug, "   qtdstart = %p qtdend = %p",
+		    ex->ex_sqtdstart, ex->ex_sqtdend, 0, 0);
+		break;
+	case EX_ISOC:
+		USBHIST_LOG(ehcidebug, "   itdstart = %p itdend = %p",
+		    ex->ex_itdstart, ex->ex_itdend, 0, 0);
+		break;
+	case EX_FS_ISOC:
+		USBHIST_LOG(ehcidebug, "   sitdstart = %p sitdend = %p",
+		    ex->ex_sitdstart, ex->ex_sitdend, 0, 0);
+		break;
+	default:
+		USBHIST_LOG(ehcidebug, "   unknown type", 0, 0, 0, 0);
+	}
 }
 #endif
 
@@ -2980,6 +3000,8 @@ ehci_reset_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 	USBHIST_LOG(ehcidebug, "xfer=%p len %d isread %d toggle %d", xfer,
 	    len, isread, *toggle);
+	USBHIST_LOG(ehcidebug, "    VA %p", KERNADDR(&xfer->ux_dmabuf, 0),
+	    0, 0, 0);
 
 	sqtd = prev = NULL;
 	for (i = 0; i < exfer->ex_nsqtd; i++, prev = sqtd) {
@@ -2992,6 +3014,8 @@ ehci_reset_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 
 		USBHIST_LOG(ehcidebug, "sqtd[%d]=%p prev %p len %d", i, sqtd,
 		    prev, sqtd->len);
+		USBHIST_LOG(ehcidebug, "    va %p bufoff %d pa %p", va, sqtd->bufoff,
+		    DMAADDR(&xfer->ux_dmabuf, sqtd->bufoff), 0);
 
 		if (prev) {
 			prev->nextqtd = sqtd;
