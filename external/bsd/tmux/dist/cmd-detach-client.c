@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,14 @@ const struct cmd_entry cmd_detach_client_entry = {
 	"as:t:P", 0, 0,
 	"[-P] [-a] [-s target-session] " CMD_TARGET_CLIENT_USAGE,
 	CMD_READONLY,
-	NULL,
+	cmd_detach_client_exec
+};
+
+const struct cmd_entry cmd_suspend_client_entry = {
+	"suspend-client", "suspendc",
+	"t:", 0, 0,
+	CMD_TARGET_CLIENT_USAGE,
+	0,
 	cmd_detach_client_exec
 };
 
@@ -41,10 +48,18 @@ enum cmd_retval
 cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
-	struct client	*c, *c2;
+	struct client	*c, *cloop;
 	struct session	*s;
 	enum msgtype	 msgtype;
-	u_int 		 i;
+
+	if (self->entry == &cmd_suspend_client_entry) {
+		if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
+			return (CMD_RETURN_ERROR);
+		tty_stop_tty(&c->tty);
+		c->flags |= CLIENT_SUSPENDED;
+		server_write_client(c, MSG_SUSPEND, NULL, 0);
+		return (CMD_RETURN_NORMAL);
+	}
 
 	if (args_has(args, 'P'))
 		msgtype = MSG_DETACHKILL;
@@ -56,33 +71,32 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		if (s == NULL)
 			return (CMD_RETURN_ERROR);
 
-		for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-			c = ARRAY_ITEM(&clients, i);
-			if (c == NULL || c->session != s)
+		TAILQ_FOREACH(cloop, &clients, entry) {
+			if (cloop->session != s)
 				continue;
-			server_write_client(c, msgtype, c->session->name,
-			    strlen(c->session->name) + 1);
+			server_write_client(cloop, msgtype,
+			    cloop->session->name,
+			    strlen(cloop->session->name) + 1);
 		}
-	} else {
-		c = cmd_find_client(cmdq, args_get(args, 't'), 0);
-		if (c == NULL)
-			return (CMD_RETURN_ERROR);
-
-		if (args_has(args, 'a')) {
-			for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-				c2 = ARRAY_ITEM(&clients, i);
-				if (c2 == NULL || c2->session == NULL ||
-				    c2 == c)
-					continue;
-				server_write_client(c2, msgtype,
-				    c2->session->name,
-				    strlen(c2->session->name) + 1);
-			}
-		} else {
-			server_write_client(c, msgtype, c->session->name,
-			    strlen(c->session->name) + 1);
-		}
+		return (CMD_RETURN_STOP);
 	}
 
+	c = cmd_find_client(cmdq, args_get(args, 't'), 0);
+	if (c == NULL)
+		return (CMD_RETURN_ERROR);
+
+	if (args_has(args, 'a')) {
+		TAILQ_FOREACH(cloop, &clients, entry) {
+			if (cloop->session == NULL || cloop == c)
+				continue;
+			server_write_client(cloop, msgtype,
+			    cloop->session->name,
+			    strlen(cloop->session->name) + 1);
+		}
+		return (CMD_RETURN_NORMAL);
+	}
+
+	server_write_client(c, msgtype, c->session->name,
+	    strlen(c->session->name) + 1);
 	return (CMD_RETURN_STOP);
 }
