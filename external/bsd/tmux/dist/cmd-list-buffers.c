@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,6 +27,9 @@
  * List paste buffers.
  */
 
+#define LIST_BUFFERS_TEMPLATE						\
+	"#{buffer_name}: #{buffer_size} bytes: \"#{buffer_sample}\""
+
 enum cmd_retval	 cmd_list_buffers_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_list_buffers_entry = {
@@ -34,7 +37,6 @@ const struct cmd_entry cmd_list_buffers_entry = {
 	"F:", 0, 0,
 	"[-F format]",
 	0,
-	NULL,
 	cmd_list_buffers_exec
 };
 
@@ -44,18 +46,16 @@ cmd_list_buffers_exec(unused struct cmd *self, struct cmd_q *cmdq)
 	struct args		*args = self->args;
 	struct paste_buffer	*pb;
 	struct format_tree	*ft;
-	u_int			 idx;
 	char			*line;
 	const char		*template;
 
 	if ((template = args_get(args, 'F')) == NULL)
 		template = LIST_BUFFERS_TEMPLATE;
 
-	idx = 0;
-	while ((pb = paste_walk_stack(&global_buffers, &idx)) != NULL) {
+	pb = NULL;
+	while ((pb = paste_walk(pb)) != NULL) {
 		ft = format_create();
-		format_add(ft, "line", "%u", idx - 1);
-		format_paste_buffer(ft, pb);
+		format_defaults_paste_buffer(ft, pb, 0);
 
 		line = format_expand(ft, template);
 		cmdq_print(cmdq, "%s", line);
