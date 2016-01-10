@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.6 2016/01/07 04:26:44 marty Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.7 2016/01/10 23:01:29 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.6 2016/01/07 04:26:44 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.7 2016/01/10 23:01:29 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.6 2016/01/07 04:26:44 marty Exp $");
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
 
-#define MAX_SPEC_LENGTH 6
 struct fdtbus_interrupt_controller {
 	device_t ic_dev;
 	int ic_phandle;
@@ -123,33 +122,41 @@ void *
 fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
+	void * result = NULL;
 	u_int *specifier;
-	u_int maxspec[MAX_SPEC_LENGTH];
+	u_int spec_length;
 	int ihandle;
 	struct fdtbus_interrupt_controller *ic;
 
 	if (has_interrupt_map(phandle)) {
-		specifier = get_entry_from_map(phandle, index, maxspec);
+		specifier = get_entry_from_map(phandle, index, &spec_length);
 		ihandle = be32toh(specifier[1]);
 		ihandle = fdtbus_get_phandle_from_native(ihandle);
 		specifier += 2;
 	} else {
-		specifier = get_specifier_by_index(phandle, index, maxspec);
+		specifier = get_specifier_by_index(phandle, index,
+						   &spec_length);
 		ihandle = phandle;
 	}
 	if (specifier == NULL) {
 		printf("%s: Unable to get specifier %d for phandle %d\n",
 		       __func__, index, phandle);
-		return NULL;
+		goto done;
 	}
 	ic = fdtbus_get_interrupt_controller(ihandle);
 	if (ic == NULL) {
 		printf("%s: Unable to get interrupt controller for %d\n",
 		       __func__, ihandle);
-		return NULL;
+		goto done;
 	}
-	return ic->ic_funcs->establish(ic->ic_dev, specifier,
+	result = ic->ic_funcs->establish(ic->ic_dev, specifier,
 					       ipl, flags, func, arg);
+done:
+	if (has_interrupt_map(phandle))
+	    specifier -= 2;
+	if (specifier && spec_length > 0)
+		kmem_free(specifier, spec_length);
+	return result;
 }
 
 void
@@ -166,31 +173,40 @@ fdtbus_intr_disestablish(int phandle, void *ih)
 bool
 fdtbus_intr_str(int phandle, u_int index, char *buf, size_t buflen)
 {
+	bool result = false;
 	struct fdtbus_interrupt_controller *ic;
 	int ihandle;
 	u_int *specifier;
-	u_int maxspec[MAX_SPEC_LENGTH];
+	u_int spec_length;
 	if (has_interrupt_map(phandle)) {
-		specifier = get_entry_from_map(phandle, index, maxspec);
+		specifier = get_entry_from_map(phandle, index,
+			&spec_length);
 		ihandle = be32toh(specifier[1]);
 		ihandle = fdtbus_get_phandle_from_native(ihandle);
 		specifier += 2;
 	} else {
 		ihandle = phandle;
-		specifier = get_specifier_by_index(phandle, index, maxspec);
+		specifier = get_specifier_by_index(phandle, index,
+						   &spec_length);
 	}
 	if (specifier == NULL) {
 		printf("%s: Unable to get specifier %d for phandle %d\n",
 		       __func__, index, phandle);
-		return false;
+		goto done;
 	}
 	ic = fdtbus_get_interrupt_controller(ihandle);
 	if (ic == NULL) {
 		printf("%s: Unable to get interrupt controller for %d\n",
 		       __func__, ihandle);
-		return false;
+		goto done;
 	}
-	return ic->ic_funcs->intrstr(ic->ic_dev, specifier, buf, buflen);
+	result = ic->ic_funcs->intrstr(ic->ic_dev, specifier, buf, buflen);
+done:
+	if (has_interrupt_map(phandle))
+	    specifier -= 2;
+	if (specifier && spec_length > 0)
+		kmem_free(specifier, spec_length);
+	return result;
 }
 
 /*
@@ -232,7 +248,7 @@ has_interrupt_map(int phandle)
  *
  */
 static u_int *
-get_entry_from_map(int phandle, int pindex, u_int *specifier)
+get_entry_from_map(int phandle, int pindex, u_int *spec_length)
 {
 	int intr_cells;
 	int intr_parent;
@@ -262,9 +278,11 @@ get_entry_from_map(int phandle, int pindex, u_int *specifier)
 		u_int pintr_cells;
 		of_getprop_uint32(parent, "#interrupt-cells", &pintr_cells);
 		if (index == pindex) {
-			for (int i = 0; i < pintr_cells; i++)
-				specifier[i] =  p[i];
-			result = specifier;
+			result = kmem_alloc((pintr_cells + 2) * sizeof(u_int),
+					    KM_SLEEP);
+			*spec_length = (pintr_cells + 2) * sizeof (u_int);
+			for (int i = 0; i < pintr_cells + 2; i++)
+				result[i] =  p[i];
 			goto done;
 									
 		}
@@ -287,9 +305,11 @@ done:
  * and return a pointer to it.
  *
  */
-static u_int *get_specifier_by_index(int phandle, int pindex, u_int *specifier)
+static u_int *get_specifier_by_index(int phandle, int pindex,
+				     u_int *spec_length)
 {
 	u_int *specifiers;
+	u_int *specifier;
 	int interrupt_parent, interrupt_cells, len;
 
 	interrupt_parent = fdtbus_get_interrupt_parent(phandle);
@@ -326,6 +346,8 @@ static u_int *get_specifier_by_index(int phandle, int pindex, u_int *specifier)
 		kmem_free(specifiers, len);
 		return NULL;
 	}
+	specifier = kmem_alloc(interrupt_cells * sizeof(u_int), KM_SLEEP);
+	*spec_length = interrupt_cells * sizeof(u_int);
 	for (int i = 0; i < interrupt_cells; i++)
 		specifier[i] = specifiers[pindex * clen + i];
 	kmem_free(specifiers, len);
