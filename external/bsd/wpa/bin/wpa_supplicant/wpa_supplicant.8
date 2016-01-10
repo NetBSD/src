@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_supplicant.8,v 1.5 2016/01/10 15:52:36 roy Exp $
+.\" $NetBSD: wpa_supplicant.8,v 1.6 2016/01/10 20:31:13 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -108,11 +108,11 @@ The following options are available:
 .It Fl B
 Detach from the controlling terminal and run as a daemon process
 in the background.
-.It Fl b
+.It Fl b Ar br_ifname
 Optional bridge interface name.
-.It Fl C
+.It Fl C Ar ctrl
 Control interface parameter.
-.It Fl D
+.It Fl D Ar driver
 Driver name (can be either bsd or wired)
 .It Fl d
 Enable debugging messages.
@@ -121,19 +121,19 @@ Messages are sent to stdout by default, even when daemonised.
 This can be changed with the
 .Fl f
 flag.
-.It Fl e
+.It Fl e Ar entropy-file
 Specifies a file to store entropy.
-.It Fl f
+.It Fl f Ar debug-file
 Specifies a file to send debug messages to when enabled with the
 .Fl d
 flag.
-.It Fl G
+.It Fl G Ar global-ctrl-group
 Global control interface group.
-.It Fl g
+.It Fl g Ar global-ctrl
 Global control interface.
 .It Fl h
 Show help text.
-.It Fl I
+.It Fl I Ar additional-config-file
 Additional configuration file.
 .It Fl K
 Include key information in debugging output.
@@ -144,20 +144,22 @@ Specify an additional interface and configuration file.
 If multiple interfaces are specified then
 .Nm
 will manage them all with a single process.
-.It Fl O
+.It Fl O Ar override-ctrl
 Override ctrl_interface parameter for new interface.
-.It Fl o
+.It Fl o Ar override-driver
 Override driver paramter for new interface.
-.It Fl P
+.It Fl P Ar pidfile
 File in which to save the process PID.
-.It Fl p
+.It Fl p Ar parameters
 Specify driver parameters.
 .It Fl q
 Decrease debugging verbosity (i.e., counteract the use of the
 .Fl d
 flag).
 .It Fl s
-Send log messages through syslog(3) instead of to the terminal.
+Send log messages through
+.Xr syslog 3
+instead of to the terminal.
 .It Fl t
 Include timestamp in debug messages.
 .It Fl v
