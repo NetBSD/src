@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: grep2netbsd,v 1.1 2016/01/10 22:16:40 christos Exp $
+#	$NetBSD: grep2netbsd,v 1.2 2016/01/10 22:18:05 christos Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,5 +70,8 @@ echo done
 cat << EOF
 To import:
 cvs -d cvs.netbsd.org:/cvsroot import src/external/gpl2/grep/dist FSF grep-X-Y
+
+Then run configure, make, merge the config.h file and the gmo files in the po
+dir.
 EOF
 exit 0
