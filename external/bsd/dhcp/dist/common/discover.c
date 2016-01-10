@@ -1,4 +1,4 @@
-/*	$NetBSD: discover.c,v 1.4 2014/07/12 12:09:37 spz Exp $	*/
+/*	$NetBSD: discover.c,v 1.5 2016/01/10 20:10:44 christos Exp $	*/
 /* discover.c
 
    Find and identify the network interfaces. */
@@ -29,9 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.4 2014/07/12 12:09:37 spz Exp $");
+__RCSID("$NetBSD: discover.c,v 1.5 2016/01/10 20:10:44 christos Exp $");
 
 #include "dhcpd.h"
+
+/* length of line we can read from the IF file, 256 is too small in some cases */
+#define IF_LINE_LENGTH 1024
 
 #define BSD_COMP		/* needed on Solaris for SIOCGLIFNUM */
 #include <sys/ioctl.h>
@@ -412,7 +415,7 @@ struct iface_info {
  */
 static int 
 begin_iface_scan(struct iface_conf_list *ifaces) {
-	char buf[256];
+	char buf[IF_LINE_LENGTH];
 	int len;
 	int i;
 
@@ -485,7 +488,7 @@ begin_iface_scan(struct iface_conf_list *ifaces) {
  */
 static int
 next_iface4(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
-	char buf[256];
+	char buf[IF_LINE_LENGTH];
 	int len;
 	char *p;
 	char *name;
@@ -548,7 +551,7 @@ next_iface4(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 				log_error("Interface name '%s' too long", name);
 				return 0;
 			}
-			strcpy(info->name, name);
+			strncpy(info->name, name, sizeof(info->name) - 1);
 
 #ifdef ALIAS_NAMED_PERMUTED
 			/* interface aliases look like "eth0:1" or "wlan1:3" */
@@ -565,7 +568,7 @@ next_iface4(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 #endif
 
 		memset(&tmp, 0, sizeof(tmp));
-		strcpy(tmp.ifr_name, name);
+		strncpy(tmp.ifr_name, name, sizeof(tmp.ifr_name) - 1);
 		if (ioctl(ifaces->sock, SIOCGIFADDR, &tmp) < 0) {
 			if (errno == EADDRNOTAVAIL) {
 				continue;
@@ -578,7 +581,7 @@ next_iface4(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 		memcpy(&info->addr, &tmp.ifr_addr, sizeof(tmp.ifr_addr));
 
 		memset(&tmp, 0, sizeof(tmp));
-		strcpy(tmp.ifr_name, name);
+		strncpy(tmp.ifr_name, name, sizeof(tmp.ifr_name) - 1);
 		if (ioctl(ifaces->sock, SIOCGIFFLAGS, &tmp) < 0) {
 			log_error("Error getting interface flags for '%s'; %m", 
 			  	name);
@@ -609,7 +612,7 @@ next_iface4(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
  */
 static int
 next_iface6(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
-	char buf[256];
+	char buf[IF_LINE_LENGTH];
 	int len;
 	char *p;
 	char *name;
