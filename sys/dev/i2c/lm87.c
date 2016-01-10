@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.6 2016/01/10 10:20:08 jdc Exp $	*/
+/*	$NetBSD: lm87.c,v 1.7 2016/01/10 14:03:11 jdc Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.6 2016/01/10 10:20:08 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.7 2016/01/10 14:03:11 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ struct lmenv_softc {
 
 	int	sc_fan1_div, sc_fan2_div;
 	int	sc_family;
-	int	sc_channel;
+	uint8_t	sc_channel;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[LMENV_NUM_SENSORS];
@@ -271,9 +271,15 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize sensor data. */
 	sc->sc_sensor[LMENV_2_5V].state = ENVSYS_SINVALID;
-	sc->sc_sensor[LMENV_2_5V].units = ENVSYS_SVOLTS_DC;
-	strlcpy(sc->sc_sensor[LMENV_2_5V].desc, "+2.5Vin",
-	    sizeof(sc->sc_sensor[LMENV_2_5V].desc));
+	if (sc->sc_channel & LM87_CHANNEL_TEMP2) {
+		sc->sc_sensor[LMENV_INT_TEMP].units = ENVSYS_STEMP;
+		strlcpy(sc->sc_sensor[LMENV_2_5V].desc, "External 2",
+		    sizeof(sc->sc_sensor[LMENV_2_5V].desc));
+	} else {
+		sc->sc_sensor[LMENV_2_5V].units = ENVSYS_SVOLTS_DC;
+		strlcpy(sc->sc_sensor[LMENV_2_5V].desc, "+2.5Vin",
+		    sizeof(sc->sc_sensor[LMENV_2_5V].desc));
+	}
 
 	sc->sc_sensor[LMENV_VCCP1].state = ENVSYS_SINVALID;
 	sc->sc_sensor[LMENV_VCCP1].units = ENVSYS_SVOLTS_DC;
@@ -296,11 +302,7 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 	    sizeof(sc->sc_sensor[LMENV_12V].desc));
 
 	sc->sc_sensor[LMENV_VCCP2].state = ENVSYS_SINVALID;
-	if (sc->sc_channel & LM87_CHANNEL_TEMP2) {
-		sc->sc_sensor[LMENV_INT_TEMP].units = ENVSYS_STEMP;
-		strlcpy(sc->sc_sensor[LMENV_VCCP2].desc, "External 2",
-		    sizeof(sc->sc_sensor[LMENV_VCCP2].desc));
-	} else {
+	if (!(sc->sc_channel & LM87_CHANNEL_TEMP2)) {
 		sc->sc_sensor[LMENV_VCCP2].units = ENVSYS_SVOLTS_DC;
 		strlcpy(sc->sc_sensor[LMENV_VCCP2].desc, "Vccp2",
 		    sizeof(sc->sc_sensor[LMENV_VCCP2].desc));
@@ -380,9 +382,15 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	switch (edata->sensor) {
 	case LMENV_2_5V:
-		/* If monitoring external temperature 2, this isn't monitored */
+		/* Might be external temperature 2 */
 		if (sc->sc_channel & LM87_CHANNEL_TEMP2) {
-			edata->state = ENVSYS_SINVALID;
+			if (data == 0x80)
+				edata->state = ENVSYS_SINVALID;
+			else {
+				edata->value_cur =
+				    (int8_t)data * 1000000 + 273150000;
+				edata->state = ENVSYS_SVALID;
+			}
 			break;
 		}
 		edata->value_cur = 2500000 * data / 192;
@@ -401,15 +409,9 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SVALID;
 		break;
 	case LMENV_VCCP2:
-		/* Might be external temperature 2 */
+		/* If monitoring external temperature 2, this isn't monitored */
 		if (sc->sc_channel & LM87_CHANNEL_TEMP2) {
-			if (data == 0x80)
-				edata->state = ENVSYS_SINVALID;
-			else {
-				edata->value_cur =
-				    (int8_t)data * 1000000 + 273150000;
-				edata->state = ENVSYS_SVALID;
-			}
+			edata->state = ENVSYS_SINVALID;
 			break;
 		}
 		edata->value_cur = 2700000 * data / 192;
