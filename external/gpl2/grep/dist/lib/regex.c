@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.c,v 1.1.1.1 2016/01/10 21:36:19 christos Exp $	*/
+/*	$NetBSD: regex.c,v 1.2 2016/01/10 22:16:40 christos Exp $	*/
 
 /* Extended regular expression matching and search library,
    version 0.12.
@@ -1127,7 +1127,7 @@ print_double_string (where, string1, size1, string2, size2)
     int size1;
     int size2;
 {
-  int this_char;
+  ptrdiff_t this_char;
 
   if (where == NULL)
     printf ("(null)");
