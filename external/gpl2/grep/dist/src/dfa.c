@@ -1,4 +1,4 @@
-/*	$NetBSD: dfa.c,v 1.1.1.1 2016/01/10 21:36:21 christos Exp $	*/
+/*	$NetBSD: dfa.c,v 1.2 2016/01/10 22:16:40 christos Exp $	*/
 
 /* dfa.c - deterministic extended regexp routines for GNU
    Copyright 1988, 1998, 2000 Free Software Foundation, Inc.
@@ -46,7 +46,7 @@ extern void free();
 # include <locale.h>
 #endif
 
-#if defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H && defined HAVE_MBRTOWC
+#if defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H && defined HAVE_MBRTOWC && defined HAVE_WCTYPE
 /* We can handle multibyte string.  */
 # define MBS_SUPPORT
 #endif
@@ -334,9 +334,9 @@ static int hard_LC_COLLATE;	/* Nonzero if LC_COLLATE is hard.  */
 #ifdef MBS_SUPPORT
 /* These variables are used only if (MB_CUR_MAX > 1).  */
 static mbstate_t mbs;		/* Mbstate for mbrlen().  */
-static int cur_mb_len;		/* Byte length of the current scanning
+static ssize_t cur_mb_len;		/* Byte length of the current scanning
 				   multibyte character.  */
-static int cur_mb_index;        /* Byte index of the current scanning multibyte
+static ssize_t cur_mb_index;        /* Byte index of the current scanning multibyte
                                    character.
 
 				   singlebyte character : cur_mb_index = 0
@@ -369,7 +369,7 @@ static unsigned char const *buf_end;	/* refference to end in dfaexec().  */
 /* This function update cur_mb_len, and cur_mb_index.
    p points current lexptr, len is the remaining buffer length.  */
 static void
-update_mb_len_index (unsigned char const *p, int len)
+update_mb_len_index (unsigned char const *p, size_t len)
 {
   /* If last character is a part of a multibyte character,
      we update cur_mb_index.  */
@@ -484,7 +484,8 @@ parse_bracket_exp_mb ()
 
   work_mbc->nchars = work_mbc->nranges = work_mbc->nch_classes = 0;
   work_mbc->nequivs = work_mbc->ncoll_elems = 0;
-  work_mbc->chars = work_mbc->ch_classes = NULL;
+  work_mbc->chars = NULL;
+  work_mbc->ch_classes = NULL;
   work_mbc->range_sts = work_mbc->range_ends = NULL;
   work_mbc->equivs = work_mbc->coll_elems = NULL;
 
@@ -553,7 +554,7 @@ parse_bracket_exp_mb ()
 		  wt = wctype (str);
 
 		  if (ch_classes_al == 0)
-		    MALLOC(work_mbc->ch_classes, wchar_t, ++ch_classes_al);
+		    MALLOC(work_mbc->ch_classes, wctype_t, ++ch_classes_al);
 		  REALLOC_IF_NECESSARY(work_mbc->ch_classes, wctype_t,
 				       ch_classes_al,
 				       work_mbc->nch_classes + 1);
@@ -2465,7 +2466,7 @@ match_mb_charset (struct dfa *d, int s, position pos, int index)
   int match;		/* Flag which represent that matching succeed.  */
   int match_len;	/* Length of the character (or collating element)
 			   with which this operator match.  */
-  int op_len;		/* Length of the operator.  */
+  size_t op_len;		/* Length of the operator.  */
   char buffer[128];
   wchar_t wcbuf[6];
 

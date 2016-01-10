@@ -1,21 +1,8 @@
-.\"	$NetBSD: grep.1,v 1.1.1.1 2016/01/10 21:36:16 christos Exp $
+.\"	$NetBSD: grep.1,v 1.2 2016/01/10 22:16:40 christos Exp $
 .\"
 .\" grep man page
-.if !\n(.g \{\
-.	if !\w|\*(lq| \{\
-.		ds lq ``
-.		if \w'\(lq' .ds lq "\(lq
-.	\}
-.	if !\w|\*(rq| \{\
-.		ds rq ''
-.		if \w'\(rq' .ds rq "\(rq
-.	\}
-.\}
-.de Id
-.ds Dt \\$4
-..
-.Id Id: grep.1,v 1.23 2002/01/22 13:20:04 bero Exp 
-.TH GREP 1 \*(Dt "GNU Project"
+.\"d Id: grep.1,v 1.23 2002/01/22 13:20:04 bero Exp 
+.TH GREP 1 "June 16 2003" "GNU Project"
 .SH NAME
 grep, egrep, fgrep \- print lines matching a pattern
 .SH SYNOPSIS
@@ -81,14 +68,6 @@ Places a line containing
 .B \-\^\-
 between contiguous groups of matches.
 .TP
-.BI \-C " NUM" "\fR,\fP \-\^\-context=" NUM
-Print
-.I NUM
-lines of output context.
-Places a line containing
-.B \-\^\-
-between contiguous groups of matches.
-.TP
 .BR \-b ", " \-\^\-byte-offset
 Print the byte offset within the input file before
 each line of output.
@@ -128,10 +107,13 @@ might output binary garbage,
 which can have nasty side effects if the output is a terminal and if the
 terminal driver interprets some of it as commands.
 .TP
-.BI \-\^\-colour[=\fIWHEN\fR] ", " \-\^\-color[=\fIWHEN\fR]
-Surround the matching string with the marker find in
-.B GREP_COLOR
-environment variable. WHEN may be `never', `always', or `auto'
+.BI \-C " NUM" "\fR,\fP \-\^\-context=" NUM
+Print
+.I NUM
+lines of output context.
+Places a line containing
+.B \-\^\-
+between contiguous groups of matches.
 .TP
 .BR \-c ", " \-\^\-count
 Suppress normal output; instead print a count of
@@ -139,6 +121,11 @@ matching lines for each input file.
 With the
 .BR \-v ", " \-\^\-invert-match
 option (see below), count non-matching lines.
+.TP
+.BI \-\^\-colour[=\fIWHEN\fR] ", " \-\^\-color[=\fIWHEN\fR]
+Surround the matching string with the marker find in
+.B GREP_COLOR
+environment variable. WHEN may be `never', `always', or `auto'
 .TP
 .BI \-D " ACTION" "\fR,\fP \-\^\-devices=" ACTION
 If an input file is a device, FIFO or socket, use
@@ -187,16 +174,13 @@ Use
 .I PATTERN
 as the pattern; useful to protect patterns beginning with
 .BR \- .
+May be specified more than once.
 .TP
 .BR \-F ", " \-\^\-fixed-strings
 Interpret
 .I PATTERN
 as a list of fixed strings, separated by newlines,
 any of which is to be matched.
-.BR \-P ", " \-\^\-perl-regexp
-Interpret
-.I PATTERN
-as a Perl regular expression.
 .TP
 .BI \-f " FILE" "\fR,\fP \-\^\-file=" FILE
 Obtain patterns from
@@ -235,6 +219,15 @@ Suppress normal output; instead print the name
 of each input file from which no output would
 normally have been printed.  The scanning will stop
 on the first match.
+.TP
+.BI \-\^\-label= LABEL
+Displays input actually coming from standard input as input coming from file
+.I LABEL.
+This is especially useful for tools like zgrep, e.g.
+.B "gzip -cd foo.gz |grep --label=foo something"
+.TP
+.BR \-\^\-line-buffered
+Use line buffering, it can be a performance penalty.
 .TP
 .BR \-l ", " \-\^\-files-with-matches
 Suppress normal output; instead print
@@ -297,15 +290,12 @@ within its input file.
 .BR \-o ", " \-\^\-only-matching
 Show only the part of a matching line that matches
 .I PATTERN.
-.TP
-.BI \-\^\-label= LABEL
-Displays input actually coming from standard input as input coming from file
-.I LABEL.
-This is especially useful for tools like zgrep, e.g.
-.B "gzip -cd foo.gz |grep --label=foo something"
-.TP
-.BR \-\^\-line-buffering
-Use line buffering, it can be a performance penality.
+.\" NetBSD doesn't support perl regexps
+.\" .TP
+.\" .BR \-P ", " \-\^\-perl-regexp
+.\" Interpret
+.\" .I PATTERN
+.\" as a Perl regular expression.
 .TP
 .BR \-q ", " \-\^\-quiet ", " \-\^\-silent
 Quiet; do not write anything to standard output.
@@ -529,7 +519,7 @@ is a synonym for
 and
 .B \eW
 is a synonym for
-.BR [^[:alnum]] .
+.BR [^[:alnum:]] .
 .PP
 The caret
 .B ^
