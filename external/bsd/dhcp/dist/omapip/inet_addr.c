@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $	*/
 /*	NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp 	*/
 
 /*
@@ -31,15 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inet_addr.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $");
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-#else
-static char rcsid[] = "NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp ";
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: inet_addr.c,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $");
 
 #include "dhcpd.h"
 

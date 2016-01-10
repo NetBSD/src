@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.1.1.2 2014/07/12 11:58:00 spz Exp $	*/
+/*	$NetBSD: test.c,v 1.1.1.3 2016/01/10 19:44:43 christos Exp $	*/
 /* test.c
 
    Test code for omapip... */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test.c,v 1.1.1.2 2014/07/12 11:58:00 spz Exp $");
+__RCSID("$NetBSD: test.c,v 1.1.1.3 2016/01/10 19:44:43 christos Exp $");
 
 #include "config.h"
 
@@ -57,7 +57,12 @@ int main (int argc, char **argv)
 		exit(1);
 	}
 
-	omapi_init ();
+	status = omapi_init ();
+	if (status != ISC_R_SUCCESS) {
+		fprintf(stderr, "omapi_init failed: %s\n",
+			isc_result_totext(status));
+		exit(1);
+	}
 
 	if (argc > 1 && !strcmp (argv [1], "listen")) {
 		if (argc < 3) {
