@@ -1,4 +1,4 @@
-/*	$NetBSD: omapip_p.h,v 1.1.1.4 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: omapip_p.h,v 1.1.1.5 2016/01/10 19:44:43 christos Exp $	*/
 /* omapip_p.h
 
    Private master include file for the OMAPI library. */
@@ -279,7 +279,6 @@ OMAPI_ARRAY_TYPE_DECL(omapi_connection, omapi_connection_object_t);
 
 isc_result_t omapi_handle_clear(omapi_handle_t);
 
-extern int log_priority;
 extern int log_perror;
 extern void (*log_cleanup) (void);
 

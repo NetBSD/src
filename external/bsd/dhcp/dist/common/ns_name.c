@@ -1,6 +1,6 @@
-/*	$NetBSD: ns_name.c,v 1.1.1.4 2014/07/12 11:57:45 spz Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.1.1.5 2016/01/10 19:44:40 christos Exp $	*/
 /*
- * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,11 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ns_name.c,v 1.1.1.4 2014/07/12 11:57:45 spz Exp $");
-
-#ifndef lint
-static const char rcsid[] = "Id: ns_name.c,v 1.2 2009/10/28 04:12:29 sar Exp ";
-#endif
+__RCSID("$NetBSD: ns_name.c,v 1.1.1.5 2016/01/10 19:44:40 christos Exp $");
 
 #include <sys/types.h>
 
@@ -652,4 +648,146 @@ dn_find(const u_char *domain, const u_char *msg,
 	}
 	errno = ENOENT;
 	return (-1);
+}
+
+/*!
+ * \brief Creates a string of comma-separated domain-names from a
+ * compressed list
+ *
+ * Produces a null-terminated string of comma-separated domain-names from
+ * a buffer containing a compressed list of domain-names. The names will
+ * be dotted and without enclosing quotes. For example:
+ * If a compressed list contains the follwoing two domain names:
+ *
+ *  a. one.two.com
+ *  b. three.four.com
+ *
+ * The compressed data will look like this:
+ *
+ *  03 6f 6e 65 03 74 77 6f 03 63 6f 6d 00 05 74 68
+ *  72 65 65 04 66 6f 75 72 c0 08
+ *
+ * and will decompress into:
+ *
+ *  one.two.com,three.four.com
+ *
+ * \param  buf - buffer containing the compressed list of domain-names
+ * \param  buflen - length of compressed list of domain-names
+ * \param  dst_buf - buffer to receive the decompressed list
+ * \param  dst_size - size of the destination buffer
+ *
+ * \return the length of the decompressed string when successful, -1 on
+ * error.
+ */
+int MRns_name_uncompress_list(const unsigned char* buf, int buflen,
+			      char* dst_buf, size_t dst_size)
+{
+	const unsigned char* src = buf;
+	char* dst = dst_buf;
+	int consumed = 1;
+	int dst_remaining = dst_size;
+	int added_len = 0;
+	int first_pass = 1;
+
+	if (!buf || buflen == 0 || *buf == 0x00) {
+		/* nothing to do */
+		*dst = 0;
+		return (0);
+	}
+
+	while ((consumed > 0) && (src < (buf + buflen)))
+	{
+		if (dst_remaining <= 0) {
+			errno = EMSGSIZE;
+			return (-1);
+		}
+
+		if (!first_pass) {
+			*dst++ = ',';
+			*dst = '\0';
+			dst_remaining--;
+		}
+
+		consumed = MRns_name_uncompress(buf, buf + buflen, src,
+						dst, dst_remaining);
+		if (consumed < 0) {
+			return (-1);
+		}
+
+		src += consumed;
+		added_len = strlen(dst);
+		dst_remaining -= added_len;
+		dst += added_len;
+		first_pass = 0;
+	}
+	*dst='\0';
+
+	/* return the length of the uncompressed list string */
+	return (strlen(dst_buf));
+}
+
+/*!
+ * \brief Creates a compressed list from a string of comma-separated
+ * domain-names
+ *
+ * Produces a buffer containing a compressed data version of a list of
+ * domain-names extracted from a comma-separated string. Given a string
+ * containing:
+ *
+ *  one.two.com,three.four.com
+ *
+ * It will compress this into:
+ *
+ *  03 6f 6e 65 03 74 77 6f 03 63 6f 6d 00 05 74 68
+ *  72 65 65 04 66 6f 75 72 c0 08
+ *
+ * \param  buf - buffer containing the uncompressed string of domain-names
+ * \param  buflen - length of uncompressed string of domain-names
+ * \param  compbuf - buffer to receive the compressed list
+ * \param  compbuf_size - size of the compression buffer
+ *
+ * \return the length of the compressed data when successful, -1 on error.
+ */
+int MRns_name_compress_list(const char* buf, int buflen,
+	unsigned char* compbuf, size_t compbuf_size)
+{
+	char cur_name[NS_MAXCDNAME];
+	const unsigned char *dnptrs[256], **lastdnptr;
+	const char* src;
+	const char* src_end;
+	unsigned clen = 0;
+	int result = 0;
+
+	memset(compbuf, 0, compbuf_size);
+	memset(dnptrs, 0, sizeof(dnptrs));
+	dnptrs[0] = compbuf;
+	lastdnptr = &dnptrs[255];
+
+	src = buf;
+	src_end = buf + buflen;
+	while (src < src_end) {
+		char *comma = strchr(src, ',');
+		int copylen = ((comma != NULL) ? comma - src : strlen(src));
+		if (copylen > (sizeof(cur_name) - 1)) {
+			errno = EMSGSIZE;
+			return (-1);
+		}
+
+		memcpy(cur_name, src, copylen);
+		cur_name[copylen] = '\0';
+		src += copylen + 1;
+
+		result = MRns_name_compress(cur_name, compbuf + clen,
+					    compbuf_size - clen,
+					    dnptrs, lastdnptr);
+
+		if (result < 0) {
+			return (-1);
+		}
+
+		clen += result;
+	}
+
+	/* return size of compressed list */
+	return(clen);
 }

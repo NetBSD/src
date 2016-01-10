@@ -1,4 +1,4 @@
-AC_INIT([DHCP],[4.3.0],[dhcp-users@isc.org])
+AC_INIT([DHCP],[4.3.3],[dhcp-users@isc.org])
 
 # we specify "foreign" to avoid having to have the GNU mandated files,
 # like AUTHORS, COPYING, and such
@@ -32,6 +32,10 @@ if test "$GCC" = "yes"; then
 	fi
 fi
 
+# We can have some flags to pass to bind configure
+BINDCONFIG=
+AC_SUBST(BINDCONFIG)
+
 # POSIX doesn't include the IPv6 Advanced Socket API and glibc hides
 # parts of the IPv6 Advanced Socket API as a result.  This is stupid
 # as it breaks how the two halves (Basic and Advanced) of the IPv6
@@ -52,14 +56,16 @@ AC_DEFINE_UNQUOTED([DHCP_BYTE_ORDER], [$byte_order],
 # Optional compile-time DEBUGging.
 AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--enable-debug],[create a debug-only version of the software (default is no).]),
-		[enable_debug=yes],[enable_debug=no])
-# This is very much off by default.
-if test "$enable_debug" = "yes" ; then
-	AC_DEFINE([DEBUG], [1],
-		[Define to compile debug-only DHCP software.])
-	# Just override CFLAGS to totally to remove optimization.
-	CFLAGS="-g"
-fi
+  [case "${enableval}" in
+    yes) enable_debug=yes
+        AC_DEFINE([DEBUG], [1],
+            [Define to compile debug-only DHCP software.])
+        # Just override CFLAGS totally to remove optimization.
+        CFLAGS="-g";;
+    no)  enable_debug=no ;;
+    *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+  esac],[enable_debug=no])
+
 # XXX: there are actually quite a lot more DEBUG_ features we could enable,
 # but I don't want to pollute the --help space.
 #
@@ -171,13 +177,43 @@ if test "$enable_secs_byteorder" = "yes" ; then
 		[Define to correct bad byteorders in secs field.])
 fi
 
+# Include the PID in the log messages.  This is useful when there may
+# be multiple instances of a program.
+# This is off by default
+AC_ARG_ENABLE(log_pid,
+	AS_HELP_STRING([--enable-log-pid],[Include PIDs in syslog messages (default is no).]))
+if test "$enable_log_pid" = "yes" ; then
+	AC_DEFINE([USE_LOG_PID], [1],
+		[Define to include PIDs in syslog messages.])
+fi
+
+# Allow for binary search when inserting v4 leases into queues
+AC_ARG_ENABLE(binary_leases,
+	AS_HELP_STRING([--enable-binary-leases],[enable support for binary insertion of leases (default is no)]))
+# binary_leases is off by default.
+if test "$enable_binary_leases" = "yes"; then
+	AC_DEFINE([BINARY_LEASES], [1],
+		  [Define to support binary insertion of leases into queues.])
+fi
+
 # Testing section
 
 atf_path="no"
 AC_ARG_WITH([atf],
-    AS_HELP_STRING([--with-atf=PATH],[specify location where atf was installed]),
+    AS_HELP_STRING([--with-atf=PATH],[specify location where atf was installed (or "bind")]),
     [atf_path="$withval"])
-if test "$atf_path" != "no" ; then
+AM_CONDITIONAL(BIND_ATF, test "$atf_path" = "bind")
+if test "$atf_path" = "bind" ; then
+    atf_pcp="bind"
+    atf_path="\${top_srcdir}/bind/atf"
+    ATF_CFLAGS="-I$atf_path/include -DUNIT_TEST"
+    ATF_LDFLAGS="-L$atf_path/lib -latf-c"
+    ATF_BIN=`pwd`/bind/atf/bin
+    AC_SUBST(ATF_CFLAGS)
+    AC_SUBST(ATF_LDFLAGS)
+    AC_SUBST(ATF_BIN)
+    BINDCONFIG="$BINDCONFIG --with-atf"
+elif test "$atf_path" != "no" ; then
     # Config path for pkg-config
     atf_pcp=""
     if test "$atf_path" != "yes" ; then
@@ -193,24 +229,38 @@ if test "$atf_path" != "no" ; then
         do
             if test -f $d/lib/pkgconfig/atf-c.pc ; then
                 atf_pcp=$d/lib/pkgconfig
+                atf_path=$d
             elif test -f $d/lib64/pkgconfig/atf-c.pc ; then
                 atf_pcp=$d/lib64/pkgconfig
+                atf_path=$d
             fi
         done
     fi
+
     if test "$atf_pcp" = "" ; then
         AC_MSG_ERROR([Unable to find atf files in location specified])
     else
         ATF_CFLAGS="`PKG_CONFIG_PATH=$atf_pcp pkg-config --cflags atf-c` -DUNIT_TEST"
         ATF_LDFLAGS="`PKG_CONFIG_PATH=$atf_pcp pkg-config --libs atf-c`"
+        if  test -f $atf_pcp/atf-sh.pc ; then
+                ATF_BIN="`PKG_CONFIG_PATH=$atf_pcp pkg-config --variable=exec_prefix atf-sh`/bin"
+        else
+                # older versions don't have atf-sh, try usual place
+                ATF_BIN=$atf_path/bin
+        fi
+
+        if test ! -x $ATF_BIN/atf-run  -o  ! -x $ATF_BIN/atf-report ; then
+            AC_MSG_WARN([atf-run,atf-report not found, assuming they are in your path])
+        fi
+
         AC_SUBST(ATF_CFLAGS)
         AC_SUBST(ATF_LDFLAGS)
+        AC_SUBST(ATF_BIN)
     fi
 fi
 
 AM_CONDITIONAL(HAVE_ATF, test "$atf_pcp" != "")
-### Uncomment this once docs.lab.isc.org upgrades to automake 1.11
-### AM_COND_IF([HAVE_ATF], [AC_DEFINE([HAVE_ATF], [1], [ATF framework specified?])])
+AM_COND_IF([HAVE_ATF], [AC_DEFINE([HAVE_ATF], [1], [ATF framework specified?])])
 
 ###
 ### Path fun.  Older versions of DHCP were installed in /usr/sbin, so we
@@ -238,7 +288,7 @@ AC_ARG_WITH(srv-lease-file,
 	AC_DEFINE_UNQUOTED([_PATH_DHCPD_DB], ["$withval"],
 			   [File for dhcpd leases.]))
 
-echo -n "checking for dhcpd.leases location..."
+AC_MSG_CHECKING([for dhcpd.leases location])
 if [[ "x$with_srv_lease_file" = "x" ]] ; then
 	if [[ -d "${localstatedir}/db" ]] ; then
 		with_srv_lease_file="${localstatedir}/db/dhcpd.leases"
@@ -260,7 +310,7 @@ if [[ "x$with_srv_lease_file" = "x" ]] ; then
 		with_srv_lease_file="/etc/dhcpd.leases"
 	fi
 fi
-echo "$with_srv_lease_file"
+AC_MSG_RESULT($with_srv_lease_file)
 
 AC_ARG_WITH(srv6-lease-file,
 	AS_HELP_STRING([--with-srv6-lease-file=PATH],[File for dhcpd6 leases 
@@ -268,7 +318,7 @@ AC_ARG_WITH(srv6-lease-file,
 	AC_DEFINE_UNQUOTED([_PATH_DHCPD6_DB], ["$withval"],
 			   [File for dhcpd6 leases.]))
 
-echo -n "checking for dhcpd6.leases location..."
+AC_MSG_CHECKING([for dhcpd6.leases location])
 if [[ "x$with_srv6_lease_file" = "x" ]] ; then
 	if [[ -d "${localstatedir}/db" ]] ; then
 		with_srv6_lease_file="${localstatedir}/db/dhcpd6.leases"
@@ -290,7 +340,7 @@ if [[ "x$with_srv6_lease_file" = "x" ]] ; then
 		with_srv6_lease_file="/etc/dhcpd6.leases"
 	fi
 fi
-echo "$with_srv6_lease_file"
+AC_MSG_RESULT($with_srv6_lease_file)
 
 AC_ARG_WITH(cli-lease-file,
 	AS_HELP_STRING([--with-cli-lease-file=PATH],[File for dhclient leases 
@@ -298,7 +348,7 @@ AC_ARG_WITH(cli-lease-file,
 	AC_DEFINE_UNQUOTED([_PATH_DHCLIENT_DB], ["$withval"],
 			   [File for dhclient leases.]))
 
-echo -n "checking for dhclient.leases location..."
+AC_MSG_CHECKING([for dhclient.leases location])
 if [[ "x$with_cli_lease_file" = "x" ]] ; then
 	if [[ -d "${localstatedir}/db" ]] ; then
 		with_cli_lease_file="${localstatedir}/db/dhclient.leases"
@@ -320,7 +370,7 @@ if [[ "x$with_cli_lease_file" = "x" ]] ; then
 		with_cli_lease_file="/etc/dhclient.leases"
 	fi
 fi
-echo "$with_cli_lease_file"
+AC_MSG_RESULT($with_cli_lease_file)
 
 AC_ARG_WITH(cli6-lease-file,
 	AS_HELP_STRING([--with-cli6-lease-file=PATH],[File for dhclient6 leases 
@@ -328,7 +378,7 @@ AC_ARG_WITH(cli6-lease-file,
 	AC_DEFINE_UNQUOTED([_PATH_DHCLIENT6_DB], ["$withval"],
 			   [File for dhclient6 leases.]))
 
-echo -n "checking for dhclient6.leases location..."
+AC_MSG_CHECKING([for dhclient6.leases location])
 if [[ "x$with_cli6_lease_file" = "x" ]] ; then
 	if [[ -d "${localstatedir}/db" ]] ; then
 		with_cli6_lease_file="${localstatedir}/db/dhclient6.leases"
@@ -350,7 +400,7 @@ if [[ "x$with_cli6_lease_file" = "x" ]] ; then
 		with_cli6_lease_file="/etc/dhclient6.leases"
 	fi
 fi
-echo "$with_cli6_lease_file"
+AC_MSG_RESULT($with_cli6_lease_file)
 
 AC_ARG_WITH(srv-pid-file,
 	AS_HELP_STRING([--with-srv-pid-file=PATH],[File for dhcpd process information
@@ -550,6 +600,10 @@ AC_CHECK_MEMBER(struct msghdr.msg_control,,
 #include <sys/socket.h>
 	])
 
+AC_CHECK_MEMBER(struct tpacket_auxdata.tp_vlan_tci,
+    [AC_DEFINE([VLAN_TCI_PRESENT], [1], [tpacket_auxdata.tp_vlan_tci present])]
+    ,, [#include <linux/if_packet.h>])
+
 libbind=
 AC_ARG_WITH(libbind,
 	AS_HELP_STRING([--with-libbind=PATH],[bind includes and libraries are in PATH 
@@ -564,6 +618,9 @@ no)
 	;;
 *)
 	libbind="$use_libbind"
+	if test ! -d "bind"; then
+		AC_MSG_WARN(empty bind directory)
+	fi	
 	;;
 esac
 
@@ -579,20 +636,63 @@ AC_ARG_WITH(ldapcrypto,
     [ldapcrypto=$withval],
     [ldapcrypto=no])
 
+# Gssapi to allow LDAP to authenticate with a keytab
+AC_ARG_WITH(ldap-gssapi,
+    AC_HELP_STRING([--with-ldap-gssapi],
+                   [enable krb5/gssapi authentication for OpenLDAP in dhcpd (default is no)]),
+    [ldap_gssapi=$withval],
+    [ldap_gssapi=no])
+
+
+# LDAP CASA auth support.
+AC_ARG_WITH(ldapcasa,
+    AC_HELP_STRING([--with-ldapcasa],
+                   [enable LDAP CASA auth support in dhcpd (default is no)]),
+    [ldapcasa=$withval],
+    [ldapcasa=no])
+
 # OpenLDAP support is disabled by default, if enabled then SSL support is an
 # extra optional that is also disabled by default.  Enabling LDAP SSL support
-# implies enabling LDAP support.
-if test x$ldap = xyes || test x$ldapcrypto = xyes ; then
+# implies enabling LDAP support. Similarly, KRB5 support implies LDAP support,
+# but doesn't include SSL. The two are not dependant.
+if test x$ldap = xyes || test x$ldapcrypto = xyes || test x$ldap_gssapi = xyes; then
+    saved_LIBS="$LIBS"
+    LIBS=""
     AC_SEARCH_LIBS(ldap_initialize, [ldap], ,
 		   AC_MSG_FAILURE([*** Cannot find ldap_initialize with -lldap - do you need to install an OpenLDAP2 Devel package?]))
     AC_SEARCH_LIBS(ber_pvt_opt_on, [lber], ,
 		   AC_MSG_FAILURE([*** Cannot find ber_pvt_opt_on with -llber - do you need to install an OpenLDAP2 Devel package?]))
+    if test x$ldap_gssapi = xyes ; then
+    AC_SEARCH_LIBS(krb5_init_context, [krb5], ,
+          AC_MSG_FAILURE([*** Cannot find krb5_init_context with -lkrb5 - do you need to install a Kerberos Devel package?]))
+    fi
+
+    # Create LDAP_LIBS which we specify them explicitly rather than lumping them in with LIBS
+    AC_SUBST(LDAP_LIBS, [$LIBS])
+    LIBS="$saved_LIBS"
+
+
+    AC_CHECK_HEADERS([ldap.h])
+    AC_CHECK_FUNCS([inet_pton inet_ntop])
+
+
+    LDAP_CFLAGS="-DLDAP_CONFIGURATION"
+
+    if test x$ldapcasa = xyes ; then
+    AC_CHECK_HEADERS([micasa_mgmd.h],[
+           LDAP_CFLAGS="$LDAP_CFLAGS -DLDAP_CASA_AUTH"
+    ], AC_MSG_FAILURE([*** Cannot find micasa_mgmd.h for ldap casa auth support]))
+    fi
 
     if test x$ldapcrypto = xyes ; then
-	AC_SUBST(LDAP_CFLAGS, ["-DLDAP_CONFIGURATION -DLDAP_USE_SSL"])
-    else
-	AC_SUBST(LDAP_CFLAGS, ["-DLDAP_CONFIGURATION"])
+    LDAP_CFLAGS="$LDAP_CFLAGS -DLDAP_USE_SSL"
     fi
+
+    if test x$ldap_gssapi = xyes; then
+    LDAP_CFLAGS="$LDAP_CFLAGS -DLDAP_USE_GSSAPI"
+    fi
+
+    AC_SUBST(LDAP_CFLAGS, [$LDAP_CFLAGS])
 fi
 
 # Append selected warning levels to CFLAGS before substitution (but after
@@ -611,16 +711,18 @@ AC_C_FLEXIBLE_ARRAY_MEMBER
 
 AC_CONFIG_FILES([
   Makefile
+  bind/Makefile
   client/Makefile
+  client/tests/Makefile
   common/Makefile
   common/tests/Makefile
   dhcpctl/Makefile
-  dst/Makefile
   includes/Makefile
   omapip/Makefile
   relay/Makefile
   server/Makefile
   tests/Makefile
+  tests/unittest.sh
   server/tests/Makefile
   doc/devel/doxyfile
 ])
@@ -647,6 +749,7 @@ Features:
   debug:         $enable_debug
   failover:      $enable_failover
   execute:       $enable_execute
+  binary-leases: $enable_binary_leases
 
 Developer:
   ATF unittests : $atf_path
@@ -658,6 +761,7 @@ if test "$atf_path" != "no"
 then
 echo "ATF_CFLAGS  : $ATF_CFLAGS" >> config.report
 echo "ATF_LDFLAGS : $ATF_LDFLAGS" >> config.report
+echo "ATF_BIN : $ATF_BIN" >> config.report
 echo
 fi
 

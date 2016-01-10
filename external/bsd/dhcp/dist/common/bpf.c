@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.1.1.3 2014/07/12 11:57:39 spz Exp $	*/
+/*	$NetBSD: bpf.c,v 1.1.1.4 2016/01/10 19:44:38 christos Exp $	*/
 /* bpf.c
 
    BPF socket interface code, originally contributed by Archie Cobbs. */
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.1.1.3 2014/07/12 11:57:39 spz Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.1.1.4 2016/01/10 19:44:38 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -484,8 +484,8 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 		/* Decode the IP and UDP headers... */
 		offset = decode_udp_ip_header(interface, interface->rbuf,
-					       interface->rbuf_offset,
-  					       from, hdr.bh_caplen, &paylen);
+					      interface->rbuf_offset,
+                                              from, hdr.bh_caplen, &paylen, 1);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
@@ -582,6 +582,9 @@ get_hw_addr(const char *name, struct hardware *hw) {
 	 */
         switch (sa->sdl_type) {
                 case IFT_ETHER:
+#if defined (IFT_L2VLAN)
+		case IFT_L2VLAN:
+#endif
                         hw->hlen = sa->sdl_alen + 1;
                         hw->hbuf[0] = HTYPE_ETHER;
                         memcpy(&hw->hbuf[1], LLADDR(sa), sa->sdl_alen);

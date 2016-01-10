@@ -1,9 +1,9 @@
-/*	$NetBSD: result.h,v 1.1.1.2 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.3 2016/01/10 19:44:43 christos Exp $	*/
 /* result.h
  */
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009,2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -81,13 +81,13 @@
 
 // Included for historical reasons, these should be removed as
 // soon as reasonable
+#ifdef INCLUDE_OLD_DHCP_ISC_ERROR_CODES
 #define ISC_R_HOSTUNKNOWN	DHCP_R_HOSTUNKNOWN
 #define ISC_R_VERSIONMISMATCH	DHCP_R_VERSIONMISMATCH
 #define ISC_R_PROTOCOLERROR	DHCP_R_PROTOCOLERROR	
 #define ISC_R_INVALIDARG	DHCP_R_INVALIDARG	
 #define ISC_R_NOTYET		DHCP_R_NOTYET		
 #define ISC_R_UNCHANGED		DHCP_R_UNCHANGED		
-#define ISC_R_MULTIPLE		DHCP_R_MULTIPLE		
 #define ISC_R_KEYCONFLICT	DHCP_R_KEYCONFLICT	
 #define ISC_R_BADPARSE		DHCP_R_BADPARSE		
 #define ISC_R_NOKEYS		DHCP_R_NOKEYS		
@@ -114,6 +114,7 @@
 #define ISC_R_NOT_EQUAL		DHCP_R_NOT_EQUAL		
 #define ISC_R_CONNRESET		DHCP_R_CONNRESET		
 #define ISC_R_UNKNOWNATTRIBUTE	DHCP_R_UNKNOWNATTRIBUTE	
+#endif
 
 isc_result_t
 dhcp_result_register(void);

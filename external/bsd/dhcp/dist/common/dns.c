@@ -1,10 +1,10 @@
-/*	$NetBSD: dns.c,v 1.1.1.4 2014/07/12 11:57:43 spz Exp $	*/
+/*	$NetBSD: dns.c,v 1.1.1.5 2016/01/10 19:44:39 christos Exp $	*/
 /* dns.c
 
    Domain Name Service subroutines. */
 
 /*
- * Copyright (c) 2009-2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2015 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dns.c,v 1.1.1.4 2014/07/12 11:57:43 spz Exp $");
+__RCSID("$NetBSD: dns.c,v 1.1.1.5 2016/01/10 19:44:39 christos Exp $");
 
 /*! \file common/dns.c
  */
