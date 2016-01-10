@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.11 2015/12/27 12:09:59 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.12 2016/01/10 10:33:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.11 2015/12/27 12:09:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.12 2016/01/10 10:33:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -960,7 +960,7 @@ usbd_add_dev_event(int type, struct usbd_device *udev)
 {
 	struct usb_event *ue = usb_alloc_event();
 
-	usbd_fill_deviceinfo(udev, &ue->u.ue_device, USB_EVENT_IS_ATTACH(type));
+	usbd_fill_deviceinfo(udev, &ue->u.ue_device, false);
 	usb_add_event(type, ue);
 }
 
