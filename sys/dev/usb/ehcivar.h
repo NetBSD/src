@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.21 2015/10/25 09:50:06 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.22 2016/01/10 16:49:29 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,10 +93,10 @@ typedef struct ehci_soft_itd {
 
 struct ehci_xfer {
 	struct usbd_xfer ex_xfer;
-	struct usb_task	ex_aborttask;
+	struct usb_task ex_aborttask;
 	TAILQ_ENTRY(ehci_xfer) ex_next; /* list of active xfers */
 	enum {
-		EX_NONE, 
+		EX_NONE,
 		EX_CTRL,
 		EX_BULK,
 		EX_INTR,
