@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.248 2016/01/10 03:59:34 dholland Exp $
+#	$NetBSD: bsd.sys.mk,v 1.249 2016/01/10 06:13:21 dholland Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -15,7 +15,7 @@ error2:
 .endif
 
 .if ${MKREPRO:Uno} == "yes"
-CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
+CPPFLAGS+=	-Wp,-iremap,${DESTDIR}:
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
 .export NETBSDSRCDIR DESTDIR X11SRCDIR
