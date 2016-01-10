@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,6 +38,20 @@
  * (any matching MODEKEYEDIT_SWITCHMODE*) are special-cased to do this.
  */
 
+/* Entry in the default mode key tables. */
+struct mode_key_entry {
+	int			key;
+
+	/*
+	 * Editing mode for vi: 0 is edit mode, keys not in the table are
+	 * returned as MODEKEY_OTHER; 1 is command mode, keys not in the table
+	 * are returned as MODEKEY_NONE. This is also matched on, allowing some
+	 * keys to be bound in edit mode.
+	 */
+	int			mode;
+	enum mode_key_cmd	cmd;
+};
+
 /* Edit keys command strings. */
 const struct mode_key_cmdstr mode_key_cmdstr_edit[] = {
 	{ MODEKEYEDIT_BACKSPACE, "backspace" },
@@ -76,14 +90,18 @@ const struct mode_key_cmdstr mode_key_cmdstr_edit[] = {
 /* Choice keys command strings. */
 const struct mode_key_cmdstr mode_key_cmdstr_choice[] = {
 	{ MODEKEYCHOICE_BACKSPACE, "backspace" },
+	{ MODEKEYCHOICE_BOTTOMLINE, "bottom-line"},
 	{ MODEKEYCHOICE_CANCEL, "cancel" },
 	{ MODEKEYCHOICE_CHOOSE, "choose" },
 	{ MODEKEYCHOICE_DOWN, "down" },
+	{ MODEKEYCHOICE_ENDOFLIST, "end-of-list"},
 	{ MODEKEYCHOICE_PAGEDOWN, "page-down" },
 	{ MODEKEYCHOICE_PAGEUP, "page-up" },
 	{ MODEKEYCHOICE_SCROLLDOWN, "scroll-down" },
 	{ MODEKEYCHOICE_SCROLLUP, "scroll-up" },
 	{ MODEKEYCHOICE_STARTNUMBERPREFIX, "start-number-prefix" },
+	{ MODEKEYCHOICE_STARTOFLIST, "start-of-list"},
+	{ MODEKEYCHOICE_TOPLINE, "top-line"},
 	{ MODEKEYCHOICE_TREE_COLLAPSE, "tree-collapse" },
 	{ MODEKEYCHOICE_TREE_COLLAPSE_ALL, "tree-collapse-all" },
 	{ MODEKEYCHOICE_TREE_EXPAND, "tree-expand" },
@@ -96,6 +114,7 @@ const struct mode_key_cmdstr mode_key_cmdstr_choice[] = {
 
 /* Copy keys command strings. */
 const struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
+	{ MODEKEYCOPY_APPENDSELECTION, "append-selection" },
 	{ MODEKEYCOPY_BACKTOINDENTATION, "back-to-indentation" },
 	{ MODEKEYCOPY_BOTTOMLINE, "bottom-line" },
 	{ MODEKEYCOPY_CANCEL, "cancel" },
@@ -125,6 +144,7 @@ const struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 	{ MODEKEYCOPY_NEXTSPACEEND, "next-space-end" },
 	{ MODEKEYCOPY_NEXTWORD, "next-word" },
 	{ MODEKEYCOPY_NEXTWORDEND, "next-word-end" },
+	{ MODEKEYCOPY_OTHEREND, "other-end" },
 	{ MODEKEYCOPY_PREVIOUSPAGE, "page-up" },
 	{ MODEKEYCOPY_PREVIOUSSPACE, "previous-space" },
 	{ MODEKEYCOPY_PREVIOUSWORD, "previous-word" },
@@ -136,6 +156,7 @@ const struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 	{ MODEKEYCOPY_SEARCHREVERSE, "search-reverse" },
 	{ MODEKEYCOPY_SEARCHUP, "search-backward" },
 	{ MODEKEYCOPY_SELECTLINE, "select-line" },
+	{ MODEKEYCOPY_STARTNAMEDBUFFER, "start-named-buffer" },
 	{ MODEKEYCOPY_STARTNUMBERPREFIX, "start-number-prefix" },
 	{ MODEKEYCOPY_STARTOFLINE, "start-of-line" },
 	{ MODEKEYCOPY_STARTSELECTION, "begin-selection" },
@@ -226,6 +247,12 @@ const struct mode_key_entry mode_key_vi_choice[] = {
 	{ 'j',			    0, MODEKEYCHOICE_DOWN },
 	{ 'k',			    0, MODEKEYCHOICE_UP },
 	{ 'q',			    0, MODEKEYCHOICE_CANCEL },
+	{ KEYC_HOME,                0, MODEKEYCHOICE_STARTOFLIST },
+	{ 'g',                      0, MODEKEYCHOICE_STARTOFLIST },
+	{ 'H',                      0, MODEKEYCHOICE_TOPLINE },
+	{ 'L',                      0, MODEKEYCHOICE_BOTTOMLINE },
+	{ 'G',                      0, MODEKEYCHOICE_ENDOFLIST },
+	{ KEYC_END,                 0, MODEKEYCHOICE_ENDOFLIST },
 	{ KEYC_BSPACE,		    0, MODEKEYCHOICE_BACKSPACE },
 	{ KEYC_DOWN | KEYC_CTRL,    0, MODEKEYCHOICE_SCROLLDOWN },
 	{ KEYC_DOWN,		    0, MODEKEYCHOICE_DOWN },
@@ -238,6 +265,10 @@ const struct mode_key_entry mode_key_vi_choice[] = {
 	{ KEYC_RIGHT,		    0, MODEKEYCHOICE_TREE_EXPAND },
 	{ KEYC_LEFT | KEYC_CTRL,    0, MODEKEYCHOICE_TREE_COLLAPSE_ALL },
 	{ KEYC_RIGHT | KEYC_CTRL,   0, MODEKEYCHOICE_TREE_EXPAND_ALL },
+	{ KEYC_MOUSEDOWN1_PANE,     0, MODEKEYCHOICE_CHOOSE },
+	{ KEYC_MOUSEDOWN3_PANE,     0, MODEKEYCHOICE_TREE_TOGGLE },
+	{ KEYC_WHEELUP_PANE,        0, MODEKEYCHOICE_UP },
+	{ KEYC_WHEELDOWN_PANE,      0, MODEKEYCHOICE_DOWN },
 
 	{ 0,			   -1, 0 }
 };
@@ -246,6 +277,7 @@ struct mode_key_tree mode_key_tree_vi_choice;
 /* vi copy mode keys. */
 const struct mode_key_entry mode_key_vi_copy[] = {
 	{ ' ',			    0, MODEKEYCOPY_STARTSELECTION },
+	{ '"',			    0, MODEKEYCOPY_STARTNAMEDBUFFER },
 	{ '$',			    0, MODEKEYCOPY_ENDOFLINE },
 	{ ',',			    0, MODEKEYCOPY_JUMPREVERSE },
 	{ ';',			    0, MODEKEYCOPY_JUMPAGAIN },
@@ -262,6 +294,7 @@ const struct mode_key_entry mode_key_vi_copy[] = {
 	{ '9',			    0, MODEKEYCOPY_STARTNUMBERPREFIX },
 	{ ':',			    0, MODEKEYCOPY_GOTOLINE },
 	{ '?',			    0, MODEKEYCOPY_SEARCHUP },
+	{ 'A',			    0, MODEKEYCOPY_APPENDSELECTION },
 	{ 'B',			    0, MODEKEYCOPY_PREVIOUSSPACE },
 	{ 'D',			    0, MODEKEYCOPY_COPYENDOFLINE },
 	{ 'E',			    0, MODEKEYCOPY_NEXTSPACEEND },
@@ -274,6 +307,7 @@ const struct mode_key_entry mode_key_vi_copy[] = {
 	{ 'M',			    0, MODEKEYCOPY_MIDDLELINE },
 	{ 'N',			    0, MODEKEYCOPY_SEARCHREVERSE },
 	{ 'T',			    0, MODEKEYCOPY_JUMPTOBACK },
+	{ 'V',			    0, MODEKEYCOPY_SELECTLINE },
 	{ 'W',			    0, MODEKEYCOPY_NEXTSPACE },
 	{ '\002' /* C-b */,	    0, MODEKEYCOPY_PREVIOUSPAGE },
 	{ '\003' /* C-c */,	    0, MODEKEYCOPY_CANCEL },
@@ -310,6 +344,9 @@ const struct mode_key_entry mode_key_vi_copy[] = {
 	{ KEYC_RIGHT,		    0, MODEKEYCOPY_RIGHT },
 	{ KEYC_UP | KEYC_CTRL,	    0, MODEKEYCOPY_SCROLLUP },
 	{ KEYC_UP,		    0, MODEKEYCOPY_UP },
+	{ KEYC_WHEELUP_PANE,        0, MODEKEYCOPY_SCROLLUP },
+	{ KEYC_WHEELDOWN_PANE,      0, MODEKEYCOPY_SCROLLDOWN },
+	{ KEYC_MOUSEDRAG1_PANE,     0, MODEKEYCOPY_STARTSELECTION },
 
 	{ 0,			   -1, 0 }
 };
@@ -372,6 +409,11 @@ const struct mode_key_entry mode_key_emacs_choice[] = {
 	{ '\r',			    0, MODEKEYCHOICE_CHOOSE },
 	{ 'q',			    0, MODEKEYCHOICE_CANCEL },
 	{ 'v' | KEYC_ESCAPE,	    0, MODEKEYCHOICE_PAGEUP },
+	{ KEYC_HOME,                0, MODEKEYCHOICE_STARTOFLIST },
+	{ '<' | KEYC_ESCAPE,	    0, MODEKEYCHOICE_STARTOFLIST },
+	{ 'R' | KEYC_ESCAPE,	    0, MODEKEYCHOICE_TOPLINE },
+	{ '>' | KEYC_ESCAPE,	    0, MODEKEYCHOICE_ENDOFLIST },
+	{ KEYC_END,                 0, MODEKEYCHOICE_ENDOFLIST },
 	{ KEYC_BSPACE,		    0, MODEKEYCHOICE_BACKSPACE },
 	{ KEYC_DOWN | KEYC_CTRL,    0, MODEKEYCHOICE_SCROLLDOWN },
 	{ KEYC_DOWN,		    0, MODEKEYCHOICE_DOWN },
@@ -384,6 +426,10 @@ const struct mode_key_entry mode_key_emacs_choice[] = {
 	{ KEYC_RIGHT,		    0, MODEKEYCHOICE_TREE_EXPAND },
 	{ KEYC_LEFT | KEYC_CTRL,    0, MODEKEYCHOICE_TREE_COLLAPSE_ALL },
 	{ KEYC_RIGHT | KEYC_CTRL,   0, MODEKEYCHOICE_TREE_EXPAND_ALL },
+	{ KEYC_MOUSEDOWN1_PANE,     0, MODEKEYCHOICE_CHOOSE },
+	{ KEYC_MOUSEDOWN3_PANE,     0, MODEKEYCHOICE_TREE_TOGGLE },
+	{ KEYC_WHEELUP_PANE,        0, MODEKEYCHOICE_UP },
+	{ KEYC_WHEELDOWN_PANE,      0, MODEKEYCHOICE_DOWN },
 
 	{ 0,			   -1, 0 }
 };
@@ -446,6 +492,9 @@ const struct mode_key_entry mode_key_emacs_copy[] = {
 	{ KEYC_UP | KEYC_CTRL,	    0, MODEKEYCOPY_SCROLLUP },
 	{ KEYC_UP | KEYC_ESCAPE,    0, MODEKEYCOPY_HALFPAGEUP },
 	{ KEYC_UP,		    0, MODEKEYCOPY_UP },
+	{ KEYC_WHEELUP_PANE,        0, MODEKEYCOPY_SCROLLUP },
+	{ KEYC_WHEELDOWN_PANE,      0, MODEKEYCOPY_SCROLLDOWN },
+	{ KEYC_MOUSEDRAG1_PANE,     0, MODEKEYCOPY_STARTSELECTION },
 
 	{ 0,			   -1, 0 }
 };
