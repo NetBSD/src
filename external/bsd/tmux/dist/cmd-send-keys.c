@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,10 +31,9 @@ enum cmd_retval	 cmd_send_keys_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_send_keys_entry = {
 	"send-keys", "send",
-	"lRt:", 0, -1,
-	"[-lR] " CMD_TARGET_PANE_USAGE " key ...",
+	"lRMt:", 0, -1,
+	"[-lRM] " CMD_TARGET_PANE_USAGE " key ...",
 	0,
-	NULL,
 	cmd_send_keys_exec
 };
 
@@ -43,7 +42,6 @@ const struct cmd_entry cmd_send_prefix_entry = {
 	"2t:", 0, 0,
 	"[-2] " CMD_TARGET_PANE_USAGE,
 	0,
-	NULL,
 	cmd_send_keys_exec
 };
 
@@ -51,11 +49,21 @@ enum cmd_retval
 cmd_send_keys_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
+	struct mouse_event	*m = &cmdq->item->mouse;
 	struct window_pane	*wp;
 	struct session		*s;
-	struct input_ctx	*ictx;
-	const u_char		*str;
+	const char		*str;
 	int			 i, key;
+
+	if (args_has(args, 'M')) {
+		wp = cmd_mouse_pane(m, &s, NULL);
+		if (wp == NULL) {
+			cmdq_error(cmdq, "no mouse target");
+			return (CMD_RETURN_ERROR);
+		}
+		window_pane_key(wp, NULL, s, m->key, m);
+		return (CMD_RETURN_NORMAL);
+	}
 
 	if (cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp) == NULL)
 		return (CMD_RETURN_ERROR);
@@ -65,35 +73,22 @@ cmd_send_keys_exec(struct cmd *self, struct cmd_q *cmdq)
 			key = options_get_number(&s->options, "prefix2");
 		else
 			key = options_get_number(&s->options, "prefix");
-		window_pane_key(wp, s, key);
+		window_pane_key(wp, NULL, s, key, NULL);
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (args_has(args, 'R')) {
-		ictx = &wp->ictx;
-
-		memcpy(&ictx->cell, &grid_default_cell, sizeof ictx->cell);
-		memcpy(&ictx->old_cell, &ictx->cell, sizeof ictx->old_cell);
-		ictx->old_cx = 0;
-		ictx->old_cy = 0;
-
-		if (wp->mode == NULL)
-			screen_write_start(&ictx->ctx, wp, &wp->base);
-		else
-			screen_write_start(&ictx->ctx, NULL, &wp->base);
-		screen_write_reset(&ictx->ctx);
-		screen_write_stop(&ictx->ctx);
-	}
+	if (args_has(args, 'R'))
+		input_reset(wp);
 
 	for (i = 0; i < args->argc; i++) {
-		str = (u_char *)args->argv[i];
+		str = args->argv[i];
 
 		if (!args_has(args, 'l') &&
-		    (key = key_string_lookup_string((const char *)str)) != KEYC_NONE) {
-			    window_pane_key(wp, s, key);
+		    (key = key_string_lookup_string(str)) != KEYC_NONE) {
+			window_pane_key(wp, NULL, s, key, NULL);
 		} else {
 			for (; *str != '\0'; str++)
-			    window_pane_key(wp, s, *str);
+				window_pane_key(wp, NULL, s, *str, NULL);
 		}
 	}
 

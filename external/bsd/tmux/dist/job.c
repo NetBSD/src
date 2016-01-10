@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 
 #include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -39,7 +40,7 @@ struct joblist	all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
 
 /* Start a job running, if it isn't already. */
 struct job *
-job_run(const char *cmd, struct session *s,
+job_run(const char *cmd, struct session *s, int cwd,
     void (*callbackfn)(struct job *), void (*freefn)(void *), void *data)
 {
 	struct job	*job;
@@ -59,9 +60,14 @@ job_run(const char *cmd, struct session *s,
 	switch (pid = fork()) {
 	case -1:
 		environ_free(&env);
+		close(out[0]);
+		close(out[1]);
 		return (NULL);
 	case 0:		/* child */
 		clear_signals(1);
+
+		if (cwd != -1 && fchdir(cwd) != 0)
+			chdir("/");
 
 		environ_push(&env);
 		environ_free(&env);
@@ -93,6 +99,8 @@ job_run(const char *cmd, struct session *s,
 	close(out[1]);
 
 	job = xmalloc(sizeof *job);
+	job->state = JOB_RUNNING;
+
 	job->cmd = xstrdup(cmd);
 	job->pid = pid;
 	job->status = 0;
@@ -160,14 +168,13 @@ job_callback(unused struct bufferevent *bufev, unused short events, void *data)
 
 	log_debug("job error %p: %s, pid %ld", job, job->cmd, (long) job->pid);
 
-	if (job->pid == -1) {
+	if (job->state == JOB_DEAD) {
 		if (job->callbackfn != NULL)
 			job->callbackfn(job);
 		job_free(job);
 	} else {
 		bufferevent_disable(job->event, EV_READ);
-		close(job->fd);
-		job->fd = -1;
+		job->state = JOB_CLOSED;
 	}
 }
 
@@ -179,10 +186,12 @@ job_died(struct job *job, int status)
 
 	job->status = status;
 
-	if (job->fd == -1) {
+	if (job->state == JOB_CLOSED) {
 		if (job->callbackfn != NULL)
 			job->callbackfn(job);
 		job_free(job);
-	} else
+	} else {
 		job->pid = -1;
+		job->state = JOB_DEAD;
+	}
 }
