@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.22 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.23 2016/01/10 10:33:43 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.22 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.23 2016/01/10 10:33:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -166,6 +166,33 @@ usbd_trim_spaces(char *p)
 	*e = '\0';			/* kill trailing spaces */
 }
 
+static void
+usbd_get_device_string(struct usbd_device *ud, uByte index, char **buf)
+{
+	char *b = kmem_alloc(USB_MAX_ENCODED_STRING_LEN, KM_SLEEP);
+	if (b) {
+		usbd_status err = usbd_get_string0(ud, index, b, true);
+		if (err != USBD_NORMAL_COMPLETION) {
+			kmem_free(b, USB_MAX_ENCODED_STRING_LEN);
+			b = NULL;
+		} else {
+			usbd_trim_spaces(b);
+		}
+	}
+	*buf = b;
+}
+
+void
+usbd_get_device_strings(struct usbd_device *ud)
+{
+	usb_device_descriptor_t *udd = &ud->ud_ddesc;
+
+	usbd_get_device_string(ud, udd->iManufacturer, &ud->ud_vendor);
+	usbd_get_device_string(ud, udd->iProduct, &ud->ud_product);
+	usbd_get_device_string(ud, udd->iSerialNumber, &ud->ud_serial);
+}
+
+
 Static void
 usbd_devinfo_vp(struct usbd_device *dev, char *v, size_t vl, char *p,
     size_t pl, int usedev, int useencoded)
@@ -183,6 +210,13 @@ usbd_devinfo_vp(struct usbd_device *dev, char *v, size_t vl, char *p,
 		if (usbd_get_string0(dev, udd->iProduct, p, useencoded) ==
 		    USBD_NORMAL_COMPLETION)
 			usbd_trim_spaces(p);
+	} else {
+		if (dev->ud_vendor) {
+			strlcpy(v, dev->ud_vendor, vl);
+		}
+		if (dev->ud_product) {
+			strlcpy(p, dev->ud_product, pl);
+		}
 	}
 	if (v[0] == '\0')
 		usb_findvendor(v, vl, UGETW(udd->idVendor));
@@ -215,7 +249,7 @@ usbd_devinfo(struct usbd_device *dev, int showclass, char *cp, size_t l)
 	ep = cp + l;
 
 	usbd_devinfo_vp(dev, vendor, USB_MAX_ENCODED_STRING_LEN,
-	    product, USB_MAX_ENCODED_STRING_LEN, 1, 1);
+	    product, USB_MAX_ENCODED_STRING_LEN, 0, 1);
 	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += snprintf(cp, ep - cp, ", class %d/%d",
@@ -832,19 +866,10 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 static void
 usbd_serialnumber(device_t dv, struct usbd_device *dev)
 {
-	usb_device_descriptor_t *dd = &dev->ud_ddesc;
-	char *serialnumber;
-
-	serialnumber = kmem_alloc(USB_MAX_ENCODED_STRING_LEN, KM_SLEEP);
-	if (serialnumber == NULL)
-		return;
-	serialnumber[0] = '\0';
-	(void)usbd_get_string(dev, dd->iSerialNumber, serialnumber);
-	if (serialnumber[0]) {
+	if (dev->ud_serial) {
 		prop_dictionary_set_cstring(device_properties(dv),
-		    "serialnumber", serialnumber);
+		    "serialnumber", dev->ud_serial);
 	}
-	kmem_free(serialnumber, USB_MAX_ENCODED_STRING_LEN);
 }
 
 static usbd_status
@@ -1325,6 +1350,8 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 
 	DPRINTF("new dev (addr %d), dev=%p, parent=%p", addr, dev, parent, 0);
 
+	usbd_get_device_strings(dev);
+
 	usbd_add_dev_event(USB_EVENT_DEVICE_ATTACH, dev);
 
 	if (port == 0) { /* root hub */
@@ -1446,10 +1473,22 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 	    di->udi_product, sizeof(di->udi_product), usedev, 1);
 	usbd_printBCD(di->udi_release, sizeof(di->udi_release),
 	    UGETW(dev->ud_ddesc.bcdDevice));
-	di->udi_serial[0] = 0;
-	if (usedev)
-		(void)usbd_get_string(dev, dev->ud_ddesc.iSerialNumber,
-				      di->udi_serial);
+	if (usedev) {
+		usbd_status uerr = usbd_get_string(dev,
+		    dev->ud_ddesc.iSerialNumber, di->udi_serial);
+		if (uerr != USBD_NORMAL_COMPLETION) {
+			di->udi_serial[0] = '\0';
+		} else {
+			usbd_trim_spaces(di->udi_serial);
+		}
+	} else {
+		di->udi_serial[0] = '\0';
+		if (dev->ud_serial) {
+			strlcpy(di->udi_serial, dev->ud_serial,
+			    sizeof(di->udi_serial));
+		}
+	}
+
 	di->udi_vendorNo = UGETW(dev->ud_ddesc.idVendor);
 	di->udi_productNo = UGETW(dev->ud_ddesc.idProduct);
 	di->udi_releaseNo = UGETW(dev->ud_ddesc.bcdDevice);
@@ -1601,6 +1640,15 @@ usb_free_device(struct usbd_device *dev)
 		kmem_free(dev->ud_subdevs,
 		    dev->ud_subdevlen * sizeof(device_t));
 		dev->ud_subdevlen = 0;
+	}
+	if (dev->ud_vendor) {
+		kmem_free(dev->ud_vendor, USB_MAX_ENCODED_STRING_LEN);
+	}
+	if (dev->ud_product) {
+		kmem_free(dev->ud_product, USB_MAX_ENCODED_STRING_LEN);
+	}
+	if (dev->ud_serial) {
+		kmem_free(dev->ud_serial, USB_MAX_ENCODED_STRING_LEN);
 	}
 	kmem_free(dev, sizeof(*dev));
 }
