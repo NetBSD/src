@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -137,7 +137,8 @@ environ_unset(struct environ *env, const char *name)
  * environment.
  */
 void
-environ_update(const char *vars, struct environ *srcenv, struct environ *dstenv)
+environ_update(const char *vars, struct environ *srcenv,
+    struct environ *dstenv)
 {
 	struct environ_entry	*envent;
 	char			*copyvars, *var, *next;
@@ -156,20 +157,16 @@ environ_update(const char *vars, struct environ *srcenv, struct environ *dstenv)
 void
 environ_push(struct environ *env)
 {
-	ARRAY_DECL(, char *)	varlist;
-	struct environ_entry   *envent;
-	char		      **varp, *var;
-	u_int			i;
+	struct environ_entry	 *envent;
+	char			**vp, *v;
 
-	ARRAY_INIT(&varlist);
-	for (varp = environ; *varp != NULL; varp++) {
-		var = xstrdup(*varp);
-		var[strcspn(var, "=")] = '\0';
-		ARRAY_ADD(&varlist, var);
+	for (vp = environ; *vp != NULL; vp++) {
+		v = xstrdup(*vp);
+		v[strcspn(v, "=")] = '\0';
+
+		unsetenv(v);
+		free(v);
 	}
-	for (i = 0; i < ARRAY_LENGTH(&varlist); i++)
-		unsetenv(ARRAY_ITEM(&varlist, i));
-	ARRAY_FREE(&varlist);
 
 	RB_FOREACH(envent, environ, env) {
 		if (envent->value != NULL)
