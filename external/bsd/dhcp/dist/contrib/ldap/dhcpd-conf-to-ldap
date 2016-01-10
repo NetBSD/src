@@ -137,6 +137,7 @@ add_dn_to_stack
   local ($dn) = @_;
 
   $current_dn = "$dn, $current_dn";
+  $curentry{'current_dn'} = $current_dn;
 }
 
 
@@ -154,6 +155,26 @@ parse_error
   exit (1);
 }
 
+sub
+new_entry
+{
+   if (%curentry) {
+     $curentry{'current_dn'} = $current_dn;
+     push(@entrystack, {%curentry});
+     undef(%curentry);
+   }
+}
+
+sub
+pop_entry
+{
+  if (%curentry) {
+    push(@outputlist, {%curentry});
+  }
+  $rentry = pop(@entrystack);
+  %curentry = %$rentry if $rentry;
+}
+
 
 sub
 print_entry
@@ -167,7 +188,7 @@ print_entry
       print "cn: $server\n";
       print "objectClass: top\n";
       print "objectClass: dhcpServer\n";
-      print "dhcpServiceDN: $current_dn\n";
+      print "dhcpServiceDN: $curentry{'current_dn'}\n";
       if(grep(/FaIlOvEr/i, @use))
         {
           foreach my $fo_peer (keys %failover)
@@ -179,7 +200,7 @@ print_entry
         }
       print "\n";
 
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: $dhcpcn\n";
       print "objectClass: top\n";
       print "objectClass: dhcpService\n";
@@ -195,7 +216,7 @@ print_entry
     }
   elsif ($curentry{'type'} eq 'subnet')
     {
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: " . $curentry{'ip'} . "\n";
       print "objectClass: top\n";
       print "objectClass: dhcpSubnet\n";
@@ -215,7 +236,7 @@ print_entry
     }
   elsif ($curentry{'type'} eq 'shared-network')
     {
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: " . $curentry{'descr'} . "\n";
       print "objectClass: top\n";
       print "objectClass: dhcpSharedNetwork\n";
@@ -226,7 +247,7 @@ print_entry
     }
   elsif ($curentry{'type'} eq 'group')
     {
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: group", $curentry{'idx'}, "\n";
       print "objectClass: top\n";
       print "objectClass: dhcpGroup\n";
@@ -237,7 +258,7 @@ print_entry
     }
   elsif ($curentry{'type'} eq 'host')
     {
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: " . $curentry{'host'} . "\n";
       print "objectClass: top\n";
       print "objectClass: dhcpHost\n";
@@ -254,7 +275,7 @@ print_entry
     }
   elsif ($curentry{'type'} eq 'pool')
     {
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: pool", $curentry{'idx'}, "\n";
       print "objectClass: top\n";
       print "objectClass: dhcpPool\n";
@@ -273,7 +294,7 @@ print_entry
     }
   elsif ($curentry{'type'} eq 'class')
     {
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: " . $curentry{'class'} . "\n";
       print "objectClass: top\n";
       print "objectClass: dhcpClass\n";
@@ -284,7 +305,7 @@ print_entry
     }
   elsif ($curentry{'type'} eq 'subclass')
     {
-      print "dn: $current_dn\n";
+      print "dn: $curentry{'current_dn'}\n";
       print "cn: " . $curentry{'subclass'} . "\n";
       print "objectClass: top\n";
       print "objectClass: dhcpSubClass\n";
@@ -344,7 +365,7 @@ sub parse_subnet
 {
   local ($ip, $tmp, $netmask);
 
-  print_entry () if %curentry;
+  new_entry ();
     
   $ip = next_token (0);
   parse_error () if !defined ($ip);
@@ -374,7 +395,7 @@ sub parse_shared_network
 {
   local ($descr, $tmp);
 
-  print_entry () if %curentry;
+  new_entry ();
 
   $descr = next_token (0);
   parse_error () if !defined ($descr);
@@ -393,7 +414,7 @@ sub parse_host
 {
   local ($descr, $tmp);
 
-  print_entry () if %curentry;
+  new_entry ();
 
   $host = next_token (0);
   parse_error () if !defined ($host);
@@ -412,7 +433,7 @@ sub parse_group
 {
   local ($descr, $tmp);
 
-  print_entry () if %curentry;
+  new_entry ();
 
   $tmp = next_token (0);
   parse_error () if !defined ($tmp);
@@ -435,7 +456,7 @@ sub parse_pool
 {
   local ($descr, $tmp);
 
-  print_entry () if %curentry;
+  new_entry ();
 
   $tmp = next_token (0);
   parse_error () if !defined ($tmp);
@@ -458,7 +479,7 @@ sub parse_class
 {
   local ($descr, $tmp);
 
-  print_entry () if %curentry;
+  new_entry ();
 
   $class = next_token (0);
   parse_error () if !defined ($class);
@@ -478,7 +499,7 @@ sub parse_subclass
 {
   local ($descr, $tmp);
 
-  print_entry () if %curentry;
+  new_entry ();
 
   $class = next_token (0);
   parse_error () if !defined ($class);
@@ -486,14 +507,23 @@ sub parse_subclass
   $subclass = next_token (0);
   parse_error () if !defined ($subclass);
 
-  $tmp = next_token (0);
-  parse_error () if !defined ($tmp);
-  parse_error () if !($tmp eq '{');
-
+  if (substr($subclass,-1) eq ';') {
+    $tmp = ";";
+    $subclass = substr($subclass,0,-1);
+  } else {
+    $tmp = next_token (0); 
+    parse_error () if !defined ($tmp);
+  }
+  parse_error () if !($tmp eq '{' or $tmp eq ';');
   add_dn_to_stack ("cn=$subclass");
   $curentry{'type'} = 'subclass';
   $curentry{'class'} = $class;
   $curentry{'subclass'} = $subclass;
+
+  if ($tmp eq ';') {
+    pop_entry ();
+    remove_dn_from_stack ();
+  }
 }
 
 
@@ -682,11 +712,11 @@ print STDERR "\n";
 my $token;
 my $token_number = 0;
 my $line_number = 0;
-my %curentry;
 my $cursubnet = '';
 my %curcounter = ( '' => { pool => 0, group => 0 } );
 
 $current_dn = "$dhcpdn";
+$curentry{'current_dn'} = $current_dn;
 $curentry{'descr'} = $dhcpcn;
 $line = '';
 %failover = ();
@@ -695,7 +725,7 @@ while (($token = next_token (1)))
   {
     if ($token eq '}')
       {
-        print_entry () if %curentry;
+        pop_entry ();
         if($current_dn =~ /.+?,\s*${dhcpdn}$/) {
           # don't go below dhcpdn ...
           remove_dn_from_stack ();
@@ -752,6 +782,16 @@ while (($token = next_token (1)))
         next;
       }
   }
+
+pop_entry ();
+
+while ($#outputlist >= 0) {
+  $rentry = pop(@outputlist);
+  if ($rentry) {
+    %curentry = %$rentry;
+    print_entry ();
+  }
+}
 
 close(STDIN)  if($i_conf);
 close(STDOUT) if($o_ldif);

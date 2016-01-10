@@ -1,10 +1,10 @@
-/*	$NetBSD: stables.c,v 1.1.1.2 2014/07/12 11:58:16 spz Exp $	*/
+/*	$NetBSD: stables.c,v 1.1.1.3 2016/01/10 19:44:46 christos Exp $	*/
 /* stables.c
 
    Tables of information only used by server... */
 
 /*
- * Copyright (c) 2004-2011,2013-2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2011,2013-2015 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stables.c,v 1.1.1.2 2014/07/12 11:58:16 spz Exp $");
+__RCSID("$NetBSD: stables.c,v 1.1.1.3 2016/01/10 19:44:46 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -262,13 +262,23 @@ static struct option server_options[] = {
 	{ "ldap-tls-crlcheck", "Nldap-tls-crlcheck.",	&server_universe,  75, 1 },
 	{ "ldap-tls-ciphers", "t",		&server_universe,  76, 1 },
 	{ "ldap-tls-randfile", "t",		&server_universe,  77, 1 },
+	{ "ldap-init-retry", "d",       	&server_universe,  SV_LDAP_INIT_RETRY, 1 },
 #endif /* LDAP_USE_SSL */
+#if defined(LDAP_USE_GSSAPI)
+	{ "ldap-gssapi-keytab", "t",        &server_universe,  SV_LDAP_GSSAPI_KEYTAB, 1},
+	{ "ldap-gssapi-principal", "t",     &server_universe,  SV_LDAP_GSSAPI_PRINCIPAL, 1},
+#endif /* LDAP_USE_GSSAPI */
 #endif /* LDAP_CONFIGURATION */
 	{ "dhcp-cache-threshold", "B",		&server_universe,  78, 1 },
 	{ "dont-use-fsync", "f",		&server_universe,  79, 1 },
 	{ "ddns-local-address4", "I",		&server_universe,  80, 1 },
 	{ "ddns-local-address6", "6",		&server_universe,  81, 1 },
 	{ "ignore-client-uids", "f",		&server_universe,  82, 1 },
+	{ "log-threshold-low", "B",		&server_universe,  83, 1 },
+	{ "log-threshold-high", "B",		&server_universe,  84, 1 },
+	{ "echo-client-id", "f",		&server_universe,  SV_ECHO_CLIENT_ID, 1 },
+	{ "server-id-check", "f",		&server_universe,  SV_SERVER_ID_CHECK, 1 },
+	{ "prefix-length-mode", "Nprefix_length_modes.",	&server_universe,  SV_PREFIX_LEN_MODE, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
@@ -340,6 +350,21 @@ struct enumeration ddns_styles = {
 	(struct enumeration *)0,
 	"ddns-styles", 1,
 	ddns_styles_values
+};
+
+struct enumeration_value prefix_length_modes_values[] = {
+        { "ignore", PLM_IGNORE },
+        { "prefer", PLM_PREFER },
+        { "exact", PLM_EXACT },
+        { "minimum", PLM_MINIMUM },
+        { "maximum", PLM_MAXIMUM },
+        { (char *)0, 0 }
+};
+
+struct enumeration prefix_length_modes = {
+        (struct enumeration *)0,
+        "prefix_length_modes", 1,
+        prefix_length_modes_values
 };
 
 struct enumeration_value syslog_values [] = {
