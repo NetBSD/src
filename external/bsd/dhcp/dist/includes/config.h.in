@@ -3,6 +3,9 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Define to support binary insertion of leases into queues. */
+#undef BINARY_LEASES
+
 /* Define to compile debug-only DHCP software. */
 #undef DEBUG
 
@@ -34,6 +37,9 @@
    MSVC and with C++ compilers. */
 #undef FLEXIBLE_ARRAY_MEMBER
 
+/* ATF framework specified? */
+#undef HAVE_ATF
+
 /* Define to 1 to use the Berkeley Packet Filter interface code. */
 #undef HAVE_BPF
 
@@ -46,8 +52,17 @@
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
+/* Define to 1 if you have the `inet_ntop' function. */
+#undef HAVE_INET_NTOP
+
+/* Define to 1 if you have the `inet_pton' function. */
+#undef HAVE_INET_PTON
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <ldap.h> header file. */
+#undef HAVE_LDAP_H
 
 /* Define to 1 if you have the <linux/types.h> header file. */
 #undef HAVE_LINUX_TYPES_H
@@ -57,6 +72,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <micasa_mgmd.h> header file. */
+#undef HAVE_MICASA_MGMD_H
 
 /* Define to 1 if you have the <net/if6.h> header file. */
 #undef HAVE_NET_IF6_H
@@ -148,6 +166,9 @@
 /* Define to include server activity tracing support. */
 #undef TRACING
 
+/* Define to include PIDs in syslog messages. */
+#undef USE_LOG_PID
+
 /* Define to 1 to use the standard BSD socket API. */
 #undef USE_SOCKETS
 
@@ -178,6 +199,21 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* tpacket_auxdata.tp_vlan_tci present */
+#undef VLAN_TCI_PRESENT
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
 
 /* Define to 1 if on MINIX. */
 #undef _MINIX

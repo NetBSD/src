@@ -1,10 +1,10 @@
-/*	$NetBSD: dhcrelay.c,v 1.5 2014/07/12 12:09:37 spz Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.6 2016/01/10 20:10:45 christos Exp $	*/
 /* dhcrelay.c
 
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright(c) 2004-2014 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2004-2015 by Internet Systems Consortium, Inc.("ISC")
  * Copyright(c) 1997-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.5 2014/07/12 12:09:37 spz Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.6 2016/01/10 20:10:45 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -137,7 +137,7 @@ static int strip_relay_agent_options(struct interface_info *,
 				     struct dhcp_packet *, unsigned);
 
 static const char copyright[] =
-"Copyright 2004-2014 Internet Systems Consortium.";
+"Copyright 2004-2015 Internet Systems Consortium.";
 static const char arr[] = "All rights reserved.";
 static const char message[] =
 "Internet Systems Consortium DHCP Relay Agent";
@@ -201,7 +201,7 @@ main(int argc, char **argv) {
 	else if (fd != -1)
 		close(fd);
 
-	openlog("dhcrelay", LOG_NDELAY, LOG_DAEMON);
+	openlog("dhcrelay", DHCP_LOG_OPTIONS, LOG_DAEMON);
 
 #if !defined(DEBUG)
 	setlogmask(LOG_UPTO(LOG_INFO));
@@ -595,9 +595,12 @@ main(int argc, char **argv) {
 		dhcpv6_packet_handler = do_packet6;
 #endif
 
+#if defined(ENABLE_GENTLE_SHUTDOWN)
+	/* no signal handlers until we deal with the side effects */
         /* install signal handlers */
 	signal(SIGINT, dhcp_signal_handler);   /* control-c */
 	signal(SIGTERM, dhcp_signal_handler);  /* kill */
+#endif
 
 	/* Start dispatching packets and timeouts... */
 	dispatch();
@@ -945,7 +948,7 @@ find_interface_by_agent_option(struct dhcp_packet *packet,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.5 2014/07/12 12:09:37 spz Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.6 2016/01/10 20:10:45 christos Exp $");
 static int
 add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			unsigned length, struct in_addr giaddr) {
@@ -1196,8 +1199,8 @@ parse_downstream(char *arg) {
 	/* Share with up side? */
 	for (up = upstreams; up; up = up->next) {
 		if (strcmp(ifname, up->ifp->name) == 0) {
-			log_info("Interface '%s' is both down and up.",
-				 ifname);
+			log_info("parse_downstream: Interface '%s' is "
+				 "both down and up.", ifname);
 			ifp = up->ifp;
 			break;
 		}
@@ -1215,8 +1218,8 @@ parse_downstream(char *arg) {
 			interface_dereference(&interfaces, MDL);
 		}
 		interface_reference(&interfaces, ifp, MDL);
-		ifp->flags |= INTERFACE_REQUESTED | INTERFACE_DOWNSTREAM;
 	}
+	ifp->flags |= INTERFACE_REQUESTED | INTERFACE_DOWNSTREAM;
 
 	/* New downstream. */
 	dp = (struct stream_list *) dmalloc(sizeof(*dp), MDL);
@@ -1267,6 +1270,8 @@ parse_upstream(char *arg) {
 	}
 	for (dp = downstreams; dp; dp = dp->next) {
 		if (strcmp(ifname, dp->ifp->name) == 0) {
+			log_info("parse_upstream: Interface '%s' is "
+				 "both down and up.", ifname);
 			ifp = dp->ifp;
 			break;
 		}
@@ -1284,8 +1289,8 @@ parse_upstream(char *arg) {
 			interface_dereference(&interfaces, MDL);
 		}
 		interface_reference(&interfaces, ifp, MDL);
-		ifp->flags |= INTERFACE_REQUESTED | INTERFACE_UPSTREAM;
 	}
+	ifp->flags |= INTERFACE_REQUESTED | INTERFACE_UPSTREAM;
 
 	/* New upstream. */
 	up = (struct stream_list *) dmalloc(sizeof(*up), MDL);
@@ -1353,6 +1358,13 @@ setup_streams(void) {
 		if (up->ifp->v6address_count == 0)
 			log_fatal("Interface '%s' has no IPv6 addresses.",
 				  up->ifp->name);
+
+		/* RFC 3315 Sec 20 - "If the relay agent relays messages to
+		 * the All_DHCP_Servers address or other multicast addresses,
+		 * it sets the Hop Limit field to 32." */
+		if (IN6_IS_ADDR_MULTICAST(&up->link.sin6_addr)) {
+			set_multicast_hop_limit(up->ifp, HOP_COUNT_LIMIT);
+		}
 	}
 }
 
@@ -1724,5 +1736,9 @@ dhcp_set_control_state(control_object_state_t oldstate,
 		       control_object_state_t newstate) {
 	if (newstate != server_shutdown)
 		return ISC_R_SUCCESS;
+
+	if (no_pid_file == ISC_FALSE)
+		(void) unlink(path_dhcrelay_pid);
+
 	exit(0);
 }

@@ -4,6 +4,9 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
+/* Define to support binary insertion of leases into queues. */
+/* #undef BINARY_LEASES */
+
 /* Define to compile debug-only DHCP software. */
 /* #undef DEBUG */
 
@@ -39,6 +42,9 @@
    MSVC and with C++ compilers. */
 #define FLEXIBLE_ARRAY_MEMBER /**/
 
+/* ATF framework specified? */
+#define HAVE_ATF 1
+
 /* Define to 1 to use the Berkeley Packet Filter interface code. */
 #define HAVE_BPF 1
 
@@ -51,8 +57,17 @@
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #define HAVE_IFADDRS_H 1
 
+/* Define to 1 if you have the `inet_ntop' function. */
+#define HAVE_INET_NTOP 1
+
+/* Define to 1 if you have the `inet_pton' function. */
+#define HAVE_INET_PTON 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
+
+/* Define to 1 if you have the <ldap.h> header file. */
+#define HAVE_LDAP_H 1
 
 /* Define to 1 if you have the <linux/types.h> header file. */
 /* #undef HAVE_LINUX_TYPES_H */
@@ -62,6 +77,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the <micasa_mgmd.h> header file. */
+/* #undef HAVE_MICASA_MGMD_H */
 
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
@@ -127,7 +145,7 @@
 #define PACKAGE_NAME "DHCP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "DHCP 4.3.0"
+#define PACKAGE_STRING "DHCP 4.3.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "dhcp"
@@ -136,7 +154,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.3.0"
+#define PACKAGE_VERSION "4.3.3"
 
 /* Define to any value to include Ari's PARANOIA patch. */
 /* #undef PARANOIA */
@@ -145,7 +163,7 @@
 /* #undef SECS_BYTEORDER */
 
 /* The size of `struct iaddr *', as computed by sizeof. */
-/* #undef SIZEOF_STRUCT_IADDR_P */
+#define SIZEOF_STRUCT_IADDR_P sizeof(void *)
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -153,12 +171,15 @@
 /* Define to include server activity tracing support. */
 #define TRACING 1
 
+/* Define to include PIDs in syslog messages. */
+#define USE_LOG_PID 1
+
 /* Define to 1 to use the standard BSD socket API. */
 /* #undef USE_SOCKETS */
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
-/* # undef _ALL_SOURCE */
+# define _ALL_SOURCE 1
 #endif
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
@@ -182,7 +203,28 @@
 /* #undef USE_V4_PKTINFO */
 
 /* Version number of package */
-#define VERSION "4.3.0"
+#define VERSION "4.3.3"
+
+/* tpacket_auxdata.tp_vlan_tci present */
+/* #undef VLAN_TCI_PRESENT */
+
+#if 0
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+# endif
+#endif
+#else
+#if _BYTE_ORDER == _BIG_ENDIAN
+# define WORDS_BIGENDIAN 1
+#endif
+#endif
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
