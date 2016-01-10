@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/04/08 17:24:55 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2016/01/10 22:19:41 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,5 +8,7 @@ SUBDIR+= xcvs
 .if (${MKLVM} != "no")
 SUBDIR+= lvm2
 .endif
+
+SUBDIR+= grep
 
 .include <bsd.subdir.mk>
