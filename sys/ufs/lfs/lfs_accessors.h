@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.40 2015/10/19 04:22:28 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.41 2016/01/10 02:40:21 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -395,7 +395,7 @@ lfs_copydirname(STRUCT_LFS *fs, char *dest, const char *src,
 	memset(dest + namlen, '\0', spacelen - namlen);
 }
 
-static __unused LFS_DIRHEADER *
+static __unused inline LFS_DIRHEADER *
 lfs_dirtemplate_dotdot(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
 {
 	/* XXX blah, be nice to have a way to do this w/o casts */
@@ -406,7 +406,7 @@ lfs_dirtemplate_dotdot(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
 	}
 }
 
-static __unused char *
+static __unused inline char *
 lfs_dirtemplate_dotdotname(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
 {
 	if (fs->lfs_is64) {
