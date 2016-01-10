@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -28,7 +28,6 @@
  * Join or move a pane into another (like split/swap/kill).
  */
 
-void		 cmd_join_pane_key_binding(struct cmd *, int);
 enum cmd_retval	 cmd_join_pane_exec(struct cmd *, struct cmd_q *);
 
 enum cmd_retval	 join_pane(struct cmd *, struct cmd_q *, int);
@@ -36,34 +35,18 @@ enum cmd_retval	 join_pane(struct cmd *, struct cmd_q *, int);
 const struct cmd_entry cmd_join_pane_entry = {
 	"join-pane", "joinp",
 	"bdhvp:l:s:t:", 0, 0,
-	"[-bdhv] [-p percentage|-l size] [-s src-pane] [-t dst-pane]",
+	"[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
 	0,
-	cmd_join_pane_key_binding,
 	cmd_join_pane_exec
 };
 
 const struct cmd_entry cmd_move_pane_entry = {
 	"move-pane", "movep",
 	"bdhvp:l:s:t:", 0, 0,
-	"[-bdhv] [-p percentage|-l size] [-s src-pane] [-t dst-pane]",
+	"[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
 	0,
-	NULL,
 	cmd_join_pane_exec
 };
-
-void
-cmd_join_pane_key_binding(struct cmd *self, int key)
-{
-	switch (key) {
-	case '%':
-		self->args = args_create(0);
-		args_set(self->args, 'h', NULL);
-		break;
-	default:
-		self->args = args_create(0);
-		break;
-	}
-}
 
 enum cmd_retval
 cmd_join_pane_exec(struct cmd *self, struct cmd_q *cmdq)
@@ -91,7 +74,7 @@ join_pane(struct cmd *self, struct cmd_q *cmdq, int not_same_window)
 	dst_idx = dst_wl->idx;
 	server_unzoom_window(dst_w);
 
-	src_wl = cmd_find_pane(cmdq, args_get(args, 's'), NULL, &src_wp);
+	src_wl = cmd_find_pane_marked(cmdq, args_get(args, 's'), NULL, &src_wp);
 	if (src_wl == NULL)
 		return (CMD_RETURN_ERROR);
 	src_w = src_wl->window;
@@ -138,11 +121,7 @@ join_pane(struct cmd *self, struct cmd_q *cmdq, int not_same_window)
 
 	layout_close_pane(src_wp);
 
-	if (src_w->active == src_wp) {
-		src_w->active = TAILQ_PREV(src_wp, window_panes, entry);
-		if (src_w->active == NULL)
-			src_w->active = TAILQ_NEXT(src_wp, entry);
-	}
+	window_lost_pane(src_w, src_wp);
 	TAILQ_REMOVE(&src_w->panes, src_wp, entry);
 
 	if (window_count_panes(src_w) == 0)

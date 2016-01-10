@@ -17,6 +17,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
 #include <string.h>
 
 #include "tmux.h"
@@ -26,16 +28,18 @@ int
 style_parse(const struct grid_cell *defgc, struct grid_cell *gc,
     const char *in)
 {
-	const char	delimiters[] = " ,";
-	char		tmp[32];
-	int		val;
-	size_t		end;
-	u_char		fg, bg, attr, flags;
+	struct grid_cell	savedgc;
+	const char		delimiters[] = " ,";
+	char			tmp[32];
+	int			val;
+	size_t			end;
+	u_char			fg, bg, attr, flags;
 
 	if (*in == '\0')
 		return (0);
 	if (strchr(delimiters, in[strlen(in) - 1]) != NULL)
 		return (-1);
+	memcpy(&savedgc, gc, sizeof savedgc);
 
 	fg = gc->fg;
 	bg = gc->bg;
@@ -44,7 +48,7 @@ style_parse(const struct grid_cell *defgc, struct grid_cell *gc,
 	do {
 		end = strcspn(in, delimiters);
 		if (end > (sizeof tmp) - 1)
-			return (-1);
+			goto error;
 		memcpy(tmp, in, end);
 		tmp[end] = '\0';
 
@@ -57,7 +61,7 @@ style_parse(const struct grid_cell *defgc, struct grid_cell *gc,
 			    defgc->flags & (GRID_FLAG_FG256|GRID_FLAG_BG256);
 		} else if (end > 3 && strncasecmp(tmp + 1, "g=", 2) == 0) {
 			if ((val = colour_fromstring(tmp + 3)) == -1)
-				return (-1);
+				goto error;
 			if (*in == 'f' || *in == 'F') {
 				if (val != 8) {
 					if (val & 0x100) {
@@ -85,16 +89,16 @@ style_parse(const struct grid_cell *defgc, struct grid_cell *gc,
 					flags |= defgc->flags & GRID_FLAG_BG256;
 				}
 			} else
-				return (-1);
+				goto error;
 		} else if (strcasecmp(tmp, "none") == 0)
 			attr = 0;
 		else if (end > 2 && strncasecmp(tmp, "no", 2) == 0) {
 			if ((val = attributes_fromstring(tmp + 2)) == -1)
-				return (-1);
+				goto error;
 			attr &= ~val;
 		} else {
 			if ((val = attributes_fromstring(tmp)) == -1)
-				return (-1);
+				goto error;
 			attr |= val;
 		}
 
@@ -106,6 +110,10 @@ style_parse(const struct grid_cell *defgc, struct grid_cell *gc,
 	gc->flags = flags;
 
 	return (0);
+
+error:
+	memcpy(gc, &savedgc, sizeof *gc);
+	return (-1);
 }
 
 /* Convert style to a string. */
@@ -117,7 +125,7 @@ style_tostring(struct grid_cell *gc)
 
 	*s = '\0';
 
-	if (gc->fg != 8) {
+	if (gc->fg != 8 || gc->flags & GRID_FLAG_FG256) {
 		if (gc->flags & GRID_FLAG_FG256)
 			c = gc->fg | 0x100;
 		else
@@ -126,7 +134,7 @@ style_tostring(struct grid_cell *gc)
 		comma = 1;
 	}
 
-	if (gc->bg != 8) {
+	if (gc->bg != 8 || gc->flags & GRID_FLAG_BG256) {
 		if (gc->flags & GRID_FLAG_BG256)
 			c = gc->bg | 0x100;
 		else
@@ -152,13 +160,21 @@ style_update_new(struct options *oo, const char *name, const char *newname)
 {
 	int			 value;
 	struct grid_cell	*gc;
+	struct options_entry	*o;
 
 	/* It's a colour or attribute, but with no -style equivalent. */
 	if (newname == NULL)
 		return;
 
-	gc = options_get_style(oo, newname);
-	value = options_get_number(oo, name);
+	o = options_find1(oo, newname);
+	if (o == NULL)
+		o = options_set_style(oo, newname, "default", 0);
+	gc = &o->style;
+
+	o = options_find1(oo, name);
+	if (o == NULL)
+		o = options_set_number(oo, name, 8);
+	value = o->num;
 
 	if (strstr(name, "-bg") != NULL)
 		colour_set_bg(gc, value);
@@ -221,13 +237,13 @@ style_apply_update(struct grid_cell *gc, struct options *oo, const char *name)
 	struct grid_cell	*gcp;
 
 	gcp = options_get_style(oo, name);
-	if (gcp->fg != 8) {
+	if (gcp->fg != 8 || gcp->flags & GRID_FLAG_FG256) {
 		if (gcp->flags & GRID_FLAG_FG256)
 			colour_set_fg(gc, gcp->fg | 0x100);
 		else
 			colour_set_fg(gc, gcp->fg);
 	}
-	if (gcp->bg != 8) {
+	if (gcp->bg != 8 || gcp->flags & GRID_FLAG_BG256) {
 		if (gcp->flags & GRID_FLAG_BG256)
 			colour_set_bg(gc, gcp->bg | 0x100);
 		else
@@ -235,4 +251,16 @@ style_apply_update(struct grid_cell *gc, struct options *oo, const char *name)
 	}
 	if (gcp->attr != 0)
 		gc->attr |= gcp->attr;
+}
+
+/* Check if two styles are the same. */
+int
+style_equal(const struct grid_cell *gc1, const struct grid_cell *gc2)
+{
+	return gc1->fg == gc2->fg &&
+		gc1->bg == gc2->bg &&
+		(gc1->flags & ~GRID_FLAG_PADDING) ==
+		(gc2->flags & ~GRID_FLAG_PADDING) &&
+		(gc1->attr & ~GRID_ATTR_CHARSET) ==
+		(gc2->attr & ~GRID_ATTR_CHARSET);
 }

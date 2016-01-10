@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,7 +69,6 @@ const struct cmd_entry cmd_set_option_entry = {
 	"agoqst:uw", 1, 2,
 	"[-agosquw] [-t target-session|target-window] option [value]",
 	0,
-	NULL,
 	cmd_set_option_exec
 };
 
@@ -78,7 +77,6 @@ const struct cmd_entry cmd_set_window_option_entry = {
 	"agoqt:u", 1, 2,
 	"[-agoqu] " CMD_TARGET_WINDOW_USAGE " option [value]",
 	0,
-	NULL,
 	cmd_set_option_exec
 };
 
@@ -93,7 +91,6 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct options				*oo;
 	struct window				*w;
 	const char				*optstr, *valstr;
-	u_int					 i;
 
 	/* Get the option name and value. */
 	optstr = args->argv[0];
@@ -113,12 +110,18 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 	/* Find the option entry, try each table. */
 	table = oe = NULL;
 	if (options_table_find(optstr, &table, &oe) != 0) {
-		cmdq_error(cmdq, "ambiguous option: %s", optstr);
-		return (CMD_RETURN_ERROR);
+		if (!args_has(args, 'q')) {
+			cmdq_error(cmdq, "ambiguous option: %s", optstr);
+			return (CMD_RETURN_ERROR);
+		}
+		return (CMD_RETURN_NORMAL);
 	}
 	if (oe == NULL) {
-		cmdq_error(cmdq, "unknown option: %s", optstr);
-		return (CMD_RETURN_ERROR);
+		if (!args_has(args, 'q')) {
+			cmdq_error(cmdq, "unknown option: %s", optstr);
+			return (CMD_RETURN_ERROR);
+		}
+		return (CMD_RETURN_NORMAL);
 	}
 
 	/* Work out the tree from the table. */
@@ -163,31 +166,33 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 	} else {
 		if (args_has(args, 'o') && options_find1(oo, optstr) != NULL) {
-			if (!args_has(args, 'q'))
-				cmdq_print(cmdq, "already set: %s", optstr);
+			if (!args_has(args, 'q')) {
+				cmdq_error(cmdq, "already set: %s", optstr);
+				return (CMD_RETURN_ERROR);
+			}
 			return (CMD_RETURN_NORMAL);
 		}
 		if (cmd_set_option_set(self, cmdq, oe, oo, valstr) != 0)
 			return (CMD_RETURN_ERROR);
 	}
 
-	/* Start or stop timers when automatic-rename changed. */
+	/* Start or stop timers if necessary. */
 	if (strcmp(oe->name, "automatic-rename") == 0) {
-		for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
-			if ((w = ARRAY_ITEM(&windows, i)) == NULL)
-				continue;
+		RB_FOREACH(w, windows, &windows) {
 			if (options_get_number(&w->options, "automatic-rename"))
-				queue_window_name(w);
-			else if (event_initialized(&w->name_timer))
-				evtimer_del(&w->name_timer);
+				w->active->flags |= PANE_CHANGED;
 		}
 	}
+	if (strcmp(oe->name, "status") == 0 ||
+	    strcmp(oe->name, "status-interval") == 0)
+		status_timer_start_all();
+	if (strcmp(oe->name, "monitor-silence") == 0)
+		alerts_reset_all();
 
 	/* Update sizes and redraw. May not need it but meh. */
 	recalculate_sizes();
-	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-		c = ARRAY_ITEM(&clients, i);
-		if (c != NULL && c->session != NULL)
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session != NULL)
 			server_redraw_client(c);
 	}
 
@@ -196,7 +201,7 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 
 /* Set user option. */
 enum cmd_retval
-cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char* optstr,
+cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char *optstr,
     const char *valstr)
 {
 	struct args	*args = self->args;
@@ -229,8 +234,11 @@ cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char* optstr,
 
 	if (args_has(args, 'u')) {
 		if (options_find1(oo, optstr) == NULL) {
-			cmdq_error(cmdq, "unknown option: %s", optstr);
-			return (CMD_RETURN_ERROR);
+			if (!args_has(args, 'q')) {
+				cmdq_error(cmdq, "unknown option: %s", optstr);
+				return (CMD_RETURN_ERROR);
+			}
+			return (CMD_RETURN_NORMAL);
 		}
 		if (valstr != NULL) {
 			cmdq_error(cmdq, "value passed to unset option: %s",
@@ -244,54 +252,64 @@ cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char* optstr,
 			return (CMD_RETURN_ERROR);
 		}
 		if (args_has(args, 'o') && options_find1(oo, optstr) != NULL) {
-			if (!args_has(args, 'q'))
-				cmdq_print(cmdq, "already set: %s", optstr);
+			if (!args_has(args, 'q')) {
+				cmdq_error(cmdq, "already set: %s", optstr);
+				return (CMD_RETURN_ERROR);
+			}
 			return (CMD_RETURN_NORMAL);
 		}
 		options_set_string(oo, optstr, "%s", valstr);
-		if (!args_has(args, 'q')) {
-			cmdq_info(cmdq, "set option: %s -> %s", optstr,
-			    valstr);
-		}
 	}
 	return (CMD_RETURN_NORMAL);
 }
 
-
 /* Unset an option. */
 int
 cmd_set_option_unset(struct cmd *self, struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
 	struct args	*args = self->args;
 
-	if (args_has(args, 'g')) {
-		cmdq_error(cmdq, "can't unset global option: %s", oe->name);
-		return (-1);
-	}
 	if (value != NULL) {
 		cmdq_error(cmdq, "value passed to unset option: %s", oe->name);
 		return (-1);
 	}
 
-	options_remove(oo, oe->name);
-	if (!args_has(args, 'q'))
-		cmdq_info(cmdq, "unset option: %s", oe->name);
+	if (args_has(args, 'g') || oo == &global_options) {
+		switch (oe->type) {
+		case OPTIONS_TABLE_STRING:
+			options_set_string(oo, oe->name, "%s", oe->default_str);
+			break;
+		case OPTIONS_TABLE_STYLE:
+			options_set_style(oo, oe->name, oe->default_str, 0);
+			break;
+		default:
+			options_set_number(oo, oe->name, oe->default_num);
+			break;
+		}
+	} else
+		options_remove(oo, oe->name);
 	return (0);
 }
 
 /* Set an option. */
 int
 cmd_set_option_set(struct cmd *self, struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
-	struct args		*args = self->args;
 	struct options_entry	*o;
-	const char		*s;
 
-	if (oe->type != OPTIONS_TABLE_FLAG && value == NULL) {
-		cmdq_error(cmdq, "empty value");
-		return (-1);
+	switch (oe->type) {
+	case OPTIONS_TABLE_FLAG:
+	case OPTIONS_TABLE_CHOICE:
+		break;
+	default:
+		if (value == NULL) {
+			cmdq_error(cmdq, "empty value");
+			return (-1);
+		}
 	}
 
 	o = NULL;
@@ -327,17 +345,14 @@ cmd_set_option_set(struct cmd *self, struct cmd_q *cmdq,
 	}
 	if (o == NULL)
 		return (-1);
-
-	s = options_table_print_entry(oe, o, 0);
-	if (!args_has(args, 'q'))
-		cmdq_info(cmdq, "set option: %s -> %s", oe->name, s);
 	return (0);
 }
 
 /* Set a string option. */
 struct options_entry *
 cmd_set_option_string(struct cmd *self, unused struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
 	struct args		*args = self->args;
 	struct options_entry	*o;
@@ -358,7 +373,8 @@ cmd_set_option_string(struct cmd *self, unused struct cmd_q *cmdq,
 /* Set a number option. */
 struct options_entry *
 cmd_set_option_number(unused struct cmd *self, struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
 	long long	 ll;
 	const char     	*errstr;
@@ -375,7 +391,8 @@ cmd_set_option_number(unused struct cmd *self, struct cmd_q *cmdq,
 /* Set a key option. */
 struct options_entry *
 cmd_set_option_key(unused struct cmd *self, struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
 	int	key;
 
@@ -390,7 +407,8 @@ cmd_set_option_key(unused struct cmd *self, struct cmd_q *cmdq,
 /* Set a colour option. */
 struct options_entry *
 cmd_set_option_colour(unused struct cmd *self, struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
 	int	colour;
 
@@ -405,7 +423,8 @@ cmd_set_option_colour(unused struct cmd *self, struct cmd_q *cmdq,
 /* Set an attributes option. */
 struct options_entry *
 cmd_set_option_attributes(unused struct cmd *self, struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
 	int	attr;
 
@@ -420,7 +439,8 @@ cmd_set_option_attributes(unused struct cmd *self, struct cmd_q *cmdq,
 /* Set a flag option. */
 struct options_entry *
 cmd_set_option_flag(unused struct cmd *self, struct cmd_q *cmdq,
-    const struct options_table_entry *oe, struct options *oo, const char *value)
+    const struct options_table_entry *oe, struct options *oo,
+    const char *value)
 {
 	int	flag;
 
@@ -453,21 +473,27 @@ cmd_set_option_choice(unused struct cmd *self, struct cmd_q *cmdq,
 	const char	**choicep;
 	int		  n, choice = -1;
 
-	n = 0;
-	for (choicep = oe->choices; *choicep != NULL; choicep++) {
-		n++;
-		if (strncmp(*choicep, value, strlen(value)) != 0)
-			continue;
+	if (value == NULL) {
+		choice = options_get_number(oo, oe->name);
+		if (choice < 2)
+			choice = !choice;
+	} else {
+		n = 0;
+		for (choicep = oe->choices; *choicep != NULL; choicep++) {
+			n++;
+			if (strncmp(*choicep, value, strlen(value)) != 0)
+				continue;
 
-		if (choice != -1) {
-			cmdq_error(cmdq, "ambiguous value: %s", value);
+			if (choice != -1) {
+				cmdq_error(cmdq, "ambiguous value: %s", value);
+				return (NULL);
+			}
+			choice = n - 1;
+		}
+		if (choice == -1) {
+			cmdq_error(cmdq, "unknown value: %s", value);
 			return (NULL);
 		}
-		choice = n - 1;
-	}
-	if (choice == -1) {
-		cmdq_error(cmdq, "unknown value: %s", value);
-		return (NULL);
 	}
 
 	return (options_set_number(oo, oe->name, choice));

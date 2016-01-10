@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -40,7 +40,6 @@ const struct cmd_entry cmd_run_shell_entry = {
 	"bt:", 1, 1,
 	"[-b] " CMD_TARGET_PANE_USAGE " shell-command",
 	0,
-	NULL,
 	cmd_run_shell_exec
 };
 
@@ -81,25 +80,28 @@ cmd_run_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct winlink			*wl = NULL;
 	struct window_pane		*wp = NULL;
 	struct format_tree		*ft;
+	int				 cwd;
 
-	if (args_has(args, 't'))
+	if (args_has(args, 't')) {
 		wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp);
-	else {
+		cwd = wp->cwd;
+	} else {
 		c = cmd_find_client(cmdq, NULL, 1);
 		if (c != NULL && c->session != NULL) {
 			s = c->session;
 			wl = s->curw;
 			wp = wl->window->active;
 		}
+		if (cmdq->client != NULL && cmdq->client->session == NULL)
+			cwd = cmdq->client->cwd;
+		else if (s != NULL)
+			cwd = s->cwd;
+		else
+			cwd = -1;
 	}
 
 	ft = format_create();
-	if (s != NULL)
-		format_session(ft, s);
-	if (s != NULL && wl != NULL)
-		format_winlink(ft, s, wl);
-	if (wp != NULL)
-		format_window_pane(ft, wp);
+	format_defaults(ft, NULL, s, wl, wp);
 	shellcmd = format_expand(ft, args->argv[0]);
 	format_free(ft);
 
@@ -111,7 +113,8 @@ cmd_run_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 	cdata->cmdq = cmdq;
 	cmdq->references++;
 
-	job_run(shellcmd, s, cmd_run_shell_callback, cmd_run_shell_free, cdata);
+	job_run(shellcmd, s, cwd, cmd_run_shell_callback, cmd_run_shell_free,
+	    cdata);
 
 	if (cdata->bflag)
 		return (CMD_RETURN_NORMAL);
@@ -128,7 +131,7 @@ cmd_run_shell_callback(struct job *job)
 	int				 retcode;
 	u_int				 lines;
 
-	if (cmdq->dead)
+	if (cmdq->flags & CMD_Q_DEAD)
 		return;
 	cmd = cdata->cmd;
 
@@ -161,13 +164,9 @@ cmd_run_shell_callback(struct job *job)
 		retcode = WTERMSIG(job->status);
 		xasprintf(&msg, "'%s' terminated by signal %d", cmd, retcode);
 	}
-	if (msg != NULL) {
-		if (lines == 0)
-			cmdq_info(cmdq, "%s", msg);
-		else
-			cmd_run_shell_print(job, msg);
-		free(msg);
-	}
+	if (msg != NULL)
+		cmd_run_shell_print(job, msg);
+	free(msg);
 }
 
 void

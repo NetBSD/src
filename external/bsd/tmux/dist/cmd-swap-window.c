@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_swap_window_entry = {
 	"ds:t:", 0, 0,
 	"[-d] " CMD_SRCDST_WINDOW_USAGE,
 	0,
-	NULL,
 	cmd_swap_window_exec
 };
 
@@ -48,7 +47,7 @@ cmd_swap_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct window		*w;
 
 	target_src = args_get(args, 's');
-	if ((wl_src = cmd_find_window(cmdq, target_src, &src)) == NULL)
+	if ((wl_src = cmd_find_window_marked(cmdq, target_src, &src)) == NULL)
 		return (CMD_RETURN_ERROR);
 	target_dst = args_get(args, 't');
 	if ((wl_dst = cmd_find_window(cmdq, target_dst, &dst)) == NULL)

@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -53,7 +53,6 @@ layout_create_cell(struct layout_cell *lcparent)
 	lc->yoff = UINT_MAX;
 
 	lc->wp = NULL;
-	lc->lastwp = NULL;
 
 	return (lc);
 }
@@ -520,58 +519,6 @@ layout_resize_pane(struct window_pane *wp, enum layout_type type, int change)
 	notify_window_layout_changed(wp->window);
 }
 
-/* Resize pane based on mouse events. */
-void
-layout_resize_pane_mouse(struct client *c)
-{
-	struct window		*w;
-	struct window_pane	*wp;
-	struct mouse_event	*m = &c->tty.mouse;
-	int		      	 pane_border;
-
-	w = c->session->curw->window;
-
-	pane_border = 0;
-	if (m->event & MOUSE_EVENT_DRAG && m->flags & MOUSE_RESIZE_PANE) {
-		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if (!window_pane_visible(wp))
-				continue;
-
-			if (wp->xoff + wp->sx == m->lx &&
-			    wp->yoff <= 1 + m->ly &&
-			    wp->yoff + wp->sy >= m->ly) {
-				layout_resize_pane(wp, LAYOUT_LEFTRIGHT,
-				    m->x - m->lx);
-				pane_border = 1;
-			}
-			if (wp->yoff + wp->sy == m->ly &&
-			    wp->xoff <= 1 + m->lx &&
-			    wp->xoff + wp->sx >= m->lx) {
-				layout_resize_pane(wp, LAYOUT_TOPBOTTOM,
-				    m->y - m->ly);
-				pane_border = 1;
-			}
-		}
-		if (pane_border)
-			server_redraw_window(w);
-	} else if (m->event & MOUSE_EVENT_DOWN) {
-		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if ((wp->xoff + wp->sx == m->x &&
-			    wp->yoff <= 1 + m->y &&
-			    wp->yoff + wp->sy >= m->y) ||
-			    (wp->yoff + wp->sy == m->y &&
-			    wp->xoff <= 1 + m->x &&
-			    wp->xoff + wp->sx >= m->x)) {
-				pane_border = 1;
-			}
-		}
-	}
-	if (pane_border)
-		m->flags |= MOUSE_RESIZE_PANE;
-	else
-		m->flags &= ~MOUSE_RESIZE_PANE;
-}
-
 /* Helper function to grow pane. */
 int
 layout_resize_pane_grow(
@@ -739,6 +686,8 @@ layout_split_pane(
 	case LAYOUT_LEFTRIGHT:
 		if (size < 0)
 			size2 = ((sx + 1) / 2) - 1;
+		else if (insert_before)
+			size2 = sx - size - 1;
 		else
 			size2 = size;
 		if (size2 < PANE_MINIMUM)
@@ -752,6 +701,8 @@ layout_split_pane(
 	case LAYOUT_TOPBOTTOM:
 		if (size < 0)
 			size2 = ((sy + 1) / 2) - 1;
+		else if (insert_before)
+			size2 = sy - size - 1;
 		else
 			size2 = size;
 		if (size2 < PANE_MINIMUM)

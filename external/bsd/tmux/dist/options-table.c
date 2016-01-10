@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,16 +27,13 @@
  * options. These tables are the master copy of the options with their real
  * (user-visible) types, range limits and default values. At start these are
  * copied into the runtime global options trees (which only has number and
- * string types). These tables are then used to loop up the real type when
- * the user sets an option or its value needs to be shown.
+ * string types). These tables are then used to look up the real type when the
+ * user sets an option or its value needs to be shown.
  */
 
 /* Choice option type lists. */
 const char *options_table_mode_keys_list[] = {
 	"emacs", "vi", NULL
-};
-const char *options_table_mode_mouse_list[] = {
-	"off", "on", "copy-mode", NULL
 };
 const char *options_table_clock_mode_style_list[] = {
 	"12", "24", NULL
@@ -51,7 +48,7 @@ const char *options_table_status_position_list[] = {
 	"top", "bottom", NULL
 };
 const char *options_table_bell_action_list[] = {
-	"none", "any", "current", NULL
+	"none", "any", "current", "other", NULL
 };
 
 /* Server options. */
@@ -61,6 +58,11 @@ const struct options_table_entry server_options_table[] = {
 	  .minimum = 1,
 	  .maximum = INT_MAX,
 	  .default_num = 20
+	},
+
+	{ .name = "default-terminal",
+	  .type = OPTIONS_TABLE_STRING,
+	  .default_str = "screen"
 	},
 
 	{ .name = "escape-time",
@@ -80,14 +82,33 @@ const struct options_table_entry server_options_table[] = {
 	  .default_num = 0
 	},
 
+	{ .name = "history-file",
+	  .type = OPTIONS_TABLE_STRING,
+	  .default_str = NULL
+	},
+
+	{ .name = "message-limit",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 100
+	},
+
 	{ .name = "quiet",
 	  .type = OPTIONS_TABLE_FLAG,
-	  .default_num = 0 /* overridden in main() */
+	  .default_num = 0
 	},
 
 	{ .name = "set-clipboard",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 1
+	},
+
+	{ .name = "terminal-overrides",
+	  .type = OPTIONS_TABLE_STRING,
+	  .default_str = "xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
+	                 ":Cs=\\E]12;%p1%s\\007:Cr=\\E]112\\007"
+			 ":Ss=\\E[%p1%d q:Se=\\E[2 q,screen*:XT"
 	},
 
 	{ .name = NULL }
@@ -128,11 +149,6 @@ const struct options_table_entry session_options_table[] = {
 	{ .name = "default-shell",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = _PATH_BSHELL
-	},
-
-	{ .name = "default-terminal",
-	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "screen"
 	},
 
 	{ .name = "destroy-unattached",
@@ -188,11 +204,6 @@ const struct options_table_entry session_options_table[] = {
 	  .default_str = "lock -np"
 	},
 
-	{ .name = "lock-server",
-	  .type = OPTIONS_TABLE_FLAG,
-	  .default_num = 1
-	},
-
 	{ .name = "message-attr",
 	  .type = OPTIONS_TABLE_ATTRIBUTES,
 	  .default_num = 0,
@@ -234,29 +245,12 @@ const struct options_table_entry session_options_table[] = {
 	  .style = "message-style"
 	},
 
-	{ .name = "message-limit",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .minimum = 0,
-	  .maximum = INT_MAX,
-	  .default_num = 20
-	},
-
 	{ .name = "message-style",
 	  .type = OPTIONS_TABLE_STYLE,
 	  .default_str = "bg=yellow,fg=black"
 	},
 
-	{ .name = "mouse-resize-pane",
-	  .type = OPTIONS_TABLE_FLAG,
-	  .default_num = 0
-	},
-
-	{ .name = "mouse-select-pane",
-	  .type = OPTIONS_TABLE_FLAG,
-	  .default_num = 0
-	},
-
-	{ .name = "mouse-select-window",
+	{ .name = "mouse",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
 	},
@@ -264,40 +258,6 @@ const struct options_table_entry session_options_table[] = {
 	{ .name = "mouse-utf8",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
-	},
-
-	{ .name = "pane-active-border-bg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 8,
-	  .style = "pane-active-border-style"
-	},
-
-	{ .name = "pane-active-border-fg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 2,
-	  .style = "pane-active-border-style"
-	},
-
-	{ .name = "pane-active-border-style",
-	  .type = OPTIONS_TABLE_STYLE,
-	  .default_str = "fg=green"
-	},
-
-	{ .name = "pane-border-bg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 8,
-	  .style = "pane-border-style"
-	},
-
-	{ .name = "pane-border-fg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 8,
-	  .style = "pane-border-style"
-	},
-
-	{ .name = "pane-border-style",
-	  .type = OPTIONS_TABLE_STYLE,
-	  .default_str = "default"
 	},
 
 	{ .name = "prefix",
@@ -334,7 +294,7 @@ const struct options_table_entry session_options_table[] = {
 
 	{ .name = "set-titles-string",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "#S:#I:#W - \"#T\""
+	  .default_str = "#S:#I:#W - \"#T\" #{session_alerts}"
 	},
 
 	{ .name = "status",
@@ -381,7 +341,7 @@ const struct options_table_entry session_options_table[] = {
 
 	{ .name = "status-left",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "[#S]"
+	  .default_str = "[#S] "
 	},
 
 	{ .name = "status-left-attr",
@@ -422,7 +382,7 @@ const struct options_table_entry session_options_table[] = {
 
 	{ .name = "status-right",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "\"#{=22:pane_title}\" %H:%M %d-%b-%y"
+	  .default_str = " \"#{=21:pane_title}\" %H:%M %d-%b-%y"
 	},
 
 	{ .name = "status-right-attr",
@@ -465,14 +425,6 @@ const struct options_table_entry session_options_table[] = {
 	  .default_num = 0 /* overridden in main() */
 	},
 
-	{ .name = "terminal-overrides",
-	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "*256col*:colors=256"
-	                 ",xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
-	                 ":Cs=\\E]12;%p1%s\\007:Cr=\\E]112\\007"
-			 ":Ss=\\E[%p1%d q:Se=\\E[2 q,screen*:XT"
-	},
-
 	{ .name = "update-environment",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID "
@@ -486,11 +438,6 @@ const struct options_table_entry session_options_table[] = {
 	},
 
 	{ .name = "visual-bell",
-	  .type = OPTIONS_TABLE_FLAG,
-	  .default_num = 0
-	},
-
-	{ .name = "visual-content",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
 	},
@@ -532,21 +479,8 @@ const struct options_table_entry window_options_table[] = {
 
 	{ .name = "automatic-rename-format",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "#{?pane_in_mode,[tmux],#{pane_current_command}}#{?pane_dead,[dead],}"
-	},
-
-	{ .name = "c0-change-trigger",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .default_num = 250,
-	  .minimum = 0,
-	  .maximum = USHRT_MAX
-	},
-
-	{ .name = "c0-change-interval",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .default_num = 100,
-	  .minimum = 1,
-	  .maximum = USHRT_MAX
+	  .default_str = "#{?pane_in_mode,[tmux],#{pane_current_command}}"
+	                 "#{?pane_dead,[dead],}"
 	},
 
 	{ .name = "clock-mode-colour",
@@ -612,12 +546,6 @@ const struct options_table_entry window_options_table[] = {
 	  .default_num = MODEKEY_EMACS
 	},
 
-	{ .name = "mode-mouse",
-	  .type = OPTIONS_TABLE_CHOICE,
-	  .choices = options_table_mode_mouse_list,
-	  .default_num = 0
-	},
-
 	{ .name = "mode-style",
 	  .type = OPTIONS_TABLE_STYLE,
 	  .default_str = "bg=yellow,fg=black"
@@ -626,11 +554,6 @@ const struct options_table_entry window_options_table[] = {
 	{ .name = "monitor-activity",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
-	},
-
-	{ .name = "monitor-content",
-	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = ""
 	},
 
 	{ .name = "monitor-silence",
@@ -654,11 +577,45 @@ const struct options_table_entry window_options_table[] = {
 	  .default_num = 0
 	},
 
+	{ .name = "pane-active-border-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .default_num = 8,
+	  .style = "pane-active-border-style"
+	},
+
+	{ .name = "pane-active-border-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .default_num = 2,
+	  .style = "pane-active-border-style"
+	},
+
+	{ .name = "pane-active-border-style",
+	  .type = OPTIONS_TABLE_STYLE,
+	  .default_str = "fg=green"
+	},
+
 	{ .name = "pane-base-index",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .minimum = 0,
 	  .maximum = USHRT_MAX,
 	  .default_num = 0
+	},
+
+	{ .name = "pane-border-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .default_num = 8,
+	  .style = "pane-border-style"
+	},
+
+	{ .name = "pane-border-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .default_num = 8,
+	  .style = "pane-border-style"
+	},
+
+	{ .name = "pane-border-style",
+	  .type = OPTIONS_TABLE_STYLE,
+	  .default_str = "default"
 	},
 
 	{ .name = "remain-on-exit",
@@ -674,6 +631,16 @@ const struct options_table_entry window_options_table[] = {
 	{ .name = "utf8",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0 /* overridden in main() */
+	},
+
+	{ .name = "window-active-style",
+	  .type = OPTIONS_TABLE_STYLE,
+	  .default_str = "default"
+	},
+
+	{ .name = "window-style",
+	  .type = OPTIONS_TABLE_STYLE,
+	  .default_str = "default"
 	},
 
 	{ .name = "window-status-activity-attr",
@@ -734,29 +701,6 @@ const struct options_table_entry window_options_table[] = {
 	  .style = "window-status-style"
 	},
 
-	{ .name = "window-status-content-attr",
-	  .type = OPTIONS_TABLE_ATTRIBUTES,
-	  .default_num = GRID_ATTR_REVERSE,
-	  .style = "window-status-content-style"
-	},
-
-	{ .name = "window-status-content-bg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 8,
-	  .style = "window-status-content-style"
-	},
-
-	{ .name = "window-status-content-fg",
-	  .type = OPTIONS_TABLE_COLOUR,
-	  .default_num = 8,
-	  .style = "window-status-content-style"
-	},
-
-	{ .name = "window-status-content-style",
-	  .type = OPTIONS_TABLE_STYLE,
-	  .default_str = "reverse"
-	},
-
 	{ .name = "window-status-current-attr",
 	  .type = OPTIONS_TABLE_ATTRIBUTES,
 	  .default_num = 0,
@@ -777,7 +721,7 @@ const struct options_table_entry window_options_table[] = {
 
 	{ .name = "window-status-current-format",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "#I:#W#F"
+	  .default_str = "#I:#W#{?window_flags,#{window_flags}, }"
 	},
 
 	{ .name = "window-status-current-style",
@@ -793,7 +737,7 @@ const struct options_table_entry window_options_table[] = {
 
 	{ .name = "window-status-format",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "#I:#W#F"
+	  .default_str = "#I:#W#{?window_flags,#{window_flags}, }"
 	},
 
 	{ .name = "window-status-last-attr",

@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_kill_pane_entry = {
 	"at:", 0, 0,
 	"[-a] " CMD_TARGET_PANE_USAGE,
 	0,
-	NULL,
 	cmd_kill_pane_exec
 };
 

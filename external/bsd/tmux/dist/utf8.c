@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -200,6 +201,16 @@ int	utf8_overlap(struct utf8_width_entry *, struct utf8_width_entry *);
 u_int	utf8_combine(const struct utf8_data *);
 u_int	utf8_width(const struct utf8_data *);
 
+/* Set a single character. */
+void
+utf8_set(struct utf8_data *utf8data, u_char ch)
+{
+	*utf8data->data = ch;
+	utf8data->size = 1;
+
+	utf8data->width = 1;
+}
+
 /*
  * Open UTF-8 sequence.
  *
@@ -248,8 +259,7 @@ utf8_append(struct utf8_data *utf8data, u_char ch)
 
 /* Check if two width tree entries overlap. */
 int
-utf8_overlap(
-    struct utf8_width_entry *item1, struct utf8_width_entry *item2)
+utf8_overlap(struct utf8_width_entry *item1, struct utf8_width_entry *item2)
 {
 	if (item1->first >= item2->first && item1->first <= item2->last)
 		return (1);
@@ -281,9 +291,9 @@ utf8_build(void)
 		while (*ptr != NULL) {
 			node = *ptr;
 			if (item->last < node->first)
-				ptr = &(node->left);
+				ptr = &node->left;
 			else if (item->first > node->last)
-				ptr = &(node->right);
+				ptr = &node->right;
 		}
 		*ptr = item;
 	}
@@ -313,7 +323,7 @@ utf8_combine(const struct utf8_data *utf8data)
 		value = utf8data->data[3] & 0x3f;
 		value |= (utf8data->data[2] & 0x3f) << 6;
 		value |= (utf8data->data[1] & 0x3f) << 12;
-		value |= (utf8data->data[0] & 0x3f) << 18;
+		value |= (utf8data->data[0] & 0x07) << 18;
 		break;
 	}
 	return (value);
@@ -351,4 +361,154 @@ utf8_width(const struct utf8_data *utf8data)
 			return (item->width);
 	}
 	return (1);
+}
+
+/*
+ * Encode len characters from src into dst, which is guaranteed to have four
+ * bytes available for each character from src (for \abc or UTF-8) plus space
+ * for \0.
+ */
+int
+utf8_strvis(char *dst, const char *src, size_t len, int flag)
+{
+	struct utf8_data	 utf8data;
+	const char		*start, *end;
+	int			 more;
+	size_t			 i;
+
+	start = dst;
+	end = src + len;
+
+	while (src < end) {
+		if (utf8_open(&utf8data, *src)) {
+			more = 1;
+			while (++src < end && more)
+				more = utf8_append(&utf8data, *src);
+			if (!more) {
+				/* UTF-8 character finished. */
+				for (i = 0; i < utf8data.size; i++)
+					*dst++ = utf8data.data[i];
+				continue;
+			} else if (utf8data.have > 0) {
+				/* Not a complete UTF-8 character. */
+				src -= utf8data.have;
+			}
+		}
+		if (src < end - 1)
+			dst = vis(dst, src[0], flag, src[1]);
+		else if (src < end)
+			dst = vis(dst, src[0], flag, '\0');
+		src++;
+	}
+
+	*dst = '\0';
+	return (dst - start);
+}
+
+/*
+ * Convert a string into a buffer of UTF-8 characters. Terminated by size == 0.
+ * Caller frees.
+ */
+struct utf8_data *
+utf8_fromcstr(const char *src)
+{
+	struct utf8_data	*dst;
+	size_t			 n;
+	int			 more;
+
+	dst = NULL;
+
+	n = 0;
+	while (*src != '\0') {
+		dst = xreallocarray(dst, n + 1, sizeof *dst);
+		if (utf8_open(&dst[n], *src)) {
+			more = 1;
+			while (*++src != '\0' && more)
+				more = utf8_append(&dst[n], *src);
+			if (!more) {
+				n++;
+				continue;
+			}
+			src -= dst[n].have;
+		}
+		utf8_set(&dst[n], *src);
+		src++;
+
+		n++;
+	}
+
+	dst = xreallocarray(dst, n + 1, sizeof *dst);
+	dst[n].size = 0;
+	return (dst);
+}
+
+/* Convert from a buffer of UTF-8 characters into a string. Caller frees. */
+char *
+utf8_tocstr(struct utf8_data *src)
+{
+	char	*dst;
+	size_t	 n;
+
+	dst = NULL;
+
+	n = 0;
+	for(; src->size != 0; src++) {
+		dst = xreallocarray(dst, n + src->size, 1);
+		memcpy(dst + n, src->data, src->size);
+		n += src->size;
+	}
+
+	dst = xreallocarray(dst, n + 1, 1);
+	dst[n] = '\0';
+	return (dst);
+}
+
+/* Get width of UTF-8 string. */
+u_int
+utf8_cstrwidth(const char *s)
+{
+	struct utf8_data	tmp;
+	u_int			width;
+	int			more;
+
+	width = 0;
+	while (*s != '\0') {
+		if (utf8_open(&tmp, *s)) {
+			more = 1;
+			while (*++s != '\0' && more)
+				more = utf8_append(&tmp, *s);
+			if (!more) {
+				width += tmp.width;
+				continue;
+			}
+			s -= tmp.have;
+		}
+		width++;
+		s++;
+	}
+	return (width);
+}
+
+/* Trim UTF-8 string to width. Caller frees. */
+char *
+utf8_trimcstr(const char *s, u_int width)
+{
+	struct utf8_data	*tmp, *next;
+	char			*out;
+	u_int			 at;
+
+	tmp = utf8_fromcstr(s);
+
+	at = 0;
+	for (next = tmp; next->size != 0; next++) {
+		if (at + next->width > width) {
+			next->size = 0;
+			break;
+		}
+		at += next->width;
+	}
+
+	out = utf8_tocstr(tmp);
+	free(tmp);
+	return (out);
 }

@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,72 +17,65 @@
  */
 
 #include <sys/param.h>
-#include <sys/procfs.h>
+#include <sys/stat.h>
 
+#include <event.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
 char *
-osdep_get_name(unused int fd, char *tty)
+osdep_get_name(int fd, unused char *tty)
 {
-	struct psinfo	 p;
-	char		*path;
-	ssize_t		 bytes;
-	int		 f, ttyfd, retval;
-	pid_t		 pgrp;
+	FILE	*f;
+	char	*path, *buf;
+	size_t	 len;
+	int	 ch;
+	pid_t	 pgrp;
 
-	if ((ttyfd = open(tty, O_RDONLY|O_NOCTTY)) == -1)
+	if ((pgrp = tcgetpgrp(fd)) == -1)
 		return (NULL);
 
-	retval = ioctl(ttyfd, TIOCGPGRP, &pgrp);
-	close(ttyfd);
-	if (retval == -1)
+	xasprintf(&path, "/proc/%lld/cmdline", (long long) pgrp);
+	if ((f = fopen(path, "r")) == NULL) {
+		free(path);
 		return (NULL);
-
-	xasprintf(&path, "/proc/%u/psinfo", (u_int) pgrp);
-	f = open(path, O_RDONLY);
+	}
 	free(path);
-	if (f < 0)
-		return (NULL);
 
-	bytes = read(f, &p, sizeof(p));
-	close(f);
-	if (bytes != sizeof(p))
-		return (NULL);
+	len = 0;
+	buf = NULL;
+	while ((ch = fgetc(f)) != EOF) {
+		if (ch == '\0')
+			break;
+		buf = xrealloc(buf, len + 2);
+		buf[len++] = ch;
+	}
+	if (buf != NULL)
+		buf[len] = '\0';
 
-	return (xstrdup(p.pr_fname));
+	fclose(f);
+	return (buf);
 }
 
 char *
 osdep_get_cwd(int fd)
 {
-	static char      target[MAXPATHLEN + 1];
-	char            *path;
-	const char      *ttypath;
-	ssize_t          n;
-	pid_t            pgrp;
-	int              len, retval, ttyfd;
+	static char	 target[MAXPATHLEN + 1];
+	char		*path;
+	pid_t		 pgrp;
+	ssize_t		 n;
 
-	if ((ttypath = ptsname(fd)) == NULL)
-		return (NULL);
-	if ((ttyfd = open(ttypath, O_RDONLY|O_NOCTTY)) == -1)
+	if ((pgrp = tcgetpgrp(fd)) == -1)
 		return (NULL);
 
-	retval = ioctl(ttyfd, TIOCGPGRP, &pgrp);
-	close(ttyfd);
-	if (retval == -1)
-		return (NULL);
-
-	xasprintf(&path, "/proc/%u/cwd", (u_int) pgrp);
+	xasprintf(&path, "/proc/%lld/cwd", (long long) pgrp);
 	n = readlink(path, target, MAXPATHLEN);
 	free(path);
 	if (n > 0) {
 		target[n] = '\0';
-		if ((len = strlen(target)) > 1 && target[len - 1] == '/')
-			target[len - 1] = '\0';
 		return (target);
 	}
 	return (NULL);

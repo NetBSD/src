@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -34,25 +34,23 @@ enum cmd_retval	cmd_attach_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_attach_session_entry = {
 	"attach-session", "attach",
-	"c:drt:", 0, 0,
-	"[-dr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
-	CMD_CANTNEST|CMD_STARTSERVER,
-	NULL,
+	"c:dErt:", 0, 0,
+	"[-dEr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
+	CMD_STARTSERVER,
 	cmd_attach_session_exec
 };
 
 enum cmd_retval
 cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
-    const char *cflag)
+    const char *cflag, int Eflag)
 {
 	struct session		*s;
-	struct client		*c;
+	struct client		*c = cmdq->client, *c_loop;
 	struct winlink		*wl = NULL;
 	struct window		*w = NULL;
 	struct window_pane	*wp = NULL;
 	const char		*update;
 	char			*cause;
-	u_int			 i;
 	int			 fd;
 	struct format_tree	*ft;
 	char			*cp;
@@ -71,15 +69,23 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 	} else {
 		if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
 			return (CMD_RETURN_ERROR);
-		w = cmd_lookup_windowid(tflag);
-		if (w == NULL && (wp = cmd_lookup_paneid(tflag)) != NULL)
-			w = wp->window;
+		w = window_find_by_id_str(tflag);
+		if (w == NULL) {
+			wp = window_pane_find_by_id_str(tflag);
+			if (wp != NULL)
+				w = wp->window;
+		}
 		if (w != NULL)
 			wl = winlink_find_by_window(&s->windows, w);
 	}
 
-	if (cmdq->client == NULL)
+	if (c == NULL)
 		return (CMD_RETURN_NORMAL);
+	if (server_client_check_nested(c)) {
+		cmdq_error(cmdq, "sessions should be nested with care, "
+		    "unset $TMUX to force");
+		return (CMD_RETURN_ERROR);
+	}
 
 	if (wl != NULL) {
 		if (wp != NULL)
@@ -87,96 +93,82 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 		session_set_current(s, wl);
 	}
 
-	if (cmdq->client->session != NULL) {
+	if (cflag != NULL) {
+		ft = format_create();
+		format_defaults(ft, cmd_find_client(cmdq, NULL, 1), s,
+		    NULL, NULL);
+		cp = format_expand(ft, cflag);
+		format_free(ft);
+
+		fd = open(cp, O_RDONLY|O_DIRECTORY);
+		free(cp);
+		if (fd == -1) {
+			cmdq_error(cmdq, "bad working directory: %s",
+			    strerror(errno));
+			return (CMD_RETURN_ERROR);
+		}
+		close(s->cwd);
+		s->cwd = fd;
+	}
+
+	if (c->session != NULL) {
 		if (dflag) {
 			/*
 			 * Can't use server_write_session in case attaching to
 			 * the same session as currently attached to.
 			 */
-			for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-				c = ARRAY_ITEM(&clients, i);
-				if (c == NULL || c->session != s)
-					continue;
-				if (c == cmdq->client)
+			TAILQ_FOREACH(c_loop, &clients, entry) {
+				if (c_loop->session != s || c == c_loop)
 					continue;
 				server_write_client(c, MSG_DETACH,
-				    c->session->name,
-				    strlen(c->session->name) + 1);
+				    c_loop->session->name,
+				    strlen(c_loop->session->name) + 1);
 			}
 		}
 
-		if (cflag != NULL) {
-			ft = format_create();
-			if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
-				format_client(ft, c);
-			format_session(ft, s);
-			format_winlink(ft, s, s->curw);
-			format_window_pane(ft, s->curw->window->active);
-			cp = format_expand(ft, cflag);
-			format_free(ft);
-
-			fd = open(cp, O_RDONLY|O_DIRECTORY);
-			free(cp);
-			if (fd == -1) {
-				cmdq_error(cmdq, "bad working directory: %s",
-				    strerror(errno));
-				return (CMD_RETURN_ERROR);
-			}
-			close(s->cwd);
-			s->cwd = fd;
+		if (!Eflag) {
+			update = options_get_string(&s->options,
+			    "update-environment");
+			environ_update(update, &c->environ, &s->environ);
 		}
 
-		cmdq->client->session = s;
-		notify_attached_session_changed(cmdq->client);
-		session_update_activity(s);
-		server_redraw_client(cmdq->client);
+		c->session = s;
+		status_timer_start(c);
+		notify_attached_session_changed(c);
+		session_update_activity(s, NULL);
+		gettimeofday(&s->last_attached_time, NULL);
+		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 	} else {
-		if (server_client_open(cmdq->client, s, &cause) != 0) {
+		if (server_client_open(c, &cause) != 0) {
 			cmdq_error(cmdq, "open terminal failed: %s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
 		}
 
-		if (cflag != NULL) {
-			ft = format_create();
-			if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
-				format_client(ft, c);
-			format_session(ft, s);
-			format_winlink(ft, s, s->curw);
-			format_window_pane(ft, s->curw->window->active);
-			cp = format_expand(ft, cflag);
-			format_free(ft);
-
-			fd = open(cp, O_RDONLY|O_DIRECTORY);
-			free(cp);
-			if (fd == -1) {
-				cmdq_error(cmdq, "bad working directory: %s",
-				    strerror(errno));
-				return (CMD_RETURN_ERROR);
-			}
-			close(s->cwd);
-			s->cwd = fd;
-		}
-
 		if (rflag)
-			cmdq->client->flags |= CLIENT_READONLY;
+			c->flags |= CLIENT_READONLY;
 
 		if (dflag) {
 			server_write_session(s, MSG_DETACH, s->name,
 			    strlen(s->name) + 1);
 		}
 
-		update = options_get_string(&s->options, "update-environment");
-		environ_update(update, &cmdq->client->environ, &s->environ);
+		if (!Eflag) {
+			update = options_get_string(&s->options,
+			    "update-environment");
+			environ_update(update, &c->environ, &s->environ);
+		}
 
-		cmdq->client->session = s;
-		notify_attached_session_changed(cmdq->client);
-		session_update_activity(s);
-		server_redraw_client(cmdq->client);
+		c->session = s;
+		status_timer_start(c);
+		notify_attached_session_changed(c);
+		session_update_activity(s, NULL);
+		gettimeofday(&s->last_attached_time, NULL);
+		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 
-		server_write_ready(cmdq->client);
+		server_write_ready(c);
 		cmdq->client_exit = 0;
 	}
 	recalculate_sizes();
@@ -191,5 +183,6 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct args	*args = self->args;
 
 	return (cmd_attach_session(cmdq, args_get(args, 't'),
-	    args_has(args, 'd'), args_has(args, 'r'), args_get(args, 'c')));
+	    args_has(args, 'd'), args_has(args, 'r'), args_get(args, 'c'),
+	    args_has(args, 'E')));
 }

@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -23,8 +23,8 @@
 #include "tmux.h"
 
 /*
- * Set window layouts - predefined methods to arrange windows. These are one-off
- * and generate a layout tree.
+ * Set window layouts - predefined methods to arrange windows. These are
+ * one-off and generate a layout tree.
  */
 
 void	layout_set_even_h(struct window *);
@@ -43,12 +43,6 @@ const struct {
 	{ "main-vertical", layout_set_main_v },
 	{ "tiled", layout_set_tiled },
 };
-
-const char *
-layout_set_name(u_int layout)
-{
-	return (layout_sets[layout].name);
-}
 
 int
 layout_set_lookup(const char *name)
