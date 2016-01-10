@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_unittest.c,v 1.1.1.1 2014/07/12 11:57:48 spz Exp $	*/
+/*	$NetBSD: dns_unittest.c,v 1.1.1.2 2016/01/10 19:44:40 christos Exp $	*/
 /*
  * Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
  *
@@ -31,6 +31,8 @@
  * The tests for the standard dhcid records compare to values
  * from rfc 4701
  */
+
+#if defined (NSUPDATE)
 
 char *name_1 = "chi6.example.com"; 
 u_int8_t clid_1[] = {0x00, 0x01, 0x00, 0x06, 0x41, 0x2d, 0xf1, 0x66, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
@@ -174,3 +176,19 @@ ATF_TP_ADD_TCS(tp)
 
     return (atf_no_error());
 }
+
+#else /* NSUPDATE */
+ATF_TC(untested);
+ATF_TC_HEAD(untested, tc) {
+    atf_tc_set_md_var(tc, "descr", "skipping dns test");
+}
+ATF_TC_BODY(untested, tc) {
+    IGNORE_UNUSED(tc);
+    atf_tc_skip("NSUPDATE is not defined");
+}
+ATF_TP_ADD_TCS(tp) {
+    ATF_TP_ADD_TC(tp, untested);
+
+    return (atf_no_error());
+}
+#endif /* NSUPDATE */

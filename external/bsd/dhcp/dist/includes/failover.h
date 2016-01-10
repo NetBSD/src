@@ -1,4 +1,4 @@
-/*	$NetBSD: failover.h,v 1.1.1.3 2014/07/12 11:57:56 spz Exp $	*/
+/*	$NetBSD: failover.h,v 1.1.1.4 2016/01/10 19:44:43 christos Exp $	*/
 /* failover.h
 
    Definitions for address trees... */
@@ -161,6 +161,8 @@ typedef struct {
 #define FTM_STATE		10
 #define FTM_CONTACT		11
 #define FTM_DISCONNECT		12
+
+#define FTM_MAX			FTM_DISCONNECT
 
 /* Reject reasons from Section 12.21: */
 #define FTR_ILLEGAL_IP_ADDR	1
