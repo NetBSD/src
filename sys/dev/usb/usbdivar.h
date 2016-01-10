@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.21 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.22 2016/01/10 10:33:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -204,6 +204,10 @@ struct usbd_device {
 	device_t	       *ud_subdevs;	/* sub-devices */
 	int			ud_nifaces_claimed; /* number of ifaces in use */
 	void		       *ud_hcpriv;
+
+	char		       *ud_serial;	/* serial number, can be NULL */
+	char		       *ud_vendor;	/* vendor string, can be NULL */
+	char		       *ud_product;	/* product string can be NULL */
 };
 
 struct usbd_interface {
@@ -294,6 +298,7 @@ void usbd_dump_pipe(struct usbd_pipe *);
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
+void		usbd_get_device_strings(struct usbd_device *);
 void		usb_delay_ms_locked(struct usbd_bus *, u_int, kmutex_t *);
 void		usb_delay_ms(struct usbd_bus *, u_int);
 void		usbd_delay_ms_locked(struct usbd_device *, u_int, kmutex_t *);
