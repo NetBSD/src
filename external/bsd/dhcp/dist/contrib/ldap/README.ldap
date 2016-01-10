@@ -83,6 +83,12 @@ options:
    ldap-tls-reqcert, ldap-tls-ca-file, ldap-tls-ca-dir, ldap-tls-cert
    ldap-tls-key, ldap-tls-crlcheck, ldap-tls-ciphers, ldap-tls-randfile
 
+The ldap-init-retry <num> enables an optional ldap connect retry loop with
+the specified number of retries with a one second sleep between each try
+during the initial startup of the dhcp server.
+It allows to catch the condition, that the (remote) ldap server is not yet
+started at the start time of the dhcp server.
+
 All of these parameters should be self explanatory except for the ldap-method.
 You can set this to static or dynamic.  If you set it to static, the
 configuration is read once on startup, and LDAP isn't used anymore.  But, if
@@ -189,3 +195,38 @@ into problems reading the configuration, try running dhcpd with the -d flag.
 If you still have problems, edit the site.conf file in the DHCP source and
 add the line: COPTS= -DDEBUG_LDAP and recompile DHCP. (make sure you run make
 clean and rerun configure before you rebuild).
+
+DHCPv6 requires a separate instance of the dhcpd server from the
+DHCPv4 server.  
+
+It is convenient to use distinct LDAP login DNs for the two servers,
+and setup LDAP access restrictions in the LDAP server, so that each
+DHCP server only has access to its own data.
+
+You will need to create a separate configuration file,
+call it /etc/dhcpd6.conf.  For example:
+
+ldap-server "localhost";
+ldap-port 389;
+ldap-username "cn=DHCPv6 User, dc=ntelos, dc=net";
+ldap-password "blahblah";
+ldap-base-dn "dc=ntelos, dc=net";
+ldap-method dynamic;
+ldap-debug-file "/var/log/dhcp-ldap-startup.log";
+
+And use these command line arguments to dhcpd:
+
+dhcpd eth... -6 -cf /etc/dhcpd6.conf -pf /var/run/dhcpd6.pid -lf /var/lib/dhcpd6/dhcpd.leases
+
+For DHCPv6, the client configuration is the same, but substitute the
+Client ID for the Ethernet hardware address.  Here is an example of a
+host definition for a DHCPv6 client:
+
+dn: cn=examplehost,cn=XXXX:XXXX:XXXX:XXXX::/64,cn=Network-eth1,cn=DHCPv6,dc=example,dc=com
+objectClass: top
+objectClass: dhcpHost
+cn: examplehost
+dhcpClientId: XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX
+dhcpStatements: fixed-address6 XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX
+option host-name "examplehost.ipv6.example.com"
+option domain-name "ipv6.example.com"
