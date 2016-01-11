@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.74 2016/01/01 16:09:00 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.75 2016/01/11 14:55:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.74 2016/01/01 16:09:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.75 2016/01/11 14:55:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -572,7 +572,7 @@ rnd_init(void)
 		mutex_spin_exit(&rnd_global.lock);
 		rnd_printf("rnd: seeded with %d bits\n",
 		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
-		memset(boot_rsp, 0, sizeof(*boot_rsp));
+		explicit_memset(boot_rsp, 0, sizeof(*boot_rsp));
 	}
 	rnd_attach_source(&rnd_printf_source, "printf", RND_TYPE_UNKNOWN,
 			  RND_FLAG_NO_ESTIMATE);
@@ -621,7 +621,7 @@ static void
 rnd_sample_free(rnd_sample_t *c)
 {
 
-	memset(c, 0, sizeof(*c));
+	explicit_memset(c, 0, sizeof(*c));
 	pool_cache_put(rnd_mempc, c);
 }
 
@@ -996,7 +996,7 @@ rnd_hwrng_test(rnd_sample_t *sample)
 			return 1;
 		}
 		source->test_cnt = -1;
-		memset(source->test, 0, sizeof(*source->test));
+		explicit_memset(source->test, 0, sizeof(*source->test));
 	}
 	return 0;
 }
@@ -1201,7 +1201,7 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 			    "STATISTICAL TEST!\n");
 			continue;
 		}
-		memset(&rnd_rt, 0, sizeof(rnd_rt));
+		explicit_memset(&rnd_rt, 0, sizeof(rnd_rt));
 		rndpool_add_data(&rnd_global.pool, rnd_testbits,
 		    sizeof(rnd_testbits), entropy_count);
 		memset(rnd_testbits, 0, sizeof(rnd_testbits));
@@ -1319,7 +1319,7 @@ rnd_seed(void *base, size_t len)
 		rndpool_add_data(&rnd_global.pool, boot_rsp->data,
 		    sizeof(boot_rsp->data),
 		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
-		memset(boot_rsp, 0, sizeof(*boot_rsp));
+		explicit_memset(boot_rsp, 0, sizeof(*boot_rsp));
 		mutex_spin_exit(&rnd_global.lock);
 	} else {
 		rnd_printf_verbose("rnd: not ready, deferring seed feed.\n");
