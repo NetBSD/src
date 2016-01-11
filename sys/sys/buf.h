@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.123 2016/01/11 01:08:09 dholland Exp $ */
+/*     $NetBSD: buf.h,v 1.124 2016/01/11 01:22:36 dholland Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,6 +87,8 @@ struct kauth_cred;
 
 extern kmutex_t bufcache_lock;
 extern kmutex_t buffer_lock;
+
+extern void (*biodone_vfs)(buf_t *);
 
 /*
  * The buffer header describes an I/O operation in the kernel.

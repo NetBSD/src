@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.257 2016/01/01 18:58:58 martin Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.258 2016/01/11 01:22:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.257 2016/01/01 18:58:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.258 2016/01/11 01:22:36 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -444,7 +444,6 @@ bufinit(void)
 	struct bqueue *dp;
 	int use_std;
 	u_int i;
-	extern void (*biodone_vfs)(buf_t *);
 
 	biodone_vfs = biodone;
 
