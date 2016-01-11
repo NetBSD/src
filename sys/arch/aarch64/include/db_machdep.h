@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.2 2016/01/11 07:46:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ extern db_regs_t ddb_regs;
 static inline bool 
 inst_call(db_expr_t insn)
 {
-	return (insn & 0xfc000000) == 0x92000000	/* bl */
+	return (insn & 0xfc000000) == 0x94000000	/* bl */
 	    || (insn & 0xfffffcef) == 0xd63f0000;	/* blr */
 }
 
