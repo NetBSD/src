@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.85 2015/12/26 16:48:54 macallan Exp $ */
+/* $NetBSD: awin_reg.h,v 1.86 2016/01/11 17:09:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -2343,7 +2343,9 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_TVE_CONFIG_2		0x00000138
 #define AWIN_TVE_CONFIG_3		0x0000013C
 
-
+/* AWIN_TVE_ENABLE */
+#define AWIN_TVE_CLOCK_GATE_DISABLE	__BIT(31)
+#define AWIN_TVE_EN			__BIT(0)
 
 /*
  * A31 registers
