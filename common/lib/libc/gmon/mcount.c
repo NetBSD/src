@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.11 2016/01/10 09:04:32 ryo Exp $	*/
+/*	$NetBSD: mcount.c,v 1.12 2016/01/11 01:57:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.11 2016/01/10 09:04:32 ryo Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.12 2016/01/11 01:57:12 christos Exp $");
 #endif
 #endif
 
@@ -104,6 +104,16 @@ _MCOUNT_DECL(u_long, u_long)
     __attribute__((__no_instrument_function__))
 #endif
     __used;
+#endif
+
+/* XXX: make these interfaces */
+#ifdef _RUMPKERNEL
+#undef MCOUNT_ENTER
+#define MCOUNT_ENTER
+#undef MCOUNT_EXIT
+#define MCOUNT_EXIT
+#undef MCOUNT
+#define MCOUNT
 #endif
 
 /*
