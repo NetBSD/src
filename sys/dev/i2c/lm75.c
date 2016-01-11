@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.28 2016/01/03 17:27:57 jdc Exp $	*/
+/*	$NetBSD: lm75.c,v 1.29 2016/01/11 18:23:11 jdc Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.28 2016/01/03 17:27:57 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.29 2016/01/11 18:23:11 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,16 +206,16 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
 
 	/* Read temperature limit(s) and remember initial value(s). */
-	if (lmtemp_temp_read(sc, LM75_REG_TOS_SET_POINT, &sc->sc_smax, 1)
-	    != 0) {
-		aprint_error_dev(self, "unable to read Tos register\n");
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		return;
-	}
-	sc->sc_tmax = sc->sc_smax;
 	if (i == lmtemp_lm77) {
+		if (lmtemp_temp_read(sc, LM77_REG_TCRIT_SET_POINT,
+		    &sc->sc_scrit, 1) != 0) {
+			aprint_error_dev(self,
+			    "unable to read low register\n");
+			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			return;
+		}
 		if (lmtemp_temp_read(sc, LM77_REG_TLOW_SET_POINT,
-		    &sc->sc_smax, 1) != 0) {
+		    &sc->sc_smin, 1) != 0) {
 			aprint_error_dev(self,
 			    "unable to read low register\n");
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
@@ -228,7 +228,15 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
 			return;
 		}
+	} else {	/* LM75 or compatible */
+		if (lmtemp_temp_read(sc, LM75_REG_TOS_SET_POINT,
+		    &sc->sc_smax, 1) != 0) {
+			aprint_error_dev(self, "unable to read Tos register\n");
+			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			return;
+		}
 	}
+	sc->sc_tmax = sc->sc_smax;
 
 	if (i == lmtemp_lm75)
 		lmtemp_setup_sysctl(sc);
@@ -349,12 +357,12 @@ lmtemp_getlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	*props &= ~(PROP_CRITMAX);
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_tag, 0);
 	if (lmtemp_temp_read(sc, LM75_REG_TOS_SET_POINT, &val, 0) == 0) {
 		limits->sel_critmax = val;
 		*props |= PROP_CRITMAX;
 	}
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 }
 
 static void
@@ -366,7 +374,7 @@ lmtemp_getlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	*props &= ~(PROP_CRITMAX | PROP_WARNMAX | PROP_WARNMIN);
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_tag, 0);
 	if (lmtemp_temp_read(sc, LM77_REG_TCRIT_SET_POINT, &val, 0) == 0) {
 		limits->sel_critmax = val;
 		*props |= PROP_CRITMAX;
@@ -379,7 +387,7 @@ lmtemp_getlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
 		limits->sel_warnmin = val;
 		*props |= PROP_WARNMIN;
 	}
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 }
 
 static void
@@ -394,11 +402,11 @@ lmtemp_setlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata,
 			limit = sc->sc_smax;
 		else
 			limit = limits->sel_critmax;
-		iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+		iic_acquire_bus(sc->sc_tag, 0);
 		lmtemp_temp_write(sc, LM75_REG_THYST_SET_POINT,
 		    limit - 5000000, 0);
 		lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT, limit, 0);
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		iic_release_bus(sc->sc_tag, 0);
 
 		/* Synchronise sysctl */
 		sc->sc_tmax = (limit - 273150000) / 1000000;
@@ -412,10 +420,10 @@ lmtemp_setlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
 	struct lmtemp_softc *sc = sme->sme_cookie;
 	int32_t limit;
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_tag, 0);
 	if (*props & PROP_CRITMAX) {
 		if (limits == NULL)	/* Restore defaults */
-			limit = sc->sc_smax;
+			limit = sc->sc_scrit;
 		else
 			limit = limits->sel_critmax;
 		lmtemp_temp_write(sc, LM77_REG_TCRIT_SET_POINT, limit, 0);
@@ -429,12 +437,12 @@ lmtemp_setlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
 	}
 	if (*props & PROP_WARNMIN) {
 		if (limits == NULL)	/* Restore defaults */
-			limit = sc->sc_smax;
+			limit = sc->sc_smin;
 		else
 			limit = limits->sel_warnmin;
 		lmtemp_temp_write(sc, LM77_REG_TLOW_SET_POINT, limit, 0);
 	}
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 }
 
 static uint32_t
