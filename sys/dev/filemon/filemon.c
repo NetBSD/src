@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.27 2016/01/09 07:27:31 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.28 2016/01/11 01:37:36 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.27 2016/01/09 07:27:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.28 2016/01/11 01:37:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -227,7 +227,6 @@ filemon_open(dev_t dev, int oflags __unused, int mode __unused,
 
 	filemon = kmem_alloc(sizeof(struct filemon), KM_SLEEP);
 	rw_init(&filemon->fm_mtx);
-	filemon->fm_fd = -1;
 	filemon->fm_fp = NULL;
 	filemon->fm_pid = curproc->p_pid;
 
@@ -270,7 +269,7 @@ filemon_close(struct file * fp)
 	 */
 	rw_enter(&filemon->fm_mtx, RW_WRITER);
 	if (filemon->fm_fp) {
-		fd_putfile(filemon->fm_fd);	/* release our reference */
+		closef(filemon->fm_fp);	/* release our reference */
 		filemon->fm_fp = NULL;
 	}
 	rw_exit(&filemon->fm_mtx);
@@ -284,6 +283,7 @@ static int
 filemon_ioctl(struct file * fp, u_long cmd, void *data)
 {
 	int error = 0;
+	int fd;
 	struct filemon *filemon;
 	struct proc *tp;
 
@@ -306,11 +306,11 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 
 		/* First, release any current output file descriptor */
 		if (filemon->fm_fp)
-			fd_putfile(filemon->fm_fd);
+			closef(filemon->fm_fp);
 
 		/* Now set up the new one */
-		filemon->fm_fd = *((int *) data);
-		if ((filemon->fm_fp = fd_getfile(filemon->fm_fd)) == NULL) {
+		fd = *((int *) data);
+		if ((filemon->fm_fp = fd_getfile2(curproc, fd)) == NULL) {
 			error = EBADF;
 			break;
 		}
