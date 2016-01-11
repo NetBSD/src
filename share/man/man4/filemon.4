@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.17 2016/01/06 05:22:06 wiz Exp $
+.\"	$NetBSD: filemon.4,v 1.18 2016/01/11 01:45:27 pgoyette Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -218,17 +218,11 @@ successful, and is thus more complex to post-process.
 .Sh HISTORY
 .Nm
 was contributed by Juniper Networks.
-.Sh BUGS
-If the file descriptor to which monitored events are being written is
-numerically lower than the descriptor on which
-.Pa /dev/filemon
-is open, the monitoring process will hang when it calls
-.Xr exit 3
-or an attempt is made to close the output file descriptor.
-To avoid the hang, ensure that the file descriptor on which
-.Pa /dev/filemon
-is open gets closed first.
 .Sh SECURITY CONSIDERATIONS
+If the monitored process exits, and its pid gets reused, filemon will
+continue to report events for the new process (and its descendants)
+without any authorization checks.
+.Pp
 Monitoring of a process enables the target process to write to the
 tracking process's file descriptor.
 .Sh RESTRICTIONS
