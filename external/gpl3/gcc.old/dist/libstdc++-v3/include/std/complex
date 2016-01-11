@@ -44,6 +44,16 @@
 #include <cmath>
 #include <sstream>
 
+#if _GLIBCXX_USE_C99_COMPLEX
+// This is disgusting; we can't include ccomplex because that c++11
+// and we can't use the builtins because those point to the wrong
+// ABI-wise cabs/cabsf so we manually declare those here and use
+// them directly.
+extern "C" float __c99_cabsf(_Complex float);
+extern "C" double __c99_cabs(_Complex double);
+extern "C" long double __c99_cabsl(_Complex long double);
+#endif
+
 // Get rid of a macro possibly defined in <complex.h>
 #undef complex
 
@@ -580,15 +590,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
 #if _GLIBCXX_USE_C99_COMPLEX
+  // XXX: We can't use __builtin_cabs* because they are broken
   inline float
-  __complex_abs(__complex__ float __z) { return __builtin_cabsf(__z); }
+  __complex_abs(__complex__ float __z) { return __c99_cabsf(__z); }
 
   inline double
-  __complex_abs(__complex__ double __z) { return __builtin_cabs(__z); }
+  __complex_abs(__complex__ double __z) { return __c99_cabs(__z); }
 
   inline long double
   __complex_abs(const __complex__ long double& __z)
-  { return __builtin_cabsl(__z); }
+  { return __c99_cabsl(__z); }
 
   template<typename _Tp>
     inline _Tp
