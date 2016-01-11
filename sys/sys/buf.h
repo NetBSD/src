@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.121 2015/03/28 19:24:04 maxv Exp $ */
+/*     $NetBSD: buf.h,v 1.122 2016/01/11 00:46:21 dholland Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,13 +101,18 @@ extern kmutex_t buffer_lock;
  * For buffers associated with a vnode, b_objlock points to vp->v_interlock.
  * If not associated with a vnode, it points to the generic buffer_lock.
  */
+
+/* required for the conditional union member below to be ~safe */
+__CTASSERT(sizeof(struct work) <= sizeof(TAILQ_ENTRY(buf)));
+
 struct buf {
 	union {
 		TAILQ_ENTRY(buf) u_actq;
 		rb_node_t u_rbnode;
-#if defined(_KERNEL) /* u_work is smaller than u_actq. XXX */
+#if defined(_KERNEL)
+		/* u_work is smaller than u_actq */
 		struct work u_work;
-#endif /* defined(_KERNEL) */
+#endif
 	} b_u;					/* b: device driver queue */
 #define	b_actq	b_u.u_actq
 #define	b_work	b_u.u_work
