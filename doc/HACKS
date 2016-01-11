@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.162 2015/08/27 12:32:05 pooka Exp $
+# $NetBSD: HACKS,v 1.163 2016/01/11 22:50:35 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -400,6 +400,23 @@ descr
 		include/pthread_types.h:103:17: note:   non-static data
 		member '__pthread_mutex_st::ptm_errorcheck' has volatile type
 		pthread_spin_t ptm_errorcheck;
+kcah
+
+hack	libm cabs{,f,l} and g++
+cdata	11 Jan 2016
+who	christos
+pr	lib/50646
+file	src/external/gpl3/gcc.old/dist/libstdc++-v3/include/std/complex : 1.2
+file	src/external/gpl3/gcc/dist/libstdc++-v3/include/std/complex : 1.2
+descr
+	Our cabs and cabsf have a different argument format on some architectures
+	and for that we have created in libm/compat_cabs{,f}.c. The standard
+	versions in libc are __c99_cabs{,f,l} and there are __RENAME()'s in
+	<complex.h>. G++ uses __builtin_cabs{,f,l} to implement those and they
+	translate by default to cabs{,f,l} which gets defined to cabs{,f} (the
+	wrong function) and an undefined cabsl. I've changed <complex> to use
+	the __c99_cabs{,f,l} directly. Using the __builtin_cabs{,f,l} in gcc is
+	still broken.
 kcah
 
 port	vax
