@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.124 2016/01/11 01:22:36 dholland Exp $ */
+/*     $NetBSD: buf.h,v 1.125 2016/01/11 08:40:52 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,9 @@ struct kauth_cred;
 extern kmutex_t bufcache_lock;
 extern kmutex_t buffer_lock;
 
+#if defined(_KERNEL)
 extern void (*biodone_vfs)(buf_t *);
+#endif
 
 /*
  * The buffer header describes an I/O operation in the kernel.
@@ -105,7 +107,9 @@ extern void (*biodone_vfs)(buf_t *);
  */
 
 /* required for the conditional union member below to be ~safe */
+#if defined(_KERNEL)
 __CTASSERT(sizeof(struct work) <= sizeof(TAILQ_ENTRY(buf)));
+#endif
 
 struct buf {
 	union {
