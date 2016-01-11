@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.1 2015/12/16 07:56:48 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.2 2016/01/11 18:23:52 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,7 +492,7 @@ adm1026_read_volt(struct adm1026_softc *sc, envsys_data_t *edata)
 static int
 adm1026_read_reg(struct adm1026_softc *sc, uint8_t reg, uint8_t *val)
 {
-#define ADM1026_READ_RETRIES	4
+#define ADM1026_READ_RETRIES	5
 	int i, j, err = 0;
 	uint8_t creg, cval, tmp[ADM1026_READ_RETRIES + 1];
 
