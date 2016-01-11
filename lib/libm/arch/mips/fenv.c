@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.1 2015/12/21 17:02:02 christos Exp $	*/
+/*	$NetBSD: fenv.c,v 1.2 2016/01/11 01:34:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -28,12 +28,12 @@
  * $FreeBSD: head/lib/msun/mips/fenv.c 226415 2011-10-16 05:37:56Z das $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1 2015/12/21 17:02:02 christos Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2 2016/01/11 01:34:39 christos Exp $");
 
 #define	__fenv_static
 #include "fenv.h"
 
-#if defined(__GNUC_GNU_INLINE__) || defined(__lint__)
+#if defined(__GNUC_GNU_INLINE__) && !defined(__lint__)
 #error "This file must be compiled with C99 'inline' semantics"
 #endif
 
