@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.122 2016/01/11 00:46:21 dholland Exp $ */
+/*     $NetBSD: buf.h,v 1.123 2016/01/11 01:08:09 dholland Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -267,28 +267,44 @@ struct bqueue {
 extern struct bqueue bufqueues[BQUEUES];
 
 __BEGIN_DECLS
-int	allocbuf(buf_t *, int, int);
-void	bawrite(buf_t *);
-void	bdwrite(buf_t *);
+/*
+ * bufferio(9) ops
+ */
 void	biodone(buf_t *);
 int	biowait(buf_t *);
-int	bread(struct vnode *, daddr_t, int, int, buf_t **);
-int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
-	       int, buf_t **);
-void	brelsel(buf_t *, int);
-void	brelse(buf_t *, int);
-void	bremfree(buf_t *);
-void	bufinit(void);
-void	bufinit2(void);
-int	bwrite(buf_t *);
-buf_t	*getblk(struct vnode *, daddr_t, int, int, int);
-buf_t	*geteblk(int);
-buf_t	*incore(struct vnode *, daddr_t);
+buf_t	*getiobuf(struct vnode *, bool);
+void	putiobuf(buf_t *);
+void	nestiobuf_setup(buf_t *, buf_t *, int, size_t);
+void	nestiobuf_done(buf_t *, int, int);
 
-void	minphys(buf_t *);
+void	nestiobuf_iodone(buf_t *);
 int	physio(void (*)(buf_t *), buf_t *, dev_t, int,
 	       void (*)(buf_t *), struct uio *);
 
+/*
+ * buffercache(9) ops
+ */
+int	bread(struct vnode *, daddr_t, int, int, buf_t **);
+int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
+	       int, buf_t **);
+int	bwrite(buf_t *);
+void	bawrite(buf_t *);
+void	bdwrite(buf_t *);
+buf_t	*getblk(struct vnode *, daddr_t, int, int, int);
+buf_t	*geteblk(int);
+buf_t	*incore(struct vnode *, daddr_t);
+int	allocbuf(buf_t *, int, int);
+void	brelsel(buf_t *, int);
+void	brelse(buf_t *, int);
+
+/*
+ * So-far indeterminate ops that might belong to either
+ * bufferio(9) or buffercache(9).
+ */
+void	bremfree(buf_t *);
+void	bufinit(void);
+void	bufinit2(void);
+void	minphys(buf_t *);
 void	brelvp(buf_t *);
 void	reassignbuf(buf_t *, struct vnode *);
 void	bgetvp(struct vnode *, buf_t *);
@@ -300,15 +316,10 @@ int	buf_setvalimit(vsize_t);
 void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...)
     __printflike(1, 2));
 #endif
-buf_t	*getiobuf(struct vnode *, bool);
-void	putiobuf(buf_t *);
 void	buf_init(buf_t *);
 void	buf_destroy(buf_t *);
 int	bbusy(buf_t *, bool, int, kmutex_t *);
 
-void	nestiobuf_iodone(buf_t *);
-void	nestiobuf_setup(buf_t *, buf_t *, int, size_t);
-void	nestiobuf_done(buf_t *, int, int);
 
 __END_DECLS
 #endif /* _KERNEL */
