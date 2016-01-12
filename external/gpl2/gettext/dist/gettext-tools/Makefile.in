@@ -484,7 +484,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = 1.5 gnu no-dependencies
 ACLOCAL_AMFLAGS = -I m4 -I ../gettext-runtime/m4 -I ../autoconf-lib-link/m4 -I ../m4 -I gnulib-m4 -I libgettextpo/gnulib-m4
-SUBDIRS = doc intl gnulib-lib libgrep libuniname src libgettextpo po projects misc man m4 tests examples
+SUBDIRS = doc intl gnulib-lib libgrep libuniname src libgettextpo po projects misc
 
 # Allow users to use "gnulib-tool --update".
 
@@ -512,6 +512,8 @@ all: config.h
 am--refresh:
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_Makefile.in:
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -539,6 +541,8 @@ $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENC
 	$(SHELL) ./config.status --recheck
 
 $(top_srcdir)/configure:  $(am__configure_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_configure:
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
@@ -553,6 +557,8 @@ stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
 $(srcdir)/config.h.in:  $(am__configure_deps) 
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config.h.in:
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
@@ -1008,6 +1014,8 @@ uninstall-am: uninstall-examplesbuildauxDATA \
 
 all-local: $(srcdir)/ABOUT-NLS
 $(srcdir)/ABOUT-NLS: $(srcdir)/../gettext-runtime/ABOUT-NLS
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ABOUT-NLS:
 	cp $(srcdir)/../gettext-runtime/ABOUT-NLS $(srcdir)/ABOUT-NLS
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
