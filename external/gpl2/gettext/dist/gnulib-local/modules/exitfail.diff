@@ -1,0 +1,18 @@
+*** exitfail.bak	2006-10-12 19:44:17.000000000 +0200
+--- exitfail	2006-10-12 21:55:12.000000000 +0200
+***************
+*** 13,18 ****
+  gl_EXITFAIL
+  
+  Makefile.am:
+  
+  Include:
+  "exitfail.h"
+--- 13,19 ----
+  gl_EXITFAIL
+  
+  Makefile.am:
++ lib_SOURCES += exitfail.h exitfail.c
+  
+  Include:
+  "exitfail.h"
