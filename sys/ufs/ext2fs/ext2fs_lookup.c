@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.78 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.79 2016/01/12 21:29:29 riastradh Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.78 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.79 2016/01/12 21:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,7 +768,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		auio.uio_iovcnt = 1;
 		auio.uio_rw = UIO_WRITE;
 		UIO_SETUP_SYSSPACE(&auio);
-		error = VOP_WRITE(dvp, &auio, IO_SYNC, cnp->cn_cred);
+		error = ext2fs_bufwr(dvp, &auio, IO_SYNC, cnp->cn_cred);
 		if (dirblksiz > dvp->v_mount->mnt_stat.f_bsize)
 			/* XXX should grow with balloc() */
 			panic("ext2fs_direnter: frag size");
