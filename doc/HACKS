@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.163 2016/01/11 22:50:35 christos Exp $
+# $NetBSD: HACKS,v 1.164 2016/01/12 23:03:33 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -439,47 +439,6 @@ port	vax
 		GCC4 on vax crashes.  -O0 stops it happening so far...
 	kcah
 
-	hack	gcc 2.95/vax doesn't like abort being used as function pointer
-	cdate	Tue Dec 13 05:54:50 GMT 2005
-	who	jmc
-	file	lib/libc/rpc/svc_vc.c 1.15
-	descr
-		Provide a local definition for abort which doesn't include
-		the noreturn attribute which trips up gcc 2.95 on vax.
-	kcah
-	
-	hack	gcc 2.95/vax doesn't have stdbool.h and gettext needs it
-	cdate	Mon May  9 12:16:22 CDT 2005
-	who	jmc
-	file	gnu/usr.bin/gettext/Makefile.inc.prog 1.5
-		gnu/usr.bin/gettext/libgrep/Makefile 1.3
-		gnu/usr.bin/gettext/libnlspr/Makefile 1.5
-		gnu/usr.bin/gettext/libnlsut/Makefile 1.3   
-	descr
-		The latest gettext assumes a C99 environment or at least
-		configure checks to work around this. As we don't use configure
-		provide a stdbool.h for vax builds locally in directories from
-		the template provided by the gettext code.
-	kcah
-	
-	hack	gcc 2.95/vax cannot handle __builtin_ffs()
-	cdate	Fri Aug 23 21:31:15 CEST 2002
-	who	ragge
-	file	sys/lib/libkern/libkern.h : 1.42
-	descr
-		__builtin_ffs() is ifdef'd away if __vax__. Matt Thomas has
-		added this feature to GCC 3 so it can be removed when switching.
-	kcah
-
-	hack	gcc 2.95/vax libbz2
-	mdate	27 Jun 2002
-	who	thorpej
-	file	lib/libbz2/Makefile
-	descr
-		libbz2 is mis-compiled with optimization with GCC 2.95.3
-		on VAX.  -O0 works around this problem.
-	kcah
-
 	hack	vax Toolchain bug
 	cdate	28 Mar 2003
 	who	he
@@ -489,47 +448,6 @@ port	vax
 		tries to range-check byte offsets when it doesn't have
 		sufficient information to make that decision.
 		Workaround uses `brw' instead of `brb' instruction.
-	kcah
-
-	hack	vax gcc 2.95.3 -Wuninitialized workarounds
-	cdate	6 Nov 2003
-	who	he
-	file	sys/dev/bi/if_ni.c : 1.22
-	file	sys/arch/vax/vax/ctu.c : 1.20
-	descr
-		Workaround for gcc 2.95.3 failing to detect that certain
-		variables will be initialized; so that this code compiles
-		with -Wuninitialized.  Should be reviewed and possibly
-		reverted when gcc 3.3.2 is ready for vax.
-	kcah
-
-	hack	vax gcc 2.95.3 structure initialization
-	cdat	13 May 2004
-	who	cl
-	file	sys/miscfs/kernfs/kernfs_vnops.c : 1.104
-	descr
-		Workaround for gcc 2.95.3 failing to initialize structures
-		and/or unions inside structures using nested designators.
-		Should be reverted when gcc >=3.3.3 is ready for vax.
-	kcah
-
-	hack	vax gcc 2.95.3 needs -I. to build nslexer.c
-	cdat	6 Jun 2004
-	who	mhitch
-	file	lib/libc/arch/vax/Makefile.inc : 1.6
-	descr
-		It appears necessary to add -I. to CPPFLAGS when building
-		nslesxer.c.  This may be caused by gcc 2.95.3 being used.
-		Should be reverted when a newer gcc is ready for vax.
-	kcah
-
-	hack	vax gcc 2.95.3 doesn't understand "-std=c99"
-	cdat	5 April 2005
-	who	tron
-	file	src/share/mk/bsd.sys.mk
-	descr
-		We cannot use "-std=c99" for compiler warning level 4 and above
-		because gcc 2.95.3 doesn't support that option.
 	kcah
 
 	hack	declare boolean_t in two IPF user-mode programs
