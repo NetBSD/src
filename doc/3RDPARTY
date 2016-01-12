@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1291 2016/01/10 20:12:20 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1292 2016/01/12 23:03:55 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -481,14 +481,14 @@ No hexadecimal floating-point string conversion for VAX FP yet.
 Only double-precision addressed at this time.
 
 Package:	gettext
-Version:	0.14.4
-Current Vers:	0.18
+Version:	0.16.1 (Last GPLv2+ version)
+Current Vers:	0.19.7
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Home Page:	http://www.gnu.org/software/gettext/
 Mailing List:	bug-gnu-utils@gnu.org
-Responsible:
-License:	GPLv2
+Responsible:	christos
+License:	GPLv2+ (0.16.1), GPLv3+ (0.17 and later)
 Location:	gnu/dist/gettext
 Notes:
 GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
@@ -496,14 +496,14 @@ we use BSD-licensed implementation from Citrus project (see entry for
 "Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
 
 Package:	grep
-Version:	2.5.1
+Version:	2.5.1a (last GPLv2+ version)
 Current Vers:	2.21
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	simonb
-License:	GPLv2+ (2.5.1), GPLv3+ (2.5.3 and later)
+License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
 Location:	gnu/dist/grep
 Notes:
 Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
@@ -516,7 +516,7 @@ in src/usr.bin/grep, replacing FreeGrep
 (http://mail-index.NetBSD.org/source-changes/2011/02/16/msg018643.html).
 
 Package:	groff
-Version:	1.19.2
+Version:	1.19.2 (last GPLv2+ version)
 Current Vers:	1.22.3
 Maintainer:	Werner Lemberg/FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/groff/
