@@ -1,0 +1,22 @@
+Description:
+Support for relocatable installation.
+
+Files:
+lib/relocatable.h
+lib/relocatable.c
+
+Depends-on:
+
+configure.ac:
+
+Makefile.am:
+
+Include:
+"relocatable.h"
+
+License:
+LGPL
+
+Maintainer:
+Bruno Haible
+

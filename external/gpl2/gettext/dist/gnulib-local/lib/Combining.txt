@@ -1,0 +1,105 @@
+Property dump for: 0x20000004 (Combining)
+
+0300..034E  (79 chars)
+0360..0362  (3 chars)
+0483..0486  (4 chars)
+0488..0489  (2 chars)
+0591..05A1  (17 chars)
+05A3..05B9  (23 chars)
+05BB..05BD  (3 chars)
+05BF
+05C1..05C2  (2 chars)
+05C4
+064B..0655  (11 chars)
+0670
+06D6..06E4  (15 chars)
+06E7..06E8  (2 chars)
+06EA..06ED  (4 chars)
+0711
+0730..074A  (27 chars)
+07A6..07B0  (11 chars)
+0901..0903  (3 chars)
+093C
+093E..094D  (16 chars)
+0951..0954  (4 chars)
+0962..0963  (2 chars)
+0981..0983  (3 chars)
+09BC
+09BE..09C4  (7 chars)
+09C7..09C8  (2 chars)
+09CB..09CD  (3 chars)
+09D7
+09E2..09E3  (2 chars)
+0A02
+0A3C
+0A3E..0A42  (5 chars)
+0A47..0A48  (2 chars)
+0A4B..0A4D  (3 chars)
+0A70..0A71  (2 chars)
+0A81..0A83  (3 chars)
+0ABC
+0ABE..0AC5  (8 chars)
+0AC7..0AC9  (3 chars)
+0ACB..0ACD  (3 chars)
+0B01..0B03  (3 chars)
+0B3C
+0B3E..0B43  (6 chars)
+0B47..0B48  (2 chars)
+0B4B..0B4D  (3 chars)
+0B56..0B57  (2 chars)
+0B82..0B83  (2 chars)
+0BBE..0BC2  (5 chars)
+0BC6..0BC8  (3 chars)
+0BCA..0BCD  (4 chars)
+0BD7
+0C01..0C03  (3 chars)
+0C3E..0C44  (7 chars)
+0C46..0C48  (3 chars)
+0C4A..0C4D  (4 chars)
+0C55..0C56  (2 chars)
+0C82..0C83  (2 chars)
+0CBE..0CC4  (7 chars)
+0CC6..0CC8  (3 chars)
+0CCA..0CCD  (4 chars)
+0CD5..0CD6  (2 chars)
+0D02..0D03  (2 chars)
+0D3E..0D43  (6 chars)
+0D46..0D48  (3 chars)
+0D4A..0D4D  (4 chars)
+0D57
+0D82..0D83  (2 chars)
+0DCA
+0DCF..0DD4  (6 chars)
+0DD6
+0DD8..0DDF  (8 chars)
+0DF2..0DF3  (2 chars)
+0E31
+0E34..0E3A  (7 chars)
+0E47..0E4E  (8 chars)
+0EB1
+0EB4..0EB9  (6 chars)
+0EBB..0EBC  (2 chars)
+0EC8..0ECD  (6 chars)
+0F18..0F19  (2 chars)
+0F35
+0F37
+0F39
+0F3E..0F3F  (2 chars)
+0F71..0F84  (20 chars)
+0F86..0F87  (2 chars)
+0F90..0F97  (8 chars)
+0F99..0FBC  (36 chars)
+0FC6
+102C..1032  (7 chars)
+1036..1039  (4 chars)
+1056..1059  (4 chars)
+17B4..17D3  (32 chars)
+18A9
+20D0..20E3  (20 chars)
+302A..302F  (6 chars)
+3099..309A  (2 chars)
+F8F0..F8FF  (16 chars)
+FB1E
+FE20..FE23  (4 chars)
+
+*******************************************

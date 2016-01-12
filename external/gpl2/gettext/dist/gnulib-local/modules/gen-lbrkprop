@@ -1,0 +1,22 @@
+Description:
+Generates lbrkprop.h.
+
+Files:
+lib/gen-lbrkprop.c
+lib/3level.h
+lib/Combining.txt
+
+Depends-on:
+
+configure.ac:
+
+Makefile.am:
+
+Include:
+
+License:
+GPLed build tool
+
+Maintainer:
+Bruno Haible
+
