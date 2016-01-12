@@ -313,6 +313,7 @@ extern double
 /* The threshold for fuzzy-searching.
    A message is considered only if  fstrcmp (msg, given) > FUZZY_THRESHOLD.  */
 #define FUZZY_THRESHOLD 0.6
+#define FUZZY_THRESHOLD_INV 2
 
 
 #ifdef __cplusplus

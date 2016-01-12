@@ -32,7 +32,9 @@
 #endif
 
 /* Get PKGDATADIR.  */
+#ifndef PKGDATADIR
 #include "configmake.h"
+#endif
 
 #include "javaexec.h"
 #include "pipe.h"

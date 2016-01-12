@@ -920,16 +920,22 @@ uninstall-am: uninstall-docDATA uninstall-dvi-am uninstall-html-am \
 
 
 iso-639.texi: ISO_639 iso-639.sed
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_iso-639.texi:
 	$(SED) -f $(srcdir)/iso-639.sed $(srcdir)/ISO_639 > iso-639.tmp
 	rm -f $(srcdir)/iso-639.texi
 	mv iso-639.tmp $(srcdir)/iso-639.texi
 
 iso-639-2.texi: ISO_639-2 iso-639-2.sed
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_iso-639-2.texi:
 	$(SED) -f $(srcdir)/iso-639-2.sed $(srcdir)/ISO_639-2 > iso-639-2.tmp
 	rm -f $(srcdir)/iso-639-2.texi
 	mv iso-639-2.tmp $(srcdir)/iso-639-2.texi
 
 iso-3166.texi: ISO_3166 iso-3166.sed
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_iso-3166.texi:
 	$(SED) -f $(srcdir)/iso-3166.sed $(srcdir)/ISO_3166 > iso-3166.tmp
 	rm -f $(srcdir)/iso-3166.texi
 	mv iso-3166.tmp $(srcdir)/iso-3166.texi
