@@ -183,7 +183,7 @@ add_index (index_list_ty list, index_ty idx)
    limit the search to lengths l' in the range
      l / (2 / FUZZY_THRESHOLD - 1) <= l' <= l * (2 / FUZZY_THRESHOLD - 1)
    Thus we need the list of the short strings up to length:  */
-#define SHORT_MSG_MAX (int) (SHORT_STRING_MAX_BYTES * (2 / FUZZY_THRESHOLD - 1))
+#define SHORT_MSG_MAX (int) (SHORT_STRING_MAX_BYTES * (2 * FUZZY_THRESHOLD_INV - 1))
 
 /* A fuzzy index contains a hash table mapping all n-grams to their
    occurrences list.  */
