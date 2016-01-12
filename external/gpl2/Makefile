@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2016/01/10 22:22:16 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2016/01/12 22:58:52 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,5 +12,7 @@ SUBDIR+= lvm2
 .if ${MKBSDGREP} == "no"
 SUBDIR+= grep
 .endif
+
+SUBDIR+= gettext
 
 .include <bsd.subdir.mk>
