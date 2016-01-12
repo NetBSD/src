@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.24 2016/01/08 21:06:57 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.25 2016/01/12 10:27:48 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -860,4 +860,15 @@ sys/arch/xen/xen/xennetback_xenbus.c		1.54 via patch
 	twice (during which time the frontend can alter the contents)
 	possibly leading to arbitrary code execution in backend.
 	[bouyer, ticket #1071]
+
+sys/arch/arm/arm/cpufunc.c			1.159
+
+	Fix condition which broke ARM1136 function selection when
+	ARM1176 support was added. PR port-arm/50512.
+	[skrll, ticket #1060]
+
+sys/arch/hppa/include/db_machdep.h		1.13
+
+	hppa ddb: Fix always false condition.  PR port-hppa/50642.
+	[skrll, ticket #1072]
 
