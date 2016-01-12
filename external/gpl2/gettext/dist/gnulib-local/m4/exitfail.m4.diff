@@ -1,0 +1,13 @@
+*** gnulib/m4/exitfail.m4	2005-03-21 23:06:27.000000000 +0100
+--- gettext-tools/m4/exitfail.m4	2005-03-09 00:49:02.000000000 +0100
+***************
+*** 6,13 ****
+  
+  AC_DEFUN([gl_EXITFAIL],
+  [
+-   AC_LIBOBJ([exitfail])
+- 
+    dnl No prerequisites of lib/exitfail.c.
+    :
+  ])
+--- 6,11 ----
