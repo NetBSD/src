@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.1.1.1 2016/01/13 03:15:30 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.2 2016/01/13 03:39:28 christos Exp $	*/
 
 /* diff - compare files line by line
 
@@ -38,6 +38,7 @@
 #include <regex.h>
 #include <setmode.h>
 #include <xalloc.h>
+#include <posixver.h>
 
 static char const authorship_msgid[] =
   N_("Written by Paul Eggert, Mike Haertel, David Hayes,\n\
@@ -1208,9 +1209,10 @@ compare_files (struct comparison const *parent,
   else if ((same_files
 	    = (cmp.file[0].desc != NONEXISTENT
 	       && cmp.file[1].desc != NONEXISTENT
-	       && 0 < same_file (&cmp.file[0].stat, &cmp.file[1].stat)
-	       && same_file_attributes (&cmp.file[0].stat,
-					&cmp.file[1].stat)))
+	       && (same_special_file (&cmp.file[0].stat, &cmp.file[1].stat)
+	           || (0 < same_file (&cmp.file[0].stat, &cmp.file[1].stat)
+		       && same_file_attributes (&cmp.file[0].stat,
+					&cmp.file[1].stat)))))
 	   && no_diff_means_no_output)
     {
       /* The two named files are actually the same physical file.
