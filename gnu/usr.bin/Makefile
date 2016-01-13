@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.141 2016/01/12 22:59:53 christos Exp $
+#	$NetBSD: Makefile,v 1.142 2016/01/13 03:40:49 christos Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+=	bc
 SUBDIR+=	c89 c99
-SUBDIR+=	dc diffutils
+SUBDIR+=	dc
 SUBDIR+=	rcs send-pr texinfo
 
 .if ${MKGROFF} != "no"
