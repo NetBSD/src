@@ -1,4 +1,4 @@
-/*	$NetBSD: mcheck.c,v 1.1.1.1 2016/01/13 21:42:18 christos Exp $	*/
+/*	$NetBSD: mcheck.c,v 1.2 2016/01/13 21:56:38 christos Exp $	*/
 
 /* Standard debugging hooks for `malloc'.
    Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -25,6 +25,7 @@ Cambridge, MA 02139, USA.
 #ifndef	_MALLOC_INTERNAL
 #define	_MALLOC_INTERNAL
 #include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
 #endif
 
