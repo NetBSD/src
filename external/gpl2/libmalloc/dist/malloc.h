@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.1.1.1 2016/01/13 21:42:18 christos Exp $	*/
+/*	$NetBSD: malloc.h,v 1.2 2016/01/13 21:56:38 christos Exp $	*/
 
 /* Declarations for `malloc' and friends.
    Copyright 1990, 1991, 1992, 1993, 1995 Free Software Foundation, Inc.
@@ -64,8 +64,12 @@ extern "C"
 #endif
 
 #if defined (__cplusplus) || (defined (__STDC__) && __STDC__)
+#ifndef __NetBSD__
 #undef	__P
 #define	__P(args)	args
+#else
+#include <sys/cdefs.h>
+#endif
 #undef	__ptr_t
 #define	__ptr_t		void *
 #else /* Not C++ or ANSI C.  */
