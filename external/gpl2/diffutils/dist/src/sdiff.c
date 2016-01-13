@@ -1,4 +1,4 @@
-/*	$NetBSD: sdiff.c,v 1.1.1.1 2016/01/13 03:15:30 christos Exp $	*/
+/*	$NetBSD: sdiff.c,v 1.2 2016/01/13 03:39:28 christos Exp $	*/
 
 /* sdiff - side-by-side merge of file differences
 
@@ -263,22 +263,24 @@ perror_fatal (char const *msg)
 }
 
 static void
-ck_editor_status (int errnum, int status)
+check_child_status (int werrno, int wstatus, int max_ok_status,
+		    char const *subsidiary_program)
 {
-  if (errnum | status)
+  int status = (! werrno && WIFEXITED (wstatus)
+		? WEXITSTATUS (wstatus)
+		: INT_MAX);
+
+  if (max_ok_status < status)
     {
-      char const *failure_msgid = N_("subsidiary program `%s' failed");
-      if (! errnum && WIFEXITED (status))
-	switch (WEXITSTATUS (status))
-	  {
-	  case 126:
-	    failure_msgid = N_("subsidiary program `%s' not executable");
-	    break;
-	  case 127:
-	    failure_msgid = N_("subsidiary program `%s' not found");
-	    break;
-	  }
-      error (0, errnum, _(failure_msgid), editor_program);
+      error (0, werrno,
+	     _(status == 126
+	       ? "subsidiary program `%s' could not be invoked"
+	       : status == 127
+	       ? "subsidiary program `%s' not found"
+	       : status == INT_MAX
+	       ? "subsidiary program `%s' failed"
+	       : "subsidiary program `%s' failed (exit status %d)"),
+	     subsidiary_program, status);
       exiterr ();
     }
 }
@@ -726,7 +728,7 @@ main (int argc, char *argv[])
 	if (! interact_ok)
 	  exiterr ();
 
-	ck_editor_status (werrno, wstatus);
+	check_child_status (werrno, wstatus, EXIT_FAILURE, diffargv[0]);
 	untrapsig (0);
 	checksigs ();
 	exit (WEXITSTATUS (wstatus));
@@ -1089,7 +1091,8 @@ edit (struct line_filter *left, char const *lname, lin lline, lin llen,
 	      }
 
 	      ignore_SIGINT = 0;
-	      ck_editor_status (werrno, wstatus);
+	      check_child_status (werrno, wstatus, EXIT_SUCCESS,
+				  editor_program);
 	    }
 
 	    {
