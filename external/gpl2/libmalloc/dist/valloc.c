@@ -1,4 +1,4 @@
-/*	$NetBSD: valloc.c,v 1.1.1.1 2016/01/13 21:42:18 christos Exp $	*/
+/*	$NetBSD: valloc.c,v 1.2 2016/01/13 21:56:38 christos Exp $	*/
 
 /* Allocate memory on a page boundary.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -23,6 +23,7 @@ Cambridge, MA 02139, USA.
 
 #if defined (__GNU_LIBRARY__) || defined (_LIBC)
 #include <stddef.h>
+#include <unistd.h>
 #include <sys/cdefs.h>
 extern size_t __getpagesize __P ((void));
 #else
