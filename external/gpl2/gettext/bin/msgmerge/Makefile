@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/12 22:58:02 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2016/01/13 12:48:51 christos Exp $
 
 PROG=	msgmerge
+SRCS=msgmerge.c msgl-fsearch.c
 
 LDADD+=	-lm
 DPADD+= ${LIBM}
