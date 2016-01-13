@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.12 2016/01/13 13:29:51 macallan Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.13 2016/01/13 17:07:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.12 2016/01/13 13:29:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.13 2016/01/13 17:07:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -670,9 +670,9 @@ awin_tcon1_set_videomode(int unit, const struct videomode *mode)
 		const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
 		const u_int pvsync_p = !!(mode->flags & VID_PVSYNC);
 		const u_int hspw = mode->hsync_end - mode->hsync_start;
-		const u_int hbp = mode->htotal - mode->hsync_end;
+		const u_int hbp = mode->htotal - mode->hsync_start;
 		const u_int vspw = mode->vsync_end - mode->vsync_start;
-		const u_int vbp = mode->vtotal - mode->vsync_end;
+		const u_int vbp = mode->vtotal - mode->vsync_start;
 		const u_int vblank_len =
 		    ((mode->vtotal << interlace_p) >> 1) - mode->vdisplay - 2;
 		const u_int start_delay =
