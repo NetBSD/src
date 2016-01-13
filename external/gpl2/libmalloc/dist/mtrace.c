@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.1.1.1 2016/01/13 21:42:18 christos Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.2 2016/01/13 21:56:38 christos Exp $	*/
 
 /* More debugging hooks for `malloc'.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -91,8 +91,7 @@ tr_freehook (ptr)
 
 static __ptr_t tr_mallochook __P ((__malloc_size_t));
 static __ptr_t
-tr_mallochook (size)
-     __malloc_size_t size;
+tr_mallochook (__malloc_size_t size)
 {
   __ptr_t hdr;
 
@@ -112,9 +111,7 @@ tr_mallochook (size)
 
 static __ptr_t tr_reallochook __P ((__ptr_t, __malloc_size_t));
 static __ptr_t
-tr_reallochook (ptr, size)
-     __ptr_t ptr;
-     __malloc_size_t size;
+tr_reallochook (__ptr_t ptr, __malloc_size_t size)
 {
   __ptr_t hdr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: morecore.c,v 1.1.1.1 2016/01/13 21:42:18 christos Exp $	*/
+/*	$NetBSD: morecore.c,v 1.2 2016/01/13 21:56:38 christos Exp $	*/
 
 /* Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 This file is part of the GNU C Library.
@@ -20,6 +20,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifndef	_MALLOC_INTERNAL
 #define	_MALLOC_INTERNAL
 #include <malloc.h>
+#include <unistd.h>
 #endif
 
 #ifndef	__GNU_LIBRARY__
