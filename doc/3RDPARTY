@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1294 2016/01/13 04:41:01 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.1295 2016/01/13 19:27:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -504,9 +504,9 @@ Home Page:	http://www.gnu.org/software/grep/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	simonb
 License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
-Location:	gnu/dist/grep
+Location:	external/gpl2/grep
 Notes:
-Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
+Use external/gpl2/grep//grep2netbsd for preparing the source tree
 for the import.
 On 2 Jan 2004, a non-GNU grep (FreeGrep, https://github.com/howardjp/freegrep;
 see also http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
@@ -523,11 +523,11 @@ Archive Site:	ftp://ftp.gnu.org/gnu/groff/
 Home Page:	http://www.gnu.org/software/groff/
 Mailing List:	bug-groff@gnu.org
 Responsible:	
-License:	GPLv2
-Location:	gnu/dist/groff
+License:	GPLv2+ (1.19.2), GPLv3+ (1.20 and later)
+Location:	external/gpl2/groff
 Notes:
-Use groff2netbsd from src/gnu/dist/groff to prepare the distribution
-for import.
+Use groff2netbsd from external/gpl2/groff/groff2netbsd to prepare the
+distribution for import.
 
 Package:	heimdal
 Version:	1.5.3
