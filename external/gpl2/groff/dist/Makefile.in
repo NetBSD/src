@@ -129,7 +129,7 @@ libprogramdir=$(libdir)/groff
 # `datasubdir' says where to install platform-independent data files.
 datadir=@datadir@
 dataprogramdir=$(datadir)/groff
-datasubdir=$(dataprogramdir)/$(version)$(revision)
+datasubdir=$(dataprogramdir)
 
 # `infodir' says where to install info files.
 infodir=@infodir@
@@ -244,6 +244,13 @@ man7dir=$(manroot)/man$(man7ext)
 # grohtml are available -- only then we can build the HTML documentation.
 make_html=@make_html@
 make_install_html=@make_install_html@
+
+# NetBSD_DISABLED_make_html
+# NetBSD_DISABLED_make_install_html
+#	disable html creation or installation; we don't want to depend
+#	upon png tools
+make_html=
+make_install_html=
 
 # The configure script also checks whether all necessary utility programs
 # for pdfroff are available -- only then we can build PDF documentation.
@@ -549,7 +556,6 @@ OTHERDIRS=\
   contrib/pic2graph \
   contrib/eqn2graph \
   contrib/grap2graph \
-  contrib/groffer \
   contrib/mom \
   contrib/pdfmark \
   contrib/gdiffmk
