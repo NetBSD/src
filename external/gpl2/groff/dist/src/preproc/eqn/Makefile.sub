@@ -43,6 +43,9 @@ YTABH=eqn_tab.h
 NAMEPREFIX=$(g)
 CLEANADD=neqn
 
+eqn_tab.h: eqn.cpp
+lex.cpp: eqn_tab.h
+
 all: neqn
 
 neqn: neqn.sh $(SH_DEPS_SED_SCRIPT)
