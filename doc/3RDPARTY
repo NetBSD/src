@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1295 2016/01/13 19:27:26 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1296 2016/01/13 22:01:15 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1297,6 +1297,29 @@ Location:	gnu/dist/texinfo
 Notes:
 Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
+
+Package:	malloc 
+Version:	1995-01-15
+Current Vers:	1995-01-15
+Maintainer:	FSF
+Archive Site:	ftp://prep.ai.mit.edu/old-gnu/malloc.tar.gz
+Home Page:
+Mailing List:
+Responsible:	christos
+License:	GPLv2+
+Location:	external/gpl2/libmalloc
+Notes:
+The original version of gnumalloc was added (not imported) from
+prep.ai.mit.edu in src/gnu/lib/libmalloc in 1993. This is the newest
+version from 1995. It is written by Mike Haertel, and was distributed
+both standalone and as part of glibc. At some point glibc switched
+to use Doug Lea's ptmalloc which is now tightly bound with glibc
+and cannot be separated. The Doug Lea version of malloc is also
+distributed in a standalone form by Wolfram Gloger in
+http://www.malloc.de/en/.  We can consider switching to ptmalloc
+at some point since it will provide an alternative MT malloc, but
+perhaps this implementation should be kept anyway for historical
+purposes.
 
 Package:	tmux
 Version:	2.1
