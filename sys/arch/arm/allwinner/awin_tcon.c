@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.11 2015/11/20 18:32:13 bouyer Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.12 2016/01/13 13:29:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.11 2015/11/20 18:32:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.12 2016/01/13 13:29:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,6 +67,7 @@ struct awin_tcon_softc {
 	unsigned int sc_output_type;
 #define OUTPUT_HDMI 0
 #define OUTPUT_LVDS 1
+#define OUTPUT_VGA 2
 	const char *sc_lcdpwr_pin_name;
 	struct awin_gpio_pindata sc_lcdpwr_pin;
 	const char *sc_lcdblk_pin_name;
@@ -159,6 +160,8 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 			sc->sc_output_type = OUTPUT_HDMI;
 		} else if (strcmp(output, "lvds") == 0) {
 			sc->sc_output_type = OUTPUT_LVDS;
+		} else if (strcmp(output, "vga") == 0) {
+			sc->sc_output_type = OUTPUT_VGA;
 		} else {
 			panic("tcon: wrong mode %s", output);
 		}
@@ -254,7 +257,8 @@ awin_tcon_set_pll(struct awin_tcon_softc *sc, int dclk, int min_div)
 	switch(sc->sc_clk_pll) {
 	case 3:
 		awin_pll3_set_rate(n * 3000000);
-		if (sc->sc_output_type == OUTPUT_HDMI) {
+		if ((sc->sc_output_type == OUTPUT_HDMI) ||
+		    (sc->sc_output_type == OUTPUT_VGA)) {
 			awin_reg_set_clear(sc->sc_bst, sc->sc_ch1clk_bsh, 0,
 			    AWIN_CLK_OUT_ENABLE |
 			    AWIN_LCDx_CH1_SCLK1_GATING |
@@ -286,7 +290,8 @@ awin_tcon_set_pll(struct awin_tcon_softc *sc, int dclk, int min_div)
 		break;
 	case 7:
 		awin_pll7_set_rate(n * 3000000);
-		if (sc->sc_output_type == OUTPUT_HDMI) {
+		if ((sc->sc_output_type == OUTPUT_HDMI) || 
+		    (sc->sc_output_type == OUTPUT_VGA)) {
 			awin_reg_set_clear(sc->sc_bst, sc->sc_ch1clk_bsh, 0,
 			    AWIN_CLK_OUT_ENABLE |
 			    AWIN_LCDx_CH1_SCLK1_GATING |
@@ -593,7 +598,8 @@ awin_tcon1_enable(int unit, bool enable)
 		return;
 	}
 	sc = device_private(dev);
-	KASSERT(sc->sc_output_type == OUTPUT_HDMI);
+	KASSERT((sc->sc_output_type == OUTPUT_HDMI) || 
+		    (sc->sc_output_type == OUTPUT_VGA));
 
 	awin_debe_enable(device_unit(sc->sc_dev), enable);
 	delay(20000);
@@ -604,7 +610,10 @@ awin_tcon1_enable(int unit, bool enable)
 		val = TCON_READ(sc, AWIN_TCON1_CTL_REG);
 		val |= AWIN_TCONx_CTL_EN;
 		TCON_WRITE(sc, AWIN_TCON1_CTL_REG, val);
-		TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, 0);
+		if (sc->sc_output_type == OUTPUT_VGA) {
+			TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, 0x0cffffff);
+		} else
+			TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, 0);
 	} else {
 		TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, 0xffffffff);
 		val = TCON_READ(sc, AWIN_TCON1_CTL_REG);
@@ -618,7 +627,7 @@ awin_tcon1_enable(int unit, bool enable)
 	KASSERT(tcon_mux_inited);
 	val = bus_space_read_4(sc->sc_bst, tcon_mux_bsh, 0);
 #ifdef AWIN_TCON_DEBUG
-	printf("awin_tcon1_enable(%d) val 0x%x", unit, val);
+	printf("awin_tcon1_enable(%d) %d val 0x%x", unit, enable, val);
 #endif
 	val &= ~ AWIN_TCON_MUX_CTL_HDMI_OUTPUT_SRC;
 	if (unit == 0) {
@@ -652,7 +661,8 @@ awin_tcon1_set_videomode(int unit, const struct videomode *mode)
 		return;
 	}
 	sc = device_private(dev);
-	KASSERT(sc->sc_output_type == OUTPUT_HDMI);
+	KASSERT((sc->sc_output_type == OUTPUT_HDMI) || 
+		    (sc->sc_output_type == OUTPUT_VGA));
 
 	awin_debe_set_videomode(device_unit(sc->sc_dev), mode);
 	if (mode) {
@@ -660,9 +670,9 @@ awin_tcon1_set_videomode(int unit, const struct videomode *mode)
 		const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
 		const u_int pvsync_p = !!(mode->flags & VID_PVSYNC);
 		const u_int hspw = mode->hsync_end - mode->hsync_start;
-		const u_int hbp = mode->htotal - mode->hsync_start;
+		const u_int hbp = mode->htotal - mode->hsync_end;
 		const u_int vspw = mode->vsync_end - mode->vsync_start;
-		const u_int vbp = mode->vtotal - mode->vsync_start;
+		const u_int vbp = mode->vtotal - mode->vsync_end;
 		const u_int vblank_len =
 		    ((mode->vtotal << interlace_p) >> 1) - mode->vdisplay - 2;
 		const u_int start_delay =
@@ -801,9 +811,15 @@ awin_tcon_setvideo(int unit, bool enable)
 	}
 	sc = device_private(dev);
 
-	if (sc->sc_output_type == OUTPUT_HDMI)  {
-		awin_hdmi_poweron(enable);
-	} else {
-		awin_tcon0_enable(sc, enable);
+	switch (sc->sc_output_type) {
+		case OUTPUT_HDMI:
+			awin_hdmi_poweron(enable);
+			break;
+		case OUTPUT_LVDS:
+			awin_tcon0_enable(sc, enable);
+			break;
+		case OUTPUT_VGA:
+			awin_tcon1_enable(unit, enable);
+			break;
 	}
 }
