@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1292 2016/01/12 23:03:55 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1293 2016/01/13 03:44:27 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -356,7 +356,7 @@ Location:	external/gpl2/gmake
 Notes:
 
 Package:	diffutils
-Version:	2.8.1
+Version:	2.8.1 (Last GPLv2+ version)
 Current Vers:	3.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
@@ -364,9 +364,9 @@ Home Page:	http://www.gnu.org/software/diffutils/
 Mailing List:	bug-diffutils@gnu.org
 Responsible:	
 License:	GPLv2+ (2.8.1), GPLv3+ (2.9 and later)
-Location:	gnu/dist/diffutils
+Location:	external/gpl2/diffutils
 Notes:
-Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
+Use external/gpl2/diffutils/diffutils2netbsd for preparing the source tree
 for the import.
 
 Package:	ekermit
@@ -489,7 +489,7 @@ Home Page:	http://www.gnu.org/software/gettext/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	christos
 License:	GPLv2+ (0.16.1), GPLv3+ (0.17 and later)
-Location:	gnu/dist/gettext
+Location:	external/gpl2/gettext
 Notes:
 GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
 we use BSD-licensed implementation from Citrus project (see entry for
