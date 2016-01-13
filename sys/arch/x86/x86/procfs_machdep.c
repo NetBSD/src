@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.8 2016/01/13 07:28:56 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.9 2016/01/13 08:05:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.8 2016/01/13 07:28:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9 2016/01/13 08:05:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,8 +267,8 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 	    "stepping\t: ",
 	    xcpu,
 	    (char *)ci->ci_vendor,
-	    cpuid_level >= 0 ? ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
-	    cpuid_level >= 0 ? ((ci->ci_signature >> 4) & 15) : 0,
+	    CPUID_TO_FAMILY(ci->ci_signature),
+	    CPUID_TO_MODEL(ci->ci_signature),
 	    cpu_brand_string
 	);
 	size += l;
@@ -279,7 +279,8 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 		left = 0;
 
 	if (cpuid_level >= 0)
-		l = snprintf(p, left, "%d\n", ci->ci_signature & 15);
+		l = snprintf(p, left, "%d\n",
+		    CPUID_TO_STEPPING(ci->ci_signature));
 	else
 		l = snprintf(p, left, "unknown\n");
 
