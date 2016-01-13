@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.7 2015/04/16 15:17:17 njoly Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.8 2016/01/13 07:28:56 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.7 2015/04/16 15:17:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.8 2016/01/13 07:28:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,50 +56,93 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.7 2015/04/16 15:17:17 njoly Exp
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 
-static const char * const x86_features[] = {
-	/* Intel-defined */
+static const char * const x86_features[][32] = {
+	{ /* Common */
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
 	"cx8", "apic", NULL, "sep", "mtrr", "pge", "mca", "cmov",
 	"pat", "pse36", "pn", "clflush", NULL, "dts", "acpi", "mmx",
-	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", NULL,
-#ifdef __x86_64__
-	/* AMD-defined */
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, "syscall", NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, "nx", NULL, "mmxext", NULL, 
-	NULL, "fxsr_opt", "rdtscp", NULL, NULL, "lm", "3dnowext", "3dnow",
+	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", "pbe"},
 
-	/* Transmeta-defined */
-	"recovery", "longrun", NULL, "lrti", NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+	{ /* (1) AMD-defined: 80000001 edx */
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, "syscall", NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, "mp", "nx", NULL, "mmxext", NULL,
+	NULL, "fxsr_opt", "pdpe1gb", "rdtscp", NULL, "lm", "3dnowext","3dnow"},
 
-	/* Linux-defined */
-	"cxmmx", NULL, "cyrix_arr", "centaur_mcr", NULL, 
-	"constant_tsc", NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+	{ /* Transmeta-defined (2) */
+	"recovery", "longrun", NULL, "lrti", NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	/* Intel-defined */
-	"pni", NULL, NULL, "monitor", "ds_cpi", "vmx", NULL, "est", 
-	"tm2", NULL, "cid", NULL, NULL, "cx16", "xtpr", NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+	{ /* Linux-defined (3) */
+	"cxmmx", NULL, "cyrix_arr", "centaur_mcr", NULL,
+	"constant_tsc", NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	/* VIA/Cyrix/Centaur-defined */
-	NULL, NULL, "rng", "rng_en", NULL, NULL, "ace", "ace_en", 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+	{ /* (4) Intel-defined: 80000001 ecx */
+	"pni", "pclmulqdq", "dtes64", "monitor", "ds_cpl", "vmx", "smx", "est",
+	"tm2", "ssse3", "cid", "sdbg", "fma", "cx16", "xtpr", "pdcm",
+	NULL, "pcid", "dca", "sse4_1", "sse4_2", "x2apic", "movbe", "popcnt",
+	"tsc_deadline_timer", "aes", "xsave", NULL,
+	"avx", "f16c", "rdrand", "hypervisor"},
 
-	/* AMD defined */
-	"lahf_lm", "cmp_legacy", "svm", NULL, "cr8_legacy", NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-#endif
+	{ /* (5) VIA/Cyrix/Centaur-defined */
+	NULL, NULL, "rng", "rng_en", NULL, NULL, "ace", "ace_en",
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (6) AMD defined 80000001 ecx */
+	"lahf_lm", "cmp_legacy", "svm", "extapic",
+	"cr8_legacy", "abm", "sse4a", "misalignsse",
+	"3dnowprefetch", "osvw", "ibs", "xop", "skinit", "wdt", NULL, "lwp",
+	"fma4", "tce", NULL, "nodeid_msr",
+	NULL, "tbm", "topoext", "perfctr_core",
+	"perfctr_nb", NULL, "bpext", NULL, "perfctr_l2", "mwaitx", NULL, NULL},
+
+	{ /* (7) Linux-defined */
+	"ida", "arat", "cpb", "ebp", NULL, "pln", "pts", "dtherm",
+	"hw_pstate", "proc_feedback", "hwp", "hwp_notify", "hwp_act_window",
+	"hwp_epp", "hwp_pkg_req", "intel_pt",
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (8) Linux mapping */
+	"tpr_shadow", "vnmi", "flexpriority", "ept",
+	"vpid", "npt", "lbrv", "svm_lock",
+	"nrip_save", "tsc_scale", "vmcb_clean", "flushbyasid",
+	"decodeassists", "pausefilter", "pfthreshold", "vmmcall",
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (9) Intel-defined: 00000007 ebx */
+	"fsgsbase", "tsc_adjust", NULL, "bmi1", "hle", "avx2", NULL, "smep",
+	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", NULL,
+	"avx512f", NULL, "rdseed", "adx",
+	"smap", NULL, "pcommit", "clflushopt",
+	"clwb", NULL, "avx512pf", "avx512er",
+	"avx512cd", "sha_ni", NULL, NULL},
+
+	{ /* (10) 0000000d eax*/
+	"xsaveopt", "xsavec", "xgetbv1", "xsaves", NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (11) 0x0000000f:0 edx*/
+	NULL, "cqm_llc", NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (12) 0x0000000f:1 edx*/
+	"cqm_occup_llc", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 };
 
 static int	procfs_getonecpu(int, struct cpu_info *, char *, size_t *);
@@ -119,7 +162,7 @@ procfs_getcpuinfstr(char *bf, size_t *len)
 
 	i = total = 0;
 	used = size = *len;
-	
+
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		procfs_getonecpu(i++, ci, bf, &used);
 		total += used + 1;
@@ -137,6 +180,71 @@ procfs_getcpuinfstr(char *bf, size_t *len)
 }
 
 static int
+procfs_getonefeatreg(uint32_t reg, const char * const *table, char *p,
+    size_t *left)
+{
+	size_t l;
+
+	for (size_t i = 0; i < 32; i++) {
+		if ((reg & (1 << i)) && table[i]) {
+			l = snprintf(p, *left, "%s ", table[i]);
+			if (l < *left) {
+				*left -= l;
+				p += l;
+			} else
+				break;
+		}
+	}
+
+	return 0; /* XXX */
+}
+
+/*
+ * Print feature bit. The code assume that unused entry of x86_features[]
+ * is zero-cleared.
+ *
+ * XXX This function will be rewritten when all of linux entries are
+ * decoded.
+ */
+static int
+procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
+{
+	size_t last = *left;
+	size_t diff;
+
+	procfs_getonefeatreg(ci->ci_feat_val[0], x86_features[0], p, left);
+	diff = last - *left;
+
+	procfs_getonefeatreg(ci->ci_feat_val[2], x86_features[1], p + diff,
+	    left);
+	diff = last - *left;
+
+	/* x86_features[2] is for Transmeta */
+	/* x86_features[3] is Linux defined mapping */
+	
+	procfs_getonefeatreg(ci->ci_feat_val[1], x86_features[4], p + diff,
+	    left);
+	diff = last - *left;
+
+	procfs_getonefeatreg(ci->ci_feat_val[4], x86_features[5], p + diff,
+	    left);
+	diff = last - *left;
+
+	procfs_getonefeatreg(ci->ci_feat_val[3], x86_features[6], p + diff,
+	    left);
+	diff = last - *left;
+
+	/* x86_features[7] is Linux defined mapping */
+	/* x86_features[8] is Linux defined mapping */
+
+	procfs_getonefeatreg(ci->ci_feat_val[5], x86_features[9], p + diff,
+	    left);
+	diff = last - *left;
+
+	return 0; /* XXX */
+}
+
+static int
 procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 {
 	size_t left, l, size;
@@ -145,16 +253,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 	p = featurebuf;
 	left = sizeof(featurebuf);
 	size = *len;
-	for (size_t i = 0; i < 32; i++) {
-		if ((ci->ci_feat_val[0] & (1 << i)) && x86_features[i]) {
-			l = snprintf(p, left, "%s ", x86_features[i]);
-			if (l < left) {
-				left -= l;
-				p += l;
-			} else
-				break;
-		}
-	}
+	procfs_getonecpufeatures(ci, p, &left);
 
 	p = bf;
 	left = *len;
@@ -196,8 +295,8 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 
 		freq = (ci->ci_data.cpu_cc_freq + 4999) / 1000000;
 		fraq = ((ci->ci_data.cpu_cc_freq + 4999) / 10000) % 100;
-		l = snprintf(p, left, "cpu MHz\t\t: %" PRIu64 ".%02" PRIu64 "\n",
-		    freq, fraq);
+		l = snprintf(p, left, "cpu MHz\t\t: %" PRIu64 ".%02" PRIu64
+		    "\n", freq, fraq);
 	} else
 		l = snprintf(p, left, "cpu MHz\t\t: unknown\n");
 
