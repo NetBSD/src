@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.5 2003/12/04 23:32:37 keihan Exp $
+$NetBSD: README,v 1.6 2016/01/13 22:03:38 christos Exp $
 
 Organization of Sources:
 
@@ -11,7 +11,6 @@ the standard GNU source tree layout under:
 
 The build infrastructure uses the normal BSD way under:
 
-	lib/*
 	usr.bin/*
 
 The makefiles in the above hierarchy will "reach over" into
