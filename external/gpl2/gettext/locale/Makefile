@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/12 22:58:03 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2016/01/13 00:18:01 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,5 +14,6 @@ FILESNAME_${F}=	gettext-tools.mo
 .endfor
 
 .include <bsd.files.mk>
+.include <bsd.inc.mk>
 
 .PATH: ${DIST}/gettext-tools/po
