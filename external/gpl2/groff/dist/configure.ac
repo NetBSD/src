@@ -44,9 +44,7 @@ GROFF_INSTALL_INFO
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
-# use a dummy substitution if no csh hack is necessary to avoid errors
-# with non-GNU sed programs
-GROFF_CSH_HACK([SH_SCRIPT_SED_CMD='1s/.*/:/'], [SH_SCRIPT_SED_CMD='1s/a/a/'])
+SH_SCRIPT_SED_CMD="1s,/bin/sh,${CONFIG_SHELL},"
 AC_SUBST([SH_SCRIPT_SED_CMD])
 
 # checks for headers

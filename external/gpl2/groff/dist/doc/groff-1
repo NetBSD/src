@@ -7703,7 +7703,7 @@ File: groff,  Node: Strings,  Next: Conditionals and Loops,  Prev: Sizes,  Up: g
 ============
 
 `gtroff' has string variables, which are entirely for user convenience
-(i.e. there are no built-in strings exept `.T', but even this is a
+(i.e. there are no built-in strings except `.T', but even this is a
 read-write string variable).
 
  -- Request: .ds name [string]

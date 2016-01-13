@@ -1425,7 +1425,7 @@ The reference data is the location,
 department and initials specified with \fB.AU\fP.
 It will be printed at the first author if the second argument is given,
 otherwise at the last.
-No reference data will be printed if the author(s) is specifed
+No reference data will be printed if the author(s) is specified
 thru \fB.WA\fP/\fB.WE\fP.
 See \fBINTERNALS\fP.
 .TP

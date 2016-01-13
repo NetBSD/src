@@ -117,7 +117,7 @@ version.cpp: $(top_srcdir)/VERSION $(top_srcdir)/REVISION
 	@echo Making version.cpp
 	@echo const char \*version_string = \"$(src_version)\"\; >$@
 	@echo const char \*revision_string = \"$(src_revision)\"\; >>$@
-	@echo extern \"C\" const char \*Version_string = \"$(src_version).$(src_revision)\"\; | \
+	@echo extern \"C\" \{ const char \*Version_string = \"$(src_version).$(src_revision)\"\; \} | \
 	  sed -e 's/\.0\"/\"/' >>$@
 
 # We have to avoid $(COMPILE.c) since we must not use groff's `assert.h'
