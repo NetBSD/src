@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.52 2016/01/02 12:11:30 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.53 2016/01/13 12:05:49 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -438,15 +438,13 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 	rump_sys_chdir("/");
 }
 
+/* PR kern/50607 */
 static void
 create_many(const atf_tc_t *tc, const char *mp)
 {
 	char buf[64];
 	int nfiles = 2324; /* #Nancy */
 	int i;
-
-	if (FSTYPE_EXT2FS(tc))
-		atf_tc_expect_fail("PR kern/50607");
 
 	if (FSTYPE_UDF(tc))
 		atf_tc_expect_fail("PR kern/50608");
