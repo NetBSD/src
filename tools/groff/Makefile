@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2012/12/02 12:48:32 apb Exp $
+#	$NetBSD: Makefile,v 1.31 2016/01/13 19:29:26 christos Exp $
 
 MODULE=		groff
 
@@ -61,7 +61,7 @@ ${SITETMACDIR}/${F}: ${F}-s _installtmac
 .ORDER: realinstall ${SITETMACDIR}/${F}
 CLEANFILES+=${F}-s
 ${F}-s: ${F}
-	${TOOL_SED} -f ${.CURDIR}/../../gnu/dist/groff/tmac/strip.sed \
+	${TOOL_SED} -f ${.CURDIR}/../../external/gpl2/groff/dist/tmac/strip.sed \
 		${.ALLSRC} > ${.TARGET}
 .endfor
 
