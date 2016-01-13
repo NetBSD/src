@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/01/12 22:58:52 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2016/01/13 03:40:11 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,6 @@ SUBDIR+= lvm2
 SUBDIR+= grep
 .endif
 
-SUBDIR+= gettext
+SUBDIR+= gettext diffutils
 
 .include <bsd.subdir.mk>
