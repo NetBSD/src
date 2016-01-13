@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/12 22:58:03 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2016/01/13 12:48:51 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -6,10 +6,11 @@ LIBISPRIVATE=	yes
 
 LIB=	nlspr
 SRCS= \
+clean-temp.c \
 dir-list.c \
 file-list.c \
-format.c \
 format-awk.c \
+format-boost.c \
 format-c.c \
 format-csharp.c \
 format-elisp.c \
@@ -19,7 +20,6 @@ format-librep.c \
 format-lisp.c \
 format-pascal.c \
 format-perl-brace.c \
-format-boost.c \
 format-perl.c \
 format-php.c \
 format-python.c \
@@ -28,52 +28,50 @@ format-scheme.c \
 format-sh.c \
 format-tcl.c \
 format-ycp.c \
-localcharset.c \
+format.c \
+gettext-po.c \
 hash-string.c \
 lang-table.c \
+localcharset.c \
 message.c \
 msgl-ascii.c \
 msgl-cat.c \
 msgl-charset.c \
+msgl-check.c \
 msgl-english.c \
 msgl-equal.c \
 msgl-iconv.c \
-msgl-fsearch.c \
-plural.c \
-plural-exp.c \
-plural-eval.c \
+open-catalog.c \
 plural-count.c \
+plural-eval.c \
+plural-exp.c \
 plural-table.c \
-read-catalog-abstract.c \
 po-charset.c \
 po-error.c \
 po-gram-gen.c \
 po-lex.c \
 po-time.c \
 po-xerror.c \
-open-catalog.c \
+read-catalog-abstract.c \
+read-catalog.c \
 read-csharp.c \
 read-java.c \
 read-mo.c \
 read-po.c \
-read-catalog.c \
 read-properties.c \
 read-resources.c \
 read-stringtable.c \
 read-tcl.c \
 str-list.c \
+write-catalog.c \
 write-csharp.c \
 write-java.c  \
 write-mo.c \
 write-po.c \
-write-catalog.c \
 write-properties.c \
 write-qt.c \
 write-resources.c \
 write-stringtable.c \
-msgl-check.c \
-gettext-po.c \
-clean-temp.c \
 write-tcl.c
 
 .include "${.CURDIR}/../../Makefile.inc"

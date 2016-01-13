@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/12 22:58:03 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2016/01/13 12:48:51 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -12,9 +12,9 @@ argmatch.c \
 backupfile.c \
 basename.c \
 c-ctype.c \
-c-strstr.c \
 c-strcasecmp.c \
 c-strncasecmp.c \
+c-strstr.c \
 classpath.c \
 closeout.c \
 concatpath.c \
@@ -28,19 +28,20 @@ exitfail.c \
 fatal-signal.c \
 findprog.c \
 fstrcmp.c \
-fwriteerror.c \
 full-write.c \
-gl_linkedhash_list.c \
+fwriteerror.c \
 gcd.c \
 getline.c \
+gl_linkedhash_list.c \
 hash.c \
-lock.c \
 javacomp.c \
 javaexec.c \
+javaversion.c \
 linebreak.c \
+localcharset.c \
+lock.c \
 mbchar.c \
 mbswidth.c \
-strnlen1.c \
 obstack.c \
 pipe.c \
 progname.c \
@@ -49,23 +50,20 @@ quote.c \
 quotearg.c \
 safe-read.c \
 safe-write.c \
-strstr.c \
 sh-quote.c \
+striconv.c \
+strnlen1.c \
+strstr.c \
 tmpdir.c \
-localcharset.c \
 wait-process.c \
 xallocsa.c \
-xvasprintf.c \
 xasprintf.c \
 xerror.c \
-striconv.c \
-xstriconv.c \
 xmalloc.c \
 xsetenv.c \
-javaversion.c \
-xstrdup.c
-
-# xgetcwd.c \
+xstrdup.c \
+xstriconv.c \
+xvasprintf.c
 
 .include "${.CURDIR}/../../Makefile.inc"
 
