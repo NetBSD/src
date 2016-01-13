@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.85 2016/01/08 03:26:35 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.86 2016/01/13 07:19:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -447,6 +447,7 @@
 #define CPUID_WDT	0x00002000	/* watchdog timer support */
 #define CPUID_LWP	0x00008000	/* Light Weight Profiling */
 #define CPUID_FMA4	0x00010000	/* FMA4 instructions */
+#define CPUID_TCE	0x00020000	/* Translation cache Extension */
 #define CPUID_NODEID	0x00080000	/* NodeID MSR available*/
 #define CPUID_TBM	0x00200000	/* TBM instructions */
 #define CPUID_TOPOEXT	0x00400000	/* cpuid Topology Extension */
@@ -455,6 +456,8 @@
 #define CPUID_SPM	0x02000000	/* Stream Perf Mon */
 #define CPUID_DBE	0x04000000	/* Data Breakpoint Extension */
 #define CPUID_PTSC	0x08000000	/* PerfTsc */
+#define CPUID_L2IPERFC	0x10000000	/* L2I performance counter Extension */
+#define CPUID_MWAITX	0x20000000	/* MWAITX/MONITORX support */
 
 #define CPUID_AMD_FLAGS4	"\20" \
 	"\1" "LAHF"	"\2" "CMPLEGACY" "\3" "SVM"	"\4" "EAPIC" \
@@ -462,10 +465,10 @@
 	"\11" "3DNOWPREFETCH" \
 			"\12" "OSVW"	"\13" "IBS"	"\14" "XOP" \
 	"\15" "SKINIT"	"\16" "WDT"	"\17" "B14"	"\20" "LWP" \
-	"\21" "FMA4"	"\22" "B17"	"\23" "B18"	"\24" "NodeID" \
+	"\21" "FMA4"	"\22" "TCE"	"\23" "B18"	"\24" "NodeID" \
 	"\25" "B20"	"\26" "TBM"	"\27" "TopoExt"	"\30" "PCExtC" \
 	"\31" "PCExtNB"	"\32" "StrmPM"	"\33" "DBExt"	"\34" "PerfTsc" \
-	"\35" "B28"	"\36" "B29"	"\37" "B30"	"\40" "B31"
+	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "B30"	"\40" "B31"
 
 /*
  * AMD Advanced Power Management
