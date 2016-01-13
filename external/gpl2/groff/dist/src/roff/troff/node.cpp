@@ -1,4 +1,4 @@
-/*	$NetBSD: node.cpp,v 1.1.1.1 2016/01/13 18:41:48 christos Exp $	*/
+/*	$NetBSD: node.cpp,v 1.2 2016/01/13 19:01:59 christos Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
@@ -2159,7 +2159,7 @@ void glyph_node::debug_node()
   if (c)
     fprintf(stderr, "%c", c);
   else
-    fprintf(stderr, ci->nm.contents());
+    fprintf(stderr, "%s", ci->nm.contents());
   if (push_state)
     fprintf(stderr, " <push_state>");
   if (state)
@@ -4602,7 +4602,7 @@ void hline_node::tprint(troff_output_file *out)
   }
   else {
     hunits rem = x - w*i;
-    if (rem > H0)
+    if (rem > H0) {
       if (n->overlaps_horizontally()) {
 	if (out->is_on())
 	  n->tprint(out);
@@ -4610,6 +4610,7 @@ void hline_node::tprint(troff_output_file *out)
       }
       else
 	out->right(rem);
+    }
     while (--i >= 0)
       if (out->is_on())
 	n->tprint(out);

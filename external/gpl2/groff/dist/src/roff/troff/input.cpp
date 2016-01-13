@@ -1,4 +1,4 @@
-/*	$NetBSD: input.cpp,v 1.1.1.1 2016/01/13 18:41:48 christos Exp $	*/
+/*	$NetBSD: input.cpp,v 1.2 2016/01/13 19:01:59 christos Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
@@ -2798,11 +2798,12 @@ void process_input_stack()
 	    do {
 	      node *n;
 	      cc = get_copy(&n);
-	      if (cc != EOF)
+	      if (cc != EOF) {
 		if (cc != '\0')
 		  curdiv->transparent_output(transparent_translate(cc));
 		else
 		  curdiv->transparent_output(n);
+	      }
 	    } while (cc != '\n' && cc != EOF);
 	    if (cc == EOF)
 	      curdiv->transparent_output('\n');

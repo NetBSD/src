@@ -43,4 +43,59 @@ troffrc!X100 troffrc!X100-12 troffrc!lj4 troff!lbp troffrc!html
 .\" Handle paper formats
 .do mso papersize.tmac
 .
+.if n \{\
+.  nr _C \n(.C
+.  cp 0
+.
+.  \" The following code sets a top-of-page trap to disable grotty's TTY
+.  \" mode.  Since neither \X nor .output can be used before the first
+.  \" page has started, we must use a trap.  To make it work with troff's
+.  \" -o option, we wait until the first printed page.
+.
+.  de sgr@dummy
+.  .
+.
+.  rn wh wh@old
+.
+.  \" The stand-alone version.  If no other trap is set, we can safely
+.  \" insert the truncated vertical space caused by the trap (if any).
+.  \" Otherwise we assume that the document's main macro package takes
+.  \" care of that.  As soon as the trap has been executed, it is removed.
+.  de1 no@sgr
+.    if \\n[.P] \{\
+.      if (\\n[.t] == \\n[.p]) \{\
+.        rn wh@old wh
+.        rm no@sgr
+.        wh 0
+.        sp \\n[.trunc]
+.        nop \X'tty: sgr 0'
+.        sp -1
+.    \}\}
+.  .
+.
+.  wh@old 0 no@sgr
+.
+.  \" The piggyback version to be appended to macros planted with the
+.  \" modified `wh' request.
+.  de1 no@sgr1
+.    if \\n[.P] \{\
+.      rn wh@old wh
+.      ds no@sgr1
+.      nop \X'tty: sgr 0'
+.      sp -1
+.    \}
+.  .
+.
+.  \" We redefine the `wh' request so that `no@sgr1' is appended to
+.  \" the trap macro.
+.  de1 wh
+.    am1 \\$2 sgr@dummy
+.      no@sgr1
+.    sgr@dummy
+.    wh@old \\$1 \\$2
+.  .
+.
+.  cp \n[_C]
+.\}
+.
 .\" Don't let blank lines creep in here.
