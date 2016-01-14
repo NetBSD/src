@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.23 2015/05/23 11:48:31 christos Exp $	*/
+/*	$NetBSD: vis.h,v 1.24 2016/01/14 20:42:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -91,6 +91,7 @@ char	*svis(char *, int, int, int, const char *);
 char	*snvis(char *, size_t, int, int, int, const char *);
 
 int	strvis(char *, const char *, int);
+int	stravis(char **, const char *, int);
 int	strnvis(char *, size_t, const char *, int);
 
 int	strsvis(char *, const char *, int, const char *);
