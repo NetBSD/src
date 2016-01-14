@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/13 21:56:38 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2016/01/14 02:43:50 christos Exp $
 
-NOLINT=
 NOMAN=	# defined
 .include <bsd.init.mk>
 
