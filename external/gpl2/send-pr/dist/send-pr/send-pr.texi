@@ -1,5 +1,4 @@
 \input texinfo   @c -*-texinfo-*-
-@c $NetBSD: send-pr.texi,v 1.1.1.1 2016/01/14 21:06:14 christos Exp $
 @setfilename send-pr.info
 @settitle Reporting Problems Using send-pr
 
@@ -11,13 +10,13 @@
 @ifinfo
 @format
 START-INFO-DIR-ENTRY
-* send-pr::                     Reporting problems--using send-pr
+* send-pr: (send-pr).           Reporting problems--using send-pr
 END-INFO-DIR-ENTRY
 @end format
 @end ifinfo
 
 @ifinfo
-Copyright @copyright{} 1993 Free Software Foundation, Inc.
+Copyright @copyright{} 1993, 1994 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -51,7 +50,7 @@ into another language, under the above conditions for modified versions.
 
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 1993 Free Software Foundation, Inc.
+Copyright @copyright{} 1993, 1994 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -233,7 +232,7 @@ X-send-pr-version: send-pr @value{VERSION}
 >Originator:    Jeffrey Osier
 >Organization:  
 Imaginary Software, Ltd.
->Confidential:  <[ yes | no ] (one line)>
+>Confidential:  <[ no | yes ] (one line)>
 >Synopsis:      <synopsis of the problem (one line)>
 >Severity:      <[ non-critical | serious | critical ] (one line)>
 >Priority:      <[ low | medium | high ] (one line)>

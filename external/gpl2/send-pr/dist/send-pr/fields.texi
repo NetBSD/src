@@ -1,5 +1,4 @@
 @node Fields
-@c $NetBSD: fields.texi,v 1.1.1.1 2016/01/14 21:06:14 christos Exp $
 @section Problem Report format
 @cindex Problem Report format
 @cindex format
@@ -101,7 +100,7 @@ Subject:     @var{subject}
 >Number:       @var{gnats-id}
 >Category:     @var{category}
 >Synopsis:     @var{synopsis}
->Confidential: yes @emph{or} no
+>Confidential: no @emph{or} yes
 >Severity:     critical, serious, @emph{or} non-critical
 >Priority:     high, medium @emph{or} low
 >Responsible:  @var{responsible}
@@ -281,6 +280,7 @@ The product, component or concept is working in general, but lacks
 features, has irritating behavior, does something wrong, or doesn't
 match its documentation.
 @end table
+@noindent
 The default value is @samp{serious}.
 @sp 1
 
@@ -364,7 +364,7 @@ concept.
 @item >Environment:
 @cindex @code{Environment} field
 @cindex @code{>Environment:}
-(@sc{MultiText}) Description of the environment where the problem occured:
+(@sc{MultiText}) Description of the environment where the problem occurred:
 machine architecture, operating system, host and target types,
 libraries, pathnames, etc.
 
