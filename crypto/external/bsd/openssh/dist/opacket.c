@@ -1,8 +1,8 @@
-/*	$NetBSD: opacket.c,v 1.3 2015/07/03 01:00:00 christos Exp $	*/
+/*	$NetBSD: opacket.c,v 1.4 2016/01/14 22:30:04 christos Exp $	*/
 /* Written by Markus Friedl. Placed in the public domain.  */
 
 #include "includes.h"
-__RCSID("$NetBSD: opacket.c,v 1.3 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: opacket.c,v 1.4 2016/01/14 22:30:04 christos Exp $");
 
 #include "ssherr.h"
 #include "packet.h"
@@ -241,18 +241,6 @@ packet_set_connection(int fd_in, int fd_out)
 	active_state = ssh_packet_set_connection(active_state, fd_in, fd_out);
 	if (active_state == NULL)
 		fatal("%s: ssh_packet_set_connection failed", __func__);
-}
-
-void
-packet_backup_state(void)
-{
-	ssh_packet_backup_state(active_state, backup_state);
-}
-
-void
-packet_restore_state(void)
-{
-	ssh_packet_restore_state(active_state, backup_state);
 }
 
 u_int

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.16 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.17 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: readconf.c,v 1.239 2015/07/30 00:01:34 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.16 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.17 2016/01/14 22:30:04 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -153,7 +153,7 @@ typedef enum {
 	oSendEnv, oControlPath, oControlMaster, oControlPersist,
 	oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
-	oVisualHostKey, oUseRoaming,
+	oVisualHostKey,
 	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown, oProxyUseFdpass,
 	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
 	oCanonicalizeFallbackLocal, oCanonicalizePermittedCNAMEs,
@@ -273,7 +273,6 @@ static struct {
 	{ "localcommand", oLocalCommand },
 	{ "permitlocalcommand", oPermitLocalCommand },
 	{ "visualhostkey", oVisualHostKey },
-	{ "useroaming", oUseRoaming },
 	{ "kexalgorithms", oKexAlgorithms },
 	{ "ipqos", oIPQoS },
 	{ "requesttty", oRequestTTY },
@@ -1451,10 +1450,6 @@ parse_keytypes:
 		}
 		break;
 
-	case oUseRoaming:
-		intptr = &options->use_roaming;
-		goto parse_flag;
-
 	case oRequestTTY:
 		intptr = &options->request_tty;
 		multistate_ptr = multistate_requesttty;
@@ -1746,7 +1741,6 @@ initialize_options(Options * options)
 	options->tun_remote = -1;
 	options->local_command = NULL;
 	options->permit_local_command = -1;
-	options->use_roaming = -1;
 	options->visual_host_key = -1;
 	options->ip_qos_interactive = -1;
 	options->ip_qos_bulk = -1;
@@ -1959,8 +1953,6 @@ fill_default_options(Options * options)
 		options->tun_remote = SSH_TUNID_ANY;
 	if (options->permit_local_command == -1)
 		options->permit_local_command = 0;
-	if (options->use_roaming == -1)
-		options->use_roaming = 1;
 	if (options->visual_host_key == -1)
 		options->visual_host_key = 0;
 	if (options->ip_qos_interactive == -1)
