@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh2.h,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: ssh2.h,v 1.7 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: ssh2.h,v 1.15 2014/01/29 06:18:35 djm Exp $ */
 
 /*
@@ -164,13 +164,6 @@
 #define SSH2_OPEN_RESOURCE_SHORTAGE			4
 
 #define SSH2_EXTENDED_DATA_STDERR			1
-
-/* kex messages for resume@appgate.com */
-#define SSH2_MSG_KEX_ROAMING_RESUME			30
-#define SSH2_MSG_KEX_ROAMING_AUTH_REQUIRED		31
-#define SSH2_MSG_KEX_ROAMING_AUTH			32
-#define SSH2_MSG_KEX_ROAMING_AUTH_OK			33
-#define SSH2_MSG_KEX_ROAMING_AUTH_FAIL			34
 
 /* Certificate types for OpenSSH certificate keys extension */
 #define SSH2_CERT_TYPE_USER				1

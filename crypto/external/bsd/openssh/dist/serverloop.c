@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.12 2015/04/13 18:00:47 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.13 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: serverloop.c,v 1.178 2015/02/20 22:17:21 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.12 2015/04/13 18:00:47 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.13 2016/01/14 22:30:04 christos Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -77,7 +77,6 @@ __RCSID("$NetBSD: serverloop.c,v 1.12 2015/04/13 18:00:47 christos Exp $");
 #include "dispatch.h"
 #include "auth-options.h"
 #include "serverloop.h"
-#include "roaming.h"
 #include "ssherr.h"
 
 extern ServerOptions options;
@@ -399,11 +398,8 @@ process_input(fd_set *readset)
 
 	/* Read and buffer any input data from the client. */
 	if (FD_ISSET(connection_in, readset)) {
-		int cont = 0;
-		len = roaming_read(connection_in, buf, sizeof(buf), &cont);
+		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
-			if (cont)
-				return;
 			verbose("Connection closed by %.100s",
 			    get_remote_ipaddr());
 			connection_closed = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.12 2015/07/03 01:00:00 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.13 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.85 2015/05/01 03:23:51 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.12 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.13 2016/01/14 22:30:04 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -78,7 +78,6 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.12 2015/07/03 01:00:00 christos Exp $");
 #include "channels.h"
 #include "session.h"
 #include "servconf.h"
-#include "roaming.h"
 
 #include "ssherr.h"
 
