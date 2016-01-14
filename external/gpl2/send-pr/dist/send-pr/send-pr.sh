@@ -2,7 +2,7 @@
 # Submit a problem report to a GNATS site.
 # Copyright (C) 1993 Free Software Foundation, Inc.
 # Contributed by Brendan Kehoe (brendan@cygnus.com), based on a
-# version written by Heinz G. Seidl (hgs@ide.com).
+# version written by Heinz G. Seidl (hgs@cygnus.com).
 #
 # This file is part of GNU GNATS.
 #
@@ -37,7 +37,8 @@ GNATS_ADDR=xGNATS_ADDRx
 DATADIR=xDATADIRx
 
 # If we've been moved around, try using GCC_EXEC_PREFIX.
-[ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && DATADIR=${GCC_EXEC_PREFIX}..
+[ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && 
+  DATADIR=${GCC_EXEC_PREFIX}../../../lib
 
 # The default release for this host.
 DEFAULT_RELEASE="xDEFAULT_RELEASEx"
@@ -55,6 +56,9 @@ GNATS_SITE=xGNATS_SITEx
 # host-dependent.
 MAIL_AGENT="xMAIL_AGENTx"
 
+# How to read the passwd database.
+PASSWD="xPASSWDx"
+
 ECHON=xECHONx
 
 if [ $ECHON = bsd ] ; then
@@ -70,39 +74,46 @@ fi
 
 #
 
-[ -z "$TMPDIR" ] && TMPDIR=/tmp
+if [ -z "$TMPDIR" ]; then
+  TMPDIR=/tmp
+else
+  if [ "`echo $TMPDIR | grep '/$'`" != "" ]; then
+    TMPDIR="`echo $TMPDIR | sed -e 's,/$,,'`"
+  fi
+fi
 
-TEMP=$TMPDIR/p$$
-BAD=$TMPDIR/pbad$$
-REF=$TMPDIR/pf$$
+TEMP=`mktemp -t p` || exit 1
+BAD=`mktemp -t pbad` || exit 1
+REF=`mktemp -t pf` || exit 1
 
-if [ -z "$LOGNAME" -a -n "$USER" ]; then
-  LOGNAME=$USER
+# find a user name
+if [ "$LOGNAME" = "" ]; then
+	if [ "$USER" != "" ]; then
+		LOGNAME="$USER"
+	else
+		LOGNAME="UNKNOWN"
+	fi
 fi
 
 FROM="$LOGNAME"
-REPLY_TO="$LOGNAME"
+if [ -z "$REPLYTO" ]; then
+  REPLYTO="$LOGNAME"
+fi
 
 # Find out the name of the originator of this PR.
 if [ -n "$NAME" ]; then
   ORIGINATOR="$NAME"
 elif [ -f $HOME/.fullname ]; then
   ORIGINATOR="`sed -e '1q' $HOME/.fullname`"
-elif [ -f /bin/domainname ]; then
-  if [ "`/bin/domainname`" != "" -a -f /usr/bin/ypcat ]; then
-    # Must use temp file due to incompatibilities in quoting behavior
-    # and to protect shell metacharacters in the expansion of $LOGNAME
-    /usr/bin/ypcat passwd 2>/dev/null | cat - /etc/passwd | grep "^$LOGNAME:" |
-      cut -f5 -d':' | sed -e 's/,.*//' > $TEMP
-    ORIGINATOR="`cat $TEMP`"
-    rm -f $TEMP
-  fi
-fi
-
-if [ "$ORIGINATOR" = "" ]; then
-  grep "^$LOGNAME:" /etc/passwd | cut -f5 -d':' | sed -e 's/,.*//' > $TEMP
-  ORIGINATOR="`cat $TEMP`"
-  rm -f $TEMP
+else
+  ORIGINATOR=`$PASSWD | sed -e /"^${LOGNAME}:"/'{s/^[^:]*:[^:]*:[^:]*:[^:]*:\([^,:;]*\).*$/\1/' -e q -e } -e d`
+  case "$ORIGINATOR" in
+  *'&'*)
+    AMP=`echo $LOGNAME | tr '[a-z]' '[A-Z]'`
+    AMP=`echo $AMP $LOGNAME | sed 's/^\(.\)[^ ]* ./\1/'`
+    ORIGINATOR=`echo "$ORIGINATOR" | sed "s/&/$AMP/"`
+    ;;
+  esac
 fi
 
 if [ -n "$ORGANIZATION" ]; then
@@ -131,10 +142,22 @@ else
 fi
 
 # Find out some information.
-SYSTEM=`( [ -f /bin/uname ] && /bin/uname -a ) || \
-        ( [ -f /usr/bin/uname ] && /usr/bin/uname -a ) || echo ""`
-ARCH=`[ -f /bin/arch ] && /bin/arch`
-MACHINE=`[ -f /bin/machine ] && /bin/machine`
+if [ -f /bin/uname ]; then
+  UNAME="/bin/uname"
+elif [ -f /usr/bin/uname ]; then
+  UNAME="/usr/bin/uname"
+else
+  UNAME="echo"
+fi
+SYSTEM=`$UNAME -a`
+ARCH=`$UNAME -p`
+if [ -z "$ARCH" -a -f /bin/arch ]; then
+  ARCH=`/bin/arch`
+fi
+MACHINE=`$UNAME -m`
+if [ -z "$ARCH" -a -f /bin/machine ]; then
+  ARCH=`/bin/arch`
+fi
 
 COMMAND=`echo $0 | sed -e 's,.*/,,'`
 USAGE="Usage: $COMMAND [-PVL] [-t address] [-f filename] [--request-id] 
@@ -180,7 +203,7 @@ while [ $# -gt 0 ]; do
  shift
 done
 
-if [ -n "$USER_GNATS_SITE" ]; then
+if [ -n "$USER_GNATS_SITE" ] && [ "$USER_GNATS_SITE" != "$GNATS_SITE" ]; then
   GNATS_SITE=$USER_GNATS_SITE
   GNATS_ADDR=$USER_GNATS_SITE-gnats
 fi
@@ -233,22 +256,36 @@ esac
 
 ORIGINATOR_C='<name of the PR author (one line)>'
 ORGANIZATION_C='<organization of PR author (multiple lines)>'
-CONFIDENTIAL_C='<[ yes | no ] (one line)>'
+CONFIDENTIAL_C='<[ no | yes ] (one line)>'
 SYNOPSIS_C='<synopsis of the problem (one line)>'
 SEVERITY_C='<[ non-critical | serious | critical ] (one line)>'
 PRIORITY_C='<[ low | medium | high ] (one line)>'
-CATEGORY_C='<name of the product (one line)>'
+CATEGORY_C='<problem report category - see top for list (one line)>'
 CLASS_C='<[ sw-bug | doc-bug | change-request | support ] (one line)>'
-RELEASE_C='<release number or tag (one line)>'
-ENVIRONMENT_C='<machine, os, target, libraries (multiple lines)>'
+RELEASE_C_1='<Please check that the above is correct for the bug being reported,>'
+RELEASE_C_2='<and append source date of snapshot, if applicable (one line).>'
+ENVIRONMENT_C_1='<The following information is extracted from your kernel. Please>'
+ENVIRONMENT_C_2='<append output of "ldd", "ident" where relevant (multiple lines).>'
 DESCRIPTION_C='<precise description of the problem (multiple lines)>'
 HOW_TO_REPEAT_C='<code/input/activities to reproduce the problem (multiple lines)>'
 FIX_C='<how to correct or work around the problem, if known (multiple lines)>'
 
 # Catch some signals. ($xs kludge needed by Sun /bin/sh)
 xs=0
-trap 'rm -f $REF $TEMP; exit $xs' 0
-trap 'echo "$COMMAND: Aborting ..."; rm -f $REF $TEMP; xs=1; exit' 1 2 3 13 15
+TRAP_EXIT_ACTION='rm -f $REF $TEMP; exit $xs'
+TRAP_IGNORE_ACTION=''
+TRAP_ABORT_ACTION='echo "$COMMAND: Aborting ..."; rm -f $REF $TEMP; xs=1; exit'
+TRAP_ABORTSAVE_ACTION='
+    echo "$COMMAND: Aborting ...";
+    if cmp -s $REF $TEMP ; then
+	rm $REF
+    else
+	echo "$COMMAND: the problem report remains in $BAD and is not sent."
+	mv $REF $BAD
+    fi
+    rm -f $TEMP; xs=1; exit'
+trap "$TRAP_EXIT_ACTION" 0
+trap "$TRAP_ABORT_ACTION" 1 2 3 13 15
 
 # If they told us to use a specific file, then do so.
 if [ -n "$IN_FILE" ]; then
@@ -291,6 +328,9 @@ SEND-PR:
 SEND-PR: Please consult the send-pr man page `send-pr(1)' or the Texinfo
 SEND-PR: manual if you are not sure how to fill out a problem report.
 SEND-PR:
+SEND-PR: NOTE: If you include a patch that corrects the problem, the
+SEND-PR: issue will probably be handled much more quickly.
+SEND-PR:
 SEND-PR: Choose from the following categories:
 SEND-PR:
 __EOF__
@@ -311,33 +351,26 @@ __EOF__
 To: $GNATS_ADDR
 Subject: 
 From: $FROM
-Reply-To: $REPLY_TO
+Reply-To: $REPLYTO
 X-send-pr-version: $VERSION
 
 
->Submitter-Id:   $SUBMITTER
->Originator: 	 $ORIGINATOR
+>Submitter-Id:	$SUBMITTER
+>Originator:	$ORIGINATOR
 >Organization:
-`
-  if [ -n "$ORGANIZATION" ]; then
-    echo "$ORGANIZATION"
-  else
-    echo "	$ORGANIZATION_C" ;
-  fi ;
-`
->Confidential:  $CONFIDENTIAL_C
+${ORGANIZATION-	$ORGANIZATION_C}
+>Confidential:	$CONFIDENTIAL_C
 >Synopsis:	$SYNOPSIS_C
 >Severity:	$SEVERITY_C
 >Priority:	$PRIORITY_C
->Category: 	$CATEGORY_C
+>Category:	$CATEGORY_C
 >Class:		$CLASS_C
->Release:	 `if [ -n "$DEFAULT_RELEASE" ]; then
-		   echo "$DEFAULT_RELEASE"
-		  else
-		   echo "	$RELEASE_C"
-		  fi; `
+>Release:	${DEFAULT_RELEASE:-"unreleased"}
+	$RELEASE_C_1
+	$RELEASE_C_2
 >Environment:
-    	$ENVIRONMENT_C
+	$ENVIRONMENT_C_1
+	$ENVIRONMENT_C_2
 `[ -n "$SYSTEM" ] && echo System: $SYSTEM`
 `[ -n "$ARCH" ] && echo Architecture: $ARCH`
 `[ -n "$MACHINE" ] && echo Machine: $MACHINE`
@@ -358,7 +391,9 @@ __EOF__
 
   chmod u+w $TEMP
   if [ -z "$REQUEST_ID" ]; then
+    trap "$TRAP_IGNORE_ACTION" 2 3
     eval $EDIT $TEMP
+    trap "$TRAP_ABORTSAVE_ACTION" 2 3
   else
     ed -s $TEMP << '__EOF__'
 /^Subject/s/^Subject:.*/Subject: request for a customer id/
@@ -448,8 +483,18 @@ while [ -z "$REQUEST_ID" ]; do
     ""|sw-bug|doc-bug|change-request|support) CNT=`expr $CNT + 1` ;;
     *)  echo "$COMMAND: \`$CLASS' is not a valid value for \`Class'."
   esac
+  #
+  # 6) Release
+  #
+  PATTERN=">Release:"
+  RELEASE=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
+  if [ -z "$RELEASE" ]; then
+    echo "$COMMAND: you must include a Release: field in your report."
+  else
+    CNT=`expr $CNT + 1`
+  fi
 
-  [ $CNT -lt 5 -a -z "$BATCH" ] && 
+  [ $CNT -lt 6 -a -z "$BATCH" ] && 
     echo "Errors were found with the problem report."
 
   while true; do
@@ -457,7 +502,7 @@ while [ -z "$REQUEST_ID" ]; do
       $ECHON1 "a)bort, e)dit or s)end? $ECHON2"
       read input
     else
-      if [ $CNT -eq 5 ]; then
+      if [ $CNT -eq 6 ]; then
         input=s
       else
         input=a
@@ -474,7 +519,9 @@ while [ -z "$REQUEST_ID" ]; do
 	xs=1; exit
 	;;
       e*)
-        eval $EDIT $TEMP
+	trap "$TRAP_IGNORE_ACTION" 2 3
+	eval $EDIT $TEMP
+	trap "$TRAP_ABORTSAVE_ACTION" 2 3
 	continue 2
 	;;
       s*)
@@ -497,8 +544,10 @@ sed  -e "
 /^>Priority:/s;<.*>;;
 /^>Category:/s;$CATEGORY_C;;
 /^>Class:/s;<.*>;;
-/^>Release:/,/^>[A-Za-z-]*:/s;$RELEASE_C;;
-/^>Environment:/,/^>[A-Za-z-]*:/s;$ENVIRONMENT_C;;
+/^>Release:/,/^>[A-Za-z-]*:/s;$RELEASE_C_1;;
+/^>Release:/,/^>[A-Za-z-]*:/s;$RELEASE_C_2;;
+/^>Environment:/,/^>[A-Za-z-]*:/s;$ENVIRONMENT_C_1;;
+/^>Environment:/,/^>[A-Za-z-]*:/s;$ENVIRONMENT_C_2;;
 /^>Description:/,/^>[A-Za-z-]*:/s;$DESCRIPTION_C;;
 /^>How-To-Repeat:/,/^>[A-Za-z-]*:/s;$HOW_TO_REPEAT_C;;
 /^>Fix:/,/^>[A-Za-z-]*:/s;$FIX_C;;

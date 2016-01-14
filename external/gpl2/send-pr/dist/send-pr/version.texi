@@ -1,1 +1,2 @@
-@set VERSION 3.2
+@c	$NetBSD: version.texi,v 1.2 2016/01/14 21:13:20 christos Exp $
+@set VERSION 3.95

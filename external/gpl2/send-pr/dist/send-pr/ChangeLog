@@ -1,3 +1,194 @@
+Thu Aug  3 13:32:39 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (VERSION): Up to 3.95.
+
+Wed Jul 26 18:26:31 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (install-gnats-dist): Also put in INSTALL and MANIFEST.
+
+Mon Jul 17 10:11:11 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (VERSION): Up to 3.93.
+
+	* Makefile.in (prefix): Use @prefix@, not /usr/local, for the default.
+
+Thu Jul 13 13:02:52 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* send-pr-el.in (gnats::position-on-field): Add new arg QUIET.
+	Only give the error if QUIET is nil.
+	(gnats::field-contents): Pass T to position-on-field.
+
+	* Makefile.in (VERSION): Update to 3.92.
+
+Wed Jul 12 12:26:49 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* Makefile.in (EMACS): Define variable to use ../emacs19/src/emacs
+	if it's there.
+	(send-pr.elc): Use that instead of just `emacs'.
+
+Fri Jul  7 13:43:48 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* aclocal.m4: Use AC_MSG_* for AC_LISPDIR.
+	* configure: Regenerate.
+
+Thu Jul  6 19:22:53 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* send-pr-el.in (gnats::get-config): Also match `.:' for NetBSD.
+
+Mon Jun 12 08:32:57 1995  Brendan Kehoe  (brendan@lisa.cygnus.com)
+
+	* Makefile.in (stamp-gnats): Don't depend on ../gnats/Makefile.
+
+Fri Mar 24 15:04:58 1995  Jason Merrill  <jason@phydeaux.cygnus.com>
+
+	* aclocal.m4 (AC_LISPDIR): Tweak quoting to work with bash.
+	* configure: Regenerate.
+
+Mon Feb 13 02:04:13 1995  Brendan Kehoe  (brendan@lisa.cygnus.com)
+
+	* send-pr.sh: Be a little more elegant about how we set LOGNAME.
+
+Sun Feb 12 22:59:44 1995  Brendan Kehoe  (brendan@cygnus.com)
+
+	* configure.in: Only set GNATS_SITE and GNATS_ADDR if we aren't
+	given environment variables with them set.
+	* configure: Generated new one.
+
+Fri Feb  3 12:10:35 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* send-pr.sh: Added missing ` (backquote) to expression used to
+	  determine whether TMPDIR ends in a slash.
+
+Tue Jan 31 10:48:39 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* send-pr.sh: Use REPLYTO instead of REPLY_TO.  Set REPLYTO to
+	  LOGNAME if it is unset.
+
+Fri Dec 30 16:52:40 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
+
+	* Makefile.in (install-norm): Stop make from printing an error
+	message of send-pr.elc does not exist.
+
+Thu Oct  6 13:05:19 1994  Brendan Kehoe  (brendan@lisa.cygnus.com)
+
+	* send-pr-el.in (gnats::get-config): Go to point-min after running
+	the shell command on the region.
+	(send-pr::start-up): Likewise, after inserting the site template. 
+
+	* send-pr.sh (TMPDIR): If TMPDIR ends in a slash, cut it off to
+	avoid emacs send-pr not working.
+
+Wed Oct  5 13:11:27 1994  Brendan Kehoe  (brendan@lisa.cygnus.com)
+
+	* send-pr-el.in (send-pr::start-up): Call insert-template instead
+	of running `send-pr -P' every time.
+	(send-pr::template-alist): Declare.
+	(send-pr::insert-template): New function.
+
+	* send-pr-el.in (gnats::get-config): Check get-buffer before using
+	looking-at, since shell-command-on-region wipes it out if there's
+	no output (which will be the case for variables not set in the
+	config file).
+
+	* send-pr-el.in (gnats::find-safe-default-directory): New function.
+
+Thu Sep 29 18:37:34 1994  Brendan Kehoe  (brendan@lisa.cygnus.com)
+
+	* aclocal.m4 (AC_LISPDIR): Set LISPDIR using commas in the sed,
+	not slashes.
+	* configure: Generate a new one.
+
+Tue Aug 30 13:55:22 1994  Brendan Kehoe  (brendan@lisa.cygnus.com)
+
+	* aclocal.m4: Change from Jason, to try to use PREFIX on the
+	LISPDIR if possible before going with /usr/local.
+
+Mon Aug  1 11:31:47 1994  Brendan Kehoe  (brendan@lisa.cygnus.com)
+
+	* send-pr-el.in (send-pr::start-up): Always start at the beginning
+	of the buffer when searching for `^SEND-PR:'.
+
+Sun Jul 17 19:13:17 1994  Jason Molenda  (crash@sendai.cygnus.com)
+
+	* categories: add `dos' for real this time.
+
+Wed May 11 15:46:48 1994  Bill Cox  (bill@rtl.cygnus.com)
+
+	* Makefile.in: Delete install commands which attempt to
+	  'chown' the script to user 'gnats', who not exist in
+	  the end-user's system.
+
+Fri May  6 17:40:12 1994  Jason Molenda (crash@sendai.cygnus.com)
+
+	* categories: add 'dos', 'gcov', 'gasp', and 'install'.
+
+Thu Apr 21 12:55:52 1994  James Clark  (jjc@jclark.com)
+
+	* send-pr.sh (ORGANIZATION): don't use quotes in the ${ORG-"\t$ORG_C"}
+	thing.  It tickles a bug in bourne shell.
+
+Wed Apr  6 17:16:28 1994  Jason Merrill  (jason@deneb.cygnus.com)
+
+	* send-pr-el.in (gnats::get-config): Use shell-command-on-region
+	instead of shell-command.
+	(send-pr::start-up): Ditto.
+
+Wed Apr  6 17:14:36 1994  Cheryl Bien  (bien@aero.org)
+
+	* send-pr.sh (ORIGINATOR): Use awk instead of cut.
+
+Tue Mar 22 17:12:24 1994  Jason Merrill  (jason@deneb.cygnus.com)
+
+	* send-pr.sh: DATADIR is under $(prefix), not $(exec_prefix).
+
+Sat Jan 15 19:12:45 1994  Jason Merrill  (jason@deneb.cygnus.com)
+
+	* aclocal.m4 (AC_LISPDIR): Handle case where $(prefix) is not
+	specified on the command line.
+
+Mon Jan 10 17:21:33 1994  Jason Merrill  (jason@deneb.cygnus.com)
+
+	* send-pr-el.in (send-pr:submit-pr): If called from command line,
+	save buffer on C-c C-c.
+
+	* send-pr.sh: Clean up template.
+
+	* Makefile.in, configure.in: Don't use AC_PROG_INSTALL after all.
+
+	* aclocal.m4 (AC_LISPDIR): Check for --with-lispdir option.
+
+Fri Jan  7 11:43:02 1994  Jason Merrill  (jason@deneb.cygnus.com)
+
+	* send-pr-el.in (gnats:change-field): If not called interactively,
+	just use the default value.
+
+	* Makefile.in (uninstall): Fix.
+
+	* configure.in: Add call to AC_PROG_INSTALL.
+
+	* Makefile.in (INSTALL*): Use it.
+
+	* send-pr.sh: Only modify GNATS_ADDR if USER_GNATS_SITE is different
+	from GNATS_SITE.
+
+	* send-pr-el.in (send-pr:submit-pr): If the user ran send-pr from the
+	command line with $EDITOR == emacs, don't submit the PR here.
+	(send-pr:::spawn-to-send): Variable to control this behavior.
+
+Thu Jan  6 22:51:15 1994  Jason Merrill  (jason@deneb.cygnus.com)
+
+	* send-pr-el.in (send-pr::fields): Default for Submitter-Id should
+	be SUBMITTER, not DEFAULT_SUBMITTER.
+
+	* aclocal.m4 (AC_PASSWD): New macro to figure out how to read the
+	passwd database (cat, ypcat, niscat).
+
+	* configure.in: Use it.
+
+	* Makefile.in (PASSWD, send-pr): Use it.
+
+	* send-pr.sh: Use it.
+
 Fri Dec 10 11:48:44 1993  Jason Merrill  (jason@deneb.cygnus.com)
 
 	* Version 3.2
