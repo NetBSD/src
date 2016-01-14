@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.14 2016/01/14 20:42:03 christos Exp $	*/
+/*	$NetBSD: regex.h,v 1.15 2016/01/14 21:45:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ int	regexec(const regex_t * __restrict,
 	    const char * __restrict, size_t, regmatch_t [], int);
 void	regfree(regex_t *);
 #ifdef _NETBSD_SOURCE
-ssize_t regsub(char *, size_t, const char *, const regmatch_t *, const char *);
+ssize_t regnsub(char *, size_t, const char *, const regmatch_t *, const char *);
 ssize_t regasub(char **buf, const char *, const regmatch_t *, const char *);
 #endif
 __END_DECLS
