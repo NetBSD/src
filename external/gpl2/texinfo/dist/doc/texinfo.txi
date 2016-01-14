@@ -12782,7 +12782,7 @@ sections for more details:
 
 @table @code
 @item @@set @var{flag} [@var{value}]
-Set the variable @var{flag}, to the optional @var{value} if specifed.
+Set the variable @var{flag}, to the optional @var{value} if specified.
 
 @item @@clear @var{flag}
 Undefine the variable @var{flag}, whether or not it was previously defined.

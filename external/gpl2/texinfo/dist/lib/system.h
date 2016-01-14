@@ -1,4 +1,4 @@
-/*	$NetBSD: system.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: system.h,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
 
 /* system.h: system-dependent declarations; include this first.
    Id: system.h,v 1.12 2004/04/26 13:56:57 karl Exp 
@@ -268,6 +268,10 @@ extern int strcoll ();
 #endif
 /* Some systems don't declare this function in pwd.h. */
 struct passwd *getpwnam (const char *name);
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 /* Our library routines not included in any system library.  */
 extern void *xmalloc (size_t), *xrealloc (void *, size_t);

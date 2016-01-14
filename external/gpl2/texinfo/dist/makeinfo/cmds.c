@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
 
 /* cmds.c -- Texinfo commands.
    Id: cmds.c,v 1.55 2004/12/14 00:15:36 karl Exp 
