@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.53 2016/01/13 12:05:49 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.54 2016/01/14 08:58:02 gson Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <assert.h>
 #include <atf-c.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <stdlib.h>
@@ -446,9 +447,6 @@ create_many(const atf_tc_t *tc, const char *mp)
 	int nfiles = 2324; /* #Nancy */
 	int i;
 
-	if (FSTYPE_UDF(tc))
-		atf_tc_expect_fail("PR kern/50608");
-
 	/* takes forever with many files */
 	if (FSTYPE_MSDOS(tc))
 		nfiles /= 4;
@@ -469,17 +467,49 @@ create_many(const atf_tc_t *tc, const char *mp)
 	for (i = 0; i < nfiles; i++) {
 		int fd;
 
-		sprintf(buf, TESTFN "%d\n", i);
+		sprintf(buf, TESTFN "%d", i);
 		RL(fd = rump_sys_open(buf, O_RDWR|O_CREAT|O_EXCL, 0666));
 		RL(rump_sys_close(fd));
 	}
 
 	/* wipe them out */
 	for (i = 0; i < nfiles; i++) {
-		sprintf(buf, TESTFN "%d\n", i);
+		sprintf(buf, TESTFN "%d", i);
 		RL(rump_sys_unlink(buf));
 	}
 #undef TESTFN
+
+	rump_sys_chdir("/");
+}
+
+/*
+ * Test creating files with one-character names using all possible
+ * character values.  Failures to create the file are ignored as the
+ * characters allowed in file names vary by file system, but at least
+ * we can check that the fs does not crash, and if the file is
+ * successfully created, unlinking it should also succeed.
+ */
+static void
+create_nonalphanum(const atf_tc_t *tc, const char *mp)
+{
+	char buf[64];
+	int i;
+
+	if (FSTYPE_UDF(tc))
+		atf_tc_expect_fail("PR kern/50608");
+
+	RL(rump_sys_chdir(mp));
+
+	for (i = 0; i < 256; i++) {
+		int fd;
+		sprintf(buf, "%c", i);
+		fd = rump_sys_open(buf, O_RDWR|O_CREAT|O_EXCL, 0666);
+		if (fd == -1)
+			continue;
+		RL(rump_sys_close(fd));
+		RL(rump_sys_unlink(buf));
+	}
+	printf("\n");
 
 	rump_sys_chdir("/");
 }
@@ -1007,6 +1037,7 @@ ATF_TC_FSAPPLY(lstat_symlink, "lstat(2) values for symbolic links");
 #undef FSTEST_IMGSIZE
 #define FSTEST_IMGSIZE (1024*1024*64)
 ATF_TC_FSAPPLY(create_many, "create many directory entries");
+ATF_TC_FSAPPLY(create_nonalphanum, "non-alphanumeric filenames");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -1020,6 +1051,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(rename_dotdot);
 	ATF_TP_FSAPPLY(rename_reg_nodir);
 	ATF_TP_FSAPPLY(create_many);
+	ATF_TP_FSAPPLY(create_nonalphanum);
 	ATF_TP_FSAPPLY(create_nametoolong);
 	ATF_TP_FSAPPLY(create_exist);
 	ATF_TP_FSAPPLY(rename_nametoolong);
