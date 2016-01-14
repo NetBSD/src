@@ -1,4 +1,4 @@
-.\"	$NetBSD: merge.1,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $
+.\"	$NetBSD: merge.1,v 1.2 2016/01/14 04:22:39 christos Exp $
 .\"
 .de Id
 .ds Rv \\$3
@@ -45,19 +45,19 @@ have changes in a common segment of lines.
 If a conflict is found,
 .B merge
 normally outputs a warning and brackets the conflict with
-.B <<<<<<<
+.B \*[Lt]\*[Lt]\*[Lt]\*[Lt]\*[Lt]\*[Lt]\*[Lt]
 and
-.B >>>>>>>
+.B \*[Gt]\*[Gt]\*[Gt]\*[Gt]\*[Gt]\*[Gt]\*[Gt]
 lines.
 A typical conflict will look like this:
 .LP
 .RS
 .nf
-.BI <<<<<<< " file A"
+.BI \*[Lt]\*[Lt]\*[Lt]\*[Lt]\*[Lt]\*[Lt]\*[Lt] " file A"
 .I "lines in file A"
 .B "======="
 .I "lines in file B"
-.BI >>>>>>> " file B"
+.BI \*[Gt]\*[Gt]\*[Gt]\*[Gt]\*[Gt]\*[Gt]\*[Gt] " file B"
 .RE
 .fi
 .LP
@@ -116,8 +116,9 @@ Send results to standard output instead of overwriting
 .TP
 .BI \-q
 Quiet; do not warn about conflicts.
+.TP
 .BI \-V
-Print \*r's version number.
+Print version number.
 .SH DIAGNOSTICS
 Exit status is 0 for no conflicts, 1 for some conflicts, 2 for trouble.
 .SH IDENTIFICATION

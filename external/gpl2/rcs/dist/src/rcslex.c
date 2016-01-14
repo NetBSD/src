@@ -1,4 +1,4 @@
-/*	$NetBSD: rcslex.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcslex.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* lexical analysis of RCS files */
 
@@ -308,7 +308,7 @@ nextlex()
  * For ID's and NUM's, NextString is set to the character string.
  * Assumption: nextc contains the next character.
  */
-{       register c;
+{       int c;
 	declarecache;
 	register FILE *frew;
         register char * sp;
@@ -673,7 +673,7 @@ readstring()
 /* skip over characters until terminating single SDELIM        */
 /* If foutptr is set, copy every character read to foutptr.    */
 /* Does not advance nextlex at the end.                        */
-{       register c;
+{       int c;
 	declarecache;
 	register FILE *frew;
 	register RILE *fin;
@@ -706,7 +706,7 @@ printstring()
  * Does not advance nextlex at the end.
  */
 {
-        register c;
+        int c;
 	declarecache;
 	register FILE *fout;
 	register RILE *fin;
@@ -744,7 +744,7 @@ savestring(target)
  * Yield a copy of *TARGET, except with exact length.
  */
 {
-        register c;
+        int c;
 	declarecache;
 	register FILE *frew;
 	register char *tp;
@@ -999,7 +999,7 @@ fd2RILE(fd, name, type, status)
 			if (!f->base) {
 			    catchmmapints();
 			    f->base = (unsigned char *) mmap(
-				(char *)0, s, PROT_READ, MAP_SHARED,
+				(char *)0, s, PROT_READ, MAP_FILE|MAP_SHARED,
 				fd, (off_t)0
 			    );
 #			    ifndef MAP_FAILED
