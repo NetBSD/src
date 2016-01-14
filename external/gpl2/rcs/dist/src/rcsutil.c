@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsutil.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsutil.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* RCS utility functions */
 
@@ -371,7 +371,7 @@ getusername(suspicious)
 			    faterror("no password entry for userid %lu",
 				     (unsigned long)ruid()
 			    );
-			name = pw->pw_name;
+			name = strdup(pw->pw_name);
 #else
 #if has_setuid
 			faterror("setuid not supported");
@@ -812,6 +812,9 @@ awrite(buf, chars, f)
 	size_t chars;
 	FILE *f;
 {
+	if (buf == NULL)
+		return;
+
 	/* Posix 1003.1-1990 ssize_t hack */
 	while (SSIZE_MAX < chars) {
 		if (Fwrite(buf, sizeof(*buf), SSIZE_MAX, f)  !=  SSIZE_MAX)

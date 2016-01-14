@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsedit.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsedit.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* RCS stream editor */
 
@@ -619,7 +619,7 @@ copystring()
  * editline is incremented by the number of lines copied.
  * Assumption: next character read is first string character.
  */
-{	register c;
+{	int c;
 	declarecache;
 	register FILE *frew, *fcop;
 	register int amidline;
@@ -864,7 +864,7 @@ expandline(infile, outfile, delta, delimstuffed, frewfile, dolog)
  * 2 if a complete line is copied; adds 1 to yield if expansion occurred.
  */
 {
-	register c;
+	int c;
 	declarecache;
 	register FILE *out, *frew;
 	register char * tp;
@@ -1053,8 +1053,11 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
                 break;
 	    case Id:
 	    case Header:
+#ifdef LOCALID
+	    case LocalId:
+#endif
 		escape_string(out,
-			marker==Id || RCSv<VERSION(4)
+			marker!=Header || RCSv<VERSION(4)
 			? basefilename(RCSname)
 			: getfullRCSname()
 		);
@@ -1065,12 +1068,13 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
 			  RCSv==VERSION(3) && delta->lockedby ? "Locked"
 			: delta->state
 		);
-		if (delta->lockedby)
+		if (delta->lockedby) {
 		    if (VERSION(5) <= RCSv) {
 			if (locker_expansion || exp==KEYVALLOCK_EXPAND)
 			    aprintf(out, " %s", delta->lockedby);
 		    } else if (RCSv == VERSION(4))
 			aprintf(out, " Locker: %s", delta->lockedby);
+		}
                 break;
 	    case Locker:
 		if (delta->lockedby)
@@ -1505,6 +1509,9 @@ makedirtemp(isworkfile)
 	register size_t dl;
 	register struct buf *bn;
 	register char const *name = isworkfile ? workname : RCSname;
+#	if has_mkstemp
+	int fd;
+#	endif
 
 	dl = basefilename(name) - name;
 	bn = &dirtpname[newRCSdirtp_index + isworkfile];
@@ -1523,10 +1530,17 @@ makedirtemp(isworkfile)
 	catchints();
 #	if has_mktemp
 		VOID strcpy(tp, "XXXXXX");
+#		if has_mkstemp
+		if ((fd = mkstemp(np)) == -1)
+#		else
 		if (!mktemp(np) || !*np)
+#		endif
 		    faterror("can't make temporary pathname `%.*s_%cXXXXXX'",
 			(int)dl, name, '0'+isworkfile
 		    );
+#		if has_mkstemp
+		close(fd);
+#		endif
 #	else
 		/*
 		 * Posix 1003.1-1990 has no reliable way
@@ -1723,7 +1737,7 @@ addlock(delta, verbose)
 	register struct rcslock *next;
 
 	for (next = Locks;  next;  next = next->nextlock)
-		if (cmpnum(delta->num, next->delta->num) == 0)
+		if (cmpnum(delta->num, next->delta->num) == 0) {
 			if (strcmp(getcaller(), next->login) == 0)
 				return 0;
 			else {
@@ -1733,6 +1747,7 @@ addlock(delta, verbose)
 				  );
 				return -1;
 			}
+		}
 	next = ftalloc(struct rcslock);
 	delta->lockedby = next->login = getcaller();
 	next->delta = delta;
@@ -1756,7 +1771,7 @@ addsymbol(num, name, rebind)
 	register struct assoc *next;
 
 	for (next = Symbols;  next;  next = next->nextassoc)
-		if (strcmp(name, next->symbol)  ==  0)
+		if (strcmp(name, next->symbol)  ==  0) {
 			if (strcmp(next->num,num) == 0)
 				return 0;
 			else if (rebind) {
@@ -1768,6 +1783,7 @@ addsymbol(num, name, rebind)
 				);
 				return -1;
 			}
+		}
 	next = ftalloc(struct assoc);
 	next->symbol = name;
 	next->num = num;
@@ -1827,7 +1843,7 @@ dorewrite(lockflag, changed)
 {
 	int r = 0, e;
 
-	if (lockflag)
+	if (lockflag) {
 		if (changed) {
 			if (changed < 0)
 				return -1;
@@ -1863,6 +1879,7 @@ dorewrite(lockflag, changed)
 				}
 #			endif
 		}
+	}
 	return r;
 }
 
