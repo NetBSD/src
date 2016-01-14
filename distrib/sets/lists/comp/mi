@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2012 2016/01/14 20:43:58 christos Exp $
+#	$NetBSD: mi,v 1.2013 2016/01/14 21:46:10 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8442,8 +8442,8 @@
 ./usr/share/man/cat3/regexp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/regfree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/registerrpc.0		comp-c-catman		.cat
+./usr/share/man/cat3/regnsub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/regsterrpc.0		comp-obsolete		obsolete
-./usr/share/man/cat3/regsub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remainder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remainderf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remove.0			comp-c-catman		.cat
@@ -15398,7 +15398,7 @@
 ./usr/share/man/html3/regexp.html		comp-c-htmlman		html
 ./usr/share/man/html3/regfree.html		comp-c-htmlman		html
 ./usr/share/man/html3/registerrpc.html		comp-c-htmlman		html
-./usr/share/man/html3/regsub.html		comp-c-htmlman		html
+./usr/share/man/html3/regnsub.html		comp-c-htmlman		html
 ./usr/share/man/html3/remainder.html		comp-c-htmlman		html
 ./usr/share/man/html3/remainderf.html		comp-c-htmlman		html
 ./usr/share/man/html3/remove.html		comp-c-htmlman		html
@@ -22351,8 +22351,8 @@
 ./usr/share/man/man3/regexp.3			comp-c-man		.man
 ./usr/share/man/man3/regfree.3			comp-c-man		.man
 ./usr/share/man/man3/registerrpc.3		comp-c-man		.man
+./usr/share/man/man3/regnsub.3			comp-c-man		.man
 ./usr/share/man/man3/regsterrpc.3		comp-obsolete		obsolete
-./usr/share/man/man3/regsub.3			comp-c-man		.man
 ./usr/share/man/man3/remainder.3		comp-c-man		.man
 ./usr/share/man/man3/remainderf.3		comp-c-man		.man
 ./usr/share/man/man3/remove.3			comp-c-man		.man
