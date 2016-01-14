@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.145 2016/01/14 04:28:05 christos Exp $
+#	$NetBSD: Makefile,v 1.146 2016/01/14 21:15:51 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+=	bc
-SUBDIR+=	dc
-SUBDIR+=	send-pr
+SUBDIR+=	bc dc
 
 .include <bsd.subdir.mk>
