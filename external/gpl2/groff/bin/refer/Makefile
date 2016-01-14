@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2016/01/13 19:01:57 christos Exp $
+# $NetBSD: Makefile,v 1.2 2016/01/14 02:30:18 christos Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/refer/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
 GROFFYSRCS=	label.y
 DIST_SUBDIR=	src/preproc/refer
+NOLIBDRIVER=
 
 .include <bsd.init.mk>
 
