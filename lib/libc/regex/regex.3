@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.22 2011/05/17 03:35:38 enami Exp $
+.\"	$NetBSD: regex.3,v 1.23 2016/01/14 20:41:47 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd December 29, 2003
+.Dd January 8, 2016
 .Dt REGEX 3
 .Os
 .Sh NAME
@@ -73,7 +73,9 @@
 .Nm regcomp ,
 .Nm regexec ,
 .Nm regerror ,
-.Nm regfree
+.Nm regfree ,
+.Nm regasub ,
+.Nm regsub
 .Nd regular-expression library
 .Sh LIBRARY
 .Lb libc
@@ -87,6 +89,10 @@
 .Fn regerror "int errcode" "const regex_t * restrict preg" "char * restrict errbuf" "size_t errbuf_size"
 .Ft void
 .Fn regfree "regex_t *preg"
+.Ft ssize_t
+.Fn regsub "char *buf" "size_t bufsiz" "const char *sub" "const regmatch_t *rm" "const char *str"
+.Ft ssize_t
+.Fn regasub "char **buf" "const char *sub" "const regmatch_t *rm" "const char *sstr"
 .Sh DESCRIPTION
 These routines implement
 .St -p1003.2-92
@@ -466,6 +472,46 @@ is undefined.
 None of these functions references global variables except for tables
 of constants;
 all are safe for use from multiple threads if the arguments are safe.
+.Pp
+The
+.Fn regsub
+and
+.Fn regasub
+functions perform substitutions using
+.Xr sed 1
+like syntax.
+They return the length of the string that would have been created
+if there was enough space or
+.Dv \-1
+on error, setting
+.Dv errno .
+The result
+is being placed in
+.Fa buf
+which is user-supplied in
+.Fn regsub
+and dynamically allocated in
+.Fn regasub .
+The
+.Fa sub
+argument contains a substitution string which might refer to the first
+9 regular expression strings using
+.Dq \e<n>
+to refer to the nth matched
+item, or
+.Dq &
+(which is equivalent to
+.Dq \e0 )
+to refer to the full match.
+The
+.Fa rm
+array must be at least 10 elements long, and should contain the result
+of the matches from a previous
+.Fn regexec
+call.
+The
+.Fa str
+argument contains the source string to apply the transformation to.
 .Sh IMPLEMENTATION CHOICES
 There are a number of decisions that
 .St -p1003.2-92
@@ -576,6 +622,13 @@ Originally written by Henry Spencer.
 Altered for inclusion in the
 .Bx 4.4
 distribution.
+.Pp
+The
+.Fn regsub
+and
+.Fn regasub
+functions appeared in
+.Nx 8 .
 .Sh BUGS
 There is one known functionality bug.
 The implementation of internationalization is incomplete:
