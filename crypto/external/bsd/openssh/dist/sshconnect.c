@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.13 2015/08/21 08:20:59 christos Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.14 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: sshconnect.c,v 1.263 2015/08/20 22:32:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.13 2015/08/21 08:20:59 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.14 2016/01/14 22:30:04 christos Exp $");
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: sshconnect.c,v 1.13 2015/08/21 08:20:59 christos Exp $");
 #include "readconf.h"
 #include "atomicio.h"
 #include "dns.h"
-#include "roaming.h"
 #include "monitor_fdpass.h"
 #include "ssh2.h"
 #include "version.h"
@@ -554,7 +553,7 @@ send_client_banner(int connection_out, int minor1)
 		xasprintf(&client_version_string, "SSH-%d.%d-%.100s\n",
 		    PROTOCOL_MAJOR_1, minor1, SSH_VERSION);
 	}
-	if (roaming_atomicio(vwrite, connection_out, client_version_string,
+	if (atomicio(vwrite, connection_out, client_version_string,
 	    strlen(client_version_string)) != strlen(client_version_string))
 		fatal("write: %.100s", strerror(errno));
 	chop(client_version_string);
@@ -614,7 +613,7 @@ ssh_exchange_identification(int timeout_ms)
 				}
 			}
 
-			len = roaming_atomicio(read, connection_in, &buf[i], 1);
+			len = atomicio(read, connection_in, &buf[i], 1);
 
 			if (len != 1 && errno == EPIPE)
 				fatal("ssh_exchange_identification: "
