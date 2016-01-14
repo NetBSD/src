@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.23 2016/01/14 20:41:47 christos Exp $
+.\"	$NetBSD: regex.3,v 1.24 2016/01/14 22:06:42 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@
 .Nm regerror ,
 .Nm regfree ,
 .Nm regasub ,
-.Nm regsub
+.Nm regnsub
 .Nd regular-expression library
 .Sh LIBRARY
 .Lb libc
@@ -90,7 +90,7 @@
 .Ft void
 .Fn regfree "regex_t *preg"
 .Ft ssize_t
-.Fn regsub "char *buf" "size_t bufsiz" "const char *sub" "const regmatch_t *rm" "const char *str"
+.Fn regnsub "char *buf" "size_t bufsiz" "const char *sub" "const regmatch_t *rm" "const char *str"
 .Ft ssize_t
 .Fn regasub "char **buf" "const char *sub" "const regmatch_t *rm" "const char *sstr"
 .Sh DESCRIPTION
@@ -474,7 +474,7 @@ of constants;
 all are safe for use from multiple threads if the arguments are safe.
 .Pp
 The
-.Fn regsub
+.Fn regnsub
 and
 .Fn regasub
 functions perform substitutions using
@@ -489,7 +489,7 @@ The result
 is being placed in
 .Fa buf
 which is user-supplied in
-.Fn regsub
+.Fn regnsub
 and dynamically allocated in
 .Fn regasub .
 The
@@ -624,7 +624,7 @@ Altered for inclusion in the
 distribution.
 .Pp
 The
-.Fn regsub
+.Fn regnsub
 and
 .Fn regasub
 functions appeared in
