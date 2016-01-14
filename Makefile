@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.316 2015/07/23 08:03:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.317 2016/01/14 02:51:25 christos Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -163,7 +163,7 @@ afterinstall: .PHONY .MAKE
 	${MAKEDIRTARGET} share/man makedb
 .endif
 .if (${MKUNPRIVED} != "no" && ${MKINFO} != "no")
-	${MAKEDIRTARGET} gnu/usr.bin/texinfo/install-info infodir-meta
+	${MAKEDIRTARGET} external/gpl2/texinfo/bin/install-info infodir-meta
 .endif
 .if !defined(NOPOSTINSTALL)
 	${MAKEDIRTARGET} . postinstall-check
