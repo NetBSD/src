@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2011 2016/01/05 03:40:41 christos Exp $
+#	$NetBSD: mi,v 1.2012 2016/01/14 20:43:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3660,6 +3660,7 @@
 ./usr/libdata/lint/llib-llua.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-llzf.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-llzma.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
@@ -3722,7 +3723,6 @@
 ./usr/libdata/lint/llib-lwrap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ly.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lz.ln			comp-c-lintlib		lint
-./usr/libdata/lint/llib-llzma.ln		comp-c-lintlib		lint
 ./usr/libexec/cc1				comp-c-bin		gcccmds
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
@@ -8434,6 +8434,7 @@
 ./usr/share/man/cat3/recno.0			comp-c-catman		.cat
 ./usr/share/man/cat3/refresh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/refuse.0			comp-refuse-catman	.cat
+./usr/share/man/cat3/regasub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/regcomp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/regerror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/regex.0			comp-c-catman		.cat
@@ -8442,6 +8443,7 @@
 ./usr/share/man/cat3/regfree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/registerrpc.0		comp-c-catman		.cat
 ./usr/share/man/cat3/regsterrpc.0		comp-obsolete		obsolete
+./usr/share/man/cat3/regsub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remainder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remainderf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remove.0			comp-c-catman		.cat
@@ -8834,6 +8836,7 @@
 ./usr/share/man/cat3/stdlib.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stpcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stpncpy.0			comp-c-catman		.cat
+./usr/share/man/cat3/stravis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcat.0			comp-c-catman		.cat
@@ -15387,6 +15390,7 @@
 ./usr/share/man/html3/recno.html		comp-c-htmlman		html
 ./usr/share/man/html3/refresh.html		comp-c-htmlman		html
 ./usr/share/man/html3/refuse.html		comp-refuse-htmlman	html
+./usr/share/man/html3/regasub.html		comp-c-htmlman		html
 ./usr/share/man/html3/regcomp.html		comp-c-htmlman		html
 ./usr/share/man/html3/regerror.html		comp-c-htmlman		html
 ./usr/share/man/html3/regex.html		comp-c-htmlman		html
@@ -15394,6 +15398,7 @@
 ./usr/share/man/html3/regexp.html		comp-c-htmlman		html
 ./usr/share/man/html3/regfree.html		comp-c-htmlman		html
 ./usr/share/man/html3/registerrpc.html		comp-c-htmlman		html
+./usr/share/man/html3/regsub.html		comp-c-htmlman		html
 ./usr/share/man/html3/remainder.html		comp-c-htmlman		html
 ./usr/share/man/html3/remainderf.html		comp-c-htmlman		html
 ./usr/share/man/html3/remove.html		comp-c-htmlman		html
@@ -15767,6 +15772,7 @@
 ./usr/share/man/html3/stdlib.html		comp-c-htmlman		html
 ./usr/share/man/html3/stpcpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/stpncpy.html		comp-c-htmlman		html
+./usr/share/man/html3/stravis.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcasecmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcasestr.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcat.html		comp-c-htmlman		html
@@ -22337,6 +22343,7 @@
 ./usr/share/man/man3/recno.3			comp-c-man		.man
 ./usr/share/man/man3/refresh.3			comp-c-man		.man
 ./usr/share/man/man3/refuse.3			comp-refuse-man		.man
+./usr/share/man/man3/regasub.3			comp-c-man		.man
 ./usr/share/man/man3/regcomp.3			comp-c-man		.man
 ./usr/share/man/man3/regerror.3			comp-c-man		.man
 ./usr/share/man/man3/regex.3			comp-c-man		.man
@@ -22345,6 +22352,7 @@
 ./usr/share/man/man3/regfree.3			comp-c-man		.man
 ./usr/share/man/man3/registerrpc.3		comp-c-man		.man
 ./usr/share/man/man3/regsterrpc.3		comp-obsolete		obsolete
+./usr/share/man/man3/regsub.3			comp-c-man		.man
 ./usr/share/man/man3/remainder.3		comp-c-man		.man
 ./usr/share/man/man3/remainderf.3		comp-c-man		.man
 ./usr/share/man/man3/remove.3			comp-c-man		.man
@@ -22733,6 +22741,7 @@
 ./usr/share/man/man3/stdlib.3			comp-c-man		.man
 ./usr/share/man/man3/stpcpy.3			comp-c-man		.man
 ./usr/share/man/man3/stpncpy.3			comp-c-man		.man
+./usr/share/man/man3/stravis.3			comp-c-man		.man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man		.man
 ./usr/share/man/man3/strcasestr.3		comp-c-man		.man
 ./usr/share/man/man3/strcat.3			comp-c-man		.man
