@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.h,v 1.10 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: kex.h,v 1.11 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: kex.h,v 1.73 2015/07/30 00:01:34 djm Exp $ */
 
 /*
@@ -41,7 +41,6 @@
 #define	KEX_DH14		"diffie-hellman-group14-sha1"
 #define	KEX_DHGEX_SHA1		"diffie-hellman-group-exchange-sha1"
 #define	KEX_DHGEX_SHA256	"diffie-hellman-group-exchange-sha256"
-#define	KEX_RESUME		"resume@appgate.com"
 #define	KEX_ECDH_SHA2_NISTP256	"ecdh-sha2-nistp256"
 #define	KEX_ECDH_SHA2_NISTP384	"ecdh-sha2-nistp384"
 #define	KEX_ECDH_SHA2_NISTP521	"ecdh-sha2-nistp521"
@@ -119,7 +118,6 @@ struct kex {
 	int	hostkey_type;
 	int	hostkey_nid;
 	u_int	kex_type;
-	int	roaming;
 	struct sshbuf *my;
 	struct sshbuf *peer;
 	sig_atomic_t done;

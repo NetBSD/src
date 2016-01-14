@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2015/01/26 03:57:17 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2016/01/14 22:30:04 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
 	monitor_mm.c monitor.c monitor_wrap.c \
 	kexdhs.c kexgexs.c kexecdhs.c sftp-server.c sftp-common.c \
-	roaming_common.c roaming_serv.c sandbox-rlimit.c pfilter.c
+	sandbox-rlimit.c pfilter.c
 
 COPTS.auth-options.c=	-Wno-pointer-sign
 COPTS.ldapauth.c=	-Wno-format-nonliteral	# XXX: should fix
