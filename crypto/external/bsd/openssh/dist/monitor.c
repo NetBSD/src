@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.16 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.17 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.150 2015/06/22 23:42:16 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.16 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.17 2016/01/14 22:30:04 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -84,7 +84,6 @@ __RCSID("$NetBSD: monitor.c,v 1.16 2015/08/13 10:33:21 christos Exp $");
 #include "monitor_fdpass.h"
 #include "compat.h"
 #include "ssh2.h"
-#include "roaming.h"
 #include "authfd.h"
 #include "match.h"
 #include "ssherr.h"

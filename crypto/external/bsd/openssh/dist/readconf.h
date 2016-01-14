@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.h,v 1.13 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: readconf.h,v 1.14 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: readconf.h,v 1.110 2015/07/10 06:21:53 markus Exp $ */
 
 /*
@@ -146,8 +146,6 @@ typedef struct {
 	char	*local_command;
 	int	permit_local_command;
 	int	visual_host_key;
-
-	int	use_roaming;
 
 	int	request_tty;
 	int	send_version_first;
