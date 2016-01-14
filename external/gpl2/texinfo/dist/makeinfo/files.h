@@ -1,4 +1,4 @@
-/*	$NetBSD: files.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: files.h,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
 
 /* files.h -- declarations for files.c.
    Id: files.h,v 1.4 2004/07/27 00:06:31 karl Exp 

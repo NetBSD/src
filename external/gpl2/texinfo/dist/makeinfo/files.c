@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
 
 /* files.c -- file-related functions for makeinfo.
    Id: files.c,v 1.5 2004/07/27 00:06:31 karl Exp 
@@ -458,8 +458,7 @@ full_pathname (char *filename)
           temp_home = (char *) getenv ("HOME");
           result = xmalloc (strlen (&filename[1])
                                     + 1
-                                    + temp_home ? strlen (temp_home)
-                                    : 0);
+                                    + (temp_home ? strlen (temp_home) : 0));
           *result = 0;
 
           if (temp_home)
