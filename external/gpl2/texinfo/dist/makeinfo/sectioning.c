@@ -1,4 +1,4 @@
-/*	$NetBSD: sectioning.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: sectioning.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
 
 /* sectioning.c -- for @chapter, @section, ..., @contents ...
    Id: sectioning.c,v 1.25 2004/07/05 22:23:23 karl Exp 
@@ -258,14 +258,13 @@ current_chapter_number (void)
     return xstrdup ("");
   else if (enum_marker == APPENDIX_MAGIC)
     {
-      char s[1];
-      sprintf (s, "%c", numbers[0] + 64);
+      char s[2] = { numbers[0] + 64, '\0' };
       return xstrdup (s);
     }
   else
     {
-      char s[5];
-      sprintf (s, "%d", numbers[0]);
+      char s[11];
+      snprintf (s, sizeof(s), "%d", numbers[0]);
       return xstrdup (s);
     }
 }

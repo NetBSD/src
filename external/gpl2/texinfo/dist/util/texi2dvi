@@ -605,10 +605,10 @@ $textra" "$filename_input" >"$filename_xtr"
   # If this is a Texinfo file with a specified input encoding, and
   # recode is available, then recode to plain 7 bit Texinfo.
   if test $language = texinfo; then
-    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/  
-	t found                                                
-	d                                                     
-	:found                                               
+    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/
+	t found
+	d
+	:found
 	q'
     encoding=`sed -e "$pgm" "$filename_input"`
     if $recode && test -n "$encoding" && findprog recode; then
@@ -691,8 +691,13 @@ $textra" "$filename_input" >"$filename_xtr"
 
     # Finally, run TeX.
     cmd="$tex $tex_args"
-    $verbose "Running $cmd $filename_input ..."
+    $verbose "Running $cmd ..."
     if $cmd "$filename_input" >&5; then :; else
+      echo "$0: TeX failed. If the above said 'tex: not found', " >&2
+      echo "$0: you may need to install TeX;" >&2
+      echo "$0: it is available from the pkgsrc system in print/teTeX." >&2
+      echo "$0: If TeX is installed, make sure it is in your $PATH, or" >&2
+      echo "$0: set the environment variable $TEX to its location." >&2
       echo "$0: $tex exited with bad status, quitting." >&2
       echo "$0: see $filename_noext.log for errors." >&2
       test "$clean" = t \
