@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.21 2015/08/21 08:20:59 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.22 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.214 2015/08/20 22:32:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.21 2015/08/21 08:20:59 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.22 2016/01/14 22:30:04 christos Exp $");
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -80,7 +80,6 @@ __RCSID("$NetBSD: packet.c,v 1.21 2015/08/21 08:20:59 christos Exp $");
 #include "channels.h"
 #include "ssh.h"
 #include "packet.h"
-#include "roaming.h"
 #include "ssherr.h"
 #include "sshbuf.h"
 
@@ -1265,7 +1264,7 @@ int
 ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 {
 	struct session_state *state = ssh->state;
-	int len, r, ms_remain = 0, cont;
+	int len, r, ms_remain = 0;
 	fd_set *setp;
 	char buf[8192];
 	struct timeval timeout, start, *timeoutp = NULL;
@@ -1334,11 +1333,7 @@ ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		if (r == 0)
 			return SSH_ERR_CONN_TIMEOUT;
 		/* Read data from the socket. */
-		do {
-			cont = 0;
-			len = roaming_read(state->connection_in, buf,
-			    sizeof(buf), &cont);
-		} while (len == 0 && cont);
+		len = read(state->connection_in, buf, sizeof(buf));
 		if (len == 0) {
 			r = SSH_ERR_CONN_CLOSED;
 			goto out;
@@ -2003,18 +1998,17 @@ ssh_packet_write_poll(struct ssh *ssh)
 {
 	struct session_state *state = ssh->state;
 	int len = sshbuf_len(state->output);
-	int cont, r;
+	int r;
 
 	if (len > 0) {
-		cont = 0;
-		len = roaming_write(state->connection_out,
-		    sshbuf_ptr(state->output), len, &cont);
+		len = write(state->connection_out,
+		    sshbuf_ptr(state->output), len);
 		if (len == -1) {
 			if (errno == EINTR || errno == EAGAIN)
 				return 0;
 			return SSH_ERR_SYSTEM_ERROR;
 		}
-		if (len == 0 && !cont)
+		if (len == 0)
 			return SSH_ERR_CONN_CLOSED;
 		if ((r = sshbuf_consume(state->output, len)) < 0)
 			return r;
@@ -2295,58 +2289,6 @@ ssh_packet_get_output(struct ssh *ssh)
 	return (void *)ssh->state->output;
 }
 
-/* XXX TODO update roaming to new API (does not work anyway) */
-/*
- * Save the state for the real connection, and use a separate state when
- * resuming a suspended connection.
- */
-void
-ssh_packet_backup_state(struct ssh *ssh,
-    struct ssh *backup_state)
-{
-	struct ssh *tmp;
-
-	close(ssh->state->connection_in);
-	ssh->state->connection_in = -1;
-	close(ssh->state->connection_out);
-	ssh->state->connection_out = -1;
-	if (backup_state)
-		tmp = backup_state;
-	else
-		tmp = ssh_alloc_session_state();
-	backup_state = ssh;
-	ssh = tmp;
-}
-
-/* XXX FIXME FIXME FIXME */
-/*
- * Swap in the old state when resuming a connecion.
- */
-void
-ssh_packet_restore_state(struct ssh *ssh,
-    struct ssh *backup_state)
-{
-	struct ssh *tmp;
-	u_int len;
-	int r;
-
-	tmp = backup_state;
-	backup_state = ssh;
-	ssh = tmp;
-	ssh->state->connection_in = backup_state->state->connection_in;
-	backup_state->state->connection_in = -1;
-	ssh->state->connection_out = backup_state->state->connection_out;
-	backup_state->state->connection_out = -1;
-	len = sshbuf_len(backup_state->state->input);
-	if (len > 0) {
-		if ((r = sshbuf_putb(ssh->state->input,
-		    backup_state->state->input)) != 0)
-			fatal("%s: %s", __func__, ssh_err(r));
-		sshbuf_reset(backup_state->state->input);
-		add_recv_bytes(len);
-	}
-}
-
 /* Reset after_authentication and reset compression in post-auth privsep */
 static int
 ssh_packet_set_postauth(struct ssh *ssh)
@@ -2497,11 +2439,6 @@ ssh_packet_get_state(struct ssh *ssh, struct sshbuf *m)
 	    (r = sshbuf_put_stringb(m, state->output)) != 0)
 		return r;
 
-	if (compat20) {
-		if ((r = sshbuf_put_u64(m, get_sent_bytes())) != 0 ||
-		    (r = sshbuf_put_u64(m, get_recv_bytes())) != 0)
-			return r;
-	}
 	return 0;
 }
 
@@ -2632,7 +2569,6 @@ ssh_packet_set_state(struct ssh *ssh, struct sshbuf *m)
 	size_t ssh1keylen, rlen, slen, ilen, olen;
 	int r;
 	u_int ssh1cipher = 0;
-	u_int64_t sent_bytes = 0, recv_bytes = 0;
 
 	if (!compat20) {
 		if ((r = sshbuf_get_u32(m, &state->remote_protocol_flags)) != 0 ||
@@ -2697,12 +2633,6 @@ ssh_packet_set_state(struct ssh *ssh, struct sshbuf *m)
 	    (r = sshbuf_put(state->output, output, olen)) != 0)
 		return r;
 
-	if (compat20) {
-		if ((r = sshbuf_get_u64(m, &sent_bytes)) != 0 ||
-		    (r = sshbuf_get_u64(m, &recv_bytes)) != 0)
-			return r;
-		roam_set_bytes(sent_bytes, recv_bytes);
-	}
 	if (sshbuf_len(m))
 		return SSH_ERR_INVALID_FORMAT;
 	debug3("%s: done", __func__);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.15 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.16 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: clientloop.c,v 1.275 2015/07/10 06:21:53 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.15 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.16 2016/01/14 22:30:04 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -106,7 +106,6 @@ __RCSID("$NetBSD: clientloop.c,v 1.15 2015/08/13 10:33:21 christos Exp $");
 #include "sshpty.h"
 #include "match.h"
 #include "msg.h"
-#include "roaming.h"
 #include "getpeereid.h"
 #include "ssherr.h"
 #include "hostfile.h"
@@ -734,7 +733,7 @@ client_suspend_self(Buffer *bin, Buffer *bout, Buffer *berr)
 static void
 client_process_net_input(fd_set *readset)
 {
-	int len, cont = 0;
+	int len;
 	char buf[8192];
 
 	/*
@@ -743,8 +742,8 @@ client_process_net_input(fd_set *readset)
 	 */
 	if (FD_ISSET(connection_in, readset)) {
 		/* Read as much as possible. */
-		len = roaming_read(connection_in, buf, sizeof(buf), &cont);
-		if (len == 0 && cont == 0) {
+		len = read(connection_in, buf, sizeof(buf));
+		if (len == 0) {
 			/*
 			 * Received EOF.  The remote host has closed the
 			 * connection.

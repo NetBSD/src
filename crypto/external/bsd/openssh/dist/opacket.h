@@ -1,4 +1,4 @@
-/*	$NetBSD: opacket.h,v 1.2 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: opacket.h,v 1.3 2016/01/14 22:30:04 christos Exp $	*/
 #ifndef _OPACKET_H
 /* Written by Markus Friedl. Placed in the public domain.  */
 
@@ -41,8 +41,6 @@ do { \
 void	 packet_close(void);
 u_int	 packet_get_char(void);
 u_int	 packet_get_int(void);
-void	 packet_backup_state(void);
-void	 packet_restore_state(void);
 void     packet_set_connection(int, int);
 int	 packet_read_seqnr(u_int32_t *);
 int	 packet_read_poll_seqnr(u_int32_t *);

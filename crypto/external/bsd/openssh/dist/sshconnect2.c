@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.22 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.23 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.226 2015/07/30 00:01:34 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.22 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.23 2016/01/14 22:30:04 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -220,11 +220,6 @@ ssh_kex2(char *host, struct sockaddr *hostaddr, u_short port)
 	kex->verify_host_key=&verify_host_key_callback;
 
 	dispatch_run(DISPATCH_BLOCK, &kex->done, active_state);
-
-	if (options.use_roaming && !kex->roaming) {
-		debug("Roaming not allowed by server");
-		options.use_roaming = 0;
-	}
 
 	session_id2 = kex->session_id;
 	session_id2_len = kex->session_id_len;

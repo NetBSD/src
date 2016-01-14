@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.12 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: kex.c,v 1.13 2016/01/14 22:30:04 christos Exp $	*/
 /* $OpenBSD: kex.c,v 1.109 2015/07/30 00:01:34 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.12 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.13 2016/01/14 22:30:04 christos Exp $");
 #include <sys/param.h>	/* MAX roundup */
 
 #include <signal.h>
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: kex.c,v 1.12 2015/08/13 10:33:21 christos Exp $");
 #include "dispatch.h"
 #include "monitor.h"
 #include "canohost.h"
-#include "roaming.h"
 
 #include "ssherr.h"
 #include "sshbuf.h"
@@ -648,17 +647,6 @@ kex_choose_conf(struct ssh *ssh)
 	} else {
 		cprop=my;
 		sprop=peer;
-	}
-
-	/* Check whether server offers roaming */
-	if (!kex->server) {
-		char *roaming = match_list(KEX_RESUME,
-		    peer[PROPOSAL_KEX_ALGS], NULL);
-
-		if (roaming) {
-			kex->roaming = 1;
-			free(roaming);
-		}
 	}
 
 	/* Algorithm Negotiation */
