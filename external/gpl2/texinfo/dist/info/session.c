@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.2 2016/01/14 00:34:52 christos Exp $	*/
 
 /* session.c -- user windowing interface to Info.
    Id: session.c,v 1.16 2004/12/14 00:15:36 karl Exp 
@@ -964,7 +964,7 @@ forward_move_node_structure (WINDOW *window, int behaviour)
                      same as the first menu item found in this node. */
                   window_message_in_echo_area
                     ((char *) _("Moving Up %d time(s), then Next."),
-                     (void *) (long) up_counter, NULL);
+                     (void *)((intptr_t)up_counter), NULL);
 
                   info_handle_pointer ("Next", window);
                   return;
@@ -1961,7 +1961,7 @@ DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
 
   /* Special case.  Item "0" is the last item in this menu. */
   if (item == 0)
-    for (i = 0; menu[i + 1]; i++);
+    for (i = 0; menu[i] && menu[i + 1]; i++);
   else
     {
       for (i = 0; menu[i]; i++)
@@ -1977,7 +1977,7 @@ DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
     }
   else
     info_error ((char *) _("There aren't %d items in this menu."),
-                (void *) (long) item, NULL);
+        (void *)((intptr_t)item), NULL);
 
   info_free_references (menu);
   return;
@@ -2020,7 +2020,7 @@ nearest_xref (REFERENCE **xref_list, long int pos)
       /* See how far POS is from this xref.  Take into account the
          `*Note' that begins the xref, since as far as the user is
          concerned, that's where it starts.  */
-      delta = MIN (labs (pos - (xref->start - strlen (INFO_XREF_LABEL))),
+      delta = MIN (labs (pos - (xref->start - (long)strlen (INFO_XREF_LABEL))),
                    labs (pos - xref->end));
       
       /* It's the <= instead of < that makes us choose the forward xref
@@ -2247,7 +2247,7 @@ info_menu_or_ref_item (WINDOW *window, int count,
                 {
                   /* ref->end is more accurate estimate of position
                      for menus than ref->start.  Go figure.  */
-                  int dist = abs (window->point - ref->end);
+                  int dist = labs (window->point - ref->end);
 
                   if (dist < min_dist)
                     {
