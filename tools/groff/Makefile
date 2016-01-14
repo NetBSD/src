@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2016/01/13 19:29:26 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2016/01/14 01:13:26 christos Exp $
 
 MODULE=		groff
 
@@ -10,6 +10,7 @@ CONFIGURE_ARGS+=	--without-x
 
 TMACDIR=	${TOOLDIR}/share/groff/tmac
 SITETMACDIR=	${TOOLDIR}/share/groff/site-tmac
+GROFFDIR=	${.CURDIR}/../../external/gpl2/groff
 
 # Add gnuwrap hack directly to the Makefile.
 _NOWRAPPER=1
@@ -31,7 +32,7 @@ _post_conf: .USE
 .include "${.CURDIR}/../Makefile.gnuhost"
 .-include "${TOOLDIR}/share/compat/defs.mk"
 
-.PATH:	${.CURDIR}/../../share/tmac ${.CURDIR}/../../gnu/usr.bin/groff/tmac
+.PATH:	${.CURDIR}/../../share/tmac ${GROFFDIR}/tmac
 
 _installtmac: .USE
 .if ${MKUPDATE} != "no"
@@ -61,8 +62,7 @@ ${SITETMACDIR}/${F}: ${F}-s _installtmac
 .ORDER: realinstall ${SITETMACDIR}/${F}
 CLEANFILES+=${F}-s
 ${F}-s: ${F}
-	${TOOL_SED} -f ${.CURDIR}/../../external/gpl2/groff/dist/tmac/strip.sed \
-		${.ALLSRC} > ${.TARGET}
+	${TOOL_SED} -f ${GROFFDIR}/dist/tmac/strip.sed ${.ALLSRC} > ${.TARGET}
 .endfor
 
 # The silly walk below is because sometimes the files begin with "g",
