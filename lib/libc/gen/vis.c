@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.70 2015/05/26 21:42:46 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.71 2016/01/14 20:41:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.70 2015/05/26 21:42:46 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.71 2016/01/14 20:41:23 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -389,7 +389,7 @@ makeextralist(int flags, const char *src)
  *	All user-visible functions call this one.
  */
 static int
-istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
+istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
     int flags, const char *mbextra, int *cerr_ptr)
 {
 	wchar_t *dst, *src, *pdst, *psrc, *start, *extra;
@@ -398,9 +398,10 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 	wint_t c;
 	visfun_t f;
 	int clen = 0, cerr, error = -1, i, shft;
+	char *mbdst, *mdst;
 	ssize_t mbslength, maxolen;
 
-	_DIAGASSERT(mbdst != NULL);
+	_DIAGASSERT(mbdstp != NULL);
 	_DIAGASSERT(mbsrc != NULL || mblength == 0);
 	_DIAGASSERT(mbextra != NULL);
 
@@ -419,10 +420,18 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 
 	/* Allocate space for the wide char strings */
 	psrc = pdst = extra = NULL;
+	mdst = NULL;
 	if ((psrc = calloc(mblength + 1, sizeof(*psrc))) == NULL)
 		return -1;
 	if ((pdst = calloc((4 * mblength) + 1, sizeof(*pdst))) == NULL)
 		goto out;
+	if (*mbdstp == NULL) {
+		if ((mdst = calloc((4 * mblength) + 1, sizeof(*mdst))) == NULL)
+			goto out;
+		*mbdstp = mdst;
+	}
+
+	mbdst = *mbdstp;
 	dst = pdst;
 	src = psrc;
 
@@ -487,7 +496,7 @@ istrsenvisx(char *mbdst, size_t *dlen, const char *mbsrc, size_t mblength,
 			errno = ENOSPC;
 			goto out;
 		}
-		*mbdst = '\0';		/* can't create extra, return "" */
+		*mbdst = '\0';	/* can't create extra, return "" */
 		error = 0;
 		goto out;
 	}
@@ -574,14 +583,15 @@ out:
 	free(extra);
 	free(pdst);
 	free(psrc);
+	free(mdst);
 	return error;
 }
 
 static int
-istrsenvisxl(char *mbdst, size_t *dlen, const char *mbsrc,
+istrsenvisxl(char **mbdstp, size_t *dlen, const char *mbsrc,
     int flags, const char *mbextra, int *cerr_ptr)
 {
-	return istrsenvisx(mbdst, dlen, mbsrc,
+	return istrsenvisx(mbdstp, dlen, mbsrc,
 	    mbsrc != NULL ? strlen(mbsrc) : 0, flags, mbextra, cerr_ptr);
 }
 
@@ -604,7 +614,7 @@ svis(char *mbdst, int c, int flags, int nextc, const char *mbextra)
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsenvisx(mbdst, NULL, cc, 1, flags, mbextra, NULL);
+	ret = istrsenvisx(&mbdst, NULL, cc, 1, flags, mbextra, NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
@@ -619,7 +629,7 @@ snvis(char *mbdst, size_t dlen, int c, int flags, int nextc, const char *mbextra
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsenvisx(mbdst, &dlen, cc, 1, flags, mbextra, NULL);
+	ret = istrsenvisx(&mbdst, &dlen, cc, 1, flags, mbextra, NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
@@ -628,33 +638,33 @@ snvis(char *mbdst, size_t dlen, int c, int flags, int nextc, const char *mbextra
 int
 strsvis(char *mbdst, const char *mbsrc, int flags, const char *mbextra)
 {
-	return istrsenvisxl(mbdst, NULL, mbsrc, flags, mbextra, NULL);
+	return istrsenvisxl(&mbdst, NULL, mbsrc, flags, mbextra, NULL);
 }
 
 int
 strsnvis(char *mbdst, size_t dlen, const char *mbsrc, int flags, const char *mbextra)
 {
-	return istrsenvisxl(mbdst, &dlen, mbsrc, flags, mbextra, NULL);
+	return istrsenvisxl(&mbdst, &dlen, mbsrc, flags, mbextra, NULL);
 }
 
 int
 strsvisx(char *mbdst, const char *mbsrc, size_t len, int flags, const char *mbextra)
 {
-	return istrsenvisx(mbdst, NULL, mbsrc, len, flags, mbextra, NULL);
+	return istrsenvisx(&mbdst, NULL, mbsrc, len, flags, mbextra, NULL);
 }
 
 int
 strsnvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags,
     const char *mbextra)
 {
-	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, mbextra, NULL);
+	return istrsenvisx(&mbdst, &dlen, mbsrc, len, flags, mbextra, NULL);
 }
 
 int
 strsenvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags,
     const char *mbextra, int *cerr_ptr)
 {
-	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, mbextra, cerr_ptr);
+	return istrsenvisx(&mbdst, &dlen, mbsrc, len, flags, mbextra, cerr_ptr);
 }
 #endif
 
@@ -671,7 +681,7 @@ vis(char *mbdst, int c, int flags, int nextc)
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsenvisx(mbdst, NULL, cc, 1, flags, "", NULL);
+	ret = istrsenvisx(&mbdst, NULL, cc, 1, flags, "", NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
@@ -686,7 +696,7 @@ nvis(char *mbdst, size_t dlen, int c, int flags, int nextc)
 	cc[0] = c;
 	cc[1] = nextc;
 
-	ret = istrsenvisx(mbdst, &dlen, cc, 1, flags, "", NULL);
+	ret = istrsenvisx(&mbdst, &dlen, cc, 1, flags, "", NULL);
 	if (ret < 0)
 		return NULL;
 	return mbdst + ret;
@@ -703,13 +713,20 @@ nvis(char *mbdst, size_t dlen, int c, int flags, int nextc)
 int
 strvis(char *mbdst, const char *mbsrc, int flags)
 {
-	return istrsenvisxl(mbdst, NULL, mbsrc, flags, "", NULL);
+	return istrsenvisxl(&mbdst, NULL, mbsrc, flags, "", NULL);
 }
 
 int
 strnvis(char *mbdst, size_t dlen, const char *mbsrc, int flags)
 {
-	return istrsenvisxl(mbdst, &dlen, mbsrc, flags, "", NULL);
+	return istrsenvisxl(&mbdst, &dlen, mbsrc, flags, "", NULL);
+}
+
+int
+stravis(char **mbdstp, const char *mbsrc, int flags)
+{
+	*mbdstp = NULL;
+	return istrsenvisxl(mbdstp, NULL, mbsrc, flags, "", NULL);
 }
 
 /*
@@ -726,19 +743,19 @@ strnvis(char *mbdst, size_t dlen, const char *mbsrc, int flags)
 int
 strvisx(char *mbdst, const char *mbsrc, size_t len, int flags)
 {
-	return istrsenvisx(mbdst, NULL, mbsrc, len, flags, "", NULL);
+	return istrsenvisx(&mbdst, NULL, mbsrc, len, flags, "", NULL);
 }
 
 int
 strnvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags)
 {
-	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, "", NULL);
+	return istrsenvisx(&mbdst, &dlen, mbsrc, len, flags, "", NULL);
 }
 
 int
 strenvisx(char *mbdst, size_t dlen, const char *mbsrc, size_t len, int flags,
     int *cerr_ptr)
 {
-	return istrsenvisx(mbdst, &dlen, mbsrc, len, flags, "", cerr_ptr);
+	return istrsenvisx(&mbdst, &dlen, mbsrc, len, flags, "", cerr_ptr);
 }
 #endif
