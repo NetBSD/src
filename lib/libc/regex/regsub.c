@@ -1,4 +1,4 @@
-/*	$NetBSD: regsub.c,v 1.1 2016/01/14 20:41:47 christos Exp $	*/
+/*	$NetBSD: regsub.c,v 1.2 2016/01/14 21:45:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regsub.c,v 1.1 2016/01/14 20:41:47 christos Exp $");
+__RCSID("$NetBSD: regsub.c,v 1.2 2016/01/14 21:45:01 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -148,7 +148,7 @@ regsub1(char **buf, size_t len, const char *sub,
 }
 
 ssize_t
-regsub(char *buf, size_t len, const char *sub, const regmatch_t *rm,
+regnsub(char *buf, size_t len, const char *sub, const regmatch_t *rm,
     const char *str)
 {
 	return regsub1(&buf, len, sub, rm, str);
