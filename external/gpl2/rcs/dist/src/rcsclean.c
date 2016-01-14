@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsclean.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsclean.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* Clean up working files.  */
 
@@ -323,11 +323,14 @@ get_directory(dirname, aargv)
 		efaterror(dirname);
 	if (chars)
 		a = trealloc(char, a, chars);
-	else
+	else {
 		tfree(a);
+		a = NULL;
+	}
 	*aargv = p = tnalloc(char*, entries+1);
-	for (i=0; i<entries; i++)
-		*p++ = a + offset[i];
+	if (a)
+		for (i=0; i<entries; i++)
+			*p++ = a + offset[i];
 	*p = 0;
 	tfree(offset);
 	return entries;
