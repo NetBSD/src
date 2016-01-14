@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/01/14 04:21:48 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2016/01/14 21:13:54 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,6 @@ SUBDIR+= grep
 SUBDIR+=        groff
 .endif
 
-SUBDIR+= gettext diffutils texinfo rcs
+SUBDIR+= gettext diffutils texinfo rcs send-pr
 
 .include <bsd.subdir.mk>
