@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: node.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
 
 /* node.c -- nodes for Texinfo.
    Id: node.c,v 1.27 2004/12/20 23:56:07 karl Exp 
