@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2016/01/13 19:01:55 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2016/01/14 02:30:18 christos Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -79,7 +79,9 @@ DIST=		${NETBSDSRCDIR}/external/gpl2/groff
 GROFF_DIST=	${DIST}/dist
 
 PROGDPLIBS+= bib ${DIST}/lib/libbib
+.if !defined(NOLIBDRIVER)
 PROGDPLIBS+= driver ${DIST}/lib/libdriver
+.endif
 PROGDPLIBS+= groff ${DIST}/lib/libgroff
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
