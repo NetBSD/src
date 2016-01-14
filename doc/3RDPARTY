@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1298 2016/01/14 04:25:13 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1299 2016/01/14 21:15:17 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1221,16 +1221,19 @@ We use arc4random
 We use strlcpy/snprintf
 
 Package:	send-pr (part of GNATS)
-Version:	3.95
-Current Vers:	4.1
+Version:	3.2
+Current Vers:	4.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gnats/
 Home Page:	http://www.gnu.org/software/gnats/
 Mailing List:	bug-gnats@gnu.org
-License:	GPLv2
+License:	GPLv2+ (4.1), GPLv3+ (4.2 and later)
 Responsible:
-Location:	gnu/usr.bin/send-pr
+Location:	external/gpl2/send-pr
 Notes:
+We have 3.2 with patches to become 3.95 which was never distributed. This
+is the last "standalone" send-pr version. Newer versions require "query-pr"
+to be installed and many more changes. It is not worth the hassle.
 
 Package:	SoftFloat
 Version:	2a
