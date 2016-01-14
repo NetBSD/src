@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1296 2016/01/13 22:01:15 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1297 2016/01/14 00:41:14 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1285,17 +1285,17 @@ Location:	regress/lib/libc/ieeefp/testfloat
 Notes:
 
 Package:	texinfo
-Version:	4.8
+Version:	4.8a (Last GPLv2+ version)
 Current Vers:	5.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
 Mailing List:	bug-texinfo@gnu.org
 Responsible:	
-License:	GPLv2+ (4.8), GPLv3+ (4.9 and later)
-Location:	gnu/dist/texinfo
+License:	GPLv2+ (4.8a), GPLv3+ (4.9 and later)
+Location:	external/gpl2/texinfo
 Notes:
-Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
+Use src/external/gpl2/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
 
 Package:	malloc 
