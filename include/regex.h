@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.13 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: regex.h,v 1.14 2016/01/14 20:42:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -137,6 +137,10 @@ size_t	regerror(int, const regex_t * __restrict, char * __restrict, size_t);
 int	regexec(const regex_t * __restrict,
 	    const char * __restrict, size_t, regmatch_t [], int);
 void	regfree(regex_t *);
+#ifdef _NETBSD_SOURCE
+ssize_t regsub(char *, size_t, const char *, const regmatch_t *, const char *);
+ssize_t regasub(char **buf, const char *, const regmatch_t *, const char *);
+#endif
 __END_DECLS
 
 #endif /* !_REGEX_H_ */
