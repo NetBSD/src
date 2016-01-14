@@ -1,4 +1,4 @@
-/*	$NetBSD: rcssyn.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcssyn.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* RCS file syntactic analysis */
 
@@ -173,6 +173,7 @@ char const
 	Kauthor[]   = "author",
 	Kbranch[]   = "branch",
 	Kcomment[]  = "comment",
+	Kcommitid[] = "commitid",
 	Kdate[]     = "date",
 	Kdesc[]     = "desc",
 	Kexpand[]   = "expand",
@@ -432,6 +433,17 @@ getdelta()
 	getkey(Knext);
 	Delta->next = num = getdnum();
 	getsemi(Knext);
+	if (getkeyopt(Kcommitid)) {
+	    if (nexttok == ID) {
+		Delta->commitid = NextString;
+		nextlex();
+	    } else {
+		fatserror("missing %s", Kcommitid);
+		Delta->commitid = NULL;
+	    }
+	    getsemi(Kcommitid);
+	} else
+	    Delta->commitid = NULL;
 	Delta->lockedby = 0;
 	Delta->log.string = 0;
 	Delta->selector = true;

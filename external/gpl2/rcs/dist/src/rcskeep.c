@@ -1,4 +1,4 @@
-/*	$NetBSD: rcskeep.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcskeep.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* Extract RCS keyword string values from working files.  */
 
@@ -194,6 +194,9 @@ getoldkeys(fp)
                 break;
             case Header:
             case Id:
+#ifdef LOCALID
+	    case LocalId:
+#endif
 		if (!(
 		      getval(fp, (struct buf*)0, false) &&
 		      keeprev(fp) &&

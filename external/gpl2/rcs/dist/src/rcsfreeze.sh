@@ -25,7 +25,7 @@
 #       {RCS/}.rcsfreeze.ver	version number
 #       {RCS/}.rscfreeze.log	log messages, most recent first
 
-PATH=/usr/local/bin:/bin:/usr/bin:/usr/ucb:$PATH
+PATH=/bin:/usr/bin:$PATH
 export PATH
 
 DATE=`date` || exit

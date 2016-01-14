@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsdiff.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsdiff.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* Compare RCS revisions.  */
 
@@ -178,7 +178,7 @@ mainProg(rcsdiffId, "rcsdiff", "Id: rcsdiff.c,v 5.19 1995/06/16 06:19:24 eggert 
     struct hshentry * target;
     char *a, *dcp, **newargv;
     int no_diff_means_no_output;
-    register c;
+    int c;
 
     exitstatus = DIFF_SUCCESS;
 
@@ -216,9 +216,9 @@ mainProg(rcsdiffId, "rcsdiff", "Id: rcsdiff.c,v 5.19 1995/06/16 06:19:24 eggert 
 	    case '-': case 'D':
 		    no_diff_means_no_output = false;
 		    /* fall into */
-	    case 'C': case 'F': case 'I': case 'L': case 'W':
+	    case 'C': case 'F': case 'I': case 'L': case 'W': case 'U':
 #if DIFF_L
-		    if (c == 'L'  &&  ++file_labels == 2)
+		    if (c == 'L'  &&  file_labels++ == 2)
 			faterror("too many -L options");
 #endif
 		    *dcp++ = c;
@@ -366,13 +366,14 @@ mainProg(rcsdiffId, "rcsdiff", "Id: rcsdiff.c,v 5.19 1995/06/16 06:19:24 eggert 
 		    lexpandarg = "-kkvl";
 	    Izclose(&workptr);
 #if DIFF_L
-	    if (diff_label2)
+	    if (diff_label2) {
 		if (revnums == 2)
 		    *diff_label2 = setup_label(&labelbuf[1], target->num, target->date);
 		else {
 		    time2date(workstat.st_mtime, date2);
 		    *diff_label2 = setup_label(&labelbuf[1], (char*)0, date2);
 		}
+	    }
 #endif
 
 	    diagnose("retrieving revision %s\n", xrev1);

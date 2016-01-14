@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsrev.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsrev.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* Handle RCS revision numbers.  */
 
@@ -632,11 +632,19 @@ genbranch(bpoint, revno, length, date, author, state, store)
 				);
 				return 0;
                         }
-			if (state && strcmp(state,trail->state)!=0) {
-				rcserror("Revision %s has state %s.",
-					trail->num,
-					trail->state ? trail->state : "<empty>"
-				);
+			if (state) {
+				const char *st;
+
+				if (trail->state == NULL)
+					st = "<empty>";
+				else if (strcmp(trail->state, state) != 0)
+					st = trail->state;
+				else
+					st = NULL;
+
+				if (st)
+					rcserror("Revision %s has state %s.",
+					    trail->num, st);
 				return 0;
                         }
                 }
@@ -747,7 +755,7 @@ fexpandsym(source, target, fp)
 			for (bp = tp;  *bp=='0' && isdigit(bp[1]);  bp++)
 				continue;
 
-			if (!*bp)
+			if (!*bp) {
 			    if (s || *sp!='.')
 				break;
 			    else {
@@ -763,6 +771,7 @@ fexpandsym(source, target, fp)
 				bp = tp = target->string;
 				tlim = tp + target->size;
 			    }
+			}
 		}
 
 		while ((*tp++ = *bp++))

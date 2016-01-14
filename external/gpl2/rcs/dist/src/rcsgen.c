@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsgen.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsgen.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* Generate RCS revisions.  */
 
@@ -446,7 +446,7 @@ getsstdin(option, name, note, buf)
 	   c = getcstdin(),  !feof(stdin);
 	   bufrealloc(buf, i+1),  p = buf->string,  p[i++] = c
 	)
-		if (c == '\n')
+		if (c == '\n') {
 			if (i  &&  p[i-1]=='.'  &&  (i==1 || p[i-2]=='\n')) {
 				/* Remove trailing '.'.  */
 				--i;
@@ -455,6 +455,7 @@ getsstdin(option, name, note, buf)
 				aputs(">> ", stderr);
 				eflush();
 			}
+		}
 	return cleanlogmsg(p, i);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsfnms.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsfnms.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* RCS filename and pathname handling */
 
@@ -294,14 +294,24 @@ maketemp(n)
 	catchints();
 	{
 #	if has_mktemp
+#	if has_mkstemp
+	    int fd;
+#       endif
 	    char const *tp = tmp();
 	    size_t tplen = dir_useful_len(tp);
 	    p = testalloc(tplen + 10);
 	    VOID sprintf(p, "%.*s%cT%cXXXXXX", (int)tplen, tp, SLASH, '0'+n);
+#	    if has_mkstemp
+	    if ((fd = mkstemp(p)) == -1)
+#	    else
 	    if (!mktemp(p) || !*p)
+#	    endif
 		faterror("can't make temporary pathname `%.*s%cT%cXXXXXX'",
 			(int)tplen, tp, SLASH, '0'+n
 		);
+#	    if has_mkstemp
+	    close(fd);
+#	    endif
 #	else
 	    static char tpnamebuf[TEMPNAMES][L_tmpnam];
 	    p = tpnamebuf[n];

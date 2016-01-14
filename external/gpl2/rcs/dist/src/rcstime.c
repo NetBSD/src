@@ -1,4 +1,4 @@
-/*	$NetBSD: rcstime.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcstime.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* Convert between RCS time format and Posix and/or C formats.  */
 

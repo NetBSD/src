@@ -1,5 +1,5 @@
-/*	$NetBSD: ident.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
-
+/*	$NetBSD: ident.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
+/*	$NetBSD: ident.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 /* Identify RCS keyword strings in files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
@@ -136,7 +136,7 @@ mainProg(identId, "ident", "Id: ident.c,v 5.9 1995/06/16 06:19:24 eggert Exp ")
 		    break;
 	    }
 
-   if (0 <= quiet)
+   if (0 <= quiet) {
        if (!a)
 	    VOID scanfile(stdin, (char*)0, quiet);
        else
@@ -150,7 +150,7 @@ mainProg(identId, "ident", "Id: ident.c,v 5.9 1995/06/16 06:19:24 eggert Exp ")
 		)
 		    break;
 	    } while ((a = *++argv));
-
+   }
    if (ferror(stdout) || fclose(stdout)!=0) {
       reportError("standard output");
       status = EXIT_FAILURE;
@@ -252,8 +252,8 @@ match(fp)   /* group substring between two KDELIM's; then do pattern match */
       return c ? c : '\n';
    *tp++ = c;
    while( (c = getc(fp)) != KDELIM ) {
-      if (c == EOF  &&  feof(fp) | ferror(fp))
-	    return c;
+      if (c == EOF)
+	 return c;
       switch (ctab[c]) {
 	 default:
 	    *tp++ = c;
