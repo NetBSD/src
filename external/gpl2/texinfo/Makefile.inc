@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2016/01/14 00:34:52 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2016/01/14 00:38:19 christos Exp $
 
+BINDIR=		/usr/bin
 DIST=		${NETBSDSRCDIR}/external/gpl2/texinfo
 IDIST=		${DIST}/dist
 
