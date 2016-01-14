@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.222 2015/12/18 18:56:47 christos Exp $
+#	$NetBSD: Makefile,v 1.223 2016/01/14 04:27:26 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
 SUBDIR= apply asa at audio audiocfg \
 	banner basename biff bthset btkey btpin \
-	bzip2 bzip2recover cal calendar cap_mkdb cdplay \
+	bzip2 bzip2recover c89 c99 cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp cleantags col colcrt colrm \
 	column comm compress config crunch csplit ctags cut \
 	deroff db dirname du \
