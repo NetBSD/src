@@ -1,4 +1,4 @@
-/*	$NetBSD: rcskeys.c,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcskeys.c,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* RCS keyword table and match operation */
 
@@ -73,6 +73,9 @@ char const *const Keyword[] = {
     /* This must be in the same order as rcsbase.h's enum markers type. */
 	0,
 	AUTHOR, DATE, HEADER, IDH,
+#ifdef LOCALID
+	LOCALID,
+#endif
 	LOCKER, LOG, NAME, RCSFILE, REVISION, SOURCE, STATE
 };
 

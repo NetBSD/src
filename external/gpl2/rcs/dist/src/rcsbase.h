@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsbase.h,v 1.1.1.1 2016/01/14 03:05:06 christos Exp $	*/
+/*	$NetBSD: rcsbase.h,v 1.2 2016/01/14 04:22:39 christos Exp $	*/
 
 /* RCS common definitions and data structures */
 
@@ -272,14 +272,14 @@ Report problems and direct all questions to:
 #	if maps_memory
 #		define declarecache register Iptr_type ptr, lim
 #		define setupcache(f) (lim = (f)->lim)
-#		define Igeteof_(f,c,s) if ((f)->ptr==(f)->lim) s else (c)= *(f)->ptr++;
-#		define cachegeteof_(c,s) if (ptr==lim) s else (c)= *ptr++;
+#		define Igeteof_(f,c,s) { if ((f)->ptr==(f)->lim) s else (c)= *(f)->ptr++; }
+#		define cachegeteof_(c,s) { if (ptr==lim) s else (c)= *ptr++; }
 #	else
 		int Igetmore P((RILE*));
 #		define declarecache register Iptr_type ptr; register RILE *rRILE
 #		define setupcache(f) (rRILE = (f))
-#		define Igeteof_(f,c,s) if ((f)->ptr==(f)->readlim && !Igetmore(f)) s else (c)= *(f)->ptr++;
-#		define cachegeteof_(c,s) if (ptr==rRILE->readlim && !Igetmore(rRILE)) s else (c)= *ptr++;
+#		define Igeteof_(f,c,s) { if ((f)->ptr==(f)->readlim && !Igetmore(f)) s else (c)= *(f)->ptr++; }
+#		define cachegeteof_(c,s) { if (ptr==rRILE->readlim && !Igetmore(rRILE)) s else (c)= *ptr++; }
 #	endif
 #	define uncache(f) ((f)->ptr = ptr)
 #	define cache(f) (ptr = (f)->ptr)
@@ -360,6 +360,7 @@ struct hshentry {
 	char const	  * lockedby; /* who locks the revision		    */
 	char const	  * state;    /* state of revision (Exp by default) */
 	char const	  * name;     /* name (if any) by which retrieved   */
+	char const	  * commitid; /* unique commit identifier           */
 	struct cbuf	    log;      /* log message requested at checkin   */
         struct branchhead * branches; /* list of first revisions on branches*/
 	struct cbuf	    ig;	      /* ignored phrases in admin part	    */
@@ -429,9 +430,12 @@ struct assoc {
 #define REVISION        "Revision"
 #define SOURCE          "Source"
 #define STATE           "State"
-#define keylength 8 /* max length of any of the above keywords */
+#define keylength 32 /* max length of any of the above keywords */
 
 enum markers { Nomatch, Author, Date, Header, Id,
+#ifdef LOCALID
+	       LocalId,
+#endif
 	       Locker, Log, Name, RCSfile, Revision, Source, State };
 	/* This must be in the same order as rcskeys.c's Keyword[] array. */
 
