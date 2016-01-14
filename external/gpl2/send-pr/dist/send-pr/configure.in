@@ -1,4 +1,5 @@
 AC_INIT(send-pr.sh)
+
 AC_SUBST(GNATS_ROOT)dnl
 AC_SUBST(GNATS_ADDR)dnl
 AC_SUBST(GNATS_SITE)dnl
@@ -9,10 +10,16 @@ AC_SUBST(SUBMITTER)dnl
 AC_SUBST(ECHON)dnl
 
 AC_ECHON
+AC_LISPDIR
+AC_PASSWD
 
-GNATS_SITE=cygnus
+if test -z "${GNATS_SITE}"; then
+   GNATS_SITE=cygnus
+fi
 SUBMITTER=unknown
-GNATS_ADDR=bugs@cygnus.com
+if test -z "${GNATS_ADDR}"; then
+   GNATS_ADDR=bugs@cygnus.com
+fi
 DEFAULT_ORGANIZATION=
 
 AC_FIND_PROGRAM(SENDMAIL,sendmail,/usr/lib:/usr/sbin:/usr/ucblib)
@@ -35,11 +42,7 @@ if test -n "$with_gnats_root"; then
 fi
 
 if test -z "${GNATS_ROOT}"; then
-	if test -n "${prefix}"; then
-		GNATS_ROOT=${prefix}/lib/gnats/gnats-root
-	else
-		GNATS_ROOT=/usr/local/lib/gnats/gnats-root
-	fi
+	GNATS_ROOT=${prefix-/usr/local}/lib/gnats/gnats-root
 	_PR=${GNATS_ROOT}
 fi
 
