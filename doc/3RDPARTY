@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1297 2016/01/14 00:41:14 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1298 2016/01/14 04:25:13 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1178,15 +1178,15 @@ TDB code as found in 2.4.x, x>1 is under the GPL.  Therefore, we're
 using the version found in 2.4.1.
 
 Package:	rcs
-Version:	5.7
-Current Vers:	5.9.2
+Version:	5.7 (Last GPLv2+ version)
+Current Vers:	5.9.4
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
 Home Page:	http://www.gnu.org/software/rcs/
 Responsible:	agc
 License:	GPLv2+ (5.7), GPLv3+ (5.8 and later)
-Location:	gnu/usr.bin/rcs
+Location:	external/gpl2/rcs
 Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
