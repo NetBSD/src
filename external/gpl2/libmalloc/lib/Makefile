@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/14 02:43:50 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2016/01/15 15:14:02 christos Exp $
 
 NOMAN=	# defined
 .include <bsd.init.mk>
@@ -11,7 +11,7 @@ SRCS+=  memalign.c valloc.c mcheck.c mtrace.c mstats.c vm-limit.c
 SRCS+=  ralloc.c
 
 
-CPPFLAGS+= -I${DIST} -I${.CURDIR} -DSTDC_HEADERS -DHAVE_STDLIB_H
+CPPFLAGS+= -I${DIST} -I${.CURDIR} -DSTDC_HEADERS -DHAVE_STDLIB_H -DHAVE_UNISTD_H
 
 .PATH: ${DIST}
 
