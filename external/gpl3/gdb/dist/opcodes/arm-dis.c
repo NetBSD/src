@@ -2105,7 +2105,7 @@ print_insn_coprocessor (bfd_vma pc,
 
 		    /* Is ``imm'' a negative number?  */
 		    if (imm & 0x40)
-		      imm |= (-1 << 7);
+		      imm |= -128;
 
 		    func (stream, "%d", imm);
 		  }
