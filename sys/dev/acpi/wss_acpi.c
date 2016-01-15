@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.29 2011/06/02 14:12:25 tsutsui Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.30 2016/01/15 15:42:57 joerg Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.29 2011/06/02 14:12:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.30 2016/01/15 15:42:57 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -77,7 +77,6 @@ wss_acpi_hints_index(const char *idstr)
 	for (idx = 0; idx < __arraycount(wss_acpi_hints); idx++) {
 		if (!strcmp(wss_acpi_hints[idx].idstr, idstr))
 			return idx;
-		++idx;
 	}
 
 	return -1;
