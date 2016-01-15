@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.12 2009/09/05 11:37:52 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.13 2016/01/15 08:27:04 mlelstv Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -85,13 +85,11 @@ typing in an alternate command sequence.
 The command line looks like:
 .Bd -ragged -offset indent
 .Ar kernel-path
-.Op Fl abknpqstvADZ
+.Op Fl abkpqsvACDS
 .Op Fl c Ar model
 .Op Fl m Ar memsize
 .Op Fl n Ar memsegments
 .Op Fl I Ar mask
-.Op Fl S Ar amount
-.Op Fl T Ar amount
 .Ed
 .Pp
 .Bl -tag -width flag
@@ -129,8 +127,13 @@ Boot in quiet mode.
 Boot into single-user mode.
 .It Fl v
 Boot in verbose mode.
+.It Fl A
+Enable AGA display modes.
+.It Fl C
+Use the serial port as console.
 .It Fl D
-Enter the kernel debugger (best used with -S)
+Enter the kernel debugger (best used with
+.Fl S ) .
 .It Fl I Ar mask
 inhibit sync negotiation as follows: The
 .Ar mask
@@ -142,7 +145,8 @@ real SCSI busses, but not, e.g., to internal IDE.
 The bytes are used up
 from right to left by SCSI bus drivers using this convention.
 .It Fl S
-Load the  kernel symbols
+include kernel debug symbols (for use by
+.Fl D ) .
 .El
 .Ss Booting NetBSD using the loadbsd program
 When you want (or have to) start
@@ -153,13 +157,11 @@ program that is supplied in the utils directory of the distribution.
 The loadbsd command line specification is:
 .Bd -ragged -offset indent
 .Nm loadbsd
-.Op Fl abknpstADZ
+.Op Fl abkpqstvACDSZ
 .Op Fl c Ar model
 .Op Fl m Ar memsize
 .Op Fl n Ar memsegments
 .Op Fl I Ar mask
-.Op Fl S Ar amount
-.Op Fl T Ar amount
 .Ar kernel-path
 .Ed
 .Pp
@@ -186,17 +188,22 @@ of memory to use, encoded as follows: 0 (default): 1 segment, 1:
 2 segments, 2: 3 or more segments.
 .It Fl p
 Select kernel load segment by priority instead of size.
+.It Fl q
+Boot in quiet mode.
 .It Fl s
 Boot into single-user mode.
 .It Fl t
 Test loading of the kernel but don't start
 .Nx .
+.It Fl v
+Boot in verbose mode.
 .It Fl A
-enable AGA modes.
+enable AGA display modes.
+.It Fl C
+Use the serial port as console
 .It Fl D
-Enter the kernel debugger after booting.
-Best with
-.Fl S .
+Enter the kernel debugger (best used with
+.Fl S ) .
 .It Fl I Ar mask
 inhibit sync negotiation as follows: The
 .Ar mask
@@ -208,7 +215,8 @@ real SCSI busses, but not, e.g., to internal IDE.
 The bytes are used up
 from right to left by SCSI bus drivers using this convention.
 .It Fl S
-include kernel debug symbols (for use by -D).
+include kernel debug symbols (for use by
+.Fl D ) .
 .It Fl Z
 Force load via chip memory.
 Won't work if kernel is larger than the chip memory size or on the
