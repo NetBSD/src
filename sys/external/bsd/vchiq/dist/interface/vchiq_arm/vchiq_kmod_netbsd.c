@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.5 2015/07/29 14:22:49 skrll Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.6 2016/01/15 07:49:41 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.5 2015/07/29 14:22:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.6 2016/01/15 07:49:41 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
+#include <sys/sysctl.h>
 
 #include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
@@ -173,4 +174,33 @@ remote_event_signal(REMOTE_EVENT_T *event)
 		bus_space_write_4(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
 		    0x48, 0);
 	}
+}
+
+SYSCTL_SETUP(sysctl_hw_vchiq_setup, "sysctl hw.vchiq setup")
+{
+	const struct sysctlnode *rnode = NULL;
+	const struct sysctlnode *cnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "vchiq", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "loglevel", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &cnode, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "core", "VChiq Core Loglevel", NULL, 0,
+	    &vchiq_core_log_level, 0, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &cnode, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "coremsg", "VChiq Core Message Loglevel", NULL, 0,
+	    &vchiq_core_msg_log_level, 0, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &cnode, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "sync", "VChiq Sync Loglevel", NULL, 0,
+	    &vchiq_sync_log_level, 0, CTL_CREATE, CTL_EOL);
 }
