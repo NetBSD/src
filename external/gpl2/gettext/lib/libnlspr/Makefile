@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/13 12:48:51 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2016/01/15 18:03:32 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -83,10 +83,13 @@ CPPFLAGS+=-DLIBDIR=\"/usr/share\"
 CPPFLAGS+=-DGETTEXTJAR=\"/usr/share/gettext/gettext.jar\"
 CPPFLAGS+=-DGETTEXTDATADIR=\"/usr/share/gettext\"
 
+COPTS.clean-temp.c = -Wno-stack-protector
 COPTS.format-java.c = -Wno-stack-protector
+COPTS.message.c = -Wno-stack-protector
 COPTS.msgl-cat.c = -Wno-stack-protector
 COPTS.msgl-charset.c = -Wno-stack-protector
 COPTS.msgl-iconv.c = -Wno-stack-protector
+COPTS.plural-exp.c = -Wno-stack-protector
 COPTS.plural.c = -Wno-stack-protector
 COPTS.po-charset.c = -Wno-stack-protector
 COPTS.po-gram-gen.c = -Wno-stack-protector
