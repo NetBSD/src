@@ -277,7 +277,7 @@ extern const unsigned int num_powerpc_operands;
 /* Use with the shift field of a struct powerpc_operand to indicate
      that BITM and SHIFT cannot be used to determine where the operand
      goes in the insn.  */
-#define PPC_OPSHIFT_INV (-1 << 31)
+#define PPC_OPSHIFT_INV (-0x80000000)
 
 /* Values defined for the flags field of a struct powerpc_operand.  */
 
