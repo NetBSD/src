@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.13 2009/10/17 11:18:18 mlelstv Exp $ */
+/* $NetBSD: console.c,v 1.14 2016/01/15 08:27:04 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,6 +71,39 @@ static struct Console myConsole;
 
 u_int16_t timelimit;
 
+#ifdef SERCONSOLE
+static int use_serconsole;
+extern char default_command[];
+
+static void
+conspreinit(void)
+{
+	char *p = default_command;
+	char c;
+
+	/*
+	 * preparse the default command to check for -C option
+	 * that selects the serial console
+	 */
+	while ((c = *p)) {
+		while (c == ' ')
+			c = *++p;
+		if (c == '-') {
+			while ((c = *++p) && c != ' ') {
+				switch (c) {
+				case 'C':
+					use_serconsole = 1;
+					break;
+				}
+			}
+		} else {
+			while ((c = *++p) && c != ' ')
+				;
+		}
+	}
+}
+#endif
+
 int
 consinit(void *consptr) {
 	struct Console *mc;
@@ -116,7 +149,9 @@ consinit(void *consptr) {
 		goto err;
 
 #ifdef SERCONSOLE
-	RawIOInit();
+	conspreinit();
+	if (use_serconsole)
+		RawIOInit();
 #endif
 
 	ConsoleBase = mc;
@@ -189,7 +224,8 @@ putchar(int c)
 	mc->cnior->cmd = Cmd_Wr;
 
 #ifdef SERCONSOLE
-	RawPutChar((int32_t)c);
+	if (use_serconsole)
+		RawPutChar((int32_t)c);
 #endif
 
 	(void)DoIO(mc->cnior);
@@ -205,8 +241,10 @@ puts(char *s)
 	mc->cnior->cmd = Cmd_Wr;
 
 #ifdef SERCONSOLE
-	while (*s)
-		RawPutChar(*s++);
+	if (use_serconsole) {
+		while (*s)
+			RawPutChar(*s++);
+	}
 #endif
 
 	(void)DoIO(mc->cnior);
@@ -245,10 +283,12 @@ getchar(void)
 			ticks = 1;
 		} else /* if (ior == mc->tmior) */ {
 #ifdef SERCONSOLE
-			r = RawMayGetChar();
-			if (r != -1) {
-				c = r;
-				ticks = 1;
+			if (use_serconsole) {
+				r = RawMayGetChar();
+				if (r != -1) {
+					c = r;
+					ticks = 1;
+				}
 			}
 #endif
 			if (ticks == 1)
