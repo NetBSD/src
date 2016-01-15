@@ -1,5 +1,4 @@
-#include <sys/param.h>
-/*	$NetBSD: getpagesize.h,v 1.2 2016/01/13 21:56:38 christos Exp $	*/
+/*	$NetBSD: getpagesize.h,v 1.3 2016/01/15 15:13:28 christos Exp $	*/
 
 /* Emulate getpagesize on systems that lack it.  */
 
