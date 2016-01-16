@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.26 2014/08/05 17:55:20 joerg Exp $ */
+/* $NetBSD: main.c,v 1.26.2.1 2016/01/16 10:04:05 snj Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ struct btinfo_memory bi_mem;
 struct btinfo_console bi_cons;
 struct btinfo_clock bi_clk;
 struct btinfo_prodfamily bi_fam;
+struct btinfo_model bi_model;
 struct btinfo_bootpath bi_path;
 struct btinfo_rootdevice bi_rdev;
 struct btinfo_net bi_net;
@@ -362,6 +363,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			/* need to pass this MAC address to kernel */
 			bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
 		}
+		bi_add(&bi_model, BTINFO_MODEL, sizeof(bi_model));
 
 		if (modules_enabled) {
 			if (fsmod != NULL)
