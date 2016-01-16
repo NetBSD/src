@@ -314,8 +314,10 @@ error_at_line (int status, int errnum, const char *file_name,
   __fxprintf (NULL, file_name != NULL ? "%s:%d: " : " ",
 	      file_name, line_number);
 #else
-  fprintf (stderr, file_name != NULL ? "%s:%d: " : " ",
-	   file_name, line_number);
+  if (file_name != NULL)
+    fprintf (stderr, "%s:%d: ", file_name, line_number);
+  else
+    fputc(' ', stderr);
 #endif
 
   va_start (args, message);
