@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.47 2016/01/15 17:38:53 sborrill Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.48 2016/01/16 10:16:24 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1763,4 +1763,23 @@ sys/arch/hppa/include/db_machdep.h		1.13
 
 	hppa ddb: Fix always false condition.  PR port-hppa/50642.
 	[skrll, ticket #1072]
+
+sys/arch/sandpoint/include/bootinfo.h		1.9
+sys/arch/sandpoint/stand/altboot/brdsetup.c	1.36, 1.37
+sys/arch/sandpoint/stand/altboot/dsk.c		1.18
+sys/arch/sandpoint/stand/altboot/globals.h	1.20, 1.21
+sys/arch/sandpoint/stand/altboot/main.c		1.27
+sys/arch/sandpoint/stand/altboot/siisata.c	1.6
+sys/arch/sandpoint/stand/altboot/version	1.8
+
+	sandpoint altboot:
+	- Correctly identify and power up a second disk on the same
+	  SATA channel.
+	- Fix misdetection of LinkStation and KuroBox(HG) as KuroT4.
+	[phx, ticket #1059]
+
+sys/arch/evbarm/conf/OPENRD			1.6
+
+	Disable mvsdio on OPENRD.
+	[cyber, ticket #1061]
 
