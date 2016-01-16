@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.8 2016/01/16 19:44:05 christos Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.9 2016/01/16 21:29:33 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -124,7 +124,7 @@ prf(const char *s, double d)
 		unsigned long long u;
 	} x;
 	x.d = d;
-	printf("%s = %#016.16llx (%24.16e)\n:, s, x.u, x.d);
+	printf("%s = %#016.16llx (%24.16e)\n", s, x.u, x.d);
 }
 
 static void
