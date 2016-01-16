@@ -1,4 +1,4 @@
-/*	$NetBSD: regsub.c,v 1.1 2016/01/09 02:05:00 christos Exp $	*/
+/*	$NetBSD: regsub.c,v 1.2 2016/01/16 19:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regsub.c,v 1.1 2016/01/09 02:05:00 christos Exp $");
+#ifdef __RCSID
+__RCSID("$NetBSD: regsub.c,v 1.2 2016/01/16 19:28:36 christos Exp $");
+#endif
 
 #include <sys/param.h>
 
