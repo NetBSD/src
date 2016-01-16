@@ -1,5 +1,5 @@
 /*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: extern.h,v 1.17 2015/01/29 03:27:06 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2016/01/16 16:57:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,10 @@ extern void doprintfilename(struct input_file *);
 extern void doesyscmd(const char *);
 extern void getdivfile(const char *);
 extern void doformat(const char *[], int);
+#ifdef REAL_FREEZE
+extern void freeze_state(const char *);
+extern void thaw_state(const char *);
+#endif
  
 
 /* look.c */
@@ -83,6 +87,10 @@ extern void 	macro_for_all(void (*)(const char *, struct macro_definition *));
 #define is_traced(p) ((p)->trace_flags == FLAG_NO_TRACE ? (trace_flags & TRACE_ALL) : (p)->trace_flags)
 
 extern ndptr macro_getbuiltin(const char *);
+#ifdef REAL_FREEZE
+extern void  dump_state(FILE *);
+extern void  restore_state(FILE *);
+#endif
 
 /* main.c */
 extern void outputstr(const char *);
@@ -165,6 +173,12 @@ extern char lquote[MAXCCHARS+1];/* left quote character (`) */
 extern char **m4wraps;		/* m4wrap string default. */
 extern int maxwraps;		/* size of m4wraps array */
 extern int wrapindex;		/* current index in m4wraps */
+extern int fatal_warnings;	/* exit on warning */
+extern int quiet;		/* no warnings */
+#ifndef REAL_FREEZE
+extern FILE *freezef;		/* copy of input */
+extern int thawing;		/* don't process includes during thaw */
+#endif
 
 extern const char *null;	/* as it says.. just a null. */
 extern char rquote[MAXCCHARS+1];/* right quote character (') */
