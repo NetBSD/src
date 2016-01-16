@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.42 2012/04/25 18:23:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2016/01/16 18:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,9 +42,10 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.42 2012/04/25 18:23:58 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2016/01/16 18:31:29 christos Exp $");
 #include <assert.h>
 #include <signal.h>
+#include <getopt.h>
 #include <err.h>
 #include <errno.h>
 #include <unistd.h>
@@ -82,6 +83,15 @@ char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
 char ecommt[MAXCCHARS+1] = {ECOMMT};	/* end character for comment   */
 int  synch_lines = 0;		/* line synchronisation for C preprocessor */
 int  prefix_builtins = 0;	/* -P option to prefix builtin keywords */
+int  fatal_warnings = 0;	/* -E option to exit on warnings */
+int  quiet = 0;			/* -Q option to silence warnings */
+int  nesting_limit = -1;	/* -L for nesting limit */
+const char *freeze = NULL;	/* -F to freeze state */
+const char *reload = NULL;	/* -R to reload state */
+#ifndef REAL_FREEZE
+FILE *freezef = NULL;
+int thawing = 0;
+#endif
 
 struct keyblk {
         const char *knam;	/* keyword name */
@@ -146,9 +156,6 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 
 #define MAXKEYS	(sizeof(keywrds)/sizeof(struct keyblk))
 
-extern int optind;
-extern char *optarg;
-
 #define MAXRECORD 50
 static struct position {
 	char *name;
@@ -166,14 +173,14 @@ static void reallyoutputstr(const char *);
 static void reallyputchar(int);
 
 static void enlarge_stack(void);
+static void help(void);
 
-__dead static void
-usage(void)
+static void
+usage(FILE *f)
 {
-	fprintf(stderr, "usage: %s [-gPs] [-Dname[=value]] [-d flags] "
-			"[-I dirname] [-o filename]\n"
-			"\t[-t macro] [-Uname] [file ...]\n", getprogname());
-	exit(1);
+	fprintf(f, "Usage: %s [-EGgiPQsv] [-Dname[=value]] [-d flags] "
+	    "[-I dirname] [-o filename] [-L limit]\n"
+	    "\t[-t macro] [-Uname] [file ...]\n", getprogname());
 }
 
 __dead static void
@@ -183,6 +190,37 @@ onintr(int signo)
 	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
 	_exit(1);
 }
+
+#define OPT_HELP 1
+
+struct option longopts[] = {
+	{ "debug",		optional_argument,	0, 'd' },
+	{ "define",		required_argument,	0, 'D' },
+	{ "error-output",	required_argument,	0, 'e' },
+	{ "fatal-warnings",	no_argument,		0, 'E' },
+	{ "freeze-state",	required_argument,	0, 'F' },
+	{ "gnu",		no_argument,		0, 'g' },
+	{ "help",		no_argument,		0, OPT_HELP },
+	{ "include",		required_argument,	0, 'I' },
+	{ "interactive",	no_argument,		0, 'i' },
+	{ "nesting-limit",	required_argument,	0, 'L' },
+	{ "prefix-builtins",	no_argument,		0, 'P' },
+	{ "quiet",		no_argument,		0, 'Q' },
+	{ "reload-state",	required_argument,	0, 'R' },
+	{ "silent",		no_argument,		0, 'Q' },
+	{ "synclines",		no_argument,		0, 's' },
+	{ "trace",		required_argument,	0, 't' },
+	{ "traditional",	no_argument,		0, 'G' },
+	{ "undefine",		required_argument,	0, 'U' },
+	{ "version",		no_argument,		0, 'v' },
+#ifdef notyet
+	{ "arglength",		required_argument,	0, 'l' },
+	{ "debugfile",		optional_argument, 	0, OPT_DEBUGFILE },
+	{ "hashsize",		required_argument,	0, 'H' },
+	{ "warn-macro-sequence",optional_argument,	0, OPT_WARN_SEQUENCE },
+#endif
+	{ 0,			0,			0, 0 },
+};
 
 int
 main(int argc, char *argv[])
@@ -207,9 +245,9 @@ main(int argc, char *argv[])
 	outfile = NULL;
 	resizedivs(MAXOUT);
 
-	while ((c = getopt(argc, argv, "gst:d:D:U:o:I:P")) != -1)
+	while ((c = getopt_long(argc, argv, "D:d:e:EF:GgIi:L:o:PR:Qst:U:v",
+	    longopts, NULL)) != -1)
 		switch(c) {
-
 		case 'D':               /* define something..*/
 			for (p = optarg; *p; p++)
 				if (*p == '=')
@@ -218,20 +256,51 @@ main(int argc, char *argv[])
 				*p++ = EOS;
 			dodefine(optarg, p);
 			break;
+		case 'd':
+			set_trace_flags(optarg);
+			break;
+		case 'E':
+			fatal_warnings++;
+			break;
+		case 'e':
+			if (freopen(optarg, "w+", stderr) == NULL)
+				err(EXIT_FAILURE, "Can't redirect errors to `%s'",
+				    optarg);
+			break;
+		case 'F':
+			freeze = optarg;
+#ifndef REAL_FREEZE
+			if ((freezef = fopen(freeze, "w")) == NULL)
+				err(EXIT_FAILURE, "Can't open `%s'", freeze);
+#endif
+			break;
 		case 'I':
 			addtoincludepath(optarg);
 			break;
-		case 'P':
-			prefix_builtins = 1;
+		case 'i':
+			setvbuf(stdout, NULL, _IONBF, 0);
+			signal(SIGINT, SIG_IGN);
 			break;
-		case 'U':               /* undefine...       */
-			macro_popdef(optarg);
+		case 'G':
+			mimic_gnu = 0;
 			break;
 		case 'g':
 			mimic_gnu = 1;
 			break;
-		case 'd':
-			set_trace_flags(optarg);
+		case 'L':
+			nesting_limit = atoi(optarg);
+			break;
+		case 'o':
+			trace_file(optarg);
+                        break;
+		case 'P':
+			prefix_builtins = 1;
+			break;
+		case 'Q':
+			quiet++;
+			break;
+		case 'R':
+			reload = optarg;
 			break;
 		case 's':
 			synch_lines = 1;
@@ -239,15 +308,30 @@ main(int argc, char *argv[])
 		case 't':
 			mark_traced(optarg, 1);
 			break;
-		case 'o':
-			trace_file(optarg);
-                        break;
+		case 'U':               /* undefine...       */
+			macro_popdef(optarg);
+			break;
+		case 'v':
+			fprintf(stderr, "%s version %d\n", getprogname(),
+			    VERSION);
+			return EXIT_SUCCESS;
+		case OPT_HELP:
+			help();
+			return EXIT_SUCCESS;
 		case '?':
-			usage();
+		default:
+			usage(stderr);
+			return EXIT_FAILURE;
 		}
 
+#ifdef REDIRECT
+	if (freopen("/tmp/m4", "w+", stderr) == NULL)
+		err(EXIT_FAILURE, "Can't redirect errors to `%s'",
+		    "/tmp/m4");
+#endif
         argc -= optind;
         argv += optind;
+
 
 	initkwds();
 	if (mimic_gnu)
@@ -255,6 +339,22 @@ main(int argc, char *argv[])
 
 	active = stdout;		/* default active output     */
 	bbase[0] = bufbase;
+
+	if (reload) {
+#ifdef REAL_FREEZE
+		thaw_state(reload);
+#else
+		if (fopen_trypath(infile, reload) == NULL)
+			err(1, "Can't open `%s'", reload);
+		sp = -1;
+		fp = 0;
+		thawing = 1;
+		macro();
+		thawing = 0;
+		release_input(infile);
+#endif
+	}
+
         if (!argc) {
  		sp = -1;		/* stack pointer initialized */
 		fp = 0; 		/* frame pointer initialized */
@@ -303,6 +403,14 @@ main(int argc, char *argv[])
 	if (outfile[0] != NULL) {
 		(void) fclose(outfile[0]);
 	}
+
+#ifdef REAL_FREEZE
+	if (freeze)
+		freeze_state(freeze);
+#else
+	if (freezef)
+		fclose(freezef);
+#endif
 
 	return 0;
 }
@@ -368,12 +476,16 @@ macro(void)
 					record(quotes, nlpar++);
 					outputstr(lquote);
 				} else if (l == EOF) {
-					if (nlpar == 1)
-						warnx("unclosed quote:");
-					else
-						warnx("%d unclosed quotes:", nlpar);
-					dump_stack(quotes, nlpar);
-					exit(1);
+					if (!quiet) {
+						if (nlpar == 1)
+							warnx("unclosed quote:");
+						else
+							warnx(
+							    "%d unclosed quotes:",
+							    nlpar);
+						dump_stack(quotes, nlpar);
+					}
+					exit(EXIT_FAILURE);
 				} else {
 					if (nlpar > 0) {
 						if (sp < 0)
@@ -436,9 +548,12 @@ macro(void)
 			}
 		} else if (t == EOF) {
 			if (sp > -1 && ilevel <= 0) {
-				warnx( "unexpected end of input, unclosed parenthesis:");
-				dump_stack(paren, PARLEV);
-				exit(1);
+				if (!quiet) {
+					warnx("unexpected end of input, "
+					    "unclosed parenthesis:");
+					dump_stack(paren, PARLEV);
+				}
+				exit(EXIT_FAILURE);
 			}
 			if (ilevel <= 0)
 				break;			/* all done thanks.. */
@@ -609,7 +724,7 @@ initkwds(void)
 	size_t i;
 
 	for (i = 0; i < MAXKEYS; i++) {
-		type = keywrds[i].ktyp & TYPEMASK;
+		type = keywrds[i].ktyp;
 		if ((keywrds[i].ktyp & NOARGS) == 0)
 			type |= NEEDARGS;
 		setup_builtin(keywrds[i].knam, type);
@@ -651,4 +766,41 @@ enlarge_stack(void)
 	sstack = xrealloc(sstack, STACKMAX,
 	    "Evaluation stack overflow (%lu)", 
 	    (unsigned long)STACKMAX);
+}
+
+static const struct {
+	const char *n;
+	const char *d;
+} nd [] = {
+{ "-d, --debug[=flags]",	"set debug flags" },
+{ "-D, --define=name[=value]",	"define macro" },
+{ "-e, --error-output=file",	"send error output to file" },
+{ "-E, --fatal-warnings",	"exit on warnings" },
+{ "-F, --freeze-state=file",	"save state to file" },
+{ "-g, --gnu",			"enable gnu extensions" },
+{ "    --help",			"print this message and exit" },
+{ "-I, --include=file",		"include file" },
+{ "-i, --interactive",		"unbuffer output, ignore tty signals" },
+{ "-L, --nesting-limit=num",	"macro expansion nesting limit (-1 disable)" },
+{ "-P, --prefix-builtins",	"prefix builtins with m4_" },
+{ "-Q, --quiet",		"don't print warnings" },
+{ "-R, --reload-state=file",	"restore state from file" },
+{ "-Q, --silent",		"don't print warnings" },
+{ "-s, --synclines",		"output line directives for cpp(1)" },
+{ "-t, --trace=macro",		"trace the named macro" },
+{ "-G, --traditional",		"disable gnu extensions" },
+{ "-U, --undefine=name",	"undefine the named macro" },
+{ "-v, --version",		"print the version number and exit" },
+};
+
+static void
+help(void)
+{
+	size_t i;
+	fprintf(stdout, "%s version %d\n\n", getprogname(), VERSION);
+	usage(stdout);
+
+	fprintf(stdout, "\nThe long options are:\n");
+	for (i = 0; i < __arraycount(nd); i++)
+		fprintf(stdout, "\t%-25.25s\t%s\n", nd[i].n, nd[i].d);
 }
