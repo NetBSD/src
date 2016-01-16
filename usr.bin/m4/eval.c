@@ -1,5 +1,5 @@
 /*	$OpenBSD: eval.c,v 1.66 2008/08/21 21:01:47 espie Exp $	*/
-/*	$NetBSD: eval.c,v 1.23 2015/01/29 19:26:20 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.24 2016/01/16 16:56:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,9 +42,10 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eval.c,v 1.23 2015/01/29 19:26:20 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.24 2016/01/16 16:56:21 christos Exp $");
 
 #include <sys/types.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
@@ -541,7 +542,16 @@ expand_macro(const char *argv[], int argc)
 			case '7':
 			case '8':
 			case '9':
-				if ((argno = *p - '0') < argc - 1)
+				argno = *p - '0';
+				if (mimic_gnu) {
+					const unsigned char *q =
+					    (const unsigned char *)p;
+					while (isdigit(*++q)) {
+						bp--;
+						argno = argno * 10 + *q - '0';
+					}
+				}
+				if (argno < argc - 1)
 					pbstr(argv[argno + 1]);
 				break;
 			case '*':
@@ -707,6 +717,10 @@ doifelse(const char *argv[], int argc)
 static int
 doincl(const char *ifile)
 {
+#ifndef REAL_FREEZE
+	if (thawing)
+		return 1;
+#endif
 	if (ilevel + 1 == MAXINP)
 		m4errx(1, "too many include files.");
 	if (fopen_trypath(infile+ilevel+1, ifile) != NULL) {
@@ -915,6 +929,7 @@ map(char *dest, const char *src, const char *from, const char *to)
 {
 	const char *tmp;
 	unsigned char sch, dch;
+	unsigned char found[256];
 	static char frombis[257];
 	static char tobis[257];
 	static unsigned char mapvec[256] = {
@@ -951,19 +966,33 @@ map(char *dest, const char *src, const char *from, const char *to)
 	 * create a mapping between "from" and
 	 * "to"
 	 */
-		while (*from)
-			mapvec[(unsigned char)(*from++)] = (*to) ? 
-				(unsigned char)(*to++) : 0;
-
-		while (*src) {
-			sch = (unsigned char)(*src++);
-			dch = mapvec[sch];
-			while (dch != sch) {
-				sch = dch;
-				dch = mapvec[sch];
+		memset(found, 0, sizeof(found));
+		for (; (sch = (unsigned char)*from) != '\0'; from++) {
+			if (!mimic_gnu || !found[sch]) {
+				found[sch] = 1;
+				mapvec[sch] = *to;
 			}
-			if ((*dest = (char)dch))
-				dest++;
+			if (*to)
+				to++;
+		}
+
+		if (mimic_gnu) {
+			for (; (sch = (unsigned char)*src) != '\0'; src++) {
+				if (!found[sch])
+					*dest++ = sch;
+				else if ((dch = mapvec[sch]) != '\0')
+					*dest++ = dch;
+			}
+		} else {
+			while (*src) {
+				dch = mapvec[sch];
+				while (dch != sch) {
+					sch = dch;
+					dch = mapvec[sch];
+				}
+				if ((*dest = (char)dch))
+					dest++;
+			}
 		}
 	/*
 	 * restore all the changed characters
