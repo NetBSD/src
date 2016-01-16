@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.44 2016/01/16 18:33:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2016/01/16 21:12:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.44 2016/01/16 18:33:35 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2016/01/16 21:12:27 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 	outfile = NULL;
 	resizedivs(MAXOUT);
 
-	while ((c = getopt_long(argc, argv, "D:d:e:EF:GgIi:L:o:PR:Qst:U:v",
+	while ((c = getopt_long(argc, argv, "D:d:e:EF:GgI:iL:o:PR:Qst:U:v",
 	    longopts, NULL)) != -1)
 		switch(c) {
 		case 'D':               /* define something..*/
