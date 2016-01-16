@@ -1429,7 +1429,7 @@ extern struct client *cfg_client;
 void		 start_cfg(void);
 int		 load_cfg(const char *, struct cmd_q *, char **);
 void		 set_cfg_file(const char *);
-void		 cfg_add_cause(const char *, ...);
+void printflike(1, 2) cfg_add_cause(const char *, ...);
 void		 cfg_print_causes(struct cmd_q *);
 void		 cfg_show_causes(struct session *);
 
@@ -2081,7 +2081,7 @@ extern const struct window_mode window_copy_mode;
 void		 window_copy_init_from_pane(struct window_pane *, int);
 void		 window_copy_init_for_output(struct window_pane *);
 void printflike(2, 3) window_copy_add(struct window_pane *, const char *, ...);
-void		 window_copy_vadd(struct window_pane *, const char *, va_list);
+void printflike(2, 0) window_copy_vadd(struct window_pane *, const char *, va_list);
 void		 window_copy_pageup(struct window_pane *);
 void		 window_copy_start_drag(struct client *, struct mouse_event *);
 
@@ -2204,9 +2204,9 @@ void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t);
 void		*xreallocarray(void *, size_t, size_t);
 int printflike(2, 3) xasprintf(char **, const char *, ...);
-int		 xvasprintf(char **, const char *, va_list);
+int printflike(2, 0) xvasprintf(char **, const char *, va_list);
 int printflike(3, 4) xsnprintf(char *, size_t, const char *, ...);
-int		 xvsnprintf(char *, size_t, const char *, va_list);
+int printflike(3, 0) xvsnprintf(char *, size_t, const char *, va_list);
 
 /* style.c */
 int		 style_parse(const struct grid_cell *,
