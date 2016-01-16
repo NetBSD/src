@@ -1,4 +1,4 @@
-/* $NetBSD: gnum4.c,v 1.9 2012/03/20 20:34:58 matt Exp $ */
+/* $NetBSD: gnum4.c,v 1.10 2016/01/16 16:59:18 christos Exp $ */
 /* $OpenBSD: gnum4.c,v 1.39 2008/08/21 21:01:04 espie Exp $ */
 
 /*
@@ -33,7 +33,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gnum4.c,v 1.9 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: gnum4.c,v 1.10 2016/01/16 16:59:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -203,10 +203,11 @@ static void addchars(const char *, size_t);
 static void addchar(int);
 static char *twiddle(const char *);
 static char *getstring(void);
-static void exit_regerror(int, regex_t *) __dead;
-static void do_subst(const char *, regex_t *, const char *, regmatch_t *);
-static void do_regexpindex(const char *, regex_t *, regmatch_t *);
-static void do_regexp(const char *, regex_t *, const char *, regmatch_t *);
+static void exit_regerror(int, const char *, regex_t *) __dead;
+static void do_subst(const char *, const char *, regex_t *, const char *,
+    regmatch_t *);
+static void do_regexpindex(const char *, const char *, regex_t *, regmatch_t *);
+static void do_regexp(const char *, const char *, regex_t *, const char *, regmatch_t *);
 static void add_sub(size_t, const char *, regex_t *, regmatch_t *);
 static void add_replace(const char *, regex_t *, const char *, regmatch_t *);
 #define addconstantstring(s) addchars((s), sizeof(s)-1)
@@ -250,7 +251,7 @@ getstring(void)
 
 
 static void 
-exit_regerror(int er, regex_t *re)
+exit_regerror(int er, const char *pat, regex_t *re)
 {
 	size_t 	errlen;
 	char 	*errbuf;
@@ -259,14 +260,18 @@ exit_regerror(int er, regex_t *re)
 	errbuf = xalloc(errlen, 
 	    "malloc in regerror: %lu", (unsigned long)errlen);
 	regerror(er, re, errbuf, errlen);
-	m4errx(1, "regular expression error: %s.", errbuf);
+	m4errx(1, "regular expression error: %s for: `%s'", errbuf, pat);
 }
 
 static void
 add_sub(size_t n, const char *string, regex_t *re, regmatch_t *pm)
 {
-	if (n > re->re_nsub)
-		warnx("No subexpression %zu", n);
+	if (n > re->re_nsub) {
+		if (!quiet)
+			warnx("No subexpression %zu", n);
+		if (fatal_warnings)
+			exit(EXIT_FAILURE);
+	}
 	/* Subexpressions that did not match are
 	 * not an error.  */
 	else if (pm[n].rm_so != -1 &&
@@ -313,7 +318,8 @@ add_replace(const char *string, regex_t *re, const char *replace, regmatch_t *pm
 }
 
 static void 
-do_subst(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
+do_subst(const char *pat, const char *string, regex_t *re, const char *replace,
+    regmatch_t *pm)
 {
 	int error;
 	int flags = 0;
@@ -346,14 +352,18 @@ do_subst(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 		addchars(string, pm[0].rm_so);
 		add_replace(string, re, replace, pm);
 		string += pm[0].rm_eo;
+		buffer[current] = '\0';
 	}
+	while (*string)
+		addchar(*string++);
 	if (error != REG_NOMATCH)
-		exit_regerror(error, re);
+		exit_regerror(error, pat, re);
 	pbstr(string);
 }
 
 static void 
-do_regexp(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
+do_regexp(const char *pat, const char *string, regex_t *re, const char *replace,
+    regmatch_t *pm)
 {
 	int error;
 
@@ -365,12 +375,12 @@ do_regexp(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 	case REG_NOMATCH:
 		break;
 	default:
-		exit_regerror(error, re);
+		exit_regerror(error, pat, re);
 	}
 }
 
 static void 
-do_regexpindex(const char *string, regex_t *re, regmatch_t *pm)
+do_regexpindex(const char *pat, const char *string, regex_t *re, regmatch_t *pm)
 {
 	int error;
 
@@ -382,7 +392,7 @@ do_regexpindex(const char *string, regex_t *re, regmatch_t *pm)
 		pbnum(-1);
 		break;
 	default:
-		exit_regerror(error, re);
+		exit_regerror(error, pat, re);
 	}
 }
 
@@ -437,6 +447,33 @@ twiddle(const char *p)
 	return getstring();
 }
 
+static int
+checkempty(const char *argv[], int argc)
+{
+	const char *s;
+	size_t len;
+
+	if (argc != 3 && argv[3][0] != '\0')
+		return 0;
+
+	if (argc == 3) {
+		if (!quiet)
+			warnx("Too few arguments to patsubst");
+		if (fatal_warnings)
+			exit(EXIT_FAILURE);
+	}
+			
+	if (argv[4] && argc > 4) 
+		len = strlen(argv[4]);
+	else
+		len = 0;
+	for (s = argv[2]; *s != '\0'; s++) {
+		addchars(argv[4], len);
+		addchar(*s);
+	}
+	return 1;
+}
+
 /* patsubst(string, regexp, opt replacement) */
 /* argv[2]: string
  * argv[3]: regexp
@@ -445,23 +482,17 @@ twiddle(const char *p)
 void
 dopatsubst(const char *argv[], int argc)
 {
-	if (argc <= 3) {
-		warnx("Too few arguments to patsubst");
+	if (argc < 3) {
+		if (!quiet)
+			warnx("Too few arguments to patsubst");
+		if (fatal_warnings)
+			exit(EXIT_FAILURE);
 		return;
 	}
 	/* special case: empty regexp */
-	if (argv[3][0] == '\0') {
-		const char *s;
-		size_t len;
-		if (argv[4] && argc > 4) 
-			len = strlen(argv[4]);
-		else
-			len = 0;
-		for (s = argv[2]; *s != '\0'; s++) {
-			addchars(argv[4], len);
-			addchar(*s);
-		}
-	} else {
+	if (!checkempty(argv, argc)) {
+
+		const char *pat;
 		int error;
 		regex_t re;
 		regmatch_t *pmatch;
@@ -473,13 +504,13 @@ dopatsubst(const char *argv[], int argc)
 		    (l > 0 && argv[3][l-1] == '$'))
 			mode |= REG_NEWLINE;
 
-		error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
-		    mode);
+		pat = mimic_gnu ? twiddle(argv[3]) : argv[3];
+		error = regcomp(&re, pat, mode);
 		if (error != 0)
-			exit_regerror(error, &re);
+			exit_regerror(error, pat, &re);
 		
 		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
-		do_subst(argv[2], &re, 
+		do_subst(pat, argv[2], &re, 
 		    argc > 4 && argv[4] != NULL ? argv[4] : "", pmatch);
 		free(pmatch);
 		regfree(&re);
@@ -493,21 +524,29 @@ doregexp(const char *argv[], int argc)
 	int error;
 	regex_t re;
 	regmatch_t *pmatch;
+	const char *pat;
 
-	if (argc <= 3) {
-		warnx("Too few arguments to regexp");
+	if (argc < 3) {
+		if (!quiet)
+			warnx("Too few arguments to regexp");
+		if (fatal_warnings)
+			exit(EXIT_FAILURE);
 		return;
 	}
-	error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
-	    REG_EXTENDED);
+	if (checkempty(argv, argc)) {
+		return;
+	}
+
+	pat = mimic_gnu ? twiddle(argv[3]) : argv[3];
+	error = regcomp(&re, pat, REG_EXTENDED);
 	if (error != 0)
-		exit_regerror(error, &re);
+		exit_regerror(error, pat, &re);
 	
 	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
 	if (argv[4] == NULL || argc == 4)
-		do_regexpindex(argv[2], &re, pmatch);
+		do_regexpindex(pat, argv[2], &re, pmatch);
 	else
-		do_regexp(argv[2], &re, argv[4], pmatch);
+		do_regexp(pat, argv[2], &re, argv[4], pmatch);
 	free(pmatch);
 	regfree(&re);
 }
@@ -667,3 +706,112 @@ getdivfile(const char *name)
 		putc(c, active);
 	(void) fclose(f);
 }
+
+#ifdef REAL_FREEZE
+void
+freeze_state(const char *fname)
+{
+	FILE *f;
+
+	if ((f = fopen(fname, "wb")) == NULL)
+		m4errx(EXIT_FAILURE, "Can't open output freeze file `%s' (%s)",
+		    fname, strerror(errno));
+	fprintf(f, "# This is a frozen state file generated by %s\nV1\n",
+	    getprogname());
+	fprintf(f, "Q%zu,%zu\n%s%s\n", strlen(lquote), strlen(rquote),
+	    lquote, rquote);
+	fprintf(f, "C%zu,%zu\n%s%s\n", strlen(scommt), strlen(ecommt),
+	    scommt, ecommt);
+	dump_state(f);
+	/* XXX: diversions? */
+	fprintf(f, "D-1,0\n");
+	fprintf(f, "# End of frozen state file\n");
+	fclose(f);
+}
+
+void
+thaw_state(const char *fname)
+{
+	char *name = NULL;
+	size_t nl, namelen = 0;
+	char *defn = NULL;
+	size_t dl, defnlen = 0;
+	size_t lineno = 0;
+	char line[1024], *ptr, type;
+	FILE *f;
+
+	if ((f = fopen(fname, "rb")) == NULL)
+		m4errx(EXIT_FAILURE, "Can't open frozen file `%s' (%s)",
+		    fname, strerror(errno));
+
+#define GET() if (fgets(line, (int)sizeof(line), f) == NULL) goto out
+#define GETSTR(s, l) if (fread(s, 1, l, f) != l) goto out; else s[l] = '\0'
+
+	GET();	/* comment */
+	GET();	/* version */
+	if ((ptr = strrchr(line, '\n')) != NULL)
+		*ptr = '\0';
+	if (strcmp(line, "V1") != 0)
+		m4errx(EXIT_FAILURE, "Bad frozen version `%s'", line);
+
+	for (;;) {
+		GET();
+		lineno++;
+		switch (*line) {
+		case '\n':
+			continue;
+		case '#':
+			free(name);
+			free(defn);
+			fclose(f);
+			return;
+		default:
+			if (sscanf(line, "%c%zu,%zu\n", &type, &nl, &dl) != 3)
+				m4errx(EXIT_FAILURE, "%s, %zu: Bad line `%s'",
+				    fname, lineno, line);
+			break;
+		}
+
+		switch (type) {
+		case 'Q':
+			if (nl >= sizeof(lquote) || dl >= sizeof(rquote))
+				m4errx(EXIT_FAILURE, "%s, %zu: Quote too long",
+				    fname, lineno);
+			GETSTR(lquote, nl);
+			GETSTR(rquote, dl);
+			break;
+
+		case 'C':
+			if (nl >= sizeof(scommt) || dl >= sizeof(ecommt))
+				m4errx(EXIT_FAILURE, "%s, %zu: Comment too long",
+				    fname, lineno);
+			GETSTR(scommt, nl);
+			GETSTR(ecommt, dl);
+			break;
+
+		case 'T':
+		case 'F':
+			if (nl >= namelen)
+				name = xrealloc(name, namelen = nl + 1,
+					"name grow");
+			if (dl >= defnlen)
+				defn = xrealloc(defn, defnlen = dl + 1,
+					"defn grow");
+			GETSTR(name, nl);
+			GETSTR(defn, dl);
+			macro_pushdef(name, defn);
+			break;
+
+		case 'D':
+			/* XXX: Not implemented */
+			break;
+
+		default:
+			m4errx(EXIT_FAILURE, "%s, %zu: Unknown type %c",
+			    fname, lineno,type);
+		}
+	}
+out:
+	m4errx(EXIT_FAILURE, "Unexprected end of file in `%s'", fname);
+}
+#endif
