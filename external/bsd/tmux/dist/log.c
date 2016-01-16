@@ -93,9 +93,6 @@ log_vwrite(const char *msg, va_list ap)
 	free(out);
 	free(fmt);
 }
-#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
-#pragma GCC diagnostic push
-#endif
 
 /* Log a debug message. */
 void
@@ -107,6 +104,11 @@ log_debug(const char *msg, ...)
 	log_vwrite(msg, ap);
 	va_end(ap);
 }
+
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
 
 /* Log a critical error with error string and die. */
 __dead void
@@ -135,3 +137,7 @@ log_fatalx(const char *msg, ...)
 	log_vwrite(fmt, ap);
 	exit(1);
 }
+
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
