@@ -1,5 +1,5 @@
 /*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
-/*	$NetBSD: mdef.h,v 1.15 2013/10/18 20:19:36 christos Exp $	*/
+/*	$NetBSD: mdef.h,v 1.16 2016/01/16 17:01:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -88,10 +88,10 @@
 
 #define BUILTIN_MARKER	"__builtin_"
  
-#define TYPEMASK	63	/* Keep bits really corresponding to a type. */
-#define RECDEF		256	/* Pure recursive def, don't expand it */
-#define NOARGS		512	/* builtin needs no args */
-#define NEEDARGS	1024	/* mark builtin that need args with this */
+#define TYPEMASK	0xff	/* Keep bits really corresponding to a type. */
+#define RECDEF		0x100	/* Pure recursive def, don't expand it */
+#define NOARGS		0x200	/* builtin needs no args */
+#define NEEDARGS	0x400	/* mark builtin that need args with this */
 
 /*
  * m4 special characters
