@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.9 2016/01/16 21:29:33 christos Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.10 2016/01/16 21:31:38 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -109,8 +109,9 @@ fmodf(float x, float y)
 }
 
 #ifdef TEST_FMOD
-extern long random();
-extern double fmod();
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define	NTEST	10000
 #define	NCASES	3
