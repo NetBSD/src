@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.43 2016/01/13 23:01:15 christos Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.44 2016/01/16 18:38:53 christos Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -24,11 +24,11 @@ HOST_CFLAGS+=-O2 -no-cpp-precomp
 .endif
 MAKE_PROGRAM?=	${MAKE}
 
-.if exists(${.CURDIR}/../../external/gpl2/${MODULE}/dist)
-GNUHOSTDIST?=	${.CURDIR}/../../external/gpl2/${MODULE}/dist
-.else
-GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
+.for i in 3 2
+.if exists(${.CURDIR}/../../external/gpl${i}/${MODULE}/dist)
+GNUHOSTDIST?=	${.CURDIR}/../../external/gpl${i}/${MODULE}/dist
 .endif
+.endfor
 
 FIND_ARGS+=	\! \( -type d \( \
 			-name 'CVS' -o \
