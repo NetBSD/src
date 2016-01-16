@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.12 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: look.c,v 1.13 2016/01/16 17:00:07 christos Exp $	*/
 /*	$OpenBSD: look.c,v 1.21 2009/10/14 17:23:17 sthen Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: look.c,v 1.12 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: look.c,v 1.13 2016/01/16 17:00:07 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -278,3 +278,38 @@ macro_getbuiltin(const char *name)
 		return p;
 }
 
+#ifdef REAL_FREEZE
+static void
+recurse(FILE *f, ndptr n, struct macro_definition *d)
+{
+	if (d->next != NULL)
+		recurse(f, n, d->next);
+
+	// skip built-ins, because it is cheaper to do so
+	// and initialize them manually
+	if (d->type & (NOARGS|NEEDARGS))
+		return;
+	fprintf(f, "%c%zu,%zu\n%s%s\n",
+	    (d->type & (NOARGS|NEEDARGS)) ? 'F' : 'T',
+	    strlen(n->name), strlen(d->defn),
+	    n->name, d->defn);
+}
+
+static void
+dump_entry(FILE *f, ndptr n)
+{
+	if (n->d == NULL)
+		return;
+	recurse(f, n, n->d);
+}
+
+void
+dump_state(FILE *f)
+{
+	ndptr n;
+	unsigned int i;
+	for (n = ohash_first(&macros, &i); n != NULL; 
+	    n = ohash_next(&macros, &i))
+		dump_entry(f, n);
+}
+#endif
