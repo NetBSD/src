@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1299 2016/01/14 21:15:17 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1300 2016/01/16 18:56:48 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1300,6 +1300,20 @@ Location:	external/gpl2/texinfo
 Notes:
 Use src/external/gpl2/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
+
+Package:	autoconf 
+Version:	2.69
+Current Vers:	2.69
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/autoconf/
+Home Page:	http://www.gnu.org/software/autoconf/
+Mailing List:	bug-autoconf@gnu.org
+Responsible:	christos
+License:	GPLv3+
+Location:	external/gpl3/autoconf
+Notes:
+This is only used to re-generate the configure files in tools/compat.
+It is not part of the regular build.
 
 Package:	malloc 
 Version:	1995-01-15
