@@ -1,5 +1,5 @@
 /*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: extern.h,v 1.18 2016/01/16 16:57:29 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2016/01/16 18:30:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -175,6 +175,7 @@ extern int maxwraps;		/* size of m4wraps array */
 extern int wrapindex;		/* current index in m4wraps */
 extern int fatal_warnings;	/* exit on warning */
 extern int quiet;		/* no warnings */
+extern int nesting_limit;	/* macro expansion nesting limit */
 #ifndef REAL_FREEZE
 extern FILE *freezef;		/* copy of input */
 extern int thawing;		/* don't process includes during thaw */
