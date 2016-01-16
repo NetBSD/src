@@ -1,5 +1,5 @@
 /*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
-/*	$NetBSD: mdef.h,v 1.16 2016/01/16 17:01:01 christos Exp $	*/
+/*	$NetBSD: mdef.h,v 1.17 2016/01/16 18:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -233,3 +233,5 @@ struct input_file {
 #define PREVEP	(mstack[fp+3].sstr)
 #define PREVSP	(fp-4)
 #define PREVFP	(mstack[fp-3].sfra)
+
+#define VERSION	20150116
