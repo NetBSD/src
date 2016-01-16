@@ -1,5 +1,5 @@
 /*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: misc.c,v 1.23 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: misc.c,v 1.24 2016/01/16 17:01:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.23 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: misc.c,v 1.24 2016/01/16 17:01:22 christos Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -339,6 +339,10 @@ obtain_char(struct input_file *f)
 		return EOF;
 
 	f->c = fgetc(f->file);
+#ifndef REAL_FREEZE
+	if (freezef)
+		fputc(f->c, freezef);
+#endif
 	if (f->c == '\n')
 		f->lineno++;
 
