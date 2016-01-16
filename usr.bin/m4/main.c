@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.43 2016/01/16 18:31:29 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2016/01/16 18:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.43 2016/01/16 18:31:29 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2016/01/16 18:33:35 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -781,7 +781,7 @@ static const struct {
 { "    --help",			"print this message and exit" },
 { "-I, --include=file",		"include file" },
 { "-i, --interactive",		"unbuffer output, ignore tty signals" },
-{ "-L, --nesting-limit=num",	"macro expansion nesting limit (-1 disable)" },
+{ "-L, --nesting-limit=num",	"macro expansion nesting limit (unimpl)" },
 { "-P, --prefix-builtins",	"prefix builtins with m4_" },
 { "-Q, --quiet",		"don't print warnings" },
 { "-R, --reload-state=file",	"restore state from file" },
