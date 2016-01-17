@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.1 2012/10/12 20:15:53 tsutsui Exp $
+$NetBSD: version,v 1.2 2016/01/17 04:47:59 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
 0.1:	Initial netboot
+0.2:	Disable slow gunzip CRC32 calculation.
