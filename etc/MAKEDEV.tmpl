@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.177 2015/11/21 12:11:56 pgoyette Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.178 2016/01/17 23:18:18 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -924,6 +924,7 @@ std)
 	mkdev		kmem	c %mem_chr% 1	640 $g_kmem
 	mkdev		mem	c %mem_chr% 0	640 $g_kmem
 	mkdev		null	c %mem_chr% 2	666
+	mkdev		full	c %mem_chr% 11	666
 	mkdev		zero	c %mem_chr% 12	666
 	mkdev		klog	c %log_chr% 0	600
 	mkdev		ksyms	c %ksyms_chr% 0 444
