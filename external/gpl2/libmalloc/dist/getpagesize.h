@@ -1,6 +1,10 @@
-/*	$NetBSD: getpagesize.h,v 1.3 2016/01/15 15:13:28 christos Exp $	*/
+/*	$NetBSD: getpagesize.h,v 1.4 2016/01/17 22:51:32 christos Exp $	*/
 
 /* Emulate getpagesize on systems that lack it.  */
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #ifndef HAVE_GETPAGESIZE
 
@@ -8,9 +12,6 @@
 #define getpagesize() 512
 #endif
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #ifdef _SC_PAGESIZE
 #define getpagesize() sysconf(_SC_PAGESIZE)
@@ -22,7 +23,7 @@
 #define getpagesize() EXEC_PAGESIZE
 #else
 #ifdef NBPG
-#define getpagesize() NBPG * CLSIZE
+#define getpagesize() (NBPG * CLSIZE)
 #ifndef CLSIZE
 #define CLSIZE 1
 #endif /* no CLSIZE */
