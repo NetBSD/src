@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.183 2016/01/17 15:30:23 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.184 2016/01/17 15:32:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.183 2016/01/17 15:30:23 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.184 2016/01/17 15:32:38 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.183 2016/01/17 15:30:23 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.184 2016/01/17 15:32:38 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,7 +141,6 @@ __RCSID("$NetBSD: job.c,v 1.183 2016/01/17 15:30:23 christos Exp $");
 
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #ifndef USE_SELECT
 #include <poll.h>
 #endif
