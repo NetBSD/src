@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.184 2016/01/17 15:32:38 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.185 2016/01/17 17:45:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.184 2016/01/17 15:32:38 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.185 2016/01/17 17:45:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.184 2016/01/17 15:32:38 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.185 2016/01/17 17:45:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -852,8 +852,7 @@ JobPrintCommand(void *cmdp, void *jobp)
     
     DBPRINTF(cmdTemplate, cmd);
     free(cmdStart);
-    if (escCmd)
-        free(escCmd);
+    free(escCmd);
     if (errOff) {
 	/*
 	 * If echoing is already off, there's no point in issuing the
@@ -1219,8 +1218,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	     */
 	    Make_HandleUse(DEFAULT, gn);
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn, 0);
-	    if (p1)
-		free(p1);
+	    free(p1);
 	} else if (Dir_MTime(gn, 0) == 0 && (gn->type & OP_SPECIAL) == 0) {
 	    /*
 	     * The node wasn't the target of an operator we have no .DEFAULT
@@ -2385,8 +2383,7 @@ Job_ParseShell(char *line)
 	line++;
     }
 
-    if (shellArgv)
-	free(UNCONST(shellArgv));
+    free(UNCONST(shellArgv));
 
     memset(&newShell, 0, sizeof(newShell));
 
@@ -2634,8 +2631,7 @@ void
 Job_End(void)
 {
 #ifdef CLEANUP
-    if (shellArgv)
-	free(shellArgv);
+    free(shellArgv);
 #endif
 }
 

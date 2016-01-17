@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.72 2016/01/09 00:55:17 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.73 2016/01/17 17:45:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.72 2016/01/09 00:55:17 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.73 2016/01/17 17:45:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.72 2016/01/09 00:55:17 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.73 2016/01/17 17:45:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -291,8 +291,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func)
 
 	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, TRUE, FALSE, &len, &freeIt);
 	    Buf_AddBytes(&buf, strlen(cp2), cp2);
-	    if (freeIt)
-		free(freeIt);
+	    free(freeIt);
 	    cp += len;
 	    continue;
 	}
@@ -346,8 +345,8 @@ CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
     } else {
 	result = FALSE;
     }
-    if (p1)
-	free(p1);
+
+    free(p1);
     return (result);
 }
 
@@ -805,10 +804,8 @@ do_string_compare:
     }
 
 done:
-    if (lhsFree)
-	free(lhsFree);
-    if (rhsFree)
-	free(rhsFree);
+    free(lhsFree);
+    free(rhsFree);
     return t;
 }
 
@@ -848,8 +845,7 @@ get_mpt_arg(char **linePtr, char **argPtr, const char *func MAKE_ATTR_UNUSED)
      * true/false here.
      */
     length = *val ? 2 : 1;
-    if (freeIt)
-	free(freeIt);
+    free(freeIt);
     return length;
 }
 
@@ -900,8 +896,7 @@ compare_function(Boolean doEval)
 	}
 	/* Evaluate the argument using the required function. */
 	t = !doEval || fn_def->fn_proc(arglen, arg);
-	if (arg)
-	    free(arg);
+	free(arg);
 	condExpr = cp;
 	return t;
     }
@@ -933,8 +928,7 @@ compare_function(Boolean doEval)
      * be empty - even if it contained a variable expansion.
      */
     t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot;
-    if (arg)
-	free(arg);
+    free(arg);
     return t;
 }
 

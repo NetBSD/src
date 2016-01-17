@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.237 2016/01/17 15:32:38 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.238 2016/01/17 17:45:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.237 2016/01/17 15:32:38 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.238 2016/01/17 17:45:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.237 2016/01/17 15:32:38 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.238 2016/01/17 17:45:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -664,8 +664,7 @@ Main_ParseArgLine(const char *line)
 
 	buf = bmake_malloc(len = strlen(line) + strlen(argv0) + 2);
 	(void)snprintf(buf, len, "%s %s", argv0, line);
-	if (p1)
-		free(p1);
+	free(p1);
 
 	argv = brk_string(buf, &argc, TRUE, &args);
 	if (argv == NULL) {
@@ -715,8 +714,7 @@ Main_SetObjdir(const char *path)
 		}
 	}
 
-	if (p)
-		free(p);
+	free(p);
 	return rc;
 }
 
@@ -787,8 +785,8 @@ MakeMode(const char *mode)
 	    meta_mode_init(mode);
 #endif
     }
-    if (mp)
-	free(mp);
+
+    free(mp);
 }
 
 /*-
@@ -1240,8 +1238,7 @@ main(int argc, char **argv)
 	MakeMode(NULL);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
-	if (p1)
-	    free(p1);
+	free(p1);
 
 	if (!compatMake)
 	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
@@ -1328,8 +1325,7 @@ main(int argc, char **argv)
 				value = Var_Value(var, VAR_GLOBAL, &p1);
 			}
 			printf("%s\n", value ? value : "");
-			if (p1)
-				free(p1);
+			free(p1);
 		}
 	} else {
 		/*
@@ -1453,8 +1449,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 			name = Dir_FindFile(fname,
 				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
 		if (!name || (fd = open(name, O_RDONLY)) == -1) {
-			if (name)
-				free(name);
+			free(name);
 			free(path);
 			return(-1);
 		}

@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.43 2016/01/17 15:32:38 christos Exp $ */
+/*      $NetBSD: meta.c,v 1.44 2016/01/17 17:45:21 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -295,8 +295,7 @@ meta_name(struct GNode *gn, char *mname, size_t mnamelen,
     }
     free(tp);
     for (i--; i >= 0; i--) {
-	if (p[i])
-	    free(p[i]);
+	free(p[i]);
     }
     return (mname);
 }
@@ -348,8 +347,7 @@ is_submake(void *cmdp, void *gnp)
 	    }
 	}
     }
-    if (mp)
-	free(mp);
+    free(mp);
     return (rc);
 }
 
@@ -369,8 +367,7 @@ printCMD(void *cmdp, void *mfpp)
 	cmd = cp = Var_Subst(NULL, cmd, mfp->gn, FALSE, TRUE);
     }
     fprintf(mfp->fp, "CMD %s\n", cmd);
-    if (cp)
-	free(cp);
+    free(cp);
     return 0;
 }
 
@@ -519,8 +516,7 @@ meta_create(BuildMon *pbm, GNode *gn)
     }
  out:
     for (i--; i >= 0; i--) {
-	if (p[i])
-	    free(p[i]);
+	free(p[i]);
     }
 
     return (mf.fp);
@@ -1030,14 +1026,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 			ldir = Var_Value(ldir_vname, VAR_GLOBAL, &tp);
 			if (ldir) {
 			    strlcpy(latestdir, ldir, sizeof(latestdir));
-			    if (tp)
-				free(tp);
+			    free(tp);
 			}
 			ldir = Var_Value(lcwd_vname, VAR_GLOBAL, &tp);
 			if (ldir) {
 			    strlcpy(lcwd, ldir, sizeof(lcwd));
-			    if (tp)
-				free(tp);
+			    free(tp);
 			}
 		    }
 		    /* Skip past the pid. */
@@ -1394,8 +1388,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	 */
 	Var_Delete(OODATE, gn);
 	Var_Set(OODATE, Var_Value(ALLSRC, gn, &cp), gn, 0);
-	if (cp)
-	    free(cp);
+	free(cp);
     }
     return oodate;
 }
