@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.208 2016/01/17 15:32:38 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.209 2016/01/17 17:45:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.208 2016/01/17 15:32:38 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.209 2016/01/17 17:45:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.208 2016/01/17 15:32:38 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.209 2016/01/17 17:45:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1219,8 +1219,7 @@ ParseDoDependency(char *line)
 		void    *freeIt;
 
 		(void)Var_Parse(cp, VAR_CMD, TRUE, TRUE, FALSE, &length, &freeIt);
-		if (freeIt)
-		    free(freeIt);
+		free(freeIt);
 		cp += length-1;
 	    }
 	}
@@ -2324,10 +2323,8 @@ ParseSetIncludedFile(void)
 	fprintf(debug_file, "%s: ${.INCLUDEDFROMDIR} = `%s' "
 	    "${.INCLUDEDFROMFILE} = `%s'\n", __func__, pd, pf);
 
-    if (fp)
-	free(fp);
-    if (dp)
-	free(dp);
+    free(fp);
+    free(dp);
 }
 /*-
  *---------------------------------------------------------------------
