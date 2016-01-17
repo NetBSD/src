@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.182 2016/01/09 00:55:17 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.183 2016/01/17 15:30:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.182 2016/01/09 00:55:17 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.183 2016/01/17 15:30:23 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.182 2016/01/09 00:55:17 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.183 2016/01/17 15:30:23 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -412,8 +412,8 @@ JobCreatePipe(Job *job, int minfd)
     }
     
     /* Set close-on-exec flag for both */
-    (void)fcntl(job->jobPipe[0], F_SETFD, 1);
-    (void)fcntl(job->jobPipe[1], F_SETFD, 1);
+    (void)fcntl(job->jobPipe[0], F_SETFD, FD_CLOEXEC);
+    (void)fcntl(job->jobPipe[1], F_SETFD, FD_CLOEXEC);
 
     /*
      * We mark the input side of the pipe non-blocking; we poll(2) the
@@ -1582,7 +1582,7 @@ JobStart(GNode *gn, int flags)
 	if (job->cmdFILE == NULL) {
 	    Punt("Could not fdopen %s", tfile);
 	}
-	(void)fcntl(FILENO(job->cmdFILE), F_SETFD, 1);
+	(void)fcntl(FILENO(job->cmdFILE), F_SETFD, FD_CLOEXEC);
 	/*
 	 * Send the commands to the command file, flush all its buffers then
 	 * rewind and remove the thing.
@@ -2835,8 +2835,8 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 	/* Pipe passed in from parent */
 	tokenWaitJob.inPipe = jp_0;
 	tokenWaitJob.outPipe = jp_1;
-	(void)fcntl(jp_0, F_SETFD, 1);
-	(void)fcntl(jp_1, F_SETFD, 1);
+	(void)fcntl(jp_0, F_SETFD, FD_CLOEXEC);
+	(void)fcntl(jp_1, F_SETFD, FD_CLOEXEC);
 	return;
     }
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.41 2015/11/30 23:37:56 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.42 2016/01/17 15:30:23 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -144,8 +144,8 @@ filemon_open(BuildMon *pbm)
 	err(1, "Could not set filemon file descriptor!");
     }
     /* we don't need these once we exec */
-    (void)fcntl(pbm->mon_fd, F_SETFD, 1);
-    (void)fcntl(pbm->filemon_fd, F_SETFD, 1);
+    (void)fcntl(pbm->mon_fd, F_SETFD, FD_CLOEXEC);
+    (void)fcntl(pbm->filemon_fd, F_SETFD, FD_CLOEXEC);
 }
 
 /*
@@ -1423,8 +1423,8 @@ meta_compat_start(void)
     if (pipe(childPipe) < 0)
 	Punt("Cannot create pipe: %s", strerror(errno));
     /* Set close-on-exec flag for both */
-    (void)fcntl(childPipe[0], F_SETFD, 1);
-    (void)fcntl(childPipe[1], F_SETFD, 1);
+    (void)fcntl(childPipe[0], F_SETFD, FD_CLOEXEC);
+    (void)fcntl(childPipe[1], F_SETFD, FD_CLOEXEC);
 }
 
 void
