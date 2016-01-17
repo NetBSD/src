@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.102 2016/01/09 00:55:17 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.103 2016/01/17 17:45:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.102 2016/01/09 00:55:17 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.103 2016/01/17 17:45:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.102 2016/01/09 00:55:17 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.103 2016/01/17 17:45:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -143,8 +143,8 @@ CompatInterrupt(int signo)
 	if (!noExecute && eunlink(file) != -1) {
 	    Error("*** %s removed", file);
 	}
-	if (p1)
-	    free(p1);
+
+	free(p1);
 
 	/*
 	 * Run .INTERRUPT only if hit with interrupt signal
@@ -371,10 +371,10 @@ again:
 	execError("exec", av[0]);
 	_exit(1);
     }
-    if (mav)
-	free(mav);
-    if (bp)
-	free(bp);
+
+    free(mav);
+    free(bp);
+
     Lst_Replace(cmdNode, NULL);
 
 #ifdef USE_META
@@ -513,8 +513,7 @@ Compat_Make(void *gnp, void *pgnp)
 	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
-	    if (p1)
-		free(p1);
+	    free(p1);
 	}
 
 	/*
@@ -617,8 +616,7 @@ Compat_Make(void *gnp, void *pgnp)
 	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
-	    if (p1)
-		free(p1);
+	    free(p1);
 	}
 	switch(gn->made) {
 	    case BEINGMADE:
