@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.34 2015/08/10 07:32:49 shm Exp $	*/
+/*	$NetBSD: cmds.c,v 1.35 2016/01/17 14:46:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.34 2015/08/10 07:32:49 shm Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.35 2016/01/17 14:46:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -600,7 +600,7 @@ static void
 fact_perm(const char *fact, FILE *fd, factelem *fe)
 {
 	int		rok, wok, xok, pdirwok;
-	struct stat	*pdir;
+	struct stat	*pdir, dir;
 
 	if (fe->stat->st_uid == geteuid()) {
 		rok = ((fe->stat->st_mode & S_IRUSR) != 0);
@@ -627,7 +627,6 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 	if (pdir == NULL && CURCLASS_FLAGS_ISSET(modify)) {
 		size_t		len;
 		char		realdir[MAXPATHLEN], *p;
-		struct stat	dir;
 
 		len = strlcpy(realdir, fe->path, sizeof(realdir));
 		if (len < sizeof(realdir) - 4) {
