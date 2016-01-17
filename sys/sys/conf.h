@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.145 2014/07/25 07:56:14 dholland Exp $	*/
+/*	$NetBSD: conf.h,v 1.146 2016/01/17 23:16:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -235,6 +235,7 @@ int	seltrue_kqfilter(dev_t, struct knote *);
 #ifdef COMPAT_16
 #define	_DEV_ZERO_oARM	3	/* reserved: old ARM /dev/zero minor */
 #endif
+#define DEV_FULL	11	/* minor device 11 is '\0'/ENOSPC */
 #define	DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
 
 enum devnode_class {
