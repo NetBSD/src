@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.151 2015/03/23 18:33:17 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.152 2016/01/17 15:59:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.151 2015/03/23 18:33:17 roy Exp $");
+__RCSID("$NetBSD: route.c,v 1.152 2016/01/17 15:59:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -660,22 +660,22 @@ newroute(int argc, char *const *argv)
 		} else
 			break;
 	}
-	if (*cmd == 'g')
-		return ret != 0;
-	if (!qflag) {
-		oerrno = errno;
-		(void)printf("%s %s %s", cmd, ishost? "host" : "net", dest);
-		if (*gateway) {
-			(void)printf(": gateway %s", gateway);
-			if (attempts > 1 && ret == 0 && af == AF_INET)
-			    (void)printf(" (%s)",
-			        inet_ntoa(soup->so_gate->sin.sin_addr));
-		}
-		if (ret == 0)
-			(void)printf("\n");
-		else
-			(void)printf(": %s\n", route_strerror(oerrno));
+	if (*cmd == 'g' || qflag)
+		goto out;
+
+	oerrno = errno;
+	(void)printf("%s %s %s", cmd, ishost? "host" : "net", dest);
+	if (*gateway) {
+		(void)printf(": gateway %s", gateway);
+		if (attempts > 1 && ret == 0 && af == AF_INET)
+		    (void)printf(" (%s)",
+			inet_ntoa(soup->so_gate->sin.sin_addr));
 	}
+	if (ret == 0)
+		(void)printf("\n");
+	else
+		(void)printf(": %s\n", route_strerror(oerrno));
+out:
 	free(sou.so_dst);
 	free(sou.so_gate);
 	free(sou.so_mask);
