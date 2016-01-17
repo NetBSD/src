@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.26 2016/01/16 21:15:51 christos Exp $
+.\"	$NetBSD: m4.1,v 1.27 2016/01/17 11:24:28 wiz Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.56 2009/10/14 17:19:47 sthen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 .Nd macro language processor
 .Sh SYNOPSIS
 .Nm m4
-.Op Fl EgGiPQsv
+.Op Fl EGgiPQsv
 .Oo
 .Sm off
 .Fl D Ar name Op No = Ar value
@@ -134,16 +134,16 @@ turn on all options.
 .Pp
 By default, trace is set to
 .Qq eq .
-.If Fl E , Fl Fl fatal-warnings
+.It Fl E , Fl Fl fatal-warnings
 Warnings make
 .Nm
 exit.
-.If Fl e , Fl Fl error-output Ar filename
+.It Fl e , Fl Fl error-output Ar filename
 Redirect error output to filename.
-.If Fl F , Fl Fl freeze-state Ar filename
+.It Fl F , Fl Fl freeze-state Ar filename
 Save the input state to
 .Ar filename .
-.If Fl G , Fl Fl traditional
+.It Fl G , Fl Fl traditional
 Disable GNU-m4 extensions.
 .It Fl g , Fl Fl gnu
 Activate GNU-m4 compatibility mode.
@@ -161,14 +161,14 @@ Print help message and exit.
 Add directory
 .Ar dirname
 to the include path.
-.It Fl o Ar filename
-Send trace output to
-.Ar filename .
 .It Fl i , Fl Fl interactive
 Set unbuffered output, disable tty signals.
 .It Fl L , Fl Fl nesting-limit
 Set the nesting limit in macro expansions.
 This is unimplemented and unlimited.
+.It Fl o Ar filename
+Send trace output to
+.Ar filename .
 .It Fl P , Fl Fl prefix-builtins
 Prefix all built-in macros with
 .Sq m4_ .
