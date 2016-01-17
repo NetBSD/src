@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.19 2014/04/26 07:53:41 tsutsui Exp $
+$NetBSD: version,v 1.20 2016/01/17 08:05:20 tsutsui Exp $
 
 1.1:	Initial version
 1.2:	Added support for network booting
@@ -19,3 +19,4 @@ $NetBSD: version,v 1.19 2014/04/26 07:53:41 tsutsui Exp $
 1.17:	Pull OpenBSD's ite driver reorganization.
 1.18:	Add support for framebuffers on HP362 and HP382.
 1.19:	Add and fix support for HP425e mcclock, sti framebuffer, apci and dnkbd.
+1.20:	Disable slow gunzip CRC32 calculation.
