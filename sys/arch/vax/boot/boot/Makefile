@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2014/05/24 07:38:42 martin Exp $
+#	$NetBSD: Makefile,v 1.43 2016/01/17 03:08:39 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -8,7 +8,13 @@ PROG=	boot
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	consio.c consio2.S str.S ${DEVS} findcpu.c vers.c
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBC=
+LIBCRT0=
+LIBCRTI=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 CLEANFILES+=${PROG} ${PROG}.sym vers.c
 # XXX - hack, doesn't work with -O2 and gcc 4.8
