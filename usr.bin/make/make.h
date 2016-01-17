@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.96 2015/09/21 21:50:16 pooka Exp $	*/
+/*	$NetBSD: make.h,v 1.97 2016/01/17 15:32:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -84,6 +84,7 @@
 #include <sys/param.h>
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,6 +92,10 @@
 
 #ifdef BSD4_4
 # include <sys/cdefs.h>
+#endif
+
+#ifndef FD_CLOEXEC
+#define FD_CLOEXEC 1
 #endif
 
 #if defined(__GNUC__)

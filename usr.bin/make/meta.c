@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.42 2016/01/17 15:30:23 christos Exp $ */
+/*      $NetBSD: meta.c,v 1.43 2016/01/17 15:32:38 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -37,7 +37,6 @@
 #endif
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <fcntl.h>
 #include <libgen.h>
 #include <errno.h>
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_ERR_H)
