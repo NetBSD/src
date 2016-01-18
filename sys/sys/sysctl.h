@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.218 2016/01/18 16:46:08 pooka Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.219 2016/01/18 23:27:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,8 +50,6 @@
 #include <sys/ucontext.h>
 #include <sys/mallocvar.h>
 #include <uvm/uvm_extern.h>
-
-#include <sys/kernel.h>
 #endif
 
 
@@ -1150,6 +1148,8 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oname, l, node
 
 #ifdef RUMP_USE_CTOR
+#include <sys/kernel.h>
+
 struct sysctl_setup_chain {
 	void (*ssc_func)(struct sysctllog **);
 	LIST_ENTRY(sysctl_setup_chain) ssc_entries;
