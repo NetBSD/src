@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.217 2015/09/26 20:28:37 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.218 2016/01/18 16:46:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,6 +50,8 @@
 #include <sys/ucontext.h>
 #include <sys/mallocvar.h>
 #include <uvm/uvm_extern.h>
+
+#include <sys/kernel.h>
 #endif
 
 
@@ -1154,14 +1156,25 @@ struct sysctl_setup_chain {
 };
 LIST_HEAD(sysctl_boot_chain, sysctl_setup_chain);
 #define _SYSCTL_REGISTER(name)						\
+static struct sysctl_setup_chain __CONCAT(ssc,name) = {			\
+	.ssc_func = name,						\
+};									\
 static void sysctlctor_##name(void) __attribute__((constructor));	\
 static void sysctlctor_##name(void)					\
 {									\
-        static struct sysctl_setup_chain ssc = {			\
-		.ssc_func = name,					\
-        };								\
-        extern struct sysctl_boot_chain sysctl_boot_chain;		\
-        LIST_INSERT_HEAD(&sysctl_boot_chain, &ssc, ssc_entries);	\
+	struct sysctl_setup_chain *ssc = &__CONCAT(ssc,name);		\
+	extern struct sysctl_boot_chain sysctl_boot_chain;		\
+	if (cold) {							\
+		LIST_INSERT_HEAD(&sysctl_boot_chain, ssc, ssc_entries);	\
+	}								\
+}									\
+static void sysctldtor_##name(void) __attribute__((destructor));	\
+static void sysctldtor_##name(void)					\
+{									\
+	struct sysctl_setup_chain *ssc = &__CONCAT(ssc,name);		\
+	if (cold) {							\
+		LIST_REMOVE(ssc, ssc_entries);				\
+	}								\
 }
 
 #else /* RUMP_USE_CTOR */
