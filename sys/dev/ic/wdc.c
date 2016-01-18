@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.279 2013/09/15 16:08:28 martin Exp $ */
+/*	$NetBSD: wdc.c,v 1.280 2016/01/18 04:46:47 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.279 2013/09/15 16:08:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.280 2016/01/18 04:46:47 msaitoh Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -525,8 +525,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		}
 
 		ATADEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
-		    device_xname(chp->ch_atac->atac_dev),
-		    chp->ch_channel, st0, st1), DEBUG_PROBE);
+			__func__, chp->ch_channel, st0, st1), DEBUG_PROBE);
 
 		if (st0 == 0xff || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
@@ -545,8 +544,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x02) {
 				ATADEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
 				    "got 0x%x != 0x02\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x01;
 			}
@@ -557,8 +555,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x01) {
 				ATADEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
 				    "got 0x%x != 0x01\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x01;
 			}
@@ -569,8 +566,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x01) {
 				ATADEBUG_PRINT(("%s:%d drive 0 wd_sector: "
 				    "got 0x%x != 0x01\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x01;
 			}
@@ -581,8 +577,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x02) {
 				ATADEBUG_PRINT(("%s:%d drive 0 wd_sector: "
 				    "got 0x%x != 0x02\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x01;
 			}
@@ -591,8 +586,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x01) {
 				ATADEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo(2): "
 				    "got 0x%x != 0x01\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x01;
 			}
@@ -610,8 +604,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x02) {
 				ATADEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
 				    "got 0x%x != 0x02\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x02;
 			}
@@ -622,8 +615,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x01) {
 				ATADEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
 				    "got 0x%x != 0x01\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x02;
 			}
@@ -634,8 +626,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x01) {
 				ATADEBUG_PRINT(("%s:%d drive 1 wd_sector: "
 				    "got 0x%x != 0x01\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x02;
 			}
@@ -646,8 +637,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x02) {
 				ATADEBUG_PRINT(("%s:%d drive 1 wd_sector: "
 				    "got 0x%x != 0x02\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x02;
 			}
@@ -656,8 +646,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if (cl != 0x01) {
 				ATADEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo(2): "
 				    "got 0x%x != 0x01\n",
-				    device_xname(chp->ch_atac->atac_dev),
-				    chp->ch_channel, cl),
+				    __func__, chp->ch_channel, cl),
 				    DEBUG_PROBE);
 				ret_value &= ~0x02;
 			}
@@ -668,7 +657,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			return 0;
 		}
 	}
-
 
 #if 0 /* XXX this break some ATA or ATAPI devices */
 	/*
@@ -711,8 +699,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	s = splbio();
 #endif
 	ATADEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
-	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
-	    ret_value), DEBUG_PROBE);
+	    __func__, chp->ch_channel, ret_value), DEBUG_PROBE);
 
 	/* if reset failed, there's nothing here */
 	if (ret_value == 0) {
@@ -745,9 +732,8 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		     wdr->cmd_iohs[wd_cyl_hi], 0);
 
 		ATADEBUG_PRINT(("%s:%d:%d: after reset, sc=0x%x sn=0x%x "
-		    "cl=0x%x ch=0x%x\n",
-		    device_xname(chp->ch_atac->atac_dev),
-		    chp->ch_channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
+		    "cl=0x%x ch=0x%x\n", __func__, chp->ch_channel, drive, sc,
+		    sn, cl, ch), DEBUG_PROBE);
 		/*
 		 * sc & sn are supposed to be 0x1 for ATAPI but in some cases
 		 * we get wrong values here, so ignore it.
