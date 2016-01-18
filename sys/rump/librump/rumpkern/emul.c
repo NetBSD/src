@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.176 2016/01/18 23:21:28 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.177 2016/01/18 23:27:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.176 2016/01/18 23:21:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.177 2016/01/18 23:27:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -55,11 +55,6 @@ int physmem = PHYSMEM;
 int nkmempages = PHYSMEM/2; /* from le chapeau */
 #undef PHYSMEM
 
-struct lwp lwp0 = {
-	.l_lid = 1,
-	.l_proc = &proc0,
-	.l_fd = &filedesc0,
-};
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
 
@@ -89,8 +84,6 @@ int booted_partition;
 /* XXX: unused */
 kmutex_t tty_lock;
 krwlock_t exec_lock;
-
-struct lwplist alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
 /* sparc doesn't sport constant page size, pretend we have 4k pages */
 #ifdef __sparc__
@@ -130,8 +123,6 @@ struct emul emul_netbsd = {
 	.e_sc_autoload = netbsd_syscalls_autoload,
 };
 
-u_int nprocs = 1;
-
 cprng_strong_t *kern_cprng;
 
 /* not used, but need the symbols for pointer comparisons */
@@ -156,34 +147,6 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 		mutex_enter(mtx);
 
 	return 0;
-}
-
-void
-lwp_unsleep(lwp_t *l, bool cleanup)
-{
-
-	KASSERT(mutex_owned(l->l_mutex));
-
-	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
-}
-
-void
-lwp_update_creds(struct lwp *l)
-{
-	struct proc *p;
-	kauth_cred_t oldcred;
-
-	p = l->l_proc;
-	oldcred = l->l_cred;
-	l->l_prflag &= ~LPR_CRMOD;
-
-	mutex_enter(p->p_lock);
-	kauth_cred_hold(p->p_cred);
-	l->l_cred = p->p_cred;
-	mutex_exit(p->p_lock);
-
-	if (oldcred != NULL)
-		kauth_cred_free(oldcred);
 }
 
 vaddr_t
