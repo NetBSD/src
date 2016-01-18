@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.39 2015/11/04 04:28:58 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.40 2016/01/18 16:46:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ typedef enum modcmd {
 
 #ifdef _KERNEL
 
+#include <sys/kernel.h>
 #include <sys/mutex.h>
 
 #include <prop/proplib.h>
@@ -105,6 +106,12 @@ typedef struct module {
  * Alternatively, in some environments rump kernels use
  * __attribute__((constructor)) due to link sets being
  * difficult (impossible?) to implement (e.g. GNU gold, OS X, etc.)
+ * If we're cold (read: rump_init() has not been called), we lob the
+ * module onto the list to be handled when rump_init() runs.
+ * nb. it's not possible to use in-kernel locking mechanisms here since
+ * the code runs before rump_init().  We solve the problem by decreeing
+ * that thou shalt not call dlopen()/dlclose() for rump kernel components
+ * from multiple threads before calling rump_init().
  */
 
 #ifdef RUMP_USE_CTOR
@@ -114,14 +121,26 @@ struct modinfo_chain {
 };
 LIST_HEAD(modinfo_boot_chain, modinfo_chain);
 #define _MODULE_REGISTER(name)						\
+static struct modinfo_chain __CONCAT(mc,name) = {			\
+	.mc_info = &__CONCAT(name,_modinfo),				\
+};									\
 static void __CONCAT(modctor_,name)(void) __attribute__((__constructor__));\
 static void __CONCAT(modctor_,name)(void)				\
 {									\
-	static struct modinfo_chain mc = {				\
-		.mc_info = &__CONCAT(name,_modinfo),			\
-	};								\
 	extern struct modinfo_boot_chain modinfo_boot_chain;		\
-	LIST_INSERT_HEAD(&modinfo_boot_chain, &mc, mc_entries);		\
+	if (cold) {							\
+		struct modinfo_chain *mc = &__CONCAT(mc,name);		\
+		LIST_INSERT_HEAD(&modinfo_boot_chain, mc, mc_entries);	\
+	}								\
+}									\
+									\
+static void __CONCAT(moddtor_,name)(void) __attribute__((__destructor__));\
+static void __CONCAT(moddtor_,name)(void)				\
+{									\
+	struct modinfo_chain *mc = &__CONCAT(mc,name);			\
+	if (cold) {							\
+		LIST_REMOVE(mc, mc_entries);				\
+	}								\
 }
 
 #else /* RUMP_USE_CTOR */

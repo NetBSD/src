@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.325 2015/08/31 07:38:48 ozaki-r Exp $	*/
+/*	$NetBSD: rump.c,v 1.326 2016/01/18 16:46:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.325 2015/08/31 07:38:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.326 2016/01/18 16:46:08 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -314,7 +314,8 @@ rump_init(void)
 	{
 		struct sysctl_setup_chain *ssc;
 
-		LIST_FOREACH(ssc, &sysctl_boot_chain, ssc_entries) {
+		while ((ssc = LIST_FIRST(&sysctl_boot_chain)) != NULL) {
+			LIST_REMOVE(ssc, ssc_entries);
 			ssc->ssc_func(NULL);
 		}
 	}
@@ -544,6 +545,10 @@ rump_component_load(const struct rump_component *rc_const)
 {
 	struct rump_component *rc, *rc_iter;
 
+	/* time for rump component loading and unloading has passed */
+	if (!cold)
+		return;
+
 	/*
 	 * XXX: this is ok since the "const" was removed from the
 	 * definition of RUMP_COMPONENT().
@@ -563,6 +568,20 @@ rump_component_load(const struct rump_component *rc_const)
 	LIST_INSERT_HEAD(&rchead, rc, rc_entries);
 	KASSERT(rc->rc_type < RUMP_COMPONENT_MAX);
 	compcounter[rc->rc_type]++;
+}
+
+void
+rump_component_unload(struct rump_component *rc)
+{
+
+	/*
+	 * Checking for cold is enough because rump_init() both
+	 * flips it and handles component loading.
+	 */
+	if (!cold)
+		return;
+
+	LIST_REMOVE(rc, rc_entries);
 }
 
 int

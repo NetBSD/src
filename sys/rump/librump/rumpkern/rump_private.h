@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.92 2015/04/22 17:38:33 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.93 2016/01/18 16:46:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -90,6 +90,11 @@ static void rumpcomp_ctor##type(void) __attribute__((constructor));	\
 static void rumpcomp_ctor##type(void)					\
 {									\
 	rump_component_load(&rumpcomp##type);				\
+}									\
+static void rumpcomp_dtor##type(void) __attribute__((destructor));	\
+static void rumpcomp_dtor##type(void)					\
+{									\
+	rump_component_unload(&rumpcomp##type);				\
 }
 
 #else /* RUMP_USE_CTOR */
@@ -130,6 +135,7 @@ struct rump_spctl {
 #define RUMP_SPVM2CTL(vm) (((struct rump_spctl *)vm)->spctl)
 
 void		rump_component_load(const struct rump_component *);
+void		rump_component_unload(struct rump_component *);
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
 
