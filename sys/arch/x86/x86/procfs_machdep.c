@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.9 2016/01/13 08:05:58 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.10 2016/01/18 05:59:37 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9 2016/01/13 08:05:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.10 2016/01/18 05:59:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9 2016/01/13 08:05:58 msaitoh E
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 
+/*
+ *  The feature table. The order is the saame as Linux's
+ *  x86/include/asm/cpufeatures.h.
+ */
 static const char * const x86_features[][32] = {
-	{ /* Common */
+	{ /* (0) Common */
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
 	"cx8", "apic", NULL, "sep", "mtrr", "pge", "mca", "cmov",
 	"pat", "pse36", "pn", "clflush", NULL, "dts", "acpi", "mmx",
@@ -69,13 +73,13 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, "mp", "nx", NULL, "mmxext", NULL,
 	NULL, "fxsr_opt", "pdpe1gb", "rdtscp", NULL, "lm", "3dnowext","3dnow"},
 
-	{ /* Transmeta-defined (2) */
+	{ /* (2) Transmeta-defined */
 	"recovery", "longrun", NULL, "lrti", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* Linux-defined (3) */
+	{ /* (3) Linux mapping */
 	"cxmmx", NULL, "cyrix_arr", "centaur_mcr", NULL,
 	"constant_tsc", NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -103,7 +107,7 @@ static const char * const x86_features[][32] = {
 	NULL, "tbm", "topoext", "perfctr_core",
 	"perfctr_nb", NULL, "bpext", NULL, "perfctr_l2", "mwaitx", NULL, NULL},
 
-	{ /* (7) Linux-defined */
+	{ /* (7) Linux mapping */
 	"ida", "arat", "cpb", "ebp", NULL, "pln", "pts", "dtherm",
 	"hw_pstate", "proc_feedback", "hwp", "hwp_notify", "hwp_act_window",
 	"hwp_epp", "hwp_pkg_req", "intel_pt",
@@ -126,19 +130,19 @@ static const char * const x86_features[][32] = {
 	"clwb", NULL, "avx512pf", "avx512er",
 	"avx512cd", "sha_ni", NULL, NULL},
 
-	{ /* (10) 0000000d eax*/
+	{ /* (10) 0000000d eax */
 	"xsaveopt", "xsavec", "xgetbv1", "xsaves", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* (11) 0x0000000f:0 edx*/
+	{ /* (11) 0x0000000f:0 edx */
 	NULL, "cqm_llc", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* (12) 0x0000000f:1 edx*/
+	{ /* (12) 0x0000000f:1 edx */
 	"cqm_occup_llc", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -200,7 +204,7 @@ procfs_getonefeatreg(uint32_t reg, const char * const *table, char *p,
 }
 
 /*
- * Print feature bit. The code assume that unused entry of x86_features[]
+ * Print feature bits. The code assume that unused entry of x86_features[]
  * is zero-cleared.
  *
  * XXX This function will be rewritten when all of linux entries are
@@ -240,6 +244,10 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 	procfs_getonefeatreg(ci->ci_feat_val[5], x86_features[9], p + diff,
 	    left);
 	diff = last - *left;
+
+	/* (10) 0000000d eax */
+	/* (11) 0x0000000f(ecx=0) edx */
+	/* (12) 0x0000000f(ecx=1) edx */
 
 	return 0; /* XXX */
 }
