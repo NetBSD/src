@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.175 2016/01/18 15:53:38 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.176 2016/01/18 23:21:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,41 +26,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.175 2016/01/18 15:53:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.176 2016/01/18 23:21:28 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/null.h>
-#include <sys/vnode.h>
-#include <sys/stat.h>
-#include <sys/select.h>
-#include <sys/syslog.h>
-#include <sys/namei.h>
-#include <sys/kauth.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/queue.h>
-#include <sys/file.h>
+#include <sys/cprng.h>
 #include <sys/filedesc.h>
-#include <sys/cpu.h>
-#include <sys/kmem.h>
-#include <sys/poll.h>
-#include <sys/timetc.h>
-#include <sys/tprintf.h>
+#include <sys/kauth.h>
 #include <sys/module.h>
-#include <sys/tty.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
-#include <sys/syscallvar.h>
-#include <sys/xcall.h>
-#include <sys/sleepq.h>
-#include <sys/cprng.h>
 
 #include <dev/cons.h>
 
 #include <rump/rumpuser.h>
-
-#include <uvm/uvm_map.h>
 
 #include "rump_private.h"
 
