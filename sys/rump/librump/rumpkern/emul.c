@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.174 2015/12/29 10:22:05 pgoyette Exp $	*/
+/*	$NetBSD: emul.c,v 1.175 2016/01/18 15:53:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.174 2015/12/29 10:22:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.175 2016/01/18 15:53:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.174 2015/12/29 10:22:05 pgoyette Exp $");
 #include <sys/syslog.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/queue.h>
@@ -86,7 +87,7 @@ dev_t rootdev = NODEV;
 
 const int schedppq = 1;
 bool mp_online = false;
-struct timeval boottime;
+struct timespec boottime;
 int cold = 1;
 int boothowto = AB_SILENT;
 struct tty *constty;
