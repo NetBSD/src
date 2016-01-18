@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.64 2015/12/25 06:47:57 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.65 2016/01/18 06:08:26 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.64 2015/12/25 06:47:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.65 2016/01/18 06:08:26 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -79,7 +79,7 @@ int	ip6_gif_hlim = GIF_HLIM;
 
 extern LIST_HEAD(, gif_softc) gif_softc_list;
 
-extern const struct ip6protosw in6_gif_protosw;
+static const struct ip6protosw in6_gif_protosw;
 
 /* 
  * family - family of the packet to be encapsulate. 
@@ -458,7 +458,7 @@ PR_WRAP_CTLOUTPUT(rip6_ctloutput)
 
 extern struct domain inet6domain;
 
-const struct ip6protosw in6_gif_protosw = {
+static const struct ip6protosw in6_gif_protosw = {
 	.pr_type	= SOCK_RAW,
 	.pr_domain	= &inet6domain,
 	.pr_protocol	= 0 /* IPPROTO_IPV[46] */,
