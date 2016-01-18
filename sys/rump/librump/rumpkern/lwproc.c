@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.35 2015/04/18 15:49:18 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.36 2016/01/18 23:27:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.35 2015/04/18 15:49:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.36 2016/01/18 23:27:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,7 +47,44 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.35 2015/04/18 15:49:18 pooka Exp $");
 #include "rump_private.h"
 #include "rump_curlwp.h"
 
+struct lwp lwp0 = {
+	.l_lid = 1,
+	.l_proc = &proc0,
+	.l_fd = &filedesc0,
+};
+struct lwplist alllwp = LIST_HEAD_INITIALIZER(alllwp);
+
+u_int nprocs = 1;
+
 struct emul *emul_default = &emul_netbsd;
+
+void
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+void
+lwp_update_creds(struct lwp *l)
+{
+	struct proc *p;
+	kauth_cred_t oldcred;
+
+	p = l->l_proc;
+	oldcred = l->l_cred;
+	l->l_prflag &= ~LPR_CRMOD;
+
+	mutex_enter(p->p_lock);
+	kauth_cred_hold(p->p_cred);
+	l->l_cred = p->p_cred;
+	mutex_exit(p->p_lock);
+
+	if (oldcred != NULL)
+		kauth_cred_free(oldcred);
+}
 
 void
 rump_lwproc_init(void)
