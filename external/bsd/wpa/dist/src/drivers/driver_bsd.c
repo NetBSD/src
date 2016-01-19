@@ -1327,31 +1327,8 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' "
 			    "if=%x drv=%x", event.interface_status.ifname,
 			    ifm->ifm_flags, drv->flags);
- 		}
+		}
 		drv->flags = ifm->ifm_flags;
-		break;
-#ifdef RTM_OIFINFO
-	case RTM_OIFINFO:
-		wpa_printf(MSG_DEBUG, "RTM_OIFINFO ignored");
-		break;
-#endif
-#ifdef RTM_OOIFINFO
-	case RTM_OOIFINFO:
-		wpa_printf(MSG_DEBUG, "RTM_OOIFINFO ignored");
-		break;
-#endif
-#ifdef RTM_LOSING
-	case RTM_LOSING:
-		wpa_printf(MSG_DEBUG, "RTM_LOSING ignored");
-		break;
-#endif
-#ifdef RTM_MISS
-	case RTM_MISS:
-		wpa_printf(MSG_DEBUG, "RTM_MISS ignored");
-		break;
-#endif
-	default:
-		wpa_printf(MSG_DEBUG, "RTM_???: %d", rtm->rtm_type);
 		break;
 	}
 }
