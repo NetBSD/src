@@ -1228,20 +1228,16 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		switch (ifan->ifan_what) {
 		case IFAN_DEPARTURE:
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
-		default:
-#if 1
-			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
 			break;
-#else
+		default:
 			return;
-#endif
 		}
 		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s",
 			   event.interface_status.ifname,
 			   ifan->ifan_what == IFAN_DEPARTURE ?
 				"removed" : "added");
 		wpa_supplicant_event(drv->ctx, EVENT_INTERFACE_STATUS, &event);
-		return;
+		break;
 	case RTM_IEEE80211:
 		ifan = (struct if_announcemsghdr *) rtm;
 		drv = bsd_get_drvindex(global, ifan->ifan_index);
