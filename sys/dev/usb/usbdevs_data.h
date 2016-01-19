@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.701 2016/01/19 03:25:35 msaitoh Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.702 2016/01/19 19:03:27 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.708 2016/01/19 03:24:58 msaitoh Exp
+ *	NetBSD: usbdevs,v 1.709 2016/01/19 19:02:32 martin Exp
  */
 
 /*
@@ -3102,6 +3102,8 @@ static const uint16_t usb_products[] = {
 	    14149, 14155, 0,
 	    USB_VENDOR_NETCHIP, USB_PRODUCT_NETCHIP_ETHERNETGADGET, 
 	    7856, 14158, 14173, 11244, 14180, 0,
+	    USB_VENDOR_NETCHIP, USB_PRODUCT_NETCHIP_NET2270, 
+	    10070, 1764, 0,
 	    USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_EA101, 
 	    4748, 4757, 0,
 	    USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_EA101X, 
@@ -4948,7 +4950,7 @@ static const char usb_words[] = { "."
 	    "Chic\0" /* 1 refs @ 1745 */
 	    "Barco\0" /* 1 refs @ 1750 */
 	    "Display\0" /* 1 refs @ 1756 */
-	    "Bridge\0" /* 17 refs @ 1764 */
+	    "Bridge\0" /* 18 refs @ 1764 */
 	    "Information\0" /* 1 refs @ 1771 */
 	    "SMK\0" /* 1 refs @ 1783 */
 	    "Solid\0" /* 3 refs @ 1787 */
@@ -6053,7 +6055,7 @@ static const char usb_words[] = { "."
 	    "GL641USB\0" /* 3 refs @ 10041 */
 	    "CompactFlash\0" /* 6 refs @ 10050 */
 	    "Reader\0" /* 23 refs @ 10063 */
-	    "USB-IDE\0" /* 4 refs @ 10070 */
+	    "USB-IDE\0" /* 5 refs @ 10070 */
 	    "GN-54G\0" /* 1 refs @ 10078 */
 	    "GN-BR402W\0" /* 1 refs @ 10085 */
 	    "GN-WLBM101\0" /* 1 refs @ 10095 */

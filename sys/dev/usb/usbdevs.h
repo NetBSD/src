@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.700 2016/01/19 03:25:35 msaitoh Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.701 2016/01/19 19:03:27 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.708 2016/01/19 03:24:58 msaitoh Exp
+ *	NetBSD: usbdevs,v 1.709 2016/01/19 19:02:32 martin Exp
  */
 
 /*
@@ -2341,6 +2341,7 @@
 #define	USB_PRODUCT_NETCHIP_TURBOCONNECT	0x1080		/* Turbo-Connect */
 #define	USB_PRODUCT_NETCHIP_CLIK40	0xa140		/* Clik! 40 */
 #define	USB_PRODUCT_NETCHIP_ETHERNETGADGET	0xa4a2		/* Linux Ethernet/RNDIS gadget on pxa210/25x/26x */
+#define	USB_PRODUCT_NETCHIP_NET2270	0xa612		/* USB-IDE Bridge */
 
 /* Netgear products */
 #define	USB_PRODUCT_NETGEAR_EA101	0x1001		/* Ethernet adapter */
