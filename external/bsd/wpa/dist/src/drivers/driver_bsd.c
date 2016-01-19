@@ -1613,7 +1613,7 @@ wpa_driver_bsd_get_capa(void *priv, struct wpa_driver_capa *capa)
 #endif /* HOSTAPD */
 
 static void *
-bsd_global_init()
+bsd_global_init(void)
 {
 	struct bsd_driver_global *global;
 
