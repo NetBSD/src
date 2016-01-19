@@ -1,6 +1,7 @@
-.\"	$NetBSD: intro.3lua,v 1.5 2014/01/06 09:23:18 wiz Exp $
+.\"	$NetBSD: intro.3lua,v 1.6 2016/01/19 10:11:02 mbalmer Exp $
 .\"
-.\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
+.\" Copyright (c) 2013, 2016 Marc Balmer <mbalmer@NetBSD.org>.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd November 13, 2013
+.Dd January 19, 2016
 .Dt INTRO 3lua
 .Os
 .Sh NAME
@@ -51,7 +52,7 @@ Access
 .Xr sqlite3 1
 files.
 .It Em syslog
-Acces
+Access
 .Xr syslog 3
 functionality.
 .El
