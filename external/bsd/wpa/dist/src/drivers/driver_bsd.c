@@ -1237,10 +1237,10 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			return;
 #endif
 		}
-		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s (%d)",
+		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s",
 			   event.interface_status.ifname,
 			   ifan->ifan_what == IFAN_DEPARTURE ?
-				"removed" : "added", ifan->ifan_what);
+				"removed" : "added");
 		wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
 		return;
 	case RTM_IEEE80211:
@@ -1250,22 +1250,16 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		case RTM_IEEE80211_REASSOC:
 			if (drv->is_ap)
 				break;
-			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: (re)assoc (%d)",
-			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_ASSOC, NULL);
 			break;
 		case RTM_IEEE80211_DISASSOC:
 			if (drv->is_ap)
 				break;
-			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: disassoc (%d)",
-			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_DISASSOC, NULL);
 			break;
 		case RTM_IEEE80211_SCAN:
 			if (drv->is_ap)
 				break;
-			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: scan result (%d)",
-			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_SCAN_RESULTS, NULL);
 			break;
 		case RTM_IEEE80211_LEAVE:
@@ -1280,8 +1274,6 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			bsd_new_sta(drv, ctx, join->iev_addr);
 			break;
 		case RTM_IEEE80211_REPLAY:
-			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: replay (%d)",
-			    ifan->ifan_what);
 			/* ignore */
 			break;
 		case RTM_IEEE80211_MICHAEL:
@@ -1296,10 +1288,6 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 				!IEEE80211_IS_MULTICAST(mic->iev_dst);
 			wpa_supplicant_event(ctx, EVENT_MICHAEL_MIC_FAILURE,
 				&event);
-			break;
-		default:
-			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: ??? (%d)",
-			    ifan->ifan_what);
 			break;
 		}
 		break;
