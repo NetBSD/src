@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.699 2015/12/10 14:31:46 leot Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.700 2016/01/19 03:25:35 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.707 2015/12/10 14:30:56 leot Exp
+ *	NetBSD: usbdevs,v 1.708 2016/01/19 03:24:58 msaitoh Exp
  */
 
 /*
@@ -1322,6 +1322,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_LD220	0x0100		/* Samsung LD220 */
 #define	USB_PRODUCT_DISPLAYLINK_LD190	0x0102		/* Samsung LD190 */
 #define	USB_PRODUCT_DISPLAYLINK_U70	0x0103		/* Samsung U70 */
+#define	USB_PRODUCT_DISPLAYLINK_POLARIS2	0x0117		/* Polaris2 USB dock */
 #define	USB_PRODUCT_DISPLAYLINK_VCUD60	0x0136		/* Rextron DVI */
 #define	USB_PRODUCT_DISPLAYLINK_CONV	0x0138		/* StarTech CONV-USB2DVI */
 #define	USB_PRODUCT_DISPLAYLINK_DLDVI	0x0141		/* DisplayLink DVI */
@@ -1343,6 +1344,8 @@
 #define	USB_PRODUCT_DISPLAYLINK_LUM70	0x02a9		/* Lilliput UM-70 */
 #define	USB_PRODUCT_DISPLAYLINK_LCD8000UD_DVI	0x02b8		/* LCD-8000UD-DVI */
 #define	USB_PRODUCT_DISPLAYLINK_LDEWX015U	0x02e3		/* Logitec LDE-WX015U */
+#define	USB_PRODUCT_DISPLAYLINK_MIMO	0x0335		/* DisplayLink MIMO */
+#define	USB_PRODUCT_DISPLAYLINK_PLUGABLE	0x0377		/* Plugable docking station */
 #define	USB_PRODUCT_DISPLAYLINK_LT1421WIDE	0x03e0		/* Lenovo ThinkVision LT1421 Wide */
 #define	USB_PRODUCT_DISPLAYLINK_SD_U2VDH	0x046d		/* AREA SD-U2VDH */
 #define	USB_PRODUCT_DISPLAYLINK_UM7X0	0x401a		/* nanovision MiMo */
