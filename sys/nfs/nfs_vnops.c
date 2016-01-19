@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.308 2015/05/14 17:35:54 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.309 2016/01/19 10:56:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.308 2015/05/14 17:35:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.309 2016/01/19 10:56:59 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -954,18 +954,11 @@ dorpc:
 
 	if (NFS_CMPFH(np, fhp, fhsize)) {
 		/*
-		 * as we handle "." lookup locally, this should be
+		 * As we handle "." lookup locally, this is
 		 * a broken server.
 		 */
-		vref(dvp);
-		newvp = dvp;
-#ifndef NFS_V2_ONLY
-		if (v3) {
-			nfsm_postop_attr(newvp, attrflag, 0);
-			nfsm_postop_attr(dvp, attrflag, 0);
-		} else
-#endif
-			nfsm_loadattr(newvp, (struct vattr *)0, 0);
+		m_freem(mrep);
+		return EBADRPC;
 	} else if (flags & ISDOTDOT) {
 		/*
 		 * ".." lookup
