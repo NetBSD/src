@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.16 2016/01/14 22:30:04 christos Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.17 2016/01/19 17:10:55 christos Exp $	*/
 /* $OpenBSD: clientloop.c,v 1.275 2015/07/10 06:21:53 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.16 2016/01/14 22:30:04 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.17 2016/01/19 17:10:55 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -283,6 +283,9 @@ client_x11_display_valid(const char *display)
 {
 	size_t i, dlen;
 
+	if (display == NULL)
+		return 0;
+
 	dlen = strlen(display);
 	for (i = 0; i < dlen; i++) {
 		if (!isalnum((u_char)display[i]) &&
@@ -296,35 +299,33 @@ client_x11_display_valid(const char *display)
 
 #define SSH_X11_PROTO		"MIT-MAGIC-COOKIE-1"
 #define X11_TIMEOUT_SLACK	60
-void
+int
 client_x11_get_proto(const char *display, const char *xauth_path,
     u_int trusted, u_int timeout, char **_proto, char **_data)
 {
-	char cmd[1024];
-	char line[512];
-	char xdisplay[512];
+	char cmd[1024], line[512], xdisplay[512];
+	char xauthfile[PATH_MAX], xauthdir[PATH_MAX];
 	static char proto[512], data[512];
 	FILE *f;
-	int got_data = 0, generated = 0, do_unlink = 0, i;
-	char *xauthdir, *xauthfile;
+	int got_data = 0, generated = 0, do_unlink = 0, i, r;
 	struct stat st;
 	u_int now, x11_timeout_real;
 
-	xauthdir = xauthfile = NULL;
 	*_proto = proto;
 	*_data = data;
-	proto[0] = data[0] = '\0';
+	proto[0] = data[0] = xauthfile[0] = xauthdir[0] = '\0';
 
-	if (xauth_path == NULL ||(stat(xauth_path, &st) == -1)) {
-		debug("No xauth program.");
-	} else if (!client_x11_display_valid(display)) {
-		logit("DISPLAY '%s' invalid, falling back to fake xauth data",
+	if (!client_x11_display_valid(display)) {
+		logit("DISPLAY \"%s\" invalid; disabling X11 forwarding",
 		    display);
-	} else {
-		if (display == NULL) {
-			debug("x11_get_proto: DISPLAY not set");
-			return;
-		}
+		return -1;
+	}
+	if (xauth_path != NULL && stat(xauth_path, &st) == -1) {
+		debug("No xauth program.");
+		xauth_path = NULL;
+	}
+
+	if (xauth_path != NULL) {
 		/*
 		 * Handle FamilyLocal case where $DISPLAY does
 		 * not match an authorization entry.  For this we
@@ -338,40 +339,52 @@ client_x11_get_proto(const char *display, const char *xauth_path,
 			display = xdisplay;
 		}
 		if (trusted == 0) {
-			xauthdir = xmalloc(PATH_MAX);
-			xauthfile = xmalloc(PATH_MAX);
-			mktemp_proto(xauthdir, PATH_MAX);
 			/*
-			 * The authentication cookie should briefly outlive
-			 * ssh's willingness to forward X11 connections to
-			 * avoid nasty fail-open behaviour in the X server.
+			 * Generate an untrusted X11 auth cookie.
+			 *
+ 			 * The authentication cookie should briefly outlive
+ 			 * ssh's willingness to forward X11 connections to
+ 			 * avoid nasty fail-open behaviour in the X server.
 			 */
+			mktemp_proto(xauthdir, sizeof(xauthdir));
+			if (mkdtemp(xauthdir) == NULL) {
+				error("%s: mkdtemp: %s",
+				    __func__, strerror(errno));
+				return -1;
+			}
+			do_unlink = 1;
+			if ((r = snprintf(xauthfile, sizeof(xauthfile),
+			    "%s/xauthfile", xauthdir)) < 0 ||
+			    (size_t)r >= sizeof(xauthfile)) {
+				error("%s: xauthfile path too long", __func__);
+				unlink(xauthfile);
+				rmdir(xauthdir);
+				return -1;
+			}
+
 			if (timeout >= UINT_MAX - X11_TIMEOUT_SLACK)
 				x11_timeout_real = UINT_MAX;
 			else
 				x11_timeout_real = timeout + X11_TIMEOUT_SLACK;
-			if (mkdtemp(xauthdir) != NULL) {
-				do_unlink = 1;
-				snprintf(xauthfile, PATH_MAX, "%s/xauthfile",
-				    xauthdir);
-				snprintf(cmd, sizeof(cmd),
-				    "%s -f %s generate %s " SSH_X11_PROTO
-				    " untrusted timeout %u 2>" _PATH_DEVNULL,
-				    xauth_path, xauthfile, display,
-				    x11_timeout_real);
-				debug2("x11_get_proto: %s", cmd);
-				if (x11_refuse_time == 0) {
-					now = monotime() + 1;
-					if (UINT_MAX - timeout < now)
-						x11_refuse_time = UINT_MAX;
-					else
-						x11_refuse_time = now + timeout;
-					channel_set_x11_refuse_time(
-					    x11_refuse_time);
-				}
-				if (system(cmd) == 0)
-					generated = 1;
+
+			if ((r = snprintf(cmd, sizeof(cmd),
+			    "%s -f %s generate %s " SSH_X11_PROTO
+			    " untrusted timeout %u 2>" _PATH_DEVNULL,
+			    xauth_path, xauthfile, display,
+			    x11_timeout_real)) < 0 ||
+			    (size_t)r >= sizeof(cmd))
+				fatal("%s: cmd too long", __func__);
+			debug2("%s: %s", __func__, cmd);
+			if (x11_refuse_time == 0) {
+				now = monotime() + 1;
+				if (UINT_MAX - timeout < now)
+					x11_refuse_time = UINT_MAX;
+				else
+					x11_refuse_time = now + timeout;
+				channel_set_x11_refuse_time(x11_refuse_time);
 			}
+			if (system(cmd) == 0)
+				generated = 1;
 		}
 
 		/*
@@ -393,17 +406,20 @@ client_x11_get_proto(const char *display, const char *xauth_path,
 				got_data = 1;
 			if (f)
 				pclose(f);
-		} else
-			error("Warning: untrusted X11 forwarding setup failed: "
-			    "xauth key data not generated");
+		}
 	}
 
 	if (do_unlink) {
 		unlink(xauthfile);
 		rmdir(xauthdir);
 	}
-	free(xauthdir);
-	free(xauthfile);
+
+	/* Don't fall back to fake X11 data for untrusted forwarding */
+	if (!trusted && !got_data) {
+		error("Warning: untrusted X11 forwarding setup failed: "
+		    "xauth key data not generated");
+		return -1;
+	}
 
 	/*
 	 * If we didn't get authentication data, just make up some
@@ -427,6 +443,8 @@ client_x11_get_proto(const char *display, const char *xauth_path,
 			rnd >>= 8;
 		}
 	}
+
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.23 2016/01/14 22:30:04 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.24 2016/01/19 17:10:55 christos Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.226 2015/07/30 00:01:34 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.23 2016/01/14 22:30:04 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.24 2016/01/19 17:10:55 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1277,6 +1277,7 @@ pubkey_prepare(Authctxt *authctxt)
 		if (r != SSH_ERR_AGENT_NO_IDENTITIES)
 			debug("%s: ssh_fetch_identitylist: %s",
 			    __func__, ssh_err(r));
+		close(agent_fd);
 	} else {
 		for (j = 0; j < idlist->nkeys; j++) {
 			found = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.14 2016/01/14 22:30:04 christos Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.15 2016/01/19 17:10:55 christos Exp $	*/
 /* $OpenBSD: sshconnect.c,v 1.263 2015/08/20 22:32:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.14 2016/01/14 22:30:04 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.15 2016/01/19 17:10:55 christos Exp $");
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,6 +111,7 @@ ssh_proxy_fdpass_connect(const char *host, u_short port,
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) < 0)
 		fatal("Could not create socketpair to communicate with "
 		    "proxy dialer: %.100s", strerror(errno));
+	close(sp[1]);
 
 	command_string = expand_proxy_command(proxy_command, options.user,
 	    host, port);
