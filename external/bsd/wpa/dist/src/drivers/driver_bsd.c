@@ -1339,7 +1339,7 @@ wpa_driver_bsd_add_scan_entry(struct wpa_scan_results *res,
 	result->freq = sr->isr_freq;
 	result->beacon_int = sr->isr_intval;
 	result->caps = sr->isr_capinfo;
-	result->level = sr->isr_rssi;
+	result->qual = sr->isr_rssi;
 	result->noise = sr->isr_noise;
 	/*
 	 * the rssi value reported by the kernel is in 0.5dB steps relative to
