@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.47 2015/12/09 06:00:51 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.48 2016/01/20 05:58:49 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -64,13 +64,10 @@
  *
  * The code assumes that radix table code can handle non-continuous netmask,
  * as it will pass radix table memory region with (src + dst) sockaddr pair.
- *
- * FreeBSD is excluded here as they make max_keylen a static variable, and
- * thus forbid definition of radix table other than proper domains.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.47 2015/12/09 06:00:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.48 2016/01/20 05:58:49 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -127,7 +124,6 @@ static void encap_fillarg(struct mbuf *, const struct encaptab *);
 
 LIST_HEAD(, encaptab) encaptab = LIST_HEAD_INITIALIZER(&encaptab);
 
-extern int max_keylen;	/* radix.c */
 struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
 
 void
