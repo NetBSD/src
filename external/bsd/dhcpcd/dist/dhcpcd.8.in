@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.46 2016/01/07 20:09:43 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.47 2016/01/20 19:42:33 roy Exp $
 .\" Copyright (c) 2006-2016 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 7, 2016
+.Dd January 14, 2016
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Nd a DHCP client
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46ABbDdEGgHJKLMNPpqTV
+.Op Fl 146ABbDdEGgHJKLMNPpqTV
 .Op Fl C , Fl Fl nohook Ar hook
 .Op Fl c , Fl Fl script Ar script
 .Op Fl e , Fl Fl env Ar value
@@ -570,6 +570,11 @@ However, there are sometimes situations where you don't want the things to be
 configured exactly how the the DHCP server wants.
 Here are some options that deal with turning these bits off.
 .Bl -tag -width indent
+.It Fl 1 , Fl Fl oneshot
+Exit after configuring an interface.
+Use the
+.Fl w , Fl Fl waitip
+option to specify which protocol(s) to configure before exiting.
 .It Fl 4 , Fl Fl ipv4only
 Configure IPv4 only.
 .It Fl 6 , Fl Fl ipv6only
