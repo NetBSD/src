@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.174 2015/10/13 21:28:34 rjs Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.175 2016/01/20 21:43:59 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.174 2015/10/13 21:28:34 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.175 2016/01/20 21:43:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -151,7 +151,7 @@ struct route_info COMPATNAME(route_info) = {
 #define	PRESERVED_RTF	(RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_DONE | RTF_MASK)
 
 static void COMPATNAME(route_init)(void);
-static int COMPATNAME(route_output)(struct mbuf *, ...);
+static int COMPATNAME(route_output)(struct mbuf *, struct socket *);
 
 static int rt_msg2(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
 static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
@@ -164,6 +164,8 @@ static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct rt_walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
 static void rt_adjustcount(int, int);
+
+static const struct protosw COMPATNAME(route_protosw)[];
 
 static void
 rt_adjustcount(int af, int cnt)
@@ -390,9 +392,10 @@ COMPATNAME(route_send)(struct socket *so, struct mbuf *m,
 	int s;
 
 	KASSERT(solocked(so));
+	KASSERT(so->so_proto == &COMPATNAME(route_protosw)[0]);
 
 	s = splsoftnet();
-	error = raw_send(so, m, nam, control, l);
+	error = raw_send(so, m, nam, control, l, &COMPATNAME(route_output));
 	splx(s);
 
 	return error;
@@ -420,7 +423,7 @@ COMPATNAME(route_purgeif)(struct socket *so, struct ifnet *ifp)
 
 /*ARGSUSED*/
 int
-COMPATNAME(route_output)(struct mbuf *m, ...)
+COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 {
 	struct sockproto proto = { .sp_family = PF_XROUTE, };
 	struct rt_xmsghdr *rtm = NULL;
@@ -431,13 +434,7 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 	int len, error = 0;
 	struct ifnet *ifp = NULL;
 	struct ifaddr *ifa = NULL;
-	struct socket *so;
-	va_list ap;
 	sa_family_t family;
-
-	va_start(ap, m);
-	so = va_arg(ap, struct socket *);
-	va_end(ap);
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
@@ -1541,7 +1538,6 @@ static const struct protosw COMPATNAME(route_protosw)[] = {
 		.pr_domain = &COMPATNAME(routedomain),
 		.pr_flags = PR_ATOMIC|PR_ADDR,
 		.pr_input = raw_input,
-		.pr_output = COMPATNAME(route_output),
 		.pr_ctlinput = raw_ctlinput,
 		.pr_usrreqs = &route_usrreqs,
 		.pr_init = raw_init,

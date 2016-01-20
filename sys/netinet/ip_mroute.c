@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.133 2016/01/17 15:08:10 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.134 2016/01/20 21:43:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.133 2016/01/17 15:08:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.134 2016/01/20 21:43:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -199,7 +199,6 @@ static const struct protosw vif_protosw = {
 	.pr_protocol	= IPPROTO_IPV4,
 	.pr_flags	= PR_ATOMIC|PR_ADDR,
 	.pr_input	= vif_input,
-	.pr_output	= rip_output,
 	.pr_ctloutput	= rip_ctloutput,
 	.pr_usrreqs	= &rip_usrreqs,
 };

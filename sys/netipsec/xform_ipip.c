@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.32 2015/03/27 07:47:10 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.33 2016/01/20 21:44:00 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.32 2015/03/27 07:47:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.33 2016/01/20 21:44:00 riastradh Exp $");
 
 /*
  * IP-inside-IP processing
@@ -692,7 +692,6 @@ static struct ipprotosw ipe4_protosw = {
  .pr_protocol = IPPROTO_IPV4,
  .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
  .pr_input = ip4_input,
- .pr_output = 0,
  .pr_ctlinput = 0,
  .pr_ctloutput = rip_ctloutput,
  .pr_usrreqs = &rip_usrreqs,
@@ -713,7 +712,6 @@ static struct ip6protosw ipe4_protosw6 = {
  .pr_protocol = IPPROTO_IPV6,
  .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
  .pr_input = ip4_input6,
- .pr_output = 0,
  .pr_ctlinput = 0,
  .pr_ctloutput = rip6_ctloutput,
  .pr_usrreqs = &rip6_usrreqs,

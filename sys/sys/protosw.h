@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.65 2015/10/13 21:28:34 rjs Exp $	*/
+/*	$NetBSD: protosw.h,v 1.66 2016/01/20 21:43:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -76,8 +76,6 @@ struct protosw {
 
 /* protocol-protocol hooks */
 	void	(*pr_input)		/* input to protocol (from below) */
-			(struct mbuf *, ...);
-	int	(*pr_output)		/* output to protocol (from above) */
 			(struct mbuf *, ...);
 	void	*(*pr_ctlinput)		/* control input (from below) */
 			(int, const struct sockaddr *, void *);

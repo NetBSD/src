@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.82 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.83 2016/01/20 21:43:59 riastradh Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.82 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.83 2016/01/20 21:43:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -165,7 +165,6 @@ static const struct protosw in_stf_protosw =
 	.pr_protocol	= IPPROTO_IPV6,
 	.pr_flags	= PR_ATOMIC|PR_ADDR,
 	.pr_input	= in_stf_input,
-	.pr_output	= rip_output,
 	.pr_ctlinput	= NULL,
 	.pr_ctloutput	= rip_ctloutput,
 	.pr_usrreqs	= &rip_usrreqs,
