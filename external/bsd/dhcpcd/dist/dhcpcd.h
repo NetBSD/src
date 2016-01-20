@@ -202,6 +202,6 @@ void dhcpcd_dropinterface(struct interface *, const char *);
 int dhcpcd_selectprofile(struct interface *, const char *);
 
 void dhcpcd_startinterface(void *);
-void dhcpcd_initstate(struct interface *, unsigned long long);
+void dhcpcd_activateinterface(struct interface *);
 
 #endif
