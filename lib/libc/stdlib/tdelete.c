@@ -1,4 +1,4 @@
-/*	$NetBSD: tdelete.c,v 1.6 2012/06/25 22:32:45 abs Exp $	*/
+/*	$NetBSD: tdelete.c,v 1.7 2016/01/20 15:31:55 christos Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -13,7 +13,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: tdelete.c,v 1.6 2012/06/25 22:32:45 abs Exp $");
+__RCSID("$NetBSD: tdelete.c,v 1.7 2016/01/20 15:31:55 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -60,8 +60,9 @@ tdelete(const void *vkey, void **vrootp,
 			q->rlink = (*rootp)->rlink;
 		}
 	}
-	if (p != *rootp)
-		free(*rootp);			/* D4: Free node */
+	if (p == *rootp)
+		p = NULL;
+	free(*rootp);				/* D4: Free node */
 	*rootp = q;				/* link parent to new node */
 	return p;
 }
