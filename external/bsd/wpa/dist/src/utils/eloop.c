@@ -169,9 +169,6 @@ int eloop_init(void)
 			   __func__, strerror(errno));
 		return -1;
 	}
-	eloop.readers.type = EVENT_TYPE_READ;
-	eloop.writers.type = EVENT_TYPE_WRITE;
-	eloop.exceptions.type = EVENT_TYPE_EXCEPTION;
 #endif /* CONFIG_ELOOP_EPOLL */
 #ifdef CONFIG_ELOOP_KQUEUE
 	eloop.kqueuefd = kqueue();
@@ -181,26 +178,85 @@ int eloop_init(void)
 		return -1;
 	}
 #endif /* CONFIG_ELOOP_KQUEUE */
+#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
+	eloop.readers.type = EVENT_TYPE_READ;
+	eloop.writers.type = EVENT_TYPE_WRITE;
+	eloop.exceptions.type = EVENT_TYPE_EXCEPTION;
+#endif
 #ifdef WPA_TRACE
 	signal(SIGSEGV, eloop_sigsegv_handler);
 #endif /* WPA_TRACE */
 	return 0;
 }
 
+#ifdef CONFIG_ELOOP_EPOLL
+static int eloop_sock_queue(int sock, eloop_event_type type)
+{
+	struct epoll_event ev;
+
+	os_memset(&ev, 0, sizeof(ev));
+	switch (type) {
+	case EVENT_TYPE_READ:
+		ev.events = EPOLLIN;
+		break;
+	case EVENT_TYPE_WRITE:
+		ev.events = EPOLLOUT;
+		break;
+	/*
+	 * Exceptions are always checked when using epoll, but I suppose it's
+	 * possible that someone registered a socket *only* for exception
+	 * handling.
+	 */
+	case EVENT_TYPE_EXCEPTION:
+		ev.events = EPOLLERR | EPOLLHUP;
+		break;
+	}
+	ev.data.fd = sock;
+	if (epoll_ctl(eloop.epollfd, EPOLL_CTL_ADD, sock, &ev) < 0) {
+		wpa_printf(MSG_ERROR, "%s: epoll_ctl(ADD) for fd=%d "
+			   "failed. %s\n", __func__, sock, strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+#endif /* CONFIG_ELOOP_EPOLL */
+
+#ifdef CONFIG_ELOOP_KQUEUE
+static int eloop_sock_queue(int sock, eloop_event_type type)
+{
+	int filter;
+	struct kevent ke;
+
+	switch (type) {
+	case EVENT_TYPE_READ:
+		filter = EVFILT_READ;
+		break;
+	case EVENT_TYPE_WRITE:
+		filter = EVFILT_WRITE;
+		break;
+	default:
+		filter = 0;
+	}
+	EV_SET(&ke, sock, filter, EV_ADD, 0, 0, NULL);
+	if (kevent(eloop.kqueuefd, &ke, 1, NULL, 0, NULL) == -1) {
+		wpa_printf(MSG_ERROR, "%s: kevent(ADD) for fd=%d "
+			   "failed. %s\n", __func__, sock, strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+#endif /* CONFIG_ELOOP_KQUEUE */
 
 static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
                                      int sock, eloop_sock_handler handler,
                                      void *eloop_data, void *user_data)
 {
 #ifdef CONFIG_ELOOP_EPOLL
-	struct eloop_sock *temp_table;
-	struct epoll_event ev, *temp_events;
-	int next;
+	struct epoll_event *temp_events;
 #endif /* CONFIG_ELOOP_EPOLL */
-#ifdef CONFIG_ELOOP_KQUEUE
+#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
 	struct eloop_sock *temp_table;
-	int next, filter;
-	struct kevent ke;
+	int next;
 #endif
 	struct eloop_sock *tmp;
 	int new_max_sock;
@@ -302,53 +358,12 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 	table->changed = 1;
 	eloop_trace_sock_add_ref(table);
 
-#ifdef CONFIG_ELOOP_EPOLL
-	os_memset(&ev, 0, sizeof(ev));
-	switch (table->type) {
-	case EVENT_TYPE_READ:
-		ev.events = EPOLLIN;
-		break;
-	case EVENT_TYPE_WRITE:
-		ev.events = EPOLLOUT;
-		break;
-	/*
-	 * Exceptions are always checked when using epoll, but I suppose it's
-	 * possible that someone registered a socket *only* for exception
-	 * handling.
-	 */
-	case EVENT_TYPE_EXCEPTION:
-		ev.events = EPOLLERR | EPOLLHUP;
-		break;
-	}
-	ev.data.fd = sock;
-	if (epoll_ctl(eloop.epollfd, EPOLL_CTL_ADD, sock, &ev) < 0) {
-		wpa_printf(MSG_ERROR, "%s: epoll_ctl(ADD) for fd=%d "
-			   "failed. %s\n", __func__, sock, strerror(errno));
+#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
+	if (eloop_sock_queue(sock, table->type) == -1)
 		return -1;
-	}
 	os_memcpy(&eloop.fd_table[sock], &table->table[table->count - 1],
 		  sizeof(struct eloop_sock));
-#endif /* CONFIG_ELOOP_EPOLL */
-#ifdef CONFIG_ELOOP_KQUEUE
-	switch (table->type) {
-	case EVENT_TYPE_READ:
-		filter = EVFILT_READ;
-		break;
-	case EVENT_TYPE_WRITE:
-		filter = EVFILT_WRITE;
-		break;
-	default:
-		filter = 0;
-	}
-	EV_SET(&ke, sock, filter, EV_ADD, 0, 0, NULL);
-	if (kevent(eloop.kqueuefd, &ke, 1, NULL, 0, NULL) == -1) {
-		wpa_printf(MSG_ERROR, "%s: kevent(ADD) for fd=%d "
-			   "failed. %s\n", __func__, sock, strerror(errno));
-		return -1;
-	}
-	os_memcpy(&eloop.fd_table[sock], &table->table[table->count - 1],
-		  sizeof(struct eloop_sock));
-#endif /* CONFIG_ELOOP_KQUEUE */
+#endif
 	return 0;
 }
 
@@ -621,7 +636,48 @@ static void eloop_sock_table_dispatch(struct kevent *events, int nfds)
 			break;
 	}
 }
-#endif /* CONFIG_ELOOP_KQUEUE */
+
+static int eloop_sock_table_requeue(struct eloop_sock_table *table)
+{
+	int i, r;
+	struct kevent ke;
+
+	r = 0;
+	for (i = 0; i < table->count && table->table; i++) {
+		if (eloop_sock_queue(table->table[i].sock, table->type) == -1)
+			r = -1;
+	}
+	return r;
+}
+
+int eloop_sock_requeue(void)
+{
+	int r = 0;
+
+	close(eloop.kqueuefd);
+	eloop.kqueuefd = kqueue();
+	if (eloop.kqueuefd < 0) {
+		wpa_printf(MSG_ERROR, "%s: kqueue failed. %s\n",
+			   __func__, strerror(errno));
+		return -1;
+	}
+
+	if (eloop_sock_table_requeue(&eloop.readers) == -1)
+		r = -1;
+	if (eloop_sock_table_requeue(&eloop.writers) == -1)
+		r = -1;
+	if (eloop_sock_table_requeue(&eloop.exceptions) == -1)
+		r = -1;
+
+	return r;
+}
+#else /* CONFIG_ELOOP_KQUEUE */
+int eloop_sock_requeue(void)
+{
+
+	return 0;
+}
+#endif /* !CONFIG_ELOOP_KQUEUE */
 
 static void eloop_sock_table_destroy(struct eloop_sock_table *table)
 {
