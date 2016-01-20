@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.17 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.18 2016/01/20 19:42:33 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -2485,14 +2485,20 @@ dhcp6_delegate_prefix(struct interface *ifp)
 			for (k = 0; k < i; j++)
 				if (strcmp(sla->ifname, ia->sla[j].ifname) == 0)
 					break;
-			if (j >= i &&
-			    ((ifd = if_find(ifp->ctx->ifaces,
-			        sla->ifname)) == NULL ||
-			    !ifd->active))
-				logger(ifp->ctx, LOG_ERR,
-				    "%s: interface does not exist"
-				    " for delegation",
-				    sla->ifname);
+			if (j >= i) {
+				ifd = if_find(ifp->ctx->ifaces, sla->ifname);
+				if (ifd == NULL)
+					logger(ifp->ctx, LOG_ERR,
+					    "%s: interface does not exist"
+					    " for delegation",
+					    sla->ifname);
+				else if (!ifd->active) {
+					logger(ifp->ctx, LOG_INFO,
+					    "%s: activating for delegation",
+					    sla->ifname);
+					dhcpcd_activateinterface(ifd);
+				}
+			}
 		}
 	}
 
