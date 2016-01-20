@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.366 2015/09/26 16:33:16 maxv Exp $
+# $NetBSD: GENERIC,v 1.367 2016/01/20 12:49:21 jklos Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.366 $"
+ident		"GENERIC-$Revision: 1.367 $"
 
 maxusers 32
 
@@ -401,6 +401,7 @@ ld*	at iop? tid ?			# block devices
 #dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # MII/PHY support
+brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
