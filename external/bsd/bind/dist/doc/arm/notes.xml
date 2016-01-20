@@ -23,6 +23,12 @@
       This document summarizes changes since BIND 9.10.3:
     </para>
     <para>
+      BIND 9.10.3-P3 addresses the security issues described in
+      CVE-2015-8704 and CVE-2015-8705. It also fixes a serious
+      regression in authoritative server selection that was
+      introduced in BIND 9.10.3.
+    </para>
+    <para>
       BIND 9.10.3-P2 addresses the security issues described in
       CVE-2015-3193 (OpenSSL), CVE-2015-8000 and CVE-2015-8461.
     </para>
@@ -46,15 +52,24 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  Named is potentially vulnerable to the OpenSSL vulnerabilty
-	  described in CVE-2015-3193.
+	  Specific APL data could trigger an INSIST.  This flaw
+	  was discovered by Brian Mitchell and is disclosed in
+	  CVE-2015-8704. [RT #41396]
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  Incorrect reference counting could result in an INSIST
-	  failure if a socket error occurred while performing a
-	  lookup.  This flaw is disclosed in CVE-2015-8461. [RT#40945]
+	  Certain errors that could be encountered when printing out
+	  or logging an OPT record containing a CLIENT-SUBNET option
+	  could be mishandled, resulting in an assertion failure.
+	  This flaw was discovered by Brian Mitchell and is disclosed
+	  in CVE-2015-8705. [RT #41397]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Named is potentially vulnerable to the OpenSSL vulnerabilty
+	  described in CVE-2015-3193.
 	</para>
       </listitem>
       <listitem>
@@ -64,6 +79,13 @@
 	  triggering a REQUIRE failure when those records
 	  were subsequently cached.  This flaw is disclosed
 	  in CVE-2015-8000. [RT #40987]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Incorrect reference counting could result in an INSIST
+	  failure if a socket error occurred while performing a
+	  lookup.  This flaw is disclosed in CVE-2015-8461. [RT#40945]
 	</para>
       </listitem>
     </itemizedlist>
@@ -93,8 +115,10 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  None.
- 	</para>
+	  Authoritative servers that were marked as bogus (e.g. blackholed
+	  in configuration or with invalid addresses) were being queried
+	  anyway. [RT #41321]
+	</para>
       </listitem>
     </itemizedlist>
   </sect2>
