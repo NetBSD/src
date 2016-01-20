@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2010/08/04 17:12:33 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2016/01/20 15:08:44 roy Exp $
 
 BINDIR?=	/usr/sbin
 
@@ -25,7 +25,7 @@ CPPFLAGS+= \
 	-I${WPA_DISTDIR}/src/l2_packet \
 	-I${WPA_DISTDIR}/src/utils
 
-CPPFLAGS+=-DCONFIG_CTRL_IFACE -DCONFIG_CTRL_IFACE_UNIX
+CPPFLAGS+=-DCONFIG_CTRL_IFACE -DCONFIG_CTRL_IFACE_UNIX -DCONFIG_ELOOP_KQUEUE
 
 .include <bsd.own.mk>
 
