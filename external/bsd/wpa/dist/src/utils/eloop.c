@@ -44,8 +44,8 @@ struct eloop_sock {
 	void *eloop_data;
 	void *user_data;
 	eloop_sock_handler handler;
-	WPA_TRACE_REF(eloop)
-	WPA_TRACE_REF(user)
+	WPA_TRACE_REF(eloop);
+	WPA_TRACE_REF(user);
 	WPA_TRACE_INFO
 };
 
@@ -55,8 +55,8 @@ struct eloop_timeout {
 	void *eloop_data;
 	void *user_data;
 	eloop_timeout_handler handler;
-	WPA_TRACE_REF(eloop)
-	WPA_TRACE_REF(user)
+	WPA_TRACE_REF(eloop);
+	WPA_TRACE_REF(user);
 	WPA_TRACE_INFO
 };
 
@@ -70,11 +70,8 @@ struct eloop_signal {
 struct eloop_sock_table {
 	int count;
 	struct eloop_sock *table;
-#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
 	eloop_event_type type;
-#else /* CONFIG_ELOOP_EPOLL */
 	int changed;
-#endif /* CONFIG_ELOOP_EPOLL */
 };
 
 struct eloop_data {
@@ -302,9 +299,7 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 	table->table = tmp;
 	eloop.max_sock = new_max_sock;
 	eloop.count++;
-#if !defined(CONFIG_ELOOP_EPOLL) && !defined(CONFIG_ELOOP_KQUEUE)
 	table->changed = 1;
-#endif /* CONFIG_ELOOP_EPOLL */
 	eloop_trace_sock_add_ref(table);
 
 #ifdef CONFIG_ELOOP_EPOLL
@@ -383,9 +378,7 @@ static void eloop_sock_table_remove_sock(struct eloop_sock_table *table,
 	}
 	table->count--;
 	eloop.count--;
-#if !defined(CONFIG_ELOOP_EPOLL) && !defined(CONFIG_ELOOP_KQUEUE)
 	table->changed = 1;
-#endif /* CONFIG_ELOOP_EPOLL */
 	eloop_trace_sock_add_ref(table);
 #ifdef CONFIG_ELOOP_EPOLL
 	if (epoll_ctl(eloop.epollfd, EPOLL_CTL_DEL, sock, NULL) < 0) {
@@ -601,6 +594,10 @@ static void eloop_sock_table_dispatch(struct epoll_event *events, int nfds)
 			continue;
 		table->handler(table->sock, table->eloop_data,
 			       table->user_data);
+		if (eloop.readers.changed ||
+		    eloop.writers.changed ||
+		    eloop.exceptions.changed)
+			break;
 	}
 }
 #endif /* CONFIG_ELOOP_EPOLL */
@@ -618,6 +615,10 @@ static void eloop_sock_table_dispatch(struct kevent *events, int nfds)
 			continue;
 		table->handler(table->sock, table->eloop_data,
 			       table->user_data);
+		if (eloop.readers.changed ||
+		    eloop.writers.changed ||
+		    eloop.exceptions.changed)
+			break;
 	}
 }
 #endif /* CONFIG_ELOOP_KQUEUE */
@@ -1020,6 +1021,20 @@ void eloop_run(void)
 	       (!dl_list_empty(&eloop.timeout) || eloop.readers.count > 0 ||
 		eloop.writers.count > 0 || eloop.exceptions.count > 0)) {
 		struct eloop_timeout *timeout;
+
+		if (eloop.pending_terminate) {
+			/*
+			 * This may happen in some corner cases where a signal
+			 * is received during a blocking operation. We need to
+			 * process the pending signals and exit if requested to
+			 * avoid hitting the SIGALRM limit if the blocking
+			 * operation took more than two seconds.
+			 */
+			eloop_process_pending_signals();
+			if (eloop.terminate)
+				break;
+		}
+
 		timeout = dl_list_first(&eloop.timeout, struct eloop_timeout,
 					list);
 		if (timeout) {
@@ -1091,7 +1106,13 @@ void eloop_run(void)
 				   , strerror(errno));
 			goto out;
 		}
+
+		eloop.readers.changed = 0;
+		eloop.writers.changed = 0;
+		eloop.exceptions.changed = 0;
+
 		eloop_process_pending_signals();
+
 
 		/* check if some registered timeouts have occurred */
 		timeout = dl_list_first(&eloop.timeout, struct eloop_timeout,
@@ -1111,6 +1132,19 @@ void eloop_run(void)
 
 		if (res <= 0)
 			continue;
+
+		if (eloop.readers.changed ||
+		    eloop.writers.changed ||
+		    eloop.exceptions.changed) {
+			 /*
+			  * Sockets may have been closed and reopened with the
+			  * same FD in the signal or timeout handlers, so we
+			  * must skip the previous results and check again
+			  * whether any of the currently registered sockets have
+			  * events.
+			  */
+			continue;
+		}
 
 #ifdef CONFIG_ELOOP_POLL
 		eloop_sock_table_dispatch(&eloop.readers, &eloop.writers,
@@ -1196,7 +1230,7 @@ void eloop_destroy(void)
 
 int eloop_terminated(void)
 {
-	return eloop.terminate;
+	return eloop.terminate || eloop.pending_terminate;
 }
 
 
