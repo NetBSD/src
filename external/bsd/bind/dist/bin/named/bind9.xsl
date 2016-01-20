@@ -20,7 +20,7 @@
 <!-- %Id: bind9.xsl,v 1.21 2009/01/27 23:47:54 tbox Exp % -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
   <xsl:output method="html" indent="yes" version="4.0"/>
-  <xsl:template match="statistics[@version=&quot;3.5&quot;]">
+  <xsl:template match="statistics[@version=&quot;3.6&quot;]">
     <html>
       <head>
         <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
