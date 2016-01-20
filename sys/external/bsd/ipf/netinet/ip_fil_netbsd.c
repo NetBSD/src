@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.11 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.12 2016/01/20 22:11:23 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.11 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.12 2016/01/20 22:11:23 riastradh Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1935,7 +1935,7 @@ ipf_inject(fr_info_t *fin, mb_t *m)
 			error = 0;
 		}
 	} else {
-		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
+		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 	}
 	return error;
 }
