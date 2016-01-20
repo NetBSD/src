@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.48 2015/05/02 17:18:04 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.49 2016/01/20 21:44:00 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.48 2015/05/02 17:18:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.49 2016/01/20 21:44:00 riastradh Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.48 2015/05/02 17:18:04 rtr Exp $");
 #include <netipsec/ipsec_osdep.h>
 #include <netipsec/ipsec_private.h>
 
-typedef int	pr_output_t (struct mbuf *, struct socket *);
-
 struct key_cb {
 	int key_count;
 	int any_count;
@@ -78,6 +76,7 @@ static struct sockaddr key_src = {
     .sa_family = PF_KEY,
 };
 
+static const struct protosw keysw[];
 
 static int key_sendup0(struct rawcb *, struct mbuf *, int, int);
 
@@ -86,18 +85,12 @@ int key_registered_sb_max = (2048 * MHLEN); /* XXX arbitrary */
 /*
  * key_output()
  */
-int
-key_output(struct mbuf *m, ...)
+static int
+key_output(struct mbuf *m, struct socket *so)
 {
 	struct sadb_msg *msg;
 	int len, error = 0;
 	int s;
-	struct socket *so;
-	va_list ap;
-
-	va_start(ap, m);
-	so = va_arg(ap, struct socket *);
-	va_end(ap);
 
 	if (m == 0)
 		panic("key_output: NULL pointer was passed");
@@ -638,9 +631,10 @@ key_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	int s;
 
 	KASSERT(solocked(so));
+	KASSERT(so->so_proto == &keysw[0]);
 
 	s = splsoftnet();
-	error = raw_send(so, m, nam, control, l);
+	error = raw_send(so, m, nam, control, l, &key_output);
 	splx(s);
 
 	return error;
@@ -693,7 +687,7 @@ PR_WRAP_USRREQS(key)
 #define	key_sendoob	key_sendoob_wrapper
 #define	key_purgeif	key_purgeif_wrapper
 
-const struct pr_usrreqs key_usrreqs = {
+static const struct pr_usrreqs key_usrreqs = {
 	.pr_attach	= key_attach,
 	.pr_detach	= key_detach,
 	.pr_accept	= key_accept,
@@ -715,13 +709,12 @@ const struct pr_usrreqs key_usrreqs = {
 	.pr_purgeif	= key_purgeif,
 };
 
-const struct protosw keysw[] = {
+static const struct protosw keysw[] = {
     {
 	.pr_type = SOCK_RAW,
 	.pr_domain = &keydomain,
 	.pr_protocol = PF_KEY_V2,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_output = key_output,
 	.pr_ctlinput = raw_ctlinput,
 	.pr_usrreqs = &key_usrreqs,
 	.pr_init = raw_init,

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.18 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.19 2016/01/20 21:43:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.18 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.19 2016/01/20 21:43:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ const struct protosw atalksw[] = {
 	.pr_domain = &atalkdomain,
 	.pr_protocol = ATPROTO_DDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_output = ddp_output,
 	.pr_usrreqs = &ddp_usrreqs,
 	.pr_init = ddp_init,
     },

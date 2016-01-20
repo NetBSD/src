@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.68 2016/01/18 06:08:26 knakahara Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.69 2016/01/20 21:43:59 riastradh Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.68 2016/01/18 06:08:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.69 2016/01/20 21:43:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,7 +85,6 @@ static const struct protosw in_gif_protosw = {
 	.pr_protocol	= 0 /* IPPROTO_IPV[46] */,
 	.pr_flags	= PR_ATOMIC|PR_ADDR,
 	.pr_input	= in_gif_input,
-	.pr_output	= rip_output,
 	.pr_ctlinput	= NULL,
 	.pr_ctloutput	= rip_ctloutput,
 	.pr_usrreqs	= &rip_usrreqs,
