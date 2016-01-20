@@ -1608,7 +1608,7 @@ add_debug_regex_map (const char *arg)
   debug_regex_maps = map;
 }
 
-extern ssize_t aregsub(char **, const char *,
+extern ssize_t regasub(char **, const char *,
   const regmatch_t *rm, const char *);
 
 /* Perform user-specified mapping of debug filename regular expressions.  Return
@@ -1623,7 +1623,7 @@ remap_debug_regex_filename (const char *filename)
 
   for (map = debug_regex_maps; map; map = map->next)
     if (regexec (&map->re, filename, 10, rm, 0) == 0
-       && aregsub (&s, map->sub, rm, filename) >= 0)
+       && regasub (&s, map->sub, rm, filename) >= 0)
       {
 	 const char *name = ggc_strdup(s);
 	 free(s);
