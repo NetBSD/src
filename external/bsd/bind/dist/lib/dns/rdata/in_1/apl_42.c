@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.c,v 1.6 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: apl_42.c,v 1.7 2016/01/20 02:14:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,7 @@ totext_in_apl(ARGS_TOTEXT) {
 	isc_uint8_t len;
 	isc_boolean_t neg;
 	unsigned char buf[16];
-	char txt[sizeof(" !64000")];
+	char txt[sizeof(" !64000:")];
 	const char *sep = "";
 	int n;
 
@@ -142,7 +142,7 @@ totext_in_apl(ARGS_TOTEXT) {
 		isc_region_consume(&sr, 1);
 		INSIST(len <= sr.length);
 		n = snprintf(txt, sizeof(txt), "%s%s%u:", sep,
-			     neg ? "!": "", afi);
+			     neg ? "!" : "", afi);
 		INSIST(n < (int)sizeof(txt));
 		RETERR(str_totext(txt, target));
 		switch (afi) {

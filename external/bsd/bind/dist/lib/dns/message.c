@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.16 2015/12/17 04:00:43 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.17 2016/01/20 02:14:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -3247,7 +3247,7 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 }
 
 static isc_result_t
-render_ecs(isc_buffer_t *optbuf, isc_buffer_t *target) {
+render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	int i;
 	char addr[16], addr_text[64];
 	isc_uint16_t family;
@@ -3257,26 +3257,33 @@ render_ecs(isc_buffer_t *optbuf, isc_buffer_t *target) {
 	 * Note: This routine needs to handle malformed ECS options.
 	 */
 
-	if (isc_buffer_remaininglength(optbuf) < 4)
+	if (isc_buffer_remaininglength(ecsbuf) < 4)
 		return (DNS_R_OPTERR);
-	family = isc_buffer_getuint16(optbuf);
-	addrlen = isc_buffer_getuint8(optbuf);
-	scopelen = isc_buffer_getuint8(optbuf);
+	family = isc_buffer_getuint16(ecsbuf);
+	addrlen = isc_buffer_getuint8(ecsbuf);
+	scopelen = isc_buffer_getuint8(ecsbuf);
 
 	addrbytes = (addrlen + 7) / 8;
-	if (isc_buffer_remaininglength(optbuf) < addrbytes)
+	if (isc_buffer_remaininglength(ecsbuf) < addrbytes)
+		return (DNS_R_OPTERR);
+
+	if (addrbytes > sizeof(addr))
 		return (DNS_R_OPTERR);
 
 	ADD_STRING(target, ": ");
 	memset(addr, 0, sizeof(addr));
 	for (i = 0; i < addrbytes; i ++)
-		addr[i] = isc_buffer_getuint8(optbuf);
+		addr[i] = isc_buffer_getuint8(ecsbuf);
 
-	if (family == 1)
+	if (family == 1) {
+		if (addrlen > 32 || scopelen > 32)
+			return (DNS_R_OPTERR);
 		inet_ntop(AF_INET, addr, addr_text, sizeof(addr_text));
-	else if (family == 2)
+	} else if (family == 2) {
+		if (addrlen > 128 || scopelen > 128)
+			return (DNS_R_OPTERR);
 		inet_ntop(AF_INET6, addr, addr_text, sizeof(addr_text));
-	else {
+	} else {
 		snprintf(addr_text, sizeof(addr_text),
 			 "Unsupported family %u", family);
 		ADD_STRING(target, addr_text);
@@ -3363,9 +3370,18 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 			} else if (optcode == DNS_OPT_COOKIE) {
 				ADD_STRING(target, "; COOKIE");
 			} else if (optcode == DNS_OPT_CLIENT_SUBNET) {
+				isc_buffer_t ecsbuf;
+
 				ADD_STRING(target, "; CLIENT-SUBNET");
-				result = render_ecs(&optbuf, target);
+				isc_buffer_init(&ecsbuf,
+						isc_buffer_current(&optbuf),
+					        optlen);
+				isc_buffer_add(&ecsbuf, optlen);
+				result = render_ecs(&ecsbuf, target);
+				if (result == ISC_R_NOSPACE)
+					return (result);
 				if (result == ISC_R_SUCCESS) {
+					isc_buffer_forward(&optbuf, optlen);
 					ADD_STRING(target, "\n");
 					continue;
 				}
