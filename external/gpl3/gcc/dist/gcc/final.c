@@ -1608,7 +1608,7 @@ add_debug_regex_map (const char *arg)
   debug_regex_maps = map;
 }
 
-extern ssize_t regasub(char **, const char *,
+extern "C" ssize_t regasub(char **, const char *,
   const regmatch_t *rm, const char *);
 
 /* Perform user-specified mapping of debug filename regular expressions.  Return
