@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.9 2014/06/14 08:18:24 apb Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.10 2016/01/20 15:43:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtcheck.c,v 1.9 2014/06/14 08:18:24 apb Exp $");
+__RCSID("$NetBSD: fmtcheck.c,v 1.10 2016/01/20 15:43:05 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -101,6 +101,23 @@ get_next_format_from_precision(const char **pf)
 		f++;
 		longdouble = 1;
 		break;
+#ifdef WIN32
+	case 'I':
+		f++;
+		if (!*f) RETURN(pf,f,FMTCHECK_UNKNOWN);
+		if (*f == '3' && f[1] == '2') {
+			f += 2;
+		} else if (*f == '6' && f[1] == '4') {
+			f += 2;
+			quad = 1;
+		}
+#ifdef _WIN64
+		else {
+			quad = 1;
+		}
+#endif
+		break;
+#endif
 	default:
 		break;
 	}
