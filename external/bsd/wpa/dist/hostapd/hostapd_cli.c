@@ -1375,7 +1375,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (daemonize && os_daemonize(pid_file))
+	if (daemonize && os_daemonize(pid_file) && eloop_sock_requeue())
 		return -1;
 
 	if (interactive)
