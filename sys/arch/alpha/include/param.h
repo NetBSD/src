@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.43 2013/01/14 10:46:14 he Exp $ */
+/* $NetBSD: param.h,v 1.44 2016/01/20 12:49:21 jklos Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,7 @@
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
 #define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
 
-#define	KERNBASE	0xfffffc0000230000	/* start of kernel virtual */
+#define	KERNBASE	0xfffffc0000a00000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
