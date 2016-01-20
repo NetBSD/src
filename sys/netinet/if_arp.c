@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.199 2016/01/05 05:37:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.200 2016/01/20 21:43:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.199 2016/01/05 05:37:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.200 2016/01/20 21:43:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -270,7 +270,6 @@ const struct protosw arpsw[] = {
 	  .pr_protocol = 0,
 	  .pr_flags = 0,
 	  .pr_input = 0,
-	  .pr_output = 0,
 	  .pr_ctlinput = 0,
 	  .pr_ctloutput = 0,
 	  .pr_usrreqs = 0,
