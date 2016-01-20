@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.222 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.223 2016/01/20 22:01:18 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.222 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.223 2016/01/20 22:01:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -775,19 +775,14 @@ end:
 
 
 int
-udp_output(struct mbuf *m, ...)
+udp_output(struct mbuf *m, struct inpcb *inp)
 {
-	struct inpcb *inp;
 	struct udpiphdr *ui;
 	struct route *ro;
 	int len = m->m_pkthdr.len;
 	int error = 0;
-	va_list ap;
 
 	MCLAIM(m, &udp_tx_mowner);
-	va_start(ap, m);
-	inp = va_arg(ap, struct inpcb *);
-	va_end(ap);
 
 	/*
 	 * Calculate data length and get a mbuf
