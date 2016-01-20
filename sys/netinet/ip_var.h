@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.108 2015/06/04 09:20:00 ozaki-r Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.109 2016/01/20 22:02:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -230,7 +230,7 @@ void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
 void	 rip_input(struct mbuf *, ...);
-int	 rip_output(struct mbuf *, ...);
+int	 rip_output(struct mbuf *, struct inpcb *);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 
