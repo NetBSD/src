@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.18 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.19 2016/01/20 21:59:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -37,6 +37,7 @@ struct ifaddr;
 struct at_ifaddr;
 struct route;
 struct socket;
+struct ddpcb;
 
 extern struct mowner atalk_rx_mowner;
 extern struct mowner atalk_tx_mowner;
@@ -59,7 +60,7 @@ u_int16_t
 void	ddp_init(void);
 struct ifaddr *
 	at_ifawithnet(const struct sockaddr_at *, struct ifnet *);
-int	ddp_output(struct mbuf *, ...);
+int	ddp_output(struct mbuf *, struct ddpcb *);
 struct ddpcb  *
 	ddp_search(struct sockaddr_at *, struct sockaddr_at *,
     struct at_ifaddr *);
