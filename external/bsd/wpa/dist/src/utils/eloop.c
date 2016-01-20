@@ -18,7 +18,12 @@
 #error Do not define both of poll and epoll
 #endif
 
-#if !defined(CONFIG_ELOOP_POLL) && !defined(CONFIG_ELOOP_EPOLL)
+#if defined(CONFIG_ELOOP_POLL) && defined(CONFIG_ELOOP_KQUEUE)
+#error Do not define both of poll and kqueue
+#endif
+
+#if !defined(CONFIG_ELOOP_POLL) && !defined(CONFIG_ELOOP_EPOLL) && \
+    !defined(CONFIG_ELOOP_KQUEUE)
 #define CONFIG_ELOOP_SELECT
 #endif
 
@@ -29,6 +34,10 @@
 #ifdef CONFIG_ELOOP_EPOLL
 #include <sys/epoll.h>
 #endif /* CONFIG_ELOOP_EPOLL */
+
+#ifdef CONFIG_ELOOP_KQUEUE
+#include <sys/event.h>
+#endif /* CONFIG_ELOOP_KQUEUE */
 
 struct eloop_sock {
 	int sock;
@@ -61,7 +70,7 @@ struct eloop_signal {
 struct eloop_sock_table {
 	int count;
 	struct eloop_sock *table;
-#ifdef CONFIG_ELOOP_EPOLL
+#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
 	eloop_event_type type;
 #else /* CONFIG_ELOOP_EPOLL */
 	int changed;
@@ -78,13 +87,20 @@ struct eloop_data {
 	struct pollfd *pollfds;
 	struct pollfd **pollfds_map;
 #endif /* CONFIG_ELOOP_POLL */
+#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
+	int max_fd;
+	struct eloop_sock *fd_table;
+#endif
 #ifdef CONFIG_ELOOP_EPOLL
 	int epollfd;
 	int epoll_max_event_num;
-	int epoll_max_fd;
-	struct eloop_sock *epoll_table;
 	struct epoll_event *epoll_events;
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	int kqueuefd;
+	int kqueue_nevents;
+	struct kevent *kqueue_events;
+#endif /* CONFIG_ELOOP_KQUEUE */
 	struct eloop_sock_table readers;
 	struct eloop_sock_table writers;
 	struct eloop_sock_table exceptions;
@@ -160,6 +176,14 @@ int eloop_init(void)
 	eloop.writers.type = EVENT_TYPE_WRITE;
 	eloop.exceptions.type = EVENT_TYPE_EXCEPTION;
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	eloop.kqueuefd = kqueue();
+	if (eloop.kqueuefd < 0) {
+		wpa_printf(MSG_ERROR, "%s: kqueue failed. %s\n",
+			   __func__, strerror(errno));
+		return -1;
+	}
+#endif /* CONFIG_ELOOP_KQUEUE */
 #ifdef WPA_TRACE
 	signal(SIGSEGV, eloop_sigsegv_handler);
 #endif /* WPA_TRACE */
@@ -176,6 +200,11 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 	struct epoll_event ev, *temp_events;
 	int next;
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	struct eloop_sock *temp_table;
+	int next, filter;
+	struct kevent ke;
+#endif
 	struct eloop_sock *tmp;
 	int new_max_sock;
 
@@ -211,18 +240,20 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 		eloop.pollfds = n;
 	}
 #endif /* CONFIG_ELOOP_POLL */
-#ifdef CONFIG_ELOOP_EPOLL
-	if (new_max_sock >= eloop.epoll_max_fd) {
-		next = eloop.epoll_max_fd == 0 ? 16 : eloop.epoll_max_fd * 2;
-		temp_table = os_realloc_array(eloop.epoll_table, next,
+#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
+	if (new_max_sock >= eloop.max_fd) {
+		next = eloop.max_fd == 0 ? 16 : eloop.max_fd * 2;
+		temp_table = os_realloc_array(eloop.fd_table, next,
 					      sizeof(struct eloop_sock));
 		if (temp_table == NULL)
 			return -1;
 
-		eloop.epoll_max_fd = next;
-		eloop.epoll_table = temp_table;
+		eloop.max_fd = next;
+		eloop.fd_table = temp_table;
 	}
+#endif
 
+#ifdef CONFIG_ELOOP_EPOLL
 	if (eloop.count + 1 > eloop.epoll_max_event_num) {
 		next = eloop.epoll_max_event_num == 0 ? 8 :
 			eloop.epoll_max_event_num * 2;
@@ -238,6 +269,21 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 		eloop.epoll_events = temp_events;
 	}
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	if (eloop.count + 1 > eloop.kqueue_nevents) {
+		next = eloop.kqueue_nevents == 0 ? 8 : eloop.kqueue_nevents * 2;
+		os_free(eloop.kqueue_events);
+		eloop.kqueue_events = os_malloc(next *
+					        sizeof(eloop.kqueue_events));
+		if (eloop.kqueue_events == NULL) {
+			wpa_printf(MSG_ERROR, "%s: malloc for kqueue failed. "
+				   "%s\n", __func__, strerror(errno));
+			return -1;
+		}
+
+		eloop.kqueue_nevents = next;
+	}
+#endif /* CONFIG_ELOOP_KQUEUE */
 
 	eloop_trace_sock_remove_ref(table);
 	tmp = os_realloc_array(table->table, table->count + 1,
@@ -256,7 +302,7 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 	table->table = tmp;
 	eloop.max_sock = new_max_sock;
 	eloop.count++;
-#ifndef CONFIG_ELOOP_EPOLL
+#if !defined(CONFIG_ELOOP_EPOLL) && !defined(CONFIG_ELOOP_KQUEUE)
 	table->changed = 1;
 #endif /* CONFIG_ELOOP_EPOLL */
 	eloop_trace_sock_add_ref(table);
@@ -285,9 +331,29 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 			   "failed. %s\n", __func__, sock, strerror(errno));
 		return -1;
 	}
-	os_memcpy(&eloop.epoll_table[sock], &table->table[table->count - 1],
+	os_memcpy(&eloop.fd_table[sock], &table->table[table->count - 1],
 		  sizeof(struct eloop_sock));
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	switch (table->type) {
+	case EVENT_TYPE_READ:
+		filter = EVFILT_READ;
+		break;
+	case EVENT_TYPE_WRITE:
+		filter = EVFILT_WRITE;
+		break;
+	default:
+		filter = 0;
+	}
+	EV_SET(&ke, sock, filter, EV_ADD, 0, 0, NULL);
+	if (kevent(eloop.kqueuefd, &ke, 1, NULL, 0, NULL) == -1) {
+		wpa_printf(MSG_ERROR, "%s: kevent(ADD) for fd=%d "
+			   "failed. %s\n", __func__, sock, strerror(errno));
+		return -1;
+	}
+	os_memcpy(&eloop.fd_table[sock], &table->table[table->count - 1],
+		  sizeof(struct eloop_sock));
+#endif /* CONFIG_ELOOP_KQUEUE */
 	return 0;
 }
 
@@ -295,6 +361,9 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 static void eloop_sock_table_remove_sock(struct eloop_sock_table *table,
                                          int sock)
 {
+#ifdef CONFIG_ELOOP_KQUEUE
+	struct kevent ke;
+#endif
 	int i;
 
 	if (table == NULL || table->table == NULL || table->count == 0)
@@ -314,7 +383,7 @@ static void eloop_sock_table_remove_sock(struct eloop_sock_table *table,
 	}
 	table->count--;
 	eloop.count--;
-#ifndef CONFIG_ELOOP_EPOLL
+#if !defined(CONFIG_ELOOP_EPOLL) && !defined(CONFIG_ELOOP_KQUEUE)
 	table->changed = 1;
 #endif /* CONFIG_ELOOP_EPOLL */
 	eloop_trace_sock_add_ref(table);
@@ -324,8 +393,17 @@ static void eloop_sock_table_remove_sock(struct eloop_sock_table *table,
 			   "failed. %s\n", __func__, sock, strerror(errno));
 		return;
 	}
-	os_memset(&eloop.epoll_table[sock], 0, sizeof(struct eloop_sock));
+	os_memset(&eloop.fd_table[sock], 0, sizeof(struct eloop_sock));
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	EV_SET(&ke, sock, 0, EV_DELETE, 0, 0, NULL);
+	if (kevent(eloop.kqueuefd, &ke, 1, NULL, 0, NULL) == -1) {
+		wpa_printf(MSG_ERROR, "%s: kevent(DEL) for fd=%d "
+			   "failed. %s\n", __func__, sock, strerror(errno));
+		return;
+	}
+	os_memset(&eloop.fd_table[sock], 0, sizeof(struct eloop_sock));
+#endif /* CONFIG_ELOOP_KQUEUE */
 }
 
 
@@ -518,7 +596,7 @@ static void eloop_sock_table_dispatch(struct epoll_event *events, int nfds)
 	int i;
 
 	for (i = 0; i < nfds; i++) {
-		table = &eloop.epoll_table[events[i].data.fd];
+		table = &eloop.fd_table[events[i].data.fd];
 		if (table->handler == NULL)
 			continue;
 		table->handler(table->sock, table->eloop_data,
@@ -527,6 +605,22 @@ static void eloop_sock_table_dispatch(struct epoll_event *events, int nfds)
 }
 #endif /* CONFIG_ELOOP_EPOLL */
 
+
+#ifdef CONFIG_ELOOP_KQUEUE
+static void eloop_sock_table_dispatch(struct kevent *events, int nfds)
+{
+	struct eloop_sock *table;
+	int i;
+
+	for (i = 0; i < nfds; i++) {
+		table = &eloop.fd_table[events[i].ident];
+		if (table->handler == NULL)
+			continue;
+		table->handler(table->sock, table->eloop_data,
+			       table->user_data);
+	}
+}
+#endif /* CONFIG_ELOOP_KQUEUE */
 
 static void eloop_sock_table_destroy(struct eloop_sock_table *table)
 {
@@ -908,6 +1002,9 @@ void eloop_run(void)
 #ifdef CONFIG_ELOOP_EPOLL
 	int timeout_ms = -1;
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	struct timespec ts;
+#endif /* CONFIG_ELOOP_KQUEUE */
 	int res;
 	struct os_reltime tv, now;
 
@@ -938,6 +1035,10 @@ void eloop_run(void)
 			_tv.tv_sec = tv.sec;
 			_tv.tv_usec = tv.usec;
 #endif /* CONFIG_ELOOP_SELECT */
+#ifdef CONFIG_ELOOP_KQUEUE
+			ts.tv_sec = tv.sec;
+			ts.tv_nsec = tv.usec * 1000L;
+#endif /* CONFIG_ELOOP_KQUEUE */
 		}
 
 #ifdef CONFIG_ELOOP_POLL
@@ -963,6 +1064,15 @@ void eloop_run(void)
 					 eloop.count, timeout_ms);
 		}
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+		if (eloop.count == 0) {
+			res = 0;
+		} else {
+			res = kevent(eloop.kqueuefd, NULL, 0,
+				     eloop.kqueue_events, eloop.kqueue_nevents,
+				     timeout ? &ts : NULL);
+		}
+#endif /* CONFIG_ELOOP_KQUEUE */
 		if (res < 0 && errno != EINTR && errno != 0) {
 			wpa_printf(MSG_ERROR, "eloop: %s: %s",
 #ifdef CONFIG_ELOOP_POLL
@@ -974,6 +1084,10 @@ void eloop_run(void)
 #ifdef CONFIG_ELOOP_EPOLL
 				   "epoll"
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+				   "kqueue"
+#endif /* CONFIG_ELOOP_EKQUEUE */
+
 				   , strerror(errno));
 			goto out;
 		}
@@ -1011,6 +1125,9 @@ void eloop_run(void)
 #ifdef CONFIG_ELOOP_EPOLL
 		eloop_sock_table_dispatch(eloop.epoll_events, res);
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+		eloop_sock_table_dispatch(eloop.kqueue_events, res);
+#endif /* CONFIG_ELOOP_KQUEUE */
 	}
 
 	eloop.terminate = 0;
@@ -1063,11 +1180,17 @@ void eloop_destroy(void)
 	os_free(eloop.pollfds);
 	os_free(eloop.pollfds_map);
 #endif /* CONFIG_ELOOP_POLL */
+#if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
+	os_free(eloop.fd_table);
+#endif
 #ifdef CONFIG_ELOOP_EPOLL
-	os_free(eloop.epoll_table);
 	os_free(eloop.epoll_events);
 	close(eloop.epollfd);
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	os_free(eloop.kqueue_events);
+	close(eloop.kqueuefd);
+#endif /* CONFIG_ELOOP_KQUEUE */
 }
 
 
@@ -1106,6 +1229,17 @@ void eloop_wait_for_read_sock(int sock)
 	FD_SET(sock, &rfds);
 	select(sock + 1, &rfds, NULL, NULL, NULL);
 #endif /* defined(CONFIG_ELOOP_SELECT) || defined(CONFIG_ELOOP_EPOLL) */
+#ifdef CONFIG_ELOOP_KQUEUE
+	int kfd;
+	struct kevent ke1, ke2;
+
+	kfd = kqueue();
+	if (kfd == -1)
+		return;
+	EV_SET(&ke1, sock, EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, NULL);
+	kevent(kfd, &ke1, 1, &ke2, 1, NULL);
+	close(kfd);
+#endif /* CONFIG_ELOOP_KQUEUE */
 }
 
 #ifdef CONFIG_ELOOP_SELECT
