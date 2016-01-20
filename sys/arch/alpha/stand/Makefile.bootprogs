@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.34 2014/01/16 01:15:33 christos Exp $
+# $NetBSD: Makefile.bootprogs,v 1.35 2016/01/20 12:49:21 jklos Exp $
 
 NOMAN=			# defined
 
@@ -89,9 +89,9 @@ PRIMARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 SECONDARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 
 #	standalone programs are like kernels.  They load at
-#	0xfffffc0000300000 and can use the rest of memory.
+#	0xfffffc0000800000 and can use the rest of memory.
 
-STANDPROG_LOAD_ADDRESS=	0xfffffc0000300000
+STANDPROG_LOAD_ADDRESS=	0xfffffc0000800000
 
 
 FILE_FORMAT_CPPFLAGS=	-DBOOT_ECOFF -DBOOT_ELF64
