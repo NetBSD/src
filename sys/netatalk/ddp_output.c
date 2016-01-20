@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.17 2013/09/12 19:47:58 martin Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.18 2016/01/20 21:59:19 riastradh Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.17 2013/09/12 19:47:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.18 2016/01/20 21:59:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,15 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.17 2013/09/12 19:47:58 martin Exp $
 int ddp_cksum = 1;
 
 int
-ddp_output(struct mbuf *m,...)
+ddp_output(struct mbuf *m, struct ddpcb *ddp)
 {
-	struct ddpcb   *ddp;
 	struct ddpehdr *deh;
-	va_list         ap;
-
-	va_start(ap, m);
-	ddp = va_arg(ap, struct ddpcb *);
-	va_end(ap);
 
 	M_PREPEND(m, sizeof(struct ddpehdr), M_DONTWAIT);
 	if (!m)
