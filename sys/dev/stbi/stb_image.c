@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.7 2016/01/21 17:16:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.8 2016/01/21 17:17:53 christos Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -3358,7 +3358,10 @@ static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
             easy = 2;
       }
       if (!easy) {
-         if (!mr || !mg || !mb) return epuc("bad masks", "Corrupt BMP");
+         if (!mr || !mg || !mb) {
+	    FREE(out);
+	    return epuc("bad masks", "Corrupt BMP");
+	 }
          // right shift amt to put high bit in position #7
          rshift = high_bit(mr)-7; rcount = bitcount(mr);
          gshift = high_bit(mg)-7; gcount = bitcount(mr);
