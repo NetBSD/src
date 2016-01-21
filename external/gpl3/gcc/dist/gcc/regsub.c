@@ -1,4 +1,4 @@
-/*	$NetBSD: regsub.c,v 1.3 2016/01/20 15:13:33 christos Exp $	*/
+/*	$NetBSD: regsub.c,v 1.4 2016/01/21 04:55:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+extern "C" {
+
 #include <sys/param.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -156,4 +159,6 @@ regasub(char **buf, const char *sub, const regmatch_t *rm, const char *str)
 {
 	*buf = NULL;
 	return regsub1(buf, REINCR, sub, rm, str);
+}
+
 }
