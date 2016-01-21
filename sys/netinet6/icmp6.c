@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.178 2016/01/21 15:27:48 riastradh Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.179 2016/01/21 15:41:30 riastradh Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.178 2016/01/21 15:27:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.179 2016/01/21 15:41:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1060,7 +1060,8 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 			ip6cp.ip6c_cmdarg = (void *)&notifymtu;
 		}
 
-		ctlfunc = (inet6sw[ip6_protox[nxt]].ip6pr_protosw.pr_ctlinput);
+		ctlfunc = (void (*)(int, struct sockaddr *, void *))
+			(inet6sw[ip6_protox[nxt]].pr_ctlinput);
 		if (ctlfunc) {
 			(void) (*ctlfunc)(code, (struct sockaddr *)&icmp6dst,
 					  &ip6cp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.327 2016/01/21 15:27:48 riastradh Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.328 2016/01/21 15:41:30 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.327 2016/01/21 15:27:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.328 2016/01/21 15:41:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -301,33 +301,24 @@ void
 ip_init(void)
 {
 	const struct protosw *pr;
-	const struct ipprotosw *ippr;
-	size_t i;
 
 	in_init();
 	sysctl_net_inet_ip_setup(NULL);
 
-	for (i = 0; i < inetdomain.dom_nprotosw; i++) {
-		inetdomain.dom_protosw[i] = &inetsw[i].ippr_protosw;
-	}
-
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	KASSERT(pr != NULL);
-	ippr = container_of(pr, struct ipprotosw, ippr_protosw);
 
 	ip_pktq = pktq_create(IFQ_MAXLEN, ipintr, NULL);
 	KASSERT(ip_pktq != NULL);
 
-	for (i = 0; i < IPPROTO_MAX; i++) {
-		ip_protox[i] = ippr - inetsw;
+	for (u_int i = 0; i < IPPROTO_MAX; i++) {
+		ip_protox[i] = pr - inetsw;
 	}
-	for (i = 0; i < inetdomain.dom_nprotosw; i++) {
-		pr = inetdomain.dom_protosw[i];
-		ippr = container_of(pr, struct ipprotosw, ippr_protosw);
+	for (pr = inetdomain.dom_protosw;
+	    pr < inetdomain.dom_protoswNPROTOSW; pr++)
 		if (pr->pr_domain->dom_family == PF_INET &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
-			ip_protox[pr->pr_protocol] = ippr - inetsw;
-	}
+			ip_protox[pr->pr_protocol] = pr - inetsw;
 
 	ip_reass_init();
 
@@ -764,8 +755,7 @@ ours:
 	 * code - like UDP/TCP/raw IP.
 	 */
 	if (ipsec_used &&
-	    ((inetsw[ip_protox[ip->ip_p]].ippr_protosw.pr_flags & PR_LASTHDR)
-	        != 0)) {
+	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
 		SOFTNET_LOCK();
 		if (ipsec4_input(m, 0) != 0) {
 			SOFTNET_UNLOCK();
@@ -787,7 +777,7 @@ ours:
 	const int off = hlen, nh = ip->ip_p;
 
 	SOFTNET_LOCK();
-	(*inetsw[ip_protox[nh]].ippr_input)(m, off, nh);
+	(*inetsw[ip_protox[nh]].pr_input)(m, off, nh);
 	SOFTNET_UNLOCK();
 	return;
 bad:

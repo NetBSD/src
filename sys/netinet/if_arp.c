@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.201 2016/01/21 15:27:48 riastradh Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.202 2016/01/21 15:41:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.201 2016/01/21 15:27:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.202 2016/01/21 15:41:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -264,9 +264,8 @@ arp_fasttimo(void)
 	}
 }
 
-const struct protosw *const arpsw[] = {
-	&(const struct protosw) {
-	  .pr_type = 0,
+const struct protosw arpsw[] = {
+	{ .pr_type = 0,
 	  .pr_domain = &arpdomain,
 	  .pr_protocol = 0,
 	  .pr_flags = 0,
@@ -285,7 +284,7 @@ struct domain arpdomain = {
 	.dom_family = PF_ARP,
 	.dom_name = "arp",
 	.dom_protosw = arpsw,
-	.dom_nprotosw = __arraycount(arpsw),
+	.dom_protoswNPROTOSW = &arpsw[__arraycount(arpsw)],
 };
 
 static void sysctl_net_inet_arp_setup(struct sysctllog **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.h,v 1.3 2016/01/21 15:27:48 riastradh Exp $	*/
+/*	$NetBSD: in_proto.h,v 1.4 2016/01/21 15:41:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,11 +34,6 @@
 #ifndef _NETINET_IN_PROTO_H_
 #define _NETINET_IN_PROTO_H_
 
-struct ipprotosw {
-	struct protosw	ippr_protosw;
-	void		(*ippr_input)(struct mbuf *, int, int);
-};
-
-extern const struct ipprotosw inetsw[];
+extern const struct protosw inetsw[];
 
 #endif /* !_NETINET_IN_PROTO_H_ */
