@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.23 2016/01/20 21:44:00 riastradh Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.24 2016/01/21 15:27:48 riastradh Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -112,32 +112,8 @@ struct ip6ctlparam {
 };
 
 struct ip6protosw {
-	int 	pr_type;		/* socket type used for */
-	struct	domain *pr_domain;	/* domain protocol a member of */
-	short	pr_protocol;		/* protocol number */
-	short	pr_flags;		/* see below */
-
-/* protocol-protocol hooks */
-	int	(*pr_input)		/* input to protocol (from below) */
-			(struct mbuf **, int *, int);
-	void	*(*pr_ctlinput)		/* control input (from below) */
-			(int, const struct sockaddr *, void *);
-	int	(*pr_ctloutput)		/* control output (from above) */
-			(int, struct socket *, struct sockopt *);
-
-/* user-protocol hook */
-	const struct pr_usrreqs *pr_usrreqs;
-
-/* utility hooks */
-	void	(*pr_init)		/* initialization hook */
-			(void);
-
-	void	(*pr_fasttimo)		/* fast timeout (200ms) */
-			(void);
-	void	(*pr_slowtimo)		/* slow timeout (500ms) */
-			(void);
-	void	(*pr_drain)		/* flush any excess space possible */
-			(void);
+	struct protosw	ip6pr_protosw;
+	int		(*ip6pr_input)(struct mbuf **, int *, int);
 };
 
 extern const struct ip6protosw inet6sw[];
