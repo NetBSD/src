@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.2 2016/01/21 15:27:48 riastradh Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.3 2016/01/21 15:41:30 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.2 2016/01/21 15:27:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.3 2016/01/21 15:41:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.2 2016/01/21 15:27:48 riastradh E
 #endif
 
 #include <net/net_osdep.h>
+
+extern struct protosw inetsw[];
 
 #if defined(HAVE_NRL_INPCB) || defined(__FreeBSD__)
 #ifndef in6pcb
