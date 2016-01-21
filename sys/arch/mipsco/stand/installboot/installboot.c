@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.9 2013/06/27 21:23:21 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.10 2016/01/21 16:58:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -208,6 +208,7 @@ do_install(const char *disk, const char *bootstrap, const char *bootname)
 	if (nowrite) {
 	    if (verbose)
 		    fprintf(stderr, "not writing\n");
+	    free(boot_code);
 	    return;
 	}
 
