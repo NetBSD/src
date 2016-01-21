@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.320 2016/01/04 09:08:38 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.321 2016/01/21 15:27:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.320 2016/01/04 09:08:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.321 2016/01/21 15:27:48 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -745,7 +745,8 @@ if_detach(struct ifnet *ifp)
 #endif
 	struct domain *dp;
 	const struct protosw *pr;
-	int s, i, family, purged;
+	size_t i;
+	int s, family, purged;
 	uint64_t xc;
 
 	/*
@@ -828,8 +829,9 @@ again:
 		 * ifp->if_addrlist.
 		 */
 		purged = 0;
-		for (pr = dp->dom_protosw;
-		     pr < dp->dom_protoswNPROTOSW; pr++) {
+		for (i = 0; i < dp->dom_nprotosw; i++) {
+			pr = dp->dom_protosw[i];
+			KASSERT(pr != NULL);
 			so.so_proto = pr;
 			if (pr->pr_usrreqs) {
 				(void) (*pr->pr_usrreqs->pr_purgeif)(&so, ifp);
