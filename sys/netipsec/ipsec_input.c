@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.33 2015/03/30 03:51:50 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.34 2016/01/21 15:27:48 riastradh Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.33 2015/03/30 03:51:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.34 2016/01/21 15:27:48 riastradh Exp $");
 
 /*
  * IPsec input processing.
@@ -431,12 +431,12 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 	key_sa_recordxfer(sav, m);		/* record data transfer */
 
-	if ((inetsw[ip_protox[prot]].pr_flags & PR_LASTHDR) != 0 &&
+	if ((inetsw[ip_protox[prot]].ippr_proto.pr_flags & PR_LASTHDR) != 0 &&
 				ipsec4_in_reject(m, NULL)) {
 		error = EINVAL;
 		goto bad;
 	}
-	(*inetsw[ip_protox[prot]].pr_input)(m, skip, prot);
+	(*inetsw[ip_protox[prot]].ippr_input)(m, skip, prot);
 	return 0;
 bad:
 	m_freem(m);

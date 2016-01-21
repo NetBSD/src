@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.28 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.29 2016/01/21 15:27:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.28 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.29 2016/01/21 15:27:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -98,7 +98,7 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_purgeif	= link_purgeif,
 };
 
-const struct protosw linksw[] = {
+const struct protosw *const linksw[] = {
 	{	.pr_type = SOCK_DGRAM,
 		.pr_domain = &linkdomain,
 		.pr_protocol = 0,	/* XXX */
@@ -117,7 +117,7 @@ struct domain linkdomain = {
 	.dom_externalize = NULL,
 	.dom_dispose = NULL,
 	.dom_protosw = linksw,
-	.dom_protoswNPROTOSW = &linksw[__arraycount(linksw)],
+	.dom_nprotosw = __arraycount(linksw),
 	.dom_sockaddr_cmp = sockaddr_dl_cmp
 };
 
