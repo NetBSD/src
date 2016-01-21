@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.175 2016/01/20 21:43:59 riastradh Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.176 2016/01/21 15:27:48 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.175 2016/01/20 21:43:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.176 2016/01/21 15:27:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1532,7 +1532,7 @@ static const struct pr_usrreqs route_usrreqs = {
 	.pr_purgeif	= COMPATNAME(route_purgeif_wrapper),
 };
 
-static const struct protosw COMPATNAME(route_protosw)[] = {
+static const struct protosw *const COMPATNAME(route_protosw)[] = {
 	{
 		.pr_type = SOCK_RAW,
 		.pr_domain = &COMPATNAME(routedomain),
@@ -1549,8 +1549,7 @@ struct domain COMPATNAME(routedomain) = {
 	.dom_name = DOMAINNAME,
 	.dom_init = COMPATNAME(route_init),
 	.dom_protosw = COMPATNAME(route_protosw),
-	.dom_protoswNPROTOSW =
-	    &COMPATNAME(route_protosw)[__arraycount(COMPATNAME(route_protosw))],
+	.dom_nprotosw = __arraycount(COMPATNAME(route_protosw)),
 };
 
 static void

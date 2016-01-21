@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.142 2015/08/31 06:25:15 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.143 2016/01/21 15:27:48 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.142 2015/08/31 06:25:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.143 2016/01/21 15:27:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -395,6 +395,7 @@ icmp_input(struct mbuf *m, ...)
 	void *(*ctlfunc)(int, const struct sockaddr *, void *);
 	int code;
 	int hlen;
+	unsigned char protox;
 	va_list ap;
 	struct rtentry *rt;
 
@@ -526,7 +527,8 @@ icmp_input(struct mbuf *m, ...)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
-		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
+		protox = ip_protox[icp->icmp_ip.ip_p];
+		ctlfunc = inetsw[protox].ippr_protosw.pr_ctlinput;
 		if (ctlfunc)
 			(void) (*ctlfunc)(code, sintosa(&icmpsrc),
 			    &icp->icmp_ip);

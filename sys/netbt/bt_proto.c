@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.14 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.15 2016/01/21 15:27:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.14 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.15 2016/01/21 15:27:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -62,8 +62,8 @@ PR_WRAP_CTLOUTPUT(rfcomm_ctloutput)
 #define	l2cap_ctloutput		l2cap_ctloutput_wrapper
 #define	rfcomm_ctloutput	rfcomm_ctloutput_wrapper
 
-static const struct protosw btsw[] = {
-	{ /* raw HCI commands */
+static const struct protosw *const btsw[] = {
+	&(const struct protosw) { /* raw HCI commands */
 		.pr_type = SOCK_RAW,
 		.pr_domain = &btdomain,
 		.pr_protocol = BTPROTO_HCI,
@@ -72,7 +72,7 @@ static const struct protosw btsw[] = {
 		.pr_ctloutput = hci_ctloutput,
 		.pr_usrreqs = &hci_usrreqs,
 	},
-	{ /* HCI SCO data (audio) */
+	&(const struct protosw) { /* HCI SCO data (audio) */
 		.pr_type = SOCK_SEQPACKET,
 		.pr_domain = &btdomain,
 		.pr_protocol = BTPROTO_SCO,
@@ -80,7 +80,7 @@ static const struct protosw btsw[] = {
 		.pr_ctloutput = sco_ctloutput,
 		.pr_usrreqs = &sco_usrreqs,
 	},
-	{ /* L2CAP Connection Oriented */
+	&(const struct protosw) { /* L2CAP Connection Oriented */
 		.pr_type = SOCK_SEQPACKET,
 		.pr_domain = &btdomain,
 		.pr_protocol = BTPROTO_L2CAP,
@@ -89,7 +89,7 @@ static const struct protosw btsw[] = {
 		.pr_usrreqs = &l2cap_usrreqs,
 		.pr_init = l2cap_init,
 	},
-	{ /* RFCOMM */
+	&(const struct protosw) { /* RFCOMM */
 		.pr_type = SOCK_STREAM,
 		.pr_domain = &btdomain,
 		.pr_protocol = BTPROTO_RFCOMM,
@@ -105,7 +105,7 @@ struct domain btdomain = {
 	.dom_name = "bluetooth",
 	.dom_init = bt_init,
 	.dom_protosw = btsw,
-	.dom_protoswNPROTOSW = &btsw[__arraycount(btsw)],
+	.dom_nprotosw = __arraycount(btsw),
 };
 
 kmutex_t *bt_lock;
