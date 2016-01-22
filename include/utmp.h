@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.h,v 1.12 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: utmp.h,v 1.13 2016/01/22 23:59:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,6 +38,9 @@
 
 #ifndef	_UTMP_H_
 #define	_UTMP_H_
+
+#include <sys/cdefs.h>
+#include <time.h> /* for time_t */
 
 #define	_PATH_UTMP	"/var/run/utmp"
 #define	_PATH_WTMP	"/var/log/wtmp"
