@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.177 2016/01/18 23:27:20 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.178 2016/01/22 04:26:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.177 2016/01/18 23:27:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.178 2016/01/22 04:26:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -35,6 +35,9 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.177 2016/01/18 23:27:20 pooka Exp $");
 #include <sys/module.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#ifdef LOCKDEBUG
+#include <sys/sleepq.h>
+#endif
 
 #include <dev/cons.h>
 
