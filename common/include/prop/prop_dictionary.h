@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.14 2011/09/30 22:08:18 jym Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.15 2016/01/22 23:03:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define	_PROPLIB_PROP_DICTIONARY_H_
 
 #include <prop/prop_object.h>
+#include <prop/prop_array.h>
 
 typedef struct _prop_dictionary *prop_dictionary_t;
 typedef struct _prop_dictionary_keysym *prop_dictionary_keysym_t;
