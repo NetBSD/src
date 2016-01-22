@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.h,v 1.1 2010/08/25 07:16:00 manu Exp $ */
+/*  $NetBSD: perfuse.h,v 1.2 2016/01/22 22:25:50 dholland Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -27,6 +27,9 @@
 
 #ifndef _REFUSE_PERFUSE_WRAPPER_H
 #define _REFUSE_PERFUSE_WRAPPER_H
+
+#include <sys/cdefs.h>
+#include <sys/types.h>
 
 __BEGIN_DECLS
 
