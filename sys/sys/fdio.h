@@ -1,4 +1,4 @@
-/*	$NetBSD: fdio.h,v 1.4 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: fdio.h,v 1.5 2016/01/22 23:35:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ enum fdformat_result {
 #define FDFORMAT_VERSION 19961120
 
 struct fdformat_cmd {
-	u_int formatcmd_version;	/* FDFORMAT_VERSION */
+	unsigned formatcmd_version;	/* FDFORMAT_VERSION */
 	int head;		/* IN */
 	int cylinder;		/* IN */
 };
@@ -54,20 +54,20 @@ struct fdformat_cmd {
 struct fdformat_parms {
 /* list of items taken from i386 formatting glop (NEC 765);
    should be made the union of support needed for other devices. */
-    u_int fdformat_version;	/* rev this when needed; write drivers to
+    unsigned fdformat_version;	/* rev this when needed; write drivers to
 				   allow forward compatibility, please,
 				   and add elements to the end of the
 				   structure */
-    u_int nbps;				/* number of bytes per sector */
-    u_int ncyl;				/* number of cylinders */
-    u_int nspt;				/* sectors per track */
-    u_int ntrk;				/* number of heads/tracks per cyl */
-    u_int stepspercyl;			/* steps per cylinder */
-    u_int gaplen;			/* formatting gap length */
-    u_int fillbyte;			/* formatting fill byte */
-    u_int xfer_rate;			/* in bits per second; driver
+    unsigned nbps;			/* number of bytes per sector */
+    unsigned ncyl;			/* number of cylinders */
+    unsigned nspt;			/* sectors per track */
+    unsigned ntrk;			/* number of heads/tracks per cyl */
+    unsigned stepspercyl;		/* steps per cylinder */
+    unsigned gaplen;			/* formatting gap length */
+    unsigned fillbyte;			/* formatting fill byte */
+    unsigned xfer_rate;			/* in bits per second; driver
 					   must convert */
-    u_int interleave;			/* interleave factor */
+    unsigned interleave;		/* interleave factor */
 };
 
 
