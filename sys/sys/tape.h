@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.h,v 1.3 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: tape.h,v 1.4 2016/01/22 23:44:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _SYS_TAPE_H_
 
 #include <sys/queue.h>
+#include <sys/time.h>
 
 #define	TAPENAMELEN	16
 
