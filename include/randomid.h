@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.h,v 1.2 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: randomid.h,v 1.3 2016/01/22 23:15:42 dholland Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -68,6 +68,8 @@
 
 #ifndef _RANDOMID_H_
 #define _RANDOMID_H_
+
+#include <stdint.h>
 
 struct randomid_ctx;
 
