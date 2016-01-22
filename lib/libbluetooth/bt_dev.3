@@ -1,4 +1,4 @@
-.\" $NetBSD: bt_dev.3,v 1.3 2011/10/25 09:33:55 plunky Exp $
+.\" $NetBSD: bt_dev.3,v 1.4 2016/01/22 08:51:40 plunky Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -155,7 +155,7 @@ structure contains at least the following members:
         /* flow control */
         uint16_t    cmd_free;   /* available CMD packet buffers */
         uint16_t    acl_free;   /* available ACL packet buffers */
-        uint16_t    sco_free;   /* available ACL packet buffers */
+        uint16_t    sco_free;   /* available SCO packet buffers */
 
         /* statistics */
         uint32_t    cmd_sent;
