@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.39 2016/01/22 08:50:00 plunky Exp $
+.\"	$NetBSD: directory.3,v 1.40 2016/01/22 09:32:50 pgoyette Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -290,8 +290,8 @@ Based on historical implementations,
 the rules about file descriptors apply to directory streams as well.
 The
 .St -p1003.1-2008
-standard does not however any more mandate that directory streams
-are necessarily implemented by using file descriptors.
+standard no longer mandates that directory streams be
+implemented by using file descriptors.
 .Pp
 The following additional remarks can be noted from the
 .St -p1003.1-2008
@@ -346,7 +346,7 @@ and
 .Fn seekdir ,
 any subsequent call to
 .Fn readdir
-is unspecified, possibly resulting undefined behavior.
+is unspecified, possibly resulting in undefined behavior.
 .It
 After a call to
 .Xr fork 2 ,
