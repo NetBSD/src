@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.70 2016/01/22 05:15:10 riastradh Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.71 2016/01/22 23:27:12 riastradh Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.70 2016/01/22 05:15:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.71 2016/01/22 23:27:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.70 2016/01/22 05:15:10 riastradh Exp $"
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/protosw.h>
 #include <sys/kernel.h>
 
 #include <net/if.h>
@@ -78,9 +79,15 @@ int ip_gif_ttl = GIF_TTL;
 int ip_gif_ttl = 0;
 #endif
 
-static const struct encapsw in_gif_encapsw = {
-	.en_input	= in_gif_input,
-	.en_ctlinput	= NULL,
+static const struct protosw in_gif_protosw = {
+	.pr_type	= SOCK_RAW,
+	.pr_domain	= &inetdomain,
+	.pr_protocol	= 0 /* IPPROTO_IPV[46] */,
+	.pr_flags	= PR_ATOMIC|PR_ADDR,
+	.pr_input	= in_gif_input,
+	.pr_ctlinput	= NULL,
+	.pr_ctloutput	= rip_ctloutput,
+	.pr_usrreqs	= &rip_usrreqs,
 };
 
 int
@@ -374,10 +381,10 @@ in_gif_attach(struct gif_softc *sc)
 		return EINVAL;
 	sc->encap_cookie4 = encap_attach(AF_INET, -1, sc->gif_psrc,
 	    (struct sockaddr *)&mask4, sc->gif_pdst, (struct sockaddr *)&mask4,
-	    &in_gif_encapsw, sc);
+	    (const struct protosw *)&in_gif_protosw, sc);
 #else
 	sc->encap_cookie4 = encap_attach_func(AF_INET, -1, gif_encapcheck,
-	    &in_gif_encapsw, sc);
+	    &in_gif_protosw, sc);
 #endif
 	if (sc->encap_cookie4 == NULL)
 		return EEXIST;
@@ -385,7 +392,7 @@ in_gif_attach(struct gif_softc *sc)
 }
 
 int
-in_gif_detach(struct gif_softc *sc)
+in_gif_pause(struct gif_softc *sc)
 {
 	int error;
 
@@ -393,7 +400,14 @@ in_gif_detach(struct gif_softc *sc)
 	if (error == 0)
 		sc->encap_cookie4 = NULL;
 
+	return error;
+}
+
+int
+in_gif_detach(struct gif_softc *sc)
+{
+
 	rtcache_free(&sc->gif_ro);
 
-	return error;
+	return 0;
 }
