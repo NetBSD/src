@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_opt.h,v 1.5 2009/04/19 22:25:29 christos Exp $	*/
+/*	$NetBSD: fuse_opt.h,v 1.6 2016/01/22 22:39:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
@@ -30,6 +30,8 @@
 
 #ifndef _FUSE_OPT_H_
 #define _FUSE_OPT_H_
+
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
