@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.h,v 1.7 2003/08/07 09:44:13 agc Exp $	*/
+/*	$NetBSD: rwhod.h,v 1.8 2016/01/22 23:11:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _PROTOCOLS_RWHOD_H_
 #define	_PROTOCOLS_RWHOD_H_
+
+#include <stdint.h>
 
 /*
  * rwho protocol packet format.

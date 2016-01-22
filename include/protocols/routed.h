@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.14 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: routed.h,v 1.15 2016/01/22 23:11:50 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1993
@@ -33,6 +33,9 @@
 
 #ifndef _PROTOCOLS_ROUTED_H_
 #define	_PROTOCOLS_ROUTED_H_
+
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
