@@ -31,6 +31,10 @@
 #ifndef _LIB_DM_H_
 #define _LIB_DM_H_
 
+#include <sys/cdefs.h>
+#include <stddef.h>
+#include <stdint.h>
+
 __BEGIN_DECLS
 
 #define DM_DEVICE_PATH "/dev/mapper/control"
