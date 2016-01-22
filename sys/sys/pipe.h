@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.32 2009/12/20 09:36:06 dsl Exp $ */
+/* $NetBSD: pipe.h,v 1.33 2016/01/22 23:38:45 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -27,6 +27,7 @@
 #define _SYS_PIPE_H_
 
 #include <sys/selinfo.h>		/* for struct selinfo */
+#include <sys/time.h>			/* for struct timespec */
 
 #include <uvm/uvm_extern.h>
 
