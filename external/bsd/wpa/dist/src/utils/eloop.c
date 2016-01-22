@@ -254,6 +254,9 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 #ifdef CONFIG_ELOOP_EPOLL
 	struct epoll_event *temp_events;
 #endif /* CONFIG_ELOOP_EPOLL */
+#ifdef CONFIG_ELOOP_KQUEUE
+	struct kevent *temp_events;
+#endif /* CONFIG_ELOOP_EPOLL */
 #if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
 	struct eloop_sock *temp_table;
 	int next;
@@ -325,15 +328,15 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 #ifdef CONFIG_ELOOP_KQUEUE
 	if (eloop.count + 1 > eloop.kqueue_nevents) {
 		next = eloop.kqueue_nevents == 0 ? 8 : eloop.kqueue_nevents * 2;
-		os_free(eloop.kqueue_events);
-		eloop.kqueue_events = os_malloc(next *
-					        sizeof(eloop.kqueue_events));
-		if (eloop.kqueue_events == NULL) {
+		temp_events = os_malloc(next * sizeof(*temp_events));
+		if (temp_events == NULL) {
 			wpa_printf(MSG_ERROR, "%s: malloc for kqueue failed. "
 				   "%s\n", __func__, strerror(errno));
 			return -1;
 		}
 
+		os_free(eloop.kqueue_events);
+		eloop.kqueue_events = temp_events;
 		eloop.kqueue_nevents = next;
 	}
 #endif /* CONFIG_ELOOP_KQUEUE */
