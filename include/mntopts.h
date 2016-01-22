@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.15 2012/10/19 17:09:06 drochner Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.16 2016/01/22 22:26:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -32,6 +32,8 @@
  */
 #ifndef _MNTOPTS_H_
 #define _MNTOPTS_H_
+
+#include <sys/cdefs.h>
 
 struct mntopt {
 	const char *m_option;	/* option name */
