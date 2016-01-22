@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.22 2014/12/26 22:44:54 christos Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.23 2016/01/22 22:03:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ any			return ANY;
 			return IPV6ADDR;
 		}
 
-"::"{HEXDIG}[0-9a-fA-F:]* {
+"::"{HEXDIG}[0-9a-fA-F:.]* {
 			yylval.str = estrndup(yytext, yyleng);
 			return IPV6ADDR;
 		}
