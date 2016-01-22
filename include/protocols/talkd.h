@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.h,v 1.10 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: talkd.h,v 1.11 2016/01/22 23:11:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,6 +34,8 @@
 #ifndef _PROTOCOLS_TALKD_H_
 #define	_PROTOCOLS_TALKD_H_
 
+#include <stdint.h>
+
 /*
  * This describes the protocol used by the talk server and clients.
  *
@@ -64,10 +66,10 @@ struct talkd_sockaddr {
  * Client->server request message format.
  */
 typedef struct {
-	u_char	  vers;			/* protocol version */
-	u_char	  type;			/* request type, see below */
-	u_char	  answer;		/* not used */
-	u_char	  pad;
+	unsigned char vers;		/* protocol version */
+	unsigned char type;		/* request type, see below */
+	unsigned char answer;		/* not used */
+	unsigned char pad;
 	uint32_t id_num;		/* message id */
 	struct	  talkd_sockaddr addr;	/* old (4.3) style */
 	struct	  talkd_sockaddr ctl_addr;/* old (4.3) style */
@@ -83,10 +85,10 @@ typedef struct {
  * Server->client response message format.
  */
 typedef struct {
-	u_char	  vers;		/* protocol version */
-	u_char	  type;		/* type of request message, see below */
-	u_char	  answer;	/* respose to request message, see below */
-	u_char	  pad;
+	unsigned char vers;	/* protocol version */
+	unsigned char type;	/* type of request message, see below */
+	unsigned char answer;	/* respose to request message, see below */
+	unsigned char pad;
 	uint32_t id_num;	/* message id */
 	struct	  talkd_sockaddr addr; /* address for establishing conversation */
 } CTL_RESPONSE;
