@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.95 2016/01/22 06:34:59 ozaki-r Exp $	*/
+/*	$NetBSD: midway.c,v 1.96 2016/01/22 06:51:47 ozaki-r Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.95 2016/01/22 06:34:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.96 2016/01/22 06:51:47 ozaki-r Exp $");
 
 #include "opt_natm.h"
 
@@ -2768,7 +2768,7 @@ EN_INTR_TYPE en_intr(void *arg)
 
 	  bpf_mtap(ifp, m);
 
-	  ifp->if_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
+	  atm_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
 	}
 
       }
