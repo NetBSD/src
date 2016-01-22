@@ -643,7 +643,6 @@ static void eloop_sock_table_dispatch(struct kevent *events, int nfds)
 static int eloop_sock_table_requeue(struct eloop_sock_table *table)
 {
 	int i, r;
-	struct kevent ke;
 
 	r = 0;
 	for (i = 0; i < table->count && table->table; i++) {
