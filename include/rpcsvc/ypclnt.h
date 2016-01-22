@@ -1,4 +1,4 @@
-/*	$NetBSD: ypclnt.h,v 1.14 2012/03/02 17:27:48 christos Exp $	*/
+/*	$NetBSD: ypclnt.h,v 1.15 2016/01/22 23:23:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,6 +28,8 @@
 
 #ifndef _RPCSVC_YPCLNT_H_
 #define _RPCSVC_YPCLNT_H_
+
+#include <sys/cdefs.h>
 
 #define YPERR_BADARGS	1		/* args to function are bad */
 #define YPERR_RPC	2		/* RPC failure */
