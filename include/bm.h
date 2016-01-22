@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.h,v 1.5 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: bm.h,v 1.6 2016/01/22 21:55:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 #define	_BM_H_
 
 typedef struct {
-	u_char	*pat;			/* pattern */
+	unsigned char *pat;		/* pattern */
 	size_t	 patlen;		/* pattern length */
 	size_t	*delta;			/* skip delta */
 	int	 rarec;			/* rare character */
@@ -49,8 +49,8 @@ typedef struct {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-bm_pat	*bm_comp(u_char const *, size_t, u_char const *);
-u_char	*bm_exec(bm_pat *, u_char *, size_t);
+bm_pat	*bm_comp(unsigned char const *, size_t, unsigned char const *);
+unsigned char *bm_exec(bm_pat *, unsigned char *, size_t);
 void	 bm_free(bm_pat *);
 __END_DECLS
 
