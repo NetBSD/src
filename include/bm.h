@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.h,v 1.6 2016/01/22 21:55:57 dholland Exp $	*/
+/*	$NetBSD: bm.h,v 1.7 2016/01/22 22:27:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -36,6 +36,8 @@
 
 #ifndef _BM_H_
 #define	_BM_H_
+
+#include <stddef.h>
 
 typedef struct {
 	unsigned char *pat;		/* pattern */
