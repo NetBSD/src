@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.h,v 1.12 2016/01/22 23:11:50 dholland Exp $	*/
+/*	$NetBSD: timed.h,v 1.13 2016/01/22 23:13:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -55,7 +55,7 @@ struct tsp {
 		} tspu_time;
 		char tspu_hopcnt;
 	} tsp_u;
-	char tsp_name[_POSIX_HOST_NAME_MAX];
+	char tsp_name[_POSIX_HOST_NAME_MAX+1];
 };
 
 #define	tsp_time	tsp_u.tspu_time
