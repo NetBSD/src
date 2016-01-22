@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.h,v 1.7 2011/02/16 19:29:35 christos Exp $	*/
+/*	$NetBSD: rmt.h,v 1.8 2016/01/22 23:15:58 dholland Exp $	*/
 
 /*
  *	rmt.h
@@ -18,6 +18,7 @@
 #define _RMT_H_
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
 
 #if _FORTIFY_SOURCE > 0
 #define __ssp_weak_name(x)	rmt ## x
