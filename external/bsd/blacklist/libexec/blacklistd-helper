@@ -17,7 +17,16 @@ add)
 	if [ -n "$6" ]; then
 		port="port $6"
 	fi
-	exec /sbin/npfctl rule $2 add block in final $proto from $4/$5 to any $port
+	addr=$4
+	mask=$5
+	case "$4" in
+	::ffff:*.*.*.*)
+		if [ "$5" = 128 ]; then
+			mask=32
+			addr=${4#::ffff:}
+		fi;;
+	esac
+	exec /sbin/npfctl rule $2 add block in final $proto from $addr/$mask to any $port
 	;;
 rem)
 	exec /sbin/npfctl rule $2 rem-id $7
