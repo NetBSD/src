@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.38 2012/10/08 18:15:09 njoly Exp $
+.\"	$NetBSD: directory.3,v 1.39 2016/01/22 08:50:00 plunky Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 15, 2011
+.Dd January 22, 2016
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -246,10 +246,12 @@ associated with the directory stream specified by
 Upon failure,
 .Fn dirfd
 returns \-1.
-The returned file descriptor should be closed by
-.Fn closedir
-instead of
-.Xr close 2 .
+The returned file descriptor should not be closed by
+.Xr close 2 ,
+it will be released when
+.Fa dirp
+is closed with
+.Fn closedir .
 .Pp
 The rationale of
 .Fn dirfd
