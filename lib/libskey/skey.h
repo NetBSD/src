@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.h,v 1.9 2005/02/04 16:12:13 perry Exp $	*/
+/*	$NetBSD: skey.h,v 1.10 2016/01/22 23:25:51 dholland Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.h)
@@ -14,6 +14,8 @@
  *
  * Main client header
  */
+
+#include <stdio.h>
 
 /* Server-side data structure for reading keys file during login */
 struct skey {
