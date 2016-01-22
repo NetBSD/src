@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.h,v 1.11 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: login_cap.h,v 1.12 2016/01/22 21:55:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -73,15 +73,15 @@ login_cap_t *login_getpwclass(const struct passwd *)
     __RENAME(__login_getpwclass50);
 #endif
 void	 login_close(login_cap_t *);
-int	 login_getcapbool(login_cap_t *, const char *, u_int);
+int	 login_getcapbool(login_cap_t *, const char *, unsigned);
 quad_t	 login_getcapnum(login_cap_t *, const char *, quad_t, quad_t);
 quad_t	 login_getcapsize(login_cap_t *, const char *, quad_t, quad_t);
 char	*login_getcapstr(login_cap_t *, const char *, char *, char *);
 quad_t	 login_getcaptime(login_cap_t *, const char *, quad_t, quad_t);
 
-int	setclasscontext(const char *, u_int);
+int	setclasscontext(const char *, unsigned);
 #ifndef __LIBC12_SOURCE__
-int	setusercontext(login_cap_t *, struct passwd *, uid_t, u_int)
+int	setusercontext(login_cap_t *, struct passwd *, uid_t, unsigned)
     __RENAME(__setusercontext50);
 #endif
 void	setuserpath(login_cap_t *, const char *, envfunc_t, void *);
