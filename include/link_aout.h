@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.21 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.22 2016/01/22 21:55:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 struct sod {	/* Shared Object Descriptor */
 	long	sod_name;		/* name (relative to load address) */
-	u_int	sod_library  : 1,	/* Searched for by library rules */
+	unsigned sod_library  : 1,	/* Searched for by library rules */
 		sod_reserved : 31;
 	short	sod_major;		/* major version number */
 	short	sod_minor;		/* minor version number */
@@ -71,7 +71,7 @@ struct so_map {		/* Shared Object Map */
 	struct so_map	*som_next;	/* Next map in chain */
 	struct sod	*som_sod;	/* Sod responsible for this map */
 	caddr_t		som_sodbase;	/* Base address of this sod */
-	u_int		som_write : 1;	/* Text is currently writable */
+	unsigned	som_write : 1;	/* Text is currently writable */
 	struct _dynamic	*som_dynamic;	/* _dynamic structure */
 	caddr_t		som_spd;	/* Private data */
 };
@@ -85,7 +85,7 @@ struct so_map {		/* Shared Object Map */
  */
 struct nzlist {
 	struct nlist	nlist;
-	u_long		nz_size;
+	unsigned long	nz_size;
 #define nz_un		nlist.n_un
 #define nz_strx		nlist.n_un.n_strx
 #define nz_name		nlist.n_un.n_name

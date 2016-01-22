@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.16 2011/09/12 21:14:29 christos Exp $	*/
+/*	$NetBSD: kvm.h,v 1.17 2016/01/22 21:55:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -71,7 +71,7 @@ char	 *kvm_geterr(kvm_t *);
 int	  kvm_getloadavg(kvm_t *, double [], int);
 char	 *kvm_getfiles(kvm_t *, int, int, int *);
 struct kinfo_lwp *
-	  kvm_getlwps(kvm_t *, int, u_long, size_t, int *);
+	  kvm_getlwps(kvm_t *, int, unsigned long, size_t, int *);
 struct kinfo_proc2 *
 	  kvm_getproc2(kvm_t *, int, int, size_t, int *);
 struct kinfo_proc *
@@ -80,8 +80,8 @@ int	  kvm_nlist(kvm_t *, struct nlist *);
 kvm_t	 *kvm_open
 	    (const char *, const char *, const char *, int, const char *);
 kvm_t	 *kvm_openfiles(const char *, const char *, const char *, int, char *);
-ssize_t	  kvm_read(kvm_t *, u_long, void *, size_t);
-ssize_t	  kvm_write(kvm_t *, u_long, const void *, size_t);
+ssize_t	  kvm_read(kvm_t *, unsigned long, void *, size_t);
+ssize_t	  kvm_write(kvm_t *, unsigned long, const void *, size_t);
 const char *kvm_getkernelname(kvm_t *);
 
 __END_DECLS
