@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.29 2016/01/22 03:38:57 zafer Exp $
+.\"	$NetBSD: resolver.3,v 1.30 2016/01/22 10:58:39 wiz Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -33,7 +33,7 @@
 .\"	@(#)resolver.3	6.5 (Berkeley) 6/23/90
 .\"	Id: resolver.man3,v 1.2 2009/01/21 00:12:34 each Exp
 .\"
-.Dd November 13, 2013
+.Dd January 22, 2016
 .Dt RESOLVER 3
 .Os
 .Sh NAME
@@ -217,8 +217,7 @@ are initialized on the first call to
 /
 .Fn res_init
 to reasonable defaults and can be ignored.
-Options
-stored in
+Options stored in
 .Ft statp->options
 /
 .Ft _res.options
@@ -299,7 +298,7 @@ the
 environment variable.
 Network daemons should set this option.
 .It Dv RES_ROTATE
-This options causes the
+This options causes
 .Fn res_nsend
 /
 .Fn res_send
@@ -323,15 +322,15 @@ This option has no effect if neither
 .Dv RES_DEFNAMES
 or
 .Dv RES_DNSRCH
-is set.
+are set.
 .El
 .Pp
 The
 .Fn res_ninit
 /
 .Fn res_init
-routine
-reads the configuration file (if any; see
+routines
+read the configuration file (if any; see
 .Xr resolv.conf 5 )
 to get the default domain name, search list and
 the Internet address of the local name server(s).
@@ -397,9 +396,9 @@ The
 .Fn res_nquery
 /
 .Fn res_query
-functions provides interfaces to the server query mechanism.
-They constructs a query, sends it to the local server,
-awaits a response, and makes preliminary checks on the reply.
+functions provide interfaces to the server query mechanism.
+They construct a query, send it to the local server,
+await a response, and make preliminary checks on the reply.
 The query requests information of the specified
 .Fa type
 and
@@ -424,13 +423,13 @@ routines make a query and awaits a response like
 .Fn res_nquery
 /
 .Fn res_query ,
-but in addition, it implements the default and search rules
+but in addition, they implement the default and search rules
 controlled by the
 .Dv RES_DEFNAMES
 and
 .Dv RES_DNSRCH
 options.
-It returns the length of the first successful reply which is stored in
+They return the length of the first successful reply which is stored in
 .Ft answer
 or \-1 on error.
 .Pp
@@ -442,10 +441,9 @@ The
 .Fn res_nmkquery
 /
 .Fn res_mkquery
-functions
-constructs a standard query message and places it in
+functions construct a standard query message and place it in
 .Fa buf .
-It returns the size of the query, or \-1 if the query is
+They return the size of the query, or \-1 if the query is
 larger than
 .Fa buflen .
 The query type
@@ -466,8 +464,8 @@ The
 /
 .Fn res_nsendsigned
 routines
-sends a pre-formatted query and returns an answer.
-It will call
+send a pre-formatted query and return an answer.
+They will call
 .Fn res_ninit
 /
 .Fn res_init
@@ -495,12 +493,14 @@ and
 return a length that may be bigger than
 .Fa anslen .
 In that case the query should be retried with a bigger buffer.
-NOTE the answer to the second query may be larger still so supplying
+.Em NOTE :
+The answer to the second query may be larger still so supplying
 a buffer that bigger that the answer returned by the previous
 query is recommended.
 .Pp
 .Fa answer
-MUST be big enough to receive a maximum UDP response from the server or
+.Em MUST
+be big enough to receive a maximum UDP response from the server or
 parts of the answer will be silently discarded.
 The default maximum UDP response size is 512 bytes.
 .Pp
@@ -539,10 +539,11 @@ The functions
 .Fn res_hostalias
 /
 .Fn hostalias
-lookup up name in the file referred to by the
+look up name in the file referred to by the
 .Ev HOSTALIASES
-files return a fully qualified hostname if found or NULL if
-not found or an error occurred.
+files and return a fully qualified hostname if found or
+.Dv NULL
+if not found or an error occurred.
 .Fn res_hostalias
 uses
 .Fa buf
@@ -562,14 +563,14 @@ The functions
 .Fn res_update
 take a list of ns_updrec
 .Fa rrecp_in .
-Identifies the containing zone for each record and groups the records
-according to containing zone maintaining in zone order then sends and update
+They identify the containing zone for each record and group the records
+according to containing zone maintaining in zone order then send an update
 request to the servers for these zones.
 The number of zones updated is returned or \-1 on error.
 Note that
 .Fn res_nupdate
 will perform TSIG authenticated dynamic update operations if the key is not
-NULL.
+.Dv NULL .
 .Pp
 The function
 .Fn res_findzonecut
@@ -582,7 +583,7 @@ The functions
 .Fn res_mkupdate
 take a linked list of ns_updrec
 .Fa rrecp_in
-and construct a UPDATE message in
+and construct an UPDATE message in
 .Fa buf .
 .Fn res_nmkupdate
 /
@@ -680,7 +681,7 @@ The variables
 .Ft _res.res_h_errno
 and external variable
 .Ft h_errno
-is set whenever an error occurs during resolver operation.
+are set whenever an error occurs during resolver operation.
 The following
 definitions are given in
 .Aq Pa netdb.h :
