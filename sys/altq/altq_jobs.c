@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.7 2014/08/18 03:14:12 riastradh Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.8 2016/01/22 18:19:54 christos Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7 2014/08/18 03:14:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.8 2016/01/22 18:19:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7 2014/08/18 03:14:12 riastradh Exp 
  * function prototypes
  */
 static struct jobs_if *jobs_attach(struct ifaltq *, u_int, u_int, u_int);
-static int jobs_detach(struct jobs_if *);
+static void jobs_detach(struct jobs_if *);
 static int jobs_clear_interface(struct jobs_if *);
 static int jobs_request(struct ifaltq *, int, void *);
 static void jobs_purge(struct jobs_if *);
@@ -184,7 +184,7 @@ jobs_attach(struct ifaltq *ifq, u_int bandwidth, u_int qlimit, u_int separate)
 	return (jif);
 }
 
-static int
+static void
 jobs_detach(struct jobs_if *jif)
 {
 	(void)jobs_clear_interface(jif);
@@ -203,7 +203,6 @@ jobs_detach(struct jobs_if *jif)
 		ASSERT(p != NULL);
 	}
 	free(jif, M_DEVBUF);
-	return (0);
 }
 
 /*
@@ -1837,18 +1836,21 @@ jobsclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
 	struct jobs_if *jif;
-	int err, error = 0;
 
 	while ((jif = jif_list) != NULL) {
 		/* destroy all */
 		if (ALTQ_IS_ENABLED(jif->jif_ifq))
 			altq_disable(jif->jif_ifq);
 
-		err = altq_detach(jif->jif_ifq);
-		if (err == 0)
-			err = jobs_detach(jif);
-		if (err != 0 && error == 0)
-			error = err;
+		int error = altq_detach(pif->pif_ifq);
+		switch (error) {
+		case 0:
+		case ENXIO:	/* already disabled */
+			break;
+		default:
+			return error;
+		}
+		jobs_detach(jif);
 	}
 
 	return error;
@@ -1971,7 +1973,7 @@ jobscmd_if_attach(struct jobs_attach *ap)
 	if ((error = altq_attach(&ifp->if_snd, ALTQT_JOBS, jif,
 				 jobs_enqueue, jobs_dequeue, jobs_request,
 				 &jif->jif_classifier, acc_classify)) != 0)
-		(void)jobs_detach(jif);
+		jobs_detach(jif);
 
 	return (error);
 }
@@ -1991,7 +1993,8 @@ jobscmd_if_detach(struct jobs_interface *ap)
 	if ((error = altq_detach(jif->jif_ifq)))
 		return (error);
 
-	return jobs_detach(jif);
+	jobs_detach(jif);
+	return 0;
 }
 
 static int

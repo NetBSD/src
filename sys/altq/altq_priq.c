@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.21 2009/03/14 15:35:58 dsl Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.22 2016/01/22 18:19:54 christos Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.21 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.22 2016/01/22 18:19:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.21 2009/03/14 15:35:58 dsl Exp $");
  */
 #ifdef ALTQ3_COMPAT
 static struct priq_if *priq_attach(struct ifaltq *, u_int);
-static int priq_detach(struct priq_if *);
+static void priq_detach(struct priq_if *);
 #endif
 static int priq_clear_interface(struct priq_if *);
 static int priq_request(struct ifaltq *, int, void *);
@@ -648,7 +648,7 @@ priq_attach(struct ifaltq *ifq, u_int bandwidth)
 	return (pif);
 }
 
-static int
+static void
 priq_detach(struct priq_if *pif)
 {
 	(void)priq_clear_interface(pif);
@@ -668,7 +668,6 @@ priq_detach(struct priq_if *pif)
 	}
 
 	free(pif, M_DEVBUF);
-	return (0);
 }
 
 /*
@@ -687,21 +686,24 @@ priqclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
 	struct priq_if *pif;
-	int err, error = 0;
 
 	while ((pif = pif_list) != NULL) {
 		/* destroy all */
 		if (ALTQ_IS_ENABLED(pif->pif_ifq))
 			altq_disable(pif->pif_ifq);
 
-		err = altq_detach(pif->pif_ifq);
-		if (err == 0)
-			err = priq_detach(pif);
-		if (err != 0 && error == 0)
-			error = err;
+		int error = altq_detach(pif->pif_ifq);
+		switch (error) {
+		case 0:
+		case ENXIO:	/* already disabled */
+			break;
+		default:
+			return error;
+		}
+		priq_detach(pif);
 	}
 
-	return error;
+	return 0;
 }
 
 int
@@ -821,7 +823,7 @@ priqcmd_if_attach(struct priq_interface *ap)
 	if ((error = altq_attach(&ifp->if_snd, ALTQT_PRIQ, pif,
 				 priq_enqueue, priq_dequeue, priq_request,
 				 &pif->pif_classifier, acc_classify)) != 0)
-		(void)priq_detach(pif);
+		priq_detach(pif);
 
 	return (error);
 }
@@ -841,7 +843,8 @@ priqcmd_if_detach(struct priq_interface *ap)
 	if ((error = altq_detach(pif->pif_ifq)))
 		return (error);
 
-	return priq_detach(pif);
+	priq_detach(pif);
+	return 0;
 }
 
 static int
