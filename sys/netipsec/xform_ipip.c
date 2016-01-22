@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.33 2016/01/20 21:44:00 riastradh Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.34 2016/01/22 05:15:10 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.33 2016/01/20 21:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.34 2016/01/22 05:15:10 riastradh Exp $");
 
 /*
  * IP-inside-IP processing
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.33 2016/01/20 21:44:00 riastradh Ex
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/kernel.h>
-#include <sys/protosw.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -70,9 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.33 2016/01/20 21:44:00 riastradh Ex
 #include <netinet/ip_ecn.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_encap.h>
-#ifdef __FreeBSD__
-#include <netinet/ipprotosw.h>
-#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_private.h>
@@ -91,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.33 2016/01/20 21:44:00 riastradh Ex
 #  include <netinet6/ip6_ecn.h>
 #  endif
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6protosw.h>
 #endif
 
 #include <netipsec/key.h>
@@ -682,43 +677,15 @@ static struct xformsw ipe4_xformsw = {
 };
 
 #ifdef INET
-PR_WRAP_CTLOUTPUT(rip_ctloutput)
-#define	rip_ctloutput	rip_ctloutput_wrapper
-
-extern struct domain inetdomain;
-static struct ipprotosw ipe4_protosw = {
- .pr_type = SOCK_RAW,
- .pr_domain = &inetdomain,
- .pr_protocol = IPPROTO_IPV4,
- .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
- .pr_input = ip4_input,
- .pr_ctlinput = 0,
- .pr_ctloutput = rip_ctloutput,
- .pr_usrreqs = &rip_usrreqs,
- .pr_init = 0,
- .pr_fasttimo = 0,
- .pr_slowtimo =	0,
- .pr_drain = 0,
+static const struct encapsw ipe4_encapsw = {
+	.en_input = ip4_input,
+	.en_ctlinput = NULL,
 };
 #endif
 #ifdef INET6
-PR_WRAP_CTLOUTPUT(rip6_ctloutput)
-#define	rip6_ctloutput	rip6_ctloutput_wrapper
-
-extern struct domain inet6domain;
-static struct ip6protosw ipe4_protosw6 = {
- .pr_type = SOCK_RAW,
- .pr_domain = &inet6domain,
- .pr_protocol = IPPROTO_IPV6,
- .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
- .pr_input = ip4_input6,
- .pr_ctlinput = 0,
- .pr_ctloutput = rip6_ctloutput,
- .pr_usrreqs = &rip6_usrreqs,
- .pr_init = 0,
- .pr_fasttimo = 0,
- .pr_slowtimo = 0,
- .pr_drain = 0,
+static const struct encapsw ipe4_encapsw6 = {
+	.en_input = (void (*)(struct mbuf *, ...))ip4_input6,
+	.en_ctlinput = NULL,
 };
 #endif
 
@@ -752,11 +719,11 @@ ipe4_attach(void)
 	/* XXX save return cookie for detach on module remove */
 #ifdef INET
 	(void) encap_attach_func(AF_INET, -1,
-		ipe4_encapcheck, (struct protosw*) &ipe4_protosw, NULL);
+		ipe4_encapcheck, &ipe4_encapsw, NULL);
 #endif
 #ifdef INET6
 	(void) encap_attach_func(AF_INET6, -1,
-		ipe4_encapcheck, (struct protosw*) &ipe4_protosw6, NULL);
+		ipe4_encapcheck, &ipe4_encapsw6, NULL);
 #endif
 }
 
