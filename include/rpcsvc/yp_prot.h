@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.18 2013/01/23 17:27:35 mbalmer Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.19 2016/01/22 23:22:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,6 +28,8 @@
 
 #ifndef _RPCSVC_YP_PROT_H_
 #define _RPCSVC_YP_PROT_H_
+
+#include <rpc/rpc.h> /* for XDR */
 
 /*
  * YPSERV PROTOCOL:
