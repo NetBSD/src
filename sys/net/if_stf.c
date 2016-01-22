@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.83 2016/01/20 21:43:59 riastradh Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.84 2016/01/22 05:15:10 riastradh Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.83 2016/01/20 21:43:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.84 2016/01/22 05:15:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.83 2016/01/20 21:43:59 riastradh Exp $"
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/protosw.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
@@ -156,18 +155,9 @@ extern int ip_gif_ttl;	/*XXX*/
 static int ip_gif_ttl = 40;	/*XXX*/
 #endif
 
-extern struct domain inetdomain;
-
-static const struct protosw in_stf_protosw =
-{
-	.pr_type	= SOCK_RAW,
-	.pr_domain	= &inetdomain,
-	.pr_protocol	= IPPROTO_IPV6,
-	.pr_flags	= PR_ATOMIC|PR_ADDR,
-	.pr_input	= in_stf_input,
-	.pr_ctlinput	= NULL,
-	.pr_ctloutput	= rip_ctloutput,
-	.pr_usrreqs	= &rip_usrreqs,
+static const struct encapsw in_stf_encapsw = {
+	.en_input	= in_stf_input,
+	.en_ctlinput	= NULL,
 };
 
 static int stf_encapcheck(struct mbuf *, int, int, void *);
@@ -206,7 +196,7 @@ stf_clone_create(struct if_clone *ifc, int unit)
 	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 
 	sc->encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV6,
-	    stf_encapcheck, &in_stf_protosw, sc);
+	    stf_encapcheck, &in_stf_encapsw, sc);
 	if (sc->encap_cookie == NULL) {
 		printf("%s: unable to attach encap\n", if_name(&sc->sc_if));
 		free(sc, M_DEVBUF);
