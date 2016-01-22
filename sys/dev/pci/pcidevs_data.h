@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1236 2015/12/01 09:37:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1237 2016/01/22 09:34:44 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1244 2015/12/01 09:36:52 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1245 2016/01/22 09:34:26 msaitoh Exp
  */
 
 /*
@@ -4787,6 +4787,8 @@ static const uint16_t pci_products[] = {
 	    19536, 5509, 18391, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V2, 
 	    19544, 5509, 18391, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM3, 
+	    19536, 5509, 18391, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_HB_1, 
 	    17716, 19585, 6751, 6355, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_HDA_1, 
@@ -11500,7 +11502,7 @@ static const char pci_words[] = { "."
 	    "ID\0" /* 1 refs @ 5492 */
 	    "3c985\0" /* 1 refs @ 5495 */
 	    "Gigabit\0" /* 119 refs @ 5501 */
-	    "Ethernet\0" /* 455 refs @ 5509 */
+	    "Ethernet\0" /* 456 refs @ 5509 */
 	    "3c996\0" /* 1 refs @ 5518 */
 	    "10/100/1000\0" /* 48 refs @ 5524 */
 	    "3c556\0" /* 2 refs @ 5536 */
@@ -13305,7 +13307,7 @@ static const char pci_words[] = { "."
 	    "(AMT)\0" /* 3 refs @ 18368 */
 	    "(IFE)\0" /* 1 refs @ 18374 */
 	    "82801EB/ER\0" /* 10 refs @ 18380 */
-	    "Connection\0" /* 32 refs @ 18391 */
+	    "Connection\0" /* 33 refs @ 18391 */
 	    "M\0" /* 1 refs @ 18402 */
 	    "i82571EB\0" /* 7 refs @ 18404 */
 	    "82801FB\0" /* 4 refs @ 18413 */
@@ -13452,7 +13454,7 @@ static const char pci_words[] = { "."
 	    "I218-V\0" /* 3 refs @ 19514 */
 	    "I218-LM\0" /* 3 refs @ 19521 */
 	    "Bypass\0" /* 2 refs @ 19529 */
-	    "I219-LM\0" /* 2 refs @ 19536 */
+	    "I219-LM\0" /* 3 refs @ 19536 */
 	    "I219-V\0" /* 2 refs @ 19544 */
 	    "SFP+\0" /* 1 refs @ 19551 */
 	    "KX\0" /* 3 refs @ 19556 */
