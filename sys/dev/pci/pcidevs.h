@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1237 2015/12/01 09:37:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1238 2016/01/22 09:34:44 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1244 2015/12/01 09:36:52 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1245 2016/01/22 09:34:26 msaitoh Exp
  */
 
 /*
@@ -3017,6 +3017,7 @@
 #define	PCI_PRODUCT_INTEL_I218_V3	0x15a3		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM2	0x15b7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V2	0x15b8		/* I219-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM3	0x15b9		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_CORE5G_HB_1	0x1604		/* Core 5G Host Bridge */
 #define	PCI_PRODUCT_INTEL_CORE5G_HDA_1	0x160c		/* Core 5G HD Audio */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT1	0x1606		/* HD Graphics (GT1) */
