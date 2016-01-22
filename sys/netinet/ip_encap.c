@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.48 2016/01/20 05:58:49 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.49 2016/01/22 05:15:10 riastradh Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.48 2016/01/20 05:58:49 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.49 2016/01/22 05:15:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -240,7 +240,7 @@ encap4_input(struct mbuf *m, ...)
 {
 	int off, proto;
 	va_list ap;
-	const struct protosw *psw;
+	const struct encapsw *esw;
 	struct encaptab *match;
 
 	va_start(ap, m);
@@ -252,10 +252,10 @@ encap4_input(struct mbuf *m, ...)
 
 	if (match) {
 		/* found a match, "match" has the best one */
-		psw = match->psw;
-		if (psw && psw->pr_input) {
+		esw = match->esw;
+		if (esw && esw->en_input) {
 			encap_fillarg(m, match);
-			(*psw->pr_input)(m, off, proto);
+			(*esw->en_input)(m, off, proto);
 		} else
 			m_freem(m);
 		return;
@@ -329,17 +329,20 @@ int
 encap6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
-	const struct ip6protosw *psw;
+	const struct encapsw *esw;
 	struct encaptab *match;
 
 	match = encap6_lookup(m, *offp, proto, INBOUND);
 
 	if (match) {
 		/* found a match */
-		psw = (const struct ip6protosw *)match->psw;
-		if (psw && psw->pr_input) {
+		esw = match->esw;
+		if (esw && esw->en_input) {
+			/* XXX IPv6 cast, eliminate me */
+			int (*input)(struct mbuf **, int *, int) =
+			    (int (*)(struct mbuf **, int *, int))esw->en_input;
 			encap_fillarg(m, match);
-			return (*psw->pr_input)(mp, offp, proto);
+			return (*input)(mp, offp, proto);
 		} else {
 			m_freem(m);
 			return IPPROTO_DONE;
@@ -431,7 +434,7 @@ const struct encaptab *
 encap_attach(int af, int proto,
     const struct sockaddr *sp, const struct sockaddr *sm,
     const struct sockaddr *dp, const struct sockaddr *dm,
-    const struct protosw *psw, void *arg)
+    const struct encapsw *esw, void *arg)
 {
 	struct encaptab *ep;
 	int error;
@@ -534,7 +537,7 @@ encap_attach(int af, int proto,
 	memcpy(ep->srcmask, sm, sp->sa_len);
 	memcpy(ep->dst, dp, dp->sa_len);
 	memcpy(ep->dstmask, dm, dp->sa_len);
-	ep->psw = psw;
+	ep->esw = esw;
 	ep->arg = arg;
 
 	error = encap_add(ep);
@@ -560,7 +563,7 @@ fail:
 const struct encaptab *
 encap_attach_func(int af, int proto,
     int (*func)(struct mbuf *, int, int, void *),
-    const struct protosw *psw, void *arg)
+    const struct encapsw *esw, void *arg)
 {
 	struct encaptab *ep;
 	int error;
@@ -587,7 +590,7 @@ encap_attach_func(int af, int proto,
 	ep->af = af;
 	ep->proto = proto;
 	ep->func = func;
-	ep->psw = psw;
+	ep->esw = esw;
 	ep->arg = arg;
 
 	error = encap_add(ep);
@@ -616,7 +619,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	struct ip6ctlparam *ip6cp = NULL;
 	int nxt;
 	struct encaptab *ep;
-	const struct ip6protosw *psw;
+	const struct encapsw *esw;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -675,9 +678,9 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 		/* should optimize by looking at address pairs */
 
 		/* XXX need to pass ep->arg or ep itself to listeners */
-		psw = (const struct ip6protosw *)ep->psw;
-		if (psw && psw->pr_ctlinput)
-			(*psw->pr_ctlinput)(cmd, sa, d);
+		esw = ep->esw;
+		if (esw && esw->en_ctlinput)
+			(*esw->en_ctlinput)(cmd, sa, d);
 	}
 
 	rip6_ctlinput(cmd, sa, d0);
