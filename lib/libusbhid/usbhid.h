@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.5 2007/04/11 20:56:20 plunky Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.6 2016/01/22 23:51:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -25,6 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef _USBHID_H_
+#define _USBHID_H_
+
+#include <sys/cdefs.h>
+#include <stdint.h>
 
 typedef struct report_desc *report_desc_t;
 
@@ -102,3 +108,5 @@ int hid_get_data(const void *p, const hid_item_t *h);
 void hid_set_data(void *p, const hid_item_t *h, int data);
 
 __END_DECLS
+
+#endif /* _USBHID_H_ */
