@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.156 2016/01/08 08:37:18 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.157 2016/01/22 19:13:53 jnemeth Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -690,6 +690,7 @@ LTO	link time optimization
 LTR	left to right
 LTR	load task register
 LTR	letter(-sized paper)
+LTS	long term support
 LUA	Lua Uppercase Accident
 LUN	logical unit number
 LV	logical volume
