@@ -1,4 +1,4 @@
-/*	$NetBSD: wdog.h,v 1.3 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: wdog.h,v 1.4 2016/01/22 23:47:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -48,7 +48,7 @@
 struct wdog_mode {
 	char wm_name[WDOG_NAMESIZE];
 	int wm_mode;		/* timer mode */
-	u_int wm_period;	/* timer period (seconds) */
+	unsigned wm_period;	/* timer period (seconds) */
 };
 
 /*
