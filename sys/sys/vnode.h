@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.256 2015/07/12 08:11:28 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.257 2016/01/22 22:43:25 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #include <sys/condvar.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
+#include <sys/time.h>
 
 /* XXX: clean up includes later */
 #include <uvm/uvm_param.h>	/* XXX */
