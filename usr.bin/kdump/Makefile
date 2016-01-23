@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2015/09/26 03:31:11 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2016/01/23 21:22:49 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT & NETBSDSRCDIR
@@ -17,7 +17,7 @@ LDSTATIC?=-static
 .include "Makefile.ioctl-c"
 .include "Makefile.siginfo-c"
 
-CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys -D_KERNTYPES
 
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
