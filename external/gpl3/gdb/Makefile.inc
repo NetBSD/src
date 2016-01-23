@@ -1,9 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.9 2015/08/16 09:51:58 christos Exp $
+# $NetBSD: Makefile.inc,v 1.10 2016/01/23 23:02:31 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
 BINDIR=/usr/bin
 WARNS?=		0
+CPPFLAGS+=	-D_KERNTYPES
 
 GDB_MACHINE_ARCH=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 
