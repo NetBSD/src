@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.36 2016/01/23 21:22:14 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.37 2016/01/23 22:31:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
 

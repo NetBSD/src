@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.25 2016/01/23 21:22:13 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.26 2016/01/23 22:31:19 christos Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -49,7 +49,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long		hppa_hpa_t;
 typedef	unsigned long		hppa_spa_t;
 typedef	unsigned int		pa_space_t;
