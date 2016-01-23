@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.66 2015/04/20 23:03:07 riastradh Exp $	*/
+/*	$NetBSD: p2k.c,v 1.67 2016/01/23 16:39:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -46,7 +46,6 @@
 #include <sys/cdefs.h>
 #include <sys/mount.h>
 #include <sys/param.h>
-#include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
@@ -61,6 +60,8 @@
 #include <rump/rump.h>
 #include <rump/p2k.h>
 #include <rump/ukfs.h>
+
+#include <uvm/uvm_pager.h>
 
 /* NetBSD-5 compat */
 #ifndef MOUNT_RUMPFS
