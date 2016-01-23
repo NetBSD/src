@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.52 2016/01/23 21:22:13 christos Exp $ */
+/* $NetBSD: types.h,v 1.53 2016/01/23 22:31:19 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
