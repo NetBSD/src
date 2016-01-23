@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_soc.h,v 1.3 2005/02/06 04:40:51 perry Exp $	*/
+/*	$NetBSD: clnt_soc.h,v 1.4 2016/01/23 01:05:30 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -55,26 +55,26 @@
  * CLIENT *
  * clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
  *	struct sockaddr_in *raddr;
- *	u_long prog;
- *	u_long version;
+ *	unsigned long prog;
+ *	unsigned long version;
  *	int *sockp;
- *	u_int sendsz;
- *	u_int recvsz;
+ *	unsigned sendsz;
+ *	unsigned recvsz;
  */
 __BEGIN_DECLS
 extern CLIENT *clnttcp_create(struct sockaddr_in *,
-				u_long,
-				u_long,
+				unsigned long,
+				unsigned long,
 				int *,
-				u_int,
-				u_int);
+				unsigned,
+				unsigned);
 __END_DECLS
 
 /*
  * Raw (memory) rpc.
  */
 __BEGIN_DECLS
-extern CLIENT *clntraw_create  (u_long, u_long);
+extern CLIENT *clntraw_create  (unsigned long, unsigned long);
 __END_DECLS
 
 
@@ -83,8 +83,8 @@ __END_DECLS
  * CLIENT *
  * clntudp_create(raddr, program, version, wait, sockp)
  *	struct sockaddr_in *raddr;
- *	u_long program;
- *	u_long version;
+ *	unsigned long program;
+ *	unsigned long version;
  *	struct timeval wait;
  *	int *sockp;
  *
@@ -92,26 +92,26 @@ __END_DECLS
  * CLIENT *
  * clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
  *	struct sockaddr_in *raddr;
- *	u_long program;
- *	u_long version;
+ *	unsigned long program;
+ *	unsigned long version;
  *	struct timeval wait;
  *	int *sockp;
- *	u_int sendsz;
- *	u_int recvsz;
+ *	unsigned sendsz;
+ *	unsigned recvsz;
  */
 __BEGIN_DECLS
 extern CLIENT *clntudp_create(struct sockaddr_in *,
-				u_long,
-				u_long,
+				unsigned long,
+				unsigned long,
 				struct timeval,
 				int *);
 extern CLIENT *clntudp_bufcreate(struct sockaddr_in *,
-				     u_long,
-				     u_long,
+				     unsigned long,
+				     unsigned long,
 				     struct timeval,
 				     int *,
-				     u_int,
-				     u_int);
+				     unsigned,
+				     unsigned);
 __END_DECLS
 
 #endif /* _RPC_CLNT_SOC_H */
