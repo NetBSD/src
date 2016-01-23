@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.8 2016/01/22 22:53:36 dholland Exp $	*/
+/*	$NetBSD: direntry.h,v 1.9 2016/01/23 01:26:14 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -130,11 +130,11 @@ struct winentry {
 struct dirent;
 void	unix2dostime(const struct timespec *tsp, int gmtoff, uint16_t *ddp,
 	    uint16_t *dtp, uint8_t *dhp);
-void	dos2unixtime(unsigned dd, unsigned dt, unsigned dh, int gmtoff,
-	    struct timespec *tsp);
+void	dos2unixtime(unsigned int dd, unsigned int dt, unsigned int dh,
+	    int gmtoff, struct timespec *tsp);
 int	dos2unixfn(unsigned char dn[11], unsigned char *un, int lower);
 int	unix2dosfn(const unsigned char *un, unsigned char dn[12], int unlen,
-	    unsigned gen);
+	    unsigned int gen);
 int	unix2winfn(const unsigned char *un, int unlen, struct winentry *wep,
 	    int cnt, int chksum);
 int	winChkName(const unsigned char *un, int unlen, struct winentry *wep,

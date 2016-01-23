@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.7 2016/01/22 22:22:48 dholland Exp $	*/
+/*	$NetBSD: pci.h,v 1.8 2016/01/23 01:26:14 dholland Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -48,18 +48,20 @@
 typedef uint32_t pcireg_t;	/* XXX */
 
 /* pci_bus.c */
-int	pcibus_conf_read(int, unsigned, unsigned, unsigned, unsigned, pcireg_t *);
-int	pcibus_conf_write(int, unsigned, unsigned, unsigned, unsigned, pcireg_t);
+int	pcibus_conf_read(int, unsigned int, unsigned int, unsigned int,
+		unsigned int, pcireg_t *);
+int	pcibus_conf_write(int, unsigned int, unsigned int, unsigned int,
+		unsigned int, pcireg_t);
 
 /* pci_device.c */
-int	pcidev_conf_read(int, unsigned, pcireg_t *);
-int	pcidev_conf_write(int, unsigned, pcireg_t);
+int	pcidev_conf_read(int, unsigned int, pcireg_t *);
+int	pcidev_conf_write(int, unsigned int, pcireg_t);
 
 /* pci_drvname.c */
-int	pci_drvname(int, unsigned, unsigned, char *, size_t);
+int	pci_drvname(int, unsigned int, unsigned int, char *, size_t);
 
 /* pci_subr.c */
 void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
-void	pci_conf_print(int, unsigned, unsigned, unsigned);
+void	pci_conf_print(int, unsigned int, unsigned int, unsigned int);
 
 #endif /* _PCI_H_ */
