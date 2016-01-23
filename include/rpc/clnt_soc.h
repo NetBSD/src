@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_soc.h,v 1.4 2016/01/23 01:05:30 dholland Exp $	*/
+/*	$NetBSD: clnt_soc.h,v 1.5 2016/01/23 02:34:09 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -66,8 +66,8 @@ extern CLIENT *clnttcp_create(struct sockaddr_in *,
 				unsigned long,
 				unsigned long,
 				int *,
-				unsigned,
-				unsigned);
+				unsigned int,
+				unsigned int);
 __END_DECLS
 
 /*
@@ -110,8 +110,8 @@ extern CLIENT *clntudp_bufcreate(struct sockaddr_in *,
 				     unsigned long,
 				     struct timeval,
 				     int *,
-				     unsigned,
-				     unsigned);
+				     unsigned int,
+				     unsigned int);
 __END_DECLS
 
 #endif /* _RPC_CLNT_SOC_H */
