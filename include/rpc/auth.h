@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.17 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: auth.h,v 1.18 2016/01/23 01:05:30 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -87,7 +87,7 @@ __END_DECLS
 struct opaque_auth {
 	enum_t	oa_flavor;		/* flavor of auth */
 	caddr_t	oa_base;		/* address of more auth stuff */
-	u_int	oa_length;		/* not to exceed MAX_AUTH_BYTES */
+	unsigned oa_length;		/* not to exceed MAX_AUTH_BYTES */
 };
 
 
@@ -169,7 +169,7 @@ struct sockaddr_in;
 extern AUTH *authunix_create		(char *, int, int, int, int *);
 extern AUTH *authunix_create_default	(void);
 extern AUTH *authnone_create		(void);
-extern AUTH *authdes_create		(char *, u_int,
+extern AUTH *authdes_create		(char *, unsigned,
 					    struct sockaddr_in *, des_block *);
 extern bool_t xdr_opaque_auth		(XDR *, struct opaque_auth *);
 

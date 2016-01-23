@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_soc.h,v 1.2 2005/02/03 04:39:33 perry Exp $	*/
+/*	$NetBSD: svc_soc.h,v 1.3 2016/01/23 01:05:30 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -58,13 +58,13 @@
  *
  * svc_register(xprt, prog, vers, dispatch, protocol)
  *	SVCXPRT *xprt;
- *	u_long prog;
- *	u_long vers;
+ *	unsigned long prog;
+ *	unsigned long vers;
  *	void (*dispatch)();
  *	int protocol;    like TCP or UDP, zero means do not register 
  */
 __BEGIN_DECLS
-extern bool_t	svc_register(SVCXPRT *, u_long, u_long,
+extern bool_t	svc_register(SVCXPRT *, unsigned long, unsigned long,
 		    void (*)(struct svc_req *, SVCXPRT *), int);
 __END_DECLS
 
@@ -72,11 +72,11 @@ __END_DECLS
  * Service un-registration
  *
  * svc_unregister(prog, vers)
- *	u_long prog;
- *	u_long vers;
+ *	unsigned long prog;
+ *	unsigned long vers;
  */
 __BEGIN_DECLS
-extern void	svc_unregister(u_long, u_long);
+extern void	svc_unregister(unsigned long, unsigned long);
 __END_DECLS
 
 
@@ -93,8 +93,8 @@ __END_DECLS
  */
 __BEGIN_DECLS
 extern SVCXPRT *svcudp_create(int);
-extern SVCXPRT *svcudp_bufcreate(int, u_int, u_int);
-extern int svcudp_enablecache(SVCXPRT *, u_long);
+extern SVCXPRT *svcudp_bufcreate(int, unsigned, unsigned);
+extern int svcudp_enablecache(SVCXPRT *, unsigned long);
 __END_DECLS
 
 
@@ -102,14 +102,14 @@ __END_DECLS
  * Tcp based rpc.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svctcp_create(int, u_int, u_int);
+extern SVCXPRT *svctcp_create(int, unsigned, unsigned);
 __END_DECLS
 
 /*
  * Fd based rpc.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svcfd_create(int, u_int, u_int);
+extern SVCXPRT *svcfd_create(int, unsigned, unsigned);
 __END_DECLS
 
 #endif /* !_RPC_SVC_SOC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.h,v 1.11 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: pmap_clnt.h,v 1.12 2016/01/23 01:05:30 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -66,23 +66,26 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern bool_t		pmap_set(u_long, u_long, int, int);
-extern bool_t		pmap_unset(u_long, u_long);
+extern bool_t		pmap_set(unsigned long, unsigned long, int, int);
+extern bool_t		pmap_unset(unsigned long, unsigned long);
 extern struct pmaplist	*pmap_getmaps(struct sockaddr_in *);
 #ifndef __LIBC12_SOURCE__
 extern enum clnt_stat	pmap_rmtcall(struct sockaddr_in *,
-					u_long, u_long, u_long,
+					unsigned long, unsigned long,
+					unsigned long,
 					xdrproc_t, caddr_t,
 					xdrproc_t, caddr_t,
-					struct timeval, u_long *)
+					struct timeval, unsigned long *)
 					__RENAME(__pmap_rmtcall50);
 #endif
-extern enum clnt_stat	clnt_broadcast(u_long, u_long, u_long,
+extern enum clnt_stat	clnt_broadcast(unsigned long, unsigned long,
+					unsigned long,
 					xdrproc_t, char *,
 					xdrproc_t, char *,
 					resultproc_t);
 extern u_short		pmap_getport(struct sockaddr_in *,
-					u_long, u_long, u_int);
+					unsigned long, unsigned long,
+					unsigned);
 __END_DECLS
 
 #endif /* !_RPC_PMAP_CLNT_H_ */
