@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#define _KMEMUSER
 #include "defs.h"
 #include "cli/cli-cmds.h"
 #include "command.h"
@@ -35,7 +36,6 @@
 #include <paths.h>
 #include "readline/readline.h"
 #include <sys/param.h>
-#define _KMEMUSER
 #include <sys/proc.h>
 #include <sys/user.h>
 
