@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.15 2015/08/21 08:20:59 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.16 2016/01/23 00:03:30 christos Exp $	*/
 /* $OpenBSD: auth.c,v 1.113 2015/08/21 03:42:19 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.15 2015/08/21 08:20:59 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.16 2016/01/23 00:03:30 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -656,6 +656,7 @@ getpwnamallow(const char *user)
 
 	pw = getpwnam(user);
 	if (pw == NULL) {
+		pfilter_notify(1);
 		logit("Invalid user %.100s from %.100s",
 		    user, get_remote_ipaddr());
 		return (NULL);
