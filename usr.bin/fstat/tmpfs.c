@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.9 2011/05/29 01:00:50 rmind Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.10 2016/01/23 16:12:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tmpfs.c,v 1.9 2011/05/29 01:00:50 rmind Exp $");
+__RCSID("$NetBSD: tmpfs.c,v 1.10 2016/01/23 16:12:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,9 +37,7 @@ __RCSID("$NetBSD: tmpfs.c,v 1.9 2011/05/29 01:00:50 rmind Exp $");
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
-#define	_KMEMUSER
 #include <fs/tmpfs/tmpfs.h>
-#undef _KMEMUSER
 
 #include <err.h>
 #include <kvm.h>
