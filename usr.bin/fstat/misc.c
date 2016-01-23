@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15 2015/12/30 18:15:38 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.16 2016/01/23 16:12:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.15 2015/12/30 18:15:38 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2016/01/23 16:12:03 christos Exp $");
 
-#define _KMEMUSER
 #include <stdbool.h>
 #include <sys/param.h>
 #include <sys/types.h>
