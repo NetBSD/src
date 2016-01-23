@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 2009/12/27 21:42:22 abs Exp $
+# $NetBSD: Makefile,v 1.6 2016/01/23 21:22:50 christos Exp $
 # $FreeBSD: src/usr.sbin/acpi/acpidump/Makefile,v 1.7 2003/08/28 03:33:07 njl Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
-CPPFLAGS+=-I${.CURDIR}/../../../sys
+CPPFLAGS+=-I${.CURDIR}/../../../sys -D_KERNTYPES
 CPPFLAGS+=-I${.CURDIR}/..
 PROG=	acpidump
 SRCS=	acpi.c acpi_user.c acpidump.c

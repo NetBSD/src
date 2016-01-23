@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2014/01/15 22:25:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.23 2016/01/23 21:22:47 christos Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -40,7 +40,7 @@ CPPFLAGS+= -DSUPPORT_SERIAL=boot_params.bp_consdev
 CPPFLAGS+= -DCONSPEED=boot_params.bp_conspeed
 CPPFLAGS+= -DCONSADDR=boot_params.bp_consaddr
 CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
-CPPFLAGS+= -DDIRECT_SERIAL
+CPPFLAGS+= -DDIRECT_SERIAL -D_KERNTYPES
 # Various serial line configurations
 #CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
 #	or

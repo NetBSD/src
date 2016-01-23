@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2015/09/26 13:31:27 christos Exp $
+#	$NetBSD: Makefile,v 1.30 2016/01/23 21:22:49 christos Exp $
 
 NOMAN=		# defined
 
@@ -30,7 +30,7 @@ misc.c misc.h: ${DESTDIR}/usr/include/sys/errno.h makeerrnos.sh \
 .include "${NETBSDSRCDIR}/usr.bin/kdump/Makefile.ioctl-c"
 
 CPPFLAGS+=	-I. -I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys \
-		-I${NETBSDSRCDIR}/usr.bin/kdump -DKTRUSS
+		-I${NETBSDSRCDIR}/usr.bin/kdump -DKTRUSS -D_KERNTYPES
 
 .include <bsd.prog.mk>
 

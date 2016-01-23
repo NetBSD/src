@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/08/01 23:19:39 matt Exp $
+#	$NetBSD: Makefile,v 1.8 2016/01/23 21:22:50 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ SRCS+=	noarch.c
 SRCS+=	${MACHINE_ARCH}-asm.S
 .endif
 
+CPPFLAGS+=	-D_KERNTYPES
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2014/01/16 01:15:34 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2016/01/23 21:22:50 christos Exp $
 
 WARNS?=	4
 
@@ -19,6 +19,7 @@ MOUNTDIR=	${.CURDIR}/../../../sbin
 MOUNT=		${MOUNTDIR}/mount
 
 CPPFLAGS+=	-I${MOUNTDIR}/mount_${MOUNTNAME} -I${MOUNT} -DMOUNT_NOMAIN
+CPPFLAGS+=	-D_KERNTYPES
 SRCS+=		mount_${MOUNTNAME}.c rump_${MOUNTNAME}.c pathadj.c fattr.c
 
 # on select archs use the kernel module directly, otherwise fallback

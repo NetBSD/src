@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.67 2015/08/20 11:39:28 uebayasi Exp $
+# $NetBSD: Makefile.boot,v 1.68 2016/01/23 21:22:47 christos Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -36,7 +36,7 @@ BINMODE=444
 
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
-CPPFLAGS+= -I ${.OBJDIR}
+CPPFLAGS+= -I ${.OBJDIR} -D_KERNTYPES
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 

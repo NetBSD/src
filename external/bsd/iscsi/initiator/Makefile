@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2011/08/17 09:24:23 christos Exp $
+# $NetBSD: Makefile,v 1.6 2016/01/23 21:22:45 christos Exp $
 
 .sinclude "${.CURDIR}/../Makefile.inc"
 
@@ -13,7 +13,7 @@ PROG=iscsi-initiator
 SRCS=iscsi-initiator.c virtdir.c libkmod.c
 LDADD+= -lrefuse -liscsi -lpuffs
 DPADD+= ${LIBREFUSE} ${LIBISCSI} ${LIBPUFFS}
-CPPFLAGS+= -I${ISCSIDIST}/include
+CPPFLAGS+= -I${ISCSIDIST}/include -D_KERNTYPES
 CPPFLAGS+= -pthread
 LDFLAGS+= -pthread
 MAN=iscsi-initiator.8

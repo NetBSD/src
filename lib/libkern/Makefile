@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/08/25 14:20:30 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2016/01/23 21:22:46 christos Exp $
 
 .include <bsd.obj.mk>		# Pull in OBJDIR name rules.
 .include <bsd.own.mk>
@@ -18,6 +18,7 @@ COPTS+=	-fno-stack-protector
 COPTS+=	-fno-unwind-tables
 CWARNFLAGS+= -Werror
 CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+CPPFLAGS+= -D_KERNTYPES
 
 ### find out what to use for libkern
 KERN_AS=	library

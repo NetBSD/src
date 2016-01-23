@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.39 2015/06/22 00:05:23 matt Exp $
+# $NetBSD: Makefile,v 1.40 2016/01/23 21:22:49 christos Exp $
 
 MKMAN=	no
 
@@ -72,6 +72,7 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 LDADD.t_getpid+=        -lpthread
 
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
+CPPFLAGS.t_posix_fadvise.c += -D_KERNTYPES
 TESTS_C+=		t_posix_fadvise
 LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 .endif
