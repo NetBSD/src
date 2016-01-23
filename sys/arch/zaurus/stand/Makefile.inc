@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.3 2013/05/02 04:22:45 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2016/01/23 22:20:45 christos Exp $
 
 BINDIR=		/usr/mdec
 KLINK_MACHINE=	zaurus
+CPPFLAGS+=	-D_KERNTYPES
