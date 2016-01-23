@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.61 2013/12/09 17:43:58 pooka Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.62 2016/01/23 21:19:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -126,8 +126,8 @@ struct ktr_sysret {
 	short	ktr_code;
 	short	ktr_eosys;		/* XXX unused */
 	int	ktr_error;
-	register_t ktr_retval;
-	register_t ktr_retval_1;
+	__register_t ktr_retval;
+	__register_t ktr_retval_1;
 };
 
 /*
