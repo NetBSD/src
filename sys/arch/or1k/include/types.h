@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.2 2015/08/27 12:30:51 pooka Exp $ */
+/* $NetBSD: types.h,v 1.3 2016/01/23 21:22:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
 #include <sys/featuretest.h>
 #include <or1k/int_types.h>
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
-typedef	unsigned long	vm_offset_t;	/* depreciated */
-typedef	unsigned long	vm_size_t;	/* depreciated */
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+typedef	unsigned long	vm_offset_t;	/* deprecated */
+typedef	unsigned long	vm_size_t;	/* deprecated */
 
 typedef __UINTPTR_TYPE__	paddr_t;
 typedef __UINTPTR_TYPE__	psize_t;
@@ -51,7 +50,6 @@ typedef __UINTPTR_TYPE__	vsize_t;
 #define PRIxVADDR	PRIxPTR
 #define PRIxVSIZE	PRIxPTR
 #define PRIuVSIZE	PRIuPTR
-#endif
 
 typedef unsigned long int register_t;
 
@@ -59,6 +57,7 @@ typedef unsigned long	pmc_evid_t;
 #define PMC_INVALID_EVID	(-1)
 typedef unsigned long	pmc_ctr_t;
 typedef unsigned short	tlb_asid_t;
+#endif
 
 #if defined(_KERNEL)
 typedef struct label_t {	/* Used by setjmp & longjmp */
@@ -67,6 +66,7 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
 #endif
          
 typedef	unsigned int	__cpu_simple_lock_nv_t;
+typedef	unsigned long int	__register_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
