@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.257 2016/01/22 22:43:25 dholland Exp $	*/
+/*	$NetBSD: vnode.h,v 1.258 2016/01/23 16:02:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 #include <sys/time.h>
 
 /* XXX: clean up includes later */
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <uvm/uvm_param.h>	/* XXX */
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
@@ -75,6 +76,7 @@
 
 struct namecache;
 struct uvm_ractx;
+#endif
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -112,6 +114,7 @@ enum vtagtype	{
     "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", \
     "VT_ZFS", "VT_RUMP", "VT_NILFS", "VT_V7FS", "VT_CHFS"
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
 struct vnode;
 struct buf;
 
@@ -180,6 +183,7 @@ struct vnode {
 
 typedef struct vnodelst vnodelst_t;
 typedef struct vnode vnode_t;
+#endif
 
 /*
  * Vnode flags.  The first set are locked by vnode lock or are stable.
