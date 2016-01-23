@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111 2015/11/12 10:49:35 jmcneill Exp $	*/
+/*	$NetBSD: cpu.c,v 1.112 2016/01/23 21:39:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111 2015/11/12 10:49:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.112 2016/01/23 21:39:17 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ cpu_attach(device_t dv, cpuid_t id)
 
 		/* Get the CPU ID from coprocessor 15 */
 
-		ci->ci_arm_cpuid = cpu_id();
+		ci->ci_arm_cpuid = cpu_idnum();
 		ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
 		ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 	} else {

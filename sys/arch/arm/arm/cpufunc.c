@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.159 2015/12/10 22:04:54 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.160 2016/01/23 21:39:17 christos Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.159 2015/12/10 22:04:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.160 2016/01/23 21:39:17 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1573,7 +1573,7 @@ get_cachetype_cp15(void)
 	 * reserved ID register is encountered, the System Control
 	 * processor returns the value of the main ID register.
 	 */
-	if (ctype == cpu_id())
+	if (ctype == cpu_idnum())
 		goto out;
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
@@ -1587,7 +1587,7 @@ get_cachetype_cp15(void)
 			arm_cache_prefer_mask = PAGE_SIZE;
 		}
 #ifdef CPU_CORTEX
-		if (CPU_ID_CORTEX_P(cpu_id())) {
+		if (CPU_ID_CORTEX_P(cpu_idnum())) {
 			arm_pcache.dcache_type = CACHE_TYPE_PIPT;
 		} else
 #endif
@@ -1730,7 +1730,7 @@ static void
 get_cachetype_table(void)
 {
 	int i;
-	uint32_t cpuid = cpu_id();
+	uint32_t cpuid = cpu_idnum();
 
 	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
 		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {
@@ -3184,7 +3184,7 @@ arm11x6_setup(char *args)
 	uint32_t sbz=0;
 	uint32_t cpuid;
 
-	cpuid = cpu_id();
+	cpuid = cpu_idnum();
 
 	cpuctrl =
 		CPU_CONTROL_MMU_ENABLE  |
