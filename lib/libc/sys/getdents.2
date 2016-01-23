@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdents.2,v 1.23 2011/07/20 17:51:25 njoly Exp $
+.\"	$NetBSD: getdents.2,v 1.24 2016/01/23 08:17:18 dholland Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ struct dirent {
 	uint16_t d_reclen;		/* length of this record */
 	uint16_t d_namlen;		/* length of d_name */
 	uint8_t  d_type;		/* file type, see below */
-	char	 d_name[MAXNAMELEN + 1];
+	char	 d_name[MAXNAMLEN + 1];
 };
 .Ed
 .Pp
