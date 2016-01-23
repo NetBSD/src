@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2013 2016/01/14 21:46:10 christos Exp $
+#	$NetBSD: mi,v 1.2014 2016/01/23 15:01:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3328,7 +3328,7 @@
 ./usr/lib/libppath.a				comp-c-lib		compatfile
 ./usr/lib/libppath_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libproc.a				comp-c-lib		compatfile,dtrace
-./usr/lib/libproc_p.a				comp-c-lib		compatfile,dtrace
+./usr/lib/libproc_p.a				comp-c-lib		compatfile,dtrace,profile
 ./usr/lib/libprop.a				comp-c-lib		compatfile
 ./usr/lib/libprop_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libpthread.a				comp-c-lib		compatfile
@@ -3353,7 +3353,7 @@
 ./usr/lib/librt.a				comp-c-lib		compatfile
 ./usr/lib/librt_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/librtld_db.a				comp-c-lib		compatfile,dtrace
-./usr/lib/librtld_db_p.a			comp-c-lib		compatfile,dtrace
+./usr/lib/librtld_db_p.a			comp-c-lib		compatfile,dtrace,profile
 ./usr/lib/librump.a				comp-c-lib		compatfile,rump
 ./usr/lib/librump_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpclient.a			comp-c-lib		compatfile,rump
