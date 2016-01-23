@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.283 2015/11/22 04:44:30 kamil Exp $
+# $NetBSD: shl.mi,v 1.284 2016/01/23 15:01:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -128,7 +128,7 @@
 ./usr/lib/libppath_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libproc.so				comp-c-shlib		compatfile,dtrace
 ./usr/lib/libproc.so.0				comp-c-shlib		compatfile,dtrace
-./usr/lib/libproc_pic.a				comp-c-piclib		compatfile,dtrace
+./usr/lib/libproc_pic.a				comp-c-piclib		compatfile,dtrace,picinstall
 ./usr/lib/libprop_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpthread_dbg_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpthread_pic.a			comp-c-piclib		compatfile,picinstall
@@ -142,7 +142,7 @@
 ./usr/lib/librt_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/librtld_db.so				comp-c-shlib		compatfile,dtrace
 ./usr/lib/librtld_db.so.0			comp-c-shlib		compatfile,dtrace
-./usr/lib/librtld_db_pic.a			comp-c-piclib		compatfile,dtrace
+./usr/lib/librtld_db_pic.a			comp-c-piclib		compatfile,dtrace,picinstall
 ./usr/lib/librump_pic.a				comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpclient_pic.a			comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpcrypto_pic.a			comp-obsolete		obsolete
