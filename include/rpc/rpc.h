@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.15 2006/06/22 19:35:34 christos Exp $	*/
+/*	$NetBSD: rpc.h,v 1.16 2016/01/23 01:05:30 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -102,7 +102,7 @@ int __rpc_nconf2sockinfo(const struct netconfig *,
 			      struct __rpc_sockinfo *);
 int __rpc_fd2sockinfo(int, struct __rpc_sockinfo *);
 int __rpc_setnodelay(int, const struct __rpc_sockinfo *);
-u_int __rpc_get_t_size(int, int, int);
+unsigned __rpc_get_t_size(int, int, int);
 __END_DECLS
 
 #endif /* !_RPC_RPC_H_ */
