@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.59 2015/08/27 12:30:51 pooka Exp $	*/
+/*	$NetBSD: types.h,v 1.60 2016/01/23 21:22:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,8 +48,7 @@
  */
 
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 typedef __uint64_t	paddr_t;
 typedef __uint64_t	psize_t;
@@ -76,7 +75,6 @@ typedef __uint32_t	vsize_t;
 #define	PRIxVSIZE	PRIx32
 #define	PRIdVSIZE	PRId32
 #endif
-#endif /* NETBSD_SOURCE */
 
 typedef int		mips_prid_t;
 /* Make sure this is signed; we need pointers to be sign-extended. */
@@ -104,8 +102,9 @@ typedef __uint64_t	uregister32_t;
 #define	PRIxREGISTER	PRIx64
 #define	PRIxUREGISTER	PRIx64
 #endif /* __mips_o32 */
+#endif /* _KERNEL || _KMEMUSER*/
 
-#if defined(_KERNEL) || defined(_NETBSD_SOURCE)
+#if defined(_KERNEL)
 typedef struct label_t {
 	register_t val[14];
 } label_t;
@@ -125,7 +124,7 @@ typedef struct label_t {
 #define	_L_SR		13
 
 typedef __uint32_t tlb_asid_t;
-#endif /* defined(_KERNEL) || defined(_NETBSD_SOURCE) */
+#endif /* _KERNEL */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define	PCU_FPU		0
@@ -134,6 +133,11 @@ typedef __uint32_t tlb_asid_t;
 #endif
 
 typedef	unsigned int	__cpu_simple_lock_nv_t;
+#if defined(__mips_o32)
+typedef __int32_t	__register_t;
+#else
+typedef __int64_t	__register_t;
+#endif
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
