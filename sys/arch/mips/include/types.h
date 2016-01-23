@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.60 2016/01/23 21:22:14 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.61 2016/01/23 22:31:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
  */
 
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 typedef __uint64_t	paddr_t;
 typedef __uint64_t	psize_t;
