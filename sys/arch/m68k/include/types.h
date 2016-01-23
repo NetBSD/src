@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.31 2015/08/27 12:30:51 pooka Exp $	*/
+/*	$NetBSD: types.h,v 1.32 2016/01/23 21:22:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,8 +43,7 @@ typedef struct label_t {		/* consistent with HP-UX */
 } label_t;
 #endif
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
 typedef	unsigned long	vm_offset_t;	/* depreciated */
 typedef	unsigned long	vm_size_t;	/* depreciated */
 
@@ -58,12 +57,13 @@ typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif
 
 typedef int		register_t;
 #define	PRIxREGISTER	"x"
+#endif
 
-typedef	unsigned char __cpu_simple_lock_nv_t;
+typedef	unsigned char	__cpu_simple_lock_nv_t;
+typedef int		__register_t;
 
 #define	__SIMPLELOCK_LOCKED	0x80	/* result of `tas' insn */
 #define	__SIMPLELOCK_UNLOCKED	0

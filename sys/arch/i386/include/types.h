@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.83 2015/08/27 12:30:51 pooka Exp $	*/
+/*	$NetBSD: types.h,v 1.84 2016/01/23 21:22:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,9 +47,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#if defined(_NETBSD_SOURCE)
 #if defined(_KERNEL)
-
 /*
  * XXX JYM for now, in kernel paddr_t can be 32 or 64 bits, depending
  * on PAE. Revisit when paddr_t becomes 64 bits for !PAE systems.
@@ -68,7 +66,7 @@ typedef unsigned long	psize_t;
 #define	PRIuPSIZE	"lu"
 #endif /* PAE */
 
-#else /* _KERNEL */
+#elif defined(_KMEMUSER) || defined(_KERNTYPES)
 /* paddr_t is always 64 bits for userland */
 typedef __uint64_t	paddr_t;
 typedef __uint64_t	psize_t;
@@ -78,18 +76,22 @@ typedef __uint64_t	psize_t;
 
 #endif /* _KERNEL */
 
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif /* _NETBSD_SOURCE */
 
 typedef int		pmc_evid_t;
 typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
 #define	PRIxREGISTER	"x"
 
+#endif /* _KERNEL || _KMEMUSER */
+
+typedef int			__register_t;
 typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */

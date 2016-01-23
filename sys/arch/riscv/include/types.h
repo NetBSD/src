@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.3 2015/08/27 12:30:51 pooka Exp $ */
+/* $NetBSD: types.h,v 1.4 2016/01/23 21:22:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,8 +36,7 @@
 #include <sys/featuretest.h>
 #include <riscv/int_types.h>
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
 typedef __UINTPTR_TYPE__	paddr_t;
 typedef __UINTPTR_TYPE__	psize_t;
 typedef __UINTPTR_TYPE__	vaddr_t;
@@ -48,7 +47,6 @@ typedef __UINTPTR_TYPE__	vsize_t;
 #define PRIxVADDR	PRIxPTR
 #define PRIxVSIZE	PRIxPTR
 #define PRIuVSIZE	PRIuPTR
-#endif
 
 #ifdef _LP64			// match <riscv/reg.h>
 #define PRIxREGISTER	PRIx64
@@ -67,6 +65,7 @@ typedef unsigned long	pmc_evid_t;
 #define PMC_INVALID_EVID	(-1)
 typedef unsigned long	pmc_ctr_t;
 typedef unsigned short	tlb_asid_t;
+#endif
 
 #if defined(_KERNEL)
 typedef struct label_t {	/* Used by setjmp & longjmp */
@@ -76,6 +75,11 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
 #endif
          
 typedef	unsigned int	__cpu_simple_lock_nv_t;
+#ifdef _LP64		
+typedef __int64_t	__register_t;
+#else
+typedef __int32_t	__register_t;
+#endif
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
