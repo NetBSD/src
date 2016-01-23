@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.3,v 1.10 2014/12/16 13:38:36 msaitoh Exp $
+.\"	$NetBSD: pci.3,v 1.11 2016/01/23 00:43:43 dholland Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -44,23 +44,23 @@
 .Sh SYNOPSIS
 .In pci.h
 .Ft int
-.Fn pcibus_conf_read "int pcifd" "u_int bus" "u_int dev" "u_int func" \
-"u_int reg" "pcireg_t *valp"
+.Fn pcibus_conf_read "int pcifd" "unsigned bus" "unsigned dev" "unsigned func" \
+"unsigned reg" "pcireg_t *valp"
 .Ft int
-.Fn pcibus_conf_write "int pcifd" "u_int bus" "u_int dev" "u_int func" \
-"u_int reg" "pcireg_t val"
+.Fn pcibus_conf_write "int pcifd" "unsigned bus" "unsigned dev" "unsigned func" \
+"unsigned reg" "pcireg_t val"
 .Ft int
-.Fn pcidev_conf_read "int devfd" "u_int reg" "pcireg_t *valp"
+.Fn pcidev_conf_read "int devfd" "unsigned reg" "pcireg_t *valp"
 .Ft int
-.Fn pcidev_conf_write "int devfd" "u_int reg" "pcireg_t val"
+.Fn pcidev_conf_write "int devfd" "unsigned reg" "pcireg_t val"
 .Ft char *
 .Fn pci_findvendor "pcireg_t id_reg"
 .Ft void
 .Fn pci_devinfo "pcireg_t id_reg" "pcireg_t class_reg" "int showclass" "char *devinfo" "size_t len"
 .Ft void
-.Fn pci_conf_print "int pcifd" "u_int bus" "u_int dev" "u_int func"
+.Fn pci_conf_print "int pcifd" "unsigned bus" "unsigned dev" "unsigned func"
 .Ft int
-.Fn pci_drvname "int pcifd" "u_int dev" "u_int func" "char *drvname" "size_t len"
+.Fn pci_drvname "int pcifd" "unsigned dev" "unsigned func" "char *drvname" "size_t len"
 .Sh DESCRIPTION
 The
 .Nm
