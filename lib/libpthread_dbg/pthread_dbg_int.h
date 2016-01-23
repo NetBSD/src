@@ -6,19 +6,19 @@ struct td_proc_st {
 	struct td_proc_callbacks_t *cb;
 	void *arg;
 
-	caddr_t dbgaddr;
-	caddr_t allqaddr;
-	caddr_t runqaddr;	
-	caddr_t idleqaddr;
-	caddr_t suspqaddr;
-	caddr_t maxlwpsaddr;
-	caddr_t tsdlistaddr;
-	caddr_t tsddestaddr;
+	void *dbgaddr;
+	void *allqaddr;
+	void *runqaddr;	
+	void *idleqaddr;
+	void *suspqaddr;
+	void *maxlwpsaddr;
+	void *tsdlistaddr;
+	void *tsddestaddr;
 
-	caddr_t stacksizeaddr;
+	void *stacksizeaddr;
 	int stacksizelg;
 	size_t stacksize;
-	vaddr_t stackmask;
+	uintptr_t stackmask;
 	struct reg *regbuf;
 	struct fpreg *fpregbuf;
 
@@ -28,7 +28,7 @@ struct td_proc_st {
 
 struct td_thread_st {
 	td_proc_t *proc;
-	caddr_t addr;
+	void *addr;
 	lwpid_t lwp;
 	PTQ_ENTRY(td_thread_st)	list;
 };
@@ -36,7 +36,7 @@ struct td_thread_st {
 
 struct td_sync_st {
 	td_proc_t *proc;
-	caddr_t addr;
+	void *addr;
 	PTQ_ENTRY(td_sync_st) list;
 };
 

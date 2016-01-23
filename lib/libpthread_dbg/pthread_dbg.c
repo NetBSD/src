@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.43 2015/05/29 07:37:32 manu Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.44 2016/01/23 14:02:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.43 2015/05/29 07:37:32 manu Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.44 2016/01/23 14:02:21 christos Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -59,6 +59,8 @@ __RCSID("$NetBSD: pthread_dbg.c,v 1.43 2015/05/29 07:37:32 manu Exp $");
 #include <pthread_dbg_int.h>
 
 #define PT_STACKMASK (proc->stackmask)
+#define OFFSET(thread, field) \
+    (((char *)(thread)->addr) + offsetof(struct __pthread_st, field))
 
 /* Compensate for debuggers that want a zero ID to be a sentinel */
 #define TN_OFFSET 1
@@ -216,9 +218,8 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 		return TD_ERR_BADTHREAD;
 
 	info->thread_addr = thread->addr;
-	if ((val = READ(thread->proc, 
-		      thread->addr + offsetof(struct __pthread_st, pt_state), 
-		      &tmp, sizeof(tmp))) != 0)
+	if ((val = READ(thread->proc,
+	    OFFSET(thread, pt_state), &tmp, sizeof(tmp))) != 0)
 		return val;
 	switch (tmp) {
 	case PT_STATE_RUNNING:
@@ -238,18 +239,15 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 
 	info->thread_type = TD_TYPE_USER;
 
-	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_stack),
+	if ((val = READ(thread->proc, OFFSET(thread, pt_stack),
 	    &info->thread_stack, sizeof(stack_t))) != 0)
 		return val;
 
-	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_errno),
+	if ((val = READ(thread->proc, OFFSET(thread, pt_errno),
 	    &info->thread_errno, sizeof(info->thread_errno))) != 0)
 		return val;
 
-	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_lid),
+	if ((val = READ(thread->proc, OFFSET(thread, pt_lid),
 	    &info->thread_id, sizeof(info->thread_id))) != 0)
 		return val;
 
@@ -272,8 +270,7 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 	if (tmp != PT_MAGIC)
 		return TD_ERR_BADTHREAD;
 
-	if ((val = READ(thread->proc,
-	    thread->addr + offsetof(struct __pthread_st, pt_name),
+	if ((val = READ(thread->proc, OFFSET(thread, pt_name),
 	    &nameaddr, sizeof(nameaddr))) != 0)
 		return val;
 
@@ -291,9 +288,8 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 {
 	int tmp, val;
 
-	if ((val = READ(thread->proc, 
-		      thread->addr + offsetof(struct __pthread_st, pt_state), 
-		      &tmp, sizeof(tmp))) != 0)
+	if ((val = READ(thread->proc, OFFSET(thread, pt_state),
+	    &tmp, sizeof(tmp))) != 0)
 		return val;
 
 	switch (tmp) {
@@ -319,9 +315,8 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 {
 	int val, tmp;
 
-	if ((val = READ(thread->proc, 
-		      thread->addr + offsetof(struct __pthread_st, pt_state), 
-		      &tmp, sizeof(tmp))) != 0)
+	if ((val = READ(thread->proc, OFFSET(thread, pt_state),
+	    &tmp, sizeof(tmp))) != 0)
 		return val;
 
 	switch (tmp) {
@@ -378,8 +373,7 @@ td_map_id2thr(td_proc_t *proc, int threadid, td_thread_t **threadp)
 	threadid -= TN_OFFSET;
 	next = (void *)allq.ptqh_first;
 	while (next != NULL) {
-		val = READ(proc, 
-		    next + offsetof(struct __pthread_st, pt_lid), 
+		val = READ(proc, next + offsetof(struct __pthread_st, pt_lid), 
 		    &num, sizeof(num));
 
 		if (num == threadid)
@@ -453,9 +447,7 @@ td_thr_suspend(td_thread_t *thread)
 	if (tmp != PT_MAGIC)
 		return TD_ERR_BADTHREAD;
 
-	val = READ(thread->proc, thread->addr +
-	    offsetof(struct __pthread_st, pt_lid),
-	    &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_lid), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 
@@ -477,9 +469,7 @@ td_thr_resume(td_thread_t *thread)
 	if (tmp != PT_MAGIC)
 		return TD_ERR_BADTHREAD;
 
-	val = READ(thread->proc, thread->addr +
-	    offsetof(struct __pthread_st, pt_lid),
-	    &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_lid), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 
@@ -522,8 +512,7 @@ td_thr_tsd(td_thread_t *thread, pthread_key_t key, void **value)
 {
 	int val;
 
-	val = READ(thread->proc, thread->addr + 
-	    offsetof(struct __pthread_st, pt_specific) +
+	val = READ(thread->proc, OFFSET(thread, pt_specific) +
 	    key * sizeof(void *), value, sizeof(*value));
 
 	return val;
