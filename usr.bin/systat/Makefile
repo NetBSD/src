@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2012/01/06 14:08:08 drochner Exp $
+#	$NetBSD: Makefile,v 1.38 2016/01/23 21:22:50 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ PROG=	systat
 .PATH:	${NETBSDSRCDIR}/usr.bin/vmstat ${NETBSDSRCDIR}/usr.bin/who
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/vmstat -DSUPPORT_UTMP -DSUPPORT_UTMPX \
-	-I${NETBSDSRCDIR}/usr.bin/who
+	-I${NETBSDSRCDIR}/usr.bin/who -D_KMEMUSER
 CWARNFLAGS+=    -Wno-format-y2k
 SRCS=	bufcache.c cmds.c cmdtab.c disks.c df.c drvstats.c fetch.c \
 	globalcmds.c icmp.c iostat.c ip.c keyboard.c main.c mbufs.c \
