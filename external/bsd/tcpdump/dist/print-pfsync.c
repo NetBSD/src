@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pfsync.c,v 1.2 2014/11/20 03:05:03 christos Exp $	*/
+/*	$NetBSD: print-pfsync.c,v 1.3 2016/01/23 19:08:02 christos Exp $	*/
 /*	$OpenBSD: print-pfsync.c,v 1.30 2007/05/31 04:16:26 mcbride Exp $	*/
 
 /*
@@ -31,9 +31,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/external/bsd/tcpdump/dist/print-pfsync.c,v 1.2 2014/11/20 03:05:03 christos Exp $";
+    "@(#) $Header: /cvsroot/src/external/bsd/tcpdump/dist/print-pfsync.c,v 1.3 2016/01/23 19:08:02 christos Exp $";
 #else
-__RCSID("$NetBSD: print-pfsync.c,v 1.2 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-pfsync.c,v 1.3 2016/01/23 19:08:02 christos Exp $");
 #endif
 #endif
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: print-pfsync.c,v 1.2 2014/11/20 03:05:03 christos Exp $");
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/mbuf.h>
 
 #ifdef __STDC__
 struct rtentry;
