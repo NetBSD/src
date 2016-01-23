@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.24 2015/09/20 15:45:07 kamil Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.25 2016/01/23 02:33:09 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.24 2015/09/20 15:45:07 kamil Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.25 2016/01/23 02:33:09 dholland Exp $");
 #endif
 #endif
 
@@ -447,7 +447,7 @@ ptypedef(definition *def)
 		switch (rel) {
 		case REL_ARRAY:
 			f_print(fout, "struct {\n");
-			f_print(fout, "\tu_int %s_len;\n", name);
+			f_print(fout, "\tunsigned int %s_len;\n", name);
 			f_print(fout, "\t%s%s *%s_val;\n", prefix, old, name);
 			f_print(fout, "} %s", name);
 			break;
@@ -511,7 +511,7 @@ pdeclaration(const char *name, declaration *dec, int tab,
 		case REL_ARRAY:
 			f_print(fout, "struct {\n");
 			tabify(fout, tab);
-			f_print(fout, "\tu_int %s_len;\n", dec->name);
+			f_print(fout, "\tunsigned int %s_len;\n", dec->name);
 			tabify(fout, tab);
 			f_print(fout, "\t%s%s *%s_val;\n", prefix, type, dec->name);
 			tabify(fout, tab);
