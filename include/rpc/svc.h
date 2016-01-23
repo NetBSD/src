@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.31 2016/01/23 02:34:09 dholland Exp $	*/
+/*	$NetBSD: svc.h,v 1.32 2016/01/23 02:36:57 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,6 +42,7 @@
 #define _RPC_SVC_H_
 #include <sys/cdefs.h>
 
+#include <sys/select.h>
 #include <rpc/rpc_com.h>
 
 /*
