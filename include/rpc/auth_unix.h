@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.h,v 1.9 2016/01/23 01:05:30 dholland Exp $	*/
+/*	$NetBSD: auth_unix.h,v 1.10 2016/01/23 02:34:09 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -63,7 +63,7 @@ struct authunix_parms {
 	char	*aup_machname;
 	int	 aup_uid;
 	int	 aup_gid;
-	unsigned aup_len;
+	unsigned int aup_len;
 	int	*aup_gids;
 };
 

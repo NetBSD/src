@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.30 2016/01/23 01:05:30 dholland Exp $	*/
+/*	$NetBSD: svc.h,v 1.31 2016/01/23 02:34:09 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -108,8 +108,8 @@ typedef struct __rpc_svcxprt {
 	/* XXX - fvdl stick this here for ABI backward compat reasons */
 	const struct xp_ops2 {
 		/* catch-all function */
-		bool_t  (*xp_control)(struct __rpc_svcxprt *, const unsigned,
-					   void *);
+		bool_t  (*xp_control)(struct __rpc_svcxprt *,
+					   const unsigned int, void *);
 	} *xp_ops2;
 	char		*xp_tp;		 /* transport provider device name */
 	char		*xp_netid;	 /* network token */
@@ -387,8 +387,8 @@ extern SVCXPRT *svc_tp_create(void (*)(struct svc_req *, SVCXPRT *),
  * Generic TLI create routine
  */
 extern SVCXPRT *svc_tli_create(const int, const struct netconfig *,
-				    const struct t_bind *, const unsigned,
-				    const unsigned);
+				    const struct t_bind *, const unsigned int,
+				    const unsigned int);
 /*
  *	const int fd;			-- connection end point
  *	const struct netconfig *nconf;	-- netconfig structure for network
@@ -401,14 +401,16 @@ extern SVCXPRT *svc_tli_create(const int, const struct netconfig *,
  * Connectionless and connectionful create routines
  */
 
-extern SVCXPRT *svc_vc_create(const int, const unsigned, const unsigned);
+extern SVCXPRT *svc_vc_create(const int, const unsigned int,
+				const unsigned int);
 /*
  *	const int fd;			-- open connection end point
  *	const unsigned sendsize;	-- max send size
  *	const unsigned recvsize;	-- max recv size
  */
 
-extern SVCXPRT *svc_dg_create(const int, const unsigned, const unsigned);
+extern SVCXPRT *svc_dg_create(const int, const unsigned int,
+				const unsigned int);
 /*
  *	const int fd;			-- open connection
  *	const unsigned sendsize;	-- max send size
@@ -420,7 +422,8 @@ extern SVCXPRT *svc_dg_create(const int, const unsigned, const unsigned);
  * the routine takes any *open* connection
  * descriptor as its first input and is used for open connections.
  */
-extern SVCXPRT *svc_fd_create(const int, const unsigned, const unsigned);
+extern SVCXPRT *svc_fd_create(const int, const unsigned int,
+				const unsigned int);
 /*
  *	const int fd;			-- open connection end point
  *	const unsigned sendsize;	-- max send size
@@ -435,7 +438,7 @@ extern SVCXPRT *svc_raw_create(void);
 /*
  * svc_dg_enable_cache() enables the cache on dg transports.
  */
-int svc_dg_enablecache(SVCXPRT *, const unsigned);
+int svc_dg_enablecache(SVCXPRT *, const unsigned int);
 
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_soc.h,v 1.3 2016/01/23 01:05:30 dholland Exp $	*/
+/*	$NetBSD: svc_soc.h,v 1.4 2016/01/23 02:34:09 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -93,7 +93,7 @@ __END_DECLS
  */
 __BEGIN_DECLS
 extern SVCXPRT *svcudp_create(int);
-extern SVCXPRT *svcudp_bufcreate(int, unsigned, unsigned);
+extern SVCXPRT *svcudp_bufcreate(int, unsigned int, unsigned int);
 extern int svcudp_enablecache(SVCXPRT *, unsigned long);
 __END_DECLS
 
@@ -102,14 +102,14 @@ __END_DECLS
  * Tcp based rpc.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svctcp_create(int, unsigned, unsigned);
+extern SVCXPRT *svctcp_create(int, unsigned int, unsigned int);
 __END_DECLS
 
 /*
  * Fd based rpc.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svcfd_create(int, unsigned, unsigned);
+extern SVCXPRT *svcfd_create(int, unsigned int, unsigned int);
 __END_DECLS
 
 #endif /* !_RPC_SVC_SOC_H */
