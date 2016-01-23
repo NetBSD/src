@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.23 2016/01/23 01:05:30 dholland Exp $	*/
+/*	$NetBSD: clnt.h,v 1.24 2016/01/23 02:34:09 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -156,8 +156,8 @@ typedef struct __rpc_client {
 		/* destroy this structure */
 		void		(*cl_destroy)(struct __rpc_client *);
 		/* the ioctl() of rpc */
-		bool_t          (*cl_control)(struct __rpc_client *, unsigned,
-				    char *);
+		bool_t          (*cl_control)(struct __rpc_client *,
+				    unsigned int, char *);
 	} *cl_ops;
 	void 			*cl_private;	/* private stuff */
 	char			*cl_netid;	/* network token */
@@ -365,8 +365,8 @@ extern CLIENT *clnt_tp_create(const char *, const rpcprog_t,
 
 extern CLIENT *clnt_tli_create(const int, const struct netconfig *,
 				    const struct netbuf *, const rpcprog_t,
-				    const rpcvers_t, const unsigned,
-				    const unsigned);
+				    const rpcvers_t, const unsigned int,
+				    const unsigned int);
 /*
  *	const register int fd;		-- fd
  *	const struct netconfig *nconf;	-- netconfig structure
@@ -382,7 +382,7 @@ extern CLIENT *clnt_tli_create(const int, const struct netconfig *,
  */
 extern CLIENT *clnt_vc_create(const int, const struct netbuf *,
 				   const rpcprog_t, const rpcvers_t,
-				   const unsigned, const unsigned);
+				   const unsigned int, const unsigned int);
 /*
  *	const int fd;				-- open file descriptor
  *	const struct netbuf *svcaddr;		-- servers address
@@ -397,7 +397,7 @@ extern CLIENT *clnt_vc_create(const int, const struct netbuf *,
  */
 extern CLIENT *clnt_dg_create(const int, const struct netbuf *,
 				   const rpcprog_t, const rpcvers_t,
-				   const unsigned, const unsigned);
+				   const unsigned int, const unsigned int);
 /*
  *	const int fd;				-- open file descriptor
  *	const struct netbuf *svcaddr;		-- servers address
