@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.12 2015/07/03 00:59:59 christos Exp $	*/
+/*	$NetBSD: auth1.c,v 1.13 2016/01/23 00:03:30 christos Exp $	*/
 /* $OpenBSD: auth1.c,v 1.82 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.12 2015/07/03 00:59:59 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.13 2016/01/23 00:03:30 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -376,6 +376,7 @@ do_authloop(Authctxt *authctxt)
 			char *msg;
 			size_t len;
 
+			pfilter_notify(1);
 			error("Access denied for user %s by PAM account "
 			    "configuration", authctxt->user);
 			len = buffer_len(&loginmsg);
