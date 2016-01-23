@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/01/15 22:25:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.29 2016/01/23 21:22:47 christos Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -13,7 +13,7 @@ SRCS= main.c devopen.c exec.c
 
 CPPFLAGS+= -DSLOW	# for libz
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
-CPPFLAGS+= -DXMS
+CPPFLAGS+= -DXMS -D_KERNTYPES
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
