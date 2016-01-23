@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.3 2016/01/23 21:22:14 christos Exp $ */
+/* $NetBSD: types.h,v 1.4 2016/01/23 22:31:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/featuretest.h>
 #include <or1k/int_types.h>
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long	vm_offset_t;	/* deprecated */
 typedef	unsigned long	vm_size_t;	/* deprecated */
 

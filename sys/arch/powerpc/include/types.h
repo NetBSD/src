@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.52 2016/01/23 21:22:14 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.53 2016/01/23 22:31:20 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -38,7 +38,7 @@
 #include <sys/featuretest.h>
 #include <powerpc/int_types.h>
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
 #define	PRIxPADDR	"lx"
