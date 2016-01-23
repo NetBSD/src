@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.258 2016/01/23 16:02:09 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.259 2016/01/23 16:08:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,8 +68,8 @@
 #include <sys/time.h>
 
 /* XXX: clean up includes later */
-#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <uvm/uvm_param.h>	/* XXX */
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */
