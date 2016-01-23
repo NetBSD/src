@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.84 2016/01/23 21:22:14 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.85 2016/01/23 22:31:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@ typedef unsigned long	psize_t;
 #define	PRIuPSIZE	"lu"
 #endif /* PAE */
 
-#elif defined(_KMEMUSER) || defined(_KERNTYPES)
+#elif defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 /* paddr_t is always 64 bits for userland */
 typedef __uint64_t	paddr_t;
 typedef __uint64_t	psize_t;
@@ -76,7 +76,7 @@ typedef __uint64_t	psize_t;
 
 #endif /* _KERNEL */
 
-#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
