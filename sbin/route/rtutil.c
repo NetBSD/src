@@ -1,4 +1,4 @@
-/*	$NetBSD: rtutil.c,v 1.6 2015/03/23 18:33:17 roy Exp $	*/
+/*	$NetBSD: rtutil.c,v 1.7 2016/01/23 21:05:51 christos Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/mbuf.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
