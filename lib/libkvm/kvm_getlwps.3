@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getlwps.3,v 1.6 2009/03/10 23:49:07 joerg Exp $
+.\"	$NetBSD: kvm_getlwps.3,v 1.7 2016/01/23 00:43:43 dholland Exp $
 .\"
 .\"Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\"All rights reserved.
@@ -41,7 +41,7 @@
 .In sys/sysctl.h
 .\" .Fa kvm_t *kd
 .Ft struct kinfo_lwp *
-.Fn kvm_getlwps "kvm_t *kd" "int pid" "u_long procaddr" "int *elemsize" "int *cnt"
+.Fn kvm_getlwps "kvm_t *kd" "int pid" "unsigned long procaddr" "int *elemsize" "int *cnt"
 .Sh DESCRIPTION
 .Fn kvm_getlwps
 returns the set of LWPs belonging to the process specified by
