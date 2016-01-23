@@ -169,7 +169,7 @@ struct cpu_functions {
 extern struct cpu_functions cpufuncs;
 extern u_int cputype;
 
-#define cpu_id()		cpufuncs.cf_id()
+#define cpu_idnum()		cpufuncs.cf_id()
 
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
