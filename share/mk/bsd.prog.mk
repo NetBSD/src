@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.293 2015/11/07 23:41:58 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.294 2016/01/23 21:22:47 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -330,6 +330,7 @@ _CCLINK=	${CXX} ${_CCLINKFLAGS}
 .endif
 
 .if defined(RUMPPRG)
+CPPFLAGS+=	-D_KERNTYPES
 PROG=			${RUMPPRG}
 . ifndef CRUNCHEDPROG
 .  if (${MKRUMP} != "no")
