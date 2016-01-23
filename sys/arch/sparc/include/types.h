@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.64 2015/10/06 20:03:05 martin Exp $ */
+/*	$NetBSD: types.h,v 1.65 2016/01/23 21:22:14 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
 #include <machine/int_types.h>
 
 /* The following are unsigned to prevent annoying sign extended pointers. */
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
 typedef unsigned long int	register_t;
 #define	PRIxREGISTER		"lx"
 typedef unsigned int		register32_t;
@@ -70,6 +71,7 @@ typedef unsigned long int	register64_t;
 typedef unsigned long long int	register64_t;
 #define	PRIxREGISTER64		"llx"
 #endif
+#endif
 
 #if defined(_KERNEL)
 typedef struct label_t {
@@ -81,7 +83,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES)
 typedef unsigned long int	vaddr_t;
 typedef vaddr_t			vsize_t;
 #define	PRIxVADDR		"lx"
@@ -108,6 +110,7 @@ typedef paddr_t			psize_t;
 #endif
 
 typedef	unsigned char		__cpu_simple_lock_nv_t;
+typedef unsigned long int	__register_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD
