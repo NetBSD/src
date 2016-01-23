@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.24 2011/08/28 08:43:02 mbalmer Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.25 2016/01/23 15:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,14 +31,13 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.24 2011/08/28 08:43:02 mbalmer Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.25 2016/01/23 15:41:47 christos Exp $");
 #endif
 
 
 #include <sys/param.h>
 #include <sys/callout.h>
 #include <sys/ioctl.h>
-#include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
