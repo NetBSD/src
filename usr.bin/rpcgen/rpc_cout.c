@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.37 2015/09/20 16:57:13 kamil Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.38 2016/01/23 02:33:09 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.37 2015/09/20 16:57:13 kamil Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.38 2016/01/23 02:33:09 dholland Exp $");
 #endif
 #endif
 
@@ -203,9 +203,9 @@ static void
 print_ifsizeof(const char *prefix, const char *type)
 {
 	if (streq(type, "bool")) {
-		f_print(fout, ", (u_int)sizeof(bool_t), (xdrproc_t)xdr_bool");
+		f_print(fout, ", (unsigned int)sizeof(bool_t), (xdrproc_t)xdr_bool");
 	} else {
-		f_print(fout, ", (u_int)sizeof(");
+		f_print(fout, ", (unsigned int)sizeof(");
 		if (undefined(type) && prefix) {
 			f_print(fout, "%s ", prefix);
 		}
@@ -272,10 +272,10 @@ print_ifstat(int indent, const char *prefix, const char *type, relation rel,
 			}
 			print_ifarg("(char **)(void *)");
 			if (*objname == '&') {
-				f_print(fout, "%s.%s_val, (u_int *)%s.%s_len",
+				f_print(fout, "%s.%s_val, (unsigned int *)%s.%s_len",
 				    objname, name, objname, name);
 			} else {
-				f_print(fout, "&%s->%s_val, (u_int *)&%s->%s_len",
+				f_print(fout, "&%s->%s_val, (unsigned int *)&%s->%s_len",
 				    objname, name, objname, name);
 			}
 		}
