@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.61 2016/01/23 22:31:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.62 2016/01/24 16:00:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,6 +41,18 @@
 #include <sys/featuretest.h>
 #include <mips/int_types.h>
 
+typedef	unsigned int	__cpu_simple_lock_nv_t;
+#if defined(__mips_o32)
+typedef __int32_t	__register_t;
+#else
+typedef __int64_t	__register_t;
+#endif
+#if defined(__mips_o64) || defined(__mips_o32)
+typedef	__uint32_t	__fpregister_t;
+#else
+typedef	__uint64_t	__fpregister_t;
+#endif
+
 /*
  * Note that mips_reg_t is distinct from the register_t defined
  * in <types.h> to allow these structures to be as hidden from
@@ -76,26 +88,21 @@ typedef __uint32_t	vsize_t;
 #define	PRIdVSIZE	PRId32
 #endif
 
+
 typedef int		mips_prid_t;
 /* Make sure this is signed; we need pointers to be sign-extended. */
-#if defined(__mips_o64) || defined(__mips_o32)
-typedef	__uint32_t	fpregister_t;
-typedef	__uint32_t	mips_fpreg_t;		/* do not use */
-#else
-typedef	__uint64_t	fpregister_t;
-typedef	__uint64_t	mips_fpreg_t;		/* do not use */
-#endif
+typedef	__fpregister_t	fpregister_t;
+typedef	__fpregister_t	mips_fpreg_t;		/* do not use */
+typedef __register_t	register_t;
+typedef __register_t	mips_reg_t;
+
 #if defined(__mips_o32)
-typedef __int32_t	register_t;
 typedef __uint32_t	uregister_t;
-typedef __int32_t	mips_reg_t;		/* do not use */
 typedef __uint32_t	mips_ureg_t;		/* do not use */
 #define	PRIxREGISTER	PRIx32
 #define	PRIxUREGISTER	PRIx32
 #else
-typedef __int64_t	register_t;
 typedef __uint64_t	uregister_t;
-typedef __int64_t	mips_reg_t;		/* do not use */
 typedef __uint64_t	mips_ureg_t;		/* do not use */
 typedef __int64_t	register32_t;
 typedef __uint64_t	uregister32_t;
@@ -132,12 +139,6 @@ typedef __uint32_t tlb_asid_t;
 #define	PCU_UNIT_COUNT	2
 #endif
 
-typedef	unsigned int	__cpu_simple_lock_nv_t;
-#if defined(__mips_o32)
-typedef __int32_t	__register_t;
-#else
-typedef __int64_t	__register_t;
-#endif
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
