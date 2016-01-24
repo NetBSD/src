@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.185 2016/01/24 20:14:17 christos Exp $
+#	$NetBSD: Makefile,v 1.186 2016/01/24 22:49:08 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -103,7 +103,6 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 .endif
 
 SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
-SUBDIR+= cvslatest
 
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR += .WAIT texinfo \
@@ -217,6 +216,8 @@ SUBDIR+=	mkubootimage
 SUBDIR+=	makestrs
 SUBDIR+=	makekeys
 .endif
+
+SUBDIR+= cvslatest
 
 .endif # TOOLCHAIN_BUILDRUMP
 
