@@ -1,5 +1,5 @@
 ;; Predicate definitions for SPARC.
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -124,7 +124,7 @@
 (define_predicate "symbolic_operand"
   (match_code "symbol_ref,label_ref,const")
 {
-  enum machine_mode omode = GET_MODE (op);
+  machine_mode omode = GET_MODE (op);
 
   if (omode != mode && omode != VOIDmode && mode != VOIDmode)
     return false;
@@ -260,10 +260,10 @@
   return REG_P (op) && SPARC_FP_REG_P (REGNO (op));
 })
 
-;; Return true if OP is an integer register.
-(define_special_predicate "int_register_operand"
-  (ior (match_test "register_operand (op, SImode)")
-       (match_test "TARGET_ARCH64 && register_operand (op, DImode)")))
+;; Return true if OP is an integer register of the appropriate mode
+;; for a cstore result.
+(define_special_predicate "cstore_result_operand"
+  (match_test "register_operand (op, TARGET_ARCH64 ? DImode : SImode)"))
 
 ;; Return true if OP is a floating point condition code register.
 (define_predicate "fcc_register_operand"

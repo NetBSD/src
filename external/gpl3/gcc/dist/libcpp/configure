@@ -592,6 +592,7 @@ ac_includes_default="\
 #endif"
 
 ac_subst_vars='LTLIBOBJS
+PICFLAG
 MAINT
 USED_CATALOGS
 PACKAGE
@@ -701,6 +702,7 @@ with_libiconv_prefix
 enable_maintainer_mode
 enable_checking
 enable_canonical_system_headers
+enable_host_shared
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1340,6 +1342,7 @@ Optional Features:
                           other strings
   --enable-canonical-system-headers
                           enable or disable system headers canonicalization
+  --enable-host-shared    build host code as shared libraries
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1818,6 +1821,58 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
 
 } # ac_fn_c_check_type
+
+# ac_fn_c_find_uintX_t LINENO BITS VAR
+# ------------------------------------
+# Finds an unsigned integer type with width BITS, setting cache variable VAR
+# accordingly.
+ac_fn_c_find_uintX_t ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for uint$2_t" >&5
+$as_echo_n "checking for uint$2_t... " >&6; }
+if { as_var=$3; eval "test \"\${$as_var+set}\" = set"; }; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=no"
+     for ac_type in uint$2_t 'unsigned int' 'unsigned long int' \
+	 'unsigned long long int' 'unsigned short int' 'unsigned char'; do
+       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+static int test_array [1 - 2 * !(($ac_type) -1 >> ($2 - 1) == 1)];
+test_array [0] = 0
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  case $ac_type in #(
+  uint$2_t) :
+    eval "$3=yes" ;; #(
+  *) :
+    eval "$3=\$ac_type" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+       eval as_val=\$$3
+   if test "x$as_val" = x""no; then :
+
+else
+  break
+fi
+     done
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+
+} # ac_fn_c_find_uintX_t
 
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
@@ -5563,6 +5618,23 @@ _ACEOF
 
 fi
 
+ac_fn_c_find_uintX_t "$LINENO" "64" "ac_cv_c_uint64_t"
+case $ac_cv_c_uint64_t in #(
+  no|yes) ;; #(
+  *)
+
+$as_echo "#define _UINT64_T 1" >>confdefs.h
+
+
+cat >>confdefs.h <<_ACEOF
+#define uint64_t $ac_cv_c_uint64_t
+_ACEOF
+;;
+  esac
+
+if test x"$ac_cv_c_uint64_t" = x"no"; then
+  as_fn_error "uint64_t not found" "$LINENO" 5
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether struct tm is in sys/time.h or time.h" >&5
 $as_echo_n "checking whether struct tm is in sys/time.h or time.h... " >&6; }
 if test "${ac_cv_struct_tm+set}" = set; then :
@@ -7148,41 +7220,6 @@ $as_echo "#define ENABLE_CANONICAL_SYSTEM_HEADERS 1" >>confdefs.h
 
 fi
 
-
-case $target in
-	aarch64*-*-* | \
-	alpha*-*-* | \
-	arm*-*-* | \
-	x86_64-*-* | \
-	ia64-*-* | \
-	hppa*64*-*-* | \
-	i[34567]86-*-* | x86_64-*-solaris2.1[0-9]* | \
-	mips*-*-* | \
-	mmix-*-* | \
-	powerpc*-*-* | \
-	rs6000*-*-* | \
-	s390*-*-* | \
-	sparc*-*-* | \
-	spu-*-* | \
-	sh[123456789lbe]*-*-* | sh-*-* | \
-	tilegx-*-* | tilepro-*-* )
-		need_64bit_hwint=yes ;;
-	*)
-		need_64bit_hwint=no ;;
-esac
-
-case $need_64bit_hwint:$ac_cv_sizeof_long in
-	*:8 | no:*) host_wide_int=long ;;
-	*) host_wide_int='long long' ;;
-esac
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define HOST_WIDE_INT $host_wide_int
-_ACEOF
-
-
 case $target in
   i?86-* | x86_64-*)
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -7203,6 +7240,16 @@ $as_echo "#define HAVE_SSE4 1" >>confdefs.h
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 esac
+
+# Enable --enable-host-shared.
+# Check whether --enable-host-shared was given.
+if test "${enable_host_shared+set}" = set; then :
+  enableval=$enable_host_shared; PICFLAG=-fPIC
+else
+  PICFLAG=
+fi
+
+
 
 # Output.
 

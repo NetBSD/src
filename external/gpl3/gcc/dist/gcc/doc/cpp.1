@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "CPP 1"
-.TH CPP 1 "2015-06-23" "gcc-4.8.5" "GNU"
+.TH CPP 1 "2015-12-04" "gcc-5.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -376,7 +376,7 @@ suitable for \fBmake\fR describing the dependencies of the main
 source file.  The preprocessor outputs one \fBmake\fR rule containing
 the object file name for that source file, a colon, and the names of all
 the included files, including those coming from \fB\-include\fR or
-\&\fB\-imacros\fR command line options.
+\&\fB\-imacros\fR command-line options.
 .Sp
 Unless specified explicitly (with \fB\-MT\fR or \fB\-MQ\fR), the
 object file name consists of the name of the source file with any
@@ -726,8 +726,7 @@ Accept \fB$\fR in identifiers.
 .IP "\fB\-fextended\-identifiers\fR" 4
 .IX Item "-fextended-identifiers"
 Accept universal character names in identifiers.  This option is
-experimental; in a future version of \s-1GCC\s0, it will be enabled by
-default for C99 and \*(C+.
+enabled by default for C99 (and later C standard versions) and \*(C+.
 .IP "\fB\-fno\-canonical\-system\-headers\fR" 4
 .IX Item "-fno-canonical-system-headers"
 When preprocessing, do not shorten system header paths with canonicalization.
@@ -782,7 +781,7 @@ tokens locations completely. This value is the most memory hungry.
 When this option is given no argument, the default parameter value is
 \&\fB2\fR.
 .Sp
-Note that \-ftrack\-macro\-expansion=2 is activated by default.
+Note that \f(CW\*(C`\-ftrack\-macro\-expansion=2\*(C'\fR is activated by default.
 .IP "\fB\-fexec\-charset=\fR\fIcharset\fR" 4
 .IX Item "-fexec-charset=charset"
 Set the execution character set, used for string and character
@@ -802,7 +801,7 @@ Set the input character set, used for translation from the character
 set of the input file to the source character set used by \s-1GCC\s0.  If the
 locale does not specify, or \s-1GCC\s0 cannot get this information from the
 locale, the default is \s-1UTF\-8\s0.  This can be overridden by either the locale
-or this command line option.  Currently the command line option takes
+or this command-line option.  Currently the command-line option takes
 precedence if there's a conflict.  \fIcharset\fR can be any encoding
 supported by the system's \f(CW\*(C`iconv\*(C'\fR library routine.
 .IP "\fB\-fworking\-directory\fR" 4
@@ -928,7 +927,7 @@ short file names, such as MS-DOS.
 .IP "\fB\-\-target\-help\fR" 4
 .IX Item "--target-help"
 .PD
-Print text describing all the command line options instead of
+Print text describing all the command-line options instead of
 preprocessing anything.
 .IP "\fB\-v\fR" 4
 .IX Item "-v"
