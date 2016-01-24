@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2014 2016/01/23 15:01:30 christos Exp $
+#	$NetBSD: mi,v 1.2015 2016/01/24 17:14:10 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -24,6 +24,7 @@
 ./usr/bin/ctfmerge				comp-util-bin		ctf
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
+./usr/bin/cvslatest				comp-cvs-bin		cvs
 ./usr/bin/elfedit				comp-util-bin		binutils
 ./usr/bin/f77					comp-fortran-bin	obsolete
 ./usr/bin/fgen					comp-util-bin
@@ -3887,6 +3888,7 @@
 ./usr/share/man/cat1/crunchgen.0		comp-c-catman		.cat
 ./usr/share/man/cat1/crunchide.0		comp-c-catman		.cat
 ./usr/share/man/cat1/cvs.0			comp-cvs-catman		cvs,.cat
+./usr/share/man/cat1/cvslatest.0		comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat1/elf2aout.0			comp-sysutil-catman	.cat
 ./usr/share/man/cat1/elf2ecoff.0		comp-sysutil-catman	.cat
 ./usr/share/man/cat1/elfedit.0			comp-util-catman	binutils,.cat
@@ -10975,6 +10977,7 @@
 ./usr/share/man/html1/crunchgen.html		comp-c-htmlman		html
 ./usr/share/man/html1/crunchide.html		comp-c-htmlman		html
 ./usr/share/man/html1/cvs.html			comp-cvs-htmlman	cvs,html
+./usr/share/man/html1/cvslatest.html		comp-cvs-htmlman	cvs,html
 ./usr/share/man/html1/elf2aout.html		comp-sysutil-htmlman	html
 ./usr/share/man/html1/elf2ecoff.html		comp-sysutil-htmlman	html
 ./usr/share/man/html1/elfedit.html		comp-util-htmlman	binutils,html
@@ -17800,6 +17803,7 @@
 ./usr/share/man/man1/crunchgen.1		comp-c-man		.man
 ./usr/share/man/man1/crunchide.1		comp-c-man		.man
 ./usr/share/man/man1/cvs.1			comp-cvs-man		cvs,.man
+./usr/share/man/man1/cvslatest.1		comp-cvs-man		cvs,.man
 ./usr/share/man/man1/elf2aout.1			comp-sysutil-man	.man
 ./usr/share/man/man1/elf2ecoff.1		comp-sysutil-man	.man
 ./usr/share/man/man1/elfedit.1			comp-util-man		binutils,.man
