@@ -339,6 +339,18 @@ Note &lsquo;<samp><span class="samp">libiberty</span></samp>&rsquo; does not sup
 <samp><span class="option">--disable-shared</span></samp> does not accept a list of package names as
 argument, only <samp><span class="option">--enable-shared</span></samp> does.
 
+     <p>Contrast with <samp><span class="option">--enable-host-shared</span></samp>, which affects <em>host</em>
+code.
+
+     <br><dt><code>--enable-host-shared</code><dd>Specify that the <em>host</em> code should be built into position-independent
+machine code (with -fPIC), allowing it to be used within shared libraries,
+but yielding a slightly slower compiler.
+
+     <p>This option is required when building the libgccjit.so library.
+
+     <p>Contrast with <samp><span class="option">--enable-shared</span></samp>, which affects <em>target</em>
+libraries.
+
      <br><dt><code><a name="with_002dgnu_002das"></a>--with-gnu-as</code><dd>Specify that the compiler should assume that the
 assembler it finds is the GNU assembler.  However, this does not modify
 the rules to find an assembler and will result in confusion if the
@@ -438,6 +450,17 @@ and for cross builds configured with <samp><span class="option">--with-sysroot</
 <samp><span class="option">--with-native-system-header-dir</span></samp>. 
 More documentation about multiarch can be found at
 <a href="http://wiki.debian.org/Multiarch">http://wiki.debian.org/Multiarch</a>.
+
+     <br><dt><code>--enable-vtable-verify</code><dd>Specify whether to enable or disable the vtable verification feature. 
+Enabling this feature causes libstdc++ to be built with its virtual calls
+in verifiable mode.  This means that, when linked with libvtv, every
+virtual call in libstdc++ will verify the vtable pointer through which the
+call will be made before actually making the call.  If not linked with libvtv,
+the verifier will call stub functions (in libstdc++ itself) and do nothing. 
+If vtable verification is disabled, then libstdc++ is not built with its
+virtual calls in verifiable mode at all.  However the libvtv library will
+still be built (see <samp><span class="option">--disable-libvtv</span></samp> to turn off building libvtv). 
+<samp><span class="option">--disable-vtable-verify</span></samp> is the default.
 
      <br><dt><code>--disable-multilib</code><dd>Specify that multiple target
 libraries to support different target variants, calling
@@ -554,8 +577,8 @@ This is an alias for <samp><span class="option">--enable-tls=no</span></samp>.
 
      <br><dt><code>--with-cpu=</code><var>cpu</var><dt><code>--with-cpu-32=</code><var>cpu</var><dt><code>--with-cpu-64=</code><var>cpu</var><dd>Specify which cpu variant the compiler should generate code for by default. 
 <var>cpu</var> will be used as the default value of the <samp><span class="option">-mcpu=</span></samp> switch. 
-This option is only supported on some targets, including ARM, i386, M68k,
-PowerPC, and SPARC.  The <samp><span class="option">--with-cpu-32</span></samp> and
+This option is only supported on some targets, including ARC, ARM, i386, M68k,
+PowerPC, and SPARC.  It is mandatory for ARC.  The <samp><span class="option">--with-cpu-32</span></samp> and
 <samp><span class="option">--with-cpu-64</span></samp> options specify separate default CPUs for
 32-bit and 64-bit modes; these options are only supported for i386,
 x86-64 and PowerPC.
@@ -577,6 +600,41 @@ libraries.  This option is only supported on Epiphany targets.
 ISA for floating-point arithmetics.  You can select either &lsquo;<samp><span class="samp">sse</span></samp>&rsquo; which
 enables <samp><span class="option">-msse2</span></samp> or &lsquo;<samp><span class="samp">avx</span></samp>&rsquo; which enables <samp><span class="option">-mavx</span></samp> by default. 
 This option is only supported on i386 and x86-64 targets.
+
+     <br><dt><code>--with-fp-32=</code><var>mode</var><dd>On MIPS targets, set the default value for the <samp><span class="option">-mfp</span></samp> option when using
+the o32 ABI.  The possibilities for <var>mode</var> are:
+          <dl>
+<dt><code>32</code><dd>Use the o32 FP32 ABI extension, as with the <samp><span class="option">-mfp32</span></samp> command-line
+option. 
+<br><dt><code>xx</code><dd>Use the o32 FPXX ABI extension, as with the <samp><span class="option">-mfpxx</span></samp> command-line
+option. 
+<br><dt><code>64</code><dd>Use the o32 FP64 ABI extension, as with the <samp><span class="option">-mfp64</span></samp> command-line
+option. 
+</dl>
+     In the absence of this configuration option the default is to use the o32
+FP32 ABI extension.
+
+     <br><dt><code>--with-odd-spreg-32</code><dd>On MIPS targets, set the <samp><span class="option">-modd-spreg</span></samp> option by default when using
+the o32 ABI.
+
+     <br><dt><code>--without-odd-spreg-32</code><dd>On MIPS targets, set the <samp><span class="option">-mno-odd-spreg</span></samp> option by default when using
+the o32 ABI.  This is normally used in conjunction with
+<samp><span class="option">--with-fp-32=64</span></samp> in order to target the o32 FP64A ABI extension.
+
+     <br><dt><code>--with-nan=</code><var>encoding</var><dd>On MIPS targets, set the default encoding convention to use for the
+special not-a-number (NaN) IEEE 754 floating-point data.  The
+possibilities for <var>encoding</var> are:
+          <dl>
+<dt><code>legacy</code><dd>Use the legacy encoding, as with the <samp><span class="option">-mnan=legacy</span></samp> command-line
+option. 
+<br><dt><code>2008</code><dd>Use the 754-2008 encoding, as with the <samp><span class="option">-mnan=2008</span></samp> command-line
+option. 
+</dl>
+     To use this configuration option you must have an assembler version
+installed that supports the <samp><span class="option">-mnan=</span></samp> command-line option too. 
+In the absence of this configuration option the default convention is
+the legacy encoding, as when neither of the <samp><span class="option">-mnan=2008</span></samp> and
+<samp><span class="option">-mnan=legacy</span></samp> command-line options has been used.
 
      <br><dt><code>--with-divide=</code><var>type</var><dd>Specify how the compiler should generate code for checking for
 division by zero.  This option is only supported on the MIPS target. 
@@ -635,6 +693,10 @@ opposite effect.  If neither option is specified, the configure script
 will try to guess whether the <code>.init_array</code> and
 <code>.fini_array</code> sections are supported and, if they are, use them.
 
+     <br><dt><code>--enable-link-mutex</code><dd>When building GCC, use a mutex to avoid linking the compilers for
+multiple languages at the same time, to avoid thrashing on build
+systems with limited free memory.  The default is not to use such a mutex.
+
      <br><dt><code>--enable-maintainer-mode</code><dd>The build rules that regenerate the Autoconf and Automake output files as
 well as the GCC master message catalog <samp><span class="file">gcc.pot</span></samp> are normally
 disabled.  This is because it can only be rebuilt if the complete source
@@ -676,7 +738,102 @@ addition, &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo;'s inclu
 <samp><span class="option">--with-gxx-include-dir=</span><var>dirname</var></samp>.  Using this option is
 particularly useful if you intend to use several versions of GCC in
 parallel.  This is currently supported by &lsquo;<samp><span class="samp">libgfortran</span></samp>&rsquo;,
-&lsquo;<samp><span class="samp">libjava</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libmudflap</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;.
+&lsquo;<samp><span class="samp">libjava</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;.
+
+     <br><dt><code><a name="WithAixSoname"></a>--with-aix-soname=&lsquo;</code><samp><span class="samp">aix</span></samp><code>&rsquo;, &lsquo;</code><samp><span class="samp">svr4</span></samp><code>&rsquo; or &lsquo;</code><samp><span class="samp">both</span></samp><code>&rsquo;</code><dd>Traditional AIX shared library versioning (versioned <code>Shared Object</code>
+files as members of unversioned <code>Archive Library</code> files named
+&lsquo;<samp><span class="samp">lib.a</span></samp>&rsquo;) causes numerous headaches for package managers. However,
+<code>Import Files</code> as members of <code>Archive Library</code> files allow for
+<strong>filename-based versioning</strong> of shared libraries as seen on Linux/SVR4,
+where this is called the "SONAME". But as they prevent static linking,
+<code>Import Files</code> may be used with <code>Runtime Linking</code> only, where the
+linker does search for &lsquo;<samp><span class="samp">libNAME.so</span></samp>&rsquo; before &lsquo;<samp><span class="samp">libNAME.a</span></samp>&rsquo; library
+filenames with the &lsquo;<samp><span class="samp">-lNAME</span></samp>&rsquo; linker flag.
+
+     <p><a name="AixLdCommand"></a>For detailed information please refer to the AIX
+<a href="http://www-01.ibm.com/support/knowledgecenter/search/%22the%20ld%20command%2C%20also%20called%20the%20linkage%20editor%20or%20binder%22">ld Command</a> reference.
+
+     <p>As long as shared library creation is enabled, upon:
+          <dl>
+<dt><code>--with-aix-soname=aix</code><br><dt><code>--with-aix-soname=both</code><dd> A (traditional AIX) <code>Shared Archive Library</code> file is created:
+               <ul>
+  <li>using the &lsquo;<samp><span class="samp">libNAME.a</span></samp>&rsquo; filename scheme
+  <li>with the <code>Shared Object</code> file as archive member named
+  &lsquo;<samp><span class="samp">libNAME.so.V</span></samp>&rsquo; (except for &lsquo;<samp><span class="samp">libgcc_s</span></samp>&rsquo;, where the <code>Shared
+  Object</code> file is named &lsquo;<samp><span class="samp">shr.o</span></samp>&rsquo; for backwards compatibility), which
+                    <ul>
+   <li>is used for runtime loading from inside the &lsquo;<samp><span class="samp">libNAME.a</span></samp>&rsquo; file
+   <li>is used for dynamic loading via
+   <code>dlopen("libNAME.a(libNAME.so.V)", RTLD_MEMBER)</code>
+   <li>is used for shared linking
+   <li>is used for static linking, so no separate <code>Static Archive
+   Library</code> file is needed
+  </ul>
+                </ul>
+          <br><dt><code>--with-aix-soname=both</code><br><dt><code>--with-aix-soname=svr4</code><dd> A (second) <code>Shared Archive Library</code> file is created:
+               <ul>
+ <li>using the &lsquo;<samp><span class="samp">libNAME.so.V</span></samp>&rsquo; filename scheme
+ <li>with the <code>Shared Object</code> file as archive member named
+ &lsquo;<samp><span class="samp">shr.o</span></samp>&rsquo;, which
+                    <ul>
+   <li>is created with the <code>-G linker flag</code>
+   <li>has the <code>F_LOADONLY</code> flag set
+   <li>is used for runtime loading from inside the &lsquo;<samp><span class="samp">libNAME.so.V</span></samp>&rsquo; file
+   <li>is used for dynamic loading via <code>dlopen("libNAME.so.V(shr.o)",
+   RTLD_MEMBER)</code>
+  </ul>
+                <li>with the <code>Import File</code> as archive member named &lsquo;<samp><span class="samp">shr.imp</span></samp>&rsquo;,
+ which
+                    <ul>
+   <li>refers to &lsquo;<samp><span class="samp">libNAME.so.V(shr.o)</span></samp>&rsquo; as the "SONAME", to be recorded
+   in the <code>Loader Section</code> of subsequent binaries
+   <li>indicates whether &lsquo;<samp><span class="samp">libNAME.so.V(shr.o)</span></samp>&rsquo; is 32 or 64 bit
+   <li>lists all the public symbols exported by &lsquo;<samp><span class="samp">lib.so.V(shr.o)</span></samp>&rsquo;,
+   eventually decorated with the <code>&lsquo;</code><samp><span class="samp">weak</span></samp><code>&rsquo; Keyword</code>
+   <li>is necessary for shared linking against &lsquo;<samp><span class="samp">lib.so.V(shr.o)</span></samp>&rsquo;
+   </ul>
+                 </ul>
+            A symbolic link using the &lsquo;<samp><span class="samp">libNAME.so</span></samp>&rsquo; filename scheme is created:
+               <ul>
+  <li>pointing to the &lsquo;<samp><span class="samp">libNAME.so.V</span></samp>&rsquo; <code>Shared Archive Library</code> file
+  <li>to permit the <code>ld Command</code> to find &lsquo;<samp><span class="samp">lib.so.V(shr.imp)</span></samp>&rsquo; via
+  the &lsquo;<samp><span class="samp">-lNAME</span></samp>&rsquo; argument (requires <code>Runtime Linking</code> to be enabled)
+  <li>to permit dynamic loading of &lsquo;<samp><span class="samp">lib.so.V(shr.o)</span></samp>&rsquo; without the need
+  to specify the version number via <code>dlopen("libNAME.so(shr.o)",
+  RTLD_MEMBER)</code>
+  </ul>
+          </dl>
+
+     <p>As long as static library creation is enabled, upon:
+          <dl>
+<dt><code>--with-aix-soname=svr4</code><dd> A <code>Static Archive Library</code> is created:
+               <ul>
+ <li>using the &lsquo;<samp><span class="samp">libNAME.a</span></samp>&rsquo; filename scheme
+ <li>with all the <code>Static Object</code> files as archive members, which
+                    <ul>
+   <li>are used for static linking
+  </ul>
+                </ul>
+          </dl>
+
+     <p>While the aix-soname=&lsquo;<samp><span class="samp">svr4</span></samp>&rsquo; option does not create <code>Shared Object</code>
+files as members of unversioned <code>Archive Library</code> files any more, package
+managers still are responsible to
+<a href="./specific.html#TransferAixShobj">transfer</a> <code>Shared Object</code> files
+found as member of a previously installed unversioned <code>Archive Library</code>
+file into the newly installed <code>Archive Library</code> file with the same
+filename.
+
+     <p><em>WARNING:</em> Creating <code>Shared Object</code> files with <code>Runtime Linking</code>
+enabled may bloat the TOC, eventually leading to <code>TOC overflow</code> errors,
+requiring the use of either the <samp><span class="option">-Wl,-bbigtoc</span></samp> linker flag (seen to
+break with the <code>GDB</code> debugger) or some of the TOC-related compiler flags,
+see &ldquo;RS/6000 and PowerPC Options&rdquo; in the main manual.
+
+     <p><samp><span class="option">--with-aix-soname</span></samp> is currently supported by &lsquo;<samp><span class="samp">libgcc_s</span></samp>&rsquo; only, so
+this option is still experimental and not for normal use yet.
+
+     <p>Default is the traditional behaviour <samp><span class="option">--with-aix-soname=&lsquo;</span><samp><span class="samp">aix</span></samp><span class="option">&rsquo;</span></samp>.
 
      <br><dt><code>--enable-languages=</code><var>lang1</var><code>,</code><var>lang2</var><code>,...</code><dd>Specify that only a particular subset of compilers and
 their runtime libraries should be built.  For a list of valid values for
@@ -711,6 +868,9 @@ be built.  This can be useful for debugging, or for compatibility with
 previous Ada build procedures, when it was required to explicitly
 do a &lsquo;<samp><span class="samp">make -C gcc gnatlib_and_tools</span></samp>&rsquo;.
 
+     <br><dt><code>--disable-libsanitizer</code><dd>Specify that the run-time libraries for the various sanitizers should
+not be built.
+
      <br><dt><code>--disable-libssp</code><dd>Specify that the run-time libraries for stack smashing protection
 should not be built.
 
@@ -722,7 +882,11 @@ is used.
      <br><dt><code>--disable-libquadmath-support</code><dd>Specify that the Fortran front end and <code>libgfortran</code> do not add
 support for <code>libquadmath</code> on systems supporting it.
 
-     <br><dt><code>--disable-libgomp</code><dd>Specify that the run-time libraries used by GOMP should not be built.
+     <br><dt><code>--disable-libgomp</code><dd>Specify that the GNU Offloading and Multi Processing Runtime Library
+should not be built.
+
+     <br><dt><code>--disable-libvtv</code><dd>Specify that the run-time libraries used by vtable verification
+should not be built.
 
      <br><dt><code>--with-dwarf2</code><dd>Specify that the compiler should
 use DWARF 2 debugging information as the default.
@@ -889,18 +1053,13 @@ variable (<samp><span class="env">LD_LIBRARY_PATH</span></samp> on GNU/Linux and
      <p>These flags are applicable to the host platform only.  When building
 a cross compiler, they will not be used to configure target libraries.
 
-     <br><dt><code>--with-isl=</code><var>pathname</var><dt><code>--with-isl-include=</code><var>pathname</var><dt><code>--with-isl-lib=</code><var>pathname</var><dt><code>--with-cloog=</code><var>pathname</var><dt><code>--with-cloog-include=</code><var>pathname</var><dt><code>--with-cloog-lib=</code><var>pathname</var><dd>If you do not have ISL and the CLooG
-libraries installed in a standard location and you want to build GCC,
-you can explicitly specify the directory where they are installed
-(&lsquo;<samp><span class="samp">--with-isl=</span><var>islinstalldir</var></samp>&rsquo;,
-&lsquo;<samp><span class="samp">--with-cloog=</span><var>clooginstalldir</var></samp>&rsquo;). The
+     <br><dt><code>--with-isl=</code><var>pathname</var><dt><code>--with-isl-include=</code><var>pathname</var><dt><code>--with-isl-lib=</code><var>pathname</var><dd>If you do not have the ISL library installed in a standard location and you
+want to build GCC, you can explicitly specify the directory where it is
+installed (&lsquo;<samp><span class="samp">--with-isl=</span><var>islinstalldir</var></samp>&rsquo;). The
 <samp><span class="option">--with-isl=</span><var>islinstalldir</var></samp> option is shorthand for
 <samp><span class="option">--with-isl-lib=</span><var>islinstalldir</var><span class="option">/lib</span></samp> and
-<samp><span class="option">--with-isl-include=</span><var>islinstalldir</var><span class="option">/include</span></samp>.  Likewise the
-<samp><span class="option">--with-cloog=</span><var>clooginstalldir</var></samp> option is shorthand for
-<samp><span class="option">--with-cloog-lib=</span><var>clooginstalldir</var><span class="option">/lib</span></samp> and
-<samp><span class="option">--with-cloog-include=</span><var>clooginstalldir</var><span class="option">/include</span></samp>.  If these
-shorthand assumptions are not correct, you can use the explicit
+<samp><span class="option">--with-isl-include=</span><var>islinstalldir</var><span class="option">/include</span></samp>. If this
+shorthand assumption is not correct, you can use the explicit
 include and lib options directly.
 
      <p>These flags are applicable to the host platform only.  When building
@@ -949,12 +1108,35 @@ linker for all final links. <var>choice</var> can be one of
 
      <br><dt><code>--enable-gnu-unique-object</code><dt><code>--disable-gnu-unique-object</code><dd>Tells GCC to use the gnu_unique_object relocation for C++ template
 static data members and inline function local statics.  Enabled by
-default for a native toolchain with an assembler that accepts it and
+default for a toolchain with an assembler that accepts it and
 GLIBC 2.11 or above, otherwise disabled.
+
+     <br><dt><code>--with-diagnostics-color=</code><var>choice</var><dd>Tells GCC to use <var>choice</var> as the default for <samp><span class="option">-fdiagnostics-color=</span></samp>
+option (if not used explicitly on the command line).  <var>choice</var>
+can be one of &lsquo;<samp><span class="samp">never</span></samp>&rsquo;, &lsquo;<samp><span class="samp">auto</span></samp>&rsquo;, &lsquo;<samp><span class="samp">always</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">auto-if-env</span></samp>&rsquo;
+where &lsquo;<samp><span class="samp">auto</span></samp>&rsquo; is the default.  &lsquo;<samp><span class="samp">auto-if-env</span></samp>&rsquo; means that
+<samp><span class="option">-fdiagnostics-color=auto</span></samp> will be the default if <code>GCC_COLORS</code>
+is present and non-empty in the environment, and
+<samp><span class="option">-fdiagnostics-color=never</span></samp> otherwise.
 
      <br><dt><code>--enable-lto</code><dt><code>--disable-lto</code><dd>Enable support for link-time optimization (LTO).  This is enabled by
 default, and may be disabled using <samp><span class="option">--disable-lto</span></samp>.
 
+     <br><dt><code>--enable-linker-plugin-configure-flags=FLAGS</code><dt><code>--enable-linker-plugin-flags=FLAGS</code><dd>By default, linker plugins (such as the LTO plugin) are built for the
+host system architecture.  For the case that the linker has a
+different (but run-time compatible) architecture, these flags can be
+specified to build plugins that are compatible to the linker.  For
+example, if you are building GCC for a 64-bit x86_64
+(&lsquo;<samp><span class="samp">x86_64-unknown-linux-gnu</span></samp>&rsquo;) host system, but have a 32-bit x86
+GNU/Linux (&lsquo;<samp><span class="samp">i686-pc-linux-gnu</span></samp>&rsquo;) linker executable (which is
+executable on the former system), you can configure GCC as follows for
+getting compatible linker plugins:
+
+     <pre class="smallexample">          % <var>srcdir</var>/configure \
+              --host=x86_64-unknown-linux-gnu \
+              --enable-linker-plugin-configure-flags=--host=i686-pc-linux-gnu \
+              --enable-linker-plugin-flags='CC=gcc\ -m32\ -Wl,-rpath,[...]/i686-pc-linux-gnu/lib'
+</pre>
      <br><dt><code>--with-plugin-ld=</code><var>pathname</var><dd>Enable an alternate linker to be used at link-time optimization (LTO)
 link time when <samp><span class="option">-fuse-linker-plugin</span></samp> is enabled. 
 This linker should have plugin support such as gold starting with
@@ -965,8 +1147,30 @@ See <samp><span class="option">-fuse-linker-plugin</span></samp> for details.
 produce shorter header file paths in diagnostics and dependency output
 files, but these changed header paths may conflict with some compilation
 environments.  Enabled by default, and may be disabled using
-<samp><span class="option">--disable-canonical-system-headers</span></samp>. 
-</dl>
+<samp><span class="option">--disable-canonical-system-headers</span></samp>.
+
+     <br><dt><code>--with-glibc-version=</code><var>major</var><code>.</code><var>minor</var><dd>Tell GCC that when the GNU C Library (glibc) is used on the target it
+will be version <var>major</var>.<var>minor</var> or later.  Normally this can
+be detected from the C library's header files, but this option may be
+needed when bootstrapping a cross toolchain without the header files
+available for building the initial bootstrap compiler.
+
+     <p>If GCC is configured with some multilibs that use glibc and some that
+do not, this option applies only to the multilibs that use glibc. 
+However, such configurations may not work well as not all the relevant
+configuration in GCC is on a per-multilib basis.
+
+     <br><dt><code>--enable-as-accelerator-for=</code><var>target</var><dd>Build as offload target compiler. Specify offload host triple by <var>target</var>.
+
+     <br><dt><code>--enable-offload-targets=</code><var>target1</var><code>[=</code><var>path1</var><code>],...,</code><var>targetN</var><code>[=</code><var>pathN</var><code>]</code><dd>Enable offloading to targets <var>target1</var>, <small class="dots">...</small>, <var>targetN</var>. 
+Offload compilers are expected to be already installed.  Default search
+path for them is <samp><var>exec-prefix</var></samp>, but it can be changed by
+specifying paths <var>path1</var>, <small class="dots">...</small>, <var>pathN</var>.
+
+     <pre class="smallexample">          % <var>srcdir</var>/configure \
+              --enable-offload-target=i686-unknown-linux-gnu=/path/to/i686/compiler,x86_64-pc-linux-gnu
+</pre>
+     </dl>
 
 <h4 class="subheading"><a name="TOC3"></a>Cross-Compiler-Specific Options</h4>
 
@@ -1044,6 +1248,10 @@ technical details, cf. <a href="http://gcc.gnu.org/PR54461">PR54461</a>.
 This option is only supported for the AVR target.  It is not supported for
 RTEMS configurations, which currently use newlib.  The option is
 supported since version 4.7.2 and is the default in 4.8.0 and newer.
+
+     <br><dt><code>--with-nds32-lib=</code><var>library</var><dd>Specifies that <var>library</var> setting is used for building <samp><span class="file">libgcc.a</span></samp>. 
+Currently, the valid <var>library</var> is &lsquo;<samp><span class="samp">newlib</span></samp>&rsquo; or &lsquo;<samp><span class="samp">mculib</span></samp>&rsquo;. 
+This option is only supported for the NDS32 target.
 
      <br><dt><code>--with-build-time-tools=</code><var>dir</var><dd>Specifies where to find the set of target tools (assembler, linker, etc.) 
 that will be used while building GCC itself.  This option can be useful

@@ -1,5 +1,5 @@
 ;; Constraints for the DEC VAX port.
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -116,4 +116,4 @@
     "@internal satisfies CONSTANT_P and, if pic is enabled, is not a SYMBOL_REF, LABEL_REF, or CONST."
   (and (match_test ("CONSTANT_P (op)"))
        (ior (not (match_code "symbol_ref,label_ref,const"))
-	     (match_test "!flag_pic"))))
+	    (match_test "!flag_pic"))))

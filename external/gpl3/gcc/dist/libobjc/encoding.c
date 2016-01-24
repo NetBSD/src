@@ -1,5 +1,5 @@
 /* Encoding of types for Objective C.
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Kresten Krab Thorup
    Bitfield support by Ovidiu Predescu
 
@@ -192,8 +192,7 @@ _darwin_rs6000_special_round_type_align (const char *struc, int comp, int spec)
    ? MAX (MAX (COMPUTED, SPECIFIED), 64)				\
    : MAX (COMPUTED, SPECIFIED));})
 
-#define rs6000_special_adjust_field_align_p(FIELD, COMPUTED) \
- (TARGET_ALTIVEC && TREE_CODE (TREE_TYPE (FIELD)) == VECTOR_TYPE)
+#define rs6000_special_adjust_field_align_p(FIELD, COMPUTED) 0
 
 /* Skip a variable name, enclosed in quotes (").  */
 static inline
@@ -1069,7 +1068,7 @@ objc_get_type_qualifiers (const char *type)
   These functions are used by objc_sizeof_type and objc_alignof_type
   functions to compute the size and alignment of structures. The
   previous method of computing the size and alignment of a structure
-  was not working on some architectures, particulary on AIX, and in
+  was not working on some architectures, particularly on AIX, and in
   the presence of bitfields inside the structure.  */
 void
 objc_layout_structure (const char *type,

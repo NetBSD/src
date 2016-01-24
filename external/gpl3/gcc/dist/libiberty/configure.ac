@@ -128,6 +128,31 @@ if test $cross_compiling = no && test $multilib = yes \
    cross_compiling=maybe
 fi
 
+# We may wish to install the target headers somewhere.
+AC_MSG_CHECKING([whether to install libiberty headers and static library])
+dnl install-libiberty is disabled by default
+
+AC_ARG_ENABLE(install-libiberty,
+[  --enable-install-libiberty       Install headers and library for end users],
+enable_install_libiberty=$enableval,
+enable_install_libiberty=no)dnl
+
+# Option parsed, now set things appropriately.
+case x"$enable_install_libiberty" in
+  xyes|x)
+    target_header_dir=libiberty
+    ;;
+  xno)   
+    target_header_dir=
+    ;;
+  *) 
+    # This could be sanity-checked in various ways...
+    target_header_dir="${enable_install_libiberty}"
+    ;;
+esac
+AC_MSG_RESULT($enable_install_libiberty)
+AC_MSG_NOTICE([target_header_dir = $target_header_dir])
+
 GCC_NO_EXECUTABLES
 AC_PROG_CC
 AC_SYS_LARGEFILE
@@ -200,10 +225,22 @@ case "${enable_shared}" in
   "") shared=no ;;
   *) shared=yes ;;
 esac
+
+# ...unless --enable-host-shared was passed from top-level config:
+if [[ "${enable_host_shared}" = "yes" ]]; then
+  shared=yes
+fi
+
 if [[ "${shared}" != "yes" ]]; then
   PICFLAG=
 fi
 AC_SUBST(PICFLAG)
+
+NOASANFLAG=
+case " ${CFLAGS} " in
+  *\ -fsanitize=address\ *) NOASANFLAG=-fno-sanitize=address ;;
+esac
+AC_SUBST(NOASANFLAG)
 
 echo "# Warning: this fragment is automatically generated" > temp-frag
 
@@ -235,8 +272,14 @@ AC_HEADER_TIME
 
 libiberty_AC_DECLARE_ERRNO
 
-# Determine the size of an int for struct fibnode.
+# Determine sizes of some types.
 AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([long])
+
+# Check for presense of long long
+AC_CHECK_TYPE([long long],
+  [AC_DEFINE(HAVE_LONG_LONG, 1, [Define if you have the `long long' type.]) AC_CHECK_SIZEOF([long long])],
+  [])
 
 # Look for a 64-bit type.
 AC_MSG_CHECKING([for a 64-bit type])
@@ -328,6 +371,8 @@ funcs="$funcs strstr"
 funcs="$funcs strtod"
 funcs="$funcs strtol"
 funcs="$funcs strtoul"
+funcs="$funcs strtoll"
+funcs="$funcs strtoull"
 funcs="$funcs strverscmp"
 funcs="$funcs tmpnam"
 funcs="$funcs vasprintf"
@@ -364,11 +409,11 @@ if test "x" = "y"; then
     sbrk setenv setproctitle setrlimit sigsetmask snprintf spawnve spawnvpe \
      stpcpy stpncpy strcasecmp strchr strdup \
      strerror strncasecmp strndup strnlen strrchr strsignal strstr strtod \
-     strtol strtoul strverscmp sysconf sysctl sysmp \
+     strtol strtoul strtoll strtoull strverscmp sysconf sysctl sysmp \
     table times tmpnam \
     vasprintf vfprintf vprintf vsprintf \
     wait3 wait4 waitpid)
-  AC_CHECK_DECLS([basename(char *), ffs, asprintf, vasprintf, snprintf, vsnprintf])
+  AC_CHECK_DECLS([basename(char *), ffs, asprintf, vasprintf, snprintf, vsnprintf, strtol, strtoul, strtoll, strtoull])
   AC_DEFINE(HAVE_SYS_ERRLIST, 1, [Define if you have the sys_errlist variable.])
   AC_DEFINE(HAVE_SYS_NERR,    1, [Define if you have the sys_nerr variable.])
   AC_DEFINE(HAVE_SYS_SIGLIST, 1, [Define if you have the sys_siglist variable.])
@@ -380,7 +425,6 @@ fi
 
 setobjs=
 CHECK=
-target_header_dir=
 if test -n "${with_target_subdir}"; then
 
   # We are being configured as a target library.  AC_REPLACE_FUNCS
@@ -491,27 +535,6 @@ if test -n "${with_target_subdir}"; then
     ;;
 
   esac
-
-  # We may wish to install the target headers somewhere.
-  AC_ARG_ENABLE(install-libiberty,
-  [  --enable-install-libiberty       Install headers for end users],
-  enable_install_libiberty=$enableval,
-  enable_install_libiberty=no)dnl
-  
-  # Option parsed, now set things appropriately.
-  case x"$enable_install_libiberty" in
-    xyes|x)
-      target_header_dir=libiberty
-      ;;
-    xno)   
-      target_header_dir=
-      ;;
-    *) 
-      # This could be sanity-checked in various ways...
-      target_header_dir="${enable_install_libiberty}"
-      ;;
-  esac
-
 
 else
 
@@ -655,6 +678,7 @@ if test -z "${setobjs}"; then
   AC_CHECK_FUNCS($checkfuncs)
   AC_CHECK_DECLS([basename(char *), ffs, asprintf, vasprintf, snprintf, vsnprintf])
   AC_CHECK_DECLS([calloc, getenv, getopt, malloc, realloc, sbrk])
+  AC_CHECK_DECLS([strtol, strtoul, strtoll, strtoull])
   AC_CHECK_DECLS([strverscmp])
   libiberty_NEED_DECLARATION(canonicalize_file_name)
 fi

@@ -1,5 +1,5 @@
 /* Part of CPP library.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -58,6 +58,8 @@ struct cset_converter
    ((prevc) == 'e' || (prevc) == 'E' \
     || (((prevc) == 'p' || (prevc) == 'P') \
         && CPP_OPTION (pfile, extended_numbers))))
+
+#define DIGIT_SEP(c) ((c) == '\'' && CPP_OPTION (pfile, digit_separators))
 
 #define CPP_OPTION(PFILE, OPTION) ((PFILE)->opts.OPTION)
 #define CPP_BUFFER(PFILE) ((PFILE)->buffer)
@@ -259,6 +261,9 @@ struct lexer_state
   /* Nonzero when parsing arguments to a function-like macro.  */
   unsigned char parsing_args;
 
+  /* Nonzero if in a __has_include__ or __has_include_next__ statement.  */
+  unsigned char in__has_include__;
+
   /* Nonzero if prevent_expansion is true only because output is
      being discarded.  */
   unsigned char discarding_output;
@@ -280,6 +285,8 @@ struct spec_nodes
   cpp_hashnode *n_true;			/* C++ keyword true */
   cpp_hashnode *n_false;		/* C++ keyword false */
   cpp_hashnode *n__VA_ARGS__;		/* C99 vararg macros */
+  cpp_hashnode *n__has_include__;	/* __has_include__ operator */
+  cpp_hashnode *n__has_include_next__;	/* __has_include_next__ operator */
 };
 
 typedef struct _cpp_line_note _cpp_line_note;
@@ -416,6 +423,11 @@ struct cpp_reader
   /* When expanding a macro at top-level, this is the location of the
      macro invocation.  */
   source_location invocation_location;
+
+  /* This is the node representing the macro being expanded at
+     top-level.  The value of this data member is valid iff
+     in_macro_expansion_p() returns TRUE.  */
+  cpp_hashnode *top_most_macro_node;
 
   /* Nonzero if we are about to expand a macro.  Note that if we are
      really expanding a macro, the function macro_of_context returns
@@ -612,7 +624,8 @@ extern bool _cpp_create_definition (cpp_reader *, cpp_hashnode *);
 extern void _cpp_pop_context (cpp_reader *);
 extern void _cpp_push_text_context (cpp_reader *, cpp_hashnode *,
 				    const unsigned char *, size_t);
-extern bool _cpp_save_parameter (cpp_reader *, cpp_macro *, cpp_hashnode *);
+extern bool _cpp_save_parameter (cpp_reader *, cpp_macro *, cpp_hashnode *,
+				 cpp_hashnode *);
 extern bool _cpp_arguments_ok (cpp_reader *, cpp_macro *, const cpp_hashnode *,
 			       unsigned int);
 extern const unsigned char *_cpp_builtin_macro_text (cpp_reader *,
@@ -646,6 +659,8 @@ extern bool _cpp_save_file_entries (cpp_reader *pfile, FILE *f);
 extern bool _cpp_read_file_entries (cpp_reader *, FILE *);
 extern const char *_cpp_get_file_name (_cpp_file *);
 extern struct stat *_cpp_get_file_stat (_cpp_file *);
+extern bool _cpp_has_header (cpp_reader *, const char *, int,
+			     enum include_type);
 
 /* In expr.c */
 extern bool _cpp_parse_expr (cpp_reader *, bool);
@@ -659,6 +674,7 @@ extern bool _cpp_skip_block_comment (cpp_reader *);
 extern cpp_token *_cpp_temp_token (cpp_reader *);
 extern const cpp_token *_cpp_lex_token (cpp_reader *);
 extern cpp_token *_cpp_lex_direct (cpp_reader *);
+extern unsigned char *_cpp_spell_ident_ucns (unsigned char *, cpp_hashnode *);
 extern int _cpp_equiv_tokens (const cpp_token *, const cpp_token *);
 extern void _cpp_init_tokenrun (tokenrun *, unsigned int);
 extern cpp_hashnode *_cpp_lex_identifier (cpp_reader *, const char *);
@@ -681,6 +697,7 @@ extern void _cpp_init_internal_pragmas (cpp_reader *);
 extern void _cpp_do_file_change (cpp_reader *, enum lc_reason, const char *,
 				 linenum_type, unsigned int);
 extern void _cpp_pop_buffer (cpp_reader *);
+extern char *_cpp_bracket_include (cpp_reader *);
 
 /* In directives.c */
 struct _cpp_dir_only_callbacks
@@ -694,7 +711,7 @@ extern void _cpp_preprocess_dir_only (cpp_reader *,
 				      const struct _cpp_dir_only_callbacks *);
 
 /* In traditional.c.  */
-extern bool _cpp_scan_out_logical_line (cpp_reader *, cpp_macro *);
+extern bool _cpp_scan_out_logical_line (cpp_reader *, cpp_macro *, bool);
 extern bool _cpp_read_logical_line_trad (cpp_reader *);
 extern void _cpp_overlay_buffer (cpp_reader *pfile, const unsigned char *,
 				 size_t);
@@ -714,9 +731,10 @@ extern size_t _cpp_replacement_text_len (const cpp_macro *);
 
 struct normalize_state 
 {
-  /* The previous character.  */
+  /* The previous starter character.  */
   cppchar_t previous;
-  /* The combining class of the previous character.  */
+  /* The combining class of the previous character (whether or not a
+     starter).  */
   unsigned char prev_class;
   /* The lowest normalization level so far.  */
   enum cpp_normalize_level level;
@@ -724,10 +742,10 @@ struct normalize_state
 #define INITIAL_NORMALIZE_STATE { 0, 0, normalized_KC }
 #define NORMALIZE_STATE_RESULT(st) ((st)->level)
 
-/* We saw a character that matches ISIDNUM(), update a
+/* We saw a character C that matches ISIDNUM(), update a
    normalize_state appropriately.  */
-#define NORMALIZE_STATE_UPDATE_IDNUM(st) \
-  ((st)->previous = 0, (st)->prev_class = 0)
+#define NORMALIZE_STATE_UPDATE_IDNUM(st, c)	\
+  ((st)->previous = (c), (st)->prev_class = 0)
 
 extern cppchar_t _cpp_valid_ucn (cpp_reader *, const unsigned char **,
 				 const unsigned char *, int,

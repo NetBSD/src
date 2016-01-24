@@ -100,6 +100,12 @@ ACX_LT_HOST_FLAGS
 AC_SUBST(enable_shared)
 AC_SUBST(enable_static)
 
+if test "$enable_vtable_verify" = yes; then
+  predep_objects_CXX="${predep_objects_CXX} ${glibcxx_builddir}/../libgcc/vtv_start.o"
+  postdep_objects_CXX="${postdep_objects_CXX} ${glibcxx_builddir}/../libgcc/vtv_end.o"
+fi
+
+
 # libtool variables for C++ shared and position-independent compiles.
 #
 # Use glibcxx_lt_pic_flag to designate the automake variable
@@ -150,6 +156,9 @@ GLIBCXX_ENABLE_THREADS
 GLIBCXX_ENABLE_ATOMIC_BUILTINS
 GLIBCXX_ENABLE_DECIMAL_FLOAT
 GLIBCXX_ENABLE_INT128_FLOAT128
+if test "$enable_float128" = yes; then
+  port_specific_symbol_files="$port_specific_symbol_files \$(top_srcdir)/config/abi/pre/float128.ver"
+fi
 
 # Checks for compiler support that doesn't require linking.
 GLIBCXX_CHECK_COMPILER_FEATURES
@@ -171,9 +180,11 @@ GLIBCXX_ENABLE_FULLY_DYNAMIC_STRING([no])
 GLIBCXX_ENABLE_EXTERN_TEMPLATE([yes])
 GLIBCXX_ENABLE_PYTHON
 GLIBCXX_ENABLE_WERROR([yes])
+GLIBCXX_ENABLE_VTABLE_VERIFY([no])
 
 # Checks for operating systems support that doesn't require linking.
 GLIBCXX_CHECK_STDIO_PROTO
+GLIBCXX_CHECK_MATH11_PROTO
 GLIBCXX_CHECK_SYSTEM_ERROR
 
 # For the streamoff typedef.
@@ -191,6 +202,12 @@ GLIBCXX_CHECK_S_ISREG_OR_S_IFREG
 AC_CHECK_HEADERS(sys/uio.h)
 GLIBCXX_CHECK_WRITEV
 
+# Check for fenv.h and complex.h before GLIBCXX_CHECK_C99_TR1
+# so that the check is done with the C compiler (not C++).
+# Checking with C++ can break a canadian cross build if either
+# file does not exist in C but does in C++.
+AC_CHECK_HEADERS(fenv.h complex.h)
+
 # For C99 support to TR1.
 GLIBCXX_CHECK_C99_TR1
 
@@ -201,8 +218,10 @@ GLIBCXX_COMPUTE_STDIO_INTEGER_CONSTANTS
 GLIBCXX_CHECK_GETTIMEOFDAY
 
 # For clock_gettime, nanosleep and sched_yield support.
-# NB: The default is [no], because otherwise it requires linking.
-GLIBCXX_ENABLE_LIBSTDCXX_TIME([no])
+GLIBCXX_ENABLE_LIBSTDCXX_TIME
+
+# Check for tmpnam which is obsolescent in POSIX.1-2008
+GLIBCXX_CHECK_TMPNAM
 
 AC_LC_MESSAGES
 
@@ -353,6 +372,9 @@ AC_SUBST(libtool_VERSION)
 
 GLIBCXX_ENABLE_LIBSTDCXX_VISIBILITY([yes])
 
+GLIBCXX_ENABLE_LIBSTDCXX_DUAL_ABI([yes])
+GLIBCXX_DEFAULT_ABI
+
 ac_ldbl_compat=no
 case "$target" in
   powerpc*-*-linux* | \
@@ -383,6 +405,11 @@ GLIBCXX_CONFIGURE_TESTSUITE
 
 # For gthread support.  Depends on GLIBCXX_ENABLE_SYMVERS.
 GLIBCXX_CHECK_GTHREADS
+
+# For Filesystem TS.
+AC_CHECK_HEADERS([fcntl.h dirent.h sys/statvfs.h utime.h])
+GLIBCXX_ENABLE_FILESYSTEM_TS
+GLIBCXX_CHECK_FILESYSTEM_DEPS
 
 # Define documentation rules conditionally.
 

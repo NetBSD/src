@@ -1,6 +1,6 @@
 # Makefile.in
 
-# Copyright (C) 2005-2013 Free Software Foundation, Inc.
+# Copyright (C) 2005-2015 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -39,8 +39,10 @@ enable_shared = @enable_shared@
 double_type_size = @double_type_size@
 long_double_type_size = @long_double_type_size@
 decimal_float = @decimal_float@
+enable_vtable_verify = @enable_vtable_verify@
 enable_decimal_float = @enable_decimal_float@
 fixed_point = @fixed_point@
+with_aix_soname = @with_aix_soname@
 
 host_noncanonical = @host_noncanonical@
 target_noncanonical = @target_noncanonical@
@@ -48,6 +50,8 @@ target_noncanonical = @target_noncanonical@
 # List of extra object files that should be compiled for this target machine.
 # The rules for compiling them should be in the t-* file for the machine.
 EXTRA_PARTS = @extra_parts@
+
+FORCE_EXPLICIT_EH_REGISTRY = @force_explicit_eh_registry@
 
 extra-parts = libgcc-extra-parts
 
@@ -121,8 +125,8 @@ installcheck:
 .PHONY: all clean
 
 clean:
-	-rm -f auto-target.h libgcc_tm.h libgcc.map
-	-rm -f libgcc_tm.stamp stamp-h stmp-ldirs
+	-rm -f libgcc_tm.h libgcc.map
+	-rm -f libgcc_tm.stamp stmp-ldirs
 	-rm -f *$(objext)
 	-rm -f *.dep
 	-rm -f *.a
@@ -131,6 +135,8 @@ clean:
 	@$(MULTICLEAN) multi-clean DO=clean
 distclean: clean
 	@$(MULTICLEAN) multi-clean DO=distclean
+	-rm -f auto-target.h
+	-rm -f stamp-h
 	-rm -f *~ Makefile config.cache config.status multilib.out
 	-rm -f config.log
 maintainer-clean realclean: distclean
@@ -179,7 +185,7 @@ STRIP = @STRIP@
 STRIP_FOR_TARGET = $(STRIP)
 
 # Directory in which the compiler finds libraries etc.
-libsubdir = $(libdir)/gcc/$(host_noncanonical)/$(version)
+libsubdir = $(libdir)/gcc/$(host_noncanonical)/$(version)@accel_dir_suffix@
 # Used to install the shared libgcc.
 slibdir = @slibdir@
 # Maybe used for DLLs on Windows targets.
@@ -280,7 +286,7 @@ INTERNAL_CFLAGS = $(CFLAGS) $(LIBGCC2_CFLAGS) $(HOST_LIBGCC2_CFLAGS) \
 CRTSTUFF_CFLAGS = -O2 $(GCC_CFLAGS) $(INCLUDES) $(MULTILIB_CFLAGS) -g0 \
   -finhibit-size-directive -fno-inline -fno-exceptions \
   -fno-zero-initialized-in-bss -fno-toplevel-reorder -fno-tree-vectorize \
-  -fno-stack-protector \
+  -fbuilding-libgcc -fno-stack-protector $(FORCE_EXPLICIT_EH_REGISTRY) \
   $(INHIBIT_LIBC_CFLAGS)
 
 # Extra flags to use when compiling crt{begin,end}.o.
@@ -849,18 +855,34 @@ include $(iterator)
 
 # Build libgcov components.
 
-# Defined in libgcov.c, included only in gcov library
-LIBGCOV = _gcov _gcov_merge_add _gcov_merge_single _gcov_merge_delta \
-    _gcov_fork _gcov_execl _gcov_execlp _gcov_execle \
-    _gcov_execv _gcov_execvp _gcov_execve _gcov_reset _gcov_dump \
-    _gcov_interval_profiler _gcov_pow2_profiler _gcov_one_value_profiler \
-    _gcov_indirect_call_profiler _gcov_average_profiler _gcov_ior_profiler \
-    _gcov_merge_ior
+LIBGCOV_MERGE = _gcov_merge_add _gcov_merge_single _gcov_merge_delta	\
+	_gcov_merge_ior _gcov_merge_time_profile _gcov_merge_icall_topn
+LIBGCOV_PROFILER = _gcov_interval_profiler _gcov_pow2_profiler		\
+	_gcov_one_value_profiler _gcov_indirect_call_profiler		\
+ 	_gcov_average_profiler _gcov_ior_profiler			\
+	_gcov_indirect_call_profiler_v2 _gcov_time_profiler		\
+	_gcov_indirect_call_topn_profiler
+LIBGCOV_INTERFACE = _gcov_dump _gcov_flush _gcov_fork			\
+	_gcov_execl _gcov_execlp					\
+	_gcov_execle _gcov_execv _gcov_execvp _gcov_execve _gcov_reset
+LIBGCOV_DRIVER = _gcov
 
-libgcov-objects = $(patsubst %,%$(objext),$(LIBGCOV))
+libgcov-merge-objects = $(patsubst %,%$(objext),$(LIBGCOV_MERGE))
+libgcov-profiler-objects = $(patsubst %,%$(objext),$(LIBGCOV_PROFILER))
+libgcov-interface-objects = $(patsubst %,%$(objext),$(LIBGCOV_INTERFACE))
+libgcov-driver-objects = $(patsubst %,%$(objext),$(LIBGCOV_DRIVER))
+libgcov-objects = $(libgcov-merge-objects) $(libgcov-profiler-objects) \
+                 $(libgcov-interface-objects) $(libgcov-driver-objects)
 
-$(libgcov-objects): %$(objext): $(srcdir)/libgcov.c
-	$(gcc_compile) -DL$* -c $(srcdir)/libgcov.c
+$(libgcov-merge-objects): %$(objext): $(srcdir)/libgcov-merge.c $(srcdir)/libgcov.h
+	$(gcc_compile) -DL$* -c $(srcdir)/libgcov-merge.c
+$(libgcov-profiler-objects): %$(objext): $(srcdir)/libgcov-profiler.c $(srcdir)/libgcov.h
+	$(gcc_compile) -DL$* -c $(srcdir)/libgcov-profiler.c
+$(libgcov-interface-objects): %$(objext): $(srcdir)/libgcov-interface.c $(srcdir)/libgcov.h
+	$(gcc_compile) -DL$* -c $(srcdir)/libgcov-interface.c
+$(libgcov-driver-objects): %$(objext): $(srcdir)/libgcov-driver.c \
+  $(srcdir)/libgcov-driver-system.c $(srcdir)/libgcov.h
+	$(gcc_compile) -DL$* -c $(srcdir)/libgcov-driver.c
 
 
 # Static libraries.
@@ -901,12 +923,16 @@ ifeq ($(enable_shared),yes)
 
 # Map-file generation.
 ifneq ($(SHLIB_MKMAP),)
-libgcc.map: $(SHLIB_MKMAP) $(SHLIB_MAPFILES) $(libgcc-s-objects)
-	{ $(NM) $(SHLIB_NM_FLAGS) $(libgcc-s-objects); echo %%; \
-	  cat $(SHLIB_MAPFILES) \
+libgcc.map.in: $(SHLIB_MAPFILES)
+	{ cat $(SHLIB_MAPFILES) \
 	    | sed -e '/^[ 	]*#/d' \
 		  -e 's/^%\(if\|else\|elif\|endif\|define\)/#\1/' \
 	    | $(gcc_compile_bare) -E -xassembler-with-cpp -; \
+	} > tmp-$@
+	mv tmp-$@ $@
+libgcc.map: $(SHLIB_MKMAP) libgcc.map.in $(libgcc-s-objects)
+	{ $(NM) $(SHLIB_NM_FLAGS) $(libgcc-s-objects); echo %%; \
+	  cat libgcc.map.in; \
 	} | $(AWK) -f $(SHLIB_MKMAP) $(SHLIB_MKMAP_OPTS) > tmp-$@
 	mv tmp-$@ $@
 libgcc_s$(SHLIB_EXT): libgcc.map
@@ -969,6 +995,30 @@ crtendS$(objext): $(srcdir)/crtstuff.c
 # This is a version of crtbegin for -static links.
 crtbeginT$(objext): $(srcdir)/crtstuff.c
 	$(crt_compile) $(CRTSTUFF_T_CFLAGS) -c $< -DCRT_BEGIN -DCRTSTUFFT_O
+
+# crtoffloadbegin and crtoffloadend contain symbols, that mark the begin and
+# the end of tables with addresses, required for offloading.
+crtoffloadbegin$(objext): $(srcdir)/offloadstuff.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS) -c $< -DCRT_BEGIN
+
+crtoffloadend$(objext): $(srcdir)/offloadstuff.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS) -c $< -DCRT_END
+endif
+
+ifeq ($(enable_vtable_verify),yes)
+# These are used in vtable verification; see comments in source files for
+# more details.
+vtv_start$(objext): $(srcdir)/vtv_start.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS_S) -c $(srcdir)/vtv_start.c
+
+vtv_end$(objext): $(srcdir)/vtv_end.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS_S) -c $(srcdir)/vtv_end.c
+
+vtv_start_preinit$(objext): $(srcdir)/vtv_start_preinit.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS_S) -c $(srcdir)/vtv_start_preinit.c
+
+vtv_end_preinit$(objext): $(srcdir)/vtv_end_preinit.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS_S) -c $(srcdir)/vtv_end_preinit.c
 endif
 
 ifeq ($(CUSTOM_CRTIN),)

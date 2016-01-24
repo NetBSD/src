@@ -49,7 +49,7 @@ AC_DEFUN([GLIBCXX_CONFIGURE], [
   # Keep these sync'd with the list in Makefile.am.  The first provides an
   # expandable list at autoconf time; the second provides an expandable list
   # (i.e., shell variable) at configure time.
-  m4_define([glibcxx_SUBDIRS],[include libsupc++ python src src/c++98 src/c++11 doc testsuite])
+  m4_define([glibcxx_SUBDIRS],[include libsupc++ src src/c++98 src/c++11 src/filesystem doc python])
   SUBDIRS='glibcxx_SUBDIRS'
 
   # These need to be absolute paths, yet at the same time need to
@@ -871,7 +871,8 @@ dnl    (FEATURE, DEFAULT, HELP-ARG, HELP-STRING)
 dnl    (FEATURE, DEFAULT, HELP-ARG, HELP-STRING, permit a|b|c)
 dnl    (FEATURE, DEFAULT, HELP-ARG, HELP-STRING, SHELL-CODE-HANDLER)
 dnl
-dnl See docs/html/17_intro/configury.html#enable for documentation.
+dnl See manual/appendix_porting.html#appendix.porting.build_hacking for
+dnl documentation.
 dnl
 m4_define([GLIBCXX_ENABLE],[dnl
 m4_define([_g_switch],[--enable-$1])dnl
@@ -921,7 +922,7 @@ AC_DEFUN([GLIBCXX_ENABLE_C99], [
   # Use -std=c++98 because the default (-std=gnu++98) leaves __STRICT_ANSI__
   # undefined and fake C99 facilities - like pre-standard snprintf - may be
   # spuriously enabled.
-  # Long term, -std=c++0x could be even better, could manage to explicitely
+  # Long term, -std=c++0x could be even better, could manage to explicitly
   # request C99 facilities to the underlying C headers.
   ac_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS -std=c++98"
@@ -1051,8 +1052,8 @@ AC_DEFUN([GLIBCXX_ENABLE_C99], [
 	vscanf("%i", args);
 	vsnprintf(fmt, 0, "%i", args);
 	vsscanf(fmt, "%i", args);
-      }],
-     [snprintf("12", 0, "%i");],
+	snprintf(fmt, 0, "%i");
+      }], [],
      [glibcxx_cv_c99_stdio=yes], [glibcxx_cv_c99_stdio=no])
   ])
   AC_MSG_RESULT($glibcxx_cv_c99_stdio)
@@ -1161,8 +1162,9 @@ dnl        nanosleep and sched_yield in libc and libposix4 and, if needed,
 dnl        links in the latter.
 dnl --enable-libstdcxx-time=rt
 dnl        also searches (and, if needed, links) librt.  Note that this is
-dnl        not always desirable because, in glibc, for example, in turn it
-dnl        triggers the linking of libpthread too, which activates locking,
+dnl        not always desirable because, in glibc 2.16 and earlier, for
+dnl        example, in turn it triggers the linking of libpthread too,
+dnl        which activates locking,
 dnl        a large overhead for single-thread programs.
 dnl --enable-libstdcxx-time=no
 dnl --disable-libstdcxx-time
@@ -1175,8 +1177,7 @@ dnl os_defines.h and also defines _GLIBCXX_USE_SCHED_YIELD.
 dnl
 AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
 
-  AC_MSG_CHECKING([for clock_gettime, nanosleep and sched_yield])
-  GLIBCXX_ENABLE(libstdcxx-time,$1,[[[=KIND]]],
+  GLIBCXX_ENABLE(libstdcxx-time,auto,[[[=KIND]]],
     [use KIND for check type],
     [permit yes|no|rt])
 
@@ -1188,9 +1189,59 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
 
   ac_has_clock_monotonic=no
   ac_has_clock_realtime=no
-  AC_MSG_RESULT($enable_libstdcxx_time)
+  ac_has_nanosleep=no
+  ac_has_sched_yield=no
 
-  if test x"$enable_libstdcxx_time" != x"no"; then
+  if test x"$enable_libstdcxx_time" = x"auto"; then
+
+    case "${target_os}" in
+      cygwin*)
+        ac_has_nanosleep=yes
+        ;;
+      darwin*)
+        ac_has_nanosleep=yes
+        ac_has_sched_yield=yes
+        ;;
+      gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
+        AC_MSG_CHECKING([for at least GNU libc 2.17])
+        AC_TRY_COMPILE(
+          [#include <features.h>],
+          [
+          #if ! __GLIBC_PREREQ(2, 17)
+          #error 
+          #endif
+          ],
+          [glibcxx_glibc217=yes], [glibcxx_glibc217=no])
+        AC_MSG_RESULT($glibcxx_glibc217)
+
+        if test x"$glibcxx_glibc217" = x"yes"; then
+          ac_has_clock_monotonic=yes
+          ac_has_clock_realtime=yes
+        fi
+        ac_has_nanosleep=yes
+        ac_has_sched_yield=yes
+        ;;
+      freebsd*|netbsd*|dragonfly*)
+        ac_has_clock_monotonic=yes
+        ac_has_clock_realtime=yes
+        ac_has_nanosleep=yes
+        ac_has_sched_yield=yes
+        ;;
+      openbsd*)
+        ac_has_clock_monotonic=yes
+        ac_has_clock_realtime=yes
+        ac_has_nanosleep=yes
+        ;;
+      solaris*)
+        GLIBCXX_LIBS="$GLIBCXX_LIBS -lrt"
+        ac_has_clock_monotonic=yes
+        ac_has_clock_realtime=yes
+        ac_has_nanosleep=yes
+        ac_has_sched_yield=yes
+        ;;
+    esac
+
+  elif test x"$enable_libstdcxx_time" != x"no"; then
 
     if test x"$enable_libstdcxx_time" = x"rt"; then
       AC_SEARCH_LIBS(clock_gettime, [rt posix4])
@@ -1214,19 +1265,16 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
     case "$ac_cv_search_sched_yield" in
       -lposix4*)
       GLIBCXX_LIBS="$GLIBCXX_LIBS $ac_cv_search_sched_yield"
-      AC_DEFINE(_GLIBCXX_USE_SCHED_YIELD, 1,
-		[ Defined if sched_yield is available. ])
+      ac_has_sched_yield=yes
       ;;
       -lrt*)
       if test x"$enable_libstdcxx_time" = x"rt"; then
 	GLIBCXX_LIBS="$GLIBCXX_LIBS $ac_cv_search_sched_yield"
-	AC_DEFINE(_GLIBCXX_USE_SCHED_YIELD, 1,
-		  [ Defined if sched_yield is available. ])
+        ac_has_sched_yield=yes
       fi
       ;;
       *)
-      AC_DEFINE(_GLIBCXX_USE_SCHED_YIELD, 1,
-		[ Defined if sched_yield is available. ])
+      ac_has_sched_yield=yes
       ;;
     esac
 
@@ -1307,6 +1355,11 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
   if test x"$ac_has_clock_realtime" = x"yes"; then
     AC_DEFINE(_GLIBCXX_USE_CLOCK_REALTIME, 1,
       [ Defined if clock_gettime has realtime clock support. ])
+  fi
+
+  if test x"$ac_has_sched_yield" = x"yes"; then
+    AC_DEFINE(_GLIBCXX_USE_SCHED_YIELD, 1,
+              [ Defined if sched_yield is available. ])
   fi
 
   if test x"$ac_has_nanosleep" = x"yes"; then
@@ -1724,7 +1777,7 @@ AC_DEFUN([GLIBCXX_CHECK_C99_TR1], [
 	      <tr1/cinttypes> in namespace std::tr1.])
   fi
 
-  # Check for the existence of whcar_t <inttypes.h> functions (NB: doesn't
+  # Check for the existence of wchar_t <inttypes.h> functions (NB: doesn't
   # make sense if the glibcxx_cv_c99_stdint_tr1 check fails, per C99, 7.8/1).
   ac_c99_inttypes_wchar_t_tr1=no;
   if test x"$glibcxx_cv_c99_stdint_tr1" = x"yes"; then
@@ -1844,6 +1897,52 @@ AC_DEFUN([GLIBCXX_CHECK_STDIO_PROTO], [
 ])
 
 dnl
+dnl Check whether required C++11 overloads are present in <math.h>.
+dnl
+AC_DEFUN([GLIBCXX_CHECK_MATH11_PROTO], [
+
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
+  ac_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -std=c++11"
+
+  case "$host" in
+    *-*-solaris2.*)
+      # Solaris 12 introduced the C++11 <math.h> overloads.  A backport to
+      # a Solaris 11.3 SRU is likely, maybe even a Solaris 10 patch.
+      AC_MSG_CHECKING([for C++11 <math.h> overloads])
+      AC_CACHE_VAL(glibcxx_cv_math11_overload, [
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+	  [#include <math.h>
+	   #undef isfinite
+	   namespace std {
+	     inline bool isfinite(float __x)
+	     { return __builtin_isfinite(__x); }
+	   }
+	])],
+	[glibcxx_cv_math11_overload=no],
+	[glibcxx_cv_math11_overload=yes]
+      )])
+
+      # autoheader cannot handle indented templates.
+      AH_VERBATIM([__CORRECT_ISO_CPP11_MATH_H_PROTO],
+        [/* Define if all C++11 overloads are available in <math.h>.  */
+#if __cplusplus >= 201103L
+#undef __CORRECT_ISO_CPP11_MATH_H_PROTO
+#endif])
+
+      if test $glibcxx_cv_math11_overload = yes; then
+        AC_DEFINE(__CORRECT_ISO_CPP11_MATH_H_PROTO)
+      fi
+      AC_MSG_RESULT([$glibcxx_cv_math11_overload])
+      ;;
+  esac
+
+  CXXFLAGS="$ac_save_CXXFLAGS"
+  AC_LANG_RESTORE
+])
+
+dnl
 dnl Check whether macros, etc are present for <system_error>
 dnl
 AC_DEFUN([GLIBCXX_CHECK_SYSTEM_ERROR], [
@@ -1936,6 +2035,9 @@ AC_DEFUN([GLIBCXX_ENABLE_CLOCALE], [
       darwin* | freebsd*)
 	enable_clocale_flag=darwin
 	;;
+      dragonfly*)
+	enable_clocale_flag=dragonfly
+	;;
       openbsd*)
 	enable_clocale_flag=newlib
 	;;
@@ -2019,6 +2121,23 @@ AC_DEFUN([GLIBCXX_ENABLE_CLOCALE], [
       CCODECVT_CC=config/locale/generic/codecvt_members.cc
       CCOLLATE_CC=config/locale/generic/collate_members.cc
       CCTYPE_CC=config/locale/darwin/ctype_members.cc
+      CMESSAGES_H=config/locale/generic/messages_members.h
+      CMESSAGES_CC=config/locale/generic/messages_members.cc
+      CMONEY_CC=config/locale/generic/monetary_members.cc
+      CNUMERIC_CC=config/locale/generic/numeric_members.cc
+      CTIME_H=config/locale/generic/time_members.h
+      CTIME_CC=config/locale/generic/time_members.cc
+      CLOCALE_INTERNAL_H=config/locale/generic/c++locale_internal.h
+      ;;
+
+    dragonfly)
+      AC_MSG_RESULT(dragonfly)
+
+      CLOCALE_H=config/locale/generic/c_locale.h
+      CLOCALE_CC=config/locale/dragonfly/c_locale.cc
+      CCODECVT_CC=config/locale/generic/codecvt_members.cc
+      CCOLLATE_CC=config/locale/generic/collate_members.cc
+      CCTYPE_CC=config/locale/dragonfly/ctype_members.cc
       CMESSAGES_H=config/locale/generic/messages_members.h
       CMESSAGES_CC=config/locale/generic/messages_members.cc
       CMONEY_CC=config/locale/generic/monetary_members.cc
@@ -2229,6 +2348,48 @@ AC_DEFUN([GLIBCXX_ENABLE_EXTERN_TEMPLATE], [
   AC_MSG_RESULT([$enable_extern_template])
 
   GLIBCXX_CONDITIONAL(ENABLE_EXTERN_TEMPLATE, test $enable_extern_template = yes)
+])
+
+dnl
+dnl Use vtable verification.
+dnl
+dnl --enable-vtable-verify defines _GLIBCXX_VTABLE_VERIFY to 1
+dnl --disable-vtable-verify defines _GLIBCXX_VTABLE_VERIFY to 0
+
+dnl  +  Usage:  GLIBCXX_ENABLE_VTABLE_VERIFY[(DEFAULT)]
+dnl       Where DEFAULT is `yes' or `no'.
+dnl
+AC_DEFUN([GLIBCXX_ENABLE_VTABLE_VERIFY], [
+
+  GLIBCXX_ENABLE(vtable-verify,$1,,[enable vtable verify])
+
+  AC_MSG_CHECKING([for vtable verify support])
+  AC_MSG_RESULT([$enable_vtable_verify])
+
+  vtv_cygmin=no
+  if test $enable_vtable_verify = yes; then
+    case ${target_os} in
+      cygwin*|mingw32*)
+        VTV_CXXFLAGS="-fvtable-verify=std -Wl,-lvtv,-u_vtable_map_vars_start,-u_vtable_map_vars_end"
+        vtv_cygmin=yes
+        ;;
+      *)
+        VTV_CXXFLAGS="-fvtable-verify=std -Wl,-u_vtable_map_vars_start,-u_vtable_map_vars_end"
+        ;;
+    esac
+    VTV_PCH_CXXFLAGS="-fvtable-verify=std"
+    VTV_CXXLINKFLAGS="-L${toplevel_builddir}/libvtv/.libs -Wl,--rpath -Wl,${toplevel_builddir}/libvtv/.libs"		
+  else
+    VTV_CXXFLAGS= 
+    VTV_PCH_CXXFLAGS=
+    VTV_CXXLINKFLAGS= 
+  fi
+
+  AC_SUBST(VTV_CXXFLAGS)
+  AC_SUBST(VTV_PCH_CXXFLAGS)
+  AC_SUBST(VTV_CXXLINKFLAGS)
+  AM_CONDITIONAL(VTV_CYGMIN, test x$vtv_cygmin = xyes)
+  GLIBCXX_CONDITIONAL(ENABLE_VTABLE_VERIFY, test $enable_vtable_verify = yes)
 ])
 
 dnl
@@ -3054,6 +3215,8 @@ EOF
     if AC_TRY_EVAL(ac_compile); then
       if grep _Unwind_SjLj_Resume conftest.s >/dev/null 2>&1 ; then
 	enable_sjlj_exceptions=yes
+      elif grep _Unwind_SjLj_Register conftest.s >/dev/null 2>&1 ; then
+	enable_sjlj_exceptions=yes
       elif grep _Unwind_Resume conftest.s >/dev/null 2>&1 ; then
 	enable_sjlj_exceptions=no
       elif grep __cxa_end_cleanup conftest.s >/dev/null 2>&1 ; then
@@ -3266,7 +3429,7 @@ changequote([,])dnl
 fi
 
 # For libtool versioning info, format is CURRENT:REVISION:AGE
-libtool_VERSION=6:19:0
+libtool_VERSION=6:21:0
 
 # Everything parsed; figure out what files and settings to use.
 case $enable_symvers in
@@ -3436,25 +3599,7 @@ AC_DEFUN([GLIBCXX_CHECK_GTHREADS], [
       #ifndef __GTHREADS_CXX0X
       #error
       #endif
-    ], [case $target_os in
-	  # gthreads support breaks symbol versioning on Solaris 9 (PR
-	  # libstdc++/52189).
-          solaris2.9*)
-	    if test x$enable_symvers = xno; then
-	      ac_has_gthreads=yes
-	    elif test x$enable_libstdcxx_threads = xyes; then
-	      AC_MSG_WARN([You have requested C++11 threads support, but])
-	      AC_MSG_WARN([this breaks symbol versioning.])
-	      ac_has_gthreads=yes
-	    else
-	      ac_has_gthreads=no
-	    fi
-	    ;;
-	  *)
-	    ac_has_gthreads=yes
-	    ;;
-        esac],
-       [ac_has_gthreads=no])
+    ], [ac_has_gthreads=yes], [ac_has_gthreads=no])
   else
     ac_has_gthreads=no
   fi
@@ -3464,6 +3609,13 @@ AC_DEFUN([GLIBCXX_CHECK_GTHREADS], [
   if test x"$ac_has_gthreads" = x"yes"; then
     AC_DEFINE(_GLIBCXX_HAS_GTHREADS, 1,
 	      [Define if gthreads library is available.])
+
+    # Also check for pthread_rwlock_t for std::shared_timed_mutex in C++14
+    AC_CHECK_TYPE([pthread_rwlock_t],
+            [AC_DEFINE([_GLIBCXX_USE_PTHREAD_RWLOCK_T], 1,
+            [Define if POSIX read/write locks are available in <gthr.h>.])],
+            [],
+            [#include "gthr.h"])
   fi
 
   CXXFLAGS="$ac_save_CXXFLAGS"
@@ -3684,13 +3836,40 @@ AC_DEFUN([GLIBCXX_ENABLE_WERROR], [
   GLIBCXX_CONDITIONAL(ENABLE_WERROR, test $enable_werror = yes)
 ])
 
+dnl
+dnl Check whether obsolescent tmpnam is available in <stdio.h>,
+dnl and define _GLIBCXX_USE_TMPNAM.
+dnl
+AC_DEFUN([GLIBCXX_CHECK_TMPNAM], [dnl
+dnl
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
+  ac_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -fno-exceptions"
+dnl
+  AC_MSG_CHECKING([for tmpnam])
+  AC_CACHE_VAL(glibcxx_cv_TMPNAM, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <stdio.h>],
+      [char *tmp = tmpnam(NULL);],
+      [glibcxx_cv_TMPNAM=yes],
+      [glibcxx_cv_TMPNAM=no])
+  ])
+  if test $glibcxx_cv_TMPNAM = yes; then
+    AC_DEFINE(_GLIBCXX_USE_TMPNAM, 1, [Define if obsolescent tmpnam is available in <stdio.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_TMPNAM)
+dnl
+  CXXFLAGS="$ac_save_CXXFLAGS"
+  AC_LANG_RESTORE
+])
 
 dnl
 dnl Check to see if sys/sdt.h exists and that it is suitable for use.
 dnl Some versions of sdt.h were not compatible with C++11.
 dnl
 AC_DEFUN([GLIBCXX_CHECK_SDT_H], [
-  AC_MSG_RESULT([for suitable sys/sdt.h])
+  AC_MSG_CHECKING([for suitable sys/sdt.h])
   # Note that this test has to be run with the C language.
   # Otherwise, sdt.h will try to include some headers from
   # libstdc++ itself.
@@ -3713,6 +3892,236 @@ AC_DEFUN([GLIBCXX_CHECK_SDT_H], [
               [Define to 1 if you have a suitable <sys/sdt.h> header file])
   fi
   AC_MSG_RESULT($glibcxx_cv_sys_sdt_h)
+])
+
+dnl
+dnl Control whether the library should define symbols for old and new ABIs.
+dnl This affects definitions of strings, stringstreams and locale facets.
+dnl
+dnl --disable-libstdcxx-dual-abi will use old ABI for all types.
+dnl
+dnl Defines:
+dnl  _GLIBCXX_USE_DUAL_ABI (always defined, either to 1 or 0)
+dnl
+AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_DUAL_ABI], [
+  GLIBCXX_ENABLE(libstdcxx-dual-abi,$1,,[support two versions of std::string])
+  if test x$enable_symvers = xgnu-versioned-namespace; then
+    # gnu-versioned-namespace is incompatible with the dual ABI.
+    enable_libstdcxx_dual_abi="no"
+  fi
+  if test x"$enable_libstdcxx_dual_abi" != xyes; then
+    AC_MSG_NOTICE([dual ABI is disabled])
+    default_libstdcxx_abi="gcc4-compatible"
+  fi
+  GLIBCXX_CONDITIONAL(ENABLE_DUAL_ABI, test $enable_libstdcxx_dual_abi = yes)
+])
+
+dnl
+dnl Check to see which ABI should be enabled by default.
+dnl
+dnl --with-default-libstdcxx-abi={gcc4-compatible,new}
+dnl
+dnl Defines:
+dnl  _GLIBCXX_USE_CXX11_ABI (always defined, either to 1 or 0)
+dnl
+AC_DEFUN([GLIBCXX_DEFAULT_ABI], [
+  if test x$enable_libstdcxx_dual_abi = xyes; then
+  AC_MSG_CHECKING([for default std::string ABI to use])
+  AC_ARG_WITH([default-libstdcxx-abi],
+    AS_HELP_STRING([--with-default-libstdcxx-abi],
+                   [set the std::string ABI to use by default]),
+    [case "$withval" in
+      gcc4-compatible)  default_libstdcxx_abi="gcc4-compatible" ;;
+      new|cxx11)  default_libstdcxx_abi="new" ;;
+      c++*|gnu++*) AC_MSG_ERROR([Supported arguments for --with-default-libstdcxx-abi have changed, use "new" or "gcc4-compatible"]) ;;
+      *) AC_MSG_ERROR([Invalid argument for --with-default-libstdcxx-abi]) ;;
+     esac
+     ],
+    [default_libstdcxx_abi="new"])
+  AC_MSG_RESULT(${default_libstdcxx_abi})
+  fi
+  if test $default_libstdcxx_abi = "new"; then
+    glibcxx_cxx11_abi=1
+    glibcxx_cxx98_abi=0
+  else
+    glibcxx_cxx11_abi=0
+    glibcxx_cxx98_abi=1
+  fi
+  AC_SUBST(glibcxx_cxx98_abi)
+  GLIBCXX_CONDITIONAL(ENABLE_CXX11_ABI, test $glibcxx_cxx11_abi = 1)
+])
+
+dnl
+dnl Check to see whether to build libstdc++fs.a
+dnl
+dnl --enable-libstdcxx-filesystem-ts
+dnl
+AC_DEFUN([GLIBCXX_ENABLE_FILESYSTEM_TS], [
+  GLIBCXX_ENABLE(libstdcxx-filesystem-ts,auto,,
+    [turns on ISO/IEC TS 18822 support],
+    [permit yes|no|auto])
+
+  AC_MSG_CHECKING([whether to build Filesystem TS support])
+  if test x"$ac_cv_header_dirent_h" != x"yes"; then
+    enable_libstdcxx_filesystem_ts=no
+  fi
+  if test x"$enable_libstdcxx_filesystem_ts" = x"auto"; then
+    case "${target_os}" in
+      freebsd*|netbsd*|openbsd*|dragonfly*|darwin*)
+        enable_libstdcxx_filesystem_ts=yes
+        ;;
+      gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
+        enable_libstdcxx_filesystem_ts=yes
+        ;;
+      solaris*)
+        enable_libstdcxx_filesystem_ts=yes
+        ;;
+      *)
+        enable_libstdcxx_filesystem_ts=no
+        ;;
+    esac
+  fi
+  AC_MSG_RESULT($enable_libstdcxx_filesystem_ts)
+  GLIBCXX_CONDITIONAL(ENABLE_FILESYSTEM_TS, test $enable_libstdcxx_filesystem_ts = yes)
+])
+
+dnl
+dnl Check whether the library calls required by the Filesystem TS are present
+dnl and define _GLIBCXX_USE_REALPATH and _GLIBCXX_USE_UTIMENSAT.
+dnl
+AC_DEFUN([GLIBCXX_CHECK_FILESYSTEM_DEPS], [dnl
+dnl
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
+  ac_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -fno-exceptions"
+dnl
+  AC_MSG_CHECKING([for struct dirent.d_type])
+  AC_CACHE_VAL(glibcxx_cv_dirent_d_type, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <dirent.h>],
+      [
+       struct dirent d;
+       if (sizeof d.d_type) return 0;
+      ],
+      [glibcxx_cv_dirent_d_type=yes],
+      [glibcxx_cv_dirent_d_type=no])
+  ])
+  if test $glibcxx_cv_dirent_d_type = yes; then
+    AC_DEFINE(HAVE_STRUCT_DIRENT_D_TYPE, 1, [Define to 1 if `d_type' is a member of `struct dirent'.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_dirent_d_type)
+dnl
+  AC_MSG_CHECKING([for realpath])
+  AC_CACHE_VAL(glibcxx_cv_realpath, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+       #include <stdlib.h>
+       #include <unistd.h>
+      ],
+      [
+       #if _XOPEN_VERSION < 500
+       #error
+       #elif _XOPEN_VERSION >= 700 || defined(PATH_MAX)
+       char *tmp = realpath((const char*)NULL, (char*)NULL);
+       #else
+       #error
+       #endif
+      ],
+      [glibcxx_cv_realpath=yes],
+      [glibcxx_cv_realpath=no])
+  ])
+  if test $glibcxx_cv_realpath = yes; then
+    AC_DEFINE(_GLIBCXX_USE_REALPATH, 1, [Define if usable realpath is available in <stdlib.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_realpath)
+dnl
+  AC_MSG_CHECKING([for utimensat])
+  AC_CACHE_VAL(glibcxx_cv_utimensat, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+        #include <fcntl.h>
+        #include <sys/stat.h>
+      ],
+      [
+        struct timespec ts[2] = { { 0, UTIME_OMIT }, { 1, 1 } };
+        int i = utimensat(AT_FDCWD, "path", ts, 0);
+      ],
+      [glibcxx_cv_utimensat=yes],
+      [glibcxx_cv_utimensat=no])
+  ])
+  if test $glibcxx_cv_utimensat = yes; then
+    AC_DEFINE(_GLIBCXX_USE_UTIMENSAT, 1, [Define if utimensat and UTIME_OMIT are available in <sys/stat.h> and AT_FDCWD in <fcntl.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_utimensat)
+dnl
+  AC_MSG_CHECKING([for struct stat.st_mtim.tv_nsec])
+  AC_CACHE_VAL(glibcxx_cv_st_mtim, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [ #include <sys/stat.h> ],
+      [
+        struct stat st;
+        return st.st_mtim.tv_nsec;
+      ],
+      [glibcxx_cv_st_mtim=yes],
+      [glibcxx_cv_st_mtim=no])
+  ])
+  if test $glibcxx_cv_st_mtim = yes; then
+    AC_DEFINE(_GLIBCXX_USE_ST_MTIM, 1, [Define if struct stat has timespec members.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_st_mtim)
+dnl
+  AC_MSG_CHECKING([for fchmod])
+  AC_CACHE_VAL(glibcxx_cv_fchmod, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <sys/stat.h>],
+      [fchmod(1, S_IWUSR);],
+      [glibcxx_cv_fchmod=yes],
+      [glibcxx_cv_fchmod=no])
+  ])
+  if test $glibcxx_cv_fchmod = yes; then
+    AC_DEFINE(_GLIBCXX_USE_FCHMOD, 1, [Define if fchmod is available in <sys/stat.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_fchmod)
+dnl
+  AC_MSG_CHECKING([for fchmodat])
+  AC_CACHE_VAL(glibcxx_cv_fchmodat, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+        #include <fcntl.h>
+        #include <sys/stat.h>
+      ],
+      [fchmodat(AT_FDCWD, "", 0, AT_SYMLINK_NOFOLLOW);],
+      [glibcxx_cv_fchmodat=yes],
+      [glibcxx_cv_fchmodat=no])
+  ])
+  if test $glibcxx_cv_fchmodat = yes; then
+    AC_DEFINE(_GLIBCXX_USE_FCHMODAT, 1, [Define if fchmodat is available in <sys/stat.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_fchmodat)
+dnl
+  AC_MSG_CHECKING([for sendfile that can copy files])
+  AC_CACHE_VAL(glibcxx_cv_sendfile, [dnl
+    case "${target_os}" in
+      gnu* | linux* | solaris*)
+        GCC_TRY_COMPILE_OR_LINK(
+          [#include <sys/sendfile.h>],
+          [sendfile(1, 2, (off_t*)NULL, sizeof 1);],
+          [glibcxx_cv_sendfile=yes],
+          [glibcxx_cv_sendfile=no])
+        ;;
+      *)
+        glibcxx_cv_sendfile=no
+        ;;
+    esac
+  ])
+  if test $glibcxx_cv_sendfile = yes; then
+    AC_DEFINE(_GLIBCXX_USE_SENDFILE, 1, [Define if sendfile is available in <sys/stat.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_sendfile)
+dnl
+  CXXFLAGS="$ac_save_CXXFLAGS"
+  AC_LANG_RESTORE
 ])
 
 # Macros from the top-level gcc directory.

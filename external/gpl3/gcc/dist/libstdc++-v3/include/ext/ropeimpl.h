@@ -1,6 +1,6 @@
 // SGI's rope class implementation -*- C++ -*-
 
-// Copyright (C) 2001-2013 Free Software Foundation, Inc.
+// Copyright (C) 2001-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1223,7 +1223,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
 		__result = _S_concat(__forest[__i], __result);
 		__forest[__i]->_M_unref_nonnil();
-#if !defined(__GC) && defined(__EXCEPTIONS)
+#if !defined(__GC) && __cpp_exceptions
 		__forest[__i] = 0;
 #endif
 	      }
