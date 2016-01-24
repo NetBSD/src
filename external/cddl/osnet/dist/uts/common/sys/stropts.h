@@ -37,7 +37,9 @@
 /*
  * For FMNAMESZ define.
  */
+#ifdef _KERNEL
 #include <sys/conf.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
