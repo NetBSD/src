@@ -1,5 +1,5 @@
 /* Definitions for CPP library.
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Per Bothner, 1994-95.
 
 This program is free software; you can redistribute it and/or modify it
@@ -153,6 +153,9 @@ enum cpp_ttype
   TTYPE_TABLE
   N_TTYPES,
 
+  /* A token type for keywords, as opposed to ordinary identifiers.  */
+  CPP_KEYWORD,
+
   /* Positions in the table.  */
   CPP_LAST_EQ        = CPP_LSHIFT,
   CPP_FIRST_DIGRAPH  = CPP_HASH,
@@ -165,7 +168,8 @@ enum cpp_ttype
 /* C language kind, used when calling cpp_create_reader.  */
 enum c_lang {CLK_GNUC89 = 0, CLK_GNUC99, CLK_GNUC11,
 	     CLK_STDC89, CLK_STDC94, CLK_STDC99, CLK_STDC11,
-	     CLK_GNUCXX, CLK_CXX98, CLK_GNUCXX11, CLK_CXX11, CLK_ASM};
+	     CLK_GNUCXX, CLK_CXX98, CLK_GNUCXX11, CLK_CXX11,
+	     CLK_GNUCXX14, CLK_CXX14, CLK_GNUCXX1Z, CLK_CXX1Z, CLK_ASM};
 
 /* Payload of a NUMBER, STRING, CHAR or COMMENT token.  */
 struct GTY(()) cpp_string {
@@ -204,6 +208,12 @@ enum cpp_token_fld_kind {
 struct GTY(()) cpp_macro_arg {
   /* Argument number.  */
   unsigned int arg_no;
+  /* The original spelling of the macro argument token.  */
+  cpp_hashnode *
+    GTY ((nested_ptr (union tree_node,
+		"%h ? CPP_HASHNODE (GCC_IDENT_TO_HT_IDENT (%h)) : NULL",
+			"%h ? HT_IDENT_TO_GCC_IDENT (HT_NODE (%h)) : NULL")))
+       spelling;
 };
 
 /* An identifier in the cpp_token union.  */
@@ -214,6 +224,12 @@ struct GTY(()) cpp_identifier {
 		"%h ? CPP_HASHNODE (GCC_IDENT_TO_HT_IDENT (%h)) : NULL",
 			"%h ? HT_IDENT_TO_GCC_IDENT (HT_NODE (%h)) : NULL")))
        node;
+  /* The original spelling of the identifier.  */
+  cpp_hashnode *
+    GTY ((nested_ptr (union tree_node,
+		"%h ? CPP_HASHNODE (GCC_IDENT_TO_HT_IDENT (%h)) : NULL",
+			"%h ? HT_IDENT_TO_GCC_IDENT (HT_NODE (%h)) : NULL")))
+       spelling;
 };
 
 /* A preprocessing token.  This has been carefully packed and should
@@ -234,7 +250,7 @@ struct GTY(()) cpp_token {
     /* A string, or number.  */
     struct cpp_string GTY ((tag ("CPP_TOKEN_FLD_STR"))) str;
 
-    /* Argument no. for a CPP_MACRO_ARG.  */
+    /* Argument no. (and original spelling) for a CPP_MACRO_ARG.  */
     struct cpp_macro_arg GTY ((tag ("CPP_TOKEN_FLD_ARG_NO"))) macro_arg;
 
     /* Original token no. for a CPP_PASTE (from a sequence of
@@ -247,7 +263,7 @@ struct GTY(()) cpp_token {
 };
 
 /* Say which field is in use.  */
-extern enum cpp_token_fld_kind cpp_token_val_index (cpp_token *tok);
+extern enum cpp_token_fld_kind cpp_token_val_index (const cpp_token *tok);
 
 /* A type wide enough to hold any multibyte source character.
    cpplib's character constant interpreter requires an unsigned type.
@@ -336,6 +352,9 @@ struct cpp_options
   /* Nonzero means warn if slash-star appears in a comment.  */
   unsigned char warn_comments;
 
+  /* Nonzero means to warn about __DATA__, __TIME__ and __TIMESTAMP__ usage.   */
+  unsigned char warn_date_time;
+
   /* Nonzero means warn if a user-supplied include directory does not
      exist.  */
   unsigned char warn_missing_include_dirs;
@@ -422,7 +441,7 @@ struct cpp_options
   /* True for traditional preprocessing.  */
   unsigned char traditional;
 
-  /* Nonzero for C++ 2011 Standard user-defnied literals.  */
+  /* Nonzero for C++ 2011 Standard user-defined literals.  */
   unsigned char user_literals;
 
   /* Nonzero means warn when a string or character literal is followed by a
@@ -432,6 +451,16 @@ struct cpp_options
   /* Nonzero means interpret imaginary, fixed-point, or other gnu extension
      literal number suffixes as user-defined literal number suffixes.  */
   unsigned char ext_numeric_literals;
+
+  /* Nonzero means extended identifiers allow the characters specified
+     in C11 and C++11.  */
+  unsigned char c11_identifiers;
+
+  /* Nonzero for C++ 2014 Standard binary constants.  */
+  unsigned char binary_constants;
+
+  /* Nonzero for C++ 2014 Standard digit separators.  */
+  unsigned char digit_separators;
 
   /* Holds the name of the target (execution) character set.  */
   const char *narrow_charset;
@@ -443,14 +472,17 @@ struct cpp_options
   const char *input_charset;
 
   /* The minimum permitted level of normalization before a warning
-     is generated.  */
-  enum cpp_normalize_level warn_normalize;
+     is generated.  See enum cpp_normalize_level.  */
+  int warn_normalize;
 
   /* True to warn about precompiled header files we couldn't use.  */
   bool warn_invalid_pch;
 
   /* True if dependencies should be restored from a precompiled header.  */
   bool restore_pch_deps;
+
+  /* True if warn about differences between C90 and C99.  */
+  signed char cpp_warn_c90_c99_compat;
 
   /* Dependency generation.  */
   struct
@@ -548,6 +580,9 @@ struct cpp_callbacks
      Second argument is the location of the start of the current expansion.  */
   void (*used) (cpp_reader *, source_location, cpp_hashnode *);
 
+  /* Callback to identify whether an attribute exists.  */
+  int (*has_attribute) (cpp_reader *);
+
   /* Callback that can change a user builtin into normal macro.  */
   bool (*user_builtin_macro) (cpp_reader *, cpp_hashnode *);
 };
@@ -641,6 +676,7 @@ enum cpp_builtin_type
   BT_PRAGMA,			/* `_Pragma' operator */
   BT_TIMESTAMP,			/* `__TIMESTAMP__' */
   BT_COUNTER,			/* `__COUNTER__' */
+  BT_HAS_ATTRIBUTE,		/* `__has_attribute__(x)' */
   BT_FIRST_USER,		/* User defined builtin macros.  */
   BT_LAST_USER = BT_FIRST_USER + 31
 };
@@ -808,7 +844,10 @@ extern int cpp_defined (cpp_reader *, const unsigned char *, int);
 
 /* A preprocessing number.  Code assumes that any unused high bits of
    the double integer are set to zero.  */
-typedef unsigned HOST_WIDE_INT cpp_num_part;
+
+/* This type has to be equal to unsigned HOST_WIDE_INT, see
+   gcc/c-family/c-lex.c.  */
+typedef uint64_t cpp_num_part;
 typedef struct cpp_num cpp_num;
 struct cpp_num
 {
@@ -921,7 +960,10 @@ enum {
   CPP_W_NORMALIZE,
   CPP_W_INVALID_PCH,
   CPP_W_WARNING_DIRECTIVE,
-  CPP_W_LITERAL_SUFFIX
+  CPP_W_LITERAL_SUFFIX,
+  CPP_W_DATE_TIME,
+  CPP_W_PEDANTIC,
+  CPP_W_C90_C99_COMPAT
 };
 
 /* Output a diagnostic of some kind.  */
@@ -937,6 +979,9 @@ extern bool cpp_warning_syshdr (cpp_reader *, int, const char *msgid, ...)
 /* Output a diagnostic with "MSGID: " preceding the
    error string of errno.  No location is printed.  */
 extern bool cpp_errno (cpp_reader *, int, const char *msgid);
+/* Similarly, but with "FILENAME: " instead of "MSGID: ", where
+   the filename is not localized.  */
+extern bool cpp_errno_filename (cpp_reader *, int, const char *filename);
 
 /* Same as cpp_error, except additionally specifies a position as a
    (translation unit) physical line and physical column.  If the line is
