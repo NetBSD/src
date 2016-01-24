@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler,
    for m68k (including m68010) NetBSD platforms using the
    ELF object format.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Wasabi Systems. Inc.
 
    This file is derived from <m68k/m68kv4.h>, <m68k/m68kelf.h>,
@@ -38,13 +38,6 @@ along with GCC; see the file COPYING3.  If not see
 /* Don't try using XFmode on the 68010 or coldfire.  */ 
 #undef LONG_DOUBLE_TYPE_SIZE
 #define LONG_DOUBLE_TYPE_SIZE (TARGET_68020 ? 80 : 64)
-
-#undef LIBGCC2_LONG_DOUBLE_TYPE_SIZE
-#if defined(__mc68010__) || defined(__mcoldfire__)
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
-#else
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 80
-#endif
 
 #undef SUBTARGET_OVERRIDE_OPTIONS
 #define SUBTARGET_OVERRIDE_OPTIONS \
