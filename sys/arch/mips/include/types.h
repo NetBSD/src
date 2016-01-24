@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.62 2016/01/24 16:00:45 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.63 2016/01/24 16:08:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -109,9 +109,7 @@ typedef __uint64_t	uregister32_t;
 #define	PRIxREGISTER	PRIx64
 #define	PRIxUREGISTER	PRIx64
 #endif /* __mips_o32 */
-#endif /* _KERNEL || _KMEMUSER*/
 
-#if defined(_KERNEL)
 typedef struct label_t {
 	register_t val[14];
 } label_t;
