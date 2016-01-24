@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.11 2014/08/12 20:27:10 joerg Exp $	*/
+/*	$NetBSD: reg.h,v 1.12 2016/01/24 20:02:38 christos Exp $	*/
 
 #ifndef _POWERPC_REG_H_
 #define _POWERPC_REG_H_
@@ -49,12 +49,12 @@
  */
 
 struct reg {				/* base registers */
-	register_t fixreg[32];
-	register_t lr;			/* Link Register */
+	__register_t fixreg[32];
+	__register_t lr;			/* Link Register */
 	int cr;				/* Condition Register */
 	int xer;			/* SPR 1 */
-	register_t ctr;			/* Count Register */
-	register_t pc;			/* Program Counter */
+	__register_t ctr;			/* Count Register */
+	__register_t pc;			/* Program Counter */
 };
 
 struct fpreg {				/* Floating Point registers */
@@ -69,9 +69,9 @@ struct fpreg {				/* Floating Point registers */
 
 struct vreg {				/* Vector registers */
 	uint32_t vreg[32][4];
-	register_t vrsave;		/* SPR 256 */
-	register_t spare[2];		/* filler */
-	register_t vscr;		/* Vector Status And Control Register */
+	__register_t vrsave;		/* SPR 256 */
+	__register_t spare[2];		/* filler */
+	__register_t vscr;		/* Vector Status And Control Register */
 };
 
 #endif /* _POWERPC_REG_H_ */
