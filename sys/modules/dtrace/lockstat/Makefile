@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/09/10 19:57:48 riz Exp $
+#	$NetBSD: Makefile,v 1.3 2016/01/24 01:01:43 christos Exp $
 
 .include "../../Makefile.inc"
 
@@ -10,7 +10,7 @@ SRCS=		lockstat.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
 CPPFLAGS+=	-DKDTRACE_HOOKS
-.if (!empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*))
+.if exists(${DESTDIR}/usr/include/machine/cpu_counter.h)
 CPPFLAGS+=	-D__HAVE_CPU_COUNTER
 .endif
 
