@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.85 2016/01/23 22:31:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.86 2016/01/24 18:21:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,10 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
+typedef int			__register_t;
+typedef unsigned long		__vaddr_t;	/* segments.h */
+typedef unsigned char		__cpu_simple_lock_nv_t;
+
 #if defined(_KERNEL)
 typedef struct label_t {
 	int val[6];
@@ -78,7 +82,7 @@ typedef __uint64_t	psize_t;
 
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 
-typedef unsigned long	vaddr_t;
+typedef __vaddr_t	vaddr_t;
 typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
@@ -86,13 +90,10 @@ typedef unsigned long	vsize_t;
 
 typedef int		pmc_evid_t;
 typedef __uint64_t	pmc_ctr_t;
-typedef int		register_t;
+typedef __register_t	register_t;
 #define	PRIxREGISTER	"x"
 
 #endif /* _KERNEL || _KMEMUSER */
-
-typedef int			__register_t;
-typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD
