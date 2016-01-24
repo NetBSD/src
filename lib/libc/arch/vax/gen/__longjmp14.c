@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.4 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.5 2016/01/24 22:02:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 struct _jmp_buf {
 	struct sigcontext jb_sc;
-	register_t jb_regs[6];
+	__register_t jb_regs[6];
 };
 
 void
