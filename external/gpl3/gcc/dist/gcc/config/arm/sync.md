@@ -1,5 +1,5 @@
 ;; Machine description for ARM processor synchronization primitives.
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 ;; Written by Marcus Shawcroft (marcus.shawcroft@arm.com)
 ;; 64bit Atomics by Dave Gilbert (david.gilbert@linaro.org)
 ;;
@@ -65,6 +65,40 @@
    (set_attr "conds" "unconditional")
    (set_attr "predicable" "no")])
 
+(define_insn "atomic_load<mode>"
+  [(set (match_operand:QHSI 0 "register_operand" "=r")
+    (unspec_volatile:QHSI
+      [(match_operand:QHSI 1 "arm_sync_memory_operand" "Q")
+       (match_operand:SI 2 "const_int_operand")]		;; model
+      VUNSPEC_LDA))]
+  "TARGET_HAVE_LDACQ"
+  {
+    enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+    if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_release (model))
+      return \"ldr%(<sync_sfx>%)\\t%0, %1\";
+    else
+      return \"lda<sync_sfx>%?\\t%0, %1\";
+  }
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
+
+(define_insn "atomic_store<mode>"
+  [(set (match_operand:QHSI 0 "memory_operand" "=Q")
+    (unspec_volatile:QHSI
+      [(match_operand:QHSI 1 "general_operand" "r")
+       (match_operand:SI 2 "const_int_operand")]		;; model
+      VUNSPEC_STL))]
+  "TARGET_HAVE_LDACQ"
+  {
+    enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+    if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_acquire (model))
+      return \"str%(<sync_sfx>%)\t%1, %0\";
+    else
+      return \"stl<sync_sfx>%?\t%1, %0\";
+  }
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
+
 ;; Note that ldrd and vldr are *not* guaranteed to be single-copy atomic,
 ;; even for a 64-bit aligned address.  Instead we use a ldrexd unparied
 ;; with a store.
@@ -74,10 +108,10 @@
    (match_operand:SI 2 "const_int_operand")]		;; model
   "TARGET_HAVE_LDREXD && ARM_DOUBLEWORD_ALIGN"
 {
-  enum memmodel model = (enum memmodel) INTVAL (operands[2]);
+  enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
   expand_mem_thread_fence (model);
   emit_insn (gen_atomic_loaddi_1 (operands[0], operands[1]));
-  if (model == MEMMODEL_SEQ_CST)
+  if (is_mm_seq_cst (model))
     expand_mem_thread_fence (model);
   DONE;
 })
@@ -88,7 +122,8 @@
 		   UNSPEC_LL))]
   "TARGET_HAVE_LDREXD && ARM_DOUBLEWORD_ALIGN"
   "ldrexd%?\t%0, %H0, %C1"
-  [(set_attr "predicable" "yes")])
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
 
 (define_expand "atomic_compare_and_swap<mode>"
   [(match_operand:SI 0 "s_register_operand" "")		;; bool out
@@ -325,7 +360,19 @@
 	    VUNSPEC_LL)))]
   "TARGET_HAVE_LDREXBH"
   "ldrex<sync_sfx>%?\t%0, %C1"
-  [(set_attr "predicable" "yes")])
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
+
+(define_insn "arm_load_acquire_exclusive<mode>"
+  [(set (match_operand:SI 0 "s_register_operand" "=r")
+        (zero_extend:SI
+	  (unspec_volatile:NARROW
+	    [(match_operand:NARROW 1 "mem_noofs_operand" "Ua")]
+	    VUNSPEC_LAX)))]
+  "TARGET_HAVE_LDACQ"
+  "ldaex<sync_sfx>%?\\t%0, %C1"
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
 
 (define_insn "arm_load_exclusivesi"
   [(set (match_operand:SI 0 "s_register_operand" "=r")
@@ -334,7 +381,18 @@
 	  VUNSPEC_LL))]
   "TARGET_HAVE_LDREX"
   "ldrex%?\t%0, %C1"
-  [(set_attr "predicable" "yes")])
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
+
+(define_insn "arm_load_acquire_exclusivesi"
+  [(set (match_operand:SI 0 "s_register_operand" "=r")
+	(unspec_volatile:SI
+	  [(match_operand:SI 1 "mem_noofs_operand" "Ua")]
+	  VUNSPEC_LAX))]
+  "TARGET_HAVE_LDACQ"
+  "ldaex%?\t%0, %C1"
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
 
 (define_insn "arm_load_exclusivedi"
   [(set (match_operand:DI 0 "s_register_operand" "=r")
@@ -343,7 +401,18 @@
 	  VUNSPEC_LL))]
   "TARGET_HAVE_LDREXD"
   "ldrexd%?\t%0, %H0, %C1"
-  [(set_attr "predicable" "yes")])
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
+
+(define_insn "arm_load_acquire_exclusivedi"
+  [(set (match_operand:DI 0 "s_register_operand" "=r")
+	(unspec_volatile:DI
+	  [(match_operand:DI 1 "mem_noofs_operand" "Ua")]
+	  VUNSPEC_LAX))]
+  "TARGET_HAVE_LDACQ && ARM_DOUBLEWORD_ALIGN"
+  "ldaexd%?\t%0, %H0, %C1"
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
 
 (define_insn "arm_store_exclusive<mode>"
   [(set (match_operand:SI 0 "s_register_operand" "=&r")
@@ -367,4 +436,35 @@
       }
     return "strex<sync_sfx>%?\t%0, %2, %C1";
   }
-  [(set_attr "predicable" "yes")])
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
+
+(define_insn "arm_store_release_exclusivedi"
+  [(set (match_operand:SI 0 "s_register_operand" "=&r")
+	(unspec_volatile:SI [(const_int 0)] VUNSPEC_SLX))
+   (set (match_operand:DI 1 "mem_noofs_operand" "=Ua")
+	(unspec_volatile:DI
+	  [(match_operand:DI 2 "s_register_operand" "r")]
+	  VUNSPEC_SLX))]
+  "TARGET_HAVE_LDACQ && ARM_DOUBLEWORD_ALIGN"
+  {
+    rtx value = operands[2];
+    /* See comment in arm_store_exclusive<mode> above.  */
+    gcc_assert ((REGNO (value) & 1) == 0 || TARGET_THUMB2);
+    operands[3] = gen_rtx_REG (SImode, REGNO (value) + 1);
+    return "stlexd%?\t%0, %2, %3, %C1";
+  }
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])
+
+(define_insn "arm_store_release_exclusive<mode>"
+  [(set (match_operand:SI 0 "s_register_operand" "=&r")
+	(unspec_volatile:SI [(const_int 0)] VUNSPEC_SLX))
+   (set (match_operand:QHSI 1 "mem_noofs_operand" "=Ua")
+	(unspec_volatile:QHSI
+	  [(match_operand:QHSI 2 "s_register_operand" "r")]
+	  VUNSPEC_SLX))]
+  "TARGET_HAVE_LDACQ"
+  "stlex<sync_sfx>%?\t%0, %2, %C1"
+  [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")])

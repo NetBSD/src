@@ -1,5 +1,5 @@
 ;; Predicate definitions for Motorola 68000.
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -243,4 +243,17 @@
 	     && (!standard_68881_constant_p (op)
 		 || reload_in_progress
 		 || reload_completed));
+})
+
+;; Used to detect when an operand is either a register
+;; or a constant that is all ones in its lower bits.
+;; Used by insv pattern to help detect when we're initializing
+;; a bitfield to all ones.
+
+(define_predicate "reg_or_pow2_m1_operand"
+  (match_code "reg,const_int")
+{
+  return (REG_P (op)
+	  || (GET_CODE (op) == CONST_INT
+	      && exact_log2 (INTVAL (op) + 1) >= 0));
 })

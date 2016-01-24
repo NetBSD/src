@@ -1,5 +1,5 @@
 ;; Constraint definitions for RS6000
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -55,6 +55,9 @@
 ;; any VSX register
 (define_register_constraint "wa" "rs6000_constraints[RS6000_CONSTRAINT_wa]"
   "Any VSX register if the -mvsx option was used or NO_REGS.")
+
+;; NOTE: For compatibility, "wc" is reserved to represent individual CR bits.
+;; It is currently used for that purpose in LLVM.
 
 (define_register_constraint "wd" "rs6000_constraints[RS6000_CONSTRAINT_wd]"
   "VSX vector register to hold vector double data or NO_REGS.")
@@ -117,6 +120,11 @@
 (define_register_constraint "wz" "rs6000_constraints[RS6000_CONSTRAINT_wz]"
   "Floating point register if the LFIWZX instruction is enabled or NO_REGS.")
 
+(define_constraint "wD"
+  "Int constant that is the element number of the 64-bit scalar in a vector."
+  (and (match_code "const_int")
+       (match_test "TARGET_VSX && (ival == VECTOR_ELEMENT_SCALAR_64BIT)")))
+
 ;; Lq/stq validates the address for load/store quad
 (define_memory_constraint "wQ"
   "Memory operand suitable for the load/store quad instructions"
@@ -132,7 +140,7 @@
 (define_constraint "I"
   "A signed 16-bit constant"
   (and (match_code "const_int")
-       (match_test "(unsigned HOST_WIDE_INT) (ival + 0x8000) < 0x10000")))
+       (match_test "((unsigned HOST_WIDE_INT) ival + 0x8000) < 0x10000")))
 
 (define_constraint "J"
   "high-order 16 bits nonzero"
@@ -168,7 +176,7 @@
 (define_constraint "P"
   "constant whose negation is signed 16-bit constant"
   (and (match_code "const_int")
-       (match_test "(unsigned HOST_WIDE_INT) ((- ival) + 0x8000) < 0x10000")))
+       (match_test "((- (unsigned HOST_WIDE_INT) ival) + 0x8000) < 0x10000")))
 
 ;; Floating-point constraints
 
@@ -224,7 +232,8 @@ usually better to use @samp{m} or @samp{es} in @code{asm} statements)"
 
 (define_constraint "S"
   "Constant that can be placed into a 64-bit mask operand"
-  (match_operand 0 "mask64_operand"))
+  (and (match_test "TARGET_POWERPC64")
+       (match_operand 0 "mask64_operand")))
 
 (define_constraint "T"
   "Constant that can be placed into a 32-bit mask operand"

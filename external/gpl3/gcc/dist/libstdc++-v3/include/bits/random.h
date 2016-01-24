@@ -1,6 +1,6 @@
 // random number generation -*- C++ -*-
 
-// Copyright (C) 2009-2013 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -164,6 +164,8 @@ _GLIBCXX_END_NAMESPACE_VERSION
     template<typename _Engine, typename _DInputType>
       struct _Adaptor
       {
+	static_assert(std::is_floating_point<_DInputType>::value,
+		      "template argument not a floating point type");
 
       public:
 	_Adaptor(_Engine& __g)
@@ -659,10 +661,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *
    * The size of the state is @f$r@f$
    * and the maximum period of the generator is @f$(m^r - m^s - 1)@f$.
-   *
-   * @var _M_x     The state of the generator.  This is a ring buffer.
-   * @var _M_carry The carry.
-   * @var _M_p     Current index of x(i - r).
    */
   template<typename _UIntType, size_t __w, size_t __s, size_t __r>
     class subtract_with_carry_engine
@@ -794,9 +792,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       template<typename _UIntType1, size_t __w1, size_t __s1, size_t __r1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
 		   const std::subtract_with_carry_engine<_UIntType1, __w1,
-		   __s1, __r1>&);
+		   __s1, __r1>& __x);
 
       /**
        * @brief Extracts the current state of a % subtract_with_carry_engine
@@ -813,14 +811,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       template<typename _UIntType1, size_t __w1, size_t __s1, size_t __r1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
 		   std::subtract_with_carry_engine<_UIntType1, __w1,
-		   __s1, __r1>&);
+		   __s1, __r1>& __x);
 
     private:
+      /// The state of the generator.  This is a ring buffer.
       _UIntType  _M_x[long_lag];
-      _UIntType  _M_carry;
-      size_t     _M_p;
+      _UIntType  _M_carry;		///< The carry
+      size_t     _M_p;			///< Current index of x(i - r).
     };
 
   /**
@@ -1638,9 +1637,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     union
     {
-    FILE*        _M_file;
-    mt19937      _M_mt;
-  };
+      void*      _M_file;
+      mt19937    _M_mt;
+    };
   };
 
   /* @} */ // group random_generators
@@ -3333,7 +3332,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     };
 
   /**
-   * @brief Return true if two Fisher f distributions are diferent.
+   * @brief Return true if two Fisher f distributions are different.
    */
   template<typename _RealType>
     inline bool
@@ -5685,11 +5684,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { return __d1._M_param == __d2._M_param; }
 
       /**
-       * @brief Inserts a %piecewise_constan_distribution random
+       * @brief Inserts a %piecewise_constant_distribution random
        *        number distribution @p __x into the output stream @p __os.
        *
        * @param __os An output stream.
-       * @param __x  A %piecewise_constan_distribution random number
+       * @param __x  A %piecewise_constant_distribution random number
        *             distribution.
        *
        * @returns The output stream with the state of @p __x inserted or in
@@ -5701,11 +5700,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		   const std::piecewise_constant_distribution<_RealType1>& __x);
 
       /**
-       * @brief Extracts a %piecewise_constan_distribution random
+       * @brief Extracts a %piecewise_constant_distribution random
        *        number distribution @p __x from the input stream @p __is.
        *
        * @param __is An input stream.
-       * @param __x A %piecewise_constan_distribution random number
+       * @param __x A %piecewise_constant_distribution random number
        *            generator engine.
        *
        * @returns The input stream with @p __x extracted or in an error

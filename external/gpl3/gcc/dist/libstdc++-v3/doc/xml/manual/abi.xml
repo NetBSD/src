@@ -263,6 +263,8 @@ compatible.
     <listitem><para>GCC 4.7.0: libstdc++.so.6.0.17</para></listitem>
     <listitem><para>GCC 4.8.0: libstdc++.so.6.0.18</para></listitem>
     <listitem><para>GCC 4.8.3: libstdc++.so.6.0.19</para></listitem>
+    <listitem><para>GCC 4.9.0: libstdc++.so.6.0.20</para></listitem>
+    <listitem><para>GCC 5.1.0: libstdc++.so.6.0.21</para></listitem>
     </itemizedlist>
     <para>
       Note 1: Error should be libstdc++.so.3.0.3.
@@ -327,6 +329,8 @@ compatible.
     <listitem><para>GCC 4.7.0: GLIBCXX_3.4.17, CXXABI_1.3.6</para></listitem>
     <listitem><para>GCC 4.8.0: GLIBCXX_3.4.18, CXXABI_1.3.7</para></listitem>
     <listitem><para>GCC 4.8.3: GLIBCXX_3.4.19, CXXABI_1.3.7</para></listitem>
+    <listitem><para>GCC 4.9.0: GLIBCXX_3.4.20, CXXABI_1.3.8</para></listitem>
+    <listitem><para>GCC 5.1.0: GLIBCXX_3.4.21, CXXABI_1.3.9</para></listitem>
     </itemizedlist>
     </listitem>
 
@@ -537,6 +541,7 @@ compatible.
     <listitem><para>GCC 3.3.3: include/c++/3.3.3</para></listitem>
     <listitem><para>GCC 3.4.x: include/c++/3.4.x</para></listitem>
     <listitem><para>GCC 4.x.y: include/c++/4.x.y</para></listitem>
+    <listitem><para>GCC 5.x.0: include/c++/5.x.0</para></listitem>
     </itemizedlist>
     <para/>
     </listitem>
@@ -1098,8 +1103,8 @@ gcc test.c -g -O2 -L. -lone -ltwo /usr/lib/libstdc++.so.5 /usr/lib/libstdc++.so.
   <biblioentry>
        <title>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink"
-	      xlink:href="http://www.intel.com/cd/software/products/asmo-na/eng/284736.htm">
-	Intel Compilers for Linux Compatibility with the GNU Compilers
+	      xlink:href="https://software.intel.com/en-us/articles/intel-compilers-for-linux-compatibility-with-gnu-compilers">
+	Intel Compilers for Linux: Compatibility with GNU Compilers
 	</link>
       </title>
   </biblioentry>
@@ -1107,7 +1112,7 @@ gcc test.c -g -O2 -L. -lone -ltwo /usr/lib/libstdc++.so.5 /usr/lib/libstdc++.so.
   <biblioentry>
       <title>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink"
-	      xlink:href="http://download.oracle.com/docs/cd/E19963-01/html/819-0690/index.html">
+	      xlink:href="http://docs.oracle.com/cd/E23824_01/html/819-0690/index.html">
 	Linker and Libraries Guide (document 819-0690)
 	</link>
       </title>
@@ -1141,7 +1146,7 @@ gcc test.c -g -O2 -L. -lone -ltwo /usr/lib/libstdc++.so.5 /usr/lib/libstdc++.so.
   <biblioentry>
       <title>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink"
-	      xlink:href="http://www.arm.com/miscPDFs/8033.pdf">
+	      xlink:href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ihi0036b/index.html">
       C++ ABI for the ARM Architecture
 	</link>
       </title>
@@ -1177,7 +1182,7 @@ gcc test.c -g -O2 -L. -lone -ltwo /usr/lib/libstdc++.so.5 /usr/lib/libstdc++.so.
   <biblioentry>
      <title>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink"
-	      xlink:href="http://syrcose.ispras.ru/2009/files/SYRCoSE2009-CfP.pdf">
+	      xlink:href="http://syrcose.ispras.ru/2009/files/02_paper.pdf">
       Binary Compatibility of Shared Libraries Implemented in C++
       on GNU/Linux Systems
 	</link>

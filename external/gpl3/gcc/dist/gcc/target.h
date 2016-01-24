@@ -1,5 +1,5 @@
 /* Data structure definitions for a generic GCC target.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -49,10 +49,14 @@
 #define GCC_TARGET_H
 
 #include "insn-modes.h"
+#include "insn-codes.h"
+#include "wide-int.h"
+#include "tm.h"
+#include "hard-reg-set.h"
 
 #ifdef ENABLE_CHECKING
 
-typedef struct { void *magic; void *p; } cumulative_args_t;
+struct cumulative_args_t { void *magic; void *p; };
 
 #else /* !ENABLE_CHECKING */
 
@@ -62,20 +66,30 @@ typedef struct { void *magic; void *p; } cumulative_args_t;
    efficient way of argument passing otherwise.  However, that would come
    at the cost of less type-safe !ENABLE_CHECKING compilation.  */
 
-typedef union { void *p; } cumulative_args_t;
+union cumulative_args_t { void *p; };
 
 #endif /* !ENABLE_CHECKING */
 
 /* Types used by the record_gcc_switches() target function.  */
-typedef enum
+enum print_switch_type
 {
   SWITCH_TYPE_PASSED,		/* A switch passed on the command line.  */
   SWITCH_TYPE_ENABLED,		/* An option that is currently enabled.  */
   SWITCH_TYPE_DESCRIPTIVE,	/* Descriptive text, not a switch or option.  */
   SWITCH_TYPE_LINE_START,	/* Please emit any necessary text at the start of a line.  */
   SWITCH_TYPE_LINE_END		/* Please emit a line terminator.  */
-}
-print_switch_type;
+};
+
+/* Types of memory operation understood by the "by_pieces" infrastructure.
+   Used by the TARGET_USE_BY_PIECES_INFRASTRUCTURE_P target hook.  */
+
+enum by_pieces_operation
+{
+  CLEAR_BY_PIECES,
+  MOVE_BY_PIECES,
+  SET_BY_PIECES,
+  STORE_BY_PIECES
+};
 
 typedef int (* print_switch_fn_type) (print_switch_type, const char *);
 
@@ -88,12 +102,18 @@ extern int elf_record_gcc_switches (print_switch_type type, const char *);
    we disable such optimizations on such targets, using this function.  */
 extern bool target_default_pointer_address_modes_p (void);
 
+/* For hooks which use the MOVE_RATIO macro, this gives the legacy default
+   behaviour.  */
+extern unsigned int get_move_ratio (bool);
+
 struct stdarg_info;
 struct spec_info_def;
 struct hard_reg_set_container;
+struct cgraph_node;
+struct cgraph_simd_clone;
 
 /* The struct used by the secondary_reload target hook.  */
-typedef struct secondary_reload_info
+struct secondary_reload_info
 {
   /* icode is actually an enum insn_code, but we don't want to force every
      file that includes target.h to include optabs.h .  */
@@ -104,7 +124,7 @@ typedef struct secondary_reload_info
      compatibility hook.  */
   struct secondary_reload_info *prev_sri;
   int t_icode; /* Actually an enum insn_code - see above.  */
-} secondary_reload_info;
+};
 
 /* This is defined in sched-int.h .  */
 struct _dep;
@@ -116,7 +136,7 @@ struct ddg;
 struct loop;
 
 /* This is defined in tree-ssa-alias.h.  */
-struct ao_ref_s;
+struct ao_ref;
 
 /* This is defined in tree-vectorizer.h.  */
 struct _stmt_vec_info;

@@ -1,5 +1,5 @@
 /* Instruction scheduling pass.   Log dumping infrastructure.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,12 +26,20 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm_p.h"
 #include "hard-reg-set.h"
 #include "regs.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "vec.h"
+#include "machmode.h"
+#include "input.h"
 #include "function.h"
+#include "predict.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "basic-block.h"
 #include "flags.h"
 #include "insn-config.h"
 #include "insn-attr.h"
 #include "params.h"
-#include "basic-block.h"
 #include "cselib.h"
 #include "target.h"
 
@@ -207,6 +215,42 @@ dump_vinsn (vinsn_t vi)
   dump_vinsn_1 (vi, dump_vinsn_flags);
 }
 
+DEBUG_FUNCTION void
+debug (vinsn_def &ref)
+{
+  switch_dump (stderr);
+  dump_vinsn_1 (&ref, dump_vinsn_flags);
+  sel_print ("\n");
+  restore_dump ();
+}
+
+DEBUG_FUNCTION void
+debug (vinsn_def *ptr)
+{
+  if (ptr)
+    debug (*ptr);
+  else
+    fprintf (stderr, "<nil>\n");
+}
+
+DEBUG_FUNCTION void
+debug_verbose (vinsn_def &ref)
+{
+  switch_dump (stderr);
+  dump_vinsn_1 (&ref, debug_vinsn_flags);
+  sel_print ("\n");
+  restore_dump ();
+}
+
+DEBUG_FUNCTION void
+debug_verbose (vinsn_def *ptr)
+{
+  if (ptr)
+    debug (*ptr);
+  else
+    fprintf (stderr, "<nil>\n");
+}
+
 /* Dump vinsn VI to stderr.  */
 DEBUG_FUNCTION void
 debug_vinsn (vinsn_t vi)
@@ -296,6 +340,46 @@ debug_expr (expr_t expr)
   dump_expr_1 (expr, debug_expr_flags);
   sel_print ("\n");
   restore_dump ();
+}
+
+/* Dump expression REF.  */
+
+DEBUG_FUNCTION void
+debug (expr_def &ref)
+{
+  switch_dump (stderr);
+  dump_expr_1 (&ref, 0);
+  sel_print ("\n");
+  restore_dump ();
+}
+
+DEBUG_FUNCTION void
+debug (expr_def *ptr)
+{
+  if (ptr)
+    debug (*ptr);
+  else
+    fprintf (stderr, "<nil>\n");
+}
+
+/* Dump expression REF verbosely.  */
+
+DEBUG_FUNCTION void
+debug_verbose (expr_def &ref)
+{
+  switch_dump (stderr);
+  dump_expr_1 (&ref, DUMP_EXPR_ALL);
+  sel_print ("\n");
+  restore_dump ();
+}
+
+DEBUG_FUNCTION void
+debug_verbose (expr_def *ptr)
+{
+  if (ptr)
+    debug_verbose (*ptr);
+  else
+    fprintf (stderr, "<nil>\n");
 }
 
 /* Dump insn I honoring FLAGS.  */
@@ -458,7 +542,7 @@ void
 dump_insn_vector (rtx_vec_t succs)
 {
   int i;
-  rtx succ;
+  rtx_insn *succ;
 
   FOR_EACH_VEC_ELT (succs, i, succ)
     if (succ)
@@ -491,7 +575,7 @@ dump_hard_reg_set (const char *prefix, HARD_REG_SET set)
 
 /* Pretty print INSN.  This is used as a hook.  */
 const char *
-sel_print_insn (const_rtx insn, int aligned ATTRIBUTE_UNUSED)
+sel_print_insn (const rtx_insn *insn, int aligned ATTRIBUTE_UNUSED)
 {
   static char buf[80];
 
@@ -674,7 +758,7 @@ sel_dump_cfg_2 (FILE *f, int flags)
   if (flags & SEL_DUMP_CFG_FUNCTION_NAME)
     fprintf (f, "function [label = \"%s\"];\n", current_function_name ());
 
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
       insn_t insn = BB_HEAD (bb);
       insn_t next_tail = NEXT_INSN (BB_END (bb));
@@ -918,6 +1002,25 @@ debug_blist (blist_t bnds)
   restore_dump ();
 }
 
+/* Dump a rtx vector REF.  */
+DEBUG_FUNCTION void
+debug (vec<rtx_insn *> &ref)
+{
+  switch_dump (stderr);
+  dump_insn_vector (ref);
+  sel_print ("\n");
+  restore_dump ();
+}
+
+DEBUG_FUNCTION void
+debug (vec<rtx_insn *> *ptr)
+{
+  if (ptr)
+    debug (*ptr);
+  else
+    fprintf (stderr, "<nil>\n");
+}
+
 /* Dump an insn vector SUCCS.  */
 DEBUG_FUNCTION void
 debug_insn_vector (rtx_vec_t succs)
@@ -950,7 +1053,7 @@ DEBUG_FUNCTION rtx
 debug_mem_addr_value (rtx x)
 {
   rtx t, addr;
-  enum machine_mode address_mode;
+  machine_mode address_mode;
 
   gcc_assert (MEM_P (x));
   address_mode = get_address_mode (x);

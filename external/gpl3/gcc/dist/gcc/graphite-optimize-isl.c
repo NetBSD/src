@@ -1,5 +1,5 @@
 /* A scheduling optimizer for Graphite
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Tobias Grosser <tobias@grosser.es>.
 
 This file is part of GCC.
@@ -20,23 +20,47 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "config.h"
 
-#ifdef HAVE_cloog
+#ifdef HAVE_isl
+#include <isl/constraint.h>
 #include <isl/set.h>
+#include <isl/union_set.h>
 #include <isl/map.h>
 #include <isl/union_map.h>
 #include <isl/schedule.h>
 #include <isl/band.h>
 #include <isl/aff.h>
 #include <isl/options.h>
-#ifdef HAVE_ISL_SCHED_CONSTRAINTS_COMPUTE_SCHEDULE
-#include <isl/deprecated/int.h>
-#include <isl/deprecated/aff_int.h>
-#endif
 #endif
 
 #include "system.h"
 #include "coretypes.h"
-#include "tree-flow.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "tree.h"
+#include "fold-const.h"
+#include "predict.h"
+#include "tm.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
+#include "gimple-iterator.h"
+#include "tree-ssa-loop.h"
 #include "dumpfile.h"
 #include "cfgloop.h"
 #include "tree-chrec.h"
@@ -44,7 +68,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-scalar-evolution.h"
 #include "sese.h"
 
-#ifdef HAVE_cloog
+#ifdef HAVE_isl
 #include "graphite-poly.h"
 
 static isl_union_set *
@@ -59,35 +83,6 @@ scop_get_domains (scop_p scop ATTRIBUTE_UNUSED)
     res = isl_union_set_add_set (res, isl_set_copy (pbb->domain));
 
   return res;
-}
-
-static isl_union_map *
-scop_get_dependences (scop_p scop)
-{
-  isl_union_map *dependences;
-
-  if (!scop->must_raw)
-    compute_deps (scop, SCOP_BBS (scop),
-		  &scop->must_raw, &scop->may_raw,
-		  &scop->must_raw_no_source, &scop->may_raw_no_source,
-		  &scop->must_war, &scop->may_war,
-		  &scop->must_war_no_source, &scop->may_war_no_source,
-		  &scop->must_waw, &scop->may_waw,
-		  &scop->must_waw_no_source, &scop->may_waw_no_source);
-
-  dependences = isl_union_map_copy (scop->must_raw);
-  dependences = isl_union_map_union (dependences,
-				     isl_union_map_copy (scop->must_war));
-  dependences = isl_union_map_union (dependences,
-				     isl_union_map_copy (scop->must_waw));
-  dependences = isl_union_map_union (dependences,
-				     isl_union_map_copy (scop->may_raw));
-  dependences = isl_union_map_union (dependences,
-				     isl_union_map_copy (scop->may_war));
-  dependences = isl_union_map_union (dependences,
-				     isl_union_map_copy (scop->may_waw));
-
-  return dependences;
 }
 
 /* getTileMap - Create a map that describes a n-dimensonal tiling.
@@ -118,7 +113,7 @@ scop_get_dependences (scop_p scop)
    */
  
 static isl_basic_map *
-getTileMap(isl_ctx *ctx, int scheduleDimensions, int tileSize)
+getTileMap (isl_ctx *ctx, int scheduleDimensions, int tileSize)
 {
   int x;
   /* We construct
@@ -128,11 +123,11 @@ getTileMap(isl_ctx *ctx, int scheduleDimensions, int tileSize)
     	                s1 = a1 * 32 and s1 = p1 and t1 <= p1 < t1 + 32}
 
      and project out the auxilary dimensions a0 and a1.  */
-  isl_space *Space = isl_space_alloc(ctx, 0, scheduleDimensions,
-				     scheduleDimensions * 3);
-  isl_basic_map *tileMap = isl_basic_map_universe(isl_space_copy(Space));
+  isl_space *Space = isl_space_alloc (ctx, 0, scheduleDimensions,
+				      scheduleDimensions * 3);
+  isl_basic_map *tileMap = isl_basic_map_universe (isl_space_copy (Space));
 
-  isl_local_space *LocalSpace = isl_local_space_from_space(Space);
+  isl_local_space *LocalSpace = isl_local_space_from_space (Space);
 
   for (x = 0; x < scheduleDimensions; x++)
     {
@@ -144,40 +139,40 @@ getTileMap(isl_ctx *ctx, int scheduleDimensions, int tileSize)
       isl_constraint *c;
 
       /* sX = aX * tileSize; */
-      c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-      isl_constraint_set_coefficient_si(c, isl_dim_out, sX, 1);
-      isl_constraint_set_coefficient_si(c, isl_dim_out, aX, -tileSize);
-      tileMap = isl_basic_map_add_constraint(tileMap, c);
+      c = isl_equality_alloc (isl_local_space_copy (LocalSpace));
+      isl_constraint_set_coefficient_si (c, isl_dim_out, sX, 1);
+      isl_constraint_set_coefficient_si (c, isl_dim_out, aX, -tileSize);
+      tileMap = isl_basic_map_add_constraint (tileMap, c);
 
       /* pX = sX; */
-      c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-      isl_constraint_set_coefficient_si(c, isl_dim_out, pX, 1);
-      isl_constraint_set_coefficient_si(c, isl_dim_in, sX, -1);
-      tileMap = isl_basic_map_add_constraint(tileMap, c);
+      c = isl_equality_alloc (isl_local_space_copy (LocalSpace));
+      isl_constraint_set_coefficient_si (c, isl_dim_out, pX, 1);
+      isl_constraint_set_coefficient_si (c, isl_dim_in, sX, -1);
+      tileMap = isl_basic_map_add_constraint (tileMap, c);
 
       /* tX <= pX */
-      c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
-      isl_constraint_set_coefficient_si(c, isl_dim_out, pX, 1);
-      isl_constraint_set_coefficient_si(c, isl_dim_out, tX, -1);
-      tileMap = isl_basic_map_add_constraint(tileMap, c);
+      c = isl_inequality_alloc (isl_local_space_copy (LocalSpace));
+      isl_constraint_set_coefficient_si (c, isl_dim_out, pX, 1);
+      isl_constraint_set_coefficient_si (c, isl_dim_out, tX, -1);
+      tileMap = isl_basic_map_add_constraint (tileMap, c);
 
       /* pX <= tX + (tileSize - 1) */
-      c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
-      isl_constraint_set_coefficient_si(c, isl_dim_out, tX, 1);
-      isl_constraint_set_coefficient_si(c, isl_dim_out, pX, -1);
-      isl_constraint_set_constant_si(c, tileSize - 1);
-      tileMap = isl_basic_map_add_constraint(tileMap, c);
+      c = isl_inequality_alloc (isl_local_space_copy (LocalSpace));
+      isl_constraint_set_coefficient_si (c, isl_dim_out, tX, 1);
+      isl_constraint_set_coefficient_si (c, isl_dim_out, pX, -1);
+      isl_constraint_set_constant_si (c, tileSize - 1);
+      tileMap = isl_basic_map_add_constraint (tileMap, c);
     }
 
-  /* Project out auxilary dimensions.
+  /* Project out auxiliary dimensions.
 
-     The auxilary dimensions are transformed into existentially quantified ones.
+     The auxiliary dimensions are transformed into existentially quantified ones.
      This reduces the number of visible scattering dimensions and allows Cloog
      to produces better code.  */
-  tileMap = isl_basic_map_project_out(tileMap, isl_dim_out,
-				      2 * scheduleDimensions,
-				      scheduleDimensions);
-  isl_local_space_free(LocalSpace);
+  tileMap = isl_basic_map_project_out (tileMap, isl_dim_out,
+				       2 * scheduleDimensions,
+				       scheduleDimensions);
+  isl_local_space_free (LocalSpace);
   return tileMap;
 }
 
@@ -189,7 +184,7 @@ getTileMap(isl_ctx *ctx, int scheduleDimensions, int tileSize)
 static bool DisableTiling = false;
 
 static isl_union_map *
-getScheduleForBand(isl_band *Band, int *Dimensions)
+getScheduleForBand (isl_band *Band, int *Dimensions)
 {
   isl_union_map *PartialSchedule;
   isl_ctx *ctx;
@@ -197,25 +192,25 @@ getScheduleForBand(isl_band *Band, int *Dimensions)
   isl_basic_map *TileMap;
   isl_union_map *TileUMap;
 
-  PartialSchedule = isl_band_get_partial_schedule(Band);
-  *Dimensions = isl_band_n_member(Band);
+  PartialSchedule = isl_band_get_partial_schedule (Band);
+  *Dimensions = isl_band_n_member (Band);
 
-  if (DisableTiling)
+  if (DisableTiling || flag_loop_unroll_jam)
     return PartialSchedule;
 
   /* It does not make any sense to tile a band with just one dimension.  */
   if (*Dimensions == 1)
     return PartialSchedule;
 
-  ctx = isl_union_map_get_ctx(PartialSchedule);
-  Space = isl_union_map_get_space(PartialSchedule);
+  ctx = isl_union_map_get_ctx (PartialSchedule);
+  Space = isl_union_map_get_space (PartialSchedule);
 
-  TileMap = getTileMap(ctx, *Dimensions, 32);
-  TileUMap = isl_union_map_from_map(isl_map_from_basic_map(TileMap));
-  TileUMap = isl_union_map_align_params(TileUMap, Space);
+  TileMap = getTileMap (ctx, *Dimensions, 32);
+  TileUMap = isl_union_map_from_map (isl_map_from_basic_map (TileMap));
+  TileUMap = isl_union_map_align_params (TileUMap, Space);
   *Dimensions = 2 * *Dimensions;
 
-  return isl_union_map_apply_range(PartialSchedule, TileUMap);
+  return isl_union_map_apply_range (PartialSchedule, TileUMap);
 }
 
 /* Create a map that pre-vectorizes one scheduling dimension.
@@ -255,11 +250,13 @@ getScheduleForBand(isl_band *Band, int *Dimensions)
    constant number of iterations, if the number of loop iterations at
    DimToVectorize can be devided by VectorWidth. The default VectorWidth is
    currently constant and not yet target specific. This function does not reason
-   about parallelism.  */
+   about parallelism.
+
+  */
 static isl_map *
-getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
-		int ScheduleDimensions,
-		int VectorWidth)
+getPrevectorMap (isl_ctx *ctx, int DimToVectorize,
+		 int ScheduleDimensions,
+		 int VectorWidth)
 {
   isl_space *Space;
   isl_local_space *LocalSpace, *LocalSpaceRange;
@@ -269,14 +266,14 @@ getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
   isl_aff *Aff;
   int PointDimension; /* ip */
   int TileDimension;  /* it */
-  isl_int VectorWidthMP;
+  isl_val *VectorWidthMP;
   int i;
 
   /* assert (0 <= DimToVectorize && DimToVectorize < ScheduleDimensions);*/
 
-  Space = isl_space_alloc(ctx, 0, ScheduleDimensions, ScheduleDimensions + 1);
-  TilingMap = isl_map_universe(isl_space_copy(Space));
-  LocalSpace = isl_local_space_from_space(Space);
+  Space = isl_space_alloc (ctx, 0, ScheduleDimensions, ScheduleDimensions + 1);
+  TilingMap = isl_map_universe (isl_space_copy (Space));
+  LocalSpace = isl_local_space_from_space (Space);
   PointDimension = ScheduleDimensions;
   TileDimension = DimToVectorize;
 
@@ -284,43 +281,132 @@ getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
      DimToVectorize to the point loop at the innermost dimension.  */
   for (i = 0; i < ScheduleDimensions; i++)
     {
-      c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-      isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
+      c = isl_equality_alloc (isl_local_space_copy (LocalSpace));
+      isl_constraint_set_coefficient_si (c, isl_dim_in, i, -1);
 
       if (i == DimToVectorize)
-	isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
+	isl_constraint_set_coefficient_si (c, isl_dim_out, PointDimension, 1);
       else
-	isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
+	isl_constraint_set_coefficient_si (c, isl_dim_out, i, 1);
 
-      TilingMap = isl_map_add_constraint(TilingMap, c);
+      TilingMap = isl_map_add_constraint (TilingMap, c);
     }
 
   /* it % 'VectorWidth' = 0  */
-  LocalSpaceRange = isl_local_space_range(isl_local_space_copy(LocalSpace));
-  Aff = isl_aff_zero_on_domain(LocalSpaceRange);
-  Aff = isl_aff_set_constant_si(Aff, VectorWidth);
-  Aff = isl_aff_set_coefficient_si(Aff, isl_dim_in, TileDimension, 1);
-  isl_int_init(VectorWidthMP);
-  isl_int_set_si(VectorWidthMP, VectorWidth);
-  Aff = isl_aff_mod(Aff, VectorWidthMP);
-  isl_int_clear(VectorWidthMP);
-  Modulo = isl_pw_aff_zero_set(isl_pw_aff_from_aff(Aff));
-  TilingMap = isl_map_intersect_range(TilingMap, Modulo);
+  LocalSpaceRange = isl_local_space_range (isl_local_space_copy (LocalSpace));
+  Aff = isl_aff_zero_on_domain (LocalSpaceRange);
+  Aff = isl_aff_set_constant_si (Aff, VectorWidth);
+  Aff = isl_aff_set_coefficient_si (Aff, isl_dim_in, TileDimension, 1);
+
+  VectorWidthMP = isl_val_int_from_si (ctx, VectorWidth);
+  Aff = isl_aff_mod_val (Aff, VectorWidthMP);
+  Modulo = isl_pw_aff_zero_set (isl_pw_aff_from_aff (Aff));
+  TilingMap = isl_map_intersect_range (TilingMap, Modulo);
 
   /* it <= ip */
-  c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
-  isl_constraint_set_coefficient_si(c, isl_dim_out, TileDimension, -1);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
-  TilingMap = isl_map_add_constraint(TilingMap, c);
+  c = isl_inequality_alloc (isl_local_space_copy (LocalSpace));
+  isl_constraint_set_coefficient_si (c, isl_dim_out, TileDimension, -1);
+  isl_constraint_set_coefficient_si (c, isl_dim_out, PointDimension, 1);
+  TilingMap = isl_map_add_constraint (TilingMap, c);
 
   /* ip <= it + ('VectorWidth' - 1) */
-  c = isl_inequality_alloc(LocalSpace);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, TileDimension, 1);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, -1);
-  isl_constraint_set_constant_si(c, VectorWidth - 1);
-  TilingMap = isl_map_add_constraint(TilingMap, c);
+  c = isl_inequality_alloc (LocalSpace);
+  isl_constraint_set_coefficient_si (c, isl_dim_out, TileDimension, 1);
+  isl_constraint_set_coefficient_si (c, isl_dim_out, PointDimension, -1);
+  isl_constraint_set_constant_si (c, VectorWidth - 1);
+  TilingMap = isl_map_add_constraint (TilingMap, c);
 
-  isl_map_dump(TilingMap);
+  return TilingMap;
+}
+
+/* Compute an auxiliary map to getPrevectorMap, for computing the separating 
+   class defined by full tiles.  Used in graphite_isl_ast_to_gimple.c to set the 
+   corresponding option for AST build.
+
+   The map (for VectorWidth=4):
+
+   [i,j] -> [it,j,ip] : it % 4 = 0 and it <= ip <= it + 3 and it + 3 = i and
+                        ip >= 0
+
+   The image of this map is the separation class. The range of this map includes
+   all the i multiple of 4 in the domain such as i + 3 is in the domain too.
+    
+ */ 
+static isl_map *
+getPrevectorMap_full (isl_ctx *ctx, int DimToVectorize,
+		 int ScheduleDimensions,
+		 int VectorWidth)
+{
+  isl_space *Space;
+  isl_local_space *LocalSpace, *LocalSpaceRange;
+  isl_set *Modulo;
+  isl_map *TilingMap;
+  isl_constraint *c;
+  isl_aff *Aff;
+  int PointDimension; /* ip */
+  int TileDimension;  /* it */
+  isl_val *VectorWidthMP;
+  int i;
+
+  /* assert (0 <= DimToVectorize && DimToVectorize < ScheduleDimensions);*/
+
+  Space = isl_space_alloc (ctx, 0, ScheduleDimensions, ScheduleDimensions + 1);
+  TilingMap = isl_map_universe (isl_space_copy (Space));
+  LocalSpace = isl_local_space_from_space (Space);
+  PointDimension = ScheduleDimensions;
+  TileDimension = DimToVectorize;
+
+  /* Create an identity map for everything except DimToVectorize and the 
+     point loop. */
+  for (i = 0; i < ScheduleDimensions; i++)
+    {
+      if (i == DimToVectorize)
+        continue;
+
+      c = isl_equality_alloc (isl_local_space_copy (LocalSpace));
+
+      isl_constraint_set_coefficient_si (c, isl_dim_in, i, -1);
+      isl_constraint_set_coefficient_si (c, isl_dim_out, i, 1);
+
+      TilingMap = isl_map_add_constraint (TilingMap, c);
+    }
+
+  /* it % 'VectorWidth' = 0  */
+  LocalSpaceRange = isl_local_space_range (isl_local_space_copy (LocalSpace));
+  Aff = isl_aff_zero_on_domain (LocalSpaceRange);
+  Aff = isl_aff_set_constant_si (Aff, VectorWidth);
+  Aff = isl_aff_set_coefficient_si (Aff, isl_dim_in, TileDimension, 1);
+
+  VectorWidthMP = isl_val_int_from_si (ctx, VectorWidth);
+  Aff = isl_aff_mod_val (Aff, VectorWidthMP);
+  Modulo = isl_pw_aff_zero_set (isl_pw_aff_from_aff (Aff));
+  TilingMap = isl_map_intersect_range (TilingMap, Modulo);
+
+  /* it + ('VectorWidth' - 1) = i0  */
+  c = isl_equality_alloc (isl_local_space_copy(LocalSpace));
+  isl_constraint_set_coefficient_si (c, isl_dim_out, TileDimension,-1);
+  isl_constraint_set_coefficient_si (c, isl_dim_in, TileDimension, 1);
+  isl_constraint_set_constant_si (c, -VectorWidth + 1);
+  TilingMap = isl_map_add_constraint (TilingMap, c);
+
+  /* ip >= 0 */
+  c = isl_inequality_alloc (isl_local_space_copy (LocalSpace));
+  isl_constraint_set_coefficient_si (c, isl_dim_out, PointDimension, 1);
+  isl_constraint_set_constant_si (c, 0);
+  TilingMap = isl_map_add_constraint (TilingMap, c);
+
+  /* it <= ip */
+  c = isl_inequality_alloc (isl_local_space_copy (LocalSpace));
+  isl_constraint_set_coefficient_si (c, isl_dim_out, TileDimension, -1);
+  isl_constraint_set_coefficient_si (c, isl_dim_out, PointDimension, 1);
+  TilingMap = isl_map_add_constraint (TilingMap, c);
+
+  /* ip <= it + ('VectorWidth' - 1) */
+  c = isl_inequality_alloc (LocalSpace);
+  isl_constraint_set_coefficient_si (c, isl_dim_out, TileDimension, 1);
+  isl_constraint_set_coefficient_si (c, isl_dim_out, PointDimension, -1);
+  isl_constraint_set_constant_si (c, VectorWidth - 1);
+  TilingMap = isl_map_add_constraint (TilingMap, c);
 
   return TilingMap;
 }
@@ -331,17 +417,19 @@ static bool EnablePollyVector = false;
     
    We walk recursively the forest of bands to combine the schedules of the
    individual bands to the overall schedule. In case tiling is requested,
-   the individual bands are tiled.  */
+   the individual bands are tiled.
+   For unroll and jam the map the schedule for full tiles of the unrolled
+   dimnesion is computed.  */
 static isl_union_map *
-getScheduleForBandList(isl_band_list *BandList)
+getScheduleForBandList (isl_band_list *BandList, isl_union_map **map_sepcl)
 {
   int NumBands, i;
   isl_union_map *Schedule;
   isl_ctx *ctx;
 
-  ctx = isl_band_list_get_ctx(BandList);
-  NumBands = isl_band_list_n_band(BandList);
-  Schedule = isl_union_map_empty(isl_space_params_alloc(ctx, 0));
+  ctx = isl_band_list_get_ctx (BandList);
+  NumBands = isl_band_list_n_band (BandList);
+  Schedule = isl_union_map_empty (isl_space_params_alloc (ctx, 0));
 
   for (i = 0; i < NumBands; i++)
     {
@@ -350,74 +438,111 @@ getScheduleForBandList(isl_band_list *BandList)
       int ScheduleDimensions;
       isl_space *Space;
 
-      Band = isl_band_list_get_band(BandList, i);
-      PartialSchedule = getScheduleForBand(Band, &ScheduleDimensions);
-      Space = isl_union_map_get_space(PartialSchedule);
+      isl_union_map *PartialSchedule_f;
 
-      if (isl_band_has_children(Band))
+      Band = isl_band_list_get_band (BandList, i);
+      PartialSchedule = getScheduleForBand (Band, &ScheduleDimensions);
+      Space = isl_union_map_get_space (PartialSchedule);
+
+      PartialSchedule_f = NULL;
+
+      if (isl_band_has_children (Band))
 	{
 	  isl_band_list *Children;
 	  isl_union_map *SuffixSchedule;
 
-	  Children = isl_band_get_children(Band);
-	  SuffixSchedule = getScheduleForBandList(Children);
-	  PartialSchedule = isl_union_map_flat_range_product(PartialSchedule,
-							     SuffixSchedule);
-	  isl_band_list_free(Children);
+	  Children = isl_band_get_children (Band);
+	  SuffixSchedule = getScheduleForBandList (Children, map_sepcl);
+	  PartialSchedule = isl_union_map_flat_range_product (PartialSchedule,
+							      SuffixSchedule);
+	  isl_band_list_free (Children);
 	}
-      else if (EnablePollyVector)
+      else if (EnablePollyVector || flag_loop_unroll_jam)
 	{
+	  int i;
+	  int depth;
+ 
+ 	  depth = PARAM_VALUE (PARAM_LOOP_UNROLL_JAM_DEPTH);
+  
 	  for (i = ScheduleDimensions - 1 ;  i >= 0 ; i--)
 	    {
+	      if (flag_loop_unroll_jam && (i != (ScheduleDimensions - depth)))
+		continue;
+
 #ifdef HAVE_ISL_SCHED_CONSTRAINTS_COMPUTE_SCHEDULE
 	      if (isl_band_member_is_coincident (Band, i))
 #else
-	      if (isl_band_member_is_zero_distance(Band, i))
+	      if (isl_band_member_is_zero_distance (Band, i))
 #endif
 		{
 		  isl_map *TileMap;
 		  isl_union_map *TileUMap;
+		  int stride;
 
-		  TileMap = getPrevectorMap(ctx, i, ScheduleDimensions, 4);
-		  TileUMap = isl_union_map_from_map(TileMap);
-		  TileUMap = isl_union_map_align_params(TileUMap,
-							isl_space_copy(Space));
-		  PartialSchedule = isl_union_map_apply_range(PartialSchedule,
-							      TileUMap);
+                  stride = PARAM_VALUE (PARAM_LOOP_UNROLL_JAM_SIZE);    
+
+		  TileMap = getPrevectorMap_full (ctx, i, ScheduleDimensions, 
+						  stride); 
+ 		  TileUMap = isl_union_map_from_map (TileMap);
+		  TileUMap = isl_union_map_align_params
+		    (TileUMap, isl_space_copy (Space));
+		  PartialSchedule_f = isl_union_map_apply_range
+		    (isl_union_map_copy (PartialSchedule), TileUMap);
+
+		  TileMap = getPrevectorMap (ctx, i, ScheduleDimensions, stride);
+		  TileUMap = isl_union_map_from_map (TileMap);
+		  TileUMap = isl_union_map_align_params
+		    (TileUMap, isl_space_copy (Space));
+		  PartialSchedule = isl_union_map_apply_range
+		    (PartialSchedule, TileUMap);
 		  break;
-		}
+		}	
 	    }
 	}
+      Schedule = isl_union_map_union (Schedule, 
+                                      isl_union_map_copy(PartialSchedule));
 
-      Schedule = isl_union_map_union(Schedule, PartialSchedule);
+      isl_band_free (Band);
+      isl_space_free (Space);
 
-      isl_band_free(Band);
-      isl_space_free(Space);
+      if (!flag_loop_unroll_jam)
+	{
+          isl_union_map_free (PartialSchedule);
+          continue;
+	}
+
+      if (PartialSchedule_f)
+	{
+	  *map_sepcl = isl_union_map_union (*map_sepcl, PartialSchedule_f);
+          isl_union_map_free (PartialSchedule);
+	}
+      else
+        *map_sepcl = isl_union_map_union (*map_sepcl, PartialSchedule);
     }
 
   return Schedule;
 }
 
 static isl_union_map *
-getScheduleMap(isl_schedule *Schedule)
+getScheduleMap (isl_schedule *Schedule, isl_union_map **map_sepcl)
 {
-  isl_band_list *BandList = isl_schedule_get_band_forest(Schedule);
-  isl_union_map *ScheduleMap = getScheduleForBandList(BandList);
-  isl_band_list_free(BandList);
+  isl_band_list *BandList = isl_schedule_get_band_forest (Schedule);
+  isl_union_map *ScheduleMap = getScheduleForBandList (BandList, map_sepcl);
+  isl_band_list_free (BandList);
   return ScheduleMap;
 }
 
-static int
-getSingleMap(__isl_take isl_map *map, void *user)
+static isl_stat
+getSingleMap (__isl_take isl_map *map, void *user)
 {
   isl_map **singleMap = (isl_map **) user;
   *singleMap = map;
 
-  return 0;
+  return isl_stat_ok;
 }
 
 static void
-apply_schedule_map_to_scop (scop_p scop, isl_union_map *schedule_map)
+apply_schedule_map_to_scop (scop_p scop, isl_union_map *schedule_map, bool sepcl)
 {
   int i;
   poly_bb_p pbb;
@@ -428,12 +553,20 @@ apply_schedule_map_to_scop (scop_p scop, isl_union_map *schedule_map)
       isl_union_map *stmtBand;
       isl_map *stmtSchedule;
 
-      stmtBand = isl_union_map_intersect_domain(isl_union_map_copy(schedule_map),
-						isl_union_set_from_set(domain));
-      isl_union_map_foreach_map(stmtBand, getSingleMap, &stmtSchedule);
-      isl_map_free(pbb->transformed);
-      pbb->transformed = stmtSchedule;
-      isl_union_map_free(stmtBand);
+      stmtBand = isl_union_map_intersect_domain
+	(isl_union_map_copy (schedule_map),
+	 isl_union_set_from_set (domain));
+      isl_union_map_foreach_map (stmtBand, getSingleMap, &stmtSchedule);
+
+      if (!sepcl)
+	{
+	  isl_map_free (pbb->transformed);
+	  pbb->transformed = stmtSchedule;
+	}
+      else
+	  pbb->map_sepclass = stmtSchedule;
+
+      isl_union_map_free (stmtBand);
     }
 }
 
@@ -444,33 +577,64 @@ optimize_isl (scop_p scop)
 {
 
   isl_schedule *schedule;
+#ifdef HAVE_ISL_SCHED_CONSTRAINTS_COMPUTE_SCHEDULE
+  isl_schedule_constraints *schedule_constraints;
+#endif
   isl_union_set *domain;
   isl_union_map *validity, *proximity, *dependences;
   isl_union_map *schedule_map;
+  isl_union_map *schedule_map_f;
 
   domain = scop_get_domains (scop);
   dependences = scop_get_dependences (scop);
-  dependences = isl_union_map_gist_domain(dependences,
-					  isl_union_set_copy(domain));
-  dependences = isl_union_map_gist_range(dependences,
-					 isl_union_set_copy(domain));
+  dependences = isl_union_map_gist_domain (dependences,
+					   isl_union_set_copy (domain));
+  dependences = isl_union_map_gist_range (dependences,
+					  isl_union_set_copy (domain));
   validity = dependences;
 
   proximity = isl_union_map_copy (validity);
 
-  isl_options_set_schedule_max_constant_term(scop->ctx, CONSTANT_BOUND);
-  isl_options_set_schedule_maximize_band_depth(scop->ctx, 1);
-  isl_options_set_schedule_fuse(scop->ctx, ISL_SCHEDULE_FUSE_MIN);
-  isl_options_set_on_error(scop->ctx, ISL_ON_ERROR_CONTINUE);
+#ifdef HAVE_ISL_SCHED_CONSTRAINTS_COMPUTE_SCHEDULE
+  schedule_constraints = isl_schedule_constraints_on_domain (domain);
+  schedule_constraints
+	= isl_schedule_constraints_set_proximity (schedule_constraints,
+						  proximity);
+  schedule_constraints
+	= isl_schedule_constraints_set_validity (schedule_constraints,
+						 isl_union_map_copy (validity));
+  schedule_constraints
+	= isl_schedule_constraints_set_coincidence (schedule_constraints,
+						    validity);
+#endif
+
+  isl_options_set_schedule_max_constant_term (scop->ctx, CONSTANT_BOUND);
+  isl_options_set_schedule_maximize_band_depth (scop->ctx, 1);
+#ifdef HAVE_ISL_OPTIONS_SET_SCHEDULE_SERIALIZE_SCCS
+  isl_options_set_schedule_serialize_sccs (scop->ctx, 1);
+#else
+  isl_options_set_schedule_fuse (scop->ctx, ISL_SCHEDULE_FUSE_MIN);
+#endif
+  isl_options_set_on_error (scop->ctx, ISL_ON_ERROR_CONTINUE);
+
+#ifdef HAVE_ISL_SCHED_CONSTRAINTS_COMPUTE_SCHEDULE
+  schedule = isl_schedule_constraints_compute_schedule(schedule_constraints);
+#else
   schedule = isl_union_set_compute_schedule (domain, validity, proximity);
-  isl_options_set_on_error(scop->ctx, ISL_ON_ERROR_ABORT);
+#endif
+
+  isl_options_set_on_error (scop->ctx, ISL_ON_ERROR_ABORT);
 
   if (!schedule)
     return false;
 
-  schedule_map = getScheduleMap (schedule);
+  schedule_map_f = isl_union_map_empty (isl_space_params_alloc (scop->ctx, 0));
+  schedule_map = getScheduleMap (schedule, &schedule_map_f);
 
-  apply_schedule_map_to_scop (scop, schedule_map);
+  apply_schedule_map_to_scop (scop, schedule_map, false);
+  if (!isl_union_map_is_empty (schedule_map_f))
+    apply_schedule_map_to_scop (scop, schedule_map_f, true);
+  isl_union_map_free (schedule_map_f);
 
   isl_schedule_free (schedule);
   isl_union_map_free (schedule_map);

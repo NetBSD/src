@@ -1,5 +1,5 @@
 /* Process source files and output type information.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -17,10 +17,11 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#ifdef GENERATOR_FILE
-#include "bconfig.h"
-#else
+#ifdef HOST_GENERATOR_FILE
 #include "config.h"
+#define GENERATOR_FILE 1
+#else
+#include "bconfig.h"
 #endif
 #include "system.h"
 #include "gengtype.h"
@@ -165,6 +166,21 @@ require (int t)
   return v;
 }
 
+/* As per require, but do not advance.  */
+static const char *
+require_without_advance (int t)
+{
+  int u = token ();
+  const char *v = T.value;
+  if (u != t)
+    {
+      parse_error ("expected %s, have %s",
+		   print_token (t, 0), print_token (u, v));
+      return 0;
+    }
+  return v;
+}
+
 /* If the next token does not have one of the codes T1 or T2, report a
    parse error; otherwise return the token's value.  */
 static const char *
@@ -176,6 +192,24 @@ require2 (int t1, int t2)
     {
       parse_error ("expected %s or %s, have %s",
 		   print_token (t1, 0), print_token (t2, 0),
+		   print_token (u, v));
+      return 0;
+    }
+  return v;
+}
+
+/* If the next token does not have one of the codes T1, T2, T3 or T4, report a
+   parse error; otherwise return the token's value.  */
+static const char *
+require4 (int t1, int t2, int t3, int t4)
+{
+  int u = token ();
+  const char *v = advance ();
+  if (u != t1 && u != t2 && u != t3 && u != t4)
+    {
+      parse_error ("expected %s, %s, %s or %s, have %s",
+		   print_token (t1, 0), print_token (t2, 0),
+		   print_token (t3, 0), print_token (t4, 0),
 		   print_token (u, v));
       return 0;
     }
@@ -213,7 +247,9 @@ string_seq (void)
 
 /* The caller has detected a template declaration that starts
    with TMPL_NAME.  Parse up to the closing '>'.  This recognizes
-   simple template declarations of the form ID<ID1,ID2,...,IDn>.
+   simple template declarations of the form ID<ID1,ID2,...,IDn>,
+   potentially with a single level of indirection e.g.
+     ID<ID1 *, ID2, ID3 *, ..., IDn>.
    It does not try to parse anything more sophisticated than that.
 
    Returns the template declaration string "ID<ID1,ID2,...,IDn>".  */
@@ -222,24 +258,64 @@ static const char *
 require_template_declaration (const char *tmpl_name)
 {
   char *str;
+  int num_indirections = 0;
 
   /* Recognize the opening '<'.  */
   require ('<');
   str = concat (tmpl_name, "<", (char *) 0);
 
   /* Read the comma-separated list of identifiers.  */
-  while (token () != '>')
+  int depth = 1;
+  while (depth > 0)
     {
-      const char *id = require2 (ID, ',');
+      if (token () == ENUM)
+	{
+	  advance ();
+	  str = concat (str, "enum ", (char *) 0);
+	  continue;
+	}
+      if (token () == NUM)
+	{
+	  str = concat (str, advance (), (char *) 0);
+	  continue;
+	}
+      if (token () == ':')
+	{
+	  advance ();
+	  str = concat (str, ":", (char *) 0);
+	  continue;
+	}
+      if (token () == '<')
+	{
+	  advance ();
+	  str = concat (str, "<", (char *) 0);
+	  depth += 1;
+	  continue;
+	}
+      if (token () == '>')
+	{
+	  advance ();
+	  str = concat (str, ">", (char *) 0);
+	  depth -= 1;
+	  continue;
+	}
+      const char *id = require4 (SCALAR, ID, '*', ',');
       if (id == NULL)
-	id = ",";
+	{
+	  if (T.code == '*')
+	    {
+	      id = "*";
+	      if (num_indirections++)
+		parse_error ("only one level of indirection is supported"
+			     " in template arguments");
+	    }
+	  else
+	    id = ",";
+	}
+      else
+	num_indirections = 0;
       str = concat (str, id, (char *) 0);
     }
-
-  /* Recognize the closing '>'.  */
-  require ('>');
-  str = concat (str, ">", (char *) 0);
-
   return str;
 }
 
@@ -462,7 +538,6 @@ nestedptr_optvalue (options_p prev)
 /* One GTY(()) option:
    ID str_optvalue_opt
    | PTR_ALIAS type_optvalue
-   | PARAM_IS type_optvalue
    | NESTED_PTR nestedptr_optvalue
 */
 static options_p
@@ -476,9 +551,6 @@ option (options_p prev)
     case PTR_ALIAS:
       advance ();
       return type_optvalue (prev, "ptr_alias");
-
-    case PARAM_IS:
-      return type_optvalue (prev, advance ());
 
     case NESTED_PTR:
       advance ();
@@ -715,7 +787,7 @@ declarator (type_p ty, const char **namep, options_p *optsp,
    (
    type bitfield ';'
    | type declarator bitfield? ( ',' declarator bitfield? )+ ';'
-   )+
+   )*
 
    Knows that such declarations must end with a close brace (or,
    erroneously, at EOF).
@@ -729,9 +801,20 @@ struct_field_seq (void)
   const char *name;
   bool another;
 
-  do
+  while (token () != '}' && token () != EOF_TOKEN)
     {
       ty = type (&opts, true);
+
+      /* Ignore access-control keywords ("public:" etc).  */
+      while (!ty && token () == IGNORABLE_CXX_KEYWORD)
+	{
+	  const char *keyword = advance ();
+	  if (strcmp (keyword, "public:") != 0
+	      && strcmp (keyword, "private:") != 0
+	      && strcmp (keyword, "protected:") != 0)
+	    break;
+	  ty = type (&opts, true);
+	}
 
       if (!ty || token () == ':')
 	{
@@ -761,13 +844,12 @@ struct_field_seq (void)
 	}
       while (another);
     }
-  while (token () != '}' && token () != EOF_TOKEN);
   return nreverse_pairs (f);
 }
 
 /* Return true if OPTS contain the option named STR.  */
 
-static bool
+bool
 opts_have (options_p opts, const char *str)
 {
   for (options_p opt = opts; opt; opt = opt->next)
@@ -818,6 +900,7 @@ type (options_p *optsp, bool nested)
     case STRUCT:
     case UNION:
       {
+	type_p base_class = NULL;
 	options_p opts = 0;
 	/* GTY annotations follow attribute syntax
 	   GTY_BEFORE_ID is for union/struct declarations
@@ -857,16 +940,39 @@ type (options_p *optsp, bool nested)
 	    opts = gtymarker_opt ();
 	  }
 
+	bool is_user_gty = opts_have (opts, "user");
+
 	if (token () == ':')
 	  {
-	    /* Skip over C++ inheritance specification.  */
-	    while (token () != '{')
-	      advance ();
+	    if (is_gty && !is_user_gty)
+	      {
+		/* For GTY-marked types that are not "user", parse some C++
+		   inheritance specifications.
+		   We require single-inheritance from a non-template type.  */
+		advance ();
+		const char *basename = require (ID);
+		/* This may be either an access specifier, or the base name.  */
+		if (0 == strcmp (basename, "public")
+		    || 0 == strcmp (basename, "protected")
+		    || 0 == strcmp (basename, "private"))
+		  basename = require (ID);
+		base_class = find_structure (basename, TYPE_STRUCT);
+		if (!base_class)
+		  parse_error ("unrecognized base class: %s", basename);
+		require_without_advance ('{');
+	      }
+	    else
+	      {
+		/* For types lacking GTY-markings, skip over C++ inheritance
+		   specification (and thus avoid having to parse e.g. template
+		   types).  */
+		while (token () != '{')
+		  advance ();
+	      }
 	  }
 
 	if (is_gty)
 	  {
-	    bool is_user_gty = opts_have (opts, "user");
 	    if (token () == '{')
 	      {
 		pair_p fields;
@@ -889,7 +995,8 @@ type (options_p *optsp, bool nested)
 		    return create_user_defined_type (s, &lexer_line);
 		  }
 
-		return new_structure (s, kind, &lexer_line, fields, opts);
+		return new_structure (s, kind, &lexer_line, fields, opts,
+				      base_class);
 	      }
 	  }
 	else if (token () == '{')

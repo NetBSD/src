@@ -1,5 +1,5 @@
 /* Single entry single exit control flow regions.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Jan Sjodin <jan.sjodin@amd.com> and
    Sebastian Pop <sebastian.pop@amd.com>.
 
@@ -22,8 +22,46 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "hash-map.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "tree.h"
+#include "fold-const.h"
 #include "tree-pretty-print.h"
-#include "tree-flow.h"
+#include "predict.h"
+#include "tm.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-fold.h"
+#include "tree-eh.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
+#include "gimplify.h"
+#include "gimple-iterator.h"
+#include "gimplify-me.h"
+#include "gimple-ssa.h"
+#include "tree-cfg.h"
+#include "tree-phinodes.h"
+#include "ssa-iterators.h"
+#include "stringpool.h"
+#include "tree-ssanames.h"
+#include "tree-ssa-loop.h"
+#include "tree-into-ssa.h"
 #include "cfgloop.h"
 #include "tree-chrec.h"
 #include "tree-data-ref.h"
@@ -31,105 +69,48 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "value-prof.h"
 #include "sese.h"
-
-/* Print to stderr the element ELT.  */
-
-static void
-debug_rename_elt (rename_map_elt elt)
-{
-  fprintf (stderr, "(");
-  print_generic_expr (stderr, elt->old_name, 0);
-  fprintf (stderr, ", ");
-  print_generic_expr (stderr, elt->expr, 0);
-  fprintf (stderr, ")\n");
-}
+#include "tree-ssa-propagate.h"
 
 /* Helper function for debug_rename_map.  */
 
-static int
-debug_rename_map_1 (void **slot, void *s ATTRIBUTE_UNUSED)
+bool
+debug_rename_map_1 (tree_node *const &old_name, tree_node *const &expr,
+		    void *)
 {
-  struct rename_map_elt_s *entry = (struct rename_map_elt_s *) *slot;
-  debug_rename_elt (entry);
-  return 1;
+  fprintf (stderr, "(");
+  print_generic_expr (stderr, old_name, 0);
+  fprintf (stderr, ", ");
+  print_generic_expr (stderr, expr, 0);
+  fprintf (stderr, ")\n");
+  return true;
 }
+
+
+/* Hashtable helpers.  */
+
+struct rename_map_hasher : default_hashmap_traits
+{
+  static inline hashval_t hash (tree);
+};
+
+/* Computes a hash function for database element ELT.  */
+
+inline hashval_t
+rename_map_hasher::hash (tree old_name)
+{
+  return SSA_NAME_VERSION (old_name);
+}
+
+typedef hash_map<tree, tree, rename_map_hasher> rename_map_type;
+
 
 /* Print to stderr all the elements of RENAME_MAP.  */
 
 DEBUG_FUNCTION void
-debug_rename_map (htab_t rename_map)
+debug_rename_map (rename_map_type *rename_map)
 {
-  htab_traverse (rename_map, debug_rename_map_1, NULL);
+  rename_map->traverse <void *, debug_rename_map_1> (NULL);
 }
-
-/* Computes a hash function for database element ELT.  */
-
-hashval_t
-rename_map_elt_info (const void *elt)
-{
-  return SSA_NAME_VERSION (((const struct rename_map_elt_s *) elt)->old_name);
-}
-
-/* Compares database elements E1 and E2.  */
-
-int
-eq_rename_map_elts (const void *e1, const void *e2)
-{
-  const struct rename_map_elt_s *elt1 = (const struct rename_map_elt_s *) e1;
-  const struct rename_map_elt_s *elt2 = (const struct rename_map_elt_s *) e2;
-
-  return (elt1->old_name == elt2->old_name);
-}
-
-
-
-/* Print to stderr the element ELT.  */
-
-static void
-debug_ivtype_elt (ivtype_map_elt elt)
-{
-  fprintf (stderr, "(%s, ", elt->cloog_iv);
-  print_generic_expr (stderr, elt->type, 0);
-  fprintf (stderr, ")\n");
-}
-
-/* Helper function for debug_ivtype_map.  */
-
-static int
-debug_ivtype_map_1 (void **slot, void *s ATTRIBUTE_UNUSED)
-{
-  struct ivtype_map_elt_s *entry = (struct ivtype_map_elt_s *) *slot;
-  debug_ivtype_elt (entry);
-  return 1;
-}
-
-/* Print to stderr all the elements of MAP.  */
-
-DEBUG_FUNCTION void
-debug_ivtype_map (htab_t map)
-{
-  htab_traverse (map, debug_ivtype_map_1, NULL);
-}
-
-/* Computes a hash function for database element ELT.  */
-
-hashval_t
-ivtype_map_elt_info (const void *elt)
-{
-  return htab_hash_pointer (((const struct ivtype_map_elt_s *) elt)->cloog_iv);
-}
-
-/* Compares database elements E1 and E2.  */
-
-int
-eq_ivtype_map_elts (const void *e1, const void *e2)
-{
-  const struct ivtype_map_elt_s *elt1 = (const struct ivtype_map_elt_s *) e1;
-  const struct ivtype_map_elt_s *elt2 = (const struct ivtype_map_elt_s *) e2;
-
-  return (elt1->cloog_iv == elt2->cloog_iv);
-}
-
 
 
 /* Record LOOP as occurring in REGION.  */
@@ -154,7 +135,7 @@ build_sese_loop_nests (sese region)
   basic_block bb;
   struct loop *loop0, *loop1;
 
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     if (bb_in_sese_p (bb, region))
       {
 	struct loop *loop = bb->loop_father;
@@ -212,18 +193,19 @@ sese_build_liveouts_use (sese region, bitmap liveouts, basic_block bb,
 static void
 sese_build_liveouts_bb (sese region, bitmap liveouts, basic_block bb)
 {
-  gimple_stmt_iterator bsi;
   edge e;
   edge_iterator ei;
   ssa_op_iter iter;
   use_operand_p use_p;
 
   FOR_EACH_EDGE (e, ei, bb->succs)
-    for (bsi = gsi_start_phis (e->dest); !gsi_end_p (bsi); gsi_next (&bsi))
+    for (gphi_iterator bsi = gsi_start_phis (e->dest); !gsi_end_p (bsi);
+	 gsi_next (&bsi))
       sese_build_liveouts_use (region, liveouts, bb,
-			       PHI_ARG_DEF_FROM_EDGE (gsi_stmt (bsi), e));
+			       PHI_ARG_DEF_FROM_EDGE (bsi.phi (), e));
 
-  for (bsi = gsi_start_bb (bb); !gsi_end_p (bsi); gsi_next (&bsi))
+  for (gimple_stmt_iterator bsi = gsi_start_bb (bb); !gsi_end_p (bsi);
+       gsi_next (&bsi))
     {
       gimple stmt = gsi_stmt (bsi);
 
@@ -301,10 +283,10 @@ sese_build_liveouts (sese region, bitmap liveouts)
 {
   basic_block bb;
 
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     sese_build_liveouts_bb (region, liveouts, bb);
   if (MAY_HAVE_DEBUG_STMTS)
-    FOR_EACH_BB (bb)
+    FOR_EACH_BB_FN (bb, cfun)
       sese_reset_debug_liveouts_bb (region, liveouts, bb);
 }
 
@@ -344,7 +326,7 @@ free_sese (sese region)
 static void
 sese_add_exit_phis_edge (basic_block exit, tree use, edge false_e, edge true_e)
 {
-  gimple phi = create_phi_node (NULL_TREE, exit);
+  gphi *phi = create_phi_node (NULL_TREE, exit);
   create_new_def_for (use, phi, gimple_phi_result_ptr (phi));
   add_phi_arg (phi, use, false_e, UNKNOWN_LOCATION);
   add_phi_arg (phi, use, true_e, UNKNOWN_LOCATION);
@@ -414,17 +396,12 @@ get_false_edge_from_guard_bb (basic_block bb)
 /* Returns the expression associated to OLD_NAME in RENAME_MAP.  */
 
 static tree
-get_rename (htab_t rename_map, tree old_name)
+get_rename (rename_map_type *rename_map, tree old_name)
 {
-  struct rename_map_elt_s tmp;
-  PTR *slot;
-
   gcc_assert (TREE_CODE (old_name) == SSA_NAME);
-  tmp.old_name = old_name;
-  slot = htab_find_slot (rename_map, &tmp, NO_INSERT);
-
-  if (slot && *slot)
-    return ((rename_map_elt) *slot)->expr;
+  tree *expr = rename_map->get (old_name);
+  if (expr)
+    return *expr;
 
   return NULL_TREE;
 }
@@ -432,23 +409,12 @@ get_rename (htab_t rename_map, tree old_name)
 /* Register in RENAME_MAP the rename tuple (OLD_NAME, EXPR).  */
 
 static void
-set_rename (htab_t rename_map, tree old_name, tree expr)
+set_rename (rename_map_type *rename_map, tree old_name, tree expr)
 {
-  struct rename_map_elt_s tmp;
-  PTR *slot;
-
   if (old_name == expr)
     return;
 
-  tmp.old_name = old_name;
-  slot = htab_find_slot (rename_map, &tmp, INSERT);
-
-  if (!slot)
-    return;
-
-  free (*slot);
-
-  *slot = new_rename_map_elt (old_name, expr);
+  rename_map->put (old_name, expr);
 }
 
 /* Renames the scalar uses of the statement COPY, using the
@@ -459,7 +425,8 @@ set_rename (htab_t rename_map, tree old_name, tree expr)
    is set when the code generation cannot continue.  */
 
 static bool
-rename_uses (gimple copy, htab_t rename_map, gimple_stmt_iterator *gsi_tgt,
+rename_uses (gimple copy, rename_map_type *rename_map,
+	     gimple_stmt_iterator *gsi_tgt,
 	     sese region, loop_p loop, vec<tree> iv_map,
 	     bool *gloog_error)
 {
@@ -565,7 +532,7 @@ rename_uses (gimple copy, htab_t rename_map, gimple_stmt_iterator *gsi_tgt,
 
 static void
 graphite_copy_stmts_from_block (basic_block bb, basic_block new_bb,
-				htab_t rename_map,
+				rename_map_type *rename_map,
 				vec<tree> iv_map, sese region,
 				bool *gloog_error)
 {
@@ -633,14 +600,12 @@ copy_bb_and_scalar_dependences (basic_block bb, sese region,
 				bool *gloog_error)
 {
   basic_block new_bb = split_edge (next_e);
-  htab_t rename_map = htab_create (10, rename_map_elt_info,
-				   eq_rename_map_elts, free);
+  rename_map_type rename_map (10);
 
   next_e = single_succ_edge (new_bb);
-  graphite_copy_stmts_from_block (bb, new_bb, rename_map, iv_map, region,
+  graphite_copy_stmts_from_block (bb, new_bb, &rename_map, iv_map, region,
 				  gloog_error);
   remove_phi_nodes (new_bb);
-  htab_delete (rename_map);
 
   return next_e;
 }
@@ -672,9 +637,9 @@ if_region_set_false_region (ifsese if_region, sese region)
   edge exit_region = SESE_EXIT (region);
   basic_block before_region = entry_region->src;
   basic_block last_in_region = exit_region->src;
-  void **slot = htab_find_slot_with_hash (current_loops->exits, exit_region,
-					  htab_hash_pointer (exit_region),
-					  NO_INSERT);
+  hashval_t hash = htab_hash_pointer (exit_region);
+  loop_exit **slot
+    = current_loops->exits->find_slot_with_hash (exit_region, hash, NO_INSERT);
 
   entry_region->flags = false_edge->flags;
   false_edge->flags = exit_region->flags;
@@ -695,14 +660,14 @@ if_region_set_false_region (ifsese if_region, sese region)
 
   if (slot)
     {
-      struct loop_exit *loop_exit = ggc_alloc_cleared_loop_exit ();
+      struct loop_exit *loop_exit = ggc_cleared_alloc<struct loop_exit> ();
 
       memcpy (loop_exit, *((struct loop_exit **) slot), sizeof (struct loop_exit));
-      htab_clear_slot (current_loops->exits, slot);
+      current_loops->exits->clear_slot (slot);
 
-      slot = htab_find_slot_with_hash (current_loops->exits, false_edge,
-				       htab_hash_pointer (false_edge),
-				       INSERT);
+							hashval_t hash = htab_hash_pointer (false_edge);
+      slot = current_loops->exits->find_slot_with_hash (false_edge, hash,
+							INSERT);
       loop_exit->e = false_edge;
       *slot = loop_exit;
       false_edge->src->loop_father->exits->next = loop_exit;
@@ -780,7 +745,7 @@ set_ifsese_condition (ifsese if_region, tree condition)
   basic_block bb = entry->dest;
   gimple last = last_stmt (bb);
   gimple_stmt_iterator gsi = gsi_last_bb (bb);
-  gimple cond_stmt;
+  gcond *cond_stmt;
 
   gcc_assert (gimple_code (last) == GIMPLE_COND);
 

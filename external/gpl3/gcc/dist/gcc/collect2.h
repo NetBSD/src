@@ -1,5 +1,5 @@
 /* Header file for collect/tlink routines.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -36,10 +36,10 @@ extern const char *lderrout;
 extern const char *c_file_name;
 extern struct obstack temporary_obstack;
 extern char *temporary_firstobj;
-extern bool vflag, debug;
 extern bool may_unlink_output_file;
 
 extern void notice_translated (const char *, ...) ATTRIBUTE_PRINTF_1;
 extern void notice (const char *, ...) ATTRIBUTE_PRINTF_1;
 
+extern bool at_file_supplied;
 #endif /* ! GCC_COLLECT2_H */

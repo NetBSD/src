@@ -1,5 +1,5 @@
 /* Straight-line strength reduction.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Bill Schmidt, IBM <wschmidt@linux.ibm.com>
 
 This file is part of GCC.
@@ -24,18 +24,10 @@ along with GCC; see the file COPYING3.  If not see
    up the crumbs it leaves behind, by considering opportunities for
    strength reduction along dominator paths.
 
-   Strength reduction will be implemented in four stages, gradually
-   adding more complex candidates:
-
-   1) Explicit multiplies, known constant multipliers, no
-      conditional increments. (complete)
-   2) Explicit multiplies, unknown constant multipliers,
-      no conditional increments. (complete)
-   3) Implicit multiplies in addressing expressions. (complete)
-   4) Explicit multiplies, conditional increments. (pending)
-
-   It would also be possible to apply strength reduction to divisions
-   and modulos, but such opportunities are relatively uncommon.
+   Strength reduction addresses explicit multiplies, and certain
+   multiplies implicit in addressing expressions.  It would also be
+   possible to apply strength reduction to divisions and modulos,
+   but such opportunities are relatively uncommon.
 
    Strength reduction is also currently restricted to integer operations.
    If desired, it could be extended to floating-point operations under
@@ -44,17 +36,63 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
-#include "gimple.h"
+#include "fold-const.h"
+#include "predict.h"
+#include "tm.h"
+#include "hard-reg-set.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
 #include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
+#include "gimple-iterator.h"
+#include "gimplify-me.h"
+#include "stor-layout.h"
+#include "hashtab.h"
+#include "rtl.h"
+#include "flags.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "insn-config.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
+#include "expr.h"
 #include "tree-pass.h"
 #include "cfgloop.h"
 #include "gimple-pretty-print.h"
-#include "tree-flow.h"
+#include "gimple-ssa.h"
+#include "tree-cfg.h"
+#include "tree-phinodes.h"
+#include "ssa-iterators.h"
+#include "stringpool.h"
+#include "tree-ssanames.h"
 #include "domwalk.h"
-#include "pointer-set.h"
-#include "expmed.h"
 #include "params.h"
+#include "tree-ssa-address.h"
+#include "tree-affine.h"
+#include "wide-int-print.h"
+#include "builtins.h"
 
 /* Information about a strength reduction candidate.  Each statement
    in the candidate table represents an expression of one of the
@@ -146,7 +184,69 @@ along with GCC; see the file COPYING3.  If not see
    is thus another CAND_REF with the same B and S values.  When at 
    least two CAND_REFs are chained together using the basis relation,
    each of them is replaced as above, resulting in improved code
-   generation for addressing.  */
+   generation for addressing.
+
+   Conditional candidates
+   ======================
+
+   Conditional candidates are best illustrated with an example.
+   Consider the code sequence:
+
+   (1)  x_0 = ...;
+   (2)  a_0 = x_0 * 5;          MULT (B: x_0; i: 0; S: 5)
+        if (...)
+   (3)    x_1 = x_0 + 1;        ADD  (B: x_0, i: 1; S: 1)
+   (4)  x_2 = PHI <x_0, x_1>;   PHI  (B: x_0, i: 0, S: 1)
+   (5)  x_3 = x_2 + 1;          ADD  (B: x_2, i: 1, S: 1)
+   (6)  a_1 = x_3 * 5;          MULT (B: x_2, i: 1; S: 5)
+
+   Here strength reduction is complicated by the uncertain value of x_2.
+   A legitimate transformation is:
+
+   (1)  x_0 = ...;
+   (2)  a_0 = x_0 * 5;
+        if (...)
+	  {
+   (3)      [x_1 = x_0 + 1;]
+   (3a)     t_1 = a_0 + 5;
+          }
+   (4)  [x_2 = PHI <x_0, x_1>;]
+   (4a) t_2 = PHI <a_0, t_1>;
+   (5)  [x_3 = x_2 + 1;]
+   (6r) a_1 = t_2 + 5;
+
+   where the bracketed instructions may go dead.
+
+   To recognize this opportunity, we have to observe that statement (6)
+   has a "hidden basis" (2).  The hidden basis is unlike a normal basis
+   in that the statement and the hidden basis have different base SSA
+   names (x_2 and x_0, respectively).  The relationship is established
+   when a statement's base name (x_2) is defined by a phi statement (4),
+   each argument of which (x_0, x_1) has an identical "derived base name."
+   If the argument is defined by a candidate (as x_1 is by (3)) that is a
+   CAND_ADD having a stride of 1, the derived base name of the argument is
+   the base name of the candidate (x_0).  Otherwise, the argument itself
+   is its derived base name (as is the case with argument x_0).
+
+   The hidden basis for statement (6) is the nearest dominating candidate
+   whose base name is the derived base name (x_0) of the feeding phi (4), 
+   and whose stride is identical to that of the statement.  We can then
+   create the new "phi basis" (4a) and feeding adds along incoming arcs (3a),
+   allowing the final replacement of (6) by the strength-reduced (6r).
+
+   To facilitate this, a new kind of candidate (CAND_PHI) is introduced.
+   A CAND_PHI is not a candidate for replacement, but is maintained in the
+   candidate table to ease discovery of hidden bases.  Any phi statement
+   whose arguments share a common derived base name is entered into the
+   table with the derived base name, an (arbitrary) index of zero, and a
+   stride of 1.  A statement with a hidden basis can then be detected by
+   simply looking up its feeding phi definition in the candidate table,
+   extracting the derived base name, and searching for a basis in the
+   usual manner after substituting the derived base name.
+
+   Note that the transformation is only valid when the original phi and 
+   the statements that define the phi's arguments are all at the same
+   position in the loop hierarchy.  */
 
 
 /* Index into the candidate vector, offset by 1.  VECs are zero-based,
@@ -158,7 +258,8 @@ enum cand_kind
 {
   CAND_MULT,
   CAND_ADD,
-  CAND_REF
+  CAND_REF,
+  CAND_PHI
 };
 
 struct slsr_cand_d
@@ -173,7 +274,7 @@ struct slsr_cand_d
   tree stride;
 
   /* The index constant i.  */
-  double_int index;
+  widest_int index;
 
   /* The type of the candidate.  This is normally the type of base_expr,
      but casts may have occurred when combining feeding instructions.
@@ -203,9 +304,9 @@ struct slsr_cand_d
   /* Next candidate having the same basis as this one.  */
   cand_idx sibling;
 
-  /* If this is a conditional candidate, the defining PHI statement
-     for the base SSA name B.  For future use; always NULL for now.  */
-  gimple def_phi;
+  /* If this is a conditional candidate, the CAND_PHI candidate
+     that defines the base SSA name B.  */
+  cand_idx def_phi;
 
   /* Savings that can be expected from eliminating dead code if this
      candidate is replaced.  */
@@ -248,7 +349,7 @@ typedef const struct cand_chain_d *const_cand_chain_t;
 struct incr_info_d
 {
   /* The increment that relates a candidate to its basis.  */
-  double_int incr;
+  widest_int incr;
 
   /* How many times the increment occurs in the candidate tree.  */
   unsigned count;
@@ -281,27 +382,49 @@ enum cost_consts
   COST_INFINITE = 1000
 };
 
+enum stride_status
+{
+  UNKNOWN_STRIDE = 0,
+  KNOWN_STRIDE = 1
+};
+
+enum phi_adjust_status
+{
+  NOT_PHI_ADJUST = 0,
+  PHI_ADJUST = 1
+};
+
+enum count_phis_status
+{
+  DONT_COUNT_PHIS = 0,
+  COUNT_PHIS = 1
+};
+ 
 /* Pointer map embodying a mapping from statements to candidates.  */
-static struct pointer_map_t *stmt_cand_map;
+static hash_map<gimple, slsr_cand_t> *stmt_cand_map;
 
 /* Obstack for candidates.  */
 static struct obstack cand_obstack;
-
-/* Hash table embodying a mapping from base exprs to chains of candidates.  */
-static htab_t base_cand_map;
 
 /* Obstack for candidate chains.  */
 static struct obstack chain_obstack;
 
 /* An array INCR_VEC of incr_infos is used during analysis of related
    candidates having an SSA name for a stride.  INCR_VEC_LEN describes
-   its current length.  */
+   its current length.  MAX_INCR_VEC_LEN is used to avoid costly
+   pathological cases. */
 static incr_info_t incr_vec;
 static unsigned incr_vec_len;
+const int MAX_INCR_VEC_LEN = 16;
 
 /* For a chain of candidates with unknown stride, indicates whether or not
    we must generate pointer arithmetic when replacing statements.  */
 static bool address_arithmetic_p;
+
+/* Forward function declarations.  */
+static slsr_cand_t base_cand_from_table (tree);
+static tree introduce_cast_before_cand (slsr_cand_t, tree, tree);
+static bool legal_cast_p_1 (tree, tree);
 
 /* Produce a pointer to the IDX'th candidate in the candidate vector.  */
 
@@ -311,42 +434,93 @@ lookup_cand (cand_idx idx)
   return cand_vec[idx - 1];
 }
 
-/* Callback to produce a hash value for a candidate chain header.  */
+/* Helper for hashing a candidate chain header.  */
 
-static hashval_t
-base_cand_hash (const void *p)
+struct cand_chain_hasher : typed_noop_remove <cand_chain>
 {
-  tree base_expr = ((const_cand_chain_t) p)->base_expr;
+  typedef cand_chain value_type;
+  typedef cand_chain compare_type;
+  static inline hashval_t hash (const value_type *);
+  static inline bool equal (const value_type *, const compare_type *);
+};
+
+inline hashval_t
+cand_chain_hasher::hash (const value_type *p)
+{
+  tree base_expr = p->base_expr;
   return iterative_hash_expr (base_expr, 0);
 }
 
-/* Callback when an element is removed from the hash table.
-   We never remove entries until the entire table is released.  */
-
-static void
-base_cand_free (void *p ATTRIBUTE_UNUSED)
+inline bool
+cand_chain_hasher::equal (const value_type *chain1, const compare_type *chain2)
 {
-}
-
-/* Callback to return true if two candidate chain headers are equal.  */
-
-static int
-base_cand_eq (const void *p1, const void *p2)
-{
-  const_cand_chain_t const chain1 = (const_cand_chain_t) p1;
-  const_cand_chain_t const chain2 = (const_cand_chain_t) p2;
   return operand_equal_p (chain1->base_expr, chain2->base_expr, 0);
 }
-
-/* Use the base expr from candidate C to look for possible candidates
-   that can serve as a basis for C.  Each potential basis must also
-   appear in a block that dominates the candidate statement and have
-   the same stride and type.  If more than one possible basis exists,
-   the one with highest index in the vector is chosen; this will be
-   the most immediately dominating basis.  */
 
-static int
-find_basis_for_candidate (slsr_cand_t c)
+/* Hash table embodying a mapping from base exprs to chains of candidates.  */
+static hash_table<cand_chain_hasher> *base_cand_map;
+
+/* Pointer map used by tree_to_aff_combination_expand.  */
+static hash_map<tree, name_expansion *> *name_expansions;
+/* Pointer map embodying a mapping from bases to alternative bases.  */
+static hash_map<tree, tree> *alt_base_map;
+
+/* Given BASE, use the tree affine combiniation facilities to
+   find the underlying tree expression for BASE, with any
+   immediate offset excluded.
+
+   N.B. we should eliminate this backtracking with better forward
+   analysis in a future release.  */
+
+static tree
+get_alternative_base (tree base)
+{
+  tree *result = alt_base_map->get (base);
+
+  if (result == NULL)
+    {
+      tree expr;
+      aff_tree aff;
+
+      tree_to_aff_combination_expand (base, TREE_TYPE (base),
+				      &aff, &name_expansions);
+      aff.offset = 0;
+      expr = aff_combination_to_tree (&aff);
+
+      gcc_assert (!alt_base_map->put (base, base == expr ? NULL : expr));
+
+      return expr == base ? NULL : expr;
+    }
+
+  return *result;
+}
+
+/* Look in the candidate table for a CAND_PHI that defines BASE and
+   return it if found; otherwise return NULL.  */
+
+static cand_idx
+find_phi_def (tree base)
+{
+  slsr_cand_t c;
+
+  if (TREE_CODE (base) != SSA_NAME)
+    return 0;
+
+  c = base_cand_from_table (base);
+
+  if (!c || c->kind != CAND_PHI)
+    return 0;
+
+  return c->cand_num;
+}
+
+/* Helper routine for find_basis_for_candidate.  May be called twice:
+   once for the candidate's base expr, and optionally again either for
+   the candidate's phi definition or for a CAND_REF's alternative base
+   expression.  */
+
+static slsr_cand_t
+find_basis_for_base_expr (slsr_cand_t c, tree base_expr)
 {
   cand_chain mapping_key;
   cand_chain_t chain;
@@ -356,8 +530,8 @@ find_basis_for_candidate (slsr_cand_t c)
   int iters = 0;
   int max_iters = PARAM_VALUE (PARAM_MAX_SLSR_CANDIDATE_SCAN);
 
-  mapping_key.base_expr = c->base_expr;
-  chain = (cand_chain_t) htab_find (base_cand_map, &mapping_key);
+  mapping_key.base_expr = base_expr;
+  chain = base_cand_map->find (&mapping_key);
 
   for (; chain && iters < max_iters; chain = chain->next, ++iters)
     {
@@ -376,6 +550,57 @@ find_basis_for_candidate (slsr_cand_t c)
 	basis = one_basis;
     }
 
+  return basis;
+}
+
+/* Use the base expr from candidate C to look for possible candidates
+   that can serve as a basis for C.  Each potential basis must also
+   appear in a block that dominates the candidate statement and have
+   the same stride and type.  If more than one possible basis exists,
+   the one with highest index in the vector is chosen; this will be
+   the most immediately dominating basis.  */
+
+static int
+find_basis_for_candidate (slsr_cand_t c)
+{
+  slsr_cand_t basis = find_basis_for_base_expr (c, c->base_expr);
+
+  /* If a candidate doesn't have a basis using its base expression,
+     it may have a basis hidden by one or more intervening phis.  */
+  if (!basis && c->def_phi)
+    {
+      basic_block basis_bb, phi_bb;
+      slsr_cand_t phi_cand = lookup_cand (c->def_phi);
+      basis = find_basis_for_base_expr (c, phi_cand->base_expr);
+
+      if (basis)
+	{
+	  /* A hidden basis must dominate the phi-definition of the
+	     candidate's base name.  */
+	  phi_bb = gimple_bb (phi_cand->cand_stmt);
+	  basis_bb = gimple_bb (basis->cand_stmt);
+
+	  if (phi_bb == basis_bb
+	      || !dominated_by_p (CDI_DOMINATORS, phi_bb, basis_bb))
+	    {
+	      basis = NULL;
+	      c->basis = 0;
+	    }
+
+	  /* If we found a hidden basis, estimate additional dead-code
+	     savings if the phi and its feeding statements can be removed.  */
+	  if (basis && has_single_use (gimple_phi_result (phi_cand->cand_stmt)))
+	    c->dead_savings += phi_cand->dead_savings;
+	}
+    }
+
+  if (flag_expensive_optimizations && !basis && c->kind == CAND_REF)
+    {
+      tree alt_base_expr = get_alternative_base (c->base_expr);
+      if (alt_base_expr)
+	basis = find_basis_for_base_expr (c, alt_base_expr);
+    }
+
   if (basis)
     {
       c->sibling = basis->dependent;
@@ -386,20 +611,24 @@ find_basis_for_candidate (slsr_cand_t c)
   return 0;
 }
 
-/* Record a mapping from the base expression of C to C itself, indicating that
-   C may potentially serve as a basis using that base expression.  */
+/* Record a mapping from BASE to C, indicating that C may potentially serve
+   as a basis using that base expression.  BASE may be the same as
+   C->BASE_EXPR; alternatively BASE can be a different tree that share the
+   underlining expression of C->BASE_EXPR.  */
 
 static void
-record_potential_basis (slsr_cand_t c)
+record_potential_basis (slsr_cand_t c, tree base)
 {
   cand_chain_t node;
-  void **slot;
+  cand_chain **slot;
+
+  gcc_assert (base);
 
   node = (cand_chain_t) obstack_alloc (&chain_obstack, sizeof (cand_chain));
-  node->base_expr = c->base_expr;
+  node->base_expr = base;
   node->cand = c;
   node->next = NULL;
-  slot = htab_find_slot (base_cand_map, node, INSERT);
+  slot = base_cand_map->find_slot (node, INSERT);
 
   if (*slot)
     {
@@ -412,11 +641,19 @@ record_potential_basis (slsr_cand_t c)
 }
 
 /* Allocate storage for a new candidate and initialize its fields.
-   Attempt to find a basis for the candidate.  */
+   Attempt to find a basis for the candidate.
+
+   For CAND_REF, an alternative base may also be recorded and used
+   to find a basis.  This helps cases where the expression hidden
+   behind BASE (which is usually an SSA_NAME) has immediate offset,
+   e.g.
+
+     a2[i][j] = 1;
+     a2[i + 20][j] = 2;  */
 
 static slsr_cand_t
-alloc_cand_and_find_basis (enum cand_kind kind, gimple gs, tree base, 
-			   double_int index, tree stride, tree ctype,
+alloc_cand_and_find_basis (enum cand_kind kind, gimple gs, tree base,
+			   const widest_int &index, tree stride, tree ctype,
 			   unsigned savings)
 {
   slsr_cand_t c = (slsr_cand_t) obstack_alloc (&cand_obstack,
@@ -431,12 +668,23 @@ alloc_cand_and_find_basis (enum cand_kind kind, gimple gs, tree base,
   c->next_interp = 0;
   c->dependent = 0;
   c->sibling = 0;
-  c->def_phi = NULL;
+  c->def_phi = kind == CAND_MULT ? find_phi_def (base) : 0;
   c->dead_savings = savings;
 
   cand_vec.safe_push (c);
-  c->basis = find_basis_for_candidate (c);
-  record_potential_basis (c);
+
+  if (kind == CAND_PHI)
+    c->basis = 0;
+  else
+    c->basis = find_basis_for_candidate (c);
+
+  record_potential_basis (c, base);
+  if (flag_expensive_optimizations && kind == CAND_REF)
+    {
+      tree alt_base = get_alternative_base (base);
+      if (alt_base)
+	record_potential_basis (c, alt_base);
+    }
 
   return c;
 }
@@ -448,7 +696,7 @@ static int
 stmt_cost (gimple gs, bool speed)
 {
   tree lhs, rhs1, rhs2;
-  enum machine_mode lhs_mode;
+  machine_mode lhs_mode;
 
   gcc_assert (is_gimple_assign (gs));
   lhs = gimple_assign_lhs (gs);
@@ -460,8 +708,8 @@ stmt_cost (gimple gs, bool speed)
     case MULT_EXPR:
       rhs2 = gimple_assign_rhs2 (gs);
 
-      if (host_integerp (rhs2, 0))
-	return mult_by_coeff_cost (TREE_INT_CST_LOW (rhs2), lhs_mode, speed);
+      if (tree_fits_shwi_p (rhs2))
+	return mult_by_coeff_cost (tree_to_shwi (rhs2), lhs_mode, speed);
 
       gcc_assert (TREE_CODE (rhs1) != INTEGER_CST);
       return mul_cost (speed, lhs_mode);
@@ -474,7 +722,7 @@ stmt_cost (gimple gs, bool speed)
     case NEGATE_EXPR:
       return neg_cost (speed, lhs_mode);
 
-    case NOP_EXPR:
+    CASE_CONVERT:
       return convert_cost (lhs_mode, TYPE_MODE (TREE_TYPE (rhs1)), speed);
 
     /* Note that we don't assign costs to copies that in most cases
@@ -500,7 +748,7 @@ base_cand_from_table (tree base_in)
   if (!def)
     return (slsr_cand_t) NULL;
 
-  result = (slsr_cand_t *) pointer_map_contains (stmt_cand_map, def);
+  result = stmt_cand_map->get (def);
   
   if (result && (*result)->kind != CAND_REF)
     return *result;
@@ -513,11 +761,159 @@ base_cand_from_table (tree base_in)
 static void
 add_cand_for_stmt (gimple gs, slsr_cand_t c)
 {
-  void **slot = pointer_map_insert (stmt_cand_map, gs);
-  gcc_assert (!*slot);
-  *slot = c;
+  gcc_assert (!stmt_cand_map->put (gs, c));
 }
 
+/* Given PHI which contains a phi statement, determine whether it
+   satisfies all the requirements of a phi candidate.  If so, create
+   a candidate.  Note that a CAND_PHI never has a basis itself, but
+   is used to help find a basis for subsequent candidates.  */
+
+static void
+slsr_process_phi (gphi *phi, bool speed)
+{
+  unsigned i;
+  tree arg0_base = NULL_TREE, base_type;
+  slsr_cand_t c;
+  struct loop *cand_loop = gimple_bb (phi)->loop_father;
+  unsigned savings = 0;
+
+  /* A CAND_PHI requires each of its arguments to have the same
+     derived base name.  (See the module header commentary for a
+     definition of derived base names.)  Furthermore, all feeding
+     definitions must be in the same position in the loop hierarchy
+     as PHI.  */
+
+  for (i = 0; i < gimple_phi_num_args (phi); i++)
+    {
+      slsr_cand_t arg_cand;
+      tree arg = gimple_phi_arg_def (phi, i);
+      tree derived_base_name = NULL_TREE;
+      gimple arg_stmt = NULL;
+      basic_block arg_bb = NULL;
+
+      if (TREE_CODE (arg) != SSA_NAME)
+	return;
+
+      arg_cand = base_cand_from_table (arg);
+
+      if (arg_cand)
+	{
+	  while (arg_cand->kind != CAND_ADD && arg_cand->kind != CAND_PHI)
+	    {
+	      if (!arg_cand->next_interp)
+		return;
+
+	      arg_cand = lookup_cand (arg_cand->next_interp);
+	    }
+
+	  if (!integer_onep (arg_cand->stride))
+	    return;
+
+	  derived_base_name = arg_cand->base_expr;
+	  arg_stmt = arg_cand->cand_stmt;
+	  arg_bb = gimple_bb (arg_stmt);
+
+	  /* Gather potential dead code savings if the phi statement
+	     can be removed later on.  */
+	  if (has_single_use (arg))
+	    {
+	      if (gimple_code (arg_stmt) == GIMPLE_PHI)
+		savings += arg_cand->dead_savings;
+	      else
+		savings += stmt_cost (arg_stmt, speed);
+	    }
+	}
+      else
+	{
+	  derived_base_name = arg;
+
+	  if (SSA_NAME_IS_DEFAULT_DEF (arg))
+	    arg_bb = single_succ (ENTRY_BLOCK_PTR_FOR_FN (cfun));
+	  else
+	    gimple_bb (SSA_NAME_DEF_STMT (arg));
+	}
+
+      if (!arg_bb || arg_bb->loop_father != cand_loop)
+	return;
+
+      if (i == 0)
+	arg0_base = derived_base_name;
+      else if (!operand_equal_p (derived_base_name, arg0_base, 0))
+	return;
+    }
+
+  /* Create the candidate.  "alloc_cand_and_find_basis" is named
+     misleadingly for this case, as no basis will be sought for a
+     CAND_PHI.  */
+  base_type = TREE_TYPE (arg0_base);
+
+  c = alloc_cand_and_find_basis (CAND_PHI, phi, arg0_base,
+				 0, integer_one_node, base_type, savings);
+
+  /* Add the candidate to the statement-candidate mapping.  */
+  add_cand_for_stmt (phi, c);
+}
+
+/* Given PBASE which is a pointer to tree, look up the defining
+   statement for it and check whether the candidate is in the
+   form of:
+
+     X = B + (1 * S), S is integer constant
+     X = B + (i * S), S is integer one
+
+   If so, set PBASE to the candidate's base_expr and return double
+   int (i * S).
+   Otherwise, just return double int zero.  */
+
+static widest_int
+backtrace_base_for_ref (tree *pbase)
+{
+  tree base_in = *pbase;
+  slsr_cand_t base_cand;
+
+  STRIP_NOPS (base_in);
+
+  /* Strip off widening conversion(s) to handle cases where
+     e.g. 'B' is widened from an 'int' in order to calculate
+     a 64-bit address.  */
+  if (CONVERT_EXPR_P (base_in)
+      && legal_cast_p_1 (base_in, TREE_OPERAND (base_in, 0)))
+    base_in = get_unwidened (base_in, NULL_TREE);
+
+  if (TREE_CODE (base_in) != SSA_NAME)
+    return 0;
+
+  base_cand = base_cand_from_table (base_in);
+
+  while (base_cand && base_cand->kind != CAND_PHI)
+    {
+      if (base_cand->kind == CAND_ADD
+	  && base_cand->index == 1
+	  && TREE_CODE (base_cand->stride) == INTEGER_CST)
+	{
+	  /* X = B + (1 * S), S is integer constant.  */
+	  *pbase = base_cand->base_expr;
+	  return wi::to_widest (base_cand->stride);
+	}
+      else if (base_cand->kind == CAND_ADD
+	       && TREE_CODE (base_cand->stride) == INTEGER_CST
+	       && integer_onep (base_cand->stride))
+	{
+	  /* X = B + (i * S), S is integer one.  */
+	  *pbase = base_cand->base_expr;
+	  return base_cand->index;
+	}
+
+      if (base_cand->next_interp)
+	base_cand = lookup_cand (base_cand->next_interp);
+      else
+	base_cand = NULL;
+    }
+
+  return 0;
+}
+
 /* Look for the following pattern:
 
     *PBASE:    MEM_REF (T1, C1)
@@ -535,41 +931,45 @@ add_cand_for_stmt (gimple gs, slsr_cand_t c)
 
     *PBASE:    T1
     *POFFSET:  MULT_EXPR (T2, C3)
-    *PINDEX:   C1 + (C2 * C3) + C4  */
+    *PINDEX:   C1 + (C2 * C3) + C4
+
+   When T2 is recorded by a CAND_ADD in the form of (T2' + C5), it
+   will be further restructured to:
+
+    *PBASE:    T1
+    *POFFSET:  MULT_EXPR (T2', C3)
+    *PINDEX:   C1 + (C2 * C3) + C4 + (C5 * C3)  */
 
 static bool
-restructure_reference (tree *pbase, tree *poffset, double_int *pindex,
+restructure_reference (tree *pbase, tree *poffset, widest_int *pindex,
 		       tree *ptype)
 {
   tree base = *pbase, offset = *poffset;
-  double_int index = *pindex;
-  double_int bpu = double_int::from_uhwi (BITS_PER_UNIT);
-  tree mult_op0, mult_op1, t1, t2, type;
-  double_int c1, c2, c3, c4;
+  widest_int index = *pindex;
+  tree mult_op0, t1, t2, type;
+  widest_int c1, c2, c3, c4, c5;
 
   if (!base
       || !offset
       || TREE_CODE (base) != MEM_REF
       || TREE_CODE (offset) != MULT_EXPR
       || TREE_CODE (TREE_OPERAND (offset, 1)) != INTEGER_CST
-      || !index.umod (bpu, FLOOR_MOD_EXPR).is_zero ())
+      || wi::umod_floor (index, BITS_PER_UNIT) != 0)
     return false;
 
   t1 = TREE_OPERAND (base, 0);
-  c1 = mem_ref_offset (base);
+  c1 = widest_int::from (mem_ref_offset (base), SIGNED);
   type = TREE_TYPE (TREE_OPERAND (base, 1));
 
   mult_op0 = TREE_OPERAND (offset, 0);
-  mult_op1 = TREE_OPERAND (offset, 1);
-
-  c3 = tree_to_double_int (mult_op1);
+  c3 = wi::to_widest (TREE_OPERAND (offset, 1));
 
   if (TREE_CODE (mult_op0) == PLUS_EXPR)
 
     if (TREE_CODE (TREE_OPERAND (mult_op0, 1)) == INTEGER_CST)
       {
 	t2 = TREE_OPERAND (mult_op0, 0);
-	c2 = tree_to_double_int (TREE_OPERAND (mult_op0, 1));
+	c2 = wi::to_widest (TREE_OPERAND (mult_op0, 1));
       }
     else
       return false;
@@ -579,7 +979,7 @@ restructure_reference (tree *pbase, tree *poffset, double_int *pindex,
     if (TREE_CODE (TREE_OPERAND (mult_op0, 1)) == INTEGER_CST)
       {
 	t2 = TREE_OPERAND (mult_op0, 0);
-	c2 = -tree_to_double_int (TREE_OPERAND (mult_op0, 1));
+	c2 = -wi::to_widest (TREE_OPERAND (mult_op0, 1));
       }
     else
       return false;
@@ -587,15 +987,16 @@ restructure_reference (tree *pbase, tree *poffset, double_int *pindex,
   else
     {
       t2 = mult_op0;
-      c2 = double_int_zero;
+      c2 = 0;
     }
 
-  c4 = index.udiv (bpu, FLOOR_DIV_EXPR);
+  c4 = wi::lrshift (index, LOG2_BITS_PER_UNIT);
+  c5 = backtrace_base_for_ref (&t2);
 
   *pbase = t1;
-  *poffset = fold_build2 (MULT_EXPR, sizetype, t2,
-			  double_int_to_tree (sizetype, c3));
-  *pindex = c1 + c2 * c3 + c4;
+  *poffset = fold_build2 (MULT_EXPR, sizetype, fold_convert (sizetype, t2),
+			  wide_int_to_tree (sizetype, c3));
+  *pindex = c1 + c2 * c3 + c4 + c5 * c3;
   *ptype = type;
 
   return true;
@@ -609,9 +1010,8 @@ slsr_process_ref (gimple gs)
 {
   tree ref_expr, base, offset, type;
   HOST_WIDE_INT bitsize, bitpos;
-  enum machine_mode mode;
+  machine_mode mode;
   int unsignedp, volatilep;
-  double_int index;
   slsr_cand_t c;
 
   if (gimple_vdef (gs))
@@ -627,7 +1027,7 @@ slsr_process_ref (gimple gs)
 
   base = get_inner_reference (ref_expr, &bitsize, &bitpos, &offset, &mode,
 			      &unsignedp, &volatilep, false);
-  index = double_int::from_uhwi (bitpos);
+  widest_int index = bitpos;
 
   if (!restructure_reference (&base, &offset, &index, &type))
     return;
@@ -648,18 +1048,17 @@ static slsr_cand_t
 create_mul_ssa_cand (gimple gs, tree base_in, tree stride_in, bool speed)
 {
   tree base = NULL_TREE, stride = NULL_TREE, ctype = NULL_TREE;
-  double_int index;
+  widest_int index;
   unsigned savings = 0;
   slsr_cand_t c;
   slsr_cand_t base_cand = base_cand_from_table (base_in);
 
   /* Look at all interpretations of the base candidate, if necessary,
      to find information to propagate into this candidate.  */
-  while (base_cand && !base)
+  while (base_cand && !base && base_cand->kind != CAND_PHI)
     {
 
-      if (base_cand->kind == CAND_MULT
-	  && operand_equal_p (base_cand->stride, integer_one_node, 0))
+      if (base_cand->kind == CAND_MULT && integer_onep (base_cand->stride))
 	{
 	  /* Y = (B + i') * 1
 	     X = Y * Z
@@ -681,7 +1080,7 @@ create_mul_ssa_cand (gimple gs, tree base_in, tree stride_in, bool speed)
 	     ============================
 	     X = B + ((i' * S) * Z)  */
 	  base = base_cand->base_expr;
-	  index = base_cand->index * tree_to_double_int (base_cand->stride);
+	  index = base_cand->index * wi::to_widest (base_cand->stride);
 	  stride = stride_in;
 	  ctype = base_cand->cand_type;
 	  if (has_single_use (base_in))
@@ -700,7 +1099,7 @@ create_mul_ssa_cand (gimple gs, tree base_in, tree stride_in, bool speed)
       /* No interpretations had anything useful to propagate, so
 	 produce X = (Y + 0) * Z.  */
       base = base_in;
-      index = double_int_zero;
+      index = 0;
       stride = stride_in;
       ctype = TREE_TYPE (base_in);
     }
@@ -719,14 +1118,14 @@ static slsr_cand_t
 create_mul_imm_cand (gimple gs, tree base_in, tree stride_in, bool speed)
 {
   tree base = NULL_TREE, stride = NULL_TREE, ctype = NULL_TREE;
-  double_int index, temp;
+  widest_int index, temp;
   unsigned savings = 0;
   slsr_cand_t c;
   slsr_cand_t base_cand = base_cand_from_table (base_in);
 
   /* Look at all interpretations of the base candidate, if necessary,
      to find information to propagate into this candidate.  */
-  while (base_cand && !base)
+  while (base_cand && !base && base_cand->kind != CAND_PHI)
     {
       if (base_cand->kind == CAND_MULT
 	  && TREE_CODE (base_cand->stride) == INTEGER_CST)
@@ -735,21 +1134,19 @@ create_mul_imm_cand (gimple gs, tree base_in, tree stride_in, bool speed)
 	     X = Y * c
 	     ============================
 	     X = (B + i') * (S * c)  */
-	  temp = tree_to_double_int (base_cand->stride)
-		 * tree_to_double_int (stride_in);
-	  if (double_int_fits_to_tree_p (TREE_TYPE (stride_in), temp))
+	  temp = wi::to_widest (base_cand->stride) * wi::to_widest (stride_in);
+	  if (wi::fits_to_tree_p (temp, TREE_TYPE (stride_in)))
 	    {
 	      base = base_cand->base_expr;
 	      index = base_cand->index;
-	      stride = double_int_to_tree (TREE_TYPE (stride_in), temp);
+	      stride = wide_int_to_tree (TREE_TYPE (stride_in), temp);
 	      ctype = base_cand->cand_type;
 	      if (has_single_use (base_in))
 		savings = (base_cand->dead_savings 
 			   + stmt_cost (base_cand->cand_stmt, speed));
 	    }
 	}
-      else if (base_cand->kind == CAND_ADD
-	       && operand_equal_p (base_cand->stride, integer_one_node, 0))
+      else if (base_cand->kind == CAND_ADD && integer_onep (base_cand->stride))
 	{
 	  /* Y = B + (i' * 1)
 	     X = Y * c
@@ -764,7 +1161,7 @@ create_mul_imm_cand (gimple gs, tree base_in, tree stride_in, bool speed)
 		       + stmt_cost (base_cand->cand_stmt, speed));
 	}
       else if (base_cand->kind == CAND_ADD
-	       && base_cand->index.is_one ()
+	       && base_cand->index == 1
 	       && TREE_CODE (base_cand->stride) == INTEGER_CST)
 	{
 	  /* Y = B + (1 * S), S constant
@@ -772,7 +1169,7 @@ create_mul_imm_cand (gimple gs, tree base_in, tree stride_in, bool speed)
 	     ===========================
 	     X = (B + S) * c  */
 	  base = base_cand->base_expr;
-	  index = tree_to_double_int (base_cand->stride);
+	  index = wi::to_widest (base_cand->stride);
 	  stride = stride_in;
 	  ctype = base_cand->cand_type;
 	  if (has_single_use (base_in))
@@ -791,7 +1188,7 @@ create_mul_imm_cand (gimple gs, tree base_in, tree stride_in, bool speed)
       /* No interpretations had anything useful to propagate, so
 	 produce X = (Y + 0) * c.  */
       base = base_in;
-      index = double_int_zero;
+      index = 0;
       stride = stride_in;
       ctype = TREE_TYPE (base_in);
     }
@@ -854,7 +1251,7 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
 		     bool subtract_p, bool speed)
 {
   tree base = NULL_TREE, stride = NULL_TREE, ctype = NULL;
-  double_int index;
+  widest_int index;
   unsigned savings = 0;
   slsr_cand_t c;
   slsr_cand_t base_cand = base_cand_from_table (base_in);
@@ -862,10 +1259,10 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
 
   /* The most useful transformation is a multiply-immediate feeding
      an add or subtract.  Look for that first.  */
-  while (addend_cand && !base)
+  while (addend_cand && !base && addend_cand->kind != CAND_PHI)
     {
       if (addend_cand->kind == CAND_MULT
-	  && addend_cand->index.is_zero ()
+	  && addend_cand->index == 0
 	  && TREE_CODE (addend_cand->stride) == INTEGER_CST)
 	{
 	  /* Z = (B + 0) * S, S constant
@@ -873,7 +1270,7 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
 	     ===========================
 	     X = Y + ((+/-1 * S) * B)  */
 	  base = base_in;
-	  index = tree_to_double_int (addend_cand->stride);
+	  index = wi::to_widest (addend_cand->stride);
 	  if (subtract_p)
 	    index = -index;
 	  stride = addend_cand->base_expr;
@@ -889,10 +1286,10 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
 	addend_cand = NULL;
     }
 
-  while (base_cand && !base)
+  while (base_cand && !base && base_cand->kind != CAND_PHI)
     {
       if (base_cand->kind == CAND_ADD
-	  && (base_cand->index.is_zero ()
+	  && (base_cand->index == 0
 	      || operand_equal_p (base_cand->stride,
 				  integer_zero_node, 0)))
 	{
@@ -901,7 +1298,7 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
 	     ============================
 	     X = B + (+/-1 * Z)  */
 	  base = base_cand->base_expr;
-	  index = subtract_p ? double_int_minus_one : double_int_one;
+	  index = subtract_p ? -1 : 1;
 	  stride = addend_in;
 	  ctype = base_cand->cand_type;
 	  if (has_single_use (base_in))
@@ -912,10 +1309,10 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
 	{
 	  slsr_cand_t subtrahend_cand = base_cand_from_table (addend_in);
 
-	  while (subtrahend_cand && !base)
+	  while (subtrahend_cand && !base && subtrahend_cand->kind != CAND_PHI)
 	    {
 	      if (subtrahend_cand->kind == CAND_MULT
-		  && subtrahend_cand->index.is_zero ()
+		  && subtrahend_cand->index == 0
 		  && TREE_CODE (subtrahend_cand->stride) == INTEGER_CST)
 		{
 		  /* Z = (B + 0) * S, S constant
@@ -923,7 +1320,7 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
 		     ===========================
 		     Value:  X = Y + ((-1 * S) * B)  */
 		  base = base_in;
-		  index = tree_to_double_int (subtrahend_cand->stride);
+		  index = wi::to_widest (subtrahend_cand->stride);
 		  index = -index;
 		  stride = subtrahend_cand->base_expr;
 		  ctype = TREE_TYPE (base_in);
@@ -950,7 +1347,7 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
       /* No interpretations had anything useful to propagate, so
 	 produce X = Y + (1 * Z).  */
       base = base_in;
-      index = subtract_p ? double_int_minus_one : double_int_one;
+      index = subtract_p ? -1 : 1;
       stride = addend_in;
       ctype = TREE_TYPE (base_in);
     }
@@ -965,22 +1362,23 @@ create_add_ssa_cand (gimple gs, tree base_in, tree addend_in,
    about BASE_IN into the new candidate.  Return the new candidate.  */
 
 static slsr_cand_t
-create_add_imm_cand (gimple gs, tree base_in, double_int index_in, bool speed)
+create_add_imm_cand (gimple gs, tree base_in, const widest_int &index_in,
+		     bool speed)
 {
   enum cand_kind kind = CAND_ADD;
   tree base = NULL_TREE, stride = NULL_TREE, ctype = NULL_TREE;
-  double_int index, multiple;
+  widest_int index, multiple;
   unsigned savings = 0;
   slsr_cand_t c;
   slsr_cand_t base_cand = base_cand_from_table (base_in);
 
-  while (base_cand && !base)
+  while (base_cand && !base && base_cand->kind != CAND_PHI)
     {
-      bool unsigned_p = TYPE_UNSIGNED (TREE_TYPE (base_cand->stride));
+      signop sign = TYPE_SIGN (TREE_TYPE (base_cand->stride));
 
       if (TREE_CODE (base_cand->stride) == INTEGER_CST
-	  && index_in.multiple_of (tree_to_double_int (base_cand->stride),
-				   unsigned_p, &multiple))
+	  && wi::multiple_of_p (index_in, wi::to_widest (base_cand->stride),
+				sign, &multiple))
 	{
 	  /* Y = (B + i') * S, S constant, c = kS for some integer k
 	     X = Y + c
@@ -1065,10 +1463,8 @@ slsr_process_add (gimple gs, tree rhs1, tree rhs2, bool speed)
     }
   else
     {
-      double_int index;
-
       /* Record an interpretation for the add-immediate.  */
-      index = tree_to_double_int (rhs2);
+      widest_int index = wi::to_widest (rhs2);
       if (subtract_p)
 	index = -index;
 
@@ -1108,8 +1504,8 @@ legal_cast_p_1 (tree lhs, tree rhs)
   rhs_type = TREE_TYPE (rhs);
   lhs_size = TYPE_PRECISION (lhs_type);
   rhs_size = TYPE_PRECISION (rhs_type);
-  lhs_wraps = TYPE_OVERFLOW_WRAPS (lhs_type);
-  rhs_wraps = TYPE_OVERFLOW_WRAPS (rhs_type);
+  lhs_wraps = ANY_INTEGRAL_TYPE_P (lhs_type) && TYPE_OVERFLOW_WRAPS (lhs_type);
+  rhs_wraps = ANY_INTEGRAL_TYPE_P (rhs_type) && TYPE_OVERFLOW_WRAPS (rhs_type);
 
   if (lhs_size < rhs_size
       || (rhs_wraps && !lhs_wraps)
@@ -1184,7 +1580,7 @@ slsr_process_cast (gimple gs, tree rhs1, bool speed)
   base_cand = base_cand_from_table (rhs1);
   ctype = TREE_TYPE (lhs);
 
-  if (base_cand)
+  if (base_cand && base_cand->kind != CAND_PHI)
     {
       while (base_cand)
 	{
@@ -1216,10 +1612,10 @@ slsr_process_cast (gimple gs, tree rhs1, bool speed)
 	 The first of these is somewhat arbitrary, but the choice of
 	 1 for the stride simplifies the logic for propagating casts
 	 into their uses.  */
-      c = alloc_cand_and_find_basis (CAND_ADD, gs, rhs1, double_int_zero,
-				     integer_one_node, ctype, 0);
-      c2 = alloc_cand_and_find_basis (CAND_MULT, gs, rhs1, double_int_zero,
-				      integer_one_node, ctype, 0);
+      c = alloc_cand_and_find_basis (CAND_ADD, gs, rhs1,
+				     0, integer_one_node, ctype, 0);
+      c2 = alloc_cand_and_find_basis (CAND_MULT, gs, rhs1,
+				      0, integer_one_node, ctype, 0);
       c->next_interp = c2->cand_num;
     }
 
@@ -1243,7 +1639,7 @@ slsr_process_copy (gimple gs, tree rhs1, bool speed)
 
   base_cand = base_cand_from_table (rhs1);
 
-  if (base_cand)
+  if (base_cand && base_cand->kind != CAND_PHI)
     {
       while (base_cand)
 	{
@@ -1273,10 +1669,10 @@ slsr_process_copy (gimple gs, tree rhs1, bool speed)
 	 The first of these is somewhat arbitrary, but the choice of
 	 1 for the stride simplifies the logic for propagating casts
 	 into their uses.  */
-      c = alloc_cand_and_find_basis (CAND_ADD, gs, rhs1, double_int_zero,
-				     integer_one_node, TREE_TYPE (rhs1), 0);
-      c2 = alloc_cand_and_find_basis (CAND_MULT, gs, rhs1, double_int_zero,
-				      integer_one_node, TREE_TYPE (rhs1), 0);
+      c = alloc_cand_and_find_basis (CAND_ADD, gs, rhs1,
+				     0, integer_one_node, TREE_TYPE (rhs1), 0);
+      c2 = alloc_cand_and_find_basis (CAND_MULT, gs, rhs1,
+				      0, integer_one_node, TREE_TYPE (rhs1), 0);
       c->next_interp = c2->cand_num;
     }
 
@@ -1285,16 +1681,27 @@ slsr_process_copy (gimple gs, tree rhs1, bool speed)
   add_cand_for_stmt (gs, c);
 }
 
+class find_candidates_dom_walker : public dom_walker
+{
+public:
+  find_candidates_dom_walker (cdi_direction direction)
+    : dom_walker (direction) {}
+  virtual void before_dom_children (basic_block);
+};
+
 /* Find strength-reduction candidates in block BB.  */
 
-static void
-find_candidates_in_block (struct dom_walk_data *walk_data ATTRIBUTE_UNUSED,
-			  basic_block bb)
+void
+find_candidates_dom_walker::before_dom_children (basic_block bb)
 {
   bool speed = optimize_bb_for_speed_p (bb);
-  gimple_stmt_iterator gsi;
 
-  for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
+  for (gphi_iterator gsi = gsi_start_phis (bb); !gsi_end_p (gsi);
+       gsi_next (&gsi))
+    slsr_process_phi (gsi.phi (), speed);
+
+  for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
+       gsi_next (&gsi))
     {
       gimple gs = gsi_stmt (gsi);
 
@@ -1326,7 +1733,7 @@ find_candidates_in_block (struct dom_walk_data *walk_data ATTRIBUTE_UNUSED,
 	      rhs2 = gimple_assign_rhs2 (gs);
 	      /* Fall-through.  */
 
-	    case NOP_EXPR:
+	    CASE_CONVERT:
 	    case MODIFY_EXPR:
 	    case NEGATE_EXPR:
 	      rhs1 = gimple_assign_rhs1 (gs);
@@ -1354,7 +1761,7 @@ find_candidates_in_block (struct dom_walk_data *walk_data ATTRIBUTE_UNUSED,
 	      slsr_process_neg (gs, rhs1, speed);
 	      break;
 
-	    case NOP_EXPR:
+	    CASE_CONVERT:
 	      slsr_process_cast (gs, rhs1, speed);
 	      break;
 
@@ -1383,7 +1790,7 @@ dump_candidate (slsr_cand_t c)
       fputs ("     MULT : (", dump_file);
       print_generic_expr (dump_file, c->base_expr, 0);
       fputs (" + ", dump_file);
-      dump_double_int (dump_file, c->index, false);
+      print_decs (c->index, dump_file);
       fputs (") * ", dump_file);
       print_generic_expr (dump_file, c->stride, 0);
       fputs (" : ", dump_file);
@@ -1392,7 +1799,7 @@ dump_candidate (slsr_cand_t c)
       fputs ("     ADD  : ", dump_file);
       print_generic_expr (dump_file, c->base_expr, 0);
       fputs (" + (", dump_file);
-      dump_double_int (dump_file, c->index, false);
+      print_decs (c->index, dump_file);
       fputs (" * ", dump_file);
       print_generic_expr (dump_file, c->stride, 0);
       fputs (") : ", dump_file);
@@ -1403,8 +1810,15 @@ dump_candidate (slsr_cand_t c)
       fputs (" + (", dump_file);
       print_generic_expr (dump_file, c->stride, 0);
       fputs (") + ", dump_file);
-      dump_double_int (dump_file, c->index, false);
+      print_decs (c->index, dump_file);
       fputs (" : ", dump_file);
+      break;
+    case CAND_PHI:
+      fputs ("     PHI  : ", dump_file);
+      print_generic_expr (dump_file, c->base_expr, 0);
+      fputs (" + (unknown * ", dump_file);
+      print_generic_expr (dump_file, c->stride, 0);
+      fputs (") : ", dump_file);
       break;
     default:
       gcc_unreachable ();
@@ -1415,10 +1829,7 @@ dump_candidate (slsr_cand_t c)
   fprintf (dump_file, "     next-interp: %d  dead-savings: %d\n",
 	   c->next_interp, c->dead_savings);
   if (c->def_phi)
-    {
-      fputs ("     phi:  ", dump_file);
-      print_gimple_stmt (dump_file, c->def_phi, 0, 0);
-    }
+    fprintf (dump_file, "     phi:  %d\n", c->def_phi);
   fputs ("\n", dump_file);
 }
 
@@ -1438,10 +1849,10 @@ dump_cand_vec (void)
 
 /* Callback used to dump the candidate chains hash table.  */
 
-static int
-base_cand_dump_callback (void **slot, void *ignored ATTRIBUTE_UNUSED)
+int
+ssa_base_cand_dump_callback (cand_chain **slot, void *ignored ATTRIBUTE_UNUSED)
 {
-  const_cand_chain_t chain = *((const_cand_chain_t *) slot);
+  const_cand_chain_t chain = *slot;
   cand_chain_t p;
 
   print_generic_expr (dump_file, chain->base_expr, 0);
@@ -1460,7 +1871,8 @@ static void
 dump_cand_chains (void)
 {
   fprintf (dump_file, "\nStrength reduction candidate chains:\n\n");
-  htab_traverse_noresize (base_cand_map, base_cand_dump_callback, NULL);
+  base_cand_map->traverse_noresize <void *, ssa_base_cand_dump_callback>
+    (NULL);
   fputs ("\n", dump_file);
 }
 
@@ -1478,7 +1890,7 @@ dump_incr_vec (void)
       for (i = 0; i < incr_vec_len; i++)
 	{
 	  fprintf (dump_file, "%3d  increment:   ", i);
-	  dump_double_int (dump_file, incr_vec[i].incr, false);
+	  print_decs (incr_vec[i].incr, dump_file);
 	  fprintf (dump_file, "\n     count:       %d", incr_vec[i].count);
 	  fprintf (dump_file, "\n     cost:        %d", incr_vec[i].cost);
 	  fputs ("\n     initializer: ", dump_file);
@@ -1488,40 +1900,6 @@ dump_incr_vec (void)
     }
 }
 
-/* Recursive helper for unconditional_cands_with_known_stride_p.
-   Returns TRUE iff C, its siblings, and its dependents are all
-   unconditional candidates.  */
-
-static bool
-unconditional_cands (slsr_cand_t c)
-{
-  if (c->def_phi)
-    return false;
-
-  if (c->sibling && !unconditional_cands (lookup_cand (c->sibling)))
-    return false;
-
-  if (c->dependent && !unconditional_cands (lookup_cand (c->dependent)))
-    return false;
-
-  return true;
-}
-
-/* Determine whether or not the tree of candidates rooted at
-   ROOT consists entirely of unconditional increments with
-   an INTEGER_CST stride.  */
-
-static bool
-unconditional_cands_with_known_stride_p (slsr_cand_t root)
-{
-  /* The stride is identical for all related candidates, so
-     check it once.  */
-  if (TREE_CODE (root->stride) != INTEGER_CST)
-    return false;
-
-  return unconditional_cands (lookup_cand (root->dependent));
-}
-
 /* Replace *EXPR in candidate C with an equivalent strength-reduced
    data reference.  */
 
@@ -1543,7 +1921,7 @@ replace_ref (tree *expr, slsr_cand_t c)
   add_expr = fold_build2 (POINTER_PLUS_EXPR, TREE_TYPE (c->base_expr),
 			  c->base_expr, c->stride);
   mem_ref = fold_build2 (MEM_REF, acc_type, add_expr,
-			 double_int_to_tree (c->cand_type, c->index));
+			 wide_int_to_tree (c->cand_type, c->index));
 
   /* Gimplify the base addressing expression for the new MEM_REF tree.  */
   gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
@@ -1563,6 +1941,12 @@ replace_ref (tree *expr, slsr_cand_t c)
 static void
 replace_refs (slsr_cand_t c)
 {
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fputs ("Replacing reference: ", dump_file);
+      print_gimple_stmt (dump_file, c->cand_stmt, 0, 0);
+    }
+
   if (gimple_vdef (c->cand_stmt))
     {
       tree *lhs = gimple_assign_lhs_ptr (c->cand_stmt);
@@ -1574,6 +1958,13 @@ replace_refs (slsr_cand_t c)
       replace_ref (rhs, c);
     }
 
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fputs ("With: ", dump_file);
+      print_gimple_stmt (dump_file, c->cand_stmt, 0, 0);
+      fputs ("\n", dump_file);
+    }
+
   if (c->sibling)
     replace_refs (lookup_cand (c->sibling));
 
@@ -1581,18 +1972,34 @@ replace_refs (slsr_cand_t c)
     replace_refs (lookup_cand (c->dependent));
 }
 
+/* Return TRUE if candidate C is dependent upon a PHI.  */
+
+static bool
+phi_dependent_cand_p (slsr_cand_t c)
+{
+  /* A candidate is not necessarily dependent upon a PHI just because
+     it has a phi definition for its base name.  It may have a basis
+     that relies upon the same phi definition, in which case the PHI
+     is irrelevant to this candidate.  */
+  return (c->def_phi
+	  && c->basis
+	  && lookup_cand (c->basis)->def_phi != c->def_phi);
+}
+
 /* Calculate the increment required for candidate C relative to 
    its basis.  */
 
-static double_int
+static widest_int
 cand_increment (slsr_cand_t c)
 {
   slsr_cand_t basis;
 
   /* If the candidate doesn't have a basis, just return its own
      index.  This is useful in record_increments to help us find
-     an existing initializer.  */
-  if (!c->basis)
+     an existing initializer.  Also, if the candidate's basis is
+     hidden by a phi, then its own index will be the increment
+     from the newly introduced phi basis.  */
+  if (!c->basis || phi_dependent_cand_p (c))
     return c->index;
 
   basis = lookup_cand (c->basis);
@@ -1605,25 +2012,15 @@ cand_increment (slsr_cand_t c)
    for this candidate, return the absolute value of that increment
    instead.  */
 
-static inline double_int
+static inline widest_int
 cand_abs_increment (slsr_cand_t c)
 {
-  double_int increment = cand_increment (c);
+  widest_int increment = cand_increment (c);
 
-  if (!address_arithmetic_p && increment.is_negative ())
+  if (!address_arithmetic_p && wi::neg_p (increment))
     increment = -increment;
 
   return increment;
-}
-
-/* If *VAR is NULL or is not of a compatible type with TYPE, create a
-   new temporary reg of type TYPE and store it in *VAR.  */
-
-static inline void
-lazy_create_slsr_reg (tree *var, tree type)
-{
-  if (!*var || !types_compatible_p (TREE_TYPE (*var), type))
-    *var = create_tmp_reg (type, "slsr");
 }
 
 /* Return TRUE iff candidate C has already been replaced under
@@ -1635,146 +2032,445 @@ cand_already_replaced (slsr_cand_t c)
   return (gimple_bb (c->cand_stmt) == 0);
 }
 
-/* Helper routine for replace_dependents, doing the work for a 
-   single candidate C.  */
+/* Common logic used by replace_unconditional_candidate and
+   replace_conditional_candidate.  */
 
 static void
-replace_dependent (slsr_cand_t c, enum tree_code cand_code)
+replace_mult_candidate (slsr_cand_t c, tree basis_name, widest_int bump)
 {
-  double_int stride = tree_to_double_int (c->stride);
-  double_int bump = cand_increment (c) * stride;
-  gimple stmt_to_print = NULL;
-  slsr_cand_t basis;
-  tree basis_name, incr_type, bump_tree;
-  enum tree_code code;
-  
+  tree target_type = TREE_TYPE (gimple_assign_lhs (c->cand_stmt));
+  enum tree_code cand_code = gimple_assign_rhs_code (c->cand_stmt);
+
   /* It is highly unlikely, but possible, that the resulting
      bump doesn't fit in a HWI.  Abandon the replacement
-     in this case.  Restriction to signed HWI is conservative
-     for unsigned types but allows for safe negation without
-     twisted logic.  */
-  if (!bump.fits_shwi ())
-    return;
+     in this case.  This does not affect siblings or dependents
+     of C.  Restriction to signed HWI is conservative for unsigned
+     types but allows for safe negation without twisted logic.  */
+  if (wi::fits_shwi_p (bump)
+      && bump.to_shwi () != HOST_WIDE_INT_MIN
+      /* It is not useful to replace casts, copies, or adds of
+	 an SSA name and a constant.  */
+      && cand_code != MODIFY_EXPR
+      && !CONVERT_EXPR_CODE_P (cand_code)
+      && cand_code != PLUS_EXPR
+      && cand_code != POINTER_PLUS_EXPR
+      && cand_code != MINUS_EXPR)
+    {
+      enum tree_code code = PLUS_EXPR;
+      tree bump_tree;
+      gimple stmt_to_print = NULL;
 
-  basis = lookup_cand (c->basis);
-  basis_name = gimple_assign_lhs (basis->cand_stmt);
-  if (cand_code == POINTER_PLUS_EXPR)
-    {
-      incr_type = sizetype;
-      code = cand_code;
-    }
-  else
-    {
-      incr_type = TREE_TYPE (gimple_assign_rhs1 (c->cand_stmt));
-      code = PLUS_EXPR;
-    }
-
-  if (bump.is_negative ()
-      && cand_code != POINTER_PLUS_EXPR)
-    {
-      code = MINUS_EXPR;
-      bump = -bump;
-    }
-
-  bump_tree = double_int_to_tree (incr_type, bump);
-
-  if (dump_file && (dump_flags & TDF_DETAILS))
-    {
-      fputs ("Replacing: ", dump_file);
-      print_gimple_stmt (dump_file, c->cand_stmt, 0, 0);
-    }
-
-  if (bump.is_zero ())
-    {
-      tree lhs = gimple_assign_lhs (c->cand_stmt);
-      gimple copy_stmt = gimple_build_assign (lhs, basis_name);
-      gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
-      gimple_set_location (copy_stmt, gimple_location (c->cand_stmt));
-      gsi_replace (&gsi, copy_stmt, false);
-      if (dump_file && (dump_flags & TDF_DETAILS))
-	stmt_to_print = copy_stmt;
-    }
-  else
-    {
-      tree rhs1 = gimple_assign_rhs1 (c->cand_stmt);
-      tree rhs2 = gimple_assign_rhs2 (c->cand_stmt);
-      if (cand_code != NEGATE_EXPR
-	  && ((operand_equal_p (rhs1, basis_name, 0)
-	       && operand_equal_p (rhs2, bump_tree, 0))
-	      || (operand_equal_p (rhs1, bump_tree, 0)
-		  && operand_equal_p (rhs2, basis_name, 0))))
+      /* If the basis name and the candidate's LHS have incompatible
+	 types, introduce a cast.  */
+      if (!useless_type_conversion_p (target_type, TREE_TYPE (basis_name)))
+	basis_name = introduce_cast_before_cand (c, target_type, basis_name);
+      if (wi::neg_p (bump))
 	{
+	  code = MINUS_EXPR;
+	  bump = -bump;
+	}
+
+      bump_tree = wide_int_to_tree (target_type, bump);
+
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fputs ("Replacing: ", dump_file);
+	  print_gimple_stmt (dump_file, c->cand_stmt, 0, 0);
+	}
+
+      if (bump == 0)
+	{
+	  tree lhs = gimple_assign_lhs (c->cand_stmt);
+	  gassign *copy_stmt = gimple_build_assign (lhs, basis_name);
+	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
+	  gimple_set_location (copy_stmt, gimple_location (c->cand_stmt));
+	  gsi_replace (&gsi, copy_stmt, false);
+	  c->cand_stmt = copy_stmt;
 	  if (dump_file && (dump_flags & TDF_DETAILS))
-	    {
-	      fputs ("(duplicate, not actually replacing)", dump_file);
-	      stmt_to_print = c->cand_stmt;
-	    }
+	    stmt_to_print = copy_stmt;
 	}
       else
 	{
-	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
-	  gimple_assign_set_rhs_with_ops (&gsi, code, basis_name, bump_tree);
-	  update_stmt (gsi_stmt (gsi));
-	  if (dump_file && (dump_flags & TDF_DETAILS))
-	    stmt_to_print = gsi_stmt (gsi);
+	  tree rhs1, rhs2;
+	  if (cand_code != NEGATE_EXPR) {
+	    rhs1 = gimple_assign_rhs1 (c->cand_stmt);
+	    rhs2 = gimple_assign_rhs2 (c->cand_stmt);
+	  }
+	  if (cand_code != NEGATE_EXPR
+	      && ((operand_equal_p (rhs1, basis_name, 0)
+		   && operand_equal_p (rhs2, bump_tree, 0))
+		  || (operand_equal_p (rhs1, bump_tree, 0)
+		      && operand_equal_p (rhs2, basis_name, 0))))
+	    {
+	      if (dump_file && (dump_flags & TDF_DETAILS))
+		{
+		  fputs ("(duplicate, not actually replacing)", dump_file);
+		  stmt_to_print = c->cand_stmt;
+		}
+	    }
+	  else
+	    {
+	      gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
+	      gimple_assign_set_rhs_with_ops (&gsi, code,
+					      basis_name, bump_tree);
+	      update_stmt (gsi_stmt (gsi));
+              c->cand_stmt = gsi_stmt (gsi);
+	      if (dump_file && (dump_flags & TDF_DETAILS))
+		stmt_to_print = gsi_stmt (gsi);
+	    }
 	}
-    }
   
-  if (dump_file && (dump_flags & TDF_DETAILS))
-    {
-      fputs ("With: ", dump_file);
-      print_gimple_stmt (dump_file, stmt_to_print, 0, 0);
-      fputs ("\n", dump_file);
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fputs ("With: ", dump_file);
+	  print_gimple_stmt (dump_file, stmt_to_print, 0, 0);
+	  fputs ("\n", dump_file);
+  	}
     }
 }
 
-/* Replace candidate C, each sibling of candidate C, and each
-   dependent of candidate C with an add or subtract.  Note that we
-   only operate on CAND_MULTs with known strides, so we will never
-   generate a POINTER_PLUS_EXPR.  Each candidate X = (B + i) * S is
-   replaced by X = Y + ((i - i') * S), as described in the module
-   commentary.  The folded value ((i - i') * S) is referred to here
-   as the "bump."  */
+/* Replace candidate C with an add or subtract.   Note that we only
+   operate on CAND_MULTs with known strides, so we will never generate
+   a POINTER_PLUS_EXPR.  Each candidate X = (B + i) * S is replaced by
+   X = Y + ((i - i') * S), as described in the module commentary.  The
+   folded value ((i - i') * S) is referred to here as the "bump."  */
 
 static void
-replace_dependents (slsr_cand_t c)
+replace_unconditional_candidate (slsr_cand_t c)
 {
-  enum tree_code cand_code = gimple_assign_rhs_code (c->cand_stmt);
+  slsr_cand_t basis;
 
-  /* It is not useful to replace casts, copies, or adds of an SSA name
-     and a constant.  Also skip candidates that have already been
-     replaced under another interpretation.  */
-  if (cand_code != MODIFY_EXPR
-      && cand_code != NOP_EXPR
-      && c->kind == CAND_MULT
-      && !cand_already_replaced (c))
-    replace_dependent (c, cand_code);
+  if (cand_already_replaced (c))
+    return;
 
-  if (c->sibling)
-    replace_dependents (lookup_cand (c->sibling));
+  basis = lookup_cand (c->basis);
+  widest_int bump = cand_increment (c) * wi::to_widest (c->stride);
 
-  if (c->dependent)
-    replace_dependents (lookup_cand (c->dependent));
+  replace_mult_candidate (c, gimple_assign_lhs (basis->cand_stmt), bump);
 }
 
-/* Return the index in the increment vector of the given INCREMENT.  */
+/* Return the index in the increment vector of the given INCREMENT,
+   or -1 if not found.  The latter can occur if more than
+   MAX_INCR_VEC_LEN increments have been found.  */
 
-static inline unsigned
-incr_vec_index (double_int increment)
+static inline int
+incr_vec_index (const widest_int &increment)
 {
   unsigned i;
   
   for (i = 0; i < incr_vec_len && increment != incr_vec[i].incr; i++)
     ;
 
-  gcc_assert (i < incr_vec_len);
-  return i;
+  if (i < incr_vec_len)
+    return i;
+  else
+    return -1;
 }
 
+/* Create a new statement along edge E to add BASIS_NAME to the product
+   of INCREMENT and the stride of candidate C.  Create and return a new
+   SSA name from *VAR to be used as the LHS of the new statement.
+   KNOWN_STRIDE is true iff C's stride is a constant.  */
+
+static tree
+create_add_on_incoming_edge (slsr_cand_t c, tree basis_name,
+			     widest_int increment, edge e, location_t loc,
+			     bool known_stride)
+{
+  basic_block insert_bb;
+  gimple_stmt_iterator gsi;
+  tree lhs, basis_type;
+  gassign *new_stmt;
+
+  /* If the add candidate along this incoming edge has the same
+     index as C's hidden basis, the hidden basis represents this
+     edge correctly.  */
+  if (increment == 0)
+    return basis_name;
+
+  basis_type = TREE_TYPE (basis_name);
+  lhs = make_temp_ssa_name (basis_type, NULL, "slsr");
+
+  if (known_stride)
+    {
+      tree bump_tree;
+      enum tree_code code = PLUS_EXPR;
+      widest_int bump = increment * wi::to_widest (c->stride);
+      if (wi::neg_p (bump))
+	{
+	  code = MINUS_EXPR;
+	  bump = -bump;
+	}
+
+      bump_tree = wide_int_to_tree (basis_type, bump);
+      new_stmt = gimple_build_assign (lhs, code, basis_name, bump_tree);
+    }
+  else
+    {
+      int i;
+      bool negate_incr = (!address_arithmetic_p && wi::neg_p (increment));
+      i = incr_vec_index (negate_incr ? -increment : increment);
+      gcc_assert (i >= 0);
+
+      if (incr_vec[i].initializer)
+	{
+	  enum tree_code code = negate_incr ? MINUS_EXPR : PLUS_EXPR;
+	  new_stmt = gimple_build_assign (lhs, code, basis_name,
+					  incr_vec[i].initializer);
+	}
+      else if (increment == 1)
+	new_stmt = gimple_build_assign (lhs, PLUS_EXPR, basis_name, c->stride);
+      else if (increment == -1)
+	new_stmt = gimple_build_assign (lhs, MINUS_EXPR, basis_name,
+					c->stride);
+      else
+	gcc_unreachable ();
+    }
+
+  insert_bb = single_succ_p (e->src) ? e->src : split_edge (e);
+  gsi = gsi_last_bb (insert_bb);
+
+  if (!gsi_end_p (gsi) && is_ctrl_stmt (gsi_stmt (gsi)))
+    gsi_insert_before (&gsi, new_stmt, GSI_NEW_STMT);
+  else
+    gsi_insert_after (&gsi, new_stmt, GSI_NEW_STMT);
+
+  gimple_set_location (new_stmt, loc);
+
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fprintf (dump_file, "Inserting in block %d: ", insert_bb->index);
+      print_gimple_stmt (dump_file, new_stmt, 0, 0);
+    }
+
+  return lhs;
+}
+
+/* Given a candidate C with BASIS_NAME being the LHS of C's basis which
+   is hidden by the phi node FROM_PHI, create a new phi node in the same
+   block as FROM_PHI.  The new phi is suitable for use as a basis by C,
+   with its phi arguments representing conditional adjustments to the
+   hidden basis along conditional incoming paths.  Those adjustments are
+   made by creating add statements (and sometimes recursively creating
+   phis) along those incoming paths.  LOC is the location to attach to
+   the introduced statements.  KNOWN_STRIDE is true iff C's stride is a
+   constant.  */
+
+static tree
+create_phi_basis (slsr_cand_t c, gimple from_phi, tree basis_name,
+		  location_t loc, bool known_stride)
+{
+  int i;
+  tree name, phi_arg;
+  gphi *phi;
+  vec<tree> phi_args;
+  slsr_cand_t basis = lookup_cand (c->basis);
+  int nargs = gimple_phi_num_args (from_phi);
+  basic_block phi_bb = gimple_bb (from_phi);
+  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (from_phi));
+  phi_args.create (nargs);
+
+  /* Process each argument of the existing phi that represents
+     conditionally-executed add candidates.  */
+  for (i = 0; i < nargs; i++)
+    {
+      edge e = (*phi_bb->preds)[i];
+      tree arg = gimple_phi_arg_def (from_phi, i);
+      tree feeding_def;
+
+      /* If the phi argument is the base name of the CAND_PHI, then
+	 this incoming arc should use the hidden basis.  */
+      if (operand_equal_p (arg, phi_cand->base_expr, 0))
+	if (basis->index == 0)
+	  feeding_def = gimple_assign_lhs (basis->cand_stmt);
+	else
+	  {
+	    widest_int incr = -basis->index;
+	    feeding_def = create_add_on_incoming_edge (c, basis_name, incr,
+						       e, loc, known_stride);
+	  }
+      else
+	{
+	  gimple arg_def = SSA_NAME_DEF_STMT (arg);
+
+	  /* If there is another phi along this incoming edge, we must
+	     process it in the same fashion to ensure that all basis
+	     adjustments are made along its incoming edges.  */
+	  if (gimple_code (arg_def) == GIMPLE_PHI)
+	    feeding_def = create_phi_basis (c, arg_def, basis_name,
+					    loc, known_stride);
+	  else
+	    {
+	      slsr_cand_t arg_cand = base_cand_from_table (arg);
+	      widest_int diff = arg_cand->index - basis->index;
+	      feeding_def = create_add_on_incoming_edge (c, basis_name, diff,
+							 e, loc, known_stride);
+	    }
+	}
+
+      /* Because of recursion, we need to save the arguments in a vector
+	 so we can create the PHI statement all at once.  Otherwise the
+	 storage for the half-created PHI can be reclaimed.  */
+      phi_args.safe_push (feeding_def);
+    }
+
+  /* Create the new phi basis.  */
+  name = make_temp_ssa_name (TREE_TYPE (basis_name), NULL, "slsr");
+  phi = create_phi_node (name, phi_bb);
+  SSA_NAME_DEF_STMT (name) = phi;
+
+  FOR_EACH_VEC_ELT (phi_args, i, phi_arg)
+    {
+      edge e = (*phi_bb->preds)[i];
+      add_phi_arg (phi, phi_arg, e, loc);
+    }
+
+  update_stmt (phi);
+
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fputs ("Introducing new phi basis: ", dump_file);
+      print_gimple_stmt (dump_file, phi, 0, 0);
+    }
+
+  return name;
+}
+
+/* Given a candidate C whose basis is hidden by at least one intervening
+   phi, introduce a matching number of new phis to represent its basis
+   adjusted by conditional increments along possible incoming paths.  Then
+   replace C as though it were an unconditional candidate, using the new
+   basis.  */
+
+static void
+replace_conditional_candidate (slsr_cand_t c)
+{
+  tree basis_name, name;
+  slsr_cand_t basis;
+  location_t loc;
+
+  /* Look up the LHS SSA name from C's basis.  This will be the 
+     RHS1 of the adds we will introduce to create new phi arguments.  */
+  basis = lookup_cand (c->basis);
+  basis_name = gimple_assign_lhs (basis->cand_stmt);
+
+  /* Create a new phi statement which will represent C's true basis
+     after the transformation is complete.  */
+  loc = gimple_location (c->cand_stmt);
+  name = create_phi_basis (c, lookup_cand (c->def_phi)->cand_stmt,
+			   basis_name, loc, KNOWN_STRIDE);
+  /* Replace C with an add of the new basis phi and a constant.  */
+  widest_int bump = c->index * wi::to_widest (c->stride);
+
+  replace_mult_candidate (c, name, bump);
+}
+
+/* Compute the expected costs of inserting basis adjustments for
+   candidate C with phi-definition PHI.  The cost of inserting 
+   one adjustment is given by ONE_ADD_COST.  If PHI has arguments
+   which are themselves phi results, recursively calculate costs
+   for those phis as well.  */
+
+static int
+phi_add_costs (gimple phi, slsr_cand_t c, int one_add_cost)
+{
+  unsigned i;
+  int cost = 0;
+  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
+
+  /* If we work our way back to a phi that isn't dominated by the hidden
+     basis, this isn't a candidate for replacement.  Indicate this by
+     returning an unreasonably high cost.  It's not easy to detect
+     these situations when determining the basis, so we defer the
+     decision until now.  */
+  basic_block phi_bb = gimple_bb (phi);
+  slsr_cand_t basis = lookup_cand (c->basis);
+  basic_block basis_bb = gimple_bb (basis->cand_stmt);
+
+  if (phi_bb == basis_bb || !dominated_by_p (CDI_DOMINATORS, phi_bb, basis_bb))
+    return COST_INFINITE;
+
+  for (i = 0; i < gimple_phi_num_args (phi); i++)
+    {
+      tree arg = gimple_phi_arg_def (phi, i);
+
+      if (arg != phi_cand->base_expr)
+	{
+	  gimple arg_def = SSA_NAME_DEF_STMT (arg);
+
+	  if (gimple_code (arg_def) == GIMPLE_PHI)
+	    cost += phi_add_costs (arg_def, c, one_add_cost);
+	  else
+	    {
+	      slsr_cand_t arg_cand = base_cand_from_table (arg);
+
+	      if (arg_cand->index != c->index)
+		cost += one_add_cost;
+	    }
+	}
+    }
+
+  return cost;
+}
+
+/* For candidate C, each sibling of candidate C, and each dependent of
+   candidate C, determine whether the candidate is dependent upon a 
+   phi that hides its basis.  If not, replace the candidate unconditionally.
+   Otherwise, determine whether the cost of introducing compensation code
+   for the candidate is offset by the gains from strength reduction.  If
+   so, replace the candidate and introduce the compensation code.  */
+
+static void
+replace_uncond_cands_and_profitable_phis (slsr_cand_t c)
+{
+  if (phi_dependent_cand_p (c))
+    {
+      if (c->kind == CAND_MULT)
+	{
+	  /* A candidate dependent upon a phi will replace a multiply by 
+	     a constant with an add, and will insert at most one add for
+	     each phi argument.  Add these costs with the potential dead-code
+	     savings to determine profitability.  */
+	  bool speed = optimize_bb_for_speed_p (gimple_bb (c->cand_stmt));
+	  int mult_savings = stmt_cost (c->cand_stmt, speed);
+	  gimple phi = lookup_cand (c->def_phi)->cand_stmt;
+	  tree phi_result = gimple_phi_result (phi);
+	  int one_add_cost = add_cost (speed, 
+				       TYPE_MODE (TREE_TYPE (phi_result)));
+	  int add_costs = one_add_cost + phi_add_costs (phi, c, one_add_cost);
+	  int cost = add_costs - mult_savings - c->dead_savings;
+
+	  if (dump_file && (dump_flags & TDF_DETAILS))
+	    {
+	      fprintf (dump_file, "  Conditional candidate %d:\n", c->cand_num);
+	      fprintf (dump_file, "    add_costs = %d\n", add_costs);
+	      fprintf (dump_file, "    mult_savings = %d\n", mult_savings);
+	      fprintf (dump_file, "    dead_savings = %d\n", c->dead_savings);
+	      fprintf (dump_file, "    cost = %d\n", cost);
+	      if (cost <= COST_NEUTRAL)
+		fputs ("  Replacing...\n", dump_file);
+	      else
+		fputs ("  Not replaced.\n", dump_file);
+	    }
+
+	  if (cost <= COST_NEUTRAL)
+	    replace_conditional_candidate (c);
+	}
+    }
+  else
+    replace_unconditional_candidate (c);
+
+  if (c->sibling)
+    replace_uncond_cands_and_profitable_phis (lookup_cand (c->sibling));
+
+  if (c->dependent)
+    replace_uncond_cands_and_profitable_phis (lookup_cand (c->dependent));
+}
+
 /* Count the number of candidates in the tree rooted at C that have
    not already been replaced under other interpretations.  */
 
-static unsigned
+static int
 count_candidates (slsr_cand_t c)
 {
   unsigned count = cand_already_replaced (c) ? 0 : 1;
@@ -1789,19 +2485,21 @@ count_candidates (slsr_cand_t c)
 }
 
 /* Increase the count of INCREMENT by one in the increment vector.
-   INCREMENT is associated with candidate C.  If an initializer
+   INCREMENT is associated with candidate C.  If INCREMENT is to be
+   conditionally executed as part of a conditional candidate replacement,
+   IS_PHI_ADJUST is true, otherwise false.  If an initializer
    T_0 = stride * I is provided by a candidate that dominates all
    candidates with the same increment, also record T_0 for subsequent use.  */
 
 static void
-record_increment (slsr_cand_t c, double_int increment)
+record_increment (slsr_cand_t c, widest_int increment, bool is_phi_adjust)
 {
   bool found = false;
   unsigned i;
 
   /* Treat increments that differ only in sign as identical so as to
      share initializers, unless we are generating pointer arithmetic.  */
-  if (!address_arithmetic_p && increment.is_negative ())
+  if (!address_arithmetic_p && wi::neg_p (increment))
     increment = -increment;
 
   for (i = 0; i < incr_vec_len; i++)
@@ -1827,24 +2525,26 @@ record_increment (slsr_cand_t c, double_int increment)
 	}
     }
 
-  if (!found)
+  if (!found && incr_vec_len < MAX_INCR_VEC_LEN - 1)
     {
       /* The first time we see an increment, create the entry for it.
 	 If this is the root candidate which doesn't have a basis, set
 	 the count to zero.  We're only processing it so it can possibly
 	 provide an initializer for other candidates.  */
       incr_vec[incr_vec_len].incr = increment;
-      incr_vec[incr_vec_len].count = c->basis ? 1 : 0;
+      incr_vec[incr_vec_len].count = c->basis || is_phi_adjust ? 1 : 0;
       incr_vec[incr_vec_len].cost = COST_INFINITE;
       
       /* Optimistically record the first occurrence of this increment
 	 as providing an initializer (if it does); we will revise this
 	 opinion later if it doesn't dominate all other occurrences.
-         Exception:  increments of -1, 0, 1 never need initializers.  */
+         Exception:  increments of -1, 0, 1 never need initializers;
+	 and phi adjustments don't ever provide initializers.  */
       if (c->kind == CAND_ADD
+	  && !is_phi_adjust
 	  && c->index == increment
-	  && (increment.sgt (double_int_one)
-	      || increment.slt (double_int_minus_one))
+	  && (wi::gts_p (increment, 1)
+	      || wi::lts_p (increment, -1))
 	  && (gimple_assign_rhs_code (c->cand_stmt) == PLUS_EXPR
 	      || gimple_assign_rhs_code (c->cand_stmt) == POINTER_PLUS_EXPR))
 	{
@@ -1877,6 +2577,38 @@ record_increment (slsr_cand_t c, double_int increment)
     }
 }
 
+/* Given phi statement PHI that hides a candidate from its BASIS, find
+   the increments along each incoming arc (recursively handling additional
+   phis that may be present) and record them.  These increments are the
+   difference in index between the index-adjusting statements and the
+   index of the basis.  */
+
+static void
+record_phi_increments (slsr_cand_t basis, gimple phi)
+{
+  unsigned i;
+  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
+  
+  for (i = 0; i < gimple_phi_num_args (phi); i++)
+    {
+      tree arg = gimple_phi_arg_def (phi, i);
+
+      if (!operand_equal_p (arg, phi_cand->base_expr, 0))
+	{
+	  gimple arg_def = SSA_NAME_DEF_STMT (arg);
+
+	  if (gimple_code (arg_def) == GIMPLE_PHI)
+	    record_phi_increments (basis, arg_def);
+	  else
+	    {
+	      slsr_cand_t arg_cand = base_cand_from_table (arg);
+	      widest_int diff = arg_cand->index - basis->index;
+	      record_increment (arg_cand, diff, PHI_ADJUST);
+	    }
+	}
+    }
+}
+
 /* Determine how many times each unique increment occurs in the set
    of candidates rooted at C's parent, recording the data in the
    increment vector.  For each unique increment I, if an initializer
@@ -1888,13 +2620,79 @@ static void
 record_increments (slsr_cand_t c)
 {
   if (!cand_already_replaced (c))
-    record_increment (c, cand_increment (c));
+    {
+      if (!phi_dependent_cand_p (c))
+	record_increment (c, cand_increment (c), NOT_PHI_ADJUST);
+      else
+	{
+	  /* A candidate with a basis hidden by a phi will have one
+	     increment for its relationship to the index represented by
+	     the phi, and potentially additional increments along each
+	     incoming edge.  For the root of the dependency tree (which
+	     has no basis), process just the initial index in case it has
+	     an initializer that can be used by subsequent candidates.  */
+	  record_increment (c, c->index, NOT_PHI_ADJUST);
+
+	  if (c->basis)
+	    record_phi_increments (lookup_cand (c->basis),
+				   lookup_cand (c->def_phi)->cand_stmt);
+	}
+    }
 
   if (c->sibling)
     record_increments (lookup_cand (c->sibling));
 
   if (c->dependent)
     record_increments (lookup_cand (c->dependent));
+}
+
+/* Add up and return the costs of introducing add statements that
+   require the increment INCR on behalf of candidate C and phi
+   statement PHI.  Accumulate into *SAVINGS the potential savings
+   from removing existing statements that feed PHI and have no other
+   uses.  */
+
+static int
+phi_incr_cost (slsr_cand_t c, const widest_int &incr, gimple phi, int *savings)
+{
+  unsigned i;
+  int cost = 0;
+  slsr_cand_t basis = lookup_cand (c->basis);
+  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
+
+  for (i = 0; i < gimple_phi_num_args (phi); i++)
+    {
+      tree arg = gimple_phi_arg_def (phi, i);
+
+      if (!operand_equal_p (arg, phi_cand->base_expr, 0))
+	{
+	  gimple arg_def = SSA_NAME_DEF_STMT (arg);
+      
+	  if (gimple_code (arg_def) == GIMPLE_PHI)
+	    {
+	      int feeding_savings = 0;
+	      cost += phi_incr_cost (c, incr, arg_def, &feeding_savings);
+	      if (has_single_use (gimple_phi_result (arg_def)))
+		*savings += feeding_savings;
+	    }
+	  else
+	    {
+	      slsr_cand_t arg_cand = base_cand_from_table (arg);
+	      widest_int diff = arg_cand->index - basis->index;
+
+	      if (incr == diff)
+		{
+		  tree basis_lhs = gimple_assign_lhs (basis->cand_stmt);
+		  tree lhs = gimple_assign_lhs (arg_cand->cand_stmt);
+		  cost += add_cost (true, TYPE_MODE (TREE_TYPE (basis_lhs)));
+		  if (has_single_use (lhs))
+		    *savings += stmt_cost (arg_cand->cand_stmt, true);
+		}
+	    }
+	}
+    }
+
+  return cost;
 }
 
 /* Return the first candidate in the tree rooted at C that has not
@@ -1940,13 +2738,15 @@ optimize_cands_for_speed_p (slsr_cand_t c)
    candidate C or any of its siblings, counting only candidates along
    such paths with increment INCR.  Assume that replacing a candidate
    reduces cost by REPL_SAVINGS.  Also account for savings from any
-   statements that would go dead.  */
+   statements that would go dead.  If COUNT_PHIS is true, include
+   costs of introducing feeding statements for conditional candidates.  */
 
 static int
-lowest_cost_path (int cost_in, int repl_savings, slsr_cand_t c, double_int incr)
+lowest_cost_path (int cost_in, int repl_savings, slsr_cand_t c,
+		  const widest_int &incr, bool count_phis)
 {
-  int local_cost, sib_cost;
-  double_int cand_incr = cand_abs_increment (c);
+  int local_cost, sib_cost, savings = 0;
+  widest_int cand_incr = cand_abs_increment (c);
 
   if (cand_already_replaced (c))
     local_cost = cost_in;
@@ -1955,14 +2755,27 @@ lowest_cost_path (int cost_in, int repl_savings, slsr_cand_t c, double_int incr)
   else
     local_cost = cost_in - c->dead_savings;
 
+  if (count_phis
+      && phi_dependent_cand_p (c)
+      && !cand_already_replaced (c))
+    {
+      gimple phi = lookup_cand (c->def_phi)->cand_stmt;
+      local_cost += phi_incr_cost (c, incr, phi, &savings);
+
+      if (has_single_use (gimple_phi_result (phi)))
+	local_cost -= savings;
+    }
+
   if (c->dependent)
     local_cost = lowest_cost_path (local_cost, repl_savings, 
-				   lookup_cand (c->dependent), incr);
+				   lookup_cand (c->dependent), incr,
+				   count_phis);
 
   if (c->sibling)
     {
       sib_cost = lowest_cost_path (cost_in, repl_savings,
-				   lookup_cand (c->sibling), incr);
+				   lookup_cand (c->sibling), incr,
+				   count_phis);
       local_cost = MIN (local_cost, sib_cost);
     }
 
@@ -1976,19 +2789,34 @@ lowest_cost_path (int cost_in, int repl_savings, slsr_cand_t c, double_int incr)
    would go dead.  */
 
 static int
-total_savings (int repl_savings, slsr_cand_t c, double_int incr)
+total_savings (int repl_savings, slsr_cand_t c, const widest_int &incr,
+	       bool count_phis)
 {
   int savings = 0;
-  double_int cand_incr = cand_abs_increment (c);
+  widest_int cand_incr = cand_abs_increment (c);
 
   if (incr == cand_incr && !cand_already_replaced (c))
     savings += repl_savings + c->dead_savings;
 
+  if (count_phis
+      && phi_dependent_cand_p (c)
+      && !cand_already_replaced (c))
+    {
+      int phi_savings = 0;
+      gimple phi = lookup_cand (c->def_phi)->cand_stmt;
+      savings -= phi_incr_cost (c, incr, phi, &phi_savings);
+
+      if (has_single_use (gimple_phi_result (phi)))
+	savings += phi_savings;
+    }
+
   if (c->dependent)
-    savings += total_savings (repl_savings, lookup_cand (c->dependent), incr);
+    savings += total_savings (repl_savings, lookup_cand (c->dependent), incr,
+			      count_phis);
 
   if (c->sibling)
-    savings += total_savings (repl_savings, lookup_cand (c->sibling), incr);
+    savings += total_savings (repl_savings, lookup_cand (c->sibling), incr,
+			      count_phis);
 
   return savings;
 }
@@ -2004,7 +2832,7 @@ total_savings (int repl_savings, slsr_cand_t c, double_int incr)
    up sometime.  */
 
 static void
-analyze_increments (slsr_cand_t first_dep, enum machine_mode mode, bool speed)
+analyze_increments (slsr_cand_t first_dep, machine_mode mode, bool speed)
 {
   unsigned i;
 
@@ -2015,7 +2843,7 @@ analyze_increments (slsr_cand_t first_dep, enum machine_mode mode, bool speed)
       /* If somehow this increment is bigger than a HWI, we won't
 	 be optimizing candidates that use it.  And if the increment
 	 has a count of zero, nothing will be done with it.  */
-      if (!incr_vec[i].incr.fits_shwi () || !incr_vec[i].count)
+      if (!wi::fits_shwi_p (incr_vec[i].incr) || !incr_vec[i].count)
 	incr_vec[i].cost = COST_INFINITE;
 
       /* Increments of 0, 1, and -1 are always profitable to replace,
@@ -2080,9 +2908,10 @@ analyze_increments (slsr_cand_t first_dep, enum machine_mode mode, bool speed)
 	  int repl_savings = mul_cost (speed, mode) - add_cost (speed, mode);
 	  if (speed)
 	    cost = lowest_cost_path (cost, repl_savings, first_dep,
-				     incr_vec[i].incr);
+				     incr_vec[i].incr, COUNT_PHIS);
 	  else
-	    cost -= total_savings (repl_savings, first_dep, incr_vec[i].incr);
+	    cost -= total_savings (repl_savings, first_dep, incr_vec[i].incr,
+				   COUNT_PHIS);
 
 	  incr_vec[i].cost = cost;
 	}
@@ -2099,9 +2928,11 @@ analyze_increments (slsr_cand_t first_dep, enum machine_mode mode, bool speed)
 	    cost = mult_by_coeff_cost (incr, mode, speed);
 
 	  if (speed)
-	    cost = lowest_cost_path (cost, 0, first_dep, incr_vec[i].incr);
+	    cost = lowest_cost_path (cost, 0, first_dep, incr_vec[i].incr,
+				     DONT_COUNT_PHIS);
 	  else
-	    cost -= total_savings (0, first_dep, incr_vec[i].incr);
+	    cost -= total_savings (0, first_dep, incr_vec[i].incr,
+				   DONT_COUNT_PHIS);
 
 	  incr_vec[i].cost = cost;
 	}
@@ -2159,6 +2990,71 @@ ncd_for_two_cands (basic_block bb1, basic_block bb2,
   return ncd;
 }
 
+/* Consider all candidates that feed PHI.  Find the nearest common
+   dominator of those candidates requiring the given increment INCR.
+   Further find and return the nearest common dominator of this result
+   with block NCD.  If the returned block contains one or more of the
+   candidates, return the earliest candidate in the block in *WHERE.  */
+
+static basic_block
+ncd_with_phi (slsr_cand_t c, const widest_int &incr, gphi *phi,
+	      basic_block ncd, slsr_cand_t *where)
+{
+  unsigned i;
+  slsr_cand_t basis = lookup_cand (c->basis);
+  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
+
+  for (i = 0; i < gimple_phi_num_args (phi); i++)
+    {
+      tree arg = gimple_phi_arg_def (phi, i);
+
+      if (!operand_equal_p (arg, phi_cand->base_expr, 0))
+	{
+	  gimple arg_def = SSA_NAME_DEF_STMT (arg);
+
+	  if (gimple_code (arg_def) == GIMPLE_PHI)
+	    ncd = ncd_with_phi (c, incr, as_a <gphi *> (arg_def), ncd,
+				where);
+	  else 
+	    {
+	      slsr_cand_t arg_cand = base_cand_from_table (arg);
+	      widest_int diff = arg_cand->index - basis->index;
+	      basic_block pred = gimple_phi_arg_edge (phi, i)->src;
+
+	      if ((incr == diff) || (!address_arithmetic_p && incr == -diff))
+		ncd = ncd_for_two_cands (ncd, pred, *where, NULL, where);
+	    }
+	}
+    }
+
+  return ncd;
+}
+
+/* Consider the candidate C together with any candidates that feed
+   C's phi dependence (if any).  Find and return the nearest common
+   dominator of those candidates requiring the given increment INCR.
+   If the returned block contains one or more of the candidates,
+   return the earliest candidate in the block in *WHERE.  */
+
+static basic_block
+ncd_of_cand_and_phis (slsr_cand_t c, const widest_int &incr, slsr_cand_t *where)
+{
+  basic_block ncd = NULL;
+
+  if (cand_abs_increment (c) == incr)
+    {
+      ncd = gimple_bb (c->cand_stmt);
+      *where = c;
+    }
+  
+  if (phi_dependent_cand_p (c))
+    ncd = ncd_with_phi (c, incr,
+			as_a <gphi *> (lookup_cand (c->def_phi)->cand_stmt),
+			ncd, where);
+
+  return ncd;
+}
+
 /* Consider all candidates in the tree rooted at C for which INCR
    represents the required increment of C relative to its basis.
    Find and return the basic block that most nearly dominates all
@@ -2167,12 +3063,11 @@ ncd_for_two_cands (basic_block bb1, basic_block bb2,
    *WHERE.  */
 
 static basic_block
-nearest_common_dominator_for_cands (slsr_cand_t c, double_int incr,
+nearest_common_dominator_for_cands (slsr_cand_t c, const widest_int &incr,
 				    slsr_cand_t *where)
 {
   basic_block sib_ncd = NULL, dep_ncd = NULL, this_ncd = NULL, ncd;
   slsr_cand_t sib_where = NULL, dep_where = NULL, this_where = NULL, new_where;
-  double_int cand_incr;
 
   /* First find the NCD of all siblings and dependents.  */
   if (c->sibling)
@@ -2201,10 +3096,11 @@ nearest_common_dominator_for_cands (slsr_cand_t c, double_int incr,
 			     dep_where, &new_where);
 
   /* If the candidate's increment doesn't match the one we're interested
-     in, then the result depends only on siblings and dependents.  */
-  cand_incr = cand_abs_increment (c);
+     in (and nor do any increments for feeding defs of a phi-dependence),
+     then the result depends only on siblings and dependents.  */
+  this_ncd = ncd_of_cand_and_phis (c, incr, &this_where);
 
-  if (cand_incr != incr || cand_already_replaced (c))
+  if (!this_ncd || cand_already_replaced (c))
     {
       *where = new_where;
       return ncd;
@@ -2212,8 +3108,6 @@ nearest_common_dominator_for_cands (slsr_cand_t c, double_int incr,
 
   /* Otherwise, compare this candidate with the result from all siblings
      and dependents.  */
-  this_where = c;
-  this_ncd = gimple_bb (c->cand_stmt);
   ncd = ncd_for_two_cands (ncd, this_ncd, new_where, this_where, where);
 
   return ncd;
@@ -2238,21 +3132,20 @@ static void
 insert_initializers (slsr_cand_t c)
 {
   unsigned i;
-  tree new_var = NULL_TREE;
 
   for (i = 0; i < incr_vec_len; i++)
     {
       basic_block bb;
       slsr_cand_t where = NULL;
-      gimple init_stmt;
+      gassign *init_stmt;
       tree stride_type, new_name, incr_tree;
-      double_int incr = incr_vec[i].incr;
+      widest_int incr = incr_vec[i].incr;
 
       if (!profitable_increment_p (i)
-	  || incr.is_one ()
-	  || (incr.is_minus_one ()
+	  || incr == 1
+	  || (incr == -1
 	      && gimple_assign_rhs_code (c->cand_stmt) != POINTER_PLUS_EXPR)
-	  || incr.is_zero ())
+	  || incr == 0)
 	continue;
 
       /* We may have already identified an existing initializer that
@@ -2276,15 +3169,14 @@ insert_initializers (slsr_cand_t c)
 
       /* Create a new SSA name to hold the initializer's value.  */
       stride_type = TREE_TYPE (c->stride);
-      lazy_create_slsr_reg (&new_var, stride_type);
-      new_name = make_ssa_name (new_var, NULL);
+      new_name = make_temp_ssa_name (stride_type, NULL, "slsr");
       incr_vec[i].initializer = new_name;
 
       /* Create the initializer and insert it in the latest possible
 	 dominating position.  */
-      incr_tree = double_int_to_tree (stride_type, incr);
-      init_stmt = gimple_build_assign_with_ops (MULT_EXPR, new_name,
-						c->stride, incr_tree);
+      incr_tree = wide_int_to_tree (stride_type, incr);
+      init_stmt = gimple_build_assign (new_name, MULT_EXPR,
+				       c->stride, incr_tree);
       if (where)
 	{
 	  gimple_stmt_iterator gsi = gsi_for_stmt (where->cand_stmt);
@@ -2312,23 +3204,82 @@ insert_initializers (slsr_cand_t c)
     }
 }
 
+/* Return TRUE iff all required increments for candidates feeding PHI
+   are profitable to replace on behalf of candidate C.  */
+
+static bool
+all_phi_incrs_profitable (slsr_cand_t c, gimple phi)
+{
+  unsigned i;
+  slsr_cand_t basis = lookup_cand (c->basis);
+  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
+
+  for (i = 0; i < gimple_phi_num_args (phi); i++)
+    {
+      tree arg = gimple_phi_arg_def (phi, i);
+
+      if (!operand_equal_p (arg, phi_cand->base_expr, 0))
+	{
+	  gimple arg_def = SSA_NAME_DEF_STMT (arg);
+
+	  if (gimple_code (arg_def) == GIMPLE_PHI)
+	    {
+	      if (!all_phi_incrs_profitable (c, arg_def))
+		return false;
+	    }
+	  else
+	    {
+	      int j;
+	      slsr_cand_t arg_cand = base_cand_from_table (arg);
+	      widest_int increment = arg_cand->index - basis->index;
+
+	      if (!address_arithmetic_p && wi::neg_p (increment))
+		increment = -increment;
+
+	      j = incr_vec_index (increment);
+
+	      if (dump_file && (dump_flags & TDF_DETAILS))
+		{
+		  fprintf (dump_file, "  Conditional candidate %d, phi: ",
+			   c->cand_num);
+		  print_gimple_stmt (dump_file, phi, 0, 0);
+		  fputs ("    increment: ", dump_file);
+		  print_decs (increment, dump_file);
+		  if (j < 0)
+		    fprintf (dump_file,
+			     "\n  Not replaced; incr_vec overflow.\n");
+		  else {
+		    fprintf (dump_file, "\n    cost: %d\n", incr_vec[j].cost);
+		    if (profitable_increment_p (j))
+		      fputs ("  Replacing...\n", dump_file);
+		    else
+		      fputs ("  Not replaced.\n", dump_file);
+		  }
+		}
+
+	      if (j < 0 || !profitable_increment_p (j))
+		return false;
+	    }
+	}
+    }
+
+  return true;
+}
+  
 /* Create a NOP_EXPR that copies FROM_EXPR into a new SSA name of
    type TO_TYPE, and insert it in front of the statement represented
    by candidate C.  Use *NEW_VAR to create the new SSA name.  Return
    the new SSA name.  */
 
 static tree
-introduce_cast_before_cand (slsr_cand_t c, tree to_type,
-			    tree from_expr, tree *new_var)
+introduce_cast_before_cand (slsr_cand_t c, tree to_type, tree from_expr)
 {
   tree cast_lhs;
-  gimple cast_stmt;
+  gassign *cast_stmt;
   gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
 
-  lazy_create_slsr_reg (new_var, to_type);
-  cast_lhs = make_ssa_name (*new_var, NULL);
-  cast_stmt = gimple_build_assign_with_ops (NOP_EXPR, cast_lhs,
-					    from_expr, NULL_TREE);
+  cast_lhs = make_temp_ssa_name (to_type, NULL, "slsr");
+  cast_stmt = gimple_build_assign (cast_lhs, NOP_EXPR, from_expr);
   gimple_set_location (cast_stmt, gimple_location (c->cand_stmt));
   gsi_insert_before (&gsi, cast_stmt, GSI_SAME_STMT);
 
@@ -2362,6 +3313,7 @@ replace_rhs_if_not_dup (enum tree_code new_code, tree new_rhs1, tree new_rhs2,
       gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
       gimple_assign_set_rhs_with_ops (&gsi, new_code, new_rhs1, new_rhs2);
       update_stmt (gsi_stmt (gsi));
+      c->cand_stmt = gsi_stmt (gsi);
 
       if (dump_file && (dump_flags & TDF_DETAILS))
 	return gsi_stmt (gsi);
@@ -2380,14 +3332,13 @@ replace_rhs_if_not_dup (enum tree_code new_code, tree new_rhs1, tree new_rhs2,
    is the rhs1 to use in creating the add/subtract.  */
 
 static void
-replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
-		       tree basis_name)
+replace_one_candidate (slsr_cand_t c, unsigned i, tree basis_name)
 {
   gimple stmt_to_print = NULL;
   tree orig_rhs1, orig_rhs2;
   tree rhs2;
   enum tree_code orig_code, repl_code;
-  double_int cand_incr;
+  widest_int cand_incr;
 
   orig_code = gimple_assign_rhs_code (c->cand_stmt);
   orig_rhs1 = gimple_assign_rhs1 (c->cand_stmt);
@@ -2417,8 +3368,7 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
 	rhs2 = incr_vec[i].initializer;
       else
 	rhs2 = introduce_cast_before_cand (c, orig_type,
-					   incr_vec[i].initializer,
-					   new_var);
+					   incr_vec[i].initializer);
 
       if (incr_vec[i].incr != cand_incr)
 	{
@@ -2436,7 +3386,7 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
      from the basis name, or an add of the stride to the basis
      name, respectively.  It may be necessary to introduce a
      cast (or reuse an existing cast).  */
-  else if (cand_incr.is_one ())
+  else if (cand_incr == 1)
     {
       tree stride_type = TREE_TYPE (c->stride);
       tree orig_type = TREE_TYPE (orig_rhs2);
@@ -2444,14 +3394,14 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
       if (types_compatible_p (orig_type, stride_type))
 	rhs2 = c->stride;
       else
-	rhs2 = introduce_cast_before_cand (c, orig_type, c->stride, new_var);
+	rhs2 = introduce_cast_before_cand (c, orig_type, c->stride);
       
       stmt_to_print = replace_rhs_if_not_dup (repl_code, basis_name, rhs2,
 					      orig_code, orig_rhs1, orig_rhs2,
 					      c);
     }
 
-  else if (cand_incr.is_minus_one ())
+  else if (cand_incr == -1)
     {
       tree stride_type = TREE_TYPE (c->stride);
       tree orig_type = TREE_TYPE (orig_rhs2);
@@ -2460,7 +3410,7 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
       if (types_compatible_p (orig_type, stride_type))
 	rhs2 = c->stride;
       else
-	rhs2 = introduce_cast_before_cand (c, orig_type, c->stride, new_var);
+	rhs2 = introduce_cast_before_cand (c, orig_type, c->stride);
       
       if (orig_code != MINUS_EXPR
 	  || !operand_equal_p (basis_name, orig_rhs1, 0)
@@ -2469,6 +3419,7 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
 	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
 	  gimple_assign_set_rhs_with_ops (&gsi, MINUS_EXPR, basis_name, rhs2);
 	  update_stmt (gsi_stmt (gsi));
+          c->cand_stmt = gsi_stmt (gsi);
 
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    stmt_to_print = gsi_stmt (gsi);
@@ -2477,7 +3428,7 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
 	fputs ("  (duplicate, not actually replacing)\n", dump_file);
     }
 
-  else if (cand_incr.is_zero ())
+  else if (cand_incr == 0)
     {
       tree lhs = gimple_assign_lhs (c->cand_stmt);
       tree lhs_type = TREE_TYPE (lhs);
@@ -2485,10 +3436,11 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
       
       if (types_compatible_p (lhs_type, basis_type))
 	{
-	  gimple copy_stmt = gimple_build_assign (lhs, basis_name);
+	  gassign *copy_stmt = gimple_build_assign (lhs, basis_name);
 	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
 	  gimple_set_location (copy_stmt, gimple_location (c->cand_stmt));
 	  gsi_replace (&gsi, copy_stmt, false);
+	  c->cand_stmt = copy_stmt;
 
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    stmt_to_print = copy_stmt;
@@ -2496,11 +3448,10 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree *new_var,
       else
 	{
 	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
-	  gimple cast_stmt = gimple_build_assign_with_ops (NOP_EXPR, lhs,
-							   basis_name,
-							   NULL_TREE);
+	  gassign *cast_stmt = gimple_build_assign (lhs, NOP_EXPR, basis_name);
 	  gimple_set_location (cast_stmt, gimple_location (c->cand_stmt));
 	  gsi_replace (&gsi, cast_stmt, false);
+	  c->cand_stmt = cast_stmt;
 
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    stmt_to_print = cast_stmt;
@@ -2525,22 +3476,48 @@ replace_profitable_candidates (slsr_cand_t c)
 {
   if (!cand_already_replaced (c))
     {
-      double_int increment = cand_abs_increment (c);
-      tree new_var = NULL;
+      widest_int increment = cand_abs_increment (c);
       enum tree_code orig_code = gimple_assign_rhs_code (c->cand_stmt);
-      unsigned i;
+      int i;
 
       i = incr_vec_index (increment);
 
       /* Only process profitable increments.  Nothing useful can be done
 	 to a cast or copy.  */
-      if (profitable_increment_p (i) 
+      if (i >= 0
+	  && profitable_increment_p (i) 
 	  && orig_code != MODIFY_EXPR
-	  && orig_code != NOP_EXPR)
+	  && !CONVERT_EXPR_CODE_P (orig_code))
 	{
-	  slsr_cand_t basis = lookup_cand (c->basis);
-	  tree basis_name = gimple_assign_lhs (basis->cand_stmt);
-	  replace_one_candidate (c, i, &new_var, basis_name);
+	  if (phi_dependent_cand_p (c))
+	    {
+	      gimple phi = lookup_cand (c->def_phi)->cand_stmt;
+
+	      if (all_phi_incrs_profitable (c, phi))
+		{
+		  /* Look up the LHS SSA name from C's basis.  This will be 
+		     the RHS1 of the adds we will introduce to create new
+		     phi arguments.  */
+		  slsr_cand_t basis = lookup_cand (c->basis);
+		  tree basis_name = gimple_assign_lhs (basis->cand_stmt);
+
+		  /* Create a new phi statement that will represent C's true
+		     basis after the transformation is complete.  */
+		  location_t loc = gimple_location (c->cand_stmt);
+		  tree name = create_phi_basis (c, phi, basis_name,
+						loc, UNKNOWN_STRIDE);
+
+		  /* Replace C with an add of the new basis phi and the
+		     increment.  */
+		  replace_one_candidate (c, i, name);
+		}
+	    }
+	  else
+	    {
+	      slsr_cand_t basis = lookup_cand (c->basis);
+	      tree basis_name = gimple_assign_lhs (basis->cand_stmt);
+	      replace_one_candidate (c, i, basis_name);
+	    }
 	}
     }
 
@@ -2582,14 +3559,15 @@ analyze_candidates_and_replace (void)
       if (c->kind == CAND_REF)
 	replace_refs (c);
 
-      /* If the common stride of all related candidates is a
-	 known constant, and none of these has a phi-dependence,
-	 then all replacements are considered profitable.
-	 Each replaces a multiply by a single add, with the
-	 possibility that a feeding add also goes dead as a
-	 result.  */
-      else if (unconditional_cands_with_known_stride_p (c))
-	replace_dependents (first_dep);
+      /* If the common stride of all related candidates is a known
+	 constant, each candidate without a phi-dependence can be
+	 profitably replaced.  Each replaces a multiply by a single
+	 add, with the possibility that a feeding add also goes dead.
+	 A candidate with a phi-dependence is replaced only if the
+	 compensation code it requires is offset by the strength
+	 reduction savings.  */
+      else if (TREE_CODE (c->stride) == INTEGER_CST)
+	replace_uncond_cands_and_profitable_phis (first_dep);
 
       /* When the stride is an SSA name, it may still be profitable
 	 to replace some or all of the dependent candidates, depending
@@ -2597,8 +3575,7 @@ analyze_candidates_and_replace (void)
 	 less expensive to calculate than the replaced statements.  */
       else
 	{
-	  unsigned length;
-	  enum machine_mode mode;
+	  machine_mode mode;
 	  bool speed;
 
 	  /* Determine whether we'll be generating pointer arithmetic
@@ -2608,12 +3585,11 @@ analyze_candidates_and_replace (void)
 
 	  /* If all candidates have already been replaced under other
 	     interpretations, nothing remains to be done.  */
-	  length = count_candidates (c);
-	  if (!length)
+	  if (!count_candidates (c))
 	    continue;
 
 	  /* Construct an array of increments for this candidate chain.  */
-	  incr_vec = XNEWVEC (incr_info, length);
+	  incr_vec = XNEWVEC (incr_info, MAX_INCR_VEC_LEN);
 	  incr_vec_len = 0;
 	  record_increments (c);
 
@@ -2631,18 +3607,40 @@ analyze_candidates_and_replace (void)
 	  replace_profitable_candidates (first_dep);
 	  free (incr_vec);
 	}
-
-      /* TODO:  When conditional increments occur so that a 
-	 candidate is dependent upon a phi-basis, the cost of
-	 introducing a temporary must be accounted for.  */
     }
 }
 
-static unsigned
-execute_strength_reduction (void)
-{
-  struct dom_walk_data walk_data;
+namespace {
 
+const pass_data pass_data_strength_reduction =
+{
+  GIMPLE_PASS, /* type */
+  "slsr", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_GIMPLE_SLSR, /* tv_id */
+  ( PROP_cfg | PROP_ssa ), /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_strength_reduction : public gimple_opt_pass
+{
+public:
+  pass_strength_reduction (gcc::context *ctxt)
+    : gimple_opt_pass (pass_data_strength_reduction, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return flag_tree_slsr; }
+  virtual unsigned int execute (function *);
+
+}; // class pass_strength_reduction
+
+unsigned
+pass_strength_reduction::execute (function *fun)
+{
   /* Create the obstack where candidates will reside.  */
   gcc_obstack_init (&cand_obstack);
 
@@ -2650,31 +3648,25 @@ execute_strength_reduction (void)
   cand_vec.create (128);
 
   /* Allocate the mapping from statements to candidate indices.  */
-  stmt_cand_map = pointer_map_create ();
+  stmt_cand_map = new hash_map<gimple, slsr_cand_t>;
 
   /* Create the obstack where candidate chains will reside.  */
   gcc_obstack_init (&chain_obstack);
 
   /* Allocate the mapping from base expressions to candidate chains.  */
-  base_cand_map = htab_create (500, base_cand_hash,
-			       base_cand_eq, base_cand_free);
+  base_cand_map = new hash_table<cand_chain_hasher> (500);
+
+  /* Allocate the mapping from bases to alternative bases.  */
+  alt_base_map = new hash_map<tree, tree>;
 
   /* Initialize the loop optimizer.  We need to detect flow across
      back edges, and this gives us dominator information as well.  */
   loop_optimizer_init (AVOID_CFG_MODIFICATIONS);
 
-  /* Set up callbacks for the generic dominator tree walker.  */
-  walk_data.dom_direction = CDI_DOMINATORS;
-  walk_data.initialize_block_local_data = NULL;
-  walk_data.before_dom_children = find_candidates_in_block;
-  walk_data.after_dom_children = NULL;
-  walk_data.global_data = NULL;
-  walk_data.block_local_data_size = 0;
-  init_walk_dominator_tree (&walk_data);
-
   /* Walk the CFG in predominator order looking for strength reduction
      candidates.  */
-  walk_dominator_tree (&walk_data, ENTRY_BLOCK_PTR);
+  find_candidates_dom_walker (CDI_DOMINATORS)
+    .walk (fun->cfg->x_entry_block_ptr);
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     {
@@ -2682,43 +3674,27 @@ execute_strength_reduction (void)
       dump_cand_chains ();
     }
 
+  delete alt_base_map;
+  free_affine_expand_cache (&name_expansions);
+
   /* Analyze costs and make appropriate replacements.  */
   analyze_candidates_and_replace ();
 
-  /* Free resources.  */
-  fini_walk_dominator_tree (&walk_data);
   loop_optimizer_finalize ();
-  htab_delete (base_cand_map);
+  delete base_cand_map;
+  base_cand_map = NULL;
   obstack_free (&chain_obstack, NULL);
-  pointer_map_destroy (stmt_cand_map);
+  delete stmt_cand_map;
   cand_vec.release ();
   obstack_free (&cand_obstack, NULL);
 
   return 0;
 }
 
-static bool
-gate_strength_reduction (void)
-{
-  return flag_tree_slsr;
-}
+} // anon namespace
 
-struct gimple_opt_pass pass_strength_reduction =
+gimple_opt_pass *
+make_pass_strength_reduction (gcc::context *ctxt)
 {
- {
-  GIMPLE_PASS,
-  "slsr",				/* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_strength_reduction,		/* gate */
-  execute_strength_reduction,		/* execute */
-  NULL,					/* sub */
-  NULL,					/* next */
-  0,					/* static_pass_number */
-  TV_GIMPLE_SLSR,			/* tv_id */
-  PROP_cfg | PROP_ssa,			/* properties_required */
-  0,					/* properties_provided */
-  0,					/* properties_destroyed */
-  0,					/* todo_flags_start */
-  TODO_verify_ssa			/* todo_flags_finish */
- }
-};
+  return new pass_strength_reduction (ctxt);
+}

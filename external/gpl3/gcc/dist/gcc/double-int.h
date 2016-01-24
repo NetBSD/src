@@ -1,5 +1,5 @@
 /* Operations with long integers.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,6 +19,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef DOUBLE_INT_H
 #define DOUBLE_INT_H
+
+#include "wide-int.h"
 
 /* A large integer is currently represented as a pair of HOST_WIDE_INTs.
    It therefore represents a number with precision of
@@ -128,7 +130,9 @@ struct double_int
   double_int operator ^ (double_int) const;
   double_int and_not (double_int) const;
 
+  double_int lshift (HOST_WIDE_INT count) const;
   double_int lshift (HOST_WIDE_INT count, unsigned int prec, bool arith) const;
+  double_int rshift (HOST_WIDE_INT count) const;
   double_int rshift (HOST_WIDE_INT count, unsigned int prec, bool arith) const;
   double_int alshift (HOST_WIDE_INT count, unsigned int prec) const;
   double_int arshift (HOST_WIDE_INT count, unsigned int prec) const;
@@ -188,7 +192,7 @@ struct double_int
   bool operator == (double_int cst2) const;
   bool operator != (double_int cst2) const;
 
-  /* Please migrate away from using these member variables publically.  */
+  /* Please migrate away from using these member variables publicly.  */
 
   unsigned HOST_WIDE_INT low;
   HOST_WIDE_INT high;
@@ -254,27 +258,6 @@ inline double_int &
 double_int::operator -- ()
 {
   *this -= double_int_one;
-  return *this;
-}
-
-inline double_int &
-double_int::operator *= (double_int b)
-{
-  *this = *this * b;
-  return *this;
-}
-
-inline double_int &
-double_int::operator += (double_int b)
-{
-  *this = *this + b;
-  return *this;
-}
-
-inline double_int &
-double_int::operator -= (double_int b)
-{
-  *this = *this - b;
   return *this;
 }
 
@@ -453,5 +436,37 @@ double_int::popcount () const
 void mpz_set_double_int (mpz_t, double_int, bool);
 double_int mpz_get_double_int (const_tree, mpz_t, bool);
 #endif
+
+namespace wi
+{
+  template <>
+  struct int_traits <double_int>
+  {
+    static const enum precision_type precision_type = CONST_PRECISION;
+    static const bool host_dependent_precision = true;
+    static const unsigned int precision = HOST_BITS_PER_DOUBLE_INT;
+    static unsigned int get_precision (const double_int &);
+    static wi::storage_ref decompose (HOST_WIDE_INT *, unsigned int,
+				      const double_int &);
+  };
+}
+
+inline unsigned int
+wi::int_traits <double_int>::get_precision (const double_int &)
+{
+  return precision;
+}
+
+inline wi::storage_ref
+wi::int_traits <double_int>::decompose (HOST_WIDE_INT *scratch, unsigned int p,
+					const double_int &x)
+{
+  gcc_checking_assert (precision == p);
+  scratch[0] = x.low;
+  if ((x.high == 0 && scratch[0] >= 0) || (x.high == -1 && scratch[0] < 0))
+    return wi::storage_ref (scratch, 1, precision);
+  scratch[1] = x.high;
+  return wi::storage_ref (scratch, 2, precision);
+}
 
 #endif /* DOUBLE_INT_H */

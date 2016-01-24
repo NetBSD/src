@@ -1,6 +1,6 @@
 // Stack implementation -*- C++ -*-
 
-// Copyright (C) 2001-2013 Free Software Foundation, Inc.
+// Copyright (C) 2001-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -58,6 +58,9 @@
 
 #include <bits/concept_check.h>
 #include <debug/debug.h>
+#if __cplusplus >= 201103L
+# include <bits/uses_allocator.h>
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {

@@ -1,33 +1,146 @@
-2015-06-23  Release Manager
+2015-12-04  Release Manager
 
-	* GCC 4.8.5 released.
+	* GCC 5.3.0 released.
 
-2014-12-19  Release Manager
+2015-07-16  Release Manager
 
-	* GCC 4.8.4 released.
+	* GCC 5.2.0 released.
 
-2014-05-22  Release Manager
+2015-04-22  Release Manager
 
-	* GCC 4.8.3 released.
+	* GCC 5.1.0 released.
 
-2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+2015-02-06  H.J. Lu  <hongjiu.lu@intel.com>
 
-	Backport from mainline
-	2013-11-15  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+	* lto-plugin.c (release_input_file): Removed.
+	(claim_file_handler): Don't call release_input_file.
+	(onload): Don't set release_input_file.
 
+2015-02-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lto-plugin.c (claim_file_handler): Pass handle to
+	release_input_file.
+
+2015-02-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lto-plugin.c (claim_file_handler): Call release_input_file only
+	if file is claimed.
+
+2015-01-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lto-plugin.c (claim_file_handler): Call release_input_file only
+	if it is not NULL.
+
+2015-01-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR lto/64837
+	* lto-plugin.c (release_input_file): New.
+	(claim_file_handler): Call release_input_file.
+	(onload): Set release_input_file.
+
+2014-12-09  Ilya Verbin  <ilya.verbin@intel.com>
+
+	* lto-plugin.c (offload_files, num_offload_files): New static variables.
+	(free_1): Use arguments instead of global variables.
+	(free_2): Free offload_files.
+	(all_symbols_read_handler): Add names from offload_files to lto-wrapper
+	arguments.
+	(claim_file_handler): Do not add file to claimed_files if it contains
+	offload sections without LTO sections.  Add it to offload_files instead.
+
+2014-11-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/63784
+	* configure: Regenerated.
+
+2014-11-13  Ilya Verbin  <ilya.verbin@intel.com>
+	    Bernd Schmidt  <bernds@codesourcery.com>
+	    Andrey Turetskiy  <andrey.turetskiy@intel.com>
+	    Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	* lto-plugin.c (OFFLOAD_SECTION, OFFLOAD_SECTION_LEN): Define.
+	(struct plugin_objfile): Add new field "offload".
+	(process_offload_section): New static function.
+	(claim_file_handler): Claim file if it contains offload sections.
+
+2014-11-13  Bernd Schmidt  <bernds@codesourcery.com>
+	    Thomas Schwinge  <thomas@codesourcery.com>
+	    Ilya Verbin  <ilya.verbin@intel.com>
+	    Andrey Turetskiy  <andrey.turetskiy@intel.com>
+
+	* Makefile.am (libexecsubdir): Tweak for the possibility of being
+	configured for offload compiler.
+	(accel_dir_suffix, real_target_noncanonical): New variables substituted
+	by configure.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+	* configure.ac (accel_dir_suffix, real_target_noncanonical): Compute new
+	variables.
+
+2014-11-11  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	PR target/63610
 	* configure: Regenerate.
 
-2013-10-16  Release Manager
+2014-08-26  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* GCC 4.8.2 released.
+	PR bootstrap/62260
+	* Makefile.am (gcc_build_dir): Set to @gcc_build_dir@.
+	* configure.ac (gcc_build_dir): Set and AC_SUBST according to
+	$host_subdir.
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
 
-2013-05-31  Release Manager
+2014-06-13  Thomas Schwinge  <thomas@codesourcery.com>
 
-	* GCC 4.8.1 released.
+	* configure.ac (--with-libiberty): New configure option.
+	* configure: Regenerate.
+	* Makefile.am (libiberty, libiberty_noasan, libiberty_pic): New
+	variables.
+	(liblto_plugin_la_LIBADD, liblto_plugin_la_LDFLAGS)
+	(liblto_plugin_la_DEPENDENCIES): Use them.
+	* Makefile.in: Regenerate.
 
-2013-03-22  Release Manager
+2014-05-15  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
-	* GCC 4.8.0 released.
+	PR lto/60981
+	* configure.ac: Check for -static-libgcc.
+	* configure: Regenerate.
+
+2014-04-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/56781
+	* Makefile.am (CFLAGS, LDFLAGS): Filter out -fsanitize=address.
+	(liblto_plugin_la_LIBADD, liblto_plugin_la_LDFLAGS,
+	liblto_plugin_la_DEPENDENCIES): Prefer ../libiberty/noasan/libiberty.a
+	over ../libiberty/pic/libiberty.a if the former exists.
+	* Makefile.in: Regenerated.
+
+	PR sanitizer/56781
+	* Makefile.am (LTLDFLAGS, liblto_plugin_la_LINK): New variables.
+	* Makefile.in: Regenerated.
+
+2014-04-02  Richard Biener  <rguenther@suse.de>
+
+	* lto-plugin.c (onload): Fail to load if -fno-use-linker-plugin
+	is set in COLLECT_GCC_OPTIONS.
+
+2014-03-28  Richard Biener  <rguenther@suse.de>
+
+	* lto-plugin.c (process_symtab): Handle EINTR and short reads.
+
+2014-03-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* configure.ac (ac_lto_plugin_ldflags): Set to -Wc,-static-libgcc
+	for gcc.
+	* configure: Regenerate.
+	* Makefile.am (AM_LDFLAGS): New variable.
+	(liblto_plugin_la_LDFLAGS): Add it.
+	* Makefile.in: Regenerate.
+
+2013-09-20  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
 
 2012-09-14  David Edelsohn  <dje.gcc@gmail.com>
 
@@ -361,7 +474,7 @@
 	(claim_file_handler): Add n variable. Check return value of
 	process_symtab. Call resolve_conflicts.
 
-2010-07-27  Andi Kleen <ak@linux.intel.com>
+2010-07-27  Andi Kleen  <ak@linux.intel.com>
 
 	* lto-plugin.c (translate): Remove debug fprintf.
 
@@ -370,7 +483,7 @@
 	PR bootstrap/45042
 	* lto-plugin.c (translate): Cast to unsigned long.
 
-2010-07-23   Andi Kleen <ak@linux.intel.com>
+2010-07-23   Andi Kleen  <ak@linux.intel.com>
 
 	PR lto/44992
 	* lto-plugin.c (sym_aux): Add.

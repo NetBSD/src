@@ -1,5 +1,5 @@
 /* Instruction scheduling pass.  Log dumping infrastructure.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -111,6 +111,12 @@ extern void dump_vinsn_1 (vinsn_t, int);
 extern void dump_vinsn (vinsn_t);
 extern void debug_vinsn (vinsn_t);
 
+extern void debug (vinsn_def &ref);
+extern void debug (vinsn_def *ptr);
+extern void debug_verbose (vinsn_def &ref);
+extern void debug_verbose (vinsn_def *ptr);
+
+
 /* These values control dumping of expressions.  The meaning of the fields
    is explained in sel-sched-ir.h.  */
 enum dump_expr_def
@@ -145,6 +151,12 @@ enum dump_expr_def
 extern void dump_expr_1 (expr_t, int);
 extern void dump_expr (expr_t);
 extern void debug_expr (expr_t);
+
+extern void debug (expr_def &ref);
+extern void debug (expr_def *ptr);
+extern void debug_verbose (expr_def &ref);
+extern void debug_verbose (expr_def *ptr);
+
 
 /* A enumeration for dumping flags of an insn.  The difference from
    dump_insn_rtx_def is that these fields are for insns in stream only.  */
@@ -184,7 +196,7 @@ extern bool sched_dump_to_dot_p;
 
 /* Functions from sel-sched-dump.c.  */
 extern void sel_print (const char *fmt, ...) ATTRIBUTE_PRINTF_1;
-extern const char * sel_print_insn (const_rtx, int);
+extern const char * sel_print_insn (const rtx_insn *, int);
 extern void free_sel_dump_data (void);
 
 extern void block_start (void);
@@ -214,6 +226,8 @@ extern void debug_av_set (av_set_t);
 extern void debug_lv_set (regset);
 extern void debug_ilist (ilist_t);
 extern void debug_blist (blist_t);
+extern void debug (vec<rtx> &ref);
+extern void debug (vec<rtx> *ptr);
 extern void debug_insn_vector (rtx_vec_t);
 extern void debug_hard_reg_set (HARD_REG_SET);
 extern rtx debug_mem_addr_value (rtx);

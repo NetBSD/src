@@ -1,5 +1,5 @@
 ;; Scheduling description for LEON.
-;;   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;;   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -24,12 +24,14 @@
 (define_cpu_unit "leon_memory" "leon")
 
 (define_insn_reservation "leon_load" 1
-  (and (eq_attr "cpu" "leon") (eq_attr "type" "load,sload"))
+  (and (eq_attr "cpu" "leon,leon3,leon3v7")
+       (and (eq_attr "fix_ut699" "false") (eq_attr "type" "load,sload")))
   "leon_memory")
 
 ;; Use a double reservation to work around the load pipeline hazard on UT699.
-(define_insn_reservation "leon3_load" 1
-  (and (eq_attr "cpu" "leon3,leon3v7") (eq_attr "type" "load,sload"))
+(define_insn_reservation "ut699_load" 1
+  (and (eq_attr "cpu" "leon,leon3,leon3v7")
+       (and (eq_attr "fix_ut699" "true") (eq_attr "type" "load,sload")))
   "leon_memory*2")
 
 (define_insn_reservation "leon_store" 2
