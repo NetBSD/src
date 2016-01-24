@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2016/01/23 21:22:49 christos Exp $
+# $NetBSD: Makefile,v 1.41 2016/01/24 15:11:08 christos Exp $
 
 MKMAN=	no
 
@@ -77,7 +77,8 @@ TESTS_C+=		t_posix_fadvise
 LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 .endif
 
+CPPFLAGS.t_lwp_create.c += -D_KERNTYPES
+
 WARNS=			4
 
 .include <bsd.test.mk>
-
