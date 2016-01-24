@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.701 2016/01/19 19:03:27 martin Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.702 2016/01/24 15:03:39 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.709 2016/01/19 19:02:32 martin Exp
+ *	NetBSD: usbdevs,v 1.710 2016/01/24 15:02:52 christos Exp
  */
 
 /*
@@ -2222,6 +2222,8 @@
 #define	USB_PRODUCT_MICROSOFT_XBOX_360_WIRELESS_RECEIVER	0x0291		/* Xbox 360 Wireless Receiver */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR10	0x071d		/* 2.4GHz Transceiver V1.0 */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR20	0x071f		/* 2.4GHz Transceiver V2.0 */
+#define	USB_PRODUCT_MICROSOFT_CM6000	0x077d		/* Comfort Mouse 6000 */
+
 
 /* Microtech products */
 #define	USB_PRODUCT_MICROTECH_SCSIDB25	0x0004		/* USB-SCSI-DB25 */
