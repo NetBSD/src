@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: paths.c,v 1.42 2016/01/24 01:56:04 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: paths.c,v 1.42 2016/01/24 01:56:04 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
 #include <sys/gmon.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
-#include <sys/mbuf.h>
 #include <sys/resource.h>
 #include <machine/cpu.h>
 
