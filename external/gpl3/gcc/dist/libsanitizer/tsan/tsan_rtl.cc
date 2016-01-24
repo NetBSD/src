@@ -21,6 +21,17 @@
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
 #include "tsan_suppressions.h"
+#include "tsan_symbolize.h"
+
+#ifdef __SSE3__
+// <emmintrin.h> transitively includes <stdlib.h>,
+// and it's prohibited to include std headers into tsan runtime.
+// So we do this dirty trick.
+#define _MM_MALLOC_H_INCLUDED
+#define __MM_MALLOC_H
+#include <emmintrin.h>
+typedef __m128i m128;
+#endif
 
 volatile int __tsan_resumed = 0;
 
@@ -34,148 +45,250 @@ namespace __tsan {
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
 #endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
+Context *ctx;
 
 // Can be overriden by a front-end.
-bool CPP_WEAK OnFinalize(bool failed) {
+#ifdef TSAN_EXTERNAL_HOOKS
+bool OnFinalize(bool failed);
+void OnInitialize();
+#else
+SANITIZER_INTERFACE_ATTRIBUTE
+bool WEAK OnFinalize(bool failed) {
   return failed;
 }
+SANITIZER_INTERFACE_ATTRIBUTE
+void WEAK OnInitialize() {}
+#endif
 
-static Context *ctx;
-Context *CTX() {
-  return ctx;
+static char thread_registry_placeholder[sizeof(ThreadRegistry)];
+
+static ThreadContextBase *CreateThreadContext(u32 tid) {
+  // Map thread trace when context is created.
+  MapThreadTrace(GetThreadTrace(tid), TraceSize() * sizeof(Event));
+  MapThreadTrace(GetThreadTraceHeader(tid), sizeof(Trace));
+  new(ThreadTrace(tid)) Trace();
+  void *mem = internal_alloc(MBlockThreadContex, sizeof(ThreadContext));
+  return new(mem) ThreadContext(tid);
 }
+
+#ifndef TSAN_GO
+static const u32 kThreadQuarantineSize = 16;
+#else
+static const u32 kThreadQuarantineSize = 64;
+#endif
 
 Context::Context()
   : initialized()
   , report_mtx(MutexTypeReport, StatMtxReport)
   , nreported()
   , nmissed_expected()
-  , thread_mtx(MutexTypeThreads, StatMtxThreads)
+  , thread_registry(new(thread_registry_placeholder) ThreadRegistry(
+      CreateThreadContext, kMaxTid, kThreadQuarantineSize, kMaxTidReuse))
   , racy_stacks(MBlockRacyStacks)
   , racy_addresses(MBlockRacyAddresses)
-  , fired_suppressions(MBlockRacyAddresses) {
+  , fired_suppressions(8) {
 }
 
 // The objects are allocated in TLS, so one may rely on zero-initialization.
 ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
+                         unsigned reuse_count,
                          uptr stk_addr, uptr stk_size,
                          uptr tls_addr, uptr tls_size)
   : fast_state(tid, epoch)
   // Do not touch these, rely on zero initialization,
   // they may be accessed before the ctor.
-  // , fast_ignore_reads()
-  // , fast_ignore_writes()
-  // , in_rtl()
-  , shadow_stack_pos(&shadow_stack[0])
+  // , ignore_reads_and_writes()
+  // , ignore_interceptors()
+  , clock(tid, reuse_count)
+#ifndef TSAN_GO
+  , jmp_bufs(MBlockJmpBuf)
+#endif
   , tid(tid)
   , unique_id(unique_id)
   , stk_addr(stk_addr)
   , stk_size(stk_size)
   , tls_addr(tls_addr)
-  , tls_size(tls_size) {
+  , tls_size(tls_size)
+#ifndef TSAN_GO
+  , last_sleep_clock(tid)
+#endif
+{
 }
 
-ThreadContext::ThreadContext(int tid)
-  : tid(tid)
-  , unique_id()
-  , os_id()
-  , user_id()
-  , thr()
-  , status(ThreadStatusInvalid)
-  , detached()
-  , reuse_count()
-  , epoch0()
-  , epoch1()
-  , dead_info()
-  , dead_next()
-  , name() {
+static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
+  uptr n_threads;
+  uptr n_running_threads;
+  ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
+  InternalScopedBuffer<char> buf(4096);
+  WriteMemoryProfile(buf.data(), buf.size(), n_threads, n_running_threads);
+  internal_write(fd, buf.data(), internal_strlen(buf.data()));
 }
 
-static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
-  uptr shadow = GetShadowMemoryConsumption();
+static void BackgroundThread(void *arg) {
+#ifndef TSAN_GO
+  // This is a non-initialized non-user thread, nothing to see here.
+  // We don't use ScopedIgnoreInterceptors, because we want ignores to be
+  // enabled even when the thread function exits (e.g. during pthread thread
+  // shutdown code).
+  cur_thread()->ignore_interceptors++;
+#endif
+  const u64 kMs2Ns = 1000 * 1000;
 
-  int nthread = 0;
-  int nlivethread = 0;
-  uptr threadmem = 0;
-  {
-    Lock l(&ctx->thread_mtx);
-    for (unsigned i = 0; i < kMaxTid; i++) {
-      ThreadContext *tctx = ctx->threads[i];
-      if (tctx == 0)
-        continue;
-      nthread += 1;
-      threadmem += sizeof(ThreadContext);
-      if (tctx->status != ThreadStatusRunning)
-        continue;
-      nlivethread += 1;
-      threadmem += sizeof(ThreadState);
+  fd_t mprof_fd = kInvalidFd;
+  if (flags()->profile_memory && flags()->profile_memory[0]) {
+    if (internal_strcmp(flags()->profile_memory, "stdout") == 0) {
+      mprof_fd = 1;
+    } else if (internal_strcmp(flags()->profile_memory, "stderr") == 0) {
+      mprof_fd = 2;
+    } else {
+      InternalScopedBuffer<char> filename(4096);
+      internal_snprintf(filename.data(), filename.size(), "%s.%d",
+          flags()->profile_memory, (int)internal_getpid());
+      uptr openrv = OpenFile(filename.data(), true);
+      if (internal_iserror(openrv)) {
+        Printf("ThreadSanitizer: failed to open memory profile file '%s'\n",
+            &filename[0]);
+      } else {
+        mprof_fd = openrv;
+      }
     }
   }
 
-  uptr nsync = 0;
-  uptr syncmem = CTX()->synctab.GetMemoryConsumption(&nsync);
+  u64 last_flush = NanoTime();
+  uptr last_rss = 0;
+  for (int i = 0;
+      atomic_load(&ctx->stop_background_thread, memory_order_relaxed) == 0;
+      i++) {
+    SleepForMillis(100);
+    u64 now = NanoTime();
 
-  internal_snprintf(buf, buf_size, "%d: shadow=%zuMB"
-                                   " thread=%zuMB(total=%d/live=%d)"
-                                   " sync=%zuMB(cnt=%zu)\n",
-    num,
-    shadow >> 20,
-    threadmem >> 20, nthread, nlivethread,
-    syncmem >> 20, nsync);
-}
+    // Flush memory if requested.
+    if (flags()->flush_memory_ms > 0) {
+      if (last_flush + flags()->flush_memory_ms * kMs2Ns < now) {
+        VPrintf(1, "ThreadSanitizer: periodic memory flush\n");
+        FlushShadowMemory();
+        last_flush = NanoTime();
+      }
+    }
+    // GetRSS can be expensive on huge programs, so don't do it every 100ms.
+    if (flags()->memory_limit_mb > 0) {
+      uptr rss = GetRSS();
+      uptr limit = uptr(flags()->memory_limit_mb) << 20;
+      VPrintf(1, "ThreadSanitizer: memory flush check"
+                 " RSS=%llu LAST=%llu LIMIT=%llu\n",
+              (u64)rss >> 20, (u64)last_rss >> 20, (u64)limit >> 20);
+      if (2 * rss > limit + last_rss) {
+        VPrintf(1, "ThreadSanitizer: flushing memory due to RSS\n");
+        FlushShadowMemory();
+        rss = GetRSS();
+        VPrintf(1, "ThreadSanitizer: memory flushed RSS=%llu\n", (u64)rss>>20);
+      }
+      last_rss = rss;
+    }
 
-static void MemoryProfileThread(void *arg) {
-  ScopedInRtl in_rtl;
-  fd_t fd = (fd_t)(uptr)arg;
-  for (int i = 0; ; i++) {
-    InternalScopedBuffer<char> buf(4096);
-    WriteMemoryProfile(buf.data(), buf.size(), i);
-    internal_write(fd, buf.data(), internal_strlen(buf.data()));
-    SleepForSeconds(1);
+    // Write memory profile if requested.
+    if (mprof_fd != kInvalidFd)
+      MemoryProfiler(ctx, mprof_fd, i);
+
+#ifndef TSAN_GO
+    // Flush symbolizer cache if requested.
+    if (flags()->flush_symbolizer_ms > 0) {
+      u64 last = atomic_load(&ctx->last_symbolize_time_ns,
+                             memory_order_relaxed);
+      if (last != 0 && last + flags()->flush_symbolizer_ms * kMs2Ns < now) {
+        Lock l(&ctx->report_mtx);
+        SpinMutexLock l2(&CommonSanitizerReportMutex);
+        SymbolizeFlush();
+        atomic_store(&ctx->last_symbolize_time_ns, 0, memory_order_relaxed);
+      }
+    }
+#endif
   }
 }
 
-static void InitializeMemoryProfile() {
-  if (flags()->profile_memory == 0 || flags()->profile_memory[0] == 0)
-    return;
-  InternalScopedBuffer<char> filename(4096);
-  internal_snprintf(filename.data(), filename.size(), "%s.%d",
-      flags()->profile_memory, GetPid());
-  fd_t fd = OpenFile(filename.data(), true);
-  if (fd == kInvalidFd) {
-    Printf("Failed to open memory profile file '%s'\n", &filename[0]);
-    Die();
-  }
-  internal_start_thread(&MemoryProfileThread, (void*)(uptr)fd);
+static void StartBackgroundThread() {
+  ctx->background_thread = internal_start_thread(&BackgroundThread, 0);
 }
 
-static void MemoryFlushThread(void *arg) {
-  ScopedInRtl in_rtl;
-  for (int i = 0; ; i++) {
-    SleepForMillis(flags()->flush_memory_ms);
-    FlushShadowMemory();
-  }
+#ifndef TSAN_GO
+static void StopBackgroundThread() {
+  atomic_store(&ctx->stop_background_thread, 1, memory_order_relaxed);
+  internal_join_thread(ctx->background_thread);
+  ctx->background_thread = 0;
 }
+#endif
 
-static void InitializeMemoryFlush() {
-  if (flags()->flush_memory_ms == 0)
-    return;
-  if (flags()->flush_memory_ms < 100)
-    flags()->flush_memory_ms = 100;
-  internal_start_thread(&MemoryFlushThread, 0);
+void DontNeedShadowFor(uptr addr, uptr size) {
+  uptr shadow_beg = MemToShadow(addr);
+  uptr shadow_end = MemToShadow(addr + size);
+  FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
 }
 
 void MapShadow(uptr addr, uptr size) {
+  // Global data is not 64K aligned, but there are no adjacent mappings,
+  // so we can get away with unaligned mapping.
+  // CHECK_EQ(addr, addr & ~((64 << 10) - 1));  // windows wants 64K alignment
   MmapFixedNoReserve(MemToShadow(addr), size * kShadowMultiplier);
+
+  // Meta shadow is 2:1, so tread carefully.
+  static bool data_mapped = false;
+  static uptr mapped_meta_end = 0;
+  uptr meta_begin = (uptr)MemToMeta(addr);
+  uptr meta_end = (uptr)MemToMeta(addr + size);
+  meta_begin = RoundDownTo(meta_begin, 64 << 10);
+  meta_end = RoundUpTo(meta_end, 64 << 10);
+  if (!data_mapped) {
+    // First call maps data+bss.
+    data_mapped = true;
+    MmapFixedNoReserve(meta_begin, meta_end - meta_begin);
+  } else {
+    // Mapping continous heap.
+    // Windows wants 64K alignment.
+    meta_begin = RoundDownTo(meta_begin, 64 << 10);
+    meta_end = RoundUpTo(meta_end, 64 << 10);
+    if (meta_end <= mapped_meta_end)
+      return;
+    if (meta_begin < mapped_meta_end)
+      meta_begin = mapped_meta_end;
+    MmapFixedNoReserve(meta_begin, meta_end - meta_begin);
+    mapped_meta_end = meta_end;
+  }
+  VPrintf(2, "mapped meta shadow for (%p-%p) at (%p-%p)\n",
+      addr, addr+size, meta_begin, meta_end);
 }
 
 void MapThreadTrace(uptr addr, uptr size) {
   DPrintf("#0: Mapping trace at %p-%p(0x%zx)\n", addr, addr + size, size);
-  CHECK_GE(addr, kTraceMemBegin);
-  CHECK_LE(addr + size, kTraceMemBegin + kTraceMemSize);
-  if (addr != (uptr)MmapFixedNoReserve(addr, size)) {
-    Printf("FATAL: ThreadSanitizer can not mmap thread trace\n");
+  CHECK_GE(addr, kTraceMemBeg);
+  CHECK_LE(addr + size, kTraceMemEnd);
+  CHECK_EQ(addr, addr & ~((64 << 10) - 1));  // windows wants 64K alignment
+  uptr addr1 = (uptr)MmapFixedNoReserve(addr, size);
+  if (addr1 != addr) {
+    Printf("FATAL: ThreadSanitizer can not mmap thread trace (%p/%p->%p)\n",
+        addr, size, addr1);
     Die();
+  }
+}
+
+static void CheckShadowMapping() {
+  for (uptr i = 0; i < ARRAY_SIZE(UserRegions); i += 2) {
+    const uptr beg = UserRegions[i];
+    const uptr end = UserRegions[i + 1];
+    VPrintf(3, "checking shadow region %p-%p\n", beg, end);
+    for (uptr p0 = beg; p0 <= end; p0 += (end - beg) / 4) {
+      for (int x = -1; x <= 1; x++) {
+        const uptr p = p0 + x;
+        if (p < beg || p >= end)
+          continue;
+        const uptr s = MemToShadow(p);
+        VPrintf(3, "  checking pointer %p -> %p\n", p, s);
+        CHECK(IsAppMem(p));
+        CHECK(IsShadowMem(s));
+        CHECK_EQ(p & ~(kShadowCell - 1), ShadowToMem(s));
+        const uptr m = (uptr)MemToMeta(p);
+        CHECK(IsMetaMem(m));
+      }
+    }
   }
 }
 
@@ -185,71 +298,60 @@ void Initialize(ThreadState *thr) {
   if (is_initialized)
     return;
   is_initialized = true;
+  // We are not ready to handle interceptors yet.
+  ScopedIgnoreInterceptors ignore;
   SanitizerToolName = "ThreadSanitizer";
   // Install tool-specific callbacks in sanitizer_common.
   SetCheckFailedCallback(TsanCheckFailed);
 
-  ScopedInRtl in_rtl;
+  ctx = new(ctx_placeholder) Context;
+  const char *options = GetEnv(kTsanOptionsEnv);
+  InitializeFlags(&ctx->flags, options);
 #ifndef TSAN_GO
   InitializeAllocator();
 #endif
   InitializeInterceptors();
-  const char *env = InitializePlatform();
+  CheckShadowMapping();
+  InitializePlatform();
   InitializeMutex();
   InitializeDynamicAnnotations();
-  ctx = new(ctx_placeholder) Context;
 #ifndef TSAN_GO
   InitializeShadowMemory();
 #endif
-  ctx->dead_list_size = 0;
-  ctx->dead_list_head = 0;
-  ctx->dead_list_tail = 0;
-  InitializeFlags(&ctx->flags, env);
   // Setup correct file descriptor for error reports.
-  if (internal_strcmp(flags()->log_path, "stdout") == 0)
-    __sanitizer_set_report_fd(kStdoutFd);
-  else if (internal_strcmp(flags()->log_path, "stderr") == 0)
-    __sanitizer_set_report_fd(kStderrFd);
-  else
-    __sanitizer_set_report_path(flags()->log_path);
+  __sanitizer_set_report_path(common_flags()->log_path);
   InitializeSuppressions();
 #ifndef TSAN_GO
-  // Initialize external symbolizer before internal threads are started.
-  const char *external_symbolizer = flags()->external_symbolizer_path;
-  if (external_symbolizer != 0 && external_symbolizer[0] != '\0') {
-    if (!InitializeExternalSymbolizer(external_symbolizer)) {
-      Printf("Failed to start external symbolizer: '%s'\n",
-             external_symbolizer);
-      Die();
-    }
-  }
+  InitializeLibIgnore();
+  Symbolizer::GetOrInit()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 #endif
-  InitializeMemoryProfile();
-  InitializeMemoryFlush();
+  StartBackgroundThread();
+#ifndef TSAN_GO
+  SetSandboxingCallback(StopBackgroundThread);
+#endif
+  if (common_flags()->detect_deadlocks)
+    ctx->dd = DDetector::Create(flags());
 
-  if (ctx->flags.verbosity)
-    Printf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",
-               GetPid());
+  VPrintf(1, "***** Running under ThreadSanitizer v2 (pid %d) *****\n",
+          (int)internal_getpid());
 
   // Initialize thread 0.
-  ctx->thread_seq = 0;
   int tid = ThreadCreate(thr, 0, 0, true);
   CHECK_EQ(tid, 0);
-  ThreadStart(thr, tid, GetPid());
-  CHECK_EQ(thr->in_rtl, 1);
+  ThreadStart(thr, tid, internal_getpid());
   ctx->initialized = true;
 
   if (flags()->stop_on_start) {
     Printf("ThreadSanitizer is suspended at startup (pid %d)."
            " Call __tsan_resume().\n",
-           GetPid());
+           (int)internal_getpid());
     while (__tsan_resumed == 0) {}
   }
+
+  OnInitialize();
 }
 
 int Finalize(ThreadState *thr) {
-  ScopedInRtl in_rtl;
-  Context *ctx = __tsan::ctx;
   bool failed = false;
 
   if (flags()->atexit_sleep_ms > 0 && ThreadCount(thr) > 1)
@@ -257,10 +359,12 @@ int Finalize(ThreadState *thr) {
 
   // Wait for pending reports.
   ctx->report_mtx.Lock();
+  CommonSanitizerReportMutex.Lock();
+  CommonSanitizerReportMutex.Unlock();
   ctx->report_mtx.Unlock();
 
 #ifndef TSAN_GO
-  if (ctx->flags.verbosity)
+  if (common_flags()->verbosity)
     AllocatorPrintStats();
 #endif
 
@@ -281,6 +385,13 @@ int Finalize(ThreadState *thr) {
         ctx->nmissed_expected);
   }
 
+  if (common_flags()->print_suppressions)
+    PrintMatchedSuppressions();
+#ifndef TSAN_GO
+  if (flags()->print_benign)
+    PrintMatchedBenignRaces();
+#endif
+
   failed = OnFinalize(failed);
 
   StatAggregate(ctx->stat, thr->stat);
@@ -289,31 +400,87 @@ int Finalize(ThreadState *thr) {
 }
 
 #ifndef TSAN_GO
-u32 CurrentStackId(ThreadState *thr, uptr pc) {
-  if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
-    return 0;
-  if (pc) {
-    thr->shadow_stack_pos[0] = pc;
-    thr->shadow_stack_pos++;
+void ForkBefore(ThreadState *thr, uptr pc) {
+  ctx->thread_registry->Lock();
+  ctx->report_mtx.Lock();
+}
+
+void ForkParentAfter(ThreadState *thr, uptr pc) {
+  ctx->report_mtx.Unlock();
+  ctx->thread_registry->Unlock();
+}
+
+void ForkChildAfter(ThreadState *thr, uptr pc) {
+  ctx->report_mtx.Unlock();
+  ctx->thread_registry->Unlock();
+
+  uptr nthread = 0;
+  ctx->thread_registry->GetNumberOfThreads(0, 0, &nthread /* alive threads */);
+  VPrintf(1, "ThreadSanitizer: forked new process with pid %d,"
+      " parent had %d threads\n", (int)internal_getpid(), (int)nthread);
+  if (nthread == 1) {
+    internal_start_thread(&BackgroundThread, 0);
+  } else {
+    // We've just forked a multi-threaded process. We cannot reasonably function
+    // after that (some mutexes may be locked before fork). So just enable
+    // ignores for everything in the hope that we will exec soon.
+    ctx->after_multithreaded_fork = true;
+    thr->ignore_interceptors++;
+    ThreadIgnoreBegin(thr, pc);
+    ThreadIgnoreSyncBegin(thr, pc);
   }
-  u32 id = StackDepotPut(thr->shadow_stack,
-                         thr->shadow_stack_pos - thr->shadow_stack);
-  if (pc)
-    thr->shadow_stack_pos--;
-  return id;
 }
 #endif
 
+#ifdef TSAN_GO
+NOINLINE
+void GrowShadowStack(ThreadState *thr) {
+  const int sz = thr->shadow_stack_end - thr->shadow_stack;
+  const int newsz = 2 * sz;
+  uptr *newstack = (uptr*)internal_alloc(MBlockShadowStack,
+      newsz * sizeof(uptr));
+  internal_memcpy(newstack, thr->shadow_stack, sz * sizeof(uptr));
+  internal_free(thr->shadow_stack);
+  thr->shadow_stack = newstack;
+  thr->shadow_stack_pos = newstack + sz;
+  thr->shadow_stack_end = newstack + newsz;
+}
+#endif
+
+u32 CurrentStackId(ThreadState *thr, uptr pc) {
+  if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
+    return 0;
+  if (pc != 0) {
+#ifndef TSAN_GO
+    DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
+#else
+    if (thr->shadow_stack_pos == thr->shadow_stack_end)
+      GrowShadowStack(thr);
+#endif
+    thr->shadow_stack_pos[0] = pc;
+    thr->shadow_stack_pos++;
+  }
+  u32 id = StackDepotPut(
+      StackTrace(thr->shadow_stack, thr->shadow_stack_pos - thr->shadow_stack));
+  if (pc != 0)
+    thr->shadow_stack_pos--;
+  return id;
+}
+
 void TraceSwitch(ThreadState *thr) {
   thr->nomalloc++;
-  ScopedInRtl in_rtl;
-  Lock l(&thr->trace.mtx);
+  Trace *thr_trace = ThreadTrace(thr->tid);
+  Lock l(&thr_trace->mtx);
   unsigned trace = (thr->fast_state.epoch() / kTracePartSize) % TraceParts();
-  TraceHeader *hdr = &thr->trace.headers[trace];
+  TraceHeader *hdr = &thr_trace->headers[trace];
   hdr->epoch0 = thr->fast_state.epoch();
-  hdr->stack0.ObtainCurrent(thr, 0);
+  ObtainCurrentStack(thr, 0, &hdr->stack0);
   hdr->mset0 = thr->mset;
   thr->nomalloc--;
+}
+
+Trace *ThreadTrace(int tid) {
+  return (Trace*)GetThreadTraceHeader(tid);
 }
 
 uptr TraceTopPC(ThreadState *thr) {
@@ -341,23 +508,24 @@ extern "C" void __tsan_report_race() {
 #endif
 
 ALWAYS_INLINE
-static Shadow LoadShadow(u64 *p) {
+Shadow LoadShadow(u64 *p) {
   u64 raw = atomic_load((atomic_uint64_t*)p, memory_order_relaxed);
   return Shadow(raw);
 }
 
 ALWAYS_INLINE
-static void StoreShadow(u64 *sp, u64 s) {
+void StoreShadow(u64 *sp, u64 s) {
   atomic_store((atomic_uint64_t*)sp, s, memory_order_relaxed);
 }
 
 ALWAYS_INLINE
-static void StoreIfNotYetStored(u64 *sp, u64 *s) {
+void StoreIfNotYetStored(u64 *sp, u64 *s) {
   StoreShadow(sp, *s);
   *s = 0;
 }
 
-static inline void HandleRace(ThreadState *thr, u64 *shadow_mem,
+ALWAYS_INLINE
+void HandleRace(ThreadState *thr, u64 *shadow_mem,
                               Shadow cur, Shadow old) {
   thr->racy_state[0] = cur.raw();
   thr->racy_state[1] = old.raw();
@@ -369,16 +537,12 @@ static inline void HandleRace(ThreadState *thr, u64 *shadow_mem,
 #endif
 }
 
-static inline bool OldIsInSameSynchEpoch(Shadow old, ThreadState *thr) {
-  return old.epoch() >= thr->fast_synch_epoch;
-}
-
 static inline bool HappensBefore(Shadow old, ThreadState *thr) {
   return thr->clock.get(old.TidWithIgnore()) >= old.epoch();
 }
 
 ALWAYS_INLINE
-void MemoryAccessImpl(ThreadState *thr, uptr addr,
+void MemoryAccessImpl1(ThreadState *thr, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
     u64 *shadow_mem, Shadow cur) {
   StatInc(thr, StatMop);
@@ -451,7 +615,114 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
   return;
 }
 
+void UnalignedMemoryAccess(ThreadState *thr, uptr pc, uptr addr,
+    int size, bool kAccessIsWrite, bool kIsAtomic) {
+  while (size) {
+    int size1 = 1;
+    int kAccessSizeLog = kSizeLog1;
+    if (size >= 8 && (addr & ~7) == ((addr + 7) & ~7)) {
+      size1 = 8;
+      kAccessSizeLog = kSizeLog8;
+    } else if (size >= 4 && (addr & ~7) == ((addr + 3) & ~7)) {
+      size1 = 4;
+      kAccessSizeLog = kSizeLog4;
+    } else if (size >= 2 && (addr & ~7) == ((addr + 1) & ~7)) {
+      size1 = 2;
+      kAccessSizeLog = kSizeLog2;
+    }
+    MemoryAccess(thr, pc, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic);
+    addr += size1;
+    size -= size1;
+  }
+}
+
 ALWAYS_INLINE
+bool ContainsSameAccessSlow(u64 *s, u64 a, u64 sync_epoch, bool is_write) {
+  Shadow cur(a);
+  for (uptr i = 0; i < kShadowCnt; i++) {
+    Shadow old(LoadShadow(&s[i]));
+    if (Shadow::Addr0AndSizeAreEqual(cur, old) &&
+        old.TidWithIgnore() == cur.TidWithIgnore() &&
+        old.epoch() > sync_epoch &&
+        old.IsAtomic() == cur.IsAtomic() &&
+        old.IsRead() <= cur.IsRead())
+      return true;
+  }
+  return false;
+}
+
+#if defined(__SSE3__) && TSAN_SHADOW_COUNT == 4
+#define SHUF(v0, v1, i0, i1, i2, i3) _mm_castps_si128(_mm_shuffle_ps( \
+    _mm_castsi128_ps(v0), _mm_castsi128_ps(v1), \
+    (i0)*1 + (i1)*4 + (i2)*16 + (i3)*64))
+ALWAYS_INLINE
+bool ContainsSameAccessFast(u64 *s, u64 a, u64 sync_epoch, bool is_write) {
+  // This is an optimized version of ContainsSameAccessSlow.
+  // load current access into access[0:63]
+  const m128 access     = _mm_cvtsi64_si128(a);
+  // duplicate high part of access in addr0:
+  // addr0[0:31]        = access[32:63]
+  // addr0[32:63]       = access[32:63]
+  // addr0[64:95]       = access[32:63]
+  // addr0[96:127]      = access[32:63]
+  const m128 addr0      = SHUF(access, access, 1, 1, 1, 1);
+  // load 4 shadow slots
+  const m128 shadow0    = _mm_load_si128((__m128i*)s);
+  const m128 shadow1    = _mm_load_si128((__m128i*)s + 1);
+  // load high parts of 4 shadow slots into addr_vect:
+  // addr_vect[0:31]    = shadow0[32:63]
+  // addr_vect[32:63]   = shadow0[96:127]
+  // addr_vect[64:95]   = shadow1[32:63]
+  // addr_vect[96:127]  = shadow1[96:127]
+  m128 addr_vect        = SHUF(shadow0, shadow1, 1, 3, 1, 3);
+  if (!is_write) {
+    // set IsRead bit in addr_vect
+    const m128 rw_mask1 = _mm_cvtsi64_si128(1<<15);
+    const m128 rw_mask  = SHUF(rw_mask1, rw_mask1, 0, 0, 0, 0);
+    addr_vect           = _mm_or_si128(addr_vect, rw_mask);
+  }
+  // addr0 == addr_vect?
+  const m128 addr_res   = _mm_cmpeq_epi32(addr0, addr_vect);
+  // epoch1[0:63]       = sync_epoch
+  const m128 epoch1     = _mm_cvtsi64_si128(sync_epoch);
+  // epoch[0:31]        = sync_epoch[0:31]
+  // epoch[32:63]       = sync_epoch[0:31]
+  // epoch[64:95]       = sync_epoch[0:31]
+  // epoch[96:127]      = sync_epoch[0:31]
+  const m128 epoch      = SHUF(epoch1, epoch1, 0, 0, 0, 0);
+  // load low parts of shadow cell epochs into epoch_vect:
+  // epoch_vect[0:31]   = shadow0[0:31]
+  // epoch_vect[32:63]  = shadow0[64:95]
+  // epoch_vect[64:95]  = shadow1[0:31]
+  // epoch_vect[96:127] = shadow1[64:95]
+  const m128 epoch_vect = SHUF(shadow0, shadow1, 0, 2, 0, 2);
+  // epoch_vect >= sync_epoch?
+  const m128 epoch_res  = _mm_cmpgt_epi32(epoch_vect, epoch);
+  // addr_res & epoch_res
+  const m128 res        = _mm_and_si128(addr_res, epoch_res);
+  // mask[0] = res[7]
+  // mask[1] = res[15]
+  // ...
+  // mask[15] = res[127]
+  const int mask        = _mm_movemask_epi8(res);
+  return mask != 0;
+}
+#endif
+
+ALWAYS_INLINE
+bool ContainsSameAccess(u64 *s, u64 a, u64 sync_epoch, bool is_write) {
+#if defined(__SSE3__) && TSAN_SHADOW_COUNT == 4
+  bool res = ContainsSameAccessFast(s, a, sync_epoch, is_write);
+  // NOTE: this check can fail if the shadow is concurrently mutated
+  // by other threads.
+  DCHECK_EQ(res, ContainsSameAccessSlow(s, a, sync_epoch, is_write));
+  return res;
+#else
+  return ContainsSameAccessSlow(s, a, sync_epoch, is_write);
+#endif
+}
+
+ALWAYS_INLINE USED
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic) {
   u64 *shadow_mem = (u64*)MemToShadow(addr);
@@ -472,26 +743,72 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   }
 #endif
 
-  FastState fast_state = thr->fast_state;
-  if (fast_state.GetIgnoreBit())
+  if (kCppMode && *shadow_mem == kShadowRodata) {
+    // Access to .rodata section, no races here.
+    // Measurements show that it can be 10-20% of all memory accesses.
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopRodata);
     return;
-  fast_state.IncrementEpoch();
-  thr->fast_state = fast_state;
+  }
+
+  FastState fast_state = thr->fast_state;
+  if (fast_state.GetIgnoreBit()) {
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopIgnored);
+    return;
+  }
+
   Shadow cur(fast_state);
   cur.SetAddr0AndSizeLog(addr & 7, kAccessSizeLog);
   cur.SetWrite(kAccessIsWrite);
   cur.SetAtomic(kIsAtomic);
 
-  // We must not store to the trace if we do not store to the shadow.
-  // That is, this call must be moved somewhere below.
-  TraceAddEvent(thr, fast_state, EventTypeMop, pc);
+  if (LIKELY(ContainsSameAccess(shadow_mem, cur.raw(),
+      thr->fast_synch_epoch, kAccessIsWrite))) {
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopSame);
+    return;
+  }
 
-  MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
+  if (kCollectHistory) {
+    fast_state.IncrementEpoch();
+    thr->fast_state = fast_state;
+    TraceAddEvent(thr, fast_state, EventTypeMop, pc);
+    cur.IncrementEpoch();
+  }
+
+  MemoryAccessImpl1(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
+      shadow_mem, cur);
+}
+
+// Called by MemoryAccessRange in tsan_rtl_thread.cc
+ALWAYS_INLINE USED
+void MemoryAccessImpl(ThreadState *thr, uptr addr,
+    int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
+    u64 *shadow_mem, Shadow cur) {
+  if (LIKELY(ContainsSameAccess(shadow_mem, cur.raw(),
+      thr->fast_synch_epoch, kAccessIsWrite))) {
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopSame);
+    return;
+  }
+
+  MemoryAccessImpl1(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
       shadow_mem, cur);
 }
 
 static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
                            u64 val) {
+  (void)thr;
+  (void)pc;
   if (size == 0)
     return;
   // FIXME: fix me.
@@ -508,23 +825,44 @@ static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
   // let it just crash as usual.
   if (!IsAppMem(addr) || !IsAppMem(addr + size - 1))
     return;
-  (void)thr;
-  (void)pc;
-  // Some programs mmap like hundreds of GBs but actually used a small part.
-  // So, it's better to report a false positive on the memory
-  // then to hang here senselessly.
-  const uptr kMaxResetSize = 4ull*1024*1024*1024;
-  if (size > kMaxResetSize)
-    size = kMaxResetSize;
+  // Don't want to touch lots of shadow memory.
+  // If a program maps 10MB stack, there is no need reset the whole range.
   size = (size + (kShadowCell - 1)) & ~(kShadowCell - 1);
-  u64 *p = (u64*)MemToShadow(addr);
-  CHECK(IsShadowMem((uptr)p));
-  CHECK(IsShadowMem((uptr)(p + size * kShadowCnt / kShadowCell - 1)));
-  // FIXME: may overwrite a part outside the region
-  for (uptr i = 0; i < size * kShadowCnt / kShadowCell;) {
-    p[i++] = val;
-    for (uptr j = 1; j < kShadowCnt; j++)
-      p[i++] = 0;
+  // UnmapOrDie/MmapFixedNoReserve does not work on Windows,
+  // so we do it only for C/C++.
+  if (kGoMode || size < common_flags()->clear_shadow_mmap_threshold) {
+    u64 *p = (u64*)MemToShadow(addr);
+    CHECK(IsShadowMem((uptr)p));
+    CHECK(IsShadowMem((uptr)(p + size * kShadowCnt / kShadowCell - 1)));
+    // FIXME: may overwrite a part outside the region
+    for (uptr i = 0; i < size / kShadowCell * kShadowCnt;) {
+      p[i++] = val;
+      for (uptr j = 1; j < kShadowCnt; j++)
+        p[i++] = 0;
+    }
+  } else {
+    // The region is big, reset only beginning and end.
+    const uptr kPageSize = 4096;
+    u64 *begin = (u64*)MemToShadow(addr);
+    u64 *end = begin + size / kShadowCell * kShadowCnt;
+    u64 *p = begin;
+    // Set at least first kPageSize/2 to page boundary.
+    while ((p < begin + kPageSize / kShadowSize / 2) || ((uptr)p % kPageSize)) {
+      *p++ = val;
+      for (uptr j = 1; j < kShadowCnt; j++)
+        *p++ = 0;
+    }
+    // Reset middle part.
+    u64 *p1 = p;
+    p = RoundDown(end, kPageSize);
+    UnmapOrDie((void*)p1, (uptr)p - (uptr)p1);
+    MmapFixedNoReserve((uptr)p1, (uptr)p - (uptr)p1);
+    // Set the ending.
+    while (p < end) {
+      *p++ = val;
+      for (uptr j = 1; j < kShadowCnt; j++)
+        *p++ = 0;
+    }
   }
 }
 
@@ -533,10 +871,19 @@ void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 }
 
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
+  // Processing more than 1k (4k of shadow) is expensive,
+  // can cause excessive memory consumption (user does not necessary touch
+  // the whole range) and most likely unnecessary.
+  if (size > 1024)
+    size = 1024;
   CHECK_EQ(thr->is_freeing, false);
   thr->is_freeing = true;
   MemoryAccessRange(thr, pc, addr, size, true);
   thr->is_freeing = false;
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
+  }
   Shadow s(thr->fast_state);
   s.ClearIgnoreBit();
   s.MarkAsFreed();
@@ -546,6 +893,10 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 }
 
 void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
+  }
   Shadow s(thr->fast_state);
   s.ClearIgnoreBit();
   s.SetWrite(true);
@@ -553,59 +904,85 @@ void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   MemoryRangeSet(thr, pc, addr, size, s.raw());
 }
 
-ALWAYS_INLINE
+ALWAYS_INLINE USED
 void FuncEntry(ThreadState *thr, uptr pc) {
-  DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncEnter);
   DPrintf2("#%d: FuncEntry %p\n", (int)thr->fast_state.tid(), (void*)pc);
-  thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state, EventTypeFuncEnter, pc);
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeFuncEnter, pc);
+  }
 
   // Shadow stack maintenance can be replaced with
   // stack unwinding during trace switch (which presumably must be faster).
-  DCHECK_GE(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+  DCHECK_GE(thr->shadow_stack_pos, thr->shadow_stack);
 #ifndef TSAN_GO
-  DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
+  DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #else
-  if (thr->shadow_stack_pos == thr->shadow_stack_end) {
-    const int sz = thr->shadow_stack_end - thr->shadow_stack;
-    const int newsz = 2 * sz;
-    uptr *newstack = (uptr*)internal_alloc(MBlockShadowStack,
-        newsz * sizeof(uptr));
-    internal_memcpy(newstack, thr->shadow_stack, sz * sizeof(uptr));
-    internal_free(thr->shadow_stack);
-    thr->shadow_stack = newstack;
-    thr->shadow_stack_pos = newstack + sz;
-    thr->shadow_stack_end = newstack + newsz;
-  }
+  if (thr->shadow_stack_pos == thr->shadow_stack_end)
+    GrowShadowStack(thr);
 #endif
   thr->shadow_stack_pos[0] = pc;
   thr->shadow_stack_pos++;
 }
 
-ALWAYS_INLINE
+ALWAYS_INLINE USED
 void FuncExit(ThreadState *thr) {
-  DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncExit);
   DPrintf2("#%d: FuncExit\n", (int)thr->fast_state.tid());
-  thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state, EventTypeFuncExit, 0);
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeFuncExit, 0);
+  }
 
-  DCHECK_GT(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+  DCHECK_GT(thr->shadow_stack_pos, thr->shadow_stack);
 #ifndef TSAN_GO
-  DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
+  DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #endif
   thr->shadow_stack_pos--;
 }
 
-void IgnoreCtl(ThreadState *thr, bool write, bool begin) {
-  DPrintf("#%d: IgnoreCtl(%d, %d)\n", thr->tid, write, begin);
-  thr->ignore_reads_and_writes += begin ? 1 : -1;
+void ThreadIgnoreBegin(ThreadState *thr, uptr pc) {
+  DPrintf("#%d: ThreadIgnoreBegin\n", thr->tid);
+  thr->ignore_reads_and_writes++;
+  CHECK_GT(thr->ignore_reads_and_writes, 0);
+  thr->fast_state.SetIgnoreBit();
+#ifndef TSAN_GO
+  if (!ctx->after_multithreaded_fork)
+    thr->mop_ignore_set.Add(CurrentStackId(thr, pc));
+#endif
+}
+
+void ThreadIgnoreEnd(ThreadState *thr, uptr pc) {
+  DPrintf("#%d: ThreadIgnoreEnd\n", thr->tid);
+  thr->ignore_reads_and_writes--;
   CHECK_GE(thr->ignore_reads_and_writes, 0);
-  if (thr->ignore_reads_and_writes)
-    thr->fast_state.SetIgnoreBit();
-  else
+  if (thr->ignore_reads_and_writes == 0) {
     thr->fast_state.ClearIgnoreBit();
+#ifndef TSAN_GO
+    thr->mop_ignore_set.Reset();
+#endif
+  }
+}
+
+void ThreadIgnoreSyncBegin(ThreadState *thr, uptr pc) {
+  DPrintf("#%d: ThreadIgnoreSyncBegin\n", thr->tid);
+  thr->ignore_sync++;
+  CHECK_GT(thr->ignore_sync, 0);
+#ifndef TSAN_GO
+  if (!ctx->after_multithreaded_fork)
+    thr->sync_ignore_set.Add(CurrentStackId(thr, pc));
+#endif
+}
+
+void ThreadIgnoreSyncEnd(ThreadState *thr, uptr pc) {
+  DPrintf("#%d: ThreadIgnoreSyncEnd\n", thr->tid);
+  thr->ignore_sync--;
+  CHECK_GE(thr->ignore_sync, 0);
+#ifndef TSAN_GO
+  if (thr->ignore_sync == 0)
+    thr->sync_ignore_set.Reset();
+#endif
 }
 
 bool MD5Hash::operator==(const MD5Hash &other) const {

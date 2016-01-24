@@ -1,5 +1,5 @@
 /* Map logical line numbers to (source file, line number) pairs.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -315,6 +315,10 @@ struct GTY(()) line_maps {
   line_map_round_alloc_size_func round_alloc_size;
 
   struct location_adhoc_data_map location_adhoc_data_map;
+
+  /* The special location value that is used as spelling location for
+     built-in tokens.  */
+  source_location builtin_location;
 };
 
 /* Returns the pointer to the memory region where information about
@@ -447,8 +451,12 @@ extern source_location get_location_from_adhoc_loc (struct line_maps *,
 
 extern void rebuild_location_adhoc_htab (struct line_maps *);
 
-/* Initialize a line map set.  */
-extern void linemap_init (struct line_maps *);
+/* Initialize a line map set.  SET is the line map set to initialize
+   and BUILTIN_LOCATION is the special location value to be used as
+   spelling location for built-in tokens.  This BUILTIN_LOCATION has
+   to be strictly less than RESERVED_LOCATION_COUNT.  */
+extern void linemap_init (struct line_maps *set,
+			  source_location builtin_location);
 
 /* Check for and warn about line_maps entered but not exited.  */
 
@@ -515,7 +523,7 @@ int linemap_location_in_system_header_p (struct line_maps *,
 /* Return TRUE if LOCATION is a source code location of a token coming
    from a macro replacement-list at a macro expansion point, FALSE
    otherwise.  */
-bool linemap_location_from_macro_expansion_p (struct line_maps *,
+bool linemap_location_from_macro_expansion_p (const struct line_maps *,
 					      source_location);
 
 /* source_location values from 0 to RESERVED_LOCATION_COUNT-1 will
@@ -571,6 +579,16 @@ bool linemap_location_from_macro_expansion_p (struct line_maps *,
     if (! (EXPR))				\
       abort ();					\
   } while (0)
+ 
+/* Assert that becomes a conditional expression when checking is disabled at
+   compilation time.  Use this for conditions that should not happen but if
+   they happen, it is better to handle them gracefully rather than crash
+   randomly later. 
+   Usage:
+
+   if (linemap_assert_fails(EXPR)) handle_error(); */
+#define linemap_assert_fails(EXPR) __extension__ \
+  ({linemap_assert (EXPR); false;}) 
 
 /* Assert that MAP encodes locations of tokens that are not part of
    the replacement-list of a macro expansion.  */
@@ -578,7 +596,9 @@ bool linemap_location_from_macro_expansion_p (struct line_maps *,
   ({linemap_assert (!linemap_macro_expansion_map_p (LINE_MAP)); \
     (LINE_MAP);})
 #else
-#define linemap_assert(EXPR)
+/* Include EXPR, so that unused variable warnings do not occur.  */
+#define linemap_assert(EXPR) ((void)(0 && (EXPR)))
+#define linemap_assert_fails(EXPR) (! (EXPR))
 #define linemap_check_ordinary(LINE_MAP) (LINE_MAP)
 #endif
 
@@ -591,9 +611,18 @@ linemap_position_for_column (struct line_maps *, unsigned int);
 
 /* Encode and return a source location from a given line and
    column.  */
-source_location linemap_position_for_line_and_column (struct line_map *,
-						      linenum_type,
-						      unsigned int);
+source_location
+linemap_position_for_line_and_column (const struct line_map *,
+				      linenum_type, unsigned int);
+
+/* Encode and return a source_location starting from location LOC and
+   shifting it by OFFSET columns.  This function does not support
+   virtual locations.  */
+source_location
+linemap_position_for_loc_and_offset (struct line_maps *set,
+				     source_location loc,
+				     unsigned int offset);
+
 /* Return the file this map is for.  */
 #define LINEMAP_FILE(MAP)					\
   (linemap_check_ordinary (MAP)->d.ordinary.to_file)
@@ -755,6 +784,14 @@ struct linemap_stats
   long macro_maps_locations_size;
   long duplicated_macro_maps_locations_size;
 };
+
+/* Return the highest location emitted for a given file for which
+   there is a line map in SET.  FILE_NAME is the file name to
+   consider.  If the function returns TRUE, *LOC is set to the highest
+   location emitted for that file.  */
+bool linemap_get_file_highest_location (struct line_maps * set,
+					const char *file_name,
+					source_location *loc);
 
 /* Compute and return statistics about the memory consumption of some
    parts of the line table SET.  */

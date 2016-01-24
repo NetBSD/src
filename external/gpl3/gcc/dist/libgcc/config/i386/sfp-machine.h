@@ -15,6 +15,7 @@ typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
 #endif
 
 #define _FP_KEEPNANFRACP	1
+#define _FP_QNANNEGATEDP 0
 
 #define _FP_NANSIGN_S		1
 #define _FP_NANSIGN_D		1
@@ -63,6 +64,8 @@ void __sfp_handle_exceptions (int);
 
 #define FP_ROUNDMODE		(_fcw & FP_RND_MASK)
 #endif
+
+#define _FP_TININESS_AFTER_ROUNDING 1
 
 #define	__LITTLE_ENDIAN	1234
 #define	__BIG_ENDIAN	4321

@@ -1,5 +1,5 @@
 /* Null garbage collection for the GNU compiler.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -41,14 +41,18 @@ ggc_round_alloc_size (size_t requested_size)
 }
 
 void *
-ggc_internal_alloc_stat (size_t size MEM_STAT_DECL)
+ggc_internal_alloc (size_t size, void (*f)(void *), size_t, size_t
+		    MEM_STAT_DECL)
 {
+  gcc_assert (!f); // ggc-none doesn't support finalizers
   return xmalloc (size);
 }
 
 void *
-ggc_internal_cleared_alloc_stat (size_t size MEM_STAT_DECL)
+ggc_internal_cleared_alloc (size_t size, void (*f)(void *), size_t, size_t
+			    MEM_STAT_DECL)
 {
+  gcc_assert (!f); // ggc-none doesn't support finalizers
   return xcalloc (size, 1);
 }
 
@@ -62,4 +66,9 @@ void
 ggc_free (void *p)
 {
   free (p);
+}
+
+void
+ggc_grow (void)
+{
 }

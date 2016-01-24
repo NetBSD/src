@@ -1,5 +1,5 @@
 /* Output VMS debug format symbol table information from GCC.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
    Contributed by Douglas B. Rupp (rupp@gnat.com).
    Updated by Bernard W. Giroud (bgiroud@users.sourceforge.net).
 
@@ -25,7 +25,17 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 
 #ifdef VMS_DEBUGGING_INFO
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "varasm.h"
 #include "version.h"
 #include "flags.h"
 #include "rtl.h"
@@ -33,6 +43,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "vmsdbg.h"
 #include "debug.h"
 #include "langhooks.h"
+#include "hard-reg-set.h"
+#include "input.h"
 #include "function.h"
 #include "target.h"
 
@@ -186,15 +198,16 @@ const struct gcc_debug_hooks vmsdbg_debug_hooks
    vmsdbgout_end_epilogue,
    vmsdbgout_begin_function,
    vmsdbgout_end_function,
+   debug_nothing_tree,		  /* register_main_translation_unit */
    vmsdbgout_decl,
    vmsdbgout_global_decl,
    vmsdbgout_type_decl,		  /* type_decl */
    debug_nothing_tree_tree_tree_bool, /* imported_module_or_decl */
    debug_nothing_tree,		  /* deferred_inline_function */
    vmsdbgout_abstract_function,
-   debug_nothing_rtx,		  /* label */
+   debug_nothing_rtx_code_label,  /* label */
    debug_nothing_int,		  /* handle_pch */
-   debug_nothing_rtx,		  /* var_location */
+   debug_nothing_rtx_insn,	  /* var_location */
    debug_nothing_void,            /* switch_text_section */
    debug_nothing_tree_tree,	  /* set_name */
    0,                             /* start_end_main_source_file */
@@ -221,9 +234,9 @@ const struct gcc_debug_hooks vmsdbg_debug_hooks
 
 #ifndef UNALIGNED_OFFSET_ASM_OP
 #define UNALIGNED_OFFSET_ASM_OP(OFFSET) \
-  (NUMBYTES(OFFSET) == 4 \
+  (NUMBYTES (OFFSET) == 4 \
    ? VMS_UNALIGNED_LONG_ASM_OP \
-   : (NUMBYTES(OFFSET) == 2 ? VMS_UNALIGNED_SHORT_ASM_OP : VMS_ASM_BYTE_OP))
+   : (NUMBYTES (OFFSET) == 2 ? VMS_UNALIGNED_SHORT_ASM_OP : VMS_ASM_BYTE_OP))
 #endif
 
 /* Definitions of defaults for formats and names of various special
@@ -329,7 +342,7 @@ static char text_end_label[MAX_ARTIFICIAL_LABEL_BYTES];
 
 #ifndef ASM_OUTPUT_DEBUG_DATA
 #define ASM_OUTPUT_DEBUG_DATA(FILE,VALUE) \
-  fprintf ((FILE), "\t%s\t%#lx", UNALIGNED_OFFSET_ASM_OP(VALUE), VALUE)
+  fprintf ((FILE), "\t%s\t%#lx", UNALIGNED_OFFSET_ASM_OP (VALUE), VALUE)
 #endif
 
 #ifndef ASM_OUTPUT_DEBUG_ADDR_DATA
@@ -351,7 +364,7 @@ static char text_end_label[MAX_ARTIFICIAL_LABEL_BYTES];
 #define ASM_OUTPUT_DEBUG_STRING(FILE,P)		\
   do						\
     {						\
-      register int slen = strlen(P);		\
+      register int slen = strlen (P);		\
       register const char *p = (P);		\
       register int i;				\
       fprintf (FILE, "\t.ascii \"");		\
@@ -1453,9 +1466,9 @@ vmsdbgout_init (const char *filename)
 
   lookup_filename (primary_filename);
 
-  if (!strcmp (language_string, "GNU C"))
+  if (lang_GNU_C ())
     module_language = DST_K_C;
-  else if (!strcmp (language_string, "GNU C++"))
+  else if (lang_GNU_CXX ())
     module_language = DST_K_CXX;
   else if (!strcmp (language_string, "GNU Ada"))
     module_language = DST_K_ADA;

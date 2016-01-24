@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -68,6 +68,9 @@ David Binderman tests weekly snapshots of GCC trunk against Fedora Rawhide
 for several architectures.
 
 @item
+Laurynas Biveinis for memory management work and DJGPP port fixes.
+
+@item
 Uros Bizjak for the implementation of x87 math built-in functions and
 for various middle end and i386 back end improvements and bug fixes.
 
@@ -128,7 +131,8 @@ Herman A.J. ten Brugge for various fixes.
 Joerg Brunsmann for Java compiler hacking and help with the GCJ FAQ@.
 
 @item
-Joe Buck for his direction via the steering committee.
+Joe Buck for his direction via the steering committee from its creation
+to 2013.
 
 @item
 Craig Burley for leadership of the G77 Fortran effort.
@@ -176,7 +180,7 @@ The @uref{http://www.gnu.org/software/classpath/,,GNU Classpath project}
 for all of their merged runtime code.
 
 @item
-Nick Clifton for arm, mcore, fr30, v850, m32r, rx work,
+Nick Clifton for arm, mcore, fr30, v850, m32r, msp430 rx work,
 @option{--help}, and other random hacking.
 
 @item
@@ -218,7 +222,7 @@ Mo DeJong for GCJ and libgcj bug fixes.
 
 @item
 DJ Delorie for the DJGPP port, build and libiberty maintenance,
-various bug fixes, and the M32C, MeP, and RL78 ports.
+various bug fixes, and the M32C, MeP, MSP430, and RL78 ports.
 
 @item
 Arnaud Desitter for helping to debug GNU Fortran.
@@ -236,6 +240,10 @@ support, CFG dumping support, etc., plus support of the C++ runtime
 libraries including for all kinds of C interface issues, contributing and
 maintaining @code{complex<>}, sanity checking and disbursement, configuration
 architecture, libio maintenance, and early math work.
+
+@item
+Fran@,{c}ois Dumont for his work on libstdc++-v3, especially maintaining and
+improving @code{debug-mode} and associative and unordered containers.
 
 @item
 Zdenek Dvorak for a new loop unroller and various fixes.
@@ -321,6 +329,9 @@ support, improved leaf function register allocation, and his direction
 via the steering committee.
 
 @item
+Jonny Grant for improvements to @code{collect2's} @option{--help} documentation.
+
+@item
 Anthony Green for his @option{-Os} contributions, the moxie port, and
 Java front end work.
 
@@ -331,7 +342,7 @@ Stu Grossman for gdb hacking, allowing GCJ developers to debug Java code.
 Michael K. Gschwind contributed the port to the PDP-11.
 
 @item
-Richard Guenther for his ongoing middle-end contributions and bug fixes
+Richard Biener for his ongoing middle-end contributions and bug fixes
 and for release management.
 
 @item
@@ -417,7 +428,14 @@ Kamil Iskra for general m68k hacking.
 Lee Iverson for random fixes and MIPS testing.
 
 @item
+Balaji V. Iyer for Cilk+ development and merging.
+
+@item
 Andreas Jaeger for testing and benchmarking of GCC and various bug fixes.
+
+@item
+Martin Jambor for his work on inter-procedural optimizations, the
+switch conversion pass, and scalar replacement of aggregates.
 
 @item
 Jakub Jelinek for his SPARC work and sibling call optimizations as well
@@ -493,6 +511,10 @@ Bruce Korb for the new and improved fixincludes code.
 
 @item
 Benjamin Kosnik for his G++ work and for leading the libstdc++-v3 effort.
+
+@item
+Maxim Kuvyrkov for contributions to the instruction scheduler, the Android 
+and m68k/Coldfire ports, and optimizations.
 
 @item
 Charles LaBrec contributed the support for the Integrated Solutions
@@ -580,8 +602,15 @@ implementation of the automaton based instruction scheduler.
 Bob Manson for his behind the scenes work on dejagnu.
 
 @item
+John Marino for contributing the DragonFly BSD port.
+
+@item
 Philip Martin for lots of libstdc++ string and vector iterator fixes and
 improvements, and string clean up and testsuites.
+
+@item
+Michael Matz for his work on dominance tree discovery, the x86-64 port,
+link-time optimization framework and general optimization improvements.
 
 @item
 All of the Mauve project
@@ -783,6 +812,9 @@ translation of the old @file{g77-0.5.16/f/DOC} file.
 Ken Rose for fixes to GCC's delay slot filling code.
 
 @item
+Ira Rosen for her contributions to the auto-vectorizer.
+
+@item
 Paul Rubin wrote most of the preprocessor.
 
 @item
@@ -838,6 +870,9 @@ Lars Segerlund for work on GNU Fortran.
 Dodji Seketeli for numerous C++ bug fixes and debug info improvements.
 
 @item
+Tim Shen for major work on @code{<regex>}.
+
+@item
 Joel Sherrill for his direction via the steering committee, RTEMS
 contributions and RTEMS testing.
 
@@ -868,9 +903,15 @@ Christopher Smith did the port for Convex machines.
 
 @item
 Danny Smith for his major efforts on the Mingw (and Cygwin) ports.
+Retired from GCC maintainership August 2010, having mentored two 
+new maintainers into the role.
 
 @item
 Randy Smith finished the Sun FPA support.
+
+@item
+Ed Smith-Rowland for his continuous work on libstdc++-v3, special functions,
+@code{<random>}, and various improvements to C++11 features.
 
 @item
 Scott Snyder for queue, iterator, istream, and string fixes and libstdc++
@@ -995,7 +1036,7 @@ Feng Wang for contributions to GNU Fortran.
 @item
 Stephen M. Webb for time and effort on making libstdc++ shadow files
 work with the tricky Solaris 8+ headers, and for pushing the build-time
-header tree.
+header tree. Also, for starting and driving the @code{<regex>} effort.
 
 @item
 John Wehle for various improvements for the x86 code generator,
@@ -1037,6 +1078,9 @@ Carlo Wood for various fixes.
 
 @item
 Tom Wood for work on the m88k port.
+
+@item
+Chung-Ju Wu for his work on the Andes NDS32 port.
 
 @item
 Canqun Yang for work on GNU Fortran.

@@ -1,5 +1,5 @@
 /* Common definitions for Intel 386 and AMD x86-64 systems using
-   GNU userspace.  Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   GNU userspace.  Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Ilya Enkovich.
 
 This file is part of GCC.
@@ -57,12 +57,6 @@ along with GCC; see the file COPYING3.  If not see
   GNU_USER_TARGET_MATHFILE_SPEC " " \
   GNU_USER_TARGET_ENDFILE_SPEC
 
-/* Put all *tf routines in libgcc.  */
-#undef LIBGCC2_HAS_TF_MODE
-#define LIBGCC2_HAS_TF_MODE 1
-#define LIBGCC2_TF_CEXT q
-#define TF_SIZE 113
-
 #define TARGET_ASM_FILE_END file_end_indicate_exec_stack
 
 /* The stack pointer needs to be moved while checking the stack.  */
@@ -70,3 +64,9 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Static stack checking is supported by means of probes.  */
 #define STACK_CHECK_STATIC_BUILTIN 1
+
+/* We only build the -fsplit-stack support in libgcc if the
+   assembler has full support for the CFI directives.  */
+#if HAVE_GAS_CFI_PERSONALITY_DIRECTIVE
+#define TARGET_CAN_SPLIT_STACK
+#endif

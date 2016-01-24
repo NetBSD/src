@@ -1,5 +1,5 @@
 ;; Predicate definitions for IA-64.
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -69,12 +69,17 @@
 	     of constants here.  */
 	  t = SYMBOL_REF_DECL (op);
 	  if (DECL_P (t))
-	    t = DECL_SIZE_UNIT (t);
+	    {
+	      /* Common symbol isn't placed in small data section.  */
+	      if (DECL_COMMON (t))
+		return false;
+	      t = DECL_SIZE_UNIT (t);
+	    }
 	  else
 	    t = TYPE_SIZE_UNIT (TREE_TYPE (t));
-	  if (t && host_integerp (t, 0))
+	  if (t && tree_fits_shwi_p (t))
 	    {
-	      size = tree_low_cst (t, 0);
+	      size = tree_to_shwi (t);
 	      if (size < 0)
 		size = 0;
 	    }
@@ -568,9 +573,15 @@
 	    (match_test "op == CONST0_RTX (GET_MODE (op))"))))
 
 ;; Return 1 if OP is a valid comparison operator for "cbranch" instructions.
+;; If we're assuming that FP operations cannot generate user-visible traps,
+;; then we can use the FP unordered-signaling instructions to implement the
+;; FP unordered-quiet comparison predicates.
 (define_predicate "ia64_cbranch_operator"
-  (ior (match_operand 0 "ordered_comparison_operator")
-       (match_code "ordered,unordered")))
+  (if_then_else (match_test "flag_trapping_math")
+		(ior (match_operand 0 "ordered_comparison_operator")
+		      (match_code "ordered,unordered"))
+		(and (match_operand 0 "comparison_operator")
+		      (not (match_code "uneq,ltgt")))))
 
 ;; True if this is a comparison operator, which accepts a normal 8-bit
 ;; signed immediate operand.

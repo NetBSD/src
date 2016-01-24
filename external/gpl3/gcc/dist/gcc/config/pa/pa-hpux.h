@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for HP-UX.
-   Copyright (C) 1991-2013 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,7 +25,7 @@ along with GCC; see the file COPYING3.  If not see
 #define HPUX_LONG_DOUBLE_LIBRARY 1
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT MASK_BIG_SWITCH
+#define TARGET_DEFAULT 0
 
 /* Make GCC agree with types.h.  */
 #undef SIZE_TYPE
@@ -114,3 +114,6 @@ along with GCC; see the file COPYING3.  If not see
    compatibility with the HP-UX unwind library.  */
 #undef TARGET_HPUX_UNWIND_LIBRARY
 #define TARGET_HPUX_UNWIND_LIBRARY 1
+
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function

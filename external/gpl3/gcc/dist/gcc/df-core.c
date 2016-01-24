@@ -1,5 +1,5 @@
 /* Allocation for dataflow support routines.
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Originally contributed by Michael P. Hayes
              (m.hayes@elec.canterbury.ac.nz, mhayes@redhat.com)
    Major rewrite contributed by Danny Berlin (dberlin@dberlin.org)
@@ -181,7 +181,7 @@ There are four ways of doing the incremental scanning:
    next call to df_analyze or df_process_deferred_rescans.
 
    This mode is also used by a few passes that still rely on note_uses,
-   note_stores and for_each_rtx instead of using the DF data.  This
+   note_stores and rtx iterators instead of using the DF data.  This
    can be said to fall under case 1c.
 
    To enable this mode, call df_set_flags (DF_DEFER_INSN_RESCAN).
@@ -382,17 +382,27 @@ are write-only operations.
 #include "tm_p.h"
 #include "insn-config.h"
 #include "recog.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "vec.h"
+#include "machmode.h"
+#include "hard-reg-set.h"
+#include "input.h"
 #include "function.h"
 #include "regs.h"
 #include "alloc-pool.h"
 #include "flags.h"
-#include "hard-reg-set.h"
+#include "predict.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfganal.h"
 #include "basic-block.h"
 #include "sbitmap.h"
 #include "bitmap.h"
 #include "df.h"
 #include "tree-pass.h"
 #include "params.h"
+#include "cfgloop.h"
 
 static void *df_get_bb_info (struct dataflow *, unsigned int);
 static void df_set_bb_info (struct dataflow *, unsigned int, void *);
@@ -520,7 +530,7 @@ df_set_blocks (bitmap blocks)
 
 		  EXECUTE_IF_SET_IN_BITMAP (&diff, 0, bb_index, bi)
 		    {
-		      basic_block bb = BASIC_BLOCK (bb_index);
+		      basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
 		      if (bb)
 			{
 			  void *bb_info = df_get_bb_info (dflow, bb_index);
@@ -549,7 +559,7 @@ df_set_blocks (bitmap blocks)
 		    {
 		      basic_block bb;
 		      bitmap_initialize (&blocks_to_reset, &df_bitmap_obstack);
-		      FOR_ALL_BB(bb)
+		      FOR_ALL_BB_FN (bb, cfun)
 			{
 			  bitmap_set_bit (&blocks_to_reset, bb->index);
 			}
@@ -721,15 +731,13 @@ rest_of_handle_df_initialize (void)
   if (optimize > 1)
     df_live_add_problem ();
 
-  df->postorder = XNEWVEC (int, last_basic_block);
-  df->postorder_inverted = XNEWVEC (int, last_basic_block);
+  df->postorder = XNEWVEC (int, last_basic_block_for_fn (cfun));
+  df->postorder_inverted = XNEWVEC (int, last_basic_block_for_fn (cfun));
   df->n_blocks = post_order_compute (df->postorder, true, true);
   df->n_blocks_inverted = inverted_post_order_compute (df->postorder_inverted);
   gcc_assert (df->n_blocks == df->n_blocks_inverted);
 
-  df->hard_regs_live_count = XNEWVEC (unsigned int, FIRST_PSEUDO_REGISTER);
-  memset (df->hard_regs_live_count, 0,
-	  sizeof (unsigned int) * FIRST_PSEUDO_REGISTER);
+  df->hard_regs_live_count = XCNEWVEC (unsigned int, FIRST_PSEUDO_REGISTER);
 
   df_hard_reg_init ();
   /* After reload, some ports add certain bits to regs_ever_live so
@@ -741,60 +749,84 @@ rest_of_handle_df_initialize (void)
 }
 
 
-static bool
-gate_opt (void)
+namespace {
+
+const pass_data pass_data_df_initialize_opt =
 {
-  return optimize > 0;
+  RTL_PASS, /* type */
+  "dfinit", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_DF_SCAN, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_df_initialize_opt : public rtl_opt_pass
+{
+public:
+  pass_df_initialize_opt (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_df_initialize_opt, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return optimize > 0; }
+  virtual unsigned int execute (function *)
+    {
+      return rest_of_handle_df_initialize ();
+    }
+
+}; // class pass_df_initialize_opt
+
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_df_initialize_opt (gcc::context *ctxt)
+{
+  return new pass_df_initialize_opt (ctxt);
 }
 
 
-struct rtl_opt_pass pass_df_initialize_opt =
+namespace {
+
+const pass_data pass_data_df_initialize_no_opt =
 {
- {
-  RTL_PASS,
-  "dfinit",                             /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_opt,                             /* gate */
-  rest_of_handle_df_initialize,         /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_DF_SCAN,                           /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  0                                     /* todo_flags_finish */
- }
+  RTL_PASS, /* type */
+  "no-opt dfinit", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_DF_SCAN, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
 };
 
-
-static bool
-gate_no_opt (void)
+class pass_df_initialize_no_opt : public rtl_opt_pass
 {
-  return optimize == 0;
+public:
+  pass_df_initialize_no_opt (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_df_initialize_no_opt, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return optimize == 0; }
+  virtual unsigned int execute (function *)
+    {
+      return rest_of_handle_df_initialize ();
+    }
+
+}; // class pass_df_initialize_no_opt
+
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_df_initialize_no_opt (gcc::context *ctxt)
+{
+  return new pass_df_initialize_no_opt (ctxt);
 }
-
-
-struct rtl_opt_pass pass_df_initialize_no_opt =
-{
- {
-  RTL_PASS,
-  "no-opt dfinit",                      /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_no_opt,                          /* gate */
-  rest_of_handle_df_initialize,         /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_DF_SCAN,                           /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  0                                     /* todo_flags_finish */
- }
-};
 
 
 /* Free all the dataflow info and the DF structure.  This should be
@@ -824,25 +856,43 @@ rest_of_handle_df_finish (void)
 }
 
 
-struct rtl_opt_pass pass_df_finish =
+namespace {
+
+const pass_data pass_data_df_finish =
 {
- {
-  RTL_PASS,
-  "dfinish",                            /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  NULL,					/* gate */
-  rest_of_handle_df_finish,             /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_NONE,                              /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  0                                     /* todo_flags_finish */
- }
+  RTL_PASS, /* type */
+  "dfinish", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_NONE, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
 };
+
+class pass_df_finish : public rtl_opt_pass
+{
+public:
+  pass_df_finish (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_df_finish, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual unsigned int execute (function *)
+    {
+      return rest_of_handle_df_finish ();
+    }
+
+}; // class pass_df_finish
+
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_df_finish (gcc::context *ctxt)
+{
+  return new pass_df_finish (ctxt);
+}
 
 
 
@@ -882,7 +932,7 @@ df_worklist_propagate_forward (struct dataflow *dataflow,
 {
   edge e;
   edge_iterator ei;
-  basic_block bb = BASIC_BLOCK (bb_index);
+  basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
   bool changed = !age;
 
   /*  Calculate <conf_op> of incoming edges.  */
@@ -927,7 +977,7 @@ df_worklist_propagate_backward (struct dataflow *dataflow,
 {
   edge e;
   edge_iterator ei;
-  basic_block bb = BASIC_BLOCK (bb_index);
+  basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
   bool changed = !age;
 
   /*  Calculate <conf_op> of incoming edges.  */
@@ -963,7 +1013,7 @@ df_worklist_propagate_backward (struct dataflow *dataflow,
    DATAFLOW is problem we are solving, PENDING is worklist of basic blocks we
    need to visit.
    BLOCK_IN_POSTORDER is array of size N_BLOCKS specifying postorder in BBs and
-   BBINDEX_TO_POSTORDER is array mapping back BB->index to postorder possition.
+   BBINDEX_TO_POSTORDER is array mapping back BB->index to postorder position.
    PENDING will be freed.
 
    The worklists are bitmaps indexed by postorder positions.  
@@ -1016,7 +1066,7 @@ df_worklist_dataflow_doublequeue (struct dataflow *dataflow,
 
 	  bitmap_clear_bit (pending, index);
 	  bb_index = blocks_in_postorder[index];
-	  bb = BASIC_BLOCK (bb_index);
+	  bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
 	  prev_age = last_visit_age[index];
 	  if (dir == DF_FORWARD)
 	    changed = df_worklist_propagate_forward (dataflow, bb_index,
@@ -1035,7 +1085,7 @@ df_worklist_dataflow_doublequeue (struct dataflow *dataflow,
       bitmap_clear (worklist);
     }
   for (i = 0; i < n_blocks; i++)
-    BASIC_BLOCK (blocks_in_postorder[i])->aux = NULL;
+    BASIC_BLOCK_FOR_FN (cfun, blocks_in_postorder[i])->aux = NULL;
 
   BITMAP_FREE (worklist);
   BITMAP_FREE (pending);
@@ -1046,8 +1096,8 @@ df_worklist_dataflow_doublequeue (struct dataflow *dataflow,
     fprintf (dump_file, "df_worklist_dataflow_doublequeue:"
 	     "n_basic_blocks %d n_edges %d"
 	     " count %d (%5.2g)\n",
-	     n_basic_blocks, n_edges,
-	     dcount, dcount / (float)n_basic_blocks);
+	     n_basic_blocks_for_fn (cfun), n_edges_for_fn (cfun),
+	     dcount, dcount / (float)n_basic_blocks_for_fn (cfun));
 }
 
 /* Worklist-based dataflow solver. It uses sbitmap as a worklist,
@@ -1064,7 +1114,7 @@ df_worklist_dataflow (struct dataflow *dataflow,
                       int n_blocks)
 {
   bitmap pending = BITMAP_ALLOC (&df_bitmap_obstack);
-  sbitmap considered = sbitmap_alloc (last_basic_block);
+  sbitmap considered = sbitmap_alloc (last_basic_block_for_fn (cfun));
   bitmap_iterator bi;
   unsigned int *bbindex_to_postorder;
   int i;
@@ -1074,12 +1124,12 @@ df_worklist_dataflow (struct dataflow *dataflow,
   gcc_assert (dir != DF_NONE);
 
   /* BBINDEX_TO_POSTORDER maps the bb->index to the reverse postorder.  */
-  bbindex_to_postorder =
-    (unsigned int *)xmalloc (last_basic_block * sizeof (unsigned int));
+  bbindex_to_postorder = XNEWVEC (unsigned int,
+				  last_basic_block_for_fn (cfun));
 
   /* Initialize the array to an out-of-bound value.  */
-  for (i = 0; i < last_basic_block; i++)
-    bbindex_to_postorder[i] = last_basic_block;
+  for (i = 0; i < last_basic_block_for_fn (cfun); i++)
+    bbindex_to_postorder[i] = last_basic_block_for_fn (cfun);
 
   /* Initialize the considered map.  */
   bitmap_clear (considered);
@@ -1174,22 +1224,12 @@ df_analyze_problem (struct dataflow *dflow,
 }
 
 
-/* Analyze dataflow info for the basic blocks specified by the bitmap
-   BLOCKS, or for the whole CFG if BLOCKS is zero.  */
+/* Analyze dataflow info.  */
 
-void
-df_analyze (void)
+static void
+df_analyze_1 (void)
 {
-  bitmap current_all_blocks = BITMAP_ALLOC (&df_bitmap_obstack);
-  bool everything;
   int i;
-
-  free (df->postorder);
-  free (df->postorder_inverted);
-  df->postorder = XNEWVEC (int, last_basic_block);
-  df->postorder_inverted = XNEWVEC (int, last_basic_block);
-  df->n_blocks = post_order_compute (df->postorder, true, true);
-  df->n_blocks_inverted = inverted_post_order_compute (df->postorder_inverted);
 
   /* These should be the same.  */
   gcc_assert (df->n_blocks == df->n_blocks_inverted);
@@ -1206,36 +1246,6 @@ df_analyze (void)
   if (df->changeable_flags & DF_VERIFY_SCHEDULED)
 #endif
     df_verify ();
-
-  for (i = 0; i < df->n_blocks; i++)
-    bitmap_set_bit (current_all_blocks, df->postorder[i]);
-
-#ifdef ENABLE_CHECKING
-  /* Verify that POSTORDER_INVERTED only contains blocks reachable from
-     the ENTRY block.  */
-  for (i = 0; i < df->n_blocks_inverted; i++)
-    gcc_assert (bitmap_bit_p (current_all_blocks, df->postorder_inverted[i]));
-#endif
-
-  /* Make sure that we have pruned any unreachable blocks from these
-     sets.  */
-  if (df->analyze_subset)
-    {
-      everything = false;
-      bitmap_and_into (df->blocks_to_analyze, current_all_blocks);
-      df->n_blocks = df_prune_to_subcfg (df->postorder,
-					 df->n_blocks, df->blocks_to_analyze);
-      df->n_blocks_inverted = df_prune_to_subcfg (df->postorder_inverted,
-			                          df->n_blocks_inverted,
-                                                  df->blocks_to_analyze);
-      BITMAP_FREE (current_all_blocks);
-    }
-  else
-    {
-      everything = true;
-      df->blocks_to_analyze = current_all_blocks;
-      current_all_blocks = NULL;
-    }
 
   /* Skip over the DF_SCAN problem. */
   for (i = 1; i < df->num_problems_defined; i++)
@@ -1256,7 +1266,7 @@ df_analyze (void)
         }
     }
 
-  if (everything)
+  if (!df->analyze_subset)
     {
       BITMAP_FREE (df->blocks_to_analyze);
       df->blocks_to_analyze = NULL;
@@ -1265,6 +1275,208 @@ df_analyze (void)
 #ifdef DF_DEBUG_CFG
   df_set_clean_cfg ();
 #endif
+}
+
+/* Analyze dataflow info.  */
+
+void
+df_analyze (void)
+{
+  bitmap current_all_blocks = BITMAP_ALLOC (&df_bitmap_obstack);
+  int i;
+
+  free (df->postorder);
+  free (df->postorder_inverted);
+  df->postorder = XNEWVEC (int, last_basic_block_for_fn (cfun));
+  df->postorder_inverted = XNEWVEC (int, last_basic_block_for_fn (cfun));
+  df->n_blocks = post_order_compute (df->postorder, true, true);
+  df->n_blocks_inverted = inverted_post_order_compute (df->postorder_inverted);
+
+  for (i = 0; i < df->n_blocks; i++)
+    bitmap_set_bit (current_all_blocks, df->postorder[i]);
+
+#ifdef ENABLE_CHECKING
+  /* Verify that POSTORDER_INVERTED only contains blocks reachable from
+     the ENTRY block.  */
+  for (i = 0; i < df->n_blocks_inverted; i++)
+    gcc_assert (bitmap_bit_p (current_all_blocks, df->postorder_inverted[i]));
+#endif
+
+  /* Make sure that we have pruned any unreachable blocks from these
+     sets.  */
+  if (df->analyze_subset)
+    {
+      bitmap_and_into (df->blocks_to_analyze, current_all_blocks);
+      df->n_blocks = df_prune_to_subcfg (df->postorder,
+					 df->n_blocks, df->blocks_to_analyze);
+      df->n_blocks_inverted = df_prune_to_subcfg (df->postorder_inverted,
+						  df->n_blocks_inverted,
+						  df->blocks_to_analyze);
+      BITMAP_FREE (current_all_blocks);
+    }
+  else
+    {
+      df->blocks_to_analyze = current_all_blocks;
+      current_all_blocks = NULL;
+    }
+
+  df_analyze_1 ();
+}
+
+/* Compute the reverse top sort order of the sub-CFG specified by LOOP.
+   Returns the number of blocks which is always loop->num_nodes.  */
+
+static int
+loop_post_order_compute (int *post_order, struct loop *loop)
+{
+  edge_iterator *stack;
+  int sp;
+  int post_order_num = 0;
+  bitmap visited;
+
+  /* Allocate stack for back-tracking up CFG.  */
+  stack = XNEWVEC (edge_iterator, loop->num_nodes + 1);
+  sp = 0;
+
+  /* Allocate bitmap to track nodes that have been visited.  */
+  visited = BITMAP_ALLOC (NULL);
+
+  /* Push the first edge on to the stack.  */
+  stack[sp++] = ei_start (loop_preheader_edge (loop)->src->succs);
+
+  while (sp)
+    {
+      edge_iterator ei;
+      basic_block src;
+      basic_block dest;
+
+      /* Look at the edge on the top of the stack.  */
+      ei = stack[sp - 1];
+      src = ei_edge (ei)->src;
+      dest = ei_edge (ei)->dest;
+
+      /* Check if the edge destination has been visited yet and mark it
+         if not so.  */
+      if (flow_bb_inside_loop_p (loop, dest)
+	  && bitmap_set_bit (visited, dest->index))
+	{
+	  if (EDGE_COUNT (dest->succs) > 0)
+	    /* Since the DEST node has been visited for the first
+	       time, check its successors.  */
+	    stack[sp++] = ei_start (dest->succs);
+	  else
+	    post_order[post_order_num++] = dest->index;
+	}
+      else
+	{
+	  if (ei_one_before_end_p (ei)
+	      && src != loop_preheader_edge (loop)->src)
+	    post_order[post_order_num++] = src->index;
+
+	  if (!ei_one_before_end_p (ei))
+	    ei_next (&stack[sp - 1]);
+	  else
+	    sp--;
+	}
+    }
+
+  free (stack);
+  BITMAP_FREE (visited);
+
+  return post_order_num;
+}
+
+/* Compute the reverse top sort order of the inverted sub-CFG specified
+   by LOOP.  Returns the number of blocks which is always loop->num_nodes.  */
+
+static int
+loop_inverted_post_order_compute (int *post_order, struct loop *loop)
+{
+  basic_block bb;
+  edge_iterator *stack;
+  int sp;
+  int post_order_num = 0;
+  bitmap visited;
+
+  /* Allocate stack for back-tracking up CFG.  */
+  stack = XNEWVEC (edge_iterator, loop->num_nodes + 1);
+  sp = 0;
+
+  /* Allocate bitmap to track nodes that have been visited.  */
+  visited = BITMAP_ALLOC (NULL);
+
+  /* Put all latches into the initial work list.  In theory we'd want
+     to start from loop exits but then we'd have the special case of
+     endless loops.  It doesn't really matter for DF iteration order and
+     handling latches last is probably even better.  */
+  stack[sp++] = ei_start (loop->header->preds);
+  bitmap_set_bit (visited, loop->header->index);
+
+  /* The inverted traversal loop. */
+  while (sp)
+    {
+      edge_iterator ei;
+      basic_block pred;
+
+      /* Look at the edge on the top of the stack.  */
+      ei = stack[sp - 1];
+      bb = ei_edge (ei)->dest;
+      pred = ei_edge (ei)->src;
+
+      /* Check if the predecessor has been visited yet and mark it
+	 if not so.  */
+      if (flow_bb_inside_loop_p (loop, pred)
+	  && bitmap_set_bit (visited, pred->index))
+	{
+	  if (EDGE_COUNT (pred->preds) > 0)
+	    /* Since the predecessor node has been visited for the first
+	       time, check its predecessors.  */
+	    stack[sp++] = ei_start (pred->preds);
+	  else
+	    post_order[post_order_num++] = pred->index;
+	}
+      else
+	{
+	  if (flow_bb_inside_loop_p (loop, bb)
+	      && ei_one_before_end_p (ei))
+	    post_order[post_order_num++] = bb->index;
+
+	  if (!ei_one_before_end_p (ei))
+	    ei_next (&stack[sp - 1]);
+	  else
+	    sp--;
+	}
+    }
+
+  free (stack);
+  BITMAP_FREE (visited);
+  return post_order_num;
+}
+
+
+/* Analyze dataflow info for the basic blocks contained in LOOP.  */
+
+void
+df_analyze_loop (struct loop *loop)
+{
+  free (df->postorder);
+  free (df->postorder_inverted);
+
+  df->postorder = XNEWVEC (int, loop->num_nodes);
+  df->postorder_inverted = XNEWVEC (int, loop->num_nodes);
+  df->n_blocks = loop_post_order_compute (df->postorder, loop);
+  df->n_blocks_inverted
+    = loop_inverted_post_order_compute (df->postorder_inverted, loop);
+  gcc_assert ((unsigned) df->n_blocks == loop->num_nodes);
+  gcc_assert ((unsigned) df->n_blocks_inverted == loop->num_nodes);
+
+  bitmap blocks = BITMAP_ALLOC (&df_bitmap_obstack);
+  for (int i = 0; i < df->n_blocks; ++i)
+    bitmap_set_bit (blocks, df->postorder[i]);
+  df_set_blocks (blocks);
+  BITMAP_FREE (blocks);
+
+  df_analyze_1 ();
 }
 
 
@@ -1431,7 +1643,7 @@ df_set_bb_dirty (basic_block bb)
 void
 df_grow_bb_info (struct dataflow *dflow)
 {
-  unsigned int new_size = last_basic_block + 1;
+  unsigned int new_size = last_basic_block_for_fn (cfun) + 1;
   if (dflow->block_info_size < new_size)
     {
       new_size += new_size / 4;
@@ -1492,7 +1704,7 @@ df_compact_blocks (void)
 	    bitmap_set_bit (dflow->out_of_date_transfer_functions, EXIT_BLOCK);
 
 	  i = NUM_FIXED_BLOCKS;
-	  FOR_EACH_BB (bb)
+	  FOR_EACH_BB_FN (bb, cfun)
 	    {
 	      if (bitmap_bit_p (&tmp, bb->index))
 		bitmap_set_bit (dflow->out_of_date_transfer_functions, i);
@@ -1503,7 +1715,8 @@ df_compact_blocks (void)
       /* Now shuffle the block info for the problem.  */
       if (dflow->problem->free_bb_fun)
 	{
-	  int size = last_basic_block * dflow->problem->block_info_elt_size;
+	  int size = (last_basic_block_for_fn (cfun)
+		      * dflow->problem->block_info_elt_size);
 	  problem_temps = XNEWVAR (char, size);
 	  df_grow_bb_info (dflow);
 	  memcpy (problem_temps, dflow->block_info, size);
@@ -1512,7 +1725,7 @@ df_compact_blocks (void)
 	     place in the block_info vector.  Null out the copied
 	     item.  The entry and exit blocks never move.  */
 	  i = NUM_FIXED_BLOCKS;
-	  FOR_EACH_BB (bb)
+	  FOR_EACH_BB_FN (bb, cfun)
 	    {
 	      df_set_bb_info (dflow, i,
 			      (char *)problem_temps
@@ -1521,7 +1734,7 @@ df_compact_blocks (void)
 	    }
 	  memset ((char *)dflow->block_info
 		  + i * dflow->problem->block_info_elt_size, 0,
-		  (last_basic_block - i)
+		  (last_basic_block_for_fn (cfun) - i)
 		  * dflow->problem->block_info_elt_size);
 	  free (problem_temps);
 	}
@@ -1538,7 +1751,7 @@ df_compact_blocks (void)
       bitmap_copy (&tmp, df->blocks_to_analyze);
       bitmap_clear (df->blocks_to_analyze);
       i = NUM_FIXED_BLOCKS;
-      FOR_EACH_BB (bb)
+      FOR_EACH_BB_FN (bb, cfun)
 	{
 	  if (bitmap_bit_p (&tmp, bb->index))
 	    bitmap_set_bit (df->blocks_to_analyze, i);
@@ -1549,17 +1762,17 @@ df_compact_blocks (void)
   bitmap_clear (&tmp);
 
   i = NUM_FIXED_BLOCKS;
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
-      SET_BASIC_BLOCK (i, bb);
+      SET_BASIC_BLOCK_FOR_FN (cfun, i, bb);
       bb->index = i;
       i++;
     }
 
-  gcc_assert (i == n_basic_blocks);
+  gcc_assert (i == n_basic_blocks_for_fn (cfun));
 
-  for (; i < last_basic_block; i++)
-    SET_BASIC_BLOCK (i, NULL);
+  for (; i < last_basic_block_for_fn (cfun); i++)
+    SET_BASIC_BLOCK_FOR_FN (cfun, i, NULL);
 
 #ifdef DF_DEBUG_CFG
   if (!df_lr->solutions_dirty)
@@ -1581,7 +1794,7 @@ df_bb_replace (int old_index, basic_block new_block)
     fprintf (dump_file, "shoving block %d into %d\n", new_block_index, old_index);
 
   gcc_assert (df);
-  gcc_assert (BASIC_BLOCK (old_index) == NULL);
+  gcc_assert (BASIC_BLOCK_FOR_FN (cfun, old_index) == NULL);
 
   for (p = 0; p < df->num_problems_defined; p++)
     {
@@ -1595,10 +1808,10 @@ df_bb_replace (int old_index, basic_block new_block)
     }
 
   df_clear_bb_dirty (new_block);
-  SET_BASIC_BLOCK (old_index, new_block);
+  SET_BASIC_BLOCK_FOR_FN (cfun, old_index, new_block);
   new_block->index = old_index;
-  df_set_bb_dirty (BASIC_BLOCK (old_index));
-  SET_BASIC_BLOCK (new_block_index, NULL);
+  df_set_bb_dirty (BASIC_BLOCK_FOR_FN (cfun, old_index));
+  SET_BASIC_BLOCK_FOR_FN (cfun, new_block_index, NULL);
 }
 
 
@@ -1609,7 +1822,7 @@ df_bb_replace (int old_index, basic_block new_block)
 void
 df_bb_delete (int bb_index)
 {
-  basic_block bb = BASIC_BLOCK (bb_index);
+  basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
   int i;
 
   if (!df)
@@ -1664,11 +1877,11 @@ static int *
 df_compute_cfg_image (void)
 {
   basic_block bb;
-  int size = 2 + (2 * n_basic_blocks);
+  int size = 2 + (2 * n_basic_blocks_for_fn (cfun));
   int i;
   int * map;
 
-  FOR_ALL_BB (bb)
+  FOR_ALL_BB_FN (bb, cfun)
     {
       size += EDGE_COUNT (bb->succs);
     }
@@ -1676,7 +1889,7 @@ df_compute_cfg_image (void)
   map = XNEWVEC (int, size);
   map[0] = size;
   i = 1;
-  FOR_ALL_BB (bb)
+  FOR_ALL_BB_FN (bb, cfun)
     {
       edge_iterator ei;
       edge e;
@@ -1739,22 +1952,17 @@ df_set_clean_cfg (void)
 df_ref
 df_bb_regno_first_def_find (basic_block bb, unsigned int regno)
 {
-  rtx insn;
-  df_ref *def_rec;
-  unsigned int uid;
+  rtx_insn *insn;
+  df_ref def;
 
   FOR_BB_INSNS (bb, insn)
     {
       if (!INSN_P (insn))
 	continue;
 
-      uid = INSN_UID (insn);
-      for (def_rec = DF_INSN_UID_DEFS (uid); *def_rec; def_rec++)
-	{
-	  df_ref def = *def_rec;
-	  if (DF_REF_REGNO (def) == regno)
-	    return def;
-	}
+      FOR_EACH_INSN_DEF (def, insn)
+	if (DF_REF_REGNO (def) == regno)
+	  return def;
     }
   return NULL;
 }
@@ -1765,22 +1973,17 @@ df_bb_regno_first_def_find (basic_block bb, unsigned int regno)
 df_ref
 df_bb_regno_last_def_find (basic_block bb, unsigned int regno)
 {
-  rtx insn;
-  df_ref *def_rec;
-  unsigned int uid;
+  rtx_insn *insn;
+  df_ref def;
 
   FOR_BB_INSNS_REVERSE (bb, insn)
     {
       if (!INSN_P (insn))
 	continue;
 
-      uid = INSN_UID (insn);
-      for (def_rec = DF_INSN_UID_DEFS (uid); *def_rec; def_rec++)
-	{
-	  df_ref def = *def_rec;
-	  if (DF_REF_REGNO (def) == regno)
-	    return def;
-	}
+      FOR_EACH_INSN_DEF (def, insn)
+	if (DF_REF_REGNO (def) == regno)
+	  return def;
     }
 
   return NULL;
@@ -1790,22 +1993,17 @@ df_bb_regno_last_def_find (basic_block bb, unsigned int regno)
    DF is the dataflow object.  */
 
 df_ref
-df_find_def (rtx insn, rtx reg)
+df_find_def (rtx_insn *insn, rtx reg)
 {
-  unsigned int uid;
-  df_ref *def_rec;
+  df_ref def;
 
   if (GET_CODE (reg) == SUBREG)
     reg = SUBREG_REG (reg);
   gcc_assert (REG_P (reg));
 
-  uid = INSN_UID (insn);
-  for (def_rec = DF_INSN_UID_DEFS (uid); *def_rec; def_rec++)
-    {
-      df_ref def = *def_rec;
-      if (rtx_equal_p (DF_REF_REAL_REG (def), reg))
-	return def;
-    }
+  FOR_EACH_INSN_DEF (def, insn)
+    if (DF_REF_REGNO (def) == REGNO (reg))
+      return def;
 
   return NULL;
 }
@@ -1814,7 +2012,7 @@ df_find_def (rtx insn, rtx reg)
 /* Return true if REG is defined in INSN, zero otherwise.  */
 
 bool
-df_reg_defined (rtx insn, rtx reg)
+df_reg_defined (rtx_insn *insn, rtx reg)
 {
   return df_find_def (insn, reg) != NULL;
 }
@@ -1824,29 +2022,22 @@ df_reg_defined (rtx insn, rtx reg)
    DF is the dataflow object.  */
 
 df_ref
-df_find_use (rtx insn, rtx reg)
+df_find_use (rtx_insn *insn, rtx reg)
 {
-  unsigned int uid;
-  df_ref *use_rec;
+  df_ref use;
 
   if (GET_CODE (reg) == SUBREG)
     reg = SUBREG_REG (reg);
   gcc_assert (REG_P (reg));
 
-  uid = INSN_UID (insn);
-  for (use_rec = DF_INSN_UID_USES (uid); *use_rec; use_rec++)
-    {
-      df_ref use = *use_rec;
-      if (rtx_equal_p (DF_REF_REAL_REG (use), reg))
-	return use;
-    }
+  df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
+  FOR_EACH_INSN_INFO_USE (use, insn_info)
+    if (DF_REF_REGNO (use) == REGNO (reg))
+      return use;
   if (df->changeable_flags & DF_EQ_NOTES)
-    for (use_rec = DF_INSN_UID_EQ_USES (uid); *use_rec; use_rec++)
-      {
-	df_ref use = *use_rec;
-	if (rtx_equal_p (DF_REF_REAL_REG (use), reg))
-	  return use;
-      }
+    FOR_EACH_INSN_INFO_EQ_USE (use, insn_info)
+      if (DF_REF_REGNO (use) == REGNO (reg))
+	return use;
   return NULL;
 }
 
@@ -1854,7 +2045,7 @@ df_find_use (rtx insn, rtx reg)
 /* Return true if REG is referenced in INSN, zero otherwise.  */
 
 bool
-df_reg_used (rtx insn, rtx reg)
+df_reg_used (rtx_insn *insn, rtx reg)
 {
   return df_find_use (insn, reg) != NULL;
 }
@@ -1969,7 +2160,7 @@ df_dump (FILE *file)
   basic_block bb;
   df_dump_start (file);
 
-  FOR_ALL_BB (bb)
+  FOR_ALL_BB_FN (bb, cfun)
     {
       df_print_bb_index (bb, file);
       df_dump_top (bb, file);
@@ -1995,7 +2186,7 @@ df_dump_region (FILE *file)
 
       EXECUTE_IF_SET_IN_BITMAP (df->blocks_to_analyze, 0, bb_index, bi)
 	{
-	  basic_block bb = BASIC_BLOCK (bb_index);
+	  basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
 	  dump_bb (file, bb, 0, TDF_DETAILS);
 	}
       fprintf (file, "\n");
@@ -2028,7 +2219,7 @@ df_dump_start (FILE *file)
 	{
 	  df_dump_problem_function fun = dflow->problem->dump_start_fun;
 	  if (fun)
-	    fun(file);
+	    fun (file);
 	}
     }
 }
@@ -2080,7 +2271,7 @@ df_dump_bottom (basic_block bb, FILE *file)
 
 /* Dump information about INSN just before or after dumping INSN itself.  */
 static void
-df_dump_insn_problem_data (const_rtx insn, FILE *file, bool top)
+df_dump_insn_problem_data (const rtx_insn *insn, FILE *file, bool top)
 {
   int i;
 
@@ -2108,7 +2299,7 @@ df_dump_insn_problem_data (const_rtx insn, FILE *file, bool top)
 /* Dump information about INSN before dumping INSN itself.  */
 
 void
-df_dump_insn_top (const_rtx insn, FILE *file)
+df_dump_insn_top (const rtx_insn *insn, FILE *file)
 {
   df_dump_insn_problem_data (insn,  file, /*top=*/true);
 }
@@ -2116,7 +2307,7 @@ df_dump_insn_top (const_rtx insn, FILE *file)
 /* Dump information about INSN after dumping INSN itself.  */
 
 void
-df_dump_insn_bottom (const_rtx insn, FILE *file)
+df_dump_insn_bottom (const rtx_insn *insn, FILE *file)
 {
   df_dump_insn_problem_data (insn,  file, /*top=*/false);
 }
@@ -2134,16 +2325,14 @@ df_ref_dump (df_ref ref, FILE *file)
 }
 
 void
-df_refs_chain_dump (df_ref *ref_rec, bool follow_chain, FILE *file)
+df_refs_chain_dump (df_ref ref, bool follow_chain, FILE *file)
 {
   fprintf (file, "{ ");
-  while (*ref_rec)
+  for (; ref; ref = DF_REF_NEXT_LOC (ref))
     {
-      df_ref ref = *ref_rec;
       df_ref_dump (ref, file);
       if (follow_chain)
 	df_chain_dump (DF_REF_CHAIN (ref), file);
-      ref_rec++;
     }
   fprintf (file, "}");
 }
@@ -2165,15 +2354,12 @@ df_regs_chain_dump (df_ref ref,  FILE *file)
 
 
 static void
-df_mws_dump (struct df_mw_hardreg **mws, FILE *file)
+df_mws_dump (struct df_mw_hardreg *mws, FILE *file)
 {
-  while (*mws)
-    {
-      fprintf (file, "mw %c r[%d..%d]\n",
-	       (DF_MWS_REG_DEF_P (*mws)) ? 'd' : 'u',
-	       (*mws)->start_regno, (*mws)->end_regno);
-      mws++;
-    }
+  for (; mws; mws = DF_MWS_NEXT (mws))
+    fprintf (file, "mw %c r[%d..%d]\n",
+	     DF_MWS_REG_DEF_P (mws) ? 'd' : 'u',
+	     mws->start_regno, mws->end_regno);
 }
 
 
@@ -2212,13 +2398,13 @@ df_insn_uid_debug (unsigned int uid,
 
 
 DEBUG_FUNCTION void
-df_insn_debug (rtx insn, bool follow_chain, FILE *file)
+df_insn_debug (rtx_insn *insn, bool follow_chain, FILE *file)
 {
   df_insn_uid_debug (INSN_UID (insn), follow_chain, file);
 }
 
 DEBUG_FUNCTION void
-df_insn_debug_regno (rtx insn, FILE *file)
+df_insn_debug_regno (rtx_insn *insn, FILE *file)
 {
   struct df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
 
@@ -2277,7 +2463,7 @@ df_ref_debug (df_ref ref, FILE *file)
 /* Functions for debugging from GDB.  */
 
 DEBUG_FUNCTION void
-debug_df_insn (rtx insn)
+debug_df_insn (rtx_insn *insn)
 {
   df_insn_debug (insn, true, stderr);
   debug_rtx (insn);

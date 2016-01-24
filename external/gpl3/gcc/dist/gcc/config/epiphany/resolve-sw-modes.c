@@ -1,5 +1,5 @@
 /* Mode switching cleanup pass for the EPIPHANY cpu.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
 This file is part of GCC.
@@ -27,6 +27,18 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm_p.h"
 #include "vec.h"
 #include "sbitmap.h"
+#include "predict.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfganal.h"
+#include "lcm.h"
+#include "cfgbuild.h"
+#include "cfgcleanup.h"
 #include "basic-block.h"
 #include "df.h"
 #include "rtl.h"
@@ -34,9 +46,36 @@ along with GCC; see the file COPYING3.  If not see
 #include "insn-codes.h"
 #include "emit-rtl.h"
 #include "recog.h"
-#include "function.h"
 #include "insn-attr-common.h"
 #include "tree-pass.h"
+
+namespace {
+
+const pass_data pass_data_resolve_sw_modes =
+{
+  RTL_PASS, /* type */
+  "resolve_sw_modes", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_MODE_SWITCH, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  TODO_df_finish, /* todo_flags_finish */
+};
+
+class pass_resolve_sw_modes : public rtl_opt_pass
+{
+public:
+  pass_resolve_sw_modes(gcc::context *ctxt)
+    : rtl_opt_pass(pass_data_resolve_sw_modes, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return optimize; }
+  virtual unsigned int execute (function *);
+
+}; // class pass_resolve_sw_modes
 
 /* Clean-up after mode switching:
    Check for mode setting insns that have FP_MODE_ROUND_UNKNOWN.
@@ -45,31 +84,26 @@ along with GCC; see the file COPYING3.  If not see
    insert new mode setting insns on the edges where the other mode
    becomes unambigous.  */
 
-static bool
-gate_resolve_sw_modes (void)
-{
-  return optimize;
-}
-
-static unsigned
-resolve_sw_modes (void)
+unsigned
+pass_resolve_sw_modes::execute (function *fun)
 {
   basic_block bb;
-  rtx insn, src;
+  rtx_insn *insn;
+  rtx src;
   vec<basic_block> todo;
   sbitmap pushed;
   bool need_commit = false;
   bool finalize_fp_sets = (MACHINE_FUNCTION (cfun)->unknown_mode_sets == 0);
 
-  todo.create (last_basic_block);
-  pushed = sbitmap_alloc (last_basic_block);
+  todo.create (last_basic_block_for_fn (fun));
+  pushed = sbitmap_alloc (last_basic_block_for_fn (fun));
   bitmap_clear (pushed);
   if (!finalize_fp_sets)
     {
       df_note_add_problem ();
       df_analyze ();
     }
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, fun)
     FOR_BB_INSNS (bb, insn)
       {
 	enum attr_fp_mode selected_mode;
@@ -133,7 +167,7 @@ resolve_sw_modes (void)
       FOR_EACH_EDGE (e, ei, bb->succs)
 	{
 	  basic_block succ = e->dest;
-	  rtx seq;
+	  rtx_insn *seq;
 
 	  if (!REGNO_REG_SET_P (DF_LIVE_IN (succ), jilted_reg))
 	    continue;
@@ -147,7 +181,7 @@ resolve_sw_modes (void)
 	    }
 	  start_sequence ();
 	  emit_set_fp_mode (EPIPHANY_MSW_ENTITY_ROUND_UNKNOWN,
-			    jilted_mode, NULL);
+			    jilted_mode, FP_MODE_NONE, NULL);
 	  seq = get_insns ();
 	  end_sequence ();
 	  need_commit = true;
@@ -161,23 +195,10 @@ resolve_sw_modes (void)
   return 0;
 }
 
-struct rtl_opt_pass pass_resolve_sw_modes =
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_resolve_sw_modes (gcc::context *ctxt)
 {
- {
-  RTL_PASS,
-  "resolve_sw_modes",			/* name */
-  OPTGROUP_NONE,			/* optinfo_flags */
-  gate_resolve_sw_modes,		/* gate */
-  resolve_sw_modes,			/* execute */
-  NULL,					/* sub */
-  NULL,					/* next */
-  0,					/* static_pass_number */
-  TV_MODE_SWITCH,			/* tv_id */
-  0,					/* properties_required */
-  0,					/* properties_provided */
-  0,					/* properties_destroyed */
-  0,					/* todo_flags_start */
-  TODO_df_finish | TODO_verify_rtl_sharing |
-  0					/* todo_flags_finish */
- }
-};
+  return new pass_resolve_sw_modes (ctxt);
+}

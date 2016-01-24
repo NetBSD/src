@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2013 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -89,7 +89,7 @@ The Go runtime library.  The bulk of this library is mirrored from the
 @uref{http://code.google.com/@/p/@/go/, master Go repository}.
 
 @item libgomp
-The GNU OpenMP runtime library.
+The GNU Offloading and Multi Processing Runtime Library.
 
 @item libiberty
 The @code{libiberty} library, used for portability and for some
@@ -102,10 +102,6 @@ The runtime support library for transactional memory.
 
 @item libjava
 The Java runtime library.
-
-@item libmudflap
-The @code{libmudflap} library, used for instrumenting pointer and array
-dereferencing operations.
 
 @item libobjc
 The Objective-C and Objective-C++ runtime library.
@@ -120,7 +116,7 @@ The Stack protector runtime library.
 The C++ runtime library.
 
 @item lto-plugin
-Plugin used by @command{gold} if link-time optimizations are enabled.
+Plugin used by the linker if link-time optimizations are enabled.
 
 @item maintainer-scripts
 Scripts used by the @code{gccadmin} account on @code{gcc.gnu.org}.
@@ -1435,6 +1431,10 @@ Target supports a vector widening multiplication of @code{short} operands
 into @code{int} results, or can promote (unpack) from @code{short} to
 @code{int} and perform non-widening multiplication of @code{int}.
 
+@item vect_widen_mult_si_to_di_pattern
+Target supports a vector widening multiplication of @code{int} operands
+into @code{long} results.
+
 @item vect_sdot_qi
 Target supports a vector dot-product of @code{signed char}.
 
@@ -1527,6 +1527,9 @@ Some multilibs may be incompatible with this option.
 @item arm_neon
 ARM target supports generating NEON instructions.
 
+@item arm_tune_string_ops_prefer_neon
+Test CPU tune supports inlining string operations with NEON instructions.
+
 @item arm_neon_hw
 Test system supports executing NEON instructions.
 
@@ -1556,6 +1559,11 @@ ARM target generates Thumb-2 code for @code{-mthumb}.
 
 @item arm_vfp_ok
 ARM target supports @code{-mfpu=vfp -mfloat-abi=softfp}.
+Some multilibs may be incompatible with these options.
+
+@item arm_vfp3_ok
+@anchor{arm_vfp3_ok}
+ARM target supports @code{-mfpu=vfp3 -mfloat-abi=softfp}.
 Some multilibs may be incompatible with these options.
 
 @item arm_v8_vfp_ok
@@ -1684,6 +1692,9 @@ Target uses a ColdFire FPU.
 @item hard_float
 Target supports FPU instructions.
 
+@item non_strict_align
+Target does not require strict alignment.
+
 @item sse
 Target supports compiling @code{sse} instructions.
 
@@ -1709,6 +1720,9 @@ or @code{EM_SPARCV9} executables.
 
 @item vect_cmdline_needed
 Target requires a command line argument to enable a SIMD instruction set.
+
+@item pie_copyreloc
+The x86-64 target linker supports PIE with copy reloc.
 @end table
 
 @subsubsection Environment attributes
@@ -1753,6 +1767,9 @@ Target might have errors of a few ULP in string to floating-point
 conversion functions and overflow is not always detected correctly by
 those functions.
 
+@item mempcpy
+Target provides @code{mempcpy} function.
+
 @item mmap
 Target supports @code{mmap}.
 
@@ -1781,6 +1798,9 @@ hardware (i.e. fast).
 Target has the basic signed and unsigned C types in @code{stdint.h}.
 This will be obsolete when GCC ensures a working @code{stdint.h} for
 all targets.
+
+@item stpcpy
+Target provides @code{stpcpy} function.
 
 @item trampolines
 Target supports trampolines.
@@ -1818,6 +1838,9 @@ Target supports Graphite optimizations.
 
 @item fixed_point
 Target supports fixed-point extension to C.
+
+@item fopenacc
+Target supports OpenACC via @option{-fopenacc}.
 
 @item fopenmp
 Target supports OpenMP via @option{-fopenmp}.
@@ -1863,6 +1886,9 @@ Target uses natural alignment (aligned to type size) for types of
 
 @item nonpic
 Target does not generate PIC by default.
+
+@item pie_enabled
+Target generates PIE by default.
 
 @item pcc_bitfield_type_matters
 Target defines @code{PCC_BITFIELD_TYPE_MATTERS}.
@@ -1910,6 +1936,9 @@ Target supports @code{wchar_t} that is compatible with @code{char16_t}.
 
 @item wchar_t_char32_t_compatible
 Target supports @code{wchar_t} that is compatible with @code{char32_t}.
+
+@item comdat_group
+Target uses comdat groups.
 @end table
 
 @subsubsection Local to tests in @code{gcc.target/i386}
@@ -1985,6 +2014,10 @@ keyword}.
 NEON and half-precision floating point support.  Only ARM targets
 support this feature, and only then in certain modes; see
 the @ref{arm_neon_ok,,arm_neon_fp16_ok effective target keyword}.
+
+@item arm_vfp3
+arm vfp3 floating point support; see
+the @ref{arm_vfp3_ok,,arm_vfp3_ok effective target keyword}.
 
 @item bind_pic_locally
 Add the target-specific flags needed to enable functions to bind

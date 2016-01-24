@@ -30,6 +30,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -86,6 +89,9 @@
    */
 #undef LT_OBJDIR
 
+/* Define to hold the list of target names suitable for offloading. */
+#undef OFFLOAD_TARGETS
+
 /* Name of package */
 #undef PACKAGE
 
@@ -106,6 +112,12 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define to 1 if the NVIDIA plugin is built, 0 if not. */
+#undef PLUGIN_NVPTX
+
+/* Define if all infrastructure, needed for plugins, is supported. */
+#undef PLUGIN_SUPPORT
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
@@ -130,6 +142,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* Define to 1 if the target use emutls for thread-local storage. */
+#undef USE_EMUTLS
 
 /* Version number of package */
 #undef VERSION
