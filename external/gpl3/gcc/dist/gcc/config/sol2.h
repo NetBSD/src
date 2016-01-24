@@ -1,6 +1,6 @@
 /* Operating system specific defines to be used when targeting GCC for any
    Solaris 2 system.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,20 +21,25 @@ along with GCC; see the file COPYING3.  If not see
 /* We are compiling for Solaris 2 now.  */
 #define TARGET_SOLARIS 1
 
-/* Solaris 2 (at least as of 2.5.1) uses a 32-bit wchar_t.  */
+/* wchar_t is called differently in <wchar.h> for 32 and 64-bit
+   compilations.  This is called for by SCD 2.4.1, p. 6-83, Figure 6-65
+   (32-bit) and p. 6P-10, Figure 6.38 (64-bit).  */
+
 #undef WCHAR_TYPE
-#define WCHAR_TYPE "long int"
+#define WCHAR_TYPE (TARGET_64BIT ? "int" : "long int")
 
 #undef WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE BITS_PER_WORD
+#define WCHAR_TYPE_SIZE 32
 
-/* Solaris 2 uses a wint_t different from the default. This is required
-   by the SCD 2.4.1, p. 6-83, Figure 6-66.  */
-#undef	WINT_TYPE
-#define	WINT_TYPE "long int"
+/* Same for wint_t.  See SCD 2.4.1, p. 6-83, Figure 6-66 (32-bit).  There's
+   no corresponding 64-bit definition, but this is what Solaris 8
+   <iso/wchar_iso.h> uses.  */
 
-#undef	WINT_TYPE_SIZE
-#define	WINT_TYPE_SIZE BITS_PER_WORD
+#undef WINT_TYPE
+#define WINT_TYPE (TARGET_64BIT ? "int" : "long int")
+
+#undef WINT_TYPE_SIZE
+#define WINT_TYPE_SIZE 32
 
 #define SIG_ATOMIC_TYPE "int"
 
@@ -103,6 +108,19 @@ along with GCC; see the file COPYING3.  If not see
     solaris_override_options ();			\
   } while (0)
 
+#if DEFAULT_ARCH32_P
+#define MULTILIB_DEFAULTS { "m32" }
+#else
+#define MULTILIB_DEFAULTS { "m64" }
+#endif
+
+#if DEFAULT_ARCH32_P
+#define DEF_ARCH32_SPEC(__str) "%{!m64:" __str "}"
+#define DEF_ARCH64_SPEC(__str) "%{m64:" __str "}"
+#else
+#define DEF_ARCH32_SPEC(__str) "%{m32:" __str "}"
+#define DEF_ARCH64_SPEC(__str) "%{!m32:" __str "}"
+#endif
 
 /* It's safe to pass -s always, even if -g is not used.  Those options are
    handled by both Sun as and GNU as.  */
@@ -111,57 +129,150 @@ along with GCC; see the file COPYING3.  If not see
 
 #define ASM_PIC_SPEC " %{fpic|fpie|fPIC|fPIE:-K PIC}"
 
+#undef ASM_CPU_DEFAULT_SPEC
+#define ASM_CPU_DEFAULT_SPEC \
+(DEFAULT_ARCH32_P ? "\
+%{m64:" ASM_CPU64_DEFAULT_SPEC "} \
+%{!m64:" ASM_CPU32_DEFAULT_SPEC "} \
+" : "\
+%{m32:" ASM_CPU32_DEFAULT_SPEC "} \
+%{!m32:" ASM_CPU64_DEFAULT_SPEC "} \
+")
+
 #undef LIB_SPEC
 #define LIB_SPEC \
   "%{!symbolic:\
      %{pthreads|pthread:-lpthread} \
-     %{pthreads|pthread|fprofile-generate*:" LIB_TLS_SPEC "} \
      %{p|pg:-ldl} -lc}"
 
 #ifndef CROSS_DIRECTORY_STRUCTURE
 #undef MD_EXEC_PREFIX
 #define MD_EXEC_PREFIX "/usr/ccs/bin/"
-
-#undef MD_STARTFILE_PREFIX
-#define MD_STARTFILE_PREFIX "/usr/ccs/lib/"
 #endif
 
-#undef STARTFILE_ARCH32_SPEC
-#define STARTFILE_ARCH32_SPEC "%{ansi:values-Xc.o%s} \
+#undef STARTFILE_ARCH_SPEC
+#define STARTFILE_ARCH_SPEC "%{ansi:values-Xc.o%s} \
 			    %{!ansi:values-Xa.o%s}"
 
-#undef STARTFILE_ARCH_SPEC
-#define STARTFILE_ARCH_SPEC STARTFILE_ARCH32_SPEC
+#if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
+#define STARTFILE_CRTBEGIN_SPEC "%{shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+#else
+#define STARTFILE_CRTBEGIN_SPEC	"crtbegin.o%s"
+#endif
 
 /* We don't use the standard svr4 STARTFILE_SPEC because it's wrong for us.  */
 #undef STARTFILE_SPEC
-#define STARTFILE_SPEC "%{!shared: \
-			 %{!symbolic: \
-			  %{p:mcrt1.o%s} \
-                          %{!p: \
-	                    %{pg:gcrt1.o%s gmon.o%s} \
-                            %{!pg:crt1.o%s}}}} \
-			crti.o%s %(startfile_arch) \
-			crtbegin.o%s"
+#ifdef HAVE_SOLARIS_CRTS
+/* Since Solaris 11.x and Solaris 12, the OS delivers crt1.o, crti.o, and
+   crtn.o, with a hook for compiler-dependent stuff like profile handling.  */
+#define STARTFILE_SPEC "%{!shared:%{!symbolic: \
+			  crt1.o%s \
+			  %{p:%e-p is not supported; \
+			    pg:crtpg.o%s gmon.o%s; \
+			      :crtp.o%s}}} \
+			crti.o%s %(startfile_arch) %(startfile_crtbegin)"
+#else
+#define STARTFILE_SPEC "%{!shared:%{!symbolic: \
+			  %{p:mcrt1.o%s; \
+                            pg:gcrt1.o%s gmon.o%s; \
+                              :crt1.o%s}}} \
+			crti.o%s %(startfile_arch) %(startfile_crtbegin)"
+#endif
+
+#if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
+#define ENDFILE_CRTEND_SPEC "%{shared|pie:crtendS.o%s;:crtend.o%s}"
+#else
+#define ENDFILE_CRTEND_SPEC "crtend.o%s"
+#endif
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC \
   "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s} \
-   crtend.o%s crtn.o%s"
+   %(endfile_arch) %(endfile_crtend) crtn.o%s"
 
 #undef LINK_ARCH32_SPEC_BASE
 #define LINK_ARCH32_SPEC_BASE \
   "%{G:-G} \
    %{YP,*} \
    %{R*} \
-   %{!YP,*:%{p|pg:-Y P,%R/usr/ccs/lib/libp:%R/usr/lib/libp:%R/usr/ccs/lib:%R/lib:%R/usr/lib} \
-	   %{!p:%{!pg:-Y P,%R/usr/ccs/lib:%R/lib:%R/usr/lib}}}"
+   %{!YP,*:%{p|pg:-Y P,%R/usr/lib/libp%R/lib:%R/usr/lib} \
+	   %{!p:%{!pg:-Y P,%R/lib:%R/usr/lib}}}"
 
 #undef LINK_ARCH32_SPEC
 #define LINK_ARCH32_SPEC LINK_ARCH32_SPEC_BASE
 
+/* This should be the same as LINK_ARCH32_SPEC_BASE, except with
+   ARCH64_SUBDIR appended to the paths.  */
+#undef LINK_ARCH64_SPEC_BASE
+#define LINK_ARCH64_SPEC_BASE \
+  "%{G:-G} \
+   %{YP,*} \
+   %{R*} \
+   %{!YP,*:%{p|pg:-Y P,%R/usr/lib/libp/" ARCH64_SUBDIR ":%R/lib/" ARCH64_SUBDIR ":%R/usr/lib/" ARCH64_SUBDIR "}	\
+	   %{!p:%{!pg:-Y P,%R/lib/" ARCH64_SUBDIR ":%R/usr/lib/" ARCH64_SUBDIR "}}}"
+
+#undef LINK_ARCH64_SPEC
+#ifndef USE_GLD
+/* FIXME: Used to be SPARC-only.  Not SPARC-specfic but for the model name!  */
+#define LINK_ARCH64_SPEC \
+  "%{mcmodel=medlow:-M /usr/lib/ld/" ARCH64_SUBDIR "/map.below4G} " \
+  LINK_ARCH64_SPEC_BASE
+#else
+#define LINK_ARCH64_SPEC LINK_ARCH64_SPEC_BASE
+#endif
+
+#ifdef USE_GLD
+#if DEFAULT_ARCH32_P
+#define ARCH_DEFAULT_EMULATION ARCH32_EMULATION
+#else
+#define ARCH_DEFAULT_EMULATION ARCH64_EMULATION
+#endif
+#define TARGET_LD_EMULATION "%{m32:-m " ARCH32_EMULATION "}" \
+			    "%{m64:-m " ARCH64_EMULATION "}" \
+			    "%{!m32:%{!m64:-m " ARCH_DEFAULT_EMULATION "}} "
+#else
+#define TARGET_LD_EMULATION ""
+#endif
+
 #undef LINK_ARCH_SPEC
-#define LINK_ARCH_SPEC LINK_ARCH32_SPEC
+#if DISABLE_MULTILIB
+#if DEFAULT_ARCH32_P
+#define LINK_ARCH_SPEC TARGET_LD_EMULATION " \
+%{m32:%(link_arch32)} \
+%{m64:%edoes not support multilib} \
+%{!m32:%{!m64:%(link_arch_default)}} \
+"
+#else
+#define LINK_ARCH_SPEC TARGET_LD_EMULATION " \
+%{m32:%edoes not support multilib} \
+%{m64:%(link_arch64)} \
+%{!m32:%{!m64:%(link_arch_default)}} \
+"
+#endif
+#else
+#define LINK_ARCH_SPEC TARGET_LD_EMULATION " \
+%{m32:%(link_arch32)} \
+%{m64:%(link_arch64)} \
+%{!m32:%{!m64:%(link_arch_default)}}"
+#endif
+
+#define LINK_ARCH_DEFAULT_SPEC \
+(DEFAULT_ARCH32_P ? LINK_ARCH32_SPEC : LINK_ARCH64_SPEC)
+
+#undef SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS \
+  { "startfile_arch",	 	STARTFILE_ARCH_SPEC },		\
+  { "startfile_crtbegin",	STARTFILE_CRTBEGIN_SPEC },	\
+  { "link_arch32",       	LINK_ARCH32_SPEC },		\
+  { "link_arch64",       	LINK_ARCH64_SPEC },		\
+  { "link_arch_default", 	LINK_ARCH_DEFAULT_SPEC },	\
+  { "link_arch",	 	LINK_ARCH_SPEC },		\
+  { "endfile_arch",	 	ENDFILE_ARCH_SPEC },		\
+  { "endfile_crtend",		ENDFILE_CRTEND_SPEC },	\
+  SUBTARGET_CPU_EXTRA_SPECS
+
+/* C++11 programs need -lrt for nanosleep.  */
+#define TIME_LIBRARY "rt"
 
 #ifndef USE_GLD
 /* With Sun ld, -rdynamic is a no-op.  */
@@ -171,15 +282,38 @@ along with GCC; see the file COPYING3.  If not see
 #define RDYNAMIC_SPEC "--export-dynamic"
 #endif
 
+#ifndef USE_GLD
+/* With Sun ld, use mapfile to enforce direct binding to libgcc_s unwinder.  */
+#define LINK_LIBGCC_MAPFILE_SPEC \
+  "%{shared|shared-libgcc:-M %slibgcc-unwind.map}"
+#else
+/* GNU ld doesn't support direct binding.  */
+#define LINK_LIBGCC_MAPFILE_SPEC ""
+#endif
+
+/* Clear hardware capabilities, either explicitly or with OpenMP:
+   #pragma openmp declare simd creates clones for SSE2, AVX, and AVX2.  */
+#ifdef HAVE_LD_CLEARCAP
+#define LINK_CLEARCAP_SPEC " %{mclear-hwcap|fopenmp*:-M %sclearcap.map}"
+#else
+#define LINK_CLEARCAP_SPEC ""
+#endif
+
 #undef  LINK_SPEC
 #define LINK_SPEC \
   "%{h*} %{v:-V} \
    %{!shared:%{!static:%{rdynamic: " RDYNAMIC_SPEC "}}} \
    %{static:-dn -Bstatic} \
-   %{shared:-G -dy %{!mimpure-text:-z text}} \
+   %{shared:-G -dy %{!mimpure-text:-z text}} " \
+   LINK_LIBGCC_MAPFILE_SPEC LINK_CLEARCAP_SPEC " \
    %{symbolic:-Bsymbolic -G -dy -z text} \
    %(link_arch) \
    %{Qy:} %{!Qn:-Qy}"
+
+/* Use --as-needed/-z ignore -lgcc_s for eh support.  */
+#ifdef HAVE_LD_AS_NEEDED
+#define USE_LD_AS_NEEDED 1
+#endif
 
 #ifdef USE_GLD
 /* Solaris 11 build 135+ implements dl_iterate_phdr.  GNU ld needs
@@ -189,9 +323,18 @@ along with GCC; see the file COPYING3.  If not see
 #endif /* HAVE_LD_EH_FRAME && TARGET_DL_ITERATE_PHDR */
 #endif
 
-#ifndef USE_GLD
-/* The default MFLIB_SPEC is GNU ld specific.  */
-#define MFLIB_SPEC ""
+#if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
+#ifdef USE_GLD
+/* Assert -z text by default to match Solaris ld.  */
+#define LINK_PIE_SPEC "%{pie:-pie %{!mimpure-text:-z text}} "
+#else
+/* Solaris ld needs -z type=pie instead of -pie.  */
+#define LINK_PIE_SPEC "%{pie:-z type=pie %{mimpure-text:-z textoff}} "
+#endif
+#else
+/* Error out if some part of PIE support is missing.  */
+#define LINK_PIE_SPEC \
+  "%{no-pie:} %{pie:%e-pie is not supported in this configuration} "
 #endif
 
 /* collect2.c can only parse GNU nm -n output.  Solaris nm needs -png to
@@ -224,7 +367,9 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_CXX_DECL_MANGLING_CONTEXT solaris_cxx_decl_mangling_context
 
 /* Solaris/x86 as and gas support unquoted section names.  */
+#ifndef SECTION_NAME_FORMAT
 #define SECTION_NAME_FORMAT	"%s"
+#endif
 
 /* This is how to declare the size of a function.  For Solaris, we output
    any .init or .fini entries here.  */
@@ -236,23 +381,6 @@ along with GCC; see the file COPYING3.  If not see
 	ASM_OUTPUT_MEASURED_SIZE (FILE, FNAME);			\
       solaris_output_init_fini (FILE, DECL);			\
     }								\
-  while (0)
-
-/* Solaris as has a bug: a .common directive in .tbss or .tdata section
-   behaves as .tls_common rather than normal non-TLS .common.  */
-#undef  ASM_OUTPUT_ALIGNED_COMMON
-#define ASM_OUTPUT_ALIGNED_COMMON(FILE, NAME, SIZE, ALIGN)		\
-  do									\
-    {									\
-      if (TARGET_SUN_TLS						\
-	  && in_section							\
-	  && ((in_section->common.flags & SECTION_TLS) == SECTION_TLS))	\
-	switch_to_section (bss_section);				\
-      fprintf ((FILE), "%s", COMMON_ASM_OP);				\
-      assemble_name ((FILE), (NAME));					\
-      fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",		\
-	       (SIZE), (ALIGN) / BITS_PER_UNIT);			\
-    }									\
   while (0)
 
 #ifndef USE_GAS
@@ -279,6 +407,11 @@ along with GCC; see the file COPYING3.  If not see
 #define STACK_CHECK_STATIC_BUILTIN 1
 
 #define TARGET_POSIX_IO
+
+/* Solaris 10 has the float and long double forms of math functions.
+   We redefine this hook so the version from elfos.h header won't be used.  */
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION default_libc_has_function
 
 extern GTY(()) tree solaris_pending_aligns;
 extern GTY(()) tree solaris_pending_inits;

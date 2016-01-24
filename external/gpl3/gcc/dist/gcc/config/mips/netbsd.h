@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for MIPS NetBSD systems.
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -32,7 +32,9 @@ along with GCC; see the file COPYING3.  If not see
       if (TARGET_ABICALLS)				\
 	builtin_define ("__ABICALLS__");		\
 							\
-      if (mips_abi == ABI_EABI)				\
+      if (mips_abi == ABI_32)				\
+	builtin_define ("__mips_o32");			\
+      else if (mips_abi == ABI_EABI)			\
 	builtin_define ("__mips_eabi");			\
       else if (mips_abi == ABI_N32)			\
 	builtin_define ("__mips_n32");			\
@@ -82,21 +84,13 @@ along with GCC; see the file COPYING3.  If not see
 	builtin_define ("__mips=3");				\
       else if (ISA_MIPS4)					\
 	builtin_define ("__mips=4");				\
-      else if (ISA_MIPS32)					\
-	{							\
-	  builtin_define ("__mips=32");				\
-	  builtin_define ("__mips_isa_rev=1");			\
-	}							\
-      else if (ISA_MIPS32R2)					\
-	{							\
-	  builtin_define ("__mips=32");				\
-	  builtin_define ("__mips_isa_rev=2");			\
-	}							\
-      else if (ISA_MIPS64)					\
-	{							\
-	  builtin_define ("__mips=64");				\
-	  builtin_define ("__mips_isa_rev=1");			\
-	}							\
+      else if (mips_isa >= 32 && mips_isa < 64)			\
+	builtin_define ("__mips=32");				\
+      else if (mips_isa >= 64)					\
+	builtin_define ("__mips=64");				\
+      if (mips_isa_rev > 0)					\
+        builtin_define_with_int_value ("__mips_isa_rev",	\
+                                       mips_isa_rev);		\
 								\
       if (TARGET_HARD_FLOAT)					\
 	builtin_define ("__mips_hard_float");			\
@@ -139,7 +133,8 @@ along with GCC; see the file COPYING3.  If not see
   "%{EL:-m elf32lmip} \
    %{EB:-m elf32bmip} \
    %(endian_spec) \
-   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips32r2} %{mips64} \
+   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips32r2} \
+   %{mips32r6} %{mips64} %{mips64r6} \
    %(netbsd_link_spec)"
 
 #define NETBSD_ENTRY_POINT "__start"

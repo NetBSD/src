@@ -1,6 +1,6 @@
 // Vector implementation -*- C++ -*-
 
-// Copyright (C) 2001-2013 Free Software Foundation, Inc.
+// Copyright (C) 2001-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -84,21 +84,21 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	pointer _M_end_of_storage;
 
 	_Vector_impl()
-	: _Tp_alloc_type(), _M_start(0), _M_finish(0), _M_end_of_storage(0)
+	: _Tp_alloc_type(), _M_start(), _M_finish(), _M_end_of_storage()
 	{ }
 
-	_Vector_impl(_Tp_alloc_type const& __a)
-	: _Tp_alloc_type(__a), _M_start(0), _M_finish(0), _M_end_of_storage(0)
+	_Vector_impl(_Tp_alloc_type const& __a) _GLIBCXX_NOEXCEPT
+	: _Tp_alloc_type(__a), _M_start(), _M_finish(), _M_end_of_storage()
 	{ }
 
 #if __cplusplus >= 201103L
-	_Vector_impl(_Tp_alloc_type&& __a)
+	_Vector_impl(_Tp_alloc_type&& __a) noexcept
 	: _Tp_alloc_type(std::move(__a)),
-	  _M_start(0), _M_finish(0), _M_end_of_storage(0)
+	  _M_start(), _M_finish(), _M_end_of_storage()
 	{ }
 #endif
 
-	void _M_swap_data(_Vector_impl& __x)
+	void _M_swap_data(_Vector_impl& __x) _GLIBCXX_NOEXCEPT
 	{
 	  std::swap(_M_start, __x._M_start);
 	  std::swap(_M_finish, __x._M_finish);
@@ -124,7 +124,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       _Vector_base()
       : _M_impl() { }
 
-      _Vector_base(const allocator_type& __a)
+      _Vector_base(const allocator_type& __a) _GLIBCXX_NOEXCEPT
       : _M_impl(__a) { }
 
       _Vector_base(size_t __n)
@@ -136,10 +136,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       { _M_create_storage(__n); }
 
 #if __cplusplus >= 201103L
-      _Vector_base(_Tp_alloc_type&& __a)
+      _Vector_base(_Tp_alloc_type&& __a) noexcept
       : _M_impl(std::move(__a)) { }
 
-      _Vector_base(_Vector_base&& __x)
+      _Vector_base(_Vector_base&& __x) noexcept
       : _M_impl(std::move(__x._M_get_Tp_allocator()))
       { this->_M_impl._M_swap_data(__x._M_impl); }
 
@@ -156,7 +156,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       }
 #endif
 
-      ~_Vector_base()
+      ~_Vector_base() _GLIBCXX_NOEXCEPT
       { _M_deallocate(this->_M_impl._M_start, this->_M_impl._M_end_of_storage
 		      - this->_M_impl._M_start); }
 
@@ -165,13 +165,17 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       pointer
       _M_allocate(size_t __n)
-      { return __n != 0 ? _M_impl.allocate(__n) : 0; }
+      {
+	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
+	return __n != 0 ? _Tr::allocate(_M_impl, __n) : pointer();
+      }
 
       void
       _M_deallocate(pointer __p, size_t __n)
       {
+	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
 	if (__p)
-	  _M_impl.deallocate(__p, __n);
+	  _Tr::deallocate(_M_impl, __p, __n);
       }
 
     private:
@@ -242,10 +246,14 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     public:
       // [23.2.4.1] construct/copy/destroy
       // (assign() and get_allocator() are also listed in this section)
+
       /**
-       *  @brief  Default constructor creates no elements.
+       *  @brief  Creates a %vector with no elements.
        */
       vector()
+#if __cplusplus >= 201103L
+      noexcept(is_nothrow_default_constructible<_Alloc>::value)
+#endif
       : _Base() { }
 
       /**
@@ -253,7 +261,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  @param  __a  An allocator object.
        */
       explicit
-      vector(const allocator_type& __a)
+      vector(const allocator_type& __a) _GLIBCXX_NOEXCEPT
       : _Base(__a) { }
 
 #if __cplusplus >= 201103L
@@ -338,6 +346,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       /// Move constructor with alternative allocator
       vector(vector&& __rv, const allocator_type& __m)
+      noexcept(_Alloc_traits::_S_always_equal())
       : _Base(std::move(__rv), __m)
       {
 	if (__rv.get_allocator() != __m)
@@ -767,7 +776,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  see at().)
        */
       reference
-      operator[](size_type __n)
+      operator[](size_type __n) _GLIBCXX_NOEXCEPT
       { return *(this->_M_impl._M_start + __n); }
 
       /**
@@ -782,7 +791,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  see at().)
        */
       const_reference
-      operator[](size_type __n) const
+      operator[](size_type __n) const _GLIBCXX_NOEXCEPT
       { return *(this->_M_impl._M_start + __n); }
 
     protected:
@@ -791,7 +800,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       _M_range_check(size_type __n) const
       {
 	if (__n >= this->size())
-	  __throw_out_of_range(__N("vector::_M_range_check"));
+	  __throw_out_of_range_fmt(__N("vector::_M_range_check: __n "
+				       "(which is %zu) >= this->size() "
+				       "(which is %zu)"),
+				   __n, this->size());
       }
 
     public:
@@ -836,7 +848,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  element of the %vector.
        */
       reference
-      front()
+      front() _GLIBCXX_NOEXCEPT
       { return *begin(); }
 
       /**
@@ -844,7 +856,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  element of the %vector.
        */
       const_reference
-      front() const
+      front() const _GLIBCXX_NOEXCEPT
       { return *begin(); }
 
       /**
@@ -852,7 +864,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  element of the %vector.
        */
       reference
-      back()
+      back() _GLIBCXX_NOEXCEPT
       { return *(end() - 1); }
       
       /**
@@ -860,7 +872,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  last element of the %vector.
        */
       const_reference
-      back() const
+      back() const _GLIBCXX_NOEXCEPT
       { return *(end() - 1); }
 
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -876,7 +888,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       pointer
 #endif
       data() _GLIBCXX_NOEXCEPT
-      { return std::__addressof(front()); }
+      { return _M_data_ptr(this->_M_impl._M_start); }
 
 #if __cplusplus >= 201103L
       const _Tp*
@@ -884,7 +896,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       const_pointer
 #endif
       data() const _GLIBCXX_NOEXCEPT
-      { return std::__addressof(front()); }
+      { return _M_data_ptr(this->_M_impl._M_start); }
 
       // [23.2.4.3] modifiers
       /**
@@ -934,7 +946,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  called.
        */
       void
-      pop_back()
+      pop_back() _GLIBCXX_NOEXCEPT
       {
 	--this->_M_impl._M_finish;
 	_Alloc_traits::destroy(this->_M_impl, this->_M_impl._M_finish);
@@ -943,7 +955,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 #if __cplusplus >= 201103L
       /**
        *  @brief  Inserts an object in %vector before specified iterator.
-       *  @param  __position  An iterator into the %vector.
+       *  @param  __position  A const_iterator into the %vector.
        *  @param  __args  Arguments.
        *  @return  An iterator that points to the inserted data.
        *
@@ -955,9 +967,22 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        */
       template<typename... _Args>
         iterator
-        emplace(iterator __position, _Args&&... __args);
-#endif
+        emplace(const_iterator __position, _Args&&... __args);
 
+      /**
+       *  @brief  Inserts given value into %vector before specified iterator.
+       *  @param  __position  A const_iterator into the %vector.
+       *  @param  __x  Data to be inserted.
+       *  @return  An iterator that points to the inserted data.
+       *
+       *  This function will insert a copy of the given value before
+       *  the specified location.  Note that this kind of operation
+       *  could be expensive for a %vector and if it is frequently
+       *  used the user should consider using std::list.
+       */
+      iterator
+      insert(const_iterator __position, const value_type& __x);
+#else
       /**
        *  @brief  Inserts given value into %vector before specified iterator.
        *  @param  __position  An iterator into the %vector.
@@ -971,11 +996,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        */
       iterator
       insert(iterator __position, const value_type& __x);
+#endif
 
 #if __cplusplus >= 201103L
       /**
        *  @brief  Inserts given rvalue into %vector before specified iterator.
-       *  @param  __position  An iterator into the %vector.
+       *  @param  __position  A const_iterator into the %vector.
        *  @param  __x  Data to be inserted.
        *  @return  An iterator that points to the inserted data.
        *
@@ -985,7 +1011,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  used the user should consider using std::list.
        */
       iterator
-      insert(iterator __position, value_type&& __x)
+      insert(const_iterator __position, value_type&& __x)
       { return emplace(__position, std::move(__x)); }
 
       /**
@@ -1001,11 +1027,34 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  %vector and if it is frequently used the user should
        *  consider using std::list.
        */
-      void
-      insert(iterator __position, initializer_list<value_type> __l)
-      { this->insert(__position, __l.begin(), __l.end()); }
+      iterator
+      insert(const_iterator __position, initializer_list<value_type> __l)
+      { return this->insert(__position, __l.begin(), __l.end()); }
 #endif
 
+#if __cplusplus >= 201103L
+      /**
+       *  @brief  Inserts a number of copies of given data into the %vector.
+       *  @param  __position  A const_iterator into the %vector.
+       *  @param  __n  Number of elements to be inserted.
+       *  @param  __x  Data to be inserted.
+       *  @return  An iterator that points to the inserted data.
+       *
+       *  This function will insert a specified number of copies of
+       *  the given data before the location specified by @a position.
+       *
+       *  Note that this kind of operation could be expensive for a
+       *  %vector and if it is frequently used the user should
+       *  consider using std::list.
+       */
+      iterator
+      insert(const_iterator __position, size_type __n, const value_type& __x)
+      {
+	difference_type __offset = __position - cbegin();
+	_M_fill_insert(begin() + __offset, __n, __x);
+	return begin() + __offset;
+      }
+#else
       /**
        *  @brief  Inserts a number of copies of given data into the %vector.
        *  @param  __position  An iterator into the %vector.
@@ -1022,7 +1071,36 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       void
       insert(iterator __position, size_type __n, const value_type& __x)
       { _M_fill_insert(__position, __n, __x); }
+#endif
 
+#if __cplusplus >= 201103L
+      /**
+       *  @brief  Inserts a range into the %vector.
+       *  @param  __position  A const_iterator into the %vector.
+       *  @param  __first  An input iterator.
+       *  @param  __last   An input iterator.
+       *  @return  An iterator that points to the inserted data.
+       *
+       *  This function will insert copies of the data in the range
+       *  [__first,__last) into the %vector before the location specified
+       *  by @a pos.
+       *
+       *  Note that this kind of operation could be expensive for a
+       *  %vector and if it is frequently used the user should
+       *  consider using std::list.
+       */
+      template<typename _InputIterator,
+	       typename = std::_RequireInputIter<_InputIterator>>
+        iterator
+        insert(const_iterator __position, _InputIterator __first,
+	       _InputIterator __last)
+        {
+	  difference_type __offset = __position - cbegin();
+	  _M_insert_dispatch(begin() + __offset,
+			     __first, __last, __false_type());
+	  return begin() + __offset;
+	}
+#else
       /**
        *  @brief  Inserts a range into the %vector.
        *  @param  __position  An iterator into the %vector.
@@ -1037,14 +1115,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  %vector and if it is frequently used the user should
        *  consider using std::list.
        */
-#if __cplusplus >= 201103L
-      template<typename _InputIterator,
-	       typename = std::_RequireInputIter<_InputIterator>>
-        void
-        insert(iterator __position, _InputIterator __first,
-	       _InputIterator __last)
-        { _M_insert_dispatch(__position, __first, __last, __false_type()); }
-#else
       template<typename _InputIterator>
         void
         insert(iterator __position, _InputIterator __first,
@@ -1072,7 +1142,13 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  the pointer is the user's responsibility.
        */
       iterator
-      erase(iterator __position);
+#if __cplusplus >= 201103L
+      erase(const_iterator __position)
+      { return _M_erase(begin() + (__position - cbegin())); }
+#else
+      erase(iterator __position)
+      { return _M_erase(__position); }
+#endif
 
       /**
        *  @brief  Remove a range of elements.
@@ -1093,7 +1169,17 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  Managing the pointer is the user's responsibility.
        */
       iterator
-      erase(iterator __first, iterator __last);
+#if __cplusplus >= 201103L
+      erase(const_iterator __first, const_iterator __last)
+      {
+	const auto __beg = begin();
+	const auto __cbeg = cbegin();
+	return _M_erase(__beg + (__first - __cbeg), __beg + (__last - __cbeg));
+      }
+#else
+      erase(iterator __first, iterator __last)
+      { return _M_erase(__first, __last); }
+#endif
 
       /**
        *  @brief  Swaps data with another %vector.
@@ -1107,7 +1193,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       void
       swap(vector& __x)
 #if __cplusplus >= 201103L
-			noexcept(_Alloc_traits::_S_nothrow_swap())
+      noexcept(_Alloc_traits::_S_nothrow_swap())
 #endif
       {
 	this->_M_impl._M_swap_data(__x._M_impl);
@@ -1211,9 +1297,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       void
       _M_fill_initialize(size_type __n, const value_type& __value)
       {
-	std::__uninitialized_fill_n_a(this->_M_impl._M_start, __n, __value, 
-				      _M_get_Tp_allocator());
-	this->_M_impl._M_finish = this->_M_impl._M_end_of_storage;
+	this->_M_impl._M_finish =
+	  std::__uninitialized_fill_n_a(this->_M_impl._M_start, __n, __value,
+					_M_get_Tp_allocator());
       }
 
 #if __cplusplus >= 201103L
@@ -1221,9 +1307,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       void
       _M_default_initialize(size_type __n)
       {
-	std::__uninitialized_default_n_a(this->_M_impl._M_start, __n, 
-					 _M_get_Tp_allocator());
-	this->_M_impl._M_finish = this->_M_impl._M_end_of_storage;
+	this->_M_impl._M_finish =
+	  std::__uninitialized_default_n_a(this->_M_impl._M_start, __n,
+					   _M_get_Tp_allocator());
       }
 #endif
 
@@ -1347,11 +1433,17 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       // Called by erase(q1,q2), clear(), resize(), _M_fill_assign,
       // _M_assign_aux.
       void
-      _M_erase_at_end(pointer __pos)
+      _M_erase_at_end(pointer __pos) _GLIBCXX_NOEXCEPT
       {
 	std::_Destroy(__pos, this->_M_impl._M_finish, _M_get_Tp_allocator());
 	this->_M_impl._M_finish = __pos;
       }
+
+      iterator
+      _M_erase(iterator __position);
+
+      iterator
+      _M_erase(iterator __first, iterator __last);
 
 #if __cplusplus >= 201103L
     private:
@@ -1364,9 +1456,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	vector __tmp(get_allocator());
 	this->_M_impl._M_swap_data(__tmp._M_impl);
 	this->_M_impl._M_swap_data(__x._M_impl);
-	if (_Alloc_traits::_S_propagate_on_move_assign())
-	  std::__alloc_on_move(_M_get_Tp_allocator(),
-			       __x._M_get_Tp_allocator());
+	std::__alloc_on_move(_M_get_Tp_allocator(), __x._M_get_Tp_allocator());
       }
 
       // Do move assignment when it might not be possible to move source
@@ -1385,6 +1475,23 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	    __x.clear();
 	  }
       }
+#endif
+
+#if __cplusplus >= 201103L
+      template<typename _Up>
+	_Up*
+	_M_data_ptr(_Up* __ptr) const
+	{ return __ptr; }
+
+      template<typename _Ptr>
+	typename std::pointer_traits<_Ptr>::element_type*
+	_M_data_ptr(_Ptr __ptr) const
+	{ return empty() ? nullptr : std::__addressof(*__ptr); }
+#else
+      template<typename _Ptr>
+	_Ptr
+	_M_data_ptr(_Ptr __ptr) const
+	{ return __ptr; }
 #endif
     };
 

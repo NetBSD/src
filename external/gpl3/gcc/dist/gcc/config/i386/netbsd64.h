@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for x86-64/ELF NetBSD systems.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -67,3 +67,5 @@ along with GCC; see the file COPYING3.  If not see
 }
 
 #define HAVE_ENABLE_EXECUTE_STACK
+
+#define IX86_MAYBE_NO_LIBGCC_TFMODE

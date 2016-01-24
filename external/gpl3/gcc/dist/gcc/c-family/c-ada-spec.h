@@ -1,5 +1,5 @@
 /* Interface for -fdump-ada-spec capability.
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -29,7 +29,8 @@ typedef enum {
   IS_CONSTRUCTOR,
   IS_DESTRUCTOR,
   IS_COPY_CONSTRUCTOR,
-  IS_TEMPLATE
+  IS_TEMPLATE,
+  IS_TRIVIAL
 } cpp_operation;
 
 extern location_t decl_sloc (const_tree, bool);

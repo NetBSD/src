@@ -1,7 +1,7 @@
 /* Configuration for an i386 running GNU with ELF as the target machine.  */
 
 /*
-Copyright (C) 1994-2013 Free Software Foundation, Inc.
+Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -36,6 +36,12 @@ along with GCC.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #ifdef TARGET_LIBC_PROVIDES_SSP
+
 /* Not supported yet.  */
-#undef TARGET_THREAD_SSP_OFFSET
+# undef TARGET_THREAD_SSP_OFFSET
+
+/* Not supported yet.  */
+# undef TARGET_CAN_SPLIT_STACK
+# undef TARGET_THREAD_SPLIT_STACK_OFFSET
+
 #endif

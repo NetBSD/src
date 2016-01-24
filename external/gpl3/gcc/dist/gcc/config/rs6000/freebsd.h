@@ -1,5 +1,5 @@
 /* Definitions for PowerPC running FreeBSD using the ELF format
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by David E. O'Brien <obrien@FreeBSD.org> and BSDi.
 
    This file is part of GCC.
@@ -73,6 +73,7 @@
 #define RELOCATABLE_NEEDS_FIXUP \
   (rs6000_isa_flags & rs6000_isa_flags_explicit & OPTION_MASK_RELOCATABLE)
 
-#define DBX_REGISTER_NUMBER(REGNO) rs6000_dbx_register_number (REGNO)
+/* Use standard DWARF numbering for DWARF debugging information.  */
+#define RS6000_USE_DWARF_NUMBERING
 
 #define POWERPC_FREEBSD

@@ -1,5 +1,5 @@
 /* Debug hooks for GCC.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -86,6 +86,10 @@ struct gcc_debug_hooks
   /* Record end of function.  LINE is highest line number in function.  */
   void (* end_function) (unsigned int line);
 
+  /* Register UNIT as the main translation unit.  Called from front-ends when
+     they create their main translation unit.  */
+  void (* register_main_translation_unit) (tree);
+
   /* Debug information for a function DECL.  This might include the
      function name (a symbol), its parameters, and the block that
      makes up the function's body, and the local variables of the
@@ -119,14 +123,14 @@ struct gcc_debug_hooks
 
   /* Called from final_scan_insn for any CODE_LABEL insn whose
      LABEL_NAME is non-null.  */
-  void (* label) (rtx);
+  void (* label) (rtx_code_label *);
 
   /* Called after the start and before the end of writing a PCH file.
      The parameter is 0 if after the start, 1 if before the end.  */
   void (* handle_pch) (unsigned int);
 
   /* Called from final_scan_insn for any NOTE_INSN_VAR_LOCATION note.  */
-  void (* var_location) (rtx);
+  void (* var_location) (rtx_insn *);
 
   /* Called from final_scan_insn if there is a switch between hot and cold
      text sections.  */
@@ -160,8 +164,8 @@ extern void debug_nothing_tree_tree (tree, tree);
 extern void debug_nothing_tree_int (tree, int);
 extern void debug_nothing_tree_tree_tree_bool (tree, tree, tree, bool);
 extern bool debug_true_const_tree (const_tree);
-extern void debug_nothing_rtx (rtx);
-extern void debug_nothing_rtx_rtx (rtx, rtx);
+extern void debug_nothing_rtx_insn (rtx_insn *);
+extern void debug_nothing_rtx_code_label (rtx_code_label *);
 
 /* Hooks for various debug formats.  */
 extern const struct gcc_debug_hooks do_nothing_debug_hooks;

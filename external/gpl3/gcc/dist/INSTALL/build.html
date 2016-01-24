@@ -186,7 +186,15 @@ examples of supported build configurations are:
 
      <br><dt>&lsquo;<samp><span class="samp">bootstrap-lto</span></samp>&rsquo;<dd>Enables Link-Time Optimization for host tools during bootstrapping. 
 &lsquo;<samp><span class="samp">BUILD_CONFIG=bootstrap-lto</span></samp>&rsquo; is equivalent to adding
-<samp><span class="option">-flto</span></samp> to &lsquo;<samp><span class="samp">BOOT_CFLAGS</span></samp>&rsquo;.
+<samp><span class="option">-flto</span></samp> to &lsquo;<samp><span class="samp">BOOT_CFLAGS</span></samp>&rsquo;.  This option assumes that the host
+supports the linker plugin (e.g. GNU ld version 2.21 or later or GNU gold
+version 2.21 or later).
+
+     <br><dt>&lsquo;<samp><span class="samp">bootstrap-lto-noplugin</span></samp>&rsquo;<dd>This option is similar to <code>bootstrap-lto</code>, but is intended for
+hosts that do not support the linker plugin.  Without the linker plugin
+static libraries are not compiled with link-time optimizations.  Since
+the GCC middle end and back end are in <samp><span class="file">libbackend.a</span></samp> this means
+that only the front end is actually LTO optimized.
 
      <br><dt>&lsquo;<samp><span class="samp">bootstrap-debug</span></samp>&rsquo;<dd>Verifies that the compiler generates the same executable code, whether
 or not it is asked to emit debug information.  To this end, this
@@ -360,8 +368,7 @@ Finally a <code>stagefeedback</code> compiler is built using the information col
 
    <p>Unlike standard bootstrap, several additional restrictions apply.  The
 compiler used to build <code>stage1</code> needs to support a 64-bit integral type. 
-It is recommended to only use GCC for this.  Also parallel make is currently
-not supported since collisions in profile collecting may occur.
+It is recommended to only use GCC for this.
 
    <p><hr />
 <p><a href="./index.html">Return to the GCC Installation page</a>

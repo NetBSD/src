@@ -1,5 +1,5 @@
 /* Operations on HOST_WIDE_INT.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -93,7 +93,7 @@ ctz_hwi (unsigned HOST_WIDE_INT x)
 int
 clz_hwi (unsigned HOST_WIDE_INT x)
 {
-  return HOST_BITS_PER_WIDE_INT - 1 - floor_log2(x);
+  return HOST_BITS_PER_WIDE_INT - 1 - floor_log2 (x);
 }
 
 /* Similar to ctz_hwi, except that the least significant bit is numbered
@@ -124,22 +124,6 @@ popcount_hwi (unsigned HOST_WIDE_INT x)
 
 #endif /* GCC_VERSION < 3004 */
 
-/* Compute the absolute value of X.  */
-
-HOST_WIDE_INT
-abs_hwi (HOST_WIDE_INT x)
-{
-  gcc_checking_assert (x != HOST_WIDE_INT_MIN);
-  return x >= 0 ? x : -x;
-}
-
-/* Compute the absolute value of X as an unsigned type.  */
-
-unsigned HOST_WIDE_INT
-absu_hwi (HOST_WIDE_INT x)
-{
-  return x >= 0 ? (unsigned HOST_WIDE_INT)x : -(unsigned HOST_WIDE_INT)x;
-}
 
 /* Compute the greatest common divisor of two numbers A and B using
    Euclid's algorithm.  */

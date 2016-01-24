@@ -1,5 +1,5 @@
 ;;- Machine description for Blackfin for GNU compiler
-;;  Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;;  Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;;  Contributed by Analog Devices.
 
 ;; This file is part of GCC.
@@ -1929,35 +1929,25 @@
 ;;  Hardware loop
 
 ; operand 0 is the loop count pseudo register
-; operand 1 is the number of loop iterations or 0 if it is unknown
-; operand 2 is the maximum number of loop iterations
-; operand 3 is the number of levels of enclosed loops
-; operand 4 is the label to jump to at the top of the loop
-; operand 5 indicates if the loop is entered at the top
+; operand 1 is the label to jump to at the top of the loop
 (define_expand "doloop_end"
   [(parallel [(set (pc) (if_then_else
 			  (ne (match_operand:SI 0 "" "")
 			      (const_int 1))
-			  (label_ref (match_operand 4 "" ""))
+			  (label_ref (match_operand 1 "" ""))
 			  (pc)))
 	      (set (match_dup 0)
 		   (plus:SI (match_dup 0)
 			    (const_int -1)))
 	      (unspec [(const_int 0)] UNSPEC_LSETUP_END)
-	      (clobber (match_operand 5 ""))])] ; match_scratch
+	      (clobber (match_dup 2))])] ; match_scratch
   ""
 {
   /* The loop optimizer doesn't check the predicates... */
   if (GET_MODE (operands[0]) != SImode)
     FAIL;
-  /* Due to limitations in the hardware (an initial loop count of 0
-     does not loop 2^32 times) we must avoid to generate a hardware
-     loops when we cannot rule out this case.  */
-  if (!flag_unsafe_loop_optimizations
-      && (unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 0xFFFFFFFF)
-    FAIL;
   bfin_hardware_loop ();
-  operands[5] = gen_rtx_SCRATCH (SImode);
+  operands[2] = gen_rtx_SCRATCH (SImode);
 })
 
 (define_insn "loop_end"
@@ -1980,15 +1970,15 @@
 
 (define_split
   [(set (pc)
-	(if_then_else (ne (match_operand:SI 0 "nondp_reg_or_memory_operand" "")
+	(if_then_else (ne (match_operand:SI 0 "nondp_reg_or_memory_operand")
 			  (const_int 1))
-		      (label_ref (match_operand 1 "" ""))
+		      (label_ref (match_operand 1 ""))
 		      (pc)))
    (set (match_dup 0)
 	(plus (match_dup 0)
 	      (const_int -1)))
    (unspec [(const_int 0)] UNSPEC_LSETUP_END)
-   (clobber (match_scratch:SI 2 "=&r"))]
+   (clobber (match_scratch:SI 2))]
   "memory_operand (operands[0], SImode) || splitting_loops"
   [(set (match_dup 2) (match_dup 0))
    (set (match_dup 2) (plus:SI (match_dup 2) (const_int -1)))

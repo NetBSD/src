@@ -1,5 +1,5 @@
 /* Discover if the stack pointer is modified in a function.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,13 +21,39 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
 #include "rtl.h"
 #include "regs.h"
+#include "hashtab.h"
+#include "hard-reg-set.h"
+#include "function.h"
+#include "flags.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "insn-config.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
 #include "expr.h"
 #include "tree-pass.h"
+#include "predict.h"
+#include "dominance.h"
+#include "cfg.h"
 #include "basic-block.h"
-#include "flags.h"
 #include "output.h"
 #include "df.h"
 
@@ -48,17 +74,48 @@ notice_stack_pointer_modification_1 (rtx x, const_rtx pat ATTRIBUTE_UNUSED,
     crtl->sp_is_unchanging = 0;
 }
 
-static void
-notice_stack_pointer_modification (void)
+  /* Some targets can emit simpler epilogues if they know that sp was
+     not ever modified during the function.  After reload, of course,
+     we've already emitted the epilogue so there's no sense searching.  */
+
+namespace {
+
+const pass_data pass_data_stack_ptr_mod =
+{
+  RTL_PASS, /* type */
+  "*stack_ptr_mod", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_NONE, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_stack_ptr_mod : public rtl_opt_pass
+{
+public:
+  pass_stack_ptr_mod (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_stack_ptr_mod, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual unsigned int execute (function *);
+
+}; // class pass_stack_ptr_mod
+
+unsigned int
+pass_stack_ptr_mod::execute (function *fun)
 {
   basic_block bb;
-  rtx insn;
+  rtx_insn *insn;
 
   /* Assume that the stack pointer is unchanging if alloca hasn't
      been used.  */
-  crtl->sp_is_unchanging = !cfun->calls_alloca;
+  crtl->sp_is_unchanging = !fun->calls_alloca;
   if (crtl->sp_is_unchanging)
-    FOR_EACH_BB (bb)
+    FOR_EACH_BB_FN (bb, fun)
       FOR_BB_INSNS (bb, insn)
         {
 	  if (INSN_P (insn))
@@ -68,7 +125,7 @@ notice_stack_pointer_modification (void)
 			   notice_stack_pointer_modification_1,
 			   NULL);
 	      if (! crtl->sp_is_unchanging)
-		return;
+		return 0;
 	    }
 	}
 
@@ -77,35 +134,14 @@ notice_stack_pointer_modification (void)
      exit block uses.  */
   if (df && crtl->sp_is_unchanging)
     df_update_exit_block_uses ();
-}
 
-  /* Some targets can emit simpler epilogues if they know that sp was
-     not ever modified during the function.  After reload, of course,
-     we've already emitted the epilogue so there's no sense searching.  */
-
-static unsigned int
-rest_of_handle_stack_ptr_mod (void)
-{
-  notice_stack_pointer_modification ();
   return 0;
 }
 
-struct rtl_opt_pass pass_stack_ptr_mod =
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_stack_ptr_mod (gcc::context *ctxt)
 {
- {
-  RTL_PASS,
-  "*stack_ptr_mod",                     /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  NULL,                                 /* gate */
-  rest_of_handle_stack_ptr_mod,         /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_NONE,                              /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  0                                     /* todo_flags_finish */
- }
-};
+  return new pass_stack_ptr_mod (ctxt);
+}

@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCJ 1"
-.TH GCJ 1 "2015-06-23" "gcc-4.8.5" "GNU"
+.TH GCJ 1 "2015-12-04" "gcc-5.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -246,17 +246,17 @@ directory at the end of the class path.
 This is an environment variable which holds a list of paths.
 .PP
 The final class path is constructed like so:
-.IP "\(bu" 4
+.IP "*" 4
 First come all directories specified via \f(CW\*(C`\-I\*(C'\fR.
-.IP "\(bu" 4
+.IP "*" 4
 If \fB\-\-classpath\fR is specified, its value is appended.
 Otherwise, if the \f(CW\*(C`CLASSPATH\*(C'\fR environment variable is specified,
 then its value is appended.
 Otherwise, the current directory (\f(CW"."\fR) is appended.
-.IP "\(bu" 4
+.IP "*" 4
 If \f(CW\*(C`\-\-bootclasspath\*(C'\fR was specified, append its value.
 Otherwise, append the built-in system directory, \fIlibgcj.jar\fR.
-.IP "\(bu" 4
+.IP "*" 4
 Finally, if \f(CW\*(C`\-\-extdirs\*(C'\fR was specified, append the contents of the
 specified directories at the end of the class path.  Otherwise, append
 the contents of the built-in extdirs at \f(CW\*(C`$(prefix)/share/java/ext\*(C'\fR.
@@ -340,15 +340,15 @@ collection of Java classes may have more than one class with a
 \&\f(CW\*(C`main\*(C'\fR method, you need to let the linker know which of those
 \&\f(CW\*(C`main\*(C'\fR methods it should invoke when starting the application.
 You can do that in any of these ways:
-.IP "\(bu" 4
+.IP "*" 4
 Specify the class containing the desired \f(CW\*(C`main\*(C'\fR method
 when you link the application, using the \f(CW\*(C`\-\-main\*(C'\fR flag,
 described below.
-.IP "\(bu" 4
+.IP "*" 4
 Link the Java package(s) into a shared library (dll) rather than an
 executable.  Then invoke the application using the \f(CW\*(C`gij\*(C'\fR program,
 making sure that \f(CW\*(C`gij\*(C'\fR can find the libraries it needs.
-.IP "\(bu" 4
+.IP "*" 4
 Link the Java packages(s) with the flag \f(CW\*(C`\-lgij\*(C'\fR, which links
 in the \f(CW\*(C`main\*(C'\fR routine from the \f(CW\*(C`gij\*(C'\fR command.
 This allows you to select the class whose \f(CW\*(C`main\*(C'\fR method you
@@ -567,7 +567,7 @@ detected, so you won't usually need to use this option.
 and the Info entries for \fIgcj\fR and \fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2001\-2013 Free Software Foundation, Inc.
+Copyright (c) 2001\-2015 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or
