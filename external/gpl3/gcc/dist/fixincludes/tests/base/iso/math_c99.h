@@ -20,6 +20,13 @@
 #endif  /* SOLARIS_MATH_1_CHECK */
 
 
+#if defined( SOLARIS_MATH_10_CHECK )
+#pragma ident	"@(#)math_c99.h	1.12	07/01/21 SMI"
+#undef	isinf
+#define	isinf(x) __builtin_isinf(x)
+#endif  /* SOLARIS_MATH_10_CHECK */
+
+
 #if defined( SOLARIS_MATH_2_CHECK )
 #ident	"@(#)math_c99.h	1.9	04/11/01 SMI"
 #undef	INFINITY
@@ -70,8 +77,12 @@
 #endif  /* SOLARIS_MATH_9_CHECK */
 
 
-#if defined( SOLARIS_MATH_10_CHECK )
-#pragma ident	"@(#)math_c99.h	1.12	07/01/21 SMI"
-#undef	isinf
-#define	isinf(x) __builtin_isinf(x)
-#endif  /* SOLARIS_MATH_10_CHECK */
+#if defined( SOLARIS_MATH_11_CHECK )
+/* @(#)math_c99.h	1.14	13/03/27 */
+#undef	signbit
+#define	signbit(x)	(sizeof(x) == sizeof(float) \
+			   ? __builtin_signbitf(x) \
+			   : sizeof(x) == sizeof(long double) \
+			     ? __builtin_signbitl(x) \
+			     : __builtin_signbit(x))
+#endif  /* SOLARIS_MATH_11_CHECK */

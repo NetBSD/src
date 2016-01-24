@@ -1,5 +1,5 @@
 /* DWARF2 EH unwinding support for AMD x86-64 and x86.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -144,26 +144,8 @@ x86_fallback_frame_state (struct _Unwind_Context *context,
   mcontext_t *mctx;
   long new_cfa;
 
-  if (/* Solaris 9 - single-threaded
-	----------------------------
-         <sigacthandler+16>:    mov    0x244(%ebx),%ecx
-	 <sigacthandler+22>:    mov    0x8(%ebp),%eax
-	 <sigacthandler+25>:    mov    (%ecx,%eax,4),%ecx
-	 <sigacthandler+28>:    pushl  0x10(%ebp)
-	 <sigacthandler+31>:    pushl  0xc(%ebp)
-	 <sigacthandler+34>:    push   %eax
-	 <sigacthandler+35>:    call   *%ecx
-	 <sigacthandler+37>:    add    $0xc,%esp	<--- PC
-	 <sigacthandler+40>:    pushl  0x10(%ebp) */
-      (*(unsigned long *)(pc - 21) == 0x2448b8b
-       && *(unsigned long *)(pc - 17) == 0x458b0000
-       && *(unsigned long *)(pc - 13) == 0x810c8b08
-       && *(unsigned long *)(pc - 9)  == 0xff1075ff
-       && *(unsigned long *)(pc - 5)  == 0xff500c75
-       && *(unsigned long *)(pc - 1)  == 0xcc483d1)
-
-      || /* Solaris 9 - multi-threaded, Solaris 10
-	   ---------------------------------------
+  if (/* Solaris 10
+	-----------
 	   <__sighndlr+0>:      push   %ebp
 	   <__sighndlr+1>:      mov    %esp,%ebp
 	   <__sighndlr+3>:      pushl  0x10(%ebp)
@@ -249,7 +231,12 @@ x86_fallback_frame_state (struct _Unwind_Context *context,
   fs->regs.reg[8].how = REG_SAVED_OFFSET;
   fs->regs.reg[8].loc.offset = (long)&mctx->gregs[EIP] - new_cfa;
   fs->retaddr_column = 8;
-  fs->signal_frame = 1;
+
+  /* SIGFPE for IEEE-754 exceptions is delivered after the faulting insn
+     rather than before it, so don't set fs->signal_frame in that case.
+     We test whether the ES field of the Status Register is zero.  */
+  if ((mctx->fpregs.fp_reg_set.fpchip_state.status & 0x80) == 0)
+    fs->signal_frame = 1;
 
   return _URC_NO_REASON;
 }

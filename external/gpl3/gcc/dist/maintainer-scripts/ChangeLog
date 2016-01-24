@@ -1,14 +1,68 @@
-2015-06-23  Release Manager
+2015-12-04  Release Manager
 
-	* GCC 4.8.5 released.
+	* GCC 5.3.0 released.
 
-2014-12-19  Release Manager
+2015-07-16  Release Manager
 
-	* GCC 4.8.4 released.
+	* GCC 5.2.0 released.
 
-2014-05-22  Release Manager
+2015-04-22  Release Manager
 
-	* GCC 4.8.3 released.
+	* GCC 5.1.0 released.
+
+2015-04-07  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* update_web_docs_libstdcxx_svn (FILTER): Introduce.
+	Use to filter output of the copying process.
+
+2015-02-25  Arnaud Charlet  <charlet@adacore.com>
+
+	* update_web_docs_svn: Preserve gcc/ada/*.png. Update comments.
+
+2015-02-25  Arnaud Charlet  <charlet@adacore.com>
+
+	* update_web_docs_svn: Add -I gcc/gcc/ada/doc/gnat_ugn for gnat_ugn
+
+2015-02-06  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/64257
+	* update_web_docs_svn: When copying up files for the built jit
+	documentation, also copy up .txt files.
+
+2015-02-04  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/64257
+	* update_web_docs_svn: Update build of jit docs to use EPEL6
+	variant install of sphinx 1.0.8, rather than 0.6.6.
+
+2015-01-26  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/64257
+	* update_web_docs_svn: Don't delete gcc/jit/docs or
+	gcc/jit/jit-common.h, gcc/jit/notes.txt. Special case the
+	building of the JIT docs (using sphinx-build).  Special case
+	copying them up.
+
+2014-08-14  Richard Biener  <rguenther@suse.de>
+
+	* crontab: Change trunk snapshots from 4.10 to 5.
+
+2014-08-01  Arnaud Charlet  <charlet@adacore.com>
+
+	* update_web_docs_svn: Simplify build of gnat_ugn.
+
+2014-06-12  Richard Biener  <rguenther@suse.de>
+
+	* crontab: Remove 4.7 snapshot entry.
+	* update_version_svn: Update IGNORE_BRANCHES.
+
+2014-05-30  Jonathan Wakely  <jwakely@redhat.com>
+
+	* generate_libstdcxx_web_docs: New script.
+
+2014-04-11  Jakub Jelinek  <jakub@redhat.com>
+
+	* crontab: Enable snapshots from gcc-4_9-branch.
 
 2014-02-01  Dmitry Gorbachev  <d.g.gorbachev@gmail.com>
 
@@ -16,17 +70,25 @@
 	* gcc_release: Avoid printing empty line to generated MD5SUMS files.
 	Bump copyright year.
 
-2013-10-16  Release Manager
+2013-12-02  Gerald Pfeifer  <gerald@pfeifer.com>
 
-	* GCC 4.8.2 released.
+	* update_web_docs_svn: Work around makeinfo generated file names
+	and references with "_002d" instead of "-".
 
-2013-05-31  Release Manager
+2013-04-12  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 4.8.1 released.
+	* crontab: Disable snapshots from gcc-4_6-branch.
+	* update_version_svn: Ignore gcc-4_6-branch.
 
-2013-03-22  Release Manager
+2013-04-07  Gerald Pfeifer  <gerald@pfeifer.com>
 
-	* GCC 4.8.0 released.
+	* update_web_docs_libstdcxx_svn: No longer ignore all output from
+	the actual copy process.
+	Check the exit code of the actual copy process; diagnose problems.
+
+2013-03-16  Jakub Jelinek  <jakub@redhat.com>
+
+	* crontab: Enable snapshots from gcc-4_8-branch.
 
 2012-07-02  Richard Guenther  <rguenther@suse.de>
 

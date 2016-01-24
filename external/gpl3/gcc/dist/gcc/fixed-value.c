@@ -1,5 +1,5 @@
 /* Fixed-point arithmetic support.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,8 +21,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "fixed-value.h"
 #include "tree.h"
 #include "diagnostic-core.h"
+#include "wide-int.h"
 
 /* Compare two fixed objects for bitwise identity.  */
 
@@ -59,7 +70,7 @@ enum fixed_value_range_code {
           FIXED_MAX_EPS, if it is equal to the maximum plus the epsilon.  */
 
 static enum fixed_value_range_code
-check_real_for_fixed_mode (REAL_VALUE_TYPE *real_value, enum machine_mode mode)
+check_real_for_fixed_mode (REAL_VALUE_TYPE *real_value, machine_mode mode)
 {
   REAL_VALUE_TYPE max_value, min_value, epsilon_value;
 
@@ -86,7 +97,7 @@ check_real_for_fixed_mode (REAL_VALUE_TYPE *real_value, enum machine_mode mode)
    The bits in PAYLOAD are sign-extended/zero-extended according to MODE.  */
 
 FIXED_VALUE_TYPE
-fixed_from_double_int (double_int payload, enum machine_mode mode)
+fixed_from_double_int (double_int payload, machine_mode mode)
 {
   FIXED_VALUE_TYPE value;
 
@@ -97,7 +108,7 @@ fixed_from_double_int (double_int payload, enum machine_mode mode)
   else if (UNSIGNED_SCALAR_FIXED_POINT_MODE_P (mode))
     value.data = payload.zext (GET_MODE_IBIT (mode) + GET_MODE_FBIT (mode));
   else
-    gcc_unreachable();
+    gcc_unreachable ();
 
   value.mode = mode;
 
@@ -108,11 +119,12 @@ fixed_from_double_int (double_int payload, enum machine_mode mode)
 /* Initialize from a decimal or hexadecimal string.  */
 
 void
-fixed_from_string (FIXED_VALUE_TYPE *f, const char *str, enum machine_mode mode)
+fixed_from_string (FIXED_VALUE_TYPE *f, const char *str, machine_mode mode)
 {
   REAL_VALUE_TYPE real_value, fixed_value, base_value;
   unsigned int fbit;
   enum fixed_value_range_code temp;
+  bool fail;
 
   f->mode = mode;
   fbit = GET_MODE_FBIT (mode);
@@ -127,8 +139,10 @@ fixed_from_string (FIXED_VALUE_TYPE *f, const char *str, enum machine_mode mode)
 	     "large fixed-point constant implicitly truncated to fixed-point type");
   real_2expN (&base_value, fbit, mode);
   real_arithmetic (&fixed_value, MULT_EXPR, &real_value, &base_value);
-  real_to_integer2 ((HOST_WIDE_INT *)&f->data.low, &f->data.high,
-		    &fixed_value);
+  wide_int w = real_to_integer (&fixed_value, &fail,
+				GET_MODE_PRECISION (mode));
+  f->data.low = w.elt (0);
+  f->data.high = w.elt (1);
 
   if (temp == FIXED_MAX_EPS && ALL_FRACT_MODE_P (f->mode))
     {
@@ -153,9 +167,12 @@ fixed_to_decimal (char *str, const FIXED_VALUE_TYPE *f_orig,
 {
   REAL_VALUE_TYPE real_value, base_value, fixed_value;
 
+  signop sgn = UNSIGNED_FIXED_POINT_MODE_P (f_orig->mode) ? UNSIGNED : SIGNED;
   real_2expN (&base_value, GET_MODE_FBIT (f_orig->mode), f_orig->mode);
-  real_from_integer (&real_value, VOIDmode, f_orig->data.low, f_orig->data.high,
-		     UNSIGNED_FIXED_POINT_MODE_P (f_orig->mode));
+  real_from_integer (&real_value, VOIDmode,
+		     wide_int::from (f_orig->data,
+				     GET_MODE_PRECISION (f_orig->mode), sgn),
+		     sgn);
   real_arithmetic (&fixed_value, RDIV_EXPR, &real_value, &base_value);
   real_to_decimal (str, &fixed_value, buf_size, 0, 1);
 }
@@ -169,7 +186,7 @@ fixed_to_decimal (char *str, const FIXED_VALUE_TYPE *f_orig,
    Return true, if !SAT_P and overflow.  */
 
 static bool
-fixed_saturate1 (enum machine_mode mode, double_int a, double_int *f,
+fixed_saturate1 (machine_mode mode, double_int a, double_int *f,
 		 bool sat_p)
 {
   bool overflow_p = false;
@@ -227,7 +244,7 @@ fixed_saturate1 (enum machine_mode mode, double_int a, double_int *f,
    Return true, if !SAT_P and overflow.  */
 
 static bool
-fixed_saturate2 (enum machine_mode mode, double_int a_high, double_int a_low,
+fixed_saturate2 (machine_mode mode, double_int a_high, double_int a_low,
 		 double_int *f, bool sat_p)
 {
   bool overflow_p = false;
@@ -569,14 +586,14 @@ do_fixed_divide (FIXED_VALUE_TYPE *f, const FIXED_VALUE_TYPE *a,
 	  int leftmost_mod = (mod.high < 0);
 
 	  /* Shift left mod by 1 bit.  */
-	  mod = mod.llshift (1, HOST_BITS_PER_DOUBLE_INT);
+	  mod = mod.lshift (1);
 
 	  /* Test the leftmost bit of s to add to mod.  */
 	  if (s.high < 0)
 	    mod.low += 1;
 
 	  /* Shift left quo_s by 1 bit.  */
-	  quo_s = quo_s.llshift (1, HOST_BITS_PER_DOUBLE_INT);
+	  quo_s = quo_s.lshift (1);
 
 	  /* Try to calculate (mod - pos_b).  */
 	  temp = mod - pos_b;
@@ -588,7 +605,7 @@ do_fixed_divide (FIXED_VALUE_TYPE *f, const FIXED_VALUE_TYPE *a,
 	    }
 
 	  /* Shift left s by 1 bit.  */
-	  s = s.llshift (1, HOST_BITS_PER_DOUBLE_INT);
+	  s = s.lshift (1);
 
 	}
 
@@ -804,7 +821,7 @@ fixed_compare (int icode, const FIXED_VALUE_TYPE *op0,
    Return true, if !SAT_P and overflow.  */
 
 bool
-fixed_convert (FIXED_VALUE_TYPE *f, enum machine_mode mode,
+fixed_convert (FIXED_VALUE_TYPE *f, machine_mode mode,
                const FIXED_VALUE_TYPE *a, bool sat_p)
 {
   bool overflow_p = false;
@@ -948,7 +965,7 @@ fixed_convert (FIXED_VALUE_TYPE *f, enum machine_mode mode,
    Return true, if !SAT_P and overflow.  */
 
 bool
-fixed_convert_from_int (FIXED_VALUE_TYPE *f, enum machine_mode mode,
+fixed_convert_from_int (FIXED_VALUE_TYPE *f, machine_mode mode,
 			double_int a, bool unsigned_p, bool sat_p)
 {
   bool overflow_p = false;
@@ -1032,7 +1049,7 @@ fixed_convert_from_int (FIXED_VALUE_TYPE *f, enum machine_mode mode,
    Return true, if !SAT_P and overflow.  */
 
 bool
-fixed_convert_from_real (FIXED_VALUE_TYPE *f, enum machine_mode mode,
+fixed_convert_from_real (FIXED_VALUE_TYPE *f, machine_mode mode,
 			 const REAL_VALUE_TYPE *a, bool sat_p)
 {
   bool overflow_p = false;
@@ -1041,12 +1058,17 @@ fixed_convert_from_real (FIXED_VALUE_TYPE *f, enum machine_mode mode,
   int i_f_bits = GET_MODE_IBIT (mode) + GET_MODE_FBIT (mode);
   unsigned int fbit = GET_MODE_FBIT (mode);
   enum fixed_value_range_code temp;
+  bool fail;
 
   real_value = *a;
   f->mode = mode;
   real_2expN (&base_value, fbit, mode);
   real_arithmetic (&fixed_value, MULT_EXPR, &real_value, &base_value);
-  real_to_integer2 ((HOST_WIDE_INT *)&f->data.low, &f->data.high, &fixed_value);
+
+  wide_int w = real_to_integer (&fixed_value, &fail,
+				GET_MODE_PRECISION (mode));
+  f->data.low = w.elt (0);
+  f->data.high = w.elt (1);
   temp = check_real_for_fixed_mode (&real_value, mode);
   if (temp == FIXED_UNDERFLOW) /* Minimum.  */
     {
@@ -1086,14 +1108,16 @@ fixed_convert_from_real (FIXED_VALUE_TYPE *f, enum machine_mode mode,
 /* Convert to a new real mode from a fixed-point.  */
 
 void
-real_convert_from_fixed (REAL_VALUE_TYPE *r, enum machine_mode mode,
+real_convert_from_fixed (REAL_VALUE_TYPE *r, machine_mode mode,
 			 const FIXED_VALUE_TYPE *f)
 {
   REAL_VALUE_TYPE base_value, fixed_value, real_value;
 
+  signop sgn = UNSIGNED_FIXED_POINT_MODE_P (f->mode) ? UNSIGNED : SIGNED;
   real_2expN (&base_value, GET_MODE_FBIT (f->mode), f->mode);
-  real_from_integer (&fixed_value, VOIDmode, f->data.low, f->data.high,
-		     UNSIGNED_FIXED_POINT_MODE_P (f->mode));
+  real_from_integer (&fixed_value, VOIDmode,
+		     wide_int::from (f->data, GET_MODE_PRECISION (f->mode),
+				     sgn), sgn);
   real_arithmetic (&real_value, RDIV_EXPR, &fixed_value, &base_value);
   real_convert (r, mode, &real_value);
 }

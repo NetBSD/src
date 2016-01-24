@@ -1,6 +1,6 @@
 // Compatibility symbols for -mlong-double-64 compatibility -*- C++ -*-
 
-// Copyright (C) 2006-2013 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,6 +22,7 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
+#define _GLIBCXX_USE_CXX11_ABI 0
 #include <locale>
 #include <cmath>
 #include <tr1/functional>

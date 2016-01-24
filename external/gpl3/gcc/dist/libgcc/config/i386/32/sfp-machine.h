@@ -63,11 +63,27 @@
 	     "g" ((USItype) (y1)),				\
 	     "2" ((USItype) (x0)),				\
 	     "g" ((USItype) (y0)))
+#define __FP_FRAC_ADDI_4(x3,x2,x1,x0,i)				\
+  __asm__ ("add{l} {%4,%3|%3,%4}\n\t"				\
+	   "adc{l} {$0,%2|%2,0}\n\t"				\
+	   "adc{l} {$0,%1|%1,0}\n\t"				\
+	   "adc{l} {$0,%0|%0,0}"				\
+	   : "+r" ((USItype) (x3)),				\
+	     "+&r" ((USItype) (x2)),				\
+	     "+&r" ((USItype) (x1)),				\
+	     "+&r" ((USItype) (x0))				\
+	   : "g" ((USItype) (i)))
 
 
+#define _FP_MUL_MEAT_S(R,X,Y)				\
+  _FP_MUL_MEAT_1_wide(_FP_WFRACBITS_S,R,X,Y,umul_ppmm)
+#define _FP_MUL_MEAT_D(R,X,Y)				\
+  _FP_MUL_MEAT_2_wide(_FP_WFRACBITS_D,R,X,Y,umul_ppmm)
 #define _FP_MUL_MEAT_Q(R,X,Y)				\
   _FP_MUL_MEAT_4_wide(_FP_WFRACBITS_Q,R,X,Y,umul_ppmm)
 
+#define _FP_DIV_MEAT_S(R,X,Y)   _FP_DIV_MEAT_1_loop(S,R,X,Y)
+#define _FP_DIV_MEAT_D(R,X,Y)   _FP_DIV_MEAT_2_udiv(D,R,X,Y)
 #define _FP_DIV_MEAT_Q(R,X,Y)   _FP_DIV_MEAT_4_udiv(Q,R,X,Y)
 
 #define _FP_NANFRAC_S		_FP_QNANBIT_S

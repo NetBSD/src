@@ -1,5 +1,5 @@
 /* Message translation utilities.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -140,7 +140,7 @@ char *
 get_spaces (const char *str)
 {
    size_t len = gcc_gettext_width (str);
-   char *spaces = XNEWVEC(char, len + 1);
+   char *spaces = XNEWVEC (char, len + 1);
    memset (spaces, ' ', len);
    spaces[len] = '\0';
    return spaces;

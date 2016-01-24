@@ -1,6 +1,6 @@
 /* Data structures and function declarations for the SSA value propagation
    engine.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -63,18 +63,25 @@ enum ssa_prop_result {
 
 /* Call-back functions used by the value propagation engine.  */
 typedef enum ssa_prop_result (*ssa_prop_visit_stmt_fn) (gimple, edge *, tree *);
-typedef enum ssa_prop_result (*ssa_prop_visit_phi_fn) (gimple);
+typedef enum ssa_prop_result (*ssa_prop_visit_phi_fn) (gphi *);
 typedef bool (*ssa_prop_fold_stmt_fn) (gimple_stmt_iterator *gsi);
 typedef tree (*ssa_prop_get_value_fn) (tree);
 
 
-/* In tree-ssa-propagate.c  */
-void ssa_propagate (ssa_prop_visit_stmt_fn, ssa_prop_visit_phi_fn);
-bool valid_gimple_rhs_p (tree);
-void move_ssa_defining_stmt_for_defs (gimple, gimple);
-bool update_gimple_call (gimple_stmt_iterator *, tree, int, ...);
-bool update_call_from_tree (gimple_stmt_iterator *, tree);
-bool stmt_makes_single_store (gimple);
-bool substitute_and_fold (ssa_prop_get_value_fn, ssa_prop_fold_stmt_fn, bool);
+extern bool valid_gimple_rhs_p (tree);
+extern void move_ssa_defining_stmt_for_defs (gimple, gimple);
+extern bool update_gimple_call (gimple_stmt_iterator *, tree, int, ...);
+extern bool update_call_from_tree (gimple_stmt_iterator *, tree);
+extern void ssa_propagate (ssa_prop_visit_stmt_fn, ssa_prop_visit_phi_fn);
+extern bool stmt_makes_single_store (gimple);
+extern bool substitute_and_fold (ssa_prop_get_value_fn, ssa_prop_fold_stmt_fn,
+				 bool);
+extern bool may_propagate_copy (tree, tree);
+extern bool may_propagate_copy_into_stmt (gimple, tree);
+extern bool may_propagate_copy_into_asm (tree);
+extern void propagate_value (use_operand_p, tree);
+extern void replace_exp (use_operand_p, tree);
+extern void propagate_tree_value (tree *, tree);
+extern void propagate_tree_value_into_stmt (gimple_stmt_iterator *, tree);
 
 #endif /* _TREE_SSA_PROPAGATE_H  */

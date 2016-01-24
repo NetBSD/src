@@ -1,5 +1,5 @@
 ;;  Machine Description for Renesas RL78 processors
-;;  Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;;  Copyright (C) 2011-2015 Free Software Foundation, Inc.
 ;;  Contributed by Red Hat.
 
 ;; This file is part of GCC.
@@ -25,19 +25,31 @@
 	(match_operand:QI 1 "general_operand"))]
   ""
   {
-    if (MEM_P (operand0) && MEM_P (operand1))
-      operands[1] = copy_to_mode_reg (QImode, operand1);
-    if (rl78_far_p (operand0) && rl78_far_p (operand1))
-      operands[1] = copy_to_mode_reg (QImode, operand1);
+    if (MEM_P (operands[0]) && MEM_P (operands[1]))
+      operands[1] = copy_to_mode_reg (QImode, operands[1]);
+    if (rl78_far_p (operands[0]) && rl78_far_p (operands[1]))
+      operands[1] = copy_to_mode_reg (QImode, operands[1]);
 
-    /* FIXME: Not sure how GCC can generate (SUBREG (SYMBOL_REF)),
-       but it does.  Since this makes no sense, reject it here.  */
-    if (GET_CODE (operand1) == SUBREG
-        && GET_CODE (XEXP (operand1, 0)) == SYMBOL_REF)
+    /* GCC can generate (SUBREG (SYMBOL_REF)) when it has to store a symbol
+       into a bitfield, or a packed ordinary field.  We can handle this
+       provided that the destination is a register.  If not, then load the
+       source into a register first.  */
+    if (GET_CODE (operands[1]) == SUBREG
+        && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF
+	&& ! REG_P (operands[0]))
+	operands[1] = copy_to_mode_reg (QImode, operands[1]);
+
+    /* Similarly for (SUBREG (CONST (PLUS (SYMBOL_REF)))).
+       cf. g++.dg/abi/packed.C.  */
+    if (GET_CODE (operands[1]) == SUBREG
+	&& GET_CODE (XEXP (operands[1], 0)) == CONST
+        && GET_CODE (XEXP (XEXP (operands[1], 0), 0)) == PLUS
+        && GET_CODE (XEXP (XEXP (XEXP (operands[1], 0), 0), 0)) == SYMBOL_REF
+	&& ! REG_P (operands[0]))
+	operands[1] = copy_to_mode_reg (QImode, operands[1]);
+
+    if (CONST_INT_P (operands[1]) && ! IN_RANGE (INTVAL (operands[1]), (-1 << 8) + 1, (1 << 8) - 1))
       FAIL;
-
-    if (CONST_INT_P (operand1) && ! IN_RANGE (INTVAL (operand1), (-1 << 8) + 1, (1 << 8) - 1))
-      gcc_unreachable();
   }
 )
 
@@ -46,27 +58,51 @@
 	(match_operand:HI 1 "general_operand"))]
   ""
   {
-    if (MEM_P (operand0) && MEM_P (operand1))
-      operands[1] = copy_to_mode_reg (HImode, operand1);
-    if (rl78_far_p (operand0) && rl78_far_p (operand1))
-      operands[1] = copy_to_mode_reg (HImode, operand1);
+    if (MEM_P (operands[0]) && MEM_P (operands[1]))
+      operands[1] = copy_to_mode_reg (HImode, operands[1]);
+    if (rl78_far_p (operands[0]) && rl78_far_p (operands[1]))
+      operands[1] = copy_to_mode_reg (HImode, operands[1]);
 
     /* FIXME: Not sure how GCC can generate (SUBREG (SYMBOL_REF)),
        but it does.  Since this makes no sense, reject it here.  */
-    if (GET_CODE (operand1) == SUBREG
-        && GET_CODE (XEXP (operand1, 0)) == SYMBOL_REF)
+    if (GET_CODE (operands[1]) == SUBREG
+        && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF)
+      FAIL;
+    /* Similarly for (SUBREG (CONST (PLUS (SYMBOL_REF)))).  */
+    if (GET_CODE (operands[1]) == SUBREG
+	&& GET_CODE (XEXP (operands[1], 0)) == CONST
+        && GET_CODE (XEXP (XEXP (operands[1], 0), 0)) == PLUS
+        && GET_CODE (XEXP (XEXP (XEXP (operands[1], 0), 0), 0)) == SYMBOL_REF)
       FAIL;
   }
 )
 
-(define_expand "movsi"
-  [(set (match_operand:SI 0 "nonimmediate_operand")
-	(match_operand:SI 1 "general_operand"))]
+(define_insn_and_split "movsi"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=vYS,v,Wfr")
+	(match_operand:SI 1 "general_operand" "viYS,Wfr,v"))]
   ""
-  {
-    rl78_expand_movsi (operands);
-    DONE;
-  }
+  "#"
+  ""
+  [(set (match_operand:HI 2 "nonimmediate_operand")
+	(match_operand:HI 4 "general_operand"))
+   (set (match_operand:HI 3 "nonimmediate_operand")
+	(match_operand:HI 5 "general_operand"))]
+  "rl78_split_movsi (operands, SImode);"
+  [(set_attr "valloc" "op1")]
+)
+
+(define_insn_and_split "movsf"
+  [(set (match_operand:SF 0 "nonimmediate_operand" "=vYS,v,Wfr")
+	(match_operand:SF 1 "general_operand" "viYS,Wfr,v"))]
+  ""
+  "#"
+  ""
+  [(set (match_operand:HI 2 "nonimmediate_operand")
+	(match_operand:HI 4 "general_operand"))
+   (set (match_operand:HI 3 "nonimmediate_operand")
+	(match_operand:HI 5 "general_operand"))]
+  "rl78_split_movsi (operands, SFmode);"
+  [(set_attr "valloc" "op1")]
 )
 
 ;;---------- Conversions ------------------------
@@ -123,14 +159,14 @@
   [(set (match_operand:HI 0 "register_operand")
         (mult:HI (zero_extend:HI (match_operand:QI 1 "register_operand"))
                  (zero_extend:HI (match_operand:QI 2 "register_operand"))))]
-  ""
+  "!TARGET_G10"
   ""
 )
 
 (define_expand "andqi3"
-  [(set (match_operand:QI         0 "nonimmediate_operand")
-	(and:QI (match_operand:QI 1 "general_operand")
-		(match_operand:QI 2 "general_operand")))
+  [(set (match_operand:QI         0 "rl78_nonimmediate_operand")
+	(and:QI (match_operand:QI 1 "rl78_general_operand")
+		(match_operand:QI 2 "rl78_general_operand")))
    ]
   ""
   "if (rl78_force_nonfar_3 (operands, gen_andqi3))
@@ -138,9 +174,9 @@
 )
 
 (define_expand "iorqi3"
-  [(set (match_operand:QI         0 "nonimmediate_operand")
-	(ior:QI (match_operand:QI 1 "general_operand")
-		(match_operand:QI 2 "general_operand")))
+  [(set (match_operand:QI         0 "rl78_nonimmediate_operand")
+	(ior:QI (match_operand:QI 1 "rl78_general_operand")
+		(match_operand:QI 2 "rl78_general_operand")))
    ]
   ""
   "if (rl78_force_nonfar_3 (operands, gen_iorqi3))
@@ -148,9 +184,9 @@
 )
 
 (define_expand "xorqi3"
-  [(set (match_operand:QI         0 "nonimmediate_operand")
-	(xor:QI (match_operand:QI 1 "general_operand")
-		(match_operand:QI 2 "general_operand")))
+  [(set (match_operand:QI         0 "rl78_nonimmediate_operand")
+	(xor:QI (match_operand:QI 1 "rl78_general_operand")
+		(match_operand:QI 2 "rl78_general_operand")))
    ]
   ""
   "if (rl78_force_nonfar_3 (operands, gen_xorqi3))
@@ -160,7 +196,7 @@
 (define_expand "one_cmplqi2"
   [(set (match_operand:QI         0 "nonimmediate_operand")
 	(xor:QI (match_operand:QI 1 "general_operand")
-		(const_int 255)))
+		(const_int -1)))
    ]
   ""
   "if (rl78_force_nonfar_2 (operands, gen_one_cmplqi2))
@@ -200,13 +236,33 @@
 )
 
 (define_expand "ashrsi3"
-  [(set (match_operand:SI               0 "register_operand")
-	(ashiftrt:SI (match_operand:SI  1 "register_operand")
-		      (match_operand:SI 2 "immediate_operand")))
+  [(parallel [(set (match_operand:SI               0 "nonimmediate_operand")
+		   (ashiftrt:SI (match_operand:SI  1 "nonimmediate_operand")
+				(match_operand:SI  2 "nonmemory_operand")))
+	      (clobber (reg:HI X_REG))])
    ]
   ""
-  "if (GET_CODE (operands[2]) != CONST_INT)
-     FAIL;"
+  ""
+)
+
+(define_expand "lshrsi3"
+  [(parallel [(set (match_operand:SI               0 "nonimmediate_operand")
+		   (lshiftrt:SI (match_operand:SI  1 "nonimmediate_operand")
+				(match_operand:SI  2 "nonmemory_operand")))
+	      (clobber (reg:HI X_REG))])
+   ]
+  ""
+  ""
+)
+
+(define_expand "ashlsi3"
+  [(parallel [(set (match_operand:SI            0 "nonimmediate_operand")
+		   (ashift:SI (match_operand:SI 1 "nonimmediate_operand")
+			      (match_operand:SI 2 "nonmemory_operand")))
+	      (clobber (reg:HI X_REG))])
+   ]
+  ""
+  ""
 )
 
 ;;---------- Branching ------------------------
@@ -252,5 +308,18 @@
               (label_ref (match_operand 3 "" ""))
 	      (pc)))]
   ""
+  "rl78_expand_compare (operands);"
+)
+
+(define_expand "cbranchsi4"
+  [(parallel [(set (pc) (if_then_else
+			 (match_operator 0 "rl78_cmp_operator"
+					 [(match_operand:SI 1 "general_operand")
+					  (match_operand:SI 2 "nonmemory_operand")])
+			 (label_ref (match_operand 3 "" ""))
+			 (pc)))
+	      (clobber (reg:HI AX_REG))
+	      ])]
+  "1"
   "rl78_expand_compare (operands);"
 )

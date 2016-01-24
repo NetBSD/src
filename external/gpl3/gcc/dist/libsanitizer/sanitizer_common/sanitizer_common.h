@@ -15,6 +15,9 @@
 #define SANITIZER_COMMON_H
 
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_libc.h"
+#include "sanitizer_mutex.h"
+#include "sanitizer_flags.h"
 
 namespace __sanitizer {
 struct StackTrace;
@@ -24,27 +27,34 @@ const uptr kWordSize = SANITIZER_WORDSIZE / 8;
 const uptr kWordSizeInBits = 8 * kWordSize;
 
 #if defined(__powerpc__) || defined(__powerpc64__)
-const uptr kCacheLineSize = 128;
+  const uptr kCacheLineSize = 128;
 #else
-const uptr kCacheLineSize = 64;
+  const uptr kCacheLineSize = 64;
 #endif
+
+const uptr kMaxPathLength = 512;
+
+const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
 
 extern const char *SanitizerToolName;  // Can be changed by the tool.
 
 uptr GetPageSize();
 uptr GetPageSizeCached();
 uptr GetMmapGranularity();
+uptr GetMaxVirtualAddress();
 // Threads
-int GetPid();
 uptr GetTid();
 uptr GetThreadSelf();
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom);
+void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
+                          uptr *tls_addr, uptr *tls_size);
 
 // Memory management
 void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size);
+void *MmapNoReserveOrDie(uptr size, const char *mem_type);
 void *MmapFixedOrDie(uptr fixed_addr, uptr size);
 void *Mprotect(uptr fixed_addr, uptr size);
 // Map aligned chunk of address space; size and alignment are powers of two.
@@ -52,10 +62,8 @@ void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
 // Used to check if we can map shadow memory to a fixed location.
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
 void FlushUnneededShadowMemory(uptr addr, uptr size);
-
-// Internal allocator
-void *InternalAlloc(uptr size);
-void InternalFree(void *p);
+void IncreaseTotalMmap(uptr size);
+void DecreaseTotalMmap(uptr size);
 
 // InternalScopedBuffer can be used instead of large stack arrays to
 // keep frame size low.
@@ -83,6 +91,23 @@ class InternalScopedBuffer {
   void operator=(const InternalScopedBuffer&);
 };
 
+class InternalScopedString : public InternalScopedBuffer<char> {
+ public:
+  explicit InternalScopedString(uptr max_length)
+      : InternalScopedBuffer<char>(max_length), length_(0) {
+    (*this)[0] = '\0';
+  }
+  uptr length() { return length_; }
+  void clear() {
+    (*this)[0] = '\0';
+    length_ = 0;
+  }
+  void append(const char *format, ...);
+
+ private:
+  uptr length_;
+};
+
 // Simple low-level (mmap-based) allocator for internal use. Doesn't have
 // constructor, so all instances of LowLevelAllocator should be
 // linker initialized.
@@ -102,11 +127,32 @@ void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback);
 // IO
 void RawWrite(const char *buffer);
 bool PrintsToTty();
+// Caching version of PrintsToTty(). Not thread-safe.
+bool PrintsToTtyCached();
+bool ColorizeReports();
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
 void SetPrintfAndReportCallback(void (*callback)(const char *));
+#define VReport(level, ...)                                              \
+  do {                                                                   \
+    if ((uptr)common_flags()->verbosity >= (level)) Report(__VA_ARGS__); \
+  } while (0)
+#define VPrintf(level, ...)                                              \
+  do {                                                                   \
+    if ((uptr)common_flags()->verbosity >= (level)) Printf(__VA_ARGS__); \
+  } while (0)
 
-fd_t OpenFile(const char *filename, bool write);
+// Can be used to prevent mixing error reports from different sanitizers.
+extern StaticSpinMutex CommonSanitizerReportMutex;
+void MaybeOpenReportFile();
+extern fd_t report_fd;
+extern bool log_to_file;
+extern char report_path_prefix[4096];
+extern uptr report_fd_pid;
+extern uptr stoptheworld_tracer_pid;
+extern uptr stoptheworld_tracer_ppid;
+
+uptr OpenFile(const char *filename, bool write);
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.
 // The size of the mmaped region is stored in '*buff_size',
@@ -117,29 +163,53 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
 // (or NULL if the mapping failes). Stores the size of mmaped region
 // in '*buff_size'.
 void *MapFileToMemory(const char *file_name, uptr *buff_size);
+void *MapWritableFileToMemory(void *addr, uptr size, uptr fd, uptr offset);
+
+bool IsAccessibleMemoryRange(uptr beg, uptr size);
+
+// Error report formatting.
+const char *StripPathPrefix(const char *filepath,
+                            const char *strip_file_prefix);
+// Strip the directories from the module name.
+const char *StripModuleName(const char *module);
 
 // OS
-void DisableCoreDumper();
+void DisableCoreDumperIfNecessary();
 void DumpProcessMap();
 bool FileExists(const char *filename);
 const char *GetEnv(const char *name);
+bool SetEnv(const char *name, const char *value);
 const char *GetPwd();
+char *FindPathToBinary(const char *name);
 u32 GetUid();
 void ReExec();
 bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
-void PrepareForSandboxing();
+bool AddressSpaceIsUnlimited();
+void SetAddressSpaceUnlimited();
+void AdjustStackSize(void *attr);
+void PrepareForSandboxing(__sanitizer_sandbox_arguments *args);
+void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args);
+void SetSandboxingCallback(void (*f)());
+
+void CovUpdateMapping(uptr caller_pc = 0);
+void CovBeforeFork();
+void CovAfterFork(int child_pid);
+
+void InitTlsSize();
+uptr GetTlsSize();
 
 // Other
 void SleepForSeconds(int seconds);
 void SleepForMillis(int millis);
+u64 NanoTime();
 int Atexit(void (*function)(void));
 void SortArray(uptr *array, uptr size);
 
 // Exit
 void NORETURN Abort();
 void NORETURN Die();
-void NORETURN SANITIZER_INTERFACE_ATTRIBUTE
+void NORETURN
 CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);
 
 // Set the name of the current thread to 'name', return true on succees.
@@ -151,19 +221,35 @@ bool SanitizerGetThreadName(char *name, int max_len);
 
 // Specific tools may override behavior of "Die" and "CheckFailed" functions
 // to do tool-specific job.
-void SetDieCallback(void (*callback)(void));
+typedef void (*DieCallbackType)(void);
+void SetDieCallback(DieCallbackType);
+DieCallbackType GetDieCallback();
 typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
                                        u64, u64);
 void SetCheckFailedCallback(CheckFailedCallbackType callback);
 
-// Construct a one-line string like
-//  SanitizerToolName: error_type file:line function
-// and call __sanitizer_report_error_summary on it.
+// Functions related to signal handling.
+typedef void (*SignalHandlerType)(int, void *, void *);
+bool IsDeadlySignal(int signum);
+void InstallDeadlySignalHandlers(SignalHandlerType handler);
+// Alternative signal stack (POSIX-only).
+void SetAlternateSignalStack();
+void UnsetAlternateSignalStack();
+
+// We don't want a summary too long.
+const int kMaxSummaryLength = 1024;
+// Construct a one-line string:
+//   SUMMARY: SanitizerToolName: error_message
+// and pass it to __sanitizer_report_error_summary.
+void ReportErrorSummary(const char *error_message);
+// Same as above, but construct error_message as:
+//   error_type file:line function
 void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function);
+void ReportErrorSummary(const char *error_type, StackTrace *trace);
 
 // Math
-#if defined(_WIN32) && !defined(__clang__)
+#if SANITIZER_WINDOWS && !defined(__clang__) && !defined(__GNUC__)
 extern "C" {
 unsigned char _BitScanForward(unsigned long *index, unsigned long mask);  // NOLINT
 unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);  // NOLINT
@@ -175,14 +261,27 @@ unsigned char _BitScanReverse64(unsigned long *index, unsigned __int64 mask);  /
 #endif
 
 INLINE uptr MostSignificantSetBitIndex(uptr x) {
-  CHECK(x != 0);
+  CHECK_NE(x, 0U);
   unsigned long up;  // NOLINT
-#if !defined(_WIN32) || defined(__clang__)
+#if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
   up = SANITIZER_WORDSIZE - 1 - __builtin_clzl(x);
 #elif defined(_WIN64)
   _BitScanReverse64(&up, x);
 #else
   _BitScanReverse(&up, x);
+#endif
+  return up;
+}
+
+INLINE uptr LeastSignificantSetBitIndex(uptr x) {
+  CHECK_NE(x, 0U);
+  unsigned long up;  // NOLINT
+#if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
+  up = __builtin_ctzl(x);
+#elif defined(_WIN64)
+  _BitScanForward64(&up, x);
+#else
+  _BitScanForward(&up, x);
 #endif
   return up;
 }
@@ -216,7 +315,7 @@ INLINE bool IsAligned(uptr a, uptr alignment) {
 
 INLINE uptr Log2(uptr x) {
   CHECK(IsPowerOfTwo(x));
-#if !defined(_WIN32) || defined(__clang__)
+#if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
   return __builtin_ctzl(x);
 #elif defined(_WIN64)
   unsigned long ret;  // NOLINT
@@ -251,12 +350,216 @@ INLINE int ToLower(int c) {
   return (c >= 'A' && c <= 'Z') ? (c + 'a' - 'A') : c;
 }
 
-#if SANITIZER_WORDSIZE == 64
-# define FIRST_32_SECOND_64(a, b) (b)
+// A low-level vector based on mmap. May incur a significant memory overhead for
+// small vectors.
+// WARNING: The current implementation supports only POD types.
+template<typename T>
+class InternalMmapVector {
+ public:
+  explicit InternalMmapVector(uptr initial_capacity) {
+    capacity_ = Max(initial_capacity, (uptr)1);
+    size_ = 0;
+    data_ = (T *)MmapOrDie(capacity_ * sizeof(T), "InternalMmapVector");
+  }
+  ~InternalMmapVector() {
+    UnmapOrDie(data_, capacity_ * sizeof(T));
+  }
+  T &operator[](uptr i) {
+    CHECK_LT(i, size_);
+    return data_[i];
+  }
+  const T &operator[](uptr i) const {
+    CHECK_LT(i, size_);
+    return data_[i];
+  }
+  void push_back(const T &element) {
+    CHECK_LE(size_, capacity_);
+    if (size_ == capacity_) {
+      uptr new_capacity = RoundUpToPowerOfTwo(size_ + 1);
+      Resize(new_capacity);
+    }
+    data_[size_++] = element;
+  }
+  T &back() {
+    CHECK_GT(size_, 0);
+    return data_[size_ - 1];
+  }
+  void pop_back() {
+    CHECK_GT(size_, 0);
+    size_--;
+  }
+  uptr size() const {
+    return size_;
+  }
+  const T *data() const {
+    return data_;
+  }
+  uptr capacity() const {
+    return capacity_;
+  }
+
+  void clear() { size_ = 0; }
+
+ private:
+  void Resize(uptr new_capacity) {
+    CHECK_GT(new_capacity, 0);
+    CHECK_LE(size_, new_capacity);
+    T *new_data = (T *)MmapOrDie(new_capacity * sizeof(T),
+                                 "InternalMmapVector");
+    internal_memcpy(new_data, data_, size_ * sizeof(T));
+    T *old_data = data_;
+    data_ = new_data;
+    UnmapOrDie(old_data, capacity_ * sizeof(T));
+    capacity_ = new_capacity;
+  }
+  // Disallow evil constructors.
+  InternalMmapVector(const InternalMmapVector&);
+  void operator=(const InternalMmapVector&);
+
+  T *data_;
+  uptr capacity_;
+  uptr size_;
+};
+
+// HeapSort for arrays and InternalMmapVector.
+template<class Container, class Compare>
+void InternalSort(Container *v, uptr size, Compare comp) {
+  if (size < 2)
+    return;
+  // Stage 1: insert elements to the heap.
+  for (uptr i = 1; i < size; i++) {
+    uptr j, p;
+    for (j = i; j > 0; j = p) {
+      p = (j - 1) / 2;
+      if (comp((*v)[p], (*v)[j]))
+        Swap((*v)[j], (*v)[p]);
+      else
+        break;
+    }
+  }
+  // Stage 2: swap largest element with the last one,
+  // and sink the new top.
+  for (uptr i = size - 1; i > 0; i--) {
+    Swap((*v)[0], (*v)[i]);
+    uptr j, max_ind;
+    for (j = 0; j < i; j = max_ind) {
+      uptr left = 2 * j + 1;
+      uptr right = 2 * j + 2;
+      max_ind = j;
+      if (left < i && comp((*v)[max_ind], (*v)[left]))
+        max_ind = left;
+      if (right < i && comp((*v)[max_ind], (*v)[right]))
+        max_ind = right;
+      if (max_ind != j)
+        Swap((*v)[j], (*v)[max_ind]);
+      else
+        break;
+    }
+  }
+}
+
+template<class Container, class Value, class Compare>
+uptr InternalBinarySearch(const Container &v, uptr first, uptr last,
+                          const Value &val, Compare comp) {
+  uptr not_found = last + 1;
+  while (last >= first) {
+    uptr mid = (first + last) / 2;
+    if (comp(v[mid], val))
+      first = mid + 1;
+    else if (comp(val, v[mid]))
+      last = mid - 1;
+    else
+      return mid;
+  }
+  return not_found;
+}
+
+// Represents a binary loaded into virtual memory (e.g. this can be an
+// executable or a shared object).
+class LoadedModule {
+ public:
+  LoadedModule(const char *module_name, uptr base_address);
+  void addAddressRange(uptr beg, uptr end, bool executable);
+  bool containsAddress(uptr address) const;
+
+  const char *full_name() const { return full_name_; }
+  uptr base_address() const { return base_address_; }
+
+  uptr n_ranges() const { return n_ranges_; }
+  uptr address_range_start(int i) const { return ranges_[i].beg; }
+  uptr address_range_end(int i) const { return ranges_[i].end; }
+  bool address_range_executable(int i) const { return exec_[i]; }
+
+ private:
+  struct AddressRange {
+    uptr beg;
+    uptr end;
+  };
+  char *full_name_;
+  uptr base_address_;
+  static const uptr kMaxNumberOfAddressRanges = 6;
+  AddressRange ranges_[kMaxNumberOfAddressRanges];
+  bool exec_[kMaxNumberOfAddressRanges];
+  uptr n_ranges_;
+};
+
+// OS-dependent function that fills array with descriptions of at most
+// "max_modules" currently loaded modules. Returns the number of
+// initialized modules. If filter is nonzero, ignores modules for which
+// filter(full_name) is false.
+typedef bool (*string_predicate_t)(const char *);
+uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
+                      string_predicate_t filter);
+
+#if SANITIZER_POSIX
+const uptr kPthreadDestructorIterations = 4;
 #else
-# define FIRST_32_SECOND_64(a, b) (a)
+// Unused on Windows.
+const uptr kPthreadDestructorIterations = 0;
 #endif
 
+// Callback type for iterating over a set of memory ranges.
+typedef void (*RangeIteratorCallback)(uptr begin, uptr end, void *arg);
+
+#if (SANITIZER_FREEBSD || SANITIZER_LINUX) && !defined(SANITIZER_GO)
+extern uptr indirect_call_wrapper;
+void SetIndirectCallWrapper(uptr wrapper);
+
+template <typename F>
+F IndirectExternCall(F f) {
+  typedef F (*WrapF)(F);
+  return indirect_call_wrapper ? ((WrapF)indirect_call_wrapper)(f) : f;
+}
+#else
+INLINE void SetIndirectCallWrapper(uptr wrapper) {}
+template <typename F>
+F IndirectExternCall(F f) {
+  return f;
+}
+#endif
+
+#if SANITIZER_ANDROID
+// Initialize Android logging. Any writes before this are silently lost.
+void AndroidLogInit();
+void AndroidLogWrite(const char *buffer);
+void GetExtraActivationFlags(char *buf, uptr size);
+void SanitizerInitializeUnwinder();
+#else
+INLINE void AndroidLogInit() {}
+INLINE void AndroidLogWrite(const char *buffer_unused) {}
+INLINE void GetExtraActivationFlags(char *buf, uptr size) { *buf = '\0'; }
+INLINE void SanitizerInitializeUnwinder() {}
+#endif
 }  // namespace __sanitizer
+
+inline void *operator new(__sanitizer::operator_new_size_type size,
+                          __sanitizer::LowLevelAllocator &alloc) {
+  return alloc.Allocate(size);
+}
+
+struct StackDepotStats {
+  uptr n_uniq_ids;
+  uptr allocated;
+};
 
 #endif  // SANITIZER_COMMON_H

@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -16,11 +16,9 @@ report the problem.
 @menu
 * Criteria:  Bug Criteria.   Have you really found a bug?
 * Reporting: Bug Reporting.  How to report a bug effectively.
-* Known: Trouble.            Known problems.
-* Help: Service.             Where to ask for help.
 @end menu
 
-@node Bug Criteria,Bug Reporting,,Bugs
+@node Bug Criteria
 @section Have You Found a Bug?
 @cindex bug criteria
 
@@ -83,8 +81,8 @@ If you are an experienced user of one of the languages GCC supports, your
 suggestions for improvement of GCC are welcome in any case.
 @end itemize
 
-@node Bug Reporting,,Bug Criteria,Bugs
-@section How and where to Report Bugs
+@node Bug Reporting
+@section How and Where to Report Bugs
 @cindex compiler bugs, reporting
 
 Bugs should be reported to the bug database at @value{BUGURL}.

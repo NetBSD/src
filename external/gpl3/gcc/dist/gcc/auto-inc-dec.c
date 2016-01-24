@@ -1,5 +1,5 @@
 /* Discovery of auto-inc and auto-dec instructions.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -22,18 +22,42 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
 #include "rtl.h"
 #include "tm_p.h"
 #include "hard-reg-set.h"
+#include "predict.h"
+#include "hashtab.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
 #include "basic-block.h"
 #include "insn-config.h"
 #include "regs.h"
 #include "flags.h"
-#include "function.h"
 #include "except.h"
 #include "diagnostic-core.h"
 #include "recog.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
 #include "expr.h"
 #include "tree-pass.h"
 #include "df.h"
@@ -295,7 +319,7 @@ init_decision_table (void)
 
 static struct inc_insn
 {
-  rtx insn;           /* The insn being parsed.  */
+  rtx_insn *insn;     /* The insn being parsed.  */
   rtx pat;            /* The pattern of the insn.  */
   bool reg1_is_const; /* True if reg1 is const, false if reg1 is a reg.  */
   enum form form;
@@ -355,7 +379,7 @@ dump_inc_insn (FILE *file)
 
 static struct mem_insn
 {
-  rtx insn;           /* The insn being parsed.  */
+  rtx_insn *insn;     /* The insn being parsed.  */
   rtx pat;            /* The pattern of the insn.  */
   rtx *mem_loc;       /* The address of the field that holds the mem */
                       /* that is to be replaced.  */
@@ -397,9 +421,9 @@ dump_mem_insn (FILE *file)
    must be compared with the current block.
 */
 
-static rtx *reg_next_use = NULL;
-static rtx *reg_next_inc_use = NULL;
-static rtx *reg_next_def = NULL;
+static rtx_insn **reg_next_use = NULL;
+static rtx_insn **reg_next_inc_use = NULL;
+static rtx_insn **reg_next_def = NULL;
 
 
 /* Move dead note that match PATTERN to TO_INSN from FROM_INSN.  We do
@@ -408,7 +432,7 @@ static rtx *reg_next_def = NULL;
    does not appear that there are any other kinds of relevant notes.  */
 
 static void
-move_dead_notes (rtx to_insn, rtx from_insn, rtx pattern)
+move_dead_notes (rtx_insn *to_insn, rtx_insn *from_insn, rtx pattern)
 {
   rtx note;
   rtx next_note;
@@ -436,10 +460,10 @@ move_dead_notes (rtx to_insn, rtx from_insn, rtx pattern)
 /* Create a mov insn DEST_REG <- SRC_REG and insert it before
    NEXT_INSN.  */
 
-static rtx
-insert_move_insn_before (rtx next_insn, rtx dest_reg, rtx src_reg)
+static rtx_insn *
+insert_move_insn_before (rtx_insn *next_insn, rtx dest_reg, rtx src_reg)
 {
-  rtx insns;
+  rtx_insn *insns;
 
   start_sequence ();
   emit_move_insn (dest_reg, src_reg);
@@ -469,10 +493,10 @@ attempt_change (rtx new_addr, rtx inc_reg)
      handled mov free.  */
 
   basic_block bb = BLOCK_FOR_INSN (mem_insn.insn);
-  rtx mov_insn = NULL;
+  rtx_insn *mov_insn = NULL;
   int regno;
   rtx mem = *mem_insn.mem_loc;
-  enum machine_mode mode = GET_MODE (mem);
+  machine_mode mode = GET_MODE (mem);
   rtx new_mem;
   int old_cost = 0;
   int new_cost = 0;
@@ -611,8 +635,8 @@ try_merge (void)
 
   /* The width of the mem being accessed.  */
   int size = GET_MODE_SIZE (GET_MODE (mem));
-  rtx last_insn = NULL;
-  enum machine_mode reg_mode = GET_MODE (inc_reg);
+  rtx_insn *last_insn = NULL;
+  machine_mode reg_mode = GET_MODE (inc_reg);
 
   switch (inc_insn.form)
     {
@@ -738,10 +762,10 @@ try_merge (void)
    NEXT_ARRAY) or defines (if reg_next_def is passed in NEXT_ARRAY)
    REGNO in BB.  */
 
-static rtx
-get_next_ref (int regno, basic_block bb, rtx *next_array)
+static rtx_insn *
+get_next_ref (int regno, basic_block bb, rtx_insn **next_array)
 {
-  rtx insn = next_array[regno];
+  rtx_insn *insn = next_array[regno];
 
   /* Lazy about cleaning out the next_arrays.  */
   if (insn && BLOCK_FOR_INSN (insn) != bb)
@@ -787,7 +811,7 @@ reverse_inc (void)
    processed.  */
 
 static bool
-parse_add_or_inc (rtx insn, bool before_mem)
+parse_add_or_inc (rtx_insn *insn, bool before_mem)
 {
   rtx pat = single_set (insn);
   if (!pat)
@@ -966,10 +990,10 @@ find_address (rtx *address_of_x)
 static bool
 find_inc (bool first_try)
 {
-  rtx insn;
+  rtx_insn *insn;
   basic_block bb = BLOCK_FOR_INSN (mem_insn.insn);
-  rtx other_insn;
-  df_ref *def_rec;
+  rtx_insn *other_insn;
+  df_ref def;
 
   /* Make sure this reg appears only once in this insn.  */
   if (count_occurrences (PATTERN (mem_insn.insn), mem_insn.reg0, 1) != 1)
@@ -1013,9 +1037,8 @@ find_inc (bool first_try)
 
   /* Need to assure that none of the operands of the inc instruction are
      assigned to by the mem insn.  */
-  for (def_rec = DF_INSN_DEFS (mem_insn.insn); *def_rec; def_rec++)
+  FOR_EACH_INSN_DEF (def, mem_insn.insn)
     {
-      df_ref def = *def_rec;
       unsigned int regno = DF_REF_REGNO (def);
       if ((regno == REGNO (inc_insn.reg0))
 	  || (regno == REGNO (inc_insn.reg_res)))
@@ -1039,9 +1062,9 @@ find_inc (bool first_try)
     {
       /* Make sure that there is no insn that assigns to inc_insn.res
 	 between the mem_insn and the inc_insn.  */
-      rtx other_insn = get_next_ref (REGNO (inc_insn.reg_res),
-				     BLOCK_FOR_INSN (mem_insn.insn),
-				     reg_next_def);
+      rtx_insn *other_insn = get_next_ref (REGNO (inc_insn.reg_res),
+					   BLOCK_FOR_INSN (mem_insn.insn),
+					   reg_next_def);
       if (other_insn != inc_insn.insn)
 	{
 	  if (dump_file)
@@ -1130,7 +1153,7 @@ find_inc (bool first_try)
 	 then we just abandon this.  */
 
       int luid = DF_INSN_LUID (inc_insn.insn);
-      rtx other_insn;
+      rtx_insn *other_insn;
 
       /* Make sure this reg appears only once in this insn.  */
       if (count_occurrences (PATTERN (mem_insn.insn), mem_insn.reg1, 1) != 1)
@@ -1333,8 +1356,8 @@ find_mem (rtx *address_of_x)
 static void
 merge_in_block (int max_reg, basic_block bb)
 {
-  rtx insn;
-  rtx curr;
+  rtx_insn *insn;
+  rtx_insn *curr;
   int success_in_block = 0;
 
   if (dump_file)
@@ -1342,7 +1365,6 @@ merge_in_block (int max_reg, basic_block bb)
 
   FOR_BB_INSNS_REVERSE_SAFE (bb, insn, curr)
     {
-      unsigned int uid = INSN_UID (insn);
       bool insn_is_add_or_inc = true;
 
       if (!NONDEBUG_INSN_P (insn))
@@ -1379,7 +1401,7 @@ merge_in_block (int max_reg, basic_block bb)
 			 clear of c because the inc insn is going to move
 			 into the mem_insn.insn.  */
 		      int luid = DF_INSN_LUID (mem_insn.insn);
-		      rtx other_insn
+		      rtx_insn *other_insn
 			= get_next_ref (REGNO (inc_insn.reg1), bb, reg_next_use);
 
 		      if (other_insn && luid > DF_INSN_LUID (other_insn))
@@ -1418,22 +1440,20 @@ merge_in_block (int max_reg, basic_block bb)
 
       /* If the inc insn was merged with a mem, the inc insn is gone
 	 and there is noting to update.  */
-      if (DF_INSN_UID_GET (uid))
+      if (df_insn_info *insn_info = DF_INSN_INFO_GET (insn))
 	{
-	  df_ref *def_rec;
-	  df_ref *use_rec;
+	  df_ref def, use;
+
 	  /* Need to update next use.  */
-	  for (def_rec = DF_INSN_UID_DEFS (uid); *def_rec; def_rec++)
+	  FOR_EACH_INSN_INFO_DEF (def, insn_info)
 	    {
-	      df_ref def = *def_rec;
 	      reg_next_use[DF_REF_REGNO (def)] = NULL;
 	      reg_next_inc_use[DF_REF_REGNO (def)] = NULL;
 	      reg_next_def[DF_REF_REGNO (def)] = insn;
 	    }
 
-	  for (use_rec = DF_INSN_UID_USES (uid); *use_rec; use_rec++)
+	  FOR_EACH_INSN_INFO_USE (use, insn_info)
 	    {
-	      df_ref use = *use_rec;
 	      reg_next_use[DF_REF_REGNO (use)] = insn;
 	      if (insn_is_add_or_inc)
 		reg_next_inc_use[DF_REF_REGNO (use)] = insn;
@@ -1442,7 +1462,8 @@ merge_in_block (int max_reg, basic_block bb)
 	    }
 	}
       else if (dump_file)
-	fprintf (dump_file, "skipping update of deleted insn %d\n", uid);
+	fprintf (dump_file, "skipping update of deleted insn %d\n",
+		 INSN_UID (insn));
     }
 
   /* If we were successful, try again.  There may have been several
@@ -1452,9 +1473,9 @@ merge_in_block (int max_reg, basic_block bb)
     {
       /* In this case, we must clear these vectors since the trick of
 	 testing if the stale insn in the block will not work.  */
-      memset (reg_next_use, 0, max_reg * sizeof(rtx));
-      memset (reg_next_inc_use, 0, max_reg * sizeof(rtx));
-      memset (reg_next_def, 0, max_reg * sizeof(rtx));
+      memset (reg_next_use, 0, max_reg * sizeof (rtx));
+      memset (reg_next_inc_use, 0, max_reg * sizeof (rtx));
+      memset (reg_next_def, 0, max_reg * sizeof (rtx));
       df_recompute_luids (bb);
       merge_in_block (max_reg, bb);
     }
@@ -1462,8 +1483,47 @@ merge_in_block (int max_reg, basic_block bb)
 
 #endif
 
-static unsigned int
-rest_of_handle_auto_inc_dec (void)
+/* Discover auto-inc auto-dec instructions.  */
+
+namespace {
+
+const pass_data pass_data_inc_dec =
+{
+  RTL_PASS, /* type */
+  "auto_inc_dec", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_AUTO_INC_DEC, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  TODO_df_finish, /* todo_flags_finish */
+};
+
+class pass_inc_dec : public rtl_opt_pass
+{
+public:
+  pass_inc_dec (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_inc_dec, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *)
+    {
+#ifdef AUTO_INC_DEC
+      return (optimize > 0 && flag_auto_inc_dec);
+#else
+      return false;
+#endif
+    }
+
+
+  unsigned int execute (function *);
+
+}; // class pass_inc_dec
+
+unsigned int
+pass_inc_dec::execute (function *fun ATTRIBUTE_UNUSED)
 {
 #ifdef AUTO_INC_DEC
   basic_block bb;
@@ -1477,10 +1537,10 @@ rest_of_handle_auto_inc_dec (void)
   df_note_add_problem ();
   df_analyze ();
 
-  reg_next_use = XCNEWVEC (rtx, max_reg);
-  reg_next_inc_use = XCNEWVEC (rtx, max_reg);
-  reg_next_def = XCNEWVEC (rtx, max_reg);
-  FOR_EACH_BB (bb)
+  reg_next_use = XCNEWVEC (rtx_insn *, max_reg);
+  reg_next_inc_use = XCNEWVEC (rtx_insn *, max_reg);
+  reg_next_def = XCNEWVEC (rtx_insn *, max_reg);
+  FOR_EACH_BB_FN (bb, fun)
     merge_in_block (max_reg, bb);
 
   free (reg_next_use);
@@ -1492,36 +1552,10 @@ rest_of_handle_auto_inc_dec (void)
   return 0;
 }
 
+} // anon namespace
 
-/* Discover auto-inc auto-dec instructions.  */
-
-static bool
-gate_auto_inc_dec (void)
+rtl_opt_pass *
+make_pass_inc_dec (gcc::context *ctxt)
 {
-#ifdef AUTO_INC_DEC
-  return (optimize > 0 && flag_auto_inc_dec);
-#else
-  return false;
-#endif
+  return new pass_inc_dec (ctxt);
 }
-
-
-struct rtl_opt_pass pass_inc_dec =
-{
- {
-  RTL_PASS,
-  "auto_inc_dec",                       /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_auto_inc_dec,                    /* gate */
-  rest_of_handle_auto_inc_dec,          /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_AUTO_INC_DEC,                      /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  TODO_df_finish,                       /* todo_flags_finish */
- }
-};

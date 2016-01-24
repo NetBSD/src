@@ -140,7 +140,7 @@ s390*)
     save_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS -march=zEC12"
     AC_TRY_COMPILE([], [asm("tbegin 0,0; tend");],
-                   [libitm_cv_as_htm=yes], [libitm_cv_as_htm=no])
+		   [libitm_cv_as_htm=yes], [libitm_cv_as_htm=no])
     CFLAGS="$save_CFLAGS"])
   if test x$libitm_cv_as_htm = xyes; then
     AC_DEFINE(HAVE_AS_HTM, 1, [Define to 1 if the assembler supports HTM.])
@@ -301,10 +301,10 @@ AC_DEFUN([LIBITM_CHECK_LINKER_FEATURES], [
 
 dnl
 dnl Check if the linker used supports linker maps to clear hardware
-dnl capabilities.  This is only supported by Sun ld at the moment.
+dnl capabilities.  This is only supported on Solaris at the moment.
 dnl
 dnl Defines:
-dnl  HWCAP_LDFLAGS='-Wl,-M,clearcap.map' if possible
+dnl  HWCAP_LDFLAGS=-mclear-hwcap if possible
 dnl  LD (as a side effect of testing)
 dnl
 AC_DEFUN([LIBITM_CHECK_LINKER_HWCAP], [
@@ -312,12 +312,12 @@ AC_DEFUN([LIBITM_CHECK_LINKER_HWCAP], [
   AC_REQUIRE([AC_PROG_LD])
 
   ac_save_LDFLAGS="$LDFLAGS"
-  LDFLAGS="$LFLAGS -Wl,-M,$srcdir/clearcap.map"
+  LDFLAGS="$LFLAGS -mclear-hwcap"
 
-  AC_MSG_CHECKING([for ld that supports -Wl,-M,mapfile])
+  AC_MSG_CHECKING([for -mclear-hwcap])
   AC_TRY_LINK([], [return 0;], [ac_hwcap_ldflags=yes],[ac_hwcap_ldflags=no])
   if test "$ac_hwcap_ldflags" = "yes"; then
-    HWCAP_LDFLAGS="-Wl,-M,$srcdir/clearcap.map $HWCAP_LDFLAGS"
+    HWCAP_LDFLAGS="-mclear-hwcap $HWCAP_LDFLAGS"
   fi
   AC_MSG_RESULT($ac_hwcap_ldflags)
 

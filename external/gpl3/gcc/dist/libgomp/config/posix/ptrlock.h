@@ -1,7 +1,8 @@
-/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
-   This file is part of the GNU OpenMP Library (libgomp).
+   This file is part of the GNU Offloading and Multi Processing Library
+   (libgomp).
 
    Libgomp is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by
@@ -22,9 +23,8 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-/* This is a Linux specific implementation of a mutex synchronization
-   mechanism for libgomp.  This type is private to the library.  This
-   implementation uses atomic instructions and the futex syscall.  */
+/* This is a generic POSIX implementation of a mutex synchronization
+   mechanism for libgomp.  This type is private to the library.  */
 
 #ifndef GOMP_PTRLOCK_H
 #define GOMP_PTRLOCK_H 1

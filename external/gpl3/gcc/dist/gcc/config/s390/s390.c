@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on IBM S/390 and zSeries
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by Hartmut Penner (hpenner@de.ibm.com) and
                   Ulrich Weigand (uweigand@de.ibm.com) and
                   Andreas Krebbel (Andreas.Krebbel@de.ibm.com).
@@ -25,7 +25,22 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "rtl.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "print-tree.h"
+#include "stringpool.h"
+#include "stor-layout.h"
+#include "varasm.h"
+#include "calls.h"
 #include "tm_p.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -37,21 +52,55 @@ along with GCC; see the file COPYING3.  If not see
 #include "except.h"
 #include "function.h"
 #include "recog.h"
+#include "hashtab.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "emit-rtl.h"
+#include "stmt.h"
 #include "expr.h"
 #include "reload.h"
 #include "diagnostic-core.h"
+#include "predict.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfganal.h"
+#include "lcm.h"
+#include "cfgbuild.h"
+#include "cfgcleanup.h"
 #include "basic-block.h"
 #include "ggc.h"
 #include "target.h"
 #include "target-def.h"
 #include "debug.h"
 #include "langhooks.h"
+#include "insn-codes.h"
 #include "optabs.h"
+#include "hash-table.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-fold.h"
+#include "tree-eh.h"
+#include "gimple-expr.h"
+#include "is-a.h"
 #include "gimple.h"
+#include "gimplify.h"
 #include "df.h"
 #include "params.h"
 #include "cfgloop.h"
 #include "opts.h"
+#include "tree-pass.h"
+#include "context.h"
+#include "builtins.h"
+#include "rtl-iter.h"
+#include "intl.h"
+#include "plugin-api.h"
+#include "ipa-ref.h"
+#include "cgraph.h"
 
 /* Define the specific costs for a given cpu.  */
 
@@ -287,7 +336,7 @@ struct processor_costs zEC12_cost =
 extern int reload_completed;
 
 /* Kept up to date using the SCHED_VARIABLE_ISSUE hook.  */
-static rtx last_scheduled_insn;
+static rtx_insn *last_scheduled_insn;
 
 /* Structure used to hold the components of a S/390 memory
    address.  A legitimate address on S/390 is of the general
@@ -324,6 +373,12 @@ struct GTY (()) s390_frame_layout
   int first_save_gpr_slot;
   int last_save_gpr_slot;
 
+  /* Location (FP register number) where GPRs (r0-r15) should
+     be saved to.
+      0 - does not need to be saved at all
+     -1 - stack slot  */
+  signed char gpr_save_slots[16];
+
   /* Number of first and last gpr to be saved, restored.  */
   int first_save_gpr;
   int first_restore_gpr;
@@ -333,9 +388,9 @@ struct GTY (()) s390_frame_layout
   /* Bits standing for floating point registers. Set, if the
      respective register has to be saved. Starting with reg 16 (f0)
      at the rightmost bit.
-     Bit 15 -  8  7  6  5  4  3  2  1  0
-     fpr 15 -  8  7  5  3  1  6  4  2  0
-     reg 31 - 24 23 22 21 20 19 18 17 16  */
+     Bit 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+     fpr 15 13 11  9 14 12 10  8  7  5  3  1  6  4  2  0
+     reg 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16  */
   unsigned int fpr_bitmap;
 
   /* Number of floating point registers f8-f15 which must be saved.  */
@@ -363,9 +418,6 @@ struct GTY(()) machine_function
   /* True if we may need to perform branch splitting.  */
   bool split_branches_pending_p;
 
-  /* Some local-dynamic TLS symbol name.  */
-  const char *some_ld_name;
-
   bool has_landing_pad_p;
 
   /* True if the current function may contain a tbegin clobbering
@@ -377,16 +429,22 @@ struct GTY(()) machine_function
 
 #define cfun_frame_layout (cfun->machine->frame_layout)
 #define cfun_save_high_fprs_p (!!cfun_frame_layout.high_fprs)
-#define cfun_gprs_save_area_size ((cfun_frame_layout.last_save_gpr_slot -           \
+#define cfun_save_arg_fprs_p (!!(TARGET_64BIT				\
+				 ? cfun_frame_layout.fpr_bitmap & 0x0f	\
+				 : cfun_frame_layout.fpr_bitmap & 0x03))
+#define cfun_gprs_save_area_size ((cfun_frame_layout.last_save_gpr_slot - \
   cfun_frame_layout.first_save_gpr_slot + 1) * UNITS_PER_LONG)
-#define cfun_set_fpr_bit(BITNUM) (cfun->machine->frame_layout.fpr_bitmap |=    \
-  (1 << (BITNUM)))
-#define cfun_fpr_bit_p(BITNUM) (!!(cfun->machine->frame_layout.fpr_bitmap &    \
-  (1 << (BITNUM))))
+#define cfun_set_fpr_save(REGNO) (cfun->machine->frame_layout.fpr_bitmap |=    \
+  (1 << (REGNO - FPR0_REGNUM)))
+#define cfun_fpr_save_p(REGNO) (!!(cfun->machine->frame_layout.fpr_bitmap &    \
+  (1 << (REGNO - FPR0_REGNUM))))
+#define cfun_gpr_save_slot(REGNO) \
+  cfun->machine->frame_layout.gpr_save_slots[REGNO]
 
 /* Number of GPRs and FPRs used for argument passing.  */
 #define GP_ARG_NUM_REG 5
 #define FP_ARG_NUM_REG (TARGET_64BIT? 4 : 2)
+#define VEC_ARG_NUM_REG 8
 
 /* A couple of shortcuts.  */
 #define CONST_OK_FOR_J(x) \
@@ -406,6 +464,525 @@ struct GTY(()) machine_function
 /* That's the read ahead of the dynamic branch prediction unit in
    bytes on a z10 (or higher) CPU.  */
 #define PREDICT_DISTANCE (TARGET_Z10 ? 384 : 2048)
+
+
+/* Indicate which ABI has been used for passing vector args.
+   0 - no vector type arguments have been passed where the ABI is relevant
+   1 - the old ABI has been used
+   2 - a vector type argument has been passed either in a vector register
+       or on the stack by value  */
+static int s390_vector_abi = 0;
+
+/* Set the vector ABI marker if TYPE is subject to the vector ABI
+   switch.  The vector ABI affects only vector data types.  There are
+   two aspects of the vector ABI relevant here:
+
+   1. vectors >= 16 bytes have an alignment of 8 bytes with the new
+   ABI and natural alignment with the old.
+
+   2. vector <= 16 bytes are passed in VRs or by value on the stack
+   with the new ABI but by reference on the stack with the old.
+
+   If ARG_P is true TYPE is used for a function argument or return
+   value.  The ABI marker then is set for all vector data types.  If
+   ARG_P is false only type 1 vectors are being checked.  */
+
+static void
+s390_check_type_for_vector_abi (const_tree type, bool arg_p, bool in_struct_p)
+{
+  static hash_set<const_tree> visited_types_hash;
+
+  if (s390_vector_abi)
+    return;
+
+  if (type == NULL_TREE || TREE_CODE (type) == ERROR_MARK)
+    return;
+
+  if (visited_types_hash.contains (type))
+    return;
+
+  visited_types_hash.add (type);
+
+  if (VECTOR_TYPE_P (type))
+    {
+      int type_size = int_size_in_bytes (type);
+
+      /* Outside arguments only the alignment is changing and this
+	 only happens for vector types >= 16 bytes.  */
+      if (!arg_p && type_size < 16)
+	return;
+
+      /* In arguments vector types > 16 are passed as before (GCC
+	 never enforced the bigger alignment for arguments which was
+	 required by the old vector ABI).  However, it might still be
+	 ABI relevant due to the changed alignment if it is a struct
+	 member.  */
+      if (arg_p && type_size > 16 && !in_struct_p)
+	return;
+
+      s390_vector_abi = TARGET_VX_ABI ? 2 : 1;
+    }
+  else if (POINTER_TYPE_P (type) || TREE_CODE (type) == ARRAY_TYPE)
+    {
+      /* ARRAY_TYPE: Since with neither of the ABIs we have more than
+	 natural alignment there will never be ABI dependent padding
+	 in an array type.  That's why we do not set in_struct_p to
+	 true here.  */
+      s390_check_type_for_vector_abi (TREE_TYPE (type), arg_p, in_struct_p);
+    }
+  else if (TREE_CODE (type) == FUNCTION_TYPE || TREE_CODE (type) == METHOD_TYPE)
+    {
+      tree arg_chain;
+
+      /* Check the return type.  */
+      s390_check_type_for_vector_abi (TREE_TYPE (type), true, false);
+
+      for (arg_chain = TYPE_ARG_TYPES (type);
+	   arg_chain;
+	   arg_chain = TREE_CHAIN (arg_chain))
+	s390_check_type_for_vector_abi (TREE_VALUE (arg_chain), true, false);
+    }
+  else if (RECORD_OR_UNION_TYPE_P (type))
+    {
+      tree field;
+
+      for (field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
+	{
+	  if (TREE_CODE (field) != FIELD_DECL)
+	    continue;
+
+	  s390_check_type_for_vector_abi (TREE_TYPE (field), arg_p, true);
+	}
+    }
+}
+
+
+/* System z builtins.  */
+
+#include "s390-builtins.h"
+
+const unsigned int bflags_builtin[S390_BUILTIN_MAX + 1] =
+  {
+#undef B_DEF
+#undef OB_DEF
+#undef OB_DEF_VAR
+#define B_DEF(NAME, PATTERN, ATTRS, BFLAGS, ...) BFLAGS,
+#define OB_DEF(...)
+#define OB_DEF_VAR(...)
+#include "s390-builtins.def"
+    0
+  };
+
+const unsigned int opflags_builtin[S390_BUILTIN_MAX + 1] =
+  {
+#undef B_DEF
+#undef OB_DEF
+#undef OB_DEF_VAR
+#define B_DEF(NAME, PATTERN, ATTRS, BFLAGS, OPFLAGS, ...) OPFLAGS,
+#define OB_DEF(...)
+#define OB_DEF_VAR(...)
+#include "s390-builtins.def"
+    0
+  };
+
+const unsigned int bflags_overloaded_builtin[S390_OVERLOADED_BUILTIN_MAX + 1] =
+  {
+#undef B_DEF
+#undef OB_DEF
+#undef OB_DEF_VAR
+#define B_DEF(...)
+#define OB_DEF(NAME, FIRST_VAR_NAME, LAST_VAR_NAME, BFLAGS, ...) BFLAGS,
+#define OB_DEF_VAR(...)
+#include "s390-builtins.def"
+    0
+  };
+
+const unsigned int
+opflags_overloaded_builtin_var[S390_OVERLOADED_BUILTIN_VAR_MAX + 1] =
+  {
+#undef B_DEF
+#undef OB_DEF
+#undef OB_DEF_VAR
+#define B_DEF(...)
+#define OB_DEF(...)
+#define OB_DEF_VAR(NAME, PATTERN, FLAGS, FNTYPE) FLAGS,
+#include "s390-builtins.def"
+    0
+  };
+
+tree s390_builtin_types[BT_MAX];
+tree s390_builtin_fn_types[BT_FN_MAX];
+tree s390_builtin_decls[S390_BUILTIN_MAX +
+			S390_OVERLOADED_BUILTIN_MAX +
+			S390_OVERLOADED_BUILTIN_VAR_MAX];
+
+static enum insn_code const code_for_builtin[S390_BUILTIN_MAX + 1] = {
+#undef B_DEF
+#undef OB_DEF
+#undef OB_DEF_VAR
+#define B_DEF(NAME, PATTERN, ...) CODE_FOR_##PATTERN,
+#define OB_DEF(...)
+#define OB_DEF_VAR(...)
+
+#include "s390-builtins.def"
+  CODE_FOR_nothing
+};
+
+static void
+s390_init_builtins (void)
+{
+  /* These definitions are being used in s390-builtins.def.  */
+  tree returns_twice_attr = tree_cons (get_identifier ("returns_twice"),
+				       NULL, NULL);
+  tree noreturn_attr = tree_cons (get_identifier ("noreturn"), NULL, NULL);
+  tree c_uint64_type_node;
+  unsigned int bflags_mask = (BFLAGS_MASK_INIT);
+
+  bflags_mask |= (TARGET_VX)  ? B_VX  : 0;
+  bflags_mask |= (TARGET_HTM) ? B_HTM : 0;
+
+  /* The uint64_type_node from tree.c is not compatible to the C99
+     uint64_t data type.  What we want is c_uint64_type_node from
+     c-common.c.  But since backend code is not supposed to interface
+     with the frontend we recreate it here.  */
+  if (TARGET_64BIT)
+    c_uint64_type_node = long_unsigned_type_node;
+  else
+    c_uint64_type_node = long_long_unsigned_type_node;
+
+#undef DEF_TYPE
+#define DEF_TYPE(INDEX, BFLAGS, NODE, CONST_P)		\
+  if ((BFLAGS) == 0 || ((BFLAGS) & bflags_mask))	\
+    s390_builtin_types[INDEX] = (!CONST_P) ?		\
+      (NODE) : build_type_variant ((NODE), 1, 0);
+
+#undef DEF_POINTER_TYPE
+#define DEF_POINTER_TYPE(INDEX, BFLAGS, INDEX_BASE)			\
+  if ((BFLAGS) == 0 || ((BFLAGS) & bflags_mask))			\
+    s390_builtin_types[INDEX] =						\
+      build_pointer_type (s390_builtin_types[INDEX_BASE]);
+
+#undef DEF_DISTINCT_TYPE
+#define DEF_DISTINCT_TYPE(INDEX, BFLAGS, INDEX_BASE)			\
+  if ((BFLAGS) == 0 || ((BFLAGS) & bflags_mask))			\
+    s390_builtin_types[INDEX] =						\
+      build_distinct_type_copy (s390_builtin_types[INDEX_BASE]);
+
+#undef DEF_VECTOR_TYPE
+#define DEF_VECTOR_TYPE(INDEX, BFLAGS, INDEX_BASE, ELEMENTS)		\
+  if ((BFLAGS) == 0 || ((BFLAGS) & bflags_mask))			\
+    s390_builtin_types[INDEX] =						\
+      build_vector_type (s390_builtin_types[INDEX_BASE], ELEMENTS);
+
+#undef DEF_OPAQUE_VECTOR_TYPE
+#define DEF_OPAQUE_VECTOR_TYPE(INDEX, BFLAGS, INDEX_BASE, ELEMENTS)	\
+  if ((BFLAGS) == 0 || ((BFLAGS) & bflags_mask))			\
+    s390_builtin_types[INDEX] =						\
+      build_opaque_vector_type (s390_builtin_types[INDEX_BASE], ELEMENTS);
+
+#undef DEF_FN_TYPE
+#define DEF_FN_TYPE(INDEX, BFLAGS, args...)			\
+  if ((BFLAGS) == 0 || ((BFLAGS) & bflags_mask))		\
+    s390_builtin_fn_types[INDEX] =				\
+    build_function_type_list (args, NULL_TREE);
+#undef DEF_OV_TYPE
+#define DEF_OV_TYPE(...)
+#include "s390-builtin-types.def"
+
+#undef B_DEF
+#define B_DEF(NAME, PATTERN, ATTRS, BFLAGS, OPFLAGS, FNTYPE)		\
+  if (((BFLAGS) & ~bflags_mask) == 0)					\
+    s390_builtin_decls[S390_BUILTIN_##NAME] =				\
+      add_builtin_function ("__builtin_" #NAME,				\
+			    s390_builtin_fn_types[FNTYPE],		\
+			    S390_BUILTIN_##NAME,			\
+			    BUILT_IN_MD,				\
+			    NULL,					\
+			    ATTRS);
+#undef OB_DEF
+#define OB_DEF(NAME, FIRST_VAR_NAME, LAST_VAR_NAME, BFLAGS, FNTYPE)	\
+  if (((BFLAGS) & ~bflags_mask) == 0)					\
+    s390_builtin_decls[S390_OVERLOADED_BUILTIN_##NAME + S390_BUILTIN_MAX] = \
+      add_builtin_function ("__builtin_" #NAME,				\
+			    s390_builtin_fn_types[FNTYPE],		\
+			    S390_OVERLOADED_BUILTIN_##NAME + S390_BUILTIN_MAX, \
+			    BUILT_IN_MD,				\
+			    NULL,					\
+			    0);
+#undef OB_DEF_VAR
+#define OB_DEF_VAR(...)
+#include "s390-builtins.def"
+
+}
+
+/* Return true if ARG is appropriate as argument number ARGNUM of
+   builtin DECL.  The operand flags from s390-builtins.def have to
+   passed as OP_FLAGS.  */
+bool
+s390_const_operand_ok (tree arg, int argnum, int op_flags, tree decl)
+{
+  if (O_UIMM_P (op_flags))
+    {
+      int bitwidths[] = { 1, 2, 3, 4, 5, 8, 12, 16, 32 };
+      int bitwidth = bitwidths[op_flags - O_U1];
+
+      if (!tree_fits_uhwi_p (arg)
+	  || tree_to_uhwi (arg) > ((unsigned HOST_WIDE_INT)1 << bitwidth) - 1)
+	{
+	  error("constant argument %d for builtin %qF is out of range (0.."
+		HOST_WIDE_INT_PRINT_UNSIGNED ")",
+		argnum, decl,
+		((unsigned HOST_WIDE_INT)1 << bitwidth) - 1);
+	  return false;
+	}
+    }
+
+  if (O_SIMM_P (op_flags))
+    {
+      int bitwidths[] = { 2, 3, 4, 5, 8, 12, 16, 32 };
+      int bitwidth = bitwidths[op_flags - O_S2];
+
+      if (!tree_fits_shwi_p (arg)
+	  || tree_to_shwi (arg) < -((HOST_WIDE_INT)1 << (bitwidth - 1))
+	  || tree_to_shwi (arg) > (((HOST_WIDE_INT)1 << (bitwidth - 1)) - 1))
+	{
+	  error("constant argument %d for builtin %qF is out of range ("
+		HOST_WIDE_INT_PRINT_DEC ".."
+		HOST_WIDE_INT_PRINT_DEC ")",
+		argnum, decl,
+		-((HOST_WIDE_INT)1 << (bitwidth - 1)),
+		((HOST_WIDE_INT)1 << (bitwidth - 1)) - 1);
+	  return false;
+	}
+    }
+  return true;
+}
+
+/* Expand an expression EXP that calls a built-in function,
+   with result going to TARGET if that's convenient
+   (and in mode MODE if that's convenient).
+   SUBTARGET may be used as the target for computing one of EXP's operands.
+   IGNORE is nonzero if the value is to be ignored.  */
+
+static rtx
+s390_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
+		     machine_mode mode ATTRIBUTE_UNUSED,
+		     int ignore ATTRIBUTE_UNUSED)
+{
+#define MAX_ARGS 5
+
+  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
+  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
+  enum insn_code icode;
+  rtx op[MAX_ARGS], pat;
+  int arity;
+  bool nonvoid;
+  tree arg;
+  call_expr_arg_iterator iter;
+  unsigned int all_op_flags = opflags_for_builtin (fcode);
+  machine_mode last_vec_mode = VOIDmode;
+
+  if (TARGET_DEBUG_ARG)
+    {
+      fprintf (stderr,
+	       "s390_expand_builtin, code = %4d, %s\n",
+	       (int)fcode, IDENTIFIER_POINTER (DECL_NAME (fndecl)));
+    }
+
+  if (fcode >= S390_OVERLOADED_BUILTIN_VAR_OFFSET
+      && fcode < S390_ALL_BUILTIN_MAX)
+    {
+      gcc_unreachable ();
+    }
+  else if (fcode < S390_OVERLOADED_BUILTIN_OFFSET)
+    {
+      icode = code_for_builtin[fcode];
+      /* Set a flag in the machine specific cfun part in order to support
+	 saving/restoring of FPRs.  */
+      if (fcode == S390_BUILTIN_tbegin || fcode == S390_BUILTIN_tbegin_retry)
+	cfun->machine->tbegin_p = true;
+    }
+  else if (fcode < S390_OVERLOADED_BUILTIN_VAR_OFFSET)
+    {
+      error ("Unresolved overloaded builtin");
+      return const0_rtx;
+    }
+  else
+    internal_error ("bad builtin fcode");
+
+  if (icode == 0)
+    internal_error ("bad builtin icode");
+
+  nonvoid = TREE_TYPE (TREE_TYPE (fndecl)) != void_type_node;
+
+  if (nonvoid)
+    {
+      machine_mode tmode = insn_data[icode].operand[0].mode;
+      if (!target
+	  || GET_MODE (target) != tmode
+	  || !(*insn_data[icode].operand[0].predicate) (target, tmode))
+	target = gen_reg_rtx (tmode);
+
+      /* There are builtins (e.g. vec_promote) with no vector
+	 arguments but an element selector.  So we have to also look
+	 at the vector return type when emitting the modulo
+	 operation.  */
+      if (VECTOR_MODE_P (insn_data[icode].operand[0].mode))
+	last_vec_mode = insn_data[icode].operand[0].mode;
+    }
+
+  arity = 0;
+  FOR_EACH_CALL_EXPR_ARG (arg, iter, exp)
+    {
+      const struct insn_operand_data *insn_op;
+      unsigned int op_flags = all_op_flags & ((1 << O_SHIFT) - 1);
+
+      all_op_flags = all_op_flags >> O_SHIFT;
+
+      if (arg == error_mark_node)
+	return NULL_RTX;
+      if (arity >= MAX_ARGS)
+	return NULL_RTX;
+
+      if (O_IMM_P (op_flags)
+	  && TREE_CODE (arg) != INTEGER_CST)
+	{
+	  error ("constant value required for builtin %qF argument %d",
+		 fndecl, arity + 1);
+	  return const0_rtx;
+	}
+
+      if (!s390_const_operand_ok (arg, arity + 1, op_flags, fndecl))
+	return const0_rtx;
+
+      insn_op = &insn_data[icode].operand[arity + nonvoid];
+      op[arity] = expand_expr (arg, NULL_RTX, insn_op->mode, EXPAND_NORMAL);
+
+      /* Wrap the expanded RTX for pointer types into a MEM expr with
+	 the proper mode.  This allows us to use e.g. (match_operand
+	 "memory_operand"..) in the insn patterns instead of (mem
+	 (match_operand "address_operand)).  This is helpful for
+	 patterns not just accepting MEMs.  */
+      if (POINTER_TYPE_P (TREE_TYPE (arg))
+	  && insn_op->predicate != address_operand)
+	op[arity] = gen_rtx_MEM (insn_op->mode, op[arity]);
+
+      /* Expand the module operation required on element selectors.  */
+      if (op_flags == O_ELEM)
+	{
+	  gcc_assert (last_vec_mode != VOIDmode);
+	  op[arity] = simplify_expand_binop (SImode, code_to_optab (AND),
+					     op[arity],
+					     GEN_INT (GET_MODE_NUNITS (last_vec_mode) - 1),
+					     NULL_RTX, 1, OPTAB_DIRECT);
+	}
+
+      /* Record the vector mode used for an element selector.  This assumes:
+	 1. There is no builtin with two different vector modes and an element selector
+         2. The element selector comes after the vector type it is referring to.
+	 This currently the true for all the builtins but FIXME we
+	 should better check for that.  */
+      if (VECTOR_MODE_P (insn_op->mode))
+	last_vec_mode = insn_op->mode;
+
+      if (insn_op->predicate (op[arity], insn_op->mode))
+	{
+	  arity++;
+	  continue;
+	}
+
+      if (MEM_P (op[arity])
+	  && insn_op->predicate == memory_operand
+	  && (GET_MODE (XEXP (op[arity], 0)) == Pmode
+	      || GET_MODE (XEXP (op[arity], 0)) == VOIDmode))
+	{
+	  op[arity] = replace_equiv_address (op[arity],
+					     copy_to_mode_reg (Pmode,
+					       XEXP (op[arity], 0)));
+	}
+      else if (GET_MODE (op[arity]) == insn_op->mode
+	       || GET_MODE (op[arity]) == VOIDmode
+	       || (insn_op->predicate == address_operand
+		   && GET_MODE (op[arity]) == Pmode))
+	{
+	  /* An address_operand usually has VOIDmode in the expander
+	     so we cannot use this.  */
+	  machine_mode target_mode =
+	    (insn_op->predicate == address_operand
+	     ? Pmode : insn_op->mode);
+	  op[arity] = copy_to_mode_reg (target_mode, op[arity]);
+	}
+
+      if (!insn_op->predicate (op[arity], insn_op->mode))
+	{
+	  error ("Invalid argument %d for builtin %qF", arity + 1, fndecl);
+	  return const0_rtx;
+	}
+      arity++;
+    }
+
+  if (last_vec_mode != VOIDmode && !TARGET_VX)
+    {
+      error ("Vector type builtin %qF is not supported without -mvx "
+	     "(default with -march=z13).",
+	     fndecl);
+      return const0_rtx;
+    }
+
+  switch (arity)
+    {
+    case 0:
+      pat = GEN_FCN (icode) (target);
+      break;
+    case 1:
+      if (nonvoid)
+        pat = GEN_FCN (icode) (target, op[0]);
+      else
+	pat = GEN_FCN (icode) (op[0]);
+      break;
+    case 2:
+      if (nonvoid)
+	pat = GEN_FCN (icode) (target, op[0], op[1]);
+      else
+	pat = GEN_FCN (icode) (op[0], op[1]);
+      break;
+    case 3:
+      if (nonvoid)
+	pat = GEN_FCN (icode) (target, op[0], op[1], op[2]);
+      else
+	pat = GEN_FCN (icode) (op[0], op[1], op[2]);
+      break;
+    case 4:
+      if (nonvoid)
+	pat = GEN_FCN (icode) (target, op[0], op[1], op[2], op[3]);
+      else
+	pat = GEN_FCN (icode) (op[0], op[1], op[2], op[3]);
+      break;
+    case 5:
+      if (nonvoid)
+	pat = GEN_FCN (icode) (target, op[0], op[1], op[2], op[3], op[4]);
+      else
+	pat = GEN_FCN (icode) (op[0], op[1], op[2], op[3], op[4]);
+      break;
+    case 6:
+      if (nonvoid)
+	pat = GEN_FCN (icode) (target, op[0], op[1], op[2], op[3], op[4], op[5]);
+      else
+	pat = GEN_FCN (icode) (op[0], op[1], op[2], op[3], op[4], op[5]);
+      break;
+    default:
+      gcc_unreachable ();
+    }
+  if (!pat)
+    return NULL_RTX;
+  emit_insn (pat);
+
+  if (nonvoid)
+    return target;
+  else
+    return const0_rtx;
+}
+
 
 static const int s390_hotpatch_hw_max = 1000000;
 static int s390_hotpatch_hw_before_label = 0;
@@ -437,13 +1014,11 @@ s390_handle_hotpatch_attribute (tree *node, tree name, tree args,
     err = 1;
   else if (TREE_CODE (expr) != INTEGER_CST
 	   || !INTEGRAL_TYPE_P (TREE_TYPE (expr))
-	   || TREE_INT_CST_HIGH (expr) != 0
-	   || TREE_INT_CST_LOW (expr) > (unsigned int)s390_hotpatch_hw_max)
+	   || wi::gtu_p (expr, s390_hotpatch_hw_max))
     err = 1;
   else if (TREE_CODE (expr2) != INTEGER_CST
 	   || !INTEGRAL_TYPE_P (TREE_TYPE (expr2))
-	   || TREE_INT_CST_HIGH (expr2) != 0
-	   || TREE_INT_CST_LOW (expr2) > (unsigned int)s390_hotpatch_hw_max)
+	   || wi::gtu_p (expr2, s390_hotpatch_hw_max))
     err = 1;
   else
     err = 0;
@@ -458,9 +1033,43 @@ s390_handle_hotpatch_attribute (tree *node, tree name, tree args,
   return NULL_TREE;
 }
 
+/* Expand the s390_vector_bool type attribute.  */
+
+static tree
+s390_handle_vectorbool_attribute (tree *node, tree name ATTRIBUTE_UNUSED,
+				  tree args ATTRIBUTE_UNUSED,
+				  int flags ATTRIBUTE_UNUSED, bool *no_add_attrs)
+{
+  tree type = *node, result = NULL_TREE;
+  machine_mode mode;
+
+  while (POINTER_TYPE_P (type)
+	 || TREE_CODE (type) == FUNCTION_TYPE
+	 || TREE_CODE (type) == METHOD_TYPE
+	 || TREE_CODE (type) == ARRAY_TYPE)
+    type = TREE_TYPE (type);
+
+  mode = TYPE_MODE (type);
+  switch (mode)
+    {
+    case DImode: case V2DImode: result = s390_builtin_types[BT_BV2DI]; break;
+    case SImode: case V4SImode: result = s390_builtin_types[BT_BV4SI]; break;
+    case HImode: case V8HImode: result = s390_builtin_types[BT_BV8HI]; break;
+    case QImode: case V16QImode: result = s390_builtin_types[BT_BV16QI];
+    default: break;
+    }
+
+  *no_add_attrs = true;  /* No need to hang on to the attribute.  */
+
+  if (result)
+    *node = lang_hooks.types.reconstruct_complex_type (*node, result);
+
+  return NULL_TREE;
+}
+
 static const struct attribute_spec s390_attribute_table[] = {
-  { "hotpatch", 2, 2, true, false, false, s390_handle_hotpatch_attribute, false
-  },
+  { "hotpatch", 2, 2, true, false, false, s390_handle_hotpatch_attribute, false },
+  { "s390_vector_bool", 0, 0, false, true, false, s390_handle_vectorbool_attribute, true },
   /* End element.  */
   { NULL,        0, 0, false, false, false, NULL, false }
 };
@@ -470,40 +1079,41 @@ static const struct attribute_spec s390_attribute_table[] = {
 int
 s390_label_align (rtx label)
 {
-  rtx prev_insn = prev_active_insn (label);
+  rtx_insn *prev_insn = prev_active_insn (label);
+  rtx set, src;
 
   if (prev_insn == NULL_RTX)
     goto old;
 
-  prev_insn = single_set (prev_insn);
+  set = single_set (prev_insn);
 
-  if (prev_insn == NULL_RTX)
+  if (set == NULL_RTX)
     goto old;
 
-  prev_insn = SET_SRC (prev_insn);
+  src = SET_SRC (set);
 
   /* Don't align literal pool base labels.  */
-  if (GET_CODE (prev_insn) == UNSPEC
-      && XINT (prev_insn, 1) == UNSPEC_MAIN_BASE)
+  if (GET_CODE (src) == UNSPEC
+      && XINT (src, 1) == UNSPEC_MAIN_BASE)
     return 0;
 
  old:
   return align_labels_log;
 }
 
-static enum machine_mode
+static machine_mode
 s390_libgcc_cmp_return_mode (void)
 {
   return TARGET_64BIT ? DImode : SImode;
 }
 
-static enum machine_mode
+static machine_mode
 s390_libgcc_shift_count_mode (void)
 {
   return TARGET_64BIT ? DImode : SImode;
 }
 
-static enum machine_mode
+static machine_mode
 s390_unwind_word_mode (void)
 {
   return TARGET_64BIT ? DImode : SImode;
@@ -511,7 +1121,7 @@ s390_unwind_word_mode (void)
 
 /* Return true if the back end supports mode MODE.  */
 static bool
-s390_scalar_mode_supported_p (enum machine_mode mode)
+s390_scalar_mode_supported_p (machine_mode mode)
 {
   /* In contrast to the default implementation reject TImode constants on 31bit
      TARGET_ZARCH for ABI compliance.  */
@@ -522,6 +1132,35 @@ s390_scalar_mode_supported_p (enum machine_mode mode)
     return default_decimal_float_supported_p ();
 
   return default_scalar_mode_supported_p (mode);
+}
+
+/* Return true if the back end supports vector mode MODE.  */
+static bool
+s390_vector_mode_supported_p (machine_mode mode)
+{
+  machine_mode inner;
+
+  if (!VECTOR_MODE_P (mode)
+      || !TARGET_VX
+      || GET_MODE_SIZE (mode) > 16)
+    return false;
+
+  inner = GET_MODE_INNER (mode);
+
+  switch (inner)
+    {
+    case QImode:
+    case HImode:
+    case SImode:
+    case DImode:
+    case TImode:
+    case SFmode:
+    case DFmode:
+    case TFmode:
+      return true;
+    default:
+      return false;
+    }
 }
 
 /* Set the has_landing_pad_p flag in struct machine_function to VALUE.  */
@@ -536,8 +1175,8 @@ s390_set_has_landing_pad_p (bool value)
    mode which is compatible with both.  Otherwise, return
    VOIDmode.  */
 
-static enum machine_mode
-s390_cc_modes_compatible (enum machine_mode m1, enum machine_mode m2)
+static machine_mode
+s390_cc_modes_compatible (machine_mode m1, machine_mode m2)
 {
   if (m1 == m2)
     return m1;
@@ -572,9 +1211,9 @@ s390_cc_modes_compatible (enum machine_mode m1, enum machine_mode m2)
    CC mode is at least as constrained as REQ_MODE.  */
 
 static bool
-s390_match_ccmode_set (rtx set, enum machine_mode req_mode)
+s390_match_ccmode_set (rtx set, machine_mode req_mode)
 {
-  enum machine_mode set_mode;
+  machine_mode set_mode;
 
   gcc_assert (GET_CODE (set) == SET);
 
@@ -595,6 +1234,11 @@ s390_match_ccmode_set (rtx set, enum machine_mode req_mode)
     case CCT1mode:
     case CCT2mode:
     case CCT3mode:
+    case CCVEQmode:
+    case CCVHmode:
+    case CCVHUmode:
+    case CCVFHmode:
+    case CCVFHEmode:
       if (req_mode != set_mode)
         return 0;
       break;
@@ -624,7 +1268,7 @@ s390_match_ccmode_set (rtx set, enum machine_mode req_mode)
    If REQ_MODE is VOIDmode, always return false.  */
 
 bool
-s390_match_ccmode (rtx insn, enum machine_mode req_mode)
+s390_match_ccmode (rtx_insn *insn, machine_mode req_mode)
 {
   int i;
 
@@ -654,7 +1298,7 @@ s390_match_ccmode (rtx insn, enum machine_mode req_mode)
    CC1 and CC2 for mixed selected bits (TMxx), it is false
    if the instruction cannot (TM).  */
 
-enum machine_mode
+machine_mode
 s390_tm_ccmode (rtx op1, rtx op2, bool mixed)
 {
   int bit0, bit1;
@@ -692,9 +1336,32 @@ s390_tm_ccmode (rtx op1, rtx op2, bool mixed)
    OP0 and OP1 of a COMPARE, return the mode to be used for the
    comparison.  */
 
-enum machine_mode
+machine_mode
 s390_select_ccmode (enum rtx_code code, rtx op0, rtx op1)
 {
+  if (TARGET_VX
+      && register_operand (op0, DFmode)
+      && register_operand (op1, DFmode))
+    {
+      /* LT, LE, UNGT, UNGE require swapping OP0 and OP1.  Either
+	 s390_emit_compare or s390_canonicalize_comparison will take
+	 care of it.  */
+      switch (code)
+	{
+	case EQ:
+	case NE:
+	  return CCVEQmode;
+	case GT:
+	case UNLE:
+	  return CCVFHmode;
+	case GE:
+	case UNLT:
+	  return CCVFHEmode;
+	default:
+	  ;
+	}
+    }
+
   switch (code)
     {
       case EQ:
@@ -713,7 +1380,7 @@ s390_select_ccmode (enum rtx_code code, rtx op0, rtx op1)
 	if (GET_CODE (op0) == AND)
 	  {
 	    /* Check whether we can potentially do it via TM.  */
-	    enum machine_mode ccmode;
+	    machine_mode ccmode;
 	    ccmode = s390_tm_ccmode (XEXP (op0, 1), op1, 1);
 	    if (ccmode != VOIDmode)
 	      {
@@ -972,7 +1639,72 @@ s390_canonicalize_comparison (int *code, rtx *op0, rtx *op1,
       rtx tem = *op0; *op0 = *op1; *op1 = tem;
       *code = (int)swap_condition ((enum rtx_code)*code);
     }
+
+  /* Using the scalar variants of vector instructions for 64 bit FP
+     comparisons might require swapping the operands.  */
+  if (TARGET_VX
+      && register_operand (*op0, DFmode)
+      && register_operand (*op1, DFmode)
+      && (*code == LT || *code == LE || *code == UNGT || *code == UNGE))
+    {
+      rtx tmp;
+
+      switch (*code)
+	{
+	case LT:   *code = GT; break;
+	case LE:   *code = GE; break;
+	case UNGT: *code = UNLE; break;
+	case UNGE: *code = UNLT; break;
+	default: ;
+	}
+      tmp = *op0; *op0 = *op1; *op1 = tmp;
+    }
 }
+
+/* Helper function for s390_emit_compare.  If possible emit a 64 bit
+   FP compare using the single element variant of vector instructions.
+   Replace CODE with the comparison code to be used in the CC reg
+   compare and return the condition code register RTX in CC.  */
+
+static bool
+s390_expand_vec_compare_scalar (enum rtx_code *code, rtx cmp1, rtx cmp2,
+				rtx *cc)
+{
+  machine_mode cmp_mode;
+  bool swap_p = false;
+
+  switch (*code)
+    {
+    case EQ:   cmp_mode = CCVEQmode;  break;
+    case NE:   cmp_mode = CCVEQmode;  break;
+    case GT:   cmp_mode = CCVFHmode;  break;
+    case GE:   cmp_mode = CCVFHEmode; break;
+    case UNLE: cmp_mode = CCVFHmode;  break;
+    case UNLT: cmp_mode = CCVFHEmode; break;
+    case LT:   cmp_mode = CCVFHmode;  *code = GT;   swap_p = true; break;
+    case LE:   cmp_mode = CCVFHEmode; *code = GE;   swap_p = true; break;
+    case UNGE: cmp_mode = CCVFHmode;  *code = UNLE; swap_p = true; break;
+    case UNGT: cmp_mode = CCVFHEmode; *code = UNLT; swap_p = true; break;
+    default: return false;
+    }
+
+  if (swap_p)
+    {
+      rtx tmp = cmp2;
+      cmp2 = cmp1;
+      cmp1 = tmp;
+    }
+  *cc = gen_rtx_REG (cmp_mode, CC_REGNUM);
+  emit_insn (gen_rtx_PARALLEL (VOIDmode,
+	       gen_rtvec (2,
+			  gen_rtx_SET (VOIDmode, *cc,
+				       gen_rtx_COMPARE (cmp_mode, cmp1,
+							cmp2)),
+			  gen_rtx_CLOBBER (VOIDmode,
+					   gen_rtx_SCRATCH (V2DImode)))));
+  return true;
+}
+
 
 /* Emit a compare instruction suitable to implement the comparison
    OP0 CODE OP1.  Return the correct condition RTL to be placed in
@@ -981,13 +1713,21 @@ s390_canonicalize_comparison (int *code, rtx *op0, rtx *op1,
 rtx
 s390_emit_compare (enum rtx_code code, rtx op0, rtx op1)
 {
-  enum machine_mode mode = s390_select_ccmode (code, op0, op1);
+  machine_mode mode = s390_select_ccmode (code, op0, op1);
   rtx cc;
 
-  /* Do not output a redundant compare instruction if a compare_and_swap
-     pattern already computed the result and the machine modes are compatible.  */
-  if (GET_MODE_CLASS (GET_MODE (op0)) == MODE_CC)
+  if (TARGET_VX
+      && register_operand (op0, DFmode)
+      && register_operand (op1, DFmode)
+      && s390_expand_vec_compare_scalar (&code, op0, op1, &cc))
     {
+      /* Work has been done by s390_expand_vec_compare_scalar already.  */
+    }
+  else if (GET_MODE_CLASS (GET_MODE (op0)) == MODE_CC)
+    {
+      /* Do not output a redundant compare instruction if a
+	 compare_and_swap pattern already computed the result and the
+	 machine modes are compatible.  */
       gcc_assert (s390_cc_modes_compatible (GET_MODE (op0), mode)
 		  == GET_MODE (op0));
       cc = op0;
@@ -1019,7 +1759,7 @@ s390_emit_compare_and_swap (enum rtx_code code, rtx old, rtx mem,
    NULL_RTX, emit an unconditional jump, else a conditional jump under
    condition COND.  */
 
-rtx
+rtx_insn *
 s390_emit_jump (rtx target, rtx cond)
 {
   rtx insn;
@@ -1222,6 +1962,93 @@ s390_branch_condition_mask (rtx code)
         }
       break;
 
+      /* Vector comparison modes.  */
+
+    case CCVEQmode:
+      switch (GET_CODE (code))
+	{
+	case EQ:        return CC0;
+	case NE:        return CC3;
+	default:        return -1;
+	}
+
+    case CCVEQANYmode:
+      switch (GET_CODE (code))
+	{
+	case EQ:        return CC0 | CC1;
+	case NE:        return CC3 | CC1;
+	default:        return -1;
+	}
+
+      /* Integer vector compare modes.  */
+
+    case CCVHmode:
+      switch (GET_CODE (code))
+	{
+	case GT:        return CC0;
+	case LE:        return CC3;
+	default:        return -1;
+	}
+
+    case CCVHANYmode:
+      switch (GET_CODE (code))
+	{
+	case GT:        return CC0 | CC1;
+	case LE:        return CC3 | CC1;
+	default:        return -1;
+	}
+
+    case CCVHUmode:
+      switch (GET_CODE (code))
+	{
+	case GTU:       return CC0;
+	case LEU:       return CC3;
+	default:        return -1;
+	}
+
+    case CCVHUANYmode:
+      switch (GET_CODE (code))
+	{
+	case GTU:       return CC0 | CC1;
+	case LEU:       return CC3 | CC1;
+	default:        return -1;
+	}
+
+      /* FP vector compare modes.  */
+
+    case CCVFHmode:
+      switch (GET_CODE (code))
+	{
+	case GT:        return CC0;
+	case UNLE:      return CC3;
+	default:        return -1;
+	}
+
+    case CCVFHANYmode:
+      switch (GET_CODE (code))
+	{
+	case GT:        return CC0 | CC1;
+	case UNLE:      return CC3 | CC1;
+	default:        return -1;
+	}
+
+    case CCVFHEmode:
+      switch (GET_CODE (code))
+	{
+	case GE:        return CC0;
+	case UNLT:      return CC3;
+	default:        return -1;
+	}
+
+    case CCVFHEANYmode:
+      switch (GET_CODE (code))
+	{
+	case GE:        return CC0 | CC1;
+	case UNLT:      return CC3 | CC1;
+	default:        return -1;
+	}
+
+
     case CCRAWmode:
       switch (GET_CODE (code))
 	{
@@ -1315,7 +2142,7 @@ s390_branch_condition_mnemonic (rtx code, int inv)
    contains such a part.  */
 
 unsigned HOST_WIDE_INT
-s390_extract_part (rtx op, enum machine_mode mode, int def)
+s390_extract_part (rtx op, machine_mode mode, int def)
 {
   unsigned HOST_WIDE_INT value = 0;
   int max_parts = HOST_BITS_PER_WIDE_INT / GET_MODE_BITSIZE (mode);
@@ -1344,8 +2171,8 @@ s390_extract_part (rtx op, enum machine_mode mode, int def)
 
 int
 s390_single_part (rtx op,
-		  enum machine_mode mode,
-		  enum machine_mode part_mode,
+		  machine_mode mode,
+		  machine_mode part_mode,
 		  int def)
 {
   unsigned HOST_WIDE_INT value = 0;
@@ -1421,6 +2248,9 @@ s390_contiguous_bitmask_p (unsigned HOST_WIDE_INT in, int size,
   /* Calculate a mask for all bits beyond the contiguous bits.  */
   mask = (-1LL & ~(((1ULL << (tmp_length + tmp_pos - 1)) << 1) - 1));
 
+  if ((unsigned)size < sizeof (HOST_WIDE_INT) * BITS_PER_UNIT)
+    mask &= (HOST_WIDE_INT_1U << size) - 1;
+
   if (mask & in)
     return false;
 
@@ -1432,6 +2262,101 @@ s390_contiguous_bitmask_p (unsigned HOST_WIDE_INT in, int size,
 
   if (pos)
     *pos = tmp_pos;
+
+  return true;
+}
+
+/* Return true if OP contains the same contiguous bitfield in *all*
+   its elements.  START and END can be used to obtain the start and
+   end position of the bitfield.
+
+   START/STOP give the position of the first/last bit of the bitfield
+   counting from the lowest order bit starting with zero.  In order to
+   use these values for S/390 instructions this has to be converted to
+   "bits big endian" style.  */
+
+bool
+s390_contiguous_bitmask_vector_p (rtx op, int *start, int *end)
+{
+  unsigned HOST_WIDE_INT mask;
+  int length, size;
+
+  if (!VECTOR_MODE_P (GET_MODE (op))
+      || GET_CODE (op) != CONST_VECTOR
+      || !CONST_INT_P (XVECEXP (op, 0, 0)))
+    return false;
+
+  if (GET_MODE_NUNITS (GET_MODE (op)) > 1)
+    {
+      int i;
+
+      for (i = 1; i < GET_MODE_NUNITS (GET_MODE (op)); ++i)
+	if (!rtx_equal_p (XVECEXP (op, 0, i), XVECEXP (op, 0, 0)))
+	  return false;
+    }
+
+  size = GET_MODE_UNIT_BITSIZE (GET_MODE (op));
+  mask = UINTVAL (XVECEXP (op, 0, 0));
+  if (s390_contiguous_bitmask_p (mask, size, start,
+				 end != NULL ? &length : NULL))
+    {
+      if (end != NULL)
+	*end = *start + length - 1;
+      return true;
+    }
+  /* 0xff00000f style immediates can be covered by swapping start and
+     end indices in vgm.  */
+  if (s390_contiguous_bitmask_p (~mask, size, start,
+				 end != NULL ? &length : NULL))
+    {
+      if (end != NULL)
+	*end = *start - 1;
+      if (start != NULL)
+	*start = *start + length;
+      return true;
+    }
+  return false;
+}
+
+/* Return true if C consists only of byte chunks being either 0 or
+   0xff.  If MASK is !=NULL a byte mask is generated which is
+   appropriate for the vector generate byte mask instruction.  */
+
+bool
+s390_bytemask_vector_p (rtx op, unsigned *mask)
+{
+  int i;
+  unsigned tmp_mask = 0;
+  int nunit, unit_size;
+
+  if (!VECTOR_MODE_P (GET_MODE (op))
+      || GET_CODE (op) != CONST_VECTOR
+      || !CONST_INT_P (XVECEXP (op, 0, 0)))
+    return false;
+
+  nunit = GET_MODE_NUNITS (GET_MODE (op));
+  unit_size = GET_MODE_UNIT_SIZE (GET_MODE (op));
+
+  for (i = 0; i < nunit; i++)
+    {
+      unsigned HOST_WIDE_INT c;
+      int j;
+
+      if (!CONST_INT_P (XVECEXP (op, 0, i)))
+	return false;
+
+      c = UINTVAL (XVECEXP (op, 0, i));
+      for (j = 0; j < unit_size; j++)
+	{
+	  if ((c & 0xff) != 0 && (c & 0xff) != 0xff)
+	    return false;
+	  tmp_mask |= (c & 1) << ((nunit - 1 - i) * unit_size + j);
+	  c = c >> BITS_PER_UNIT;
+	}
+    }
+
+  if (mask != NULL)
+    *mask = tmp_mask;
 
   return true;
 }
@@ -1459,10 +2384,10 @@ s390_extzv_shift_ok (int bitsize, int rotl, unsigned HOST_WIDE_INT contig)
    moves, moving the subword FIRST_SUBWORD first.  */
 
 bool
-s390_split_ok_p (rtx dst, rtx src, enum machine_mode mode, int first_subword)
+s390_split_ok_p (rtx dst, rtx src, machine_mode mode, int first_subword)
 {
-  /* Floating point registers cannot be split.  */
-  if (FP_REG_P (src) || FP_REG_P (dst))
+  /* Floating point and vector registers cannot be split.  */
+  if (FP_REG_P (src) || FP_REG_P (dst) || VECTOR_REG_P (src) || VECTOR_REG_P (dst))
     return false;
 
   /* We don't need to split if operands are directly accessible.  */
@@ -1553,10 +2478,10 @@ s390_offset_p (rtx mem1, rtx mem2, rtx delta)
 /* Expand logical operator CODE in mode MODE with operands OPERANDS.  */
 
 void
-s390_expand_logical_operator (enum rtx_code code, enum machine_mode mode,
+s390_expand_logical_operator (enum rtx_code code, machine_mode mode,
 			      rtx *operands)
 {
-  enum machine_mode wmode = mode;
+  machine_mode wmode = mode;
   rtx dst = operands[0];
   rtx src1 = operands[1];
   rtx src2 = operands[2];
@@ -1647,257 +2572,32 @@ s390_narrow_logical_operator (enum rtx_code code, rtx *memop, rtx *immop)
 static struct machine_function *
 s390_init_machine_status (void)
 {
-  return ggc_alloc_cleared_machine_function ();
-}
-
-static void
-s390_option_override (void)
-{
-  unsigned int i;
-  cl_deferred_option *opt;
-  vec<cl_deferred_option> *v =
-    (vec<cl_deferred_option> *) s390_deferred_options;
-
-  if (v)
-    FOR_EACH_VEC_ELT (*v, i, opt)
-      {
-	switch (opt->opt_index)
-	  {
-	  case OPT_mhotpatch_:
-	    {
-	      int val1;
-	      int val2;
-	      char s[256];
-	      char *t;
-
-	      strncpy (s, opt->arg, 256);
-	      s[255] = 0;
-	      t = strchr (s, ',');
-	      if (t != NULL)
-		{
-		  *t = 0;
-		  t++;
-		  val1 = integral_argument (s);
-		  val2 = integral_argument (t);
-		}
-	      else
-		{
-		  val1 = -1;
-		  val2 = -1;
-		}
-	      if (val1 == -1 || val2 == -1)
-		{
-		  /* argument is not a plain number */
-		  error ("arguments to %qs should be non-negative integers",
-			 "-mhotpatch=n,m");
-		  break;
-		}
-	      else if (val1 > s390_hotpatch_hw_max
-		       || val2 > s390_hotpatch_hw_max)
-		{
-		  error ("argument to %qs is too large (max. %d)",
-			 "-mhotpatch=n,m", s390_hotpatch_hw_max);
-		  break;
-		}
-	      s390_hotpatch_hw_before_label = val1;
-	      s390_hotpatch_hw_after_label = val2;
-	      break;
-	    }
-	  default:
-	    gcc_unreachable ();
-	  }
-      }
-
-  /* Set up function hooks.  */
-  init_machine_status = s390_init_machine_status;
-
-  /* Architecture mode defaults according to ABI.  */
-  if (!(target_flags_explicit & MASK_ZARCH))
-    {
-      if (TARGET_64BIT)
-	target_flags |= MASK_ZARCH;
-      else
-	target_flags &= ~MASK_ZARCH;
-    }
-
-  /* Set the march default in case it hasn't been specified on
-     cmdline.  */
-  if (s390_arch == PROCESSOR_max)
-    {
-      s390_arch_string = TARGET_ZARCH? "z900" : "g5";
-      s390_arch = TARGET_ZARCH ? PROCESSOR_2064_Z900 : PROCESSOR_9672_G5;
-      s390_arch_flags = processor_flags_table[(int)s390_arch];
-    }
-
-  /* Determine processor to tune for.  */
-  if (s390_tune == PROCESSOR_max)
-    {
-      s390_tune = s390_arch;
-      s390_tune_flags = s390_arch_flags;
-    }
-
-  /* Sanity checks.  */
-  if (TARGET_ZARCH && !TARGET_CPU_ZARCH)
-    error ("z/Architecture mode not supported on %s", s390_arch_string);
-  if (TARGET_64BIT && !TARGET_ZARCH)
-    error ("64-bit ABI not supported in ESA/390 mode");
-
-  /* Use hardware DFP if available and not explicitly disabled by
-     user. E.g. with -m31 -march=z10 -mzarch   */
-  if (!(target_flags_explicit & MASK_HARD_DFP) && TARGET_DFP)
-    target_flags |= MASK_HARD_DFP;
-
-  /* Enable hardware transactions if available and not explicitly
-     disabled by user.  E.g. with -m31 -march=zEC12 -mzarch */
-  if (!(target_flags_explicit & MASK_OPT_HTM) && TARGET_CPU_HTM && TARGET_ZARCH)
-    target_flags |= MASK_OPT_HTM;
-
-  if (TARGET_HARD_DFP && !TARGET_DFP)
-    {
-      if (target_flags_explicit & MASK_HARD_DFP)
-	{
-	  if (!TARGET_CPU_DFP)
-	    error ("hardware decimal floating point instructions"
-		   " not available on %s", s390_arch_string);
-	  if (!TARGET_ZARCH)
-	    error ("hardware decimal floating point instructions"
-		   " not available in ESA/390 mode");
-	}
-      else
-	target_flags &= ~MASK_HARD_DFP;
-    }
-
-  if ((target_flags_explicit & MASK_SOFT_FLOAT) && TARGET_SOFT_FLOAT)
-    {
-      if ((target_flags_explicit & MASK_HARD_DFP) && TARGET_HARD_DFP)
-	error ("-mhard-dfp can%'t be used in conjunction with -msoft-float");
-
-      target_flags &= ~MASK_HARD_DFP;
-    }
-
-  /* Set processor cost function.  */
-  switch (s390_tune)
-    {
-    case PROCESSOR_2084_Z990:
-      s390_cost = &z990_cost;
-      break;
-    case PROCESSOR_2094_Z9_109:
-      s390_cost = &z9_109_cost;
-      break;
-    case PROCESSOR_2097_Z10:
-      s390_cost = &z10_cost;
-      break;
-    case PROCESSOR_2817_Z196:
-      s390_cost = &z196_cost;
-      break;
-    case PROCESSOR_2827_ZEC12:
-      s390_cost = &zEC12_cost;
-      break;
-    default:
-      s390_cost = &z900_cost;
-    }
-
-  if (TARGET_BACKCHAIN && TARGET_PACKED_STACK && TARGET_HARD_FLOAT)
-    error ("-mbackchain -mpacked-stack -mhard-float are not supported "
-	   "in combination");
-
-  if (s390_stack_size)
-    {
-      if (s390_stack_guard >= s390_stack_size)
-	error ("stack size must be greater than the stack guard value");
-      else if (s390_stack_size > 1 << 16)
-	error ("stack size must not be greater than 64k");
-    }
-  else if (s390_stack_guard)
-    error ("-mstack-guard implies use of -mstack-size");
-
-#ifdef TARGET_DEFAULT_LONG_DOUBLE_128
-  if (!(target_flags_explicit & MASK_LONG_DOUBLE_128))
-    target_flags |= MASK_LONG_DOUBLE_128;
-#endif
-
-  if (s390_tune == PROCESSOR_2097_Z10
-      || s390_tune == PROCESSOR_2817_Z196
-      || s390_tune == PROCESSOR_2827_ZEC12)
-    {
-      maybe_set_param_value (PARAM_MAX_UNROLLED_INSNS, 100,
-			     global_options.x_param_values,
-			     global_options_set.x_param_values);
-      maybe_set_param_value (PARAM_MAX_UNROLL_TIMES, 32,
-			     global_options.x_param_values,
-			     global_options_set.x_param_values);
-      maybe_set_param_value (PARAM_MAX_COMPLETELY_PEELED_INSNS, 2000,
-			     global_options.x_param_values,
-			     global_options_set.x_param_values);
-      maybe_set_param_value (PARAM_MAX_COMPLETELY_PEEL_TIMES, 64,
-			     global_options.x_param_values,
-			     global_options_set.x_param_values);
-    }
-
-  maybe_set_param_value (PARAM_MAX_PENDING_LIST_LENGTH, 256,
-			 global_options.x_param_values,
-			 global_options_set.x_param_values);
-  /* values for loop prefetching */
-  maybe_set_param_value (PARAM_L1_CACHE_LINE_SIZE, 256,
-			 global_options.x_param_values,
-			 global_options_set.x_param_values);
-  maybe_set_param_value (PARAM_L1_CACHE_SIZE, 128,
-			 global_options.x_param_values,
-			 global_options_set.x_param_values);
-  /* s390 has more than 2 levels and the size is much larger.  Since
-     we are always running virtualized assume that we only get a small
-     part of the caches above l1.  */
-  maybe_set_param_value (PARAM_L2_CACHE_SIZE, 1500,
-			 global_options.x_param_values,
-			 global_options_set.x_param_values);
-  maybe_set_param_value (PARAM_PREFETCH_MIN_INSN_TO_MEM_RATIO, 2,
-			 global_options.x_param_values,
-			 global_options_set.x_param_values);
-  maybe_set_param_value (PARAM_SIMULTANEOUS_PREFETCHES, 6,
-			 global_options.x_param_values,
-			 global_options_set.x_param_values);
-
-  /* This cannot reside in s390_option_optimization_table since HAVE_prefetch
-     requires the arch flags to be evaluated already.  Since prefetching
-     is beneficial on s390, we enable it if available.  */
-  if (flag_prefetch_loop_arrays < 0 && HAVE_prefetch && optimize >= 3)
-    flag_prefetch_loop_arrays = 1;
-
-  /* Use the alternative scheduling-pressure algorithm by default.  */
-  maybe_set_param_value (PARAM_SCHED_PRESSURE_ALGORITHM, 2,
-                         global_options.x_param_values,
-                         global_options_set.x_param_values);
-
-  if (TARGET_TPF)
-    {
-      /* Don't emit DWARF3/4 unless specifically selected.  The TPF
-	 debuggers do not yet support DWARF 3/4.  */
-      if (!global_options_set.x_dwarf_strict) 
-	dwarf_strict = 1;
-      if (!global_options_set.x_dwarf_version)
-	dwarf_version = 2;
-    }
+  return ggc_cleared_alloc<machine_function> ();
 }
 
 /* Map for smallest class containing reg regno.  */
 
 const enum reg_class regclass_map[FIRST_PSEUDO_REGISTER] =
-{ GENERAL_REGS, ADDR_REGS, ADDR_REGS, ADDR_REGS,
-  ADDR_REGS,    ADDR_REGS, ADDR_REGS, ADDR_REGS,
-  ADDR_REGS,    ADDR_REGS, ADDR_REGS, ADDR_REGS,
-  ADDR_REGS,    ADDR_REGS, ADDR_REGS, ADDR_REGS,
-  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,
-  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,
-  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,
-  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,
-  ADDR_REGS,    CC_REGS,   ADDR_REGS, ADDR_REGS,
-  ACCESS_REGS,	ACCESS_REGS
+{ GENERAL_REGS, ADDR_REGS, ADDR_REGS, ADDR_REGS,  /*  0 */
+  ADDR_REGS,    ADDR_REGS, ADDR_REGS, ADDR_REGS,  /*  4 */
+  ADDR_REGS,    ADDR_REGS, ADDR_REGS, ADDR_REGS,  /*  8 */
+  ADDR_REGS,    ADDR_REGS, ADDR_REGS, ADDR_REGS,  /* 12 */
+  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,    /* 16 */
+  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,    /* 20 */
+  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,    /* 24 */
+  FP_REGS,      FP_REGS,   FP_REGS,   FP_REGS,    /* 28 */
+  ADDR_REGS,    CC_REGS,   ADDR_REGS, ADDR_REGS,  /* 32 */
+  ACCESS_REGS,	ACCESS_REGS, VEC_REGS, VEC_REGS,  /* 36 */
+  VEC_REGS, VEC_REGS, VEC_REGS, VEC_REGS,         /* 40 */
+  VEC_REGS, VEC_REGS, VEC_REGS, VEC_REGS,         /* 44 */
+  VEC_REGS, VEC_REGS, VEC_REGS, VEC_REGS,         /* 48 */
+  VEC_REGS, VEC_REGS                              /* 52 */
 };
 
 /* Return attribute type of insn.  */
 
 static enum attr_type
-s390_safe_attr_type (rtx insn)
+s390_safe_attr_type (rtx_insn *insn)
 {
   if (recog_memoized (insn) >= 0)
     return get_attr_type (insn);
@@ -2167,14 +2867,18 @@ s390_decompose_address (rtx addr, struct s390_address *out)
 	 Thus we don't check the displacement for validity here.  If after
 	 elimination the displacement turns out to be invalid after all,
 	 this is fixed up by reload in any case.  */
-      if (base != arg_pointer_rtx
-	  && indx != arg_pointer_rtx
-	  && base != return_address_pointer_rtx
-	  && indx != return_address_pointer_rtx
-	  && base != frame_pointer_rtx
-	  && indx != frame_pointer_rtx
-	  && base != virtual_stack_vars_rtx
-	  && indx != virtual_stack_vars_rtx)
+      /* LRA maintains always displacements up to date and we need to
+	 know the displacement is right during all LRA not only at the
+	 final elimination.  */
+      if (lra_in_progress
+	  || (base != arg_pointer_rtx
+	      && indx != arg_pointer_rtx
+	      && base != return_address_pointer_rtx
+	      && indx != return_address_pointer_rtx
+	      && base != frame_pointer_rtx
+	      && indx != frame_pointer_rtx
+	      && base != virtual_stack_vars_rtx
+	      && indx != virtual_stack_vars_rtx))
 	if (!DISP_IN_RANGE (offset))
 	  return false;
     }
@@ -2502,7 +3206,7 @@ s390_O_constraint_str (const char c, HOST_WIDE_INT value)
 int
 s390_N_constraint_str (const char *str, HOST_WIDE_INT value)
 {
-  enum machine_mode mode, part_mode;
+  machine_mode mode, part_mode;
   int def;
   int part, part_goal;
 
@@ -2579,10 +3283,25 @@ s390_float_const_zero_p (rtx value)
 /* Implement TARGET_REGISTER_MOVE_COST.  */
 
 static int
-s390_register_move_cost (enum machine_mode mode ATTRIBUTE_UNUSED,
+s390_register_move_cost (machine_mode mode,
                          reg_class_t from, reg_class_t to)
 {
-/* On s390, copy between fprs and gprs is expensive.  */
+  /* On s390, copy between fprs and gprs is expensive.  */
+
+  /* It becomes somewhat faster having ldgr/lgdr.  */
+  if (TARGET_Z10 && GET_MODE_SIZE (mode) == 8)
+    {
+      /* ldgr is single cycle. */
+      if (reg_classes_intersect_p (from, GENERAL_REGS)
+	  && reg_classes_intersect_p (to, FP_REGS))
+	return 1;
+      /* lgdr needs 3 cycles. */
+      if (reg_classes_intersect_p (to, GENERAL_REGS)
+	  && reg_classes_intersect_p (from, FP_REGS))
+	return 3;
+    }
+
+  /* Otherwise copying is done via memory.  */
   if ((reg_classes_intersect_p (from, GENERAL_REGS)
        && reg_classes_intersect_p (to, FP_REGS))
       || (reg_classes_intersect_p (from, FP_REGS)
@@ -2595,11 +3314,11 @@ s390_register_move_cost (enum machine_mode mode ATTRIBUTE_UNUSED,
 /* Implement TARGET_MEMORY_MOVE_COST.  */
 
 static int
-s390_memory_move_cost (enum machine_mode mode ATTRIBUTE_UNUSED,
+s390_memory_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
 		       reg_class_t rclass ATTRIBUTE_UNUSED,
 		       bool in ATTRIBUTE_UNUSED)
 {
-  return 1;
+  return 2;
 }
 
 /* Compute a (partial) cost for rtx X.  Return true if the complete
@@ -2811,7 +3530,7 @@ s390_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
 /* Return the cost of an address rtx ADDR.  */
 
 static int
-s390_address_cost (rtx addr, enum machine_mode mode ATTRIBUTE_UNUSED,
+s390_address_cost (rtx addr, machine_mode mode ATTRIBUTE_UNUSED,
 		   addr_space_t as ATTRIBUTE_UNUSED,
 		   bool speed ATTRIBUTE_UNUSED)
 {
@@ -2931,8 +3650,19 @@ legitimate_pic_operand_p (rtx op)
    It is given that OP satisfies CONSTANT_P or is a CONST_DOUBLE.  */
 
 static bool
-s390_legitimate_constant_p (enum machine_mode mode, rtx op)
+s390_legitimate_constant_p (machine_mode mode, rtx op)
 {
+  if (TARGET_VX && VECTOR_MODE_P (mode) && GET_CODE (op) == CONST_VECTOR)
+    {
+      if (GET_MODE_SIZE (mode) != 16)
+	return 0;
+
+      if (!const0_operand (op, mode)
+	  && !s390_contiguous_bitmask_vector_p (op, NULL, NULL)
+	  && !s390_bytemask_vector_p (op, NULL))
+	return 0;
+    }
+
   /* Accept all non-symbolic constants.  */
   if (!SYMBOLIC_CONST (op))
     return 1;
@@ -2963,12 +3693,13 @@ s390_legitimate_constant_p (enum machine_mode mode, rtx op)
    not constant (TLS) or not known at final link time (PIC).  */
 
 static bool
-s390_cannot_force_const_mem (enum machine_mode mode, rtx x)
+s390_cannot_force_const_mem (machine_mode mode, rtx x)
 {
   switch (GET_CODE (x))
     {
     case CONST_INT:
     case CONST_DOUBLE:
+    case CONST_VECTOR:
       /* Accept all non-symbolic constants.  */
       return false;
 
@@ -3071,7 +3802,7 @@ legitimate_reload_constant_p (rtx op)
   if (GET_CODE (op) == CONST_INT
       && trunc_int_for_mode (INTVAL (op), word_mode) != INTVAL (op))
     {
-      enum machine_mode dword_mode = word_mode == SImode ? DImode : TImode;
+      machine_mode dword_mode = word_mode == SImode ? DImode : TImode;
       rtx hi = operand_subword (op, 0, 0, dword_mode);
       rtx lo = operand_subword (op, 1, 0, dword_mode);
       return legitimate_reload_constant_p (hi)
@@ -3101,6 +3832,27 @@ legitimate_reload_fp_constant_p (rtx op)
   return false;
 }
 
+/* Returns true if the constant value OP is a legitimate vector operand
+   during and after reload.
+   This function accepts all constants which can be loaded directly
+   into an VR.  */
+
+static bool
+legitimate_reload_vector_constant_p (rtx op)
+{
+  /* FIXME: Support constant vectors with all the same 16 bit unsigned
+     operands.  These can be loaded with vrepi.  */
+
+  if (TARGET_VX && GET_MODE_SIZE (GET_MODE (op)) == 16
+      && (const0_operand (op, GET_MODE (op))
+	  || constm1_operand (op, GET_MODE (op))
+	  || s390_contiguous_bitmask_vector_p (op, NULL, NULL)
+	  || s390_bytemask_vector_p (op, NULL)))
+    return true;
+
+  return false;
+}
+
 /* Given an rtx OP being reloaded into a reg required to be in class RCLASS,
    return the class of reg to actually use.  */
 
@@ -3111,6 +3863,7 @@ s390_preferred_reload_class (rtx op, reg_class_t rclass)
     {
       /* Constants we cannot reload into general registers
 	 must be forced into the literal pool.  */
+      case CONST_VECTOR:
       case CONST_DOUBLE:
       case CONST_INT:
 	if (reg_class_subset_p (GENERAL_REGS, rclass)
@@ -3122,6 +3875,10 @@ s390_preferred_reload_class (rtx op, reg_class_t rclass)
 	else if (reg_class_subset_p (FP_REGS, rclass)
 		 && legitimate_reload_fp_constant_p (op))
 	  return FP_REGS;
+	else if (reg_class_subset_p (VEC_REGS, rclass)
+		 && legitimate_reload_vector_constant_p (op))
+	  return VEC_REGS;
+
 	return NO_REGS;
 
       /* If a symbolic constant or a PLUS is reloaded,
@@ -3245,6 +4002,7 @@ s390_reload_symref_address (rtx reg, rtx mem, rtx scratch, bool tomem)
   /* Reload might have pulled a constant out of the literal pool.
      Force it back in.  */
   if (CONST_INT_P (mem) || GET_CODE (mem) == CONST_DOUBLE
+      || GET_CODE (mem) == CONST_VECTOR
       || GET_CODE (mem) == CONST)
     mem = force_const_mem (GET_MODE (reg), mem);
 
@@ -3276,13 +4034,37 @@ s390_reload_symref_address (rtx reg, rtx mem, rtx scratch, bool tomem)
 
 static reg_class_t
 s390_secondary_reload (bool in_p, rtx x, reg_class_t rclass_i,
-		       enum machine_mode mode, secondary_reload_info *sri)
+		       machine_mode mode, secondary_reload_info *sri)
 {
   enum reg_class rclass = (enum reg_class) rclass_i;
 
   /* Intermediate register needed.  */
   if (reg_classes_intersect_p (CC_REGS, rclass))
     return GENERAL_REGS;
+
+  if (TARGET_VX)
+    {
+      /* The vst/vl vector move instructions allow only for short
+	 displacements.  */
+      if (MEM_P (x)
+	  && GET_CODE (XEXP (x, 0)) == PLUS
+	  && GET_CODE (XEXP (XEXP (x, 0), 1)) == CONST_INT
+	  && !SHORT_DISP_IN_RANGE(INTVAL (XEXP (XEXP (x, 0), 1)))
+	  && reg_class_subset_p (rclass, VEC_REGS)
+	  && (!reg_class_subset_p (rclass, FP_REGS)
+	      || (GET_MODE_SIZE (mode) > 8
+		  && s390_class_max_nregs (FP_REGS, mode) == 1)))
+	{
+	  if (in_p)
+	    sri->icode = (TARGET_64BIT ?
+			  CODE_FOR_reloaddi_la_in :
+			  CODE_FOR_reloadsi_la_in);
+	  else
+	    sri->icode = (TARGET_64BIT ?
+			  CODE_FOR_reloaddi_la_out :
+			  CODE_FOR_reloadsi_la_out);
+	}
+    }
 
   if (TARGET_Z10)
     {
@@ -3299,17 +4081,15 @@ s390_secondary_reload (bool in_p, rtx x, reg_class_t rclass_i,
 	sri->icode = ((mode == DImode) ? CODE_FOR_reloaddi_larl_odd_addend_z10
 		      : CODE_FOR_reloadsi_larl_odd_addend_z10);
 
-      /* On z10 we need a scratch register when moving QI, TI or floating
-	 point mode values from or to a memory location with a SYMBOL_REF
-	 or if the symref addend of a SI or DI move is not aligned to the
-	 width of the access.  */
+      /* Handle all the (mem (symref)) accesses we cannot use the z10
+	 instructions for.  */
       if (MEM_P (x)
 	  && s390_loadrelative_operand_p (XEXP (x, 0), NULL, NULL)
-	  && (mode == QImode || mode == TImode || FLOAT_MODE_P (mode)
-	      || (!TARGET_ZARCH && mode == DImode)
-	      || ((mode == HImode || mode == SImode || mode == DImode)
-		  && (!s390_check_symref_alignment (XEXP (x, 0),
-						    GET_MODE_SIZE (mode))))))
+	  && (mode == QImode
+	      || !reg_class_subset_p (rclass, GENERAL_REGS)
+	      || GET_MODE_SIZE (mode) > UNITS_PER_WORD
+	      || !s390_check_symref_alignment (XEXP (x, 0),
+					       GET_MODE_SIZE (mode))))
 	{
 #define __SECONDARY_RELOAD_CASE(M,m)					\
 	  case M##mode:							\
@@ -3334,7 +4114,27 @@ s390_secondary_reload (bool in_p, rtx x, reg_class_t rclass_i,
 	      __SECONDARY_RELOAD_CASE (SD, sd);
 	      __SECONDARY_RELOAD_CASE (DD, dd);
 	      __SECONDARY_RELOAD_CASE (TD, td);
-
+	      __SECONDARY_RELOAD_CASE (V1QI, v1qi);
+	      __SECONDARY_RELOAD_CASE (V2QI, v2qi);
+	      __SECONDARY_RELOAD_CASE (V4QI, v4qi);
+	      __SECONDARY_RELOAD_CASE (V8QI, v8qi);
+	      __SECONDARY_RELOAD_CASE (V16QI, v16qi);
+	      __SECONDARY_RELOAD_CASE (V1HI, v1hi);
+	      __SECONDARY_RELOAD_CASE (V2HI, v2hi);
+	      __SECONDARY_RELOAD_CASE (V4HI, v4hi);
+	      __SECONDARY_RELOAD_CASE (V8HI, v8hi);
+	      __SECONDARY_RELOAD_CASE (V1SI, v1si);
+	      __SECONDARY_RELOAD_CASE (V2SI, v2si);
+	      __SECONDARY_RELOAD_CASE (V4SI, v4si);
+	      __SECONDARY_RELOAD_CASE (V1DI, v1di);
+	      __SECONDARY_RELOAD_CASE (V2DI, v2di);
+	      __SECONDARY_RELOAD_CASE (V1TI, v1ti);
+	      __SECONDARY_RELOAD_CASE (V1SF, v1sf);
+	      __SECONDARY_RELOAD_CASE (V2SF, v2sf);
+	      __SECONDARY_RELOAD_CASE (V4SF, v4sf);
+	      __SECONDARY_RELOAD_CASE (V1DF, v1df);
+	      __SECONDARY_RELOAD_CASE (V2DF, v2df);
+	      __SECONDARY_RELOAD_CASE (V1TF, v1tf);
 	    default:
 	      gcc_unreachable ();
 	    }
@@ -3344,7 +4144,9 @@ s390_secondary_reload (bool in_p, rtx x, reg_class_t rclass_i,
 
   /* We need a scratch register when loading a PLUS expression which
      is not a legitimate operand of the LOAD ADDRESS instruction.  */
-  if (in_p && s390_plus_operand (x, mode))
+  /* LRA can deal with transformation of plus op very well -- so we
+     don't need to prompt LRA in this case.  */
+  if (! lra_in_progress && in_p && s390_plus_operand (x, mode))
     sri->icode = (TARGET_64BIT ?
 		  CODE_FOR_reloaddi_plus : CODE_FOR_reloadsi_plus);
 
@@ -3371,12 +4173,12 @@ s390_secondary_reload (bool in_p, rtx x, reg_class_t rclass_i,
 	{
 	  if (in_p)
 	    sri->icode = (TARGET_64BIT ?
-			  CODE_FOR_reloaddi_nonoffmem_in :
-			  CODE_FOR_reloadsi_nonoffmem_in);
+			  CODE_FOR_reloaddi_la_in :
+			  CODE_FOR_reloadsi_la_in);
 	  else
 	    sri->icode = (TARGET_64BIT ?
-			  CODE_FOR_reloaddi_nonoffmem_out :
-			  CODE_FOR_reloadsi_nonoffmem_out);
+			  CODE_FOR_reloaddi_la_out :
+			  CODE_FOR_reloadsi_la_out);
 	}
     }
 
@@ -3456,7 +4258,7 @@ s390_expand_plus_operand (rtx target, rtx src,
    STRICT specifies whether strict register checking applies.  */
 
 static bool
-s390_legitimate_address_p (enum machine_mode mode, rtx addr, bool strict)
+s390_legitimate_address_p (machine_mode mode, rtx addr, bool strict)
 {
   struct s390_address ad;
 
@@ -4114,7 +4916,7 @@ emit_symbolic_move (rtx *operands)
 
 static rtx
 s390_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
-			 enum machine_mode mode ATTRIBUTE_UNUSED)
+			 machine_mode mode ATTRIBUTE_UNUSED)
 {
   rtx constant_term = const0_rtx;
 
@@ -4206,7 +5008,7 @@ s390_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
    and TYPE is the reload type of the current reload.  */
 
 rtx
-legitimize_reload_address (rtx ad, enum machine_mode mode ATTRIBUTE_UNUSED,
+legitimize_reload_address (rtx ad, machine_mode mode ATTRIBUTE_UNUSED,
 			   int opnum, int type)
 {
   if (!optimize || TARGET_LONG_DISPLACEMENT)
@@ -4271,10 +5073,10 @@ s390_expand_movmem (rtx dst, rtx src, rtx len)
   else
     {
       rtx dst_addr, src_addr, count, blocks, temp;
-      rtx loop_start_label = gen_label_rtx ();
-      rtx loop_end_label = gen_label_rtx ();
-      rtx end_label = gen_label_rtx ();
-      enum machine_mode mode;
+      rtx_code_label *loop_start_label = gen_label_rtx ();
+      rtx_code_label *loop_end_label = gen_label_rtx ();
+      rtx_code_label *end_label = gen_label_rtx ();
+      machine_mode mode;
 
       mode = GET_MODE (len);
       if (mode == VOIDmode)
@@ -4396,10 +5198,10 @@ s390_expand_setmem (rtx dst, rtx len, rtx val)
   else
     {
       rtx dst_addr, count, blocks, temp, dstp1 = NULL_RTX;
-      rtx loop_start_label = gen_label_rtx ();
-      rtx loop_end_label = gen_label_rtx ();
-      rtx end_label = gen_label_rtx ();
-      enum machine_mode mode;
+      rtx_code_label *loop_start_label = gen_label_rtx ();
+      rtx_code_label *loop_end_label = gen_label_rtx ();
+      rtx_code_label *end_label = gen_label_rtx ();
+      machine_mode mode;
 
       mode = GET_MODE (len);
       if (mode == VOIDmode)
@@ -4522,10 +5324,10 @@ s390_expand_cmpmem (rtx target, rtx op0, rtx op1, rtx len)
   else
     {
       rtx addr0, addr1, count, blocks, temp;
-      rtx loop_start_label = gen_label_rtx ();
-      rtx loop_end_label = gen_label_rtx ();
-      rtx end_label = gen_label_rtx ();
-      enum machine_mode mode;
+      rtx_code_label *loop_start_label = gen_label_rtx ();
+      rtx_code_label *loop_end_label = gen_label_rtx ();
+      rtx_code_label *end_label = gen_label_rtx ();
+      machine_mode mode;
 
       mode = GET_MODE (len);
       if (mode == VOIDmode)
@@ -4610,6 +5412,138 @@ s390_expand_cmpmem (rtx target, rtx op0, rtx op1, rtx len)
   return true;
 }
 
+/* Emit a conditional jump to LABEL for condition code mask MASK using
+   comparsion operator COMPARISON.  Return the emitted jump insn.  */
+
+static rtx
+s390_emit_ccraw_jump (HOST_WIDE_INT mask, enum rtx_code comparison, rtx label)
+{
+  rtx temp;
+
+  gcc_assert (comparison == EQ || comparison == NE);
+  gcc_assert (mask > 0 && mask < 15);
+
+  temp = gen_rtx_fmt_ee (comparison, VOIDmode,
+			 gen_rtx_REG (CCRAWmode, CC_REGNUM), GEN_INT (mask));
+  temp = gen_rtx_IF_THEN_ELSE (VOIDmode, temp,
+			       gen_rtx_LABEL_REF (VOIDmode, label), pc_rtx);
+  temp = gen_rtx_SET (VOIDmode, pc_rtx, temp);
+  return emit_jump_insn (temp);
+}
+
+/* Emit the instructions to implement strlen of STRING and store the
+   result in TARGET.  The string has the known ALIGNMENT.  This
+   version uses vector instructions and is therefore not appropriate
+   for targets prior to z13.  */
+
+void
+s390_expand_vec_strlen (rtx target, rtx string, rtx alignment)
+{
+  int very_unlikely = REG_BR_PROB_BASE / 100 - 1;
+  int very_likely = REG_BR_PROB_BASE - 1;
+  rtx highest_index_to_load_reg = gen_reg_rtx (Pmode);
+  rtx str_reg = gen_reg_rtx (V16QImode);
+  rtx str_addr_base_reg = gen_reg_rtx (Pmode);
+  rtx str_idx_reg = gen_reg_rtx (Pmode);
+  rtx result_reg = gen_reg_rtx (V16QImode);
+  rtx is_aligned_label = gen_label_rtx ();
+  rtx into_loop_label = NULL_RTX;
+  rtx loop_start_label = gen_label_rtx ();
+  rtx temp;
+  rtx len = gen_reg_rtx (QImode);
+  rtx cond;
+
+  s390_load_address (str_addr_base_reg, XEXP (string, 0));
+  emit_move_insn (str_idx_reg, const0_rtx);
+
+  if (INTVAL (alignment) < 16)
+    {
+      /* Check whether the address happens to be aligned properly so
+	 jump directly to the aligned loop.  */
+      emit_cmp_and_jump_insns (gen_rtx_AND (Pmode,
+					    str_addr_base_reg, GEN_INT (15)),
+			       const0_rtx, EQ, NULL_RTX,
+			       Pmode, 1, is_aligned_label);
+
+      temp = gen_reg_rtx (Pmode);
+      temp = expand_binop (Pmode, and_optab, str_addr_base_reg,
+			   GEN_INT (15), temp, 1, OPTAB_DIRECT);
+      gcc_assert (REG_P (temp));
+      highest_index_to_load_reg =
+	expand_binop (Pmode, sub_optab, GEN_INT (15), temp,
+		      highest_index_to_load_reg, 1, OPTAB_DIRECT);
+      gcc_assert (REG_P (highest_index_to_load_reg));
+      emit_insn (gen_vllv16qi (str_reg,
+		   convert_to_mode (SImode, highest_index_to_load_reg, 1),
+		   gen_rtx_MEM (BLKmode, str_addr_base_reg)));
+
+      into_loop_label = gen_label_rtx ();
+      s390_emit_jump (into_loop_label, NULL_RTX);
+      emit_barrier ();
+    }
+
+  emit_label (is_aligned_label);
+  LABEL_NUSES (is_aligned_label) = INTVAL (alignment) < 16 ? 2 : 1;
+
+  /* Reaching this point we are only performing 16 bytes aligned
+     loads.  */
+  emit_move_insn (highest_index_to_load_reg, GEN_INT (15));
+
+  emit_label (loop_start_label);
+  LABEL_NUSES (loop_start_label) = 1;
+
+  /* Load 16 bytes of the string into VR.  */
+  emit_move_insn (str_reg,
+		  gen_rtx_MEM (V16QImode,
+			       gen_rtx_PLUS (Pmode, str_idx_reg,
+					     str_addr_base_reg)));
+  if (into_loop_label != NULL_RTX)
+    {
+      emit_label (into_loop_label);
+      LABEL_NUSES (into_loop_label) = 1;
+    }
+
+  /* Increment string index by 16 bytes.  */
+  expand_binop (Pmode, add_optab, str_idx_reg, GEN_INT (16),
+		str_idx_reg, 1, OPTAB_DIRECT);
+
+  emit_insn (gen_vec_vfenesv16qi (result_reg, str_reg, str_reg,
+				  GEN_INT (VSTRING_FLAG_ZS | VSTRING_FLAG_CS)));
+
+  add_int_reg_note (s390_emit_ccraw_jump (8, NE, loop_start_label),
+		    REG_BR_PROB, very_likely);
+  emit_insn (gen_vec_extractv16qi (len, result_reg, GEN_INT (7)));
+
+  /* If the string pointer wasn't aligned we have loaded less then 16
+     bytes and the remaining bytes got filled with zeros (by vll).
+     Now we have to check whether the resulting index lies within the
+     bytes actually part of the string.  */
+
+  cond = s390_emit_compare (GT, convert_to_mode (Pmode, len, 1),
+			    highest_index_to_load_reg);
+  s390_load_address (highest_index_to_load_reg,
+		     gen_rtx_PLUS (Pmode, highest_index_to_load_reg,
+				   const1_rtx));
+  if (TARGET_64BIT)
+    emit_insn (gen_movdicc (str_idx_reg, cond,
+			    highest_index_to_load_reg, str_idx_reg));
+  else
+    emit_insn (gen_movsicc (str_idx_reg, cond,
+			    highest_index_to_load_reg, str_idx_reg));
+
+  add_int_reg_note (s390_emit_jump (is_aligned_label, cond), REG_BR_PROB,
+		    very_unlikely);
+
+  expand_binop (Pmode, add_optab, str_idx_reg,
+		GEN_INT (-16), str_idx_reg, 1, OPTAB_DIRECT);
+  /* FIXME: len is already zero extended - so avoid the llgcr emitted
+     here.  */
+  temp = expand_binop (Pmode, add_optab, str_idx_reg,
+		       convert_to_mode (Pmode, len, 1),
+		       target, 1, OPTAB_DIRECT);
+  if (temp != target)
+    emit_move_insn (target, temp);
+}
 
 /* Expand conditional increment or decrement using alc/slb instructions.
    Should generate code setting DST to either SRC or SRC + INCREMENT,
@@ -4634,8 +5568,8 @@ bool
 s390_expand_addcc (enum rtx_code cmp_code, rtx cmp_op0, rtx cmp_op1,
 		   rtx dst, rtx src, rtx increment)
 {
-  enum machine_mode cmp_mode;
-  enum machine_mode cc_mode;
+  machine_mode cmp_mode;
+  machine_mode cc_mode;
   rtx op_res;
   rtx insn;
   rtvec p;
@@ -4799,8 +5733,8 @@ s390_expand_insv (rtx dest, rtx op1, rtx op2, rtx src)
 {
   int bitsize = INTVAL (op1);
   int bitpos = INTVAL (op2);
-  enum machine_mode mode = GET_MODE (dest);
-  enum machine_mode smode;
+  machine_mode mode = GET_MODE (dest);
+  machine_mode smode;
   int smode_bsize, mode_bsize;
   rtx op, clobber;
 
@@ -4820,7 +5754,7 @@ s390_expand_insv (rtx dest, rtx op1, rtx op2, rtx src)
 
       while (regpos > bitpos)
 	{
-	  enum machine_mode putmode;
+	  machine_mode putmode;
 	  int putsize;
 
 	  if (TARGET_EXTIMM && (regpos % 32 == 0) && (regpos >= bitpos + 32))
@@ -4922,7 +5856,7 @@ s390_expand_insv (rtx dest, rtx op1, rtx op2, rtx src)
   /* For z10, generate ROTATE THEN INSERT SELECTED BITS (RISBG et al).  */
   if (TARGET_Z10 && (mode == DImode || mode == SImode))
     {
-      enum machine_mode mode_s = GET_MODE (src);
+      machine_mode mode_s = GET_MODE (src);
 
       if (mode_s == VOIDmode)
 	{
@@ -4956,12 +5890,308 @@ s390_expand_insv (rtx dest, rtx op1, rtx op2, rtx src)
    register that holds VAL of mode MODE shifted by COUNT bits.  */
 
 static inline rtx
-s390_expand_mask_and_shift (rtx val, enum machine_mode mode, rtx count)
+s390_expand_mask_and_shift (rtx val, machine_mode mode, rtx count)
 {
   val = expand_simple_binop (SImode, AND, val, GEN_INT (GET_MODE_MASK (mode)),
 			     NULL_RTX, 1, OPTAB_DIRECT);
   return expand_simple_binop (SImode, ASHIFT, val, count,
 			      NULL_RTX, 1, OPTAB_DIRECT);
+}
+
+/* Generate a vector comparison COND of CMP_OP1 and CMP_OP2 and store
+   the result in TARGET.  */
+
+void
+s390_expand_vec_compare (rtx target, enum rtx_code cond,
+			 rtx cmp_op1, rtx cmp_op2)
+{
+  machine_mode mode = GET_MODE (target);
+  bool neg_p = false, swap_p = false;
+  rtx tmp;
+
+  if (GET_MODE (cmp_op1) == V2DFmode)
+    {
+      switch (cond)
+	{
+	  /* NE a != b -> !(a == b) */
+	case NE:   cond = EQ; neg_p = true;                break;
+	  /* UNGT a u> b -> !(b >= a) */
+	case UNGT: cond = GE; neg_p = true; swap_p = true; break;
+	  /* UNGE a u>= b -> !(b > a) */
+	case UNGE: cond = GT; neg_p = true; swap_p = true; break;
+	  /* LE: a <= b -> b >= a */
+	case LE:   cond = GE;               swap_p = true; break;
+	  /* UNLE: a u<= b -> !(a > b) */
+	case UNLE: cond = GT; neg_p = true;                break;
+	  /* LT: a < b -> b > a */
+	case LT:   cond = GT;               swap_p = true; break;
+	  /* UNLT: a u< b -> !(a >= b) */
+	case UNLT: cond = GE; neg_p = true;                break;
+	case UNEQ:
+	  emit_insn (gen_vec_cmpuneqv2df (target, cmp_op1, cmp_op2));
+	  return;
+	case LTGT:
+	  emit_insn (gen_vec_cmpltgtv2df (target, cmp_op1, cmp_op2));
+	  return;
+	case ORDERED:
+	  emit_insn (gen_vec_orderedv2df (target, cmp_op1, cmp_op2));
+	  return;
+	case UNORDERED:
+	  emit_insn (gen_vec_unorderedv2df (target, cmp_op1, cmp_op2));
+	  return;
+	default: break;
+	}
+    }
+  else
+    {
+      switch (cond)
+	{
+	  /* NE: a != b -> !(a == b) */
+	case NE:  cond = EQ;  neg_p = true;                break;
+	  /* GE: a >= b -> !(b > a) */
+	case GE:  cond = GT;  neg_p = true; swap_p = true; break;
+	  /* GEU: a >= b -> !(b > a) */
+	case GEU: cond = GTU; neg_p = true; swap_p = true; break;
+	  /* LE: a <= b -> !(a > b) */
+	case LE:  cond = GT;  neg_p = true;                break;
+	  /* LEU: a <= b -> !(a > b) */
+	case LEU: cond = GTU; neg_p = true;                break;
+	  /* LT: a < b -> b > a */
+	case LT:  cond = GT;                swap_p = true; break;
+	  /* LTU: a < b -> b > a */
+	case LTU: cond = GTU;               swap_p = true; break;
+	default: break;
+	}
+    }
+
+  if (swap_p)
+    {
+      tmp = cmp_op1; cmp_op1 = cmp_op2; cmp_op2 = tmp;
+    }
+
+  emit_insn (gen_rtx_SET (VOIDmode, target, gen_rtx_fmt_ee (cond,
+						  mode,
+						  cmp_op1, cmp_op2)));
+  if (neg_p)
+    emit_insn (gen_rtx_SET (VOIDmode, target, gen_rtx_NOT (mode, target)));
+}
+
+/* Expand the comparison CODE of CMP1 and CMP2 and copy 1 or 0 into
+   TARGET if either all (ALL_P is true) or any (ALL_P is false) of the
+   elements in CMP1 and CMP2 fulfill the comparison.  */
+void
+s390_expand_vec_compare_cc (rtx target, enum rtx_code code,
+			    rtx cmp1, rtx cmp2, bool all_p)
+{
+  enum rtx_code new_code = code;
+  machine_mode cmp_mode, full_cmp_mode, scratch_mode;
+  rtx tmp_reg = gen_reg_rtx (SImode);
+  bool swap_p = false;
+
+  if (GET_MODE_CLASS (GET_MODE (cmp1)) == MODE_VECTOR_INT)
+    {
+      switch (code)
+	{
+	case EQ:  cmp_mode = CCVEQmode; break;
+	case NE:  cmp_mode = CCVEQmode; break;
+	case GT:  cmp_mode = CCVHmode;  break;
+	case GE:  cmp_mode = CCVHmode;  new_code = LE; swap_p = true; break;
+	case LT:  cmp_mode = CCVHmode;  new_code = GT; swap_p = true; break;
+	case LE:  cmp_mode = CCVHmode;  new_code = LE; break;
+	case GTU: cmp_mode = CCVHUmode; break;
+	case GEU: cmp_mode = CCVHUmode; new_code = LEU; swap_p = true; break;
+	case LTU: cmp_mode = CCVHUmode; new_code = GTU; swap_p = true; break;
+	case LEU: cmp_mode = CCVHUmode; new_code = LEU; break;
+	default: gcc_unreachable ();
+	}
+      scratch_mode = GET_MODE (cmp1);
+    }
+  else if (GET_MODE (cmp1) == V2DFmode)
+    {
+      switch (code)
+	{
+	case EQ:   cmp_mode = CCVEQmode;  break;
+	case NE:   cmp_mode = CCVEQmode;  break;
+	case GT:   cmp_mode = CCVFHmode;  break;
+	case GE:   cmp_mode = CCVFHEmode; break;
+	case UNLE: cmp_mode = CCVFHmode;  break;
+	case UNLT: cmp_mode = CCVFHEmode; break;
+	case LT:   cmp_mode = CCVFHmode;  new_code = GT; swap_p = true; break;
+	case LE:   cmp_mode = CCVFHEmode; new_code = GE; swap_p = true; break;
+	default: gcc_unreachable ();
+	}
+      scratch_mode = V2DImode;
+    }
+  else
+    gcc_unreachable ();
+
+  if (!all_p)
+    switch (cmp_mode)
+      {
+      case CCVEQmode:  full_cmp_mode = CCVEQANYmode;  break;
+      case CCVHmode:   full_cmp_mode = CCVHANYmode;   break;
+      case CCVHUmode:  full_cmp_mode = CCVHUANYmode;  break;
+      case CCVFHmode:  full_cmp_mode = CCVFHANYmode;  break;
+      case CCVFHEmode: full_cmp_mode = CCVFHEANYmode; break;
+      default: gcc_unreachable ();
+      }
+  else
+    /* The modes without ANY match the ALL modes.  */
+    full_cmp_mode = cmp_mode;
+
+  if (swap_p)
+    {
+      rtx tmp = cmp2;
+      cmp2 = cmp1;
+      cmp1 = tmp;
+    }
+
+  emit_insn (gen_rtx_PARALLEL (VOIDmode,
+	       gen_rtvec (2, gen_rtx_SET (VOIDmode,
+			       gen_rtx_REG (cmp_mode, CC_REGNUM),
+			       gen_rtx_COMPARE (cmp_mode, cmp1, cmp2)),
+			  gen_rtx_CLOBBER (VOIDmode,
+					   gen_rtx_SCRATCH (scratch_mode)))));
+  emit_move_insn (target, const0_rtx);
+  emit_move_insn (tmp_reg, const1_rtx);
+
+  emit_move_insn (target,
+		  gen_rtx_IF_THEN_ELSE (SImode,
+		    gen_rtx_fmt_ee (new_code, VOIDmode,
+				    gen_rtx_REG (full_cmp_mode, CC_REGNUM),
+				    const0_rtx),
+		      target, tmp_reg));
+}
+
+/* Generate a vector comparison expression loading either elements of
+   THEN or ELS into TARGET depending on the comparison COND of CMP_OP1
+   and CMP_OP2.  */
+
+void
+s390_expand_vcond (rtx target, rtx then, rtx els,
+		   enum rtx_code cond, rtx cmp_op1, rtx cmp_op2)
+{
+  rtx tmp;
+  machine_mode result_mode;
+  rtx result_target;
+
+  /* We always use an integral type vector to hold the comparison
+     result.  */
+  result_mode = GET_MODE (cmp_op1) == V2DFmode ? V2DImode : GET_MODE (cmp_op1);
+  result_target = gen_reg_rtx (result_mode);
+
+  /* Alternatively this could be done by reload by lowering the cmp*
+     predicates.  But it appears to be better for scheduling etc. to
+     have that in early.  */
+  if (!REG_P (cmp_op1))
+    cmp_op1 = force_reg (GET_MODE (target), cmp_op1);
+
+  if (!REG_P (cmp_op2))
+    cmp_op2 = force_reg (GET_MODE (target), cmp_op2);
+
+  s390_expand_vec_compare (result_target, cond,
+			   cmp_op1, cmp_op2);
+
+  /* If the results are supposed to be either -1 or 0 we are done
+     since this is what our compare instructions generate anyway.  */
+  if (constm1_operand (then, GET_MODE (then))
+      && const0_operand (els, GET_MODE (els)))
+    {
+      emit_move_insn (target, gen_rtx_SUBREG (GET_MODE (target),
+					      result_target, 0));
+      return;
+    }
+
+  /* Otherwise we will do a vsel afterwards.  */
+  /* This gets triggered e.g.
+     with gcc.c-torture/compile/pr53410-1.c */
+  if (!REG_P (then))
+    then = force_reg (GET_MODE (target), then);
+
+  if (!REG_P (els))
+    els = force_reg (GET_MODE (target), els);
+
+  tmp = gen_rtx_fmt_ee (EQ, VOIDmode,
+			result_target,
+			CONST0_RTX (result_mode));
+
+  /* We compared the result against zero above so we have to swap then
+     and els here.  */
+  tmp = gen_rtx_IF_THEN_ELSE (GET_MODE (target), tmp, els, then);
+
+  gcc_assert (GET_MODE (target) == GET_MODE (then));
+  emit_insn (gen_rtx_SET (VOIDmode, target, tmp));
+}
+
+/* Emit the RTX necessary to initialize the vector TARGET with values
+   in VALS.  */
+void
+s390_expand_vec_init (rtx target, rtx vals)
+{
+  machine_mode mode = GET_MODE (target);
+  machine_mode inner_mode = GET_MODE_INNER (mode);
+  int n_elts = GET_MODE_NUNITS (mode);
+  bool all_same = true, all_regs = true, all_const_int = true;
+  rtx x;
+  int i;
+
+  for (i = 0; i < n_elts; ++i)
+    {
+      x = XVECEXP (vals, 0, i);
+
+      if (!CONST_INT_P (x))
+	all_const_int = false;
+
+      if (i > 0 && !rtx_equal_p (x, XVECEXP (vals, 0, 0)))
+	all_same = false;
+
+      if (!REG_P (x))
+	all_regs = false;
+    }
+
+  /* Use vector gen mask or vector gen byte mask if possible.  */
+  if (all_same && all_const_int
+      && (XVECEXP (vals, 0, 0) == const0_rtx
+	  || s390_contiguous_bitmask_vector_p (XVECEXP (vals, 0, 0),
+					       NULL, NULL)
+	  || s390_bytemask_vector_p (XVECEXP (vals, 0, 0), NULL)))
+    {
+      emit_insn (gen_rtx_SET (VOIDmode, target,
+			      gen_rtx_CONST_VECTOR (mode, XVEC (vals, 0))));
+      return;
+    }
+
+  if (all_same)
+    {
+      emit_insn (gen_rtx_SET (VOIDmode, target,
+			      gen_rtx_VEC_DUPLICATE (mode,
+						     XVECEXP (vals, 0, 0))));
+      return;
+    }
+
+  if (all_regs && REG_P (target) && n_elts == 2 && inner_mode == DImode)
+    {
+      /* Use vector load pair.  */
+      emit_insn (gen_rtx_SET (VOIDmode, target,
+			      gen_rtx_VEC_CONCAT (mode,
+						  XVECEXP (vals, 0, 0),
+						  XVECEXP (vals, 0, 1))));
+      return;
+    }
+
+  /* We are about to set the vector elements one by one.  Zero out the
+     full register first in order to help the data flow framework to
+     detect it as full VR set.  */
+  emit_insn (gen_rtx_SET (VOIDmode, target, CONST0_RTX (mode)));
+
+  /* Unfortunately the vec_init expander is not allowed to fail.  So
+     we have to implement the fallback ourselves.  */
+  for (i = 0; i < n_elts; i++)
+    emit_insn (gen_rtx_SET (VOIDmode, target,
+			    gen_rtx_UNSPEC (mode,
+					    gen_rtvec (3, XVECEXP (vals, 0, i),
+						       GEN_INT (i), target),
+					    UNSPEC_VEC_SET)));
 }
 
 /* Structure to hold the initial parameters for a compare_and_swap operation
@@ -4983,7 +6213,7 @@ struct alignment_context
 
 static void
 init_alignment_context (struct alignment_context *ac, rtx mem,
-			enum machine_mode mode)
+			machine_mode mode)
 {
   ac->shift = GEN_INT (GET_MODE_SIZE (SImode) - GET_MODE_SIZE (mode));
   ac->aligned = (MEM_ALIGN (mem) >= GET_MODE_BITSIZE (SImode));
@@ -5035,7 +6265,7 @@ init_alignment_context (struct alignment_context *ac, rtx mem,
 
 static rtx
 s390_two_part_insv (struct alignment_context *ac, rtx *seq1, rtx *seq2,
-		    enum machine_mode mode, rtx val, rtx ins)
+		    machine_mode mode, rtx val, rtx ins)
 {
   rtx tmp;
 
@@ -5073,13 +6303,13 @@ s390_two_part_insv (struct alignment_context *ac, rtx *seq1, rtx *seq2,
    value to set if CMP == MEM.  */
 
 void
-s390_expand_cs_hqi (enum machine_mode mode, rtx btarget, rtx vtarget, rtx mem,
+s390_expand_cs_hqi (machine_mode mode, rtx btarget, rtx vtarget, rtx mem,
 		    rtx cmp, rtx new_rtx, bool is_weak)
 {
   struct alignment_context ac;
   rtx cmpv, newv, val, cc, seq0, seq1, seq2, seq3;
   rtx res = gen_reg_rtx (SImode);
-  rtx csloop = NULL, csend = NULL;
+  rtx_code_label *csloop = NULL, *csend = NULL;
 
   gcc_assert (MEM_P (mem));
 
@@ -5155,14 +6385,14 @@ s390_expand_cs_hqi (enum machine_mode mode, rtx btarget, rtx vtarget, rtx mem,
    store it to TARGET.  */
 
 void
-s390_expand_atomic (enum machine_mode mode, enum rtx_code code,
+s390_expand_atomic (machine_mode mode, enum rtx_code code,
 		    rtx target, rtx mem, rtx val, bool after)
 {
   struct alignment_context ac;
   rtx cmp;
   rtx new_rtx = gen_reg_rtx (SImode);
   rtx orig = gen_reg_rtx (SImode);
-  rtx csloop = gen_label_rtx ();
+  rtx_code_label *csloop = gen_label_rtx ();
 
   gcc_assert (!target || register_operand (target, VOIDmode));
   gcc_assert (MEM_P (mem));
@@ -5259,12 +6489,37 @@ s390_output_dwarf_dtprel (FILE *file, int size, rtx x)
   fputs ("@DTPOFF", file);
 }
 
+/* Return the proper mode for REGNO being represented in the dwarf
+   unwind table.  */
+machine_mode
+s390_dwarf_frame_reg_mode (int regno)
+{
+  machine_mode save_mode = default_dwarf_frame_reg_mode (regno);
+
+  /* The rightmost 64 bits of vector registers are call-clobbered.  */
+  if (GET_MODE_SIZE (save_mode) > 8)
+    save_mode = DImode;
+
+  return save_mode;
+}
+
 #ifdef TARGET_ALTERNATE_LONG_DOUBLE_MANGLING
 /* Implement TARGET_MANGLE_TYPE.  */
 
 static const char *
 s390_mangle_type (const_tree type)
 {
+  type = TYPE_MAIN_VARIANT (type);
+
+  if (TREE_CODE (type) != VOID_TYPE && TREE_CODE (type) != BOOLEAN_TYPE
+      && TREE_CODE (type) != INTEGER_TYPE && TREE_CODE (type) != REAL_TYPE)
+    return NULL;
+
+  if (type == s390_builtin_types[BT_BV16QI]) return "U6__boolc";
+  if (type == s390_builtin_types[BT_BV8HI]) return "U6__bools";
+  if (type == s390_builtin_types[BT_BV4SI]) return "U6__booli";
+  if (type == s390_builtin_types[BT_BV2DI]) return "U6__booll";
+
   if (TYPE_MAIN_VARIANT (type) == long_double_type_node
       && TARGET_LONG_DOUBLE_128)
     return "g";
@@ -5390,48 +6645,6 @@ print_shift_count_operand (FILE *file, rtx op)
     fprintf (file, "(%s)", reg_names[REGNO (base)]);
 }
 
-/* See 'get_some_local_dynamic_name'.  */
-
-static int
-get_some_local_dynamic_name_1 (rtx *px, void *data ATTRIBUTE_UNUSED)
-{
-  rtx x = *px;
-
-  if (GET_CODE (x) == SYMBOL_REF && CONSTANT_POOL_ADDRESS_P (x))
-    {
-      x = get_pool_constant (x);
-      return for_each_rtx (&x, get_some_local_dynamic_name_1, 0);
-    }
-
-  if (GET_CODE (x) == SYMBOL_REF
-      && tls_symbolic_operand (x) == TLS_MODEL_LOCAL_DYNAMIC)
-    {
-      cfun->machine->some_ld_name = XSTR (x, 0);
-      return 1;
-    }
-
-  return 0;
-}
-
-/* Locate some local-dynamic symbol still in use by this function
-   so that we can print its name in local-dynamic base patterns.  */
-
-static const char *
-get_some_local_dynamic_name (void)
-{
-  rtx insn;
-
-  if (cfun->machine->some_ld_name)
-    return cfun->machine->some_ld_name;
-
-  for (insn = get_insns (); insn ; insn = NEXT_INSN (insn))
-    if (INSN_P (insn)
-        && for_each_rtx (&PATTERN (insn), get_some_local_dynamic_name_1, 0))
-      return cfun->machine->some_ld_name;
-
-  gcc_unreachable ();
-}
-
 /* Assigns the number of NOP halfwords to be emitted before and after the
    function label to *HW_BEFORE and *HW_AFTER.  Both pointers must not be NULL.
    If hotpatching is disabled for the function, the values are set to zero.
@@ -5446,23 +6659,23 @@ s390_function_num_hotpatch_hw (tree decl,
 
   attr = lookup_attribute ("hotpatch", DECL_ATTRIBUTES (decl));
 
+  /* Handle the arguments of the hotpatch attribute.  The values
+     specified via attribute might override the cmdline argument
+     values.  */
   if (attr)
     {
       tree args = TREE_VALUE (attr);
 
-      /* If the hotpatch attribute is present, its values are used even if the
-	 -mhotpatch cmdline option is used.  */
       *hw_before = TREE_INT_CST_LOW (TREE_VALUE (args));
       *hw_after = TREE_INT_CST_LOW (TREE_VALUE (TREE_CHAIN (args)));
     }
   else
     {
-      /* Values specified by the -mhotpatch cmdline option.  */
+      /* Use the values specified by the cmdline arguments.  */
       *hw_before = s390_hotpatch_hw_before_label;
       *hw_after = s390_hotpatch_hw_after_label;
     }
 }
-
 
 /* Write the extra assembler code needed to declare a function properly.  */
 
@@ -5478,8 +6691,8 @@ s390_asm_output_function_label (FILE *asm_out_file, const char *fname,
       unsigned int function_alignment;
       int i;
 
-      /* Add trampoline code area before the function label and initialize it
-	 with two-byte NOP instructions.  This area can be overwritten with code
+      /* Add a trampoline code area before the function label and initialize it
+	 with two-byte nop instructions.  This area can be overwritten with code
 	 that jumps to a patched version of the function.  */
       asm_fprintf (asm_out_file, "\tnopr\t%%r7"
 		   "\t# pre-label NOPs for hotpatch (%d halfwords)\n",
@@ -5488,15 +6701,15 @@ s390_asm_output_function_label (FILE *asm_out_file, const char *fname,
 	fputs ("\tnopr\t%r7\n", asm_out_file);
 
       /* Note:  The function label must be aligned so that (a) the bytes of the
-	 following NOP do not cross a cacheline boundary, and (b) a jump address
+	 following nop do not cross a cacheline boundary, and (b) a jump address
 	 (eight bytes for 64 bit targets, 4 bytes for 32 bit targets) can be
 	 stored directly before the label without crossing a cacheline
 	 boundary.  All this is necessary to make sure the trampoline code can
 	 be changed atomically.
-	 This alignment is done automatically using the FOUNCTION_BOUNDARY
-	 macro, but if there are NOPs before the function label, the alignment
-	 is placed before them.  So it is necessary to duplicate the alignment
-	 after the NOPs.  */
+	 This alignment is done automatically using the FOUNCTION_BOUNDARY, but
+	 if there are NOPs before the function label, the alignment is placed
+	 before them.  So it is necessary to duplicate the alignment after the
+	 NOPs.  */
       function_alignment = MAX (8, DECL_ALIGN (decl) / BITS_PER_UNIT);
       if (! DECL_USER_ALIGN (decl))
 	function_alignment = MAX (function_alignment,
@@ -5627,24 +6840,26 @@ print_operand_address (FILE *file, rtx addr)
     'J': print tls_load/tls_gdcall/tls_ldcall suffix
     'M': print the second word of a TImode operand.
     'N': print the second word of a DImode operand.
-    'O': print only the displacement of a memory reference.
-    'R': print only the base register of a memory reference.
+    'O': print only the displacement of a memory reference or address.
+    'R': print only the base register of a memory reference or address.
     'S': print S-type memory reference (base+displacement).
     'Y': print shift count operand.
 
     'b': print integer X as if it's an unsigned byte.
     'c': print integer X as if it's an signed byte.
-    'e': "end" of DImode contiguous bitmask X.
-    'f': "end" of SImode contiguous bitmask X.
+    'e': "end" contiguous bitmask X in either DImode or vector inner mode.
+    'f': "end" contiguous bitmask X in SImode.
     'h': print integer X as if it's a signed halfword.
     'i': print the first nonzero HImode part of X.
     'j': print the first HImode part unequal to -1 of X.
     'k': print the first nonzero SImode part of X.
     'm': print the first SImode part unequal to -1 of X.
     'o': print integer X as if it's an unsigned 32bit word.
-    's': "start" of DImode contiguous bitmask X.
-    't': "start" of SImode contiguous bitmask X.
+    's': "start" of contiguous bitmask X in either DImode or vector inner mode.
+    't': CONST_INT: "start" of contiguous bitmask X in SImode.
+         CONST_VECTOR: Generate a bitmask for vgbm instruction.
     'x': print integer X as if it's an unsigned halfword.
+    'v': print register number as vector register (v1 instead of f1).
 */
 
 void
@@ -5686,7 +6901,9 @@ print_operand (FILE *file, rtx x, int code)
       else if (GET_CODE (x) == UNSPEC && XINT (x, 1) == UNSPEC_TLSLDM)
 	{
 	  fprintf (file, "%s", ":tls_ldcall:");
-	  assemble_name (file, get_some_local_dynamic_name ());
+	  const char *name = get_some_local_dynamic_name ();
+	  gcc_assert (name);
+	  assemble_name (file, name);
 	}
       else
 	output_operand_lossage ("invalid reference for 'J' output modifier");
@@ -5701,14 +6918,7 @@ print_operand (FILE *file, rtx x, int code)
         struct s390_address ad;
 	int ret;
 
-	if (!MEM_P (x))
-	  {
-	    output_operand_lossage ("memory reference expected for "
-				    "'O' output modifier");
-	    return;
-	  }
-
-	ret = s390_decompose_address (XEXP (x, 0), &ad);
+	ret = s390_decompose_address (MEM_P (x) ? XEXP (x, 0) : x, &ad);
 
 	if (!ret
 	    || (ad.base && !REGNO_OK_FOR_BASE_P (REGNO (ad.base)))
@@ -5730,14 +6940,7 @@ print_operand (FILE *file, rtx x, int code)
         struct s390_address ad;
 	int ret;
 
-	if (!MEM_P (x))
-	  {
-	    output_operand_lossage ("memory reference expected for "
-				    "'R' output modifier");
-	    return;
-	  }
-
-	ret = s390_decompose_address (XEXP (x, 0), &ad);
+	ret = s390_decompose_address (MEM_P (x) ? XEXP (x, 0) : x, &ad);
 
 	if (!ret
 	    || (ad.base && !REGNO_OK_FOR_BASE_P (REGNO (ad.base)))
@@ -5815,7 +7018,17 @@ print_operand (FILE *file, rtx x, int code)
   switch (GET_CODE (x))
     {
     case REG:
-      fprintf (file, "%s", reg_names[REGNO (x)]);
+      /* Print FP regs as fx instead of vx when they are accessed
+	 through non-vector mode.  */
+      if (code == 'v'
+	  || VECTOR_NOFP_REG_P (x)
+	  || (FP_REG_P (x) && VECTOR_MODE_P (GET_MODE (x)))
+	  || (VECTOR_REG_P (x)
+	      && (GET_MODE_SIZE (GET_MODE (x)) /
+		  s390_class_max_nregs (FP_REGS, GET_MODE (x))) > 8))
+	fprintf (file, "%%v%s", reg_names[REGNO (x)] + 2);
+      else
+	fprintf (file, "%s", reg_names[REGNO (x)]);
       break;
 
     case MEM:
@@ -5902,6 +7115,39 @@ print_operand (FILE *file, rtx x, int code)
 				    code);
 	}
       break;
+    case CONST_VECTOR:
+      switch (code)
+	{
+	case 'e':
+	case 's':
+	  {
+	    int start, stop, inner_len;
+	    bool ok;
+
+	    inner_len = GET_MODE_UNIT_BITSIZE (GET_MODE (x));
+	    ok = s390_contiguous_bitmask_vector_p (x, &start, &stop);
+	    gcc_assert (ok);
+	    if (code == 's' || code == 't')
+	      ival = inner_len - stop - 1;
+	    else
+	      ival = inner_len - start - 1;
+	    fprintf (file, HOST_WIDE_INT_PRINT_DEC, ival);
+	  }
+	  break;
+	case 't':
+	  {
+	    unsigned mask;
+	    bool ok = s390_bytemask_vector_p (x, &mask);
+	    gcc_assert (ok);
+	    fprintf (file, "%u", mask);
+	  }
+	  break;
+
+	default:
+	  output_operand_lossage ("invalid constant vector for output "
+				  "modifier '%c'", code);
+	}
+      break;
 
     default:
       if (code == 0)
@@ -5943,15 +7189,13 @@ reg_used_in_mem_p (int regno, rtx x)
 
   if (code == MEM)
     {
-      if (refers_to_regno_p (regno, regno+1,
-			     XEXP (x, 0), 0))
+      if (refers_to_regno_p (regno, XEXP (x, 0)))
 	return true;
     }
   else if (code == SET
 	   && GET_CODE (SET_DEST (x)) == PC)
     {
-      if (refers_to_regno_p (regno, regno+1,
-			     SET_SRC (x), 0))
+      if (refers_to_regno_p (regno, SET_SRC (x)))
 	return true;
     }
 
@@ -5974,12 +7218,12 @@ reg_used_in_mem_p (int regno, rtx x)
    used by instruction INSN to address memory.  */
 
 static bool
-addr_generation_dependency_p (rtx dep_rtx, rtx insn)
+addr_generation_dependency_p (rtx dep_rtx, rtx_insn *insn)
 {
   rtx target, pat;
 
-  if (GET_CODE (dep_rtx) == INSN)
-      dep_rtx = PATTERN (dep_rtx);
+  if (NONJUMP_INSN_P (dep_rtx))
+    dep_rtx = PATTERN (dep_rtx);
 
   if (GET_CODE (dep_rtx) == SET)
     {
@@ -6002,7 +7246,7 @@ addr_generation_dependency_p (rtx dep_rtx, rtx insn)
 		  pat = XVECEXP (pat, 0, 0);
 		}
 	      gcc_assert (GET_CODE (pat) == SET);
-	      return refers_to_regno_p (regno, regno+1, SET_SRC (pat), 0);
+	      return refers_to_regno_p (regno, SET_SRC (pat));
 	    }
 	  else if (get_attr_atype (insn) == ATYPE_AGEN)
 	    return reg_used_in_mem_p (regno, PATTERN (insn));
@@ -6014,7 +7258,7 @@ addr_generation_dependency_p (rtx dep_rtx, rtx insn)
 /* Return 1, if dep_insn sets register used in insn in the agen unit.  */
 
 int
-s390_agen_dep_p (rtx dep_insn, rtx insn)
+s390_agen_dep_p (rtx_insn *dep_insn, rtx_insn *insn)
 {
   rtx dep_rtx = PATTERN (dep_insn);
   int i;
@@ -6042,7 +7286,7 @@ s390_agen_dep_p (rtx dep_insn, rtx insn)
    A STD instruction should be scheduled earlier,
    in order to use the bypass.  */
 static int
-s390_adjust_priority (rtx insn ATTRIBUTE_UNUSED, int priority)
+s390_adjust_priority (rtx_insn *insn, int priority)
 {
   if (! INSN_P (insn))
     return priority;
@@ -6051,7 +7295,8 @@ s390_adjust_priority (rtx insn ATTRIBUTE_UNUSED, int priority)
       && s390_tune != PROCESSOR_2094_Z9_109
       && s390_tune != PROCESSOR_2097_Z10
       && s390_tune != PROCESSOR_2817_Z196
-      && s390_tune != PROCESSOR_2827_ZEC12)
+      && s390_tune != PROCESSOR_2827_ZEC12
+      && s390_tune != PROCESSOR_2964_Z13)
     return priority;
 
   switch (s390_safe_attr_type (insn))
@@ -6211,7 +7456,8 @@ s390_split_branches (void)
 {
   rtx temp_reg = gen_rtx_REG (Pmode, RETURN_REGNUM);
   int new_literal = 0, ret;
-  rtx insn, pat, tmp, target;
+  rtx_insn *insn;
+  rtx pat, target;
   rtx *label;
 
   /* We need correct insn addresses.  */
@@ -6222,11 +7468,11 @@ s390_split_branches (void)
 
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     {
-      if (GET_CODE (insn) != JUMP_INSN)
+      if (! JUMP_P (insn) || tablejump_p (insn, NULL, NULL))
 	continue;
 
       pat = PATTERN (insn);
-      if (GET_CODE (pat) == PARALLEL && XVECLEN (pat, 0) > 2)
+      if (GET_CODE (pat) == PARALLEL)
 	pat = XVECEXP (pat, 0, 0);
       if (GET_CODE (pat) != SET || SET_DEST (pat) != pc_rtx)
 	continue;
@@ -6257,10 +7503,10 @@ s390_split_branches (void)
       if (!flag_pic)
 	{
 	  new_literal = 1;
-	  tmp = force_const_mem (Pmode, *label);
-	  tmp = emit_insn_before (gen_rtx_SET (Pmode, temp_reg, tmp), insn);
-	  INSN_ADDRESSES_NEW (tmp, -1);
-	  annotate_constant_pool_refs (&PATTERN (tmp));
+	  rtx mem = force_const_mem (Pmode, *label);
+	  rtx_insn *set_insn = emit_insn_before (gen_rtx_SET (Pmode, temp_reg, mem), insn);
+	  INSN_ADDRESSES_NEW (set_insn, -1);
+	  annotate_constant_pool_refs (&PATTERN (set_insn));
 
 	  target = temp_reg;
 	}
@@ -6271,9 +7517,9 @@ s390_split_branches (void)
 				   UNSPEC_LTREL_OFFSET);
 	  target = gen_rtx_CONST (Pmode, target);
 	  target = force_const_mem (Pmode, target);
-	  tmp = emit_insn_before (gen_rtx_SET (Pmode, temp_reg, target), insn);
-	  INSN_ADDRESSES_NEW (tmp, -1);
-	  annotate_constant_pool_refs (&PATTERN (tmp));
+	  rtx_insn *set_insn = emit_insn_before (gen_rtx_SET (Pmode, temp_reg, target), insn);
+	  INSN_ADDRESSES_NEW (set_insn, -1);
+	  annotate_constant_pool_refs (&PATTERN (set_insn));
 
           target = gen_rtx_UNSPEC (Pmode, gen_rtvec (2, XEXP (target, 0),
 							cfun->machine->base_reg),
@@ -6459,34 +7705,40 @@ replace_ltrel_base (rtx *x)
 /* We keep a list of constants which we have to add to internal
    constant tables in the middle of large functions.  */
 
-#define NR_C_MODES 11
-enum machine_mode constant_modes[NR_C_MODES] =
+#define NR_C_MODES 32
+machine_mode constant_modes[NR_C_MODES] =
 {
   TFmode, TImode, TDmode,
+  V16QImode, V8HImode, V4SImode, V2DImode, V1TImode,
+  V4SFmode, V2DFmode, V1TFmode,
   DFmode, DImode, DDmode,
+  V8QImode, V4HImode, V2SImode, V1DImode, V2SFmode, V1DFmode,
   SFmode, SImode, SDmode,
+  V4QImode, V2HImode, V1SImode,  V1SFmode,
   HImode,
-  QImode
+  V2QImode, V1HImode,
+  QImode,
+  V1QImode
 };
 
 struct constant
 {
   struct constant *next;
   rtx value;
-  rtx label;
+  rtx_code_label *label;
 };
 
 struct constant_pool
 {
   struct constant_pool *next;
-  rtx first_insn;
-  rtx pool_insn;
+  rtx_insn *first_insn;
+  rtx_insn *pool_insn;
   bitmap insns;
-  rtx emit_pool_after;
+  rtx_insn *emit_pool_after;
 
   struct constant *constants[NR_C_MODES];
   struct constant *execute;
-  rtx label;
+  rtx_code_label *label;
   int size;
 };
 
@@ -6505,11 +7757,11 @@ s390_alloc_pool (void)
 
   pool->execute = NULL;
   pool->label = gen_label_rtx ();
-  pool->first_insn = NULL_RTX;
-  pool->pool_insn = NULL_RTX;
+  pool->first_insn = NULL;
+  pool->pool_insn = NULL;
   pool->insns = BITMAP_ALLOC (NULL);
   pool->size = 0;
-  pool->emit_pool_after = NULL_RTX;
+  pool->emit_pool_after = NULL;
 
   return pool;
 }
@@ -6518,7 +7770,7 @@ s390_alloc_pool (void)
    and chain it to the end of POOL_LIST.  */
 
 static struct constant_pool *
-s390_start_pool (struct constant_pool **pool_list, rtx insn)
+s390_start_pool (struct constant_pool **pool_list, rtx_insn *insn)
 {
   struct constant_pool *pool, **prev;
 
@@ -6536,7 +7788,7 @@ s390_start_pool (struct constant_pool **pool_list, rtx insn)
    placeholder insn representing the pool.  */
 
 static void
-s390_end_pool (struct constant_pool *pool, rtx insn)
+s390_end_pool (struct constant_pool *pool, rtx_insn *insn)
 {
   rtx pool_size = GEN_INT (pool->size + 8 /* alignment slop */);
 
@@ -6572,7 +7824,7 @@ s390_find_pool (struct constant_pool *pool_list, rtx insn)
 /* Add constant VAL of mode MODE to the constant pool POOL.  */
 
 static void
-s390_add_constant (struct constant_pool *pool, rtx val, enum machine_mode mode)
+s390_add_constant (struct constant_pool *pool, rtx val, machine_mode mode)
 {
   struct constant *c;
   int i;
@@ -6617,7 +7869,7 @@ s390_pool_offset (struct constant_pool *pool, rtx x)
 
 static rtx
 s390_find_constant (struct constant_pool *pool, rtx val,
-		    enum machine_mode mode)
+		    machine_mode mode)
 {
   struct constant *c;
   int i;
@@ -6642,7 +7894,7 @@ s390_find_constant (struct constant_pool *pool, rtx val,
 static rtx
 s390_execute_label (rtx insn)
 {
-  if (GET_CODE (insn) == INSN
+  if (NONJUMP_INSN_P (insn)
       && GET_CODE (PATTERN (insn)) == PARALLEL
       && GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == UNSPEC
       && XINT (XVECEXP (PATTERN (insn), 0, 0), 1) == UNSPEC_EXECUTE)
@@ -6721,7 +7973,7 @@ s390_execute_target (rtx insn)
    execute insns that carry a unique label.  */
 
 static bool
-s390_cannot_copy_insn_p (rtx insn)
+s390_cannot_copy_insn_p (rtx_insn *insn)
 {
   rtx label = s390_execute_label (insn);
   return label && label != const0_rtx;
@@ -6734,7 +7986,7 @@ static void
 s390_dump_pool (struct constant_pool *pool, bool remote_label)
 {
   struct constant *c;
-  rtx insn = pool->pool_insn;
+  rtx_insn *insn = pool->pool_insn;
   int i;
 
   /* Switch to rodata section.  */
@@ -6841,18 +8093,26 @@ static struct constant_pool *
 s390_mainpool_start (void)
 {
   struct constant_pool *pool;
-  rtx insn;
+  rtx_insn *insn;
 
   pool = s390_alloc_pool ();
 
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     {
-      if (GET_CODE (insn) == INSN
+      if (NONJUMP_INSN_P (insn)
 	  && GET_CODE (PATTERN (insn)) == SET
 	  && GET_CODE (SET_SRC (PATTERN (insn))) == UNSPEC_VOLATILE
 	  && XINT (SET_SRC (PATTERN (insn)), 1) == UNSPECV_MAIN_POOL)
 	{
-	  gcc_assert (!pool->pool_insn);
+	  /* There might be two main_pool instructions if base_reg
+	     is call-clobbered; one for shrink-wrapped code and one
+	     for the rest.  We want to keep the first.  */
+	  if (pool->pool_insn)
+	    {
+	      insn = PREV_INSN (insn);
+	      delete_insn (NEXT_INSN (insn));
+	      continue;
+	    }
 	  pool->pool_insn = insn;
 	}
 
@@ -6860,14 +8120,14 @@ s390_mainpool_start (void)
 	{
 	  s390_add_execute (pool, insn);
 	}
-      else if (GET_CODE (insn) == INSN || GET_CODE (insn) == CALL_INSN)
+      else if (NONJUMP_INSN_P (insn) || CALL_P (insn))
 	{
 	  rtx pool_ref = NULL_RTX;
 	  find_constant_pool_ref (PATTERN (insn), &pool_ref);
 	  if (pool_ref)
 	    {
 	      rtx constant = get_pool_constant (pool_ref);
-	      enum machine_mode mode = get_pool_mode (pool_ref);
+	      machine_mode mode = get_pool_mode (pool_ref);
 	      s390_add_constant (pool, constant, mode);
 	    }
 	}
@@ -6912,7 +8172,6 @@ static void
 s390_mainpool_finish (struct constant_pool *pool)
 {
   rtx base_reg = cfun->machine->base_reg;
-  rtx insn;
 
   /* If the pool is empty, we're done.  */
   if (pool->size == 0)
@@ -6933,8 +8192,8 @@ s390_mainpool_finish (struct constant_pool *pool)
      located in the .rodata section, so we emit it after the function.  */
   if (TARGET_CPU_ZARCH)
     {
-      insn = gen_main_base_64 (base_reg, pool->label);
-      insn = emit_insn_after (insn, pool->pool_insn);
+      rtx set = gen_main_base_64 (base_reg, pool->label);
+      rtx_insn *insn = emit_insn_after (set, pool->pool_insn);
       INSN_ADDRESSES_NEW (insn, -1);
       remove_insn (pool->pool_insn);
 
@@ -6951,8 +8210,8 @@ s390_mainpool_finish (struct constant_pool *pool)
   else if (INSN_ADDRESSES (INSN_UID (pool->emit_pool_after))
 	   + pool->size + 8 /* alignment slop */ < 4096)
     {
-      insn = gen_main_base_31_small (base_reg, pool->label);
-      insn = emit_insn_after (insn, pool->pool_insn);
+      rtx set = gen_main_base_31_small (base_reg, pool->label);
+      rtx_insn *insn = emit_insn_after (set, pool->pool_insn);
       INSN_ADDRESSES_NEW (insn, -1);
       remove_insn (pool->pool_insn);
 
@@ -6974,10 +8233,10 @@ s390_mainpool_finish (struct constant_pool *pool)
      over it, setting up the pool register at the same time.  */
   else
     {
-      rtx pool_end = gen_label_rtx ();
+      rtx_code_label *pool_end = gen_label_rtx ();
 
-      insn = gen_main_base_31_large (base_reg, pool->label, pool_end);
-      insn = emit_jump_insn_after (insn, pool->pool_insn);
+      rtx pat = gen_main_base_31_large (base_reg, pool->label, pool_end);
+      rtx_insn *insn = emit_jump_insn_after (pat, pool->pool_insn);
       JUMP_LABEL (insn) = pool_end;
       INSN_ADDRESSES_NEW (insn, -1);
       remove_insn (pool->pool_insn);
@@ -6997,12 +8256,12 @@ s390_mainpool_finish (struct constant_pool *pool)
 
   /* Replace all literal pool references.  */
 
-  for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
+  for (rtx_insn *insn = get_insns (); insn; insn = NEXT_INSN (insn))
     {
       if (INSN_P (insn))
 	replace_ltrel_base (&PATTERN (insn));
 
-      if (GET_CODE (insn) == INSN || GET_CODE (insn) == CALL_INSN)
+      if (NONJUMP_INSN_P (insn) || CALL_P (insn))
         {
           rtx addr, pool_ref = NULL_RTX;
           find_constant_pool_ref (PATTERN (insn), &pool_ref);
@@ -7049,7 +8308,7 @@ s390_chunkify_start (void)
   int extra_size = 0;
   bitmap far_labels;
   rtx pending_ltrel = NULL_RTX;
-  rtx insn;
+  rtx_insn *insn;
 
   rtx (*gen_reload_base) (rtx, rtx) =
     TARGET_CPU_ZARCH? gen_reload_base_64 : gen_reload_base_31;
@@ -7084,14 +8343,14 @@ s390_chunkify_start (void)
 	  s390_add_execute (curr_pool, insn);
 	  s390_add_pool_insn (curr_pool, insn);
 	}
-      else if (GET_CODE (insn) == INSN || CALL_P (insn))
+      else if (NONJUMP_INSN_P (insn) || CALL_P (insn))
 	{
 	  rtx pool_ref = NULL_RTX;
 	  find_constant_pool_ref (PATTERN (insn), &pool_ref);
 	  if (pool_ref)
 	    {
 	      rtx constant = get_pool_constant (pool_ref);
-	      enum machine_mode mode = get_pool_mode (pool_ref);
+	      machine_mode mode = get_pool_mode (pool_ref);
 
 	      if (!curr_pool)
 		curr_pool = s390_start_pool (&pool_list, insn);
@@ -7111,7 +8370,7 @@ s390_chunkify_start (void)
 	    }
 	}
 
-      if (GET_CODE (insn) == JUMP_INSN || GET_CODE (insn) == CODE_LABEL)
+      if (JUMP_P (insn) || JUMP_TABLE_DATA_P (insn) || LABEL_P (insn))
 	{
 	  if (curr_pool)
 	    s390_add_pool_insn (curr_pool, insn);
@@ -7142,7 +8401,7 @@ s390_chunkify_start (void)
 	  if (curr_pool->size < S390_POOL_CHUNK_MAX)
 	    continue;
 
-	  s390_end_pool (curr_pool, NULL_RTX);
+	  s390_end_pool (curr_pool, NULL);
 	  curr_pool = NULL;
 	}
       else
@@ -7155,7 +8414,7 @@ s390_chunkify_start (void)
 	     Those will have an effect on code size, which we need to
 	     consider here.  This calculation makes rather pessimistic
 	     worst-case assumptions.  */
-	  if (GET_CODE (insn) == CODE_LABEL)
+	  if (LABEL_P (insn))
 	    extra_size += 6;
 
 	  if (chunk_size < S390_POOL_CHUNK_MIN
@@ -7164,7 +8423,7 @@ s390_chunkify_start (void)
 	    continue;
 
 	  /* Pool chunks can only be inserted after BARRIERs ...  */
-	  if (GET_CODE (insn) == BARRIER)
+	  if (BARRIER_P (insn))
 	    {
 	      s390_end_pool (curr_pool, insn);
 	      curr_pool = NULL;
@@ -7176,12 +8435,12 @@ s390_chunkify_start (void)
 	           || curr_pool->size > S390_POOL_CHUNK_MAX
 		   || section_switch_p)
 	    {
-	      rtx label, jump, barrier, next, prev;
+	      rtx_insn *label, *jump, *barrier, *next, *prev;
 
 	      if (!section_switch_p)
 		{
 		  /* We can insert the barrier only after a 'real' insn.  */
-		  if (GET_CODE (insn) != INSN && GET_CODE (insn) != CALL_INSN)
+		  if (! NONJUMP_INSN_P (insn) && ! CALL_P (insn))
 		    continue;
 		  if (get_attr_length (insn) == 0)
 		    continue;
@@ -7236,7 +8495,7 @@ s390_chunkify_start (void)
     }
 
   if (curr_pool)
-    s390_end_pool (curr_pool, NULL_RTX);
+    s390_end_pool (curr_pool, NULL);
   gcc_assert (!pending_ltrel);
 
   /* Find all labels that are branched into
@@ -7246,6 +8505,8 @@ s390_chunkify_start (void)
 
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     {
+      rtx_jump_table_data *table;
+
       /* Labels marked with LABEL_PRESERVE_P can be target
 	 of non-local jumps, so we have to mark them.
 	 The same holds for named labels.
@@ -7253,51 +8514,33 @@ s390_chunkify_start (void)
 	 Don't do that, however, if it is the label before
 	 a jump table.  */
 
-      if (GET_CODE (insn) == CODE_LABEL
+      if (LABEL_P (insn)
 	  && (LABEL_PRESERVE_P (insn) || LABEL_NAME (insn)))
 	{
-	  rtx vec_insn = next_real_insn (insn);
-	  rtx vec_pat = vec_insn && GET_CODE (vec_insn) == JUMP_INSN ?
-			PATTERN (vec_insn) : NULL_RTX;
-	  if (!vec_pat
-	      || !(GET_CODE (vec_pat) == ADDR_VEC
-		   || GET_CODE (vec_pat) == ADDR_DIFF_VEC))
+	  rtx_insn *vec_insn = NEXT_INSN (insn);
+	  if (! vec_insn || ! JUMP_TABLE_DATA_P (vec_insn))
 	    bitmap_set_bit (far_labels, CODE_LABEL_NUMBER (insn));
 	}
+      /* Check potential targets in a table jump (casesi_jump).  */
+      else if (tablejump_p (insn, NULL, &table))
+	{
+	  rtx vec_pat = PATTERN (table);
+	  int i, diff_p = GET_CODE (vec_pat) == ADDR_DIFF_VEC;
 
-      /* If we have a direct jump (conditional or unconditional)
-	 or a casesi jump, check all potential targets.  */
-      else if (GET_CODE (insn) == JUMP_INSN)
+	  for (i = 0; i < XVECLEN (vec_pat, diff_p); i++)
+	    {
+	      rtx label = XEXP (XVECEXP (vec_pat, diff_p, i), 0);
+
+	      if (s390_find_pool (pool_list, label)
+		  != s390_find_pool (pool_list, insn))
+		bitmap_set_bit (far_labels, CODE_LABEL_NUMBER (label));
+	    }
+	}
+      /* If we have a direct jump (conditional or unconditional),
+	 check all potential targets.  */
+      else if (JUMP_P (insn))
 	{
 	  rtx pat = PATTERN (insn);
-	  if (GET_CODE (pat) == PARALLEL
-	      && XVECLEN (pat, 0) == 2
-	      && GET_CODE (XVECEXP (pat, 0, 0)) == SET
-	      && GET_CODE (XVECEXP (pat, 0, 1)) == USE
-	      && GET_CODE (XEXP (XVECEXP (pat, 0, 1), 0)) == LABEL_REF)
-	    {
-	      /* Find the jump table used by this casesi jump.  */
-	      rtx vec_label = XEXP (XEXP (XVECEXP (pat, 0, 1), 0), 0);
-	      rtx vec_insn = next_real_insn (vec_label);
-	      rtx vec_pat = vec_insn && GET_CODE (vec_insn) == JUMP_INSN ?
-			    PATTERN (vec_insn) : NULL_RTX;
-	      if (vec_pat
-		  && (GET_CODE (vec_pat) == ADDR_VEC
-		      || GET_CODE (vec_pat) == ADDR_DIFF_VEC))
-		{
-		  int i, diff_p = GET_CODE (vec_pat) == ADDR_DIFF_VEC;
-
-		  for (i = 0; i < XVECLEN (vec_pat, diff_p); i++)
-		    {
-		      rtx label = XEXP (XVECEXP (vec_pat, diff_p, i), 0);
-
-		      if (s390_find_pool (pool_list, label)
-			  != s390_find_pool (pool_list, insn))
-			bitmap_set_bit (far_labels, CODE_LABEL_NUMBER (label));
-		    }
-		}
-	      continue;
-	    }
 
 	  if (GET_CODE (pat) == PARALLEL)
 	    pat = XVECEXP (pat, 0, 0);
@@ -7305,7 +8548,7 @@ s390_chunkify_start (void)
 	  if (GET_CODE (pat) == SET)
 	    {
 	      rtx label = JUMP_LABEL (insn);
-	      if (label)
+	      if (label && !ANY_RETURN_P (label))
 		{
 		  if (s390_find_pool (pool_list, label)
 		      != s390_find_pool (pool_list, insn))
@@ -7321,14 +8564,14 @@ s390_chunkify_start (void)
     {
       rtx new_insn = gen_reload_base (cfun->machine->base_reg,
 				      curr_pool->label);
-      rtx insn = curr_pool->first_insn;
+      rtx_insn *insn = curr_pool->first_insn;
       INSN_ADDRESSES_NEW (emit_insn_before (new_insn, insn), -1);
     }
 
   /* Insert base register reload insns at every far label.  */
 
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
-    if (GET_CODE (insn) == CODE_LABEL
+    if (LABEL_P (insn)
         && bitmap_bit_p (far_labels, CODE_LABEL_NUMBER (insn)))
       {
 	struct constant_pool *pool = s390_find_pool (pool_list, insn);
@@ -7360,7 +8603,7 @@ static void
 s390_chunkify_finish (struct constant_pool *pool_list)
 {
   struct constant_pool *curr_pool = NULL;
-  rtx insn;
+  rtx_insn *insn;
 
 
   /* Replace all literal pool references.  */
@@ -7374,7 +8617,7 @@ s390_chunkify_finish (struct constant_pool *pool_list)
       if (!curr_pool)
 	continue;
 
-      if (GET_CODE (insn) == INSN || GET_CODE (insn) == CALL_INSN)
+      if (NONJUMP_INSN_P (insn) || CALL_P (insn))
         {
           rtx addr, pool_ref = NULL_RTX;
           find_constant_pool_ref (PATTERN (insn), &pool_ref);
@@ -7416,20 +8659,20 @@ static void
 s390_chunkify_cancel (struct constant_pool *pool_list)
 {
   struct constant_pool *curr_pool = NULL;
-  rtx insn;
+  rtx_insn *insn;
 
   /* Remove all pool placeholder insns.  */
 
   for (curr_pool = pool_list; curr_pool; curr_pool = curr_pool->next)
     {
       /* Did we insert an extra barrier?  Remove it.  */
-      rtx barrier = PREV_INSN (curr_pool->pool_insn);
-      rtx jump = barrier? PREV_INSN (barrier) : NULL_RTX;
-      rtx label = NEXT_INSN (curr_pool->pool_insn);
+      rtx_insn *barrier = PREV_INSN (curr_pool->pool_insn);
+      rtx_insn *jump = barrier? PREV_INSN (barrier) : NULL;
+      rtx_insn *label = NEXT_INSN (curr_pool->pool_insn);
 
-      if (jump && GET_CODE (jump) == JUMP_INSN
-	  && barrier && GET_CODE (barrier) == BARRIER
-	  && label && GET_CODE (label) == CODE_LABEL
+      if (jump && JUMP_P (jump)
+	  && barrier && BARRIER_P (barrier)
+	  && label && LABEL_P (label)
 	  && GET_CODE (PATTERN (jump)) == SET
 	  && SET_DEST (PATTERN (jump)) == pc_rtx
 	  && GET_CODE (SET_SRC (PATTERN (jump))) == LABEL_REF
@@ -7447,9 +8690,9 @@ s390_chunkify_cancel (struct constant_pool *pool_list)
 
   for (insn = get_insns (); insn; )
     {
-      rtx next_insn = NEXT_INSN (insn);
+      rtx_insn *next_insn = NEXT_INSN (insn);
 
-      if (GET_CODE (insn) == INSN
+      if (NONJUMP_INSN_P (insn)
 	  && GET_CODE (PATTERN (insn)) == SET
 	  && GET_CODE (SET_SRC (PATTERN (insn))) == UNSPEC
 	  && XINT (SET_SRC (PATTERN (insn)), 1) == UNSPEC_RELOAD_BASE)
@@ -7471,7 +8714,7 @@ s390_chunkify_cancel (struct constant_pool *pool_list)
 /* Output the constant pool entry EXP in mode MODE with alignment ALIGN.  */
 
 void
-s390_output_pool_entry (rtx exp, enum machine_mode mode, unsigned int align)
+s390_output_pool_entry (rtx exp, machine_mode mode, unsigned int align)
 {
   REAL_VALUE_TYPE r;
 
@@ -7488,6 +8731,23 @@ s390_output_pool_entry (rtx exp, enum machine_mode mode, unsigned int align)
     case MODE_INT:
       assemble_integer (exp, GET_MODE_SIZE (mode), align, 1);
       mark_symbol_refs_as_used (exp);
+      break;
+
+    case MODE_VECTOR_INT:
+    case MODE_VECTOR_FLOAT:
+      {
+	int i;
+	machine_mode inner_mode;
+	gcc_assert (GET_CODE (exp) == CONST_VECTOR);
+
+	inner_mode = GET_MODE_INNER (GET_MODE (exp));
+	for (i = 0; i < XVECLEN (exp, 0); i++)
+	  s390_output_pool_entry (XVECEXP (exp, 0, i),
+				  inner_mode,
+				  i == 0
+				  ? align
+				  : GET_MODE_BITSIZE (inner_mode));
+      }
       break;
 
     default:
@@ -7577,9 +8837,9 @@ find_unused_clobbered_reg (void)
 static void
 s390_reg_clobbered_rtx (rtx setreg, const_rtx set_insn ATTRIBUTE_UNUSED, void *data)
 {
-  int *regs_ever_clobbered = (int *)data;
+  char *regs_ever_clobbered = (char *)data;
   unsigned int i, regno;
-  enum machine_mode mode = GET_MODE (setreg);
+  machine_mode mode = GET_MODE (setreg);
 
   if (GET_CODE (setreg) == SUBREG)
     {
@@ -7605,13 +8865,13 @@ s390_reg_clobbered_rtx (rtx setreg, const_rtx set_insn ATTRIBUTE_UNUSED, void *d
    each of those regs.  */
 
 static void
-s390_regs_ever_clobbered (int *regs_ever_clobbered)
+s390_regs_ever_clobbered (char regs_ever_clobbered[])
 {
   basic_block cur_bb;
-  rtx cur_insn;
+  rtx_insn *cur_insn;
   unsigned int i;
 
-  memset (regs_ever_clobbered, 0, 32 * sizeof (int));
+  memset (regs_ever_clobbered, 0, 32);
 
   /* For non-leaf functions we have to consider all call clobbered regs to be
      clobbered.  */
@@ -7638,19 +8898,47 @@ s390_regs_ever_clobbered (int *regs_ever_clobbered)
      This flag is also set for the unwinding code in libgcc.
      See expand_builtin_unwind_init.  For regs_ever_live this is done by
      reload.  */
-  if (cfun->has_nonlocal_label)
+  if (crtl->saves_all_registers)
     for (i = 0; i < 32; i++)
       if (!call_really_used_regs[i])
 	regs_ever_clobbered[i] = 1;
 
-  FOR_EACH_BB (cur_bb)
+  FOR_EACH_BB_FN (cur_bb, cfun)
     {
       FOR_BB_INSNS (cur_bb, cur_insn)
 	{
-	  if (INSN_P (cur_insn))
-	    note_stores (PATTERN (cur_insn),
-			 s390_reg_clobbered_rtx,
-			 regs_ever_clobbered);
+	  rtx pat;
+
+	  if (!INSN_P (cur_insn))
+	    continue;
+
+	  pat = PATTERN (cur_insn);
+
+	  /* Ignore GPR restore insns.  */
+	  if (epilogue_completed && RTX_FRAME_RELATED_P (cur_insn))
+	    {
+	      if (GET_CODE (pat) == SET
+		  && GENERAL_REG_P (SET_DEST (pat)))
+		{
+		  /* lgdr  */
+		  if (GET_MODE (SET_SRC (pat)) == DImode
+		      && FP_REG_P (SET_SRC (pat)))
+		    continue;
+
+		  /* l / lg  */
+		  if (GET_CODE (SET_SRC (pat)) == MEM)
+		    continue;
+		}
+
+	      /* lm / lmg */
+	      if (GET_CODE (pat) == PARALLEL
+		  && load_multiple_operation (pat, VOIDmode))
+		continue;
+	    }
+
+	  note_stores (pat,
+		       s390_reg_clobbered_rtx,
+		       regs_ever_clobbered);
 	}
     }
 }
@@ -7665,7 +8953,6 @@ static void
 s390_frame_area (int *area_bottom, int *area_top)
 {
   int b, t;
-  int i;
 
   b = INT_MAX;
   t = INT_MIN;
@@ -7686,80 +8973,176 @@ s390_frame_area (int *area_bottom, int *area_top)
     }
 
   if (!TARGET_64BIT)
-    for (i = 2; i < 4; i++)
-      if (cfun_fpr_bit_p (i))
+    {
+      if (cfun_fpr_save_p (FPR4_REGNUM))
 	{
-	  b = MIN (b, cfun_frame_layout.f4_offset + (i - 2) * 8);
-	  t = MAX (t, cfun_frame_layout.f4_offset + (i - 1) * 8);
+	  b = MIN (b, cfun_frame_layout.f4_offset);
+	  t = MAX (t, cfun_frame_layout.f4_offset + 8);
 	}
-
+      if (cfun_fpr_save_p (FPR6_REGNUM))
+	{
+	  b = MIN (b, cfun_frame_layout.f4_offset + 8);
+	  t = MAX (t, cfun_frame_layout.f4_offset + 16);
+	}
+    }
   *area_bottom = b;
   *area_top = t;
 }
-
-/* Fill cfun->machine with info about register usage of current function.
-   Return in CLOBBERED_REGS which GPRs are currently considered set.  */
+/* Update gpr_save_slots in the frame layout trying to make use of
+   FPRs as GPR save slots.
+   This is a helper routine of s390_register_info.  */
 
 static void
-s390_register_info (int clobbered_regs[])
+s390_register_info_gprtofpr ()
 {
+  int save_reg_slot = FPR0_REGNUM;
   int i, j;
 
-  /* Find first and last gpr to be saved.  We trust regs_ever_live
-     data, except that we don't save and restore global registers.
+  if (!TARGET_Z10 || !TARGET_HARD_FLOAT || !crtl->is_leaf)
+    return;
 
-     Also, all registers with special meaning to the compiler need
-     to be handled extra.  */
-
-  s390_regs_ever_clobbered (clobbered_regs);
-
-  /* fprs 8 - 15 are call saved for 64 Bit ABI.  */
-  if (!epilogue_completed)
+  for (i = 15; i >= 6; i--)
     {
-      cfun_frame_layout.fpr_bitmap = 0;
-      cfun_frame_layout.high_fprs = 0;
-      for (i = 16; i <= 31; i++)
+      if (cfun_gpr_save_slot (i) == 0)
+	continue;
+
+      /* Advance to the next FP register which can be used as a
+	 GPR save slot.  */
+      while ((!call_really_used_regs[save_reg_slot]
+	      || df_regs_ever_live_p (save_reg_slot)
+	      || cfun_fpr_save_p (save_reg_slot))
+	     && FP_REGNO_P (save_reg_slot))
+	save_reg_slot++;
+      if (!FP_REGNO_P (save_reg_slot))
 	{
-	  if (call_really_used_regs[i])
-	    continue;
-	  /* During reload we have to use the df_regs_ever_live infos
-	     since reload is marking FPRs used as spill slots there as
-	     live before actually making the code changes.  Without
-	     this we fail during elimination offset verification.  */
-	  if ((clobbered_regs[i]
-	       || (df_regs_ever_live_p (i)
-		   && (reload_in_progress
-		       || crtl->saves_all_registers)))
-	      && !global_regs[i])
-	    {
-	      cfun_set_fpr_bit (i - 16);
-	      if (i >= 24)
-		cfun_frame_layout.high_fprs++;
-	    }
+	  /* We only want to use ldgr/lgdr if we can get rid of
+	     stm/lm entirely.  So undo the gpr slot allocation in
+	     case we ran out of FPR save slots.  */
+	  for (j = 6; j <= 15; j++)
+	    if (FP_REGNO_P (cfun_gpr_save_slot (j)))
+	      cfun_gpr_save_slot (j) = -1;
+	  break;
 	}
+      cfun_gpr_save_slot (i) = save_reg_slot++;
     }
+}
 
-  for (i = 0; i < 16; i++)
-    clobbered_regs[i] = clobbered_regs[i] && !global_regs[i] && !fixed_regs[i];
+/* Set the bits in fpr_bitmap for FPRs which need to be saved due to
+   stdarg.
+   This is a helper routine for s390_register_info.  */
 
-  if (frame_pointer_needed)
-    clobbered_regs[HARD_FRAME_POINTER_REGNUM] = 1;
+static void
+s390_register_info_stdarg_fpr ()
+{
+  int i;
+  int min_fpr;
+  int max_fpr;
+
+  /* Save the FP argument regs for stdarg. f0, f2 for 31 bit and
+     f0-f4 for 64 bit.  */
+  if (!cfun->stdarg
+      || !TARGET_HARD_FLOAT
+      || !cfun->va_list_fpr_size
+      || crtl->args.info.fprs >= FP_ARG_NUM_REG)
+    return;
+
+  min_fpr = crtl->args.info.fprs;
+  max_fpr = min_fpr + cfun->va_list_fpr_size;
+  if (max_fpr > FP_ARG_NUM_REG)
+    max_fpr = FP_ARG_NUM_REG;
+
+  for (i = min_fpr; i < max_fpr; i++)
+    cfun_set_fpr_save (i + FPR0_REGNUM);
+}
+
+/* Reserve the GPR save slots for GPRs which need to be saved due to
+   stdarg.
+   This is a helper routine for s390_register_info.  */
+
+static void
+s390_register_info_stdarg_gpr ()
+{
+  int i;
+  int min_gpr;
+  int max_gpr;
+
+  if (!cfun->stdarg
+      || !cfun->va_list_gpr_size
+      || crtl->args.info.gprs >= GP_ARG_NUM_REG)
+    return;
+
+  min_gpr = crtl->args.info.gprs;
+  max_gpr = min_gpr + cfun->va_list_gpr_size;
+  if (max_gpr > GP_ARG_NUM_REG)
+    max_gpr = GP_ARG_NUM_REG;
+
+  for (i = min_gpr; i < max_gpr; i++)
+    cfun_gpr_save_slot (2 + i) = -1;
+}
+
+/* The GPR and FPR save slots in cfun->machine->frame_layout are set
+   for registers which need to be saved in function prologue.
+   This function can be used until the insns emitted for save/restore
+   of the regs are visible in the RTL stream.  */
+
+static void
+s390_register_info ()
+{
+  int i, j;
+  char clobbered_regs[32];
+
+  gcc_assert (!epilogue_completed);
+
+  if (reload_completed)
+    /* After reload we rely on our own routine to determine which
+       registers need saving.  */
+    s390_regs_ever_clobbered (clobbered_regs);
+  else
+    /* During reload we use regs_ever_live as a base since reload
+       does changes in there which we otherwise would not be aware
+       of.  */
+    for (i = 0; i < 32; i++)
+      clobbered_regs[i] = df_regs_ever_live_p (i);
+
+  for (i = 0; i < 32; i++)
+    clobbered_regs[i] = clobbered_regs[i] && !global_regs[i];
+
+  /* Mark the call-saved FPRs which need to be saved.
+     This needs to be done before checking the special GPRs since the
+     stack pointer usage depends on whether high FPRs have to be saved
+     or not.  */
+  cfun_frame_layout.fpr_bitmap = 0;
+  cfun_frame_layout.high_fprs = 0;
+  for (i = FPR0_REGNUM; i <= FPR15_REGNUM; i++)
+    if (clobbered_regs[i] && !call_really_used_regs[i])
+      {
+	cfun_set_fpr_save (i);
+	if (i >= FPR8_REGNUM)
+	  cfun_frame_layout.high_fprs++;
+      }
 
   if (flag_pic)
     clobbered_regs[PIC_OFFSET_TABLE_REGNUM]
-      |= df_regs_ever_live_p (PIC_OFFSET_TABLE_REGNUM);
+      |= !!df_regs_ever_live_p (PIC_OFFSET_TABLE_REGNUM);
 
   clobbered_regs[BASE_REGNUM]
     |= (cfun->machine->base_reg
-        && REGNO (cfun->machine->base_reg) == BASE_REGNUM);
+	&& REGNO (cfun->machine->base_reg) == BASE_REGNUM);
 
+  clobbered_regs[HARD_FRAME_POINTER_REGNUM]
+    |= !!frame_pointer_needed;
+
+  /* On pre z900 machines this might take until machine dependent
+     reorg to decide.
+     save_return_addr_p will only be set on non-zarch machines so
+     there is no risk that r14 goes into an FPR instead of a stack
+     slot.  */
   clobbered_regs[RETURN_REGNUM]
     |= (!crtl->is_leaf
 	|| TARGET_TPF_PROFILING
 	|| cfun->machine->split_branches_pending_p
 	|| cfun_frame_layout.save_return_addr_p
-	|| crtl->calls_eh_return
-	|| cfun->stdarg);
+	|| crtl->calls_eh_return);
 
   clobbered_regs[STACK_POINTER_REGNUM]
     |= (!crtl->is_leaf
@@ -7767,104 +9150,85 @@ s390_register_info (int clobbered_regs[])
 	|| cfun_save_high_fprs_p
 	|| get_frame_size () > 0
 	|| (reload_completed && cfun_frame_layout.frame_size > 0)
-	|| cfun->calls_alloca
-	|| cfun->stdarg);
+	|| cfun->calls_alloca);
+
+  memset (cfun_frame_layout.gpr_save_slots, 0, 16);
 
   for (i = 6; i < 16; i++)
-    if (df_regs_ever_live_p (i) || clobbered_regs[i])
-      break;
-  for (j = 15; j > i; j--)
-    if (df_regs_ever_live_p (j) || clobbered_regs[j])
-      break;
+    if (clobbered_regs[i])
+      cfun_gpr_save_slot (i) = -1;
 
-  if (i == 16)
-    {
-      /* Nothing to save/restore.  */
-      cfun_frame_layout.first_save_gpr_slot = -1;
-      cfun_frame_layout.last_save_gpr_slot = -1;
-      cfun_frame_layout.first_save_gpr = -1;
-      cfun_frame_layout.first_restore_gpr = -1;
-      cfun_frame_layout.last_save_gpr = -1;
-      cfun_frame_layout.last_restore_gpr = -1;
-    }
-  else
-    {
-      /* Save slots for gprs from i to j.  */
-      cfun_frame_layout.first_save_gpr_slot = i;
-      cfun_frame_layout.last_save_gpr_slot = j;
+  s390_register_info_stdarg_fpr ();
+  s390_register_info_gprtofpr ();
 
-      for (i = cfun_frame_layout.first_save_gpr_slot;
-	   i < cfun_frame_layout.last_save_gpr_slot + 1;
-	   i++)
-	if (clobbered_regs[i])
-	  break;
+  /* First find the range of GPRs to be restored.  Vararg regs don't
+     need to be restored so we do it before assigning slots to the
+     vararg GPRs.  */
+  for (i = 0; i < 16 && cfun_gpr_save_slot (i) != -1; i++);
+  for (j = 15; j > i && cfun_gpr_save_slot (j) != -1; j--);
+  cfun_frame_layout.first_restore_gpr = (i == 16) ? -1 : i;
+  cfun_frame_layout.last_restore_gpr = (i == 16) ? -1 : j;
 
-      for (j = cfun_frame_layout.last_save_gpr_slot; j > i; j--)
-	if (clobbered_regs[j])
-	  break;
+  /* stdarg functions might need to save GPRs 2 to 6.  This might
+     override the GPR->FPR save decision made above for r6 since
+     vararg regs must go to the stack.  */
+  s390_register_info_stdarg_gpr ();
 
-      if (i == cfun_frame_layout.last_save_gpr_slot + 1)
-	{
-	  /* Nothing to save/restore.  */
-	  cfun_frame_layout.first_save_gpr = -1;
-	  cfun_frame_layout.first_restore_gpr = -1;
-	  cfun_frame_layout.last_save_gpr = -1;
-	  cfun_frame_layout.last_restore_gpr = -1;
-	}
-      else
-	{
-	  /* Save / Restore from gpr i to j.  */
-	  cfun_frame_layout.first_save_gpr = i;
-	  cfun_frame_layout.first_restore_gpr = i;
-	  cfun_frame_layout.last_save_gpr = j;
-	  cfun_frame_layout.last_restore_gpr = j;
-	}
-    }
+  /* Now the range of GPRs which need saving.  */
+  for (i = 0; i < 16 && cfun_gpr_save_slot (i) != -1; i++);
+  for (j = 15; j > i && cfun_gpr_save_slot (j) != -1; j--);
+  cfun_frame_layout.first_save_gpr = (i == 16) ? -1 : i;
+  cfun_frame_layout.last_save_gpr = (i == 16) ? -1 : j;
+}
 
-  if (cfun->stdarg)
-    {
-      /* Varargs functions need to save gprs 2 to 6.  */
-      if (cfun->va_list_gpr_size
-	  && crtl->args.info.gprs < GP_ARG_NUM_REG)
-	{
-	  int min_gpr = crtl->args.info.gprs;
-	  int max_gpr = min_gpr + cfun->va_list_gpr_size;
-	  if (max_gpr > GP_ARG_NUM_REG)
-	    max_gpr = GP_ARG_NUM_REG;
+/* This function is called by s390_optimize_prologue in order to get
+   rid of unnecessary GPR save/restore instructions.  The register info
+   for the GPRs is re-computed and the ranges are re-calculated.  */
 
-	  if (cfun_frame_layout.first_save_gpr == -1
-	      || cfun_frame_layout.first_save_gpr > 2 + min_gpr)
-	    {
-	      cfun_frame_layout.first_save_gpr = 2 + min_gpr;
-	      cfun_frame_layout.first_save_gpr_slot = 2 + min_gpr;
-	    }
+static void
+s390_optimize_register_info ()
+{
+  char clobbered_regs[32];
+  int i, j;
 
-	  if (cfun_frame_layout.last_save_gpr == -1
-	      || cfun_frame_layout.last_save_gpr < 2 + max_gpr - 1)
-	    {
-	      cfun_frame_layout.last_save_gpr = 2 + max_gpr - 1;
-	      cfun_frame_layout.last_save_gpr_slot = 2 + max_gpr - 1;
-	    }
-	}
+  gcc_assert (epilogue_completed);
+  gcc_assert (!cfun->machine->split_branches_pending_p);
 
-      /* Mark f0, f2 for 31 bit and f0-f4 for 64 bit to be saved.  */
-      if (TARGET_HARD_FLOAT && cfun->va_list_fpr_size
-	  && crtl->args.info.fprs < FP_ARG_NUM_REG)
-	{
-	  int min_fpr = crtl->args.info.fprs;
-	  int max_fpr = min_fpr + cfun->va_list_fpr_size;
-	  if (max_fpr > FP_ARG_NUM_REG)
-	    max_fpr = FP_ARG_NUM_REG;
+  s390_regs_ever_clobbered (clobbered_regs);
 
-	  /* ??? This is currently required to ensure proper location
-	     of the fpr save slots within the va_list save area.  */
-	  if (TARGET_PACKED_STACK)
-	    min_fpr = 0;
+  for (i = 0; i < 32; i++)
+    clobbered_regs[i] = clobbered_regs[i] && !global_regs[i];
 
-	  for (i = min_fpr; i < max_fpr; i++)
-	    cfun_set_fpr_bit (i);
-	}
-    }
+  /* There is still special treatment needed for cases invisible to
+     s390_regs_ever_clobbered.  */
+  clobbered_regs[RETURN_REGNUM]
+    |= (TARGET_TPF_PROFILING
+	/* When expanding builtin_return_addr in ESA mode we do not
+	   know whether r14 will later be needed as scratch reg when
+	   doing branch splitting.  So the builtin always accesses the
+	   r14 save slot and we need to stick to the save/restore
+	   decision for r14 even if it turns out that it didn't get
+	   clobbered.  */
+	|| cfun_frame_layout.save_return_addr_p
+	|| crtl->calls_eh_return);
+
+  memset (cfun_frame_layout.gpr_save_slots, 0, 6);
+
+  for (i = 6; i < 16; i++)
+    if (!clobbered_regs[i])
+      cfun_gpr_save_slot (i) = 0;
+
+  for (i = 0; i < 16 && cfun_gpr_save_slot (i) != -1; i++);
+  for (j = 15; j > i && cfun_gpr_save_slot (j) != -1; j--);
+  cfun_frame_layout.first_restore_gpr = (i == 16) ? -1 : i;
+  cfun_frame_layout.last_restore_gpr = (i == 16) ? -1 : j;
+
+  s390_register_info_stdarg_gpr ();
+
+  for (i = 0; i < 16 && cfun_gpr_save_slot (i) != -1; i++);
+  for (j = 15; j > i && cfun_gpr_save_slot (j) != -1; j--);
+  cfun_frame_layout.first_save_gpr = (i == 16) ? -1 : i;
+  cfun_frame_layout.last_save_gpr = (i == 16) ? -1 : j;
 }
 
 /* Fill cfun->machine with info about frame of current function.  */
@@ -7872,14 +9236,32 @@ s390_register_info (int clobbered_regs[])
 static void
 s390_frame_info (void)
 {
-  int i;
+  HOST_WIDE_INT lowest_offset;
+
+  cfun_frame_layout.first_save_gpr_slot = cfun_frame_layout.first_save_gpr;
+  cfun_frame_layout.last_save_gpr_slot = cfun_frame_layout.last_save_gpr;
+
+  /* The va_arg builtin uses a constant distance of 16 *
+     UNITS_PER_LONG (r0-r15) to reach the FPRs from the reg_save_area
+     pointer.  So even if we are going to save the stack pointer in an
+     FPR we need the stack space in order to keep the offsets
+     correct.  */
+  if (cfun->stdarg && cfun_save_arg_fprs_p)
+    {
+      cfun_frame_layout.last_save_gpr_slot = STACK_POINTER_REGNUM;
+
+      if (cfun_frame_layout.first_save_gpr_slot == -1)
+	cfun_frame_layout.first_save_gpr_slot = STACK_POINTER_REGNUM;
+    }
 
   cfun_frame_layout.frame_size = get_frame_size ();
   if (!TARGET_64BIT && cfun_frame_layout.frame_size > 0x7fff0000)
-    fatal_error ("total size of local variables exceeds architecture limit");
+    fatal_error (input_location,
+		 "total size of local variables exceeds architecture limit");
 
   if (!TARGET_PACKED_STACK)
     {
+      /* Fixed stack layout.  */
       cfun_frame_layout.backchain_offset = 0;
       cfun_frame_layout.f0_offset = 16 * UNITS_PER_LONG;
       cfun_frame_layout.f4_offset = cfun_frame_layout.f0_offset + 2 * 8;
@@ -7887,93 +9269,89 @@ s390_frame_info (void)
       cfun_frame_layout.gprs_offset = (cfun_frame_layout.first_save_gpr_slot
 				       * UNITS_PER_LONG);
     }
-  else if (TARGET_BACKCHAIN) /* kernel stack layout */
+  else if (TARGET_BACKCHAIN)
     {
+      /* Kernel stack layout - packed stack, backchain, no float  */
+      gcc_assert (TARGET_SOFT_FLOAT);
       cfun_frame_layout.backchain_offset = (STACK_POINTER_OFFSET
 					    - UNITS_PER_LONG);
+
+      /* The distance between the backchain and the return address
+	 save slot must not change.  So we always need a slot for the
+	 stack pointer which resides in between.  */
+      cfun_frame_layout.last_save_gpr_slot = STACK_POINTER_REGNUM;
+
       cfun_frame_layout.gprs_offset
-	= (cfun_frame_layout.backchain_offset
-	   - (STACK_POINTER_REGNUM - cfun_frame_layout.first_save_gpr_slot + 1)
-	   * UNITS_PER_LONG);
+	= cfun_frame_layout.backchain_offset - cfun_gprs_save_area_size;
 
-      if (TARGET_64BIT)
-	{
-	  cfun_frame_layout.f4_offset
-	    = (cfun_frame_layout.gprs_offset
-	       - 8 * (cfun_fpr_bit_p (2) + cfun_fpr_bit_p (3)));
-
-	  cfun_frame_layout.f0_offset
-	    = (cfun_frame_layout.f4_offset
-	       - 8 * (cfun_fpr_bit_p (0) + cfun_fpr_bit_p (1)));
-	}
-      else
-	{
-	  /* On 31 bit we have to care about alignment of the
-	     floating point regs to provide fastest access.  */
-	  cfun_frame_layout.f0_offset
-	    = ((cfun_frame_layout.gprs_offset
-		& ~(STACK_BOUNDARY / BITS_PER_UNIT - 1))
-	       - 8 * (cfun_fpr_bit_p (0) + cfun_fpr_bit_p (1)));
-
-	  cfun_frame_layout.f4_offset
-	    = (cfun_frame_layout.f0_offset
-	       - 8 * (cfun_fpr_bit_p (2) + cfun_fpr_bit_p (3)));
-	}
+      /* FPRs will not be saved.  Nevertheless pick sane values to
+	 keep area calculations valid.  */
+      cfun_frame_layout.f0_offset =
+	cfun_frame_layout.f4_offset =
+	cfun_frame_layout.f8_offset = cfun_frame_layout.gprs_offset;
     }
-  else /* no backchain */
+  else
     {
-      cfun_frame_layout.f4_offset
-	= (STACK_POINTER_OFFSET
-	   - 8 * (cfun_fpr_bit_p (2) + cfun_fpr_bit_p (3)));
+      int num_fprs;
 
-      cfun_frame_layout.f0_offset
-	= (cfun_frame_layout.f4_offset
-	   - 8 * (cfun_fpr_bit_p (0) + cfun_fpr_bit_p (1)));
+      /* Packed stack layout without backchain.  */
+
+      /* With stdarg FPRs need their dedicated slots.  */
+      num_fprs = (TARGET_64BIT && cfun->stdarg ? 2
+		  : (cfun_fpr_save_p (FPR4_REGNUM) +
+		     cfun_fpr_save_p (FPR6_REGNUM)));
+      cfun_frame_layout.f4_offset = STACK_POINTER_OFFSET - 8 * num_fprs;
+
+      num_fprs = (cfun->stdarg ? 2
+		  : (cfun_fpr_save_p (FPR0_REGNUM)
+		     + cfun_fpr_save_p (FPR2_REGNUM)));
+      cfun_frame_layout.f0_offset = cfun_frame_layout.f4_offset - 8 * num_fprs;
 
       cfun_frame_layout.gprs_offset
 	= cfun_frame_layout.f0_offset - cfun_gprs_save_area_size;
+
+      cfun_frame_layout.f8_offset = (cfun_frame_layout.gprs_offset
+				     - cfun_frame_layout.high_fprs * 8);
     }
 
+  if (cfun_save_high_fprs_p)
+    cfun_frame_layout.frame_size += cfun_frame_layout.high_fprs * 8;
+
+  if (!crtl->is_leaf)
+    cfun_frame_layout.frame_size += crtl->outgoing_args_size;
+
+  /* In the following cases we have to allocate a STACK_POINTER_OFFSET
+     sized area at the bottom of the stack.  This is required also for
+     leaf functions.  When GCC generates a local stack reference it
+     will always add STACK_POINTER_OFFSET to all these references.  */
   if (crtl->is_leaf
       && !TARGET_TPF_PROFILING
       && cfun_frame_layout.frame_size == 0
-      && !cfun_save_high_fprs_p
-      && !cfun->calls_alloca
-      && !cfun->stdarg)
+      && !cfun->calls_alloca)
     return;
 
-  if (!TARGET_PACKED_STACK)
-    cfun_frame_layout.frame_size += (STACK_POINTER_OFFSET
-				     + crtl->outgoing_args_size
-				     + cfun_frame_layout.high_fprs * 8);
+  /* Calculate the number of bytes we have used in our own register
+     save area.  With the packed stack layout we can re-use the
+     remaining bytes for normal stack elements.  */
+
+  if (TARGET_PACKED_STACK)
+    lowest_offset = MIN (MIN (cfun_frame_layout.f0_offset,
+			      cfun_frame_layout.f4_offset),
+			 cfun_frame_layout.gprs_offset);
   else
-    {
-      if (TARGET_BACKCHAIN)
-	cfun_frame_layout.frame_size += UNITS_PER_LONG;
+    lowest_offset = 0;
 
-      /* No alignment trouble here because f8-f15 are only saved under
-	 64 bit.  */
-      cfun_frame_layout.f8_offset = (MIN (MIN (cfun_frame_layout.f0_offset,
-					       cfun_frame_layout.f4_offset),
-					  cfun_frame_layout.gprs_offset)
-				     - cfun_frame_layout.high_fprs * 8);
+  if (TARGET_BACKCHAIN)
+    lowest_offset = MIN (lowest_offset, cfun_frame_layout.backchain_offset);
 
-      cfun_frame_layout.frame_size += cfun_frame_layout.high_fprs * 8;
+  cfun_frame_layout.frame_size += STACK_POINTER_OFFSET - lowest_offset;
 
-      for (i = 0; i < 8; i++)
-	if (cfun_fpr_bit_p (i))
-	  cfun_frame_layout.frame_size += 8;
-
-      cfun_frame_layout.frame_size += cfun_gprs_save_area_size;
-
-      /* If under 31 bit an odd number of gprs has to be saved we have to adjust
-	 the frame size to sustain 8 byte alignment of stack frames.  */
-      cfun_frame_layout.frame_size = ((cfun_frame_layout.frame_size +
-				       STACK_BOUNDARY / BITS_PER_UNIT - 1)
-				      & ~(STACK_BOUNDARY / BITS_PER_UNIT - 1));
-
-      cfun_frame_layout.frame_size += crtl->outgoing_args_size;
-    }
+  /* If under 31 bit an odd number of gprs has to be saved we have to
+     adjust the frame size to sustain 8 byte alignment of stack
+     frames.  */
+  cfun_frame_layout.frame_size = ((cfun_frame_layout.frame_size +
+				   STACK_BOUNDARY / BITS_PER_UNIT - 1)
+				  & ~(STACK_BOUNDARY / BITS_PER_UNIT - 1));
 }
 
 /* Generate frame layout.  Fills in register and frame data for the current
@@ -7985,7 +9363,8 @@ s390_init_frame_layout (void)
 {
   HOST_WIDE_INT frame_size;
   int base_used;
-  int clobbered_regs[32];
+
+  gcc_assert (!reload_completed);
 
   /* On S/390 machines, we may need to perform branch splitting, which
      will require both base and return address register.  We have no
@@ -8014,7 +9393,7 @@ s390_init_frame_layout (void)
       else
 	cfun->machine->base_reg = gen_rtx_REG (Pmode, BASE_REGNUM);
 
-      s390_register_info (clobbered_regs);
+      s390_register_info ();
       s390_frame_info ();
     }
   while (frame_size != cfun_frame_layout.frame_size);
@@ -8039,17 +9418,17 @@ s390_optimize_nonescaping_tx (void)
   basic_block tbegin_bb = NULL;
   basic_block tend_bb = NULL;
   basic_block bb;
-  rtx insn;
+  rtx_insn *insn;
   bool result = true;
   int bb_index;
-  rtx tbegin_insn = NULL_RTX;
+  rtx_insn *tbegin_insn = NULL;
 
   if (!cfun->machine->tbegin_p)
     return;
 
-  for (bb_index = 0; bb_index < n_basic_blocks; bb_index++)
+  for (bb_index = 0; bb_index < n_basic_blocks_for_fn (cfun); bb_index++)
     {
-      bb = BASIC_BLOCK (bb_index);
+      bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
 
       if (!bb)
 	continue;
@@ -8073,7 +9452,7 @@ s390_optimize_nonescaping_tx (void)
 
 	  if (XINT (SET_SRC (pat), 1) == UNSPECV_TBEGIN)
 	    {
-	      rtx tmp;
+	      rtx_insn *tmp;
 
 	      tbegin_insn = insn;
 
@@ -8177,37 +9556,30 @@ s390_optimize_nonescaping_tx (void)
   return;
 }
 
-/* Update frame layout.  Recompute actual register save data based on
-   current info and update regs_ever_live for the special registers.
-   May be called multiple times, but may never cause *more* registers
-   to be saved than s390_init_frame_layout allocated room for.  */
-
-static void
-s390_update_frame_layout (void)
-{
-  int clobbered_regs[32];
-
-  s390_register_info (clobbered_regs);
-
-  df_set_regs_ever_live (BASE_REGNUM,
-			 clobbered_regs[BASE_REGNUM] ? true : false);
-  df_set_regs_ever_live (RETURN_REGNUM,
-			 clobbered_regs[RETURN_REGNUM] ? true : false);
-  df_set_regs_ever_live (STACK_POINTER_REGNUM,
-			 clobbered_regs[STACK_POINTER_REGNUM] ? true : false);
-
-  if (cfun->machine->base_reg)
-    df_set_regs_ever_live (REGNO (cfun->machine->base_reg), true);
-}
-
 /* Return true if it is legal to put a value with MODE into REGNO.  */
 
 bool
-s390_hard_regno_mode_ok (unsigned int regno, enum machine_mode mode)
+s390_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 {
+  if (!TARGET_VX && VECTOR_NOFP_REGNO_P (regno))
+    return false;
+
   switch (REGNO_REG_CLASS (regno))
     {
+    case VEC_REGS:
+      return ((GET_MODE_CLASS (mode) == MODE_INT
+	       && s390_class_max_nregs (VEC_REGS, mode) == 1)
+	      || mode == DFmode
+	      || s390_vector_mode_supported_p (mode));
+      break;
     case FP_REGS:
+      if (TARGET_VX
+	  && ((GET_MODE_CLASS (mode) == MODE_INT
+	       && s390_class_max_nregs (FP_REGS, mode) == 1)
+	      || mode == DFmode
+	      || s390_vector_mode_supported_p (mode)))
+	return true;
+
       if (REGNO_PAIR_OK (regno, mode))
 	{
 	  if (mode == SImode || mode == DImode)
@@ -8260,6 +9632,31 @@ s390_hard_regno_rename_ok (unsigned int old_reg, unsigned int new_reg)
 	|| REGNO (cfun->machine->base_reg) == new_reg)
       return false;
 
+  /* Prevent regrename from using call-saved regs which haven't
+     actually been saved.  This is necessary since regrename assumes
+     the backend save/restore decisions are based on
+     df_regs_ever_live.  Since we have our own routine we have to tell
+     regrename manually about it.  */
+  if (GENERAL_REGNO_P (new_reg)
+      && !call_really_used_regs[new_reg]
+      && cfun_gpr_save_slot (new_reg) == 0)
+    return false;
+
+  return true;
+}
+
+/* Return nonzero if register REGNO can be used as a scratch register
+   in peephole2.  */
+
+static bool
+s390_hard_regno_scratch_ok (unsigned int regno)
+{
+  /* See s390_hard_regno_rename_ok.  */
+  if (GENERAL_REGNO_P (regno)
+      && !call_really_used_regs[regno]
+      && cfun_gpr_save_slot (regno) == 0)
+    return false;
+
   return true;
 }
 
@@ -8267,21 +9664,95 @@ s390_hard_regno_rename_ok (unsigned int old_reg, unsigned int new_reg)
    in a register of class RCLASS.  */
 
 int
-s390_class_max_nregs (enum reg_class rclass, enum machine_mode mode)
+s390_class_max_nregs (enum reg_class rclass, machine_mode mode)
 {
+  int reg_size;
+  bool reg_pair_required_p = false;
+
   switch (rclass)
     {
     case FP_REGS:
+    case VEC_REGS:
+      reg_size = TARGET_VX ? 16 : 8;
+
+      /* TF and TD modes would fit into a VR but we put them into a
+	 register pair since we do not have 128bit FP instructions on
+	 full VRs.  */
+      if (TARGET_VX
+	  && SCALAR_FLOAT_MODE_P (mode)
+	  && GET_MODE_SIZE (mode) >= 16)
+	reg_pair_required_p = true;
+
+      /* Even if complex types would fit into a single FPR/VR we force
+	 them into a register pair to deal with the parts more easily.
+	 (FIXME: What about complex ints?)  */
       if (GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-	return 2 * ((GET_MODE_SIZE (mode) / 2 + 8 - 1) / 8);
-      else
-	return (GET_MODE_SIZE (mode) + 8 - 1) / 8;
+	reg_pair_required_p = true;
+      break;
     case ACCESS_REGS:
-      return (GET_MODE_SIZE (mode) + 4 - 1) / 4;
+      reg_size = 4;
+      break;
     default:
+      reg_size = UNITS_PER_WORD;
       break;
     }
-  return (GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+
+  if (reg_pair_required_p)
+    return 2 * ((GET_MODE_SIZE (mode) / 2 + reg_size - 1) / reg_size);
+
+  return (GET_MODE_SIZE (mode) + reg_size - 1) / reg_size;
+}
+
+/* Return TRUE if changing mode from FROM to TO should not be allowed
+   for register class CLASS.  */
+
+int
+s390_cannot_change_mode_class (machine_mode from_mode,
+			       machine_mode to_mode,
+			       enum reg_class rclass)
+{
+  machine_mode small_mode;
+  machine_mode big_mode;
+
+  if (GET_MODE_SIZE (from_mode) == GET_MODE_SIZE (to_mode))
+    return 0;
+
+  if (GET_MODE_SIZE (from_mode) < GET_MODE_SIZE (to_mode))
+    {
+      small_mode = from_mode;
+      big_mode = to_mode;
+    }
+  else
+    {
+      small_mode = to_mode;
+      big_mode = from_mode;
+    }
+
+  /* Values residing in VRs are little-endian style.  All modes are
+     placed left-aligned in an VR.  This means that we cannot allow
+     switching between modes with differing sizes.  Also if the vector
+     facility is available we still place TFmode values in VR register
+     pairs, since the only instructions we have operating on TFmodes
+     only deal with register pairs.  Therefore we have to allow DFmode
+     subregs of TFmodes to enable the TFmode splitters.  */
+  if (reg_classes_intersect_p (VEC_REGS, rclass)
+      && (GET_MODE_SIZE (small_mode) < 8
+	  || s390_class_max_nregs (VEC_REGS, big_mode) == 1))
+    return 1;
+
+  /* Likewise for access registers, since they have only half the
+     word size on 64-bit.  */
+  if (reg_classes_intersect_p (ACCESS_REGS, rclass))
+    return 1;
+
+  return 0;
+}
+
+/* Return true if we use LRA instead of reload pass.  */
+static bool
+s390_lra_p (void)
+{
+  return s390_lra_flag;
 }
 
 /* Return true if register FROM can be eliminated via register TO.  */
@@ -8332,7 +9803,6 @@ HOST_WIDE_INT
 s390_initial_elimination_offset (int from, int to)
 {
   HOST_WIDE_INT offset;
-  int index;
 
   /* ??? Why are we called for non-eliminable pairs?  */
   if (!s390_can_eliminate (from, to))
@@ -8353,10 +9823,26 @@ s390_initial_elimination_offset (int from, int to)
 
     case RETURN_ADDRESS_POINTER_REGNUM:
       s390_init_frame_layout ();
-      index = RETURN_REGNUM - cfun_frame_layout.first_save_gpr_slot;
-      gcc_assert (index >= 0);
-      offset = cfun_frame_layout.frame_size + cfun_frame_layout.gprs_offset;
-      offset += index * UNITS_PER_LONG;
+
+      if (cfun_frame_layout.first_save_gpr_slot == -1)
+	{
+	  /* If it turns out that for stdarg nothing went into the reg
+	     save area we also do not need the return address
+	     pointer.  */
+	  if (cfun->stdarg && !cfun_save_arg_fprs_p)
+	    return 0;
+
+	  gcc_unreachable ();
+	}
+
+      /* In order to make the following work it is not necessary for
+	 r14 to have a save slot.  It is sufficient if one other GPR
+	 got one.  Since the GPRs are always stored without gaps we
+	 are able to calculate where the r14 save slot would
+	 reside.  */
+      offset = (cfun_frame_layout.frame_size + cfun_frame_layout.gprs_offset +
+		(RETURN_REGNUM - cfun_frame_layout.first_save_gpr_slot) *
+		UNITS_PER_LONG);
       break;
 
     case BASE_REGNUM:
@@ -8494,6 +9980,23 @@ save_gprs (rtx base, int offset, int first, int last)
 
       addr = plus_constant (Pmode, base,
 			    offset + (start - first) * UNITS_PER_LONG);
+
+      if (start == last)
+	{
+	  if (TARGET_64BIT)
+	    note = gen_movdi (gen_rtx_MEM (Pmode, addr),
+			      gen_rtx_REG (Pmode, start));
+	  else
+	    note = gen_movsi (gen_rtx_MEM (Pmode, addr),
+			      gen_rtx_REG (Pmode, start));
+	  note = PATTERN (note);
+
+	  add_reg_note (insn, REG_FRAME_RELATED_EXPR, note);
+	  RTX_FRAME_RELATED_P (insn) = 1;
+
+	  return insn;
+	}
+
       note = gen_store_multiple (gen_rtx_MEM (Pmode, addr),
 				 gen_rtx_REG (Pmode, start),
 				 GEN_INT (last - start + 1));
@@ -8534,22 +10037,24 @@ restore_gprs (rtx base, int offset, int first, int last)
       else
         insn = gen_movsi (gen_rtx_REG (Pmode, first), addr);
 
+      RTX_FRAME_RELATED_P (insn) = 1;
       return insn;
     }
 
   insn = gen_load_multiple (gen_rtx_REG (Pmode, first),
 			    addr,
 			    GEN_INT (last - first + 1));
+  RTX_FRAME_RELATED_P (insn) = 1;
   return insn;
 }
 
 /* Return insn sequence to load the GOT register.  */
 
 static GTY(()) rtx got_symbol;
-rtx
+rtx_insn *
 s390_load_got (void)
 {
-  rtx insns;
+  rtx_insn *insns;
 
   /* We cannot use pic_offset_table_rtx here since we use this
      function also for non-pic if __tls_get_offset is called and in
@@ -8604,6 +10109,116 @@ s390_emit_stack_tie (void)
   emit_insn (gen_stack_tie (mem));
 }
 
+/* Copy GPRS into FPR save slots.  */
+
+static void
+s390_save_gprs_to_fprs (void)
+{
+  int i;
+
+  if (!TARGET_Z10 || !TARGET_HARD_FLOAT || !crtl->is_leaf)
+    return;
+
+  for (i = 6; i < 16; i++)
+    {
+      if (FP_REGNO_P (cfun_gpr_save_slot (i)))
+	{
+	  rtx_insn *insn =
+	    emit_move_insn (gen_rtx_REG (DImode, cfun_gpr_save_slot (i)),
+			    gen_rtx_REG (DImode, i));
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	}
+    }
+}
+
+/* Restore GPRs from FPR save slots.  */
+
+static void
+s390_restore_gprs_from_fprs (void)
+{
+  int i;
+
+  if (!TARGET_Z10 || !TARGET_HARD_FLOAT || !crtl->is_leaf)
+    return;
+
+  for (i = 6; i < 16; i++)
+    {
+      if (FP_REGNO_P (cfun_gpr_save_slot (i)))
+	{
+	  rtx_insn *insn =
+	    emit_move_insn (gen_rtx_REG (DImode, i),
+			    gen_rtx_REG (DImode, cfun_gpr_save_slot (i)));
+	  df_set_regs_ever_live (i, true);
+	  add_reg_note (insn, REG_CFA_RESTORE, gen_rtx_REG (DImode, i));
+	  if (i == STACK_POINTER_REGNUM)
+	    add_reg_note (insn, REG_CFA_DEF_CFA,
+			  plus_constant (Pmode, stack_pointer_rtx,
+					 STACK_POINTER_OFFSET));
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	}
+    }
+}
+
+
+/* A pass run immediately before shrink-wrapping and prologue and epilogue
+   generation.  */
+
+namespace {
+
+const pass_data pass_data_s390_early_mach =
+{
+  RTL_PASS, /* type */
+  "early_mach", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_MACH_DEP, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  ( TODO_df_verify | TODO_df_finish ), /* todo_flags_finish */
+};
+
+class pass_s390_early_mach : public rtl_opt_pass
+{
+public:
+  pass_s390_early_mach (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_s390_early_mach, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual unsigned int execute (function *);
+
+}; // class pass_s390_early_mach
+
+unsigned int
+pass_s390_early_mach::execute (function *fun)
+{
+  rtx_insn *insn;
+
+  /* Try to get rid of the FPR clobbers.  */
+  s390_optimize_nonescaping_tx ();
+
+  /* Re-compute register info.  */
+  s390_register_info ();
+
+  /* If we're using a base register, ensure that it is always valid for
+     the first non-prologue instruction.  */
+  if (fun->machine->base_reg)
+    emit_insn_at_entry (gen_main_pool (fun->machine->base_reg));
+
+  /* Annotate all constant pool references to let the scheduler know
+     they implicitly use the base register.  */
+  for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
+    if (INSN_P (insn))
+      {
+	annotate_constant_pool_refs (&PATTERN (insn));
+	df_insn_rescan (insn);
+      }
+  return 0;
+}
+
+} // anon namespace
+
 /* Expand the prologue into a bunch of separate insns.  */
 
 void
@@ -8615,26 +10230,6 @@ s390_emit_prologue (void)
   int offset;
   int next_fpr = 0;
 
-  /* Try to get rid of the FPR clobbers.  */
-  s390_optimize_nonescaping_tx ();
-
-  /* Complete frame layout.  */
-  s390_update_frame_layout ();
-
-  /* Annotate all constant pool references to let the scheduler know
-     they implicitly use the base register.  */
-
-  push_topmost_sequence ();
-
-  for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
-    if (INSN_P (insn))
-      {
-	annotate_constant_pool_refs (&PATTERN (insn));
-	df_insn_rescan (insn);
-      }
-
-  pop_topmost_sequence ();
-
   /* Choose best register to use for temp use within prologue.
      See below for why TPF must use the register 1.  */
 
@@ -8644,6 +10239,8 @@ s390_emit_prologue (void)
     temp_reg = gen_rtx_REG (Pmode, RETURN_REGNUM);
   else
     temp_reg = gen_rtx_REG (Pmode, 1);
+
+  s390_save_gprs_to_fprs ();
 
   /* Save call saved gprs.  */
   if (cfun_frame_layout.first_save_gpr != -1)
@@ -8665,32 +10262,32 @@ s390_emit_prologue (void)
   offset = cfun_frame_layout.f0_offset;
 
   /* Save f0 and f2.  */
-  for (i = 0; i < 2; i++)
+  for (i = FPR0_REGNUM; i <= FPR0_REGNUM + 1; i++)
     {
-      if (cfun_fpr_bit_p (i))
+      if (cfun_fpr_save_p (i))
 	{
-	  save_fpr (stack_pointer_rtx, offset, i + 16);
+	  save_fpr (stack_pointer_rtx, offset, i);
 	  offset += 8;
 	}
-      else if (!TARGET_PACKED_STACK)
-	  offset += 8;
+      else if (!TARGET_PACKED_STACK || cfun->stdarg)
+	offset += 8;
     }
 
   /* Save f4 and f6.  */
   offset = cfun_frame_layout.f4_offset;
-  for (i = 2; i < 4; i++)
+  for (i = FPR4_REGNUM; i <= FPR4_REGNUM + 1; i++)
     {
-      if (cfun_fpr_bit_p (i))
+      if (cfun_fpr_save_p (i))
 	{
-	  insn = save_fpr (stack_pointer_rtx, offset, i + 16);
+	  insn = save_fpr (stack_pointer_rtx, offset, i);
 	  offset += 8;
 
-	  /* If f4 and f6 are call clobbered they are saved due to stdargs and
-	     therefore are not frame related.  */
-	  if (!call_really_used_regs[i + 16])
+	  /* If f4 and f6 are call clobbered they are saved due to
+	     stdargs and therefore are not frame related.  */
+	  if (!call_really_used_regs[i])
 	    RTX_FRAME_RELATED_P (insn) = 1;
 	}
-      else if (!TARGET_PACKED_STACK)
+      else if (!TARGET_PACKED_STACK || call_really_used_regs[i])
 	offset += 8;
     }
 
@@ -8701,20 +10298,20 @@ s390_emit_prologue (void)
       offset = (cfun_frame_layout.f8_offset
 		+ (cfun_frame_layout.high_fprs - 1) * 8);
 
-      for (i = 15; i > 7 && offset >= 0; i--)
-	if (cfun_fpr_bit_p (i))
+      for (i = FPR15_REGNUM; i >= FPR8_REGNUM && offset >= 0; i--)
+	if (cfun_fpr_save_p (i))
 	  {
-	    insn = save_fpr (stack_pointer_rtx, offset, i + 16);
+	    insn = save_fpr (stack_pointer_rtx, offset, i);
 
 	    RTX_FRAME_RELATED_P (insn) = 1;
 	    offset -= 8;
 	  }
       if (offset >= cfun_frame_layout.f8_offset)
-	next_fpr = i + 16;
+	next_fpr = i;
     }
 
   if (!TARGET_PACKED_STACK)
-    next_fpr = cfun_save_high_fprs_p ? 31 : 0;
+    next_fpr = cfun_save_high_fprs_p ? FPR15_REGNUM : 0;
 
   if (flag_stack_usage_info)
     current_function_static_stack_size = cfun_frame_layout.frame_size;
@@ -8859,8 +10456,8 @@ s390_emit_prologue (void)
 
       offset = 0;
 
-      for (i = 24; i <= next_fpr; i++)
-	if (cfun_fpr_bit_p (i - 16))
+      for (i = FPR8_REGNUM; i <= next_fpr; i++)
+	if (cfun_fpr_save_p (i))
 	  {
 	    rtx addr = plus_constant (Pmode, stack_pointer_rtx,
 				      cfun_frame_layout.frame_size
@@ -8889,9 +10486,9 @@ s390_emit_prologue (void)
 
   if (flag_pic && df_regs_ever_live_p (PIC_OFFSET_TABLE_REGNUM))
     {
-      rtx insns = s390_load_got ();
+      rtx_insn *insns = s390_load_got ();
 
-      for (insn = insns; insn; insn = NEXT_INSN (insn))
+      for (rtx_insn *insn = insns; insn; insn = NEXT_INSN (insn))
 	annotate_constant_pool_refs (&PATTERN (insn));
 
       emit_insn (insns);
@@ -8989,9 +10586,9 @@ s390_emit_epilogue (bool sibcall)
       if (cfun_save_high_fprs_p)
 	{
 	  next_offset = cfun_frame_layout.f8_offset;
-	  for (i = 24; i < 32; i++)
+	  for (i = FPR8_REGNUM; i <= FPR15_REGNUM; i++)
 	    {
-	      if (cfun_fpr_bit_p (i - 16))
+	      if (cfun_fpr_save_p (i))
 		{
 		  restore_fpr (frame_pointer,
 			       offset + next_offset, i);
@@ -9007,9 +10604,10 @@ s390_emit_epilogue (bool sibcall)
   else
     {
       next_offset = cfun_frame_layout.f4_offset;
-      for (i = 18; i < 20; i++)
+      /* f4, f6 */
+      for (i = FPR4_REGNUM; i <= FPR4_REGNUM + 1; i++)
 	{
-	  if (cfun_fpr_bit_p (i - 16))
+	  if (cfun_fpr_save_p (i))
 	    {
 	      restore_fpr (frame_pointer,
 			   offset + next_offset, i);
@@ -9061,11 +10659,14 @@ s390_emit_epilogue (bool sibcall)
       if (! sibcall)
 	{
 	  /* Fetch return address from stack before load multiple,
-	     this will do good for scheduling.  */
+	     this will do good for scheduling.
 
-	  if (cfun_frame_layout.save_return_addr_p
-	      || (cfun_frame_layout.first_restore_gpr < BASE_REGNUM
-		  && cfun_frame_layout.last_restore_gpr > RETURN_REGNUM))
+	     Only do this if we already decided that r14 needs to be
+	     saved to a stack slot. (And not just because r14 happens to
+	     be in between two GPRs which need saving.)  Otherwise it
+	     would be difficult to take that decision back in
+	     s390_optimize_prologue.  */
+	  if (cfun_gpr_save_slot (RETURN_REGNUM) == -1)
 	    {
 	      int return_regnum = find_unused_clobbered_reg();
 	      if (!return_regnum)
@@ -9080,6 +10681,12 @@ s390_emit_epilogue (bool sibcall)
 	      addr = gen_rtx_MEM (Pmode, addr);
 	      set_mem_alias_set (addr, get_frame_alias_set ());
 	      emit_move_insn (return_reg, addr);
+
+	      /* Once we did that optimization we have to make sure
+		 s390_optimize_prologue does not try to remove the
+		 store of r14 since we will not be able to find the
+		 load issued here.  */
+	      cfun_frame_layout.save_return_addr_p = true;
 	    }
 	}
 
@@ -9098,6 +10705,8 @@ s390_emit_epilogue (bool sibcall)
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
+  s390_restore_gprs_from_fprs ();
+
   if (! sibcall)
     {
 
@@ -9111,13 +10720,86 @@ s390_emit_epilogue (bool sibcall)
     }
 }
 
+/* Implement TARGET_SET_UP_BY_PROLOGUE.  */
+
+static void
+s300_set_up_by_prologue (hard_reg_set_container *regs)
+{
+  if (cfun->machine->base_reg
+      && !call_really_used_regs[REGNO (cfun->machine->base_reg)])
+    SET_HARD_REG_BIT (regs->set, REGNO (cfun->machine->base_reg));
+}
+
+/* Return true if the function can use simple_return to return outside
+   of a shrink-wrapped region.  At present shrink-wrapping is supported
+   in all cases.  */
+
+bool
+s390_can_use_simple_return_insn (void)
+{
+  return true;
+}
+
+/* Return true if the epilogue is guaranteed to contain only a return
+   instruction and if a direct return can therefore be used instead.
+   One of the main advantages of using direct return instructions
+   is that we can then use conditional returns.  */
+
+bool
+s390_can_use_return_insn (void)
+{
+  int i;
+
+  if (!reload_completed)
+    return false;
+
+  if (crtl->profile)
+    return false;
+
+  if (TARGET_TPF_PROFILING)
+    return false;
+
+  for (i = 0; i < 16; i++)
+    if (cfun_gpr_save_slot (i))
+      return false;
+
+  /* For 31 bit this is not covered by the frame_size check below
+     since f4, f6 are saved in the register save area without needing
+     additional stack space.  */
+  if (!TARGET_64BIT
+      && (cfun_fpr_save_p (FPR4_REGNUM) || cfun_fpr_save_p (FPR6_REGNUM)))
+    return false;
+
+  if (cfun->machine->base_reg
+      && !call_really_used_regs[REGNO (cfun->machine->base_reg)])
+    return false;
+
+  return cfun_frame_layout.frame_size == 0;
+}
+
+/* The VX ABI differs for vararg functions.  Therefore we need the
+   prototype of the callee to be available when passing vector type
+   values.  */
+static const char *
+s390_invalid_arg_for_unprototyped_fn (const_tree typelist, const_tree funcdecl, const_tree val)
+{
+  return ((TARGET_VX_ABI
+	   && typelist == 0
+	   && VECTOR_TYPE_P (TREE_TYPE (val))
+	   && (funcdecl == NULL_TREE
+	       || (TREE_CODE (funcdecl) == FUNCTION_DECL
+		   && DECL_BUILT_IN_CLASS (funcdecl) != BUILT_IN_MD)))
+	  ? N_("Vector argument passed to unprototyped function")
+	  : NULL);
+}
+
 
 /* Return the size in bytes of a function argument of
    type TYPE and/or mode MODE.  At least one of TYPE or
    MODE must be specified.  */
 
 static int
-s390_function_arg_size (enum machine_mode mode, const_tree type)
+s390_function_arg_size (machine_mode mode, const_tree type)
 {
   if (type)
     return int_size_in_bytes (type);
@@ -9131,13 +10813,61 @@ s390_function_arg_size (enum machine_mode mode, const_tree type)
 }
 
 /* Return true if a function argument of type TYPE and mode MODE
+   is to be passed in a vector register, if available.  */
+
+bool
+s390_function_arg_vector (machine_mode mode, const_tree type)
+{
+  if (!TARGET_VX_ABI)
+    return false;
+
+  if (s390_function_arg_size (mode, type) > 16)
+    return false;
+
+  /* No type info available for some library calls ...  */
+  if (!type)
+    return VECTOR_MODE_P (mode);
+
+  /* The ABI says that record types with a single member are treated
+     just like that member would be.  */
+  while (TREE_CODE (type) == RECORD_TYPE)
+    {
+      tree field, single = NULL_TREE;
+
+      for (field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
+	{
+	  if (TREE_CODE (field) != FIELD_DECL)
+	    continue;
+
+	  if (single == NULL_TREE)
+	    single = TREE_TYPE (field);
+	  else
+	    return false;
+	}
+
+      if (single == NULL_TREE)
+	return false;
+      else
+	{
+	  /* If the field declaration adds extra byte due to
+	     e.g. padding this is not accepted as vector type.  */
+	  if (int_size_in_bytes (single) <= 0
+	      || int_size_in_bytes (single) != int_size_in_bytes (type))
+	    return false;
+	  type = single;
+	}
+    }
+
+  return VECTOR_TYPE_P (type);
+}
+
+/* Return true if a function argument of type TYPE and mode MODE
    is to be passed in a floating-point register, if available.  */
 
 static bool
-s390_function_arg_float (enum machine_mode mode, const_tree type)
+s390_function_arg_float (machine_mode mode, const_tree type)
 {
-  int size = s390_function_arg_size (mode, type);
-  if (size > 8)
+  if (s390_function_arg_size (mode, type) > 8)
     return false;
 
   /* Soft-float changes the ABI: no floating-point registers are used.  */
@@ -9179,7 +10909,7 @@ s390_function_arg_float (enum machine_mode mode, const_tree type)
    registers, if available.  */
 
 static bool
-s390_function_arg_integer (enum machine_mode mode, const_tree type)
+s390_function_arg_integer (machine_mode mode, const_tree type)
 {
   int size = s390_function_arg_size (mode, type);
   if (size > 8)
@@ -9216,24 +10946,28 @@ s390_function_arg_integer (enum machine_mode mode, const_tree type)
 
 static bool
 s390_pass_by_reference (cumulative_args_t ca ATTRIBUTE_UNUSED,
-			enum machine_mode mode, const_tree type,
+			machine_mode mode, const_tree type,
 			bool named ATTRIBUTE_UNUSED)
 {
   int size = s390_function_arg_size (mode, type);
+
+  if (s390_function_arg_vector (mode, type))
+    return false;
+
   if (size > 8)
     return true;
 
   if (type)
     {
       if (AGGREGATE_TYPE_P (type) && exact_log2 (size) < 0)
-        return 1;
+        return true;
 
       if (TREE_CODE (type) == COMPLEX_TYPE
 	  || TREE_CODE (type) == VECTOR_TYPE)
-        return 1;
+	return true;
     }
 
-  return 0;
+  return false;
 }
 
 /* Update the data in CUM to advance over an argument of mode MODE and
@@ -9243,12 +10977,22 @@ s390_pass_by_reference (cumulative_args_t ca ATTRIBUTE_UNUSED,
    matching an ellipsis).  */
 
 static void
-s390_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
-			   const_tree type, bool named ATTRIBUTE_UNUSED)
+s390_function_arg_advance (cumulative_args_t cum_v, machine_mode mode,
+			   const_tree type, bool named)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
 
-  if (s390_function_arg_float (mode, type))
+  if (s390_function_arg_vector (mode, type))
+    {
+      /* We are called for unnamed vector stdarg arguments which are
+	 passed on the stack.  In this case this hook does not have to
+	 do anything since stack arguments are tracked by common
+	 code.  */
+      if (!named)
+	return;
+      cum->vrs += 1;
+    }
+  else if (s390_function_arg_float (mode, type))
     {
       cum->fprs += 1;
     }
@@ -9281,15 +11025,27 @@ s390_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
    are pushed to the stack.  */
 
 static rtx
-s390_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
-		   const_tree type, bool named ATTRIBUTE_UNUSED)
+s390_function_arg (cumulative_args_t cum_v, machine_mode mode,
+		   const_tree type, bool named)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
 
-  if (s390_function_arg_float (mode, type))
+  if (!named)
+    s390_check_type_for_vector_abi (type, true, false);
+
+  if (s390_function_arg_vector (mode, type))
+    {
+      /* Vector arguments being part of the ellipsis are passed on the
+	 stack.  */
+      if (!named || (cum->vrs + 1 > VEC_ARG_NUM_REG))
+	return NULL_RTX;
+
+      return gen_rtx_REG (mode, cum->vrs + FIRST_VEC_ARG_REGNO);
+    }
+  else if (s390_function_arg_float (mode, type))
     {
       if (cum->fprs + 1 > FP_ARG_NUM_REG)
-	return 0;
+	return NULL_RTX;
       else
 	return gen_rtx_REG (mode, cum->fprs + 16);
     }
@@ -9299,7 +11055,7 @@ s390_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
       int n_gprs = (size + UNITS_PER_LONG - 1) / UNITS_PER_LONG;
 
       if (cum->gprs + n_gprs > GP_ARG_NUM_REG)
-	return 0;
+	return NULL_RTX;
       else if (n_gprs == 1 || UNITS_PER_WORD == UNITS_PER_LONG)
 	return gen_rtx_REG (mode, cum->gprs + 2);
       else if (n_gprs == 2)
@@ -9342,11 +11098,17 @@ s390_return_in_memory (const_tree type, const_tree fundecl ATTRIBUTE_UNUSED)
       || TREE_CODE (type) == REAL_TYPE)
     return int_size_in_bytes (type) > 8;
 
+  /* vector types which fit into a VR.  */
+  if (TARGET_VX_ABI
+      && VECTOR_TYPE_P (type)
+      && int_size_in_bytes (type) <= 16)
+    return false;
+
   /* Aggregates and similar constructs are always returned
      in memory.  */
   if (AGGREGATE_TYPE_P (type)
       || TREE_CODE (type) == COMPLEX_TYPE
-      || TREE_CODE (type) == VECTOR_TYPE)
+      || VECTOR_TYPE_P (type))
     return true;
 
   /* ??? We get called on all sorts of random stuff from
@@ -9357,8 +11119,8 @@ s390_return_in_memory (const_tree type, const_tree fundecl ATTRIBUTE_UNUSED)
 
 /* Function arguments and return values are promoted to word size.  */
 
-static enum machine_mode
-s390_promote_function_mode (const_tree type, enum machine_mode mode,
+static machine_mode
+s390_promote_function_mode (const_tree type, machine_mode mode,
                             int *punsignedp,
                             const_tree fntype ATTRIBUTE_UNUSED,
                             int for_return ATTRIBUTE_UNUSED)
@@ -9379,11 +11141,17 @@ s390_promote_function_mode (const_tree type, enum machine_mode mode,
    value of mode MODE from a libcall.  */
 
 static rtx
-s390_function_and_libcall_value (enum machine_mode mode,
+s390_function_and_libcall_value (machine_mode mode,
 				 const_tree ret_type,
 				 const_tree fntype_or_decl,
 				 bool outgoing ATTRIBUTE_UNUSED)
 {
+  /* For vector return types it is important to use the RET_TYPE
+     argument whenever available since the middle-end might have
+     changed the mode to a scalar mode.  */
+  bool vector_ret_type_p = ((ret_type && VECTOR_TYPE_P (ret_type))
+			    || (!ret_type && VECTOR_MODE_P (mode)));
+
   /* For normal functions perform the promotion as
      promote_function_mode would do.  */
   if (ret_type)
@@ -9393,10 +11161,14 @@ s390_function_and_libcall_value (enum machine_mode mode,
 				    fntype_or_decl, 1);
     }
 
-  gcc_assert (GET_MODE_CLASS (mode) == MODE_INT || SCALAR_FLOAT_MODE_P (mode));
-  gcc_assert (GET_MODE_SIZE (mode) <= 8);
+  gcc_assert (GET_MODE_CLASS (mode) == MODE_INT
+	      || SCALAR_FLOAT_MODE_P (mode)
+	      || (TARGET_VX_ABI && vector_ret_type_p));
+  gcc_assert (GET_MODE_SIZE (mode) <= (TARGET_VX_ABI ? 16 : 8));
 
-  if (TARGET_HARD_FLOAT && SCALAR_FLOAT_MODE_P (mode))
+  if (TARGET_VX_ABI && vector_ret_type_p)
+    return gen_rtx_REG (mode, FIRST_VEC_ARG_REGNO);
+  else if (TARGET_HARD_FLOAT && SCALAR_FLOAT_MODE_P (mode))
     return gen_rtx_REG (mode, 16);
   else if (GET_MODE_SIZE (mode) <= UNITS_PER_LONG
 	   || UNITS_PER_LONG == UNITS_PER_WORD)
@@ -9434,7 +11206,7 @@ s390_function_value (const_tree ret_type, const_tree fn_decl_or_type,
    MODE.  */
 
 static rtx
-s390_libcall_value (enum machine_mode mode, const_rtx fun ATTRIBUTE_UNUSED)
+s390_libcall_value (machine_mode mode, const_rtx fun ATTRIBUTE_UNUSED)
 {
   return s390_function_and_libcall_value (mode, NULL_TREE,
 					  NULL_TREE, true);
@@ -9560,9 +11332,13 @@ s390_va_start (tree valist, rtx nextarg ATTRIBUTE_UNUSED)
       expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
     }
 
-  /* Find the overflow area.  */
+  /* Find the overflow area.
+     FIXME: This currently is too pessimistic when the vector ABI is
+     enabled.  In that case we *always* set up the overflow area
+     pointer.  */
   if (n_gpr + cfun->va_list_gpr_size > GP_ARG_NUM_REG
-      || n_fpr + cfun->va_list_fpr_size > FP_ARG_NUM_REG)
+      || n_fpr + cfun->va_list_fpr_size > FP_ARG_NUM_REG
+      || TARGET_VX_ABI)
     {
       t = make_tree (TREE_TYPE (ovf), virtual_incoming_args_rtx);
 
@@ -9604,6 +11380,9 @@ s390_va_start (tree valist, rtx nextarg ATTRIBUTE_UNUSED)
        ret = args.reg_save_area[args.gpr+8]
      else
        ret = *args.overflow_arg_area++;
+   } else if (vector value) {
+       ret = *args.overflow_arg_area;
+       args.overflow_arg_area += size / 8;
    } else if (float value) {
      if (args.fgpr < 2)
        ret = args.reg_save_area[args.fpr+64]
@@ -9623,7 +11402,10 @@ s390_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
   tree f_gpr, f_fpr, f_ovf, f_sav;
   tree gpr, fpr, ovf, sav, reg, t, u;
   int indirect_p, size, n_reg, sav_ofs, sav_scale, max_reg;
-  tree lab_false, lab_over, addr;
+  tree lab_false, lab_over;
+  tree addr = create_tmp_var (ptr_type_node, "addr");
+  bool left_align_p; /* How a value < UNITS_PER_LONG is aligned within
+			a stack slot.  */
 
   f_gpr = TYPE_FIELDS (TREE_TYPE (va_list_type_node));
   f_fpr = DECL_CHAIN (f_gpr);
@@ -9641,6 +11423,8 @@ s390_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
   ovf = build3 (COMPONENT_REF, TREE_TYPE (f_ovf), valist, f_ovf, NULL_TREE);
 
   size = int_size_in_bytes (type);
+
+  s390_check_type_for_vector_abi (type, true, false);
 
   if (pass_by_reference (NULL, TYPE_MODE (type), type, false))
     {
@@ -9662,6 +11446,23 @@ s390_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
       sav_scale = UNITS_PER_LONG;
       size = UNITS_PER_LONG;
       max_reg = GP_ARG_NUM_REG - n_reg;
+      left_align_p = false;
+    }
+  else if (s390_function_arg_vector (TYPE_MODE (type), type))
+    {
+      if (TARGET_DEBUG_ARG)
+	{
+	  fprintf (stderr, "va_arg: vector type");
+	  debug_tree (type);
+	}
+
+      indirect_p = 0;
+      reg = NULL_TREE;
+      n_reg = 0;
+      sav_ofs = 0;
+      sav_scale = 8;
+      max_reg = 0;
+      left_align_p = true;
     }
   else if (s390_function_arg_float (TYPE_MODE (type), type))
     {
@@ -9678,6 +11479,7 @@ s390_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
       sav_ofs = 16 * UNITS_PER_LONG;
       sav_scale = 8;
       max_reg = FP_ARG_NUM_REG - n_reg;
+      left_align_p = false;
     }
   else
     {
@@ -9702,53 +11504,74 @@ s390_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
 
       sav_scale = UNITS_PER_LONG;
       max_reg = GP_ARG_NUM_REG - n_reg;
+      left_align_p = false;
     }
 
   /* Pull the value out of the saved registers ...  */
 
-  lab_false = create_artificial_label (UNKNOWN_LOCATION);
-  lab_over = create_artificial_label (UNKNOWN_LOCATION);
-  addr = create_tmp_var (ptr_type_node, "addr");
+  if (reg != NULL_TREE)
+    {
+      /*
+	if (reg > ((typeof (reg))max_reg))
+          goto lab_false;
 
-  t = fold_convert (TREE_TYPE (reg), size_int (max_reg));
-  t = build2 (GT_EXPR, boolean_type_node, reg, t);
-  u = build1 (GOTO_EXPR, void_type_node, lab_false);
-  t = build3 (COND_EXPR, void_type_node, t, u, NULL_TREE);
-  gimplify_and_add (t, pre_p);
+        addr = sav + sav_ofs + reg * save_scale;
 
-  t = fold_build_pointer_plus_hwi (sav, sav_ofs);
-  u = build2 (MULT_EXPR, TREE_TYPE (reg), reg,
-	      fold_convert (TREE_TYPE (reg), size_int (sav_scale)));
-  t = fold_build_pointer_plus (t, u);
+	goto lab_over;
 
-  gimplify_assign (addr, t, pre_p);
+        lab_false:
+      */
 
-  gimple_seq_add_stmt (pre_p, gimple_build_goto (lab_over));
+      lab_false = create_artificial_label (UNKNOWN_LOCATION);
+      lab_over = create_artificial_label (UNKNOWN_LOCATION);
 
-  gimple_seq_add_stmt (pre_p, gimple_build_label (lab_false));
+      t = fold_convert (TREE_TYPE (reg), size_int (max_reg));
+      t = build2 (GT_EXPR, boolean_type_node, reg, t);
+      u = build1 (GOTO_EXPR, void_type_node, lab_false);
+      t = build3 (COND_EXPR, void_type_node, t, u, NULL_TREE);
+      gimplify_and_add (t, pre_p);
 
+      t = fold_build_pointer_plus_hwi (sav, sav_ofs);
+      u = build2 (MULT_EXPR, TREE_TYPE (reg), reg,
+		  fold_convert (TREE_TYPE (reg), size_int (sav_scale)));
+      t = fold_build_pointer_plus (t, u);
+
+      gimplify_assign (addr, t, pre_p);
+
+      gimple_seq_add_stmt (pre_p, gimple_build_goto (lab_over));
+
+      gimple_seq_add_stmt (pre_p, gimple_build_label (lab_false));
+    }
 
   /* ... Otherwise out of the overflow area.  */
 
   t = ovf;
-  if (size < UNITS_PER_LONG)
+  if (size < UNITS_PER_LONG && !left_align_p)
     t = fold_build_pointer_plus_hwi (t, UNITS_PER_LONG - size);
 
   gimplify_expr (&t, pre_p, NULL, is_gimple_val, fb_rvalue);
 
   gimplify_assign (addr, t, pre_p);
 
-  t = fold_build_pointer_plus_hwi (t, size);
+  if (size < UNITS_PER_LONG && left_align_p)
+    t = fold_build_pointer_plus_hwi (t, UNITS_PER_LONG);
+  else
+    t = fold_build_pointer_plus_hwi (t, size);
+
   gimplify_assign (ovf, t, pre_p);
 
-  gimple_seq_add_stmt (pre_p, gimple_build_label (lab_over));
+  if (reg != NULL_TREE)
+    gimple_seq_add_stmt (pre_p, gimple_build_label (lab_over));
 
 
   /* Increment register save count.  */
 
-  u = build2 (PREINCREMENT_EXPR, TREE_TYPE (reg), reg,
-	      fold_convert (TREE_TYPE (reg), size_int (n_reg)));
-  gimplify_and_add (u, pre_p);
+  if (n_reg > 0)
+    {
+      u = build2 (PREINCREMENT_EXPR, TREE_TYPE (reg), reg,
+		  fold_convert (TREE_TYPE (reg), size_int (n_reg)));
+      gimplify_and_add (u, pre_p);
+    }
 
   if (indirect_p)
     {
@@ -9781,7 +11604,7 @@ s390_expand_tbegin (rtx dest, rtx tdb, rtx retry, bool clobber_fprs_p)
 {
   rtx retry_plus_two = gen_reg_rtx (SImode);
   rtx retry_reg = gen_reg_rtx (SImode);
-  rtx retry_label = NULL_RTX;
+  rtx_code_label *retry_label = NULL;
 
   if (retry != NULL_RTX)
     {
@@ -9809,7 +11632,7 @@ s390_expand_tbegin (rtx dest, rtx tdb, rtx retry, bool clobber_fprs_p)
       const int CC3 = 1 << 0;
       rtx jump;
       rtx count = gen_reg_rtx (SImode);
-      rtx leave_label = gen_label_rtx ();
+      rtx_code_label *leave_label = gen_label_rtx ();
 
       /* Exit for success and permanent failures.  */
       jump = s390_emit_jump (leave_label,
@@ -9831,209 +11654,27 @@ s390_expand_tbegin (rtx dest, rtx tdb, rtx retry, bool clobber_fprs_p)
     }
 }
 
-/* Builtins.  */
 
-enum s390_builtin
+/* Return the decl for the target specific builtin with the function
+   code FCODE.  */
+
+static tree
+s390_builtin_decl (unsigned fcode, bool initialized_p ATTRIBUTE_UNUSED)
 {
-  S390_BUILTIN_TBEGIN,
-  S390_BUILTIN_TBEGIN_NOFLOAT,
-  S390_BUILTIN_TBEGIN_RETRY,
-  S390_BUILTIN_TBEGIN_RETRY_NOFLOAT,
-  S390_BUILTIN_TBEGINC,
-  S390_BUILTIN_TEND,
-  S390_BUILTIN_TABORT,
-  S390_BUILTIN_NON_TX_STORE,
-  S390_BUILTIN_TX_NESTING_DEPTH,
-  S390_BUILTIN_TX_ASSIST,
+  if (fcode >= S390_BUILTIN_MAX)
+    return error_mark_node;
 
-  S390_BUILTIN_max
-};
-
-static enum insn_code const code_for_builtin[S390_BUILTIN_max] = {
-  CODE_FOR_tbegin,
-  CODE_FOR_tbegin_nofloat,
-  CODE_FOR_tbegin_retry,
-  CODE_FOR_tbegin_retry_nofloat,
-  CODE_FOR_tbeginc,
-  CODE_FOR_tend,
-  CODE_FOR_tabort,
-  CODE_FOR_ntstg,
-  CODE_FOR_etnd,
-  CODE_FOR_tx_assist
-};
-
-static void
-s390_init_builtins (void)
-{
-  tree ftype, uint64_type;
-  tree returns_twice_attr = tree_cons (get_identifier ("returns_twice"),
-				       NULL, NULL);
-  tree noreturn_attr = tree_cons (get_identifier ("noreturn"), NULL, NULL);
-
-  /* void foo (void) */
-  ftype = build_function_type_list (void_type_node, NULL_TREE);
-  add_builtin_function ("__builtin_tbeginc", ftype, S390_BUILTIN_TBEGINC,
-			BUILT_IN_MD, NULL, NULL_TREE);
-
-  /* void foo (int) */
-  ftype = build_function_type_list (void_type_node, integer_type_node,
-				    NULL_TREE);
-  add_builtin_function ("__builtin_tabort", ftype,
-			S390_BUILTIN_TABORT, BUILT_IN_MD, NULL, noreturn_attr);
-  add_builtin_function ("__builtin_tx_assist", ftype,
-			S390_BUILTIN_TX_ASSIST, BUILT_IN_MD, NULL, NULL_TREE);
-
-  /* int foo (void *) */
-  ftype = build_function_type_list (integer_type_node, ptr_type_node, NULL_TREE);
-  add_builtin_function ("__builtin_tbegin", ftype, S390_BUILTIN_TBEGIN,
-			BUILT_IN_MD, NULL, returns_twice_attr);
-  add_builtin_function ("__builtin_tbegin_nofloat", ftype,
-			S390_BUILTIN_TBEGIN_NOFLOAT,
-			BUILT_IN_MD, NULL, returns_twice_attr);
-
-  /* int foo (void *, int) */
-  ftype = build_function_type_list (integer_type_node, ptr_type_node,
-				    integer_type_node, NULL_TREE);
-  add_builtin_function ("__builtin_tbegin_retry", ftype,
-			S390_BUILTIN_TBEGIN_RETRY,
-			BUILT_IN_MD,
-			NULL, returns_twice_attr);
-  add_builtin_function ("__builtin_tbegin_retry_nofloat", ftype,
-			S390_BUILTIN_TBEGIN_RETRY_NOFLOAT,
-			BUILT_IN_MD,
-			NULL, returns_twice_attr);
-
-  /* int foo (void) */
-  ftype = build_function_type_list (integer_type_node, NULL_TREE);
-  add_builtin_function ("__builtin_tx_nesting_depth", ftype,
-			S390_BUILTIN_TX_NESTING_DEPTH,
-			BUILT_IN_MD, NULL, NULL_TREE);
-  add_builtin_function ("__builtin_tend", ftype,
-			S390_BUILTIN_TEND, BUILT_IN_MD,	NULL, NULL_TREE);
-
-  /* void foo (uint64_t *, uint64_t) */
-  if (TARGET_64BIT)
-    uint64_type = long_unsigned_type_node;
-  else
-    uint64_type = long_long_unsigned_type_node;
-
-   ftype = build_function_type_list (void_type_node,
- 				    build_pointer_type (uint64_type),
-				    uint64_type, NULL_TREE);
-  add_builtin_function ("__builtin_non_tx_store", ftype,
-			S390_BUILTIN_NON_TX_STORE,
-			BUILT_IN_MD, NULL, NULL_TREE);
+  return s390_builtin_decls[fcode];
 }
 
-/* Expand an expression EXP that calls a built-in function,
-   with result going to TARGET if that's convenient
-   (and in mode MODE if that's convenient).
-   SUBTARGET may be used as the target for computing one of EXP's operands.
-   IGNORE is nonzero if the value is to be ignored.  */
+/* We call mcount before the function prologue.  So a profiled leaf
+   function should stay a leaf function.  */
 
-static rtx
-s390_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
-		     enum machine_mode mode ATTRIBUTE_UNUSED,
-		     int ignore ATTRIBUTE_UNUSED)
+static bool
+s390_keep_leaf_when_profiled ()
 {
-#define MAX_ARGS 2
-
-  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
-  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
-  enum insn_code icode;
-  rtx op[MAX_ARGS], pat;
-  int arity;
-  bool nonvoid;
-  tree arg;
-  call_expr_arg_iterator iter;
-
-  if (fcode >= S390_BUILTIN_max)
-    internal_error ("bad builtin fcode");
-  icode = code_for_builtin[fcode];
-  if (icode == 0)
-    internal_error ("bad builtin fcode");
-
-  if (!TARGET_HTM)
-    error ("Transactional execution builtins not enabled (-mhtm)\n");
-
-  /* Set a flag in the machine specific cfun part in order to support
-     saving/restoring of FPRs.  */
-  if (fcode == S390_BUILTIN_TBEGIN || fcode == S390_BUILTIN_TBEGIN_RETRY)
-    cfun->machine->tbegin_p = true;
-
-  nonvoid = TREE_TYPE (TREE_TYPE (fndecl)) != void_type_node;
-
-  arity = 0;
-  FOR_EACH_CALL_EXPR_ARG (arg, iter, exp)
-    {
-      const struct insn_operand_data *insn_op;
-
-      if (arg == error_mark_node)
-	return NULL_RTX;
-      if (arity >= MAX_ARGS)
-	return NULL_RTX;
-
-      insn_op = &insn_data[icode].operand[arity + nonvoid];
-
-      op[arity] = expand_expr (arg, NULL_RTX, insn_op->mode, EXPAND_NORMAL);
-
-      if (!(*insn_op->predicate) (op[arity], insn_op->mode))
-	{
-	  if (insn_op->predicate == memory_operand)
-	    {
-	      /* Don't move a NULL pointer into a register. Otherwise
-		 we have to rely on combine being able to move it back
-		 in order to get an immediate 0 in the instruction.  */
-	      if (op[arity] != const0_rtx)
-		op[arity] = copy_to_mode_reg (Pmode, op[arity]);
-	      op[arity] = gen_rtx_MEM (insn_op->mode, op[arity]);
-	    }
-	  else
-	    op[arity] = copy_to_mode_reg (insn_op->mode, op[arity]);
-	}
-
-      arity++;
-    }
-
-  if (nonvoid)
-    {
-      enum machine_mode tmode = insn_data[icode].operand[0].mode;
-      if (!target
-	  || GET_MODE (target) != tmode
-	  || !(*insn_data[icode].operand[0].predicate) (target, tmode))
-	target = gen_reg_rtx (tmode);
-    }
-
-  switch (arity)
-    {
-    case 0:
-      pat = GEN_FCN (icode) (target);
-      break;
-    case 1:
-      if (nonvoid)
-        pat = GEN_FCN (icode) (target, op[0]);
-      else
-	pat = GEN_FCN (icode) (op[0]);
-      break;
-    case 2:
-      if (nonvoid)
-	pat = GEN_FCN (icode) (target, op[0], op[1]);
-      else
-	pat = GEN_FCN (icode) (op[0], op[1]);
-      break;
-    default:
-      gcc_unreachable ();
-    }
-  if (!pat)
-    return NULL_RTX;
-  emit_insn (pat);
-
-  if (nonvoid)
-    return target;
-  else
-    return const0_rtx;
+  return true;
 }
-
 
 /* Output assembly code for the trampoline template to
    stdio stream FILE.
@@ -10168,9 +11809,9 @@ s390_encode_section_info (tree decl, rtx rtl, int first)
 	SYMBOL_REF_FLAGS (XEXP (rtl, 0)) |= SYMBOL_FLAG_ALIGN1;
       if (!DECL_SIZE (decl)
 	  || !DECL_ALIGN (decl)
-	  || !host_integerp (DECL_SIZE (decl), 0)
+	  || !tree_fits_shwi_p (DECL_SIZE (decl))
 	  || (DECL_ALIGN (decl) <= 64
-	      && DECL_ALIGN (decl) != tree_low_cst (DECL_SIZE (decl), 0)))
+	      && DECL_ALIGN (decl) != tree_to_shwi (DECL_SIZE (decl))))
 	SYMBOL_REF_FLAGS (XEXP (rtl, 0)) |= SYMBOL_FLAG_NOT_NATURALLY_ALIGNED;
     }
 
@@ -10456,7 +12097,7 @@ s390_output_mi_thunk (FILE *file, tree thunk ATTRIBUTE_UNUSED,
 }
 
 static bool
-s390_valid_pointer_mode (enum machine_mode mode)
+s390_valid_pointer_mode (machine_mode mode)
 {
   return (mode == SImode || (TARGET_64BIT && mode == DImode));
 }
@@ -10472,7 +12113,7 @@ s390_call_saved_register_used (tree call_expr)
   CUMULATIVE_ARGS cum_v;
   cumulative_args_t cum;
   tree parameter;
-  enum machine_mode mode;
+  machine_mode mode;
   tree type;
   rtx parm_rtx;
   int reg, i;
@@ -10496,15 +12137,18 @@ s390_call_saved_register_used (tree call_expr)
       mode = TYPE_MODE (type);
       gcc_assert (mode);
 
+      /* We assume that in the target function all parameters are
+	 named.  This only has an impact on vector argument register
+	 usage none of which is call-saved.  */
       if (pass_by_reference (&cum_v, mode, type, true))
  	{
  	  mode = Pmode;
  	  type = build_pointer_type (type);
  	}
 
-       parm_rtx = s390_function_arg (cum, mode, type, 0);
+       parm_rtx = s390_function_arg (cum, mode, type, true);
 
-       s390_function_arg_advance (cum, mode, type, 0);
+       s390_function_arg_advance (cum, mode, type, true);
 
        if (!parm_rtx)
 	 continue;
@@ -10584,12 +12228,12 @@ s390_fixed_condition_code_regs (unsigned int *p1, unsigned int *p2)
                If this parameter is NULL_RTX the call is considered
                to be a sibling call.  */
 
-rtx
+rtx_insn *
 s390_emit_call (rtx addr_location, rtx tls_call, rtx result_reg,
 		rtx retaddr_reg)
 {
   bool plt_call = false;
-  rtx insn;
+  rtx_insn *insn;
   rtx call;
   rtx clobber;
   rtvec vec;
@@ -10697,19 +12341,26 @@ s390_conditional_register_usage (void)
     }
   if (TARGET_64BIT)
     {
-      for (i = 24; i < 32; i++)
+      for (i = FPR8_REGNUM; i <= FPR15_REGNUM; i++)
 	call_used_regs[i] = call_really_used_regs[i] = 0;
     }
   else
     {
-      for (i = 18; i < 20; i++)
-	call_used_regs[i] = call_really_used_regs[i] = 0;
+      call_used_regs[FPR4_REGNUM] = call_really_used_regs[FPR4_REGNUM] = 0;
+      call_used_regs[FPR6_REGNUM] = call_really_used_regs[FPR6_REGNUM] = 0;
     }
 
   if (TARGET_SOFT_FLOAT)
     {
-      for (i = 16; i < 32; i++)
+      for (i = FPR0_REGNUM; i <= FPR15_REGNUM; i++)
 	call_used_regs[i] = fixed_regs[i] = 1;
+    }
+
+  /* Disable v16 - v31 for non-vector target.  */
+  if (!TARGET_VX)
+    {
+      for (i = VR16_REGNUM; i <= VR31_REGNUM; i++)
+	fixed_regs[i] = call_used_regs[i] = call_really_used_regs[i] = 1;
     }
 }
 
@@ -10719,17 +12370,21 @@ static GTY(()) rtx s390_tpf_eh_return_symbol;
 void
 s390_emit_tpf_eh_return (rtx target)
 {
-  rtx insn, reg;
+  rtx_insn *insn;
+  rtx reg, orig_ra;
 
   if (!s390_tpf_eh_return_symbol)
     s390_tpf_eh_return_symbol = gen_rtx_SYMBOL_REF (Pmode, "__tpf_eh_return");
 
   reg = gen_rtx_REG (Pmode, 2);
+  orig_ra = gen_rtx_REG (Pmode, 3);
 
   emit_move_insn (reg, target);
+  emit_move_insn (orig_ra, get_hard_reg_initial_val (Pmode, RETURN_REGNUM));
   insn = s390_emit_call (s390_tpf_eh_return_symbol, NULL_RTX, reg,
                                      gen_rtx_REG (Pmode, RETURN_REGNUM));
   use_reg (&CALL_INSN_FUNCTION_USAGE (insn), reg);
+  use_reg (&CALL_INSN_FUNCTION_USAGE (insn), orig_ra);
 
   emit_move_insn (EH_RETURN_HANDLER_RTX, reg);
 }
@@ -10740,11 +12395,10 @@ s390_emit_tpf_eh_return (rtx target)
 static void
 s390_optimize_prologue (void)
 {
-  rtx insn, new_insn, next_insn;
+  rtx_insn *insn, *new_insn, *next_insn;
 
   /* Do a final recompute of the frame-related data.  */
-
-  s390_update_frame_layout ();
+  s390_optimize_register_info ();
 
   /* If all special registers are in fact used, there's nothing we
      can do, so no point in walking the insn list.  */
@@ -10762,18 +12416,57 @@ s390_optimize_prologue (void)
     {
       int first, last, off;
       rtx set, base, offset;
+      rtx pat;
 
       next_insn = NEXT_INSN (insn);
 
-      if (GET_CODE (insn) != INSN)
+      if (! NONJUMP_INSN_P (insn) || ! RTX_FRAME_RELATED_P (insn))
 	continue;
 
-      if (GET_CODE (PATTERN (insn)) == PARALLEL
-	  && store_multiple_operation (PATTERN (insn), VOIDmode))
+      pat = PATTERN (insn);
+
+      /* Remove ldgr/lgdr instructions used for saving and restore
+	 GPRs if possible.  */
+      if (TARGET_Z10
+	  && GET_CODE (pat) == SET
+	  && GET_MODE (SET_SRC (pat)) == DImode
+	  && REG_P (SET_SRC (pat))
+	  && REG_P (SET_DEST (pat)))
 	{
-	  set = XVECEXP (PATTERN (insn), 0, 0);
+	  int src_regno = REGNO (SET_SRC (pat));
+	  int dest_regno = REGNO (SET_DEST (pat));
+	  int gpr_regno;
+	  int fpr_regno;
+
+	  if (!((GENERAL_REGNO_P (src_regno) && FP_REGNO_P (dest_regno))
+		|| (FP_REGNO_P (src_regno) && GENERAL_REGNO_P (dest_regno))))
+	    continue;
+
+	  gpr_regno = GENERAL_REGNO_P (src_regno) ? src_regno : dest_regno;
+	  fpr_regno = FP_REGNO_P (src_regno) ? src_regno : dest_regno;
+
+	  /* GPR must be call-saved, FPR must be call-clobbered.  */
+	  if (!call_really_used_regs[fpr_regno]
+	      || call_really_used_regs[gpr_regno])
+	    continue;
+
+	  /* It must not happen that what we once saved in an FPR now
+	     needs a stack slot.  */
+	  gcc_assert (cfun_gpr_save_slot (gpr_regno) != -1);
+
+	  if (cfun_gpr_save_slot (gpr_regno) == 0)
+	    {
+	      remove_insn (insn);
+	      continue;
+	    }
+	}
+
+      if (GET_CODE (pat) == PARALLEL
+	  && store_multiple_operation (pat, VOIDmode))
+	{
+	  set = XVECEXP (pat, 0, 0);
 	  first = REGNO (SET_SRC (set));
-	  last = first + XVECLEN (PATTERN (insn), 0) - 1;
+	  last = first + XVECLEN (pat, 0) - 1;
 	  offset = const0_rtx;
 	  base = eliminate_constant_term (XEXP (SET_DEST (set), 0), &offset);
 	  off = INTVAL (offset);
@@ -10792,12 +12485,12 @@ s390_optimize_prologue (void)
 
 	  if (cfun_frame_layout.first_save_gpr != -1)
 	    {
-	      new_insn 	= save_gprs (base,
+	      rtx s_pat = save_gprs (base,
 				     off + (cfun_frame_layout.first_save_gpr
 					    - first) * UNITS_PER_LONG,
 				     cfun_frame_layout.first_save_gpr,
 				     cfun_frame_layout.last_save_gpr);
-	      new_insn = emit_insn_before (new_insn, insn);
+	      new_insn = emit_insn_before (s_pat, insn);
 	      INSN_ADDRESSES_NEW (new_insn, -1);
 	    }
 
@@ -10806,14 +12499,11 @@ s390_optimize_prologue (void)
 	}
 
       if (cfun_frame_layout.first_save_gpr == -1
-	  && GET_CODE (PATTERN (insn)) == SET
-	  && GET_CODE (SET_SRC (PATTERN (insn))) == REG
-	  && (REGNO (SET_SRC (PATTERN (insn))) == BASE_REGNUM
-	      || (!TARGET_CPU_ZARCH
-		  && REGNO (SET_SRC (PATTERN (insn))) == RETURN_REGNUM))
-	  && GET_CODE (SET_DEST (PATTERN (insn))) == MEM)
+	  && GET_CODE (pat) == SET
+	  && GENERAL_REG_P (SET_SRC (pat))
+	  && GET_CODE (SET_DEST (pat)) == MEM)
 	{
-	  set = PATTERN (insn);
+	  set = pat;
 	  first = REGNO (SET_SRC (set));
 	  offset = const0_rtx;
 	  base = eliminate_constant_term (XEXP (SET_DEST (set), 0), &offset);
@@ -10829,18 +12519,19 @@ s390_optimize_prologue (void)
 	  continue;
 	}
 
-      if (GET_CODE (PATTERN (insn)) == PARALLEL
-	  && load_multiple_operation (PATTERN (insn), VOIDmode))
+      if (GET_CODE (pat) == PARALLEL
+	  && load_multiple_operation (pat, VOIDmode))
 	{
-	  set = XVECEXP (PATTERN (insn), 0, 0);
+	  set = XVECEXP (pat, 0, 0);
 	  first = REGNO (SET_DEST (set));
-	  last = first + XVECLEN (PATTERN (insn), 0) - 1;
+	  last = first + XVECLEN (pat, 0) - 1;
 	  offset = const0_rtx;
 	  base = eliminate_constant_term (XEXP (SET_SRC (set), 0), &offset);
 	  off = INTVAL (offset);
 
 	  if (GET_CODE (base) != REG || off < 0)
 	    continue;
+
 	  if (cfun_frame_layout.first_restore_gpr != -1
 	      && (cfun_frame_layout.first_restore_gpr < first
 		  || cfun_frame_layout.last_restore_gpr > last))
@@ -10853,12 +12544,24 @@ s390_optimize_prologue (void)
 
 	  if (cfun_frame_layout.first_restore_gpr != -1)
 	    {
-	      new_insn = restore_gprs (base,
+	      rtx rpat = restore_gprs (base,
 				       off + (cfun_frame_layout.first_restore_gpr
 					      - first) * UNITS_PER_LONG,
 				       cfun_frame_layout.first_restore_gpr,
 				       cfun_frame_layout.last_restore_gpr);
-	      new_insn = emit_insn_before (new_insn, insn);
+
+	      /* Remove REG_CFA_RESTOREs for registers that we no
+		 longer need to save.  */
+	      REG_NOTES (rpat) = REG_NOTES (insn);
+	      for (rtx *ptr = &REG_NOTES (rpat); *ptr; )
+		if (REG_NOTE_KIND (*ptr) == REG_CFA_RESTORE
+		    && ((int) REGNO (XEXP (*ptr, 0))
+			< cfun_frame_layout.first_restore_gpr))
+		  *ptr = XEXP (*ptr, 1);
+		else
+		  ptr = &XEXP (*ptr, 1);
+	      new_insn = emit_insn_before (rpat, insn);
+	      RTX_FRAME_RELATED_P (new_insn) = 1;
 	      INSN_ADDRESSES_NEW (new_insn, -1);
 	    }
 
@@ -10867,14 +12570,11 @@ s390_optimize_prologue (void)
 	}
 
       if (cfun_frame_layout.first_restore_gpr == -1
-	  && GET_CODE (PATTERN (insn)) == SET
-	  && GET_CODE (SET_DEST (PATTERN (insn))) == REG
-	  && (REGNO (SET_DEST (PATTERN (insn))) == BASE_REGNUM
-	      || (!TARGET_CPU_ZARCH
-		  && REGNO (SET_DEST (PATTERN (insn))) == RETURN_REGNUM))
-	  && GET_CODE (SET_SRC (PATTERN (insn))) == MEM)
+	  && GET_CODE (pat) == SET
+	  && GENERAL_REG_P (SET_DEST (pat))
+	  && GET_CODE (SET_SRC (pat)) == MEM)
 	{
-	  set = PATTERN (insn);
+	  set = pat;
 	  first = REGNO (SET_DEST (set));
 	  offset = const0_rtx;
 	  base = eliminate_constant_term (XEXP (SET_SRC (set), 0), &offset);
@@ -10882,6 +12582,7 @@ s390_optimize_prologue (void)
 
 	  if (GET_CODE (base) != REG || off < 0)
 	    continue;
+
 	  if (REGNO (base) != STACK_POINTER_REGNUM
 	      && REGNO (base) != HARD_FRAME_POINTER_REGNUM)
 	    continue;
@@ -10898,12 +12599,12 @@ s390_optimize_prologue (void)
    branch in a way which makes the static prediction always correct.
    The function returns true if it added an instruction.  */
 static bool
-s390_fix_long_loop_prediction (rtx insn)
+s390_fix_long_loop_prediction (rtx_insn *insn)
 {
   rtx set = single_set (insn);
   rtx code_label, label_ref, new_label;
-  rtx uncond_jump;
-  rtx cur_insn;
+  rtx_insn *uncond_jump;
+  rtx_insn *cur_insn;
   rtx tmp;
   int distance;
 
@@ -10912,6 +12613,11 @@ s390_fix_long_loop_prediction (rtx insn)
   if (!set
       || SET_DEST (set) != pc_rtx
       || GET_CODE (SET_SRC(set)) != IF_THEN_ELSE)
+    return false;
+
+  /* Skip conditional returns.  */
+  if (ANY_RETURN_P (XEXP (SET_SRC (set), 1))
+      && XEXP (SET_SRC (set), 2) == pc_rtx)
     return false;
 
   label_ref = (GET_CODE (XEXP (SET_SRC (set), 1)) == LABEL_REF ?
@@ -10955,7 +12661,7 @@ s390_fix_long_loop_prediction (rtx insn)
 /* Returns 1 if INSN reads the value of REG for purposes not related
    to addressing of memory, and 0 otherwise.  */
 static int
-s390_non_addr_reg_read_p (rtx reg, rtx insn)
+s390_non_addr_reg_read_p (rtx reg, rtx_insn *insn)
 {
   return reg_referenced_p (reg, PATTERN (insn))
     && !reg_used_in_mem_p (REGNO (reg), PATTERN (insn));
@@ -10964,8 +12670,8 @@ s390_non_addr_reg_read_p (rtx reg, rtx insn)
 /* Starting from INSN find_cond_jump looks downwards in the insn
    stream for a single jump insn which is the last user of the
    condition code set in INSN.  */
-static rtx
-find_cond_jump (rtx insn)
+static rtx_insn *
+find_cond_jump (rtx_insn *insn)
 {
   for (; insn; insn = NEXT_INSN (insn))
     {
@@ -11000,26 +12706,26 @@ find_cond_jump (rtx insn)
       break;
     }
 
-  return NULL_RTX;
+  return NULL;
 }
 
 /* Swap the condition in COND and the operands in OP0 and OP1 so that
    the semantics does not change.  If NULL_RTX is passed as COND the
    function tries to find the conditional jump starting with INSN.  */
 static void
-s390_swap_cmp (rtx cond, rtx *op0, rtx *op1, rtx insn)
+s390_swap_cmp (rtx cond, rtx *op0, rtx *op1, rtx_insn *insn)
 {
   rtx tmp = *op0;
 
   if (cond == NULL_RTX)
     {
-      rtx jump = find_cond_jump (NEXT_INSN (insn));
-      jump = jump ? single_set (jump) : NULL_RTX;
+      rtx_insn *jump = find_cond_jump (NEXT_INSN (insn));
+      rtx set = jump ? single_set (jump) : NULL_RTX;
 
-      if (jump == NULL_RTX)
+      if (set == NULL_RTX)
 	return;
 
-      cond = XEXP (XEXP (jump, 1), 0);
+      cond = XEXP (SET_SRC (set), 0);
     }
 
   *op0 = *op1;
@@ -11037,9 +12743,9 @@ s390_swap_cmp (rtx cond, rtx *op0, rtx *op1, rtx insn)
    operands of the compare.  The function return true whenever it
    added an insn.  */
 static bool
-s390_z10_optimize_cmp (rtx insn)
+s390_z10_optimize_cmp (rtx_insn *insn)
 {
-  rtx prev_insn, next_insn;
+  rtx_insn *prev_insn, *next_insn;
   bool insn_added_p = false;
   rtx cond, *op0, *op1;
 
@@ -11208,7 +12914,8 @@ s390_reorg (void)
   /* Generate out-of-pool execute target insns.  */
   if (TARGET_CPU_ZARCH)
     {
-      rtx insn, label, target;
+      rtx_insn *insn, *target;
+      rtx label;
 
       for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
 	{
@@ -11232,9 +12939,10 @@ s390_reorg (void)
   /* Walk over the insns and do some >=z10 specific changes.  */
   if (s390_tune == PROCESSOR_2097_Z10
       || s390_tune == PROCESSOR_2817_Z196
-      || s390_tune == PROCESSOR_2827_ZEC12)
+      || s390_tune == PROCESSOR_2827_ZEC12
+      || s390_tune == PROCESSOR_2964_Z13)
     {
-      rtx insn;
+      rtx_insn *insn;
       bool insn_added_p = false;
 
       /* The insn lengths and addresses have to be up to date for the
@@ -11263,7 +12971,7 @@ s390_reorg (void)
   s390_function_num_hotpatch_hw (current_function_decl, &hw_before, &hw_after);
   if (hw_after > 0)
     {
-      rtx insn;
+      rtx_insn *insn;
 
       /* Insert NOPs for hotpatching. */
       for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
@@ -11303,7 +13011,7 @@ s390_reorg (void)
 
 /* Return true if INSN is a fp load insn writing register REGNO.  */
 static inline bool
-s390_fpload_toreg (rtx insn, unsigned int regno)
+s390_fpload_toreg (rtx_insn *insn, unsigned int regno)
 {
   rtx set;
   enum attr_type flag = s390_safe_attr_type (insn);
@@ -11336,13 +13044,13 @@ s390_fpload_toreg (rtx insn, unsigned int regno)
    for Z10_EARLYLOAD_DISTANCE.  A problematic load instruction is
    moved to the very end of the ready list.  */
 static void
-s390_z10_prevent_earlyload_conflicts (rtx *ready, int *nready_p)
+s390_z10_prevent_earlyload_conflicts (rtx_insn **ready, int *nready_p)
 {
   unsigned int regno;
   int nready = *nready_p;
-  rtx tmp;
+  rtx_insn *tmp;
   int i;
-  rtx insn;
+  rtx_insn *insn;
   rtx set;
   enum attr_type flag;
   int distance;
@@ -11378,7 +13086,7 @@ s390_z10_prevent_earlyload_conflicts (rtx *ready, int *nready_p)
     return;
 
   tmp = ready[i];
-  memmove (&ready[1], &ready[0], sizeof (rtx) * i);
+  memmove (&ready[1], &ready[0], sizeof (rtx_insn *) * i);
   ready[0] = tmp;
 }
 
@@ -11401,7 +13109,7 @@ static int s390_sched_state;
 #define S390_OOO_SCHED_ATTR_MASK_GROUPALONE 0x8
 
 static unsigned int
-s390_get_sched_attrmask (rtx insn)
+s390_get_sched_attrmask (rtx_insn *insn)
 {
   unsigned int mask = 0;
 
@@ -11420,7 +13128,7 @@ s390_get_sched_attrmask (rtx insn)
    better.  The score is calculated from the OOO scheduling attributes
    of INSN and the scheduling state s390_sched_state.  */
 static int
-s390_sched_score (rtx insn)
+s390_sched_score (rtx_insn *insn)
 {
   unsigned int mask = s390_get_sched_attrmask (insn);
   int score = 0;
@@ -11476,18 +13184,19 @@ s390_sched_score (rtx insn)
 }
 
 /* This function is called via hook TARGET_SCHED_REORDER before
-   issueing one insn from list READY which contains *NREADYP entries.
+   issuing one insn from list READY which contains *NREADYP entries.
    For target z10 it reorders load instructions to avoid early load
    conflicts in the floating point pipeline  */
 static int
 s390_sched_reorder (FILE *file, int verbose,
-		    rtx *ready, int *nreadyp, int clock ATTRIBUTE_UNUSED)
+		    rtx_insn **ready, int *nreadyp, int clock ATTRIBUTE_UNUSED)
 {
   if (s390_tune == PROCESSOR_2097_Z10)
     if (reload_completed && *nreadyp > 1)
       s390_z10_prevent_earlyload_conflicts (ready, nreadyp);
 
-  if (s390_tune == PROCESSOR_2827_ZEC12
+  if ((s390_tune == PROCESSOR_2827_ZEC12
+       || s390_tune == PROCESSOR_2964_Z13)
       && reload_completed
       && *nreadyp > 1)
     {
@@ -11495,7 +13204,7 @@ s390_sched_reorder (FILE *file, int verbose,
       int last_index = *nreadyp - 1;
       int max_index = -1;
       int max_score = -1;
-      rtx tmp;
+      rtx_insn *tmp;
 
       /* Just move the insn with the highest score to the top (the
 	 end) of the list.  A full sort is not needed since a conflict
@@ -11566,11 +13275,12 @@ s390_sched_reorder (FILE *file, int verbose,
    last_scheduled_insn in order to make it available for
    s390_sched_reorder.  */
 static int
-s390_sched_variable_issue (FILE *file, int verbose, rtx insn, int more)
+s390_sched_variable_issue (FILE *file, int verbose, rtx_insn *insn, int more)
 {
   last_scheduled_insn = insn;
 
-  if (s390_tune == PROCESSOR_2827_ZEC12
+  if ((s390_tune == PROCESSOR_2827_ZEC12
+       || s390_tune == PROCESSOR_2964_Z13)
       && reload_completed
       && recog_memoized (insn) >= 0)
     {
@@ -11629,21 +13339,8 @@ s390_sched_init (FILE *file ATTRIBUTE_UNUSED,
 		 int verbose ATTRIBUTE_UNUSED,
 		 int max_ready ATTRIBUTE_UNUSED)
 {
-  last_scheduled_insn = NULL_RTX;
+  last_scheduled_insn = NULL;
   s390_sched_state = 0;
-}
-
-/* This function checks the whole of insn X for memory references. The
-   function always returns zero because the framework it is called
-   from would stop recursively analyzing the insn upon a return value
-   other than zero. The real result of this function is updating
-   counter variable MEM_COUNT.  */
-static int
-check_dpu (rtx *x, unsigned *mem_count)
-{
-  if (*x != NULL_RTX && MEM_P (*x))
-    (*mem_count)++;
-  return 0;
 }
 
 /* This target hook implementation for TARGET_LOOP_UNROLL_ADJUST calculates
@@ -11657,23 +13354,25 @@ static unsigned
 s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
 {
   basic_block *bbs;
-  rtx insn;
+  rtx_insn *insn;
   unsigned i;
   unsigned mem_count = 0;
 
   if (s390_tune != PROCESSOR_2097_Z10
       && s390_tune != PROCESSOR_2817_Z196
-      && s390_tune != PROCESSOR_2827_ZEC12)
+      && s390_tune != PROCESSOR_2827_ZEC12
+      && s390_tune != PROCESSOR_2964_Z13)
     return nunroll;
 
   /* Count the number of memory references within the loop body.  */
   bbs = get_loop_body (loop);
+  subrtx_iterator::array_type array;
   for (i = 0; i < loop->num_nodes; i++)
-    {
-      for (insn = BB_HEAD (bbs[i]); insn != BB_END (bbs[i]); insn = NEXT_INSN (insn))
-	if (INSN_P (insn) && INSN_CODE (insn) != -1)
-            for_each_rtx (&insn, (rtx_function) check_dpu, &mem_count);
-    }
+    FOR_BB_INSNS (bbs[i], insn)
+      if (INSN_P (insn) && INSN_CODE (insn) != -1)
+	FOR_EACH_SUBRTX (iter, array, PATTERN (insn), NONCONST)
+	  if (MEM_P (*iter))
+	    mem_count += 1;
   free (bbs);
 
   /* Prevent division by zero, and we do not need to adjust nunroll in this case.  */
@@ -11690,6 +13389,489 @@ s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
       return MIN (nunroll, 16 / mem_count);
     }
 }
+
+static void
+s390_option_override (void)
+{
+  unsigned int i;
+  cl_deferred_option *opt;
+  vec<cl_deferred_option> *v =
+    (vec<cl_deferred_option> *) s390_deferred_options;
+
+  if (v)
+    FOR_EACH_VEC_ELT (*v, i, opt)
+      {
+	switch (opt->opt_index)
+	  {
+	  case OPT_mhotpatch_:
+	    {
+	      int val1;
+	      int val2;
+	      char s[256];
+	      char *t;
+
+	      strncpy (s, opt->arg, 256);
+	      s[255] = 0;
+	      t = strchr (s, ',');
+	      if (t != NULL)
+		{
+		  *t = 0;
+		  t++;
+		  val1 = integral_argument (s);
+		  val2 = integral_argument (t);
+		}
+	      else
+		{
+		  val1 = -1;
+		  val2 = -1;
+		}
+	      if (val1 == -1 || val2 == -1)
+		{
+		  /* argument is not a plain number */
+		  error ("arguments to %qs should be non-negative integers",
+			 "-mhotpatch=n,m");
+		  break;
+		}
+	      else if (val1 > s390_hotpatch_hw_max
+		       || val2 > s390_hotpatch_hw_max)
+		{
+		  error ("argument to %qs is too large (max. %d)",
+			 "-mhotpatch=n,m", s390_hotpatch_hw_max);
+		  break;
+		}
+	      s390_hotpatch_hw_before_label = val1;
+	      s390_hotpatch_hw_after_label = val2;
+	      break;
+	    }
+	  default:
+	    gcc_unreachable ();
+	  }
+      }
+
+  /* Set up function hooks.  */
+  init_machine_status = s390_init_machine_status;
+
+  /* Architecture mode defaults according to ABI.  */
+  if (!(target_flags_explicit & MASK_ZARCH))
+    {
+      if (TARGET_64BIT)
+	target_flags |= MASK_ZARCH;
+      else
+	target_flags &= ~MASK_ZARCH;
+    }
+
+  /* Set the march default in case it hasn't been specified on
+     cmdline.  */
+  if (s390_arch == PROCESSOR_max)
+    {
+      s390_arch_string = TARGET_ZARCH? "z900" : "g5";
+      s390_arch = TARGET_ZARCH ? PROCESSOR_2064_Z900 : PROCESSOR_9672_G5;
+      s390_arch_flags = processor_flags_table[(int)s390_arch];
+    }
+
+  /* Determine processor to tune for.  */
+  if (s390_tune == PROCESSOR_max)
+    {
+      s390_tune = s390_arch;
+      s390_tune_flags = s390_arch_flags;
+    }
+
+  /* Sanity checks.  */
+  if (TARGET_ZARCH && !TARGET_CPU_ZARCH)
+    error ("z/Architecture mode not supported on %s", s390_arch_string);
+  if (TARGET_64BIT && !TARGET_ZARCH)
+    error ("64-bit ABI not supported in ESA/390 mode");
+
+  /* Use hardware DFP if available and not explicitly disabled by
+     user. E.g. with -m31 -march=z10 -mzarch   */
+  if (!(target_flags_explicit & MASK_HARD_DFP) && TARGET_DFP)
+    target_flags |= MASK_HARD_DFP;
+
+  /* Enable hardware transactions if available and not explicitly
+     disabled by user.  E.g. with -m31 -march=zEC12 -mzarch */
+  if (!(target_flags_explicit & MASK_OPT_HTM) && TARGET_CPU_HTM && TARGET_ZARCH)
+    target_flags |= MASK_OPT_HTM;
+
+  if (target_flags_explicit & MASK_OPT_VX)
+    {
+      if (TARGET_OPT_VX)
+	{
+	  if (!TARGET_CPU_VX)
+	    error ("hardware vector support not available on %s",
+		   s390_arch_string);
+	  if (TARGET_SOFT_FLOAT)
+	    error ("hardware vector support not available with -msoft-float");
+	}
+    }
+  else if (TARGET_CPU_VX)
+    /* Enable vector support if available and not explicitly disabled
+       by user.  E.g. with -m31 -march=z13 -mzarch */
+    target_flags |= MASK_OPT_VX;
+
+  if (TARGET_HARD_DFP && !TARGET_DFP)
+    {
+      if (target_flags_explicit & MASK_HARD_DFP)
+	{
+	  if (!TARGET_CPU_DFP)
+	    error ("hardware decimal floating point instructions"
+		   " not available on %s", s390_arch_string);
+	  if (!TARGET_ZARCH)
+	    error ("hardware decimal floating point instructions"
+		   " not available in ESA/390 mode");
+	}
+      else
+	target_flags &= ~MASK_HARD_DFP;
+    }
+
+  if ((target_flags_explicit & MASK_SOFT_FLOAT) && TARGET_SOFT_FLOAT)
+    {
+      if ((target_flags_explicit & MASK_HARD_DFP) && TARGET_HARD_DFP)
+	error ("-mhard-dfp can%'t be used in conjunction with -msoft-float");
+
+      target_flags &= ~MASK_HARD_DFP;
+    }
+
+  /* Set processor cost function.  */
+  switch (s390_tune)
+    {
+    case PROCESSOR_2084_Z990:
+      s390_cost = &z990_cost;
+      break;
+    case PROCESSOR_2094_Z9_109:
+      s390_cost = &z9_109_cost;
+      break;
+    case PROCESSOR_2097_Z10:
+      s390_cost = &z10_cost;
+      break;
+    case PROCESSOR_2817_Z196:
+      s390_cost = &z196_cost;
+      break;
+    case PROCESSOR_2827_ZEC12:
+    case PROCESSOR_2964_Z13:
+      s390_cost = &zEC12_cost;
+      break;
+    default:
+      s390_cost = &z900_cost;
+    }
+
+  if (TARGET_BACKCHAIN && TARGET_PACKED_STACK && TARGET_HARD_FLOAT)
+    error ("-mbackchain -mpacked-stack -mhard-float are not supported "
+	   "in combination");
+
+  if (s390_stack_size)
+    {
+      if (s390_stack_guard >= s390_stack_size)
+	error ("stack size must be greater than the stack guard value");
+      else if (s390_stack_size > 1 << 16)
+	error ("stack size must not be greater than 64k");
+    }
+  else if (s390_stack_guard)
+    error ("-mstack-guard implies use of -mstack-size");
+
+#ifdef TARGET_DEFAULT_LONG_DOUBLE_128
+  if (!(target_flags_explicit & MASK_LONG_DOUBLE_128))
+    target_flags |= MASK_LONG_DOUBLE_128;
+#endif
+
+  if (s390_tune == PROCESSOR_2097_Z10
+      || s390_tune == PROCESSOR_2817_Z196
+      || s390_tune == PROCESSOR_2827_ZEC12
+      || s390_tune == PROCESSOR_2964_Z13)
+    {
+      maybe_set_param_value (PARAM_MAX_UNROLLED_INSNS, 100,
+			     global_options.x_param_values,
+			     global_options_set.x_param_values);
+      maybe_set_param_value (PARAM_MAX_UNROLL_TIMES, 32,
+			     global_options.x_param_values,
+			     global_options_set.x_param_values);
+      maybe_set_param_value (PARAM_MAX_COMPLETELY_PEELED_INSNS, 2000,
+			     global_options.x_param_values,
+			     global_options_set.x_param_values);
+      maybe_set_param_value (PARAM_MAX_COMPLETELY_PEEL_TIMES, 64,
+			     global_options.x_param_values,
+			     global_options_set.x_param_values);
+    }
+
+  maybe_set_param_value (PARAM_MAX_PENDING_LIST_LENGTH, 256,
+			 global_options.x_param_values,
+			 global_options_set.x_param_values);
+  /* values for loop prefetching */
+  maybe_set_param_value (PARAM_L1_CACHE_LINE_SIZE, 256,
+			 global_options.x_param_values,
+			 global_options_set.x_param_values);
+  maybe_set_param_value (PARAM_L1_CACHE_SIZE, 128,
+			 global_options.x_param_values,
+			 global_options_set.x_param_values);
+  /* s390 has more than 2 levels and the size is much larger.  Since
+     we are always running virtualized assume that we only get a small
+     part of the caches above l1.  */
+  maybe_set_param_value (PARAM_L2_CACHE_SIZE, 1500,
+			 global_options.x_param_values,
+			 global_options_set.x_param_values);
+  maybe_set_param_value (PARAM_PREFETCH_MIN_INSN_TO_MEM_RATIO, 2,
+			 global_options.x_param_values,
+			 global_options_set.x_param_values);
+  maybe_set_param_value (PARAM_SIMULTANEOUS_PREFETCHES, 6,
+			 global_options.x_param_values,
+			 global_options_set.x_param_values);
+
+  /* This cannot reside in s390_option_optimization_table since HAVE_prefetch
+     requires the arch flags to be evaluated already.  Since prefetching
+     is beneficial on s390, we enable it if available.  */
+  if (flag_prefetch_loop_arrays < 0 && HAVE_prefetch && optimize >= 3)
+    flag_prefetch_loop_arrays = 1;
+
+  /* Use the alternative scheduling-pressure algorithm by default.  */
+  maybe_set_param_value (PARAM_SCHED_PRESSURE_ALGORITHM, 2,
+                         global_options.x_param_values,
+                         global_options_set.x_param_values);
+
+  if (TARGET_TPF)
+    {
+      /* Don't emit DWARF3/4 unless specifically selected.  The TPF
+	 debuggers do not yet support DWARF 3/4.  */
+      if (!global_options_set.x_dwarf_strict) 
+	dwarf_strict = 1;
+      if (!global_options_set.x_dwarf_version)
+	dwarf_version = 2;
+    }
+
+  /* Register a target-specific optimization-and-lowering pass
+     to run immediately before prologue and epilogue generation.
+
+     Registering the pass must be done at start up.  It's
+     convenient to do it here.  */
+  opt_pass *new_pass = new pass_s390_early_mach (g);
+  struct register_pass_info insert_pass_s390_early_mach =
+    {
+      new_pass,			/* pass */
+      "pro_and_epilogue",	/* reference_pass_name */
+      1,			/* ref_pass_instance_number */
+      PASS_POS_INSERT_BEFORE	/* po_op */
+    };
+  register_pass (&insert_pass_s390_early_mach);
+}
+
+/* Implement TARGET_USE_BY_PIECES_INFRASTRUCTURE_P.  */
+
+static bool
+s390_use_by_pieces_infrastructure_p (unsigned HOST_WIDE_INT size,
+				     unsigned int align ATTRIBUTE_UNUSED,
+				     enum by_pieces_operation op ATTRIBUTE_UNUSED,
+				     bool speed_p ATTRIBUTE_UNUSED)
+{
+  return (size == 1 || size == 2
+	  || size == 4 || (TARGET_ZARCH && size == 8));
+}
+
+/* Implement TARGET_ATOMIC_ASSIGN_EXPAND_FENV hook.  */
+
+static void
+s390_atomic_assign_expand_fenv (tree *hold, tree *clear, tree *update)
+{
+  tree sfpc = s390_builtin_decls[S390_BUILTIN_s390_sfpc];
+  tree efpc = s390_builtin_decls[S390_BUILTIN_s390_efpc];
+  tree call_efpc = build_call_expr (efpc, 0);
+  tree fenv_var = create_tmp_var (unsigned_type_node);
+
+#define FPC_EXCEPTION_MASK	 HOST_WIDE_INT_UC (0xf8000000)
+#define FPC_FLAGS_MASK		 HOST_WIDE_INT_UC (0x00f80000)
+#define FPC_DXC_MASK		 HOST_WIDE_INT_UC (0x0000ff00)
+#define FPC_EXCEPTION_MASK_SHIFT HOST_WIDE_INT_UC (24)
+#define FPC_FLAGS_SHIFT		 HOST_WIDE_INT_UC (16)
+#define FPC_DXC_SHIFT		 HOST_WIDE_INT_UC (8)
+
+  /* Generates the equivalent of feholdexcept (&fenv_var)
+
+     fenv_var = __builtin_s390_efpc ();
+     __builtin_s390_sfpc (fenv_var & mask) */
+  tree old_fpc = build2 (MODIFY_EXPR, unsigned_type_node, fenv_var, call_efpc);
+  tree new_fpc =
+    build2 (BIT_AND_EXPR, unsigned_type_node, fenv_var,
+	    build_int_cst (unsigned_type_node,
+			   ~(FPC_DXC_MASK | FPC_FLAGS_MASK |
+			     FPC_EXCEPTION_MASK)));
+  tree set_new_fpc = build_call_expr (sfpc, 1, new_fpc);
+  *hold = build2 (COMPOUND_EXPR, void_type_node, old_fpc, set_new_fpc);
+
+  /* Generates the equivalent of feclearexcept (FE_ALL_EXCEPT)
+
+     __builtin_s390_sfpc (__builtin_s390_efpc () & mask) */
+  new_fpc = build2 (BIT_AND_EXPR, unsigned_type_node, call_efpc,
+		    build_int_cst (unsigned_type_node,
+				   ~(FPC_DXC_MASK | FPC_FLAGS_MASK)));
+  *clear = build_call_expr (sfpc, 1, new_fpc);
+
+  /* Generates the equivalent of feupdateenv (fenv_var)
+
+  old_fpc = __builtin_s390_efpc ();
+  __builtin_s390_sfpc (fenv_var);
+  __atomic_feraiseexcept ((old_fpc & FPC_FLAGS_MASK) >> FPC_FLAGS_SHIFT);  */
+
+  old_fpc = create_tmp_var (unsigned_type_node);
+  tree store_old_fpc = build2 (MODIFY_EXPR, void_type_node,
+			       old_fpc, call_efpc);
+
+  set_new_fpc = build_call_expr (sfpc, 1, fenv_var);
+
+  tree raise_old_except = build2 (BIT_AND_EXPR, unsigned_type_node, old_fpc,
+				  build_int_cst (unsigned_type_node,
+						 FPC_FLAGS_MASK));
+  raise_old_except = build2 (RSHIFT_EXPR, unsigned_type_node, raise_old_except,
+			     build_int_cst (unsigned_type_node,
+					    FPC_FLAGS_SHIFT));
+  tree atomic_feraiseexcept
+    = builtin_decl_implicit (BUILT_IN_ATOMIC_FERAISEEXCEPT);
+  raise_old_except = build_call_expr (atomic_feraiseexcept,
+				      1, raise_old_except);
+
+  *update = build2 (COMPOUND_EXPR, void_type_node,
+		    build2 (COMPOUND_EXPR, void_type_node,
+			    store_old_fpc, set_new_fpc),
+		    raise_old_except);
+
+#undef FPC_EXCEPTION_MASK
+#undef FPC_FLAGS_MASK
+#undef FPC_DXC_MASK
+#undef FPC_EXCEPTION_MASK_SHIFT
+#undef FPC_FLAGS_SHIFT
+#undef FPC_DXC_SHIFT
+}
+
+/* Return the vector mode to be used for inner mode MODE when doing
+   vectorization.  */
+static machine_mode
+s390_preferred_simd_mode (machine_mode mode)
+{
+  if (TARGET_VX)
+    switch (mode)
+      {
+      case DFmode:
+	return V2DFmode;
+      case DImode:
+	return V2DImode;
+      case SImode:
+	return V4SImode;
+      case HImode:
+	return V8HImode;
+      case QImode:
+	return V16QImode;
+      default:;
+      }
+  return word_mode;
+}
+
+/* Our hardware does not require vectors to be strictly aligned.  */
+static bool
+s390_support_vector_misalignment (machine_mode mode ATTRIBUTE_UNUSED,
+				  const_tree type ATTRIBUTE_UNUSED,
+				  int misalignment ATTRIBUTE_UNUSED,
+				  bool is_packed ATTRIBUTE_UNUSED)
+{
+  if (TARGET_VX)
+    return true;
+
+  return default_builtin_support_vector_misalignment (mode, type, misalignment,
+						      is_packed);
+}
+
+/* The vector ABI requires vector types to be aligned on an 8 byte
+   boundary (our stack alignment).  However, we allow this to be
+   overriden by the user, while this definitely breaks the ABI.  */
+static HOST_WIDE_INT
+s390_vector_alignment (const_tree type)
+{
+  if (!TARGET_VX_ABI)
+    return default_vector_alignment (type);
+
+  if (TYPE_USER_ALIGN (type))
+    return TYPE_ALIGN (type);
+
+  return MIN (64, tree_to_shwi (TYPE_SIZE (type)));
+}
+
+/* Implement TARGET_ASM_FILE_END.  */
+static void
+s390_asm_file_end (void)
+{
+#ifdef HAVE_AS_GNU_ATTRIBUTE
+  varpool_node *vnode;
+  cgraph_node *cnode;
+
+  FOR_EACH_VARIABLE (vnode)
+    if (TREE_PUBLIC (vnode->decl))
+      s390_check_type_for_vector_abi (TREE_TYPE (vnode->decl), false, false);
+
+  FOR_EACH_FUNCTION (cnode)
+    if (TREE_PUBLIC (cnode->decl))
+      s390_check_type_for_vector_abi (TREE_TYPE (cnode->decl), false, false);
+
+
+  if (s390_vector_abi != 0)
+    fprintf (asm_out_file, "\t.gnu_attribute 8, %d\n",
+	     s390_vector_abi);
+#endif
+  file_end_indicate_exec_stack ();
+}
+
+/* Return true if TYPE is a vector bool type.  */
+static inline bool
+s390_vector_bool_type_p (const_tree type)
+{
+  return TYPE_VECTOR_OPAQUE (type);
+}
+
+/* Return the diagnostic message string if the binary operation OP is
+   not permitted on TYPE1 and TYPE2, NULL otherwise.  */
+static const char*
+s390_invalid_binary_op (int op ATTRIBUTE_UNUSED, const_tree type1, const_tree type2)
+{
+  bool bool1_p, bool2_p;
+  bool plusminus_p;
+  bool muldiv_p;
+  bool compare_p;
+  machine_mode mode1, mode2;
+
+  if (!TARGET_ZVECTOR)
+    return NULL;
+
+  if (!VECTOR_TYPE_P (type1) || !VECTOR_TYPE_P (type2))
+    return NULL;
+
+  bool1_p = s390_vector_bool_type_p (type1);
+  bool2_p = s390_vector_bool_type_p (type2);
+
+  /* Mixing signed and unsigned types is forbidden for all
+     operators.  */
+  if (!bool1_p && !bool2_p
+      && TYPE_UNSIGNED (type1) != TYPE_UNSIGNED (type2))
+    return N_("types differ in signess");
+
+  plusminus_p = (op == PLUS_EXPR || op == MINUS_EXPR);
+  muldiv_p = (op == MULT_EXPR || op == RDIV_EXPR || op == TRUNC_DIV_EXPR
+	      || op == CEIL_DIV_EXPR || op == FLOOR_DIV_EXPR
+	      || op == ROUND_DIV_EXPR);
+  compare_p = (op == LT_EXPR || op == LE_EXPR || op == GT_EXPR || op == GE_EXPR
+	       || op == EQ_EXPR || op == NE_EXPR);
+
+  if (bool1_p && bool2_p && (plusminus_p || muldiv_p))
+    return N_("binary operator does not support two vector bool operands");
+
+  if (bool1_p != bool2_p && (muldiv_p || compare_p))
+    return N_("binary operator does not support vector bool operand");
+
+  mode1 = TYPE_MODE (type1);
+  mode2 = TYPE_MODE (type2);
+
+  if (bool1_p != bool2_p && plusminus_p
+      && (GET_MODE_CLASS (mode1) == MODE_VECTOR_FLOAT
+	  || GET_MODE_CLASS (mode2) == MODE_VECTOR_FLOAT))
+    return N_("binary operator does not support mixing vector "
+	      "bool with floating point vector operands");
+
+  return NULL;
+}
+
 
 /* Initialize GCC target structure.  */
 
@@ -11735,6 +13917,8 @@ s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
 #define TARGET_INIT_BUILTINS s390_init_builtins
 #undef  TARGET_EXPAND_BUILTIN
 #define TARGET_EXPAND_BUILTIN s390_expand_builtin
+#undef  TARGET_BUILTIN_DECL
+#define TARGET_BUILTIN_DECL s390_builtin_decl
 
 #undef TARGET_ASM_OUTPUT_ADDR_CONST_EXTRA
 #define TARGET_ASM_OUTPUT_ADDR_CONST_EXTRA s390_output_addr_const_extra
@@ -11797,6 +13981,11 @@ s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
 #define TARGET_FUNCTION_VALUE s390_function_value
 #undef TARGET_LIBCALL_VALUE
 #define TARGET_LIBCALL_VALUE s390_libcall_value
+#undef TARGET_STRICT_ARGUMENT_NAMING
+#define TARGET_STRICT_ARGUMENT_NAMING hook_bool_CUMULATIVE_ARGS_true
+
+#undef TARGET_KEEP_LEAF_WHEN_PROFILED
+#define TARGET_KEEP_LEAF_WHEN_PROFILED s390_keep_leaf_when_profiled
 
 #undef TARGET_FIXED_CONDITION_CODE_REGS
 #define TARGET_FIXED_CONDITION_CODE_REGS s390_fixed_condition_code_regs
@@ -11805,12 +13994,15 @@ s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
 #define TARGET_CC_MODES_COMPATIBLE s390_cc_modes_compatible
 
 #undef TARGET_INVALID_WITHIN_DOLOOP
-#define TARGET_INVALID_WITHIN_DOLOOP hook_constcharptr_const_rtx_null
+#define TARGET_INVALID_WITHIN_DOLOOP hook_constcharptr_const_rtx_insn_null
 
 #ifdef HAVE_AS_TLS
 #undef TARGET_ASM_OUTPUT_DWARF_DTPREL
 #define TARGET_ASM_OUTPUT_DWARF_DTPREL s390_output_dwarf_dtprel
 #endif
+
+#undef TARGET_DWARF_FRAME_REG_MODE
+#define TARGET_DWARF_FRAME_REG_MODE s390_dwarf_frame_reg_mode
 
 #ifdef TARGET_ALTERNATE_LONG_DOUBLE_MANGLING
 #undef TARGET_MANGLE_TYPE
@@ -11819,6 +14011,9 @@ s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
 
 #undef TARGET_SCALAR_MODE_SUPPORTED_P
 #define TARGET_SCALAR_MODE_SUPPORTED_P s390_scalar_mode_supported_p
+
+#undef TARGET_VECTOR_MODE_SUPPORTED_P
+#define TARGET_VECTOR_MODE_SUPPORTED_P s390_vector_mode_supported_p
 
 #undef  TARGET_PREFERRED_RELOAD_CLASS
 #define TARGET_PREFERRED_RELOAD_CLASS s390_preferred_reload_class
@@ -11837,6 +14032,9 @@ s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
 
 #undef TARGET_LEGITIMATE_CONSTANT_P
 #define TARGET_LEGITIMATE_CONSTANT_P s390_legitimate_constant_p
+
+#undef TARGET_LRA_P
+#define TARGET_LRA_P s390_lra_p
 
 #undef TARGET_CAN_ELIMINATE
 #define TARGET_CAN_ELIMINATE s390_can_eliminate
@@ -11858,11 +14056,42 @@ s390_loop_unroll_adjust (unsigned nunroll, struct loop *loop)
 #undef TARGET_CANONICALIZE_COMPARISON
 #define TARGET_CANONICALIZE_COMPARISON s390_canonicalize_comparison
 
+#undef TARGET_HARD_REGNO_SCRATCH_OK
+#define TARGET_HARD_REGNO_SCRATCH_OK s390_hard_regno_scratch_ok
+
 #undef TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE s390_attribute_table
 
 #undef TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P
 #define TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P hook_bool_const_tree_true
+
+#undef TARGET_SET_UP_BY_PROLOGUE
+#define TARGET_SET_UP_BY_PROLOGUE s300_set_up_by_prologue
+
+#undef TARGET_USE_BY_PIECES_INFRASTRUCTURE_P
+#define TARGET_USE_BY_PIECES_INFRASTRUCTURE_P \
+  s390_use_by_pieces_infrastructure_p
+
+#undef TARGET_ATOMIC_ASSIGN_EXPAND_FENV
+#define TARGET_ATOMIC_ASSIGN_EXPAND_FENV s390_atomic_assign_expand_fenv
+
+#undef TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN
+#define TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN s390_invalid_arg_for_unprototyped_fn
+
+#undef TARGET_VECTORIZE_PREFERRED_SIMD_MODE
+#define TARGET_VECTORIZE_PREFERRED_SIMD_MODE s390_preferred_simd_mode
+
+#undef TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT
+#define TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT s390_support_vector_misalignment
+
+#undef TARGET_VECTOR_ALIGNMENT
+#define TARGET_VECTOR_ALIGNMENT s390_vector_alignment
+
+#undef TARGET_INVALID_BINARY_OP
+#define TARGET_INVALID_BINARY_OP s390_invalid_binary_op
+
+#undef TARGET_ASM_FILE_END
+#define TARGET_ASM_FILE_END s390_asm_file_end
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

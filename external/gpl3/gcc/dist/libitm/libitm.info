@@ -1,7 +1,7 @@
 This is libitm.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-4.8.5/gcc-4.8.5/libitm/libitm.texi.
+/space/rguenther/gcc-5.3.0/gcc-5.3.0/libitm/libitm.texi.
 
-Copyright (C) 2011-2013 Free Software Foundation, Inc.
+Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.2 or
@@ -17,7 +17,7 @@ END-INFO-DIR-ENTRY
 
    This manual documents the GNU Transactional Memory Library.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.2 or
@@ -47,7 +47,7 @@ accesses to shared memory by several threads.
 * Internals::                  Notes on libitm's internal synchronization.
 * GNU Free Documentation License::
                                How you can copy and share this manual.
-* Index::                      Index of this documentation.
+* Library Index::              Index of this documentation.
 
 
 File: libitm.info,  Node: Enabling libitm,  Next: C/C++ Language Constructs for TM,  Prev: Top,  Up: Top
@@ -792,7 +792,7 @@ progress guarantees) to use priority inheritance until the TM has
 priority-aware contention management.
 
 
-File: libitm.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: Internals,  Up: Top
+File: libitm.info,  Node: GNU Free Documentation License,  Next: Library Index,  Prev: Internals,  Up: Top
 
 GNU Free Documentation License
 ******************************
@@ -1278,10 +1278,10 @@ free software license, such as the GNU General Public License, to
 permit their use in free software.
 
 
-File: libitm.info,  Node: Index,  Prev: GNU Free Documentation License,  Up: Top
+File: libitm.info,  Node: Library Index,  Prev: GNU Free Documentation License,  Up: Top
 
-Index
-*****
+Library Index
+*************
 
  [index ]
 * Menu:
@@ -1302,6 +1302,6 @@ Node: Internals18032
 Ref: serial-lock-impl28057
 Ref: progress-guarantees32807
 Node: GNU Free Documentation License35081
-Node: Index60222
+Node: Library Index60230
 
 End Tag Table

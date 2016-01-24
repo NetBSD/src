@@ -1,5 +1,5 @@
 /* Definitions for LM32 running Linux-based GNU systems using ELF
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Philip Blundell <philb@gnu.org>
 
    This file is part of GCC.
@@ -76,4 +76,3 @@
 
 #undef  CC1_SPEC
 #define CC1_SPEC "%{G*} %{!fno-PIC:-fPIC}"
-

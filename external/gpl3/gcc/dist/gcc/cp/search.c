@@ -1,6 +1,6 @@
 /* Breadth-first and depth-first routines for
    searching multiple-inheritance lattice for GNU C++.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -25,6 +25,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
 #include "cp-tree.h"
 #include "intl.h"
@@ -381,7 +390,7 @@ lookup_field_1 (tree type, tree name, bool want_type)
 {
   tree field;
 
-  gcc_assert (TREE_CODE (name) == IDENTIFIER_NODE);
+  gcc_assert (identifier_p (name));
 
   if (TREE_CODE (type) == TEMPLATE_TYPE_PARM
       || TREE_CODE (type) == BOUND_TEMPLATE_TEMPLATE_PARM
@@ -424,8 +433,7 @@ lookup_field_1 (tree type, tree name, bool want_type)
 		  do
 		    field = fields[i--];
 		  while (i >= lo && DECL_NAME (fields[i]) == name);
-		  if (TREE_CODE (field) != TYPE_DECL
-		      && !DECL_TYPE_TEMPLATE_P (field))
+		  if (!DECL_DECLARES_TYPE_P (field))
 		    field = NULL_TREE;
 		}
 	      else
@@ -478,9 +486,7 @@ lookup_field_1 (tree type, tree name, bool want_type)
 	}
 
       if (DECL_NAME (decl) == name
-	  && (!want_type
-	      || TREE_CODE (decl) == TYPE_DECL
-	      || DECL_TYPE_TEMPLATE_P (decl)))
+	  && (!want_type || DECL_DECLARES_TYPE_P (decl)))
 	return decl;
     }
   /* Not found.  */
@@ -730,7 +736,7 @@ protected_accessible_p (tree decl, tree derived, tree binfo)
     Here DERIVED is a possible P, DECL is m and BINFO_TYPE (binfo) is N.  */
 
   /* If DERIVED isn't derived from N, then it can't be a P.  */
-  if (!DERIVED_FROM_P (BINFO_TYPE (binfo), derived))
+  if (!DERIVED_FROM_P (context_for_name_lookup (decl), derived))
     return 0;
 
   access = access_in_type (derived, decl);
@@ -777,8 +783,7 @@ friend_accessible_p (tree scope, tree decl, tree binfo)
   if (!scope)
     return 0;
 
-  if (TREE_CODE (scope) == FUNCTION_DECL
-      || DECL_FUNCTION_TEMPLATE_P (scope))
+  if (DECL_DECLARES_FUNCTION_P (scope))
     befriending_classes = DECL_BEFRIENDING_CLASSES (scope);
   else if (TYPE_P (scope))
     befriending_classes = CLASSTYPE_BEFRIENDING_CLASSES (scope);
@@ -796,8 +801,7 @@ friend_accessible_p (tree scope, tree decl, tree binfo)
       if (protected_accessible_p (decl, t, binfo))
 	return 1;
 
-  if (TREE_CODE (scope) == FUNCTION_DECL
-      || DECL_FUNCTION_TEMPLATE_P (scope))
+  if (DECL_DECLARES_FUNCTION_P (scope))
     {
       /* Perhaps this SCOPE is a member of a class which is a
 	 friend.  */
@@ -922,9 +926,11 @@ accessible_p (tree type, tree decl, bool consider_local_p)
       /* Figure out where the reference is occurring.  Check to see if
 	 DECL is private or protected in this scope, since that will
 	 determine whether protected access is allowed.  */
-      if (current_class_type)
+      tree ct = current_nonlambda_class_type ();
+      if (ct)
 	protected_ok = protected_accessible_p (decl,
-					       current_class_type, binfo);
+					       ct,
+					       binfo);
 
       /* Now, loop through the classes of which we are a friend.  */
       if (!protected_ok)
@@ -983,7 +989,7 @@ struct lookup_field_info {
 int
 shared_member_p (tree t)
 {
-  if (TREE_CODE (t) == VAR_DECL || TREE_CODE (t) == TYPE_DECL \
+  if (VAR_P (t) || TREE_CODE (t) == TYPE_DECL \
       || TREE_CODE (t) == CONST_DECL)
     return 1;
   if (is_overloaded_fn (t))
@@ -1059,8 +1065,7 @@ lookup_field_r (tree binfo, void *data)
 
   /* If we're looking up a type (as with an elaborated type specifier)
      we ignore all non-types we find.  */
-  if (lfi->want_type && TREE_CODE (nval) != TYPE_DECL
-      && !DECL_TYPE_TEMPLATE_P (nval))
+  if (lfi->want_type && !DECL_DECLARES_TYPE_P (nval))
     {
       if (lfi->name == TYPE_IDENTIFIER (type))
 	{
@@ -1190,7 +1195,7 @@ lookup_member (tree xbasetype, tree name, int protect, bool want_type,
       || xbasetype == error_mark_node)
     return NULL_TREE;
 
-  gcc_assert (TREE_CODE (name) == IDENTIFIER_NODE);
+  gcc_assert (identifier_p (name));
 
   if (TREE_CODE (xbasetype) == TREE_BINFO)
     {
@@ -1509,8 +1514,7 @@ lookup_fnfields_slot_nolazy (tree type, tree name)
 int
 class_method_index_for_fn (tree class_type, tree function)
 {
-  gcc_assert (TREE_CODE (function) == FUNCTION_DECL
-	      || DECL_FUNCTION_TEMPLATE_P (function));
+  gcc_assert (DECL_DECLARES_FUNCTION_P (function));
 
   return lookup_fnfields_1 (class_type,
 			    DECL_CONSTRUCTOR_P (function) ? ctor_identifier :
@@ -1849,8 +1853,8 @@ check_final_overrider (tree overrider, tree basefn)
 {
   tree over_type = TREE_TYPE (overrider);
   tree base_type = TREE_TYPE (basefn);
-  tree over_return = TREE_TYPE (over_type);
-  tree base_return = TREE_TYPE (base_type);
+  tree over_return = fndecl_declared_return_type (overrider);
+  tree base_return = fndecl_declared_return_type (basefn);
   tree over_throw, base_throw;
 
   int fail = 0;
@@ -1896,23 +1900,16 @@ check_final_overrider (tree overrider, tree basefn)
 		fail = 1;
 	    }
 	}
-      else if (!pedantic
-	       && can_convert (TREE_TYPE (base_type), TREE_TYPE (over_type),
-			       tf_warning_or_error))
+      else if (can_convert_standard (TREE_TYPE (base_type),
+				     TREE_TYPE (over_type),
+				     tf_warning_or_error))
 	/* GNU extension, allow trivial pointer conversions such as
 	   converting to void *, or qualification conversion.  */
 	{
-	  /* can_convert will permit user defined conversion from a
-	     (reference to) class type. We must reject them.  */
-	  over_return = non_reference (TREE_TYPE (over_type));
-	  if (CLASS_TYPE_P (over_return))
-	    fail = 2;
-	  else
-	    {
-	      warning (0, "deprecated covariant return type for %q+#D",
-			     overrider);
-	      warning (0, "  overriding %q+#D", basefn);
-	    }
+	  if (pedwarn (DECL_SOURCE_LOCATION (overrider), 0,
+		       "invalid covariant return type for %q#D", overrider))
+	    inform (DECL_SOURCE_LOCATION (basefn),
+		    "  overriding %q+#D", basefn);
 	}
       else
 	fail = 2;
@@ -2520,7 +2517,7 @@ lookup_conversions (tree type)
   tree list = NULL_TREE;
 
   complete_type (type);
-  if (!TYPE_BINFO (type))
+  if (!CLASS_TYPE_P (type) || !TYPE_BINFO (type))
     return NULL_TREE;
 
   lookup_conversions_r (TYPE_BINFO (type), 0, 0,

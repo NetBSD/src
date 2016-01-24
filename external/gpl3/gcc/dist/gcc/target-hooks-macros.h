@@ -1,5 +1,5 @@
 /* Common macros for target hook definitions.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -18,7 +18,7 @@
 /* The following macros should be provided by the including file:
 
    DEFHOOK(NAME, DOC, TYPE, PARAMS, INIT): Define a function-valued hook.
-   DEFHOOKPOD(DOC, TYPE, NAME, INIT): Define a piece-of-data 'hook'.  */
+   DEFHOOKPOD(NAME, DOC, TYPE, INIT): Define a piece-of-data 'hook'.  */
 
 /* Defaults for optional macros:
    DEFHOOKPODX(NAME, TYPE, INIT): Like DEFHOOKPOD, but share documentation
@@ -37,7 +37,7 @@
    HOOK_VECTOR_END: Close a struct declaration, providing a member declarator
                     name for nested use.  */
 #ifndef HOOK_VECTOR_1
-#define HOOK_VECTOR_1(NAME, FRAGMENT) HOOKSTRUCT(FRAGMENT)
+#define HOOK_VECTOR_1(NAME, FRAGMENT) HOOKSTRUCT (FRAGMENT)
 #endif
 #define HOOK_VECTOR(INIT_NAME, SNAME) HOOK_VECTOR_1 (INIT_NAME, struct SNAME {)
 #define HOOK_VECTOR_END(DECL_NAME) HOOK_VECTOR_1(,} DECL_NAME ;)

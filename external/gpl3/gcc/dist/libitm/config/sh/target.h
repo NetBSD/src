@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Transactional Memory Library (libitm).
 
@@ -34,10 +34,6 @@ typedef struct gtm_jmpbuf
   unsigned long f[4];	/* fr12-fr15 */
 #endif
 } gtm_jmpbuf;
-
-/* SH generally uses a fixed page size of 4K.  */
-#define PAGE_SIZE	4096
-#define FIXED_PAGE_SIZE	1
 
 /* ??? The size of one line in hardware caches (in bytes). */
 #define HW_CACHELINE_SIZE 32

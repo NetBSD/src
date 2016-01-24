@@ -1,5 +1,5 @@
 /* Definitions of target machine GNU compiler. VMS common version.
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    Contributed by Douglas B Rupp (rupp@gnat.com).
 
 This file is part of GCC.
@@ -87,3 +87,6 @@ extern void vms_c_register_includes (const char *, const char *, int);
 
 /* Special VMS debugger symbol to record the entry point.  */
 #define VMS_DEBUG_MAIN_POINTER "TRANSFER$BREAK$GO"
+
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function

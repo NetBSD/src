@@ -5,7 +5,7 @@
    This code has no license restrictions, and is considered public
    domain.
 
-   Changes copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Changes copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@inria.fr>
 
 This file is part of GCC.
@@ -122,6 +122,8 @@ extern enum omega_result omega_simplify_approximate (omega_pb);
 extern enum omega_result omega_constrain_variable_sign (omega_pb,
 							enum omega_eqn_color,
 							int, int);
+extern void debug (omega_pb_d &ref);
+extern void debug (omega_pb_d *ptr);
 extern void debug_omega_problem (omega_pb);
 extern void omega_print_problem (FILE *, omega_pb);
 extern void omega_print_red_equations (FILE *, omega_pb);

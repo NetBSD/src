@@ -23,6 +23,10 @@ Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 
 #include "ansidecl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* A floatformat consists of a sign bit, an exponent and a mantissa.  Once the
    bytes are concatenated according to the byteorder flag, then each of those
    fields is contiguous.  We number the bits with 0 being the most significant
@@ -128,7 +132,8 @@ extern const struct floatformat floatformat_ia64_spill_little;
 extern const struct floatformat floatformat_ia64_quad_big;
 extern const struct floatformat floatformat_ia64_quad_little;
 /* IBM long double (double+double).  */
-extern const struct floatformat floatformat_ibm_long_double;
+extern const struct floatformat floatformat_ibm_long_double_big;
+extern const struct floatformat floatformat_ibm_long_double_little;
 
 /* Convert from FMT to a double.
    FROM is the address of the extended float.
@@ -147,5 +152,9 @@ floatformat_from_double (const struct floatformat *, const double *, void *);
 
 extern int
 floatformat_is_valid (const struct floatformat *fmt, const void *from);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* defined (FLOATFORMAT_H) */

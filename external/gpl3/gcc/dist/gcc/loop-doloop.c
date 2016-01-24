@@ -1,5 +1,5 @@
 /* Perform doloop optimizations
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Based on code by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
 This file is part of GCC.
@@ -24,15 +24,43 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "rtl.h"
 #include "flags.h"
-#include "expr.h"
+#include "symtab.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "vec.h"
+#include "machmode.h"
 #include "hard-reg-set.h"
-#include "basic-block.h"
+#include "input.h"
+#include "function.h"
+#include "statistics.h"
+#include "double-int.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "alias.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "tree.h"
+#include "insn-config.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
+#include "expr.h"
 #include "diagnostic-core.h"
 #include "tm_p.h"
+#include "predict.h"
+#include "dominance.h"
+#include "cfg.h"
 #include "cfgloop.h"
+#include "cfgrtl.h"
+#include "basic-block.h"
 #include "params.h"
 #include "target.h"
 #include "dumpfile.h"
+#include "loop-unroll.h"
 
 /* This module is used to modify loops with a determinable number of
    iterations to use special low-overhead looping instructions.
@@ -261,7 +289,7 @@ static bool
 doloop_valid_p (struct loop *loop, struct niter_desc *desc)
 {
   basic_block *body = get_loop_body (loop), bb;
-  rtx insn;
+  rtx_insn *insn;
   unsigned i;
   bool result = true;
 
@@ -336,8 +364,9 @@ cleanup:
 static bool
 add_test (rtx cond, edge *e, basic_block dest)
 {
-  rtx seq, jump, label;
-  enum machine_mode mode;
+  rtx_insn *seq, *jump;
+  rtx label;
+  machine_mode mode;
   rtx op0 = XEXP (cond, 0), op1 = XEXP (cond, 1);
   enum rtx_code code = GET_CODE (cond);
   basic_block bb;
@@ -381,7 +410,7 @@ add_test (rtx cond, edge *e, basic_block dest)
   JUMP_LABEL (jump) = label;
 
   /* The jump is supposed to handle an unlikely special case.  */
-  add_reg_note (jump, REG_BR_PROB, const0_rtx);
+  add_int_reg_note (jump, REG_BR_PROB, 0);
 
   LABEL_NUSES (label)++;
 
@@ -401,15 +430,15 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
 {
   rtx counter_reg;
   rtx tmp, noloop = NULL_RTX;
-  rtx sequence;
-  rtx jump_insn;
+  rtx_insn *sequence;
+  rtx_insn *jump_insn;
   rtx jump_label;
   int nonneg = 0;
   bool increment_count;
   basic_block loop_end = desc->out_edge->src;
-  enum machine_mode mode;
+  machine_mode mode;
   rtx true_prob_val;
-  double_int iterations;
+  widest_int iterations;
 
   jump_insn = BB_END (loop_end);
 
@@ -417,7 +446,7 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
     {
       fprintf (dump_file, "Doloop: Inserting doloop pattern (");
       if (desc->const_iter)
-	fprintf (dump_file, HOST_WIDEST_INT_PRINT_DEC, desc->niter);
+	fprintf (dump_file, "%"PRId64, desc->niter);
       else
 	fputs ("runtime", dump_file);
       fputs (" iterations).\n", dump_file);
@@ -460,10 +489,10 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
 
       /* Determine if the iteration counter will be non-negative.
 	 Note that the maximum value loaded is iterations_max - 1.  */
-      if (max_loop_iterations (loop, &iterations)
-	  && (iterations.ule (double_int_one.llshift
-			       (GET_MODE_PRECISION (mode) - 1,
-				GET_MODE_PRECISION (mode)))))
+      if (get_max_loop_iterations (loop, &iterations)
+	  && wi::leu_p (iterations,
+			wi::set_bit_in_zero <widest_int>
+			(GET_MODE_PRECISION (mode) - 1)))
 	nonneg = 1;
       break;
 
@@ -548,20 +577,8 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
 #ifdef HAVE_doloop_begin
   {
     rtx init;
-    unsigned level = get_loop_level (loop) + 1;
-    double_int iter;
-    rtx iter_rtx;
 
-    if (!max_loop_iterations (loop, &iter)
-	|| !iter.fits_shwi ())
-      iter_rtx = const0_rtx;
-    else
-      iter_rtx = GEN_INT (iter.to_shwi());
-    init = gen_doloop_begin (counter_reg,
-			     desc->const_iter ? desc->niter_expr : const0_rtx,
-			     iter_rtx,
-			     GEN_INT (level),
-			     doloop_seq);
+    init = gen_doloop_begin (counter_reg, doloop_seq);
     if (init)
       {
 	start_sequence ();
@@ -594,8 +611,7 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
   if (true_prob_val)
     {
       /* Seems safer to use the branch probability.  */
-      add_reg_note (jump_insn, REG_BR_PROB,
-		    GEN_INT (desc->in_edge->probability));
+      add_int_reg_note (jump_insn, REG_BR_PROB, desc->in_edge->probability);
     }
 }
 
@@ -607,10 +623,10 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
 static bool
 doloop_optimize (struct loop *loop)
 {
-  enum machine_mode mode;
+  machine_mode mode;
   rtx doloop_seq, doloop_pat, doloop_reg;
-  rtx iterations, count;
-  rtx iterations_max;
+  rtx count;
+  widest_int iterations, iterations_max;
   rtx start_label;
   rtx condition;
   unsigned level, est_niter;
@@ -618,7 +634,6 @@ doloop_optimize (struct loop *loop)
   struct niter_desc *desc;
   unsigned word_mode_size;
   unsigned HOST_WIDE_INT word_mode_max;
-  double_int iter;
   int entered_at_top;
 
   if (dump_file)
@@ -668,25 +683,31 @@ doloop_optimize (struct loop *loop)
       return false;
     }
 
-  count = copy_rtx (desc->niter_expr);
-  iterations = desc->const_iter ? desc->niter_expr : const0_rtx;
-  if (!max_loop_iterations (loop, &iter)
-      || !iter.fits_shwi ())
-    iterations_max = const0_rtx;
+  if (desc->const_iter)
+    iterations = widest_int::from (std::make_pair (desc->niter_expr, mode),
+				   UNSIGNED);
   else
-    iterations_max = GEN_INT (iter.to_shwi());
+    iterations = 0;
+  if (!get_max_loop_iterations (loop, &iterations_max))
+    iterations_max = 0;
   level = get_loop_level (loop) + 1;
+  entered_at_top = (loop->latch == desc->in_edge->dest
+		    && contains_no_active_insn_p (loop->latch));
+  if (!targetm.can_use_doloop_p (iterations, iterations_max, level,
+				 entered_at_top))
+    {
+      if (dump_file)
+	fprintf (dump_file, "Loop rejected by can_use_doloop_p.\n");
+      return false;
+    }
 
   /* Generate looping insn.  If the pattern FAILs then give up trying
      to modify the loop since there is some aspect the back-end does
      not like.  */
+  count = copy_rtx (desc->niter_expr);
   start_label = block_label (desc->in_edge->dest);
   doloop_reg = gen_reg_rtx (mode);
-  entered_at_top = (loop->latch == desc->in_edge->dest
-		    && contains_no_active_insn_p (loop->latch));
-  doloop_seq = gen_doloop_end (doloop_reg, iterations, iterations_max,
-			       GEN_INT (level), start_label,
-			       GEN_INT (entered_at_top));
+  doloop_seq = gen_doloop_end (doloop_reg, start_label);
 
   word_mode_size = GET_MODE_PRECISION (word_mode);
   word_mode_max
@@ -697,27 +718,14 @@ doloop_optimize (struct loop *loop)
 	 computed, we must be sure that the number of iterations fits into
 	 the new mode.  */
       && (word_mode_size >= GET_MODE_PRECISION (mode)
-	  || iter.ule (double_int::from_shwi (word_mode_max))))
+ 	  || wi::leu_p (iterations_max, word_mode_max)))
     {
       if (word_mode_size > GET_MODE_PRECISION (mode))
-	{
-	  count = simplify_gen_unary (ZERO_EXTEND, word_mode,
-				      count, mode);
-	  iterations = simplify_gen_unary (ZERO_EXTEND, word_mode,
-					   iterations, mode);
-	  iterations_max = simplify_gen_unary (ZERO_EXTEND, word_mode,
-					       iterations_max, mode);
-	}
+	count = simplify_gen_unary (ZERO_EXTEND, word_mode, count, mode);
       else
-	{
-	  count = lowpart_subreg (word_mode, count, mode);
-	  iterations = lowpart_subreg (word_mode, iterations, mode);
-	  iterations_max = lowpart_subreg (word_mode, iterations_max, mode);
-	}
+	count = lowpart_subreg (word_mode, count, mode);
       PUT_MODE (doloop_reg, word_mode);
-      doloop_seq = gen_doloop_end (doloop_reg, iterations, iterations_max,
-				   GEN_INT (level), start_label,
-				   GEN_INT (entered_at_top));
+      doloop_seq = gen_doloop_end (doloop_reg, start_label);
     }
   if (! doloop_seq)
     {
@@ -733,10 +741,12 @@ doloop_optimize (struct loop *loop)
   doloop_pat = doloop_seq;
   if (INSN_P (doloop_pat))
     {
-      while (NEXT_INSN (doloop_pat) != NULL_RTX)
-	doloop_pat = NEXT_INSN (doloop_pat);
-      if (!JUMP_P (doloop_pat))
-	doloop_pat = NULL_RTX;
+      rtx_insn *doloop_insn = as_a <rtx_insn *> (doloop_pat);
+      while (NEXT_INSN (doloop_insn) != NULL_RTX)
+	doloop_insn = NEXT_INSN (doloop_insn);
+      if (!JUMP_P (doloop_insn))
+	doloop_insn = NULL;
+      doloop_pat = doloop_insn;
     }
 
   if (! doloop_pat
@@ -756,10 +766,9 @@ doloop_optimize (struct loop *loop)
 void
 doloop_optimize_loops (void)
 {
-  loop_iterator li;
   struct loop *loop;
 
-  FOR_EACH_LOOP (li, loop, 0)
+  FOR_EACH_LOOP (loop, 0)
     {
       doloop_optimize (loop);
     }

@@ -1,5 +1,5 @@
 /* GNU Runtime ABI version 8
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Iain Sandoe (split from objc-act.c)
 
 This file is part of GCC.
@@ -21,7 +21,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "stringpool.h"
 
 #ifdef OBJCPLUS
 #include "cp/cp-tree.h"
@@ -76,7 +88,7 @@ along with GCC; see the file COPYING3.  If not see
    For example, at present, any target that includes an implementation of
    the NeXT runtime needs to place Objective-C meta-data into specific
    named sections.  This should _not_ be done for the GNU runtime, and the
-   folowing macro is used to attach Objective-C private attributes that may
+   following macro is used to attach Objective-C private attributes that may
    be used to identify the runtime for which the meta-data are intended.  */
 
 #define OBJCMETA(DECL,VERS,KIND)					\
@@ -477,7 +489,7 @@ build_protocol_template (void)
   objc_finish_struct (objc_protocol_template, decls);
 }
 
-/* --- names, decls + identifers --- */
+/* --- names, decls + identifiers --- */
 
 static void
 build_selector_table_decl (void)
@@ -699,7 +711,7 @@ build_objc_method_call (location_t loc, int super_flag, tree method_prototype,
      then cast the pointer, then call it with the method arguments.  */
   tv->quick_push (lookup_object);
   tv->quick_push (selector);
-  method = build_function_call_vec (loc, sender, tv, NULL);
+  method = build_function_call_vec (loc, vNULL, sender, tv, NULL);
   vec_free (tv);
 
   /* Pass the appropriate object to the method.  */
@@ -714,7 +726,7 @@ build_objc_method_call (location_t loc, int super_flag, tree method_prototype,
 
   /* Build an obj_type_ref, with the correct cast for the method call.  */
   t = build3 (OBJ_TYPE_REF, sender_cast, method, lookup_object, size_zero_node);
-  t = build_function_call_vec (loc, t, parms, NULL);
+  t = build_function_call_vec (loc, vNULL, t, parms, NULL);
   vec_free (parms);
   return t;
 }
@@ -2212,7 +2224,8 @@ build_throw_stmt (location_t loc, tree throw_expr, bool rethrown ATTRIBUTE_UNUSE
   /* A throw is just a call to the runtime throw function with the
      object as a parameter.  */
   parms->quick_push (throw_expr);
-  t = build_function_call_vec (loc, objc_exception_throw_decl, parms, NULL);
+  t = build_function_call_vec (loc, vNULL, objc_exception_throw_decl, parms,
+			       NULL);
   vec_free (parms);
   return add_stmt (t);
 }

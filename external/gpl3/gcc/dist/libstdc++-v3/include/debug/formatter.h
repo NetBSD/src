@@ -1,6 +1,6 @@
 // Debug-mode error formatting implementation -*- C++ -*-
 
-// Copyright (C) 2003-2013 Free Software Foundation, Inc.
+// Copyright (C) 2003-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -38,7 +38,7 @@ namespace __gnu_debug
   using std::type_info;
 
   template<typename _Iterator>
-    bool __check_singular(_Iterator&);
+    bool __check_singular(const _Iterator&);
 
   class _Safe_sequence_base;
 
@@ -114,7 +114,9 @@ namespace __gnu_debug
     // unordered container buckets
     __msg_bucket_index_oob,
     __msg_valid_load_factor,
-    __msg_equal_allocs
+    // others
+    __msg_equal_allocs,
+    __msg_insert_range_from_self
   };
 
   class _Error_formatter
@@ -216,7 +218,7 @@ namespace __gnu_debug
         {
 	  _M_variant._M_iterator._M_name = __name;
 	  _M_variant._M_iterator._M_address = &__it;
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_iterator._M_type = &typeid(__it);
 #else
 	  _M_variant._M_iterator._M_type = 0;
@@ -226,7 +228,7 @@ namespace __gnu_debug
 	                    typename _Sequence::iterator>::
 	      __value ? __mutable_iterator : __const_iterator;
 	  _M_variant._M_iterator._M_sequence = __it._M_get_sequence();
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_iterator._M_seq_type = &typeid(_Sequence);
 #else
 	  _M_variant._M_iterator._M_seq_type = 0;
@@ -254,7 +256,7 @@ namespace __gnu_debug
 	{
 	  _M_variant._M_iterator._M_name = __name;
 	  _M_variant._M_iterator._M_address = &__it;
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_iterator._M_type = &typeid(__it);
 #else
 	  _M_variant._M_iterator._M_type = 0;
@@ -264,7 +266,7 @@ namespace __gnu_debug
 	                    typename _Sequence::local_iterator>::
 	      __value ? __mutable_iterator : __const_iterator;
 	  _M_variant._M_iterator._M_sequence = __it._M_get_sequence();
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_iterator._M_seq_type = &typeid(_Sequence);
 #else
 	  _M_variant._M_iterator._M_seq_type = 0;
@@ -289,7 +291,7 @@ namespace __gnu_debug
         {
 	  _M_variant._M_iterator._M_name = __name;
 	  _M_variant._M_iterator._M_address = &__it;
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_iterator._M_type = &typeid(__it);
 #else
 	  _M_variant._M_iterator._M_type = 0;
@@ -306,7 +308,7 @@ namespace __gnu_debug
         {
 	  _M_variant._M_iterator._M_name = __name;
 	  _M_variant._M_iterator._M_address = &__it;
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_iterator._M_type = &typeid(__it);
 #else
 	  _M_variant._M_iterator._M_type = 0;
@@ -323,7 +325,7 @@ namespace __gnu_debug
         {
 	  _M_variant._M_iterator._M_name = __name;
 	  _M_variant._M_iterator._M_address = &__it;
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_iterator._M_type = &typeid(__it);
 #else
 	  _M_variant._M_iterator._M_type = 0;
@@ -343,7 +345,7 @@ namespace __gnu_debug
 	  _M_variant._M_sequence._M_name = __name;
 	  _M_variant._M_sequence._M_address =
 	    static_cast<const _Sequence*>(&__seq);
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_sequence._M_type = &typeid(_Sequence);
 #else
 	  _M_variant._M_sequence._M_type = 0;
@@ -356,7 +358,7 @@ namespace __gnu_debug
         {
 	  _M_variant._M_sequence._M_name = __name;
 	  _M_variant._M_sequence._M_address = &__seq;
-#ifdef __GXX_RTTI
+#if __cpp_rtti
 	  _M_variant._M_sequence._M_type = &typeid(_Sequence);
 #else
 	  _M_variant._M_sequence._M_type = 0;

@@ -1,5 +1,5 @@
 /* Generate code to initialize optabs from machine description.
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -194,7 +194,7 @@ match_pattern (pattern *p, const char *name, const char *pat)
 	    for (i = (MAX_MACHINE_MODE) - 1; i >= 0; i--)
 	      {
 		const char *p, *q;
-		for (p = GET_MODE_NAME(i), q = name; *p; p++, q++)
+		for (p = GET_MODE_NAME (i), q = name; *p; p++, q++)
 		  if (TOLOWER (*p) != *q)
 		    break;
 		if (*p == 0
@@ -357,8 +357,7 @@ main (int argc, char **argv)
     }
 
   /* Sort the collected patterns.  */
-  qsort (patterns.address (), patterns.length (),
-	 sizeof (pattern), pattern_cmp);
+  patterns.qsort (pattern_cmp);
 
   /* Now that we've handled the "extra" patterns, eliminate them from
      the optabs array.  That way they don't get in the way below.  */
@@ -372,7 +371,7 @@ main (int argc, char **argv)
   /* Sort the (real) optabs.  Better than forcing the optabs.def file to
      remain sorted by kind.  We also scrogged any real ordering with the
      purging of the X patterns above.  */
-  qsort (optabs, n, sizeof(optab_def), optab_kind_cmp);
+  qsort (optabs, n, sizeof (optab_def), optab_kind_cmp);
 
   /* Emit the optab enumeration for the header file.  */
   fprintf (h_file, "enum optab_tag {\n");
@@ -399,16 +398,104 @@ main (int argc, char **argv)
   fprintf (h_file, "#define NUM_OPTAB_PATTERNS  %u\n",
 	   (unsigned) patterns.length ());
 
+  fprintf (h_file, 
+	   "typedef enum optab_tag optab;\n"
+	   "typedef enum optab_tag convert_optab;\n"
+	   "typedef enum optab_tag direct_optab;\n"
+	   "\n"
+	   "struct optab_libcall_d\n"
+	   "{\n"
+	   "  char libcall_suffix;\n"
+	   "  const char *libcall_basename;\n"
+	   "  void (*libcall_gen) (optab, const char *name,\n"
+	   "		       char suffix, machine_mode);\n"
+	   "};\n"
+	   "\n"
+	   "struct convert_optab_libcall_d\n"
+	   "{\n"
+	   "  const char *libcall_basename;\n"
+	   "  void (*libcall_gen) (convert_optab, const char *name,\n"
+	   "		       machine_mode, machine_mode);\n"
+	   "};\n"
+	   "\n"
+	   "/* Given an enum insn_code, access the function to construct\n"
+	   "   the body of that kind of insn.  */\n"
+	   "#define GEN_FCN(CODE) (insn_data[CODE].genfun)\n"
+	   "\n"
+	   "/* Contains the optab used for each rtx code, and vice-versa.  */\n"
+	   "extern const optab code_to_optab_[NUM_RTX_CODE];\n"
+	   "extern const enum rtx_code optab_to_code_[NUM_OPTABS];\n"
+	   "\n"
+	   "static inline optab\n"
+	   "code_to_optab (enum rtx_code code)\n"
+	   "{\n"
+	   "  return code_to_optab_[code];\n"
+	   "}\n"
+	   "\n"
+	   "static inline enum rtx_code\n"
+	   "optab_to_code (optab op)\n"
+	   "{\n"
+	   "  return optab_to_code_[op];\n"
+	   "}\n"
+	   "\n"
+	   "extern const struct convert_optab_libcall_d convlib_def[NUM_CONVLIB_OPTABS];\n"
+	   "extern const struct optab_libcall_d normlib_def[NUM_NORMLIB_OPTABS];\n"
+	   "\n"
+	   "/* Returns the active icode for the given (encoded) optab.  */\n"
+	   "extern enum insn_code raw_optab_handler (unsigned);\n"
+	   "extern bool swap_optab_enable (optab, machine_mode, bool);\n"
+	   "\n"
+	   "/* Target-dependent globals.  */\n"
+	   "struct target_optabs {\n"
+	   "  /* Patterns that are used by optabs that are enabled for this target.  */\n"
+	   "  bool pat_enable[NUM_OPTAB_PATTERNS];\n"
+	   "};\n"
+	   "extern void init_all_optabs (struct target_optabs *);\n"
+	   "\n"
+	   "extern struct target_optabs default_target_optabs;\n"
+	   "extern struct target_optabs *this_fn_optabs;\n"
+	   "#if SWITCHABLE_TARGET\n"
+	   "extern struct target_optabs *this_target_optabs;\n"
+	   "#else\n"
+	   "#define this_target_optabs (&default_target_optabs)\n"
+	   "#endif\n");
+
   fprintf (s_file,
 	   "#include \"config.h\"\n"
 	   "#include \"system.h\"\n"
 	   "#include \"coretypes.h\"\n"
 	   "#include \"tm.h\"\n"
+	   "#include \"hash-set.h\"\n"
+	   "#include \"machmode.h\"\n"
+	   "#include \"vec.h\"\n"
+	   "#include \"double-int.h\"\n"
+	   "#include \"input.h\"\n"
+	   "#include \"alias.h\"\n"
+	   "#include \"symtab.h\"\n"
+	   "#include \"wide-int.h\"\n"
+	   "#include \"inchash.h\"\n"
+	   "#include \"tree.h\"\n"
+	   "#include \"varasm.h\"\n"
+	   "#include \"stor-layout.h\"\n"
+	   "#include \"calls.h\"\n"
 	   "#include \"rtl.h\"\n"
+	   "#include \"predict.h\"\n"
 	   "#include \"tm_p.h\"\n"
 	   "#include \"flags.h\"\n"
 	   "#include \"insn-config.h\"\n"
+	   "#include \"hashtab.h\"\n"
+	   "#include \"hard-reg-set.h\"\n"
+	   "#include \"function.h\"\n"
+	   "#include \"statistics.h\"\n"
+	   "#include \"real.h\"\n"
+	   "#include \"fixed-value.h\"\n"
+	   "#include \"expmed.h\"\n"
+	   "#include \"dojump.h\"\n"
+	   "#include \"explow.h\"\n"
+	   "#include \"emit-rtl.h\"\n"
+	   "#include \"stmt.h\"\n"
 	   "#include \"expr.h\"\n"
+	   "#include \"insn-codes.h\"\n"
 	   "#include \"optabs.h\"\n"
 	   "\n"
 	   "struct optab_pat {\n"
@@ -462,7 +549,7 @@ main (int argc, char **argv)
 
   fprintf (s_file,
 	   "bool\n"
-	   "swap_optab_enable (optab op, enum machine_mode m, bool set)\n"
+	   "swap_optab_enable (optab op, machine_mode m, bool set)\n"
 	   "{\n"
 	   "  unsigned scode = (op << 16) | m;\n"
 	   "  int i = lookup_handler (scode);\n"

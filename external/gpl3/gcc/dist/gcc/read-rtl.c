@@ -1,5 +1,5 @@
 /* RTL reader for GCC.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -149,7 +149,7 @@ find_mode (const char *name)
 static void
 apply_mode_iterator (void *loc, int mode)
 {
-  PUT_MODE ((rtx) loc, (enum machine_mode) mode);
+  PUT_MODE ((rtx) loc, (machine_mode) mode);
 }
 
 /* Implementations of the iterator_group callbacks for codes.  */
@@ -380,7 +380,7 @@ apply_iterator_to_string (const char *string)
 static rtx
 copy_rtx_for_iterators (rtx original)
 {
-  const char *format_ptr;
+  const char *format_ptr, *p;
   int i, j;
   rtx x;
 
@@ -397,12 +397,14 @@ copy_rtx_for_iterators (rtx original)
     switch (format_ptr[i])
       {
       case 'T':
-	XTMPL (x, i) = apply_iterator_to_string (XTMPL (x, i));
+	while (XTMPL (x, i) != (p = apply_iterator_to_string (XTMPL (x, i))))
+	  XTMPL (x, i) = p;
 	break;
 
       case 'S':
       case 's':
-	XSTR (x, i) = apply_iterator_to_string (XSTR (x, i));
+	while (XSTR (x, i) != (p = apply_iterator_to_string (XSTR (x, i))))
+	  XSTR (x, i) = p;
 	break;
 
       case 'e':
@@ -801,9 +803,35 @@ validate_const_int (const char *string)
     valid = 0;
   for (; *cp; cp++)
     if (! ISDIGIT (*cp))
-      valid = 0;
+      {
+        valid = 0;
+	break;
+      }
   if (!valid)
     fatal_with_file_and_line ("invalid decimal constant \"%s\"\n", string);
+}
+
+static void
+validate_const_wide_int (const char *string)
+{
+  const char *cp;
+  int valid = 1;
+
+  cp = string;
+  while (*cp && ISSPACE (*cp))
+    cp++;
+  /* Skip the leading 0x.  */
+  if (cp[0] == '0' || cp[1] == 'x')
+    cp += 2;
+  else
+    valid = 0;
+  if (*cp == 0)
+    valid = 0;
+  for (; *cp; cp++)
+    if (! ISXDIGIT (*cp))
+      valid = 0;
+  if (!valid)
+    fatal_with_file_and_line ("invalid hex constant \"%s\"\n", string);
 }
 
 /* Record that PTR uses iterator ITERATOR.  */
@@ -1126,6 +1154,7 @@ read_rtx_code (const char *code_name)
   /* If we end up with an insn expression then we free this space below.  */
   return_rtx = rtx_alloc (code);
   format_ptr = GET_RTX_FORMAT (code);
+  memset (return_rtx, 0, RTX_CODE_SIZE (code));
   PUT_CODE (return_rtx, code);
 
   if (iterator)
@@ -1149,6 +1178,8 @@ read_rtx_code (const char *code_name)
 	/* 0 means a field for internal use only.
 	   Don't expect it to be present in the input.  */
       case '0':
+	if (code == REG)
+	  ORIGINAL_REGNO (return_rtx) = REGNO (return_rtx);
 	break;
 
       case 'e':
@@ -1318,6 +1349,54 @@ read_rtx_code (const char *code_name)
       default:
 	gcc_unreachable ();
       }
+
+  if (CONST_WIDE_INT_P (return_rtx))
+    {
+      read_name (&name);
+      validate_const_wide_int (name.string);
+      {
+	const char *s = name.string;
+	int len;
+	int index = 0;
+	int gs = HOST_BITS_PER_WIDE_INT/4;
+	int pos;
+	char * buf = XALLOCAVEC (char, gs + 1);
+	unsigned HOST_WIDE_INT wi;
+	int wlen;
+
+	/* Skip the leading spaces.  */
+	while (*s && ISSPACE (*s))
+	  s++;
+
+	/* Skip the leading 0x.  */
+	gcc_assert (s[0] == '0');
+	gcc_assert (s[1] == 'x');
+	s += 2;
+
+	len = strlen (s);
+	pos = len - gs;
+	wlen = (len + gs - 1) / gs;	/* Number of words needed */
+
+	return_rtx = const_wide_int_alloc (wlen);
+
+	while (pos > 0)
+	  {
+#if HOST_BITS_PER_WIDE_INT == 64
+	    sscanf (s + pos, "%16" HOST_WIDE_INT_PRINT "x", &wi);
+#else
+	    sscanf (s + pos, "%8" HOST_WIDE_INT_PRINT "x", &wi);
+#endif
+	    CWI_ELT (return_rtx, index++) = wi;
+	    pos -= gs;
+	  }
+	strncpy (buf, s, gs - pos);
+	buf [gs - pos] = 0;
+	sscanf (buf, "%" HOST_WIDE_INT_PRINT "x", &wi);
+	CWI_ELT (return_rtx, index++) = wi;
+	/* TODO: After reading, do we want to canonicalize with:
+	   value = lookup_const_wide_int (value); ? */
+      }
+    }
 
   c = read_skip_spaces ();
   /* Syntactic sugar for AND and IOR, allowing Lisp-like

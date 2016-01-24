@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 architecture.
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -20,6 +20,9 @@
 
 (define_register_constraint "k" "STACK_REG"
   "@internal The stack register.")
+
+(define_register_constraint "Ucs" "CALLER_SAVE_REGS"
+  "@internal The caller save registers.")
 
 (define_register_constraint "w" "FP_REGS"
   "Floating point and SIMD vector registers.")
@@ -75,11 +78,6 @@
   "Integer constant zero."
   (match_test "op == const0_rtx"))
 
-(define_constraint "Usa"
-  "A constraint that matches an absolute symbolic address."
-  (and (match_code "const,symbol_ref")
-       (match_test "aarch64_symbolic_address_p (op)")))
-
 (define_constraint "Ush"
   "A constraint that matches an absolute symbolic address high part."
   (and (match_code "high")
@@ -91,11 +89,20 @@
   (and (match_code "const_int")
        (match_test "(unsigned HOST_WIDE_INT) ival < 32")))
 
+(define_constraint "Usn"
+ "A constant that can be used with a CCMN operation (once negated)."
+ (and (match_code "const_int")
+      (match_test "IN_RANGE (ival, -31, 0)")))
+
 (define_constraint "Usd"
   "@internal
   A constraint that matches an immediate shift constant in DImode."
   (and (match_code "const_int")
        (match_test "(unsigned HOST_WIDE_INT) ival < 64")))
+
+(define_constraint "Usf"
+  "@internal Usf is a symbol reference."
+  (match_code "symbol_ref"))
 
 (define_constraint "UsM"
   "@internal
@@ -148,9 +155,24 @@
   "@internal
  A constraint that matches vector of immediates."
  (and (match_code "const_vector")
-      (match_test "aarch64_simd_immediate_valid_for_move (op, GET_MODE (op),
-							  NULL, NULL, NULL,
-							  NULL, NULL) != 0")))
+      (match_test "aarch64_simd_valid_immediate (op, GET_MODE (op),
+						 false, NULL)")))
+
+(define_constraint "Dh"
+  "@internal
+ A constraint that matches an immediate operand valid for\
+ AdvSIMD scalar move in HImode."
+ (and (match_code "const_int")
+      (match_test "aarch64_simd_scalar_immediate_valid_for_move (op,
+						 HImode)")))
+
+(define_constraint "Dq"
+  "@internal
+ A constraint that matches an immediate operand valid for\
+ AdvSIMD scalar move in QImode."
+ (and (match_code "const_int")
+      (match_test "aarch64_simd_scalar_immediate_valid_for_move (op,
+						 QImode)")))
 
 (define_constraint "Dl"
   "@internal

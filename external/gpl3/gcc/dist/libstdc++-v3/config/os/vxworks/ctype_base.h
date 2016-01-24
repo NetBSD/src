@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 1997-2013 Free Software Foundation, Inc.
+// Copyright (C) 1997-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -53,6 +53,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     static const mask cntrl 	= _C_CONTROL;
     static const mask punct 	= _C_PUNCT;
     static const mask alnum 	= _C_UPPER | _C_LOWER | _C_NUMBER;
+#if __cplusplus >= 201103L
+    static const mask blank	= _C_WHITE_SPACE;
+#endif
   };
 
 _GLIBCXX_END_NAMESPACE_VERSION

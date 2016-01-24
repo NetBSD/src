@@ -1,5 +1,5 @@
 ; Machine description for AArch64 architecture.
-; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ; Contributed by ARM Ltd.
 ;
 ; This file is part of GCC.
@@ -71,6 +71,10 @@ mfix-cortex-a53-835769
 Target Report Var(aarch64_fix_a53_err835769) Init(2)
 Workaround for ARM Cortex-A53 Erratum number 835769
 
+mfix-cortex-a53-843419
+Target Report
+Workaround for ARM Cortex-A53 Erratum number 843419
+
 mlittle-endian
 Target Report RejectNegative InverseMask(BIG_END)
 Assume target CPU is configured as little endian
@@ -92,13 +96,27 @@ Target RejectNegative Joined Enum(tls_type) Var(aarch64_tls_dialect) Init(TLS_DE
 Specify TLS dialect
 
 march=
-Target RejectNegative Joined Var(aarch64_arch_string)
+Target RejectNegative ToLower Joined Var(aarch64_arch_string)
 -march=ARCH	Use features of architecture ARCH
 
 mcpu=
-Target RejectNegative Joined Var(aarch64_cpu_string)
+Target RejectNegative ToLower Joined Var(aarch64_cpu_string)
 -mcpu=CPU	Use features of and optimize for CPU
 
 mtune=
-Target RejectNegative Joined Var(aarch64_tune_string)
+Target RejectNegative ToLower Joined Var(aarch64_tune_string)
 -mtune=CPU	Optimize for CPU
+
+mabi=
+Target RejectNegative Joined Enum(aarch64_abi) Var(aarch64_abi) Init(AARCH64_ABI_DEFAULT)
+-mabi=ABI	Generate code that conforms to the specified ABI
+
+Enum
+Name(aarch64_abi) Type(int)
+Known AArch64 ABIs (for use with the -mabi= option):
+
+EnumValue
+Enum(aarch64_abi) String(ilp32) Value(AARCH64_ABI_ILP32)
+
+EnumValue
+Enum(aarch64_abi) String(lp64) Value(AARCH64_ABI_LP64)

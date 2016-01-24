@@ -1,5 +1,5 @@
 /* Subroutines for gcc2 for pdp11.
-   Copyright (C) 1994-2013 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Contributed by Michael K. Gschwind (mike@vlsivie.tuwien.ac.at).
 
 This file is part of GCC.
@@ -27,19 +27,51 @@ along with GCC; see the file COPYING3.  If not see
 #include "hard-reg-set.h"
 #include "insn-config.h"
 #include "conditions.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "vec.h"
+#include "machmode.h"
+#include "input.h"
 #include "function.h"
 #include "output.h"
 #include "insn-attr.h"
 #include "flags.h"
 #include "recog.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "stor-layout.h"
+#include "varasm.h"
+#include "calls.h"
+#include "statistics.h"
+#include "double-int.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "alias.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "emit-rtl.h"
+#include "stmt.h"
 #include "expr.h"
 #include "diagnostic-core.h"
 #include "tm_p.h"
 #include "target.h"
 #include "target-def.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfganal.h"
+#include "lcm.h"
+#include "cfgbuild.h"
+#include "cfgcleanup.h"
+#include "predict.h"
+#include "basic-block.h"
 #include "df.h"
 #include "opts.h"
+#include "dbxout.h"
+#include "builtins.h"
 
 /* this is the current value returned by the macro FIRST_PARM_OFFSET 
    defined in tm.h */
@@ -75,7 +107,8 @@ const struct real_format pdp11_f_format =
     false,
     false,
     false,
-    false
+    false,
+    "pdp11_f"
   };
 
 const struct real_format pdp11_d_format =
@@ -96,7 +129,8 @@ const struct real_format pdp11_d_format =
     false,
     false,
     false,
-    false
+    false,
+    "pdp11_d"
   };
 
 static void
@@ -143,15 +177,17 @@ static bool pdp11_assemble_integer (rtx, unsigned int, int);
 static bool pdp11_rtx_costs (rtx, int, int, int, int *, bool);
 static bool pdp11_return_in_memory (const_tree, const_tree);
 static rtx pdp11_function_value (const_tree, const_tree, bool);
-static rtx pdp11_libcall_value (enum machine_mode, const_rtx);
+static rtx pdp11_libcall_value (machine_mode, const_rtx);
 static bool pdp11_function_value_regno_p (const unsigned int);
 static void pdp11_trampoline_init (rtx, tree, rtx);
-static rtx pdp11_function_arg (cumulative_args_t, enum machine_mode,
+static rtx pdp11_function_arg (cumulative_args_t, machine_mode,
 			       const_tree, bool);
 static void pdp11_function_arg_advance (cumulative_args_t,
-					enum machine_mode, const_tree, bool);
+					machine_mode, const_tree, bool);
 static void pdp11_conditional_register_usage (void);
-static bool pdp11_legitimate_constant_p (enum machine_mode, rtx);
+static bool pdp11_legitimate_constant_p (machine_mode, rtx);
+
+static bool pdp11_scalar_mode_supported_p (machine_mode);
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_BYTE_OP
@@ -218,6 +254,9 @@ static bool pdp11_legitimate_constant_p (enum machine_mode, rtx);
 
 #undef  TARGET_LEGITIMATE_CONSTANT_P
 #define TARGET_LEGITIMATE_CONSTANT_P pdp11_legitimate_constant_p
+
+#undef  TARGET_SCALAR_MODE_SUPPORTED_P
+#define TARGET_SCALAR_MODE_SUPPORTED_P pdp11_scalar_mode_supported_p
 
 /* A helper function to determine if REGNO should be saved in the
    current function's stack frame.  */
@@ -880,7 +919,7 @@ static const int move_costs[N_REG_CLASSES][N_REG_CLASSES] =
    -- as we do here with 10 -- or not ? */
 
 static int 
-pdp11_register_move_cost (enum machine_mode mode ATTRIBUTE_UNUSED,
+pdp11_register_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
 			  reg_class_t c1, reg_class_t c2)
 {
     return move_costs[(int)c1][(int)c2];
@@ -1103,7 +1142,7 @@ notice_update_cc_on_set(rtx exp, rtx insn ATTRIBUTE_UNUSED)
 
 
 int
-simple_memory_operand(rtx op, enum machine_mode mode ATTRIBUTE_UNUSED)
+simple_memory_operand(rtx op, machine_mode mode ATTRIBUTE_UNUSED)
 {
     rtx addr;
 
@@ -1351,8 +1390,8 @@ legitimate_const_double_p (rtx address)
 
 /* Implement CANNOT_CHANGE_MODE_CLASS.  */
 bool
-pdp11_cannot_change_mode_class (enum machine_mode from,
-				enum machine_mode to,
+pdp11_cannot_change_mode_class (machine_mode from,
+				machine_mode to,
 				enum reg_class rclass)
 {
   /* Also, FPU registers contain a whole float value and the parts of
@@ -1423,7 +1462,7 @@ static reg_class_t
 pdp11_secondary_reload (bool in_p ATTRIBUTE_UNUSED,
 			rtx x,
 			reg_class_t reload_class,
-			enum machine_mode reload_mode ATTRIBUTE_UNUSED,
+			machine_mode reload_mode ATTRIBUTE_UNUSED,
 			secondary_reload_info *sri ATTRIBUTE_UNUSED)
 {
   if (reload_class != NO_LOAD_FPU_REGS || GET_CODE (x) != REG ||
@@ -1440,7 +1479,7 @@ pdp11_secondary_reload (bool in_p ATTRIBUTE_UNUSED,
 */
 bool 
 pdp11_secondary_memory_needed (reg_class_t c1, reg_class_t c2, 
-			       enum machine_mode mode ATTRIBUTE_UNUSED)
+			       machine_mode mode ATTRIBUTE_UNUSED)
 {
   int fromfloat = (c1 == LOAD_FPU_REGS || c1 == NO_LOAD_FPU_REGS || 
 		   c1 == FPU_REGS);
@@ -1458,7 +1497,7 @@ pdp11_secondary_memory_needed (reg_class_t c1, reg_class_t c2,
 */
 
 static bool
-pdp11_legitimate_address_p (enum machine_mode mode,
+pdp11_legitimate_address_p (machine_mode mode,
 			    rtx operand, bool strict)
 {
     rtx xfoob;
@@ -1759,7 +1798,7 @@ pdp11_function_value (const_tree valtype,
 /* Worker function for TARGET_LIBCALL_VALUE.  */
 
 static rtx
-pdp11_libcall_value (enum machine_mode mode,
+pdp11_libcall_value (machine_mode mode,
                      const_rtx fun ATTRIBUTE_UNUSED)
 {
   return  gen_rtx_REG (mode, BASE_RETURN_VALUE_REG(mode));
@@ -1822,7 +1861,7 @@ pdp11_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
 
 static rtx
 pdp11_function_arg (cumulative_args_t cum ATTRIBUTE_UNUSED,
-		    enum machine_mode mode ATTRIBUTE_UNUSED,
+		    machine_mode mode ATTRIBUTE_UNUSED,
 		    const_tree type ATTRIBUTE_UNUSED,
 		    bool named ATTRIBUTE_UNUSED)
 {
@@ -1836,7 +1875,7 @@ pdp11_function_arg (cumulative_args_t cum ATTRIBUTE_UNUSED,
    may not be available.)  */
 
 static void
-pdp11_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
+pdp11_function_arg_advance (cumulative_args_t cum_v, machine_mode mode,
 			    const_tree type, bool named ATTRIBUTE_UNUSED)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
@@ -1891,9 +1930,20 @@ pdp11_function_section (tree decl ATTRIBUTE_UNUSED,
 /* Implement TARGET_LEGITIMATE_CONSTANT_P.  */
 
 static bool
-pdp11_legitimate_constant_p (enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
+pdp11_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   return GET_CODE (x) != CONST_DOUBLE || legitimate_const_double_p (x);
+}
+
+/* Implement TARGET_SCALAR_MODE_SUPPORTED_P.  */
+
+static bool
+pdp11_scalar_mode_supported_p (machine_mode mode)
+{
+  /* Support SFmode even with -mfloat64.  */
+  if (mode == SFmode)
+    return true;
+  return default_scalar_mode_supported_p (mode);
 }
 
 struct gcc_target targetm = TARGET_INITIALIZER;

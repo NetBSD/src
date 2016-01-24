@@ -1,5 +1,5 @@
 /* Definitions for RDOS on i386.
-   Copyright (C) 2013 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,6 +20,12 @@ along with GCC; see the file COPYING3.  If not see
 /* RDOS uses .exe suffix */
 #undef TARGET_EXECUTABLE_SUFFIX
 #define TARGET_EXECUTABLE_SUFFIX ".exe"
+
+#undef TARGET_TLS_DIRECT_SEG_REFS_DEFAULT
+#define TARGET_TLS_DIRECT_SEG_REFS_DEFAULT MASK_TLS_DIRECT_SEG_REFS
+
+#undef DEFAULT_TLS_SEG_REG
+#define DEFAULT_TLS_SEG_REG SEG_GS 
 
 #undef TARGET_RDOS
 #define TARGET_RDOS 1

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM RS/6000.
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -477,6 +477,10 @@ extern int rs6000_vector_align[];
 #define VECTOR_ELT_ORDER_BIG                                  \
   (BYTES_BIG_ENDIAN || (rs6000_altivec_element_order == 2))
 
+/* Element number of the 64-bit value in a 128-bit vector that can be accessed
+   with scalar instructions.  */
+#define VECTOR_ELEMENT_SCALAR_64BIT	((BYTES_BIG_ENDIAN) ? 0 : 1)
+
 /* Alignment options for fields in structures for sub-targets following
    AIX-like ABI.
    ALIGN_POWER word-aligns FP doubles (default AIX ABI).
@@ -606,9 +610,6 @@ extern int rs6000_vector_align[];
 #define MASK_PROTOTYPE			OPTION_MASK_PROTOTYPE
 #endif
 
-/* Explicit ISA options that were set.  */
-#define rs6000_isa_flags_explicit	global_options_set.x_rs6000_isa_flags
-
 /* For power systems, we want to enable Altivec and VSX builtins even if the
    user did not use -maltivec or -mvsx to allow the builtins to be used inside
    of #pragma GCC target or the target attribute to change the code level for a
@@ -732,7 +733,7 @@ extern unsigned char rs6000_recip_bits[];
 
 #define PROMOTE_MODE(MODE,UNSIGNEDP,TYPE)	\
   if (GET_MODE_CLASS (MODE) == MODE_INT		\
-      && GET_MODE_SIZE (MODE) < UNITS_PER_WORD) \
+      && GET_MODE_SIZE (MODE) < (TARGET_32BIT ? 4 : 8)) \
     (MODE) = TARGET_32BIT ? SImode : DImode;
 
 /* Define this if most significant bit is lowest numbered
@@ -818,14 +819,6 @@ extern unsigned char rs6000_recip_bits[];
    the target machine.  If you don't define this, the default is two
    words.  */
 #define LONG_DOUBLE_TYPE_SIZE rs6000_long_double_type_size
-
-/* Define this to set long double type size to use in libgcc2.c, which can
-   not depend on target_flags.  */
-#ifdef __LONG_DOUBLE_128__
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 128
-#else
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
-#endif
 
 /* Work around rs6000_long_double_type_size dependency in ada/targtyps.c.  */
 #define WIDEST_HARDWARE_FP_SIZE 64
@@ -930,55 +923,47 @@ enum data_align { align_abi, align_opt, align_both };
 
    The 3 HTM registers aren't also included in DWARF_FRAME_REGISTERS.  */
 
-#define FIRST_PSEUDO_REGISTER 117
+#define FIRST_PSEUDO_REGISTER 149
 
 /* This must be included for pre gcc 3.0 glibc compatibility.  */
 #define PRE_GCC3_DWARF_FRAME_REGISTERS 77
 
-/* Add 32 dwarf columns for synthetic SPE registers.  */
-#define DWARF_FRAME_REGISTERS ((FIRST_PSEUDO_REGISTER - 4) + 32)
+/* True if register is an SPE High register.  */
+#define SPE_HIGH_REGNO_P(N) \
+  ((N) >= FIRST_SPE_HIGH_REGNO && (N) <= LAST_SPE_HIGH_REGNO)
+
+/* SPE high registers added as hard regs.
+   The sfp register and 3 HTM registers
+   aren't included in DWARF_FRAME_REGISTERS.  */
+#define DWARF_FRAME_REGISTERS (FIRST_PSEUDO_REGISTER - 4)
 
 /* The SPE has an additional 32 synthetic registers, with DWARF debug
    info numbering for these registers starting at 1200.  While eh_frame
    register numbering need not be the same as the debug info numbering,
-   we choose to number these regs for eh_frame at 1200 too.  This allows
-   future versions of the rs6000 backend to add hard registers and
-   continue to use the gcc hard register numbering for eh_frame.  If the
-   extra SPE registers in eh_frame were numbered starting from the
-   current value of FIRST_PSEUDO_REGISTER, then if FIRST_PSEUDO_REGISTER
-   changed we'd need to introduce a mapping in DWARF_FRAME_REGNUM to
-   avoid invalidating older SPE eh_frame info.
+   we choose to number these regs for eh_frame at 1200 too.
 
    We must map them here to avoid huge unwinder tables mostly consisting
    of unused space.  */
 #define DWARF_REG_TO_UNWIND_COLUMN(r) \
-  ((r) > 1200 ? ((r) - 1200 + (DWARF_FRAME_REGISTERS - 32)) : (r))
+  ((r) >= 1200 ? ((r) - 1200 + (DWARF_FRAME_REGISTERS - 32)) : (r))
 
 /* Use standard DWARF numbering for DWARF debugging information.  */
-#define DBX_REGISTER_NUMBER(REGNO) rs6000_dbx_register_number (REGNO)
+#define DBX_REGISTER_NUMBER(REGNO) rs6000_dbx_register_number ((REGNO), 0)
 
 /* Use gcc hard register numbering for eh_frame.  */
 #define DWARF_FRAME_REGNUM(REGNO) (REGNO)
 
 /* Map register numbers held in the call frame info that gcc has
    collected using DWARF_FRAME_REGNUM to those that should be output in
-   .debug_frame and .eh_frame.  We continue to use gcc hard reg numbers
-   for .eh_frame, but use the numbers mandated by the various ABIs for
-   .debug_frame.  rs6000_emit_prologue has translated any combination of
-   CR2, CR3, CR4 saves to a save of CR2.  The actual code emitted saves
-   the whole of CR, so we map CR2_REGNO to the DWARF reg for CR.  */
-#define DWARF2_FRAME_REG_OUT(REGNO, FOR_EH)	\
-  ((FOR_EH) ? (REGNO)				\
-   : (REGNO) == CR2_REGNO ? 64			\
-   : DBX_REGISTER_NUMBER (REGNO))
+   .debug_frame and .eh_frame.  */
+#define DWARF2_FRAME_REG_OUT(REGNO, FOR_EH) \
+  rs6000_dbx_register_number ((REGNO), (FOR_EH)? 2 : 1)
 
 /* 1 for registers that have pervasive standard uses
    and are not available for the register allocator.
 
    On RS/6000, r1 is used for the stack.  On Darwin, r2 is available
    as a local register; for all other OS's r2 is the TOC pointer.
-
-   cr5 is not supposed to be used.
 
    On System V implementations, r13 is fixed and not available for use.  */
 
@@ -987,12 +972,15 @@ enum data_align { align_abi, align_opt, align_both };
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-   0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1,	   \
+   0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,	   \
    /* AltiVec registers.  */			   \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    1, 1						   \
-   , 1, 1, 1, 1, 1, 1				   \
+   , 1, 1, 1, 1, 1, 1,				   \
+   /* SPE High registers.  */			   \
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, \
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1  \
 }
 
 /* 1 for registers not available across function calls.
@@ -1012,7 +1000,10 @@ enum data_align { align_abi, align_opt, align_both };
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    1, 1						   \
-   , 1, 1, 1, 1, 1, 1				   \
+   , 1, 1, 1, 1, 1, 1,				   \
+   /* SPE High registers.  */			   \
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, \
+   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1  \
 }
 
 /* Like `CALL_USED_REGISTERS' except this macro doesn't require that
@@ -1031,7 +1022,10 @@ enum data_align { align_abi, align_opt, align_both };
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0						   \
-   , 0, 0, 0, 0, 0, 0				   \
+   , 0, 0, 0, 0, 0, 0,				   \
+   /* SPE High registers.  */			   \
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  \
 }
 
 #define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
@@ -1048,7 +1042,8 @@ enum data_align { align_abi, align_opt, align_both };
 	fp13 - fp2	(not saved; incoming fp arg registers)
 	fp1		(not saved; return value)
 	fp31 - fp14	(saved; order given to save least number)
-	cr7, cr6	(not saved or special)
+	cr7, cr5	(not saved or special)
+	cr6		(not saved, but used for vector operations)
 	cr1		(not saved, but used for FP operations)
 	cr0		(not saved, but used for arithmetic operations)
 	cr4, cr3, cr2	(saved)
@@ -1061,7 +1056,7 @@ enum data_align { align_abi, align_opt, align_both };
 	r12		(not saved; if used for DImode or DFmode would use r13)
 	ctr		(not saved; when we have the choice ctr is better)
 	lr		(saved)
-	cr5, r1, r2, ap, ca (fixed)
+	r1, r2, ap, ca	(fixed)
 	v0 - v1		(not saved or used for anything)
 	v13 - v3	(not saved; incoming vector arg registers)
 	v2		(not saved; incoming vector arg reg; return value)
@@ -1099,14 +1094,14 @@ enum data_align { align_abi, align_opt, align_both };
    33,								\
    63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51,		\
    50, 49, 48, 47, 46,						\
-   75, 74, 69, 68, 72, 71, 70,					\
+   75, 73, 74, 69, 68, 72, 71, 70,				\
    MAYBE_R2_AVAILABLE						\
    9, 10, 8, 7, 6, 5, 4,					\
    3, EARLY_R12 11, 0,						\
    31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19,		\
    18, 17, 16, 15, 14, 13, LATE_R12				\
    66, 65,							\
-   73, 1, MAYBE_R2_FIXED 67, 76,				\
+   1, MAYBE_R2_FIXED 67, 76,					\
    /* AltiVec registers.  */					\
    77, 78,							\
    90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80,			\
@@ -1114,7 +1109,10 @@ enum data_align { align_abi, align_opt, align_both };
    96, 95, 94, 93, 92, 91,					\
    108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97,	\
    109, 110,							\
-   111, 112, 113, 114, 115, 116					\
+   111, 112, 113, 114, 115, 116,				\
+   117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,  \
+   129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,  \
+   141, 142, 143, 144, 145, 146, 147, 148			\
 }
 
 /* True if register is floating-point.  */
@@ -1174,9 +1172,11 @@ enum data_align { align_abi, align_opt, align_both };
    && ((MODE) == VOIDmode || ALTIVEC_OR_VSX_VECTOR_MODE (MODE))		\
    && FP_REGNO_P (REGNO)						\
    ? V2DFmode								\
-   : ((MODE) == TFmode && FP_REGNO_P (REGNO))				\
+   : TARGET_E500_DOUBLE && ((MODE) == VOIDmode || (MODE) == DFmode)	\
    ? DFmode								\
-   : ((MODE) == TDmode && FP_REGNO_P (REGNO))				\
+   : !TARGET_E500_DOUBLE && (MODE) == TFmode && FP_REGNO_P (REGNO)	\
+   ? DFmode								\
+   : !TARGET_E500_DOUBLE && (MODE) == TDmode && FP_REGNO_P (REGNO)	\
    ? DImode								\
    : choose_hard_reg_mode ((REGNO), (NREGS), false))
 
@@ -1349,6 +1349,7 @@ enum reg_class
   CR_REGS,
   NON_FLOAT_REGS,
   CA_REGS,
+  SPE_HIGH_REGS,
   ALL_REGS,
   LIM_REG_CLASSES
 };
@@ -1380,6 +1381,7 @@ enum reg_class
   "CR_REGS",								\
   "NON_FLOAT_REGS",							\
   "CA_REGS",								\
+  "SPE_HIGH_REGS",							\
   "ALL_REGS"								\
 }
 
@@ -1387,30 +1389,54 @@ enum reg_class
    This is an initializer for a vector of HARD_REG_SET
    of length N_REG_CLASSES.  */
 
-#define REG_CLASS_CONTENTS						     \
-{									     \
-  { 0x00000000, 0x00000000, 0x00000000, 0x00000000 }, /* NO_REGS */	     \
-  { 0xfffffffe, 0x00000000, 0x00000008, 0x00020000 }, /* BASE_REGS */	     \
-  { 0xffffffff, 0x00000000, 0x00000008, 0x00020000 }, /* GENERAL_REGS */     \
-  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000 }, /* FLOAT_REGS */       \
-  { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff }, /* ALTIVEC_REGS */     \
-  { 0x00000000, 0xffffffff, 0xffffe000, 0x00001fff }, /* VSX_REGS */	     \
-  { 0x00000000, 0x00000000, 0x00000000, 0x00002000 }, /* VRSAVE_REGS */	     \
-  { 0x00000000, 0x00000000, 0x00000000, 0x00004000 }, /* VSCR_REGS */	     \
-  { 0x00000000, 0x00000000, 0x00000000, 0x00008000 }, /* SPE_ACC_REGS */     \
-  { 0x00000000, 0x00000000, 0x00000000, 0x00010000 }, /* SPEFSCR_REGS */     \
-  { 0x00000000, 0x00000000, 0x00000000, 0x00040000 }, /* SPR_REGS */     \
-  { 0xffffffff, 0xffffffff, 0x00000008, 0x00020000 }, /* NON_SPECIAL_REGS */ \
-  { 0x00000000, 0x00000000, 0x00000002, 0x00000000 }, /* LINK_REGS */	     \
-  { 0x00000000, 0x00000000, 0x00000004, 0x00000000 }, /* CTR_REGS */	     \
-  { 0x00000000, 0x00000000, 0x00000006, 0x00000000 }, /* LINK_OR_CTR_REGS */ \
-  { 0x00000000, 0x00000000, 0x00000006, 0x00002000 }, /* SPECIAL_REGS */     \
-  { 0xffffffff, 0x00000000, 0x0000000e, 0x00022000 }, /* SPEC_OR_GEN_REGS */ \
-  { 0x00000000, 0x00000000, 0x00000010, 0x00000000 }, /* CR0_REGS */	     \
-  { 0x00000000, 0x00000000, 0x00000ff0, 0x00000000 }, /* CR_REGS */	     \
-  { 0xffffffff, 0x00000000, 0x00000ffe, 0x00020000 }, /* NON_FLOAT_REGS */   \
-  { 0x00000000, 0x00000000, 0x00001000, 0x00000000 }, /* CA_REGS */	     \
-  { 0xffffffff, 0xffffffff, 0xfffffffe, 0x0007ffff }  /* ALL_REGS */	     \
+#define REG_CLASS_CONTENTS						\
+{									\
+  /* NO_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 },	\
+  /* BASE_REGS.  */							\
+  { 0xfffffffe, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
+  /* GENERAL_REGS.  */							\
+  { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
+  /* FLOAT_REGS.  */							\
+  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
+  /* ALTIVEC_REGS.  */							\
+  { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
+  /* VSX_REGS.  */							\
+  { 0x00000000, 0xffffffff, 0xffffe000, 0x00001fff, 0x00000000 },	\
+  /* VRSAVE_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00002000, 0x00000000 },	\
+  /* VSCR_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000 },	\
+  /* SPE_ACC_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00008000, 0x00000000 },	\
+  /* SPEFSCR_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000 },	\
+  /* SPR_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00040000, 0x00000000 },	\
+  /* NON_SPECIAL_REGS.  */						\
+  { 0xffffffff, 0xffffffff, 0x00000008, 0x00020000, 0x00000000 },	\
+  /* LINK_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000 },	\
+  /* CTR_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x00000000 },	\
+  /* LINK_OR_CTR_REGS.  */						\
+  { 0x00000000, 0x00000000, 0x00000006, 0x00000000, 0x00000000 },	\
+  /* SPECIAL_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000006, 0x00002000, 0x00000000 },	\
+  /* SPEC_OR_GEN_REGS.  */						\
+  { 0xffffffff, 0x00000000, 0x0000000e, 0x00022000, 0x00000000 },	\
+  /* CR0_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000010, 0x00000000, 0x00000000 },	\
+  /* CR_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000ff0, 0x00000000, 0x00000000 },	\
+  /* NON_FLOAT_REGS.  */						\
+  { 0xffffffff, 0x00000000, 0x00000ffe, 0x00020000, 0x00000000 },	\
+  /* CA_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00001000, 0x00000000, 0x00000000 },	\
+  /* SPE_HIGH_REGS.  */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0xffe00000, 0x001fffff },	\
+  /* ALL_REGS.  */							\
+  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffe7ffff, 0x001fffff }	\
 }
 
 /* The same information, inverted:
@@ -1513,6 +1539,13 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define SECONDARY_MEMORY_NEEDED_RTX(MODE) \
   rs6000_secondary_memory_needed_rtx (MODE)
 
+/* Specify the mode to be used for memory when a secondary memory
+   location is needed.  For cpus that cannot load/store SDmode values
+   from the 64-bit FP registers without using a full 64-bit
+   load/store, we need a wider mode.  */
+#define SECONDARY_MEMORY_NEEDED_MODE(MODE)		\
+  rs6000_secondary_memory_needed_mode (MODE)
+
 /* Return the maximum number of consecutive registers
    needed to represent mode MODE in a register of class CLASS.
 
@@ -1542,7 +1575,8 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 
    On the RS/6000, we grow upwards, from the area after the outgoing
    arguments.  */
-#define FRAME_GROWS_DOWNWARD (flag_stack_protect != 0 || flag_asan != 0)
+#define FRAME_GROWS_DOWNWARD (flag_stack_protect != 0			\
+			      || (flag_sanitize & SANITIZE_ADDRESS) != 0)
 
 /* Size of the fixed area on the stack */
 #define RS6000_SAVE_AREA \
@@ -2033,7 +2067,7 @@ do {									     \
    After generation of rtl, the compiler makes no further distinction
    between pointers and any other objects of this machine mode.  */
 extern unsigned rs6000_pmode;
-#define Pmode ((enum machine_mode)rs6000_pmode)
+#define Pmode ((machine_mode)rs6000_pmode)
 
 /* Supply definition of STACK_SIZE_MODE for allocate_dynamic_stack_space.  */
 #define STACK_SIZE_MODE (TARGET_32BIT ? SImode : DImode)
@@ -2187,9 +2221,15 @@ extern int toc_initialized;
 	    }								\
 	  else if (TARGET_XCOFF)					\
 	    {								\
-	      fputs ("\t.lglobl\t.", FILE);				\
-	      RS6000_OUTPUT_BASENAME (FILE, alias);			\
-	      putc ('\n', FILE);					\
+	      if (!RS6000_WEAK || !DECL_WEAK (DECL))			\
+		{							\
+		  fputs ("\t.lglobl\t.", FILE);				\
+		  RS6000_OUTPUT_BASENAME (FILE, alias);			\
+		  putc ('\n', FILE);					\
+		  fputs ("\t.lglobl\t", FILE);				\
+		  RS6000_OUTPUT_BASENAME (FILE, alias);			\
+		  putc ('\n', FILE);					\
+		}							\
 	    }								\
 	  fputs ("\t.set\t.", FILE);					\
 	  RS6000_OUTPUT_BASENAME (FILE, alias);				\
@@ -2342,6 +2382,39 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   &rs6000_reg_names[114][0],	/* tfhar  */				\
   &rs6000_reg_names[115][0],	/* tfiar  */				\
   &rs6000_reg_names[116][0],	/* texasr  */				\
+									\
+  &rs6000_reg_names[117][0],	/* SPE rh0.  */				\
+  &rs6000_reg_names[118][0],	/* SPE rh1.  */				\
+  &rs6000_reg_names[119][0],	/* SPE rh2.  */				\
+  &rs6000_reg_names[120][0],	/* SPE rh3.  */				\
+  &rs6000_reg_names[121][0],	/* SPE rh4.  */				\
+  &rs6000_reg_names[122][0],	/* SPE rh5.  */				\
+  &rs6000_reg_names[123][0],	/* SPE rh6.  */				\
+  &rs6000_reg_names[124][0],	/* SPE rh7.  */				\
+  &rs6000_reg_names[125][0],	/* SPE rh8.  */				\
+  &rs6000_reg_names[126][0],	/* SPE rh9.  */				\
+  &rs6000_reg_names[127][0],	/* SPE rh10.  */			\
+  &rs6000_reg_names[128][0],	/* SPE rh11.  */			\
+  &rs6000_reg_names[129][0],	/* SPE rh12.  */			\
+  &rs6000_reg_names[130][0],	/* SPE rh13.  */			\
+  &rs6000_reg_names[131][0],	/* SPE rh14.  */			\
+  &rs6000_reg_names[132][0],	/* SPE rh15.  */			\
+  &rs6000_reg_names[133][0],	/* SPE rh16.  */			\
+  &rs6000_reg_names[134][0],	/* SPE rh17.  */			\
+  &rs6000_reg_names[135][0],	/* SPE rh18.  */			\
+  &rs6000_reg_names[136][0],	/* SPE rh19.  */			\
+  &rs6000_reg_names[137][0],	/* SPE rh20.  */			\
+  &rs6000_reg_names[138][0],	/* SPE rh21.  */			\
+  &rs6000_reg_names[139][0],	/* SPE rh22.  */			\
+  &rs6000_reg_names[140][0],	/* SPE rh22.  */			\
+  &rs6000_reg_names[141][0],	/* SPE rh24.  */			\
+  &rs6000_reg_names[142][0],	/* SPE rh25.  */			\
+  &rs6000_reg_names[143][0],	/* SPE rh26.  */			\
+  &rs6000_reg_names[144][0],	/* SPE rh27.  */			\
+  &rs6000_reg_names[145][0],	/* SPE rh28.  */			\
+  &rs6000_reg_names[146][0],	/* SPE rh29.  */			\
+  &rs6000_reg_names[147][0],	/* SPE rh30.  */			\
+  &rs6000_reg_names[148][0],	/* SPE rh31.  */			\
 }
 
 /* Table of additional register names to use in user input.  */
@@ -2397,7 +2470,17 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   {"vs56", 101},{"vs57", 102},{"vs58", 103},{"vs59", 104},      \
   {"vs60", 105},{"vs61", 106},{"vs62", 107},{"vs63", 108},	\
   /* Transactional Memory Facility (HTM) Registers.  */		\
-  {"tfhar",  114}, {"tfiar",  115}, {"texasr",  116} }
+  {"tfhar",  114}, {"tfiar",  115}, {"texasr",  116},		\
+  /* SPE high registers.  */					\
+  {"rh0",  117}, {"rh1",  118}, {"rh2",  119}, {"rh3",  120},	\
+  {"rh4",  121}, {"rh5",  122}, {"rh6",  123}, {"rh7",  124},	\
+  {"rh8",  125}, {"rh9",  126}, {"rh10", 127}, {"rh11", 128},	\
+  {"rh12", 129}, {"rh13", 130}, {"rh14", 131}, {"rh15", 132},	\
+  {"rh16", 133}, {"rh17", 134}, {"rh18", 135}, {"rh19", 136},	\
+  {"rh20", 137}, {"rh21", 138}, {"rh22", 139}, {"rh23", 140},	\
+  {"rh24", 141}, {"rh25", 142}, {"rh26", 143}, {"rh27", 144},	\
+  {"rh28", 145}, {"rh29", 146}, {"rh30", 147}, {"rh31", 148},	\
+}
 
 /* This is how to output an element of a case-vector that is relative.  */
 
@@ -2454,6 +2537,9 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
 /* Print a memory address as an operand to reference that memory location.  */
 
 #define PRINT_OPERAND_ADDRESS(FILE, ADDR) print_operand_address (FILE, ADDR)
+
+/* For switching between functions with different target attributes.  */
+#define SWITCHABLE_TARGET 1
 
 /* uncomment for disabling the corresponding default options */
 /* #define  MACHINE_no_sched_interblock */
@@ -2687,3 +2773,4 @@ enum rs6000_builtin_type_index
 extern GTY(()) tree rs6000_builtin_types[RS6000_BTI_MAX];
 extern GTY(()) tree rs6000_builtin_decls[RS6000_BUILTIN_COUNT];
 
+#define TARGET_SUPPORTS_WIDE_INT 1

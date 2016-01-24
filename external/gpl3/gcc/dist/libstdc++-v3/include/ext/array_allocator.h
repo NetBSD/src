@@ -1,6 +1,6 @@
 // array allocator -*- C++ -*-
 
-// Copyright (C) 2004-2013 Free Software Foundation, Inc.
+// Copyright (C) 2004-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -37,6 +37,10 @@
 #if __cplusplus >= 201103L
 #include <type_traits>
 #endif
+
+// Suppress deprecated warning for this file.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
@@ -95,7 +99,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void 
       destroy(pointer __p) { __p->~_Tp(); }
 #endif
-    };  
+    } _GLIBCXX_DEPRECATED;
 
   /**
    *  @brief  An allocator that uses previously allocated memory.
@@ -128,7 +132,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     public:
      template<typename _Tp1, typename _Array1 = _Array>
         struct rebind
-        { typedef array_allocator<_Tp1, _Array1> other; };
+        {
+	  typedef array_allocator<_Tp1, _Array1> other _GLIBCXX_DEPRECATED;
+	} _GLIBCXX_DEPRECATED;
 
       array_allocator(array_type* __array = 0) _GLIBCXX_USE_NOEXCEPT 
       : _M_array(__array), _M_used(size_type()) { }
@@ -152,7 +158,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_M_used += __n;
 	return __ret;
       }
-    };
+    } _GLIBCXX_DEPRECATED;
 
   template<typename _Tp, typename _Array>
     inline bool
@@ -168,5 +174,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
+
+#pragma GCC diagnostic pop
 
 #endif

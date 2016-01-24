@@ -1,4 +1,4 @@
-// Copyright (C) 2002-2013 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015 Free Software Foundation, Inc.
 //  
 // This file is part of GCC.
 //
@@ -203,7 +203,7 @@ namespace __cxxabiv1
   static inline void
   throw_recursive_init_exception()
   {
-#ifdef __EXCEPTIONS
+#if __cpp_exceptions
 	throw __gnu_cxx::recursive_init_error();
 #else
 	// Use __builtin_trap so we don't require abort().

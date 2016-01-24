@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Torvald Riegel <triegel@redhat.com>.
 
    This file is part of the GNU Transactional Memory Library (libitm).
@@ -39,6 +39,11 @@ struct gtm_thread;
 //
 // In this implementation, writers are given highest priority access but
 // read-to-write upgrades do not have a higher priority than writers.
+//
+// Do not change the layout of this class; it must remain a POD type with
+// standard layout, and the WRITERS field must be first (i.e., so the
+// assembler code can assume that its address is equal to the address of the
+// respective instance of the class).
 
 class gtm_rwlock
 {

@@ -1,6 +1,6 @@
 // Allocator traits -*- C++ -*-
 
-// Copyright (C) 2011-2013 Free Software Foundation, Inc.
+// Copyright (C) 2011-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -44,73 +44,47 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 #if __cplusplus >= 201103L
   template<typename _Alloc>
-    struct __allocator_always_compares_equal
-    { static const bool value = false; };
-
-  template<typename _Alloc>
-    const bool __allocator_always_compares_equal<_Alloc>::value;
+    struct __allocator_always_compares_equal : std::false_type { };
 
   template<typename _Tp>
     struct __allocator_always_compares_equal<std::allocator<_Tp>>
-    { static const bool value = true; };
-
-  template<typename _Tp>
-    const bool __allocator_always_compares_equal<std::allocator<_Tp>>::value;
+    : std::true_type { };
 
   template<typename, typename> struct array_allocator;
 
   template<typename _Tp, typename _Array>
     struct __allocator_always_compares_equal<array_allocator<_Tp, _Array>>
-    { static const bool value = true; };
-
-  template<typename _Tp, typename _Array>
-    const bool
-    __allocator_always_compares_equal<array_allocator<_Tp, _Array>>::value;
+    : std::true_type { };
 
   template<typename> struct bitmap_allocator;
 
   template<typename _Tp>
     struct __allocator_always_compares_equal<bitmap_allocator<_Tp>>
-    { static const bool value = true; };
-
-  template<typename _Tp>
-    const bool __allocator_always_compares_equal<bitmap_allocator<_Tp>>::value;
+    : std::true_type { };
 
   template<typename> struct malloc_allocator;
 
   template<typename _Tp>
     struct __allocator_always_compares_equal<malloc_allocator<_Tp>>
-    { static const bool value = true; };
-
-  template<typename _Tp>
-    const bool __allocator_always_compares_equal<malloc_allocator<_Tp>>::value;
+    : std::true_type { };
 
   template<typename> struct mt_allocator;
 
   template<typename _Tp>
     struct __allocator_always_compares_equal<mt_allocator<_Tp>>
-    { static const bool value = true; };
-
-  template<typename _Tp>
-    const bool __allocator_always_compares_equal<mt_allocator<_Tp>>::value;
+    : std::true_type { };
 
   template<typename> struct new_allocator;
 
   template<typename _Tp>
     struct __allocator_always_compares_equal<new_allocator<_Tp>>
-    { static const bool value = true; };
-
-  template<typename _Tp>
-    const bool __allocator_always_compares_equal<new_allocator<_Tp>>::value;
+    : std::true_type { };
 
   template<typename> struct pool_allocator;
 
   template<typename _Tp>
     struct __allocator_always_compares_equal<pool_allocator<_Tp>>
-    { static const bool value = true; };
-
-  template<typename _Tp>
-    const bool __allocator_always_compares_equal<pool_allocator<_Tp>>::value;
+    : std::true_type { };
 #endif
 
 /**
@@ -131,7 +105,7 @@ template<typename _Alloc>
     typedef typename _Base_type::const_pointer      const_pointer;
     typedef typename _Base_type::size_type          size_type;
     typedef typename _Base_type::difference_type    difference_type;
-    // C++0x allocators do not define reference or const_reference
+    // C++11 allocators do not define reference or const_reference
     typedef value_type&                             reference;
     typedef const value_type&                       const_reference;
     using _Base_type::allocate;
@@ -142,10 +116,9 @@ template<typename _Alloc>
 
   private:
     template<typename _Ptr>
-      struct __is_custom_pointer
-      : std::integral_constant<bool, std::is_same<pointer, _Ptr>::value
-                                     && !std::is_pointer<_Ptr>::value>
-      { };
+      using __is_custom_pointer
+	= std::__and_<std::is_same<pointer, _Ptr>,
+		      std::__not_<std::is_pointer<_Ptr>>>;
 
   public:
     // overload construct for non-standard pointer types
@@ -237,6 +210,6 @@ template<typename _Alloc>
   };
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace std
+} // namespace __gnu_cxx
 
 #endif

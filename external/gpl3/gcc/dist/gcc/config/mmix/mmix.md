@@ -1,5 +1,5 @@
 ;; GCC machine description for MMIX
-;; Copyright (C) 2000-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2015 Free Software Foundation, Inc.
 ;; Contributed by Hans-Peter Nilsson (hp@bitrange.com)
 
 ;; This file is part of GCC.
@@ -1168,7 +1168,7 @@ DIVU %1,%1,%2\;GET %0,:rR\;NEGU %2,0,%0\;CSNN %0,$255,%2")
     }
   else
     {
-      HOST_WIDEST_INT offs = INTVAL (XEXP (operands[1], 1));
+      int64_t offs = INTVAL (XEXP (operands[1], 1));
       offs += MMIX_fp_rO_OFFSET;
 
       if (insn_const_int_ok_for_constraint (offs, CONSTRAINT_I))

@@ -1,5 +1,5 @@
 ;; Predicate definitions for Xilinx MicroBlaze
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;;
 ;; Contributed by Michael Eager <eager@eagercon.com>.
 ;;
@@ -83,6 +83,10 @@
 ;; Return whether OP is a register or the constant 0.
 (define_predicate "reg_or_0_operand"
   (ior (match_operand 0 "const_0_operand")
+       (match_operand 0 "register_operand")))
+
+(define_predicate "reg_or_mem_operand"
+  (ior (match_operand 0 "memory_operand")
        (match_operand 0 "register_operand")))
 
 ;;  Return if the operand is either the PC or a label_ref.  

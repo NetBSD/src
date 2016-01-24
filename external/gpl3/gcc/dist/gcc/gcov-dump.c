@@ -1,5 +1,5 @@
 /* Dump a gcov file, for debugging use.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 
 Gcov is free software; you can redistribute it and/or modify
@@ -38,6 +38,8 @@ static void tag_arcs (const char *, unsigned, unsigned);
 static void tag_lines (const char *, unsigned, unsigned);
 static void tag_counters (const char *, unsigned, unsigned);
 static void tag_summary (const char *, unsigned, unsigned);
+static void dump_working_sets (const char *filename ATTRIBUTE_UNUSED,
+                               const struct gcov_ctr_summary *summary);
 extern int main (int, char **);
 
 typedef struct tag_format
@@ -49,6 +51,7 @@ typedef struct tag_format
 
 static int flag_dump_contents = 0;
 static int flag_dump_positions = 0;
+static int flag_dump_working_sets = 0;
 
 static const struct option options[] =
 {
@@ -56,6 +59,7 @@ static const struct option options[] =
   { "version",              no_argument,       NULL, 'v' },
   { "long",                 no_argument,       NULL, 'l' },
   { "positions",	    no_argument,       NULL, 'o' },
+  { "working-sets",	    no_argument,       NULL, 'w' },
   { 0, 0, 0, 0 }
 };
 
@@ -93,7 +97,7 @@ main (int argc ATTRIBUTE_UNUSED, char **argv)
 
   diagnostic_initialize (global_dc, 0);
 
-  while ((opt = getopt_long (argc, argv, "hlpv", options, NULL)) != -1)
+  while ((opt = getopt_long (argc, argv, "hlpvw", options, NULL)) != -1)
     {
       switch (opt)
 	{
@@ -108,6 +112,9 @@ main (int argc ATTRIBUTE_UNUSED, char **argv)
 	  break;
 	case 'p':
 	  flag_dump_positions = 1;
+	  break;
+	case 'w':
+	  flag_dump_working_sets = 1;
 	  break;
 	default:
 	  fprintf (stderr, "unknown flag `%c'\n", opt);
@@ -128,6 +135,7 @@ print_usage (void)
   printf ("  -v, --version        Print version number\n");
   printf ("  -l, --long           Dump record contents too\n");
   printf ("  -p, --positions      Dump record positions\n");
+  printf ("  -w, --working-sets   Dump working set computed from summary\n");
 }
 
 static void
@@ -414,7 +422,11 @@ static void
 tag_counters (const char *filename ATTRIBUTE_UNUSED,
 	      unsigned tag ATTRIBUTE_UNUSED, unsigned length ATTRIBUTE_UNUSED)
 {
-  static const char *const counter_names[] = GCOV_COUNTER_NAMES;
+#define DEF_GCOV_COUNTER(COUNTER, NAME, MERGE_FN) NAME,
+  static const char *const counter_names[] = {
+#include "gcov-counter.def"
+};
+#undef DEF_GCOV_COUNTER
   unsigned n_counts = GCOV_TAG_COUNTER_NUM (length);
 
   printf (" %s %u counts",
@@ -436,7 +448,7 @@ tag_counters (const char *filename ATTRIBUTE_UNUSED,
 
 	  count = gcov_read_counter ();
 	  printf (" ");
-	  printf (HOST_WIDEST_INT_PRINT_DEC, count);
+	  printf ("%"PRId64, count);
 	}
     }
 }
@@ -459,12 +471,12 @@ tag_summary (const char *filename ATTRIBUTE_UNUSED,
       printf ("\t\tcounts=%u, runs=%u",
 	      summary.ctrs[ix].num, summary.ctrs[ix].runs);
 
-      printf (", sum_all=" HOST_WIDEST_INT_PRINT_DEC,
-	      (HOST_WIDEST_INT)summary.ctrs[ix].sum_all);
-      printf (", run_max=" HOST_WIDEST_INT_PRINT_DEC,
-	      (HOST_WIDEST_INT)summary.ctrs[ix].run_max);
-      printf (", sum_max=" HOST_WIDEST_INT_PRINT_DEC,
-	      (HOST_WIDEST_INT)summary.ctrs[ix].sum_max);
+      printf (", sum_all=%"PRId64,
+	      (int64_t)summary.ctrs[ix].sum_all);
+      printf (", run_max=%"PRId64,
+	      (int64_t)summary.ctrs[ix].run_max);
+      printf (", sum_max=%"PRId64,
+	      (int64_t)summary.ctrs[ix].sum_max);
       if (ix != GCOV_COUNTER_ARCS)
         continue;
       printf ("\n");
@@ -478,11 +490,45 @@ tag_summary (const char *filename ATTRIBUTE_UNUSED,
           printf ("\n");
           print_prefix (filename, 0, 0);
           printf ("\t\t%d: num counts=%u, min counter="
-              HOST_WIDEST_INT_PRINT_DEC ", cum_counter="
-              HOST_WIDEST_INT_PRINT_DEC,
+              "%"PRId64 ", cum_counter="
+              "%"PRId64,
 	      h_ix, histo_bucket->num_counters,
-              (HOST_WIDEST_INT)histo_bucket->min_value,
-              (HOST_WIDEST_INT)histo_bucket->cum_value);
+              (int64_t)histo_bucket->min_value,
+              (int64_t)histo_bucket->cum_value);
         }
+      if (flag_dump_working_sets)
+        dump_working_sets (filename, &summary.ctrs[ix]);
+    }
+}
+
+static void
+dump_working_sets (const char *filename ATTRIBUTE_UNUSED,
+                   const struct gcov_ctr_summary *summary)
+{
+  gcov_working_set_t gcov_working_sets[NUM_GCOV_WORKING_SETS];
+  unsigned ws_ix, pctinc, pct;
+  gcov_working_set_t *ws_info;
+
+  compute_working_sets (summary, gcov_working_sets);
+
+  printf ("\n");
+  print_prefix (filename, 0, 0);
+  printf ("\t\tcounter working sets:");
+  /* Multiply the percentage by 100 to avoid float.  */
+  pctinc = 100 * 100 / NUM_GCOV_WORKING_SETS;
+  for (ws_ix = 0, pct = pctinc; ws_ix < NUM_GCOV_WORKING_SETS;
+       ws_ix++, pct += pctinc)
+    {
+      if (ws_ix == NUM_GCOV_WORKING_SETS - 1)
+        pct = 9990;
+      ws_info = &gcov_working_sets[ws_ix];
+      /* Print out the percentage using int arithmatic to avoid float.  */
+      printf ("\n");
+      print_prefix (filename, 0, 0);
+      printf ("\t\t%u.%02u%%: num counts=%u, min counter="
+               "%"PRId64,
+               pct / 100, pct - (pct / 100 * 100),
+               ws_info->num_counters,
+               (int64_t)ws_info->min_counter);
     }
 }

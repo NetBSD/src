@@ -1,5 +1,5 @@
 /* DWARF2 EH unwinding support for PA HP-UX.
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -349,8 +349,8 @@ pa_fallback_frame_state (struct _Unwind_Context *context,
 	  UPDATE_FS_FOR_SAR (fs, 88);
 	}
 
-      fs->retaddr_column = DWARF_ALT_FRAME_RETURN_COLUMN;
-      UPDATE_FS_FOR_PC (fs, DWARF_ALT_FRAME_RETURN_COLUMN);
+      fs->retaddr_column = __LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__;
+      UPDATE_FS_FOR_PC (fs, __LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__);
       fs->signal_frame = 1;
 
       return _URC_NO_REASON;

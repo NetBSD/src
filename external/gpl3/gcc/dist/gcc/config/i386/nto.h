@@ -1,5 +1,5 @@
 /* Definitions for Intel 386 running QNX/Neutrino.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -103,3 +103,5 @@ crti.o%s \
 #define TARGET_POSIX_IO
 
 #undef DBX_REGISTER_NUMBER
+
+#define IX86_MAYBE_NO_LIBGCC_TFMODE

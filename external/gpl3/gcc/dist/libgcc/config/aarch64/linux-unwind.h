@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is free software; you can redistribute it and/or modify it
@@ -24,6 +24,19 @@
 
 #include <signal.h>
 #include <sys/ucontext.h>
+
+
+/* Since insns are always stored LE, on a BE system the opcodes will
+   be loaded byte-reversed.  Therefore, define two sets of opcodes,
+   one for LE and one for BE.  */
+
+#if __AARCH64EB__
+#define MOVZ_X8_8B	0x681180d2
+#define SVC_0		0x010000d4
+#else
+#define MOVZ_X8_8B	0xd2801168
+#define SVC_0		0xd4000001
+#endif
 
 #define MD_FALLBACK_FRAME_STATE_FOR aarch64_fallback_frame_state
 
@@ -55,7 +68,7 @@ aarch64_fallback_frame_state (struct _Unwind_Context *context,
      0xd2801168         movz x8, #0x8b
      0xd4000001         svc  0x0
    */
-  if (pc[0] != 0xd2801168 || pc[1] != 0xd4000001)
+  if (pc[0] != MOVZ_X8_8B || pc[1] != SVC_0)
     {
       return _URC_END_OF_STACK;
     }
@@ -68,7 +81,7 @@ aarch64_fallback_frame_state (struct _Unwind_Context *context,
 
   new_cfa = (_Unwind_Ptr) sc;
   fs->regs.cfa_how = CFA_REG_OFFSET;
-  fs->regs.cfa_reg = STACK_POINTER_REGNUM;
+  fs->regs.cfa_reg = __LIBGCC_STACK_POINTER_REGNUM__;
   fs->regs.cfa_offset = new_cfa - (_Unwind_Ptr) context->cfa;
 
   for (i = 0; i < AARCH64_DWARF_NUMBER_R; i++)
@@ -131,11 +144,12 @@ aarch64_fallback_frame_state (struct _Unwind_Context *context,
 
   fs->signal_frame = 1;
 
-  fs->regs.reg[DWARF_ALT_FRAME_RETURN_COLUMN].how = REG_SAVED_VAL_OFFSET;
-  fs->regs.reg[DWARF_ALT_FRAME_RETURN_COLUMN].loc.offset =
+  fs->regs.reg[__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__].how =
+    REG_SAVED_VAL_OFFSET;
+  fs->regs.reg[__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__].loc.offset =
     (_Unwind_Ptr) (sc->pc) - new_cfa;
 
-  fs->retaddr_column = DWARF_ALT_FRAME_RETURN_COLUMN;
+  fs->retaddr_column = __LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__;
 
   return _URC_NO_REASON;
 }

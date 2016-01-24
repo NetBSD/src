@@ -1,6 +1,6 @@
 // <system_error> -*- C++ -*-
 
-// Copyright (C) 2007-2013 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -46,7 +46,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   class error_code;
   class error_condition;
-  class error_category;
   class system_error;
 
   /// is_error_code_enum
@@ -61,15 +60,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     struct is_error_condition_enum<errc>
     : public true_type { };
 
+  inline namespace _V2 {
 
   /// error_category
   class error_category
   {
-  protected:
-    error_category() noexcept;
-
   public:
-    virtual ~error_category() noexcept;
+    constexpr error_category() noexcept = default;
+
+    virtual ~error_category();
 
     error_category(const error_category&) = delete;
     error_category& operator=(const error_category&) = delete;
@@ -77,9 +76,30 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     virtual const char* 
     name() const noexcept = 0;
 
+    // We need two different virtual functions here, one returning a
+    // COW string and one returning an SSO string. Their positions in the
+    // vtable must be consistent for dynamic dispatch to work, but which one
+    // the name "message()" finds depends on which ABI the caller is using.
+#if _GLIBCXX_USE_CXX11_ABI
+  private:
+    _GLIBCXX_DEFAULT_ABI_TAG
+    virtual __cow_string
+    _M_message(int) const;
+
+  public:
+    _GLIBCXX_DEFAULT_ABI_TAG
+    virtual string
+    message(int) const = 0;
+#else
     virtual string 
     message(int) const = 0;
 
+  private:
+    virtual __sso_string
+    _M_message(int) const;
+#endif
+
+  public:
     virtual error_condition
     default_error_condition(int __i) const noexcept;
 
@@ -105,6 +125,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // DR 890.
   _GLIBCXX_CONST const error_category& system_category() noexcept;
   _GLIBCXX_CONST const error_category& generic_category() noexcept;
+
+  } // end inline namespace
 
   error_code make_error_code(errc) noexcept;
 
@@ -153,6 +175,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     error_condition 
     default_error_condition() const noexcept;
 
+    _GLIBCXX_DEFAULT_ABI_TAG
     string 
     message() const
     { return category().message(value()); }
@@ -228,6 +251,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     const error_category&
     category() const noexcept { return *_M_cat; }
 
+    _GLIBCXX_DEFAULT_ABI_TAG
     string 
     message() const
     { return category().message(value()); }
@@ -318,16 +342,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     system_error(error_code __ec, const string& __what)
     : runtime_error(__what + ": " + __ec.message()), _M_code(__ec) { }
 
-    /*
-     * TODO: Add const char* ctors to all exceptions.
-     *
-     * system_error(error_code __ec, const char* __what)
-     * : runtime_error(__what + (": " + __ec.message())), _M_code(__ec) { }
-     *
-     * system_error(int __v, const error_category& __ecat, const char* __what)
-     * : runtime_error(__what + (": " + __ec.message())),
-     *   _M_code(error_code(__v, __ecat)) { }
-     */
+    system_error(error_code __ec, const char* __what)
+    : runtime_error(__what + (": " + __ec.message())), _M_code(__ec) { }
+
+    system_error(int __v, const error_category& __ecat, const char* __what)
+    : system_error(error_code(__v, __ecat), __what) { }
 
     system_error(int __v, const error_category& __ecat)
     : runtime_error(error_code(__v, __ecat).message()),

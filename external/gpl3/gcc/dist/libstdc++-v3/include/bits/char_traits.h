@@ -1,6 +1,6 @@
 // Character Traits for use by standard string and iostream -*- C++ -*-
 
-// Copyright (C) 1997-2013 Free Software Foundation, Inc.
+// Copyright (C) 1997-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -75,7 +75,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  may not be specialized for fundamental types, but classes in
    *  namespace __gnu_cxx may be.
    *
-   *  See http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt05ch13s03.html
+   *  See https://gcc.gnu.org/onlinedocs/libstdc++/manual/strings.html#strings.string.character_types
    *  for advice on how to make use of this class for @a unusual character
    *  types. Also, check out include/ext/pod_char_traits.h.  
    */
@@ -219,7 +219,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  __gnu_cxx::char_traits, it is possible to achieve a more
    *  appropriate definition by specializing __gnu_cxx::char_traits.
    *
-   *  See http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt05ch13s03.html
+   *  See https://gcc.gnu.org/onlinedocs/libstdc++/manual/strings.html#strings.string.character_types
    *  for advice on how to make use of this class for @a unusual character
    *  types. Also, check out include/ext/pod_char_traits.h.
   */
@@ -248,11 +248,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       static _GLIBCXX_CONSTEXPR bool
       lt(const char_type& __c1, const char_type& __c2) _GLIBCXX_NOEXCEPT
-      { return __c1 < __c2; }
+      {
+	// LWG 467.
+	return (static_cast<unsigned char>(__c1)
+		< static_cast<unsigned char>(__c2));
+      }
 
       static int
       compare(const char_type* __s1, const char_type* __s2, size_t __n)
-      { return __builtin_memcmp(__s1, __s2, __n); }
+      {
+	if (__n == 0)
+	  return 0;
+	return __builtin_memcmp(__s1, __s2, __n);
+      }
 
       static size_t
       length(const char_type* __s)
@@ -260,19 +268,35 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       static const char_type*
       find(const char_type* __s, size_t __n, const char_type& __a)
-      { return static_cast<const char_type*>(__builtin_memchr(__s, __a, __n)); }
+      {
+	if (__n == 0)
+	  return 0;
+	return static_cast<const char_type*>(__builtin_memchr(__s, __a, __n));
+      }
 
       static char_type*
       move(char_type* __s1, const char_type* __s2, size_t __n)
-      { return static_cast<char_type*>(__builtin_memmove(__s1, __s2, __n)); }
+      {
+	if (__n == 0)
+	  return __s1;
+	return static_cast<char_type*>(__builtin_memmove(__s1, __s2, __n));
+      }
 
       static char_type*
       copy(char_type* __s1, const char_type* __s2, size_t __n)
-      { return static_cast<char_type*>(__builtin_memcpy(__s1, __s2, __n)); }
+      {
+	if (__n == 0)
+	  return __s1;
+	return static_cast<char_type*>(__builtin_memcpy(__s1, __s2, __n));
+      }
 
       static char_type*
       assign(char_type* __s, size_t __n, char_type __a)
-      { return static_cast<char_type*>(__builtin_memset(__s, __a, __n)); }
+      {
+	if (__n == 0)
+	  return __s;
+	return static_cast<char_type*>(__builtin_memset(__s, __a, __n));
+      }
 
       static _GLIBCXX_CONSTEXPR char_type
       to_char_type(const int_type& __c) _GLIBCXX_NOEXCEPT
@@ -323,7 +347,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       static int
       compare(const char_type* __s1, const char_type* __s2, size_t __n)
-      { return wmemcmp(__s1, __s2, __n); }
+      {
+	if (__n == 0)
+	  return 0;
+	return wmemcmp(__s1, __s2, __n);
+      }
 
       static size_t
       length(const char_type* __s)
@@ -331,19 +359,35 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       static const char_type*
       find(const char_type* __s, size_t __n, const char_type& __a)
-      { return wmemchr(__s, __a, __n); }
+      {
+	if (__n == 0)
+	  return 0;
+	return wmemchr(__s, __a, __n);
+      }
 
       static char_type*
       move(char_type* __s1, const char_type* __s2, size_t __n)
-      { return wmemmove(__s1, __s2, __n); }
+      {
+	if (__n == 0)
+	  return __s1;
+	return wmemmove(__s1, __s2, __n);
+      }
 
       static char_type*
       copy(char_type* __s1, const char_type* __s2, size_t __n)
-      { return wmemcpy(__s1, __s2, __n); }
+      {
+	if (__n == 0)
+	  return __s1;
+	return wmemcpy(__s1, __s2, __n);
+      }
 
       static char_type*
       assign(char_type* __s, size_t __n, char_type __a)
-      { return wmemset(__s, __a, __n); }
+      {
+	if (__n == 0)
+	  return __s;
+	return wmemset(__s, __a, __n);
+      }
 
       static _GLIBCXX_CONSTEXPR char_type
       to_char_type(const int_type& __c) _GLIBCXX_NOEXCEPT
@@ -432,6 +476,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static char_type*
       move(char_type* __s1, const char_type* __s2, size_t __n)
       {
+	if (__n == 0)
+	  return __s1;
 	return (static_cast<char_type*>
 		(__builtin_memmove(__s1, __s2, __n * sizeof(char_type))));
       }
@@ -439,6 +485,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static char_type*
       copy(char_type* __s1, const char_type* __s2, size_t __n)
       {
+	if (__n == 0)
+	  return __s1;
 	return (static_cast<char_type*>
 		(__builtin_memcpy(__s1, __s2, __n * sizeof(char_type))));
       }
@@ -525,6 +573,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static char_type*
       move(char_type* __s1, const char_type* __s2, size_t __n)
       {
+	if (__n == 0)
+	  return __s1;
 	return (static_cast<char_type*>
 		(__builtin_memmove(__s1, __s2, __n * sizeof(char_type))));
       }
@@ -532,6 +582,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static char_type*
       copy(char_type* __s1, const char_type* __s2, size_t __n)
       { 
+	if (__n == 0)
+	  return __s1;
 	return (static_cast<char_type*>
 		(__builtin_memcpy(__s1, __s2, __n * sizeof(char_type))));
       }

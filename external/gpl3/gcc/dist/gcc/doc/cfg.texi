@@ -1,5 +1,5 @@
 @c -*-texinfo-*-
-@c Copyright (C) 2001-2013 Free Software Foundation, Inc.
+@c Copyright (C) 2001-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -23,7 +23,7 @@ used to represent the control flow graph are defined in
 
 In GCC, the representation of control flow is maintained throughout
 the compilation process, from constructing the CFG early in 
-@code{pass_build_cfg} to @code{pass_free_cfg} (see @file{passes.c}).
+@code{pass_build_cfg} to @code{pass_free_cfg} (see @file{passes.def}).
 The CFG takes various different modes and may undergo extensive
 manipulations, but the graph is always valid between its construction
 and its release.  This way, transfer of information such as data flow,
@@ -147,6 +147,9 @@ Abstract containers and iterators are used to access the PHI nodes
 and statements in a basic blocks.  These iterators are called
 @dfn{GIMPLE statement iterators} (GSIs).  Grep for @code{^gsi}
 in the various @file{gimple-*} and @file{tree-*} files.
+There is a @code{gimple_stmt_iterator} type for iterating over
+all kinds of statement, and a @code{gphi_iterator} subclass for
+iterating over PHI nodes.
 The following snippet will pretty-print all PHI nodes the statements
 of the current function in the GIMPLE representation.
 
@@ -155,11 +158,12 @@ basic_block bb;
 
 FOR_EACH_BB (bb)
   @{
+   gphi_iterator pi;
    gimple_stmt_iterator si;
 
-   for (si = gsi_start_phis (bb); !gsi_end_p (si); gsi_next (&si))
+   for (pi = gsi_start_phis (bb); !gsi_end_p (pi); gsi_next (&pi))
      @{
-       gimple phi = gsi_stmt (si);
+       gphi *phi = pi.phi ();
        print_gimple_stmt (dump_file, phi, 0, TDF_SLIM);
      @}
    for (si = gsi_start_bb (bb); !gsi_end_p (si); gsi_next (&si))
@@ -539,7 +543,7 @@ When changes need to be applied to a function in its @code{GIMPLE}
 representation, @dfn{GIMPLE statement iterators} should be used.  These
 iterators provide an integrated abstraction of the flow graph and the
 instruction stream.  Block statement iterators are constructed using
-the @code{gimple_stmt_iterator} data structure and several modifier are
+the @code{gimple_stmt_iterator} data structure and several modifiers are
 available, including the following:
 
 @ftable @code

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GCC for Motorola 680x0/ColdFire.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -279,14 +279,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #define LONG_DOUBLE_TYPE_SIZE			\
   ((TARGET_COLDFIRE || TARGET_FIDOA) ? 64 : 80)
-
-/* We need to know the size of long double at compile-time in libgcc2.  */
-
-#if defined(__mcoldfire__) || defined(__mfido__)
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
-#else
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 80
-#endif
 
 /* Set the value of FLT_EVAL_METHOD in float.h.  When using 68040 fp
    instructions, we get proper intermediate rounding, otherwise we
@@ -974,7 +966,7 @@ extern M68K_CONST_METHOD m68k_const_method (HOST_WIDE_INT);
 
 extern void m68k_emit_move_double (rtx [2]);
 
-extern int m68k_sched_address_bypass_p (rtx, rtx);
-extern int m68k_sched_indexed_address_bypass_p (rtx, rtx);
+extern int m68k_sched_address_bypass_p (rtx_insn *, rtx_insn *);
+extern int m68k_sched_indexed_address_bypass_p (rtx_insn *, rtx_insn *);
 
 #define CPU_UNITS_QUERY 1

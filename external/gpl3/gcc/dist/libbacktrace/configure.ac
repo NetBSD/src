@@ -1,5 +1,5 @@
 # configure.ac -- Backtrace configure script.
-# Copyright (C) 2012-2013 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -168,6 +168,11 @@ PIC_FLAG=
 if test -n "${with_target_subdir}"; then
   PIC_FLAG=-fPIC
 fi
+# Similarly, use -fPIC with --enable-host-shared:
+AC_ARG_ENABLE(host-shared,
+[AS_HELP_STRING([--enable-host-shared],
+		[build host code as shared libraries])],
+[PIC_FLAG=-fPIC], [])
 AC_SUBST(PIC_FLAG)
 
 # Test for __sync support.
@@ -191,6 +196,24 @@ if test "$libbacktrace_cv_sys_sync" = "yes"; then
 	    [Define to 1 if you have the __sync functions])
 fi
 AC_SUBST(BACKTRACE_SUPPORTS_THREADS)
+
+# Test for __atomic support.
+AC_CACHE_CHECK([__atomic extensions],
+[libbacktrace_cv_sys_atomic],
+[if test -n "${with_target_subdir}"; then
+   libbacktrace_cv_sys_atomic=yes
+ else
+   AC_LINK_IFELSE(
+     [AC_LANG_PROGRAM([int i;],
+     		      [__atomic_load_n (&i, __ATOMIC_ACQUIRE);
+		       __atomic_store_n (&i, 1, __ATOMIC_RELEASE);])],
+     [libbacktrace_cv_sys_atomic=yes],
+     [libbacktrace_cv_sys_atomic=no])
+ fi])
+if test "$libbacktrace_cv_sys_atomic" = "yes"; then
+  AC_DEFINE([HAVE_ATOMIC_FUNCTIONS], 1,
+	    [Define to 1 if you have the __atomic functions])
+fi
 
 # The library needs to be able to read the executable itself.  Compile
 # a file to determine the executable format.  The awk script

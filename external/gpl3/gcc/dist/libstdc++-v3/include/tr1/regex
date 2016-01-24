@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2007-2013 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -678,7 +678,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       
       if (__ctype.is(__c, __f))
 	return true;
-      
+#if 0
       // special case of underscore in [[:w:]]
       if (__c == __ctype.widen('_'))
 	{
@@ -698,7 +698,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  if (__f | __bt)
 	    return true;
 	}
-      
+#endif
       return false;
     }
 

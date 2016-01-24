@@ -1,5 +1,5 @@
 ;; Machine description for DEC Alpha for GNU C compiler
-;; Copyright (C) 1992-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1992-2015 Free Software Foundation, Inc.
 ;; Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 ;;
 ;; This file is part of GCC.
@@ -4764,7 +4764,7 @@
   "operands[4] = gen_rtx_SYMBOL_REF (Pmode, \"OTS$MOVE\");")
 
 (define_insn "*movmemdi_1"
-  [(set (match_operand:BLK 0 "memory_operand" "=m,=m")
+  [(set (match_operand:BLK 0 "memory_operand" "=m,m")
 	(match_operand:BLK 1 "memory_operand" "m,m"))
    (use (match_operand:DI 2 "nonmemory_operand" "r,i"))
    (use (match_operand:DI 3 "immediate_operand"))
@@ -4831,7 +4831,7 @@
 })
 
 (define_insn "*clrmemdi_1"
-  [(set (match_operand:BLK 0 "memory_operand" "=m,=m")
+  [(set (match_operand:BLK 0 "memory_operand" "=m,m")
 		   (const_int 0))
    (use (match_operand:DI 1 "nonmemory_operand" "r,i"))
    (use (match_operand:DI 2 "immediate_operand"))
@@ -4907,8 +4907,8 @@
     }
   else
     {
-      rtx out_label = 0;
-      rtx loop_label = gen_label_rtx ();
+      rtx_code_label *out_label = 0;
+      rtx_code_label *loop_label = gen_label_rtx ();
       rtx want = gen_reg_rtx (Pmode);
       rtx tmp = gen_reg_rtx (Pmode);
       rtx memref, test;

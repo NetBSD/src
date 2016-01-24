@@ -1,7 +1,7 @@
 /* This file contains the definitions and documentation for the
    additional tree codes used in the GNU C++ compiler (see tree.def
    for the standard codes).
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -212,9 +212,12 @@ DEFTREECODE (USING_STMT, "using_stmt", tcc_statement, 1)
    parsing had occurred.  */
 DEFTREECODE (DEFAULT_ARG, "default_arg", tcc_exceptional, 0)
 
-/* An uninstantiated noexcept-specification.  DEFERRED_NOEXCEPT_PATTERN is
-   the pattern from the template, and DEFERRED_NOEXCEPT_ARGS are the
-   template arguments to substitute into the pattern when needed.  */
+/* An uninstantiated/unevaluated noexcept-specification.  For the
+   uninstantiated case, DEFERRED_NOEXCEPT_PATTERN is the pattern from the
+   template, and DEFERRED_NOEXCEPT_ARGS are the template arguments to
+   substitute into the pattern when needed.  For the unevaluated case,
+   those slots are NULL_TREE and we use get_defaulted_eh_spec to find
+   the exception-specification.  */
 DEFTREECODE (DEFERRED_NOEXCEPT, "deferred_noexcept", tcc_exceptional, 0)
 
 /* A template-id, like foo<int>.  The first operand is the template.
@@ -351,9 +354,9 @@ DEFTREECODE (STMT_EXPR, "stmt_expr", tcc_expression, 1)
    is applied.  */
 DEFTREECODE (UNARY_PLUS_EXPR, "unary_plus_expr", tcc_unary, 1)
 
-/** C++0x extensions. */
+/** C++11 extensions. */
 
-/* A static assertion.  This is a C++0x extension.
+/* A static assertion.  This is a C++11 extension.
    STATIC_ASSERT_CONDITION contains the condition that is being
    checked.  STATIC_ASSERT_MESSAGE contains the message (a string
    literal) to be displayed if the condition fails to hold.  */

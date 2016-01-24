@@ -1,5 +1,5 @@
 ;; Constraint definitions for Xilinx MicroBlaze processors.
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 ;; Contributed by Michael Eager <eager@eagercon.com>.
 
@@ -70,3 +70,8 @@
   "Double word operand."
   (and (match_code "mem")
        (match_test "double_memory_operand (op, GET_MODE (op))")))
+
+(define_memory_constraint "Q"
+  "Memory operand which is a single register."
+  (and (match_code "mem")
+       (match_test "GET_CODE ( XEXP (op, 0)) == REG")))

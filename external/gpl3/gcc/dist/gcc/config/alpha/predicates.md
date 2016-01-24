@@ -1,5 +1,5 @@
 ;; Predicate definitions for DEC Alpha.
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -357,7 +357,7 @@
 	    && !SYMBOL_REF_TLS_MODEL (op))
     {
       if (SYMBOL_REF_DECL (op))
-        max_ofs = tree_low_cst (DECL_SIZE_UNIT (SYMBOL_REF_DECL (op)), 1);
+        max_ofs = tree_to_uhwi (DECL_SIZE_UNIT (SYMBOL_REF_DECL (op)));
     }
   else
     return false;
@@ -638,7 +638,7 @@
   /* Avoid search unless necessary.  */
   if (!TARGET_EXPLICIT_RELOCS || !reload_completed)
     return false;
-  return for_each_rtx (&op, some_small_symbolic_operand_int, NULL);
+  return some_small_symbolic_operand_int (op);
 })
 
 ;; Accept a register, or a memory if BWX is enabled.

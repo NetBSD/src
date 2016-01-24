@@ -1,6 +1,6 @@
 // Specific definitions for generic platforms  -*- C++ -*-
 
-// Copyright (C) 2000-2013 Free Software Foundation, Inc.
+// Copyright (C) 2000-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -77,6 +77,11 @@
 #ifdef __x86_64__
 #define _GLIBCXX_LLP64 1
 #endif
+
+// Enable use of GetModuleHandleEx (requires Windows XP/2003) in
+// __cxa_thread_atexit to prevent modules from being unloaded before
+// their dtors are called
+#define _GLIBCXX_THREAD_ATEXIT_WIN32 1
 
 // See libstdc++/59807
 #define _GTHREAD_USE_MUTEX_INIT_FUNC 1

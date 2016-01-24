@@ -1,5 +1,5 @@
 /* Solaris support needed only by C/C++ frontends.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -21,7 +21,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "stringpool.h"
+#include "attribs.h"
 #include "tm.h"
 #include "tm_p.h"
 
@@ -84,7 +96,7 @@ solaris_pragma_align (cpp_reader *pfile ATTRIBUTE_UNUSED)
 {
   tree t, x;
   enum cpp_ttype ttype;
-  HOST_WIDE_INT low;
+  unsigned HOST_WIDE_INT low;
 
   if (pragma_lex (&x) != CPP_NUMBER
       || pragma_lex (&t) != CPP_OPEN_PAREN)
@@ -94,7 +106,7 @@ solaris_pragma_align (cpp_reader *pfile ATTRIBUTE_UNUSED)
     }
 
   low = TREE_INT_CST_LOW (x);
-  if (TREE_INT_CST_HIGH (x) != 0
+  if (!tree_fits_uhwi_p (x)
       || (low != 1 && low != 2 && low != 4 && low != 8 && low != 16
 	  && low != 32 && low != 64 && low != 128))
     {

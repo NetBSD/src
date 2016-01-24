@@ -1,5 +1,5 @@
 /* Definitions for branch prediction routines in the GNU compiler.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,6 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_PREDICT_H
 #define GCC_PREDICT_H
 
+/* Random guesstimation given names.
+   PROB_VERY_UNLIKELY should be small enough so basic block predicted
+   by it gets below HOT_BB_FREQUENCY_FRACTION.  */
+#define PROB_VERY_UNLIKELY	(REG_BR_PROB_BASE / 2000 - 1)
+#define PROB_EVEN		(REG_BR_PROB_BASE / 2)
+#define PROB_VERY_LIKELY	(REG_BR_PROB_BASE - PROB_VERY_UNLIKELY)
+#define PROB_ALWAYS		(REG_BR_PROB_BASE)
+#define PROB_UNLIKELY           (REG_BR_PROB_BASE / 5 - 1)
+#define PROB_LIKELY             (REG_BR_PROB_BASE - PROB_UNLIKELY)
+
 #define DEF_PREDICTOR(ENUM, NAME, HITRATE, FLAGS) ENUM,
 enum br_predictor
 {
@@ -35,13 +45,48 @@ enum prediction
    TAKEN
 };
 
-extern void predict_insn_def (rtx, enum br_predictor, enum prediction);
-extern int counts_to_freqs (void);
-extern void estimate_bb_frequencies (void);
-extern const char *predictor_name (enum br_predictor);
-extern tree build_predict_expr (enum br_predictor, enum prediction);
+extern gcov_type get_hot_bb_threshold (void);
+extern void set_hot_bb_threshold (gcov_type);
+extern bool maybe_hot_count_p (struct function *, gcov_type);
+extern bool maybe_hot_bb_p (struct function *, const_basic_block);
+extern bool maybe_hot_edge_p (edge);
+extern bool probably_never_executed_bb_p (struct function *, const_basic_block);
+extern bool probably_never_executed_edge_p (struct function *, edge);
+extern bool optimize_function_for_size_p (struct function *);
+extern bool optimize_function_for_speed_p (struct function *);
+extern bool optimize_bb_for_size_p (const_basic_block);
+extern bool optimize_bb_for_speed_p (const_basic_block);
+extern bool optimize_edge_for_size_p (edge);
+extern bool optimize_edge_for_speed_p (edge);
+extern bool optimize_insn_for_size_p (void);
+extern bool optimize_insn_for_speed_p (void);
+extern bool optimize_loop_for_size_p (struct loop *);
+extern bool optimize_loop_for_speed_p (struct loop *);
+extern bool optimize_loop_nest_for_speed_p (struct loop *);
+extern bool optimize_loop_nest_for_size_p (struct loop *);
+extern bool predictable_edge_p (edge);
+extern void rtl_profile_for_bb (basic_block);
+extern void rtl_profile_for_edge (edge);
+extern void default_rtl_profile (void);
+extern bool rtl_predicted_by_p (const_basic_block, enum br_predictor);
+extern bool gimple_predicted_by_p (const_basic_block, enum br_predictor);
+extern bool edge_probability_reliable_p (const_edge);
+extern bool br_prob_note_reliable_p (const_rtx);
+extern void predict_insn_def (rtx_insn *, enum br_predictor, enum prediction);
+extern void rtl_predict_edge (edge, enum br_predictor, int);
+extern void gimple_predict_edge (edge, enum br_predictor, int);
+extern void remove_predictions_associated_with_edge (edge);
+extern void predict_edge_def (edge, enum br_predictor, enum prediction);
+extern void invert_br_probabilities (rtx);
+extern void guess_outgoing_edge_probabilities (basic_block);
 extern void tree_estimate_probability (void);
+extern void handle_missing_profiles (void);
+extern int counts_to_freqs (void);
+extern bool expensive_function_p (int);
+extern void estimate_bb_frequencies (bool);
 extern void compute_function_frequency (void);
+extern tree build_predict_expr (enum br_predictor, enum prediction);
+extern const char *predictor_name (enum br_predictor);
 extern void rebuild_frequencies (void);
 
 #endif  /* GCC_PREDICT_H */

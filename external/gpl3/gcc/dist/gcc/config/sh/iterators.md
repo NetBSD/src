@@ -1,5 +1,5 @@
 ;; Iterator definitions for GCC SH machine description files.
-;; Copyright (C) 2012-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -41,3 +41,6 @@
 ;; Lowpart subreg byte position code attributes for big and little endian.
 (define_mode_attr lowpart_be [(QI "3") (HI "2")])
 (define_mode_attr lowpart_le [(QI "0") (HI "0")])
+
+;; Signed minimum/maximum code iterator.
+(define_code_iterator SMIN_SMAX [smin smax])

@@ -1,5 +1,5 @@
 /* Predicates for TI C6X
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Bernd Schmidt <bernds@codesourcery.com>
 
@@ -210,9 +210,9 @@
         t = DECL_SIZE_UNIT (t);
       else
 	t = TYPE_SIZE_UNIT (TREE_TYPE (t));
-      if (t && host_integerp (t, 0))
+      if (t && tree_fits_shwi_p (t))
 	{
-	  size = tree_low_cst (t, 0);
+	  size = tree_to_shwi (t);
 	  if (size < 0)
 	    size = 0;
 	}

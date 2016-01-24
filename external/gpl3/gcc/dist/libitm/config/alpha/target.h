@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Transactional Memory Library (libitm).
@@ -31,10 +31,6 @@ typedef struct gtm_jmpbuf
   void *cfa;
   unsigned long f[8];
 } gtm_jmpbuf;
-
-/* Alpha generally uses a fixed page size of 8K.  */
-#define PAGE_SIZE	8192
-#define FIXED_PAGE_SIZE	1
 
 /* The size of one line in hardware caches (in bytes). */
 #define HW_CACHELINE_SIZE 64

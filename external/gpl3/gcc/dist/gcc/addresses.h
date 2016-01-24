@@ -1,5 +1,5 @@
 /* Inline functions to test validity of reg classes for addressing modes.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,8 +21,11 @@ along with GCC; see the file COPYING3.  If not see
    MODE_BASE_REG_REG_CLASS, MODE_BASE_REG_CLASS and BASE_REG_CLASS.
    Arguments as for the MODE_CODE_BASE_REG_CLASS macro.  */
 
+#ifndef GCC_ADDRESSES_H
+#define GCC_ADDRESSES_H
+
 static inline enum reg_class
-base_reg_class (enum machine_mode mode ATTRIBUTE_UNUSED,
+base_reg_class (machine_mode mode ATTRIBUTE_UNUSED,
 		addr_space_t as ATTRIBUTE_UNUSED,
 		enum rtx_code outer_code ATTRIBUTE_UNUSED,
 		enum rtx_code index_code ATTRIBUTE_UNUSED)
@@ -49,7 +52,7 @@ base_reg_class (enum machine_mode mode ATTRIBUTE_UNUSED,
 
 static inline bool
 ok_for_base_p_1 (unsigned regno ATTRIBUTE_UNUSED,
-		 enum machine_mode mode ATTRIBUTE_UNUSED,
+		 machine_mode mode ATTRIBUTE_UNUSED,
 		 addr_space_t as ATTRIBUTE_UNUSED,
 		 enum rtx_code outer_code ATTRIBUTE_UNUSED,
 		 enum rtx_code index_code ATTRIBUTE_UNUSED)
@@ -74,7 +77,7 @@ ok_for_base_p_1 (unsigned regno ATTRIBUTE_UNUSED,
    complete.  Arguments as for the called function.  */
 
 static inline bool
-regno_ok_for_base_p (unsigned regno, enum machine_mode mode, addr_space_t as,
+regno_ok_for_base_p (unsigned regno, machine_mode mode, addr_space_t as,
 		     enum rtx_code outer_code, enum rtx_code index_code)
 {
   if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
@@ -82,3 +85,5 @@ regno_ok_for_base_p (unsigned regno, enum machine_mode mode, addr_space_t as,
 
   return ok_for_base_p_1 (regno, mode, as, outer_code, index_code);
 }
+
+#endif /* GCC_ADDRESSES_H */

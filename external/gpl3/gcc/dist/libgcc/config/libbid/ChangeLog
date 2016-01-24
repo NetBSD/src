@@ -1,26 +1,34 @@
-2015-06-23  Release Manager
+2015-12-04  Release Manager
 
-	* GCC 4.8.5 released.
+	* GCC 5.3.0 released.
 
-2014-12-19  Release Manager
+2015-07-16  Release Manager
 
-	* GCC 4.8.4 released.
+	* GCC 5.2.0 released.
 
-2014-05-22  Release Manager
+2015-04-22  Release Manager
 
-	* GCC 4.8.3 released.
+	* GCC 5.1.0 released.
 
-2013-10-16  Release Manager
+2014-07-23  Marius Cornea  <marius.cornea@intel.com>
 
-	* GCC 4.8.2 released.
+	PR libgcc/61685
+	* bid128_fma.c (rounding_correction): Remove redundant tests.
 
-2013-05-31  Release Manager
+2014-06-10  Uros Bizjak  <ubizjak@gmail.com>
 
-	* GCC 4.8.1 released.
+	* bid128_div.c (BID128_FUNCTION_ARG2): Remove unused variable 'Ql'.
+	Call __mul_128x128_high instead of __mul_128x128_full.
+	(TYPE0_FUNCTION_ARGTYPE1_ARGTYPE2): Ditto.
+	(BID128_FUNCTION_ARGTYPE1_ARG128): Ditto.
+	(BID128_FUNCTION_ARG128_ARGTYPE2): Ditto.
+	* bid64_div.c (TYPE0_FUNCTION_ARGTYPE1_ARG128): Ditto.
+	(TYPE0_FUNCTION_ARG128_ARGTYPE2): Ditto.
+	(TYPE0_FUNCTION_ARG128_ARG128): Ditto.
 
-2013-03-22  Release Manager
+2014-01-02  Richard Sandiford  <rdsandiford@googlemail.com>
 
-	* GCC 4.8.0 released.
+	Update copyright years
 
 2012-11-04  Thomas Schwinge  <thomas@codesourcery.com>
 

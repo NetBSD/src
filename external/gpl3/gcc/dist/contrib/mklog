@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright (C) 2012 Free Software Foundation, Inc.
+# Copyright (C) 2012-2014 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -19,66 +19,226 @@
 # Boston, MA 02110-1301, USA.
 
 # This script parses a .diff file generated with 'diff -up' or 'diff -cp'
-# and writes a skeleton ChangeLog file to stdout. It does not try to be
+# and adds a skeleton ChangeLog file to the file. It does not try to be
 # very smart when parsing function names, but it produces a reasonable
 # approximation.
 #
 # Author: Diego Novillo <dnovillo@google.com> and
 #         Cary Coutant <ccoutant@google.com>
 
-# Change these settings to reflect your profile.
-$username = $ENV{'USER'};
-$name = `finger $username | grep -o 'Name: .*'`;
-@n = split(/: /, $name);
-$name = @n[1]; chop($name);
-$addr = $username . "\@my.domain.org";
+use File::Temp;
+use File::Copy qw(cp mv);
+
 $date = `date +%Y-%m-%d`; chop ($date);
 
+$dot_mklog_format_msg =
+    "The .mklog format is:\n"
+    . "NAME = ...\n"
+    . "EMAIL = ...\n";
+
+# Create a .mklog to reflect your profile, if necessary.
+my $conf = "$ENV{HOME}/.mklog";
+if (-f "$conf") {
+    open (CONF, "$conf")
+	or die "Could not open file '$conf' for reading: $!\n";
+    while (<CONF>) {
+	if (m/^\s*NAME\s*=\s*(.*?)\s*$/) {
+	    $name = $1;
+	} elsif (m/^\s*EMAIL\s*=\s*(.*?)\s*$/) {
+	    $addr = $1;
+	}
+    }
+    if (!($name && $addr)) {
+	die "Could not read .mklog settings.\n"
+	    . $dot_mklog_format_msg;
+    }
+} else {
+    $name = `git config user.name`;
+    chomp($name);
+    $addr = `git config user.email`;
+    chomp($addr);
+
+    if (!($name && $addr)) {
+	die "Could not read git user.name and user.email settings.\n"
+	    . "Please add missing git settings, or create a .mklog file in"
+	    . " $ENV{HOME}.\n"
+	    . $dot_mklog_format_msg;
+    }
+}
+
+$gcc_root = $0;
+$gcc_root =~ s/[^\\\/]+$/../;
 
 #-----------------------------------------------------------------------------
 # Program starts here. You should not need to edit anything below this
 # line.
 #-----------------------------------------------------------------------------
-if ( $#ARGV != 0 ) {
+$inline = 0;
+if ($#ARGV == 1 && ("$ARGV[0]" eq "-i" || "$ARGV[0]" eq "--inline")) {
+	shift;
+	$inline = 1;
+} elsif ($#ARGV != 0) {
     $prog = `basename $0`; chop ($prog);
-    print "usage: $prog file.diff\n\n";
-    print "Adds a ChangeLog template to the start of file.diff\n";
-    print "It assumes that file.diff has been created with -up or -cp.\n";
+    print <<EOF;
+usage: $prog [ -i | --inline ] file.diff
+
+Generate ChangeLog template for file.diff.
+It assumes that patch has been created with -up or -cp.
+When -i is used, the ChangeLog template is followed by the contents of
+file.diff.
+When file.diff is -, read standard input.
+When -i is used and file.diff is not -, it writes to file.diff, otherwise it
+writes to stdout.
+EOF
     exit 1;
 }
 
 $diff = $ARGV[0];
 $dir = `dirname $diff`; chop ($dir);
 $basename = `basename $diff`; chop ($basename);
-$cl = `mktemp /tmp/$basename.XXXXXX` || exit 1; chop ($cl);
 $hdrline = "$date  $name  <$addr>";
 
-open (CLFILE, ">$cl") or die "Could not open file $cl for writing";
+sub get_clname ($) {
+	return ('ChangeLog', $_[0]) if ($_[0] !~ /[\/\\]/);
 
-print CLFILE "$hdrline\n\n";
+	my $dirname = $_[0];
+	while ($dirname) {
+		my $clname = "$dirname/ChangeLog";
+		if (-f "$gcc_root/$clname") {
+			my $relname = substr ($_[0], length ($dirname) + 1);
+			return ($clname, $relname);
+		} else {
+			$dirname =~ s/[\/\\]?[^\/\\]*$//;
+		} 
+	}
+
+	return ('Unknown ChangeLog', $_[0]);
+}
+
+sub remove_suffixes ($) {
+	my $filename = $_[0];
+	$filename =~ s/^[ab]\///;
+	$filename =~ s/\.jj$//;
+	return $filename;
+}
+
+sub is_context_hunk_start {
+	return @_[0] =~ /^\*\*\*\*\*\** ([a-zA-Z0-9_].*)/;
+}
+
+sub is_unified_hunk_start {
+	return @_[0] =~ /^@@ .* @@ ([a-zA-Z0-9_].*)/;
+}
+
+# Check if line is a top-level declaration.
+# TODO: ignore preprocessor directives except maybe #define ?
+sub is_top_level {
+	my ($function, $is_context_diff) = (@_);
+	if (is_unified_hunk_start ($function)
+	    || is_context_hunk_start ($function)) {
+	    return 1;
+	}
+	if ($is_context_diff) {
+		$function =~ s/^..//;
+	} else {
+		$function =~ s/^.//;
+	}
+	return $function && $function !~ /^[\s{]/;
+}
+
+# Read contents of .diff file
+open (DFILE, $diff) or die "Could not open file $diff for reading";
+chomp (my @diff_lines = <DFILE>);
+close (DFILE);
+
+# Array diff_lines is modified by the log generation, so save a copy in
+# orig_diff_lines if needed.
+if ($inline) {
+    @orig_diff_lines = @diff_lines;
+}
 
 # For every file in the .diff print all the function names in ChangeLog
 # format.
-$bof = 0;
-open (DFILE, $diff) or die "Could not open file $diff for reading";
-while (<DFILE>) {
-    # Check if we found a new file.
-    if (/^\+\+\+ (b\/)?(\S+)/) {
-	# If we have not seen any function names in the previous file (ie,
-	# $bof == 1), we just write out a ':' before starting the next
-	# file.
-	if ($bof == 1) {
-	    print CLFILE ":\n";
+%cl_entries = ();
+$change_msg = undef;
+$look_for_funs = 0;
+$clname = get_clname('');
+$line_idx = 0;
+foreach (@diff_lines) {
+    # Stop processing functions if we found a new file.
+	# Remember both left and right names because one may be /dev/null.
+    # Don't be fooled by line markers in case of context diff.
+    if (!/\*\*\*$/ && /^[+*][+*][+*] +(\S+)/) {
+		$left = remove_suffixes ($1);
+		$look_for_funs = 0;
 	}
-	$filename = $2;
-	print CLFILE "\t* $filename";
-	$bof = 1;
+    if (!/---$/ && /^--- +(\S+)?/) {
+		$right = remove_suffixes ($1);
+		$look_for_funs = 0;
+	}
+
+	# Check if the body of diff started.
+	# We should now have both left and right name,
+	# so we can decide filename.
+
+    if ($left && (/^\*{15}/ || /^@@ /)) {
+	# If we have not seen any function names in the previous file (ie,
+	# $change_msg is empty), we just write out a ':' before starting the next
+	# file.
+	if ($clname) {
+		$cl_entries{$clname} .= $change_msg ? "$change_msg" : ":\n";
+	}
+
+	if ($left eq $right) {
+		$filename = $left;
+	} elsif($left eq '/dev/null') {
+		$filename = $right;
+	} elsif($right eq '/dev/null') {
+		$filename = $left;
+	} else {
+		print STDERR "Error: failed to parse diff for $left and $right\n";
+		exit 1;
+	}
+	$left = $right = undef;
+	($clname, $relname) = get_clname ($filename);
+	$cl_entries{$clname} .= "\t* $relname";
+	$change_msg = '';
+	$look_for_funs = $filename =~ '\.(c|cpp|C|cc|h|inc|def)$';
     }
 
-    # Remember the last line in a unified diff block that might start
+    # Context diffs have extra whitespace after first char;
+    # remove it to make matching easier.
+    if ($is_context_diff) {
+      s/^([-+! ]) /\1/;
+    }
+
+    # Remember the last line in a diff block that might start
     # a new function.
-    if (/^[-+ ]([a-zA-Z0-9_].*)/) {
+    if (/^[-+! ]([a-zA-Z0-9_].*)/) {
         $save_fn = $1;
+    }
+
+    # Check if file is newly added.
+    # Two patterns: for context and unified diff.
+    if (/^\*\*\* 0 \*\*\*\*/
+        || /^@@ -0,0 \+1.* @@/) {
+        $change_msg = $filename =~ /testsuite.*(?<!\.exp)$/ ? ": New test.\n" : ": New file.\n";
+        $look_for_funs = 0;
+    }
+
+    # Check if file was removed.
+    # Two patterns: for context and unified diff.
+    if (/^--- 0 ----/
+        || /^@@ -1.* \+0,0 @@/) {
+        $change_msg = ": Remove.\n";
+        $look_for_funs = 0;
+    }
+
+    if (is_unified_hunk_start ($diff_lines[$line_idx])) {
+        $is_context_diff = 0;
+    }
+    elsif (is_context_hunk_start ($diff_lines[$line_idx])) {
+	    $is_context_diff = 1;
     }
 
     # If we find a new function, print it in brackets.  Special case if
@@ -87,16 +247,15 @@ while (<DFILE>) {
     # Note that we don't try too hard to find good matches.  This should
     # return a superset of the actual set of functions in the .diff file.
     #
-    # The first two patterns work with context diff files (diff -c). The
-    # third pattern works with unified diff files (diff -u).
+    # The first pattern works with context diff files (diff -c). The
+    # second pattern works with unified diff files (diff -u).
     #
-    # The fourth pattern looks for the starts of functions or classes
-    # within a unified diff block.
-
-    if (/^\*\*\*\*\*\** ([a-zA-Z0-9_].*)/
-        || /^[\-\+\!] ([a-zA-Z0-9_]+)[ \t]*\(.*/
+    # The third pattern looks for the starts of functions or classes
+    # within a diff block both for context and unified diff files.
+    if ($look_for_funs
+        && (/^\*\*\*\*\*\** ([a-zA-Z0-9_].*)/
 	|| /^@@ .* @@ ([a-zA-Z0-9_].*)/
-	|| /^[-+ ](\{)/)
+	|| /^[-+! ](\{)/))
       {
 	$_ = $1;
 	my $fn;
@@ -117,35 +276,76 @@ while (<DFILE>) {
 	    1 while ($fn =~ s/<[^<>]*>//);
 	    $fn =~ s/[ \t]*$//;
 	}
-	if ($fn && $seen_names{$fn} == 0) {
+	# Check is function really modified
+	$no_real_change = 0;
+	$idx = $line_idx;
+	# Skip line info in context diffs.
+	while ($idx <= $#diff_lines && $is_context_diff
+               && $diff_lines[$idx + 1] =~ /^[-\*]{3} [0-9]/) {
+		++$idx;
+	}
+	# Check all lines till the first change
+	# for the presence of really changed function
+	do {
+		++$idx;
+		$no_real_change = $idx > $#diff_lines
+				  || is_top_level ($diff_lines[$idx], $is_context_diff);
+	} while (!$no_real_change && ($diff_lines[$idx] !~ /^[-+!]/));
+	if ($fn && !$seen_names{$fn} && !$no_real_change) {
 	    # If this is the first function in the file, we display it next
 	    # to the filename, so we need an extra space before the opening
 	    # brace.
-	    if ($bof) {
-		print CLFILE " ";
-		$bof = 0;
+	    if (!$change_msg) {
+		$change_msg .= " ";
 	    } else {
-		print CLFILE "\t";
+		$change_msg .= "\t";
 	    }
 
-	    print CLFILE "($fn):\n";
+		$change_msg .= "($fn):\n";
 	    $seen_names{$fn} = 1;
 	}
     }
+	$line_idx++;
 }
 
-# If we have not seen any function names (ie, $bof == 1), we just
+# If we have not seen any function names (ie, $change_msg is empty), we just
 # write out a ':'. This happens when there is only one file with no
 # functions.
-if ($bof == 1) {
-    print CLFILE ":\n";
+$cl_entries{$clname} .= $change_msg ? "$change_msg\n" : ":\n";
+
+if ($inline && $diff ne "-") {
+	# Get a temp filename, rather than an open filehandle, because we use
+	# the open to truncate.
+	$tmp = mktemp("tmp.XXXXXXXX") or die "Could not create temp file: $!";
+
+	# Copy the permissions to the temp file (in File::Copy module version
+	# 2.15 and later).
+	cp $diff, $tmp or die "Could not copy patch file to temp file: $!";
+
+	# Open the temp file, clearing contents.
+	open (OUTPUTFILE, '>', $tmp) or die "Could not open temp file: $!";
+} else {
+	*OUTPUTFILE = STDOUT;
 }
 
-print CLFILE "\n";
-close (DFILE);
+# Print the log
+foreach my $clname (keys %cl_entries) {
+	print OUTPUTFILE "$clname:\n\n$hdrline\n\n$cl_entries{$clname}\n";
+}
 
-# Concatenate the ChangeLog template and the original .diff file.
-system ("cat $diff >>$cl && mv $cl $diff") == 0
-    or die "Could not add the ChangeLog entry to $diff";
+if ($inline) {
+	# Append the patch to the log
+	foreach (@orig_diff_lines) {
+		print OUTPUTFILE "$_\n";
+	}
+}
+
+if ($inline && $diff ne "-") {
+	# Close $tmp
+	close(OUTPUTFILE);
+
+	# Write new contents to $diff atomically
+	mv $tmp, $diff or die "Could not move temp file to patch file: $!";
+}
 
 exit 0;

@@ -1,5 +1,5 @@
 /*  -*- Mode: Asm -*-  */
-/* Copyright (C) 1998-2013 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <chertykov@gmail.com>
 
 This file is free software; you can redistribute it and/or modify it
@@ -21,8 +21,13 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
+#if defined (__AVR_TINY__)
+#define __zero_reg__ r17
+#define __tmp_reg__ r16
+#else
 #define __zero_reg__ r1
 #define __tmp_reg__ r0
+#endif
 #define __SREG__ 0x3f
 #if defined (__AVR_HAVE_SPH__)
 #define __SP_H__ 0x3e
@@ -45,6 +50,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
            though they are in the same input section and all same
            input sections together are small enough to reach every
            location with a RCALL/RJMP instruction.  */
+
+#if defined (__AVR_HAVE_EIJMP_EICALL__) && !defined (__AVR_HAVE_ELPMX__)
+#error device not supported
+#endif
 
 	.macro	mov_l  r_dest, r_src
 #if defined (__AVR_HAVE_MOVW__)
@@ -77,6 +86,14 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #else
 #define XCALL rcall
 #define XJMP  rjmp
+#endif
+
+#if defined (__AVR_HAVE_EIJMP_EICALL__)
+#define XICALL eicall
+#define XIJMP  eijmp
+#else
+#define XICALL icall
+#define XIJMP  ijmp
 #endif
 
 ;; Prologue stuff
@@ -114,6 +131,24 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 ;; Support function entry and exit for convenience
 
+.macro wsubi r_arg1, i_arg2
+#if defined (__AVR_TINY__)
+    subi \r_arg1,   lo8(\i_arg2)
+    sbci \r_arg1+1, hi8(\i_arg2)
+#else
+    sbiw \r_arg1, \i_arg2
+#endif
+.endm
+
+.macro waddi r_arg1, i_arg2
+#if defined (__AVR_TINY__)
+    subi \r_arg1,   lo8(-\i_arg2)
+    sbci \r_arg1+1, hi8(-\i_arg2)
+#else
+    adiw \r_arg1, \i_arg2
+#endif
+.endm
+
 .macro DEFUN name
 .global \name
 .func \name
@@ -134,7 +169,11 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 .endm
 
 ;; Skip next instruction, typically a jump target
+#if defined(__AVR_TINY__)
 #define skip cpse 0,0
+#else
+#define skip cpse 16,16
+#endif
 
 ;; Negate a 2-byte value held in consecutive registers
 .macro NEG2  reg
@@ -207,16 +246,16 @@ ENDF __mulqi3
     Multiplication  16 x 16  without MUL
 *******************************************************/
 
-#define A0  r22
-#define A1  r23
-#define B0  r24
-#define BB0 r20
-#define B1  r25
+#define A0  22
+#define A1  23
+#define B0  24
+#define BB0 20
+#define B1  25
 ;; Output overlaps input, thus expand result in CC0/1
-#define C0  r24
-#define C1  r25
+#define C0  24
+#define C1  25
 #define CC0  __tmp_reg__
-#define CC1  R21
+#define CC1  21
 
 #if defined (L_umulqihi3)
 ;;; R25:R24 = (unsigned int) R22 * (unsigned int) R24
@@ -282,7 +321,7 @@ DEFUN __mulhi3
     rol     B1
 3:
     ;; If B == 0 we are ready
-    sbiw    B0, 0
+    wsubi   B0, 0
     breq 9f
 
     ;; Carry = n-th bit of A
@@ -390,6 +429,18 @@ ENDF __mulhisi3
 
 #if defined (L_mulsi3)
 DEFUN __mulsi3
+#if defined (__AVR_TINY__)
+    in     r26, __SP_L__ ; safe to use X, as it is CC0/CC1
+    in     r27, __SP_H__
+    subi   r26, lo8(-3)   ; Add 3 to point past return address
+    sbci   r27, hi8(-3)
+    push   B0    ; save callee saved regs
+    push   B1
+    ld     B0, X+   ; load from caller stack
+    ld     B1, X+
+    ld     B2, X+
+    ld     B3, X
+#endif
     ;; Clear result
     clr     CC2
     clr     CC3
@@ -415,12 +466,17 @@ DEFUN __mulsi3_helper
     ;; Only continue if  A != 0
     sbci    A1, 0
     brne 2b
-    sbiw    A2, 0
+    wsubi   A2, 0
     brne 2b
 
     ;; All bits of A are consumed:  Copy result to return register C
     wmov    C0, CC0
     wmov    C2, CC2
+#if defined (__AVR_TINY__)
+    pop     B1      ; restore callee saved regs
+    pop     B0 
+#endif  /* defined (__AVR_TINY__) */
+
     ret
 ENDF __mulsi3_helper
 #endif /* L_mulsi3 */
@@ -670,9 +726,12 @@ ENDF __mulpsi3
 #undef C0
 
 #else /* !HAVE_MUL */
-
 ;; C[0..2]: Expand Result
+#if defined (__AVR_TINY__)
+#define C0  16
+#else
 #define C0  0
+#endif /* defined (__AVR_TINY__) */
 #define C1  C0+1
 #define C2  21
 
@@ -680,6 +739,17 @@ ENDF __mulpsi3
 ;; Clobbers: __tmp_reg__, R18, R19, R20, R21
 
 DEFUN __mulpsi3
+#if defined (__AVR_TINY__)
+    in r26,__SP_L__ 
+    in r27,__SP_H__
+    subi r26, lo8(-3)   ; Add 3 to point past return address
+    sbci r27, hi8(-3)
+    push B0    ; save callee saved regs
+    push B1
+    ld B0,X+   ; load from caller stack 
+    ld B1,X+
+    ld B2,X+
+#endif /* defined (__AVR_TINY__) */
 
     ;; C[] = 0
     clr     __tmp_reg__
@@ -706,6 +776,10 @@ DEFUN __mulpsi3
     mov     A2, C2
 
     clr     __zero_reg__
+#if defined (__AVR_TINY__)
+    pop B1
+    pop B0
+#endif /* (__AVR_TINY__) */
     ret
 ENDF __mulpsi3
 
@@ -797,8 +871,8 @@ ENDF __mulsqipsi3
 #define B6  B0+6
 #define B7  B0+7
 
+#ifndef __AVR_TINY__
 #if defined (__AVR_HAVE_MUL__)
-
 ;; Define C[] for convenience
 ;; Notice that parts of C[] overlap A[] respective B[]
 #define C0  16
@@ -1000,6 +1074,7 @@ ENDF __muldi3
 
 #endif /* L_muldi3 */
 #endif /* HAVE_MUL */
+#endif /* if not __AVR_TINY__ */
 
 #undef B7
 #undef B6
@@ -1157,7 +1232,7 @@ ENDF __mulsidi3
 /**********************************************************
     Widening Multiplication 64 = 32 x 32  without  MUL
 **********************************************************/
-
+#ifndef __AVR_TINY__ /* if not __AVR_TINY__ */
 #if defined (L_mulsidi3) && !defined (__AVR_HAVE_MUL__)
 #define A0 18
 #define A1 A0+1
@@ -1253,7 +1328,7 @@ ENDF __umulsidi3
 #undef BB3
 #undef Mask
 #endif /* L_mulsidi3 && !HAVE_MUL */
-
+#endif /* if not __AVR_TINY__ */
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 
@@ -1425,7 +1500,7 @@ ENDF __divmodhi4
 #define r_cnt   21
 
 #if defined (L_udivmodpsi4)
-;; R24:R22 = R24:R22  udiv  R20:R18
+;; R24:R22 = R24:R24  udiv  R20:R18
 ;; R20:R18 = R24:R22  umod  R20:R18
 ;; Clobbers: R21, R25, R26
 
@@ -1660,6 +1735,10 @@ ENDF __negsi2
 #undef r_arg2L
 #undef r_cnt
 
+/* *di routines use registers below R19 and won't work with tiny arch
+   right now. */
+
+#if !defined (__AVR_TINY__)
 /*******************************************************
        Division 64 / 64
        Modulo   64 % 64
@@ -2075,12 +2154,15 @@ ENDF __negdi2
 #undef A1
 #undef A0
 
+#endif /* !defined (__AVR_TINY__) */
+
 
 .section .text.libgcc.prologue, "ax", @progbits
 
 /**********************************
  * This is a prologue subroutine
  **********************************/
+#if !defined (__AVR_TINY__)
 #if defined (L_prologue)
 
 ;; This function does not clobber T-flag; 64-bit division relies on it
@@ -2127,11 +2209,7 @@ DEFUN __prologue_saves__
 	out	__SP_L__,r28
 #endif /* #SP = 8/16 */
 
-#if defined (__AVR_HAVE_EIJMP_EICALL__)
-	eijmp
-#else
-	ijmp
-#endif
+	XIJMP
 
 ENDF __prologue_saves__
 #endif /* defined (L_prologue) */
@@ -2186,6 +2264,7 @@ DEFUN __epilogue_restores__
 	ret
 ENDF __epilogue_restores__
 #endif /* defined (L_epilogue) */
+#endif /* !defined (__AVR_TINY__) */
 
 #ifdef L_exit
 	.section .fini9,"ax",@progbits
@@ -2213,39 +2292,81 @@ _cleanup:
 
 .section .text.libgcc, "ax", @progbits
 
-#ifdef L_tablejump
+#ifdef L_tablejump2
 DEFUN __tablejump2__
-	lsl	r30
-	rol	r31
-    ;; FALLTHRU
-ENDF __tablejump2__
-
-DEFUN __tablejump__
-#if defined (__AVR_HAVE_LPMX__)
-	lpm __tmp_reg__, Z+
-	lpm r31, Z
-	mov r30, __tmp_reg__
+    lsl     r30
+    rol     r31
 #if defined (__AVR_HAVE_EIJMP_EICALL__)
-	eijmp
+    ;; Word address of gs() jumptable entry in R24:Z
+    rol     r24
+    out     __RAMPZ__, r24
+#elif defined (__AVR_HAVE_ELPM__)
+    ;; Word address of jumptable entry in Z
+    clr     __tmp_reg__
+    rol     __tmp_reg__
+    out     __RAMPZ__, __tmp_reg__
+#endif
+
+    ;; Read word address from jumptable and jump
+
+#if defined (__AVR_HAVE_ELPMX__)
+    elpm    __tmp_reg__, Z+
+    elpm    r31, Z
+    mov     r30, __tmp_reg__
+#ifdef __AVR_HAVE_RAMPD__
+    ;; Reset RAMPZ to 0 so that EBI devices don't read garbage from RAM
+    out     __RAMPZ__, __zero_reg__
+#endif /* RAMPD */
+    XIJMP
+#elif defined (__AVR_HAVE_ELPM__)
+    elpm
+    push    r0
+    adiw    r30, 1
+    elpm
+    push    r0
+    ret
+#elif defined (__AVR_HAVE_LPMX__)
+    lpm     __tmp_reg__, Z+
+    lpm     r31, Z
+    mov     r30, __tmp_reg__
+    ijmp
+#elif defined (__AVR_TINY__)
+    wsubi 30, -(__AVR_TINY_PM_BASE_ADDRESS__) ; Add PM offset to Z
+    ld __tmp_reg__, Z+
+    ld r31, Z   ; Use ld instead of lpm to load Z
+    mov r30, __tmp_reg__    
+    ijmp
 #else
-	ijmp
+    lpm
+    push    r0
+    adiw    r30, 1
+    lpm
+    push    r0
+    ret
 #endif
+ENDF __tablejump2__
+#endif /* L_tablejump2 */
 
-#else /* !HAVE_LPMX */
-	lpm
-	adiw r30, 1
-	push r0
-	lpm
-	push r0
-#if defined (__AVR_HAVE_EIJMP_EICALL__)
-	in   __tmp_reg__, __EIND__
-	push __tmp_reg__
+#if defined(__AVR_TINY__)
+#ifdef L_copy_data
+        .section .init4,"ax",@progbits
+        .global __do_copy_data
+__do_copy_data:
+        ldi     r18, hi8(__data_end)
+        ldi     r26, lo8(__data_start)
+        ldi     r27, hi8(__data_start)
+        ldi     r30, lo8(__data_load_start + __AVR_TINY_PM_BASE_ADDRESS__)
+        ldi     r31, hi8(__data_load_start + __AVR_TINY_PM_BASE_ADDRESS__)
+        rjmp    .L__do_copy_data_start
+.L__do_copy_data_loop:
+        ld      r19, z+
+        st      X+, r19
+.L__do_copy_data_start:
+        cpi     r26, lo8(__data_end)
+        cpc     r27, r18
+        brne    .L__do_copy_data_loop
 #endif
-	ret
-#endif /* !HAVE_LPMX */
-ENDF __tablejump__
-#endif /* defined (L_tablejump) */
-
+#else
 #ifdef L_copy_data
 	.section .init4,"ax",@progbits
 DEFUN __do_copy_data
@@ -2311,13 +2432,14 @@ DEFUN __do_copy_data
 #endif /* ELPM && RAMPD */
 ENDF __do_copy_data
 #endif /* L_copy_data */
+#endif /* !defined (__AVR_TINY__) */
 
 /* __do_clear_bss is only necessary if there is anything in .bss section.  */
 
 #ifdef L_clear_bss
 	.section .init4,"ax",@progbits
 DEFUN __do_clear_bss
-	ldi	r17, hi8(__bss_end)
+	ldi	r18, hi8(__bss_end)
 	ldi	r26, lo8(__bss_start)
 	ldi	r27, hi8(__bss_start)
 	rjmp	.do_clear_bss_start
@@ -2325,7 +2447,7 @@ DEFUN __do_clear_bss
 	st	X+, __zero_reg__
 .do_clear_bss_start:
 	cpi	r26, lo8(__bss_end)
-	cpc	r27, r17
+	cpc	r27, r18
 	brne	.do_clear_bss_loop
 ENDF __do_clear_bss
 #endif /* L_clear_bss */
@@ -2333,119 +2455,79 @@ ENDF __do_clear_bss
 /* __do_global_ctors and __do_global_dtors are only necessary
    if there are any constructors/destructors.  */
 
+#if defined(__AVR_TINY__)
+#define cdtors_tst_reg r18
+#else
+#define cdtors_tst_reg r17
+#endif
+
 #ifdef L_ctors
 	.section .init6,"ax",@progbits
 DEFUN __do_global_ctors
-#if defined(__AVR_HAVE_ELPM__)
-	ldi	r17, hi8(__ctors_start)
-	ldi	r28, lo8(__ctors_end)
-	ldi	r29, hi8(__ctors_end)
-	ldi	r16, hh8(__ctors_end)
-	rjmp	.L__do_global_ctors_start
+    ldi     cdtors_tst_reg, pm_hi8(__ctors_start)
+    ldi     r28, pm_lo8(__ctors_end)
+    ldi     r29, pm_hi8(__ctors_end)
+#ifdef __AVR_HAVE_EIJMP_EICALL__
+    ldi     r16, pm_hh8(__ctors_end)
+#endif /* HAVE_EIJMP */
+    rjmp    .L__do_global_ctors_start
 .L__do_global_ctors_loop:
-	sbiw	r28, 2
-	sbc     r16, __zero_reg__
-	mov_h	r31, r29
-	mov_l	r30, r28
-	out     __RAMPZ__, r16
-	XCALL	__tablejump_elpm__
+    wsubi   28, 1
+#ifdef __AVR_HAVE_EIJMP_EICALL__
+    sbc     r16, __zero_reg__
+    mov     r24, r16
+#endif /* HAVE_EIJMP */
+    mov_h   r31, r29
+    mov_l   r30, r28
+    XCALL   __tablejump2__
 .L__do_global_ctors_start:
-	cpi	r28, lo8(__ctors_start)
-	cpc	r29, r17
-	ldi	r24, hh8(__ctors_start)
-	cpc	r16, r24
-	brne	.L__do_global_ctors_loop
-#else
-	ldi	r17, hi8(__ctors_start)
-	ldi	r28, lo8(__ctors_end)
-	ldi	r29, hi8(__ctors_end)
-	rjmp	.L__do_global_ctors_start
-.L__do_global_ctors_loop:
-	sbiw	r28, 2
-	mov_h	r31, r29
-	mov_l	r30, r28
-	XCALL	__tablejump__
-.L__do_global_ctors_start:
-	cpi	r28, lo8(__ctors_start)
-	cpc	r29, r17
-	brne	.L__do_global_ctors_loop
-#endif /* defined(__AVR_HAVE_ELPM__) */
+    cpi     r28, pm_lo8(__ctors_start)
+    cpc     r29, cdtors_tst_reg
+#ifdef __AVR_HAVE_EIJMP_EICALL__
+    ldi     r24, pm_hh8(__ctors_start)
+    cpc     r16, r24
+#endif /* HAVE_EIJMP */
+    brne    .L__do_global_ctors_loop
 ENDF __do_global_ctors
 #endif /* L_ctors */
 
 #ifdef L_dtors
 	.section .fini6,"ax",@progbits
 DEFUN __do_global_dtors
-#if defined(__AVR_HAVE_ELPM__)
-	ldi	r17, hi8(__dtors_end)
-	ldi	r28, lo8(__dtors_start)
-	ldi	r29, hi8(__dtors_start)
-	ldi	r16, hh8(__dtors_start)
-	rjmp	.L__do_global_dtors_start
+    ldi     cdtors_tst_reg, pm_hi8(__dtors_end)
+    ldi     r28, pm_lo8(__dtors_start)
+    ldi     r29, pm_hi8(__dtors_start)
+#ifdef __AVR_HAVE_EIJMP_EICALL__
+    ldi     r16, pm_hh8(__dtors_start)
+#endif /* HAVE_EIJMP */
+    rjmp    .L__do_global_dtors_start
 .L__do_global_dtors_loop:
-	sbiw	r28, 2
-	sbc     r16, __zero_reg__
-	mov_h	r31, r29
-	mov_l	r30, r28
-	out     __RAMPZ__, r16
-	XCALL	__tablejump_elpm__
+#ifdef __AVR_HAVE_EIJMP_EICALL__
+    mov     r24, r16
+#endif /* HAVE_EIJMP */
+    mov_h   r31, r29
+    mov_l   r30, r28
+    XCALL   __tablejump2__
+    waddi   28, 1
+#ifdef __AVR_HAVE_EIJMP_EICALL__
+    adc     r16, __zero_reg__
+#endif /* HAVE_EIJMP */
 .L__do_global_dtors_start:
-	cpi	r28, lo8(__dtors_end)
-	cpc	r29, r17
-	ldi	r24, hh8(__dtors_end)
-	cpc	r16, r24
-	brne	.L__do_global_dtors_loop
-#else
-	ldi	r17, hi8(__dtors_end)
-	ldi	r28, lo8(__dtors_start)
-	ldi	r29, hi8(__dtors_start)
-	rjmp	.L__do_global_dtors_start
-.L__do_global_dtors_loop:
-	mov_h	r31, r29
-	mov_l	r30, r28
-	XCALL	__tablejump__
-	adiw	r28, 2
-.L__do_global_dtors_start:
-	cpi	r28, lo8(__dtors_end)
-	cpc	r29, r17
-	brne	.L__do_global_dtors_loop
-#endif /* defined(__AVR_HAVE_ELPM__) */
+    cpi     r28, pm_lo8(__dtors_end)
+    cpc     r29, cdtors_tst_reg
+#ifdef __AVR_HAVE_EIJMP_EICALL__
+    ldi     r24, pm_hh8(__dtors_end)
+    cpc     r16, r24
+#endif /* HAVE_EIJMP */
+    brne    .L__do_global_dtors_loop
 ENDF __do_global_dtors
 #endif /* L_dtors */
 
+#undef cdtors_tst_reg
+
 .section .text.libgcc, "ax", @progbits
 
-#ifdef L_tablejump_elpm
-DEFUN __tablejump_elpm__
-#if defined (__AVR_HAVE_ELPMX__)
-	elpm	__tmp_reg__, Z+
-	elpm	r31, Z
-	mov	r30, __tmp_reg__
-#if defined (__AVR_HAVE_RAMPD__)
-	;; Reset RAMPZ to 0 so that EBI devices don't read garbage from RAM
-	out	__RAMPZ__, __zero_reg__
-#endif /* RAMPD */
-#if defined (__AVR_HAVE_EIJMP_EICALL__)
-	eijmp
-#else
-	ijmp
-#endif
-
-#elif defined (__AVR_HAVE_ELPM__)
-	elpm
-	adiw	r30, 1
-	push	r0
-	elpm
-	push	r0
-#if defined (__AVR_HAVE_EIJMP_EICALL__)
-	in      __tmp_reg__, __EIND__
-	push    __tmp_reg__
-#endif
-	ret
-#endif
-ENDF __tablejump_elpm__
-#endif /* defined (L_tablejump_elpm) */
-
+#if !defined (__AVR_TINY__)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading n bytes from Flash; n = 3,4
 ;; R22... = Flash[Z]
@@ -2491,7 +2573,9 @@ ENDF __load_4
 #endif /* L_load_4 */
 
 #endif /* L_load_3 || L_load_3 */
+#endif /* !defined (__AVR_TINY__) */
 
+#if !defined (__AVR_TINY__)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading n bytes from Flash or RAM;  n = 1,2,3,4
 ;; R22... = Flash[R21:Z] or RAM[Z] depending on R21.7
@@ -2617,7 +2701,9 @@ ENDF __xload_4
 #endif /* L_xload_4 */
 
 #endif /* L_xload_{1|2|3|4} */
+#endif /* if !defined (__AVR_TINY__) */
 
+#if !defined (__AVR_TINY__)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; memcopy from Address Space __pgmx to RAM
 ;; R23:Z = Source Address
@@ -2689,6 +2775,7 @@ ENDF __movmemx_hi
 #undef LOOP
 
 #endif /* L_movmemx */
+#endif /* !defined (__AVR_TINY__) */ 
 
 
 .section .text.libgcc.builtins, "ax", @progbits

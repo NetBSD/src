@@ -1,5 +1,5 @@
 /* Interprocedural analyses.
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,14 +20,10 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef IPA_PROP_H
 #define IPA_PROP_H
 
-#include "tree.h"
-#include "vec.h"
-#include "cgraph.h"
-#include "gimple.h"
-#include "alloc-pool.h"
-
 /* The following definitions and interfaces are used by
    interprocedural analyses or parameters.  */
+
+#define IPA_UNDESCRIBED_USE -1
 
 /* ipa-prop.c stuff (ipa-cp, indirect inlining):  */
 
@@ -54,11 +50,6 @@ along with GCC; see the file COPYING3.  If not see
    parameter or can apply one simple binary operation to it (such jump
    functions are called polynomial).
 
-   IPA_JF_KNOWN_TYPE is a special type of an "unknown" function that applies
-   only to pointer parameters.  It means that even though we cannot prove that
-   the passed value is an interprocedural constant, we still know the exact
-   type of the containing object which may be valuable for devirtualization.
-
    Jump functions are computed in ipa-prop.c by function
    update_call_notes_after_inlining.  Some information can be lost and jump
    functions degraded accordingly when inlining, see
@@ -67,21 +58,20 @@ along with GCC; see the file COPYING3.  If not see
 enum jump_func_type
 {
   IPA_JF_UNKNOWN = 0,  /* newly allocated and zeroed jump functions default */
-  IPA_JF_KNOWN_TYPE,        /* represented by field known_type */
   IPA_JF_CONST,             /* represented by field costant */
   IPA_JF_PASS_THROUGH,	    /* represented by field pass_through */
   IPA_JF_ANCESTOR	    /* represented by field ancestor */
 };
 
-/* Structure holding data required to describe a known type jump function.  */
-struct GTY(()) ipa_known_type_data
+struct ipa_cst_ref_desc;
+
+/* Structure holding data required to describe a constant jump function.  */
+struct GTY(()) ipa_constant_data
 {
-  /* Offset of the component of the base_type being described.  */
-  HOST_WIDE_INT offset;
-  /* Type of the whole object.  */
-  tree base_type;
-  /* Type of the component of the object that is being described.  */
-  tree component_type;
+  /* THe value of the constant.  */
+  tree value;
+  /* Pointer to the structure that describes the reference.  */
+  struct ipa_cst_ref_desc GTY((skip)) *rdesc;
 };
 
 /* Structure holding data required to describe a pass-through jump function.  */
@@ -104,7 +94,7 @@ struct GTY(()) ipa_pass_through_data
      aggregate part of the jump function (see description of
      ipa_agg_jump_function).  The flag is used only when the operation is
      NOP_EXPR.  */
-  bool agg_preserved;
+  unsigned agg_preserved : 1;
 };
 
 /* Structure holding data required to describe an ancestor pass-through
@@ -114,12 +104,10 @@ struct GTY(()) ipa_ancestor_jf_data
 {
   /* Offset of the field representing the ancestor.  */
   HOST_WIDE_INT offset;
-  /* Type of the result.  */
-  tree type;
   /* Number of the caller's formal parameter being passed.  */
   int formal_id;
   /* Flag with the same meaning like agg_preserve in ipa_pass_through_data.  */
-  bool agg_preserved;
+  unsigned agg_preserved : 1;
 };
 
 /* An element in an aggegate part of a jump function describing a known value
@@ -130,16 +118,16 @@ struct GTY(()) ipa_ancestor_jf_data
    the size of the type) is clobbered with an unknown value.  When
    agg_preserved is false or the type of the containing jump function is
    different, all unlisted parts are assumed to be unknown and all values must
-   fullfill is_gimple_ip_invariant.  */
+   fulfill is_gimple_ip_invariant.  */
 
-typedef struct GTY(()) ipa_agg_jf_item
+struct GTY(()) ipa_agg_jf_item
 {
   /* The offset at which the known value is located within the aggregate.  */
   HOST_WIDE_INT offset;
 
   /* The known constant or type if this is a clobber.  */
   tree value;
-} ipa_agg_jf_item_t;
+};
 
 
 /* Aggregate jump function - i.e. description of contents of aggregates passed
@@ -148,22 +136,35 @@ typedef struct GTY(()) ipa_agg_jf_item
 struct GTY(()) ipa_agg_jump_function
 {
   /* Description of the individual items.  */
-  vec<ipa_agg_jf_item_t, va_gc> *items;
+  vec<ipa_agg_jf_item, va_gc> *items;
   /* True if the data was passed by reference (as opposed to by value). */
   bool by_ref;
 };
 
 typedef struct ipa_agg_jump_function *ipa_agg_jump_function_p;
-typedef struct ipa_agg_jump_function ipa_agg_jump_function_t;
+
+/* Info about pointer alignments. */
+struct GTY(()) ipa_alignment
+{
+  /* The data fields below are valid only if known is true.  */
+  bool known;
+  /* See ptr_info_def and get_pointer_alignment_1 for description of these
+     two.  */
+  unsigned align;
+  unsigned misalign;
+};
 
 /* A jump function for a callsite represents the values passed as actual
    arguments of the callsite. See enum jump_func_type for the various
    types of jump functions supported.  */
-typedef struct GTY (()) ipa_jump_func
+struct GTY (()) ipa_jump_func
 {
   /* Aggregate contants description.  See struct ipa_agg_jump_function and its
      description.  */
   struct ipa_agg_jump_function agg;
+
+  /* Information about alignment of pointers. */
+  struct ipa_alignment alignment;
 
   enum jump_func_type type;
   /* Represents a value of a jump function.  pass_through is used only in jump
@@ -171,41 +172,12 @@ typedef struct GTY (()) ipa_jump_func
      functions and member_cst holds constant c++ member functions.  */
   union jump_func_value
   {
-    struct ipa_known_type_data GTY ((tag ("IPA_JF_KNOWN_TYPE"))) known_type;
-    tree GTY ((tag ("IPA_JF_CONST"))) constant;
+    struct ipa_constant_data GTY ((tag ("IPA_JF_CONST"))) constant;
     struct ipa_pass_through_data GTY ((tag ("IPA_JF_PASS_THROUGH"))) pass_through;
     struct ipa_ancestor_jf_data GTY ((tag ("IPA_JF_ANCESTOR"))) ancestor;
   } GTY ((desc ("%1.type"))) value;
-} ipa_jump_func_t;
+};
 
-
-/* Return the offset of the component that is decribed by a known type jump
-   function JFUNC.  */
-
-static inline HOST_WIDE_INT
-ipa_get_jf_known_type_offset (struct ipa_jump_func *jfunc)
-{
-  gcc_checking_assert (jfunc->type == IPA_JF_KNOWN_TYPE);
-  return jfunc->value.known_type.offset;
-}
-
-/* Return the base type of a known type jump function JFUNC.  */
-
-static inline tree
-ipa_get_jf_known_type_base_type (struct ipa_jump_func *jfunc)
-{
-  gcc_checking_assert (jfunc->type == IPA_JF_KNOWN_TYPE);
-  return jfunc->value.known_type.base_type;
-}
-
-/* Return the component type of a known type jump function JFUNC.  */
-
-static inline tree
-ipa_get_jf_known_type_component_type (struct ipa_jump_func *jfunc)
-{
-  gcc_checking_assert (jfunc->type == IPA_JF_KNOWN_TYPE);
-  return jfunc->value.known_type.component_type;
-}
 
 /* Return the constant stored in a constant jump functin JFUNC.  */
 
@@ -213,7 +185,14 @@ static inline tree
 ipa_get_jf_constant (struct ipa_jump_func *jfunc)
 {
   gcc_checking_assert (jfunc->type == IPA_JF_CONST);
-  return jfunc->value.constant;
+  return jfunc->value.constant.value;
+}
+
+static inline struct ipa_cst_ref_desc *
+ipa_get_jf_constant_rdesc (struct ipa_jump_func *jfunc)
+{
+  gcc_checking_assert (jfunc->type == IPA_JF_CONST);
+  return jfunc->value.constant.rdesc;
 }
 
 /* Return the operand of a pass through jmp function JFUNC.  */
@@ -244,10 +223,20 @@ ipa_get_jf_pass_through_operation (struct ipa_jump_func *jfunc)
   return jfunc->value.pass_through.operation;
 }
 
-/* Return the agg_preserved flag of a pass through jump functin JFUNC.  */
+/* Return the agg_preserved flag of a pass through jump function JFUNC.  */
 
 static inline bool
 ipa_get_jf_pass_through_agg_preserved (struct ipa_jump_func *jfunc)
+{
+  gcc_checking_assert (jfunc->type == IPA_JF_PASS_THROUGH);
+  return jfunc->value.pass_through.agg_preserved;
+}
+
+/* Return true if pass through jump function JFUNC preserves type
+   information.  */
+
+static inline bool
+ipa_get_jf_pass_through_type_preserved (struct ipa_jump_func *jfunc)
 {
   gcc_checking_assert (jfunc->type == IPA_JF_PASS_THROUGH);
   return jfunc->value.pass_through.agg_preserved;
@@ -262,15 +251,6 @@ ipa_get_jf_ancestor_offset (struct ipa_jump_func *jfunc)
   return jfunc->value.ancestor.offset;
 }
 
-/* Return the result type of an ancestor jump function JFUNC.  */
-
-static inline tree
-ipa_get_jf_ancestor_type (struct ipa_jump_func *jfunc)
-{
-  gcc_checking_assert (jfunc->type == IPA_JF_ANCESTOR);
-  return jfunc->value.ancestor.type;
-}
-
 /* Return the number of the caller's formal parameter that an ancestor jump
    function JFUNC refers to.  */
 
@@ -281,10 +261,19 @@ ipa_get_jf_ancestor_formal_id (struct ipa_jump_func *jfunc)
   return jfunc->value.ancestor.formal_id;
 }
 
-/* Return the agg_preserved flag of an ancestor jump functin JFUNC.  */
+/* Return the agg_preserved flag of an ancestor jump function JFUNC.  */
 
 static inline bool
 ipa_get_jf_ancestor_agg_preserved (struct ipa_jump_func *jfunc)
+{
+  gcc_checking_assert (jfunc->type == IPA_JF_ANCESTOR);
+  return jfunc->value.ancestor.agg_preserved;
+}
+
+/* Return true if ancestor jump function JFUNC presrves type information.  */
+
+static inline bool
+ipa_get_jf_ancestor_type_preserved (struct ipa_jump_func *jfunc)
 {
   gcc_checking_assert (jfunc->type == IPA_JF_ANCESTOR);
   return jfunc->value.ancestor.agg_preserved;
@@ -296,12 +285,14 @@ struct ipa_param_descriptor
 {
   /* PARAM_DECL of this parameter.  */
   tree decl;
+  /* If all uses of the parameter are described by ipa-prop structures, this
+     says how many there are.  If any use could not be described by means of
+     ipa-prop structures, this is IPA_UNDESCRIBED_USE.  */
+  int controlled_uses;
+  unsigned int move_cost : 31;
   /* The parameter is used.  */
   unsigned used : 1;
 };
-
-typedef struct ipa_param_descriptor ipa_param_descriptor_t;
-struct ipcp_lattice;
 
 /* ipa_node_params stores information related to formal parameters of functions
    and some other information for interprocedural passes that operate on
@@ -309,20 +300,26 @@ struct ipcp_lattice;
 
 struct ipa_node_params
 {
+  ~ipa_node_params ();
+
   /* Information about individual formal parameters that are gathered when
      summaries are generated. */
-  vec<ipa_param_descriptor_t> descriptors;
+  vec<ipa_param_descriptor> descriptors;
   /* Pointer to an array of structures describing individual formal
      parameters.  */
   struct ipcp_param_lattices *lattices;
   /* Only for versioned nodes this field would not be NULL,
      it points to the node that IPA cp cloned from.  */
   struct cgraph_node *ipcp_orig_node;
-  /* If this node is an ipa-cp clone, these are the known values that describe
-     what it has been specialized for.  */
-  vec<tree> known_vals;
-  /* Whether the param uses analysis has already been performed.  */
-  unsigned uses_analysis_done : 1;
+  /* If this node is an ipa-cp clone, these are the known constants that
+     describe what it has been specialized for.  */
+  vec<tree> known_csts;
+  /* If this node is an ipa-cp clone, these are the known polymorphic contexts
+     that describe what it has been specialized for.  */
+  vec<ipa_polymorphic_call_context> known_contexts;
+  /* Whether the param uses analysis and jump function computation has already
+     been performed.  */
+  unsigned analysis_done : 1;
   /* Whether the function is enqueued in ipa-cp propagation stack.  */
   unsigned node_enqueued : 1;
   /* Whether we should create a specialized version based on values that are
@@ -333,6 +330,61 @@ struct ipa_node_params
   /* Node has been completely replaced by clones and will be removed after
      ipa-cp is finished.  */
   unsigned node_dead : 1;
+  /* Node is involved in a recursion, potentionally indirect.  */
+  unsigned node_within_scc : 1;
+  /* Node is calling a private function called only once.  */
+  unsigned node_calling_single_call : 1;
+};
+
+/* Intermediate information that we get from alias analysis about a particular
+   parameter in a particular basic_block.  When a parameter or the memory it
+   references is marked modified, we use that information in all dominated
+   blocks without consulting alias analysis oracle.  */
+
+struct ipa_param_aa_status
+{
+  /* Set when this structure contains meaningful information.  If not, the
+     structure describing a dominating BB should be used instead.  */
+  bool valid;
+
+  /* Whether we have seen something which might have modified the data in
+     question.  PARM is for the parameter itself, REF is for data it points to
+     but using the alias type of individual accesses and PT is the same thing
+     but for computing aggregate pass-through functions using a very inclusive
+     ao_ref.  */
+  bool parm_modified, ref_modified, pt_modified;
+};
+
+/* Information related to a given BB that used only when looking at function
+   body.  */
+
+struct ipa_bb_info
+{
+  /* Call graph edges going out of this BB.  */
+  vec<cgraph_edge *> cg_edges;
+  /* Alias analysis statuses of each formal parameter at this bb.  */
+  vec<ipa_param_aa_status> param_aa_statuses;
+};
+
+/* Structure with global information that is only used when looking at function
+   body. */
+
+struct ipa_func_body_info
+{
+  /* The node that is being analyzed.  */
+  cgraph_node *node;
+
+  /* Its info.  */
+  struct ipa_node_params *info;
+
+  /* Information about individual BBs. */
+  vec<ipa_bb_info> bb_infos;
+
+  /* Number of parameters.  */
+  int param_count;
+
+  /* Number of statements already walked by when analyzing this function.  */
+  unsigned int aa_walked;
 };
 
 /* ipa_node_params access functions.  Please use these to access fields that
@@ -353,7 +405,17 @@ ipa_get_param_count (struct ipa_node_params *info)
 static inline tree
 ipa_get_param (struct ipa_node_params *info, int i)
 {
+  gcc_checking_assert (!flag_wpa);
   return info->descriptors[i].decl;
+}
+
+/* Return the move cost of Ith formal parameter of the function corresponding
+   to INFO.  */
+
+static inline int
+ipa_get_param_move_cost (struct ipa_node_params *info, int i)
+{
+  return info->descriptors[i].move_cost;
 }
 
 /* Set the used flag corresponding to the Ith formal parameter of the function
@@ -363,6 +425,26 @@ static inline void
 ipa_set_param_used (struct ipa_node_params *info, int i, bool val)
 {
   info->descriptors[i].used = val;
+}
+
+/* Return how many uses described by ipa-prop a parameter has or
+   IPA_UNDESCRIBED_USE if there is a use that is not described by these
+   structures.  */
+static inline int
+ipa_get_controlled_uses (struct ipa_node_params *info, int i)
+{
+  /* FIXME: introducing speuclation causes out of bounds access here.  */
+  if (info->descriptors.length () > (unsigned)i)
+    return info->descriptors[i].controlled_uses;
+  return IPA_UNDESCRIBED_USE;
+}
+
+/* Set the controlled counter of a given parameter.  */
+
+static inline void
+ipa_set_controlled_uses (struct ipa_node_params *info, int i, int val)
+{
+  info->descriptors[i].controlled_uses = val;
 }
 
 /* Return the used flag corresponding to the Ith formal parameter of the
@@ -390,18 +472,28 @@ struct GTY(()) ipa_agg_replacement_value
   bool by_ref;
 };
 
-typedef struct ipa_agg_replacement_value *ipa_agg_replacement_value_p;
+/* Structure holding information for the transformation phase of IPA-CP.  */
+
+struct GTY(()) ipcp_transformation_summary
+{
+  /* Linked list of known aggregate values.  */
+  ipa_agg_replacement_value *agg_values;
+  /* Alignment information for pointers.  */
+  vec<ipa_alignment, va_gc> *alignments;
+};
 
 void ipa_set_node_agg_value_chain (struct cgraph_node *node,
 				   struct ipa_agg_replacement_value *aggvals);
+void ipcp_grow_transformations_if_necessary (void);
 
 /* ipa_edge_args stores information related to a callsite and particularly its
    arguments.  It can be accessed by the IPA_EDGE_REF macro.  */
-typedef struct GTY(()) ipa_edge_args
+struct GTY(()) ipa_edge_args
 {
   /* Vector of the callsite's jump function of each parameter.  */
-  vec<ipa_jump_func_t, va_gc> *jump_functions;
-} ipa_edge_args_t;
+  vec<ipa_jump_func, va_gc> *jump_functions;
+  vec<ipa_polymorphic_call_context, va_gc> *polymorphic_call_contexts;
+};
 
 /* ipa_edge_args access functions.  Please use these to access fields that
    are or will be shared among various passes.  */
@@ -424,21 +516,40 @@ ipa_get_ith_jump_func (struct ipa_edge_args *args, int i)
   return &(*args->jump_functions)[i];
 }
 
-/* Vectors need to have typedefs of structures.  */
-typedef struct ipa_node_params ipa_node_params_t;
+/* Returns a pointer to the polymorphic call context for the ith argument.
+   NULL if contexts are not computed.  */
+static inline struct ipa_polymorphic_call_context *
+ipa_get_ith_polymorhic_call_context (struct ipa_edge_args *args, int i)
+{
+  if (!args->polymorphic_call_contexts)
+    return NULL;
+  return &(*args->polymorphic_call_contexts)[i];
+}
 
-/* Types of vectors holding the infos.  */
+/* Function summary for ipa_node_params.  */
+class ipa_node_params_t: public function_summary <ipa_node_params *>
+{
+public:
+  ipa_node_params_t (symbol_table *table):
+    function_summary<ipa_node_params *> (table) { }
 
+  /* Hook that is called by summary when a node is duplicated.  */
+  virtual void duplicate (cgraph_node *node,
+			  cgraph_node *node2,
+			  ipa_node_params *data,
+			  ipa_node_params *data2);
+};
+
+/* Function summary where the parameter infos are actually stored. */
+extern ipa_node_params_t *ipa_node_params_sum;
+/* Vector of IPA-CP transformation data for each clone.  */
+extern GTY(()) vec<ipcp_transformation_summary, va_gc> *ipcp_transformations;
 /* Vector where the parameter infos are actually stored. */
-extern vec<ipa_node_params_t> ipa_node_params_vector;
-/* Vector of known aggregate values in cloned nodes.  */
-extern GTY(()) vec<ipa_agg_replacement_value_p, va_gc> *ipa_node_agg_replacements;
-/* Vector where the parameter infos are actually stored. */
-extern GTY(()) vec<ipa_edge_args_t, va_gc> *ipa_edge_args_vector;
+extern GTY(()) vec<ipa_edge_args, va_gc> *ipa_edge_args_vector;
 
 /* Return the associated parameter/argument info corresponding to the given
    node/edge.  */
-#define IPA_NODE_REF(NODE) (&ipa_node_params_vector[(NODE)->uid])
+#define IPA_NODE_REF(NODE) (ipa_node_params_sum->get (NODE))
 #define IPA_EDGE_REF(EDGE) (&(*ipa_edge_args_vector)[(EDGE)->uid])
 /* This macro checks validity of index returned by
    ipa_get_param_decl_index function.  */
@@ -448,12 +559,13 @@ extern GTY(()) vec<ipa_edge_args_t, va_gc> *ipa_edge_args_vector;
 void ipa_create_all_node_params (void);
 void ipa_create_all_edge_args (void);
 void ipa_free_edge_args_substructures (struct ipa_edge_args *);
-void ipa_free_node_params_substructures (struct ipa_node_params *);
 void ipa_free_all_node_params (void);
 void ipa_free_all_edge_args (void);
 void ipa_free_all_structures_after_ipa_cp (void);
 void ipa_free_all_structures_after_iinln (void);
+
 void ipa_register_cgraph_hooks (void);
+int count_formal_params (tree fndecl);
 
 /* This function ensures the array of node param infos is big enough to
    accommodate a structure for all nodes and reallocates it if not.  */
@@ -461,11 +573,8 @@ void ipa_register_cgraph_hooks (void);
 static inline void
 ipa_check_create_node_params (void)
 {
-  if (!ipa_node_params_vector.exists ())
-    ipa_node_params_vector.create (cgraph_max_uid);
-
-  if (ipa_node_params_vector.length () <= (unsigned) cgraph_max_uid)
-    ipa_node_params_vector.safe_grow_cleared (cgraph_max_uid + 1);
+  if (!ipa_node_params_sum)
+    ipa_node_params_sum = new ipa_node_params_t (symtab);
 }
 
 /* This function ensures the array of edge arguments infos is big enough to
@@ -474,8 +583,9 @@ ipa_check_create_node_params (void)
 static inline void
 ipa_check_create_edge_args (void)
 {
-  if (vec_safe_length (ipa_edge_args_vector) <= (unsigned) cgraph_edge_max_uid)
-    vec_safe_grow_cleared (ipa_edge_args_vector, cgraph_edge_max_uid + 1);
+  if (vec_safe_length (ipa_edge_args_vector)
+      <= (unsigned) symtab->edges_max_uid)
+    vec_safe_grow_cleared (ipa_edge_args_vector, symtab->edges_max_uid + 1);
 }
 
 /* Returns true if the array of edge infos is large enough to accommodate an
@@ -488,27 +598,37 @@ ipa_edge_args_info_available_for_edge_p (struct cgraph_edge *edge)
   return ((unsigned) edge->uid < vec_safe_length (ipa_edge_args_vector));
 }
 
+static inline ipcp_transformation_summary *
+ipcp_get_transformation_summary (cgraph_node *node)
+{
+  if ((unsigned) node->uid >= vec_safe_length (ipcp_transformations))
+    return NULL;
+  return &(*ipcp_transformations)[node->uid];
+}
+
 /* Return the aggregate replacements for NODE, if there are any.  */
 
 static inline struct ipa_agg_replacement_value *
-ipa_get_agg_replacements_for_node (struct cgraph_node *node)
+ipa_get_agg_replacements_for_node (cgraph_node *node)
 {
-  if ((unsigned) node->uid >= vec_safe_length (ipa_node_agg_replacements))
-    return NULL;
-  return (*ipa_node_agg_replacements)[node->uid];
+  ipcp_transformation_summary *ts = ipcp_get_transformation_summary (node);
+  return ts ? ts->agg_values : NULL;
 }
 
 /* Function formal parameters related computations.  */
 void ipa_initialize_node_params (struct cgraph_node *node);
 bool ipa_propagate_indirect_call_infos (struct cgraph_edge *cs,
-					vec<cgraph_edge_p> *new_edges);
+					vec<cgraph_edge *> *new_edges);
 
 /* Indirect edge and binfo processing.  */
 tree ipa_get_indirect_edge_target (struct cgraph_edge *ie,
 				   vec<tree> ,
-				   vec<tree> ,
-				   vec<ipa_agg_jump_function_p> );
-struct cgraph_edge *ipa_make_edge_direct_to_target (struct cgraph_edge *, tree);
+				   vec<ipa_polymorphic_call_context>,
+				   vec<ipa_agg_jump_function_p>,
+				   bool *);
+struct cgraph_edge *ipa_make_edge_direct_to_target (struct cgraph_edge *, tree,
+						    bool speculative = false);
+tree ipa_impossible_devirt_target (struct cgraph_edge *, tree);
 
 /* Functions related to both.  */
 void ipa_analyze_node (struct cgraph_node *);
@@ -516,8 +636,9 @@ void ipa_analyze_node (struct cgraph_node *);
 /* Aggregate jump function related functions.  */
 tree ipa_find_agg_cst_for_param (struct ipa_agg_jump_function *, HOST_WIDE_INT,
 				 bool);
-bool ipa_load_from_parm_agg (struct ipa_node_params *, gimple, tree, int *,
-			     HOST_WIDE_INT *, bool *);
+bool ipa_load_from_parm_agg (struct ipa_func_body_info *,
+			     vec<ipa_param_descriptor>, gimple, tree, int *,
+			     HOST_WIDE_INT *, HOST_WIDE_INT *, bool *);
 
 /* Debugging interface.  */
 void ipa_print_node_params (FILE *, struct cgraph_node *node);
@@ -526,9 +647,31 @@ void ipa_print_node_jump_functions (FILE *f, struct cgraph_node *node);
 void ipa_print_all_jump_functions (FILE * f);
 void ipcp_verify_propagated_values (void);
 
-extern alloc_pool ipcp_values_pool;
+extern alloc_pool ipcp_cst_values_pool;
+extern alloc_pool ipcp_poly_ctx_values_pool;
 extern alloc_pool ipcp_sources_pool;
 extern alloc_pool ipcp_agg_lattice_pool;
+
+/* Operation to be performed for the parameter in ipa_parm_adjustment
+   below.  */
+enum ipa_parm_op {
+  IPA_PARM_OP_NONE,
+
+  /* This describes a brand new parameter.
+
+     The field `type' should be set to the new type, `arg_prefix'
+     should be set to the string prefix for the new DECL_NAME, and
+     `new_decl' will ultimately hold the newly created argument.  */
+  IPA_PARM_OP_NEW,
+
+  /* This new parameter is an unmodified parameter at index base_index. */
+  IPA_PARM_OP_COPY,
+
+  /* This adjustment describes a parameter that is about to be removed
+     completely.  Most users will probably need to book keep those so that they
+     don't leave behinfd any non default def ssa names belonging to them.  */
+  IPA_PARM_OP_REMOVE
+};
 
 /* Structure to describe transformations of formal parameters and actual
    arguments.  Each instance describes one new parameter and they are meant to
@@ -553,10 +696,11 @@ struct ipa_parm_adjustment
      arguments.  */
   tree alias_ptr_type;
 
-  /* The new declaration when creating/replacing a parameter.  Created by
-     ipa_modify_formal_parameters, useful for functions modifying the body
-     accordingly. */
-  tree reduction;
+  /* The new declaration when creating/replacing a parameter.  Created
+     by ipa_modify_formal_parameters, useful for functions modifying
+     the body accordingly.  For brand new arguments, this is the newly
+     created argument.  */
+  tree new_decl;
 
   /* New declaration of a substitute variable that we may use to replace all
      non-default-def ssa names when a parm decl is going away.  */
@@ -566,35 +710,30 @@ struct ipa_parm_adjustment
      is NULL), this is going to be its nonlocalized vars value.  */
   tree nonlocal_value;
 
+  /* This holds the prefix to be used for the new DECL_NAME.  */
+  const char *arg_prefix;
+
   /* Offset into the original parameter (for the cases when the new parameter
      is a component of an original one).  */
   HOST_WIDE_INT offset;
 
-  /* Zero based index of the original parameter this one is based on.  (ATM
-     there is no way to insert a new parameter out of the blue because there is
-     no need but if it arises the code can be easily exteded to do so.)  */
+  /* Zero based index of the original parameter this one is based on.  */
   int base_index;
 
-  /* This new parameter is an unmodified parameter at index base_index. */
-  unsigned copy_param : 1;
-
-  /* This adjustment describes a parameter that is about to be removed
-     completely.  Most users will probably need to book keep those so that they
-     don't leave behinfd any non default def ssa names belonging to them.  */
-  unsigned remove_param : 1;
+  /* Whether this parameter is a new parameter, a copy of an old one,
+     or one about to be removed.  */
+  enum ipa_parm_op op;
 
   /* The parameter is to be passed by reference.  */
   unsigned by_ref : 1;
 };
 
-typedef struct ipa_parm_adjustment ipa_parm_adjustment_t;
-
-typedef vec<ipa_parm_adjustment_t> ipa_parm_adjustment_vec;
+typedef vec<ipa_parm_adjustment> ipa_parm_adjustment_vec;
 
 vec<tree> ipa_get_vector_of_formal_parms (tree fndecl);
-void ipa_modify_formal_parameters (tree fndecl, ipa_parm_adjustment_vec,
-				   const char *);
-void ipa_modify_call_arguments (struct cgraph_edge *, gimple,
+vec<tree> ipa_get_vector_of_formal_parm_types (tree fntype);
+void ipa_modify_formal_parameters (tree fndecl, ipa_parm_adjustment_vec);
+void ipa_modify_call_arguments (struct cgraph_edge *, gcall *,
 				ipa_parm_adjustment_vec);
 ipa_parm_adjustment_vec ipa_combine_adjustments (ipa_parm_adjustment_vec,
 						 ipa_parm_adjustment_vec);
@@ -603,17 +742,29 @@ void ipa_dump_agg_replacement_values (FILE *f,
 				      struct ipa_agg_replacement_value *av);
 void ipa_prop_write_jump_functions (void);
 void ipa_prop_read_jump_functions (void);
-void ipa_prop_write_all_agg_replacement (void);
-void ipa_prop_read_all_agg_replacement (void);
+void ipcp_write_transformation_summaries (void);
+void ipcp_read_transformation_summaries (void);
 void ipa_update_after_lto_read (void);
 int ipa_get_param_decl_index (struct ipa_node_params *, tree);
 tree ipa_value_from_jfunc (struct ipa_node_params *info,
 			   struct ipa_jump_func *jfunc);
 unsigned int ipcp_transform_function (struct cgraph_node *node);
+ipa_polymorphic_call_context ipa_context_from_jfunc (ipa_node_params *,
+						     cgraph_edge *,
+						     int,
+						     ipa_jump_func *);
+void ipa_dump_param (FILE *, struct ipa_node_params *info, int i);
+bool ipa_modify_expr (tree *, bool, ipa_parm_adjustment_vec);
+ipa_parm_adjustment *ipa_get_adjustment_candidate (tree **, bool *,
+						   ipa_parm_adjustment_vec,
+						   bool);
 
 
 /* From tree-sra.c:  */
 tree build_ref_for_offset (location_t, tree, HOST_WIDE_INT, tree,
 			   gimple_stmt_iterator *, bool);
+
+/* In ipa-cp.c  */
+void ipa_cp_c_finalize (void);
 
 #endif /* IPA_PROP_H */

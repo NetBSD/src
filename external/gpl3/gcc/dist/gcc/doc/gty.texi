@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2013 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -87,6 +87,7 @@ data members.
 
 @menu
 * GTY Options::         What goes inside a @code{GTY(())}.
+* Inheritance and GTY:: Adding GTY to a class hierarchy.
 * User GC::		Adding user-provided GC marking routines.
 * GGC Roots::           Making global variables GGC roots.
 * Files::               How the generated files work.
@@ -196,6 +197,12 @@ If @code{skip} is applied to a field, the type machinery will ignore it.
 This is somewhat dangerous; the only safe use is in a union when one
 field really isn't ever used.
 
+@findex for_user
+Use this to mark types that need to be marked by user gc routines, but are not
+refered to in a template argument.  So if you have some user gc type T1 and a
+non user gc type T2 you can give T2 the for_user option so that the marking
+functions for T1 can call non mangled functions to mark T2.
+
 @findex desc
 @findex tag
 @findex default
@@ -234,53 +241,17 @@ In this example, the value of BINDING_HAS_LEVEL_P when applied to a
 mechanism will treat the field @code{level} as being present and if 0,
 will treat the field @code{scope} as being present.
 
-@findex param_is
-@findex use_param
-@item param_is (@var{type})
-@itemx use_param
+The @code{desc} and @code{tag} options can also be used for inheritance
+to denote which subclass an instance is.  See @ref{Inheritance and GTY}
+for more information.
 
-Sometimes it's convenient to define some data structure to work on
-generic pointers (that is, @code{PTR}) and then use it with a specific
-type.  @code{param_is} specifies the real type pointed to, and
-@code{use_param} says where in the generic data structure that type
-should be put.
+@findex cache
+@item cache
 
-For instance, to have a @code{htab_t} that points to trees, one would
-write the definition of @code{htab_t} like this:
-@smallexample
-typedef struct GTY(()) @{
-  @dots{}
-  void ** GTY ((use_param, @dots{})) entries;
-  @dots{}
-@} htab_t;
-@end smallexample
-and then declare variables like this:
-@smallexample
-  static htab_t GTY ((param_is (union tree_node))) ict;
-@end smallexample
-
-@findex param@var{n}_is
-@findex use_param@var{n}
-@item param@var{n}_is (@var{type})
-@itemx use_param@var{n}
-
-In more complicated cases, the data structure might need to work on
-several different types, which might not necessarily all be pointers.
-For this, @code{param1_is} through @code{param9_is} may be used to
-specify the real type of a field identified by @code{use_param1} through
-@code{use_param9}.
-
-@findex use_params
-@item use_params
-
-When a structure contains another structure that is parameterized,
-there's no need to do anything special, the inner structure inherits the
-parameters of the outer one.  When a structure contains a pointer to a
-parameterized structure, the type machinery won't automatically detect
-this (it could, it just doesn't yet), so it's necessary to tell it that
-the pointed-to structure should use the same parameters as the outer
-structure.  This is done by marking the pointer with the
-@code{use_params} option.
+When the @code{cache} option is applied to a global variable gt_clear_cache is
+called on that variable between the mark and sweep phases of garbage
+collection.  The gt_clear_cache function is free to mark blocks as used, or to
+clear pointers in the variable.
 
 @findex deletable
 @item deletable
@@ -289,23 +260,6 @@ structure.  This is done by marking the pointer with the
 garbage collection runs, there's no need to mark anything pointed to
 by this variable, it can just be set to @code{NULL} instead.  This is used
 to keep a list of free structures around for re-use.
-
-@findex if_marked
-@item if_marked ("@var{expression}")
-
-Suppose you want some kinds of object to be unique, and so you put them
-in a hash table.  If garbage collection marks the hash table, these
-objects will never be freed, even if the last other reference to them
-goes away.  GGC has special handling to deal with this: if you use the
-@code{if_marked} option on a global hash table, GGC will call the
-routine whose name is the parameter to the option on each hash table
-entry.  If the routine returns nonzero, the hash table entry will
-be marked as usual.  If the routine returns zero, the hash table entry
-will be deleted.
-
-The routine @code{ggc_marked_p} can be used to determine if an element
-has been marked already; in fact, the usual case is to use
-@code{if_marked ("ggc_marked_p")}.
 
 @findex mark_hook
 @item mark_hook ("@var{hook-routine-name}")
@@ -377,38 +331,6 @@ of pointers.  @code{reorder} functions can be expensive.  When
 possible, it is better to depend on properties of the data, like an ID
 number or the hash of a string instead.
 
-@findex variable_size
-@item variable_size
-
-The type machinery expects the types to be of constant size.  When this
-is not true, for example, with structs that have array fields or unions,
-the type machinery cannot tell how many bytes need to be allocated at
-each allocation.  The @code{variable_size} is used to mark such types.
-The type machinery then provides allocators that take a parameter
-indicating an exact size of object being allocated.  Note that the size
-must be provided in bytes whereas the @code{length} option works with
-array lengths in number of elements.
-
-For example,
-@smallexample
-struct GTY((variable_size)) sorted_fields_type @{
-  int len;
-  tree GTY((length ("%h.len"))) elts[1];
-@};
-@end smallexample
-
-Then the objects of @code{struct sorted_fields_type} are allocated in GC
-memory as follows:
-@smallexample
-  field_vec = ggc_alloc_sorted_fields_type (size);
-@end smallexample
-
-If @var{field_vec->elts} stores @var{n} elements, then @var{size}
-could be calculated as follows:
-@smallexample
-  size_t size = sizeof (struct sorted_fields_type) + n * sizeof (tree);
-@end smallexample
-
 @findex atomic
 @item atomic
 
@@ -469,6 +391,60 @@ The @code{user} option indicates that the code to mark structure
 fields is completely handled by user-provided routines.  See section
 @ref{User GC} for details on what functions need to be provided.
 @end table
+
+@node Inheritance and GTY
+@section Support for inheritance
+gengtype has some support for simple class hierarchies.  You can use
+this to have gengtype autogenerate marking routines, provided:
+
+@itemize @bullet
+@item
+There must be a concrete base class, with a discriminator expression
+that can be used to identify which subclass an instance is.
+@item
+Only single inheritance is used.
+@item
+None of the classes within the hierarchy are templates.
+@end itemize
+
+If your class hierarchy does not fit in this pattern, you must use
+@ref{User GC} instead.
+
+The base class and its discriminator must be identified using the ``desc''
+option.  Each concrete subclass must use the ``tag'' option to identify
+which value of the discriminator it corresponds to.
+
+Every class in the hierarchy must have a @code{GTY(())} marker, as
+gengtype will only attempt to parse classes that have such a marker
+@footnote{Classes lacking such a marker will not be identified as being
+part of the hierarchy, and so the marking routines will not handle them,
+leading to a assertion failure within the marking routines due to an
+unknown tag value (assuming that assertions are enabled).}.
+
+@smallexample
+class GTY((desc("%h.kind"), tag("0"))) example_base
+@{
+public:
+    int kind;
+    tree a;
+@};
+
+class GTY((tag("1")) some_subclass : public example_base
+@{
+public:
+    tree b;
+@};
+
+class GTY((tag("2")) some_other_subclass : public example_base
+@{
+public:
+    tree c;
+@};
+@end smallexample
+
+The generated marking routines for the above will contain a ``switch''
+on ``kind'', visiting all appropriate fields.  For example, if kind is
+2, it will cast to ``some_other_subclass'' and visit fields a, b, and c.
 
 @node User GC
 @section Support for user-provided GC marking routines

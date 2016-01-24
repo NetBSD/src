@@ -1,6 +1,6 @@
 /* Miscellaneous BPABI functions.  ARMv6M implementation
 
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Contributed by CodeSourcery.
 
    This file is free software; you can redistribute it and/or modify it
@@ -150,7 +150,7 @@ FUNC_START aeabi_uldivmod
 	mov r0, sp
 	push {r0, lr}
 	ldr r0, [sp, #8]
-	bl SYM(__gnu_uldivmod_helper)
+	bl SYM(__udivmoddi4)
 	ldr r3, [sp, #4]
 	mov lr, r3
 	add sp, sp, #8

@@ -1,6 +1,6 @@
 /* This file contains the definitions of the GIMPLE IR tuples used in GCC.
 
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>
 
 This file is part of GCC.
@@ -221,7 +221,7 @@ DEFGSCODE(GIMPLE_NOP, "gimple_nop", GSS_BASE)
 DEFGSCODE(GIMPLE_OMP_ATOMIC_LOAD, "gimple_omp_atomic_load",
 	  GSS_OMP_ATOMIC_LOAD)
 DEFGSCODE(GIMPLE_OMP_ATOMIC_STORE, "gimple_omp_atomic_store",
-	  GSS_OMP_ATOMIC_STORE)
+	  GSS_OMP_ATOMIC_STORE_LAYOUT)
 
 /* GIMPLE_OMP_CONTINUE marks the location of the loop or sections
    iteration in partially lowered OpenMP code.  */
@@ -242,6 +242,9 @@ DEFGSCODE(GIMPLE_OMP_CRITICAL, "gimple_omp_critical", GSS_OMP_CRITICAL)
    #pragma omp for [clause1 ... clauseN]
    for (INDEX = INITIAL; INDEX COND FINAL; INDEX {+=,-=} INCR)
    BODY
+
+   Likewise for:
+   #pragma acc loop [clause1 ... clauseN]
 
    BODY is the loop body.
 
@@ -269,12 +272,16 @@ DEFGSCODE(GIMPLE_OMP_CRITICAL, "gimple_omp_critical", GSS_OMP_CRITICAL)
    INITIAL, FINAL and INCR are required to be loop invariant integer
    expressions that are evaluated without any synchronization.
    The evaluation order, frequency of evaluation and side-effects are
-   unspecified by the standard.  */
+   unspecified by the standards.  */
 DEFGSCODE(GIMPLE_OMP_FOR, "gimple_omp_for", GSS_OMP_FOR)
 
 /* GIMPLE_OMP_MASTER <BODY> represents #pragma omp master.
    BODY is the sequence of statements to execute in the master section.  */
 DEFGSCODE(GIMPLE_OMP_MASTER, "gimple_omp_master", GSS_OMP)
+
+/* GIMPLE_OMP_TASKGROUP <BODY> represents #pragma omp taskgroup.
+   BODY is the sequence of statements to execute in the taskgroup section.  */
+DEFGSCODE(GIMPLE_OMP_TASKGROUP, "gimple_omp_taskgroup", GSS_OMP)
 
 /* GIMPLE_OMP_ORDERED <BODY> represents #pragma omp ordered.
    BODY is the sequence of statements to execute in the ordered section.  */
@@ -287,7 +294,7 @@ DEFGSCODE(GIMPLE_OMP_ORDERED, "gimple_omp_ordered", GSS_OMP)
 
    BODY is a the sequence of statements to be executed by all threads.
 
-   CLAUSES is a TREE_LIST node with all the clauses.
+   CLAUSES is an OMP_CLAUSE chain with all the clauses.
 
    CHILD_FN is set when outlining the body of the parallel region.
    All the statements in BODY are moved into this newly created
@@ -296,7 +303,7 @@ DEFGSCODE(GIMPLE_OMP_ORDERED, "gimple_omp_ordered", GSS_OMP)
    DATA_ARG is a local variable in the parent function containing data
    to be shared with CHILD_FN.  This is used to implement all the data
    sharing clauses.  */
-DEFGSCODE(GIMPLE_OMP_PARALLEL, "gimple_omp_parallel", GSS_OMP_PARALLEL)
+DEFGSCODE(GIMPLE_OMP_PARALLEL, "gimple_omp_parallel", GSS_OMP_PARALLEL_LAYOUT)
 
 /* GIMPLE_OMP_TASK <BODY, CLAUSES, CHILD_FN, DATA_ARG, COPY_FN,
 		    ARG_SIZE, ARG_ALIGN> represents
@@ -306,7 +313,7 @@ DEFGSCODE(GIMPLE_OMP_PARALLEL, "gimple_omp_parallel", GSS_OMP_PARALLEL)
 
    BODY is a the sequence of statements to be executed by all threads.
 
-   CLAUSES is a TREE_LIST node with all the clauses.
+   CLAUSES is an OMP_CLAUSE chain with all the clauses.
 
    CHILD_FN is set when outlining the body of the explicit task region.
    All the statements in BODY are moved into this newly created
@@ -325,7 +332,7 @@ DEFGSCODE(GIMPLE_OMP_PARALLEL, "gimple_omp_parallel", GSS_OMP_PARALLEL)
 DEFGSCODE(GIMPLE_OMP_TASK, "gimple_omp_task", GSS_OMP_TASK)
 
 /* OMP_RETURN marks the end of an OpenMP directive.  */
-DEFGSCODE(GIMPLE_OMP_RETURN, "gimple_omp_return", GSS_BASE)
+DEFGSCODE(GIMPLE_OMP_RETURN, "gimple_omp_return", GSS_OMP_ATOMIC_STORE_LAYOUT)
 
 /* OMP_SECTION <BODY> represents #pragma omp section.
    BODY is the sequence of statements in the section body.  */
@@ -334,7 +341,7 @@ DEFGSCODE(GIMPLE_OMP_SECTION, "gimple_omp_section", GSS_OMP)
 /* OMP_SECTIONS <BODY, CLAUSES, CONTROL> represents #pragma omp sections.
 
    BODY is the sequence of statements in the sections body.
-   CLAUSES is a TREE_LIST node holding the list of associated clauses.
+   CLAUSES is an OMP_CLAUSE chain holding the list of associated clauses.
    CONTROL is a VAR_DECL used for deciding which of the sections
    to execute.  */
 DEFGSCODE(GIMPLE_OMP_SECTIONS, "gimple_omp_sections", GSS_OMP_SECTIONS)
@@ -346,8 +353,27 @@ DEFGSCODE(GIMPLE_OMP_SECTIONS_SWITCH, "gimple_omp_sections_switch", GSS_BASE)
 
 /* GIMPLE_OMP_SINGLE <BODY, CLAUSES> represents #pragma omp single
    BODY is the sequence of statements inside the single section.
-   CLAUSES is a TREE_LIST node holding the associated clauses.  */
-DEFGSCODE(GIMPLE_OMP_SINGLE, "gimple_omp_single", GSS_OMP_SINGLE)
+   CLAUSES is an OMP_CLAUSE chain holding the associated clauses.  */
+DEFGSCODE(GIMPLE_OMP_SINGLE, "gimple_omp_single", GSS_OMP_SINGLE_LAYOUT)
+
+/* GIMPLE_OMP_TARGET <BODY, CLAUSES, CHILD_FN> represents
+   #pragma acc {kernels,parallel,data,enter data,exit data,update}
+   #pragma omp target {,data,update}
+   BODY is the sequence of statements inside the construct
+   (NULL for some variants).
+   CLAUSES is an OMP_CLAUSE chain holding the associated clauses.
+   CHILD_FN is set when outlining the body of the offloaded region.
+   All the statements in BODY are moved into this newly created
+   function when converting OMP constructs into low-GIMPLE.
+   DATA_ARG is a vec of 3 local variables in the parent function
+   containing data to be mapped to CHILD_FN.  This is used to
+   implement the MAP clauses.  */
+DEFGSCODE(GIMPLE_OMP_TARGET, "gimple_omp_target", GSS_OMP_PARALLEL_LAYOUT)
+
+/* GIMPLE_OMP_TEAMS <BODY, CLAUSES> represents #pragma omp teams
+   BODY is the sequence of statements inside the single section.
+   CLAUSES is an OMP_CLAUSE chain holding the associated clauses.  */
+DEFGSCODE(GIMPLE_OMP_TEAMS, "gimple_omp_teams", GSS_OMP_SINGLE_LAYOUT)
 
 /* GIMPLE_PREDICT <PREDICT, OUTCOME> specifies a hint for branch prediction.
 

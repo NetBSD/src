@@ -1,5 +1,5 @@
 /* FR30 specific functions.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GCC.
@@ -32,17 +32,49 @@
 #include "insn-attr.h"
 #include "flags.h"
 #include "recog.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "stor-layout.h"
+#include "varasm.h"
 #include "output.h"
+#include "hashtab.h"
+#include "function.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "stmt.h"
 #include "expr.h"
 #include "obstack.h"
 #include "except.h"
-#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfganal.h"
+#include "lcm.h"
+#include "cfgbuild.h"
+#include "cfgcleanup.h"
+#include "predict.h"
+#include "basic-block.h"
 #include "df.h"
 #include "diagnostic-core.h"
 #include "tm_p.h"
 #include "target.h"
 #include "target-def.h"
+#include "builtins.h"
 
 /*}}}*/
 /*{{{  Function Prologues & Epilogues */ 
@@ -113,23 +145,23 @@ static struct fr30_frame_info 	current_frame_info;
 /* Zero structure to initialize current_frame_info.  */
 static struct fr30_frame_info 	zero_frame_info;
 
-static void fr30_setup_incoming_varargs (cumulative_args_t, enum machine_mode,
+static void fr30_setup_incoming_varargs (cumulative_args_t, machine_mode,
 					 tree, int *, int);
-static bool fr30_must_pass_in_stack (enum machine_mode, const_tree);
-static int fr30_arg_partial_bytes (cumulative_args_t, enum machine_mode,
+static bool fr30_must_pass_in_stack (machine_mode, const_tree);
+static int fr30_arg_partial_bytes (cumulative_args_t, machine_mode,
 				   tree, bool);
-static rtx fr30_function_arg (cumulative_args_t, enum machine_mode,
+static rtx fr30_function_arg (cumulative_args_t, machine_mode,
 			      const_tree, bool);
-static void fr30_function_arg_advance (cumulative_args_t, enum machine_mode,
+static void fr30_function_arg_advance (cumulative_args_t, machine_mode,
 				       const_tree, bool);
 static bool fr30_frame_pointer_required (void);
 static rtx fr30_function_value (const_tree, const_tree, bool);
-static rtx fr30_libcall_value (enum machine_mode, const_rtx);
+static rtx fr30_libcall_value (machine_mode, const_rtx);
 static bool fr30_function_value_regno_p (const unsigned int);
 static bool fr30_can_eliminate (const int, const int);
 static void fr30_asm_trampoline_template (FILE *);
 static void fr30_trampoline_init (rtx, tree, rtx);
-static int fr30_num_arg_regs (enum machine_mode, const_tree);
+static int fr30_num_arg_regs (machine_mode, const_tree);
 
 #define FRAME_POINTER_MASK 	(1 << (FRAME_POINTER_REGNUM))
 #define RETURN_POINTER_MASK 	(1 << (RETURN_POINTER_REGNUM))
@@ -454,7 +486,7 @@ fr30_expand_epilogue (void)
    which has type TYPE and mode MODE, and we rely on this fact.  */
 void
 fr30_setup_incoming_varargs (cumulative_args_t arg_regs_used_so_far_v,
-			     enum machine_mode mode,
+			     machine_mode mode,
 			     tree type ATTRIBUTE_UNUSED,
 			     int *pretend_size,
 			     int second_time ATTRIBUTE_UNUSED)
@@ -716,7 +748,7 @@ fr30_function_value (const_tree valtype,
 /* Implements TARGET_LIBCALL_VALUE.  */
 
 static rtx
-fr30_libcall_value (enum machine_mode mode,
+fr30_libcall_value (machine_mode mode,
 		    const_rtx fun ATTRIBUTE_UNUSED)
 {
   return gen_rtx_REG (mode, RETURN_VALUE_REGNUM);
@@ -736,7 +768,7 @@ fr30_function_value_regno_p (const unsigned int regno)
    in registers.  */
 
 static bool
-fr30_must_pass_in_stack (enum machine_mode mode, const_tree type)
+fr30_must_pass_in_stack (machine_mode mode, const_tree type)
 {
   if (mode == BLKmode)
     return true;
@@ -748,7 +780,7 @@ fr30_must_pass_in_stack (enum machine_mode mode, const_tree type)
 /* Compute the number of word sized registers needed to hold a
    function argument of mode INT_MODE and tree type TYPE.  */
 static int
-fr30_num_arg_regs (enum machine_mode mode, const_tree type)
+fr30_num_arg_regs (machine_mode mode, const_tree type)
 {
   int size;
 
@@ -771,7 +803,7 @@ fr30_num_arg_regs (enum machine_mode mode, const_tree type)
    parameters to the function.  */
 
 static int
-fr30_arg_partial_bytes (cumulative_args_t cum_v, enum machine_mode mode,
+fr30_arg_partial_bytes (cumulative_args_t cum_v, machine_mode mode,
 			tree type, bool named)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
@@ -795,7 +827,7 @@ fr30_arg_partial_bytes (cumulative_args_t cum_v, enum machine_mode mode,
 }
 
 static rtx
-fr30_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
+fr30_function_arg (cumulative_args_t cum_v, machine_mode mode,
 		   const_tree type, bool named)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
@@ -817,7 +849,7 @@ fr30_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
    the stack.  The compiler knows how to track the amount of stack space used
    for arguments without any special help.  */
 static void
-fr30_function_arg_advance (cumulative_args_t cum, enum machine_mode mode,
+fr30_function_arg_advance (cumulative_args_t cum, machine_mode mode,
 			   const_tree type, bool named)
 {
   *get_cumulative_args (cum) += named * fr30_num_arg_regs (mode, type);
@@ -827,7 +859,7 @@ fr30_function_arg_advance (cumulative_args_t cum, enum machine_mode mode,
 /*{{{  Operand predicates */ 
 
 #ifndef Mmode
-#define Mmode enum machine_mode
+#define Mmode machine_mode
 #endif
 
 /* Returns true iff all the registers in the operands array
@@ -899,7 +931,7 @@ fr30_move_double (rtx * operands)
   rtx dest = operands[0];
   enum rtx_code src_code = GET_CODE (src);
   enum rtx_code dest_code = GET_CODE (dest);
-  enum machine_mode mode = GET_MODE (dest);
+  machine_mode mode = GET_MODE (dest);
   rtx val;
 
   start_sequence ();

@@ -1,6 +1,6 @@
 // <cast.h> -*- C++ -*-
 
-// Copyright (C) 2008-2013 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -38,7 +38,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    * These functions are here to allow containers to support non standard
    * pointer types.  For normal pointers, these resolve to the use of the
    * standard cast operation.  For other types the functions will perform
-   * the apprpriate cast to/from the custom pointer class so long as that
+   * the appropriate cast to/from the custom pointer class so long as that
    * class meets the following conditions:
    * 1) has a typedef element_type which names tehe type it points to.
    * 2) has a get() const method which returns element_type*.

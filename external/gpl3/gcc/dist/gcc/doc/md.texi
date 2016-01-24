@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -105,10 +105,11 @@ acts like it's unnamed, since the names are ignored.
 @cindex instruction patterns
 
 @findex define_insn
-Each instruction pattern contains an incomplete RTL expression, with pieces
-to be filled in later, operand constraints that restrict how the pieces can
-be filled in, and an output pattern or C code to generate the assembler
-output, all wrapped up in a @code{define_insn} expression.
+A @code{define_insn} expression is used to define instruction patterns
+to which insns may be matched.  A @code{define_insn} expression contains
+an incomplete RTL expression, with pieces to be filled in later, operand
+constraints that restrict how the pieces can be filled in, and an output
+template or C code to generate the assembler output.
 
 A @code{define_insn} is an RTL expression containing four or five operands:
 
@@ -130,60 +131,63 @@ effect; they are equivalent to no name at all.
 
 For the purpose of debugging the compiler, you may also specify a
 name beginning with the @samp{*} character.  Such a name is used only
-for identifying the instruction in RTL dumps; it is entirely equivalent
-to having a nameless pattern for all other purposes.
+for identifying the instruction in RTL dumps; it is equivalent to having
+a nameless pattern for all other purposes.  Names beginning with the
+@samp{*} character are not required to be unique.
 
 @item
-The @dfn{RTL template} (@pxref{RTL Template}) is a vector of incomplete
-RTL expressions which show what the instruction should look like.  It is
-incomplete because it may contain @code{match_operand},
+The @dfn{RTL template}: This is a vector of incomplete RTL expressions
+which describe the semantics of the instruction (@pxref{RTL Template}).
+It is incomplete because it may contain @code{match_operand},
 @code{match_operator}, and @code{match_dup} expressions that stand for
 operands of the instruction.
 
-If the vector has only one element, that element is the template for the
-instruction pattern.  If the vector has multiple elements, then the
-instruction pattern is a @code{parallel} expression containing the
-elements described.
+If the vector has multiple elements, the RTL template is treated as a
+@code{parallel} expression.
 
 @item
 @cindex pattern conditions
 @cindex conditions, in patterns
-A condition.  This is a string which contains a C expression that is
-the final test to decide whether an insn body matches this pattern.
+The condition: This is a string which contains a C expression.  When the
+compiler attempts to match RTL against a pattern, the condition is
+evaluated.  If the condition evaluates to @code{true}, the match is
+permitted.  The condition may be an empty string, which is treated
+as always @code{true}.
 
 @cindex named patterns and conditions
-For a named pattern, the condition (if present) may not depend on
-the data in the insn being matched, but only the target-machine-type
-flags.  The compiler needs to test these conditions during
-initialization in order to learn exactly which named instructions are
-available in a particular run.
+For a named pattern, the condition may not depend on the data in the
+insn being matched, but only the target-machine-type flags.  The compiler
+needs to test these conditions during initialization in order to learn
+exactly which named instructions are available in a particular run.
 
 @findex operands
 For nameless patterns, the condition is applied only when matching an
 individual insn, and only after the insn has matched the pattern's
 recognition template.  The insn's operands may be found in the vector
-@code{operands}.  For an insn where the condition has once matched, it
-can't be used to control register allocation, for example by excluding
-certain hard registers or hard register combinations.
+@code{operands}.
+
+For an insn where the condition has once matched, it
+cannot later be used to control register allocation by excluding
+certain register or value combinations.
 
 @item
-The @dfn{output template}: a string that says how to output matching
-insns as assembler code.  @samp{%} in this string specifies where
-to substitute the value of an operand.  @xref{Output Template}.
+The @dfn{output template} or @dfn{output statement}: This is either
+a string, or a fragment of C code which returns a string.
 
 When simple substitution isn't general enough, you can specify a piece
 of C code to compute the output.  @xref{Output Statement}.
 
 @item
-Optionally, a vector containing the values of attributes for insns matching
-this pattern.  @xref{Insn Attributes}.
+The @dfn{insn attributes}: This is an optional vector containing the values of
+attributes for insns matching this pattern (@pxref{Insn Attributes}).
 @end enumerate
 
 @node Example
 @section Example of @code{define_insn}
 @cindex @code{define_insn} example
 
-Here is an actual example of an instruction pattern, for the 68000/68020.
+Here is an example of an instruction pattern, taken from the machine
+description for the 68000/68020.
 
 @smallexample
 (define_insn "tstsi"
@@ -213,12 +217,12 @@ This can also be written using braced strings:
 @})
 @end smallexample
 
-This is an instruction that sets the condition codes based on the value of
-a general operand.  It has no condition, so any insn whose RTL description
-has the form shown may be handled according to this pattern.  The name
-@samp{tstsi} means ``test a @code{SImode} value'' and tells the RTL generation
-pass that, when it is necessary to test such a value, an insn to do so
-can be constructed using this pattern.
+This describes an instruction which sets the condition codes based on the
+value of a general operand.  It has no condition, so any insn with an RTL
+description of the form shown may be matched to this pattern.  The name
+@samp{tstsi} means ``test a @code{SImode} value'' and tells the RTL
+generation pass that, when it is necessary to test such a value, an insn
+to do so can be constructed using this pattern.
 
 The output control string is a piece of C code which chooses which
 output template to return based on the kind of operand and the specific
@@ -297,7 +301,7 @@ expression.
 When matching patterns, this is equivalent to
 
 @smallexample
-(match_operand:@var{m} @var{n} "scratch_operand" @var{pred})
+(match_operand:@var{m} @var{n} "scratch_operand" @var{constraint})
 @end smallexample
 
 but, when generating RTL, it produces a (@code{scratch}:@var{m})
@@ -352,7 +356,7 @@ commutative arithmetic operators of RTL and whose mode is @var{mode}:
 int
 commutative_integer_operator (x, mode)
      rtx x;
-     enum machine_mode mode;
+     machine_mode mode;
 @{
   enum rtx_code code = GET_CODE (x);
   if (GET_MODE (x) != mode)
@@ -1080,7 +1084,7 @@ the addressing register.
 * Class Preferences::   Constraints guide which hard register to put things in.
 * Modifiers::           More precise control over effects of constraints.
 * Machine Constraints:: Existing constraints for some particular machines.
-* Disable Insn Alternatives:: Disable insn alternatives using the @code{enabled} attribute.
+* Disable Insn Alternatives:: Disable insn alternatives using attributes.
 * Define Constraints::  How to define machine-specific constraints.
 * C Constraint Interface:: How to test constraints from C code.
 @end menu
@@ -1503,6 +1507,18 @@ in it.
 Disparage severely the alternative that the @samp{!} appears in.
 This alternative can still be used if it fits without reloading,
 but if reloading is needed, some other alternative will be used.
+
+@cindex @samp{^} in constraint
+@cindex caret
+@item ^
+This constraint is analogous to @samp{?} but it disparages slightly
+the alternative only if the operand with the @samp{^} needs a reload.
+
+@cindex @samp{$} in constraint
+@cindex dollar sign
+@item $
+This constraint is analogous to @samp{!} but it disparages severely
+the alternative only if the operand with the @samp{$} needs a reload.
 @end table
 
 @ifset INTERNALS
@@ -1546,18 +1562,18 @@ Here are constraint modifier characters.
 @table @samp
 @cindex @samp{=} in constraint
 @item =
-Means that this operand is write-only for this instruction: the previous
-value is discarded and replaced by output data.
+Means that this operand is written to by this instruction:
+the previous value is discarded and replaced by new data.
 
 @cindex @samp{+} in constraint
 @item +
 Means that this operand is both read and written by the instruction.
 
 When the compiler fixes up the operands to satisfy the constraints,
-it needs to know which operands are inputs to the instruction and
-which are outputs from it.  @samp{=} identifies an output; @samp{+}
-identifies an operand that is both input and output; all other operands
-are assumed to be input only.
+it needs to know which operands are read by the instruction and
+which are written by it.  @samp{=} identifies an operand which is only
+written; @samp{+} identifies an operand that is both read and written; all
+other operands are assumed to only be read.
 
 If you specify @samp{=} or @samp{+} in a constraint, you put it in the
 first character of the constraint string.
@@ -1566,9 +1582,9 @@ first character of the constraint string.
 @cindex earlyclobber operand
 @item &
 Means (in a particular alternative) that this operand is an
-@dfn{earlyclobber} operand, which is modified before the instruction is
+@dfn{earlyclobber} operand, which is written before the instruction is
 finished using the input operands.  Therefore, this operand may not lie
-in a register that is used as an input operand or as part of any memory
+in a register that is read by the instruction or as part of any memory
 address.
 
 @samp{&} applies only to the alternative in which it is written.  In
@@ -1576,20 +1592,29 @@ constraints with multiple alternatives, sometimes one alternative
 requires @samp{&} while others do not.  See, for example, the
 @samp{movdf} insn of the 68000.
 
-An input operand can be tied to an earlyclobber operand if its only
-use as an input occurs before the early result is written.  Adding
-alternatives of this form often allows GCC to produce better code
-when only some of the inputs can be affected by the earlyclobber.
-See, for example, the @samp{mulsi3} insn of the ARM@.
+A operand which is read by the instruction can be tied to an earlyclobber
+operand if its only use as an input occurs before the early result is
+written.  Adding alternatives of this form often allows GCC to produce
+better code when only some of the read operands can be affected by the
+earlyclobber. See, for example, the @samp{mulsi3} insn of the ARM@.
 
-@samp{&} does not obviate the need to write @samp{=}.
+Furthermore, if the @dfn{earlyclobber} operand is also a read/write
+operand, then that operand is written only after it's used.
+
+@samp{&} does not obviate the need to write @samp{=} or @samp{+}.  As
+@dfn{earlyclobber} operands are always written, a read-only
+@dfn{earlyclobber} operand is ill-formed and will be rejected by the
+compiler.
 
 @cindex @samp{%} in constraint
 @item %
 Declares the instruction to be commutative for this operand and the
 following operand.  This means that the compiler may interchange the
 two operands if that is the cheapest way to make all operands fit the
-constraints.
+constraints.  @samp{%} applies to all alternatives and must appear as
+the first character in the constraint.  Only read-only operands can use
+@samp{%}.
+
 @ifset INTERNALS
 This is often used in patterns for addition instructions
 that really have only two operands: the result must go in one of the
@@ -1670,6 +1695,7 @@ constraints that aren't.  The compiler source file mentioned in the
 table heading for each architecture is the definitive reference for
 the meanings of that architecture's constraints.
 
+@c Please keep this table alphabetized by target!
 @table @emph
 @item AArch64 family---@file{config/aarch64/constraints.md}
 @table @code
@@ -1711,9 +1737,6 @@ Floating point constant zero
 @item Z
 Integer constant zero
 
-@item Usa
-An absolute symbolic address
-
 @item Ush
 The high part (bits 12 and upwards) of the pc-relative address of a symbol
 within 4GB of the instruction
@@ -1728,10 +1751,80 @@ DF modes
 @end table
 
 
+@item ARC ---@file{config/arc/constraints.md}
+@table @code
+@item q
+Registers usable in ARCompact 16-bit instructions: @code{r0}-@code{r3},
+@code{r12}-@code{r15}.  This constraint can only match when the @option{-mq}
+option is in effect.
+
+@item e
+Registers usable as base-regs of memory addresses in ARCompact 16-bit memory
+instructions: @code{r0}-@code{r3}, @code{r12}-@code{r15}, @code{sp}.
+This constraint can only match when the @option{-mq}
+option is in effect.
+@item D
+ARC FPX (dpfp) 64-bit registers. @code{D0}, @code{D1}.
+
+@item I
+A signed 12-bit integer constant.
+
+@item Cal
+constant for arithmetic/logical operations.  This might be any constant
+that can be put into a long immediate by the assmbler or linker without
+involving a PIC relocation.
+
+@item K
+A 3-bit unsigned integer constant.
+
+@item L
+A 6-bit unsigned integer constant.
+
+@item CnL
+One's complement of a 6-bit unsigned integer constant.
+
+@item CmL
+Two's complement of a 6-bit unsigned integer constant.
+
+@item M
+A 5-bit unsigned integer constant.
+
+@item O
+A 7-bit unsigned integer constant.
+
+@item P
+A 8-bit unsigned integer constant.
+
+@item H
+Any const_double value.
+@end table
+
 @item ARM family---@file{config/arm/constraints.md}
 @table @code
+
+@item h
+In Thumb state, the core registers @code{r8}-@code{r15}.
+
+@item k
+The stack pointer register.
+
+@item l
+In Thumb State the core registers @code{r0}-@code{r7}.  In ARM state this
+is an alias for the @code{r} constraint.
+
+@item t
+VFP floating-point registers @code{s0}-@code{s31}.  Used for 32 bit values.
+
 @item w
-VFP floating-point register
+VFP floating-point registers @code{d0}-@code{d31} and the appropriate
+subset @code{d0}-@code{d15} based on command line options.
+Used for 64 bit values only.  Not valid for Thumb1.
+
+@item y
+The iWMMX co-processor registers.
+
+@item z
+The iWMMX GR registers.
 
 @item G
 The floating-point constant 0.0
@@ -1837,734 +1930,6 @@ A floating point constant 0.0
 
 @item Q
 A memory address based on Y or Z pointer with displacement.
-@end table
-
-@item Epiphany---@file{config/epiphany/constraints.md}
-@table @code
-@item U16
-An unsigned 16-bit constant.
-
-@item K
-An unsigned 5-bit constant.
-
-@item L
-A signed 11-bit constant.
-
-@item Cm1
-A signed 11-bit constant added to @minus{}1.
-Can only match when the @option{-m1reg-@var{reg}} option is active.
-
-@item Cl1
-Left-shift of @minus{}1, i.e., a bit mask with a block of leading ones, the rest
-being a block of trailing zeroes.
-Can only match when the @option{-m1reg-@var{reg}} option is active.
-
-@item Cr1
-Right-shift of @minus{}1, i.e., a bit mask with a trailing block of ones, the
-rest being zeroes.  Or to put it another way, one less than a power of two.
-Can only match when the @option{-m1reg-@var{reg}} option is active.
-
-@item Cal
-Constant for arithmetic/logical operations.
-This is like @code{i}, except that for position independent code,
-no symbols / expressions needing relocations are allowed.
-
-@item Csy
-Symbolic constant for call/jump instruction.
-
-@item Rcs
-The register class usable in short insns.  This is a register class
-constraint, and can thus drive register allocation.
-This constraint won't match unless @option{-mprefer-short-insn-regs} is
-in effect.
-
-@item Rsc
-The the register class of registers that can be used to hold a
-sibcall call address.  I.e., a caller-saved register.
-
-@item Rct
-Core control register class.
-
-@item Rgs
-The register group usable in short insns.
-This constraint does not use a register class, so that it only
-passively matches suitable registers, and doesn't drive register allocation.
-
-@ifset INTERNALS
-@item Car
-Constant suitable for the addsi3_r pattern.  This is a valid offset
-For byte, halfword, or word addressing.
-@end ifset
-
-@item Rra
-Matches the return address if it can be replaced with the link register.
-
-@item Rcc
-Matches the integer condition code register.
-
-@item Sra
-Matches the return address if it is in a stack slot.
-
-@item Cfm
-Matches control register values to switch fp mode, which are encapsulated in
-@code{UNSPEC_FP_MODE}.
-@end table
-
-@item CR16 Architecture---@file{config/cr16/cr16.h}
-@table @code
-
-@item b
-Registers from r0 to r14 (registers without stack pointer)
-
-@item t
-Register from r0 to r11 (all 16-bit registers)
-
-@item p
-Register from r12 to r15 (all 32-bit registers)
-
-@item I
-Signed constant that fits in 4 bits
-
-@item J
-Signed constant that fits in 5 bits
-
-@item K
-Signed constant that fits in 6 bits
-
-@item L
-Unsigned constant that fits in 4 bits
-
-@item M
-Signed constant that fits in 32 bits
-
-@item N
-Check for 64 bits wide constants for add/sub instructions
-
-@item G
-Floating point constant that is legal for store immediate
-@end table
-
-@item Hewlett-Packard PA-RISC---@file{config/pa/pa.h}
-@table @code
-@item a
-General register 1
-
-@item f
-Floating point register
-
-@item q
-Shift amount register
-
-@item x
-Floating point register (deprecated)
-
-@item y
-Upper floating point register (32-bit), floating point register (64-bit)
-
-@item Z
-Any register
-
-@item I
-Signed 11-bit integer constant
-
-@item J
-Signed 14-bit integer constant
-
-@item K
-Integer constant that can be deposited with a @code{zdepi} instruction
-
-@item L
-Signed 5-bit integer constant
-
-@item M
-Integer constant 0
-
-@item N
-Integer constant that can be loaded with a @code{ldil} instruction
-
-@item O
-Integer constant whose value plus one is a power of 2
-
-@item P
-Integer constant that can be used for @code{and} operations in @code{depi}
-and @code{extru} instructions
-
-@item S
-Integer constant 31
-
-@item U
-Integer constant 63
-
-@item G
-Floating-point constant 0.0
-
-@item A
-A @code{lo_sum} data-linkage-table memory operand
-
-@item Q
-A memory operand that can be used as the destination operand of an
-integer store instruction
-
-@item R
-A scaled or unscaled indexed memory operand
-
-@item T
-A memory operand for floating-point loads and stores
-
-@item W
-A register indirect memory operand
-@end table
-
-@item picoChip family---@file{picochip.h}
-@table @code
-@item k
-Stack register.
-
-@item f
-Pointer register.  A register which can be used to access memory without
-supplying an offset.  Any other register can be used to access memory,
-but will need a constant offset.  In the case of the offset being zero,
-it is more efficient to use a pointer register, since this reduces code
-size.
-
-@item t
-A twin register.  A register which may be paired with an adjacent
-register to create a 32-bit register.
-
-@item a
-Any absolute memory address (e.g., symbolic constant, symbolic
-constant + offset).
-
-@item I
-4-bit signed integer.
-
-@item J
-4-bit unsigned integer.
-
-@item K
-8-bit signed integer.
-
-@item M
-Any constant whose absolute value is no greater than 4-bits.
-
-@item N
-10-bit signed integer
-
-@item O
-16-bit signed integer.
-
-@end table
-
-@item PowerPC and IBM RS6000---@file{config/rs6000/constraints.md}
-@table @code
-@item b
-Address base register
-
-@item d
-Floating point register (containing 64-bit value)
-
-@item f
-Floating point register (containing 32-bit value)
-
-@item v
-Altivec vector register
-
-@item wa
-Any VSX register if the -mvsx option was used or NO_REGS.
-
-When using any of the register constraints (@code{wa}, @code{wd},
-@code{wf}, @code{wg}, @code{wh}, @code{wi}, @code{wj}, @code{wk},
-@code{wl}, @code{wm}, @code{ws}, @code{wt}, @code{wu}, @code{wv},
-@code{ww}, or @code{wy}) that take VSX registers, you must use
-@code{%x<n>} in the template so that the correct register is used.
-Otherwise the register number output in the assembly file will be
-incorrect if an Altivec register is an operand of a VSX instruction
-that expects VSX register numbering.
-
-@smallexample
-asm ("xvadddp %x0,%x1,%x2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
-@end smallexample
-
-is correct, but:
-
-@smallexample
-asm ("xvadddp %0,%1,%2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
-@end smallexample
-
-is not correct.
-
-@item wd
-VSX vector register to hold vector double data or NO_REGS.
-
-@item wf
-VSX vector register to hold vector float data or NO_REGS.
-
-@item wg
-If @option{-mmfpgpr} was used, a floating point register or NO_REGS.
-
-@item wh
-Floating point register if direct moves are available, or NO_REGS.
-
-@item wi
-FP or VSX register to hold 64-bit integers for VSX insns or NO_REGS.
-
-@item wj
-FP or VSX register to hold 64-bit integers for direct moves or NO_REGS.
-
-@item wk
-FP or VSX register to hold 64-bit doubles for direct moves or NO_REGS.
-
-@item wl
-Floating point register if the LFIWAX instruction is enabled or NO_REGS.
-
-@item wm
-VSX register if direct move instructions are enabled, or NO_REGS.
-
-@item wn
-No register (NO_REGS).
-
-@item wr
-General purpose register if 64-bit instructions are enabled or NO_REGS.
-
-@item ws
-VSX vector register to hold scalar double values or NO_REGS.
-
-@item wt
-VSX vector register to hold 128 bit integer or NO_REGS.
-
-@item wu
-Altivec register to use for float/32-bit int loads/stores  or NO_REGS.
-
-@item wv
-Altivec register to use for double loads/stores  or NO_REGS.
-
-@item ww
-FP or VSX register to perform float operations under @option{-mvsx} or NO_REGS.
-
-@item wx
-Floating point register if the STFIWX instruction is enabled or NO_REGS.
-
-@item wy
-FP or VSX register to perform ISA 2.07 float ops or NO_REGS.
-
-@item wz
-Floating point register if the LFIWZX instruction is enabled or NO_REGS.
-
-@item wQ
-A memory address that will work with the @code{lq} and @code{stq}
-instructions.
-
-@item h
-@samp{MQ}, @samp{CTR}, or @samp{LINK} register
-
-@item q
-@samp{MQ} register
-
-@item c
-@samp{CTR} register
-
-@item l
-@samp{LINK} register
-
-@item x
-@samp{CR} register (condition register) number 0
-
-@item y
-@samp{CR} register (condition register)
-
-@item z
-@samp{XER[CA]} carry bit (part of the XER register)
-
-@item I
-Signed 16-bit constant
-
-@item J
-Unsigned 16-bit constant shifted left 16 bits (use @samp{L} instead for
-@code{SImode} constants)
-
-@item K
-Unsigned 16-bit constant
-
-@item L
-Signed 16-bit constant shifted left 16 bits
-
-@item M
-Constant larger than 31
-
-@item N
-Exact power of 2
-
-@item O
-Zero
-
-@item P
-Constant whose negation is a signed 16-bit constant
-
-@item G
-Floating point constant that can be loaded into a register with one
-instruction per word
-
-@item H
-Integer/Floating point constant that can be loaded into a register using
-three instructions
-
-@item m
-Memory operand.
-Normally, @code{m} does not allow addresses that update the base register.
-If @samp{<} or @samp{>} constraint is also used, they are allowed and
-therefore on PowerPC targets in that case it is only safe
-to use @samp{m<>} in an @code{asm} statement if that @code{asm} statement
-accesses the operand exactly once.  The @code{asm} statement must also
-use @samp{%U@var{<opno>}} as a placeholder for the ``update'' flag in the
-corresponding load or store instruction.  For example:
-
-@smallexample
-asm ("st%U0 %1,%0" : "=m<>" (mem) : "r" (val));
-@end smallexample
-
-is correct but:
-
-@smallexample
-asm ("st %1,%0" : "=m<>" (mem) : "r" (val));
-@end smallexample
-
-is not.
-
-@item es
-A ``stable'' memory operand; that is, one which does not include any
-automodification of the base register.  This used to be useful when
-@samp{m} allowed automodification of the base register, but as those are now only
-allowed when @samp{<} or @samp{>} is used, @samp{es} is basically the same
-as @samp{m} without @samp{<} and @samp{>}.
-
-@item Q
-Memory operand that is an offset from a register (it is usually better
-to use @samp{m} or @samp{es} in @code{asm} statements)
-
-@item Z
-Memory operand that is an indexed or indirect from a register (it is
-usually better to use @samp{m} or @samp{es} in @code{asm} statements)
-
-@item R
-AIX TOC entry
-
-@item a
-Address operand that is an indexed or indirect from a register (@samp{p} is
-preferable for @code{asm} statements)
-
-@item S
-Constant suitable as a 64-bit mask operand
-
-@item T
-Constant suitable as a 32-bit mask operand
-
-@item U
-System V Release 4 small data area reference
-
-@item t
-AND masks that can be performed by two rldic@{l, r@} instructions
-
-@item W
-Vector constant that does not require memory
-
-@item j
-Vector constant that is all zeros.
-
-@end table
-
-@item Intel 386---@file{config/i386/constraints.md}
-@table @code
-@item R
-Legacy register---the eight integer registers available on all
-i386 processors (@code{a}, @code{b}, @code{c}, @code{d},
-@code{si}, @code{di}, @code{bp}, @code{sp}).
-
-@item q
-Any register accessible as @code{@var{r}l}.  In 32-bit mode, @code{a},
-@code{b}, @code{c}, and @code{d}; in 64-bit mode, any integer register.
-
-@item Q
-Any register accessible as @code{@var{r}h}: @code{a}, @code{b},
-@code{c}, and @code{d}.
-
-@ifset INTERNALS
-@item l
-Any register that can be used as the index in a base+index memory
-access: that is, any general register except the stack pointer.
-@end ifset
-
-@item a
-The @code{a} register.
-
-@item b
-The @code{b} register.
-
-@item c
-The @code{c} register.
-
-@item d
-The @code{d} register.
-
-@item S
-The @code{si} register.
-
-@item D
-The @code{di} register.
-
-@item A
-The @code{a} and @code{d} registers.  This class is used for instructions
-that return double word results in the @code{ax:dx} register pair.  Single
-word values will be allocated either in @code{ax} or @code{dx}.
-For example on i386 the following implements @code{rdtsc}:
-
-@smallexample
-unsigned long long rdtsc (void)
-@{
-  unsigned long long tick;
-  __asm__ __volatile__("rdtsc":"=A"(tick));
-  return tick;
-@}
-@end smallexample
-
-This is not correct on x86_64 as it would allocate tick in either @code{ax}
-or @code{dx}.  You have to use the following variant instead:
-
-@smallexample
-unsigned long long rdtsc (void)
-@{
-  unsigned int tickl, tickh;
-  __asm__ __volatile__("rdtsc":"=a"(tickl),"=d"(tickh));
-  return ((unsigned long long)tickh << 32)|tickl;
-@}
-@end smallexample
-
-
-@item f
-Any 80387 floating-point (stack) register.
-
-@item t
-Top of 80387 floating-point stack (@code{%st(0)}).
-
-@item u
-Second from top of 80387 floating-point stack (@code{%st(1)}).
-
-@item y
-Any MMX register.
-
-@item x
-Any SSE register.
-
-@item Yz
-First SSE register (@code{%xmm0}).
-
-@ifset INTERNALS
-@item Y2
-Any SSE register, when SSE2 is enabled.
-
-@item Yi
-Any SSE register, when SSE2 and inter-unit moves are enabled.
-
-@item Ym
-Any MMX register, when inter-unit moves are enabled.
-@end ifset
-
-@item I
-Integer constant in the range 0 @dots{} 31, for 32-bit shifts.
-
-@item J
-Integer constant in the range 0 @dots{} 63, for 64-bit shifts.
-
-@item K
-Signed 8-bit integer constant.
-
-@item L
-@code{0xFF} or @code{0xFFFF}, for andsi as a zero-extending move.
-
-@item M
-0, 1, 2, or 3 (shifts for the @code{lea} instruction).
-
-@item N
-Unsigned 8-bit integer constant (for @code{in} and @code{out}
-instructions).
-
-@ifset INTERNALS
-@item O
-Integer constant in the range 0 @dots{} 127, for 128-bit shifts.
-@end ifset
-
-@item G
-Standard 80387 floating point constant.
-
-@item C
-Standard SSE floating point constant.
-
-@item e
-32-bit signed integer constant, or a symbolic reference known
-to fit that range (for immediate operands in sign-extending x86-64
-instructions).
-
-@item Z
-32-bit unsigned integer constant, or a symbolic reference known
-to fit that range (for immediate operands in zero-extending x86-64
-instructions).
-
-@end table
-
-@item Intel IA-64---@file{config/ia64/ia64.h}
-@table @code
-@item a
-General register @code{r0} to @code{r3} for @code{addl} instruction
-
-@item b
-Branch register
-
-@item c
-Predicate register (@samp{c} as in ``conditional'')
-
-@item d
-Application register residing in M-unit
-
-@item e
-Application register residing in I-unit
-
-@item f
-Floating-point register
-
-@item m
-Memory operand.  If used together with @samp{<} or @samp{>},
-the operand can have postincrement and postdecrement which
-require printing with @samp{%Pn} on IA-64.
-
-@item G
-Floating-point constant 0.0 or 1.0
-
-@item I
-14-bit signed integer constant
-
-@item J
-22-bit signed integer constant
-
-@item K
-8-bit signed integer constant for logical instructions
-
-@item L
-8-bit adjusted signed integer constant for compare pseudo-ops
-
-@item M
-6-bit unsigned integer constant for shift counts
-
-@item N
-9-bit signed integer constant for load and store postincrements
-
-@item O
-The constant zero
-
-@item P
-0 or @minus{}1 for @code{dep} instruction
-
-@item Q
-Non-volatile memory for floating-point loads and stores
-
-@item R
-Integer constant in the range 1 to 4 for @code{shladd} instruction
-
-@item S
-Memory operand except postincrement and postdecrement.  This is
-now roughly the same as @samp{m} when not used together with @samp{<}
-or @samp{>}.
-@end table
-
-@item FRV---@file{config/frv/frv.h}
-@table @code
-@item a
-Register in the class @code{ACC_REGS} (@code{acc0} to @code{acc7}).
-
-@item b
-Register in the class @code{EVEN_ACC_REGS} (@code{acc0} to @code{acc7}).
-
-@item c
-Register in the class @code{CC_REGS} (@code{fcc0} to @code{fcc3} and
-@code{icc0} to @code{icc3}).
-
-@item d
-Register in the class @code{GPR_REGS} (@code{gr0} to @code{gr63}).
-
-@item e
-Register in the class @code{EVEN_REGS} (@code{gr0} to @code{gr63}).
-Odd registers are excluded not in the class but through the use of a machine
-mode larger than 4 bytes.
-
-@item f
-Register in the class @code{FPR_REGS} (@code{fr0} to @code{fr63}).
-
-@item h
-Register in the class @code{FEVEN_REGS} (@code{fr0} to @code{fr63}).
-Odd registers are excluded not in the class but through the use of a machine
-mode larger than 4 bytes.
-
-@item l
-Register in the class @code{LR_REG} (the @code{lr} register).
-
-@item q
-Register in the class @code{QUAD_REGS} (@code{gr2} to @code{gr63}).
-Register numbers not divisible by 4 are excluded not in the class but through
-the use of a machine mode larger than 8 bytes.
-
-@item t
-Register in the class @code{ICC_REGS} (@code{icc0} to @code{icc3}).
-
-@item u
-Register in the class @code{FCC_REGS} (@code{fcc0} to @code{fcc3}).
-
-@item v
-Register in the class @code{ICR_REGS} (@code{cc4} to @code{cc7}).
-
-@item w
-Register in the class @code{FCR_REGS} (@code{cc0} to @code{cc3}).
-
-@item x
-Register in the class @code{QUAD_FPR_REGS} (@code{fr0} to @code{fr63}).
-Register numbers not divisible by 4 are excluded not in the class but through
-the use of a machine mode larger than 8 bytes.
-
-@item z
-Register in the class @code{SPR_REGS} (@code{lcr} and @code{lr}).
-
-@item A
-Register in the class @code{QUAD_ACC_REGS} (@code{acc0} to @code{acc7}).
-
-@item B
-Register in the class @code{ACCG_REGS} (@code{accg0} to @code{accg7}).
-
-@item C
-Register in the class @code{CR_REGS} (@code{cc0} to @code{cc7}).
-
-@item G
-Floating point constant zero
-
-@item I
-6-bit signed integer constant
-
-@item J
-10-bit signed integer constant
-
-@item L
-16-bit signed integer constant
-
-@item M
-16-bit unsigned integer constant
-
-@item N
-12-bit signed integer constant that is negative---i.e.@: in the
-range of @minus{}2048 to @minus{}1
-
-@item O
-Constant zero
-
-@item P
-12-bit signed integer constant that is greater than zero---i.e.@: in the
-range of 1 to 2047.
-
 @end table
 
 @item Blackfin family---@file{config/bfin/constraints.md}
@@ -2682,6 +2047,339 @@ An integer constant with all bits set except exactly one.
 
 @item Q
 Any SYMBOL_REF.
+@end table
+
+@item CR16 Architecture---@file{config/cr16/cr16.h}
+@table @code
+
+@item b
+Registers from r0 to r14 (registers without stack pointer)
+
+@item t
+Register from r0 to r11 (all 16-bit registers)
+
+@item p
+Register from r12 to r15 (all 32-bit registers)
+
+@item I
+Signed constant that fits in 4 bits
+
+@item J
+Signed constant that fits in 5 bits
+
+@item K
+Signed constant that fits in 6 bits
+
+@item L
+Unsigned constant that fits in 4 bits
+
+@item M
+Signed constant that fits in 32 bits
+
+@item N
+Check for 64 bits wide constants for add/sub instructions
+
+@item G
+Floating point constant that is legal for store immediate
+@end table
+
+@item Epiphany---@file{config/epiphany/constraints.md}
+@table @code
+@item U16
+An unsigned 16-bit constant.
+
+@item K
+An unsigned 5-bit constant.
+
+@item L
+A signed 11-bit constant.
+
+@item Cm1
+A signed 11-bit constant added to @minus{}1.
+Can only match when the @option{-m1reg-@var{reg}} option is active.
+
+@item Cl1
+Left-shift of @minus{}1, i.e., a bit mask with a block of leading ones, the rest
+being a block of trailing zeroes.
+Can only match when the @option{-m1reg-@var{reg}} option is active.
+
+@item Cr1
+Right-shift of @minus{}1, i.e., a bit mask with a trailing block of ones, the
+rest being zeroes.  Or to put it another way, one less than a power of two.
+Can only match when the @option{-m1reg-@var{reg}} option is active.
+
+@item Cal
+Constant for arithmetic/logical operations.
+This is like @code{i}, except that for position independent code,
+no symbols / expressions needing relocations are allowed.
+
+@item Csy
+Symbolic constant for call/jump instruction.
+
+@item Rcs
+The register class usable in short insns.  This is a register class
+constraint, and can thus drive register allocation.
+This constraint won't match unless @option{-mprefer-short-insn-regs} is
+in effect.
+
+@item Rsc
+The the register class of registers that can be used to hold a
+sibcall call address.  I.e., a caller-saved register.
+
+@item Rct
+Core control register class.
+
+@item Rgs
+The register group usable in short insns.
+This constraint does not use a register class, so that it only
+passively matches suitable registers, and doesn't drive register allocation.
+
+@ifset INTERNALS
+@item Car
+Constant suitable for the addsi3_r pattern.  This is a valid offset
+For byte, halfword, or word addressing.
+@end ifset
+
+@item Rra
+Matches the return address if it can be replaced with the link register.
+
+@item Rcc
+Matches the integer condition code register.
+
+@item Sra
+Matches the return address if it is in a stack slot.
+
+@item Cfm
+Matches control register values to switch fp mode, which are encapsulated in
+@code{UNSPEC_FP_MODE}.
+@end table
+
+@item FRV---@file{config/frv/frv.h}
+@table @code
+@item a
+Register in the class @code{ACC_REGS} (@code{acc0} to @code{acc7}).
+
+@item b
+Register in the class @code{EVEN_ACC_REGS} (@code{acc0} to @code{acc7}).
+
+@item c
+Register in the class @code{CC_REGS} (@code{fcc0} to @code{fcc3} and
+@code{icc0} to @code{icc3}).
+
+@item d
+Register in the class @code{GPR_REGS} (@code{gr0} to @code{gr63}).
+
+@item e
+Register in the class @code{EVEN_REGS} (@code{gr0} to @code{gr63}).
+Odd registers are excluded not in the class but through the use of a machine
+mode larger than 4 bytes.
+
+@item f
+Register in the class @code{FPR_REGS} (@code{fr0} to @code{fr63}).
+
+@item h
+Register in the class @code{FEVEN_REGS} (@code{fr0} to @code{fr63}).
+Odd registers are excluded not in the class but through the use of a machine
+mode larger than 4 bytes.
+
+@item l
+Register in the class @code{LR_REG} (the @code{lr} register).
+
+@item q
+Register in the class @code{QUAD_REGS} (@code{gr2} to @code{gr63}).
+Register numbers not divisible by 4 are excluded not in the class but through
+the use of a machine mode larger than 8 bytes.
+
+@item t
+Register in the class @code{ICC_REGS} (@code{icc0} to @code{icc3}).
+
+@item u
+Register in the class @code{FCC_REGS} (@code{fcc0} to @code{fcc3}).
+
+@item v
+Register in the class @code{ICR_REGS} (@code{cc4} to @code{cc7}).
+
+@item w
+Register in the class @code{FCR_REGS} (@code{cc0} to @code{cc3}).
+
+@item x
+Register in the class @code{QUAD_FPR_REGS} (@code{fr0} to @code{fr63}).
+Register numbers not divisible by 4 are excluded not in the class but through
+the use of a machine mode larger than 8 bytes.
+
+@item z
+Register in the class @code{SPR_REGS} (@code{lcr} and @code{lr}).
+
+@item A
+Register in the class @code{QUAD_ACC_REGS} (@code{acc0} to @code{acc7}).
+
+@item B
+Register in the class @code{ACCG_REGS} (@code{accg0} to @code{accg7}).
+
+@item C
+Register in the class @code{CR_REGS} (@code{cc0} to @code{cc7}).
+
+@item G
+Floating point constant zero
+
+@item I
+6-bit signed integer constant
+
+@item J
+10-bit signed integer constant
+
+@item L
+16-bit signed integer constant
+
+@item M
+16-bit unsigned integer constant
+
+@item N
+12-bit signed integer constant that is negative---i.e.@: in the
+range of @minus{}2048 to @minus{}1
+
+@item O
+Constant zero
+
+@item P
+12-bit signed integer constant that is greater than zero---i.e.@: in the
+range of 1 to 2047.
+
+@end table
+
+@item Hewlett-Packard PA-RISC---@file{config/pa/pa.h}
+@table @code
+@item a
+General register 1
+
+@item f
+Floating point register
+
+@item q
+Shift amount register
+
+@item x
+Floating point register (deprecated)
+
+@item y
+Upper floating point register (32-bit), floating point register (64-bit)
+
+@item Z
+Any register
+
+@item I
+Signed 11-bit integer constant
+
+@item J
+Signed 14-bit integer constant
+
+@item K
+Integer constant that can be deposited with a @code{zdepi} instruction
+
+@item L
+Signed 5-bit integer constant
+
+@item M
+Integer constant 0
+
+@item N
+Integer constant that can be loaded with a @code{ldil} instruction
+
+@item O
+Integer constant whose value plus one is a power of 2
+
+@item P
+Integer constant that can be used for @code{and} operations in @code{depi}
+and @code{extru} instructions
+
+@item S
+Integer constant 31
+
+@item U
+Integer constant 63
+
+@item G
+Floating-point constant 0.0
+
+@item A
+A @code{lo_sum} data-linkage-table memory operand
+
+@item Q
+A memory operand that can be used as the destination operand of an
+integer store instruction
+
+@item R
+A scaled or unscaled indexed memory operand
+
+@item T
+A memory operand for floating-point loads and stores
+
+@item W
+A register indirect memory operand
+@end table
+
+@item Intel IA-64---@file{config/ia64/ia64.h}
+@table @code
+@item a
+General register @code{r0} to @code{r3} for @code{addl} instruction
+
+@item b
+Branch register
+
+@item c
+Predicate register (@samp{c} as in ``conditional'')
+
+@item d
+Application register residing in M-unit
+
+@item e
+Application register residing in I-unit
+
+@item f
+Floating-point register
+
+@item m
+Memory operand.  If used together with @samp{<} or @samp{>},
+the operand can have postincrement and postdecrement which
+require printing with @samp{%Pn} on IA-64.
+
+@item G
+Floating-point constant 0.0 or 1.0
+
+@item I
+14-bit signed integer constant
+
+@item J
+22-bit signed integer constant
+
+@item K
+8-bit signed integer constant for logical instructions
+
+@item L
+8-bit adjusted signed integer constant for compare pseudo-ops
+
+@item M
+6-bit unsigned integer constant for shift counts
+
+@item N
+9-bit signed integer constant for load and store postincrements
+
+@item O
+The constant zero
+
+@item P
+0 or @minus{}1 for @code{dep} instruction
+
+@item Q
+Non-volatile memory for floating-point loads and stores
+
+@item R
+Integer constant in the range 1 to 4 for @code{shladd} instruction
+
+@item S
+Memory operand except postincrement and postdecrement.  This is
+now roughly the same as @samp{m} when not used together with @samp{<}
+or @samp{>}.
 @end table
 
 @item M32C---@file{config/m32c/m32c.c}
@@ -2989,6 +2687,15 @@ Floating-point zero.
 
 @item R
 An address that can be used in a non-macro load or store.
+
+@item ZC
+A memory operand whose address is formed by a base register and offset
+that is suitable for use in instructions with the same addressing mode
+as @code{ll} and @code{sc}.
+
+@item ZD
+An address suitable for a @code{prefetch} instruction, or for any other
+instruction with the same addressing mode as @code{prefetch}.
 @end table
 
 @item Motorola 680x0---@file{config/m68k/constraints.md}
@@ -3098,6 +2805,162 @@ A constant in the range of 0 to @minus{}255.
 
 @end table
 
+@item MSP430--@file{config/msp430/constraints.md}
+@table @code
+
+@item R12
+Register R12.
+
+@item R13
+Register R13.
+
+@item K
+Integer constant 1.
+
+@item L
+Integer constant -1^20..1^19.
+
+@item M
+Integer constant 1-4.
+
+@item Ya
+Memory references which do not require an extended MOVX instruction.
+
+@item Yl
+Memory reference, labels only.
+
+@item Ys
+Memory reference, stack only.
+
+@end table
+
+@item NDS32---@file{config/nds32/constraints.md}
+@table @code
+@item w
+LOW register class $r0 to $r7 constraint for V3/V3M ISA.
+@item l
+LOW register class $r0 to $r7.
+@item d
+MIDDLE register class $r0 to $r11, $r16 to $r19.
+@item h
+HIGH register class $r12 to $r14, $r20 to $r31.
+@item t
+Temporary assist register $ta (i.e.@: $r15).
+@item k
+Stack register $sp.
+@item Iu03
+Unsigned immediate 3-bit value.
+@item In03
+Negative immediate 3-bit value in the range of @minus{}7--0.
+@item Iu04
+Unsigned immediate 4-bit value.
+@item Is05
+Signed immediate 5-bit value.
+@item Iu05
+Unsigned immediate 5-bit value.
+@item In05
+Negative immediate 5-bit value in the range of @minus{}31--0.
+@item Ip05
+Unsigned immediate 5-bit value for movpi45 instruction with range 16--47.
+@item Iu06
+Unsigned immediate 6-bit value constraint for addri36.sp instruction.
+@item Iu08
+Unsigned immediate 8-bit value.
+@item Iu09
+Unsigned immediate 9-bit value.
+@item Is10
+Signed immediate 10-bit value.
+@item Is11
+Signed immediate 11-bit value.
+@item Is15
+Signed immediate 15-bit value.
+@item Iu15
+Unsigned immediate 15-bit value.
+@item Ic15
+A constant which is not in the range of imm15u but ok for bclr instruction.
+@item Ie15
+A constant which is not in the range of imm15u but ok for bset instruction.
+@item It15
+A constant which is not in the range of imm15u but ok for btgl instruction.
+@item Ii15
+A constant whose compliment value is in the range of imm15u
+and ok for bitci instruction.
+@item Is16
+Signed immediate 16-bit value.
+@item Is17
+Signed immediate 17-bit value.
+@item Is19
+Signed immediate 19-bit value.
+@item Is20
+Signed immediate 20-bit value.
+@item Ihig
+The immediate value that can be simply set high 20-bit.
+@item Izeb
+The immediate value 0xff.
+@item Izeh
+The immediate value 0xffff.
+@item Ixls
+The immediate value 0x01.
+@item Ix11
+The immediate value 0x7ff.
+@item Ibms
+The immediate value with power of 2.
+@item Ifex
+The immediate value with power of 2 minus 1.
+@item U33
+Memory constraint for 333 format.
+@item U45
+Memory constraint for 45 format.
+@item U37
+Memory constraint for 37 format.
+@end table
+
+@item Nios II family---@file{config/nios2/constraints.md}
+@table @code
+
+@item I
+Integer that is valid as an immediate operand in an
+instruction taking a signed 16-bit number. Range
+@minus{}32768 to 32767.
+
+@item J
+Integer that is valid as an immediate operand in an
+instruction taking an unsigned 16-bit number. Range
+0 to 65535.
+
+@item K
+Integer that is valid as an immediate operand in an
+instruction taking only the upper 16-bits of a
+32-bit number. Range 32-bit numbers with the lower
+16-bits being 0.
+
+@item L
+Integer that is valid as an immediate operand for a 
+shift instruction. Range 0 to 31.
+
+@item M
+Integer that is valid as an immediate operand for
+only the value 0. Can be used in conjunction with
+the format modifier @code{z} to use @code{r0}
+instead of @code{0} in the assembly output.
+
+@item N
+Integer that is valid as an immediate operand for
+a custom instruction opcode. Range 0 to 255.
+
+@item S
+Matches immediates which are addresses in the small
+data section and therefore can be added to @code{gp}
+as a 16-bit immediate to re-create their 32-bit value.
+
+@ifset INTERNALS
+@item T
+A @code{const} wrapped @code{UNSPEC} expression,
+representing a supported PIC or TLS relocation.
+@end ifset
+
+@end table
+
 @item PDP-11---@file{config/pdp11/constraints.md}
 @table @code
 @item a
@@ -3144,6 +3007,226 @@ offset) after the opcode.
 
 @item R
 A memory reference that is encoded within the opcode.
+
+@end table
+
+@item PowerPC and IBM RS6000---@file{config/rs6000/constraints.md}
+@table @code
+@item b
+Address base register
+
+@item d
+Floating point register (containing 64-bit value)
+
+@item f
+Floating point register (containing 32-bit value)
+
+@item v
+Altivec vector register
+
+@item wa
+Any VSX register if the -mvsx option was used or NO_REGS.
+
+When using any of the register constraints (@code{wa}, @code{wd},
+@code{wf}, @code{wg}, @code{wh}, @code{wi}, @code{wj}, @code{wk},
+@code{wl}, @code{wm}, @code{ws}, @code{wt}, @code{wu}, @code{wv},
+@code{ww}, or @code{wy}) that take VSX registers, you must use
+@code{%x<n>} in the template so that the correct register is used.
+Otherwise the register number output in the assembly file will be
+incorrect if an Altivec register is an operand of a VSX instruction
+that expects VSX register numbering.
+
+@smallexample
+asm ("xvadddp %x0,%x1,%x2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
+@end smallexample
+
+is correct, but:
+
+@smallexample
+asm ("xvadddp %0,%1,%2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
+@end smallexample
+
+is not correct.
+
+@item wd
+VSX vector register to hold vector double data or NO_REGS.
+
+@item wf
+VSX vector register to hold vector float data or NO_REGS.
+
+@item wg
+If @option{-mmfpgpr} was used, a floating point register or NO_REGS.
+
+@item wh
+Floating point register if direct moves are available, or NO_REGS.
+
+@item wi
+FP or VSX register to hold 64-bit integers for VSX insns or NO_REGS.
+
+@item wj
+FP or VSX register to hold 64-bit integers for direct moves or NO_REGS.
+
+@item wk
+FP or VSX register to hold 64-bit doubles for direct moves or NO_REGS.
+
+@item wl
+Floating point register if the LFIWAX instruction is enabled or NO_REGS.
+
+@item wm
+VSX register if direct move instructions are enabled, or NO_REGS.
+
+@item wn
+No register (NO_REGS).
+
+@item wr
+General purpose register if 64-bit instructions are enabled or NO_REGS.
+
+@item ws
+VSX vector register to hold scalar double values or NO_REGS.
+
+@item wt
+VSX vector register to hold 128 bit integer or NO_REGS.
+
+@item wu
+Altivec register to use for float/32-bit int loads/stores  or NO_REGS.
+
+@item wv
+Altivec register to use for double loads/stores  or NO_REGS.
+
+@item ww
+FP or VSX register to perform float operations under @option{-mvsx} or NO_REGS.
+
+@item wx
+Floating point register if the STFIWX instruction is enabled or NO_REGS.
+
+@item wy
+FP or VSX register to perform ISA 2.07 float ops or NO_REGS.
+
+@item wz
+Floating point register if the LFIWZX instruction is enabled or NO_REGS.
+
+@item wD
+Int constant that is the element number of the 64-bit scalar in a vector.
+
+@item wQ
+A memory address that will work with the @code{lq} and @code{stq}
+instructions.
+
+@item h
+@samp{MQ}, @samp{CTR}, or @samp{LINK} register
+
+@item q
+@samp{MQ} register
+
+@item c
+@samp{CTR} register
+
+@item l
+@samp{LINK} register
+
+@item x
+@samp{CR} register (condition register) number 0
+
+@item y
+@samp{CR} register (condition register)
+
+@item z
+@samp{XER[CA]} carry bit (part of the XER register)
+
+@item I
+Signed 16-bit constant
+
+@item J
+Unsigned 16-bit constant shifted left 16 bits (use @samp{L} instead for
+@code{SImode} constants)
+
+@item K
+Unsigned 16-bit constant
+
+@item L
+Signed 16-bit constant shifted left 16 bits
+
+@item M
+Constant larger than 31
+
+@item N
+Exact power of 2
+
+@item O
+Zero
+
+@item P
+Constant whose negation is a signed 16-bit constant
+
+@item G
+Floating point constant that can be loaded into a register with one
+instruction per word
+
+@item H
+Integer/Floating point constant that can be loaded into a register using
+three instructions
+
+@item m
+Memory operand.
+Normally, @code{m} does not allow addresses that update the base register.
+If @samp{<} or @samp{>} constraint is also used, they are allowed and
+therefore on PowerPC targets in that case it is only safe
+to use @samp{m<>} in an @code{asm} statement if that @code{asm} statement
+accesses the operand exactly once.  The @code{asm} statement must also
+use @samp{%U@var{<opno>}} as a placeholder for the ``update'' flag in the
+corresponding load or store instruction.  For example:
+
+@smallexample
+asm ("st%U0 %1,%0" : "=m<>" (mem) : "r" (val));
+@end smallexample
+
+is correct but:
+
+@smallexample
+asm ("st %1,%0" : "=m<>" (mem) : "r" (val));
+@end smallexample
+
+is not.
+
+@item es
+A ``stable'' memory operand; that is, one which does not include any
+automodification of the base register.  This used to be useful when
+@samp{m} allowed automodification of the base register, but as those are now only
+allowed when @samp{<} or @samp{>} is used, @samp{es} is basically the same
+as @samp{m} without @samp{<} and @samp{>}.
+
+@item Q
+Memory operand that is an offset from a register (it is usually better
+to use @samp{m} or @samp{es} in @code{asm} statements)
+
+@item Z
+Memory operand that is an indexed or indirect from a register (it is
+usually better to use @samp{m} or @samp{es} in @code{asm} statements)
+
+@item R
+AIX TOC entry
+
+@item a
+Address operand that is an indexed or indirect from a register (@samp{p} is
+preferable for @code{asm} statements)
+
+@item S
+Constant suitable as a 64-bit mask operand
+
+@item T
+Constant suitable as a 32-bit mask operand
+
+@item U
+System V Release 4 small data area reference
+
+@item t
+AND masks that can be performed by two rldic@{l, r@} instructions
+
+@item W
+Vector constant that does not require memory
+
+@item j
+Vector constant that is all zeros.
 
 @end table
 
@@ -3260,6 +3343,79 @@ A constant in the range @minus{}8388608 to 8388607, inclusive.
 
 @item Uint04
 A constant in the range 0 to 15, inclusive.
+
+@end table
+
+@item S/390 and zSeries---@file{config/s390/s390.h}
+@table @code
+@item a
+Address register (general purpose register except r0)
+
+@item c
+Condition code register
+
+@item d
+Data register (arbitrary general purpose register)
+
+@item f
+Floating-point register
+
+@item I
+Unsigned 8-bit constant (0--255)
+
+@item J
+Unsigned 12-bit constant (0--4095)
+
+@item K
+Signed 16-bit constant (@minus{}32768--32767)
+
+@item L
+Value appropriate as displacement.
+@table @code
+@item (0..4095)
+for short displacement
+@item (@minus{}524288..524287)
+for long displacement
+@end table
+
+@item M
+Constant integer with a value of 0x7fffffff.
+
+@item N
+Multiple letter constraint followed by 4 parameter letters.
+@table @code
+@item 0..9:
+number of the part counting from most to least significant
+@item H,Q:
+mode of the part
+@item D,S,H:
+mode of the containing operand
+@item 0,F:
+value of the other parts (F---all bits set)
+@end table
+The constraint matches if the specified part of a constant
+has a value different from its other parts.
+
+@item Q
+Memory reference without index register and with short displacement.
+
+@item R
+Memory reference with index register and short displacement.
+
+@item S
+Memory reference without index register but with long displacement.
+
+@item T
+Memory reference with index register and long displacement.
+
+@item U
+Pointer with short displacement.
+
+@item W
+Pointer with long displacement.
+
+@item Y
+Shift count operand.
 
 @end table
 
@@ -3432,218 +3588,6 @@ An immediate for and/xor/or instructions.  const_int is sign extended as a 128 b
 
 @item Z
 An immediate for the @code{iohl} instruction.  const_int is sign extended to 128 bit.
-
-@end table
-
-@item S/390 and zSeries---@file{config/s390/s390.h}
-@table @code
-@item a
-Address register (general purpose register except r0)
-
-@item c
-Condition code register
-
-@item d
-Data register (arbitrary general purpose register)
-
-@item f
-Floating-point register
-
-@item I
-Unsigned 8-bit constant (0--255)
-
-@item J
-Unsigned 12-bit constant (0--4095)
-
-@item K
-Signed 16-bit constant (@minus{}32768--32767)
-
-@item L
-Value appropriate as displacement.
-@table @code
-@item (0..4095)
-for short displacement
-@item (@minus{}524288..524287)
-for long displacement
-@end table
-
-@item M
-Constant integer with a value of 0x7fffffff.
-
-@item N
-Multiple letter constraint followed by 4 parameter letters.
-@table @code
-@item 0..9:
-number of the part counting from most to least significant
-@item H,Q:
-mode of the part
-@item D,S,H:
-mode of the containing operand
-@item 0,F:
-value of the other parts (F---all bits set)
-@end table
-The constraint matches if the specified part of a constant
-has a value different from its other parts.
-
-@item Q
-Memory reference without index register and with short displacement.
-
-@item R
-Memory reference with index register and short displacement.
-
-@item S
-Memory reference without index register but with long displacement.
-
-@item T
-Memory reference with index register and long displacement.
-
-@item U
-Pointer with short displacement.
-
-@item W
-Pointer with long displacement.
-
-@item Y
-Shift count operand.
-
-@end table
-
-@item Score family---@file{config/score/score.h}
-@table @code
-@item d
-Registers from r0 to r32.
-
-@item e
-Registers from r0 to r16.
-
-@item t
-r8---r11 or r22---r27 registers.
-
-@item h
-hi register.
-
-@item l
-lo register.
-
-@item x
-hi + lo register.
-
-@item q
-cnt register.
-
-@item y
-lcb register.
-
-@item z
-scb register.
-
-@item a
-cnt + lcb + scb register.
-
-@item c
-cr0---cr15 register.
-
-@item b
-cp1 registers.
-
-@item f
-cp2 registers.
-
-@item i
-cp3 registers.
-
-@item j
-cp1 + cp2 + cp3 registers.
-
-@item I
-High 16-bit constant (32-bit constant with 16 LSBs zero).
-
-@item J
-Unsigned 5 bit integer (in the range 0 to 31).
-
-@item K
-Unsigned 16 bit integer (in the range 0 to 65535).
-
-@item L
-Signed 16 bit integer (in the range @minus{}32768 to 32767).
-
-@item M
-Unsigned 14 bit integer (in the range 0 to 16383).
-
-@item N
-Signed 14 bit integer (in the range @minus{}8192 to 8191).
-
-@item Z
-Any SYMBOL_REF.
-@end table
-
-@item Xstormy16---@file{config/stormy16/stormy16.h}
-@table @code
-@item a
-Register r0.
-
-@item b
-Register r1.
-
-@item c
-Register r2.
-
-@item d
-Register r8.
-
-@item e
-Registers r0 through r7.
-
-@item t
-Registers r0 and r1.
-
-@item y
-The carry register.
-
-@item z
-Registers r8 and r9.
-
-@item I
-A constant between 0 and 3 inclusive.
-
-@item J
-A constant that has exactly one bit set.
-
-@item K
-A constant that has exactly one bit clear.
-
-@item L
-A constant between 0 and 255 inclusive.
-
-@item M
-A constant between @minus{}255 and 0 inclusive.
-
-@item N
-A constant between @minus{}3 and 0 inclusive.
-
-@item O
-A constant between 1 and 4 inclusive.
-
-@item P
-A constant between @minus{}4 and @minus{}1 inclusive.
-
-@item Q
-A memory reference that is a stack push.
-
-@item R
-A memory reference that is a stack pop.
-
-@item S
-A memory reference that refers to a constant address of known value.
-
-@item T
-The register indicated by Rx (not implemented yet).
-
-@item U
-A constant that is not between 2 and 15 inclusive.
-
-@item Z
-The constant 0.
 
 @end table
 
@@ -3878,6 +3822,264 @@ A 2-element vector constant with identical elements.
 
 @end table
 
+@item Visium---@file{config/visium/constraints.md}
+@table @code
+@item b
+EAM register @code{mdb}
+
+@item c
+EAM register @code{mdc}
+
+@item f
+Floating point register
+
+@ifset INTERNALS
+@item k
+Register for sibcall optimization
+@end ifset
+
+@item l
+General register, but not @code{r29}, @code{r30} and @code{r31}
+
+@item t
+Register @code{r1}
+
+@item u
+Register @code{r2}
+
+@item v
+Register @code{r3}
+
+@item G
+Floating-point constant 0.0
+
+@item J
+Integer constant in the range 0 .. 65535 (16-bit immediate)
+
+@item K
+Integer constant in the range 1 .. 31 (5-bit immediate)
+
+@item L
+Integer constant in the range @minus{}65535 .. @minus{}1 (16-bit negative immediate)
+
+@item M
+Integer constant @minus{}1
+
+@item O
+Integer constant 0
+
+@item P
+Integer constant 32
+@end table
+
+@item x86 family---@file{config/i386/constraints.md}
+@table @code
+@item R
+Legacy register---the eight integer registers available on all
+i386 processors (@code{a}, @code{b}, @code{c}, @code{d},
+@code{si}, @code{di}, @code{bp}, @code{sp}).
+
+@item q
+Any register accessible as @code{@var{r}l}.  In 32-bit mode, @code{a},
+@code{b}, @code{c}, and @code{d}; in 64-bit mode, any integer register.
+
+@item Q
+Any register accessible as @code{@var{r}h}: @code{a}, @code{b},
+@code{c}, and @code{d}.
+
+@ifset INTERNALS
+@item l
+Any register that can be used as the index in a base+index memory
+access: that is, any general register except the stack pointer.
+@end ifset
+
+@item a
+The @code{a} register.
+
+@item b
+The @code{b} register.
+
+@item c
+The @code{c} register.
+
+@item d
+The @code{d} register.
+
+@item S
+The @code{si} register.
+
+@item D
+The @code{di} register.
+
+@item A
+The @code{a} and @code{d} registers.  This class is used for instructions
+that return double word results in the @code{ax:dx} register pair.  Single
+word values will be allocated either in @code{ax} or @code{dx}.
+For example on i386 the following implements @code{rdtsc}:
+
+@smallexample
+unsigned long long rdtsc (void)
+@{
+  unsigned long long tick;
+  __asm__ __volatile__("rdtsc":"=A"(tick));
+  return tick;
+@}
+@end smallexample
+
+This is not correct on x86-64 as it would allocate tick in either @code{ax}
+or @code{dx}.  You have to use the following variant instead:
+
+@smallexample
+unsigned long long rdtsc (void)
+@{
+  unsigned int tickl, tickh;
+  __asm__ __volatile__("rdtsc":"=a"(tickl),"=d"(tickh));
+  return ((unsigned long long)tickh << 32)|tickl;
+@}
+@end smallexample
+
+
+@item f
+Any 80387 floating-point (stack) register.
+
+@item t
+Top of 80387 floating-point stack (@code{%st(0)}).
+
+@item u
+Second from top of 80387 floating-point stack (@code{%st(1)}).
+
+@item y
+Any MMX register.
+
+@item x
+Any SSE register.
+
+@item Yz
+First SSE register (@code{%xmm0}).
+
+@ifset INTERNALS
+@item Y2
+Any SSE register, when SSE2 is enabled.
+
+@item Yi
+Any SSE register, when SSE2 and inter-unit moves are enabled.
+
+@item Ym
+Any MMX register, when inter-unit moves are enabled.
+@end ifset
+
+@item I
+Integer constant in the range 0 @dots{} 31, for 32-bit shifts.
+
+@item J
+Integer constant in the range 0 @dots{} 63, for 64-bit shifts.
+
+@item K
+Signed 8-bit integer constant.
+
+@item L
+@code{0xFF} or @code{0xFFFF}, for andsi as a zero-extending move.
+
+@item M
+0, 1, 2, or 3 (shifts for the @code{lea} instruction).
+
+@item N
+Unsigned 8-bit integer constant (for @code{in} and @code{out}
+instructions).
+
+@ifset INTERNALS
+@item O
+Integer constant in the range 0 @dots{} 127, for 128-bit shifts.
+@end ifset
+
+@item G
+Standard 80387 floating point constant.
+
+@item C
+Standard SSE floating point constant.
+
+@item e
+32-bit signed integer constant, or a symbolic reference known
+to fit that range (for immediate operands in sign-extending x86-64
+instructions).
+
+@item Z
+32-bit unsigned integer constant, or a symbolic reference known
+to fit that range (for immediate operands in zero-extending x86-64
+instructions).
+
+@end table
+
+@item Xstormy16---@file{config/stormy16/stormy16.h}
+@table @code
+@item a
+Register r0.
+
+@item b
+Register r1.
+
+@item c
+Register r2.
+
+@item d
+Register r8.
+
+@item e
+Registers r0 through r7.
+
+@item t
+Registers r0 and r1.
+
+@item y
+The carry register.
+
+@item z
+Registers r8 and r9.
+
+@item I
+A constant between 0 and 3 inclusive.
+
+@item J
+A constant that has exactly one bit set.
+
+@item K
+A constant that has exactly one bit clear.
+
+@item L
+A constant between 0 and 255 inclusive.
+
+@item M
+A constant between @minus{}255 and 0 inclusive.
+
+@item N
+A constant between @minus{}3 and 0 inclusive.
+
+@item O
+A constant between 1 and 4 inclusive.
+
+@item P
+A constant between @minus{}4 and @minus{}1 inclusive.
+
+@item Q
+A memory reference that is a stack push.
+
+@item R
+A memory reference that is a stack pop.
+
+@item S
+A memory reference that refers to a constant address of known value.
+
+@item T
+The register indicated by Rx (not implemented yet).
+
+@item U
+A constant that is not between 2 and 15 inclusive.
+
+@item Z
+The constant 0.
+
+@end table
+
 @item Xtensa---@file{config/xtensa/constraints.md}
 @table @code
 @item a
@@ -3910,38 +4112,49 @@ Unsigned constant valid for BccUI instructions
 @subsection Disable insn alternatives using the @code{enabled} attribute
 @cindex enabled
 
-The @code{enabled} insn attribute may be used to disable certain insn
-alternatives for machine-specific reasons.  This is useful when adding
-new instructions to an existing pattern which are only available for
-certain cpu architecture levels as specified with the @code{-march=}
-option.
+There are three insn attributes that may be used to selectively disable
+instruction alternatives:
 
-If an insn alternative is disabled, then it will never be used.  The
-compiler treats the constraints for the disabled alternative as
-unsatisfiable.
+@table @code
+@item enabled
+Says whether an alternative is available on the current subtarget.
 
-In order to make use of the @code{enabled} attribute a back end has to add
-in the machine description files:
+@item preferred_for_size
+Says whether an enabled alternative should be used in code that is
+optimized for size.
 
-@enumerate
-@item
-A definition of the @code{enabled} insn attribute.  The attribute is
-defined as usual using the @code{define_attr} command.  This
-definition should be based on other insn attributes and/or target flags.
-The @code{enabled} attribute is a numeric attribute and should evaluate to
-@code{(const_int 1)} for an enabled alternative and to
-@code{(const_int 0)} otherwise.
-@item
-A definition of another insn attribute used to describe for what
-reason an insn alternative might be available or
-not.  E.g. @code{cpu_facility} as in the example below.
-@item
-An assignment for the second attribute to each insn definition
-combining instructions which are not all available under the same
-circumstances.  (Note: It obviously only makes sense for definitions
-with more than one alternative.  Otherwise the insn pattern should be
-disabled or enabled using the insn condition.)
-@end enumerate
+@item preferred_for_speed
+Says whether an enabled alternative should be used in code that is
+optimized for speed.
+@end table
+
+All these attributes should use @code{(const_int 1)} to allow an alternative
+or @code{(const_int 0)} to disallow it.  The attributes must be a static
+property of the subtarget; they cannot for example depend on the
+current operands, on the current optimization level, on the location
+of the insn within the body of a loop, on whether register allocation
+has finished, or on the current compiler pass.
+
+The @code{enabled} attribute is a correctness property.  It tells GCC to act
+as though the disabled alternatives were never defined in the first place.
+This is useful when adding new instructions to an existing pattern in
+cases where the new instructions are only available for certain cpu
+architecture levels (typically mapped to the @code{-march=} command-line
+option).
+
+In contrast, the @code{preferred_for_size} and @code{preferred_for_speed}
+attributes are strong optimization hints rather than correctness properties.
+@code{preferred_for_size} tells GCC which alternatives to consider when
+adding or modifying an instruction that GCC wants to optimize for size.
+@code{preferred_for_speed} does the same thing for speed.  Note that things
+like code motion can lead to cases where code optimized for size uses
+alternatives that are not preferred for size, and similarly for speed.
+
+Although @code{define_insn}s can in principle specify the @code{enabled}
+attribute directly, it is often clearer to have subsiduary attributes
+for each architectural feature of interest.  The @code{define_insn}s
+can then use these subsiduary attributes to say which alternatives
+require which features.  The example below does this for @code{cpu_facility}.
 
 E.g. the following two patterns could easily be merged using the @code{enabled}
 attribute:
@@ -4164,16 +4377,8 @@ Use this for constraints that should not appear in @code{asm} statements.
 It is occasionally useful to test a constraint from C code rather than
 implicitly via the constraint string in a @code{match_operand}.  The
 generated file @file{tm_p.h} declares a few interfaces for working
-with machine-specific constraints.  None of these interfaces work with
-the generic constraints described in @ref{Simple Constraints}.  This
-may change in the future.
-
-@strong{Warning:} @file{tm_p.h} may declare other functions that
-operate on constraints, besides the ones documented here.  Do not use
-those functions from machine-dependent code.  They exist to implement
-the old constraint interface that machine-independent components of
-the compiler still expect.  They will change or disappear in the
-future.
+with constraints.  At present these are defined for all constraints
+except @code{g} (which is equivalent to @code{general_operand}).
 
 Some valid constraint names are not valid C identifiers, so there is a
 mangling scheme for referring to them from C@.  Constraint names that
@@ -4200,17 +4405,14 @@ the variable @var{m} is a mangled constraint name (usually as part of
 a larger identifier).
 
 @deftp Enum constraint_num
-For each machine-specific constraint, there is a corresponding
+For each constraint except @code{g}, there is a corresponding
 enumeration constant: @samp{CONSTRAINT_} plus the mangled name of the
 constraint.  Functions that take an @code{enum constraint_num} as an
 argument expect one of these constants.
-
-Machine-independent constraints do not have associated constants.
-This may change in the future.
 @end deftp
 
 @deftypefun {inline bool} satisfies_constraint_@var{m} (rtx @var{exp})
-For each machine-specific, non-register constraint @var{m}, there is
+For each non-register constraint @var{m} except @code{g}, there is
 one of these functions; it returns @code{true} if @var{exp} satisfies the
 constraint.  These functions are only visible if @file{rtl.h} was included
 before @file{tm_p.h}.
@@ -4223,7 +4425,7 @@ specifies a register constraint, this function will always return
 @code{false}.
 @end deftypefun
 
-@deftypefun {enum reg_class} regclass_for_constraint (enum constraint_num @var{c})
+@deftypefun {enum reg_class} reg_class_for_constraint (enum constraint_num @var{c})
 Returns the register class associated with @var{c}.  If @var{c} is not
 a register constraint, or those registers are not available for the
 currently selected subtarget, returns @code{NO_REGS}.
@@ -4568,6 +4770,35 @@ means of constraints requiring operands 1 and 0 to be the same location.
 @itemx @samp{and@var{m}3}, @samp{ior@var{m}3}, @samp{xor@var{m}3}
 Similar, for other arithmetic operations.
 
+@cindex @code{addv@var{m}4} instruction pattern
+@item @samp{addv@var{m}4}
+Like @code{add@var{m}3} but takes a @code{code_label} as operand 3 and
+emits code to jump to it if signed overflow occurs during the addition.
+This pattern is used to implement the built-in functions performing
+signed integer addition with overflow checking.
+
+@cindex @code{subv@var{m}4} instruction pattern
+@cindex @code{mulv@var{m}4} instruction pattern
+@item @samp{subv@var{m}4}, @samp{mulv@var{m}4}
+Similar, for other signed arithmetic operations.
+
+@cindex @code{umulv@var{m}4} instruction pattern
+@item @samp{umulv@var{m}4}
+Like @code{mulv@var{m}4} but for unsigned multiplication.  That is to
+say, the operation is the same as signed multiplication but the jump
+is taken only on unsigned overflow.
+
+@cindex @code{addptr@var{m}3} instruction pattern
+@item @samp{addptr@var{m}3}
+Like @code{add@var{m}3} but is guaranteed to only be used for address
+calculations.  The expanded code is not allowed to clobber the
+condition code.  It only needs to be defined if @code{add@var{m}3}
+sets the condition code.  If adds used for address calculations and
+normal adds are not compatible it is required to expand a distinct
+pattern (e.g. using an unspec).  The pattern is used by LRA to emit
+address calculations.  @code{add@var{m}3} is used if
+@code{addptr@var{m}3} is not defined.
+
 @cindex @code{fma@var{m}4} instruction pattern
 @item @samp{fma@var{m}4}
 Multiply operand 2 and operand 1, then add operand 3, storing the
@@ -4617,53 +4848,81 @@ it is unspecified which of the two operands is returned as the result.
 @cindex @code{reduc_smax_@var{m}} instruction pattern
 @item @samp{reduc_smin_@var{m}}, @samp{reduc_smax_@var{m}}
 Find the signed minimum/maximum of the elements of a vector. The vector is
-operand 1, and the scalar result is stored in the least significant bits of
+operand 1, and the result is stored in the least significant bits of
 operand 0 (also a vector). The output and input vector should have the same
-modes.
+modes. These are legacy optabs, and platforms should prefer to implement
+@samp{reduc_smin_scal_@var{m}} and @samp{reduc_smax_scal_@var{m}}.
 
 @cindex @code{reduc_umin_@var{m}} instruction pattern
 @cindex @code{reduc_umax_@var{m}} instruction pattern
 @item @samp{reduc_umin_@var{m}}, @samp{reduc_umax_@var{m}}
 Find the unsigned minimum/maximum of the elements of a vector. The vector is
-operand 1, and the scalar result is stored in the least significant bits of
+operand 1, and the result is stored in the least significant bits of
 operand 0 (also a vector). The output and input vector should have the same
-modes.
+modes. These are legacy optabs, and platforms should prefer to implement
+@samp{reduc_umin_scal_@var{m}} and @samp{reduc_umax_scal_@var{m}}.
 
 @cindex @code{reduc_splus_@var{m}} instruction pattern
-@item @samp{reduc_splus_@var{m}}
-Compute the sum of the signed elements of a vector. The vector is operand 1,
-and the scalar result is stored in the least significant bits of operand 0
-(also a vector). The output and input vector should have the same modes.
-
 @cindex @code{reduc_uplus_@var{m}} instruction pattern
-@item @samp{reduc_uplus_@var{m}}
-Compute the sum of the unsigned elements of a vector. The vector is operand 1,
-and the scalar result is stored in the least significant bits of operand 0
+@item @samp{reduc_splus_@var{m}}, @samp{reduc_uplus_@var{m}}
+Compute the sum of the signed/unsigned elements of a vector. The vector is
+operand 1, and the result is stored in the least significant bits of operand 0
 (also a vector). The output and input vector should have the same modes.
+These are legacy optabs, and platforms should prefer to implement
+@samp{reduc_plus_scal_@var{m}}.
+
+@cindex @code{reduc_smin_scal_@var{m}} instruction pattern
+@cindex @code{reduc_smax_scal_@var{m}} instruction pattern
+@item @samp{reduc_smin_scal_@var{m}}, @samp{reduc_smax_scal_@var{m}}
+Find the signed minimum/maximum of the elements of a vector. The vector is
+operand 1, and operand 0 is the scalar result, with mode equal to the mode of
+the elements of the input vector.
+
+@cindex @code{reduc_umin_scal_@var{m}} instruction pattern
+@cindex @code{reduc_umax_scal_@var{m}} instruction pattern
+@item @samp{reduc_umin_scal_@var{m}}, @samp{reduc_umax_scal_@var{m}}
+Find the unsigned minimum/maximum of the elements of a vector. The vector is
+operand 1, and operand 0 is the scalar result, with mode equal to the mode of
+the elements of the input vector.
+
+@cindex @code{reduc_plus_scal_@var{m}} instruction pattern
+@item @samp{reduc_plus_scal_@var{m}}
+Compute the sum of the elements of a vector. The vector is operand 1, and
+operand 0 is the scalar result, with mode equal to the mode of the elements of
+the input vector.
 
 @cindex @code{sdot_prod@var{m}} instruction pattern
 @item @samp{sdot_prod@var{m}}
 @cindex @code{udot_prod@var{m}} instruction pattern
-@item @samp{udot_prod@var{m}}
+@itemx @samp{udot_prod@var{m}}
 Compute the sum of the products of two signed/unsigned elements.
 Operand 1 and operand 2 are of the same mode. Their product, which is of a
 wider mode, is computed and added to operand 3. Operand 3 is of a mode equal or
 wider than the mode of the product. The result is placed in operand 0, which
 is of the same mode as operand 3.
 
+@cindex @code{ssad@var{m}} instruction pattern
+@item @samp{ssad@var{m}}
+@cindex @code{usad@var{m}} instruction pattern
+@item @samp{usad@var{m}}
+Compute the sum of absolute differences of two signed/unsigned elements.
+Operand 1 and operand 2 are of the same mode. Their absolute difference, which
+is of a wider mode, is computed and added to operand 3. Operand 3 is of a mode
+equal or wider than the mode of the absolute difference. The result is placed
+in operand 0, which is of the same mode as operand 3.
+
 @cindex @code{ssum_widen@var{m3}} instruction pattern
 @item @samp{ssum_widen@var{m3}}
 @cindex @code{usum_widen@var{m3}} instruction pattern
-@item @samp{usum_widen@var{m3}}
+@itemx @samp{usum_widen@var{m3}}
 Operands 0 and 2 are of the same mode, which is wider than the mode of
 operand 1. Add operand 1 to operand 2 and place the widened result in
 operand 0. (This is used express accumulation of elements into an accumulator
 of a wider mode.)
 
-@cindex @code{vec_shl_@var{m}} instruction pattern
 @cindex @code{vec_shr_@var{m}} instruction pattern
-@item @samp{vec_shl_@var{m}}, @samp{vec_shr_@var{m}}
-Whole vector left/right shift in bits.
+@item @samp{vec_shr_@var{m}}
+Whole vector right shift in bits, i.e. towards element 0.
 Operand 1 is a vector to be shifted.
 Operand 2 is an integer shift amount in bits.
 Operand 0 is where the resulting shifted vector is stored.
@@ -4737,7 +4996,8 @@ the output vector (operand 0).
 Signed/Unsigned widening multiplication.  The two inputs (operands 1 and 2)
 are vectors with N signed/unsigned elements of size S@.  Multiply the high/low
 or even/odd elements of the two vectors, and put the N/2 products of size 2*S
-in the output vector (operand 0).
+in the output vector (operand 0). A target shouldn't implement even/odd pattern
+pair if it is less efficient than lo/hi one.
 
 @cindex @code{vec_widen_ushiftl_hi_@var{m}} instruction pattern
 @cindex @code{vec_widen_ushiftl_lo_@var{m}} instruction pattern
@@ -4903,6 +5163,11 @@ Reverse the order of bytes of operand 1 and store the result in operand 0.
 @cindex @code{usneg@var{m}2} instruction pattern
 @item @samp{neg@var{m}2}, @samp{ssneg@var{m}2}, @samp{usneg@var{m}2}
 Negate operand 1 and store the result in operand 0.
+
+@cindex @code{negv@var{m}3} instruction pattern
+@item @samp{negv@var{m}3}
+Like @code{neg@var{m}2} but takes a @code{code_label} as operand 2 and
+emits code to jump to it if signed overflow occurs during the negation.
 
 @cindex @code{abs@var{m}2} instruction pattern
 @item @samp{abs@var{m}2}
@@ -5111,10 +5376,18 @@ generating the instruction.
 The @code{ffs} built-in function of C always uses the mode which
 corresponds to the C data type @code{int}.
 
+@cindex @code{clrsb@var{m}2} instruction pattern
+@item @samp{clrsb@var{m}2}
+Count leading redundant sign bits.
+Store into operand 0 the number of redundant sign bits in operand 1, starting
+at the most significant bit position.
+A redundant sign bit is defined as any sign bit after the first. As such,
+this count will be one less than the count of leading sign bits.
+
 @cindex @code{clz@var{m}2} instruction pattern
 @item @samp{clz@var{m}2}
-Store into operand 0 the number of leading 0-bits in @var{x}, starting
-at the most significant bit position.  If @var{x} is 0, the
+Store into operand 0 the number of leading 0-bits in operand 1, starting
+at the most significant bit position.  If operand 1 is 0, the
 @code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if
 the result is undefined or has a useful value.
 @var{m} is the mode of operand 0; operand 1's mode is
@@ -5123,8 +5396,8 @@ operand to that mode before generating the instruction.
 
 @cindex @code{ctz@var{m}2} instruction pattern
 @item @samp{ctz@var{m}2}
-Store into operand 0 the number of trailing 0-bits in @var{x}, starting
-at the least significant bit position.  If @var{x} is 0, the
+Store into operand 0 the number of trailing 0-bits in operand 1, starting
+at the least significant bit position.  If operand 1 is 0, the
 @code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if
 the result is undefined or has a useful value.
 @var{m} is the mode of operand 0; operand 1's mode is
@@ -5133,15 +5406,15 @@ operand to that mode before generating the instruction.
 
 @cindex @code{popcount@var{m}2} instruction pattern
 @item @samp{popcount@var{m}2}
-Store into operand 0 the number of 1-bits in @var{x}.  @var{m} is the
+Store into operand 0 the number of 1-bits in operand 1.  @var{m} is the
 mode of operand 0; operand 1's mode is specified by the instruction
 pattern, and the compiler will convert the operand to that mode before
 generating the instruction.
 
 @cindex @code{parity@var{m}2} instruction pattern
 @item @samp{parity@var{m}2}
-Store into operand 0 the parity of @var{x}, i.e.@: the number of 1-bits
-in @var{x} modulo 2.  @var{m} is the mode of operand 0; operand 1's mode
+Store into operand 0 the parity of operand 1, i.e.@: the number of 1-bits
+in operand 1 modulo 2.  @var{m} is the mode of operand 0; operand 1's mode
 is specified by the instruction pattern, and the compiler will convert
 the operand to that mode before generating the instruction.
 
@@ -5156,12 +5429,13 @@ are the first two operands, and both are @code{mem:BLK}s with an
 address in mode @code{Pmode}.
 
 The number of bytes to move is the third operand, in mode @var{m}.
-Usually, you specify @code{word_mode} for @var{m}.  However, if you can
+Usually, you specify @code{Pmode} for @var{m}.  However, if you can
 generate better code knowing the range of valid lengths is smaller than
-those representable in a full word, you should provide a pattern with a
+those representable in a full Pmode pointer, you should provide
+a pattern with a
 mode corresponding to the range of values you can handle efficiently
 (e.g., @code{QImode} for values in the range 0--127; note we avoid numbers
-that appear negative) and also a pattern with @code{word_mode}.
+that appear negative) and also a pattern with @code{Pmode}.
 
 The fourth operand is the known shared alignment of the source and
 destination, in the form of a @code{const_int} rtx.  Thus, if the
@@ -5192,6 +5466,9 @@ destination and source strings are operands 1 and 2, and both are
 the expansion of this pattern should store in operand 0 the address in
 which the @code{NUL} terminator was stored in the destination string.
 
+This patern has also several optional operands that are same as in
+@code{setmem}.
+
 @cindex @code{setmem@var{m}} instruction pattern
 @item @samp{setmem@var{m}}
 Block set instruction.  The destination string is the first operand,
@@ -5211,6 +5488,10 @@ respectively.  The expected alignment differs from alignment in operand 4
 in a way that the blocks are not required to be aligned according to it in
 all cases. This expected alignment is also in bytes, just like operand 4.
 Expected size, when unknown, is set to @code{(const_int -1)}.
+Operand 7 is the minimal size of the block and operand 8 is the
+maximal size of the block (NULL if it can not be represented as CONST_INT).
+Operand 9 is the probable maximal size (i.e. we can not rely on it for correctness,
+but it can be used for choosing proper code sequence for a given size).
 
 The use for multiple @code{setmem@var{m}} is as for @code{movmem@var{m}}.
 
@@ -5522,13 +5803,13 @@ from the machine description.
 Conditional branch instruction combined with a compare instruction.
 Operand 0 is a comparison operator.  Operand 1 and operand 2 are the
 first and second operands of the comparison, respectively.  Operand 3
-is a @code{label_ref} that refers to the label to jump to.
+is the @code{code_label} to jump to.
 
 @cindex @code{jump} instruction pattern
 @item @samp{jump}
 A jump inside a function; an unconditional branch.  Operand 0 is the
-@code{label_ref} of the label to jump to.  This pattern name is mandatory
-on all machines.
+@code{code_label} to jump to.  This pattern name is mandatory on all
+machines.
 
 @cindex @code{call} instruction pattern
 @item @samp{call}
@@ -5686,7 +5967,7 @@ A label to jump to if the index has a value outside the bounds.
 @end enumerate
 
 The table is an @code{addr_vec} or @code{addr_diff_vec} inside of a
-@code{jump_insn}.  The number of elements in the table is one plus the
+@code{jump_table_data}.  The number of elements in the table is one plus the
 difference between the upper bound and the lower bound.
 
 @cindex @code{tablejump} instruction pattern
@@ -5721,34 +6002,27 @@ reduction is enabled.
 
 @cindex @code{doloop_end} instruction pattern
 @item @samp{doloop_end}
-Conditional branch instruction that decrements a register and jumps if
-the register is nonzero.  This instruction takes five operands: Operand
-0 is the register to decrement and test; operand 1 is the number of loop
-iterations as a @code{const_int} or @code{const0_rtx} if this cannot be
-determined until run-time; operand 2 is the actual or estimated maximum
-number of iterations as a @code{const_int}; operand 3 is the number of
-enclosed loops as a @code{const_int} (an innermost loop has a value of
-1); operand 4 is the label to jump to if the register is nonzero;
-operand 5 is const1_rtx if the loop in entered at its top, const0_rtx
-otherwise.
+Conditional branch instruction that decrements a register and
+jumps if the register is nonzero.  Operand 0 is the register to
+decrement and test; operand 1 is the label to jump to if the
+register is nonzero.
 @xref{Looping Patterns}.
 
 This optional instruction pattern should be defined for machines with
 low-overhead looping instructions as the loop optimizer will try to
-modify suitable loops to utilize it.  If nested low-overhead looping is
-not supported, use a @code{define_expand} (@pxref{Expander Definitions})
-and make the pattern fail if operand 3 is not @code{const1_rtx}.
-Similarly, if the actual or estimated maximum number of iterations is
-too large for this instruction, make it fail.
+modify suitable loops to utilize it.  The target hook
+@code{TARGET_CAN_USE_DOLOOP_P} controls the conditions under which
+low-overhead loops can be used.
 
 @cindex @code{doloop_begin} instruction pattern
 @item @samp{doloop_begin}
 Companion instruction to @code{doloop_end} required for machines that
-need to perform some initialization, such as loading special registers
-used by a low-overhead looping instruction.  If initialization insns do
-not always need to be emitted, use a @code{define_expand}
-(@pxref{Expander Definitions}) and make it fail.
+need to perform some initialization, such as loading a special counter
+register.  Operand 1 is the associated @code{doloop_end} pattern and
+operand 0 is the register that it decrements.
 
+If initialization insns do not always need to be emitted, use a
+@code{define_expand} (@pxref{Expander Definitions}) and make it fail.
 
 @cindex @code{canonicalize_funcptr_for_compare} instruction pattern
 @item @samp{canonicalize_funcptr_for_compare}
@@ -6025,7 +6299,6 @@ A typical @code{ctrap} pattern looks like
 
 @cindex @code{prefetch} instruction pattern
 @item @samp{prefetch}
-
 This pattern, if defined, emits code for a non-faulting data prefetch
 instruction.  Operand 0 is the address of the memory to prefetch.  Operand 1
 is a constant 1 if the prefetch is preparing for a write to the memory
@@ -6041,7 +6314,6 @@ the values of operands 1 and 2.
 
 @cindex @code{blockage} instruction pattern
 @item @samp{blockage}
-
 This pattern defines a pseudo insn that prevents the instruction
 scheduler and other passes from moving instructions and using register
 equivalences across the boundary defined by the blockage insn.
@@ -6049,7 +6321,6 @@ This needs to be an UNSPEC_VOLATILE pattern or a volatile ASM.
 
 @cindex @code{memory_barrier} instruction pattern
 @item @samp{memory_barrier}
-
 If the target memory model is not fully synchronous, then this pattern
 should be defined to an instruction that orders both loads and stores
 before the instruction with respect to loads and stores after the instruction.
@@ -6057,7 +6328,6 @@ This pattern has no operands.
 
 @cindex @code{sync_compare_and_swap@var{mode}} instruction pattern
 @item @samp{sync_compare_and_swap@var{mode}}
-
 This pattern, if defined, emits code for an atomic compare-and-swap
 operation.  Operand 1 is the memory on which the atomic operation is
 performed.  Operand 2 is the ``old'' value to be compared against the
@@ -6106,7 +6376,6 @@ interruptable locking.
 @item @samp{sync_add@var{mode}}, @samp{sync_sub@var{mode}}
 @itemx @samp{sync_ior@var{mode}}, @samp{sync_and@var{mode}}
 @itemx @samp{sync_xor@var{mode}}, @samp{sync_nand@var{mode}}
-
 These patterns emit code for an atomic operation on memory.
 Operand 0 is the memory on which the atomic operation is performed.
 Operand 1 is the second operand to the binary operator.
@@ -6128,7 +6397,6 @@ from a compare-and-swap operation, if defined.
 @item @samp{sync_old_add@var{mode}}, @samp{sync_old_sub@var{mode}}
 @itemx @samp{sync_old_ior@var{mode}}, @samp{sync_old_and@var{mode}}
 @itemx @samp{sync_old_xor@var{mode}}, @samp{sync_old_nand@var{mode}}
-
 These patterns emit code for an atomic operation on memory,
 and return the value that the memory contained before the operation.
 Operand 0 is the result value, operand 1 is the memory on which the
@@ -6152,14 +6420,12 @@ from a compare-and-swap operation, if defined.
 @item @samp{sync_new_add@var{mode}}, @samp{sync_new_sub@var{mode}}
 @itemx @samp{sync_new_ior@var{mode}}, @samp{sync_new_and@var{mode}}
 @itemx @samp{sync_new_xor@var{mode}}, @samp{sync_new_nand@var{mode}}
-
 These patterns are like their @code{sync_old_@var{op}} counterparts,
 except that they return the value that exists in the memory location
 after the operation, rather than before the operation.
 
 @cindex @code{sync_lock_test_and_set@var{mode}} instruction pattern
 @item @samp{sync_lock_test_and_set@var{mode}}
-
 This pattern takes two forms, based on the capabilities of the target.
 In either case, operand 0 is the result of the operand, operand 1 is
 the memory on which the atomic operation is performed, and operand 2
@@ -6184,7 +6450,6 @@ a compare-and-swap operation, if defined.
 
 @cindex @code{sync_lock_release@var{mode}} instruction pattern
 @item @samp{sync_lock_release@var{mode}}
-
 This pattern, if defined, releases a lock set by
 @code{sync_lock_test_and_set@var{mode}}.  Operand 0 is the memory
 that contains the lock; operand 1 is the value to store in the lock.
@@ -6274,7 +6539,6 @@ compare and swap loop.
 @item @samp{atomic_add@var{mode}}, @samp{atomic_sub@var{mode}}
 @itemx @samp{atomic_or@var{mode}}, @samp{atomic_and@var{mode}}
 @itemx @samp{atomic_xor@var{mode}}, @samp{atomic_nand@var{mode}}
-
 These patterns emit code for an atomic operation on memory with memory
 model semantics. Operand 0 is the memory on which the atomic operation is
 performed.  Operand 1 is the second operand to the binary operator.
@@ -6293,7 +6557,6 @@ none of these are available a compare-and-swap loop will be used.
 @item @samp{atomic_fetch_add@var{mode}}, @samp{atomic_fetch_sub@var{mode}}
 @itemx @samp{atomic_fetch_or@var{mode}}, @samp{atomic_fetch_and@var{mode}}
 @itemx @samp{atomic_fetch_xor@var{mode}}, @samp{atomic_fetch_nand@var{mode}}
-
 These patterns emit code for an atomic operation on memory with memory
 model semantics, and return the original value. Operand 0 is an output 
 operand which contains the value of the memory location before the 
@@ -6314,7 +6577,6 @@ loop will be used.
 @item @samp{atomic_add_fetch@var{mode}}, @samp{atomic_sub_fetch@var{mode}}
 @itemx @samp{atomic_or_fetch@var{mode}}, @samp{atomic_and_fetch@var{mode}}
 @itemx @samp{atomic_xor_fetch@var{mode}}, @samp{atomic_nand_fetch@var{mode}}
-
 These patterns emit code for an atomic operation on memory with memory
 model semantics and return the result after the operation is performed.
 Operand 0 is an output operand which contains the value after the
@@ -6330,7 +6592,6 @@ used.
 
 @cindex @code{atomic_test_and_set} instruction pattern
 @item @samp{atomic_test_and_set}
-
 This pattern emits code for @code{__builtin_atomic_test_and_set}.
 Operand 0 is an output operand which is set to true if the previous
 previous contents of the byte was "set", and false otherwise.  Operand 1
@@ -6377,7 +6638,6 @@ with @var{mode} intended to be @code{Pmode}.
 
 @cindex @code{stack_protect_set} instruction pattern
 @item @samp{stack_protect_set}
-
 This pattern, if defined, moves a @code{ptr_mode} value from the memory
 in operand 1 to the memory in operand 0 without leaving the value in
 a register afterward.  This is to avoid leaking the value some place
@@ -6388,7 +6648,6 @@ If this pattern is not defined, then a plain move pattern is generated.
 
 @cindex @code{stack_protect_test} instruction pattern
 @item @samp{stack_protect_test}
-
 This pattern, if defined, compares a @code{ptr_mode} value from the
 memory in operand 1 with the memory in operand 0 without leaving the
 value in a register afterward and branches to operand 2 if the values
@@ -6399,7 +6658,6 @@ conditional branch pattern is used.
 
 @cindex @code{clear_cache} instruction pattern
 @item @samp{clear_cache}
-
 This pattern, if defined, flushes the instruction cache for a region of
 memory.  The region is bounded to by the Pmode pointers in operand 0
 inclusive and operand 1 exclusive.
@@ -7613,7 +7871,7 @@ so here's a silly made-up example:
   "/* @r{determine 1 does not overlap 0 and 2} */"
   [(set (match_dup 4) (match_dup 1))
    (set (match_dup 0) (match_dup 4))
-   (set (match_dup 2) (match_dup 4))]
+   (set (match_dup 2) (match_dup 4))
    (set (match_dup 3) (match_dup 4))]
   "")
 @end smallexample
@@ -7644,6 +7902,7 @@ to track the condition codes.
 * Attr Example::        An example of assigning attributes.
 * Insn Lengths::        Computing the length of insns.
 * Constant Attributes:: Defining attributes that are constant.
+* Mnemonic Attribute::  Obtain the instruction mnemonic as attribute value.
 * Delay Slots::         Defining delay slots required for a machine.
 * Processor pipeline description:: Specifying information for insn scheduling.
 @end menu
@@ -7663,15 +7922,17 @@ by the target machine.  It looks like:
 (define_attr @var{name} @var{list-of-values} @var{default})
 @end smallexample
 
-@var{name} is a string specifying the name of the attribute being defined.
-Some attributes are used in a special way by the rest of the compiler. The
-@code{enabled} attribute can be used to conditionally enable or disable
-insn alternatives (@pxref{Disable Insn Alternatives}). The @code{predicable}
-attribute, together with a suitable @code{define_cond_exec}
-(@pxref{Conditional Execution}), can be used to automatically generate
-conditional variants of instruction patterns. The compiler internally uses
-the names @code{ce_enabled} and @code{nonce_enabled}, so they should not be
-used elsewhere as alternative names.
+@var{name} is a string specifying the name of the attribute being
+defined.  Some attributes are used in a special way by the rest of the
+compiler. The @code{enabled} attribute can be used to conditionally
+enable or disable insn alternatives (@pxref{Disable Insn
+Alternatives}). The @code{predicable} attribute, together with a
+suitable @code{define_cond_exec} (@pxref{Conditional Execution}), can
+be used to automatically generate conditional variants of instruction
+patterns. The @code{mnemonic} attribute can be used to check for the
+instruction mnemonic (@pxref{Mnemonic Attribute}).  The compiler
+internally uses the names @code{ce_enabled} and @code{nonce_enabled},
+so they should not be used elsewhere as alternative names.
 
 @var{list-of-values} is either a string that specifies a comma-separated
 list of values that can be assigned to the attribute, or a null string to
@@ -7735,6 +7996,11 @@ distances. @xref{Insn Lengths}.
 The @code{enabled} attribute can be defined to prevent certain
 alternatives of an insn definition from being used during code
 generation. @xref{Disable Insn Alternatives}.
+
+@item mnemonic
+The @code{mnemonic} attribute can be defined to implement instruction
+specific checks in e.g. the pipeline description.
+@xref{Mnemonic Attribute}.
 @end table
 
 For each of these special attributes, the corresponding
@@ -8208,6 +8474,12 @@ the number of vectors multiplied by the size of each vector.
 
 Lengths are measured in addressable storage units (bytes).
 
+Note that it is possible to call functions via the @code{symbol_ref}
+mechanism to compute the length of an insn.  However, if you use this
+mechanism you must provide dummy clauses to express the maximum length
+without using the function call.  You can an example of this in the
+@code{pa} machine description for the @code{call_symref} pattern.
+
 The following macros can be used to refine the length computation:
 
 @table @code
@@ -8284,6 +8556,47 @@ does not depend on any particular insn.  RTL expressions used to define
 the value of a constant attribute may use the @code{symbol_ref} form,
 but may not use either the @code{match_operand} form or @code{eq_attr}
 forms involving insn attributes.
+
+@end ifset
+@ifset INTERNALS
+@node Mnemonic Attribute
+@subsection Mnemonic Attribute
+@cindex mnemonic attribute
+
+The @code{mnemonic} attribute is a string type attribute holding the
+instruction mnemonic for an insn alternative.  The attribute values
+will automatically be generated by the machine description parser if
+there is an attribute definition in the md file:
+
+@smallexample
+(define_attr "mnemonic" "unknown" (const_string "unknown"))
+@end smallexample
+
+The default value can be freely chosen as long as it does not collide
+with any of the instruction mnemonics.  This value will be used
+whenever the machine description parser is not able to determine the
+mnemonic string.  This might be the case for output templates
+containing more than a single instruction as in
+@code{"mvcle\t%0,%1,0\;jo\t.-4"}.
+
+The @code{mnemonic} attribute set is not generated automatically if the
+instruction string is generated via C code.
+
+An existing @code{mnemonic} attribute set in an insn definition will not
+be overriden by the md file parser.  That way it is possible to
+manually set the instruction mnemonics for the cases where the md file
+parser fails to determine it automatically.
+
+The @code{mnemonic} attribute is useful for dealing with instruction
+specific properties in the pipeline description without defining
+additional insn attributes.
+
+@smallexample
+(define_attr "ooo_expanded" ""
+  (cond [(eq_attr "mnemonic" "dlr,dsgr,d,dsgf,stam,dsgfr,dlgr")
+         (const_int 1)]
+        (const_int 0)))
+@end smallexample
 
 @end ifset
 @ifset INTERNALS
@@ -8901,7 +9214,8 @@ can be quite tedious to describe these forms directly in the
 (define_cond_exec
   [@var{predicate-pattern}]
   "@var{condition}"
-  "@var{output-template}")
+  "@var{output-template}"
+  "@var{optional-insn-attribues}")
 @end smallexample
 
 @var{predicate-pattern} is the condition that must be true for the
@@ -8921,6 +9235,13 @@ assembly text for the predicate is a simple prefix to the main insn.
 In order to handle the general case, there is a global variable
 @code{current_insn_predicate} that will contain the entire predicate
 if the current insn is predicated, and will otherwise be @code{NULL}.
+
+@var{optional-insn-attributes} is an optional vector of attributes that gets
+appended to the insn attributes of the produced cond_exec rtx. It can
+be used to add some distinguishing attribute to cond_exec rtxs produced
+that way. An example usage would be to use this attribute in conjunction
+with attributes on the main pattern to disable particular alternatives under
+certain conditions.
 
 When @code{define_cond_exec} is used, an implicit reference to
 the @code{predicable} instruction attribute is made.
@@ -9678,7 +9999,7 @@ Here's an example of int iterators in action, taken from the ARM port:
 		      QABSNEG))]
   "TARGET_NEON"
   "vq<absneg>.<V_s_elem>\t%<V_reg>0, %<V_reg>1"
-  [(set_attr "neon_type" "neon_vqneg_vqabs")]
+  [(set_attr "type" "neon_vqneg_vqabs")]
 )
 
 @end smallexample
@@ -9693,7 +10014,7 @@ This is equivalent to:
 		      UNSPEC_VQABS))]
   "TARGET_NEON"
   "vqabs.<V_s_elem>\t%<V_reg>0, %<V_reg>1"
-  [(set_attr "neon_type" "neon_vqneg_vqabs")]
+  [(set_attr "type" "neon_vqneg_vqabs")]
 )
 
 (define_insn "neon_vqneg<mode>"
@@ -9703,7 +10024,7 @@ This is equivalent to:
 		      UNSPEC_VQNEG))]
   "TARGET_NEON"
   "vqneg.<V_s_elem>\t%<V_reg>0, %<V_reg>1"
-  [(set_attr "neon_type" "neon_vqneg_vqabs")]
+  [(set_attr "type" "neon_vqneg_vqabs")]
 )
 
 @end smallexample

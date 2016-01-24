@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -26,11 +26,48 @@
 #define TARGET_CPU_CPP_BUILTINS()			\
   do							\
     {							\
-      builtin_define ("__aarch64__");			\
+      builtin_define ("__aarch64__");                   \
+      builtin_define ("__ARM_64BIT_STATE");             \
+      builtin_define_with_int_value                     \
+        ("__ARM_ARCH", aarch64_architecture_version);   \
+      cpp_define_formatted                                              \
+        (parse_in, "__ARM_ARCH_%dA", aarch64_architecture_version);     \
+      builtin_define ("__ARM_ARCH_ISA_A64");            \
+      builtin_define_with_int_value                     \
+        ("__ARM_ARCH_PROFILE", 'A');                    \
+      builtin_define ("__ARM_FEATURE_CLZ");             \
+      builtin_define ("__ARM_FEATURE_IDIV");            \
+      builtin_define ("__ARM_FEATURE_UNALIGNED");       \
+      if (flag_unsafe_math_optimizations)               \
+        builtin_define ("__ARM_FP_FAST");               \
+      builtin_define ("__ARM_PCS_AAPCS64");             \
+      builtin_define_with_int_value                     \
+        ("__ARM_SIZEOF_WCHAR_T", WCHAR_TYPE_SIZE / 8);  \
+      builtin_define_with_int_value                     \
+        ("__ARM_SIZEOF_MINIMAL_ENUM",                   \
+         flag_short_enums? 1 : 4);                      \
       if (TARGET_BIG_END)				\
-	builtin_define ("__AARCH64EB__");		\
+        {                                               \
+          builtin_define ("__AARCH64EB__");             \
+          builtin_define ("__ARM_BIG_ENDIAN");          \
+        }                                               \
       else						\
 	builtin_define ("__AARCH64EL__");		\
+							\
+      if (TARGET_FLOAT)                                         \
+        {                                                       \
+          builtin_define ("__ARM_FEATURE_FMA");                 \
+          builtin_define_with_int_value ("__ARM_FP", 0x0C);     \
+        }                                                       \
+      if (TARGET_SIMD)                                          \
+        {                                                       \
+          builtin_define ("__ARM_FEATURE_NUMERIC_MAXMIN");      \
+          builtin_define ("__ARM_NEON");			\
+          builtin_define_with_int_value ("__ARM_NEON_FP", 0x0C);\
+        }                                                       \
+							        \
+      if (TARGET_CRC32)				        \
+	builtin_define ("__ARM_FEATURE_CRC32");		\
 							\
       switch (aarch64_cmodel)				\
 	{						\
@@ -49,6 +86,13 @@
 	    break;					\
 	}						\
 							\
+      if (TARGET_ILP32)					\
+	{						\
+	  cpp_define (parse_in, "_ILP32");		\
+	  cpp_define (parse_in, "__ILP32__");		\
+	}						\
+      if (TARGET_CRYPTO)				\
+	builtin_define ("__ARM_FEATURE_CRYPTO");	\
     } while (0)
 
 
@@ -73,7 +117,7 @@
 #define WORDS_BIG_ENDIAN (BYTES_BIG_ENDIAN)
 
 /* AdvSIMD is supported in the default configuration, unless disabled by
-   -mgeneral-regs-only or the +nosimd extension.  */
+   -mgeneral-regs-only or by the +nosimd extension.  */
 #define TARGET_SIMD (!TARGET_GENERAL_REGS_ONLY && AARCH64_ISA_SIMD)
 #define TARGET_FLOAT (!TARGET_GENERAL_REGS_ONLY && AARCH64_ISA_FP)
 
@@ -95,7 +139,9 @@
 
 #define INT_TYPE_SIZE		32
 
-#define LONG_TYPE_SIZE		64	/* XXX This should be an option */
+#define LONG_TYPE_SIZE		(TARGET_ILP32 ? 32 : 64)
+
+#define POINTER_SIZE		(TARGET_ILP32 ? 32 : 64)
 
 #define LONG_LONG_TYPE_SIZE	64
 
@@ -104,6 +150,8 @@
 #define DOUBLE_TYPE_SIZE	64
 
 #define LONG_DOUBLE_TYPE_SIZE	128
+
+#define TARGET_SUPPORTS_WIDE_INT 1
 
 /* The architecture reserves all bits of the address for hardware use,
    so the vbit must go into the delta field of pointers to member
@@ -143,6 +191,8 @@
 
 #define PCC_BITFIELD_TYPE_MATTERS	1
 
+/* Major revision number of the ARM Architecture implemented by the target.  */
+extern unsigned aarch64_architecture_version;
 
 /* Instruction tuning/selection flags.  */
 
@@ -151,6 +201,7 @@
 #define AARCH64_FL_FP         (1 << 1)	/* Has FP.  */
 #define AARCH64_FL_CRYPTO     (1 << 2)	/* Has crypto.  */
 #define AARCH64_FL_SLOWMUL    (1 << 3)	/* A slow multiply core.  */
+#define AARCH64_FL_CRC        (1 << 4)	/* Has CRC.  */
 
 /* Has FP and SIMD.  */
 #define AARCH64_FL_FPSIMD     (AARCH64_FL_FP | AARCH64_FL_SIMD)
@@ -163,6 +214,7 @@
 
 /* Macros to test ISA flags.  */
 extern unsigned long aarch64_isa_flags;
+#define AARCH64_ISA_CRC            (aarch64_isa_flags & AARCH64_FL_CRC)
 #define AARCH64_ISA_CRYPTO         (aarch64_isa_flags & AARCH64_FL_CRYPTO)
 #define AARCH64_ISA_FP             (aarch64_isa_flags & AARCH64_FL_FP)
 #define AARCH64_ISA_SIMD           (aarch64_isa_flags & AARCH64_FL_SIMD)
@@ -171,6 +223,11 @@ extern unsigned long aarch64_isa_flags;
 extern unsigned long aarch64_tune_flags;
 #define AARCH64_TUNE_SLOWMUL       (aarch64_tune_flags & AARCH64_FL_SLOWMUL)
 
+/* Crypto is an optional extension to AdvSIMD.  */
+#define TARGET_CRYPTO (TARGET_SIMD && AARCH64_ISA_CRYPTO)
+
+/* CRC instructions that can be enabled through +crc arch extension.  */
+#define TARGET_CRC32 (AARCH64_ISA_CRC)
 
 /* Standard register usage.  */
 
@@ -228,7 +285,7 @@ extern unsigned long aarch64_tune_flags;
     1, 1, 1, 1,   1, 1, 1, 1,	/* R0 - R7 */		\
     1, 1, 1, 1,   1, 1, 1, 1,	/* R8 - R15 */		\
     1, 1, 1, 0,   0, 0, 0, 0,	/* R16 - R23 */		\
-    0, 0, 0, 0,   0, 1, 0, 1,	/* R24 - R30, SP */	\
+    0, 0, 0, 0,   0, 1, 1, 1,	/* R24 - R30, SP */	\
     1, 1, 1, 1,   1, 1, 1, 1,	/* V0 - V7 */		\
     0, 0, 0, 0,   0, 0, 0, 0,	/* V8 - V15 */		\
     1, 1, 1, 1,   1, 1, 1, 1,   /* V16 - V23 */         \
@@ -271,7 +328,7 @@ extern unsigned long aarch64_tune_flags;
     R_ALIASES(16), R_ALIASES(17), R_ALIASES(18), R_ALIASES(19), \
     R_ALIASES(20), R_ALIASES(21), R_ALIASES(22), R_ALIASES(23), \
     R_ALIASES(24), R_ALIASES(25), R_ALIASES(26), R_ALIASES(27), \
-    R_ALIASES(28), R_ALIASES(29), R_ALIASES(30), /* 31 omitted  */ \
+    R_ALIASES(28), R_ALIASES(29), R_ALIASES(30), {"wsp", R0_REGNUM + 31}, \
     V_ALIASES(0),  V_ALIASES(1),  V_ALIASES(2),  V_ALIASES(3),  \
     V_ALIASES(4),  V_ALIASES(5),  V_ALIASES(6),  V_ALIASES(7),  \
     V_ALIASES(8),  V_ALIASES(9),  V_ALIASES(10), V_ALIASES(11), \
@@ -287,7 +344,7 @@ extern unsigned long aarch64_tune_flags;
    considered live at the start of the called function.  */
 
 #define EPILOGUE_USES(REGNO) \
-  ((REGNO) == LR_REGNUM)
+  (epilogue_completed && (REGNO) == LR_REGNUM)
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in
@@ -349,8 +406,7 @@ extern unsigned long aarch64_tune_flags;
 
 #define HARD_REGNO_MODE_OK(REGNO, MODE)	aarch64_hard_regno_mode_ok (REGNO, MODE)
 
-#define MODES_TIEABLE_P(MODE1, MODE2)			\
-  (GET_MODE_CLASS (MODE1) == GET_MODE_CLASS (MODE2))
+#define MODES_TIEABLE_P(MODE1, MODE2) aarch64_modes_tieable_p (MODE1, MODE2)
 
 #define DWARF2_UNWIND_INFO 1
 
@@ -393,7 +449,7 @@ extern unsigned long aarch64_tune_flags;
 enum reg_class
 {
   NO_REGS,
-  CORE_REGS,
+  CALLER_SAVE_REGS,
   GENERAL_REGS,
   STACK_REG,
   POINTER_REGS,
@@ -408,7 +464,7 @@ enum reg_class
 #define REG_CLASS_NAMES				\
 {						\
   "NO_REGS",					\
-  "CORE_REGS",					\
+  "CALLER_SAVE_REGS",				\
   "GENERAL_REGS",				\
   "STACK_REG",					\
   "POINTER_REGS",				\
@@ -420,7 +476,7 @@ enum reg_class
 #define REG_CLASS_CONTENTS						\
 {									\
   { 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
-  { 0x7fffffff, 0x00000000, 0x00000003 },	/* CORE_REGS */		\
+  { 0x0007ffff, 0x00000000, 0x00000000 },	/* CALLER_SAVE_REGS */	\
   { 0x7fffffff, 0x00000000, 0x00000003 },	/* GENERAL_REGS */	\
   { 0x80000000, 0x00000000, 0x00000000 },	/* STACK_REG */		\
   { 0xffffffff, 0x00000000, 0x00000003 },	/* POINTER_REGS */	\
@@ -431,10 +487,10 @@ enum reg_class
 
 #define REGNO_REG_CLASS(REGNO)	aarch64_regno_regclass (REGNO)
 
-#define INDEX_REG_CLASS	CORE_REGS
+#define INDEX_REG_CLASS	GENERAL_REGS
 #define BASE_REG_CLASS  POINTER_REGS
 
-/* Register pairs used to eliminate unneeded registers that point intoi
+/* Register pairs used to eliminate unneeded registers that point into
    the stack frame.  */
 #define ELIMINABLE_REGS							\
 {									\
@@ -452,14 +508,14 @@ enum reg_class
 
 enum target_cpus
 {
-#define AARCH64_CORE(NAME, IDENT, ARCH, FLAGS, COSTS) \
-  TARGET_CPU_##IDENT,
+#define AARCH64_CORE(NAME, INTERNAL_IDENT, SCHED, ARCH, FLAGS, COSTS) \
+  TARGET_CPU_##INTERNAL_IDENT,
 #include "aarch64-cores.def"
 #undef AARCH64_CORE
   TARGET_CPU_generic
 };
 
-/* If there is no CPU defined at configure, use "generic" as default.  */
+/* If there is no CPU defined at configure, use generic as default.  */
 #ifndef TARGET_CPU_DEFAULT
 #define TARGET_CPU_DEFAULT \
   (TARGET_CPU_generic | (AARCH64_CPU_DEFAULT_FLAGS << 6))
@@ -470,8 +526,8 @@ enum target_cpus
 #define ADJUST_INSN_LENGTH(insn, length)	\
   do						\
     {						\
-      if (aarch64_madd_needs_nop (insn))	\
-        length += 4;				\
+       if (aarch64_madd_needs_nop (insn))	\
+         length += 4;				\
     } while (0)
 
 #define FINAL_PRESCAN_INSN(INSN, OPVEC, NOPERANDS)	\
@@ -487,7 +543,7 @@ extern enum aarch64_processor aarch64_tune;
 /* Stack layout; function entry, exit and calling.  */
 #define STACK_GROWS_DOWNWARD	1
 
-#define FRAME_GROWS_DOWNWARD	0
+#define FRAME_GROWS_DOWNWARD	1
 
 #define STARTING_FRAME_OFFSET	0
 
@@ -511,12 +567,32 @@ extern enum aarch64_processor aarch64_tune;
 struct GTY (()) aarch64_frame
 {
   HOST_WIDE_INT reg_offset[FIRST_PSEUDO_REGISTER];
+
+  /* The number of extra stack bytes taken up by register varargs.
+     This area is allocated by the callee at the very top of the
+     frame.  This value is rounded up to a multiple of
+     STACK_BOUNDARY.  */
+  HOST_WIDE_INT saved_varargs_size;
+
   HOST_WIDE_INT saved_regs_size;
   /* Padding if needed after the all the callee save registers have
      been saved.  */
   HOST_WIDE_INT padding0;
   HOST_WIDE_INT hardfp_offset;	/* HARD_FRAME_POINTER_REGNUM */
-  HOST_WIDE_INT fp_lr_offset;	/* Space needed for saving fp and/or lr */
+
+  /* Offset from the base of the frame (incomming SP) to the
+     hard_frame_pointer.  This value is always a multiple of
+     STACK_BOUNDARY.  */
+  HOST_WIDE_INT hard_fp_offset;
+
+  /* The size of the frame.  This value is the offset from base of the
+   * frame (incomming SP) to the stack_pointer.  This value is always
+   * a multiple of STACK_BOUNDARY.  */
+
+  unsigned wb_candidate1;
+  unsigned wb_candidate2;
+
+  HOST_WIDE_INT frame_size;
 
   bool laid_out;
 };
@@ -524,20 +600,21 @@ struct GTY (()) aarch64_frame
 typedef struct GTY (()) machine_function
 {
   struct aarch64_frame frame;
-
-  /* The number of extra stack bytes taken up by register varargs.
-     This area is allocated by the callee at the very top of the frame.  */
-  HOST_WIDE_INT saved_varargs_size;
-
 } machine_function;
 #endif
 
-
 /* Which ABI to use.  */
-enum arm_abi_type
+enum aarch64_abi_type
 {
-  ARM_ABI_AAPCS64
+  AARCH64_ABI_LP64 = 0,
+  AARCH64_ABI_ILP32 = 1
 };
+
+#ifndef AARCH64_ABI_DEFAULT
+#define AARCH64_ABI_DEFAULT AARCH64_ABI_LP64
+#endif
+
+#define TARGET_ILP32	(aarch64_abi & AARCH64_ABI_ILP32)
 
 enum arm_pcs
 {
@@ -546,27 +623,19 @@ enum arm_pcs
 };
 
 
-extern enum arm_abi_type arm_abi;
-extern enum arm_pcs arm_pcs_variant;
-#ifndef ARM_DEFAULT_ABI
-#define ARM_DEFAULT_ABI ARM_ABI_AAPCS64
-#endif
 
-#ifndef ARM_DEFAULT_PCS
-#define ARM_DEFAULT_PCS ARM_PCS_AAPCS64
-#endif
 
-/* We can't use enum machine_mode inside a generator file because it
+/* We can't use machine_mode inside a generator file because it
    hasn't been created yet; we shouldn't be using any code that
    needs the real definition though, so this ought to be safe.  */
 #ifdef GENERATOR_FILE
 #define MACHMODE int
 #else
 #include "insn-modes.h"
-#define MACHMODE enum machine_mode
+#define MACHMODE machine_mode
 #endif
 
-
+#ifndef USED_FOR_TARGET
 /* AAPCS related state tracking.  */
 typedef struct
 {
@@ -587,6 +656,7 @@ typedef struct
   int aapcs_stack_size;		/* The total size (in words, per 8 byte) of the
 				   stack arg area so far.  */
 } CUMULATIVE_ARGS;
+#endif
 
 #define FUNCTION_ARG_PADDING(MODE, TYPE) \
   (aarch64_pad_arg_upward (MODE, TYPE) ? upward : downward)
@@ -655,12 +725,14 @@ do {									     \
 /* The base cost overhead of a memcpy call, for MOVE_RATIO and friends.  */
 #define AARCH64_CALL_RATIO 8
 
-/* When optimizing for size, give a better estimate of the length of a memcpy
-   call, but use the default otherwise.  But move_by_pieces_ninsns() counts
-   memory-to-memory moves, and we'll have to generate a load & store for each,
-   so halve the value to take that into account.  */
+/* MOVE_RATIO dictates when we will use the move_by_pieces infrastructure.
+   move_by_pieces will continually copy the largest safe chunks.  So a
+   7-byte copy is a 4-byte + 2-byte + byte copy.  This proves inefficient
+   for both size and speed of copy, so we will instead use the "movmem"
+   standard name to implement the copy.  This logic does not apply when
+   targeting -mstrict-align, so keep a sensible default in that case.  */
 #define MOVE_RATIO(speed) \
-  (((speed) ? 15 : AARCH64_CALL_RATIO) / 2)
+  (!STRICT_ALIGNMENT ? 2 : (((speed) ? 15 : AARCH64_CALL_RATIO) / 2))
 
 /* For CLEAR_RATIO, when optimizing for size, give a better estimate
    of the length of a memset call, but use the default otherwise.  */
@@ -672,12 +744,6 @@ do {									     \
    the constant.  */
 #define SET_RATIO(speed) \
   ((speed) ? 15 : AARCH64_CALL_RATIO - 2)
-
-/* STORE_BY_PIECES_P can be used when copying a constant string, but
-   in that case each 64-bit chunk takes 5 insns instead of 2 (LDR/STR).
-   For now we always fail this and let the move_by_pieces code copy
-   the string from read-only memory.  */
-#define STORE_BY_PIECES_P(SIZE, ALIGN) 0
 
 /* Disable auto-increment in move_by_pieces et al.  Use of auto-increment is
    rarely a good idea in straight-line code since it adds an extra address
@@ -716,10 +782,23 @@ do {									     \
 
 #define NO_FUNCTION_CSE	1
 
+/* Specify the machine mode that the hardware addresses have.
+   After generation of rtl, the compiler makes no further distinction
+   between pointers and any other objects of this machine mode.  */
 #define Pmode		DImode
+
+/* A C expression whose value is zero if pointers that need to be extended
+   from being `POINTER_SIZE' bits wide to `Pmode' are sign-extended and
+   greater then zero if they are zero-extended and less then zero if the
+   ptr_extend instruction should be used.  */
+#define POINTERS_EXTEND_UNSIGNED 1
+
+/* Mode of a function address in a call instruction (for indexing purposes).  */
 #define FUNCTION_MODE	Pmode
 
 #define SELECT_CC_MODE(OP, X, Y)	aarch64_select_cc_mode (OP, X, Y)
+
+#define REVERSIBLE_CC_MODE(MODE) 1
 
 #define REVERSE_CONDITION(CODE, MODE)		\
   (((MODE) == CCFPmode || (MODE) == CCFPEmode)	\
@@ -727,15 +806,16 @@ do {									     \
    : reverse_condition (CODE))
 
 #define CLZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) \
-  ((VALUE) = ((MODE) == SImode ? 32 : 64), 2)
+  ((VALUE) = GET_MODE_UNIT_BITSIZE (MODE), 2)
 #define CTZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) \
-  ((VALUE) = ((MODE) == SImode ? 32 : 64), 2)
+  ((VALUE) = GET_MODE_UNIT_BITSIZE (MODE), 2)
 
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, LR_REGNUM)
 
 #define RETURN_ADDR_RTX aarch64_return_addr
 
-#define TRAMPOLINE_SIZE	aarch64_trampoline_size ()
+/* 3 insns + padding + 2 pointer-sized entries.  */
+#define TRAMPOLINE_SIZE	(TARGET_ILP32 ? 24 : 32)
 
 /* Trampolines contain dwords, so must be dword aligned.  */
 #define TRAMPOLINE_ALIGNMENT 64
@@ -743,10 +823,6 @@ do {									     \
 /* Put trampolines in the text section so that mapping symbols work
    correctly.  */
 #define TRAMPOLINE_SECTION text_section
-
-/* Costs, etc.  */
-#define MEMORY_MOVE_COST(M, CLASS, IN) \
-  (GET_MODE_SIZE (M) < 8 ? 8 : GET_MODE_SIZE (M))
 
 /* To start with.  */
 #define BRANCH_COST(SPEED_P, PREDICTABLE_P) 2
@@ -770,8 +846,22 @@ do {									     \
 #define PRINT_OPERAND_ADDRESS(STREAM, X) \
   aarch64_print_operand_address (STREAM, X)
 
-#define FUNCTION_PROFILER(STREAM, LABELNO) \
-  aarch64_function_profiler (STREAM, LABELNO)
+#define MCOUNT_NAME "_mcount"
+
+#define NO_PROFILE_COUNTERS 1
+
+/* Emit rtl for profiling.  Output assembler code to FILE
+   to call "_mcount" for profiling a function entry.  */
+#define PROFILE_HOOK(LABEL)						\
+  {									\
+    rtx fun, lr;							\
+    lr = get_hard_reg_initial_val (Pmode, LR_REGNUM);			\
+    fun = gen_rtx_SYMBOL_REF (Pmode, MCOUNT_NAME);			\
+    emit_library_call (fun, LCT_NORMAL, VOIDmode, 1, lr, Pmode);	\
+  }
+
+/* All the work done in PROFILE_HOOK, but still required.  */
+#define FUNCTION_PROFILER(STREAM, LABELNO) do { } while (0)
 
 /* For some reason, the Linux headers think they know how to define
    these macros.  They don't!!!  */
@@ -791,15 +881,12 @@ do {									     \
   extern void  __aarch64_sync_cache_range (void *, void *);	\
   __aarch64_sync_cache_range (beg, end)
 
-/*  VFP registers may only be accessed in the mode they
-   were set.  */
-#define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS)	\
-  (GET_MODE_SIZE (FROM) != GET_MODE_SIZE (TO)		\
-   ? reg_classes_intersect_p (FP_REGS, (CLASS))		\
-   : 0)
-
-
 #define SHIFT_COUNT_TRUNCATED !TARGET_SIMD
+
+/* Choose appropriate mode for caller saves, so we do the minimum
+   required size of load/store.  */
+#define HARD_REGNO_CALLER_SAVE_MODE(REGNO, NREGS, MODE) \
+  aarch64_hard_regno_caller_save_mode ((REGNO), (NREGS), (MODE))
 
 /* Callee only saves lower 64-bits of a 128-bit register.  Tell the
    compiler the callee clobbers the top 64-bits when restoring the
@@ -826,5 +913,30 @@ extern enum aarch64_code_model aarch64_cmodel;
 #define AARCH64_VALID_SIMD_QREG_MODE(MODE) \
   ((MODE) == V4SImode || (MODE) == V8HImode || (MODE) == V16QImode \
    || (MODE) == V4SFmode || (MODE) == V2DImode || mode == V2DFmode)
+
+#define ENDIAN_LANE_N(mode, n)  \
+  (BYTES_BIG_ENDIAN ? GET_MODE_NUNITS (mode) - 1 - n : n)
+
+/* Support for a configure-time default CPU, etc.  We currently support
+   --with-arch and --with-cpu.  Both are ignored if either is specified
+   explicitly on the command line at run time.  */
+#define OPTION_DEFAULT_SPECS				\
+  {"arch", "%{!march=*:%{!mcpu=*:-march=%(VALUE)}}" },	\
+  {"cpu",  "%{!march=*:%{!mcpu=*:-mcpu=%(VALUE)}}" },
+
+#define BIG_LITTLE_SPEC \
+   " %{mcpu=*:-mcpu=%:rewrite_mcpu(%{mcpu=*:%*})}"
+
+extern const char *aarch64_rewrite_mcpu (int argc, const char **argv);
+#define BIG_LITTLE_CPU_SPEC_FUNCTIONS \
+  { "rewrite_mcpu", aarch64_rewrite_mcpu },
+
+#define ASM_CPU_SPEC \
+   BIG_LITTLE_SPEC
+
+#define EXTRA_SPEC_FUNCTIONS BIG_LITTLE_CPU_SPEC_FUNCTIONS
+
+#define EXTRA_SPECS						\
+  { "asm_cpu_spec",		ASM_CPU_SPEC }
 
 #endif /* GCC_AARCH64_H */

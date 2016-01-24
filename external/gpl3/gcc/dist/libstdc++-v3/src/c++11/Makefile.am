@@ -1,6 +1,6 @@
 ## Makefile for the C++03 sources of the GNU C++ Standard library.
 ##
-## Copyright (C) 1997-2013 Free Software Foundation, Inc.
+## Copyright (C) 1997-2015 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -27,32 +27,86 @@ noinst_LTLIBRARIES = libc++11convenience.la
 
 headers =
 
+# Source files linked in via configuration/make substitution for a
+# particular host.
+host_sources = \
+	ctype_configure_char.cc \
+	ctype_members.cc
+
+ctype_configure_char.cc: ${glibcxx_srcdir}/$(OS_INC_SRCDIR)/ctype_configure_char.cc
+	$(LN_S) ${glibcxx_srcdir}/$(OS_INC_SRCDIR)/ctype_configure_char.cc . || true
+
+ctype_members.cc: ${glibcxx_srcdir}/$(CCTYPE_CC)
+	$(LN_S) ${glibcxx_srcdir}/$(CCTYPE_CC) . || true
+
+if ENABLE_DUAL_ABI
+cxx11_abi_sources = \
+	cow-locale_init.cc \
+	cow-shim_facets.cc \
+	cxx11-hash_tr1.cc \
+	cxx11-ios_failure.cc \
+	cxx11-shim_facets.cc \
+	cxx11-stdexcept.cc
+else
+cxx11_abi_sources =
+endif
+
 sources = \
 	chrono.cc \
+	codecvt.cc \
 	condition_variable.cc \
+	cow-stdexcept.cc \
+	ctype.cc \
 	debug.cc \
 	functexcept.cc \
 	functional.cc \
+	futex.cc \
 	future.cc \
 	hash_c++0x.cc \
 	hashtable_c++0x.cc \
+	ios.cc \
 	limits.cc \
 	mutex.cc \
 	placeholders.cc \
 	random.cc \
 	regex.cc  \
 	shared_ptr.cc \
+	snprintf_lite.cc \
 	system_error.cc \
-	thread.cc
+	thread.cc \
+	${cxx11_abi_sources} \
+	${host_sources}
+
+if ENABLE_DUAL_ABI
+extra_string_inst_sources = \
+	cow-fstream-inst.cc \
+	cow-sstream-inst.cc \
+	cow-string-inst.cc \
+	cow-wstring-inst.cc \
+	cxx11-locale-inst.cc \
+	cxx11-wlocale-inst.cc
+else
+extra_string_inst_sources =
+endif
 
 if ENABLE_EXTERN_TEMPLATE
-XTEMPLATE_FLAGS = -fno-implicit-templates
+# XTEMPLATE_FLAGS = -fno-implicit-templates
 inst_sources = \
+	$(extra_string_inst_sources) \
+	ext11-inst.cc \
 	fstream-inst.cc \
+	ios-inst.cc \
+	iostream-inst.cc \
+	istream-inst.cc \
+	locale-inst.cc \
+	ostream-inst.cc \
+	sstream-inst.cc \
+	streambuf-inst.cc \
 	string-inst.cc \
+	wlocale-inst.cc \
 	wstring-inst.cc
 else
-XTEMPLATE_FLAGS =
+# XTEMPLATE_FLAGS =
 inst_sources =
 endif
 
@@ -75,7 +129,7 @@ hashtable_c++0x.o: hashtable_c++0x.cc
 AM_CXXFLAGS = \
 	-std=gnu++11 \
 	$(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
-	$(XTEMPLATE_FLAGS) \
+	$(XTEMPLATE_FLAGS) $(VTV_CXXFLAGS) \
 	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS) $(CONFIG_CXXFLAGS)
 
 AM_MAKEFLAGS = \
@@ -125,4 +179,5 @@ CXXLINK = \
 	$(LIBTOOL) --tag CXX --tag disable-shared \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXX) \
+	$(VTV_CXXLINKFLAGS) \
 	$(OPT_LDFLAGS) $(SECTION_LDFLAGS) $(AM_CXXFLAGS) $(LTLDFLAGS) -o $@

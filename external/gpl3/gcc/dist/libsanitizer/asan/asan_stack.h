@@ -12,53 +12,100 @@
 #ifndef ASAN_STACK_H
 #define ASAN_STACK_H
 
-#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "asan_flags.h"
+#include "asan_thread.h"
+#include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 
 namespace __asan {
-
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast);
-void PrintStack(StackTrace *stack);
-
-}  // namespace __asan
 
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.
-// fast_unwind is currently unused.
-#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)     \
-  StackTrace stack;                                             \
-  GetStackTrace(&stack, max_s, pc, bp, fast)
+ALWAYS_INLINE
+void GetStackTraceWithPcBpAndContext(BufferedStackTrace *stack, uptr max_depth,
+                                     uptr pc, uptr bp, void *context,
+                                     bool fast) {
+#if SANITIZER_WINDOWS
+  stack->Unwind(max_depth, pc, bp, context, 0, 0, fast);
+#else
+  AsanThread *t;
+  stack->size = 0;
+  if (LIKELY(asan_inited)) {
+    if ((t = GetCurrentThread()) && !t->isUnwinding()) {
+      // On FreeBSD the slow unwinding that leverages _Unwind_Backtrace()
+      // yields the call stack of the signal's handler and not of the code
+      // that raised the signal (as it does on Linux).
+      if (SANITIZER_FREEBSD && t->isInDeadlySignal()) fast = true;
+      uptr stack_top = t->stack_top();
+      uptr stack_bottom = t->stack_bottom();
+      ScopedUnwinding unwind_scope(t);
+      stack->Unwind(max_depth, pc, bp, context, stack_top, stack_bottom, fast);
+    } else if (t == 0 && !fast) {
+      /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
+      stack->Unwind(max_depth, pc, bp, context, 0, 0, false);
+    }
+  }
+#endif  // SANITIZER_WINDOWS
+}
+
+}  // namespace __asan
 
 // NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
 // as early as possible (in functions exposed to the user), as we generally
 // don't want stack trace to contain functions from ASan internals.
 
-#define GET_STACK_TRACE(max_size, fast)                       \
-  GET_STACK_TRACE_WITH_PC_AND_BP(max_size,                    \
-      StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(), fast)
+#define GET_STACK_TRACE(max_size, fast)                                        \
+  BufferedStackTrace stack;                                                    \
+  if (max_size <= 2) {                                                         \
+    stack.size = max_size;                                                     \
+    if (max_size > 0) {                                                        \
+      stack.top_frame_bp = GET_CURRENT_FRAME();                                \
+      stack.trace_buffer[0] = StackTrace::GetCurrentPc();                      \
+      if (max_size > 1)                                                        \
+        stack.trace_buffer[1] = GET_CALLER_PC();                               \
+    }                                                                          \
+  } else {                                                                     \
+    GetStackTraceWithPcBpAndContext(&stack, max_size,                          \
+                                    StackTrace::GetCurrentPc(),                \
+                                    GET_CURRENT_FRAME(), 0, fast);             \
+  }
 
-#define GET_STACK_TRACE_FATAL(pc, bp)                                 \
-  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp,              \
-                                 flags()->fast_unwind_on_fatal)
+#define GET_STACK_TRACE_FATAL(pc, bp)                                          \
+  BufferedStackTrace stack;                                                    \
+  GetStackTraceWithPcBpAndContext(&stack, kStackTraceMax, pc, bp, 0,           \
+                                  common_flags()->fast_unwind_on_fatal)
 
-#define GET_STACK_TRACE_FATAL_HERE                           \
-  GET_STACK_TRACE(kStackTraceMax, flags()->fast_unwind_on_fatal)
+#define GET_STACK_TRACE_SIGNAL(pc, bp, context)                                \
+  BufferedStackTrace stack;                                                    \
+  GetStackTraceWithPcBpAndContext(&stack, kStackTraceMax, pc, bp, context,     \
+                                  common_flags()->fast_unwind_on_fatal)
 
-#define GET_STACK_TRACE_THREAD                              \
+#define GET_STACK_TRACE_FATAL_HERE                                \
+  GET_STACK_TRACE(kStackTraceMax, common_flags()->fast_unwind_on_fatal)
+
+#define GET_STACK_TRACE_CHECK_HERE                                \
+  GET_STACK_TRACE(kStackTraceMax, common_flags()->fast_unwind_on_check)
+
+#define GET_STACK_TRACE_THREAD                                    \
   GET_STACK_TRACE(kStackTraceMax, true)
 
-#define GET_STACK_TRACE_MALLOC                             \
-  GET_STACK_TRACE(flags()->malloc_context_size,            \
-                  flags()->fast_unwind_on_malloc)
+#define GET_STACK_TRACE_MALLOC                                    \
+  GET_STACK_TRACE(common_flags()->malloc_context_size,            \
+                  common_flags()->fast_unwind_on_malloc)
 
 #define GET_STACK_TRACE_FREE GET_STACK_TRACE_MALLOC
 
-#define PRINT_CURRENT_STACK()                    \
-  {                                              \
-    GET_STACK_TRACE(kStackTraceMax,              \
-      flags()->fast_unwind_on_fatal);            \
-    PrintStack(&stack);                          \
+#define PRINT_CURRENT_STACK()   \
+  {                             \
+    GET_STACK_TRACE_FATAL_HERE; \
+    stack.Print();              \
+  }
+
+#define PRINT_CURRENT_STACK_CHECK() \
+  {                                 \
+    GET_STACK_TRACE_CHECK_HERE;     \
+    stack.Print();                  \
   }
 
 #endif  // ASAN_STACK_H

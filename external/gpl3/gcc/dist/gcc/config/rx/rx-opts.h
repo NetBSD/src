@@ -1,5 +1,5 @@
 /* GCC option-handling definitions for the Renesas RX processor.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -24,7 +24,8 @@ enum rx_cpu_types
 {
   RX600,
   RX610,
-  RX200
+  RX200,
+  RX100
 };
 
 #endif

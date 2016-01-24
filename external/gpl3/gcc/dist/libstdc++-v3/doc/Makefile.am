@@ -1,6 +1,6 @@
 ## Makefile for the doc subdirectory of the GNU C++ Standard library.
 ##
-## Copyright (C) 2008-2013 Free Software Foundation, Inc.
+## Copyright (C) 2008-2015 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -339,6 +339,7 @@ xml_sources_manual = \
 	${xml_dir}/manual/spine.xml \
 	${xml_dir}/manual/status_cxx1998.xml \
 	${xml_dir}/manual/status_cxx2011.xml \
+	${xml_dir}/manual/status_cxx2014.xml \
 	${xml_dir}/manual/status_cxxtr1.xml \
 	${xml_dir}/manual/status_cxxtr24733.xml \
 	${xml_dir}/manual/strings.xml \
@@ -462,7 +463,7 @@ xml_noinst = \
 
 XSLTPROC       = xsltproc
 XSLT_FLAGS = --nonet --xinclude
-XSLT_PARAM = --param toc.section.depth 4
+XSLT_PARAM = --param toc.section.depth 4 --param generate.consistent.ids 1
 #XSL_STYLE_DIR = /usr/share/xml/docbook/stylesheet/docbook-xsl-ns
 #XSL_STYLE_DIR = /usr/share/sgml/docbook/xsl-ns-stylesheets
 XSL_FO_STYLE = $(XSL_STYLE_DIR)/fo/docbook.xsl

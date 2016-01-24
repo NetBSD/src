@@ -1,6 +1,6 @@
 // random number generation (out of line) -*- C++ -*-
 
-// Copyright (C) 2009-2013 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -3463,6 +3463,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     _RealType
     generate_canonical(_UniformRandomNumberGenerator& __urng)
     {
+      static_assert(std::is_floating_point<_RealType>::value,
+		    "template argument not a floating point type");
+
       const size_t __b
 	= std::min(static_cast<size_t>(std::numeric_limits<_RealType>::digits),
                    __bits);

@@ -1,5 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of GCC.
@@ -23,22 +23,23 @@ along with GCC; see the file COPYING3.  If not see
 extern bool cris_simple_epilogue (void);
 #ifdef RTX_CODE
 extern const char *cris_op_str (rtx);
-extern void cris_notice_update_cc (rtx, rtx);
-extern bool cris_reload_address_legitimized (rtx, enum machine_mode, int, int, int);
+extern void cris_notice_update_cc (rtx, rtx_insn *);
+extern bool cris_reload_address_legitimized (rtx, machine_mode, int, int, int);
 extern int cris_side_effect_mode_ok (enum rtx_code, rtx *, int, int,
                                      int, int, int);
 extern bool cris_cc0_user_requires_cmp (rtx);
 extern rtx cris_return_addr_rtx (int, rtx);
 extern rtx cris_split_movdx (rtx *);
 extern int cris_legitimate_pic_operand (rtx);
-extern enum cris_pic_symbol_type cris_pic_symbol_type_of (const_rtx);
+extern enum cris_symbol_type cris_symbol_type_of (const_rtx);
 extern bool cris_valid_pic_const (const_rtx, bool);
+extern bool cris_legitimate_constant_p (machine_mode, rtx);
 extern bool cris_constant_index_p (const_rtx);
 extern bool cris_base_p (const_rtx, bool);
 extern bool cris_base_or_autoincr_p (const_rtx, bool);
 extern bool cris_bdap_index_p (const_rtx, bool);
 extern bool cris_biap_index_p (const_rtx, bool);
-extern bool cris_legitimate_address_p (enum machine_mode, rtx, bool);
+extern bool cris_legitimate_address_p (machine_mode, rtx, bool);
 extern bool cris_store_multiple_op_p (rtx);
 extern bool cris_movem_load_rest_p (rtx, int);
 extern void cris_asm_output_symbol_ref (FILE *, rtx);
@@ -46,7 +47,7 @@ extern int cris_cfun_uses_pic_table (void);
 extern void cris_asm_output_case_end (FILE *, int, rtx);
 extern rtx cris_gen_movem_load (rtx, rtx, int);
 extern rtx cris_emit_movem_store (rtx, rtx, int, bool);
-extern void cris_expand_pic_call_address (rtx *);
+extern void cris_expand_pic_call_address (rtx *, rtx *);
 extern void cris_order_for_addsi3 (rtx *, int);
 extern void cris_emit_trap_for_misalignment (rtx);
 #endif /* RTX_CODE */

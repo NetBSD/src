@@ -1,5 +1,5 @@
 /* Configuration file for ARM BPABI targets, library renames.
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC   
 
    This file is part of GCC.
@@ -13,6 +13,10 @@
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
    License for more details.
+
+   Under Section 7 of GPL version 3, you are granted additional
+   permissions described in the GCC Runtime Library Exception, version
+   3.1, as published by the Free Software Foundation.
 
    You should have received a copy of the GNU General Public License and
    a copy of the GCC Runtime Library Exception along with this program;
@@ -75,3 +79,7 @@
    helper functions - not everything in libgcc - in the interests of
    maintaining backward compatibility.  */
 #define LIBGCC2_FIXEDBIT_GNU_PREFIX
+
+#if (!defined(__ARM_ARCH_EXT_IDIV__))
+# define TARGET_HAS_NO_HW_DIVIDE
+#endif

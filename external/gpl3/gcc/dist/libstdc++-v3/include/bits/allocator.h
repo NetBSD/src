@@ -1,6 +1,6 @@
 // Allocators -*- C++ -*-
 
-// Copyright (C) 2001-2013 Free Software Foundation, Inc.
+// Copyright (C) 2001-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -83,7 +83,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   /**
    * @brief  The @a standard allocator, as per [20.4].
    *
-   *  See http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt04ch11.html
+   *  See https://gcc.gnu.org/onlinedocs/libstdc++/manual/memory.html#std.util.memory.allocator
    *  for further details.
    *
    *  @tparam  _Tp  Type of allocated object.
@@ -126,21 +126,25 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _T1, typename _T2>
     inline bool
     operator==(const allocator<_T1>&, const allocator<_T2>&)
+    _GLIBCXX_USE_NOEXCEPT
     { return true; }
 
   template<typename _Tp>
     inline bool
     operator==(const allocator<_Tp>&, const allocator<_Tp>&)
+    _GLIBCXX_USE_NOEXCEPT
     { return true; }
 
   template<typename _T1, typename _T2>
     inline bool
     operator!=(const allocator<_T1>&, const allocator<_T2>&)
+    _GLIBCXX_USE_NOEXCEPT
     { return false; }
 
   template<typename _Tp>
     inline bool
     operator!=(const allocator<_Tp>&, const allocator<_Tp>&)
+    _GLIBCXX_USE_NOEXCEPT
     { return false; }
 
   /// @} group allocator
@@ -158,13 +162,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // To implement Option 3 of DR 431.
   template<typename _Alloc, bool = __is_empty(_Alloc)>
     struct __alloc_swap
-    { static void _S_do_it(_Alloc&, _Alloc&) { } };
+    { static void _S_do_it(_Alloc&, _Alloc&) _GLIBCXX_NOEXCEPT { } };
 
   template<typename _Alloc>
     struct __alloc_swap<_Alloc, false>
     {
       static void
-      _S_do_it(_Alloc& __one, _Alloc& __two)
+      _S_do_it(_Alloc& __one, _Alloc& __two) _GLIBCXX_NOEXCEPT
       {
 	// Precondition: swappable allocators.
 	if (__one != __two)
@@ -194,23 +198,27 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     = __or_<is_copy_constructible<typename _Tp::value_type>,
             is_nothrow_move_constructible<typename _Tp::value_type>>::value>
     struct __shrink_to_fit_aux
-    { static bool _S_do_it(_Tp&) { return false; } };
+    { static bool _S_do_it(_Tp&) noexcept { return false; } };
 
   template<typename _Tp>
     struct __shrink_to_fit_aux<_Tp, true>
     {
       static bool
-      _S_do_it(_Tp& __c)
+      _S_do_it(_Tp& __c) noexcept
       {
-	__try
+#if __cpp_exceptions
+	try
 	  {
 	    _Tp(__make_move_if_noexcept_iterator(__c.begin()),
 		__make_move_if_noexcept_iterator(__c.end()),
 		__c.get_allocator()).swap(__c);
 	    return true;
 	  }
-	__catch(...)
+	catch(...)
 	  { return false; }
+#else
+	return false;
+#endif
       }
     };
 #endif

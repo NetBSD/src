@@ -162,8 +162,7 @@
 
  <varlistentry><term><code>--enable-libstdcxx-threads</code></term>
  <listitem><para>Enable C++11 threads support.  If not explicitly specified,
-        the  configure process enables it if possible.  It defaults to 'off'
-	on Solaris 9, where it would break symbol versioning.   This
+        the  configure process enables it if possible.  This
 	option can change the library ABI.
      </para>
  </listitem></varlistentry>
@@ -186,7 +185,8 @@
 	desirable because, in glibc, for example, in turn it triggers the
 	linking of libpthread too, which activates locking, a large overhead
 	for single-thread programs.  OPTION=no skips the tests completely.
-	The default is OPTION=no.
+	The default is OPTION=auto, which skips the checks and enables the
+	features only for targets known to support them.
     </para>
  </listitem></varlistentry>
 
@@ -376,10 +376,46 @@
      to standard error for certain events such as calling a pure virtual
      function or the invocation of the standard terminate handler.  Those
      messages cause the library to depend on the demangler and standard I/O
-     facilites, which might be undesirable in a low-memory environment or
+     facilities, which might be undesirable in a low-memory environment or
      when standard error is not available.  This option disables those
      messages.  This option does not change the library ABI.
    </para>
+ </listitem></varlistentry>
+
+<varlistentry><term><code>--disable-libstdcxx-dual-abi</code></term>
+ <listitem>
+   <para>
+     Disable support for the new, C++11-conforming implementations of
+     <code>std::string</code>, <code>std::list</code> etc. so that the
+     library only provides definitions of types using the old ABI
+     (see <xref linkend="manual.intro.using.abi"/>).
+     This option changes the library ABI.
+   </para>
+ </listitem></varlistentry>
+
+<varlistentry><term><code>--with-default-libstdcxx-abi=</code><replaceable>OPTION</replaceable></term>
+ <listitem>
+   <para>
+     Set the default value for the <symbol>_GLIBCXX_USE_CXX11_ABI</symbol>
+     macro (see <xref linkend="manual.intro.using.macros"/>).
+     The default is <option>OPTION=new</option> which sets the macro to
+     <literal>1</literal>,
+     use <option>OPTION=gcc4-compatible</option> to set it to
+     <literal>0</literal>.
+     This option does not change the library ABI.
+   </para>
+ </listitem></varlistentry>
+
+ <varlistentry><term><code>--enable-vtable-verify</code>[default]</term>
+ <listitem>
+    <para>Use <code>-fvtable-verify=std</code> to compile the C++
+    runtime with instrumentation for vtable verification. All virtual
+    functions in the standard library will be verified at runtime.
+    Types impacted include <classname>locale</classname> and
+    <classname>iostream</classname>, and others.  Disabling means that
+    the C++ runtime is compiled without support for vtable
+    verification. By default, this option is off.
+     </para>
  </listitem></varlistentry>
 
 </variablelist>

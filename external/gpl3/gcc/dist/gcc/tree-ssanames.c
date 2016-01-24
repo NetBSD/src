@@ -1,5 +1,5 @@
 /* Generic routines for manipulating SSA_NAME expressions
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,8 +21,36 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
-#include "tree-flow.h"
+#include "fold-const.h"
+#include "stor-layout.h"
+#include "predict.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
+#include "gimple-ssa.h"
+#include "gimple-iterator.h"
+#include "tree-phinodes.h"
+#include "ssa-iterators.h"
+#include "stringpool.h"
+#include "tree-ssanames.h"
+#include "tree-into-ssa.h"
+#include "tree-ssa.h"
 #include "tree-pass.h"
 
 /* Rewriting a function into SSA form can create a huge number of SSA_NAMEs,
@@ -59,6 +87,9 @@ along with GCC; see the file COPYING3.  If not see
 
 unsigned int ssa_name_nodes_reused;
 unsigned int ssa_name_nodes_created;
+
+#define FREE_SSANAMES(fun) (fun)->gimple_df->free_ssanames
+
 
 /* Initialize management of SSA_NAMEs to default SIZE.  If SIZE is
    zero use default.  */
@@ -151,7 +182,11 @@ make_ssa_name_fn (struct function *fn, tree var, gimple stmt)
       SET_SSA_NAME_VAR_OR_IDENTIFIER (t, var);
     }
   SSA_NAME_DEF_STMT (t) = stmt;
-  SSA_NAME_PTR_INFO (t) = NULL;
+  if (POINTER_TYPE_P (TREE_TYPE (t)))
+    SSA_NAME_PTR_INFO (t) = NULL;
+  else
+    SSA_NAME_RANGE_INFO (t) = NULL;
+
   SSA_NAME_IN_FREE_LIST (t) = 0;
   SSA_NAME_IS_DEFAULT_DEF (t) = 0;
   imm = &(SSA_NAME_IMM_USE_NODE (t));
@@ -163,6 +198,105 @@ make_ssa_name_fn (struct function *fn, tree var, gimple stmt)
   return t;
 }
 
+/* Store range information RANGE_TYPE, MIN, and MAX to tree ssa_name NAME.  */
+
+void
+set_range_info (tree name, enum value_range_type range_type,
+		const wide_int_ref &min, const wide_int_ref &max)
+{
+  gcc_assert (!POINTER_TYPE_P (TREE_TYPE (name)));
+  gcc_assert (range_type == VR_RANGE || range_type == VR_ANTI_RANGE);
+  range_info_def *ri = SSA_NAME_RANGE_INFO (name);
+  unsigned int precision = TYPE_PRECISION (TREE_TYPE (name));
+
+  /* Allocate if not available.  */
+  if (ri == NULL)
+    {
+      size_t size = (sizeof (range_info_def)
+		     + trailing_wide_ints <3>::extra_size (precision));
+      ri = static_cast<range_info_def *> (ggc_internal_alloc (size));
+      ri->ints.set_precision (precision);
+      SSA_NAME_RANGE_INFO (name) = ri;
+      ri->set_nonzero_bits (wi::shwi (-1, precision));
+    }
+
+  /* Record the range type.  */
+  if (SSA_NAME_RANGE_TYPE (name) != range_type)
+    SSA_NAME_ANTI_RANGE_P (name) = (range_type == VR_ANTI_RANGE);
+
+  /* Set the values.  */
+  ri->set_min (min);
+  ri->set_max (max);
+
+  /* If it is a range, try to improve nonzero_bits from the min/max.  */
+  if (range_type == VR_RANGE)
+    {
+      wide_int xorv = ri->get_min () ^ ri->get_max ();
+      if (xorv != 0)
+	xorv = wi::mask (precision - wi::clz (xorv), false, precision);
+      ri->set_nonzero_bits (ri->get_nonzero_bits () & (ri->get_min () | xorv));
+    }
+}
+
+
+/* Gets range information MIN, MAX and returns enum value_range_type
+   corresponding to tree ssa_name NAME.  enum value_range_type returned
+   is used to determine if MIN and MAX are valid values.  */
+
+enum value_range_type
+get_range_info (const_tree name, wide_int *min, wide_int *max)
+{
+  gcc_assert (!POINTER_TYPE_P (TREE_TYPE (name)));
+  gcc_assert (min && max);
+  range_info_def *ri = SSA_NAME_RANGE_INFO (name);
+
+  /* Return VR_VARYING for SSA_NAMEs with NULL RANGE_INFO or SSA_NAMEs
+     with integral types width > 2 * HOST_BITS_PER_WIDE_INT precision.  */
+  if (!ri || (GET_MODE_PRECISION (TYPE_MODE (TREE_TYPE (name)))
+	      > 2 * HOST_BITS_PER_WIDE_INT))
+    return VR_VARYING;
+
+  *min = ri->get_min ();
+  *max = ri->get_max ();
+  return SSA_NAME_RANGE_TYPE (name);
+}
+
+/* Change non-zero bits bitmask of NAME.  */
+
+void
+set_nonzero_bits (tree name, const wide_int_ref &mask)
+{
+  gcc_assert (!POINTER_TYPE_P (TREE_TYPE (name)));
+  if (SSA_NAME_RANGE_INFO (name) == NULL)
+    set_range_info (name, VR_RANGE,
+		    TYPE_MIN_VALUE (TREE_TYPE (name)),
+		    TYPE_MAX_VALUE (TREE_TYPE (name)));
+  range_info_def *ri = SSA_NAME_RANGE_INFO (name);
+  ri->set_nonzero_bits (mask);
+}
+
+/* Return a widest_int with potentially non-zero bits in SSA_NAME
+   NAME, or -1 if unknown.  */
+
+wide_int
+get_nonzero_bits (const_tree name)
+{
+  unsigned int precision = TYPE_PRECISION (TREE_TYPE (name));
+  if (POINTER_TYPE_P (TREE_TYPE (name)))
+    {
+      struct ptr_info_def *pi = SSA_NAME_PTR_INFO (name);
+      if (pi && pi->align)
+	return wi::shwi (-(HOST_WIDE_INT) pi->align
+			 | (HOST_WIDE_INT) pi->misalign, precision);
+      return wi::shwi (-1, precision);
+    }
+
+  range_info_def *ri = SSA_NAME_RANGE_INFO (name);
+  if (!ri)
+    return wi::shwi (-1, precision);
+
+  return ri->get_nonzero_bits ();
+}
 
 /* We no longer need the SSA_NAME expression VAR, release it so that
    it may be reused.
@@ -173,7 +307,7 @@ make_ssa_name_fn (struct function *fn, tree var, gimple stmt)
    other fields must be assumed clobbered.  */
 
 void
-release_ssa_name (tree var)
+release_ssa_name_fn (struct function *fn, tree var)
 {
   if (!var)
     return;
@@ -213,7 +347,7 @@ release_ssa_name (tree var)
       while (imm->next != imm)
 	delink_imm_use (imm->next);
 
-      (*SSANAMES (cfun))[SSA_NAME_VERSION (var)] = NULL_TREE;
+      (*SSANAMES (fn))[SSA_NAME_VERSION (var)] = NULL_TREE;
       memset (var, 0, tree_size (var));
 
       imm->prev = imm;
@@ -235,7 +369,7 @@ release_ssa_name (tree var)
       SSA_NAME_IN_FREE_LIST (var) = 1;
 
       /* And finally put it on the free list.  */
-      vec_safe_push (FREE_SSANAMES (cfun), var);
+      vec_safe_push (FREE_SSANAMES (fn), var);
     }
 }
 
@@ -309,7 +443,7 @@ get_ptr_info (tree t)
   pi = SSA_NAME_PTR_INFO (t);
   if (pi == NULL)
     {
-      pi = ggc_alloc_cleared_ptr_info_def ();
+      pi = ggc_cleared_alloc<ptr_info_def> ();
       pt_solution_reset (&pi->pt);
       mark_ptr_info_alignment_unknown (pi);
       SSA_NAME_PTR_INFO (t) = pi;
@@ -353,11 +487,37 @@ duplicate_ssa_name_ptr_info (tree name, struct ptr_info_def *ptr_info)
   if (!ptr_info)
     return;
 
-  new_ptr_info = ggc_alloc_ptr_info_def ();
+  new_ptr_info = ggc_alloc<ptr_info_def> ();
   *new_ptr_info = *ptr_info;
 
   SSA_NAME_PTR_INFO (name) = new_ptr_info;
 }
+
+/* Creates a duplicate of the range_info_def at RANGE_INFO of type
+   RANGE_TYPE for use by the SSA name NAME.  */
+void
+duplicate_ssa_name_range_info (tree name, enum value_range_type range_type,
+			       struct range_info_def *range_info)
+{
+  struct range_info_def *new_range_info;
+
+  gcc_assert (!POINTER_TYPE_P (TREE_TYPE (name)));
+  gcc_assert (!SSA_NAME_RANGE_INFO (name));
+
+  if (!range_info)
+    return;
+
+  unsigned int precision = TYPE_PRECISION (TREE_TYPE (name));
+  size_t size = (sizeof (range_info_def)
+		 + trailing_wide_ints <3>::extra_size (precision));
+  new_range_info = static_cast<range_info_def *> (ggc_internal_alloc (size));
+  memcpy (new_range_info, range_info, size);
+
+  gcc_assert (range_type == VR_RANGE || range_type == VR_ANTI_RANGE);
+  SSA_NAME_ANTI_RANGE_P (name) = (range_type == VR_ANTI_RANGE);
+  SSA_NAME_RANGE_INFO (name) = new_range_info;
+}
+
 
 
 /* Creates a duplicate of a ssa name NAME tobe defined by statement STMT
@@ -367,14 +527,65 @@ tree
 duplicate_ssa_name_fn (struct function *fn, tree name, gimple stmt)
 {
   tree new_name = copy_ssa_name_fn (fn, name, stmt);
-  struct ptr_info_def *old_ptr_info = SSA_NAME_PTR_INFO (name);
+  if (POINTER_TYPE_P (TREE_TYPE (name)))
+    {
+      struct ptr_info_def *old_ptr_info = SSA_NAME_PTR_INFO (name);
 
-  if (old_ptr_info)
-    duplicate_ssa_name_ptr_info (new_name, old_ptr_info);
+      if (old_ptr_info)
+	duplicate_ssa_name_ptr_info (new_name, old_ptr_info);
+    }
+  else
+    {
+      struct range_info_def *old_range_info = SSA_NAME_RANGE_INFO (name);
+
+      if (old_range_info)
+	duplicate_ssa_name_range_info (new_name, SSA_NAME_RANGE_TYPE (name),
+				       old_range_info);
+    }
 
   return new_name;
 }
 
+
+/* Reset all flow sensitive data on NAME such as range-info, nonzero
+   bits and alignment.  */
+
+void
+reset_flow_sensitive_info (tree name)
+{
+  if (POINTER_TYPE_P (TREE_TYPE (name)))
+    {
+      /* points-to info is not flow-sensitive.  */
+      if (SSA_NAME_PTR_INFO (name))
+	mark_ptr_info_alignment_unknown (SSA_NAME_PTR_INFO (name));
+    }
+  else
+    SSA_NAME_RANGE_INFO (name) = NULL;
+}
+
+/* Clear all flow sensitive data from all statements and PHI definitions
+   in BB.  */
+
+void
+reset_flow_sensitive_info_in_bb (basic_block bb)
+{
+  for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
+       gsi_next (&gsi))
+    {
+      gimple stmt = gsi_stmt (gsi);
+      ssa_op_iter i;
+      tree op;
+      FOR_EACH_SSA_TREE_OPERAND (op, stmt, i, SSA_OP_DEF)
+	reset_flow_sensitive_info (op);
+    }
+
+  for (gphi_iterator gsi = gsi_start_phis (bb); !gsi_end_p (gsi);
+       gsi_next (&gsi))
+    {
+      tree phi_def = gimple_phi_result (gsi.phi ());
+      reset_flow_sensitive_info (phi_def);
+    }
+}
 
 /* Release all the SSA_NAMEs created by STMT.  */
 
@@ -406,18 +617,46 @@ replace_ssa_name_symbol (tree ssa_name, tree sym)
 /* Return SSA names that are unused to GGC memory and compact the SSA
    version namespace.  This is used to keep footprint of compiler during
    interprocedural optimization.  */
-static unsigned int
-release_dead_ssa_names (void)
+
+namespace {
+
+const pass_data pass_data_release_ssa_names =
+{
+  GIMPLE_PASS, /* type */
+  "release_ssa", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_TREE_SSA_OTHER, /* tv_id */
+  PROP_ssa, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  TODO_remove_unused_locals, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_release_ssa_names : public gimple_opt_pass
+{
+public:
+  pass_release_ssa_names (gcc::context *ctxt)
+    : gimple_opt_pass (pass_data_release_ssa_names, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual unsigned int execute (function *);
+
+}; // class pass_release_ssa_names
+
+unsigned int
+pass_release_ssa_names::execute (function *fun)
 {
   unsigned i, j;
-  int n = vec_safe_length (FREE_SSANAMES (cfun));
+  int n = vec_safe_length (FREE_SSANAMES (fun));
 
   /* Now release the freelist.  */
-  vec_free (FREE_SSANAMES (cfun));
+  vec_free (FREE_SSANAMES (fun));
 
   /* And compact the SSA number space.  We make sure to not change the
      relative order of SSA versions.  */
-  for (i = 1, j = 1; i < cfun->gimple_df->ssa_names->length (); ++i)
+  for (i = 1, j = 1; i < fun->gimple_df->ssa_names->length (); ++i)
     {
       tree name = ssa_name (i);
       if (name)
@@ -425,37 +664,25 @@ release_dead_ssa_names (void)
 	  if (i != j)
 	    {
 	      SSA_NAME_VERSION (name) = j;
-	      (*cfun->gimple_df->ssa_names)[j] = name;
+	      (*fun->gimple_df->ssa_names)[j] = name;
 	    }
 	  j++;
 	}
     }
-  cfun->gimple_df->ssa_names->truncate (j);
+  fun->gimple_df->ssa_names->truncate (j);
 
-  statistics_counter_event (cfun, "SSA names released", n);
-  statistics_counter_event (cfun, "SSA name holes removed", i - j);
+  statistics_counter_event (fun, "SSA names released", n);
+  statistics_counter_event (fun, "SSA name holes removed", i - j);
   if (dump_file)
     fprintf (dump_file, "Released %i names, %.2f%%, removed %i holes\n",
 	     n, n * 100.0 / num_ssa_names, i - j);
   return 0;
 }
 
-struct gimple_opt_pass pass_release_ssa_names =
+} // anon namespace
+
+gimple_opt_pass *
+make_pass_release_ssa_names (gcc::context *ctxt)
 {
- {
-  GIMPLE_PASS,
-  "release_ssa",			/* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  NULL,					/* gate */
-  release_dead_ssa_names,		/* execute */
-  NULL,					/* sub */
-  NULL,					/* next */
-  0,					/* static_pass_number */
-  TV_TREE_SSA_OTHER,			/* tv_id */
-  PROP_ssa,				/* properties_required */
-  0,					/* properties_provided */
-  0,					/* properties_destroyed */
-  TODO_remove_unused_locals,		/* todo_flags_start */
-  0					/* todo_flags_finish */
- }
-};
+  return new pass_release_ssa_names (ctxt);
+}

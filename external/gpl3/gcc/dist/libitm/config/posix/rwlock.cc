@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Transactional Memory Library (libitm).
@@ -30,11 +30,11 @@ namespace GTM HIDDEN {
 // ??? Move this back to the header file when constexpr is implemented.
 
 gtm_rwlock::gtm_rwlock()
-  : mutex (PTHREAD_MUTEX_INITIALIZER),
+  : summary (0),
+    mutex (PTHREAD_MUTEX_INITIALIZER),
     c_readers (PTHREAD_COND_INITIALIZER),
     c_writers (PTHREAD_COND_INITIALIZER),
     c_confirmed_writers (PTHREAD_COND_INITIALIZER),
-    summary (0),
     a_readers (0),
     w_readers (0),
     w_writers (0)

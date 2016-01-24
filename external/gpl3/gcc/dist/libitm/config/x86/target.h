@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Transactional Memory Library (libitm).
@@ -52,10 +52,6 @@ typedef struct gtm_jmpbuf
 /* x86 doesn't require strict alignment for the basic types.  */
 #define STRICT_ALIGNMENT 0
 
-/* x86 uses a fixed page size of 4K.  */
-#define PAGE_SIZE       4096
-#define FIXED_PAGE_SIZE 1
-
 /* The size of one line in hardware caches (in bytes). */
 #define HW_CACHELINE_SIZE 64
 
@@ -70,6 +66,10 @@ cpu_relax (void)
 // See gtm_thread::begin_transaction for how these functions are used.
 #ifdef HAVE_AS_RTM
 #define USE_HTM_FASTPATH
+#ifdef __x86_64__
+// Use the custom fastpath in ITM_beginTransaction.
+#define HTM_CUSTOM_FASTPATH
+#endif
 
 static inline bool
 htm_available ()

@@ -1,6 +1,6 @@
 // thread -*- C++ -*-
 
-// Copyright (C) 2008-2013 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -92,7 +92,7 @@ namespace std _GLIBCXX_VISIBILITY(default)
 	  std::terminate();
 	}
 
-      return 0;
+      return nullptr;
     }
   }
 
@@ -130,19 +130,26 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   thread::_M_start_thread(__shared_base_type __b)
   {
     if (!__gthread_active_p())
-#if __EXCEPTIONS
+#if __cpp_exceptions
       throw system_error(make_error_code(errc::operation_not_permitted),
 			 "Enable multithreading to use std::thread");
 #else
       __throw_system_error(int(errc::operation_not_permitted));
 #endif
 
-    __b->_M_this_ptr = __b;
+    _M_start_thread(std::move(__b), nullptr);
+  }
+
+  void
+  thread::_M_start_thread(__shared_base_type __b, void (*)())
+  {
+    auto ptr = __b.get();
+    ptr->_M_this_ptr = std::move(__b);
     int __e = __gthread_create(&_M_id._M_thread,
-			       &execute_native_thread_routine, __b.get());
+			       &execute_native_thread_routine, ptr);
     if (__e)
     {
-      __b->_M_this_ptr.reset();
+      ptr->_M_this_ptr.reset();
       __throw_system_error(__e);
     }
   }

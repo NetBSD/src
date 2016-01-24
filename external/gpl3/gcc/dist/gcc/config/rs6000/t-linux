@@ -5,7 +5,7 @@ ifneq (,$(findstring powerpc64,$(target)))
 MULTILIB_OSDIRNAMES := .=../lib64$(call if_multiarch,:powerpc64-linux-gnu)
 else
 ifneq (,$(findstring spe,$(target)))
-MULTIARCH_DIRNAME := powerpc-linux-gnuspe$(if $(findstring rs6000/e500-double.h, $(tm_file_list)),,v1)
+MULTIARCH_DIRNAME := powerpc-linux-gnuspe$(if $(findstring 8548,$(with_cpu)),,v1)
 else
 MULTIARCH_DIRNAME := powerpc-linux-gnu
 endif
@@ -17,3 +17,7 @@ ifneq (,$(findstring powerpc64le,$(target)))
 MULTILIB_OSDIRNAMES := $(subst -linux,le-linux,$(MULTILIB_OSDIRNAMES))
 endif
 endif
+
+rs6000-linux.o: $(srcdir)/config/rs6000/rs6000-linux.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)

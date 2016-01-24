@@ -1,5 +1,5 @@
 /* Target definitions for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
    This file is part of GCC.
@@ -206,7 +206,11 @@ extern int darwin_emit_branch_islands;
     "vrsave", "vscr",							\
     "spe_acc", "spefscr",                                               \
     "sfp",								\
-    "tfhar", "tfiar", "texasr"						\
+    "tfhar", "tfiar", "texasr",						\
+    "rh0",  "rh1",  "rh2",  "rh3",  "rh4",  "rh5",  "rh6",  "rh7",	\
+    "rh8",  "rh9",  "rh10", "rh11", "rh12", "rh13", "rh14", "rh15",	\
+    "rh16", "rh17", "rh18", "rh19", "rh20", "rh21", "rh22", "rh23",	\
+    "rh24", "rh25", "rh26", "rh27", "rh28", "rh29", "rh30", "rh31"	\
 }
 
 /* This outputs NAME to FILE.  */
@@ -321,16 +325,19 @@ extern int darwin_emit_branch_islands;
    ? GENERAL_REGS						\
    : (CLASS))
 
-/* Compute field alignment.  This is similar to the version of the
-   macro in the Apple version of GCC, except that version supports
-   'mac68k' alignment, and that version uses the computed alignment
-   always for the first field of a structure.  The first-field
-   behavior is dealt with by
-   darwin_rs6000_special_round_type_align.  */
-#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED)	\
-  (TARGET_ALIGN_NATURAL ? (COMPUTED)		\
-   : (COMPUTED) == 128 ? 128			\
-   : MIN ((COMPUTED), 32))
+/* Compute field alignment.
+   This implements the 'power' alignment rule by pegging the alignment of
+   items (beyond the first aggregate field) to 32 bits.  The pegging is
+   suppressed for vector and long double items (both 128 in size).
+   There is a dummy use of the FIELD argument to avoid an unused variable
+   warning (see PR59496).  */
+#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED)			\
+  ((void) (FIELD),						\
+    (TARGET_ALIGN_NATURAL					\
+     ? (COMPUTED)						\
+     : (COMPUTED) == 128					\
+	? 128							\
+	: MIN ((COMPUTED), 32)))
 
 /* Darwin increases natural record alignment to doubleword if the first
    field is an FP double while the FP fields remain word aligned.  */
@@ -386,10 +393,8 @@ extern int darwin_emit_branch_islands;
 #define OFFS_ASSIGNIVAR_FAST		0xFFFEFEC0
 
 /* Old versions of Mac OS/Darwin don't have C99 functions available.  */
-#undef TARGET_C99_FUNCTIONS
-#define TARGET_C99_FUNCTIONS					\
-  (TARGET_64BIT							\
-   || strverscmp (darwin_macosx_version_min, "10.3") >= 0)
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION darwin_libc_has_function
 
 /* When generating kernel code or kexts, we don't use Altivec by
    default, as kernel code doesn't save/restore those registers.  */
@@ -423,3 +428,7 @@ do {									\
 /* So far, there is no rs6000_fold_builtin, if one is introduced, then
    this will need to be modified similar to the x86 case.  */
 #define TARGET_FOLD_BUILTIN SUBTARGET_FOLD_BUILTIN
+
+/* Use standard DWARF numbering for DWARF debugging information.  */
+#define RS6000_USE_DWARF_NUMBERING
+

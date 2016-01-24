@@ -1,6 +1,6 @@
 // <bitset> -*- C++ -*-
 
-// Copyright (C) 2001-2013 Free Software Foundation, Inc.
+// Copyright (C) 2001-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -681,9 +681,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 #endif
 
   /**
-   *  The %bitset class represents a @e fixed-size sequence of bits.
+   *  @class bitset <bitset>
    *
-   *  @ingroup containers
+   *  @brief The %bitset class represents a @e fixed-size sequence of bits.
+   *  @ingroup utilities
    *
    *  (Note that %bitset does @e not meet the formal requirements of a
    *  <a href="tables.html#65">container</a>.  Mainly, it lacks iterators.)
@@ -732,7 +733,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *  @endcode
    *
    *  Also see:
-   *  http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt12ch33s02.html
+   *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_containers.html
    *  for a description of extensions.
    *
    *  Most of the actual code isn't contained in %bitset<> itself, but in the
@@ -751,6 +752,26 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     private:
       typedef _Base_bitset<_GLIBCXX_BITSET_WORDS(_Nb)> _Base;
       typedef unsigned long _WordT;
+
+      template<class _CharT, class _Traits, class _Alloc>
+      void
+      _M_check_initial_position(const std::basic_string<_CharT, _Traits, _Alloc>& __s,
+				size_t __position) const
+      {
+	if (__position > __s.size())
+	  __throw_out_of_range_fmt(__N("bitset::bitset: __position "
+				       "(which is %zu) > __s.size() "
+				       "(which is %zu)"),
+				   __position, __s.size());
+      }
+
+      void _M_check(size_t __position, const char *__s) const
+      {
+	if (__position >= _Nb)
+	  __throw_out_of_range_fmt(__N("%s: __position (which is %zu) "
+				       ">= _Nb (which is %zu)"),
+				   __s, __position, _Nb);
+      }
 
       void
       _M_do_sanitize() _GLIBCXX_NOEXCEPT
@@ -867,9 +888,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	       size_t __position = 0)
 	: _Base()
 	{
-	  if (__position > __s.size())
-	    __throw_out_of_range(__N("bitset::bitset initial position "
-				     "not valid"));
+	  _M_check_initial_position(__s, __position);
 	  _M_copy_from_string(__s, __position,
 			      std::basic_string<_CharT, _Traits, _Alloc>::npos,
 			      _CharT('0'), _CharT('1'));
@@ -890,9 +909,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	       size_t __position, size_t __n)
 	: _Base()
 	{
-	  if (__position > __s.size())
-	    __throw_out_of_range(__N("bitset::bitset initial position "
-				     "not valid"));
+	  _M_check_initial_position(__s, __position);
 	  _M_copy_from_string(__s, __position, __n, _CharT('0'), _CharT('1'));
 	}
 
@@ -904,9 +921,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	       _CharT __zero, _CharT __one = _CharT('1'))
 	: _Base()
 	{
-	  if (__position > __s.size())
-	    __throw_out_of_range(__N("bitset::bitset initial position "
-				     "not valid"));
+	  _M_check_initial_position(__s, __position);
 	  _M_copy_from_string(__s, __position, __n, __zero, __one);
 	}
 
@@ -1067,8 +1082,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       bitset<_Nb>&
       set(size_t __position, bool __val = true)
       {
-	if (__position >= _Nb)
-	  __throw_out_of_range(__N("bitset::set"));
+	this->_M_check(__position, __N("bitset::set"));
 	return _Unchecked_set(__position, __val);
       }
 
@@ -1092,8 +1106,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       bitset<_Nb>&
       reset(size_t __position)
       {
-	if (__position >= _Nb)
-	  __throw_out_of_range(__N("bitset::reset"));
+	this->_M_check(__position, __N("bitset::reset"));
 	return _Unchecked_reset(__position);
       }
       
@@ -1116,8 +1129,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       bitset<_Nb>&
       flip(size_t __position)
       {
-	if (__position >= _Nb)
-	  __throw_out_of_range(__N("bitset::flip"));
+	this->_M_check(__position, __N("bitset::flip"));
 	return _Unchecked_flip(__position);
       }
       
@@ -1302,8 +1314,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       bool
       test(size_t __position) const
       {
-	if (__position >= _Nb)
-	  __throw_out_of_range(__N("bitset::test"));
+	this->_M_check(__position, __N("bitset::test"));
 	return _Unchecked_test(__position);
       }
 

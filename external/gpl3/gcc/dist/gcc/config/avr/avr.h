@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for ATMEL AVR at90s8515, ATmega103/103L, ATmega603/603L microcontrollers.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Denis Chertykov (chertykov@gmail.com)
 
 This file is part of GCC.
@@ -60,21 +60,23 @@ enum
 
 #define TARGET_CPU_CPP_BUILTINS()	avr_cpu_cpp_builtins (pfile)
 
-#define AVR_HAVE_JMP_CALL (avr_current_arch->have_jmp_call)
-#define AVR_HAVE_MUL (avr_current_arch->have_mul)
-#define AVR_HAVE_MOVW (avr_current_arch->have_movw_lpmx)
-#define AVR_HAVE_LPMX (avr_current_arch->have_movw_lpmx)
-#define AVR_HAVE_ELPM (avr_current_arch->have_elpm)
-#define AVR_HAVE_ELPMX (avr_current_arch->have_elpmx)
-#define AVR_HAVE_RAMPD (avr_current_arch->have_rampd)
-#define AVR_HAVE_RAMPX (avr_current_arch->have_rampd)
-#define AVR_HAVE_RAMPY (avr_current_arch->have_rampd)
-#define AVR_HAVE_RAMPZ (avr_current_arch->have_elpm             \
-                        || avr_current_arch->have_rampd)
-#define AVR_HAVE_EIJMP_EICALL (avr_current_arch->have_eijmp_eicall)
+#define AVR_HAVE_JMP_CALL (avr_arch->have_jmp_call)
+#define AVR_HAVE_MUL (avr_arch->have_mul)
+#define AVR_HAVE_MOVW (avr_arch->have_movw_lpmx)
+#define AVR_HAVE_LPM (!AVR_TINY)
+#define AVR_HAVE_LPMX (avr_arch->have_movw_lpmx)
+#define AVR_HAVE_ELPM (avr_arch->have_elpm)
+#define AVR_HAVE_ELPMX (avr_arch->have_elpmx)
+#define AVR_HAVE_RAMPD (avr_arch->have_rampd)
+#define AVR_HAVE_RAMPX (avr_arch->have_rampd)
+#define AVR_HAVE_RAMPY (avr_arch->have_rampd)
+#define AVR_HAVE_RAMPZ (avr_arch->have_elpm             \
+                        || avr_arch->have_rampd)
+#define AVR_HAVE_EIJMP_EICALL (avr_arch->have_eijmp_eicall)
 
 /* Handling of 8-bit SP versus 16-bit SP is as follows:
 
+FIXME: DRIVER_SELF_SPECS has changed.
    -msp8 is used internally to select the right multilib for targets with
    8-bit SP.  -msp8 is set automatically by DRIVER_SELF_SPECS for devices
    with 8-bit SP or by multilib generation machinery.  If a frame pointer is
@@ -88,15 +90,16 @@ enum
    __AVR_HAVE_8BIT_SP__ and __AVR_HAVE_16BIT_SP__.  During multilib generation
    there is always __AVR_SP8__ == __AVR_HAVE_8BIT_SP__.  */
 
-#define AVR_HAVE_8BIT_SP                                                \
-  (avr_current_device->short_sp || TARGET_TINY_STACK || avr_sp8)
+#define AVR_HAVE_8BIT_SP                        \
+  (TARGET_TINY_STACK || avr_sp8)
 
 #define AVR_HAVE_SPH (!avr_sp8)
 
 #define AVR_2_BYTE_PC (!AVR_HAVE_EIJMP_EICALL)
 #define AVR_3_BYTE_PC (AVR_HAVE_EIJMP_EICALL)
 
-#define AVR_XMEGA (avr_current_arch->xmega_p)
+#define AVR_XMEGA (avr_arch->xmega_p)
+#define AVR_TINY  (avr_arch->tiny_p)
 
 #define BITS_BIG_ENDIAN 0
 #define BYTES_BIG_ENDIAN 0
@@ -303,12 +306,13 @@ enum reg_class {
 
 #define ARG_POINTER_REGNUM 34
 
-#define STATIC_CHAIN_REGNUM 2
+#define STATIC_CHAIN_REGNUM ((AVR_TINY) ? 18 :2)
 
 #define ELIMINABLE_REGS {					\
-      {ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM},		\
-	{FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM}		\
-       ,{FRAME_POINTER_REGNUM+1,STACK_POINTER_REGNUM+1}}
+    { ARG_POINTER_REGNUM, STACK_POINTER_REGNUM },               \
+    { ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM },               \
+    { FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM },             \
+    { FRAME_POINTER_REGNUM + 1, STACK_POINTER_REGNUM + 1 } }
 
 #define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET)			\
   OFFSET = avr_initial_elimination_offset (FROM, TO)
@@ -401,7 +405,8 @@ typedef struct avr_args
   avr_asm_output_aligned_decl_common (STREAM, DECL, NAME, SIZE, ALIGN, false)
 
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
-  asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
+  avr_asm_asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN, \
+				  asm_output_aligned_bss)
 
 #define ASM_OUTPUT_ALIGNED_DECL_LOCAL(STREAM, DECL, NAME, SIZE, ALIGN)  \
   avr_asm_output_aligned_decl_common (STREAM, DECL, NAME, SIZE, ALIGN, true)
@@ -486,59 +491,24 @@ typedef struct avr_args
 #define ADJUST_INSN_LENGTH(INSN, LENGTH)                \
     (LENGTH = avr_adjust_insn_length (INSN, LENGTH))
 
-extern const char *avr_device_to_as (int argc, const char **argv);
-extern const char *avr_device_to_ld (int argc, const char **argv);
-extern const char *avr_device_to_data_start (int argc, const char **argv);
-extern const char *avr_device_to_startfiles (int argc, const char **argv);
-extern const char *avr_device_to_devicelib (int argc, const char **argv);
-extern const char *avr_device_to_sp8 (int argc, const char **argv);
+extern const char *avr_devicespecs_file (int, const char**);
 
-#define EXTRA_SPEC_FUNCTIONS                            \
-  { "device_to_as", avr_device_to_as },                 \
-  { "device_to_ld", avr_device_to_ld },                 \
-  { "device_to_data_start", avr_device_to_data_start }, \
-  { "device_to_startfile", avr_device_to_startfiles },  \
-  { "device_to_devicelib", avr_device_to_devicelib },   \
-  { "device_to_sp8", avr_device_to_sp8 },
+#define EXTRA_SPEC_FUNCTIONS                                   \
+  { "device-specs-file", avr_devicespecs_file },
 
-#define DRIVER_SELF_SPECS " %:device_to_sp8(%{mmcu=*:%*}) "
-#define CPP_SPEC ""
+/* Driver self specs has lmited functionality w.r.t. '%s' for dynamic specs.
+   Apply '%s' to a static string to inflate the file (directory) name which
+   is used to diagnose problems with reading the specs file.  */
 
-#define CC1_SPEC ""
+#undef  DRIVER_SELF_SPECS
+#define DRIVER_SELF_SPECS                       \
+  " %:device-specs-file(device-specs%s %{mmcu=*:%*})"
 
-#define CC1PLUS_SPEC "%{!frtti:-fno-rtti} \
-    %{!fenforce-eh-specs:-fno-enforce-eh-specs} \
-    %{!fexceptions:-fno-exceptions}"
-
-#define ASM_SPEC "%:device_to_as(%{mmcu=*:%*}) "
-  
-#define LINK_SPEC "\
-%{mrelax:--relax\
-         %{mpmem-wrap-around:%{mmcu=at90usb8*:--pmem-wrap-around=8k}\
-                             %{mmcu=atmega16*:--pmem-wrap-around=16k}\
-                             %{mmcu=atmega32*|\
-                               mmcu=at90can32*:--pmem-wrap-around=32k}\
-                             %{mmcu=atmega64*|\
-                               mmcu=at90can64*|\
-                               mmcu=at90usb64*:--pmem-wrap-around=64k}}}\
-%:device_to_ld(%{mmcu=*:%*})\
-%:device_to_data_start(%{mmcu=*:%*})"
-
-#define LIB_SPEC \
-  "%{!mmcu=at90s1*:%{!mmcu=attiny11:%{!mmcu=attiny12:%{!mmcu=attiny15:%{!mmcu=attiny28: -lc }}}}}"
-
-#define LIBSTDCXX "gcc"
 /* No libstdc++ for now.  Empty string doesn't work.  */
+#define LIBSTDCXX "gcc"
 
-#define LIBGCC_SPEC \
-  "%{!mmcu=at90s1*:%{!mmcu=attiny11:%{!mmcu=attiny12:%{!mmcu=attiny15:%{!mmcu=attiny28: -lgcc }}}}}"
-
-#define STARTFILE_SPEC "%:device_to_startfile(%{mmcu=*:%*})"
-
-#define ENDFILE_SPEC ""
-
-/* This is the default without any -mmcu=* option (AT90S*).  */
-#define MULTILIB_DEFAULTS { "mmcu=avr2" }
+/* This is the default without any -mmcu=* option.  */
+#define MULTILIB_DEFAULTS { "mmcu=" AVR_MMCU_DEFAULT }
 
 #define TEST_HARD_REG_CLASS(CLASS, REGNO) \
   TEST_HARD_REG_BIT (reg_class_contents[ (int) (CLASS)], REGNO)
@@ -602,3 +572,8 @@ extern int avr_accumulate_outgoing_args (void);
 #define ACCUMULATE_OUTGOING_ARGS avr_accumulate_outgoing_args()
 
 #define INIT_EXPANDERS avr_init_expanders()
+
+/* Flags used for io and address attributes.  */
+#define SYMBOL_FLAG_IO_LOW	(SYMBOL_FLAG_MACH_DEP << 4)
+#define SYMBOL_FLAG_IO		(SYMBOL_FLAG_MACH_DEP << 5)
+#define SYMBOL_FLAG_ADDRESS	(SYMBOL_FLAG_MACH_DEP << 6)
