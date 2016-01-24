@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.2 2016/01/24 16:27:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2016/01/24 16:47:32 christos Exp $
 
-CPPFLAGS+=	-I${ARCHDIR} -DELFSIZE=64 -D_KERNTYPES
+CPPFLAGS+=	-I${ARCHDIR} -DELFSIZE=64
