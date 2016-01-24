@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.54 2011/04/26 15:51:23 joerg Exp $	*/
+/*	$NetBSD: segments.h,v 1.55 2016/01/24 18:21:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -159,7 +159,7 @@ struct gate_descriptor {
 } __packed;
 
 struct ldt_descriptor {
-	vaddr_t ld_base;
+	__vaddr_t ld_base;
 	uint32_t ld_entries;
 } __packed;
 
