@@ -1,1 +1,15 @@
-# $NetBSD: md.alpha,v 1.6 2013/01/16 16:01:08 christos Exp $
+# $NetBSD: md.alpha,v 1.7 2016/01/24 17:26:59 christos Exp $
+./usr/libdata/lint/llib-ldbe.ln		-unknown-l	lint,xorg
+./usr/libdata/lint/llib-ldri.ln		-unknown-l	lint,xorg
+./usr/libdata/lint/llib-ldri2.ln	-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lexa.ln		-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lextmod.ln	-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lfb.ln		-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lglx.ln		-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lrecord.ln	-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lshadow.ln	-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lshadowfb.ln	-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lvbe.ln		-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lvgahw.ln	-unknown-l	lint,xorg
+./usr/libdata/lint/llib-lxaa.ln		-unknown-l	lint,xorg
+
