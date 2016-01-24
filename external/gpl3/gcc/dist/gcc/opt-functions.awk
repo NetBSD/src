@@ -1,4 +1,4 @@
-#  Copyright (C) 2003-2013 Free Software Foundation, Inc.
+#  Copyright (C) 2003-2015 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -97,6 +97,7 @@ function switch_flags (flags)
 	result = result \
 	  test_flag("Common", flags, " | CL_COMMON") \
 	  test_flag("Target", flags, " | CL_TARGET") \
+	  test_flag("PchIgnore", flags, " | CL_PCH_IGNORE") \
 	  test_flag("Driver", flags, " | CL_DRIVER") \
 	  test_flag("Joined", flags, " | CL_JOINED") \
 	  test_flag("JoinedOrMissing", flags, " | CL_JOINED") \
@@ -318,29 +319,33 @@ function search_var_name(name, opt_numbers, opts, flags, n_opts)
 function lang_enabled_by(enabledby_langs, enabledby_name, enabledby_posarg, enabledby_negarg)
 {
     n_enabledby_arg_langs = split(enabledby_langs, enabledby_arg_langs, " ");
-    enabledby_index = opt_numbers[enabledby_name];
-    if (enabledby_index == "") {
-        print "#error LangEnabledby: " enabledby_name 
+    if (enabledby_posarg != "" && enabledby_negarg != "") {
+        with_args = "," enabledby_posarg "," enabledby_negarg
+    } else if (enabledby_posarg == "" && enabledby_negarg == "") {
+        with_args = ""
     } else {
-        if (enabledby_posarg != "" && enabledby_negarg != "") {
-            with_args = "," enabledby_posarg "," enabledby_negarg
-        } else if (enabledby_posarg == "" && enabledby_negarg == "") {
-            with_args = ""
+        print "#error LangEnabledBy("enabledby_langs","enabledby_name", " \
+            enabledby_posarg", " enabledby_negargs                  \
+            ") with three arguments, it should have either 2 or 4"
+    }
+
+    n_enabledby_array = split(enabledby_name, enabledby_array, " \\|\\| ");
+    for (k = 1; k <= n_enabledby_array; k++) {
+        enabledby_index = opt_numbers[enabledby_array[k]];
+        if (enabledby_index == "") {
+             print "#error LangEnabledBy("enabledby_langs","enabledby_name", " \
+                 enabledby_posarg", " enabledby_negargs") has invalid ENABLEDBY_NAME"
         } else {
-            print "#error LangEnabledBy("enabledby_langs","enabledby_name", " \
-                enabledby_posarg", " enabledby_negargs                  \
-                ") with three arguments, it should have either 2 or 4"
-        }
-        
-        for (j = 1; j <= n_enabledby_arg_langs; j++) {
-            lang_name = lang_sanitized_name(enabledby_arg_langs[j]);
-            lang_index = lang_numbers[enabledby_arg_langs[j]];
-            if (enables[lang_name,enabledby_name] == "") {
-                enabledby[lang_name,n_enabledby_lang[lang_index]] = enabledby_name;
-                n_enabledby_lang[lang_index]++;
+            for (j = 1; j <= n_enabledby_arg_langs; j++) {
+                 lang_name = lang_sanitized_name(enabledby_arg_langs[j]);
+                 lang_index = lang_numbers[enabledby_arg_langs[j]];
+                 if (enables[lang_name,enabledby_array[k]] == "") {
+                     enabledby[lang_name,n_enabledby_lang[lang_index]] = enabledby_array[k];
+                     n_enabledby_lang[lang_index]++;
+                 }
+                 enables[lang_name,enabledby_array[k]] \
+                     = enables[lang_name,enabledby_array[k]] opts[i] with_args ";";
             }
-            enables[lang_name,enabledby_name] = enables[lang_name,enabledby_name] opts[i] with_args ";";
         }
     }
 }
-

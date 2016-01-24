@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 processor synchronization primitives.
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -119,7 +119,7 @@
   [(set (match_operand:ALLI 0 "aarch64_sync_memory_operand" "+Q")
     (unspec_volatile:ALLI
       [(atomic_op:ALLI (match_dup 0)
-	(match_operand:ALLI 1 "<atomic_op_operand>" "r<lconst_atomic>"))
+	(match_operand:ALLI 1 "<atomic_op_operand>" "r<const_atomic>"))
        (match_operand:SI 2 "const_int_operand")]		;; model
       UNSPECV_ATOMIC_OP))
        (clobber (reg:CC CC_REGNUM))
@@ -164,7 +164,7 @@
    (set (match_dup 1)
     (unspec_volatile:ALLI
       [(atomic_op:ALLI (match_dup 1)
-	(match_operand:ALLI 2 "<atomic_op_operand>" "r<lconst_atomic>"))
+	(match_operand:ALLI 2 "<atomic_op_operand>" "r<const_atomic>"))
        (match_operand:SI 3 "const_int_operand")]		;; model
       UNSPECV_ATOMIC_OP))
    (clobber (reg:CC CC_REGNUM))
@@ -209,7 +209,7 @@
   [(set (match_operand:ALLI 0 "register_operand" "=&r")
     (atomic_op:ALLI
       (match_operand:ALLI 1 "aarch64_sync_memory_operand" "+Q")
-      (match_operand:ALLI 2 "<atomic_op_operand>" "r<lconst_atomic>")))
+      (match_operand:ALLI 2 "<atomic_op_operand>" "r<const_atomic>")))
    (set (match_dup 1)
     (unspec_volatile:ALLI
       [(match_dup 1) (match_dup 2)
@@ -260,10 +260,8 @@
       UNSPECV_LDA))]
   ""
   {
-    enum memmodel model = (enum memmodel) INTVAL (operands[2]);
-    if (model == MEMMODEL_RELAXED
-	|| model == MEMMODEL_CONSUME
-	|| model == MEMMODEL_RELEASE)
+    enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+    if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_release (model))
       return "ldr<atomic_sfx>\t%<w>0, %1";
     else
       return "ldar<atomic_sfx>\t%<w>0, %1";
@@ -278,10 +276,8 @@
       UNSPECV_STL))]
   ""
   {
-    enum memmodel model = (enum memmodel) INTVAL (operands[2]);
-    if (model == MEMMODEL_RELAXED
-	|| model == MEMMODEL_CONSUME
-	|| model == MEMMODEL_ACQUIRE)
+    enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+    if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_acquire (model))
       return "str<atomic_sfx>\t%<w>1, %0";
     else
       return "stlr<atomic_sfx>\t%<w>1, %0";
@@ -297,10 +293,8 @@
 	UNSPECV_LX)))]
   ""
   {
-    enum memmodel model = (enum memmodel) INTVAL (operands[2]);
-    if (model == MEMMODEL_RELAXED
-	|| model == MEMMODEL_CONSUME
-	|| model == MEMMODEL_RELEASE)
+    enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+    if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_release (model))
       return "ldxr<atomic_sfx>\t%w0, %1";
     else
       return "ldaxr<atomic_sfx>\t%w0, %1";
@@ -315,10 +309,8 @@
       UNSPECV_LX))]
   ""
   {
-    enum memmodel model = (enum memmodel) INTVAL (operands[2]);
-    if (model == MEMMODEL_RELAXED
-	|| model == MEMMODEL_CONSUME
-	|| model == MEMMODEL_RELEASE)
+    enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+    if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_release (model))
       return "ldxr\t%<w>0, %1";
     else
       return "ldaxr\t%<w>0, %1";
@@ -335,10 +327,8 @@
       UNSPECV_SX))]
   ""
   {
-    enum memmodel model = (enum memmodel) INTVAL (operands[3]);
-    if (model == MEMMODEL_RELAXED
-	|| model == MEMMODEL_CONSUME
-	|| model == MEMMODEL_ACQUIRE)
+    enum memmodel model = memmodel_from_int (INTVAL (operands[3]));
+    if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_acquire (model))
       return "stxr<atomic_sfx>\t%w0, %<w>2, %1";
     else
       return "stlxr<atomic_sfx>\t%w0, %<w>2, %1";
@@ -349,8 +339,8 @@
   [(match_operand:SI 0 "const_int_operand" "")]
   ""
   {
-    enum memmodel model = (enum memmodel) INTVAL (operands[0]);
-    if (model != MEMMODEL_RELAXED && model != MEMMODEL_CONSUME)
+    enum memmodel model = memmodel_from_int (INTVAL (operands[0]));
+    if (!(is_mm_relaxed (model) || is_mm_consume (model)))
       emit_insn (gen_dmb (operands[0]));
     DONE;
   }
@@ -373,8 +363,8 @@
      UNSPEC_MB))]
   ""
   {
-    enum memmodel model = (enum memmodel) INTVAL (operands[1]);
-    if (model == MEMMODEL_ACQUIRE)
+    enum memmodel model = memmodel_from_int (INTVAL (operands[1]));
+    if (is_mm_acquire (model))
       return "dmb\\tishld";
     else
       return "dmb\\tish";

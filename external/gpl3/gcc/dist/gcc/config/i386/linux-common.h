@@ -1,5 +1,5 @@
 /* Definitions for Intel 386 running Linux-based GNU systems with ELF format.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Ilya Enkovich.
 
 This file is part of GCC.
@@ -40,7 +40,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef  LIB_SPEC
 #define LIB_SPEC \
   LINUX_OR_ANDROID_LD (GNU_USER_TARGET_LIB_SPEC, \
-		       GNU_USER_TARGET_LIB_SPEC " " ANDROID_LIB_SPEC)
+		    GNU_USER_TARGET_NO_PTHREADS_LIB_SPEC " " ANDROID_LIB_SPEC)
 
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC \
@@ -53,3 +53,46 @@ along with GCC; see the file COPYING3.  If not see
 		       GNU_USER_TARGET_ENDFILE_SPEC,	 \
 		       GNU_USER_TARGET_MATHFILE_SPEC " " \
 		       ANDROID_ENDFILE_SPEC)
+
+#ifndef LIBMPX_LIBS
+#define LIBMPX_LIBS "\
+ %:include(libmpx.spec)%(link_libmpx)"
+#endif
+
+#ifndef MPX_SPEC
+#define MPX_SPEC "\
+ %{mmpx:%{fcheck-pointer-bounds:%{!static:%:include(libmpx.spec)%(link_mpx)}}}"
+#endif
+
+#ifndef LIBMPX_SPEC
+#if defined(HAVE_LD_STATIC_DYNAMIC)
+#define LIBMPX_SPEC "\
+%{mmpx:%{fcheck-pointer-bounds:\
+    %{static:--whole-archive -lmpx --no-whole-archive" LIBMPX_LIBS "}\
+    %{!static:%{static-libmpx:" LD_STATIC_OPTION " --whole-archive}\
+    -lmpx %{static-libmpx:--no-whole-archive " LD_DYNAMIC_OPTION \
+    LIBMPX_LIBS "}}}}"
+#else
+#define LIBMPX_SPEC "\
+%{mmpx:%{fcheck-pointer-bounds:-lmpx" LIBMPX_LIBS "}}"
+#endif
+#endif
+
+#ifndef LIBMPXWRAPPERS_SPEC
+#if defined(HAVE_LD_STATIC_DYNAMIC)
+#define LIBMPXWRAPPERS_SPEC "\
+%{mmpx:%{fcheck-pointer-bounds:%{!fno-chkp-use-wrappers:\
+    %{static:-lmpxwrappers}\
+    %{!static:%{static-libmpxwrappers:" LD_STATIC_OPTION " --whole-archive}\
+    -lmpxwrappers %{static-libmpxwrappers:--no-whole-archive "\
+    LD_DYNAMIC_OPTION "}}}}}"
+#else
+#define LIBMPXWRAPPERS_SPEC "\
+%{mmpx:%{fcheck-pointer-bounds:{!fno-chkp-use-wrappers:-lmpxwrappers}}}"
+#endif
+#endif
+
+#ifndef CHKP_SPEC
+#define CHKP_SPEC "\
+%{!nostdlib:%{!nodefaultlibs:" LIBMPX_SPEC LIBMPXWRAPPERS_SPEC "}}" MPX_SPEC
+#endif

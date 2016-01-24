@@ -1,5 +1,5 @@
 /* High-level loop manipulation functions.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,10 +21,46 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
 #include "tm_p.h"
+#include "predict.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfganal.h"
 #include "basic-block.h"
-#include "tree-flow.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
+#include "gimplify.h"
+#include "gimple-iterator.h"
+#include "gimplify-me.h"
+#include "gimple-ssa.h"
+#include "tree-cfg.h"
+#include "tree-phinodes.h"
+#include "ssa-iterators.h"
+#include "stringpool.h"
+#include "tree-ssanames.h"
+#include "tree-ssa-loop-ivopts.h"
+#include "tree-ssa-loop-manip.h"
+#include "tree-ssa-loop-niter.h"
+#include "tree-ssa-loop.h"
+#include "tree-into-ssa.h"
+#include "tree-ssa.h"
 #include "dumpfile.h"
 #include "gimple-pretty-print.h"
 #include "cfgloop.h"
@@ -52,7 +88,8 @@ create_iv (tree base, tree step, tree var, struct loop *loop,
 	   gimple_stmt_iterator *incr_pos, bool after,
 	   tree *var_before, tree *var_after)
 {
-  gimple stmt;
+  gassign *stmt;
+  gphi *phi;
   tree initial, step1;
   gimple_seq stmts;
   tree vb, va;
@@ -61,8 +98,8 @@ create_iv (tree base, tree step, tree var, struct loop *loop,
 
   if (var != NULL_TREE)
     {
-      vb = make_ssa_name (var, NULL);
-      va = make_ssa_name (var, NULL);
+      vb = make_ssa_name (var);
+      va = make_ssa_name (var);
     }
   else
     {
@@ -114,7 +151,7 @@ create_iv (tree base, tree step, tree var, struct loop *loop,
   if (stmts)
     gsi_insert_seq_on_edge_immediate (pe, stmts);
 
-  stmt = gimple_build_assign_with_ops (incr_op, va, vb, step);
+  stmt = gimple_build_assign (va, incr_op, vb, step);
   if (after)
     gsi_insert_after (incr_pos, stmt, GSI_NEW_STMT);
   else
@@ -124,9 +161,9 @@ create_iv (tree base, tree step, tree var, struct loop *loop,
   if (stmts)
     gsi_insert_seq_on_edge_immediate (pe, stmts);
 
-  stmt = create_phi_node (vb, loop->header);
-  add_phi_arg (stmt, initial, loop_preheader_edge (loop), UNKNOWN_LOCATION);
-  add_phi_arg (stmt, va, loop_latch_edge (loop), UNKNOWN_LOCATION);
+  phi = create_phi_node (vb, loop->header);
+  add_phi_arg (phi, initial, loop_preheader_edge (loop), UNKNOWN_LOCATION);
+  add_phi_arg (phi, va, loop_latch_edge (loop), UNKNOWN_LOCATION);
 }
 
 /* Return the innermost superloop LOOP of USE_LOOP that is a superloop of
@@ -172,7 +209,6 @@ compute_live_loop_exits (bitmap live_exits, bitmap use_blocks,
 {
   unsigned i;
   bitmap_iterator bi;
-  vec<basic_block> worklist;
   struct loop *def_loop = def_bb->loop_father;
   unsigned def_loop_depth = loop_depth (def_loop);
   bitmap def_loop_exits;
@@ -180,11 +216,11 @@ compute_live_loop_exits (bitmap live_exits, bitmap use_blocks,
   /* Normally the work list size is bounded by the number of basic
      blocks in the largest loop.  We don't know this number, but we
      can be fairly sure that it will be relatively small.  */
-  worklist.create (MAX (8, n_basic_blocks / 128));
+  auto_vec<basic_block> worklist (MAX (8, n_basic_blocks_for_fn (cfun) / 128));
 
   EXECUTE_IF_SET_IN_BITMAP (use_blocks, 0, i, bi)
     {
-      basic_block use_bb = BASIC_BLOCK (i);
+      basic_block use_bb = BASIC_BLOCK_FOR_FN (cfun, i);
       struct loop *use_loop = use_bb->loop_father;
       gcc_checking_assert (def_loop != use_loop
 			   && ! flow_loop_nested_p (def_loop, use_loop));
@@ -216,7 +252,7 @@ compute_live_loop_exits (bitmap live_exits, bitmap use_blocks,
 	  bool pred_visited;
 
 	  /* We should have met DEF_BB along the way.  */
-	  gcc_assert (pred != ENTRY_BLOCK_PTR);
+	  gcc_assert (pred != ENTRY_BLOCK_PTR_FOR_FN (cfun));
 
 	  if (pred_loop_depth >= def_loop_depth)
 	    {
@@ -243,7 +279,6 @@ compute_live_loop_exits (bitmap live_exits, bitmap use_blocks,
 	  worklist.quick_push (pred);
 	}
     }
-  worklist.release ();
 
   def_loop_exits = BITMAP_ALLOC (&loop_renamer_obstack);
   for (struct loop *loop = def_loop;
@@ -259,7 +294,7 @@ compute_live_loop_exits (bitmap live_exits, bitmap use_blocks,
 static void
 add_exit_phi (basic_block exit, tree var)
 {
-  gimple phi;
+  gphi *phi;
   edge e;
   edge_iterator ei;
 
@@ -308,7 +343,7 @@ add_exit_phis_var (tree var, bitmap use_blocks, bitmap *loop_exits)
 
   EXECUTE_IF_SET_IN_BITMAP (live_exits, 0, index, bi)
     {
-      add_exit_phi (BASIC_BLOCK (index), var);
+      add_exit_phi (BASIC_BLOCK_FOR_FN (cfun, index), var);
     }
 
   BITMAP_FREE (live_exits);
@@ -335,12 +370,11 @@ add_exit_phis (bitmap names_to_rename, bitmap *use_blocks, bitmap *loop_exits)
 static void
 get_loops_exits (bitmap *loop_exits)
 {
-  loop_iterator li;
   struct loop *loop;
   unsigned j;
   edge e;
 
-  FOR_EACH_LOOP (li, loop, 0)
+  FOR_EACH_LOOP (loop, 0)
     {
       vec<edge> exit_edges = get_loop_exit_edges (loop);
       loop_exits[loop->num] = BITMAP_ALLOC (&loop_renamer_obstack);
@@ -414,20 +448,21 @@ find_uses_to_rename_stmt (gimple stmt, bitmap *use_blocks, bitmap need_phis)
 static void
 find_uses_to_rename_bb (basic_block bb, bitmap *use_blocks, bitmap need_phis)
 {
-  gimple_stmt_iterator bsi;
   edge e;
   edge_iterator ei;
 
   FOR_EACH_EDGE (e, ei, bb->succs)
-    for (bsi = gsi_start_phis (e->dest); !gsi_end_p (bsi); gsi_next (&bsi))
+    for (gphi_iterator bsi = gsi_start_phis (e->dest); !gsi_end_p (bsi);
+	 gsi_next (&bsi))
       {
-        gimple phi = gsi_stmt (bsi);
+        gphi *phi = bsi.phi ();
 	if (! virtual_operand_p (gimple_phi_result (phi)))
 	  find_uses_to_rename_use (bb, PHI_ARG_DEF_FROM_EDGE (phi, e),
 				   use_blocks, need_phis);
       }
 
-  for (bsi = gsi_start_bb (bb); !gsi_end_p (bsi); gsi_next (&bsi))
+  for (gimple_stmt_iterator bsi = gsi_start_bb (bb); !gsi_end_p (bsi);
+       gsi_next (&bsi))
     find_uses_to_rename_stmt (gsi_stmt (bsi), use_blocks, need_phis);
 }
 
@@ -443,21 +478,12 @@ find_uses_to_rename (bitmap changed_bbs, bitmap *use_blocks, bitmap need_phis)
   unsigned index;
   bitmap_iterator bi;
 
-  /* ??? If CHANGED_BBS is empty we rewrite the whole function -- why?  */
-  if (changed_bbs && !bitmap_empty_p (changed_bbs))
-    {
-      EXECUTE_IF_SET_IN_BITMAP (changed_bbs, 0, index, bi)
-	{
-	  find_uses_to_rename_bb (BASIC_BLOCK (index), use_blocks, need_phis);
-	}
-    }
+  if (changed_bbs)
+    EXECUTE_IF_SET_IN_BITMAP (changed_bbs, 0, index, bi)
+      find_uses_to_rename_bb (BASIC_BLOCK_FOR_FN (cfun, index), use_blocks, need_phis);
   else
-    {
-      FOR_EACH_BB (bb)
-	{
-	  find_uses_to_rename_bb (bb, use_blocks, need_phis);
-	}
-    }
+    FOR_EACH_BB_FN (bb, cfun)
+      find_uses_to_rename_bb (bb, use_blocks, need_phis);
 }
 
 /* Rewrites the program into a loop closed ssa form -- i.e. inserts extra
@@ -498,12 +524,11 @@ find_uses_to_rename (bitmap changed_bbs, bitmap *use_blocks, bitmap need_phis)
 void
 rewrite_into_loop_closed_ssa (bitmap changed_bbs, unsigned update_flag)
 {
-  bitmap *loop_exits;
   bitmap *use_blocks;
   bitmap names_to_rename;
 
   loops_state_set (LOOP_CLOSED_SSA);
-  if (number_of_loops () <= 1)
+  if (number_of_loops (cfun) <= 1)
     return;
 
   /* If the pass has caused the SSA form to be out-of-date, update it
@@ -514,11 +539,6 @@ rewrite_into_loop_closed_ssa (bitmap changed_bbs, unsigned update_flag)
 
   names_to_rename = BITMAP_ALLOC (&loop_renamer_obstack);
 
-  /* An array of bitmaps where LOOP_EXITS[I] is the set of basic blocks
-     that are the destination of an edge exiting loop number I.  */
-  loop_exits = XNEWVEC (bitmap, number_of_loops ());
-  get_loops_exits (loop_exits);
-
   /* Uses of names to rename.  We don't have to initialize this array,
      because we know that we will only have entries for the SSA names
      in NAMES_TO_RENAME.  */
@@ -527,17 +547,26 @@ rewrite_into_loop_closed_ssa (bitmap changed_bbs, unsigned update_flag)
   /* Find the uses outside loops.  */
   find_uses_to_rename (changed_bbs, use_blocks, names_to_rename);
 
-  /* Add the PHI nodes on exits of the loops for the names we need to
-     rewrite.  */
-  add_exit_phis (names_to_rename, use_blocks, loop_exits);
+  if (!bitmap_empty_p (names_to_rename))
+    {
+      /* An array of bitmaps where LOOP_EXITS[I] is the set of basic blocks
+	 that are the destination of an edge exiting loop number I.  */
+      bitmap *loop_exits = XNEWVEC (bitmap, number_of_loops (cfun));
+      get_loops_exits (loop_exits);
+
+      /* Add the PHI nodes on exits of the loops for the names we need to
+	 rewrite.  */
+      add_exit_phis (names_to_rename, use_blocks, loop_exits);
+
+      free (loop_exits);
+
+      /* Fix up all the names found to be used outside their original
+	 loops.  */
+      update_ssa (TODO_update_ssa);
+    }
 
   bitmap_obstack_release (&loop_renamer_obstack);
   free (use_blocks);
-  free (loop_exits);
-
-  /* Fix up all the names found to be used outside their original
-     loops.  */
-  update_ssa (TODO_update_ssa);
 }
 
 /* Check invariants of the loop closed ssa form for the USE in BB.  */
@@ -579,30 +608,30 @@ DEBUG_FUNCTION void
 verify_loop_closed_ssa (bool verify_ssa_p)
 {
   basic_block bb;
-  gimple_stmt_iterator bsi;
-  gimple phi;
   edge e;
   edge_iterator ei;
 
-  if (number_of_loops () <= 1)
+  if (number_of_loops (cfun) <= 1)
     return;
 
   if (verify_ssa_p)
-    verify_ssa (false);
+    verify_ssa (false, true);
 
   timevar_push (TV_VERIFY_LOOP_CLOSED);
 
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
-      for (bsi = gsi_start_phis (bb); !gsi_end_p (bsi); gsi_next (&bsi))
+      for (gphi_iterator bsi = gsi_start_phis (bb); !gsi_end_p (bsi);
+	   gsi_next (&bsi))
 	{
-	  phi = gsi_stmt (bsi);
+	  gphi *phi = bsi.phi ();
 	  FOR_EACH_EDGE (e, ei, bb->preds)
 	    check_loop_closed_ssa_use (e->src,
 				       PHI_ARG_DEF_FROM_EDGE (phi, e));
 	}
 
-      for (bsi = gsi_start_bb (bb); !gsi_end_p (bsi); gsi_next (&bsi))
+      for (gimple_stmt_iterator bsi = gsi_start_bb (bb); !gsi_end_p (bsi);
+	   gsi_next (&bsi))
 	check_loop_closed_ssa_stmt (bb, gsi_stmt (bsi));
     }
 
@@ -617,15 +646,15 @@ split_loop_exit_edge (edge exit)
 {
   basic_block dest = exit->dest;
   basic_block bb = split_edge (exit);
-  gimple phi, new_phi;
+  gphi *phi, *new_phi;
   tree new_name, name;
   use_operand_p op_p;
-  gimple_stmt_iterator psi;
+  gphi_iterator psi;
   source_location locus;
 
   for (psi = gsi_start_phis (dest); !gsi_end_p (psi); gsi_next (&psi))
     {
-      phi = gsi_stmt (psi);
+      phi = psi.phi ();
       op_p = PHI_ARG_DEF_PTR_FROM_EDGE (phi, single_succ_edge (bb));
       locus = gimple_phi_arg_location_from_edge (phi, single_succ_edge (bb));
 
@@ -718,14 +747,14 @@ copy_phi_node_args (unsigned first_new_block)
 {
   unsigned i;
 
-  for (i = first_new_block; i < (unsigned) last_basic_block; i++)
-    BASIC_BLOCK (i)->flags |= BB_DUPLICATED;
+  for (i = first_new_block; i < (unsigned) last_basic_block_for_fn (cfun); i++)
+    BASIC_BLOCK_FOR_FN (cfun, i)->flags |= BB_DUPLICATED;
 
-  for (i = first_new_block; i < (unsigned) last_basic_block; i++)
-    add_phi_args_after_copy_bb (BASIC_BLOCK (i));
+  for (i = first_new_block; i < (unsigned) last_basic_block_for_fn (cfun); i++)
+    add_phi_args_after_copy_bb (BASIC_BLOCK_FOR_FN (cfun, i));
 
-  for (i = first_new_block; i < (unsigned) last_basic_block; i++)
-    BASIC_BLOCK (i)->flags &= ~BB_DUPLICATED;
+  for (i = first_new_block; i < (unsigned) last_basic_block_for_fn (cfun); i++)
+    BASIC_BLOCK_FOR_FN (cfun, i)->flags &= ~BB_DUPLICATED;
 }
 
 
@@ -751,18 +780,7 @@ gimple_duplicate_loop_to_header_edge (struct loop *loop, edge e,
   if (!loops_state_satisfies_p (LOOPS_HAVE_PREHEADERS))
     return false;
 
-#ifdef ENABLE_CHECKING
-  /* ???  This forces needless update_ssa calls after processing each
-     loop instead of just once after processing all loops.  We should
-     instead verify that loop-closed SSA form is up-to-date for LOOP
-     only (and possibly SSA form).  For now just skip verifying if
-     there are to-be renamed variables.  */
-  if (!need_ssa_update_p (cfun)
-      && loops_state_satisfies_p (LOOP_CLOSED_SSA))
-    verify_loop_closed_ssa (true);
-#endif
-
-  first_new_block = last_basic_block;
+  first_new_block = last_basic_block_for_fn (cfun);
   if (!duplicate_loop_to_header_edge (loop, e, ndupl, wont_exit,
 				      orig, to_remove, flags))
     return false;
@@ -1020,12 +1038,12 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
 				transform_callback transform,
 				void *data)
 {
-  gimple exit_if;
+  gcond *exit_if;
   tree ctr_before, ctr_after;
   tree enter_main_cond, exit_base, exit_step, exit_bound;
   enum tree_code exit_cmp;
-  gimple phi_old_loop, phi_new_loop, phi_rest;
-  gimple_stmt_iterator psi_old_loop, psi_new_loop;
+  gphi *phi_old_loop, *phi_new_loop, *phi_rest;
+  gphi_iterator psi_old_loop, psi_new_loop;
   tree init, next, new_init;
   struct loop *new_loop;
   basic_block rest, exit_bb;
@@ -1038,7 +1056,7 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   unsigned new_est_niter, i, prob;
   unsigned irr = loop_preheader_edge (loop)->flags & EDGE_IRREDUCIBLE_LOOP;
   sbitmap wont_exit;
-  vec<edge> to_remove = vNULL;
+  auto_vec<edge> to_remove;
 
   est_niter = expected_loop_iterations (loop);
   determine_exit_conditions (loop, desc, factor,
@@ -1132,8 +1150,8 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
        !gsi_end_p (psi_old_loop);
        gsi_next (&psi_old_loop), gsi_next (&psi_new_loop))
     {
-      phi_old_loop = gsi_stmt (psi_old_loop);
-      phi_new_loop = gsi_stmt (psi_new_loop);
+      phi_old_loop = psi_old_loop.phi ();
+      phi_new_loop = psi_new_loop.phi ();
 
       init = PHI_ARG_DEF_FROM_EDGE (phi_old_loop, old_entry);
       op = PHI_ARG_DEF_PTR_FROM_EDGE (phi_new_loop, new_entry);
@@ -1146,11 +1164,11 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
       if (TREE_CODE (next) == SSA_NAME
 	  && useless_type_conversion_p (TREE_TYPE (next),
 					TREE_TYPE (init)))
-	new_init = copy_ssa_name (next, NULL);
+	new_init = copy_ssa_name (next);
       else if (TREE_CODE (init) == SSA_NAME
 	       && useless_type_conversion_p (TREE_TYPE (init),
 					     TREE_TYPE (next)))
-	new_init = copy_ssa_name (init, NULL);
+	new_init = copy_ssa_name (init);
       else if (useless_type_conversion_p (TREE_TYPE (next), TREE_TYPE (init)))
 	new_init = make_temp_ssa_name (TREE_TYPE (next), NULL, "unrinittmp");
       else
@@ -1186,7 +1204,6 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
       ok = remove_path (e);
       gcc_assert (ok);
     }
-  to_remove.release ();
   update_ssa (TODO_update_ssa);
 
   /* Ensure that the frequencies in the loop match the new estimated
@@ -1218,7 +1235,7 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   /* Finally create the new counter for number of iterations and add the new
      exit instruction.  */
   bsi = gsi_last_nondebug_bb (exit_bb);
-  exit_if = gsi_stmt (bsi);
+  exit_if = as_a <gcond *> (gsi_stmt (bsi));
   create_iv (exit_base, exit_step, NULL_TREE, loop,
 	     &bsi, false, &ctr_before, &ctr_after);
   gimple_cond_set_code (exit_if, exit_cmp);
@@ -1250,12 +1267,13 @@ tree_unroll_loop (struct loop *loop, unsigned factor,
 
 static void
 rewrite_phi_with_iv (loop_p loop,
-		     gimple_stmt_iterator *psi,
+		     gphi_iterator *psi,
 		     gimple_stmt_iterator *gsi,
 		     tree main_iv)
 {
   affine_iv iv;
-  gimple stmt, phi = gsi_stmt (*psi);
+  gassign *stmt;
+  gphi *phi = psi->phi ();
   tree atype, mtype, val, res = PHI_RESULT (phi);
 
   if (virtual_operand_p (res) || res == main_iv)
@@ -1283,7 +1301,6 @@ rewrite_phi_with_iv (loop_p loop,
 				  GSI_SAME_STMT);
   stmt = gimple_build_assign (res, val);
   gsi_insert_before (gsi, stmt, GSI_SAME_STMT);
-  SSA_NAME_DEF_STMT (res) = stmt;
 }
 
 /* Rewrite all the phi nodes of LOOP in function of the main induction
@@ -1294,7 +1311,7 @@ rewrite_all_phi_nodes_with_iv (loop_p loop, tree main_iv)
 {
   unsigned i;
   basic_block *bbs = get_loop_body_in_dom_order (loop);
-  gimple_stmt_iterator psi;
+  gphi_iterator psi;
 
   for (i = 0; i < loop->num_nodes; i++)
     {
@@ -1327,17 +1344,18 @@ canonicalize_loop_ivs (struct loop *loop, tree *nit, bool bump_in_latch)
   unsigned precision = TYPE_PRECISION (TREE_TYPE (*nit));
   unsigned original_precision = precision;
   tree type, var_before;
-  gimple_stmt_iterator gsi, psi;
-  gimple stmt;
+  gimple_stmt_iterator gsi;
+  gphi_iterator psi;
+  gcond *stmt;
   edge exit = single_dom_exit (loop);
   gimple_seq stmts;
-  enum machine_mode mode;
+  machine_mode mode;
   bool unsigned_p = false;
 
   for (psi = gsi_start_phis (loop->header);
        !gsi_end_p (psi); gsi_next (&psi))
     {
-      gimple phi = gsi_stmt (psi);
+      gphi *phi = psi.phi ();
       tree res = PHI_RESULT (phi);
       bool uns;
 
@@ -1379,7 +1397,7 @@ canonicalize_loop_ivs (struct loop *loop, tree *nit, bool bump_in_latch)
 
   rewrite_all_phi_nodes_with_iv (loop, var_before);
 
-  stmt = last_stmt (exit->src);
+  stmt = as_a <gcond *> (last_stmt (exit->src));
   /* Make the loop exit if the control condition is not satisfied.  */
   if (exit->flags & EDGE_TRUE_VALUE)
     {

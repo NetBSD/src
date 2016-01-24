@@ -1,5 +1,5 @@
 /* Scanning of rtl for dataflow analysis.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck (zadeck@naturalbridge.com).
 
 This file is part of GCC.
@@ -29,6 +29,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "regs.h"
 #include "except.h"
 #include "hard-reg-set.h"
+#include "predict.h"
+#include "vec.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
 #include "basic-block.h"
 #include "timevar.h"
 #include "df.h"
@@ -120,10 +129,9 @@ regstat_bb_compute_ri (unsigned int bb_index,
 		       bitmap local_live, bitmap local_processed,
 		       int *local_live_last_luid)
 {
-  basic_block bb = BASIC_BLOCK (bb_index);
-  rtx insn;
-  df_ref *def_rec;
-  df_ref *use_rec;
+  basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
+  rtx_insn *insn;
+  df_ref def, use;
   int luid = 0;
   bitmap_iterator bi;
   unsigned int regno;
@@ -138,29 +146,23 @@ regstat_bb_compute_ri (unsigned int bb_index,
 
   /* Process the artificial defs and uses at the bottom of the block
      to begin processing.  */
-  for (def_rec = df_get_artificial_defs (bb_index); *def_rec; def_rec++)
-    {
-      df_ref def = *def_rec;
-      if ((DF_REF_FLAGS (def) & DF_REF_AT_TOP) == 0)
-	bitmap_clear_bit (live, DF_REF_REGNO (def));
-    }
+  FOR_EACH_ARTIFICIAL_DEF (def, bb_index)
+    if ((DF_REF_FLAGS (def) & DF_REF_AT_TOP) == 0)
+      bitmap_clear_bit (live, DF_REF_REGNO (def));
 
-  for (use_rec = df_get_artificial_uses (bb_index); *use_rec; use_rec++)
-    {
-      df_ref use = *use_rec;
-      if ((DF_REF_FLAGS (use) & DF_REF_AT_TOP) == 0)
-	{
-	  regno = DF_REF_REGNO (use);
-	  bitmap_set_bit (live, regno);
-	  bitmap_set_bit (artificial_uses, regno);
-	}
-    }
+  FOR_EACH_ARTIFICIAL_USE (use, bb_index)
+    if ((DF_REF_FLAGS (use) & DF_REF_AT_TOP) == 0)
+      {
+	regno = DF_REF_REGNO (use);
+	bitmap_set_bit (live, regno);
+	bitmap_set_bit (artificial_uses, regno);
+      }
 
   FOR_BB_INSNS_REVERSE (bb, insn)
     {
-      unsigned int uid = INSN_UID (insn);
+      struct df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
       bitmap_iterator bi;
-      struct df_mw_hardreg **mws_rec;
+      df_mw_hardreg *mw;
       rtx link;
 
       if (!NONDEBUG_INSN_P (insn))
@@ -172,7 +174,7 @@ regstat_bb_compute_ri (unsigned int bb_index,
       while (link)
 	{
 	  if (REG_NOTE_KIND (link) == REG_DEAD)
-	    REG_N_DEATHS(REGNO (XEXP (link, 0)))++;
+	    REG_N_DEATHS (REGNO (XEXP (link, 0)))++;
 	  link = XEXP (link, 1);
 	}
 
@@ -209,35 +211,31 @@ regstat_bb_compute_ri (unsigned int bb_index,
       /* We only care about real sets for calls.  Clobbers cannot
 	 be depended on.
 	 Only do this if the value is totally dead.  */
-      for (mws_rec = DF_INSN_UID_MWS (uid); *mws_rec; mws_rec++)
-	{
-	  struct df_mw_hardreg *mws = *mws_rec;
-	  if (DF_MWS_REG_DEF_P (mws))
-	    {
-	      bool all_dead = true;
-	      unsigned int r;
+      FOR_EACH_INSN_INFO_MW (mw, insn_info)
+	if (DF_MWS_REG_DEF_P (mw))
+	  {
+	    bool all_dead = true;
+	    unsigned int r;
 
-	      for (r = mws->start_regno; r <= mws->end_regno; r++)
-		if (bitmap_bit_p (artificial_uses, r)
-		    || bitmap_bit_p (live, r))
-		  {
-		    all_dead = false;
-		    break;
-		  }
-
-	      if (all_dead)
+	    for (r = mw->start_regno; r <= mw->end_regno; r++)
+	      if (bitmap_bit_p (artificial_uses, r)
+		  || bitmap_bit_p (live, r))
 		{
-		  regno = mws->start_regno;
-		  REG_LIVE_LENGTH (regno)++;
+		  all_dead = false;
+		  break;
 		}
-	    }
-	}
+
+	    if (all_dead)
+	      {
+		regno = mw->start_regno;
+		REG_LIVE_LENGTH (regno)++;
+	      }
+	  }
 
       /* All of the defs except the return value are some sort of
 	 clobber.  This code is for the return.  */
-      for (def_rec = DF_INSN_UID_DEFS (uid); *def_rec; def_rec++)
+      FOR_EACH_INSN_INFO_DEF (def, insn_info)
 	{
-	  df_ref def = *def_rec;
 	  if ((!CALL_P (insn))
 	      || (!(DF_REF_FLAGS (def) & (DF_REF_MUST_CLOBBER | DF_REF_MAY_CLOBBER))))
 	    {
@@ -301,9 +299,8 @@ regstat_bb_compute_ri (unsigned int bb_index,
 	    }
 	}
 
-      for (use_rec = DF_INSN_UID_USES (uid); *use_rec; use_rec++)
+      FOR_EACH_INSN_INFO_USE (use, insn_info)
 	{
-	  df_ref use = *use_rec;
 	  unsigned int uregno = DF_REF_REGNO (use);
 
 	  if (uregno >= FIRST_PSEUDO_REGISTER)
@@ -375,7 +372,7 @@ regstat_compute_ri (void)
   reg_info_p = XCNEWVEC (struct reg_info_t, max_regno);
   local_live_last_luid = XNEWVEC (int, max_regno);
 
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
       regstat_bb_compute_ri (bb->index, live, artificial_uses,
 			     local_live, local_processed,
@@ -440,32 +437,25 @@ regstat_get_setjmp_crosses (void)
 static void
 regstat_bb_compute_calls_crossed (unsigned int bb_index, bitmap live)
 {
-  basic_block bb = BASIC_BLOCK (bb_index);
-  rtx insn;
-  df_ref *def_rec;
-  df_ref *use_rec;
+  basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
+  rtx_insn *insn;
+  df_ref def, use;
 
   bitmap_copy (live, df_get_live_out (bb));
 
   /* Process the artificial defs and uses at the bottom of the block
      to begin processing.  */
-  for (def_rec = df_get_artificial_defs (bb_index); *def_rec; def_rec++)
-    {
-      df_ref def = *def_rec;
-      if ((DF_REF_FLAGS (def) & DF_REF_AT_TOP) == 0)
-	bitmap_clear_bit (live, DF_REF_REGNO (def));
-    }
+  FOR_EACH_ARTIFICIAL_DEF (def, bb_index)
+    if ((DF_REF_FLAGS (def) & DF_REF_AT_TOP) == 0)
+      bitmap_clear_bit (live, DF_REF_REGNO (def));
 
-  for (use_rec = df_get_artificial_uses (bb_index); *use_rec; use_rec++)
-    {
-      df_ref use = *use_rec;
-      if ((DF_REF_FLAGS (use) & DF_REF_AT_TOP) == 0)
-	bitmap_set_bit (live, DF_REF_REGNO (use));
-    }
+  FOR_EACH_ARTIFICIAL_USE (use, bb_index)
+    if ((DF_REF_FLAGS (use) & DF_REF_AT_TOP) == 0)
+      bitmap_set_bit (live, DF_REF_REGNO (use));
 
   FOR_BB_INSNS_REVERSE (bb, insn)
     {
-      unsigned int uid = INSN_UID (insn);
+      struct df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
       unsigned int regno;
 
       if (!INSN_P (insn))
@@ -486,9 +476,8 @@ regstat_bb_compute_calls_crossed (unsigned int bb_index, bitmap live)
 
       /* All of the defs except the return value are some sort of
 	 clobber.  This code is for the return.  */
-      for (def_rec = DF_INSN_UID_DEFS (uid); *def_rec; def_rec++)
+      FOR_EACH_INSN_INFO_DEF (def, insn_info)
 	{
-	  df_ref def = *def_rec;
 	  if ((!CALL_P (insn))
 	      || (!(DF_REF_FLAGS (def) & (DF_REF_MUST_CLOBBER | DF_REF_MAY_CLOBBER))))
 	    {
@@ -498,11 +487,8 @@ regstat_bb_compute_calls_crossed (unsigned int bb_index, bitmap live)
 	    }
 	}
 
-      for (use_rec = DF_INSN_UID_USES (uid); *use_rec; use_rec++)
-	{
-	  df_ref use = *use_rec;
-	  bitmap_set_bit (live, DF_REF_REGNO (use));
-	}
+      FOR_EACH_INSN_INFO_USE (use, insn_info)
+	bitmap_set_bit (live, DF_REF_REGNO (use));
     }
 }
 
@@ -522,7 +508,7 @@ regstat_compute_calls_crossed (void)
   reg_info_p_size = max_regno;
   reg_info_p = XCNEWVEC (struct reg_info_t, max_regno);
 
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
       regstat_bb_compute_calls_crossed (bb->index, live);
     }

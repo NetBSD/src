@@ -1,6 +1,6 @@
 // unordered_map implementation -*- C++ -*-
 
-// Copyright (C) 2010-2013 Free Software Foundation, Inc.
+// Copyright (C) 2010-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -75,12 +75,13 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *
    *  @ingroup unordered_associative_containers
    *
-   *  @tparam  _Key  Type of key objects.
-   *  @tparam  _Tp  Type of mapped objects.
-   *  @tparam  _Hash  Hashing function object type, defaults to hash<_Value>.
-   *  @tparam  _Pred  Predicate function object type, defaults
-   *                  to equal_to<_Value>.
-   *  @tparam  _Alloc  Allocator type, defaults to allocator<_Key>.
+   *  @tparam  _Key    Type of key objects.
+   *  @tparam  _Tp     Type of mapped objects.
+   *  @tparam  _Hash   Hashing function object type, defaults to hash<_Value>.
+   *  @tparam  _Pred   Predicate function object type, defaults
+   *                   to equal_to<_Value>.
+   *  @tparam  _Alloc  Allocator type, defaults to 
+   *                   std::allocator<std::pair<const _Key, _Tp>>.
    *
    *  Meets the requirements of a <a href="tables.html#65">container</a>, and
    *  <a href="tables.html#xx">unordered associative container</a>
@@ -94,7 +95,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	   class _Hash = hash<_Key>,
 	   class _Pred = std::equal_to<_Key>,
 	   class _Alloc = std::allocator<std::pair<const _Key, _Tp> > >
-    class unordered_map : __check_copy_constructible<_Alloc>
+    class unordered_map
     {
       typedef __umap_hashtable<_Key, _Tp, _Hash, _Pred, _Alloc>  _Hashtable;
       _Hashtable _M_h;
@@ -113,10 +114,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       //@{
       ///  Iterator-related typedefs.
-      typedef typename allocator_type::pointer		pointer;
-      typedef typename allocator_type::const_pointer	const_pointer;
-      typedef typename allocator_type::reference	reference;
-      typedef typename allocator_type::const_reference	const_reference;
+      typedef typename _Hashtable::pointer		pointer;
+      typedef typename _Hashtable::const_pointer	const_pointer;
+      typedef typename _Hashtable::reference		reference;
+      typedef typename _Hashtable::const_reference	const_reference;
       typedef typename _Hashtable::iterator		iterator;
       typedef typename _Hashtable::const_iterator	const_iterator;
       typedef typename _Hashtable::local_iterator	local_iterator;
@@ -127,15 +128,18 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       //construct/destroy/copy
 
+      /// Default constructor.
+      unordered_map() = default;
+
       /**
        *  @brief  Default constructor creates no elements.
-       *  @param __n  Initial number of buckets.
+       *  @param __n  Minimal initial number of buckets.
        *  @param __hf  A hash functor.
        *  @param __eql  A key equality functor.
        *  @param __a  An allocator object.
        */
       explicit
-      unordered_map(size_type __n = 10,
+      unordered_map(size_type __n,
 		    const hasher& __hf = hasher(),
 		    const key_equal& __eql = key_equal(),
 		    const allocator_type& __a = allocator_type())
@@ -156,12 +160,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  distance(__first,__last)).
        */
       template<typename _InputIterator>
-	unordered_map(_InputIterator __f, _InputIterator __l,
+	unordered_map(_InputIterator __first, _InputIterator __last,
 		      size_type __n = 0,
 		      const hasher& __hf = hasher(),
 		      const key_equal& __eql = key_equal(),
 		      const allocator_type& __a = allocator_type())
-	: _M_h(__f, __l, __n, __hf, __eql, __a)
+	: _M_h(__first, __last, __n, __hf, __eql, __a)
 	{ }
 
       /// Copy constructor.
@@ -169,6 +173,35 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       /// Move constructor.
       unordered_map(unordered_map&&) = default;
+
+      /**
+       *  @brief Creates an %unordered_map with no elements.
+       *  @param __a An allocator object.
+       */
+      explicit
+      unordered_map(const allocator_type& __a)
+	: _M_h(__a)
+      { }
+
+      /*
+       *  @brief Copy constructor with allocator argument.
+       * @param  __uset  Input %unordered_map to copy.
+       * @param  __a  An allocator object.
+       */
+      unordered_map(const unordered_map& __umap,
+		    const allocator_type& __a)
+      : _M_h(__umap._M_h, __a)
+      { }
+
+      /*
+       *  @brief  Move constructor with allocator argument.
+       *  @param  __uset Input %unordered_map to move.
+       *  @param  __a    An allocator object.
+       */
+      unordered_map(unordered_map&& __umap,
+		    const allocator_type& __a)
+      : _M_h(std::move(__umap._M_h), __a)
+      { }
 
       /**
        *  @brief  Builds an %unordered_map from an initializer_list.
@@ -186,7 +219,42 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 		    const hasher& __hf = hasher(),
 		    const key_equal& __eql = key_equal(),
 		    const allocator_type& __a = allocator_type())
-	: _M_h(__l, __n, __hf, __eql, __a)
+      : _M_h(__l, __n, __hf, __eql, __a)
+      { }
+
+      unordered_map(size_type __n, const allocator_type& __a)
+      : unordered_map(__n, hasher(), key_equal(), __a)
+      { }
+
+      unordered_map(size_type __n, const hasher& __hf,
+		    const allocator_type& __a)
+      : unordered_map(__n, __hf, key_equal(), __a)
+      { }
+
+      template<typename _InputIterator>
+	unordered_map(_InputIterator __first, _InputIterator __last,
+		      size_type __n,
+		      const allocator_type& __a)
+	: unordered_map(__first, __last, __n, hasher(), key_equal(), __a)
+	{ }
+
+      template<typename _InputIterator>
+	unordered_map(_InputIterator __first, _InputIterator __last,
+		      size_type __n, const hasher& __hf,
+		      const allocator_type& __a)
+	  : unordered_map(__first, __last, __n, __hf, key_equal(), __a)
+	{ }
+
+      unordered_map(initializer_list<value_type> __l,
+		    size_type __n,
+		    const allocator_type& __a)
+      : unordered_map(__l, __n, hasher(), key_equal(), __a)
+      { }
+
+      unordered_map(initializer_list<value_type> __l,
+		    size_type __n, const hasher& __hf,
+		    const allocator_type& __a)
+      : unordered_map(__l, __n, __hf, key_equal(), __a)
       { }
 
       /// Copy assignment operator.
@@ -287,7 +355,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       // modifiers.
 
       /**
-       *  @brief Attempts to build and insert a std::pair into the %unordered_map.
+       *  @brief Attempts to build and insert a std::pair into the
+       *  %unordered_map.
        *
        *  @param __args  Arguments used to generate a new pair instance (see
        *	        std::piecewise_contruct for passing arguments to each
@@ -311,7 +380,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	{ return _M_h.emplace(std::forward<_Args>(__args)...); }
 
       /**
-       *  @brief Attempts to build and insert a std::pair into the %unordered_map.
+       *  @brief Attempts to build and insert a std::pair into the
+       *  %unordered_map.
        *
        *  @param  __pos  An iterator that serves as a hint as to where the pair
        *                should be inserted.
@@ -330,7 +400,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  cause no gains in efficiency.
        *
        *  See
-       *  http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt07ch17.html
+       *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
        *  for more on @a hinting.
        *
        *  Insertion requires amortized constant time.
@@ -387,7 +457,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  hint would cause no gains in efficiency.
        *
        *  See
-       *  http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt07ch17.html
+       *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
        *  for more on @a hinting.
        *
        *  Insertion requires amortized constant time.
@@ -449,8 +519,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       // LWG 2059.
       iterator
-      erase(iterator __it)
-      { return _M_h.erase(__it); }
+      erase(iterator __position)
+      { return _M_h.erase(__position); }
       //@}
 
       /**
@@ -502,12 +572,14 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  @param  __x  An %unordered_map of the same element and allocator
        *  types.
        *
-       *  This exchanges the elements between two %unordered_map in constant time.
+       *  This exchanges the elements between two %unordered_map in constant
+       *  time.
        *  Note that the global std::swap() function is specialized such that
        *  std::swap(m1,m2) will feed to this function.
        */
       void
       swap(unordered_map& __x)
+      noexcept( noexcept(_M_h.swap(__x._M_h)) )
       { _M_h.swap(__x._M_h); }
 
       // observers.
@@ -756,12 +828,13 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *
    *  @ingroup unordered_associative_containers
    *
-   *  @tparam  _Key  Type of key objects.
-   *  @tparam  _Tp  Type of mapped objects.
-   *  @tparam  _Hash  Hashing function object type, defaults to hash<_Value>.
-   *  @tparam  _Pred  Predicate function object type, defaults
-   *                  to equal_to<_Value>.
-   *  @tparam  _Alloc  Allocator type, defaults to allocator<_Key>.
+   *  @tparam  _Key    Type of key objects.
+   *  @tparam  _Tp     Type of mapped objects.
+   *  @tparam  _Hash   Hashing function object type, defaults to hash<_Value>.
+   *  @tparam  _Pred   Predicate function object type, defaults
+   *                   to equal_to<_Value>.
+   *  @tparam  _Alloc  Allocator type, defaults to
+   *                   std::allocator<std::pair<const _Key, _Tp>>.
    *
    *  Meets the requirements of a <a href="tables.html#65">container</a>, and
    *  <a href="tables.html#xx">unordered associative container</a>
@@ -775,7 +848,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	   class _Hash = hash<_Key>,
 	   class _Pred = std::equal_to<_Key>,
 	   class _Alloc = std::allocator<std::pair<const _Key, _Tp> > >
-    class unordered_multimap : __check_copy_constructible<_Alloc>
+    class unordered_multimap
     {
       typedef __ummap_hashtable<_Key, _Tp, _Hash, _Pred, _Alloc>  _Hashtable;
       _Hashtable _M_h;
@@ -794,10 +867,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       //@{
       ///  Iterator-related typedefs.
-      typedef typename allocator_type::pointer		pointer;
-      typedef typename allocator_type::const_pointer	const_pointer;
-      typedef typename allocator_type::reference	reference;
-      typedef typename allocator_type::const_reference	const_reference;
+      typedef typename _Hashtable::pointer		pointer;
+      typedef typename _Hashtable::const_pointer	const_pointer;
+      typedef typename _Hashtable::reference		reference;
+      typedef typename _Hashtable::const_reference	const_reference;
       typedef typename _Hashtable::iterator		iterator;
       typedef typename _Hashtable::const_iterator	const_iterator;
       typedef typename _Hashtable::local_iterator	local_iterator;
@@ -808,15 +881,18 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       //construct/destroy/copy
 
+      /// Default constructor.
+      unordered_multimap() = default;
+
       /**
        *  @brief  Default constructor creates no elements.
-       *  @param __n  Initial number of buckets.
+       *  @param __n  Mnimal initial number of buckets.
        *  @param __hf  A hash functor.
        *  @param __eql  A key equality functor.
        *  @param __a  An allocator object.
        */
       explicit
-      unordered_multimap(size_type __n = 10,
+      unordered_multimap(size_type __n,
 			 const hasher& __hf = hasher(),
 			 const key_equal& __eql = key_equal(),
 			 const allocator_type& __a = allocator_type())
@@ -825,24 +901,24 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       /**
        *  @brief  Builds an %unordered_multimap from a range.
-       *  @param  __first  An input iterator.
+       *  @param  __first An input iterator.
        *  @param  __last  An input iterator.
-       *  @param __n  Minimal initial number of buckets.
-       *  @param __hf  A hash functor.
-       *  @param __eql  A key equality functor.
-       *  @param __a  An allocator object.
+       *  @param __n      Minimal initial number of buckets.
+       *  @param __hf     A hash functor.
+       *  @param __eql    A key equality functor.
+       *  @param __a      An allocator object.
        *
        *  Create an %unordered_multimap consisting of copies of the elements
        *  from [__first,__last).  This is linear in N (where N is
        *  distance(__first,__last)).
        */
       template<typename _InputIterator>
-	unordered_multimap(_InputIterator __f, _InputIterator __l,
+	unordered_multimap(_InputIterator __first, _InputIterator __last,
 			   size_type __n = 0,
 			   const hasher& __hf = hasher(),
 			   const key_equal& __eql = key_equal(),
 			   const allocator_type& __a = allocator_type())
-	: _M_h(__f, __l, __n, __hf, __eql, __a)
+	: _M_h(__first, __last, __n, __hf, __eql, __a)
 	{ }
 
       /// Copy constructor.
@@ -850,6 +926,35 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       /// Move constructor.
       unordered_multimap(unordered_multimap&&) = default;
+
+      /**
+       *  @brief Creates an %unordered_multimap with no elements.
+       *  @param __a An allocator object.
+       */
+      explicit
+      unordered_multimap(const allocator_type& __a)
+      : _M_h(__a)
+      { }
+
+      /*
+       *  @brief Copy constructor with allocator argument.
+       * @param  __uset  Input %unordered_multimap to copy.
+       * @param  __a  An allocator object.
+       */
+      unordered_multimap(const unordered_multimap& __ummap,
+			 const allocator_type& __a)
+      : _M_h(__ummap._M_h, __a)
+      { }
+
+      /*
+       *  @brief  Move constructor with allocator argument.
+       *  @param  __uset Input %unordered_multimap to move.
+       *  @param  __a    An allocator object.
+       */
+      unordered_multimap(unordered_multimap&& __ummap,
+			 const allocator_type& __a)
+      : _M_h(std::move(__ummap._M_h), __a)
+      { }
 
       /**
        *  @brief  Builds an %unordered_multimap from an initializer_list.
@@ -867,7 +972,42 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 			 const hasher& __hf = hasher(),
 			 const key_equal& __eql = key_equal(),
 			 const allocator_type& __a = allocator_type())
-	: _M_h(__l, __n, __hf, __eql, __a)
+      : _M_h(__l, __n, __hf, __eql, __a)
+      { }
+
+      unordered_multimap(size_type __n, const allocator_type& __a)
+      : unordered_multimap(__n, hasher(), key_equal(), __a)
+      { }
+
+      unordered_multimap(size_type __n, const hasher& __hf,
+			 const allocator_type& __a)
+      : unordered_multimap(__n, __hf, key_equal(), __a)
+      { }
+
+      template<typename _InputIterator>
+	unordered_multimap(_InputIterator __first, _InputIterator __last,
+			   size_type __n,
+			   const allocator_type& __a)
+	: unordered_multimap(__first, __last, __n, hasher(), key_equal(), __a)
+	{ }
+
+      template<typename _InputIterator>
+	unordered_multimap(_InputIterator __first, _InputIterator __last,
+			   size_type __n, const hasher& __hf,
+			   const allocator_type& __a)
+	: unordered_multimap(__first, __last, __n, __hf, key_equal(), __a)
+	{ }
+
+      unordered_multimap(initializer_list<value_type> __l,
+			 size_type __n,
+			 const allocator_type& __a)
+      : unordered_multimap(__l, __n, hasher(), key_equal(), __a)
+      { }
+
+      unordered_multimap(initializer_list<value_type> __l,
+			 size_type __n, const hasher& __hf,
+			 const allocator_type& __a)
+      : unordered_multimap(__l, __n, __hf, key_equal(), __a)
       { }
 
       /// Copy assignment operator.
@@ -988,7 +1128,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	{ return _M_h.emplace(std::forward<_Args>(__args)...); }
 
       /**
-       *  @brief Attempts to build and insert a std::pair into the %unordered_multimap.
+       *  @brief Attempts to build and insert a std::pair into the
+       *  %unordered_multimap.
        *
        *  @param  __pos  An iterator that serves as a hint as to where the pair
        *                should be inserted.
@@ -1003,7 +1144,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  cause no gains in efficiency.
        *
        *  See
-       *  http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt07ch17.html
+       *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
        *  for more on @a hinting.
        *
        *  Insertion requires amortized constant time.
@@ -1050,7 +1191,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  cause no gains in efficiency.
        *
        *  See
-       *  http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt07ch17.html
+       *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
        *  for more on @a hinting.
        *
        *  Insertion requires amortized constant time.
@@ -1113,8 +1254,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       // LWG 2059.
       iterator
-      erase(iterator __it)
-      { return _M_h.erase(__it); }
+      erase(iterator __position)
+      { return _M_h.erase(__position); }
       //@}
 
       /**
@@ -1173,6 +1314,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        */
       void
       swap(unordered_multimap& __x)
+      noexcept( noexcept(_M_h.swap(__x._M_h)) )
       { _M_h.swap(__x._M_h); }
 
       // observers.

@@ -1,4 +1,4 @@
-;   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 ;   Contributed by Red Hat.
 ; 
 ; This file is free software; you can redistribute it and/or modify it
@@ -20,28 +20,9 @@
 ; see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 ; <http://www.gnu.org/licenses/>.
 
-r8	=	0xffef0
-r16	=	0xffee8
-r9	=	0xffef1
-r17	=	0xffee9
-r10	=	0xffef2
-r18	=	0xffeea
-r11	=	0xffef3
-r19	=	0xffeeb
-r12	=	0xffef4
-r20	=	0xffeec
-r13	=	0xffef5
-r21	=	0xffeed
-r14	=	0xffef6
-r22	=	0xffeee
-r15	=	0xffef7
-r23	=	0xffeef
+#include "vregs.h"
 	
-	.text
-	.global	___lshrsi3
-	.type	___lshrsi3, @function
-___lshrsi3:
-
+START_FUNC ___lshrsi3
 	;; input:
 	;; 
 	;; [zero]
@@ -61,7 +42,6 @@ ___lshrsi3:
 	;; B  - count
 
 	mov	a, [sp+8]	; A now contains the count
-
 	cmp	a, #0x20
 	bc	$.Lcount_is_normal
 
@@ -128,4 +108,4 @@ ___lshrsi3:
 
 	br	$.Lloop_top
 
-	.size	___lshrsi3, .-___lshrsi3
+END_FUNC ___lshrsi3

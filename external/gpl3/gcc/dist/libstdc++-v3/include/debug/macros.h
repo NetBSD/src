@@ -1,6 +1,6 @@
 // Debugging support implementation -*- C++ -*-
 
-// Copyright (C) 2003-2013 Free Software Foundation, Inc.
+// Copyright (C) 2003-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -72,11 +72,11 @@ _GLIBCXX_DEBUG_VERIFY(_First != _Last,					\
 */
 #define __glibcxx_check_insert(_Position)				\
 _GLIBCXX_DEBUG_VERIFY(!_Position._M_singular(),				\
-		      _M_message(__gnu_debug::__msg_insert_singular) \
+		      _M_message(__gnu_debug::__msg_insert_singular)	\
 		      ._M_sequence(*this, "this")			\
 		      ._M_iterator(_Position, #_Position));		\
 _GLIBCXX_DEBUG_VERIFY(_Position._M_attached_to(this),			\
-		      _M_message(__gnu_debug::__msg_insert_different) \
+		      _M_message(__gnu_debug::__msg_insert_different)	\
 		      ._M_sequence(*this, "this")			\
 		      ._M_iterator(_Position, #_Position))
 
@@ -99,34 +99,38 @@ _GLIBCXX_DEBUG_VERIFY(!_Position._M_is_end(),				\
  *  into a container at a specific position requires that the iterator
  *  be nonsingular (i.e., either dereferenceable or past-the-end),
  *  that it reference the sequence we are inserting into, and that the
- *  iterator range [_First, Last) is a valid (possibly empty)
- *  range. Note that this macro is only valid when the container is a
- *  _Safe_sequence and the iterator is a _Safe_iterator.
- *
- *  @todo We would like to be able to check for noninterference of
- *  _Position and the range [_First, _Last), but that can't (in
- *  general) be done.
+ *  iterator range [_First, _Last) is a valid (possibly empty)
+ *  range which does not reference the sequence we are inserting into.
+ *  Note that this macro is only valid when the container is a
+ *  _Safe_sequence and the _Position iterator is a _Safe_iterator.
 */
 #define __glibcxx_check_insert_range(_Position,_First,_Last)		\
 __glibcxx_check_valid_range(_First,_Last);				\
-__glibcxx_check_insert(_Position)
+__glibcxx_check_insert(_Position);					\
+_GLIBCXX_DEBUG_VERIFY(__gnu_debug::__foreign_iterator(_Position,_First,_Last),\
+		      _M_message(__gnu_debug::__msg_insert_range_from_self)\
+		      ._M_iterator(_First, #_First)			\
+		      ._M_iterator(_Last, #_Last)			\
+		      ._M_sequence(*this, "this"))
 
 /** Verify that we can insert the values in the iterator range
  *  [_First, _Last) into *this after the iterator _Position.  Insertion
  *  into a container after a specific position requires that the iterator
  *  be nonsingular (i.e., either dereferenceable or past-the-end),
  *  that it reference the sequence we are inserting into, and that the
- *  iterator range [_First, Last) is a valid (possibly empty)
- *  range. Note that this macro is only valid when the container is a
- *  _Safe_sequence and the iterator is a _Safe_iterator.
- *
- *  @todo We would like to be able to check for noninterference of
- *  _Position and the range [_First, _Last), but that can't (in
- *  general) be done.
+ *  iterator range [_First, _Last) is a valid (possibly empty)
+ *  range which does not reference the sequence we are inserting into.
+ *  Note that this macro is only valid when the container is a
+ *  _Safe_sequence and the _Position iterator is a _Safe_iterator.
 */
 #define __glibcxx_check_insert_range_after(_Position,_First,_Last)	\
 __glibcxx_check_valid_range(_First,_Last);				\
-__glibcxx_check_insert_after(_Position)
+__glibcxx_check_insert_after(_Position);				\
+_GLIBCXX_DEBUG_VERIFY(__gnu_debug::__foreign_iterator(_Position,_First,_Last),\
+		      _M_message(__gnu_debug::__msg_insert_range_from_self)\
+		      ._M_iterator(_First, #_First)			\
+		      ._M_iterator(_Last, #_Last)			\
+		      ._M_sequence(*this, "this"))
 
 /** Verify that we can erase the element referenced by the iterator
  * _Position. We can erase the element if the _Position iterator is
@@ -223,7 +227,9 @@ _GLIBCXX_DEBUG_VERIFY(! this->empty(),					\
 // Verify that the iterator range [_First, _Last) is sorted
 #define __glibcxx_check_sorted(_First,_Last)				\
 __glibcxx_check_valid_range(_First,_Last);				\
-_GLIBCXX_DEBUG_VERIFY(__gnu_debug::__check_sorted(_First, _Last),	\
+ _GLIBCXX_DEBUG_VERIFY(__gnu_debug::__check_sorted(			\
+			__gnu_debug::__base(_First),			\
+			__gnu_debug::__base(_Last)),			\
 		      _M_message(__gnu_debug::__msg_unsorted)	        \
                       ._M_iterator(_First, #_First)			\
 		      ._M_iterator(_Last, #_Last))
@@ -232,7 +238,9 @@ _GLIBCXX_DEBUG_VERIFY(__gnu_debug::__check_sorted(_First, _Last),	\
     predicate _Pred. */
 #define __glibcxx_check_sorted_pred(_First,_Last,_Pred)			\
 __glibcxx_check_valid_range(_First,_Last);				\
-_GLIBCXX_DEBUG_VERIFY(__gnu_debug::__check_sorted(_First, _Last, _Pred), \
+_GLIBCXX_DEBUG_VERIFY(__gnu_debug::__check_sorted(			\
+			__gnu_debug::__base(_First),			\
+			__gnu_debug::__base(_Last), _Pred),		\
 		      _M_message(__gnu_debug::__msg_unsorted_pred)      \
                       ._M_iterator(_First, #_First)			\
 		      ._M_iterator(_Last, #_Last)			\
@@ -242,7 +250,8 @@ _GLIBCXX_DEBUG_VERIFY(__gnu_debug::__check_sorted(_First, _Last, _Pred), \
 #define __glibcxx_check_sorted_set(_First1,_Last1,_First2)		\
 __glibcxx_check_valid_range(_First1,_Last1);				\
 _GLIBCXX_DEBUG_VERIFY(                                                  \
-  __gnu_debug::__check_sorted_set(_First1, _Last1, _First2),		\
+  __gnu_debug::__check_sorted_set(__gnu_debug::__base(_First1),		\
+				  __gnu_debug::__base(_Last1), _First2),\
   _M_message(__gnu_debug::__msg_unsorted)				\
   ._M_iterator(_First1, #_First1)					\
   ._M_iterator(_Last1, #_Last1))
@@ -251,7 +260,9 @@ _GLIBCXX_DEBUG_VERIFY(                                                  \
 #define __glibcxx_check_sorted_set_pred(_First1,_Last1,_First2,_Pred)	\
 __glibcxx_check_valid_range(_First1,_Last1);        			\
 _GLIBCXX_DEBUG_VERIFY(							\
-  __gnu_debug::__check_sorted_set(_First1, _Last1, _First2, _Pred),	\
+  __gnu_debug::__check_sorted_set(__gnu_debug::__base(_First1),		\
+				  __gnu_debug::__base(_Last1),		\
+				  _First2, _Pred),			\
   _M_message(__gnu_debug::__msg_unsorted_pred)				\
   ._M_iterator(_First1, #_First1)					\
   ._M_iterator(_Last1, #_Last1)						\
@@ -330,16 +341,16 @@ _GLIBCXX_DEBUG_VERIFY(this != &_Other,					\
 		      _M_message(__gnu_debug::__msg_self_move_assign)	\
                       ._M_sequence(*this, "this"))
 
-// Verify that load factor is position
+// Verify that load factor is positive
 #define __glibcxx_check_max_load_factor(_F)				\
 _GLIBCXX_DEBUG_VERIFY(_F > 0.0f,					\
 		      _M_message(__gnu_debug::__msg_valid_load_factor)	\
                       ._M_sequence(*this, "this"))
 
-#define __glibcxx_check_equal_allocs(_Other)			\
-_GLIBCXX_DEBUG_VERIFY(this->get_allocator() == _Other.get_allocator(),	\
+#define __glibcxx_check_equal_allocs(_This, _Other)			\
+_GLIBCXX_DEBUG_VERIFY(_This.get_allocator() == _Other.get_allocator(),	\
 		      _M_message(__gnu_debug::__msg_equal_allocs)	\
-		      ._M_sequence(*this, "this"))
+		      ._M_sequence(_This, "this"))
 
 #ifdef _GLIBCXX_DEBUG_PEDANTIC
 #  define __glibcxx_check_string(_String) _GLIBCXX_DEBUG_ASSERT(_String != 0)

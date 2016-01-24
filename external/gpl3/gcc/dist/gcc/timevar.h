@@ -1,5 +1,5 @@
 /* Timing variables for measuring compiler performance.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Alex Samuel <samuel@codesourcery.com>
 
    This file is part of GCC.
@@ -62,7 +62,7 @@ struct timevar_time_def
   double wall;
 
   /* Garbage collector memory.  */
-  unsigned ggc_mem;
+  size_t ggc_mem;
 };
 
 /* An enumeration of timing variable identifiers.  Constructed from
@@ -109,6 +109,30 @@ timevar_pop (timevar_id_t tv)
   if (timevar_enable)
     timevar_pop_1 (tv);
 }
+
+// This is a simple timevar wrapper class that pushes a timevar in its
+// constructor and pops the timevar in its destructor.
+class auto_timevar
+{
+ public:
+  auto_timevar (timevar_id_t tv)
+    : m_tv (tv)
+  {
+    timevar_push (m_tv);
+  }
+
+  ~auto_timevar ()
+  {
+    timevar_pop (m_tv);
+  }
+
+ private:
+
+  // Private to disallow copies.
+  auto_timevar (const auto_timevar &);
+
+  timevar_id_t m_tv;
+};
 
 extern void print_time (const char *, long);
 

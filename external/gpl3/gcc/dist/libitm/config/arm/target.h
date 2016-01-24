@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Transactional Memory Library (libitm).
@@ -32,10 +32,6 @@ typedef struct gtm_jmpbuf
   void *cfa;
   unsigned long pc;
 } gtm_jmpbuf;
-
-/* ARM generally uses a fixed page size of 4K.  */
-#define PAGE_SIZE	4096
-#define FIXED_PAGE_SIZE	1
 
 /* ??? The size of one line in hardware caches (in bytes). */
 #define HW_CACHELINE_SIZE 64

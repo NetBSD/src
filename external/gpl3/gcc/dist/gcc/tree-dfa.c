@@ -1,5 +1,5 @@
 /* Data flow functions for trees.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -23,22 +23,57 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "hashtab.h"
-#include "pointer-set.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "stor-layout.h"
 #include "tm_p.h"
+#include "predict.h"
+#include "hard-reg-set.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
 #include "basic-block.h"
-#include "ggc.h"
 #include "langhooks.h"
 #include "flags.h"
-#include "function.h"
 #include "tree-pretty-print.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
 #include "gimple.h"
-#include "tree-flow.h"
+#include "gimple-iterator.h"
+#include "gimple-walk.h"
+#include "gimple-ssa.h"
+#include "tree-phinodes.h"
+#include "ssa-iterators.h"
+#include "stringpool.h"
+#include "tree-ssanames.h"
+#include "rtl.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "insn-config.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
+#include "expr.h"
+#include "tree-dfa.h"
 #include "tree-inline.h"
 #include "tree-pass.h"
-#include "convert.h"
 #include "params.h"
-#include "cgraph.h"
 
 /* Build and maintain data flow information for trees.  */
 
@@ -71,7 +106,7 @@ renumber_gimple_stmt_uids (void)
   basic_block bb;
 
   set_gimple_stmt_max_uid (cfun, 0);
-  FOR_ALL_BB (bb)
+  FOR_ALL_BB_FN (bb, cfun)
     {
       gimple_stmt_iterator bsi;
       for (bsi = gsi_start_phis (bb); !gsi_end_p (bsi); gsi_next (&bsi))
@@ -223,7 +258,7 @@ dump_dfa_stats (FILE *file)
   fprintf (file, fmt_str_1, "VDEF operands", dfa_stats.num_vdefs,
 	   SCALE (size), LABEL (size));
 
-  size = dfa_stats.num_phis * sizeof (struct gimple_statement_phi);
+  size = dfa_stats.num_phis * sizeof (struct gphi);
   total += size;
   fprintf (file, fmt_str_1, "PHI nodes", dfa_stats.num_phis,
 	   SCALE (size), LABEL (size));
@@ -270,20 +305,20 @@ collect_dfa_stats (struct dfa_stats_d *dfa_stats_p ATTRIBUTE_UNUSED)
   memset ((void *)dfa_stats_p, 0, sizeof (struct dfa_stats_d));
 
   /* Walk all the statements in the function counting references.  */
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
-      gimple_stmt_iterator si;
-
-      for (si = gsi_start_phis (bb); !gsi_end_p (si); gsi_next (&si))
+      for (gphi_iterator si = gsi_start_phis (bb); !gsi_end_p (si);
+	   gsi_next (&si))
 	{
-	  gimple phi = gsi_stmt (si);
+	  gphi *phi = si.phi ();
 	  dfa_stats_p->num_phis++;
 	  dfa_stats_p->num_phi_args += gimple_phi_num_args (phi);
 	  if (gimple_phi_num_args (phi) > dfa_stats_p->max_num_phi_args)
 	    dfa_stats_p->max_num_phi_args = gimple_phi_num_args (phi);
 	}
 
-      for (si = gsi_start_bb (bb); !gsi_end_p (si); gsi_next (&si))
+      for (gimple_stmt_iterator si = gsi_start_bb (bb); !gsi_end_p (si);
+	   gsi_next (&si))
 	{
 	  gimple stmt = gsi_stmt (si);
 	  dfa_stats_p->num_defs += NUM_SSA_OPERANDS (stmt, SSA_OP_DEF);
@@ -312,7 +347,7 @@ ssa_default_def (struct function *fn, tree var)
 	      || TREE_CODE (var) == RESULT_DECL);
   in.var = (tree)&ind;
   ind.uid = DECL_UID (var);
-  return (tree) htab_find_with_hash (DEFAULT_DEFS (fn), &in, DECL_UID (var));
+  return DEFAULT_DEFS (fn)->find_with_hash ((tree)&in, DECL_UID (var));
 }
 
 /* Insert the pair VAR's UID, DEF into the default_defs hashtable
@@ -323,7 +358,6 @@ set_ssa_default_def (struct function *fn, tree var, tree def)
 {
   struct tree_decl_minimal ind;
   struct tree_ssa_name in;
-  void **loc;
 
   gcc_assert (TREE_CODE (var) == VAR_DECL
 	      || TREE_CODE (var) == PARM_DECL
@@ -332,25 +366,26 @@ set_ssa_default_def (struct function *fn, tree var, tree def)
   ind.uid = DECL_UID (var);
   if (!def)
     {
-      loc = htab_find_slot_with_hash (DEFAULT_DEFS (fn), &in,
-				      DECL_UID (var), NO_INSERT);
-      if (*loc)
+      tree *loc = DEFAULT_DEFS (fn)->find_slot_with_hash ((tree)&in,
+							  DECL_UID (var),
+							  NO_INSERT);
+      if (loc)
 	{
 	  SSA_NAME_IS_DEFAULT_DEF (*(tree *)loc) = false;
-	  htab_clear_slot (DEFAULT_DEFS (fn), loc);
+	  DEFAULT_DEFS (fn)->clear_slot (loc);
 	}
       return;
     }
   gcc_assert (TREE_CODE (def) == SSA_NAME && SSA_NAME_VAR (def) == var);
-  loc = htab_find_slot_with_hash (DEFAULT_DEFS (fn), &in,
-                                  DECL_UID (var), INSERT);
+  tree *loc = DEFAULT_DEFS (fn)->find_slot_with_hash ((tree)&in,
+						      DECL_UID (var), INSERT);
 
   /* Default definition might be changed by tail call optimization.  */
   if (*loc)
-    SSA_NAME_IS_DEFAULT_DEF (*(tree *) loc) = false;
+    SSA_NAME_IS_DEFAULT_DEF (*loc) = false;
 
    /* Mark DEF as the default definition for VAR.  */
-  *(tree *) loc = def;
+  *loc = def;
   SSA_NAME_IS_DEFAULT_DEF (def) = true;
 }
 
@@ -380,11 +415,10 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 			 HOST_WIDE_INT *psize,
 			 HOST_WIDE_INT *pmax_size)
 {
-  HOST_WIDE_INT bitsize = -1;
-  HOST_WIDE_INT maxsize = -1;
+  offset_int bitsize = -1;
+  offset_int maxsize;
   tree size_tree = NULL_TREE;
-  double_int bit_offset = double_int_zero;
-  HOST_WIDE_INT hbit_offset;
+  offset_int bit_offset = 0;
   bool seen_variable_array_ref = false;
 
   /* First get the final access size from just the outermost expression.  */
@@ -394,19 +428,15 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
     size_tree = TREE_OPERAND (exp, 1);
   else if (!VOID_TYPE_P (TREE_TYPE (exp)))
     {
-      enum machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+      machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
       if (mode == BLKmode)
 	size_tree = TYPE_SIZE (TREE_TYPE (exp));
       else
-	bitsize = GET_MODE_BITSIZE (mode);
+	bitsize = int (GET_MODE_PRECISION (mode));
     }
-  if (size_tree != NULL_TREE)
-    {
-      if (! host_integerp (size_tree, 1))
-	bitsize = -1;
-      else
-	bitsize = TREE_INT_CST_LOW (size_tree);
-    }
+  if (size_tree != NULL_TREE
+      && TREE_CODE (size_tree) == INTEGER_CST)
+    bitsize = wi::to_offset (size_tree);
 
   /* Initially, maxsize is the same as the accessed element size.
      In the following it will only grow (or become -1).  */
@@ -419,7 +449,7 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
       switch (TREE_CODE (exp))
 	{
 	case BIT_FIELD_REF:
-	  bit_offset += tree_to_double_int (TREE_OPERAND (exp, 2));
+	  bit_offset += wi::to_offset (TREE_OPERAND (exp, 2));
 	  break;
 
 	case COMPONENT_REF:
@@ -429,12 +459,10 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 
 	    if (this_offset && TREE_CODE (this_offset) == INTEGER_CST)
 	      {
-		double_int doffset = tree_to_double_int (this_offset);
-		doffset = doffset.alshift (BITS_PER_UNIT == 8
-					   ? 3 : exact_log2 (BITS_PER_UNIT),
-					   HOST_BITS_PER_DOUBLE_INT);
-		doffset += tree_to_double_int (DECL_FIELD_BIT_OFFSET (field));
-		bit_offset = bit_offset + doffset;
+		offset_int woffset = wi::lshift (wi::to_offset (this_offset),
+						 LOG2_BITS_PER_UNIT);
+		woffset += wi::to_offset (DECL_FIELD_BIT_OFFSET (field));
+		bit_offset += woffset;
 
 		/* If we had seen a variable array ref already and we just
 		   referenced the last field of a struct or a union member
@@ -451,15 +479,19 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 		      {
 			tree fsize = DECL_SIZE_UNIT (field);
 			tree ssize = TYPE_SIZE_UNIT (stype);
-			if (host_integerp (fsize, 0)
-			    && host_integerp (ssize, 0)
-			    && doffset.fits_shwi ())
-			  maxsize += ((TREE_INT_CST_LOW (ssize)
-				       - TREE_INT_CST_LOW (fsize))
-				      * BITS_PER_UNIT
-					- doffset.to_shwi ());
-			else
+			if (fsize == NULL
+			    || TREE_CODE (fsize) != INTEGER_CST
+			    || ssize == NULL
+			    || TREE_CODE (ssize) != INTEGER_CST)
 			  maxsize = -1;
+			else
+			  {
+			    offset_int tem = (wi::to_offset (ssize)
+					      - wi::to_offset (fsize));
+			    tem = wi::lshift (tem, LOG2_BITS_PER_UNIT);
+			    tem -= woffset;
+			    maxsize += tem;
+			  }
 		      }
 		  }
 	      }
@@ -471,10 +503,8 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 		   because that would get us out of the structure otherwise.  */
 		if (maxsize != -1
 		    && csize
-		    && host_integerp (csize, 1)
-		    && bit_offset.fits_shwi ())
-		  maxsize = TREE_INT_CST_LOW (csize)
-			    - bit_offset.to_shwi ();
+		    && TREE_CODE (csize) == INTEGER_CST)
+		  maxsize = wi::to_offset (csize) - bit_offset;
 		else
 		  maxsize = -1;
 	      }
@@ -494,14 +524,12 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 		&& (unit_size = array_ref_element_size (exp),
 		    TREE_CODE (unit_size) == INTEGER_CST))
 	      {
-		double_int doffset
-		  = (TREE_INT_CST (index) - TREE_INT_CST (low_bound))
-		    .sext (TYPE_PRECISION (TREE_TYPE (index)));
-		doffset *= tree_to_double_int (unit_size);
-		doffset = doffset.alshift (BITS_PER_UNIT == 8
-					   ? 3 : exact_log2 (BITS_PER_UNIT),
-					   HOST_BITS_PER_DOUBLE_INT);
-		bit_offset = bit_offset + doffset;
+		offset_int woffset
+		  = wi::sext (wi::to_offset (index) - wi::to_offset (low_bound),
+			      TYPE_PRECISION (TREE_TYPE (index)));
+		woffset *= wi::to_offset (unit_size);
+		woffset = wi::lshift (woffset, LOG2_BITS_PER_UNIT);
+		bit_offset += woffset;
 
 		/* An array ref with a constant index up in the structure
 		   hierarchy will constrain the size of any variable array ref
@@ -516,10 +544,8 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 		   because that would get us outside of the array otherwise.  */
 		if (maxsize != -1
 		    && asize
-		    && host_integerp (asize, 1)
-		    && bit_offset.fits_shwi ())
-		  maxsize = TREE_INT_CST_LOW (asize)
-			    - bit_offset.to_shwi ();
+		    && TREE_CODE (asize) == INTEGER_CST)
+		  maxsize = wi::to_offset (asize) - bit_offset;
 		else
 		  maxsize = -1;
 
@@ -534,7 +560,7 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 	  break;
 
 	case IMAGPART_EXPR:
-	  bit_offset += double_int::from_uhwi (bitsize);
+	  bit_offset += bitsize;
 	  break;
 
 	case VIEW_CONVERT_EXPR:
@@ -547,7 +573,7 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 	      && (TMR_INDEX (exp) || TMR_INDEX2 (exp)))
 	    {
 	      exp = TREE_OPERAND (TMR_BASE (exp), 0);
-	      bit_offset = double_int_zero;
+	      bit_offset = 0;
 	      maxsize = -1;
 	      goto done;
 	    }
@@ -565,11 +591,10 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 	     padding that is there for alignment purposes.  */
 	  if (seen_variable_array_ref
 	      && maxsize != -1
-	      && (!bit_offset.fits_shwi ()
-		  || !host_integerp (TYPE_SIZE (TREE_TYPE (exp)), 1)
-		  || (bit_offset.to_shwi () + maxsize
-		      == (HOST_WIDE_INT) TREE_INT_CST_LOW
-		            (TYPE_SIZE (TREE_TYPE (exp))))))
+	      && (TYPE_SIZE (TREE_TYPE (exp)) == NULL_TREE
+		  || TREE_CODE (TYPE_SIZE (TREE_TYPE (exp))) != INTEGER_CST
+		  || (bit_offset + maxsize
+		      == wi::to_offset (TYPE_SIZE (TREE_TYPE (exp))))))
 	    maxsize = -1;
 
 	  /* Hand back the decl for MEM[&decl, off].  */
@@ -579,12 +604,10 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
 		exp = TREE_OPERAND (TREE_OPERAND (exp, 0), 0);
 	      else
 		{
-		  double_int off = mem_ref_offset (exp);
-		  off = off.alshift (BITS_PER_UNIT == 8
-				     ? 3 : exact_log2 (BITS_PER_UNIT),
-				     HOST_BITS_PER_DOUBLE_INT);
-		  off = off + bit_offset;
-		  if (off.fits_shwi ())
+		  offset_int off = mem_ref_offset (exp);
+		  off = wi::lshift (off, LOG2_BITS_PER_UNIT);
+		  off += bit_offset;
+		  if (wi::fits_shwi_p (off))
 		    {
 		      bit_offset = off;
 		      exp = TREE_OPERAND (TREE_OPERAND (exp, 0), 0);
@@ -603,24 +626,31 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
   /* We need to deal with variable arrays ending structures.  */
   if (seen_variable_array_ref
       && maxsize != -1
-      && (!bit_offset.fits_shwi ()
-	  || !host_integerp (TYPE_SIZE (TREE_TYPE (exp)), 1)
-	  || (bit_offset.to_shwi () + maxsize
-	      == (HOST_WIDE_INT)
-	           TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (exp))))))
+      && (TYPE_SIZE (TREE_TYPE (exp)) == NULL_TREE
+	  || TREE_CODE (TYPE_SIZE (TREE_TYPE (exp))) != INTEGER_CST
+	  || (bit_offset + maxsize
+	      == wi::to_offset (TYPE_SIZE (TREE_TYPE (exp))))))
     maxsize = -1;
 
  done:
-  if (!bit_offset.fits_shwi ())
+  if (!wi::fits_shwi_p (bitsize) || wi::neg_p (bitsize))
     {
       *poffset = 0;
-      *psize = bitsize;
+      *psize = -1;
       *pmax_size = -1;
 
       return exp;
     }
 
-  hbit_offset = bit_offset.to_shwi ();
+  *psize = bitsize.to_shwi ();
+
+  if (!wi::fits_shwi_p (bit_offset))
+    {
+      *poffset = 0;
+      *pmax_size = -1;
+
+      return exp;
+    }
 
   /* In case of a decl or constant base object we can do better.  */
 
@@ -629,25 +659,169 @@ get_ref_base_and_extent (tree exp, HOST_WIDE_INT *poffset,
       /* If maxsize is unknown adjust it according to the size of the
          base decl.  */
       if (maxsize == -1
-	  && host_integerp (DECL_SIZE (exp), 1))
-	maxsize = TREE_INT_CST_LOW (DECL_SIZE (exp)) - hbit_offset;
+	  && DECL_SIZE (exp)
+	  && TREE_CODE (DECL_SIZE (exp)) == INTEGER_CST)
+	maxsize = wi::to_offset (DECL_SIZE (exp)) - bit_offset;
     }
   else if (CONSTANT_CLASS_P (exp))
     {
       /* If maxsize is unknown adjust it according to the size of the
          base type constant.  */
       if (maxsize == -1
-	  && host_integerp (TYPE_SIZE (TREE_TYPE (exp)), 1))
-	maxsize = TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (exp))) - hbit_offset;
+	  && TYPE_SIZE (TREE_TYPE (exp))
+	  && TREE_CODE (TYPE_SIZE (TREE_TYPE (exp))) == INTEGER_CST)
+	maxsize = (wi::to_offset (TYPE_SIZE (TREE_TYPE (exp)))
+		   - bit_offset);
     }
 
   /* ???  Due to negative offsets in ARRAY_REF we can end up with
      negative bit_offset here.  We might want to store a zero offset
      in this case.  */
-  *poffset = hbit_offset;
-  *psize = bitsize;
-  *pmax_size = maxsize;
+  *poffset = bit_offset.to_shwi ();
+  if (!wi::fits_shwi_p (maxsize) || wi::neg_p (maxsize))
+    *pmax_size = -1;
+  else
+    *pmax_size = maxsize.to_shwi ();
 
+  return exp;
+}
+
+/* Returns the base object and a constant BITS_PER_UNIT offset in *POFFSET that
+   denotes the starting address of the memory access EXP.
+   Returns NULL_TREE if the offset is not constant or any component
+   is not BITS_PER_UNIT-aligned.
+   VALUEIZE if non-NULL is used to valueize SSA names.  It should return
+   its argument or a constant if the argument is known to be constant.  */
+
+tree
+get_addr_base_and_unit_offset_1 (tree exp, HOST_WIDE_INT *poffset,
+				 tree (*valueize) (tree))
+{
+  HOST_WIDE_INT byte_offset = 0;
+
+  /* Compute cumulative byte-offset for nested component-refs and array-refs,
+     and find the ultimate containing object.  */
+  while (1)
+    {
+      switch (TREE_CODE (exp))
+	{
+	case BIT_FIELD_REF:
+	  {
+	    HOST_WIDE_INT this_off = TREE_INT_CST_LOW (TREE_OPERAND (exp, 2));
+	    if (this_off % BITS_PER_UNIT)
+	      return NULL_TREE;
+	    byte_offset += this_off / BITS_PER_UNIT;
+	  }
+	  break;
+
+	case COMPONENT_REF:
+	  {
+	    tree field = TREE_OPERAND (exp, 1);
+	    tree this_offset = component_ref_field_offset (exp);
+	    HOST_WIDE_INT hthis_offset;
+
+	    if (!this_offset
+		|| TREE_CODE (this_offset) != INTEGER_CST
+		|| (TREE_INT_CST_LOW (DECL_FIELD_BIT_OFFSET (field))
+		    % BITS_PER_UNIT))
+	      return NULL_TREE;
+
+	    hthis_offset = TREE_INT_CST_LOW (this_offset);
+	    hthis_offset += (TREE_INT_CST_LOW (DECL_FIELD_BIT_OFFSET (field))
+			     / BITS_PER_UNIT);
+	    byte_offset += hthis_offset;
+	  }
+	  break;
+
+	case ARRAY_REF:
+	case ARRAY_RANGE_REF:
+	  {
+	    tree index = TREE_OPERAND (exp, 1);
+	    tree low_bound, unit_size;
+
+	    if (valueize
+		&& TREE_CODE (index) == SSA_NAME)
+	      index = (*valueize) (index);
+
+	    /* If the resulting bit-offset is constant, track it.  */
+	    if (TREE_CODE (index) == INTEGER_CST
+		&& (low_bound = array_ref_low_bound (exp),
+		    TREE_CODE (low_bound) == INTEGER_CST)
+		&& (unit_size = array_ref_element_size (exp),
+		    TREE_CODE (unit_size) == INTEGER_CST))
+	      {
+		offset_int woffset
+		  = wi::sext (wi::to_offset (index) - wi::to_offset (low_bound),
+			      TYPE_PRECISION (TREE_TYPE (index)));
+		woffset *= wi::to_offset (unit_size);
+		byte_offset += woffset.to_shwi ();
+	      }
+	    else
+	      return NULL_TREE;
+	  }
+	  break;
+
+	case REALPART_EXPR:
+	  break;
+
+	case IMAGPART_EXPR:
+	  byte_offset += TREE_INT_CST_LOW (TYPE_SIZE_UNIT (TREE_TYPE (exp)));
+	  break;
+
+	case VIEW_CONVERT_EXPR:
+	  break;
+
+	case MEM_REF:
+	  {
+	    tree base = TREE_OPERAND (exp, 0);
+	    if (valueize
+		&& TREE_CODE (base) == SSA_NAME)
+	      base = (*valueize) (base);
+
+	    /* Hand back the decl for MEM[&decl, off].  */
+	    if (TREE_CODE (base) == ADDR_EXPR)
+	      {
+		if (!integer_zerop (TREE_OPERAND (exp, 1)))
+		  {
+		    offset_int off = mem_ref_offset (exp);
+		    byte_offset += off.to_short_addr ();
+		  }
+		exp = TREE_OPERAND (base, 0);
+	      }
+	    goto done;
+	  }
+
+	case TARGET_MEM_REF:
+	  {
+	    tree base = TREE_OPERAND (exp, 0);
+	    if (valueize
+		&& TREE_CODE (base) == SSA_NAME)
+	      base = (*valueize) (base);
+
+	    /* Hand back the decl for MEM[&decl, off].  */
+	    if (TREE_CODE (base) == ADDR_EXPR)
+	      {
+		if (TMR_INDEX (exp) || TMR_INDEX2 (exp))
+		  return NULL_TREE;
+		if (!integer_zerop (TMR_OFFSET (exp)))
+		  {
+		    offset_int off = mem_ref_offset (exp);
+		    byte_offset += off.to_short_addr ();
+		  }
+		exp = TREE_OPERAND (base, 0);
+	      }
+	    goto done;
+	  }
+
+	default:
+	  goto done;
+	}
+
+      exp = TREE_OPERAND (exp, 0);
+    }
+done:
+
+  *poffset = byte_offset;
   return exp;
 }
 
@@ -733,12 +907,11 @@ dump_enumerated_decls (FILE *file, int flags)
 {
   basic_block bb;
   struct walk_stmt_info wi;
-  vec<numbered_tree> decl_list;
-  decl_list.create (40);
+  auto_vec<numbered_tree, 40> decl_list;
 
   memset (&wi, '\0', sizeof (wi));
   wi.info = (void *) &decl_list;
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
       gimple_stmt_iterator gsi;
 
@@ -765,5 +938,4 @@ dump_enumerated_decls (FILE *file, int flags)
 	  last = ntp->t;
 	}
     }
-  decl_list.release ();
 }

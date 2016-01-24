@@ -6,11 +6,14 @@
   Appendices
 </th><td width="20%" align="right"> <a accesskey="n" href="source_organization.html">Next</a></td></tr></table><hr /></div><div class="appendix"><div class="titlepage"><div><div><h1 class="title"><a id="appendix.contrib"></a>
   Contributing
-  <a id="idm269993657472" class="indexterm"></a>
+  <a id="id-1.3.6.2.1.1.1" class="indexterm"></a>
 </h1></div></div></div><div class="toc"><p><strong>Table of Contents</strong></p><dl class="toc"><dt><span class="section"><a href="appendix_contributing.html#contrib.list">Contributor Checklist</a></span></dt><dd><dl><dt><span class="section"><a href="appendix_contributing.html#list.reading">Reading</a></span></dt><dt><span class="section"><a href="appendix_contributing.html#list.copyright">Assignment</a></span></dt><dt><span class="section"><a href="appendix_contributing.html#list.getting">Getting Sources</a></span></dt><dt><span class="section"><a href="appendix_contributing.html#list.patches">Submitting Patches</a></span></dt></dl></dd><dt><span class="section"><a href="source_organization.html">Directory Layout and Source Conventions</a></span></dt><dt><span class="section"><a href="source_code_style.html">Coding Style</a></span></dt><dd><dl><dt><span class="section"><a href="source_code_style.html#coding_style.bad_identifiers">Bad Identifiers</a></span></dt><dt><span class="section"><a href="source_code_style.html#coding_style.example">By Example</a></span></dt></dl></dd><dt><span class="section"><a href="source_design_notes.html">Design Notes</a></span></dt></dl></div><p>
-  The GNU C++ Library follows an open development model. Active
-  contributors are assigned maintainer-ship responsibility, and given
-  write access to the source repository. First time contributors
+  The GNU C++ Library is part of GCC and follows the same development model,
+  so the general rules for
+  <a class="link" href="http://gcc.gnu.org/contribute.html" target="_top">contributing
+  to GCC</a> apply. Active
+  contributors are assigned maintainership responsibility, and given
+  write access to the source repository. First-time contributors
   should follow this procedure:
 </p><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="contrib.list"></a>Contributor Checklist</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="list.reading"></a>Reading</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
 	  Get and read the relevant sections of the C++ language
@@ -24,17 +27,12 @@
 	  organization is
 	  <a class="link" href="http://www.ansi.org" target="_top">ANSI</a>.
 	  (And if you've already registered with them you can
-	  <a class="link" href="http://webstore.ansi.org/RecordDetail.aspx?sku=INCITS%2fISO%2fIEC+14882-2003" target="_top">buy the standard on-line</a>.)
+	  <a class="link" href="http://webstore.ansi.org/RecordDetail.aspx?sku=INCITS%2fISO%2fIEC+14882-2012" target="_top">buy the standard on-line</a>.)
 	</p></li><li class="listitem"><p>
 	  The library working group bugs, and known defects, can
 	  be obtained here:
 	  <a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/" target="_top">http://www.open-std.org/jtc1/sc22/wg21</a>
 	</p></li><li class="listitem"><p>
-	  The newsgroup dedicated to standardization issues is
-	  comp.std.c++: the
-	  <a class="link" href="http://www.comeaucomputing.com/csc/faq.html" target="_top">FAQ</a>
-          for this group is quite useful.
-      </p></li><li class="listitem"><p>
 	  Peruse
 	  the <a class="link" href="http://www.gnu.org/prep/standards/" target="_top">GNU
 	  Coding Standards</a>, and chuckle when you hit the part
@@ -48,10 +46,7 @@
 	  library-specific information found in
           <a class="link" href="appendix_porting.html" title="Appendix B.  Porting and Maintenance">Porting and Maintenance</a>.
       </p></li></ul></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="list.copyright"></a>Assignment</h3></div></div></div><p>
-      Small changes can be accepted without a copyright assignment form on
-      file. New code and additions to the library need completed copyright
-      assignment form on file at the FSF. Note: your employer may be required
-      to fill out appropriate disclaimer forms as well.
+      See the <a class="link" href="http://gcc.gnu.org/contribute.html#legal" target="_top">legal prerequisites</a> for all GCC contributions.
     </p><p>
       Historically, the libstdc++ assignment form added the following
       question:
@@ -64,16 +59,14 @@
       While not strictly necessary, humoring the maintainers and answering
       this question would be appreciated.
     </p><p>
-      For more information about getting a copyright assignment, please see
-      <a class="link" href="http://www.gnu.org/prep/maintain/html_node/Legal-Matters.html" target="_top">Legal
-	Matters</a>.
-    </p><p>
-      Please contact Benjamin Kosnik at
-      <code class="email">&lt;<a class="email" href="mailto:bkoz+assign@redhat.com">bkoz+assign@redhat.com</a>&gt;</code> if you are confused
-      about the assignment or have general licensing questions. When
-      requesting an assignment form from
-      <code class="email">&lt;<a class="email" href="mailto:mailto:assign@gnu.org">mailto:assign@gnu.org</a>&gt;</code>, please cc the libstdc++
-      maintainer above so that progress can be monitored.
+      Please contact
+      Paolo Carlini at <code class="email">&lt;<a class="email" href="mailto:paolo.carlini@oracle.com">paolo.carlini@oracle.com</a>&gt;</code>
+      or
+      Jonathan Wakely at <code class="email">&lt;<a class="email" href="mailto:jwakely+assign@redhat.com">jwakely+assign@redhat.com</a>&gt;</code>
+      if you are confused about the assignment or have general licensing
+      questions. When requesting an assignment form from
+      <code class="email">&lt;<a class="email" href="mailto:assign@gnu.org">assign@gnu.org</a>&gt;</code>, please CC the libstdc++
+      maintainers above so that progress can be monitored.
     </p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="list.getting"></a>Getting Sources</h3></div></div></div><p>
       <a class="link" href="http://gcc.gnu.org/svnwrite.html" target="_top">Getting write access
 	(look for "Write after approval")</a>

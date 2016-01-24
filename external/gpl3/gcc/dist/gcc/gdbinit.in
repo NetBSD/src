@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2013 Free Software Foundation, Inc.
+# Copyright (C) 2001-2015 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -94,6 +94,15 @@ Print the expression that is $ in C syntax.
 Works only when an inferior is executing.
 end
 
+define pmz
+set mpz_out_str(stderr, 10, $)
+end
+
+document pmz
+Print the mpz value that is $
+Works only when an inferior is executing.
+end
+
 define ptc
 output (enum tree_code) $.common.code
 echo \n
@@ -166,7 +175,7 @@ including the global binding level.
 end
 
 define pbb
-set dump_bb ($, stderr, 0)
+set debug ($)
 end
 
 document pbb
@@ -181,9 +190,31 @@ document pbm
 Dump the bitmap that is in $ as a comma-separated list of numbers.
 end
 
+define pel
+output expand_location ($)
+echo \n
+end
+
+document pel
+Print expanded location of $.
+end
+
+define pcfun
+output debug_function (cfun ? cfun->decl : current_function_decl, 0)
+echo \n
+end
+
+document pcfun
+Print current function.
+end
+
 # Define some macros helpful to gdb when it is expanding macros.
 macro define __FILE__ "gdb"
 macro define __LINE__ 1
+macro define __FUNCTION__ "gdb"
+macro define __null 0
+macro define input_line expand_location(input_location).line
+macro define input_filename expand_location(input_location).file
 
 # Gracefully handle aborts in functions used from gdb.
 set unwindonsignal on
@@ -203,8 +234,33 @@ set complaints 0
 b exit
 b abort
 
+# Disable strict type checking.  This allows developers to (for example)
+# make inferior calls without casting absolute address to a suitable
+# pointer type.
+set check type off
+
 # Skip all inline functions in tree.h.
 # These are used in accessor macros.
 # Note that this is added at the end because older gdb versions
 # do not understand the 'skip' command.
+# See https://sourceware.org/gdb/current/onlinedocs/gdb/Skipping-Over-Functions-and-Files.html
 skip file tree.h
+
+# Likewise, skip various inline functions in rtl.h.
+skip rtx_expr_list::next
+skip rtx_expr_list::element
+skip rtx_insn_list::next
+skip rtx_insn_list::insn
+skip rtx_sequence::len
+skip rtx_sequence::element
+skip rtx_sequence::insn
+skip INSN_UID
+skip PREV_INSN
+skip SET_PREV_INSN
+skip NEXT_INSN
+skip SET_NEXT_INSN
+skip BLOCK_FOR_INSN
+skip PATTERN
+skip INSN_LOCATION
+skip INSN_HAS_LOCATION
+skip JUMP_LABEL_AS_INSN

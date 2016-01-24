@@ -1,5 +1,5 @@
 /* Timing variables for measuring compiler performance.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Alex Samuel <samuel@codesourcery.com>
 
 This file is part of GCC.
@@ -223,6 +223,9 @@ timevar_accumulate (struct timevar_time_def *timer,
 void
 timevar_init (void)
 {
+  if (timevar_enable)
+    return;
+
   timevar_enable = true;
 
   /* Zero all elapsed times.  */
@@ -430,7 +433,7 @@ validate_phases (FILE *fp)
   double phase_user = 0.0;
   double phase_sys = 0.0;
   double phase_wall = 0.0;
-  unsigned phase_ggc_mem = 0;
+  size_t phase_ggc_mem = 0;
   static char phase_prefix[] = "phase ";
   const double tolerance = 1.000001;  /* One part in a million.  */
 
@@ -465,7 +468,8 @@ validate_phases (FILE *fp)
       if (phase_wall > total->wall)
 	fprintf (fp, "wall    %24.18e > %24.18e\n", phase_wall, total->wall);
       if (phase_ggc_mem > total->ggc_mem)
-	fprintf (fp, "ggc_mem %24u > %24u\n", phase_ggc_mem, total->ggc_mem);
+	fprintf (fp, "ggc_mem %24lu > %24lu\n", (unsigned long)phase_ggc_mem,
+		 (unsigned long)total->ggc_mem);
       gcc_unreachable ();
     }
 }
