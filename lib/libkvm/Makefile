@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2014/08/10 23:39:08 matt Exp $
+#	$NetBSD: Makefile,v 1.51 2016/01/24 16:07:48 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 WARNS=	3
@@ -69,6 +69,10 @@ MLINKS+=kvm_dump.3 kvm_dump_inval.3
 CLEANFILES+=	machine sparc
 CPPFLAGS+=	-I.
 .endif					# }
+
+.if (${MACHINE_ARCH} == "mips")
+CPPFLAGS+=	-D_KMEMUSER
+.endif
 
 
 .include <bsd.lib.mk>
