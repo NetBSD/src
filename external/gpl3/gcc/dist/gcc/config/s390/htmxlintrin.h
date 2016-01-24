@@ -1,5 +1,5 @@
 /* XL compiler hardware transactional execution intrinsics
-   Copyright (C) 2013 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel (Andreas.Krebbel@de.ibm.com)
 
 This file is part of GCC.
@@ -31,7 +31,7 @@ extern "C" {
 
 /* These intrinsics are being made available for compatibility with
    the IBM XL compiler.  For documentation please see the "z/OS XL
-   C/C++ Programming Guide" publically available on the web.  */
+   C/C++ Programming Guide" publicly available on the web.  */
 
 /* FIXME: __TM_simple_begin and __TM_begin should be marked
    __always_inline__ as well but this currently produces an error

@@ -1,7 +1,7 @@
 /* Definitions for systems using, at least optionally, a GNU
    (glibc-based) userspace or other userspace with libc derived from
    glibc (e.g. uClibc) or for which similar specs are appropriate.
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Contributed by Eric Youngdale.
    Modified for stabs-in-ELF by H.J. Lu (hjl@lucon.org).
 
@@ -39,15 +39,21 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    the GNU userspace magical crtbegin.o file (see crtstuff.c) which
    provides part of the support for getting C++ file-scope static
    object constructed before entering `main'.  */
-   
+
 #if defined HAVE_LD_PIE
 #define GNU_USER_TARGET_STARTFILE_SPEC \
   "%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}} \
-   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s} \
+   %{fvtable-verify=none:%s; \
+     fvtable-verify=preinit:vtv_start_preinit.o%s; \
+     fvtable-verify=std:vtv_start.o%s}"
 #else
 #define GNU_USER_TARGET_STARTFILE_SPEC \
   "%{!shared: %{pg|p|profile:gcrt1.o%s;:crt1.o%s}} \
-   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s} \
+   %{fvtable-verify=none:%s; \
+     fvtable-verify=preinit:vtv_start_preinit.o%s; \
+     fvtable-verify=std:vtv_start.o%s}"
 #endif
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC GNU_USER_TARGET_STARTFILE_SPEC
@@ -59,7 +65,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    GNU userspace "finalizer" file, `crtn.o'.  */
 
 #define GNU_USER_TARGET_ENDFILE_SPEC \
-  "%{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
+  "%{fvtable-verify=none:%s; \
+     fvtable-verify=preinit:vtv_end_preinit.o%s; \
+     fvtable-verify=std:vtv_end.o%s} \
+   %{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC GNU_USER_TARGET_ENDFILE_SPEC
 
@@ -73,10 +82,14 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #undef CPLUSPLUS_CPP_SPEC
 #define CPLUSPLUS_CPP_SPEC "-D_GNU_SOURCE %(cpp)"
 
-#define GNU_USER_TARGET_LIB_SPEC \
-  "%{pthread:-lpthread} \
-   %{shared:-lc} \
+#define GNU_USER_TARGET_NO_PTHREADS_LIB_SPEC \
+  "%{shared:-lc} \
    %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
+
+#define GNU_USER_TARGET_LIB_SPEC \
+  "%{pthread:-lpthread} " \
+  GNU_USER_TARGET_NO_PTHREADS_LIB_SPEC
+
 #undef  LIB_SPEC
 #define LIB_SPEC GNU_USER_TARGET_LIB_SPEC
 
@@ -95,13 +108,14 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #define TARGET_POSIX_IO
 
-#define TARGET_C99_FUNCTIONS 1
-#define TARGET_HAS_SINCOS 1
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION gnu_libc_has_function
 
 /* Link -lasan early on the command line.  For -static-libasan, don't link
    it for -shared link, the executable should be compiled with -static-libasan
    in that case, and for executable link link with --{,no-}whole-archive around
-   it to force everything into the executable.  And similarly for -ltsan.  */
+   it to force everything into the executable.  And similarly for -ltsan
+   and -llsan.  */
 #if defined(HAVE_LD_STATIC_DYNAMIC)
 #undef LIBASAN_EARLY_SPEC
 #define LIBASAN_EARLY_SPEC "%{!shared:libasan_preinit%O%s} " \
@@ -112,12 +126,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define LIBTSAN_EARLY_SPEC "%{static-libtsan:%{!shared:" \
   LD_STATIC_OPTION " --whole-archive -ltsan --no-whole-archive " \
   LD_DYNAMIC_OPTION "}}%{!static-libtsan:-ltsan}"
+#undef LIBLSAN_EARLY_SPEC
+#define LIBLSAN_EARLY_SPEC "%{static-liblsan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -llsan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-liblsan:-llsan}"
 #endif
-
-/* Additional libraries needed by -static-libasan.  */
-#undef STATIC_LIBASAN_LIBS
-#define STATIC_LIBASAN_LIBS "-ldl -lpthread"
-
-/* Additional libraries needed by -static-libtsan.  */
-#undef STATIC_LIBTSAN_LIBS
-#define STATIC_LIBTSAN_LIBS "-ldl -lpthread"

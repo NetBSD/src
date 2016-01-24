@@ -1,5 +1,5 @@
 /* Print RTL for GCC.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,9 +33,22 @@ along with GCC; see the file COPYING3.  If not see
 /* These headers all define things which are not available in
    generator programs.  */
 #ifndef GENERATOR_FILE
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "print-tree.h"
 #include "flags.h"
 #include "hard-reg-set.h"
+#include "predict.h"
+#include "input.h"
+#include "function.h"
 #include "basic-block.h"
 #include "diagnostic.h"
 #include "tree-pretty-print.h"
@@ -49,6 +62,8 @@ static FILE *outfile;
 static int sawclose = 0;
 
 static int indent;
+
+static bool in_call_function_usage;
 
 static void print_rtx (const_rtx);
 
@@ -150,8 +165,10 @@ print_rtx (const_rtx in_rtx)
 
       /* Print REG_NOTE names for EXPR_LIST and INSN_LIST.  */
       if ((GET_CODE (in_rtx) == EXPR_LIST
-	   || GET_CODE (in_rtx) == INSN_LIST)
-	  && (int)GET_MODE (in_rtx) < REG_NOTE_MAX)
+	   || GET_CODE (in_rtx) == INSN_LIST
+	   || GET_CODE (in_rtx) == INT_LIST)
+	  && (int)GET_MODE (in_rtx) < REG_NOTE_MAX
+	  && !in_call_function_usage)
 	fprintf (outfile, ":%s",
 		 GET_REG_NOTE_NAME (GET_MODE (in_rtx)));
 
@@ -182,6 +199,14 @@ print_rtx (const_rtx in_rtx)
     i = 5;
 #endif
 
+  if (INSN_CHAIN_CODE_P (GET_CODE (in_rtx)))
+    {
+      if (flag_dump_unnumbered)
+	fprintf (outfile, " #");
+      else
+	fprintf (outfile, " %d", INSN_UID (in_rtx));
+    }
+
   /* Get the format string and skip the first elements if we have handled
      them already.  */
   format_ptr = GET_RTX_FORMAT (GET_CODE (in_rtx)) + i;
@@ -210,26 +235,17 @@ print_rtx (const_rtx in_rtx)
 	   An exception is the third field of a NOTE, where it indicates
 	   that the field has several different valid contents.  */
       case '0':
-	if (i == 1 && REG_P (in_rtx))
-	  {
-	    if (REGNO (in_rtx) != ORIGINAL_REGNO (in_rtx))
-	      fprintf (outfile, " [%d]", ORIGINAL_REGNO (in_rtx));
-	  }
 #ifndef GENERATOR_FILE
-	else if (i == 1 && GET_CODE (in_rtx) == SYMBOL_REF)
+	if (i == 1 && GET_CODE (in_rtx) == SYMBOL_REF)
 	  {
 	    int flags = SYMBOL_REF_FLAGS (in_rtx);
 	    if (flags)
 	      fprintf (outfile, " [flags %#x]", flags);
-	  }
-	else if (i == 2 && GET_CODE (in_rtx) == SYMBOL_REF)
-	  {
 	    tree decl = SYMBOL_REF_DECL (in_rtx);
 	    if (decl)
 	      print_node_brief (outfile, "", decl, dump_flags);
 	  }
-#endif
-	else if (i == 4 && NOTE_P (in_rtx))
+	else if (i == 3 && NOTE_P (in_rtx))
 	  {
 	    switch (NOTE_KIND (in_rtx))
 	      {
@@ -244,19 +260,15 @@ print_rtx (const_rtx in_rtx)
 
 	      case NOTE_INSN_BLOCK_BEG:
 	      case NOTE_INSN_BLOCK_END:
-#ifndef GENERATOR_FILE
 		dump_addr (outfile, " ", NOTE_BLOCK (in_rtx));
-#endif
 		sawclose = 1;
 		break;
 
 	      case NOTE_INSN_BASIC_BLOCK:
 		{
-#ifndef GENERATOR_FILE
 		  basic_block bb = NOTE_BASIC_BLOCK (in_rtx);
 		  if (bb != 0)
 		    fprintf (outfile, " [bb %d]", bb->index);
-#endif
 		  break;
 	        }
 
@@ -273,35 +285,29 @@ print_rtx (const_rtx in_rtx)
 
 	      case NOTE_INSN_SWITCH_TEXT_SECTIONS:
 		{
-#ifndef GENERATOR_FILE
 		  basic_block bb = NOTE_BASIC_BLOCK (in_rtx);
 		  if (bb != 0)
 		    fprintf (outfile, " [bb %d]", bb->index);
-#endif
 		  break;
 		}
 
 	      case NOTE_INSN_VAR_LOCATION:
 	      case NOTE_INSN_CALL_ARG_LOCATION:
-#ifndef GENERATOR_FILE
 		fputc (' ', outfile);
 		print_rtx (NOTE_VAR_LOCATION (in_rtx));
-#endif
 		break;
 
 	      case NOTE_INSN_CFI:
-#ifndef GENERATOR_FILE
 		fputc ('\n', outfile);
 		output_cfi_directive (outfile, NOTE_CFI (in_rtx));
 		fputc ('\t', outfile);
-#endif
 		break;
 
 	      default:
 		break;
 	      }
 	  }
-	else if (i == 8 && JUMP_P (in_rtx) && JUMP_LABEL (in_rtx) != NULL)
+	else if (i == 7 && JUMP_P (in_rtx) && JUMP_LABEL (in_rtx) != NULL)
 	  {
 	    /* Output the JUMP_LABEL reference.  */
 	    fprintf (outfile, "\n%s%*s -> ", print_rtx_head, indent * 2, "");
@@ -314,20 +320,16 @@ print_rtx (const_rtx in_rtx)
 	  }
 	else if (i == 0 && GET_CODE (in_rtx) == VALUE)
 	  {
-#ifndef GENERATOR_FILE
 	    cselib_val *val = CSELIB_VAL_PTR (in_rtx);
 
 	    fprintf (outfile, " %u:%u", val->uid, val->hash);
 	    dump_addr (outfile, " @", in_rtx);
 	    dump_addr (outfile, "/", (void*)val);
-#endif
 	  }
 	else if (i == 0 && GET_CODE (in_rtx) == DEBUG_EXPR)
 	  {
-#ifndef GENERATOR_FILE
 	    fprintf (outfile, " D#%i",
 		     DEBUG_TEMP_UID (DEBUG_EXPR_TREE_DECL (in_rtx)));
-#endif
 	  }
 	else if (i == 0 && GET_CODE (in_rtx) == ENTRY_VALUE)
 	  {
@@ -337,18 +339,26 @@ print_rtx (const_rtx in_rtx)
 	    print_rtx (ENTRY_VALUE_EXP (in_rtx));
 	    indent -= 2;
 	  }
+#endif
 	break;
 
       case 'e':
       do_e:
 	indent += 2;
-	if (i == 7 && INSN_P (in_rtx))
+	if (i == 6 && INSN_P (in_rtx))
 	  /* Put REG_NOTES on their own line.  */
 	  fprintf (outfile, "\n%s%*s",
 		   print_rtx_head, indent * 2, "");
 	if (!sawclose)
 	  fprintf (outfile, " ");
-	print_rtx (XEXP (in_rtx, i));
+	if (i == 7 && CALL_P (in_rtx))
+	  {
+	    in_call_function_usage = true;
+	    print_rtx (XEXP (in_rtx, i));
+	    in_call_function_usage = false;
+	  }
+	else
+	  print_rtx (XEXP (in_rtx, i));
 	indent -= 2;
 	break;
 
@@ -391,33 +401,40 @@ print_rtx (const_rtx in_rtx)
 	break;
 
       case 'i':
-	if (i == 5 && INSN_P (in_rtx))
+	if (i == 4 && INSN_P (in_rtx))
 	  {
 #ifndef GENERATOR_FILE
+	    const rtx_insn *in_insn = as_a <const rtx_insn *> (in_rtx);
+
 	    /*  Pretty-print insn locations.  Ignore scoping as it is mostly
 		redundant with line number information and do not print anything
 		when there is no location information available.  */
-	    if (INSN_LOCATION (in_rtx) && insn_file (in_rtx))
-	      fprintf(outfile, " %s:%i", insn_file (in_rtx), insn_line (in_rtx));
+	    if (INSN_HAS_LOCATION (in_insn))
+	      {
+		expanded_location xloc = insn_location (in_insn);
+		fprintf (outfile, " %s:%i", xloc.file, xloc.line);
+	      }
 #endif
 	  }
 	else if (i == 6 && GET_CODE (in_rtx) == ASM_OPERANDS)
 	  {
 #ifndef GENERATOR_FILE
-	    fprintf (outfile, " %s:%i",
-		     LOCATION_FILE (ASM_OPERANDS_SOURCE_LOCATION (in_rtx)),
-		     LOCATION_LINE (ASM_OPERANDS_SOURCE_LOCATION (in_rtx)));
+	    if (ASM_OPERANDS_SOURCE_LOCATION (in_rtx) != UNKNOWN_LOCATION)
+	      fprintf (outfile, " %s:%i",
+		       LOCATION_FILE (ASM_OPERANDS_SOURCE_LOCATION (in_rtx)),
+		       LOCATION_LINE (ASM_OPERANDS_SOURCE_LOCATION (in_rtx)));
 #endif
 	  }
 	else if (i == 1 && GET_CODE (in_rtx) == ASM_INPUT)
 	  {
 #ifndef GENERATOR_FILE
-	    fprintf (outfile, " %s:%i",
-		     LOCATION_FILE (ASM_INPUT_SOURCE_LOCATION (in_rtx)),
-		     LOCATION_LINE (ASM_INPUT_SOURCE_LOCATION (in_rtx)));
+	    if (ASM_INPUT_SOURCE_LOCATION (in_rtx) != UNKNOWN_LOCATION)
+	      fprintf (outfile, " %s:%i",
+		       LOCATION_FILE (ASM_INPUT_SOURCE_LOCATION (in_rtx)),
+		       LOCATION_LINE (ASM_INPUT_SOURCE_LOCATION (in_rtx)));
 #endif
 	  }
-	else if (i == 6 && NOTE_P (in_rtx))
+	else if (i == 5 && NOTE_P (in_rtx))
 	  {
 	    /* This field is only used for NOTE_INSN_DELETED_LABEL, and
 	       other times often contains garbage from INSN->NOTE death.  */
@@ -490,6 +507,8 @@ print_rtx (const_rtx in_rtx)
 			   REG_OFFSET (in_rtx));
 		fputs (" ]", outfile);
 	      }
+	    if (REG_P (in_rtx) && REGNO (in_rtx) != ORIGINAL_REGNO (in_rtx))
+	      fprintf (outfile, " [%d]", ORIGINAL_REGNO (in_rtx));
 #endif
 
 	    if (is_insn && &INSN_CODE (in_rtx) == &XINT (in_rtx, i)
@@ -614,6 +633,11 @@ print_rtx (const_rtx in_rtx)
 	  fprintf (outfile, " [%s]", s);
 	}
       break;
+
+    case CONST_WIDE_INT:
+      fprintf (outfile, " ");
+      cwi_output_hex (outfile, in_rtx);
+      break;
 #endif
 
     case CODE_LABEL:
@@ -664,6 +688,23 @@ debug_rtx (const_rtx x)
   fprintf (stderr, "\n");
 }
 
+/* Dump rtx REF.  */
+
+DEBUG_FUNCTION void
+debug (const rtx_def &ref)
+{
+  debug_rtx (&ref);
+}
+
+DEBUG_FUNCTION void
+debug (const rtx_def *ptr)
+{
+  if (ptr)
+    debug (*ptr);
+  else
+    fprintf (stderr, "<nil>\n");
+}
+
 /* Count of rtx's to print with debug_rtx_list.
    This global exists because gdb user defined commands have no arguments.  */
 
@@ -672,14 +713,15 @@ DEBUG_VARIABLE int debug_rtx_count = 0;	/* 0 is treated as equivalent to 1 */
 /* Call this function to print list from X on.
 
    N is a count of the rtx's to print. Positive values print from the specified
-   rtx on.  Negative values print a window around the rtx.
-   EG: -5 prints 2 rtx's on either side (in addition to the specified rtx).  */
+   rtx_insn on.  Negative values print a window around the rtx_insn.
+   EG: -5 prints 2 rtx_insn's on either side (in addition to the specified
+   rtx_insn).  */
 
 DEBUG_FUNCTION void
-debug_rtx_list (const_rtx x, int n)
+debug_rtx_list (const rtx_insn *x, int n)
 {
   int i,count;
-  const_rtx insn;
+  const rtx_insn *insn;
 
   count = n == 0 ? 1 : n < 0 ? -n : n;
 
@@ -700,10 +742,11 @@ debug_rtx_list (const_rtx x, int n)
     }
 }
 
-/* Call this function to print an rtx list from START to END inclusive.  */
+/* Call this function to print an rtx_insn list from START to END
+   inclusive.  */
 
 DEBUG_FUNCTION void
-debug_rtx_range (const_rtx start, const_rtx end)
+debug_rtx_range (const rtx_insn *start, const rtx_insn *end)
 {
   while (1)
     {
@@ -715,12 +758,12 @@ debug_rtx_range (const_rtx start, const_rtx end)
     }
 }
 
-/* Call this function to search an rtx list to find one with insn uid UID,
+/* Call this function to search an rtx_insn list to find one with insn uid UID,
    and then call debug_rtx_list to print it, using DEBUG_RTX_COUNT.
    The found insn is returned to enable further debugging analysis.  */
 
 DEBUG_FUNCTION const_rtx
-debug_rtx_find (const_rtx x, int uid)
+debug_rtx_find (const rtx_insn *x, int uid)
 {
   while (x != 0 && INSN_UID (x) != uid)
     x = NEXT_INSN (x);
@@ -745,7 +788,7 @@ debug_rtx_find (const_rtx x, int uid)
 void
 print_rtl (FILE *outf, const_rtx rtx_first)
 {
-  const_rtx tmp_rtx;
+  const rtx_insn *tmp_rtx;
 
   outfile = outf;
   sawclose = 0;
@@ -763,8 +806,11 @@ print_rtl (FILE *outf, const_rtx rtx_first)
       case CALL_INSN:
       case NOTE:
       case CODE_LABEL:
+      case JUMP_TABLE_DATA:
       case BARRIER:
-	for (tmp_rtx = rtx_first; tmp_rtx != 0; tmp_rtx = NEXT_INSN (tmp_rtx))
+	for (tmp_rtx = as_a <const rtx_insn *> (rtx_first);
+	     tmp_rtx != 0;
+	     tmp_rtx = NEXT_INSN (tmp_rtx))
 	  {
 	    fputs (print_rtx_head, outfile);
 	    print_rtx (tmp_rtx);

@@ -1,5 +1,5 @@
 /* Compilation switch flag type definitions for GCC.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -104,6 +104,16 @@ enum symbol_visibility
 };
 #endif
 
+/* Enumerate Objective-c instance variable visibility settings. */
+
+enum ivar_visibility
+{
+  IVAR_VISIBILITY_PRIVATE,
+  IVAR_VISIBILITY_PROTECTED,
+  IVAR_VISIBILITY_PUBLIC,
+  IVAR_VISIBILITY_PACKAGE
+};
+
 /* The stack reuse level.  */
 enum stack_reuse_level
 {
@@ -190,5 +200,102 @@ enum fp_contract_mode {
   FP_CONTRACT_ON = 1,
   FP_CONTRACT_FAST = 2
 };
+
+/* Vectorizer cost-model.  */
+enum vect_cost_model {
+  VECT_COST_MODEL_UNLIMITED = 0,
+  VECT_COST_MODEL_CHEAP = 1,
+  VECT_COST_MODEL_DYNAMIC = 2,
+  VECT_COST_MODEL_DEFAULT = 3
+};
+
+
+/* Different instrumentation modes.  */
+enum sanitize_code {
+  /* AddressSanitizer.  */
+  SANITIZE_ADDRESS = 1 << 0,
+  SANITIZE_USER_ADDRESS = 1 << 1,
+  SANITIZE_KERNEL_ADDRESS = 1 << 2,
+  /* ThreadSanitizer.  */
+  SANITIZE_THREAD = 1 << 3,
+  /* LeakSanitizer.  */
+  SANITIZE_LEAK = 1 << 4,
+  /* UndefinedBehaviorSanitizer.  */
+  SANITIZE_SHIFT = 1 << 5,
+  SANITIZE_DIVIDE = 1 << 6,
+  SANITIZE_UNREACHABLE = 1 << 7,
+  SANITIZE_VLA = 1 << 8,
+  SANITIZE_NULL = 1 << 9,
+  SANITIZE_RETURN = 1 << 10,
+  SANITIZE_SI_OVERFLOW = 1 << 11,
+  SANITIZE_BOOL = 1 << 12,
+  SANITIZE_ENUM = 1 << 13,
+  SANITIZE_FLOAT_DIVIDE = 1 << 14,
+  SANITIZE_FLOAT_CAST = 1 << 15,
+  SANITIZE_BOUNDS = 1UL << 16,
+  SANITIZE_ALIGNMENT = 1UL << 17,
+  SANITIZE_NONNULL_ATTRIBUTE = 1UL << 18,
+  SANITIZE_RETURNS_NONNULL_ATTRIBUTE = 1UL << 19,
+  SANITIZE_OBJECT_SIZE = 1UL << 20,
+  SANITIZE_VPTR = 1UL << 21,
+  SANITIZE_UNDEFINED = SANITIZE_SHIFT | SANITIZE_DIVIDE | SANITIZE_UNREACHABLE
+		       | SANITIZE_VLA | SANITIZE_NULL | SANITIZE_RETURN
+		       | SANITIZE_SI_OVERFLOW | SANITIZE_BOOL | SANITIZE_ENUM
+		       | SANITIZE_BOUNDS | SANITIZE_ALIGNMENT
+		       | SANITIZE_NONNULL_ATTRIBUTE
+		       | SANITIZE_RETURNS_NONNULL_ATTRIBUTE
+		       | SANITIZE_OBJECT_SIZE | SANITIZE_VPTR,
+  SANITIZE_NONDEFAULT = SANITIZE_FLOAT_DIVIDE | SANITIZE_FLOAT_CAST
+};
+
+/* flag_vtable_verify initialization levels. */
+enum vtv_priority {
+  VTV_NO_PRIORITY       = 0,  /* i.E. Do NOT do vtable verification. */
+  VTV_STANDARD_PRIORITY = 1,
+  VTV_PREINIT_PRIORITY  = 2
+};
+
+/* flag_lto_partition initialization values.  */
+enum lto_partition_model {
+  LTO_PARTITION_NONE = 0,
+  LTO_PARTITION_ONE = 1,
+  LTO_PARTITION_BALANCED = 2,
+  LTO_PARTITION_1TO1 = 3,
+  LTO_PARTITION_MAX = 4
+};
+
+
+/* gfortran -finit-real= values.  */
+
+enum gfc_init_local_real
+{
+  GFC_INIT_REAL_OFF = 0,
+  GFC_INIT_REAL_ZERO,
+  GFC_INIT_REAL_NAN,
+  GFC_INIT_REAL_SNAN,
+  GFC_INIT_REAL_INF,
+  GFC_INIT_REAL_NEG_INF
+};
+
+/* gfortran -fcoarray= values.  */
+
+enum gfc_fcoarray
+{
+  GFC_FCOARRAY_NONE = 0,
+  GFC_FCOARRAY_SINGLE,
+  GFC_FCOARRAY_LIB
+};
+
+
+/* gfortran -fconvert= values; used for unformatted I/O.
+   Keep in sync with GFC_CONVERT_* in gcc/fortran/libgfortran.h.   */
+enum gfc_convert
+{
+  GFC_FLAG_CONVERT_NATIVE = 0,
+  GFC_FLAG_CONVERT_SWAP,
+  GFC_FLAG_CONVERT_BIG,
+  GFC_FLAG_CONVERT_LITTLE
+};
+
 
 #endif /* ! GCC_FLAG_TYPES_H */

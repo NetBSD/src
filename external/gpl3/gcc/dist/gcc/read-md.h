@@ -1,5 +1,5 @@
 /* MD reader definitions.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -16,6 +16,9 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+#ifndef GCC_READ_MD_H
+#define GCC_READ_MD_H
 
 #include "obstack.h"
 #include "hashtab.h"
@@ -138,3 +141,5 @@ extern void traverse_enum_types (htab_trav, void *);
 extern struct enum_type *lookup_enum_type (const char *);
 extern bool read_md_files (int, char **, bool (*) (const char *),
 			   directive_handler_t);
+
+#endif /* GCC_READ_MD_H */

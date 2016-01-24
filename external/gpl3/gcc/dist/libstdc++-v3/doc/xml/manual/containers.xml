@@ -25,9 +25,8 @@
   <section xml:id="sequences.list.size" xreflabel="list::size() is O(n)"><info><title>list::size() is O(n)</title></info>
     
    <para>
-     Yes it is, and that was okay until the 2011 edition of the C++ standard.
-     In future GCC will change it to O(1) but O(N) was a decision that we
-     preserved when we imported SGI's STL implementation.  The following is
+     Yes it is, and that's okay.  This is a decision that we preserved
+     when we imported SGI's STL implementation.  The following is
      quoted from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.sgi.com/tech/stl/FAQ.html">their FAQ</link>:
    </para>
    <blockquote>
@@ -213,7 +212,7 @@
    <para>
      There are a couple of ways to handle this kind of thing.  Please
      consider all of them before passing judgement.  They include, in
-     no chaptericular order:
+     no particular order:
    </para>
       <itemizedlist>
 	<listitem><para>A very large N in <code>bitset&lt;N&gt;</code>.</para></listitem>
@@ -315,7 +314,7 @@
      constructor expression:
    </para>
    <programlisting>
-      std::bitset&lt;5&gt; b ( std::string(<quote>10110</quote>) );
+      std::bitset&lt;5&gt; b ( std::string("10110") );
    </programlisting>
 
    <para>
@@ -323,7 +322,7 @@
    </para>
 
     <programlisting>
-      std::bitset&lt;5&gt; b ( <quote>10110</quote> );    // invalid
+      std::bitset&lt;5&gt; b ( "10110" );    // invalid
     </programlisting>
     </section>
   </section>
@@ -334,6 +333,60 @@
 <section xml:id="std.containers.unordered" xreflabel="Unordered">
   <info><title>Unordered Associative</title></info>
   <?dbhtml filename="unordered_associative.html"?>
+
+  <section xml:id="containers.unordered.insert_hints" xreflabel="Insertion Hints">
+    <info><title>Insertion Hints</title></info>
+
+    <para>
+     Here is how the hinting works in the libstdc++ implementation of unordered
+     containers, and the rationale behind this behavior.
+    </para>
+    <para>
+      In the following text, the phrase <emphasis>equivalent to</emphasis> refer
+      to the result of the invocation of the equal predicate imposed on the
+      container by its <code>key_equal</code> object, which defaults to (basically)
+      <quote>==</quote>.
+    </para>
+    <para>
+      Unordered containers can be seen as a <code>std::vector</code> of
+      <code>std::forward_list</code>. The <code>std::vector</code> represents
+      the buckets and each <code>std::forward_list</code> is the list of nodes
+      belonging to the same bucket. When inserting an element in such a data
+      structure we first need to compute the element hash code to find the
+      bucket to insert the element to, the second step depends on the uniqueness
+      of elements in the container.
+    </para>
+    <para>
+      In the case of <code>std::unordered_set</code> and
+      <code>std::unordered_map</code> you need to look through all bucket's
+      elements for an equivalent one. If there is none the insertion can be
+      achieved, otherwise the insertion fails. As we always need to loop though
+      all bucket's elements, the hint doesn't tell us if the element is already
+      present, and we don't have any constraint on where the new element is to
+      be inserted, the hint won't be of any help and will then be ignored.
+    </para>
+    <para>
+      In the case of <code>std::unordered_multiset</code>
+      and <code>std::unordered_multimap</code> equivalent elements must be
+      linked together so that the <code>equal_range(const key_type&amp;)</code>
+      can return the range of iterators pointing to all equivalent elements.
+      This is where hinting can be used to point to another equivalent element
+      already part of the container and so skip all non equivalent elements of
+      the bucket. So to be useful the hint shall point to an element equivalent
+      to the one being inserted. The new element will be then inserted right
+      after the hint. Note that because of an implementation detail inserting
+      after a node can require updating the bucket of the following node. To
+      check if the next bucket is to be modified we need to compute the
+      following node's hash code. So if you want your hint to be really efficient
+      it should be followed by another equivalent element, the implementation
+      will detect this equivalence and won't compute next element hash code.
+    </para>
+    <para>
+      It is highly advised to start using unordered containers hints only if you
+      have a benchmark that will demonstrate the benefit of it. If you don't then do
+      not use hints, it might do more harm than good.
+    </para>
+  </section>
 
   <section xml:id="containers.unordered.hash" xreflabel="Hash">
     <info><title>Hash Code</title></info>
@@ -347,7 +400,7 @@
       the hash code every time it's needed can improve performance, but the
       additional memory overhead can also reduce performance, so whether an
       unordered associative container caches the hash code or not depends on
-      a number of factors. The caching policy for GCC 4.8 is described below.
+      the properties described below.
     </para>
     <para>
       The C++ standard requires that <code>erase</code> and <code>swap</code>
@@ -359,23 +412,8 @@
       or <code>throw()</code>.
     </para>
     <para>
-      Secondly, libstdc++ also needs the hash code in the implementation of
-      <code>local_iterator</code> and <code>const_local_iterator</code> in
-      order to know when the iterator has reached the end of the bucket.
-      This means that the local iterator types will embed a copy of the hash
-      function when possible.
-      Because the local iterator types must be DefaultConstructible and
-      CopyAssignable, if the hash function type does not model those concepts
-      then it cannot be embedded and so the hash code must be cached.
-      Note that a hash function might not be safe to use when
-      default-constructed (e.g if it a function pointer) so a hash
-      function that is contained in a local iterator won't be used until
-      the iterator is valid, so the hash function has been copied from a
-      correctly-initialized object.
-    </para>
-    <para>
-      If the hash function is non-throwing, DefaultConstructible and
-      CopyAssignable then libstdc++ doesn't need to cache the hash code for
+      If the hash function is non-throwing then libstdc++ doesn't need to
+      cache the hash code for
       correctness, but might still do so for performance if computing a
       hash code is an expensive operation, as it may be for arbitrarily
       long strings.

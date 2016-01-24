@@ -1,5 +1,5 @@
 /* Prototypes for exported functions defined in c6x.c.
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by CodeSourcery.
 
    This file is part of GCC.
@@ -25,15 +25,15 @@
 
 #ifdef RTX_CODE
 extern void c6x_init_cumulative_args (CUMULATIVE_ARGS *, const_tree, rtx, int);
-extern bool c6x_block_reg_pad_upward (enum machine_mode, const_tree, bool);
+extern bool c6x_block_reg_pad_upward (machine_mode, const_tree, bool);
 
-extern bool c6x_legitimate_address_p_1 (enum machine_mode, rtx, bool, bool);
+extern bool c6x_legitimate_address_p_1 (machine_mode, rtx, bool, bool);
 extern bool c6x_mem_operand (rtx, enum reg_class, bool);
-extern bool expand_move (rtx *, enum machine_mode);
+extern bool expand_move (rtx *, machine_mode);
 
 extern bool c6x_long_call_p (rtx);
 extern void c6x_expand_call (rtx, rtx, bool);
-extern rtx c6x_expand_compare (rtx, enum machine_mode);
+extern rtx c6x_expand_compare (rtx, machine_mode);
 extern bool c6x_force_op_for_comparison_p (enum rtx_code, rtx);
 extern bool c6x_expand_movmem (rtx, rtx, rtx, rtx, rtx, rtx);
 
@@ -41,9 +41,9 @@ extern rtx c6x_subword (rtx, bool);
 extern void split_di (rtx *, int, rtx *, rtx *);
 extern bool c6x_valid_mask_p (HOST_WIDE_INT);
 
-extern char c6x_get_unit_specifier (rtx);
+extern char c6x_get_unit_specifier (rtx_insn *);
 
-extern void c6x_final_prescan_insn(rtx insn, rtx *opvec, int noperands);
+extern void c6x_final_prescan_insn(rtx_insn *insn, rtx *opvec, int noperands);
 
 extern int c6x_nsaved_regs (void);
 extern HOST_WIDE_INT c6x_initial_elimination_offset (int, int);

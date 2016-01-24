@@ -1,5 +1,5 @@
 ;; Predicate definitions for code generation on the EPIPHANY cpu.
-;; Copyright (C) 1994-2013 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2015 Free Software Foundation, Inc.
 ;; Contributed by Embecosm on behalf of Adapteva, Inc.
 ;;
 ;; This file is part of GCC.
@@ -98,7 +98,7 @@
 {
   if (GET_CODE (op) == REG || GET_CODE (op) == SUBREG)
     return add_reg_operand (op, mode);
-  return satisfies_constraint_L (op);
+  return satisfies_constraint_L (op) || satisfies_constraint_CnL (op);
 })
 
 ;; Ordinary 3rd operand for arithmetic operations
@@ -292,7 +292,11 @@
   bool inserted = MACHINE_FUNCTION (cfun)->control_use_inserted;
   int i;
 
-  if (count == 2)
+  if (count == 2
+      /* Vector ashift has an extra use for the constant factor required to
+	 implement the shift as multiply.  */
+      || (count == 3 && GET_CODE (XVECEXP (op, 0, 0)) == SET
+	  && GET_CODE (XEXP (XVECEXP (op, 0, 0), 1)) == ASHIFT))
     return !inserted;
 
   /* combine / recog will pass any old garbage here before checking the
@@ -302,7 +306,7 @@
 
   i = 1;
   if (count > 4)
-    for (i = 4; i < count; i++)
+    for (i = 2; i < count; i++)
       {
 	rtx x = XVECEXP (op, 0, i);
 
@@ -353,6 +357,11 @@
 (define_predicate "post_modify_operand"
   (and (match_code "mem")
        (match_test "post_modify_address (XEXP (op, 0), Pmode)")))
+
+; used in the memory clobber of stack_adjust_str, allows addresses with
+; large offsets.
+(define_predicate "memclob_operand"
+  (match_code "mem"))
 
 (define_predicate "nonsymbolic_immediate_operand"
   (ior (match_test "immediate_operand (op, mode)")

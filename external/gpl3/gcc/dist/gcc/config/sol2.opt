@@ -1,6 +1,6 @@
 ; Options for the Solaris 2 port of the compiler
 ;
-; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -26,6 +26,10 @@ Driver Joined
 
 Ym,
 Driver Joined
+
+mclear-hwcap
+Target Report
+Clear hardware capabilities when linking
 
 mimpure-text
 Target Report

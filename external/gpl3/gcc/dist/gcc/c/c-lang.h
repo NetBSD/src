@@ -1,5 +1,5 @@
 /* Definitions for C language specific types.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,7 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "c-family/c-common.h"
 #include "ggc.h"
 
-struct GTY((variable_size)) lang_type {
+struct GTY(()) lang_type {
   /* In a RECORD_TYPE, a sorted array of the fields of the type.  */
   struct sorted_fields_type * GTY ((reorder ("resort_sorted_fields"))) s;
   /* In an ENUMERAL_TYPE, the min and max values.  */
@@ -35,7 +35,7 @@ struct GTY((variable_size)) lang_type {
   tree objc_info;
 };
 
-struct GTY((variable_size)) lang_decl {
+struct GTY(()) lang_decl {
   char dummy;
 };
 
@@ -55,5 +55,8 @@ struct GTY(()) language_function {
   int warn_about_return_type;
 };
 
+/* If non-zero, implicit "omp declare target" attribute is added into the
+   attribute lists.  */
+extern GTY(()) int current_omp_declare_target_attribute;
 
 #endif /* ! GCC_C_LANG_H */

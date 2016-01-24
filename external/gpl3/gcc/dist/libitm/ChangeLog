@@ -1,34 +1,117 @@
-2015-06-23  Release Manager
+2015-12-04  Release Manager
 
-	* GCC 4.8.5 released.
+	* GCC 5.3.0 released.
 
-2014-12-19  Release Manager
+2015-07-16  Release Manager
 
-	* GCC 4.8.4 released.
+	* GCC 5.2.0 released.
 
-2014-12-05  Uros Bizjak  <ubizjak@gmail.com>
+2015-07-03  Carlos Sánchez de La Lama  <csanchezdll@gmail.com>
+
+	PR target/52482
+	* config/powerpc/sjlj.S: Port to Xcode 2.5.
+
+2015-04-22  Release Manager
+
+	* GCC 5.1.0 released.
+
+2015-01-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR libitm/64360
+	* libitm.c/stackundo.c (test2): Make it static.
+	(test1): Likewise.
+
+2015-01-05  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2015-01-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* libitm.texi: Bump @copying's copyright year.
+
+2014-12-12  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* testsuite/lib/libitm.exp: Load target-utils.exp.
+	Move load of target-supports.exp earlier.
+
+2014-12-03  Uros Bizjak  <ubizjak@gmail.com>
 
 	* configure.tgt (x86_64): Tune -m32 multilib to generic.
 
-2014-05-22  Release Manager
+2014-11-21  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* GCC 4.8.3 released.
+	PR bootstrap/63784
+	* configure: Regenerated.
 
-2014-04-14  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+2014-11-11  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
 
-	* acinclude.m4: Move s390* case from RTM to HTM check.
+	PR target/63610
 	* configure: Regenerate.
+
+2014-10-06  Marek Polacek  <polacek@redhat.com>
+
+	* testsuite/libitm.c/memcpy-1.c: Declare getpagesize.
+	* testsuite/libitm.c/memset-1.c: Likewise.
+
+2014-07-24  Richard Henderson  <rth@redhat.com>
+
+	* config/aarch64/sjlj.S (_ITM_beginTransaction): Use post-inc
+	addressing mode in epilogue.
+
+2014-05-28  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* acinclude.m4 (LIBITM_CHECK_LINKER_HWCAP): Check for
+	-mclear-hwcap instead.
+	* configure: Regenerate.
+	* clearcap.map: Remove.
+
+2014-05-21  John Marino  <gnugcc@marino.st>
+
+	* configure.tgt (*-*-dragonfly*): New target.
+
+2014-05-19  Richard Henderson  <rth@redhat.com>
+
+	* config/aarch64/sjlj.S: New file.
+	* config/aarch64/target.h: New file.
+	* configure.tgt: Enable aarch64.
 
 2014-04-09  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* config/generic/asmcfi.h: Also check for
 	__GCC_HAVE_DWARF2_CFI_ASM.
 
-2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+2013-04-02  Richard Henderson  <rth@redhat.com>
 
-	Backport from mainline r204808:
+	* config/alpha/target.h (PAGE_SIZE, FIXED_PAGE_SIZE): Remove.
+	* config/arm/target.h, config/sh/target.h: Likewise.
+	* config/sparc/target.h, config/x86/target.h: Likewise.
 
-	2013-11-14  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+2014-03-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* config/linux/futex_bits.h: Include errno.h.
+	(sys_futex0): If syscall returns -1, return -errno rather than
+	-1.
+
+2014-03-26  Joseph Myers  <joseph@codesourcery.com>
+
+	* libitm.texi (Index): Rename to Library Index.
+
+2014-01-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR libitm/53113
+	* Makefile.am (x86_sse.lo): Append -msse to CXXFLAGS.
+	(x86_avx.lo): Append -mavx to CXXFLAGS.
+	* Makefile.in: Regenerate.
+
+2014-01-02  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	Update copyright years
+
+2014-01-02  Tobias Burnus  <burnus@net-b.de>
+
+	* libitm.texi: Bump @copying's copyright year.
+
+2013-11-14  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
 
 	* config/powerpc/sjlj.S [__powerpc64__ && _CALL_ELF == 2]:
 	(FUNC): Define ELFv2 variant.
@@ -38,101 +121,124 @@
 	(BASE): Likewise.
 	(LR_SAVE): Likewise.
 
-2014-04-04  Bill Schmidt <wschmidt@linux.vnet.ibm.com>
+2013-09-20  Alan Modra  <amodra@gmail.com>
 
-	Power8 HTM Support
-	Backport from mainline
-	* acinclude.m4 (LIBITM_CHECK_AS_HTM): New.
-	* configure: Rebuild.
-	* configure.tgt (target_cpu): Add -mhtm to XCFLAGS.
-	* config/powerpc/target.h: Include sys/auxv.h and htmintrin.h.
-	(USE_HTM_FASTPATH): Define.
-	(_TBEGIN_STARTED, _TBEGIN_INDETERMINATE, _TBEGIN_PERSISTENT)
-	(_HTM_RETRIES) New macros.
-	(htm_abort, htm_abort_should_retry, htm_available, htm_begin, htm_init)
-	(htm_begin_success, htm_commit, htm_transaction_active): New functions.
+	* configure: Regenerate.
 
-2014-03-26  Jakub Jelinek  <jakub@redhat.com>
+2013-08-30  Torvald Riegel  <triegel@redhat.com>
 
-	* config/linux/futex_bits.h: Include errno.h.
-	(sys_futex0): If syscall returns -1, return -errno rather than
-	-1.
+	* config/posix/rwlock.cc: Fix initialization order.
 
-2014-03-03  Peter Bergner  <bergner@vnet.ibm.com>
+2013-08-30  Torvald Riegel  <triegel@redhat.com>
 
-	Backport from mainline
-	2013-06-20  Torvald Riegel  <triegel@redhat.com>
-
-	* query.cc (_ITM_inTransaction): Abort when using the HTM fastpath.
-	(_ITM_getTransactionId): Same.
-	* config/x86/target.h (htm_transaction_active): New.
-
-	2013-06-20  Torvald Riegel  <triegel@redhat.com>
-
-	PR libitm/57643
-	* beginend.cc (gtm_thread::begin_transaction): Handle reentrancy in
-	the HTM fastpath.
-
-2013-10-16  Release Manager
-
-	* GCC 4.8.2 released.
+	* libitm_i.h (gtm_thread): Assign an asm name to serial_lock.
+	(htm_fastpath): Assign an asm name.
+	* libitm.h (_ITM_codeProperties): Add non-ABI flags used by custom
+	HTM fast paths.
+	(_ITM_actions): Likewise.
+	* config/x86/target.h (HTM_CUSTOM_FASTPATH): Enable custom fastpath on
+	x86_64.
+	* config/x86/sjlj.S (_ITM_beginTransaction): Add custom HTM fast path.
+	* config/posix/rwlock.h (gtm_rwlock): Update comments.  Move summary
+	field to the start of the structure.
+	* config/linux/rwlock.h (gtm_rwlock): Update comments.
+	* beginend.cc (gtm_thread::begin_transaction): Add retry policy
+	handling for custom HTM fast paths.
 
 2013-08-14  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
-
 	Revert:
 	2013-08-02  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
 	* configure.tgt: Add -msoft-float to XCFLAGS.
 
-2013-08-14  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
-
-	* config/s390/sjlj.S: Add file missing from last commit.
-	* config/s390/target.h: Likewise.
-
 2013-08-02  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
-	Backports from mainline:
-	2013-04-23  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+	* configure.tgt: Add -msoft-float to XCFLAGS.
 
-	* config/s390/sjlj.S: New file.
-	* config/s390/target.h: New file.
-	* configure.tgt: Set options for S/390.
-
-	2013-06-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
-
-	* config/s390/target.h: Include htmintrin.h.
-	(_HTM_ITM_RETRIES): New macro definition.
-	(htm_available, htm_init, htm_begin, htm_begin_success)
-	(htm_commit, htm_abort, htm_abort_should_retry): New functions.
-
-	2013-07-17  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
-
-	* acinclude.m4: Add htm asm check for s390.
-	* configure.tgt: Add -mhtm and -Wa,-march=zEC12 to the
-	options.
-	* configure: Regenerate.
-	* config/s390/target.h: Remove __HTM__ check.
-	(htm_available): Call getauxval to get hwcaps and check
-	whether	HTM is available or not.
-
-	2013-07-29  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+2013-07-29  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
 	* config/s390/target.h (htm_begin, htm_commit, htm_abort)
 	(htm_transaction_active): Enable zEC12 instructions in the
 	assembler.
 	* configure.tgt: Remove -Wa,-march=zEC12 from XCFLAGS.
 
-	2013-08-02  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+2013-07-17  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
-	* configure.tgt: Add -msoft-float to XCFLAGS.
+	* acinclude.m4: Add htm asm check for s390.
+	* configure.tgt: Add -mhtm and -Wa,-march=zEC12 to the options.
+	* configure: Regenerate.
+	* config/s390/target.h: Remove __HTM__ check.
+	(htm_available): Call getauxval to get hwcaps and check whether
+	HTM is available or not.
 
-2013-05-31  Release Manager
+2013-07-15  Peter Bergner  <bergner@vnet.ibm.com>
 
-	* GCC 4.8.1 released.
+	* acinclude.m4 (LIBITM_CHECK_AS_HTM): New.
+	* configure.ac: Use it.
+	(AC_CHECK_HEADERS): Check for sys/auxv.h.
+	(AC_CHECK_FUNCS): Check for getauxval.
+	* config.h.in, configure: Rebuild.
+	* configure.tgt (target_cpu): Add -mhtm to XCFLAGS.
+	* config/powerpc/target.h: Include sys/auxv.h and htmintrin.h.
+	(USE_HTM_FASTPATH): Define.
+	(_TBEGIN_STARTED, _TBEGIN_INDETERMINATE, _TBEGIN_PERSISTENT,
+	_HTM_RETRIES) New macros.
+	(htm_abort, htm_abort_should_retry, htm_available, htm_begin, htm_init,
+	htm_begin_success, htm_commit, htm_transaction_active): New functions.
 
-2013-03-22  Release Manager
+2013-06-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
-	* GCC 4.8.0 released.
+	* config/s390/target.h: Include htmintrin.h.
+	(_HTM_ITM_RETRIES): New macro definition.
+	(htm_available, htm_init, htm_begin, htm_begin_success)
+	(htm_commit, htm_abort, htm_abort_should_retry): New functions.
+
+2013-06-20  Iain Sandoe  <iain@codesourcery.com>
+	    Cesar Philippidis  <cesar@codesourcery.com>
+
+	* testsuite/lib/libitm.exp: Reorder lib loads into dependency order.
+	Do not load_gcc_lib gcc-dg.exp and add a comment as to why.
+	* testsuite/libitm.c/c.exp: load_gcc_lib gcc-dg.exp.
+	* testsuite/libitm.c++/c++.exp: load_gcc_lib gcc-dg.exp.
+
+2013-06-20  Torvald Riegel  <triegel@redhat.com>
+
+	* query.cc (_ITM_inTransaction): Abort when using the HTM fastpath.
+	(_ITM_getTransactionId): Same.
+	* config/x86/target.h (htm_transaction_active): New.
+
+2013-06-20  Torvald Riegel  <triegel@redhat.com>
+
+	PR libitm/57643
+	* beginend.cc (gtm_thread::begin_transaction): Handle reentrancy in
+	the HTM fastpath.
+
+2013-03-31  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	PR bootstrap/56714
+	* local_atomic (__always_inline): Always define our version.
+	(__calculate_memory_order): Mark inline.
+	(atomic_thread_fence): Ditto.
+	(atomic_signal_fence): Ditto.
+	(atomic_bool::atomic_flag_test_and_set_explicit): Ditto.
+	(atomic_bool::atomic_flag_clear_explicit): Ditto.
+	(atomic_bool::atomic_flag_test_and_set): Ditto.
+	(atomic_bool::atomic_flag_clear): Ditto.
+
+2013-04-23  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* config/s390/sjlj.S: New file.
+	* config/s390/target.h: New file.
+	* configure.tgt: Set options for S/390.
+
+2013-03-23  Andi Kleen  <ak@linux.intel.com>
+
+	* local_atomic (__always_inline): Add.
+	(__calculate_memory_order, atomic_thread_fence,
+	 atomic_signal_fence, test_and_set, clear, store, load,
+	 exchange, compare_exchange_weak, compare_exchange_strong,
+	 fetch_add, fetch_sub, fetch_and, fetch_or, fetch_xor):
+	Add __always_inline to force inlining.
 
 2013-02-11  Iain Sandoe  <iain@codesourcery.com>
 	    Jack Howarth  <howarth@bromo.med.uc.edu>

@@ -1,5 +1,5 @@
 ;; Machine description for PowerPC synchronization instructions.
-;; Copyright (C) 2005-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;; Contributed by Geoffrey Keating.
 
 ;; This file is part of GCC.
@@ -41,18 +41,21 @@
   [(match_operand:SI 0 "const_int_operand" "")]		;; model
   ""
 {
-  enum memmodel model = (enum memmodel) INTVAL (operands[0]);
+  enum memmodel model = memmodel_from_int (INTVAL (operands[0]));
   switch (model)
     {
     case MEMMODEL_RELAXED:
       break;
     case MEMMODEL_CONSUME:
     case MEMMODEL_ACQUIRE:
+    case MEMMODEL_SYNC_ACQUIRE:
     case MEMMODEL_RELEASE:
+    case MEMMODEL_SYNC_RELEASE:
     case MEMMODEL_ACQ_REL:
       emit_insn (gen_lwsync ());
       break;
     case MEMMODEL_SEQ_CST:
+    case MEMMODEL_SYNC_SEQ_CST:
       emit_insn (gen_hwsync ());
       break;
     default:
@@ -144,9 +147,9 @@
   if (<MODE>mode == TImode && !TARGET_SYNC_TI)
     FAIL;
 
-  enum memmodel model = (enum memmodel) INTVAL (operands[2]);
+  enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
 
-  if (model == MEMMODEL_SEQ_CST)
+  if (is_mm_seq_cst (model))
     emit_insn (gen_hwsync ());
 
   if (<MODE>mode != TImode)
@@ -167,29 +170,12 @@
 
       emit_insn (gen_load_quadpti (pti_reg, op1));
 
-      /* For 4.8 we need to do explicit dword copies, even in big endian mode,
-	 unless we are using the LRA register allocator. The 4.9 register
-	 allocator is smart enough to assign an even/odd pair. */
-      if (WORDS_BIG_ENDIAN && rs6000_lra_flag)
+      if (WORDS_BIG_ENDIAN)
 	emit_move_insn (op0, gen_lowpart (TImode, pti_reg));
       else
 	{
-	  rtx op0_lo = gen_lowpart (DImode, op0);
-	  rtx op0_hi = gen_highpart (DImode, op0);
-	  rtx pti_lo = gen_lowpart (DImode, pti_reg);
-	  rtx pti_hi = gen_highpart (DImode, pti_reg);
-
-	  emit_insn (gen_rtx_CLOBBER (VOIDmode, op0));
-	  if (WORDS_BIG_ENDIAN)
-	    {
-	      emit_move_insn (op0_hi, pti_hi);
-	      emit_move_insn (op0_lo, pti_lo);
-	    }
-	  else
-	    {
-	      emit_move_insn (op0_hi, pti_lo);
-	      emit_move_insn (op0_lo, pti_hi);
-	    }
+	  emit_move_insn (gen_lowpart (DImode, op0), gen_highpart (DImode, pti_reg));
+	  emit_move_insn (gen_highpart (DImode, op0), gen_lowpart (DImode, pti_reg));
 	}
     }
 
@@ -199,7 +185,9 @@
       break;
     case MEMMODEL_CONSUME:
     case MEMMODEL_ACQUIRE:
+    case MEMMODEL_SYNC_ACQUIRE:
     case MEMMODEL_SEQ_CST:
+    case MEMMODEL_SYNC_SEQ_CST:
       emit_insn (gen_loadsync_<mode> (operands[0]));
       break;
     default:
@@ -226,15 +214,17 @@
   if (<MODE>mode == TImode && !TARGET_SYNC_TI)
     FAIL;
 
-  enum memmodel model = (enum memmodel) INTVAL (operands[2]);
+  enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
   switch (model)
     {
     case MEMMODEL_RELAXED:
       break;
     case MEMMODEL_RELEASE:
+    case MEMMODEL_SYNC_RELEASE:
       emit_insn (gen_lwsync ());
       break;
     case MEMMODEL_SEQ_CST:
+    case MEMMODEL_SYNC_SEQ_CST:
       emit_insn (gen_hwsync ());
       break;
     default:
@@ -256,29 +246,12 @@
 	  operands[0] = op0 = replace_equiv_address (op0, new_addr);
 	}
 
-      /* For 4.8 we need to do explicit dword copies, even in big endian mode,
-	 unless we are using the LRA register allocator. The 4.9 register
-	 allocator is smart enough to assign an even/odd pair. */
-      if (WORDS_BIG_ENDIAN && rs6000_lra_flag)
+      if (WORDS_BIG_ENDIAN)
 	emit_move_insn (pti_reg, gen_lowpart (PTImode, op1));
       else
 	{
-	  rtx op1_lo = gen_lowpart (DImode, op1);
-	  rtx op1_hi = gen_highpart (DImode, op1);
-	  rtx pti_lo = gen_lowpart (DImode, pti_reg);
-	  rtx pti_hi = gen_highpart (DImode, pti_reg);
-
-	  emit_insn (gen_rtx_CLOBBER (VOIDmode, pti_reg));
-	  if (WORDS_BIG_ENDIAN)
-	    {
-	      emit_move_insn (pti_hi, op1_hi);
-	      emit_move_insn (pti_lo, op1_lo);
-	    }
-	  else
-	    {
-	      emit_move_insn (pti_hi, op1_lo);
-	      emit_move_insn (pti_lo, op1_hi);
-	    }
+	  emit_move_insn (gen_lowpart (DImode, pti_reg), gen_highpart (DImode, op1));
+	  emit_move_insn (gen_highpart (DImode, pti_reg), gen_lowpart (DImode, op1));
 	}
 
       emit_insn (gen_store_quadpti (gen_lowpart (PTImode, op0), pti_reg));
@@ -314,12 +287,9 @@
   [(set_attr "type" "load_l")])
 
 ;; Use PTImode to get even/odd register pairs.
-
 ;; Use a temporary register to force getting an even register for the
-;; lqarx/stqcrx. instructions.  Under AT 7.0, we need use an explicit copy,
-;; even in big endian mode, unless we are using the LRA register allocator.  In
-;; GCC 4.9, the register allocator is smart enough to assign a even/odd
-;; register pair.
+;; lqarx/stqcrx. instructions.  Normal optimizations will eliminate this extra
+;; copy on big endian systems.
 
 ;; On little endian systems where non-atomic quad word load/store instructions
 ;; are not used, the address can be register+offset, so make sure the address
@@ -342,26 +312,12 @@
     }
 
   emit_insn (gen_load_lockedpti (pti, op1));
-  if (WORDS_BIG_ENDIAN && rs6000_lra_flag)
+  if (WORDS_BIG_ENDIAN)
     emit_move_insn (op0, gen_lowpart (TImode, pti));
   else
     {
-      rtx op0_lo = gen_lowpart (DImode, op0);
-      rtx op0_hi = gen_highpart (DImode, op0);
-      rtx pti_lo = gen_lowpart (DImode, pti);
-      rtx pti_hi = gen_highpart (DImode, pti);
-
-      emit_insn (gen_rtx_CLOBBER (VOIDmode, op0));
-      if (WORDS_BIG_ENDIAN)
-	{
-	  emit_move_insn (op0_hi, pti_hi);
-	  emit_move_insn (op0_lo, pti_lo);
-	}
-      else
-	{
-	  emit_move_insn (op0_hi, pti_lo);
-	  emit_move_insn (op0_lo, pti_hi);
-	}
+      emit_move_insn (gen_lowpart (DImode, op0), gen_highpart (DImode, pti));
+      emit_move_insn (gen_highpart (DImode, op0), gen_lowpart (DImode, pti));
     }
   DONE;
 })
@@ -386,9 +342,8 @@
   [(set_attr "type" "store_c")])
 
 ;; Use a temporary register to force getting an even register for the
-;; lqarx/stqcrx. instructions.  Under AT 7.0, we need use an explicit copy,
-;; even in big endian mode.  In GCC 4.9, the register allocator is smart enough
-;; to assign a even/odd register pair.
+;; lqarx/stqcrx. instructions.  Normal optimizations will eliminate this extra
+;; copy on big endian systems.
 
 ;; On little endian systems where non-atomic quad word load/store instructions
 ;; are not used, the address can be register+offset, so make sure the address
@@ -417,26 +372,12 @@
   pti_mem = change_address (op1, PTImode, addr);
   pti_reg = gen_reg_rtx (PTImode);
 
-  if (WORDS_BIG_ENDIAN && rs6000_lra_flag)
+  if (WORDS_BIG_ENDIAN)
     emit_move_insn (pti_reg, gen_lowpart (PTImode, op2));
   else
     {
-      rtx op2_lo = gen_lowpart (DImode, op2);
-      rtx op2_hi = gen_highpart (DImode, op2);
-      rtx pti_lo = gen_lowpart (DImode, pti_reg);
-      rtx pti_hi = gen_highpart (DImode, pti_reg);
-
-      emit_insn (gen_rtx_CLOBBER (VOIDmode, op0));
-      if (WORDS_BIG_ENDIAN)
-	{
-	  emit_move_insn (pti_hi, op2_hi);
-	  emit_move_insn (pti_lo, op2_lo);
-	}
-      else
-	{
-	  emit_move_insn (pti_hi, op2_lo);
-	  emit_move_insn (pti_lo, op2_hi);
-	}
+      emit_move_insn (gen_lowpart (DImode, pti_reg), gen_highpart (DImode, op2));
+      emit_move_insn (gen_highpart (DImode, pti_reg), gen_lowpart (DImode, op2));
     }
 
   emit_insn (gen_store_conditionalpti (op0, pti_mem, pti_reg));

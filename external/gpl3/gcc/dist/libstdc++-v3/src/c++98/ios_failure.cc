@@ -1,6 +1,6 @@
 // Iostreams base classes -*- C++ -*-
 
-// Copyright (C) 1997-2013 Free Software Foundation, Inc.
+// Copyright (C) 1997-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -23,9 +23,10 @@
 // <http://www.gnu.org/licenses/>.
 
 //
-// ISO C++ 14882: 27.4.2.1.1  Class ios_base::failure
+// ISO C++ 14882:1998: 27.4.2.1.1  Class ios_base::failure
 //
 
+#define _GLIBCXX_USE_CXX11_ABI 0
 #include <ios>
 
 namespace std _GLIBCXX_VISIBILITY(default)

@@ -1,6 +1,6 @@
 // Debugging deque implementation -*- C++ -*-
 
-// Copyright (C) 2003-2013 Free Software Foundation, Inc.
+// Copyright (C) 2003-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,6 +31,7 @@
 
 #include <deque>
 #include <debug/safe_sequence.h>
+#include <debug/safe_container.h>
 #include <debug/safe_iterator.h>
 
 namespace std _GLIBCXX_VISIBILITY(default)
@@ -40,42 +41,74 @@ namespace __debug
   /// Class std::deque with safety/checking/debug instrumentation.
   template<typename _Tp, typename _Allocator = std::allocator<_Tp> >
     class deque
-    : public _GLIBCXX_STD_C::deque<_Tp, _Allocator>,
-      public __gnu_debug::_Safe_sequence<deque<_Tp, _Allocator> >
+    : public __gnu_debug::_Safe_container<
+	deque<_Tp, _Allocator>, _Allocator,
+	__gnu_debug::_Safe_sequence>,
+      public _GLIBCXX_STD_C::deque<_Tp, _Allocator>
     {
-      typedef  _GLIBCXX_STD_C::deque<_Tp, _Allocator> _Base;
+      typedef  _GLIBCXX_STD_C::deque<_Tp, _Allocator>		_Base;
+      typedef __gnu_debug::_Safe_container<
+	deque, _Allocator, __gnu_debug::_Safe_sequence>	_Safe;
 
-      typedef typename _Base::const_iterator _Base_const_iterator;
-      typedef typename _Base::iterator _Base_iterator;
+      typedef typename _Base::const_iterator	_Base_const_iterator;
+      typedef typename _Base::iterator		_Base_iterator;
       typedef __gnu_debug::_Equal_to<_Base_const_iterator> _Equal;
+
     public:
-      typedef typename _Base::reference             reference;
-      typedef typename _Base::const_reference       const_reference;
+      typedef typename _Base::reference			reference;
+      typedef typename _Base::const_reference		const_reference;
 
-      typedef __gnu_debug::_Safe_iterator<_Base_iterator,deque>
-						    iterator;
-      typedef __gnu_debug::_Safe_iterator<_Base_const_iterator,deque>
-						    const_iterator;
+      typedef __gnu_debug::_Safe_iterator<_Base_iterator, deque>
+							iterator;
+      typedef __gnu_debug::_Safe_iterator<_Base_const_iterator, deque>
+							const_iterator;
 
-      typedef typename _Base::size_type             size_type;
-      typedef typename _Base::difference_type       difference_type;
+      typedef typename _Base::size_type			size_type;
+      typedef typename _Base::difference_type		difference_type;
 
-      typedef _Tp				    value_type;
-      typedef _Allocator			    allocator_type;
-      typedef typename _Base::pointer               pointer;
-      typedef typename _Base::const_pointer         const_pointer;
-      typedef std::reverse_iterator<iterator>       reverse_iterator;
-      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+      typedef _Tp					value_type;
+      typedef _Allocator				allocator_type;
+      typedef typename _Base::pointer			pointer;
+      typedef typename _Base::const_pointer		const_pointer;
+      typedef std::reverse_iterator<iterator>		reverse_iterator;
+      typedef std::reverse_iterator<const_iterator>	const_reverse_iterator;
 
       // 23.2.1.1 construct/copy/destroy:
+
+#if __cplusplus < 201103L
+      deque()
+      : _Base() { }
+
+      deque(const deque& __x)
+      : _Base(__x) { }
+
+      ~deque() { }
+#else
+      deque() = default;
+      deque(const deque&) = default;
+      deque(deque&&) = default;
+
+      deque(const deque& __d, const _Allocator& __a)
+      : _Base(__d, __a) { }
+
+      deque(deque&& __d, const _Allocator& __a)
+      : _Safe(std::move(__d)), _Base(std::move(__d), __a) { }
+
+      deque(initializer_list<value_type> __l,
+	    const allocator_type& __a = allocator_type())
+      : _Base(__l, __a) { }
+
+      ~deque() = default;
+#endif
+
       explicit
-      deque(const _Allocator& __a = _Allocator())
+      deque(const _Allocator& __a)
       : _Base(__a) { }
 
 #if __cplusplus >= 201103L
       explicit
-      deque(size_type __n)
-      : _Base(__n) { }
+      deque(size_type __n, const _Allocator& __a = _Allocator())
+      : _Base(__n, __a) { }
 
       deque(size_type __n, const _Tp& __value,
 	    const _Allocator& __a = _Allocator())
@@ -93,55 +126,35 @@ namespace __debug
 #else
       template<class _InputIterator>
 #endif
-        deque(_InputIterator __first, _InputIterator __last,
+	deque(_InputIterator __first, _InputIterator __last,
 	      const _Allocator& __a = _Allocator())
 	: _Base(__gnu_debug::__base(__gnu_debug::__check_valid_range(__first,
 								     __last)),
 		__gnu_debug::__base(__last), __a)
-        { }
-
-      deque(const deque& __x)
-      : _Base(__x) { }
+	{ }
 
       deque(const _Base& __x)
       : _Base(__x) { }
 
-#if __cplusplus >= 201103L
-      deque(deque&& __x)
-      : _Base(std::move(__x))
-      { this->_M_swap(__x); }
-
-      deque(initializer_list<value_type> __l,
-	    const allocator_type& __a = allocator_type())
-      : _Base(__l, __a) { }
-#endif
-
-      ~deque() _GLIBCXX_NOEXCEPT { }
-
+#if __cplusplus < 201103L
       deque&
       operator=(const deque& __x)
       {
-	*static_cast<_Base*>(this) = __x;
-	this->_M_invalidate_all();
+	this->_M_safe() = __x;
+	_M_base() = __x;
 	return *this;
       }
-
-#if __cplusplus >= 201103L
+#else
       deque&
-      operator=(deque&& __x)
-      {
-	// NB: DR 1204.
-	// NB: DR 675.
-	__glibcxx_check_self_move_assign(__x);
-	clear();
-	swap(__x);
-	return *this;
-      }
+      operator=(const deque&) = default;
+
+      deque&
+      operator=(deque&&) = default;
 
       deque&
       operator=(initializer_list<value_type> __l)
       {
-	*static_cast<_Base*>(this) = __l;
+	_M_base() = __l;
 	this->_M_invalidate_all();
 	return *this;
       }
@@ -153,9 +166,9 @@ namespace __debug
 #else
       template<class _InputIterator>
 #endif
-        void
-        assign(_InputIterator __first, _InputIterator __last)
-        {
+	void
+	assign(_InputIterator __first, _InputIterator __last)
+	{
 	  __glibcxx_check_valid_range(__first, __last);
 	  _Base::assign(__gnu_debug::__base(__first),
 			__gnu_debug::__base(__last));
@@ -238,7 +251,7 @@ namespace __debug
 	typedef __gnu_debug::_After_nth_from<_Base_const_iterator> _After_nth;
 	this->_M_invalidate_if(_After_nth(__n, _Base::begin()));
       }
-      
+
     public:
       // 23.2.1.2 capacity:
       using _Base::size;
@@ -287,7 +300,7 @@ namespace __debug
 
 #if __cplusplus >= 201103L
       void
-      shrink_to_fit()
+      shrink_to_fit() noexcept
       {
 	if (_Base::_M_shrink_to_fit())
 	  this->_M_invalidate_all();
@@ -298,14 +311,14 @@ namespace __debug
 
       // element access:
       reference
-      operator[](size_type __n)
+      operator[](size_type __n) _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_subscript(__n);
 	return _M_base()[__n];
       }
 
       const_reference
-      operator[](size_type __n) const
+      operator[](size_type __n) const _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_subscript(__n);
 	return _M_base()[__n];
@@ -314,28 +327,28 @@ namespace __debug
       using _Base::at;
 
       reference
-      front()
+      front() _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_nonempty();
 	return _Base::front();
       }
 
       const_reference
-      front() const
+      front() const _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_nonempty();
 	return _Base::front();
       }
 
       reference
-      back()
+      back() _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_nonempty();
 	return _Base::back();
       }
 
       const_reference
-      back() const
+      back() const _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_nonempty();
 	return _Base::back();
@@ -366,24 +379,24 @@ namespace __debug
       { emplace_back(std::move(__x)); }
 
       template<typename... _Args>
-        void
-        emplace_front(_Args&&... __args)
+	void
+	emplace_front(_Args&&... __args)
 	{
 	  _Base::emplace_front(std::forward<_Args>(__args)...);
 	  this->_M_invalidate_all();
 	}
 
       template<typename... _Args>
-        void
-        emplace_back(_Args&&... __args)
+	void
+	emplace_back(_Args&&... __args)
 	{
 	  _Base::emplace_back(std::forward<_Args>(__args)...);
 	  this->_M_invalidate_all();
 	}
 
       template<typename... _Args>
-        iterator
-        emplace(iterator __position, _Args&&... __args)
+	iterator
+	emplace(const_iterator __position, _Args&&... __args)
 	{
 	  __glibcxx_check_insert(__position);
 	  _Base_iterator __res = _Base::emplace(__position.base(),
@@ -394,7 +407,11 @@ namespace __debug
 #endif
 
       iterator
+#if __cplusplus >= 201103L
+      insert(const_iterator __position, const _Tp& __x)
+#else
       insert(iterator __position, const _Tp& __x)
+#endif
       {
 	__glibcxx_check_insert(__position);
 	_Base_iterator __res = _Base::insert(__position.base(), __x);
@@ -404,17 +421,29 @@ namespace __debug
 
 #if __cplusplus >= 201103L
       iterator
-      insert(iterator __position, _Tp&& __x)
+      insert(const_iterator __position, _Tp&& __x)
       { return emplace(__position, std::move(__x)); }
 
-      void
-      insert(iterator __p, initializer_list<value_type> __l)
+      iterator
+      insert(const_iterator __position, initializer_list<value_type> __l)
       {
-	_Base::insert(__p, __l);
+	__glibcxx_check_insert(__position);
+	_Base_iterator __res = _Base::insert(__position.base(), __l);
 	this->_M_invalidate_all();
+	return iterator(__res, this);
       }
 #endif
 
+#if __cplusplus >= 201103L
+      iterator
+      insert(const_iterator __position, size_type __n, const _Tp& __x)
+      {
+	__glibcxx_check_insert(__position);
+	_Base_iterator __res = _Base::insert(__position.base(), __n, __x);
+	this->_M_invalidate_all();
+	return iterator(__res, this);
+      }
+#else
       void
       insert(iterator __position, size_type __n, const _Tp& __x)
       {
@@ -422,25 +451,37 @@ namespace __debug
 	_Base::insert(__position.base(), __n, __x);
 	this->_M_invalidate_all();
       }
+#endif
 
 #if __cplusplus >= 201103L
       template<class _InputIterator,
 	       typename = std::_RequireInputIter<_InputIterator>>
+	iterator
+	insert(const_iterator __position,
+	       _InputIterator __first, _InputIterator __last)
+	{
+	  __glibcxx_check_insert_range(__position, __first, __last);
+	  _Base_iterator __res = _Base::insert(__position.base(),
+					       __gnu_debug::__base(__first),
+					       __gnu_debug::__base(__last));
+	  this->_M_invalidate_all();
+	  return iterator(__res, this);
+	}
 #else
       template<class _InputIterator>
-#endif
-        void
-        insert(iterator __position,
+	void
+	insert(iterator __position,
 	       _InputIterator __first, _InputIterator __last)
-        {
+	{
 	  __glibcxx_check_insert_range(__position, __first, __last);
 	  _Base::insert(__position.base(), __gnu_debug::__base(__first),
 					   __gnu_debug::__base(__last));
 	  this->_M_invalidate_all();
 	}
+#endif
 
       void
-      pop_front()
+      pop_front() _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_nonempty();
 	this->_M_invalidate_if(_Equal(_Base::begin()));
@@ -448,7 +489,7 @@ namespace __debug
       }
 
       void
-      pop_back()
+      pop_back() _GLIBCXX_NOEXCEPT
       {
 	__glibcxx_check_nonempty();
 	this->_M_invalidate_if(_Equal(--_Base::end()));
@@ -456,11 +497,19 @@ namespace __debug
       }
 
       iterator
-      erase(iterator __position)
+#if __cplusplus >= 201103L
+      erase(const_iterator __position)
+#else
+      erase(iterator __position)	
+#endif
       {
 	__glibcxx_check_erase(__position);
+#if __cplusplus >= 201103L
+	_Base_const_iterator __victim = __position.base();
+#else
 	_Base_iterator __victim = __position.base();
-	if (__victim == _Base::begin() || __victim == _Base::end()-1)
+#endif
+	if (__victim == _Base::begin() || __victim == _Base::end() - 1)
 	  {
 	    this->_M_invalidate_if(_Equal(__victim));
 	    return iterator(_Base::erase(__victim), this);
@@ -474,19 +523,27 @@ namespace __debug
       }
 
       iterator
+#if __cplusplus >= 201103L
+      erase(const_iterator __first, const_iterator __last)
+#else
       erase(iterator __first, iterator __last)
+#endif
       {
 	// _GLIBCXX_RESOLVE_LIB_DEFECTS
 	// 151. can't currently clear() empty container
 	__glibcxx_check_erase_range(__first, __last);
 
 	if (__first.base() == __last.base())
+#if __cplusplus >= 201103L
+	  return iterator(__first.base()._M_const_cast(), this);
+#else
 	  return __first;
-        else if (__first.base() == _Base::begin()
+#endif
+	else if (__first.base() == _Base::begin()
 		 || __last.base() == _Base::end())
 	  {
 	    this->_M_detach_singular();
-	    for (_Base_iterator __position = __first.base();
+	    for (_Base_const_iterator __position = __first.base();
 		 __position != __last.base(); ++__position)
 	      {
 		this->_M_invalidate_if(_Equal(__position));
@@ -513,9 +570,12 @@ namespace __debug
 
       void
       swap(deque& __x)
+#if __cplusplus >= 201103L
+	noexcept( noexcept(declval<_Base>().swap(__x)) )
+#endif
       {
+	_Safe::_M_swap(__x);
 	_Base::swap(__x);
-	this->_M_swap(__x);
       }
 
       void
@@ -526,10 +586,10 @@ namespace __debug
       }
 
       _Base&
-      _M_base() _GLIBCXX_NOEXCEPT       { return *this; }
+      _M_base() _GLIBCXX_NOEXCEPT	{ return *this; }
 
       const _Base&
-      _M_base() const _GLIBCXX_NOEXCEPT { return *this; }
+      _M_base() const _GLIBCXX_NOEXCEPT	{ return *this; }
     };
 
   template<typename _Tp, typename _Alloc>

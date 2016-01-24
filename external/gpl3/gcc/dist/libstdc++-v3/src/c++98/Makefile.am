@@ -1,6 +1,6 @@
 ## Makefile for the C++03 sources of the GNU C++ Standard library.
 ##
-## Copyright (C) 1997-2013 Free Software Foundation, Inc.
+## Copyright (C) 1997-2015 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -27,14 +27,21 @@ noinst_LTLIBRARIES = libc++98convenience.la
 
 headers =
 
+if ENABLE_DUAL_ABI
+cow_string_host_sources = \
+	collate_members_cow.cc \
+	messages_members_cow.cc \
+	monetary_members_cow.cc \
+	numeric_members_cow.cc
+endif
+
 # Source files linked in via configuration/make substitution for a
 # particular host.
 host_sources = \
+	$(cow_string_host_sources) \
 	atomicity.cc \
 	codecvt_members.cc \
 	collate_members.cc \
-	ctype_configure_char.cc \
-	ctype_members.cc \
 	messages_members.cc \
 	monetary_members.cc \
 	numeric_members.cc \
@@ -45,12 +52,6 @@ codecvt_members.cc: ${glibcxx_srcdir}/$(CCODECVT_CC)
 
 collate_members.cc: ${glibcxx_srcdir}/$(CCOLLATE_CC)
 	$(LN_S) ${glibcxx_srcdir}/$(CCOLLATE_CC) . || true
-
-ctype_configure_char.cc: ${glibcxx_srcdir}/$(OS_INC_SRCDIR)/ctype_configure_char.cc
-	$(LN_S) ${glibcxx_srcdir}/$(OS_INC_SRCDIR)/ctype_configure_char.cc . || true
-
-ctype_members.cc: ${glibcxx_srcdir}/$(CCTYPE_CC)
-	$(LN_S) ${glibcxx_srcdir}/$(CCTYPE_CC) . || true
 
 messages_members.cc: ${glibcxx_srcdir}/$(CMESSAGES_CC)
 	$(LN_S) ${glibcxx_srcdir}/$(CMESSAGES_CC) . || true
@@ -68,6 +69,20 @@ atomicity_file = ${glibcxx_srcdir}/$(ATOMICITY_SRCDIR)/atomicity.h
 atomicity.cc: ${atomicity_file}
 	$(LN_S) ${atomicity_file} ./atomicity.cc || true
 
+if ENABLE_DUAL_ABI
+collate_members_cow.cc: ${glibcxx_srcdir}/$(CCOLLATE_CC)
+	$(LN_S) ${glibcxx_srcdir}/$(CCOLLATE_CC) ./$@ || true
+
+messages_members_cow.cc: ${glibcxx_srcdir}/$(CMESSAGES_CC)
+	$(LN_S) ${glibcxx_srcdir}/$(CMESSAGES_CC) ./$@ || true
+
+monetary_members_cow.cc: ${glibcxx_srcdir}/$(CMONEY_CC)
+	$(LN_S) ${glibcxx_srcdir}/$(CMONEY_CC) ./$@ || true
+
+numeric_members_cow.cc: ${glibcxx_srcdir}/$(CNUMERIC_CC)
+	$(LN_S) ${glibcxx_srcdir}/$(CNUMERIC_CC) ./$@ || true
+endif
+
 # Source files linked in via configuration/make substitution for a
 # particular host, but with ad hoc naming rules.
 host_sources_extra = \
@@ -80,24 +95,22 @@ c++locale.cc: ${glibcxx_srcdir}/$(CLOCALE_CC)
 basic_file.cc: ${glibcxx_srcdir}/$(BASIC_FILE_CC)
 	$(LN_S) ${glibcxx_srcdir}/$(BASIC_FILE_CC) ./$@ || true
 
+if ENABLE_DUAL_ABI
+cxx11_abi_sources = \
+	cow-istream-string.cc
+else
+cxx11_abi_sources =
+endif
 
 if ENABLE_EXTERN_TEMPLATE
-XTEMPLATE_FLAGS = -fno-implicit-templates
+# XTEMPLATE_FLAGS = -fno-implicit-templates
 inst_sources = \
 	allocator-inst.cc \
 	concept-inst.cc \
 	ext-inst.cc \
-	ios-inst.cc \
-	iostream-inst.cc \
-	istream-inst.cc \
-	locale-inst.cc \
-	misc-inst.cc \
-	ostream-inst.cc \
-	sstream-inst.cc \
-	streambuf-inst.cc \
-	wlocale-inst.cc
+	misc-inst.cc
 else
-XTEMPLATE_FLAGS =
+# XTEMPLATE_FLAGS =
 inst_sources =
 endif
 
@@ -110,11 +123,9 @@ sources = \
 	mt_allocator.cc \
 	codecvt.cc \
 	complex_io.cc \
-	ctype.cc \
 	globals_io.cc \
 	hash_tr1.cc \
 	hashtable_tr1.cc \
-	ios.cc \
 	ios_failure.cc \
 	ios_init.cc \
 	ios_locale.cc \
@@ -133,14 +144,47 @@ sources = \
 	strstream.cc \
 	tree.cc \
 	istream.cc \
+	istream-string.cc \
 	streambuf.cc \
 	valarray.cc \
+	${cxx11_abi_sources} \
 	${host_sources} \
 	${host_sources_extra}
 
 vpath % $(top_srcdir)/src/c++98
 
 libc__98convenience_la_SOURCES = $(sources)
+
+if ENABLE_DUAL_ABI
+GLIBCXX_ABI_FLAGS = -D_GLIBCXX_USE_CXX11_ABI=@glibcxx_cxx98_abi@
+# Use special rules to compile with the non-default string ABI.
+collate_members_cow.lo: collate_members_cow.cc
+	$(LTCXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+collate_members_cow.o: collate_members_cow.cc
+	$(CXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+messages_members_cow.lo: messages_members_cow.cc
+	$(LTCXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+messages_members_cow.o: messages_members_cow.cc
+	$(CXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+monetary_members_cow.lo: monetary_members_cow.cc
+	$(LTCXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+monetary_members_cow.o: monetary_members_cow.cc
+	$(CXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+numeric_members_cow.lo: numeric_members_cow.cc
+	$(LTCXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+numeric_members_cow.o: numeric_members_cow.cc
+	$(CXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<
+endif
+
+# XXX TODO move locale_init.cc and localename.cc to src/c++11
+locale_init.lo: locale_init.cc
+	$(LTCXXCOMPILE) -std=gnu++11 -c $<
+locale_init.o: locale_init.cc
+	$(LTCXXCOMPILE) -std=gnu++11 -c $<
+localename.lo: localename.cc
+	$(LTCXXCOMPILE) -std=gnu++11 -c $<
+localename.o: localename.cc
+	$(LTCXXCOMPILE) -std=gnu++11 -c $<
 
 # Use special rules for the deprecated source files so that they find
 # deprecated include files.
@@ -172,7 +216,7 @@ parallel_settings.o: parallel_settings.cc
 # as the occasion calls for it.
 AM_CXXFLAGS = \
 	$(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
-	$(XTEMPLATE_FLAGS) \
+	$(XTEMPLATE_FLAGS) $(VTV_CXXFLAGS) \
 	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS) $(CONFIG_CXXFLAGS)
 
 AM_MAKEFLAGS = \
@@ -222,4 +266,5 @@ CXXLINK = \
 	$(LIBTOOL) --tag CXX --tag disable-shared \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXX) \
+	$(VTV_CXXLINKFLAGS) \
 	$(OPT_LDFLAGS) $(SECTION_LDFLAGS) $(AM_CXXFLAGS) $(LTLDFLAGS) -o $@

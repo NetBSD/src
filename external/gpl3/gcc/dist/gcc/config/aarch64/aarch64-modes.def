@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -24,12 +24,24 @@ CC_MODE (CC_SWP);
 CC_MODE (CC_ZESWP); /* zero-extend LHS (but swap to make it RHS).  */
 CC_MODE (CC_SESWP); /* sign-extend LHS (but swap to make it RHS).  */
 CC_MODE (CC_NZ);    /* Only N and Z bits of condition flags are valid.  */
+CC_MODE (CC_Z);     /* Only Z bit of condition flags is valid.  */
+CC_MODE (CC_DNE);
+CC_MODE (CC_DEQ);
+CC_MODE (CC_DLE);
+CC_MODE (CC_DLT);
+CC_MODE (CC_DGE);
+CC_MODE (CC_DGT);
+CC_MODE (CC_DLEU);
+CC_MODE (CC_DLTU);
+CC_MODE (CC_DGEU);
+CC_MODE (CC_DGTU);
 
 /* Vector modes.  */
 VECTOR_MODES (INT, 8);        /*       V8QI V4HI V2SI.  */
 VECTOR_MODES (INT, 16);       /* V16QI V8HI V4SI V2DI.  */
 VECTOR_MODES (FLOAT, 8);      /*                 V2SF.  */
 VECTOR_MODES (FLOAT, 16);     /*            V4SF V2DF.  */
+VECTOR_MODE (FLOAT, DF, 1);   /*                 V1DF.  */
 
 /* Oct Int: 256-bit integer mode needed for 32-byte vector arguments.  */
 INT_MODE (OI, 32);

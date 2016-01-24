@@ -1,6 +1,6 @@
 ## Linker script for GNU namespace versioning.
 ##
-## Copyright (C) 2002-2013 Free Software Foundation, Inc.
+## Copyright (C) 2002-2015 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ##
@@ -233,6 +233,12 @@ CXXABI_2.0 {
     _ZTSSt17bad_function_call;
     _ZTVSt17bad_function_call;
 
+    __cxa_throw_bad_array_new_length;
+    _Z*St20bad_array_new_length*;
+
+    __cxa_throw_bad_array_length;
+    _Z*St16bad_array_length*;
+
     # Default function.
     _ZSt11_Hash_bytesPKv*;
 
@@ -332,6 +338,10 @@ CXXABI_2.0 {
     _ZTVN10__cxxabiv120__si_class_type_infoE;
     _ZTVN10__cxxabiv121__vmi_class_type_infoE;
 
+    # operator delete(void*, std::size_t)
+    _ZdlPv[jmy];
+    # operator delete[](void*, std::size_t)
+    _ZdaPv[jmy];
 };
 
 # Symbols in the support library (libsupc++) supporting trans-mem.

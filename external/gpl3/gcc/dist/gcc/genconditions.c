@@ -1,5 +1,5 @@
 /* Process machine description and calculate constant conditions.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -70,8 +70,12 @@ write_header (void)
 #include \"coretypes.h\"\n\
 #include \"tm.h\"\n\
 #include \"insn-constants.h\"\n\
+#include \"ggc.h\"\n\
 #include \"rtl.h\"\n\
 #include \"tm_p.h\"\n\
+#include \"hashtab.h\"\n\
+#include \"hash-set.h\"\n\
+#include \"hard-reg-set.h\"\n\
 #include \"function.h\"\n\
 \n\
 /* Fake - insn-config.h doesn't exist yet.  */\n\
@@ -84,6 +88,8 @@ write_header (void)
 #include \"output.h\"\n\
 #include \"flags.h\"\n\
 #include \"hard-reg-set.h\"\n\
+#include \"predict.h\"\n\
+#include \"basic-block.h\"\n\
 #include \"resource.h\"\n\
 #include \"diagnostic-core.h\"\n\
 #include \"reload.h\"\n\
@@ -95,7 +101,7 @@ write_header (void)
 
   puts ("\
 /* Dummy external declarations.  */\n\
-extern rtx insn;\n\
+extern rtx_insn *insn;\n\
 extern rtx ins1;\n\
 extern rtx operands[];\n\
 \n\

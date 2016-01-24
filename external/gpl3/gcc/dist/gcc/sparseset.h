@@ -1,5 +1,5 @@
 /* SparseSet implementation.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Contributed by Peter Bergner <bergner@vnet.ibm.com>
 
 This file is part of GCC.
@@ -177,7 +177,7 @@ sparseset_pop (sparseset s)
   gcc_checking_assert (mem != 0);
 
   s->members = mem - 1;
-  return s->dense[mem];
+  return s->dense[s->members];
 }
 
 static inline void

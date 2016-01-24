@@ -1,5 +1,5 @@
 /* DWARF2 EH unwinding support for TILEPro.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
 This file is part of GCC.
@@ -78,7 +78,7 @@ tile_fallback_frame_state (struct _Unwind_Context *context,
 
   new_cfa = sc->sp;
   fs->regs.cfa_how = CFA_REG_OFFSET;
-  fs->regs.cfa_reg = STACK_POINTER_REGNUM;
+  fs->regs.cfa_reg = __LIBGCC_STACK_POINTER_REGNUM__;
   fs->regs.cfa_offset = new_cfa - (long) context->cfa;
 
   for (i = 0; i < 56; ++i)

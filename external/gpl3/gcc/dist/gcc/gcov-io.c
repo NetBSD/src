@@ -1,5 +1,5 @@
 /* File format for coverage information
-   Copyright (C) 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Contributed by Bob Manson <manson@cygnus.com>.
    Completely remangled by Nathan Sidwell <nathan@codesourcery.com>.
 
@@ -34,6 +34,68 @@ static gcov_unsigned_t *gcov_write_words (unsigned);
 static const gcov_unsigned_t *gcov_read_words (unsigned);
 #if !IN_LIBGCOV
 static void gcov_allocate (unsigned);
+#endif
+
+/* Optimum number of gcov_unsigned_t's read from or written to disk.  */
+#define GCOV_BLOCK_SIZE (1 << 10)
+
+struct gcov_var
+{
+  FILE *file;
+  gcov_position_t start;	/* Position of first byte of block */
+  unsigned offset;		/* Read/write position within the block.  */
+  unsigned length;		/* Read limit in the block.  */
+  unsigned overread;		/* Number of words overread.  */
+  int error;			/* < 0 overflow, > 0 disk error.  */
+  int mode;	                /* < 0 writing, > 0 reading */
+#if IN_LIBGCOV
+  /* Holds one block plus 4 bytes, thus all coverage reads & writes
+     fit within this buffer and we always can transfer GCOV_BLOCK_SIZE
+     to and from the disk. libgcov never backtracks and only writes 4
+     or 8 byte objects.  */
+  gcov_unsigned_t buffer[GCOV_BLOCK_SIZE + 1];
+#else
+  int endian;			/* Swap endianness.  */
+  /* Holds a variable length block, as the compiler can write
+     strings and needs to backtrack.  */
+  size_t alloc;
+  gcov_unsigned_t *buffer;
+#endif
+} gcov_var;
+
+/* Save the current position in the gcov file.  */
+/* We need to expose this function when compiling for gcov-tool.  */
+#ifndef IN_GCOV_TOOL
+static inline
+#endif
+gcov_position_t
+gcov_position (void)
+{
+  gcov_nonruntime_assert (gcov_var.mode > 0); 
+  return gcov_var.start + gcov_var.offset;
+}
+
+/* Return nonzero if the error flag is set.  */
+/* We need to expose this function when compiling for gcov-tool.  */
+#ifndef IN_GCOV_TOOL
+static inline
+#endif
+int
+gcov_is_error (void)
+{
+  return gcov_var.file ? gcov_var.error : 1;
+}
+
+#if IN_LIBGCOV
+/* Move to beginning of file and initialize for writing.  */
+GCOV_LINKAGE inline void
+gcov_rewrite (void)
+{
+  gcov_var.mode = -1; 
+  gcov_var.start = 0;
+  gcov_var.offset = 0;
+  fseek (gcov_var.file, 0L, SEEK_SET);
+}
 #endif
 
 static inline gcov_unsigned_t from_file (gcov_unsigned_t value)
@@ -78,7 +140,7 @@ gcov_open (const char *name, int mode)
   s_flock.l_pid = getpid ();
 #endif
 
-  gcc_assert (!gcov_var.file);
+  gcov_nonruntime_assert (!gcov_var.file);
   gcov_var.start = 0;
   gcov_var.offset = gcov_var.length = 0;
   gcov_var.overread = -1u;
@@ -94,9 +156,15 @@ gcov_open (const char *name, int mode)
       /* pass mode (ignored) for compatibility */
       fd = open (name, O_RDONLY, S_IRUSR | S_IWUSR);
     }
-  else
+  else if (mode < 0)
+     {
+       /* Write mode - acquire a write-lock.  */
+       s_flock.l_type = F_WRLCK;
+      fd = open (name, O_RDWR | O_CREAT | O_TRUNC, 0666);
+    }
+  else /* mode == 0 */
     {
-      /* Write mode - acquire a write-lock.  */
+      /* Read-Write mode - acquire a write-lock.  */
       s_flock.l_type = F_WRLCK;
       fd = open (name, O_RDWR | O_CREAT, 0666);
     }
@@ -236,14 +304,13 @@ gcov_write_words (unsigned words)
 {
   gcov_unsigned_t *result;
 
-  gcc_assert (gcov_var.mode < 0);
+  gcov_nonruntime_assert (gcov_var.mode < 0);
 #if IN_LIBGCOV
   if (gcov_var.offset >= GCOV_BLOCK_SIZE)
     {
       gcov_write_block (GCOV_BLOCK_SIZE);
       if (gcov_var.offset)
 	{
-	  gcc_assert (gcov_var.offset == 1);
 	  memcpy (gcov_var.buffer, gcov_var.buffer + GCOV_BLOCK_SIZE, 4);
 	}
     }
@@ -338,9 +405,9 @@ gcov_write_length (gcov_position_t position)
   gcov_unsigned_t length;
   gcov_unsigned_t *buffer;
 
-  gcc_assert (gcov_var.mode < 0);
-  gcc_assert (position + 2 <= gcov_var.start + gcov_var.offset);
-  gcc_assert (position >= gcov_var.start);
+  gcov_nonruntime_assert (gcov_var.mode < 0);
+  gcov_nonruntime_assert (position + 2 <= gcov_var.start + gcov_var.offset);
+  gcov_nonruntime_assert (position >= gcov_var.start);
   offset = position - gcov_var.start;
   length = gcov_var.offset - offset - 2;
   buffer = (gcov_unsigned_t *) &gcov_var.buffer[offset];
@@ -386,7 +453,7 @@ gcov_write_summary (gcov_unsigned_t tag, const struct gcov_summary *summary)
           h_cnt++;
         }
     }
-  gcov_write_tag_length (tag, GCOV_TAG_SUMMARY_LENGTH(h_cnt));
+  gcov_write_tag_length (tag, GCOV_TAG_SUMMARY_LENGTH (h_cnt));
   gcov_write_unsigned (summary->checksum);
   for (csum = summary->ctrs, ix = GCOV_COUNTERS_SUMMABLE; ix--; csum++)
     {
@@ -426,23 +493,22 @@ gcov_read_words (unsigned words)
   const gcov_unsigned_t *result;
   unsigned excess = gcov_var.length - gcov_var.offset;
 
-  gcc_assert (gcov_var.mode > 0);
+  gcov_nonruntime_assert (gcov_var.mode > 0);
   if (excess < words)
     {
       gcov_var.start += gcov_var.offset;
-#if IN_LIBGCOV
       if (excess)
 	{
-	  gcc_assert (excess == 1);
+#if IN_LIBGCOV
 	  memcpy (gcov_var.buffer, gcov_var.buffer + gcov_var.offset, 4);
-	}
 #else
-      memmove (gcov_var.buffer, gcov_var.buffer + gcov_var.offset, excess * 4);
+	  memmove (gcov_var.buffer, gcov_var.buffer + gcov_var.offset,
+		   excess * 4);
 #endif
+	}
       gcov_var.offset = 0;
       gcov_var.length = excess;
 #if IN_LIBGCOV
-      gcc_assert (!gcov_var.length || gcov_var.length == 1);
       excess = GCOV_BLOCK_SIZE;
 #else
       if (gcov_var.length + words > gcov_var.alloc)
@@ -499,11 +565,13 @@ gcov_read_counter (void)
   return value;
 }
 
+/* We need to expose the below function when compiling for gcov-tool.  */
+
+#if !IN_LIBGCOV || defined (IN_GCOV_TOOL)
 /* Read string from coverage file. Returns a pointer to a static
    buffer, or NULL on empty string. You must copy the string before
    calling another gcov function.  */
 
-#if !IN_LIBGCOV
 GCOV_LINKAGE const char *
 gcov_read_string (void)
 {
@@ -559,7 +627,9 @@ gcov_read_summary (struct gcov_summary *summary)
           while (!cur_bitvector)
             {
               h_ix = bv_ix * 32;
-              gcc_assert(bv_ix < GCOV_HISTOGRAM_BITVECTOR_SIZE);
+              if (bv_ix >= GCOV_HISTOGRAM_BITVECTOR_SIZE)
+                gcov_error ("corrupted profile info: summary histogram "
+                            "bitvector is corrupt");
               cur_bitvector = histo_bitvector[bv_ix++];
             }
           while (!(cur_bitvector & 0x1))
@@ -567,7 +637,9 @@ gcov_read_summary (struct gcov_summary *summary)
               h_ix++;
               cur_bitvector >>= 1;
             }
-          gcc_assert(h_ix < GCOV_HISTOGRAM_SIZE);
+          if (h_ix >= GCOV_HISTOGRAM_SIZE)
+            gcov_error ("corrupted profile info: summary histogram "
+                        "index is corrupt");
 
           csum->histogram[h_ix].num_counters = gcov_read_unsigned ();
           csum->histogram[h_ix].min_value = gcov_read_counter ();
@@ -580,14 +652,16 @@ gcov_read_summary (struct gcov_summary *summary)
     }
 }
 
-#if !IN_LIBGCOV
+/* We need to expose the below function when compiling for gcov-tool.  */
+
+#if !IN_LIBGCOV || defined (IN_GCOV_TOOL)
 /* Reset to a known position.  BASE should have been obtained from
    gcov_position, LENGTH should be a record length.  */
 
 GCOV_LINKAGE void
 gcov_sync (gcov_position_t base, gcov_unsigned_t length)
 {
-  gcc_assert (gcov_var.mode > 0);
+  gcov_nonruntime_assert (gcov_var.mode > 0);
   base += length;
   if (base - gcov_var.start <= gcov_var.length)
     gcov_var.offset = base - gcov_var.start;
@@ -606,7 +680,6 @@ gcov_sync (gcov_position_t base, gcov_unsigned_t length)
 GCOV_LINKAGE void
 gcov_seek (gcov_position_t base)
 {
-  gcc_assert (gcov_var.mode < 0);
   if (gcov_var.offset)
     gcov_write_block (gcov_var.offset);
   fseek (gcov_var.file, base << 2, SEEK_SET);
@@ -658,20 +731,8 @@ gcov_histo_index (gcov_type value)
       r = sizeof (long long) * __CHAR_BIT__ - 1 - __builtin_clzll (v);
 #else
       /* We use floor_log2 from hwint.c, which takes a HOST_WIDE_INT
-         that is either 32 or 64 bits, and gcov_type_unsigned may be 64 bits.
-         Need to check for the case where gcov_type_unsigned is 64 bits
-         and HOST_WIDE_INT is 32 bits and handle it specially.  */
-#if HOST_BITS_PER_WIDEST_INT == HOST_BITS_PER_WIDE_INT
+         that is 64 bits and gcov_type_unsigned is 64 bits.  */
       r = floor_log2 (v);
-#elif HOST_BITS_PER_WIDEST_INT == 2 * HOST_BITS_PER_WIDE_INT
-      HOST_WIDE_INT hwi_v = v >> HOST_BITS_PER_WIDE_INT;
-      if (hwi_v)
-        r = floor_log2 (hwi_v) + HOST_BITS_PER_WIDE_INT;
-      else
-        r = floor_log2 ((HOST_WIDE_INT)v);
-#else
-      gcc_unreachable ();
-#endif
 #endif
     }
 
@@ -681,7 +742,7 @@ gcov_histo_index (gcov_type value)
   if (r < 2)
     return (unsigned)value;
 
-  gcc_assert (r < 64);
+  gcov_nonruntime_assert (r < 64);
 
   /* Find the two next most significant bits to determine which
      of the four linear sub-buckets to select.  */
@@ -709,7 +770,7 @@ static void gcov_histogram_merge (gcov_bucket_type *tgt_histo,
   gcov_bucket_type tmp_histo[GCOV_HISTOGRAM_SIZE];
   int src_done = 0;
 
-  memset(tmp_histo, 0, sizeof (gcov_bucket_type) * GCOV_HISTOGRAM_SIZE);
+  memset (tmp_histo, 0, sizeof (gcov_bucket_type) * GCOV_HISTOGRAM_SIZE);
 
   /* Assume that the counters are in the same relative order in both
      histograms. Walk the histograms from largest to smallest entry,
@@ -797,8 +858,8 @@ static void gcov_histogram_merge (gcov_bucket_type *tgt_histo,
 
           /* The merged counters get placed in the new merged histogram
              at the entry for the merged min_value.  */
-          tmp_i = gcov_histo_index(merge_min);
-          gcc_assert (tmp_i < GCOV_HISTOGRAM_SIZE);
+          tmp_i = gcov_histo_index (merge_min);
+          gcov_nonruntime_assert (tmp_i < GCOV_HISTOGRAM_SIZE);
           tmp_histo[tmp_i].num_counters += merge_num;
           tmp_histo[tmp_i].cum_value += merge_cum;
           if (!tmp_histo[tmp_i].min_value ||
@@ -812,7 +873,7 @@ static void gcov_histogram_merge (gcov_bucket_type *tgt_histo,
         }
     }
 
-  gcc_assert (tgt_i < 0);
+  gcov_nonruntime_assert (tgt_i < 0);
 
   /* In the case where there were more counters in the source histogram,
      accumulate the remaining unmerged cumulative counter values. Add
@@ -829,11 +890,119 @@ static void gcov_histogram_merge (gcov_bucket_type *tgt_histo,
     }
   /* At this point, tmp_i should be the smallest non-zero entry in the
      tmp_histo.  */
-  gcc_assert(tmp_i >= 0 && tmp_i < GCOV_HISTOGRAM_SIZE
-             && tmp_histo[tmp_i].num_counters > 0);
+  gcov_nonruntime_assert (tmp_i >= 0 && tmp_i < GCOV_HISTOGRAM_SIZE
+                          && tmp_histo[tmp_i].num_counters > 0);
   tmp_histo[tmp_i].cum_value += src_cum;
 
   /* Finally, copy the merged histogram into tgt_histo.  */
-  memcpy(tgt_histo, tmp_histo, sizeof (gcov_bucket_type) * GCOV_HISTOGRAM_SIZE);
+  memcpy (tgt_histo, tmp_histo,
+	  sizeof (gcov_bucket_type) * GCOV_HISTOGRAM_SIZE);
 }
 #endif /* !IN_GCOV */
+
+/* This is used by gcov-dump (IN_GCOV == -1) and in the compiler
+   (!IN_GCOV && !IN_LIBGCOV).  */
+#if IN_GCOV <= 0 && !IN_LIBGCOV
+/* Compute the working set information from the counter histogram in
+   the profile summary. This is an array of information corresponding to a
+   range of percentages of the total execution count (sum_all), and includes
+   the number of counters required to cover that working set percentage and
+   the minimum counter value in that working set.  */
+
+GCOV_LINKAGE void
+compute_working_sets (const struct gcov_ctr_summary *summary,
+                      gcov_working_set_t *gcov_working_sets)
+{
+  gcov_type working_set_cum_values[NUM_GCOV_WORKING_SETS];
+  gcov_type ws_cum_hotness_incr;
+  gcov_type cum, tmp_cum;
+  const gcov_bucket_type *histo_bucket;
+  unsigned ws_ix, c_num, count;
+  int h_ix;
+
+  /* Compute the amount of sum_all that the cumulative hotness grows
+     by in each successive working set entry, which depends on the
+     number of working set entries.  */
+  ws_cum_hotness_incr = summary->sum_all / NUM_GCOV_WORKING_SETS;
+
+  /* Next fill in an array of the cumulative hotness values corresponding
+     to each working set summary entry we are going to compute below.
+     Skip 0% statistics, which can be extrapolated from the
+     rest of the summary data.  */
+  cum = ws_cum_hotness_incr;
+  for (ws_ix = 0; ws_ix < NUM_GCOV_WORKING_SETS;
+       ws_ix++, cum += ws_cum_hotness_incr)
+    working_set_cum_values[ws_ix] = cum;
+  /* The last summary entry is reserved for (roughly) 99.9% of the
+     working set. Divide by 1024 so it becomes a shift, which gives
+     almost exactly 99.9%.  */
+  working_set_cum_values[NUM_GCOV_WORKING_SETS-1]
+      = summary->sum_all - summary->sum_all/1024;
+
+  /* Next, walk through the histogram in decending order of hotness
+     and compute the statistics for the working set summary array.
+     As histogram entries are accumulated, we check to see which
+     working set entries have had their expected cum_value reached
+     and fill them in, walking the working set entries in increasing
+     size of cum_value.  */
+  ws_ix = 0; /* The current entry into the working set array.  */
+  cum = 0; /* The current accumulated counter sum.  */
+  count = 0; /* The current accumulated count of block counters.  */
+  for (h_ix = GCOV_HISTOGRAM_SIZE - 1;
+       h_ix >= 0 && ws_ix < NUM_GCOV_WORKING_SETS; h_ix--)
+    {
+      histo_bucket = &summary->histogram[h_ix];
+
+      /* If we haven't reached the required cumulative counter value for
+         the current working set percentage, simply accumulate this histogram
+         entry into the running sums and continue to the next histogram
+         entry.  */
+      if (cum + histo_bucket->cum_value < working_set_cum_values[ws_ix])
+        {
+          cum += histo_bucket->cum_value;
+          count += histo_bucket->num_counters;
+          continue;
+        }
+
+      /* If adding the current histogram entry's cumulative counter value
+         causes us to exceed the current working set size, then estimate
+         how many of this histogram entry's counter values are required to
+         reach the working set size, and fill in working set entries
+         as we reach their expected cumulative value.  */
+      for (c_num = 0, tmp_cum = cum;
+           c_num < histo_bucket->num_counters && ws_ix < NUM_GCOV_WORKING_SETS;
+           c_num++)
+        {
+          count++;
+          /* If we haven't reached the last histogram entry counter, add
+             in the minimum value again. This will underestimate the
+             cumulative sum so far, because many of the counter values in this
+             entry may have been larger than the minimum. We could add in the
+             average value every time, but that would require an expensive
+             divide operation.  */
+          if (c_num + 1 < histo_bucket->num_counters)
+            tmp_cum += histo_bucket->min_value;
+          /* If we have reached the last histogram entry counter, then add
+             in the entire cumulative value.  */
+          else
+            tmp_cum = cum + histo_bucket->cum_value;
+
+	  /* Next walk through successive working set entries and fill in
+	     the statistics for any whose size we have reached by accumulating
+	     this histogram counter.  */
+	  while (ws_ix < NUM_GCOV_WORKING_SETS
+		 && tmp_cum >= working_set_cum_values[ws_ix])
+            {
+              gcov_working_sets[ws_ix].num_counters = count;
+              gcov_working_sets[ws_ix].min_counter
+                  = histo_bucket->min_value;
+              ws_ix++;
+            }
+        }
+      /* Finally, update the running cumulative value since we were
+         using a temporary above.  */
+      cum += histo_bucket->cum_value;
+    }
+  gcov_nonruntime_assert (ws_ix == NUM_GCOV_WORKING_SETS);
+}
+#endif /* IN_GCOV <= 0 && !IN_LIBGCOV */
