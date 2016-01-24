@@ -1,5 +1,5 @@
 /* Target definitions for GNU compiler for PowerPC running System V.4
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GCC.
@@ -462,7 +462,7 @@ do {									\
 do {									\
   if (DEFAULT_ABI == ABI_V4)						\
     asm_fprintf (FILE,							\
-		 "\tlwz %s,12(%s)\n\taddic %s,%s,16\n",	\
+		 "\tlwz %s,12(%s)\n\taddi %s,%s,16\n",	\
 		 reg_names[REGNO], reg_names[1], reg_names[1],		\
 		 reg_names[1]);						\
 } while (0)
@@ -580,7 +580,6 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 %{R*} \
 %(link_shlib) \
 %{!T*: %(link_start) } \
-%(link_target) \
 %(link_os)"
 
 /* Shared libraries are not default.  */
@@ -589,10 +588,6 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 %{static: } \
 %{shared:-G -dy -z text } \
 %{symbolic:-Bsymbolic -G -dy -z text }"
-
-/* Override the default target of the linker.  */
-#define	LINK_TARGET_SPEC \
-  ENDIAN_SELECT("", " --oformat elf32-powerpcle", "")
 
 /* Any specific OS flags.  */
 #define LINK_OS_SPEC "\
@@ -874,7 +869,6 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
   { "endfile_openbsd",		ENDFILE_OPENBSD_SPEC },			\
   { "endfile_default",		ENDFILE_DEFAULT_SPEC },			\
   { "link_shlib",		LINK_SHLIB_SPEC },			\
-  { "link_target",		LINK_TARGET_SPEC },			\
   { "link_start",		LINK_START_SPEC },			\
   { "link_start_ads",		LINK_START_ADS_SPEC },			\
   { "link_start_yellowknife",	LINK_START_YELLOWKNIFE_SPEC },		\
@@ -951,28 +945,3 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 /* This target uses the sysv4.opt file.  */
 #define TARGET_USES_SYSV4_OPT 1
 
-#undef DBX_REGISTER_NUMBER
-
-/* Link -lasan early on the command line.  For -static-libasan, don't link
-   it for -shared link, the executable should be compiled with -static-libasan
-   in that case, and for executable link link with --{,no-}whole-archive around
-   it to force everything into the executable.  And similarly for -ltsan.  */
-#if defined(HAVE_LD_STATIC_DYNAMIC)
-#undef LIBASAN_EARLY_SPEC
-#define LIBASAN_EARLY_SPEC "%{!shared:libasan_preinit%O%s} " \
-  "%{static-libasan:%{!shared:" \
-  LD_STATIC_OPTION " --whole-archive -lasan --no-whole-archive " \
-  LD_DYNAMIC_OPTION "}}%{!static-libasan:-lasan}"
-#undef LIBTSAN_EARLY_SPEC
-#define LIBTSAN_EARLY_SPEC "%{static-libtsan:%{!shared:" \
-  LD_STATIC_OPTION " --whole-archive -ltsan --no-whole-archive " \
-  LD_DYNAMIC_OPTION "}}%{!static-libtsan:-ltsan}"
-#endif
-
-/* Additional libraries needed by -static-libasan.  */
-#undef STATIC_LIBASAN_LIBS
-#define STATIC_LIBASAN_LIBS "-ldl -lpthread"
-
-/* Additional libraries needed by -static-libtsan.  */
-#undef STATIC_LIBTSAN_LIBS
-#define STATIC_LIBTSAN_LIBS "-ldl -lpthread"

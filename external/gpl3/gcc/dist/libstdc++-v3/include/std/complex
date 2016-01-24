@@ -1,6 +1,6 @@
 // The template and inlines for the -*- C++ -*- complex number classes.
 
-// Copyright (C) 1997-2013 Free Software Foundation, Inc.
+// Copyright (C) 1997-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -98,11 +98,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp> complex<_Tp> log(const complex<_Tp>&);
   /// Return complex base 10 logarithm of @a z.
   template<typename _Tp> complex<_Tp> log10(const complex<_Tp>&);
-#if __cplusplus < 201103L
-  // DR 844.
   /// Return @a x to the @a y'th power.
   template<typename _Tp> complex<_Tp> pow(const complex<_Tp>&, int);
-#endif
   /// Return @a x to the @a y'th power.
   template<typename _Tp> complex<_Tp> pow(const complex<_Tp>&, const _Tp&);
   /// Return @a x to the @a y'th power.
@@ -142,9 +139,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _GLIBCXX_CONSTEXPR complex(const _Tp& __r = _Tp(), const _Tp& __i = _Tp())
       : _M_real(__r), _M_imag(__i) { }
 
-      // Lets the compiler synthesize the copy constructor   
-      // complex (const complex<_Tp>&);
-      ///  Copy constructor.
+      // Let the compiler synthesize the copy constructor
+#if __cplusplus >= 201103L
+      constexpr complex(const complex&) = default;
+#endif
+
+      ///  Converting constructor.
       template<typename _Up>
         _GLIBCXX_CONSTEXPR complex(const complex<_Up>& __z)
 	: _M_real(__z.real()), _M_imag(__z.imag()) { }
@@ -154,11 +154,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // DR 387. std::complex over-encapsulated.
       _GLIBCXX_ABI_TAG_CXX11
       constexpr _Tp 
-      real() { return _M_real; }
+      real() const { return _M_real; }
 
       _GLIBCXX_ABI_TAG_CXX11
       constexpr _Tp 
-      imag() { return _M_imag; }
+      imag() const { return _M_imag; }
 #else
       ///  Return real part of complex number.
       _Tp& 
@@ -185,10 +185,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void 
       imag(_Tp __val) { _M_imag = __val; }
 
-      /// Assign this complex number to scalar @a t.
+      /// Assign a scalar to this complex number.
       complex<_Tp>& operator=(const _Tp&);
       
-      /// Add @a t to this complex number.
+      /// Add a scalar to this complex number.
       // 26.2.5/1
       complex<_Tp>&
       operator+=(const _Tp& __t)
@@ -197,7 +197,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return *this;
       }
 
-      /// Subtract @a t from this complex number.
+      /// Subtract a scalar from this complex number.
       // 26.2.5/3
       complex<_Tp>&
       operator-=(const _Tp& __t)
@@ -206,31 +206,33 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return *this;
       }
 
-      /// Multiply this complex number by @a t.
+      /// Multiply this complex number by a scalar.
       complex<_Tp>& operator*=(const _Tp&);
-      /// Divide this complex number by @a t.
+      /// Divide this complex number by a scalar.
       complex<_Tp>& operator/=(const _Tp&);
 
-      // Lets the compiler synthesize the
-      // copy and assignment operator
-      // complex<_Tp>& operator= (const complex<_Tp>&);
-      /// Assign this complex number to complex @a z.
+      // Let the compiler synthesize the copy assignment operator
+#if __cplusplus >= 201103L
+      complex& operator=(const complex&) = default;
+#endif
+
+      /// Assign another complex number to this one.
       template<typename _Up>
         complex<_Tp>& operator=(const complex<_Up>&);
-      /// Add @a z to this complex number.
+      /// Add another complex number to this one.
       template<typename _Up>
         complex<_Tp>& operator+=(const complex<_Up>&);
-      /// Subtract @a z from this complex number.
+      /// Subtract another complex number from this one.
       template<typename _Up>
         complex<_Tp>& operator-=(const complex<_Up>&);
-      /// Multiply this complex number by @a z.
+      /// Multiply this complex number by another.
       template<typename _Up>
         complex<_Tp>& operator*=(const complex<_Up>&);
-      /// Divide this complex number by @a z.
+      /// Divide this complex number by another.
       template<typename _Up>
         complex<_Tp>& operator/=(const complex<_Up>&);
 
-      _GLIBCXX_USE_CONSTEXPR complex __rep() const
+      _GLIBCXX_CONSTEXPR complex __rep() const
       { return *this; }
 
     private:
@@ -639,7 +641,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // 26.2.7/5: norm(__z) returns the squared magnitude of __z.
   //     As defined, norm() is -not- a norm is the common mathematical
-  //     sens used in numerics.  The helper class _Norm_helper<> tries to
+  //     sense used in numerics.  The helper class _Norm_helper<> tries to
   //     distinguish between builtin floating point and the rest, so as
   //     to deliver an answer as close as possible to the real value.
   template<bool>
@@ -749,7 +751,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp>
     inline complex<_Tp>
     __complex_exp(const complex<_Tp>& __z)
-    { return std::polar(exp(__z.real()), __z.imag()); }
+    { return std::polar<_Tp>(exp(__z.real()), __z.imag()); }
 
 #if _GLIBCXX_USE_C99_COMPLEX
   inline __complex__ float
@@ -966,7 +968,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // 26.2.8/9  pow(__x, __y): Returns the complex power base of __x
   //                          raised to the __y-th power.  The branch
   //                          cut is on the negative axis.
-#if __cplusplus < 201103L
   template<typename _Tp>
     complex<_Tp>
     __complex_pow_unsigned(complex<_Tp> __x, unsigned __n)
@@ -983,8 +984,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __y;
     }
 
-  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+  // In C++11 mode we used to implement the resolution of
   // DR 844. complex pow return type is ambiguous.
+  // thus the following overload was disabled in that mode.  However, doing
+  // that causes all sorts of issues, see, for example:
+  //   http://gcc.gnu.org/ml/libstdc++/2013-01/msg00058.html
+  // and also PR57974.
   template<typename _Tp>
     inline complex<_Tp>
     pow(const complex<_Tp>& __z, int __n)
@@ -993,7 +998,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	? complex<_Tp>(1) / std::__complex_pow_unsigned(__z, -(unsigned)__n)
         : std::__complex_pow_unsigned(__z, __n);
     }
-#endif
 
   template<typename _Tp>
     complex<_Tp>
@@ -1007,7 +1011,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         return pow(__x.real(), __y);
 
       complex<_Tp> __t = std::log(__x);
-      return std::polar(exp(__y * __t.real()), __y * __t.imag());
+      return std::polar<_Tp>(exp(__y * __t.real()), __y * __t.imag());
     }
 
   template<typename _Tp>
@@ -1044,8 +1048,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline complex<_Tp>
     pow(const _Tp& __x, const complex<_Tp>& __y)
     {
-      return __x > _Tp() ? std::polar(pow(__x, __y.real()),
-				      __y.imag() * log(__x))
+      return __x > _Tp() ? std::polar<_Tp>(pow(__x, __y.real()),
+					   __y.imag() * log(__x))
 	                 : std::pow(complex<_Tp>(__x), __y);
     }
 
@@ -1077,11 +1081,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // DR 387. std::complex over-encapsulated.
       __attribute ((__abi_tag__ ("cxx11")))
       constexpr float 
-      real() { return __real__ _M_value; }
+      real() const { return __real__ _M_value; }
 
       __attribute ((__abi_tag__ ("cxx11")))
       constexpr float 
-      imag() { return __imag__ _M_value; }
+      imag() const { return __imag__ _M_value; }
 #else
       float& 
       real() { return __real__ _M_value; }
@@ -1192,7 +1196,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  return *this;
 	}
 
-      _GLIBCXX_USE_CONSTEXPR _ComplexT __rep() const { return _M_value; }
+      _GLIBCXX_CONSTEXPR _ComplexT __rep() const { return _M_value; }
 
     private:
       _ComplexT _M_value;
@@ -1228,11 +1232,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // DR 387. std::complex over-encapsulated.
       __attribute ((__abi_tag__ ("cxx11")))
       constexpr double 
-      real() { return __real__ _M_value; }
+      real() const { return __real__ _M_value; }
 
       __attribute ((__abi_tag__ ("cxx11")))
       constexpr double 
-      imag() { return __imag__ _M_value; }
+      imag() const { return __imag__ _M_value; }
 #else
       double& 
       real() { return __real__ _M_value; }
@@ -1342,7 +1346,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  return *this;
 	}
 
-      _GLIBCXX_USE_CONSTEXPR _ComplexT __rep() const { return _M_value; }
+      _GLIBCXX_CONSTEXPR _ComplexT __rep() const { return _M_value; }
 
     private:
       _ComplexT _M_value;
@@ -1380,11 +1384,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // DR 387. std::complex over-encapsulated.
       __attribute ((__abi_tag__ ("cxx11")))
       constexpr long double 
-      real() { return __real__ _M_value; }
+      real() const { return __real__ _M_value; }
 
       __attribute ((__abi_tag__ ("cxx11")))
       constexpr long double 
-      imag() { return __imag__ _M_value; }
+      imag() const { return __imag__ _M_value; }
 #else
       long double& 
       real() { return __real__ _M_value; }
@@ -1494,7 +1498,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  return *this;
 	}
 
-      _GLIBCXX_USE_CONSTEXPR _ComplexT __rep() const { return _M_value; }
+      _GLIBCXX_CONSTEXPR _ComplexT __rep() const { return _M_value; }
 
     private:
       _ComplexT _M_value;
@@ -1935,6 +1939,42 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline typename __gnu_cxx::__promote<_Tp>::__type
     conj(_Tp __x)
     { return __x; }
+
+#if __cplusplus > 201103L
+
+inline namespace literals {
+inline namespace complex_literals {
+
+#define __cpp_lib_complex_udls 201309
+
+  constexpr std::complex<float>
+  operator""if(long double __num)
+  { return std::complex<float>{0.0F, static_cast<float>(__num)}; }
+
+  constexpr std::complex<float>
+  operator""if(unsigned long long __num)
+  { return std::complex<float>{0.0F, static_cast<float>(__num)}; }
+
+  constexpr std::complex<double>
+  operator""i(long double __num)
+  { return std::complex<double>{0.0, static_cast<double>(__num)}; }
+
+  constexpr std::complex<double>
+  operator""i(unsigned long long __num)
+  { return std::complex<double>{0.0, static_cast<double>(__num)}; }
+
+  constexpr std::complex<long double>
+  operator""il(long double __num)
+  { return std::complex<long double>{0.0L, __num}; }
+
+  constexpr std::complex<long double>
+  operator""il(unsigned long long __num)
+  { return std::complex<long double>{0.0L, static_cast<long double>(__num)}; }
+
+} // inline namespace complex_literals
+} // inline namespace literals
+
+#endif // C++14
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
