@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.38 2015/07/26 17:21:55 martin Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.39 2016/01/24 21:56:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.38 2015/07/26 17:21:55 martin Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.39 2016/01/24 21:56:43 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -143,8 +143,8 @@ __RCSID("$NetBSD: jemalloc.c,v 1.38 2015/07/26 17:21:55 martin Exp $");
 #ifdef __FreeBSD__
 #include <machine/atomic.h>
 #include <machine/cpufunc.h>
-#endif
 #include <machine/vmparam.h>
+#endif
 
 #include <errno.h>
 #include <limits.h>
