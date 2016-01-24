@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.709 2016/01/19 19:02:32 martin Exp $
+$NetBSD: usbdevs,v 1.710 2016/01/24 15:02:52 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2215,6 +2215,8 @@ product MICROSOFT XBOX_CONTROLLER_S12	0x0289	Xbox Controller S (1.2)
 product MICROSOFT XBOX_360_WIRELESS_RECEIVER 0x0291 Xbox 360 Wireless Receiver
 product MICROSOFT 24GHZ_XCVR10		0x071d  2.4GHz Transceiver V1.0
 product MICROSOFT 24GHZ_XCVR20		0x071f  2.4GHz Transceiver V2.0
+product	MICROSOFT CM6000		0x077d  Comfort Mouse 6000
+
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	USB-SCSI-DB25
