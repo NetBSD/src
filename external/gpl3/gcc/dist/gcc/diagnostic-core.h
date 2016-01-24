@@ -1,7 +1,7 @@
 /* Declarations of core diagnostic functionality for code that does
    not need to deal with diagnostic contexts or diagnostic info
    structures.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,7 +28,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Constants used to discriminate diagnostics.  */
 typedef enum
 {
-#define DEFINE_DIAGNOSTIC_KIND(K, msgid) K,
+#define DEFINE_DIAGNOSTIC_KIND(K, msgid, C) K,
 #include "diagnostic.def"
 #undef DEFINE_DIAGNOSTIC_KIND
   DK_LAST_DIAGNOSTIC_KIND,
@@ -56,15 +56,19 @@ extern const char *trim_filename (const char *);
 #endif
 extern void internal_error (const char *, ...) ATTRIBUTE_GCC_DIAG(1,2)
      ATTRIBUTE_NORETURN;
+extern void internal_error_no_backtrace (const char *, ...)
+     ATTRIBUTE_GCC_DIAG(1,2) ATTRIBUTE_NORETURN;
 /* Pass one of the OPT_W* from options.h as the first parameter.  */
 extern bool warning (int, const char *, ...) ATTRIBUTE_GCC_DIAG(2,3);
+extern bool warning_n (location_t, int, int, const char *, const char *, ...)
+    ATTRIBUTE_GCC_DIAG(4,6) ATTRIBUTE_GCC_DIAG(5,6);
 extern bool warning_at (location_t, int, const char *, ...)
     ATTRIBUTE_GCC_DIAG(3,4);
 extern void error (const char *, ...) ATTRIBUTE_GCC_DIAG(1,2);
 extern void error_n (location_t, int, const char *, const char *, ...)
     ATTRIBUTE_GCC_DIAG(3,5) ATTRIBUTE_GCC_DIAG(4,5);
 extern void error_at (location_t, const char *, ...) ATTRIBUTE_GCC_DIAG(2,3);
-extern void fatal_error (const char *, ...) ATTRIBUTE_GCC_DIAG(1,2)
+extern void fatal_error (location_t, const char *, ...) ATTRIBUTE_GCC_DIAG(2,3)
      ATTRIBUTE_NORETURN;
 /* Pass one of the OPT_W* from options.h as the second parameter.  */
 extern bool pedwarn (location_t, int, const char *, ...)

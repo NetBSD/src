@@ -1,5 +1,5 @@
 ;; MIPS Paired-Single Floating and MIPS-3D Instructions.
-;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -481,7 +481,7 @@
   operands[7] = simplify_gen_subreg (CCV2mode, operands[0], CCV4mode, 8);
 }
   [(set_attr "type" "fcmp")
-   (set_attr "length" "8")
+   (set_attr "insn_count" "2")
    (set_attr "mode" "FPSW")])
 
 (define_insn_and_split "mips_cabs_cond_4s"
@@ -510,7 +510,7 @@
   operands[7] = simplify_gen_subreg (CCV2mode, operands[0], CCV4mode, 8);
 }
   [(set_attr "type" "fcmp")
-   (set_attr "length" "8")
+   (set_attr "insn_count" "2")
    (set_attr "mode" "FPSW")])
 
 

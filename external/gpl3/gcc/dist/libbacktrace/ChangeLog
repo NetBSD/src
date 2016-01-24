@@ -1,26 +1,67 @@
-2015-06-23  Release Manager
+2015-12-04  Release Manager
 
-	* GCC 4.8.5 released.
+	* GCC 5.3.0 released.
 
-2015-01-26  Matthias Klose  <doko@ubuntu.com>
+2015-07-16  Release Manager
+
+	* GCC 5.2.0 released.
+
+2015-04-22  Release Manager
+
+	* GCC 5.1.0 released.
+
+2015-01-24  Matthias Klose  <doko@ubuntu.com>
 
 	* configure.ac: Move AM_ENABLE_MULTILIB before AC_PROG_CC.
 	* configure: Regenerate.
 
-2014-12-19  Release Manager
+2015-01-05  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 4.8.4 released.
+	Update copyright years.
 
-2014-05-22  Release Manager
+2014-11-21  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* GCC 4.8.3 released.
+	PR bootstrap/63784
+	* configure: Regenerated.
 
-2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+2014-11-11  David Malcolm  <dmalcolm@redhat.com>
 
-	Backport from mainline
-	2013-11-15  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+	* ChangeLog.jit: New.
 
+2014-11-11  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	PR target/63610
 	* configure: Regenerate.
+
+2014-10-23  Ian Lance Taylor  <iant@google.com>
+
+	* internal.h (backtrace_atomic_load_pointer) [no atomic or sync]:
+	Fix to return void *.
+
+2014-05-08  Ian Lance Taylor  <iant@google.com>
+
+	* mmap.c (backtrace_free): If freeing a large aligned block of
+	memory, call munmap rather than holding onto it.
+	(backtrace_vector_grow): When growing a vector, double the number
+	of pages requested.  When releasing the old version of a grown
+	vector, pass the correct size to backtrace_free.
+
+2014-03-07  Ian Lance Taylor  <iant@google.com>
+
+	* sort.c (backtrace_qsort): Use middle element as pivot.
+
+2014-03-06  Ian Lance Taylor  <iant@google.com>
+
+	* sort.c: New file.
+	* stest.c: New file.
+	* internal.h (backtrace_qsort): Declare.
+	* dwarf.c (read_abbrevs): Call backtrace_qsort instead of qsort.
+	(read_line_info, read_function_entry): Likewise.
+	(read_function_info, build_dwarf_data): Likewise.
+	* elf.c (elf_initialize_syminfo): Likewise.
+	* Makefile.am (libbacktrace_la_SOURCES): Add sort.c.
+	(stest_SOURCES, stest_LDADD): Define.
+	(check_PROGRAMS): Add stest.
 
 2014-02-07  Misty De Meo  <misty@brew.sh>
 
@@ -28,6 +69,23 @@
 	* configure.ac: Use AC_LINK_IFELSE in check for
 	_Unwind_GetIPInfo.
 	* configure: Regenerate.
+
+2014-01-02  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	Update copyright years
+
+2013-12-06  Jakub Jelinek  <jakub@redhat.com>
+
+	* elf.c (ET_DYN): Undefine and define again.
+	(elf_add): Add exe argument, if true and ehdr.e_type is ET_DYN,
+	return early -1 without closing the descriptor.
+	(struct phdr_data): Add exe_descriptor.
+	(phdr_callback): If pd->exe_descriptor is not -1, for very first
+	call if dlpi_name is NULL just call elf_add with the exe_descriptor,
+	otherwise backtrace_close the exe_descriptor if not -1.  Adjust
+	call to elf_add.
+	(backtrace_initialize): Adjust call to elf_add.  If it returns
+	-1, set pd.exe_descriptor to descriptor, otherwise set it to -1.
 
 2013-12-05  Ian Lance Taylor  <iant@google.com>
 
@@ -39,30 +97,99 @@
 	backtrace_vector_finish.
 	* internal.h (backtrace_vector_finish): Update declaration.
 
-2013-11-30  Ian Lance Taylor  <iant@google.com>
+2013-11-27  Ian Lance Taylor  <iant@google.com>
 
-	Backport from mainline:
-	2013-10-17  Ian Lance Taylor  <iant@google.com>
+	* dwarf.c (find_address_ranges): New static function, broken out
+	of build_address_map.
+	(build_address_map): Call it.
+	* btest.c (check): Check for missing filename or function, rather
+	than crashing.
+	(f3): Check that enough frames were returned.
+
+2013-11-19  Jakub Jelinek  <jakub@redhat.com>
+
+	* backtrace.h (backtrace_syminfo_callback): Add symsize argument.
+	* elf.c (elf_syminfo): Pass 0 or sym->size to the callback as
+	last argument.
+	* btest.c (struct symdata): Add size field.
+	(callback_three): Add symsize argument.  Copy it to the data->size
+	field.
+	(f23): Set symdata.size to 0.
+	(test5): Likewise.  If sizeof (int) > 1, lookup address of
+	((uintptr_t) &global) + 1.  Verify symdata.val and symdata.size
+	values.
+
+	* atomic.c: Include sys/types.h.
+
+2013-11-18  Ian Lance Taylor  <iant@google.com>
+
+	* configure.ac: Check for support of __atomic extensions.
+	* internal.h: Declare or #define atomic functions for use in
+	backtrace code.
+	* atomic.c: New file.
+	* dwarf.c (dwarf_lookup_pc): Use atomic functions.
+	(dwarf_fileline, backtrace_dwarf_add): Likewise.
+	* elf.c (elf_add_syminfo_data, elf_syminfo): Likewise.
+	(backtrace_initialize): Likewise.
+	* fileline.c (fileline_initialize): Likewise.
+	* Makefile.am (libbacktrace_la_SOURCES): Add atomic.c.
+	* configure, config.h.in, Makefile.in: Rebuild.
+
+2013-11-18  Jakub Jelinek  <jakub@redhat.com>
+
+	* elf.c (SHN_UNDEF): Define.
+	(elf_initialize_syminfo): Add base_address argument.  Ignore symbols
+	with st_shndx == SHN_UNDEF.  Add base_address to address fields.
+	(elf_add): Adjust caller.
+
+	* elf.c (phdr_callback): Process info->dlpi_addr == 0 normally.
+
+2013-11-16  Ian Lance Taylor  <iant@google.com>
+
+	* backtrace.h (backtrace_create_state): Correct comment about
+	threading.
+
+2013-11-15  Ian Lance Taylor  <iant@google.com>
+
+	* backtrace.h (backtrace_syminfo): Update comment and parameter
+	name to take any address, not just a PC value.
+	* elf.c (STT_OBJECT): Define.
+	(elf_nosyms): Rename parameter pc to addr.
+	(elf_symbol_search): Rename local variable pc to addr.
+	(elf_initialize_syminfo): Add STT_OBJECT symbols to elf_symbols.
+	(elf_syminfo): Rename parameter pc to addr.
+	* btest.c (global): New global variable.
+	(test5): New test.
+	(main): Call test5.
+
+2013-10-17  Ian Lance Taylor  <iant@google.com>
 
 	* elf.c (elf_add): Don't get the wrong offsets if a debug section
 	is missing.
 
-2013-10-16  Release Manager
+2013-10-15  David Malcolm  <dmalcolm@redhat.com>
 
-	* GCC 4.8.2 released.
+	* configure.ac: Add --enable-host-shared, setting up
+	pre-existing PIC_FLAG variable within Makefile.am et al.
+	* configure: Regenerate.
 
-2013-05-31  Release Manager
+2013-09-20  Alan Modra  <amodra@gmail.com>
 
-	* GCC 4.8.1 released.
+	* configure: Regenerate.
+
+2013-07-23  Alexander Monakov  <amonakov@ispras.ru>
+
+	* elf.c (elf_syminfo): Loop over the elf_syminfo_data chain.
+
+2013-07-23  Alexander Monakov  <amonakov@ispras.ru>
+
+	* elf.c (backtrace_initialize): Pass elf_fileline_fn to
+	dl_iterate_phdr callbacks.
 
 2013-03-25  Ian Lance Taylor  <iant@google.com>
 
 	* alloc.c: #include <sys/types.h>.
 	* mmap.c: Likewise.
-
-2013-03-22  Release Manager
-
-	* GCC 4.8.0 released.
 
 2013-01-31  Ian Lance Taylor  <iant@google.com>
 

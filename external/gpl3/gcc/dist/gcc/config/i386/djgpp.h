@@ -1,5 +1,5 @@
 /* Configuration for an i386 running MS-DOS with DJGPP.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -80,7 +80,8 @@ along with GCC; see the file COPYING3.  If not see
 #undef LINK_COMMAND_SPEC
 #define LINK_COMMAND_SPEC \
 "%{!fsyntax-only: \
-%{!c:%{!M:%{!MM:%{!E:%{!S:%(linker) %l %X %{o*} %{e*} %{N} %{n} \
+%{!c:%{!M:%{!MM:%{!E:%{!S:%(linker) %l " LINK_COMPRESS_DEBUG_SPEC \
+"%X %{o*} %{e*} %{N} %{n} \
 \t%{r} %{s} %{t} %{u*} %{z} %{Z}\
 \t%{!nostdlib:%{!nostartfiles:%S}}\
 \t%{static:} %{L*} %D %o\
@@ -117,6 +118,17 @@ along with GCC; see the file COPYING3.  If not see
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
   asm_output_aligned_bss ((FILE), (DECL), (NAME), (SIZE), (ALIGN))
 
+/* Write the extra assembler code needed to declare a function properly.  */
+
+#ifndef ASM_DECLARE_FUNCTION_NAME
+#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)		\
+  do								\
+    {								\
+      ASM_OUTPUT_FUNCTION_LABEL (FILE, NAME, DECL);		\
+    }								\
+  while (0)
+#endif
+
 /* This is how to tell assembler that a symbol is weak  */ 
 #undef ASM_WEAKEN_LABEL
 #define ASM_WEAKEN_LABEL(FILE,NAME) \
@@ -126,6 +138,9 @@ along with GCC; see the file COPYING3.  If not see
 /* djgpp automatically calls its own version of __main, so don't define one
    in libgcc, nor call one in main().  */
 #define HAS_INIT_SECTION
+
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function
 
 /* Definitions for types and sizes. Wide characters are 16-bits long so
    Win32 compiler add-ons will be wide character compatible.  */
@@ -162,3 +177,5 @@ while (0)
 /* Support for C++ templates.  */
 #undef MAKE_DECL_ONE_ONLY
 #define MAKE_DECL_ONE_ONLY(DECL) (DECL_WEAK (DECL) = 1)
+
+#define IX86_MAYBE_NO_LIBGCC_TFMODE

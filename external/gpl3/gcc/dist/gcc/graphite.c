@@ -1,5 +1,5 @@
 /* Gimple Represented as Polyhedra.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@inria.fr>.
 
 This file is part of GCC.
@@ -34,20 +34,45 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "config.h"
 
-#ifdef HAVE_cloog
+#ifdef HAVE_isl
+#include <isl/constraint.h>
 #include <isl/set.h>
 #include <isl/map.h>
 #include <isl/options.h>
 #include <isl/union_map.h>
-#include <cloog/cloog.h>
-#include <cloog/isl/domain.h>
-#include <cloog/isl/cloog.h>
 #endif
 
 #include "system.h"
 #include "coretypes.h"
 #include "diagnostic-core.h"
-#include "tree-flow.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "tree.h"
+#include "fold-const.h"
+#include "predict.h"
+#include "tm.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
+#include "gimple-iterator.h"
+#include "tree-cfg.h"
+#include "tree-ssa-loop.h"
 #include "tree-dump.h"
 #include "cfgloop.h"
 #include "tree-chrec.h"
@@ -55,15 +80,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-scalar-evolution.h"
 #include "sese.h"
 #include "dbgcnt.h"
+#include "tree-parloops.h"
+#include "tree-pass.h"
+#include "tree-cfgcleanup.h"
 
-#ifdef HAVE_cloog
+#ifdef HAVE_isl
 
 #include "graphite-poly.h"
 #include "graphite-scop-detection.h"
-#include "graphite-clast-to-gimple.h"
+#include "graphite-isl-ast-to-gimple.h"
 #include "graphite-sese-to-poly.h"
-
-CloogState *cloog_state;
 
 /* Print global statistics to FILE.  */
 
@@ -81,7 +107,7 @@ print_global_statistics (FILE* file)
 
   basic_block bb;
 
-  FOR_ALL_BB (bb)
+  FOR_ALL_BB_FN (bb, cfun)
     {
       gimple_stmt_iterator psi;
 
@@ -137,7 +163,7 @@ print_graphite_scop_statistics (FILE* file, scop_p scop)
 
   basic_block bb;
 
-  FOR_ALL_BB (bb)
+  FOR_ALL_BB_FN (bb, cfun)
     {
       gimple_stmt_iterator psi;
       loop_p loop = bb->loop_father;
@@ -197,10 +223,11 @@ print_graphite_statistics (FILE* file, vec<scop_p> scops)
 static bool
 graphite_initialize (isl_ctx *ctx)
 {
-  if (number_of_loops () <= 1
+  if (number_of_loops (cfun) <= 1
       /* FIXME: This limit on the number of basic blocks of a function
 	 should be removed when the SCOP detection is faster.  */
-      || n_basic_blocks > PARAM_VALUE (PARAM_GRAPHITE_MAX_BBS_PER_FUNCTION))
+      || (n_basic_blocks_for_fn (cfun) >
+	  PARAM_VALUE (PARAM_GRAPHITE_MAX_BBS_PER_FUNCTION)))
     {
       if (dump_file && (dump_flags & TDF_DETAILS))
 	print_global_statistics (dump_file);
@@ -212,8 +239,6 @@ graphite_initialize (isl_ctx *ctx)
   scev_reset ();
   recompute_all_dominators ();
   initialize_original_copy_tables ();
-
-  cloog_state = cloog_isl_state_malloc (ctx);
 
   if (dump_file && dump_flags)
     dump_function_to_file (current_function_decl, dump_file, dump_flags);
@@ -231,12 +256,11 @@ graphite_finalize (bool need_cfg_cleanup_p)
     {
       scev_reset ();
       cleanup_tree_cfg ();
-      profile_status = PROFILE_ABSENT;
+      profile_status_for_fn (cfun) = PROFILE_ABSENT;
       release_recorded_exits ();
       tree_estimate_probability ();
     }
 
-  cloog_state_free (cloog_state);
   free_original_copy_tables ();
 
   if (dump_file && dump_flags)
@@ -255,7 +279,6 @@ graphite_transform_loops (void)
   scop_p scop;
   bool need_cfg_cleanup_p = false;
   vec<scop_p> scops = vNULL;
-  htab_t bb_pbb_mapping;
   isl_ctx *ctx;
 
   /* If a function is parallel it was most probably already run through graphite
@@ -264,7 +287,7 @@ graphite_transform_loops (void)
     return;
 
   ctx = isl_ctx_alloc ();
-  isl_options_set_on_error(ctx, ISL_ON_ERROR_ABORT);
+  isl_options_set_on_error (ctx, ISL_ON_ERROR_ABORT);
   if (!graphite_initialize (ctx))
     return;
 
@@ -277,8 +300,6 @@ graphite_transform_loops (void)
       print_global_statistics (dump_file);
     }
 
-  bb_pbb_mapping = htab_create (10, bb_pbb_map_hash, eq_bb_pbb_map, free);
-
   FOR_EACH_VEC_ELT (scops, i, scop)
     if (dbg_cnt (graphite_scop))
       {
@@ -287,23 +308,125 @@ graphite_transform_loops (void)
 
 	if (POLY_SCOP_P (scop)
 	    && apply_poly_transforms (scop)
-	    && gloog (scop, bb_pbb_mapping))
+	    && graphite_regenerate_ast_isl (scop))
 	  need_cfg_cleanup_p = true;
+
       }
 
-  htab_delete (bb_pbb_mapping);
   free_scops (scops);
   graphite_finalize (need_cfg_cleanup_p);
   the_isl_ctx = NULL;
   isl_ctx_free (ctx);
 }
 
-#else /* If Cloog is not available: #ifndef HAVE_cloog.  */
+#else /* If ISL is not available: #ifndef HAVE_isl.  */
 
-void
+static void
 graphite_transform_loops (void)
 {
-  sorry ("Graphite loop optimizations cannot be used");
+  sorry ("Graphite loop optimizations cannot be used (ISL is not available).");
 }
 
 #endif
+
+
+static unsigned int
+graphite_transforms (struct function *fun)
+{
+  if (number_of_loops (fun) <= 1)
+    return 0;
+
+  graphite_transform_loops ();
+
+  return 0;
+}
+
+static bool
+gate_graphite_transforms (void)
+{
+  /* Enable -fgraphite pass if any one of the graphite optimization flags
+     is turned on.  */
+  if (flag_loop_block
+      || flag_loop_interchange
+      || flag_loop_strip_mine
+      || flag_graphite_identity
+      || flag_loop_parallelize_all
+      || flag_loop_optimize_isl
+      || flag_loop_unroll_jam)
+    flag_graphite = 1;
+
+  return flag_graphite != 0;
+}
+
+namespace {
+
+const pass_data pass_data_graphite =
+{
+  GIMPLE_PASS, /* type */
+  "graphite0", /* name */
+  OPTGROUP_LOOP, /* optinfo_flags */
+  TV_GRAPHITE, /* tv_id */
+  ( PROP_cfg | PROP_ssa ), /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_graphite : public gimple_opt_pass
+{
+public:
+  pass_graphite (gcc::context *ctxt)
+    : gimple_opt_pass (pass_data_graphite, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return gate_graphite_transforms (); }
+
+}; // class pass_graphite
+
+} // anon namespace
+
+gimple_opt_pass *
+make_pass_graphite (gcc::context *ctxt)
+{
+  return new pass_graphite (ctxt);
+}
+
+namespace {
+
+const pass_data pass_data_graphite_transforms =
+{
+  GIMPLE_PASS, /* type */
+  "graphite", /* name */
+  OPTGROUP_LOOP, /* optinfo_flags */
+  TV_GRAPHITE_TRANSFORMS, /* tv_id */
+  ( PROP_cfg | PROP_ssa ), /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_graphite_transforms : public gimple_opt_pass
+{
+public:
+  pass_graphite_transforms (gcc::context *ctxt)
+    : gimple_opt_pass (pass_data_graphite_transforms, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return gate_graphite_transforms (); }
+  virtual unsigned int execute (function *fun) { return graphite_transforms (fun); }
+
+}; // class pass_graphite_transforms
+
+} // anon namespace
+
+gimple_opt_pass *
+make_pass_graphite_transforms (gcc::context *ctxt)
+{
+  return new pass_graphite_transforms (ctxt);
+}
+
+

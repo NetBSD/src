@@ -1,5 +1,5 @@
-/* Definitions for simple data type for positive real numbers.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+/* Definitions for simple data type for real numbers.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,44 +21,244 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_SREAL_H
 
 /* SREAL_PART_BITS has to be an even number.  */
-#if (HOST_BITS_PER_WIDE_INT / 2) % 2 == 1
-#define SREAL_PART_BITS (HOST_BITS_PER_WIDE_INT / 2 - 1)
-#else
-#define SREAL_PART_BITS (HOST_BITS_PER_WIDE_INT / 2)
-#endif
+#define SREAL_PART_BITS 32
 
-#define uhwi unsigned HOST_WIDE_INT
-#define MAX_HOST_WIDE_INT (((uhwi) 1 << (HOST_BITS_PER_WIDE_INT - 1)) - 1)
+#define UINT64_BITS	64
 
-#define SREAL_MIN_SIG ((uhwi) 1 << (SREAL_PART_BITS - 1))
-#define SREAL_MAX_SIG (((uhwi) 1 << SREAL_PART_BITS) - 1)
+#define SREAL_MIN_SIG ((int64_t) 1 << (SREAL_PART_BITS - 2))
+#define SREAL_MAX_SIG (((int64_t) 1 << (SREAL_PART_BITS - 1)) - 1)
 #define SREAL_MAX_EXP (INT_MAX / 4)
 
-#if SREAL_PART_BITS < 32
-#define SREAL_BITS (SREAL_PART_BITS * 2)
-#else
 #define SREAL_BITS SREAL_PART_BITS
-#endif
 
 /* Structure for holding a simple real number.  */
-typedef struct sreal
+class sreal
 {
-#if SREAL_PART_BITS < 32
-  unsigned HOST_WIDE_INT sig_lo;	/* Significant (lower part).  */
-  unsigned HOST_WIDE_INT sig_hi;	/* Significant (higher part).  */
-#else
-  unsigned HOST_WIDE_INT sig;		/* Significant.  */
-#endif
-  signed int exp;			/* Exponent.  */
-} sreal;
+public:
+  /* Construct an uninitialized sreal.  */
+  sreal () : m_sig (-1), m_exp (-1) {}
 
-extern void dump_sreal (FILE *, sreal *);
-extern sreal *sreal_init (sreal *, unsigned HOST_WIDE_INT, signed int);
-extern HOST_WIDE_INT sreal_to_int (sreal *);
-extern int sreal_compare (sreal *, sreal *);
-extern sreal *sreal_add (sreal *, sreal *, sreal *);
-extern sreal *sreal_sub (sreal *, sreal *, sreal *);
-extern sreal *sreal_mul (sreal *, sreal *, sreal *);
-extern sreal *sreal_div (sreal *, sreal *, sreal *);
+  /* Construct a sreal.  */
+  sreal (int64_t sig, int exp = 0) : m_sig (sig), m_exp (exp)
+  {
+    normalize ();
+  }
+
+  void dump (FILE *) const;
+  int64_t to_int () const;
+  double to_double () const;
+  sreal operator+ (const sreal &other) const;
+  sreal operator- (const sreal &other) const;
+  sreal operator* (const sreal &other) const;
+  sreal operator/ (const sreal &other) const;
+
+  bool operator< (const sreal &other) const
+  {
+    if (m_exp == other.m_exp)
+      return m_sig < other.m_sig;
+    else
+    {
+      bool negative = m_sig < 0;
+      bool other_negative = other.m_sig < 0;
+
+      if (negative != other_negative)
+        return negative > other_negative;
+
+      bool r = m_exp < other.m_exp;
+      return negative ? !r : r;
+    }
+  }
+
+  bool operator== (const sreal &other) const
+  {
+    return m_exp == other.m_exp && m_sig == other.m_sig;
+  }
+
+  sreal operator- () const
+  {
+    sreal tmp = *this;
+    tmp.m_sig *= -1;
+
+    return tmp;
+  }
+
+  sreal shift (int s) const
+  {
+    /* Zero needs no shifting.  */
+    if (!m_sig)
+      return *this;
+    gcc_checking_assert (s <= SREAL_MAX_EXP);
+    gcc_checking_assert (s >= -SREAL_MAX_EXP);
+
+    /* Overflows/drop to 0 could be handled gracefully, but hopefully we do not
+       need to do so.  */
+    gcc_checking_assert (m_exp + s <= SREAL_MAX_EXP);
+    gcc_checking_assert (m_exp + s >= -SREAL_MAX_EXP);
+
+    sreal tmp = *this;
+    tmp.m_exp += s;
+
+    return tmp;
+  }
+
+  /* Global minimum sreal can hold.  */
+  inline static sreal min ()
+  {
+    static sreal min = sreal (-SREAL_MAX_SIG, SREAL_MAX_EXP);
+    return min;
+  }
+
+  /* Global minimum sreal can hold.  */
+  inline static sreal max ()
+  {
+    static sreal max = sreal (SREAL_MAX_SIG, SREAL_MAX_EXP);
+    return max;
+  }
+
+private:
+  inline void normalize ();
+  inline void normalize_up ();
+  inline void normalize_down ();
+  void shift_right (int amount);
+  static sreal signedless_plus (const sreal &a, const sreal &b, bool negative);
+  static sreal signedless_minus (const sreal &a, const sreal &b, bool negative);
+
+  int64_t m_sig;			/* Significant.  */
+  signed int m_exp;			/* Exponent.  */
+};
+
+extern void debug (const sreal &ref);
+extern void debug (const sreal *ptr);
+
+inline sreal &operator+= (sreal &a, const sreal &b)
+{
+  return a = a + b;
+}
+
+inline sreal &operator-= (sreal &a, const sreal &b)
+{
+  return a = a - b;
+}
+
+inline sreal &operator/= (sreal &a, const sreal &b)
+{
+  return a = a / b;
+}
+
+inline sreal &operator*= (sreal &a, const sreal &b)
+{
+  return a = a  * b;
+}
+
+inline bool operator!= (const sreal &a, const sreal &b)
+{
+  return !(a == b);
+}
+
+inline bool operator> (const sreal &a, const sreal &b)
+{
+  return !(a == b || a < b);
+}
+
+inline bool operator<= (const sreal &a, const sreal &b)
+{
+  return a < b || a == b;
+}
+
+inline bool operator>= (const sreal &a, const sreal &b)
+{
+  return a == b || a > b;
+}
+
+inline sreal operator<< (const sreal &a, int exp)
+{
+  return a.shift (exp);
+}
+
+inline sreal operator>> (const sreal &a, int exp)
+{
+  return a.shift (-exp);
+}
+
+/* Make significant to be >= SREAL_MIN_SIG.
+
+   Make this separate method so inliner can handle hot path better.  */
+
+inline void
+sreal::normalize_up ()
+{
+  int64_t s = m_sig < 0 ? -1 : 1;
+  unsigned HOST_WIDE_INT sig = absu_hwi (m_sig);
+  int shift = SREAL_PART_BITS - 2 - floor_log2 (sig);
+
+  gcc_checking_assert (shift > 0);
+  sig <<= shift;
+  m_exp -= shift;
+  gcc_checking_assert (sig <= SREAL_MAX_SIG && sig >= SREAL_MIN_SIG);
+
+  /* Check underflow.  */
+  if (m_exp < -SREAL_MAX_EXP)
+    {
+      m_exp = -SREAL_MAX_EXP;
+      sig = 0;
+    }
+  if (s == -1)
+    m_sig = -sig;
+  else
+    m_sig = sig;
+}
+
+/* Make significant to be <= SREAL_MAX_SIG.
+
+   Make this separate method so inliner can handle hot path better.  */
+
+inline void
+sreal::normalize_down ()
+{
+  int64_t s = m_sig < 0 ? -1 : 1;
+  int last_bit;
+  unsigned HOST_WIDE_INT sig = absu_hwi (m_sig);
+  int shift = floor_log2 (sig) - SREAL_PART_BITS + 2;
+
+  gcc_checking_assert (shift > 0);
+  last_bit = (sig >> (shift-1)) & 1;
+  sig >>= shift;
+  m_exp += shift;
+  gcc_checking_assert (sig <= SREAL_MAX_SIG && sig >= SREAL_MIN_SIG);
+
+  /* Round the number.  */
+  sig += last_bit;
+  if (sig > SREAL_MAX_SIG)
+    {
+      sig >>= 1;
+      m_exp++;
+    }
+
+  /* Check overflow.  */
+  if (m_exp > SREAL_MAX_EXP)
+    {
+      m_exp = SREAL_MAX_EXP;
+      sig = SREAL_MAX_SIG;
+    }
+  if (s == -1)
+    m_sig = -sig;
+  else
+    m_sig = sig;
+}
+
+/* Normalize *this; the hot path.  */
+
+inline void
+sreal::normalize ()
+{
+  unsigned HOST_WIDE_INT sig = absu_hwi (m_sig);
+
+  if (sig == 0)
+    m_exp = -SREAL_MAX_EXP;
+  else if (sig > SREAL_MAX_SIG)
+    normalize_down ();
+  else if (sig < SREAL_MIN_SIG)
+    normalize_up ();
+}
 
 #endif

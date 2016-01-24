@@ -1,5 +1,5 @@
 /* intl.h - internationalization
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    GCC is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,12 +38,12 @@ extern size_t gcc_gettext_width (const char *);
 # define bindtextdomain(domain, directory) (domain)
 # undef gettext
 # define gettext(msgid) (msgid)
-# define ngettext(singular,plural,n) fake_ngettext(singular,plural,n)
+# define ngettext(singular,plural,n) fake_ngettext (singular, plural, n)
 # define gcc_init_libintl()	/* nothing */
-# define gcc_gettext_width(s) strlen(s)
+# define gcc_gettext_width(s) strlen (s)
 
-extern const char *fake_ngettext(const char *singular,const char *plural,
-                                 unsigned long int n);
+extern const char *fake_ngettext (const char *singular, const char *plural,
+				  unsigned long int n);
 
 #endif
 

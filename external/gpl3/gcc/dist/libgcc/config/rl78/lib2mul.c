@@ -1,5 +1,5 @@
 /* libgcc routines for RL78
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -29,13 +29,6 @@ typedef unsigned int  uint08_type   __attribute__ ((mode (QI)));
 
 #define C3B(a,b,c) a##b##c
 #define C3(a,b,c) C3B(a,b,c)
-
-
-#define UINT_TYPE	uint16_type
-#define BITS_MINUS_1	15
-#define NAME_MODE	hi
-
-/*#include "rl78-mul.h"*/
 
 #undef UINT_TYPE
 #undef BITS_MINUS_1

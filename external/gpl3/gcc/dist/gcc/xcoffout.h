@@ -1,6 +1,6 @@
 /* XCOFF definitions.  These are needed in dbxout.c, final.c,
    and xcoffout.h.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifndef GCC_XCOFFOUT_H
+#define GCC_XCOFFOUT_H
 
 /* Tags and typedefs are C_DECL in XCOFF, not C_LSYM.  */
 
@@ -159,8 +161,11 @@ do {							\
 /* Do not emit any marker for XCOFF until assembler allows XFT_CV.  */
 #define NO_DBX_GCC_MARKER
 
-/* Do not break .stabs pseudos into continuations.  */
-#define DBX_CONTIN_LENGTH 0
+/* XCOFF32 maximum length is 64K; XLC limits to 16K.  */
+#define DBX_CONTIN_LENGTH 16384
+
+/* XLC uses '?' as continuation character.  */
+#define DBX_CONTIN_CHAR '?'
 
 /* Don't try to use the `x' type-cross-reference character in DBX data.
    Also has the consequence of putting each struct, union or enum
@@ -184,3 +189,5 @@ extern void xcoffout_end_block (unsigned, unsigned);
 extern int xcoff_assign_fundamental_type_number (tree);
 extern void xcoffout_declare_function (FILE *, tree, const char *);
 extern void xcoffout_source_line (unsigned int, const char *, int, bool);
+
+#endif /* GCC_XCOFFOUT_H */

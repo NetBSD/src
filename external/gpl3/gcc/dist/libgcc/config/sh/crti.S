@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file was adapted from glibc sources.
 
 This file is part of GCC.
@@ -22,6 +22,7 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
+#include "crt.h"
 
 /* The code in sections .init and .fini is supposed to be a single
    regular function.  The function in .init is called directly from
@@ -44,8 +45,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #else
 	.p2align 1
 #endif
-	.global	 _init
-_init:
+	.global	 GLOBAL(_init)
+GLOBAL(_init):
 #if __SHMEDIA__
 	addi	r15, -16, r15
 	st.q	r15, 8, r14
@@ -89,8 +90,8 @@ _init:
 #else
 	.p2align 1
 #endif
-	.global  _fini
-_fini:	
+	.global  GLOBAL(_fini)
+GLOBAL(_fini):	
 #if __SHMEDIA__
 	addi	r15, -16, r15
 	st.q	r15, 8, r14

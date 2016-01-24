@@ -1,6 +1,6 @@
 ## Makefile for the C++11 sources of the GNU C++ Standard library.
 ##
-## Copyright (C) 1997-2013 Free Software Foundation, Inc.
+## Copyright (C) 1997-2015 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -22,13 +22,45 @@
 
 include $(top_srcdir)/fragment.am
 
-SUBDIRS = c++98 c++11
+if ENABLE_FILESYSTEM_TS
+filesystem_dir = filesystem
+else
+filesystem_dir =
+endif
+
+SUBDIRS = c++98 c++11 $(filesystem_dir)
 
 # Cross compiler support.
+if VTV_CYGMIN
+toolexeclib_LTLIBRARIES = libvtv.la libstdc++.la
+else
 toolexeclib_LTLIBRARIES = libstdc++.la
+endif
+
+if VTV_CYGMIN
+vtv_stubs.cc:
+	rm -f $@
+	$(LN_S) $(toplevel_srcdir)/libstdc++-v3/libsupc++/vtv_stubs.cc $@
+
+libvtv_la_SOURCES = vtv_stubs.cc
+libvtv_la_LDFLAGS = $(lt_host_flags)
+
+libvtv_la_AM_CXXFLAGS = \
+	$(glibcxx_compiler_pic_flag) \
+	$(XTEMPLATE_FLAGS) \
+	-Wl,-u_vtable_map_vars_start,-u_vtable_map_vars_end \
+	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS) $(CONFIG_CXXFLAGS)
+
+libvtv_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(libvtv_la_AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libvtv_la_LDFLAGS) $(LDFLAGS) -o $@
+endif
 
 vpath % $(top_srcdir)/src/c++98
 vpath % $(top_srcdir)/src/c++11
+if ENABLE_FILESYSTEM_TS
+vpath % $(top_srcdir)/src/filesystem
+endif
 
 if GLIBCXX_LDBL_COMPAT
 ldbl_compat_sources = compatibility-ldbl.cc
@@ -51,7 +83,8 @@ cxx11_sources = \
 	compatibility-c++0x.cc \
 	compatibility-atomic-c++0x.cc \
 	compatibility-thread-c++0x.cc \
-	compatibility-chrono.cc
+	compatibility-chrono.cc \
+	compatibility-condvar.cc
 
 libstdc___la_SOURCES = $(cxx98_sources) $(cxx11_sources)
 
@@ -71,7 +104,6 @@ libstdc___la_LDFLAGS = \
 	-version-info $(libtool_VERSION) ${version_arg} -lm
 
 libstdc___la_LINK = $(CXXLINK) $(libstdc___la_LDFLAGS)
-
 
 # Use special rules for compatibility-ldbl.cc compilation, as we need to
 # pass -mlong-double-64.
@@ -103,6 +135,11 @@ compatibility-chrono.lo: compatibility-chrono.cc
 compatibility-chrono.o: compatibility-chrono.cc
 	$(CXXCOMPILE) -std=gnu++11 -c $<
 
+compatibility-condvar.lo: compatibility-condvar.cc
+	$(LTCXXCOMPILE) -std=gnu++11 -c $<
+compatibility-condvar.o: compatibility-condvar.cc
+	$(CXXCOMPILE) -std=gnu++11 -c $<
+
 # A note on compatibility and static libraries.
 # 
 # static lib == linked against only this version, should not need compat
@@ -132,7 +169,7 @@ compatibility-chrono.o: compatibility-chrono.cc
 # as the occasion calls for it.
 AM_CXXFLAGS = \
 	$(glibcxx_compiler_pic_flag) \
-	$(XTEMPLATE_FLAGS) \
+	$(XTEMPLATE_FLAGS) $(VTV_CXXFLAGS) \
 	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS) $(CONFIG_CXXFLAGS)
 
 # Libtool notes
@@ -179,8 +216,8 @@ CXXLINK = \
 	$(LIBTOOL) --tag CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXX) \
+	$(VTV_CXXLINKFLAGS) \
 	$(OPT_LDFLAGS) $(SECTION_LDFLAGS) $(AM_CXXFLAGS) $(LTLDFLAGS) -o $@
-
 
 # Symbol versioning for shared libraries.
 if ENABLE_SYMVERS

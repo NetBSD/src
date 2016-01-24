@@ -1,5 +1,5 @@
 (* Auto-generate ARM ldm/stm patterns
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by CodeSourcery.
 
    This file is part of GCC.
@@ -149,12 +149,15 @@ let can_thumb addrmode update is_store =
   | IA, true, true -> true
   | _ -> false
 
+exception InvalidAddrMode of string;;
+
 let target addrmode thumb =
   match addrmode, thumb with
     IA, true -> "TARGET_THUMB1"
   | IA, false -> "TARGET_32BIT"
   | DB, false -> "TARGET_32BIT"
   | _, false -> "TARGET_ARM"
+  | _, _ -> raise (InvalidAddrMode "ERROR: Invalid Addressing mode for Thumb1.")
 
 let write_pattern_1 name ls addrmode nregs write_set_fn update thumb =
   let astr = string_of_addrmode addrmode in
@@ -184,8 +187,10 @@ let write_pattern_1 name ls addrmode nregs write_set_fn update thumb =
   done;
   Printf.printf "}\"\n";
   Printf.printf "  [(set_attr \"type\" \"%s%d\")" ls nregs;
-  begin if not thumb then
+  if not thumb then begin
     Printf.printf "\n   (set_attr \"predicable\" \"yes\")";
+    if addrmode == IA || addrmode == DB then
+      Printf.printf "\n   (set_attr \"predicable_short_it\" \"no\")";
   end;
   Printf.printf "])\n\n"
 
@@ -317,7 +322,7 @@ let _ =
 "/* ARM ldm/stm instruction patterns.  This file was automatically generated";
 "   using arm-ldmstm.ml.  Please do not edit manually.";
 "";
-"   Copyright (C) 2010-2013 Free Software Foundation, Inc.";
+"   Copyright (C) 2010-2015 Free Software Foundation, Inc.";
 "   Contributed by CodeSourcery.";
 "";
 "   This file is part of GCC.";

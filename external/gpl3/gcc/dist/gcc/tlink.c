@@ -1,7 +1,7 @@
 /* Scan linker error messages for missing template instantiations and provide
    them.
 
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Contributed by Jason Merrill (jason@cygnus.com).
 
 This file is part of GCC.
@@ -29,6 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "hashtab.h"
 #include "demangle.h"
 #include "collect2.h"
+#include "collect-utils.h"
 #include "filenames.h"
 #include "diagnostic-core.h"
 #include "vec.h"
@@ -104,8 +105,6 @@ static void symbol_push (symbol *);
 static symbol * symbol_pop (void);
 static void file_push (file *);
 static file * file_pop (void);
-static void tlink_init (void);
-static int tlink_execute (const char *, char **, const char *, const char *);
 static char * frob_extension (const char *, const char *);
 static char * obstack_fgets (FILE *, struct obstack *);
 static char * tfgets (FILE *);
@@ -275,7 +274,7 @@ tlink_init (void)
   else
     {
       tlink_verbose = 1;
-      if (vflag)
+      if (verbose)
 	tlink_verbose = 2;
       if (debug)
 	tlink_verbose = 3;
@@ -286,11 +285,12 @@ tlink_init (void)
 
 static int
 tlink_execute (const char *prog, char **argv, const char *outname,
-	       const char *errname)
+	       const char *errname, bool use_atfile)
 {
   struct pex_obj *pex;
 
-  pex = collect_execute (prog, argv, outname, errname, PEX_LAST | PEX_SEARCH);
+  pex = collect_execute (prog, argv, outname, errname,
+			 PEX_LAST | PEX_SEARCH, use_atfile);
   return collect_wait (prog, pex);
 }
 
@@ -486,9 +486,9 @@ recompile_files (void)
 	 the new file name already exists.  Therefore, we explicitly
 	 remove the old file first.  */
       if (remove (f->key) == -1)
-	fatal_error ("removing .rpo file: %m");
+	fatal_error (input_location, "removing .rpo file: %m");
       if (rename (outname, f->key) == -1)
-	fatal_error ("renaming .rpo file: %m");
+	fatal_error (input_location, "renaming .rpo file: %m");
 
       if (!f->args)
 	{
@@ -545,7 +545,7 @@ recompile_files (void)
 	fprintf (stderr, _("collect: recompiling %s\n"), f->main);
 
       if (chdir (f->dir) != 0
-	  || tlink_execute (c_file_name, argv, NULL, NULL) != 0
+	  || tlink_execute (c_file_name, argv, NULL, NULL, false) != 0
 	  || chdir (initial_cwd) != 0)
 	return 0;
 
@@ -768,7 +768,7 @@ scan_linker_output (const char *fname)
 	     constructor or destructor, there can be several mangled names
 	     that match it, so choose or unchoose all of them.  If some are
 	     chosen and some not, leave the later ones that don't match
-	     alone for now; either this will cause the link to suceed, or
+	     alone for now; either this will cause the link to succeed, or
 	     on the next attempt we will switch all of them the other way
 	     and that will cause it to succeed.  */
 	  int chosen = 0;
@@ -817,7 +817,8 @@ scan_linker_output (const char *fname)
 void
 do_tlink (char **ld_argv, char **object_lst ATTRIBUTE_UNUSED)
 {
-  int ret = tlink_execute ("ld", ld_argv, ldout, lderrout);
+  int ret = tlink_execute ("ld", ld_argv, ldout, lderrout,
+			   HAVE_GNU_LD && at_file_supplied);
 
   tlink_init ();
 
@@ -843,7 +844,8 @@ do_tlink (char **ld_argv, char **object_lst ATTRIBUTE_UNUSED)
 	      break;
 	    if (tlink_verbose)
 	      fprintf (stderr, _("collect: relinking\n"));
-	    ret = tlink_execute ("ld", ld_argv, ldout, lderrout);
+	    ret = tlink_execute ("ld", ld_argv, ldout, lderrout,
+				 HAVE_GNU_LD && at_file_supplied);
 	  }
     }
 

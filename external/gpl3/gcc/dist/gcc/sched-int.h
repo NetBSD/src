@@ -1,6 +1,6 @@
 /* Instruction scheduling pass.  This file contains definitions used
    internally in the scheduler.
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,12 +21,11 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_SCHED_INT_H
 #define GCC_SCHED_INT_H
 
+#include "insn-attr.h"
+
 #ifdef INSN_SCHEDULING
 
-/* For state_t.  */
-#include "insn-attr.h"
 #include "df.h"
-#include "basic-block.h"
 
 /* Identificator of a scheduler pass.  */
 enum sched_pass_id_t { SCHED_PASS_UNKNOWN, SCHED_RGN_PASS, SCHED_EBB_PASS,
@@ -41,13 +40,13 @@ enum sched_pressure_algorithm
 };
 
 typedef vec<basic_block> bb_vec_t;
-typedef vec<rtx> insn_vec_t;
-typedef vec<rtx> rtx_vec_t;
+typedef vec<rtx_insn *> insn_vec_t;
+typedef vec<rtx_insn *> rtx_vec_t;
 
 extern void sched_init_bbs (void);
 
 extern void sched_extend_luids (void);
-extern void sched_init_insn_luid (rtx);
+extern void sched_init_insn_luid (rtx_insn *);
 extern void sched_init_luids (bb_vec_t);
 extern void sched_finish_luids (void);
 
@@ -70,7 +69,7 @@ struct common_sched_info_def
   /* Called to notify frontend, that new basic block is being added.
      The first parameter - new basic block.
      The second parameter - block, after which new basic block is being added,
-     or EXIT_BLOCK_PTR, if recovery block is being added,
+     or the exit block, if recovery block is being added,
      or NULL, if standalone block is being added.  */
   void (*add_block) (basic_block, basic_block);
 
@@ -125,16 +124,16 @@ extern int insn_luid (rtx);
 /* This list holds ripped off notes from the current block.  These notes will
    be attached to the beginning of the block when its scheduling is
    finished.  */
-extern rtx note_list;
+extern rtx_insn *note_list;
 
-extern void remove_notes (rtx, rtx);
-extern rtx restore_other_notes (rtx, basic_block);
+extern void remove_notes (rtx_insn *, rtx_insn *);
+extern rtx_insn *restore_other_notes (rtx_insn *, basic_block);
 extern void sched_insns_init (rtx);
 extern void sched_insns_finish (void);
 
 extern void *xrecalloc (void *, size_t, size_t, size_t);
 
-extern void reemit_notes (rtx);
+extern void reemit_notes (rtx_insn *);
 
 /* Functions in haifa-sched.c.  */
 extern int haifa_classify_insn (const_rtx);
@@ -163,14 +162,14 @@ extern bool sel_insn_is_speculation_check (rtx);
    N_DEBUG determines how many debug insns are on the ready list.  */
 struct ready_list
 {
-  rtx *vec;
+  rtx_insn **vec;
   int veclen;
   int first;
   int n_ready;
   int n_debug;
 };
 
-extern char *ready_try;
+extern signed char *ready_try;
 extern struct ready_list ready;
 
 extern int max_issue (struct ready_list *, int, state_t, bool, int *);
@@ -193,10 +192,11 @@ extern void sched_create_recovery_edges (basic_block, basic_block,
 extern state_t curr_state;
 
 /* Type to represent status of a dependence.  */
-typedef int ds_t;
+typedef unsigned int ds_t;
+#define BITS_PER_DEP_STATUS HOST_BITS_PER_INT
 
 /* Type to represent weakness of speculative dependence.  */
-typedef int dw_t;
+typedef unsigned int dw_t;
 
 extern enum reg_note ds_to_dk (ds_t);
 extern ds_t dk_to_ds (enum reg_note);
@@ -210,17 +210,17 @@ struct dep_replacement
   rtx *loc;
   rtx orig;
   rtx newval;
-  rtx insn;
+  rtx_insn *insn;
 };
 
 /* Information about the dependency.  */
 struct _dep
 {
   /* Producer.  */
-  rtx pro;
+  rtx_insn *pro;
 
   /* Consumer.  */
-  rtx con;
+  rtx_insn *con;
 
   /* If nonnull, holds a pointer to information about how to break the
      dependency by making a replacement in one of the insns.  There is
@@ -260,8 +260,8 @@ typedef dep_def *dep_t;
 
 /* Functions to work with dep.  */
 
-extern void init_dep_1 (dep_t, rtx, rtx, enum reg_note, ds_t);
-extern void init_dep (dep_t, rtx, rtx, enum reg_note);
+extern void init_dep_1 (dep_t, rtx_insn *, rtx_insn *, enum reg_note, ds_t);
+extern void init_dep (dep_t, rtx_insn *, rtx_insn *, enum reg_note);
 
 extern void sd_debug_dep (dep_t);
 
@@ -448,11 +448,11 @@ enum post_call_group
 /* Insns which affect pseudo-registers.  */
 struct deps_reg
 {
-  rtx uses;
-  rtx sets;
-  rtx implicit_sets;
-  rtx control_uses;
-  rtx clobbers;
+  rtx_insn_list *uses;
+  rtx_insn_list *sets;
+  rtx_insn_list *implicit_sets;
+  rtx_insn_list *control_uses;
+  rtx_insn_list *clobbers;
   int uses_length;
   int clobbers_length;
 };
@@ -470,19 +470,19 @@ struct deps_desc
      to a list more than once.  */
 
   /* An INSN_LIST containing all insns with pending read operations.  */
-  rtx pending_read_insns;
+  rtx_insn_list *pending_read_insns;
 
   /* An EXPR_LIST containing all MEM rtx's which are pending reads.  */
-  rtx pending_read_mems;
+  rtx_expr_list *pending_read_mems;
 
   /* An INSN_LIST containing all insns with pending write operations.  */
-  rtx pending_write_insns;
+  rtx_insn_list *pending_write_insns;
 
   /* An EXPR_LIST containing all MEM rtx's which are pending writes.  */
-  rtx pending_write_mems;
+  rtx_expr_list *pending_write_mems;
 
   /* An INSN_LIST containing all jump insns.  */
-  rtx pending_jump_insns;
+  rtx_insn_list *pending_jump_insns;
 
   /* We must prevent the above lists from ever growing too large since
      the number of dependencies produced is at least O(N*N),
@@ -509,34 +509,37 @@ struct deps_desc
      alias analysis, this restriction can be relaxed.
      This may also be an INSN that writes memory if the pending lists grow
      too large.  */
-  rtx last_pending_memory_flush;
+  rtx_insn_list *last_pending_memory_flush;
 
   /* A list of the last function calls we have seen.  We use a list to
      represent last function calls from multiple predecessor blocks.
      Used to prevent register lifetimes from expanding unnecessarily.  */
-  rtx last_function_call;
+  rtx_insn_list *last_function_call;
 
   /* A list of the last function calls that may not return normally
      we have seen.  We use a list to represent last function calls from
      multiple predecessor blocks.  Used to prevent moving trapping insns
      across such calls.  */
-  rtx last_function_call_may_noreturn;
+  rtx_insn_list *last_function_call_may_noreturn;
 
   /* A list of insns which use a pseudo register that does not already
      cross a call.  We create dependencies between each of those insn
      and the next call insn, to ensure that they won't cross a call after
      scheduling is done.  */
-  rtx sched_before_next_call;
+  rtx_insn_list *sched_before_next_call;
 
   /* Similarly, a list of insns which should not cross a branch.  */
-  rtx sched_before_next_jump;
+  rtx_insn_list *sched_before_next_jump;
 
   /* Used to keep post-call pseudo/hard reg movements together with
      the call.  */
   enum post_call_group in_post_call_group_p;
 
   /* The last debug insn we've seen.  */
-  rtx last_debug_insn;
+  rtx_insn *last_debug_insn;
+
+  /* The last insn bearing REG_ARGS_SIZE that we've seen.  */
+  rtx_insn *last_args_size;
 
   /* The maximum register number for the following arrays.  Before reload
      this is max_reg_num; after reload it is FIRST_PSEUDO_REGISTER.  */
@@ -574,7 +577,7 @@ struct haifa_sched_info
   void (*init_ready_list) (void);
   /* Called after taking an insn from the ready list.  Returns nonzero if
      this insn can be scheduled, nonzero if we should silently discard it.  */
-  int (*can_schedule_ready_p) (rtx);
+  int (*can_schedule_ready_p) (rtx_insn *);
   /* Return nonzero if there are more insns that should be scheduled.  */
   int (*schedule_more_p) (void);
   /* Called after an insn has all its hard dependencies resolved.
@@ -582,30 +585,30 @@ struct haifa_sched_info
      to indicate if instruction should be moved to the ready list or the
      queue, or if it should silently discard it (until next resolved
      dependence).  */
-  ds_t (*new_ready) (rtx, ds_t);
+  ds_t (*new_ready) (rtx_insn *, ds_t);
   /* Compare priority of two insns.  Return a positive number if the second
      insn is to be preferred for scheduling, and a negative one if the first
      is to be preferred.  Zero if they are equally good.  */
-  int (*rank) (rtx, rtx);
+  int (*rank) (rtx_insn *, rtx_insn *);
   /* Return a string that contains the insn uid and optionally anything else
      necessary to identify this insn in an output.  It's valid to use a
      static buffer for this.  The ALIGNED parameter should cause the string
      to be formatted so that multiple output lines will line up nicely.  */
-  const char *(*print_insn) (const_rtx, int);
+  const char *(*print_insn) (const rtx_insn *, int);
   /* Return nonzero if an insn should be included in priority
      calculations.  */
-  int (*contributes_to_priority) (rtx, rtx);
+  int (*contributes_to_priority) (rtx_insn *, rtx_insn *);
 
   /* Return true if scheduling insn (passed as the parameter) will trigger
      finish of scheduling current block.  */
-  bool (*insn_finishes_block_p) (rtx);
+  bool (*insn_finishes_block_p) (rtx_insn *);
 
   /* The boundaries of the set of insns to be scheduled.  */
-  rtx prev_head, next_tail;
+  rtx_insn *prev_head, *next_tail;
 
   /* Filled in after the schedule is finished; the first and last scheduled
      insns.  */
-  rtx head, tail;
+  rtx_insn *head, *tail;
 
   /* If nonzero, enables an additional sanity check in schedule_block.  */
   unsigned int queue_must_finish_empty:1;
@@ -617,23 +620,23 @@ struct haifa_sched_info
 
   /* Called to notify frontend that instruction is being added (second
      parameter == 0) or removed (second parameter == 1).  */
-  void (*add_remove_insn) (rtx, int);
+  void (*add_remove_insn) (rtx_insn *, int);
 
   /* Called to notify the frontend that instruction INSN is being
      scheduled.  */
-  void (*begin_schedule_ready) (rtx insn);
+  void (*begin_schedule_ready) (rtx_insn *insn);
 
   /* Called to notify the frontend that an instruction INSN is about to be
      moved to its correct place in the final schedule.  This is done for all
      insns in order of the schedule.  LAST indicates the last scheduled
      instruction.  */
-  void (*begin_move_insn) (rtx insn, rtx last);
+  void (*begin_move_insn) (rtx_insn *insn, rtx_insn *last);
 
   /* If the second parameter is not NULL, return nonnull value, if the
      basic block should be advanced.
      If the second parameter is NULL, return the next basic block in EBB.
      The first parameter is the current basic block in EBB.  */
-  basic_block (*advance_target_bb) (basic_block, rtx);
+  basic_block (*advance_target_bb) (basic_block, rtx_insn *);
 
   /* Allocate memory, store the frontend scheduler state in it, and
      return it.  */
@@ -733,7 +736,7 @@ struct _haifa_deps_insn_data
 
   /* For a conditional insn, a list of insns that could set the condition
      register.  Used when generating control dependencies.  */
-  rtx cond_deps;
+  rtx_insn_list *cond_deps;
 
   /* True if the condition in 'cond' should be reversed to get the actual
      condition.  */
@@ -743,6 +746,7 @@ struct _haifa_deps_insn_data
   unsigned int cant_move : 1;
 };
 
+
 /* Bits used for storing values of the fields in the following
    structure.  */
 #define INCREASE_BITS 8
@@ -769,7 +773,7 @@ struct reg_use_data
   /* Regno used in the insn.  */
   int regno;
   /* Insn using the regno.  */
-  rtx insn;
+  rtx_insn *insn;
   /* Cyclic list of elements with the same regno.  */
   struct reg_use_data *next_regno_use;
   /* List of elements with the same insn.  */
@@ -789,6 +793,32 @@ struct reg_set_data
   struct reg_set_data *next_insn_set;
 };
 
+enum autopref_multipass_data_status {
+  /* Entry is irrelevant for auto-prefetcher.  */
+  AUTOPREF_MULTIPASS_DATA_IRRELEVANT = -2,
+  /* Entry is uninitialized.  */
+  AUTOPREF_MULTIPASS_DATA_UNINITIALIZED = -1,
+  /* Entry is relevant for auto-prefetcher and insn can be delayed
+     to allow another insn through.  */
+  AUTOPREF_MULTIPASS_DATA_NORMAL = 0,
+  /* Entry is relevant for auto-prefetcher, but insn should not be
+     delayed as that will break scheduling.  */
+  AUTOPREF_MULTIPASS_DATA_DONT_DELAY = 1
+};
+
+/* Data for modeling cache auto-prefetcher.  */
+struct autopref_multipass_data_
+{
+  /* Base part of memory address.  */
+  rtx base;
+  /* Memory offset.  */
+  int offset;
+  /* Entry status.  */
+  enum autopref_multipass_data_status status;
+};
+typedef struct autopref_multipass_data_ autopref_multipass_data_def;
+typedef autopref_multipass_data_def *autopref_multipass_data_t;
+
 struct _haifa_insn_data
 {
   /* We can't place 'struct _deps_list' into h_i_d instead of deps_list_t
@@ -800,6 +830,9 @@ struct _haifa_insn_data
 
   /* A priority for each insn.  */
   int priority;
+
+  /* The fusion priority for each insn.  */
+  int fusion_priority;
 
   /* The minimum clock tick at which the insn becomes ready.  This is
      used to note timing constraints for the insns in the pending list.  */
@@ -883,6 +916,16 @@ struct _haifa_insn_data
      pressure excess (between source and target).  */
   int reg_pressure_excess_cost_change;
   int model_index;
+
+  /* Original order of insns in the ready list.  */
+  int rfs_debug_orig_order;
+
+  /* The deciding reason for INSN's place in the ready list.  */
+  int last_rfs_win;
+
+  /* Two entries for cache auto-prefetcher model: one for mem reads,
+     and one for mem writes.  */
+  autopref_multipass_data_def autopref_multipass_data[2];
 };
 
 typedef struct _haifa_insn_data haifa_insn_data_def;
@@ -896,6 +939,7 @@ extern vec<haifa_insn_data_def> h_i_d;
 /* Accessor macros for h_i_d.  There are more in haifa-sched.c and
    sched-rgn.c.  */
 #define INSN_PRIORITY(INSN) (HID (INSN)->priority)
+#define INSN_FUSION_PRIORITY(INSN) (HID (INSN)->fusion_priority)
 #define INSN_REG_PRESSURE(INSN) (HID (INSN)->reg_pressure)
 #define INSN_MAX_REG_PRESSURE(INSN) (HID (INSN)->max_reg_pressure)
 #define INSN_REG_USE_LIST(INSN) (HID (INSN)->reg_use_list)
@@ -904,6 +948,8 @@ extern vec<haifa_insn_data_def> h_i_d;
   (HID (INSN)->reg_pressure_excess_cost_change)
 #define INSN_PRIORITY_STATUS(INSN) (HID (INSN)->priority_status)
 #define INSN_MODEL_INDEX(INSN) (HID (INSN)->model_index)
+#define INSN_AUTOPREF_MULTIPASS_DATA(INSN) \
+  (HID (INSN)->autopref_multipass_data)
 
 typedef struct _haifa_deps_insn_data haifa_deps_insn_data_def;
 typedef haifa_deps_insn_data_def *haifa_deps_insn_data_t;
@@ -943,42 +989,63 @@ extern vec<haifa_deps_insn_data_def> h_d_i_d;
 /* INSN is a speculation check that will simply reexecute the speculatively
    scheduled instruction if the speculation fails.  */
 #define IS_SPECULATION_SIMPLE_CHECK_P(INSN) \
-  (RECOVERY_BLOCK (INSN) == EXIT_BLOCK_PTR)
+  (RECOVERY_BLOCK (INSN) == EXIT_BLOCK_PTR_FOR_FN (cfun))
 
 /* INSN is a speculation check that will branch to RECOVERY_BLOCK if the
    speculation fails.  Insns in that block will reexecute the speculatively
    scheduled code and then will return immediately after INSN thus preserving
    semantics of the program.  */
 #define IS_SPECULATION_BRANCHY_CHECK_P(INSN) \
-  (RECOVERY_BLOCK (INSN) != NULL && RECOVERY_BLOCK (INSN) != EXIT_BLOCK_PTR)
+  (RECOVERY_BLOCK (INSN) != NULL             \
+   && RECOVERY_BLOCK (INSN) != EXIT_BLOCK_PTR_FOR_FN (cfun))
 
-/* Dep status (aka ds_t) of the link encapsulates information, that is needed
-   for speculative scheduling.  Namely, it is 4 integers in the range
-   [0, MAX_DEP_WEAK] and 3 bits.
-   The integers correspond to the probability of the dependence to *not*
-   exist, it is the probability, that overcoming of this dependence will
-   not be followed by execution of the recovery code.  Nevertheless,
-   whatever high the probability of success is, recovery code should still
-   be generated to preserve semantics of the program.  To find a way to
-   get/set these integers, please refer to the {get, set}_dep_weak ()
-   functions in sched-deps.c .
-   The 3 bits in the DEP_STATUS correspond to 3 dependence types: true-,
-   output- and anti- dependence.  It is not enough for speculative scheduling
-   to know just the major type of all the dependence between two instructions,
-   as only true dependence can be overcome.
-   There also is the 4-th bit in the DEP_STATUS (HARD_DEP), that is reserved
-   for using to describe instruction's status.  It is set whenever instruction
-   has at least one dependence, that cannot be overcame.
+
+/* Dep status (aka ds_t) of the link encapsulates all information for a given
+   dependency, including everything that is needed for speculative scheduling.
+
+   The lay-out of a ds_t is as follows:
+
+   1. Integers corresponding to the probability of the dependence to *not*
+      exist.  This is the probability that overcoming this dependence will
+      not be followed by execution of the recovery code.  Note that however
+      high this probability is, the recovery code should still always be
+      generated to preserve semantics of the program.
+
+      The probability values can be set or retrieved using the functions
+      the set_dep_weak() and get_dep_weak() in sched-deps.c.  The values
+      are always in the range [0, MAX_DEP_WEAK].
+
+	BEGIN_DATA	: BITS_PER_DEP_WEAK
+	BE_IN_DATA	: BITS_PER_DEP_WEAK
+	BEGIN_CONTROL	: BITS_PER_DEP_WEAK
+	BE_IN_CONTROL	: BITS_PER_DEP_WEAK
+
+      The basic type of DS_T is a host int.  For a 32-bits int, the values
+      will each take 6 bits.
+
+   2. The type of dependence.  This supercedes the old-style REG_NOTE_KIND
+      values.  TODO: Use this field instead of DEP_TYPE, or make DEP_TYPE
+      extract the dependence type from here.
+
+	dep_type	:  4 => DEP_{TRUE|OUTPUT|ANTI|CONTROL}
+
+   3. Various flags:
+
+	HARD_DEP	:  1 =>	Set if an instruction has a non-speculative
+				dependence.  This is an instruction property
+				so this bit can only appear in the TODO_SPEC
+				field of an instruction.
+	DEP_POSTPONED	:  1 =>	Like HARD_DEP, but the hard dependence may
+				still be broken by adjusting the instruction.
+	DEP_CANCELLED	:  1 =>	Set if a dependency has been broken using
+				some form of speculation.
+	RESERVED	:  1 => Reserved for use in the delay slot scheduler.
+
    See also: check_dep_status () in sched-deps.c .  */
 
-/* We exclude sign bit.  */
-#define BITS_PER_DEP_STATUS (HOST_BITS_PER_INT - 1)
-
-/* First '6' stands for 4 dep type bits and the HARD_DEP and DEP_CANCELLED
-   bits.
-   Second '4' stands for BEGIN_{DATA, CONTROL}, BE_IN_{DATA, CONTROL}
-   dep weakness.  */
-#define BITS_PER_DEP_WEAK ((BITS_PER_DEP_STATUS - 6) / 4)
+/* The number of bits per weakness probability.  There are 4 weakness types
+   and we need 8 bits for other data in a DS_T.  */
+#define BITS_PER_DEP_WEAK ((BITS_PER_DEP_STATUS - 8) / 4)
 
 /* Mask of speculative weakness in dep_status.  */
 #define DEP_WEAK_MASK ((1 << BITS_PER_DEP_WEAK) - 1)
@@ -996,7 +1063,9 @@ extern vec<haifa_deps_insn_data_def> h_d_i_d;
 #define MIN_DEP_WEAK 1
 
 /* This constant represents 100% probability.
-   E.g. it is used to represent weakness of dependence, that doesn't exist.  */
+   E.g. it is used to represent weakness of dependence, that doesn't exist.
+   This value never appears in a ds_t, it is only used for computing the
+   weakness of a dependence.  */
 #define NO_DEP_WEAK (MAX_DEP_WEAK + MIN_DEP_WEAK)
 
 /* Default weakness of speculative dependence.  Used when we can't say
@@ -1011,8 +1080,10 @@ enum SPEC_TYPES_OFFSETS {
   BE_IN_CONTROL_BITS_OFFSET = BEGIN_CONTROL_BITS_OFFSET + BITS_PER_DEP_WEAK
 };
 
-/* The following defines provide numerous constants used to distinguish between
-   different types of speculative dependencies.  */
+/* The following defines provide numerous constants used to distinguish
+   between different types of speculative dependencies.  They are also
+   used as masks to clear/preserve the bits corresponding to the type
+   of dependency weakness.  */
 
 /* Dependence can be overcome with generation of new data speculative
    instruction.  */
@@ -1058,15 +1129,24 @@ enum SPEC_TYPES_OFFSETS {
 
 /* Instruction has non-speculative dependence.  This bit represents the
    property of an instruction - not the one of a dependence.
-   Therefore, it can appear only in TODO_SPEC field of an instruction.  */
+   Therefore, it can appear only in the TODO_SPEC field of an instruction.  */
 #define HARD_DEP (DEP_CONTROL << 1)
 
-/* Set in the TODO_SPEC field of an instruction for which new_ready
-   has decided not to schedule it speculatively.  */
+/* Like HARD_DEP, but dependencies can perhaps be broken by modifying
+   the instructions.  This is used for example to change:
+
+   rn++		=>	rm=[rn + 4]
+   rm=[rn]		rn++
+
+   For instructions that have this bit set, one of the dependencies of
+   the instructions will have a non-NULL REPLACE field in its DEP_T.
+   Just like HARD_DEP, this bit is only ever set in TODO_SPEC.  */
 #define DEP_POSTPONED (HARD_DEP << 1)
 
+/* Set if a dependency is cancelled via speculation.  */
 #define DEP_CANCELLED (DEP_POSTPONED << 1)
 
+
 /* This represents the results of calling sched-deps.c functions,
    which modify dependencies.  */
 enum DEPS_ADJUST_RESULT {
@@ -1102,9 +1182,7 @@ enum SCHED_FLAGS {
 
 enum SPEC_SCHED_FLAGS {
   COUNT_SPEC_IN_CRITICAL_PATH = 1,
-  PREFER_NON_DATA_SPEC = COUNT_SPEC_IN_CRITICAL_PATH << 1,
-  PREFER_NON_CONTROL_SPEC = PREFER_NON_DATA_SPEC << 1,
-  SEL_SCHED_SPEC_DONT_CHECK_CONTROL = PREFER_NON_CONTROL_SPEC << 1
+  SEL_SCHED_SPEC_DONT_CHECK_CONTROL = COUNT_SPEC_IN_CRITICAL_PATH << 1
 };
 
 #define NOTE_NOT_BB_P(NOTE) (NOTE_P (NOTE) && (NOTE_KIND (NOTE)	\
@@ -1202,7 +1280,7 @@ struct sched_deps_info_def
   void (*compute_jump_reg_dependencies) (rtx, regset);
 
   /* Start analyzing insn.  */
-  void (*start_insn) (rtx);
+  void (*start_insn) (rtx_insn *);
 
   /* Finish analyzing insn.  */
   void (*finish_insn) (void);
@@ -1230,10 +1308,10 @@ struct sched_deps_info_def
 
   /* Note memory dependence of type DS between MEM1 and MEM2 (which is
      in the INSN2).  */
-  void (*note_mem_dep) (rtx mem1, rtx mem2, rtx insn2, ds_t ds);
+  void (*note_mem_dep) (rtx mem1, rtx mem2, rtx_insn *insn2, ds_t ds);
 
   /* Note a dependence of type DS from the INSN.  */
-  void (*note_dep) (rtx insn, ds_t ds);
+  void (*note_dep) (rtx_insn *, ds_t ds);
 
   /* Nonzero if we should use cselib for better alias analysis.  This
      must be 0 if the dependency information is used after sched_analyze
@@ -1254,21 +1332,21 @@ extern struct sched_deps_info_def *sched_deps_info;
 
 
 /* Functions in sched-deps.c.  */
-extern rtx sched_get_reverse_condition_uncached (const_rtx);
-extern bool sched_insns_conditions_mutex_p (const_rtx, const_rtx);
-extern bool sched_insn_is_legitimate_for_speculation_p (const_rtx, ds_t);
-extern void add_dependence (rtx, rtx, enum reg_note);
-extern void sched_analyze (struct deps_desc *, rtx, rtx);
+extern rtx sched_get_reverse_condition_uncached (const rtx_insn *);
+extern bool sched_insns_conditions_mutex_p (const rtx_insn *,
+					    const rtx_insn *);
+extern bool sched_insn_is_legitimate_for_speculation_p (const rtx_insn *, ds_t);
+extern void add_dependence (rtx_insn *, rtx_insn *, enum reg_note);
+extern void sched_analyze (struct deps_desc *, rtx_insn *, rtx_insn *);
 extern void init_deps (struct deps_desc *, bool);
 extern void init_deps_reg_last (struct deps_desc *);
 extern void free_deps (struct deps_desc *);
 extern void init_deps_global (void);
 extern void finish_deps_global (void);
-extern void deps_analyze_insn (struct deps_desc *, rtx);
-extern void remove_from_deps (struct deps_desc *, rtx);
+extern void deps_analyze_insn (struct deps_desc *, rtx_insn *);
+extern void remove_from_deps (struct deps_desc *, rtx_insn *);
 extern void init_insn_reg_pressure_info (rtx);
 
-extern dw_t get_dep_weak_1 (ds_t, ds_t);
 extern dw_t get_dep_weak (ds_t, ds_t);
 extern ds_t set_dep_weak (ds_t, ds_t, dw_t);
 extern dw_t estimate_dep_weak (rtx, rtx);
@@ -1288,54 +1366,59 @@ extern void haifa_note_reg_use (int);
 
 extern void maybe_extend_reg_info_p (void);
 
-extern void deps_start_bb (struct deps_desc *, rtx);
+extern void deps_start_bb (struct deps_desc *, rtx_insn *);
 extern enum reg_note ds_to_dt (ds_t);
 
 extern bool deps_pools_are_empty_p (void);
-extern void sched_free_deps (rtx, rtx, bool);
+extern void sched_free_deps (rtx_insn *, rtx_insn *, bool);
 extern void extend_dependency_caches (int, bool);
 
 extern void debug_ds (ds_t);
 
 
 /* Functions in haifa-sched.c.  */
+extern void initialize_live_range_shrinkage (void);
+extern void finish_live_range_shrinkage (void);
 extern void sched_init_region_reg_pressure_info (void);
+extern void free_global_sched_pressure_data (void);
 extern int haifa_classify_insn (const_rtx);
-extern void get_ebb_head_tail (basic_block, basic_block, rtx *, rtx *);
-extern int no_real_insns_p (const_rtx, const_rtx);
+extern void get_ebb_head_tail (basic_block, basic_block,
+			       rtx_insn **, rtx_insn **);
+extern int no_real_insns_p (const rtx_insn *, const rtx_insn *);
 
-extern int insn_cost (rtx);
+extern int insn_cost (rtx_insn *);
 extern int dep_cost_1 (dep_t, dw_t);
 extern int dep_cost (dep_t);
-extern int set_priorities (rtx, rtx);
+extern int set_priorities (rtx_insn *, rtx_insn *);
 
-extern void sched_setup_bb_reg_pressure_info (basic_block, rtx);
+extern void sched_setup_bb_reg_pressure_info (basic_block, rtx_insn *);
 extern bool schedule_block (basic_block *, state_t);
 
 extern int cycle_issued_insns;
 extern int issue_rate;
 extern int dfa_lookahead;
 
-extern void ready_sort (struct ready_list *);
-extern rtx ready_element (struct ready_list *, int);
-extern rtx *ready_lastpos (struct ready_list *);
+extern int autopref_multipass_dfa_lookahead_guard (rtx_insn *, int);
 
-extern int try_ready (rtx);
+extern rtx_insn *ready_element (struct ready_list *, int);
+extern rtx_insn **ready_lastpos (struct ready_list *);
+
+extern int try_ready (rtx_insn *);
 extern void sched_extend_ready_list (int);
 extern void sched_finish_ready_list (void);
 extern void sched_change_pattern (rtx, rtx);
-extern int sched_speculate_insn (rtx, ds_t, rtx *);
+extern int sched_speculate_insn (rtx_insn *, ds_t, rtx *);
 extern void unlink_bb_notes (basic_block, basic_block);
 extern void add_block (basic_block, basic_block);
-extern rtx bb_note (basic_block);
-extern void concat_note_lists (rtx, rtx *);
-extern rtx sched_emit_insn (rtx);
-extern rtx get_ready_element (int);
+extern rtx_note *bb_note (basic_block);
+extern void concat_note_lists (rtx_insn *, rtx_insn **);
+extern rtx_insn *sched_emit_insn (rtx);
+extern rtx_insn *get_ready_element (int);
 extern int number_in_ready (void);
 
 /* Types and functions in sched-ebb.c.  */
 
-extern basic_block schedule_ebb (rtx, rtx, bool);
+extern basic_block schedule_ebb (rtx_insn *, rtx_insn *, bool);
 extern void schedule_ebbs_init (void);
 extern void schedule_ebbs_finish (void);
 
@@ -1344,7 +1427,7 @@ extern void schedule_ebbs_finish (void);
 /* A region is the main entity for interblock scheduling: insns
    are allowed to move between blocks in the same region, along
    control flow graph edges, in the 'up' direction.  */
-typedef struct
+struct region
 {
   /* Number of extended basic blocks in region.  */
   int rgn_nr_blocks;
@@ -1355,8 +1438,7 @@ typedef struct
   unsigned int dont_calc_deps : 1;
   /* This region has at least one non-trivial ebb.  */
   unsigned int has_real_ebb : 1;
-}
-region;
+};
 
 extern int nr_regions;
 extern region *rgn_table;
@@ -1379,8 +1461,9 @@ extern int *containing_rgn;
 /* The mapping from ebb to block.  */
 extern int *ebb_head;
 #define BB_TO_BLOCK(ebb) (rgn_bb_table[ebb_head[ebb]])
-#define EBB_FIRST_BB(ebb) BASIC_BLOCK (BB_TO_BLOCK (ebb))
-#define EBB_LAST_BB(ebb) BASIC_BLOCK (rgn_bb_table[ebb_head[ebb + 1] - 1])
+#define EBB_FIRST_BB(ebb) BASIC_BLOCK_FOR_FN (cfun, BB_TO_BLOCK (ebb))
+#define EBB_LAST_BB(ebb) \
+  BASIC_BLOCK_FOR_FN (cfun, rgn_bb_table[ebb_head[ebb + 1] - 1])
 #define INSN_BB(INSN) (BLOCK_TO_BB (BLOCK_NUM (INSN)))
 
 extern int current_nr_blocks;
@@ -1389,11 +1472,11 @@ extern int target_bb;
 extern bool sched_no_dce;
 
 extern void set_modulo_params (int, int, int, int);
-extern void record_delay_slot_pair (rtx, rtx, int, int);
-extern rtx real_insn_for_shadow (rtx);
+extern void record_delay_slot_pair (rtx_insn *, rtx_insn *, int, int);
+extern rtx_insn *real_insn_for_shadow (rtx_insn *);
 extern void discard_delay_pairs_above (int);
 extern void free_delay_pairs (void);
-extern void add_delay_dependencies (rtx);
+extern void add_delay_dependencies (rtx_insn *);
 extern bool sched_is_disabled_for_current_region_p (void);
 extern void sched_rgn_init (bool);
 extern void sched_rgn_finish (void);
@@ -1406,11 +1489,11 @@ extern void extend_regions (void);
 extern void rgn_make_new_region_out_of_new_block (basic_block);
 
 extern void compute_priorities (void);
-extern void increase_insn_priority (rtx, int);
+extern void increase_insn_priority (rtx_insn *, int);
 extern void debug_rgn_dependencies (int);
-extern void debug_dependencies (rtx, rtx);
+extern void debug_dependencies (rtx_insn *, rtx_insn *);
 extern void free_rgn_deps (void);
-extern int contributes_to_priority (rtx, rtx);
+extern int contributes_to_priority (rtx_insn *, rtx_insn *);
 extern void extend_rgns (int *, int *, sbitmap, int *);
 extern void deps_join (struct deps_desc *, struct deps_desc *);
 
@@ -1425,7 +1508,7 @@ extern void dump_region_dot_file (const char *, int);
 extern void haifa_sched_init (void);
 extern void haifa_sched_finish (void);
 
-extern void find_modifiable_mems (rtx, rtx);
+extern void find_modifiable_mems (rtx_insn *, rtx_insn *);
 
 /* sched-deps.c interface to walk, add, search, update, resolve, delete
    and debug instruction dependencies.  */
@@ -1511,34 +1594,37 @@ sd_iterator_start (rtx insn, sd_list_types_def types)
 static inline bool
 sd_iterator_cond (sd_iterator_def *it_ptr, dep_t *dep_ptr)
 {
-  dep_link_t link = *it_ptr->linkp;
-
-  if (link != NULL)
+  while (true)
     {
-      *dep_ptr = DEP_LINK_DEP (link);
-      return true;
-    }
-  else
-    {
-      sd_list_types_def types = it_ptr->types;
+      dep_link_t link = *it_ptr->linkp;
 
-      if (types != SD_LIST_NONE)
-	/* Switch to next list.  */
+      if (link != NULL)
 	{
-	  deps_list_t list;
-
-	  sd_next_list (it_ptr->insn,
-			&it_ptr->types, &list, &it_ptr->resolved_p);
-
-	  it_ptr->linkp = &DEPS_LIST_FIRST (list);
-
-	  if (list)
-	    return sd_iterator_cond (it_ptr, dep_ptr);
+	  *dep_ptr = DEP_LINK_DEP (link);
+	  return true;
 	}
+      else
+	{
+	  sd_list_types_def types = it_ptr->types;
 
-      *dep_ptr = NULL;
-      return false;
-    }
+	  if (types != SD_LIST_NONE)
+	    /* Switch to next list.  */
+	    {
+	      deps_list_t list;
+
+	      sd_next_list (it_ptr->insn,
+			    &it_ptr->types, &list, &it_ptr->resolved_p);
+
+	      it_ptr->linkp = &DEPS_LIST_FIRST (list);
+
+	      if (list)
+		continue;
+	    }
+
+	  *dep_ptr = NULL;
+	  return false;
+	}
+   }
 }
 
 /* Advance iterator.  */
@@ -1570,9 +1656,13 @@ extern void sd_add_dep (dep_t, bool);
 extern enum DEPS_ADJUST_RESULT sd_add_or_update_dep (dep_t, bool);
 extern void sd_resolve_dep (sd_iterator_def);
 extern void sd_unresolve_dep (sd_iterator_def);
-extern void sd_copy_back_deps (rtx, rtx, bool);
+extern void sd_copy_back_deps (rtx_insn *, rtx_insn *, bool);
 extern void sd_delete_dep (sd_iterator_def);
 extern void sd_debug_lists (rtx, sd_list_types_def);
+
+/* Macros and declarations for scheduling fusion.  */
+#define FUSION_MAX_PRIORITY (INT_MAX)
+extern bool sched_fusion;
 
 #endif /* INSN_SCHEDULING */
 
