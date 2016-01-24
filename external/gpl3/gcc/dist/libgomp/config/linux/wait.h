@@ -1,7 +1,8 @@
-/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
-   This file is part of the GNU OpenMP Library (libgomp).
+   This file is part of the GNU Offloading and Multi Processing Library
+   (libgomp).
 
    Libgomp is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by
@@ -48,7 +49,9 @@ static inline int do_spin (int *addr, int val)
 {
   unsigned long long i, count = gomp_spin_count_var;
 
-  if (__builtin_expect (gomp_managed_threads > gomp_available_cpus, 0))
+  if (__builtin_expect (__atomic_load_n (&gomp_managed_threads,
+                                         MEMMODEL_RELAXED)
+                        > gomp_available_cpus, 0))
     count = gomp_throttled_spin_count_var;
   for (i = 0; i < count; i++)
     if (__builtin_expect (__atomic_load_n (addr, MEMMODEL_RELAXED) != val, 0))

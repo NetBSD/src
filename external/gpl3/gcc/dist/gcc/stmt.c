@@ -1,5 +1,5 @@
 /* Expands front end tree to back end RTL for GCC
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -29,30 +29,57 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "rtl.h"
 #include "hard-reg-set.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "varasm.h"
+#include "stor-layout.h"
 #include "tm_p.h"
 #include "flags.h"
 #include "except.h"
 #include "function.h"
 #include "insn-config.h"
+#include "hashtab.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "stmt.h"
 #include "expr.h"
 #include "libfuncs.h"
 #include "recog.h"
-#include "machmode.h"
 #include "diagnostic-core.h"
 #include "output.h"
-#include "ggc.h"
 #include "langhooks.h"
 #include "predict.h"
+#include "insn-codes.h"
 #include "optabs.h"
 #include "target.h"
+#include "cfganal.h"
+#include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
 #include "gimple.h"
 #include "regs.h"
 #include "alloc-pool.h"
 #include "pretty-print.h"
-#include "pointer-set.h"
 #include "params.h"
 #include "dumpfile.h"
+#include "builtins.h"
 
 
 /* Functions and data structures for expanding case statements.  */
@@ -102,14 +129,8 @@ typedef struct case_node *case_node_ptr;
 
 extern basic_block label_to_block_fn (struct function *, tree);
 
-static int n_occurrences (int, const char *);
-static bool tree_conflicts_with_clobbers_p (tree, HARD_REG_SET *);
-static void expand_nl_goto_receiver (void);
-static bool check_operand_nalternatives (tree, tree);
 static bool check_unique_operand_names (tree, tree, tree);
 static char *resolve_operand_name_1 (char *, tree, tree, tree);
-static void expand_null_return_1 (void);
-static void expand_value_return (rtx);
 static void balance_case_nodes (case_node_ptr *, case_node_ptr);
 static int node_has_low_bound (case_node_ptr, tree);
 static int node_has_high_bound (case_node_ptr, tree);
@@ -126,7 +147,7 @@ label_rtx (tree label)
 
   if (!DECL_RTL_SET_P (label))
     {
-      rtx r = gen_label_rtx ();
+      rtx_code_label *r = gen_label_rtx ();
       SET_DECL_RTL (label, r);
       if (FORCED_LABEL (label) || DECL_NONLOCAL (label))
 	LABEL_PRESERVE_P (r) = 1;
@@ -140,12 +161,12 @@ label_rtx (tree label)
 rtx
 force_label_rtx (tree label)
 {
-  rtx ref = label_rtx (label);
+  rtx_insn *ref = as_a <rtx_insn *> (label_rtx (label));
   tree function = decl_function_context (label);
 
   gcc_assert (function);
 
-  forced_labels = gen_rtx_EXPR_LIST (VOIDmode, ref, forced_labels);
+  forced_labels = gen_rtx_INSN_LIST (VOIDmode, ref, forced_labels);
   return ref;
 }
 
@@ -157,20 +178,6 @@ emit_jump (rtx label)
   do_pending_stack_adjust ();
   emit_jump_insn (gen_jump (label));
   emit_barrier ();
-}
-
-/* Emit code to jump to the address
-   specified by the pointer expression EXP.  */
-
-void
-expand_computed_goto (tree exp)
-{
-  rtx x = expand_normal (exp);
-
-  x = convert_memory_address (Pmode, x);
-
-  do_pending_stack_adjust ();
-  emit_indirect_jump (x);
 }
 
 /* Handle goto statements and the labels that they can go to.  */
@@ -189,7 +196,7 @@ expand_computed_goto (tree exp)
 void
 expand_label (tree label)
 {
-  rtx label_r = label_rtx (label);
+  rtx_insn *label_r = as_a <rtx_insn *> (label_rtx (label));
 
   do_pending_stack_adjust ();
   emit_label (label_r);
@@ -198,68 +205,19 @@ expand_label (tree label)
 
   if (DECL_NONLOCAL (label))
     {
-      expand_nl_goto_receiver ();
+      expand_builtin_setjmp_receiver (NULL);
       nonlocal_goto_handler_labels
-	= gen_rtx_EXPR_LIST (VOIDmode, label_r,
+	= gen_rtx_INSN_LIST (VOIDmode, label_r,
 			     nonlocal_goto_handler_labels);
     }
 
   if (FORCED_LABEL (label))
-    forced_labels = gen_rtx_EXPR_LIST (VOIDmode, label_r, forced_labels);
+    forced_labels = gen_rtx_INSN_LIST (VOIDmode, label_r, forced_labels);
 
   if (DECL_NONLOCAL (label) || FORCED_LABEL (label))
     maybe_set_first_label_num (label_r);
 }
-
-/* Generate RTL code for a `goto' statement with target label LABEL.
-   LABEL should be a LABEL_DECL tree node that was or will later be
-   defined with `expand_label'.  */
-
-void
-expand_goto (tree label)
-{
-#ifdef ENABLE_CHECKING
-  /* Check for a nonlocal goto to a containing function.  Should have
-     gotten translated to __builtin_nonlocal_goto.  */
-  tree context = decl_function_context (label);
-  gcc_assert (!context || context == current_function_decl);
-#endif
-
-  emit_jump (label_rtx (label));
-}
 
-/* Return the number of times character C occurs in string S.  */
-static int
-n_occurrences (int c, const char *s)
-{
-  int n = 0;
-  while (*s)
-    n += (*s++ == c);
-  return n;
-}
-
-/* Generate RTL for an asm statement (explicit assembler code).
-   STRING is a STRING_CST node containing the assembler code text,
-   or an ADDR_EXPR containing a STRING_CST.  VOL nonzero means the
-   insn is volatile; don't optimize it.  */
-
-static void
-expand_asm_loc (tree string, int vol, location_t locus)
-{
-  rtx body;
-
-  if (TREE_CODE (string) == ADDR_EXPR)
-    string = TREE_OPERAND (string, 0);
-
-  body = gen_rtx_ASM_INPUT_loc (VOIDmode,
-				ggc_strdup (TREE_STRING_POINTER (string)),
-				locus);
-
-  MEM_VOLATILE_P (body) = vol;
-
-  emit_insn (body);
-}
-
 /* Parse the output constraint pointed to by *CONSTRAINT_P.  It is the
    OPERAND_NUMth output operand, indexed from zero.  There are NINPUTS
    inputs and NOUTPUTS outputs to this extended-asm.  Upon return,
@@ -348,11 +306,8 @@ parse_output_constraint (const char **constraint_p, int operand_num,
 	  }
 	break;
 
-      case 'V':  case TARGET_MEM_CONSTRAINT:  case 'o':
-	*allows_mem = true;
-	break;
-
       case '?':  case '!':  case '*':  case '&':  case '#':
+      case '$':  case '^':
       case 'E':  case 'F':  case 'G':  case 'H':
       case 's':  case 'i':  case 'n':
       case 'I':  case 'J':  case 'K':  case 'L':  case 'M':
@@ -377,19 +332,14 @@ parse_output_constraint (const char **constraint_p, int operand_num,
 	*allows_mem = true;
 	break;
 
-      case 'p': case 'r':
-	*allows_reg = true;
-	break;
-
       default:
 	if (!ISALPHA (*p))
 	  break;
-	if (REG_CLASS_FROM_CONSTRAINT (*p, p) != NO_REGS)
+	enum constraint_num cn = lookup_constraint (p);
+	if (reg_class_for_constraint (cn) != NO_REGS
+	    || insn_extra_address_constraint (cn))
 	  *allows_reg = true;
-#ifdef EXTRA_CONSTRAINT_STR
-	else if (EXTRA_ADDRESS_CONSTRAINT (*p, p))
-	  *allows_reg = true;
-	else if (EXTRA_MEMORY_CONSTRAINT (*p, p))
+	else if (insn_extra_memory_constraint (cn))
 	  *allows_mem = true;
 	else
 	  {
@@ -399,7 +349,6 @@ parse_output_constraint (const char **constraint_p, int operand_num,
 	    *allows_reg = true;
 	    *allows_mem = true;
 	  }
-#endif
 	break;
       }
 
@@ -447,12 +396,9 @@ parse_input_constraint (const char **constraint_p, int input_num,
 	  }
 	break;
 
-      case 'V':  case TARGET_MEM_CONSTRAINT:  case 'o':
-	*allows_mem = true;
-	break;
-
       case '<':  case '>':
       case '?':  case '!':  case '*':  case '#':
+      case '$':  case '^':
       case 'E':  case 'F':  case 'G':  case 'H':
       case 's':  case 'i':  case 'n':
       case 'I':  case 'J':  case 'K':  case 'L':  case 'M':
@@ -501,10 +447,6 @@ parse_input_constraint (const char **constraint_p, int input_num,
 	}
 	/* Fall through.  */
 
-      case 'p':  case 'r':
-	*allows_reg = true;
-	break;
-
       case 'g':  case 'X':
 	*allows_reg = true;
 	*allows_mem = true;
@@ -516,13 +458,11 @@ parse_input_constraint (const char **constraint_p, int input_num,
 	    error ("invalid punctuation %qc in constraint", constraint[j]);
 	    return false;
 	  }
-	if (REG_CLASS_FROM_CONSTRAINT (constraint[j], constraint + j)
-	    != NO_REGS)
+	enum constraint_num cn = lookup_constraint (constraint + j);
+	if (reg_class_for_constraint (cn) != NO_REGS
+	    || insn_extra_address_constraint (cn))
 	  *allows_reg = true;
-#ifdef EXTRA_CONSTRAINT_STR
-	else if (EXTRA_ADDRESS_CONSTRAINT (constraint[j], constraint + j))
-	  *allows_reg = true;
-	else if (EXTRA_MEMORY_CONSTRAINT (constraint[j], constraint + j))
+	else if (insn_extra_memory_constraint (cn))
 	  *allows_mem = true;
 	else
 	  {
@@ -532,7 +472,6 @@ parse_input_constraint (const char **constraint_p, int input_num,
 	    *allows_reg = true;
 	    *allows_mem = true;
 	  }
-#endif
 	break;
       }
 
@@ -578,662 +517,6 @@ tree_overlaps_hard_reg_set (tree decl, HARD_REG_SET *regs)
   return walk_tree (&decl, decl_overlaps_hard_reg_set_p, regs, NULL);
 }
 
-/* Check for overlap between registers marked in CLOBBERED_REGS and
-   anything inappropriate in T.  Emit error and return the register
-   variable definition for error, NULL_TREE for ok.  */
-
-static bool
-tree_conflicts_with_clobbers_p (tree t, HARD_REG_SET *clobbered_regs)
-{
-  /* Conflicts between asm-declared register variables and the clobber
-     list are not allowed.  */
-  tree overlap = tree_overlaps_hard_reg_set (t, clobbered_regs);
-
-  if (overlap)
-    {
-      error ("asm-specifier for variable %qE conflicts with asm clobber list",
-	     DECL_NAME (overlap));
-
-      /* Reset registerness to stop multiple errors emitted for a single
-	 variable.  */
-      DECL_REGISTER (overlap) = 0;
-      return true;
-    }
-
-  return false;
-}
-
-/* Generate RTL for an asm statement with arguments.
-   STRING is the instruction template.
-   OUTPUTS is a list of output arguments (lvalues); INPUTS a list of inputs.
-   Each output or input has an expression in the TREE_VALUE and
-   a tree list in TREE_PURPOSE which in turn contains a constraint
-   name in TREE_VALUE (or NULL_TREE) and a constraint string
-   in TREE_PURPOSE.
-   CLOBBERS is a list of STRING_CST nodes each naming a hard register
-   that is clobbered by this insn.
-
-   LABELS is a list of labels, and if LABELS is non-NULL, FALLTHRU_BB
-   should be the fallthru basic block of the asm goto.
-
-   Not all kinds of lvalue that may appear in OUTPUTS can be stored directly.
-   Some elements of OUTPUTS may be replaced with trees representing temporary
-   values.  The caller should copy those temporary values to the originally
-   specified lvalues.
-
-   VOL nonzero means the insn is volatile; don't optimize it.  */
-
-static void
-expand_asm_operands (tree string, tree outputs, tree inputs,
-		     tree clobbers, tree labels, basic_block fallthru_bb,
-		     int vol, location_t locus)
-{
-  rtvec argvec, constraintvec, labelvec;
-  rtx body;
-  int ninputs = list_length (inputs);
-  int noutputs = list_length (outputs);
-  int nlabels = list_length (labels);
-  int ninout;
-  int nclobbers;
-  HARD_REG_SET clobbered_regs;
-  int clobber_conflict_found = 0;
-  tree tail;
-  tree t;
-  int i;
-  /* Vector of RTX's of evaluated output operands.  */
-  rtx *output_rtx = XALLOCAVEC (rtx, noutputs);
-  int *inout_opnum = XALLOCAVEC (int, noutputs);
-  rtx *real_output_rtx = XALLOCAVEC (rtx, noutputs);
-  enum machine_mode *inout_mode = XALLOCAVEC (enum machine_mode, noutputs);
-  const char **constraints = XALLOCAVEC (const char *, noutputs + ninputs);
-  int old_generating_concat_p = generating_concat_p;
-  rtx fallthru_label = NULL_RTX;
-
-  /* An ASM with no outputs needs to be treated as volatile, for now.  */
-  if (noutputs == 0)
-    vol = 1;
-
-  if (! check_operand_nalternatives (outputs, inputs))
-    return;
-
-  string = resolve_asm_operand_names (string, outputs, inputs, labels);
-
-  /* Collect constraints.  */
-  i = 0;
-  for (t = outputs; t ; t = TREE_CHAIN (t), i++)
-    constraints[i] = TREE_STRING_POINTER (TREE_VALUE (TREE_PURPOSE (t)));
-  for (t = inputs; t ; t = TREE_CHAIN (t), i++)
-    constraints[i] = TREE_STRING_POINTER (TREE_VALUE (TREE_PURPOSE (t)));
-
-  /* Sometimes we wish to automatically clobber registers across an asm.
-     Case in point is when the i386 backend moved from cc0 to a hard reg --
-     maintaining source-level compatibility means automatically clobbering
-     the flags register.  */
-  clobbers = targetm.md_asm_clobbers (outputs, inputs, clobbers);
-
-  /* Count the number of meaningful clobbered registers, ignoring what
-     we would ignore later.  */
-  nclobbers = 0;
-  CLEAR_HARD_REG_SET (clobbered_regs);
-  for (tail = clobbers; tail; tail = TREE_CHAIN (tail))
-    {
-      const char *regname;
-      int nregs;
-
-      if (TREE_VALUE (tail) == error_mark_node)
-	return;
-      regname = TREE_STRING_POINTER (TREE_VALUE (tail));
-
-      i = decode_reg_name_and_count (regname, &nregs);
-      if (i == -4)
-	++nclobbers;
-      else if (i == -2)
-	error ("unknown register name %qs in %<asm%>", regname);
-
-      /* Mark clobbered registers.  */
-      if (i >= 0)
-        {
-	  int reg;
-
-	  for (reg = i; reg < i + nregs; reg++)
-	    {
-	      ++nclobbers;
-
-	      /* Clobbering the PIC register is an error.  */
-	      if (reg == (int) PIC_OFFSET_TABLE_REGNUM)
-		{
-		  error ("PIC register clobbered by %qs in %<asm%>", regname);
-		  return;
-		}
-
-	      SET_HARD_REG_BIT (clobbered_regs, reg);
-	    }
-	}
-    }
-
-  /* First pass over inputs and outputs checks validity and sets
-     mark_addressable if needed.  */
-
-  ninout = 0;
-  for (i = 0, tail = outputs; tail; tail = TREE_CHAIN (tail), i++)
-    {
-      tree val = TREE_VALUE (tail);
-      tree type = TREE_TYPE (val);
-      const char *constraint;
-      bool is_inout;
-      bool allows_reg;
-      bool allows_mem;
-
-      /* If there's an erroneous arg, emit no insn.  */
-      if (type == error_mark_node)
-	return;
-
-      /* Try to parse the output constraint.  If that fails, there's
-	 no point in going further.  */
-      constraint = constraints[i];
-      if (!parse_output_constraint (&constraint, i, ninputs, noutputs,
-				    &allows_mem, &allows_reg, &is_inout))
-	return;
-
-      if (! allows_reg
-	  && (allows_mem
-	      || is_inout
-	      || (DECL_P (val)
-		  && REG_P (DECL_RTL (val))
-		  && GET_MODE (DECL_RTL (val)) != TYPE_MODE (type))))
-	mark_addressable (val);
-
-      if (is_inout)
-	ninout++;
-    }
-
-  ninputs += ninout;
-  if (ninputs + noutputs > MAX_RECOG_OPERANDS)
-    {
-      error ("more than %d operands in %<asm%>", MAX_RECOG_OPERANDS);
-      return;
-    }
-
-  for (i = 0, tail = inputs; tail; i++, tail = TREE_CHAIN (tail))
-    {
-      bool allows_reg, allows_mem;
-      const char *constraint;
-
-      /* If there's an erroneous arg, emit no insn, because the ASM_INPUT
-	 would get VOIDmode and that could cause a crash in reload.  */
-      if (TREE_TYPE (TREE_VALUE (tail)) == error_mark_node)
-	return;
-
-      constraint = constraints[i + noutputs];
-      if (! parse_input_constraint (&constraint, i, ninputs, noutputs, ninout,
-				    constraints, &allows_mem, &allows_reg))
-	return;
-
-      if (! allows_reg && allows_mem)
-	mark_addressable (TREE_VALUE (tail));
-    }
-
-  /* Second pass evaluates arguments.  */
-
-  /* Make sure stack is consistent for asm goto.  */
-  if (nlabels > 0)
-    do_pending_stack_adjust ();
-
-  ninout = 0;
-  for (i = 0, tail = outputs; tail; tail = TREE_CHAIN (tail), i++)
-    {
-      tree val = TREE_VALUE (tail);
-      tree type = TREE_TYPE (val);
-      bool is_inout;
-      bool allows_reg;
-      bool allows_mem;
-      rtx op;
-      bool ok;
-
-      ok = parse_output_constraint (&constraints[i], i, ninputs,
-				    noutputs, &allows_mem, &allows_reg,
-				    &is_inout);
-      gcc_assert (ok);
-
-      /* If an output operand is not a decl or indirect ref and our constraint
-	 allows a register, make a temporary to act as an intermediate.
-	 Make the asm insn write into that, then our caller will copy it to
-	 the real output operand.  Likewise for promoted variables.  */
-
-      generating_concat_p = 0;
-
-      real_output_rtx[i] = NULL_RTX;
-      if ((TREE_CODE (val) == INDIRECT_REF
-	   && allows_mem)
-	  || (DECL_P (val)
-	      && (allows_mem || REG_P (DECL_RTL (val)))
-	      && ! (REG_P (DECL_RTL (val))
-		    && GET_MODE (DECL_RTL (val)) != TYPE_MODE (type)))
-	  || ! allows_reg
-	  || is_inout)
-	{
-	  op = expand_expr (val, NULL_RTX, VOIDmode, EXPAND_WRITE);
-	  if (MEM_P (op))
-	    op = validize_mem (op);
-
-	  if (! allows_reg && !MEM_P (op))
-	    error ("output number %d not directly addressable", i);
-	  if ((! allows_mem && MEM_P (op))
-	      || GET_CODE (op) == CONCAT)
-	    {
-	      real_output_rtx[i] = op;
-	      op = gen_reg_rtx (GET_MODE (op));
-	      if (is_inout)
-		emit_move_insn (op, real_output_rtx[i]);
-	    }
-	}
-      else
-	{
-	  op = assign_temp (type, 0, 1);
-	  op = validize_mem (op);
-	  if (!MEM_P (op) && TREE_CODE (TREE_VALUE (tail)) == SSA_NAME)
-	    set_reg_attrs_for_decl_rtl (SSA_NAME_VAR (TREE_VALUE (tail)), op);
-	  TREE_VALUE (tail) = make_tree (type, op);
-	}
-      output_rtx[i] = op;
-
-      generating_concat_p = old_generating_concat_p;
-
-      if (is_inout)
-	{
-	  inout_mode[ninout] = TYPE_MODE (type);
-	  inout_opnum[ninout++] = i;
-	}
-
-      if (tree_conflicts_with_clobbers_p (val, &clobbered_regs))
-	clobber_conflict_found = 1;
-    }
-
-  /* Make vectors for the expression-rtx, constraint strings,
-     and named operands.  */
-
-  argvec = rtvec_alloc (ninputs);
-  constraintvec = rtvec_alloc (ninputs);
-  labelvec = rtvec_alloc (nlabels);
-
-  body = gen_rtx_ASM_OPERANDS ((noutputs == 0 ? VOIDmode
-				: GET_MODE (output_rtx[0])),
-			       ggc_strdup (TREE_STRING_POINTER (string)),
-			       empty_string, 0, argvec, constraintvec,
-			       labelvec, locus);
-
-  MEM_VOLATILE_P (body) = vol;
-
-  /* Eval the inputs and put them into ARGVEC.
-     Put their constraints into ASM_INPUTs and store in CONSTRAINTS.  */
-
-  for (i = 0, tail = inputs; tail; tail = TREE_CHAIN (tail), ++i)
-    {
-      bool allows_reg, allows_mem;
-      const char *constraint;
-      tree val, type;
-      rtx op;
-      bool ok;
-
-      constraint = constraints[i + noutputs];
-      ok = parse_input_constraint (&constraint, i, ninputs, noutputs, ninout,
-				   constraints, &allows_mem, &allows_reg);
-      gcc_assert (ok);
-
-      generating_concat_p = 0;
-
-      val = TREE_VALUE (tail);
-      type = TREE_TYPE (val);
-      /* EXPAND_INITIALIZER will not generate code for valid initializer
-	 constants, but will still generate code for other types of operand.
-	 This is the behavior we want for constant constraints.  */
-      op = expand_expr (val, NULL_RTX, VOIDmode,
-			allows_reg ? EXPAND_NORMAL
-			: allows_mem ? EXPAND_MEMORY
-			: EXPAND_INITIALIZER);
-
-      /* Never pass a CONCAT to an ASM.  */
-      if (GET_CODE (op) == CONCAT)
-	op = force_reg (GET_MODE (op), op);
-      else if (MEM_P (op))
-	op = validize_mem (op);
-
-      if (asm_operand_ok (op, constraint, NULL) <= 0)
-	{
-	  if (allows_reg && TYPE_MODE (type) != BLKmode)
-	    op = force_reg (TYPE_MODE (type), op);
-	  else if (!allows_mem)
-	    warning (0, "asm operand %d probably doesn%'t match constraints",
-		     i + noutputs);
-	  else if (MEM_P (op))
-	    {
-	      /* We won't recognize either volatile memory or memory
-		 with a queued address as available a memory_operand
-		 at this point.  Ignore it: clearly this *is* a memory.  */
-	    }
-	  else
-	    gcc_unreachable ();
-	}
-
-      generating_concat_p = old_generating_concat_p;
-      ASM_OPERANDS_INPUT (body, i) = op;
-
-      ASM_OPERANDS_INPUT_CONSTRAINT_EXP (body, i)
-	= gen_rtx_ASM_INPUT (TYPE_MODE (type),
-			     ggc_strdup (constraints[i + noutputs]));
-
-      if (tree_conflicts_with_clobbers_p (val, &clobbered_regs))
-	clobber_conflict_found = 1;
-    }
-
-  /* Protect all the operands from the queue now that they have all been
-     evaluated.  */
-
-  generating_concat_p = 0;
-
-  /* For in-out operands, copy output rtx to input rtx.  */
-  for (i = 0; i < ninout; i++)
-    {
-      int j = inout_opnum[i];
-      char buffer[16];
-
-      ASM_OPERANDS_INPUT (body, ninputs - ninout + i)
-	= output_rtx[j];
-
-      sprintf (buffer, "%d", j);
-      ASM_OPERANDS_INPUT_CONSTRAINT_EXP (body, ninputs - ninout + i)
-	= gen_rtx_ASM_INPUT (inout_mode[i], ggc_strdup (buffer));
-    }
-
-  /* Copy labels to the vector.  */
-  for (i = 0, tail = labels; i < nlabels; ++i, tail = TREE_CHAIN (tail))
-    {
-      rtx r;
-      /* If asm goto has any labels in the fallthru basic block, use
-	 a label that we emit immediately after the asm goto.  Expansion
-	 may insert further instructions into the same basic block after
-	 asm goto and if we don't do this, insertion of instructions on
-	 the fallthru edge might misbehave.  See PR58670.  */
-      if (fallthru_bb
-	  && label_to_block_fn (cfun, TREE_VALUE (tail)) == fallthru_bb)
-	{
-	  if (fallthru_label == NULL_RTX)
-	    fallthru_label = gen_label_rtx ();
-	  r = fallthru_label;
-	}
-      else
-	r = label_rtx (TREE_VALUE (tail));
-      ASM_OPERANDS_LABEL (body, i) = gen_rtx_LABEL_REF (Pmode, r);
-    }
-
-  generating_concat_p = old_generating_concat_p;
-
-  /* Now, for each output, construct an rtx
-     (set OUTPUT (asm_operands INSN OUTPUTCONSTRAINT OUTPUTNUMBER
-			       ARGVEC CONSTRAINTS OPNAMES))
-     If there is more than one, put them inside a PARALLEL.  */
-
-  if (nlabels > 0 && nclobbers == 0)
-    {
-      gcc_assert (noutputs == 0);
-      emit_jump_insn (body);
-    }
-  else if (noutputs == 0 && nclobbers == 0)
-    {
-      /* No output operands: put in a raw ASM_OPERANDS rtx.  */
-      emit_insn (body);
-    }
-  else if (noutputs == 1 && nclobbers == 0)
-    {
-      ASM_OPERANDS_OUTPUT_CONSTRAINT (body) = ggc_strdup (constraints[0]);
-      emit_insn (gen_rtx_SET (VOIDmode, output_rtx[0], body));
-    }
-  else
-    {
-      rtx obody = body;
-      int num = noutputs;
-
-      if (num == 0)
-	num = 1;
-
-      body = gen_rtx_PARALLEL (VOIDmode, rtvec_alloc (num + nclobbers));
-
-      /* For each output operand, store a SET.  */
-      for (i = 0, tail = outputs; tail; tail = TREE_CHAIN (tail), i++)
-	{
-	  XVECEXP (body, 0, i)
-	    = gen_rtx_SET (VOIDmode,
-			   output_rtx[i],
-			   gen_rtx_ASM_OPERANDS
-			   (GET_MODE (output_rtx[i]),
-			    ggc_strdup (TREE_STRING_POINTER (string)),
-			    ggc_strdup (constraints[i]),
-			    i, argvec, constraintvec, labelvec, locus));
-
-	  MEM_VOLATILE_P (SET_SRC (XVECEXP (body, 0, i))) = vol;
-	}
-
-      /* If there are no outputs (but there are some clobbers)
-	 store the bare ASM_OPERANDS into the PARALLEL.  */
-
-      if (i == 0)
-	XVECEXP (body, 0, i++) = obody;
-
-      /* Store (clobber REG) for each clobbered register specified.  */
-
-      for (tail = clobbers; tail; tail = TREE_CHAIN (tail))
-	{
-	  const char *regname = TREE_STRING_POINTER (TREE_VALUE (tail));
-	  int reg, nregs;
-	  int j = decode_reg_name_and_count (regname, &nregs);
-	  rtx clobbered_reg;
-
-	  if (j < 0)
-	    {
-	      if (j == -3)	/* `cc', which is not a register */
-		continue;
-
-	      if (j == -4)	/* `memory', don't cache memory across asm */
-		{
-		  XVECEXP (body, 0, i++)
-		    = gen_rtx_CLOBBER (VOIDmode,
-				       gen_rtx_MEM
-				       (BLKmode,
-					gen_rtx_SCRATCH (VOIDmode)));
-		  continue;
-		}
-
-	      /* Ignore unknown register, error already signaled.  */
-	      continue;
-	    }
-
-	  for (reg = j; reg < j + nregs; reg++)
-	    {
-	      /* Use QImode since that's guaranteed to clobber just
-	       * one reg.  */
-	      clobbered_reg = gen_rtx_REG (QImode, reg);
-
-	      /* Do sanity check for overlap between clobbers and
-		 respectively input and outputs that hasn't been
-		 handled.  Such overlap should have been detected and
-		 reported above.  */
-	      if (!clobber_conflict_found)
-		{
-		  int opno;
-
-		  /* We test the old body (obody) contents to avoid
-		     tripping over the under-construction body.  */
-		  for (opno = 0; opno < noutputs; opno++)
-		    if (reg_overlap_mentioned_p (clobbered_reg,
-						 output_rtx[opno]))
-		      internal_error
-			("asm clobber conflict with output operand");
-
-		  for (opno = 0; opno < ninputs - ninout; opno++)
-		    if (reg_overlap_mentioned_p (clobbered_reg,
-						 ASM_OPERANDS_INPUT (obody,
-								     opno)))
-		      internal_error
-			("asm clobber conflict with input operand");
-		}
-
-	      XVECEXP (body, 0, i++)
-		= gen_rtx_CLOBBER (VOIDmode, clobbered_reg);
-	    }
-	}
-
-      if (nlabels > 0)
-	emit_jump_insn (body);
-      else
-	emit_insn (body);
-    }
-
-  if (fallthru_label)
-    emit_label (fallthru_label);
-
-  /* For any outputs that needed reloading into registers, spill them
-     back to where they belong.  */
-  for (i = 0; i < noutputs; ++i)
-    if (real_output_rtx[i])
-      emit_move_insn (real_output_rtx[i], output_rtx[i]);
-
-  crtl->has_asm_statement = 1;
-  free_temp_slots ();
-}
-
-void
-expand_asm_stmt (gimple stmt)
-{
-  int noutputs;
-  tree outputs, tail, t;
-  tree *o;
-  size_t i, n;
-  const char *s;
-  tree str, out, in, cl, labels;
-  location_t locus = gimple_location (stmt);
-  basic_block fallthru_bb = NULL;
-
-  /* Meh... convert the gimple asm operands into real tree lists.
-     Eventually we should make all routines work on the vectors instead
-     of relying on TREE_CHAIN.  */
-  out = NULL_TREE;
-  n = gimple_asm_noutputs (stmt);
-  if (n > 0)
-    {
-      t = out = gimple_asm_output_op (stmt, 0);
-      for (i = 1; i < n; i++)
-	t = TREE_CHAIN (t) = gimple_asm_output_op (stmt, i);
-    }
-
-  in = NULL_TREE;
-  n = gimple_asm_ninputs (stmt);
-  if (n > 0)
-    {
-      t = in = gimple_asm_input_op (stmt, 0);
-      for (i = 1; i < n; i++)
-	t = TREE_CHAIN (t) = gimple_asm_input_op (stmt, i);
-    }
-
-  cl = NULL_TREE;
-  n = gimple_asm_nclobbers (stmt);
-  if (n > 0)
-    {
-      t = cl = gimple_asm_clobber_op (stmt, 0);
-      for (i = 1; i < n; i++)
-	t = TREE_CHAIN (t) = gimple_asm_clobber_op (stmt, i);
-    }
-
-  labels = NULL_TREE;
-  n = gimple_asm_nlabels (stmt);
-  if (n > 0)
-    {
-      edge fallthru = find_fallthru_edge (gimple_bb (stmt)->succs);
-      if (fallthru)
-	fallthru_bb = fallthru->dest;
-      t = labels = gimple_asm_label_op (stmt, 0);
-      for (i = 1; i < n; i++)
-	t = TREE_CHAIN (t) = gimple_asm_label_op (stmt, i);
-    }
-
-  s = gimple_asm_string (stmt);
-  str = build_string (strlen (s), s);
-
-  if (gimple_asm_input_p (stmt))
-    {
-      expand_asm_loc (str, gimple_asm_volatile_p (stmt), locus);
-      return;
-    }
-
-  outputs = out;
-  noutputs = gimple_asm_noutputs (stmt);
-  /* o[I] is the place that output number I should be written.  */
-  o = (tree *) alloca (noutputs * sizeof (tree));
-
-  /* Record the contents of OUTPUTS before it is modified.  */
-  for (i = 0, tail = outputs; tail; tail = TREE_CHAIN (tail), i++)
-    o[i] = TREE_VALUE (tail);
-
-  /* Generate the ASM_OPERANDS insn; store into the TREE_VALUEs of
-     OUTPUTS some trees for where the values were actually stored.  */
-  expand_asm_operands (str, outputs, in, cl, labels, fallthru_bb,
-		       gimple_asm_volatile_p (stmt), locus);
-
-  /* Copy all the intermediate outputs into the specified outputs.  */
-  for (i = 0, tail = outputs; tail; tail = TREE_CHAIN (tail), i++)
-    {
-      if (o[i] != TREE_VALUE (tail))
-	{
-	  expand_assignment (o[i], TREE_VALUE (tail), false);
-	  free_temp_slots ();
-
-	  /* Restore the original value so that it's correct the next
-	     time we expand this function.  */
-	  TREE_VALUE (tail) = o[i];
-	}
-    }
-}
-
-/* A subroutine of expand_asm_operands.  Check that all operands have
-   the same number of alternatives.  Return true if so.  */
-
-static bool
-check_operand_nalternatives (tree outputs, tree inputs)
-{
-  if (outputs || inputs)
-    {
-      tree tmp = TREE_PURPOSE (outputs ? outputs : inputs);
-      int nalternatives
-	= n_occurrences (',', TREE_STRING_POINTER (TREE_VALUE (tmp)));
-      tree next = inputs;
-
-      if (nalternatives + 1 > MAX_RECOG_ALTERNATIVES)
-	{
-	  error ("too many alternatives in %<asm%>");
-	  return false;
-	}
-
-      tmp = outputs;
-      while (tmp)
-	{
-	  const char *constraint
-	    = TREE_STRING_POINTER (TREE_VALUE (TREE_PURPOSE (tmp)));
-
-	  if (n_occurrences (',', constraint) != nalternatives)
-	    {
-	      error ("operand constraints for %<asm%> differ "
-		     "in number of alternatives");
-	      return false;
-	    }
-
-	  if (TREE_CHAIN (tmp))
-	    tmp = TREE_CHAIN (tmp);
-	  else
-	    tmp = next, next = 0;
-	}
-    }
-
-  return true;
-}
 
 /* A subroutine of expand_asm_operands.  Check that all operand names
    are unique.  Return true if so.  We rely on the fact that these names
@@ -1427,19 +710,6 @@ resolve_operand_name_1 (char *p, tree outputs, tree inputs, tree labels)
   return p;
 }
 
-/* Generate RTL to return from the current function, with no value.
-   (That is, we do not do anything about returning any value.)  */
-
-void
-expand_null_return (void)
-{
-  /* If this function was declared to return a value, but we
-     didn't, clobber the return registers so that they are not
-     propagated live to the rest of the function.  */
-  clobber_return_register ();
-
-  expand_null_return_1 ();
-}
 
 /* Generate RTL to return directly from the current function.
    (That is, we bypass any return value.)  */
@@ -1459,238 +729,10 @@ expand_naked_return (void)
   emit_jump (end_label);
 }
 
-/* Generate RTL to return from the current function, with value VAL.  */
-
-static void
-expand_value_return (rtx val)
-{
-  /* Copy the value to the return location unless it's already there.  */
-
-  tree decl = DECL_RESULT (current_function_decl);
-  rtx return_reg = DECL_RTL (decl);
-  if (return_reg != val)
-    {
-      tree funtype = TREE_TYPE (current_function_decl);
-      tree type = TREE_TYPE (decl);
-      int unsignedp = TYPE_UNSIGNED (type);
-      enum machine_mode old_mode = DECL_MODE (decl);
-      enum machine_mode mode;
-      if (DECL_BY_REFERENCE (decl))
-        mode = promote_function_mode (type, old_mode, &unsignedp, funtype, 2);
-      else
-        mode = promote_function_mode (type, old_mode, &unsignedp, funtype, 1);
-
-      if (mode != old_mode)
-	val = convert_modes (mode, old_mode, val, unsignedp);
-
-      if (GET_CODE (return_reg) == PARALLEL)
-	emit_group_load (return_reg, val, type, int_size_in_bytes (type));
-      else
-	emit_move_insn (return_reg, val);
-    }
-
-  expand_null_return_1 ();
-}
-
-/* Output a return with no value.  */
-
-static void
-expand_null_return_1 (void)
-{
-  clear_pending_stack_adjust ();
-  do_pending_stack_adjust ();
-  emit_jump (return_label);
-}
-
-/* Generate RTL to evaluate the expression RETVAL and return it
-   from the current function.  */
-
-void
-expand_return (tree retval)
-{
-  rtx result_rtl;
-  rtx val = 0;
-  tree retval_rhs;
-
-  /* If function wants no value, give it none.  */
-  if (TREE_CODE (TREE_TYPE (TREE_TYPE (current_function_decl))) == VOID_TYPE)
-    {
-      expand_normal (retval);
-      expand_null_return ();
-      return;
-    }
-
-  if (retval == error_mark_node)
-    {
-      /* Treat this like a return of no value from a function that
-	 returns a value.  */
-      expand_null_return ();
-      return;
-    }
-  else if ((TREE_CODE (retval) == MODIFY_EXPR
-	    || TREE_CODE (retval) == INIT_EXPR)
-	   && TREE_CODE (TREE_OPERAND (retval, 0)) == RESULT_DECL)
-    retval_rhs = TREE_OPERAND (retval, 1);
-  else
-    retval_rhs = retval;
-
-  result_rtl = DECL_RTL (DECL_RESULT (current_function_decl));
-
-  /* If we are returning the RESULT_DECL, then the value has already
-     been stored into it, so we don't have to do anything special.  */
-  if (TREE_CODE (retval_rhs) == RESULT_DECL)
-    expand_value_return (result_rtl);
-
-  /* If the result is an aggregate that is being returned in one (or more)
-     registers, load the registers here.  */
-
-  else if (retval_rhs != 0
-	   && TYPE_MODE (TREE_TYPE (retval_rhs)) == BLKmode
-	   && REG_P (result_rtl))
-    {
-      val = copy_blkmode_to_reg (GET_MODE (result_rtl), retval_rhs);
-      if (val)
-	{
-	  /* Use the mode of the result value on the return register.  */
-	  PUT_MODE (result_rtl, GET_MODE (val));
-	  expand_value_return (val);
-	}
-      else
-	expand_null_return ();
-    }
-  else if (retval_rhs != 0
-	   && !VOID_TYPE_P (TREE_TYPE (retval_rhs))
-	   && (REG_P (result_rtl)
-	       || (GET_CODE (result_rtl) == PARALLEL)))
-    {
-      /* Calculate the return value into a temporary (usually a pseudo
-         reg).  */
-      tree ot = TREE_TYPE (DECL_RESULT (current_function_decl));
-      tree nt = build_qualified_type (ot, TYPE_QUALS (ot) | TYPE_QUAL_CONST);
-
-      val = assign_temp (nt, 0, 1);
-      val = expand_expr (retval_rhs, val, GET_MODE (val), EXPAND_NORMAL);
-      val = force_not_mem (val);
-      /* Return the calculated value.  */
-      expand_value_return (val);
-    }
-  else
-    {
-      /* No hard reg used; calculate value into hard return reg.  */
-      expand_expr (retval, const0_rtx, VOIDmode, EXPAND_NORMAL);
-      expand_value_return (result_rtl);
-    }
-}
-
-/* Emit code to restore vital registers at the beginning of a nonlocal goto
-   handler.  */
-static void
-expand_nl_goto_receiver (void)
-{
-  rtx chain;
-
-  /* Clobber the FP when we get here, so we have to make sure it's
-     marked as used by this function.  */
-  emit_use (hard_frame_pointer_rtx);
-
-  /* Mark the static chain as clobbered here so life information
-     doesn't get messed up for it.  */
-  chain = targetm.calls.static_chain (current_function_decl, true);
-  if (chain && REG_P (chain))
-    emit_clobber (chain);
-
-#ifdef HAVE_nonlocal_goto
-  if (! HAVE_nonlocal_goto)
-#endif
-    {
-      /* First adjust our frame pointer to its actual value.  It was
-	 previously set to the start of the virtual area corresponding to
-	 the stacked variables when we branched here and now needs to be
-	 adjusted to the actual hardware fp value.
-
-	 Assignments to virtual registers are converted by
-	 instantiate_virtual_regs into the corresponding assignment
-	 to the underlying register (fp in this case) that makes
-	 the original assignment true.
-	 So the following insn will actually be decrementing fp by
-	 STARTING_FRAME_OFFSET.  */
-      emit_move_insn (virtual_stack_vars_rtx, hard_frame_pointer_rtx);
-
-      /* Restoring the frame pointer also modifies the hard frame pointer.
-	 Mark it used (so that the previous assignment remains live once
-	 the frame pointer is eliminated) and clobbered (to represent the
-	 implicit update from the assignment).  */
-      emit_use (hard_frame_pointer_rtx);
-      emit_clobber (hard_frame_pointer_rtx);
-    }
-
-#if !HARD_FRAME_POINTER_IS_ARG_POINTER
-  if (fixed_regs[ARG_POINTER_REGNUM])
-    {
-#ifdef ELIMINABLE_REGS
-      /* If the argument pointer can be eliminated in favor of the
-	 frame pointer, we don't need to restore it.  We assume here
-	 that if such an elimination is present, it can always be used.
-	 This is the case on all known machines; if we don't make this
-	 assumption, we do unnecessary saving on many machines.  */
-      static const struct elims {const int from, to;} elim_regs[] = ELIMINABLE_REGS;
-      size_t i;
-
-      for (i = 0; i < ARRAY_SIZE (elim_regs); i++)
-	if (elim_regs[i].from == ARG_POINTER_REGNUM
-	    && elim_regs[i].to == HARD_FRAME_POINTER_REGNUM)
-	  break;
-
-      if (i == ARRAY_SIZE (elim_regs))
-#endif
-	{
-	  /* Now restore our arg pointer from the address at which it
-	     was saved in our stack frame.  */
-	  emit_move_insn (crtl->args.internal_arg_pointer,
-			  copy_to_reg (get_arg_pointer_save_area ()));
-	}
-    }
-#endif
-
-#ifdef HAVE_nonlocal_goto_receiver
-  if (HAVE_nonlocal_goto_receiver)
-    emit_insn (gen_nonlocal_goto_receiver ());
-#endif
-
-  /* We must not allow the code we just generated to be reordered by
-     scheduling.  Specifically, the update of the frame pointer must
-     happen immediately, not later.  */
-  emit_insn (gen_blockage ());
-}
-
-/* Emit code to save the current value of stack.  */
-rtx
-expand_stack_save (void)
-{
-  rtx ret = NULL_RTX;
-
-  do_pending_stack_adjust ();
-  emit_stack_save (SAVE_BLOCK, &ret);
-  return ret;
-}
-
-/* Emit code to restore the current value of stack.  */
-void
-expand_stack_restore (tree var)
-{
-  rtx prev, sa = expand_normal (var);
-
-  sa = convert_memory_address (Pmode, sa);
-
-  prev = get_last_insn ();
-  emit_stack_restore (SAVE_BLOCK, sa);
-  fixup_args_size_notes (prev, get_last_insn (), 0);
-}
-
 /* Generate code to jump to LABEL if OP0 and OP1 are equal in mode MODE. PROB
    is the probability of jumping to LABEL.  */
 static void
-do_jump_if_equal (enum machine_mode mode, rtx op0, rtx op1, rtx label,
+do_jump_if_equal (machine_mode mode, rtx op0, rtx op1, rtx label,
 		  int unsignedp, int prob)
 {
   gcc_assert (prob <= REG_BR_PROB_BASE);
@@ -1734,24 +776,20 @@ static void
 dump_case_nodes (FILE *f, struct case_node *root,
 		 int indent_step, int indent_level)
 {
-  HOST_WIDE_INT low, high;
-
   if (root == 0)
     return;
   indent_level++;
 
   dump_case_nodes (f, root->left, indent_step, indent_level);
 
-  low = tree_low_cst (root->low, 0);
-  high = tree_low_cst (root->high, 0);
-
   fputs (";; ", f);
-  if (high == low)
-    fprintf(f, "%*s" HOST_WIDE_INT_PRINT_DEC,
-	    indent_step * indent_level, "", low);
-  else
-    fprintf(f, "%*s" HOST_WIDE_INT_PRINT_DEC " ... " HOST_WIDE_INT_PRINT_DEC,
-	    indent_step * indent_level, "", low, high);
+  fprintf (f, "%*s", indent_step * indent_level, "");
+  print_dec (root->low, f, TYPE_SIGN (TREE_TYPE (root->low)));
+  if (!tree_int_cst_equal (root->low, root->high))
+    {
+      fprintf (f, " ... ");
+      print_dec (root->high, f, TYPE_SIGN (TREE_TYPE (root->high)));
+    }
   fputs ("\n", f);
 
   dump_case_nodes (f, root->right, indent_step, indent_level);
@@ -1820,7 +858,7 @@ expand_switch_as_decision_tree_p (tree range,
      who knows...  */
   max_ratio = optimize_insn_for_size_p () ? 3 : 10;
   if (count < case_values_threshold ()
-      || ! host_integerp (range, /*pos=*/1)
+      || ! tree_fits_uhwi_p (range)
       || compare_tree_int (range, max_ratio * count) > 0)
     return true;
 
@@ -1865,7 +903,7 @@ emit_case_decision_tree (tree index_expr, tree index_type,
       && ! have_insn_for (COMPARE, GET_MODE (index)))
     {
       int unsignedp = TYPE_UNSIGNED (index_type);
-      enum machine_mode wider_mode;
+      machine_mode wider_mode;
       for (wider_mode = GET_MODE (index); wider_mode != VOIDmode;
 	   wider_mode = GET_MODE_WIDER_MODE (wider_mode))
 	if (have_insn_for (COMPARE, wider_mode))
@@ -1908,7 +946,7 @@ get_outgoing_edge_probs (basic_block bb)
   int prob_sum = 0;
   if (!bb)
     return 0;
-  FOR_EACH_EDGE(e, ei, bb->succs)
+  FOR_EACH_EDGE (e, ei, bb->succs)
     prob_sum += e->probability;
   return prob_sum;
 }
@@ -1927,7 +965,7 @@ conditional_probability (int target_prob, int base_prob)
     {
       gcc_assert (target_prob >= 0);
       gcc_assert (target_prob <= base_prob);
-      return RDIV (target_prob * REG_BR_PROB_BASE, base_prob);
+      return GCOV_COMPUTE_SCALE (target_prob, base_prob);
     }
   return -1;
 }
@@ -1955,9 +993,9 @@ emit_case_dispatch_table (tree index_expr, tree index_type,
   struct case_node *n;
   rtx *labelvec;
   rtx fallback_label = label_rtx (case_list->code_label);
-  rtx table_label = gen_label_rtx ();
+  rtx_code_label *table_label = gen_label_rtx ();
   bool has_gaps = false;
-  edge default_edge = stmt_bb ? EDGE_SUCC(stmt_bb, 0) : NULL;
+  edge default_edge = stmt_bb ? EDGE_SUCC (stmt_bb, 0) : NULL;
   int default_prob = default_edge ? default_edge->probability : 0;
   int base = get_outgoing_edge_probs (stmt_bb);
   bool try_with_tablejump = false;
@@ -1985,7 +1023,7 @@ emit_case_dispatch_table (tree index_expr, tree index_type,
 
   /* Get table of labels to jump to, in order of case index.  */
 
-  ncases = tree_low_cst (range, 0) + 1;
+  ncases = tree_to_shwi (range) + 1;
   labelvec = XALLOCAVEC (rtx, ncases);
   memset (labelvec, 0, ncases * sizeof (rtx));
 
@@ -1995,11 +1033,11 @@ emit_case_dispatch_table (tree index_expr, tree index_type,
 	 value since that should fit in a HOST_WIDE_INT while the
 	 actual values may not.  */
       HOST_WIDE_INT i_low
-	= tree_low_cst (fold_build2 (MINUS_EXPR, index_type,
-				     n->low, minval), 1);
+	= tree_to_uhwi (fold_build2 (MINUS_EXPR, index_type,
+				     n->low, minval));
       HOST_WIDE_INT i_high
-	= tree_low_cst (fold_build2 (MINUS_EXPR, index_type,
-				     n->high, minval), 1);
+	= tree_to_uhwi (fold_build2 (MINUS_EXPR, index_type,
+				     n->high, minval));
       HOST_WIDE_INT i;
 
       for (i = i_low; i <= i_high; i ++)
@@ -2049,7 +1087,7 @@ emit_case_dispatch_table (tree index_expr, tree index_type,
       edge e;
       edge_iterator ei;
       FOR_EACH_EDGE (e, ei, stmt_bb->succs)
-        e->probability = RDIV (e->probability * REG_BR_PROB_BASE,  base);
+        e->probability = GCOV_COMPUTE_SCALE (e->probability,  base);
     }
 
   if (try_with_tablejump)
@@ -2062,13 +1100,14 @@ emit_case_dispatch_table (tree index_expr, tree index_type,
   emit_label (table_label);
 
   if (CASE_VECTOR_PC_RELATIVE || flag_pic)
-    emit_jump_insn (gen_rtx_ADDR_DIFF_VEC (CASE_VECTOR_MODE,
-					   gen_rtx_LABEL_REF (Pmode, table_label),
-					   gen_rtvec_v (ncases, labelvec),
-					   const0_rtx, const0_rtx));
+    emit_jump_table_data (gen_rtx_ADDR_DIFF_VEC (CASE_VECTOR_MODE,
+						 gen_rtx_LABEL_REF (Pmode,
+								    table_label),
+						 gen_rtvec_v (ncases, labelvec),
+						 const0_rtx, const0_rtx));
   else
-    emit_jump_insn (gen_rtx_ADDR_VEC (CASE_VECTOR_MODE,
-				      gen_rtvec_v (ncases, labelvec)));
+    emit_jump_table_data (gen_rtx_ADDR_VEC (CASE_VECTOR_MODE,
+					    gen_rtvec_v (ncases, labelvec)));
 
   /* Record no drop-through after the table.  */
   emit_barrier ();
@@ -2081,7 +1120,7 @@ reset_out_edges_aux (basic_block bb)
 {
   edge e;
   edge_iterator ei;
-  FOR_EACH_EDGE(e, ei, bb->succs)
+  FOR_EACH_EDGE (e, ei, bb->succs)
     e->aux = (void *)0;
 }
 
@@ -2089,7 +1128,7 @@ reset_out_edges_aux (basic_block bb)
    STMT. Record this information in the aux field of the edge.  */
 
 static inline void
-compute_cases_per_edge (gimple stmt)
+compute_cases_per_edge (gswitch *stmt)
 {
   basic_block bb = gimple_bb (stmt);
   reset_out_edges_aux (bb);
@@ -2111,7 +1150,7 @@ compute_cases_per_edge (gimple stmt)
    Generate the code to test it and jump to the right place.  */
 
 void
-expand_case (gimple stmt)
+expand_case (gswitch *stmt)
 {
   tree minval = NULL_TREE, maxval = NULL_TREE, range = NULL_TREE;
   rtx default_label = NULL_RTX;
@@ -2147,7 +1186,7 @@ expand_case (gimple stmt)
 
   /* Find the default case target label.  */
   default_label = label_rtx (CASE_LABEL (gimple_switch_default_label (stmt)));
-  edge default_edge = EDGE_SUCC(bb, 0);
+  edge default_edge = EDGE_SUCC (bb, 0);
   int default_prob = default_edge->probability;
 
   /* Get upper and lower bounds of case values.  */
@@ -2166,7 +1205,7 @@ expand_case (gimple stmt)
      how to expand this switch().  */
   uniq = 0;
   count = 0;
-  struct pointer_set_t *seen_labels = pointer_set_create ();
+  hash_set<tree> seen_labels;
   compute_cases_per_edge (stmt);
 
   for (i = ncases - 1; i >= 1; --i)
@@ -2186,7 +1225,7 @@ expand_case (gimple stmt)
 
       /* If we have not seen this label yet, then increase the
 	 number of unique case node targets seen.  */
-      if (!pointer_set_insert (seen_labels, lab))
+      if (!seen_labels.add (lab))
 	uniq++;
 
       /* The bounds on the case range, LOW and HIGH, have to be converted
@@ -2196,9 +1235,7 @@ expand_case (gimple stmt)
 	 original type.  Make sure to drop overflow flags.  */
       low = fold_convert (index_type, low);
       if (TREE_OVERFLOW (low))
-	low = build_int_cst_wide (index_type,
-				  TREE_INT_CST_LOW (low),
-				  TREE_INT_CST_HIGH (low));
+	low = wide_int_to_tree (index_type, low);
 
       /* The canonical from of a case label in GIMPLE is that a simple case
 	 has an empty CASE_HIGH.  For the casesi and tablejump expanders,
@@ -2207,9 +1244,7 @@ expand_case (gimple stmt)
 	high = low;
       high = fold_convert (index_type, high);
       if (TREE_OVERFLOW (high))
-	high = build_int_cst_wide (index_type,
-				   TREE_INT_CST_LOW (high),
-				   TREE_INT_CST_HIGH (high));
+	high = wide_int_to_tree (index_type, high);
 
       basic_block case_bb = label_to_block_fn (cfun, lab);
       edge case_edge = find_edge (bb, case_bb);
@@ -2218,7 +1253,6 @@ expand_case (gimple stmt)
           case_edge->probability / (intptr_t)(case_edge->aux),
           case_node_pool);
     }
-  pointer_set_destroy (seen_labels);
   reset_out_edges_aux (bb);
 
   /* cleanup_tree_cfg removes all SWITCH_EXPR with a single
@@ -2227,7 +1261,7 @@ expand_case (gimple stmt)
      type, so we should never get a zero here.  */
   gcc_assert (count > 0);
 
-  rtx before_case = get_last_insn ();
+  rtx_insn *before_case = get_last_insn ();
 
   /* Decide how to expand this switch.
      The two options at this point are a dispatch table (casesi or
@@ -2266,12 +1300,12 @@ expand_sjlj_dispatch_table (rtx dispatch_index,
 			    vec<tree> dispatch_table)
 {
   tree index_type = integer_type_node;
-  enum machine_mode index_mode = TYPE_MODE (index_type);
+  machine_mode index_mode = TYPE_MODE (index_type);
 
   int ncases = dispatch_table.length ();
 
   do_pending_stack_adjust ();
-  rtx before_case = get_last_insn ();
+  rtx_insn *before_case = get_last_insn ();
 
   /* Expand as a decrement-chain if there are 5 or fewer dispatch
      labels.  This covers more than 98% of the cases in libjava,
@@ -2319,7 +1353,7 @@ expand_sjlj_dispatch_table (rtx dispatch_index,
       tree minval = build_int_cst (index_type, 0);
       tree maxval = CASE_LOW (dispatch_table.last ());
       tree range = maxval;
-      rtx default_label = gen_label_rtx ();
+      rtx_code_label *default_label = gen_label_rtx ();
 
       for (int i = ncases - 1; i >= 0; --i)
 	{
@@ -2577,8 +1611,8 @@ emit_case_nodes (rtx index, case_node_ptr node, rtx default_label,
   int unsignedp = TYPE_UNSIGNED (index_type);
   int probability;
   int prob = node->prob, subtree_prob = node->subtree_prob;
-  enum machine_mode mode = GET_MODE (index);
-  enum machine_mode imode = TYPE_MODE (index_type);
+  machine_mode mode = GET_MODE (index);
+  machine_mode imode = TYPE_MODE (index_type);
 
   /* Handle indices detected as constant during RTL expansion.  */
   if (mode == VOIDmode)
@@ -2688,7 +1722,7 @@ emit_case_nodes (rtx index, case_node_ptr node, rtx default_label,
 
 	      tree test_label
 		= build_decl (curr_insn_location (),
-			      LABEL_DECL, NULL_TREE, NULL_TREE);
+			      LABEL_DECL, NULL_TREE, void_type_node);
 
               /* The default label could be reached either through the right
                  subtree or the left subtree. Divide the probability
@@ -2847,7 +1881,7 @@ emit_case_nodes (rtx index, case_node_ptr node, rtx default_label,
 		 Branch to a label where we will handle it later.  */
 
 	      test_label = build_decl (curr_insn_location (),
-				       LABEL_DECL, NULL_TREE, NULL_TREE);
+				       LABEL_DECL, NULL_TREE, void_type_node);
               probability = conditional_probability (
                   node->right->subtree_prob + default_prob/2,
                   subtree_prob + default_prob);

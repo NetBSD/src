@@ -1,5 +1,5 @@
 ;; Constraint definitions for Renesas H8/300.
-;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -171,10 +171,14 @@
 (define_constraint "U"
   "An operand valid for a bset destination."
   (ior (and (match_code "reg")
-	    (match_test "REG_OK_FOR_BASE_P (op)"))
+	    (match_test "(reload_in_progress || reload_completed)
+			 ? REG_OK_FOR_BASE_STRICT_P (op)
+			 : REG_OK_FOR_BASE_P (op)"))
        (and (match_code "mem")
 	    (match_code "reg" "0")
-	    (match_test "REG_OK_FOR_BASE_P (XEXP (op, 0))"))
+	    (match_test "(reload_in_progress || reload_completed)
+			 ? REG_OK_FOR_BASE_STRICT_P (XEXP (op, 0))
+			 : REG_OK_FOR_BASE_P (XEXP (op, 0))"))
        (and (match_code "mem")
 	    (match_code "symbol_ref" "0")
 	    (match_test "TARGET_H8300S"))
@@ -184,7 +188,7 @@
 	    (match_code "symbol_ref" "000")
 	    (match_code "const_int" "001")
 	    (ior (match_test "TARGET_H8300S")
-		 (match_test "SYMBOL_REF_FLAG (XEXP (XEXP (XEXP (op, 0), 0), 0))")))
+		 (match_test "(SYMBOL_REF_FLAGS (XEXP (XEXP (XEXP (op, 0), 0), 0)) & SYMBOL_FLAG_EIGHTBIT_DATA) != 0")))
        (and (match_code "mem")
 	    (match_test "h8300_eightbit_constant_address_p (XEXP (op, 0))"))
        (and (match_code "mem")

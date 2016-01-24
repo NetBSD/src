@@ -1,5 +1,5 @@
 /* Graphite polyhedral representation.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@amd.com> and
    Tobias Grosser <grosser@fim.uni-passau.de>.
 
@@ -21,6 +21,11 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_GRAPHITE_POLY_H
 #define GCC_GRAPHITE_POLY_H
+
+#ifndef HAVE_ISL_OPTIONS_SET_SCHEDULE_SERIALIZE_SCCS
+# define isl_stat int
+# define isl_stat_ok 0
+#endif
 
 typedef struct poly_dr *poly_dr_p;
 
@@ -349,6 +354,9 @@ struct poly_bb
   poly_scattering_p _saved;
   isl_map *saved;
 
+  /* For tiling, the map for computing the separating class.  */
+  isl_map *map_sepclass;
+
   /* True when this PBB contains only a reduction statement.  */
   bool is_reduction;
 };
@@ -377,14 +385,12 @@ extern void print_pbb_domain (FILE *, poly_bb_p, int);
 extern void print_pbb (FILE *, poly_bb_p, int);
 extern void print_scop_context (FILE *, scop_p, int);
 extern void print_scop (FILE *, scop_p, int);
-extern void print_cloog (FILE *, scop_p, int);
 extern void debug_pbb_domain (poly_bb_p, int);
 extern void debug_pbb (poly_bb_p, int);
 extern void print_pdrs (FILE *, poly_bb_p, int);
 extern void debug_pdrs (poly_bb_p, int);
 extern void debug_scop_context (scop_p, int);
 extern void debug_scop (scop_p, int);
-extern void debug_cloog (scop_p, int);
 extern void print_scop_params (FILE *, scop_p, int);
 extern void debug_scop_params (scop_p, int);
 extern void print_iteration_domain (FILE *, poly_bb_p, int);
@@ -403,7 +409,7 @@ extern int scop_do_interchange (scop_p);
 extern int scop_do_strip_mine (scop_p, int);
 extern bool scop_do_block (scop_p);
 extern bool flatten_all_loops (scop_p);
-extern bool optimize_isl(scop_p);
+extern bool optimize_isl (scop_p);
 extern void pbb_number_of_iterations_at_time (poly_bb_p, graphite_dim_t, mpz_t);
 extern void debug_gmp_value (mpz_t);
 
@@ -1376,10 +1382,6 @@ struct scop
     *must_war, *may_war, *must_war_no_source, *may_war_no_source,
     *must_waw, *may_waw, *must_waw_no_source, *may_waw_no_source;
 
-  /* A hashtable of the data dependence relations for the original
-     scattering.  */
-  htab_t original_pddrs;
-
   /* True when the scop has been converted to its polyhedral
      representation.  */
   bool poly_scop_p;
@@ -1388,7 +1390,6 @@ struct scop
 #define SCOP_BBS(S) (S->bbs)
 #define SCOP_REGION(S) ((sese) S->region)
 #define SCOP_CONTEXT(S) (NULL)
-#define SCOP_ORIGINAL_PDDRS(S) (S->original_pddrs)
 #define SCOP_ORIGINAL_SCHEDULE(S) (S->original_schedule)
 #define SCOP_TRANSFORMED_SCHEDULE(S) (S->transformed_schedule)
 #define SCOP_SAVED_SCHEDULE(S) (S->saved_schedule)
@@ -1407,7 +1408,6 @@ extern int scop_max_loop_depth (scop_p);
 extern int unify_scattering_dimensions (scop_p);
 extern bool apply_poly_transforms (scop_p);
 extern bool graphite_legal_transform (scop_p);
-extern void cloog_checksum (scop_p);
 
 /* Set the region of SCOP to REGION.  */
 
@@ -1536,9 +1536,6 @@ restore_scattering (scop_p scop)
 }
 
 bool graphite_legal_transform (scop_p);
-poly_bb_p find_pbb_via_hash (htab_t, basic_block);
-bool loop_is_parallel_p (loop_p, htab_t, int);
-scop_p get_loop_body_pbbs (loop_p, htab_t, vec<poly_bb_p> *);
 isl_map *reverse_loop_at_level (poly_bb_p, int);
 isl_union_map *reverse_loop_for_pbbs (scop_p, vec<poly_bb_p> , int);
 __isl_give isl_union_map *extend_schedule (__isl_take isl_union_map *);
@@ -1558,5 +1555,13 @@ compute_deps (scop_p scop, vec<poly_bb_p> pbbs,
 	      isl_union_map **may_waw,
 	      isl_union_map **must_waw_no_source,
 	      isl_union_map **may_waw_no_source);
+
+isl_union_map *
+scop_get_dependences (scop_p scop);
+
+bool
+carries_deps (__isl_keep isl_union_map *schedule,
+	      __isl_keep isl_union_map *deps,
+	      int depth);
 
 #endif

@@ -1,6 +1,6 @@
 /* Data structures and functions for streaming trees.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -22,9 +22,10 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_TREE_STREAMER_H
 #define GCC_TREE_STREAMER_H
 
-#include "tree.h"
 #include "streamer-hooks.h"
 #include "lto-streamer.h"
+#include "data-streamer.h"
+#include "hash-map.h"
 
 /* Cache of pickled nodes.  Used to avoid writing the same node more
    than once.  The first time a tree node is streamed out, it is
@@ -43,13 +44,19 @@ along with GCC; see the file COPYING3.  If not see
      T.  The reconstructed T is inserted in some array so that when
      the reference index for T is found in the input stream, it can be
      used to look up into the array to get the reconstructed T.  */
+
 struct streamer_tree_cache_d
 {
   /* The mapping between tree nodes and slots into the nodes array.  */
-  struct pointer_map_t *node_map;
+  hash_map<tree, unsigned> *node_map;
 
   /* The nodes pickled so far.  */
   vec<tree> nodes;
+  /* The node hashes (if available).  */
+  vec<hashval_t> hashes;
+
+  /* Next index to assign.  */
+  unsigned next_idx;
 };
 
 /* Return true if tree node EXPR should be streamed as a builtin.  For
@@ -71,40 +78,62 @@ tree streamer_alloc_tree (struct lto_input_block *, struct data_in *,
 void streamer_read_tree_body (struct lto_input_block *, struct data_in *, tree);
 tree streamer_get_pickled_tree (struct lto_input_block *, struct data_in *);
 tree streamer_get_builtin_tree (struct lto_input_block *, struct data_in *);
-tree streamer_read_integer_cst (struct lto_input_block *, struct data_in *);
-struct bitpack_d streamer_read_tree_bitfields (struct lto_input_block *,
-					       struct data_in *, tree);
+void streamer_read_tree_bitfields (struct lto_input_block *,
+				   struct data_in *, tree);
 
 /* In tree-streamer-out.c.  */
 void streamer_write_string_cst (struct output_block *,
 				struct lto_output_stream *, tree);
 void streamer_write_chain (struct output_block *, tree, bool);
 void streamer_write_tree_header (struct output_block *, tree);
-void streamer_pack_tree_bitfields (struct output_block *, struct bitpack_d *,
-				   tree);
+void streamer_write_tree_bitfields (struct output_block *, tree);
 void streamer_write_tree_body (struct output_block *, tree, bool);
 void streamer_write_integer_cst (struct output_block *, tree, bool);
 void streamer_write_builtin (struct output_block *, tree);
 
 /* In tree-streamer.c.  */
+extern unsigned char streamer_mode_table[1 << 8];
 void streamer_check_handled_ts_structures (void);
 bool streamer_tree_cache_insert (struct streamer_tree_cache_d *, tree,
-				 unsigned *);
-bool streamer_tree_cache_insert_at (struct streamer_tree_cache_d *, tree,
-				    unsigned);
-void streamer_tree_cache_append (struct streamer_tree_cache_d *, tree);
+				 hashval_t, unsigned *);
+void streamer_tree_cache_replace_tree (struct streamer_tree_cache_d *, tree,
+				       unsigned);
+void streamer_tree_cache_append (struct streamer_tree_cache_d *, tree,
+				 hashval_t);
 bool streamer_tree_cache_lookup (struct streamer_tree_cache_d *, tree,
 				 unsigned *);
-struct streamer_tree_cache_d *streamer_tree_cache_create (void);
+struct streamer_tree_cache_d *streamer_tree_cache_create (bool, bool, bool);
 void streamer_tree_cache_delete (struct streamer_tree_cache_d *);
 
 /* Return the tree node at slot IX in CACHE.  */
 
 static inline tree
-streamer_tree_cache_get (struct streamer_tree_cache_d *cache, unsigned ix)
+streamer_tree_cache_get_tree (struct streamer_tree_cache_d *cache, unsigned ix)
 {
   return cache->nodes[ix];
 }
 
+/* Return the tree hash value at slot IX in CACHE.  */
+
+static inline hashval_t
+streamer_tree_cache_get_hash (struct streamer_tree_cache_d *cache, unsigned ix)
+{
+  return cache->hashes[ix];
+}
+
+static inline void
+bp_pack_machine_mode (struct bitpack_d *bp, machine_mode mode)
+{
+  streamer_mode_table[mode] = 1;
+  bp_pack_enum (bp, machine_mode, 1 << 8, mode);
+}
+
+static inline machine_mode
+bp_unpack_machine_mode (struct bitpack_d *bp)
+{
+  return (machine_mode)
+	   ((struct lto_input_block *)
+	    bp->stream)->mode_table[bp_unpack_enum (bp, machine_mode, 1 << 8)];
+}
 
 #endif  /* GCC_TREE_STREAMER_H  */

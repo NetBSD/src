@@ -11,10 +11,13 @@ TEST=all-gcc
 # nohup nice make -j25 -l36 -f ../gcc/contrib/config-list.mk > make.out 2>&1 &
 #
 # v850e1-elf is rejected by config.sub
-LIST = alpha-linux-gnu alpha-freebsd6 alpha-netbsd alpha-openbsd \
+LIST = aarch64-elf aarch64-linux-gnu \
+  alpha-linux-gnu alpha-freebsd6 alpha-netbsd alpha-openbsd \
   alpha64-dec-vms alpha-dec-vms am33_2.0-linux \
+  arc-elf32OPT-with-cpu=arc600 arc-elf32OPT-with-cpu=arc700 \
+  arc-linux-uclibcOPT-with-cpu=arc700 arceb-linux-uclibcOPT-with-cpu=arc700 \
   arm-wrs-vxworks arm-netbsdelf \
-  arm-linux-androideabi arm-uclinux_eabi arm-eabi \
+  arm-linux-androideabi arm-uclinux_eabi arm-eabi arm-rtems \
   arm-symbianelf avr-rtems avr-elf \
   bfin-elf bfin-uclinux bfin-linux-uclibc bfin-rtems bfin-openbsd \
   c6x-elf c6x-uclinux cr16-elf cris-elf cris-linux crisv32-elf crisv32-linux \
@@ -42,14 +45,19 @@ LIST = alpha-linux-gnu alpha-freebsd6 alpha-netbsd alpha-openbsd \
   mipsisa64-elfoabi mipsisa64r2el-elf mipsisa64sr71k-elf mipsisa64sb1-elf \
   mipsel-elf mips64-elf mips64vr-elf mips64orion-elf mips-rtems \
   mips-wrs-vxworks mipstx39-elf mmix-knuth-mmixware mn10300-elf moxie-elf \
-  moxie-uclinux moxie-rtems pdp11-aout picochip-elfOPT-enable-obsolete \
+  moxie-uclinux moxie-rtems \
+  msp430-elf \
+  nds32le-elf nds32be-elf \
+  nios2-elf nios2-linux-gnu nios2-rtems \
+  pdp11-aout \
   powerpc-darwin8 \
   powerpc-darwin7 powerpc64-darwin powerpc-freebsd6 powerpc-netbsd \
   powerpc-eabispe powerpc-eabisimaltivec powerpc-eabisim ppc-elf \
   powerpc-eabialtivec powerpc-xilinx-eabi powerpc-eabi \
-  powerpc-rtems4.11OPT-enable-threads=yes powerpc-linux_spe \
+  powerpc-rtems powerpc-linux_spe \
   powerpc-linux_paired powerpc64-linux_altivec \
-  powerpc-wrs-vxworks powerpc-wrs-vxworksae powerpc-lynxos powerpcle-elf \
+  powerpc-wrs-vxworks powerpc-wrs-vxworksae powerpc-wrs-vxworksmils \
+  powerpc-lynxos powerpcle-elf \
   powerpcle-eabisim powerpcle-eabi rs6000-ibm-aix4.3 rs6000-ibm-aix5.1.0 \
   rs6000-ibm-aix5.2.0 rs6000-ibm-aix5.3.0 rs6000-ibm-aix6.0 \
   rl78-elf rx-elf s390-linux-gnu s390x-linux-gnu s390x-ibm-tpf sh-elf \
@@ -59,21 +67,24 @@ LIST = alpha-linux-gnu alpha-freebsd6 alpha-netbsd alpha-openbsd \
   sparc-leon3-linux-gnuOPT-enable-target=all sparc-netbsdelf \
   sparc64-sun-solaris2.10OPT-with-gnu-ldOPT-with-gnu-asOPT-enable-threads=posix \
   sparc-wrs-vxworks sparc64-elf sparc64-rtems sparc64-linux sparc64-freebsd6 \
-  sparc64-netbsd sparc64-openbsd spu-elf tilegx-linux-gnu tilepro-linux-gnu \
-  v850e-elf v850-elf vax-linux-gnu \
-  vax-netbsdelf vax-openbsd x86_64-apple-darwin \
+  sparc64-netbsd sparc64-openbsd spu-elf \
+  tilegx-linux-gnu tilegxbe-linux-gnu tilepro-linux-gnu \
+  v850e-elf v850-elf v850-rtems vax-linux-gnu \
+  vax-netbsdelf vax-openbsd visium-elf x86_64-apple-darwin \
   x86_64-pc-linux-gnuOPT-with-fpmath=avx \
   x86_64-elfOPT-with-fpmath=sse x86_64-freebsd6 x86_64-netbsd \
   x86_64-knetbsd-gnu x86_64-w64-mingw32 \
   x86_64-mingw32OPT-enable-sjlj-exceptions=yes xstormy16-elf xtensa-elf \
-  xtensa-linux sparc-sun-solaris2.9 i686-solaris2.9 \
-  i686-interix3OPT-enable-obsolete score-elfOPT-enable-obsolete
+  xtensa-linux \
+  i686-interix3OPT-enable-obsolete
 
 LOGFILES = $(patsubst %,log/%-make.out,$(LIST))
 all: $(LOGFILES)
 config: $(LIST)
+show:
+	@echo $(LIST)
 
-.PHONY: make-log-dir all config
+.PHONY: make-log-dir all config show
 
 empty=
 
@@ -84,11 +95,23 @@ make-log-dir: ../gcc/MAINTAINERS
 
 $(LIST): make-log-dir
 	-mkdir $@
-	(cd $@ && \
-	../../gcc/configure \
-	--target=$(subst SCRIPTS,`pwd`/../scripts/,$(subst OPT,$(empty) -,$@)) \
-	--enable-werror-always ${host_options} --enable-languages=all,ada,go) \
-	> log/$@-config.out 2>&1
+	(											\
+		cd $@ &&									\
+		TGT=`echo $@ | awk 'BEGIN { FS = "OPT" }; { print $$1 }'` &&			\
+		TGT=`../../gcc/config.sub $$TGT` &&						\
+		case $$TGT in									\
+			*-*-darwin* | *-*-cygwin* | *-*-mingw* | *-*-aix*)			\
+				ADDITIONAL_LANGUAGES="";					\
+				;;								\
+			*)									\
+				ADDITIONAL_LANGUAGES=",go";					\
+				;;								\
+		esac &&										\
+		../../gcc/configure								\
+			--target=$(subst SCRIPTS,`pwd`/../scripts/,$(subst OPT,$(empty) -,$@))	\
+			--enable-werror-always ${host_options}					\
+			--enable-languages=all,ada$$ADDITIONAL_LANGUAGES;			\
+	) > log/$@-config.out 2>&1
 
 $(LOGFILES) : log/%-make.out : %
 	-$(MAKE) -C $< $(TEST) > $@ 2>&1 && rm -rf $<

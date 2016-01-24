@@ -1,6 +1,6 @@
 ## Makefile for the include subdirectory of the GNU C++ Standard library.
 ##
-## Copyright (C) 2001-2013 Free Software Foundation, Inc.
+## Copyright (C) 2001-2015 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -31,6 +31,7 @@ std_headers = \
 	${std_srcdir}/atomic \
 	${std_srcdir}/bitset \
 	${std_srcdir}/chrono \
+	${std_srcdir}/codecvt \
 	${std_srcdir}/complex \
 	${std_srcdir}/condition_variable \
 	${std_srcdir}/deque \
@@ -58,6 +59,7 @@ std_headers = \
 	${std_srcdir}/regex \
 	${std_srcdir}/scoped_allocator \
 	${std_srcdir}/set \
+	${std_srcdir}/shared_mutex \
 	${std_srcdir}/sstream \
 	${std_srcdir}/stack \
 	${std_srcdir}/stdexcept \
@@ -79,19 +81,23 @@ bits_builddir = ./bits
 bits_headers = \
 	${bits_srcdir}/algorithmfwd.h \
 	${bits_srcdir}/alloc_traits.h \
+	${bits_srcdir}/allocated_ptr.h \
 	${bits_srcdir}/allocator.h \
 	${bits_srcdir}/atomic_base.h \
+	${bits_srcdir}/atomic_futex.h \
 	${bits_srcdir}/basic_ios.h \
 	${bits_srcdir}/basic_ios.tcc \
 	${bits_srcdir}/basic_string.h \
 	${bits_srcdir}/basic_string.tcc \
 	${bits_srcdir}/boost_concept_check.h \
 	${bits_srcdir}/c++0x_warning.h \
+	${bits_srcdir}/c++14_warning.h \
 	${bits_srcdir}/char_traits.h \
 	${bits_srcdir}/codecvt.h \
 	${bits_srcdir}/concept_check.h \
 	${bits_srcdir}/cpp_type_traits.h \
 	${bits_srcdir}/deque.tcc \
+	${bits_srcdir}/enable_special_members.h \
 	${bits_srcdir}/forward_list.h \
 	${bits_srcdir}/forward_list.tcc \
 	${bits_srcdir}/fstream.tcc \
@@ -107,6 +113,7 @@ bits_headers = \
 	${bits_srcdir}/list.tcc \
 	${bits_srcdir}/locale_classes.h \
 	${bits_srcdir}/locale_classes.tcc \
+	${bits_srcdir}/locale_conv.h \
 	${bits_srcdir}/locale_facets.h \
 	${bits_srcdir}/locale_facets.tcc \
 	${bits_srcdir}/locale_facets_nonio.h \
@@ -117,23 +124,30 @@ bits_headers = \
 	${bits_srcdir}/move.h \
 	${bits_srcdir}/ostream.tcc \
 	${bits_srcdir}/ostream_insert.h \
+	${bits_srcdir}/parse_numbers.h \
 	${bits_srcdir}/postypes.h \
+	${bits_srcdir}/predefined_ops.h \
 	${bits_srcdir}/ptr_traits.h \
+	${bits_srcdir}/quoted_string.h \
 	${bits_srcdir}/random.h \
 	${bits_srcdir}/random.tcc \
 	${bits_srcdir}/range_access.h \
 	${bits_srcdir}/regex.h \
-	${bits_srcdir}/regex_compiler.h \
+	${bits_srcdir}/regex.tcc \
 	${bits_srcdir}/regex_constants.h \
-	${bits_srcdir}/regex_cursor.h \
 	${bits_srcdir}/regex_error.h \
-	${bits_srcdir}/regex_grep_matcher.h \
-	${bits_srcdir}/regex_grep_matcher.tcc \
-	${bits_srcdir}/regex_nfa.h \
-	${bits_srcdir}/regex_nfa.tcc \
+	${bits_srcdir}/regex_scanner.h \
+	${bits_srcdir}/regex_scanner.tcc \
+	${bits_srcdir}/regex_automaton.h \
+	${bits_srcdir}/regex_automaton.tcc \
+	${bits_srcdir}/regex_compiler.h \
+	${bits_srcdir}/regex_compiler.tcc \
+	${bits_srcdir}/regex_executor.h \
+	${bits_srcdir}/regex_executor.tcc \
 	${bits_srcdir}/stream_iterator.h \
 	${bits_srcdir}/streambuf_iterator.h \
 	${bits_srcdir}/shared_ptr.h \
+	${bits_srcdir}/shared_ptr_atomic.h \
 	${bits_srcdir}/shared_ptr_base.h \
 	${bits_srcdir}/slice_array.h \
 	${bits_srcdir}/sstream.tcc \
@@ -494,6 +508,7 @@ ext_srcdir = ${glibcxx_srcdir}/include/ext
 ext_builddir = ./ext
 ext_headers = \
 	${ext_srcdir}/algorithm \
+	${ext_srcdir}/aligned_buffer.h \
 	${ext_srcdir}/alloc_traits.h \
 	${ext_srcdir}/atomicity.h \
 	${ext_srcdir}/array_allocator.h \
@@ -615,6 +630,7 @@ tr2_headers = \
 	${tr2_srcdir}/bool_set \
 	${tr2_srcdir}/bool_set.tcc \
 	${tr2_srcdir}/dynamic_bitset \
+	${tr2_srcdir}/dynamic_bitset.tcc \
 	${tr2_srcdir}/ratio \
 	${tr2_srcdir}/type_traits
 
@@ -623,6 +639,34 @@ decimal_builddir = ./decimal
 decimal_headers = \
 	${decimal_srcdir}/decimal \
 	${decimal_srcdir}/decimal.h
+
+# Post-C++11 TS's
+experimental_srcdir = ${glibcxx_srcdir}/include/experimental
+experimental_builddir = ./experimental
+experimental_headers = \
+	${experimental_srcdir}/algorithm \
+	${experimental_srcdir}/any \
+	${experimental_srcdir}/chrono \
+	${experimental_srcdir}/functional \
+	${experimental_srcdir}/optional \
+	${experimental_srcdir}/ratio \
+	${experimental_srcdir}/string_view \
+	${experimental_srcdir}/string_view.tcc \
+	${experimental_srcdir}/system_error \
+	${experimental_srcdir}/tuple \
+	${experimental_srcdir}/type_traits \
+	${experimental_filesystem_headers}
+
+if ENABLE_FILESYSTEM_TS
+experimental_filesystem_headers = \
+	${experimental_srcdir}/filesystem \
+	${experimental_srcdir}/fs_dir.h \
+	${experimental_srcdir}/fs_fwd.h \
+	${experimental_srcdir}/fs_ops.h \
+	${experimental_srcdir}/fs_path.h
+else
+experimental_filesystem_headers =
+endif
 
 # This is the common subset of C++ files that all three "C" header models use.
 c_base_srcdir = $(C_INCLUDE_DIR)
@@ -715,6 +759,7 @@ debug_headers = \
 	${debug_srcdir}/multimap.h \
 	${debug_srcdir}/multiset.h \
 	${debug_srcdir}/safe_base.h \
+	${debug_srcdir}/safe_container.h \
 	${debug_srcdir}/safe_iterator.h \
 	${debug_srcdir}/safe_iterator.tcc \
 	${debug_srcdir}/safe_local_iterator.h \
@@ -797,6 +842,7 @@ profile_headers = \
 	${profile_srcdir}/map.h \
 	${profile_srcdir}/multimap.h \
 	${profile_srcdir}/multiset.h \
+	${profile_srcdir}/ordered_base.h \
 	${profile_srcdir}/set \
 	${profile_srcdir}/set.h \
 	${profile_srcdir}/iterator_tracker.h
@@ -889,7 +935,7 @@ pch_output_dirs = \
 	${pch1_output_builddir} ${pch2_output_builddir} ${pch3_output_builddir}
 pch_output_anchors = \
 	${pch1_output_anchor} ${pch2_output_anchor} ${pch3_output_anchor}
-PCHFLAGS=-x c++-header -nostdinc++ $(CXXFLAGS)
+PCHFLAGS=-x c++-header -nostdinc++ $(CXXFLAGS) $(VTV_PCH_CXXFLAGS)
 if GLIBCXX_BUILD_PCH
 pch_build = ${pch_output}
 else
@@ -901,8 +947,8 @@ endif
 allstamped = \
 	stamp-std stamp-bits stamp-bits-sup stamp-c_base stamp-c_compatibility \
 	stamp-backward stamp-ext stamp-pb stamp-tr1 stamp-tr2 stamp-decimal \
-	stamp-debug stamp-parallel stamp-profile stamp-profile-impl \
-	stamp-host
+	stamp-experimental stamp-debug stamp-parallel stamp-profile \
+	stamp-profile-impl stamp-host
 
 # List of all files that are created by explicit building, editing, or
 # catenation.
@@ -1025,6 +1071,11 @@ stamp-decimal: ${decimal_headers}
 	@-cd ${decimal_builddir} && $(LN_S) $? . 2>/dev/null
 	@$(STAMP) stamp-decimal
 
+stamp-experimental: ${experimental_headers}
+	@-mkdir -p ${experimental_builddir}
+	@-cd ${experimental_builddir} && $(LN_S) $? . 2>/dev/null
+	@$(STAMP) stamp-experimental
+
 stamp-debug: ${debug_headers}
 	@-mkdir -p ${debug_builddir}
 	@-cd ${debug_builddir} && $(LN_S) $? . 2>/dev/null
@@ -1094,6 +1145,22 @@ stamp-visibility:
 	echo 0 > stamp-visibility
 endif
 
+if ENABLE_DUAL_ABI
+stamp-dual-abi:
+	echo 1 > stamp-dual-abi
+else
+stamp-dual-abi:
+	echo 0 > stamp-dual-abi
+endif
+
+if ENABLE_CXX11_ABI
+stamp-cxx11-abi:
+	echo 1 > stamp-cxx11-abi
+else
+stamp-cxx11-abi:
+	echo 0 > stamp-cxx11-abi
+endif
+
 # NB: The non-empty default ldbl_compat works around an AIX sed
 # oddity, see libstdc++/31957 for details.
 ${host_builddir}/c++config.h: ${CONFIG_HEADER} \
@@ -1102,11 +1169,15 @@ ${host_builddir}/c++config.h: ${CONFIG_HEADER} \
 			      ${toplevel_srcdir}/gcc/DATESTAMP \
 			      stamp-namespace-version \
 			      stamp-visibility \
-			      stamp-extern-template
+			      stamp-extern-template \
+			      stamp-dual-abi \
+			      stamp-cxx11-abi
 	@date=`cat ${toplevel_srcdir}/gcc/DATESTAMP` ;\
 	ns_version=`cat stamp-namespace-version` ;\
 	visibility=`cat stamp-visibility` ;\
 	externtemplate=`cat stamp-extern-template` ;\
+	dualabi=`cat stamp-dual-abi` ;\
+	cxx11abi=`cat stamp-cxx11-abi` ;\
 	ldbl_compat='s,g,g,' ;\
 	grep "^[	 ]*#[	 ]*define[	 ][	 ]*_GLIBCXX_LONG_DOUBLE_COMPAT[	 ][	 ]*1[	 ]*$$" \
 	${CONFIG_HEADER} > /dev/null 2>&1 \
@@ -1115,6 +1186,8 @@ ${host_builddir}/c++config.h: ${CONFIG_HEADER} \
 	-e "s,define _GLIBCXX_INLINE_VERSION, define _GLIBCXX_INLINE_VERSION $$ns_version," \
 	-e "s,define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY, define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY $$visibility," \
 	-e "s,define _GLIBCXX_EXTERN_TEMPLATE$$, define _GLIBCXX_EXTERN_TEMPLATE $$externtemplate," \
+	-e "s,define _GLIBCXX_USE_DUAL_ABI, define _GLIBCXX_USE_DUAL_ABI $$dualabi," \
+	-e "s,define _GLIBCXX_USE_CXX11_ABI, define _GLIBCXX_USE_CXX11_ABI $$cxx11abi," \
 	-e "$$ldbl_compat" \
 	    < ${glibcxx_srcdir}/include/bits/c++config > $@ ;\
 	sed -e 's/HAVE_/_GLIBCXX_HAVE_/g' \
@@ -1196,24 +1269,28 @@ else
 install-data-local: install-freestanding-headers
 endif
 
-# This is a subset of the full install-headers rule.  We only need <cstddef>,
-# <limits>, <cstdlib>, <cstdarg>, <new>, <typeinfo>, <exception>, and any
-# files which they include (and which we provide).  The last three headers
-# are installed by libsupc++, so only the first four and the sub-includes
-# are copied here.
+# This is a subset of the full install-headers rule.  We only need <ciso646>,
+# <cstddef>, <cfloat>, <limits>, <climits>, <cstdint>, <cstdlib>, <new>,
+# <typeinfo>, <exception>, <initializer_list>, <cstdalign>, <cstdarg>,
+# <cstdbool>, <type_traits>, <atomic>, and any files which they include (and
+# which we provide).
+# <new>, <typeinfo>, <exception>, and <initializer_list> are installed by
+# libsupc++, so only the others and the sub-includes are copied here.
 install-freestanding-headers:
 	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}/bits
+	for file in c++0x_warning.h atomic_base.h; do \
+	  $(INSTALL_DATA) ${glibcxx_srcdir}/include/bits/$${file} $(DESTDIR)${gxx_include_dir}/bits; done
 	$(mkinstalldirs) $(DESTDIR)${host_installdir}
-	$(INSTALL_DATA) ${glibcxx_srcdir}/include/bits/c++0x_warning.h \
-	  $(DESTDIR)${gxx_include_dir}/bits
 	for file in ${host_srcdir}/os_defines.h ${host_builddir}/c++config.h \
 	  ${glibcxx_srcdir}/$(ABI_TWEAKS_SRCDIR)/cxxabi_tweaks.h \
 	  ${glibcxx_srcdir}/$(CPU_DEFINES_SRCDIR)/cpu_defines.h; do \
 	  $(INSTALL_DATA) $${file} $(DESTDIR)${host_installdir}; done
 	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}/${std_builddir}
-	$(INSTALL_DATA) ${std_builddir}/limits $(DESTDIR)${gxx_include_dir}/${std_builddir}
+	for file in limits type_traits atomic; do \
+	  $(INSTALL_DATA) ${std_builddir}/$${file} $(DESTDIR)${gxx_include_dir}/${std_builddir}; done
 	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}/${c_base_builddir}
-	for file in cstddef cstdlib cstdarg; do \
+	for file in ciso646 cstddef cfloat climits cstdint cstdlib \
+	  cstdalign cstdarg cstdbool; do \
 	  $(INSTALL_DATA) ${c_base_builddir}/$${file} $(DESTDIR)${gxx_include_dir}/${c_base_builddir}; done
 
 # The real deal.
@@ -1268,6 +1345,9 @@ install-headers:
 	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}/${decimal_builddir}
 	for file in ${decimal_headers}; do \
 	  $(INSTALL_DATA) $${file} $(DESTDIR)${gxx_include_dir}/${decimal_builddir}; done
+	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}/${experimental_builddir}
+	for file in ${experimental_headers}; do \
+	  $(INSTALL_DATA) $${file} $(DESTDIR)${gxx_include_dir}/${experimental_builddir}; done
 	$(mkinstalldirs) $(DESTDIR)${gxx_include_dir}/${c_base_builddir}
 	for file in ${c_base_headers}; do \
 	  $(INSTALL_DATA) $${file} $(DESTDIR)${gxx_include_dir}/${c_base_builddir}; done
@@ -1313,9 +1393,10 @@ clean-local:
 # directory. (This is more of an example of how this kind of rule can
 # be made.)
 .PRECIOUS: $(std_headers) $(c_base_headers) $(tr1_headers) $(tr2_headers)
-	   $(decimal_headers) $(ext_headers)
+	   $(decimal_headers) $(ext_headers) $(experimental_headers)
 $(std_headers): ; @:
 $(c_base_headers): ; @:
 $(tr1_headers): ; @:
 $(decimal_headers): ; @:
 $(ext_headers): ; @:
+$(experimental_headers): ; @:

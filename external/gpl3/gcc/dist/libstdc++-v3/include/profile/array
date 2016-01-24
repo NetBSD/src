@@ -1,6 +1,6 @@
 // Profile array implementation -*- C++ -*-
 
-// Copyright (C) 2012-2013 Free Software Foundation, Inc.
+// Copyright (C) 2012-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -83,19 +83,19 @@ namespace __profile
       end() const noexcept
       { return const_iterator(data() + _Nm); }
 
-      reverse_iterator 
+      reverse_iterator
       rbegin() noexcept
       { return reverse_iterator(end()); }
 
-      const_reverse_iterator 
+      const_reverse_iterator
       rbegin() const noexcept
       { return const_reverse_iterator(end()); }
 
-      reverse_iterator 
+      reverse_iterator
       rend() noexcept
       { return reverse_iterator(begin()); }
 
-      const_reverse_iterator 
+      const_reverse_iterator
       rend() const noexcept
       { return const_reverse_iterator(begin()); }
 
@@ -107,27 +107,27 @@ namespace __profile
       cend() const noexcept
       { return const_iterator(data() + _Nm); }
 
-      const_reverse_iterator 
+      const_reverse_iterator
       crbegin() const noexcept
       { return const_reverse_iterator(end()); }
 
-      const_reverse_iterator 
+      const_reverse_iterator
       crend() const noexcept
       { return const_reverse_iterator(begin()); }
 
       // Capacity.
-      constexpr size_type 
+      constexpr size_type
       size() const noexcept { return _Nm; }
 
-      constexpr size_type 
+      constexpr size_type
       max_size() const noexcept { return _Nm; }
 
-      constexpr bool 
+      constexpr bool
       empty() const noexcept { return size() == 0; }
 
       // Element access.
       reference
-      operator[](size_type __n)
+      operator[](size_type __n) noexcept
       {	return _AT_Type::_S_ref(_M_elems, __n); }
 
       constexpr const_reference
@@ -138,7 +138,10 @@ namespace __profile
       at(size_type __n)
       {
 	if (__n >= _Nm)
-	  std::__throw_out_of_range(__N("array::at"));
+	  std::__throw_out_of_range_fmt(__N("array::at: __n "
+				            "(which is %zu) >= _Nm "
+					    "(which is %zu)"),
+					__n, _Nm);
 	return _AT_Type::_S_ref(_M_elems, __n);
       }
 
@@ -148,41 +151,43 @@ namespace __profile
 	// Result of conditional expression must be an lvalue so use
 	// boolean ? lvalue : (throw-expr, lvalue)
 	return __n < _Nm ? _AT_Type::_S_ref(_M_elems, __n)
-	  : (std::__throw_out_of_range(__N("array::at")),
+	  : (std::__throw_out_of_range_fmt(__N("array::at: __n (which is %zu) "
+					       ">= _Nm (which is %zu)"),
+					   __n, _Nm),
 	     _AT_Type::_S_ref(_M_elems, 0));
       }
 
-      reference 
-      front()
+      reference
+      front() noexcept
       { return *begin(); }
 
-      constexpr const_reference 
-      front() const
+      constexpr const_reference
+      front() const noexcept
       { return _AT_Type::_S_ref(_M_elems, 0); }
 
-      reference 
-      back()
+      reference
+      back() noexcept
       { return _Nm ? *(end() - 1) : *end(); }
 
-      constexpr const_reference 
-      back() const
+      constexpr const_reference
+      back() const noexcept
       {
 	return _Nm ? _AT_Type::_S_ref(_M_elems, _Nm - 1)
- 	           : _AT_Type::_S_ref(_M_elems, 0);	  
+		   : _AT_Type::_S_ref(_M_elems, 0);
       }
 
       pointer
       data() noexcept
-      { return std::__addressof(_AT_Type::_S_ref(_M_elems, 0)); }
+      { return _AT_Type::_S_ptr(_M_elems); }
 
       const_pointer
       data() const noexcept
-      { return std::__addressof(_AT_Type::_S_ref(_M_elems, 0)); }
+      { return _AT_Type::_S_ptr(_M_elems); }
     };
 
   // Array comparisons.
   template<typename _Tp, std::size_t _Nm>
-    inline bool 
+    inline bool
     operator==(const array<_Tp, _Nm>& __one, const array<_Tp, _Nm>& __two)
     { return std::equal(__one.begin(), __one.end(), __two.begin()); }
 
@@ -194,9 +199,9 @@ namespace __profile
   template<typename _Tp, std::size_t _Nm>
     inline bool
     operator<(const array<_Tp, _Nm>& __a, const array<_Tp, _Nm>& __b)
-    { 
+    {
       return std::lexicographical_compare(__a.begin(), __a.end(),
-					  __b.begin(), __b.end()); 
+					  __b.begin(), __b.end());
     }
 
   template<typename _Tp, std::size_t _Nm>
@@ -235,7 +240,7 @@ namespace __profile
     get(array<_Tp, _Nm>&& __arr) noexcept
     {
       static_assert(_Int < _Nm, "index is out of bounds");
-      return std::move(get<_Int>(__arr));
+      return std::move(__profile::get<_Int>(__arr));
     }
 
   template<std::size_t _Int, typename _Tp, std::size_t _Nm>

@@ -1,5 +1,5 @@
 /* Dynamic testing for abstract is-a relationships.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Lawrence Crowl.
 
 This file is part of GCC.
@@ -31,24 +31,32 @@ bool is_a <TYPE> (pointer)
 
     Tests whether the pointer actually points to a more derived TYPE.
 
-    Suppose you have a symtab_node_def *ptr, AKA symtab_node ptr.  You can test
+    Suppose you have a symtab_node *ptr, AKA symtab_node *ptr.  You can test
     whether it points to a 'derived' cgraph_node as follows.
 
-      if (is_a <cgraph_node> (ptr))
+      if (is_a <cgraph_node *> (ptr))
         ....
 
 
-TYPE *as_a <TYPE> (pointer)
+TYPE as_a <TYPE> (pointer)
 
-    Converts pointer to a TYPE*.
+    Converts pointer to a TYPE.
 
     You can just assume that it is such a node.
 
-      do_something_with (as_a <cgraph_node> *ptr);
+      do_something_with (as_a <cgraph_node *> *ptr);
 
-TYPE *dyn_cast <TYPE> (pointer)
+TYPE safe_as_a <TYPE> (pointer)
 
-    Converts pointer to TYPE* if and only if "is_a <TYPE> pointer".  Otherwise,
+    Like as_a <TYPE> (pointer), but where pointer could be NULL.  This
+    adds a check against NULL where the regular is_a_helper hook for TYPE
+    assumes non-NULL.
+
+      do_something_with (safe_as_a <cgraph_node *> *ptr);
+
+TYPE dyn_cast <TYPE> (pointer)
+
+    Converts pointer to TYPE if and only if "is_a <TYPE> pointer".  Otherwise,
     returns NULL.  This function is essentially a checked down cast.
 
     This functions reduce compile time and increase type safety when treating a
@@ -57,7 +65,7 @@ TYPE *dyn_cast <TYPE> (pointer)
     You can test and obtain a pointer to the 'derived' type in one indivisible
     operation.
 
-      if (cgraph_node *cptr = dyn_cast <cgraph_node> (ptr))
+      if (cgraph_node *cptr = dyn_cast <cgraph_node *> (ptr))
         ....
 
     As an example, the code change is from
@@ -70,7 +78,7 @@ TYPE *dyn_cast <TYPE> (pointer)
 
     to
 
-      if (cgraph_node *cnode = dyn_cast <cgraph_node> (node))
+      if (cgraph_node *cnode = dyn_cast <cgraph_node *> (node))
         {
           ....
         }
@@ -88,7 +96,7 @@ TYPE *dyn_cast <TYPE> (pointer)
 
     becomes
 
-      varpool_node *vnode = dyn_cast <varpool_node> (node);
+      varpool_node *vnode = dyn_cast <varpool_node *> (node);
       if (vnode && vnode->finalized)
         varpool_analyze_node (vnode);
 
@@ -110,9 +118,9 @@ example,
   template <>
   template <>
   inline bool
-  is_a_helper <cgraph_node>::test (symtab_node_def *p)
+  is_a_helper <cgraph_node *>::test (symtab_node *p)
   {
-    return p->symbol.type == SYMTAB_FUNCTION;
+    return p->type == SYMTAB_FUNCTION;
   }
 
 If a simple reinterpret_cast between the pointer types is incorrect, then you
@@ -122,7 +130,7 @@ when needed may result in a crash.  For example,
   template <>
   template <>
   inline bool
-  is_a_helper <cgraph_node>::cast (symtab_node_def *p)
+  is_a_helper <cgraph_node *>::cast (symtab_node *p)
   {
     return &p->x_function;
   }
@@ -140,7 +148,7 @@ struct is_a_helper
   template <typename U>
   static inline bool test (U *p);
   template <typename U>
-  static inline T *cast (U *p);
+  static inline T cast (U *p);
 };
 
 /* Note that we deliberately do not define the 'test' member template.  Not
@@ -154,10 +162,10 @@ struct is_a_helper
 
 template <typename T>
 template <typename U>
-inline T *
+inline T
 is_a_helper <T>::cast (U *p)
 {
-  return reinterpret_cast <T *> (p);
+  return reinterpret_cast <T> (p);
 }
 
 
@@ -178,24 +186,40 @@ is_a (U *p)
    discussion above for when to use this function.  */
 
 template <typename T, typename U>
-inline T *
+inline T
 as_a (U *p)
 {
-  gcc_assert (is_a <T> (p));
+  gcc_checking_assert (is_a <T> (p));
   return is_a_helper <T>::cast (p);
+}
+
+/* Similar to as_a<>, but where the pointer can be NULL, even if
+   is_a_helper<T> doesn't check for NULL.  */
+
+template <typename T, typename U>
+inline T
+safe_as_a (U *p)
+{
+  if (p)
+    {
+      gcc_checking_assert (is_a <T> (p));
+      return is_a_helper <T>::cast (p);
+    }
+  else
+    return NULL;
 }
 
 /* A generic checked conversion from a base type U to a derived type T.  See
    the discussion above for when to use this function.  */
 
 template <typename T, typename U>
-inline T *
+inline T
 dyn_cast (U *p)
 {
   if (is_a <T> (p))
     return is_a_helper <T>::cast (p);
   else
-    return static_cast <T *> (0);
+    return static_cast <T> (0);
 }
 
 #endif  /* GCC_IS_A_H  */

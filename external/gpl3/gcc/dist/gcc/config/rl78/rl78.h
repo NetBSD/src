@@ -1,5 +1,5 @@
 /* GCC backend definitions for the Renesas RL78 processor.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -32,6 +32,8 @@
 	builtin_define ("__RL78_MUL_RL78__"); 	\
       if (RL78_MUL_G13)				\
 	builtin_define ("__RL78_MUL_G13__"); 	\
+      if (TARGET_G10)				\
+	builtin_define ("__RL78_G10__"); 	\
     }                                           \
   while (0)
 
@@ -40,6 +42,18 @@
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC "crtend.o%s crtn.o%s"
+
+#undef  ASM_SPEC
+#define ASM_SPEC "\
+%{mrelax:-relax} \
+%{mg10} \
+"
+
+#undef  LINK_SPEC
+#define LINK_SPEC "\
+%{mrelax:-relax} \
+%{!r:--gc-sections} \
+"
 
 #undef  LIB_SPEC
 #define LIB_SPEC "					\
@@ -84,9 +98,6 @@
 #define DOUBLE_TYPE_SIZE 		32 /*64*/
 #define LONG_DOUBLE_TYPE_SIZE		64 /*DOUBLE_TYPE_SIZE*/
 
-#define LIBGCC2_HAS_DF_MODE		1
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE   64
-
 #define DEFAULT_SIGNED_CHAR		0
 
 #define STRICT_ALIGNMENT 		1
@@ -123,7 +134,8 @@
 
 #define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC)   1
 
-#define ADDR_SPACE_FAR	1
+#define ADDR_SPACE_NEAR			1
+#define ADDR_SPACE_FAR			2
 
 #define HAVE_PRE_DECCREMENT		0
 #define HAVE_POST_INCREMENT		0
@@ -133,7 +145,6 @@
 
 #define STORE_FLAG_VALUE		1
 #define LOAD_EXTEND_OP(MODE)		ZERO_EXTEND
-#define SHORT_IMMEDIATES_SIGN_EXTEND	0
 
 
 /* The RL78 has four register banks.  Normal operation uses RB0 as
@@ -231,6 +242,8 @@ enum reg_class
   "ALL_REGS"						\
 }
 
+/* Note that no class may include the second register in $fp, because
+   we treat $fp as a single HImode register.  */
 #define REG_CLASS_CONTENTS				\
 {							\
   { 0x00000000, 0x00000000 },	/* No registers,  */		\
@@ -252,8 +265,8 @@ enum reg_class
   { 0x00000300, 0x00000000 }, 	/* R8 - HImode */		\
   { 0x00000c00, 0x00000000 }, 	/* R10 - HImode */		\
   { 0xff000000, 0x00000000 }, 	/* INT - HImode */		\
-  { 0x007fff00, 0x00000000 },	/* Virtual registers.  */	\
-  { 0xff7fffff, 0x00000002 },	/* General registers.  */	\
+  { 0xff7fff00, 0x00000000 },	/* Virtual registers.  */	\
+  { 0xff7fff00, 0x00000002 },	/* General registers.  */	\
   { 0x04000000, 0x00000004 },	/* PSW.  */	\
   { 0xff7fffff, 0x0000001f }	/* All registers.  */		\
 }
@@ -339,7 +352,7 @@ enum reg_class
        && reg_renumber[(REGNO)] <= (MAX)))
 
 #ifdef REG_OK_STRICT
-#define REGNO_OK_FOR_BASE_P(regno)      REGNO_IN_RANGE (regno, 16, 23)
+#define REGNO_OK_FOR_BASE_P(regno)      REGNO_IN_RANGE (regno, 16, 31)
 #else
 #define REGNO_OK_FOR_BASE_P(regno)	1
 #endif
@@ -413,6 +426,16 @@ typedef unsigned int CUMULATIVE_ARGS;
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   fprintf (FILE, "\t.long .L%d - 1b\n", VALUE)
 
+
+#define ASM_OUTPUT_SYMBOL_REF(FILE, SYM) rl78_output_symbol_ref ((FILE), (SYM))
+
+#define ASM_OUTPUT_LABELREF(FILE, SYM) rl78_output_labelref ((FILE), (SYM))
+
+#define ASM_OUTPUT_ALIGNED_DECL_COMMON(STREAM, DECL, NAME, SIZE, ALIGNMENT) \
+	rl78_output_aligned_common (STREAM, DECL, NAME, SIZE, ALIGNMENT, 1)
+
+#define ASM_OUTPUT_ALIGNED_DECL_LOCAL(STREAM, DECL, NAME, SIZE, ALIGNMENT) \
+	rl78_output_aligned_common (STREAM, DECL, NAME, SIZE, ALIGNMENT, 0)
 
 #define ASM_OUTPUT_ALIGN(STREAM, LOG)		\
   do						\

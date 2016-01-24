@@ -1,6 +1,6 @@
 // Iostreams base classes -*- C++ -*-
 
-// Copyright (C) 1997-2013 Free Software Foundation, Inc.
+// Copyright (C) 1997-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -53,6 +53,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     _M_call_callbacks(imbue_event);
     return __old;
   }
+
+  // Explicit instantiations for basic_ios are done in src/c++11/ios.cc
+  // and so do not include this member, which is only defined for C++98.
+  template basic_ios<char>::operator void*() const;
+#ifdef _GLIBCXX_USE_WCHAR_T
+  template basic_ios<wchar_t>::operator void*() const;
+#endif
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

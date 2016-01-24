@@ -1,6 +1,6 @@
 // Function-Based Exception Support -*- C++ -*-
 
-// Copyright (C) 2001-2013 Free Software Foundation, Inc.
+// Copyright (C) 2001-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -73,6 +73,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   void
   __throw_out_of_range(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_out_of_range_fmt(const char*, ...) __attribute__((__noreturn__))
+    __attribute__((__format__(__gnu_printf__, 1, 2)));
 
   void
   __throw_runtime_error(const char*) __attribute__((__noreturn__));

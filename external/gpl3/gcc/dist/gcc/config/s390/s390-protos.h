@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM S/390.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    Contributed by Hartmut Penner (hpenner@de.ibm.com)
 
@@ -36,29 +36,36 @@ extern bool s390_check_symref_alignment (rtx addr, HOST_WIDE_INT alignment);
 extern HOST_WIDE_INT s390_initial_elimination_offset (int, int);
 extern void s390_emit_prologue (void);
 extern void s390_emit_epilogue (bool);
+extern bool s390_can_use_simple_return_insn (void);
+extern bool s390_can_use_return_insn (void);
 extern void s390_function_profiler (FILE *, int);
 extern void s390_set_has_landing_pad_p (bool);
-extern bool s390_hard_regno_mode_ok (unsigned int, enum machine_mode);
+extern bool s390_hard_regno_mode_ok (unsigned int, machine_mode);
 extern bool s390_hard_regno_rename_ok (unsigned int, unsigned int);
-extern int s390_class_max_nregs (enum reg_class, enum machine_mode);
+extern int s390_class_max_nregs (enum reg_class, machine_mode);
+extern int s390_cannot_change_mode_class (machine_mode, machine_mode,
+					  enum reg_class);
+extern bool s390_function_arg_vector (machine_mode, const_tree);
 
 #ifdef RTX_CODE
 extern int s390_extra_constraint_str (rtx, int, const char *);
 extern int s390_const_ok_for_constraint_p (HOST_WIDE_INT, int, const char *);
 extern int s390_const_double_ok_for_constraint_p (rtx, int, const char *);
-extern int s390_single_part (rtx, enum machine_mode, enum machine_mode, int);
-extern unsigned HOST_WIDE_INT s390_extract_part (rtx, enum machine_mode, int);
+extern int s390_single_part (rtx, machine_mode, machine_mode, int);
+extern unsigned HOST_WIDE_INT s390_extract_part (rtx, machine_mode, int);
 extern bool s390_contiguous_bitmask_p (unsigned HOST_WIDE_INT, int, int *, int *);
-extern bool s390_split_ok_p (rtx, rtx, enum machine_mode, int);
+extern bool s390_contiguous_bitmask_vector_p (rtx, int *, int *);
+extern bool s390_bytemask_vector_p (rtx, unsigned *);
+extern bool s390_split_ok_p (rtx, rtx, machine_mode, int);
 extern bool s390_overlap_p (rtx, rtx, HOST_WIDE_INT);
 extern bool s390_offset_p (rtx, rtx, rtx);
 extern int tls_symbolic_operand (rtx);
 
-extern bool s390_match_ccmode (rtx, enum machine_mode);
-extern enum machine_mode s390_tm_ccmode (rtx, rtx, bool);
-extern enum machine_mode s390_select_ccmode (enum rtx_code, rtx, rtx);
+extern bool s390_match_ccmode (rtx_insn *, machine_mode);
+extern machine_mode s390_tm_ccmode (rtx, rtx, bool);
+extern machine_mode s390_select_ccmode (enum rtx_code, rtx, rtx);
 extern rtx s390_emit_compare (enum rtx_code, rtx, rtx);
-extern rtx s390_emit_jump (rtx, rtx);
+extern rtx_insn *s390_emit_jump (rtx, rtx);
 extern bool symbolic_reference_mentioned_p (rtx);
 extern bool tls_symbolic_reference_mentioned_p (rtx);
 extern bool legitimate_la_operand_p (rtx);
@@ -66,12 +73,12 @@ extern bool preferred_la_operand_p (rtx, rtx);
 extern int legitimate_pic_operand_p (rtx);
 extern bool legitimate_reload_constant_p (rtx);
 extern rtx legitimize_pic_address (rtx, rtx);
-extern rtx legitimize_reload_address (rtx, enum machine_mode, int, int);
+extern rtx legitimize_reload_address (rtx, machine_mode, int, int);
 extern enum reg_class s390_secondary_input_reload_class (enum reg_class,
-							 enum machine_mode,
+							 machine_mode,
 							 rtx);
 extern enum reg_class s390_secondary_output_reload_class (enum reg_class,
-							  enum machine_mode,
+							  machine_mode,
 							  rtx);
 extern void s390_reload_larl_operand (rtx , rtx , rtx);
 extern void s390_reload_symref_address (rtx , rtx , rtx , bool);
@@ -81,28 +88,33 @@ extern void s390_load_address (rtx, rtx);
 extern bool s390_expand_movmem (rtx, rtx, rtx);
 extern void s390_expand_setmem (rtx, rtx, rtx);
 extern bool s390_expand_cmpmem (rtx, rtx, rtx, rtx);
+extern void s390_expand_vec_strlen (rtx, rtx, rtx);
 extern bool s390_expand_addcc (enum rtx_code, rtx, rtx, rtx, rtx, rtx);
 extern bool s390_expand_insv (rtx, rtx, rtx, rtx);
-extern void s390_expand_cs_hqi (enum machine_mode, rtx, rtx, rtx,
+extern void s390_expand_cs_hqi (machine_mode, rtx, rtx, rtx,
 				rtx, rtx, bool);
-extern void s390_expand_atomic (enum machine_mode, enum rtx_code,
+extern void s390_expand_atomic (machine_mode, enum rtx_code,
 				rtx, rtx, rtx, bool);
 extern void s390_expand_tbegin (rtx, rtx, rtx, bool);
+extern void s390_expand_vec_compare (rtx, enum rtx_code, rtx, rtx);
+extern void s390_expand_vec_compare_cc (rtx, enum rtx_code, rtx, rtx, bool);
+extern void s390_expand_vcond (rtx, rtx, rtx, enum rtx_code, rtx, rtx);
+extern void s390_expand_vec_init (rtx, rtx);
 extern rtx s390_return_addr_rtx (int, rtx);
 extern rtx s390_back_chain_rtx (void);
-extern rtx s390_emit_call (rtx, rtx, rtx, rtx);
+extern rtx_insn *s390_emit_call (rtx, rtx, rtx, rtx);
 extern void s390_expand_logical_operator (enum rtx_code,
-					  enum machine_mode, rtx *);
+					  machine_mode, rtx *);
 extern bool s390_logical_operator_ok_p (rtx *);
 extern void s390_narrow_logical_operator (enum rtx_code, rtx *, rtx *);
 extern void s390_split_access_reg (rtx, rtx *, rtx *);
 
 extern void print_operand_address (FILE *, rtx);
 extern void print_operand (FILE *, rtx, int);
-extern void s390_output_pool_entry (rtx, enum machine_mode, unsigned int);
+extern void s390_output_pool_entry (rtx, machine_mode, unsigned int);
 extern int s390_label_align (rtx);
-extern int s390_agen_dep_p (rtx, rtx);
-extern rtx s390_load_got (void);
+extern int s390_agen_dep_p (rtx_insn *, rtx_insn *);
+extern rtx_insn *s390_load_got (void);
 extern rtx s390_get_thread_pointer (void);
 extern void s390_emit_tpf_eh_return (rtx);
 extern bool s390_legitimate_address_without_index_p (rtx);
@@ -113,3 +125,10 @@ extern bool s390_extzv_shift_ok (int, int, unsigned HOST_WIDE_INT);
 extern void s390_asm_output_function_label (FILE *, const char *, tree);
 
 #endif /* RTX_CODE */
+
+/* s390-c.c routines */
+extern void s390_cpu_cpp_builtins (struct cpp_reader *);
+extern void s390_register_target_pragmas (void);
+
+/* Routines for s390-c.c */
+extern bool s390_const_operand_ok (tree, int, int, tree);

@@ -1,5 +1,5 @@
 /* Fallback frame unwinding for Alpha/VMS.
-   Copyright (C) 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -58,7 +58,7 @@ do { \
   { if ((((STATUS) & 1) != 1)) return _URC_END_OF_STACK; }
 #define DENOTES_EXC_DISPATCHER(PV) ((PV) == (ADDR) (REG) SYS$GL_CALL_HANDL)
 
-#define RA_COLUMN (DWARF_ALT_FRAME_RETURN_COLUMN)
+#define RA_COLUMN (__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__)
 
 static int
 alpha_vms_fallback_frame_state (struct _Unwind_Context *context,

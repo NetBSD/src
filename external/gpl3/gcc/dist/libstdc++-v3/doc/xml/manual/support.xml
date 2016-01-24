@@ -169,16 +169,18 @@
      <constant>NULL</constant> is always a pointer.)
     </para>
 
-    <para>In his book <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.awprofessional.com/titles/0-201-92488-9/"><emphasis>Effective
-    C++</emphasis></link>, Scott Meyers points out that the best way
+    <para>In his book <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="http://www.aristeia.com/books.html"><emphasis>Effective
+      C++</emphasis></link>, Scott Meyers points out that the best way
     to solve this problem is to not overload on pointer-vs-integer
     types to begin with.  He also offers a way to make your own magic
     <constant>NULL</constant> that will match pointers before it
     matches integers.
     </para>
-    <para>See
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.awprofessional.com/titles/0-201-31015-5/">the
-      Effective C++ CD example</link>
+    <para>See the
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="http://www.aristeia.com/books.html"><emphasis>Effective
+      C++ CD</emphasis></link> example.
     </para>
   </section>
 
@@ -246,9 +248,9 @@
    void my_new_handler ()
    {
        delete[] safety;
-       popup_window ("Dude, you are running low on heap memory.  You
-		      should, like, close some windows, or something.
-		      The next time you run out, we're gonna burn!");
+       popup_window ("Dude, you are running low on heap memory.  You"
+		     " should, like, close some windows, or something."
+		     " The next time you run out, we're gonna burn!");
        set_new_handler (old_handler);
        return;
    }
@@ -382,7 +384,7 @@ int main(int argc)
 {
   std::set_terminate(__gnu_cxx::__verbose_terminate_handler);
   if (argc &gt; 5)
-    throw argument_error(<quote>argc is greater than 5!</quote>);
+    throw argument_error("argc is greater than 5!");
   else
     throw argc;
 }
