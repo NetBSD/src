@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of GCC.
@@ -58,7 +58,8 @@
 #endif
 
 #if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
-    && defined(__FreeBSD__) && __FreeBSD__ >= 7
+    && defined(TARGET_DL_ITERATE_PHDR) \
+    && (defined(__DragonFly__) || defined(__FreeBSD__))
 # define ElfW __ElfN
 # define USE_PT_GNU_EH_FRAME
 #endif
@@ -348,9 +349,6 @@ _Unwind_IteratePhdrCallback (struct dl_phdr_info *info, size_t size, void *ptr)
     }
 # elif defined __FRV_FDPIC__ && defined __linux__
   data->dbase = load_base.got_value;
-# elif defined __x86_64__ && defined __sun__ && defined __svr4__
-  /* While CRT_GET_RFIB_DATA is also defined for 64-bit Solaris 10+/x86, it
-     doesn't apply since it uses DW_EH_PE_pcrel encoding.  */
 # else
 #  error What is DW_EH_PE_datarel base on this platform?
 # endif

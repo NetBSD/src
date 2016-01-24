@@ -1,5 +1,5 @@
 /* CPP Library - lexical analysis.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -263,16 +263,14 @@ search_line_acc_char (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
     }
 }
 
-/* Disable on Solaris 2/x86 until the following problems can be properly
+/* Disable on Solaris 2/x86 until the following problem can be properly
    autoconfed:
 
-   The Solaris 9 assembler cannot assemble SSE4.2 insns.
-   Before Solaris 9 Update 6, SSE insns cannot be executed.
    The Solaris 10+ assembler tags objects with the instruction set
    extensions used, so SSE4.2 executables cannot run on machines that
    don't support that extension.  */
 
-#if (GCC_VERSION >= 4005) && (defined(__i386__) || defined(__x86_64__)) && !(defined(__sun__) && defined(__svr4__))
+#if (GCC_VERSION >= 4005) && (__GNUC__ >= 5 || !defined(__PIC__)) && (defined(__i386__) || defined(__x86_64__)) && !(defined(__sun__) && defined(__svr4__))
 
 /* Replicated character data to be shared between implementations.
    Recall that outside of a context with vector support we can't
@@ -521,6 +519,7 @@ init_vectorized_lexer (void)
    and VSX unaligned loads (when VSX is available).  This is otherwise
    the same as the pre-GCC 5 version.  */
 
+ATTRIBUTE_NO_SANITIZE_UNDEFINED
 static const uchar *
 search_line_fast (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
 {
@@ -733,7 +732,7 @@ search_line_fast (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
   }
 }
 
-#elif defined (__ARM_NEON__)
+#elif defined (__ARM_NEON)
 #include "arm_neon.h"
 
 static const uchar *
@@ -1270,9 +1269,16 @@ lex_identifier_intern (cpp_reader *pfile, const uchar *base)
 	 replacement list of a variadic macro.  */
       if (result == pfile->spec_nodes.n__VA_ARGS__
 	  && !pfile->state.va_args_ok)
-	cpp_error (pfile, CPP_DL_PEDWARN,
-		   "__VA_ARGS__ can only appear in the expansion"
-		   " of a C99 variadic macro");
+	{
+	  if (CPP_OPTION (pfile, cplusplus))
+	    cpp_error (pfile, CPP_DL_PEDWARN,
+		       "__VA_ARGS__ can only appear in the expansion"
+		       " of a C++11 variadic macro");
+	  else
+	    cpp_error (pfile, CPP_DL_PEDWARN,
+		       "__VA_ARGS__ can only appear in the expansion"
+		       " of a C99 variadic macro");
+	}
 
       /* For -Wc++-compat, warn about use of C++ named operators.  */
       if (result->flags & NODE_WARN_OPERATOR)
@@ -1297,7 +1303,7 @@ _cpp_lex_identifier (cpp_reader *pfile, const char *name)
 /* Lex an identifier starting at BUFFER->CUR - 1.  */
 static cpp_hashnode *
 lex_identifier (cpp_reader *pfile, const uchar *base, bool starts_ucn,
-		struct normalize_state *nst)
+		struct normalize_state *nst, cpp_hashnode **spelling)
 {
   cpp_hashnode *result;
   const uchar *cur;
@@ -1306,11 +1312,14 @@ lex_identifier (cpp_reader *pfile, const uchar *base, bool starts_ucn,
 
   cur = pfile->buffer->cur;
   if (! starts_ucn)
-    while (ISIDNUM (*cur))
-      {
-	hash = HT_HASHSTEP (hash, *cur);
-	cur++;
-      }
+    {
+      while (ISIDNUM (*cur))
+	{
+	  hash = HT_HASHSTEP (hash, *cur);
+	  cur++;
+	}
+      NORMALIZE_STATE_UPDATE_IDNUM (nst, *(cur - 1));
+    }
   pfile->buffer->cur = cur;
   if (starts_ucn || forms_identifier_p (pfile, false, nst))
     {
@@ -1318,12 +1327,13 @@ lex_identifier (cpp_reader *pfile, const uchar *base, bool starts_ucn,
       do {
 	while (ISIDNUM (*pfile->buffer->cur))
 	  {
+	    NORMALIZE_STATE_UPDATE_IDNUM (nst, *pfile->buffer->cur);
 	    pfile->buffer->cur++;
-	    NORMALIZE_STATE_UPDATE_IDNUM (nst);
 	  }
       } while (forms_identifier_p (pfile, false, nst));
       result = _cpp_interpret_identifier (pfile, base,
 					  pfile->buffer->cur - base);
+      *spelling = cpp_lookup (pfile, base, pfile->buffer->cur - base);
     }
   else
     {
@@ -1332,6 +1342,7 @@ lex_identifier (cpp_reader *pfile, const uchar *base, bool starts_ucn,
 
       result = CPP_HASHNODE (ht_lookup_with_hash (pfile->hash_table,
 						  base, len, hash, HT_ALLOC));
+      *spelling = result;
     }
 
   /* Rarely, identifiers require diagnostics when lexed.  */
@@ -1347,9 +1358,16 @@ lex_identifier (cpp_reader *pfile, const uchar *base, bool starts_ucn,
 	 replacement list of a variadic macro.  */
       if (result == pfile->spec_nodes.n__VA_ARGS__
 	  && !pfile->state.va_args_ok)
-	cpp_error (pfile, CPP_DL_PEDWARN,
-		   "__VA_ARGS__ can only appear in the expansion"
-		   " of a C99 variadic macro");
+	{
+	  if (CPP_OPTION (pfile, cplusplus))
+	    cpp_error (pfile, CPP_DL_PEDWARN,
+		       "__VA_ARGS__ can only appear in the expansion"
+		       " of a C++11 variadic macro");
+	  else
+	    cpp_error (pfile, CPP_DL_PEDWARN,
+		       "__VA_ARGS__ can only appear in the expansion"
+		       " of a C99 variadic macro");
+	}
 
       /* For -Wc++-compat, warn about use of C++ named operators.  */
       if (result->flags & NODE_WARN_OPERATOR)
@@ -1376,11 +1394,15 @@ lex_number (cpp_reader *pfile, cpp_string *number,
       cur = pfile->buffer->cur;
 
       /* N.B. ISIDNUM does not include $.  */
-      while (ISIDNUM (*cur) || *cur == '.' || VALID_SIGN (*cur, cur[-1]))
+      while (ISIDNUM (*cur) || *cur == '.' || DIGIT_SEP (*cur)
+	     || VALID_SIGN (*cur, cur[-1]))
 	{
+	  NORMALIZE_STATE_UPDATE_IDNUM (nst, *cur);
 	  cur++;
-	  NORMALIZE_STATE_UPDATE_IDNUM (nst);
 	}
+      /* A number can't end with a digit separator.  */
+      while (cur > pfile->buffer->cur && DIGIT_SEP (cur[-1]))
+	--cur;
 
       pfile->buffer->cur = cur;
     }
@@ -1436,6 +1458,33 @@ bufring_append (cpp_reader *pfile, const uchar *base, size_t len,
   *last_buff_p = last_buff;
 }
 
+
+/* Returns true if a macro has been defined.
+   This might not work if compile with -save-temps,
+   or preprocess separately from compilation.  */
+
+static bool
+is_macro(cpp_reader *pfile, const uchar *base)
+{
+  const uchar *cur = base;
+  if (! ISIDST (*cur))
+    return false;
+  unsigned int hash = HT_HASHSTEP (0, *cur);
+  ++cur;
+  while (ISIDNUM (*cur))
+    {
+      hash = HT_HASHSTEP (hash, *cur);
+      ++cur;
+    }
+  hash = HT_HASHFINISH (hash, cur - base);
+
+  cpp_hashnode *result = CPP_HASHNODE (ht_lookup_with_hash (pfile->hash_table,
+					base, cur - base, hash, HT_NO_INSERT));
+
+  return !result ? false : (result->type == NT_MACRO);
+}
+
+
 /* Lexes a raw string.  The stored string contains the spelling, including
    double quotes, delimiter string, '(' and ')', any leading
    'L', 'u', 'U' or 'u8' and 'R' modifier.  It returns the type of the
@@ -1448,11 +1497,20 @@ static void
 lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 		const uchar *cur)
 {
-  const uchar *raw_prefix;
-  unsigned int raw_prefix_len = 0;
+  uchar raw_prefix[17];
+  uchar temp_buffer[18];
+  const uchar *orig_base;
+  unsigned int raw_prefix_len = 0, raw_suffix_len = 0;
+  enum raw_str_phase { RAW_STR_PREFIX, RAW_STR, RAW_STR_SUFFIX };
+  raw_str_phase phase = RAW_STR_PREFIX;
   enum cpp_ttype type;
   size_t total_len = 0;
+  /* Index into temp_buffer during phases other than RAW_STR,
+     during RAW_STR phase 17 to tell BUF_APPEND that nothing should
+     be appended to temp_buffer.  */
+  size_t temp_buffer_len = 0;
   _cpp_buff *first_buff = NULL, *last_buff = NULL;
+  size_t raw_prefix_start;
   _cpp_line_note *note = &pfile->buffer->notes[pfile->buffer->cur_note];
 
   type = (*base == 'L' ? CPP_WSTRING :
@@ -1460,68 +1518,31 @@ lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 	  *base == 'u' ? (base[1] == '8' ? CPP_UTF8STRING : CPP_STRING16)
 	  : CPP_STRING);
 
-  raw_prefix = cur + 1;
-  while (raw_prefix_len < 16)
-    {
-      switch (raw_prefix[raw_prefix_len])
-	{
-	case ' ': case '(': case ')': case '\\': case '\t':
-	case '\v': case '\f': case '\n': default:
-	  break;
-	/* Basic source charset except the above chars.  */
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-	case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
-	case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
-	case 's': case 't': case 'u': case 'v': case 'w': case 'x':
-	case 'y': case 'z':
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-	case 'G': case 'H': case 'I': case 'J': case 'K': case 'L':
-	case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
-	case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
-	case 'Y': case 'Z':
-	case '0': case '1': case '2': case '3': case '4': case '5':
-	case '6': case '7': case '8': case '9':
-	case '_': case '{': case '}': case '#': case '[': case ']':
-	case '<': case '>': case '%': case ':': case ';': case '.':
-	case '?': case '*': case '+': case '-': case '/': case '^':
-	case '&': case '|': case '~': case '!': case '=': case ',':
-	case '"': case '\'':
-	  raw_prefix_len++;
-	  continue;
-	}
-      break;
-    }
-
-  if (raw_prefix[raw_prefix_len] != '(')
-    {
-      int col = CPP_BUF_COLUMN (pfile->buffer, raw_prefix + raw_prefix_len)
-		+ 1;
-      if (raw_prefix_len == 16)
-	cpp_error_with_line (pfile, CPP_DL_ERROR, token->src_loc, col,
-			     "raw string delimiter longer than 16 characters");
-      else
-	cpp_error_with_line (pfile, CPP_DL_ERROR, token->src_loc, col,
-			     "invalid character '%c' in raw string delimiter",
-			     (int) raw_prefix[raw_prefix_len]);
-      pfile->buffer->cur = raw_prefix - 1;
-      create_literal (pfile, token, base, raw_prefix - 1 - base, CPP_OTHER);
-      return;
-    }
-
-  cur = raw_prefix + raw_prefix_len + 1;
-  for (;;)
-    {
 #define BUF_APPEND(STR,LEN)					\
       do {							\
 	bufring_append (pfile, (const uchar *)(STR), (LEN),	\
 			&first_buff, &last_buff);		\
 	total_len += (LEN);					\
+	if (__builtin_expect (temp_buffer_len < 17, 0)		\
+	    && (const uchar *)(STR) != base			\
+	    && (LEN) <= 2)					\
+	  {							\
+	    memcpy (temp_buffer + temp_buffer_len,		\
+		    (const uchar *)(STR), (LEN));		\
+	    temp_buffer_len += (LEN);				\
+	  }							\
       } while (0);
 
+  orig_base = base;
+  ++cur;
+  raw_prefix_start = cur - base;
+  for (;;)
+    {
       cppchar_t c;
 
       /* If we previously performed any trigraph or line splicing
-	 transformations, undo them within the body of the raw string.  */
+	 transformations, undo them in between the opening and closing
+	 double quote.  */
       while (note->pos < cur)
 	++note;
       for (; note->pos == cur; ++note)
@@ -1581,23 +1602,13 @@ lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 		      ++note;
 		      goto after_backslash;
 		    }
-		  /* The ) from ??) could be part of the suffix.  */
-		  else if (type == ')'
-			   && strncmp ((const char *) cur+1,
-				       (const char *) raw_prefix,
-				       raw_prefix_len) == 0
-			   && cur[raw_prefix_len+1] == '"')
-		    {
-		      BUF_APPEND (")", 1);
-		      base++;
-		      cur += raw_prefix_len + 2;
-		      goto break_outer_loop;
-		    }
 		  else
 		    {
 		      /* Skip the replacement character.  */
 		      base = ++cur;
 		      BUF_APPEND (&type, 1);
+		      c = type;
+		      goto check_c;
 		    }
 		}
 	      else
@@ -1606,20 +1617,104 @@ lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 	    }
 	}
       c = *cur++;
+      if (__builtin_expect (temp_buffer_len < 17, 0))
+	temp_buffer[temp_buffer_len++] = c;
 
-      if (c == ')'
-	  && strncmp ((const char *) cur, (const char *) raw_prefix,
-		      raw_prefix_len) == 0
-	  && cur[raw_prefix_len] == '"')
+     check_c:
+      if (phase == RAW_STR_PREFIX)
 	{
-	  cur += raw_prefix_len + 1;
-	  break;
+	  while (raw_prefix_len < temp_buffer_len)
+	    {
+	      raw_prefix[raw_prefix_len] = temp_buffer[raw_prefix_len];
+	      switch (raw_prefix[raw_prefix_len])
+		{
+		case ' ': case '(': case ')': case '\\': case '\t':
+		case '\v': case '\f': case '\n': default:
+		  break;
+		/* Basic source charset except the above chars.  */
+		case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+		case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+		case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
+		case 's': case 't': case 'u': case 'v': case 'w': case 'x':
+		case 'y': case 'z':
+		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+		case 'G': case 'H': case 'I': case 'J': case 'K': case 'L':
+		case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
+		case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
+		case 'Y': case 'Z':
+		case '0': case '1': case '2': case '3': case '4': case '5':
+		case '6': case '7': case '8': case '9':
+		case '_': case '{': case '}': case '#': case '[': case ']':
+		case '<': case '>': case '%': case ':': case ';': case '.':
+		case '?': case '*': case '+': case '-': case '/': case '^':
+		case '&': case '|': case '~': case '!': case '=': case ',':
+		case '"': case '\'':
+		  if (raw_prefix_len < 16)
+		    {
+		      raw_prefix_len++;
+		      continue;
+		    }
+		  break;
+		}
+
+	      if (raw_prefix[raw_prefix_len] != '(')
+		{
+		  int col = CPP_BUF_COLUMN (pfile->buffer, cur) + 1;
+		  if (raw_prefix_len == 16)
+		    cpp_error_with_line (pfile, CPP_DL_ERROR, token->src_loc,
+					 col, "raw string delimiter longer "
+					      "than 16 characters");
+		  else if (raw_prefix[raw_prefix_len] == '\n')
+		    cpp_error_with_line (pfile, CPP_DL_ERROR, token->src_loc,
+					 col, "invalid new-line in raw "
+					      "string delimiter");
+		  else
+		    cpp_error_with_line (pfile, CPP_DL_ERROR, token->src_loc,
+					 col, "invalid character '%c' in "
+					      "raw string delimiter",
+					 (int) raw_prefix[raw_prefix_len]);
+		  pfile->buffer->cur = orig_base + raw_prefix_start - 1;
+		  create_literal (pfile, token, orig_base,
+				  raw_prefix_start - 1, CPP_OTHER);
+		  if (first_buff)
+		    _cpp_release_buff (pfile, first_buff);
+		  return;
+		}
+	      raw_prefix[raw_prefix_len] = '"';
+	      phase = RAW_STR;
+	      /* Nothing should be appended to temp_buffer during
+		 RAW_STR phase.  */
+	      temp_buffer_len = 17;
+	      break;
+	    }
+	  continue;
+	}
+      else if (phase == RAW_STR_SUFFIX)
+	{
+	  while (raw_suffix_len <= raw_prefix_len
+		 && raw_suffix_len < temp_buffer_len
+		 && temp_buffer[raw_suffix_len] == raw_prefix[raw_suffix_len])
+	    raw_suffix_len++;
+	  if (raw_suffix_len > raw_prefix_len)
+	    break;
+	  if (raw_suffix_len == temp_buffer_len)
+	    continue;
+	  phase = RAW_STR;
+	  /* Nothing should be appended to temp_buffer during
+	     RAW_STR phase.  */
+	  temp_buffer_len = 17;
+	}
+      if (c == ')')
+	{
+	  phase = RAW_STR_SUFFIX;
+	  raw_suffix_len = 0;
+	  temp_buffer_len = 0;
 	}
       else if (c == '\n')
 	{
 	  if (pfile->state.in_directive
-	      || pfile->state.parsing_args
-	      || pfile->state.in_deferred_pragma)
+	      || (pfile->state.parsing_args
+		  && pfile->buffer->next_line >= pfile->buffer->rlimit))
 	    {
 	      cur--;
 	      type = CPP_OTHER;
@@ -1654,26 +1749,21 @@ lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 	  note = &pfile->buffer->notes[pfile->buffer->cur_note];
 	}
     }
- break_outer_loop:
 
   if (CPP_OPTION (pfile, user_literals))
     {
-      /* According to C++11 [lex.ext]p10, a ud-suffix not starting with an
-	 underscore is ill-formed.  Since this breaks programs using macros
-	 from inttypes.h, we generate a warning and treat the ud-suffix as a
-	 separate preprocessing token.  This approach is under discussion by
-	 the standards committee, and has been adopted as a conforming
-	 extension by other front ends such as clang.
-         A special exception is made for the suffix 's' which will be
-	 standardized as a user-defined literal suffix for strings.  */
-      if (ISALPHA (*cur) && *cur != 's')
+      /* If a string format macro, say from inttypes.h, is placed touching
+	 a string literal it could be parsed as a C++11 user-defined string
+	 literal thus breaking the program.
+	 Try to identify macros with is_macro. A warning is issued. */
+      if (is_macro (pfile, cur))
 	{
 	  /* Raise a warning, but do not consume subsequent tokens.  */
-	  if (CPP_OPTION (pfile, warn_literal_suffix))
+	  if (CPP_OPTION (pfile, warn_literal_suffix) && !pfile->state.skipping)
 	    cpp_warning_with_line (pfile, CPP_W_LITERAL_SUFFIX,
 				   token->src_loc, 0,
 				   "invalid suffix on literal; C++11 requires "
-				   "a space between literal and identifier");
+				   "a space between literal and string macro");
 	}
       /* Grab user defined literal suffix.  */
       else if (ISIDST (*cur))
@@ -1791,22 +1881,18 @@ lex_string (cpp_reader *pfile, cpp_token *token, const uchar *base)
 
   if (CPP_OPTION (pfile, user_literals))
     {
-      /* According to C++11 [lex.ext]p10, a ud-suffix not starting with an
-	 underscore is ill-formed.  Since this breaks programs using macros
-	 from inttypes.h, we generate a warning and treat the ud-suffix as a
-	 separate preprocessing token.  This approach is under discussion by
-	 the standards committee, and has been adopted as a conforming
-	 extension by other front ends such as clang.
-         A special exception is made for the suffix 's' which will be
-	 standardized as a user-defined literal suffix for strings.  */
-      if (ISALPHA (*cur) && *cur != 's')
+      /* If a string format macro, say from inttypes.h, is placed touching
+	 a string literal it could be parsed as a C++11 user-defined string
+	 literal thus breaking the program.
+	 Try to identify macros with is_macro. A warning is issued. */
+      if (is_macro (pfile, cur))
 	{
 	  /* Raise a warning, but do not consume subsequent tokens.  */
-	  if (CPP_OPTION (pfile, warn_literal_suffix))
+	  if (CPP_OPTION (pfile, warn_literal_suffix) && !pfile->state.skipping)
 	    cpp_warning_with_line (pfile, CPP_W_LITERAL_SUFFIX,
 				   token->src_loc, 0,
 				   "invalid suffix on literal; C++11 requires "
-				   "a space between literal and identifier");
+				   "a space between literal and string macro");
 	}
       /* Grab user defined literal suffix.  */
       else if (ISIDST (*cur))
@@ -1995,16 +2081,26 @@ cpp_peek_token (cpp_reader *pfile, int index)
   count = index;
   pfile->keep_tokens++;
 
+  /* For peeked tokens temporarily disable line_change reporting,
+     until the tokens are parsed for real.  */
+  void (*line_change) (cpp_reader *, const cpp_token *, int)
+    = pfile->cb.line_change;
+  pfile->cb.line_change = NULL;
+
   do
     {
       peektok = _cpp_lex_token (pfile);
       if (peektok->type == CPP_EOF)
-	return peektok;
+	{
+	  index--;
+	  break;
+	}
     }
   while (index--);
 
-  _cpp_backup_tokens_direct (pfile, count + 1);
+  _cpp_backup_tokens_direct (pfile, count - index);
   pfile->keep_tokens--;
+  pfile->cb.line_change = line_change;
 
   return peektok;
 }
@@ -2309,7 +2405,8 @@ _cpp_lex_direct (cpp_reader *pfile)
       {
 	struct normalize_state nst = INITIAL_NORMALIZE_STATE;
 	result->val.node.node = lex_identifier (pfile, buffer->cur - 1, false,
-						&nst);
+						&nst,
+						&result->val.node.spelling);
 	warn_about_normalization (pfile, result, &nst);
       }
 
@@ -2336,13 +2433,16 @@ _cpp_lex_direct (cpp_reader *pfile)
 	  if (_cpp_skip_block_comment (pfile))
 	    cpp_error (pfile, CPP_DL_ERROR, "unterminated comment");
 	}
-      else if (c == '/' && (CPP_OPTION (pfile, cplusplus_comments)
-			    || cpp_in_system_header (pfile)))
+      else if (c == '/' && ! CPP_OPTION (pfile, traditional))
 	{
-	  /* Warn about comments only if pedantically GNUC89, and not
+	  /* Don't warn for system headers.  */
+	  if (cpp_in_system_header (pfile))
+	    ;
+	  /* Warn about comments if pedantically GNUC89, and not
 	     in system headers.  */
-	  if (CPP_OPTION (pfile, lang) == CLK_GNUC89 && CPP_PEDANTIC (pfile)
-	      && ! buffer->warned_cplusplus_comments)
+	  else if (CPP_OPTION (pfile, lang) == CLK_GNUC89
+		   && CPP_PEDANTIC (pfile)
+		   && ! buffer->warned_cplusplus_comments)
 	    {
 	      cpp_error (pfile, CPP_DL_PEDWARN,
 			 "C++ style comments are not allowed in ISO C90");
@@ -2350,7 +2450,42 @@ _cpp_lex_direct (cpp_reader *pfile)
 			 "(this will be reported only once per input file)");
 	      buffer->warned_cplusplus_comments = 1;
 	    }
-
+	  /* Or if specifically desired via -Wc90-c99-compat.  */
+	  else if (CPP_OPTION (pfile, cpp_warn_c90_c99_compat) > 0
+		   && ! CPP_OPTION (pfile, cplusplus)
+		   && ! buffer->warned_cplusplus_comments)
+	    {
+	      cpp_error (pfile, CPP_DL_WARNING,
+			 "C++ style comments are incompatible with C90");
+	      cpp_error (pfile, CPP_DL_WARNING,
+			 "(this will be reported only once per input file)");
+	      buffer->warned_cplusplus_comments = 1;
+	    }
+	  /* In C89/C94, C++ style comments are forbidden.  */
+	  else if ((CPP_OPTION (pfile, lang) == CLK_STDC89
+		    || CPP_OPTION (pfile, lang) == CLK_STDC94))
+	    {
+	      /* But don't be confused about valid code such as
+	         - // immediately followed by *,
+		 - // in a preprocessing directive,
+		 - // in an #if 0 block.  */
+	      if (buffer->cur[1] == '*'
+		  || pfile->state.in_directive
+		  || pfile->state.skipping)
+		{
+		  result->type = CPP_DIV;
+		  break;
+		}
+	      else if (! buffer->warned_cplusplus_comments)
+		{
+		  cpp_error (pfile, CPP_DL_ERROR,
+			     "C++ style comments are not allowed in ISO C90");
+		  cpp_error (pfile, CPP_DL_ERROR,
+			     "(this will be reported only once per input "
+			     "file)");
+		  buffer->warned_cplusplus_comments = 1;
+		}
+	    }
 	  if (skip_line_comment (pfile) && CPP_OPTION (pfile, warn_comments))
 	    cpp_warning (pfile, CPP_W_COMMENTS, "multi-line comment");
 	}
@@ -2401,8 +2536,8 @@ _cpp_lex_direct (cpp_reader *pfile)
 		 is neither : nor >, the < is treated as a preprocessor
 		 token by itself".  */
 	      if (CPP_OPTION (pfile, cplusplus)
-		  && (CPP_OPTION (pfile, lang) == CLK_CXX11
-		      || CPP_OPTION (pfile, lang) == CLK_GNUCXX11)
+		  && CPP_OPTION (pfile, lang) != CLK_CXX98
+		  && CPP_OPTION (pfile, lang) != CLK_GNUCXX
 		  && buffer->cur[1] == ':'
 		  && buffer->cur[2] != ':' && buffer->cur[2] != '>')
 		break;
@@ -2549,7 +2684,8 @@ _cpp_lex_direct (cpp_reader *pfile)
 	if (forms_identifier_p (pfile, true, &nst))
 	  {
 	    result->type = CPP_NAME;
-	    result->val.node.node = lex_identifier (pfile, base, true, &nst);
+	    result->val.node.node = lex_identifier (pfile, base, true, &nst,
+						    &result->val.node.spelling);
 	    warn_about_normalization (pfile, result, &nst);
 	    break;
 	  }
@@ -2623,11 +2759,35 @@ cpp_digraph2name (enum cpp_ttype type)
   return digraph_spellings[(int) type - (int) CPP_FIRST_DIGRAPH];
 }
 
+/* Write the spelling of an identifier IDENT, using UCNs, to BUFFER.
+   The buffer must already contain the enough space to hold the
+   token's spelling.  Returns a pointer to the character after the
+   last character written.  */
+unsigned char *
+_cpp_spell_ident_ucns (unsigned char *buffer, cpp_hashnode *ident)
+{
+  size_t i;
+  const unsigned char *name = NODE_NAME (ident);
+	  
+  for (i = 0; i < NODE_LEN (ident); i++)
+    if (name[i] & ~0x7F)
+      {
+	i += utf8_to_ucn (buffer, name + i) - 1;
+	buffer += 10;
+      }
+    else
+      *buffer++ = name[i];
+
+  return buffer;
+}
+
 /* Write the spelling of a token TOKEN to BUFFER.  The buffer must
    already contain the enough space to hold the token's spelling.
    Returns a pointer to the character after the last character written.
    FORSTRING is true if this is to be the spelling after translation
-   phase 1 (this is different for UCNs).
+   phase 1 (with the original spelling of extended identifiers), false
+   if extended identifiers should always be written using UCNs (there is
+   no option for always writing them in the internal UTF-8 form).
    FIXME: Would be nice if we didn't need the PFILE argument.  */
 unsigned char *
 cpp_spell_token (cpp_reader *pfile, const cpp_token *token,
@@ -2656,24 +2816,12 @@ cpp_spell_token (cpp_reader *pfile, const cpp_token *token,
     case SPELL_IDENT:
       if (forstring)
 	{
-	  memcpy (buffer, NODE_NAME (token->val.node.node),
-		  NODE_LEN (token->val.node.node));
-	  buffer += NODE_LEN (token->val.node.node);
+	  memcpy (buffer, NODE_NAME (token->val.node.spelling),
+		  NODE_LEN (token->val.node.spelling));
+	  buffer += NODE_LEN (token->val.node.spelling);
 	}
       else
-	{
-	  size_t i;
-	  const unsigned char * name = NODE_NAME (token->val.node.node);
-	  
-	  for (i = 0; i < NODE_LEN (token->val.node.node); i++)
-	    if (name[i] & ~0x7F)
-	      {
-		i += utf8_to_ucn (buffer, name + i) - 1;
-		buffer += 10;
-	      }
-	    else
-	      *buffer++ = NODE_NAME (token->val.node.node)[i];
-	}
+	buffer = _cpp_spell_ident_ucns (buffer, token->val.node.node);
       break;
 
     case SPELL_LITERAL:
@@ -2787,9 +2935,11 @@ _cpp_equiv_tokens (const cpp_token *a, const cpp_token *b)
 	return (a->type != CPP_PASTE || a->val.token_no == b->val.token_no);
       case SPELL_NONE:
 	return (a->type != CPP_MACRO_ARG
-		|| a->val.macro_arg.arg_no == b->val.macro_arg.arg_no);
+		|| (a->val.macro_arg.arg_no == b->val.macro_arg.arg_no
+		    && a->val.macro_arg.spelling == b->val.macro_arg.spelling));
       case SPELL_IDENT:
-	return a->val.node.node == b->val.node.node;
+	return (a->val.node.node == b->val.node.node
+		&& a->val.node.spelling == b->val.node.spelling);
       case SPELL_LITERAL:
 	return (a->val.str.len == b->val.str.len
 		&& !memcmp (a->val.str.text, b->val.str.text,
@@ -2851,6 +3001,15 @@ cpp_avoid_paste (cpp_reader *pfile, const cpp_token *token1,
 				|| (CPP_OPTION (pfile, objc)
 				    && token1->val.str.text[0] == '@'
 				    && (b == CPP_NAME || b == CPP_STRING)));
+    case CPP_STRING:
+    case CPP_WSTRING:
+    case CPP_UTF8STRING:
+    case CPP_STRING16:
+    case CPP_STRING32:	return (CPP_OPTION (pfile, user_literals)
+				&& (b == CPP_NAME
+				    || (TOKEN_SPELL (token2) == SPELL_LITERAL
+					&& ISIDST (token2->val.str.text[0]))));
+
     default:		break;
     }
 
@@ -3104,7 +3263,7 @@ _cpp_aligned_alloc (cpp_reader *pfile, size_t len)
 /* Say which field of TOK is in use.  */
 
 enum cpp_token_fld_kind
-cpp_token_val_index (cpp_token *tok)
+cpp_token_val_index (const cpp_token *tok)
 {
   switch (TOKEN_SPELL (tok))
     {

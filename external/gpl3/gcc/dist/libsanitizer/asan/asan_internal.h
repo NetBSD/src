@@ -19,38 +19,7 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
-#if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32) && !defined(__NetBSD__)
-# error "This operating system is not supported by AddressSanitizer"
-#endif
-
 #define ASAN_DEFAULT_FAILURE_EXITCODE 1
-
-#if defined(__linux__) || defined(__NetBSD__)
-# define ASAN_LINUX   1
-#else
-# define ASAN_LINUX   0
-#endif
-
-#if defined(__APPLE__)
-# define ASAN_MAC     1
-#else
-# define ASAN_MAC     0
-#endif
-
-#if defined(_WIN32)
-# define ASAN_WINDOWS 1
-#else
-# define ASAN_WINDOWS 0
-#endif
-
-#if defined(__ANDROID__) || defined(ANDROID)
-# define ASAN_ANDROID 1
-#else
-# define ASAN_ANDROID 0
-#endif
-
-
-#define ASAN_POSIX (ASAN_LINUX || ASAN_MAC)
 
 #if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
 # error "The AddressSanitizer run-time should not be"
@@ -59,24 +28,9 @@
 
 // Build-time configuration options.
 
-// If set, asan will install its own SEGV signal handler.
-#ifndef ASAN_NEEDS_SEGV
-# if ASAN_ANDROID == 1
-#  define ASAN_NEEDS_SEGV 0
-# else
-#  define ASAN_NEEDS_SEGV 1
-# endif
-#endif
-
 // If set, asan will intercept C++ exception api call(s).
 #ifndef ASAN_HAS_EXCEPTIONS
 # define ASAN_HAS_EXCEPTIONS 1
-#endif
-
-// If set, asan uses the values of SHADOW_SCALE and SHADOW_OFFSET
-// provided by the instrumented objects. Otherwise constants are used.
-#ifndef ASAN_FLEXIBLE_MAPPING_AND_OFFSET
-# define ASAN_FLEXIBLE_MAPPING_AND_OFFSET 0
 #endif
 
 // If set, values like allocator chunk size, as well as defaults for some flags
@@ -89,71 +43,72 @@
 # endif
 #endif
 
-#ifndef ASAN_USE_PREINIT_ARRAY
-# define ASAN_USE_PREINIT_ARRAY (ASAN_LINUX && !ASAN_ANDROID)
+#ifndef ASAN_DYNAMIC
+# ifdef PIC
+#  define ASAN_DYNAMIC 1
+# else
+#  define ASAN_DYNAMIC 0
+# endif
 #endif
 
 // All internal functions in asan reside inside the __asan namespace
 // to avoid namespace collisions with the user programs.
-// Seperate namespace also makes it simpler to distinguish the asan run-time
+// Separate namespace also makes it simpler to distinguish the asan run-time
 // functions from the instrumented user code in a profile.
 namespace __asan {
 
 class AsanThread;
 using __sanitizer::StackTrace;
 
+void AsanInitFromRtl();
+
 // asan_rtl.cc
 void NORETURN ShowStatsAndAbort();
 
-void ReplaceOperatorsNewAndDelete();
 // asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
+void AsanCheckDynamicRTPrereqs();
+void AsanCheckIncompatibleRT();
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
+void AsanOnSIGSEGV(int, void *siginfo, void *context);
 
 void MaybeReexec();
 bool AsanInterceptsSignal(int signum);
-void SetAlternateSignalStack();
-void UnsetAlternateSignalStack();
-void InstallSignalHandlers();
 void ReadContextStack(void *context, uptr *stack, uptr *ssize);
 void AsanPlatformThreadInit();
+void StopInitOrderChecking();
 
 // Wrapper for TLS/TSD.
 void AsanTSDInit(void (*destructor)(void *tsd));
 void *AsanTSDGet();
 void AsanTSDSet(void *tsd);
+void PlatformTSDDtor(void *tsd);
 
 void AppendToErrorMessageBuffer(const char *buffer);
 
-// asan_poisoning.cc
-// Poisons the shadow memory for "size" bytes starting from "addr".
-void PoisonShadow(uptr addr, uptr size, u8 value);
-// Poisons the shadow memory for "redzone_size" bytes starting from
-// "addr + size".
-void PoisonShadowPartialRightRedzone(uptr addr,
-                                     uptr size,
-                                     uptr redzone_size,
-                                     u8 value);
+void ParseExtraActivationFlags();
 
-// Platfrom-specific options.
-#ifdef __APPLE__
+void *AsanDlSymNext(const char *sym);
+
+// Platform-specific options.
+#if SANITIZER_MAC
 bool PlatformHasDifferentMemcpyAndMemmove();
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE \
     (PlatformHasDifferentMemcpyAndMemmove())
 #else
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE true
-#endif  // __APPLE__
+#endif  // SANITIZER_MAC
 
 // Add convenient macro for interface functions that may be represented as
 // weak hooks.
 #define ASAN_MALLOC_HOOK(ptr, size) \
-  if (&__asan_malloc_hook) __asan_malloc_hook(ptr, size)
+  if (&__sanitizer_malloc_hook) __sanitizer_malloc_hook(ptr, size)
 #define ASAN_FREE_HOOK(ptr) \
-  if (&__asan_free_hook) __asan_free_hook(ptr)
+  if (&__sanitizer_free_hook) __sanitizer_free_hook(ptr)
 #define ASAN_ON_ERROR() \
   if (&__asan_on_error) __asan_on_error()
 
@@ -173,9 +128,12 @@ const int kAsanStackPartialRedzoneMagic = 0xf4;
 const int kAsanStackAfterReturnMagic = 0xf5;
 const int kAsanInitializationOrderMagic = 0xf6;
 const int kAsanUserPoisonedMemoryMagic = 0xf7;
+const int kAsanContiguousContainerOOBMagic = 0xfc;
 const int kAsanStackUseAfterScopeMagic = 0xf8;
 const int kAsanGlobalRedzoneMagic = 0xf9;
 const int kAsanInternalHeapMagic = 0xfe;
+const int kAsanArrayCookieMagic = 0xac;
+const int kAsanIntraObjectRedzone = 0xbb;
 
 static const uptr kCurrentStackFrameMagic = 0x41B58AB3;
 static const uptr kRetiredStackFrameMagic = 0x45E0360E;

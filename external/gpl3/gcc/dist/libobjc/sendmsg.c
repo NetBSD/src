@@ -1,5 +1,5 @@
 /* GNU Objective C Runtime message lookup 
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Kresten Krab Thorup
 
 This file is part of GCC.
@@ -103,6 +103,10 @@ __objc_block_forward (id, SEL, ...);
 static struct objc_method * search_for_method_in_hierarchy (Class class, SEL sel);
 struct objc_method * search_for_method_in_list (struct objc_method_list * list, SEL op);
 id nil_method (id, SEL);
+
+/* Make sure this inline function is exported regardless of GNU89 or C99
+   inlining semantics as it is part of the libobjc ABI.  */
+extern IMP __objc_get_forward_imp (id, SEL);
 
 /* Given a selector, return the proper forwarding implementation.  */
 IMP
@@ -319,6 +323,11 @@ get_implementation (id receiver, Class class, SEL sel)
   return res;
 }
 
+/* Make sure this inline function is exported regardless of GNU89 or C99
+   inlining semantics as it is part of the libobjc ABI.  */
+extern IMP get_imp (Class, SEL);
+
+inline
 IMP
 get_imp (Class class, SEL sel)
 {
