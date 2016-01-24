@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.53 2016/01/23 22:31:20 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.54 2016/01/24 19:49:35 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -38,6 +38,10 @@
 #include <sys/featuretest.h>
 #include <powerpc/int_types.h>
 
+typedef int __cpu_simple_lock_nv_t;
+typedef unsigned long __register_t;	/* frame.h */
+typedef __uint32_t __register32_t;	/* frame.h */
+
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
@@ -51,9 +55,9 @@ typedef	unsigned long	psize_t, vsize_t;
 /*
  * Because lwz etal don't sign extend, it's best to make registers unsigned.
  */
-typedef unsigned long register_t;
+typedef __register_t register_t;
+typedef __register32_t register32_t;
 typedef __uint64_t register64_t;
-typedef __uint32_t register32_t;
 #define	PRIxREGISTER	"lx"
 #define	PRIxREGISTER64	PRIx64
 #define	PRIxREGISTER32	PRIx32
@@ -66,9 +70,6 @@ typedef struct label_t {
 
 typedef __uint32_t tlb_asid_t;		/* for booke */
 #endif
-
-typedef int __cpu_simple_lock_nv_t;
-typedef unsigned long __register_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
