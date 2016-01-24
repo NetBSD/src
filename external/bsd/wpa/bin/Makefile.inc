@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2016/01/22 17:56:20 roy Exp $
+# $NetBSD: Makefile.inc,v 1.4 2016/01/24 18:49:05 christos Exp $
 
 BINDIR?=	/usr/sbin
 
@@ -7,9 +7,6 @@ USE_FORT?= yes	# network client/server
 WPA_DISTDIR?=			${.CURDIR}/../../dist
 WPA_SUPPLICANT_DISTDIR?=	${WPA_DISTDIR}/wpa_supplicant
 HOSTAPD_DISTDIR?=		${WPA_DISTDIR}/hostapd
-
-# clang dislikes the NetBSD specific kevent header
-COPTS.eloop.c =			-Wno-int-conversion
 
 .PATH.c: \
 	${WPA_DISTDIR}/src/ap \
