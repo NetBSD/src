@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.87 2014/01/25 00:03:14 mlelstv Exp $	*/
+/*	$NetBSD: ums.c,v 1.88 2016/01/25 18:37:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87 2014/01/25 00:03:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.88 2016/01/25 18:37:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,18 +300,32 @@ ums_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	/*
-	 * The Microsoft Wireless Laser Mouse 6000 v2.0 reports a bad
-	 * position for the wheel and wheel tilt controls -- should be
-	 * in bytes 3 & 4 of the report.  Fix this if necessary.
-	 */
-	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT &&
-	    (uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR10 ||
-	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {
-		if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
-			sc->sc_loc_z.pos = 24;
-		if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)
-			sc->sc_loc_w.pos = sc->sc_loc_z.pos + 8;
+	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT) {
+		int fixpos;
+		/*
+		 * The Microsoft Wireless Laser Mouse 6000 v2.0 and the
+		 * Microsoft Comfort Mouse 2.0 report a bad position for
+		 * the wheel and wheel tilt controls -- should be in bytes
+		 * 3 & 4 of the report. Fix this if necessary.
+		 */
+		switch (uha->uaa->product) {
+		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR10:
+		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR20:
+			fixpos = 24;
+			break;
+		case USB_PRODUCT_MICROSOFT_CM6000:
+			fixpos = 40;
+			break;
+		default:
+			fixpos = 0;
+			break;
+		}
+		if (fixpos) {
+			if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
+				sc->sc_loc_z.pos = fixpos;
+			if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)
+				sc->sc_loc_w.pos = sc->sc_loc_z.pos + 8;
+		}
 	}
 
 	/* figure out the number of buttons */
