@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.16 2014/02/04 18:51:16 matt Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.17 2016/01/25 16:30:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _FOOTBRIDGE_INTR_H_
 #define _FOOTBRIDGE_INTR_H_
 
+#include <arm/mutex.h>
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 
