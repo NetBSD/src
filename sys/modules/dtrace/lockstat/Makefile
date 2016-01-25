@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2016/01/25 13:31:48 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2016/01/25 15:37:21 christos Exp $
 
 .include "../../Makefile.inc"
 
@@ -15,7 +15,7 @@ CPPFLAGS+=	-DKDTRACE_HOOKS
 ARMV:= ${MACHINE_ARCH:S/earmv//:S/eb//:S/hf//}
 .elif !empty(MACHINE_ARCH:Marmv*)
 ARMV:= ${MACHINE_ARCH:S/armv//:S/eb//:S/hf//}
-.elif !empry(MACHINE_ARCH:Mearm*)
+.elif !empty(MACHINE_ARCH:Mearm*)
 ARMV:= 5
 .else
 ARMV:= 0
