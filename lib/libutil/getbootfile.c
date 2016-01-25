@@ -1,4 +1,4 @@
-/*	$NetBSD: getbootfile.c,v 1.5 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: getbootfile.c,v 1.6 2016/01/25 18:14:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getbootfile.c,v 1.5 2008/04/28 20:23:02 martin Exp $");
+__RCSID("$NetBSD: getbootfile.c,v 1.6 2016/01/25 18:14:04 christos Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <string.h>
 #include <paths.h>
 #include <util.h>
