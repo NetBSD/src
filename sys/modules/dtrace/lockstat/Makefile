@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/01/25 12:44:52 martin Exp $
+#	$NetBSD: Makefile,v 1.7 2016/01/25 13:31:48 christos Exp $
 
 .include "../../Makefile.inc"
 
@@ -11,12 +11,12 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
 CPPFLAGS+=	-DKDTRACE_HOOKS
 
-.if ${MACHINE_ARCH} == "earm"
-ARMV:= 5
-.elif !empty(MACHINE_ARCH:Mearm*)
+.if !empty(MACHINE_ARCH:Mearmv*)
 ARMV:= ${MACHINE_ARCH:S/earmv//:S/eb//:S/hf//}
-.elif !empty(MACHINE_ARCH:Marm*)
+.elif !empty(MACHINE_ARCH:Marmv*)
 ARMV:= ${MACHINE_ARCH:S/armv//:S/eb//:S/hf//}
+.elif !empry(MACHINE_ARCH:Mearm*)
+ARMV:= 5
 .else
 ARMV:= 0
 .endif
