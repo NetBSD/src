@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.18 2016/01/25 16:41:06 christos Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.19 2016/01/25 21:54:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,12 +38,14 @@
 #ifndef _FOOTBRIDGE_INTR_H_
 #define _FOOTBRIDGE_INTR_H_
 
+#ifndef _LOCORE
 typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
 
 #include <arm/mutex.h>
+#endif
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 
