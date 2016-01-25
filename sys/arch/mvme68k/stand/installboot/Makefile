@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/08/21 06:58:58 matt Exp $
+#	$NetBSD: Makefile,v 1.18 2016/01/25 21:58:02 christos Exp $
 
 NOMAN=	# defined
 
@@ -8,7 +8,7 @@ PROG=	installboot
 BINDIR=/usr/mdec
 LIBSA=${.CURDIR}/../../../../lib/libsa
 COPTS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
-CPPFLAGS+= -I${LIBSA} -I. -D__daddr_t=int32_t
+CPPFLAGS+= -I${LIBSA} -I. -D__daddr_t=int32_t -D_KERNTYPES
 # Need this to work in the miniroot
 LDSTATIC= -static
 
