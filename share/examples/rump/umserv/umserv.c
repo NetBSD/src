@@ -1,4 +1,4 @@
-/*	$NetBSD: umserv.c,v 1.2 2010/06/24 13:03:05 hannken Exp $	*/
+/*	$NetBSD: umserv.c,v 1.3 2016/01/25 11:45:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,7 @@
 #include <dev/pud/pud_msgif.h>
 
 #include <rump/rump.h>
+#include <rump/rumpvnode_if.h>
 
 #include <assert.h>
 #include <err.h>

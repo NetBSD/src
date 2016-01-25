@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.64 2015/11/01 12:34:28 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.65 2016/01/25 11:45:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -62,7 +62,6 @@ typedef struct prop_dictionary *prop_dictionary_t;
 typedef RUMP_REGISTER_T register_t;
 #endif
 
-#include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>
 
 /* rumpkern */
