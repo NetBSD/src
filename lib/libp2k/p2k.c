@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.67 2016/01/23 16:39:31 christos Exp $	*/
+/*	$NetBSD: p2k.c,v 1.68 2016/01/25 11:45:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -58,6 +58,7 @@
 #include <stdio.h>
 
 #include <rump/rump.h>
+#include <rump/rumpvnode_if.h>
 #include <rump/p2k.h>
 #include <rump/ukfs.h>
 
