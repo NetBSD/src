@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.18 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: npftest.c,v 1.19 2016/01/25 12:24:41 pooka Exp $	*/
 
 /*
  * NPF testing framework.
@@ -19,6 +19,8 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+
+#include <prop/proplib.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
