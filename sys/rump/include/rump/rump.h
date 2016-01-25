@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.65 2016/01/25 11:45:57 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.66 2016/01/25 12:25:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -45,17 +45,6 @@ struct kauth_cred;
 struct lwp;
 struct modinfo;
 struct uio;
-
-/* yetch */
-#if defined(__NetBSD__)
-#include <prop/proplib.h>
-#else
-#ifndef HAVE_PROP_DICTIONARY_T
-#define HAVE_PROP_DICTIONARY_T
-struct prop_dictionary;
-typedef struct prop_dictionary *prop_dictionary_t;
-#endif
-#endif /* __NetBSD__ */
 
 #if (!defined(_KERNEL)) && (defined(__sun__) || defined(__ANDROID__)) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
