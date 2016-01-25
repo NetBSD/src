@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.5 2012/03/22 12:31:32 skrll Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.6 2016/01/25 16:44:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -50,8 +50,8 @@ __longjmp14(jmp_buf env, int val)
 {
 	ucontext_t uc;
 	struct sigcontext *sc = (void *)env;
-	register_t *regs = (void *)(sc + 1);
-	register register_t dp __asm("r27");
+	__register_t *regs = (void *)(sc + 1);
+	register __register_t dp __asm("r27");
 
 	/* Ensure non-zero SP */
 	if (sc->sc_sp == 0)
