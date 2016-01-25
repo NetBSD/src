@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.659 2016/01/05 17:22:38 jakllsch Exp $
+# $NetBSD: mi,v 1.660 2016/01/25 03:14:29 jnemeth Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2888,6 +2888,7 @@
 ./usr/tests/lib/libm/t_fenv			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_floor			tests-obsolete		obsolete
 ./usr/tests/lib/libm/t_fmod			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libm/t_hypot			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_infinity			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_ldexp			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_libm			tests-obsolete		obsolete
