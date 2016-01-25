@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.202 2016/01/21 15:41:30 riastradh Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.203 2016/01/25 10:15:38 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.202 2016/01/21 15:41:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.203 2016/01/25 10:15:38 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -714,7 +714,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		if (la->la_flags & LLE_LINKED) {
 			size_t pkts_dropped;
 
-			LLE_REMREF(la);
 			pkts_dropped = llentry_free(la);
 			ARP_STATADD(ARP_STAT_DFRDROPPED, pkts_dropped);
 		} else {
