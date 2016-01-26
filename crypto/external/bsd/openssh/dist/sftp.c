@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.12.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/*	$NetBSD: sftp.c,v 1.12.4.1.2.1 2016/01/26 01:30:40 riz Exp $	*/
 /* $OpenBSD: sftp.c,v 1.170 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.12.4.1 2015/04/30 06:07:30 riz Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.12.4.1.2.1 2016/01/26 01:30:40 riz Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -1845,8 +1845,8 @@ complete_match(EditLine *el, struct sftp_conn *conn, char *remote_path,
 	if (remote != LOCAL) {
 		tmp = make_absolute(tmp, remote_path);
 		remote_glob(conn, tmp, GLOB_DOOFFS|GLOB_MARK, NULL, &g);
+	} else
 		glob(tmp, GLOB_LIMIT|GLOB_DOOFFS|GLOB_MARK, NULL, &g);
-	}
 	
 	/* Determine length of pwd so we can trim completion display */
 	for (hadglob = tmplen = pwdlen = 0; tmp[tmplen] != 0; tmplen++) {
