@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2015/03/28 07:03:23 matt Exp $
+#	$NetBSD: Makefile,v 1.14 2016/01/26 19:37:47 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -6,7 +6,7 @@ NOMAN=		# defined
 NOPROFILE=	# defined
 NOCLANGERROR=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 # If the platform does not support shared libraries, we need to supply
 # *something* for BFD-using programs to link against.  Also provide an
@@ -24,8 +24,6 @@ DEFS_MK=${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk
 
 .if exists(${DEFS_MK})
 .include "${DEFS_MK}"
-
-DIST=		${NETBSDSRCDIR}/external/gpl3/binutils/dist
 
 SHLIB_MAJOR=	13
 SHLIB_MINOR=	0

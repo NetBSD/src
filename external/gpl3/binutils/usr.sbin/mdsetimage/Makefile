@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.10 2013/08/05 00:17:53 matt Exp $
+#	$NetBSD: Makefile,v 1.11 2016/01/26 19:37:49 christos Exp $
 
 .include <bsd.own.mk>
 
 .if (defined(HOSTPROG) && \
      (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBINUTILS} != "no"
-TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
-DIST=		${TOP}/dist
 BFDSUBDIR=	lib
 
 PROG=		mdsetimage

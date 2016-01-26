@@ -1,16 +1,5 @@
-#	$NetBSD: Makefile,v 1.21 2013/10/03 23:42:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2016/01/26 19:37:48 christos Exp $
 
-.include <bsd.own.mk>
-
-TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
-
-.include "${.CURDIR}/../common/Makefile.inc"
-.include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
-
-SCRIPTSDIR=	/usr/libdata
-
-PROG=		ld
-SRCS=		${G_OFILES:.o=.c}
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
 		-DDEFAULT_EMULATION=\"${G_EMUL}\" \
@@ -19,6 +8,14 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-DBINDIR=\"/usr/bin\" \
 		-DTOOLBINDIR=\"/usr/bin\" \
 		-DENABLE_PLUGINS
+
+.include "${.CURDIR}/../common/Makefile.inc"
+.include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
+
+SCRIPTSDIR=	/usr/libdata
+
+PROG=		ld
+SRCS=		${G_OFILES:.o=.c}
 
 COPTS.ldgram.c = -Wno-stack-protector
 
