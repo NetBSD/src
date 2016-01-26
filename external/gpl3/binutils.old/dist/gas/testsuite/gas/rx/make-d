@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+# -*- perl -*-
+
+# Utility to create *.d files from *.lst files.  Not normally needed.
+
+opendir L, "/tmp/lsts";
+for $f (sort readdir L) {
+    next unless $f =~ /\.lst/;
+    $f =~ s@\.lst@@;
+    push (@files, $f);
+}
+closedir L;
+
+for $f (@files) {
+
+    open (I, "/tmp/lsts/$f.lst");
+    open (O, ">$f.d");
+
+    print O "#objdump: -dr\n";
+
+    while (<I>) {
+	s/$f\.o/dump.o/;
+	s/\\/\\\\/g;
+	s/([\[\]\.\*\?\+])/\\$1/g;
+	s/file format .*/file format \.\*/;
+	print O;
+    }
+
+    close I;
+    close O;
+}
