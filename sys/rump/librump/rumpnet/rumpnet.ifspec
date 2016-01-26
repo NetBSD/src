@@ -1,8 +1,8 @@
-;       $NetBSD: rumpnet.ifspec,v 1.3 2013/07/03 19:21:11 pooka Exp $
+;       $NetBSD: rumpnet.ifspec,v 1.4 2016/01/26 23:22:22 pooka Exp $
 
 NAME|net
 PUBHDR|include/rump/rumpnet_if_pub.h
-PRIVHDR|librump/rumpnet/rumpnet_if_priv.h
+PRIVHDR|include/rump-sys/net_if.h
 WRAPPERS|librump/rumpnet/rumpnet_if_wrappers.c
 
 ; type          | name          | args			| attrs
