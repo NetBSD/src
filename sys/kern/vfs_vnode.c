@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.37.2.1 2014/10/19 10:02:59 martin Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.37.2.1.2.1 2016/01/26 23:44:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.37.2.1 2014/10/19 10:02:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.37.2.1.2.1 2016/01/26 23:44:11 snj Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -328,15 +328,17 @@ try_nextlist:
 		KASSERT((vp->v_iflag & VI_CLEAN) == 0);
 		KASSERT(vp->v_freelisthd == listhd);
 
-		if (!mutex_tryenter(vp->v_interlock))
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0)
 			continue;
-		if ((vp->v_iflag & VI_XLOCK) != 0) {
-			mutex_exit(vp->v_interlock);
+		if (!mutex_tryenter(vp->v_interlock)) {
+			VOP_UNLOCK(vp);
 			continue;
 		}
+		KASSERT((vp->v_iflag & VI_XLOCK) == 0);
 		mp = vp->v_mount;
 		if (fstrans_start_nowait(mp, FSTRANS_SHARED) != 0) {
 			mutex_exit(vp->v_interlock);
+			VOP_UNLOCK(vp);
 			continue;
 		}
 		break;
@@ -735,6 +737,11 @@ vrelel(vnode_t *vp, int flags)
 		 * Note that VOP_INACTIVE() will drop the vnode lock.
 		 */
 		VOP_INACTIVE(vp, &recycle);
+		if (recycle) {
+			/* vclean() below will drop the lock. */
+			if (vn_lock(vp, LK_EXCLUSIVE) != 0)
+				recycle = false;
+		}
 		mutex_enter(vp->v_interlock);
 		if (!recycle) {
 			if (vtryrele(vp)) {
@@ -959,6 +966,7 @@ holdrelel(vnode_t *vp)
 /*
  * Disassociate the underlying file system from a vnode.
  *
+ * Must be called with vnode locked and will return unlocked.
  * Must be called with the interlock held, and will return with it held.
  */
 static void
@@ -968,28 +976,21 @@ vclean(vnode_t *vp)
 	bool recycle, active, doclose;
 	int error;
 
+	KASSERT((vp->v_vflag & VV_LOCKSWORK) == 0 ||
+	    VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(mutex_owned(vp->v_interlock));
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
+	KASSERT((vp->v_iflag & (VI_XLOCK | VI_CLEAN)) == 0);
 	KASSERT(vp->v_usecount != 0);
-
-	/* If already clean, nothing to do. */
-	if ((vp->v_iflag & VI_CLEAN) != 0) {
-		return;
-	}
 
 	active = (vp->v_usecount > 1);
 	doclose = ! (active && vp->v_type == VBLK &&
 	    spec_node_getmountedfs(vp) != NULL);
-	mutex_exit(vp->v_interlock);
-
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * Prevent the vnode from being recycled or brought into use
 	 * while we clean it out.
 	 */
-	mutex_enter(vp->v_interlock);
-	KASSERT((vp->v_iflag & (VI_XLOCK | VI_CLEAN)) == 0);
 	vp->v_iflag |= VI_XLOCK;
 	if (vp->v_iflag & VI_EXECMAP) {
 		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
@@ -1073,23 +1074,26 @@ bool
 vrecycle(vnode_t *vp)
 {
 
+	if (vn_lock(vp, LK_EXCLUSIVE) != 0)
+		return false;
+
 	mutex_enter(vp->v_interlock);
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
 	if (vp->v_usecount != 1) {
 		mutex_exit(vp->v_interlock);
+		VOP_UNLOCK(vp);
 		return false;
 	}
 	if ((vp->v_iflag & VI_CHANGING) != 0)
 		vwait(vp, VI_CHANGING);
 	if (vp->v_usecount != 1) {
 		mutex_exit(vp->v_interlock);
+		VOP_UNLOCK(vp);
 		return false;
-	} else if ((vp->v_iflag & VI_CLEAN) != 0) {
-		mutex_exit(vp->v_interlock);
-		return true;
 	}
+	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
 	vp->v_iflag |= VI_CHANGING;
 	vclean(vp);
 	vrelel(vp, VRELEL_CHANGING_SET);
@@ -1136,6 +1140,11 @@ vrevoke(vnode_t *vp)
 void
 vgone(vnode_t *vp)
 {
+
+	if (vn_lock(vp, LK_EXCLUSIVE) != 0) {
+		KASSERT((vp->v_iflag & VI_CLEAN) != 0);
+		vrele(vp);
+	}
 
 	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_CHANGING) != 0)
