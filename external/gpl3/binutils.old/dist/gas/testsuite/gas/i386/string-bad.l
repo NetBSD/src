@@ -1,0 +1,17 @@
+.*: Assembler messages:
+.*:4: Error: .*
+.*:5: Error: .*
+.*:6: Error: .*
+.*:7: Error: .*
+.*:8: Error: .*
+.*:9: Error: .*
+.*:10: Error: .*
+.*:14: Error: .*
+.*:15: Error: .*
+.*:16: Error: .*
+.*:17: Error: .*
+.*:18: Error: .*
+.*:19: Error: .*
+.*:20: Error: .*
+.*:21: Error: .*
+.*:22: Error: .*

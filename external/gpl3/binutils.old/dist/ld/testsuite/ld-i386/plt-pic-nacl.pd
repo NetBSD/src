@@ -1,0 +1,168 @@
+#source: plt.s
+#as: --32
+#ld: -shared -melf_i386_nacl
+#objdump: -drj.plt
+#target: i?86-*-nacl*
+
+.*: +file format .*
+
+Disassembly of section .plt:
+
+[0-9a-f]+ <fn1@plt-0x40>:
+ +[0-9a-f]+:	ff 73 04             	pushl  0x4\(%ebx\)
+ +[0-9a-f]+:	8b 4b 08             	mov    0x8\(%ebx\),%ecx
+ +[0-9a-f]+:	83 e1 e0             	and    \$0xffffffe0,%ecx
+ +[0-9a-f]+:	ff e1                	jmp    \*%ecx
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+
+[0-9a-f]+ <fn1@plt>:
+ +[0-9a-f]+:	8b 8b 0c 00 00 00    	mov    0xc\(%ebx\),%ecx
+ +[0-9a-f]+:	83 e1 e0             	and    \$0xffffffe0,%ecx
+ +[0-9a-f]+:	ff e1                	jmp    \*%ecx
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	68 00 00 00 00       	push   \$0x0
+ +[0-9a-f]+:	e9 ([0-9a-f]{2} ){4} *	jmp    [0-9a-f]+ <fn1@plt-0x40>
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+
+[0-9a-f]+ <fn2@plt>:
+ +[0-9a-f]+:	8b 8b 10 00 00 00    	mov    0x10\(%ebx\),%ecx
+ +[0-9a-f]+:	83 e1 e0             	and    \$0xffffffe0,%ecx
+ +[0-9a-f]+:	ff e1                	jmp    \*%ecx
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	68 08 00 00 00       	push   \$0x8
+ +[0-9a-f]+:	e9 ([0-9a-f]{2} ){4} *	jmp    [0-9a-f]+ <fn1@plt-0x40>
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
+ +[0-9a-f]+:	90                   	nop
