@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.85 2016/01/22 23:27:12 riastradh Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.86 2016/01/26 05:58:05 knakahara Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.85 2016/01/22 23:27:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.86 2016/01/26 05:58:05 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.85 2016/01/22 23:27:12 riastradh Exp $"
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/protosw.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
@@ -158,16 +157,12 @@ static int ip_gif_ttl = 40;	/*XXX*/
 
 extern struct domain inetdomain;
 
-static const struct protosw in_stf_protosw =
+static const struct encapsw in_stf_encapsw =
 {
-	.pr_type	= SOCK_RAW,
-	.pr_domain	= &inetdomain,
-	.pr_protocol	= IPPROTO_IPV6,
-	.pr_flags	= PR_ATOMIC|PR_ADDR,
-	.pr_input	= in_stf_input,
-	.pr_ctlinput	= NULL,
-	.pr_ctloutput	= rip_ctloutput,
-	.pr_usrreqs	= &rip_usrreqs,
+	.encapsw6 = {
+		.pr_input	= in_stf_input,
+		.pr_ctlinput	= NULL,
+	}
 };
 
 static int stf_encapcheck(struct mbuf *, int, int, void *);
@@ -206,7 +201,7 @@ stf_clone_create(struct if_clone *ifc, int unit)
 	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 
 	sc->encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV6,
-	    stf_encapcheck, &in_stf_protosw, sc);
+	    stf_encapcheck, &in_stf_encapsw, sc);
 	if (sc->encap_cookie == NULL) {
 		printf("%s: unable to attach encap\n", if_name(&sc->sc_if));
 		free(sc, M_DEVBUF);
@@ -557,26 +552,22 @@ stf_checkaddr6(struct stf_softc *sc, const struct in6_addr *in6,
 	return 0;
 }
 
-void
-in_stf_input(struct mbuf *m, ...)
+int
+in_stf_input(struct mbuf **mp, int *offp, int proto)
 {
-	int s, off, proto;
+	int s;
 	struct stf_softc *sc;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	uint8_t otos, itos;
 	struct ifnet *ifp;
 	size_t pktlen;
-	va_list ap;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
+	int off = *offp;
+	struct mbuf *m = *mp;
 
 	if (proto != IPPROTO_IPV6) {
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	ip = mtod(m, struct ip *);
@@ -585,7 +576,7 @@ in_stf_input(struct mbuf *m, ...)
 
 	if (sc == NULL || (sc->sc_if.if_flags & IFF_UP) == 0) {
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	ifp = &sc->sc_if;
@@ -597,7 +588,7 @@ in_stf_input(struct mbuf *m, ...)
 	if (stf_checkaddr4(sc, &ip->ip_dst, NULL) < 0 ||
 	    stf_checkaddr4(sc, &ip->ip_src, m->m_pkthdr.rcvif) < 0) {
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	otos = ip->ip_tos;
@@ -606,7 +597,7 @@ in_stf_input(struct mbuf *m, ...)
 	if (m->m_len < sizeof(*ip6)) {
 		m = m_pullup(m, sizeof(*ip6));
 		if (!m)
-			return;
+			return IPPROTO_DONE;
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
 
@@ -617,7 +608,7 @@ in_stf_input(struct mbuf *m, ...)
 	if (stf_checkaddr6(sc, &ip6->ip6_dst, NULL) < 0 ||
 	    stf_checkaddr6(sc, &ip6->ip6_src, m->m_pkthdr.rcvif) < 0) {
 		m_freem(m);
-		return;
+		return IPPROTO_DONE;
 	}
 
 	itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
@@ -648,6 +639,8 @@ in_stf_input(struct mbuf *m, ...)
 		m_freem(m);
 	}
 	splx(s);
+
+	return IPPROTO_DONE;
 }
 
 /* ARGSUSED */

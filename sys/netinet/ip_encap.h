@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.15 2016/01/22 23:27:12 riastradh Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.16 2016/01/26 05:58:05 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -39,6 +39,26 @@
 #include <net/radix.h>
 #endif
 
+struct encapsw {
+	union {
+		struct encapsw4 {
+			void	(*pr_input)	/* input to protocol (from below) */
+				(struct mbuf *, ...);
+			void    *(*pr_ctlinput)	/* control input (from below) */
+				(int, const struct sockaddr *, void *);
+		} _encapsw4;
+		struct encapsw6 {
+			int	(*pr_input)	/* input to protocol (from below) */
+				(struct mbuf **, int *, int);
+			void	*(*pr_ctlinput)	/* control input (from below) */
+				(int, const struct sockaddr *, void *);
+		} _encapsw6;
+	} encapsw46;
+};
+
+#define encapsw4 encapsw46._encapsw4
+#define encapsw6 encapsw46._encapsw6
+
 struct encaptab {
 	struct radix_node nodes[2];
 	LIST_ENTRY(encaptab) chain;
@@ -51,7 +71,7 @@ struct encaptab {
 	struct sockaddr *dst;		/* remote addr */
 	struct sockaddr *dstmask;
 	int (*func) (struct mbuf *, int, int, void *);
-	const struct protosw *psw;	/* only pr_input will be used */
+	const struct encapsw *esw;
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
 };
 
@@ -78,10 +98,10 @@ void	encap4_input(struct mbuf *, ...);
 int	encap6_input(struct mbuf **, int *, int);
 const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
-	const struct sockaddr *, const struct protosw *, void *);
+	const struct sockaddr *, const struct encapsw *, void *);
 const struct encaptab *encap_attach_func(int, int,
 	int (*)(struct mbuf *, int, int, void *),
-	const struct protosw *, void *);
+	const struct encapsw *, void *);
 void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
 void	*encap_getarg(struct mbuf *);
