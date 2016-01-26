@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_component.c,v 1.1 2014/03/13 02:01:04 pooka Exp $	*/
+/*	$NetBSD: bpf_component.c,v 1.2 2016/01/26 23:12:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_component.c,v 1.1 2014/03/13 02:01:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_component.c,v 1.2 2016/01/26 23:12:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -36,8 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf_component.c,v 1.1 2014/03/13 02:01:04 pooka Exp 
 
 #include <net/bpf.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {

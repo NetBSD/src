@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/10/19 16:16:34 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2016/01/26 23:12:16 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -11,8 +11,6 @@ IOCONF=	ULPT.ioconf
 SRCS=	ulpt.c
 
 SRCS+=	ulpt_at_usb.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.13 2015/04/23 10:51:20 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.14 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -9,11 +9,11 @@
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs_if.h>
+
 #include <rump/rump.h>
 #include <rump/rumpvfs_if_pub.h>
-
-#include "rump_private.h"
-#include "rumpvfs_if_priv.h"
 
 void __dead rump_vfs_unavailable(void);
 void __dead
