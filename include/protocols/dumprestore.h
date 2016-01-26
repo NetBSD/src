@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.16 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.16.28.1 2016/01/26 04:53:42 riz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -152,8 +152,9 @@ union u_spcl {
 #define DR_NEWINODEFMT	0x0002	/* new format inodes on tape */
 #define DR_EXTATTRIBUTES 0x8000	/* linux: extended attributes */
 
-#define	DUMPOUTFMT	"%-16s %c %s"		/* for printf */
+/* 511 == NAME_MAX */
+#define	DUMPOUTFMT	"%-511s %c %s"		/* for printf */
 						/* name, level, ctime(date) */
-#define	DUMPINFMT	"%16s %c %[^\n]\n"	/* inverse for scanf */
+#define	DUMPINFMT	"%511s %c %[^\n]\n"	/* inverse for scanf */
 
 #endif /* !_PROTOCOLS_DUMPRESTORE_H_ */
