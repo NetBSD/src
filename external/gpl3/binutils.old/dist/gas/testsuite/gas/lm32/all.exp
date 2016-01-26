@@ -1,0 +1,6 @@
+# Lattice Mico32 assembler testsuite.
+
+if [istarget lm32-*-*] {
+    run_dump_test "csr"
+    run_dump_test "insn"
+}

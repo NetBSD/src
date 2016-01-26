@@ -1,0 +1,24 @@
+
+.*
+
+
+Disassembly of section \.text:
+
+0*10000000 <\.foo>:
+Four
+ *10000000:	60 00 00 00 	(oril    r0,r0,0|nop)
+and
+ *10000004:	60 00 00 00 	(oril    r0,r0,0|nop)
+twenty
+ *10000008:	60 00 00 00 	(oril    r0,r0,0|nop)
+blackbirds
+ *1000000c:	60 00 00 00 	(oril    r0,r0,0|nop)
+baked
+ *10000010:	60 00 00 00 	(oril    r0,r0,0|nop)
+
+0*10000014 <\.main>:
+in
+a
+ *10000014:	4b ff ff ed 	bl      10000000 <\.foo>
+pie
+ *10000018:	60 00 00 00 	(oril    r0,r0,0|nop)
