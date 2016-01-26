@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.48 2016/01/16 10:16:24 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.49 2016/01/26 01:21:56 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1782,4 +1782,19 @@ sys/arch/evbarm/conf/OPENRD			1.6
 
 	Disable mvsdio on OPENRD.
 	[cyber, ticket #1061]
+
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000.c 1.13
+
+	Avoid creation of GNU_STACK segment.
+	[phx, ticket #1037]
+
+sys/kern/exec_elf.c			patch
+
+	Restore binary compatibility on sparc64 for old binaries.
+	[martin, ticket #1062]
+
+usr.sbin/ndp/ndp.c				1.46
+
+	Fix ndp to ipv6 link-local addresses.
+	[ozaki-r, ticket #1063]
 
