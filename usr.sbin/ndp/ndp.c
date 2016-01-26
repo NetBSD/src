@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.43 2014/06/05 16:06:49 roy Exp $	*/
+/*	$NetBSD: ndp.c,v 1.43.4.1 2016/01/26 01:22:13 riz Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -298,6 +298,15 @@ main(int argc, char **argv)
 }
 
 static void
+makeaddr(struct sockaddr_in6 *mysin, const void *resp)
+{
+	const struct sockaddr_in6 *res = resp;
+	mysin->sin6_addr = res->sin6_addr;
+	mysin->sin6_scope_id = res->sin6_scope_id;
+	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
+}
+
+static void
 getsocket(void)
 {
 	if (my_s < 0) {
@@ -356,8 +365,7 @@ set(int argc, char **argv)
 		warnx("%s: %s\n", host, gai_strerror(gai_error));
 		return 1;
 	}
-	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
+	makeaddr(mysin, res->ai_addr);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -423,8 +431,7 @@ get(char *host)
 		warnx("%s: %s\n", host, gai_strerror(gai_error));
 		return;
 	}
-	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
+	makeaddr(mysin, res->ai_addr);
 	dump(&mysin->sin6_addr, 0);
 	if (found_entry == 0) {
 		(void)getnameinfo((struct sockaddr *)(void *)mysin,
@@ -457,8 +464,7 @@ delete(char *host)
 		warnx("%s: %s\n", host, gai_strerror(gai_error));
 		return 1;
 	}
-	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
+	makeaddr(mysin, res->ai_addr);
 	if (rtmsg(RTM_GET) < 0)
 		errx(1, "RTM_GET(%s) failed", host);
 	mysin = (struct sockaddr_in6 *)(void *)(rtm + 1);
