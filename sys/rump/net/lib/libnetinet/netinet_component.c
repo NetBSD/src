@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet_component.c,v 1.4 2014/08/22 11:34:28 pooka Exp $	*/
+/*	$NetBSD: netinet_component.c,v 1.5 2016/01/26 23:12:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.4 2014/08/22 11:34:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.5 2016/01/26 23:12:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.4 2014/08/22 11:34:28 pooka 
 #include <netinet/ip_var.h>
 #include <netinet/if_inarp.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/net.h>
 
 int carpattach(int);
 

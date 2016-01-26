@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.6 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: devnull.c,v 1.7 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,14 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.6 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7 2016/01/26 23:12:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "rump_vfs_private.h"
+#include <rump-sys/vfs.h>
 
 static dev_type_open(rump_devnullopen);
 static dev_type_read(rump_devnullrw);

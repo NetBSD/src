@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.c,v 1.9 2014/06/05 23:48:17 rmind Exp $	*/
+/*	$NetBSD: netisr.c,v 1.10 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.9 2014/06/05 23:48:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.10 2016/01/26 23:12:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
 
 #include <net/netisr.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/net.h>
 
-#include "rump_net_private.h"
+#include <rump/rumpuser.h>
 
 static void *netisrs[NETISR_MAX];
 

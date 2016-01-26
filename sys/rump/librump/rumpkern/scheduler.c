@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.41 2015/08/25 14:47:39 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.42 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.41 2015/08/25 14:47:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.42 2016/01/26 23:12:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -38,9 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.41 2015/08/25 14:47:39 pooka Exp $")
 #include <sys/select.h>
 #include <sys/systm.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 static struct cpu_info rump_cpus[MAXCPUS];
 static struct rumpcpu {
