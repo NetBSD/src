@@ -1,0 +1,10 @@
+# Test assembler warnings and errors.
+
+load_lib gas-dg.exp
+dg-init
+
+if [istarget bfin-*-*] {
+    dg-runtest "$srcdir/$subdir/parallel5.s" "" ""
+}
+
+dg-finish

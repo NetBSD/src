@@ -1,0 +1,116 @@
+2012-11-27  Roland McGrath  <mcgrathr@google.com>
+
+	* lib/binutils-common.exp (is_zlib_supported): New function.
+	* lib/utils-lib.exp (run_dump_test): If as options include
+	--compress-debug-sections and zlib is not available, report
+	the test as unsupported.
+	* binutils-all/compress.exp: Bail out if zlib is not available.
+	* binutils-all/objdump.exp (objdump compressed debug):
+	Mark unsupported if zlib is not available.
+	* binutils-all/readelf.exp (readelf_compressed_wa_test): Likewise.
+
+2012-08-16  Ian Bolton  <ian.bolton@arm.com>
+            Laurent Desnogues  <laurent.desnogues@arm.com>
+            Jim MacArthur  <jim.macarthur@arm.com>
+            Marcus Shawcroft  <marcus.shawcroft@arm.com>
+            Nigel Stephens  <nigel.stephens@arm.com>
+            Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+            Richard Earnshaw  <rearnsha@arm.com>
+            Sofiane Naci  <sofiane.naci@arm.com>
+            Tejas Belagod  <tejas.belagod@arm.com>
+            Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* objdump.exp: Add AArch64.
+
+2012-07-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14319
+	* binutils-all/compress.exp: Test compress empty debug sections.
+
+	* binutils-all/dw2-empty.S: New file.
+
+2012-06-07  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* binutils-all/i386/i386.exp: Don't skip for x86_64-*-linux*.
+
+2012-05-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* binutils-all/hppa/objdump.exp: Expect addend as signed.
+
+2012-05-17  Alan Modra  <amodra@gmail.com>
+
+	* binutils-all/objdump.W: Update.
+	* binutils-all/readelf.wa: Update.
+	* binutils-all/i386/compressed-1a.d: Update.
+	* binutils-all/x86-64/compressed-1a.d: Update.
+
+2012-05-16  Meador Inge  <meadori@codesourcery.com>
+
+	* binutils-all/arm/objdump.exp:
+	STMFD/LDMIA sp!, {reg} don't disassemble to PUSH/POP {reg} any longer.
+
+2012-04-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/13947
+	* binutils-all/i386/compressed-1b.d: Remove empty REL section.
+	* binutils-all/i386/compressed-1c.d: Likewise.
+
+	* binutils-all/x86-64/compressed-1b.d: Remove empty RELA
+	section.
+	* binutils-all/x86-64/compressed-1c.d: Likewise.
+
+2012-04-03  Roland McGrath  <mcgrathr@google.com>
+
+	* lib/binutils-common.exp (is_elf_format): Consider *-*-nacl* to
+	be ELF too.
+
+	* binutils-all/elfedit-4.d: Add "#as: --64" option.
+
+	* binutils-all/i386/i386.exp: Accept nacl targets too.
+	* binutils-all/x86-64/x86-64.exp: Likewise.
+
+2012-03-13  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR binutils/3807
+	* binutils-all/objcopy.exp (localize-hidden-1): Correct xfailed
+	mips-targets.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* binutils-all/objdump.exp (cpus_expected): Add tilegx.
+
+2012-02-14  Alan Modra  <amodra@gmail.com>
+
+	* binutils-all/dlltool.exp: Add setup_xfail.
+
+	* binutils-all/dw2-decodedline.S: Always have whitespace before
+	directives.
+	* binutils-all/version.s: Likewise.
+	* binutils-all/objdump.exp (dw2-decodedline): Don't run for
+	hppa64*-*-hpux*, i370-*-*, i960-*-*.
+
+2012-02-11  Kai Tietz  <ktietz@redhat.com>
+
+	* binutils-all/version.def: New file.
+	* binutils-all/dlltool.exp: Add version-dll test.
+
+2012-02-02  Nick Clifton  <nickc@redhat.com>
+
+	* binutils-all/readelf.n: Add #pass to cope with targets that add
+	their own notes.
+
+2012-02-01  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/13482
+	* binutils-all/version.s: New test source file.
+	* binutils-all/readelf.n: New file: expected readelf output.
+	* binutils-all/readelf.exp: Add test of .note section contents.
+
+For older changes see ChangeLog-0411
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

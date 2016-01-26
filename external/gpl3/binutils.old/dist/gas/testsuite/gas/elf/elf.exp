@@ -1,0 +1,197 @@
+#
+# elf tests
+#
+
+proc run_elf_list_test { name suffix opts readelf_opts readelf_pipe } {
+    global READELF
+    global srcdir subdir
+    set testname "elf $name list"
+    set file $srcdir/$subdir/$name
+    gas_run ${name}.s "$opts -o dump.o" ">&dump.out"
+    if { ![string match "" $opts]
+	  && [regexp_diff "dump.out" "${file}.l"] } then {
+	fail $testname
+	verbose "output is [file_contents "dump.out"]" 2
+	return
+    }
+    send_log "$READELF $readelf_opts dump.o $readelf_pipe > dump.out\n"
+    set status [gas_host_run "$READELF $readelf_opts dump.o" ">readelf.out"]
+    if { [lindex $status 0] != 0 || ![string match "" [lindex $status 1]] } then {
+	send_log "[lindex $status 1]\n"
+	fail $testname
+	return
+    }
+    catch "exec cat readelf.out $readelf_pipe > dump.out\n" comp_output
+    if ![string match "" $comp_output] then {
+	send_log "$comp_output\n"
+	fail $testname
+	return
+    }
+    verbose_eval {[file_contents "dump.out"]} 3
+    if { [regexp_diff "dump.out" "${file}.e${suffix}"] } then {
+	fail $testname
+	verbose "output is [file_contents "dump.out"]" 2
+	return
+    }
+    pass $testname
+}
+
+# We're testing bits in obj-elf -- don't run on anything else.
+if { [is_elf_format] } then {
+    set target_machine ""
+    if {[istarget "mips*-*-*"]} then {
+	set target_machine -mips
+    }
+    if {[istarget m32r*-*-*]} then {
+	set target_machine -m32r
+    }
+    if {[istarget "score-*-*"]} then {
+	set target_machine -score
+    }
+    if {[istarget "tic6x-*-*"]} then {
+	set target_machine -tic6x
+    }
+    if {[istarget "xtensa*-*-*"]} then {
+	set target_machine -xtensa
+    }
+    if {[istarget "rx-*-*"]} then {
+	set target_machine -rx
+    }
+    if {[istarget "arm*-*-*"]} {
+
+	if { ([istarget "*-*-*eabi"]
+	      || [istarget "*-*-linux-*"]
+	      || [istarget "*-*-nacl*"]
+	      || [istarget "*-*-symbianelf"])} then {
+	    set target_machine -armeabi
+	} else {
+	    set target_machine -armelf
+	}
+    }
+
+    # The MN10300 and Xtensa ports disable the assembler's call frame
+    # optimization because it interfers with link-time relaxation of
+    # function prologues.
+    if {![istarget "mn10300-*-*"]
+	&& ![istarget "xtensa*-*-*"]
+	&& ![istarget "am3*-*-*"]} then {
+      run_dump_test "ehopt0"
+    }
+    case $target_triplet in {
+	{ m68k-*-* m68[03]??-*-* } {
+	    run_dump_test "file" { { as "--defsym m68k=1" } }
+	}
+	{ mmix-*-* } {
+	    run_dump_test "file" { { as "--defsym mmix=1" } }
+	}
+	{ xtensa*-*-* } {
+	    run_dump_test "file" { { as "--rename-section file.s=file.c" } }
+	}
+	default {
+	    run_dump_test "file"
+	}
+    }
+    run_dump_test "group0a"
+    run_dump_test "group0b"
+    run_dump_test "group0c"
+    run_dump_test "group1a"
+    run_dump_test "group1b"
+    case $target_triplet in {
+	{ hppa64*-*-hpux* } { }
+	default {
+	    run_dump_test "groupautoa"
+	}
+    }
+    case $target_triplet in {
+	{ hppa64*-*-hpux* } { }
+	{ xtensa*-*-* } { }
+	default {
+	    run_dump_test "groupautob"
+	}
+    }
+    case $target_triplet in {
+	{ alpha*-*-* } { }
+	{ cr16*-*-* } { }
+	{ crx*-*-* } { }
+	{ h8300-*-* } { }
+	{ hppa*-*-* } { }
+	{ iq2000*-*-* } { }
+	{ mips*-*-* } { }
+	{ mn10200-*-* } { }
+	{ mn10300-*-* } { }
+	{ *c54x*-*-* } { }
+	{ rx-*-* } { }
+	default {
+	    # The next test can fail if the target does not convert fixups
+	    # against ordinary symbols into relocations against section symbols.
+	    # This is usually revealed by the error message:
+	    #  symbol `sym' required but not present
+    	setup_xfail "m681*-*-*" "m68hc*-*-*"
+	    run_dump_test redef
+	    run_dump_test equ-reloc
+	}
+    }
+    run_dump_test "pseudo"
+    run_dump_test "section0"
+    run_dump_test "section1"
+    if {! [istarget "h8300-*-*"]} then {
+	# The h8300 port issues a warning message for
+	# new sections created without atrributes.
+	run_elf_list_test "section2" "$target_machine" "-al" "-s" ""
+    }
+    run_dump_test "section3"
+    run_dump_test "section4"
+    if {! [istarget "h8300-*-*"] && ! [istarget "rx-*-*"]} then {
+	# The h8300 port issues a warning message for
+	# new sections created without atrributes.
+	# The RX port does not complain about changing the attributes of the
+	# .data and .bss sections since it does not use those names.
+	run_elf_list_test "section5" "" "-al" "-SW" "| grep \" \\\\.test\\\[0-9\\\]\""
+    }
+    run_dump_test "struct"
+    if { ![istarget "alpha*-*-*"] } then {
+	# The alpha port uses .set for state, e.g. nomacro.
+	run_dump_test "symtab"
+    }
+    run_dump_test "symver"
+
+    # No indirect functions on non-GNU targets.
+    # The MSP port sets the ELF header's OSABI field to ELFOSABI_STANDALONE.
+    # The non-eabi ARM ports sets it to ELFOSABI_ARM.
+    # So for these targets we cannot include an IFUNC symbol type
+    # in the symbol type test.
+    if { [istarget "*-*-hpux*"]
+	 || [istarget "msp*-*-*"]
+	 || [istarget "arm*-*-*"]} then {
+	# hppa64 has a non-standard common directive
+	if { ![istarget "hppa64*-*-hpux*"] } then {
+	    run_elf_list_test "type-noifunc" "" "" "-s" "| grep \"1 *\\\[FONTC\\\]\""
+	}
+    } else {
+	run_dump_test ifunc-1
+	run_elf_list_test "type" "" "" "-s" "| grep \"1 *\\\[FIONTCU\\\]\""
+    }
+
+    run_dump_test "section6"
+    run_dump_test "section7"
+    run_dump_test "section8"
+    run_dump_test "section9"
+    run_dump_test "dwarf2-1"
+    run_dump_test "dwarf2-2"
+    run_dump_test "dwarf2-3"
+    run_dump_test "dwarf2-4"
+    run_dump_test "bad-section-flag"
+    run_dump_test "bad-size"
+    run_dump_test "bad-group"
+
+    run_dump_test "syms"
+    
+    run_dump_test "common1"
+    run_dump_test "common2"
+
+load_lib gas-dg.exp
+dg-init
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/err-*.s $srcdir/$subdir/warn-*.s]] "" ""
+dg-finish
+    
+}
