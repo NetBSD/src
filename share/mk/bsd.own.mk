@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.885 2016/01/24 20:15:11 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.886 2016/01/26 17:47:06 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -113,8 +113,6 @@ HAVE_LIBGCC_EH?=	no
 HAVE_LIBGCC_EH?=	yes
 .endif
 
-HAVE_GDB?=	79
-
 .if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "hppa") || \
     (${MACHINE_ARCH} == "ia64") || \
@@ -125,6 +123,22 @@ HAVE_SSP?=	yes
 .if ${USE_FORT:Uno} != "no"
 USE_SSP?=	yes
 .endif
+.endif
+
+HAVE_GDB?=	79
+
+.if ${HAVE_GDB} == 79
+EXTERNAL_GDB_SUBDIR=		gdb
+.else
+EXTERNAL_GDB_SUBDIR=		/does/not/exist
+.endif
+
+HAVE_BINUTILS?=	223
+
+.if ${HAVE_BINUTILS} == 223
+EXTERNAL_BINUTILS_SUBDIR=	binutils.old
+.else
+EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 .endif
 
 .if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
