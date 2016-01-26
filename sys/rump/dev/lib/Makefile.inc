@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.7 2015/11/17 01:07:34 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2016/01/26 23:12:14 pooka Exp $
 #
 
 RUMPTOP=	${.CURDIR}/../../..
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpdev
 
 RUMPDEVLIBDIR:= ${.PARSEDIR}
 

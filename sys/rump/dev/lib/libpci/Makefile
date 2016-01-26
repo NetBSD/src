@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/11/01 22:41:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2016/01/26 23:12:15 pooka Exp $
 #
 
 RUMPTOP= ${TOPRUMP}
@@ -23,9 +23,6 @@ SRCS+=	rumpdev_bus_space.c
 SRCS+=	rumpdev_bus_dma.c
 
 SRCS+=	pci_at_mainbus.c
-
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpvfs
 
 .if ${RUMP_PCI_IOSPACE:Uno} == "yes"
 .error RUMP_PCI_IOSPACE defined in Makefile.  Use userfeatures.h instead.
