@@ -1,0 +1,75 @@
+#
+# Makefile for binutils under openVMS (Alpha and Itanium)
+#
+# For use with gnu-make for vms
+#
+# Created by Klaus Kaempf, kkaempf@rmi.de
+#
+#
+
+DEFS=/define=("OBJDUMP_PRIVATE_VECTORS=")
+OPT=/noopt/debug
+CFLAGS=$(OPT)/include=([],"../include",[-.bfd])$(DEFS)\
+ /name=(as_is,shortened)\
+ /prefix=(all,except=("getopt","optarg","optopt","optind","opterr"))\
+ /warns=(info=(ptrmismatch,shiftcount))
+
+LIBBFD = [-.bfd]libbfd.olb/lib
+LIBBFD_DEP = [-.bfd]libbfd.olb
+LIBIBERTY_DEP = [-.libiberty]libiberty.olb
+LIBIBERTY = [-.libiberty]libiberty.olb/lib
+OPCODES_DEP = [-.opcodes]libopcodes.olb
+OPCODES = [-.opcodes]libopcodes.olb/lib
+
+DEBUG_OBJS = rddbg.obj,debug.obj,stabs.obj,ieee.obj,rdcoff.obj,dwarf.obj,\
+  elfcomm.obj
+
+BULIBS = bucomm.obj,version.obj,filemode.obj
+
+ADDL_DEPS = $(BULIBS),$(LIBBFD_DEP),$(LIBIBERTY_DEP)
+ADDL_LIBS = $(BULIBS),$(LIBBFD),$(LIBIBERTY)
+
+SIZEOBJS = $(ADDL_DEPS),size.obj
+
+STRINGSOBJS = $(ADDL_DEPS),strings.obj
+
+NMOBJS = $(ADDL_DEPS),nm.obj
+
+ADDR2LINEOBJS = $(ADDL_DEPS),addr2line.obj
+
+OBJDUMPOBJS = objdump.obj,prdbg.obj,$(DEBUG_OBJS),$(ADDL_DEPS),$(OPCODES_DEP)
+
+READELFOBJS = readelf.obj,dwarf.obj,unwind-ia64.obj,$(ADDL_DEPS)
+
+all: config.h size.exe strings.exe objdump.exe nm.exe addr2line.exe
+
+size.exe: $(SIZEOBJS)
+	link/exe=$@ size.obj,$(ADDL_LIBS)
+
+strings.exe: $(STRINGSOBJS)
+	link/exe=$@ strings.obj,$(ADDL_LIBS)
+
+nm.exe: $(NMOBJS)
+	link/exe=$@ nm.obj,$(ADDL_LIBS)
+
+addr2line.exe: $(ADDR2LINEOBJS)
+	link/exe=$@ addr2line.obj,$(ADDL_LIBS)
+
+objdump.exe: $(OBJDUMPOBJS)
+	link/exe=$@ objdump.obj,prdbg.obj,$(DEBUG_OBJS),$(ADDL_LIBS),$(OPCODES)
+
+readelf.exe: $(READELFOBJS)
+	link/exe=$@ readelf.obj,dwarf.obj,unwind-ia64.obj,$(ADDL_LIBS)
+
+config.h:
+	$$ @configure
+	$(MAKE) -f makefile.vms "CC=$(CC)"
+
+clean:
+	$$ purge
+	$(RM) *.obj;
+	$(RM) *.exe;
+
+distclean: clean
+	$(RM) config.h;
+	$(RM) makefile.vms;
