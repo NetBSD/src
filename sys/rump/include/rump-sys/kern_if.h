@@ -1,9 +1,9 @@
-/*	$NetBSD: kern_if.h,v 1.1 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: kern_if.h,v 1.2 2016/01/26 23:25:40 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.13 2014/04/25 13:10:42 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.14 2016/01/26 23:22:22 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.10 2016/01/26 23:21:18 pooka Exp 
  */
 
 #ifndef _RUMP_PRIF_KERN_H_
