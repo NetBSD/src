@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.69.2.3 2015/11/08 00:57:09 riz Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.69.2.4 2016/01/26 01:18:37 riz Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.69.2.3 2015/11/08 00:57:09 riz Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.69.2.4 2016/01/26 01:18:37 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.69.2.3 2015/11/08 00:57:09 riz Exp $"
 #include <sys/kauth.h>
 #include <sys/bitops.h>
 #include <sys/cprng.h>
+#include <sys/atomic.h>
 
 #include <sys/cpu.h>
 #include <machine/reg.h>
@@ -409,20 +410,18 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	u_long phsize;
 	Elf_Addr addr = *last;
 	struct proc *p;
-	bool use_topdown;
+	bool use_topdown, restore_topdown;
 
 	p = l->l_proc;
 
 	KASSERT(p->p_vmspace);
-	if (__predict_true(p->p_vmspace != proc0.p_vmspace)) {
-		use_topdown = p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN;
-	} else {
+	KASSERT(p->p_vmspace != proc0.p_vmspace);
+	restore_topdown = false;
 #ifdef __USE_TOPDOWN_VM
-		use_topdown = epp->ep_flags & EXEC_TOPDOWN_VM;
+	use_topdown = epp->ep_flags & EXEC_TOPDOWN_VM;
 #else
-		use_topdown = false;
+	use_topdown = false;
 #endif
-	}
 
 	/*
 	 * 1. open file
@@ -537,9 +536,36 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 		/*
 		 * Now compute the size and load address.
 		 */
+		if (__predict_false(
+		    /* vmspace is marked as topdown */
+		    (((p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN) != 0)
+			!=
+		     /* but this differs from the topdown usage we need */
+		     use_topdown))) {
+			/*
+			 * The vmmap might be shared, but this flag is
+			 * considered r/o and we will restore it immediately
+			 * after calculating the load address.
+			 */
+			int flags = p->p_vmspace->vm_map.flags;
+			int n = use_topdown
+				    ? (flags | VM_MAP_TOPDOWN)
+				    : (flags & ~VM_MAP_TOPDOWN);
+
+			restore_topdown = true;
+			atomic_swap_32(&p->p_vmspace->vm_map.flags, n);
+		}
 		addr = (*epp->ep_esch->es_emul->e_vm_default_addr)(p,
 		    epp->ep_daddr,
 		    round_page(limit) - trunc_page(base_ph->p_vaddr));
+		if (__predict_false(restore_topdown)) {
+			int flags = p->p_vmspace->vm_map.flags;
+			int n = !use_topdown
+				    ? (flags | VM_MAP_TOPDOWN)
+				    : (flags & ~VM_MAP_TOPDOWN);
+
+			atomic_swap_32(&p->p_vmspace->vm_map.flags, n);
+		}
 	} else
 		addr = *last; /* may be ELF_LINK_ADDR */
 
