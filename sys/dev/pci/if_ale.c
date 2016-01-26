@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.18 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.19 2016/01/26 16:01:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.18 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.19 2016/01/26 16:01:45 christos Exp $");
 
 #include "vlan.h"
 
@@ -541,7 +541,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 #ifdef ALE_CHECKSUM
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 				IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
+				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
 
 #if NVLAN > 0
