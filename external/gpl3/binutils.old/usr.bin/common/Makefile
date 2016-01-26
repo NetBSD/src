@@ -1,8 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/01/26 17:27:00 christos Exp $
-
-.include <bsd.own.mk>
-
-TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
+#	$NetBSD: Makefile,v 1.2 2016/01/26 19:38:10 christos Exp $
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
