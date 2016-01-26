@@ -1,0 +1,5 @@
+
+Notes at offset 0x0*0.. with length 0x0*018:
+  Owner[ 	]*Data size[ 	]*Description
+  Version 1.0[ 	]*0x0*0[ 	]*NT_VERSION \(version\)
+#pass
