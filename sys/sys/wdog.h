@@ -1,4 +1,4 @@
-/*	$NetBSD: wdog.h,v 1.5 2016/01/23 01:26:14 dholland Exp $	*/
+/*	$NetBSD: wdog.h,v 1.6 2016/01/26 06:27:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -54,7 +54,7 @@ struct wdog_mode {
 /*
  * GMODE -- get mode of watchdog specified by wm_name.
  *
- * SMODE -- set mode of watchdog specified by wm_mame.  If
+ * SMODE -- set mode of watchdog specified by wm_name.  If
  *          wm_mode is not DISARMED, the watchdog is armed,
  *          if another watchdog is not already running.
  */
