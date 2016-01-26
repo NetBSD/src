@@ -1,4 +1,4 @@
-.\"	$NetBSD: pserialize.9,v 1.11 2016/01/26 01:05:17 riastradh Exp $
+.\"	$NetBSD: pserialize.9,v 1.12 2016/01/26 01:09:56 riastradh Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,6 +117,13 @@ Find a frotz, as a reader:
 		/* Fetch f before we fetch anything f points to.  */
 		membar_datadep_consumer();
 		if (f->f_... == key) {
+			/*
+			 * Grab whatever part of the frotz we need.
+			 * Note that we can't use the frotz after
+			 * pserialize_read_exit, without a stronger
+			 * kind of reference, say a reference count
+			 * managed by atomic_ops(3).
+			 */
 			*resultp = f->f_...;
 			error = 0;
 			break;
