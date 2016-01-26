@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.29 2016/01/26 01:30:56 riz Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.30 2016/01/26 04:57:19 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -887,4 +887,16 @@ crypto/external/bsd/openssh/dist/sftp.c		1.17
 
 	Fix sftp filename completion.  PR#50564.
 	[snj, ticket #1066]
+
+sys/kern/kern_softint.c				1.42
+
+	Fix parallel operation problem with softint which
+	leads to panic.
+	[knakahara, ticket #1067]
+
+sys/arch/sparc64/sparc64/ofw_machdep.c		1.45
+
+	Restrict the check for fully specified interrupts to machines with psycho
+	controllers only, and adjust comments to note this.
+	[jdc, ticket #1069]
 
