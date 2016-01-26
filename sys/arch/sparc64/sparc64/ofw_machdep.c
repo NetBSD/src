@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.42 2014/05/04 09:05:39 martin Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.42.2.1 2016/01/26 04:56:34 riz Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.42 2014/05/04 09:05:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.42.2.1 2016/01/26 04:56:34 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -707,22 +707,22 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	int phc_node;
 	int rc = -1;
 
+	phc_node = find_pci_host_node(node);
+
 	/* 
-	 * Don't try to map interrupts for onboard devices, or if the
-	 * interrupt is already fully specified.
-	 * XXX This should be done differently (i.e. by matching
-	 * the node name) - but we need access to a machine where
-	 * a change is testable - hence the printf below.
+	 * On machines with psycho PCI controllers, we don't need to map
+	 * interrupts if they are already fully specified (0x20 to 0x3f
+	 * for onboard devices and IGN 0x7c0 for psycho0/psycho1).
 	 */
 	if (*interrupt & 0x20 || *interrupt & 0x7c0) {
-		char name[40];
-
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("\nATTENTION: if you see this message, please mail "
-		    "the output of \"dmesg\" and \"ofctl -p\" to "
-		    "port-sparc64@NetBSD.org!\n"
-		    "Not mapping interrupt for node %s (%x)\n", name, node);
-		return validlen;
+		char model[40];
+		
+		if (OF_getprop(phc_node, "model", &model, sizeof(model)) > 10
+		    && !strcmp(model, "SUNW,psycho")) {
+			DPRINTF(("OF_mapintr: interrupt %x already mapped\n",
+			    *interrupt));
+			return validlen;
+		}
 	}
 
 	/*
@@ -743,8 +743,6 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		printf("OF_mapintr: no reg property?\n");
 		return (-1);
 	}
-
-	phc_node = find_pci_host_node(node);
 
 	while (node) {
 #ifdef DEBUG
