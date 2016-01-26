@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.74 2016/01/26 05:58:05 knakahara Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.75 2016/01/26 06:00:10 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.74 2016/01/26 05:58:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.75 2016/01/26 06:00:10 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -193,19 +193,12 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 }
 
 void
-in_gif_input(struct mbuf *m, ...)
+in_gif_input(struct mbuf *m, int off, int proto)
 {
-	int off, proto;
 	struct ifnet *gifp = NULL;
 	const struct ip *ip;
-	va_list ap;
 	int af;
 	u_int8_t otos;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
 
 	ip = mtod(m, const struct ip *);
 

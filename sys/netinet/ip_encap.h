@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.16 2016/01/26 05:58:05 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.17 2016/01/26 06:00:10 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ struct encapsw {
 	union {
 		struct encapsw4 {
 			void	(*pr_input)	/* input to protocol (from below) */
-				(struct mbuf *, ...);
+				(struct mbuf *, int, int);
 			void    *(*pr_ctlinput)	/* control input (from below) */
 				(int, const struct sockaddr *, void *);
 		} _encapsw4;

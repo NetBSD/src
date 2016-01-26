@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.7 2011/02/25 20:13:10 drochner Exp $	*/
+/*	$NetBSD: xform.h,v 1.8 2016/01/26 06:00:10 knakahara Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -105,7 +105,7 @@ struct cryptoini;
 
 /* XF_IP4 */
 extern	int ip4_input6(struct mbuf **m, int *offp, int proto);
-extern	void ip4_input(struct mbuf *m, ...);
+extern	void ip4_input(struct mbuf *m, int, int);
 extern	int ipip_output(struct mbuf *, struct ipsecrequest *,
 			struct mbuf **, int, int);
 
