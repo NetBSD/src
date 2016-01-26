@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.137 2016/01/26 05:58:05 knakahara Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.138 2016/01/26 06:00:10 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.137 2016/01/26 05:58:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.138 2016/01/26 06:00:10 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -190,7 +190,7 @@ extern int rsvp_on;
 #endif /* RSVP_ISI */
 
 /* vif attachment using sys/netinet/ip_encap.c */
-static void vif_input(struct mbuf *, ...);
+static void vif_input(struct mbuf *, int, int);
 static int vif_encapcheck(struct mbuf *, int, int, void *);
 
 static const struct encapsw vif_encapsw = {
@@ -1870,16 +1870,9 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
  * De-encapsulate a packet and feed it back through ip input.
  */
 static void
-vif_input(struct mbuf *m, ...)
+vif_input(struct mbuf *m, int off, int proto)
 {
-	int off, proto;
-	va_list ap;
 	struct vif *vifp;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
 
 	vifp = (struct vif *)encap_getarg(m);
 	if (!vifp || proto != ENCAP_PROTO) {
