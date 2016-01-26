@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.49 2016/01/26 01:21:56 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.50 2016/01/26 01:30:23 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1797,4 +1797,21 @@ usr.sbin/ndp/ndp.c				1.46
 
 	Fix ndp to ipv6 link-local addresses.
 	[ozaki-r, ticket #1063]
+
+sys/arch/sparc64/dev/schizo.c			1.34-1.35
+sys/arch/sparc64/dev/schizoreg.h		1.7,1.10-1.11
+
+	Fix interrupt routing on sparc64 machines with Tomatillo
+	PCI controllers.
+	[jdc, ticket #1064]
+
+sys/net/npf/npf_mbuf.c				1.15
+
+	Handle delayed checksums for IPv6.
+	[mlelstv, ticket #1065]
+
+crypto/external/bsd/openssh/dist/sftp.c		1.17
+
+	Fix sftp filename completion.  PR#50564.
+	[snj, ticket #1066]
 
