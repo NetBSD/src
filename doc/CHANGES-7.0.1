@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.28 2016/01/26 01:23:50 riz Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.29 2016/01/26 01:30:56 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -882,4 +882,9 @@ usr.sbin/ndp/ndp.c				1.46
 
 	Fix ndp to ipv6 link-local addresses.
 	[ozaki-r, ticket #1063]
+
+crypto/external/bsd/openssh/dist/sftp.c		1.17
+
+	Fix sftp filename completion.  PR#50564.
+	[snj, ticket #1066]
 
