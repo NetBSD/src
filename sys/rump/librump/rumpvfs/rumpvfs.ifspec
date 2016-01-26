@@ -1,8 +1,8 @@
-;       $NetBSD: rumpvfs.ifspec,v 1.10 2015/04/23 10:50:29 pooka Exp $
+;       $NetBSD: rumpvfs.ifspec,v 1.11 2016/01/26 23:22:22 pooka Exp $
 
 NAME|vfs
 PUBHDR|include/rump/rumpvfs_if_pub.h
-PRIVHDR|librump/rumpvfs/rumpvfs_if_priv.h
+PRIVHDR|include/rump-sys/vfs_if.h
 WRAPPERS|librump/rumpvfs/rumpvfs_if_wrappers.c
 
 ; type          | name          | args		| attrs
