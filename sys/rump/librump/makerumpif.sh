@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.10 2016/01/26 23:21:18 pooka Exp $
 #
 # Copyright (c) 2009, 2015 Antti Kantee.  All rights reserved.
 #
@@ -78,9 +78,9 @@ sed -e '
 ' ${1} | awk -F\| -v topdir=${TOPDIR} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.10 2016/01/26 23:21:18 pooka Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.10 2016/01/26 23:21:18 pooka Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -154,11 +154,11 @@ $1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 		printf("\n") > privhdr
 
 		printf("\n#include <sys/cdefs.h>\n") > gencalls
-		printf("#include <sys/systm.h>\n") > gencalls
-		printf("\n#include <rump/rump.h>\n") > gencalls
+		printf("#include <sys/systm.h>\n\n") > gencalls
+		printf("#include <rump-sys/kern.h>\n", privfile) > gencalls
+		printf("#include <rump-sys/%s>\n\n", privfile) > gencalls
+		printf("#include <rump/rump.h>\n") > gencalls
 		printf("#include <rump/%s>\n\n", pubfile) > gencalls
-		printf("#include \"rump_private.h\"\n", privfile) > gencalls
-		printf("#include \"%s\"\n\n", privfile) > gencalls
 		printf("void __dead rump_%s_unavailable(void);\n",	\
 		    myname) > gencalls
 		printf("void __dead\nrump_%s_unavailable(void)\n{\n",	\
