@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2013/09/20 16:49:00 pooka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2016/01/26 23:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2013/09/20 16:49:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2016/01/26 23:12:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,7 +70,7 @@ const short cfroots[] = {
 struct pdevinit pdevinit[MAXPDEVS] = {{NULL,0}, }; /* XXX: static limit */
 static int pdev_total = 0;
 
-#include "rump_dev_private.h"
+#include <rump-sys/dev.h>
 
 void
 rump_pdev_add(void (*pdev_attach)(int), int pdev_count)

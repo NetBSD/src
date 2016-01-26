@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.36 2016/01/18 23:27:20 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.37 2016/01/26 23:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.36 2016/01/18 23:27:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.37 2016/01/26 23:12:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,8 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.36 2016/01/18 23:27:20 pooka Exp $");
 #include <sys/resourcevar.h>
 #include <sys/uidinfo.h>
 
+#include <rump-sys/kern.h>
+
 #include <rump/rumpuser.h>
-#include "rump_private.h"
+
 #include "rump_curlwp.h"
 
 struct lwp lwp0 = {

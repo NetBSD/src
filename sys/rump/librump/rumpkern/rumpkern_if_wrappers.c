@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.16 2014/04/25 17:50:28 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.17 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -9,11 +9,10 @@
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
+#include <rump-sys/kern.h>
+
 #include <rump/rump.h>
 #include <rump/rumpkern_if_pub.h>
-
-#include "rump_private.h"
-#include "rumpkern_if_priv.h"
 
 void __dead rump_kern_unavailable(void);
 void __dead

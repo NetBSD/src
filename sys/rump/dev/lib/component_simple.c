@@ -1,4 +1,4 @@
-/*	$NetBSD: component_simple.c,v 1.2 2015/11/16 23:27:07 pooka Exp $	*/
+/*	$NetBSD: component_simple.c,v 1.3 2016/01/26 23:12:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2015 Antti Kantee.  All Rights Reserved.
@@ -26,14 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component_simple.c,v 1.2 2015/11/16 23:27:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component_simple.c,v 1.3 2016/01/26 23:12:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 #include "ioconf.c"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.23 2014/04/09 23:53:36 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.24 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.23 2014/04/09 23:53:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.24 2016/01/26 23:12:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.23 2014/04/09 23:53:36 pooka Exp $");
 #include <sys/systm.h>
 #include <sys/queue.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 struct thrdesc {
 	void (*f)(void *);

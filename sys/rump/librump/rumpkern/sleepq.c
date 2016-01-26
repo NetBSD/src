@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.16 2014/04/24 12:04:28 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.17 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.16 2014/04/24 12:04:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.17 2016/01/26 23:12:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.16 2014/04/24 12:04:28 pooka Exp $");
 #include <sys/syncobj.h>
 #include <sys/atomic.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 syncobj_t sleep_syncobj;
 static kcondvar_t sq_cv;

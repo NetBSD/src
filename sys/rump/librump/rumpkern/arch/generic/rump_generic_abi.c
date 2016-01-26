@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_generic_abi.c,v 1.1 2015/04/22 18:12:39 pooka Exp $	*/
+/*	$NetBSD: rump_generic_abi.c,v 1.2 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2015 Antti Kantee.  All Rights Reserved.
@@ -26,9 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_generic_abi.c,v 1.1 2015/04/22 18:12:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_generic_abi.c,v 1.2 2016/01/26 23:12:18 pooka Exp $");
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 int
 rump_nativeabi_p(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.326 2016/01/18 16:46:08 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.327 2016/01/26 23:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.326 2016/01/18 16:46:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.327 2016/01/26 23:12:17 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -74,6 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.326 2016/01/18 16:46:08 pooka Exp $");
 #include <sys/rnd.h>
 #include <sys/ktrace.h>
 
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
+#include <rump-sys/net.h>
+#include <rump-sys/vfs.h>
+
 #include <rump/rumpuser.h>
 
 #include <secmodel/suser/suser.h>
@@ -82,11 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.326 2016/01/18 16:46:08 pooka Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_readahead.h>
-
-#include "rump_private.h"
-#include "rump_net_private.h"
-#include "rump_vfs_private.h"
-#include "rump_dev_private.h"
 
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;

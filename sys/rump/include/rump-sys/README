@@ -1,0 +1,6 @@
+	$NetBSD: README,v 1.1 2016/01/26 23:12:17 pooka Exp $
+
+This directory contains files which are kernel-internal interfaces
+provided by rump kernels.  Like any other NetBSD kernel interfaces,
+they may change as long as __NetBSD_Version__ is bumped at the
+same time.

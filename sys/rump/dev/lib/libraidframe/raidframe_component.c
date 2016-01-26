@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframe_component.c,v 1.4 2015/12/26 10:22:09 pgoyette Exp $	*/
+/*	$NetBSD: raidframe_component.c,v 1.5 2016/01/26 23:12:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.4 2015/12/26 10:22:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.5 2016/01/26 23:12:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
+#include <rump-sys/vfs.h>
 
 #include "ioconf.h"
 

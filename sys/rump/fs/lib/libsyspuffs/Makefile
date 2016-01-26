@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/10/19 16:16:36 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2016/01/26 23:12:17 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/puffs
@@ -13,8 +13,7 @@ SRCS+=	puffs_rumpglue.c
 
 SRCS+=	syspuffs_component.c
 
-CPPFLAGS+= -DPUFFSDEBUG -I${RUMPTOP}/librump/rumpvfs
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern
+CPPFLAGS+= -DPUFFSDEBUG
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.10 2015/04/21 04:05:57 riastradh Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.11 2016/01/26 23:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.10 2015/04/21 04:05:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.11 2016/01/26 23:12:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -34,9 +34,9 @@ __KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.10 2015/04/21 04:05:57 riastradh 
 #include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 static krndsource_t rndsrc;
 static volatile unsigned hyperentropy_wanted;

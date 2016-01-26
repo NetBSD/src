@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_x86_spl.c,v 1.1 2014/02/12 22:28:43 pooka Exp $	*/
+/*	$NetBSD: rump_x86_spl.c,v 1.2 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,13 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_spl.c,v 1.1 2014/02/12 22:28:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_spl.c,v 1.2 2016/01/26 23:12:18 pooka Exp $");
 
 #include <sys/param.h>
 
 #include <machine/intr.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 void
 spllower(int s)

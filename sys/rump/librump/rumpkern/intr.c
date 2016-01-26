@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.53 2015/08/16 11:06:54 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.54 2016/01/26 23:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.53 2015/08/16 11:06:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.54 2016/01/26 23:12:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -38,9 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.53 2015/08/16 11:06:54 pooka Exp $");
 #include <sys/intr.h>
 #include <sys/timetc.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 /*
  * Interrupt simulator.  It executes hardclock() and softintrs.
