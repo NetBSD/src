@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.21 2014/10/18 08:33:30 snj Exp $	*/
+/*	$NetBSD: showmount.c,v 1.22 2016/01/26 16:23:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.21 2014/10/18 08:33:30 snj Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.22 2016/01/26 16:23:27 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 
 	if (rpcs & DODUMP)
 		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
-			 RPCMNT_DUMP, (xdrproc_t)xdr_void, (char *)0,
+			 RPCMNT_DUMP, (xdrproc_t)xdr_void, NULL,
 			 (xdrproc_t)xdr_mntdump, (char *)&mntdump)) != 0) {
 			fprintf(stderr, "showmount: Can't do Mountdump rpc: ");
 			clnt_perrno(estat);
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 		}
 	if (rpcs & DOEXPORTS)
 		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
-			 RPCMNT_EXPORT, (xdrproc_t)xdr_void, (char *)0,
+			 RPCMNT_EXPORT, (xdrproc_t)xdr_void, NULL,
 			 (xdrproc_t)xdr_exports, (char *)&exports)) != 0) {
 			fprintf(stderr, "showmount: Can't do Exports rpc: ");
 			clnt_perrno(estat);
@@ -233,6 +233,16 @@ tcp_callrpc(const char *host, int prognum, int versnum, int procnum,
  	return rval;
 }
 
+static void
+mountlist_free(struct mountlist *ml)
+{
+	if (ml == NULL)
+		return;
+	mountlist_free(ml->ml_left);
+	mountlist_free(ml->ml_right);
+	free(ml);
+}
+
 /*
  * Xdr routine for retrieving the mount dump list
  */
@@ -244,20 +254,24 @@ xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 	char *strp;
 
 	otp = NULL;
-	*mlp = (struct mountlist *)0;
+	*mlp = NULL;
 	if (!xdr_bool(xdrsp, &bool_int))
-		return (0);
+		return 0;
 	while (bool_int) {
-		mp = (struct mountlist *)malloc(sizeof(struct mountlist));
+		mp = malloc(sizeof(*mp));
 		if (mp == NULL)
-			return (0);
-		mp->ml_left = mp->ml_right = (struct mountlist *)0;
+			goto out;
+		mp->ml_left = mp->ml_right = NULL;
 		strp = mp->ml_host;
-		if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN))
-			return (0);
+		if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN)) {
+			free(mp);
+			goto out;
+		}
 		strp = mp->ml_dirp;
-		if (!xdr_string(xdrsp, &strp, RPCMNT_PATHLEN))
-			return (0);
+		if (!xdr_string(xdrsp, &strp, RPCMNT_PATHLEN)) {
+			free(mp);
+			goto out;
+		}
 
 		/*
 		 * Build a binary tree on sorted order of either host or dirp.
@@ -274,7 +288,7 @@ xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 				case ALL:
 					if (val == 0) {
 						if (val2 == 0) {
-							free((caddr_t)mp);
+							free(mp);
 							goto next;
 						}
 						val = val2;
@@ -282,14 +296,14 @@ xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 					break;
 				case DIRS:
 					if (val2 == 0) {
-						free((caddr_t)mp);
+						free(mp);
 						goto next;
 					}
 					val = val2;
 					break;
 				default:
 					if (val == 0) {
-						free((caddr_t)mp);
+						free(mp);
 						goto next;
 					}
 					break;
@@ -306,9 +320,31 @@ xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 		}
 next:
 		if (!xdr_bool(xdrsp, &bool_int))
-			return (0);
+			goto out;
 	}
-	return (1);
+	return 1;
+out:
+	mountlist_free(*mlp);
+	return 0;
+}
+
+static void
+grouplist_free(struct grouplist *gp)
+{
+	if (gp == NULL)
+		return;
+	grouplist_free(gp->gr_next);
+	free(gp);
+}
+
+static void
+exportslist_free(struct exportslist *ep)
+{
+	if (ep == NULL)
+		return;
+	exportslist_free(ep->ex_next);
+	grouplist_free(ep->ex_groups);
+	free(ep);
 }
 
 /*
@@ -317,42 +353,47 @@ next:
 static int
 xdr_exports(XDR *xdrsp, struct exportslist **exp)
 {
-	struct exportslist *ep;
+	struct exportslist *ep = NULL;
 	struct grouplist *gp;
 	int bool_int, grpbool;
 	char *strp;
 
-	*exp = (struct exportslist *)0;
+	*exp = NULL;
 	if (!xdr_bool(xdrsp, &bool_int))
-		return (0);
+		return 0;
 	while (bool_int) {
-		ep = (struct exportslist *)malloc(sizeof(struct exportslist));
+		ep = malloc(sizeof(*ep));
 		if (ep == NULL)
-			return (0);
-		ep->ex_groups = (struct grouplist *)0;
+			goto out;
+		ep->ex_groups = NULL;
 		strp = ep->ex_dirp;
 		if (!xdr_string(xdrsp, &strp, RPCMNT_PATHLEN))
-			return (0);
+			goto out;
 		if (!xdr_bool(xdrsp, &grpbool))
-			return (0);
+			goto out;
 		while (grpbool) {
-			gp = (struct grouplist *)malloc(sizeof(struct grouplist));
+			gp = malloc(sizeof(*gp));
 			if (gp == NULL)
-				return (0);
-			strp = gp->gr_name;
-			if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN))
-				return (0);
+				goto out;
 			gp->gr_next = ep->ex_groups;
 			ep->ex_groups = gp;
+			strp = gp->gr_name;
+			if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN))
+				goto out;
 			if (!xdr_bool(xdrsp, &grpbool))
-				return (0);
+				goto out;
 		}
 		ep->ex_next = *exp;
 		*exp = ep;
+		ep = NULL;
 		if (!xdr_bool(xdrsp, &bool_int))
-			return (0);
+			goto out;
 	}
-	return (1);
+	return 1;
+out:
+	exportslist_free(ep);
+	exportslist_free(*exp);
+	return 0;
 }
 
 static void
