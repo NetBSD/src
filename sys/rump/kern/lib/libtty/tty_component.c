@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_component.c,v 1.3 2016/01/07 21:09:01 pooka Exp $	*/
+/*	$NetBSD: tty_component.c,v 1.4 2016/01/26 23:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,15 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_component.c,v 1.3 2016/01/07 21:09:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_component.c,v 1.4 2016/01/26 23:12:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
 #include <sys/tty.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 #include "ioconf.h"
 

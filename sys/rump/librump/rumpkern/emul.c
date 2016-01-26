@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.178 2016/01/22 04:26:01 ozaki-r Exp $	*/
+/*	$NetBSD: emul.c,v 1.179 2016/01/26 23:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.178 2016/01/22 04:26:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.179 2016/01/26 23:12:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.178 2016/01/22 04:26:01 ozaki-r Exp $");
 
 #include <dev/cons.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 void (*rump_vfs_fini)(void) = (void *)nullop;
 

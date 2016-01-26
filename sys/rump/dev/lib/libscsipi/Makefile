@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/10/19 16:16:34 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2016/01/26 23:12:16 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/scsipi
@@ -17,8 +17,6 @@ SRCS+=		scsipi_verbose.c
 .endif
 
 SRCS+=	scsipi_component.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

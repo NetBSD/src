@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin_component.c,v 1.2 2014/08/22 11:34:28 pooka Exp $	*/
+/*	$NetBSD: sockin_component.c,v 1.3 2016/01/26 23:12:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,14 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin_component.c,v 1.2 2014/08/22 11:34:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin_component.c,v 1.3 2016/01/26 23:12:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
