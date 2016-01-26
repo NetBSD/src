@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.162 2015/12/01 00:58:29 pgoyette Exp $
+#	$NetBSD: makesyscalls.sh,v 1.163 2016/01/26 23:44:58 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -287,8 +287,8 @@ NR == 1 {
 	printf "#include <sys/syscall.h>\n" > rumpcalls
 	printf "#include <sys/syscallargs.h>\n\n" > rumpcalls
 	printf "#include <sys/syscallvar.h>\n\n" > rumpcalls
+	printf "#include <rump-sys/kern.h>\"\n\n" > rumpcalls
 	printf "#include <rump/rumpuser.h>\n" > rumpcalls
-	printf "#include \"rump_private.h\"\n\n" > rumpcalls
 	printf "#define rsys_syscall(num, data, dlen, retval)\t\\\n" > rumpcalls
 	printf "    rump_syscall(num, data, dlen, retval)\n\n" > rumpcalls
 	printf "#define rsys_seterrno(error) rumpuser_seterrno(error)\n" \
