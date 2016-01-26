@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: regexp.c,v 1.18 2007/02/16 16:34:19 freza Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.19 2016/01/26 16:05:18 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -236,7 +236,7 @@ const char *expn;
 		FAIL("regexp too big");
 
 	/* Allocate space. */
-	r = (regexp *)malloc(sizeof(regexp) + (unsigned)regsize);
+	r = malloc(sizeof(regexp) + (unsigned)regsize);
 	if (r == NULL)
 		FAIL("out of space");
 
@@ -246,8 +246,10 @@ const char *expn;
 	regnpar = 1;
 	regcode = r->program;
 	regc(MAGIC);
-	if (reg(0, &flags) == NULL)
+	if (reg(0, &flags) == NULL) {
+		free(r);
 		return(NULL);
+	}
 
 	/* Dig out information for optimizations. */
 	r->regstart = '\0';	/* Worst-case defaults. */
