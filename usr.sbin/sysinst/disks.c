@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.11 2015/11/14 23:00:17 pgoyette Exp $ */
+/*	$NetBSD: disks.c,v 1.12 2016/01/26 14:05:29 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -800,8 +800,11 @@ make_filesystems(void)
 			error = fsck_preen(pm->diskdev, ptn, lbl->fsname);
 		}
 		free(newfs);
-		if (error != 0)
+		if (error != 0) {
+			free(devdev);
+			free(dev);
 			return error;
+		}
 
 		lbl->pi_flags ^= PIF_NEWFS;
 		md_pre_mount();
@@ -813,6 +816,8 @@ make_filesystems(void)
 			if (error) {
 				msg_display(MSG_mountfail, dev, ' ', lbl->pi_mount);
 				process_menu(MENU_ok, NULL);
+				free(devdev);
+				free(dev);
 				return error;
 			}
 		}
@@ -1055,8 +1060,10 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 	asprintf(&prog, "/sbin/fsck_%s", fsname);
 	if (prog == NULL)
 		return 0;
-	if (access(prog, X_OK) != 0)
+	if (access(prog, X_OK) != 0) {
+		free(prog);
 		return 0;
+	}
 	if (!strcmp(fsname,"ffs"))
 		fixsb(prog, disk, ptn);
 	error = run_program(0, "%s -p -q /dev/r%s%c", prog, disk, ptn);
