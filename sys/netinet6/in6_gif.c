@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.70 2016/01/23 14:48:55 riastradh Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.71 2016/01/26 05:58:05 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.70 2016/01/23 14:48:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.71 2016/01/26 05:58:05 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.70 2016/01/23 14:48:55 riastradh Exp $
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
-#include <sys/protosw.h>
 #include <sys/kernel.h>
 
 #include <net/if.h>
@@ -65,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.70 2016/01/23 14:48:55 riastradh Exp $
 #include <netinet6/in6_gif.h>
 #include <netinet6/in6_var.h>
 #endif
-#include <netinet6/ip6protosw.h>
+#include <netinet6/ip6protosw.h> /* for struct ip6ctlparam */
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
@@ -79,7 +78,7 @@ int	ip6_gif_hlim = GIF_HLIM;
 
 extern LIST_HEAD(, gif_softc) gif_softc_list;
 
-static const struct ip6protosw in6_gif_protosw;
+static const struct encapsw in6_gif_encapsw;
 
 /* 
  * family - family of the packet to be encapsulate. 
@@ -374,10 +373,10 @@ in6_gif_attach(struct gif_softc *sc)
 		return EINVAL;
 	sc->encap_cookie6 = encap_attach(AF_INET6, -1, sc->gif_psrc,
 	    (struct sockaddr *)&mask6, sc->gif_pdst, (struct sockaddr *)&mask6,
-	    (const void *)&in6_gif_protosw, sc);
+	    (const void *)&in6_gif_encapsw, sc);
 #else
 	sc->encap_cookie6 = encap_attach_func(AF_INET6, -1, gif_encapcheck,
-	    (struct protosw *)&in6_gif_protosw, sc);
+	    &in6_gif_encapsw, sc);
 #endif
 	if (sc->encap_cookie6 == NULL)
 		return EEXIST;
@@ -451,20 +450,11 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 }
 
 PR_WRAP_CTLINPUT(in6_gif_ctlinput)
-PR_WRAP_CTLOUTPUT(rip6_ctloutput)
-
 #define	in6_gif_ctlinput	in6_gif_ctlinput_wrapper
-#define	rip6_ctloutput		rip6_ctloutput_wrapper
 
-extern struct domain inet6domain;
-
-static const struct ip6protosw in6_gif_protosw = {
-	.pr_type	= SOCK_RAW,
-	.pr_domain	= &inet6domain,
-	.pr_protocol	= 0 /* IPPROTO_IPV[46] */,
-	.pr_flags	= PR_ATOMIC | PR_ADDR,
-	.pr_input	= in6_gif_input,
-	.pr_ctlinput	= in6_gif_ctlinput,
-	.pr_ctloutput	= rip6_ctloutput,
-	.pr_usrreqs	= &rip6_usrreqs,
+static const struct encapsw in6_gif_encapsw = {
+	.encapsw6 = {
+		.pr_input	= in6_gif_input,
+		.pr_ctlinput	= in6_gif_ctlinput,
+	}
 };

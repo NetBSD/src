@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.136 2016/01/22 23:27:12 riastradh Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.137 2016/01/26 05:58:05 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.136 2016/01/22 23:27:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.137 2016/01/26 05:58:05 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -193,14 +193,11 @@ extern int rsvp_on;
 static void vif_input(struct mbuf *, ...);
 static int vif_encapcheck(struct mbuf *, int, int, void *);
 
-static const struct protosw vif_protosw = {
-	.pr_type	= SOCK_RAW,
-	.pr_domain	= &inetdomain,
-	.pr_protocol	= IPPROTO_IPV4,
-	.pr_flags	= PR_ATOMIC|PR_ADDR,
-	.pr_input	= vif_input,
-	.pr_ctloutput	= rip_ctloutput,
-	.pr_usrreqs	= &rip_usrreqs,
+static const struct encapsw vif_encapsw = {
+	.encapsw4 = {
+		.pr_input	= vif_input,
+		.pr_ctlinput	= NULL,
+	}
 };
 
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
@@ -837,7 +834,7 @@ add_vif(struct vifctl *vifcp)
 		 * function to check, and this is not supported yet.
 		 */
 		vifp->v_encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV4,
-		    vif_encapcheck, &vif_protosw, vifp);
+		    vif_encapcheck, &vif_encapsw, vifp);
 		if (!vifp->v_encap_cookie)
 			return (EINVAL);
 
