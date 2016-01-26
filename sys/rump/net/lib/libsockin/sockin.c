@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.62 2015/05/02 17:18:04 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.63 2016/01/26 23:12:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.62 2015/05/02 17:18:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.63 2016/01/26 23:12:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -51,9 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.62 2015/05/02 17:18:04 rtr Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
+#include <rump-sys/kern.h>
+
 #include <rump/rumpuser.h>
 
-#include "rump_private.h"
 #include "sockin_user.h"
 
 /*

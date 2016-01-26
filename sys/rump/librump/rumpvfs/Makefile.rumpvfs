@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.48 2015/10/19 16:16:38 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.49 2016/01/26 23:12:18 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -74,8 +74,6 @@ SRCS+=	rumpvfs_compat50.c
 .endif
 
 SRCS+=	rumpvnode_if.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

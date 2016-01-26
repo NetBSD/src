@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_linux_component.c,v 1.2 2014/04/04 18:24:12 njoly Exp $	*/
+/*	$NetBSD: sys_linux_component.c,v 1.3 2016/01/26 23:12:17 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -7,7 +7,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 #include "rump_linux_syscall.h"
 
