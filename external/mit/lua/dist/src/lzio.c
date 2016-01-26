@@ -1,7 +1,7 @@
-/*	$NetBSD: lzio.c,v 1.1.1.4 2015/02/02 02:01:08 lneto Exp $	*/
+/*	$NetBSD: lzio.c,v 1.1.1.5 2016/01/26 14:37:04 lneto Exp $	*/
 
 /*
-** Id: lzio.c,v 1.36 2014/11/02 19:19:04 roberto Exp 
+** Id: lzio.c,v 1.37 2015/09/08 15:41:05 roberto Exp 
 ** Buffered streams
 ** See Copyright Notice in lua.h
 */
@@ -67,14 +67,4 @@ size_t luaZ_read (ZIO *z, void *b, size_t n) {
   }
   return 0;
 }
-
-/* ------------------------------------------------------------------------ */
-char *luaZ_openspace (lua_State *L, Mbuffer *buff, size_t n) {
-  if (n > buff->buffsize) {
-    if (n < LUA_MINBUFFER) n = LUA_MINBUFFER;
-    luaZ_resizebuffer(L, buff, n);
-  }
-  return buff->buffer;
-}
-
 
