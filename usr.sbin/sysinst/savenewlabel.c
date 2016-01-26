@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.3 2015/05/01 17:48:36 martin Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.4 2016/01/26 14:08:58 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.3 2015/05/01 17:48:36 martin Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.4 2016/01/26 14:08:58 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -133,5 +133,6 @@ savenewlabel(partinfo *lp, int nparts)
 	scripting_fprintf(NULL, "EOF\n");
 	fflush(NULL);
 	run_program(0, "sh -c 'cat /tmp/disktab.* >/tmp/disktab'");
+	free(f_name);
 	return(0);
 }
