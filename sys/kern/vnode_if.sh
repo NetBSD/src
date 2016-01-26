@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.60 2014/01/13 12:07:55 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.61 2016/01/26 23:28:06 pooka Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -306,7 +306,7 @@ echo '
 #include <sys/vnode.h>
 #include <sys/lock.h>'
 [ ! -z "${rump}" ] && echo '#include <rump/rumpvnode_if.h>'		\
-	&& echo '#include "rump_private.h"'
+	&& echo '#include <rump-sys/kern.h>'
 
 if [ -z "${rump}" ] ; then
 	echo "
