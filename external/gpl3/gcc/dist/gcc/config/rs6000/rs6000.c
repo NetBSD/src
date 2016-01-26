@@ -29474,8 +29474,7 @@ rs6000_elf_file_end (void)
 		 aix_struct_return ? 2 : 1);
     }
 #endif
-#if defined (POWERPC_LINUX) || defined (POWERPC_FREEBSD) \
-    || defined (POWERPC_NETBSD)
+#if defined (POWERPC_LINUX) || defined (POWERPC_FREEBSD)
   if (TARGET_32BIT || DEFAULT_ABI == ABI_ELFv2)
     file_end_indicate_exec_stack ();
 #endif
