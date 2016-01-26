@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/10/19 16:16:37 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2016/01/26 23:12:17 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../compat/linux/common
@@ -16,7 +16,6 @@ SRCS+=	linux_rump.c
 SRCS+=	sys_linux_component.c
 
 # XXX
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern
 CPPFLAGS+= -DINET6
 
 SYS_P=rump_linux_sys

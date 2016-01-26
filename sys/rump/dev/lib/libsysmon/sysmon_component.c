@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_component.c,v 1.2 2015/04/23 23:23:14 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_component.c,v 1.3 2016/01/26 23:12:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_component.c,v 1.2 2015/04/23 23:23:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_component.c,v 1.3 2016/01/26 23:12:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -36,9 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_component.c,v 1.2 2015/04/23 23:23:14 pgoyett
 #include <dev/sysmon/sysmon_taskq.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
+#include <rump-sys/vfs.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {

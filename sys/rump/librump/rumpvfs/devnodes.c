@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.11 2015/06/08 12:16:47 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.12 2016/01/26 23:12:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.11 2015/06/08 12:16:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.12 2016/01/26 23:12:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.11 2015/06/08 12:16:47 pooka Exp $");
 #include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 
-#include "rump_vfs_private.h"
+#include <rump-sys/vfs.h>
 
 /* realqvik(tm) "devfs" */
 static int

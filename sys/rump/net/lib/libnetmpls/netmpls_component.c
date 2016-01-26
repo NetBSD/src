@@ -1,4 +1,4 @@
-/* $NetBSD: netmpls_component.c,v 1.3 2015/08/20 12:20:09 christos Exp $ */
+/* $NetBSD: netmpls_component.c,v 1.4 2016/01/26 23:12:19 pooka Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.3 2015/08/20 12:20:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.4 2016/01/26 23:12:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.3 2015/08/20 12:20:09 christ
 
 #include <netmpls/mpls_var.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/net.h>
 
 #include "ioconf.h"
 
