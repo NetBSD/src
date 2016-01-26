@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.189 2015/11/11 08:20:22 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.190 2016/01/26 14:34:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.189 2015/11/11 08:20:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2016/01/26 14:34:50 hannken Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3746,6 +3746,7 @@ startover:
 	}
 	result = pp->pp_attrs & clearbits;
 	pp->pp_attrs &= ~clearbits;
+	pmap_tlb_shootnow();
 	kpreempt_enable();
 
 	return result != 0;
