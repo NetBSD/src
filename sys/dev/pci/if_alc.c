@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.17 2015/11/24 23:30:04 leot Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.18 2016/01/26 16:02:50 christos Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1418,7 +1418,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 #ifdef ALC_CHECKSUM
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 				IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
+				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
 
 #if NVLAN > 0
