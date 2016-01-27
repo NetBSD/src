@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.51 2016/01/26 04:57:58 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.52 2016/01/27 00:27:45 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1828,7 +1828,43 @@ include/protocols/dumprestore.h			1.17
 
 sys/arch/sparc64/sparc64/ofw_machdep.c		1.45
 
-	Restrict the check for fully specified interrupts to machines with psycho
-	controllers only, and adjust comments to note this.
+	Restrict the check for fully specified interrupts to machines
+	with psycho controllers only, and adjust comments to note this.
 	[jdc, ticket #1069]
+
+sys/kern/vfs_vnode.c				1.46 via patch
+
+	Take the vnode lock before the vnode is marked VI_CHANGING and fed
+	to vclean().  Prevents a deadlock with two null mounts on the same
+	physical mount where one thread tries to vclean() a layer node and
+	another thread tries to vget() a layer node pointing to the same
+	physical node.
+
+	Fixes PR kern/50375.
+	[hannken, ticket #1070]
+
+sys/arch/x86/include/cpufunc.h			1.19
+sys/arch/x86/x86/errata.c			1.23
+
+	Adapt prototypes and usage of rdmsr_locked() and wrmsr_locked() to
+	their implementation.  Both functions don't take the passcode as
+	argument.
+	[hannken, ticket #1073]
+
+etc/ssh/ssh_known_hosts				1.9
+
+	Add keys for wip.pkgsrc.org.
+	[wiz, ticket #1074]
+
+sys/external/bsd/drm2/include/linux/pci.h	1.22
+
+	Use PCI ROM MD fallback if PCI ROM BAR points to invalid ROM.
+	Fixes at least one manifestation of PR kern/49964.
+	[riastradh, ticket #1077]
+
+sys/dev/pci/agp_i810.c				1.120, 1.121
+
+	Fix a sanity check for PCI BARs in Intel graphics devices
+	(CID 1328433).
+	[riastradh, ticket #1078]
 
