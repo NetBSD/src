@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.26 2011/08/30 18:57:38 joerg Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.27 2016/01/27 18:55:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -292,7 +292,8 @@ check_addrs(char *cp, int addrs, enum event ev)
 	struct sockaddr *sa, *ifa = NULL, *brd = NULL;
 	char ifname_buf[IFNAMSIZ];
 	const char *ifname;
-	int ifndx = 0, i;
+	int ifndx = 0;
+	unsigned i;
 
 	if (addrs == 0)
 		return;
