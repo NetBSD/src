@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/03/09 17:12:03 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2016/01/27 18:43:44 christos Exp $
 
 NOMAN=	# defined
 
@@ -34,7 +34,7 @@ LDADD+=		-L${DWARFOBJ} -ldwarf
 LDADD+=		-L${ELFOBJ} -lelf
 
 # need native pthread support
-LDADD+=		-lpthread
+COPTS+=		-pthread
 
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/common
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/cvt
