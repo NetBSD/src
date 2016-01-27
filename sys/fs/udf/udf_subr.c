@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.135 2015/12/19 03:16:09 dholland Exp $ */
+/* $NetBSD: udf_subr.c,v 1.136 2016/01/27 00:06:49 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.135 2015/12/19 03:16:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.136 2016/01/27 00:06:49 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4486,7 +4486,8 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	struct dirhash       *dirh;
 	struct dirhash_entry *dirh_ep;
 	struct fileid_desc *fid;
-	struct dirent *dirent;
+	struct dirent *dirent, *s_dirent;
+	struct charspec osta_charspec;
 	uint64_t diroffset;
 	uint32_t lb_size;
 	int hit, error;
@@ -4504,18 +4505,28 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	dirh = dir_node->dir_hash;
 
 	/* allocate temporary space for fid */
-	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
-	fid     = malloc(lb_size, M_UDFTEMP, M_WAITOK);
-	dirent  = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+	lb_size  = udf_rw32(dir_node->ump->logical_vol->lb_size);
+	fid      = malloc(lb_size, M_UDFTEMP, M_WAITOK);
+	dirent   = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+	s_dirent = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
 
 	DPRINTF(DIRHASH, ("dirhash_lookup looking for `%*.*s`\n",
 		namelen, namelen, name));
+
+	/* convert given unix name to canonical unix name */
+	udf_osta_charset(&osta_charspec);
+	unix_to_udf_name((char *) fid->data, &fid->l_fi,
+		name, namelen, &osta_charspec);
+	udf_to_unix_name(s_dirent->d_name, NAME_MAX,
+		(char *) fid->data, fid->l_fi,
+		&osta_charspec);
+	s_dirent->d_namlen = strlen(s_dirent->d_name);
 
 	/* search our dirhash hits */
 	memset(icb_loc, 0, sizeof(*icb_loc));
 	dirh_ep = NULL;
 	for (;;) {
-		hit = dirhash_lookup(dirh, name, namelen, &dirh_ep);
+		hit = dirhash_lookup(dirh, s_dirent->d_name, s_dirent->d_namlen, &dirh_ep);
 		/* if no hit, abort the search */
 		if (!hit)
 			break;
@@ -4532,16 +4543,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 			dirent->d_namlen, dirent->d_namlen, dirent->d_name));
 
 		/* see if its our entry */
-#ifdef DIAGNOSTIC
-		if (dirent->d_namlen != namelen) {
-			printf("WARNING: dirhash_lookup() returned wrong "
-				"d_namelen: %d and ought to be %d\n",
-				dirent->d_namlen, namelen);
-			printf("\tlooked for `%s' and got `%s'\n",
-				name, dirent->d_name);
-		}
-#endif
-		if (strncmp(dirent->d_name, name, namelen) == 0) {
+		if (strncmp(dirent->d_name, s_dirent->d_name, s_dirent->d_namlen) == 0) {
 			*found = 1;
 			*icb_loc = fid->icb;
 			break;
@@ -4549,6 +4551,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	}
 	free(fid, M_UDFTEMP);
 	free(dirent, M_UDFTEMP);
+	free(s_dirent, M_UDFTEMP);
 
 	dirhash_put(dir_node->dir_hash);
 
@@ -4718,12 +4721,11 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct dirhash_entry *dirh_ep;
 	struct file_entry    *fe  = dir_node->fe;
 	struct fileid_desc *fid;
-	struct dirent *dirent;
+	struct dirent *dirent, *s_dirent;
+	struct charspec osta_charspec;
 	uint64_t diroffset;
 	uint32_t lb_size, fidsize;
 	int found, error;
-	char const *name  = cnp->cn_nameptr;
-	int namelen = cnp->cn_namelen;
 	int hit, refcnt;
 
 	/* get our dirhash and make sure its read in */
@@ -4740,16 +4742,26 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 		assert(dir_node->efe);
 	}
 
-	/* allocate temporary space for fid */
-	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
-	fid     = malloc(lb_size, M_UDFTEMP, M_WAITOK);
-	dirent  = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+	/* allocate temporary space for fid and dirents */
+	lb_size  = udf_rw32(dir_node->ump->logical_vol->lb_size);
+	fid      = malloc(lb_size, M_UDFTEMP, M_WAITOK);
+	dirent   = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+	s_dirent = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+
+	/* convert given unix name to canonical unix name */
+	udf_osta_charset(&osta_charspec);
+	unix_to_udf_name((char *) fid->data, &fid->l_fi,
+		cnp->cn_nameptr, cnp->cn_namelen, &osta_charspec);
+	udf_to_unix_name(s_dirent->d_name, NAME_MAX,
+		(char *) fid->data, fid->l_fi,
+		&osta_charspec);
+	s_dirent->d_namlen = strlen(s_dirent->d_name);
 
 	/* search our dirhash hits */
 	found = 0;
 	dirh_ep = NULL;
 	for (;;) {
-		hit = dirhash_lookup(dirh, name, namelen, &dirh_ep);
+		hit = dirhash_lookup(dirh, s_dirent->d_name, s_dirent->d_namlen, &dirh_ep);
 		/* if no hit, abort the search */
 		if (!hit)
 			break;
@@ -4763,8 +4775,8 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 			break;
 
 		/* see if its our entry */
-		KASSERT(dirent->d_namlen == namelen);
-		if (strncmp(dirent->d_name, name, namelen) == 0) {
+		KASSERT(dirent->d_namlen == s_dirent->d_namlen);
+		if (strncmp(dirent->d_name, s_dirent->d_name, s_dirent->d_namlen) == 0) {
 			found = 1;
 			break;
 		}
@@ -4845,6 +4857,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 error_out:
 	free(fid, M_UDFTEMP);
 	free(dirent, M_UDFTEMP);
+	free(s_dirent, M_UDFTEMP);
 
 	dirhash_put(dir_node->dir_hash);
 
