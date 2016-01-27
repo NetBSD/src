@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.52 2016/01/27 00:27:45 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.53 2016/01/27 19:29:25 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1867,4 +1867,10 @@ sys/dev/pci/agp_i810.c				1.120, 1.121
 	Fix a sanity check for PCI BARs in Intel graphics devices
 	(CID 1328433).
 	[riastradh, ticket #1078]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nvc0.c 1.5-1.6
+
+	Don't try to wait if (cold), spin waiting for registers to clear.
+	PR#50362.
+	[riastradh, ticket #1079]
 
