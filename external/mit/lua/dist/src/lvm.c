@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.9 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: lvm.c,v 1.10 2016/01/28 17:23:21 lneto Exp $	*/
 
 /*
 ** Id: lvm.c,v 2.265 2015/11/23 11:30:45 roberto Exp 
@@ -203,18 +203,19 @@ void luaV_finishset (lua_State *L, const TValue *t, TValue *key,
   for (loop = 0; loop < MAXTAGLOOP; loop++) {
     const TValue *tm;
     if (oldval != NULL) {
-      lua_assert(ttistable(t) && ttisnil(oldval));
+      Table *h = hvalue(t);  /* save 't' table */
+      lua_assert(ttisnil(oldval));
       /* must check the metamethod */
-      if ((tm = fasttm(L, hvalue(t)->metatable, TM_NEWINDEX)) == NULL &&
+      if ((tm = fasttm(L, h->metatable, TM_NEWINDEX)) == NULL &&
          /* no metamethod; is there a previous entry in the table? */
          (oldval != luaO_nilobject ||
          /* no previous entry; must create one. (The next test is
             always true; we only need the assignment.) */
-         (oldval = luaH_newkey(L, hvalue(t), key), 1))) {
+         (oldval = luaH_newkey(L, h, key), 1))) {
         /* no metamethod and (now) there is an entry with given key */
         setobj2t(L, cast(TValue *, oldval), val);
-        invalidateTMcache(hvalue(t));
-        luaC_barrierback(L, hvalue(t), val);
+        invalidateTMcache(h);
+        luaC_barrierback(L, h, val);
         return;
       }
       /* else will try the metamethod */
