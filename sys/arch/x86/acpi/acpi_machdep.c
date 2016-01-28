@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.11 2016/01/28 01:09:56 christos Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.12 2016/01/28 23:50:04 htodd Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.11 2016/01/28 01:09:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2016/01/28 23:50:04 htodd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ acpi_md_OsGetRootPointer(void)
 	ACPI_PHYSICAL_ADDRESS PhysicalAddress;
 	ACPI_STATUS Status;
 
+#ifndef XEN
 	/* If EFI is available, attempt to use it to locate the ACPI table. */
 	if (efi_probe()) {
 		PhysicalAddress = efi_getcfgtblpa(&EFI_UUID_ACPI20);
@@ -98,6 +99,7 @@ acpi_md_OsGetRootPointer(void)
 			return PhysicalAddress;
 	}
 
+#endif
 	Status = AcpiFindRootPointer(&PhysicalAddress);
 	if (ACPI_FAILURE(Status))
 		PhysicalAddress = 0;
