@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.243 2016/01/08 08:37:18 jnemeth Exp $
+$NetBSD: acronyms,v 1.244 2016/01/28 10:20:40 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -329,6 +329,7 @@ NBD	no big deal
 NE1	anyone
 NEDM	not even Doom music
 NFA	no flaming allowed
+NFC	no functional change
 NIFOC	naked in front of computer
 NIH	not invented here
 NIMBY	not in my backyard
