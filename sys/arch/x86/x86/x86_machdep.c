@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.68 2016/01/28 00:18:27 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.69 2016/01/28 01:08:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.68 2016/01/28 00:18:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.69 2016/01/28 01:08:43 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.68 2016/01/28 00:18:27 christos Ex
 
 #include <dev/splash/splash.h>
 #include <dev/isa/isareg.h>
-#include <dev/ic/i802reg.h>
+#include <dev/ic/i8042reg.h>
 #include <dev/mm.h>
 
 #include <machine/bootinfo.h>
@@ -83,7 +83,7 @@ static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
 
 #ifdef XEN
-char module_machine_amd6_xen[] = "amd6-xen";
+char module_machine_amd64_xen[] = "amd64-xen";
 char module_machine_i386_xen[] = "i386-xen";
 char module_machine_i386pae_xen[] = "i386pae-xen";
 #endif
@@ -128,6 +128,34 @@ lookup_bootinfo(int type)
 }
 
 /*
+ * List the available bootinfo entries.
+ */
+static const char *btinfo_str[] = {
+	BTINFO_STR
+};
+
+#ifdef notyet
+void
+aprint_bootinfo(void)
+{
+	int i;
+	struct btinfo_common *bic;
+
+	aprint_normal("bootinfo:");
+	bic = (struct btinfo_common *)(bootinfo.bi_data);
+	for (i = 0; i < bootinfo.bi_nentries; i++) {
+		if (bic->type >= 0 && bic->type < __arraycount(btinfo_str))
+			aprint_normal(" %s", btinfo_str[bic->type]);
+		else
+			aprint_normal(" %d", bic->type);
+		bic = (struct btinfo_common *)
+		    ((uint8_t *)bic + bic->len);
+	}
+	aprint_normal("\n");
+}
+#endif
+
+/*
  * mm_md_physacc: check if given pa is accessible.
  */
 int
@@ -161,8 +189,8 @@ module_init_md(void)
 
 	/* setup module path for XEN kernels */
 #ifdef XEN
-#if defined(amd6)
-	module_machine = module_machine_amd6_xen;
+#if defined(amd64)
+	module_machine = module_machine_amd64_xen;
 #elif defined(i386)
 #ifdef PAE
 	module_machine = module_machine_i386pae_xen;
@@ -428,25 +456,25 @@ x86_cpu_idle_set(void (*func)(void), const char *text, bool ipi)
 
 #ifndef XEN
 
-#define KBTOB(x)	((size_t)(x) * 102UL)
-#define MBTOB(x)	((size_t)(x) * 102UL * 102UL)
+#define KBTOB(x)	((size_t)(x) * 1024UL)
+#define MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
 
 extern paddr_t avail_start, avail_end;
 
 static int
 add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	struct extent *iomem_ex,
-	uint6_t seg_start, uint6_t seg_end, uint32_t type)
+	uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
-	uint6_t new_physmem = 0;
+	uint64_t new_physmem = 0;
 	phys_ram_seg_t *cluster;
 	int i;
 
 #ifdef i386
 #ifdef PAE
-#define TOPLIMIT	0x1000000000ULL /* 6GB */
+#define TOPLIMIT	0x1000000000ULL /* 64GB */
 #else
-#define TOPLIMIT	0x100000000ULL	/*GB */
+#define TOPLIMIT	0x100000000ULL	/* 4GB */
 #endif
 #else
 #define TOPLIMIT	0x100000000000ULL /* 16TB */
@@ -454,7 +482,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 
 	if (seg_end > TOPLIMIT) {
 		aprint_verbose("WARNING: skipping large memory map entry: "
-		    "0x%"PRIx6"/0x%"PRIx6"/0x%x\n",
+		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
 		    seg_start,
 		    (seg_end - seg_start),
 		    type);
@@ -490,7 +518,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	 * sure we get them all.
 	 */
 	if (seg_start < 0x100000000ULL) {
-		uint6_t io_end;
+		uint64_t io_end;
 
 		if (seg_end > 0x100000000ULL)
 			io_end = 0x100000000ULL;
@@ -501,7 +529,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 		    io_end - seg_start, EX_NOWAIT)) {
 			/* XXX What should we do? */
 			printf("WARNING: CAN't ALLOCATE MEMORY SEGMENT "
-			    "(0x%"PRIx6"/0x%"PRIx6"/0x%x) FROM "
+			    "(0x%"PRIx64"/0x%"PRIx64"/0x%x) FROM "
 			    "IOMEM EXTENT MAP!\n",
 			    seg_start, seg_end - seg_start, type);
 			return seg_cluster_cnt;
@@ -563,8 +591,8 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 int
 initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 {
-	uint6_t seg_start, seg_end;
-	uint6_t addr, size;
+	uint64_t seg_start, seg_end;
+	uint64_t addr, size;
 	uint32_t type;
 	int x;
 
@@ -579,7 +607,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 		size = bim->entry[x].size;
 		type = bim->entry[x].type;
 #ifdef DEBUG_MEMLOAD
-		printf("    addr 0x%"PRIx6"  size 0x%"PRIx6"  type 0x%x\n",
+		printf("    addr 0x%"PRIx64"  size 0x%"PRIx64"  type 0x%x\n",
 			addr, size, type);
 #endif
 
@@ -618,7 +646,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 		if (seg_start < 0x100000 && seg_end > 0xa0000) {
 			printf("WARNING: memory map entry overlaps "
 			    "with ``Compatibility Holes'': "
-			    "0x%"PRIx6"/0x%"PRIx6"/0x%x\n", seg_start,
+			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
 			mem_cluster_cnt = add_mem_cluster(
 				mem_clusters, mem_cluster_cnt, iomem_ex,
@@ -669,24 +697,24 @@ initx86_fake_memmap(struct extent *iomem_ex)
 
 #if NISADMA > 0
 	/*
-	 * Some motherboards/BIOSes remap the 38K of RAM that would
+	 * Some motherboards/BIOSes remap the 384K of RAM that would
 	 * normally be covered by the ISA hole to the end of memory
 	 * so that it can be used.  However, on a 16M system, this
 	 * would cause bounce buffers to be allocated and used.
-	 * This is not desirable behaviour, as more than 38K of
+	 * This is not desirable behaviour, as more than 384K of
 	 * bounce buffers might be allocated.  As a work-around,
 	 * we round memory down to the nearest 1M boundary if
 	 * we're using any isadma devices and the remapped memory
 	 * is what puts us over 16M.
 	 */
-	if (biosextmem > (15*102) && biosextmem < (16*102)) {
+	if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
 		char pbuf[9];
 
 		format_bytes(pbuf, sizeof(pbuf),
-		    biosextmem - (15*102));
+		    biosextmem - (15*1024));
 		printf("Warning: ignoring %s of remapped memory\n",
 		    pbuf);
-		biosextmem = (15*102);
+		biosextmem = (15*1024);
 	}
 #endif
 	cluster = &mem_clusters[1];
@@ -701,36 +729,36 @@ initx86_fake_memmap(struct extent *iomem_ex)
 	return 0;
 }
 
-#ifdef amd6
+#ifdef amd64
 extern vaddr_t kern_end;
 extern vaddr_t module_start, module_end;
 #endif
 
 static struct {
 	int freelist;
-	uint6_t limit;
+	uint64_t limit;
 } x86_freelists[VM_NFREELIST] = {
 	{ VM_FREELIST_DEFAULT, 0 },
 #ifdef VM_FREELIST_FIRST1T
-	/*0-bit addresses needed for modern graphics. */
-	{ VM_FREELIST_FIRST1T,	1ULL * 102 * 102 * 102 * 102 },
+	/* 40-bit addresses needed for modern graphics. */
+	{ VM_FREELIST_FIRST1T,	1ULL * 1024 * 1024 * 1024 * 1024 },
 #endif
-#ifdef VM_FREELIST_FIRST6G
+#ifdef VM_FREELIST_FIRST64G
 	/* 36-bit addresses needed for oldish graphics. */
-	{ VM_FREELIST_FIRST6G, 6ULL * 102 * 102 * 102 },
+	{ VM_FREELIST_FIRST64G, 64ULL * 1024 * 1024 * 1024 },
 #endif
-#ifdef VM_FREELIST_FIRSTG
+#ifdef VM_FREELIST_FIRST4G
 	/* 32-bit addresses needed for PCI 32-bit DMA and old graphics. */
-	{ VM_FREELIST_FIRSTG,ULL * 102 * 102 * 102 },
+	{ VM_FREELIST_FIRST4G,  4ULL * 1024 * 1024 * 1024 },
 #endif
 	/* 30-bit addresses needed for ancient graphics. */
-	{ VM_FREELIST_FIRST1G,	1ULL * 102 * 102 * 102 },
-	/* 2-bit addresses needed for ISA DMA. */
-	{ VM_FREELIST_FIRST16,	16 * 102 * 102 },
+	{ VM_FREELIST_FIRST1G,	1ULL * 1024 * 1024 * 1024 },
+	/* 24-bit addresses needed for ISA DMA. */
+	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
 
 int
-x86_select_freelist(uint6_t maxaddr)
+x86_select_freelist(uint64_t maxaddr)
 {
 	unsigned int i;
 
@@ -742,14 +770,14 @@ x86_select_freelist(uint6_t maxaddr)
 			return x86_freelists[i].freelist;
 	}
 
-	panic("no freelist for maximum address %"PRIx6, maxaddr);
+	panic("no freelist for maximum address %"PRIx64, maxaddr);
 }
 
 int
 initx86_load_memmap(paddr_t first_avail)
 {
-	uint6_t seg_start, seg_end;
-	uint6_t seg_start1, seg_end1;
+	uint64_t seg_start, seg_end;
+	uint64_t seg_start1, seg_end1;
 	int x;
 	unsigned i;
 
@@ -761,7 +789,7 @@ initx86_load_memmap(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 
-#ifdef amd6
+#ifdef amd64
 	kern_end = KERNBASE + first_avail;
 	module_start = kern_end;
 	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
@@ -790,7 +818,7 @@ initx86_load_memmap(paddr_t first_avail)
 
 		if (avail_start >= seg_start && avail_start < seg_end) {
 			if (seg_start != 0)
-				panic("init_x86_6: memory doesn't start at 0");
+				panic("init_x86_64: memory doesn't start at 0");
 			seg_start = avail_start;
 			if (seg_start == seg_end)
 				continue;
@@ -811,7 +839,7 @@ initx86_load_memmap(paddr_t first_avail)
 		if (seg_start != seg_end) {
 			i = __arraycount(x86_freelists);
 			while (i--) {
-				uint6_t tmp;
+				uint64_t tmp;
 
 				if (x86_freelists[i].limit <= seg_start)
 					continue;
@@ -823,11 +851,11 @@ initx86_load_memmap(paddr_t first_avail)
 					continue;
 #ifdef DEBUG_MEMLOAD
 				printf("loading freelist %d"
-				    " 0x%"PRIx6"-0x%"PRIx6
-				    " (0x%"PRIx6"-0x%"PRIx6")\n",
+				    " 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    x86_freelists[i].freelist, seg_start, tmp,
-				    (uint6_t)atop(seg_start),
-				    (uint6_t)atop(tmp));
+				    (uint64_t)atop(seg_start),
+				    (uint64_t)atop(tmp));
 #endif
 				uvm_page_physload(atop(seg_start), atop(tmp),
 				    atop(seg_start), atop(tmp),
@@ -837,11 +865,11 @@ initx86_load_memmap(paddr_t first_avail)
 
 			if (seg_start != seg_end) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading default 0x%"PRIx6"-0x%"PRIx6
-				    " (0x%"PRIx6"-0x%"PRIx6")\n",
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    seg_start, seg_end,
-				    (uint6_t)atop(seg_start),
-				    (uint6_t)atop(seg_end));
+				    (uint64_t)atop(seg_start),
+				    (uint64_t)atop(seg_end));
 #endif
 				uvm_page_physload(atop(seg_start),
 				    atop(seg_end), atop(seg_start),
@@ -853,7 +881,7 @@ initx86_load_memmap(paddr_t first_avail)
 		if (seg_start1 != seg_end1) {
 			i = __arraycount(x86_freelists);
 			while (i--) {
-				uint6_t tmp;
+				uint64_t tmp;
 
 				if (x86_freelists[i].limit <= seg_start1)
 					continue;
@@ -865,11 +893,11 @@ initx86_load_memmap(paddr_t first_avail)
 					continue;
 #ifdef DEBUG_MEMLOAD
 				printf("loading freelist %u"
-				    " 0x%"PRIx6"-0x%"PRIx6
-				    " (0x%"PRIx6"-0x%"PRIx6")\n",
+				    " 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    x86_freelists[i].freelist, seg_start1, tmp,
-				    (uint6_t)atop(seg_start1),
-				    (uint6_t)atop(tmp));
+				    (uint64_t)atop(seg_start1),
+				    (uint64_t)atop(tmp));
 #endif
 				uvm_page_physload(atop(seg_start1), atop(tmp),
 				    atop(seg_start1), atop(tmp),
@@ -879,11 +907,11 @@ initx86_load_memmap(paddr_t first_avail)
 
 			if (seg_start1 != seg_end1) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading default 0x%"PRIx6"-0x%"PRIx6
-				    " (0x%"PRIx6"-0x%"PRIx6")\n",
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    seg_start1, seg_end1,
-				    (uint6_t)atop(seg_start1),
-				    (uint6_t)atop(seg_end1));
+				    (uint64_t)atop(seg_start1),
+				    (uint64_t)atop(seg_end1));
 #endif
 				uvm_page_physload(atop(seg_start1),
 				    atop(seg_end1), atop(seg_start1),
@@ -914,7 +942,7 @@ x86_reset(void)
 #endif
 
 	/*
-	 * The keyboard controller has random output pins, one of which is
+	 * The keyboard controller has 4 random output pins, one of which is
 	 * connected to the RESET pin on the CPU in many PCs.  We tell the
 	 * keyboard controller to pulse this line a couple of times.
 	 */
@@ -1048,7 +1076,7 @@ const_sysctl(struct sysctllog **clog, const char *name, int type,
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	extern uint6_t tsc_freq;
+	extern uint64_t tsc_freq;
 	extern int sparse_dump;
 
 	sysctl_createv(clog, 0, NULL, NULL,
