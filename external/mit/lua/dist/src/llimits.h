@@ -1,7 +1,7 @@
-/*	$NetBSD: llimits.h,v 1.5 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: llimits.h,v 1.6 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: llimits.h,v 1.135 2015/06/09 14:21:00 roberto Exp 
+** Id: llimits.h,v 1.141 2015/11/19 19:16:22 roberto Exp 
 ** Limits, basic types, and some other 'installation-dependent' definitions
 ** See Copyright Notice in lua.h
 */
@@ -13,7 +13,7 @@
 #ifndef _KERNEL
 #include <limits.h>
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 
 #include "lua.h"
@@ -68,11 +68,15 @@ typedef unsigned char lu_byte;
 #if defined(LUAI_USER_ALIGNMENT_T)
 typedef LUAI_USER_ALIGNMENT_T L_Umaxalign;
 #else
+typedef union {
 #ifndef _KERNEL
-typedef union { double u; void *s; lua_Integer i; long l; } L_Umaxalign;
-#else /* _KERNEL */
-typedef union { void *s; lua_Integer i; long l; } L_Umaxalign;
-#endif
+  lua_Number n;
+  double u;
+#endif /* _KERNEL */
+  void *s;
+  lua_Integer i;
+  long l;
+} L_Umaxalign;
 #endif
 
 
@@ -80,7 +84,7 @@ typedef union { void *s; lua_Integer i; long l; } L_Umaxalign;
 /* types of 'usual argument conversions' for lua_Number and lua_Integer */
 #ifndef _KERNEL
 typedef LUAI_UACNUMBER l_uacNumber;
-#endif
+#endif /* _KERNEL */
 typedef LUAI_UACINT l_uacInt;
 
 
@@ -88,7 +92,7 @@ typedef LUAI_UACINT l_uacInt;
 #if defined(lua_assert)
 #define check_exp(c,e)		(lua_assert(c), (e))
 /* to avoid problems with conditions too long */
-#define lua_longassert(c)	{ if (!(c)) lua_assert(0); }
+#define lua_longassert(c)	((c) ? (void)0 : lua_assert(0))
 #else
 #define lua_assert(c)		((void)0)
 #define check_exp(c,e)		(e)
@@ -194,10 +198,13 @@ typedef unsigned long Instruction;
 
 
 /*
-** Size of cache for strings in the API (better be a prime)
+** Size of cache for strings in the API. 'N' is the number of
+** sets (better be a prime) and "M" is the size of each set (M == 1
+** makes a direct cache.)
 */
-#if !defined(STRCACHE_SIZE)
-#define STRCACHE_SIZE		127
+#if !defined(STRCACHE_N)
+#define STRCACHE_N		53
+#define STRCACHE_M		2
 #endif
 
 
@@ -208,7 +215,7 @@ typedef unsigned long Instruction;
 
 
 /*
-** macros that are executed whenether program enters the Lua core
+** macros that are executed whenever program enters the Lua core
 ** ('lua_lock') and leaves the core ('lua_unlock')
 */
 #if !defined(lua_lock)
@@ -307,17 +314,18 @@ typedef unsigned long Instruction;
 ** macro to control inclusion of some hard tests on stack reallocation
 */
 #if !defined(HARDSTACKTESTS)
-#define condmovestack(L)	((void)0)
+#define condmovestack(L,pre,pos)	((void)0)
 #else
 /* realloc stack keeping its size */
-#define condmovestack(L)	luaD_reallocstack((L), (L)->stacksize)
+#define condmovestack(L,pre,pos)  \
+	{ int sz_ = (L)->stacksize; pre; luaD_reallocstack((L), sz_); pos; }
 #endif
 
 #if !defined(HARDMEMTESTS)
-#define condchangemem(L)	condmovestack(L)
+#define condchangemem(L,pre,pos)	((void)0)
 #else
-#define condchangemem(L)  \
-	((void)(!(G(L)->gcrunning) || (luaC_fullgc(L, 0), 1)))
+#define condchangemem(L,pre,pos)  \
+	{ if (G(L)->gcrunning) { pre; luaC_fullgc(L, 0); pos; } }
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: lopcodes.h,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lopcodes.h,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: lopcodes.h,v 1.148 2014/10/25 11:50:46 roberto Exp 
@@ -193,7 +193,7 @@ OP_MOD,/*	A B C	R(A) := RK(B) % RK(C)				*/
 #ifndef _KERNEL
 OP_POW,/*	A B C	R(A) := RK(B) ^ RK(C)				*/
 OP_DIV,/*	A B C	R(A) := RK(B) / RK(C)				*/
-#endif
+#endif /* _KERNEL */
 OP_IDIV,/*	A B C	R(A) := RK(B) // RK(C)				*/
 OP_BAND,/*	A B C	R(A) := RK(B) & RK(C)				*/
 OP_BOR,/*	A B C	R(A) := RK(B) | RK(C)				*/

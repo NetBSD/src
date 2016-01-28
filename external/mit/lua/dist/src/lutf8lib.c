@@ -1,4 +1,4 @@
-/*	$NetBSD: lutf8lib.c,v 1.3 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lutf8lib.c,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: lutf8lib.c,v 1.15 2015/03/28 19:16:55 roberto Exp 
@@ -17,7 +17,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
