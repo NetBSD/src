@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.54 2016/01/14 08:58:02 gson Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.55 2016/01/28 10:10:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -494,9 +494,6 @@ create_nonalphanum(const atf_tc_t *tc, const char *mp)
 {
 	char buf[64];
 	int i;
-
-	if (FSTYPE_UDF(tc))
-		atf_tc_expect_fail("PR kern/50608");
 
 	RL(rump_sys_chdir(mp));
 
