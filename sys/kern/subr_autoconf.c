@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.238 2015/12/20 04:21:03 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.239 2016/01/28 16:32:40 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.238 2015/12/20 04:21:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.239 2016/01/28 16:32:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1880,7 +1880,7 @@ config_detach_all(int how)
 	device_t curdev;
 	bool progress = false;
 
-	if ((how & RB_NOSYNC) != 0)
+	if ((how & (RB_NOSYNC|RB_DUMP)) != 0)
 		return false;
 
 	for (curdev = shutdown_first(&s); curdev != NULL;
