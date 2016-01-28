@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.20 2016/01/02 16:14:46 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.21 2016/01/28 13:01:30 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.20 2016/01/02 16:14:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.21 2016/01/28 13:01:30 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -424,7 +424,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		struct usbd_port *up = &hub->uh_ports[p];
 		up->up_dev = NULL;
 		up->up_parent = dev;
-		up->up_portno = p+1;
+		up->up_portno = p + 1;
 		if (dev->ud_selfpowered)
 			/* Self powered hub, give ports maximum current. */
 			up->up_power = USB_MAX_POWER;
@@ -530,7 +530,7 @@ uhub_explore(struct usbd_device *dev)
 	}
 
 	for (port = 1; port <= hd->bNbrPorts; port++) {
-		up = &dev->ud_hub->uh_ports[port-1];
+		up = &dev->ud_hub->uh_ports[port - 1];
 
 		/* reattach is needed after firmware upload */
 		reconnect = up->up_reattach;
@@ -820,7 +820,7 @@ uhub_detach(device_t self, int flags)
 	KERNEL_LOCK(1, curlwp);
 
 	nports = hub->uh_hubdesc.bNbrPorts;
-	for(port = 0; port < nports; port++) {
+	for (port = 0; port < nports; port++) {
 		rup = &hub->uh_ports[port];
 		if (rup->up_dev == NULL)
 			continue;
