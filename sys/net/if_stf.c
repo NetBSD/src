@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.86 2016/01/26 05:58:05 knakahara Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.87 2016/01/28 00:28:11 knakahara Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.86 2016/01/26 05:58:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.87 2016/01/28 00:28:11 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -159,7 +159,7 @@ extern struct domain inetdomain;
 
 static const struct encapsw in_stf_encapsw =
 {
-	.encapsw6 = {
+	.encapsw4 = {
 		.pr_input	= in_stf_input,
 		.pr_ctlinput	= NULL,
 	}
@@ -552,8 +552,8 @@ stf_checkaddr6(struct stf_softc *sc, const struct in6_addr *in6,
 	return 0;
 }
 
-int
-in_stf_input(struct mbuf **mp, int *offp, int proto)
+void
+in_stf_input(struct mbuf *m, int off, int proto)
 {
 	int s;
 	struct stf_softc *sc;
@@ -562,12 +562,10 @@ in_stf_input(struct mbuf **mp, int *offp, int proto)
 	uint8_t otos, itos;
 	struct ifnet *ifp;
 	size_t pktlen;
-	int off = *offp;
-	struct mbuf *m = *mp;
 
 	if (proto != IPPROTO_IPV6) {
 		m_freem(m);
-		return IPPROTO_DONE;
+		return;
 	}
 
 	ip = mtod(m, struct ip *);
@@ -576,7 +574,7 @@ in_stf_input(struct mbuf **mp, int *offp, int proto)
 
 	if (sc == NULL || (sc->sc_if.if_flags & IFF_UP) == 0) {
 		m_freem(m);
-		return IPPROTO_DONE;
+		return;
 	}
 
 	ifp = &sc->sc_if;
@@ -588,7 +586,7 @@ in_stf_input(struct mbuf **mp, int *offp, int proto)
 	if (stf_checkaddr4(sc, &ip->ip_dst, NULL) < 0 ||
 	    stf_checkaddr4(sc, &ip->ip_src, m->m_pkthdr.rcvif) < 0) {
 		m_freem(m);
-		return IPPROTO_DONE;
+		return;
 	}
 
 	otos = ip->ip_tos;
@@ -597,7 +595,7 @@ in_stf_input(struct mbuf **mp, int *offp, int proto)
 	if (m->m_len < sizeof(*ip6)) {
 		m = m_pullup(m, sizeof(*ip6));
 		if (!m)
-			return IPPROTO_DONE;
+			return;
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
 
@@ -608,7 +606,7 @@ in_stf_input(struct mbuf **mp, int *offp, int proto)
 	if (stf_checkaddr6(sc, &ip6->ip6_dst, NULL) < 0 ||
 	    stf_checkaddr6(sc, &ip6->ip6_src, m->m_pkthdr.rcvif) < 0) {
 		m_freem(m);
-		return IPPROTO_DONE;
+		return;
 	}
 
 	itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
@@ -640,7 +638,7 @@ in_stf_input(struct mbuf **mp, int *offp, int proto)
 	}
 	splx(s);
 
-	return IPPROTO_DONE;
+	return;
 }
 
 /* ARGSUSED */
