@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1302 2016/01/20 19:43:23 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1303 2016/01/28 09:12:17 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -158,7 +158,7 @@ Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
 Version:	2.23.2
-Current Vers:	2.25.1
+Current Vers:	2.26
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
