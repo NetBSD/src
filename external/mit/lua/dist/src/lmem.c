@@ -1,4 +1,4 @@
-/*	$NetBSD: lmem.c,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lmem.c,v 1.5 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: lmem.c,v 1.91 2015/03/06 19:45:54 roberto Exp 
@@ -14,7 +14,7 @@
 
 #ifndef _KERNEL
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 

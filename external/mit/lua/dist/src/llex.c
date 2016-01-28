@@ -1,7 +1,7 @@
-/*	$NetBSD: llex.c,v 1.6 2015/10/08 13:40:16 mbalmer Exp $	*/
+/*	$NetBSD: llex.c,v 1.7 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: llex.c,v 2.93 2015/05/22 17:45:56 roberto Exp 
+** Id: llex.c,v 2.95 2015/11/19 19:16:22 roberto Exp 
 ** Lexical Analyzer
 ** See Copyright Notice in lua.h
 */
@@ -15,7 +15,7 @@
 #ifndef _KERNEL
 #include <locale.h>
 #include <string.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -103,9 +103,9 @@ static const char *txtToken (LexState *ls, int token) {
     case TK_NAME: case TK_STRING:
 #ifndef _KERNEL
     case TK_FLT: case TK_INT:
-#else
+#else /* _KERNEL */
     case TK_INT:
-#endif
+#endif /* _KERNEL */
       save(ls, '\0');
       return luaO_pushfstring(ls->L, "'%s'", luaZ_buffer(ls->buff));
     default:
@@ -227,11 +227,8 @@ static void buffreplace (LexState *ls, char from, char to) {
       if (p[n] == from) p[n] = to;
   }
 }
-#endif
 
-#define buff2num(b,o)	(luaO_str2num(luaZ_buffer(b), o) != 0)
 
-#ifndef _KERNEL
 /*
 ** in case of format error, try to change decimal point separator to
 ** the one defined in the current locale and check again
@@ -240,7 +237,7 @@ static void trydecpoint (LexState *ls, TValue *o) {
   char old = ls->decpoint;
   ls->decpoint = lua_getlocaledecpoint();
   buffreplace(ls, old, ls->decpoint);  /* try new decimal separator */
-  if (!buff2num(ls->buff, o)) {
+  if (luaO_str2num(luaZ_buffer(ls->buff), o) == 0) {
     /* format error with correct decimal point: no more options */
     buffreplace(ls, ls->decpoint, '.');  /* undo change (for error message) */
     lexerror(ls, "malformed number", TK_FLT);
@@ -272,7 +269,7 @@ static int read_numeral (LexState *ls, SemInfo *seminfo) {
   }
   save(ls, '\0');
   buffreplace(ls, '.', ls->decpoint);  /* follow locale for decimal point */
-  if (!buff2num(ls->buff, &obj))  /* format error? */
+  if (luaO_str2num(luaZ_buffer(ls->buff), &obj) == 0)  /* format error? */
     trydecpoint(ls, &obj); /* try to update decimal point separator */
   if (ttisinteger(&obj)) {
     seminfo->i = ivalue(&obj);
@@ -300,16 +297,16 @@ static int read_numeral (LexState *ls, SemInfo *seminfo) {
     else break;
   }
   save(ls, '\0');
-  if (!buff2num(ls->buff, &obj))  /* format error? */
+  if (luaO_str2num(luaZ_buffer(ls->buff), &obj) == 0)  /* format error? */
     lexerror(ls, "malformed number", TK_INT);
   lua_assert(ttisinteger(&obj));
   seminfo->i = ivalue(&obj);
   return TK_INT;
 }
-#endif
+#endif /* _KERNEL */
 
 /*
-** skip a sequence '[=*[' or ']=*]'; if sequence is wellformed, return
+** skip a sequence '[=*[' or ']=*]'; if sequence is well formed, return
 ** its number of '='s; otherwise, return a negative number (-1 iff there
 ** are no '='s after initial bracket)
 */
@@ -580,7 +577,7 @@ static int llex (LexState *ls, SemInfo *seminfo) {
         else return read_numeral(ls, seminfo);
 #else /* _KERNEL */
         else return '.';
-#endif
+#endif /* _KERNEL */
       }
       case '0': case '1': case '2': case '3': case '4':
       case '5': case '6': case '7': case '8': case '9': {

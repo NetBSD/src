@@ -1,5 +1,7 @@
+/*	$NetBSD: lzio.h,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
+
 /*
-** $Id: lzio.h,v 1.3 2015/02/02 14:03:05 lneto Exp $
+** Id: lzio.h,v 1.31 2015/09/08 15:41:05 roberto Exp 
 ** Buffered streams
 ** See Copyright Notice in lua.h
 */
@@ -44,7 +46,6 @@ typedef struct Mbuffer {
 #define luaZ_freebuffer(L, buff)	luaZ_resizebuffer(L, buff, 0)
 
 
-LUAI_FUNC char *luaZ_openspace (lua_State *L, Mbuffer *buff, size_t n);
 LUAI_FUNC void luaZ_init (lua_State *L, ZIO *z, lua_Reader reader,
                                         void *data);
 LUAI_FUNC size_t luaZ_read (ZIO* z, void *b, size_t n);	/* read next n bytes */

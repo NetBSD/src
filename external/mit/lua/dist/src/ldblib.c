@@ -1,7 +1,7 @@
-/*	$NetBSD: ldblib.c,v 1.6 2015/10/08 12:40:05 mbalmer Exp $	*/
+/*	$NetBSD: ldblib.c,v 1.7 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: ldblib.c,v 1.149 2015/02/19 17:06:21 roberto Exp 
+** Id: ldblib.c,v 1.151 2015/11/23 11:29:43 roberto Exp 
 ** Interface from Lua to its debug API
 ** See Copyright Notice in lua.h
 */
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -32,8 +32,8 @@ static const int HOOKKEY = 0;
 
 
 /*
-** If L1 != L, L1 can be in any state, and therefore there is no
-** garanties about its stack space; any push in L1 must be
+** If L1 != L, L1 can be in any state, and therefore there are no
+** guarantees about its stack space; any push in L1 must be
 ** checked.
 */
 static void checkstack (lua_State *L, lua_State *L1, int n) {
@@ -417,7 +417,7 @@ static int db_debug (lua_State *L) {
     lua_settop(L, 0);  /* remove eventual returns */
   }
 }
-#endif
+#endif /* _KERNEL */
 
 
 static int db_traceback (lua_State *L) {
@@ -437,7 +437,7 @@ static int db_traceback (lua_State *L) {
 static const luaL_Reg dblib[] = {
 #ifndef _KERNEL
   {"debug", db_debug},
-#endif
+#endif /* _KERNEL */
   {"getuservalue", db_getuservalue},
   {"gethook", db_gethook},
   {"getinfo", db_getinfo},

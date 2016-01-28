@@ -1,7 +1,7 @@
-/*	$NetBSD: lobject.c,v 1.7 2015/10/11 09:06:21 mbalmer Exp $	*/
+/*	$NetBSD: lobject.c,v 1.8 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: lobject.c,v 2.104 2015/04/11 18:30:08 roberto Exp 
+** Id: lobject.c,v 2.108 2015/11/02 16:09:30 roberto Exp 
 ** Some generic functions over Lua objects
 ** See Copyright Notice in lua.h
 */
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -59,9 +59,7 @@ int luaO_int2fb (unsigned int x) {
 
 /* converts back */
 int luaO_fb2int (int x) {
-  int e = (x >> 3) & 0x1f;
-  if (e == 0) return x;
-  else return ((x & 7) + 8) << (e - 1);
+  return (x < 8) ? x : ((x & 7) + 8) << ((x >> 3) - 1);
 }
 
 
@@ -125,7 +123,7 @@ static lua_Number numarith (lua_State *L, int op, lua_Number v1,
     default: lua_assert(0); return 0;
   }
 }
-#endif
+#endif /* _KERNEL */
 
 
 void luaO_arith (lua_State *L, int op, const TValue *p1, const TValue *p2,
@@ -150,7 +148,7 @@ void luaO_arith (lua_State *L, int op, const TValue *p1, const TValue *p2,
       }
       else break;  /* go to the end */
     }
-#endif
+#endif /* _KERNEL */
     default: {  /* other operations */
 #ifndef _KERNEL
       lua_Number n1; lua_Number n2;
@@ -168,7 +166,7 @@ void luaO_arith (lua_State *L, int op, const TValue *p1, const TValue *p2,
         setivalue(res, intarith(L, op, i1, i2));
         return;
       }
-#endif
+#endif /* _KERNEL */
       else break;  /* go to the end */
     }
   }
@@ -311,7 +309,7 @@ size_t luaO_str2num (const char *s, TValue *o) {
   lua_Integer i; lua_Number n;
 #else /* _KERNEL */
   lua_Integer i;
-#endif
+#endif /* _KERNEL */
   const char *e;
   if ((e = l_str2int(s, &i)) != NULL) {  /* try as an integer */
     setivalue(o, i);
@@ -320,7 +318,7 @@ size_t luaO_str2num (const char *s, TValue *o) {
   else if ((e = l_str2d(s, &n)) != NULL) {  /* else try as a float */
     setfltvalue(o, n);
   }
-#endif
+#endif /* _KERNEL */
   else
     return 0;  /* conversion failed */
   return (e - s) + 1;  /* success; return string size */
@@ -371,13 +369,14 @@ void luaO_tostring (lua_State *L, StkId obj) {
 #else /* _KERNEL */
   lua_assert(ttisinteger(obj));
   len = lua_integer2str(buff, sizeof(buff), ivalue(obj));
-#endif
+#endif /* _KERNEL */
   setsvalue2s(L, obj, luaS_newlstr(L, buff, len));
 }
 
 
 static void pushstr (lua_State *L, const char *str, size_t l) {
-  setsvalue2s(L, L->top++, luaS_newlstr(L, str, l));
+  setsvalue2s(L, L->top, luaS_newlstr(L, str, l));
+  luaD_inctop(L);
 }
 
 
@@ -388,7 +387,6 @@ const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
   for (;;) {
     const char *e = strchr(fmt, '%');
     if (e == NULL) break;
-    luaD_checkstack(L, 2);  /* fmt + item */
     pushstr(L, fmt, e - fmt);
     switch (*(e+1)) {
       case 's': {
@@ -406,25 +404,25 @@ const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
         break;
       }
       case 'd': {
-        setivalue(L->top++, va_arg(argp, int));
-        luaO_tostring(L, L->top - 1);
-        break;
+        setivalue(L->top, va_arg(argp, int));
+        goto top2str;
       }
       case 'I': {
-        setivalue(L->top++, cast(lua_Integer, va_arg(argp, l_uacInt)));
-        luaO_tostring(L, L->top - 1);
-        break;
-      }
+        setivalue(L->top, cast(lua_Integer, va_arg(argp, l_uacInt)));
 #ifndef _KERNEL
+        goto top2str;
+      }
       case 'f': {
-        setfltvalue(L->top++, cast_num(va_arg(argp, l_uacNumber)));
+        setfltvalue(L->top, cast_num(va_arg(argp, l_uacNumber)));
+#endif /* _KERNEL */
+      top2str:
+        luaD_inctop(L);
         luaO_tostring(L, L->top - 1);
         break;
       }
-#endif
       case 'p': {
         char buff[4*sizeof(void *) + 8]; /* should be enough space for a '%p' */
-        int l = snprintf(buff, sizeof(buff), "%p", va_arg(argp, void *));
+        int l = l_sprintf(buff, sizeof(buff), "%p", va_arg(argp, void *));
         pushstr(L, buff, l);
         break;
       }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linit.c,v 1.4 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: linit.c,v 1.5 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: linit.c,v 1.38 2015/01/05 13:48:33 roberto Exp 
@@ -31,7 +31,7 @@
 
 #ifndef _KERNEL
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -47,17 +47,17 @@ static const luaL_Reg loadedlibs[] = {
   {"_G", luaopen_base},
 #ifndef _KERNEL
   {LUA_LOADLIBNAME, luaopen_package},
-#endif
+#endif /* _KERNEL */
   {LUA_COLIBNAME, luaopen_coroutine},
   {LUA_TABLIBNAME, luaopen_table},
 #ifndef _KERNEL
   {LUA_IOLIBNAME, luaopen_io},
   {LUA_OSLIBNAME, luaopen_os},
-#endif
+#endif /* _KERNEL */
   {LUA_STRLIBNAME, luaopen_string},
 #ifndef _KERNEL
   {LUA_MATHLIBNAME, luaopen_math},
-#endif
+#endif /* _KERNEL */
   {LUA_UTF8LIBNAME, luaopen_utf8},
   {LUA_DBLIBNAME, luaopen_debug},
 #if defined(LUA_COMPAT_BITLIB)

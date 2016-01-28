@@ -1,7 +1,7 @@
-/*	$NetBSD: lualib.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lualib.h,v 1.3 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** $Id: lualib.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** Id: lualib.h,v 1.44 2014/02/06 17:32:33 roberto Exp 
 ** Lua standard libraries
 ** See Copyright Notice in lua.h
 */

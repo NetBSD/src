@@ -1,7 +1,7 @@
-/*	$NetBSD: ltable.c,v 1.5 2015/10/08 13:40:16 mbalmer Exp $	*/
+/*	$NetBSD: ltable.c,v 1.6 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: ltable.c,v 2.111 2015/06/09 14:21:13 roberto Exp 
+** Id: ltable.c,v 2.117 2015/11/19 19:16:22 roberto Exp 
 ** Lua tables (hash)
 ** See Copyright Notice in lua.h
 */
@@ -26,10 +26,9 @@
 */
 
 #ifndef _KERNEL
-#include <float.h>
 #include <math.h>
 #include <limits.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -91,7 +90,7 @@ static const Node dummynode_ = {
 /*
 ** Hash for floating-point numbers.
 ** The main computation should be just
-**     n = frepx(n, &i); return (n * INT_MAX) + i
+**     n = frexp(n, &i); return (n * INT_MAX) + i
 ** but there are some numerical subtleties.
 ** In a two-complement representation, INT_MAX does not has an exact
 ** representation as a float, but INT_MIN does; because the absolute
@@ -107,7 +106,7 @@ static int l_hashfloat (lua_Number n) {
   lua_Integer ni;
   n = l_mathop(frexp)(n, &i) * -cast_num(INT_MIN);
   if (!lua_numbertointeger(n, &ni)) {  /* is 'n' inf/-inf/NaN? */
-    lua_assert(luai_numisnan(n) || l_mathop(fabs)(n) == HUGE_VAL);
+    lua_assert(luai_numisnan(n) || l_mathop(fabs)(n) == cast_num(HUGE_VAL));
     return 0;
   }
   else {  /* normal case */
@@ -116,7 +115,8 @@ static int l_hashfloat (lua_Number n) {
   }
 }
 #endif
-#endif /*_KERNEL */
+#endif /* _KERNEL */
+
 
 /*
 ** returns the 'main' position of an element in a table (that is, the index
@@ -129,17 +129,11 @@ static Node *mainposition (const Table *t, const TValue *key) {
 #ifndef _KERNEL
     case LUA_TNUMFLT:
       return hashmod(t, l_hashfloat(fltvalue(key)));
-#endif
+#endif /* _KERNEL */
     case LUA_TSHRSTR:
       return hashstr(t, tsvalue(key));
-    case LUA_TLNGSTR: {
-      TString *s = tsvalue(key);
-      if (s->extra == 0) {  /* no hash? */
-        s->hash = luaS_hash(getstr(s), s->u.lnglen, s->hash);
-        s->extra = 1;  /* now it has its hash */
-      }
-      return hashstr(t, tsvalue(key));
-    }
+    case LUA_TLNGSTR:
+      return hashpow2(t, luaS_hashlongstr(tsvalue(key)));
     case LUA_TBOOLEAN:
       return hashboolean(t, bvalue(key));
     case LUA_TLIGHTUSERDATA:
@@ -147,6 +141,7 @@ static Node *mainposition (const Table *t, const TValue *key) {
     case LUA_TLCF:
       return hashpointer(t, fvalue(key));
     default:
+      lua_assert(!ttisdeadkey(key));
       return hashpointer(t, gcvalue(key));
   }
 }
@@ -456,7 +451,7 @@ TValue *luaH_newkey (lua_State *L, Table *t, const TValue *key) {
   Node *mp;
 #ifndef _KERNEL
   TValue aux;
-#endif
+#endif /* _KERNEL */
   if (ttisnil(key)) luaG_runerror(L, "table index is nil");
 #ifndef _KERNEL
   else if (ttisfloat(key)) {
@@ -468,14 +463,14 @@ TValue *luaH_newkey (lua_State *L, Table *t, const TValue *key) {
     else if (luai_numisnan(fltvalue(key)))
       luaG_runerror(L, "table index is NaN");
   }
-#endif
+#endif /* _KERNEL */
   mp = mainposition(t, key);
   if (!ttisnil(gval(mp)) || isdummy(mp)) {  /* main position is taken? */
     Node *othern;
     Node *f = getfreepos(t);  /* get a free place */
     if (f == NULL) {  /* cannot find a free place? */
       rehash(L, t, key);  /* grow table */
-      /* whatever called 'newkey' takes care of TM cache and GC barrier */
+      /* whatever called 'newkey' takes care of TM cache */
       return luaH_set(L, t, key);  /* insert key into grown table */
     }
     lua_assert(!isdummy(f));
@@ -513,7 +508,7 @@ TValue *luaH_newkey (lua_State *L, Table *t, const TValue *key) {
 */
 const TValue *luaH_getint (Table *t, lua_Integer key) {
   /* (1 <= key && key <= t->sizearray) */
-  if (l_castS2U(key - 1) < t->sizearray)
+  if (l_castS2U(key) - 1 < t->sizearray)
     return &t->array[key - 1];
   else {
     Node *n = hashint(t, key);
@@ -525,7 +520,7 @@ const TValue *luaH_getint (Table *t, lua_Integer key) {
         if (nx == 0) break;
         n += nx;
       }
-    };
+    }
     return luaO_nilobject;
   }
 }
@@ -534,7 +529,7 @@ const TValue *luaH_getint (Table *t, lua_Integer key) {
 /*
 ** search function for short strings
 */
-const TValue *luaH_getstr (Table *t, TString *key) {
+const TValue *luaH_getshortstr (Table *t, TString *key) {
   Node *n = hashstr(t, key);
   lua_assert(key->tt == LUA_TSHRSTR);
   for (;;) {  /* check whether 'key' is somewhere in the chain */
@@ -543,11 +538,41 @@ const TValue *luaH_getstr (Table *t, TString *key) {
       return gval(n);  /* that's it */
     else {
       int nx = gnext(n);
-      if (nx == 0) break;
+      if (nx == 0)
+        return luaO_nilobject;  /* not found */
       n += nx;
     }
-  };
-  return luaO_nilobject;
+  }
+}
+
+
+/*
+** "Generic" get version. (Not that generic: not valid for integers,
+** which may be in array part, nor for floats with integral values.)
+*/
+static const TValue *getgeneric (Table *t, const TValue *key) {
+  Node *n = mainposition(t, key);
+  for (;;) {  /* check whether 'key' is somewhere in the chain */
+    if (luaV_rawequalobj(gkey(n), key))
+      return gval(n);  /* that's it */
+    else {
+      int nx = gnext(n);
+      if (nx == 0)
+        return luaO_nilobject;  /* not found */
+      n += nx;
+    }
+  }
+}
+
+
+const TValue *luaH_getstr (Table *t, TString *key) {
+  if (key->tt == LUA_TSHRSTR)
+    return luaH_getshortstr(t, key);
+  else {  /* for long strings, use generic case */
+    TValue ko;
+    setsvalue(cast(lua_State *, NULL), &ko, key);
+    return getgeneric(t, &ko);
+  }
 }
 
 
@@ -556,7 +581,7 @@ const TValue *luaH_getstr (Table *t, TString *key) {
 */
 const TValue *luaH_get (Table *t, const TValue *key) {
   switch (ttype(key)) {
-    case LUA_TSHRSTR: return luaH_getstr(t, tsvalue(key));
+    case LUA_TSHRSTR: return luaH_getshortstr(t, tsvalue(key));
     case LUA_TNUMINT: return luaH_getint(t, ivalue(key));
     case LUA_TNIL: return luaO_nilobject;
 #ifndef _KERNEL
@@ -566,20 +591,9 @@ const TValue *luaH_get (Table *t, const TValue *key) {
         return luaH_getint(t, k);  /* use specialized version */
       /* else... */
     }  /* FALLTHROUGH */
-#endif
-    default: {
-      Node *n = mainposition(t, key);
-      for (;;) {  /* check whether 'key' is somewhere in the chain */
-        if (luaV_rawequalobj(gkey(n), key))
-          return gval(n);  /* that's it */
-        else {
-          int nx = gnext(n);
-          if (nx == 0) break;
-          n += nx;
-        }
-      };
-      return luaO_nilobject;
-    }
+#endif /* _KERNEL */
+    default:
+      return getgeneric(t, key);
   }
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: lua.h,v 1.5 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lua.h,v 1.6 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: lua.h,v 1.328 2015/06/03 13:03:38 roberto Exp 
+** Id: lua.h,v 1.329 2015/11/13 17:18:42 roberto Exp 
 ** Lua - A Scripting Language
 ** Lua.org, PUC-Rio, Brazil (http://www.lua.org)
 ** See Copyright Notice at the end of this file
@@ -14,7 +14,7 @@
 #include <stdarg.h>
 #ifndef _KERNEL
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 
 #include "luaconf.h"
@@ -24,10 +24,10 @@
 #define LUA_VERSION_MINOR	"3"
 #define LUA_VERSION_NUM		503
 #ifndef _KERNEL
-#define LUA_VERSION_RELEASE	"1"
+#define LUA_VERSION_RELEASE	"2"
 #else /* _KERNEL */
-#define LUA_VERSION_RELEASE	"1 (kernel)"
-#endif
+#define LUA_VERSION_RELEASE	"2 (kernel)"
+#endif /* _KERNEL */
 
 #define LUA_VERSION	"Lua " LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #define LUA_RELEASE	LUA_VERSION "." LUA_VERSION_RELEASE
@@ -35,9 +35,9 @@
 #define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2015 Lua.org, PUC-Rio"
 #else /* _KERNEL */
 #define LUA_COPYRIGHT	LUA_RELEASE \
-	"  Copyright (c) 2015, Lourival Vieira Neto <lneto@NetBSD.org>." \
+	"  Copyright (c) 2015-2016, Lourival Vieira Neto <lneto@NetBSD.org>." \
 	"  Copyright (C) 1994-2015 Lua.org, PUC-Rio"
-#endif
+#endif /* _KERNEL */
 #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
 
 
@@ -196,7 +196,7 @@ LUA_API const char     *(lua_typename) (lua_State *L, int tp);
 LUA_API lua_Number      (lua_tonumberx) (lua_State *L, int idx, int *isnum);
 #else /* _KERNEL */
 #define lua_tonumberx	(lua_Integer) lua_tointegerx
-#endif
+#endif /* _KERNEL */
 LUA_API lua_Integer     (lua_tointegerx) (lua_State *L, int idx, int *isnum);
 LUA_API int             (lua_toboolean) (lua_State *L, int idx);
 LUA_API const char     *(lua_tolstring) (lua_State *L, int idx, size_t *len);
@@ -235,7 +235,7 @@ LUA_API const void     *(lua_topointer) (lua_State *L, int idx);
 #define LUA_OPSHR	9
 #define LUA_OPUNM	10
 #define LUA_OPBNOT	11
-#endif
+#endif /* _KERNEL */
 
 LUA_API void  (lua_arith) (lua_State *L, int op);
 
@@ -255,7 +255,7 @@ LUA_API void        (lua_pushnil) (lua_State *L);
 LUA_API void        (lua_pushnumber) (lua_State *L, lua_Number n);
 #else /* _KERNEL */
 #define lua_pushnumber(L, n)	lua_pushinteger(L, (lua_Integer)(n))
-#endif
+#endif /* _KERNEL */
 LUA_API void        (lua_pushinteger) (lua_State *L, lua_Integer n);
 LUA_API const char *(lua_pushlstring) (lua_State *L, const char *s, size_t len);
 LUA_API const char *(lua_pushstring) (lua_State *L, const char *s);
@@ -494,7 +494,7 @@ struct lua_Debug {
 
 /******************************************************************************
 #ifdef _KERNEL
-* Copyright (c) 2015, Lourival Vieira Neto <lneto@NetBSD.org>.
+* Copyright (c) 2015-2016, Lourival Vieira Neto <lneto@NetBSD.org>.
 #endif
 * Copyright (C) 1994-2015 Lua.org, PUC-Rio.
 *

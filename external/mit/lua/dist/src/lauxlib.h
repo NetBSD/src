@@ -1,7 +1,7 @@
-/*	$NetBSD: lauxlib.h,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lauxlib.h,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: lauxlib.h,v 1.128 2014/10/29 16:11:17 roberto Exp 
+** Id: lauxlib.h,v 1.129 2015/11/23 11:29:43 roberto Exp 
 ** Auxiliary functions for building Lua libraries
 ** See Copyright Notice in lua.h
 */
@@ -14,7 +14,7 @@
 #ifndef _KERNEL
 #include <stddef.h>
 #include <stdio.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -54,7 +54,7 @@ LUALIB_API lua_Integer (luaL_optinteger) (lua_State *L, int arg,
 #else /* _KERNEL */
 #define luaL_checkinteger		luaL_checknumber
 #define luaL_optinteger(L,a,d)	luaL_optnumber(L, (a), (lua_Number)(d))
-#endif
+#endif /* _KERNEL */
 
 LUALIB_API void (luaL_checkstack) (lua_State *L, int sz, const char *msg);
 LUALIB_API void (luaL_checktype) (lua_State *L, int arg, int t);
@@ -74,9 +74,9 @@ LUALIB_API int (luaL_checkoption) (lua_State *L, int arg, const char *def,
 #ifndef _KERNEL
 LUALIB_API int (luaL_fileresult) (lua_State *L, int stat, const char *fname);
 LUALIB_API int (luaL_execresult) (lua_State *L, int stat);
-#endif
+#endif /* _KERNEL */
 
-/* pre-defined references */
+/* predefined references */
 #define LUA_NOREF       (-2)
 #define LUA_REFNIL      (-1)
 
@@ -88,7 +88,7 @@ LUALIB_API int (luaL_loadfilex) (lua_State *L, const char *filename,
                                                const char *mode);
 
 #define luaL_loadfile(L,f)	luaL_loadfilex(L,f,NULL)
-#endif
+#endif /* _KERNEL */
 
 LUALIB_API int (luaL_loadbufferx) (lua_State *L, const char *buff, size_t sz,
                                    const char *name, const char *mode);
@@ -134,7 +134,7 @@ LUALIB_API void (luaL_requiref) (lua_State *L, const char *modname,
 #ifndef _KERNEL
 #define luaL_dofile(L, fn) \
 	(luaL_loadfile(L, fn) || lua_pcall(L, 0, LUA_MULTRET, 0))
-#endif
+#endif /* _KERNEL */
 
 #define luaL_dostring(L, s) \
 	(luaL_loadstring(L, s) || lua_pcall(L, 0, LUA_MULTRET, 0))
@@ -204,7 +204,7 @@ typedef struct luaL_Stream {
 } luaL_Stream;
 
 /* }====================================================== */
-#endif
+#endif /* _KERNEL */
 
 
 
@@ -245,7 +245,7 @@ LUALIB_API void (luaL_openlib) (lua_State *L, const char *libname,
 #endif
 
 /* }================================================================== */
-#endif
+#endif /* _KERNEL */
 
 
 /*

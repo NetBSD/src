@@ -1,4 +1,4 @@
-/*	$NetBSD: lcorolib.c,v 1.2 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lcorolib.c,v 1.3 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: lcorolib.c,v 1.9 2014/11/02 19:19:04 roberto Exp 
@@ -14,7 +14,7 @@
 
 #ifndef _KERNEL
 #include <stdlib.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
