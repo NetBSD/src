@@ -1,4 +1,4 @@
-/*	$NetBSD: lprefix.h,v 1.2 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lprefix.h,v 1.3 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: lprefix.h,v 1.2 2014/12/29 16:54:13 roberto Exp 
@@ -31,7 +31,7 @@
 #endif
 
 #endif				/* } */
-#endif
+#endif /* _KERNEL */
 
 
 /*
