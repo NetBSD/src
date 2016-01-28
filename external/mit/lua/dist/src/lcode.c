@@ -1,7 +1,7 @@
-/*	$NetBSD: lcode.c,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lcode.c,v 1.5 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: lcode.c,v 2.101 2015/04/29 18:24:11 roberto Exp 
+** Id: lcode.c,v 2.103 2015/11/19 19:16:22 roberto Exp 
 ** Code generator for Lua
 ** See Copyright Notice in lua.h
 */
@@ -15,7 +15,7 @@
 #ifndef _KERNEL
 #include <math.h>
 #include <stdlib.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -41,7 +41,7 @@
 
 
 static int tonumeral(expdesc *e, TValue *v) {
-  if (e->t != NO_JUMP || e->f != NO_JUMP)
+  if (hasjumps(e))
     return 0;  /* not a numeral */
   switch (e->k) {
     case VKINT:
@@ -51,7 +51,7 @@ static int tonumeral(expdesc *e, TValue *v) {
     case VKFLT:
       if (v) setfltvalue(v, e->u.nval);
       return 1;
-#endif
+#endif /* _KERNEL */
     default: return 0;
   }
 }
@@ -369,7 +369,7 @@ static int luaK_numberK (FuncState *fs, lua_Number r) {
   setfltvalue(&o, r);
   return addk(fs, &o, &o);
 }
-#endif
+#endif /* _KERNEL */
 
 
 static int boolK (FuncState *fs, int b) {
@@ -470,7 +470,7 @@ static void discharge2reg (FuncState *fs, expdesc *e, int reg) {
       luaK_codek(fs, reg, luaK_numberK(fs, e->u.nval));
       break;
     }
-#endif
+#endif /* _KERNEL */
     case VKINT: {
       luaK_codek(fs, reg, luaK_intK(fs, e->u.ival));
       break;
@@ -586,7 +586,7 @@ int luaK_exp2RK (FuncState *fs, expdesc *e) {
       e->u.info = luaK_numberK(fs, e->u.nval);
       e->k = VK;
     }
-#endif
+#endif /* _KERNEL */
     /* FALLTHROUGH */
     case VK: {
      vk:
@@ -675,9 +675,9 @@ void luaK_goiftrue (FuncState *fs, expdesc *e) {
     }
 #ifndef _KERNEL
     case VK: case VKFLT: case VKINT: case VTRUE: {
-#else
+#else /* _KERNEL */
     case VK: case VKINT: case VTRUE: {
-#endif
+#endif /* _KERNEL */
       pc = NO_JUMP;  /* always true; do nothing */
       break;
     }
@@ -724,9 +724,9 @@ static void codenot (FuncState *fs, expdesc *e) {
     }
 #ifndef _KERNEL
     case VK: case VKFLT: case VKINT: case VTRUE: {
-#else
+#else /* _KERNEL */
     case VK: case VKINT: case VTRUE: {
-#endif
+#endif /* _KERNEL */
       e->k = VFALSE;
       break;
     }
@@ -778,7 +778,7 @@ static int validop (int op, TValue *v1, TValue *v2) {
     case LUA_OPDIV: case LUA_OPIDIV: case LUA_OPMOD:  /* division by 0 */
 #else /* _KERNEL */
     case LUA_OPIDIV: case LUA_OPMOD:  /* division by 0 */
-#endif
+#endif /* _KERNEL */
       return (nvalue(v2) != 0);
     default: return 1;  /* everything else is valid */
   }
@@ -806,7 +806,7 @@ static int constfolding (FuncState *fs, int op, expdesc *e1, expdesc *e2) {
     e1->u.nval = n;
 #else /* _KERNEL */
     return 0;  /* if it is not integer, we must fail */
-#endif
+#endif /* _KERNEL */
   }
   return 1;
 }
@@ -844,7 +844,7 @@ static void codeexpval (FuncState *fs, OpCode op,
       freeexp(fs, e1);
     }
     e1->u.info = luaK_codeABC(fs, op, 0, o1, o2);  /* generate opcode */
-    e1->k = VRELOCABLE;  /* all those operations are relocable */
+    e1->k = VRELOCABLE;  /* all those operations are relocatable */
     luaK_fixline(fs, line);
   }
 }
@@ -898,10 +898,10 @@ void luaK_infix (FuncState *fs, BinOpr op, expdesc *v) {
 #ifndef _KERNEL
     case OPR_MUL: case OPR_DIV: case OPR_IDIV:
     case OPR_MOD: case OPR_POW:
-#else
+#else /* _KERNEL */
     case OPR_MUL: case OPR_IDIV:
-    case OPR_MOD: 
-#endif
+    case OPR_MOD:
+#endif /* _KERNEL */
     case OPR_BAND: case OPR_BOR: case OPR_BXOR:
     case OPR_SHL: case OPR_SHR: {
       if (!tonumeral(v, NULL)) luaK_exp2RK(fs, v);
@@ -949,10 +949,10 @@ void luaK_posfix (FuncState *fs, BinOpr op,
 #ifndef _KERNEL
     case OPR_ADD: case OPR_SUB: case OPR_MUL: case OPR_DIV:
     case OPR_IDIV: case OPR_MOD: case OPR_POW:
-#else
+#else /* _KERNEL */
     case OPR_ADD: case OPR_SUB: case OPR_MUL:
     case OPR_IDIV: case OPR_MOD:
-#endif
+#endif /* _KERNEL */
     case OPR_BAND: case OPR_BOR: case OPR_BXOR:
     case OPR_SHL: case OPR_SHR: {
       codeexpval(fs, cast(OpCode, (op - OPR_ADD) + OP_ADD), e1, e2, line);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lopcodes.c,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lopcodes.c,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: lopcodes.c,v 1.55 2015/01/05 13:48:33 roberto Exp 
@@ -14,7 +14,7 @@
 
 #ifndef _KERNEL
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lopcodes.h"
 
@@ -42,7 +42,7 @@ LUAI_DDEF const char *const luaP_opnames[NUM_OPCODES+1] = {
 #ifndef _KERNEL
   "POW",
   "DIV",
-#endif
+#endif /* _KERNEL */
   "IDIV",
   "BAND",
   "BOR",
@@ -99,7 +99,7 @@ LUAI_DDEF const lu_byte luaP_opmodes[NUM_OPCODES] = {
 #ifndef _KERNEL
  ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_POW */
  ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_DIV */
-#endif
+#endif /* _KERNEL */
  ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_IDIV */
  ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_BAND */
  ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_BOR */

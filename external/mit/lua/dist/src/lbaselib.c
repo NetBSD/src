@@ -1,7 +1,7 @@
-/*	$NetBSD: lbaselib.c,v 1.5 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lbaselib.c,v 1.6 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
-** Id: lbaselib.c,v 1.310 2015/03/28 19:14:47 roberto Exp 
+** Id: lbaselib.c,v 1.312 2015/10/29 15:21:04 roberto Exp 
 ** Basic library
 ** See Copyright Notice in lua.h
 */
@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -90,8 +90,8 @@ static int luaB_tonumber (lua_State *L) {
     const char *s;
     lua_Integer n = 0;  /* to avoid warnings */
     lua_Integer base = luaL_checkinteger(L, 2);
-    luaL_checktype(L, 1, LUA_TSTRING);  /* before 'luaL_checklstring'! */
-    s = luaL_checklstring(L, 1, &l);
+    luaL_checktype(L, 1, LUA_TSTRING);  /* no numbers as strings */
+    s = lua_tolstring(L, 1, &l);
     luaL_argcheck(L, 2 <= base && base <= 36, 2, "base out of range");
     if (b_str2int(s, (int)base, &n) == s + l) {
       lua_pushinteger(L, n);
@@ -202,12 +202,10 @@ static int luaB_collectgarbage (lua_State *L) {
 }
 
 
-/*
-** This function has all type names as upvalues, to maximize performance.
-*/
 static int luaB_type (lua_State *L) {
-  luaL_checkany(L, 1);
-  lua_pushvalue(L, lua_upvalueindex(lua_type(L, 1) + 1));
+  int t = lua_type(L, 1);
+  luaL_argcheck(L, t != LUA_TNONE, 1, "value expected");
+  lua_pushstring(L, lua_typename(L, t));
   return 1;
 }
 
@@ -247,18 +245,7 @@ static int luaB_pairs (lua_State *L) {
 
 
 /*
-** Traversal function for 'ipairs' for raw tables
-*/
-static int ipairsaux_raw (lua_State *L) {
-  lua_Integer i = luaL_checkinteger(L, 2) + 1;
-  luaL_checktype(L, 1, LUA_TTABLE);
-  lua_pushinteger(L, i);
-  return (lua_rawgeti(L, 1, i) == LUA_TNIL) ? 1 : 2;
-}
-
-
-/*
-** Traversal function for 'ipairs' for tables with metamethods
+** Traversal function for 'ipairs'
 */
 static int ipairsaux (lua_State *L) {
   lua_Integer i = luaL_checkinteger(L, 2) + 1;
@@ -273,13 +260,11 @@ static int ipairsaux (lua_State *L) {
 ** that can affect the traversal.
 */
 static int luaB_ipairs (lua_State *L) {
-  lua_CFunction iter = (luaL_getmetafield(L, 1, "__index") != LUA_TNIL)
-                       ? ipairsaux : ipairsaux_raw;
 #if defined(LUA_COMPAT_IPAIRS)
-  return pairsmeta(L, "__ipairs", 1, iter);
+  return pairsmeta(L, "__ipairs", 1, ipairsaux);
 #else
   luaL_checkany(L, 1);
-  lua_pushcfunction(L, iter);  /* iteration function */
+  lua_pushcfunction(L, ipairsaux);  /* iteration function */
   lua_pushvalue(L, 1);  /* state */
   lua_pushinteger(L, 0);  /* initial value */
   return 3;
@@ -312,7 +297,7 @@ static int luaB_loadfile (lua_State *L) {
   int status = luaL_loadfilex(L, fname, mode);
   return load_aux(L, status, env);
 }
-#endif
+#endif /* _KERNEL */
 
 
 /*
@@ -390,7 +375,7 @@ static int luaB_dofile (lua_State *L) {
   lua_callk(L, 0, LUA_MULTRET, 0, dofilecont);
   return dofilecont(L, 0, 0);
 }
-#endif
+#endif /* _KERNEL */
 
 
 static int luaB_assert (lua_State *L) {
@@ -479,13 +464,13 @@ static const luaL_Reg base_funcs[] = {
   {"collectgarbage", luaB_collectgarbage},
 #ifndef _KERNEL
   {"dofile", luaB_dofile},
-#endif
+#endif /* _KERNEL */
   {"error", luaB_error},
   {"getmetatable", luaB_getmetatable},
   {"ipairs", luaB_ipairs},
 #ifndef _KERNEL
   {"loadfile", luaB_loadfile},
-#endif
+#endif /* _KERNEL */
   {"load", luaB_load},
 #if defined(LUA_COMPAT_LOADSTRING)
   {"loadstring", luaB_load},
@@ -502,9 +487,9 @@ static const luaL_Reg base_funcs[] = {
   {"setmetatable", luaB_setmetatable},
   {"tonumber", luaB_tonumber},
   {"tostring", luaB_tostring},
+  {"type", luaB_type},
   {"xpcall", luaB_xpcall},
   /* placeholders */
-  {"type", NULL},
   {"_G", NULL},
   {"_VERSION", NULL},
   {NULL, NULL}
@@ -512,7 +497,6 @@ static const luaL_Reg base_funcs[] = {
 
 
 LUAMOD_API int luaopen_base (lua_State *L) {
-  int i;
   /* open lib into global table */
   lua_pushglobaltable(L);
   luaL_setfuncs(L, base_funcs, 0);
@@ -522,11 +506,6 @@ LUAMOD_API int luaopen_base (lua_State *L) {
   /* set global _VERSION */
   lua_pushliteral(L, LUA_VERSION);
   lua_setfield(L, -2, "_VERSION");
-  /* set function 'type' with proper upvalues */
-  for (i = 0; i < LUA_NUMTAGS; i++)  /* push all type names as upvalues */
-    lua_pushstring(L, lua_typename(L, i));
-  lua_pushcclosure(L, luaB_type, LUA_NUMTAGS);
-  lua_setfield(L, -2, "type");
   return 1;
 }
 
