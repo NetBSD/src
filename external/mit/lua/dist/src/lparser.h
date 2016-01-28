@@ -1,4 +1,4 @@
-/*	$NetBSD: lparser.h,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lparser.h,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
 
 /*
 ** Id: lparser.h,v 1.74 2014/10/25 11:50:46 roberto Exp 
@@ -26,7 +26,7 @@ typedef enum {
   VK,		/* info = index of constant in 'k' */
 #ifndef _KERNEL
   VKFLT,	/* nval = numerical float value */
-#endif
+#endif /* _KERNEL */
   VKINT,	/* nval = numerical integer value */
   VNONRELOC,	/* info = result register */
   VLOCAL,	/* info = local register */
@@ -53,7 +53,7 @@ typedef struct expdesc {
     int info;  /* for generic use */
 #ifndef _KERNEL
     lua_Number nval;  /* for VKFLT */
-#endif
+#endif /* _KERNEL */
     lua_Integer ival;    /* for VKINT */
   } u;
   int t;  /* patch list of 'exit when true' */
