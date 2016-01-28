@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.69 2016/01/28 01:08:43 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.70 2016/01/28 06:52:55 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.69 2016/01/28 01:08:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70 2016/01/28 06:52:55 jnemeth Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -127,6 +127,7 @@ lookup_bootinfo(int type)
 	return found ? bic : NULL;
 }
 
+#ifdef notyet
 /*
  * List the available bootinfo entries.
  */
@@ -134,7 +135,6 @@ static const char *btinfo_str[] = {
 	BTINFO_STR
 };
 
-#ifdef notyet
 void
 aprint_bootinfo(void)
 {
