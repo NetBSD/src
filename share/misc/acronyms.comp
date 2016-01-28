@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.157 2016/01/22 19:13:53 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.158 2016/01/28 10:20:40 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -801,6 +801,7 @@ ND	neighbor discovery
 NDFA	nondeterministic finite automaton
 NE	numeric error
 NFA	nondeterministic finite automaton
+NFC	near-field communication
 NFS	network file system
 NIA	next instruction address
 NIC	network information center
