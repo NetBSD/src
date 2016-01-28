@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/08/04 03:38:06 matt Exp $
+# $NetBSD: Makefile,v 1.2 2016/01/28 19:40:29 christos Exp $
 
 PROG=	lzmainfo
 BINDIR=	/usr/bin
@@ -17,8 +17,8 @@ SRCS+=	tuklib_exit.c tuklib_cpucores.c tuklib_open_stdxxx.c \
 CPPFLAGS+=	-DPACKAGE=\"xz\"
 CPPFLAGS+=	-DENABLE_NLS -DLOCALEDIR=\"/usr/share/locale\"
 
-DPADD+=	${LIBLZMA} ${LIBINTL}
-LDADD+=	-llzma -lintl
+DPADD+=	${LIBLZMA} ${LIBINTL} ${LIBPTHREAD}
+LDADD+=	-llzma -lintl -lpthread
 
 .PATH:	${XZSRCDIR}/src/common ${XZSRCDIR}/src/lzmainfo
 
