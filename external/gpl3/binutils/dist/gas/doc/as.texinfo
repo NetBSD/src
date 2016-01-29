@@ -1,7 +1,5 @@
 \input texinfo @c                               -*-Texinfo-*-
-@c  Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-@c  2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-@c  Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2015 Free Software Foundation, Inc.
 @c UPDATE!!  On future updates--
 @c   (1)   check for new machine-dep cmdline options in
 @c         md_parse_option definitions in config/tc-*.c
@@ -102,9 +100,7 @@
 This file documents the GNU Assembler "@value{AS}".
 
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
-Inc.
+Copyright @copyright{} 1991-2015 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -153,9 +149,7 @@ done.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
-Inc.
+Copyright @copyright{} 1991-2015 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -236,14 +230,18 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
  [@b{--compress-debug-sections}]  [@b{--nocompress-debug-sections}]
  [@b{--debug-prefix-map} @var{old}=@var{new}]
  [@b{--defsym} @var{sym}=@var{val}] [@b{-f}] [@b{-g}] [@b{--gstabs}]
- [@b{--gstabs+}] [@b{--gdwarf-2}] [@b{--help}] [@b{-I} @var{dir}] [@b{-J}]
+ [@b{--gstabs+}] [@b{--gdwarf-2}] [@b{--gdwarf-sections}]
+ [@b{--help}] [@b{-I} @var{dir}] [@b{-J}]
  [@b{-K}] [@b{-L}] [@b{--listing-lhs-width}=@var{NUM}]
  [@b{--listing-lhs-width2}=@var{NUM}] [@b{--listing-rhs-width}=@var{NUM}]
- [@b{--listing-cont-lines}=@var{NUM}] [@b{--keep-locals}] [@b{-o}
- @var{objfile}] [@b{-R}] [@b{--reduce-memory-overheads}] [@b{--statistics}]
- [@b{-v}] [@b{-version}] [@b{--version}] [@b{-W}] [@b{--warn}]
- [@b{--fatal-warnings}] [@b{-w}] [@b{-x}] [@b{-Z}] [@b{@@@var{FILE}}]
- [@b{--size-check=[error|warning]}]
+ [@b{--listing-cont-lines}=@var{NUM}] [@b{--keep-locals}]
+ [@b{-o} @var{objfile}] [@b{-R}]
+ [@b{--hash-size}=@var{NUM}] [@b{--reduce-memory-overheads}]
+ [@b{--statistics}]
+ [@b{-v}] [@b{-version}] [@b{--version}]
+ [@b{-W}] [@b{--warn}] [@b{--fatal-warnings}] [@b{-w}] [@b{-x}]
+ [@b{-Z}] [@b{@@@var{FILE}}]
+ [@b{--sectname-subst}] [@b{--size-check=[error|warning]}]
  [@b{--target-help}] [@var{target-options}]
  [@b{--}|@var{files} @dots{}]
 @c
@@ -253,6 +251,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 
 @emph{Target AArch64 options:}
    [@b{-EB}|@b{-EL}]
+   [@b{-mabi}=@var{ABI}]
 @end ifset
 @ifset ALPHA
 
@@ -266,7 +265,9 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @ifset ARC
 
 @emph{Target ARC options:}
-   [@b{-marc[5|6|7|8]}]
+   [@b{-mcpu=@var{cpu}}]
+   [@b{-mA6}|@b{-mARC600}|@b{-mARC601}|@b{-mA7}|@b{-mARC700}|@b{-mEM}|@b{-mHS}]
+   [@b{-mcode-density}]
    [@b{-EB}|@b{-EL}]
 @end ifset
 @ifset ARM
@@ -328,7 +329,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @ifset I80386
 
 @emph{Target i386 options:}
-   [@b{--32}|@b{--n32}|@b{--64}] [@b{-n}]
+   [@b{--32}|@b{--x32}|@b{--64}] [@b{-n}]
    [@b{-march}=@var{CPU}[+@var{EXTENSION}@dots{}]] [@b{-mtune}=@var{CPU}]
 @end ifset
 @ifset I960
@@ -387,6 +388,11 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-jsri2bsr}] [@b{-sifilter}] [@b{-relax}]
    [@b{-mcpu=[210|340]}]
 @end ifset
+@ifset METAG
+
+@emph{Target Meta options:}
+   [@b{-mcpu=@var{cpu}}] [@b{-mfpu=@var{cpu}}] [@b{-mdsp=@var{cpu}}]
+@end ifset
 @ifset MICROBLAZE
 @emph{Target MICROBLAZE options:}
 @c MicroBlaze has no machine-dependent assembler options.
@@ -398,10 +404,14 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-g}[@var{debug level}]] [@b{-G} @var{num}] [@b{-KPIC}] [@b{-call_shared}]
    [@b{-non_shared}] [@b{-xgot} [@b{-mvxworks-pic}]
    [@b{-mabi}=@var{ABI}] [@b{-32}] [@b{-n32}] [@b{-64}] [@b{-mfp32}] [@b{-mgp32}]
+   [@b{-mfp64}] [@b{-mgp64}] [@b{-mfpxx}]
+   [@b{-modd-spreg}] [@b{-mno-odd-spreg}]
    [@b{-march}=@var{CPU}] [@b{-mtune}=@var{CPU}] [@b{-mips1}] [@b{-mips2}]
    [@b{-mips3}] [@b{-mips4}] [@b{-mips5}] [@b{-mips32}] [@b{-mips32r2}]
-   [@b{-mips64}] [@b{-mips64r2}]
+   [@b{-mips32r3}] [@b{-mips32r5}] [@b{-mips32r6}] [@b{-mips64}] [@b{-mips64r2}]
+   [@b{-mips64r3}] [@b{-mips64r5}] [@b{-mips64r6}]
    [@b{-construct-floats}] [@b{-no-construct-floats}]
+   [@b{-mnan=@var{encoding}}]
    [@b{-trap}] [@b{-no-break}] [@b{-break}] [@b{-no-trap}]
    [@b{-mips16}] [@b{-no-mips16}]
    [@b{-mmicromips}] [@b{-mno-micromips}]
@@ -410,9 +420,13 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-mdmx}] [@b{-no-mdmx}]
    [@b{-mdsp}] [@b{-mno-dsp}]
    [@b{-mdspr2}] [@b{-mno-dspr2}]
+   [@b{-mmsa}] [@b{-mno-msa}]
+   [@b{-mxpa}] [@b{-mno-xpa}]
    [@b{-mmt}] [@b{-mno-mt}]
    [@b{-mmcu}] [@b{-mno-mcu}]
+   [@b{-minsn32}] [@b{-mno-insn32}]
    [@b{-mfix7000}] [@b{-mno-fix7000}]
+   [@b{-mfix-rm7000}] [@b{-mno-fix-rm7000}]
    [@b{-mfix-vr4120}] [@b{-mno-fix-vr4120}]
    [@b{-mfix-vr4130}] [@b{-mno-fix-vr4130}]
    [@b{-mdebug}] [@b{-no-mdebug}]
@@ -425,6 +439,24 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{--gnu-syntax}] [@b{--relax}] [@b{--no-predefined-symbols}]
    [@b{--no-expand}] [@b{--no-merge-gregs}] [@b{-x}]
    [@b{--linker-allocated-gregs}]
+@end ifset
+@ifset NIOSII
+
+@emph{Target Nios II options:}
+   [@b{-relax-all}] [@b{-relax-section}] [@b{-no-relax}]
+   [@b{-EB}] [@b{-EL}]
+@end ifset
+@ifset NDS32
+
+@emph{Target NDS32 options:}
+    [@b{-EL}] [@b{-EB}] [@b{-O}] [@b{-Os}] [@b{-mcpu=@var{cpu}}]
+    [@b{-misa=@var{isa}}] [@b{-mabi=@var{abi}}] [@b{-mall-ext}]
+    [@b{-m[no-]16-bit}]  [@b{-m[no-]perf-ext}] [@b{-m[no-]perf2-ext}]
+    [@b{-m[no-]string-ext}] [@b{-m[no-]dsp-ext}] [@b{-m[no-]mac}] [@b{-m[no-]div}]
+    [@b{-m[no-]audio-isa-ext}] [@b{-m[no-]fpu-sp-ext}] [@b{-m[no-]fpu-dp-ext}]
+    [@b{-m[no-]fpu-fma}] [@b{-mfpu-freg=@var{FREG}}] [@b{-mreduced-regs}]
+    [@b{-mfull-regs}] [@b{-m[no-]dx-regs}] [@b{-mpic}] [@b{-mno-relax}]
+    [@b{-mb2bb}]
 @end ifset
 @ifset PDP11
 
@@ -445,21 +477,33 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-mpwrx}|@b{-mpwr2}|@b{-mpwr}|@b{-m601}|@b{-mppc}|@b{-mppc32}|@b{-m603}|@b{-m604}|@b{-m403}|@b{-m405}|
     @b{-m440}|@b{-m464}|@b{-m476}|@b{-m7400}|@b{-m7410}|@b{-m7450}|@b{-m7455}|@b{-m750cl}|@b{-mppc64}|
     @b{-m620}|@b{-me500}|@b{-e500x2}|@b{-me500mc}|@b{-me500mc64}|@b{-me5500}|@b{-me6500}|@b{-mppc64bridge}|
-    @b{-mbooke}|@b{-mpower4}|@b{-mpr4}|@b{-mpower5}|@b{-mpwr5}|@b{-mpwr5x}|@b{-mpower6}|@b{-mpwr6}|
-    @b{-mpower7}|@b{-mpw7}|@b{-ma2}|@b{-mcell}|@b{-mspe}|@b{-mtitan}|@b{-me300}|@b{-mcom}]
-   [@b{-many}] [@b{-maltivec}|@b{-mvsx}]
+    @b{-mbooke}|@b{-mpower4}|@b{-mpwr4}|@b{-mpower5}|@b{-mpwr5}|@b{-mpwr5x}|@b{-mpower6}|@b{-mpwr6}|
+    @b{-mpower7}|@b{-mpwr7}|@b{-mpower8}|@b{-mpwr8}|@b{-mpower9}|@b{-mpwr9}@b{-ma2}|
+    @b{-mcell}|@b{-mspe}|@b{-mtitan}|@b{-me300}|@b{-mcom}]
+   [@b{-many}] [@b{-maltivec}|@b{-mvsx}|@b{-mhtm}|@b{-mvle}]
    [@b{-mregnames}|@b{-mno-regnames}]
    [@b{-mrelocatable}|@b{-mrelocatable-lib}|@b{-K PIC}] [@b{-memb}]
    [@b{-mlittle}|@b{-mlittle-endian}|@b{-le}|@b{-mbig}|@b{-mbig-endian}|@b{-be}]
    [@b{-msolaris}|@b{-mno-solaris}]
    [@b{-nops=@var{count}}]
 @end ifset
+@ifset RL78
+
+@emph{Target RL78 options:}
+   [@b{-mg10}]
+   [@b{-m32bit-doubles}|@b{-m64bit-doubles}]
+@end ifset
 @ifset RX
 
 @emph{Target RX options:}
    [@b{-mlittle-endian}|@b{-mbig-endian}]
-   [@b{-m32bit-ints}|@b{-m16bit-ints}]
    [@b{-m32bit-doubles}|@b{-m64bit-doubles}]
+   [@b{-muse-conventional-section-names}]
+   [@b{-msmall-data-limit}]
+   [@b{-mpid}]
+   [@b{-mrelax}]
+   [@b{-mint-register=@var{number}}]
+   [@b{-mgcc-abi}|@b{-mrx-abi}]
 @end ifset
 @ifset S390
 
@@ -491,7 +535,6 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
  [@b{-mcpu=54[123589]}|@b{-mcpu=54[56]lp}] [@b{-mfar-mode}|@b{-mf}]
  [@b{-merrors-to-file} @var{<filename>}|@b{-me} @var{<filename>}]
 @end ifset
-
 @ifset TIC6X
 
 @emph{Target TIC6X options:}
@@ -507,16 +550,21 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @ifset TILEPRO
 @c TILEPro has no machine-dependent assembler options
 @end ifset
+@ifset VISIUM
 
+@emph{Target Visium options:}
+   [@b{-mtune=@var{arch}}]
+@end ifset
 @ifset XTENSA
 
 @emph{Target Xtensa options:}
- [@b{--[no-]text-section-literals}] [@b{--[no-]absolute-literals}]
+ [@b{--[no-]text-section-literals}] [@b{--[no-]auto-litpools}]
+ [@b{--[no-]absolute-literals}]
  [@b{--[no-]target-align}] [@b{--[no-]longcalls}]
  [@b{--[no-]transform}]
  [@b{--rename-section} @var{oldname}=@var{newname}]
+ [@b{--[no-]trampolines}]
 @end ifset
-
 @ifset Z80
 
 @emph{Target Z80 options:}
@@ -528,8 +576,8 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
   [@b{ -forbid-undocumented-instructions}] [@b{-Fud}]
   [@b{ -forbid-unportable-instructions}] [@b{-Fup}]
 @end ifset
-
 @ifset Z8000
+
 @c Z8000 has no machine-dependent assembler options
 @end ifset
 
@@ -584,12 +632,34 @@ Begin in alternate macro mode.
 @end ifclear
 
 @item --compress-debug-sections
-Compress DWARF debug sections using zlib.  The debug sections are renamed
-to begin with @samp{.zdebug}, and the resulting object file may not be
-compatible with older linkers and object file utilities.
+Compress DWARF debug sections using zlib with SHF_COMPRESSED from the
+ELF ABI.  The resulting object file may not be compatible with older
+linkers and object file utilities.  Note if compression would make a
+given section @emph{larger} then it is not compressed.
+
+@ifset ELF
+@cindex @samp{--compress-debug-sections=} option
+@item --compress-debug-sections=none
+@itemx --compress-debug-sections=zlib
+@itemx --compress-debug-sections=zlib-gnu
+@itemx --compress-debug-sections=zlib-gabi
+These options control how DWARF debug sections are compressed.
+@option{--compress-debug-sections=none} is equivalent to
+@option{--nocompress-debug-sections}.
+@option{--compress-debug-sections=zlib} and
+@option{--compress-debug-sections=zlib-gabi} are equivalent to
+@option{--compress-debug-sections}.
+@option{--compress-debug-sections=zlib-gnu} compresses DWARF debug
+sections using zlib.  The debug sections are renamed to begin with
+@samp{.zdebug}.  Note if compression would make a given section
+@emph{larger} then it is not compressed nor renamed.
+
+@end ifset
 
 @item --nocompress-debug-sections
-Do not compress DWARF debug sections.  This is the default.
+Do not compress DWARF debug sections.  This is usually the default for all
+targets except the x86/x86_64, but a configure time option can be used to
+override this.
 
 @item -D
 Ignored.  This option is accepted for script compatibility with calls to
@@ -631,6 +701,15 @@ the location of the current working directory at assembling time.
 Generate DWARF2 debugging information for each assembler line.  This
 may help debugging assembler code, if the debugger can handle it.  Note---this
 option is only supported by some targets, not all of them.
+
+@item --gdwarf-sections
+Instead of creating a .debug_line section, create a series of
+.debug_line.@var{foo} sections where @var{foo} is the name of the
+corresponding code section.  For example a code section called @var{.text.func}
+will have its dwarf line number information placed into a section called
+@var{.debug_line.text.func}.  If the code section is just called @var{.text}
+then debug line section will still be called just @var{.debug_line} without any
+suffix.
 
 @item --size-check=error
 @itemx --size-check=warning
@@ -687,7 +766,7 @@ Name the object-file output from @command{@value{AS}} @var{objfile}.
 @item -R
 Fold the data section into the text section.
 
-@kindex --hash-size=@var{number}
+@item --hash-size=@var{number}
 Set the default size of GAS's hash tables to a prime number close to
 @var{number}.  Increasing this value can reduce the length of time it takes the
 assembler to perform its tasks, at the expense of increasing the assembler's
@@ -698,6 +777,14 @@ requirements at the expense of speed.
 This option reduces GAS's memory requirements, at the expense of making the
 assembly processes slower.  Currently this switch is a synonym for
 @samp{--hash-size=4051}, but in the future it may have other effects as well.
+
+@ifset ELF
+@item --sectname-subst
+Honor substitution sequences in section names.
+@ifclear man
+@xref{Section Name Substitutions,,@code{.section @var{name}}}.
+@end ifclear
+@end ifset
 
 @item --statistics
 Print the maximum space (in bytes) and total time (in seconds) used by
@@ -778,14 +865,16 @@ processor.
 
 @c man begin OPTIONS
 @ifset ARC
-The following options are available when @value{AS} is configured for
-an ARC processor.
+The following options are available when @value{AS} is configured for an ARC
+processor.
 
 @table @gcctabopt
-@item -marc[5|6|7|8]
+@item -mcpu=@var{cpu}
 This option selects the core processor variant.
 @item -EB | -EL
 Select either big-endian (-EB) or little-endian (-EL) output.
+@item -mcode-density
+Enable Code Density extenssion instructions.
 @end table
 @end ifset
 
@@ -811,6 +900,8 @@ Select either big-endian (-EB) or little-endian (-EL) output.
 @item -mthumb-interwork
 Specify that the code has been generated with interworking between Thumb and
 ARM code in mind.
+@item -mccs
+Turns on CodeComposer Studio assembly syntax compatibility mode.
 @item -k
 Specify that PIC code has been generated.
 @end table
@@ -888,6 +979,25 @@ an Epiphany processor.
 @c man end
 @c man begin INCLUDE
 @include c-epiphany.texi
+@c ended inside the included file
+@end ifset
+
+@end ifset
+
+@ifset H8300
+
+@ifclear man
+@xref{H8/300 Options}, for the options available when @value{AS} is configured
+for an H8/300 processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for an H8/300
+processor.
+@c man end
+@c man begin INCLUDE
+@include c-h8300.texi
 @c ended inside the included file
 @end ifset
 
@@ -1016,6 +1126,24 @@ The target machine does (or does not) have a memory-management
 unit coprocessor.  The default is to assume an MMU for 68020 and up.
 
 @end table
+@end ifset
+
+@ifset NIOSII
+
+@ifclear man
+@xref{Nios II Options}, for the options available when @value{AS} is configured
+for an Altera Nios II processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for an
+Altera Nios II processor.
+@c man end
+@c man begin INCLUDE
+@include c-nios2.texi
+@c ended inside the included file
+@end ifset
 @end ifset
 
 @ifset PDP11
@@ -1162,7 +1290,7 @@ behaviour in the shell.
 
 @ifset MIPS
 The following options are available when @value{AS} is configured for
-a @sc{mips} processor.
+a MIPS processor.
 
 @table @gcctabopt
 @item -G @var{num}
@@ -1188,29 +1316,40 @@ Generate ``little endian'' format output.
 @itemx -mips5
 @itemx -mips32
 @itemx -mips32r2
+@itemx -mips32r3
+@itemx -mips32r5
+@itemx -mips32r6
 @itemx -mips64
 @itemx -mips64r2
-Generate code for a particular @sc{mips} Instruction Set Architecture level.
+@itemx -mips64r3
+@itemx -mips64r5
+@itemx -mips64r6
+Generate code for a particular MIPS Instruction Set Architecture level.
 @samp{-mips1} is an alias for @samp{-march=r3000}, @samp{-mips2} is an
 alias for @samp{-march=r6000}, @samp{-mips3} is an alias for
 @samp{-march=r4000} and @samp{-mips4} is an alias for @samp{-march=r8000}.
-@samp{-mips5}, @samp{-mips32}, @samp{-mips32r2}, @samp{-mips64}, and
-@samp{-mips64r2}
-correspond to generic
-@samp{MIPS V}, @samp{MIPS32}, @samp{MIPS32 Release 2}, @samp{MIPS64},
-and @samp{MIPS64 Release 2}
-ISA processors, respectively.
+@samp{-mips5}, @samp{-mips32}, @samp{-mips32r2}, @samp{-mips32r3},
+@samp{-mips32r5}, @samp{-mips32r6}, @samp{-mips64}, @samp{-mips64r2},
+@samp{-mips64r3}, @samp{-mips64r5}, and @samp{-mips64r6} correspond to generic
+MIPS V, MIPS32, MIPS32 Release 2, MIPS32 Release 3, MIPS32 Release 5, MIPS32
+Release 6, MIPS64, MIPS64 Release 2, MIPS64 Release 3, MIPS64 Release 5, and
+MIPS64 Release 6 ISA processors, respectively.
 
-@item -march=@var{CPU}
-Generate code for a particular @sc{mips} cpu.
+@item -march=@var{cpu}
+Generate code for a particular MIPS CPU.
 
 @item -mtune=@var{cpu}
-Schedule and tune for a particular @sc{mips} cpu.
+Schedule and tune for a particular MIPS CPU.
 
 @item -mfix7000
 @itemx -mno-fix7000
 Cause nops to be inserted if the read of the destination register
 of an mfhi or mflo instruction occurs in the following two instructions.
+
+@item -mfix-rm7000
+@itemx -mno-fix-rm7000
+Cause nops to be inserted if a dmult or dmultu instruction is
+followed by a load instruction.
 
 @item -mdebug
 @itemx -no-mdebug
@@ -1227,6 +1366,25 @@ The register sizes are normally inferred from the ISA and ABI, but these
 flags force a certain group of registers to be treated as 32 bits wide at
 all times.  @samp{-mgp32} controls the size of general-purpose registers
 and @samp{-mfp32} controls the size of floating-point registers.
+
+@item -mgp64
+@itemx -mfp64
+The register sizes are normally inferred from the ISA and ABI, but these
+flags force a certain group of registers to be treated as 64 bits wide at
+all times.  @samp{-mgp64} controls the size of general-purpose registers
+and @samp{-mfp64} controls the size of floating-point registers.
+
+@item -mfpxx
+The register sizes are normally inferred from the ISA and ABI, but using
+this flag in combination with @samp{-mabi=32} enables an ABI variant
+which will operate correctly with floating-point registers which are
+32 or 64 bits wide.
+
+@item -modd-spreg
+@itemx -mno-odd-spreg
+Enable use of floating-point operations on odd-numbered single-precision
+registers when supported by the ISA.  @samp{-mfpxx} implies
+@samp{-mno-odd-spreg}, otherwise the default is @samp{-modd-spreg}.
 
 @item -mips16
 @itemx -no-mips16
@@ -1272,6 +1430,18 @@ This option implies -mdsp.
 This tells the assembler to accept DSP Release 2 instructions.
 @samp{-mno-dspr2} turns off this option.
 
+@item -mmsa
+@itemx -mno-msa
+Generate code for the MIPS SIMD Architecture Extension.
+This tells the assembler to accept MSA instructions.
+@samp{-mno-msa} turns off this option.
+
+@item -mxpa
+@itemx -mno-xpa
+Generate code for the MIPS eXtended Physical Address (XPA) Extension.
+This tells the assembler to accept XPA instructions.
+@samp{-mno-xpa} turns off this option.
+
 @item -mmt
 @itemx -mno-mt
 Generate code for the MT Application Specific Extension.
@@ -1284,6 +1454,16 @@ Generate code for the MCU Application Specific Extension.
 This tells the assembler to accept MCU instructions.
 @samp{-mno-mcu} turns off this option.
 
+@item -minsn32
+@itemx -mno-insn32
+Only use 32-bit instruction encodings when generating code for the
+microMIPS processor.  This option inhibits the use of any 16-bit
+instructions.  This is equivalent to putting @code{.set insn32} at
+the start of the assembly file.  @samp{-mno-insn32} turns off this
+option.  This is equivalent to putting @code{.set noinsn32} at the
+start of the assembly file.  By default @samp{-mno-insn32} is
+selected, allowing all instructions to be used.
+
 @item --construct-floats
 @itemx --no-construct-floats
 The @samp{--no-construct-floats} option disables the construction of
@@ -1292,30 +1472,28 @@ value into the two single width floating point registers that make up
 the double width register.  By default @samp{--construct-floats} is
 selected, allowing construction of these floating point constants.
 
+@item --relax-branch
+@itemx --no-relax-branch
+The @samp{--relax-branch} option enables the relaxation of out-of-range
+branches.  By default @samp{--no-relax-branch} is selected, causing any
+out-of-range branches to produce an error.
+
+@item -mnan=@var{encoding}
+Select between the IEEE 754-2008 (@option{-mnan=2008}) or the legacy
+(@option{-mnan=legacy}) NaN encoding format.  The latter is the default.
+
 @cindex emulation
 @item --emulation=@var{name}
-This option causes @command{@value{AS}} to emulate @command{@value{AS}} configured
-for some other target, in all respects, including output format (choosing
-between ELF and ECOFF only), handling of pseudo-opcodes which may generate
-debugging information or store symbol table information, and default
-endianness.  The available configuration names are: @samp{mipsecoff},
-@samp{mipself}, @samp{mipslecoff}, @samp{mipsbecoff}, @samp{mipslelf},
-@samp{mipsbelf}.  The first two do not alter the default endianness from that
-of the primary target for which the assembler was configured; the others change
-the default to little- or big-endian as indicated by the @samp{b} or @samp{l}
-in the name.  Using @samp{-EB} or @samp{-EL} will override the endianness
-selection in any case.
+This option was formerly used to switch between ELF and ECOFF output
+on targets like IRIX 5 that supported both.  MIPS ECOFF support was
+removed in GAS 2.24, so the option now serves little purpose.
+It is retained for backwards compatibility.
 
-This option is currently supported only when the primary target
-@command{@value{AS}} is configured for is a @sc{mips} ELF or ECOFF target.
-Furthermore, the primary target or others specified with
-@samp{--enable-targets=@dots{}} at configuration time must include support for
-the other format, if both are to be available.  For example, the Irix 5
-configuration includes support for both.
-
-Eventually, this option will support more configurations, with more
-fine-grained control over the assembler's behavior, and will be supported for
-more processors.
+The available configuration names are: @samp{mipself}, @samp{mipslelf} and
+@samp{mipsbelf}.  Choosing @samp{mipself} now has no effect, since the output
+is always ELF.  @samp{mipslelf} and @samp{mipsbelf} select little- and
+big-endian output respectively, but @samp{-EL} and @samp{-EB} are now the
+preferred options instead.
 
 @item -nocpp
 @command{@value{AS}} ignores this option.  It is accepted for compatibility with
@@ -1367,9 +1545,49 @@ Assemble for a little endian target.
 
 @end table
 @end ifset
+@c man end
 
+@ifset METAG
+
+@ifclear man
+@xref{Meta Options}, for the options available when @value{AS} is configured
+for a Meta processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for a
+Meta processor.
+@c man end
+@c man begin INCLUDE
+@include c-metag.texi
+@c ended inside the included file
+@end ifset
+
+@end ifset
+
+@c man begin OPTIONS
 @ifset MMIX
 See the info pages for documentation of the MMIX-specific options.
+@end ifset
+
+@ifset NDS32
+
+@ifclear man
+@xref{NDS32 Options}, for the options available when @value{AS} is configured
+for a NDS32 processor.
+@end ifclear
+@c ended inside the included file
+@end ifset
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for a
+NDS32 processor.
+@c man end
+@c man begin INCLUDE
+@include c-nds32.texi
+@c ended inside the included file
 @end ifset
 
 @c man end
@@ -1411,7 +1629,8 @@ Select the architecture mode, either the Enterprise System
 Architecture (esa) or the z/Architecture mode (zarch).
 @item -march=@var{processor}
 Specify which s390 processor variant is the target, @samp{g6}, @samp{g6},
-@samp{z900}, @samp{z990}, @samp{z9-109}, @samp{z9-ec}, or @samp{z10}.
+@samp{z900}, @samp{z990}, @samp{z9-109}, @samp{z9-ec}, @samp{z10},
+@samp{z196}, @samp{zEC12}, or @samp{z13}.
 @item -mregnames
 @itemx -mno-regnames
 Allow or disallow symbolic names for registers.
@@ -1455,6 +1674,25 @@ processor.
 @c man end
 @c man begin INCLUDE
 @include c-tilegx.texi
+@c ended inside the included file
+@end ifset
+
+@end ifset
+
+@ifset VISIUM
+
+@ifclear man
+@xref{Visium Options}, for the options available when @value{AS} is configured
+for a Visium processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following option is available when @value{AS} is configured for a Visium
+processor.
+@c man end
+@c man begin INCLUDE
+@include c-visium.texi
 @c ended inside the included file
 @end ifset
 
@@ -2509,10 +2747,15 @@ On most machines, you can also use @code{$} in symbol names; exceptions
 are noted in @ref{Machine Dependencies}.
 @end ifset
 No symbol may begin with a digit.  Case is significant.
-There is no length limit: all characters are significant.  Multibyte characters
+There is no length limit; all characters are significant.  Multibyte characters
 are supported.  Symbols are delimited by characters not in that set, or by the
 beginning of a file (since the source program must end with a newline, the end
 of a file is not a possible symbol delimiter).  @xref{Symbols}.
+
+Symbol names may also be enclosed in double quote @code{"} characters.  In such
+cases any characters are allowed, except for the NUL character.  If a double
+quote character is to be included in the symbol name it must be preceeded by a
+backslash @code{\} character.
 @cindex length of symbols
 
 @node Statements
@@ -3438,6 +3681,9 @@ on the H8/300), and underscores.
 Case of letters is significant: @code{foo} is a different symbol name
 than @code{Foo}.
 
+Symbol names do not start with a digit.  An exception to this rule is made for
+Local Labels.  See below.
+
 Multibyte characters are supported.  To generate a symbol name containing
 multibyte characters enclose it within double quotes and use escape codes. cf
 @xref{Strings}.  Generating a multibyte symbol name from a label is not
@@ -3461,23 +3707,23 @@ On the HPPA local symbols begin with @samp{L$}.
 
 Local symbols are defined and used within the assembler, but they are
 normally not saved in object files.  Thus, they are not visible when debugging.
-You may use the @samp{-L} option (@pxref{L, ,Include Local Symbols:
-@option{-L}}) to retain the local symbols in the object files.
+You may use the @samp{-L} option (@pxref{L, ,Include Local Symbols})
+to retain the local symbols in the object files.
 
 @subheading Local Labels
 
 @cindex local labels
 @cindex temporary symbol names
 @cindex symbol names, temporary
-Local labels help compilers and programmers use names temporarily.
-They create symbols which are guaranteed to be unique over the entire scope of
-the input source code and which can be referred to by a simple notation.
-To define a local label, write a label of the form @samp{@b{N}:} (where @b{N}
-represents any positive integer).  To refer to the most recent previous
-definition of that label write @samp{@b{N}b}, using the same number as when
-you defined the label.  To refer to the next definition of a local label, write
-@samp{@b{N}f}---the @samp{b} stands for ``backwards'' and the @samp{f} stands
-for ``forwards''.
+Local labels are different from local symbols.  Local labels help compilers and
+programmers use names temporarily.  They create symbols which are guaranteed to
+be unique over the entire scope of the input source code and which can be
+referred to by a simple notation.  To define a local label, write a label of
+the form @samp{@b{N}:} (where @b{N} represents any non-negative integer).
+To refer to the most recent previous definition of that label write
+@samp{@b{N}b}, using the same number as when you defined the label.  To refer
+to the next definition of a local label, write @samp{@b{N}f}.  The @samp{b}
+stands for ``backwards'' and the @samp{f} stands for ``forwards''.
 
 There is no restriction on how you can use these labels, and you can reuse them
 too.  So that it is possible to repeatedly define the same local label (using
@@ -3542,12 +3788,12 @@ the 44th @code{3:} may be named @code{.L3@kbd{C-B}44}.
 @subheading Dollar Local Labels
 @cindex dollar local symbols
 
-@code{@value{AS}} also supports an even more local form of local labels called
-dollar labels.  These labels go out of scope (i.e., they become undefined) as
-soon as a non-local label is defined.  Thus they remain valid for only a small
-region of the input source code.  Normal local labels, by contrast, remain in
-scope for the entire file, or until they are redefined by another occurrence of
-the same local label.
+On some targets @code{@value{AS}} also supports an even more local form of
+local labels called dollar labels.  These labels go out of scope (i.e., they
+become undefined) as soon as a non-local label is defined.  Thus they remain
+valid for only a small region of the input source code.  Normal local labels,
+by contrast, remain in scope for the entire file, or until they are redefined
+by another occurrence of the same local label.
 
 Dollar labels are defined in exactly the same way as ordinary local labels,
 except that they have a dollar sign suffix to their numeric value, e.g.,
@@ -3978,7 +4224,8 @@ address; you can only have a defined section in one of the two arguments.
 @cindex pseudo-ops, machine independent
 @cindex machine independent directives
 All assembler directives have names that begin with a period (@samp{.}).
-The rest of the name is letters, usually in lower case.
+The names are case insensitive for most targets, and usually written
+in lower case.
 
 This chapter discusses directives that are available regardless of the
 target machine configuration for the @sc{gnu} assembler.
@@ -4003,7 +4250,7 @@ Some machine configurations provide additional directives.
 * Ascii::                       @code{.ascii "@var{string}"}@dots{}
 * Asciz::                       @code{.asciz "@var{string}"}@dots{}
 * Balign::                      @code{.balign @var{abs-expr} , @var{abs-expr}}
-* Bundle directives::           @code{.bundle_align_mode @var{abs-expr}}, @code{.bundle_lock}, @code{.bundle_unlock}
+* Bundle directives::           @code{.bundle_align_mode @var{abs-expr}}, etc
 * Byte::                        @code{.byte @var{expressions}}
 * CFI directives::		@code{.cfi_startproc [simple]}, @code{.cfi_endproc}, etc.
 * Comm::                        @code{.comm @var{symbol} , @var{length} }
@@ -4164,6 +4411,9 @@ Some machine configurations provide additional directives.
 * Weak::                        @code{.weak @var{names}}
 * Weakref::                     @code{.weakref @var{alias}, @var{symbol}}
 * Word::                        @code{.word @var{expressions}}
+@ifclear no-space-dir
+* Zero::                        @code{.zero @var{size}}
+@end ifclear
 * Deprecated::                  Deprecated Directives
 @end menu
 
@@ -4216,7 +4466,7 @@ required alignment; this can be useful if you want the alignment to be filled
 with no-op instructions when appropriate.
 
 The way the required alignment is specified varies from system to system.
-For the arc, hppa, i386 using ELF, i860, iq2000, m68k, or32,
+For the arc, hppa, i386 using ELF, i860, iq2000, m68k, or1k,
 s390, sparc, tic4x, tic80 and xtensa, the first expression is the
 alignment request in bytes.  For example @samp{.align 8} advances
 the location counter until it is a multiple of 8.  If the location counter
@@ -4327,7 +4577,8 @@ the endianness of the processor).  If it skips 1 or 3 bytes, the fill value is
 undefined.
 
 @node Bundle directives
-@section @code{.bundle_align_mode @var{abs-expr}}
+@section Bundle directives
+@subsection @code{.bundle_align_mode @var{abs-expr}}
 @cindex @code{bundle_align_mode} directive
 @cindex bundle
 @cindex instruction bundle
@@ -4351,7 +4602,7 @@ end of that bundle is filled with no-op instructions so the instruction
 starts in the next bundle.  As a corollary, it's an error if any single
 instruction's encoding is longer than the bundle size.
 
-@section @code{.bundle_lock} and @code{.bundle_unlock}
+@subsection @code{.bundle_lock} and @code{.bundle_unlock}
 @cindex @code{bundle_lock} directive
 @cindex @code{bundle_unlock} directive
 The @code{.bundle_lock} and directive @code{.bundle_unlock} directives
@@ -4391,7 +4642,8 @@ same number of @code{.bundle_lock} and @code{.bundle_unlock} directives.
 Each expression is assembled into the next byte.
 
 @node CFI directives
-@section @code{.cfi_sections @var{section_list}}
+@section CFI directives
+@subsection @code{.cfi_sections @var{section_list}}
 @cindex @code{cfi_sections} directive
 @code{.cfi_sections} may be used to specify whether CFI directives
 should emit @code{.eh_frame} section and/or @code{.debug_frame} section.
@@ -4400,7 +4652,10 @@ if @var{section_list} is @code{.debug_frame}, @code{.debug_frame} is emitted.
 To emit both use @code{.eh_frame, .debug_frame}.  The default if this
 directive is not used is @code{.cfi_sections .eh_frame}.
 
-@section @code{.cfi_startproc [simple]}
+On targets that support compact unwinding tables these can be generated
+by specifying @code{.eh_frame_entry} instead of @code{.eh_frame}.
+
+@subsection @code{.cfi_startproc [simple]}
 @cindex @code{cfi_startproc} directive
 @code{.cfi_startproc} is used at the beginning of each function that
 should have an entry in @code{.eh_frame}. It initializes some internal
@@ -4410,13 +4665,14 @@ data structures. Don't forget to close the function by
 Unless @code{.cfi_startproc} is used along with parameter @code{simple}
 it also emits some architecture dependent initial CFI instructions.
 
-@section @code{.cfi_endproc}
+@subsection @code{.cfi_endproc}
 @cindex @code{cfi_endproc} directive
 @code{.cfi_endproc} is used at the end of a function where it closes its
 unwind entry previously opened by
 @code{.cfi_startproc}, and emits it to @code{.eh_frame}.
 
-@section @code{.cfi_personality @var{encoding} [, @var{exp}]}
+@subsection @code{.cfi_personality @var{encoding} [, @var{exp}]}
+@cindex @code{cfi_personality} directive
 @code{.cfi_personality} defines personality routine and its encoding.
 @var{encoding} must be a constant determining how the personality
 should be encoded.  If it is 255 (@code{DW_EH_PE_omit}), second
@@ -4427,81 +4683,114 @@ can be loaded from, not the personality routine itself.
 The default after @code{.cfi_startproc} is @code{.cfi_personality 0xff},
 no personality routine.
 
-@section @code{.cfi_lsda @var{encoding} [, @var{exp}]}
+@subsection @code{.cfi_personality_id @var{id}}
+@cindex @code{cfi_personality_id} directive
+@code{cfi_personality_id} defines a personality routine by its index as
+defined in a compact unwinding format.
+Only valid when generating compact EH frames (i.e.
+with @code{.cfi_sections eh_frame_entry}.
+
+@subsection @code{.cfi_fde_data [@var{opcode1} [, @dots{}]]}
+@cindex @code{cfi_fde_data} directive
+@code{cfi_fde_data} is used to describe the compact unwind opcodes to be
+used for the current function.  These are emitted inline in the
+@code{.eh_frame_entry} section if small enough and there is no LSDA, or
+in the @code{.gnu.extab} section otherwise.
+Only valid when generating compact EH frames (i.e.
+with @code{.cfi_sections eh_frame_entry}.
+
+@subsection @code{.cfi_lsda @var{encoding} [, @var{exp}]}
 @code{.cfi_lsda} defines LSDA and its encoding.
 @var{encoding} must be a constant determining how the LSDA
-should be encoded.  If it is 255 (@code{DW_EH_PE_omit}), second
-argument is not present, otherwise second argument should be a constant
+should be encoded.  If it is 255 (@code{DW_EH_PE_omit}), the second
+argument is not present, otherwise the second argument should be a constant
 or a symbol name.  The default after @code{.cfi_startproc} is @code{.cfi_lsda 0xff},
-no LSDA.
+meaning that no LSDA is present.
 
-@section @code{.cfi_def_cfa @var{register}, @var{offset}}
+@subsection @code{.cfi_inline_lsda} [@var{align}]
+@code{.cfi_inline_lsda} marks the start of a LSDA data section and
+switches to the corresponding @code{.gnu.extab} section.
+Must be preceded by a CFI block containing a @code{.cfi_lsda} directive.
+Only valid when generating compact EH frames (i.e.
+with @code{.cfi_sections eh_frame_entry}.
+
+The table header and unwinding opcodes will be generated at this point,
+so that they are immediately followed by the LSDA data.  The symbol
+referenced by the @code{.cfi_lsda} directive should still be defined
+in case a fallback FDE based encoding is used.  The LSDA data is terminated
+by a section directive.
+
+The optional @var{align} argument specifies the alignment required.
+The alignment is specified as a power of two, as with the
+@code{.p2align} directive.
+
+@subsection @code{.cfi_def_cfa @var{register}, @var{offset}}
 @code{.cfi_def_cfa} defines a rule for computing CFA as: @i{take
 address from @var{register} and add @var{offset} to it}.
 
-@section @code{.cfi_def_cfa_register @var{register}}
+@subsection @code{.cfi_def_cfa_register @var{register}}
 @code{.cfi_def_cfa_register} modifies a rule for computing CFA. From
 now on @var{register} will be used instead of the old one. Offset
 remains the same.
 
-@section @code{.cfi_def_cfa_offset @var{offset}}
+@subsection @code{.cfi_def_cfa_offset @var{offset}}
 @code{.cfi_def_cfa_offset} modifies a rule for computing CFA. Register
 remains the same, but @var{offset} is new. Note that it is the
 absolute offset that will be added to a defined register to compute
 CFA address.
 
-@section @code{.cfi_adjust_cfa_offset @var{offset}}
+@subsection @code{.cfi_adjust_cfa_offset @var{offset}}
 Same as @code{.cfi_def_cfa_offset} but @var{offset} is a relative
 value that is added/substracted from the previous offset.
 
-@section @code{.cfi_offset @var{register}, @var{offset}}
+@subsection @code{.cfi_offset @var{register}, @var{offset}}
 Previous value of @var{register} is saved at offset @var{offset} from
 CFA.
 
-@section @code{.cfi_rel_offset @var{register}, @var{offset}}
+@subsection @code{.cfi_rel_offset @var{register}, @var{offset}}
 Previous value of @var{register} is saved at offset @var{offset} from
 the current CFA register.  This is transformed to @code{.cfi_offset}
 using the known displacement of the CFA register from the CFA.
 This is often easier to use, because the number will match the
 code it's annotating.
 
-@section @code{.cfi_register @var{register1}, @var{register2}}
+@subsection @code{.cfi_register @var{register1}, @var{register2}}
 Previous value of @var{register1} is saved in register @var{register2}.
 
-@section @code{.cfi_restore @var{register}}
+@subsection @code{.cfi_restore @var{register}}
 @code{.cfi_restore} says that the rule for @var{register} is now the
 same as it was at the beginning of the function, after all initial
 instruction added by @code{.cfi_startproc} were executed.
 
-@section @code{.cfi_undefined @var{register}}
+@subsection @code{.cfi_undefined @var{register}}
 From now on the previous value of @var{register} can't be restored anymore.
 
-@section @code{.cfi_same_value @var{register}}
+@subsection @code{.cfi_same_value @var{register}}
 Current value of @var{register} is the same like in the previous frame,
 i.e. no restoration needed.
 
-@section @code{.cfi_remember_state},
+@subsection @code{.cfi_remember_state},
 First save all current rules for all registers by @code{.cfi_remember_state},
 then totally screw them up by subsequent @code{.cfi_*} directives and when
 everything is hopelessly bad, use @code{.cfi_restore_state} to restore
 the previous saved state.
 
-@section @code{.cfi_return_column @var{register}}
+@subsection @code{.cfi_return_column @var{register}}
 Change return column @var{register}, i.e. the return address is either
 directly in @var{register} or can be accessed by rules for @var{register}.
 
-@section @code{.cfi_signal_frame}
+@subsection @code{.cfi_signal_frame}
 Mark current function as signal trampoline.
 
-@section @code{.cfi_window_save}
+@subsection @code{.cfi_window_save}
 SPARC register window has been saved.
 
-@section @code{.cfi_escape} @var{expression}[, @dots{}]
+@subsection @code{.cfi_escape} @var{expression}[, @dots{}]
 Allows the user to add arbitrary bytes to the unwind info.  One
 might use this to add OS-specific CFI opcodes, or generic CFI
 opcodes that GAS does not yet support.
 
-@section @code{.cfi_val_encoded_addr @var{register}, @var{encoding}, @var{label}}
+@subsection @code{.cfi_val_encoded_addr @var{register}, @var{encoding}, @var{label}}
 The current value of @var{register} is @var{label}.  The value of @var{label}
 will be encoded in the output file according to @var{encoding}; see the
 description of @code{.cfi_personality} for details on this encoding.
@@ -5952,6 +6241,8 @@ section is not loaded
 writable section
 @item d
 data section
+@item e
+exclude section from linking
 @item r
 read-only section
 @item x
@@ -5994,6 +6285,38 @@ For ELF targets, the @code{.section} directive is used like this:
 @smallexample
 .section @var{name} [, "@var{flags}"[, @@@var{type}[,@var{flag_specific_arguments}]]]
 @end smallexample
+
+@anchor{Section Name Substitutions}
+@kindex --sectname-subst
+@cindex section name substitution
+If the @samp{--sectname-subst} command-line option is provided, the @var{name}
+argument may contain a substitution sequence. Only @code{%S} is supported
+at the moment, and substitutes the current section name. For example:
+
+@smallexample
+.macro exception_code
+.section %S.exception
+[exception code here]
+.previous
+.endm
+
+.text
+[code]
+exception_code
+[...]
+
+.section .init
+[init code]
+exception_code
+[...]
+@end smallexample
+
+The two @code{exception_code} invocations above would create the
+@code{.text.exception} and @code{.init.exception} sections respectively.
+This is useful e.g. to discriminate between anciliary sections that are
+tied to setup code to be discarded after use from anciliary sections that
+need to stay resident without having to define multiple @code{exception_code}
+macros just for that purpose.
 
 The optional @var{flags} argument is a quoted string which may contain any
 combination of the following characters:
@@ -6131,7 +6454,14 @@ changes @var{symbol}'s value and type to conform to
 @var{expression}.  If @var{symbol} was flagged as external, it remains
 flagged (@pxref{Symbol Attributes}).
 
-You may @code{.set} a symbol many times in the same assembly.
+You may @code{.set} a symbol many times in the same assembly provided that the
+values given to the symbol are constants.  Values that are based on expressions
+involving other symbols are allowed, but some targets may restrict this to only
+being done once per assembly.  This is because those targets do not set the
+addresses of symbols at assembly time, but rather delay the assignment until a
+final link is performed.  This allows the linker a chance to change the code in
+the files, changing the location of, and the relative distance between, various
+different symbols.
 
 If you @code{.set} a global symbol, the value stored in the object
 file is the last value stored into it.
@@ -6768,6 +7098,18 @@ assembly language programmers.
 @end ifset
 @c end     DIFF-TBL-KLUGE
 
+@ifclear no-space-dir
+@node Zero
+@section @code{.zero @var{size}}
+
+@cindex @code{zero} directive
+@cindex filling memory with zero bytes
+This directive emits @var{size} 0-valued bytes.  @var{size} must be an absolute
+expression.  This directive is actually an alias for the @samp{.skip} directive
+so in can take an optional second argument of the value to store in the bytes
+instead of zero.  Using @samp{.zero} in this way would be confusing however.
+@end ifclear
+
 @node Deprecated
 @section Deprecated Directives
 
@@ -6850,16 +7192,27 @@ The floating-point ABI used by this object file.  The value will be:
 @item
 0 for files not affected by the floating-point ABI.
 @item
-1 for files using the hardware floating-point with a standard double-precision
-FPU.
+1 for files using the hardware floating-point ABI with a standard
+double-precision FPU.
 @item
 2 for files using the hardware floating-point ABI with a single-precision FPU.
 @item
 3 for files using the software floating-point ABI.
 @item
-4 for files using the hardware floating-point ABI with 64-bit wide
-double-precision floating-point registers and 32-bit wide general
-purpose registers.
+4 for files using the deprecated hardware floating-point ABI which used 64-bit
+floating-point registers, 32-bit general-purpose registers and increased the
+number of callee-saved floating-point registers.
+@item
+5 for files using the hardware floating-point ABI with a double-precision FPU
+with either 32-bit or 64-bit floating-point registers and 32-bit
+general-purpose registers.
+@item
+6 for files using the hardware floating-point ABI with 64-bit floating-point
+registers and 32-bit general-purpose registers.
+@item
+7 for files using the hardware floating-point ABI with 64-bit floating-point
+registers, 32-bit general-purpose registers and a rule that forbids the
+direct use of odd-numbered single-precision floating-point registers.
 @end itemize
 @end table
 
@@ -6892,6 +7245,22 @@ The vector ABI used by this object file.  The value will be:
 2 for files using AltiVec registers to pass vectors.
 @item
 3 for files using SPE registers to pass vectors.
+@end itemize
+@end table
+
+@subsection IBM z Systems Attributes
+
+@table @r
+@item Tag_GNU_S390_ABI_Vector (8)
+The vector ABI used by this object file.  The value will be:
+
+@itemize @bullet
+@item
+0 for files not affected by the vector ABI.
+@item
+1 for files using software vector ABI.
+@item
+2 for files using hardware vector ABI.
 @end itemize
 @end table
 
@@ -7010,6 +7379,9 @@ subject, see the hardware manufacturer's manual.
 @ifset M68HC11
 * M68HC11-Dependent::           M68HC11 and 68HC12 Dependent Features
 @end ifset
+@ifset METAG
+* Meta-Dependent ::             Meta Dependent Features
+@end ifset
 @ifset MICROBLAZE
 * MicroBlaze-Dependent::	MICROBLAZE Dependent Features
 @end ifset
@@ -7022,12 +7394,14 @@ subject, see the hardware manufacturer's manual.
 @ifset MSP430
 * MSP430-Dependent::		MSP430 Dependent Features
 @end ifset
+@ifset NDS32
+* NDS32-Dependent::             Andes NDS32 Dependent Features
+@end ifset
+@ifset NIOSII
+* NiosII-Dependent::            Altera Nios II Dependent Features
+@end ifset
 @ifset NS32K
 * NS32K-Dependent::		NS32K Dependent Features
-@end ifset
-@ifset SH
-* SH-Dependent::                Renesas / SuperH SH Dependent Features
-* SH64-Dependent::              SuperH SH64 Dependent Features
 @end ifset
 @ifset PDP11
 * PDP-11-Dependent::            PDP-11 Dependent Features
@@ -7050,6 +7424,10 @@ subject, see the hardware manufacturer's manual.
 @ifset SCORE
 * SCORE-Dependent::             SCORE Dependent Features
 @end ifset
+@ifset SH
+* SH-Dependent::                Renesas / SuperH SH Dependent Features
+* SH64-Dependent::              SuperH SH64 Dependent Features
+@end ifset
 @ifset SPARC
 * Sparc-Dependent::             SPARC Dependent Features
 @end ifset
@@ -7068,6 +7446,12 @@ subject, see the hardware manufacturer's manual.
 @ifset V850
 * V850-Dependent::              V850 Dependent Features
 @end ifset
+@ifset VAX
+* Vax-Dependent::               VAX Dependent Features
+@end ifset
+@ifset VISIUM
+* Visium-Dependent::            Visium Dependent Features
+@end ifset
 @ifset XGATE
 * XGATE-Dependent::             XGATE Features
 @end ifset
@@ -7082,9 +7466,6 @@ subject, see the hardware manufacturer's manual.
 @end ifset
 @ifset Z8000
 * Z8000-Dependent::             Z8000 Dependent Features
-@end ifset
-@ifset VAX
-* Vax-Dependent::               VAX Dependent Features
 @end ifset
 @end menu
 
@@ -7213,6 +7594,10 @@ family.
 @include c-m68hc11.texi
 @end ifset
 
+@ifset METAG
+@include c-metag.texi
+@end ifset
+
 @ifset MICROBLAZE
 @include c-microblaze.texi
 @end ifset
@@ -7227,6 +7612,14 @@ family.
 
 @ifset MSP430
 @include c-msp430.texi
+@end ifset
+
+@ifset NDS32
+@include c-nds32.texi
+@end ifset
+
+@ifset NIOSII
+@include c-nios2.texi
 @end ifset
 
 @ifset NS32K
@@ -7286,20 +7679,16 @@ family.
 @include c-tilepro.texi
 @end ifset
 
-@ifset Z80
-@include c-z80.texi
-@end ifset
-
-@ifset Z8000
-@include c-z8k.texi
+@ifset V850
+@include c-v850.texi
 @end ifset
 
 @ifset VAX
 @include c-vax.texi
 @end ifset
 
-@ifset V850
-@include c-v850.texi
+@ifset VISIUM
+@include c-visium.texi
 @end ifset
 
 @ifset XGATE
@@ -7312,6 +7701,14 @@ family.
 
 @ifset XTENSA
 @include c-xtensa.texi
+@end ifset
+
+@ifset Z80
+@include c-z80.texi
+@end ifset
+
+@ifset Z8000
+@include c-z8k.texi
 @end ifset
 
 @ifset GENERIC
@@ -7529,8 +7926,8 @@ things without first using the debugger to find the facts.
 If you have contributed to GAS and your name isn't listed here,
 it is not meant as a slight.  We just don't know about it.  Send mail to the
 maintainer, and we'll correct the situation.  Currently
-@c (January 1994),
-the maintainer is Ken Raeburn (email address @code{raeburn@@cygnus.com}).
+@c (October 2012),
+the maintainer is Nick Clifton (email address @code{nickc@@redhat.com}).
 
 Dean Elsner wrote the original @sc{gnu} assembler for the VAX.@footnote{Any
 more details?}

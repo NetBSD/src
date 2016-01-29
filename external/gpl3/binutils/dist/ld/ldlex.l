@@ -2,9 +2,7 @@
 
 %{
 
-/* Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -75,6 +73,7 @@ static void lex_warn_invalid (char *where, char *what);
 /* STATES
 	EXPRESSION	definitely in an expression
 	SCRIPT		definitely in a script
+	INPUTLIST	definitely in a script, a filename-list
 	BOTH		either EXPRESSION or SCRIPT
 	DEFSYMEXP	in an argument to -defsym
         MRI             in an MRI script
@@ -109,6 +108,7 @@ V_TAG [.$_a-zA-Z][._a-zA-Z0-9]*
 V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 
 %s SCRIPT
+%s INPUTLIST
 %s EXPRESSION
 %s BOTH
 %s DEFSYMEXP
@@ -134,7 +134,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 	}
     }
 
-<BOTH,SCRIPT,EXPRESSION,VERS_START,VERS_NODE,VERS_SCRIPT>"/*"	{ comment (); }
+<BOTH,SCRIPT,EXPRESSION,VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>"/*"	{ comment (); }
 
 
 <DEFSYMEXP>"-"                  { RTOKEN('-');}
@@ -221,7 +221,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <BOTH,SCRIPT,EXPRESSION,MRI>"|="	{ RTOKEN(OREQ);}
 <BOTH,SCRIPT,EXPRESSION,MRI>"&&"	{ RTOKEN(ANDAND);}
 <BOTH,SCRIPT,EXPRESSION,MRI>">"		{ RTOKEN('>');}
-<BOTH,SCRIPT,EXPRESSION,MRI>","		{ RTOKEN(',');}
+<BOTH,SCRIPT,EXPRESSION,MRI,INPUTLIST>","		{ RTOKEN(',');}
 <BOTH,SCRIPT,EXPRESSION,MRI>"&"		{ RTOKEN('&');}
 <BOTH,SCRIPT,EXPRESSION,MRI>"|"		{ RTOKEN('|');}
 <BOTH,SCRIPT,EXPRESSION,MRI>"~"		{ RTOKEN('~');}
@@ -236,8 +236,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <BOTH,SCRIPT,EXPRESSION,MRI>"="         { RTOKEN('=');}
 <BOTH,SCRIPT,EXPRESSION,MRI>"}"		{ RTOKEN('}') ; }
 <BOTH,SCRIPT,EXPRESSION,MRI>"{"		{ RTOKEN('{'); }
-<BOTH,SCRIPT,EXPRESSION,MRI>")"		{ RTOKEN(')');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"("		{ RTOKEN('(');}
+<BOTH,SCRIPT,EXPRESSION,MRI,INPUTLIST>")"		{ RTOKEN(')');}
+<BOTH,SCRIPT,EXPRESSION,MRI,INPUTLIST>"("		{ RTOKEN('(');}
 <BOTH,SCRIPT,EXPRESSION,MRI>":"		{ RTOKEN(':'); }
 <BOTH,SCRIPT,EXPRESSION,MRI>";"		{ RTOKEN(';');}
 <BOTH,SCRIPT>"MEMORY"			{ RTOKEN(MEMORY);}
@@ -257,6 +257,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <EXPRESSION,BOTH,SCRIPT>"ALIGNOF"	{ RTOKEN(ALIGNOF); }
 <EXPRESSION,BOTH>"MAX"			{ RTOKEN(MAX_K); }
 <EXPRESSION,BOTH>"MIN"			{ RTOKEN(MIN_K); }
+<EXPRESSION,BOTH>"LOG2CEIL"		{ RTOKEN(LOG2CEIL); }
 <EXPRESSION,BOTH,SCRIPT>"ASSERT"	{ RTOKEN(ASSERT_K); }
 <BOTH,SCRIPT>"ENTRY"			{ RTOKEN(ENTRY);}
 <BOTH,SCRIPT,MRI>"EXTERN"		{ RTOKEN(EXTERN);}
@@ -271,7 +272,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <BOTH,SCRIPT>"OUTPUT"			{ RTOKEN(OUTPUT);}
 <BOTH,SCRIPT>"INPUT"			{ RTOKEN(INPUT);}
 <EXPRESSION,BOTH,SCRIPT>"GROUP"		{ RTOKEN(GROUP);}
-<EXPRESSION,BOTH,SCRIPT>"AS_NEEDED"	{ RTOKEN(AS_NEEDED);}
+<EXPRESSION,BOTH,SCRIPT,INPUTLIST>"AS_NEEDED"	{ RTOKEN(AS_NEEDED);}
 <EXPRESSION,BOTH,SCRIPT>"DEFINED"	{ RTOKEN(DEFINED);}
 <BOTH,SCRIPT>"CREATE_OBJECT_SYMBOLS"	{ RTOKEN(CREATE_OBJECT_SYMBOLS);}
 <BOTH,SCRIPT>"CONSTRUCTORS"		{ RTOKEN( CONSTRUCTORS);}
@@ -317,6 +318,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <EXPRESSION,BOTH,SCRIPT>"INCLUDE"	{ RTOKEN(INCLUDE);}
 <BOTH,SCRIPT>"PHDRS"			{ RTOKEN (PHDRS); }
 <EXPRESSION,BOTH,SCRIPT>"AT"		{ RTOKEN(AT);}
+<EXPRESSION,BOTH,SCRIPT>"ALIGN_WITH_INPUT"	{ RTOKEN(ALIGN_WITH_INPUT);}
 <EXPRESSION,BOTH,SCRIPT>"SUBALIGN"	{ RTOKEN(SUBALIGN);}
 <EXPRESSION,BOTH,SCRIPT>"HIDDEN"	{ RTOKEN(HIDDEN); }
 <EXPRESSION,BOTH,SCRIPT>"PROVIDE"	{ RTOKEN(PROVIDE); }
@@ -371,11 +373,16 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				}
 
 
-<BOTH>{FILENAMECHAR1}{FILENAMECHAR}*	{
+<BOTH,INPUTLIST>{FILENAMECHAR1}{FILENAMECHAR}*	{
 				 yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
-<BOTH>"-l"{FILENAMECHAR}+ {
+<INPUTLIST>"="{FILENAMECHAR1}{FILENAMECHAR}*	{
+/* Filename to be prefixed by --sysroot or when non-sysrooted, nothing.  */
+				 yylval.name = xstrdup (yytext);
+				  return NAME;
+				}
+<BOTH,INPUTLIST>"-l"{FILENAMECHAR}+ {
 				  yylval.name = xstrdup (yytext + 2);
 				  return LNAME;
 				}
@@ -404,7 +411,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 		  }
 	}
 
-<EXPRESSION,BOTH,SCRIPT,VERS_NODE>"\""[^\"]*"\"" {
+<EXPRESSION,BOTH,SCRIPT,VERS_NODE,INPUTLIST>"\""[^\"]*"\"" {
 					/* No matter the state, quotes
 					   give what's inside */
 					yylval.name = xstrdup (yytext + 1);
@@ -441,11 +448,11 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				  return *yytext;
 				}
 
-<VERS_START,VERS_NODE,VERS_SCRIPT>[\n]		{ lineno++; }
+<VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>[\n]	{ lineno++; }
 
 <VERS_START,VERS_NODE,VERS_SCRIPT>#.*		{ /* Eat up comments */ }
 
-<VERS_START,VERS_NODE,VERS_SCRIPT>[ \t\r]+   	{ /* Eat up whitespace */ }
+<VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>[ \t\r]+   	{ /* Eat up whitespace */ }
 
 <<EOF>> {
   include_stack_ptr--;
@@ -561,6 +568,13 @@ ldlex_script (void)
 {
   *(state_stack_p)++ = yy_start;
   BEGIN (SCRIPT);
+}
+
+void
+ldlex_inputlist (void)
+{
+  *(state_stack_p)++ = yy_start;
+  BEGIN (INPUTLIST);
 }
 
 void
