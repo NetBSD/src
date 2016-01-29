@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.66 2016/01/25 12:25:38 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.67 2016/01/29 20:35:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -136,6 +136,7 @@ _END_DECLS
  * is required here.
  */
 #ifdef RUMP_SYS_NETWORKING
+#include <sys/socket.h>
 #define socket(a,b,c) rump_sys_socket(a,b,c)
 #define accept(a,b,c) rump_sys_accept(a,b,c)
 #define bind(a,b,c) rump_sys_bind(a,b,c)
@@ -153,19 +154,23 @@ _END_DECLS
 #endif /* RUMP_SYS_NETWORKING */
 
 #ifdef RUMP_SYS_IOCTL
+#include <sys/ioctl.h>
 #define ioctl(...) rump_sys_ioctl(__VA_ARGS__)
 #define fcntl(...) rump_sys_fcntl(__VA_ARGS__)
 #endif /* RUMP_SYS_IOCTL */
 
 #ifdef RUMP_SYS_CLOSE
+#include <fcntl.h>
 #define close(a) rump_sys_close(a)
 #endif /* RUMP_SYS_CLOSE */
 
 #ifdef RUMP_SYS_OPEN
+#include <fcntl.h>
 #define open(...) rump_sys_open(__VA_ARGS__)
 #endif /* RUMP_SYS_OPEN */
 
 #ifdef RUMP_SYS_READWRITE
+#include <fcntl.h>
 #define read(a,b,c) rump_sys_read(a,b,c)
 #define readv(a,b,c) rump_sys_readv(a,b,c)
 #define pread(a,b,c,d) rump_sys_pread(a,b,c,d)
@@ -177,6 +182,8 @@ _END_DECLS
 #endif /* RUMP_SYS_READWRITE */
 
 #ifdef RUMP_SYS_FILEOPS
+#include <stdlib.h>
+#include <unistd.h>
 #define mkdir(a,b) rump_sys_mkdir(a,b)
 #define rmdir(a) rump_sys_rmdir(a)
 #define link(a,b) rump_sys_link(a,b)
@@ -199,12 +206,14 @@ _END_DECLS
 #endif /* RUMP_SYS_FILEOPS */
 
 #ifdef RUMP_SYS_STAT
+#include <sys/stat.h>
 #define stat(a,b) rump_sys_stat(a,b)
 #define fstat(a,b) rump_sys_fstat(a,b)
 #define lstat(a,b) rump_sys_lstat(a,b)
 #endif /* RUMP_SYS_STAT */
 
 #ifdef RUMP_SYS_PROCOPS
+#include <unistd.h>
 #define getpid() rump_sys_getpid()
 #endif /* RUMP_SYS_PROCOPS */
 
