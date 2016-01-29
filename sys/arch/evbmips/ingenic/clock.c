@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2015/06/30 04:10:10 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.7 2016/01/29 01:54:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2015/06/30 04:10:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2016/01/29 01:54:14 macallan Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -130,6 +132,8 @@ cpu_initclocks(void)
 	
 	printf("INTC %08x %08x\n", readreg(JZ_ICSR0), readreg(JZ_ICSR1));
 	delay(3000000);
+	printf("%s %d\n", __func__, MFC0(12, 3));
+	printf("%s %08x\n", __func__, MFC0(12, 4));
 #endif
 }
 
@@ -190,6 +194,7 @@ void
 ingenic_clockintr(uint32_t id)
 {
 	extern struct clockframe cf;
+	int s = splsched();
 	struct cpu_info * const ci = curcpu();
 #ifdef USE_OST
 	uint32_t new_cnt;
@@ -198,7 +203,6 @@ ingenic_clockintr(uint32_t id)
 	/* clear flags */
 	writereg(JZ_TC_TFCR, TFR_OSTFLAG);
 
-	KASSERT((ci->ci_cycles_per_hz & ~(0xffffffff)) == 0);
 	ci->ci_next_cp0_clk_intr += (uint32_t)(ci->ci_cycles_per_hz & 0xffffffff);
 #ifdef USE_OST
 	writereg(JZ_OST_DATA, ci->ci_next_cp0_clk_intr);
@@ -228,5 +232,13 @@ ingenic_clockintr(uint32_t id)
 		ingenic_puts("+");
 	}
 #endif
+#ifdef MULTIPROCESSOR
+	/*
+	 * XXX
+	 * needs to take the IPI lock and ping all online CPUs, not just core 1
+	 */
+	MTC0(1 << IPI_CLOCK, 20, 1);
+#endif
 	hardclock(&cf);
+	splx(s);
 }

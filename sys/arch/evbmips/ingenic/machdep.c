@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2015/07/11 19:00:04 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.10 2016/01/29 01:54:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2015/07/11 19:00:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2016/01/29 01:54:14 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2015/07/11 19:00:04 macallan Exp $")
 #include <sys/reboot.h>
 #include <sys/cpu.h>
 #include <sys/bus.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,6 +79,10 @@ void	ingenic_reset(void);
 void	ingenic_putchar_init(void);
 void	ingenic_puts(const char *);
 void	ingenic_com_cnattach(void);
+
+#ifdef MULTIPROCESSOR
+kmutex_t ingenic_ipi_lock;
+#endif
 
 static void
 cal_timer(void)
@@ -123,12 +128,12 @@ ingenic_cpu_init(struct cpu_info *ci)
 
 	/* enable IPIs for this core */
 	reg = MFC0(12, 4);	/* reset entry and interrupts */
-	reg &= 0xffff0000;
 	if (cpu_index(ci) == 1) {
 		reg |= REIM_MIRQ1_M;
 	} else
 		reg |= REIM_MIRQ0_M;
 	MTC0(reg, 12, 4);
+	printf("%s %d %08x\n", __func__, cpu_index(ci), reg);
 }
 
 static int
@@ -138,6 +143,7 @@ ingenic_send_ipi(struct cpu_info *ci, int tag)
 
 	msg = 1 << tag;
 
+	mutex_enter(&ingenic_ipi_lock);
 	if (kcpuset_isset(cpus_running, cpu_index(ci))) {
 		if (cpu_index(ci) == 0) {
 			MTC0(msg, CP0_CORE_MBOX, 0);
@@ -145,9 +151,10 @@ ingenic_send_ipi(struct cpu_info *ci, int tag)
 			MTC0(msg, CP0_CORE_MBOX, 1);
 		}
 	}
+	mutex_exit(&ingenic_ipi_lock);
 	return 0;
 }
-#endif
+#endif /* MULTIPROCESSOR */
 
 void
 mach_init(void)
@@ -221,6 +228,7 @@ mach_init(void)
 	mips_init_lwp0_uarea();
 
 #ifdef MULTIPROCESSOR
+	mutex_init(&ingenic_ipi_lock, MUTEX_DEFAULT, IPL_HIGH);
 	mips_locoresw.lsw_send_ipi = ingenic_send_ipi;
 	mips_locoresw.lsw_cpu_init = ingenic_cpu_init;
 #endif
