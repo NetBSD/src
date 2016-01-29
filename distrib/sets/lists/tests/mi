@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.660 2016/01/25 03:14:29 jnemeth Exp $
+# $NetBSD: mi,v 1.661 2016/01/29 04:15:46 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3221,6 +3221,7 @@
 ./usr/tests/net/route/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/route/t_change			tests-net-tests		atf,rump
 ./usr/tests/net/route/t_flags			tests-net-tests		atf,rump
+./usr/tests/net/route/t_route			tests-net-tests		atf,rump
 ./usr/tests/net/sys				tests-net-tests		compattestfile,atf
 ./usr/tests/net/sys/Atffile			tests-net-tests		compattestfile,atf
 ./usr/tests/net/sys/Kyuafile			tests-net-tests		compattestfile,atf,kyua
