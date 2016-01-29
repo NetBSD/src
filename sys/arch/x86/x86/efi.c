@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.1 2016/01/28 01:09:56 christos Exp $	*/
+/*	$NetBSD: efi.c,v 1.2 2016/01/29 02:40:22 christos Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.1 2016/01/28 01:09:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2 2016/01/29 02:40:22 christos Exp $");
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ efi_getva(paddr_t pa)
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (va == 0) {
 		aprint_debug("efi: unable to allocate va\n");
-		return NULL;
+		return 0;
 	}
 	pmap_kenter_pa(va, pa, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
@@ -151,9 +151,9 @@ efi_getcfgtblhead(void)
 		return NULL;
 
 	pa = (paddr_t) efi_systbl_va->st_cfgtbl;
-	aprint_debug("efi: cfgtbl at pa %" PRIx64 "\n", pa);
+	aprint_debug("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
 	va = efi_getva(pa);
-	aprint_debug("efi: cfgtbl mapped at va %" PRIx64 "\n", va);
+	aprint_debug("efi: cfgtbl mapped at va %" PRIxVADDR "\n", va);
 	efi_cfgtblhead_va = (struct efi_cfgtbl *) va;
 	efi_aprintcfgtbl();
 
@@ -245,9 +245,9 @@ efi_getsystbl(void)
 		pa = efi_getsystblpa();
 		if (pa == 0)
 			return NULL;
-		aprint_normal("efi: systbl at pa %" PRIx64 "\n", pa);
+		aprint_normal("efi: systbl at pa %" PRIxPADDR "\n", pa);
 		va = efi_getva(pa);
-		aprint_debug("efi: systbl mapped at va %" PRIx64 "\n", va);
+		aprint_debug("efi: systbl mapped at va %" PRIxVADDR "\n", va);
 		systbl = (struct efi_systbl *) va;
 		/* XXX Check the signature and the CRC32 */
 		aprint_debug("efi: signature %" PRIx64 " revision %" PRIx32
@@ -261,8 +261,8 @@ efi_getsystbl(void)
 		 */
 		aprint_debug("efi: runtime services at pa %" PRIx64 "\n",
 		    systbl->st_rt);
-		aprint_debug("efi: boot services at pa %" PRIx64 "\n",
-		    (uint64_t) systbl->st_bs);
+		aprint_debug("efi: boot services at pa %p\n",
+		    systbl->st_bs);
 		efi_systbl_va = systbl;
 	}
 	return efi_systbl_va;
