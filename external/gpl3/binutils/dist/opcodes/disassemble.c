@@ -1,7 +1,5 @@
 /* Select disassembly routine for specified architecture.
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -39,6 +37,7 @@
 #define ARCH_epiphany
 #define ARCH_fr30
 #define ARCH_frv
+#define ARCH_ft32
 #define ARCH_h8300
 #define ARCH_h8500
 #define ARCH_hppa
@@ -58,6 +57,7 @@
 #define ARCH_m88k
 #define ARCH_mcore
 #define ARCH_mep
+#define ARCH_metag
 #define ARCH_microblaze
 #define ARCH_mips
 #define ARCH_mmix
@@ -66,6 +66,8 @@
 #define ARCH_moxie
 #define ARCH_mt
 #define ARCH_msp430
+#define ARCH_nds32
+#define ARCH_nios2
 #define ARCH_ns32k
 #define ARCH_or1k
 #define ARCH_pdp11
@@ -89,6 +91,7 @@
 #define ARCH_tilepro
 #define ARCH_v850
 #define ARCH_vax
+#define ARCH_visium
 #define ARCH_w65
 #define ARCH_xstormy16
 #define ARCH_xc16x
@@ -209,6 +212,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_i386
     case bfd_arch_i386:
+    case bfd_arch_iamcu:
     case bfd_arch_l1om:
     case bfd_arch_k1om:
       disassemble = print_insn_i386;
@@ -294,6 +298,11 @@ disassembler (abfd)
       disassemble = print_insn_msp430;
       break;
 #endif
+#ifdef ARCH_nds32
+    case bfd_arch_nds32:
+      disassemble = print_insn_nds32;
+      break;
+#endif
 #ifdef ARCH_ns32k
     case bfd_arch_ns32k:
       disassemble = print_insn_ns32k;
@@ -307,6 +316,11 @@ disassembler (abfd)
 #ifdef ARCH_mep
     case bfd_arch_mep:
       disassemble = print_insn_mep;
+      break;
+#endif
+#ifdef ARCH_metag
+    case bfd_arch_metag:
+      disassemble = print_insn_metag;
       break;
 #endif
 #ifdef ARCH_mips
@@ -330,6 +344,14 @@ disassembler (abfd)
 #ifdef ARCH_mn10300
     case bfd_arch_mn10300:
       disassemble = print_insn_mn10300;
+      break;
+#endif
+#ifdef ARCH_nios2
+    case bfd_arch_nios2:
+      if (bfd_big_endian (abfd))
+	disassemble = print_insn_big_nios2;
+      else
+	disassemble = print_insn_little_nios2;
       break;
 #endif
 #ifdef ARCH_or1k
@@ -370,7 +392,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_rl78
     case bfd_arch_rl78:
-      disassemble = print_insn_rl78;
+      disassemble = rl78_get_disassembler (abfd);
       break;
 #endif
 #ifdef ARCH_rx
@@ -431,8 +453,14 @@ disassembler (abfd)
       disassemble = print_insn_tic80;
       break;
 #endif
+#ifdef ARCH_ft32
+    case bfd_arch_ft32:
+      disassemble = print_insn_ft32;
+      break;
+#endif
 #ifdef ARCH_v850
     case bfd_arch_v850:
+    case bfd_arch_v850_rh850:
       disassemble = print_insn_v850;
       break;
 #endif
@@ -478,6 +506,11 @@ disassembler (abfd)
     case bfd_arch_vax:
       disassemble = print_insn_vax;
       break;
+#endif
+#ifdef ARCH_visium
+     case bfd_arch_visium:
+       disassemble = print_insn_visium;
+       break;
 #endif
 #ifdef ARCH_frv
     case bfd_arch_frv:
@@ -575,6 +608,11 @@ disassemble_init_for_target (struct disassemble_info * info)
     case bfd_arch_mep:
       info->skip_zeroes = 256;
       info->skip_zeroes_at_end = 0;
+      break;
+#endif
+#ifdef ARCH_metag
+    case bfd_arch_metag:
+      info->disassembler_needs_relocs = TRUE;
       break;
 #endif
 #ifdef ARCH_m32c

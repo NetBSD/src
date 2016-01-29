@@ -1,6 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -43,7 +42,7 @@ static struct spu_elf_params params =
   1, 0, 16, 0, 0, 2000
 };
 
-static unsigned int no_overlays = 0;  
+static unsigned int no_overlays = 0;
 static unsigned int num_lines_set = 0;
 static unsigned int line_size_set = 0;
 static char *auto_overlay_file = 0;
@@ -90,9 +89,9 @@ static const struct _ovl_stream icache_mgr_stream = {
 static int
 is_spu_target (void)
 {
-  extern const bfd_target bfd_elf32_spu_vec;
+  extern const bfd_target spu_elf32_vec;
 
-  return link_info.output_bfd->xvec == &bfd_elf32_spu_vec;
+  return link_info.output_bfd->xvec == &spu_elf32_vec;
 }
 
 /* Create our note section.  */
@@ -108,10 +107,10 @@ spu_after_open (void)
       params.emit_stub_syms |= link_info.emitrelocations;
       spu_elf_setup (&link_info, &params);
 
-      if (link_info.relocatable)
+      if (bfd_link_relocatable (&link_info))
 	lang_add_unique (".text.ia.*");
 
-      if (!link_info.relocatable
+      if (!bfd_link_relocatable (&link_info)
 	  && link_info.input_bfds != NULL
 	  && !spu_elf_create_sections (&link_info))
 	einfo ("%X%P: can not create note section: %E\n");
@@ -138,8 +137,9 @@ spu_place_special_section (asection *s, asection *o, const char *output_name)
   lang_output_section_statement_type *os;
 
   if (o != NULL)
-    output_name = o->name;
-  os = lang_output_section_find (output_name);
+    os = lang_output_section_get (o);
+  else
+    os = lang_output_section_find (output_name);
   if (os == NULL)
     {
       os = gld${EMULATION_NAME}_place_orphan (s, output_name, 0);
@@ -264,7 +264,7 @@ static void
 spu_before_allocation (void)
 {
   if (is_spu_target ()
-      && !link_info.relocatable
+      && !bfd_link_relocatable (&link_info)
       && !no_overlays)
     {
       int ret;
@@ -318,7 +318,7 @@ spu_before_allocation (void)
     }
 
   if (is_spu_target ()
-      && !link_info.relocatable)
+      && !bfd_link_relocatable (&link_info))
     spu_elf_size_sections (link_info.output_bfd, &link_info);
 
   gld${EMULATION_NAME}_before_allocation ();
@@ -447,7 +447,7 @@ EOF
 
 if grep -q 'ld_elf.*ppc.*_emulation' ldemul-list.h; then
   fragment <<EOF
-#include <errno.h>
+#include "safe-ctype.h"
 #include "filenames.h"
 #include "libiberty.h"
 
@@ -551,7 +551,7 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
 	  pex_return = pex_one (PEX_SEARCH | PEX_LAST, cmd[0], (char *const *) cmd,
 				cmd[0], NULL, NULL, &status, &errno);
 	}
-      if (NULL != pex_return) {      
+      if (NULL != pex_return) {
 	perror (pex_return);
 	_exit (127);
       }
