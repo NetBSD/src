@@ -1,7 +1,7 @@
 BUILDING(8)                 System Manager's Manual                BUILDING(8)
 
 NAME
-     BUILDING -- Procedure for building NetBSD from source code.
+     BUILDING - Procedure for building NetBSD from source code.
 
 REQUIREMENTS
      NetBSD is designed to be buildable on most POSIX-compliant host systems.
@@ -371,6 +371,12 @@ CONFIGURATION
                  same source tree result in the same build results.
 
                  Default: ``no''
+
+     MKREPRO_TIMESTAMP
+                 Unix timestamp.  When MKREPRO is set, the timestamp of all
+                 files in the sets will be set to this value.
+
+                 Default: Unset.
 
      MKSHARE     Can be set to ``yes'' or ``no''.  Indicates whether files
                  destined to reside in DESTDIR/usr/share will be built and
@@ -1102,4 +1108,4 @@ CAVEATS
      files in object directories.  Instead, one may have to manually remove
      the files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           April 7, 2015                          NetBSD
+NetBSD                         January 29, 2016                         NetBSD
