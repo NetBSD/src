@@ -3,7 +3,7 @@
 # dyn_weak_ref.sh -- test weak reference remains weak in output even if
 # gold sees a dynamic weak reference before a static one.
 
-# Copyright 2010 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # Written by Doug Kwan <dougkwan@google.com>.
 
 # This file is part of gold.

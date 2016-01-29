@@ -1,6 +1,5 @@
 /* Support for the generic parts of PE/PEI; common header information.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005,
-   2006, 2007, 2008, 2009  Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -14,7 +13,7 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
@@ -236,6 +235,10 @@
 #define _bfd_XXi_swap_scnhdr_out			_bfd_pex64i_swap_scnhdr_out
 #define _bfd_XXi_swap_sym_in				_bfd_pex64i_swap_sym_in
 #define _bfd_XXi_swap_sym_out				_bfd_pex64i_swap_sym_out
+#define _bfd_XXi_swap_debugdir_in			_bfd_pex64i_swap_debugdir_in
+#define _bfd_XXi_swap_debugdir_out			_bfd_pex64i_swap_debugdir_out
+#define _bfd_XXi_write_codeview_record			_bfd_pex64i_write_codeview_record
+#define _bfd_XXi_slurp_codeview_record			_bfd_pex64i_slurp_codeview_record
 
 #elif defined COFF_WITH_pep
 
@@ -267,6 +270,10 @@
 #define _bfd_XXi_swap_scnhdr_out			_bfd_pepi_swap_scnhdr_out
 #define _bfd_XXi_swap_sym_in				_bfd_pepi_swap_sym_in
 #define _bfd_XXi_swap_sym_out				_bfd_pepi_swap_sym_out
+#define _bfd_XXi_swap_debugdir_in			_bfd_pepi_swap_debugdir_in
+#define _bfd_XXi_swap_debugdir_out			_bfd_pepi_swap_debugdir_out
+#define _bfd_XXi_write_codeview_record			_bfd_pepi_write_codeview_record
+#define _bfd_XXi_slurp_codeview_record			_bfd_pepi_slurp_codeview_record
 
 #else /* !COFF_WITH_pep */
 
@@ -298,6 +305,10 @@
 #define _bfd_XXi_swap_scnhdr_out			_bfd_pei_swap_scnhdr_out
 #define _bfd_XXi_swap_sym_in				_bfd_pei_swap_sym_in
 #define _bfd_XXi_swap_sym_out				_bfd_pei_swap_sym_out
+#define _bfd_XXi_swap_debugdir_in			_bfd_pei_swap_debugdir_in
+#define _bfd_XXi_swap_debugdir_out			_bfd_pei_swap_debugdir_out
+#define _bfd_XXi_write_codeview_record			_bfd_pei_write_codeview_record
+#define _bfd_XXi_slurp_codeview_record			_bfd_pei_slurp_codeview_record
 
 #endif /* !COFF_WITH_pep */
 
@@ -340,6 +351,10 @@ bfd_boolean _bfd_XX_print_private_bfd_data_common (bfd *, void *);
 bfd_boolean _bfd_XX_bfd_copy_private_bfd_data_common (bfd *, bfd *);
 void        _bfd_XX_get_symbol_info (bfd *, asymbol *, symbol_info *);
 bfd_boolean _bfd_XXi_final_link_postscript (bfd *, struct coff_final_link_info *);
+void        _bfd_XXi_swap_debugdir_in (bfd *, void *, void *);
+unsigned    _bfd_XXi_swap_debugdir_out (bfd *, void *, void *);
+unsigned    _bfd_XXi_write_codeview_record (bfd *, file_ptr, CODEVIEW_INFO *);
+CODEVIEW_INFO * _bfd_XXi_slurp_codeview_record (bfd * abfd, file_ptr where, unsigned long length, CODEVIEW_INFO *cvinfo);
 
 /* The following are needed only for ONE of pe or pei, but don't
    otherwise vary; peicode.h fixes up ifdefs but we provide the

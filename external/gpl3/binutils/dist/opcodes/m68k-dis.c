@@ -1,7 +1,5 @@
 /* Print Motorola 68k instructions.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2012  Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -81,7 +79,7 @@ static char *const reg_half_names[] =
 	return ret_val;				\
       val = COERCE16 ((p[-2] << 8) + p[-1]);	\
     }						\
-  while (0)						
+  while (0)
 
 /* Get a 4 byte signed integer.  */
 #define COERCE32(x) ((bfd_signed_vma) ((x) ^ 0x80000000) - 0x80000000)
@@ -160,8 +158,6 @@ static char *const reg_half_names[] =
 
 /* Maximum length of an instruction.  */
 #define MAXLEN 22
-
-#include <setjmp.h>
 
 struct private
 {
@@ -1340,7 +1336,7 @@ match_insn_m68k (bfd_vma memaddr,
 
   if (*args == '.')
     args++;
-  
+
   /* Point at first word of argument data,
      and at descriptor for first argument.  */
   p = buffer + 2;
@@ -1587,7 +1583,7 @@ m68k_scan_mask (bfd_vma memaddr, disassemble_info *info,
 	}
     }
   return 0;
-}		
+}
 
 /* Print the m68k instruction at address MEMADDR in debugged memory,
    on INFO->STREAM.  Returns length of the instruction, in bytes.  */

@@ -1,6 +1,6 @@
 /* script_test_5.t -- linker script test 5 for gold
 
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Written by Cary Coutant <ccoutant@google.com>.
 
    This file is part of gold.
@@ -38,6 +38,7 @@ SECTIONS
 
   . = SEGMENT_START(".data", 0x10200000);
   .data : { *(.data) }
+  .got : { *(.got .toc) }
 
   . = SEGMENT_START(".bss", 0x10400000);
   .bss : { *(.bss) }

@@ -1,5 +1,4 @@
-@c Copyright 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2011-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -241,6 +240,26 @@ up and set the value of the symbol the first time the function is
 called (at latest; depending environment variables).  It is only safe
 to leave the symbol unresolved this way if all references are function
 calls.
+
+@item hw0_plt
+
+This modifier is used to load bits 0-15 of the pc-relative address of
+a plt entry.
+
+@item hw1_plt
+
+This modifier is used to load bits 16-31 of the pc-relative address of
+a plt entry.
+
+@item hw1_last_plt
+
+This modifier yields the same value as @code{hw1_plt}, but it also
+checks that the value does not overflow.
+
+@item hw2_last_plt
+
+This modifier is used to load bits 32-47 of the pc-relative address of
+a plt entry, and it also checks that the value does not overflow.
 
 @item hw0_tls_gd
 

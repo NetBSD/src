@@ -1,4 +1,4 @@
-There are 11 section headers, starting at offset 0x128:
+There are 11 section headers, starting at offset .*:
 
 Section Headers:
  +\[Nr\] Name +Type +Addr +Off +Size +ES Flg Lk Inf Al
@@ -9,8 +9,8 @@ Section Headers:
  +\[ 4\] \.bss +NOBITS +00000000 000090 000000 00 +WA +0 +0 +1
  +\[ 5\] \.stack +PROGBITS +00000000 000090 000004 00 +WA +0 +0 +1
  +\[ 6\] \.cranges +PROGBITS +00000000 000094 000046 00 +W +0 +0 +1
- +\[ 7\] \.rela\.cranges +RELA +00000000 0002e0 000054 0c +9 +6 +4
- +\[ 8\] \.shstrtab +STRTAB +00000000 0000da 00004d 00 +0 +0 +1
+ +\[ 7\] \.rela\.cranges +RELA +00000000 [0-9a-f]+ 000054 0c +I +9 +6 +4
+ +\[ 8\] \.shstrtab +STRTAB +00000000 [0-9a-f]+ 00004d 00 +0 +0 +1
  +\[ 9\] \.symtab +SYMTAB +00000000 [0-9a-f]+ [0-9a-f]+ 10 +10 +[0-9]+ +4
  +\[10\] \.strtab +STRTAB +00000000 [0-9a-f]+ [0-9a-f]+ 00 +0 +0 +1
 Key to Flags:
@@ -44,7 +44,6 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* 0000003c +0 +NOTYPE +LOCAL +DEFAULT +2 sec3
 .* 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
 .* 00000044 +0 +NOTYPE +LOCAL +DEFAULT +2 sec4
-.* 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
 .* 00000000 +0 +NOTYPE +GLOBAL +DEFAULT +2 diversion2
 
 Hex dump of section '\.text\.mixed':

@@ -37,5 +37,4 @@ Idx Name          Size      VMA +LMA +File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
  14 \.rodata\.very\.long\.section\$1234 [0-9a-fA-F]+  [0-9a-fA-F]+  [0-9a-fA-F]+  [0-9a-fA-F]+  2\*\*[0-9]
                   CONTENTS, ALLOC, LOAD, DATA
- 15 \.(bss |text)         [0-9a-fA-F]+  [0-9a-fA-F]+  [0-9a-fA-F]+  [0-9a-fA-F]+  2\*\*[0-9]
-                  (ALLOC|CONTENTS, ALLOC, LOAD, (READONLY, )?CODE)
+#...

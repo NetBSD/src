@@ -1,4 +1,4 @@
-	.arch msp430x123
+	.arch msp430f123
 	.text
 	.p2align 1,0
 	

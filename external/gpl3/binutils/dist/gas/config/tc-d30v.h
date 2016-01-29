@@ -1,6 +1,5 @@
 /* tc-310v.h -- Header file for tc-d30v.c.
-   Copyright 1997, 1998, 2000, 2001, 2002, 2005, 2007, 2009, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -47,7 +46,8 @@ extern long md_pcrel_from_section (struct fix *, segT);
 
 int d30v_cleanup (int);
 #define md_cleanup()		     d30v_cleanup (FALSE)
-#define TC_START_LABEL(ch, s, ptr)      (ch == ':' && d30v_cleanup (FALSE))
+#define TC_START_LABEL(STR, NUL_CHAR, NEXT_CHAR)	\
+  (NEXT_CHAR == ':' && d30v_cleanup (FALSE))
 void d30v_start_line (void);
 #define md_start_line_hook()	     d30v_start_line ()
 

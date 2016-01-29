@@ -1,6 +1,6 @@
 // plugin_final_layout.cc -- a test case for gold
 
-// Copyright 2011 Free Software Foundation, Inc.
+// Copyright (C) 2011-2015 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -21,16 +21,22 @@
 // MA 02110-1301, USA.
 
 // The goal of this program is to verify if section ordering
-// via plugins happens correctly.
+// via plugins happens correctly.  Also, test if plugin based ordering
+// overrides default text section ordering where ".text.hot" sections
+// are grouped.  The plugin does not want foo and baz next to each other.
+// Plugin section order is foo() followed by bar() and then baz().
 
+__attribute__ ((section(".text._Z3barv")))
 void bar ()
 {
 }
 
+__attribute__ ((section(".text.hot._Z3bazv")))
 void baz ()
 {
 }
 
+__attribute__ ((section(".text.hot._Z3foov")))
 void foo ()
 {
 }

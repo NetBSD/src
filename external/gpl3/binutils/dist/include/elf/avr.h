@@ -1,6 +1,5 @@
 /* AVR ELF support for BFD.
-   Copyright 1999, 2000, 2004, 2006, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -41,13 +40,14 @@
 #define E_AVR_MACH_AVR5     5
 #define E_AVR_MACH_AVR51   51
 #define E_AVR_MACH_AVR6     6 
-#define E_AVR_MACH_XMEGA1 101
-#define E_AVR_MACH_XMEGA2 102
-#define E_AVR_MACH_XMEGA3 103
-#define E_AVR_MACH_XMEGA4 104
-#define E_AVR_MACH_XMEGA5 105
-#define E_AVR_MACH_XMEGA6 106
-#define E_AVR_MACH_XMEGA7 107
+#define E_AVR_MACH_AVRTINY 100
+#define E_AVR_MACH_XMEGA1  101
+#define E_AVR_MACH_XMEGA2  102
+#define E_AVR_MACH_XMEGA3  103
+#define E_AVR_MACH_XMEGA4  104
+#define E_AVR_MACH_XMEGA5  105
+#define E_AVR_MACH_XMEGA6  106
+#define E_AVR_MACH_XMEGA7  107
 
 /* Relocations.  */
 START_RELOC_NUMBERS (elf_avr_reloc_type)
@@ -81,6 +81,13 @@ START_RELOC_NUMBERS (elf_avr_reloc_type)
      RELOC_NUMBER (R_AVR_8_LO8,                27)
      RELOC_NUMBER (R_AVR_8_HI8,                28)
      RELOC_NUMBER (R_AVR_8_HLO8,               29)
+     RELOC_NUMBER (R_AVR_DIFF8,                30)
+     RELOC_NUMBER (R_AVR_DIFF16,               31)
+     RELOC_NUMBER (R_AVR_DIFF32,               32)
+     RELOC_NUMBER (R_AVR_LDS_STS_16,           33)
+     RELOC_NUMBER (R_AVR_PORT6,                34)
+     RELOC_NUMBER (R_AVR_PORT5,                35)
+     RELOC_NUMBER (R_AVR_32_PCREL,             36)
 END_RELOC_NUMBERS (R_AVR_max)
 
 #endif /* _ELF_AVR_H */

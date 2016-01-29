@@ -6,7 +6,7 @@
 	// The preferred architectural syntax does not accept the shifter
 	// LSL or any other shift operator, when the destination register
 	// has the shape of 16B or 8B.
-	movi	v0.16b, 97, lsl 0
+	movi	v0.16b, 97, lsl 0	// N.B.: this is now part of the architecture specification.
 
 	// LDR Wt, label | =value
 	// As a convenience assemblers will typically permit the notation

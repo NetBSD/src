@@ -1,8 +1,6 @@
 \input texinfo @c -*-texinfo-*-
 @setfilename gprof.info
-@c Copyright 1988, 1992, 1993, 1998, 1999, 2000, 2001, 2002, 2003,
-@c 2004, 2007, 2008, 2009
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
 @settitle GNU gprof
 @setchapternewpage odd
 
@@ -23,8 +21,7 @@
 This file documents the gprof profiler of the GNU system.
 
 @c man begin COPYRIGHT
-Copyright @copyright{} 1988, 1992, 1997, 1998, 1999, 2000, 2001, 2003,
-2007, 2008, 2009 Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2015 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -41,7 +38,7 @@ section entitled ``GNU Free Documentation License''.
 
 @titlepage
 @title GNU gprof
-@subtitle The @sc{gnu} Profiler 
+@subtitle The @sc{gnu} Profiler
 @ifset VERSION_PACKAGE
 @subtitle @value{VERSION_PACKAGE}
 @end ifset
@@ -57,8 +54,7 @@ execute programs.  @sc{gnu} @code{gprof} was written by Jay Fenlason.
 Eric S. Raymond made some minor corrections and additions in 2003.
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1988, 1992, 1997, 1998, 1999, 2000, 2003, 2008,
-2009 Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2015 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -114,35 +110,36 @@ in the section entitled ``GNU Free Documentation License''.
 
 @smallexample
 @c man begin SYNOPSIS
-gprof [ -[abcDhilLrsTvwxyz] ] [ -[ACeEfFJnNOpPqQZ][@var{name}] ] 
+gprof [ -[abcDhilLrsTvwxyz] ] [ -[ACeEfFJnNOpPqQZ][@var{name}] ]
  [ -I @var{dirs} ] [ -d[@var{num}] ] [ -k @var{from/to} ]
  [ -m @var{min-count} ] [ -R @var{map_file} ] [ -t @var{table-length} ]
- [ --[no-]annotated-source[=@var{name}] ] 
+ [ --[no-]annotated-source[=@var{name}] ]
  [ --[no-]exec-counts[=@var{name}] ]
  [ --[no-]flat-profile[=@var{name}] ] [ --[no-]graph[=@var{name}] ]
- [ --[no-]time=@var{name}] [ --all-lines ] [ --brief ] 
- [ --debug[=@var{level}] ] [ --function-ordering ] 
+ [ --[no-]time=@var{name}] [ --all-lines ] [ --brief ]
+ [ --debug[=@var{level}] ] [ --function-ordering ]
  [ --file-ordering @var{map_file} ] [ --directory-path=@var{dirs} ]
  [ --display-unused-functions ] [ --file-format=@var{name} ]
- [ --file-info ] [ --help ] [ --line ] [ --min-count=@var{n} ]
- [ --no-static ] [ --print-path ] [ --separate-files ]
- [ --static-call-graph ] [ --sum ] [ --table-length=@var{len} ]
- [ --traditional ] [ --version ] [ --width=@var{n} ]
- [ --ignore-non-functions ] [ --demangle[=@var{STYLE}] ]
- [ --no-demangle ] [--external-symbol-table=name] 
+ [ --file-info ] [ --help ] [ --line ] [ --inline-file-names ]
+ [ --min-count=@var{n} ] [ --no-static ] [ --print-path ]
+ [ --separate-files ] [ --static-call-graph ] [ --sum ]
+ [ --table-length=@var{len} ] [ --traditional ] [ --version ]
+ [ --width=@var{n} ] [ --ignore-non-functions ]
+ [ --demangle[=@var{STYLE}] ] [ --no-demangle ]
+ [--external-symbol-table=name]
  [ @var{image-file} ] [ @var{profile-file} @dots{} ]
 @c man end
 @end smallexample
 
 @c man begin DESCRIPTION
-@code{gprof} produces an execution profile of C, Pascal, or Fortran77 
-programs.  The effect of called routines is incorporated in the profile 
+@code{gprof} produces an execution profile of C, Pascal, or Fortran77
+programs.  The effect of called routines is incorporated in the profile
 of each caller.  The profile data is taken from the call graph profile file
 (@file{gmon.out} default) which is created by programs
 that are compiled with the @samp{-pg} option of
 @code{cc}, @code{pc}, and @code{f77}.
 The @samp{-pg} option also links in versions of the library routines
-that are compiled for profiling.  @code{Gprof} reads the given object 
+that are compiled for profiling.  @code{Gprof} reads the given object
 file (the default is @code{a.out}) and establishes the relation between
 its symbol table and the call graph profile from @file{gmon.out}.
 If more than one profile file is specified, the @code{gprof}
@@ -187,7 +184,7 @@ the namelist and text space.
 @item @file{gmon.out}
 dynamic call graph and profile.
 @item @file{gmon.sum}
-summarized dynamic call graph and profile.  
+summarized dynamic call graph and profile.
 @end table
 @c man end
 
@@ -306,8 +303,8 @@ graph data you will still be able to see the time samples:
 Flat profile:
 
 Each sample counts as 0.01 seconds.
-  %   cumulative   self              self     total           
- time   seconds   seconds    calls  Ts/call  Ts/call  name    
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  Ts/call  Ts/call  name
  44.12      0.07     0.07                             zazLoop
  35.29      0.14     0.06                             main
  20.59      0.17     0.04                             bazMillion
@@ -647,9 +644,9 @@ first line.  This behavior is similar to @code{tcov}'s @samp{-a}.
 @itemx --no-demangle
 These options control whether C++ symbol names should be demangled when
 printing output.  The default is to demangle symbols.  The
-@code{--no-demangle} option may be used to turn off demangling. Different 
-compilers have different mangling styles.  The optional demangling style 
-argument can be used to choose an appropriate demangling style for your 
+@code{--no-demangle} option may be used to turn off demangling. Different
+compilers have different mangling styles.  The optional demangling style
+argument can be used to choose an appropriate demangling style for your
 compiler.
 @end table
 
@@ -666,7 +663,7 @@ names are not listed as global, and which are not visible outside the
 file/function/block where they were defined.)  Time spent in these
 functions, calls to/from them, etc., will all be attributed to the
 function that was loaded directly before it in the executable file.
-@c This is compatible with Unix @code{gprof}, but a bad idea.  
+@c This is compatible with Unix @code{gprof}, but a bad idea.
 This option affects both the flat profile and the call graph.
 
 @item -c
@@ -712,6 +709,11 @@ the running time of @code{gprof}, and magnifies statistical
 inaccuracies.
 @xref{Sampling Error, ,Statistical Sampling Error}.
 
+@item --inline-file-names
+This option causes @code{gprof} to print the source file after each
+symbol in both the flat profile and the call graph. The full path to the
+file is printed if used with the @samp{-L} option.
+
 @item -m @var{num}
 @itemx --min-count=@var{num}
 This option affects execution count output only.
@@ -730,8 +732,8 @@ not to propagate times for symbols matching @var{symspec}.
 @item -S@var{filename}
 @itemx --external-symbol-table=@var{filename}
 The @samp{-S} option causes @code{gprof} to read an external symbol table
-file, such as @file{/proc/kallsyms}, rather than read the symbol table 
-from the given object file (the default is @code{a.out}). This is useful 
+file, such as @file{/proc/kallsyms}, rather than read the symbol table
+from the given object file (the default is @code{a.out}). This is useful
 for profiling kernel modules.
 
 @item -z
@@ -797,7 +799,7 @@ children@dots{}) in the call graph.  The function will still be listed
 as a child of any functions that call it, but its index number will be
 shown as @samp{[not printed]}.  More than one @samp{-e} option may be
 given; only one @var{function_name} may be indicated with each @samp{-e}
-option. 
+option.
 
 @item -E @var{function_name}
 The @code{-E @var{function}} option works like the @code{-e} option, but
@@ -811,7 +813,7 @@ The @samp{-f @var{function}} option causes @code{gprof} to limit the
 call graph to the function @var{function_name} and its children (and
 their children@dots{}).  More than one @samp{-f} option may be given;
 only one @var{function_name} may be indicated with each @samp{-f}
-option.  
+option.
 
 @item -F @var{function_name}
 The @samp{-F @var{function}} option works like the @code{-f} option, but
@@ -931,8 +933,8 @@ This is part of a flat profile for a small program:
 Flat profile:
 
 Each sample counts as 0.01 seconds.
-  %   cumulative   self              self     total           
- time   seconds   seconds    calls  ms/call  ms/call  name    
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  ms/call  ms/call  name
  33.34      0.02     0.02     7208     0.00     0.00  open
  16.67      0.03     0.01      244     0.04     0.12  offtime
  16.67      0.04     0.01        8     1.25     1.25  memccpy
@@ -1085,7 +1087,7 @@ function and the following lines describe its subroutines (also called
 
 The entries are sorted by time spent in the function and its subroutines.
 
-The internal profiling function @code{mcount} (@pxref{Flat Profile, ,The 
+The internal profiling function @code{mcount} (@pxref{Flat Profile, ,The
 Flat Profile}) is never mentioned in the call graph.
 
 @menu
@@ -1447,8 +1449,8 @@ Note that @code{ct_init} accounted for four histogram hits, and
 Flat profile:
 
 Each sample counts as 0.01 seconds.
-  %   cumulative   self              self     total           
- time   seconds   seconds    calls  us/call  us/call  name    
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  us/call  us/call  name
  30.77      0.13     0.04     6335     6.31     6.31  ct_init
 
 
@@ -1480,8 +1482,8 @@ from line 385, and 6525 calls from 387.
 Flat profile:
 
 Each sample counts as 0.01 seconds.
-  %   cumulative   self                    
- time   seconds   seconds    calls  name    
+  %   cumulative   self
+ time   seconds   seconds    calls  name
   7.69      0.10     0.01           ct_init (trees.c:349)
   7.69      0.11     0.01           ct_init (trees.c:351)
   7.69      0.12     0.01           ct_init (trees.c:382)
@@ -1574,9 +1576,9 @@ annotated source listing for a sample @code{gzip} run:
                     unsigned n;
             2 ->@{
                     register ulg c;
-                
+
                     static ulg crc = (ulg)0xffffffffL;
-                
+
             2 ->    if (s == NULL) @{
             1 ->        c = 0xffffffffL;
             1 ->    @} else @{
@@ -1883,7 +1885,7 @@ more overhead than kernel-based profiling.  Also, due to the
 added delay required to deliver the signal, this method is
 less accurate as well.
 
-A special startup routine allocates memory for the histogram and 
+A special startup routine allocates memory for the histogram and
 either calls @code{profil()} or sets up
 a clock signal handler.
 This routine (@code{monstartup}) can be invoked in several ways.
@@ -2097,7 +2099,7 @@ When multiple profile data files (or files with multiple histogram
 records) are read, the memory ranges of each pair of histogram records
 must be either equal, or non-overlapping.  For each pair of histogram
 records, the resolution (memory region size divided by the number of
-bins) must be the same.  The time unit must be the same for all 
+bins) must be the same.  The time unit must be the same for all
 histogram records. If the above containts are met, all histograms
 for the same memory range are merged.
 

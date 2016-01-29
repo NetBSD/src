@@ -10,7 +10,7 @@ Disassembly of section destsect:
 Disassembly of section .text:
 
 000080.. <[^>]*>:
-    80..:	b802f000 	.word	0xb802f000
+    80..:	(b802f000|f000b802) 	.word	0x(b802f000|f000b802)
     80..:	00000000 	andeq	r0, r0, r0
 
 000080.. <[^>]*>:

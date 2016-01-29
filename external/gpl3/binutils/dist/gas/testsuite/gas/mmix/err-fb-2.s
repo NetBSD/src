@@ -10,7 +10,7 @@
 0H LOC 2F+#20+0F 		# { dg-error "indeterminable" "" }
 0H IS 4
    .section .text.unknown
-2H SWYM
+2H SWYM 
 1H IS 50
 1H GREG 1B+1F
  SWYM

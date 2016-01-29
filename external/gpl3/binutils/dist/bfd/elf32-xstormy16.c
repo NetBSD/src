@@ -1,6 +1,5 @@
 /* Xstormy16-specific support for 32-bit ELF.
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -74,11 +73,11 @@ static reloc_howto_type xstormy16_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_XSTORMY16_NONE,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
+	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_XSTORMY16_NONE",	/* name */
 	 FALSE,			/* partial_inplace */
@@ -335,7 +334,7 @@ xstormy16_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
 {
   unsigned int i;
 
-  for (i = ARRAY_SIZE (xstormy16_reloc_map); --i;)
+  for (i = ARRAY_SIZE (xstormy16_reloc_map); i--;)
     {
       const reloc_map * entry;
 
@@ -412,7 +411,7 @@ xstormy16_elf_check_relocs (bfd *abfd,
   asection *splt;
   bfd *dynobj;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   symtab_hdr = &elf_tdata(abfd)->symtab_hdr;
@@ -437,6 +436,10 @@ xstormy16_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
@@ -586,7 +589,7 @@ xstormy16_elf_relax_section (bfd *dynobj,
   /* Assume nothing changes.  */
   *again = FALSE;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   /* We only relax the .plt section at the moment.  */
@@ -607,7 +610,7 @@ xstormy16_elf_relax_section (bfd *dynobj,
 
   /* Likewise for local symbols, though that's somewhat less convenient
      as we have to walk the list of input bfds and swap in symbol data.  */
-  for (ibfd = info->input_bfds; ibfd ; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd ; ibfd = ibfd->link.next)
     {
       bfd_vma *local_plt_offsets = elf_local_got_offsets (ibfd);
       Elf_Internal_Shdr *symtab_hdr;
@@ -681,7 +684,7 @@ xstormy16_elf_relax_section (bfd *dynobj,
       elf_link_hash_traverse (elf_hash_table (info),
 			      xstormy16_relax_plt_realloc, &entry);
 
-      for (ibfd = info->input_bfds; ibfd ; ibfd = ibfd->link_next)
+      for (ibfd = info->input_bfds; ibfd ; ibfd = ibfd->link.next)
 	{
 	  bfd_vma *local_plt_offsets = elf_local_got_offsets (ibfd);
 	  unsigned int nlocals = elf_tdata (ibfd)->symtab_hdr.sh_info;
@@ -709,7 +712,7 @@ xstormy16_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   bfd *dynobj;
   asection *splt;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -814,19 +817,19 @@ xstormy16_elf_relocate_section (bfd *                   output_bfd ATTRIBUTE_UNU
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned;
+	  bfd_boolean unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	}
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       if (h != NULL)
@@ -1011,7 +1014,7 @@ xstormy16_elf_gc_mark_hook (asection *sec,
 #define ELF_MACHINE_CODE	EM_XSTORMY16
 #define ELF_MAXPAGESIZE		0x100
 
-#define TARGET_LITTLE_SYM       bfd_elf32_xstormy16_vec
+#define TARGET_LITTLE_SYM       xstormy16_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-xstormy16"
 
 #define elf_info_to_howto_rel			NULL

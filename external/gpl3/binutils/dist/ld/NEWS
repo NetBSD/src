@@ -1,8 +1,73 @@
 -*- text -*-
 
+Changes in 2.26:
+
+* Add --fix-stm32l4xx-629360 to the ARM linker to enable a link-time
+  workaround for a bug in the bus matrix / memory controller for some of
+  the STM32 Cortex-M4 based products (STM32L4xx)
+
+* Add a configure option --enable-compressed-debug-sections={all,ld} to
+  decide whether DWARF debug sections should be compressed by default.
+
+* Add support for the ARC EM/HS, and ARC600/700 architectures.
+
+* Experimental support for linker garbage collection (--gc-sections)
+  has been enabled for COFF and PE based targets.
+
+* New command line option for ELF targets to compress DWARF debug
+  sections, --compress-debug-sections=[none|zlib|zlib-gnu|zlib-gabi].
+
+* New command line option, --orphan-handling=[place|warn|error|discard], to
+  adjust how orphan sections are handled.  The default is 'place' which gives
+  the current behaviour, 'warn' and 'error' issue a warning or error
+  respectively when orphan sections are found, and 'discard' will discard all
+  orphan sections.
+
+* Add support for LLVM plugin.
+
+* Add --print-memory-usage option to report memory blocks usage.
+
+* Add --require-defined option, it's like --undefined except the new symbol
+  must be defined by the end of the link.
+
+Changes in 2.25:
+
+* PE binaries now once again contain real timestamps by default.  To disable
+  the inclusion of a timestamp in a PE binary, use the --no-insert-timestamp
+  command line option.
+
+* Replace support for openrisc and or32 with support for or1k.
+
+* Add support for the --build-id command line option to COFF based targets.
+
+* x86/x86_64 pe-coff now supports the --build-id option.
+
+* Add support for the Andes NDS32.
+
+Changes in 2.24:
+
+* Add LOG2CEIL() builtin function to the linker script language
+
+* Add support for the Texas Instruments MSP430X processor.
+
+* Add support for Altera Nios II.
+
+* Add support for the V850E3V5 architecture.
+
+* Add support for the Imagination Technologies Meta processor.
+
+* --enable-new-dtags no longer generates old dtags in addition to new dtags.
+
+* Remove linker support for MIPS ECOFF targets.
+
+* Add ALIGN_WITH_INPUT to the linker script language to force the alignment of
+  an output section to use the maximum alignment of all its input sections.
+
 Changes in 2.23:
 
-* Add support for 64-bit ARM architecture: AArch64
+* Enable compressed debug section feature for x86/x86_64 pe-coff.
+
+* Add support for the 64-bit ARM architecture: AArch64.
 
 * Added SORT_NONE to the linker script language to disable section sorting.
 
@@ -557,6 +622,12 @@ Changes in version 2.1:
   other utilities should work on Risc/Ultrix and Irix.
 
 
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local variables:
 fill-column: 79
 End:

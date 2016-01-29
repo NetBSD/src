@@ -1,7 +1,8 @@
 // mips.h -- ELF definitions specific to EM_MIPS  -*- C++ -*-
 
-// Copyright 2012 Free Software Foundation, Inc.
-// Written by Aleksandar Simeonov <aleksandar.simeonov@rt-rk.com>.
+// Copyright (C) 2012-2015 Free Software Foundation, Inc.
+// Written by Sasa Stankovic <sasa.stankovic@imgtec.com>
+//        and Aleksandar Simeonov <aleksandar.simeonov@rt-rk.com>.
 
 // This file is part of elfcpp.
 
@@ -46,16 +47,16 @@ enum
 {
   R_MIPS_NONE = 0,
   R_MIPS_16 = 1,
-  R_MIPS_32 = 2,
-  R_MIPS_REL32 = 3,
+  R_MIPS_32 = 2,                   // In Elf 64: alias R_MIPS_ADD
+  R_MIPS_REL32 = 3,                // In Elf 64: alias R_MIPS_REL
   R_MIPS_26 = 4,
   R_MIPS_HI16 = 5,
   R_MIPS_LO16 = 6,
-  R_MIPS_GPREL16 = 7,
+  R_MIPS_GPREL16 = 7,              // In Elf 64: alias R_MIPS_GPREL
   R_MIPS_LITERAL = 8,
-  R_MIPS_GOT16 = 9,
+  R_MIPS_GOT16 = 9,                // In Elf 64: alias R_MIPS_GOT
   R_MIPS_PC16 = 10,
-  R_MIPS_CALL16 = 11,
+  R_MIPS_CALL16 = 11,              // In Elf 64: alias R_MIPS_CALL
   R_MIPS_GPREL32 = 12,
   R_MIPS_UNUSED1 = 13,
   R_MIPS_UNUSED2 = 14,
@@ -69,48 +70,101 @@ enum
   R_MIPS_GOT_HI16 = 22,
   R_MIPS_GOT_LO16 = 23,
   R_MIPS_SUB = 24,
-  R_MIPS_INSERT_A = 25,		// Empty relocation
-  R_MIPS_INSERT_B = 26,		// Empty relocation
-  R_MIPS_DELETE = 27,		// Empty relocation
+  R_MIPS_INSERT_A = 25,
+  R_MIPS_INSERT_B = 26,
+  R_MIPS_DELETE = 27,
   R_MIPS_HIGHER = 28,
   R_MIPS_HIGHEST = 29,
   R_MIPS_CALL_HI16 = 30,
   R_MIPS_CALL_LO16 = 31,
   R_MIPS_SCN_DISP = 32,
-  R_MIPS_REL16 = 33,		// Empty relocation
-  R_MIPS_ADD_IMMEDIATE = 34,	// Empty relocation
-  R_MIPS_PJUMP = 35,		// Empty relocation
-  R_MIPS_RELGOT = 36,		// Empty relocation
+  R_MIPS_REL16 = 33,
+  R_MIPS_ADD_IMMEDIATE = 34,
+  R_MIPS_PJUMP = 35,
+  R_MIPS_RELGOT = 36,
   R_MIPS_JALR = 37,
+  // TLS relocations.
   R_MIPS_TLS_DTPMOD32 = 38,
   R_MIPS_TLS_DTPREL32 = 39,
-  R_MIPS_TLS_DTPMOD64 = 40,	// Empty relocation
-  R_MIPS_TLS_DTPREL64 = 41,	// Empty relocation
+  R_MIPS_TLS_DTPMOD64 = 40,
+  R_MIPS_TLS_DTPREL64 = 41,
   R_MIPS_TLS_GD = 42,
   R_MIPS_TLS_LDM = 43,
   R_MIPS_TLS_DTPREL_HI16 = 44,
   R_MIPS_TLS_DTPREL_LO16 = 45,
   R_MIPS_TLS_GOTTPREL = 46,
   R_MIPS_TLS_TPREL32 = 47,
-  R_MIPS_TLS_TPREL64 = 48,	// Empty relocation
+  R_MIPS_TLS_TPREL64 = 48,
   R_MIPS_TLS_TPREL_HI16 = 49,
   R_MIPS_TLS_TPREL_LO16 = 50,
   R_MIPS_GLOB_DAT = 51,
+  // These relocs are used for the mips16.
   R_MIPS16_26 = 100,
   R_MIPS16_GPREL = 101,
   R_MIPS16_GOT16 = 102,
   R_MIPS16_CALL16 = 103,
   R_MIPS16_HI16 = 104,
   R_MIPS16_LO16 = 105,
+  R_MIPS16_TLS_GD = 106,
+  R_MIPS16_TLS_LDM = 107,
+  R_MIPS16_TLS_DTPREL_HI16 = 108,
+  R_MIPS16_TLS_DTPREL_LO16 = 109,
+  R_MIPS16_TLS_GOTTPREL = 110,
+  R_MIPS16_TLS_TPREL_HI16 = 111,
+  R_MIPS16_TLS_TPREL_LO16 = 112,
+
   R_MIPS_COPY = 126,
   R_MIPS_JUMP_SLOT = 127,
+
+  // These relocations are specific to microMIPS.
+  R_MICROMIPS_26_S1 = 133,
+  R_MICROMIPS_HI16 = 134,
+  R_MICROMIPS_LO16 = 135,
+  R_MICROMIPS_GPREL16 = 136,       // In Elf 64: alias R_MICROMIPS_GPREL
+  R_MICROMIPS_LITERAL = 137,
+  R_MICROMIPS_GOT16 = 138,         // In Elf 64: alias R_MICROMIPS_GOT
+  R_MICROMIPS_PC7_S1 = 139,
+  R_MICROMIPS_PC10_S1 = 140,
+  R_MICROMIPS_PC16_S1 = 141,
+  R_MICROMIPS_CALL16 = 142,        // In Elf 64: alias R_MICROMIPS_CALL
+  R_MICROMIPS_GOT_DISP = 145,
+  R_MICROMIPS_GOT_PAGE = 146,
+  R_MICROMIPS_GOT_OFST = 147,
+  R_MICROMIPS_GOT_HI16 = 148,
+  R_MICROMIPS_GOT_LO16 = 149,
+  R_MICROMIPS_SUB = 150,
+  R_MICROMIPS_HIGHER = 151,
+  R_MICROMIPS_HIGHEST = 152,
+  R_MICROMIPS_CALL_HI16 = 153,
+  R_MICROMIPS_CALL_LO16 = 154,
+  R_MICROMIPS_SCN_DISP = 155,
+  R_MICROMIPS_JALR = 156,
+  R_MICROMIPS_HI0_LO16 = 157,
+  // TLS relocations.
+  R_MICROMIPS_TLS_GD = 162,
+  R_MICROMIPS_TLS_LDM = 163,
+  R_MICROMIPS_TLS_DTPREL_HI16 = 164,
+  R_MICROMIPS_TLS_DTPREL_LO16 = 165,
+  R_MICROMIPS_TLS_GOTTPREL = 166,
+  R_MICROMIPS_TLS_TPREL_HI16 = 169,
+  R_MICROMIPS_TLS_TPREL_LO16 = 170,
+  // microMIPS GP- and PC-relative relocations.
+  R_MICROMIPS_GPREL7_S2 = 172,
+  R_MICROMIPS_PC23_S2 = 173,
+
+  // This was a GNU extension used by embedded-PIC.  It was co-opted by
+  // mips-linux for exception-handling data.  GCC stopped using it in
+  // May, 2004, then started using it again for compact unwind tables.
   R_MIPS_PC32 = 248,
+  R_MIPS_EH = 249,
+  // This relocation is used internally by gas.
   R_MIPS_GNU_REL16_S2 = 250,
+  // These are GNU extensions to enable C++ vtable garbage collection.
   R_MIPS_GNU_VTINHERIT = 253,
   R_MIPS_GNU_VTENTRY = 254
 };
 
-// Processor specific flags for the ELF header e_flags field.  */
+// Processor specific flags for the ELF header e_flags field.
 enum
 {
   // At least one .noreorder directive appears in the source.
@@ -164,6 +218,7 @@ enum
   E_MIPS_MACH_OCTEON = 0x008b0000,
   E_MIPS_MACH_XLR = 0x008c0000,
   E_MIPS_MACH_OCTEON2 = 0x008d0000,
+  E_MIPS_MACH_OCTEON3 = 0x008e0000,
   E_MIPS_MACH_5400 = 0x00910000,
   E_MIPS_MACH_5500 = 0x00980000,
   E_MIPS_MACH_9000 = 0x00990000,
@@ -195,6 +250,10 @@ enum
   E_MIPS_ARCH_32R2 = 0x70000000,
   // -mips64r2 code.
   E_MIPS_ARCH_64R2 = 0x80000000,
+  // -mips32r6 code.
+  E_MIPS_ARCH_32R6 = 0x90000000,
+  // -mips64r6 code.
+  E_MIPS_ARCH_64R6 = 0xa0000000,
 };
 
 enum
@@ -235,6 +294,10 @@ enum
   // Note that one of the MIPS16 bits overlaps with STO_MIPS_PIC.
   STO_MIPS_ISA = 0xc0,
 
+  // The mask spanning the rest of MIPS psABI flags.  At most one is expected
+  // to be set except for STO_MIPS16.
+  STO_MIPS_FLAGS = ~(STO_MIPS_ISA | 0x3),
+
   // The MIPS psABI was updated in 2008 with support for PLTs and copy
   // relocs.  There are therefore two types of nonzero SHN_UNDEF functions:
   // PLT entries and traditional MIPS lazy binding stubs.  We mark the former
@@ -260,6 +323,57 @@ enum
 {
   TP_OFFSET = 0x7000,
   DTP_OFFSET = 0x8000
+};
+
+
+bool
+elf_st_is_mips16(unsigned char st_other)
+{ return (st_other & elfcpp::STO_MIPS16) == elfcpp::STO_MIPS16; }
+
+bool
+elf_st_is_micromips(unsigned char st_other)
+{ return (st_other & elfcpp::STO_MIPS_ISA) == elfcpp::STO_MICROMIPS; }
+
+// Whether the ABI is N32.
+bool
+abi_n32(elfcpp::Elf_Word e_flags)
+{ return (e_flags & elfcpp::EF_MIPS_ABI2) != 0; }
+
+// Whether the ABI is N64.
+bool
+abi_64(unsigned char ei_class)
+{ return ei_class == elfcpp::ELFCLASS64; }
+
+// Whether the file has microMIPS code.
+bool
+is_micromips(elfcpp::Elf_Word e_flags)
+{ return (e_flags & elfcpp::EF_MIPS_ARCH_ASE_MICROMIPS) != 0; }
+
+// Values which may appear in the kind field of an Elf_Options structure.
+enum
+{
+  // Undefined.
+  ODK_NULL = 0,
+  // Register usage and GP value.
+  ODK_REGINFO = 1,
+  // Exception processing information.
+  ODK_EXCEPTIONS = 2,
+  // Section padding information.
+  ODK_PAD = 3,
+  // Hardware workarounds performed.
+  ODK_HWPATCH = 4,
+  // Fill value used by the linker.
+  ODK_FILL = 5,
+  // Reserved space for desktop tools.
+  ODK_TAGS = 6,
+  // Hardware workarounds, AND bits when merging.
+  ODK_HWAND = 7,
+  // Hardware workarounds, OR bits when merging.
+  ODK_HWOR = 8,
+  // GP group to use for text/data sections.
+  ODK_GP_GROUP = 9,
+  // ID information.
+  ODK_IDENT = 10
 };
 
 } // End namespace elfcpp.

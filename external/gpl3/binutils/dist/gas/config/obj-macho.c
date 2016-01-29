@@ -1,5 +1,5 @@
 /* Mach-O object file format
-   Copyright 2009, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -24,14 +24,14 @@
    decorations.  */
 
 /* Mach-O supports multiple, named segments each of which may contain
-   multiple named sections.  Thus the concept of subsectioning is 
+   multiple named sections.  Thus the concept of subsectioning is
    handled by (say) having a __TEXT segment with appropriate flags from
-   which subsections are generated like __text, __const etc.  
-   
+   which subsections are generated like __text, __const etc.
+
    The well-known as short-hand section switch directives like .text, .data
    etc. are mapped onto predefined segment/section pairs using facilites
    supplied by the mach-o port of bfd.
-   
+
    A number of additional mach-o short-hand section switch directives are
    also defined.  */
 
@@ -76,7 +76,7 @@ mach_o_begin (void)
       subseg_set (text_section, 0);
       if (obj_mach_o_is_static)
 	{
-	  bfd_mach_o_section *mo_sec 
+	  bfd_mach_o_section *mo_sec
 			= bfd_mach_o_get_mach_o_section (text_section);
 	  mo_sec->flags &= ~BFD_MACH_O_S_ATTR_PURE_INSTRUCTIONS;
 	}
@@ -91,9 +91,9 @@ static int obj_mach_o_subsections_by_symbols;
 /* This will put at most 16 characters (terminated by a ',' or newline) from
    the input stream into dest.  If there are more than 16 chars before the
    delimiter, a warning is given and the string is truncated.  On completion of
-   this function, input_line_pointer will point to the char after the ',' or 
-   to the newline.  
-   
+   this function, input_line_pointer will point to the char after the ',' or
+   to the newline.
+
    It trims leading and trailing space.  */
 
 static int
@@ -104,14 +104,14 @@ collect_16char_name (char *dest, const char *msg, int require_comma)
   SKIP_WHITESPACE ();
   namstart = input_line_pointer;
 
-  while ( (c = *input_line_pointer) != ',' 
+  while ( (c = *input_line_pointer) != ','
 	 && !is_end_of_line[(unsigned char) c])
     input_line_pointer++;
 
   {
       int len = input_line_pointer - namstart; /* could be zero.  */
-      /* lose any trailing space.  */  
-      while (len > 0 && namstart[len-1] == ' ') 
+      /* lose any trailing space.  */
+      while (len > 0 && namstart[len-1] == ' ')
         len--;
       if (len > 16)
         {
@@ -156,7 +156,7 @@ obj_mach_o_get_section_names (char *seg, char *sec,
 
 /* Build (or get) a section from the mach-o description - which includes
    optional definitions for type, attributes, alignment and stub size.
-   
+
    BFD supplies default values for sections which have a canonical name.  */
 
 #define SECT_TYPE_SPECIFIED 0x0001
@@ -166,7 +166,7 @@ obj_mach_o_get_section_names (char *seg, char *sec,
 
 static segT
 obj_mach_o_make_or_get_sect (char * segname, char * sectname,
-			     unsigned int specified_mask, 
+			     unsigned int specified_mask,
 			     unsigned int usectype, unsigned int usecattr,
 			     unsigned int ualign, offsetT stub_size)
 {
@@ -247,7 +247,7 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
 	  && (specified_mask & SECT_ATTR_SPECIFIED)
 	  && (secattr & BFD_MACH_O_S_ATTR_PURE_INSTRUCTIONS))
 	flags |= SEC_CODE;
-      
+
       if (flags == SEC_NO_FLAGS
 	  && (specified_mask & SECT_ATTR_SPECIFIED)
 	  && (secattr & BFD_MACH_O_S_ATTR_DEBUG))
@@ -258,13 +258,13 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
 	as_warn (_("failed to set flags for \"%s\": %s"),
 		 bfd_section_name (stdoutput, sec),
 		 bfd_errmsg (bfd_get_error ()));
- 
+
       strncpy (msect->segname, segname, sizeof (msect->segname));
       strncpy (msect->sectname, sectname, sizeof (msect->sectname));
 
       msect->align = secalign;
       msect->flags = sectype | secattr;
-      
+
       if (sectype == BFD_MACH_O_S_ZEROFILL
 	  || sectype == BFD_MACH_O_S_GB_ZEROFILL)
         seg_info (sec)->bss = 1;
@@ -291,7 +291,7 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
    White space is allowed everywhere between elements.
 
    <segment> and <section> may be from 0 to 16 chars in length - they may
-   contain spaces but leading and trailing space will be trimmed.  It is 
+   contain spaces but leading and trailing space will be trimmed.  It is
    mandatory that they be present (or that zero-length names are indicated
    by ",,").
 
@@ -401,7 +401,7 @@ obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
           while (*input_line_pointer == '+');
 
           /* Parse sizeof_stub.  */
-          if ((specified_mask & SECT_ATTR_SPECIFIED) 
+          if ((specified_mask & SECT_ATTR_SPECIFIED)
 	      && *input_line_pointer == ',')
             {
               if (sectype != BFD_MACH_O_S_SYMBOL_STUBS)
@@ -415,7 +415,7 @@ obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
               sizeof_stub = get_absolute_expression ();
               specified_mask |= SECT_STUB_SPECIFIED;
             }
-          else if ((specified_mask & SECT_ATTR_SPECIFIED) 
+          else if ((specified_mask & SECT_ATTR_SPECIFIED)
 		   && sectype == BFD_MACH_O_S_SYMBOL_STUBS)
             {
               as_bad (_("missing sizeof_stub expression"));
@@ -425,7 +425,7 @@ obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
         }
     }
 
-  new_seg = obj_mach_o_make_or_get_sect (segname, sectname, specified_mask, 
+  new_seg = obj_mach_o_make_or_get_sect (segname, sectname, specified_mask,
 					 sectype, secattr, 0 /*align */,
 					 sizeof_stub);
   if (new_seg != NULL)
@@ -465,18 +465,17 @@ obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
   /* Parse variable definition, if present.  */
   if (*input_line_pointer == ',')
     {
-      /* Parse symbol, size [.align] 
+      /* Parse symbol, size [.align]
          We follow the method of s_common_internal, with the difference
          that the symbol cannot be a duplicate-common.  */
       char *name;
       char c;
       char *p;
       expressionS exp;
-  
+
       input_line_pointer++; /* Skip ',' */
       SKIP_WHITESPACE ();
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       /* Just after name is now '\0'.  */
       p = input_line_pointer;
       *p = c;
@@ -488,7 +487,7 @@ obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
 	  goto done;
 	}
 
-      SKIP_WHITESPACE ();  
+      SKIP_WHITESPACE_AFTER_NAME ();
       if (*input_line_pointer == ',')
 	input_line_pointer++;
 
@@ -535,8 +534,8 @@ obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
 		   name, (long) size, (long) exp.X_add_number);
 
       *p = c;  /* Restore the termination char.  */
-      
-      SKIP_WHITESPACE ();  
+
+      SKIP_WHITESPACE ();
       if (*input_line_pointer == ',')
 	{
 	  align = (unsigned int) parse_align (0);
@@ -557,7 +556,7 @@ obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
  /* else just a section definition.  */
 
   specified_mask |= SECT_TYPE_SPECIFIED;
-  new_seg = obj_mach_o_make_or_get_sect (segname, sectname, specified_mask, 
+  new_seg = obj_mach_o_make_or_get_sect (segname, sectname, specified_mask,
 					 BFD_MACH_O_S_ZEROFILL,
 					 BFD_MACH_O_S_ATTR_NONE,
 					 align, (offsetT) 0 /*stub size*/);
@@ -600,7 +599,7 @@ done:
   subseg_set (old_seg, 0);
 }
 
-static segT 
+static segT
 obj_mach_o_segT_from_bfd_name (const char *nam, int must_succeed)
 {
   const mach_o_section_name_xlat *xlat;
@@ -630,7 +629,7 @@ obj_mach_o_segT_from_bfd_name (const char *nam, int must_succeed)
       msect->flags = xlat->macho_sectype | xlat->macho_secattr;
       msect->align = xlat->sectalign;
 
-      if ((msect->flags & BFD_MACH_O_SECTION_TYPE_MASK) 
+      if ((msect->flags & BFD_MACH_O_SECTION_TYPE_MASK)
 	  == BFD_MACH_O_S_ZEROFILL)
 	seg_info (sec)->bss = 1;
     }
@@ -714,7 +713,7 @@ static void
 obj_mach_o_objc_section (int sect_index)
 {
   segT section;
-  
+
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
 #endif
@@ -774,7 +773,7 @@ obj_mach_o_debug_section (int sect_index)
 /* This could be moved to the tc-xx files, but there is so little dependency
    there, that the code might as well be shared.  */
 
-struct opt_tgt_sect 
+struct opt_tgt_sect
 {
  const char *name;
  unsigned x86_val;
@@ -898,7 +897,7 @@ obj_mach_o_common_parse (int is_local, symbolS *symbolP,
   addressT align = 0;
   bfd_mach_o_asymbol *s;
 
-  SKIP_WHITESPACE ();  
+  SKIP_WHITESPACE ();
 
   /* Both comm and lcomm take an optional alignment, as a power
      of two between 1 and 15.  */
@@ -923,7 +922,7 @@ obj_mach_o_common_parse (int is_local, symbolS *symbolP,
       if (bss_section == NULL)
 	{
 	  bss_section = obj_mach_o_segT_from_bfd_name (BSS_SECTION_NAME, 1);
-	  seg_info (bss_section)->bss = 1;	  
+	  seg_info (bss_section)->bss = 1;
 	}
       bss_alloc (symbolP, size, align);
       s->n_type = BFD_MACH_O_N_SECT;
@@ -962,17 +961,17 @@ typedef enum obj_mach_o_file_properties {
   OBJ_MACH_O_FILE_PROP_MAX
 } obj_mach_o_file_properties;
 
-static void 
+static void
 obj_mach_o_fileprop (int prop)
 {
   if (prop < 0 || prop >= OBJ_MACH_O_FILE_PROP_MAX)
     as_fatal (_("internal error: bad file property ID %d"), prop);
-    
+
   switch ((obj_mach_o_file_properties) prop)
     {
       case OBJ_MACH_O_FILE_PROP_SUBSECTS_VIA_SYMS:
         obj_mach_o_subsections_by_symbols = 1;
-	if (!bfd_set_private_flags (stdoutput, 
+	if (!bfd_set_private_flags (stdoutput,
 				    BFD_MACH_O_MH_SUBSECTIONS_VIA_SYMBOLS))
 	  as_bad (_("failed to set subsections by symbols"));
 	demand_empty_rest_of_line ();
@@ -982,7 +981,7 @@ obj_mach_o_fileprop (int prop)
     }
 }
 
-/* Temporary markers for symbol reference data.  
+/* Temporary markers for symbol reference data.
    Lazy will remain in place.  */
 #define LAZY 0x01
 #define REFE 0x02
@@ -1013,12 +1012,11 @@ obj_mach_o_set_symbol_qualifier (symbolS *sym, int type)
   bfd_mach_o_asymbol *s = (bfd_mach_o_asymbol *) symbol_get_bfdsym (sym);
   bfd_mach_o_section *sec;
   int sectype = -1;
-  int err = 0;
 
   /* If the symbol is defined, then we can do more rigorous checking on
-     the validity of the qualifiers.  Otherwise, we are stuck with waiting 
+     the validity of the qualifiers.  Otherwise, we are stuck with waiting
      until it's defined - or until write the file.
-     
+
      In certain cases (e.g. when a symbol qualifier is intended to introduce
      an undefined symbol in a stubs section) we should check that the current
      section is appropriate to the qualifier.  */
@@ -1041,7 +1039,8 @@ obj_mach_o_set_symbol_qualifier (symbolS *sym, int type)
 	    as_bad (_("'%s' previously declared as '%s'."), s->symbol.name,
 		      (s->n_type & BFD_MACH_O_N_PEXT) ? "private extern"
 						      : "global" );
-	    err = 1;
+	    s->symbol.udata.i = SYM_MACHO_FIELDS_UNSET;
+	    return 1;
 	  }
 	else
 	  {
@@ -1092,7 +1091,8 @@ obj_mach_o_set_symbol_qualifier (symbolS *sym, int type)
 	    as_bad (_("'%s' can't be a weak_definition (currently only"
 		      " supported in sections of type coalesced)"),
 		      s->symbol.name);
-	    err = 1;
+	    s->symbol.udata.i = SYM_MACHO_FIELDS_UNSET;
+	    return 1;
 	  }
 	else
 	  s->n_desc |= BFD_MACH_O_N_WEAK_DEF;
@@ -1111,7 +1111,7 @@ obj_mach_o_set_symbol_qualifier (symbolS *sym, int type)
     /* We've seen some kind of qualifier - check validity if or when the entity
      is defined.  */
   s->symbol.udata.i = SYM_MACHO_FIELDS_NOT_VALIDATED;
-  return err;
+  return 0;
 }
 
 /* Respond to symbol qualifiers.
@@ -1132,12 +1132,11 @@ obj_mach_o_sym_qual (int ntype)
 
   do
     {
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       symbolP = symbol_find_or_make (name);
       obj_mach_o_set_symbol_qualifier (symbolP, ntype);
       *input_line_pointer = c;
-      SKIP_WHITESPACE ();
+      SKIP_WHITESPACE_AFTER_NAME ();
       c = *input_line_pointer;
       if (c == ',')
 	{
@@ -1183,8 +1182,8 @@ obj_mach_o_indirect_symbol (int arg ATTRIBUTE_UNUSED)
       case BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS:
         {
           obj_mach_o_indirect_sym *isym;
-	  char *name = input_line_pointer;
-	  char c = get_symbol_end ();
+	  char *name;
+	  char c = get_symbol_name (&name);
 	  symbolS *sym = symbol_find_or_make (name);
 	  unsigned int elsize =
 			bfd_mach_o_section_get_entry_size (stdoutput, sec);
@@ -1194,14 +1193,14 @@ obj_mach_o_indirect_symbol (int arg ATTRIBUTE_UNUSED)
 	      as_bad (_("attempt to add an indirect_symbol to a stub or"
 			" reference section with a zero-sized element at %s"),
 			name);
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      ignore_rest_of_line ();
 	      return;
-	  }
-	  *input_line_pointer = c;
+	    }
+	  (void) restore_line_pointer (c);
 
-	  /* The indirect symbols are validated after the symbol table is 
-	     frozen, we must make sure that if a local symbol is used as an 
+	  /* The indirect symbols are validated after the symbol table is
+	     frozen, we must make sure that if a local symbol is used as an
 	     indirect, it is promoted to a 'real' one.  Fetching the bfd sym
 	     achieves this.  */
 	  symbol_get_bfdsym (sym);
@@ -1294,7 +1293,7 @@ const pseudo_typeS mach_o_pseudo_table[] =
   { "debug_str", obj_mach_o_debug_section, 10}, /* extension.  */
   { "debug_ranges", obj_mach_o_debug_section, 11}, /* extension.  */
   { "debug_macro", obj_mach_o_debug_section, 12}, /* extension.  */
-  
+
   { "lazy_symbol_pointer", obj_mach_o_opt_tgt_section, 1},
   { "lazy_symbol_pointer2", obj_mach_o_opt_tgt_section, 2}, /* extension.  */
   { "lazy_symbol_pointer3", obj_mach_o_opt_tgt_section, 3}, /* extension.  */
@@ -1324,7 +1323,7 @@ const pseudo_typeS mach_o_pseudo_table[] =
   { "indirect_symbol",	obj_mach_o_indirect_symbol, 0},
 
   /* File flags.  */
-  { "subsections_via_symbols", obj_mach_o_fileprop, 
+  { "subsections_via_symbols", obj_mach_o_fileprop,
 			       OBJ_MACH_O_FILE_PROP_SUBSECTS_VIA_SYMS},
 
   {NULL, NULL, 0}
@@ -1358,9 +1357,9 @@ obj_mach_o_frob_colon (const char *name)
 
 /* We need to check the correspondence between some kinds of symbols and their
    sections.  Common and BSS vars will seen via the obj_macho_comm() function.
-   
+
    The earlier we can pick up a problem, the better the diagnostics will be.
-   
+
    However, when symbol type information is attached, the symbol section will
    quite possibly be unknown.  So we are stuck with checking (most of the)
    validity at the time the file is written (unfortunately, then one doesn't
@@ -1398,7 +1397,7 @@ void obj_mach_o_frob_label (struct symbol *sp)
   /* This is the base symbol type, that we mask in.  */
   base_type = obj_mach_o_type_for_symbol (s);
 
-  sec = bfd_mach_o_get_mach_o_section (s->symbol.section);  
+  sec = bfd_mach_o_get_mach_o_section (s->symbol.section);
   if (sec != NULL)
     sectype = sec->flags & BFD_MACH_O_SECTION_TYPE_MASK;
 
@@ -1409,8 +1408,12 @@ void obj_mach_o_frob_label (struct symbol *sp)
     {
       if ((s->n_desc & BFD_MACH_O_N_WEAK_DEF)
 	  && sectype != BFD_MACH_O_S_COALESCED)
-	as_bad (_("'%s' can't be a weak_definition (currently only supported"
-		  " in sections of type coalesced)"), s->symbol.name);
+	{
+	  as_bad (_("'%s' can't be a weak_definition (currently only supported"
+		    " in sections of type coalesced)"), s->symbol.name);
+	  /* Don't cascade errors.  */
+	  s->symbol.udata.i = SYM_MACHO_FIELDS_UNSET;
+	}
 
       /* Have we changed from an undefined to defined ref? */
       s->n_desc &= ~(REFE | LAZY);
@@ -1442,7 +1445,7 @@ obj_mach_o_frob_symbol (struct symbol *sp)
     return 0;
 
   base_type = obj_mach_o_type_for_symbol (s);
-  sec = bfd_mach_o_get_mach_o_section (s->symbol.section);  
+  sec = bfd_mach_o_get_mach_o_section (s->symbol.section);
   if (sec != NULL)
     sectype = sec->flags & BFD_MACH_O_SECTION_TYPE_MASK;
 
@@ -1480,8 +1483,7 @@ obj_mach_o_frob_symbol (struct symbol *sp)
     {
       /* Anything here that should be added that is non-standard.  */
       s->n_desc &= ~BFD_MACH_O_REFERENCE_MASK;
-      s->symbol.udata.i = SYM_MACHO_FIELDS_NOT_VALIDATED;
-    }    
+    }
   else if (s->symbol.udata.i == SYM_MACHO_FIELDS_NOT_VALIDATED)
     {
       /* Try to validate any combinations.  */
@@ -1554,7 +1556,7 @@ obj_mach_o_process_stab (int what, const char *string,
 
   /* It's a debug symbol.  */
   s->symbol.flags |= BSF_DEBUGGING;
-  
+
   /* We've set it - so check it, if you can, but don't try to create the
      flags.  */
   s->symbol.udata.i = SYM_MACHO_FIELDS_NOT_VALIDATED;
@@ -1662,7 +1664,7 @@ obj_mach_o_set_subsections (bfd *abfd ATTRIBUTE_UNUSED,
       }
 }
 
-/* Handle mach-o subsections-via-symbols counting up frags belonging to each 
+/* Handle mach-o subsections-via-symbols counting up frags belonging to each
    sub-section.  */
 
 void
@@ -1676,7 +1678,7 @@ obj_mach_o_pre_relax_hook (void)
 
    The native 'as' leaves the sections physically in the order they appear in
    the source, and adjusts the section VMAs to meet the constraint.
-   
+
    We follow this for now - if nothing else, it makes comparison easier.
 
    An alternative implementation would be to sort the sections as ld requires.
@@ -1695,7 +1697,7 @@ typedef struct obj_mach_o_set_vma_data
 
    zerofill sections get VMAs after all others in their segment
    GB zerofill get VMAs last.
-   
+
    As we go, we notice if we see any Zerofill or GB Zerofill sections, so that
    we can skip the additional passes if there's nothing to do.  */
 
@@ -1726,11 +1728,11 @@ obj_mach_o_set_section_vma (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *v_p
   /* We know the section size now - so make a vma for the section just
      based on order.  */
   ms->size = bfd_get_section_size (sec);
-  
+
   /* Make sure that the align agrees, and set to the largest value chosen.  */
   ms->align = ms->align > bfd_align ? ms->align : bfd_align;
   bfd_set_section_alignment (abfd, sec, ms->align);
-  
+
   p->vma += (1 << ms->align) - 1;
   p->vma &= ~((1 << ms->align) - 1);
   ms->addr = p->vma;
@@ -1738,7 +1740,7 @@ obj_mach_o_set_section_vma (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *v_p
   p->vma += ms->size;
 }
 
-/* (potentially) three passes over the sections, setting VMA.  We skip the 
+/* (potentially) three passes over the sections, setting VMA.  We skip the
   {gb}zerofill passes if we didn't see any of the relevant sections.  */
 
 void obj_mach_o_post_relax_hook (void)
@@ -1746,7 +1748,7 @@ void obj_mach_o_post_relax_hook (void)
   obj_mach_o_set_vma_data d;
 
   memset (&d, 0, sizeof (d));
-  
+
   bfd_map_over_sections (stdoutput, obj_mach_o_set_section_vma, (char *) &d);
   if ((d.vma_pass = d.zerofill_seen) != 0)
     bfd_map_over_sections (stdoutput, obj_mach_o_set_section_vma, (char *) &d);
@@ -1783,7 +1785,7 @@ obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
 	  obj_mach_o_indirect_sym *isym;
 	  obj_mach_o_indirect_sym *list = NULL;
 	  obj_mach_o_indirect_sym *list_tail = NULL;
-	  unsigned long eltsiz = 
+	  unsigned long eltsiz =
 			bfd_mach_o_section_get_entry_size (abfd, ms);
 
 	  for (isym = indirect_syms; isym != NULL; isym = isym->next)
@@ -1825,14 +1827,14 @@ obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
 		  as_fatal (_("internal error: failed to allocate %d indirect"
 			      "symbol pointers"), nactual);
 		}
-	      
+
 	      for (isym = list, n = 0; isym != NULL; isym = isym->next, n++)
 		{
 		  sym = (bfd_mach_o_asymbol *)symbol_get_bfdsym (isym->sym);
 		  /* Array is init to NULL & NULL signals a local symbol
 		     If the section is lazy-bound, we need to keep the
 		     reference to the symbol, since dyld can override.
-		     
+
 		     Absolute symbols are handled specially.  */
 		  if (sym->symbol.section == bfd_abs_section_ptr)
 		    ms->indirect_syms[n] = sym;
@@ -1850,8 +1852,8 @@ obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
 			{
 			  sym->n_desc &= ~LAZY;
 			  /* ... it can be lazy, if not defined or hidden.  */
-			  if ((sym->n_type & BFD_MACH_O_N_TYPE) 
-			       == BFD_MACH_O_N_UNDF 
+			  if ((sym->n_type & BFD_MACH_O_N_TYPE)
+			       == BFD_MACH_O_N_UNDF
 			      && ! (sym->n_type & BFD_MACH_O_N_PEXT)
 			      && (sym->n_type & BFD_MACH_O_N_EXT))
 			    sym->n_desc |= lazy;
@@ -1913,7 +1915,7 @@ obj_mach_o_is_frame_section (segT sec)
    being made.  */
 
 int
-obj_mach_o_allow_local_subtract (expressionS * left ATTRIBUTE_UNUSED, 
+obj_mach_o_allow_local_subtract (expressionS * left ATTRIBUTE_UNUSED,
 				 expressionS * right ATTRIBUTE_UNUSED,
 				 segT seg)
 {

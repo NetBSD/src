@@ -1,6 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2003, 2004, 2005, 2007, 2008, 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -73,14 +72,17 @@ alpha_after_open (void)
 static void
 alpha_after_parse (void)
 {
-  if (limit_32bit && !link_info.shared && !link_info.relocatable)
+  link_info.relax_pass = 2;
+  if (limit_32bit
+      && !bfd_link_pic (&link_info)
+      && !bfd_link_relocatable (&link_info))
     lang_section_start (".interp",
 			exp_binop ('+',
 				   exp_intop (ALPHA_TEXT_START_32BIT),
 				   exp_nameop (SIZEOF_HEADERS, NULL)),
 			NULL);
 
-  after_parse_default ();
+  gld${EMULATION_NAME}_after_parse ();
 }
 
 static void
@@ -90,7 +92,9 @@ alpha_before_allocation (void)
   gld${EMULATION_NAME}_before_allocation ();
 
   /* Add -relax if -O, not -r, and not explicitly disabled.  */
-  if (link_info.optimize && !link_info.relocatable && ! RELAXATION_DISABLED_BY_USER)
+  if (link_info.optimize
+      && !bfd_link_relocatable (&link_info)
+      && ! RELAXATION_DISABLED_BY_USER)
     ENABLE_RELAXATION;
 }
 

@@ -1,5 +1,5 @@
 /*
-   Copyright 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
@@ -31,3 +31,6 @@ func:
 
 	msr daif, x0
 	mrs x0, daif
+
+	msr spsel, #0
+	msr spsel, #1

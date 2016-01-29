@@ -2,7 +2,7 @@
 
 # arm_exidx_test.sh -- a test case for .ARM.exidx section.
 
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 # Written by Doug Kwan <dougkwan@google.com>.
 
 # This file is part of gold.

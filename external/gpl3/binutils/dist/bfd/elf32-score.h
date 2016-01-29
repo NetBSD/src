@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -30,10 +30,10 @@ s7_bfd_score_elf_hide_symbol (struct bfd_link_info *,
                               struct elf_link_hash_entry *,
                               bfd_boolean);
 
-extern void 
+extern void
 s7_bfd_score_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
-extern bfd_boolean 
+extern bfd_boolean
 s7_bfd_score_elf_relocate_section (bfd *,
                                    struct bfd_link_info *,
                                    bfd *,

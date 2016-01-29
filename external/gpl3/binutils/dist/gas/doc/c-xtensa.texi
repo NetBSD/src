@@ -1,5 +1,4 @@
-@c Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2002-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c
@@ -44,9 +43,30 @@ placed in a data RAM/ROM.  With @samp{--text-@-section-@-literals}, the
 literals are interspersed in the text section in order to keep them as
 close as possible to their references.  This may be necessary for large
 assembly files, where the literals would otherwise be out of range of the
-@code{L32R} instructions in the text section.  These options only affect
+@code{L32R} instructions in the text section.  Literals are grouped into
+pools following @code{.literal_position} directives or preceding
+@code{ENTRY} instructions.  These options only affect literals referenced
+via PC-relative @code{L32R} instructions; literals for absolute mode
+@code{L32R} instructions are handled separately.
+@xref{Literal Directive, ,literal}.
+
+@item --auto-litpools | --no-auto-litpools
+@kindex --auto-litpools
+@kindex --no-auto-litpools
+Control the treatment of literal pools.  The default is
+@samp{--no-@-auto-@-litpools}, which in the absence of
+@samp{--text-@-section-@-literals} places literals in separate sections
+in the output file.  This allows the literal pool to be placed in a data
+RAM/ROM.  With @samp{--auto-@-litpools}, the literals are interspersed
+in the text section in order to keep them as close as possible to their
+references, explicit @code{.literal_position} directives are not
+required.  This may be necessary for very large functions, where single
+literal pool at the beginning of the function may not be reachable by
+@code{L32R} instructions at the end.  These options only affect
 literals referenced via PC-relative @code{L32R} instructions; literals
 for absolute mode @code{L32R} instructions are handled separately.
+When used together with @samp{--text-@-section-@-literals},
+@samp{--auto-@-litpools} takes precedence.
 @xref{Literal Directive, ,literal}.
 
 @item --absolute-literals | --no-absolute-literals
@@ -92,6 +112,16 @@ instruction operands to be errors.
 @kindex --rename-section
 Rename the @var{oldname} section to @var{newname}.  This option can be used
 multiple times to rename multiple sections.
+
+@item --trampolines | --no-trampolines
+@kindex --trampolines
+@kindex --no-trampolines
+Enable or disable transformation of jump instructions to allow jumps
+across a greater range of addresses.  @xref{Xtensa Jump Relaxation,
+,Jump Trampolines}.  This option should be used when jump targets can
+potentially be out of range.  In the absence of such jumps this option
+does not affect code size or performance.  The default is
+@samp{--trampolines}.
 @end table
 
 @c man end
@@ -312,6 +342,7 @@ fields.
 @menu
 * Xtensa Branch Relaxation::        Relaxation of Branches.
 * Xtensa Call Relaxation::          Relaxation of Function Calls.
+* Xtensa Jump Relaxation::          Relaxation of Jumps.
 * Xtensa Immediate Relaxation::     Relaxation of other Immediate Fields.
 @end menu
 
@@ -398,6 +429,87 @@ usually eliminate the unnecessary overhead.  If a program is too large
 and some of the calls are out of range, function call relaxation can be
 enabled using the @samp{--longcalls} command-line option or the
 @code{longcalls} directive (@pxref{Longcalls Directive, ,longcalls}).
+
+@node Xtensa Jump Relaxation
+@subsection Jump Relaxation
+@cindex relaxation of jump instructions
+@cindex jump instructions, relaxation
+
+Jump instruction may require relaxation because the Xtensa jump instruction
+(@code{J}) provide a PC-relative offset of only 128 Kbytes in either
+direction.  One option is to use jump long (@code{J.L}) instruction, which
+depending on jump distance may be assembled as jump (@code{J}) or indirect
+jump (@code{JX}).  However it needs a free register.  When there's no spare
+register it is possible to plant intermediate jump sites (trampolines)
+between the jump instruction and its target.  These sites may be located in
+areas unreachable by normal code execution flow, in that case they only
+contain intermediate jumps, or they may be inserted in the middle of code
+block, in which case there's an additional jump from the beginning of the
+trampoline to the instruction past its end.  So, for example:
+
+@smallexample
+@group
+    j 1f
+    ...
+    retw
+    ...
+    mov a10, a2
+    call8 func
+    ...
+1:
+    ...
+@end group
+@end smallexample
+
+might be relaxed to:
+
+@smallexample
+@group
+    j .L0_TR_1
+    ...
+    retw
+.L0_TR_1:
+    j 1f
+    ...
+    mov a10, a2
+    call8 func
+    ...
+1:
+    ...
+@end group
+@end smallexample
+
+or to:
+
+@smallexample
+@group
+    j .L0_TR_1
+    ...
+    retw
+    ...
+    mov a10, a2
+    j .L0_TR_0
+.L0_TR_1:
+    j 1f
+.L0_TR_0:
+    call8 func
+    ...
+1:
+    ...
+@end group
+@end smallexample
+
+The Xtensa assempler uses trampolines with jump around only when it cannot
+find suitable unreachable trampoline.  There may be multiple trampolines
+between the jump instruction and its target.
+
+This relaxation does not apply to jumps to undefined symbols, assuming they
+will reach their targets once resolved.
+
+Jump relaxation is enabled by default because it does not affect code size
+or performance while the code itself is small.  This relaxation may be
+disabled completely with @samp{--no-trampolines} or @samp{--no-transform}
+command-line options (@pxref{Xtensa Options, ,Command Line Options}).
 
 @node Xtensa Immediate Relaxation
 @subsection Other Immediate Field Relaxation
@@ -629,7 +741,7 @@ both directives and command-line flags.
 @subsection literal
 @cindex @code{literal} directive
 
-The @code{.literal} directive is used to define literal pool data, i.e., 
+The @code{.literal} directive is used to define literal pool data, i.e.,
 read-only 32-bit data accessed via @code{L32R} instructions.
 
 @smallexample
@@ -727,7 +839,7 @@ The @code{.literal_position} directive is ignored when the
 @samp{--text-@-section-@-literals} option is not used or when
 @code{L32R} instructions use the absolute addressing mode.
 
-The assembler will automatically place text section literal pools 
+The assembler will automatically place text section literal pools
 before @code{ENTRY} instructions, so the @code{.literal_position}
 directive is only needed to specify some other location for a literal
 pool.  You may need to add an explicit jump instruction to skip over an

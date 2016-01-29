@@ -1,5 +1,5 @@
 /* objdump.h
-   Copyright 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -43,6 +43,8 @@ struct objdump_private_desc
   /* List of options.  Terminated by a NULL name.  */
   struct objdump_private_option *options;
 };
+/* ELF32_AVR specific target.  */
+extern const struct objdump_private_desc objdump_private_desc_elf32_avr;
 
 /* XCOFF specific target.  */
 extern const struct objdump_private_desc objdump_private_desc_xcoff;

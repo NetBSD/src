@@ -1,6 +1,5 @@
 /* tc-mcore.c -- Assemble code for M*Core
-   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1770,7 +1769,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 	  	.align 2
 	   0:	.long disp
 	   1:
-	  
+
 	   If the b!cond is 4 byte aligned, the literal which would
 	   go at x+4 will also be aligned.  */
 	int first_inst = fragP->fr_fix + fragP->fr_address;

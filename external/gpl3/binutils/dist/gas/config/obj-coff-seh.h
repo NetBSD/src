@@ -1,6 +1,5 @@
 /* seh pdata/xdata coff object file format
-   Copyright 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -57,6 +56,7 @@
   .seh_savereg
   .seh_savexmm
   .seh_pushframe
+  .seh_code
 */
 
 /* architecture specific pdata/xdata handling.  */
@@ -74,6 +74,7 @@
 	{"seh_32", obj_coff_seh_32, 1}, \
 	{"seh_no32", obj_coff_seh_32, 0}, \
 	{"seh_handler", obj_coff_seh_handler, 0}, \
+	{"seh_code", obj_coff_seh_code, 0}, \
 	{"seh_handlerdata", obj_coff_seh_handlerdata, 0},
 
 /* Type definitions.  */
@@ -149,6 +150,7 @@ static void obj_coff_seh_32 (int);
 static void obj_coff_seh_proc  (int);
 static void obj_coff_seh_handler (int);
 static void obj_coff_seh_handlerdata (int);
+static void obj_coff_seh_code (int);
 
 #define UNDSEC bfd_und_section_ptr
 
@@ -202,4 +204,3 @@ static void obj_coff_seh_handlerdata (int);
    PEX64_SCOPE_ENTRY_SIZE * (IDX))
 
 #endif
-

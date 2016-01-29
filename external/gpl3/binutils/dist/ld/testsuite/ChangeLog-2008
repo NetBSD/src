@@ -1,6 +1,6 @@
 2008-12-23  Jon Beniston <jon@beniston.com>
 
-	* ld-elf/merge.d: Indicate test fails on LM32.        
+	* ld-elf/merge.d: Indicate test fails on LM32.
 
 2008-12-23  Hans-Peter Nilsson  <hp@axis.com>
 
@@ -37,7 +37,7 @@
 	* ld-arm/vfp11-fix-scalar.d: Disassembly of VFP instructions now uses
 	unified syntax.
 	* ld-arm/vfp11-fix-vector.d: Likewise.
-	
+
 2008-12-15  Hans-Peter Nilsson  <hp@axis.com>
 
 	* ld-cris/libdso-13b.d: New test.
@@ -244,7 +244,7 @@
 	ld-x86-64/dwarfreloc1.s, ld-x86-64/dwarfreloc2.s: New test.
 
 2008-08-20  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* ld-xtensa/tlsbin.dd, ld-xtensa/tlsbin.rd, ld-xtensa/tlsbin.s,
 	ld-xtensa/tlsbin.sd, ld-xtensa/tlsbin.td, ld-xtensa/tlslib.s,
 	ld-xtensa/tlspic.dd, ld-xtensa/tlspic.rd, ld-xtensa/tlspic.sd,
@@ -388,7 +388,7 @@
 	   +0x18   "  "                  %tlsgd(tlsbin_gd)
 	   +0x1c %gottprel(tlsvar_ie)       "  "
 	   +0x20 %tlsgd(tlsbin_gd)       %tlsldm(tlsbin_ld)
-	   +0x24   "  "                     "  "       
+	   +0x24   "  "                     "  "
 	   +0x28 %gottprel(tlsbin_ie)    %gottprel(tlsbin_ie)
 
 2008-08-07  Richard Sandiford  <rdsandiford@googlemail.com>
@@ -635,7 +635,7 @@
 	* ld-elfcomm/sort-common.s: New file.
 
 2008-05-28  Christophe Lyon  <christophe.lyon@st.com>
-	
+
 	* ld-arm/arm-elf.exp: Skip farcalls tests for non-ARM-EABI
 	targets.
 	* ld-arm/thumb2-bl-as-thumb1-bad-noeabi.d: New file.
@@ -676,7 +676,7 @@
 	* ld-m68k/m68k.exp: Run new tests.
 
 2008-05-15  Christophe Lyon  <christophe.lyon@st.com>
-	
+
 	* ld-arm/arm-elf.exp (armelftests): Add farcall-arm-arm,
 	farcall-arm-arm-pic-veneer, farcall-arm-arm-be8 farcall-arm-thumb,
 	farcall-arm-thumb-blx, farcall-arm-thumb-pic-veneer,
@@ -922,7 +922,7 @@
 2008-02-04  Bob Wilson  <bob.wilson@acm.org>
 
 	* ld-undefined/undefined.exp: XFAIL for xtensa*-*-linux*.
-	
+
 2008-01-31  Marc Gauthier  <marc@tensilica.com>
 
 	* ld-elf/merge.d: Recognize Xtensa processor variants.
@@ -1002,6 +1002,12 @@
 
 For older changes see ChangeLog-2007
 
+Copyright (C) 2008 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

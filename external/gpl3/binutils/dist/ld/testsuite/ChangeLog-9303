@@ -3368,6 +3368,12 @@ Wed Aug  4 21:00:18 1993  Jeffrey Wheat  (cassidy@cygnus.com)
 	* config/unix-ld.exp: new file
 	* ld.bootstrap/bootstrap.exp: new file
 
+Copyright (C) 1993-2003 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

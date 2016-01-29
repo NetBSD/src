@@ -1,6 +1,6 @@
 /* BFD support for the OpenRISC 1000 architecture.
-   Copyright 2002, 2005, 2007 Free Software Foundation, Inc.
-   Contributed by Ivan Guzvinec  <ivang@opencores.org>
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Contributed for OR32 by Ivan Guzvinec  <ivang@opencores.org>
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -15,15 +15,14 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
 
-extern const bfd_arch_info_type bfd_or1knd_arch;
+const bfd_arch_info_type bfd_or1k_arch;
+const bfd_arch_info_type bfd_or1knd_arch;
 
 const bfd_arch_info_type bfd_or1k_arch =
   {
@@ -35,13 +34,12 @@ const bfd_arch_info_type bfd_or1k_arch =
     "or1k",
     "or1k",
     4,
-    TRUE,         /* The one and only.  */
+    TRUE,
     bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
     &bfd_or1knd_arch,
   };
-
 
 const bfd_arch_info_type bfd_or1knd_arch =
   {
@@ -53,9 +51,9 @@ const bfd_arch_info_type bfd_or1knd_arch =
     "or1knd",
     "or1knd",
     4,
-    TRUE,         /* The one and only.  */
+    FALSE,
     bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
-    0,
+    NULL,
   };

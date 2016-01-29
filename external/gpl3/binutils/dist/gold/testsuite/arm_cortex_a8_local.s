@@ -27,3 +27,6 @@ _test:
 	add.w	r0, r0, 0
 	bpl.w	.Lfunc
 	.size	_test,.-_test
+
+# Align stub table for address matching.
+	.align	12

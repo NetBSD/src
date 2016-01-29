@@ -1,6 +1,7 @@
 # ld: -T overlay-size.t -Map tmpdir/overlay-size.map
 # name: overlay size
 # objdump: --headers
+# map: overlay-size-map.d
 # xfail: rx-*-*
 #   FAILS on the RX because the linker has to set LMA == VMA for the
 #   Renesas loader.

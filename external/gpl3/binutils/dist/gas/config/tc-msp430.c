@@ -1,7 +1,6 @@
 /* tc-msp430.c -- Assembler code for the Texas Instruments MSP430
 
-  Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2012
-  Free Software Foundation, Inc.
+  Copyright (C) 2002-2015 Free Software Foundation, Inc.
   Contributed by Dmitry Diky <diwil@mail.ru>
 
   This file is part of GAS, the GNU Assembler.
@@ -23,11 +22,12 @@
 
 #include "as.h"
 #include <limits.h>
-#define PUSH_1X_WORKAROUND
 #include "subsegs.h"
 #include "opcode/msp430.h"
 #include "safe-ctype.h"
 #include "dwarf2dbg.h"
+#include "elf/msp430.h"
+#include "libiberty.h"
 
 /* We will disable polymorphs by default because it is dangerous.
    The potential problem here is the following: assume we got the
@@ -39,7 +39,7 @@
       .l1:
 	nop
 	ret
-   
+
    In case of assembly time relaxation we'll get:
 	0: jmp .l1 <.text +0x08> (reloc deleted)
 	2: nop
@@ -63,15 +63,18 @@
 
    If polymorphs are enabled, and relax isn't, treat all jumps as long jumps,
    do not delete any relocs and leave them for linker.
-   
+
    If relax is enabled, relax at assembly time and kill relocs as necessary.  */
 
 int msp430_enable_relax;
 int msp430_enable_polys;
 
+/*  Set linkrelax here to avoid fixups in most sections.  */
+int linkrelax = 1;
+
 /* GCC uses the some condition codes which we'll
    implement as new polymorph instructions.
-  
+
    COND	EXPL	   SHORT JUMP	LONG JUMP
    ===============================================
    eq	==	   jeq 		jne +4; br lab
@@ -80,7 +83,7 @@ int msp430_enable_polys;
    ltn honours no-overflow flag
    ltn	<	   jn 		jn +2;  jmp +4; br lab
 
-   lt	<	   jl 		jge +4;	br lab 
+   lt	<	   jl 		jge +4;	br lab
    ltu	<	   jlo 		lhs +4; br lab
    le	<= see below
    leu	<= see below
@@ -93,14 +96,14 @@ int msp430_enable_polys;
 
    Therefore, new opcodes are (BranchEQ -> beq; and so on...)
    beq,bne,blt,bltn,bltu,bge,bgeu
-   'u' means unsigned compares 
-  
+   'u' means unsigned compares
+
    Also, we add 'jump' instruction:
    jump	UNCOND	-> jmp		br lab
 
    They will have fmt == 4, and insn_opnumb == number of instruction.  */
 
-struct rcodes_s 
+struct rcodes_s
 {
   char * name;
   int    index;	/* Corresponding insn_opnumb.  */
@@ -114,7 +117,7 @@ struct rcodes_s
 #define MSP430_RLC(n,i,sop,o1) \
   {#n, i, sop, 2, (o1 + 2), 0x4010, 0}
 
-static struct rcodes_s msp430_rcodes[] = 
+static struct rcodes_s msp430_rcodes[] =
 {
   MSP430_RLC (beq,  0, 0x2400, 0x2000),
   MSP430_RLC (bne,  1, 0x2000, 0x2400),
@@ -126,11 +129,27 @@ static struct rcodes_s msp430_rcodes[] =
   {"jump",          7, 0x3c00, 1, 0x4010, 0, 0},
   {0,0,0,0,0,0,0}
 };
+
+#undef  MSP430_RLC
+#define MSP430_RLC(n,i,sop,o1) \
+  {#n, i, sop, 2, (o1 + 2), 0x0030, 0}
+
+static struct rcodes_s msp430x_rcodes[] =
+{
+  MSP430_RLC (beq,  0, 0x2400,    0x2000),
+  MSP430_RLC (bne,  1, 0x2000,    0x2400),
+  MSP430_RLC (blt,  2, 0x3800,    0x3400),
+  MSP430_RLC (bltu, 3, 0x2800,    0x2c00),
+  MSP430_RLC (bge,  4, 0x3400,    0x3800),
+  MSP430_RLC (bgeu, 5, 0x2c00,    0x2800),
+  {"bltn",          6, 0x3000, 3, 0x0030 + 1, 0x3c00 + 2, 0x3000},
+  {"jump",          7, 0x3c00, 1, 0x0030,     0,          0},
+  {0,0,0,0,0,0,0}
+};
 #undef MSP430_RLC
 
-
 /* More difficult than above and they have format 5.
-   
+
    COND	EXPL	SHORT			LONG
    =================================================================
    gt	>	jeq +2; jge label	jeq +6; jl  +4; br label
@@ -139,9 +158,9 @@ static struct rcodes_s msp430_rcodes[] =
    le	<=	jeq label; jl  label	jeq +2; jge +4; br label
    =================================================================  */
 
-struct hcodes_s 
+struct hcodes_s
 {
-  char * name;	
+  char * name;
   int    index;		/* Corresponding insn_opnumb.  */
   int    tlab;		/* Number of labels in short mode.  */
   int    op0;		/* Opcode for first word of short jump.  */
@@ -151,12 +170,21 @@ struct hcodes_s
   int    lop2;
 };
 
-static struct hcodes_s msp430_hcodes[] = 
+static struct hcodes_s msp430_hcodes[] =
 {
   {"bgt",  0, 1, 0x2401, 0x3400, 0x2403, 0x3802, 0x4010 },
   {"bgtu", 1, 1, 0x2401, 0x2c00, 0x2403, 0x2802, 0x4010 },
   {"bleu", 2, 2, 0x2400, 0x2800, 0x2401, 0x2c02, 0x4010 },
   {"ble",  3, 2, 0x2400, 0x3800, 0x2401, 0x3402, 0x4010 },
+  {0,0,0,0,0,0,0,0}
+};
+
+static struct hcodes_s msp430x_hcodes[] =
+{
+  {"bgt",  0, 1, 0x2401, 0x3400, 0x2403, 0x3802, 0x0030 },
+  {"bgtu", 1, 1, 0x2401, 0x2c00, 0x2403, 0x2802, 0x0030 },
+  {"bleu", 2, 2, 0x2400, 0x2800, 0x2401, 0x2c02, 0x0030 },
+  {"ble",  3, 2, 0x2400, 0x3800, 0x2401, 0x3402, 0x0030 },
   {0,0,0,0,0,0,0,0}
 };
 
@@ -227,116 +255,57 @@ relax_typeS md_relax_table[] =
 };
 
 
-#define MAX_OP_LEN	256
+#define MAX_OP_LEN	4096
 
-struct mcu_type_s
+typedef enum msp_isa
 {
-  char * name;
-  int isa;
-  int mach;
-};
+  MSP_ISA_430,
+  MSP_ISA_430X,
+  MSP_ISA_430Xv2
+} msp_isa;
 
-#define MSP430_ISA_11   11
-#define MSP430_ISA_110	110
-#define MSP430_ISA_12   12
-#define MSP430_ISA_13   13
-#define MSP430_ISA_14   14
-#define MSP430_ISA_15   15
-#define MSP430_ISA_16   16
-#define MSP430_ISA_21   21
-#define MSP430_ISA_31   31
-#define MSP430_ISA_32   32
-#define MSP430_ISA_33   33
-#define MSP430_ISA_41   41
-#define MSP430_ISA_42   42
-#define MSP430_ISA_43   43
-#define MSP430_ISA_44   44
+static enum msp_isa selected_isa = MSP_ISA_430Xv2;
 
-#define CHECK_RELOC_MSP430 		((imm_op || byte_op)?BFD_RELOC_MSP430_16_BYTE:BFD_RELOC_MSP430_16)
-#define CHECK_RELOC_MSP430_PCREL	((imm_op || byte_op)?BFD_RELOC_MSP430_16_PCREL_BYTE:BFD_RELOC_MSP430_16_PCREL)
-
-static struct mcu_type_s mcu_types[] =
+static inline bfd_boolean
+target_is_430x (void)
 {
-  {"msp1",        MSP430_ISA_11, bfd_mach_msp11},
-  {"msp2",        MSP430_ISA_14, bfd_mach_msp14},
-  {"msp430x110",  MSP430_ISA_11, bfd_mach_msp11},
-  {"msp430x112",  MSP430_ISA_11, bfd_mach_msp11},
-  {"msp430x1101", MSP430_ISA_110, bfd_mach_msp110},
-  {"msp430x1111", MSP430_ISA_110, bfd_mach_msp110},
-  {"msp430x1121", MSP430_ISA_110, bfd_mach_msp110},
-  {"msp430x1122", MSP430_ISA_11, bfd_mach_msp110},
-  {"msp430x1132", MSP430_ISA_11, bfd_mach_msp110},
+  return selected_isa >= MSP_ISA_430X;
+}
 
-  {"msp430x122",  MSP430_ISA_12, bfd_mach_msp12},
-  {"msp430x123",  MSP430_ISA_12, bfd_mach_msp12},
-  {"msp430x1222", MSP430_ISA_12, bfd_mach_msp12},
-  {"msp430x1232", MSP430_ISA_12, bfd_mach_msp12},
+static inline bfd_boolean
+target_is_430xv2 (void)
+{
+  return selected_isa == MSP_ISA_430Xv2;
+}
 
-  {"msp430x133",  MSP430_ISA_13, bfd_mach_msp13},
-  {"msp430x135",  MSP430_ISA_13, bfd_mach_msp13},
-  {"msp430x1331", MSP430_ISA_13, bfd_mach_msp13},
-  {"msp430x1351", MSP430_ISA_13, bfd_mach_msp13},
-  {"msp430x147",  MSP430_ISA_14, bfd_mach_msp14},
-  {"msp430x148",  MSP430_ISA_14, bfd_mach_msp14},
-  {"msp430x149",  MSP430_ISA_14, bfd_mach_msp14},
+/* Generate an absolute 16-bit relocation.
+   For the 430X we generate a relocation without linker range checking
+    if the value is being used in an extended (ie 20-bit) instruction,
+    otherwise if have a shifted expression we use a HI reloc.
+   For the 430 we generate a relocation without assembler range checking
+    if we are handling an immediate value or a byte-width instruction.  */
 
-  {"msp430x155",  MSP430_ISA_15, bfd_mach_msp15},
-  {"msp430x156",  MSP430_ISA_15, bfd_mach_msp15},
-  {"msp430x157",  MSP430_ISA_15, bfd_mach_msp15},
-  {"msp430x167",  MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x168",  MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x169",  MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x1610", MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x1611", MSP430_ISA_16, bfd_mach_msp16},
-  {"msp430x1612", MSP430_ISA_16, bfd_mach_msp16},
+#undef  CHECK_RELOC_MSP430
+#define CHECK_RELOC_MSP430(OP)				\
+  (target_is_430x ()					\
+  ? (extended_op					\
+     ? BFD_RELOC_16					\
+     : ((OP).vshift == 1)				\
+     ? BFD_RELOC_MSP430_ABS_HI16			\
+     : BFD_RELOC_MSP430X_ABS16)				\
+   : ((imm_op || byte_op)				\
+      ? BFD_RELOC_MSP430_16_BYTE : BFD_RELOC_MSP430_16))
 
-  {"msp430x2101", MSP430_ISA_21, bfd_mach_msp21},
-  {"msp430x2111", MSP430_ISA_21, bfd_mach_msp21},
-  {"msp430x2121", MSP430_ISA_21, bfd_mach_msp21},
-  {"msp430x2131", MSP430_ISA_21, bfd_mach_msp21},
-  
-  {"msp430x311",  MSP430_ISA_31, bfd_mach_msp31},
-  {"msp430x312",  MSP430_ISA_31, bfd_mach_msp31},
-  {"msp430x313",  MSP430_ISA_31, bfd_mach_msp31},
-  {"msp430x314",  MSP430_ISA_31, bfd_mach_msp31},
-  {"msp430x315",  MSP430_ISA_31, bfd_mach_msp31},
-  {"msp430x323",  MSP430_ISA_32, bfd_mach_msp32},
-  {"msp430x325",  MSP430_ISA_32, bfd_mach_msp32},
-  {"msp430x336",  MSP430_ISA_33, bfd_mach_msp33},
-  {"msp430x337",  MSP430_ISA_33, bfd_mach_msp33},
-
-  {"msp430x412",  MSP430_ISA_41, bfd_mach_msp41},
-  {"msp430x413",  MSP430_ISA_41, bfd_mach_msp41},
-  {"msp430x415",  MSP430_ISA_41, bfd_mach_msp41},
-  {"msp430x417",  MSP430_ISA_41, bfd_mach_msp41},
-
-  {"msp430xE423", MSP430_ISA_42, bfd_mach_msp42},
-  {"msp430xE425", MSP430_ISA_42, bfd_mach_msp42},
-  {"msp430xE427", MSP430_ISA_42, bfd_mach_msp42},
-
-  {"msp430xW423", MSP430_ISA_42, bfd_mach_msp42},
-  {"msp430xW425", MSP430_ISA_42, bfd_mach_msp42},
-  {"msp430xW427", MSP430_ISA_42, bfd_mach_msp42},
-
-  {"msp430xG437", MSP430_ISA_43, bfd_mach_msp43},
-  {"msp430xG438", MSP430_ISA_43, bfd_mach_msp43},
-  {"msp430xG439", MSP430_ISA_43, bfd_mach_msp43},
-
-  {"msp430x435",  MSP430_ISA_43, bfd_mach_msp43},
-  {"msp430x436",  MSP430_ISA_43, bfd_mach_msp43},
-  {"msp430x437",  MSP430_ISA_43, bfd_mach_msp43},
-  {"msp430x447",  MSP430_ISA_44, bfd_mach_msp44},
-  {"msp430x448",  MSP430_ISA_44, bfd_mach_msp44},
-  {"msp430x449",  MSP430_ISA_44, bfd_mach_msp44},
-
-  {NULL, 0, 0}
-};
-
-
-static struct mcu_type_s default_mcu =
-    { "msp430x11", MSP430_ISA_11, bfd_mach_msp11 };
-
-static struct mcu_type_s * msp430_mcu = & default_mcu;
+/* Generate a 16-bit pc-relative relocation.
+   For the 430X we generate a relocation without linkwer range checking.
+   For the 430 we generate a relocation without assembler range checking
+   if we are handling an immediate value or a byte-width instruction.  */
+#undef  CHECK_RELOC_MSP430_PCREL
+#define CHECK_RELOC_MSP430_PCREL			     \
+  (target_is_430x ()					     \
+   ? BFD_RELOC_MSP430X_PCR16				     \
+   : (imm_op || byte_op)				     \
+   ? BFD_RELOC_MSP430_16_PCREL_BYTE : BFD_RELOC_MSP430_16_PCREL)
 
 /* Profiling capability:
    It is a performance hit to use gcc's profiling approach for this tiny target.
@@ -699,86 +668,898 @@ extract_word (char * from, char * to, int limit)
 #define OPTION_MMCU 'm'
 #define OPTION_RELAX 'Q'
 #define OPTION_POLYMORPHS 'P'
+#define OPTION_LARGE 'l'
+static bfd_boolean large_model = FALSE;
+#define OPTION_NO_INTR_NOPS 'N'
+#define OPTION_INTR_NOPS 'n'
+static bfd_boolean gen_interrupt_nops = FALSE;
+#define OPTION_WARN_INTR_NOPS 'y'
+#define OPTION_NO_WARN_INTR_NOPS 'Y'
+static bfd_boolean warn_interrupt_nops = TRUE;
+#define OPTION_MCPU 'c'
+#define OPTION_MOVE_DATA 'd'
+static bfd_boolean move_data = FALSE;
+
+enum
+{
+  OPTION_SILICON_ERRATA = OPTION_MD_BASE,
+  OPTION_SILICON_ERRATA_WARN,
+} option_numbers;
+
+static unsigned int silicon_errata_fix = 0;
+static unsigned int silicon_errata_warn = 0;
+#define SILICON_ERRATA_CPU4 		(1 << 0)
+#define SILICON_ERRATA_CPU8		(1 << 1)
+#define SILICON_ERRATA_CPU11 		(1 << 2)
+#define SILICON_ERRATA_CPU12 		(1 << 3)
+#define SILICON_ERRATA_CPU13 		(1 << 4)
+#define SILICON_ERRATA_CPU19 		(1 << 5)
 
 static void
-msp430_set_arch (int dummy ATTRIBUTE_UNUSED)
+msp430_set_arch (int option)
 {
   char *str = (char *) alloca (32);	/* 32 for good measure.  */
 
   input_line_pointer = extract_word (input_line_pointer, str, 32);
 
-  md_parse_option (OPTION_MMCU, str);
-  bfd_set_arch_mach (stdoutput, TARGET_ARCH, msp430_mcu->mach);
+  md_parse_option (option, str);
+  bfd_set_arch_mach (stdoutput, TARGET_ARCH,
+		     target_is_430x () ? bfd_mach_msp430x : bfd_mach_msp11);
 }
 
-static void
-show_mcu_list (FILE * stream)
+/* This is a copy of the same data structure found in gcc/config/msp430/msp430.c
+   Keep these two structures in sync.
+   The data in this structure has been extracted from the devices.csv file
+   released by TI, updated as of 8 October 2015.  */
+
+struct msp430_mcu_data
 {
-  int i;
-
-  fprintf (stream, _("Known MCU names:\n"));
-
-  for (i = 0; mcu_types[i].name; i++)
-    fprintf (stream, _("\t %s\n"), mcu_types[i].name);
-
-  fprintf (stream, "\n");
+  const char * name;
+  unsigned int revision; /* 0=> MSP430, 1=>MSP430X, 2=> MSP430Xv2.  */
+  unsigned int hwmpy;    /* 0=>none, 1=>16-bit, 2=>16-bit w/sign extend, 4=>32-bit, 8=> 32-bit (5xx).  */
 }
+msp430_mcu_data [] =
+{
+  { "cc430f5123",2,8 },
+  { "cc430f5125",2,8 },
+  { "cc430f5133",2,8 },
+  { "cc430f5135",2,8 },
+  { "cc430f5137",2,8 },
+  { "cc430f5143",2,8 },
+  { "cc430f5145",2,8 },
+  { "cc430f5147",2,8 },
+  { "cc430f6125",2,8 },
+  { "cc430f6126",2,8 },
+  { "cc430f6127",2,8 },
+  { "cc430f6135",2,8 },
+  { "cc430f6137",2,8 },
+  { "cc430f6143",2,8 },
+  { "cc430f6145",2,8 },
+  { "cc430f6147",2,8 },
+  { "msp430afe221",0,2 },
+  { "msp430afe222",0,2 },
+  { "msp430afe223",0,2 },
+  { "msp430afe231",0,2 },
+  { "msp430afe232",0,2 },
+  { "msp430afe233",0,2 },
+  { "msp430afe251",0,2 },
+  { "msp430afe252",0,2 },
+  { "msp430afe253",0,2 },
+  { "msp430bt5190",2,8 },
+  { "msp430c091",0,0 },
+  { "msp430c092",0,0 },
+  { "msp430c111",0,0 },
+  { "msp430c1111",0,0 },
+  { "msp430c112",0,0 },
+  { "msp430c1121",0,0 },
+  { "msp430c1331",0,0 },
+  { "msp430c1351",0,0 },
+  { "msp430c311s",0,0 },
+  { "msp430c312",0,0 },
+  { "msp430c313",0,0 },
+  { "msp430c314",0,0 },
+  { "msp430c315",0,0 },
+  { "msp430c323",0,0 },
+  { "msp430c325",0,0 },
+  { "msp430c336",0,1 },
+  { "msp430c337",0,1 },
+  { "msp430c412",0,0 },
+  { "msp430c413",0,0 },
+  { "msp430cg4616",1,1 },
+  { "msp430cg4617",1,1 },
+  { "msp430cg4618",1,1 },
+  { "msp430cg4619",1,1 },
+  { "msp430e112",0,0 },
+  { "msp430e313",0,0 },
+  { "msp430e315",0,0 },
+  { "msp430e325",0,0 },
+  { "msp430e337",0,1 },
+  { "msp430f110",0,0 },
+  { "msp430f1101",0,0 },
+  { "msp430f1101a",0,0 },
+  { "msp430f1111",0,0 },
+  { "msp430f1111a",0,0 },
+  { "msp430f112",0,0 },
+  { "msp430f1121",0,0 },
+  { "msp430f1121a",0,0 },
+  { "msp430f1122",0,0 },
+  { "msp430f1132",0,0 },
+  { "msp430f122",0,0 },
+  { "msp430f1222",0,0 },
+  { "msp430f123",0,0 },
+  { "msp430f1232",0,0 },
+  { "msp430f133",0,0 },
+  { "msp430f135",0,0 },
+  { "msp430f147",0,1 },
+  { "msp430f1471",0,1 },
+  { "msp430f148",0,1 },
+  { "msp430f1481",0,1 },
+  { "msp430f149",0,1 },
+  { "msp430f1491",0,1 },
+  { "msp430f155",0,0 },
+  { "msp430f156",0,0 },
+  { "msp430f157",0,0 },
+  { "msp430f1610",0,1 },
+  { "msp430f1611",0,1 },
+  { "msp430f1612",0,1 },
+  { "msp430f167",0,1 },
+  { "msp430f168",0,1 },
+  { "msp430f169",0,1 },
+  { "msp430f2001",0,0 },
+  { "msp430f2002",0,0 },
+  { "msp430f2003",0,0 },
+  { "msp430f2011",0,0 },
+  { "msp430f2012",0,0 },
+  { "msp430f2013",0,0 },
+  { "msp430f2101",0,0 },
+  { "msp430f2111",0,0 },
+  { "msp430f2112",0,0 },
+  { "msp430f2121",0,0 },
+  { "msp430f2122",0,0 },
+  { "msp430f2131",0,0 },
+  { "msp430f2132",0,0 },
+  { "msp430f2232",0,0 },
+  { "msp430f2234",0,0 },
+  { "msp430f2252",0,0 },
+  { "msp430f2254",0,0 },
+  { "msp430f2272",0,0 },
+  { "msp430f2274",0,0 },
+  { "msp430f233",0,2 },
+  { "msp430f2330",0,2 },
+  { "msp430f235",0,2 },
+  { "msp430f2350",0,2 },
+  { "msp430f2370",0,2 },
+  { "msp430f2410",0,2 },
+  { "msp430f2416",1,2 },
+  { "msp430f2417",1,2 },
+  { "msp430f2418",1,2 },
+  { "msp430f2419",1,2 },
+  { "msp430f247",0,2 },
+  { "msp430f2471",0,2 },
+  { "msp430f248",0,2 },
+  { "msp430f2481",0,2 },
+  { "msp430f249",0,2 },
+  { "msp430f2491",0,2 },
+  { "msp430f2616",1,2 },
+  { "msp430f2617",1,2 },
+  { "msp430f2618",1,2 },
+  { "msp430f2619",1,2 },
+  { "msp430f412",0,0 },
+  { "msp430f413",0,0 },
+  { "msp430f4132",0,0 },
+  { "msp430f415",0,0 },
+  { "msp430f4152",0,0 },
+  { "msp430f417",0,0 },
+  { "msp430f423",0,1 },
+  { "msp430f423a",0,1 },
+  { "msp430f425",0,1 },
+  { "msp430f4250",0,0 },
+  { "msp430f425a",0,1 },
+  { "msp430f4260",0,0 },
+  { "msp430f427",0,1 },
+  { "msp430f4270",0,0 },
+  { "msp430f427a",0,1 },
+  { "msp430f435",0,0 },
+  { "msp430f4351",0,0 },
+  { "msp430f436",0,0 },
+  { "msp430f4361",0,0 },
+  { "msp430f437",0,0 },
+  { "msp430f4371",0,0 },
+  { "msp430f438",0,0 },
+  { "msp430f439",0,0 },
+  { "msp430f447",0,1 },
+  { "msp430f448",0,1 },
+  { "msp430f4481",0,1 },
+  { "msp430f449",0,1 },
+  { "msp430f4491",0,1 },
+  { "msp430f4616",1,1 },
+  { "msp430f46161",1,1 },
+  { "msp430f4617",1,1 },
+  { "msp430f46171",1,1 },
+  { "msp430f4618",1,1 },
+  { "msp430f46181",1,1 },
+  { "msp430f4619",1,1 },
+  { "msp430f46191",1,1 },
+  { "msp430f47126",1,4 },
+  { "msp430f47127",1,4 },
+  { "msp430f47163",1,4 },
+  { "msp430f47166",1,4 },
+  { "msp430f47167",1,4 },
+  { "msp430f47173",1,4 },
+  { "msp430f47176",1,4 },
+  { "msp430f47177",1,4 },
+  { "msp430f47183",1,4 },
+  { "msp430f47186",1,4 },
+  { "msp430f47187",1,4 },
+  { "msp430f47193",1,4 },
+  { "msp430f47196",1,4 },
+  { "msp430f47197",1,4 },
+  { "msp430f477",0,0 },
+  { "msp430f478",0,0 },
+  { "msp430f4783",0,4 },
+  { "msp430f4784",0,4 },
+  { "msp430f479",0,0 },
+  { "msp430f4793",0,4 },
+  { "msp430f4794",0,4 },
+  { "msp430f5131",2,8 },
+  { "msp430f5132",2,8 },
+  { "msp430f5151",2,8 },
+  { "msp430f5152",2,8 },
+  { "msp430f5171",2,8 },
+  { "msp430f5172",2,8 },
+  { "msp430f5212",2,8 },
+  { "msp430f5213",2,8 },
+  { "msp430f5214",2,8 },
+  { "msp430f5217",2,8 },
+  { "msp430f5218",2,8 },
+  { "msp430f5219",2,8 },
+  { "msp430f5222",2,8 },
+  { "msp430f5223",2,8 },
+  { "msp430f5224",2,8 },
+  { "msp430f5227",2,8 },
+  { "msp430f5228",2,8 },
+  { "msp430f5229",2,8 },
+  { "msp430f5232",2,8 },
+  { "msp430f5234",2,8 },
+  { "msp430f5237",2,8 },
+  { "msp430f5239",2,8 },
+  { "msp430f5242",2,8 },
+  { "msp430f5244",2,8 },
+  { "msp430f5247",2,8 },
+  { "msp430f5249",2,8 },
+  { "msp430f5252",2,8 },
+  { "msp430f5253",2,8 },
+  { "msp430f5254",2,8 },
+  { "msp430f5255",2,8 },
+  { "msp430f5256",2,8 },
+  { "msp430f5257",2,8 },
+  { "msp430f5258",2,8 },
+  { "msp430f5259",2,8 },
+  { "msp430f5304",2,8 },
+  { "msp430f5308",2,8 },
+  { "msp430f5309",2,8 },
+  { "msp430f5310",2,8 },
+  { "msp430f5324",2,8 },
+  { "msp430f5325",2,8 },
+  { "msp430f5326",2,8 },
+  { "msp430f5327",2,8 },
+  { "msp430f5328",2,8 },
+  { "msp430f5329",2,8 },
+  { "msp430f5333",2,8 },
+  { "msp430f5335",2,8 },
+  { "msp430f5336",2,8 },
+  { "msp430f5338",2,8 },
+  { "msp430f5340",2,8 },
+  { "msp430f5341",2,8 },
+  { "msp430f5342",2,8 },
+  { "msp430f5358",2,8 },
+  { "msp430f5359",2,8 },
+  { "msp430f5418",2,8 },
+  { "msp430f5418a",2,8 },
+  { "msp430f5419",2,8 },
+  { "msp430f5419a",2,8 },
+  { "msp430f5435",2,8 },
+  { "msp430f5435a",2,8 },
+  { "msp430f5436",2,8 },
+  { "msp430f5436a",2,8 },
+  { "msp430f5437",2,8 },
+  { "msp430f5437a",2,8 },
+  { "msp430f5438",2,8 },
+  { "msp430f5438a",2,8 },
+  { "msp430f5500",2,8 },
+  { "msp430f5501",2,8 },
+  { "msp430f5502",2,8 },
+  { "msp430f5503",2,8 },
+  { "msp430f5504",2,8 },
+  { "msp430f5505",2,8 },
+  { "msp430f5506",2,8 },
+  { "msp430f5507",2,8 },
+  { "msp430f5508",2,8 },
+  { "msp430f5509",2,8 },
+  { "msp430f5510",2,8 },
+  { "msp430f5513",2,8 },
+  { "msp430f5514",2,8 },
+  { "msp430f5515",2,8 },
+  { "msp430f5517",2,8 },
+  { "msp430f5519",2,8 },
+  { "msp430f5521",2,8 },
+  { "msp430f5522",2,8 },
+  { "msp430f5524",2,8 },
+  { "msp430f5525",2,8 },
+  { "msp430f5526",2,8 },
+  { "msp430f5527",2,8 },
+  { "msp430f5528",2,8 },
+  { "msp430f5529",2,8 },
+  { "msp430f5630",2,8 },
+  { "msp430f5631",2,8 },
+  { "msp430f5632",2,8 },
+  { "msp430f5633",2,8 },
+  { "msp430f5634",2,8 },
+  { "msp430f5635",2,8 },
+  { "msp430f5636",2,8 },
+  { "msp430f5637",2,8 },
+  { "msp430f5638",2,8 },
+  { "msp430f5658",2,8 },
+  { "msp430f5659",2,8 },
+  { "msp430f5xx_6xxgeneric",2,8 },
+  { "msp430f6433",2,8 },
+  { "msp430f6435",2,8 },
+  { "msp430f6436",2,8 },
+  { "msp430f6438",2,8 },
+  { "msp430f6458",2,8 },
+  { "msp430f6459",2,8 },
+  { "msp430f6630",2,8 },
+  { "msp430f6631",2,8 },
+  { "msp430f6632",2,8 },
+  { "msp430f6633",2,8 },
+  { "msp430f6634",2,8 },
+  { "msp430f6635",2,8 },
+  { "msp430f6636",2,8 },
+  { "msp430f6637",2,8 },
+  { "msp430f6638",2,8 },
+  { "msp430f6658",2,8 },
+  { "msp430f6659",2,8 },
+  { "msp430f6720",2,8 },
+  { "msp430f6720a",2,8 },
+  { "msp430f6721",2,8 },
+  { "msp430f6721a",2,8 },
+  { "msp430f6723",2,8 },
+  { "msp430f6723a",2,8 },
+  { "msp430f6724",2,8 },
+  { "msp430f6724a",2,8 },
+  { "msp430f6725",2,8 },
+  { "msp430f6725a",2,8 },
+  { "msp430f6726",2,8 },
+  { "msp430f6726a",2,8 },
+  { "msp430f6730",2,8 },
+  { "msp430f6730a",2,8 },
+  { "msp430f6731",2,8 },
+  { "msp430f6731a",2,8 },
+  { "msp430f6733",2,8 },
+  { "msp430f6733a",2,8 },
+  { "msp430f6734",2,8 },
+  { "msp430f6734a",2,8 },
+  { "msp430f6735",2,8 },
+  { "msp430f6735a",2,8 },
+  { "msp430f6736",2,8 },
+  { "msp430f6736a",2,8 },
+  { "msp430f6745",2,8 },
+  { "msp430f67451",2,8 },
+  { "msp430f67451a",2,8 },
+  { "msp430f6745a",2,8 },
+  { "msp430f6746",2,8 },
+  { "msp430f67461",2,8 },
+  { "msp430f67461a",2,8 },
+  { "msp430f6746a",2,8 },
+  { "msp430f6747",2,8 },
+  { "msp430f67471",2,8 },
+  { "msp430f67471a",2,8 },
+  { "msp430f6747a",2,8 },
+  { "msp430f6748",2,8 },
+  { "msp430f67481",2,8 },
+  { "msp430f67481a",2,8 },
+  { "msp430f6748a",2,8 },
+  { "msp430f6749",2,8 },
+  { "msp430f67491",2,8 },
+  { "msp430f67491a",2,8 },
+  { "msp430f6749a",2,8 },
+  { "msp430f67621",2,8 },
+  { "msp430f67621a",2,8 },
+  { "msp430f67641",2,8 },
+  { "msp430f67641a",2,8 },
+  { "msp430f6765",2,8 },
+  { "msp430f67651",2,8 },
+  { "msp430f67651a",2,8 },
+  { "msp430f6765a",2,8 },
+  { "msp430f6766",2,8 },
+  { "msp430f67661",2,8 },
+  { "msp430f67661a",2,8 },
+  { "msp430f6766a",2,8 },
+  { "msp430f6767",2,8 },
+  { "msp430f67671",2,8 },
+  { "msp430f67671a",2,8 },
+  { "msp430f6767a",2,8 },
+  { "msp430f6768",2,8 },
+  { "msp430f67681",2,8 },
+  { "msp430f67681a",2,8 },
+  { "msp430f6768a",2,8 },
+  { "msp430f6769",2,8 },
+  { "msp430f67691",2,8 },
+  { "msp430f67691a",2,8 },
+  { "msp430f6769a",2,8 },
+  { "msp430f6775",2,8 },
+  { "msp430f67751",2,8 },
+  { "msp430f67751a",2,8 },
+  { "msp430f6775a",2,8 },
+  { "msp430f6776",2,8 },
+  { "msp430f67761",2,8 },
+  { "msp430f67761a",2,8 },
+  { "msp430f6776a",2,8 },
+  { "msp430f6777",2,8 },
+  { "msp430f67771",2,8 },
+  { "msp430f67771a",2,8 },
+  { "msp430f6777a",2,8 },
+  { "msp430f6778",2,8 },
+  { "msp430f67781",2,8 },
+  { "msp430f67781a",2,8 },
+  { "msp430f6778a",2,8 },
+  { "msp430f6779",2,8 },
+  { "msp430f67791",2,8 },
+  { "msp430f67791a",2,8 },
+  { "msp430f6779a",2,8 },
+  { "msp430fe423",0,0 },
+  { "msp430fe4232",0,0 },
+  { "msp430fe423a",0,0 },
+  { "msp430fe4242",0,0 },
+  { "msp430fe425",0,0 },
+  { "msp430fe4252",0,0 },
+  { "msp430fe425a",0,0 },
+  { "msp430fe427",0,0 },
+  { "msp430fe4272",0,0 },
+  { "msp430fe427a",0,0 },
+  { "msp430fg4250",0,0 },
+  { "msp430fg4260",0,0 },
+  { "msp430fg4270",0,0 },
+  { "msp430fg437",0,0 },
+  { "msp430fg438",0,0 },
+  { "msp430fg439",0,0 },
+  { "msp430fg4616",1,1 },
+  { "msp430fg4617",1,1 },
+  { "msp430fg4618",1,1 },
+  { "msp430fg4619",1,1 },
+  { "msp430fg477",0,0 },
+  { "msp430fg478",0,0 },
+  { "msp430fg479",0,0 },
+  { "msp430fg6425",2,8 },
+  { "msp430fg6426",2,8 },
+  { "msp430fg6625",2,8 },
+  { "msp430fg6626",2,8 },
+  { "msp430fr2032",2,0 },
+  { "msp430fr2033",2,0 },
+  { "msp430fr2433",2,8 },
+  { "msp430fr2xx_4xxgeneric",2,8 },
+  { "msp430fr4131",2,0 },
+  { "msp430fr4132",2,0 },
+  { "msp430fr4133",2,0 },
+  { "msp430fr5720",2,8 },
+  { "msp430fr5721",2,8 },
+  { "msp430fr5722",2,8 },
+  { "msp430fr5723",2,8 },
+  { "msp430fr5724",2,8 },
+  { "msp430fr5725",2,8 },
+  { "msp430fr5726",2,8 },
+  { "msp430fr5727",2,8 },
+  { "msp430fr5728",2,8 },
+  { "msp430fr5729",2,8 },
+  { "msp430fr5730",2,8 },
+  { "msp430fr5731",2,8 },
+  { "msp430fr5732",2,8 },
+  { "msp430fr5733",2,8 },
+  { "msp430fr5734",2,8 },
+  { "msp430fr5735",2,8 },
+  { "msp430fr5736",2,8 },
+  { "msp430fr5737",2,8 },
+  { "msp430fr5738",2,8 },
+  { "msp430fr5739",2,8 },
+  { "msp430fr57xxgeneric",2,8 },
+  { "msp430fr5847",2,8 },
+  { "msp430fr58471",2,8 },
+  { "msp430fr5848",2,8 },
+  { "msp430fr5849",2,8 },
+  { "msp430fr5857",2,8 },
+  { "msp430fr5858",2,8 },
+  { "msp430fr5859",2,8 },
+  { "msp430fr5867",2,8 },
+  { "msp430fr58671",2,8 },
+  { "msp430fr5868",2,8 },
+  { "msp430fr5869",2,8 },
+  { "msp430fr5870",2,8 },
+  { "msp430fr5872",2,8 },
+  { "msp430fr58721",2,8 },
+  { "msp430fr5887",2,8 },
+  { "msp430fr5888",2,8 },
+  { "msp430fr5889",2,8 },
+  { "msp430fr58891",2,8 },
+  { "msp430fr5922",2,8 },
+  { "msp430fr59221",2,8 },
+  { "msp430fr5947",2,8 },
+  { "msp430fr59471",2,8 },
+  { "msp430fr5948",2,8 },
+  { "msp430fr5949",2,8 },
+  { "msp430fr5957",2,8 },
+  { "msp430fr5958",2,8 },
+  { "msp430fr5959",2,8 },
+  { "msp430fr5967",2,8 },
+  { "msp430fr5968",2,8 },
+  { "msp430fr5969",2,8 },
+  { "msp430fr59691",2,8 },
+  { "msp430fr5970",2,8 },
+  { "msp430fr5972",2,8 },
+  { "msp430fr59721",2,8 },
+  { "msp430fr5986",2,8 },
+  { "msp430fr5987",2,8 },
+  { "msp430fr5988",2,8 },
+  { "msp430fr5989",2,8 },
+  { "msp430fr59891",2,8 },
+  { "msp430fr5xx_6xxgeneric",2,8 },
+  { "msp430fr6820",2,8 },
+  { "msp430fr6822",2,8 },
+  { "msp430fr68221",2,8 },
+  { "msp430fr6870",2,8 },
+  { "msp430fr6872",2,8 },
+  { "msp430fr68721",2,8 },
+  { "msp430fr6877",2,8 },
+  { "msp430fr6879",2,8 },
+  { "msp430fr68791",2,8 },
+  { "msp430fr6887",2,8 },
+  { "msp430fr6888",2,8 },
+  { "msp430fr6889",2,8 },
+  { "msp430fr68891",2,8 },
+  { "msp430fr6920",2,8 },
+  { "msp430fr6922",2,8 },
+  { "msp430fr69221",2,8 },
+  { "msp430fr6927",2,8 },
+  { "msp430fr69271",2,8 },
+  { "msp430fr6928",2,8 },
+  { "msp430fr6970",2,8 },
+  { "msp430fr6972",2,8 },
+  { "msp430fr69721",2,8 },
+  { "msp430fr6977",2,8 },
+  { "msp430fr6979",2,8 },
+  { "msp430fr69791",2,8 },
+  { "msp430fr6987",2,8 },
+  { "msp430fr6988",2,8 },
+  { "msp430fr6989",2,8 },
+  { "msp430fr69891",2,8 },
+  { "msp430fw423",0,0 },
+  { "msp430fw425",0,0 },
+  { "msp430fw427",0,0 },
+  { "msp430fw428",0,0 },
+  { "msp430fw429",0,0 },
+  { "msp430g2001",0,0 },
+  { "msp430g2101",0,0 },
+  { "msp430g2102",0,0 },
+  { "msp430g2111",0,0 },
+  { "msp430g2112",0,0 },
+  { "msp430g2113",0,0 },
+  { "msp430g2121",0,0 },
+  { "msp430g2131",0,0 },
+  { "msp430g2132",0,0 },
+  { "msp430g2152",0,0 },
+  { "msp430g2153",0,0 },
+  { "msp430g2201",0,0 },
+  { "msp430g2202",0,0 },
+  { "msp430g2203",0,0 },
+  { "msp430g2210",0,0 },
+  { "msp430g2211",0,0 },
+  { "msp430g2212",0,0 },
+  { "msp430g2213",0,0 },
+  { "msp430g2221",0,0 },
+  { "msp430g2230",0,0 },
+  { "msp430g2231",0,0 },
+  { "msp430g2232",0,0 },
+  { "msp430g2233",0,0 },
+  { "msp430g2252",0,0 },
+  { "msp430g2253",0,0 },
+  { "msp430g2302",0,0 },
+  { "msp430g2303",0,0 },
+  { "msp430g2312",0,0 },
+  { "msp430g2313",0,0 },
+  { "msp430g2332",0,0 },
+  { "msp430g2333",0,0 },
+  { "msp430g2352",0,0 },
+  { "msp430g2353",0,0 },
+  { "msp430g2402",0,0 },
+  { "msp430g2403",0,0 },
+  { "msp430g2412",0,0 },
+  { "msp430g2413",0,0 },
+  { "msp430g2432",0,0 },
+  { "msp430g2433",0,0 },
+  { "msp430g2444",0,0 },
+  { "msp430g2452",0,0 },
+  { "msp430g2453",0,0 },
+  { "msp430g2513",0,0 },
+  { "msp430g2533",0,0 },
+  { "msp430g2544",0,0 },
+  { "msp430g2553",0,0 },
+  { "msp430g2744",0,0 },
+  { "msp430g2755",0,0 },
+  { "msp430g2855",0,0 },
+  { "msp430g2955",0,0 },
+  { "msp430i2020",0,2 },
+  { "msp430i2021",0,2 },
+  { "msp430i2030",0,2 },
+  { "msp430i2031",0,2 },
+  { "msp430i2040",0,2 },
+  { "msp430i2041",0,2 },
+  { "msp430i2xxgeneric",0,2 },
+  { "msp430l092",0,0 },
+  { "msp430p112",0,0 },
+  { "msp430p313",0,0 },
+  { "msp430p315",0,0 },
+  { "msp430p315s",0,0 },
+  { "msp430p325",0,0 },
+  { "msp430p337",0,1 },
+  { "msp430sl5438a",2,8 },
+  { "msp430tch5e",0,0 },
+  { "msp430xgeneric",2,8 },
+  { "rf430f5144",2,8 },
+  { "rf430f5155",2,8 },
+  { "rf430f5175",2,8 },
+  { "rf430frl152h",0,0 },
+  { "rf430frl152h_rom",0,0 },
+  { "rf430frl153h",0,0 },
+  { "rf430frl153h_rom",0,0 },
+  { "rf430frl154h",0,0 },
+  { "rf430frl154h_rom",0,0 }
+};  
 
 int
 md_parse_option (int c, char * arg)
 {
-  int i;
-
   switch (c)
     {
-    case OPTION_MMCU:
-      for (i = 0; mcu_types[i].name; ++i)
-	if (strcmp (mcu_types[i].name, arg) == 0)
-	  break;
-
-      if (!mcu_types[i].name)
+    case OPTION_SILICON_ERRATA:
+    case OPTION_SILICON_ERRATA_WARN:
+      {
+	signed int i;
+	const struct
 	{
-	  show_mcu_list (stderr);
-	  as_fatal (_("unknown MCU: %s\n"), arg);
-	}
+	  char *       name;
+	  unsigned int length;
+	  unsigned int bitfield;
+	} erratas[] =
+	{
+	  { STRING_COMMA_LEN ("cpu4"), SILICON_ERRATA_CPU4 },
+	  { STRING_COMMA_LEN ("cpu8"), SILICON_ERRATA_CPU8 },
+	  { STRING_COMMA_LEN ("cpu11"), SILICON_ERRATA_CPU11 },
+	  { STRING_COMMA_LEN ("cpu12"), SILICON_ERRATA_CPU12 },
+	  { STRING_COMMA_LEN ("cpu13"), SILICON_ERRATA_CPU13 },
+	  { STRING_COMMA_LEN ("cpu19"), SILICON_ERRATA_CPU19 },
+	};
 
-      if (msp430_mcu == &default_mcu || msp430_mcu->mach == mcu_types[i].mach)
-	msp430_mcu = &mcu_types[i];
+	do
+	  {
+	    for (i = ARRAY_SIZE (erratas); i--;)
+	      if (strncasecmp (arg, erratas[i].name, erratas[i].length) == 0)
+		{
+		  if (c == OPTION_SILICON_ERRATA)
+		    silicon_errata_fix |= erratas[i].bitfield;
+		  else
+		    silicon_errata_warn |= erratas[i].bitfield;
+		  arg += erratas[i].length;
+		  break;
+		}
+	    if (i < 0)
+	      {
+		as_warn (_("Unrecognised CPU errata name starting here: %s"), arg);
+		break;
+	      }
+	    if (*arg == 0)
+	      break;
+	    if (*arg != ',')
+	      as_warn (_("Expecting comma after CPU errata name, not: %s"), arg);
+	    else
+	      arg ++;
+	  }
+	while (*arg != 0);
+      }
+      return 1;
+
+    case OPTION_MMCU:
+      if (arg == NULL)
+	as_fatal (_("MCU option requires a name\n"));
+
+      if (strcasecmp ("msp430", arg) == 0)
+	selected_isa = MSP_ISA_430;
+      else if (strcasecmp ("msp430xv2", arg) == 0)
+	selected_isa = MSP_ISA_430Xv2;
+      else if (strcasecmp ("msp430x", arg) == 0)
+	selected_isa = MSP_ISA_430X;
       else
-	as_fatal (_("redefinition of mcu type %s' to %s'"),
-		  msp430_mcu->name, mcu_types[i].name);
+	{
+	  int i;
+
+	  for (i = ARRAY_SIZE (msp430_mcu_data); i--;)
+	    if (strcasecmp (msp430_mcu_data[i].name, arg) == 0)
+	      {
+		switch (msp430_mcu_data[i].revision)
+		  {
+		  case 0: selected_isa = MSP_ISA_430; break;
+		  case 1: selected_isa = MSP_ISA_430X; break;
+		  case 2: selected_isa = MSP_ISA_430Xv2; break;
+		  }
+		break;
+	    }
+	}
+      /* It is not an error if we do not match the MCU name.  */
       return 1;
-      break;
-      
+
+    case OPTION_MCPU:
+      if (strcmp (arg, "430") == 0
+	  || strcasecmp (arg, "msp430") == 0)
+	selected_isa = MSP_ISA_430;
+      else if (strcasecmp (arg, "430x") == 0
+	       || strcasecmp (arg, "msp430x") == 0)
+	selected_isa = MSP_ISA_430X;
+      else if (strcasecmp (arg, "430xv2") == 0
+	       || strcasecmp (arg, "msp430xv2") == 0)
+	selected_isa = MSP_ISA_430Xv2;
+      else
+	as_fatal (_("unrecognised argument to -mcpu option '%s'"), arg);
+      return 1;
+
     case OPTION_RELAX:
-      msp430_enable_relax = 1; 
+      msp430_enable_relax = 1;
       return 1;
-      break;
-      
+
     case OPTION_POLYMORPHS:
       msp430_enable_polys = 1;
       return 1;
-      break;
+
+    case OPTION_LARGE:
+      large_model = TRUE;
+      return 1;
+
+    case OPTION_NO_INTR_NOPS:
+      gen_interrupt_nops = FALSE;
+      return 1;
+    case OPTION_INTR_NOPS:
+      gen_interrupt_nops = TRUE;
+      return 1;
+
+    case OPTION_WARN_INTR_NOPS:
+      warn_interrupt_nops = TRUE;
+      return 1;
+    case OPTION_NO_WARN_INTR_NOPS:
+      warn_interrupt_nops = FALSE;
+      return 1;
+
+    case OPTION_MOVE_DATA:
+      move_data = TRUE;
+      return 1;
     }
 
   return 0;
 }
 
+/* The intention here is to have the mere presence of these sections
+   cause the object to have a reference to a well-known symbol.  This
+   reference pulls in the bits of the runtime (crt0) that initialize
+   these sections.  Thus, for example, the startup code to call
+   memset() to initialize .bss will only be linked in when there is a
+   non-empty .bss section.  Otherwise, the call would exist but have a
+   zero length parameter, which is a waste of memory and cycles.
+
+   The code which initializes these sections should have a global
+   label for these symbols, and should be marked with KEEP() in the
+   linker script.  */
+
+static void
+msp430_make_init_symbols (const char * name)
+{
+  if (strncmp (name, ".bss", 4) == 0
+      || strncmp (name, ".gnu.linkonce.b.", 16) == 0)
+    (void) symbol_find_or_make ("__crt0_init_bss");
+
+  if (strncmp (name, ".data", 5) == 0
+      || strncmp (name, ".gnu.linkonce.d.", 16) == 0)
+    (void) symbol_find_or_make ("__crt0_movedata");
+
+  /* Note - data assigned to the .either.data section may end up being
+     placed in the .upper.data section if the .lower.data section is
+     full.  Hence the need to define the crt0 symbol.  */
+  if (strncmp (name, ".either.data", 12) == 0
+      || strncmp (name, ".upper.data", 11) == 0)
+    (void) symbol_find_or_make ("__crt0_move_highdata");
+
+  /* See note about .either.data above.  */
+  if (strncmp (name, ".upper.bss", 10) == 0
+      || strncmp (name, ".either.bss", 11) == 0)
+    (void) symbol_find_or_make ("__crt0_init_highbss");
+}
+
+static void
+msp430_section (int arg)
+{
+  char * saved_ilp = input_line_pointer;
+  char * name = obj_elf_section_name ();
+
+  msp430_make_init_symbols (name);
+
+  input_line_pointer = saved_ilp;
+  obj_elf_section (arg);
+}
+
+void
+msp430_frob_section (asection *sec)
+{
+  const char *name = sec->name;
+
+  if (sec->size == 0)
+    return;
+
+  msp430_make_init_symbols (name);
+}
+
+static void
+msp430_lcomm (int ignore ATTRIBUTE_UNUSED)
+{
+  symbolS *symbolP = s_comm_internal (0, s_lcomm_internal);
+
+  if (symbolP)
+    symbol_get_bfdsym (symbolP)->flags |= BSF_OBJECT;
+  (void) symbol_find_or_make ("__crt0_init_bss");
+}
+
+static void
+msp430_comm (int needs_align)
+{
+  s_comm_internal (needs_align, elf_common_parse);
+  (void) symbol_find_or_make ("__crt0_init_bss");
+}
+
+static void
+msp430_refsym (int arg ATTRIBUTE_UNUSED)
+{
+  char sym_name[1024];
+  input_line_pointer = extract_word (input_line_pointer, sym_name, 1024);
+
+  (void) symbol_find_or_make (sym_name);
+}
 
 const pseudo_typeS md_pseudo_table[] =
 {
-  {"arch", msp430_set_arch, 0},
+  {"arch", msp430_set_arch, OPTION_MMCU},
+  {"cpu", msp430_set_arch, OPTION_MCPU},
   {"profiler", msp430_profiler, 0},
+  {"section", msp430_section, 0},
+  {"section.s", msp430_section, 0},
+  {"sect", msp430_section, 0},
+  {"sect.s", msp430_section, 0},
+  {"pushsection", msp430_section, 1},
+  {"refsym", msp430_refsym, 0},
+  {"comm", msp430_comm, 0},
+  {"lcomm", msp430_lcomm, 0},
   {NULL, NULL, 0}
 };
 
-const char *md_shortopts = "m:";
+const char *md_shortopts = "mm:,mP,mQ,ml,mN,mn,my,mY";
 
 struct option md_longopts[] =
 {
+  {"msilicon-errata", required_argument, NULL, OPTION_SILICON_ERRATA},
+  {"msilicon-errata-warn", required_argument, NULL, OPTION_SILICON_ERRATA_WARN},
   {"mmcu", required_argument, NULL, OPTION_MMCU},
+  {"mcpu", required_argument, NULL, OPTION_MCPU},
   {"mP", no_argument, NULL, OPTION_POLYMORPHS},
   {"mQ", no_argument, NULL, OPTION_RELAX},
+  {"ml", no_argument, NULL, OPTION_LARGE},
+  {"mN", no_argument, NULL, OPTION_NO_INTR_NOPS},
+  {"mn", no_argument, NULL, OPTION_INTR_NOPS},
+  {"mY", no_argument, NULL, OPTION_NO_WARN_INTR_NOPS},
+  {"my", no_argument, NULL, OPTION_WARN_INTR_NOPS},
+  {"md", no_argument, NULL, OPTION_MOVE_DATA},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -789,38 +1570,33 @@ md_show_usage (FILE * stream)
 {
   fprintf (stream,
 	   _("MSP430 options:\n"
-	     "  -mmcu=[msp430-name] select microcontroller type\n"
-	     "                  msp430x110  msp430x112\n"
-	     "                  msp430x1101 msp430x1111\n"
-	     "                  msp430x1121 msp430x1122 msp430x1132\n"
-	     "                  msp430x122  msp430x123\n"
-	     "                  msp430x1222 msp430x1232\n"
-	     "                  msp430x133  msp430x135\n"
-	     "                  msp430x1331 msp430x1351\n"
-	     "                  msp430x147  msp430x148  msp430x149\n"
-	     "                  msp430x155  msp430x156  msp430x157\n"
-	     "                  msp430x167  msp430x168  msp430x169\n"
-	     "                  msp430x1610 msp430x1611 msp430x1612\n"
-	     "                  msp430x311  msp430x312  msp430x313  msp430x314  msp430x315\n"
-	     "                  msp430x323  msp430x325\n"
-	     "                  msp430x336  msp430x337\n"
-	     "                  msp430x412  msp430x413  msp430x415  msp430x417\n"
-	     "                  msp430xE423 msp430xE425 msp430E427\n"
-	     "                  msp430xW423 msp430xW425 msp430W427\n"
-	     "                  msp430xG437 msp430xG438 msp430G439\n"
-	     "                  msp430x435  msp430x436  msp430x437\n"
-	     "                  msp430x447  msp430x448  msp430x449\n"));
+	     "  -mmcu=<msp430-name>     - select microcontroller type\n"
+             "  -mcpu={430|430x|430xv2} - select microcontroller architecture\n"));
+  fprintf (stream,
+	   _("  -msilicon-errata=<name>[,<name>...] - enable fixups for silicon errata\n"
+	     "  -msilicon-errata-warn=<name>[,<name>...] - warn when a fixup might be needed\n"
+	     "   supported errata names: cpu4, cpu8, cpu11, cpu12, cpu13, cpu19\n"));
   fprintf (stream,
 	   _("  -mQ - enable relaxation at assembly time. DANGEROUS!\n"
 	     "  -mP - enable polymorph instructions\n"));
-
-  show_mcu_list (stream);
+  fprintf (stream,
+	   _("  -ml - enable large code model\n"));
+  fprintf (stream,
+	   _("  -mN - do not insert NOPs after changing interrupts (default)\n"));
+  fprintf (stream,
+	   _("  -mn - insert a NOP after changing interrupts\n"));
+  fprintf (stream,
+	   _("  -mY - do not warn about missing NOPs after changing interrupts\n"));
+  fprintf (stream,
+	   _("  -my - warn about missing NOPs after changing interrupts (default)\n"));
+  fprintf (stream,
+	   _("  -md - Force copying of data from ROM to RAM at startup\n"));
 }
 
 symbolS *
 md_undefined_symbol (char * name ATTRIBUTE_UNUSED)
 {
-  return 0;
+  return NULL;
 }
 
 static char *
@@ -855,34 +1631,53 @@ md_begin (void)
   for (opcode = msp430_opcodes; opcode->name; opcode++)
     hash_insert (msp430_hash, opcode->name, (char *) opcode);
 
-  bfd_set_arch_mach (stdoutput, TARGET_ARCH, msp430_mcu->mach);
+  bfd_set_arch_mach (stdoutput, TARGET_ARCH,
+		     target_is_430x () ? bfd_mach_msp430x : bfd_mach_msp11);
 }
 
-static int
+/* Returns the register number equivalent to the string T.
+   Returns -1 if there is no such register.
+   Skips a leading 'r' or 'R' character if there is one.
+   Handles the register aliases PC and SP.  */
+
+static signed int
 check_reg (char * t)
 {
-  /* If this is a reg numb, str 't' must be a number from 0 - 15.  */
+  signed int val;
 
-  if (strlen (t) > 2 && *(t + 2) != '+')
+  if (t == NULL)
+    return -1;
+
+  if (*t == 'r' || *t == 'R')
+    ++t;
+
+  if (strncasecmp (t, "pc", 2) == 0)
+    return 0;
+
+  if (strncasecmp (t, "sp", 2) == 0)
     return 1;
 
-  while (*t)
-    {
-      if ((*t < '0' || *t > '9') && *t != '+')
-	break;
-      t++;
-    }
+  if (strncasecmp (t, "sr", 2) == 0)
+    return 2;
 
-  if (*t)
-    return 1;
+  if (*t == '0')
+    return 0;
 
-  return 0;
+  val = atoi (t);
+
+  if (val < 1 || val > 15)
+    return -1;
+
+  return val;
 }
-
 
 static int
 msp430_srcoperand (struct msp430_operand_s * op,
-		   char * l, int bin, int * imm_op)
+		   char * l,
+		   int bin,
+		   bfd_boolean * imm_op,
+		   bfd_boolean allow_20bit_values,
+		   bfd_boolean constants_allowed)
 {
   char *__tl = l;
 
@@ -900,7 +1695,7 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	 hhi(x) - x = (x >> 48) & 0xffff
 	 The value _MUST_ be constant expression: #hlo(1231231231).  */
 
-      *imm_op = 1;
+      *imm_op = TRUE;
 
       if (strncasecmp (h, "#llo(", 5) == 0)
 	{
@@ -935,9 +1730,10 @@ msp430_srcoperand (struct msp430_operand_s * op,
 
       op->reg = 0;		/* Reg PC.  */
       op->am = 3;
-      op->ol = 1;		/* Immediate  will follow an instruction.  */
+      op->ol = 1;		/* Immediate will follow an instruction.  */
       __tl = h + 1 + rval;
       op->mode = OP_EXP;
+      op->vshift = vshift;
 
       parse_exp (__tl, &(op->exp));
       if (op->exp.X_op == O_constant)
@@ -953,6 +1749,7 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	    {
 	      x = (x >> 16) & 0xffff;
 	      op->exp.X_add_number = x;
+	      op->vshift = 0;
 	    }
 	  else if (vshift > 1)
 	    {
@@ -961,9 +1758,18 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	      else
 		op->exp.X_add_number = 0;	/* Nothing left.  */
 	      x = op->exp.X_add_number;
+	      op->vshift = 0;
 	    }
 
-	  if (op->exp.X_add_number > 65535 || op->exp.X_add_number < -32768)
+	  if (allow_20bit_values)
+	    {
+	      if (op->exp.X_add_number > 0xfffff || op->exp.X_add_number < -524288)
+		{
+		  as_bad (_("value 0x%x out of extended range."), x);
+		  return 1;
+		}
+	    }
+	  else if (op->exp.X_add_number > 65535 || op->exp.X_add_number < -32768)
 	    {
 	      as_bad (_("value %d out of range. Use #lo() or #hi()"), x);
 	      return 1;
@@ -972,9 +1778,12 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	  /* Now check constants.  */
 	  /* Substitute register mode with a constant generator if applicable.  */
 
-	  x = (short) x;	/* Extend sign.  */
+	  if (!allow_20bit_values)
+	    x = (short) x;	/* Extend sign.  */
 
-	  if (x == 0)
+	  if (! constants_allowed)
+	    ;
+	  else if (x == 0)
 	    {
 	      op->reg = 3;
 	      op->am = 0;
@@ -1004,14 +1813,14 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	    }
 	  else if (x == 4)
 	    {
-#ifdef PUSH_1X_WORKAROUND
-	      if (bin == 0x1200)
+	      if (bin == 0x1200 && ! target_is_430x ())
 		{
-		  /* Remove warning as confusing.
-		     as_warn (_("Hardware push bug workaround")); */
+		  /* CPU4: The shorter form of PUSH #4 is not supported on MSP430.  */
+		  if (silicon_errata_warn & SILICON_ERRATA_CPU4)
+		    as_warn (_("cpu4: not converting PUSH #4 to shorter form"));
+		  /* No need to check silicon_errata_fixes - this fix is always implemented.  */
 		}
 	      else
-#endif
 		{
 		  op->reg = 2;
 		  op->am = 2;
@@ -1021,14 +1830,13 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	    }
 	  else if (x == 8)
 	    {
-#ifdef PUSH_1X_WORKAROUND
-	      if (bin == 0x1200)
+	      if (bin == 0x1200 && ! target_is_430x ())
 		{
-		  /* Remove warning as confusing.
-		     as_warn (_("Hardware push bug workaround")); */
+		  /* CPU4: The shorter form of PUSH #8 is not supported on MSP430.  */
+		  if (silicon_errata_warn & SILICON_ERRATA_CPU4)
+		    as_warn (_("cpu4: not converting PUSH #8 to shorter form"));
 		}
 	      else
-#endif
 		{
 		  op->reg = 2;
 		  op->am = 3;
@@ -1039,16 +1847,20 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	}
       else if (op->exp.X_op == O_symbol)
 	{
+	  if (vshift > 1)
+	    as_bad (_("error: unsupported #foo() directive used on symbol"));
 	  op->mode = OP_EXP;
 	}
       else if (op->exp.X_op == O_big)
 	{
 	  short x;
+
 	  if (vshift != -1)
 	    {
 	      op->exp.X_op = O_constant;
 	      op->exp.X_add_number = 0xffff & generic_bignum[vshift];
 	      x = op->exp.X_add_number;
+	      op->vshift = 0;
 	    }
 	  else
 	    {
@@ -1122,13 +1934,22 @@ msp430_srcoperand (struct msp430_operand_s * op,
       __tl = h + 1;
       parse_exp (__tl, &(op->exp));
       op->mode = OP_EXP;
+      op->vshift = 0;
       if (op->exp.X_op == O_constant)
 	{
 	  int x = op->exp.X_add_number;
 
-	  if (x > 65535 || x < -32768)
+	  if (allow_20bit_values)
 	    {
-	      as_bad (_("value out of range: %d"), x);
+	      if (x > 0xfffff || x < -(0x7ffff))
+		{
+		  as_bad (_("value 0x%x out of extended range."), x);
+		  return 1;
+		}
+	    }
+	  else if (x > 65535 || x < -32768)
+	    {
+	      as_bad (_("value out of range: 0x%x"), x);
 	      return 1;
 	    }
 	}
@@ -1160,29 +1981,21 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	}
 
       t++;
-      if (*t != 'r' && *t != 'R')
-	{
-	  as_bad (_("unknown addressing mode %s"), l);
-	  return 1;
-	}
 
-      t++;	/* Points to the reg value.  */
-
-      if (check_reg (t))
+      if ((op->reg = check_reg (t)) == -1)
 	{
-	  as_bad (_("Bad register name r%s"), t);
+	  as_bad (_("Bad register name %s"), t);
 	  return 1;
 	}
 
       op->mode = OP_REG;
       op->am = m ? 3 : 2;
       op->ol = 0;
-      if (m)
-	*m = 0;			/* strip '+' */
-      op->reg = atoi (t);
-      if (op->reg < 0 || op->reg > 15)
+
+      /* PC cannot be used in indirect addressing.  */
+      if (target_is_430xv2 () && op->reg == 0)
 	{
-	  as_bad (_("MSP430 does not have %d registers"), op->reg);
+	  as_bad (_("cannot use indirect addressing with the PC"));
 	  return 1;
 	}
 
@@ -1196,7 +2009,7 @@ msp430_srcoperand (struct msp430_operand_s * op,
       char *m = strrchr (l, ')');
       char *t;
 
-      *imm_op = 1;
+      *imm_op = TRUE;
 
       if (!h)
 	break;
@@ -1209,61 +2022,43 @@ msp430_srcoperand (struct msp430_operand_s * op,
       t = h;
       op->am = 1;
       op->ol = 1;
-      /* Extract a register.  */
-      t++;	/* Advance pointer.  */
 
-      if (*t != 'r' && *t != 'R')
+      /* Extract a register.  */
+      if ((op->reg = check_reg (t + 1)) == -1)
 	{
 	  as_bad (_
 		  ("unknown operator %s. Did you mean X(Rn) or #[hl][hl][oi](CONST) ?"),
 		  l);
 	  return 1;
 	}
-      t++;
 
-      op->reg = *t - '0';
-      if (op->reg > 9 || op->reg < 0)
+      if (op->reg == 2)
 	{
-	  as_bad (_("unknown operator (r%s substituted as a register name"),
-		  t);
+	  as_bad (_("r2 should not be used in indexed addressing mode"));
 	  return 1;
-	}
-      t++;
-      if (*t != ')')
-	{
-	  op->reg = op->reg * 10;
-	  op->reg += *t - '0';
-
-	  if (op->reg > 15)
-	    {
-	      as_bad (_("unknown operator %s"), l);
-	      return 1;
-	    }
-	  if (op->reg == 2)
-	    {
-	      as_bad (_("r2 should not be used in indexed addressing mode"));
-	      return 1;
-	    }
-
-	  if (*(t + 1) != ')')
-	    {
-	      as_bad (_("unknown operator %s"), l);
-	      return 1;
-	    }
 	}
 
       /* Extract constant.  */
       __tl = l;
       *h = 0;
       op->mode = OP_EXP;
+      op->vshift = 0;
       parse_exp (__tl, &(op->exp));
       if (op->exp.X_op == O_constant)
 	{
 	  int x = op->exp.X_add_number;
 
-	  if (x > 65535 || x < -32768)
+	  if (allow_20bit_values)
 	    {
-	      as_bad (_("value out of range: %d"), x);
+	      if (x > 0xfffff || x < - (0x7ffff))
+		{
+		  as_bad (_("value 0x%x out of extended range."), x);
+		  return 1;
+		}
+	    }
+	  else if (x > 65535 || x < -32768)
+	    {
+	      as_bad (_("value out of range: 0x%x"), x);
 	      return 1;
 	    }
 
@@ -1273,6 +2068,14 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	      op->am = 2;
 	      op->ol = 0;
 	      return 0;
+	    }
+
+	  if (op->reg == 1 && (x & 1))
+	    {
+	      if (silicon_errata_fix & SILICON_ERRATA_CPU8)
+		as_bad (_("CPU8: Stack pointer accessed with an odd offset"));
+	      else if (silicon_errata_warn & SILICON_ERRATA_CPU8)
+		as_warn (_("CPU8: Stack pointer accessed with an odd offset"));
 	    }
 	}
       else if (op->exp.X_op == O_symbol)
@@ -1292,38 +2095,24 @@ msp430_srcoperand (struct msp430_operand_s * op,
     }
   while (0);
 
-  /* Register mode 'mov r1,r2'.  */
-  do
+  /* Possibly register mode 'mov r1,r2'.  */
+  if ((op->reg = check_reg (l)) != -1)
     {
-      char *t = l;
-
-      /* Operand should be a register.  */
-      if (*t == 'r' || *t == 'R')
-	{
-	  int x = atoi (t + 1);
-
-	  if (check_reg (t + 1))
-	    break;
-
-	  if (x < 0 || x > 15)
-	    break;		/* Symbolic mode.  */
-
-	  op->mode = OP_REG;
-	  op->am = 0;
-	  op->ol = 0;
-	  op->reg = x;
-	  return 0;
-	}
+      op->mode = OP_REG;
+      op->am = 0;
+      op->ol = 0;
+      return 0;
     }
-  while (0);
 
   /* Symbolic mode 'mov a, b' == 'mov x(pc), y(pc)'.  */
   do
     {
       op->mode = OP_EXP;
       op->reg = 0;		/* PC relative... be careful.  */
-      op->am = 1;
+      /* An expression starting with a minus sign is a constant, not an address.  */
+      op->am = (*l == '-' ? 3 : 1);
       op->ol = 1;
+      op->vshift = 0;
       __tl = l;
       parse_exp (__tl, &(op->exp));
       return 0;
@@ -1337,10 +2126,16 @@ msp430_srcoperand (struct msp430_operand_s * op,
 
 
 static int
-msp430_dstoperand (struct msp430_operand_s * op, char * l, int bin)
+msp430_dstoperand (struct msp430_operand_s * op,
+		   char * l,
+		   int bin,
+		   bfd_boolean allow_20bit_values,
+		   bfd_boolean constants_allowed)
 {
   int dummy;
-  int ret = msp430_srcoperand (op, l, bin, & dummy);
+  int ret = msp430_srcoperand (op, l, bin, & dummy,
+			       allow_20bit_values,
+			       constants_allowed);
 
   if (ret)
     return ret;
@@ -1352,6 +2147,7 @@ msp430_dstoperand (struct msp430_operand_s * op, char * l, int bin)
       op->mode = OP_EXP;
       op->am = 1;
       op->ol = 1;
+      op->vshift = 0;
       parse_exp (__tl, &(op->exp));
 
       if (op->exp.X_op != O_constant || op->exp.X_add_number != 0)
@@ -1372,6 +2168,272 @@ msp430_dstoperand (struct msp430_operand_s * op, char * l, int bin)
   return 0;
 }
 
+/* Attempt to encode a MOVA instruction with the given operands.
+   Returns the length of the encoded instruction if successful
+   or 0 upon failure.  If the encoding fails, an error message
+   will be returned if a pointer is provided.  */
+
+static int
+try_encode_mova (bfd_boolean imm_op,
+		 int bin,
+		 struct msp430_operand_s * op1,
+		 struct msp430_operand_s * op2,
+		 const char ** error_message_return)
+{
+  short ZEROS = 0;
+  char *frag;
+  int where;
+
+  /* Only a restricted subset of the normal MSP430 addressing modes
+     are supported here, so check for the ones that are allowed.  */
+  if (imm_op)
+    {
+      if (op1->mode == OP_EXP)
+	{
+	  if (op2->mode != OP_REG)
+	    {
+	      if (error_message_return != NULL)
+		* error_message_return = _("expected register as second argument of %s");
+	      return 0;
+	    }
+
+	  if (op1->am == 3)
+	    {
+	      /* MOVA #imm20, Rdst.  */
+	      bin |= 0x80 | op2->reg;
+	      frag = frag_more (4);
+	      where = frag - frag_now->fr_literal;
+	      if (op1->exp.X_op == O_constant)
+		{
+		  bin |= ((op1->exp.X_add_number >> 16) & 0xf) << 8;
+		  bfd_putl16 ((bfd_vma) bin, frag);
+		  bfd_putl16 (op1->exp.X_add_number & 0xffff, frag + 2);
+		}
+	      else
+		{
+		  bfd_putl16 ((bfd_vma) bin, frag);
+		  fix_new_exp (frag_now, where, 4, &(op1->exp), FALSE,
+			       BFD_RELOC_MSP430X_ABS20_ADR_SRC);
+		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		}
+
+	      return 4;
+	    }
+	  else if (op1->am == 1)
+	    {
+	      /* MOVA z16(Rsrc), Rdst.  */
+	      bin |= 0x30 | (op1->reg << 8) | op2->reg;
+	      frag = frag_more (4);
+	      where = frag - frag_now->fr_literal;
+	      bfd_putl16 ((bfd_vma) bin, frag);
+	      if (op1->exp.X_op == O_constant)
+		{
+		  if (op1->exp.X_add_number > 0xffff
+		      || op1->exp.X_add_number < -(0x7fff))
+		    {
+		      if (error_message_return != NULL)
+			* error_message_return = _("index value too big for %s");
+		      return 0;
+		    }
+		  bfd_putl16 (op1->exp.X_add_number & 0xffff, frag + 2);
+		}
+	      else
+		{
+		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		  fix_new_exp (frag_now, where + 2, 2, &(op1->exp), FALSE,
+			       op1->reg == 0 ?
+			       BFD_RELOC_MSP430X_PCR16 :
+			       BFD_RELOC_MSP430X_ABS16);
+		}
+	      return 4;
+	    }
+
+	  if (error_message_return != NULL)
+	    * error_message_return = _("unexpected addressing mode for %s");
+	  return 0;
+	}
+      else if (op1->am == 0)
+	{
+	  /* MOVA Rsrc, ... */
+	  if (op2->mode == OP_REG)
+	    {
+	      bin |= 0xc0 | (op1->reg << 8) | op2->reg;
+	      frag = frag_more (2);
+	      where = frag - frag_now->fr_literal;
+	      bfd_putl16 ((bfd_vma) bin, frag);
+	      return 2;
+	    }
+	  else if (op2->am == 1)
+	    {
+	      if (op2->reg == 2)
+		{
+		  /* MOVA Rsrc, &abs20.  */
+		  bin |= 0x60 | (op1->reg << 8);
+		  frag = frag_more (4);
+		  where = frag - frag_now->fr_literal;
+		  if (op2->exp.X_op == O_constant)
+		    {
+		      bin |= (op2->exp.X_add_number >> 16) & 0xf;
+		      bfd_putl16 ((bfd_vma) bin, frag);
+		      bfd_putl16 (op2->exp.X_add_number & 0xffff, frag + 2);
+		    }
+		  else
+		    {
+		      bfd_putl16 ((bfd_vma) bin, frag);
+		      bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		      fix_new_exp (frag_now, where, 4, &(op2->exp), FALSE,
+				   BFD_RELOC_MSP430X_ABS20_ADR_DST);
+		    }
+		  return 4;
+		}
+
+	      /* MOVA Rsrc, z16(Rdst).  */
+	      bin |= 0x70 | (op1->reg << 8) | op2->reg;
+	      frag = frag_more (4);
+	      where = frag - frag_now->fr_literal;
+	      bfd_putl16 ((bfd_vma) bin, frag);
+	      if (op2->exp.X_op == O_constant)
+		{
+		  if (op2->exp.X_add_number > 0xffff
+		      || op2->exp.X_add_number < -(0x7fff))
+		    {
+		      if (error_message_return != NULL)
+			* error_message_return = _("index value too big for %s");
+		      return 0;
+		    }
+		  bfd_putl16 (op2->exp.X_add_number & 0xffff, frag + 2);
+		}
+	      else
+		{
+		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		  fix_new_exp (frag_now, where + 2, 2, &(op2->exp), FALSE,
+			       op2->reg == 0 ?
+			       BFD_RELOC_MSP430X_PCR16 :
+			       BFD_RELOC_MSP430X_ABS16);
+		}
+	      return 4;
+	    }
+
+	  if (error_message_return != NULL)
+	    * error_message_return = _("unexpected addressing mode for %s");
+	  return 0;
+	}
+    }
+
+  /* imm_op == FALSE.  */
+
+  if (op1->reg == 2 && op1->am == 1 && op1->mode == OP_EXP)
+    {
+      /* MOVA &abs20, Rdst.  */
+      if (op2->mode != OP_REG)
+	{
+	  if (error_message_return != NULL)
+	    * error_message_return = _("expected register as second argument of %s");
+	  return 0;
+	}
+
+      if (op2->reg == 2 || op2->reg == 3)
+	{
+	  if (error_message_return != NULL)
+	    * error_message_return = _("constant generator destination register found in %s");
+	  return 0;
+	}
+
+      bin |= 0x20 | op2->reg;
+      frag = frag_more (4);
+      where = frag - frag_now->fr_literal;
+      if (op1->exp.X_op == O_constant)
+	{
+	  bin |= ((op1->exp.X_add_number >> 16) & 0xf) << 8;
+	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (op1->exp.X_add_number & 0xffff, frag + 2);
+	}
+      else
+	{
+	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+	  fix_new_exp (frag_now, where, 4, &(op1->exp), FALSE,
+		       BFD_RELOC_MSP430X_ABS20_ADR_SRC);
+	}
+      return 4;
+    }
+  else if (op1->mode == OP_REG)
+    {
+      if (op1->am == 3)
+	{
+	  /* MOVA @Rsrc+, Rdst.  */
+	  if (op2->mode != OP_REG)
+	    {
+	      if (error_message_return != NULL)
+		* error_message_return = _("expected register as second argument of %s");
+	      return 0;
+	    }
+
+	  if (op2->reg == 2 || op2->reg == 3)
+	    {
+	      if (error_message_return != NULL)
+		* error_message_return = _("constant generator destination register found in %s");
+	      return 0;
+	    }
+
+	  if (op1->reg == 2 || op1->reg == 3)
+	    {
+	      if (error_message_return != NULL)
+		* error_message_return = _("constant generator source register found in %s");
+	      return 0;
+	    }
+
+	  bin |= 0x10 | (op1->reg << 8) | op2->reg;
+	  frag = frag_more (2);
+	  where = frag - frag_now->fr_literal;
+	  bfd_putl16 ((bfd_vma) bin, frag);
+	  return 2;
+	}
+      else if (op1->am == 2)
+	{
+	  /* MOVA @Rsrc,Rdst */
+	  if (op2->mode != OP_REG)
+	    {
+	      if (error_message_return != NULL)
+		* error_message_return = _("expected register as second argument of %s");
+	      return 0;
+	    }
+
+	  if (op2->reg == 2 || op2->reg == 3)
+	    {
+	      if (error_message_return != NULL)
+		* error_message_return = _("constant generator destination register found in %s");
+	      return 0;
+	    }
+
+	  if (op1->reg == 2 || op1->reg == 3)
+	    {
+	      if (error_message_return != NULL)
+		* error_message_return = _("constant generator source register found in %s");
+	      return 0;
+	    }
+
+	  bin |= (op1->reg << 8) | op2->reg;
+	  frag = frag_more (2);
+	  where = frag - frag_now->fr_literal;
+	  bfd_putl16 ((bfd_vma) bin, frag);
+	  return 2;
+	}
+    }
+
+  if (error_message_return != NULL)
+    * error_message_return = _("unexpected addressing mode for %s");
+
+  return 0;
+}
+
+#define NOP_CHECK_INTERRUPT  (1 << 0)
+#define NOP_CHECK_CPU12      (1 << 1)
+#define NOP_CHECK_CPU19      (1 << 2)
+
+static signed int check_for_nop = 0;
+
+#define is_opcode(NAME) (strcmp (opcode->name, NAME) == 0)
 
 /* Parse instruction operands.
    Return binary opcode.  */
@@ -1380,14 +2442,22 @@ static unsigned int
 msp430_operands (struct msp430_opcode_s * opcode, char * line)
 {
   int bin = opcode->bin_opcode;	/* Opcode mask.  */
-  int __is = 0;
+  int insn_length = 0;
   char l1[MAX_OP_LEN], l2[MAX_OP_LEN];
   char *frag;
   int where;
   struct msp430_operand_s op1, op2;
   int res = 0;
   static short ZEROS = 0;
-  int byte_op, imm_op;
+  bfd_boolean byte_op, imm_op;
+  int op_length = 0;
+  int fmt;
+  int extended = 0x1800;
+  bfd_boolean extended_op = FALSE;
+  bfd_boolean addr_op;
+  const char * error_message;
+  static signed int repeat_count = 0;
+  bfd_boolean fix_emitted;
 
   /* Opcode is the one from opcodes table
      line contains something like
@@ -1395,20 +2465,89 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
      or
      .b @r2+, 5(R1).  */
 
-  /* Check if byte or word operation.  */
-  if (*line == '.' && TOLOWER (*(line + 1)) == 'b')
+  byte_op = FALSE;
+  addr_op = FALSE;
+  if (*line == '.')
     {
-      bin |= BYTE_OPERATION;
-      byte_op = 1;
+      bfd_boolean check = FALSE;
+      ++ line;
+
+      switch (TOLOWER (* line))
+	{
+	case 'b':
+	  /* Byte operation.  */
+	  bin |= BYTE_OPERATION;
+	  byte_op = TRUE;
+	  check = TRUE;
+	  break;
+
+	case 'a':
+	  /* "Address" ops work on 20-bit values.  */
+	  addr_op = TRUE;
+	  bin |= BYTE_OPERATION;
+	  check = TRUE;
+	  break;
+
+	case 'w':
+	  /* Word operation - this is the default.  */
+	  check = TRUE;
+	  break;
+
+	case 0:
+	case ' ':
+	case '\n':
+	case '\r':
+	  as_warn (_("no size modifier after period, .w assumed"));
+	  break;
+
+	default:
+	  as_bad (_("unrecognised instruction size modifier .%c"),
+		   * line);
+	  return 0;
+	}
+
+      if (check)
+	{
+	  ++ line;
+
+	}
     }
-  else
-    byte_op = 0;
 
-  /* skip .[bwBW].  */
-  while (! ISSPACE (*line) && *line)
-    line++;
+  if (*line && ! ISSPACE (*line))
+    {
+      as_bad (_("junk found after instruction: %s.%s"),
+	      opcode->name, line);
+      return 0;
+    }
 
-  if (opcode->insn_opnumb && (!*line || *line == '\n'))
+  /* Catch the case where the programmer has used a ".a" size modifier on an
+     instruction that does not support it.  Look for an alternative extended
+     instruction that has the same name without the period.  Eg: "add.a"
+     becomes "adda".  Although this not an officially supported way of
+     specifing instruction aliases other MSP430 assemblers allow it.  So we
+     support it for compatibility purposes.  */
+  if (addr_op && opcode->fmt >= 0)
+    {
+      char * old_name = opcode->name;
+      char real_name[32];
+
+      sprintf (real_name, "%sa", old_name);
+      opcode = hash_find (msp430_hash, real_name);
+      if (opcode == NULL)
+	{
+	  as_bad (_("instruction %s.a does not exist"), old_name);
+	  return 0;
+	}
+#if 0 /* Enable for debugging.  */
+      as_warn ("treating %s.a as %s", old_name, real_name);
+#endif
+      addr_op = FALSE;
+      bin = opcode->bin_opcode;
+    }
+
+  if (opcode->fmt != -1
+      && opcode->insn_opnumb
+      && (!*line || *line == '\n'))
     {
       as_bad (_("instruction %s requires %d operand(s)"),
 	      opcode->name, opcode->insn_opnumb);
@@ -1420,125 +2559,846 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
   memset (&op1, 0, sizeof (op1));
   memset (&op2, 0, sizeof (op2));
 
-  imm_op = 0;
+  imm_op = FALSE;
 
-  switch (opcode->fmt)
+  if ((fmt = opcode->fmt) < 0)
+    {
+      if (! target_is_430x ())
+	{
+	  as_bad (_("instruction %s requires MSP430X mcu"),
+		  opcode->name);
+	  return 0;
+	}
+
+      fmt = (-fmt) - 1;
+      extended_op = TRUE;
+    }
+
+  if (repeat_count)
+    {
+      /* If requested set the extended instruction repeat count.  */
+      if (extended_op)
+	{
+	  if (repeat_count > 0)
+	    extended |= (repeat_count - 1);
+	  else
+	    extended |= (1 << 7) | (- repeat_count);
+	}
+      else
+	as_bad (_("unable to repeat %s insn"), opcode->name);
+
+      repeat_count = 0;
+    }
+
+  if (check_for_nop)
+    {
+      if (! is_opcode ("nop"))
+	{
+	  bfd_boolean doit = FALSE;
+
+	  do
+	    {
+	      switch (check_for_nop & - check_for_nop)
+		{
+		case NOP_CHECK_INTERRUPT:
+		  if (warn_interrupt_nops)
+		    {
+		      if (gen_interrupt_nops)
+			as_warn (_("NOP inserted between two instructions that change interrupt state"));
+		      else
+			as_warn (_("a NOP might be needed here because of successive changes in interrupt state"));
+		    }
+
+		  if (gen_interrupt_nops)
+		    /* Emit a NOP between interrupt enable/disable.
+		       See 1.3.4.1 of the MSP430x5xx User Guide.  */
+		    doit = TRUE;
+		  break;
+
+		case NOP_CHECK_CPU12:
+		  if (silicon_errata_warn & SILICON_ERRATA_CPU12)
+		    as_warn (_("CPU12: CMP/BIT with PC destinstion ignores next instruction"));
+
+		  if (silicon_errata_fix & SILICON_ERRATA_CPU12)
+		    doit = TRUE;
+		  break;
+
+		case NOP_CHECK_CPU19:
+		  if (silicon_errata_warn & SILICON_ERRATA_CPU19)
+		    as_warn (_("CPU19: Instruction setting CPUOFF must be followed by a NOP"));
+
+		  if (silicon_errata_fix & SILICON_ERRATA_CPU19)
+		    doit = TRUE;
+		  break;
+		  
+		default:
+		  as_bad (_("internal error: unknown nop check state"));
+		  break;
+		}
+	      check_for_nop &= ~ (check_for_nop & - check_for_nop);
+	    }
+	  while (check_for_nop);
+	  
+	  if (doit)
+	    {
+	      frag = frag_more (2);
+	      bfd_putl16 ((bfd_vma) 0x4303 /* NOP */, frag);
+	      dwarf2_emit_insn (2);
+	    }
+	}
+
+      check_for_nop = 0;
+    }
+
+  switch (fmt)
     {
     case 0:			/* Emulated.  */
       switch (opcode->insn_opnumb)
 	{
 	case 0:
+	  if (is_opcode ("eint") || is_opcode ("dint"))
+	    check_for_nop |= NOP_CHECK_INTERRUPT;
+
 	  /* Set/clear bits instructions.  */
-	  __is = 2;
-	  frag = frag_more (__is);
+	  if (extended_op)
+	    {
+	      if (!addr_op)
+		extended |= BYTE_OPERATION;
+
+	      /* Emit the extension word.  */
+	      insn_length += 2;
+	      frag = frag_more (2);
+	      bfd_putl16 (extended, frag);
+	    }
+
+	  insn_length += 2;
+	  frag = frag_more (2);
 	  bfd_putl16 ((bfd_vma) bin, frag);
-	  dwarf2_emit_insn (__is);
+	  dwarf2_emit_insn (insn_length);
 	  break;
+
 	case 1:
 	  /* Something which works with destination operand.  */
 	  line = extract_operand (line, l1, sizeof (l1));
-	  res = msp430_dstoperand (&op1, l1, opcode->bin_opcode);
+	  res = msp430_dstoperand (&op1, l1, opcode->bin_opcode, extended_op, TRUE);
 	  if (res)
 	    break;
 
 	  bin |= (op1.reg | (op1.am << 7));
-	  __is = 1 + op1.ol;
-	  frag = frag_more (2 * __is);
+
+	  /* If the PC is the destination...  */
+	  if (op1.am == 0 && op1.reg == 0
+	      /* ... and the opcode alters the SR.  */
+	      && !(is_opcode ("bic") || is_opcode ("bis") || is_opcode ("mov")
+		   || is_opcode ("bicx") || is_opcode ("bisx") || is_opcode ("movx")))
+	    {
+	      if (silicon_errata_fix & SILICON_ERRATA_CPU11)
+		as_bad (_("CPU11: PC is destinstion of SR altering instruction"));
+	      else if (silicon_errata_warn & SILICON_ERRATA_CPU11)
+		as_warn (_("CPU11: PC is destinstion of SR altering instruction"));
+	    }
+	  
+	  /* If the status register is the destination...  */
+	  if (op1.am == 0 && op1.reg == 2
+	      /* ... and the opcode alters the SR.  */
+	      && (is_opcode ("adc") || is_opcode ("dec") || is_opcode ("decd")
+		  || is_opcode ("inc") || is_opcode ("incd") || is_opcode ("inv")
+		  || is_opcode ("sbc") || is_opcode ("sxt")
+		  || is_opcode ("adcx") || is_opcode ("decx") || is_opcode ("decdx")
+		  || is_opcode ("incx") || is_opcode ("incdx") || is_opcode ("invx")
+		  || is_opcode ("sbcx")
+		  ))
+	    {
+	      if (silicon_errata_fix & SILICON_ERRATA_CPU13)
+		as_bad (_("CPU13: SR is destinstion of SR altering instruction"));
+	      else if (silicon_errata_warn & SILICON_ERRATA_CPU13)
+		as_warn (_("CPU13: SR is destinstion of SR altering instruction"));
+	    }
+	  
+	  if (is_opcode ("clr") && bin == 0x4302 /* CLR R2*/)
+	    check_for_nop |= NOP_CHECK_INTERRUPT;
+
+	  /* Compute the entire instruction length, in bytes.  */
+	  op_length = (extended_op ? 2 : 0) + 2 + (op1.ol * 2);
+	  insn_length += op_length;
+	  frag = frag_more (op_length);
 	  where = frag - frag_now->fr_literal;
+
+	  if (extended_op)
+	    {
+	      if (!addr_op)
+		extended |= BYTE_OPERATION;
+
+	      if (op1.ol != 0 && ((extended & 0xf) != 0))
+		{
+		  as_bad (_("repeat instruction used with non-register mode instruction"));
+		  extended &= ~ 0xf;
+		}
+
+	      if (op1.mode == OP_EXP)
+		{
+		  if (op1.exp.X_op == O_constant)
+		    extended |= ((op1.exp.X_add_number >> 16) & 0xf) << 7;
+
+		  else if (op1.reg || op1.am == 3)	/* Not PC relative.  */
+		    fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+				 BFD_RELOC_MSP430X_ABS20_EXT_SRC);
+		  else
+		    fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+				 BFD_RELOC_MSP430X_PCR20_EXT_SRC);
+		}
+
+	      /* Emit the extension word.  */
+	      bfd_putl16 (extended, frag);
+	      frag += 2;
+	      where += 2;
+	    }
+
 	  bfd_putl16 ((bfd_vma) bin, frag);
-	  dwarf2_emit_insn (2 * __is);
+	  frag += 2;
+	  where += 2;
 
 	  if (op1.mode == OP_EXP)
 	    {
-	      where += 2;
-	      bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
-
-	      if (op1.reg)
-		fix_new_exp (frag_now, where, 2,
-			     &(op1.exp), FALSE, CHECK_RELOC_MSP430);
+	      if (op1.exp.X_op == O_constant)
+		{
+		  bfd_putl16 (op1.exp.X_add_number & 0xffff, frag);
+		}
 	      else
-		fix_new_exp (frag_now, where, 2,
-			     &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		{
+		  bfd_putl16 ((bfd_vma) ZEROS, frag);
+
+		  if (!extended_op)
+		    {
+		      if (op1.reg)
+			fix_new_exp (frag_now, where, 2,
+				     &(op1.exp), FALSE, CHECK_RELOC_MSP430 (op1));
+		      else
+			fix_new_exp (frag_now, where, 2,
+				     &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		    }
+		}
 	    }
+
+	  dwarf2_emit_insn (insn_length);
 	  break;
 
 	case 2:
-	  {
-	    /* Shift instruction.  */
-	    line = extract_operand (line, l1, sizeof (l1));
-	    strncpy (l2, l1, sizeof (l2));
-	    l2[sizeof (l2) - 1] = '\0';
-	    res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op);
-	    res += msp430_dstoperand (&op2, l2, opcode->bin_opcode);
-
-	    if (res)
-	      break;	/* An error occurred.  All warnings were done before.  */
-
-	    bin |= (op2.reg | (op1.reg << 8) | (op1.am << 4) | (op2.am << 7));
-
-	    __is = 1 + op1.ol + op2.ol;	/* insn size in words.  */
-	    frag = frag_more (2 * __is);
-	    where = frag - frag_now->fr_literal;
-	    bfd_putl16 ((bfd_vma) bin, frag);
-	    dwarf2_emit_insn (2 * __is);
-	    
-	    if (op1.mode == OP_EXP)
-	      {
-		where += 2;	/* Advance 'where' as we do not know _where_.  */
-		bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
-
-		if (op1.reg || (op1.reg == 0 && op1.am == 3))	/* Not PC relative.  */
-		  fix_new_exp (frag_now, where, 2,
-			       &(op1.exp), FALSE, CHECK_RELOC_MSP430);
-		else
-		  fix_new_exp (frag_now, where, 2,
-			       &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
-	      }
-
-	    if (op2.mode == OP_EXP)
-	      {
-		imm_op = 0;
-		bfd_putl16 ((bfd_vma) ZEROS, frag + 2 + ((__is == 3) ? 2 : 0));
-
-		if (op2.reg)	/* Not PC relative.  */
-		  fix_new_exp (frag_now, where + 2, 2,
-			       &(op2.exp), FALSE, CHECK_RELOC_MSP430);
-		else
-		  fix_new_exp (frag_now, where + 2, 2,
-			       &(op2.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
-	      }
-	    break;
-	  }
-	case 3:
-	  /* Branch instruction => mov dst, r0.  */
+	  /* Shift instruction.  */
 	  line = extract_operand (line, l1, sizeof (l1));
+	  strncpy (l2, l1, sizeof (l2));
+	  l2[sizeof (l2) - 1] = '\0';
+	  res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op, extended_op, TRUE);
+	  res += msp430_dstoperand (&op2, l2, opcode->bin_opcode, extended_op, TRUE);
 
-	  res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op);
 	  if (res)
-	    break;
+	    break;	/* An error occurred.  All warnings were done before.  */
 
-	  byte_op = 0;
-	  imm_op = 0;
-
-	  bin |= ((op1.reg << 8) | (op1.am << 4));
-	  __is = 1 + op1.ol;
-	  frag = frag_more (2 * __is);
+	  insn_length = (extended_op ? 2 : 0) + 2 + (op1.ol * 2) + (op2.ol * 2);
+	  frag = frag_more (insn_length);
 	  where = frag - frag_now->fr_literal;
+
+	  if (target_is_430xv2 ()
+	      && op1.mode == OP_REG
+	      && op1.reg == 0
+	      && (is_opcode ("rlax")
+		  || is_opcode ("rlcx")
+		  || is_opcode ("rla")
+		  || is_opcode ("rlc")))
+	    {
+	      as_bad (_("%s: attempt to rotate the PC register"), opcode->name);
+	      break;
+	    }
+
+	  /* If the status register is the destination...  */
+	  if (op1.am == 0 && op1.reg == 2
+	      /* ... and the opcode alters the SR.  */
+	      && (is_opcode ("rla") || is_opcode ("rlc")
+		  || is_opcode ("rlax") || is_opcode ("rlcx")
+		  ))
+	    {
+	      if (silicon_errata_fix & SILICON_ERRATA_CPU13)
+		as_bad (_("CPU13: SR is destinstion of SR altering instruction"));
+	      else if (silicon_errata_warn & SILICON_ERRATA_CPU13)
+		as_warn (_("CPU13: SR is destinstion of SR altering instruction"));
+	    }
+	  
+	  if (extended_op)
+	    {
+	      if (!addr_op)
+		extended |= BYTE_OPERATION;
+
+	      if ((op1.ol != 0 || op2.ol != 0) && ((extended & 0xf) != 0))
+		{
+		  as_bad (_("repeat instruction used with non-register mode instruction"));
+		  extended &= ~ 0xf;
+		}
+
+	      if (op1.mode == OP_EXP)
+		{
+		  if (op1.exp.X_op == O_constant)
+		    extended |= ((op1.exp.X_add_number >> 16) & 0xf) << 7;
+
+		  else if (op1.reg || op1.am == 3)	/* Not PC relative.  */
+		    fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+				 BFD_RELOC_MSP430X_ABS20_EXT_SRC);
+		  else
+		    fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+				 BFD_RELOC_MSP430X_PCR20_EXT_SRC);
+		}
+
+	      if (op2.mode == OP_EXP)
+		{
+		  if (op2.exp.X_op == O_constant)
+		    extended |= (op2.exp.X_add_number >> 16) & 0xf;
+
+		  else if (op1.mode == OP_EXP)
+		    fix_new_exp (frag_now, where, 8, &(op2.exp), FALSE,
+				 op2.reg ? BFD_RELOC_MSP430X_ABS20_EXT_ODST
+				 : BFD_RELOC_MSP430X_PCR20_EXT_ODST);
+		  else
+		    fix_new_exp (frag_now, where, 6, &(op2.exp), FALSE,
+				 op2.reg ? BFD_RELOC_MSP430X_ABS20_EXT_DST
+				 : BFD_RELOC_MSP430X_PCR20_EXT_DST);
+		}
+
+	      /* Emit the extension word.  */
+	      bfd_putl16 (extended, frag);
+	      frag += 2;
+	      where += 2;
+	    }
+
+	  bin |= (op2.reg | (op1.reg << 8) | (op1.am << 4) | (op2.am << 7));
 	  bfd_putl16 ((bfd_vma) bin, frag);
-	  dwarf2_emit_insn (2 * __is);
+	  frag += 2;
+	  where += 2;
 
 	  if (op1.mode == OP_EXP)
 	    {
+	      if (op1.exp.X_op == O_constant)
+		{
+		  bfd_putl16 (op1.exp.X_add_number & 0xffff, frag);
+		}
+	      else
+		{
+		  bfd_putl16 ((bfd_vma) ZEROS, frag);
+
+		  if (!extended_op)
+		    {
+		      if (op1.reg || op1.am == 3)	/* Not PC relative.  */
+			fix_new_exp (frag_now, where, 2,
+				     &(op1.exp), FALSE, CHECK_RELOC_MSP430 (op1));
+		      else
+			fix_new_exp (frag_now, where, 2,
+				     &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		    }
+		}
+	      frag += 2;
 	      where += 2;
+	    }
+
+	  if (op2.mode == OP_EXP)
+	    {
+	      if (op2.exp.X_op == O_constant)
+		{
+		  bfd_putl16 (op2.exp.X_add_number & 0xffff, frag);
+		}
+	      else
+		{
+		  bfd_putl16 ((bfd_vma) ZEROS, frag);
+
+		  if (!extended_op)
+		    {
+		      if (op2.reg)	/* Not PC relative.  */
+			fix_new_exp (frag_now, where, 2,
+				     &(op2.exp), FALSE, CHECK_RELOC_MSP430 (op2));
+		      else
+			fix_new_exp (frag_now, where, 2,
+				     &(op2.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		    }
+		}
+	    }
+
+	  dwarf2_emit_insn (insn_length);
+	  break;
+
+	case 3:
+	  /* Branch instruction => mov dst, r0.  */
+	  if (extended_op)
+	    {
+	      as_bad ("Internal error: state 0/3 not coded for extended instructions");
+	      break;
+	    }
+
+	  line = extract_operand (line, l1, sizeof (l1));
+	  res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op, extended_op, FALSE);
+	  if (res)
+	    break;
+
+	  byte_op = FALSE;
+	  imm_op = FALSE;
+	  bin |= ((op1.reg << 8) | (op1.am << 4));
+	  op_length = 2 + 2 * op1.ol;
+	  frag = frag_more (op_length);
+	  where = frag - frag_now->fr_literal;
+	  bfd_putl16 ((bfd_vma) bin, frag);
+
+	  if (op1.mode == OP_EXP)
+	    {
+	      if (op1.exp.X_op == O_constant)
+		{
+		  bfd_putl16 (op1.exp.X_add_number & 0xffff, frag + 2);
+		}
+	      else
+		{
+		  where += 2;
+
+		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+
+		  if (op1.reg || op1.am == 3)
+		    fix_new_exp (frag_now, where, 2,
+				 &(op1.exp), FALSE, CHECK_RELOC_MSP430 (op1));
+		  else
+		    fix_new_exp (frag_now, where, 2,
+				 &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		}
+	    }
+
+	  dwarf2_emit_insn (insn_length + op_length);
+	  break;
+
+	case 4:
+	  /* CALLA instructions.  */
+	  fix_emitted = FALSE;
+
+	  line = extract_operand (line, l1, sizeof (l1));
+	  imm_op = FALSE;
+
+	  res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op,
+				   extended_op, FALSE);
+	  if (res)
+	    break;
+
+	  byte_op = FALSE;
+
+	  op_length = 2 + 2 * op1.ol;
+	  frag = frag_more (op_length);
+	  where = frag - frag_now->fr_literal;
+
+	  if (imm_op)
+	    {
+	      if (op1.am == 3)
+		{
+		  bin |= 0xb0;
+
+		  fix_new_exp (frag_now, where, 4, &(op1.exp), FALSE,
+			       BFD_RELOC_MSP430X_ABS20_ADR_DST);
+		  fix_emitted = TRUE;
+		}
+	      else if (op1.am == 1)
+		{
+		  if (op1.reg == 0)
+		    {
+		      bin |=  0x90;
+
+		      fix_new_exp (frag_now, where, 4, &(op1.exp), FALSE,
+				   BFD_RELOC_MSP430X_PCR20_CALL);
+		      fix_emitted = TRUE;
+		    }
+		  else
+		    bin |=  0x50 | op1.reg;
+		}
+	      else if (op1.am == 0)
+		bin |= 0x40 | op1.reg;
+	    }
+	  else if (op1.am == 1)
+	    {
+	      bin |= 0x80;
+
+	      fix_new_exp (frag_now, where, 4, &(op1.exp), FALSE,
+			   BFD_RELOC_MSP430X_ABS20_ADR_DST);
+	      fix_emitted = TRUE;
+	    }
+	  else if (op1.am == 2)
+	    bin |= 0x60 | op1.reg;
+	  else if (op1.am == 3)
+	    bin |= 0x70 | op1.reg;
+
+	  bfd_putl16 ((bfd_vma) bin, frag);
+
+	  if (op1.mode == OP_EXP)
+	    {
+	      if (op1.ol != 1)
+		{
+		  as_bad ("Internal error: unexpected CALLA instruction length: %d\n", op1.ol);
+		  break;
+		}
+
 	      bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
 
-	      if (op1.reg || (op1.reg == 0 && op1.am == 3))
-		fix_new_exp (frag_now, where, 2,
-			     &(op1.exp), FALSE, CHECK_RELOC_MSP430);
-	      else
-		fix_new_exp (frag_now, where, 2,
-			     &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+	      if (! fix_emitted)
+		fix_new_exp (frag_now, where + 2, 2,
+			     &(op1.exp), FALSE, BFD_RELOC_16);
 	    }
+
+	  dwarf2_emit_insn (insn_length + op_length);
+	  break;
+
+	case 5:
+	  {
+	    int n;
+	    int reg;
+
+	    /* [POP|PUSH]M[.A] #N, Rd */
+	    line = extract_operand (line, l1, sizeof (l1));
+	    line = extract_operand (line, l2, sizeof (l2));
+
+	    if (*l1 != '#')
+	      {
+		as_bad (_("expected #n as first argument of %s"), opcode->name);
+		break;
+	      }
+	    parse_exp (l1 + 1, &(op1.exp));
+	    if (op1.exp.X_op != O_constant)
+	      {
+		as_bad (_("expected constant expression for first argument of %s"),
+			opcode->name);
+		break;
+	      }
+
+	    if ((reg = check_reg (l2)) == -1)
+	      {
+		as_bad (_("expected register as second argument of %s"),
+			opcode->name);
+		break;
+	      }
+
+	    op_length = 2;
+	    frag = frag_more (op_length);
+	    where = frag - frag_now->fr_literal;
+	    bin = opcode->bin_opcode;
+	    if (! addr_op)
+	      bin |= 0x100;
+	    n = op1.exp.X_add_number;
+	    bin |= (n - 1) << 4;
+	    if (is_opcode ("pushm"))
+	      bin |= reg;
+	    else
+	      {
+		if (reg - n + 1 < 0)
+		  {
+		    as_bad (_("Too many registers popped"));
+		    break;
+		  }
+
+		/* CPU21 errata: cannot use POPM to restore the SR register.  */
+		if (target_is_430xv2 ()
+		    && (reg - n + 1 < 3)
+		    && reg >= 2
+		    && is_opcode ("popm"))
+		  {
+		    as_bad (_("Cannot use POPM to restore the SR register"));
+		    break;
+		  }
+
+		bin |= (reg - n + 1);
+	      }
+
+	    bfd_putl16 ((bfd_vma) bin, frag);
+	    dwarf2_emit_insn (op_length);
+	    break;
+	  }
+
+	case 6:
+	  {
+	    int n;
+	    int reg;
+
+	    /* Bit rotation instructions. RRCM, RRAM, RRUM, RLAM.  */
+	    if (extended & 0xff)
+	      {
+		as_bad (_("repeat count cannot be used with %s"), opcode->name);
+		break;
+	      }
+
+	    line = extract_operand (line, l1, sizeof (l1));
+	    line = extract_operand (line, l2, sizeof (l2));
+
+	    if (*l1 != '#')
+	      {
+		as_bad (_("expected #n as first argument of %s"), opcode->name);
+		break;
+	      }
+	    parse_exp (l1 + 1, &(op1.exp));
+	    if (op1.exp.X_op != O_constant)
+	      {
+		as_bad (_("expected constant expression for first argument of %s"),
+			opcode->name);
+		break;
+	      }
+	    n = op1.exp.X_add_number;
+	    if (n > 4 || n < 1)
+	      {
+		as_bad (_("expected first argument of %s to be in the range 1-4"),
+			opcode->name);
+		break;
+	      }
+
+	    if ((reg = check_reg (l2)) == -1)
+	      {
+		as_bad (_("expected register as second argument of %s"),
+			opcode->name);
+		break;
+	      }
+
+	    if (target_is_430xv2 () && reg == 0)
+	      {
+		as_bad (_("%s: attempt to rotate the PC register"), opcode->name);
+		break;
+	      }
+
+	    op_length = 2;
+	    frag = frag_more (op_length);
+	    where = frag - frag_now->fr_literal;
+
+	    bin = opcode->bin_opcode;
+	    if (! addr_op)
+	      bin |= 0x10;
+	    bin |= (n - 1) << 10;
+	    bin |= reg;
+
+	    bfd_putl16 ((bfd_vma) bin, frag);
+	    dwarf2_emit_insn (op_length);
+	    break;
+	  }
+
+	case 7:
+	  {
+	    int reg;
+
+	    /* RRUX: Synthetic unsigned right shift of a register by one bit.  */
+	    if (extended & 0xff)
+	      {
+		as_bad (_("repeat count cannot be used with %s"), opcode->name);
+		break;
+	      }
+
+	    line = extract_operand (line, l1, sizeof (l1));
+	    if ((reg = check_reg (l1)) == -1)
+	      {
+		as_bad (_("expected register as argument of %s"),
+			opcode->name);
+		break;
+	      }
+
+	    if (target_is_430xv2 () && reg == 0)
+	      {
+		as_bad (_("%s: attempt to rotate the PC register"), opcode->name);
+		break;
+	      }
+
+	    if (byte_op)
+	      {
+		/* Tricky - there is no single instruction that will do this.
+		   Encode as: RRA.B rN { BIC.B #0x80, rN  */
+		op_length = 6;
+		frag = frag_more (op_length);
+		where = frag - frag_now->fr_literal;
+		bin = 0x1140 | reg;
+		bfd_putl16 ((bfd_vma) bin, frag);
+		dwarf2_emit_insn (2);
+		bin = 0xc070 | reg;
+		bfd_putl16 ((bfd_vma) bin, frag + 2);
+		bin = 0x0080;
+		bfd_putl16 ((bfd_vma) bin, frag + 4);
+		dwarf2_emit_insn (4);
+	      }
+	    else
+	      {
+		/* Encode as RRUM[.A] rN.  */
+		bin = opcode->bin_opcode;
+		if (! addr_op)
+		  bin |= 0x10;
+		bin |= reg;
+		op_length = 2;
+		frag = frag_more (op_length);
+		where = frag - frag_now->fr_literal;
+		bfd_putl16 ((bfd_vma) bin, frag);
+		dwarf2_emit_insn (op_length);
+	      }
+	    break;
+	  }
+
+	case 8:
+	  {
+	    bfd_boolean need_reloc = FALSE;
+	    int n;
+	    int reg;
+
+	    /* ADDA, CMPA and SUBA address instructions.  */
+	    if (extended & 0xff)
+	      {
+		as_bad (_("repeat count cannot be used with %s"), opcode->name);
+		break;
+	      }
+
+	    line = extract_operand (line, l1, sizeof (l1));
+	    line = extract_operand (line, l2, sizeof (l2));
+
+	    bin = opcode->bin_opcode;
+
+	    if (*l1 == '#')
+	      {
+		parse_exp (l1 + 1, &(op1.exp));
+
+		if (op1.exp.X_op == O_constant)
+		  {
+		    n = op1.exp.X_add_number;
+		    if (n > 0xfffff || n < - (0x7ffff))
+		      {
+			as_bad (_("expected value of first argument of %s to fit into 20-bits"),
+				opcode->name);
+			break;
+		      }
+
+		    bin |= ((n >> 16) & 0xf) << 8;
+		  }
+		else
+		  {
+		    n = 0;
+		    need_reloc = TRUE;
+		  }
+
+		op_length = 4;
+	      }
+	    else
+	      {
+		if ((n = check_reg (l1)) == -1)
+		  {
+		    as_bad (_("expected register name or constant as first argument of %s"),
+			    opcode->name);
+		    break;
+		  }
+
+		bin |= (n << 8) | (1 << 6);
+		op_length = 2;
+	      }
+
+	    if ((reg = check_reg (l2)) == -1)
+	      {
+		as_bad (_("expected register as second argument of %s"),
+			opcode->name);
+		break;
+	      }
+
+	    frag = frag_more (op_length);
+	    where = frag - frag_now->fr_literal;
+	    bin |= reg;
+	    if (need_reloc)
+	      fix_new_exp (frag_now, where, 4, &(op1.exp), FALSE,
+			   BFD_RELOC_MSP430X_ABS20_ADR_SRC);
+
+	    bfd_putl16 ((bfd_vma) bin, frag);
+	    if (op_length == 4)
+	      bfd_putl16 ((bfd_vma) (n & 0xffff), frag + 2);
+	    dwarf2_emit_insn (op_length);
+	    break;
+	  }
+
+	case 9: /* MOVA, BRA, RETA.  */
+	  imm_op = FALSE;
+	  bin = opcode->bin_opcode;
+
+	  if (is_opcode ("reta"))
+	    {
+	      /* The RETA instruction does not take any arguments.
+		 The implicit first argument is @SP+.
+		 The implicit second argument is PC.  */
+	      op1.mode = OP_REG;
+	      op1.am = 3;
+	      op1.reg = 1;
+
+	      op2.mode = OP_REG;
+	      op2.reg = 0;
+	    }
+	  else
+	    {
+	      line = extract_operand (line, l1, sizeof (l1));
+	      res = msp430_srcoperand (&op1, l1, opcode->bin_opcode,
+				       &imm_op, extended_op, FALSE);
+
+	      if (is_opcode ("bra"))
+		{
+		  /* This is the BRA synthetic instruction.
+		     The second argument is always PC.  */
+		  op2.mode = OP_REG;
+		  op2.reg = 0;
+		}
+	      else
+		{
+		  line = extract_operand (line, l2, sizeof (l2));
+		  res += msp430_dstoperand (&op2, l2, opcode->bin_opcode,
+					    extended_op, TRUE);
+		}
+
+	      if (res)
+		break;	/* Error occurred.  All warnings were done before.  */
+	    }
+
+	  /* Only a restricted subset of the normal MSP430 addressing modes
+	     are supported here, so check for the ones that are allowed.  */
+	  if ((op_length = try_encode_mova (imm_op, bin, & op1, & op2,
+					    & error_message)) == 0)
+	    {
+	      as_bad (error_message, opcode->name);
+	      break;
+	    }
+	  dwarf2_emit_insn (op_length);
+	  break;
+
+	case 10: /* RPT */
+	  line = extract_operand (line, l1, sizeof l1);
+	  /* The RPT instruction only accepted immediates and registers.  */
+	  if (*l1 == '#')
+	    {
+	      parse_exp (l1 + 1, &(op1.exp));
+	      if (op1.exp.X_op != O_constant)
+		{
+		  as_bad (_("expected constant value as argument to RPT"));
+		  break;
+		}
+	      if (op1.exp.X_add_number < 1
+		  || op1.exp.X_add_number > (1 << 4))
+		{
+		  as_bad (_("expected constant in the range 2..16"));
+		  break;
+		}
+
+	      /* We silently accept and ignore a repeat count of 1.  */
+	      if (op1.exp.X_add_number > 1)
+		repeat_count = op1.exp.X_add_number;
+	    }
+	  else
+	    {
+	      int reg;
+
+	      if ((reg = check_reg (l1)) != -1)
+		{
+		  if (reg == 0)
+		    as_warn (_("PC used as an argument to RPT"));
+		  else
+		    repeat_count = - reg;
+		}
+	      else
+		{
+		  as_bad (_("expected constant or register name as argument to RPT insn"));
+		  break;
+		}
+	    }
+	  break;
+
+	default:
+	  as_bad (_("Illegal emulated instruction "));
 	  break;
 	}
       break;
@@ -1546,80 +3406,313 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
     case 1:			/* Format 1, double operand.  */
       line = extract_operand (line, l1, sizeof (l1));
       line = extract_operand (line, l2, sizeof (l2));
-      res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op);
-      res += msp430_dstoperand (&op2, l2, opcode->bin_opcode);
+      res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op, extended_op, TRUE);
+      res += msp430_dstoperand (&op2, l2, opcode->bin_opcode, extended_op, TRUE);
 
       if (res)
 	break;			/* Error occurred.  All warnings were done before.  */
 
+      if (extended_op
+	  && is_opcode ("movx")
+	  && addr_op
+	  && msp430_enable_relax)
+	{
+	  /* This is the MOVX.A instruction.  See if we can convert
+	     it into the MOVA instruction instead.  This saves 2 bytes.  */
+	  if ((op_length = try_encode_mova (imm_op, 0x0000, & op1, & op2,
+					    NULL)) != 0)
+	    {
+	      dwarf2_emit_insn (op_length);
+	      break;
+	    }
+	}
+
       bin |= (op2.reg | (op1.reg << 8) | (op1.am << 4) | (op2.am << 7));
 
-      __is = 1 + op1.ol + op2.ol;	/* insn size in words.  */
-      frag = frag_more (2 * __is);
+      /* If the PC is the destination...  */
+      if (op2.am == 0 && op2.reg == 0
+	  /* ... and the opcode alters the SR.  */
+	  && !(is_opcode ("bic") || is_opcode ("bis") || is_opcode ("mov")
+	       || is_opcode ("bicx") || is_opcode ("bisx") || is_opcode ("movx")))
+	{
+	  if (silicon_errata_fix & SILICON_ERRATA_CPU11)
+	    as_bad (_("CPU11: PC is destinstion of SR altering instruction"));
+	  else if (silicon_errata_warn & SILICON_ERRATA_CPU11)
+	    as_warn (_("CPU11: PC is destinstion of SR altering instruction"));
+	}
+	  
+      /* If the status register is the destination...  */
+      if (op2.am == 0 && op2.reg == 2
+	  /* ... and the opcode alters the SR.  */
+	  && (is_opcode ("add") || is_opcode ("addc") || is_opcode ("and")
+	      || is_opcode ("dadd") || is_opcode ("sub") || is_opcode ("subc")
+	      || is_opcode ("xor")
+	      || is_opcode ("addx") || is_opcode ("addcx") || is_opcode ("andx")
+	      || is_opcode ("daddx") || is_opcode ("subx") || is_opcode ("subcx")
+	      || is_opcode ("xorx")
+	      ))
+	{
+	  if (silicon_errata_fix & SILICON_ERRATA_CPU13)
+	    as_bad (_("CPU13: SR is destinstion of SR altering instruction"));
+	  else if (silicon_errata_warn & SILICON_ERRATA_CPU13)
+	    as_warn (_("CPU13: SR is destinstion of SR altering instruction"));
+	}
+	  
+      if (   (is_opcode ("bic") && bin == 0xc232)
+	  || (is_opcode ("bis") && bin == 0xd232)
+	  || (is_opcode ("mov") && op2.mode == OP_REG && op2.reg == 2))
+	{
+	  /* Avoid false checks when a constant value is being put into the SR.  */
+	  if (op1.mode == OP_EXP
+	      && op1.exp.X_op == O_constant
+	      && (op1.exp.X_add_number & 0x8) != 0x8)
+	    ;
+	  else
+	    check_for_nop |= NOP_CHECK_INTERRUPT;
+	}
+
+      if (((is_opcode ("bis") && bin == 0xd032)
+	   || (is_opcode ("mov") && bin == 0x4032)
+	   || (is_opcode ("xor") && bin == 0xe032))
+	  && op1.mode == OP_EXP
+	  && op1.exp.X_op == O_constant
+	  && (op1.exp.X_add_number & 0x10) == 0x10)
+	check_for_nop |= NOP_CHECK_CPU19;
+
+      /* Compute the entire length of the instruction in bytes.  */
+      op_length = (extended_op ? 2 : 0)	/* The extension word.  */
+	+ 2 			/* The opcode */
+	+ (2 * op1.ol)		/* The first operand. */
+	+ (2 * op2.ol);		/* The second operand.  */
+
+      insn_length += op_length;
+      frag = frag_more (op_length);
       where = frag - frag_now->fr_literal;
+
+      if (extended_op)
+	{
+	  if (!addr_op)
+	    extended |= BYTE_OPERATION;
+
+	  if ((op1.ol != 0 || op2.ol != 0) && ((extended & 0xf) != 0))
+	    {
+	      as_bad (_("repeat instruction used with non-register mode instruction"));
+	      extended &= ~ 0xf;
+	    }
+
+	  /* If necessary, emit a reloc to update the extension word.  */
+	  if (op1.mode == OP_EXP)
+	    {
+	      if (op1.exp.X_op == O_constant)
+		extended |= ((op1.exp.X_add_number >> 16) & 0xf) << 7;
+
+	      else  if (op1.reg || op1.am == 3)	/* Not PC relative.  */
+		fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+			     BFD_RELOC_MSP430X_ABS20_EXT_SRC);
+	      else
+		fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+			     BFD_RELOC_MSP430X_PCR20_EXT_SRC);
+	    }
+
+	  if (op2.mode == OP_EXP)
+	    {
+	      if (op2.exp.X_op == O_constant)
+		extended |= (op2.exp.X_add_number >> 16) & 0xf;
+
+	      else if (op1.mode == OP_EXP)
+		fix_new_exp (frag_now, where, 8, &(op2.exp), FALSE,
+			     op2.reg ? BFD_RELOC_MSP430X_ABS20_EXT_ODST
+			     : BFD_RELOC_MSP430X_PCR20_EXT_ODST);
+
+	      else
+		fix_new_exp (frag_now, where, 6, &(op2.exp), FALSE,
+			     op2.reg ? BFD_RELOC_MSP430X_ABS20_EXT_DST
+			     : BFD_RELOC_MSP430X_PCR20_EXT_DST);
+	    }
+
+	  /* Emit the extension word.  */
+	  bfd_putl16 (extended, frag);
+	  where += 2;
+	  frag += 2;
+	}
+
       bfd_putl16 ((bfd_vma) bin, frag);
-      dwarf2_emit_insn (2 * __is);
+      where += 2;
+      frag += 2;
 
       if (op1.mode == OP_EXP)
 	{
-	  where += 2;		/* Advance where as we do not know _where_.  */
-	  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
-
-	  if (op1.reg || (op1.reg == 0 && op1.am == 3))	/* Not PC relative.  */
-	    fix_new_exp (frag_now, where, 2,
-			 &(op1.exp), FALSE, CHECK_RELOC_MSP430);
+	  if (op1.exp.X_op == O_constant)
+	    {
+	      bfd_putl16 (op1.exp.X_add_number & 0xffff, frag);
+	    }
 	  else
-	    fix_new_exp (frag_now, where, 2,
-			 &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+	    {
+	      bfd_putl16 ((bfd_vma) ZEROS, frag);
+
+	      if (!extended_op)
+		{
+		  if (op1.reg || op1.am == 3)	/* Not PC relative.  */
+		    fix_new_exp (frag_now, where, 2,
+				 &(op1.exp), FALSE, CHECK_RELOC_MSP430 (op1));
+		  else
+		    fix_new_exp (frag_now, where, 2,
+				 &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		}
+	    }
+
+	  where += 2;
+	  frag += 2;
 	}
 
       if (op2.mode == OP_EXP)
 	{
-	  imm_op = 0;
-	  bfd_putl16 ((bfd_vma) ZEROS, frag + 2 + ((__is == 3) ? 2 : 0));
-
-	  if (op2.reg)		/* Not PC relative.  */
-	    fix_new_exp (frag_now, where + 2, 2,
-			 &(op2.exp), FALSE, CHECK_RELOC_MSP430);
+	  if (op2.exp.X_op == O_constant)
+	    {
+	      bfd_putl16 (op2.exp.X_add_number & 0xffff, frag);
+	    }
 	  else
-	    fix_new_exp (frag_now, where + 2, 2,
-			 &(op2.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+	    {
+	      bfd_putl16 ((bfd_vma) ZEROS, frag);
+
+	      if (!extended_op)
+		{
+		  if (op2.reg)		/* Not PC relative.  */
+		    fix_new_exp (frag_now, where, 2,
+				 &(op2.exp), FALSE, CHECK_RELOC_MSP430 (op2));
+		  else
+		    fix_new_exp (frag_now, where, 2,
+				 &(op2.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		}
+	    }
 	}
+
+      dwarf2_emit_insn (insn_length);
+
+      /* If the PC is the destination...  */
+      if (op2.am == 0 && op2.reg == 0
+	  /* ... but the opcode does not alter the destination.  */
+	  && (is_opcode ("cmp") || is_opcode ("bit") || is_opcode ("cmpx")))
+	check_for_nop |= NOP_CHECK_CPU12;
       break;
 
     case 2:			/* Single-operand mostly instr.  */
       if (opcode->insn_opnumb == 0)
 	{
 	  /* reti instruction.  */
+	  insn_length += 2;
 	  frag = frag_more (2);
 	  bfd_putl16 ((bfd_vma) bin, frag);
-	  dwarf2_emit_insn (2);
+	  dwarf2_emit_insn (insn_length);
 	  break;
 	}
 
       line = extract_operand (line, l1, sizeof (l1));
-      res = msp430_srcoperand (&op1, l1, opcode->bin_opcode, &imm_op);
+      res = msp430_srcoperand (&op1, l1, opcode->bin_opcode,
+			       &imm_op, extended_op, TRUE);
       if (res)
 	break;		/* Error in operand.  */
 
-      bin |= op1.reg | (op1.am << 4);
-      __is = 1 + op1.ol;
-      frag = frag_more (2 * __is);
+      if (target_is_430xv2 ()
+	  && op1.mode == OP_REG
+	  && op1.reg == 0
+	  && (is_opcode ("rrax")
+	      || is_opcode ("rrcx")
+	      || is_opcode ("rra")
+	      || is_opcode ("rrc")))
+	{
+	  as_bad (_("%s: attempt to rotate the PC register"), opcode->name);
+	  break;
+	}
+
+      /* If the status register is the destination...  */
+      if (op1.am == 0 && op1.reg == 2
+	  /* ... and the opcode alters the SR.  */
+	  && (is_opcode ("rra") || is_opcode ("rrc") || is_opcode ("sxt")))
+	{
+	  if (silicon_errata_fix & SILICON_ERRATA_CPU13)
+	    as_bad (_("CPU13: SR is destinstion of SR altering instruction"));
+	  else if (silicon_errata_warn & SILICON_ERRATA_CPU13)
+	    as_warn (_("CPU13: SR is destinstion of SR altering instruction"));
+	}
+	  
+      insn_length = (extended_op ? 2 : 0) + 2 + (op1.ol * 2);
+      frag = frag_more (insn_length);
       where = frag - frag_now->fr_literal;
+
+      if (extended_op)
+	{
+	  if (is_opcode ("swpbx") || is_opcode ("sxtx"))
+	    {
+	      /* These two instructions use a special
+		 encoding of the A/L and B/W bits.  */
+	      bin &= ~ BYTE_OPERATION;
+
+	      if (byte_op)
+		{
+		  as_bad (_("%s instruction does not accept a .b suffix"),
+			  opcode->name);
+		  break;
+		}
+	      else if (! addr_op)
+		extended |= BYTE_OPERATION;
+	    }
+	  else if (! addr_op)
+	    extended |= BYTE_OPERATION;
+
+	  if (op1.ol != 0 && ((extended & 0xf) != 0))
+	    {
+	      as_bad (_("repeat instruction used with non-register mode instruction"));
+	      extended &= ~ 0xf;
+	    }
+
+	  if (op1.mode == OP_EXP)
+	    {
+	      if (op1.exp.X_op == O_constant)
+		extended |= ((op1.exp.X_add_number >> 16) & 0xf) << 7;
+
+	      else if (op1.reg || op1.am == 3)	/* Not PC relative.  */
+		fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+			     BFD_RELOC_MSP430X_ABS20_EXT_SRC);
+	      else
+		fix_new_exp (frag_now, where, 6, &(op1.exp), FALSE,
+			     BFD_RELOC_MSP430X_PCR20_EXT_SRC);
+	    }
+
+	  /* Emit the extension word.  */
+	  bfd_putl16 (extended, frag);
+	  frag += 2;
+	  where += 2;
+	}
+
+      bin |= op1.reg | (op1.am << 4);
       bfd_putl16 ((bfd_vma) bin, frag);
-      dwarf2_emit_insn (2 * __is);
+      frag += 2;
+      where += 2;
 
       if (op1.mode == OP_EXP)
 	{
-	  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
-
-	  if (op1.reg || (op1.reg == 0 && op1.am == 3))	/* Not PC relative.  */
-	    fix_new_exp (frag_now, where + 2, 2,
-			 &(op1.exp), FALSE, CHECK_RELOC_MSP430);
+	  if (op1.exp.X_op == O_constant)
+	    {
+	      bfd_putl16 (op1.exp.X_add_number & 0xffff, frag);
+	    }
 	  else
-	    fix_new_exp (frag_now, where + 2, 2,
-			 &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+	    {
+	      bfd_putl16 ((bfd_vma) ZEROS, frag);
+
+	      if (!extended_op)
+		{
+		  if (op1.reg || op1.am == 3)	/* Not PC relative.  */
+		    fix_new_exp (frag_now, where, 2,
+				 &(op1.exp), FALSE, CHECK_RELOC_MSP430 (op1));
+		  else
+		    fix_new_exp (frag_now, where, 2,
+				 &(op1.exp), TRUE, CHECK_RELOC_MSP430_PCREL);
+		}
+	    }
 	}
+
+      dwarf2_emit_insn (insn_length);
       break;
 
     case 3:			/* Conditional jumps instructions.  */
@@ -1634,7 +3727,6 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	    m++;
 
 	  parse_exp (m, &exp);
-	  frag = frag_more (2);	/* Instr size is 1 word.  */
 
 	  /* In order to handle something like:
 
@@ -1678,11 +3770,16 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		  break;
 		}
 
+	      insn_length += 2;
+	      frag = frag_more (2);	/* Instr size is 1 word.  */
+
 	      bin |= x & 0x3ff;
 	      bfd_putl16 ((bfd_vma) bin, frag);
 	    }
 	  else if (exp.X_op == O_symbol && *l1 != '$')
 	    {
+	      insn_length += 2;
+	      frag = frag_more (2);	/* Instr size is 1 word.  */
 	      where = frag - frag_now->fr_literal;
 	      fix_new_exp (frag_now, where, 2,
 			   &exp, TRUE, BFD_RELOC_MSP430_10_PCREL);
@@ -1694,11 +3791,9 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      as_bad (_("instruction requires label sans '$'"));
 	    }
 	  else
-	    {
-	      as_bad (_
-		      ("instruction requires label or value in range -511:512"));
-	    }
-	  dwarf2_emit_insn (2 * __is);
+	    as_bad (_
+		    ("instruction requires label or value in range -511:512"));
+	  dwarf2_emit_insn (insn_length);
 	  break;
 	}
       else
@@ -1714,7 +3809,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	  as_bad (_("polymorphs are not enabled. Use -mP option to enable."));
 	  break;
 	}
-	
+
       line = extract_operand (line, l1, sizeof (l1));
       if (l1[0])
 	{
@@ -1731,15 +3826,20 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      /* Relaxation required.  */
 	      struct rcodes_s rc = msp430_rcodes[opcode->insn_opnumb];
 
-	      /* The parameter to dwarf2_emit_insn is actually the offset to the start
-		 of the insn from the fix piece of instruction that was emitted.
-		 Since next fragments may have variable size we tie debug info
-	         to the beginning of the instruction. */
+	      if (target_is_430x ())
+		rc = msp430x_rcodes[opcode->insn_opnumb];
+
+	      /* The parameter to dwarf2_emit_insn is actually the offset to
+		 the start of the insn from the fix piece of instruction that
+		 was emitted.  Since next fragments may have variable size we
+		 tie debug info to the beginning of the instruction.  */
+	      insn_length += 8;
 	      frag = frag_more (8);
 	      dwarf2_emit_insn (0);
 	      bfd_putl16 ((bfd_vma) rc.sop, frag);
 	      frag = frag_variant (rs_machine_dependent, 8, 2,
-				   ENCODE_RELAX (rc.lpos, STATE_BITS10), /* Wild guess.  */
+				    /* Wild guess.  */
+				   ENCODE_RELAX (rc.lpos, STATE_BITS10),
 				   exp.X_add_symbol,
 				   0,	/* Offset is zero if jump dist less than 1K.  */
 				   (char *) frag);
@@ -1772,6 +3872,10 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      /* Relaxation required.  */
 	      struct hcodes_s hc = msp430_hcodes[opcode->insn_opnumb];
 
+	      if (target_is_430x ())
+		hc = msp430x_hcodes[opcode->insn_opnumb];
+
+	      insn_length += 8;
 	      frag = frag_more (8);
 	      dwarf2_emit_insn (0);
 	      bfd_putl16 ((bfd_vma) hc.op0, frag);
@@ -1805,9 +3909,9 @@ md_assemble (char * str)
   unsigned int i = 0;
 
   str = skip_space (str);	/* Skip leading spaces.  */
-  str = extract_cmd (str, cmd, sizeof (cmd));
+  str = extract_cmd (str, cmd, sizeof (cmd) - 1);
 
-  while (cmd[i] && i < sizeof (cmd))
+  while (cmd[i])
     {
       char a = TOLOWER (cmd[i]);
       cmd[i] = a;
@@ -1844,7 +3948,7 @@ md_section_align (asection * seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
 
-  return ((addr + (1 << align) - 1) & (-1 << align));
+  return ((addr + (1 << align) - 1) & -(1 << align));
 }
 
 /* If you define this macro, it should return the offset between the
@@ -1866,16 +3970,20 @@ md_pcrel_from_section (fixS * fixp, segT sec)
 
 /* Replaces standard TC_FORCE_RELOCATION_LOCAL.
    Now it handles the situation when relocations
-   have to be passed to linker. */
+   have to be passed to linker.  */
 int
-msp430_force_relocation_local(fixS *fixp)
+msp430_force_relocation_local (fixS *fixp)
 {
+  if (fixp->fx_r_type == BFD_RELOC_MSP430_10_PCREL)
+    return 1;
+  if (fixp->fx_pcrel)
+    return 1;
   if (msp430_enable_polys
         && !msp430_enable_relax)
     return 1;
-  else
-    return (!fixp->fx_pcrel
-	    || generic_force_reloc(fixp));
+
+  return (!fixp->fx_pcrel
+	  || generic_force_reloc (fixp));
 }
 
 
@@ -1928,24 +4036,18 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
 	      value -= S_GET_VALUE (fixp->fx_subsy);
 	      fixp->fx_done = 1;
 	    }
-	  else
-	    {
-	      /* We don't actually support subtracting a symbol.  */
-	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    _("expression too complex"));
-	    }
 	}
     }
 
   fixp->fx_no_overflow = 1;
 
-  /* if polymorphs are enabled and relax disabled. 
-     do not kill any relocs and pass them to linker. */
-  if (msp430_enable_polys 
+  /* If polymorphs are enabled and relax disabled.
+     do not kill any relocs and pass them to linker.  */
+  if (msp430_enable_polys
       && !msp430_enable_relax)
     {
-      if (!fixp->fx_addsy || (fixp->fx_addsy 
-	  && S_GET_SEGMENT (fixp->fx_addsy) == absolute_section))
+      if (!fixp->fx_addsy
+	  || S_GET_SEGMENT (fixp->fx_addsy) == absolute_section)
 	fixp->fx_done = 1;	/* It is ok to kill 'abs' reloc.  */
       else
       	fixp->fx_done = 0;
@@ -1955,7 +4057,6 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
     {
       /* Fetch the instruction, insert the fully resolved operand
 	 value, and stuff the instruction back again.  */
-
       where = (unsigned char *) fixp->fx_frag->fr_literal + fixp->fx_where;
 
       insn = bfd_getl16 (where);
@@ -1979,27 +4080,31 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
 	  bfd_putl16 ((bfd_vma) (value | insn), where);
 	  break;
 
+	case BFD_RELOC_MSP430X_PCR16:
 	case BFD_RELOC_MSP430_RL_PCREL:
 	case BFD_RELOC_MSP430_16_PCREL:
 	  if (value & 1)
 	    as_bad_where (fixp->fx_file, fixp->fx_line,
 			  _("odd address operand: %ld"), value);
-
-	  /* Nothing to be corrected here.  */
-	  if (value < -32768 || value > 65536)
-	    as_bad_where (fixp->fx_file, fixp->fx_line,
-			  _("operand out of range: %ld"), value);
-
-	  value &= 0xffff;	/* Get rid of extended sign.  */
-	  bfd_putl16 ((bfd_vma) value, where);
-	  break;
+	  /* Fall through.  */
 
 	case BFD_RELOC_MSP430_16_PCREL_BYTE:
 	  /* Nothing to be corrected here.  */
 	  if (value < -32768 || value > 65536)
 	    as_bad_where (fixp->fx_file, fixp->fx_line,
 			  _("operand out of range: %ld"), value);
+	  /* Fall through.  */
 
+	case BFD_RELOC_MSP430X_ABS16:
+	case BFD_RELOC_MSP430_16:
+	case BFD_RELOC_16:
+	case BFD_RELOC_MSP430_16_BYTE:
+	  value &= 0xffff;	/* Get rid of extended sign.  */
+	  bfd_putl16 ((bfd_vma) value, where);
+	  break;
+
+	case BFD_RELOC_MSP430_ABS_HI16:
+	  value >>= 16;
 	  value &= 0xffff;	/* Get rid of extended sign.  */
 	  bfd_putl16 ((bfd_vma) value, where);
 	  break;
@@ -2008,11 +4113,53 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
 	  bfd_putl16 ((bfd_vma) value, where);
 	  break;
 
-	case BFD_RELOC_MSP430_16:
-	case BFD_RELOC_16:
-	case BFD_RELOC_MSP430_16_BYTE:
-	  value &= 0xffff;
-	  bfd_putl16 ((bfd_vma) value, where);
+	case BFD_RELOC_MSP430_ABS8:
+	case BFD_RELOC_8:
+	  bfd_put_8 (NULL, (bfd_vma) value, where);
+	  break;
+
+	case BFD_RELOC_MSP430X_ABS20_EXT_SRC:
+	case BFD_RELOC_MSP430X_PCR20_EXT_SRC:
+	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 4);
+	  value >>= 16;
+	  bfd_putl16 ((bfd_vma) (((value & 0xf) << 7) | insn), where);
+	  break;
+
+	case BFD_RELOC_MSP430X_ABS20_ADR_SRC:
+	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 2);
+	  value >>= 16;
+	  bfd_putl16 ((bfd_vma) (((value & 0xf) << 8) | insn), where);
+	  break;
+
+	case BFD_RELOC_MSP430X_ABS20_EXT_ODST:
+	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 6);
+	  value >>= 16;
+	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  break;
+
+	case BFD_RELOC_MSP430X_PCR20_CALL:
+	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 2);
+	  value >>= 16;
+	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  break;
+
+	case BFD_RELOC_MSP430X_ABS20_EXT_DST:
+	case BFD_RELOC_MSP430X_PCR20_EXT_DST:
+	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 4);
+	  value >>= 16;
+	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  break;
+
+	case BFD_RELOC_MSP430X_PCR20_EXT_ODST:
+	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 6);
+	  value >>= 16;
+	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  break;
+
+	case BFD_RELOC_MSP430X_ABS20_ADR_DST:
+	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 2);
+	  value >>= 16;
+	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
 	  break;
 
 	default:
@@ -2027,6 +4174,20 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
     }
 }
 
+static bfd_boolean
+S_IS_GAS_LOCAL (symbolS * s)
+{
+  const char * name;
+  unsigned int len;
+
+  if (s == NULL)
+    return FALSE;
+  name = S_GET_NAME (s);
+  len = strlen (name) - 1;
+
+  return name[len] == 1 || name[len] == 2;
+}
+
 /* GAS will call this to generate a reloc, passing the resulting reloc
    to `bfd_install_relocation'.  This currently works poorly, as
    `bfd_install_relocation' often does the wrong thing, and instances of
@@ -2036,33 +4197,157 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
 /* If while processing a fixup, a reloc really needs to be created
    then it is done here.  */
 
-arelent *
+arelent **
 tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
 {
-  arelent * reloc;
+  static arelent * no_relocs = NULL;
+  static arelent * relocs[MAX_RELOC_EXPANSION + 1];
+  arelent *reloc;
 
   reloc = xmalloc (sizeof (arelent));
-
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
-  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
+
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("reloc %d not supported by object file format"),
 		    (int) fixp->fx_r_type);
-      return NULL;
+      free (reloc);
+      return & no_relocs;
     }
 
-  if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
-    reloc->address = fixp->fx_offset;
+  relocs[0] = reloc;
+  relocs[1] = NULL;
 
-  reloc->addend = fixp->fx_offset;
+  if (fixp->fx_subsy
+      && S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
+    {
+      fixp->fx_offset -= S_GET_VALUE (fixp->fx_subsy);
+      fixp->fx_subsy = NULL;
+    }
 
-  return reloc;
+  if (fixp->fx_addsy && fixp->fx_subsy)
+    {
+      asection *asec, *ssec;
+
+      asec = S_GET_SEGMENT (fixp->fx_addsy);
+      ssec = S_GET_SEGMENT (fixp->fx_subsy);
+
+      /* If we have a difference between two different, non-absolute symbols
+	 we must generate two relocs (one for each symbol) and allow the
+	 linker to resolve them - relaxation may change the distances between
+	 symbols, even local symbols defined in the same section.
+
+	 Unfortunately we cannot do this with assembler generated local labels
+	 because there can be multiple incarnations of the same label, with
+	 exactly the same name, in any given section and the linker will have
+	 no way to identify the correct one.  Instead we just have to hope
+	 that no relaxtion will occur between the local label and the other
+	 symbol in the expression.
+
+	 Similarly we have to compute differences between symbols in the .eh_frame
+	 section as the linker is not smart enough to apply relocations there
+	 before attempting to process it.  */
+      if ((ssec != absolute_section || asec != absolute_section)
+	  && (fixp->fx_addsy != fixp->fx_subsy)
+	  && strcmp (ssec->name, ".eh_frame") != 0
+	  && ! S_IS_GAS_LOCAL (fixp->fx_addsy)
+	  && ! S_IS_GAS_LOCAL (fixp->fx_subsy))
+	{
+	  arelent * reloc2 = xmalloc (sizeof * reloc);
+
+	  relocs[0] = reloc2;
+	  relocs[1] = reloc;
+
+	  reloc2->address = reloc->address;
+	  reloc2->howto = bfd_reloc_type_lookup (stdoutput,
+						 BFD_RELOC_MSP430_SYM_DIFF);
+	  reloc2->addend = - S_GET_VALUE (fixp->fx_subsy);
+
+	  if (ssec == absolute_section)
+	    reloc2->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  else
+	    {
+	      reloc2->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+	      *reloc2->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
+	    }
+
+	  reloc->addend = fixp->fx_offset;
+	  if (asec == absolute_section)
+	    {
+	      reloc->addend += S_GET_VALUE (fixp->fx_addsy);
+	      reloc->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	    }
+	  else
+	    {
+	      reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+	      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+	    }
+
+	  fixp->fx_pcrel = 0;
+	  fixp->fx_done = 1;
+	  return relocs;
+	}
+      else
+	{
+	  char *fixpos = fixp->fx_where + fixp->fx_frag->fr_literal;
+
+	  reloc->addend = (S_GET_VALUE (fixp->fx_addsy)
+			   - S_GET_VALUE (fixp->fx_subsy) + fixp->fx_offset);
+
+	  switch (fixp->fx_r_type)
+	    {
+	    case BFD_RELOC_8:
+	      md_number_to_chars (fixpos, reloc->addend, 1);
+	      break;
+
+	    case BFD_RELOC_16:
+	      md_number_to_chars (fixpos, reloc->addend, 2);
+	      break;
+
+	    case BFD_RELOC_24:
+	      md_number_to_chars (fixpos, reloc->addend, 3);
+	      break;
+
+	    case BFD_RELOC_32:
+	      md_number_to_chars (fixpos, reloc->addend, 4);
+	      break;
+
+	    default:
+	      reloc->sym_ptr_ptr
+		= (asymbol **) bfd_abs_section_ptr->symbol_ptr_ptr;
+	      return relocs;
+	    }
+
+	  free (reloc);
+	  return & no_relocs;
+	}
+    }
+  else
+    {
+#if 0
+      if (fixp->fx_r_type == BFD_RELOC_MSP430X_ABS16
+	  && S_GET_SEGMENT (fixp->fx_addsy) == absolute_section)
+	{
+	  bfd_vma amount = S_GET_VALUE (fixp->fx_addsy);
+	  char *fixpos = fixp->fx_where + fixp->fx_frag->fr_literal;
+
+	  md_number_to_chars (fixpos, amount, 2);
+	  free (reloc);
+	  return & no_relocs;
+	}
+#endif
+      reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+      reloc->addend = fixp->fx_offset;
+
+      if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
+	  || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+	reloc->address = fixp->fx_offset;
+    }
+
+  return relocs;
 }
 
 int
@@ -2121,7 +4406,10 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
     case ENCODE_RELAX (STATE_UNCOND_BRANCH, STATE_WORD):
     case ENCODE_RELAX (STATE_UNCOND_BRANCH, STATE_UNDEF):
       /* Convert uncond branch jmp lab -> br lab.  */
-      cc = & msp430_rcodes[7];
+      if (target_is_430x ())
+	cc = msp430x_rcodes + 7;
+      else
+	cc = msp430_rcodes + 7;
       where = fragP->fr_literal + fragP->fr_fix;
       bfd_putl16 (cc->lop0, where);
       rela = BFD_RELOC_MSP430_RL_PCREL;
@@ -2136,9 +4424,19 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 
 	insn &= 0xffff;
 	/* Find actual instruction.  */
-	for (i = 0; i < 7 && !cc; i++)
-	  if (msp430_rcodes[i].sop == insn)
-	    cc = & msp430_rcodes[i];
+	if (target_is_430x ())
+	  {
+	    for (i = 0; i < 7 && !cc; i++)
+	      if (msp430x_rcodes[i].sop == insn)
+		cc = msp430x_rcodes + i;
+	  }
+	else
+	  {
+	    for (i = 0; i < 7 && !cc; i++)
+	      if (msp430_rcodes[i].sop == insn)
+		cc = & msp430_rcodes[i];
+	  }
+
 	if (!cc || !cc->name)
 	  as_fatal (_("internal inconsistency problem in %s: insn %04lx"),
 		    __FUNCTION__, (long) insn);
@@ -2152,7 +4450,10 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 
     case ENCODE_RELAX (STATE_NOOV_BRANCH, STATE_WORD):
     case ENCODE_RELAX (STATE_NOOV_BRANCH, STATE_UNDEF):
-      cc = & msp430_rcodes[6];
+      if (target_is_430x ())
+	cc = msp430x_rcodes + 6;
+      else
+	cc = msp430_rcodes + 6;
       where = fragP->fr_literal + fragP->fr_fix;
       bfd_putl16 (cc->lop0, where);
       bfd_putl16 (cc->lop1, where + 2);
@@ -2166,9 +4467,18 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 	int insn = bfd_getl16 (fragP->fr_opcode + 2);
 
 	insn &= 0xffff;
-	for (i = 0; i < 4 && !hc; i++)
-	  if (msp430_hcodes[i].op1 == insn)
-	    hc = &msp430_hcodes[i];
+	if (target_is_430x ())
+	  {
+	    for (i = 0; i < 4 && !hc; i++)
+	      if (msp430x_hcodes[i].op1 == insn)
+		hc = msp430x_hcodes + i;
+	  }
+	else
+	  {
+	    for (i = 0; i < 4 && !hc; i++)
+	      if (msp430_hcodes[i].op1 == insn)
+		hc = &msp430_hcodes[i];
+	  }
 	if (!hc || !hc->name)
 	  as_fatal (_("internal inconsistency problem in %s: ext. insn %04lx"),
 	      __FUNCTION__, (long) insn);
@@ -2177,7 +4487,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 	   another fix will be applied to the next word of insn anyway.  */
 	if (hc->tlab == 2)
 	  fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
-	      fragP->fr_offset, TRUE, rela);
+		   fragP->fr_offset, TRUE, rela);
 	fragP->fr_fix += 2;
       }
 
@@ -2189,9 +4499,18 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 	int insn = bfd_getl16 (fragP->fr_opcode + 2);
 
 	insn &= 0xffff;
-	for (i = 0; i < 4 && !hc; i++)
-	  if (msp430_hcodes[i].op1 == insn)
-	    hc = & msp430_hcodes[i];
+	if (target_is_430x ())
+	  {
+	    for (i = 0; i < 4 && !hc; i++)
+	      if (msp430x_hcodes[i].op1 == insn)
+		hc = msp430x_hcodes + i;
+	  }
+	else
+	  {
+	    for (i = 0; i < 4 && !hc; i++)
+	      if (msp430_hcodes[i].op1 == insn)
+		hc = & msp430_hcodes[i];
+	  }
 	if (!hc || !hc->name)
 	  as_fatal (_("internal inconsistency problem in %s: ext. insn %04lx"),
 	      __FUNCTION__, (long) insn);
@@ -2251,10 +4570,10 @@ msp430_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS * fragP,
   if (!msp430_enable_relax)
     {
       /* Relaxation is not enabled. So, make all jump as long ones
-         by setting 'aim' to quite high value. */
+         by setting 'aim' to quite high value.  */
       aim = 0x7fff;
     }
-  
+
   this_state = fragP->fr_subtype;
   start_type = this_type = table + this_state;
 
@@ -2291,4 +4610,62 @@ msp430_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS * fragP,
   if (growth != 0)
     fragP->fr_subtype = this_state;
   return growth;
+}
+
+/* Return FALSE if the fixup in fixp should be left alone and not
+   adjusted.   We return FALSE here so that linker relaxation will
+   work.  */
+
+bfd_boolean
+msp430_fix_adjustable (struct fix *fixp ATTRIBUTE_UNUSED)
+{
+  /* If the symbol is in a non-code section then it should be OK.  */
+  if (fixp->fx_addsy
+      && ((S_GET_SEGMENT (fixp->fx_addsy)->flags & SEC_CODE) == 0))
+    return TRUE;
+
+  return FALSE;
+}
+
+/* Set the contents of the .MSP430.attributes section.  */
+
+void
+msp430_md_end (void)
+{
+  if (check_for_nop)
+    as_warn ("assembly finished without a possibly needed NOP instruction");
+
+  bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_ISA,
+			     target_is_430x () ? 2 : 1);
+
+  bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_Code_Model,
+			     large_model ? 2 : 1);
+
+  bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_Data_Model,
+			     large_model ? 2 : 1);
+}
+
+/* Returns FALSE if there is a msp430 specific reason why the
+   subtraction of two same-section symbols cannot be computed by
+   the assembler.  */
+
+bfd_boolean
+msp430_allow_local_subtract (expressionS * left,
+			     expressionS * right,
+			     segT section)
+{
+  /* If the symbols are not in a code section then they are OK.  */
+  if ((section->flags & SEC_CODE) == 0)
+    return TRUE;
+
+  if (S_IS_GAS_LOCAL (left->X_add_symbol) || S_IS_GAS_LOCAL (right->X_add_symbol))
+    return TRUE;
+
+  if (left->X_add_symbol == right->X_add_symbol)
+    return TRUE;
+
+  /* We have to assume that there may be instructions between the
+     two symbols and that relaxation may increase the distance between
+     them.  */
+  return FALSE;
 }

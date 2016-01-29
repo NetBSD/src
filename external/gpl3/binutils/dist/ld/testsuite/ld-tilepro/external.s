@@ -28,6 +28,6 @@ external_32a = 0x87654321
 external_32b = 0xfedcba98
 
         .data
-
+	.align 0x20
         .global external_data1
 external_data1:

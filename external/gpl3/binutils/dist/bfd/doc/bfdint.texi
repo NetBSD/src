@@ -1,7 +1,5 @@
 \input texinfo
-@c Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
-@c 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2009
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
 @setfilename bfdint.info
 
 @settitle BFD Internals
@@ -16,9 +14,7 @@
 @copying
 This file documents the internals of the BFD library.
 
-Copyright @copyright{} 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-1996, 1998, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2009
-Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2015 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -945,7 +941,7 @@ BFD.  Some files are automatically rebuilt at make time, but only if
 you configure with the @samp{--enable-maintainer-mode} option.  Some
 files live in the object directory---the directory from which you run
 configure---and some live in the source directory.  All files that live
-in the source directory are checked into the CVS repository.
+in the source directory are checked into the git repository.
 
 @table @file
 @item bfd.h
@@ -1552,7 +1548,7 @@ following:
 Define either @samp{TARGET_BIG_SYM} or @samp{TARGET_LITTLE_SYM}, or
 both, to a unique C name to use for the target vector.  This name should
 appear in the list of target vectors in @file{targets.c}, and will also
-have to appear in @file{config.bfd} and @file{configure.in}.  Define
+have to appear in @file{config.bfd} and @file{configure.ac}.  Define
 @samp{TARGET_BIG_SYM} for a big-endian processor,
 @samp{TARGET_LITTLE_SYM} for a little-endian processor, and define both
 for a bi-endian processor.

@@ -65,3 +65,9 @@ workarounds to this:
   * Replace "(. ${srcdir}/scripttempl/${SCRIPT_NAME}.sc)" in
     genscripts.sh with "sh ${srcdir}..." (no parens) and make sure the
     emulparams script used exports any shell variables it sets.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

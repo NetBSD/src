@@ -1,5 +1,5 @@
 /* tc-m32c.c -- Assembler for the Renesas M32C.
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by RedHat.
 
    This file is part of GAS, the GNU Assembler.
@@ -20,7 +20,7 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "as.h"
-#include "subsegs.h"     
+#include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/m32c-desc.h"
 #include "opcodes/m32c-opc.h"
@@ -141,7 +141,7 @@ void
 md_show_usage (FILE * stream)
 {
   fprintf (stream, _(" M32C specific command line options:\n"));
-} 
+}
 
 static void
 s_bss (int ignore ATTRIBUTE_UNUSED)
@@ -261,21 +261,21 @@ m32c_indirect_operand (char *str)
       if (s[0] == '[' && s[1] == '[')
 	indirection[operand] = relative;
     }
-   
+
   if (indirection[1] == none && indirection[2] == none)
     return FALSE;
-  
+
   operand = 1;
   ns_len = strlen (str);
   new_str = (char*) xmalloc (ns_len);
   ns = new_str;
   ns_end = ns + ns_len;
- 
+
   for (s = str; *s; s++)
     {
       if (s[0] == ',')
 	operand = 2;
- 
+
       if (s[0] == '[' && ! brace_n[operand])
 	{
 	  brace_n[operand] += 1;
@@ -283,7 +283,7 @@ m32c_indirect_operand (char *str)
 	  if (indirection[operand] != none)
 	    continue;
 	}
- 
+
       else if (s[0] == '[' && brace_n[operand])
 	{
 	  brace_n[operand] += 1;
@@ -315,7 +315,7 @@ m32c_indirect_operand (char *str)
       {
 	fprintf (stderr, "Unmatched [[operand-%d]] %d\n", operand, brace_n[operand]);
       }
-       
+
   if (indirection[1] != none && indirection[2] != none)
     md_assemble ("src-dest-indirect");
   else if (indirection[1] != none)
@@ -345,7 +345,7 @@ md_assemble (char * str)
 
   insn.insn = m32c_cgen_assemble_insn
     (gas_cgen_cpu_desc, str, & insn.fields, insn.buffer, & errmsg);
-  
+
   if (!insn.insn)
     {
       as_bad ("%s", errmsg);
@@ -398,7 +398,7 @@ md_assemble (char * str)
 /* The syntax in the manual says constants begin with '#'.
    We just ignore it.  */
 
-void 
+void
 md_operand (expressionS * exp)
 {
   /* In case of a syntax error, escape back to try next syntax combo. */
@@ -410,7 +410,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 symbolS *
@@ -595,7 +595,7 @@ md_estimate_size_before_relax (fragS * fragP, segT segment ATTRIBUTE_UNUSED)
     }
 
   return subtype_mappings[fragP->fr_subtype].bytes - (fragP->fr_fix - where);
-} 
+}
 
 /* *fragP has been relaxed to its final size, and now needs to have
    the bytes inside it modified to conform to the new size.
@@ -1019,10 +1019,9 @@ void
 m32c_cons_fix_new (fragS *	frag,
 		   int		where,
 		   int		size,
-		   expressionS *exp)
+		   expressionS *exp,
+		   bfd_reloc_code_real_type type)
 {
-  bfd_reloc_code_real_type type;
-
   switch (size)
     {
     case 1:
@@ -1064,9 +1063,9 @@ tc_gen_reloc (asection *sec, fixS *fx)
       || fx->fx_r_type == BFD_RELOC_M32C_RL_2ADDR)
     {
       arelent * reloc;
- 
+
       reloc = xmalloc (sizeof (* reloc));
- 
+
       reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
       *reloc->sym_ptr_ptr = symbol_get_bfdsym (fx->fx_addsy);
       reloc->address = fx->fx_frag->fr_address + fx->fx_where;
@@ -1248,19 +1247,16 @@ m32c_fix_adjustable (fixS * fixP)
 }
 
 /* Worker function for m32c_is_colon_insn().  */
-static char
-restore_colon (int advance_i_l_p_by)
+static int
+restore_colon (char *next_i_l_p, char *nul_char)
 {
-  char c;
-
   /* Restore the colon, and advance input_line_pointer to
      the end of the new symbol.  */
-  * input_line_pointer = ':';
-  input_line_pointer += advance_i_l_p_by;
-  c = * input_line_pointer;
-  * input_line_pointer = 0;
-
-  return c;
+  *input_line_pointer = *nul_char;
+  input_line_pointer = next_i_l_p;
+  *nul_char = *next_i_l_p;
+  *next_i_l_p = 0;
+  return 1;
 }
 
 /* Determines if the symbol starting at START and ending in
@@ -1268,28 +1264,31 @@ restore_colon (int advance_i_l_p_by)
    (but which has now been replaced bu a NUL) is in fact an
    :Z, :S, :Q, or :G suffix.
    If it is, then it restores the colon, advances INPUT_LINE_POINTER
-   to the real end of the instruction/symbol, and returns the character
-   that really terminated the symbol.  Otherwise it returns 0.  */
-char
-m32c_is_colon_insn (char *start ATTRIBUTE_UNUSED)
+   to the real end of the instruction/symbol, saves the char there to
+   NUL_CHAR and pokes a NUL, and returns 1.  Otherwise it returns 0.  */
+int
+m32c_is_colon_insn (char *start ATTRIBUTE_UNUSED, char *nul_char)
 {
   char * i_l_p = input_line_pointer;
 
+  if (*nul_char == '"')
+    ++i_l_p;
+
   /* Check to see if the text following the colon is 'G' */
   if (TOLOWER (i_l_p[1]) == 'g' && (i_l_p[2] == ' ' || i_l_p[2] == '\t'))
-    return restore_colon (2);
+    return restore_colon (i_l_p + 2, nul_char);
 
   /* Check to see if the text following the colon is 'Q' */
   if (TOLOWER (i_l_p[1]) == 'q' && (i_l_p[2] == ' ' || i_l_p[2] == '\t'))
-    return restore_colon (2);
+    return restore_colon (i_l_p + 2, nul_char);
 
   /* Check to see if the text following the colon is 'S' */
   if (TOLOWER (i_l_p[1]) == 's' && (i_l_p[2] == ' ' || i_l_p[2] == '\t'))
-    return restore_colon (2);
+    return restore_colon (i_l_p + 2, nul_char);
 
   /* Check to see if the text following the colon is 'Z' */
   if (TOLOWER (i_l_p[1]) == 'z' && (i_l_p[2] == ' ' || i_l_p[2] == '\t'))
-    return restore_colon (2);
+    return restore_colon (i_l_p + 2, nul_char);
 
   return 0;
 }
