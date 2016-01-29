@@ -1,7 +1,6 @@
 /* This file is output-file.h
 
-   Copyright 1987, 1988, 1989, 1990, 1991, 1992, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

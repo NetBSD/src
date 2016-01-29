@@ -45,8 +45,11 @@ _forward_test:
 	.size	_forward_test, .-_forward_test
 
 # Switch back to ARM mode so that we can see stubs
+        .align  2
 	.code	32
-	nop
+
+# Align stub table for address matching.
+        .align  8
 	
 	.section	.text.post,"x"
 

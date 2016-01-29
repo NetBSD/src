@@ -1,7 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -55,11 +53,11 @@ v850_elf_check_relocs (bfd *abfd,
   struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
-  enum v850_reloc_type r_type;
+  unsigned int r_type;
   int other = 0;
   const char *common = NULL;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
 #ifdef DEBUG
@@ -85,34 +83,16 @@ v850_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
-      r_type = (enum v850_reloc_type) ELF32_R_TYPE (rel->r_info);
+      r_type = ELF32_R_TYPE (rel->r_info);
       switch (r_type)
 	{
 	default:
-	case R_V850_NONE:
-	case R_V850_9_PCREL:
-	case R_V850_16_PCREL:
-	case R_V850_17_PCREL:
-	case R_V850_22_PCREL:
-	case R_V850_32_PCREL:
-	case R_V850_32_ABS:
-	case R_V850_HI16:
-	case R_V850_HI16_S:
-	case R_V850_LO16:
-	case R_V850_LO16_S1:
-	case R_V850_LO16_SPLIT_OFFSET:
-	case R_V850_23:
-	case R_V850_ABS32:
-	case R_V850_REL32:
-	case R_V850_16:
-	case R_V850_16_S1:
-	case R_V850_16_SPLIT_OFFSET:
-	case R_V850_8:
-	case R_V850_CALLT_6_7_OFFSET:
-	case R_V850_CALLT_15_16_OFFSET:
-	case R_V850_CALLT_16_16_OFFSET:
 	  break;
 
         /* This relocation describes the C++ object vtable hierarchy.
@@ -134,6 +114,9 @@ v850_elf_check_relocs (bfd *abfd,
 	case R_V850_SDA_16_16_SPLIT_OFFSET:
 	case R_V850_SDA_16_16_OFFSET:
 	case R_V850_SDA_15_16_OFFSET:
+	case R_V810_GPWLO_1:
+	case R_V850_HWLO:
+	case R_V850_HWLO_1:
 	  other = V850_OTHER_SDA;
 	  common = ".scommon";
 	  goto small_data_common;
@@ -510,13 +493,19 @@ v850_elf_perform_relocation (bfd *abfd,
   switch (r_type)
     {
     default:
+#ifdef DEBUG
+      fprintf (stderr, "%B: reloc number %d not recognised\n", abfd, r_type);
+#endif
       return bfd_reloc_notsupported;
 
     case R_V850_REL32:
     case R_V850_ABS32:
+    case R_V810_WORD:
+    case R_V850_PC32:
       bfd_put_32 (abfd, addend, address);
       return bfd_reloc_ok;
 
+    case R_V850_WLO23:
     case R_V850_23:
       insn  = bfd_get_32 (abfd, address);
       insn &= ~((0x7f << 4) | (0x7fff80 << (16-7)));
@@ -524,6 +513,7 @@ v850_elf_perform_relocation (bfd *abfd,
       bfd_put_32 (abfd, (bfd_vma) insn, address);
       return bfd_reloc_ok;
 
+    case R_V850_PCR22:
     case R_V850_22_PCREL:
       if (saddend > 0x1fffff || saddend < -0x200000)
 	return bfd_reloc_overflow;
@@ -537,6 +527,7 @@ v850_elf_perform_relocation (bfd *abfd,
       bfd_put_32 (abfd, (bfd_vma) insn, address);
       return bfd_reloc_ok;
 
+    case R_V850_PC17:
     case R_V850_17_PCREL:
       if (saddend > 0xffff || saddend < -0x10000)
 	return bfd_reloc_overflow;
@@ -549,6 +540,7 @@ v850_elf_perform_relocation (bfd *abfd,
       insn |= ((addend & 0xfffe) << 16) | ((addend & 0x10000) >> (16-4));
       break;
 
+    case R_V850_PC16U:
     case R_V850_16_PCREL:
       if ((saddend < -0xffff) || (saddend > 0))
 	return bfd_reloc_overflow;
@@ -561,6 +553,7 @@ v850_elf_perform_relocation (bfd *abfd,
       insn |= (-addend & 0xfffe);
       break;
 
+    case R_V850_PC9:
     case R_V850_9_PCREL:
       if (saddend > 0xff || saddend < -0x100)
 	return bfd_reloc_overflow;
@@ -573,12 +566,14 @@ v850_elf_perform_relocation (bfd *abfd,
       insn |= ((addend & 0x1f0) << 7) | ((addend & 0x0e) << 3);
       break;
 
+    case R_V810_WHI:
     case R_V850_HI16:
       addend += (bfd_get_16 (abfd, address) << 16);
       addend = (addend >> 16);
       insn = addend;
       break;
 
+    case R_V810_WHI1:
     case R_V850_HI16_S:
       /* Remember where this relocation took place.  */
       remember_hi16s_reloc (abfd, addend, address);
@@ -593,12 +588,14 @@ v850_elf_perform_relocation (bfd *abfd,
       insn = addend;
       break;
 
+    case R_V810_WLO:
     case R_V850_LO16:
       insn = bfd_get_16 (abfd, address);
       if (! v850_elf_perform_lo16_relocation (abfd, &insn, addend))
 	return bfd_reloc_overflow;
       break;
 
+    case R_V810_BYTE:
     case R_V850_8:
       addend += (char) bfd_get_8 (abfd, address);
 
@@ -624,7 +621,7 @@ v850_elf_perform_relocation (bfd *abfd,
     case R_V850_CALLT_15_16_OFFSET:
       insn = bfd_get_16 (abfd, address);
 
-      addend += insn & 0xfffe;;
+      addend += insn & 0xfffe;
 
       saddend = (bfd_signed_vma) addend;
 
@@ -652,6 +649,7 @@ v850_elf_perform_relocation (bfd *abfd,
       break;
 
     case R_V850_16:
+    case R_V810_HWORD:
     case R_V850_SDA_16_16_OFFSET:
     case R_V850_ZDA_16_16_OFFSET:
     case R_V850_TDA_16_16_OFFSET:
@@ -668,6 +666,7 @@ v850_elf_perform_relocation (bfd *abfd,
     case R_V850_16_S1:
     case R_V850_SDA_15_16_OFFSET:
     case R_V850_ZDA_15_16_OFFSET:
+    case R_V810_GPWLO_1:
       insn = bfd_get_16 (abfd, address);
       addend += (insn & 0xfffe);
 
@@ -756,6 +755,9 @@ v850_elf_perform_relocation (bfd *abfd,
       insn |= addend;
       break;
 
+    case R_V810_WLO_1:
+    case R_V850_HWLO:
+    case R_V850_HWLO_1:
     case R_V850_LO16_S1:
       insn = bfd_get_16 (abfd, address);
       result = insn & 0xfffe;
@@ -768,6 +770,7 @@ v850_elf_perform_relocation (bfd *abfd,
 	bfd_put_16 (abfd, insn, address);
       return bfd_reloc_ok;
 
+    case R_V850_BLO:
     case R_V850_LO16_SPLIT_OFFSET:
       insn = bfd_get_32 (abfd, address);
       result = ((insn & 0xfffe0000) >> 16) | ((insn & 0x20) >> 5);
@@ -886,17 +889,17 @@ v850_elf_ignore_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 }
 /* Note: It is REQUIRED that the 'type' value of each entry
    in this array match the index of the entry in the array.
-   SeeAlso: RELOC_NUBMER in include/elf/v850.h  */
+   SeeAlso: RELOC_NUBMER in include/elf/v850.h.  */
 static reloc_howto_type v850_elf_howto_table[] =
 {
   /* This reloc does nothing.  */
   HOWTO (R_V850_NONE,			/* Type.  */
 	 0,				/* Rightshift.  */
-	 2,				/* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,				/* Bitsize.  */
+	 3,				/* Size (0 = byte, 1 = short, 2 = long).  */
+	 0,				/* Bitsize.  */
 	 FALSE,				/* PC_relative.  */
 	 0,				/* Bitpos.  */
-	 complain_overflow_bitfield,	/* Complain_on_overflow.  */
+	 complain_overflow_dont,	/* Complain_on_overflow.  */
 	 bfd_elf_generic_reloc,		/* Special_function.  */
 	 "R_V850_NONE",			/* Name.  */
 	 FALSE,				/* Partial_inplace.  */
@@ -1742,6 +1745,109 @@ static const struct v850_elf_reloc_map v850_elf_reloc_map[] =
   { BFD_RELOC_V850_CODE,                   R_V850_CODE                   },
   { BFD_RELOC_V850_DATA,                   R_V850_DATA                   },
 };
+
+#define V800_RELOC(name,sz,bit,shift,complain,pcrel,resolver)		 \
+  HOWTO (name, shift, sz, bit, pcrel, 0, complain_overflow_ ## complain, \
+	 bfd_elf_ ## resolver ## _reloc, #name, FALSE, 0, ~0, FALSE)
+
+#define V800_EMPTY(name) EMPTY_HOWTO (name - R_V810_NONE)
+
+#define bfd_elf_v850_reloc v850_elf_reloc
+
+/* Note: It is REQUIRED that the 'type' value (R_V810_...) of each entry
+   in this array match the index of the entry in the array minus 0x30.
+   See: bfd_elf_v850_relocate_section(), v800_elf_reloc_type_lookup()
+   and v800_elf_info_to_howto().  */
+
+static reloc_howto_type v800_elf_howto_table[] =
+{
+  V800_RELOC (R_V810_NONE,      0,  0, 0, dont,     FALSE, generic),	/* Type = 0x30 */
+  V800_RELOC (R_V810_BYTE,      0,  8, 0, dont,     FALSE, generic),
+  V800_RELOC (R_V810_HWORD,     1, 16, 0, dont,     FALSE, generic),
+  V800_RELOC (R_V810_WORD,      2, 32, 0, dont,     FALSE, generic),
+  V800_RELOC (R_V810_WLO,       1, 16, 0, dont,     FALSE, generic),
+  V800_RELOC (R_V810_WHI,       1, 16, 0, dont,     FALSE, generic),
+  V800_RELOC (R_V810_WHI1,      1, 16, 0, dont,     FALSE, generic),
+  V800_RELOC (R_V810_GPBYTE,    0,  8, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_GPHWORD,   1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_GPWORD,    2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_GPWLO,     1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_GPWHI,     1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_GPWHI1,    1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_HWLO,      1, 16, 0, dont,     FALSE, generic),
+  V800_EMPTY (R_V810_reserved1),
+  V800_RELOC (R_V850_EP7BIT,    0,  7, 0, unsigned, FALSE, v850),
+  V800_RELOC (R_V850_EPHBYTE,   0,  8, 1, unsigned, FALSE, v850),
+  V800_RELOC (R_V850_EPWBYTE,   0,  8, 2, unsigned, FALSE, v850),
+  V800_RELOC (R_V850_REGHWLO,   1, 16, 0, dont,     FALSE, v850),
+  V800_EMPTY (R_V810_reserved2),
+  V800_RELOC (R_V850_GPHWLO,    1, 16, 0, dont,     FALSE, v850),
+  V800_EMPTY (R_V810_reserved3),
+  V800_RELOC (R_V850_PCR22,     2, 22, 0, signed,   TRUE,  generic),
+  V800_RELOC (R_V850_BLO,       2, 24, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_EP4BIT,    0,  4, 0, unsigned, FALSE, v850),
+  V800_RELOC (R_V850_EP5BIT,    0,  5, 0, unsigned, FALSE, v850),
+  V800_RELOC (R_V850_REGBLO,    2, 24, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_GPBLO,     2, 24, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_WLO_1,     1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_GPWLO_1,   1, 16, 0, signed,   FALSE, v850),
+  V800_RELOC (R_V850_BLO_1,     2, 16, 0, signed,   FALSE, v850),
+  V800_RELOC (R_V850_HWLO_1,    1, 16, 0, signed,   FALSE, v850),
+  V800_EMPTY  (R_V810_reserved4),
+  V800_RELOC (R_V850_GPBLO_1,   2, 16, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_GPHWLO_1,  1, 16, 1, signed,   FALSE, v850),
+  V800_EMPTY (R_V810_reserved5),
+  V800_RELOC (R_V850_EPBLO,     2, 16, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_EPHWLO,    1, 16, 1, signed,   FALSE, v850),
+  V800_EMPTY (R_V810_reserved6),
+  V800_RELOC (R_V850_EPWLO_N,   1, 16, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_PC32,      2, 32, 1, signed,   TRUE,  v850),
+  V800_RELOC (R_V850_W23BIT,    2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_GPW23BIT,  2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_EPW23BIT,  2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_B23BIT,    2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_GPB23BIT,  2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_EPB23BIT,  2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_PC16U,     1, 16, 1, unsigned, TRUE,  generic),
+  V800_RELOC (R_V850_PC17,      2, 17, 1, signed,   TRUE,  generic),
+  V800_RELOC (R_V850_DW8,       2,  8, 2, signed,   FALSE, v850),
+  V800_RELOC (R_V850_GPDW8,     2,  8, 2, signed,   FALSE, v850),
+  V800_RELOC (R_V850_EPDW8,     2,  8, 2, signed,   FALSE, v850),
+  V800_RELOC (R_V850_PC9,       1,  9, 3, signed,   TRUE,  v850),
+  V800_RELOC (R_V810_REGBYTE,   0,  8, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_REGHWORD,  1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_REGWORD,   2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_REGWLO,    1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_REGWHI,    1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_REGWHI1,   1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_REGW23BIT, 2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_REGB23BIT, 2, 23, 1, signed,   FALSE, v850),
+  V800_RELOC (R_V850_REGDW8,    2,  8, 2, signed,   FALSE, v850),
+  V800_RELOC (R_V810_EPBYTE,    0,  8, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_EPHWORD,   1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_EPWORD,    2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_WLO23,     2, 32, 1, dont,     FALSE, v850),
+  V800_RELOC (R_V850_WORD_E,    2, 32, 1, dont,     FALSE, v850),
+  V800_RELOC (R_V850_REGWORD_E, 2, 32, 1, dont,     FALSE, v850),
+  V800_RELOC (R_V850_WORD,      2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_GPWORD,    2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_REGWORD,   2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_EPWORD,    2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_TPBYTE,    0,  8, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_TPHWORD,   1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_TPWORD,    2, 32, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_TPWLO,     1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_TPWHI,     1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_TPWHI1,    1, 16, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V850_TPHWLO,    1, 16, 1, dont,     FALSE, v850),
+  V800_RELOC (R_V850_TPBLO,     2, 24, 0, dont,     FALSE, v850),
+  V800_RELOC (R_V810_TPWLO_1,   1, 16, 0, signed,   FALSE, v850),
+  V800_RELOC (R_V850_TPBLO_1,   2, 16, 0, signed,   FALSE, v850),
+  V800_RELOC (R_V850_TPHWLO_1,  1, 16, 0, signed,   FALSE, v850),
+  V800_RELOC (R_V850_TP23BIT,   2, 23, 0, signed,   FALSE, v850),
+  V800_RELOC (R_V850_TPW23BIT,  2, 23, 0, signed,   FALSE, v850),
+  V800_RELOC (R_V850_TPDW8,     2,  8, 0, signed,   FALSE, v850)
+};
 
 /* Map a bfd relocation into the appropriate howto structure.  */
 
@@ -1790,7 +1896,11 @@ v850_elf_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_V850_max);
+  if (r_type >= (unsigned int) R_V850_max)
+    {
+      _bfd_error_handler (_("%B: invalid V850 reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &v850_elf_howto_table[r_type];
 }
 
@@ -1804,7 +1914,11 @@ v850_elf_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_V850_max);
+  if (r_type >= (unsigned int) R_V850_max)
+    {
+      _bfd_error_handler (_("%B: invalid V850 reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &v850_elf_howto_table[r_type];
 }
 
@@ -1813,6 +1927,12 @@ v850_elf_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 {
   return (   (name[0] == '.' && (name[1] == 'L' || name[1] == '.'))
 	  || (name[0] == '_' &&  name[1] == '.' && name[2] == 'L' && name[3] == '_'));
+}
+
+static bfd_boolean
+v850_elf_is_target_special_symbol (bfd *abfd, asymbol *sym)
+{
+  return v850_elf_is_local_label_name (abfd, sym->name);
 }
 
 /* We overload some of the bfd_reloc error codes for own purposes.  */
@@ -1841,12 +1961,14 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
   /* Adjust the value according to the relocation.  */
   switch (r_type)
     {
+    case R_V850_PC9:
     case R_V850_9_PCREL:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset);
       value -= offset;
       break;
 
+    case R_V850_PC16U:
     case R_V850_16_PCREL:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset
@@ -1858,6 +1980,7 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
 
       break;
 
+    case R_V850_PC17:
     case R_V850_17_PCREL:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset
@@ -1870,6 +1993,7 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
       value = SEXT17 (value);
       break;
 
+    case R_V850_PCR22:
     case R_V850_22_PCREL:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset
@@ -1883,6 +2007,7 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
       value = SEXT22 (value);
       break;
 
+    case R_V850_PC32:
     case R_V850_32_PCREL:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset
@@ -1899,6 +2024,15 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
     case R_V850_16:
     case R_V850_ABS32:
     case R_V850_8:
+    case R_V810_BYTE:
+    case R_V810_HWORD:
+    case R_V810_WORD:
+    case R_V810_WLO:
+    case R_V810_WHI:
+    case R_V810_WHI1:
+    case R_V810_WLO_1:
+    case R_V850_WLO23:
+    case R_V850_BLO:
       break;
 
     case R_V850_ZDA_15_16_OFFSET:
@@ -1913,6 +2047,7 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
     case R_V850_SDA_15_16_OFFSET:
     case R_V850_SDA_16_16_OFFSET:
     case R_V850_SDA_16_16_SPLIT_OFFSET:
+    case R_V810_GPWLO_1:
       {
 	unsigned long                gp;
 	struct bfd_link_hash_entry * h;
@@ -2002,6 +2137,7 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
     break;
 
     case R_V850_NONE:
+    case R_V810_NONE:
     case R_V850_GNU_VTINHERIT:
     case R_V850_GNU_VTENTRY:
     case R_V850_LONGCALL:
@@ -2010,6 +2146,9 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
       return bfd_reloc_ok;
 
     default:
+#ifdef DEBUG
+      fprintf (stderr, "%B: reloc number %d not recognised\n", input_bfd, r_type);
+#endif
       return bfd_reloc_notsupported;
     }
 
@@ -2046,7 +2185,7 @@ v850_elf_relocate_section (bfd *output_bfd,
   relend = relocs + input_section->reloc_count;
   for (; rel < relend; rel++)
     {
-      int r_type;
+      unsigned int r_type;
       reloc_howto_type *howto;
       unsigned long r_symndx;
       Elf_Internal_Sym *sym;
@@ -2062,7 +2201,13 @@ v850_elf_relocate_section (bfd *output_bfd,
           || r_type == R_V850_GNU_VTINHERIT)
         continue;
 
-      howto = v850_elf_howto_table + r_type;
+      if (bfd_get_arch (input_bfd) == bfd_arch_v850_rh850)
+	howto = v800_elf_howto_table + (r_type - R_V810_NONE);
+      else
+	howto = v850_elf_howto_table + r_type;
+
+      BFD_ASSERT (r_type == howto->type);
+
       h = NULL;
       sym = NULL;
       sec = NULL;
@@ -2074,7 +2219,7 @@ v850_elf_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned;
+	  bfd_boolean unresolved_reloc, warned, ignored;
 
 	  /* Note - this check is delayed until now as it is possible and
 	     valid to have a file without any symbols but with relocs that
@@ -2091,14 +2236,14 @@ v850_elf_relocate_section (bfd *output_bfd,
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	}
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       /* FIXME: We should use the addend, but the COFF relocations don't.  */
@@ -2199,31 +2344,364 @@ v850_elf_gc_mark_hook (asection *sec,
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
 }
 
-/* Set the right machine number.  */
+static void
+v850_set_note (bfd * abfd, asection * s, enum v850_notes note, unsigned int val)
+{
+  bfd_byte * data = s->contents + ((note - 1) * SIZEOF_V850_NOTE);
+
+  bfd_put_32 (abfd, 4, data + 0);
+  bfd_put_32 (abfd, 4, data + 4);
+  bfd_put_32 (abfd, note, data + 8);
+  memcpy (data + 12, V850_NOTE_NAME, 4);
+  bfd_put_32 (abfd, val, data + 16);
+}
+
+/* Create the note section if not already present.  This is done early so
+   that the linker maps the sections to the right place in the output.  */
+
+static asection *
+v850_elf_make_note_section (bfd * abfd)
+{
+  asection *s;
+  bfd_byte *data;
+  flagword flags;
+  enum v850_notes id;
+
+  /* Make the note section.  */
+  flags = SEC_READONLY | SEC_HAS_CONTENTS | SEC_IN_MEMORY | SEC_MERGE;
+
+  s = bfd_make_section_anyway_with_flags (abfd, V850_NOTE_SECNAME, flags);
+  if (s == NULL)
+    return NULL;
+
+  if (!bfd_set_section_alignment (abfd, s, 2))
+    return NULL;
+
+  /* Allocate space for all known notes.  */
+  if (!bfd_set_section_size (abfd, s, NUM_V850_NOTES * SIZEOF_V850_NOTE))
+    return NULL;
+
+  data = bfd_zalloc (abfd, NUM_V850_NOTES * SIZEOF_V850_NOTE);
+  if (data == NULL)
+    return NULL;
+
+  s->contents = data;
+
+  /* Provide default (= uninitilaised) values for all of the notes.  */
+  for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
+    v850_set_note (abfd, s, id,  0);
+
+  return s;
+}
+
+/* Create the note section if not already present.  This is done early so
+   that the linker maps the sections to the right place in the output.  */
+
+bfd_boolean
+v850_elf_create_sections (struct bfd_link_info * info)
+{
+  bfd * ibfd;
+
+  /* If we already have a note section, do not make another.  */
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
+    if (bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME) != NULL)
+      return TRUE;
+
+  return v850_elf_make_note_section (info->input_bfds) != NULL;
+}
+
+bfd_boolean
+v850_elf_set_note (bfd * abfd, enum v850_notes note, unsigned int val)
+{
+  asection * notes = bfd_get_section_by_name (abfd, V850_NOTE_SECNAME);
+
+  if (val > 2)
+    /* At the moment, no known note has a value over 2.  */
+    return FALSE;
+
+  if (notes == NULL)
+    notes = v850_elf_make_note_section (abfd);
+  if (notes == NULL)
+    return FALSE;
+
+  v850_set_note (abfd, notes, note, val);
+  return TRUE;
+}
+
+/* Copy backend specific data from one object module to another.  */
+
+static bfd_boolean
+v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
+{
+  asection * onotes;
+  asection * inotes;
+
+  /* If the output bfd does not have a note section, then
+     skip the merge.  The normal input to output section
+     copying will take care of everythng for us.  */
+  if ((onotes = bfd_get_section_by_name (obfd, V850_NOTE_SECNAME)) == NULL)
+    return TRUE;
+
+  if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) == NULL)
+    return TRUE;
+
+  if (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes))
+    {
+      bfd_byte * icont;
+      bfd_byte * ocont;
+
+      if ((icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (ibfd, inotes, & icont));
+
+      if ((ocont = elf_section_data (onotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (obfd, onotes, & ocont));
+
+      /* Copy/overwrite notes from the input to the output.  */
+      memcpy (ocont, icont, bfd_section_size (obfd, onotes));
+    }
+
+  return TRUE;
+}
+#define bfd_elf32_bfd_copy_private_bfd_data	v850_elf_copy_private_bfd_data
+
+static bfd_boolean
+v850_elf_merge_notes (bfd * ibfd, bfd *obfd)
+{
+  asection * onotes;
+  asection * inotes;
+  bfd_boolean result = TRUE;
+
+  /* If the output bfd does not have a note section, then
+     skip the merge.  The normal input to output section
+     copying will take care of everythng for us.  */
+  if ((onotes = bfd_get_section_by_name (obfd, V850_NOTE_SECNAME)) == NULL)
+    return TRUE;
+
+  if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) != NULL)
+    {
+      enum v850_notes id;
+      bfd_byte * icont;
+      bfd_byte * ocont;
+
+      BFD_ASSERT (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes));
+
+      if ((icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (ibfd, inotes, & icont));
+
+      if ((ocont = elf_section_data (onotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (obfd, onotes, & ocont));
+
+      for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
+	{
+	  unsigned int ival;
+	  unsigned int oval;
+	  bfd_byte * idata = icont + ((id - 1) * SIZEOF_V850_NOTE) + 16;
+	  bfd_byte * odata = ocont + ((id - 1) * SIZEOF_V850_NOTE) + 16;
+
+	  ival = bfd_get_32 (ibfd, idata);
+	  oval = bfd_get_32 (obfd, odata);
+
+	  if (ival == 0 || ival == oval)
+	    continue;
+
+	  if (oval == 0)
+	    {
+	      bfd_put_32 (obfd, ival, odata);
+	      v850_set_note (obfd, onotes, id, ival);
+	      continue;
+	    }
+
+	  /* We have a mismatch.  The ABI defines how to handle
+	     this siutation on a per note type basis.  */
+	  switch (id)
+	    {
+	    case V850_NOTE_ALIGNMENT:
+	      if (oval == EF_RH850_DATA_ALIGN4)
+		{
+		  _bfd_error_handler
+		    (_("error: %B needs 8-byte aligment but %B is set for 4-byte alignment"),
+				      ibfd, obfd);
+		  result = FALSE;
+		}
+	      else
+		/* ibfd uses 4-byte alignment, obfd uses 8-byte alignment.
+		   Leave the obfd alignment as it is.  */
+		BFD_ASSERT (oval == EF_RH850_DATA_ALIGN8);
+
+	      break;
+
+	    case V850_NOTE_DATA_SIZE:
+	      if (oval == EF_RH850_DOUBLE32)
+		{
+		  _bfd_error_handler (_("error: %B uses 64-bit doubles but %B uses 32-bit doubles"),
+				      ibfd, obfd);
+		  result = FALSE;
+		}
+	      else
+		/* ibfd uses 32-bit doubles, obfd uses 64-bit doubles.
+		   This is acceptable.  Honest, that is what the ABI says.  */
+		BFD_ASSERT (oval == EF_RH850_DOUBLE64);
+	      break;
+
+	    case V850_NOTE_FPU_INFO:
+	      if (oval == EF_RH850_FPU20)
+		{
+		  _bfd_error_handler (_("error: %B uses FPU-3.0 but %B only supports FPU-2.0"),
+				     ibfd, obfd);
+		  result = FALSE;
+		}
+	      else
+		/* ibfd uses FPU-2.0, obfd uses FPU-3.0.  Leave obfd as it is.  */
+		BFD_ASSERT (oval == EF_RH850_FPU30);
+
+	      break;
+
+	    default:
+	      /* None of the other conflicts matter.
+		 Stick with the current output values.  */
+	      break;
+	    }
+	}
+
+      /* FIXME:  We should also check for conflicts between the notes
+	 and the EF flags in the ELF header.  */
+    }
+
+  return result;
+}
+
+static void
+print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
+{
+  unsigned int value = bfd_get_32 (abfd, data + ((id - 1) * SIZEOF_V850_NOTE) + 16);
+
+  switch (id)
+    {
+    case V850_NOTE_ALIGNMENT:
+      fprintf (file, _(" alignment of 8-byte entities: "));
+      switch (value)
+	{
+	case EF_RH850_DATA_ALIGN4: fprintf (file, _("4-byte")); break;
+	case EF_RH850_DATA_ALIGN8: fprintf (file, _("8-byte")); break;
+	case 0:  fprintf (file, _("not set")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+
+    case V850_NOTE_DATA_SIZE:
+      fprintf (file, _(" size of doubles: "));
+      switch (value)
+	{
+	case EF_RH850_DOUBLE32: fprintf (file, _("4-bytes")); break;
+	case EF_RH850_DOUBLE64: fprintf (file, _("8-bytes")); break;
+	case 0:  fprintf (file, _("not set")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+
+    case V850_NOTE_FPU_INFO:
+      fprintf (file, _(" FPU support required: "));
+      switch (value)
+	{
+	case EF_RH850_FPU20: fprintf (file, _("FPU-2.0")); break;
+	case EF_RH850_FPU30: fprintf (file, _("FPU-3.0")); break;
+	case 0:  fprintf (file, _("none")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+
+    case V850_NOTE_SIMD_INFO:
+      fprintf (file, _("SIMD use: "));
+      switch (value)
+	{
+	case EF_RH850_SIMD: fprintf (file, _("yes")); break;
+	case 0:  fprintf (file, _("no")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+
+    case V850_NOTE_CACHE_INFO:
+      fprintf (file, _("CACHE use: "));
+      switch (value)
+	{
+	case EF_RH850_CACHE: fprintf (file, _("yes")); break;
+	case 0:  fprintf (file, _("no")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+
+    case V850_NOTE_MMU_INFO:
+      fprintf (file, _("MMU use: "));
+      switch (value)
+	{
+	case EF_RH850_MMU: fprintf (file, _("yes")); break;
+	case 0:  fprintf (file, _("no")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+
+    default:
+      BFD_ASSERT (0);
+    }
+}
+
+static void
+v850_elf_print_notes (bfd * abfd, FILE * file)
+{
+  asection * notes = bfd_get_section_by_name (abfd, V850_NOTE_SECNAME);
+  enum v850_notes id;
+
+  if (notes == NULL || notes->contents == NULL)
+    return;
+
+  BFD_ASSERT (bfd_section_size (abfd, notes) == NUM_V850_NOTES * SIZEOF_V850_NOTE);
+
+  for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
+    print_v850_note (abfd, file, notes->contents, id);
+}
+
+/* Set the right machine number and architecture.  */
 
 static bfd_boolean
 v850_elf_object_p (bfd *abfd)
 {
-  switch (elf_elfheader (abfd)->e_flags & EF_V850_ARCH)
+  enum bfd_architecture arch;
+  unsigned long mach;
+
+  switch (elf_elfheader (abfd)->e_machine)
     {
+    case EM_V800:
+      arch = bfd_arch_v850_rh850;
+      mach = (elf_elfheader (abfd)->e_flags & EF_V800_850E3)
+	? bfd_mach_v850e3v5 : bfd_mach_v850e2v3;
+      break;
+
+    case EM_CYGNUS_V850:
+    case EM_V850:
+      arch = bfd_arch_v850;
+      switch (elf_elfheader (abfd)->e_flags & EF_V850_ARCH)
+	{
+	default:
+	case E_V850_ARCH:     mach = bfd_mach_v850; break;
+	case E_V850E_ARCH:    mach = bfd_mach_v850e; break;
+	case E_V850E1_ARCH:   mach = bfd_mach_v850e1; break;
+	case E_V850E2_ARCH:   mach = bfd_mach_v850e2; break;
+	case E_V850E2V3_ARCH: mach = bfd_mach_v850e2v3; break;
+	case E_V850E3V5_ARCH: mach = bfd_mach_v850e3v5; break;
+	}
+      break;
+
     default:
-    case E_V850_ARCH:
-      bfd_default_set_arch_mach (abfd, bfd_arch_v850, bfd_mach_v850);
-      break;
-    case E_V850E_ARCH:
-      bfd_default_set_arch_mach (abfd, bfd_arch_v850, bfd_mach_v850e);
-      break;
-    case E_V850E1_ARCH:
-      bfd_default_set_arch_mach (abfd, bfd_arch_v850, bfd_mach_v850e1);
-      break;
-    case E_V850E2_ARCH:
-      bfd_default_set_arch_mach (abfd, bfd_arch_v850, bfd_mach_v850e2);
-      break;
-    case E_V850E2V3_ARCH:
-      bfd_default_set_arch_mach (abfd, bfd_arch_v850, bfd_mach_v850e2v3);
-      break;
+      return FALSE;
     }
-  return TRUE;
+
+  return bfd_default_set_arch_mach (abfd, arch, mach);
 }
 
 /* Store the machine number in the flags field.  */
@@ -2234,18 +2712,32 @@ v850_elf_final_write_processing (bfd *abfd,
 {
   unsigned long val;
 
-  switch (bfd_get_mach (abfd))
+  switch (bfd_get_arch (abfd))
     {
-    default:
-    case bfd_mach_v850:   val = E_V850_ARCH; break;
-    case bfd_mach_v850e:  val = E_V850E_ARCH; break;
-    case bfd_mach_v850e1: val = E_V850E1_ARCH; break;
-    case bfd_mach_v850e2: val = E_V850E2_ARCH;  break;
-    case bfd_mach_v850e2v3: val = E_V850E2V3_ARCH;  break;
-    }
+    case bfd_arch_v850_rh850:
+      val = EF_RH850_ABI;
+      if (bfd_get_mach (abfd) == bfd_mach_v850e3v5)
+	val |= EF_V800_850E3;
+      elf_elfheader (abfd)->e_flags |= val;
+      break;
 
-  elf_elfheader (abfd)->e_flags &=~ EF_V850_ARCH;
-  elf_elfheader (abfd)->e_flags |= val;
+    case bfd_arch_v850:
+      switch (bfd_get_mach (abfd))
+	{
+	default:
+	case bfd_mach_v850:     val = E_V850_ARCH; break;
+	case bfd_mach_v850e:    val = E_V850E_ARCH; break;
+	case bfd_mach_v850e1:   val = E_V850E1_ARCH; break;
+	case bfd_mach_v850e2:   val = E_V850E2_ARCH; break;
+	case bfd_mach_v850e2v3: val = E_V850E2V3_ARCH; break;
+	case bfd_mach_v850e3v5: val = E_V850E3V5_ARCH; break;
+	}
+      elf_elfheader (abfd)->e_flags &=~ EF_V850_ARCH;
+      elf_elfheader (abfd)->e_flags |= val;
+      break;
+    default:
+      break;
+    }
 }
 
 /* Function to keep V850 specific file flags.  */
@@ -2269,10 +2761,13 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   flagword out_flags;
   flagword in_flags;
+  bfd_boolean result = TRUE;
 
   if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
+
+  result &= v850_elf_merge_notes (ibfd, obfd);
 
   in_flags = elf_elfheader (ibfd)->e_flags;
   out_flags = elf_elfheader (obfd)->e_flags;
@@ -2293,57 +2788,80 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 
       if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
 	  && bfd_get_arch_info (obfd)->the_default)
-	return bfd_set_arch_mach (obfd, bfd_get_arch (ibfd), bfd_get_mach (ibfd));
+	result &= bfd_set_arch_mach (obfd, bfd_get_arch (ibfd), bfd_get_mach (ibfd));
 
-      return TRUE;
+      return result;
     }
 
   /* Check flag compatibility.  */
   if (in_flags == out_flags)
-    return TRUE;
+    return result;
+
+  if (bfd_get_arch (obfd) == bfd_arch_v850_rh850)
+    {
+      if ((in_flags & EF_V800_850E3) != (out_flags & EF_V800_850E3))
+	{
+	  _bfd_error_handler (_("%B: Architecture mismatch with previous modules"),
+			      ibfd);
+	  elf_elfheader (obfd)->e_flags |= EF_V800_850E3;
+	}
+
+      return result;
+    }
 
   if ((in_flags & EF_V850_ARCH) != (out_flags & EF_V850_ARCH)
       && (in_flags & EF_V850_ARCH) != E_V850_ARCH)
     {
-
-      /* Allow v850e1 binaries to be linked with v850e binaries.
-         Set the output binary to v850e.  */
-      if ((in_flags & EF_V850_ARCH) == E_V850E1_ARCH
+      /* Allow earlier architecture binaries to be linked with later binaries.
+         Set the output binary to the later architecture, except for v850e1,
+         which we set to v850e.  */
+      if (   (in_flags  & EF_V850_ARCH) == E_V850E1_ARCH
           && (out_flags & EF_V850_ARCH) == E_V850E_ARCH)
-        return TRUE;
+        return result;
 
-      if ((in_flags & EF_V850_ARCH) == E_V850_ARCH
+      if (   (in_flags  & EF_V850_ARCH) == E_V850_ARCH
 	  && (out_flags & EF_V850_ARCH) == E_V850E_ARCH)
 	{
 	  elf_elfheader (obfd)->e_flags =
 	    ((out_flags & ~ EF_V850_ARCH) | E_V850E_ARCH);
-	  return TRUE;
+	  return result;
 	}
 
-      if (((in_flags & EF_V850_ARCH) == E_V850_ARCH
+      if ((   (in_flags & EF_V850_ARCH) == E_V850_ARCH
 	   || (in_flags & EF_V850_ARCH) == E_V850E_ARCH)
 	  && (out_flags & EF_V850_ARCH) == E_V850E2_ARCH)
 	{
 	  elf_elfheader (obfd)->e_flags =
 	    ((out_flags & ~ EF_V850_ARCH) | E_V850E2_ARCH);
-	  return TRUE;
+	  return result;
 	}
 
-      if (((in_flags & EF_V850_ARCH) == E_V850_ARCH
+      if ((   (in_flags & EF_V850_ARCH) == E_V850_ARCH
 	   || (in_flags & EF_V850_ARCH) == E_V850E_ARCH
 	   || (in_flags & EF_V850_ARCH) == E_V850E2_ARCH)
 	  && (out_flags & EF_V850_ARCH) == E_V850E2V3_ARCH)
 	{
 	  elf_elfheader (obfd)->e_flags =
 	    ((out_flags & ~ EF_V850_ARCH) | E_V850E2V3_ARCH);
-	  return TRUE;
+	  return result;
+	}
+
+      if ((   (in_flags & EF_V850_ARCH) == E_V850_ARCH
+	   || (in_flags & EF_V850_ARCH) == E_V850E_ARCH
+	   || (in_flags & EF_V850_ARCH) == E_V850E2_ARCH
+           || (in_flags & EF_V850_ARCH) == E_V850E2V3_ARCH)
+	  && (out_flags & EF_V850_ARCH) == E_V850E3V5_ARCH)
+	{
+	  elf_elfheader (obfd)->e_flags =
+	    ((out_flags & ~ EF_V850_ARCH) | E_V850E3V5_ARCH);
+	  return result;
 	}
 
       _bfd_error_handler (_("%B: Architecture mismatch with previous modules"),
 			  ibfd);
     }
 
-  return TRUE;
+  return result;
 }
 
 /* Display the flags field.  */
@@ -2360,17 +2878,32 @@ v850_elf_print_private_bfd_data (bfd *abfd, void * ptr)
   /* xgettext:c-format.  */
   fprintf (file, _("private flags = %lx: "), elf_elfheader (abfd)->e_flags);
 
-  switch (elf_elfheader (abfd)->e_flags & EF_V850_ARCH)
+  if (bfd_get_arch (abfd) == bfd_arch_v850_rh850)
     {
-    default:
-    case E_V850_ARCH: fprintf (file, _("v850 architecture")); break;
-    case E_V850E_ARCH: fprintf (file, _("v850e architecture")); break;
-    case E_V850E1_ARCH: fprintf (file, _("v850e1 architecture")); break;
-    case E_V850E2_ARCH: fprintf (file, _("v850e2 architecture")); break;
-    case E_V850E2V3_ARCH: fprintf (file, _("v850e2v3 architecture")); break;
+      if ((elf_elfheader (abfd)->e_flags & EF_RH850_ABI) != EF_RH850_ABI)
+	fprintf (file, _("unknown v850 architecture"));
+      else if (elf_elfheader (abfd)->e_flags & EF_V800_850E3)
+	fprintf (file, _("v850 E3 architecture"));
+      else
+	fprintf (file, _("v850 architecture"));
+    }
+  else
+    {
+      switch (elf_elfheader (abfd)->e_flags & EF_V850_ARCH)
+	{
+	default:
+	case E_V850_ARCH: fprintf (file, _("v850 architecture")); break;
+	case E_V850E_ARCH: fprintf (file, _("v850e architecture")); break;
+	case E_V850E1_ARCH: fprintf (file, _("v850e1 architecture")); break;
+	case E_V850E2_ARCH: fprintf (file, _("v850e2 architecture")); break;
+	case E_V850E2V3_ARCH: fprintf (file, _("v850e2v3 architecture")); break;
+	case E_V850E3V5_ARCH: fprintf (file, _("v850e3v5 architecture")); break;
+	}
     }
 
   fputc ('\n', file);
+
+  v850_elf_print_notes (abfd, file);
 
   return TRUE;
 }
@@ -2644,6 +3177,12 @@ v850_elf_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
     hdr->sh_type = SHT_V850_TCOMMON;
   else if (strcmp (name, ".zcommon") == 0)
     hdr->sh_type = SHT_V850_ZCOMMON;
+  /* Tweak the section type of .note.renesas.  */
+  else if (strcmp (name, V850_NOTE_SECNAME) == 0)
+    {
+      hdr->sh_type = SHT_RENESAS_INFO;
+      hdr->sh_entsize = SIZEOF_V850_NOTE;
+    }
 
   return TRUE;
 }
@@ -2667,7 +3206,6 @@ v850_elf_relax_delete_bytes (bfd *abfd,
   Elf_Internal_Rela *irel;
   Elf_Internal_Rela *irelend;
   struct elf_link_hash_entry *sym_hash;
-  Elf_Internal_Shdr *shndx_hdr;
   Elf_External_Sym_Shndx *shndx;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -2692,8 +3230,17 @@ v850_elf_relax_delete_bytes (bfd *abfd,
   /* Adjust all the relocs.  */
   irel = elf_section_data (sec)->relocs;
   irelend = irel + sec->reloc_count;
-  shndx_hdr = &elf_tdata (abfd)->symtab_shndx_hdr;
-  shndx = (Elf_External_Sym_Shndx *) shndx_hdr->contents;
+  if (elf_symtab_shndx_list (abfd))
+    {
+      Elf_Internal_Shdr *shndx_hdr;
+
+      shndx_hdr = & elf_symtab_shndx_list (abfd)->hdr;
+      shndx = (Elf_External_Sym_Shndx *) shndx_hdr->contents;
+    }
+  else
+    {
+      shndx = NULL;
+    }
 
   for (; irel < irelend; irel++)
     {
@@ -2895,7 +3442,7 @@ v850_elf_relax_section (bfd *abfd,
 
   *again = FALSE;
 
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return TRUE;
@@ -2933,7 +3480,7 @@ v850_elf_relax_section (bfd *abfd,
 
 	  if (alignmoveto < alignto)
 	    {
-	      unsigned int i;
+	      bfd_vma i;
 
 	      align_pad_size = alignto - alignmoveto;
 #ifdef DEBUG_RELAX
@@ -2965,6 +3512,7 @@ v850_elf_relax_section (bfd *abfd,
 	  Elf_Internal_Rela *lo_irelfn;
 	  Elf_Internal_Rela *irelcall;
 	  bfd_signed_vma foff;
+	  unsigned int r_type;
 
 	  if (! (irel->r_offset >= addr && irel->r_offset < toaddr
 		 && (ELF32_R_TYPE (irel->r_info) == (int) R_V850_LONGCALL
@@ -3060,23 +3608,33 @@ v850_elf_relax_section (bfd *abfd,
 	      /* Get the reloc for the address from which the register is
 	         being loaded.  This reloc will tell us which function is
 	         actually being called.  */
+
 	      for (hi_irelfn = internal_relocs; hi_irelfn < irelend; hi_irelfn ++)
-		if (hi_irelfn->r_offset == laddr + 2
-		    && ELF32_R_TYPE (hi_irelfn->r_info)
-		        == (int) R_V850_HI16_S)
-		  break;
+		{
+		  r_type = ELF32_R_TYPE (hi_irelfn->r_info);
+
+		  if (hi_irelfn->r_offset == laddr + 2
+		      && (r_type == (int) R_V850_HI16_S || r_type == (int) R_V810_WHI1))
+		    break;
+		}
 
 	      for (lo_irelfn = internal_relocs; lo_irelfn < irelend; lo_irelfn ++)
-		if (lo_irelfn->r_offset == laddr + 6
-		    && ELF32_R_TYPE (lo_irelfn->r_info)
-		        == (int) R_V850_LO16)
-		  break;
+		{
+		  r_type = ELF32_R_TYPE (lo_irelfn->r_info);
+
+		  if (lo_irelfn->r_offset == laddr + 6
+		      && (r_type == (int) R_V850_LO16 || r_type == (int) R_V810_WLO))
+		    break;
+		}
 
 	      for (irelcall = internal_relocs; irelcall < irelend; irelcall ++)
-		if (irelcall->r_offset == laddr + 8
-		    && ELF32_R_TYPE (irelcall->r_info)
-                        == (int) R_V850_22_PCREL)
-		  break;
+		{
+		  r_type = ELF32_R_TYPE (irelcall->r_info);
+
+		  if (irelcall->r_offset == laddr + 8
+		      && (r_type == (int) R_V850_22_PCREL || r_type == (int) R_V850_PCR22))
+		    break;
+		}
 
 	      if (   hi_irelfn == irelend
 		  || lo_irelfn == irelend
@@ -3202,7 +3760,10 @@ v850_elf_relax_section (bfd *abfd,
 	      symtab_hdr->contents = (bfd_byte *) isymbuf;
 
 	      /* Replace the long call with a jarl.  */
-	      irel->r_info = ELF32_R_INFO (ELF32_R_SYM (hi_irelfn->r_info), R_V850_22_PCREL);
+	      if (bfd_get_arch (abfd) == bfd_arch_v850_rh850)
+		irel->r_info = ELF32_R_INFO (ELF32_R_SYM (hi_irelfn->r_info), R_V850_PCR22);
+	      else
+		irel->r_info = ELF32_R_INFO (ELF32_R_SYM (hi_irelfn->r_info), R_V850_22_PCREL);
 
 	      addend = 0;
 
@@ -3278,14 +3839,22 @@ v850_elf_relax_section (bfd *abfd,
 	         being loaded.  This reloc will tell us which function is
 	         actually being called.  */
 	      for (hi_irelfn = internal_relocs; hi_irelfn < irelend; hi_irelfn ++)
-		if (hi_irelfn->r_offset == laddr + 2
-		    && ELF32_R_TYPE (hi_irelfn->r_info) == (int) R_V850_HI16_S)
-		  break;
+		{
+		  r_type = ELF32_R_TYPE (hi_irelfn->r_info);
+
+		  if (hi_irelfn->r_offset == laddr + 2
+		      && ((r_type == (int) R_V850_HI16_S) || r_type == (int) R_V810_WHI1))
+		    break;
+		}
 
 	      for (lo_irelfn = internal_relocs; lo_irelfn < irelend; lo_irelfn ++)
-		if (lo_irelfn->r_offset == laddr + 6
-		    && ELF32_R_TYPE (lo_irelfn->r_info) == (int) R_V850_LO16)
-		  break;
+		{
+		  r_type = ELF32_R_TYPE (lo_irelfn->r_info);
+
+		  if (lo_irelfn->r_offset == laddr + 6
+		      && (r_type == (int) R_V850_LO16 || r_type == (int) R_V810_WLO))
+		    break;
+		}
 
 	      if (   hi_irelfn == irelend
 		  || lo_irelfn == irelend)
@@ -3392,8 +3961,11 @@ v850_elf_relax_section (bfd *abfd,
 		{
 		  /* Replace the long jump with a jr.  */
 
-		  irel->r_info =
-		    ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_V850_22_PCREL);
+		  if (bfd_get_arch (abfd) == bfd_arch_v850_rh850)
+		    irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_V850_PCR22);
+		  else
+		    irel->r_info =
+		      ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_V850_22_PCREL);
 
 		  irel->r_addend = addend;
 		  addend = 0;
@@ -3425,8 +3997,11 @@ v850_elf_relax_section (bfd *abfd,
 		{
 		  /* Replace the long jump with a br.  */
 
-		  irel->r_info =
-			ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_V850_9_PCREL);
+		  if (bfd_get_arch (abfd) == bfd_arch_v850_rh850)
+		    irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_V850_PC9);
+		  else
+		    irel->r_info =
+		      ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_V850_9_PCREL);
 
 		  irel->r_addend = addend;
 		  addend = 0;
@@ -3534,12 +4109,11 @@ static const struct bfd_elf_special_section v850_elf_special_sections[] =
   { NULL,                     0,           0, 0,                0 }
 };
 
-#define TARGET_LITTLE_SYM			bfd_elf32_v850_vec
+#define TARGET_LITTLE_SYM			v850_elf32_vec
 #define TARGET_LITTLE_NAME			"elf32-v850"
 #define ELF_ARCH				bfd_arch_v850
 #define ELF_MACHINE_CODE			EM_V850
 #define ELF_MACHINE_ALT1			EM_CYGNUS_V850
-#define ELF_MACHINE_ALT2			EM_V800 /* This is the value used by the GreenHills toolchain.  */
 #define ELF_MAXPAGESIZE				0x1000
 
 #define elf_info_to_howto			v850_elf_info_to_howto_rela
@@ -3558,17 +4132,136 @@ static const struct bfd_elf_special_section v850_elf_special_sections[] =
 #define elf_backend_gc_mark_hook                v850_elf_gc_mark_hook
 #define elf_backend_special_sections		v850_elf_special_sections
 
-#define elf_backend_can_gc_sections 1
-#define elf_backend_rela_normal 1
+#define elf_backend_can_gc_sections 		1
+#define elf_backend_rela_normal			1
 
 #define bfd_elf32_bfd_is_local_label_name	v850_elf_is_local_label_name
+#define bfd_elf32_bfd_is_target_special_symbol	v850_elf_is_target_special_symbol
+
 #define bfd_elf32_bfd_reloc_type_lookup		v850_elf_reloc_type_lookup
-#define bfd_elf32_bfd_reloc_name_lookup	v850_elf_reloc_name_lookup
+#define bfd_elf32_bfd_reloc_name_lookup	        v850_elf_reloc_name_lookup
 #define bfd_elf32_bfd_merge_private_bfd_data 	v850_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_set_private_flags		v850_elf_set_private_flags
 #define bfd_elf32_bfd_print_private_bfd_data	v850_elf_print_private_bfd_data
 #define bfd_elf32_bfd_relax_section		v850_elf_relax_section
 
 #define elf_symbol_leading_char			'_'
+
+#undef  elf32_bed
+#define elf32_bed elf32_v850_bed
+
+#include "elf32-target.h"
+
+/* Map BFD reloc types to V800 ELF reloc types.  */
+
+static const struct v850_elf_reloc_map v800_elf_reloc_map[] =
+{
+  { BFD_RELOC_NONE,                   R_V810_NONE    },
+  { BFD_RELOC_8,                      R_V810_BYTE    },
+  { BFD_RELOC_16,                     R_V810_HWORD   },
+  { BFD_RELOC_32,                     R_V810_WORD    },
+  { BFD_RELOC_LO16,                   R_V810_WLO     },
+  { BFD_RELOC_HI16,                   R_V810_WHI     },
+  { BFD_RELOC_HI16_S,                 R_V810_WHI1    },
+  { BFD_RELOC_V850_32_PCREL,          R_V850_PC32    },
+  { BFD_RELOC_V850_22_PCREL,          R_V850_PCR22   },
+  { BFD_RELOC_V850_17_PCREL,          R_V850_PC17    },
+  { BFD_RELOC_V850_16_PCREL,          R_V850_PC16U   },
+  { BFD_RELOC_V850_9_PCREL,	      R_V850_PC9     },
+  { BFD_RELOC_V850_LO16_S1,           R_V810_WLO_1   }, /* Or R_V850_HWLO or R_V850_HWLO_1.  */
+  { BFD_RELOC_V850_23,                R_V850_WLO23   },
+  { BFD_RELOC_V850_LO16_SPLIT_OFFSET, R_V850_BLO     },
+  { BFD_RELOC_V850_ZDA_16_16_OFFSET,  R_V810_HWORD   },
+  { BFD_RELOC_V850_TDA_16_16_OFFSET,  R_V810_HWORD   },
+  { BFD_RELOC_V850_SDA_16_16_OFFSET,  R_V810_HWORD   },
+  { BFD_RELOC_V850_SDA_15_16_OFFSET,  R_V810_GPWLO_1 }
+};
+
+/* Map a bfd relocation into the appropriate howto structure.  */
+
+static reloc_howto_type *
+v800_elf_reloc_type_lookup (bfd * abfd, bfd_reloc_code_real_type code)
+{
+  unsigned int i;
+
+  BFD_ASSERT (bfd_get_arch (abfd) == bfd_arch_v850_rh850);
+
+  for (i = ARRAY_SIZE (v800_elf_reloc_map); i --;)
+    if (v800_elf_reloc_map[i].bfd_reloc_val == code)
+      {
+	unsigned int elf_reloc_val = v800_elf_reloc_map[i].elf_reloc_val;
+	unsigned int idx = elf_reloc_val - R_V810_NONE;
+
+	BFD_ASSERT (v800_elf_howto_table[idx].type == elf_reloc_val);
+
+	return v800_elf_howto_table + idx;
+      }
+
+#ifdef DEBUG
+  fprintf (stderr, "failed to find v800 equiv of bfd reloc code %d\n", code);
+#endif
+  return NULL;
+}
+
+static reloc_howto_type *
+v800_elf_reloc_name_lookup (bfd * abfd, const char * r_name)
+{
+  unsigned int i;
+
+  BFD_ASSERT (bfd_get_arch (abfd) == bfd_arch_v850_rh850);
+
+  for (i = ARRAY_SIZE (v800_elf_howto_table); i--;)
+    if (v800_elf_howto_table[i].name != NULL
+	&& strcasecmp (v800_elf_howto_table[i].name, r_name) == 0)
+      return v800_elf_howto_table + i;
+
+  return NULL;
+}
+
+
+/* Set the howto pointer in CACHE_PTR for a V800 ELF reloc.  */
+
+static void
+v800_elf_info_to_howto (bfd *               abfd,
+			arelent *           cache_ptr,
+			Elf_Internal_Rela * dst)
+{
+  unsigned int r_type = ELF32_R_TYPE (dst->r_info);
+
+  BFD_ASSERT (bfd_get_arch (abfd) == bfd_arch_v850_rh850);
+
+  BFD_ASSERT (r_type < (unsigned int) R_V800_max);
+
+  if (r_type == R_V800_NONE)
+    r_type = R_V810_NONE;
+
+  BFD_ASSERT (r_type >= (unsigned int) R_V810_NONE);
+  r_type -= R_V810_NONE;
+  BFD_ASSERT (r_type < ARRAY_SIZE (v800_elf_howto_table));
+
+  cache_ptr->howto = v800_elf_howto_table + r_type;
+}
+
+#undef  TARGET_LITTLE_SYM
+#define TARGET_LITTLE_SYM			v800_elf32_vec
+#undef  TARGET_LITTLE_NAME
+#define TARGET_LITTLE_NAME			"elf32-v850-rh850"
+#undef  ELF_ARCH
+#define ELF_ARCH				bfd_arch_v850_rh850
+#undef  ELF_MACHINE_CODE
+#define ELF_MACHINE_CODE			EM_V800
+#undef  ELF_MACHINE_ALT1
+
+#undef  elf32_bed
+#define elf32_bed elf32_v850_rh850_bed
+
+#undef  elf_info_to_howto
+#define elf_info_to_howto			v800_elf_info_to_howto
+#undef  elf_info_to_howto_rel
+#define elf_info_to_howto_rel			NULL
+#undef  bfd_elf32_bfd_reloc_type_lookup
+#define bfd_elf32_bfd_reloc_type_lookup		v800_elf_reloc_type_lookup
+#undef  bfd_elf32_bfd_reloc_name_lookup
+#define bfd_elf32_bfd_reloc_name_lookup		v800_elf_reloc_name_lookup
 
 #include "elf32-target.h"

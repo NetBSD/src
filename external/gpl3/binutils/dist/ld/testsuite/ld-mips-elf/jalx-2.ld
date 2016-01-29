@@ -5,4 +5,6 @@ _start_text = _start_text_phys;
 SECTIONS
 {
   .text _start_text : AT (ADDR (.text)) { *(.text) }
+  .plt : { *(.plt) }
+  .rel.plt : { *(.rel.plt) }
 }

@@ -17,10 +17,10 @@ GAS LISTING .*
    3              		.text
    4              		
    5 \?\?\?\? ........ 		bra -3 -> add r3,r0,0	; Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
    5      ........ 
    6 \?\?\?\? 08083000 		bsr -3 -> add r3,r0,0	; Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
    6      00F00000 
    6      002BFFFF 
    6      00F00000 
@@ -33,10 +33,10 @@ GAS LISTING .*
    9      88083000 
   10              	
   11 \?\?\?\? 002BFFFF 		bsr -3 -> bsr -10	;       Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   11      00F00000 
   12 \?\?\?\? 002BFFFE 		bsr -3 -> bsr/xt -10    ;       Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   12      00F00000 
   12      002BFFFF 
   12      00F00000 
@@ -48,10 +48,10 @@ GAS LISTING .*
   14      A02BFFFE 
   15              	
   16 \?\?\?\? 000BFFFF 		bra -3 -> bra  10       ;      Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   16      00F00000 
   17 \?\?\?\? 00080001 		bra -3 -> bra/tx 10     ;      Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   17      00F00000 
   17      000BFFFF 
   17      00F00000 
@@ -63,10 +63,10 @@ GAS LISTING .*
   19      A0080001 
   20              	
   21 \?\?\?\? 002BFFFF 		bsr -3 -> bra 10        ;      Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   21      00F00000 
   22 \?\?\?\? 00080001 		bsr -3 -> bra/tx 10     ;      Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   22      00F00000 
   22      002BFFFF 
 GAS LISTING .*
@@ -81,10 +81,10 @@ GAS LISTING .*
   24      A0080001 
   25              	
   26 \?\?\?\? 000BFFFF 		bra -3 -> bsr 10        ;      Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   26      00F00000 
   27 \?\?\?\? 00280001 		bra -3 -> bsr/tx 10     ;      Invalid
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
   27      00F00000 
   27      000BFFFF 
   27      00F00000 

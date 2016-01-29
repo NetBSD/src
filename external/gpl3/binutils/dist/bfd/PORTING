@@ -19,7 +19,7 @@ You need to create <target>.c and config/<target>.mt,
 and add a case for it to a case statements in bfd/configure.host and
 bfd/config.bfd, which associates each canonical host type with a BFD
 host type (used as the base of the makefile fragment names), and to the
-table in bfd/configure.in which associates each target vector with
+table in bfd/configure.ac which associates each target vector with
 the .o files it uses.
 
 config/<target>.mt is a Makefile fragment.
@@ -29,7 +29,7 @@ SELECT_ARCHITECTURES=bfd_<cpu>_arch
 
 See the list of cpu types in archures.c, or "ls cpu-*.c".
 If your architecture is new, you need to add it to the tables
-in bfd/archures.c, opcodes/configure.in, and binutils/objdump.c.
+in bfd/archures.c, opcodes/configure.ac, and binutils/objdump.c.
 
 For more information about .mt and .mh files, see config/README.
 
@@ -81,3 +81,9 @@ SEGMENT_SIZE
 TARGETNAME
 	The name of the target, for run-time lookups.
 	Usually "a.out-<target>"
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

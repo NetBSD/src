@@ -1,7 +1,5 @@
 /* tc-i386.h -- Header file for tc-i386.c
-   Copyright 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -92,6 +90,10 @@ extern unsigned long i386_mach (void);
 #define ELF_TARGET_K1OM_FORMAT	"elf64-k1om"
 #endif
 
+#ifndef ELF_TARGET_IAMCU_FORMAT
+#define ELF_TARGET_IAMCU_FORMAT	"elf32-iamcu"
+#endif
+
 #if ((defined (OBJ_MAYBE_COFF) && defined (OBJ_MAYBE_AOUT)) \
      || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
      || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
@@ -104,11 +106,6 @@ extern const char *i386_target_format (void);
 #ifdef OBJ_AOUT
 #define TARGET_FORMAT		AOUT_TARGET_FORMAT
 #endif
-#endif
-
-#if (defined (OBJ_MAYBE_ELF) || defined (OBJ_ELF))
-#define md_end i386_elf_emit_arch_note
-extern void i386_elf_emit_arch_note (void);
 #endif
 
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
@@ -134,11 +131,12 @@ extern const char *i386_comment_chars;
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)) && !defined (LEX_AT)
 #define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) x86_cons (EXP, NBYTES)
 #endif
-extern void x86_cons (expressionS *, int);
+extern bfd_reloc_code_real_type x86_cons (expressionS *, int);
 
-#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) x86_cons_fix_new(FRAG, OFF, LEN, EXP)
+#define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP, RELOC)	\
+  x86_cons_fix_new(FRAG, OFF, LEN, EXP, RELOC)
 extern void x86_cons_fix_new
-  (fragS *, unsigned int, unsigned int, expressionS *);
+(fragS *, unsigned int, unsigned int, expressionS *, bfd_reloc_code_real_type);
 
 #define TC_ADDRESS_BYTES x86_address_bytes
 extern int x86_address_bytes (void);
@@ -172,11 +170,12 @@ extern int tc_i386_fix_adjustable (struct fix *);
    the .o file.  GOTOFF and GOT32 do not need to be checked here because
    they are not pcrel.  .*/
 
-#define TC_FORCE_RELOCATION_LOCAL(FIX)			\
-  (!(FIX)->fx_pcrel					\
-   || (FIX)->fx_r_type == BFD_RELOC_386_PLT32		\
-   || (FIX)->fx_r_type == BFD_RELOC_386_GOTPC		\
-   || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCREL	\
+#define TC_FORCE_RELOCATION_LOCAL(FIX)				\
+  (!(FIX)->fx_pcrel						\
+   || (FIX)->fx_r_type == BFD_RELOC_386_PLT32			\
+   || (FIX)->fx_r_type == BFD_RELOC_386_GOTPC			\
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCRELX		\
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_REX_GOTPCRELX	\
    || TC_FORCE_RELOCATION (FIX))
 
 extern int i386_parse_name (char *, expressionS *, char *);
@@ -239,6 +238,7 @@ enum processor_type
   PROCESSOR_COREI7,
   PROCESSOR_L1OM,
   PROCESSOR_K1OM,
+  PROCESSOR_IAMCU,
   PROCESSOR_K6,
   PROCESSOR_ATHLON,
   PROCESSOR_K8,
@@ -246,6 +246,7 @@ enum processor_type
   PROCESSOR_GENERIC64,
   PROCESSOR_AMDFAM10,
   PROCESSOR_BD,
+  PROCESSOR_ZNVER,
   PROCESSOR_BT
 };
 

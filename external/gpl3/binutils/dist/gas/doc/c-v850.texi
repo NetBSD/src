@@ -1,4 +1,4 @@
-@c Copyright 1997, 2002, 2003, 2006, 2011 Free Software Foundation, Inc.
+@c Copyright (C) 1997-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -80,6 +80,16 @@ Specifies that the assembled code should be marked as being targeted at
 the V850E2V3 processor.  This allows the linker to detect attempts to link
 such code with code assembled for other processors.
 
+@cindex @code{-mv850e2v4} command line option, V850
+@item -mv850e2v4
+This is an alias for @option{-mv850e3v5}.
+
+@cindex @code{-mv850e3v5} command line option, V850
+@item -mv850e3v5
+Specifies that the assembled code should be marked as being targeted at
+the V850E3V5 processor.  This allows the linker to detect attempts to link
+such code with code assembled for other processors.
+
 @cindex @code{-mrelax} command line option, V850
 @item -mrelax
 Enables relaxation.  This allows the .longcall and .longjump pseudo
@@ -88,8 +98,42 @@ of code which are either a long function call or a long branch.  The
 assembler will then flag these sections of code and the linker will
 attempt to relax them.
 
-@end table
+@cindex @code{-mgcc-abi} command line option, V850
+@item -mgcc-abi
+Marks the generated object file as supporting the old GCC ABI.
 
+@cindex @code{-mrh850-abi} command line option, V850
+@item -mrh850-abi
+Marks the generated object file as supporting the RH850 ABI.  This is
+the default.
+
+@cindex @code{-m8byte-align} command line option, V850
+@item -m8byte-align
+Marks the generated object file as supporting a maximum 64-bits of
+alignment for variables defined in the source code.
+
+@cindex @code{-m4byte-align} command line option, V850
+@item -m4byte-align
+Marks the generated object file as supporting a maximum 32-bits of
+alignment for variables defined in the source code.  This is the
+default.
+
+@cindex @code{-msoft-float} command line option, V850
+@item -msoft-float
+Marks the generated object file as not using any floating point
+instructions - and hence can be linked with other V850 binaries
+that do or do not use floating point.  This is the default for
+binaries for architectures earlier than the @code{e2v3}.
+
+@cindex @code{-mhard-float} command line option, V850
+@item -mhard-float
+Marks the generated object file as one that uses floating point
+instructions - and hence can only be linked with other V850 binaries
+that use the same kind of floating point instructions, or with
+binaries that do not use floating point at all.  This is the default
+for binaries the @code{e2v3} and later architectures.
+
+@end table
 
 @node V850 Syntax
 @section Syntax
@@ -245,13 +289,13 @@ The V850 family uses @sc{ieee} floating-point numbers.
 @table @code
 @cindex @code{offset} directive, V850
 @item .offset @var{<expression>}
-Moves the offset into the current section to the specified amount. 
+Moves the offset into the current section to the specified amount.
 
 @cindex @code{section} directive, V850
 @item .section "name", <type>
 This is an extension to the standard .section directive.  It sets the
 current section to be <type> and creates an alias for this section
-called "name". 
+called "name".
 
 @cindex @code{.v850} directive, V850
 @item .v850
@@ -283,6 +327,18 @@ Specifies that the assembled code should be marked as being targeted at
 the V850E2V3 processor.  This allows the linker to detect attempts to link
 such code with code assembled for other processors.
 
+@cindex @code{.v850e2v4} directive, V850
+@item .v850e2v4
+Specifies that the assembled code should be marked as being targeted at
+the V850E3V5 processor.  This allows the linker to detect attempts to link
+such code with code assembled for other processors.
+
+@cindex @code{.v850e3v5} directive, V850
+@item .v850e3v5
+Specifies that the assembled code should be marked as being targeted at
+the V850E3V5 processor.  This allows the linker to detect attempts to link
+such code with code assembled for other processors.
+
 @end table
 
 @node V850 Opcodes
@@ -306,7 +362,7 @@ the immediate operand field of the given instruction.  For example:
 computes the difference between the address of labels 'here' and
 'there', takes the upper 16 bits of this difference, shifts it down 16
 bits and then multiplies it by the lower 16 bits in register 5, putting
-the result into register 6. 
+the result into register 6.
 
 @cindex @code{lo} pseudo-op, V850
 @item lo()
@@ -350,14 +406,14 @@ mov instruction).  For example:
     @samp{mov hilo(here), r6}
 
 computes the absolute address of label 'here' and puts the result into
-register 6.  
+register 6.
 
 @cindex @code{sdaoff} pseudo-op, V850
 @item sdaoff()
 Computes the offset of the named variable from the start of the Small
 Data Area (whoes address is held in register 4, the GP register) and
 stores the result as a 16 bit signed value in the immediate operand
-field of the given instruction.  For example: 
+field of the given instruction.  For example:
 
       @samp{ld.w sdaoff(_a_variable)[gp],r6}
 

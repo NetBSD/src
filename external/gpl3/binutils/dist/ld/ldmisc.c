@@ -1,7 +1,5 @@
 /* ldmisc.c
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -37,6 +35,7 @@
 #include "ldmain.h"
 #include "ldfile.h"
 #include "elf-bfd.h"
+#include "coff-bfd.h"
 
 /*
  %% literal %
@@ -304,7 +303,7 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 
 		/* The GNU Coding Standard requires that error messages
 		   be of the form:
-		   
+
 		     source-file-name:lineno: message
 
 		   We do not always have a line number available so if
@@ -361,7 +360,7 @@ vfinfo (FILE *fp, const char *fmt, va_list arg, bfd_boolean is_warning)
 		    if (functionname != NULL && fmt[-1] == 'G')
 		      lfinfo (fp, "%T", functionname);
 		    else if (filename != NULL && linenumber != 0)
-		      fprintf (fp, "%u%s", linenumber, ":" + done);
+		      fprintf (fp, "%u%s", linenumber, done ? "" : ":");
 		    else
 		      done = FALSE;
 		  }
@@ -484,7 +483,22 @@ minfo (const char *fmt, ...)
       va_list arg;
 
       va_start (arg, fmt);
-      vfinfo (config.map_file, fmt, arg, FALSE);
+      if (fmt[0] == '%' && fmt[1] == '!' && fmt[2] == 0)
+	{
+	  /* Stash info about --as-needed shared libraries.  Print
+	     later so they don't appear intermingled with archive
+	     library info.  */
+	  struct asneeded_minfo *m = xmalloc (sizeof *m);
+
+	  m->next = NULL;
+	  m->soname = va_arg (arg, const char *);
+	  m->ref = va_arg (arg, bfd *);
+	  m->name = va_arg (arg, const char *);
+	  *asneeded_list_tail = m;
+	  asneeded_list_tail = &m->next;
+	}
+      else
+	vfinfo (config.map_file, fmt, arg, FALSE);
       va_end (arg);
     }
 }
@@ -520,10 +534,10 @@ void
 ld_abort (const char *file, int line, const char *fn)
 {
   if (fn != NULL)
-    einfo (_("%P: internal error: aborting at %s line %d in %s\n"),
+    einfo (_("%P: internal error: aborting at %s:%d in %s\n"),
 	   file, line, fn);
   else
-    einfo (_("%P: internal error: aborting at %s line %d\n"),
+    einfo (_("%P: internal error: aborting at %s:%d\n"),
 	   file, line);
   einfo (_("%P%F: please report this bug\n"));
   xexit (1);

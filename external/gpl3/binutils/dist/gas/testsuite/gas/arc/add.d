@@ -1,85 +1,61 @@
-#as: -EL
-#objdump: -dr -EL
+#as: -mcpu=arc700
+#objdump: -dr --prefix-addresses --show-raw-insn
 
-.*: +file format elf32-.*arc
+.*: +file format .*arc.*
 
 Disassembly of section .text:
-
-00000000 <.text>:
-   0:	00 84 00 40 	40008400     add        r0,r1,r2
-   4:	00 b8 4d 43 	434db800     add        gp,fp,sp
-   8:	00 3e af 43 	43af3e00     add        ilink1,ilink2,blink
-   c:	00 f8 1d 47 	471df800     add        r56,r59,lp_count
-  10:	00 fe 00 40 	4000fe00     add        r0,r1,0
-  14:	00 84 1f 40 	401f8400     add        r0,0,r2
-  18:	00 84 e0 47 	47e08400     add        0,r1,r2
-  1c:	ff ff 00 40 	4000ffff     add        r0,r1,-1
-  20:	ff 85 1f 40 	401f85ff     add        r0,-1,r2
-  24:	00 84 e0 47 	47e08400     add        0,r1,r2
-  28:	ff fe 00 40 	4000feff     add        r0,r1,255
-  2c:	ff 84 1f 40 	401f84ff     add        r0,255,r2
-  30:	00 84 e0 47 	47e08400     add        0,r1,r2
-  34:	00 ff 00 40 	4000ff00     add        r0,r1,-256
-  38:	00 85 1f 40 	401f8500     add        r0,-256,r2
-  3c:	00 84 e0 47 	47e08400     add        0,r1,r2
-  40:	00 fc 00 40 	4000fc00     add        r0,r1,0x100
-  44:	00 01 00 00 
-  48:	00 04 1f 40 	401f0400     add        r0,0xffff_feff,r2
-  4c:	ff fe ff ff 
-  50:	ff fc 1f 40 	401ffcff     add        r0,255,0x100
-  54:	00 01 00 00 
-  58:	ff 7e 1f 40 	401f7eff     add        r0,0x100,255
-  5c:	00 01 00 00 
-  60:	00 fc 00 40 	4000fc00     add        r0,r1,0
-  64:	00 00 00 00 
-			64: R_ARC_32	foo
-  68:	00 84 00 40 	40008400     add        r0,r1,r2
-  6c:	00 0a 62 40 	40620a00     add        r3,r4,r5
-  70:	01 90 c3 40 	40c39001     add.z      r6,r7,r8
-  74:	01 16 25 41 	41251601     add.z      r9,r10,r11
-  78:	02 9c 86 41 	41869c02     add.nz     r12,r13,r14
-  7c:	02 22 e8 41 	41e82202     add.nz     r15,r16,r17
-  80:	03 a8 49 42 	4249a803     add.p      r18,r19,r20
-  84:	03 2e ab 42 	42ab2e03     add.p      r21,r22,r23
-  88:	04 b4 0c 43 	430cb404     add.n      r24,r25,gp
-  8c:	04 3a 6e 43 	436e3a04     add.n      fp,sp,ilink1
-  90:	05 c0 cf 43 	43cfc005     add.c      ilink2,blink,r32
-  94:	05 46 31 44 	44314605     add.c      r33,r34,r35
-  98:	05 cc 92 44 	4492cc05     add.c      r36,r37,r38
-  9c:	06 52 f4 44 	44f45206     add.nc     r39,r40,r41
-  a0:	06 d8 55 45 	4555d806     add.nc     r42,r43,r44
-  a4:	06 5e b7 45 	45b75e06     add.nc     r45,r46,r47
-  a8:	07 e4 18 46 	4618e407     add.v      r48,r49,r50
-  ac:	07 6a 1a 47 	471a6a07     add.v      r56,r52,r53
-  b0:	08 f0 1b 47 	471bf008     add.nv     r56,r55,r56
-  b4:	08 76 1d 47 	471d7608     add.nv     r56,r58,r59
-  b8:	09 00 9e 47 	479e0009     add.gt     lp_count,lp_count,r0
-  bc:	0a 7c 00 40 	40007c0a     add.ge     r0,r0,0
-  c0:	00 00 00 00 
-  c4:	0b 02 3f 40 	403f020b     add.lt     r1,1,r1
-  c8:	01 00 00 00 
-  cc:	0d 06 7f 40 	407f060d     add.hi     r3,3,r3
-  d0:	03 00 00 00 
-  d4:	0e 08 df 47 	47df080e     add.ls     0,4,r4
-  d8:	04 00 00 00 
-  dc:	0f fc c2 47 	47c2fc0f     add.pnz    0,r5,5
-  e0:	05 00 00 00 
-  e4:	00 85 00 40 	40008500     add.f      r0,r1,r2
-  e8:	01 fa 00 40 	4000fa01     add.f      r0,r1,1
-  ec:	01 84 1e 40 	401e8401     add.f      r0,1,r2
-  f0:	00 85 e0 47 	47e08500     add.f      0,r1,r2
-  f4:	00 fd 00 40 	4000fd00     add.f      r0,r1,0x200
-  f8:	00 02 00 00 
-  fc:	00 05 1f 40 	401f0500     add.f      r0,0x200,r2
- 100:	00 02 00 00 
- 104:	01 85 00 40 	40008501     add.z.f    r0,r1,r2
- 108:	02 fd 00 40 	4000fd02     add.nz.f   r0,r1,0
- 10c:	00 00 00 00 
- 110:	0b 05 1f 40 	401f050b     add.lt.f   r0,0,r2
- 114:	00 00 00 00 
- 118:	09 85 c0 47 	47c08509     add.gt.f   0,r1,r2
- 11c:	00 00 00 00 	00000000                
- 120:	0c fd 00 40 	4000fd0c     add.le.f   r0,r1,0x200
- 124:	00 02 00 00 
- 128:	0a 05 1f 40 	401f050a     add.ge.f   r0,0x200,r2
- 12c:	00 02 00 00 
+0x[0-9a-f]+ 2100 0080           	add	r0,r1,r2
+0x[0-9a-f]+ 2300 371a           	add	gp,fp,sp
+0x[0-9a-f]+ 2600 37dd           	add	ilink,r30,blink
+0x[0-9a-f]+ 2140 0000           	add	r0,r1,0
+0x[0-9a-f]+ 2600 7080 0000 0000 	add	r0,0,r2
+0x[0-9a-f]+ 2100 00be           	add	0,r1,r2
+0x[0-9a-f]+ 2100 0f80 ffff ffff 	add	r0,r1,0xffffffff
+0x[0-9a-f]+ 2600 7080 ffff ffff 	add	r0,0xffffffff,r2
+0x[0-9a-f]+ 2100 0f80 0000 00ff 	add	r0,r1,0xff
+0x[0-9a-f]+ 2600 7080 0000 00ff 	add	r0,0xff,r2
+0x[0-9a-f]+ 2100 0f80 ffff ff00 	add	r0,r1,0xffffff00
+0x[0-9a-f]+ 2600 7080 ffff ff00 	add	r0,0xffffff00,r2
+0x[0-9a-f]+ 2100 0f80 0000 0100 	add	r0,r1,0x100
+0x[0-9a-f]+ 2600 7080 ffff feff 	add	r0,0xfffffeff,r2
+0x[0-9a-f]+ 2600 7f80 0000 0100 	add	r0,0x100,0x100
+0x[0-9a-f]+ 2100 0f80 0000 0000 	add	r0,r1,0
+			68: ARC_32_ME	foo
+0x[0-9a-f]+ 20c0 0080           	add	r0,r0,r2
+0x[0-9a-f]+ 23c0 0140           	add	r3,r3,r5
+0x[0-9a-f]+ 26c0 0201           	add.eq	r6,r6,r8
+0x[0-9a-f]+ 21c0 12c1           	add.eq	r9,r9,r11
+0x[0-9a-f]+ 24c0 1382           	add.ne	r12,r12,r14
+0x[0-9a-f]+ 27c0 1442           	add.ne	r15,r15,r17
+0x[0-9a-f]+ 22c0 2503           	add.p	r18,r18,r20
+0x[0-9a-f]+ 25c0 25c3           	add.p	r21,r21,r23
+0x[0-9a-f]+ 20c0 3684           	add.n	r24,r24,gp
+0x[0-9a-f]+ 23c0 3744           	add.n	fp,fp,ilink
+0x[0-9a-f]+ 26c0 37c5           	add.c	r30,r30,blink
+0x[0-9a-f]+ 23c0 00c5           	add.c	r3,r3,r3
+0x[0-9a-f]+ 23c0 0205           	add.c	r3,r3,r8
+0x[0-9a-f]+ 23c0 0106           	add.nc	r3,r3,r4
+0x[0-9a-f]+ 24c0 0106           	add.nc	r4,r4,r4
+0x[0-9a-f]+ 24c0 01c6           	add.nc	r4,r4,r7
+0x[0-9a-f]+ 24c0 0147           	add.v	r4,r4,r5
+0x[0-9a-f]+ 25c0 0147           	add.v	r5,r5,r5
+0x[0-9a-f]+ 25c0 0148           	add.nv	r5,r5,r5
+0x[0-9a-f]+ 25c0 0148           	add.nv	r5,r5,r5
+0x[0-9a-f]+ 26c0 0009           	add.gt	r6,r6,r0
+0x[0-9a-f]+ 20c0 002a           	add.ge	r0,r0,0
+0x[0-9a-f]+ 21c0 006b           	add.lt	r1,r1,0x1
+0x[0-9a-f]+ 23c0 00ed           	add.hi	r3,r3,0x3
+0x[0-9a-f]+ 24c0 012e           	add.ls	r4,r4,0x4
+0x[0-9a-f]+ 25c0 016f           	add.pnz	r5,r5,0x5
+0x[0-9a-f]+ 2100 8080           	add.f	r0,r1,r2
+0x[0-9a-f]+ 2140 8040           	add.f	r0,r1,0x1
+0x[0-9a-f]+ 2600 f080 0000 0001 	add.f	r0,0x1,r2
+0x[0-9a-f]+ 2100 80be           	add.f	0,r1,r2
+0x[0-9a-f]+ 2100 8f80 0000 0200 	add.f	r0,r1,0x200
+0x[0-9a-f]+ 2600 f080 0000 0200 	add.f	r0,0x200,r2
+0x[0-9a-f]+ 21c0 8081           	add.f.eq	r1,r1,r2
+0x[0-9a-f]+ 20c0 8022           	add.f.ne	r0,r0,0
+0x[0-9a-f]+ 22c0 808b           	add.f.lt	r2,r2,r2
+0x[0-9a-f]+ 26c0 f0a9 0000 0001 	add.f.gt	0,0x1,0x2
+0x[0-9a-f]+ 26c0 ff8c 0000 0200 	add.f.le	0,0x200,0x200
+0x[0-9a-f]+ 26c0 f0aa 0000 0200 	add.f.ge	0,0x200,0x2

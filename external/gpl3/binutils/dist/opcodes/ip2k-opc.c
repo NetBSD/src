@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2010 Free Software Foundation, Inc.
+Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -60,7 +60,7 @@ ip2k_cgen_insn_supported (CGEN_CPU_DESC cd, const CGEN_INSN *insn)
   /* No mach attribute?  Assume it's supported for all machs.  */
   if (machs == 0)
     return 1;
-  
+
   return (machs & cd->machs) != 0;
 }
 

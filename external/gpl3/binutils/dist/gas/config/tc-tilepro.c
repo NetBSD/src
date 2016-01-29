@@ -1,5 +1,5 @@
 /* tc-tilepro.c -- Assemble for a TILEPro chip.
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -980,8 +980,8 @@ parse_reg_expression (expressionS* expression)
   /* Zero everything to make sure we don't miss any flags.  */
   memset (expression, 0, sizeof *expression);
 
-  char* regname = input_line_pointer;
-  char terminating_char = get_symbol_end ();
+  char *regname;
+  char terminating_char = get_symbol_name (&regname);
 
   void* pval = hash_find (main_reg_hash, regname);
 
@@ -998,7 +998,7 @@ parse_reg_expression (expressionS* expression)
 	       regname, tilepro_register_names[regno]);
 
   /* Restore the old character following the register name.  */
-  *input_line_pointer = terminating_char;
+  (void) restore_line_pointer (terminating_char);
 
   /* Fill in the expression fields to indicate it's a register.  */
   expression->X_op = O_register;

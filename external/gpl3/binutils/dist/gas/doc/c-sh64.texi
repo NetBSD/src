@@ -1,4 +1,4 @@
-@c Copyright (C) 2002, 2003, 2008, 2011, 2012 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @page
@@ -185,7 +185,7 @@ command line.
 
 @item .abi [32|64]
 Specify the ABI for the following instructions.  Note that you cannot use
-this directive unless you specified an ABI on the command line, and the 
+this directive unless you specified an ABI on the command line, and the
 ABIs specified must match.
 
 @end table

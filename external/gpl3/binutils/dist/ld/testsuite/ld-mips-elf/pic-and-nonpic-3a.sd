@@ -8,7 +8,7 @@ Program Headers:
  * REGINFO * [^ ]+ * 0x0+00000 * 0x0+00000 [^ ]+ * [^ ]+ * R * 0x.*
  * LOAD * [^ ]+ * 0x0+00000 * 0x0+00000 [^ ]+ * [^ ]+ * R E * 0x.*
  * LOAD * [^ ]+ * 0x0+10000 * 0x0+10000 [^ ]+ * [^ ]+ * RW  * 0x.*
- * DYNAMIC * [^ ]+ * 0x0+00400 * 0x0+00400 .*
+ * DYNAMIC * [^ ]+ * 0x0+00400 * 0x0+00400 [^ ]+ * [^ ]+ * R  * 0x.*
  * NULL * .*
 
  *Section to Segment mapping:

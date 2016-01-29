@@ -1,10 +1,9 @@
 /* BFD backend for SunOS style a.out with flags set to 0
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 2001, 2005, 2007, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
@@ -25,7 +24,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (aout0_big_,OP)
+#define MY(OP) CONCAT2 (aout0_be_,OP)
 
 #include "sysdep.h"
 #include "bfd.h"

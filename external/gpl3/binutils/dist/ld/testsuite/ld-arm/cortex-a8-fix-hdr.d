@@ -19,6 +19,6 @@ Disassembly of section \.text:
      ff6:	bf00      	nop
      ff8:	bf00      	nop
      ffa:	ea81 0002 	eor.w	r0, r1, r2
-     ffe:	f000 b80f 	b.w	1020 <_start\+0x40>
+     ffe:	f000 b803 	b.w	1008 <_start\+0x28>
 #...
-    1020:	f7ff bfde 	b.w	fe0 <_start>
+    1008:	f7ff bf.. 	b.w	fe0 <_start>

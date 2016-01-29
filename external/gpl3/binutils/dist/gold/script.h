@@ -1,6 +1,6 @@
 // script.h -- handle linker scripts for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include "elfcpp.h"
 #include "script-sections.h"
 
 namespace gold
@@ -111,7 +112,8 @@ class Expression
 		 bool is_dot_available, uint64_t dot_value,
 		 Output_section* dot_section,
 		 Output_section** result_section, uint64_t* result_alignment,
-		 bool is_section_dot_assignment);
+		 elfcpp::STT* type, elfcpp::STV* vis, unsigned char* nonvis,
+		 bool is_section_dot_assignment, bool* is_valid_pointer);
 
   // Print the expression to the FILE.  This is for debugging.
   virtual void

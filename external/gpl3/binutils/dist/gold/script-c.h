@@ -1,6 +1,6 @@
 /* script-c.h -- C interface for linker scripts in gold.  */
 
-/* Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -434,7 +434,7 @@ extern void
 script_set_section_region(void*, const char*, size_t, int);
 
 extern void
-script_include_directive(void *, const char*, size_t);
+script_include_directive(int, void *, const char*, size_t);
   
 /* Called by the bison parser for expressions.  */
 

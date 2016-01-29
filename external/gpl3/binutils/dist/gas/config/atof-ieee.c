@@ -1,6 +1,5 @@
 /* atof_ieee.c - turn a Flonum into an IEEE floating point number
-   Copyright 1987, 1992, 1994, 1996, 1997, 1998, 1999, 2000, 2001, 2005,
-   2007, 2009  Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -419,7 +418,7 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
 		     - generic_floating_point_number.low);
 
   /* Seek (and forget) 1st significant bit.  */
-  for (exponent_skippage = 0; !next_bits (1); ++exponent_skippage);;
+  for (exponent_skippage = 0; !next_bits (1); ++exponent_skippage);
   exponent_1 = (generic_floating_point_number.exponent
 		+ generic_floating_point_number.leader
 		+ 1
@@ -702,7 +701,7 @@ extern const char FLT_CHARS[];
 
 /* This is a utility function called from various tc-*.c files.  It
    is here in order to reduce code duplication.
-   
+
    Turn a string at input_line_pointer into a floating point constant
    of type TYPE (a character found in the FLT_CHARS macro), and store
    it as LITTLENUMS in the bytes buffer LITP.  The number of chars

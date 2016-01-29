@@ -1,6 +1,5 @@
 /* Definitions for opcode table for the sparc.
-   Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000, 2002,
-   2003, 2005, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, GDB, the GNU debugger, and
    the GNU Binutils.
@@ -42,6 +41,7 @@ enum sparc_opcode_arch_val
   SPARC_OPCODE_ARCH_V6 = 0,
   SPARC_OPCODE_ARCH_V7,
   SPARC_OPCODE_ARCH_V8,
+  SPARC_OPCODE_ARCH_LEON,
   SPARC_OPCODE_ARCH_SPARCLET,
   SPARC_OPCODE_ARCH_SPARCLITE,
   /* V9 variants must appear last.  */
@@ -100,6 +100,7 @@ typedef struct sparc_opcode
   /* This was called "delayed" in versions before the flags.  */
   unsigned int flags;
   unsigned int hwcaps;
+  unsigned int hwcaps2;
   short architecture;	/* Bitmask of sparc_opcode_arch_val's.  */
 } sparc_opcode;
 
@@ -111,8 +112,12 @@ typedef struct sparc_opcode
 #define	F_JSR		0x00000010 /* Subroutine call.  */
 #define F_FLOAT		0x00000020 /* Floating point instruction (not a branch).  */
 #define F_FBR		0x00000040 /* Floating point branch.  */
+#define F_PREFERRED	0x00000080 /* A preferred alias.  */
 
-/* These must match the HWCAP_* values precisely.  */
+#define F_PREF_ALIAS	(F_ALIAS|F_PREFERRED)
+
+/* These must match the ELF_SPARC_HWCAP_* and ELF_SPARC_HWCAP2_*
+   values precisely.  See include/elf/sparc.h.  */
 #define HWCAP_MUL32	0x00000001 /* umul/umulcc/smul/smulcc insns */
 #define HWCAP_DIV32	0x00000002 /* udiv/udivcc/sdiv/sdivcc insns */
 #define HWCAP_FSMULD	0x00000004 /* 'fsmuld' insn */
@@ -145,6 +150,20 @@ typedef struct sparc_opcode
 #define HWCAP_CBCOND	0x10000000 /* Compare and Branch insns */
 #define HWCAP_CRC32C	0x20000000 /* CRC32C insn */
 
+#define HWCAP2_FJATHPLUS 0x00000001 /* Fujitsu Athena+ */
+#define HWCAP2_VIS3B     0x00000002 /* Subset of VIS3 present on sparc64 X+.  */
+#define HWCAP2_ADP       0x00000004 /* Application Data Protection */
+#define HWCAP2_SPARC5    0x00000008 /* The 29 new fp and sub instructions */
+#define HWCAP2_MWAIT     0x00000010 /* mwait instruction and load/monitor ASIs */
+#define HWCAP2_XMPMUL    0x00000020 /* XOR multiple precision multiply */
+#define HWCAP2_XMONT     0x00000040 /* XOR Montgomery mult/sqr instructions */
+#define HWCAP2_NSEC      \
+                         0x00000080 /* pause insn with support for nsec timings */
+#define HWCAP2_FJATHHPC  0x00001000 /* Fujitsu HPC instrs */
+#define HWCAP2_FJDES     0x00002000 /* Fujitsu DES instrs */
+#define HWCAP2_FJAES     0x00010000 /* Fujitsu AES instrs */
+
+
 /* All sparc opcodes are 32 bits, except for the `set' instruction (really a
    macro), which is 64 bits. It is handled as a special case.
 
@@ -170,6 +189,7 @@ typedef struct sparc_opcode
 	g	frsd floating point register.
 	H	frsd floating point register (double/even).
 	J	frsd floating point register (quad/multiple of 4).
+	}       frsd floating point register (double/even) that is == frs2
 	b	crs1 coprocessor register
 	c	crs2 coprocessor register
 	D	crsd coprocessor register
@@ -211,6 +231,7 @@ typedef struct sparc_opcode
 	s	%fprs. (v9)
 	P	%pc.  (v9)
 	W	%tick.	(v9)
+	{	%mcdper. (v9b)
 	o	%asi. (v9)
 	6	%fcc0. (v9)
 	7	%fcc1. (v9)
@@ -234,6 +255,7 @@ typedef struct sparc_opcode
 #define OPF_LOW5(x)	OPF ((x) & 0x1f)     /* V9.  */
 #define OPF_LOW4(x)	OPF ((x) & 0xf)      /* V9.  */
 #define F3F(x, y, z)	(OP (x) | OP3 (y) | OPF (z)) /* Format3 float insns.  */
+#define F3F4(x, y, z)	(OP (x) | OP3 (y) | OPF_LOW4 (z))
 #define F3I(x)		(((x) & 0x1) << 13)  /* Immediate field of format 3 insns.  */
 #define F2(x, y)	(OP (x) | OP2(y))    /* Format 2 insns.  */
 #define F3(x, y, z)	(OP (x) | OP3(y) | F3I(z)) /* Format3 insns.  */

@@ -3,8 +3,8 @@
 Raw dump of debug contents of section \.z?debug_line:
 #...
  Line Number Statements:
-  Extended opcode 2: set Address to .*
-  Copy
-  Set basic block
-  .* by 1 to 2
+  \[0x.*\]  Extended opcode 2: set Address to .*
+  \[0x.*\]  Copy
+  \[0x.*\]  Set basic block
+  \[0x.*\]  .* by 1 to 2
 #pass

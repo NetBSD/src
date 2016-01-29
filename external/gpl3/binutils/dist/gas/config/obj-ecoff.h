@@ -1,6 +1,5 @@
 /* ECOFF object file format header file.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1999, 2002, 2004, 2005,
-   2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 

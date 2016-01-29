@@ -3,7 +3,7 @@
 #as: -milp32
 #source: secname.s
 
-There are 8 section headers, starting at offset 0x7c:
+There are 8 section headers, starting at offset .*:
 
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
@@ -12,8 +12,8 @@ Section Headers:
   \[ 2\] .data             PROGBITS        00000000 000040 000000 00  WA  0   0  1
   \[ 3\] .bss              NOBITS          00000000 000040 000000 00  WA  0   0  1
   \[ 4\] .foo              PROGBITS        00000000 000040 000008 00  WA  0   0  8
-  \[ 5\] .shstrtab         STRTAB          00000000 000048 000031 00      0   0  1
-  \[ 6\] .symtab           SYMTAB          00000000 0001bc 000050 10      7   5  4
-  \[ 7\] .strtab           STRTAB          00000000 00020c 000001 00      0   0  1
+  \[ 5\] .shstrtab         STRTAB          00000000 [0-9a-f]+ 000031 00      0   0  1
+  \[ 6\] .symtab           SYMTAB          00000000 [0-9a-f]+ 000050 10      7   5  4
+  \[ 7\] .strtab           STRTAB          00000000 [0-9a-f]+ 000001 00      0   0  1
 Key to Flags:
 #...

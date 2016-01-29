@@ -1,5 +1,5 @@
 /* tc-mep.h -- Header file for tc-mep.c.
-   Copyright (C) 2001, 2002, 2005, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -97,7 +97,8 @@ extern void mep_prepare_relax_scan (fragS *, offsetT *, relax_substateT);
 #define VTEXT_SECTION_NAME ".vtext"
 
 /* Needed to process pending instructions when a label is encountered.  */
-#define TC_START_LABEL(ch, s, ptr)    ((ch == ':') && mep_flush_pending_output ())
+#define TC_START_LABEL(STR, NUL_CHAR, NEXT_CHAR)	\
+  (NEXT_CHAR == ':' && mep_flush_pending_output ())
 
 #define tc_unrecognized_line(c) mep_unrecognized_line (c)
 extern int mep_unrecognized_line (int);
@@ -112,7 +113,7 @@ extern flagword mep_elf_section_flags  (flagword, bfd_vma, int);
 #define ELF_TC_SPECIAL_SECTIONS \
   { VTEXT_SECTION_NAME, SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR|SHF_MEP_VLIW },
 
-/* The values of the following enum are for use with parinsnum, which 
+/* The values of the following enum are for use with parinsnum, which
    is a variable in md_assemble that keeps track of whether or not the
    next instruction is expected to be the first or second instrucion in
    a parallelization group.  */

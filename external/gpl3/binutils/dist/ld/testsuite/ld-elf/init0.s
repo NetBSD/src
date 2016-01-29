@@ -9,8 +9,8 @@ __start:
 main:
 	.dc.a 0
 
-	.section .init
+	.section .init, "a"
 	.p2align 2
-.globl foo
+	.global foo
 	.type	foo,%function
 foo:

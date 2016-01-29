@@ -1,4 +1,3 @@
-#skip: mips-*-ecoff
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: MIPS branch-misc-2pic
 #source: branch-misc-2.s

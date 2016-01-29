@@ -1,6 +1,5 @@
 /* tc-rl78.h - header file for Renesas RL78
-   Copyright 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -50,6 +49,9 @@ extern int target_little_endian;
 #define md_end rl78_md_end
 extern void rl78_md_end (void);
 
+#define md_relax_frag rl78_relax_frag
+extern int rl78_relax_frag (segT, fragS *, long);
+
 #define TC_FRAG_TYPE struct rl78_bytesT *
 #define TC_FRAG_INIT rl78_frag_init
 extern void rl78_frag_init (fragS *);
@@ -65,7 +67,7 @@ extern long md_pcrel_from_section (struct fix *, segT);
   rl78_validate_fix_sub (FIX)
 extern int rl78_validate_fix_sub (struct fix *);
 
-#define TC_CONS_FIX_NEW(FRAG, WHERE, NBYTES, EXP) \
+#define TC_CONS_FIX_NEW(FRAG, WHERE, NBYTES, EXP, RET)	\
   rl78_cons_fix_new (FRAG, WHERE, NBYTES, EXP)
 extern void rl78_cons_fix_new (fragS *, int, int, expressionS *);
 
@@ -77,3 +79,23 @@ extern void rl78_cons_fix_new (fragS *, int, int, expressionS *);
 #define MAX_MEM_FOR_RS_ALIGN_CODE 8
 #define HANDLE_ALIGN(FRAG) rl78_handle_align (FRAG)
 extern void rl78_handle_align (fragS *);
+
+#define elf_tc_final_processing	rl78_elf_final_processing
+extern void rl78_elf_final_processing (void);
+
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES)	\
+  ((EXP)->X_md = 0, expression (EXP), TC_PARSE_CONS_RETURN_NONE)
+
+#define TC_LINKRELAX_FIXUP(seg) ((seg->flags & SEC_CODE) || (seg->flags & SEC_DEBUGGING))
+
+/* Do not adjust relocations involving symbols in code sections,
+   because it breaks linker relaxations.  This could be fixed in the
+   linker, but this fix is simpler, and it pretty much only affects
+   object size a little bit.  */
+#define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEC)	\
+  (   ((SEC)->flags & SEC_CODE) != 0		\
+   || ((SEC)->flags & SEC_DEBUGGING) != 0	\
+   || ! SEG_NORMAL (SEC)			\
+   || TC_FORCE_RELOCATION (FIX))
+
+#define DWARF2_USE_FIXED_ADVANCE_PC 1

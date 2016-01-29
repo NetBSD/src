@@ -2,7 +2,7 @@
 
 # script_test_10.sh -- test for the section order.
 
-# Copyright 2010 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # Written by Viktor Kutuzov <vkutuzov@accesssoftek.com>.
 
 # This file is part of gold.
@@ -42,5 +42,5 @@ check script_test_10.stdout ".*\[ 4\] .sec2"
 check script_test_10.stdout ".*\[ 5\] .secz"
 check script_test_10.stdout ".*\[ 6\] .sec3"
 check script_test_10.stdout ".*\[ 7\] .data"
-check script_test_10.stdout ".*\[ 8\] .bss"
+check script_test_10.stdout ".* .bss"
 

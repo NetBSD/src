@@ -6,3 +6,6 @@
 [^:]*:7: Error: invalid barrier type -- `isb nshst'
 [^:]*:8: Error: invalid barrier type -- `isb osh'
 [^:]*:9: Error: invalid barrier type -- `isb oshst'
+[^:]*:10: Error: immediate value out of range -- `isb #23'
+[^:]*:11: Error: invalid barrier type -- `dsb xyz'
+[^:]*:12: Error: immediate value out of range -- `dsb #34'

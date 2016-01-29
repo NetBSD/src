@@ -1,6 +1,5 @@
 /* BFD back-end for AMD 64 COFF files.
-   Copyright 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,7 +17,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.
-   
+
    Written by Kai Tietz, OneVision Software GmbH&CoKg.  */
 
 #ifndef COFF_WITH_pex64
@@ -144,6 +143,16 @@ coff_amd64_reloc (bfd *abfd,
 	reloc_howto_type *howto = reloc_entry->howto;
 	unsigned char *addr = (unsigned char *) data + reloc_entry->address;
 
+	/* FIXME: We do not have an end address for data, so we cannot
+	   accurately range check any addresses computed against it.
+	   cf: PR binutils/17512: file: 1085-1761-0.004.
+	   For now we do the best that we can.  */
+	if (addr < (unsigned char *) data || addr > ((unsigned char *) data) + input_section->size)
+	  {
+	    bfd_set_error (bfd_error_bad_value);
+	    return bfd_reloc_notsupported;
+	  }
+
 	switch (howto->size)
 	  {
 	  case 0:
@@ -178,7 +187,8 @@ coff_amd64_reloc (bfd *abfd,
 	    break;
 
 	  default:
-	    abort ();
+	    bfd_set_error (bfd_error_bad_value);
+	    return bfd_reloc_notsupported;
 	  }
       }
 
@@ -449,6 +459,8 @@ static reloc_howto_type howto_table[] =
 	 PCRELOFFSET)		/* pcrel_offset */
 };
 
+#define NUM_HOWTOS ARRAY_SIZE (howto_table)
+
 /* Turn a howto into a reloc  nunmber */
 
 #define SELECT_RELOC(x,howto) { x.r_type = howto->type; }
@@ -457,7 +469,7 @@ static reloc_howto_type howto_table[] =
 
 #define RTYPE2HOWTO(cache_ptr, dst)		\
   ((cache_ptr)->howto =				\
-   ((dst)->r_type < ARRAY_SIZE (howto_table))	\
+   ((dst)->r_type < NUM_HOWTOS)			\
     ? howto_table + (dst)->r_type		\
     : NULL)
 
@@ -487,7 +499,7 @@ static reloc_howto_type howto_table[] =
       coffsym = (obj_symbols (abfd)				\
 	         + (cache_ptr->sym_ptr_ptr - symbols));		\
     else if (ptr)						\
-      coffsym = coff_symbol_from (abfd, ptr);			\
+      coffsym = coff_symbol_from (ptr);				\
     								\
     if (coffsym != NULL						\
 	&& coffsym->native->u.syment.n_scnum == 0)		\
@@ -497,7 +509,8 @@ static reloc_howto_type howto_table[] =
       cache_ptr->addend = - (ptr->section->vma + ptr->value);	\
     else							\
       cache_ptr->addend = 0;					\
-    if (ptr && howto_table[reloc.r_type].pc_relative)		\
+    if (ptr && reloc.r_type < NUM_HOWTOS			\
+	&& howto_table[reloc.r_type].pc_relative)		\
       cache_ptr->addend += asect->vma;				\
   }
 
@@ -525,7 +538,7 @@ coff_pe_amd64_relocate_section (bfd *output_bfd,
 				struct internal_syment *syms,
 				asection **sections)
 {
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   return _bfd_coff_generic_relocate_section (output_bfd, info, input_bfd,input_section, contents,relocs, syms, sections);
@@ -547,7 +560,7 @@ coff_amd64_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 {
   reloc_howto_type *howto;
 
-  if (rel->r_type >= ARRAY_SIZE (howto_table))
+  if (rel->r_type >= NUM_HOWTOS)
     {
       bfd_set_error (bfd_error_bad_value);
       return NULL;
@@ -690,7 +703,7 @@ coff_amd64_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 {
   unsigned int i;
 
-  for (i = 0; i < sizeof (howto_table) / sizeof (howto_table[0]); i++)
+  for (i = 0; i < NUM_HOWTOS; i++)
     if (howto_table[i].name != NULL
 	&& strcasecmp (howto_table[i].name, r_name) == 0)
       return &howto_table[i];
@@ -735,7 +748,7 @@ const bfd_target
 #ifdef TARGET_SYM
   TARGET_SYM =
 #else
-  x86_64coff_vec =
+  x86_64_coff_vec =
 #endif
 {
 #ifdef TARGET_NAME
@@ -749,13 +762,13 @@ const bfd_target
 
   (HAS_RELOC | EXEC_P |		/* Object flags.  */
    HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
 
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* Section flags.  */
 #if defined(COFF_WITH_PE)
-   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_READONLY
+   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_READONLY | SEC_DEBUGGING
 #endif
-   | SEC_CODE | SEC_DATA),
+   | SEC_CODE | SEC_DATA | SEC_EXCLUDE ),
 
 #ifdef TARGET_UNDERSCORE
   TARGET_UNDERSCORE,		/* Leading underscore.  */
