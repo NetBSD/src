@@ -1,6 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2009, 2010, 2011  Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -28,15 +27,21 @@
 /* Sign-extend a 16-bit number.  */
 #define SEXT16(x)	((((x) & 0xffff) ^ (~0x7fff)) + 0x8000)
 
-/* Temporarily holds the reloc in a cons expression.  */
-static bfd_reloc_code_real_type hold_cons_reloc = BFD_RELOC_UNUSED;
-
 /* Set to TRUE if we want to be pedantic about signed overflows.  */
 static bfd_boolean warn_signed_overflows   = FALSE;
 static bfd_boolean warn_unsigned_overflows = FALSE;
 
+/* Non-zero if floating point insns are not being used.  */
+static signed int soft_float = -1;
+
 /* Indicates the target BFD machine number.  */
 static int machine = -1;
+
+
+/* Indiciates the target BFD architecture.  */
+int          v850_target_arch = bfd_arch_v850_rh850;
+const char * v850_target_format = "elf32-v850-rh850";
+static flagword v850_e_flags = 0;
 
 /* Indicates the target processor(s) for the assemble.  */
 static int processor_mask = 0;
@@ -121,6 +126,10 @@ const relax_typeS md_relax_table[] =
   {0xfffe, -0x10000,	4, SUBYPTE_SA_9_17_22_32 + 2},
   {0x1ffffe + 4, -0x200000 + 4, 8, SUBYPTE_SA_9_17_22_32 + 3},
   {0x7ffffffe, -0x80000000, 10, 0},
+  /* Loop.  (V850E2V4_UP, max 22-bit).  */
+#define SUBYPTE_LOOP_16_22	29
+  {0x0, -0x0fffe, 4, SUBYPTE_LOOP_16_22 + 1},
+  {0x1ffffe + 2, -0x200000 + 2, 6, 0},
 };
 
 static int v850_relax = 0;
@@ -261,8 +270,7 @@ v850_comm (int area)
   symbolS *symbolP;
   int have_align;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
 
   /* Just after name is now '\0'.  */
   p = input_line_pointer;
@@ -512,7 +520,7 @@ static void
 set_machine (int number)
 {
   machine = number;
-  bfd_set_arch_mach (stdoutput, TARGET_ARCH, machine);
+  bfd_set_arch_mach (stdoutput, v850_target_arch, machine);
 
   switch (machine)
     {
@@ -522,6 +530,7 @@ set_machine (int number)
     case bfd_mach_v850e1:  SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E);   break;
     case bfd_mach_v850e2:  SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2);  break;
     case bfd_mach_v850e2v3:SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2V3); break;
+    case bfd_mach_v850e3v5: SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E3V5); break;
     }
 }
 
@@ -582,6 +591,8 @@ const pseudo_typeS md_pseudo_table[] =
   { "v850e1",		set_machine,		bfd_mach_v850e1         },
   { "v850e2",		set_machine,		bfd_mach_v850e2 	},
   { "v850e2v3",		set_machine,		bfd_mach_v850e2v3 	},
+  { "v850e2v4",		set_machine,		bfd_mach_v850e3v5 	},
+  { "v850e3v5",		set_machine,		bfd_mach_v850e3v5 	},
   { "longcall",		v850_longcode,		1			},
   { "longjump",		v850_longcode,		2			},
   { NULL,		NULL,			0			}
@@ -645,97 +656,97 @@ static const struct reg_name system_registers[] =
   { "bpc",         22, PROCESSOR_NOT_V850 },
   { "bpdm",        27, PROCESSOR_NOT_V850 },
   { "bpdv",        26, PROCESSOR_NOT_V850 },
-  { "bsel",        31, PROCESSOR_V850E2_ALL },
-  { "cfg",          7, PROCESSOR_V850E2V3 },
+  { "bsel",        31, PROCESSOR_V850E2_UP },
+  { "cfg",          7, PROCESSOR_V850E2V3_UP },
   { "ctbp",        20, PROCESSOR_NOT_V850 },
   { "ctpc",        16, PROCESSOR_NOT_V850 },
   { "ctpsw",       17, PROCESSOR_NOT_V850 },
-  { "dbic",        15, PROCESSOR_V850E2_ALL },
+  { "dbic",        15, PROCESSOR_V850E2_UP },
   { "dbpc",        18, PROCESSOR_NOT_V850 },
   { "dbpsw",       19, PROCESSOR_NOT_V850 },
-  { "dbwr",        30, PROCESSOR_V850E2_ALL },
+  { "dbwr",        30, PROCESSOR_V850E2_UP },
   { "dir",         21, PROCESSOR_NOT_V850 },
-  { "dpa0l",       16, PROCESSOR_V850E2V3 },
-  { "dpa0u",       17, PROCESSOR_V850E2V3 },
-  { "dpa1l",       18, PROCESSOR_V850E2V3 },
-  { "dpa1u",       19, PROCESSOR_V850E2V3 },
-  { "dpa2l",       20, PROCESSOR_V850E2V3 },
-  { "dpa2u",       21, PROCESSOR_V850E2V3 },
-  { "dpa3l",       22, PROCESSOR_V850E2V3 },
-  { "dpa3u",       23, PROCESSOR_V850E2V3 },
-  { "dpa4l",       24, PROCESSOR_V850E2V3 },
-  { "dpa4u",       25, PROCESSOR_V850E2V3 },
-  { "dpa5l",       26, PROCESSOR_V850E2V3 },
-  { "dpa5u",       27, PROCESSOR_V850E2V3 },
+  { "dpa0l",       16, PROCESSOR_V850E2V3_UP },
+  { "dpa0u",       17, PROCESSOR_V850E2V3_UP },
+  { "dpa1l",       18, PROCESSOR_V850E2V3_UP },
+  { "dpa1u",       19, PROCESSOR_V850E2V3_UP },
+  { "dpa2l",       20, PROCESSOR_V850E2V3_UP },
+  { "dpa2u",       21, PROCESSOR_V850E2V3_UP },
+  { "dpa3l",       22, PROCESSOR_V850E2V3_UP },
+  { "dpa3u",       23, PROCESSOR_V850E2V3_UP },
+  { "dpa4l",       24, PROCESSOR_V850E2V3_UP },
+  { "dpa4u",       25, PROCESSOR_V850E2V3_UP },
+  { "dpa5l",       26, PROCESSOR_V850E2V3_UP },
+  { "dpa5u",       27, PROCESSOR_V850E2V3_UP },
   { "ecr",          4, PROCESSOR_ALL },
-  { "eh_base",      3, PROCESSOR_V850E2V3 },
-  { "eh_cfg",       1, PROCESSOR_V850E2V3 },
-  { "eh_reset",     2, PROCESSOR_V850E2V3 },
-  { "eiic",        13, PROCESSOR_V850E2_ALL },
+  { "eh_base",      3, PROCESSOR_V850E2V3_UP },
+  { "eh_cfg",       1, PROCESSOR_V850E2V3_UP },
+  { "eh_reset",     2, PROCESSOR_V850E2V3_UP },
+  { "eiic",        13, PROCESSOR_V850E2_UP },
   { "eipc",         0, PROCESSOR_ALL },
   { "eipsw",        1, PROCESSOR_ALL },
-  { "eiwr",        28, PROCESSOR_V850E2_ALL },
-  { "feic",        14, PROCESSOR_V850E2_ALL },
+  { "eiwr",        28, PROCESSOR_V850E2_UP },
+  { "feic",        14, PROCESSOR_V850E2_UP },
   { "fepc",         2, PROCESSOR_ALL },
   { "fepsw",        3, PROCESSOR_ALL },
-  { "fewr",        29, PROCESSOR_V850E2_ALL },
-  { "fpcc",         9, PROCESSOR_V850E2V3 },
-  { "fpcfg",       10, PROCESSOR_V850E2V3 },
-  { "fpec",        11, PROCESSOR_V850E2V3 },
-  { "fpepc",        7, PROCESSOR_V850E2V3 },
-  { "fpspc",       27, PROCESSOR_V850E2V3 },
-  { "fpsr",         6, PROCESSOR_V850E2V3 },
-  { "fpst",         8, PROCESSOR_V850E2V3 },
-  { "ipa0l",        6, PROCESSOR_V850E2V3 },
-  { "ipa0u",        7, PROCESSOR_V850E2V3 },
-  { "ipa1l",        8, PROCESSOR_V850E2V3 },
-  { "ipa1u",        9, PROCESSOR_V850E2V3 },
-  { "ipa2l",       10, PROCESSOR_V850E2V3 },
-  { "ipa2u",       11, PROCESSOR_V850E2V3 },
-  { "ipa3l",       12, PROCESSOR_V850E2V3 },
-  { "ipa3u",       13, PROCESSOR_V850E2V3 },
-  { "ipa4l",       14, PROCESSOR_V850E2V3 },
-  { "ipa4u",       15, PROCESSOR_V850E2V3 },
-  { "mca",         24, PROCESSOR_V850E2V3 },
-  { "mcc",         26, PROCESSOR_V850E2V3 },
-  { "mcr",         27, PROCESSOR_V850E2V3 },
-  { "mcs",         25, PROCESSOR_V850E2V3 },
-  { "mpc",          1, PROCESSOR_V850E2V3 },
-  { "mpm",          0, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa0l", 16, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa0u", 17, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa1l", 18, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa1u", 19, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa2l", 20, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa2u", 21, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa3l", 22, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa3u", 23, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa4l", 24, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa4u", 25, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa5l", 26, PROCESSOR_V850E2V3 },
-  { "mpu10_dpa5u", 27, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa0l",  6, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa0u",  7, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa1l",  8, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa1u",  9, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa2l", 10, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa2u", 11, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa3l", 12, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa3u", 13, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa4l", 14, PROCESSOR_V850E2V3 },
-  { "mpu10_ipa4u", 15, PROCESSOR_V850E2V3 },
-  { "mpu10_mpc",    1, PROCESSOR_V850E2V3 },
-  { "mpu10_mpm",    0, PROCESSOR_V850E2V3 },
-  { "mpu10_tid",    2, PROCESSOR_V850E2V3 },
-  { "mpu10_vmadr",  5, PROCESSOR_V850E2V3 },
-  { "mpu10_vmecr",  3, PROCESSOR_V850E2V3 },
-  { "mpu10_vmtid",  4, PROCESSOR_V850E2V3 },
-  { "pid",          6, PROCESSOR_V850E2V3 },
-  { "pmcr0",        4, PROCESSOR_V850E2V3 },
-  { "pmis2",       14, PROCESSOR_V850E2V3 },
+  { "fewr",        29, PROCESSOR_V850E2_UP },
+  { "fpcc",         9, PROCESSOR_V850E2V3_UP },
+  { "fpcfg",       10, PROCESSOR_V850E2V3_UP },
+  { "fpec",        11, PROCESSOR_V850E2V3_UP },
+  { "fpepc",        7, PROCESSOR_V850E2V3_UP },
+  { "fpspc",       27, PROCESSOR_V850E2V3_UP },
+  { "fpsr",         6, PROCESSOR_V850E2V3_UP },
+  { "fpst",         8, PROCESSOR_V850E2V3_UP },
+  { "ipa0l",        6, PROCESSOR_V850E2V3_UP },
+  { "ipa0u",        7, PROCESSOR_V850E2V3_UP },
+  { "ipa1l",        8, PROCESSOR_V850E2V3_UP },
+  { "ipa1u",        9, PROCESSOR_V850E2V3_UP },
+  { "ipa2l",       10, PROCESSOR_V850E2V3_UP },
+  { "ipa2u",       11, PROCESSOR_V850E2V3_UP },
+  { "ipa3l",       12, PROCESSOR_V850E2V3_UP },
+  { "ipa3u",       13, PROCESSOR_V850E2V3_UP },
+  { "ipa4l",       14, PROCESSOR_V850E2V3_UP },
+  { "ipa4u",       15, PROCESSOR_V850E2V3_UP },
+  { "mca",         24, PROCESSOR_V850E2V3_UP },
+  { "mcc",         26, PROCESSOR_V850E2V3_UP },
+  { "mcr",         27, PROCESSOR_V850E2V3_UP },
+  { "mcs",         25, PROCESSOR_V850E2V3_UP },
+  { "mpc",          1, PROCESSOR_V850E2V3_UP },
+  { "mpm",          0, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa0l", 16, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa0u", 17, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa1l", 18, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa1u", 19, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa2l", 20, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa2u", 21, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa3l", 22, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa3u", 23, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa4l", 24, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa4u", 25, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa5l", 26, PROCESSOR_V850E2V3_UP },
+  { "mpu10_dpa5u", 27, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa0l",  6, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa0u",  7, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa1l",  8, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa1u",  9, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa2l", 10, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa2u", 11, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa3l", 12, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa3u", 13, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa4l", 14, PROCESSOR_V850E2V3_UP },
+  { "mpu10_ipa4u", 15, PROCESSOR_V850E2V3_UP },
+  { "mpu10_mpc",    1, PROCESSOR_V850E2V3_UP },
+  { "mpu10_mpm",    0, PROCESSOR_V850E2V3_UP },
+  { "mpu10_tid",    2, PROCESSOR_V850E2V3_UP },
+  { "mpu10_vmadr",  5, PROCESSOR_V850E2V3_UP },
+  { "mpu10_vmecr",  3, PROCESSOR_V850E2V3_UP },
+  { "mpu10_vmtid",  4, PROCESSOR_V850E2V3_UP },
+  { "pid",          6, PROCESSOR_V850E2V3_UP },
+  { "pmcr0",        4, PROCESSOR_V850E2V3_UP },
+  { "pmis2",       14, PROCESSOR_V850E2V3_UP },
   { "psw",          5, PROCESSOR_ALL },
-  { "scbp",        12, PROCESSOR_V850E2V3 },
-  { "sccfg",       11, PROCESSOR_V850E2V3 },
+  { "scbp",        12, PROCESSOR_V850E2V3_UP },
+  { "sccfg",       11, PROCESSOR_V850E2V3_UP },
   { "sr0",          0, PROCESSOR_ALL },
   { "sr1",          1, PROCESSOR_ALL },
   { "sr10",        10, PROCESSOR_ALL },
@@ -768,16 +779,16 @@ static const struct reg_name system_registers[] =
   { "sr7",          7, PROCESSOR_ALL },
   { "sr8",          8, PROCESSOR_ALL },
   { "sr9",          9, PROCESSOR_ALL },
-  { "sw_base",      3, PROCESSOR_V850E2V3 },
-  { "sw_cfg",       1, PROCESSOR_V850E2V3 },
-  { "sw_ctl",       0, PROCESSOR_V850E2V3 },
-  { "tid",          2, PROCESSOR_V850E2V3 },
-  { "vmadr",        6, PROCESSOR_V850E2V3 },
-  { "vmecr",        4, PROCESSOR_V850E2V3 },
-  { "vmtid",        5, PROCESSOR_V850E2V3 },
-  { "vsadr",        2, PROCESSOR_V850E2V3 },
-  { "vsecr",        0, PROCESSOR_V850E2V3 },
-  { "vstid",        1, PROCESSOR_V850E2V3 },
+  { "sw_base",      3, PROCESSOR_V850E2V3_UP },
+  { "sw_cfg",       1, PROCESSOR_V850E2V3_UP },
+  { "sw_ctl",       0, PROCESSOR_V850E2V3_UP },
+  { "tid",          2, PROCESSOR_V850E2V3_UP },
+  { "vmadr",        6, PROCESSOR_V850E2V3_UP },
+  { "vmecr",        4, PROCESSOR_V850E2V3_UP },
+  { "vmtid",        5, PROCESSOR_V850E2V3_UP },
+  { "vsadr",        2, PROCESSOR_V850E2V3_UP },
+  { "vsecr",        0, PROCESSOR_V850E2V3_UP },
+  { "vstid",        1, PROCESSOR_V850E2V3_UP },
 };
 
 #define SYSREG_NAME_CNT						\
@@ -816,42 +827,112 @@ static const struct reg_name cc_names[] =
 
 static const struct reg_name float_cc_names[] =
 {
-  { "eq",  0x2, PROCESSOR_V850E2V3 },	/* true.  */
-  { "f",   0x0, PROCESSOR_V850E2V3 },	/* true.  */
-  { "ge",  0xd, PROCESSOR_V850E2V3 },	/* false.  */
-  { "gl",  0xb, PROCESSOR_V850E2V3 },	/* false.  */
-  { "gle", 0x9, PROCESSOR_V850E2V3 },	/* false.  */
-  { "gt",  0xf, PROCESSOR_V850E2V3 },	/* false.  */
-  { "le",  0xe, PROCESSOR_V850E2V3 },	/* true.  */
-  { "lt",  0xc, PROCESSOR_V850E2V3 },	/* true.  */
-  { "neq", 0x2, PROCESSOR_V850E2V3 },	/* false.  */
-  { "nge", 0xd, PROCESSOR_V850E2V3 },	/* true.  */
-  { "ngl", 0xb, PROCESSOR_V850E2V3 },	/* true.  */
-  { "ngle",0x9, PROCESSOR_V850E2V3 },	/* true.  */
-  { "ngt", 0xf, PROCESSOR_V850E2V3 },	/* true.  */
-  { "nle", 0xe, PROCESSOR_V850E2V3 },	/* false.  */
-  { "nlt", 0xc, PROCESSOR_V850E2V3 },	/* false.  */
-  { "oge", 0x5, PROCESSOR_V850E2V3 },	/* false.  */
-  { "ogl", 0x3, PROCESSOR_V850E2V3 },	/* false.  */
-  { "ogt", 0x7, PROCESSOR_V850E2V3 },	/* false.  */
-  { "ole", 0x6, PROCESSOR_V850E2V3 },	/* true.  */
-  { "olt", 0x4, PROCESSOR_V850E2V3 },	/* true.  */
-  { "or",  0x1, PROCESSOR_V850E2V3 },	/* false.  */
-  { "seq", 0xa, PROCESSOR_V850E2V3 },	/* true.  */
-  { "sf",  0x8, PROCESSOR_V850E2V3 },	/* true.  */
-  { "sne", 0xa, PROCESSOR_V850E2V3 },	/* false.  */
-  { "st",  0x8, PROCESSOR_V850E2V3 },	/* false.  */
-  { "t",   0x0, PROCESSOR_V850E2V3 },	/* false.  */
-  { "ueq", 0x3, PROCESSOR_V850E2V3 },	/* true.  */
-  { "uge", 0x4, PROCESSOR_V850E2V3 },	/* false.  */
-  { "ugt", 0x6, PROCESSOR_V850E2V3 },	/* false.  */
-  { "ule", 0x7, PROCESSOR_V850E2V3 },	/* true.  */
-  { "ult", 0x5, PROCESSOR_V850E2V3 },	/* true.  */
-  { "un",  0x1, PROCESSOR_V850E2V3 },	/* true.  */
+  { "eq",  0x2, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "f",   0x0, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "ge",  0xd, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "gl",  0xb, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "gle", 0x9, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "gt",  0xf, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "le",  0xe, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "lt",  0xc, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "neq", 0x2, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "nge", 0xd, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "ngl", 0xb, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "ngle",0x9, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "ngt", 0xf, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "nle", 0xe, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "nlt", 0xc, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "oge", 0x5, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "ogl", 0x3, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "ogt", 0x7, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "ole", 0x6, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "olt", 0x4, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "or",  0x1, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "seq", 0xa, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "sf",  0x8, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "sne", 0xa, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "st",  0x8, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "t",   0x0, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "ueq", 0x3, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "uge", 0x4, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "ugt", 0x6, PROCESSOR_V850E2V3_UP },	/* false.  */
+  { "ule", 0x7, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "ult", 0x5, PROCESSOR_V850E2V3_UP },	/* true.  */
+  { "un",  0x1, PROCESSOR_V850E2V3_UP },	/* true.  */
 };
 
 #define FLOAT_CC_NAME_CNT					\
   (sizeof (float_cc_names) / sizeof (struct reg_name))
+
+
+static const struct reg_name cacheop_names[] =
+{
+  { "cfald",   0x44, PROCESSOR_V850E3V5_UP },
+  { "cfali",   0x40, PROCESSOR_V850E3V5_UP },
+  { "chbid",   0x04, PROCESSOR_V850E3V5_UP },
+  { "chbii",   0x00, PROCESSOR_V850E3V5_UP },
+  { "chbiwbd", 0x06, PROCESSOR_V850E3V5_UP },
+  { "chbwbd",  0x07, PROCESSOR_V850E3V5_UP },
+  { "cibid",   0x24, PROCESSOR_V850E3V5_UP },
+  { "cibii",   0x20, PROCESSOR_V850E3V5_UP },
+  { "cibiwbd", 0x26, PROCESSOR_V850E3V5_UP },
+  { "cibwbd",  0x27, PROCESSOR_V850E3V5_UP },
+  { "cildd",   0x65, PROCESSOR_V850E3V5_UP },
+  { "cildi",   0x61, PROCESSOR_V850E3V5_UP },
+  { "cistd",   0x64, PROCESSOR_V850E3V5_UP },
+  { "cisti",   0x60, PROCESSOR_V850E3V5_UP },
+};
+
+#define CACHEOP_NAME_CNT					\
+  (sizeof (cacheop_names) / sizeof (struct reg_name))
+
+static const struct reg_name prefop_names[] =
+{
+  { "prefd",   0x04, PROCESSOR_V850E3V5_UP },
+  { "prefi",   0x00, PROCESSOR_V850E3V5_UP },
+};
+
+#define PREFOP_NAME_CNT					\
+  (sizeof (prefop_names) / sizeof (struct reg_name))
+
+static const struct reg_name vector_registers[] =
+{
+  { "vr0",   0, PROCESSOR_V850E3V5_UP },
+  { "vr1",   1, PROCESSOR_V850E3V5_UP },
+  { "vr10", 10, PROCESSOR_V850E3V5_UP },
+  { "vr11", 11, PROCESSOR_V850E3V5_UP },
+  { "vr12", 12, PROCESSOR_V850E3V5_UP },
+  { "vr13", 13, PROCESSOR_V850E3V5_UP },
+  { "vr14", 14, PROCESSOR_V850E3V5_UP },
+  { "vr15", 15, PROCESSOR_V850E3V5_UP },
+  { "vr16", 16, PROCESSOR_V850E3V5_UP },
+  { "vr17", 17, PROCESSOR_V850E3V5_UP },
+  { "vr18", 18, PROCESSOR_V850E3V5_UP },
+  { "vr19", 19, PROCESSOR_V850E3V5_UP },
+  { "vr2",   2, PROCESSOR_V850E3V5_UP },
+  { "vr20", 20, PROCESSOR_V850E3V5_UP },
+  { "vr21", 21, PROCESSOR_V850E3V5_UP },
+  { "vr22", 22, PROCESSOR_V850E3V5_UP },
+  { "vr23", 23, PROCESSOR_V850E3V5_UP },
+  { "vr24", 24, PROCESSOR_V850E3V5_UP },
+  { "vr25", 25, PROCESSOR_V850E3V5_UP },
+  { "vr26", 26, PROCESSOR_V850E3V5_UP },
+  { "vr27", 27, PROCESSOR_V850E3V5_UP },
+  { "vr28", 28, PROCESSOR_V850E3V5_UP },
+  { "vr29", 29, PROCESSOR_V850E3V5_UP },
+  { "vr3",   3, PROCESSOR_V850E3V5_UP },
+  { "vr30", 30, PROCESSOR_V850E3V5_UP },
+  { "vr31", 31, PROCESSOR_V850E3V5_UP },
+  { "vr4",   4, PROCESSOR_V850E3V5_UP },
+  { "vr5",   5, PROCESSOR_V850E3V5_UP },
+  { "vr6",   6, PROCESSOR_V850E3V5_UP },
+  { "vr7",   7, PROCESSOR_V850E3V5_UP },
+  { "vr8",   8, PROCESSOR_V850E3V5_UP },
+  { "vr9",   9, PROCESSOR_V850E3V5_UP },
+};
+
+#define VREG_NAME_CNT						\
+  (sizeof (vector_registers) / sizeof (struct reg_name))
 
 /* Do a binary search of the given register table to see if NAME is a
    valid regiter name.  Return the register number from the array on
@@ -923,15 +1004,14 @@ register_name (expressionS *expressionP)
   char c;
 
   /* Find the spelling of the operand.  */
-  start = name = input_line_pointer;
-
-  c = get_symbol_end ();
+  start = input_line_pointer;
+  c = get_symbol_name (&name);
 
   reg_number = reg_name_search (pre_defined_registers, REG_NAME_CNT,
 				name, FALSE);
 
   /* Put back the delimiting char.  */
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   expressionP->X_add_symbol = NULL;
   expressionP->X_op_symbol  = NULL;
@@ -975,14 +1055,13 @@ system_register_name (expressionS *expressionP,
   char c;
 
   /* Find the spelling of the operand.  */
-  start = name = input_line_pointer;
-
-  c = get_symbol_end ();
+  start = input_line_pointer;
+  c = get_symbol_name (&name);
   reg_number = reg_name_search (system_registers, SYSREG_NAME_CNT, name,
 				accept_numbers);
 
   /* Put back the delimiting char.  */
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   if (reg_number < 0
       && accept_numbers)
@@ -1036,13 +1115,12 @@ cc_name (expressionS *expressionP,
   char c;
 
   /* Find the spelling of the operand.  */
-  start = name = input_line_pointer;
-
-  c = get_symbol_end ();
+  start = input_line_pointer;
+  c = get_symbol_name (&name);
   reg_number = reg_name_search (cc_names, CC_NAME_CNT, name, accept_numbers);
 
   /* Put back the delimiting char.  */
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   if (reg_number < 0
       && accept_numbers)
@@ -1087,13 +1165,12 @@ float_cc_name (expressionS *expressionP,
   char c;
 
   /* Find the spelling of the operand.  */
-  start = name = input_line_pointer;
-
-  c = get_symbol_end ();
+  start = input_line_pointer;
+  c = get_symbol_name (&name);
   reg_number = reg_name_search (float_cc_names, FLOAT_CC_NAME_CNT, name, accept_numbers);
 
   /* Put back the delimiting char.  */
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   if (reg_number < 0
       && accept_numbers)
@@ -1124,6 +1201,140 @@ float_cc_name (expressionS *expressionP,
 
   expressionP->X_op = O_illegal;
   expressionP->X_add_number = 0;
+
+  return FALSE;
+}
+
+static bfd_boolean
+cacheop_name (expressionS * expressionP,
+	      bfd_boolean accept_numbers)
+{
+  int reg_number;
+  char *name;
+  char *start;
+  char c;
+
+  /* Find the spelling of the operand.  */
+  start = input_line_pointer;
+  c = get_symbol_name (&name);
+  reg_number = reg_name_search (cacheop_names, CACHEOP_NAME_CNT, name, accept_numbers);
+
+  /* Put back the delimiting char.  */
+  (void) restore_line_pointer (c);
+
+  if (reg_number < 0
+      && accept_numbers)
+    {
+      /* Reset input_line pointer.  */
+      input_line_pointer = start;
+
+      if (ISDIGIT (*input_line_pointer))
+	reg_number = strtol (input_line_pointer, &input_line_pointer, 0);
+    }
+
+  expressionP->X_add_symbol = NULL;
+  expressionP->X_op_symbol  = NULL;
+
+  /* Look to see if it's in the register table.  */
+  if (reg_number >= 0)
+    {
+      expressionP->X_op		= O_constant;
+      expressionP->X_add_number = reg_number;
+
+      return TRUE;
+    }
+
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+
+  expressionP->X_op = O_illegal;
+  expressionP->X_add_number = 0;
+
+  return FALSE;
+}
+
+static bfd_boolean
+prefop_name (expressionS * expressionP,
+	     bfd_boolean accept_numbers)
+{
+  int reg_number;
+  char *name;
+  char *start;
+  char c;
+
+  /* Find the spelling of the operand.  */
+  start = input_line_pointer;
+  c = get_symbol_name (&name);
+  reg_number = reg_name_search (prefop_names, PREFOP_NAME_CNT, name, accept_numbers);
+
+  /* Put back the delimiting char.  */
+  (void) restore_line_pointer (c);
+
+  if (reg_number < 0
+      && accept_numbers)
+    {
+      /* Reset input_line pointer.  */
+      input_line_pointer = start;
+
+      if (ISDIGIT (*input_line_pointer))
+	reg_number = strtol (input_line_pointer, &input_line_pointer, 0);
+    }
+
+  expressionP->X_add_symbol = NULL;
+  expressionP->X_op_symbol  = NULL;
+
+  /* Look to see if it's in the register table.  */
+  if (reg_number >= 0)
+    {
+      expressionP->X_op		= O_constant;
+      expressionP->X_add_number = reg_number;
+
+      return TRUE;
+    }
+
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+
+  expressionP->X_op = O_illegal;
+  expressionP->X_add_number = 0;
+
+  return FALSE;
+}
+
+static bfd_boolean
+vector_register_name (expressionS *expressionP)
+{
+  int reg_number;
+  char *name;
+  char *start;
+  char c;
+
+  /* Find the spelling of the operand.  */
+  start = input_line_pointer;
+  c = get_symbol_name (&name);
+
+  reg_number = reg_name_search (vector_registers, VREG_NAME_CNT,
+				name, FALSE);
+
+  /* Put back the delimiting char.  */
+  (void) restore_line_pointer (c);
+
+  expressionP->X_add_symbol = NULL;
+  expressionP->X_op_symbol  = NULL;
+
+  /* Look to see if it's in the register table.  */
+  if (reg_number >= 0)
+    {
+      expressionP->X_op		= O_register;
+      expressionP->X_add_number = reg_number;
+
+      return TRUE;
+    }
+
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+
+  expressionP->X_op = O_illegal;
 
   return FALSE;
 }
@@ -1321,6 +1532,8 @@ struct option md_longopts[] =
 
 size_t md_longopts_size = sizeof (md_longopts);
 
+static bfd_boolean v850_data_8 = FALSE;
+
 void
 md_show_usage (FILE *stream)
 {
@@ -1332,12 +1545,20 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("  -mv850e1                  The code is targeted at the v850e1\n"));
   fprintf (stream, _("  -mv850e2                  The code is targeted at the v850e2\n"));
   fprintf (stream, _("  -mv850e2v3                The code is targeted at the v850e2v3\n"));
+  fprintf (stream, _("  -mv850e2v4                Alias for -mv850e3v5\n"));
+  fprintf (stream, _("  -mv850e3v5                The code is targeted at the v850e3v5\n"));
   fprintf (stream, _("  -mrelax                   Enable relaxation\n"));
   fprintf (stream, _("  --disp-size-default-22    branch displacement with unknown size is 22 bits (default)\n"));
   fprintf (stream, _("  --disp-size-default-32    branch displacement with unknown size is 32 bits\n"));
   fprintf (stream, _("  -mextension               enable extension opcode support\n"));
   fprintf (stream, _("  -mno-bcond17		  disable b<cond> disp17 instruction\n"));
   fprintf (stream, _("  -mno-stld23		  disable st/ld offset23 instruction\n"));
+  fprintf (stream, _("  -mgcc-abi                 Mark the binary as using the old GCC ABI\n"));
+  fprintf (stream, _("  -mrh850-abi               Mark the binary as using the RH850 ABI (default)\n"));
+  fprintf (stream, _("  -m8byte-align             Mark the binary as using 64-bit alignment\n"));
+  fprintf (stream, _("  -m4byte-align             Mark the binary as using 32-bit alignment (default)\n"));
+  fprintf (stream, _("  -msoft-float              Mark the binary as not using FP insns (default for pre e2v3)\n"));
+  fprintf (stream, _("  -mhard-float              Mark the binary as using FP insns (default for e2v3 and up)\n"));
 }
 
 int
@@ -1389,9 +1610,19 @@ md_parse_option (int c, char *arg)
       machine = bfd_mach_v850e2v3;
       SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2V3);
     }
+  else if (strcmp (arg, "v850e2v4") == 0)
+    {
+      machine = bfd_mach_v850e3v5;
+      SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E3V5);
+    }
+  else if (strcmp (arg, "v850e3v5") == 0)
+    {
+      machine = bfd_mach_v850e3v5;
+      SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E3V5);
+    }
   else if (strcmp (arg, "extension") == 0)
     {
-      processor_mask |= PROCESSOR_OPTION_EXTENSION | PROCESSOR_OPTION_ALIAS;;
+      processor_mask |= PROCESSOR_OPTION_EXTENSION | PROCESSOR_OPTION_ALIAS;
     }
   else if (strcmp (arg, "no-bcond17") == 0)
     {
@@ -1403,6 +1634,30 @@ md_parse_option (int c, char *arg)
     }
   else if (strcmp (arg, "relax") == 0)
     v850_relax = 1;
+  else if (strcmp (arg, "gcc-abi") == 0)
+    {
+      v850_target_arch = bfd_arch_v850;
+      v850_target_format = "elf32-v850";
+    }
+  else if (strcmp (arg, "rh850-abi") == 0)
+    {
+      v850_target_arch = bfd_arch_v850_rh850;
+      v850_target_format = "elf32-v850-rh850";
+    }
+  else if (strcmp (arg, "8byte-align") == 0)
+    {
+      v850_data_8 = TRUE;
+      v850_e_flags |= EF_RH850_DATA_ALIGN8;
+    }
+  else if (strcmp (arg, "4byte-align") == 0)
+    {
+      v850_data_8 = FALSE;
+      v850_e_flags &= ~ EF_RH850_DATA_ALIGN8;
+    }
+  else if (strcmp (arg, "soft-float") == 0)
+    soft_float = 1;
+  else if (strcmp (arg, "hard-float") == 0)
+    soft_float = 0;
   else
     return 0;
 
@@ -1440,8 +1695,31 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 
   subseg_change (sec, 0);
 
+  if (fragP->fr_subtype == SUBYPTE_LOOP_16_22)
+    {
+      fix_new (fragP, fragP->fr_fix, 4, fragP->fr_symbol,
+	       fragP->fr_offset, 1,
+	       BFD_RELOC_UNUSED + opcode_converter.fx_r_type);
+      fragP->fr_fix += 4;
+    }
+  else if (fragP->fr_subtype == SUBYPTE_LOOP_16_22 + 1)
+    {
+      unsigned char * buffer =
+	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+      int loop_reg = (buffer[0] & 0x1f);
+
+      /* Add -1.reg.  */
+      md_number_to_chars ((char *) buffer, 0x025f | (loop_reg << 11), 2);
+      /* Now create the conditional branch + fixup to the final target.  */
+      /* 0x000107ea = bne LBL(disp17).  */
+      md_number_to_chars ((char *) buffer + 2, 0x000107ea, 4);
+      fix_new (fragP, fragP->fr_fix+2, 4, fragP->fr_symbol,
+	       fragP->fr_offset, 1,
+	       BFD_RELOC_V850_17_PCREL);
+      fragP->fr_fix += 6;
+    }
   /* In range conditional or unconditional branch.  */
-  if (fragP->fr_subtype == SUBYPTE_COND_9_22
+  else if (fragP->fr_subtype == SUBYPTE_COND_9_22
       || fragP->fr_subtype == SUBYPTE_UNCOND_9_22
       || fragP->fr_subtype == SUBYPTE_COND_9_22_32
       || fragP->fr_subtype == SUBYPTE_UNCOND_9_22_32
@@ -1481,7 +1759,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
   /* Out of range conditional branch.  Emit a branch around a 22bit jump.  */
   else if (fragP->fr_subtype == SUBYPTE_COND_9_22 + 1
 	   || fragP->fr_subtype == SUBYPTE_COND_9_22_32 + 1
-	   || fragP->fr_subtype == SUBYPTE_COND_9_17_22 + 2 
+	   || fragP->fr_subtype == SUBYPTE_COND_9_17_22 + 2
 	   || fragP->fr_subtype == SUBYPTE_COND_9_17_22_32 + 2)
     {
       unsigned char *buffer =
@@ -1601,7 +1879,7 @@ valueT
 md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
-  return ((addr + (1 << align) - 1) & (-1 << align));
+  return ((addr + (1 << align) - 1) & -(1 << align));
 }
 
 void
@@ -1610,7 +1888,23 @@ md_begin (void)
   char *prev_name = "";
   const struct v850_opcode *op;
 
-  if (strncmp (TARGET_CPU, "v850e2v3", 8) == 0)
+  if (strncmp (TARGET_CPU, "v850e3v5", 8) == 0)
+    {
+      if (machine == -1)
+	machine = bfd_mach_v850e3v5;
+
+      if (!processor_mask)
+	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E3V5);
+    }
+  else if (strncmp (TARGET_CPU, "v850e2v4", 8) == 0)
+    {
+      if (machine == -1)
+	machine = bfd_mach_v850e3v5;
+
+      if (!processor_mask)
+	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E3V5);
+    }
+  else if (strncmp (TARGET_CPU, "v850e2v3", 8) == 0)
     {
       if (machine == -1)
         machine = bfd_mach_v850e2v3;
@@ -1655,6 +1949,9 @@ md_begin (void)
     as_bad (_("Unable to determine default target processor from string: %s"),
 	    TARGET_CPU);
 
+  if (soft_float == -1)
+    soft_float = machine < bfd_mach_v850e2v3;
+
   v850_hash = hash_new ();
 
   /* Insert unique names into hash table.  The V850 instruction set
@@ -1673,7 +1970,8 @@ md_begin (void)
     }
 
   v850_seg_table[BSS_SECTION].s = bss_section;
-  bfd_set_arch_mach (stdoutput, TARGET_ARCH, machine);
+  bfd_set_arch_mach (stdoutput, v850_target_arch, machine);
+  bfd_set_private_flags (stdoutput, v850_e_flags);
 }
 
 
@@ -1743,6 +2041,12 @@ handle_lo16 (const struct v850_operand *operand, const char **errmsg)
 static bfd_reloc_code_real_type
 handle_ctoff (const struct v850_operand *operand, const char **errmsg)
 {
+  if (v850_target_arch == bfd_arch_v850_rh850)
+    {
+      *errmsg = _("ctoff() is not supported by the rh850 ABI. Use -mgcc-abi instead");
+      return BFD_RELOC_64;  /* Used to indicate an error condition.  */
+    }
+
   if (operand == NULL)
     return BFD_RELOC_V850_CALLT_16_16_OFFSET;
 
@@ -1867,7 +2171,7 @@ v850_reloc_prefix (const struct v850_operand *operand, const char **errmsg)
   if (paren_skipped)
     --input_line_pointer;
 
-  return BFD_RELOC_UNUSED;
+  return BFD_RELOC_NONE;
 }
 
 /* Insert an operand value into an instruction.  */
@@ -1955,7 +2259,7 @@ v850_insert_operand (unsigned long insn,
 
 	  else if (val < (offsetT) min || val > (offsetT) max)
 	    {
-	      char buf [128];
+	      static char buf [128];
 
 	      /* Restore min and mix to expected values for decimal ranges.  */
 	      if ((operand->flags & V850_OPERAND_SIGNED)
@@ -1996,7 +2300,7 @@ md_assemble (char *str)
   int relaxable = 0;
   unsigned long insn;
   unsigned long insn_size;
-  char *f;
+  char *f = NULL;
   int i;
   int match;
   bfd_boolean extra_data_after_insn = FALSE;
@@ -2104,6 +2408,12 @@ md_assemble (char *str)
 	  while (*str == ' ')
 	    ++str;
 
+	  if (   (strcmp (opcode->name, "pushsp") == 0
+	       || strcmp (opcode->name, "popsp") == 0
+	       || strcmp (opcode->name, "dbpush") == 0)
+	      && (*str == '-'))
+	    ++str;
+
 	  if (operand->flags & V850_OPERAND_RELAX)
 	    relaxable = 1;
 
@@ -2112,7 +2422,7 @@ md_assemble (char *str)
 	  input_line_pointer = str;
 
 	  /* lo(), hi(), hi0(), etc...  */
-	  if ((reloc = v850_reloc_prefix (operand, &errmsg)) != BFD_RELOC_UNUSED)
+	  if ((reloc = v850_reloc_prefix (operand, &errmsg)) != BFD_RELOC_NONE)
 	    {
 	      /* This is a fake reloc, used to indicate an error condition.  */
 	      if (reloc == BFD_RELOC_64)
@@ -2181,8 +2491,7 @@ md_assemble (char *str)
 		      break;
 
 		    default:
-		      fprintf (stderr, "reloc: %d\n", reloc);
-		      as_bad (_("AAARG -> unhandled constant reloc"));
+		      as_bad (_("AAARG -> unhandled constant reloc: %d"), reloc);
 		      break;
 		    }
 
@@ -2325,7 +2634,8 @@ md_assemble (char *str)
 		    }
 		  if (operand->flags & V850E_IMMEDIATE16)
 		    {
-		      if (ex.X_add_number & 0xffff0000)
+		      if ((ex.X_add_number & 0xffff8000)
+			  && ((ex.X_add_number & 0xffff8000) != 0xffff8000))
 			{
 			  errmsg = _("constant too big to fit into instruction");
 			  goto error;
@@ -2474,18 +2784,19 @@ md_assemble (char *str)
 	      else if ((operand->flags & V850_OPERAND_EP) != 0)
 		{
 		  char *start = input_line_pointer;
-		  char c = get_symbol_end ();
+		  char *name;
+		  char c = get_symbol_name (&name);
 
-		  if (strcmp (start, "ep") != 0 && strcmp (start, "r30") != 0)
+		  if (strcmp (name, "ep") != 0 && strcmp (name, "r30") != 0)
 		    {
 		      /* Put things back the way we found them.  */
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		      input_line_pointer = start;
 		      errmsg = _("expected EP register");
 		      goto error;
 		    }
 
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  str = input_line_pointer;
 		  input_line_pointer = hold;
 
@@ -2514,9 +2825,25 @@ md_assemble (char *str)
 		      errmsg = _("invalid condition code name");
 		    }
 		}
+	      else if ((operand->flags & V850_OPERAND_CACHEOP) != 0)
+		{
+		  if (!cacheop_name (&ex, TRUE))
+		    errmsg = _("invalid cache oparation name");
+		}
+	      else if ((operand->flags & V850_OPERAND_PREFOP) != 0)
+		{
+		  if (!prefop_name (&ex, TRUE))
+		    errmsg = _("invalid pref oparation name");
+		}
+	      else if ((operand->flags & V850_OPERAND_VREG) != 0)
+		{
+		  if (!vector_register_name (&ex))
+		    errmsg = _("invalid vector register name");
+		}
 	      else if ((register_name (&ex)
 			&& (operand->flags & V850_OPERAND_REG) == 0))
 		{
+		  char *name;
 		  char c;
 		  int exists = 0;
 
@@ -2529,12 +2856,12 @@ md_assemble (char *str)
 
 		  input_line_pointer = str;
 
-		  c = get_symbol_end ();
+		  c = get_symbol_name (&name);
 
-		  if (symbol_find (str) != NULL)
+		  if (symbol_find (name) != NULL)
 		    exists = 1;
 
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = str;
 
 		  expression (&ex);
@@ -2577,6 +2904,11 @@ md_assemble (char *str)
 		{
 		  errmsg = _("syntax error: condition code not expected");
 		}
+	      else if (vector_register_name (&ex)
+		       && (operand->flags & V850_OPERAND_VREG) == 0)
+		{
+		  errmsg = _("syntax error: vector register not expected");
+		}
 	      else
 		{
 		  expression (&ex);
@@ -2611,6 +2943,18 @@ md_assemble (char *str)
 		    {
 		      errmsg = _("immediate operand is not match");
 		    }
+
+                  /* Special case2 :
+                     If we are assembling a ld/st instruction and the immediate
+                     value does not fit into the bits available then create a
+                     fake error so that the next ld/st instruction will be
+                     selected.  */
+                  if ( (  (strncmp (opcode->name, "st.", 3) == 0)
+		       || (strncmp (opcode->name, "ld.", 3) == 0))
+                      && ex.X_op == O_constant
+                      && (ex.X_add_number < (-(1 << (operand->bits - 1)))
+			  || ex.X_add_number > ((1 << (operand->bits - 1)) - 1)))
+		    errmsg = _("displacement is too large");
 		}
 
 	      if (errmsg)
@@ -2650,7 +2994,7 @@ md_assemble (char *str)
 
 		  fixups[fc].exp     = ex;
 		  fixups[fc].opindex = *opindex_ptr;
-		  fixups[fc].reloc   = BFD_RELOC_UNUSED;
+		  fixups[fc].reloc   = BFD_RELOC_NONE;
 		  ++fc;
 		  break;
 		}
@@ -2727,10 +3071,27 @@ md_assemble (char *str)
       insn_size = 2;
       fc = 0;
 
-      if (strcmp (opcode->name, "br") == 0
-	  || strcmp (opcode->name, "jbr") == 0)
+      if (strcmp (opcode->name, "loop") == 0)
 	{
-	  if ((processor_mask & PROCESSOR_V850E2_ALL) == 0 || default_disp_size == 22)
+	  if (((processor_mask & PROCESSOR_V850E3V5_UP) == 0) || default_disp_size == 22)
+	    {
+	      insn_size = 4;
+	      f = frag_var (rs_machine_dependent, 6, 2, SUBYPTE_LOOP_16_22,
+			    fixups[0].exp.X_add_symbol,
+			    fixups[0].exp.X_add_number,
+			    (char *)(size_t) fixups[0].opindex);
+	      md_number_to_chars (f, insn, insn_size);
+	      md_number_to_chars (f+4, 0, 4);
+	    }
+	  else
+	    {
+	      as_bad (_("loop: 32-bit displacement not supported"));
+	    }
+	}
+      else if (strcmp (opcode->name, "br") == 0
+	       || strcmp (opcode->name, "jbr") == 0)
+	{
+	  if ((processor_mask & PROCESSOR_V850E2_UP) == 0 || default_disp_size == 22)
 	    {
 	      f = frag_var (rs_machine_dependent, 4, 2, SUBYPTE_UNCOND_9_22,
 			    fixups[0].exp.X_add_symbol,
@@ -2752,9 +3113,9 @@ md_assemble (char *str)
       else /* b<cond>, j<cond>.  */
 	{
 	  if (default_disp_size == 22
-	      || (processor_mask & PROCESSOR_V850E2_ALL) == 0)
+	      || (processor_mask & PROCESSOR_V850E2_UP) == 0)
 	    {
-	      if (processor_mask & PROCESSOR_V850E2V3 && !no_bcond17)
+	      if (processor_mask & PROCESSOR_V850E2V3_UP && !no_bcond17)
 		{
 		  if (strcmp (opcode->name, "bsa") == 0)
 		    {
@@ -2799,7 +3160,7 @@ md_assemble (char *str)
 	    }
 	  else
 	    {
-	      if (processor_mask & PROCESSOR_V850E2V3 && !no_bcond17)
+	      if (processor_mask & PROCESSOR_V850E2V3_UP && !no_bcond17)
 		{
 		  if (strcmp (opcode->name, "bsa") == 0)
 		    {
@@ -2862,6 +3223,12 @@ md_assemble (char *str)
 	  || (insn & 0x1ffff) == 0x2e0)	/* JR.  */
 	insn_size = 2;
 
+      if (obstack_room (& frchain_now->frch_obstack) < (insn_size + extra_data_len))
+	{
+          frag_wane (frag_now);
+          frag_new (0);
+	}
+
       f = frag_more (insn_size);
       md_number_to_chars (f, insn, insn_size);
 
@@ -2889,7 +3256,7 @@ md_assemble (char *str)
 
       reloc = fixups[i].reloc;
 
-      if (reloc != BFD_RELOC_UNUSED)
+      if (reloc != BFD_RELOC_NONE)
 	{
 	  reloc_howto_type *reloc_howto =
 	    bfd_reloc_type_lookup (stdoutput, reloc);
@@ -2949,6 +3316,7 @@ md_assemble (char *str)
 	}
       else
 	{
+	  gas_assert (f != NULL);
 	  fix_new_exp (frag_now,
 		       f - frag_now->fr_literal, 4,
 		       & fixups[i].exp,
@@ -3108,6 +3476,11 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
       else
 	insn = bfd_getl16 ((unsigned char *) where);
 
+      /* When inserting loop offets a backwards displacement
+	 is encoded as a positive value.  */
+      if (operand->flags & V850_INVERSE_PCREL)
+	value = - value;
+
       insn = v850_insert_operand (insn, operand, (offsetT) value,
 				  &errmsg);
       if (errmsg)
@@ -3219,7 +3592,8 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
 	      break;
 
 	    case BFD_RELOC_V850_16_PCREL:
-	      bfd_putl16 (-value & 0xfffe, (unsigned char *) where);
+	      bfd_putl16 ((-value & 0xfffe) | (bfd_getl16 (where + 2) & 0x0001),
+			  (unsigned char *) (where + 2));
 	      break;
 
 	    case BFD_RELOC_V850_22_PCREL:
@@ -3277,15 +3651,18 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
 /* Parse a cons expression.  We have to handle hi(), lo(), etc
    on the v850.  */
 
-void
+bfd_reloc_code_real_type
 parse_cons_expression_v850 (expressionS *exp)
 {
   const char *errmsg;
+  bfd_reloc_code_real_type r;
+
   /* See if there's a reloc prefix like hi() we have to handle.  */
-  hold_cons_reloc = v850_reloc_prefix (NULL, &errmsg);
+  r = v850_reloc_prefix (NULL, &errmsg);
 
   /* Do normal expression parsing.  */
   expression (exp);
+  return r;
 }
 
 /* Create a fixup for a cons expression.  If parse_cons_expression_v850
@@ -3296,24 +3673,23 @@ void
 cons_fix_new_v850 (fragS *frag,
 		   int where,
 		   int size,
-		   expressionS *exp)
+		   expressionS *exp,
+		   bfd_reloc_code_real_type r)
 {
-  if (hold_cons_reloc == BFD_RELOC_UNUSED)
+  if (r == BFD_RELOC_NONE)
     {
       if (size == 4)
-	hold_cons_reloc = BFD_RELOC_32;
+	r = BFD_RELOC_32;
       if (size == 2)
-	hold_cons_reloc = BFD_RELOC_16;
+	r = BFD_RELOC_16;
       if (size == 1)
-	hold_cons_reloc = BFD_RELOC_8;
+	r = BFD_RELOC_8;
     }
 
   if (exp != NULL)
-    fix_new_exp (frag, where, size, exp, 0, hold_cons_reloc);
+    fix_new_exp (frag, where, size, exp, 0, r);
   else
-    fix_new (frag, where, size, NULL, 0, 0, hold_cons_reloc);
-
-  hold_cons_reloc = BFD_RELOC_UNUSED;
+    fix_new (frag, where, size, NULL, 0, 0, r);
 }
 
 bfd_boolean
@@ -3353,4 +3729,74 @@ v850_force_relocation (struct fix *fixP)
     return 1;
 
   return generic_force_reloc (fixP);
+}
+
+/* Create a v850 note section.  */
+void
+v850_md_end (void)
+{
+  segT note_sec;
+  segT orig_seg = now_seg;
+  subsegT orig_subseg = now_subseg;
+  enum v850_notes id;
+
+  note_sec = subseg_new (V850_NOTE_SECNAME, 0);
+  bfd_set_section_flags (stdoutput, note_sec, SEC_HAS_CONTENTS | SEC_READONLY | SEC_MERGE);
+  bfd_set_section_alignment (stdoutput, note_sec, 2);
+
+  /* Provide default values for all of the notes.  */
+  for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
+    {
+      int val = 0;
+      char * p;
+
+      /* Follow the standard note section layout:
+	 First write the length of the name string.  */
+      p = frag_more (4);
+      md_number_to_chars (p, 4, 4);
+
+      /* Next comes the length of the "descriptor", i.e., the actual data.  */
+      p = frag_more (4);
+      md_number_to_chars (p, 4, 4);
+
+      /* Write the note type.  */
+      p = frag_more (4);
+      md_number_to_chars (p, (valueT) id, 4);
+
+      /* Write the name field.  */
+      p = frag_more (4);
+      memcpy (p, V850_NOTE_NAME, 4);
+
+      /* Finally, write the descriptor.  */
+      p = frag_more (4);
+      switch (id)
+	{
+	case V850_NOTE_ALIGNMENT:
+	  val = v850_data_8 ? EF_RH850_DATA_ALIGN8 : EF_RH850_DATA_ALIGN4;
+	  break;
+
+	case V850_NOTE_DATA_SIZE:
+	  /* GCC does not currently support an option
+	     for 32-bit doubles with the V850 backend.  */
+	  val = EF_RH850_DOUBLE64;
+	  break;
+
+	case V850_NOTE_FPU_INFO:
+	  if (! soft_float)
+	    switch (machine)
+	      {
+	      case bfd_mach_v850e3v5: val = EF_RH850_FPU30; break;
+	      case bfd_mach_v850e2v3: val = EF_RH850_FPU20; break;
+	      default: break;
+	      }
+	  break;
+
+	default:
+	  break;
+	}
+      md_number_to_chars (p, val, 4);
+    }
+
+  /* Paranoia - we probably do not need this.  */
+  subseg_set (orig_seg, orig_subseg);
 }

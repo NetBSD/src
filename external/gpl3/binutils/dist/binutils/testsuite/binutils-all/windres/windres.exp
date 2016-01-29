@@ -1,4 +1,4 @@
-# Copyright 2001, 2003, 2004, 2006, 2007, 2009 Free Software Foundation, Inc.
+# Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,15 +19,18 @@
 
 # Written by DJ Delorie <dj@redhat.com>
 
-if {![istarget "i*86-*-*"] && ![istarget "x86_64-*-mingw*"] } {
+if {![istarget "i*86-*-*"] && ![istarget "x86_64-*-mingw*"] && ![istarget "x86_64-*-cygwin"] } {
+    verbose "Not a Cygwin/Mingw target" 1
     return
 }
 
 if {![info exists WINDRES]} then {
+    verbose "WINDRES not defined" 1
     return
 }
 
 if {[which $WINDRES] == 0} then {
+    verbose "$WINDRES not found" 1
     return
 }
 
@@ -139,3 +142,37 @@ foreach res $res_list {
 	file delete "tmpdir/$broot.dump"
     }
 }
+
+# Test objdump -p
+
+if {[which $OBJDUMP] == 0} then {
+    unsupported "objdump -p"
+    return
+}
+
+verbose    "$wr $cpp_opts -J rc $srcdir/$subdir/version.rc tmpdir/version.o" 1
+catch "exec $wr $cpp_opts -J rc $srcdir/$subdir/version.rc tmpdir/version.o" err
+
+if ![string match "" $err] then {
+    send_log "$err\n"
+    verbose "$err" 1
+    if [string match "*windows.h: No such file*" $err] then {
+	unsupported "objdump -p (no header files found)"
+    } else {
+	fail "objdump -p (build)"
+    }
+    continue
+}
+
+set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -p tmpdir/version.o"]
+
+# FIXME: We should extend this regexp to check for more information.
+set want ".*The .rsrc Resource Directory section.*Type Table:.*Entry: ID:.*Name Table:.*Entry: ID:.*Language Table:.*Entry: ID:.*"
+
+if ![regexp $want $got] then {
+    fail "objdump -p"
+} else {
+    pass "objdump -p"
+}
+
+# file delete "tmpdir/version.o"

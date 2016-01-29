@@ -8,7 +8,7 @@ ENTRY=_start
 EMBEDDED=yes
 TEMPLATE_NAME=elf32
 ELFSIZE=32
-EXTRA_EM_FILE=needrelax
+# EXTRA_EM_FILE=needrelax
 MAXPAGESIZE=256
 # This is like setting STACK_ADDR to 0xffedc, except that the setting can
 # be overridden, e.g. --defsym _stack=0x0f00, and that we put an extra
@@ -21,6 +21,7 @@ test -z "$CREATE_SHLIB" && OTHER_SECTIONS="  .stack        ${RELOCATING-0}${RELO
     ${RELOCATING+__stack = .;}
     *(.stack)
     LONG(0xdead)
-  }"
+  }
+  ${RELOCATING+PROVIDE (__rl78_abs__ = 0);}"
 # We do not need .stack for shared library.
 test -n "$CREATE_SHLIB" && OTHER_SECTIONS=""

@@ -3,7 +3,7 @@
 #readelf: -d -S --wide
 #target: x86_64-*-linux*
 
-There are 9 section headers, starting at offset 0x1d8:
+There are 9 section headers, starting at offset .*:
 
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
@@ -11,9 +11,9 @@ Section Headers:
   \[ 1\] .hash             HASH            00000094 000094 00002c 04   A  2   0  4
   \[ 2\] .dynsym           DYNSYM          000000c0 0000c0 000060 10   A  3   2  4
   \[ 3\] .dynstr           STRTAB          00000120 000120 000019 00   A  0   0  1
-  \[ 4\] .text             PROGBITS        0000013c 00013c 000001 00  AX  0   0  4
-  \[ 5\] .dynamic          DYNAMIC         00200140 000140 000058 08  WA  3   0  4
-  \[ 6\] .shstrtab         STRTAB          00000000 000198 000040 00      0   0  1
+  \[ 4\] .text             PROGBITS        00000139 000139 000001 00  AX  0   0  1
+  \[ 5\] .dynamic          DYNAMIC         0020013c 00013c 000058 08  WA  3   0  4
+  \[ 6\] .shstrtab         STRTAB          00000000 [0-9a-f]+ 000040 00      0   0  1
   \[ 7\] .symtab           SYMTAB          00000000 [0-9a-f]+ [0-9a-f]+ 10      8   [0-9]  4
   \[ 8\] .strtab           STRTAB          00000000 [0-9a-f]+ [0-9a-f]+ 00      0   0  1
 Key to Flags:
@@ -21,7 +21,7 @@ Key to Flags:
   I \(info\), L \(link order\), G \(group\), T \(TLS\), E \(exclude\), x \(unknown\)
   O \(extra OS processing required\) o \(OS specific\), p \(processor specific\)
 
-Dynamic section at offset 0x140 contains 6 entries:
+Dynamic section at offset 0x13c contains 6 entries:
   Tag        Type                         Name/Value
  0x00000004 \(HASH\)                       0x94
  0x00000005 \(STRTAB\)                     0x120

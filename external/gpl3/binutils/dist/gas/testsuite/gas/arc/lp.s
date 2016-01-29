@@ -1,6 +1,4 @@
 # lp test
-	
-text_label:
 
 	lp	text_label
 	lpal	text_label
@@ -31,10 +29,5 @@ text_label:
 	lpls	text_label
 	lppnz	text_label
 
-	lp.d	text_label
-	lp.nd	text_label
-	lp.jd	text_label
-
-	lpeq.d	text_label
-	lpne.nd	text_label
-	lpcc.jd	text_label
+	nop_s
+text_label:

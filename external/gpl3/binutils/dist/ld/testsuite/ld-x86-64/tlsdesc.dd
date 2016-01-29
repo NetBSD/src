@@ -197,4 +197,3 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	c9[ 	]+leaveq *
  +[0-9a-f]+:	c3[ 	]+retq *
- +[0-9a-f]+:	90[ 	]+nop *

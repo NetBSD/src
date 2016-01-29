@@ -1,6 +1,5 @@
 # Basic expect script for LD Regression Tests
-#   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2001, 2003, 2005, 2007, 2009
-#   2011, 2012 Free Software Foundation, Inc.
+#   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -50,33 +49,30 @@ if ![info exists strip] then {
     set strip [findfile $base_dir/../binutils/strip-new $base_dir/../binutils/strip-new [transform strip]]
 }
 
+if ![info exists size] then {
+    set size [findfile $base_dir/../binutils/size]
+}
+
 remote_exec host "mkdir -p tmpdir"
 
-# Make a symlink from tmpdir/as to the assembler in the build tree, so
-# that we can use a -B option to gcc to force it to use the newly
-# built assembler.
-if {![file isdirectory tmpdir/gas]} then {
-    catch "exec mkdir tmpdir/gas" status
-    catch "exec ln -s ../../../gas/as-new tmpdir/gas/as" status
-}
-set gcc_gas_flag "-B[pwd]/tmpdir/gas/"
-
-# Make a symlink from tmpdir/ld to the linker in the build tree, so
-# that we can use a -B option to gcc to force it to use the newly
-# built linker. 
+# Make symlinks from tmpdir/ld to the linker and assembler in the
+# build tree, so that we can use a -B option to gcc to force it to use
+# the newly built linker and assembler. 
 if {![file isdirectory tmpdir/ld]} then {
     catch "exec mkdir tmpdir/ld" status
     catch "exec ln -s ../../ld-new tmpdir/ld/ld" status
     catch "exec ln -s ld tmpdir/ld/collect-ld" status
+    catch "exec ln -s ../../../gas/as-new tmpdir/ld/as" status
 }
-set gcc_ld_flag "-B[pwd]/tmpdir/ld/"
+set gcc_B_opt "-B[pwd]/tmpdir/ld/"
 
 # load the linker path
+set ld_L_opt ""
 if {[file exists tmpdir/libpath.exp]} {
     load_lib tmpdir/libpath.exp
 
     foreach dir $libpath {
-	set gcc_ld_flag "$gcc_ld_flag -L$dir"
+	append ld_L_opt " -L$dir"
     }
 }
 
@@ -104,7 +100,12 @@ if {[istarget mips64*-*-linux*] &&
     (![board_info [target_info name] exists multilib_flags] ||
      ![string match "*-mabi" [board_info [target_info name] multilib_flags]])
    } {
-    append gcc_gas_flag " -mabi=n32"
+    append gcc_B_opt " -mabi=n32"
+}
+
+if { [istarget rx-*-*] } {
+    global ASFLAGS
+    set ASFLAGS "-muse-conventional-section-names"
 }
 
 # load the utility procedures
@@ -139,11 +140,11 @@ proc get_target_emul {} {
 }
 
 if [isnative] {
-    foreach x {HOSTING_CRT0 HOSTING_LIBS} {
+    foreach x {HOSTING_CRT0 HOSTING_SCRT0 HOSTING_LIBS HOSTING_SLIBS} {
 	get_link_files $x
     }
 } else {
-    foreach x {HOSTING_CRT0 HOSTING_LIBS} { set $x "" }
+    foreach x {HOSTING_CRT0 HOSTING_SCRT0 HOSTING_LIBS HOSTING_SLIBS} { set $x "" }
 }
 if ![info exists HOSTING_EMU] { set HOSTING_EMU "-m [get_target_emul]" }
 
@@ -238,10 +239,6 @@ if ![info exists AS] then {
     set AS $as
 }
 
-if ![info exists GASP] then {
-    set GASP [findfile $base_dir/../gas/gasp-new $base_dir/../gas/gasp-new [transform gasp]]
-}
-
 if ![info exists ASFLAGS] then {
     set ASFLAGS ""
 }
@@ -284,4 +281,78 @@ if ![info exists LD] then {
 
 if ![info exists LDFLAGS] then {
     set LDFLAGS {}
+}
+
+# Set PLT_CFLAGS to "-fplt" if target compiler supports it.
+
+if { ![info exists PLT_CFLAGS] } then {
+    if { [which $CC] != 0 } {
+	# Check if gcc supports -fplt
+	set flags ""
+	if [board_info [target_info name] exists cflags] {
+	    append flags " [board_info [target_info name] cflags]"
+	}
+	if [board_info [target_info name] exists ldflags] {
+	    append flags " [board_info [target_info name] ldflags]"
+	}
+
+	set basename "tmpdir/plt[pid]"
+	set src ${basename}.c
+	set output ${basename}.o
+	set f [open $src "w"]
+	puts $f ""
+	close $f
+	remote_download host $src
+	set plt_available [run_host_cmd_yesno "$CC" "$flags -c -fplt $src -o $output"]
+	remote_file host delete $src
+	remote_file host delete $output
+	file delete $src
+
+	if { $plt_available == 1 } then {
+	    set PLT_CFLAGS "-fplt"
+	} else {
+	    set PLT_CFLAGS ""
+	}
+    } else {
+	set PLT_CFLAGS ""
+    }
+}
+
+# Set NOPIE_CFLAGS to "-fno-PIE" and NOPIE_LDFLAGS to "-no-pie" if
+# target compiler supports them.
+
+if { ![info exists NOPIE_CFLAGS] || ![info exists NOPIE_LDFLAGS] } then {
+    if { [which $CC] != 0 } {
+	# Check if gcc supports -fno-PIE -no-pie.
+	set flags ""
+	if [board_info [target_info name] exists cflags] {
+	    append flags " [board_info [target_info name] cflags]"
+	}
+	if [board_info [target_info name] exists ldflags] {
+	    append flags " [board_info [target_info name] ldflags]"
+	}
+
+	set basename "tmpdir/nopie[pid]"
+	set src ${basename}.c
+	set output ${basename}
+	set f [open $src "w"]
+	puts $f "int main (void) { return 0; }"
+	close $f
+	remote_download host $src
+	set nopie_available [run_host_cmd_yesno "$CC" "$flags -fno-PIE -no-pie $src -o $output"]
+	remote_file host delete $src
+	remote_file host delete $output
+	file delete $src
+
+	if { $nopie_available == 1 } then {
+	    set NOPIE_CFLAGS "-fno-PIE"
+	    set NOPIE_LDFLAGS "-no-pie"
+	} else {
+	    set NOPIE_CFLAGS ""
+	    set NOPIE_LDFLAGS ""
+	}
+    } else {
+	set NOPIE_CFLAGS ""
+	set NOPIE_LDFLAGS ""
+    }
 }

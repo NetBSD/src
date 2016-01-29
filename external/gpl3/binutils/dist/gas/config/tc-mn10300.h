@@ -1,6 +1,5 @@
 /* tc-mn10300.h -- Header file for tc-mn10300.c.
-   Copyright 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -40,9 +39,10 @@ extern bfd_boolean mn10300_force_relocation (struct fix *);
     mn10300_parse_name ((NAME), (EXPRP), (MODE), (NEXTCHARP))
 int mn10300_parse_name (char const *, expressionS *, enum expr_mode, char *);
 
-#define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP) \
-     mn10300_cons_fix_new ((FRAG), (OFF), (LEN), (EXP))
-void mn10300_cons_fix_new (fragS *, int, int, expressionS *);
+#define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP, RELOC)	\
+  mn10300_cons_fix_new ((FRAG), (OFF), (LEN), (EXP), (RELOC))
+void mn10300_cons_fix_new (fragS *, int, int, expressionS *,
+			   bfd_reloc_code_real_type);
 
 /* This is used to construct expressions out of @GOTOFF, @PLT and @GOT
    symbols.  The relocation type is stored in X_md.  */

@@ -1,5 +1,4 @@
-#   Copyright 1999, 2000, 2001, 2003, 2004, 2007, 2009, 2012
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,6 +102,8 @@ proc readelf_test { options binary_file regexp_file xfails } {
     if [istarget "mips*-*-*"] then {
 	if { [istarget "mips*-*-*linux*"]
 	     || [istarget "mips*-sde-elf*"]
+	     || [istarget "mips*-mti-elf*"]
+	     || [istarget "mips*-img-elf*"]
 	     || [istarget "mips*-*freebsd*"] } then {
 	    set target_machine tmips
 	} else {
@@ -196,6 +197,9 @@ proc readelf_wi_test {} {
 	".*\(DW_OP_addr: 0\).*"
     }
 
+    # The MSP430 in LARGE mode does not generate a DW_OP_addr.
+    setup_xfail msp430*-*-*
+
     foreach looked_for $sought {
 	set lines [grep $output $looked_for]
 	if ![llength $lines] then {
@@ -219,11 +223,6 @@ proc readelf_compressed_wa_test {} {
     global READELFFLAGS
     global srcdir
     global subdir
-
-    if { ![is_zlib_supported] } {
-	unsupported "readelf -wa (compressed)"
-	return
-    }
 
     # Compile the compressed-debug-section test file.
     if { [target_compile $srcdir/$subdir/dw2-compressed.S tmpdir/dw2-compressed.o object debug] != "" } {
@@ -347,13 +346,49 @@ readelf_dump_test
 if {![binutils_assemble $srcdir/$subdir/version.s tmpdir/version.o]} then {
     perror "could not assemble version note test file"
     unresolved "readelf - failed to assemble"
-    return
-}
-
-if ![is_remote host] {
-    set tempfile tmpdir/version.o
+    fail "readelf -n"
 } else {
-    set tempfile [remote_download host tmpdir/version.o]
+
+    if ![is_remote host] {
+	set tempfile tmpdir/version.o
+    } else {
+	set tempfile [remote_download host tmpdir/version.o]
+    }
+
+    readelf_test -n $tempfile readelf.n  {}
 }
 
-readelf_test -n $tempfile readelf.n  {}
+
+# PR 18374 - Check that relocations against the .debug_loc section
+# do not prevent readelf from displaying all the location lists.
+if {![binutils_assemble $srcdir/$subdir/pr18374.s tmpdir/pr18374.o]} then {
+    perror "could not assemble PR18374 test file"
+    unresolved "readelf - failed to assemble"
+    fail "readelf --debug-loc"
+} else {
+
+    if ![is_remote host] {
+	set tempfile tmpdir/pr18374.o
+    } else {
+	set tempfile [remote_download host tmpdir/pr18374.o]
+    }
+
+    readelf_test --debug-dump=loc $tempfile readelf.pr18374  {}
+}
+
+
+# Check that decompressed dumps work.
+if {![binutils_assemble $srcdir/$subdir/z.s tmpdir/z.o]} then {
+    perror "could not assemble decompress dump test file"
+    unresolved "readelf - failed to assemble"
+    fail "readelf -z"
+} else {
+
+    if ![is_remote host] {
+	set tempfile tmpdir/z.o
+    } else {
+	set tempfile [remote_download host tmpdir/z.o]
+    }
+
+    readelf_test {--decompress --hex-dump .debug_loc} $tempfile readelf.z  {}
+}

@@ -1,7 +1,6 @@
 /* Internal format of XCOFF object file data structures for BFD.
 
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005,
-   2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -171,6 +170,10 @@
 #define XMC_TD	16		/* Read-write data in TOC */
 #define	XMC_SV64   17		/* Read-only 64 bit supervisor call */
 #define	XMC_SV3264 18		/* Read-only 32 or 64 bit supervisor call */
+/*                19   ??? */
+#define XMC_TL     20          /* Read-write initialized TLS data */
+#define XMC_TU     21          /* Read-write uninitialized TLS data */
+#define XMC_TE     22          /* Same as XMC_TC but mapped after it */
 
 /* The ldhdr structure.  This appears at the start of the .loader
    section.  */

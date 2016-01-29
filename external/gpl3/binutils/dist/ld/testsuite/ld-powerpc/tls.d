@@ -1,7 +1,7 @@
 #source: tls.s
 #source: tlslib.s
 #as: -a64
-#ld: 
+#ld:
 #objdump: -dr
 #target: powerpc64*-*-*
 
@@ -9,7 +9,7 @@
 
 Disassembly of section \.text:
 
-0+100000e8 <_start>:
+0+100000e8 <\._start>:
 .*:	(3c 6d 00 00|00 00 6d 3c) 	addis   r3,r13,0
 .*:	(60 00 00 00|00 00 00 60) 	nop
 .*:	(38 63 90 78|78 90 63 38) 	addi    r3,r3,-28552

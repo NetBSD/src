@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola sysv68
-   Copyright 1997, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Written by Philippe De Muyter <phdm@info.ucl.ac.be>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,7 +19,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#define TARGET_SYM	m68ksysvcoff_vec
+#define TARGET_SYM	m68k_coff_sysv_vec
 #define TARGET_NAME	"coff-m68k-sysv"
 #define STATIC_RELOCS
 #define COFF_COMMON_ADDEND

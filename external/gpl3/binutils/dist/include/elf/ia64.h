@@ -1,6 +1,5 @@
 /* IA-64 ELF support for BFD.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -208,6 +207,10 @@
 # define VMS_STL_RESERVE   1
 # define VMS_STL_STD	   2	  /* Standard linkage with return value.  */
 # define VMS_STL_LNK	   3	  /* Explicit represented in .vms_linkages.  */
+
+/* OpenVMS specific symbol binding values.  */
+#define STB_VMS_WEAK	11	/* VMS weak symbol.  */
+#define STB_VMS_SYSTEM	12	/* System symbol.  */
 
 /* OpenVMS specific fixup and relocation structures.  */
 

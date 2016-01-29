@@ -1,7 +1,6 @@
 # Test DATA STATEMENT in a linker script.
 # By Nathan Sidwell, CodeSourcery LLC
-#   Copyright 2004, 2005, 2007
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,7 +23,9 @@
 # text segment, confusing run_dump_test.
 if {[is_aout_format]} {
 	unsupported data
+	unsupported fill
 	return
 }
 
 run_dump_test data
+run_dump_test fill

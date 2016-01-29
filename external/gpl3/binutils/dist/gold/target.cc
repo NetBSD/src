@@ -1,6 +1,6 @@
 // target.cc -- target support for gold.
 
-// Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 
 // This file is part of gold.
@@ -203,6 +203,15 @@ Target::set_view_to_nop(unsigned char* view, section_size_type view_size,
     }
 }
 
+// Return address and size to plug into eh_frame FDEs associated with a PLT.
+void
+Target::do_plt_fde_location(const Output_data* plt, unsigned char*,
+			    uint64_t* address, off_t* len) const
+{
+  *address = plt->address();
+  *len = plt->data_size();
+}
+
 // Class Sized_target.
 
 // Set the EI_OSABI field of the ELF header if requested.
@@ -210,7 +219,7 @@ Target::set_view_to_nop(unsigned char* view, section_size_type view_size,
 template<int size, bool big_endian>
 void
 Sized_target<size, big_endian>::do_adjust_elf_header(unsigned char* view,
-						     int len) const
+						     int len)
 {
   elfcpp::ELFOSABI osabi = this->osabi();
   if (osabi != elfcpp::ELFOSABI_NONE)

@@ -1,7 +1,6 @@
 // elfcpp.h -- main header file for elfcpp    -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-// Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -174,7 +173,7 @@ enum EM
   EM_386 = 3,
   EM_68K = 4,
   EM_88K = 5,
-  // 6 used to be EM_486
+  EM_IAMCU = 6,
   EM_860 = 7,
   EM_MIPS = 8,
   EM_S370 = 9,
@@ -247,7 +246,7 @@ enum EM
   EM_MN10300 = 89,
   EM_MN10200 = 90,
   EM_PJ = 91,
-  EM_OPENRISC = 92,
+  EM_OR1K = 92,
   EM_ARC_A5 = 93,
   EM_XTENSA = 94,
   EM_VIDEOCORE = 95,
@@ -269,6 +268,8 @@ enum EM
   EM_UNICORE = 110,
   EM_ALTERA_NIOS2 = 113,
   EM_CRX = 114,
+  EM_AARCH64 = 183,
+  EM_TILEGX = 191,
   // The Morph MT.
   EM_MT = 0x2530,
   // DLX.
@@ -288,7 +289,7 @@ enum EM
   // Old AVR objects used 0x1057 (EM_AVR is correct).
   // Old MSP430 objects used 0x1059 (EM_MSP430 is correct).
   // Old FR30 objects used 0x3330 (EM_FR30 is correct).
-  // Old OpenRISC objects used 0x3426 and 0x8472 (EM_OPENRISC is correct).
+  // Old OpenRISC objects used 0x3426 and 0x8472 (EM_OR1K is correct).
   // Old D10V objects used 0x7650 (EM_D10V is correct).
   // Old D30V objects used 0x7676 (EM_D30V is correct).
   // Old IP2X objects used 0x8217 (EM_IP2K is correct).
@@ -400,9 +401,14 @@ enum SHT
   // x86_64 unwind information.
   SHT_X86_64_UNWIND = 0x70000001,
 
-  //MIPS-specific section types.
-  // Register info section
+  // MIPS-specific section types.
+  // Section contains register usage information.
   SHT_MIPS_REGINFO = 0x70000006,
+  // Section contains miscellaneous options.
+  SHT_MIPS_OPTIONS = 0x7000000d,
+
+  // AARCH64-specific section type.
+  SHT_AARCH64_ATTRIBUTES = 0x70000003,
 
   // Link editor is to sort the entries in this section based on the
   // address specified in the associated symbol table entry.
@@ -423,6 +429,7 @@ enum SHF
   SHF_OS_NONCONFORMING = 0x100,
   SHF_GROUP = 0x200,
   SHF_TLS = 0x400,
+  SHF_COMPRESSED = 0x800,
   SHF_MASKOS = 0x0ff00000,
   SHF_MASKPROC = 0xf0000000,
 
@@ -443,6 +450,17 @@ enum SHF
 
   // x86_64 specific large section.
   SHF_X86_64_LARGE = 0x10000000
+};
+
+// Values which appear in the first Elf_WXword of the section data
+// of a SHF_COMPRESSED section.
+enum
+{
+  ELFCOMPRESS_ZLIB = 1,
+  ELFCOMPRESS_LOOS = 0x60000000,
+  ELFCOMPRESS_HIOS = 0x6fffffff,
+  ELFCOMPRESS_LOPROC = 0x70000000,
+  ELFCOMPRESS_HIPROC = 0x7fffffff,
 };
 
 // Bit flags which appear in the first 32-bit word of the section data
@@ -488,7 +506,13 @@ enum PT
   // Runtime procedure table.
   PT_MIPS_RTPROC = 0x70000001,
   // .MIPS.options section.
-  PT_MIPS_OPTIONS = 0x70000002
+  PT_MIPS_OPTIONS = 0x70000002,
+  // .MIPS.abiflags section.
+  PT_MIPS_ABIFLAGS = 0x70000003,
+  // Platform architecture compatibility information
+  PT_AARCH64_ARCHEXT = 0x70000000,
+  // Exception unwind tables
+  PT_AARCH64_UNWIND = 0x70000001
 };
 
 // The valid bit flags found in the Phdr p_flags field.
@@ -985,6 +1009,8 @@ struct Elf_sizes
   static const int phdr_size = sizeof(internal::Phdr_data<size>);
   // Size of ELF section header.
   static const int shdr_size = sizeof(internal::Shdr_data<size>);
+  // Size of ELF compression header.
+  static const int chdr_size = sizeof(internal::Chdr_data<size>);
   // Size of ELF symbol table entry.
   static const int sym_size = sizeof(internal::Sym_data<size>);
   // Sizes of ELF reloc entries.
@@ -1258,6 +1284,65 @@ class Shdr_write
 
  private:
   internal::Shdr_data<size>* p_;
+};
+
+// Accessor class for an ELF compression header.
+
+template<int size, bool big_endian>
+class Chdr
+{
+ public:
+  Chdr(const unsigned char* p)
+    : p_(reinterpret_cast<const internal::Chdr_data<size>*>(p))
+  { }
+
+  template<typename File>
+  Chdr(File* file, typename File::Location loc)
+    : p_(reinterpret_cast<const internal::Chdr_data<size>*>(
+	   file->view(loc.file_offset, loc.data_size).data()))
+  { }
+
+  Elf_Word
+  get_ch_type() const
+  { return Convert<size, big_endian>::convert_host(this->p_->ch_type); }
+
+  typename Elf_types<size>::Elf_WXword
+  get_ch_size() const
+  { return Convert<size, big_endian>::convert_host(this->p_->ch_size); }
+
+  typename Elf_types<size>::Elf_WXword
+  get_ch_addralign() const
+  { return
+      Convert<size, big_endian>::convert_host(this->p_->ch_addralign); }
+
+ private:
+  const internal::Chdr_data<size>* p_;
+};
+
+// Write class for an ELF compression header.
+
+template<int size, bool big_endian>
+class Chdr_write
+{
+ public:
+  Chdr_write(unsigned char* p)
+    : p_(reinterpret_cast<internal::Chdr_data<size>*>(p))
+  { }
+
+  void
+  put_ch_type(typename Elf_types<size>::Elf_WXword v)
+  { this->p_->ch_type = Convert<size, big_endian>::convert_host(v); }
+
+  void
+  put_ch_size(typename Elf_types<size>::Elf_WXword v)
+  { this->p_->ch_size = Convert<size, big_endian>::convert_host(v); }
+
+  void
+  put_ch_addralign(typename Elf_types<size>::Elf_WXword v)
+  { this->p_->ch_addralign = Convert<size, big_endian>::convert_host(v); }
+
+ private:
+  internal::Chdr_data<size>* p_;
 };
 
 // Accessor class for an ELF segment header.

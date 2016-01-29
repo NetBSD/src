@@ -4,4 +4,4 @@
 
 foo:
 	add.s	$f0,$f2,$f4
-	cfc1	$2,$0
+	mfc1	$2,$f0

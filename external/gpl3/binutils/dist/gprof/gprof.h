@@ -29,19 +29,15 @@
 #ifndef gprof_h
 #define gprof_h
 
-#include "gconfig.h"
-
-#undef PACKAGE
-
 /* Include the BFD sysdep.h file.  */
 #include "sysdep.h"
 #include "bfd.h"
 
-/* Undefine the BFD PACKAGE and VERSION macros before including the
-   gprof config.h file.  */
 #undef PACKAGE
-#undef VERSION
-
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
 #include "gconfig.h"
 
 #ifndef MIN
@@ -130,6 +126,7 @@ extern bfd_boolean line_granularity;	/* function or line granularity? */
 extern bfd_boolean print_descriptions;	/* output profile description */
 extern bfd_boolean print_path;		/* print path or just filename? */
 extern bfd_boolean ignore_non_functions; /* Ignore non-function symbols.  */
+extern bfd_boolean inline_file_names;	/* print file names after symbols */
 
 extern File_Format file_format;		/* requested file format */
 

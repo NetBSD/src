@@ -453,4 +453,16 @@ Disassembly of section .text:
 [ 	]*[0-9a-f]+: R_MIPS_LO16	.bss
 [0-9a-f]+ <[^>]*> addu	a0,a0,at
 [0-9a-f]+ <[^>]*> addu	a0,a0,a1
+[0-9a-f]+ <[^>]*> addiu	a0,a1,0
+[0-9a-f]+ <[^>]*> lui	a0,0x12
+[0-9a-f]+ <[^>]*> ori	a0,a0,0x3456
+[0-9a-f]+ <[^>]*> lui	a0,0x12
+[0-9a-f]+ <[^>]*> ori	a0,a0,0x3456
+[0-9a-f]+ <[^>]*> addu	a0,a0,a1
+[0-9a-f]+ <[^>]*> lw	a0,0\(gp\)
+[ 	]*[0-9a-f]+: R_MIPS_GOT16	big_external_data_label
+[0-9a-f]+ <[^>]*> lw	a0,0\(gp\)
+[ 	]*[0-9a-f]+: R_MIPS_GOT16	big_external_data_label
+[0-9a-f]+ <[^>]*> nop
+[0-9a-f]+ <[^>]*> addu	a0,a0,a1
 	...

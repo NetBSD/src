@@ -1,6 +1,6 @@
 /* plugin_section_reorder.c -- Simple plugin to reorder function sections
 
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Written by Sriraman Tallam <tmsriram@google.com>.
 
    This file is part of gold.
@@ -36,6 +36,9 @@ static ld_plugin_get_input_section_name get_input_section_name = NULL;
 static ld_plugin_get_input_section_contents get_input_section_contents = NULL;
 static ld_plugin_update_section_order update_section_order = NULL;
 static ld_plugin_allow_section_ordering allow_section_ordering = NULL;
+static ld_plugin_allow_unique_segment_for_sections 
+    allow_unique_segment_for_sections = NULL;
+static ld_plugin_unique_segment_for_sections unique_segment_for_sections = NULL;
 
 enum ld_plugin_status onload(struct ld_plugin_tv *tv);
 enum ld_plugin_status claim_file_hook(const struct ld_plugin_input_file *file,
@@ -52,11 +55,13 @@ onload(struct ld_plugin_tv *tv)
       switch (entry->tv_tag)
         {
         case LDPT_REGISTER_CLAIM_FILE_HOOK:
-          assert((*entry->tv_u.tv_register_claim_file) (claim_file_hook) == LDPS_OK);
+          assert((*entry->tv_u.tv_register_claim_file) (claim_file_hook)
+		 == LDPS_OK);
           break;
 	case LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK:
-          assert((*entry->tv_u.tv_register_all_symbols_read) (all_symbols_read_hook)
-		  == LDPS_OK);
+          assert((*entry->tv_u.tv_register_all_symbols_read)
+		     (all_symbols_read_hook)
+		 == LDPS_OK);
           break;
         case LDPT_GET_INPUT_SECTION_COUNT:
           get_input_section_count = *entry->tv_u.tv_get_input_section_count;
@@ -68,13 +73,21 @@ onload(struct ld_plugin_tv *tv)
           get_input_section_name = *entry->tv_u.tv_get_input_section_name;
           break;
         case LDPT_GET_INPUT_SECTION_CONTENTS:
-          get_input_section_contents = *entry->tv_u.tv_get_input_section_contents;
+          get_input_section_contents
+	      = *entry->tv_u.tv_get_input_section_contents;
           break;
 	case LDPT_UPDATE_SECTION_ORDER:
 	  update_section_order = *entry->tv_u.tv_update_section_order;
 	  break;
 	case LDPT_ALLOW_SECTION_ORDERING:
 	  allow_section_ordering = *entry->tv_u.tv_allow_section_ordering;
+	  break;
+	case LDPT_ALLOW_UNIQUE_SEGMENT_FOR_SECTIONS:
+	  allow_unique_segment_for_sections
+	      = *entry->tv_u.tv_allow_unique_segment_for_sections;
+	case LDPT_UNIQUE_SEGMENT_FOR_SECTIONS:
+	  unique_segment_for_sections
+	      = *entry->tv_u.tv_unique_segment_for_sections;
 	  break;
         default:
           break;
@@ -86,7 +99,9 @@ onload(struct ld_plugin_tv *tv)
       || get_input_section_name == NULL
       || get_input_section_contents == NULL
       || update_section_order == NULL
-      || allow_section_ordering == NULL)
+      || allow_section_ordering == NULL
+      || allow_unique_segment_for_sections == NULL
+      || unique_segment_for_sections == NULL)
     {
       fprintf(stderr, "Some interfaces are missing\n");
       return LDPS_ERR;
@@ -117,6 +132,9 @@ claim_file_hook(const struct ld_plugin_input_file *file, int *claimed)
     {
       /* Inform the linker to prepare for section reordering.  */
       (*allow_section_ordering)();
+      /* Inform the linker to prepare to map some sections to unique
+	 segments.  */
+      (*allow_unique_segment_for_sections)(); 
       is_ordering_specified = 1;
     }
 
@@ -160,8 +178,11 @@ enum ld_plugin_status
 all_symbols_read_hook(void)
 {
   if (num_entries == 3)
-    update_section_order(section_list, num_entries);
+    { 
+      update_section_order(section_list, num_entries);
+      unique_segment_for_sections (".text.plugin_created_unique", 0, 0x1000,
+				   section_list, num_entries);
+    }
 
   return LDPS_OK;
 }
-

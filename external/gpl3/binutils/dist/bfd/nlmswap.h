@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) swapping routines for BFD.
-   Copyright 1993, 2000, 2001, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
    template.
