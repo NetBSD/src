@@ -1,6 +1,5 @@
 /* bfd back-end for mips support
-   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
-   2002, 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -75,6 +74,7 @@ enum
   I_mips5000,
   I_mips5400,
   I_mips5500,
+  I_mips5900,
   I_mips6000,
   I_mips7000,
   I_mips8000,
@@ -87,8 +87,14 @@ enum
   I_mips5,
   I_mipsisa32,
   I_mipsisa32r2,
+  I_mipsisa32r3,
+  I_mipsisa32r5,
+  I_mipsisa32r6,
   I_mipsisa64,
   I_mipsisa64r2,
+  I_mipsisa64r3,
+  I_mipsisa64r5,
+  I_mipsisa64r6,
   I_sb1,
   I_loongson_2e,
   I_loongson_2f,
@@ -96,6 +102,7 @@ enum
   I_mipsocteon,
   I_mipsocteonp,
   I_mipsocteon2,
+  I_mipsocteon3,
   I_xlr,
   I_micromips
 };
@@ -118,6 +125,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips5000, "mips:5000",      FALSE, NN(I_mips5000)),
   N (64, 64, bfd_mach_mips5400, "mips:5400",      FALSE, NN(I_mips5400)),
   N (64, 64, bfd_mach_mips5500, "mips:5500",      FALSE, NN(I_mips5500)),
+  N (64, 32, bfd_mach_mips5900, "mips:5900",      FALSE, NN(I_mips5900)),
   N (32, 32, bfd_mach_mips6000, "mips:6000",      FALSE, NN(I_mips6000)),
   N (64, 64, bfd_mach_mips7000, "mips:7000",      FALSE, NN(I_mips7000)),
   N (64, 64, bfd_mach_mips8000, "mips:8000",      FALSE, NN(I_mips8000)),
@@ -130,8 +138,14 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips5,    "mips:mips5",     FALSE, NN(I_mips5)),
   N (32, 32, bfd_mach_mipsisa32,  "mips:isa32",   FALSE, NN(I_mipsisa32)),
   N (32, 32, bfd_mach_mipsisa32r2,"mips:isa32r2", FALSE, NN(I_mipsisa32r2)),
+  N (32, 32, bfd_mach_mipsisa32r3,"mips:isa32r3", FALSE, NN(I_mipsisa32r3)),
+  N (32, 32, bfd_mach_mipsisa32r5,"mips:isa32r5", FALSE, NN(I_mipsisa32r5)),
+  N (32, 32, bfd_mach_mipsisa32r6,"mips:isa32r6", FALSE, NN(I_mipsisa32r6)),
   N (64, 64, bfd_mach_mipsisa64,  "mips:isa64",   FALSE, NN(I_mipsisa64)),
   N (64, 64, bfd_mach_mipsisa64r2,"mips:isa64r2", FALSE, NN(I_mipsisa64r2)),
+  N (64, 64, bfd_mach_mipsisa64r3,"mips:isa64r3", FALSE, NN(I_mipsisa64r3)),
+  N (64, 64, bfd_mach_mipsisa64r5,"mips:isa64r5", FALSE, NN(I_mipsisa64r5)),
+  N (64, 64, bfd_mach_mipsisa64r6,"mips:isa64r6", FALSE, NN(I_mipsisa64r6)),
   N (64, 64, bfd_mach_mips_sb1, "mips:sb1",       FALSE, NN(I_sb1)),
   N (64, 64, bfd_mach_mips_loongson_2e, "mips:loongson_2e",       FALSE, NN(I_loongson_2e)),
   N (64, 64, bfd_mach_mips_loongson_2f, "mips:loongson_2f",       FALSE, NN(I_loongson_2f)),
@@ -139,6 +153,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips_octeon,"mips:octeon",  FALSE, NN(I_mipsocteon)),
   N (64, 64, bfd_mach_mips_octeonp,"mips:octeon+",  FALSE, NN(I_mipsocteonp)),
   N (64, 64, bfd_mach_mips_octeon2,"mips:octeon2",  FALSE, NN(I_mipsocteon2)),
+  N (64, 64, bfd_mach_mips_octeon3, "mips:octeon3",  FALSE, NN(I_mipsocteon3)),
   N (64, 64, bfd_mach_mips_xlr, "mips:xlr",       FALSE, NN(I_xlr)),
   N (64, 64, bfd_mach_mips_micromips,"mips:micromips",FALSE,0)
 };

@@ -1,7 +1,6 @@
 /* corefile.c
 
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009,
-   2010, 2011  Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -56,6 +55,7 @@ extern void vax_find_call   (Sym *, bfd_vma, bfd_vma);
 extern void tahoe_find_call (Sym *, bfd_vma, bfd_vma);
 extern void sparc_find_call (Sym *, bfd_vma, bfd_vma);
 extern void mips_find_call  (Sym *, bfd_vma, bfd_vma);
+extern void aarch64_find_call (Sym *, bfd_vma, bfd_vma);
 
 static void
 parse_error (const char *filename)
@@ -70,7 +70,7 @@ parse_error (const char *filename)
 static int
 cmp_symbol_map (const void * l, const void * r)
 {
-  return strcmp (((struct function_map *) l)->function_name, 
+  return strcmp (((struct function_map *) l)->function_name,
 		 ((struct function_map *) r)->function_name);
 }
 
@@ -165,6 +165,8 @@ read_function_mappings (const char *filename)
       symbol_map[i].is_first = 1;
 
   qsort (symbol_map, symbol_map_count, sizeof (struct function_map), cmp_symbol_map);
+
+  fclose (file);
 }
 
 void
@@ -322,6 +324,10 @@ find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
       mips_find_call (parent, p_lowpc, p_highpc);
       break;
 
+    case bfd_arch_aarch64:
+      aarch64_find_call (parent, p_lowpc, p_highpc);
+      break;
+
     default:
       fprintf (stderr, _("%s: -c not supported on architecture %s\n"),
 	       whoami, bfd_printable_name(core_bfd));
@@ -396,12 +402,18 @@ core_sym_class (asymbol *sym)
 	     Allow for multiple iterations of both - apparently GCC can clone
 	     clones and subprograms.  */
 	  int digit_seen = 0;
-#define CLONE_NAME      ".clone."
-#define CLONE_NAME_LEN  strlen (CLONE_NAME)
-	      
+#define CLONE_NAME	    ".clone."
+#define CLONE_NAME_LEN	    strlen (CLONE_NAME)
+#define CONSTPROP_NAME	    ".constprop."
+#define CONSTPROP_NAME_LEN  strlen (CONSTPROP_NAME)
+
 	  if (strlen (name) > CLONE_NAME_LEN
 	      && strncmp (name, CLONE_NAME, CLONE_NAME_LEN) == 0)
 	    name += CLONE_NAME_LEN - 1;
+
+	  else if (strlen (name) > CONSTPROP_NAME_LEN
+	      && strncmp (name, CONSTPROP_NAME, CONSTPROP_NAME_LEN) == 0)
+	    name += CONSTPROP_NAME_LEN - 1;
 
 	  for (name++; *name; name++)
 	    if (digit_seen && *name == '.')
@@ -472,7 +484,7 @@ get_src_info (bfd_vma addr, const char **filename, const char **name, int *line_
 
 /* Return number of symbols in a symbol-table file.  */
 
-static int 
+static int
 num_of_syms_in (FILE * f)
 {
   const int BUFSIZE = 1024;
@@ -481,7 +493,7 @@ num_of_syms_in (FILE * f)
   char   type;
   char * name = (char *) xmalloc (BUFSIZE);
   int num = 0;
-  
+
   while (!feof (f) && fgets (buf, BUFSIZE - 1, f))
     {
       if (sscanf (buf, "%s %c %s", address, &type, name) == 3)
