@@ -1,6 +1,5 @@
 # Expect script for ld-gc tests
-#   Copyright 2008, 2009, 2010, 2012
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -102,6 +101,10 @@ test_gc "Check --gc-section/-r/-u" "gcrel" $ld "-r --gc-sections -u used_func"
 run_dump_test "noent"
 run_dump_test "abi-note"
 run_dump_test "start"
+run_dump_test "pr19167"
+if { [is_elf_format] } then {
+    run_dump_test "all-debug-sections"
+}
 
 if { [is_elf_format] && [check_shared_lib_support] } then {
     set gasopt ""
@@ -114,6 +117,7 @@ if { [is_elf_format] && [check_shared_lib_support] } then {
     } else {
 	run_dump_test "personality"
     }
+    run_dump_test "pr18223"
 }
 
 if { [is_remote host] || [which $CC] != 0 } {
@@ -130,4 +134,15 @@ if { [is_remote host] || [which $CC] != 0 } {
 if { [is_remote host] || [which $CC] != 0 } {
 	ld_compile "$CC $CFLAGS $cflags" $srcdir/$subdir/pr13683.c tmpdir/pr13683.o
 	run_dump_test "pr13683"
+}
+
+if { [is_remote host] || [which $CC] != 0 } {
+    ld_compile "$CC $CFLAGS $cflags" $srcdir/$subdir/pr14265.c tmpdir/pr14265.o
+    run_dump_test "pr14265"
+}
+
+if { [is_remote host] || [which $CC] != 0 } {
+    ld_compile "$CC $CFLAGS $cflags -O0" $srcdir/$subdir/pr19161-1.c tmpdir/pr19161-1.o
+    ld_compile "$CC $CFLAGS $cflags -O0" $srcdir/$subdir/pr19161-2.c tmpdir/pr19161-2.o
+    run_dump_test "pr19161"
 }

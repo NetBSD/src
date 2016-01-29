@@ -37,12 +37,12 @@ Disassembly of section \.text:
   5c:	f2d75301 	movk	x1, #0xba98, lsl #32
   60:	f2aeca81 	movk	x1, #0x7654, lsl #16
   64:	f2864201 	movk	x1, #0x3210
-  68:	58000920 	ldr	x0, 18c <llit>
+  68:	580009a0 	ldr	x0, 19c <llit>
   6c:	58000001 	ldr	x1, 0 <func>
 			6c: R_AARCH64_LD_PREL_LO19	\.data\+0x8
   70:	58000002 	ldr	x2, 0 <xdata>
 			70: R_AARCH64_LD_PREL_LO19	xdata\+0xc
-  74:	100008c0 	adr	x0, 18c <llit>
+  74:	10000940 	adr	x0, 19c <llit>
   78:	10000001 	adr	x1, 0 <func>
 			78: R_AARCH64_ADR_PREL_LO21	\.data\+0x8
   7c:	10000002 	adr	x2, 0 <func>
@@ -54,7 +54,7 @@ Disassembly of section \.text:
   88:	10000005 	adr	x5, 0 <xdata>
 			88: R_AARCH64_ADR_PREL_LO21	xdata\+0xff8
   8c:	90000000 	adrp	x0, 0 <func>
-			8c: R_AARCH64_ADR_PREL_PG_HI21	\.text\+0x18c
+			8c: R_AARCH64_ADR_PREL_PG_HI21	\.text\+0x19c
   90:	90000001 	adrp	x1, 0 <func>
 			90: R_AARCH64_ADR_PREL_PG_HI21	\.data\+0x8
   94:	90000002 	adrp	x2, 0 <func>
@@ -66,7 +66,7 @@ Disassembly of section \.text:
   a0:	90000005 	adrp	x5, 0 <xdata>
 			a0: R_AARCH64_ADR_PREL_PG_HI21	xdata\+0xff8
   a4:	90000000 	adrp	x0, 0 <func>
-			a4: R_AARCH64_ADR_PREL_PG_HI21	\.text\+0x18c
+			a4: R_AARCH64_ADR_PREL_PG_HI21	\.text\+0x19c
   a8:	90000001 	adrp	x1, 0 <func>
 			a8: R_AARCH64_ADR_PREL_PG_HI21	\.data\+0x8
   ac:	90000002 	adrp	x2, 0 <func>
@@ -78,7 +78,7 @@ Disassembly of section \.text:
   b8:	90000005 	adrp	x5, 0 <xdata>
 			b8: R_AARCH64_ADR_PREL_PG_HI21	xdata\+0xff8
   bc:	91000000 	add	x0, x0, #0x0
-			bc: R_AARCH64_ADD_ABS_LO12_NC	\.text\+0x18c
+			bc: R_AARCH64_ADD_ABS_LO12_NC	\.text\+0x19c
   c0:	91000021 	add	x1, x1, #0x0
 			c0: R_AARCH64_ADD_ABS_LO12_NC	\.data\+0x8
   c4:	91000042 	add	x2, x2, #0x0
@@ -91,7 +91,7 @@ Disassembly of section \.text:
 			d0: R_AARCH64_ADD_ABS_LO12_NC	xdata\+0xff8
   d4:	913ffcc6 	add	x6, x6, #0xfff
   d8:	39400000 	ldrb	w0, \[x0\]
-			d8: R_AARCH64_LDST8_ABS_LO12_NC	\.text\+0x18c
+			d8: R_AARCH64_LDST8_ABS_LO12_NC	\.text\+0x19c
   dc:	39400021 	ldrb	w1, \[x1\]
 			dc: R_AARCH64_LDST8_ABS_LO12_NC	\.data\+0x8
   e0:	39400042 	ldrb	w2, \[x2\]
@@ -103,22 +103,22 @@ Disassembly of section \.text:
   ec:	394000a5 	ldrb	w5, \[x5\]
 			ec: R_AARCH64_LDST8_ABS_LO12_NC	xdata\+0xff8
   f0:	397ffcc6 	ldrb	w6, \[x6,#4095\]
-  f4:	360004e0 	tbz	w0, #0, 190 <lab>
+  f4:	36000560 	tbz	w0, #0, 1a0 <lab>
   f8:	b6f80001 	tbz	x1, #63, 0 <xlab>
 			f8: R_AARCH64_TSTBR14	xlab
-  fc:	374004a2 	tbnz	w2, #8, 190 <lab>
+  fc:	37400522 	tbnz	w2, #8, 1a0 <lab>
  100:	b7780002 	tbnz	x2, #47, 0 <xlab>
 			100: R_AARCH64_TSTBR14	xlab
- 104:	54000460 	b\.eq	190 <lab>
+ 104:	540004e0 	b\.eq	1a0 <lab>
  108:	54000000 	b\.eq	0 <xlab>
 			108: R_AARCH64_CONDBR19	xlab
- 10c:	b4000420 	cbz	x0, 190 <lab>
+ 10c:	b40004a0 	cbz	x0, 1a0 <lab>
  110:	b500001e 	cbnz	x30, 0 <xlab>
 			110: R_AARCH64_CONDBR19	xlab
- 114:	1400001f 	b	190 <lab>
+ 114:	14000023 	b	1a0 <lab>
  118:	14000000 	b	0 <xlab>
 			118: R_AARCH64_JUMP26	xlab
- 11c:	9400001d 	bl	190 <lab>
+ 11c:	94000021 	bl	1a0 <lab>
  120:	94000000 	bl	0 <xlab>
 			120: R_AARCH64_CALL26	xlab
  124:	d2e24680 	mov	x0, #0x1234000000000000    	// #1311673391471656960
@@ -139,10 +139,10 @@ Disassembly of section \.text:
  160:	d41fffe1 	svc	#0xffff
  164:	f8500420 	ldr	x0, \[x1\],#-256
  168:	f8500c20 	ldr	x0, \[x1,#-256\]!
- 16c:	f8500020 	ldr	x0, \[x1,#-256\]
+ 16c:	f8500020 	ldur	x0, \[x1,#-256\]
  170:	f97ffc20 	ldr	x0, \[x1,#32760\]
  174:	79400000 	ldrh	w0, \[x0\]
-			174: R_AARCH64_LDST16_ABS_LO12_NC	\.text\+0x18c
+			174: R_AARCH64_LDST16_ABS_LO12_NC	\.text\+0x19c
  178:	b9400021 	ldr	w1, \[x1\]
 			178: R_AARCH64_LDST32_ABS_LO12_NC	\.data\+0x8
  17c:	f9400042 	ldr	x2, \[x2\]
@@ -151,7 +151,14 @@ Disassembly of section \.text:
 			180: R_AARCH64_LDST128_ABS_LO12_NC	xlit
  184:	f98000f0 	prfm	pstl1keep, \[x7\]
 			184: R_AARCH64_LDST64_ABS_LO12_NC	\.data\+0x100c
- 188:	d65f03c0 	ret
+ 188:	58000000 	ldr	x0, 1 <func\+0x1>
+			188: R_AARCH64_GOT_LD_PREL19	cdata
+ 18c:	39400001 	ldrb	w1, \[x0\]
+ 190:	d65f03c0 	ret
+ 194:	f94001bc 	ldr	x28, \[x13\]
+			194: R_AARCH64_LD64_GOTPAGE_LO15	\.data
+ 198:	f9400000 	ldr	x0, \[x0\]
+			198: R_AARCH64_LD64_GOTOFF_LO15	.data
 
-000000000000018c <llit>:
- 18c:	deadf00d 	\.word	0xdeadf00d
+000000000000019c <llit>:
+ 19c:	deadf00d 	\.word	0xdeadf00d

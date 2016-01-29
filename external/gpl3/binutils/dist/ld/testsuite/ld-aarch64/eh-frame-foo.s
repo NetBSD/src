@@ -12,7 +12,7 @@ __longjmp:
  .cfi_offset x27, 24
  .cfi_offset x28, 32
  .cfi_offset x29, 32
- .cfi_offset x30, 36
+ .cfi_offset x30, 40
  .cfi_offset d9, 8
 
 /* This eh frame data differs from eh-frame-bar.s here.  The eh

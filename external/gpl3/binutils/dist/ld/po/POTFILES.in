@@ -3,6 +3,8 @@ elf-hints-local.h
 emultempl/armcoff.em
 emultempl/pe.em
 ld.h
+ldbuildid.c
+ldbuildid.h
 ldcref.c
 ldctor.c
 ldctor.h

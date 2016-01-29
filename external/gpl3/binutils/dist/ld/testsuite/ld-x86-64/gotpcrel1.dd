@@ -1,0 +1,17 @@
+#...
+[a-f0-9]+ <main>:
+[ 	]*[a-f0-9]+:	48 83 ec 08          	sub    \$0x8,%rsp
+[ 	]*[a-f0-9]+:	[ a-f0-9]+    	addr32 callq [a-f0-9]+ <foo>
+[ 	]*[a-f0-9]+:	[ a-f0-9]+    	callq  \*0x[a-f0-9]+\(%rip\)        # [a-f0-9]+ <_DYNAMIC\+0x[a-f0-9]+>
+[ 	]*[a-f0-9]+:	[ a-f0-9]+    	callq  \*0x[a-f0-9]+\(%rip\)        # [a-f0-9]+ <_DYNAMIC\+0x[a-f0-9]+>
+[ 	]*[a-f0-9]+:	[ a-f0-9]+	lea    0x[a-f0-9]+\(%rip\),%rax        # [a-f0-9]+ <foo>
+[ 	]*[a-f0-9]+:	ff d0                	callq  \*%rax
+[ 	]*[a-f0-9]+:	[ a-f0-9]+	mov    0x[a-f0-9]+\(%rip\),%rcx        # [a-f0-9]+ <_DYNAMIC\+0x[a-f0-9]+>
+[ 	]*[a-f0-9]+:	ff d1                	callq  \*%rcx
+[ 	]*[a-f0-9]+:	[ a-f0-9]+	mov    0x[a-f0-9]+\(%rip\),%rdx        # [a-f0-9]+ <_DYNAMIC\+0x[a-f0-9]+>
+[ 	]*[a-f0-9]+:	ff d2                	callq  \*%rdx
+[ 	]*[a-f0-9]+:	31 ff                	xor    %edi,%edi
+[ 	]*[a-f0-9]+:	48 83 c4 08          	add    \$0x8,%rsp
+[ 	]*[a-f0-9]+:	[ a-f0-9]+       	jmpq   [a-f0-9]+ <myexit>
+[ 	]*[a-f0-9]+:	90                   	nop
+#pass

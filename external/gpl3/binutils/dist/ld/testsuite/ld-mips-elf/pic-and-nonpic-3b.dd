@@ -14,7 +14,7 @@ Disassembly of section \.plt:
 .*:	8f991000 	lw	t9,4096\(gp\)
 .*:	279c1000 	addiu	gp,gp,4096
 .*:	031cc023 	subu	t8,t8,gp
-.*:	03e07821 	move	t7,ra
+.*:	03e07825 	move	t7,ra
 .*:	0018c082 	srl	t8,t8,0x2
 .*:	0320f809 	jalr	t9
 .*:	2718fffe 	addiu	t8,t8,-2
@@ -42,11 +42,12 @@ Disassembly of section \.text:
 .*:	03200008 	jr	t9
 .*:	00000000 	nop
 .*:	00000000 	nop
-Disassembly of section .MIPS.stubs:
 
-00044030 <\.MIPS\.stubs>:
+Disassembly of section \.MIPS\.stubs:
+
+00044030 <_MIPS_STUBS_>:
 .*:	8f998010 	lw	t9,-32752\(gp\)
-.*:	03e07821 	move	t7,ra
+.*:	03e07825 	move	t7,ra
 .*:	0320f809 	jalr	t9
-.*:	24180006 	li	t8,6
+.*:	24180005 	li	t8,5
 	\.\.\.

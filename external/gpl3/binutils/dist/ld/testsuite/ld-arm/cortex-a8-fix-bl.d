@@ -71,5 +71,5 @@ Disassembly of section \.text:
     8ffa:	eb01 0002 	add\.w	r0, r1, r2
     8ffe:	f000 f803 	bl	9008 <_start\+0x108>
     9002:	4770      	bx	lr
-    9004:	f3af 8000 	nop\.w
+#...
     9008:	f7ff bfeb 	b\.w	8fe2 <_start\+0xe2>

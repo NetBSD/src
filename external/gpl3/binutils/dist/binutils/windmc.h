@@ -1,6 +1,5 @@
 /* windmc.h -- header file for windmc program.
-   Copyright 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Written by Kai Tietz, Onevision.
 
    This file is part of GNU Binutils.

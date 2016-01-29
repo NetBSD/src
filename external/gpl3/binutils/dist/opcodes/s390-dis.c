@@ -1,6 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -36,19 +35,15 @@ static int current_arch_mask = 0;
 static void
 init_disasm (struct disassemble_info *info)
 {
-  const struct s390_opcode *opcode;
-  const struct s390_opcode *opcode_end;
+  int i;
   const char *p;
 
   memset (opc_index, 0, sizeof (opc_index));
-  opcode_end = s390_opcodes + s390_num_opcodes;
-  for (opcode = s390_opcodes; opcode < opcode_end; opcode++)
-    {
-      opc_index[(int) opcode->opcode[0]] = opcode - s390_opcodes;
-      while ((opcode < opcode_end) &&
-	     (opcode[1].opcode[0] == opcode->opcode[0]))
-	opcode++;
-    }
+
+  /* Reverse order, such that each opc_index ends up pointing to the
+     first matching entry instead of the last.  */
+  for (i = s390_num_opcodes; i--; )
+    opc_index[s390_opcodes[i].opcode[0]] = i;
 
   for (p = info->disassembler_options; p != NULL; )
     {
@@ -65,32 +60,54 @@ init_disasm (struct disassemble_info *info)
     }
 
   if (!current_arch_mask)
-    switch (info->mach)
-      {
-      case bfd_mach_s390_31:
-	current_arch_mask = 1 << S390_OPCODE_ESA;
-	break;
-      case bfd_mach_s390_64:
-	current_arch_mask = 1 << S390_OPCODE_ZARCH;
-	break;
-      default:
-	abort ();
-      }
+    current_arch_mask = 1 << S390_OPCODE_ZARCH;
 
   init_flag = 1;
 }
+
+/* Derive the length of an instruction from its first byte.  */
+
+static inline int
+s390_insn_length (const bfd_byte *buffer)
+{
+  /* 00xxxxxx -> 2, 01xxxxxx/10xxxxxx -> 4, 11xxxxxx -> 6.  */
+  return ((buffer[0] >> 6) + 3) & ~1U;
+}
+
+/* Match the instruction in BUFFER against the given OPCODE, excluding
+   the first byte.  */
+
+static inline int
+s390_insn_matches_opcode (const bfd_byte *buffer,
+			  const struct s390_opcode *opcode)
+{
+  return (buffer[1] & opcode->mask[1]) == opcode->opcode[1]
+    && (buffer[2] & opcode->mask[2]) == opcode->opcode[2]
+    && (buffer[3] & opcode->mask[3]) == opcode->opcode[3]
+    && (buffer[4] & opcode->mask[4]) == opcode->opcode[4]
+    && (buffer[5] & opcode->mask[5]) == opcode->opcode[5];
+}
+
+union operand_value
+{
+  int i;
+  unsigned int u;
+};
 
 /* Extracts an operand value from an instruction.  */
 /* We do not perform the shift operation for larl-type address
    operands here since that would lead to an overflow of the 32 bit
    integer value.  Instead the shift operation is done when printing
-   the operand in print_insn_s390.  */
+   the operand.  */
 
-static inline unsigned int
-s390_extract_operand (unsigned char *insn, const struct s390_operand *operand)
+static inline union operand_value
+s390_extract_operand (const bfd_byte *insn,
+		      const struct s390_operand *operand)
 {
+  union operand_value ret;
   unsigned int val;
   int bits;
+  const bfd_byte *orig_insn = insn;
 
   /* Extract fragments of the operand byte for byte.  */
   insn += operand->shift / 8;
@@ -110,15 +127,130 @@ s390_extract_operand (unsigned char *insn, const struct s390_operand *operand)
   if (operand->bits == 20 && operand->shift == 20)
     val = (val & 0xff) << 12 | (val & 0xfff00) >> 8;
 
-  /* Sign extend value if the operand is signed or pc relative.  */
-  if ((operand->flags & (S390_OPERAND_SIGNED | S390_OPERAND_PCREL))
-      && (val & (1U << (operand->bits - 1))))
-    val |= (-1U << (operand->bits - 1)) << 1;
+  /* Sign extend value if the operand is signed or pc relative.  Avoid
+     integer overflows.  */
+  if (operand->flags & (S390_OPERAND_SIGNED | S390_OPERAND_PCREL))
+    {
+      unsigned int m = 1U << (operand->bits - 1);
 
-  /* Length x in an instructions has real length x + 1.  */
-  if (operand->flags & S390_OPERAND_LENGTH)
-    val++;
-  return val;
+      if (val >= m)
+	ret.i = (int) (val - m) - 1 - (int) (m - 1U);
+      else
+	ret.i = (int) val;
+    }
+  else if (operand->flags & S390_OPERAND_LENGTH)
+    /* Length x in an instruction has real length x + 1.  */
+    ret.u = val + 1;
+
+  else if (operand->flags & S390_OPERAND_VR)
+    {
+      /* Extract the extra bits for a vector register operand stored
+	 in the RXB field.  */
+      unsigned vr = operand->shift == 32 ? 3
+	: (unsigned) operand->shift / 4 - 2;
+
+      ret.u = val | ((orig_insn[4] & (1 << (3 - vr))) << (vr + 1));
+    }
+  else
+    ret.u = val;
+
+  return ret;
+}
+
+/* Print the S390 instruction in BUFFER, assuming that it matches the
+   given OPCODE.  */
+
+static void
+s390_print_insn_with_opcode (bfd_vma memaddr,
+			     struct disassemble_info *info,
+			     const bfd_byte *buffer,
+			     const struct s390_opcode *opcode)
+{
+  const unsigned char *opindex;
+  char separator;
+
+  /* Mnemonic.  */
+  info->fprintf_func (info->stream, "%s", opcode->name);
+
+  /* Operands.  */
+  separator = '\t';
+  for (opindex = opcode->operands; *opindex != 0; opindex++)
+    {
+      const struct s390_operand *operand = s390_operands + *opindex;
+      union operand_value val = s390_extract_operand (buffer, operand);
+      unsigned long flags = operand->flags;
+
+      if ((flags & S390_OPERAND_INDEX) && val.u == 0)
+	continue;
+      if ((flags & S390_OPERAND_BASE) &&
+	  val.u == 0 && separator == '(')
+	{
+	  separator = ',';
+	  continue;
+	}
+
+      /* For instructions with a last optional operand don't print it
+	 if zero.  */
+      if ((opcode->flags & S390_INSTR_FLAG_OPTPARM)
+	  && val.u == 0
+	  && opindex[1] == 0)
+	break;
+
+      if (flags & S390_OPERAND_GPR)
+	info->fprintf_func (info->stream, "%c%%r%u", separator, val.u);
+      else if (flags & S390_OPERAND_FPR)
+	info->fprintf_func (info->stream, "%c%%f%u", separator, val.u);
+      else if (flags & S390_OPERAND_VR)
+	info->fprintf_func (info->stream, "%c%%v%i", separator, val.u);
+      else if (flags & S390_OPERAND_AR)
+	info->fprintf_func (info->stream, "%c%%a%u", separator, val.u);
+      else if (flags & S390_OPERAND_CR)
+	info->fprintf_func (info->stream, "%c%%c%u", separator, val.u);
+      else if (flags & S390_OPERAND_PCREL)
+	{
+	  info->fprintf_func (info->stream, "%c", separator);
+	  info->print_address_func (memaddr + val.i + val.i, info);
+	}
+      else if (flags & S390_OPERAND_SIGNED)
+	info->fprintf_func (info->stream, "%c%i", separator, val.i);
+      else
+	{
+	  if (flags & S390_OPERAND_OR1)
+	    val.u &= ~1;
+	  if (flags & S390_OPERAND_OR2)
+	    val.u &= ~2;
+	  if (flags & S390_OPERAND_OR8)
+	    val.u &= ~8;
+
+	  if ((opcode->flags & S390_INSTR_FLAG_OPTPARM)
+	      && val.u == 0
+	      && opindex[1] == 0)
+	    break;
+	  info->fprintf_func (info->stream, "%c%u", separator, val.u);
+	}
+
+      if (flags & S390_OPERAND_DISP)
+	separator = '(';
+      else if (flags & S390_OPERAND_BASE)
+	{
+	  info->fprintf_func (info->stream, ")");
+	  separator = ',';
+	}
+      else
+	separator = ',';
+    }
+}
+
+/* Check whether opcode A's mask is more specific than that of B.  */
+
+static int
+opcode_mask_more_specific (const struct s390_opcode *a,
+			   const struct s390_opcode *b)
+{
+  return (((int) a->mask[0] + a->mask[1] + a->mask[2]
+	   + a->mask[3] + a->mask[4] + a->mask[5])
+	  > ((int) b->mask[0] + b->mask[1] + b->mask[2]
+	     + b->mask[3] + b->mask[4] + b->mask[5]));
 }
 
 /* Print a S390 instruction.  */
@@ -127,11 +259,9 @@ int
 print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
 {
   bfd_byte buffer[6];
-  const struct s390_opcode *opcode;
-  const struct s390_opcode *opcode_end;
+  const struct s390_opcode *opcode = NULL;
   unsigned int value;
   int status, opsize, bufsize;
-  char separator;
 
   if (init_flag == 0)
     init_disasm (info);
@@ -141,156 +271,72 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
 
   /* Every S390 instruction is max 6 bytes long.  */
   memset (buffer, 0, 6);
-  status = (*info->read_memory_func) (memaddr, buffer, 6, info);
+  status = info->read_memory_func (memaddr, buffer, 6, info);
   if (status != 0)
     {
       for (bufsize = 0; bufsize < 6; bufsize++)
-	if ((*info->read_memory_func) (memaddr, buffer, bufsize + 1, info) != 0)
+	if (info->read_memory_func (memaddr, buffer, bufsize + 1, info) != 0)
 	  break;
       if (bufsize <= 0)
 	{
-	  (*info->memory_error_func) (status, memaddr, info);
+	  info->memory_error_func (status, memaddr, info);
 	  return -1;
 	}
-      /* Opsize calculation looks strange but it works
-	 00xxxxxx -> 2 bytes, 01xxxxxx/10xxxxxx -> 4 bytes,
-	 11xxxxxx -> 6 bytes.  */
-      opsize = ((((buffer[0] >> 6) + 1) >> 1) + 1) << 1;
+      opsize = s390_insn_length (buffer);
       status = opsize > bufsize;
     }
   else
     {
       bufsize = 6;
-      opsize = ((((buffer[0] >> 6) + 1) >> 1) + 1) << 1;
+      opsize = s390_insn_length (buffer);
     }
 
   if (status == 0)
     {
       const struct s390_opcode *op;
 
-      /* Find the first match in the opcode table.  */
-      opcode_end = s390_opcodes + s390_num_opcodes;
-      for (opcode = s390_opcodes + opc_index[(int) buffer[0]];
-	   (opcode < opcode_end) && (buffer[0] == opcode->opcode[0]);
-	   opcode++)
+      /* Find the "best match" in the opcode table.  */
+      for (op = s390_opcodes + opc_index[buffer[0]];
+	   op != s390_opcodes + s390_num_opcodes
+	     && op->opcode[0] == buffer[0];
+	   op++)
 	{
-	  const struct s390_operand *operand;
-	  const unsigned char *opindex;
-
-	  /* Check architecture.  */
-	  if (!(opcode->modes & current_arch_mask))
-	    continue;
-
-	  /* Check signature of the opcode.  */
-	  if ((buffer[1] & opcode->mask[1]) != opcode->opcode[1]
-	      || (buffer[2] & opcode->mask[2]) != opcode->opcode[2]
-	      || (buffer[3] & opcode->mask[3]) != opcode->opcode[3]
-	      || (buffer[4] & opcode->mask[4]) != opcode->opcode[4]
-	      || (buffer[5] & opcode->mask[5]) != opcode->opcode[5])
-	    continue;
-
-	  /* Advance to an opcode with a more specific mask.  */
-	  for (op = opcode + 1; op < opcode_end; op++)
-	    {
-	      if ((buffer[0] & op->mask[0]) != op->opcode[0])
-		break;
-
-	      if ((buffer[1] & op->mask[1]) != op->opcode[1]
-		  || (buffer[2] & op->mask[2]) != op->opcode[2]
-		  || (buffer[3] & op->mask[3]) != op->opcode[3]
-		  || (buffer[4] & op->mask[4]) != op->opcode[4]
-		  || (buffer[5] & op->mask[5]) != op->opcode[5])
-		continue;
-
-	      if (((int)opcode->mask[0] + opcode->mask[1] +
-		   opcode->mask[2] + opcode->mask[3] +
-		   opcode->mask[4] + opcode->mask[5]) <
-		  ((int)op->mask[0] + op->mask[1] +
-		   op->mask[2] + op->mask[3] +
-		   op->mask[4] + op->mask[5]))
-		opcode = op;
-	    }
-
-	  /* The instruction is valid.  */
-	  if (opcode->operands[0] != 0)
-	    (*info->fprintf_func) (info->stream, "%s\t", opcode->name);
-	  else
-	    (*info->fprintf_func) (info->stream, "%s", opcode->name);
-
-	  /* Extract the operands.  */
-	  separator = 0;
-	  for (opindex = opcode->operands; *opindex != 0; opindex++)
-	    {
-	      operand = s390_operands + *opindex;
-	      value = s390_extract_operand (buffer, operand);
-
-	      if ((operand->flags & S390_OPERAND_INDEX) && value == 0)
-		continue;
-	      if ((operand->flags & S390_OPERAND_BASE) &&
-		  value == 0 && separator == '(')
-		{
-		  separator = ',';
-		  continue;
-		}
-
-	      if (separator)
-		(*info->fprintf_func) (info->stream, "%c", separator);
-
-	      if (operand->flags & S390_OPERAND_GPR)
-		(*info->fprintf_func) (info->stream, "%%r%i", value);
-	      else if (operand->flags & S390_OPERAND_FPR)
-		(*info->fprintf_func) (info->stream, "%%f%i", value);
-	      else if (operand->flags & S390_OPERAND_AR)
-		(*info->fprintf_func) (info->stream, "%%a%i", value);
-	      else if (operand->flags & S390_OPERAND_CR)
-		(*info->fprintf_func) (info->stream, "%%c%i", value);
-	      else if (operand->flags & S390_OPERAND_PCREL)
-		(*info->print_address_func) (memaddr + (int)value + (int)value,
-					     info);
-	      else if (operand->flags & S390_OPERAND_SIGNED)
-		(*info->fprintf_func) (info->stream, "%i", (int) value);
-	      else
-		(*info->fprintf_func) (info->stream, "%u", value);
-
-	      if (operand->flags & S390_OPERAND_DISP)
-		{
-		  separator = '(';
-		}
-	      else if (operand->flags & S390_OPERAND_BASE)
-		{
-		  (*info->fprintf_func) (info->stream, ")");
-		  separator = ',';
-		}
-	      else
-		separator = ',';
-	    }
-
-	  /* Found instruction, printed it, return its size.  */
-	  return opsize;
+	  if ((op->modes & current_arch_mask)
+	      && s390_insn_matches_opcode (buffer, op)
+	      && (opcode == NULL
+		  || opcode_mask_more_specific (op, opcode)))
+	    opcode = op;
 	}
-      /* No matching instruction found, fall through to hex print.  */
     }
 
+  if (opcode != NULL)
+    {
+      /* The instruction is valid.  Print it and return its size.  */
+      s390_print_insn_with_opcode (memaddr, info, buffer, opcode);
+      return opsize;
+    }
+
+  /* Fall back to hex print.  */
   if (bufsize >= 4)
     {
       value = (unsigned int) buffer[0];
       value = (value << 8) + (unsigned int) buffer[1];
       value = (value << 8) + (unsigned int) buffer[2];
       value = (value << 8) + (unsigned int) buffer[3];
-      (*info->fprintf_func) (info->stream, ".long\t0x%08x", value);
+      info->fprintf_func (info->stream, ".long\t0x%08x", value);
       return 4;
     }
   else if (bufsize >= 2)
     {
       value = (unsigned int) buffer[0];
       value = (value << 8) + (unsigned int) buffer[1];
-      (*info->fprintf_func) (info->stream, ".short\t0x%04x", value);
+      info->fprintf_func (info->stream, ".short\t0x%04x", value);
       return 2;
     }
   else
     {
       value = (unsigned int) buffer[0];
-      (*info->fprintf_func) (info->stream, ".byte\t0x%02x", value);
+      info->fprintf_func (info->stream, ".byte\t0x%02x", value);
       return 1;
     }
 }

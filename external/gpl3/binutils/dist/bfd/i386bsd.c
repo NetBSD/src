@@ -1,6 +1,5 @@
 /* BFD back-end for i386 a.out binaries under BSD.
-   Copyright 1990, 1991, 1992, 1993, 1994, 2001, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -40,7 +39,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (i386bsd_,OP)
+#define MY(OP) CONCAT2 (i386_aout_bsd_,OP)
 #define TARGETNAME "a.out-i386-bsd"
 
 #include "sysdep.h"

@@ -3,8 +3,7 @@
 %{
 /* arlex.l - Strange script language lexer */
 
-/* Copyright 1992, 1997, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2011
-   Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -34,7 +33,7 @@
 #ifndef YY_NO_UNPUT
 #define YY_NO_UNPUT
 #endif
- 
+
 extern int yylex (void);
 
 int linenumber;
@@ -79,14 +78,14 @@ int linenumber;
 "("             { return '('; }
 ")"             { return ')'; }
 ","             { return ','; }
-[A-Za-z0-9/\\$:.\-\_]+  { 	
+[A-Za-z0-9/\\$:.\-\_]+  {
 		yylval.name =  xstrdup (yytext);
 		return FILENAME;
 		}
 "*".* 		{ }
 ";".* 		{ }
 " "		{ }
-"\n"	 	 { linenumber ++; return NEWLINE; }	
+"\n"	 	 { linenumber ++; return NEWLINE; }
 
 %%
 #ifndef yywrap

@@ -35,7 +35,9 @@ test:
 	pref	3, -32768($2)
 
 	nop
+	.ifndef	insn32
 	nop16
+	.endif
 	nop32
 	ssnop
 	ehb
@@ -92,20 +94,28 @@ test:
 	move	$0, $31
 
 	move	$22, $2
+	.ifndef	insn32
 	move16	$2, $22
 	move16	$22, $2
+	.endif
 	move32	$2, $22
 	move32	$22, $2
 
 	b	test
+	.ifndef	insn32
 	b16	test
+	.endif
 	b32	test
 	b	1f
+	.ifndef	insn32
 	b16	1f
+	.endif
 	b32	1f
 1:
 	b	1b
+	.ifndef	insn32
 	b16	1b
+	.endif
 	b32	1b
 
 	abs	$2, $3
@@ -263,7 +273,9 @@ test:
 	and	$2, $3
 	and	$2, $2, $3
 	and	$2, $3, $2
+	.ifndef	insn32
 	and16	$2, $2, $3
+	.endif
 	and32	$2, $2, $3
 
 	andi	$2,$2,1
@@ -299,7 +311,9 @@ test:
 
 	andi	$7,$7,65535
 	andi	$7,65535
+	.ifndef	insn32
 	andi16	$7,65535
+	.endif
 	andi32	$7,65535
 
 	and32	$2, $3, $4
@@ -369,7 +383,9 @@ test2:
 	beq	$0, $16, test2
 	beq	$0, $17, test2
 
+	.ifndef	insn32
 	beqz16	$16, test2
+	.endif
 	beqz32	$16, test2
 	beqz	$17, test2
 	beqz32	$17, test2
@@ -455,7 +471,9 @@ test2:
 	bne	$0, $16, test3
 	bne	$0, $17, test3
 
+	.ifndef	insn32
 	bnez16	$16, test3
+	.endif
 	bnez32	$16, test3
 	bnez	$17, test2
 	bnez32	$17, test2
@@ -2988,6 +3006,7 @@ test3:
 	bnel	$9, 1, test
 	addu	$3, $4, $5
 
+	.ifndef	insn32
 	addiur1sp	$2, 0
 	addiur1sp	$2, 1<<2
 	addiur1sp	$2, 2<<2
@@ -3050,6 +3069,7 @@ test3:
 	addius5	$31, -6
 	addius5	$31, -7
 	addius5	$31, -8
+	.endif
 
 	sd	$3, 4
 	sd	$3, 4($0)
@@ -5544,19 +5564,25 @@ test_delay_slot:
 	bltzall	$3, test_delay_slot
 	jal	test_delay_slot
 	jalx	test_delay_slot
+	.ifndef	insn32
 	jalr16	$2
+	.endif
 	jalr32	$2
+	.ifndef	insn32
 	jr16	$2
+	.endif
 	jr32	$2
 	jalr.hb	$2
 	jr.hb	$2
 
+	.ifndef	insn32
 	jals	test_delay_slot
 	jalrs16	$2
 	jalrs32	$2
 	jrs	$2
 	jalrs.hb	$2
 	jrs.hb	$2
+	.endif
 
 	.end	test_delay_slot
 
@@ -5635,12 +5661,14 @@ test_spec107:
 	movep	$4, $7, $20, $18
 	movep	$4, $7, $20, $19
 	movep	$4, $7, $20, $20
+	.ifndef	insn32
 	bals	test_spec107
 	nop
 	bgezals	$2, test_spec107
 	nop
 	bltzals	$2, test_spec107
 	nop
+	.endif
 	bal	test_spec107
 	nop
 	bgezal	$2, test_spec107

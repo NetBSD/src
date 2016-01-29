@@ -1,51 +1,61 @@
-#as: -EL
-#objdump: -dr -EL
+#as: -mcpu=arc700
+#objdump: -dr --prefix-addresses --show-raw-insn
 
-.*: +file format elf32-.*arc
+.*: +file format .*arc.*
 
 Disassembly of section .text:
-
-00000000 <.text>:
-   0:	00 82 00 18 	18008200     asr        r0,r1
-   4:	00 02 6e 1b 	1b6e0200     asr        fp,sp
-   8:	00 82 1f 18 	181f8200     asr        r0,0
-   c:	ff 83 3f 18 	183f83ff     asr        r1,-1
-  10:	00 02 e1 1f 	1fe10200     asr        0,r2
-  14:	00 82 e1 1f 	1fe18200     asr        0,r3
-  18:	ff 82 9f 18 	189f82ff     asr        r4,255
-  1c:	00 82 e2 1f 	1fe28200     asr        0,r5
-  20:	00 83 df 18 	18df8300     asr        r6,-256
-  24:	00 82 e3 1f 	1fe38200     asr        0,r7
-  28:	00 02 1f 19 	191f0200     asr        r8,0x100
-  2c:	00 01 00 00 
-  30:	00 02 3f 19 	193f0200     asr        r9,0xffff_feff
-  34:	ff fe ff ff 
-  38:	00 02 7f 19 	197f0200     asr        r11,0x4242_4242
-  3c:	42 42 42 42 
-  40:	00 02 ff 1f 	1fff0200     asr        0,0x100
-  44:	00 01 00 00 
-  48:	00 02 1f 18 	181f0200     asr        r0,0
-  4c:	00 00 00 00 
-			4c: R_ARC_32	foo
-  50:	01 82 45 19 	19458201     asr.z      r10,r11
-  54:	02 82 86 19 	19868202     asr.nz     r12,r13
-  58:	0b 02 df 19 	19df020b     asr.lt     r14,0
-  5c:	00 00 00 00 
-  60:	09 02 ff 19 	19ff0209     asr.gt     r15,0x200
-  64:	00 02 00 00 
-  68:	00 83 00 18 	18008300     asr.f      r0,r1
-  6c:	01 82 5e 18 	185e8201     asr.f      r2,1
-  70:	00 03 e2 1f 	1fe20300     asr.f      0,r4
-  74:	00 03 bf 18 	18bf0300     asr.f      r5,0x200
-  78:	00 02 00 00 
-  7c:	00 03 df 1f 	1fdf0300     asr.f      0,0x200
-  80:	00 02 00 00 
-  84:	01 83 00 18 	18008301     asr.z.f    r0,r1
-  88:	02 03 3f 18 	183f0302     asr.nz.f   r1,0
-  8c:	00 00 00 00 
-  90:	0b 03 c1 1f 	1fc1030b     asr.lt.f   0,r2
-  94:	00 00 00 00 	00000000                
-  98:	0c 03 1f 18 	181f030c     asr.le.f   r0,0x200
-  9c:	00 02 00 00 
-  a0:	04 03 df 1f 	1fdf0304     asr.n.f    0,0x200
-  a4:	00 02 00 00 
+0x[0-9a-f]+ 2902 0080           	asr	r0,r1,r2
+0x[0-9a-f]+ 2b02 371a           	asr	gp,fp,sp
+0x[0-9a-f]+ 2e02 37dd           	asr	ilink,r30,blink
+0x[0-9a-f]+ 2942 0000           	asr	r0,r1,0
+0x[0-9a-f]+ 2e02 7080 0000 0000 	asr	r0,0,r2
+0x[0-9a-f]+ 2902 00be           	asr	0,r1,r2
+0x[0-9a-f]+ 2902 0f80 ffff ffff 	asr	r0,r1,0xffffffff
+0x[0-9a-f]+ 2e02 7080 ffff ffff 	asr	r0,0xffffffff,r2
+0x[0-9a-f]+ 2902 0f80 0000 00ff 	asr	r0,r1,0xff
+0x[0-9a-f]+ 2e02 7080 0000 00ff 	asr	r0,0xff,r2
+0x[0-9a-f]+ 2902 0f80 ffff ff00 	asr	r0,r1,0xffffff00
+0x[0-9a-f]+ 2e02 7080 ffff ff00 	asr	r0,0xffffff00,r2
+0x[0-9a-f]+ 2902 0f80 0000 0100 	asr	r0,r1,0x100
+0x[0-9a-f]+ 2e02 7080 ffff feff 	asr	r0,0xfffffeff,r2
+0x[0-9a-f]+ 2e02 7f80 0000 0100 	asr	r0,0x100,0x100
+0x[0-9a-f]+ 2902 0f80 0000 0000 	asr	r0,r1,0
+			68: ARC_32_ME	foo
+0x[0-9a-f]+ 28c2 0080           	asr	r0,r0,r2
+0x[0-9a-f]+ 2bc2 0140           	asr	r3,r3,r5
+0x[0-9a-f]+ 2ec2 0201           	asr.eq	r6,r6,r8
+0x[0-9a-f]+ 29c2 12c1           	asr.eq	r9,r9,r11
+0x[0-9a-f]+ 2cc2 1382           	asr.ne	r12,r12,r14
+0x[0-9a-f]+ 2fc2 1442           	asr.ne	r15,r15,r17
+0x[0-9a-f]+ 2ac2 2503           	asr.p	r18,r18,r20
+0x[0-9a-f]+ 2dc2 25c3           	asr.p	r21,r21,r23
+0x[0-9a-f]+ 28c2 3684           	asr.n	r24,r24,gp
+0x[0-9a-f]+ 2bc2 3744           	asr.n	fp,fp,ilink
+0x[0-9a-f]+ 2ec2 37c5           	asr.c	r30,r30,blink
+0x[0-9a-f]+ 2bc2 00c5           	asr.c	r3,r3,r3
+0x[0-9a-f]+ 2bc2 0205           	asr.c	r3,r3,r8
+0x[0-9a-f]+ 2bc2 0106           	asr.nc	r3,r3,r4
+0x[0-9a-f]+ 2cc2 0106           	asr.nc	r4,r4,r4
+0x[0-9a-f]+ 2cc2 01c6           	asr.nc	r4,r4,r7
+0x[0-9a-f]+ 2cc2 0147           	asr.v	r4,r4,r5
+0x[0-9a-f]+ 2dc2 0147           	asr.v	r5,r5,r5
+0x[0-9a-f]+ 2dc2 0148           	asr.nv	r5,r5,r5
+0x[0-9a-f]+ 2dc2 0148           	asr.nv	r5,r5,r5
+0x[0-9a-f]+ 2ec2 0009           	asr.gt	r6,r6,r0
+0x[0-9a-f]+ 28c2 002a           	asr.ge	r0,r0,0
+0x[0-9a-f]+ 29c2 006b           	asr.lt	r1,r1,0x1
+0x[0-9a-f]+ 2bc2 00ed           	asr.hi	r3,r3,0x3
+0x[0-9a-f]+ 2cc2 012e           	asr.ls	r4,r4,0x4
+0x[0-9a-f]+ 2dc2 016f           	asr.pnz	r5,r5,0x5
+0x[0-9a-f]+ 2902 8080           	asr.f	r0,r1,r2
+0x[0-9a-f]+ 2942 8040           	asr.f	r0,r1,0x1
+0x[0-9a-f]+ 2e02 f080 0000 0001 	asr.f	r0,0x1,r2
+0x[0-9a-f]+ 2902 80be           	asr.f	0,r1,r2
+0x[0-9a-f]+ 2902 8f80 0000 0200 	asr.f	r0,r1,0x200
+0x[0-9a-f]+ 2e02 f080 0000 0200 	asr.f	r0,0x200,r2
+0x[0-9a-f]+ 29c2 8081           	asr.f.eq	r1,r1,r2
+0x[0-9a-f]+ 28c2 8022           	asr.f.ne	r0,r0,0
+0x[0-9a-f]+ 2ac2 808b           	asr.f.lt	r2,r2,r2
+0x[0-9a-f]+ 2ec2 f0a9 0000 0001 	asr.f.gt	0,0x1,0x2
+0x[0-9a-f]+ 2ec2 ff8c 0000 0200 	asr.f.le	0,0x200,0x200
+0x[0-9a-f]+ 2ec2 f0aa 0000 0200 	asr.f.ge	0,0x200,0x2

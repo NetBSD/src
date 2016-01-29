@@ -6,9 +6,9 @@
 
 RELOCATION RECORDS FOR \[.text\]:
 OFFSET[ 	]+TYPE[ 	]+VALUE[ 	]*
-[0-9a-f]+[ 	]+R_386_GOT32[ 	]+xtrn[ 	]*
+[0-9a-f]+[ 	]+R_386_GOT32X[ 	]+xtrn[ 	]*
 [0-9a-f]+[ 	]+R_386_PLT32[ 	]+xtrn[ 	]*
-[0-9a-f]+[ 	]+R_386_GOT32[ 	]+xtrn[ 	]*
+[0-9a-f]+[ 	]+R_386_GOT32X[ 	]+xtrn[ 	]*
 [0-9a-f]+[ 	]+R_386_PLT32[ 	]+xtrn[ 	]*
-[0-9a-f]+[ 	]+R_386_GOT32[ 	]+xtrn[ 	]*
+[0-9a-f]+[ 	]+R_386_GOT32X[ 	]+xtrn[ 	]*
 [0-9a-f]+[ 	]+R_386_PLT32[ 	]+xtrn[ 	]*

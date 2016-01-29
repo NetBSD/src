@@ -29,7 +29,6 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .*: 0000102c +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 sec2
 .*: 00001040 +0 +NOTYPE +LOCAL +DEFAULT +2 sec3
 .*: 00001048 +0 +NOTYPE +LOCAL +DEFAULT +2 sec4
-.* FILE +LOCAL +DEFAULT +ABS .*
 .*: 000010e0 +0 +NOTYPE +GLOBAL +DEFAULT +.* ___dtors
 .*: 000010e0 +0 +NOTYPE +GLOBAL +DEFAULT +2 __bss_start
 .*: 000010e0 +0 +NOTYPE +GLOBAL +DEFAULT +.* ___ctors_end

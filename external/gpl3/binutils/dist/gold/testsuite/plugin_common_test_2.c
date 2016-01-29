@@ -1,6 +1,6 @@
 /* plugin_common_test_2.c -- test common symbol handling in plugins
 
-   Copyright 2010 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Written by Cary Coutant <ccoutant@google.com>
 
    This file is part of gold.
@@ -26,7 +26,7 @@
 
 #include <assert.h>
 
-int c1;
+int c1 __attribute__((aligned (8)));
 extern int c2;
 int c3;
 int c4 = 40;

@@ -1,5 +1,5 @@
 /* tc-cr16.h -- Header file for tc-cr16.c, the CR16 GAS port.
-   Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 
@@ -57,14 +57,15 @@ extern int cr16_force_relocation (struct fix *);
    of two bytes long.  */
 #define DWARF2_LINE_MIN_INSN_LENGTH 2
 
-extern void cr16_cons_fix_new (struct frag *, int, int, struct expressionS *);
+extern void cr16_cons_fix_new (struct frag *, int, int, struct expressionS *,
+			       bfd_reloc_code_real_type);
 /* This is called by emit_expr when creating a reloc for a cons.
-   We could use the definition there, except that we want to handle 
+   We could use the definition there, except that we want to handle
    the CR16 reloc type specially, rather than the BFD_RELOC type.  */
-#define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP) \
-  cr16_cons_fix_new (FRAG, OFF, LEN, EXP) 
+#define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP, RELOC)	\
+  cr16_cons_fix_new (FRAG, OFF, LEN, EXP, RELOC)
 
-/* Give an error if a frag containing code is not aligned to a 2-byte 
+/* Give an error if a frag containing code is not aligned to a 2-byte
    boundary.  */
 #define md_frag_check(FRAGP) \
   if ((FRAGP)->has_code                                                \

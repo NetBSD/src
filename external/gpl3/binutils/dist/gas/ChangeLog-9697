@@ -5958,6 +5958,12 @@ Tue Jan  2 12:43:23 1996  Jim Wilson  <wilson@chestnut.cygnus.com>
 
 For older changes see ChangeLog-9295
 
+Copyright (C) 1996-1997 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8
