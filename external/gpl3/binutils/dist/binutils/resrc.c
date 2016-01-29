@@ -1,6 +1,5 @@
 /* resrc.c -- read and write Windows rc files.
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -323,7 +322,7 @@ open_input_stream (char *cmd)
       if (run_cmd (cmd, cpp_temp_file))
 	fatal (_("can't execute `%s': %s"), cmd, strerror (errno));
 
-      cpp_pipe = fopen (cpp_temp_file, FOPEN_RT);;
+      cpp_pipe = fopen (cpp_temp_file, FOPEN_RT);
       if (cpp_pipe == NULL)
 	fatal (_("can't open temporary file `%s': %s"),
 	       cpp_temp_file, strerror (errno));
@@ -2276,7 +2275,7 @@ write_rc_resource (FILE *e, const rc_res_id *type,
 	    default:
     res_id_print (e, *type, 0);
 	      break;
-	
+
 	    PRINT_RT_NAME(RT_MANIFEST);
 	    PRINT_RT_NAME(RT_ANICURSOR);
 	    PRINT_RT_NAME(RT_ANIICON);
@@ -2778,7 +2777,7 @@ write_rc_toolbar (FILE *e, const rc_toolbar *tb)
     indent (e, 2);
     if (it->id.u.id == 0)
       fprintf (e, "SEPARATOR\n");
-    else 
+    else
       fprintf (e, "BUTTON %d\n", (int) it->id.u.id);
     it = it->next;
   }
@@ -2893,7 +2892,7 @@ test_rc_datablock_text (rc_uint_type length, const bfd_byte *data)
   int has_nl;
   rc_uint_type c;
   rc_uint_type i;
-  
+
   if (length <= 1)
     return 0;
 
@@ -2924,6 +2923,7 @@ write_rc_messagetable (FILE *e, rc_uint_type length, const bfd_byte *data)
 {
   int has_error = 0;
   const struct bin_messagetable *mt;
+
   fprintf (e, "BEGIN\n");
 
   write_rc_datablock (e, length, data, 0, 0, 0);
@@ -2933,53 +2933,68 @@ write_rc_messagetable (FILE *e, rc_uint_type length, const bfd_byte *data)
   if (length < BIN_MESSAGETABLE_SIZE)
     has_error = 1;
   else
-    do {
-      rc_uint_type m, i;
-      mt = (const struct bin_messagetable *) data;
-      m = windres_get_32 (&wrtarget, mt->cblocks, length);
-      if (length < (BIN_MESSAGETABLE_SIZE + m * BIN_MESSAGETABLE_BLOCK_SIZE))
-	{
-	  has_error = 1;
-	  break;
-	}
-      for (i = 0; i < m; i++)
-	{
-	  rc_uint_type low, high, offset;
-	  const struct bin_messagetable_item *mti;
+    do
+      {
+	rc_uint_type m, i;
 
-	  low = windres_get_32 (&wrtarget, mt->items[i].lowid, 4);
-	  high = windres_get_32 (&wrtarget, mt->items[i].highid, 4);
-	  offset = windres_get_32 (&wrtarget, mt->items[i].offset, 4);
-	  while (low <= high)
-	    {
-	      rc_uint_type elen, flags;
-	      if ((offset + BIN_MESSAGETABLE_ITEM_SIZE) > length)
-		{
-		  has_error = 1;
-	  break;
-		}
-	      mti = (const struct bin_messagetable_item *) &data[offset];
-	      elen = windres_get_16 (&wrtarget, mti->length, 2);
-	      flags = windres_get_16 (&wrtarget, mti->flags, 2);
-	      if ((offset + elen) > length)
-		{
-		  has_error = 1;
-		  break;
-		}
-	      wr_printcomment (e, "MessageId = 0x%x", low);
-	      wr_printcomment (e, "");
-	      if ((flags & MESSAGE_RESOURCE_UNICODE) == MESSAGE_RESOURCE_UNICODE)
-		unicode_print (e, (const unichar *) mti->data,
-			       (elen - BIN_MESSAGETABLE_ITEM_SIZE) / 2);
-	      else
-		ascii_print (e, (const char *) mti->data,
-			     (elen - BIN_MESSAGETABLE_ITEM_SIZE));
-	      wr_printcomment (e,"");
-	      ++low;
-	      offset += elen;
-	    }
-	}
-    } while (0);
+	mt = (const struct bin_messagetable *) data;
+	m = windres_get_32 (&wrtarget, mt->cblocks, length);
+
+	if (length < (BIN_MESSAGETABLE_SIZE + m * BIN_MESSAGETABLE_BLOCK_SIZE))
+	  {
+	    has_error = 1;
+	    break;
+	  }
+	for (i = 0; i < m; i++)
+	  {
+	    rc_uint_type low, high, offset;
+	    const struct bin_messagetable_item *mti;
+
+	    low = windres_get_32 (&wrtarget, mt->items[i].lowid, 4);
+	    high = windres_get_32 (&wrtarget, mt->items[i].highid, 4);
+	    offset = windres_get_32 (&wrtarget, mt->items[i].offset, 4);
+
+	    while (low <= high)
+	      {
+		rc_uint_type elen, flags;
+		if ((offset + BIN_MESSAGETABLE_ITEM_SIZE) > length)
+		  {
+		    has_error = 1;
+		    break;
+		  }
+		mti = (const struct bin_messagetable_item *) &data[offset];
+		elen = windres_get_16 (&wrtarget, mti->length, 2);
+		flags = windres_get_16 (&wrtarget, mti->flags, 2);
+		if ((offset + elen) > length)
+		  {
+		    has_error = 1;
+		    break;
+		  }
+		wr_printcomment (e, "MessageId = 0x%x", low);
+		wr_printcomment (e, "");
+
+		if ((flags & MESSAGE_RESOURCE_UNICODE) == MESSAGE_RESOURCE_UNICODE)
+		  {
+		    /* PR 17512: file: 5c3232dc.  */
+		    if (elen > BIN_MESSAGETABLE_ITEM_SIZE * 2)
+		      unicode_print (e, (const unichar *) mti->data,
+				     (elen - BIN_MESSAGETABLE_ITEM_SIZE) / 2);
+		  }
+		else
+		  {
+		    if (elen > BIN_MESSAGETABLE_ITEM_SIZE)
+		      ascii_print (e, (const char *) mti->data,
+				   (elen - BIN_MESSAGETABLE_ITEM_SIZE));
+		  }
+
+		wr_printcomment (e,"");
+		++low;
+		offset += elen;
+	      }
+	  }
+      }
+    while (0);
+
   if (has_error)
     wr_printcomment (e, "Illegal data");
   wr_print_flush (e);
@@ -2996,7 +3011,7 @@ write_rc_datablock (FILE *e, rc_uint_type length, const bfd_byte *data, int has_
     fprintf (e, "BEGIN\n");
 
   if (show_comment == -1)
-	  {
+    {
       if (test_rc_datablock_text(length, data))
 	{
 	  rc_uint_type i, c;
@@ -3009,12 +3024,12 @@ write_rc_datablock (FILE *e, rc_uint_type length, const bfd_byte *data, int has_
 		;
 	      if (i < length && data[i] == '\n')
 		++i, ++c;
-	      ascii_print (e, (const char *) &data[i - c], c);
+	      ascii_print(e, (const char *) &data[i - c], c);
 	    fprintf (e, "\"");
 	      if (i < length)
 		fprintf (e, "\n");
 	    }
-          
+
 	  if (i == 0)
 	      {
 	      indent (e, 2);
@@ -3037,7 +3052,7 @@ write_rc_datablock (FILE *e, rc_uint_type length, const bfd_byte *data, int has_
 	      u = (const unichar *) &data[i];
 	      indent (e, 2);
 	  fprintf (e, "L\"");
-    	  
+
 	      for (c = 0; i < length && c < 160 && u[c] != '\n'; c++, i += 2)
 		;
 	      if (i < length && u[c] == '\n')
@@ -3075,9 +3090,9 @@ write_rc_datablock (FILE *e, rc_uint_type length, const bfd_byte *data, int has_
 		  {
 	  rc_uint_type k;
 	  rc_uint_type comment_start;
-	  
+
 	  comment_start = i;
-	  
+
 	  if (! first)
 	    indent (e, 2);
 

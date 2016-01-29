@@ -1,6 +1,5 @@
 /* BFD library support routines for architectures.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1997, 1998, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -111,7 +110,7 @@ const bfd_arch_info_type bfd_m68k_arch =
 
 /* Table indexed by bfd_mach_arch number indicating which
    architectural features are supported.  */
-static const unsigned m68k_arch_features[] = 
+static const unsigned m68k_arch_features[] =
 {
   0,
   m68000|m68881|m68851,
@@ -186,7 +185,7 @@ int bfd_m68k_features_to_mach (unsigned features)
        ix++)
     {
       unsigned this_extra, this_missing;
-      
+
       if (m68k_arch_features[ix] == features)
 	return ix;
       this_extra = bit_count (m68k_arch_features[ix] & ~features);
@@ -195,7 +194,7 @@ int bfd_m68k_features_to_mach (unsigned features)
 	  extra = this_extra;
 	  superset = ix;
 	}
-      
+
       this_missing = bit_count (features & ~m68k_arch_features[ix]);
       if (this_missing < missing)
 	{
@@ -220,7 +219,7 @@ bfd_m68k_compatible (const bfd_arch_info_type *a,
     return b;
   if (!b->mach)
     return a;
-  
+
   if (a->mach <= bfd_mach_m68060 && b->mach <= bfd_mach_m68060)
     /* Merge m68k machine. */
     return a->mach > b->mach ? a : b;

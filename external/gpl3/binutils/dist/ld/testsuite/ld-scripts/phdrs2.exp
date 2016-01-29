@@ -1,5 +1,5 @@
 # Test PHDRS with empty sections in a linker script.
-# Copyright 2006, 2005, 2007, 2010 Free Software Foundation, Inc,
+# Copyright (C) 2005-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #

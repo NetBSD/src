@@ -31,11 +31,4 @@ Disassembly of section .text:
   58:	aba50018 	swl	a1,24\(sp\)
   5c:	00000000 	nop
   60:	aba60000 	swl	a2,0\(sp\)
-  64:	0000000d 	break
-  68:	e3a20020 	sc	v0,32\(sp\)
-  6c:	e3a30008 	sc	v1,8\(sp\)
-  70:	e3a4fff8 	sc	a0,-8\(sp\)
-  74:	00000000 	nop
-  78:	e3a50000 	sc	a1,0\(sp\)
-  7c:	e3a60020 	sc	a2,32\(sp\)
 	\.\.\.

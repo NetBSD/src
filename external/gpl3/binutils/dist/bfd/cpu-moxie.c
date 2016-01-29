@@ -1,5 +1,5 @@
 /* BFD support for the moxie processor.
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Written by Anthony Green
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,7 +34,7 @@ const bfd_arch_info_type bfd_moxie_arch =
     "moxie",          /* Printable name.  */
     2,                /* Unsigned int section alignment power.  */
     TRUE,             /* The one and only.  */
-    bfd_default_compatible, 
+    bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
     0,

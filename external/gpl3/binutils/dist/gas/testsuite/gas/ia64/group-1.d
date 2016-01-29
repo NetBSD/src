@@ -1,7 +1,7 @@
 #readelf: -Sg
 #name: ia64 group
 
-There are 9 section headers, starting at offset 0x98:
+There are 9 section headers, starting at offset .*:
 
 Section Headers:
   \[Nr\] Name              Type             Address           Offset
@@ -18,12 +18,12 @@ Section Headers:
        0000000000000000  0000000000000000  WA       0     0     1
   \[ 5\] \.text             PROGBITS         0000000000000000  00000050
        0000000000000010  0000000000000000 AXG       0     0     16
-  \[ 6\] \.shstrtab         STRTAB           0000000000000000  00000060
+  \[ 6\] \.shstrtab         STRTAB           0000000000000000  [0-9a-f]+
        0000000000000033  0000000000000000           0     0     1
-  \[ 7\] \.symtab           SYMTAB           0000000000000000  000002d8
+  \[ 7\] \.symtab           SYMTAB           0000000000000000  .*
        00000000000000c0  0000000000000018           8     8     8
-  \[ 8\] \.strtab           STRTAB           0000000000000000  00000398
-       000000000000000c  0000000000000000           0     0     1
+  \[ 8\] \.strtab           STRTAB           0000000000000000  .*
+       000000000000000[7c]  0000000000000000           0     0     1
 Key to Flags:
 #...
 

@@ -1,7 +1,6 @@
 # Expect script for complex PE tests that require a C compiler and the ability
 # to run target executables natively, in addition to the just-built binutils.
-#   Copyright 2006, 2007, 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #

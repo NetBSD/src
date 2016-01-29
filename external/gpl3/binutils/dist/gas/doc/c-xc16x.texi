@@ -1,4 +1,4 @@
-@c Copyright 2006, 2011 Free Software Foundation, Inc.
+@c Copyright (C) 2006-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -35,7 +35,7 @@ This assembles a word (16-bit) constant.
 
 @cindex @code{ascii} directive, xc16x
 @item .ascii "@var{ascii}"
-This directive used for copying @var{str} into the object file. 
+This directive used for copying @var{str} into the object file.
 The string is terminated with a null byte.
 
 @cindex @code{set} directive, xc16x
@@ -52,7 +52,7 @@ Reserve @var{length} bytes in the bss section for a local @var{symbol},
 aligned to the power of two specified by @var{align}.  @var{length} and
 @var{align} must be positive absolute expressions.  This directive
 differs from @samp{.lcomm} only in that it permits you to specify
-an alignment.  
+an alignment.
 @end table
 
 @node xc16x Syntax

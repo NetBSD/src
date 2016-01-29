@@ -16,11 +16,11 @@
 #...
 Relocation section '.rela.dyn' at offset 0x... contains 1 entries:
  Offset +Info +Type +Sym.Value +Sym. Name \+ Addend
-.* R_CRIS_COPY .* __expobj2 \+ 0
+.* R_CRIS_COPY .* __expobj2@TST3 \+ 0
 
 Relocation section '.rela.plt' at offset 0x... contains 1 entries:
  Offset +Info +Type +Sym.Value +Sym. Name \+ Addend
-.* R_CRIS_JUMP_SLOT .* expfn2 \+ 0
+.* R_CRIS_JUMP_SLOT .* expfn2@TST3 \+ 0
 
 The decoding of unwind sections for machine type Axis Communications 32-bit embedded processor is not currently supported.
 

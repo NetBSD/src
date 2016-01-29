@@ -14,12 +14,12 @@ Disassembly of section .plt:
  +[0-9a-f]+:	41 83 e3 e0          	and    \$0xffffffe0,%r11d
  +[0-9a-f]+:	4d 01 fb             	add    %r15,%r11
  +[0-9a-f]+:	41 ff e3             	jmpq   \*%r11
- +[0-9a-f]+:	2e 0f 1f 84 00 00 00 	nopl   %cs:0x0\(%rax,%rax,1\)
+ +[0-9a-f]+:	66 0f 1f 84 00 00 00 	nopw   0x0\(%rax,%rax,1\)
  +[0-9a-f]+:	00 00 *
- +[0-9a-f]+:	66 66 66 66 66 66 2e 	data32 data32 data32 data32 data32 nopw %cs:0x0\(%rax,%rax,1\)
+ +[0-9a-f]+:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 nopw %cs:0x0\(%rax,%rax,1\)
  +[0-9a-f]+:	0f 1f 84 00 00 00 00 *
  +[0-9a-f]+:	00 *
- +[0-9a-f]+:	66 66 66 66 66 66 2e 	data32 data32 data32 data32 data32 nopw %cs:0x0\(%rax,%rax,1\)
+ +[0-9a-f]+:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 nopw %cs:0x0\(%rax,%rax,1\)
  +[0-9a-f]+:	0f 1f 84 00 00 00 00 *
  +[0-9a-f]+:	00 *
  +[0-9a-f]+:	66 90                	xchg   %ax,%ax
@@ -29,12 +29,12 @@ Disassembly of section .plt:
  +[0-9a-f]+:	41 83 e3 e0          	and    \$0xffffffe0,%r11d
  +[0-9a-f]+:	4d 01 fb             	add    %r15,%r11
  +[0-9a-f]+:	41 ff e3             	jmpq   \*%r11
- +[0-9a-f]+:	66 66 66 66 66 66 2e 	data32 data32 data32 data32 data32 nopw %cs:0x0\(%rax,%rax,1\)
+ +[0-9a-f]+:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 nopw %cs:0x0\(%rax,%rax,1\)
  +[0-9a-f]+:	0f 1f 84 00 00 00 00 *
  +[0-9a-f]+:	00 *
  +[0-9a-f]+:	68 00 00 00 00       	pushq  \$0x0
  +[0-9a-f]+:	e9 ([0-9a-f]{2} ){4} *	jmpq   [0-9a-f]+ <fn1@plt-0x40>
- +[0-9a-f]+:	66 66 66 66 66 66 2e 	data32 data32 data32 data32 data32 nopw %cs:0x0\(%rax,%rax,1\)
+ +[0-9a-f]+:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 nopw %cs:0x0\(%rax,%rax,1\)
  +[0-9a-f]+:	0f 1f 84 00 00 00 00 *
  +[0-9a-f]+:	00 *
  +[0-9a-f]+:	0f 1f 80 00 00 00 00 	nopl   0x0\(%rax\)
@@ -44,12 +44,12 @@ Disassembly of section .plt:
  +[0-9a-f]+:	41 83 e3 e0          	and    \$0xffffffe0,%r11d
  +[0-9a-f]+:	4d 01 fb             	add    %r15,%r11
  +[0-9a-f]+:	41 ff e3             	jmpq   \*%r11
- +[0-9a-f]+:	66 66 66 66 66 66 2e 	data32 data32 data32 data32 data32 nopw %cs:0x0\(%rax,%rax,1\)
+ +[0-9a-f]+:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 nopw %cs:0x0\(%rax,%rax,1\)
  +[0-9a-f]+:	0f 1f 84 00 00 00 00 *
  +[0-9a-f]+:	00 *
  +[0-9a-f]+:	68 01 00 00 00       	pushq  \$0x1
  +[0-9a-f]+:	e9 ([0-9a-f]{2} ){4} *	jmpq   [0-9a-f]+ <fn1@plt-0x40>
- +[0-9a-f]+:	66 66 66 66 66 66 2e 	data32 data32 data32 data32 data32 nopw %cs:0x0\(%rax,%rax,1\)
+ +[0-9a-f]+:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 nopw %cs:0x0\(%rax,%rax,1\)
  +[0-9a-f]+:	0f 1f 84 00 00 00 00 *
  +[0-9a-f]+:	00 *
  +[0-9a-f]+:	0f 1f 80 00 00 00 00 	nopl   0x0\(%rax\)

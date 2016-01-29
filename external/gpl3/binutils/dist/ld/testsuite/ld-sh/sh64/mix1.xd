@@ -32,7 +32,6 @@ SYMBOL TABLE:
 0+1004 l       \.text	0+ start2
 0+1030 l       \.text	0+ 0x04 mediacode2
 0+1018 l       \.text	0+ 0x04 mediacode
-0+ l    df \*ABS\*	0+ .*
 0+10c8 g       .*	0+ ___dtors
 0+10d8 g       \.data	0+ __bss_start
 0+10c8 g       .*	0+ ___ctors_end

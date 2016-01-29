@@ -1,5 +1,4 @@
-# Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2003, 2004, 2006, 2007,
-# 2009, 2010, 2012 Free Software Foundation, Inc.
+# Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -181,14 +180,22 @@ proc exe_ext {} {
 #	When assembling FILE.s, pass FLAGS to the assembler.
 #
 #   PROG: PROGRAM-NAME
-#       The name of the program to run to analyze the .o file produced
-#       by the assembler.  This can be omitted; run_dump_test will guess
-#       which program to run by seeing which of the flags options below
-#	is present.
+#       The name of the program to run to modify or analyze the .o file
+#       produced by the assembler.  This option is required.  Recognised
+#       names are: ar, elfedit, nm, objcopy, ranlib, strings, and strip.
 #
-#   objdump: FLAGS
+#   DUMPPROG: PROGRAM-NAME
+#       The name of the program to run to analyze the .o file after it has
+#       has been modified by PROG.  This can be omitted; run_dump_test will
+#       guess which program to run by seeing if any of the flags options
+#       for the recognised dump programs are set.  Recognised names are:
+#       addr2line, nm, objdump, readelf and size.
+#
 #   nm: FLAGS
 #   objcopy: FLAGS
+#   objdump: FLAGS
+#   readelf: FLAGS
+#   size: FLAGS
 #	Use the specified program to analyze the .o file, and pass it
 #	FLAGS, in addition to the .o file name.  Note that they are run
 #	with LC_ALL=C in the environment to give consistent sorting
@@ -270,16 +277,16 @@ proc run_dump_test { name {extra_options {}} } {
     set opts(addr2line) {}
     set opts(ar) {}
     set opts(as) {}
+    set opts(elfedit) {}
+    set opts(name) {}
     set opts(nm) {}
     set opts(objcopy) {}
     set opts(objdump) {}
-    set opts(strip) {}
     set opts(ranlib) {}
     set opts(readelf) {}
     set opts(size) {}
     set opts(strings) {}
-    set opts(name) {}
-    set opts(elfedit) {}
+    set opts(strip) {}
     set opts(PROG) {}
     set opts(DUMPPROG) {}
     set opts(source) {}
@@ -338,7 +345,7 @@ proc run_dump_test { name {extra_options {}} } {
     verbose "Testing $testname"
 
     if {$opts(PROG) == ""} {
-	perror "program isn't set in $file.d"
+	perror "PROG isn't set in $file.d"
 	unresolved $testname
 	return
     }
@@ -346,15 +353,15 @@ proc run_dump_test { name {extra_options {}} } {
     set destopt ""
     switch -- $opts(PROG) {
 	ar	{ set program ar }
+	elfedit { set program elfedit }
+	nm      { set program nm }
 	objcopy	{ set program objcopy }
 	ranlib	{ set program ranlib }
+	strings	{ set program strings }
 	strip	{
 	    set program strip
 	    set destopt "-o"
 	}
-	strings	{ set program strings }
-	elfedit { set program elfedit }
-	nm      { set program nm }
 	default	{
 	    perror "unrecognized program option $opts(PROG) in $file.d"
 	    unresolved $testname
@@ -376,10 +383,10 @@ proc run_dump_test { name {extra_options {}} } {
 	}
     } else {
 	# Guess which program to run, by seeing which option was specified.
-	foreach p {objdump nm readelf} {
+	foreach p {addr2line nm objdump readelf size} {
 	    if {$opts($p) != ""} {
 		if {$dumpprogram != ""} {
-		    perror "ambiguous dump program in $file.d"
+		    perror "more than one possible dump program specified in $file.d"
 		    unresolved $testname
 		    return
 		} else {
@@ -413,11 +420,6 @@ proc run_dump_test { name {extra_options {}} } {
 	if {$skip} { return }
     }
     if { $opts(target) != "" } then {
-	if { $opts(not-target) != "" } then {
-	    perror "$testname: mixing target and not-target directives is invalid"
-	    unresolved $testname
-	    return
-	}
 	set skip 1
 	foreach glob $opts(target) {
 	    if {[istarget $glob]} {
@@ -439,24 +441,29 @@ proc run_dump_test { name {extra_options {}} } {
 	}
     }
 
-    if { [string match "*--compress-debug-sections*" $opts(as)] \
-	 && ![is_zlib_supported] } {
-	unsupported $testname
-	return
-    }
-
     if { $opts(source) == "" } {
 	set srcfile ${file}.s
     } else {
 	set srcfile $srcdir/$subdir/$opts(source)
     }
 
-    set exec_output [binutils_assemble_flags ${srcfile} $tempfile $opts(as)]
-    if [string match "" $exec_output] then {
-	send_log "$exec_output\n"
-	verbose "$exec_output"
-	fail $testname
-	return
+    if { $opts(as) == "binary" } {
+	while {[file type $srcfile] eq "link"} {
+	    set newfile [file readlink $srcfile]
+	    if {[string index $newfile 0] ne "/"} {
+		set newfile [file dirname $srcfile]/$newfile
+	    }
+	    set srcfile $newfile
+	}
+	file copy -force ${srcfile} $tempfile
+    } else {
+	set exec_output [binutils_assemble_flags ${srcfile} $tempfile $opts(as)]
+	if [string match "" $exec_output] then {
+	    send_log "$exec_output\n"
+	    verbose "$exec_output"
+	    fail $testname
+	   return
+	}
     }
 
     set progopts1 $opts($program)

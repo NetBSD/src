@@ -15,7 +15,6 @@ SYMBOL TABLE:
 0+7e0 l    d  \.MMIX\.reg_contents	0+ (|\.MMIX\.reg_contents)
 0+ l    df \*ABS\*	0+ .*
 4000000000001064 l       \.text\.away	0+ x
-0+ l    df \*ABS\*	0+ .*
 0+100 g       \.text	0+ x
 4000000000001060 g       \.text\.away	0+ Main
 0+104 g       \.text	0+ x2

@@ -49,7 +49,7 @@ excerpt from an application which reads the symbol table:
 
          if (storage_needed == 0)
            return;
-         
+
          symbol_table = xmalloc (storage_needed);
            ...
          number_of_symbols =

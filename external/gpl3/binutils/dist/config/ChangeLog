@@ -1,8 +1,295 @@
+2016-01-18  Alan Modra  <amodra@gmail.com>
+
+	PR binutils/19481
+	* override.m4 (AC_PROG_LEX): Define.
+
+2015-08-24  Yaakov Selkowitz  <yselkowi@redhat.com>
+
+	* iconv.m4 (AM_ICONV_LINK): Use in-tree libiconv when present.
+
+2015-07-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2015-07-24  Micahel Darling  <darlingm@gmail.com>
+
+	PR other/66259
+	* gettext.m4: Reflects renaming of configure.in to configure.ac
+	* po.m4: Likewise
+	* stdint.m4: Likewise
+	* tcl.m4: Likewise
+
+2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2015-05-13  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sjlj.m4: New file.
+
+	2015-05-04  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* bitfields.m4: Change int to long long, and use bitfields of
+	width 1 instead of 0.
+
+	2015-05-01  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* bitfields.m4: New file.
+
+	2015-04-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-mpx.mk: New file.
+
+	2015-03-25  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR bootstrap/65537
+	* bootstrap-lto-noplugin.mk: New build configuration.
+
+	2014-11-13  Kirill Yukhin  <kirill.yukhin@intel.com>
+
+	* target-posix: New file.
+
+	2014-10-27  Tom Tromey  <tromey@redhat.com>
+
+	* gcc-plugin.m4: New file.
+
+2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2015-05-27  Jason Merrill  <jason@redhat.com>
+
+	PR bootstrap/66304
+	* warnings.m4 (ACX_PROG_CXX_WARNING_OPTS)
+	(ACX_PROG_CXX_WARNINGS_ARE_ERRORS)
+	(ACX_PROG_CXX_WARNING_ALMOST_PEDANTIC): New.
+	(ACX_PROG_CC_WARNING_OPTS, ACX_PROG_CC_WARNING_ALMOST_PEDANTIC)
+	(ACX_PROG_CC_WARNINGS_ARE_ERRORS): Push into C language context.
+
+2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	* mh-alpha-linux: Restored.
+
+2015-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* dfp.m4 (enable_decimal_float): Also set to yes for
+	i?86*-*-elfiamcu target.
+
+2015-04-10  Jakub Jelinek  <jakub@redhat.com>
+	    Iain Sandoe  <iain@codesourcery.com>
+
+	PR target/65351
+	* mh-darwin: Only apply -mdynamic-no-pic for m32 Darwin when the
+	compiler in use supports -mno-dynamic-no-pic.
+	* picflag.m4: Only append -mno-dynamic-no-pic for Darwin when
+	-mdynamic-no-pic is present in CFLAGS.
+
+2015-04-07  Jakub Jelinek  <jakub@redhat.com>
+	    Iain Sandoe  <iain@codesourcery.com>
+
+	PR target/65351
+	* picflag.m4: Append -mno-dynamic-no-pic for Darwin.
+
+2015-04-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* zlib.m4 (AM_ZLIB): Set zlibdir to -L\$(top_builddir)/../zlib
+	and set zlibinc to -I\$(top_srcdir)/../zlib.
+
+2015-04-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* zlib.m4 (AM_ZLIB): Unset zlibdir and zlibinc only for
+	--with-system-zlib.
+
+2015-03-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* zlib.m4 (AM_ZLIB): Replace --with-zlib with --with-system-zlib.
+
+2015-03-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* isl.m4: Sync with GCC tree.
+
+2015-03-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2015-02-18  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* elf.m4 (ACX_ELF_TARGET_IFELSE): nvptx-*-none isn't ELF.
+
+2015-03-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2014-11-17  Bob Dunlop  <bob.dunlop@xyzzy.org.uk>
+
+	* mt-ospace (CFLAGS_FOR_TARGET): Append -g -Os rather than
+	overwriting.
+	(CXXFLAGS_FOR_TARGET): Similarly.
+
+2015-03-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2014-04-25  Marc Glisse  <marc.glisse@inria.fr>
+
+	PR target/43538
+	* mt-gnu: Don't reset CXXFLAGS_FOR_TARGET.
+
+2015-03-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk: Sync with GCC tree.
+	* bootstrap-lto.mk: Likewise.
+
+2015-03-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* cloog.m4: Removed.
+
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* plugins.m4 (AC_PLUGINS): If plugins are enabled, add -ldl to
+	LIBS via AC_SEARCH_LIBS.
+
+2014-08-14  Alan Modra  <amodra@gmail.com>
+
+	* plugins.m4: Test for dlfcn.h or windows.h here to set default
+	for --enable-plugins.  Report error if someone tries to enable
+	plugins on a host we don't support.
+
+2014-05-14  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* mt-nios2-elf: New file.
+
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4: Remove +x file mode.
+
+2013-11-29  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk (POSTSTAGE1_LDFLAGS): Remove -lpthread -ldl.
+	Add -B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/.
+
+2013-11-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk (POSTSTAGE1_LDFLAGS): Add
+	-B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/.
+
+2013-11-19  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk (POSTSTAGE1_LDFLAGS): Add -ldl.
+
+2013-11-18  Jan Hubicka  <jh@suse.cz>
+
+	* bootstrap-lto.mk: Use -ffat-lto-objects.
+
+2013-11-15  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* picflag.m4 (m68k-*-*): Use default PIC flag.
+
+2013-09-29  Iain Sandoe  <iain@codesourcery.com>
+
+	* mh-darwin (BOOT_CFLAGS): Only add -mdynamic-no-pic for m32 hosts.
+	(STAGE1_CFLAGS, STAGE1_LDFLAGS): New.
+	Fix over-length lines and amend comments.
+
+2013-08-30  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk: New.
+
+2013-03-27  Kai Tietz  <ktietz@redhat.com>
+
+	* dfp.m4: Add support for cygwin x64 target.
+	* picflag.m4: Likewise.
+
+2013-02-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk (POSTSTAGE1_LDFLAGS): Add
+	-B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/asan/.
+
+2013-01-23  Shenghou Ma  <minux.ma@gmail.com>
+
+	* isl.m4: don't echo $CFLAGS for ISL_CHECK_VERSION.
+
+2013-01-15  Richard Biener  <rguenther@suse.de>
+
+	PR other/55973
+	* isl.m4 (ISL_INIT_FLAGS): Warn about disabled version check
+	for in-tree build.
+	(ISL_CHECK_VERSION): Do not use AC_CACHE_CHECK.
+	* cloog.m4 (CLOOG_INIT_FLAGS): Disable version check for
+	in-tree build and warn about that.
+	(CLOOG_CHECK_VERSION): Do not use AC_CACHE_CHECK.
+
+2013-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* libstdc++-raw-cxx.m4 (GCC_LIBSTDCXX_RAW_CXX_FLAGS): Remove
+	"-I" from LIBSTDCXX_RAW_CXX_LDFLAGS.
+
+2012-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* libstdc++-raw-cxx.m4 (GCC_LIBSTDCXX_RAW_CXX_FLAGS): Also
+	AC_SUBST LIBSTDCXX_RAW_CXX_LDFLAGS.
+
+2012-12-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR sanitizer/55533
+	* libstdc++-raw-cxx.m4: New file.
+
+2012-11-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk: New file.
+
+2012-11-04  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* dfp.m4 (enable_decimal_float): Enable for i?86*-*-gnu*.
+
+2012-10-15  Pavel Chupin  <pavel.v.chupin@intel.com>
+
+	* gthr.m4: New. Define GCC_AC_THREAD_HEADER.
+
+2012-09-19  Steve Ellcey  <sellcey@mips.com>
+
+	* mt-sde: Change -mcode-xonly to -mcode-readable=pcrel.
+
+2012-09-03  Richard Guenther  <rguenther@suse.de>
+
+	PR bootstrap/54138
+	* config/cloog.m4: Adjust for toplevel reorg.
+	* config/isl.m4: Adjust.
+
+2012-08-26  Art Haas <ahaas@impactweather.com>
+
+	* cloog.m4 (CLOOG_INIT_FLAGS): Use = instead of == in test.
+
+2012-07-04  Tristan Gingold  <gingold@adacore.com>
+
+	* isl.m4 (ISL_CHECK_VERSION): Set to yes if cross-compiling.
+	Fix comments.
+
+2012-07-03  Richard Guenther  <rguenther@suse.de>
+
+	* cloog.m4: Remove debugging print.
+
+2012-07-03  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* isl.m4 (ISL_CHECK_VERSION): Add -lisl to LIBS, not LDFLAGS.
+
+2012-07-02  Richard Guenther  <rguenther@suse.de>
+
+	* isl.m4 (_ISL_CHECK_CT_PROG): Omit main function header/footer.
+	Fix version test.
+
+2012-07-02  Richard Guenther  <rguenther@suse.de>
+	Michael Matz  <matz@suse.de>
+	Tobias Grosser <tobias@grosser.es>
+	Sebastian Pop <sebpop@gmail.com>
+
+	* cloog.m4: Set up to work against ISL only.
+	* isl.m4: New file.
+
 2012-05-29  Joseph Myers  <joseph@codesourcery.com>
 
 	* mt-sde: Fix typos.
 	* stdint.m4: Fix typos.
 	* tcl.m4: Fix typos.
+
+2012-05-03  Olivier Hainque  <hainque@adacore.com>
+
+	* mh-ppc-aix (LDFLAGS): Quote $(CC).
 
 2012-04-03  Tristan Gingold  <gingold@adacore.com>
 
@@ -26,7 +313,7 @@
 
 	* config/mh-interix: Remove as unneeded.
 	* config/picflag.m4 (i[[34567]]86-*-interix3*):
-        Change triplet to i[[34567]]86-*-interix[[3-9]]*.
+	Change triplet to i[[34567]]86-*-interix[[3-9]]*.
 
 2012-01-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 

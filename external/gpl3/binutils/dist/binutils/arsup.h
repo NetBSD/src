@@ -1,6 +1,5 @@
 /* arsup.h - archive support header file
-   Copyright 1992, 1993, 1994, 1996, 2001, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

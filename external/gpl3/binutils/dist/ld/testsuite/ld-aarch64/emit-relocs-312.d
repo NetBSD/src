@@ -10,10 +10,10 @@
 	+1000c: R_AARCH64_LD_PREL_LO19	tempy2
  +10010:	58f89131 	ldr	x17, 1234 <tempy3>
 	+10010: R_AARCH64_LD_PREL_LO19	tempy3
- +10014:	f9400843 	ldr	x3, \[x2.*
+ +10014:	f9400c43 	ldr	x3, \[x2.*
 	+10014: R_AARCH64_LD64_GOT_LO12_NC	jempy
- +10018:	f9400444 	ldr	x4, \[x2.*
+ +10018:	f9400844 	ldr	x4, \[x2.*
 	+10018: R_AARCH64_LD64_GOT_LO12_NC	gempy
- +1001c:	f9400045 	ldr	x5, \[x2.*
+ +1001c:	f9400445 	ldr	x5, \[x2.*
 	+1001c: R_AARCH64_LD64_GOT_LO12_NC	lempy
 

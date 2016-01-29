@@ -2,8 +2,7 @@
    of basic-block info to/from gmon.out; computing and formatting of
    basic-block related statistics.
 
-   Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -283,7 +282,7 @@ print_exec_counts ()
   for (i = 0; i < len; ++i)
     {
       sym = sorted_bbs [i];
-      
+
       if (sym->ncalls > 0 || ! ignore_zeros)
 	{
 	  /* FIXME: This only works if bfd_vma is unsigned long.  */
