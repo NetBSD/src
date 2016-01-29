@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_private.h,v 1.23 2015/06/13 17:28:42 dennis Exp $ */
+/* $NetBSD: nlist_private.h,v 1.24 2016/01/29 18:05:38 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -68,6 +68,8 @@
 #    define	NLIST_ELF64
 #  endif
 #elif defined(__aarch64__)
+#  define	NLIST_ELF64
+#elif defined(__ia64__)
 #  define	NLIST_ELF64
 #else
 #  define	NLIST_AOUT
