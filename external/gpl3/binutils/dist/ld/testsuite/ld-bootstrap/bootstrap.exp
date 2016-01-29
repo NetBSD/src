@@ -1,6 +1,5 @@
 # Expect script for LD Bootstrap Tests
-#   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2004,
-#   2005, 2006, 2007, 2009, 2010  Free Software Foundation, Inc.
+#   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -49,9 +48,13 @@ if [check_plugin_api_available] {
 # order to test -r.  Then link the result into an executable, ld1, to
 # really test -r.  Use ld1 to link a fresh ld, ld2.  Use ld2 to link a
 # new ld, ld3.  ld2 and ld3 should be identical.
+set test_flags {"" "strip" "--static" "--traditional-format"
+		"--no-keep-memory" "--relax"}
+if { [istarget "powerpc-*-*"] } {
+    lappend test_flags "--ppc476-workaround"
+}
 
-foreach flags {"" "strip" "--static" "--traditional-format"
-	       "--no-keep-memory" "--relax"} {
+foreach flags $test_flags {
     set do_strip "no"
     if {"$flags" == "strip"} { 
 	set testname "bootstrap with $flags"
@@ -67,6 +70,10 @@ foreach flags {"" "strip" "--static" "--traditional-format"
     set partial_flags "$flags"
     if { "$flags" == "--static" || "$flags" == "--relax" } {
 	set partial_flags ""
+    }
+
+    if { $partial_flags == "--ppc476-workaround" } {
+	append partial_flags " -T $srcdir/$subdir/ppc476.t"
     }
 
     # This test can only be run if we have the ld build directory,
@@ -113,9 +120,18 @@ foreach flags {"" "strip" "--static" "--traditional-format"
 	}
     }
 
+    # Check if the system's zlib library is used.
+    if {[file exists ../zlib/Makefile ]} then {
+	set extralibs "$extralibs -L../zlib -lz"
+    } else {
+	set extralibs "$extralibs -lz"
+    }
+
     # Plugin support requires linking with libdl.
     if { $plugins == "yes" } {
-	set extralibs "$extralibs -ldl"
+	if { ![istarget "*-*-freebsd*"]} {
+	    set extralibs "$extralibs -ldl"
+	}
     }
 
     # On Irix 5, linking with --static only works if all the files are

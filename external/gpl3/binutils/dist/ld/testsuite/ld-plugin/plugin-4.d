@@ -9,6 +9,7 @@ Hello from testplugin.
 .*: LDPT_REGISTER_CLEANUP_HOOK func@0x.*
 .*: LDPT_ADD_SYMBOLS func@0x.*
 .*: LDPT_GET_INPUT_FILE func@0x.*
+.*: LDPT_GET_VIEW func@0x.*
 .*: LDPT_RELEASE_INPUT_FILE func@0x.*
 .*: LDPT_GET_SYMBOLS func@0x.*
 .*: LDPT_GET_SYMBOLS_V2 func@0x.*

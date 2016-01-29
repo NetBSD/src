@@ -1,3 +1,4 @@
+aarch64.c
 alpha.c
 basic_blocks.c
 basic_blocks.h

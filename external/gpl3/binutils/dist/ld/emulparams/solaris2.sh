@@ -8,3 +8,5 @@
 # File, p.63.
 TEXT_START_SYMBOLS='_START_ = .;'
 OTHER_END_SYMBOLS='_END_ = .;'
+# Beginning with Solaris 11.x and Solaris 12, there's PIE support.
+GENERATE_PIE_SCRIPT=yes

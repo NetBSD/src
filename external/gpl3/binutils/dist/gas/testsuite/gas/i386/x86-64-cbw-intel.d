@@ -12,7 +12,7 @@ Disassembly of section .text:
    3:	48 98                	cdqe   
    5:	66 40 98             	rex cbw 
    8:	40 98                	rex cwde 
-   a:	66 48 98             	data32 cdqe 
+   a:	66 48 98             	data16 cdqe 
 
 0+00d <_cwd>:
    d:	66 99                	cwd    
@@ -20,5 +20,5 @@ Disassembly of section .text:
   10:	48 99                	cqo    
   12:	66 40 99             	rex cwd 
   15:	40 99                	rex cdq 
-  17:	66 48 99             	data32 cqo 
+  17:	66 48 99             	data16 cqo 
 #pass

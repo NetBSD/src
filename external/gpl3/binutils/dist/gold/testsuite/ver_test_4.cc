@@ -1,6 +1,6 @@
 // ver_test_4.cc -- a test case for gold
 
-// Copyright 2007, 2008 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -21,6 +21,16 @@
 // MA 02110-1301, USA.
 
 #include "ver_test.h"
+
+__asm__(".symver t1_2_orig,t1_2@");
+
+extern "C"
+int
+t1_2_orig()
+{
+  TRACE
+  return 12;
+}
 
 __asm__(".symver t1_2_a,t1_2@@VER2");
 

@@ -17,7 +17,8 @@ if test -z "${CREATE_SHLIB}"; then
   INITIAL_READONLY_SECTIONS=".interp       ${RELOCATING-0} : { *(.interp) }"
 fi
 INITIAL_READONLY_SECTIONS="${INITIAL_READONLY_SECTIONS}
-  .reginfo      ${RELOCATING-0} : { *(.reginfo) }
+  .MIPS.abiflags ${RELOCATING-0} : { *(.MIPS.abiflags) }
+  .reginfo       ${RELOCATING-0} : { *(.reginfo) }
 "
 OTHER_TEXT_SECTIONS='*(.mips16.fn.*) *(.mips16.call.*)'
 # Unlike most targets, the MIPS backend puts all dynamic relocations

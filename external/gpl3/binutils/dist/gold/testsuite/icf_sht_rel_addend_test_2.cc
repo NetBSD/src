@@ -1,6 +1,6 @@
 // icf_sht_rel_addend_test_2.cc -- a test case for gold
 
-// Copyright 2010 Free Software Foundation, Inc.
+// Copyright (C) 2010-2015 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.

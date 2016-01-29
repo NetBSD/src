@@ -26,8 +26,8 @@
 2008-12-23  Anatoly Sokolov  <aesok@post.ru>
 
 	* config/tc-avr.c (mcu_types): Add attiny87, attiny327, atmega4hvd,
-	atmega8hvd, atmega16hvb, atmega32hvb, atmega64c1, atmega16m1, 
-	atmega64m1, atmega32u6, atmega128rfa1,  at90pwm81, at90scr100, 
+	atmega8hvd, atmega16hvb, atmega32hvb, atmega64c1, atmega16m1,
+	atmega64m1, atmega32u6, atmega128rfa1,  at90pwm81, at90scr100,
 	m3000f, m3000s and m3001b devices.
 	* doc/c-avr.texi: Likewise.
 
@@ -129,7 +129,7 @@
 	(md_undefined_symbol): Defined
 	(process_label_constant): Added checks for GOT/got and cGOT/cGOT
 	prefixes with constant label and set the appropriate relocation type.
-	* doc/c-cr16.texi (cr16-operand specifiers): Add got/GOT and cgot/cGOT. 
+	* doc/c-cr16.texi (cr16-operand specifiers): Add got/GOT and cgot/cGOT.
 
 2008-11-26  DJ Delorie  <dj@redhat.com>
 
@@ -214,12 +214,12 @@
 	* configure.tgt: Add m32c-*-rtems* and m32r-*-rtems*.
 
 2008-11-04  Sterling Augustine  <sterling@tensilica.com>
-	
+
 	* config/tc-xtensa.c (tinsn_check_arguments): Check for multiple
 	writes to the same register.
-	
+
 2008-11-04  Sterling Augustine  <sterling@tensilica.com>
-	
+
 	* config/tc-xtensa.c (xtensa_j_opcode): New.
 	(xg_instruction_matches_option_term): Handle "FREEREG" option.
 	(xg_build_to_insn): Likewise.  Update renamed tls_reloc reference.
@@ -235,7 +235,7 @@
 	* config/xtensa-relax.c (widen_spec_list): Add rules to relax "j.l".
 	(build_transition): Handle "FREEREG" operand.
 	* config/xtensa-relax.h (enum op_type): Add OP_FREEREG.
-	
+
 2008-10-31  Alan Modra  <amodra@bigpond.net.au>
 
 	* po/id.po: Update.
@@ -544,7 +544,7 @@
 	targets.
 	* doc/c-i386.texi (i386-Directives): New node.  Used to document
 	the .lcomm directive.
-	
+
 2008-08-30  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
 
 	* config/tc-hppa.h: Don't define DWARF2_EH_FRAME_READ_ONLY on Linux
@@ -1869,6 +1869,12 @@
 
 For older changes see ChangeLog-2007
 
+Copyright (C) 2008 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

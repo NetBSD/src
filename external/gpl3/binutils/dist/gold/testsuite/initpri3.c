@@ -1,6 +1,6 @@
 /* initpri3.c -- test ctor odering when using init_array.
 
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.

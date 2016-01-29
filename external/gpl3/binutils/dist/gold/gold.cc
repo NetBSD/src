@@ -1,7 +1,6 @@
 // gold.cc -- main linker functions
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-// Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -502,17 +501,15 @@ queue_middle_tasks(const General_options& options,
   if (parameters->options().gc_sections())
     {
       // Find the start symbol if any.
-      Symbol* start_sym = symtab->lookup(parameters->entry());
-      if (start_sym != NULL)
-	{
-	  bool is_ordinary;
-	  unsigned int shndx = start_sym->shndx(&is_ordinary);
-	  if (is_ordinary)
-	    {
-	      symtab->gc()->worklist().push(
-		Section_id(start_sym->object(), shndx));
-	    }
-	}
+      Symbol* sym = symtab->lookup(parameters->entry());
+      if (sym != NULL)
+	symtab->gc_mark_symbol(sym);
+      sym = symtab->lookup(parameters->options().init());
+      if (sym != NULL && sym->is_defined() && !sym->is_from_dynobj())
+	symtab->gc_mark_symbol(sym);
+      sym = symtab->lookup(parameters->options().fini());
+      if (sym != NULL && sym->is_defined() && !sym->is_from_dynobj())
+	symtab->gc_mark_symbol(sym);
       // Symbols named with -u should not be considered garbage.
       symtab->gc_mark_undef_symbols(layout);
       gold_assert(symtab->gc() != NULL);
@@ -530,11 +527,13 @@ queue_middle_tasks(const General_options& options,
 
   // Call Object::layout for the second time to determine the
   // output_sections for all referenced input sections.  When
-  // --gc-sections or --icf is turned on, Object::layout is
-  // called twice.  It is called the first time when the
-  // symbols are added.
+  // --gc-sections or --icf is turned on, or when certain input
+  // sections have to be mapped to unique segments, Object::layout
+  // is called twice.  It is called the first time when symbols
+  // are added.
   if (parameters->options().gc_sections()
-      || parameters->options().icf_enabled())
+      || parameters->options().icf_enabled()
+      || layout->is_unique_segment_for_sections_specified())
     {
       for (Input_objects::Relobj_iterator p = input_objects->relobj_begin();
 	   p != input_objects->relobj_end();
@@ -552,6 +551,9 @@ queue_middle_tasks(const General_options& options,
       gold_assert(plugins != NULL);
       plugins->layout_deferred_objects();
     }
+
+  // Finalize the .eh_frame section.
+  layout->finalize_eh_frame_section();
 
   /* If plugins have specified a section order, re-arrange input sections
      according to a specified section order.  If --section-ordering-file is
@@ -652,10 +654,6 @@ queue_middle_tasks(const General_options& options,
   // For each dynamic object, record whether we've seen all the
   // dynamic objects that it depends upon.
   input_objects->check_dynamic_dependencies();
-
-  // See if any of the input definitions violate the One Definition Rule.
-  // TODO: if this is too slow, do this as a task, rather than inline.
-  symtab->detect_odr_violations(task, options.output_file_name());
 
   // Do the --no-undefined-version check.
   if (!parameters->options().undefined_version())
@@ -813,6 +811,8 @@ queue_final_tasks(const General_options& options,
   if (!any_postprocessing_sections)
     {
       input_sections_blocker = new Task_token(true);
+      // Write_symbols_task, Relocate_tasks.
+      input_sections_blocker->add_blocker();
       input_sections_blocker->add_blockers(input_objects->number_of_relobjs());
     }
 
@@ -841,6 +841,7 @@ queue_final_tasks(const General_options& options,
 
   // Queue a task to write out the output sections.
   workqueue->queue(new Write_sections_task(layout, of, output_sections_blocker,
+					   input_sections_blocker,
 					   final_blocker));
 
   // Queue a task to write out everything else.
@@ -878,12 +879,28 @@ queue_final_tasks(const General_options& options,
       final_blocker = new_final_blocker;
     }
 
-  // Queue a task to close the output file.  This will be blocked by
-  // FINAL_BLOCKER.
-  workqueue->queue(new Task_function(new Close_task_runner(&options, layout,
-							   of),
-				     final_blocker,
-				     "Task_function Close_task_runner"));
+  // Create tasks for tree-style build ID computation, if necessary.
+  if (strcmp(options.build_id(), "tree") == 0)
+    {
+      // Queue a task to compute the build id.  This will be blocked by
+      // FINAL_BLOCKER, and will in turn schedule the task to close
+      // the output file.
+      workqueue->queue(new Task_function(new Build_id_task_runner(&options,
+								  layout,
+								  of),
+					 final_blocker,
+					 "Task_function Build_id_task_runner"));
+    }
+  else
+    {
+      // Queue a task to close the output file.  This will be blocked by
+      // FINAL_BLOCKER.
+      workqueue->queue(new Task_function(new Close_task_runner(&options, layout,
+							       of, NULL, 0),
+					 final_blocker,
+					 "Task_function Close_task_runner"));
+    }
+
 }
 
 } // End namespace gold.

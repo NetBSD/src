@@ -36,3 +36,26 @@ thumb_fn:
 	.word	tc(gottpoff) + (. - 1b - 8)
 	.word	td(tpoff)
 1:	.word	te(tlsdesc) + (. - 2b + 1)
+
+	@ PR 18481
+	.text
+foo:
+	.word tbase(tpoff)-12
+	.word tbase(tpoff)-8
+	.word tbase(tpoff)-4
+	.word tbase(tpoff)+0
+	.word tbase(tpoff)+4
+	.word tbase(tpoff)+8
+	.word tbase(tpoff)+12
+	.word tbase(tpoff)
+
+	.section        .tdata,"awT",%progbits
+tbase = . + 12
+	.word -12
+	.word -8
+	.word -4
+	.word 0
+	.word 4
+	.word 8
+	.word 12
+	.word 0

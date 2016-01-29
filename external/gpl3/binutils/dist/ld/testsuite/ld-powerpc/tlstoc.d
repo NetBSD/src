@@ -1,7 +1,7 @@
 #source: tlslib.s
 #source: tlstoc.s
 #as: -a64
-#ld: 
+#ld:
 #objdump: -dr
 #target: powerpc64*-*-*
 
@@ -12,7 +12,7 @@ Disassembly of section \.text:
 .* <\.__tls_get_addr>:
 .*	(4e 80 00 20|20 00 80 4e) 	blr
 
-.* <_start>:
+.* <\._start>:
 .*	(3c 6d 00 00|00 00 6d 3c) 	addis   r3,r13,0
 .*	(60 00 00 00|00 00 00 60) 	nop
 .*	(38 63 90 40|40 90 63 38) 	addi    r3,r3,-28608

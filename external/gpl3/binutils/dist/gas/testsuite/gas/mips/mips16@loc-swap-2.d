@@ -32,18 +32,18 @@ Raw dump of debug contents of section .debug_line:
 
  The Directory Table is empty.
 
- The File Name Table:
+ The File Name Table \(offset 0x.*\):
   Entry	Dir	Time	Size	Name
   1	0	0	0	loc-swap-2.s
 
  Line Number Statements:
-  Extended opcode 2: set Address to 0x1
-  Special opcode 11: advance Address by 0 to 0x1 and Line by 6 to 7
-  Special opcode 7: advance Address by 0 to 0x1 and Line by 2 to 9
-  Special opcode 6: advance Address by 0 to 0x1 and Line by 1 to 10
-  Special opcode 64: advance Address by 4 to 0x5 and Line by 3 to 13
-  Special opcode 34: advance Address by 2 to 0x7 and Line by 1 to 14
-  Special opcode 6: advance Address by 0 to 0x7 and Line by 1 to 15
-  Special opcode 35: advance Address by 2 to 0x9 and Line by 2 to 17
-  Advance PC by 1 to 0xa
-  Extended opcode 1: End of Sequence
+  \[0x.*\]  Extended opcode 2: set Address to 0x1
+  \[0x.*\]  Special opcode 11: advance Address by 0 to 0x1 and Line by 6 to 7
+  \[0x.*\]  Special opcode 7: advance Address by 0 to 0x1 and Line by 2 to 9
+  \[0x.*\]  Special opcode 6: advance Address by 0 to 0x1 and Line by 1 to 10
+  \[0x.*\]  Special opcode 64: advance Address by 4 to 0x5 and Line by 3 to 13
+  \[0x.*\]  Special opcode 34: advance Address by 2 to 0x7 and Line by 1 to 14
+  \[0x.*\]  Special opcode 6: advance Address by 0 to 0x7 and Line by 1 to 15
+  \[0x.*\]  Special opcode 35: advance Address by 2 to 0x9 and Line by 2 to 17
+  \[0x.*\]  Advance PC by 1 to 0xa
+  \[0x.*\]  Extended opcode 1: End of Sequence

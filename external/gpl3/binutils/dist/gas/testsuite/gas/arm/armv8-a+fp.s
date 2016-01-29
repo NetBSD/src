@@ -36,20 +36,20 @@
 	vcvtn.s32.f64	s1, d16
 	vcvtp.u32.f64	s30, d15
 	vcvtm.u32.f64	s31, d31
-	vrintz.f32.f32  s0, s0
-        vrintx.f32.f32  s1, s1
-        vrintreq.f32.f32 s30, s30
-	vrinta.f32.f32	s0, s0
-	vrintn.f32.f32	s1, s1
-	vrintp.f32.f32	s30, s30
-	vrintm.f32.f32	s31, s31
-	vrintz.f64.f64  d0, d0
-        vrintx.f64.f64  d1, d1
-        vrintreq.f64.f64 d30, d30
-	vrinta.f64.f64	d0, d0
-	vrintn.f64.f64	d1, d1
-	vrintp.f64.f64	d30, d30
-	vrintm.f64.f64	d31, d31
+	vrintz.f32	s0, s0
+        vrintx.f32	s1, s1
+        vrintreq.f32	s30, s30
+	vrinta.f32	s0, s0
+	vrintn.f32	s1, s1
+	vrintp.f32	s30, s30
+	vrintm.f32	s31, s31
+	vrintz.f64	d0, d0
+        vrintx.f64	d1, d1
+        vrintreq.f64	d30, d30
+	vrinta.f64	d0, d0
+	vrintn.f64	d1, d1
+	vrintp.f64	d30, d30
+	vrintm.f64	d31, d31
 	vcvtt.f16.f64	s0, d0
 	vcvtb.f16.f64	s1, d16
 	vcvtt.f16.f64	s30, d15
@@ -92,20 +92,20 @@
 	vcvtn.s32.f64	s1, d16
 	vcvtp.u32.f64	s30, d15
 	vcvtm.u32.f64	s31, d31
-	vrintz.f32.f32  s0, s0
-        vrintx.f32.f32  s1, s1
-        vrintr.f32.f32 s30, s30
-	vrinta.f32.f32	s0, s0
-	vrintn.f32.f32	s1, s1
-	vrintp.f32.f32	s30, s30
-	vrintm.f32.f32	s31, s31
-	vrintz.f64.f64  d0, d0
-        vrintx.f64.f64  d1, d1
-        vrintr.f64.f64 d30, d30
-	vrinta.f64.f64	d0, d0
-	vrintn.f64.f64	d1, d1
-	vrintp.f64.f64	d30, d30
-	vrintm.f64.f64	d31, d31
+	vrintz.f32	s0, s0
+        vrintx.f32	s1, s1
+        vrintr.f32	s30, s30
+	vrinta.f32	s0, s0
+	vrintn.f32	s1, s1
+	vrintp.f32	s30, s30
+	vrintm.f32	s31, s31
+	vrintz.f64	d0, d0
+        vrintx.f64	d1, d1
+        vrintr.f64	d30, d30
+	vrinta.f64	d0, d0
+	vrintn.f64	d1, d1
+	vrintp.f64	d30, d30
+	vrintm.f64	d31, d31
 	vcvtt.f16.f64	s0, d0
 	vcvtb.f16.f64	s1, d16
 	vcvtt.f16.f64	s30, d15

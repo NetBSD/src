@@ -1,6 +1,5 @@
 /* Demangler for GNU C++ - main program
-   Copyright 1989, 1991, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
    Written by James Clark (jjc@jclark.uucp)
    Rewritten by Fred Fish (fnf@cygnus.com) for ARM and Lucid demangling
    Modified by Satish Pai (pai@apollo.hp.com) for HP demangling
@@ -177,6 +176,7 @@ main (int argc, char **argv)
 
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
+  bfd_set_error_program_name (program_name);
 
   expandargv (&argc, &argv);
 
@@ -240,6 +240,7 @@ main (int argc, char **argv)
     case edg_demangling:
     case gnat_demangling:
     case gnu_v3_demangling:
+    case dlang_demangling:
     case auto_demangling:
       valid_symbols = standard_symbol_characters ();
       break;

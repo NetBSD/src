@@ -1,6 +1,6 @@
 // ver_matching_def.cc - test matching rules in version_script.map
 
-// Copyright 2007, 2008 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.

@@ -71,4 +71,10 @@ Disassembly of section \.text:
   f4:	(7d 4b 60 94|94 60 4b 7d) 	addg6s  r10,r11,r12
   f8:	(60 21 00 00|00 00 21 60) 	ori     r1,r1,0
   fc:	(60 21 00 00|00 00 21 60) 	ori     r1,r1,0
+.*:	(7c 00 03 e4|e4 03 00 7c) 	slbia   
+.*:	(7c 00 03 e4|e4 03 00 7c) 	slbia   
+.*:	(7c e0 03 e4|e4 03 e0 7c) 	slbia   7
+.*:	(7c 00 52 64|64 52 00 7c) 	tlbie   r10
+.*:	(7c 00 52 64|64 52 00 7c) 	tlbie   r10
+.*:	(7c 20 52 64|64 52 20 7c) 	tlbie   r10,1
 #pass

@@ -1,5 +1,5 @@
 /* Definitions for decoding the moxie opcode table.
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Anthony Green (green@moxielogic.com).
 
    This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,8 @@
     Some use B and an indirect A                    (MOXIE_F1_AiB)
     Some use A and an indirect B                    (MOXIE_F1_ABi)
     Some consume a 4 byte immediate value and use X (MOXIE_F1_4A)
-    Some use B and an indirect A plus 4 bytes       (MOXIE_F1_AiB4)
-    Some use A and an indirect B plus 4 bytes       (MOXIE_F1_ABi4)
+    Some use B and an indirect A plus 2 byte offset (MOXIE_F1_AiB2)
+    Some use A and an indirect B plus 2 byte offset (MOXIE_F1_ABi2)
 
   Form 2 instructions also come in different flavors:
 
@@ -50,8 +50,8 @@
 #define MOXIE_F1_AiB  0x106
 #define MOXIE_F1_ABi  0x107
 #define MOXIE_F1_4A   0x108
-#define MOXIE_F1_AiB4 0x109
-#define MOXIE_F1_ABi4 0x10a
+#define MOXIE_F1_AiB2 0x109
+#define MOXIE_F1_ABi2 0x10a
 #define MOXIE_F1_M    0x10b
 
 #define MOXIE_F2_NARG 0x200
@@ -60,6 +60,8 @@
 #define MOXIE_F3_NARG  0x300
 #define MOXIE_F3_PCREL 0x301
 
+#define MOXIE_BAD     0x400
+
 typedef struct moxie_opc_info_t
 {
   short         opcode;
@@ -67,6 +69,6 @@ typedef struct moxie_opc_info_t
   const char *  name;
 } moxie_opc_info_t;
 
-extern const moxie_opc_info_t moxie_form1_opc_info[64];
+extern const moxie_opc_info_t moxie_form1_opc_info[128];
 extern const moxie_opc_info_t moxie_form2_opc_info[4];
 extern const moxie_opc_info_t moxie_form3_opc_info[16];

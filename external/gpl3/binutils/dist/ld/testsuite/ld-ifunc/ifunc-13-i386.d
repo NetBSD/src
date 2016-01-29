@@ -5,10 +5,6 @@
 #readelf: -r --wide
 #target: x86_64-*-* i?86-*-*
 
-Relocation section '.rel.got' at offset 0x[0-9a-f]+ contains 1 entries:
-[ ]+Offset[ ]+Info[ ]+Type[ ]+.*
-[0-9a-f]+[ ]+[0-9a-f]+[ ]+R_386_RELATIVE[ ]+
-
 Relocation section '.rel.ifunc' at offset 0x[0-9a-f]+ contains 1 entries:
 [ ]+Offset[ ]+Info[ ]+Type[ ]+.*
 [0-9a-f]+[ ]+[0-9a-f]+[ ]+R_386_32[ ]+ifunc\(\)[ ]+ifunc

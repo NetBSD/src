@@ -4,16 +4,16 @@
 #source: common.s
 #readelf: -Ss
 
-There are 6 section headers, starting at offset 0x7c:
+There are 6 section headers, starting at offset .*:
 
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
   \[ 0\]                   NULL            00000000 000000 000000 00      0   0  0
   \[ 1\] \.far              NOBITS          00000080 000080 000008 00  WA  0   0  4
   \[ 2\] \.bss              NOBITS          00000100 000080 000004 00  WA  0   0  4
-  \[ 3\] \.shstrtab         STRTAB          00000000 000054 000025 00      0   0  1
-  \[ 4\] \.symtab           SYMTAB          00000000 00016c 000050 10      5   3  4
-  \[ 5\] \.strtab           STRTAB          00000000 0001bc 000005 00      0   0  1
+  \[ 3\] \.shstrtab         STRTAB          00000000 [0-9a-f]+ 000025 00      0   0  1
+  \[ 4\] \.symtab           SYMTAB          00000000 [0-9a-f]+ 000050 10      5   3  4
+  \[ 5\] \.strtab           STRTAB          00000000 [0-9a-f]+ 000005 00      0   0  1
 Key to Flags:
   W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
   I \(info\), L \(link order\), G \(group\), T \(TLS\), E \(exclude\), x \(unknown\)

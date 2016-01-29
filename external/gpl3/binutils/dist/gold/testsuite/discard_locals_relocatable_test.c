@@ -1,6 +1,6 @@
 /* discard_locals_relocatable_test.c -- test --discard-locals/--discard-all -r
 
-   Copyright 2010 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Viktor Kutuzov <vkutuzov@accesssoftek.com>.
 
    This file is part of gold.
@@ -30,6 +30,15 @@
    Use GCC -Wa,-L option to preserve this local symbol
    in the output object file. */
 asm (".Lshould_be_discarded:");
+
+#ifdef __powerpc__
+/* Test wants to keep one local.  Satisfy it.  */
+#ifdef __powerpc64__
+asm (".reloc 0,R_PPC64_NONE,.LC0");
+#else
+asm (".reloc 0,R_PPC_NONE,.LC0");
+#endif
+#endif
 
 extern void print_func (const char* s);
 

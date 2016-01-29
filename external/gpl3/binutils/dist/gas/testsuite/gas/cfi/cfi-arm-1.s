@@ -18,6 +18,12 @@ foo:
 	sub	fp, ip, #20
 	.cfi_def_cfa fp, 16
 	nop
+
+	# Test fix for PR 16694 - the use of VFP registers in .cfi_offset directives.
+	.cfi_offset r1,  -16
+	.cfi_offset s1,  -20
+	.cfi_offset d11, -48
+	
 	ldmea	fp, {fp, sp, pc}
 	.cfi_endproc
 	.size   foo, .-foo

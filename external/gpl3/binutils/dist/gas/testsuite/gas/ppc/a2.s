@@ -91,13 +91,13 @@ start:
 	dcblc	1,10,11
 	dcbst	10,11
 	dcbstep	10,11
-	dcbt	10,11,0
-	dcbt	10,11,1
+	dcbt	0,10,11
+	dcbt	1,10,11
 	dcbtep	10,11,12
 	dcbtls	0,10,11
 	dcbtls	1,10,11
-	dcbtst	10,11,0
-	dcbtst	10,11,1
+	dcbtst	0,10,11
+	dcbtst	1,10,11
 	dcbtstep 10,11,12
 	dcbtstls 0,10,11
 	dcbtstls 1,10,11
@@ -322,7 +322,7 @@ start:
 	mcrxr	0
 	mcrxr	3
 	mfcr	3
-	mfcr	3,0
+	mfcr	3,0x02
 	mfcr	3,0x01
 	mfcr	3,0x80
 	mfdcr.	10,234

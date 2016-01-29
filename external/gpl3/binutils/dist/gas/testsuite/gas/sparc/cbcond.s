@@ -56,4 +56,20 @@
 	cwbvc	%l1, 26, 1f
 	cxbvc	%l2, %l3, 1f
 	cxbvc	%l2, 27, 1f
+	cwbz	%l3, %l4, 1f
+	cwbz	%l3, 28, 1f
+	cxbz	%l4, %l5, 1f
+	cxbz	%l4, 29, 1f
+	cwblu	%l5, %l6, 1f
+	cwblu	%l5, 28, 1f
+	cxblu	%l6, %l7, 1f
+	cxblu	%l6, 29, 1f
+	cwbnz	%l7, %o0, 1f
+	cwbnz	%l7, 30, 1f
+	cxbnz	%o0, %o1, 1f
+	cxbnz	%o0, 31, 1f
+	cwbgeu	%o1, %o2, 1f
+	cwbgeu	%o1, 1, 1f
+	cxbgeu	%o2, %o3, 1f
+	cxbgeu	%o2, 2, 1f
 1:	nop

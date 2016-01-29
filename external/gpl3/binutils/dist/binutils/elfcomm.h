@@ -1,6 +1,5 @@
 /* elfcomm.h -- include file of common code for ELF format file.
-   Copyright 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -30,7 +29,7 @@
 void error (const char *, ...) ATTRIBUTE_PRINTF_1;
 void warn (const char *, ...) ATTRIBUTE_PRINTF_1;
 
-#if __STDC_VERSION__ >= 199901L || (defined(__GNUC__) && __GNUC__ >= 2)
+#if defined HAVE_LONG_LONG && SIZEOF_LONG_LONG > SIZEOF_LONG
 /* We can't use any bfd types here since readelf may define BFD64 and
    objdump may not.  */
 #define HOST_WIDEST_INT	long long
@@ -78,7 +77,7 @@ struct archive_info
 };
 
 /* Return the path name for a proxy entry in a thin archive.  */
-extern char *adjust_relative_path (const char *, const char *, int);
+extern char *adjust_relative_path (const char *, const char *, unsigned long);
 
 /* Read the symbol table and long-name table from an archive.  */
 extern int setup_archive (struct archive_info *, const char *, FILE *,
