@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.20 2016/01/03 06:23:25 macallan Exp $
+#	$NetBSD: CI20,v 1.21 2016/01/29 01:54:13 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.20 $"
+#ident 		"CI20-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -138,7 +138,7 @@ config		netbsd	root on sd0a type ffs
 mainbus0 	at root
 #options 	MULTIPROCESSOR
 
-cpu0 		at mainbus?
+cpu* 		at mainbus?
 #wdog0		at mainbus?
 apbus0		at mainbus?
 
