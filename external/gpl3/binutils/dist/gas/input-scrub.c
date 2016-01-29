@@ -1,7 +1,5 @@
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
-   Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   2000, 2001, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -139,7 +137,7 @@ static struct input_save *next_saved_file;
 static struct input_save *
 input_scrub_push (char *saved_position)
 {
-  register struct input_save *saved;
+  struct input_save *saved;
 
   saved = (struct input_save *) xmalloc (sizeof *saved);
 
@@ -166,7 +164,7 @@ input_scrub_push (char *saved_position)
   sb_index = -1;
 
   buffer_start = (char *) xmalloc ((BEFORE_SIZE + buffer_length
-                                    + buffer_length + AFTER_SIZE));
+                                    + buffer_length + AFTER_SIZE + 1));
   memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
 
   return saved;
@@ -211,7 +209,7 @@ input_scrub_begin (void)
   buffer_length = input_file_buffer_size ();
 
   buffer_start = (char *) xmalloc ((BEFORE_SIZE + buffer_length
-                                    + buffer_length + AFTER_SIZE));
+                                    + buffer_length + AFTER_SIZE + 1));
   memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
 
   /* Line number things.  */
@@ -313,7 +311,7 @@ input_scrub_close (void)
 char *
 input_scrub_next_buffer (char **bufp)
 {
-  register char *limit;		/*->just after last char of buffer.  */
+  char *limit;		/*->just after last char of buffer.  */
 
   if (sb_index != (size_t) -1)
     {
@@ -331,6 +329,7 @@ input_scrub_next_buffer (char **bufp)
 	    }
 	  --macro_nest;
 	  partial_where = NULL;
+	  partial_size = 0;
 	  if (next_saved_file != NULL)
 	    *bufp = input_scrub_pop (next_saved_file);
 	  return partial_where;
@@ -343,79 +342,68 @@ input_scrub_next_buffer (char **bufp)
       return partial_where;
     }
 
-  *bufp = buffer_start + BEFORE_SIZE;
-
   if (partial_size)
     {
       memmove (buffer_start + BEFORE_SIZE, partial_where,
 	       (unsigned int) partial_size);
       memcpy (buffer_start + BEFORE_SIZE, save_source, AFTER_SIZE);
     }
-  limit = input_file_give_next_buffer (buffer_start
-				       + BEFORE_SIZE
-				       + partial_size);
-  if (limit)
+
+  while (1)
     {
-      register char *p;		/* Find last newline.  */
-      /* Terminate the buffer to avoid confusing TC_EOL_IN_INSN.  */
-      *limit = '\0';
-      for (p = limit - 1; *p != '\n' || TC_EOL_IN_INSN (p); --p)
-	;
-      ++p;
+      char *p;
 
-      while (p <= buffer_start + BEFORE_SIZE)
+      *bufp = buffer_start + BEFORE_SIZE;
+      limit = input_file_give_next_buffer (buffer_start
+					   + BEFORE_SIZE
+					   + partial_size);
+      if (!limit)
 	{
-	  int limoff;
+	  if (partial_size == 0)
+	    break;
 
-	  limoff = limit - buffer_start;
-	  buffer_length += input_file_buffer_size ();
-	  buffer_start = (char *) xrealloc (buffer_start,
-                                            (BEFORE_SIZE
-                                             + 2 * buffer_length
-                                             + AFTER_SIZE));
-	  *bufp = buffer_start + BEFORE_SIZE;
-	  limit = input_file_give_next_buffer (buffer_start + limoff);
-
-	  if (limit == NULL)
-	    {
-	      as_warn (_("partial line at end of file ignored"));
-	      partial_where = NULL;
-	      if (next_saved_file)
-		*bufp = input_scrub_pop (next_saved_file);
-	      return NULL;
-	    }
-
+	  as_warn (_("end of file not at end of a line; newline inserted"));
+	  p = buffer_start + BEFORE_SIZE + partial_size;
+	  *p++ = '\n';
+	  limit = p;
+	}
+      else
+	{
 	  /* Terminate the buffer to avoid confusing TC_EOL_IN_INSN.  */
 	  *limit = '\0';
+
+	  /* Find last newline.  */
 	  for (p = limit - 1; *p != '\n' || TC_EOL_IN_INSN (p); --p)
 	    ;
 	  ++p;
 	}
 
-      partial_where = p;
-      partial_size = limit - p;
-      memcpy (save_source, partial_where, (int) AFTER_SIZE);
-      memcpy (partial_where, AFTER_STRING, (int) AFTER_SIZE);
-    }
-  else
-    {
-      partial_where = 0;
-      if (partial_size > 0)
+      if (p != buffer_start + BEFORE_SIZE)
 	{
-	  as_warn (_("partial line at end of file ignored"));
+	  partial_where = p;
+	  partial_size = limit - p;
+	  memcpy (save_source, partial_where, (int) AFTER_SIZE);
+	  memcpy (partial_where, AFTER_STRING, (int) AFTER_SIZE);
+	  return partial_where;
 	}
 
-      /* Tell the listing we've finished the file.  */
-      LISTING_EOF ();
-
-      /* If we should pop to another file at EOF, do it.  */
-      if (next_saved_file)
-	{
-	  *bufp = input_scrub_pop (next_saved_file);	/* Pop state */
-	  /* partial_where is now correct to return, since we popped it.  */
-	}
+      partial_size = limit - (buffer_start + BEFORE_SIZE);
+      buffer_length += input_file_buffer_size ();
+      buffer_start = (char *) xrealloc (buffer_start,
+					(BEFORE_SIZE
+					 + 2 * buffer_length
+					 + AFTER_SIZE + 1));
     }
-  return (partial_where);
+
+  /* Tell the listing we've finished the file.  */
+  LISTING_EOF ();
+
+  /* If we should pop to another file at EOF, do it.  */
+  partial_where = NULL;
+  if (next_saved_file)
+    *bufp = input_scrub_pop (next_saved_file);
+
+  return partial_where;
 }
 
 /* The remaining part of this file deals with line numbers, error

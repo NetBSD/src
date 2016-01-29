@@ -1,7 +1,5 @@
 /* tc-sh.c -- Assemble code for the Renesas / SuperH SH
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -283,15 +281,15 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #if BFD_HOST_64BIT_LONG
 /* The "reach" type is long, so we can only do this for a 64-bit-long
    host.  */
-#define SH64PCREL32_M (((long) -1 << 30) * 2 - 4)
+#define SH64PCREL32_M ((-((long) 1 << 30)) * 2 - 4)
 #define SH64PCREL48_F ((((long) 1 << 47) - 1) - 4)
-#define SH64PCREL48_M (((long) -1 << 47) - 4)
+#define SH64PCREL48_M ((-((long) 1 << 47)) - 4)
 #define SH64PCREL48_LENGTH (3 * 4)
 #else
 /* If the host does not have 64-bit longs, just make this state identical
    in reach to the 32-bit state.  Note that we have a slightly incorrect
    reach, but the correct one above will overflow a 32-bit number.  */
-#define SH64PCREL32_M (((long) -1 << 30) * 2)
+#define SH64PCREL32_M ((-((long) 1 << 30)) * 2)
 #define SH64PCREL48_F SH64PCREL32_F
 #define SH64PCREL48_M SH64PCREL32_M
 #define SH64PCREL48_LENGTH (3 * 4)
@@ -315,14 +313,14 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #if BFD_HOST_64BIT_LONG
 /* The "reach" type is long, so we can only do this for a 64-bit-long
    host.  */
-#define MOVI_32_M (((long) -1 << 30) * 2 - 4)
+#define MOVI_32_M ((-((long) 1 << 30)) * 2 - 4)
 #define MOVI_48_F ((((long) 1 << 47) - 1) - 4)
-#define MOVI_48_M (((long) -1 << 47) - 4)
+#define MOVI_48_M ((-((long) 1 << 47)) - 4)
 #else
 /* If the host does not have 64-bit longs, just make this state identical
    in reach to the 32-bit state.  Note that we have a slightly incorrect
    reach, but the correct one above will overflow a 32-bit number.  */
-#define MOVI_32_M (((long) -1 << 30) * 2)
+#define MOVI_32_M ((-((long) 1 << 30)) * 2)
 #define MOVI_48_F MOVI_32_F
 #define MOVI_48_M MOVI_32_M
 #endif /* BFD_HOST_64BIT_LONG */
@@ -767,9 +765,10 @@ sh_check_fixup (expressionS *main_exp, bfd_reloc_code_real_type *r_type_p)
 /* Add expression EXP of SIZE bytes to offset OFF of fragment FRAG.  */
 
 void
-sh_cons_fix_new (fragS *frag, int off, int size, expressionS *exp)
+sh_cons_fix_new (fragS *frag, int off, int size, expressionS *exp,
+		 bfd_reloc_code_real_type r_type)
 {
-  bfd_reloc_code_real_type r_type = BFD_RELOC_UNUSED;
+  r_type = BFD_RELOC_UNUSED;
 
   if (sh_check_fixup (exp, &r_type))
     as_bad (_("Invalid PIC expression."));
@@ -812,7 +811,7 @@ sh_cons_fix_new (fragS *frag, int off, int size, expressionS *exp)
 /* Clobbers input_line_pointer, checks end-of-line.  */
 /* NBYTES 1=.byte, 2=.word, 4=.long */
 static void
-sh_elf_cons (register int nbytes)
+sh_elf_cons (int nbytes)
 {
   expressionS exp;
 
@@ -931,10 +930,11 @@ sh_optimize_expr (expressionS *l, operatorT op, expressionS *r)
 					 symbol_get_frag (r->X_add_symbol),
 					 &frag_off))
     {
-      l->X_add_number -= r->X_add_number;
-      l->X_add_number -= frag_off / OCTETS_PER_BYTE;
-      l->X_add_number += (S_GET_VALUE (l->X_add_symbol)
-			  - S_GET_VALUE (r->X_add_symbol));
+      offsetT symval_diff = S_GET_VALUE (l->X_add_symbol)
+			    - S_GET_VALUE (r->X_add_symbol);
+      subtract_from_result (l, r->X_add_number, r->X_extrabit);
+      subtract_from_result (l, frag_off / OCTETS_PER_BYTE, 0);
+      add_to_result (l, symval_diff, symval_diff < 0);
       l->X_op = O_constant;
       l->X_add_symbol = 0;
       return 1;
@@ -1363,7 +1363,7 @@ parse_reg (char *src, int *mode, int *reg)
     }
   else
     prefix = 0;
-  
+
   consumed = parse_reg_without_prefix (src, mode, reg);
 
   if (consumed == 0)
@@ -3245,10 +3245,10 @@ md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
 	  for (; bfd_arch; bfd_arch=bfd_arch->next)
 	    {
 	      int len = strlen(bfd_arch->printable_name);
-	      
+
 	      if (bfd_arch->mach == bfd_mach_sh5)
 		continue;
-	      
+
 	      if (strncasecmp (bfd_arch->printable_name, arg, len) != 0)
 		continue;
 
@@ -3262,7 +3262,7 @@ md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
 		continue;
 	      break;
 	    }
-	  
+
 	  if (!preset_target_arch)
 	    as_bad (_("Invalid argument to --isa option: %s"), arg);
 	}
@@ -3692,7 +3692,7 @@ md_section_align (segT seg ATTRIBUTE_UNUSED, valueT size)
   return size;
 #else /* ! OBJ_ELF */
   return ((size + (1 << bfd_get_section_alignment (stdoutput, seg)) - 1)
-	  & (-1 << bfd_get_section_alignment (stdoutput, seg)));
+	  & -(1 << bfd_get_section_alignment (stdoutput, seg)));
 #endif /* ! OBJ_ELF */
 }
 
@@ -4435,7 +4435,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
   if (SWITCH_TABLE (fixp))
     {
       *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
-      rel->addend = 0;
+      rel->addend = rel->address - S_GET_VALUE(fixp->fx_subsy);
       if (r_type == BFD_RELOC_16)
 	r_type = BFD_RELOC_SH_SWITCH16;
       else if (r_type == BFD_RELOC_8)

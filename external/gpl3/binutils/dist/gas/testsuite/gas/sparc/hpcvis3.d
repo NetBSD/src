@@ -7,11 +7,11 @@
 Disassembly of section .text:
 
 0+ <.text>:
-   0:	83 47 00 00 	rd  %cps, %g1
-   4:	b9 80 a0 03 	wr  %g2, 3, %cps
+   0:	01 00 00 00 	nop 
+   4:	01 00 00 00 	nop 
    8:	c7 08 c0 00 	ldx  \[ %g3 \], %efsr
-   c:	30 50 00 01 	chkpt  0x10
-  10:	bd f0 00 00 	commit 
+   c:	01 00 00 00 	nop 
+  10:	01 00 00 00 	nop 
   14:	87 a0 4a 22 	fnadds  %f1, %f2, %f3
   18:	8d a0 8a 44 	fnaddd  %f2, %f4, %f6
   1c:	8f a0 cb 25 	fnmuls  %f3, %f5, %f7
@@ -41,9 +41,9 @@ Disassembly of section .text:
   7c:	95 f9 11 c6 	fnumaddd  %f4, %f6, %f8, %f10
   80:	8f b1 42 26 	addxc  %g5, %g6, %g7
   84:	97 b2 42 6a 	addxccc  %o1, %o2, %o3
-  88:	8d b0 02 a0 	random  %f6
+  88:	01 00 00 00 	nop 
   8c:	9f b3 42 ce 	umulxhi  %o5, %sp, %o7
-  90:	b5 b0 02 f9 	lzd  %i1, %i2
+  90:	b5 b0 02 f9 	lzcnt  %i1, %i2
   94:	81 b0 03 7b 	cmask8  %i3
   98:	81 b0 03 bc 	cmask16  %i4
   9c:	81 b0 03 fd 	cmask32  %i5
@@ -75,10 +75,10 @@ Disassembly of section .text:
  104:	af b0 23 25 	movwtos  %g5, %f23
  108:	97 b2 62 aa 	xmulx  %o1, %o2, %o3
  10c:	9d b3 22 cd 	xmulxhi  %o4, %o5, %sp
- 110:	83 b4 24 12 	fucmple8  %f16, %f18, %g1
- 114:	85 b4 a4 54 	fucmpne8  %f18, %f20, %g2
- 118:	87 b5 25 16 	fucmpgt8  %f20, %f22, %g3
- 11c:	89 b5 a5 58 	fucmpeq8  %f22, %f24, %g4
+ 110:	83 b4 24 12 	fpcmpule8  %f16, %f18, %g1
+ 114:	85 b4 a4 54 	fpcmpune8  %f18, %f20, %g2
+ 118:	87 b5 25 16 	fpcmpugt8  %f20, %f22, %g3
+ 11c:	89 b5 a5 58 	fpcmpueq8  %f22, %f24, %g4
  120:	81 b0 6a 23 	flcmps  %fcc0, %f1, %f3
  124:	83 b0 ea 25 	flcmps  %fcc1, %f3, %f5
  128:	85 b1 6a 27 	flcmps  %fcc2, %f5, %f7
@@ -87,3 +87,4 @@ Disassembly of section .text:
  134:	83 b3 aa 50 	flcmpd  %fcc1, %f14, %f16
  138:	85 b4 2a 52 	flcmpd  %fcc2, %f16, %f18
  13c:	87 b4 aa 54 	flcmpd  %fcc3, %f18, %f20
+ 140:	b5 b0 02 f9 	lzcnt  %i1, %i2

@@ -22,7 +22,6 @@ File Attributes
   Tag_ABI_align_needed: 8-byte
   Tag_ABI_align_preserved: 8-byte, except leaf SP
   Tag_ABI_enum_size: small
-  Tag_ABI_HardFP_use: SP and DP
   Tag_ABI_VFP_args: VFP registers
   Tag_CPU_unaligned_access: v6
   Tag_FP_HP_extension: Allowed

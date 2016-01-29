@@ -1,6 +1,6 @@
 # Expect script for symbol export classes.
 #
-# Copyright 2012 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -44,7 +44,7 @@ set testname "Symbol export class test"
 run_ld_link_tests [list \
     [list \
 	"$testname (auxiliary shared object)" \
-	"-shared -version-script export-class-lib.ver" \
+	"-shared -version-script export-class-lib.ver" "" \
 	"" \
 	{ export-class-lib.s } \
 	{} \
@@ -58,7 +58,7 @@ run_ld_link_tests [list \
 run_ld_link_tests [list \
     [list \
 	"$testname (initial static object)" \
-	"-r" \
+	"-r" "" \
 	"" \
 	{ export-class-ref.s } \
 	{} \
@@ -75,7 +75,7 @@ run_ld_link_tests [list \
 run_ld_link_tests [list \
     [list \
 	"$testname (final shared object)" \
-	"-shared -Tdata=0x12340000 tmpdir/export-class-ref-r.o tmpdir/export-class-lib.so" \
+	"-shared -Tdata=0x12340000 tmpdir/export-class-ref-r.o tmpdir/export-class-lib.so" "" \
 	"" \
 	{ export-class-dep.s export-class-def.s } \
 	{ \

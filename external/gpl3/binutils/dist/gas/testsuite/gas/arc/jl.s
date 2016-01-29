@@ -3,7 +3,6 @@
 text_label:
 
 	jl	text_label
-	jl.f	text_label
-	jlnz.nd	[r1]
+	jlnz.d	[r1]
+	nop_s
 	jlal	text_label
-	jlal.f	text_label

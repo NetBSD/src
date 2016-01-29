@@ -4712,7 +4712,7 @@ Fri May 27 12:25:33 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 
 	* emultempl/generic.em: Find emultempl/stringify.sed in ${srcdir}.
 
-	* testsuite/ld-cdtest/cdtest-bar.cc: Renamed from cdtest-func.cc. 
+	* testsuite/ld-cdtest/cdtest-bar.cc: Renamed from cdtest-func.cc.
 	* Makefile.in: Noted change.
 
 	* scripttempl/a29k.sc: Don't include /lab3/u3/..../segments.o; I
@@ -7593,6 +7593,12 @@ Fri Oct  4 21:51:58 1991  John Gilmore  (gnu at cygnus.com)
 	few BFD types & enums.
 
 
+Copyright (C) 1991-1997 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

@@ -1,6 +1,5 @@
 /* tc-ia64.h -- Header file for tc-ia64.c.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008,
-   2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -107,7 +106,8 @@ extern void ia64_cons_align (int);
 extern void ia64_flush_insns (void);
 extern int ia64_fix_adjustable (struct fix *);
 extern int ia64_force_relocation (struct fix *);
-extern void ia64_cons_fix_new (fragS *, int, int, expressionS *);
+extern void ia64_cons_fix_new (fragS *, int, int, expressionS *,
+			       bfd_reloc_code_real_type);
 extern void ia64_validate_fix (struct fix *);
 extern char * ia64_canonicalize_symbol_name (char *);
 extern bfd_vma ia64_elf_section_letter (int, char **);
@@ -149,7 +149,7 @@ extern void ia64_convert_frag (fragS *);
 #define md_elf_section_flags		ia64_elf_section_flags
 #define TC_FIX_TYPE			struct ia64_fix
 #define TC_INIT_FIX_DATA(f)		{ f->tc_fix_data.opnd = 0; }
-#define TC_CONS_FIX_NEW(f,o,l,e)	ia64_cons_fix_new (f, o, l, e)
+#define TC_CONS_FIX_NEW(f,o,l,e,r)	ia64_cons_fix_new (f, o, l, e, r)
 #define TC_VALIDATE_FIX(fix,seg,skip)	ia64_validate_fix (fix)
 #define MD_PCREL_FROM_SECTION(fix,sec)	ia64_pcrel_from_section (fix, sec)
 #define md_section_align(seg,size)	(size)

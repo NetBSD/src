@@ -9,8 +9,8 @@
 Disassembly of section .text:
 
 [a-f0-9]+ <_start>:
-[ 	]*[a-f0-9]+:	c7 c0 fc ff ff ff    	mov    \$0xfffffffc,%eax
-[ 	]*[a-f0-9]+:	8d 80 fc ff ff ff    	lea    -0x4\(%rax\),%eax
+[ 	]*[a-f0-9]+:	40 c7 c0 fc ff ff ff 	rex mov \$0xfffffffc,%eax
+[ 	]*[a-f0-9]+:	40 8d 80 fc ff ff ff 	rex lea -0x4\(%rax\),%eax
 [ 	]*[a-f0-9]+:	41 c7 c0 fc ff ff ff 	mov    \$0xfffffffc,%r8d
 [ 	]*[a-f0-9]+:	45 8d 80 fc ff ff ff 	lea    -0x4\(%r8\),%r8d
 [ 	]*[a-f0-9]+:	41 c7 c4 fc ff ff ff 	mov    \$0xfffffffc,%r12d

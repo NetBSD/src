@@ -33,10 +33,10 @@ OFFSET [ ]+ TYPE              VALUE
 
 
 Contents of section \.text:
- 0000 0000fb00 affafb00 cff5fffb 00efeeff  .*
- 0010 fffffb00 ef000000 00d5afe4 d5cfe0ff  .*
- 0020 d5efdaff ffffd5ef 00000000 d5afd9d5  .*
- 0030 cfddffd5 efe7ffff ffd5ef00 00000004  .*
+ 0000 0000fb00 af00fb00 cf0000fb 00ef0000  .*
+ 0010 0000fb00 ef000000 00d5af00 d5cf0000  .*
+ 0020 d5ef0000 0000d5ef 00000000 d5af00d5  .*
+ 0030 cf0000d5 ef000000 00d5ef00 00000004  .*
 Contents of section \.data:
  0000 00000000 00000000 00000000 0000      .*
 #pass

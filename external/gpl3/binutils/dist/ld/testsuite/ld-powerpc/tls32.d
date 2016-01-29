@@ -9,7 +9,11 @@
 
 Disassembly of section \.text:
 
-0+1800094 <_start>:
+0+18000a0 <_start>:
+.*:	(42 9f 00 05|05 00 9f 42) 	bcl     20,4\*cr7\+so,.* <_start\+0x4>
+.*:	(7f c8 02 a6|a6 02 c8 7f) 	mflr    r30
+.*:	(3f de 00 02|02 00 de 3f) 	addis   r30,r30,2
+.*:	(3b de 80 a0|a0 80 de 3b) 	addi    r30,r30,-32608
 .*:	(3c 62 00 00|00 00 62 3c) 	addis   r3,r2,0
 .*:	(38 63 90 3c|3c 90 63 38) 	addi    r3,r3,-28612
 .*:	(3c 62 00 00|00 00 62 3c) 	addis   r3,r2,0
@@ -39,12 +43,5 @@ Disassembly of section \.text:
 .*:	(3d 22 00 00|00 00 22 3d) 	addis   r9,r2,0
 .*:	(a9 49 90 18|18 90 49 a9) 	lha     r10,-28648\(r9\)
 
-0+1800104 <__tls_get_addr>:
+0+1800120 <__tls_get_addr>:
 .*:	(4e 80 00 20|20 00 80 4e) 	blr
-Disassembly of section \.got:
-
-0+1810128 <_GLOBAL_OFFSET_TABLE_-0x4>:
-.*:	(4e 80 00 21|21 00 80 4e) 	blrl
-
-0+181012c <_GLOBAL_OFFSET_TABLE_>:
-	\.\.\.

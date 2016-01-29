@@ -1,6 +1,6 @@
 // readsyms.h -- read input file symbols for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -137,13 +137,12 @@ class Add_symbols : public Task
   // one for the previous input file.  NEXT_BLOCKER is used to prevent
   // the next task from running.
   Add_symbols(Input_objects* input_objects, Symbol_table* symtab,
-	      Layout* layout, Dirsearch* dirpath, int dirindex,
-	      Mapfile* mapfile, const Input_argument* input_argument,
+	      Layout* layout, Dirsearch* /*dirpath*/, int /*dirindex*/,
+	      Mapfile* /*mapfile*/, const Input_argument* input_argument,
 	      Object* object, Incremental_library* library,
 	      Read_symbols_data* sd, Task_token* this_blocker,
 	      Task_token* next_blocker)
     : input_objects_(input_objects), symtab_(symtab), layout_(layout),
-      dirpath_(dirpath), dirindex_(dirindex), mapfile_(mapfile),
       input_argument_(input_argument), object_(object), library_(library),
       sd_(sd), this_blocker_(this_blocker), next_blocker_(next_blocker)
   { }
@@ -169,9 +168,6 @@ private:
   Input_objects* input_objects_;
   Symbol_table* symtab_;
   Layout* layout_;
-  Dirsearch* dirpath_;
-  int dirindex_;
-  Mapfile* mapfile_;
   const Input_argument* input_argument_;
   Object* object_;
   Incremental_library* library_;
@@ -192,12 +188,11 @@ class Read_member : public Task
   // one has completed; it will be NULL for the first task.
   // NEXT_BLOCKER is used to block the next input file from adding
   // symbols.
-  Read_member(Input_objects* input_objects, Symbol_table* symtab,
-	      Layout* layout, Mapfile* mapfile,
+  Read_member(Input_objects* /*input_objects*/, Symbol_table* /*symtab*/,
+	      Layout* /*layout*/, Mapfile* /*mapfile*/,
 	      const Incremental_binary::Input_reader* input_reader,
               Task_token* this_blocker, Task_token* next_blocker)
-    : input_objects_(input_objects), symtab_(symtab), layout_(layout),
-      mapfile_(mapfile), input_reader_(input_reader),
+    : input_reader_(input_reader),
       this_blocker_(this_blocker), next_blocker_(next_blocker)
   { }
 
@@ -221,10 +216,6 @@ class Read_member : public Task
   }
 
  private:
-  Input_objects* input_objects_;
-  Symbol_table* symtab_;
-  Layout* layout_;
-  Mapfile* mapfile_;
   const Incremental_binary::Input_reader* input_reader_;
   Task_token* this_blocker_;
   Task_token* next_blocker_;
@@ -282,12 +273,12 @@ class Check_script : public Task
 class Check_library : public Task
 {
  public:
-  Check_library(Symbol_table* symtab, Layout* layout,
+  Check_library(Symbol_table* /*symtab*/, Layout* layout,
 		Incremental_binary* ibase,
 		unsigned int input_file_index,
 		const Incremental_binary::Input_reader* input_reader,
 		Task_token* this_blocker, Task_token* next_blocker)
-    : layout_(layout), symtab_(symtab), ibase_(ibase),
+    : layout_(layout), ibase_(ibase),
       input_file_index_(input_file_index), input_reader_(input_reader),
       this_blocker_(this_blocker), next_blocker_(next_blocker)
   { }
@@ -313,7 +304,6 @@ class Check_library : public Task
 
  private:
   Layout* layout_;
-  Symbol_table* symtab_;
   Incremental_binary* ibase_;
   unsigned int input_file_index_;
   const Incremental_binary::Input_reader* input_reader_;

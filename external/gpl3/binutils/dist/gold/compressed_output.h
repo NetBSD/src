@@ -1,6 +1,6 @@
 // compressed_output.h -- compressed output sections for gold  -*- C++ -*-
 
-// Copyright 2007, 2008, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -47,7 +47,7 @@ get_uncompressed_size(const unsigned char*, section_size_type);
 
 extern bool
 decompress_input_section(const unsigned char*, unsigned long, unsigned char*,
-			 unsigned long);
+			 unsigned long, int, bool, elfcpp::Elf_Xword);
 
 // This is used for a section whose data should be compressed.  It is
 // a regular Output_section which computes its contents into a buffer

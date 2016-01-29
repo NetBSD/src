@@ -1,7 +1,7 @@
 // dyn_weak_ref_1.c -- test that a weak ref remains weak in output when
 // there is a DSO with the same weak ref.
 
-// Copyright 2010 Free Software Foundation, Inc.
+// Copyright (C) 2010-2015 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 
 // This file is part of gold.

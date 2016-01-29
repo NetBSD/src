@@ -698,7 +698,6 @@
 [^:]*:686: Error: 'mpydp' instruction not supported on this functional unit
 [^:]*:687: Error: bad number of operands to 'mpydp'
 [^:]*:688: Error: operand 1 of 'mpydp' on wrong side
-[^:]*:689: Error: 'mpydp' instruction not supported on this functional unit
 [^:]*:690: Error: 'mpyh' instruction not supported on this functional unit
 [^:]*:691: Error: bad number of operands to 'mpyh'
 [^:]*:692: Error: operand 1 of 'mpyh' on wrong side

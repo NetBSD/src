@@ -16,6 +16,7 @@ foo:
 	clhlr	%r6,%r7
 	clhf	%r6,5555(%r7,%r8)
 	clih	%r6,650000
+	clih	%r9,4000000000
 	lbh	%r6,-5555(%r7,%r8)
 	lhh	%r6,-5555(%r7,%r8)
 	lfh	%r6,-5555(%r7,%r8)
@@ -255,3 +256,7 @@ foo:
 	sdtra %f3,%f5,%f9,7
 	sxtra %f1,%f4,%f5,7
 	srnmb 4000(%r7)
+	kmf %r5,%r6
+	kmo %r5,%r6
+	pcc
+	kmctr %r5,%r6,%r9

@@ -1,6 +1,5 @@
 %{/* nlmheader.y - parse NLM header specification keywords.
-     Copyright 1993, 1994, 1995, 1997, 1998, 2001, 2002, 2003, 2005, 2007,
-     2010 Free Software Foundation, Inc.
+     Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
      This file is part of GNU Binutils.
 
@@ -494,7 +493,7 @@ string_list:
 /* If strerror is just a macro, we want to use the one from libiberty
    since it will handle undefined values.  */
 #undef strerror
-extern char *strerror PARAMS ((int));
+extern char *strerror (int);
 
 /* The lexer is simple, too simple for flex.  Keywords are only
    recognized at the start of lines.  Everything else must be an

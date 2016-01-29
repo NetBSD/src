@@ -1,6 +1,5 @@
 /* MeP-specific support for 32-bit ELF.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -31,19 +30,16 @@
 /* Private relocation functions.  */
 
 #define MEPREL(type, size, bits, right, left, pcrel, overflow, mask) \
-  {(unsigned)type, right, size, bits, pcrel, left, overflow, mep_reloc, #type, FALSE, 0, mask, 0 }
+  {(unsigned)type, right, size, bits, pcrel, left, overflow, bfd_elf_generic_reloc, #type, FALSE, 0, mask, 0 }
 
 #define N complain_overflow_dont
 #define S complain_overflow_signed
 #define U complain_overflow_unsigned
 
-static bfd_reloc_status_type mep_reloc (bfd *, arelent *, struct bfd_symbol *,
-					void *, asection *, bfd *, char **);
-
 static reloc_howto_type mep_elf_howto_table [] =
 {
   /* type, size, bits, leftshift, rightshift, pcrel, OD/OS/OU, mask.  */
-  MEPREL (R_MEP_NONE,     0,  0, 0, 0, 0, N, 0),
+  MEPREL (R_MEP_NONE,     3,  0, 0, 0, 0, N, 0),
   MEPREL (R_RELC,         0,  0, 0, 0, 0, N, 0),
   /* MEPRELOC:HOWTO */
     /* This section generated from bfd/mep-relocs.pl from include/elf/mep.h.  */
@@ -76,20 +72,6 @@ static reloc_howto_type mep_elf_howto_table [] =
 #undef N
 #undef S
 #undef U
-
-static bfd_reloc_status_type
-mep_reloc
-    (bfd *               abfd ATTRIBUTE_UNUSED,
-     arelent *           reloc_entry ATTRIBUTE_UNUSED,
-     struct bfd_symbol * symbol ATTRIBUTE_UNUSED,
-     void *              data ATTRIBUTE_UNUSED,
-     asection *          input_section ATTRIBUTE_UNUSED,
-     bfd *               output_bfd ATTRIBUTE_UNUSED,
-     char **             error_message ATTRIBUTE_UNUSED)
-{
-  return bfd_reloc_ok;
-}
-
 
 
 #define BFD_RELOC_MEP_NONE BFD_RELOC_NONE
@@ -401,6 +383,11 @@ mep_info_to_howto_rela
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
+  if (r_type >= R_MEP_max)
+    {
+      _bfd_error_handler (_("%B: invalid MEP reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = & mep_elf_howto_table [r_type];
 }
 
@@ -490,12 +477,12 @@ mep_elf_relocate_section
 	}
       else
 	{
-	  bfd_boolean warned, unresolved_reloc;
+	  bfd_boolean warned, unresolved_reloc, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL(info, input_bfd, input_section, rel,
 				  r_symndx, symtab_hdr, sym_hashes,
 				  h, sec, relocation,
-				  unresolved_reloc, warned);
+				  unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
 	}
@@ -504,7 +491,7 @@ mep_elf_relocate_section
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       if (r_type == R_RELC)
@@ -577,22 +564,6 @@ mep_elf_set_private_flags (bfd *    abfd,
 {
   elf_elfheader (abfd)->e_flags = flags;
   elf_flags_init (abfd) = TRUE;
-  return TRUE;
-}
-
-static bfd_boolean
-mep_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
-{
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
-
-  /* Copy object attributes.  */
-  _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
   return TRUE;
 }
 
@@ -762,10 +733,10 @@ mep_elf_fake_sections (bfd *               abfd ATTRIBUTE_UNUSED,
 #define ELF_MACHINE_CODE	EM_CYGNUS_MEP
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM		bfd_elf32_mep_vec
+#define TARGET_BIG_SYM		mep_elf32_vec
 #define TARGET_BIG_NAME		"elf32-mep"
 
-#define TARGET_LITTLE_SYM	bfd_elf32_mep_little_vec
+#define TARGET_LITTLE_SYM	mep_elf32_le_vec
 #define TARGET_LITTLE_NAME	"elf32-mep-little"
 
 #define elf_info_to_howto_rel			NULL
@@ -778,7 +749,6 @@ mep_elf_fake_sections (bfd *               abfd ATTRIBUTE_UNUSED,
 #define bfd_elf32_bfd_reloc_type_lookup		mep_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup		mep_reloc_name_lookup
 #define bfd_elf32_bfd_set_private_flags		mep_elf_set_private_flags
-#define bfd_elf32_bfd_copy_private_bfd_data	mep_elf_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data	mep_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_print_private_bfd_data	mep_elf_print_private_bfd_data
 

@@ -35,27 +35,27 @@ Raw dump of debug contents of section \.debug_line:
 
  The Directory Table is empty\.
 
- The File Name Table:
+ The File Name Table \(offset 0x.*\):
   Entry	Dir	Time	Size	Name
   1	0	0	0	loc-swap\.s
 
  Line Number Statements:
-  Extended opcode 2: set Address to 0x0
-  Special opcode 11: advance Address by 0 to 0x0 and Line by 6 to 7
-  Special opcode 63: advance Address by 4 to 0x4 and Line by 2 to 9
-  Special opcode 120: advance Address by 8 to 0xc and Line by 3 to 12
-  Special opcode 7: advance Address by 0 to 0xc and Line by 2 to 14
-  Special opcode 120: advance Address by 8 to 0x14 and Line by 3 to 17
-  Special opcode 7: advance Address by 0 to 0x14 and Line by 2 to 19
-  Special opcode 120: advance Address by 8 to 0x1c and Line by 3 to 22
-  Special opcode 63: advance Address by 4 to 0x20 and Line by 2 to 24
-  Special opcode 120: advance Address by 8 to 0x28 and Line by 3 to 27
-  Special opcode 63: advance Address by 4 to 0x2c and Line by 2 to 29
-  Special opcode 120: advance Address by 8 to 0x34 and Line by 3 to 32
-  Special opcode 63: advance Address by 4 to 0x38 and Line by 2 to 34
-  Special opcode 120: advance Address by 8 to 0x40 and Line by 3 to 37
-  Special opcode 7: advance Address by 0 to 0x40 and Line by 2 to 39
-  Special opcode 120: advance Address by 8 to 0x48 and Line by 3 to 42
-  Special opcode 63: advance Address by 4 to 0x4c and Line by 2 to 44
-  Advance PC by 24 to 0x64
-  Extended opcode 1: End of Sequence
+  \[0x.*\]  Extended opcode 2: set Address to 0x0
+  \[0x.*\]  Special opcode 11: advance Address by 0 to 0x0 and Line by 6 to 7
+  \[0x.*\]  Special opcode 63: advance Address by 4 to 0x4 and Line by 2 to 9
+  \[0x.*\]  Special opcode 120: advance Address by 8 to 0xc and Line by 3 to 12
+  \[0x.*\]  Special opcode 7: advance Address by 0 to 0xc and Line by 2 to 14
+  \[0x.*\]  Special opcode 120: advance Address by 8 to 0x14 and Line by 3 to 17
+  \[0x.*\]  Special opcode 7: advance Address by 0 to 0x14 and Line by 2 to 19
+  \[0x.*\]  Special opcode 120: advance Address by 8 to 0x1c and Line by 3 to 22
+  \[0x.*\]  Special opcode 63: advance Address by 4 to 0x20 and Line by 2 to 24
+  \[0x.*\]  Special opcode 120: advance Address by 8 to 0x28 and Line by 3 to 27
+  \[0x.*\]  Special opcode 63: advance Address by 4 to 0x2c and Line by 2 to 29
+  \[0x.*\]  Special opcode 120: advance Address by 8 to 0x34 and Line by 3 to 32
+  \[0x.*\]  Special opcode 63: advance Address by 4 to 0x38 and Line by 2 to 34
+  \[0x.*\]  Special opcode 120: advance Address by 8 to 0x40 and Line by 3 to 37
+  \[0x.*\]  Special opcode 7: advance Address by 0 to 0x40 and Line by 2 to 39
+  \[0x.*\]  Special opcode 120: advance Address by 8 to 0x48 and Line by 3 to 42
+  \[0x.*\]  Special opcode 63: advance Address by 4 to 0x4c and Line by 2 to 44
+  \[0x.*\]  Advance PC by 24 to 0x64
+  \[0x.*\]  Extended opcode 1: End of Sequence

@@ -1,7 +1,5 @@
 /* BFD back-end for Intel 960 b.out binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -785,7 +783,7 @@ b_out_slurp_reloc_table (bfd *abfd, sec_ptr asect, asymbol **symbols)
 	/* Sign-extend symnum from 24 bits to whatever host uses.  */
 	s = symnum;
 	if (s & (1 << 23))
-	  s |= (~0) << 24;
+	  s |= (~0U) << 24;
 
 	cache_ptr->sym_ptr_ptr = (asymbol **)NULL;
 	switch (s)
@@ -1071,7 +1069,7 @@ abs32code (bfd *abfd,
      jump we were going to.  */
   gap = value - (dot - shrink);
 
-  if (-1 << 23 < (long)gap && (long)gap < 1 << 23)
+  if ((long)(-1UL << 23) < (long)gap && (long)gap < 1L << 23)
     {
       /* Change the reloc type from 32bitcode possible 24, to 24bit
 	 possible 32.  */
@@ -1141,7 +1139,7 @@ b_out_bfd_relax_section (bfd *abfd,
   arelent **reloc_vector = NULL;
   long reloc_size = bfd_get_reloc_upper_bound (input_bfd, input_section);
 
-  if (link_info->relocatable)
+  if (bfd_link_relocatable (link_info))
     (*link_info->callbacks->einfo)
       (_("%P%F: --relax and -r may not be used together\n"));
 
@@ -1376,10 +1374,11 @@ b_out_bfd_get_relocated_section_contents (bfd *output_bfd,
 
 /* Build the transfer vectors for Big and Little-Endian B.OUT files.  */
 
+#define aout_32_find_line                      _bfd_nosymbols_find_line
+#define aout_32_get_symbol_version_string      _bfd_nosymbols_get_symbol_version_string
 #define aout_32_bfd_make_debug_symbol          _bfd_nosymbols_bfd_make_debug_symbol
 #define aout_32_close_and_cleanup              aout_32_bfd_free_cached_info
 #define b_out_bfd_link_hash_table_create       _bfd_generic_link_hash_table_create
-#define b_out_bfd_link_hash_table_free         _bfd_generic_link_hash_table_free
 #define b_out_bfd_link_add_symbols             _bfd_generic_link_add_symbols
 #define b_out_bfd_link_just_syms               _bfd_generic_link_just_syms
 #define b_out_bfd_copy_link_hash_symbol_type \
@@ -1395,9 +1394,9 @@ b_out_bfd_get_relocated_section_contents (bfd *output_bfd,
 #define b_out_bfd_define_common_symbol         bfd_generic_define_common_symbol
 #define aout_32_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 
-extern const bfd_target b_out_vec_little_host;
+extern const bfd_target bout_le_vec;
 
-const bfd_target b_out_vec_big_host =
+const bfd_target bout_be_vec =
 {
   "b.out.big",			/* Name.  */
   bfd_target_aout_flavour,
@@ -1434,12 +1433,12 @@ const bfd_target b_out_vec_big_host =
      BFD_JUMP_TABLE_LINK (b_out),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  & b_out_vec_little_host,
+  & bout_le_vec,
 
   NULL
 };
 
-const bfd_target b_out_vec_little_host =
+const bfd_target bout_le_vec =
 {
   "b.out.little",		/* Name.  */
   bfd_target_aout_flavour,
@@ -1477,7 +1476,7 @@ const bfd_target b_out_vec_little_host =
      BFD_JUMP_TABLE_LINK (b_out),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  & b_out_vec_big_host,
+  & bout_be_vec,
 
   NULL
 };

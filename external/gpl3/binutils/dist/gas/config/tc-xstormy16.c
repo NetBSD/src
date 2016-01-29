@@ -1,6 +1,5 @@
 /* tc-xstormy16.c -- Assembler for the Sanyo XSTORMY16.
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
-   Free Software Foundation.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -194,10 +193,9 @@ void
 xstormy16_cons_fix_new (fragS *f,
 			int where,
 			int nbytes,
-			expressionS *exp)
+			expressionS *exp,
+			bfd_reloc_code_real_type code)
 {
-  bfd_reloc_code_real_type code;
-
   if (exp->X_op == O_fptr_symbol)
     {
       switch (nbytes)
@@ -206,9 +204,9 @@ xstormy16_cons_fix_new (fragS *f,
  	  /* This can happen when gcc is generating debug output.
  	     For example it can create a stab with the address of
  	     a function:
- 	     
+
  	     	.stabs	"foo:F(0,21)",36,0,0,@fptr(foo)
- 
+
  	     Since this does not involve switching code pages, we
  	     just allow the reloc to be generated without any
  	     @fptr behaviour.  */
@@ -281,7 +279,7 @@ md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
 
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 symbolS *
@@ -339,7 +337,7 @@ md_pcrel_from_section (fixS * fixP, segT sec)
       || xstormy16_force_relocation (fixP))
     /* The symbol is undefined,
        or it is defined but not in this section,
-       or the relocation will be relative to this symbol not the section symbol.	 
+       or the relocation will be relative to this symbol not the section symbol.
        Let the linker figure it out.  */
     return 0;
 

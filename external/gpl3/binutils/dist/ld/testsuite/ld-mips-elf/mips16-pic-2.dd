@@ -77,7 +77,7 @@ Disassembly of section \.text:
 .*:	[^\t]*	move	t9,v0
 .*:	[^\t]*	lw	v0,16\(sp\)
 .*:	[^\t]*	move	gp,v0
-.*:	[^\t]*	lw	v0,-32716\(v0\)
+.*:	[^\t]*	lw	v0,-32728\(v0\)
 .*:	[^\t]*	jalr	v0
 .*:	[^\t]*	move	t9,v0
 .*:	[^\t]*	lw	v0,16\(sp\)
@@ -101,7 +101,7 @@ Disassembly of section \.text:
 .*:	[^\t]*	move	t9,v0
 .*:	[^\t]*	lw	v0,16\(sp\)
 .*:	[^\t]*	move	gp,v0
-.*:	[^\t]*	lw	v0,-32712\(v0\)
+.*:	[^\t]*	lw	v0,-32724\(v0\)
 .*:	[^\t]*	jalr	v0
 .*:	[^\t]*	move	t9,v0
 .*:	[^\t]*	lw	v0,16\(sp\)

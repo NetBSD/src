@@ -91,7 +91,7 @@
 	* emultempl/xtensaelf.em: Remove --no-relax option.
 	(before_allocation): Test RELAXATION_ENABLED macro.
 	Use ENABLE_RELAXATION macro.
-	
+
 2009-11-25  Kai Tietz  <kai.tietz@onevision.com>
 
 	* scripttempl/pe.sc: (.note.GNU-stack): Mark as discardable.
@@ -1635,6 +1635,12 @@
 
 For older changes see ChangeLog-2008
 
+Copyright (C) 2009 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

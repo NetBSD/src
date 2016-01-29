@@ -3,7 +3,7 @@
 # as: -mfpu=vfp9
 # readelf: -A
 # This test is only valid on EABI based ports.
-# target: *-*-*eabi *-*-nacl*
+# target: *-*-*eabi* *-*-nacl*
 
 Attribute Section: aeabi
 File Attributes

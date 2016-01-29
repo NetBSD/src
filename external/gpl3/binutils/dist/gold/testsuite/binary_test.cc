@@ -1,6 +1,6 @@
 // binary_test.cc -- test --format binary for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -28,9 +28,9 @@
 #include <cstring>
 #include <stdint.h>
 
-extern char _binary_binary_txt_start[];
-extern char _binary_binary_txt_end[];
-extern char _binary_binary_txt_size[];
+extern char _binary_binary_txt_start[] __attribute__((__aligned__(1)));
+extern char _binary_binary_txt_end[] __attribute__((__aligned__(1)));
+extern char _binary_binary_txt_size[] __attribute__((__aligned__(1)));
 
 int
 main(int, char**)

@@ -1,4 +1,3 @@
-#skip: mips-*-ecoff
 #as: -march=mips2 -32
 #objdump: -dr
 #name: MIPS branch-swap

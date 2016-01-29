@@ -29,11 +29,4 @@ Disassembly of section \.text:
  *[0-9a-f]+:	609d 8010 	swl	a0,16\(sp\)
  *[0-9a-f]+:	60bd 8018 	swl	a1,24\(sp\)
  *[0-9a-f]+:	60dd 8000 	swl	a2,0\(sp\)
- *[0-9a-f]+:	4680      	break
- *[0-9a-f]+:	605d b020 	sc	v0,32\(sp\)
- *[0-9a-f]+:	607d b008 	sc	v1,8\(sp\)
- *[0-9a-f]+:	609d bff8 	sc	a0,-8\(sp\)
- *[0-9a-f]+:	60bd b000 	sc	a1,0\(sp\)
- *[0-9a-f]+:	60dd b020 	sc	a2,32\(sp\)
- *[0-9a-f]+:	0c00      	nop
 	\.\.\.

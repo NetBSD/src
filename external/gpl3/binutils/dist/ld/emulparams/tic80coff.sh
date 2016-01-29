@@ -39,7 +39,7 @@ ARCH=tic80
 #
 TEXT_START_ADDR=0x2000000
 
-# The genscripts.sh script uses this to set the default value of 
+# The genscripts.sh script uses this to set the default value of
 # DATA_ALIGNMENT when running the scripttempl script.
 #
 # SEGMENT_SIZE=

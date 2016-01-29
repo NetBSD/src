@@ -36,7 +36,5 @@ foo:
 arm:
 	test_relocs foo
 	test_relocs f1
-	test_relocs f2
 	test_relocs f3
-	test_relocs f4
 	.size	arm,.-arm

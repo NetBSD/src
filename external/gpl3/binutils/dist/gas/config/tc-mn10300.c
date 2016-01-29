@@ -1,6 +1,5 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -338,13 +337,13 @@ get_register_name (expressionS *           expressionP,
   char c;
 
   /* Find the spelling of the operand.  */
-  start = name = input_line_pointer;
+  start = input_line_pointer;
 
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   reg_number = reg_name_search (table, table_length, name);
 
   /* Put back the delimiting char.  */
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
@@ -410,13 +409,13 @@ other_register_name (expressionS *expressionP)
   char c;
 
   /* Find the spelling of the operand.  */
-  start = name = input_line_pointer;
+  start = input_line_pointer;
 
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   reg_number = reg_name_search (other_registers, ARRAY_SIZE (other_registers), name);
 
   /* Put back the delimiting char.  */
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   /* Look to see if it's in the register table.  */
   if (reg_number == 0
@@ -906,7 +905,7 @@ md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
 
-  return ((addr + (1 << align) - 1) & (-1 << align));
+  return ((addr + (1 << align) - 1) & -(1 << align));
 }
 
 void
@@ -939,7 +938,7 @@ md_begin (void)
     as_warn (_("could not set architecture and machine"));
 
   current_machine = AM33_2;
-#else  
+#else
   if (!bfd_set_arch_mach (stdoutput, bfd_arch_mn10300, MN103))
     as_warn (_("could not set architecture and machine"));
 
@@ -1014,7 +1013,8 @@ mn10300_check_fixup (struct mn10300_fixup *fixup)
 }
 
 void
-mn10300_cons_fix_new (fragS *frag, int off, int size, expressionS *exp)
+mn10300_cons_fix_new (fragS *frag, int off, int size, expressionS *exp,
+		      bfd_reloc_code_real_type r ATTRIBUTE_UNUSED)
 {
   struct mn10300_fixup fixup;
 
@@ -1069,7 +1069,7 @@ mn10300_cons_fix_new (fragS *frag, int off, int size, expressionS *exp)
       as_bad (_("unsupported BFD relocation size %u"), size);
       fixup.reloc = BFD_RELOC_UNUSED;
     }
-    
+
   fix_new_exp (frag, off, size, &fixup.exp, 0, fixup.reloc);
 }
 
@@ -1346,17 +1346,17 @@ md_assemble (char *str)
 	    }
 	  else if (operand->flags & MN10300_OPERAND_SP)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "sp") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_RREG)
@@ -1397,92 +1397,92 @@ md_assemble (char *str)
 	    }
 	  else if (operand->flags & MN10300_OPERAND_FPCR)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "fpcr") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_USP)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "usp") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_SSP)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "ssp") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_MSP)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "msp") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_PC)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "pc") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_EPSW)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "epsw") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_PLUS)
@@ -1498,32 +1498,32 @@ md_assemble (char *str)
 	    }
 	  else if (operand->flags & MN10300_OPERAND_PSW)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "psw") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_MDR)
 	    {
-	      char *start = input_line_pointer;
-	      char c = get_symbol_end ();
+	      char *start;
+	      char c = get_symbol_name (&start);
 
 	      if (strcasecmp (start, "mdr") != 0)
 		{
-		  *input_line_pointer = c;
+		  (void) restore_line_pointer (c);
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-	      *input_line_pointer = c;
+	      (void) restore_line_pointer (c);
 	      goto keep_going;
 	    }
 	  else if (operand->flags & MN10300_OPERAND_REG_LIST)
@@ -1554,57 +1554,56 @@ md_assemble (char *str)
 		  if (*input_line_pointer == ',')
 		    input_line_pointer++;
 
-		  start = input_line_pointer;
-		  c = get_symbol_end ();
+		  c = get_symbol_name (&start);
 
 		  if (strcasecmp (start, "d2") == 0)
 		    {
 		      value |= 0x80;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (strcasecmp (start, "d3") == 0)
 		    {
 		      value |= 0x40;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (strcasecmp (start, "a2") == 0)
 		    {
 		      value |= 0x20;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (strcasecmp (start, "a3") == 0)
 		    {
 		      value |= 0x10;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (strcasecmp (start, "other") == 0)
 		    {
 		      value |= 0x08;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (HAVE_AM33
 			   && strcasecmp (start, "exreg0") == 0)
 		    {
 		      value |= 0x04;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (HAVE_AM33
 			   && strcasecmp (start, "exreg1") == 0)
 		    {
 		      value |= 0x02;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (HAVE_AM33
 			   && strcasecmp (start, "exother") == 0)
 		    {
 		      value |= 0x01;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else if (HAVE_AM33
 			   && strcasecmp (start, "all") == 0)
 		    {
 		      value |= 0xff;
-		      *input_line_pointer = c;
+		      (void) restore_line_pointer (c);
 		    }
 		  else
 		    {
@@ -2216,7 +2215,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 	  reloc2->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
 	  *reloc2->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
 
-	  reloc->addend = fixp->fx_offset; 
+	  reloc->addend = fixp->fx_offset;
 	  if (asec == absolute_section)
 	    {
 	      reloc->addend += S_GET_VALUE (fixp->fx_addsy);
@@ -2283,7 +2282,7 @@ static inline bfd_boolean
 has_known_symbol_location (fragS * fragp, asection * sec)
 {
   symbolS * sym = fragp->fr_symbol;
-  
+
   return sym != NULL
     && S_IS_DEFINED (sym)
     && ! S_IS_WEAK (sym)
@@ -2384,7 +2383,7 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
     case BFD_RELOC_MN10300_ALIGN:
       fixP->fx_done = 1;
       return;
-      
+
     case BFD_RELOC_NONE:
     default:
       as_bad_where (fixP->fx_file, fixP->fx_line,
@@ -2453,7 +2452,7 @@ mn10300_end_of_match (char *cont, char *what)
     return cont + len;
 
   return NULL;
-}  
+}
 
 int
 mn10300_parse_name (char const *name,
@@ -2500,7 +2499,7 @@ mn10300_parse_name (char const *name,
     }
 
   exprP->X_add_symbol = symbol_find_or_make (name);
-  
+
   if (*nextcharP != '@')
     goto no_suffix;
   else if ((next_end = mn10300_end_of_match (next + 1, "GOTOFF")))

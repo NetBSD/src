@@ -1,5 +1,5 @@
 /* BFD back-end for ARM EPOC PE files.
-   Copyright 1999, 2000, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,9 +21,9 @@
 #define TARGET_UNDERSCORE    0
 #define USER_LABEL_PREFIX    ""
 
-#define TARGET_LITTLE_SYM    arm_epoc_pe_little_vec
+#define TARGET_LITTLE_SYM    arm_pe_epoc_le_vec
 #define TARGET_LITTLE_NAME   "epoc-pe-arm-little"
-#define TARGET_BIG_SYM       arm_epoc_pe_big_vec
+#define TARGET_BIG_SYM       arm_pe_epoc_be_vec
 #define TARGET_BIG_NAME      "epoc-pe-arm-big"
 
 #define bfd_arm_allocate_interworking_sections \

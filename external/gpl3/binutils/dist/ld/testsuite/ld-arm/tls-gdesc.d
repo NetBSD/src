@@ -1,6 +1,6 @@
 
 tmpdir/tls-lib2.so:     file format elf32-.*arm
-architecture: armv.t, flags 0x[0-9a-f]+:
+architecture: arm.*, flags 0x[0-9a-f]+:
 HAS_SYMS, DYNAMIC, D_PAGED
 start address 0x[0-9a-f]+
 

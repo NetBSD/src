@@ -1,7 +1,7 @@
 /* Opcode table for the ARC.
-   Copyright 1994, 1995, 1997, 2001, 2002, 2003, 2010
-   Free Software Foundation, Inc.
-   Contributed by Doug Evans (dje@cygnus.com).
+   Copyright 1994-2015 Free Software Foundation, Inc.
+
+   Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
    This file is part of GAS, the GNU Assembler, GDB, the GNU debugger, and
    the GNU Binutils.
@@ -13,7 +13,7 @@
 
    GAS/GDB is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,302 +21,393 @@
    the Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-/* List of the various cpu types.
-   The tables currently use bit masks to say whether the instruction or
-   whatever is supported by a particular cpu.  This lets us have one entry
-   apply to several cpus.
+#ifndef OPCODE_ARC_H
+#define OPCODE_ARC_H
 
-   The `base' cpu must be 0. The cpu type is treated independently of
-   endianness. The complete `mach' number includes endianness.
-   These values are internal to opcodes/bfd/binutils/gas.  */
-#define ARC_MACH_5 0
-#define ARC_MACH_6 1
-#define ARC_MACH_7 2
-#define ARC_MACH_8 4
+#define MAX_INSN_ARGS	     6
+#define MAX_INSN_FLGS	     3
 
-/* Additional cpu values can be inserted here and ARC_MACH_BIG moved down.  */
-#define ARC_MACH_BIG 16
+/* Instruction Class.  */
+typedef enum
+  {
+    ARITH,
+    AUXREG,
+    BRANCH,
+    CONTROL,
+    DSP,
+    FLOAT,
+    INVALID,
+    JUMP,
+    KERNEL,
+    LOGICAL,
+    MEMORY,
+  } insn_class_t;
 
-/* Mask of number of bits necessary to record cpu type.  */
-#define ARC_MACH_CPU_MASK (ARC_MACH_BIG - 1)
+/* Instruction Subclass.  */
+typedef enum
+  {
+    NONE,
+    CVT,
+    BTSCN,
+    CD1,
+    CD2,
+    DIV,
+    DP,
+    MPY1E,
+    MPY6E,
+    MPY7E,
+    MPY8E,
+    MPY9E,
+    SHFT1,
+    SHFT2,
+    SWAP,
+    SP
+  } insn_subclass_t;
 
-/* Mask of number of bits necessary to record cpu type + endianness.  */
-#define ARC_MACH_MASK ((ARC_MACH_BIG << 1) - 1)
+/* Flags class.  */
+typedef enum
+  {
+    FNONE,
+    CND,  /* Conditional flags.  */
+    WBM,  /* Write-back modes.  */
+    FLG,  /* F Flag.  */
+    SBP,  /* Static branch prediction.  */
+    DLY,  /* Delay slot.  */
+    DIF,  /* Bypass caches.  */
+    SGX,  /* Sign extend modes.  */
+    SZM   /* Data size modes.  */
+  } flag_class_t;
 
-/* Type to denote an ARC instruction (at least a 32 bit unsigned int).  */
+/* The opcode table is an array of struct arc_opcode.  */
+struct arc_opcode
+{
+  /* The opcode name.  */
+  const char *name;
 
-typedef unsigned int arc_insn;
+  /* The opcode itself.  Those bits which will be filled in with
+     operands are zeroes.  */
+  unsigned opcode;
 
-struct arc_opcode {
-  char *syntax;              /* syntax of insn  */
-  unsigned long mask, value; /* recognize insn if (op&mask) == value  */
-  int flags;                 /* various flag bits  */
+  /* The opcode mask.  This is used by the disassembler.  This is a
+     mask containing ones indicating those bits which must match the
+     opcode field, and zeroes indicating those bits which need not
+     match (and are presumably filled in by operands).  */
+  unsigned mask;
 
-/* Values for `flags'.  */
+  /* One bit flags for the opcode.  These are primarily used to
+     indicate specific processors and environments support the
+     instructions.  The defined values are listed below.  */
+  unsigned cpu;
 
-/* Return CPU number, given flag bits.  */
-#define ARC_OPCODE_CPU(bits) ((bits) & ARC_MACH_CPU_MASK)
+  /* The instruction class.  This is used by gdb.  */
+  insn_class_t class;
 
-/* Return MACH number, given flag bits.  */
-#define ARC_OPCODE_MACH(bits) ((bits) & ARC_MACH_MASK)
+  /* The instruction subclass.  */
+  insn_subclass_t subclass;
 
-/* First opcode flag bit available after machine mask.  */
-#define ARC_OPCODE_FLAG_START (ARC_MACH_MASK + 1)
+  /* An array of operand codes.  Each code is an index into the
+     operand table.  They appear in the order which the operands must
+     appear in assembly code, and are terminated by a zero.  */
+  unsigned char operands[MAX_INSN_ARGS + 1];
 
-/* This insn is a conditional branch.  */
-#define ARC_OPCODE_COND_BRANCH (ARC_OPCODE_FLAG_START)
-#define SYNTAX_3OP             (ARC_OPCODE_COND_BRANCH << 1)
-#define SYNTAX_LENGTH          (SYNTAX_3OP                 )
-#define SYNTAX_2OP             (SYNTAX_3OP             << 1)
-#define OP1_MUST_BE_IMM        (SYNTAX_2OP             << 1)
-#define OP1_IMM_IMPLIED        (OP1_MUST_BE_IMM        << 1)
-#define SYNTAX_VALID           (OP1_IMM_IMPLIED        << 1)
-
-#define I(x) (((x) & 31) << 27)
-#define A(x) (((x) & ARC_MASK_REG) << ARC_SHIFT_REGA)
-#define B(x) (((x) & ARC_MASK_REG) << ARC_SHIFT_REGB)
-#define C(x) (((x) & ARC_MASK_REG) << ARC_SHIFT_REGC)
-#define R(x,b,m) (((x) & (m)) << (b)) /* value X, mask M, at bit B */
-
-/* These values are used to optimize assembly and disassembly.  Each insn
-   is on a list of related insns (same first letter for assembly, same
-   insn code for disassembly).  */
-
-  struct arc_opcode *next_asm;	/* Next instr to try during assembly.  */
-  struct arc_opcode *next_dis;	/* Next instr to try during disassembly.  */
-
-/* Macros to create the hash values for the lists.  */
-#define ARC_HASH_OPCODE(string) \
-  ((string)[0] >= 'a' && (string)[0] <= 'z' ? (string)[0] - 'a' : 26)
-#define ARC_HASH_ICODE(insn) \
-  ((unsigned int) (insn) >> 27)
-
- /* Macros to access `next_asm', `next_dis' so users needn't care about the
-    underlying mechanism.  */
-#define ARC_OPCODE_NEXT_ASM(op) ((op)->next_asm)
-#define ARC_OPCODE_NEXT_DIS(op) ((op)->next_dis)
+  /* An array of flag codes.  Each code is an index into the flag
+     table.  They appear in the order which the flags must appear in
+     assembly code, and are terminated by a zero.  */
+  unsigned char flags[MAX_INSN_FLGS + 1];
 };
 
-/* this is an "insert at front" linked list per Metaware spec
-   that new definitions override older ones.  */
-extern struct arc_opcode *arc_ext_opcodes;
+/* The table itself is sorted by major opcode number, and is otherwise
+   in the order in which the disassembler should consider
+   instructions.  */
+extern const struct arc_opcode arc_opcodes[];
+extern const unsigned arc_num_opcodes;
 
-struct arc_operand_value {
-  char *name;          /* eg: "eq"  */
-  short value;         /* eg: 1  */
-  unsigned char type;  /* index into `arc_operands'  */
-  unsigned char flags; /* various flag bits  */
+/* CPU Availability.  */
+#define ARC_OPCODE_ARC600   0x0001  /* ARC 600 specific insns.  */
+#define ARC_OPCODE_ARC700   0x0002  /* ARC 700 specific insns.  */
+#define ARC_OPCODE_ARCv2EM  0x0004  /* ARCv2 EM specific insns.  */
+#define ARC_OPCODE_ARCv2HS  0x0008  /* ARCv2 HS specific insns.  */
 
-/* Values for `flags'.  */
+/* CPU extensions.  */
+#define ARC_EA       0x0001
+#define ARC_CD       0x0001    /* Mutual exclusive with EA.  */
+#define ARC_LLOCK    0x0002
+#define ARC_ATOMIC   0x0002    /* Mutual exclusive with LLOCK.  */
+#define ARC_MPY      0x0004
+#define ARC_MULT     0x0004
 
-/* Return CPU number, given flag bits.  */
-#define ARC_OPVAL_CPU(bits) ((bits) & ARC_MACH_CPU_MASK)
-/* Return MACH number, given flag bits.  */
-#define ARC_OPVAL_MACH(bits) ((bits) & ARC_MACH_MASK)
+/* Floating point support.  */
+#define ARC_DPFP     0x0010
+#define ARC_SPFP     0x0020
+#define ARC_FPU      0x0030
+
+/* NORM & SWAP.  */
+#define ARC_SWAP     0x0100
+#define ARC_NORM     0x0200
+#define ARC_BSCAN    0x0200
+
+/* A7 specific.  */
+#define ARC_UIX      0x1000
+#define ARC_TSTAMP   0x1000
+
+/* A6 specific.  */
+#define ARC_VBFDW    0x1000
+#define ARC_BARREL   0x1000
+#define ARC_DSPA     0x1000
+
+/* EM specific.  */
+#define ARC_SHIFT    0x1000
+
+/* V2 specific.  */
+#define ARC_INTR     0x1000
+#define ARC_DIV      0x1000
+
+/* V1 specific.  */
+#define ARC_XMAC     0x1000
+#define ARC_CRC      0x1000
+
+/* Base architecture -- all cpus.  */
+#define ARC_OPCODE_BASE				\
+  (ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700	\
+   | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
+
+/* A macro to check for short instructions.  */
+#define ARC_SHORT(mask)				\
+  (((mask) & 0xFFFF0000) ? 0 : 1)
+
+/* The operands table is an array of struct arc_operand.  */
+struct arc_operand
+{
+  /* The number of bits in the operand.  */
+  unsigned int bits;
+
+  /* How far the operand is left shifted in the instruction.  */
+  unsigned int shift;
+
+  /* The default relocation type for this operand.  */
+  signed int default_reloc;
+
+  /* One bit syntax flags.  */
+  unsigned int flags;
+
+  /* Insertion function.  This is used by the assembler.  To insert an
+     operand value into an instruction, check this field.
+
+     If it is NULL, execute
+	 i |= (op & ((1 << o->bits) - 1)) << o->shift;
+     (i is the instruction which we are filling in, o is a pointer to
+     this structure, and op is the opcode value; this assumes twos
+     complement arithmetic).
+
+     If this field is not NULL, then simply call it with the
+     instruction and the operand value.	 It will return the new value
+     of the instruction.  If the ERRMSG argument is not NULL, then if
+     the operand value is illegal, *ERRMSG will be set to a warning
+     string (the operand will be inserted in any case).	 If the
+     operand value is legal, *ERRMSG will be unchanged (most operands
+     can accept any value).  */
+  unsigned (*insert) (unsigned instruction, int op, const char **errmsg);
+
+  /* Extraction function.  This is used by the disassembler.  To
+     extract this operand type from an instruction, check this field.
+
+     If it is NULL, compute
+	 op = ((i) >> o->shift) & ((1 << o->bits) - 1);
+	 if ((o->flags & ARC_OPERAND_SIGNED) != 0
+	     && (op & (1 << (o->bits - 1))) != 0)
+	   op -= 1 << o->bits;
+     (i is the instruction, o is a pointer to this structure, and op
+     is the result; this assumes twos complement arithmetic).
+
+     If this field is not NULL, then simply call it with the
+     instruction value.	 It will return the value of the operand.  If
+     the INVALID argument is not NULL, *INVALID will be set to
+     TRUE if this operand type can not actually be extracted from
+     this operand (i.e., the instruction does not match).  If the
+     operand is valid, *INVALID will not be changed.  */
+  int (*extract) (unsigned instruction, bfd_boolean *invalid);
 };
 
-struct arc_ext_operand_value {
-  struct arc_ext_operand_value *next;
-  struct arc_operand_value operand;
-};
+/* Elements in the table are retrieved by indexing with values from
+   the operands field of the arc_opcodes table.  */
+extern const struct arc_operand arc_operands[];
+extern const unsigned arc_num_operands;
+extern const unsigned arc_Toperand;
+extern const unsigned arc_NToperand;
 
-extern struct arc_ext_operand_value *arc_ext_operands;
+/* Values defined for the flags field of a struct arc_operand.  */
 
-struct arc_operand {
-/* One of the insn format chars.  */
-  unsigned char fmt;
+/* This operand does not actually exist in the assembler input.  This
+   is used to support extended mnemonics, for which two operands fields
+   are identical.  The assembler should call the insert function with
+   any op value.  The disassembler should call the extract function,
+   ignore the return value, and check the value placed in the invalid
+   argument.  */
+#define ARC_OPERAND_FAKE	0x0001
 
-/* The number of bits in the operand (may be unused for a modifier).  */
-  unsigned char bits;
-
-/* How far the operand is left shifted in the instruction, or
-   the modifier's flag bit (may be unused for a modifier.  */
-  unsigned char shift;
-
-/* Various flag bits.  */
-  int flags;
-
-/* Values for `flags'.  */
-
-/* This operand is a suffix to the opcode.  */
-#define ARC_OPERAND_SUFFIX 1
-
-/* This operand is a relative branch displacement.  The disassembler
-   prints these symbolically if possible.  */
-#define ARC_OPERAND_RELATIVE_BRANCH 2
-
-/* This operand is an absolute branch address.  The disassembler
-   prints these symbolically if possible.  */
-#define ARC_OPERAND_ABSOLUTE_BRANCH 4
-
-/* This operand is an address.  The disassembler
-   prints these symbolically if possible.  */
-#define ARC_OPERAND_ADDRESS 8
-
-/* This operand is a long immediate value.  */
-#define ARC_OPERAND_LIMM 0x10
+/* This operand names an integer register.  */
+#define ARC_OPERAND_IR		0x0002
 
 /* This operand takes signed values.  */
-#define ARC_OPERAND_SIGNED 0x20
+#define ARC_OPERAND_SIGNED	0x0004
 
-/* This operand takes signed values, but also accepts a full positive
-   range of values.  That is, if bits is 16, it takes any value from
-   -0x8000 to 0xffff.  */
-#define ARC_OPERAND_SIGNOPT 0x40
+/* This operand takes unsigned values.  This exists primarily so that
+   a flags value of 0 can be treated as end-of-arguments.  */
+#define ARC_OPERAND_UNSIGNED	0x0008
 
-/* This operand should be regarded as a negative number for the
-   purposes of overflow checking (i.e., the normal most negative
-   number is disallowed and one more than the normal most positive
-   number is allowed).  This flag will only be set for a signed
-   operand.  */
-#define ARC_OPERAND_NEGATIVE 0x80
+/* This operand takes long immediate values.  */
+#define ARC_OPERAND_LIMM	0x0010
 
-/* This operand doesn't really exist.  The program uses these operands
-   in special ways.  */
-#define ARC_OPERAND_FAKE 0x100
+/* This operand is identical like the previous one.  */
+#define ARC_OPERAND_DUPLICATE   0x0020
 
-/* separate flags operand for j and jl instructions  */
-#define ARC_OPERAND_JUMPFLAGS 0x200
+/* This operand is PC relative.  Used for internal relocs.  */
+#define ARC_OPERAND_PCREL       0x0040
 
-/* allow warnings and errors to be issued after call to insert_xxxxxx  */
-#define ARC_OPERAND_WARN  0x400
-#define ARC_OPERAND_ERROR 0x800
+/* This operand is truncated.  The truncation is done accordingly to
+   operand alignment attribute.  */
+#define ARC_OPERAND_TRUNCATE    0x0080
 
-/* this is a load operand */
-#define ARC_OPERAND_LOAD  0x8000
+/* This operand is 16bit aligned.  */
+#define ARC_OPERAND_ALIGNED16   0x0100
 
-/* this is a store operand */
-#define ARC_OPERAND_STORE 0x10000
+/* This operand is 32bit aligned.  */
+#define ARC_OPERAND_ALIGNED32   0x0200
 
-/* Modifier values.  */
-/* A dot is required before a suffix.  Eg: .le  */
-#define ARC_MOD_DOT 0x1000
+/* This operand can be ignored by matching process if it is not
+   present.  */
+#define ARC_OPERAND_IGNORE      0x0400
 
-/* A normal register is allowed (not used, but here for completeness).  */
-#define ARC_MOD_REG 0x2000
+/* Don't check the range when matching.	 */
+#define ARC_OPERAND_NCHK	0x0800
 
-/* An auxiliary register name is expected.  */
-#define ARC_MOD_AUXREG 0x4000
+/* Mark the braket possition.  */
+#define ARC_OPERAND_BRAKET      0x1000
 
-/* Sum of all ARC_MOD_XXX bits.  */
-#define ARC_MOD_BITS 0x7000
+/* Mask for selecting the type for typecheck purposes.  */
+#define ARC_OPERAND_TYPECHECK_MASK		\
+  (ARC_OPERAND_IR |				\
+   ARC_OPERAND_LIMM | ARC_OPERAND_SIGNED | 	\
+   ARC_OPERAND_UNSIGNED | ARC_OPERAND_BRAKET)
 
-/* Non-zero if the operand type is really a modifier.  */
-#define ARC_MOD_P(X) ((X) & ARC_MOD_BITS)
+/* The flags structure.  */
+struct arc_flag_operand
+{
+  /* The flag name.  */
+  const char *name;
 
-/* enforce read/write only register restrictions  */
-#define ARC_REGISTER_READONLY    0x01
-#define ARC_REGISTER_WRITEONLY   0x02
-#define ARC_REGISTER_NOSHORT_CUT 0x04
+  /* The flag code.  */
+  unsigned code;
 
-/* Insertion function.  This is used by the assembler.  To insert an
-   operand value into an instruction, check this field.
+  /* The number of bits in the operand.  */
+  unsigned int bits;
 
-   If it is NULL, execute
-   i |= (p & ((1 << o->bits) - 1)) << o->shift;
-   (I is the instruction which we are filling in, O is a pointer to
-   this structure, and OP is the opcode value; this assumes twos
-   complement arithmetic).
-   
-   If this field is not NULL, then simply call it with the
-   instruction and the operand value.  It will return the new value
-   of the instruction.  If the ERRMSG argument is not NULL, then if
-   the operand value is illegal, *ERRMSG will be set to a warning
-   string (the operand will be inserted in any case).  If the
-   operand value is legal, *ERRMSG will be unchanged.
+  /* How far the operand is left shifted in the instruction.  */
+  unsigned int shift;
 
-   REG is non-NULL when inserting a register value.  */
-
-  arc_insn (*insert)
-    (arc_insn insn, const struct arc_operand *operand, int mods,
-     const struct arc_operand_value *reg, long value, const char **errmsg);
-
-/* Extraction function.  This is used by the disassembler.  To
-   extract this operand type from an instruction, check this field.
-   
-   If it is NULL, compute
-     op = ((i) >> o->shift) & ((1 << o->bits) - 1);
-     if ((o->flags & ARC_OPERAND_SIGNED) != 0
-          && (op & (1 << (o->bits - 1))) != 0)
-       op -= 1 << o->bits;
-   (I is the instruction, O is a pointer to this structure, and OP
-   is the result; this assumes twos complement arithmetic).
-   
-   If this field is not NULL, then simply call it with the
-   instruction value.  It will return the value of the operand.  If
-   the INVALID argument is not NULL, *INVALID will be set to
-   non-zero if this operand type can not actually be extracted from
-   this operand (i.e., the instruction does not match).  If the
-   operand is valid, *INVALID will not be changed.
-
-   INSN is a pointer to an array of two `arc_insn's.  The first element is
-   the insn, the second is the limm if present.
-
-   Operands that have a printable form like registers and suffixes have
-   their struct arc_operand_value pointer stored in OPVAL.  */
-
-  long (*extract)
-    (arc_insn *insn, const struct arc_operand *operand, int mods,
-     const struct arc_operand_value **opval, int *invalid);
+  /* Available for disassembler.  */
+  unsigned char favail;
 };
 
-/* Bits that say what version of cpu we have. These should be passed to
-   arc_init_opcode_tables. At present, all there is is the cpu type.  */
+/* The flag operands table.  */
+extern const struct arc_flag_operand arc_flag_operands[];
+extern const unsigned arc_num_flag_operands;
 
-/* CPU number, given value passed to `arc_init_opcode_tables'.  */
-#define ARC_HAVE_CPU(bits) ((bits) & ARC_MACH_CPU_MASK)
-/* MACH number, given value passed to `arc_init_opcode_tables'.  */
-#define ARC_HAVE_MACH(bits) ((bits) & ARC_MACH_MASK)
+/* The flag's class structure.  */
+struct arc_flag_class
+{
+  /* Flag class.  */
+  flag_class_t class;
 
-/* Special register values:  */
-#define ARC_REG_SHIMM_UPDATE 61
-#define ARC_REG_SHIMM 63
-#define ARC_REG_LIMM 62
+  /* List of valid flags (codes).  */
+  unsigned flags[256];
+};
 
-/* Non-zero if REG is a constant marker.  */
-#define ARC_REG_CONSTANT_P(REG) ((REG) >= 61)
+extern const struct arc_flag_class arc_flag_classes[];
 
-/* Positions and masks of various fields:  */
-#define ARC_SHIFT_REGA 21
-#define ARC_SHIFT_REGB 15
-#define ARC_SHIFT_REGC 9
-#define ARC_MASK_REG 63
+/* Structure for special cases.  */
+struct arc_flag_special
+{
+  /* Name of special case instruction.  */
+  const char *name;
 
-/* Delay slot types.  */
-#define ARC_DELAY_NONE 0   /* no delay slot */
-#define ARC_DELAY_NORMAL 1 /* delay slot in both cases */
-#define ARC_DELAY_JUMP 2   /* delay slot only if branch taken */
+  /* List of flags applicable for special case instruction.  */
+  unsigned flags[32];
+};
 
-/* Non-zero if X will fit in a signed 9 bit field.  */
-#define ARC_SHIMM_CONST_P(x) ((long) (x) >= -256 && (long) (x) <= 255)
+extern const struct arc_flag_special arc_flag_special_cases[];
+extern const unsigned arc_num_flag_special;
 
-extern const struct arc_operand arc_operands[];
-extern const int arc_operand_count;
-extern struct arc_opcode arc_opcodes[];
-extern const int arc_opcodes_count;
-extern const struct arc_operand_value arc_suffixes[];
-extern const int arc_suffixes_count;
-extern const struct arc_operand_value arc_reg_names[];
-extern const int arc_reg_names_count;
-extern unsigned char arc_operand_map[];
+/* Relocation equivalence structure.  */
+struct arc_reloc_equiv_tab
+{
+  const char * name;	   /* String to lookup.  */
+  const char * mnemonic;   /* Extra matching condition.  */
+  unsigned     flagcode;   /* Extra matching condition.  */
+  signed int   oldreloc;   /* Old relocation.  */
+  signed int   newreloc;   /* New relocation.  */
+};
 
-/* Utility fns in arc-opc.c.  */
-int arc_get_opcode_mach (int, int);
+extern const struct arc_reloc_equiv_tab arc_reloc_equiv[];
+extern const unsigned arc_num_equiv_tab;
 
-/* `arc_opcode_init_tables' must be called before `arc_xxx_supported'.  */
-void arc_opcode_init_tables (int);
-void arc_opcode_init_insert (void);
-void arc_opcode_init_extract (void);
-const struct arc_opcode *arc_opcode_lookup_asm (const char *);
-const struct arc_opcode *arc_opcode_lookup_dis (unsigned int);
-int arc_opcode_limm_p (long *);
-const struct arc_operand_value *arc_opcode_lookup_suffix
-  (const struct arc_operand *type, int value);
-int arc_opcode_supported (const struct arc_opcode *);
-int arc_opval_supported (const struct arc_operand_value *);
-int arc_limm_fixup_adjust (arc_insn);
-int arc_insn_is_j (arc_insn);
-int arc_insn_not_jl (arc_insn);
-int arc_operand_type (int);
-struct arc_operand_value *get_ext_suffix (char *);
-int arc_get_noshortcut_flag (void);
+/* Structure for operand operations for pseudo/alias instructions.  */
+struct arc_operand_operation
+{
+  /* The index for operand from operand array.  */
+  unsigned operand_idx;
+
+  /* Defines if it needs the operand inserted by the assembler or
+     whether this operand comes from the pseudo instruction's
+     operands.  */
+  unsigned char needs_insert;
+
+  /* Count we have to add to the operand.  Use negative number to
+     subtract from the operand.  Also use this number to add to 0 if
+     the operand needs to be inserted (i.e. needs_insert == 1).  */
+  int count;
+
+  /* Index of the operand to swap with.  To be done AFTER applying
+     inc_count.  */
+  unsigned swap_operand_idx;
+};
+
+/* Structure for pseudo/alias instructions.  */
+struct arc_pseudo_insn
+{
+  /* Mnemonic for pseudo/alias insn.  */
+  const char *mnemonic_p;
+
+  /* Mnemonic for real instruction.  */
+  const char *mnemonic_r;
+
+  /* Flag that will have to be added (if any).  */
+  const char *flag_r;
+
+  /* Amount of operands.  */
+  unsigned operand_cnt;
+
+  /* Array of operand operations.  */
+  struct arc_operand_operation operand[6];
+};
+
+extern const struct arc_pseudo_insn arc_pseudo_insns[];
+extern const unsigned arc_num_pseudo_insn;
+
+/* Structure for AUXILIARY registers.  */
+struct arc_aux_reg
+{
+  /* Register address.  */
+  int address;
+
+ /* Register name.  */
+  const char *name;
+
+  /* Size of the string.  */
+  size_t length;
+};
+
+extern const struct arc_aux_reg arc_aux_regs[];
+extern const unsigned arc_num_aux_regs;
+
+#endif /* OPCODE_ARC_H */

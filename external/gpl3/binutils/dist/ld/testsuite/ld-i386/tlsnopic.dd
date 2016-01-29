@@ -156,5 +156,3 @@ Disassembly of section .text:
  +[0-9a-f]+:	8b 5d fc[ 	]+mov    -0x4\(%ebp\),%ebx
  +[0-9a-f]+:	c9[ 	]+leave *
  +[0-9a-f]+:	c3[ 	]+ret *
- +[0-9a-f]+:	66 90[ 	]+xchg   %ax,%ax
- +[0-9a-f]+:	90[ 	]+nop

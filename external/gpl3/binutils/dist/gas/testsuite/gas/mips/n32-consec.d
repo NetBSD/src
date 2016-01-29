@@ -12,3 +12,16 @@ Disassembly of section .data:
 			0: R_MIPS_32	.data\+0x4
 Disassembly of section .reginfo:
 	...
+
+Disassembly of section .MIPS.abiflags:
+.*
+.*
+	...
+.*
+.*
+
+Disassembly of section .gnu.attributes:
+.*
+.*
+.*
+.*

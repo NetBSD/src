@@ -21,7 +21,7 @@ Disassembly of section .text:
   14:	afbf0020 	sw	ra,32\(sp\)
   18:	0c000000 	jal	0 <foo>
   1c:	00000000 	nop
-  20:	0000102[1d] 	move	v0,zero
+  20:	00001025 	move	v0,zero
   24:	8fbf0020 	lw	ra,32\(sp\)
   28:	00000000 	nop
   2c:	03e00008 	jr	ra

@@ -53,3 +53,15 @@ x:
 	ldrht	r9, [r0], -r9
 	ldrht	r9, [r0], #0x99
 	ldrht	r9, [r0], #-0x99
+	ldrneht	r9, [r0], r9
+	ldrneht	r9, [r0], -r9
+	ldrneht	r9, [r0], #0x99
+	ldrneht	r9, [r0], #-0x99
+	strht	r0, [r1], -r2
+	strneht	r0, [r1], -r2
+	strht	r0, [r1], r2
+	strneht	r0, [r1], r2
+	strht	r0, [r1], #2
+	strht	r0, [r1], #-2
+	strneht	r0, [r1], #2
+	strneht	r0, [r1], #-2

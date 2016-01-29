@@ -3,36 +3,6 @@ Relocation section '\.rel\.dyn' at offset 0x8000 contains 62 entries:
  Offset     Info    Type            Sym\.Value  Sym\. Name
 0001106c  ......17 R_ARM_RELATIVE   
 00011070  ......17 R_ARM_RELATIVE   
-00010004  ......a0 R_ARM_IRELATIVE  
-0001000c  ......a0 R_ARM_IRELATIVE  
-00010014  ......a0 R_ARM_IRELATIVE  
-0001001c  ......a0 R_ARM_IRELATIVE  
-00010024  ......a0 R_ARM_IRELATIVE  
-0001002c  ......a0 R_ARM_IRELATIVE  
-00010064  ......a0 R_ARM_IRELATIVE  
-0001006c  ......a0 R_ARM_IRELATIVE  
-00010074  ......a0 R_ARM_IRELATIVE  
-0001007c  ......a0 R_ARM_IRELATIVE  
-00010084  ......a0 R_ARM_IRELATIVE  
-0001008c  ......a0 R_ARM_IRELATIVE  
-00011024  ......a0 R_ARM_IRELATIVE  
-00011028  ......a0 R_ARM_IRELATIVE  
-0001102c  ......a0 R_ARM_IRELATIVE  
-00011030  ......a0 R_ARM_IRELATIVE  
-00011034  ......a0 R_ARM_IRELATIVE  
-00011038  ......a0 R_ARM_IRELATIVE  
-0001103c  ......a0 R_ARM_IRELATIVE  
-00011040  ......a0 R_ARM_IRELATIVE  
-00011044  ......a0 R_ARM_IRELATIVE  
-00011048  ......a0 R_ARM_IRELATIVE  
-0001104c  ......a0 R_ARM_IRELATIVE  
-00011050  ......a0 R_ARM_IRELATIVE  
-00011054  ......a0 R_ARM_IRELATIVE  
-00011058  ......a0 R_ARM_IRELATIVE  
-0001105c  ......a0 R_ARM_IRELATIVE  
-00011060  ......a0 R_ARM_IRELATIVE  
-00011064  ......a0 R_ARM_IRELATIVE  
-00011068  ......a0 R_ARM_IRELATIVE  
 00010034  ......02 R_ARM_ABS32       aaf2\(\)     aaf2
 00010038  ......03 R_ARM_REL32       aaf2\(\)     aaf2
 00011088  ......15 R_ARM_GLOB_DAT    aaf2\(\)     aaf2
@@ -63,6 +33,36 @@ Relocation section '\.rel\.dyn' at offset 0x8000 contains 62 entries:
 00011094  ......15 R_ARM_GLOB_DAT    ttf4\(\)     ttf4
 000100bc  ......02 R_ARM_ABS32       tbf4\(\)     tbf4
 00011090  ......15 R_ARM_GLOB_DAT    tbf4\(\)     tbf4
+00010004  ......a0 R_ARM_IRELATIVE  
+0001000c  ......a0 R_ARM_IRELATIVE  
+00010014  ......a0 R_ARM_IRELATIVE  
+0001001c  ......a0 R_ARM_IRELATIVE  
+00010024  ......a0 R_ARM_IRELATIVE  
+0001002c  ......a0 R_ARM_IRELATIVE  
+00010064  ......a0 R_ARM_IRELATIVE  
+0001006c  ......a0 R_ARM_IRELATIVE  
+00010074  ......a0 R_ARM_IRELATIVE  
+0001007c  ......a0 R_ARM_IRELATIVE  
+00010084  ......a0 R_ARM_IRELATIVE  
+0001008c  ......a0 R_ARM_IRELATIVE  
+00011024  ......a0 R_ARM_IRELATIVE  
+00011028  ......a0 R_ARM_IRELATIVE  
+0001102c  ......a0 R_ARM_IRELATIVE  
+00011030  ......a0 R_ARM_IRELATIVE  
+00011034  ......a0 R_ARM_IRELATIVE  
+00011038  ......a0 R_ARM_IRELATIVE  
+0001103c  ......a0 R_ARM_IRELATIVE  
+00011040  ......a0 R_ARM_IRELATIVE  
+00011044  ......a0 R_ARM_IRELATIVE  
+00011048  ......a0 R_ARM_IRELATIVE  
+0001104c  ......a0 R_ARM_IRELATIVE  
+00011050  ......a0 R_ARM_IRELATIVE  
+00011054  ......a0 R_ARM_IRELATIVE  
+00011058  ......a0 R_ARM_IRELATIVE  
+0001105c  ......a0 R_ARM_IRELATIVE  
+00011060  ......a0 R_ARM_IRELATIVE  
+00011064  ......a0 R_ARM_IRELATIVE  
+00011068  ......a0 R_ARM_IRELATIVE  
 
 Relocation section '\.rel\.plt' at offset 0x81f0 contains 6 entries:
  Offset     Info    Type            Sym\.Value  Sym\. Name

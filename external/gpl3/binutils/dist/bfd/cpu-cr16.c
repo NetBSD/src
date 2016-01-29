@@ -1,5 +1,5 @@
 /* BFD support for the CR16 processor.
-   Copyright 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Written by M R Swami Reddy
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,7 +34,7 @@ const bfd_arch_info_type bfd_cr16_arch =
     "cr16",           /* Printable name.  */
     1,                /* Unsigned int section alignment power.  */
     TRUE,             /* The one and only.  */
-    bfd_default_compatible, 
+    bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
     0,

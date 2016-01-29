@@ -1,6 +1,5 @@
 /* TI C6X assembler.
-   Copyright 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -472,17 +471,15 @@ s_tic6x_personalityindex (int ignored ATTRIBUTE_UNUSED)
 static void
 s_tic6x_personality (int ignored ATTRIBUTE_UNUSED)
 {
-  char *name, *p, c;
+  char *name, c;
   tic6x_unwind_info *unwind = tic6x_get_unwind ();
 
   if (unwind->personality_routine || unwind->personality_index != -1)
     as_bad (_("duplicate .personality directive"));
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
-  p = input_line_pointer;
+  c = get_symbol_name (&name);
   unwind->personality_routine = symbol_find_or_make (name);
-  *p = c;
+  (void) restore_line_pointer (c);
   demand_empty_rest_of_line ();
 }
 
@@ -537,6 +534,7 @@ s_tic6x_ehtype (int ignored ATTRIBUTE_UNUSED)
     }
 
   p = frag_more (4);
+  memset (p, 0, 4);
   fix_new_exp (frag_now, p - frag_now->fr_literal, 4,
 	       &exp, 0, BFD_RELOC_C6000_EHTYPE);
 
@@ -570,12 +568,11 @@ s_tic6x_scomm (int ignore ATTRIBUTE_UNUSED)
   offsetT align;
   int align2;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
 
   /* Just after name is now '\0'.  */
   p = input_line_pointer;
-  *p = c;
+  (void) restore_line_pointer (c);
   SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
@@ -693,7 +690,7 @@ static bfd_boolean tic6x_attributes_set_explicitly[NUM_KNOWN_OBJ_ATTRIBUTES];
 static void
 s_tic6x_c6xabi_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = s_vendor_attribute (OBJ_ATTR_PROC);
+  int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
 
   if (tag < NUM_KNOWN_OBJ_ATTRIBUTES)
     tic6x_attributes_set_explicitly[tag] = TRUE;
@@ -2013,10 +2010,9 @@ tic6x_fix_new_exp (fragS *frag, int where, int size, expressionS *exp,
    go through the error checking in tic6x_fix_new_exp.  */
 
 void
-tic6x_cons_fix_new (fragS *frag, int where, int size, expressionS *exp)
+tic6x_cons_fix_new (fragS *frag, int where, int size, expressionS *exp,
+		    bfd_reloc_code_real_type r_type)
 {
-  bfd_reloc_code_real_type r_type;
-
   switch (size)
     {
     case 1:
@@ -2069,7 +2065,7 @@ tic6x_fix_adjustable (fixS *fixP)
     case BFD_RELOC_C6000_PCR_H16:
     case BFD_RELOC_C6000_PCR_L16:
       return 0;
-      
+
     default:
       return 1;
     }
@@ -2485,7 +2481,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	  fldd = tic6x_field_from_fmt (fmt, opct->fixed_fields[fld].field_id);
 	  if (fldd == NULL)
 	    abort ();
-	  opcode_value |= opct->fixed_fields[fld].min_val << fldd->low_pos;
+	  opcode_value |= opct->fixed_fields[fld].min_val << fldd->bitfields[0].low_pos;
 	}
     }
 
@@ -2516,7 +2512,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	  ucexp = operands[opno].value.exp;
 	unsigned_constant:
 	  if (ucexp.X_add_number < 0
-	      || ucexp.X_add_number >= (1 << fldd->width))
+	      || ucexp.X_add_number >= (1 << fldd->bitfields[0].width))
 	    {
 	      if (print_errors)
 		as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
@@ -2535,7 +2531,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      value = 0;
 	      /* Opcode table should not permit non-constants without
 		 a known relocation for them.  */
-	      if (fldd->low_pos != 7 || fldd->width != 16)
+	      if (fldd->bitfields[0].low_pos != 7 || fldd->bitfields[0].width != 16)
 		abort ();
 	      *fix_needed = TRUE;
 	      *fix_exp = &operands[opno].value.exp;
@@ -2546,8 +2542,8 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	    }
 	  sign_value = SEXT (operands[opno].value.exp.X_add_number);
 	signed_constant:
-	  if (sign_value < -(1 << (fldd->width - 1))
-	      || (sign_value >= (1 << (fldd->width - 1))))
+	  if (sign_value < -(1 << (fldd->bitfields[0].width - 1))
+	      || (sign_value >= (1 << (fldd->bitfields[0].width - 1))))
 	    {
 	      if (print_errors)
 		as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
@@ -2555,8 +2551,8 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      *ok = FALSE;
 	      return 0;
 	    }
-	  value = sign_value + (1 << (fldd->width - 1));
-	  value ^= (1 << (fldd->width - 1));
+	  value = sign_value + (1 << (fldd->bitfields[0].width - 1));
+	  value ^= (1 << (fldd->bitfields[0].width - 1));
 	  break;
 
 	case tic6x_coding_ucst_minus_one:
@@ -2565,7 +2561,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	  if (operands[opno].value.exp.X_op != O_constant)
 	    abort ();
 	  if (operands[opno].value.exp.X_add_number <= 0
-	      || operands[opno].value.exp.X_add_number > (1 << fldd->width))
+	      || operands[opno].value.exp.X_add_number > (1 << fldd->bitfields[0].width))
 	    {
 	      if (print_errors)
 		as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
@@ -2637,7 +2633,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	  value = 0;
 	  /* Opcode table should not use this encoding without a known
 	     relocation.  */
-	  if (fldd->low_pos != 8 || fldd->width != 15)
+	  if (fldd->bitfields[0].low_pos != 8 || fldd->bitfields[0].width != 15)
 	    abort ();
 	  /* We do not check for offset divisibility here; such a
 	     check is not needed at this point to encode the value,
@@ -2664,7 +2660,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      value = 0;
 	      /* Opcode table should not use this encoding without a
 		 known relocation.  */
-	      if (fldd->low_pos != 7 || fldd->width != 16)
+	      if (fldd->bitfields[0].low_pos != 7 || fldd->bitfields[0].width != 16)
 		abort ();
 	      *fix_needed = TRUE;
 	      *fix_exp = &operands[opno].value.exp;
@@ -2684,7 +2680,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      value = 0;
 	      /* Opcode table should not use this encoding without a
 		 known relocation.  */
-	      if (fldd->low_pos != 7 || fldd->width != 16)
+	      if (fldd->bitfields[0].low_pos != 7 || fldd->bitfields[0].width != 16)
 		abort ();
 	      *fix_needed = TRUE;
 	      *fix_exp = &operands[opno].value.exp;
@@ -2702,19 +2698,43 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	  *fix_needed = TRUE;
 	  *fix_exp = &operands[opno].value.exp;
 	  *fix_pcrel = 1;
-	  if (fldd->low_pos == 7 && fldd->width == 21)
+	  if (fldd->bitfields[0].low_pos == 7 && fldd->bitfields[0].width == 21)
 	    *fx_r_type = BFD_RELOC_C6000_PCR_S21;
-	  else if (fldd->low_pos == 16 && fldd->width == 12)
+	  else if (fldd->bitfields[0].low_pos == 16 && fldd->bitfields[0].width == 12)
 	    *fx_r_type = BFD_RELOC_C6000_PCR_S12;
-	  else if (fldd->low_pos == 13 && fldd->width == 10)
+	  else if (fldd->bitfields[0].low_pos == 13 && fldd->bitfields[0].width == 10)
 	    *fx_r_type = BFD_RELOC_C6000_PCR_S10;
-	  else if (fldd->low_pos == 16 && fldd->width == 7)
+	  else if (fldd->bitfields[0].low_pos == 16 && fldd->bitfields[0].width == 7)
 	    *fx_r_type = BFD_RELOC_C6000_PCR_S7;
 	  else
 	    /* Opcode table should not use this encoding without a
 	       known relocation.  */
 	    abort ();
 	  *fix_adda = FALSE;
+	  break;
+
+	case tic6x_coding_regpair_lsb:
+	  switch (operands[opno].form)
+	    {
+	    case TIC6X_OP_REGPAIR:
+	      value = operands[opno].value.reg.num;
+	      break;
+
+	    default:
+	      abort ();
+	    }
+	  break;
+
+	case tic6x_coding_regpair_msb:
+	  switch (operands[opno].form)
+	    {
+	    case TIC6X_OP_REGPAIR:
+	      value = operands[opno].value.reg.num + 1;
+	      break;
+
+	    default:
+	      abort ();
+	    }
 	  break;
 
 	case tic6x_coding_reg:
@@ -2802,7 +2822,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  abort ();
 		}
 	      if (mem.offset.exp.X_add_number < 0
-		  || mem.offset.exp.X_add_number >= (1 << fldd->width) * scale)
+		  || mem.offset.exp.X_add_number >= (1 << fldd->bitfields[0].width) * scale)
 		{
 		  if (print_errors)
 		    as_bad (_("offset in operand %u of '%.*s' out of range"),
@@ -2835,7 +2855,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      if (mem.offset.exp.X_op != O_constant)
 		abort ();
 	      if (mem.offset.exp.X_add_number < 0
-		  || mem.offset.exp.X_add_number >= (1 << fldd->width))
+		  || mem.offset.exp.X_add_number >= (1 << fldd->bitfields[0].width))
 		{
 		  if (print_errors)
 		    as_bad (_("offset in operand %u of '%.*s' out of range"),
@@ -2908,7 +2928,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	case tic6x_coding_spmask:
 	  /* The position of such a field is hardcoded in the handling
 	     of "||^".  */
-	  if (fldd->low_pos != 18)
+	  if (fldd->bitfields[0].low_pos != 18)
 	    abort ();
 	  value = 0;
 	  for (opno = 0; opno < num_operands; opno++)
@@ -2963,7 +2983,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	    fcyc_bits = 4;
 	  else
 	    abort ();
-	  if (fcyc_bits > fldd->width)
+	  if (fcyc_bits > fldd->bitfields[0].width)
 	    abort ();
 
 	  if (opct->variable_fields[fld].coding_method == tic6x_coding_fstg)
@@ -2971,7 +2991,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      int i, t;
 	      if (operands[opno].value.exp.X_add_number < 0
 		  || (operands[opno].value.exp.X_add_number
-		      >= (1 << (fldd->width - fcyc_bits))))
+		      >= (1 << (fldd->bitfields[0].width - fcyc_bits))))
 		{
 		  if (print_errors)
 		    as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
@@ -2980,7 +3000,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  return 0;
 		}
 	      value = operands[opno].value.exp.X_add_number;
-	      for (t = 0, i = fcyc_bits; i < fldd->width; i++)
+	      for (t = 0, i = fcyc_bits; i < fldd->bitfields[0].width; i++)
 		{
 		  t = (t << 1) | (value & 1);
 		  value >>= 1;
@@ -3031,7 +3051,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	    return 0;
 	  }
 
-      opcode_value |= value << fldd->low_pos;
+      opcode_value |= value << fldd->bitfields[0].low_pos;
     }
 
   if (this_line_creg)
@@ -3054,8 +3074,8 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
       if (z == NULL)
 	abort ();
 
-      opcode_value |= this_line_creg << creg->low_pos;
-      opcode_value |= this_line_z << z->low_pos;
+      opcode_value |= this_line_creg << creg->bitfields[0].low_pos;
+      opcode_value |= this_line_z << z->bitfields[0].low_pos;
     }
 
   *ok = TRUE;
@@ -3801,7 +3821,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  if (value < -0x80 || value > 0xff)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("value too large for 1-byte field"));
-	  md_number_to_chars (buf, value, 1);
+	  *buf = value;
 	}
       break;
 
@@ -4464,7 +4484,7 @@ md_section_align (segT segment ATTRIBUTE_UNUSED,
   /* Round up section sizes to ensure that text sections consist of
      whole fetch packets.  */
   int align = bfd_get_section_alignment (stdoutput, segment);
-  return ((size + (1 << align) - 1) & ((valueT) -1 << align));
+  return ((size + (1 << align) - 1) & (-((valueT) 1 << align)));
 }
 
 /* No special undefined symbol handling needed for now.  */
@@ -4657,18 +4677,18 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
 
 
 static const int
-tic6x_unwind_frame_regs[TIC6X_NUM_UNWIND_REGS] = 
+tic6x_unwind_frame_regs[TIC6X_NUM_UNWIND_REGS] =
 /* A15 B15 B14 B13 B12 B11 B10  B3 A14 A13 A12 A11 A10.  */
   { 15, 31, 30, 29, 28, 27, 26, 19, 14, 13, 12, 11, 10 };
 
 /* Register save offsets for __c6xabi_push_rts.  */
 static const int
-tic6x_pop_rts_offset_little[TIC6X_NUM_UNWIND_REGS] = 
+tic6x_pop_rts_offset_little[TIC6X_NUM_UNWIND_REGS] =
 /* A15 B15 B14 B13 B12 B11 B10  B3 A14 A13 A12 A11 A10.  */
   { -1,  1,  0, -3, -4, -7, -8,-11, -2, -5, -6, -9,-10};
 
 static const int
-tic6x_pop_rts_offset_big[TIC6X_NUM_UNWIND_REGS] = 
+tic6x_pop_rts_offset_big[TIC6X_NUM_UNWIND_REGS] =
 /* A15 B15 B14 B13 B12 B11 B10  B3 A14 A13 A12 A11 A10.  */
   { -2,  1,  0, -4, -3, -8, -7,-12, -1, -6, -5,-10, -9};
 
@@ -4813,6 +4833,7 @@ tic6x_output_exidx_entry (void)
   record_alignment (now_seg, 2);
 
   ptr = frag_more (8);
+  memset (ptr, 0, 8);
   where = frag_now_fix () - 8;
 
   /* Self relative offset of the function start.  */
@@ -5316,7 +5337,7 @@ tic6x_cfi_endproc (struct fde_entry *fde)
 	    continue;
 
 	  unwind->saved_reg_count++;
-	  /* Encoding uses 4 bits per word, so size of unwinding opcode data 
+	  /* Encoding uses 4 bits per word, so size of unwinding opcode data
 	     limits the save area size.  The exact cap will be figured out
 	     later due to overflow, the 0x800 here is just a quick sanity
 	     check to weed out obviously excessive offsets.  */

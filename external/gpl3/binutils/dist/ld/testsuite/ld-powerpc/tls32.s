@@ -19,8 +19,17 @@ ie4:	.long 0x56789abc
 le4:	.long 0x6789abcd
 le5:	.long 0x789abcde
 
+	.section ".got2","aw"
+.LCTOC1 = .+32768
+
 	.text
 _start:
+ bcl 20,31,0f
+0:
+ mflr 30
+ addis 30,30,.LCTOC1-0b@ha
+ addi 30,30,.LCTOC1-0b@l
+
 #extern syms
 #GD
  addi 3,31,gd@got@tlsgd		#R_PPC_GOT_TLSGD16	gd

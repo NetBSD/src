@@ -1,5 +1,5 @@
 /* aarch64-opc.h -- Header file for aarch64-opc.c and aarch64-opc-2.c.
-   Copyright 2012  Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -84,6 +84,7 @@ enum aarch64_field_kind
   FLD_index,
   FLD_index2,
   FLD_sf,
+  FLD_lse_sz,
   FLD_H,
   FLD_L,
   FLD_M,
@@ -212,7 +213,7 @@ reset_operand_qualifier (aarch64_inst *inst, int idx)
 static inline aarch64_insn
 gen_mask (int width)
 {
-  return ((aarch64_insn) 1 << width) - 1;;
+  return ((aarch64_insn) 1 << width) - 1;
 }
 
 /* LSB_REL is the relative location of the lsb in the sub field, starting from 0.  */

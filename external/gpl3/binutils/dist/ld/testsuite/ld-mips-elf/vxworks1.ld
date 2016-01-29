@@ -28,5 +28,5 @@ SECTIONS
   . = ALIGN (0x400);
   .bss : { *(.bss) *(.dynbss) }
 
-  /DISCARD/ : { *(.reginfo) }
+  /DISCARD/ : { *(.reginfo) *(.MIPS.abiflags) }
 }

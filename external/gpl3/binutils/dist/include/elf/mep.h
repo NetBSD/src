@@ -1,6 +1,5 @@
 /* Toshiba MeP ELF support for BFD.
-   Copyright (C) 2001, 2004, 2005, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,10 +23,6 @@
 /* Bits in the sh_flags field of Elf32_Shdr:  */
 
 #define SHF_MEP_VLIW		0x10000000	/* contains vliw code */
-
-/* This bit is reserved by BFD for processor specific stuff.  Name
-   it properly so that we can easily stay consistent elsewhere.  */
-#define SEC_MEP_VLIW		SEC_TIC54X_BLOCK
 
 #include "elf/reloc-macros.h"
 

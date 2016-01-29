@@ -1,6 +1,6 @@
 // nacl.h -- Native Client support for gold    -*- C++ -*-
 
-// Copyright 2012 Free Software Foundation, Inc.
+// Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 // This file is part of gold.
 
@@ -60,7 +60,7 @@ class Sniff_file
   {
    public:
     View(File_read& file, off_t file_offset, off_t data_size)
-      : data_(file.get_view(0, file_offset, data_size, false, false))
+      : data_(file.get_view(file_offset, 0, data_size, true, false))
     { }
 
     const unsigned char* data()

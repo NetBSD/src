@@ -1,3 +1,19 @@
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  
+
 #
 # elf tests
 #
@@ -45,6 +61,9 @@ if { [is_elf_format] } then {
     if {[istarget m32r*-*-*]} then {
 	set target_machine -m32r
     }
+    if {[istarget "msp430-*-*"]} then {
+	set target_machine -msp430
+    }
     if {[istarget "score-*-*"]} then {
 	set target_machine -score
     }
@@ -57,23 +76,24 @@ if { [is_elf_format] } then {
     if {[istarget "rx-*-*"]} then {
 	set target_machine -rx
     }
+    if {[istarget "v850*-*-*"]} then {
+	set target_machine -v850
+    }
+    if {[istarget "rl78-*-*"]} then {
+	set target_machine -rl78
+    }
     if {[istarget "arm*-*-*"]} {
-
-	if { ([istarget "*-*-*eabi"]
-	      || [istarget "*-*-linux-*"]
-	      || [istarget "*-*-nacl*"]
-	      || [istarget "*-*-symbianelf"])} then {
-	    set target_machine -armeabi
-	} else {
-	    set target_machine -armelf
-	}
+	set target_machine -arm
     }
 
     # The MN10300 and Xtensa ports disable the assembler's call frame
     # optimization because it interfers with link-time relaxation of
     # function prologues.
     if {![istarget "mn10300-*-*"]
+	&& ![istarget "arc-*-*"]
 	&& ![istarget "xtensa*-*-*"]
+	&& ![istarget "msp430*-*-*"]
+	&& ![istarget "nds32*-*-*"]
 	&& ![istarget "am3*-*-*"]} then {
       run_dump_test "ehopt0"
     }
@@ -91,11 +111,13 @@ if { [is_elf_format] } then {
 	    run_dump_test "file"
 	}
     }
+    setup_xfail "nds32*-*-*"
     run_dump_test "group0a"
     run_dump_test "group0b"
     run_dump_test "group0c"
     run_dump_test "group1a"
     run_dump_test "group1b"
+    run_dump_test "group2"
     case $target_triplet in {
 	{ hppa64*-*-hpux* } { }
 	default {
@@ -119,6 +141,7 @@ if { [is_elf_format] } then {
 	{ mips*-*-* } { }
 	{ mn10200-*-* } { }
 	{ mn10300-*-* } { }
+	{ msp43*-*-* } { }
 	{ *c54x*-*-* } { }
 	{ rx-*-* } { }
 	default {
@@ -126,7 +149,7 @@ if { [is_elf_format] } then {
 	    # against ordinary symbols into relocations against section symbols.
 	    # This is usually revealed by the error message:
 	    #  symbol `sym' required but not present
-    	setup_xfail "m681*-*-*" "m68hc*-*-*"
+    	setup_xfail "m681*-*-*" "m68hc*-*-*" "arc-*-*"
 	    run_dump_test redef
 	    run_dump_test equ-reloc
 	}
@@ -156,11 +179,12 @@ if { [is_elf_format] } then {
     run_dump_test "symver"
 
     # No indirect functions on non-GNU targets.
-    # The MSP port sets the ELF header's OSABI field to ELFOSABI_STANDALONE.
+    # The Visium and MSP set the ELF header's OSABI field to ELFOSABI_STANDALONE.
     # The non-eabi ARM ports sets it to ELFOSABI_ARM.
     # So for these targets we cannot include an IFUNC symbol type
     # in the symbol type test.
     if { [istarget "*-*-hpux*"]
+	 || [istarget "visium-*-*"]
 	 || [istarget "msp*-*-*"]
 	 || [istarget "arm*-*-*"]} then {
 	# hppa64 has a non-standard common directive
@@ -188,6 +212,8 @@ if { [is_elf_format] } then {
     
     run_dump_test "common1"
     run_dump_test "common2"
+
+    run_dump_test "strtab"
 
 load_lib gas-dg.exp
 dg-init

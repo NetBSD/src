@@ -1,5 +1,5 @@
 /* aarch64-dis.h -- Header file for aarch64-dis.c and aarch64-dis-2.c.
-   Copyright 2012  Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -60,6 +60,7 @@ int aarch64_extract_operand (const aarch64_operand *, aarch64_opnd_info *,
 		   const aarch64_insn, const aarch64_inst *)
 
 AARCH64_DECL_OPD_EXTRACTOR (ext_regno);
+AARCH64_DECL_OPD_EXTRACTOR (ext_regno_pair);
 AARCH64_DECL_OPD_EXTRACTOR (ext_regrt_sysins);
 AARCH64_DECL_OPD_EXTRACTOR (ext_reglane);
 AARCH64_DECL_OPD_EXTRACTOR (ext_reglist);
@@ -85,6 +86,7 @@ AARCH64_DECL_OPD_EXTRACTOR (ext_sysreg);
 AARCH64_DECL_OPD_EXTRACTOR (ext_pstatefield);
 AARCH64_DECL_OPD_EXTRACTOR (ext_sysins_op);
 AARCH64_DECL_OPD_EXTRACTOR (ext_barrier);
+AARCH64_DECL_OPD_EXTRACTOR (ext_hint);
 AARCH64_DECL_OPD_EXTRACTOR (ext_prfop);
 AARCH64_DECL_OPD_EXTRACTOR (ext_reg_extended);
 AARCH64_DECL_OPD_EXTRACTOR (ext_reg_shifted);

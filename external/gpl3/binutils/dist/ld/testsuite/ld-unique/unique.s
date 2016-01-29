@@ -1,4 +1,4 @@
-	.type a, @gnu_unique_object
+	.type a, %gnu_unique_object
 a:	.long 0
 	.size a, .-a
 

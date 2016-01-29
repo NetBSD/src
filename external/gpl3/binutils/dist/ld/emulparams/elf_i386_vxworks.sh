@@ -11,3 +11,5 @@ GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes
 . ${srcdir}/emulparams/vxworks.sh
+. ${srcdir}/emulparams/extern_protected_data.sh
+. ${srcdir}/emulparams/call_nop.sh

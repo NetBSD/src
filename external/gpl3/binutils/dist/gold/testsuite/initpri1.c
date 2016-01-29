@@ -1,6 +1,6 @@
 /* initpri1.c -- test constructor priorities.
 
-   Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Copied from the gcc testsuite, where the test was contributed by
    Mark Mitchell <mark@codesourcery.com>.
 

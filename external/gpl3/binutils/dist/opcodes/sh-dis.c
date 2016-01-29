@@ -1,6 +1,5 @@
 /* Disassemble SH instructions.
-   Copyright 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -153,7 +152,7 @@ print_insn_ddt (int insn, struct disassemble_info *info)
 	while (op->nibbles[2] != (unsigned) ((insn >> 4) & 3)
 	       || op->nibbles[3] != (unsigned) (insn & 0xf))
 	  op++;
-	
+
 	print_movxy (op,
 		     (4 * ((insn & (is_movy ? 0x200 : 0x100)) == 0)
 		      + 2 * is_movy
@@ -906,6 +905,8 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
 	    size = 2;
 	  else
 	    size = 4;
+	  /* Not reading an instruction - disable stop_vma.  */
+	  info->stop_vma = 0;
 	  status = info->read_memory_func (disp_pc_addr, bytes, size, info);
 	  if (status == 0)
 	    {

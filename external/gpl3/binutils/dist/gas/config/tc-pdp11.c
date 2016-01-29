@@ -1,6 +1,5 @@
 /* tc-pdp11.c - pdp11-specific -
-   Copyright 2001, 2002, 2004, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

@@ -1,7 +1,6 @@
 /* tc-i370.c -- Assembler for the IBM 360/370/390 instruction set.
    Loosely based on the ppc files by Linas Vepstas <linas@linas.org> 1998, 99
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -270,11 +269,11 @@ register_name (expressionS *expressionP)
     reg_number = get_single_number ();
   else
     {
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       reg_number = reg_name_search (pre_defined_registers, REG_NAME_CNT, name);
 
       /* Put back the delimiting char.  */
-      *input_line_pointer = c;
+      (void) restore_line_pointer (c);
     }
 
   /* If numeric, make sure its not out of bounds.  */
@@ -1034,12 +1033,11 @@ i370_elf_lcomm (int unused ATTRIBUTE_UNUSED)
   char *pfrag;
   int align2;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
 
   /* Just after name is now '\0'.  */
   p = input_line_pointer;
-  *p = c;
+  (void) restore_line_pointer (c);
   SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
@@ -1186,7 +1184,7 @@ i370_elf_validate_fix (fixS *fixp, segT seg)
    waste space padding out to alignments.  The four pointers
    longlong_poolP, word_poolP, etc. point to a symbol labeling the
    start of each pool part.
- 
+
    lit_pool_num increments from zero to infinity and uniquely id's
      -- its used to generate the *_poolP symbol name.  */
 
@@ -2377,7 +2375,7 @@ md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
 
-  return (addr + (1 << align) - 1) & (-1 << align);
+  return (addr + (1 << align) - 1) & -(1 << align);
 }
 
 /* We don't have any form of relaxing.  */

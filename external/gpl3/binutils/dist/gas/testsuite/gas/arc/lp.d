@@ -1,76 +1,37 @@
-#as: -EL
-#objdump: -dr -EL
+#as: -mcpu=archs
+#objdump: -dr --show-raw-insn
 
-.*: +file format elf32-.*arc
+.*: +file format .*arc.*
 
 Disassembly of section .text:
 
-00000000 <text_label>:
-   0:	80 ff ff 37 	37ffff80     lp         0 <text_label>
-
-   4:	00 ff ff 37 	37ffff00     lp         0 <text_label>
-
-   8:	80 fe ff 37 	37fffe80     lp         0 <text_label>
-
-   c:	01 fe ff 37 	37fffe01     lpz        0 <text_label>
-
-  10:	81 fd ff 37 	37fffd81     lpz        0 <text_label>
-
-  14:	02 fd ff 37 	37fffd02     lpnz       0 <text_label>
-
-  18:	82 fc ff 37 	37fffc82     lpnz       0 <text_label>
-
-  1c:	03 fc ff 37 	37fffc03     lpp        0 <text_label>
-
-  20:	83 fb ff 37 	37fffb83     lpp        0 <text_label>
-
-  24:	04 fb ff 37 	37fffb04     lpn        0 <text_label>
-
-  28:	84 fa ff 37 	37fffa84     lpn        0 <text_label>
-
-  2c:	05 fa ff 37 	37fffa05     lpc        0 <text_label>
-
-  30:	85 f9 ff 37 	37fff985     lpc        0 <text_label>
-
-  34:	05 f9 ff 37 	37fff905     lpc        0 <text_label>
-
-  38:	86 f8 ff 37 	37fff886     lpnc       0 <text_label>
-
-  3c:	06 f8 ff 37 	37fff806     lpnc       0 <text_label>
-
-  40:	86 f7 ff 37 	37fff786     lpnc       0 <text_label>
-
-  44:	07 f7 ff 37 	37fff707     lpv        0 <text_label>
-
-  48:	87 f6 ff 37 	37fff687     lpv        0 <text_label>
-
-  4c:	08 f6 ff 37 	37fff608     lpnv       0 <text_label>
-
-  50:	88 f5 ff 37 	37fff588     lpnv       0 <text_label>
-
-  54:	09 f5 ff 37 	37fff509     lpgt       0 <text_label>
-
-  58:	8a f4 ff 37 	37fff48a     lpge       0 <text_label>
-
-  5c:	0b f4 ff 37 	37fff40b     lplt       0 <text_label>
-
-  60:	8c f3 ff 37 	37fff38c     lple       0 <text_label>
-
-  64:	0d f3 ff 37 	37fff30d     lphi       0 <text_label>
-
-  68:	8e f2 ff 37 	37fff28e     lpls       0 <text_label>
-
-  6c:	0f f2 ff 37 	37fff20f     lppnz      0 <text_label>
-
-  70:	a0 f1 ff 37 	37fff1a0     lp.d       0 <text_label>
-
-  74:	00 f1 ff 37 	37fff100     lp         0 <text_label>
-
-  78:	c0 f0 ff 37 	37fff0c0     lp.jd      0 <text_label>
-
-  7c:	21 f0 ff 37 	37fff021     lpz.d      0 <text_label>
-
-  80:	82 ef ff 37 	37ffef82     lpnz       0 <text_label>
-
-  84:	46 ef ff 37 	37ffef46     lpnc.jd    0 <text_label>
-
+[0-9a-f]+ <text_label-0x72>:
+   0:	20a8 0e40           	lp	72 <text_label>
+   4:	20e8 0de0           	lp	72 <text_label>
+   8:	20e8 0d60           	lp	72 <text_label>
+   c:	20e8 0ce1           	lpeq	72 <text_label>
+  10:	20e8 0c61           	lpeq	72 <text_label>
+  14:	20e8 0be2           	lpne	72 <text_label>
+  18:	20e8 0b62           	lpne	72 <text_label>
+  1c:	20e8 0ae3           	lpp	72 <text_label>
+  20:	20e8 0a63           	lpp	72 <text_label>
+  24:	20e8 09e4           	lpn	72 <text_label>
+  28:	20e8 0964           	lpn	72 <text_label>
+  2c:	20e8 08e5           	lpc	72 <text_label>
+  30:	20e8 0865           	lpc	72 <text_label>
+  34:	20e8 07e5           	lpc	72 <text_label>
+  38:	20e8 0766           	lpnc	72 <text_label>
+  3c:	20e8 06e6           	lpnc	72 <text_label>
+  40:	20e8 0666           	lpnc	72 <text_label>
+  44:	20e8 05e7           	lpv	72 <text_label>
+  48:	20e8 0567           	lpv	72 <text_label>
+  4c:	20e8 04e8           	lpnv	72 <text_label>
+  50:	20e8 0468           	lpnv	72 <text_label>
+  54:	20e8 03e9           	lpgt	72 <text_label>
+  58:	20e8 036a           	lpge	72 <text_label>
+  5c:	20e8 02eb           	lplt	72 <text_label>
+  60:	20e8 026c           	lple	72 <text_label>
+  64:	20e8 01ed           	lphi	72 <text_label>
+  68:	20e8 016e           	lpls	72 <text_label>
+  6c:	20e8 00ef           	lppnz	72 <text_label>
+  70:	78e0                	nop_s

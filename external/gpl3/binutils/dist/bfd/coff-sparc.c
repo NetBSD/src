@@ -1,6 +1,5 @@
 /* BFD back-end for Sparc COFF files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000, 2001,
-   2002, 2003, 2005, 2007, 2008, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -75,7 +74,7 @@ bfd_coff_generic_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 
 static reloc_howto_type coff_sparc_howto_table[] =
 {
-  HOWTO(R_SPARC_NONE,    0,0, 0,FALSE,0,complain_overflow_dont,    bfd_coff_generic_reloc,"R_SPARC_NONE",    FALSE,0,0x00000000,TRUE),
+  HOWTO(R_SPARC_NONE,    0,3, 0,FALSE,0,complain_overflow_dont,    bfd_coff_generic_reloc,"R_SPARC_NONE",    FALSE,0,0x00000000,TRUE),
   HOWTO(R_SPARC_8,       0,0, 8,FALSE,0,complain_overflow_bitfield,bfd_coff_generic_reloc,"R_SPARC_8",       FALSE,0,0x000000ff,TRUE),
   HOWTO(R_SPARC_16,      0,1,16,FALSE,0,complain_overflow_bitfield,bfd_coff_generic_reloc,"R_SPARC_16",      FALSE,0,0x0000ffff,TRUE),
   HOWTO(R_SPARC_32,      0,2,32,FALSE,0,complain_overflow_bitfield,bfd_coff_generic_reloc,"R_SPARC_32",      FALSE,0,0xffffffff,TRUE),
@@ -199,7 +198,7 @@ rtype2howto (arelent *cache_ptr, struct internal_reloc *dst)
 #include "coffcode.h"
 
 #ifndef TARGET_SYM
-#define TARGET_SYM sparccoff_vec
+#define TARGET_SYM sparc_coff_vec
 #endif
 
 #ifndef TARGET_NAME

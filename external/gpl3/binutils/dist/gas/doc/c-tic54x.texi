@@ -1,4 +1,4 @@
-@c Copyright 2000, 2002, 2003, 2006, 2011 Free Software Foundation, Inc.
+@c Copyright (C) 2000-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c TI TMS320C54X description by Timothy Wall, twall@cygnus.com
@@ -41,7 +41,7 @@ You can use the @samp{-mfar-mode} option to enable extended addressing mode.
 All addresses will be assumed to be > 16 bits, and the appropriate
 relocation types will be used.  This option is equivalent to using the
 @samp{.far_mode} directive in the assembly code.  If you do not use the
-@samp{-mfar-mode} option, all references will be assumed to be 16 bits.  
+@samp{-mfar-mode} option, all references will be assumed to be 16 bits.
 This option may be abbreviated to @samp{-mf}.
 
 @cindex @samp{-mcpu} option, cpu
@@ -49,14 +49,14 @@ You can use the @samp{-mcpu} option to specify a particular CPU.
 This option is equivalent to using the @samp{.version} directive in the
 assembly code.  For recognized CPU codes, see
 @xref{TIC54X-Directives,,@code{.version}}.  The default CPU version is
-@samp{542}.   
+@samp{542}.
 
 @cindex @samp{-merrors-to-file} option, stderr redirect
 @cindex @samp{-me} option, stderr redirect
 You can use the @samp{-merrors-to-file} option to redirect error output
 to a file (this provided for those deficient environments which don't
 provide adequate output redirection).  This option may be abbreviated to
-@samp{-me}. 
+@samp{-me}.
 
 @node TIC54X-Block
 @section Blocking
@@ -96,21 +96,21 @@ A subset of allowable symbols (which we'll call subsyms) may be assigned
 arbitrary string values.  This is roughly equivalent to C preprocessor
 #define macros.  When @code{@value{AS}} encounters one of these
 symbols, the symbol is replaced in the input stream by its string value.
-Subsym names @strong{must} begin with a letter. 
+Subsym names @strong{must} begin with a letter.
 
 Subsyms may be defined using the @code{.asg} and @code{.eval} directives
 (@xref{TIC54X-Directives,,@code{.asg}},
-@xref{TIC54X-Directives,,@code{.eval}}. 
+@xref{TIC54X-Directives,,@code{.eval}}.
 
 Expansion is recursive until a previously encountered symbol is seen, at
-which point substitution stops.  
+which point substitution stops.
 
 In this example, x is replaced with SYM2; SYM2 is replaced with SYM1, and SYM1
 is replaced with x.  At this point, x has already been encountered
 and the substitution stops.
 
-@smallexample @code
- .asg   "x",SYM1 
+@smallexample
+ .asg   "x",SYM1
  .asg   "SYM1",SYM2
  .asg   "SYM2",x
  add    x,a             ; final code assembled is "add  x, a"
@@ -124,16 +124,16 @@ directive is used to identify the subsym as a local macro variable
 
 Substitution may be forced in situations where replacement might be
 ambiguous by placing colons on either side of the subsym.  The following
-code: 
+code:
 
-@smallexample @code
+@smallexample
  .eval  "10",x
 LAB:X:  add     #x, a
 @end smallexample
 
 When assembled becomes:
 
-@smallexample @code
+@smallexample
 LAB10  add     #10, a
 @end smallexample
 
@@ -156,7 +156,7 @@ Local labels may be defined in two ways:
 @item
 $N, where N is a decimal number between 0 and 9
 @item
-LABEL?, where LABEL is any legal symbol name.  
+LABEL?, where LABEL is any legal symbol name.
 @end itemize
 
 Local labels thus defined may be redefined or automatically generated.
@@ -184,7 +184,7 @@ The macro scope where the label was defined is exited
 The following built-in functions may be used to generate a
 floating-point value.  All return a floating-point value except
 @samp{$cvi}, @samp{$int}, and @samp{$sgn}, which return an integer
-value. 
+value.
 
 @table @code
 @cindex @code{$acos} math builtin, TIC54X
@@ -309,7 +309,7 @@ The @code{LDX} pseudo-op is provided for loading the extended addressing bits
 of a label or address.  For example, if an address @code{_label} resides
 in extended program memory, the value of @code{_label} may be loaded as
 follows:
-@smallexample @code
+@smallexample
  ldx     #_label,16,a    ; loads extended bits of _label
  or      #_label,a       ; loads lower 16 bits of _label
  bacc    a               ; full address is in accumulator A
@@ -335,7 +335,7 @@ equivalent to @code{.align} with a @var{size} of 2.
 Align SPC to word boundary
 @item 2
 Align SPC to longword boundary (same as .even)
-@item 128       
+@item 128
 Align SPC to page boundary
 @end table
 
@@ -345,10 +345,10 @@ Assign @var{name} the string @var{string}.  String replacement is
 performed on @var{string} before assignment.
 
 @cindex @code{eval} directive, TIC54X
-@itemx .eval @var{string}, @var{name}
+@item .eval @var{string}, @var{name}
 Evaluate the contents of string @var{string} and assign the result as a
 string to the subsym @var{name}.  String replacement is performed on
-@var{string} before assignment. 
+@var{string} before assignment.
 
 @cindex @code{bss} directive, TIC54X
 @item .bss @var{symbol}, @var{size} [, [@var{blocking_flag}] [,@var{alignment_flag}]]
@@ -404,7 +404,7 @@ Begin assembling code into the .data section.
 Place an IEEE single-precision floating-point representation of one or
 more floating-point values into the current section.  All but
 @code{.xfloat} align the result on a longword boundary.  Values are
-stored most-significant word first. 
+stored most-significant word first.
 
 @cindex @code{drlist} directive, TIC54X
 @cindex @code{drnolist} directive, TIC54X
@@ -473,7 +473,7 @@ the current file but defined elsewhere.  Both map to the standard
 @itemx .uword @var{value} [,...,@var{value_n}]
 Place one or more values into consecutive words of the current section.
 If a label is used, it points to the word allocated for the first value
-encountered. 
+encountered.
 
 @cindex @code{label} directive, TIC54X
 @item .label @var{symbol}
@@ -501,7 +501,7 @@ Control whether the source listing is printed.  Ignored.
 Place one or more 32-bit values into consecutive words in the current
 section.  The most significant word is stored first.  @code{.long} and
 @code{.ulong} align the result on a longword boundary; @code{xlong} does
-not. 
+not.
 
 @cindex @code{loop} directive, TIC54X
 @cindex @code{break} directive, TIC54X
@@ -568,7 +568,7 @@ Define a named initialized section and make it the current section.
 @item @var{symbol} .set "@var{value}"
 @itemx @var{symbol} .equ "@var{value}"
 Equate a constant @var{value} to a @var{symbol}, which is placed in the
-symbol table.  @var{symbol} may not be previously defined.  
+symbol table.  @var{symbol} may not be previously defined.
 
 @cindex @code{space} directive, TIC54X
 @cindex @code{bes} directive, TIC54X
@@ -628,7 +628,7 @@ The @code{.tag} directive, in addition to being used to define a
 structure/union element within a structure, may be used to apply a
 structure to a symbol.  Once applied to @var{label}, the individual
 structure elements may be applied to @var{label} to produce the desired
-offsets using @var{label} as the structure base. 
+offsets using @var{label} as the structure base.
 
 @cindex @code{tab} directive, TIC54X
 @item .tab
@@ -637,7 +637,7 @@ Set the tab size in the output listing.  Ignored.
 @cindex @code{union} directive, TIC54X
 @cindex @code{tag} directive, TIC54X
 @cindex @code{endunion} directive, TIC54X
-@item [@var{utag}] .union 
+@item [@var{utag}] .union
 @itemx [@var{name_1}] element [@var{count_1}]
 @itemx [@var{name_2}] element [@var{count_2}]
 @itemx [@var{tname}] .tag @var{utagx}[,@var{tcount}]
@@ -658,12 +658,12 @@ The symbol may be used as a variable name.  @var{size} is the allocated
 size in words.  @var{blocking_flag} indicates whether to block this
 section on a page boundary (128 words) (@pxref{TIC54X-Block}).
 @var{alignment flag} indicates whether the section should be
-longword-aligned.  
+longword-aligned.
 
 @cindex @code{var} directive, TIC54X
 @item .var @var{sym}[,..., @var{sym_n}]
 Define a subsym to be a local variable within a macro.  See
-@xref{TIC54X-Macros}. 
+@xref{TIC54X-Macros}.
 
 @cindex @code{version} directive, TIC54X
 @item .version @var{version}
@@ -686,7 +686,7 @@ values are accepted, the op is ignored.
 
 @cindex TIC54X-specific macros
 @cindex macros, TIC54X
-Macros do not require explicit dereferencing of arguments (i.e., \ARG).  
+Macros do not require explicit dereferencing of arguments (i.e., \ARG).
 
 During macro expansion, the macro parameters are converted to subsyms.
 If the number of arguments passed the macro invocation exceeds the
@@ -709,17 +709,17 @@ Returns the length of @var{str}.
 
 @cindex @code{$symcmp} subsym builtin, TIC54X
 @item @code{$symcmp(@var{str1},@var{str2})}
-Returns 0 if @var{str1} == @var{str2}, non-zero otherwise.  
+Returns 0 if @var{str1} == @var{str2}, non-zero otherwise.
 
 @cindex @code{$firstch} subsym builtin, TIC54X
 @item @code{$firstch(@var{str},@var{ch})}
 Returns index of the first occurrence of character constant @var{ch} in
-@var{str}. 
+@var{str}.
 
 @cindex @code{$lastch} subsym builtin, TIC54X
 @item @code{$lastch(@var{str},@var{ch})}
 Returns index of the last occurrence of character constant @var{ch} in
-@var{str}. 
+@var{str}.
 
 @cindex @code{$isdefed} subsym builtin, TIC54X
 @item @code{$isdefed(@var{symbol})}

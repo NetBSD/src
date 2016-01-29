@@ -1,6 +1,5 @@
 /* BFD back-end for NetBSD/m68k a.out-ish binaries.
-   Copyright 1990, 1991, 1992, 1995, 1998, 2001, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,7 +28,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (m68k4knetbsd_,OP)
+#define MY(OP) CONCAT2 (m68k_aout_4knbsd_,OP)
 
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-m68k4k-netbsd"

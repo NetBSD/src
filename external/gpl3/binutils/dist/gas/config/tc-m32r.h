@@ -1,6 +1,5 @@
 /* tc-m32r.h -- Header file for tc-m32r.c.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2009, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -101,7 +100,8 @@ extern int m32r_force_relocation (struct fix *);
 
 /* Ensure insns at labels are aligned to 32 bit boundaries.  */
 int m32r_fill_insn (int);
-#define TC_START_LABEL(ch, s, ptr)	(ch == ':' && m32r_fill_insn (0))
+#define TC_START_LABEL(STR, NUL_CHAR, NEXT_CHAR)	\
+  (NEXT_CHAR == ':' && m32r_fill_insn (0))
 
 #define md_cleanup()               m32r_fill_insn (1)
 #define md_elf_section_change_hook m32r_elf_section_change_hook
@@ -109,7 +109,7 @@ extern void m32r_elf_section_change_hook (void);
 
 #define md_flush_pending_output()       m32r_flush_pending_output ()
 extern void m32r_flush_pending_output (void);
-                                                                                  
+
 #define elf_tc_final_processing 	m32r_elf_final_processing
 extern void m32r_elf_final_processing (void);
 

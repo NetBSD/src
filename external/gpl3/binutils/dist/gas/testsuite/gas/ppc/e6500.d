@@ -62,7 +62,7 @@ Disassembly of section \.text:
   d0:	(7c 00 04 ac|ac 04 00 7c) 	sync    
   d4:	(7c 00 04 ac|ac 04 00 7c) 	sync    
   d8:	(7c 20 04 ac|ac 04 20 7c) 	lwsync
-  dc:	(7c 00 04 ac|ac 04 00 7c) 	sync    
+  dc:	(7c 21 04 ac|ac 04 21 7c) 	sync    1,1
   e0:	(7c 07 04 ac|ac 04 07 7c) 	sync    0,7
   e4:	(7c 28 04 ac|ac 04 28 7c) 	sync    1,8
   e8:	(7c 00 00 c3|c3 00 00 7c) 	dni     0,0

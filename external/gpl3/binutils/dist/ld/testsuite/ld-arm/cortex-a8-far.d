@@ -1,3 +1,4 @@
+#target: *-*-*eabi* *-*-nacl*
 
 .*:     file format .*
 

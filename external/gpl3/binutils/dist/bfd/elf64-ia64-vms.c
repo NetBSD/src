@@ -1,6 +1,5 @@
 /* IA-64 support for OpenVMS
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -349,7 +348,7 @@ elf64_ia64_relax_section (bfd *abfd, asection *sec,
      one pass.  */
   *again = FALSE;
 
-  if (link_info->relocatable)
+  if (bfd_link_relocatable (link_info))
     (*link_info->callbacks->einfo)
       (_("%P%F: --relax and -r may not be used together\n"));
 
@@ -539,7 +538,7 @@ elf64_ia64_relax_section (bfd *abfd, asection *sec,
 	     .plt section.  After the first relaxation pass, linker may
 	     increase the gap between the .plt and .text sections up
 	     to 32byte.  We assume linker will always insert 32byte
-	     between the .plt and .text sections after the the first
+	     between the .plt and .text sections after the first
 	     relaxation pass.  */
 	  if (tsec == ia64_info->root.splt)
 	    offset = -0x1000000 + 32;
@@ -859,7 +858,7 @@ elf64_ia64_add_symbol_hook (bfd *abfd,
 			    bfd_vma *valp)
 {
   if (sym->st_shndx == SHN_COMMON
-      && !info->relocatable
+      && !bfd_link_relocatable (info)
       && sym->st_size <= elf_gp_size (abfd))
     {
       /* Common symbols less than or equal to -G nn bytes are
@@ -976,40 +975,6 @@ elf64_ia64_local_htab_eq (const void *ptr1, const void *ptr2)
   return entry1->id == entry2->id && entry1->r_sym == entry2->r_sym;
 }
 
-/* Create the derived linker hash table.  The IA-64 ELF port uses this
-   derived hash table to keep information specific to the IA-64 ElF
-   linker (without using static variables).  */
-
-static struct bfd_link_hash_table *
-elf64_ia64_hash_table_create (bfd *abfd)
-{
-  struct elf64_ia64_link_hash_table *ret;
-
-  ret = bfd_zmalloc ((bfd_size_type) sizeof (*ret));
-  if (!ret)
-    return NULL;
-
-  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
-				      elf64_ia64_new_elf_hash_entry,
-				      sizeof (struct elf64_ia64_link_hash_entry),
-				      IA64_ELF_DATA))
-    {
-      free (ret);
-      return NULL;
-    }
-
-  ret->loc_hash_table = htab_try_create (1024, elf64_ia64_local_htab_hash,
-					 elf64_ia64_local_htab_eq, NULL);
-  ret->loc_hash_memory = objalloc_create ();
-  if (!ret->loc_hash_table || !ret->loc_hash_memory)
-    {
-      free (ret);
-      return NULL;
-    }
-
-  return &ret->root.root;
-}
-
 /* Free the global elf64_ia64_dyn_sym_info array.  */
 
 static bfd_boolean
@@ -1058,10 +1023,10 @@ elf64_ia64_local_dyn_info_free (void **slot,
 /* Destroy IA-64 linker hash table.  */
 
 static void
-elf64_ia64_hash_table_free (struct bfd_link_hash_table *hash)
+elf64_ia64_link_hash_table_free (bfd *obfd)
 {
   struct elf64_ia64_link_hash_table *ia64_info
-    = (struct elf64_ia64_link_hash_table *) hash;
+    = (struct elf64_ia64_link_hash_table *) obfd->link.hash;
   if (ia64_info->loc_hash_table)
     {
       htab_traverse (ia64_info->loc_hash_table,
@@ -1072,7 +1037,42 @@ elf64_ia64_hash_table_free (struct bfd_link_hash_table *hash)
     objalloc_free ((struct objalloc *) ia64_info->loc_hash_memory);
   elf_link_hash_traverse (&ia64_info->root,
 			  elf64_ia64_global_dyn_info_free, NULL);
-  _bfd_generic_link_hash_table_free (hash);
+  _bfd_elf_link_hash_table_free (obfd);
+}
+
+/* Create the derived linker hash table.  The IA-64 ELF port uses this
+   derived hash table to keep information specific to the IA-64 ElF
+   linker (without using static variables).  */
+
+static struct bfd_link_hash_table *
+elf64_ia64_hash_table_create (bfd *abfd)
+{
+  struct elf64_ia64_link_hash_table *ret;
+
+  ret = bfd_zmalloc ((bfd_size_type) sizeof (*ret));
+  if (!ret)
+    return NULL;
+
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      elf64_ia64_new_elf_hash_entry,
+				      sizeof (struct elf64_ia64_link_hash_entry),
+				      IA64_ELF_DATA))
+    {
+      free (ret);
+      return NULL;
+    }
+
+  ret->loc_hash_table = htab_try_create (1024, elf64_ia64_local_htab_hash,
+					 elf64_ia64_local_htab_eq, NULL);
+  ret->loc_hash_memory = objalloc_create ();
+  if (!ret->loc_hash_table || !ret->loc_hash_memory)
+    {
+      elf64_ia64_link_hash_table_free (abfd);
+      return NULL;
+    }
+  ret->root.root.hash_table_free = elf64_ia64_link_hash_table_free;
+
+  return &ret->root.root;
 }
 
 /* Traverse both local and global hash tables.  */
@@ -1757,7 +1757,7 @@ get_fptr (bfd *abfd, struct bfd_link_info *info,
 						  | SEC_LOAD
 						  | SEC_HAS_CONTENTS
 						  | SEC_IN_MEMORY
-						  | (info->pie ? 0
+						  | (bfd_link_pie (info) ? 0
 						     : SEC_READONLY)
 						  | SEC_LINKER_CREATED));
       if (!fptr
@@ -1769,7 +1769,7 @@ get_fptr (bfd *abfd, struct bfd_link_info *info,
 
       ia64_info->fptr_sec = fptr;
 
-      if (info->pie)
+      if (bfd_link_pie (info))
 	{
 	  asection *fptr_rel;
 	  fptr_rel = bfd_make_section_anyway_with_flags (dynobj, ".rela.opd",
@@ -1922,7 +1922,7 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
   unsigned long r_symndx;
   bfd_boolean maybe_dynamic;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -1955,7 +1955,7 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	 locally or externally defined, as not all of the input files
 	 have yet been processed.  Do something with what we know, as
 	 this may help reduce memory usage and processing time later.  */
-      maybe_dynamic = (h && ((!info->executable
+      maybe_dynamic = (h && ((!bfd_link_executable (info)
 			      && (!SYMBOLIC_BIND (info, h)
 				  || info->unresolved_syms_in_shared_libs == RM_IGNORE))
 			     || !h->def_regular
@@ -1996,7 +1996,7 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_IA64_FPTR32LSB:
 	case R_IA64_FPTR64MSB:
 	case R_IA64_FPTR64LSB:
-	  if (info->shared || h)
+	  if (bfd_link_pic (info) || h)
 	    need_entry = NEED_FPTR | NEED_DYNREL;
 	  else
 	    need_entry = NEED_FPTR;
@@ -2047,7 +2047,7 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_IA64_DIR64MSB:
 	case R_IA64_DIR64LSB:
 	  /* Shared objects will always need at least a REL relocation.  */
-	  if (info->shared || maybe_dynamic)
+	  if (bfd_link_pic (info) || maybe_dynamic)
 	    need_entry = NEED_DYNREL;
 	  break;
 
@@ -2095,6 +2095,9 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	  h->ref_regular = 1;
 	}
       else
@@ -2104,7 +2107,7 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	 locally or externally defined, as not all of the input files
 	 have yet been processed.  Do something with what we know, as
 	 this may help reduce memory usage and processing time later.  */
-      maybe_dynamic = (h && ((!info->executable
+      maybe_dynamic = (h && ((!bfd_link_executable (info)
 			      && (!SYMBOLIC_BIND (info, h)
 				  || info->unresolved_syms_in_shared_libs == RM_IGNORE))
 			     || !h->def_regular
@@ -2141,7 +2144,7 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_IA64_FPTR32LSB:
 	case R_IA64_FPTR64MSB:
 	case R_IA64_FPTR64LSB:
-	  if (info->shared || h)
+	  if (bfd_link_pic (info) || h)
 	    need_entry = NEED_FPTR | NEED_DYNREL;
 	  else
 	    need_entry = NEED_FPTR;
@@ -2187,7 +2190,7 @@ elf64_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_IA64_DIR64MSB:
 	case R_IA64_DIR64LSB:
 	  /* Shared objects will always need at least a REL relocation.  */
-	  if (info->shared || maybe_dynamic)
+	  if (bfd_link_pic (info) || maybe_dynamic)
 	    need_entry = NEED_DYNREL;
 	  dynrel_type = R_IA64_DIR64LSB;
 	  break;
@@ -2457,7 +2460,7 @@ allocate_dynrel_entries (struct elf64_ia64_dyn_sym_info *dyn_i,
   /* Note that this can't be used in relation to FPTR relocs below.  */
   dynamic_symbol = elf64_ia64_dynamic_symbol_p (dyn_i->h);
 
-  shared = x->info->shared;
+  shared = bfd_link_pic (x->info);
   resolved_zero = (dyn_i->h
 		   && ELF_ST_VISIBILITY (dyn_i->h->other)
 		   && dyn_i->h->root.type == bfd_link_hash_undefweak);
@@ -2516,7 +2519,7 @@ allocate_dynrel_entries (struct elf64_ia64_dyn_sym_info *dyn_i,
 	     will be true only if we're actually allocating one statically
 	     in the main executable.  Position independent executables
 	     need a relative reloc.  */
-	  if (dyn_i->want_fptr && !x->info->pie)
+	  if (dyn_i->want_fptr && !bfd_link_pie (x->info))
 	    continue;
 	  break;
 	case R_IA64_PCREL32LSB:
@@ -2816,7 +2819,7 @@ elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
         return FALSE;
 
       /* Add entries for shared libraries.  */
-      for (abfd = info->input_bfds; abfd; abfd = abfd->link_next)
+      for (abfd = info->input_bfds; abfd; abfd = abfd->link.next)
         {
           char *soname;
           size_t soname_len;
@@ -2996,13 +2999,13 @@ set_got_entry (bfd *abfd, struct bfd_link_info *info,
       bfd_put_64 (abfd, value, got_sec->contents + got_offset);
 
       /* Install a dynamic relocation if needed.  */
-      if (((info->shared
+      if (((bfd_link_pic (info)
 	    && (!dyn_i->h
 		|| ELF_ST_VISIBILITY (dyn_i->h->other) == STV_DEFAULT
 		|| dyn_i->h->root.type != bfd_link_hash_undefweak))
            || elf64_ia64_dynamic_symbol_p (dyn_i->h))
 	  && (!dyn_i->want_ltoff_fptr
-	      || !info->pie
+	      || !bfd_link_pie (info)
 	      || !dyn_i->h
 	      || dyn_i->h->root.type != bfd_link_hash_undefweak))
 	{
@@ -3106,7 +3109,7 @@ set_pltoff_entry (bfd *abfd, struct bfd_link_info *info,
 
       /* Install dynamic relocations if needed.  */
       if (!is_plt
-	  && info->shared
+	  && bfd_link_pic (info)
 	  && (!dyn_i->h
 	      || ELF_ST_VISIBILITY (dyn_i->h->other) == STV_DEFAULT
 	      || dyn_i->h->root.type != bfd_link_hash_undefweak))
@@ -3306,7 +3309,7 @@ elf64_ia64_final_link (bfd *abfd, struct bfd_link_info *info)
     return FALSE;
 
   /* Make sure we've got ourselves a nice fat __gp value.  */
-  if (!info->relocatable)
+  if (!bfd_link_relocatable (info))
     {
       bfd_vma gp_val;
       struct elf_link_hash_entry *gp;
@@ -3332,7 +3335,7 @@ elf64_ia64_final_link (bfd *abfd, struct bfd_link_info *info)
      of the .IA_64.unwind section.  Force this section to be relocated
      into memory rather than written immediately to the output file.  */
   unwind_output_sec = NULL;
-  if (!info->relocatable)
+  if (!bfd_link_relocatable (info))
     {
       asection *s = bfd_get_section_by_name (abfd, ELF_STRING_ia64_unwind);
       if (s)
@@ -3389,7 +3392,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
     return FALSE;
 
   /* Infect various flags from the input section to the output section.  */
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       bfd_vma flags;
 
@@ -3445,7 +3448,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 	  sym_sec = local_sections[r_symndx];
 	  msec = sym_sec;
 	  value = _bfd_elf_rela_local_sym (output_bfd, sym, &msec, rel);
-	  if (!info->relocatable
+	  if (!bfd_link_relocatable (info)
 	      && (sym_sec->flags & SEC_MERGE) != 0
 	      && ELF_ST_TYPE (sym->st_info) == STT_SECTION
 	      && sym_sec->sec_info_type == SEC_INFO_TYPE_MERGE)
@@ -3492,13 +3495,13 @@ elf64_ia64_relocate_section (bfd *output_bfd,
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sym_sec, value,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  if (h->root.type == bfd_link_hash_undefweak)
 	    undef_weak_ref = TRUE;
@@ -3513,7 +3516,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       hit_addr = contents + rel->r_offset;
@@ -3534,7 +3537,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 	case R_IA64_DIR64MSB:
 	case R_IA64_DIR64LSB:
 	  /* Install a dynamic relocation for this reloc.  */
-	  if ((dynamic_symbol_p || info->shared)
+	  if ((dynamic_symbol_p || bfd_link_pic (info))
 	      && r_symndx != 0
 	      && (input_section->flags & SEC_ALLOC) != 0)
 	    {
@@ -3654,7 +3657,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 	      if (!undef_weak_ref)
 		value = set_fptr_entry (output_bfd, info, dyn_i, value);
 	    }
-	  if (!dyn_i->want_fptr || info->pie)
+	  if (!dyn_i->want_fptr || bfd_link_pie (info))
 	    {
 	      /* Otherwise, we expect the dynamic linker to create
 		 the entry.  */
@@ -3835,7 +3838,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 	case R_IA64_IPLTMSB:
 	case R_IA64_IPLTLSB:
 	  /* Install a dynamic relocation for this reloc.  */
-	  if ((dynamic_symbol_p || info->shared)
+	  if ((dynamic_symbol_p || bfd_link_pic (info))
 	      && (input_section->flags & SEC_ALLOC) != 0)
 	    {
               /* VMS: FIXFD ??  */
@@ -4030,7 +4033,7 @@ elf64_ia64_finish_dynamic_symbol (bfd *output_bfd,
     }
 
   /* Mark some specially defined symbols as absolute.  */
-  if (strcmp (h->root.root.string, "_DYNAMIC") == 0
+  if (h == ia64_info->root.hdynamic
       || h == ia64_info->root.hgot
       || h == ia64_info->root.hplt)
     sym->st_shndx = SHN_ABS;
@@ -4310,7 +4313,9 @@ elf64_ia64_print_private_bfd_data (bfd *abfd, void * ptr)
 }
 
 static enum elf_reloc_type_class
-elf64_ia64_reloc_type_class (const Elf_Internal_Rela *rela)
+elf64_ia64_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			     const asection *rel_sec ATTRIBUTE_UNUSED,
+			     const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF64_R_TYPE (rela->r_info))
     {
@@ -4735,11 +4740,11 @@ elf64_vms_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
       /* You can't use -r against a dynamic object.  Also, there's no
 	 hope of using a dynamic object which does not exactly match
 	 the format of the output file.  */
-      if (info->relocatable
+      if (bfd_link_relocatable (info)
 	  || !is_elf_hash_table (htab)
 	  || info->output_bfd->xvec != abfd->xvec)
 	{
-	  if (info->relocatable)
+	  if (bfd_link_relocatable (info))
 	    bfd_set_error (bfd_error_invalid_operation);
 	  else
 	    bfd_set_error (bfd_error_wrong_format);
@@ -4754,7 +4759,7 @@ elf64_vms_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 	 so we attach them to this BFD, provided it is the right
 	 format.  FIXME: If there are no input BFD's of the same
 	 format as the output, we can't make a shared library.  */
-      if (info->shared
+      if (bfd_link_pic (info)
 	  && is_elf_hash_table (htab)
 	  && info->output_bfd->xvec == abfd->xvec
 	  && !htab->dynamic_sections_created)
@@ -5046,7 +5051,8 @@ error_free_dyn:
 	h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
       *sym_hash = h;
-      h->unique_global = (flags & BSF_GNU_UNIQUE) != 0;
+      if (definition)
+	h->unique_global = (flags & BSF_GNU_UNIQUE) != 0;
 
       /* Set the alignment of a common symbol.  */
       if ((common || bfd_is_com_section (sec))
@@ -5453,8 +5459,6 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 /* Stuff for the BFD linker: */
 #define bfd_elf64_bfd_link_hash_table_create \
 	elf64_ia64_hash_table_create
-#define bfd_elf64_bfd_link_hash_table_free \
-	elf64_ia64_hash_table_free
 #define elf_backend_create_dynamic_sections \
 	elf64_ia64_create_dynamic_sections
 #define elf_backend_check_relocs \
@@ -5507,7 +5511,7 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 /* VMS-specific vectors.  */
 
 #undef  TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM		bfd_elf64_ia64_vms_vec
+#define TARGET_LITTLE_SYM		ia64_elf64_vms_vec
 #undef  TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME		"elf64-ia64-vms"
 #undef  TARGET_BIG_SYM

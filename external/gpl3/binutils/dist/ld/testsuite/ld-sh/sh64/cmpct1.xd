@@ -26,7 +26,6 @@ SYMBOL TABLE:
 0+ l    df \*ABS\*	0+ .*
 0+1004 l       \.text	0+ next
 0+100c l       \.rodata	0+ here
-0+ l    df \*ABS\*	0+ .*
 0+1098 g       .*	0+ ___dtors
 0+1098 g       \.rodata	0+ __bss_start
 0+1098 g       .*	0+ ___ctors_end

@@ -1,6 +1,5 @@
 /* tc-i386.c -- Assemble Intel syntax code for ix86/x86-64
-   Copyright 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -63,6 +62,8 @@ intel_state;
 #define O_xmmword_ptr O_md21
 /* ymmword ptr X_add_symbol */
 #define O_ymmword_ptr O_md20
+/* zmmword ptr X_add_symbol */
+#define O_zmmword_ptr O_md19
 
 static struct
   {
@@ -108,6 +109,7 @@ const i386_types[] =
     I386_TYPE(oword, 16),
     I386_TYPE(xmmword, 16),
     I386_TYPE(ymmword, 32),
+    I386_TYPE(zmmword, 64),
 #undef I386_TYPE
     { "near", O_near_ptr, { 0xff04, 0xff02, 0xff08 } },
     { "far", O_far_ptr, { 0xff06, 0xff05, 0xff06 } },
@@ -166,13 +168,18 @@ operatorT i386_operator (const char *name, unsigned int operands, char *pc)
   for (j = 0; i386_types[j].name; ++j)
     if (strcasecmp (i386_types[j].name, name) == 0)
       break;
+
   if (i386_types[j].name && *pc == ' ')
     {
-      char *pname = ++input_line_pointer;
-      char c = get_symbol_end ();
+      char *pname;
+      char c;
+
+      ++input_line_pointer;
+      c = get_symbol_name (&pname);
 
       if (strcasecmp (pname, "ptr") == 0)
 	{
+	  /* FIXME: What if c == '"' ?  */
 	  pname[-1] = *pc;
 	  *pc = c;
 	  if (intel_syntax > 0 || operands != 1)
@@ -180,7 +187,7 @@ operatorT i386_operator (const char *name, unsigned int operands, char *pc)
 	  return i386_types[j].op;
 	}
 
-      *input_line_pointer = c;
+      (void) restore_line_pointer (c);
       input_line_pointer = pname - 1;
     }
 
@@ -280,13 +287,16 @@ i386_intel_simplify_register (expressionS *e)
     }
   else if (!intel_state.index
 	   && (i386_regtab[reg_num].reg_type.bitfield.regxmm
-	       || i386_regtab[reg_num].reg_type.bitfield.regymm))
+	       || i386_regtab[reg_num].reg_type.bitfield.regymm
+	       || i386_regtab[reg_num].reg_type.bitfield.regzmm))
     intel_state.index = i386_regtab + reg_num;
   else if (!intel_state.base && !intel_state.in_scale)
     intel_state.base = i386_regtab + reg_num;
   else if (!intel_state.index)
     {
       if (intel_state.in_scale
+	  || current_templates->start->base_opcode == 0xf30f1b /* bndmk */
+	  || (current_templates->start->base_opcode & ~1) == 0x0f1a /* bnd{ld,st}x */
 	  || i386_regtab[reg_num].reg_type.bitfield.baseindex)
 	intel_state.index = i386_regtab + reg_num;
       else
@@ -337,7 +347,7 @@ static int i386_intel_simplify (expressionS *e)
 	  if (!i386_intel_simplify_symbol (e->X_add_symbol)
 	      || !i386_intel_check(the_reg, intel_state.base,
 				   intel_state.index))
-	    return 0;;
+	    return 0;
 	}
       if (!intel_state.in_offset)
 	++intel_state.in_bracket;
@@ -371,6 +381,7 @@ static int i386_intel_simplify (expressionS *e)
     case O_oword_ptr:
     case O_xmmword_ptr:
     case O_ymmword_ptr:
+    case O_zmmword_ptr:
     case O_near_ptr:
     case O_far_ptr:
       if (intel_state.op_modifier == O_absent)
@@ -408,23 +419,21 @@ static int i386_intel_simplify (expressionS *e)
       if (this_operand >= 0 && intel_state.in_bracket)
 	{
 	  expressionS *scale = NULL;
-
-	  if (intel_state.index)
-	    --scale;
+	  int has_index = (intel_state.index != NULL);
 
 	  if (!intel_state.in_scale++)
 	    intel_state.scale_factor = 1;
 
 	  ret = i386_intel_simplify_symbol (e->X_add_symbol);
-	  if (ret && !scale && intel_state.index)
+	  if (ret && !has_index && intel_state.index)
 	    scale = symbol_get_value_expression (e->X_op_symbol);
 
 	  if (ret)
 	    ret = i386_intel_simplify_symbol (e->X_op_symbol);
-	  if (ret && !scale && intel_state.index)
+	  if (ret && !scale && !has_index && intel_state.index)
 	    scale = symbol_get_value_expression (e->X_add_symbol);
 
-	  if (ret && scale && (scale + 1))
+	  if (ret && scale)
 	    {
 	      resolve_expression (scale);
 	      if (scale->X_op != O_constant
@@ -529,6 +538,10 @@ i386_intel_operand (char *operand_string, int got_a_float)
   char suffix = 0;
   int ret;
 
+  /* Handle vector immediates.  */
+  if (RC_SAE_immediate (operand_string))
+    return 1;
+
   /* Initialize state structure.  */
   intel_state.op_modifier = O_absent;
   intel_state.is_mem = 0;
@@ -552,6 +565,17 @@ i386_intel_operand (char *operand_string, int got_a_float)
   intel_syntax = 1;
 
   SKIP_WHITESPACE ();
+
+  /* Handle vector operations.  */
+  if (*input_line_pointer == '{')
+    {
+      char *end = check_VecOperations (input_line_pointer, NULL);
+      if (end)
+	input_line_pointer = end;
+      else
+	ret = 0;
+    }
+
   if (!is_end_of_line[(unsigned char) *input_line_pointer])
     {
       as_bad (_("junk `%s' after expression"), input_line_pointer);
@@ -664,6 +688,11 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	case O_ymmword_ptr:
 	  i.types[this_operand].bitfield.ymmword = 1;
 	  suffix = YMMWORD_MNEM_SUFFIX;
+	  break;
+
+	case O_zmmword_ptr:
+	  i.types[this_operand].bitfield.zmmword = 1;
+	  suffix = ZMMWORD_MNEM_SUFFIX;
 	  break;
 
 	case O_far_ptr:
@@ -792,7 +821,7 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	   || intel_state.is_mem)
     {
       /* Memory operand.  */
-      if (i.mem_operands
+      if ((int) i.mem_operands
 	  >= 2 - !current_templates->start->opcode_modifier.isstring)
 	{
 	  /* Handle

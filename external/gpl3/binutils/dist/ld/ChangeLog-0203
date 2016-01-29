@@ -15,7 +15,7 @@
 
 	* emultempl/pe.em (_after_open): When scanning MS import
 	libraries allow for the possible presence of static objects.
-          
+
 2003-12-07  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ldlang.c (lang_vers_match): Pass "DMGL_PARAMS | DMGL_ANSI" to
@@ -43,7 +43,7 @@
 	* ldlang.c (lang_process): Use link_info.need_relax_finalize
 	instead of link_info.relax_finalizing.
 	* ldmain.c (main): Likewise.
-	
+
 2003-12-04  Dmitry Semyonov  <Dmitry.Semyonov@oktet.ru>
 
 	* armpe.sh (RELOCATEABLE_OUTPUT_FORMAT): Define.
@@ -61,7 +61,7 @@
 	* configure.tgt: Add vax-linux-gnu target.
 
 2003-12-03  Dmitry Diky  <diwil@mail.ru>
-	
+
 	* scripttempl/elf32msp430.sc (HEAP_SECTION_MSP430): New section for
 	forthcoming devices.
 	(_etext): provide this defenition for all scripts.
@@ -3572,6 +3572,12 @@
 
 For older changes see ChangeLog-0001
 
+Copyright (C) 2002-2003 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

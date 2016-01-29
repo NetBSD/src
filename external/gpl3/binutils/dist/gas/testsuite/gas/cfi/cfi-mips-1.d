@@ -2,7 +2,7 @@
 #name: CFI on mips, 1
 Contents of the .eh_frame section:
 
-00000000 00000014 00000000 CIE
+0+0000 0+0014 0+0000 CIE
   Version:               1
   Augmentation:          "zR"
   Code alignment factor: 1
@@ -15,13 +15,13 @@ Contents of the .eh_frame section:
   DW_CFA_nop
   DW_CFA_nop
 
-00000018 0000001c 0000001c FDE cie=00000000 pc=00000000..0000002c
-  DW_CFA_advance_loc: 4 to 00000004
+0+0018 0+001c 0+001c FDE cie=0+0000 pc=0+0000..0+002c
+  DW_CFA_advance_loc: 4 to 0+0004
   DW_CFA_def_cfa_offset: 8
-  DW_CFA_advance_loc: 4 to 00000008
+  DW_CFA_advance_loc: 4 to 0+0008
   DW_CFA_offset: r30 at cfa-8
-  DW_CFA_advance_loc: 4 to 0000000c
+  DW_CFA_advance_loc: 4 to 0+000c
   DW_CFA_def_cfa: r30 ofs 8
-  DW_CFA_advance_loc: 24 to 00000024
+  DW_CFA_advance_loc: 24 to 0+0024
   DW_CFA_def_cfa: r29 ofs 0
   DW_CFA_nop

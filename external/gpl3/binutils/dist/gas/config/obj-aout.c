@@ -1,7 +1,5 @@
 /* a.out object file format
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2007, 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,7 +23,6 @@
 #include "as.h"
 #undef NO_RELOC
 #include "aout/aout64.h"
-#include "obstack.h"
 
 void
 obj_aout_frob_symbol (symbolS *sym, int *punt ATTRIBUTE_UNUSED)
@@ -155,10 +152,9 @@ obj_aout_weak (int ignore ATTRIBUTE_UNUSED)
 
   do
     {
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       symbolP = symbol_find_or_make (name);
-      *input_line_pointer = c;
+      (void) restore_line_pointer (c);
       SKIP_WHITESPACE ();
       S_SET_WEAK (symbolP);
       if (c == ',')
@@ -185,10 +181,9 @@ obj_aout_type (int ignore ATTRIBUTE_UNUSED)
   int c;
   symbolS *sym;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   sym = symbol_find_or_make (name);
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
   SKIP_WHITESPACE ();
   if (*input_line_pointer == ',')
     {

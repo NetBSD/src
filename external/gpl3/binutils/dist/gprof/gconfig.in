@@ -1,4 +1,4 @@
-/* gconfig.in.  Generated from configure.in by autoheader.  */
+/* gconfig.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -42,6 +42,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <windows.h> header file. */
+#undef HAVE_WINDOWS_H
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

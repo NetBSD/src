@@ -1,5 +1,5 @@
 /* BFD back-end for Sparc COFF LynxOS files.
-   Copyright 1993, 1994, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,7 +19,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#define TARGET_SYM	sparclynx_coff_vec
+#define TARGET_SYM	sparc_coff_lynx_vec
 #define TARGET_NAME	"coff-sparc-lynx"
 
 #define LYNXOS

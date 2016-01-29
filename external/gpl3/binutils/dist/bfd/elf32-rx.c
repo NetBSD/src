@@ -1,6 +1,5 @@
 /* Renesas RX specific support for 32-bit ELF.
-   Copyright (C) 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,14 +24,15 @@
 #include "elf-bfd.h"
 #include "elf/rx.h"
 #include "libiberty.h"
+#include "elf32-rx.h"
 
 #define RX_OPCODE_BIG_ENDIAN 0
 
 /* This is a meta-target that's used only with objcopy, to avoid the
    endian-swap we would otherwise get.  We check for this in
    rx_elf_object_p().  */
-const bfd_target bfd_elf32_rx_be_ns_vec;
-const bfd_target bfd_elf32_rx_be_vec;
+const bfd_target rx_elf32_be_ns_vec;
+const bfd_target rx_elf32_be_vec;
 
 #ifdef DEBUG
 char * rx_get_reloc (long);
@@ -49,7 +49,7 @@ void rx_dump_symtab (bfd *, void *, void *);
 
 static reloc_howto_type rx_elf_howto_table [] =
 {
-  RXREL (NONE,         0,  0, 0, dont,     FALSE),
+  RXREL (NONE,         3,  0, 0, dont,     FALSE),
   RXREL (DIR32,        2, 32, 0, signed,   FALSE),
   RXREL (DIR24S,       2, 24, 0, signed,   FALSE),
   RXREL (DIR16,        1, 16, 0, dont,     FALSE),
@@ -277,7 +277,7 @@ rx_reloc_type_lookup (bfd *                    abfd ATTRIBUTE_UNUSED,
   if (code == BFD_RELOC_RX_32_OP)
     return rx_elf_howto_table + R_RX_DIR32;
 
-  for (i = ARRAY_SIZE (rx_reloc_map); --i;)
+  for (i = ARRAY_SIZE (rx_reloc_map); i--;)
     if (rx_reloc_map [i].bfd_reloc_val == code)
       return rx_elf_howto_table + rx_reloc_map[i].rx_reloc_val;
 
@@ -307,7 +307,11 @@ rx_info_to_howto_rela (bfd *               abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_RX_max);
+  if (r_type >= (unsigned int) R_RX_max)
+    {
+      _bfd_error_handler (_("%B: invalid RX reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = rx_elf_howto_table + r_type;
 }
 
@@ -329,6 +333,26 @@ get_symbol_value (const char *            name,
 	  && h->type != bfd_link_hash_defweak))
     * status = info->callbacks->undefined_symbol
       (info, name, input_bfd, input_section, offset, TRUE);
+  else
+    value = (h->u.def.value
+	     + h->u.def.section->output_section->vma
+	     + h->u.def.section->output_offset);
+
+  return value;
+}
+static bfd_vma
+get_symbol_value_maybe (const char *            name,
+			struct bfd_link_info *  info)
+{
+  bfd_vma value = 0;
+  struct bfd_link_hash_entry * h;
+
+  h = bfd_link_hash_lookup (info->hash, name, FALSE, FALSE, TRUE);
+
+  if (h == NULL
+      || (h->type != bfd_link_hash_defined
+	  && h->type != bfd_link_hash_defweak))
+    return 0;
   else
     value = (h->u.def.value
 	     + h->u.def.section->output_section->vma
@@ -465,6 +489,9 @@ rx_elf_relocate_section
   Elf_Internal_Rela *           relend;
   bfd_boolean			pid_mode;
   bfd_boolean			saw_subtract = FALSE;
+  const char *			table_default_cache = NULL;
+  bfd_vma			table_start_cache = 0;
+  bfd_vma			table_end_cache = 0;
 
   if (elf_elfheader (output_bfd)->e_flags & E_FLAG_RX_PID)
     pid_mode = TRUE;
@@ -511,21 +538,101 @@ rx_elf_relocate_section
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes, h,
 				   sec, relocation, unresolved_reloc,
-				   warned);
+				   warned, ignored);
 
 	  name = h->root.root.string;
+	}
+
+      if (strncmp (name, "$tableentry$default$", 20) == 0)
+	{
+	  bfd_vma entry_vma;
+	  int idx;
+	  char *buf;
+	  bfd_reloc_status_type tstat = 0;
+
+	  if (table_default_cache != name)
+	    {
+
+	      /* All relocs for a given table should be to the same
+		 (weak) default symbol) so we can use it to detect a
+		 cache miss.  We use the offset into the table to find
+		 the "real" symbol.  Calculate and store the table's
+		 offset here.  */
+
+	      table_default_cache = name;
+
+	      /* We have already done error checking in rx_table_find().  */
+
+	      buf = (char *) malloc (13 + strlen (name + 20));
+
+	      sprintf (buf, "$tablestart$%s", name + 20);
+	      tstat = 0;
+	      table_start_cache = get_symbol_value (buf,
+						    &tstat,
+						    info,
+						    input_bfd,
+						    input_section,
+						    rel->r_offset);
+
+	      sprintf (buf, "$tableend$%s", name + 20);
+	      tstat = 0;
+	      table_end_cache = get_symbol_value (buf,
+						  &tstat,
+						  info,
+						  input_bfd,
+						  input_section,
+						  rel->r_offset);
+
+	      free (buf);
+	    }
+
+	  entry_vma = (input_section->output_section->vma
+		       + input_section->output_offset
+		       + rel->r_offset);
+
+	  if (table_end_cache <= entry_vma || entry_vma < table_start_cache)
+	    {
+	      _bfd_error_handler (_("%B:%A: table entry %s outside table"),
+				  input_bfd, input_section,
+				  name);
+	    }
+	  else if ((int) (entry_vma - table_start_cache) % 4)
+	    {
+	      _bfd_error_handler (_("%B:%A: table entry %s not word-aligned within table"),
+				  input_bfd, input_section,
+				  name);
+	    }
+	  else
+	    {
+	      idx = (int) (entry_vma - table_start_cache) / 4;
+
+	      /* This will look like $tableentry$<N>$<name> */
+	      buf = (char *) malloc (12 + 20 + strlen (name + 20));
+	      sprintf (buf, "$tableentry$%d$%s", idx, name + 20);
+
+	      h = (struct elf_link_hash_entry *) bfd_link_hash_lookup (info->hash, buf, FALSE, FALSE, TRUE);
+
+	      if (h)
+		{
+		  relocation = (h->root.u.def.value
+				+ h->root.u.def.section->output_section->vma
+				+ h->root.u.def.section->output_offset);;
+		}
+
+	      free (buf);
+	    }
 	}
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	{
 	  /* This is a relocatable link.  We don't have to change
              anything, unless the reloc is against a section symbol,
@@ -1163,6 +1270,7 @@ rx_elf_relocate_section
 	  {
 	    int32_t tmp;
 
+	    saw_subtract = TRUE;
 	    RX_STACK_POP (tmp);
 	    tmp = - tmp;
 	    RX_STACK_PUSH (tmp);
@@ -1207,7 +1315,6 @@ rx_elf_relocate_section
 	  {
 	    int32_t tmp1, tmp2;
 
-	    saw_subtract = TRUE;
 	    RX_STACK_POP (tmp1);
 	    RX_STACK_POP (tmp2);
 	    tmp1 /= tmp2;
@@ -1454,6 +1561,18 @@ elf32_rx_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr, int count,
   irel = elf_section_data (sec)->relocs;
   irelend = irel + sec->reloc_count;
 
+  if (irel == NULL && sec->reloc_count > 0)
+    {
+      /* If the relocs have not been kept in the section data
+	 structure (because -no-keep-memory was used) then
+	 reread them now.  */
+      irel = (_bfd_elf_link_read_relocs
+	      (abfd, sec, NULL, (Elf_Internal_Rela *) NULL, FALSE));
+      if (irel == NULL)
+	/* FIXME: Return FALSE instead ?  */
+	irelend = irel;
+    }
+
   /* Actually delete the bytes.  */
   memmove (contents + addr, contents + addr + count,
 	   (size_t) (toaddr - addr - count));
@@ -1467,7 +1586,7 @@ elf32_rx_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr, int count,
     memset (contents + toaddr - count, 0x03, count);
 
   /* Adjust all the relocs.  */
-  for (irel = elf_section_data (sec)->relocs; irel < irelend; irel++)
+  for (; irel < irelend; irel++)
     {
       /* Get the new reloc address.  */
       if (irel->r_offset > addr
@@ -1884,14 +2003,17 @@ elf32_rx_relax_section (bfd *                  abfd,
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
      code section.  */
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
     return TRUE;
 
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  shndx_hdr = &elf_tdata (abfd)->symtab_shndx_hdr;
+  symtab_hdr = & elf_symtab_hdr (abfd);
+  if (elf_symtab_shndx_list (abfd))
+    shndx_hdr = & elf_symtab_shndx_list (abfd)->hdr;
+  else
+    shndx_hdr = NULL;
 
   sec_start = sec->output_section->vma + sec->output_offset;
 
@@ -1916,7 +2038,7 @@ elf32_rx_relax_section (bfd *                  abfd,
       symtab_hdr->contents = (bfd_byte *) intsyms;
     }
 
-  if (shndx_hdr->sh_size != 0)
+  if (shndx_hdr && shndx_hdr->sh_size != 0)
     {
       bfd_size_type amt;
 
@@ -2937,6 +3059,42 @@ bfd_elf32_rx_set_target_flags (bfd_boolean user_no_warn_mismatch,
   ignore_lma = user_ignore_lma;
 }
 
+/* Converts FLAGS into a descriptive string.
+   Returns a static pointer.  */
+
+static const char *
+describe_flags (flagword flags)
+{
+  static char buf [128];
+
+  buf[0] = 0;
+
+  if (flags & E_FLAG_RX_64BIT_DOUBLES)
+    strcat (buf, "64-bit doubles");
+  else
+    strcat (buf, "32-bit doubles");
+
+  if (flags & E_FLAG_RX_DSP)
+    strcat (buf, ", dsp");
+  else
+    strcat (buf, ", no dsp");
+
+  if (flags & E_FLAG_RX_PID)
+    strcat (buf, ", pid");
+  else
+    strcat (buf, ", no pid");
+
+  if (flags & E_FLAG_RX_ABI)
+    strcat (buf, ", RX ABI");
+  else
+    strcat (buf, ", GCC ABI");
+
+  if (flags & E_FLAG_RX_SINSNS_SET)
+    strcat (buf, flags & E_FLAG_RX_SINSNS_YES ? ", uses String instructions" : ", bans String instructions");
+
+  return buf;
+}
+
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
@@ -2958,7 +3116,24 @@ rx_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
     }
   else if (old_flags != new_flags)
     {
-      flagword known_flags = E_FLAG_RX_64BIT_DOUBLES | E_FLAG_RX_DSP | E_FLAG_RX_PID;
+      flagword known_flags;
+
+      if (old_flags & E_FLAG_RX_SINSNS_SET)
+	{
+	  if ((new_flags & E_FLAG_RX_SINSNS_SET) == 0)
+	    {
+	      new_flags &= ~ E_FLAG_RX_SINSNS_MASK;
+	      new_flags |= (old_flags & E_FLAG_RX_SINSNS_MASK);
+	    }
+	}
+      else if (new_flags & E_FLAG_RX_SINSNS_SET)
+	{
+	  old_flags &= ~ E_FLAG_RX_SINSNS_MASK;
+	  old_flags |= (new_flags & E_FLAG_RX_SINSNS_MASK);
+	}
+
+      known_flags = E_FLAG_RX_ABI | E_FLAG_RX_64BIT_DOUBLES
+	| E_FLAG_RX_DSP | E_FLAG_RX_PID | E_FLAG_RX_SINSNS_MASK;
 
       if ((old_flags ^ new_flags) & known_flags)
 	{
@@ -2971,9 +3146,12 @@ rx_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	    }
 	  else
 	    {
-	      (*_bfd_error_handler)
-		("ELF header flags mismatch: old_flags = 0x%.8lx, new_flags = 0x%.8lx, filename = %s",
-		 old_flags, new_flags, bfd_get_filename (ibfd));
+	      _bfd_error_handler ("There is a conflict merging the ELF header flags from %s",
+				  bfd_get_filename (ibfd));
+	      _bfd_error_handler ("  the input  file's flags: %s",
+				  describe_flags (new_flags));
+	      _bfd_error_handler ("  the output file's flags: %s",
+				  describe_flags (old_flags));
 	      error = TRUE;
 	    }
 	}
@@ -3001,21 +3179,20 @@ rx_elf_print_private_bfd_data (bfd * abfd, void * ptr)
   flags = elf_elfheader (abfd)->e_flags;
   fprintf (file, _("private flags = 0x%lx:"), (long) flags);
 
-  if (flags & E_FLAG_RX_64BIT_DOUBLES)
-    fprintf (file, _(" [64-bit doubles]"));
-  if (flags & E_FLAG_RX_DSP)
-    fprintf (file, _(" [dsp]"));
-
-  fputc ('\n', file);
+  fprintf (file, "%s", describe_flags (flags));
   return TRUE;
 }
 
 /* Return the MACH for an e_flags value.  */
 
 static int
-elf32_rx_machine (bfd * abfd)
+elf32_rx_machine (bfd * abfd ATTRIBUTE_UNUSED)
 {
+#if 0 /* FIXME: EF_RX_CPU_MASK collides with E_FLAG_RX_...
+	 Need to sort out how these flag bits are used.
+         For now we assume that the flags are OK.  */
   if ((elf_elfheader (abfd)->e_flags & EF_RX_CPU_MASK) == EF_RX_CPU_RX)
+#endif
     return bfd_mach_rx;
 
   return 0;
@@ -3034,17 +3211,17 @@ rx_elf_object_p (bfd * abfd)
   /* We never want to automatically choose the non-swapping big-endian
      target.  The user can only get that explicitly, such as with -I
      and objcopy.  */
-  if (abfd->xvec == &bfd_elf32_rx_be_ns_vec
+  if (abfd->xvec == &rx_elf32_be_ns_vec
       && abfd->target_defaulted)
     return FALSE;
 
   /* BFD->target_defaulted is not set to TRUE when a target is chosen
      as a fallback, so we check for "scanning" to know when to stop
      using the non-swapping target.  */
-  if (abfd->xvec == &bfd_elf32_rx_be_ns_vec
+  if (abfd->xvec == &rx_elf32_be_ns_vec
       && saw_be)
     return FALSE;
-  if (abfd->xvec == &bfd_elf32_rx_be_vec)
+  if (abfd->xvec == &rx_elf32_be_vec)
     saw_be = TRUE;
 
   bfd_default_set_arch_mach (abfd, bfd_arch_rx,
@@ -3139,31 +3316,31 @@ rx_dump_symtab (bfd * abfd, void * internal_syms, void * external_syms)
     {
       switch (ELF_ST_TYPE (isym->st_info))
 	{
-	case STT_FUNC: st_info_str = "STT_FUNC";
-	case STT_SECTION: st_info_str = "STT_SECTION";
-	case STT_FILE: st_info_str = "STT_FILE";
-	case STT_OBJECT: st_info_str = "STT_OBJECT";
-	case STT_TLS: st_info_str = "STT_TLS";
+	case STT_FUNC: st_info_str = "STT_FUNC"; break;
+	case STT_SECTION: st_info_str = "STT_SECTION"; break;
+	case STT_FILE: st_info_str = "STT_FILE"; break;
+	case STT_OBJECT: st_info_str = "STT_OBJECT"; break;
+	case STT_TLS: st_info_str = "STT_TLS"; break;
 	default: st_info_str = "";
 	}
       switch (ELF_ST_BIND (isym->st_info))
 	{
-	case STB_LOCAL: st_info_stb_str = "STB_LOCAL";
-	case STB_GLOBAL: st_info_stb_str = "STB_GLOBAL";
+	case STB_LOCAL: st_info_stb_str = "STB_LOCAL"; break;
+	case STB_GLOBAL: st_info_stb_str = "STB_GLOBAL"; break;
 	default: st_info_stb_str = "";
 	}
       switch (ELF_ST_VISIBILITY (isym->st_other))
 	{
-	case STV_DEFAULT: st_other_str = "STV_DEFAULT";
-	case STV_INTERNAL: st_other_str = "STV_INTERNAL";
-	case STV_PROTECTED: st_other_str = "STV_PROTECTED";
+	case STV_DEFAULT: st_other_str = "STV_DEFAULT"; break;
+	case STV_INTERNAL: st_other_str = "STV_INTERNAL"; break;
+	case STV_PROTECTED: st_other_str = "STV_PROTECTED"; break;
 	default: st_other_str = "";
 	}
       switch (isym->st_shndx)
 	{
-	case SHN_ABS: st_shndx_str = "SHN_ABS";
-	case SHN_COMMON: st_shndx_str = "SHN_COMMON";
-	case SHN_UNDEF: st_shndx_str = "SHN_UNDEF";
+	case SHN_ABS: st_shndx_str = "SHN_ABS"; break;
+	case SHN_COMMON: st_shndx_str = "SHN_COMMON"; break;
+	case SHN_UNDEF: st_shndx_str = "SHN_UNDEF"; break;
 	default: st_shndx_str = "";
 	}
 
@@ -3472,7 +3649,7 @@ elf32_rx_modify_program_headers (bfd * abfd ATTRIBUTE_UNUSED,
   bed = get_elf_backend_data (abfd);
   tdata = elf_tdata (abfd);
   phdr = tdata->phdr;
-  count = tdata->program_header_size / bed->s->sizeof_phdr;
+  count = elf_program_header_size (abfd) / bed->s->sizeof_phdr;
 
   if (ignore_lma)
     for (i = count; i-- != 0;)
@@ -3495,15 +3672,314 @@ elf32_rx_modify_program_headers (bfd * abfd ATTRIBUTE_UNUSED,
 
   return TRUE;
 }
+
+/* The default literal sections should always be marked as "code" (i.e.,
+   SHF_EXECINSTR).  This is particularly important for big-endian mode
+   when we do not want their contents byte reversed.  */
+static const struct bfd_elf_special_section elf32_rx_special_sections[] =
+{
+  { STRING_COMMA_LEN (".init_array"),    0, SHT_INIT_ARRAY, SHF_ALLOC + SHF_EXECINSTR },
+  { STRING_COMMA_LEN (".fini_array"),    0, SHT_FINI_ARRAY, SHF_ALLOC + SHF_EXECINSTR },
+  { STRING_COMMA_LEN (".preinit_array"), 0, SHT_PREINIT_ARRAY, SHF_ALLOC + SHF_EXECINSTR },
+  { NULL,                        0,      0, 0,            0 }
+};
+
+typedef struct {
+  bfd *abfd;
+  struct bfd_link_info *info;
+  bfd_vma table_start;
+  int table_size;
+  bfd_vma *table_handlers;
+  bfd_vma table_default_handler;
+  struct bfd_link_hash_entry **table_entries;
+  struct bfd_link_hash_entry *table_default_entry;
+  FILE *mapfile;
+} RX_Table_Info;
+
+static bfd_boolean
+rx_table_find (struct bfd_hash_entry *vent, void *vinfo)
+{
+  RX_Table_Info *info = (RX_Table_Info *)vinfo;
+  struct bfd_link_hash_entry *ent = (struct bfd_link_hash_entry *)vent;
+  const char *name; /* of the symbol we've found */
+  asection *sec;
+  struct bfd *abfd;
+  int idx;
+  const char *tname; /* name of the table */
+  bfd_vma start_addr, end_addr;
+  char *buf;
+  struct bfd_link_hash_entry * h;
+
+  /* We're looking for globally defined symbols of the form
+     $tablestart$<NAME>.  */
+  if (ent->type != bfd_link_hash_defined
+      && ent->type != bfd_link_hash_defweak)
+    return TRUE;
+
+  name = ent->root.string;
+  sec = ent->u.def.section;
+  abfd = sec->owner;
+
+  if (strncmp (name, "$tablestart$", 12))
+    return TRUE;
+
+  sec->flags |= SEC_KEEP;
+
+  tname = name + 12;
+
+  start_addr = ent->u.def.value;
+
+  /* At this point, we can't build the table but we can (and must)
+     find all the related symbols and mark their sections as SEC_KEEP
+     so we don't garbage collect them.  */
+
+  buf = (char *) malloc (12 + 10 + strlen (tname));
+
+  sprintf (buf, "$tableend$%s", tname);
+  h = bfd_link_hash_lookup (info->info->hash, buf, FALSE, FALSE, TRUE);
+  if (!h || (h->type != bfd_link_hash_defined
+	     && h->type != bfd_link_hash_defweak))
+    {
+      _bfd_error_handler (_("%B:%A: table %s missing corresponding %s"),
+			  abfd, sec, name, buf);
+      return TRUE;
+    }
+
+  if (h->u.def.section != ent->u.def.section)
+    {
+      _bfd_error_handler (_("%B:%A: %s and %s must be in the same input section"),
+			  h->u.def.section->owner, h->u.def.section,
+			  name, buf);
+      return TRUE;
+    }
+
+  end_addr = h->u.def.value;
+
+  sprintf (buf, "$tableentry$default$%s", tname);
+  h = bfd_link_hash_lookup (info->info->hash, buf, FALSE, FALSE, TRUE);
+  if (h && (h->type == bfd_link_hash_defined
+	    || h->type == bfd_link_hash_defweak))
+    {
+      h->u.def.section->flags |= SEC_KEEP;
+    }
+
+  for (idx = 0; idx < (int) (end_addr - start_addr) / 4; idx ++)
+    {
+      sprintf (buf, "$tableentry$%d$%s", idx, tname);
+      h = bfd_link_hash_lookup (info->info->hash, buf, FALSE, FALSE, TRUE);
+      if (h && (h->type == bfd_link_hash_defined
+		|| h->type == bfd_link_hash_defweak))
+	{
+	  h->u.def.section->flags |= SEC_KEEP;
+	}
+    }
+
+  /* Return TRUE to keep scanning, FALSE to end the traversal.  */
+  return TRUE;
+}
+
+/* We need to check for table entry symbols and build the tables, and
+   we need to do it before the linker does garbage collection.  This function is
+   called once per input object file.  */
+static bfd_boolean
+rx_check_directives
+    (bfd *                     abfd ATTRIBUTE_UNUSED,
+     struct bfd_link_info *    info ATTRIBUTE_UNUSED)
+{
+  RX_Table_Info stuff;
+
+  stuff.abfd = abfd;
+  stuff.info = info;
+  bfd_hash_traverse (&(info->hash->table), rx_table_find, &stuff);
+
+  return TRUE;
+}
+
+
+static bfd_boolean
+rx_table_map_2 (struct bfd_hash_entry *vent, void *vinfo)
+{
+  RX_Table_Info *info = (RX_Table_Info *)vinfo;
+  struct bfd_link_hash_entry *ent = (struct bfd_link_hash_entry *)vent;
+  int idx;
+  const char *name;
+  bfd_vma addr;
+
+  /* See if the symbol ENT has an address listed in the table, and
+     isn't a debug/special symbol.  If so, put it in the table.  */
+
+  if (ent->type != bfd_link_hash_defined
+      && ent->type != bfd_link_hash_defweak)
+    return TRUE;
+
+  name = ent->root.string;
+
+  if (name[0] == '$' || name[0] == '.' || name[0] < ' ')
+    return TRUE;
+
+  addr = (ent->u.def.value
+	  + ent->u.def.section->output_section->vma
+	  + ent->u.def.section->output_offset);
+
+  for (idx = 0; idx < info->table_size; idx ++)
+    if (addr == info->table_handlers[idx])
+      info->table_entries[idx] = ent;
+
+  if (addr == info->table_default_handler)
+    info->table_default_entry = ent;
+
+  return TRUE;
+}
+
+static bfd_boolean
+rx_table_map (struct bfd_hash_entry *vent, void *vinfo)
+{
+  RX_Table_Info *info = (RX_Table_Info *)vinfo;
+  struct bfd_link_hash_entry *ent = (struct bfd_link_hash_entry *)vent;
+  const char *name; /* of the symbol we've found */
+  int idx;
+  const char *tname; /* name of the table */
+  bfd_vma start_addr, end_addr;
+  char *buf;
+  struct bfd_link_hash_entry * h;
+  int need_elipses;
+
+  /* We're looking for globally defined symbols of the form
+     $tablestart$<NAME>.  */
+  if (ent->type != bfd_link_hash_defined
+      && ent->type != bfd_link_hash_defweak)
+    return TRUE;
+
+  name = ent->root.string;
+
+  if (strncmp (name, "$tablestart$", 12))
+    return TRUE;
+
+  tname = name + 12;
+  start_addr = (ent->u.def.value
+		+ ent->u.def.section->output_section->vma
+		+ ent->u.def.section->output_offset);
+
+  buf = (char *) malloc (12 + 10 + strlen (tname));
+
+  sprintf (buf, "$tableend$%s", tname);
+  end_addr = get_symbol_value_maybe (buf, info->info);
+
+  sprintf (buf, "$tableentry$default$%s", tname);
+  h = bfd_link_hash_lookup (info->info->hash, buf, FALSE, FALSE, TRUE);
+  if (h)
+    {
+      info->table_default_handler = (h->u.def.value
+				     + h->u.def.section->output_section->vma
+				     + h->u.def.section->output_offset);
+    }
+  else
+    /* Zero is a valid handler address!  */
+    info->table_default_handler = (bfd_vma) (-1);
+  info->table_default_entry = NULL;
+
+  info->table_start = start_addr;
+  info->table_size = (int) (end_addr - start_addr) / 4;
+  info->table_handlers = (bfd_vma *) malloc (info->table_size * sizeof (bfd_vma));
+  info->table_entries = (struct bfd_link_hash_entry **) malloc (info->table_size * sizeof (struct bfd_link_hash_entry));
+
+  for (idx = 0; idx < (int) (end_addr - start_addr) / 4; idx ++)
+    {
+      sprintf (buf, "$tableentry$%d$%s", idx, tname);
+      h = bfd_link_hash_lookup (info->info->hash, buf, FALSE, FALSE, TRUE);
+      if (h && (h->type == bfd_link_hash_defined
+		|| h->type == bfd_link_hash_defweak))
+	{
+	  info->table_handlers[idx] = (h->u.def.value
+				       + h->u.def.section->output_section->vma
+				       + h->u.def.section->output_offset);
+	}
+      else
+	info->table_handlers[idx] = info->table_default_handler;
+      info->table_entries[idx] = NULL;
+    }
+
+  free (buf);
+
+  bfd_hash_traverse (&(info->info->hash->table), rx_table_map_2, info);
+
+  fprintf (info->mapfile, "\nRX Vector Table: %s has %d entries at 0x%08" BFD_VMA_FMT "x\n\n",
+	   tname, info->table_size, start_addr);
+
+  if (info->table_default_entry)
+    fprintf (info->mapfile, "  default handler is: %s at 0x%08" BFD_VMA_FMT "x\n",
+	     info->table_default_entry->root.string,
+	     info->table_default_handler);
+  else if (info->table_default_handler != (bfd_vma)(-1))
+    fprintf (info->mapfile, "  default handler is at 0x%08" BFD_VMA_FMT "x\n",
+	     info->table_default_handler);
+  else
+    fprintf (info->mapfile, "  no default handler\n");
+
+  need_elipses = 1;
+  for (idx = 0; idx < info->table_size; idx ++)
+    {
+      if (info->table_handlers[idx] == info->table_default_handler)
+	{
+	  if (need_elipses)
+	    fprintf (info->mapfile, "  . . .\n");
+	  need_elipses = 0;
+	  continue;
+	}
+      need_elipses = 1;
+
+      fprintf (info->mapfile, "  0x%08" BFD_VMA_FMT "x [%3d] ", start_addr + 4 * idx, idx);
+
+      if (info->table_handlers[idx] == (bfd_vma) (-1))
+	fprintf (info->mapfile, "(no handler found)\n");
+
+      else if (info->table_handlers[idx] == info->table_default_handler)
+	{
+	  if (info->table_default_entry)
+	    fprintf (info->mapfile, "(default)\n");
+	  else
+	    fprintf (info->mapfile, "(default)\n");
+	}
+
+      else if (info->table_entries[idx])
+	{
+	  fprintf (info->mapfile, "0x%08" BFD_VMA_FMT "x %s\n", info->table_handlers[idx], info->table_entries[idx]->root.string);
+	}
+
+      else
+	{
+	  fprintf (info->mapfile, "0x%08" BFD_VMA_FMT "x ???\n", info->table_handlers[idx]);
+	}
+    }
+  if (need_elipses)
+    fprintf (info->mapfile, "  . . .\n");
+
+  return TRUE;
+}
+
+void
+rx_additional_link_map_text (bfd *obfd, struct bfd_link_info *info, FILE *mapfile)
+{
+  /* We scan the symbol table looking for $tableentry$'s, and for
+     each, try to deduce which handlers go with which entries.  */
+
+  RX_Table_Info stuff;
+
+  stuff.abfd = obfd;
+  stuff.info = info;
+  stuff.mapfile = mapfile;
+  bfd_hash_traverse (&(info->hash->table), rx_table_map, &stuff);
+}
+
 
 #define ELF_ARCH		bfd_arch_rx
 #define ELF_MACHINE_CODE	EM_RX
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM		bfd_elf32_rx_be_vec
+#define TARGET_BIG_SYM		rx_elf32_be_vec
 #define TARGET_BIG_NAME		"elf32-rx-be"
 
-#define TARGET_LITTLE_SYM	bfd_elf32_rx_le_vec
+#define TARGET_LITTLE_SYM	rx_elf32_le_vec
 #define TARGET_LITTLE_NAME	"elf32-rx-le"
 
 #define elf_info_to_howto_rel			NULL
@@ -3523,6 +3999,8 @@ elf32_rx_modify_program_headers (bfd * abfd ATTRIBUTE_UNUSED,
 #define bfd_elf32_set_section_contents		rx_set_section_contents
 #define bfd_elf32_bfd_final_link		rx_final_link
 #define bfd_elf32_bfd_relax_section		elf32_rx_relax_section_wrapper
+#define elf_backend_special_sections	        elf32_rx_special_sections
+#define elf_backend_check_directives		rx_check_directives
 
 #include "elf32-target.h"
 
@@ -3531,7 +4009,7 @@ elf32_rx_modify_program_headers (bfd * abfd ATTRIBUTE_UNUSED,
    pre-swapped .text sections (like objcopy).  */
 
 #undef  TARGET_BIG_SYM
-#define TARGET_BIG_SYM		bfd_elf32_rx_be_ns_vec
+#define TARGET_BIG_SYM		rx_elf32_be_ns_vec
 #undef  TARGET_BIG_NAME
 #define TARGET_BIG_NAME		"elf32-rx-be-ns"
 #undef  TARGET_LITTLE_SYM

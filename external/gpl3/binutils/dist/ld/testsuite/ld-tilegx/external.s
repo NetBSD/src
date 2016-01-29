@@ -38,6 +38,6 @@ external_64a = 0x123456789abcdef0
 external_64b = 0xfedcba9876543210
 
         .data
-
+	.align 0x20
         .global external_data1
 external_data1:

@@ -1,7 +1,7 @@
 	.section	.text.startup,"ax",%progbits
 	.globl main
 main:
-	.type	main, @function
+	.type	main, %function
 .LFB0:
 	.section	.text.unlikely,"ax",%progbits
 .L5:

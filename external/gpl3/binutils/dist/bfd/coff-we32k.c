@@ -1,6 +1,5 @@
 /* BFD back-end for we32k COFF files.
-   Copyright 1992, 1993, 1994, 1999, 2000, 2002, 2003, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
    Contributed by Brendan Kehoe (brendan@cs.widener.edu).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -54,14 +53,19 @@ static reloc_howto_type howto_table[] =
   HOWTO(R_PCRLONG,	       0,  2, 	32, TRUE,  0, complain_overflow_signed, 0, "DISP32",   TRUE, 0xffffffff,0xffffffff, FALSE),
 };
 
+#define NUM_HOWTOS (sizeof (howto_table) / sizeof (howto_table[0]))
+
 /* Turn a howto into a reloc  nunmber */
 
 #define SELECT_RELOC(x,howto) { x.r_type = howto->type; }
 #define BADMAG(x) WE32KBADMAG(x)
 #define WE32K	1
 
-#define RTYPE2HOWTO(cache_ptr, dst) \
-	    (cache_ptr)->howto = howto_table + (dst)->r_type;
+#define RTYPE2HOWTO(cache_ptr, dst)				\
+  ((cache_ptr)->howto =						\
+   ((dst)->r_type < NUM_HOWTOS					\
+    ? howto_table + (dst)->r_type				\
+    : NULL))
 
 #ifndef bfd_pe_print_pdata
 #define bfd_pe_print_pdata	NULL
@@ -71,4 +75,4 @@ static reloc_howto_type howto_table[] =
 
 #define coff_write_armap bsd_write_armap
 
-CREATE_BIG_COFF_TARGET_VEC (we32kcoff_vec, "coff-we32k", 0, 0, 0, NULL, COFF_SWAP_TABLE)
+CREATE_BIG_COFF_TARGET_VEC (we32k_coff_vec, "coff-we32k", 0, 0, 0, NULL, COFF_SWAP_TABLE)

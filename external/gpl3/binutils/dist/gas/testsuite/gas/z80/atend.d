@@ -1,5 +1,5 @@
 #objdump: -d
-#name: index intructions with label as offset
+#name: index instructions with label as offset
 
 .*: .*
 

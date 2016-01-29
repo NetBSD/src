@@ -1,6 +1,6 @@
 // descriptors.h -- manage file descriptors for gold   -*- C++ -*-
 
-// Copyright 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -56,6 +56,10 @@ class Descriptors
   void
   release(int descriptor, bool permanent);
 
+  // Close all the descriptors open for reading.
+  void
+  close_all();
+
  private:
   // Information kept for a descriptor.
   struct Open_descriptor
@@ -103,6 +107,10 @@ open_descriptor(int descriptor, const char* name, int flags, int mode = 0)
 inline void
 release_descriptor(int descriptor, bool permanent)
 { descriptors.release(descriptor, permanent); }
+
+inline void
+close_all_descriptors()
+{ descriptors.close_all(); }
 
 } // End namespace gold.
 

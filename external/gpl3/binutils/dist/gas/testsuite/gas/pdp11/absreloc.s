@@ -1,5 +1,5 @@
 # Test abs operands with relocatable modes for PDP11.
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

@@ -1,7 +1,6 @@
 # Test linking directly to S-records.
 # By Ian Lance Taylor, Cygnus Support.
-#   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009, 2011, 2012
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -269,6 +268,11 @@ proc run_srec_test { test objs } {
 	set flags "$flags -no-relax"
     }
 
+    # MSP430 targets always relax.
+    if [istarget msp430*-*-*] {
+	setup_xfail "msp430*-*-*"
+    }
+
     # Epiphany needs some help too
     if [istarget epiphany*-*-*] {
 	set flags "$flags --defsym _start=00000060"
@@ -335,10 +339,20 @@ if { ![is_remote host] && [which $CC] == 0 } {
     return
 }
 
+# Pass -fplt to CC and CXX since -fno-plt doesn't work with S-records
+# tests.
+global PLT_CFLAGS
+set old_CC "$CC"
+set CC "$CC $PLT_CFLAGS"
+set old_CXX "$CXX"
+set CXX "$CXX $PLT_CFLAGS"
+
 if { ![ld_compile $CC $srcdir/$subdir/sr1.c tmpdir/sr1.o] \
      || ![ld_compile $CC $srcdir/$subdir/sr2.c tmpdir/sr2.o] } {
     unresolved $test1
     unresolved $test2
+    set CC "$old_CC"
+    set CXX "$old_CXX"
     return
 }
 
@@ -399,11 +413,15 @@ run_srec_test $test1 "tmpdir/sr1.o tmpdir/sr2.o"
 
 if { ![is_remote host] && [which $CXX] == 0 } {
     untested $test2
+    set CC "$old_CC"
+    set CXX "$old_CXX"
     return
 }
 
 if ![ld_compile "$CXX $CXXFLAGS -fno-exceptions" $srcdir/$subdir/sr3.cc tmpdir/sr3.o] {
     unresolved $test2
+    set CC "$old_CC"
+    set CXX "$old_CXX"
     return
 }
 
@@ -423,3 +441,6 @@ setup_xfail "bfin-*-linux-uclibc"
 setup_xfail "tile*-*-*"
 
 run_srec_test $test2 "tmpdir/sr3.o"
+
+set CC "$old_CC"
+set CXX "$old_CXX"

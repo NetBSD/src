@@ -1,7 +1,5 @@
 /* write.h
-   Copyright 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001,
-   2002, 2003, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -64,8 +62,8 @@ struct fix
   /* The value is signed when checking for overflow.  */
   unsigned fx_signed : 1;
 
-  /* pc-relative offset adjust (only used by m68k and m68hc11) */
-  char fx_pcrel_adjust;
+  /* pc-relative offset adjust (only used by some CPU specific code) */
+  signed char fx_pcrel_adjust;
 
   /* How many bytes are involved? */
   unsigned char fx_size;
@@ -87,6 +85,9 @@ struct fix
 
   /* The value of dot when the fixup expression was parsed.  */
   addressT fx_dot_value;
+
+  /* The frag fx_dot_value is based on.  */
+  fragS *fx_dot_frag;
 
   /* Next fixS in linked list, or NULL.  */
   struct fix *fx_next;
@@ -162,12 +163,12 @@ struct reloc_list
 extern int finalize_syms;
 extern symbolS *abs_section_sym;
 extern addressT dot_value;
+extern fragS *dot_frag;
 extern struct reloc_list* reloc_list;
 
 extern void append (char **charPP, char *fromP, unsigned long length);
 extern void record_alignment (segT seg, int align);
 extern int get_recorded_alignment (segT seg);
-extern void subsegs_finish (void);
 extern void write_object_file (void);
 extern long relax_frag (segT, fragS *, long);
 extern int relax_segment (struct frag *, segT, int);

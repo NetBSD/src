@@ -88,7 +88,7 @@
 	* readelf.c (arm_attr_tag_ABI_FP_16bit_format): New.
 	(arm_attr_tag_VFP_HP_extension): New.
 	(arm_attr_public_tag arm_attr_public_tags): Support
-	new attributes. 
+	new attributes.
 
 2008-11-17  Nick Clifton  <nickc@redhat.com>
 
@@ -365,7 +365,7 @@
 
 2008-07-15  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* objdump.c (load_debug_section): Initialize section_is_compressed 
+	* objdump.c (load_debug_section): Initialize section_is_compressed
 	for gcc 3.4/ia64.
 	* readelf.c (load_debug_section): Likewise.
 
@@ -866,6 +866,12 @@
 
 For older changes see ChangeLog-2007
 
+Copyright (C) 2008 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

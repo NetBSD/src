@@ -667,12 +667,12 @@ Disassembly of section .text:
  84c:	1800 0000 	jal	0 <data1>
 			84c: R_MIPS16_26	extern
  850:	6500      	nop
- 852:	e809      	entry	
+ 852:	e809      	entry
  854:	e909      	entry	a0
  856:	eb49      	entry	a0-a2,s0
  858:	e8a9      	entry	s0-s1,ra
  85a:	e829      	entry	ra
- 85c:	ef09      	exit	
+ 85c:	ef09      	exit
  85e:	ef49      	exit	s0
  860:	efa9      	exit	s0-s1,ra
  862:	ef29      	exit	ra

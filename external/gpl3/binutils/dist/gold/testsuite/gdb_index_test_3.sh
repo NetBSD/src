@@ -2,7 +2,7 @@
 
 # gdb_index_test_3.sh -- a test case for the --gdb-index option.
 
-# Copyright 2012 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 # Written by Cary Coutant <ccoutant@google.com>.
 
 # This file is part of gold.
@@ -37,7 +37,7 @@ check()
 
 STDOUT=gdb_index_test_3.stdout
 
-check $STDOUT "^Version [45]"
+check $STDOUT "^Version [4-7]"
 
 # Look for the symbols we know should be in the symbol table.
 

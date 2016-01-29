@@ -204,4 +204,30 @@ func_all_registers:
 	.cfi_undefined mm6	; nop
 	.cfi_undefined mm7	; nop
 
+	.cfi_undefined xmm16	; nop
+	.cfi_undefined xmm17	; nop
+	.cfi_undefined xmm18	; nop
+	.cfi_undefined xmm19	; nop
+	.cfi_undefined xmm20	; nop
+	.cfi_undefined xmm21	; nop
+	.cfi_undefined xmm22	; nop
+	.cfi_undefined xmm23	; nop
+	.cfi_undefined xmm24	; nop
+	.cfi_undefined xmm25	; nop
+	.cfi_undefined xmm26	; nop
+	.cfi_undefined xmm27	; nop
+	.cfi_undefined xmm28	; nop
+	.cfi_undefined xmm29	; nop
+	.cfi_undefined xmm30	; nop
+	.cfi_undefined xmm31	; nop
+
+	.cfi_undefined k0	; nop
+	.cfi_undefined k1	; nop
+	.cfi_undefined k2	; nop
+	.cfi_undefined k3	; nop
+	.cfi_undefined k4	; nop
+	.cfi_undefined k5	; nop
+	.cfi_undefined k6	; nop
+	.cfi_undefined k7	; nop
+
 	.cfi_endproc

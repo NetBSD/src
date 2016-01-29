@@ -1,6 +1,6 @@
 // elfcpp_file.h -- file access for elfcpp   -*- C++ -*-
 
-// Copyright 2006, 2007, Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -144,11 +144,32 @@ class Elf_file
     return this->shnum_;
   }
 
+  unsigned int
+  shnum() const
+  {
+    if (this->shnum_ == 0 && this->shoff_ != 0)
+      this->file_->error(_("ELF file has not been initialized yet"
+			   " (internal error)"));
+    return this->shnum_;
+  }
+
   // Return the section index of the section name string table.
   unsigned int
   shstrndx()
   {
     this->initialize_shnum();
+    return this->shstrndx_;
+  }
+
+  unsigned int
+  shstrndx() const
+  {
+    if (this->shstrndx_ == SHN_XINDEX && this->shoff_ != 0)
+      {
+	this->file_->error(_("ELF file has not been initialized yet"
+			     " (internal error)"));
+	return 0;
+      }
     return this->shstrndx_;
   }
 
@@ -158,6 +179,15 @@ class Elf_file
   large_shndx_offset()
   {
     this->initialize_shnum();
+    return this->large_shndx_offset_;
+  }
+
+  int
+  large_shndx_offset() const
+  {
+    if (this->shstrndx_ == SHN_XINDEX && this->shoff_ != 0)
+      this->file_->error(_("ELF file has not been initialized yet"
+			   " (internal error)"));
     return this->large_shndx_offset_;
   }
 
@@ -171,7 +201,7 @@ class Elf_file
 
   // Return the name of section SHNDX.
   std::string
-  section_name(unsigned int shndx);
+  section_name(unsigned int shndx) const;
 
   // Return the location of the contents of section SHNDX.
   typename File::Location
@@ -216,7 +246,7 @@ class Elf_file
 
   // Return the file offset of the header of section SHNDX.
   off_t
-  section_header_offset(unsigned int shndx);
+  section_header_offset(unsigned int shndx) const;
 
   // The file we are reading.
   File* file_;
@@ -465,7 +495,7 @@ Elf_file<size, big_endian, File>::find_section_by_type(unsigned int type)
 
 template<int size, bool big_endian, typename File>
 off_t
-Elf_file<size, big_endian, File>::section_header_offset(unsigned int shndx)
+Elf_file<size, big_endian, File>::section_header_offset(unsigned int shndx) const
 {
   if (shndx >= this->shnum())
     this->file_->error(_("section_header_offset: bad shndx %u >= %u"),
@@ -477,7 +507,7 @@ Elf_file<size, big_endian, File>::section_header_offset(unsigned int shndx)
 
 template<int size, bool big_endian, typename File>
 std::string
-Elf_file<size, big_endian, File>::section_name(unsigned int shndx)
+Elf_file<size, big_endian, File>::section_name(unsigned int shndx) const
 {
   File* const file = this->file_;
 

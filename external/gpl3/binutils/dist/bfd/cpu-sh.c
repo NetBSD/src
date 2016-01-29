@@ -1,6 +1,5 @@
 /* BFD library support routines for the Renesas / SuperH SH architecture.
-   Copyright 1993, 1994, 1997, 1998, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -388,7 +387,7 @@ static struct { unsigned long bfd_mach, arch, arch_up; } bfd_to_arch_table[] =
   { bfd_mach_sh2a_nofpu_or_sh3_nommu,               arch_sh2a_nofpu_or_sh3_nommu,         arch_sh2a_nofpu_or_sh3_nommu_up },
   { bfd_mach_sh2a_or_sh4,     arch_sh2a_or_sh4,     arch_sh2a_or_sh4_up },
   { bfd_mach_sh2a_or_sh3e,    arch_sh2a_or_sh3e,    arch_sh2a_or_sh3e_up },
-  
+
   { bfd_mach_sh3,             arch_sh3,             arch_sh3_up },
   { bfd_mach_sh3_nommu,       arch_sh3_nommu,       arch_sh3_nommu_up },
   { bfd_mach_sh3_dsp,         arch_sh3_dsp,         arch_sh3_dsp_up },
@@ -541,6 +540,6 @@ sh_merge_bfd_arch (bfd *ibfd, bfd *obfd)
 
   bfd_default_set_arch_mach (obfd, bfd_arch_sh,
 			     sh_get_bfd_mach_from_arch_set (merged_arch));
-  
+
   return TRUE;
 }

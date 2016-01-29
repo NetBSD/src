@@ -2,7 +2,7 @@
 #name: CFI on m68k
 Contents of the .eh_frame section:
 
-00000000 00000014 00000000 CIE
+0+0000 0+0014 0+0000 CIE
   Version:               1
   Augmentation:          "zR"
   Code alignment factor: 2
@@ -15,22 +15,22 @@ Contents of the .eh_frame section:
   DW_CFA_nop
   DW_CFA_nop
 
-00000018 00000014 0000001c FDE cie=00000000 pc=00000000..0000000c
-  DW_CFA_advance_loc: 4 to 00000004
+0+0018 0+0014 0+001c FDE cie=0+0000 pc=0+0000..0+000c
+  DW_CFA_advance_loc: 4 to 0+0004
   DW_CFA_def_cfa_offset: 4664
-  DW_CFA_advance_loc: 6 to 0000000a
+  DW_CFA_advance_loc: 6 to 0+000a
   DW_CFA_def_cfa_offset: 4
 
-00000030 00000018 00000034 FDE cie=00000000 pc=0000000c..00000018
-  DW_CFA_advance_loc: 4 to 00000010
+0+0030 0+0018 0+0034 FDE cie=0+0000 pc=0+000c..0+0018
+  DW_CFA_advance_loc: 4 to 0+0010
   DW_CFA_def_cfa_offset: 8
   DW_CFA_offset: r14 at cfa-8
   DW_CFA_def_cfa_register: r14
-  DW_CFA_advance_loc: 6 to 00000016
+  DW_CFA_advance_loc: 6 to 0+0016
   DW_CFA_def_cfa_register: r15
   DW_CFA_nop
 
-0000004c 00000010 00000050 FDE cie=00000000 pc=00000018..0000001c
+0+004c 0+0010 0+0050 FDE cie=0+0000 pc=0+0018..0+001c
 
   DW_CFA_nop
   DW_CFA_nop

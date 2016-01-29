@@ -205,13 +205,13 @@ asm (".hidden visibility_func");
 int
 main_visibility_checkcom (void)
 {
-  return & visibility_def != NULL && visibility_def == 2;
+  return visibility_def == 2;
 }
 
 int
 main_visibility_checkweak (void)
 {
-  return & visibility_func != NULL && visibility_func () == 2;
+  return visibility_func () == 2;
 }
 #else
 int

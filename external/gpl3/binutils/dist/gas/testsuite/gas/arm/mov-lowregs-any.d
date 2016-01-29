@@ -1,6 +1,6 @@
 # name: MOV lowregs
 # readelf: -A
-# target: *-*-*eabi *-*-nacl*
+# target: *-*-*eabi* *-*-nacl*
 Attribute Section: aeabi
 File Attributes
   Tag_CPU_arch: v6

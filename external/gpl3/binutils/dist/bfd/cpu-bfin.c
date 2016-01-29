@@ -1,6 +1,6 @@
 /* BFD Support for the ADI Blackfin processor.
 
-   Copyright 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,7 +34,7 @@ const bfd_arch_info_type bfd_bfin_arch =
     "bfin",        	/* Arch printable name.  */
     4,                	/* Section align power.  */
     TRUE,             	/* The one and only.  */
-    bfd_default_compatible, 
+    bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
     0,

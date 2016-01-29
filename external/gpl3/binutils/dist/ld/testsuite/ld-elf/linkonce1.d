@@ -4,7 +4,7 @@
 #objdump: -r
 
 .*:     file format .*
-
+#...
 RELOCATION RECORDS FOR \[.debug_frame\]:
 OFFSET[ 	]+TYPE[ 	]+VALUE[ 	]*
 .*(NONE|unused|UNUSED).*\*ABS\*

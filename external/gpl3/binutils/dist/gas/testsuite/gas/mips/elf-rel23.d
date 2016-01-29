@@ -7,7 +7,7 @@
 Disassembly of section \.text:
 
 0+00 <.*>:
-.*:	0380282d 	move	\$5,\$28
+.*:	03802825 	move	\$5,\$28
 .*:	3c1c0000 	lui	\$28,0x0
 			.*: R_MIPS_GPREL16	foo
 			.*: R_MIPS_SUB	\*ABS\*

@@ -1,6 +1,5 @@
 /* sysdep.h -- handle host dependencies for the GNU linker
-   Copyright 1995, 1996, 1997, 1999, 2002, 2003, 2005, 2007, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -57,32 +56,10 @@ extern char *strrchr ();
 #include <unistd.h>
 #endif
 
-/* for PATH_MAX */
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-/* for MAXPATHLEN */
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#ifdef PATH_MAX
-# define LD_PATHMAX PATH_MAX
-#else
-# ifdef MAXPATHLEN
-#  define LD_PATHMAX MAXPATHLEN
-# else
-#  define LD_PATHMAX 1024
-# endif
-#endif
-
 #ifdef HAVE_REALPATH
 # define REALPATH(a,b) realpath (a, b)
 #else
 # define REALPATH(a,b) NULL
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 
 #ifdef USE_BINARY_FOPEN

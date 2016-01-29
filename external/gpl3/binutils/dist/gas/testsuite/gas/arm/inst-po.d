@@ -9,8 +9,8 @@ Disassembly of section .text:
 00000004 <.text\+0x4> bf0c      	ite	eq
 00000006 <.text\+0x6> 4649      	moveq	r1, r9
 00000008 <.text\+0x8> 4649      	movne	r1, r9
-0000000a <.text\+0xa> 1234      	.short	0x1234
-0000000c <.text\+0xc> 0000      	.short	0x0000
+0000000a <.text\+0xa> (1234|0000)      	.short	(0x1234|0x0000)
+0000000c <.text\+0xc> (0000|1234)      	.short	(0x0000|0x1234)
 0000000e <.text\+0xe> bf0c      	ite	eq
 00000010 <.text\+0x10> 4649      	moveq	r1, r9
 00000012 <.text\+0x12> 4649      	movne	r1, r9

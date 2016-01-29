@@ -1,6 +1,5 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -830,7 +829,7 @@ ar_is_only_in_integer_unit (int reg)
   return reg >= 64 && reg <= 111;
 }
 
-/* Determine if application register REGNUM resides only in the memory 
+/* Determine if application register REGNUM resides only in the memory
    unit (as opposed to the integer unit).  */
 static int
 ar_is_only_in_memory_unit (int reg)
@@ -1085,19 +1084,18 @@ obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  sym_name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&sym_name);
 
   if (input_line_pointer == sym_name)
     {
-      *input_line_pointer = c;
+      (void) restore_line_pointer (c);
       as_bad (_("expected symbol name"));
       ignore_rest_of_line ();
       return;
     }
 
   symbolP = symbol_find_or_make (sym_name);
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   if ((S_IS_DEFINED (symbolP) || symbol_equated_p (symbolP))
       && !S_IS_COMMON (symbolP))
@@ -2978,7 +2976,7 @@ ia64_estimate_size_before_relax (fragS *frag,
 }
 
 /* This function converts a rs_machine_dependent variant frag into a
-  normal fill frag with the unwind image from the the record list.  */
+  normal fill frag with the unwind image from the record list.  */
 void
 ia64_convert_frag (fragS *frag)
 {
@@ -3168,12 +3166,11 @@ dot_radix (int dummy ATTRIBUTE_UNUSED)
 
   if (is_it_end_of_statement ())
     return;
-  radix = input_line_pointer;
-  ch = get_symbol_end ();
+  ch = get_symbol_name (&radix);
   ia64_canonicalize_symbol_name (radix);
   if (strcasecmp (radix, "C"))
     as_bad (_("Radix `%s' unsupported or invalid"), radix);
-  *input_line_pointer = ch;
+  (void) restore_line_pointer (ch);
   demand_empty_rest_of_line ();
 }
 
@@ -3280,11 +3277,12 @@ add_unwind_entry (unw_rec_list *ptr, int sep)
 
   if (sep == ',')
     {
+      char *name;
       /* Parse a tag permitted for the current directive.  */
       int ch;
 
       SKIP_WHITESPACE ();
-      ch = get_symbol_end ();
+      ch = get_symbol_name (&name);
       /* FIXME: For now, just issue a warning that this isn't implemented.  */
       {
 	static int warned;
@@ -3295,7 +3293,7 @@ add_unwind_entry (unw_rec_list *ptr, int sep)
 	    as_warn (_("Tags on unwind pseudo-ops aren't supported, yet"));
 	  }
       }
-      *input_line_pointer = ch;
+      (void) restore_line_pointer (ch);
     }
   if (sep != NOT_A_CHAR)
     demand_empty_rest_of_line ();
@@ -3341,7 +3339,7 @@ dot_vframe (int dummy ATTRIBUTE_UNUSED)
   if (! (unwind.prologue_mask & 2))
     add_unwind_entry (output_psp_gr (reg), NOT_A_CHAR);
   else if (reg != unwind.prologue_gr
-		  + (unsigned) popcount (unwind.prologue_mask & (-2 << 1)))
+		  + (unsigned) popcount (unwind.prologue_mask & -(2 << 1)))
     as_warn (_("Operand of .vframe contradicts .prologue"));
 }
 
@@ -3423,7 +3421,7 @@ dot_save (int dummy ATTRIBUTE_UNUSED)
       if (! (unwind.prologue_mask & 4))
 	add_unwind_entry (output_pfs_gr (reg2), NOT_A_CHAR);
       else if (reg2 != unwind.prologue_gr
-		       + (unsigned) popcount (unwind.prologue_mask & (-4 << 1)))
+		       + (unsigned) popcount (unwind.prologue_mask & -(4 << 1)))
 	as_warn (_("Second operand of .save contradicts .prologue"));
       break;
     case REG_AR + AR_LC:
@@ -3442,7 +3440,7 @@ dot_save (int dummy ATTRIBUTE_UNUSED)
       if (! (unwind.prologue_mask & 1))
 	add_unwind_entry (output_preds_gr (reg2), NOT_A_CHAR);
       else if (reg2 != unwind.prologue_gr
-		       + (unsigned) popcount (unwind.prologue_mask & (-1 << 1)))
+		       + (unsigned) popcount (unwind.prologue_mask & -(1 << 1)))
 	as_warn (_("Second operand of .save contradicts .prologue"));
       break;
     case REG_PRIUNAT:
@@ -3688,7 +3686,7 @@ generate_unwind_image (const segT text_seg)
 
       /* Set expression which points to start of unwind descriptor area.  */
       unwind.info = expr_build_dot ();
-      
+
       frag_var (rs_machine_dependent, size, size, 0, 0,
 		(offsetT) (long) unwind.personality_routine,
 		(char *) list);
@@ -4233,16 +4231,16 @@ static void
 dot_personality (int dummy ATTRIBUTE_UNUSED)
 {
   char *name, *p, c;
+
   if (!in_procedure ("personality"))
     return;
   SKIP_WHITESPACE ();
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   p = input_line_pointer;
   unwind.personality_routine = symbol_find_or_make (name);
   unwind.force_unwind_entry = 1;
   *p = c;
-  SKIP_WHITESPACE ();
+  SKIP_WHITESPACE_AFTER_NAME ();
   demand_empty_rest_of_line ();
 }
 
@@ -4272,8 +4270,7 @@ dot_proc (int dummy ATTRIBUTE_UNUSED)
   while (1)
     {
       SKIP_WHITESPACE ();
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       p = input_line_pointer;
       if (!*name)
 	as_bad (_("Empty argument of .proc"));
@@ -4296,7 +4293,7 @@ dot_proc (int dummy ATTRIBUTE_UNUSED)
 	  symbol_get_bfdsym (sym)->flags |= BSF_FUNCTION;
 	}
       *p = c;
-      SKIP_WHITESPACE ();
+      SKIP_WHITESPACE_AFTER_NAME ();
       if (*input_line_pointer != ',')
 	break;
       ++input_line_pointer;
@@ -4467,14 +4464,15 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
 					  symbol_get_frag (unwind.proc_pending.sym));
       else
 	e.X_add_symbol = unwind.proc_pending.sym;
-      ia64_cons_fix_new (frag_now, where, bytes_per_address, &e);
+      ia64_cons_fix_new (frag_now, where, bytes_per_address, &e,
+			 BFD_RELOC_NONE);
 
       e.X_op = O_pseudo_fixup;
       e.X_op_symbol = pseudo_func[FUNC_SEG_RELATIVE].u.sym;
       e.X_add_number = 0;
       e.X_add_symbol = proc_end;
       ia64_cons_fix_new (frag_now, where + bytes_per_address,
-			 bytes_per_address, &e);
+			 bytes_per_address, &e, BFD_RELOC_NONE);
 
       if (unwind.info)
 	{
@@ -4483,7 +4481,7 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
 	  e.X_add_number = 0;
 	  e.X_add_symbol = unwind.info;
 	  ia64_cons_fix_new (frag_now, where + (bytes_per_address * 2),
-			     bytes_per_address, &e);
+			     bytes_per_address, &e, BFD_RELOC_NONE);
 	}
     }
   subseg_set (saved_seg, saved_subseg);
@@ -4529,8 +4527,7 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
       char *name, *p, c;
 
       SKIP_WHITESPACE ();
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       p = input_line_pointer;
       if (!*name)
 	(md.unwind_check == unwind_check_warning
@@ -4552,7 +4549,7 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
 	    as_warn (_("`%s' was not specified with previous .proc"), name);
 	}
       *p = c;
-      SKIP_WHITESPACE ();
+      SKIP_WHITESPACE_AFTER_NAME ();
       if (*input_line_pointer != ',')
 	break;
       ++input_line_pointer;
@@ -4638,12 +4635,11 @@ dot_rot (int type)
   drpp = &md.dynreg[type];
   while (1)
     {
-      start = input_line_pointer;
-      ch = get_symbol_end ();
+      ch = get_symbol_name (&start);
       len = strlen (ia64_canonicalize_symbol_name (start));
       *input_line_pointer = ch;
 
-      SKIP_WHITESPACE ();
+      SKIP_WHITESPACE_AFTER_NAME ();
       if (*input_line_pointer != '[')
 	{
 	  as_bad (_("Expected '['"));
@@ -4769,8 +4765,7 @@ dot_psr (int dummy ATTRIBUTE_UNUSED)
 
   while (1)
     {
-      option = input_line_pointer;
-      ch = get_symbol_end ();
+      ch = get_symbol_name (&option);
       if (strcmp (option, "lsb") == 0)
 	md.flags &= ~EF_IA_64_BE;
       else if (strcmp (option, "msb") == 0)
@@ -4783,7 +4778,7 @@ dot_psr (int dummy ATTRIBUTE_UNUSED)
 	as_bad (_("Unknown psr option `%s'"), option);
       *input_line_pointer = ch;
 
-      SKIP_WHITESPACE ();
+      SKIP_WHITESPACE_AFTER_NAME ();
       if (*input_line_pointer != ',')
 	break;
 
@@ -4806,36 +4801,21 @@ cross_section (int ref, void (*builder) (int), int ua)
   char *start, *end;
   int saved_auto_align;
   unsigned int section_count;
+  char *name;
+  char c;
 
   SKIP_WHITESPACE ();
   start = input_line_pointer;
-  if (*start == '"')
+  c = get_symbol_name (&name);
+  if (input_line_pointer == start)
     {
-      int len;
-      char *name;
-
-      name = demand_copy_C_string (&len);
-      obstack_free(&notes, name);
-      if (!name)
-	{
-	  ignore_rest_of_line ();
-	  return;
-	}
+      as_bad (_("Missing section name"));
+      ignore_rest_of_line ();
+      return;
     }
-  else
-    {
-      char c = get_symbol_end ();
-
-      if (input_line_pointer == start)
-	{
-	  as_bad (_("Missing section name"));
-	  ignore_rest_of_line ();
-	  return;
-	}
-      *input_line_pointer = c;
-    }
+  * input_line_pointer = c;
+  SKIP_WHITESPACE_AFTER_NAME ();
   end = input_line_pointer;
-  SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
       as_bad (_("Comma expected after section name"));
@@ -5068,8 +5048,11 @@ dot_pred_rel (int type)
 	}
       else if (*input_line_pointer == '@')
 	{
-	  char *form = ++input_line_pointer;
-	  char c = get_symbol_end();
+	  char *form;
+	  char c;
+
+	  ++input_line_pointer;
+	  c = get_symbol_name (&form);
 
 	  if (strcmp (form, "mutex") == 0)
 	    type = 'm';
@@ -5077,7 +5060,7 @@ dot_pred_rel (int type)
 	    type = 'c';
 	  else if (strcmp (form, "imply") == 0)
 	    type = 'i';
-	  *input_line_pointer = c;
+	  (void) restore_line_pointer (c);
 	}
       else
 	{
@@ -5215,8 +5198,7 @@ dot_entry (int dummy ATTRIBUTE_UNUSED)
 
   do
     {
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       symbolP = symbol_find_or_make (name);
 
       err = hash_insert (md.entry_hash, S_GET_NAME (symbolP), (void *) symbolP);
@@ -5225,7 +5207,7 @@ dot_entry (int dummy ATTRIBUTE_UNUSED)
 		  name, err);
 
       *input_line_pointer = c;
-      SKIP_WHITESPACE ();
+      SKIP_WHITESPACE_AFTER_NAME ();
       c = *input_line_pointer;
       if (c == ',')
 	{
@@ -6009,10 +5991,10 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
       if (e->X_op == O_constant)
 	{
 	  /* 5-bit signed scaled by 64 */
-	  if ((e->X_add_number <=  	( 0xf  << 6 )) 
+	  if ((e->X_add_number <=  	( 0xf  << 6 ))
 	       && (e->X_add_number >=  -( 0x10 << 6 )))
 	    {
-	      
+
 	      /* Must be a multiple of 64 */
 	      if ((e->X_add_number & 0x3f) != 0)
 	        as_warn (_("stride must be a multiple of 64; lower 6 bits ignored"));
@@ -6028,7 +6010,7 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
       if (e->X_op == O_constant)
 	{
 	  /* 6-bit unsigned biased by 1 -- count 0 is meaningless */
-	  if ((e->X_add_number     <=   64) 
+	  if ((e->X_add_number     <=   64)
 	       && (e->X_add_number > 0) )
 	    {
 	      return OPERAND_MATCH;
@@ -6143,7 +6125,7 @@ parse_operands (struct ia64_opcode *idesc)
 
   for (; ; ++i)
     {
-      if (i < NELEMS (CURR_SLOT.opnd)) 
+      if (i < NELEMS (CURR_SLOT.opnd))
 	{
 	  sep = parse_operand_maybe_eval (CURR_SLOT.opnd + i, '=',
 					  idesc->operands[i]);
@@ -6934,15 +6916,6 @@ emit_one_bundle (void)
 	  md.slot[curr].unwind_record = NULL;
 	}
 
-      if (required_unit == IA64_UNIT_L)
-	{
-	  know (i == 1);
-	  /* skip one slot for long/X-unit instructions */
-	  ++i;
-	}
-      --md.num_slots_in_use;
-      last_slot = i;
-
       for (j = 0; j < md.slot[curr].num_fixups; ++j)
 	{
 	  ifix = md.slot[curr].fixup + j;
@@ -6954,6 +6927,17 @@ emit_one_bundle (void)
 	}
 
       end_of_insn_group = md.slot[curr].end_of_insn_group;
+
+      /* This adjustment to "i" must occur after the fix, otherwise the fix
+	 is assigned to the wrong slot, and the VMS linker complains.  */
+      if (required_unit == IA64_UNIT_L)
+	{
+	  know (i == 1);
+	  /* skip one slot for long/X-unit instructions */
+	  ++i;
+	}
+      --md.num_slots_in_use;
+      last_slot = i;
 
       /* clear slot:  */
       ia64_free_opcode (md.slot[curr].idesc);
@@ -7009,7 +6993,7 @@ emit_one_bundle (void)
 	as_bad_where (md.slot[curr].src_file, md.slot[curr].src_line,
 		      _("Missing '}' at end of file"));
     }
-	
+
   know (md.num_slots_in_use < NUM_SLOTS);
 
   t0 = end_of_insn_group | (template_val << 1) | (insn[0] << 5) | (insn[1] << 46);
@@ -7746,8 +7730,7 @@ ia64_unrecognized_line (int ch)
 	   recognize labels.  */
 	if (is_name_beginner (*input_line_pointer))
 	  {
-	    s = input_line_pointer;
-	    c = get_symbol_end ();
+	    c = get_symbol_name (&s);
 	  }
 	else if (LOCAL_LABELS_FB
 		 && ISDIGIT (*input_line_pointer))
@@ -9651,7 +9634,7 @@ update_qp_mutex (valueT mask)
 		  print_prmask (qp_mutexes[i].prmask);
 		  fprintf (stderr, "\n");
 		}
-	      
+
 	      /* Deal with the old mutex with more than 3+ PRs only if
 		 the new mutex on the same execution path with it.
 
@@ -9664,7 +9647,7 @@ update_qp_mutex (valueT mask)
 		  if (add == 0
 		      && (qp_mutexes[i].prmask & mask) == mask)
 		    add = 1;
-		  
+
 		  qp_mutexes[i].prmask &= ~mask;
 		  if (qp_mutexes[i].prmask & (qp_mutexes[i].prmask - 1))
 		    {
@@ -9674,7 +9657,7 @@ update_qp_mutex (valueT mask)
 		      i++;
 		    }
 		}
-	      
+
 	      if (keep == 0)
 		/* Remove the mutex.  */
 		qp_mutexes[i] = qp_mutexes[--qp_mutexeslen];
@@ -10718,12 +10701,11 @@ md_assemble (char *str)
 
   /* extract the opcode (mnemonic):  */
 
-  mnemonic = input_line_pointer;
-  ch = get_symbol_end ();
+  ch = get_symbol_name (&mnemonic);
   pdesc = (struct pseudo_opcode *) hash_find (md.pseudo_hash, mnemonic);
   if (pdesc)
     {
-      *input_line_pointer = ch;
+      (void) restore_line_pointer (ch);
       (*pdesc->handler) (pdesc->arg);
       goto done;
     }
@@ -10731,7 +10713,7 @@ md_assemble (char *str)
   /* Find the instruction descriptor matching the arguments.  */
 
   idesc = ia64_find_opcode (mnemonic);
-  *input_line_pointer = ch;
+  (void) restore_line_pointer (ch);
   if (!idesc)
     {
       as_bad (_("Unknown opcode `%s'"), mnemonic);
@@ -10795,7 +10777,7 @@ md_assemble (char *str)
     {
       enum ia64_opnd opnd1, opnd2;
       int rop;
-      
+
       opnd1 = idesc->operands[0];
       opnd2 = idesc->operands[1];
       if (opnd1 == IA64_OPND_AR3)
@@ -11055,9 +11037,9 @@ ia64_dwarf2_emit_offset (symbolS *symbol, unsigned int size)
    fixup.  We pick the right reloc code depending on the byteorder
    currently in effect.  */
 void
-ia64_cons_fix_new (fragS *f, int where, int nbytes, expressionS *exp)
+ia64_cons_fix_new (fragS *f, int where, int nbytes, expressionS *exp,
+		   bfd_reloc_code_real_type code)
 {
-  bfd_reloc_code_real_type code;
   fixS *fix;
 
   switch (nbytes)
@@ -11698,7 +11680,7 @@ ia64_handle_align (fragS *fragp)
   bytes = fragp->fr_next->fr_address - fragp->fr_address - fragp->fr_fix;
   p = fragp->fr_literal + fragp->fr_fix;
 
-  /* If no paddings are needed, we check if we need a stop bit.  */ 
+  /* If no paddings are needed, we check if we need a stop bit.  */
   if (!bytes && fragp->tc_frag_data)
     {
       if (fragp->fr_fix < 16)
@@ -11803,8 +11785,7 @@ dot_alias (int section)
   struct hash_control *ahash, *nhash;
   const char *kind;
 
-  name = input_line_pointer;
-  delim = get_symbol_end ();
+  delim = get_symbol_name (&name);
   end_name = input_line_pointer;
   *end_name = delim;
 
@@ -11815,7 +11796,7 @@ dot_alias (int section)
       return;
     }
 
-  SKIP_WHITESPACE ();
+  SKIP_WHITESPACE_AFTER_NAME ();
 
   if (*input_line_pointer != ',')
     {
@@ -11879,7 +11860,7 @@ dot_alias (int section)
   h = (struct alias *) xmalloc (sizeof (struct alias));
   as_where (&h->file, &h->line);
   h->name = name;
-  
+
   error_string = hash_jam (ahash, alias, (void *) h);
   if (error_string)
     {
@@ -11999,7 +11980,7 @@ ia64_vms_note (void)
   bname = xstrdup (lbasename (out_file_name));
   if ((p = strrchr (bname, '.')))
     *p = '\0';
-  
+
   /* VMS note header is 24 bytes long.  */
   p = frag_more (8 + 8 + 8);
   number_to_chars_littleendian (p + 0, 8, 8);

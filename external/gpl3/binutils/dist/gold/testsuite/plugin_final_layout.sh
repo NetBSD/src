@@ -2,7 +2,7 @@
 
 # plugin_final_layout.sh -- test
 
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 # Written by Sriraman Tallam <tmsriram@google.com>.
 
 # This file is part of gold.
@@ -56,5 +56,35 @@ END {
     }" $1
 }
 
+# With readelf -l, an ELF Section to Segment mapping is printed as :
+##############################################
+#  Section to Segment mapping:
+#  Segment Sections...
+#  ...
+#     0x     .text.plugin_created_unique
+#  ...
+##############################################
+# Check of .text.plugin_created_unique is the only section in the segment.
+check_unique_segment()
+{
+    awk "
+BEGIN { saw_section = 0; saw_unique = 0; }
+/$2/ { saw_section = 1; }
+/[ ]*0[0-9][ ]*$2[ ]*\$/ { saw_unique = 1; }
+END {
+      if (!saw_section)
+	{
+	  printf \"Section $2 not seen in output\\n\";
+	  exit 1;
+	}
+      else if (!saw_unique)
+	{
+	  printf \"Unique segment not seen for: $2\\n\";
+	  exit 1;
+	}
+    }" $1
+}
+
 check plugin_final_layout.stdout "_Z3foov" "_Z3barv"
 check plugin_final_layout.stdout "_Z3barv" "_Z3bazv"
+check_unique_segment plugin_final_layout_readelf.stdout ".text.plugin_created_unique"

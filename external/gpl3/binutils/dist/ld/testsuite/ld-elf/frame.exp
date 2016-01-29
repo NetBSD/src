@@ -1,5 +1,5 @@
 # Expect script for frame section tests
-#   Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -40,7 +40,7 @@ if { [istarget "sh*-*-elf*"] } {
 
 # ??? These targets have their own .tbss section, with different meaning
 # to the usual ELF .tbss.
-if { [istarget "hppa64-*-*"] || [istarget "v850-*-*"] } {
+if { [istarget "hppa64-*-*"] || [istarget "v850*-*-*"] } {
     return
 }
 

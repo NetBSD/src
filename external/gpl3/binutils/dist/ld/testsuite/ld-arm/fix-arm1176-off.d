@@ -1,5 +1,5 @@
 
-.*:     file format elf32-littlearm.*
+.*:     file format elf32-(big|little)arm.*
 
 
 Disassembly of section .foo:

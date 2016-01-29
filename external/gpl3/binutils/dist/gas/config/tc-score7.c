@@ -1,5 +1,5 @@
 /* tc-score7.c -- Assembler for Score7
-   Copyright 2009, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -2795,7 +2795,7 @@ s7_parse_16_32_inst (char *insnstr, bfd_boolean gen_frag_p)
   *p = c;
 
   memset (&s7_inst, '\0', sizeof (s7_inst));
-  sprintf (s7_inst.str, "%s", insnstr);
+  strcpy (s7_inst.str, insnstr);
   if (opcode)
     {
       s7_inst.instruction = opcode->value;
@@ -2804,7 +2804,7 @@ s7_parse_16_32_inst (char *insnstr, bfd_boolean gen_frag_p)
       s7_inst.size = s7_GET_INSN_SIZE (s7_inst.type);
       s7_inst.relax_size = 0;
       s7_inst.bwarn = 0;
-      sprintf (s7_inst.name, "%s", opcode->template_name);
+      strcpy (s7_inst.name, opcode->template_name);
       strcpy (s7_inst.reg, "");
       s7_inst.error = NULL;
       s7_inst.reloc.type = BFD_RELOC_NONE;
@@ -5090,7 +5090,7 @@ s7_build_score_ops_hsh (void)
   for (i = 0; i < sizeof (s7_score_insns) / sizeof (struct s7_asm_opcode); i++)
     {
       const struct s7_asm_opcode *insn = s7_score_insns + i;
-      unsigned len = strlen (insn->template_name);
+      size_t len = strlen (insn->template_name);
       struct s7_asm_opcode *new_opcode;
       char *template_name;
       new_opcode = (struct s7_asm_opcode *)
@@ -5119,7 +5119,7 @@ s7_build_dependency_insn_hsh (void)
   for (i = 0; i < ARRAY_SIZE (s7_insn_to_dependency_table); i++)
     {
       const struct s7_insn_to_dependency *tmp = s7_insn_to_dependency_table + i;
-      unsigned len = strlen (tmp->insn_name);
+      size_t len = strlen (tmp->insn_name);
       struct s7_insn_to_dependency *new_i2d;
 
       new_i2d = (struct s7_insn_to_dependency *)
@@ -5263,8 +5263,8 @@ s7_b32_relax_to_b16 (fragS * fragp)
     frag_addr = 0;
   else
     {
-      if (s->bsym != 0)
-	symbol_address = (addressT) s->sy_frag->fr_address;
+      if (s->bsym != NULL)
+	symbol_address = (addressT) symbol_get_frag (s)->fr_address;
     }
 
   value = s7_md_chars_to_number (fragp->fr_literal, s7_INSN_SIZE);
@@ -5308,12 +5308,12 @@ s7_parse_pce_inst (char *insnstr)
   p = strstr (insnstr, "||");
   c = *p;
   *p = '\0';
-  sprintf (first, "%s", insnstr);
+  strcpy (first, insnstr);
 
   /* Get second part string of PCE.  */
   *p = c;
   p += 2;
-  sprintf (second, "%s", p);
+  strcpy (second, p);
 
   s7_parse_16_32_inst (first, FALSE);
   if (s7_inst.error)
@@ -5337,7 +5337,7 @@ s7_parse_pce_inst (char *insnstr)
       || ((pec_part_1.size == s7_INSN16_SIZE) && (s7_inst.size == s7_INSN_SIZE)))
     {
       s7_inst.error = _("pce instruction error (16 bit || 16 bit)'");
-      sprintf (s7_inst.str, insnstr);
+      strcpy (s7_inst.str, insnstr);
       return;
     }
 
@@ -5471,10 +5471,9 @@ s7_get_symbol (void)
   char *name;
   symbolS *p;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   p = (symbolS *) symbol_find_or_make (name);
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
   return p;
 }
 
@@ -5954,8 +5953,7 @@ s7_s_score_lcomm (int bytes_p)
   segT bss_seg = bss_section;
   int needs_align = 0;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   p = input_line_pointer;
   *p = c;
 
@@ -5966,7 +5964,7 @@ s7_s_score_lcomm (int bytes_p)
       return;
     }
 
-  SKIP_WHITESPACE ();
+  SKIP_WHITESPACE_AFTER_NAME ();
 
   /* Accept an optional comma after the name.  The comma used to be
      required, but Irix 5 cc does not generate it.  */
@@ -6636,7 +6634,7 @@ s7_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
 
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 static void

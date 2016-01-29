@@ -62,6 +62,7 @@ stabs.c
 strings.c
 sysdep.h
 sysdump.c
+syslex_wrap.c
 unwind-ia64.c
 unwind-ia64.h
 version.c

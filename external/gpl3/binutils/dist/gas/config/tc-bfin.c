@@ -1,6 +1,5 @@
 /* tc-bfin.c -- Assembler for the ADI Blackfin.
-   Copyright 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -112,7 +111,7 @@ bfin_pic_ptr (int nbytes)
 static void
 bfin_s_bss (int ignore ATTRIBUTE_UNUSED)
 {
-  register int temp;
+  int temp;
 
   temp = get_absolute_expression ();
   subseg_set (bss_section, (subsegT) temp);
@@ -797,7 +796,7 @@ md_section_align (segment, size)
      valueT size;
 {
   int boundary = bfd_get_section_alignment (stdoutput, segment);
-  return ((size + (1 << boundary) - 1) & (-1 << boundary));
+  return ((size + (1 << boundary) - 1) & -(1 << boundary));
 }
 
 
@@ -949,7 +948,7 @@ int ninsns;
 int count_insns;
 
 static void *
-allocate (int n)
+allocate (size_t n)
 {
   return obstack_alloc (&mempool, n);
 }
@@ -1971,9 +1970,9 @@ bfin_eol_in_insn (char *line)
 }
 
 bfd_boolean
-bfin_start_label (char *s, char *ptr)
+bfin_start_label (char *s)
 {
-  while (s != ptr)
+  while (*s != 0)
     {
       if (*s == '(' || *s == '[')
 	return FALSE;

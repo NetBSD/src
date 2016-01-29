@@ -1,6 +1,6 @@
 // dwarf_reader.h -- parse dwarf2/3 debug information for gold  -*- C++ -*-
 
-// Copyright 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -335,10 +335,10 @@ class Dwarf_range_list
 class Dwarf_ranges_table
 {
  public:
-  Dwarf_ranges_table()
-    : ranges_shndx_(0), ranges_buffer_(NULL), ranges_buffer_end_(NULL),
-      owns_ranges_buffer_(false), ranges_reloc_mapper_(NULL),
-      output_section_offset_(0)
+  Dwarf_ranges_table(Dwarf_info_reader* dwinfo)
+    : dwinfo_(dwinfo), ranges_shndx_(0), ranges_buffer_(NULL),
+      ranges_buffer_end_(NULL), owns_ranges_buffer_(false),
+      ranges_reloc_mapper_(NULL), reloc_type_(0), output_section_offset_(0)
   { }
 
   ~Dwarf_ranges_table()
@@ -365,7 +365,14 @@ class Dwarf_ranges_table
 		  unsigned int ranges_shndx,
 		  off_t ranges_offset);
 
+  // Look for a relocation at offset OFF in the range table,
+  // and return the section index and offset of the target.
+  unsigned int
+  lookup_reloc(off_t off, off_t* target_off);
+
  private:
+  // The Dwarf_info_reader, for reading data.
+  Dwarf_info_reader* dwinfo_;
   // The section index of the ranges table.
   unsigned int ranges_shndx_;
   // The buffer containing the .debug_ranges section.
@@ -375,6 +382,8 @@ class Dwarf_ranges_table
   bool owns_ranges_buffer_;
   // Relocation mapper for the .debug_ranges section.
   Elf_reloc_mapper* ranges_reloc_mapper_;
+  // Type of the relocation section (SHT_REL or SHT_RELA).
+  unsigned int reloc_type_;
   // For incremental update links, this will hold the offset of the
   // input section within the output section.  Offsets read from
   // relocated data will be relative to the output section, and need
@@ -388,10 +397,11 @@ class Dwarf_ranges_table
 class Dwarf_pubnames_table
 {
  public:
-  Dwarf_pubnames_table(bool is_pubtypes)
-    : buffer_(NULL), buffer_end_(NULL), owns_buffer_(false),
-      offset_size_(0), pinfo_(NULL), is_pubtypes_(is_pubtypes),
-      output_section_offset_(0)
+  Dwarf_pubnames_table(Dwarf_info_reader* dwinfo, bool is_pubtypes)
+    : dwinfo_(dwinfo), buffer_(NULL), buffer_end_(NULL), owns_buffer_(false),
+      offset_size_(0), pinfo_(NULL), end_of_table_(NULL),
+      is_pubtypes_(is_pubtypes), is_gnu_style_(false),
+      unit_length_(0), cu_offset_(0)
   { }
 
   ~Dwarf_pubnames_table()
@@ -400,19 +410,35 @@ class Dwarf_pubnames_table
       delete[] this->buffer_;
   }
 
-  // Read the pubnames section SHNDX from the object file.
+  // Read the pubnames section from the object file, using the symbol
+  // table for relocating it.
   bool
-  read_section(Relobj* object, unsigned int shndx);
+  read_section(Relobj* object, const unsigned char* symbol_table,
+               off_t symtab_size);
 
   // Read the header for the set at OFFSET.
   bool
   read_header(off_t offset);
 
-  // Read the next name from the set.
+  // Return the offset to the cu within the info or types section.
+  off_t
+  cu_offset()
+  { return this->cu_offset_; }
+
+  // Return the size of this subsection of the table.  The unit length
+  // doesn't include the size of its own field.
+  off_t
+  subsection_size()
+  { return this->unit_length_; }
+
+  // Read the next name from the set.  If the pubname table is gnu-style,
+  // FLAG_BYTE is set to the high-byte of a gdb_index version 7 cu_index.
   const char*
-  next_name();
+  next_name(uint8_t* flag_byte);
 
  private:
+  // The Dwarf_info_reader, for reading data.
+  Dwarf_info_reader* dwinfo_;
   // The buffer containing the .debug_ranges section.
   const unsigned char* buffer_;
   const unsigned char* buffer_end_;
@@ -422,13 +448,22 @@ class Dwarf_pubnames_table
   unsigned int offset_size_;
   // The current position within the buffer.
   const unsigned char* pinfo_;
+  // The end of the current pubnames table.
+  const unsigned char* end_of_table_;
   // TRUE if this is a .debug_pubtypes section.
   bool is_pubtypes_;
-  // For incremental update links, this will hold the offset of the
-  // input section within the output section.  Offsets read from
-  // relocated data will be relative to the output section, and need
-  // to be corrected before reading data from the input section.
-  uint64_t output_section_offset_;
+  // Gnu-style pubnames table. This style has an extra flag byte between the
+  // offset and the name, and is used for generating version 7 of gdb-index.
+  bool is_gnu_style_;
+  // Fields read from the header.
+  uint64_t unit_length_;
+  off_t cu_offset_;
+
+  // Track relocations for this table so we can find the CUs that
+  // correspond to the subsections.
+  Elf_reloc_mapper* reloc_mapper_;
+  // Type of the relocation section (SHT_REL or SHT_RELA).
+  unsigned int reloc_type_;
 };
 
 // This class represents a DWARF Debug Info Entry (DIE).
@@ -662,12 +697,12 @@ class Dwarf_info_reader
 		    unsigned int reloc_type)
     : is_type_unit_(is_type_unit), object_(object), symtab_(symtab),
       symtab_size_(symtab_size), shndx_(shndx), reloc_shndx_(reloc_shndx),
-      reloc_type_(reloc_type), string_shndx_(0), buffer_(NULL),
-      buffer_end_(NULL), cu_offset_(0), cu_length_(0), offset_size_(0),
-      address_size_(0), cu_version_(0), type_signature_(0), type_offset_(0),
-      abbrev_table_(), reloc_mapper_(NULL), string_buffer_(NULL),
-      string_buffer_end_(NULL), owns_string_buffer_(false),
-      string_output_section_offset_(0)
+      reloc_type_(reloc_type), abbrev_shndx_(0), string_shndx_(0),
+      buffer_(NULL), buffer_end_(NULL), cu_offset_(0), cu_length_(0),
+      offset_size_(0), address_size_(0), cu_version_(0),
+      abbrev_table_(), ranges_table_(this),
+      reloc_mapper_(NULL), string_buffer_(NULL), string_buffer_end_(NULL),
+      owns_string_buffer_(false), string_output_section_offset_(0)
   { }
 
   virtual
@@ -700,6 +735,16 @@ class Dwarf_info_reader
     return NULL;
   }
 
+  // Read a possibly unaligned integer of SIZE.
+  template <int valsize>
+  inline typename elfcpp::Valtype_base<valsize>::Valtype
+  read_from_pointer(const unsigned char* source);
+
+  // Read a possibly unaligned integer of SIZE.  Update SOURCE after read.
+  template <int valsize>
+  inline typename elfcpp::Valtype_base<valsize>::Valtype
+  read_from_pointer(const unsigned char** source);
+
   // Look for a relocation at offset ATTR_OFF in the dwarf info,
   // and return the section index and offset of the target.
   unsigned int
@@ -719,6 +764,28 @@ class Dwarf_info_reader
   address_size() const
   { return this->address_size_; }
 
+  // Set the section index of the .debug_abbrev section.
+  // We use this if there are no relocations for the .debug_info section.
+  // If not set, the code parse() routine will search for the section by name.
+  void
+  set_abbrev_shndx(unsigned int abbrev_shndx)
+  { this->abbrev_shndx_ = abbrev_shndx; }
+
+  // Return a pointer to the object file's ELF symbol table.
+  const unsigned char*
+  symtab() const
+  { return this->symtab_; }
+
+  // Return the size of the object file's ELF symbol table.
+  off_t
+  symtab_size() const
+  { return this->symtab_size_; }
+
+  // Return the offset of the current compilation unit.
+  off_t
+  cu_offset() const
+  { return this->cu_offset_; }
+
  protected:
   // Begin parsing the debug info.  This calls visit_compilation_unit()
   // or visit_type_unit() for each compilation or type unit found in the
@@ -737,8 +804,8 @@ class Dwarf_info_reader
 
   // Visit a type unit.
   virtual void
-  visit_type_unit(off_t tu_offset, off_t type_offset, uint64_t signature,
-		  Dwarf_die* root_die);
+  visit_type_unit(off_t tu_offset, off_t tu_length, off_t type_offset,
+		  uint64_t signature, Dwarf_die* root_die);
 
   // Read the range table.
   Dwarf_range_list*
@@ -757,16 +824,6 @@ class Dwarf_info_reader
   object() const
   { return this->object_; }
 
-  // Return a pointer to the object file's ELF symbol table.
-  const unsigned char*
-  symtab() const
-  { return this->symtab_; }
-
-  // Return the size of the object file's ELF symbol table.
-  off_t
-  symtab_size() const
-  { return this->symtab_size_; }
-
   // Checkpoint the relocation tracker.
   uint64_t
   get_reloc_checkpoint() const
@@ -778,9 +835,21 @@ class Dwarf_info_reader
   { this->reloc_mapper_->reset(checkpoint); }
 
  private:
+  // Print a warning about a corrupt debug section.
+  void
+  warn_corrupt_debug_section() const;
+
   // Check that P is within the bounds of the current section.
   bool
-  check_buffer(const unsigned char* p) const;
+  check_buffer(const unsigned char* p) const
+  {
+    if (p > this->buffer_ + this->cu_offset_ + this->cu_length_)
+      {
+	this->warn_corrupt_debug_section();
+	return false;
+      }
+    return true;
+  }
 
   // Read the DWARF string table.
   bool
@@ -811,6 +880,8 @@ class Dwarf_info_reader
   unsigned int reloc_shndx_;
   // Type of the relocation section (SHT_REL or SHT_RELA).
   unsigned int reloc_type_;
+  // Index of the .debug_abbrev section (0 if not known).
+  unsigned int abbrev_shndx_;
   // Index of the .debug_str section.
   unsigned int string_shndx_;
   // The buffer for the debug info.
@@ -826,10 +897,6 @@ class Dwarf_info_reader
   unsigned int address_size_;
   // Compilation unit version number.
   unsigned int cu_version_;
-  // Type signature (for a type unit).
-  uint64_t type_signature_;
-  // Offset from the type unit header to the type DIE (for a type unit).
-  off_t type_offset_;
   // Abbreviations table for current compilation unit.
   Dwarf_abbrev_table abbrev_table_;
   // Ranges table for the current compilation unit.

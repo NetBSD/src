@@ -106,6 +106,7 @@ L101:   tfr ccr, r7
 L102:   tst r1
 L103:   xnor r1, r2, r3
 L104:   xnorh r4, #255
-L105:   xnorl r5, #255  
+L105:   xnorl r5, #255
+L106:   com r3
 END_CODE:
 

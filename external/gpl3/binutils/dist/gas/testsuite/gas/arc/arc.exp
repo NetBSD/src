@@ -1,46 +1,22 @@
-# ARC base instruction set (to arc8)
-if [istarget arc*-*-*] then {
-    run_dump_test ld
-    run_dump_test ld2
-    run_dump_test st
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
-    # Specially encoded/single operand instructions
-    run_dump_test flag
-    run_dump_test brk
-    run_dump_test sleep
-    run_dump_test swi
-    run_dump_test asr
-    run_dump_test lsr
-    run_dump_test ror
-    run_dump_test rrc
-    run_dump_test sexb
-    run_dump_test sexw
-    run_dump_test extb
-    run_dump_test extw
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
-    run_dump_test b
-    run_dump_test bl
-    run_dump_test lp
-    run_dump_test j
-    run_dump_test jl
-    run_dump_test add
-    run_dump_test asl
-    # FIXME: ??? `lsl' gets dumped as `asl'
-    # run_dump_test lsl
-    run_dump_test adc
-    run_dump_test rlc
-    run_dump_test sub
-    run_dump_test sbc
-    run_dump_test and
-    run_dump_test mov
-    run_dump_test or
-    run_dump_test bic
-    run_dump_test xor
-    run_dump_test nop
-    run_dump_test extensions
-}
+# ARC base instruction set
 
 # ARC library extensions
 if [istarget arc*-*-*] then {
-    # *TODO*
+     run_dump_tests [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
 }

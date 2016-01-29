@@ -1,6 +1,6 @@
 // attributes.cc -- object attributes for gold
 
-// Copyright 2009 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 // This file contains code adapted from BFD.
 

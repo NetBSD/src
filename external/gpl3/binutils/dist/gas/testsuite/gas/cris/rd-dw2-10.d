@@ -5,7 +5,7 @@
 # Continued line.
 #...
  Line Number Statements:
-  Extended opcode 2: set Address to 0x0
-  Special opcode .*: advance Address by 0 to 0x0 and Line by 6 to 7
-  Advance PC by 4 to 0x4
-  Extended opcode 1: End of Sequence
+  \[0x.*\]  Extended opcode 2: set Address to 0x0
+  \[0x.*\]  Special opcode .*: advance Address by 0 to 0x0 and Line by 6 to 7
+  \[0x.*\]  Advance PC by 4 to 0x4
+  \[0x.*\]  Extended opcode 1: End of Sequence

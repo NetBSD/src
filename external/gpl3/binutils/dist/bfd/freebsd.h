@@ -1,6 +1,5 @@
 /* BFD back-end definitions used by all FreeBSD targets.
-   Copyright 1990, 1991, 1992, 1996, 1997, 2000, 2001, 2002, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

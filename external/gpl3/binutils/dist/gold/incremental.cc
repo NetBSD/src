@@ -1,6 +1,6 @@
 // inremental.cc -- incremental linking support for gold
 
-// Copyright 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 // Written by Mikolaj Zalewski <mikolajz@google.com>.
 
 // This file is part of gold.
@@ -33,7 +33,6 @@
 #include "incremental.h"
 #include "archive.h"
 #include "object.h"
-#include "output.h"
 #include "target-select.h"
 #include "target.h"
 #include "fileread.h"
@@ -1819,6 +1818,8 @@ struct Got_plt_view_info
   unsigned int first_plt_entry_offset;
   // Size of a PLT entry (this is a target-dependent value).
   unsigned int plt_entry_size;
+  // Size of a GOT entry (this is a target-dependent value).
+  unsigned int got_entry_size;
   // Symbol index to write in the GOT descriptor array.  For global symbols,
   // this is the global symbol table index; for local symbols, it is the
   // local symbol table index.
@@ -1844,7 +1845,7 @@ class Local_got_offset_visitor : public Got_offset_list::Visitor
   void
   visit(unsigned int got_type, unsigned int got_offset)
   {
-    unsigned int got_index = got_offset / this->got_entry_size_;
+    unsigned int got_index = got_offset / this->info_.got_entry_size;
     gold_assert(got_index < this->info_.got_count);
     // We can only handle GOT entry types in the range 0..0x7e
     // because we use a byte array to store them, and we use the
@@ -1857,7 +1858,6 @@ class Local_got_offset_visitor : public Got_offset_list::Visitor
   }
 
  private:
-  static const unsigned int got_entry_size_ = size / 8;
   struct Got_plt_view_info& info_;
 };
 
@@ -1876,7 +1876,7 @@ class Global_got_offset_visitor : public Got_offset_list::Visitor
   void
   visit(unsigned int got_type, unsigned int got_offset)
   {
-    unsigned int got_index = got_offset / this->got_entry_size_;
+    unsigned int got_index = got_offset / this->info_.got_entry_size;
     gold_assert(got_index < this->info_.got_count);
     // We can only handle GOT entry types in the range 0..0x7e
     // because we use a byte array to store them, and we use the
@@ -1889,7 +1889,6 @@ class Global_got_offset_visitor : public Got_offset_list::Visitor
   }
 
  private:
-  static const unsigned int got_entry_size_ = size / 8;
   struct Got_plt_view_info& info_;
 };
 
@@ -1949,6 +1948,7 @@ Output_section_incremental_inputs<size, big_endian>::write_got_plt(
   view_info.plt_count = target->plt_entry_count();
   view_info.first_plt_entry_offset = target->first_plt_entry_offset();
   view_info.plt_entry_size = target->plt_entry_size();
+  view_info.got_entry_size = target->got_entry_size();
   view_info.got_type_p = pov + 8;
   view_info.got_desc_p = (view_info.got_type_p
 			  + ((view_info.got_count + 3) & ~3));
@@ -2270,10 +2270,10 @@ Sized_relobj_incr<size, big_endian>::do_section_size(unsigned int)
 
 template<int size, bool big_endian>
 std::string
-Sized_relobj_incr<size, big_endian>::do_section_name(unsigned int shndx)
+Sized_relobj_incr<size, big_endian>::do_section_name(unsigned int shndx) const
 {
-  Output_sections& out_sections(this->output_sections());
-  Output_section* os = out_sections[shndx];
+  const Output_sections& out_sections(this->output_sections());
+  const Output_section* os = out_sections[shndx];
   if (os == NULL)
     return NULL;
   return os->name();
@@ -2858,7 +2858,7 @@ Sized_incr_dynobj<size, big_endian>::do_section_size(unsigned int)
 
 template<int size, bool big_endian>
 std::string
-Sized_incr_dynobj<size, big_endian>::do_section_name(unsigned int)
+Sized_incr_dynobj<size, big_endian>::do_section_name(unsigned int) const
 {
   gold_unreachable();
 }

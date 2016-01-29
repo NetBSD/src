@@ -1,6 +1,7 @@
  .macro try bytes:vararg
   .byte \bytes
   .byte 0x66, \bytes
+  .byte 0x48, \bytes
   .byte 0x66, 0x48, \bytes
  .endm
 
@@ -21,3 +22,18 @@ _start:
 
 	try	0xff, 0xf0
 	try	0xff, 0x30
+
+	# push with a 1-byte immediate
+	try	0x6a, 0xff
+
+	# push with a 4-byte immediate
+	try	0x68, 0x01, 0x02, 0x03, 0x04
+
+	# push a segment register
+	try	0x0f, 0xa8
+	# with extraneous rex.B
+	try	0x41, 0x0f, 0xa8
+
+	# This is just to synchronize the disassembly.
+	# Any new cases must come before this line!
+	nop

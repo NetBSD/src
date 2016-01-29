@@ -1,6 +1,6 @@
 // archive.cc -- archive support for gold
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -96,46 +96,60 @@ Library_base::should_include_member(Symbol_table* symtab, Layout* layout,
 
   *symp = sym;
 
-  if (sym == NULL)
+  if (sym != NULL)
     {
-      // Check whether the symbol was named in a -u option.
-      if (parameters->options().is_undefined(sym_name))
-        {
-          *why = "-u ";
-          *why += sym_name;
-        }
-      else if (parameters->options().is_export_dynamic_symbol(sym_name))
-        {
-          *why = "--export-dynamic-symbol ";
-          *why += sym_name;
-        }
-      else if (layout->script_options()->is_referenced(sym_name))
-	{
-	  size_t alc = 100 + strlen(sym_name);
-	  char* buf = new char[alc];
-	  snprintf(buf, alc, _("script or expression reference to %s"),
-		   sym_name);
-	  *why = buf;
-	  delete[] buf;
-	}
-      else if (strcmp(sym_name, parameters->entry()) == 0)
+      if (!sym->is_undefined())
+	return Library_base::SHOULD_INCLUDE_NO;
+
+      // PR 12001: Do not include an archive when the undefined
+      // symbol has actually been defined on the command line.
+      if (layout->script_options()->is_pending_assignment(sym_name))
+	return Library_base::SHOULD_INCLUDE_NO;
+
+      // If the symbol is weak undefined, we still need to check
+      // for other reasons (like a -u option).
+      if (sym->binding() != elfcpp::STB_WEAK)
+	return Library_base::SHOULD_INCLUDE_YES;
+    }
+
+  // Check whether the symbol was named in a -u option.
+  if (parameters->options().is_undefined(sym_name))
+    {
+      *why = "-u ";
+      *why += sym_name;
+      return Library_base::SHOULD_INCLUDE_YES;
+    }
+
+  if (parameters->options().is_export_dynamic_symbol(sym_name))
+    {
+      *why = "--export-dynamic-symbol ";
+      *why += sym_name;
+      return Library_base::SHOULD_INCLUDE_YES;
+    }
+
+  if (layout->script_options()->is_referenced(sym_name))
+    {
+      size_t alc = 100 + strlen(sym_name);
+      char* buf = new char[alc];
+      snprintf(buf, alc, _("script or expression reference to %s"),
+	       sym_name);
+      *why = buf;
+      delete[] buf;
+      return Library_base::SHOULD_INCLUDE_YES;
+    }
+
+  if (!parameters->options().relocatable())
+    {
+      const char* entry_sym = parameters->entry();
+      if (entry_sym != NULL && strcmp(sym_name, entry_sym) == 0)
 	{
 	  *why = "entry symbol ";
 	  *why += sym_name;
+	  return Library_base::SHOULD_INCLUDE_YES;
 	}
-      else
-	return Library_base::SHOULD_INCLUDE_UNKNOWN;
     }
-  else if (!sym->is_undefined())
-    return Library_base::SHOULD_INCLUDE_NO;
-  // PR 12001: Do not include an archive when the undefined
-  // symbol has actually been defined on the command line.
-  else if (layout->script_options()->is_pending_assignment(sym_name))
-    return Library_base::SHOULD_INCLUDE_NO;
-  else if (sym->binding() == elfcpp::STB_WEAK)
-    return Library_base::SHOULD_INCLUDE_UNKNOWN;
 
-  return Library_base::SHOULD_INCLUDE_YES;
+  return Library_base::SHOULD_INCLUDE_UNKNOWN;
 }
 
 // The header of an entry in the archive.  This is all readable text,
@@ -179,6 +193,8 @@ const char Archive::armagt[sarmag] =
 
 const char Archive::arfmag[2] = { '`', '\n' };
 
+const char Archive::sym64name[7] = { '/', 'S', 'Y', 'M', '6', '4', '/' };
+
 Archive::Archive(const std::string& name, Input_file* input_file,
                  bool is_thin_archive, Dirsearch* dirpath, Task* task)
   : Library_base(task), name_(name), input_file_(input_file), armap_(),
@@ -211,7 +227,12 @@ Archive::setup()
   off_t off = sarmag;
   if (armap_name.empty())
     {
-      this->read_armap(sarmag + sizeof(Archive_header), armap_size);
+      this->read_armap<32>(sarmag + sizeof(Archive_header), armap_size);
+      off = sarmag + sizeof(Archive_header) + armap_size;
+    }
+  else if (armap_name == "/SYM64/")
+    {
+      this->read_armap<64>(sarmag + sizeof(Archive_header), armap_size);
       off = sarmag + sizeof(Archive_header) + armap_size;
     }
   else if (!this->input_file_->options().whole_archive())
@@ -263,6 +284,7 @@ Archive::unlock_nested_archives()
 
 // Read the archive symbol map.
 
+template<int mapsize>
 void
 Archive::read_armap(off_t start, section_size_type size)
 {
@@ -276,8 +298,10 @@ Archive::read_armap(off_t start, section_size_type size)
   const unsigned char* p = this->get_view(start, size, true, false);
 
   // Numbers in the armap are always big-endian.
-  const elfcpp::Elf_Word* pword = reinterpret_cast<const elfcpp::Elf_Word*>(p);
-  unsigned int nsyms = elfcpp::Swap<32, true>::readval(pword);
+  typedef typename elfcpp::Elf_types<mapsize>::Elf_Addr Entry_type;
+  const Entry_type* pword = reinterpret_cast<const Entry_type*>(p);
+  unsigned long nsyms = convert_types<unsigned long, Entry_type>(
+    elfcpp::Swap<mapsize, true>::readval(pword));
   ++pword;
 
   // Note that the addition is in units of sizeof(elfcpp::Elf_Word).
@@ -289,10 +313,11 @@ Archive::read_armap(off_t start, section_size_type size)
   this->armap_.resize(nsyms);
 
   section_offset_type name_offset = 0;
-  for (unsigned int i = 0; i < nsyms; ++i)
+  for (unsigned long i = 0; i < nsyms; ++i)
     {
       this->armap_[i].name_offset = name_offset;
-      this->armap_[i].file_offset = elfcpp::Swap<32, true>::readval(pword);
+      this->armap_[i].file_offset = convert_types<off_t, Entry_type>(
+        elfcpp::Swap<mapsize, true>::readval(pword));
       name_offset += strlen(pnames + name_offset) + 1;
       ++pword;
       if (this->armap_[i].file_offset != last_seen_offset)
@@ -379,6 +404,11 @@ Archive::interpret_header(const Archive_header* hdr, off_t off,
       // This is the symbol table.
       if (!pname->empty())
 	pname->clear();
+    }
+  else if (memcmp(hdr->ar_name, sym64name, sizeof sym64name) == 0)
+    {
+      // This is the symbol table, 64-bit version.
+      pname->assign(sym64name, sizeof sym64name);
     }
   else if (hdr->ar_name[1] == '/')
     {
@@ -530,7 +560,9 @@ Archive::const_iterator::read_next_header()
       this->header_.off = this->off_;
 
       // Skip special members.
-      if (!this->header_.name.empty() && this->header_.name != "/")
+      if (!this->header_.name.empty()
+	  && this->header_.name != "/"
+	  && this->header_.name != "/SYM64/")
 	return;
 
       this->off_ += sizeof(Archive_header) + this->header_.size;
@@ -654,33 +686,45 @@ Archive::get_elf_object_for_member(off_t off, bool* punconfigured)
 				 &member_name))
     return NULL;
 
+  const unsigned char* ehdr;
+  int read_size;
+  Object *obj = NULL;
+  bool is_elf_obj = false;
+
+  if (is_elf_object(input_file, memoff, &ehdr, &read_size))
+    {
+      obj = make_elf_object((std::string(this->input_file_->filename())
+			     + "(" + member_name + ")"),
+			    input_file, memoff, ehdr, read_size,
+			    punconfigured);
+      is_elf_obj = true;
+    }
+
   if (parameters->options().has_plugins())
     {
-      Object* obj = parameters->options().plugins()->claim_file(input_file,
-                                                                memoff,
-                                                                memsize,
-								NULL);
-      if (obj != NULL)
+      Object* plugin_obj
+	= parameters->options().plugins()->claim_file(input_file,
+						      memoff,
+						      memsize,
+						      obj);
+      if (plugin_obj != NULL)
         {
           // The input file was claimed by a plugin, and its symbols
           // have been provided by the plugin.
-          return obj;
+	  // Delete its elf object.
+	  if (obj != NULL)
+	    delete obj;
+          return plugin_obj;
         }
     }
 
-  const unsigned char* ehdr;
-  int read_size;
-  if (!is_elf_object(input_file, memoff, &ehdr, &read_size))
+  if (!is_elf_obj)
     {
       gold_error(_("%s: member at %zu is not an ELF object"),
 		 this->name().c_str(), static_cast<size_t>(off));
       return NULL;
     }
 
-  Object* obj = make_elf_object((std::string(this->input_file_->filename())
-				 + "(" + member_name + ")"),
-				input_file, memoff, ehdr, read_size,
-				punconfigured);
   if (obj == NULL)
     return NULL;
   obj->set_no_export(this->no_export());
@@ -908,6 +952,32 @@ Archive::count_members()
   return ret;
 }
 
+// RAII class to ensure we unlock the object if it's a member of a
+// thin archive. We can't use Task_lock_obj in Archive::include_member
+// because the object file is already locked when it's opened by
+// get_elf_object_for_member.
+
+class Thin_archive_object_unlocker
+{
+ public:
+  Thin_archive_object_unlocker(const Task *task, Object* obj)
+    : task_(task), obj_(obj)
+  { }
+
+  ~Thin_archive_object_unlocker()
+  {
+    if (this->obj_->offset() == 0)
+      this->obj_->unlock(this->task_);
+  }
+
+ private:
+  Thin_archive_object_unlocker(const Thin_archive_object_unlocker&);
+  Thin_archive_object_unlocker& operator=(const Thin_archive_object_unlocker&);
+
+  const Task* task_;
+  Object* obj_;
+};
+
 // Include an archive member in the link.  OFF is the file offset of
 // the member header.  WHY is the reason we are including this member.
 // Return true if we added the member or if we had an error, return
@@ -956,6 +1026,10 @@ Archive::include_member(Symbol_table* symtab, Layout* layout,
       return unconfigured ? false : true;
     }
 
+  // If the object is an external member of a thin archive,
+  // unlock it when we're done here.
+  Thin_archive_object_unlocker unlocker(this->task_, obj);
+
   if (mapfile != NULL)
     mapfile->report_include_archive_member(obj->name(), sym, why);
 
@@ -969,31 +1043,21 @@ Archive::include_member(Symbol_table* symtab, Layout* layout,
 
   if (!input_objects->add_object(obj))
     {
-      // If this is an external member of a thin archive, unlock the
-      // file.
-      if (obj->offset() == 0)
-	obj->unlock(this->task_);
       delete obj;
-    }
-  else
-    {
-      {
-	if (layout->incremental_inputs() != NULL)
-	  layout->incremental_inputs()->report_object(obj, 0, this, NULL);
-	Read_symbols_data sd;
-	obj->read_symbols(&sd);
-	obj->layout(symtab, layout, &sd);
-	obj->add_symbols(symtab, &sd, layout);
-      }
-
-      // If this is an external member of a thin archive, unlock the file
-      // for the next task.
-      if (obj->offset() == 0)
-        obj->unlock(this->task_);
-
-      this->included_member_ = true;
+      return true;
     }
 
+  if (layout->incremental_inputs() != NULL)
+    layout->incremental_inputs()->report_object(obj, 0, this, NULL);
+
+  {
+    Read_symbols_data sd;
+    obj->read_symbols(&sd);
+    obj->layout(symtab, layout, &sd);
+    obj->add_symbols(symtab, &sd, layout);
+  }
+
+  this->included_member_ = true;
   return true;
 }
 
@@ -1118,7 +1182,7 @@ unsigned int Lib_group::total_members;
 unsigned int Lib_group::total_members_loaded;
 
 Lib_group::Lib_group(const Input_file_lib* lib, Task* task)
-  : Library_base(task), lib_(lib), members_()
+  : Library_base(task), members_()
 {
   this->members_.resize(lib->size());
 }

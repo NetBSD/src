@@ -97,8 +97,24 @@
 	.endr
 	.endr
 
+	// Shift zeros, per byte
+	// MOVI <Vd>.<T>, #<imm8>, LSL #0
+	// This used to be a programmer-friendly feature (allowing LSL #0),
+	// but it is now part of the architecture specification.
+	.irp	T, 8b, 16b
+	all_8bit_imm_movi_sft v7.\T, 0, 63, LSL, 0
+	all_8bit_imm_movi_sft v7.\T, 64, 127, LSL, 0
+	all_8bit_imm_movi_sft v7.\T, 128, 191, LSL, 0
+	all_8bit_imm_movi_sft v7.\T, 192, 255, LSL, 0
+	.endr
+
 	movi	v0.2d, 18446744073709551615
 	movi	v0.2d, -1
 	movi	v0.2d, bignum
 	movi	d31, 18446744073709551615
 .set    bignum, 0xffffffffffffffff
+
+	// Allow -128 to 255 in #<imm8>
+	movi	v3.8b, -128
+	movi	v3.8b, -127
+	movi	v3.8b, -1

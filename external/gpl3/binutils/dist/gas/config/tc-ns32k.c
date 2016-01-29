@@ -1,7 +1,5 @@
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
-   Copyright 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -712,7 +710,7 @@ get_addr_mode (char *ptr, addr_modeS *addrmodeP)
       addrmodeP->am_size += 1;
     }
 
-  gas_assert (addrmodeP->mode >= 0); 
+  gas_assert (addrmodeP->mode >= 0);
   if (disp_test[(unsigned int) addrmodeP->mode])
     {
       char c;
@@ -2183,7 +2181,8 @@ void
 cons_fix_new_ns32k (fragS *frag,	/* Which frag? */
 		    int where,		/* Where in that frag? */
 		    int size,		/* 1, 2  or 4 usually.  */
-		    expressionS *exp)	/* Expression.  */
+		    expressionS *exp,	/* Expression.  */
+		    bfd_reloc_code_real_type r ATTRIBUTE_UNUSED)
 {
   fix_new_ns32k_exp (frag, where, size, exp,
 		     0, 2, 0, 0, 0, 0);

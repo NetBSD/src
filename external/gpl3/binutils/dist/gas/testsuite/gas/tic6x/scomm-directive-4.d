@@ -3,7 +3,7 @@
 #source: scomm-directive-4.s
 #readelf: -Ss
 
-There are 8 section headers, starting at offset 0x88:
+There are 8 section headers, starting at offset .*:
 
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
@@ -12,9 +12,9 @@ Section Headers:
   \[ 2\] \.data             PROGBITS        00000000 000034 000000 00  WA  0   0  1
   \[ 3\] \.bss              NOBITS          00000000 000034 000000 00  WA  0   0  1
   \[ 4\] \.c6xabi\.attribute C6000_ATTRIBUTE 00000000 000034 000013 00      0   0  1
-  \[ 5\] \.shstrtab         STRTAB          00000000 000047 00003f 00      0   0  1
-  \[ 6\] \.symtab           SYMTAB          00000000 0001c8 0000d0 10      7   5  4
-  \[ 7\] \.strtab           STRTAB          00000000 000298 00001d 00      0   0  1
+  \[ 5\] \.shstrtab         STRTAB          00000000 [0-9a-f]+ 00003f 00      0   0  1
+  \[ 6\] \.symtab           SYMTAB          00000000 [0-9a-f]+ 0000d0 10      7   5  4
+  \[ 7\] \.strtab           STRTAB          00000000 [0-9a-f]+ 00001d 00      0   0  1
 Key to Flags:
   W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
   I \(info\), L \(link order\), G \(group\), T \(TLS\), E \(exclude\), x \(unknown\)

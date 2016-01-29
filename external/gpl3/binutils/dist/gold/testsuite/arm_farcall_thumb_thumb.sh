@@ -2,7 +2,7 @@
 
 # arm_farcall_thumb_thumb.sh -- a test case for Thumb->Thumb farcall veneers.
 
-# Copyright 2010, 2011, Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # Written by Matthew Gretton-Dann <matthew.gretton-dann@arm.com>
 # Based upon arm_cortex_a8.sh
 # Written by Doug Kwan <dougkwan@google.com>.

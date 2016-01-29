@@ -1,6 +1,5 @@
 /* tc-c30.c -- Assembly code for the Texas Instruments TMS320C30
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of GAS, the GNU Assembler.
@@ -85,11 +84,11 @@ debug (const char *string, ...)
   if (flag_debug)
     {
       char str[100];
+      va_list argptr;
 
-      VA_OPEN (argptr, string);
-      VA_FIXEDARG (argptr, const char *, string);
+      va_start (argptr, string);
       vsprintf (str, string, argptr);
-      VA_CLOSE (argptr);
+      va_end (argptr);
       if (str[0] == '\0')
 	return (0);
       fputs (str, USE_STDOUT ? stdout : stderr);
@@ -281,7 +280,7 @@ output_invalid (char c)
     snprintf (output_invalid_buf, sizeof (output_invalid_buf),
 	      "'%c'", c);
   else
-    snprintf (output_invalid_buf, sizeof (output_invalid_buf), 
+    snprintf (output_invalid_buf, sizeof (output_invalid_buf),
 	      "(0x%x)", (unsigned char) c);
   return output_invalid_buf;
 }
@@ -1117,7 +1116,7 @@ md_estimate_size_before_relax (fragS *fragP ATTRIBUTE_UNUSED,
 void
 md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 		 segT sec ATTRIBUTE_UNUSED,
-		 register fragS *fragP ATTRIBUTE_UNUSED)
+		 fragS *fragP ATTRIBUTE_UNUSED)
 {
   debug ("In md_convert_frag()\n");
 }

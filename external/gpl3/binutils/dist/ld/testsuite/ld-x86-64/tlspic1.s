@@ -183,5 +183,108 @@ fn1:
 	movq	%fs:(%rcx), %rdx
 	nop;nop;nop;nop
 
+1:	movabsq	$_GLOBAL_OFFSET_TABLE_-1b, %r11
+	pushq	%rbx
+	pushq	%rbx
+	leaq	1b(%rip), %rbx
+	addq	%r11, %rbx
+	nop;nop;nop;nop
+
+	/* -mcmodel=large sequences  */
+
+	/* -mcmodel=large GD  */
+	leaq	sg1@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large GD -> IE because variable is referenced through IE too */
+	leaq	sg2@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large GD against local variable */
+	leaq	sl1@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large GD -> IE against local variable referenced through IE too */
+	leaq	sl2@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large GD against hidden and local variable */
+	leaq	sh1@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large GD -> IE against hidden and local variable referenced through
+	   IE too */
+	leaq	sh2@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large GD against hidden but not local variable */
+	leaq	sH1@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large GD -> IE against hidden but not local variable referenced through
+	   IE too */
+	leaq	sH2@tlsgd(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop;nop;nop
+
+	/* -mcmodel=large LD */
+	leaq	sl1@tlsld(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop
+	leaq	sl1@dtpoff(%rax), %rdx
+	nop;nop
+	leaq	2+sl2@dtpoff(%rax), %r9
+	nop;nop;nop;nop
+
+	/* -mcmodel=large LD against hidden and local variables */
+	leaq	sh1@tlsld(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop
+	leaq	sh1@dtpoff(%rax), %rdx
+	nop;nop
+	leaq	sh2@dtpoff+3(%rax), %rcx
+	nop;nop;nop;nop
+
+	/* -mcmodel=large LD against hidden but not local variables */
+	leaq	sH1@tlsld(%rip), %rdi
+	movabsq	$__tls_get_addr@pltoff, %rax
+	addq	%rbx, %rax
+	call	*%rax
+	nop;nop
+	leaq	sH1@dtpoff(%rax), %r12
+	nop;nop
+	leaq	sH2@dtpoff+1(%rax), %rcx
+	nop;nop;nop;nop
+
+	popq	%rbx
+	popq	%rbx
+
 	leave
 	ret

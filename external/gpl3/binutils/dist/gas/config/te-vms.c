@@ -1,5 +1,5 @@
 /* te-vms.c -- Utilities for VMS.
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    Written by Douglas B Rupp <rupp@gnat.com>
 
@@ -342,6 +342,6 @@ vms_dwarf2_file_name (const char *filename, const char *dirname)
   static char buff [255 + 7];
 
   vms_file_stats_name (dirname, filename, 0, 0, 0, &ver);
-  snprintf (buff, 255 + 7, "%s;%d", filename, ver);     
+  snprintf (buff, 255 + 7, "%s;%d", filename, ver);
   return buff;
 }

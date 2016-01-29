@@ -1,6 +1,5 @@
 /* tc-frv.c -- Assembler for the Fujitsu FRV.
-   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation. Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,7 +19,7 @@
    Boston, MA 02110-1301, USA.  */
 
 #include "as.h"
-#include "subsegs.h"     
+#include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/frv-desc.h"
 #include "opcodes/frv-opc.h"
@@ -61,7 +60,7 @@ enum vliw_insn_type
   VLIW_BRANCH_HAS_NOPS		/* A Branch that requires NOPS.  */
 };
 
-/* We're going to use these in the fr_subtype field to mark 
+/* We're going to use these in the fr_subtype field to mark
    whether to keep inserted nops.  */
 
 #define NOP_KEEP 1		/* Keep these NOPS.  */
@@ -116,7 +115,7 @@ static struct vliw_insn_list	*current_vliw_insn;
 
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
-const char line_separator_chars[] = "!"; 
+const char line_separator_chars[] = "!";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
@@ -478,14 +477,14 @@ md_show_usage (FILE * stream)
   fprintf (stream, _("                Record the cpu type\n"));
   fprintf (stream, _("-mtomcat-stats  Print out stats for tomcat workarounds\n"));
   fprintf (stream, _("-mtomcat-debug  Debug tomcat workarounds\n"));
-} 
+}
 
 
 void
 md_begin (void)
 {
   /* Initialize the `cgen' interface.  */
-  
+
   /* Set the machine number and endian.  */
   gas_cgen_cpu_desc = frv_cgen_cpu_open (CGEN_CPU_OPEN_MACHS, 0,
 					 CGEN_CPU_OPEN_ENDIAN,
@@ -560,26 +559,26 @@ frv_insert_vliw_insn (bfd_boolean count)
 }
 
   /* Identify the following cases:
- 
+
      1) A VLIW insn that contains both a branch and the branch destination.
         This requires the insertion of two vliw instructions before the
         branch.  The first consists of two nops.  The second consists of
         a single nop.
- 
+
      2) A single instruction VLIW insn which is the destination of a branch
         that is in the next VLIW insn.  This requires the insertion of a vliw
         insn containing two nops before the branch.
- 
+
      3) A double instruction VLIW insn which contains the destination of a
         branch that is in the next VLIW insn.  This requires the insertion of
         a VLIW insn containing a single nop before the branch.
- 
+
      4) A single instruction VLIW insn which contains branch destination (x),
         followed by a single instruction VLIW insn which does not contain
         the branch to (x), followed by a VLIW insn which does contain the branch
         to (x).  This requires the insertion of a VLIW insn containing a single
         nop before the VLIW instruction containing the branch.
- 
+
   */
 #define FRV_IS_NOP(insn) (insn.buffer[0] == FRV_NOP_PACK || insn.buffer[0] == FRV_NOP_NOPACK)
 #define FRV_NOP_PACK   0x00880000  /* ori.p  gr0,0,gr0 */
@@ -612,11 +611,11 @@ enum vliw_nop_type
 {
   /* A Vliw insn containing a single nop insn.  */
   VLIW_SINGLE_NOP,
-  
+
   /* A Vliw insn containing two nop insns.  */
   VLIW_DOUBLE_NOP,
 
-  /* Two vliw insns.  The first containing two nop insns.  
+  /* Two vliw insns.  The first containing two nop insns.
      The second contain a single nop insn.  */
   VLIW_DOUBLE_THEN_SINGLE_NOP
 };
@@ -698,7 +697,7 @@ frv_tomcat_shuffle (enum vliw_nop_type this_nop_type,
 	pack_prev = TRUE;
       prev_insn = curr_insn;
       curr_insn = curr_insn->next;
-    } 
+    }
 
   while (curr_vliw && curr_vliw != vliw_to_split)
     {
@@ -737,10 +736,10 @@ frv_tomcat_shuffle (enum vliw_nop_type this_nop_type,
  	  frv_adjust_vliw_count (second_part);
 
           single_nop->next       = second_part;
- 
+
           vliw_to_split->next    = single_nop;
           prev_insn->next        = NULL;
- 
+
           return_me = second_part;
 	  frv_adjust_vliw_count (vliw_to_split);
 	}
@@ -774,13 +773,13 @@ frv_tomcat_shuffle (enum vliw_nop_type this_nop_type,
 	  second_part->insn_list->type = VLIW_BRANCH_HAS_NOPS;
           second_part->next      = vliw_to_split->next;
  	  frv_adjust_vliw_count (second_part);
- 
+
           double_nop->next       = second_part;
- 
+
           vliw_to_split->next    = single_nop;
           prev_insn->next        = NULL;
  	  frv_adjust_vliw_count (vliw_to_split);
- 
+
           return_me = second_part;
 	}
       break;
@@ -800,7 +799,7 @@ frv_tomcat_shuffle (enum vliw_nop_type this_nop_type,
             prev_vliw->next = double_nop;
           else
             vliw_chain_top = double_nop;
- 
+
 	  single_nop->next = vliw_to_split;
 	  return_me = vliw_to_split;
 	  vliw_to_split->insn_list->type = VLIW_BRANCH_HAS_NOPS;
@@ -815,7 +814,7 @@ frv_tomcat_shuffle (enum vliw_nop_type this_nop_type,
 	    }
 
 	  /* The branch is in the middle of this vliw insn.  Split into first and
-	     second parts.  Insert the nop vliws in between.  */  
+	     second parts.  Insert the nop vliws in between.  */
 	  second_part->insn_list = insert_before_insn;
 	  second_part->insn_list->type = VLIW_BRANCH_HAS_NOPS;
 	  second_part->next      = vliw_to_split->next;
@@ -882,7 +881,7 @@ workaround_top:
 		tomcat_doubles++;
 	      goto workaround_top;
 	    }
-	  else if (vliw2 
+	  else if (vliw2
 		   && vliw2->insn_count == 1
 		   && (temp_insn = frv_find_in_vliw (VLIW_BRANCH_TYPE, vliw3, vliw1->insn_list->sym)) != NULL)
 	    {
@@ -1001,7 +1000,7 @@ fr550_check_insn_acc_range (frv_insn *insn, int low, int hi)
     case FRV_INSN_CMQMULHU:
     case FRV_INSN_MMACHS:
     case FRV_INSN_MMRDHS:
-    case FRV_INSN_CMMACHS: 
+    case FRV_INSN_CMMACHS:
     case FRV_INSN_MQMACHS:
     case FRV_INSN_CMQMACHS:
     case FRV_INSN_MQXMACHS:
@@ -1103,13 +1102,13 @@ md_assemble (char *str)
 
   insn.insn = frv_cgen_assemble_insn
     (gas_cgen_cpu_desc, str, & insn.fields, insn.buffer, &errmsg);
-  
+
   if (!insn.insn)
     {
       as_bad ("%s", errmsg);
       return;
     }
-  
+
   /* If the cpu is tomcat, then we need to insert nops to workaround
      hardware limitations.  We need to keep track of each vliw unit
      and examine the length of the unit and the individual insns
@@ -1119,7 +1118,7 @@ md_assemble (char *str)
     {
       /* If we've just finished a VLIW insn OR this is a branch,
 	 then start up a new frag.  Fill it with nops.  We will get rid
-	 of those that are not required after we've seen all of the 
+	 of those that are not required after we've seen all of the
 	 instructions but before we start resolving fixups.  */
       if ( !FRV_IS_NOP (insn)
 	  && (frv_is_branch_insn (insn.insn) || insn.fields.f_pack))
@@ -1207,14 +1206,14 @@ md_assemble (char *str)
 	  previous_vliw_chain = current_vliw_chain;
 	  current_vliw_chain = NULL;
 	  current_vliw_insn  = NULL;
-        } 
+        }
     }
 }
 
 /* The syntax in the manual says constants begin with '#'.
    We just ignore it.  */
 
-void 
+void
 md_operand (expressionS *expressionP)
 {
   if (* input_line_pointer == '#')
@@ -1228,7 +1227,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 symbolS *
@@ -1276,8 +1275,8 @@ md_estimate_size_before_relax (fragS *fragP, segT segment ATTRIBUTE_UNUSED)
     default:
     case NOP_DELETE:
       return 0;
-    }     
-} 
+    }
+}
 
 /* *fragP has been relaxed to its final size, and now needs to have
    the bytes inside it modified to conform to the new size.
@@ -1300,7 +1299,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
     case NOP_KEEP:
       fragP->fr_fix = fragP->fr_var;
       fragP->fr_var = 0;
-      return;   
+      return;
     }
 }
 
@@ -1370,7 +1369,7 @@ md_cgen_lookup_reloc (const CGEN_INSN *insn ATTRIBUTE_UNUSED,
     case FRV_OPERAND_U12:
       return BFD_RELOC_FRV_GPRELU12;
 
-    default: 
+    default:
       break;
     }
   return BFD_RELOC_NONE;
@@ -1594,7 +1593,7 @@ frv_pic_ptr (int nbytes)
   do
     {
       bfd_reloc_code_real_type reloc_type = BFD_RELOC_CTOR;
-      
+
       if (strncasecmp (input_line_pointer, "funcdesc(", 9) == 0)
 	{
 	  input_line_pointer += 9;
@@ -1809,7 +1808,7 @@ frv_frob_label (symbolS *this_label)
 
   vliw_insn_list_entry = frv_insert_vliw_insn(DONT_COUNT);
   vliw_insn_list_entry->type = VLIW_LABEL_TYPE;
-  vliw_insn_list_entry->sym  = this_label; 
+  vliw_insn_list_entry->sym  = this_label;
 }
 
 fixS *
@@ -1829,6 +1828,6 @@ frv_cgen_record_fixup_exp (fragS *frag,
       && current_vliw_insn->type == VLIW_BRANCH_TYPE
       && exp != NULL)
     current_vliw_insn->sym = exp->X_add_symbol;
-    
+
   return fixP;
 }

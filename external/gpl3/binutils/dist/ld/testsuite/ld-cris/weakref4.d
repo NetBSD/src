@@ -17,7 +17,7 @@
 #...
 Relocation section '.rela.dyn' at offset 0x... contains 1 entries:
 #...
-.* R_CRIS_COPY .* __expobj2 \+ 0
+.* R_CRIS_COPY .* __expobj2@TST3 \+ 0
 
 The decoding of unwind sections for machine type Axis Communications 32-bit embedded processor is not currently supported.
 

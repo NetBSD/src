@@ -1,5 +1,4 @@
-@c Copyright 2005, 2008
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2005-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -11,7 +10,7 @@
 @node Machine Dependencies
 @chapter M32C Dependent Features
 @end ifclear
- 
+
 @cindex M32C support
 
 @code{@value{AS}} can assemble code for several different members of
@@ -23,23 +22,23 @@ change the default to the M32C microprocessor.
 * M32C-Opts::                   M32C Options
 * M32C-Syntax::                 M32C Syntax
 @end menu
- 
+
 @node M32C-Opts
 @section M32C Options
- 
+
 @cindex options, M32C
 @cindex M32C options
- 
+
 The Renesas M32C version of @code{@value{AS}} has these
 machine-dependent options:
- 
+
 @table @code
 @item -m32c
 @cindex @samp{-m32c} option, M32C
 @cindex architecture options, M32C
 @cindex M32C architecture option
 Assemble M32C instructions.
- 
+
 @item -m16c
 @cindex @samp{-m16c} option, M16C
 @cindex architecture options, M16C
@@ -52,7 +51,7 @@ Enable support for link-time relaxations.
 @item -h-tick-hex
 Support H'00 style hex constants in addition to 0x00 style.
 
- 
+
 @end table
 
 @node M32C-Syntax

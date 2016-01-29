@@ -1,6 +1,5 @@
 # Expect script for ld-sh tests
-#   Copyright 1995, 1996, 1997, 2001, 2002, 2003, 2005, 2006, 2007, 2010
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -50,7 +49,7 @@ if ![ld_assemble $as "-relax $srcdir/$subdir/sh1.s" tmpdir/sh1.o] {
 	    verbose "bad output from nm"
 	    fail $testsimple
 	} else {
-	    if {$nm_output(bar) != $nm_output(foo) + 4} {
+	    if {$nm_output(bar) != $nm_output(foo) + 0xc} {
 		send_log "foo == $nm_output(foo)\n"
 		verbose "foo == $nm_output(foo)"
 		send_log "bar == $nm_output(bar)\n"
@@ -111,6 +110,26 @@ if ![ld_simple_link $ld tmpdir/sh1.s1 $srec_relax_arg ] {
     }
 }
 
+set testadjsw8 "SH switch8 adjustment after relax"
+if ![ld_assemble $as "-relax $srcdir/$subdir/adjsw8.s" tmpdir/adjsw8.o] {
+    unresolved $testadjsw8
+} else {
+    if ![ld_simple_link $ld tmpdir/adjsw8 "-relax tmpdir/adjsw8.o"] {
+	fail $testadjsw8
+    } else {
+	send_log "exec $objdump -s tmpdir/adjsw8\n"
+	verbose "exec $objdump -s tmpdir/adjsw8"
+	catch "exec $objdump -s tmpdir/adjsw8" exec_output
+	if [string match "*04080c00*" $exec_output] {
+	    pass $testadjsw8
+	} else {
+	    send_log "bad switch table\n"
+	    verbose "bad switch table"
+	    fail $testadjsw8
+	}
+    }
+}
+
 set testlink "SH relaxing"
 set testjsr "SH confirm relaxing"
 set testrun "SH relaxing execution"
@@ -130,7 +149,7 @@ if [istarget sh*-*linux*] {
 }
 
 if {![ld_assemble $as "-relax tmpdir/start.s" tmpdir/start.o] \
-    || ![ld_compile $CC "-O -mrelax $srcdir/$subdir/sh2.c" tmpdir/sh2.o]} {
+    || ![ld_compile $CC "-O -mrelax -foptimize-sibling-calls $srcdir/$subdir/sh2.c" tmpdir/sh2.o]} {
     unresolved $testlink
     unresolved $testjsr
     unresolved $testrun
@@ -149,7 +168,8 @@ pass $testlink
 send_log "$objdump -d tmpdir/sh2\n"
 verbose "$objdump -d tmpdir/sh2"
 catch "exec $objdump -d tmpdir/sh2" exec_output
-if [string match "*jsr*" $exec_output] {
+if {[string match "*jsr*" $exec_output]
+    || [string match "*jmp*" $exec_output]} {
     fail $testjsr
 } else {
     pass $testjsr

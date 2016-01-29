@@ -1,32 +1,35 @@
 
 Primary GOT:
- Canonical gp value: 00000000000a7ff0
+ Canonical gp value: 0+0a7ff0
 
  Reserved entries:
-           Address     Access          Initial Purpose
-  00000000000a0000 -32752\(gp\) 0000000000000000 Lazy resolver
-  00000000000a0008 -32744\(gp\) 8000000000000000 Module pointer \(GNU extension\)
+ * Address * Access * Initial Purpose
+  0+0a0000 -32752\(gp\) 0+ Lazy resolver
+  0+0a0008 -32744\(gp\) 8000000000000000 Module pointer \(GNU extension\)
+
+ Local entries:
+ * Address * Access * Initial
+  0+0a0010 -32736\(gp\) 0+0a2000
+  0+0a0018 -32728\(gp\) 0+0430c0
+  0+0a0020 -32720\(gp\) 0+0430a0
 
  Global entries:
-           Address     Access          Initial         Sym\.Val\. Type    Ndx Name
-  00000000000a0010 -32736\(gp\) 0000000000000000 0000000000000000 FUNC    UND extf2
-  00000000000a0018 -32728\(gp\) 0000000000000000 0000000000000000 FUNC    UND extf3
-  00000000000a0020 -32720\(gp\) 00000000000a2000 00000000000a2000 OBJECT   16 extd2
-  00000000000a0028 -32712\(gp\) 00000000000440a0 00000000000440a0 FUNC    UND extf1
-  00000000000a0030 -32704\(gp\) 0000000000000000 0000000000000000 OBJECT  UND extd1
-  00000000000a0038 -32696\(gp\) 0000000000000000 0000000000000000 FUNC    UND extf4
-  00000000000a0040 -32688\(gp\) 0000000000000000 0000000000000000 OBJECT  UND extd4
+ * Address * Access * Initial * Sym\.Val\. * Type * Ndx Name
+  0+0a0028 -32712\(gp\) 0+000000 0+000000 FUNC    UND extf2
+  0+0a0030 -32704\(gp\) 0+0440a0 0+0440a0 FUNC    UND extf1
+  0+0a0038 -32696\(gp\) 0+000000 0+000000 OBJECT  UND extd1
+  0+0a0040 -32688\(gp\) 0+000000 0+000000 OBJECT  UND extd4
 
 
 PLT GOT:
 
  Reserved entries:
-           Address          Initial Purpose
-  0000000000081000 0000000000000000 PLT lazy resolver
-  0000000000081008 0000000000000000 Module pointer
+ * Address * Initial * Purpose
+  0+081000 0+ PLT lazy resolver
+  0+081008 0+ Module pointer
 
  Entries:
-           Address          Initial         Sym.Val. Type    Ndx Name
-  0000000000081010 0000000000043080 0000000000000000 FUNC    UND extf4
-  0000000000081018 0000000000043080 0000000000000000 FUNC    UND extf5
-  0000000000081020 0000000000043080 0000000000000000 FUNC    UND extf3
+ * Address * Initial * Sym.Val. * Type * Ndx Name
+  0+081010 0+043080 0+0430a0 FUNC    UND extf4
+  0+081018 0+043080 0+000000 FUNC    UND extf5
+  0+081020 0+043080 0+000000 FUNC    UND extf3

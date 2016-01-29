@@ -1,6 +1,5 @@
 /* BFD backend for hp-ux 9000/300
-   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2010, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Glenn Engel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -105,7 +104,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (hp300hpux_,OP)
+#define MY(OP) CONCAT2 (m68k_aout_hp300hpux_,OP)
 
 #define external_exec hp300hpux_exec_bytes
 #define external_nlist hp300hpux_nlist_bytes
@@ -130,10 +129,10 @@
 /* these don't use MY because that causes problems within JUMP_TABLE
    (CONCAT2 winds up being expanded recursively, which ANSI C compilers
    will not do).  */
-#define MY_canonicalize_symtab hp300hpux_canonicalize_symtab
-#define MY_get_symtab_upper_bound hp300hpux_get_symtab_upper_bound
-#define MY_canonicalize_reloc hp300hpux_canonicalize_reloc
-#define MY_write_object_contents hp300hpux_write_object_contents
+#define MY_canonicalize_symtab m68k_aout_hp300hpux_canonicalize_symtab
+#define MY_get_symtab_upper_bound m68k_aout_hp300hpux_get_symtab_upper_bound
+#define MY_canonicalize_reloc m68k_aout_hp300hpux_canonicalize_reloc
+#define MY_write_object_contents m68k_aout_hp300hpux_write_object_contents
 
 #define MY_read_minisymbols _bfd_generic_read_minisymbols
 #define MY_minisymbol_to_symbol _bfd_generic_minisymbol_to_symbol
@@ -149,7 +148,7 @@
    were allocated using malloc.  */
 #define MY_bfd_free_cached_info bfd_true
 
-#define hp300hpux_write_syms aout_32_write_syms
+#define m68k_aout_hp300hpux_write_syms aout_32_write_syms
 
 #define MY_callback MY(callback)
 

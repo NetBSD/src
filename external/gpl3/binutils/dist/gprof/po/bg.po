@@ -2,15 +2,15 @@
 # Copyright (C) 2009, 2011 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 #
-# Roumen Petrov <transl@roumenpetrov.info>, 2009, 2011, 2012.
+# Roumen Petrov <transl@roumenpetrov.info>, 2009-2014.
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.22.90\n"
+"Project-Id-Version: gprof 2.24.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2011-10-18 14:20+0100\n"
-"PO-Revision-Date: 2012-07-28 01:08+0300\n"
+"POT-Creation-Date: 2014-02-10 09:42+1030\n"
+"PO-Revision-Date: 2014-10-18 14:00+0300\n"
 "Last-Translator: Roumen Petrov <transl@roumenpetrov.info>\n"
-"Language-Team: Bulgarian <dict@fsa-bg.org>\n"
+"Language-Team: Bulgarian <dict@ludost.net>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: alpha.c:102 mips.c:54
 msgid "<indirect child>"
-msgstr "<косвен потомък>"
+msgstr "<непряк наследник>"
 
 #: alpha.c:107 mips.c:59
 #, c-format
@@ -29,7 +29,7 @@ msgstr "[find_call] %s: 0x%lx към 0x%lx\n"
 #: alpha.c:129
 #, c-format
 msgid "[find_call] 0x%lx: jsr%s <indirect_child>\n"
-msgstr "[find_call] 0x%lx: jsr%s <косвен_потомък>\n"
+msgstr "[find_call] 0x%lx: jsr%s <непряк_наследник>\n"
 
 #: alpha.c:139
 #, c-format
@@ -44,7 +44,7 @@ msgstr "%s: %s: неочакван край на файл\n"
 #: basic_blocks.c:197
 #, c-format
 msgid "%s: warning: ignoring basic-block exec counts (use -l or --line)\n"
-msgstr "%s: предупреждение: игнориране на броене за базов-блок (да се използва -l или --line)\n"
+msgstr "%s: предупреждение: пренебрегнато броене на основни блокове (да се използва -l или --line)\n"
 
 #. FIXME: This only works if bfd_vma is unsigned long.
 #: basic_blocks.c:290 basic_blocks.c:300
@@ -87,12 +87,12 @@ msgstr ""
 #: basic_blocks.c:569
 #, c-format
 msgid "%9ld   Executable lines in this file\n"
-msgstr "%9ld   Изпълними редове в файла\n"
+msgstr "%9ld   Изпълними редове във файла\n"
 
 #: basic_blocks.c:571
 #, c-format
 msgid "%9ld   Lines executed\n"
-msgstr "%9ld   Редове изпълнени\n"
+msgstr "%9ld   Изпълнени редове\n"
 
 #: basic_blocks.c:572
 #, c-format
@@ -136,7 +136,7 @@ msgstr ""
 "\t\t\tГраф на извикванията\n"
 "\n"
 
-#: cg_print.c:80 hist.c:468
+#: cg_print.c:80 hist.c:471
 #, c-format
 msgid ""
 "\n"
@@ -191,20 +191,20 @@ msgstr "собст."
 
 #: cg_print.c:102
 msgid "descendants"
-msgstr "наследници"
+msgstr "потомци"
 
-#: cg_print.c:103 hist.c:494
+#: cg_print.c:103 hist.c:497
 msgid "name"
 msgstr "име"
 
 #: cg_print.c:105
 msgid "children"
-msgstr "потомци"
+msgstr "наследници"
 
 #: cg_print.c:110
 #, c-format
 msgid "index %% time    self  children    called     name\n"
-msgstr "индекс%% време   собс. потомци      извик.     име \n"
+msgstr "индекс%% време   собс. наследници   извик.     име \n"
 
 #: cg_print.c:133
 #, c-format
@@ -240,42 +240,42 @@ msgstr "<цикъл %d>"
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: не може да се обработи файла със съответствията %s.\n"
 
-#: corefile.c:85 corefile.c:514
+#: corefile.c:85 corefile.c:526
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: не може да се отвори %s.\n"
 
-#: corefile.c:185
+#: corefile.c:187
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: не е изпълним формат\n"
 
-#: corefile.c:196
+#: corefile.c:198
 #, c-format
 msgid "%s: can't find .text section in %s\n"
-msgstr "%s: не може да се намери изпълнима(.text) секция в %s\n"
+msgstr "%s: не може да се намери изпълним(.text) раздел в %s\n"
 
-#: corefile.c:271
+#: corefile.c:273
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
-msgstr "%s: недостиг на %lu байта за изпълнима секция\n"
+msgstr "%s: недостиг на %lu байта за изпълним раздел\n"
 
-#: corefile.c:285
+#: corefile.c:287
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr "%s: не може с команда -c\n"
 
-#: corefile.c:324
+#: corefile.c:330
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c не се поддържа за архитектура %s\n"
 
-#: corefile.c:523 corefile.c:622
+#: corefile.c:535 corefile.c:638
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
-msgstr "%s: файлът '%s' е без символи\n"
+msgstr "%s: файлът '%s' не съдържа имена\n"
 
-#: corefile.c:884
+#: corefile.c:905
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: нещо не е преброено: ltab.len=%d вместо %ld\n"
@@ -318,7 +318,7 @@ msgstr "%s: несъвместим с първия файл на \"gmon\"\n"
 #: gmon_io.c:518
 #, c-format
 msgid "%s: file '%s' does not appear to be in gmon.out format\n"
-msgstr "%s: файлът'%s', изглежда, не е в формата на gmon.out\n"
+msgstr "%s: изглежда файлът '%s' не е в формата на gmon.out\n"
 
 #: gmon_io.c:531
 #, c-format
@@ -370,7 +370,7 @@ msgstr "\t%d запис за базов-блок\n"
 msgid "\t%d basic-block count records\n"
 msgstr "\t%d записа(-и) за базов-блок\n"
 
-#: gprof.c:159
+#: gprof.c:162
 #, c-format
 msgid ""
 "Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
@@ -378,7 +378,7 @@ msgid ""
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
 "\t[--[no-]time=name] [--all-lines] [--brief] [--debug[=level]]\n"
-"\t[--function-ordering] [--file-ordering]\n"
+"\t[--function-ordering] [--file-ordering] [--inline-file-names]\n"
 "\t[--directory-path=dirs] [--display-unused-functions]\n"
 "\t[--file-format=name] [--file-info] [--help] [--line] [--min-count=n]\n"
 "\t[--no-static] [--print-path] [--separate-files]\n"
@@ -392,67 +392,67 @@ msgstr ""
 "\t[--[no-]annotated-source[=име]] [--[no-]exec-counts[=име]]\n"
 "\t[--[no-]flat-profile[=име]] [--[no-]graph[=име]]\n"
 "\t[--[no-]time=име] [--all-lines] [--brief] [--debug[=ниво]]\n"
-"\t[--function-ordering] [--file-ordering]\n"
+"\t[--function-ordering] [--file-ordering] [--inline-file-names]\n"
 "\t[--directory-path=dirs] [--display-unused-functions]\n"
-"\t[--file-format=име] [--file-info] [--help] [--line] [--min-count=n]\n"
+"\t[--file-format=име] [--file-info] [--help] [--line] [--min-count=число]\n"
 "\t[--no-static] [--print-path] [--separate-files]\n"
 "\t[--static-call-graph] [--sum] [--table-length=размер] [--traditional]\n"
-"\t[--version] [--width=n] [--ignore-non-functions]\n"
+"\t[--version] [--width=число] [--ignore-non-functions]\n"
 "\t[--demangle[=ДЕКОРАЦИЯ]] [--no-demangle] [--external-symbol-table=име] [@ФАЙЛ]\n"
 "\t[файл-образ] [диагностичен-файл...]\n"
 
-#: gprof.c:175
+#: gprof.c:178
 #, c-format
 msgid "Report bugs to %s\n"
 msgstr "Подавайте доклади за грешки на %s\n"
 
-#: gprof.c:251
+#: gprof.c:254
 #, c-format
 msgid "%s: debugging not supported; -d ignored\n"
-msgstr "%s: трасирането не се поддържа; -d е игнориран\n"
+msgstr "%s: проследяването не се поддържа; -d е пренебрегнат\n"
 
-#: gprof.c:331
+#: gprof.c:334
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: неизвестен файлов формат %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:419
+#: gprof.c:422
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "ГНУ gprof %s\n"
 
-#: gprof.c:420
+#: gprof.c:423
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "На базата на BSD gprof, авторско право 1983 Regents of the University of California.\n"
 
-#: gprof.c:421
+#: gprof.c:424
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Тази програма е свободен софтуер.  Тази програма е без гаранции.\n"
 
-#: gprof.c:462
+#: gprof.c:465
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
-msgstr "%s: непознато декориране на имена '%s'\n"
+msgstr "%s: непознато разкориране на имена '%s'\n"
 
-#: gprof.c:482
+#: gprof.c:488
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: Само една между --function-ordering и --file-ordering може да се зададе.\n"
 
-#: gprof.c:534
+#: gprof.c:540
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
-msgstr "%s: за съжаление, файловия формат 'prof', все още не се поддържа\n"
+msgstr "%s: за съжаление, файловият формат 'prof', все още не се поддържа\n"
 
-#: gprof.c:588
+#: gprof.c:594
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: gmon.out файл без хистограма\n"
 
-#: gprof.c:595
+#: gprof.c:601
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: gmon.out файл без граф за извикванията\n"
@@ -494,12 +494,12 @@ msgstr "%s: припокрити записи с хистограма\n"
 msgid "%s: %s: unexpected EOF after reading %u of %u samples\n"
 msgstr "%s: %s: неочакван край на файл(EOF) след прочитане на %u от %u проби\n"
 
-#: hist.c:464
+#: hist.c:467
 #, c-format
 msgid "%c%c/call"
 msgstr "%c%c/извикване"
 
-#: hist.c:472
+#: hist.c:475
 #, c-format
 msgid ""
 " for %.2f%% of %.2f %s\n"
@@ -508,16 +508,16 @@ msgstr ""
 " за %.2f%% от %.2f %s\n"
 "\n"
 
-#: hist.c:478
+#: hist.c:481
 #, c-format
 msgid ""
 "\n"
 "Each sample counts as %g %s.\n"
 msgstr ""
 "\n"
-"Всяка проба се брой за %g %s.\n"
+"Всяка проба се брои за %g %s.\n"
 
-#: hist.c:483
+#: hist.c:486
 #, c-format
 msgid ""
 " no time accumulated\n"
@@ -526,27 +526,27 @@ msgstr ""
 " без натрупване за време\n"
 "\n"
 
-#: hist.c:490
+#: hist.c:493
 msgid "cumulative"
 msgstr "натрупани"
 
-#: hist.c:490
+#: hist.c:493
 msgid "self  "
 msgstr "собст."
 
-#: hist.c:490
+#: hist.c:493
 msgid "total "
 msgstr "общо"
 
-#: hist.c:493
+#: hist.c:496
 msgid "time"
 msgstr "време"
 
-#: hist.c:493
+#: hist.c:496
 msgid "calls"
 msgstr "извикв."
 
-#: hist.c:582
+#: hist.c:585
 #, c-format
 msgid ""
 "\n"
@@ -559,15 +559,15 @@ msgstr ""
 "\n"
 "диагностика:\n"
 
-#: hist.c:588
+#: hist.c:591
 #, c-format
 msgid "Flat profile:\n"
 msgstr "Диагностика:\n"
 
-#: hist.c:709
+#: hist.c:712
 #, c-format
 msgid "%s: found a symbol that covers several histogram records"
-msgstr "%s: намерен е символ, който покрива няколко записа с хистограма"
+msgstr "%s: намерено е име, което покрива няколко записа с хистограма"
 
 #: mips.c:71
 #, c-format
@@ -589,7 +589,7 @@ msgstr "%s: не може да се намери '%s'\n"
 msgid "*** File %s:\n"
 msgstr "*** Файл %s:\n"
 
-#: utils.c:99
+#: utils.c:106
 #, c-format
 msgid " <cycle %d>"
 msgstr " <цикъл %d>"

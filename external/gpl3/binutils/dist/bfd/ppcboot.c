@@ -1,6 +1,5 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -327,11 +326,14 @@ ppcboot_get_symbol_info (bfd *ignore_abfd ATTRIBUTE_UNUSED,
   bfd_symbol_info (symbol, ret);
 }
 
+#define ppcboot_get_symbol_version_string \
+  _bfd_nosymbols_get_symbol_version_string
 #define ppcboot_bfd_is_target_special_symbol \
   ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define ppcboot_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define ppcboot_get_lineno _bfd_nosymbols_get_lineno
 #define ppcboot_find_nearest_line _bfd_nosymbols_find_nearest_line
+#define ppcboot_find_line _bfd_nosymbols_find_line
 #define ppcboot_find_inliner_info _bfd_nosymbols_find_inliner_info
 #define ppcboot_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
 #define ppcboot_read_minisymbols _bfd_generic_read_minisymbols
@@ -400,7 +402,7 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
   if (tdata->header.os_id)
     fprintf (f, "OS_ID               = 0x%.2x\n", tdata->header.os_id);
 
-  if (tdata->header.partition_name)
+  if (tdata->header.partition_name[0])
     fprintf (f, _("Partition name      = \"%s\"\n"), tdata->header.partition_name);
 
   for (i = 0; i < 4; i++)
@@ -455,7 +457,6 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
   _bfd_generic_section_already_linked
 #define ppcboot_bfd_define_common_symbol bfd_generic_define_common_symbol
 #define ppcboot_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
-#define ppcboot_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define ppcboot_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define ppcboot_bfd_link_just_syms _bfd_generic_link_just_syms
 #define ppcboot_bfd_copy_link_hash_symbol_type \
@@ -473,7 +474,7 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
 #define ppcboot_bfd_set_private_flags _bfd_generic_bfd_set_private_flags
 #define ppcboot_bfd_print_private_bfd_dat ppcboot_bfd_print_private_bfd_data
 
-const bfd_target ppcboot_vec =
+const bfd_target powerpc_boot_vec =
 {
   "ppcboot",			/* name */
   bfd_target_unknown_flavour,	/* flavour */

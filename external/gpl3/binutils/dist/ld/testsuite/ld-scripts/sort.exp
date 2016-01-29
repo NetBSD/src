@@ -1,7 +1,6 @@
 # Test SORT_BY_NAME/SORT_BY_ALIGNMENT/SORT in a linker script.
 # By H.J. Lu  <hongjiu.lu@intel.com>
-#   Copyright 2004, 2005, 2007
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #

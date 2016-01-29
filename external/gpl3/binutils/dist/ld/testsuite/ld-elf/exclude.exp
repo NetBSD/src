@@ -1,5 +1,5 @@
 # Expect script for --exclude-libs tests
-#   Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -83,7 +83,8 @@ if { [ld_simple_link $ld tmpdir/exclude.so "--shared tmpdir/exclude1.o -Ltmpdir 
 
 if ![ld_nm $nm "-D" tmpdir/exclude.so] {
     unresolved $test2
-} elseif { [info exists nm_output(exclude_sym)] } {
+} elseif { [info exists nm_output(exclude_common)]
+	    && [info exists nm_output(exclude_sym)] } {
     pass $test2
 } else {
     fail $test2
@@ -99,7 +100,8 @@ if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs libexclude --shared t
 
 if ![ld_nm $nm "-D" tmpdir/exclude.so] {
     unresolved $test4
-} elseif { ! [info exists nm_output(exclude_sym)] } {
+} elseif { ! [info exists nm_output(exclude_common)]
+	   &&  ! [info exists nm_output(exclude_sym)] } {
     pass $test4
 } else {
     fail $test4
@@ -109,6 +111,7 @@ if ![ld_nm $nm "-D" tmpdir/exclude.so] {
 
 if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs libexclude.a --shared tmpdir/exclude1.o -Ltmpdir -lexclude"]
      && [ld_nm $nm "-D" tmpdir/exclude.so]
+     && ! [info exists nm_output(exclude_common)]
      && ! [info exists nm_output(exclude_sym)] } {
     pass $test5
 } else {
@@ -117,6 +120,7 @@ if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs libexclude.a --shared
 
 if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs ALL --shared tmpdir/exclude1.o -Ltmpdir -lexclude"]
      && [ld_nm $nm "-D" tmpdir/exclude.so]
+     && ! [info exists nm_output(exclude_common)]
      && ! [info exists nm_output(exclude_sym)] } {
     pass $test6
 } else {
@@ -125,6 +129,7 @@ if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs ALL --shared tmpdir/e
 
 if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs foo:libexclude.a --shared tmpdir/exclude1.o -Ltmpdir -lexclude"]
      && [ld_nm $nm "-D" tmpdir/exclude.so]
+     && ! [info exists nm_output(exclude_common)]
      && ! [info exists nm_output(exclude_sym)] } {
     pass $test7
 } else {
@@ -133,6 +138,7 @@ if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs foo:libexclude.a --sh
 
 if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs foo,libexclude.a --shared tmpdir/exclude1.o -Ltmpdir -lexclude"]
      && [ld_nm $nm "-D" tmpdir/exclude.so]
+     && ! [info exists nm_output(exclude_common)]
      && ! [info exists nm_output(exclude_sym)] } {
     pass $test8
 } else {
@@ -141,6 +147,7 @@ if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs foo,libexclude.a --sh
 
 if { [ld_simple_link $ld tmpdir/exclude.so "--exclude-libs foo:bar --shared tmpdir/exclude1.o -Ltmpdir -lexclude"]
      && [ld_nm $nm "-D" tmpdir/exclude.so]
+     && [info exists nm_output(exclude_common)]
      && [info exists nm_output(exclude_sym)] } {
     pass $test9
 } else {

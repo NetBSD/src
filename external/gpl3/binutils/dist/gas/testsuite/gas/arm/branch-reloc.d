@@ -1,6 +1,6 @@
 #name: Inter-section branch relocations
-#This test is only valid on ELF based ports.
-#not-target: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd *-*-riscix*
+#This test is only valid on EABI based ports.
+#target: *-*-*eabi* *-*-nacl*
 #as: -march=armv5t
 #objdump: -rd
 #stderr: branch-reloc.l

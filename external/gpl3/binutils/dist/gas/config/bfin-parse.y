@@ -1,6 +1,5 @@
 /* bfin-parse.y  ADI Blackfin parser
-   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,7 +20,6 @@
 %{
 
 #include "as.h"
-#include <obstack.h>
 
 #include "bfin-aux.h"  /* Opcode generating auxiliaries.  */
 #include "libbfd.h"
@@ -4507,7 +4505,7 @@ static int
 value_match (Expr_Node *exp, int sz, int sign, int mul, int issigned)
 {
   int umax = (1 << sz) - 1;
-  int min = -1 << (sz - 1);
+  int min = -(1 << (sz - 1));
   int max = (1 << (sz - 1)) - 1;
 
   int v = (EXPR_VALUE (exp)) & 0xffffffff;

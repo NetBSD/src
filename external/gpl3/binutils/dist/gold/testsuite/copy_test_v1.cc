@@ -1,6 +1,6 @@
 // copy_test_v1.cc -- test copy relocs for gold
 
-// Copyright 2008, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.

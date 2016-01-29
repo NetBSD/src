@@ -1,6 +1,5 @@
 /* Opcode decoder for the Renesas RX
-   Copyright 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@redhat.com>
 
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.
@@ -24,6 +23,10 @@
    analyzer, and the disassembler.  Given an opcode data source,
    it decodes the next opcode into the following structures.  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
   RX_AnySize = 0,
@@ -35,6 +38,8 @@ typedef enum
   RX_SWord,
   RX_3Byte,
   RX_Long,
+  RX_Bad_Size,
+  RX_MAX_SIZE
 } RX_Size;
 
 typedef enum
@@ -43,6 +48,7 @@ typedef enum
   RX_Operand_Immediate,	/* #addend */
   RX_Operand_Register,	/* Rn */
   RX_Operand_Indirect,	/* [Rn + addend] */
+  RX_Operand_Zero_Indirect,/* [Rn] */
   RX_Operand_Postinc,	/* [Rn+] */
   RX_Operand_Predec,	/* [-Rn] */
   RX_Operand_Condition,	/* eq, gtu, etc */
@@ -98,6 +104,10 @@ typedef enum
   RXO_nop,
   RXO_nop2,
   RXO_nop3,
+  RXO_nop4,
+  RXO_nop5,
+  RXO_nop6,
+  RXO_nop7,
 
   RXO_scmpu,
   RXO_smovu,
@@ -213,3 +223,7 @@ typedef struct
    registers.  32..47 are condition codes.  */
 
 int rx_decode_opcode (unsigned long, RX_Opcode_Decoded *, int (*)(void *), void *);
+
+#ifdef __cplusplus
+}
+#endif

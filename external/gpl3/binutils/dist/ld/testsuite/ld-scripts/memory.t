@@ -29,5 +29,6 @@ SECTIONS
     data_end = .;
   } >DATAMEM
 
-  fred = ORIGIN(DATAMEM) + LENGTH(DATAMEM);  
+  fred = ORIGIN(DATAMEM) + LENGTH(DATAMEM);
+  tred = ORIGIN(TEXTMEM) + LENGTH(TEXTMEM);
 }

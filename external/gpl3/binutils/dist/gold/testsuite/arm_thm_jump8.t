@@ -1,6 +1,6 @@
 /* arm_thm_jump8.t -- linker script to test R_ARM_THM_JUMP8 relocation.
 
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Written by Doug Kwan <dougkwan@google.com>.
 
    This file is part of gold.

@@ -31,7 +31,7 @@ Disassembly of section .text:
   54:	36 e1 ff 7f 	M2 = 0x7fff \(X\);.*
   58:	81 60       	R1 = 0x10 \(X\);.*
   5a:	3c e1 00 00 	L0 = 0x0 \(X\);.*
-  5e:	27 e1 f3 00 	R7 = 0xf3 \(X\);.*
+  5e:	27 e1 01 00 	R7 = 0x1 \(X\);.*
   62:	00 e1 03 00 	R0.L = 0x3;.*
   66:	01 e1 0f 00 	R1.L = 0xf;.*
 
@@ -106,11 +106,4 @@ Disassembly of section .text:
   e8:	fb 98       	R3 = B\[FP--\] \(X\);
   ea:	b7 e5 00 00 	R7 = B\[SP \+ 0x0\] \(X\);
   ee:	be e5 01 80 	R6 = B\[FP \+ -0x7fff\] \(X\);
-
-000000f2 <load_data1>:
-	...
-
-000000f3 <load_data2>:
-  f3:	10 00       	IF !CC JUMP 0xf3 <load_data2>;
-  f5:	00 00       	NOP;
-	...
+	\.\.\.

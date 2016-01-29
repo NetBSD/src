@@ -10,3 +10,4 @@ a:
 _start:
 	.section	.debug_foobar
 	.long	a@dtpoff, 0
+	.quad	a@dtpoff

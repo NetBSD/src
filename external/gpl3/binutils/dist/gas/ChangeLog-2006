@@ -56,9 +56,9 @@
 	Delete the code handling large constant for PIC.
 	Modify some comments.
 	(score_relax_frag): Decrease insn_addr in certain situation.
-	(s_score_cprestore): Change .cprestore syntax from ".cprestore offset" 
+	(s_score_cprestore): Change .cprestore syntax from ".cprestore offset"
 	to ".cprestore reg, offset".
-	
+
 2006-12-23  Kazu Hirata  <kazu@codesourcery.com>
 
 	* configure.tgt: Recognize fido.
@@ -2748,6 +2748,12 @@
 
 For older changes see ChangeLog-2005
 
+Copyright (C) 2006 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

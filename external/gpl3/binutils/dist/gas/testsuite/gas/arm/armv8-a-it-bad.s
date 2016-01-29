@@ -56,3 +56,17 @@ addeq r0, pc, pc
 
 it eq
 addeq pc, r0, r0
+
+it eq
+addeq sp, sp, #12
+
+@ Misaligned immediate.
+it eq
+addeq sp, sp, #3
+
+it eq
+subeq sp, sp, #12
+
+@ Misaligned immediate.
+it eq
+subeq sp, sp, #3

@@ -60,5 +60,5 @@ SECTIONS
   end_of_data_overlays = . ;
   
   . = 0x8000;
-  /DISCARD/ : { *(.reginfo) }
+  /DISCARD/ : { *(.reginfo) *(.MIPS.abiflags) }
 }

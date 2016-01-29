@@ -1,3 +1,19 @@
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  
+
 #
 # These tests should be valid on all targets.
 #
@@ -39,11 +55,13 @@ if { ![istarget cris-*-*] && ![istarget crisv32-*-*]
 # The MN10300 port supports link time relaxation which in turn allows
 # for link time resolution of the differneces of two symbols which are
 # undefined at assembly time.  Hence this test will not pass for the
-# MN10300.  The same thing is true for the RX port as well.
+# MN10300.  The same thing is true for the RX and AVR port as well.
 if { ![istarget hppa*-*-*]
      && ![istarget alpha*-*-*vms*]
+     && ![istarget avr-*-*]
      && ![istarget rx-*-*]
      && ![istarget mn10300-*-*]
+     && ![istarget msp430*-*-*]
      && ![istarget am3*-*-*] } then {
     gas_test_error "diff1.s" "" "difference of two undefined symbols"
 }
@@ -82,13 +100,13 @@ case $target_triplet in {
     default {
 	# Some targets don't manage to resolve BFD_RELOC_8 for constants.
 	setup_xfail "alpha*-*-*" "*c30*-*-*" "*c4x*-*-*" \
-	    "d\[13\]0v*-*-*" "i860-*-*" "mips*-*-*" "msp430-*-*" \
-	    "pdp11-*-*" "xtensa*-*-*"
+	    "d\[13\]0v*-*-*" "i860-*-*" \
+	    "nds32*-*-*" "pdp11-*-*" "xtensa*-*-*"
 	run_dump_test forward
     }
 }
 
-# aout relocs are often weird, so is mep and mips-ecoff. don't bother testing
+# aout relocs are often weird, so is mep. don't bother testing
 # som doesn't use a .text section
 # mmix doesn't like .L1:
 # ti addresses aren't octets.
@@ -99,8 +117,8 @@ if { ![is_aout_format] } {
 	}
 	{ hppa*-*-hpux* } { }
 	{ mep-*-* } { }
-	{ mips*-*-ecoff* } { }
 	{ mmix-*-* } { }
+	{ nds32*-*-* } { }
 	{ tic30*-*-* } { }
 	{ tic4x*-*-* } { }
 	{ tic54x*-*-* } { }
@@ -122,6 +140,8 @@ case $target_triplet in {
     { mips*-*-* } { }
     { mn10200-*-* } { }
     { mn10300-*-* } { }
+    { msp430*-*-* } { }
+    { nds32*-*-* } { }
     { pdp11-*-* } { }
     { tic30*-*-* } { }
     { tic4x*-*-* } { }
@@ -132,7 +152,7 @@ case $target_triplet in {
 	run_dump_test redef
 	# These targets fail redef2 because they disallow redefined
 	# symbols on relocs.
-	setup_xfail "m68hc1*-*-*" "m6811-*-*" "m6812-*-*"
+	setup_xfail "m68hc1*-*-*" "m6811-*-*" "m6812-*-*" "arc-*-*"
 	setup_xfail "rx-*-*" "vax*-*-*" "xgate*-*-*" "z8k-*-*"
 	run_dump_test redef2
 	setup_xfail "m68hc1*-*-*" "m6811-*-*" "m6812-*-*"
@@ -144,7 +164,7 @@ case $target_triplet in {
 	# These targets fail redef3 because section contents for the
 	# word referencing the .comm sym is not zero and/or its reloc
 	# has a non-zero addend.  Relaxing the test would hide real
-	# failures such as or32-elf.
+	# failures.
 	setup_xfail "bfin-*-*" "i\[3-7\]86-*-*coff" \
 	    "i\[3-7\]86-*-*pe" "i\[3-7\]86-*-go32*" \
 	    "i\[3-7\]86-*-cygwin*" "i\[3-7\]86-*-mingw*" "x86_64-*-mingw*"
@@ -249,8 +269,8 @@ if { ![istarget hppa*-*-*] &&
      ![istarget *c54x*-*-*] } then {
     # the vax fails because VMS can apparently actually handle this
     # case in relocs, so gas doesn't handle it itself.
-    # mn10300 emits two relocs to handle the difference of two symbols.
-    setup_xfail "mn10300*-*-*" "vax*-*-vms*"
+    # msp430 and mn10300 emit two relocs to handle the difference of two symbols.
+    setup_xfail "mn10300*-*-*" "msp430*-*-*" "vax*-*-vms*"
     do_930509a
 }
 
@@ -348,10 +368,19 @@ if {  ([istarget "i*86-*-*pe*"] && ![istarget "i*86-*-openbsd*"]) \
   gas_test "fastcall.s" ""   "" "fastcall labels"
 }
 
-if { ![istarget "bfin-*-*"] } then {
+if { ![istarget "bfin-*-*"] && ![istarget "nds32*-*-*"] } then {
     run_dump_test assign
 }
 run_dump_test sleb128
+run_dump_test sleb128-2
+run_dump_test sleb128-3
+setup_xfail "nds32*-*-*"
+run_dump_test sleb128-4
+run_dump_test sleb128-5
+# .byte is not 8 bits on either tic4x or tic54x
+if { ![istarget "tic4x*-*-*"] && ![istarget "tic54x*-*-*"] } {
+    run_dump_test sleb128-7
+}
 
 # .byte is 32 bits on tic4x, and .p2align isn't supported on tic54x
 # .space is different on hppa*-hpux.
@@ -388,6 +417,7 @@ case $target_triplet in {
     { *c54x*-*-* } { }
     { z80-*-* } { }
     default {
+	setup_xfail "nds32*-*-*"
 	run_dump_test weakref1
 	run_dump_test weakref1g
 	run_dump_test weakref1l
@@ -400,6 +430,11 @@ gas_test_error "weakref3.s" "" "a: would close weakref loop: a => b => c => d =>
 gas_test_error "weakref4.s" "" "is already defined"
 
 run_dump_test string
+if [is_elf_format] {
+    run_dump_test none
+}
+
+run_dump_test quoted-sym-names
 
 load_lib gas-dg.exp
 dg-init

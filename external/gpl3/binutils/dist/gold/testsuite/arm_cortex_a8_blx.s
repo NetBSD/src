@@ -30,4 +30,9 @@ _test:
 
 # We have no mapping symbols for stubs.  This make the disassembler
 # list the stub correctly in ARM mode.
+	.align	2
 	.arm
+
+# Align stub table for address matching.
+	.align	12
+

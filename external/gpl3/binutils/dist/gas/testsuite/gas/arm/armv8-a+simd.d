@@ -1,5 +1,6 @@
 #name: Valid v8-a+simdv3
 #objdump: -dr --prefix-addresses --show-raw-insn
+#skip: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd
 
 .*: +file format .*arm.*
 
@@ -28,18 +29,18 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> f3fb0160 	vcvtn.s32.f32	q8, q8
 0[0-9a-f]+ <[^>]+> f3bbe2ce 	vcvtp.u32.f32	q7, q7
 0[0-9a-f]+ <[^>]+> f3fbe3ee 	vcvtm.u32.f32	q15, q15
-0[0-9a-f]+ <[^>]+> f3ba0500 	vrinta.f32.f32	d0, d0
-0[0-9a-f]+ <[^>]+> f3fa0420 	vrintn.f32.f32	d16, d16
-0[0-9a-f]+ <[^>]+> f3baf68f 	vrintm.f32.f32	d15, d15
-0[0-9a-f]+ <[^>]+> f3faf7af 	vrintp.f32.f32	d31, d31
-0[0-9a-f]+ <[^>]+> f3ba04af 	vrintx.f32.f32	d0, d31
-0[0-9a-f]+ <[^>]+> f3fa058f 	vrintz.f32.f32	d16, d15
-0[0-9a-f]+ <[^>]+> f3ba0540 	vrinta.f32.f32	q0, q0
-0[0-9a-f]+ <[^>]+> f3fa0460 	vrintn.f32.f32	q8, q8
-0[0-9a-f]+ <[^>]+> f3bae6ce 	vrintm.f32.f32	q7, q7
-0[0-9a-f]+ <[^>]+> f3fae7ee 	vrintp.f32.f32	q15, q15
-0[0-9a-f]+ <[^>]+> f3ba04ee 	vrintx.f32.f32	q0, q15
-0[0-9a-f]+ <[^>]+> f3fa05ce 	vrintz.f32.f32	q8, q7
+0[0-9a-f]+ <[^>]+> f3ba0500 	vrinta.f32	d0, d0
+0[0-9a-f]+ <[^>]+> f3fa0420 	vrintn.f32	d16, d16
+0[0-9a-f]+ <[^>]+> f3baf68f 	vrintm.f32	d15, d15
+0[0-9a-f]+ <[^>]+> f3faf7af 	vrintp.f32	d31, d31
+0[0-9a-f]+ <[^>]+> f3ba04af 	vrintx.f32	d0, d31
+0[0-9a-f]+ <[^>]+> f3fa058f 	vrintz.f32	d16, d15
+0[0-9a-f]+ <[^>]+> f3ba0540 	vrinta.f32	q0, q0
+0[0-9a-f]+ <[^>]+> f3fa0460 	vrintn.f32	q8, q8
+0[0-9a-f]+ <[^>]+> f3bae6ce 	vrintm.f32	q7, q7
+0[0-9a-f]+ <[^>]+> f3fae7ee 	vrintp.f32	q15, q15
+0[0-9a-f]+ <[^>]+> f3ba04ee 	vrintx.f32	q0, q15
+0[0-9a-f]+ <[^>]+> f3fa05ce 	vrintz.f32	q8, q7
 0[0-9a-f]+ <[^>]+> ff00 0f10 	vmaxnm.f32	d0, d0, d0
 0[0-9a-f]+ <[^>]+> ff40 0fb0 	vmaxnm.f32	d16, d16, d16
 0[0-9a-f]+ <[^>]+> ff0f ff1f 	vmaxnm.f32	d15, d15, d15
@@ -64,15 +65,15 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> fffb 0160 	vcvtn.s32.f32	q8, q8
 0[0-9a-f]+ <[^>]+> ffbb e2ce 	vcvtp.u32.f32	q7, q7
 0[0-9a-f]+ <[^>]+> fffb e3ee 	vcvtm.u32.f32	q15, q15
-0[0-9a-f]+ <[^>]+> ffba 0500 	vrinta.f32.f32	d0, d0
-0[0-9a-f]+ <[^>]+> fffa 0420 	vrintn.f32.f32	d16, d16
-0[0-9a-f]+ <[^>]+> ffba f68f 	vrintm.f32.f32	d15, d15
-0[0-9a-f]+ <[^>]+> fffa f7af 	vrintp.f32.f32	d31, d31
-0[0-9a-f]+ <[^>]+> ffba 04af 	vrintx.f32.f32	d0, d31
-0[0-9a-f]+ <[^>]+> fffa 058f 	vrintz.f32.f32	d16, d15
-0[0-9a-f]+ <[^>]+> ffba 0540 	vrinta.f32.f32	q0, q0
-0[0-9a-f]+ <[^>]+> fffa 0460 	vrintn.f32.f32	q8, q8
-0[0-9a-f]+ <[^>]+> ffba e6ce 	vrintm.f32.f32	q7, q7
-0[0-9a-f]+ <[^>]+> fffa e7ee 	vrintp.f32.f32	q15, q15
-0[0-9a-f]+ <[^>]+> ffba 04ee 	vrintx.f32.f32	q0, q15
-0[0-9a-f]+ <[^>]+> fffa 05ce 	vrintz.f32.f32	q8, q7
+0[0-9a-f]+ <[^>]+> ffba 0500 	vrinta.f32	d0, d0
+0[0-9a-f]+ <[^>]+> fffa 0420 	vrintn.f32	d16, d16
+0[0-9a-f]+ <[^>]+> ffba f68f 	vrintm.f32	d15, d15
+0[0-9a-f]+ <[^>]+> fffa f7af 	vrintp.f32	d31, d31
+0[0-9a-f]+ <[^>]+> ffba 04af 	vrintx.f32	d0, d31
+0[0-9a-f]+ <[^>]+> fffa 058f 	vrintz.f32	d16, d15
+0[0-9a-f]+ <[^>]+> ffba 0540 	vrinta.f32	q0, q0
+0[0-9a-f]+ <[^>]+> fffa 0460 	vrintn.f32	q8, q8
+0[0-9a-f]+ <[^>]+> ffba e6ce 	vrintm.f32	q7, q7
+0[0-9a-f]+ <[^>]+> fffa e7ee 	vrintp.f32	q15, q15
+0[0-9a-f]+ <[^>]+> ffba 04ee 	vrintx.f32	q0, q15
+0[0-9a-f]+ <[^>]+> fffa 05ce 	vrintz.f32	q8, q7

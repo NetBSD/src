@@ -1,7 +1,7 @@
 #objdump: -r
 #name: macro irp
 #darwin (mach-o) reverses relocs.
-#not-target: *-*-darwin*
+#not-target: *-*-darwin* nds32*-*-*
 
 .*: +file format .*
 

@@ -1,4 +1,4 @@
-	.section .init
+	.section .init, "a"
 	.p2align 8
 	.type	last,%function
 last:

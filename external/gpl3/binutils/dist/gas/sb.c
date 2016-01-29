@@ -1,6 +1,5 @@
 /* sb.c - string buffer manipulation routines
-   Copyright 1994, 1995, 2000, 2003, 2005, 2006, 2007, 2009, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -113,7 +112,7 @@ sb_scrub_and_add_sb (sb *ptr, sb *s)
 {
   sb_to_scrub = s;
   scrub_position = s->ptr;
-  
+
   sb_check (ptr, s->len);
   ptr->len += do_scrub_chars (scrub_from_sb, ptr->ptr + ptr->len, s->len);
 

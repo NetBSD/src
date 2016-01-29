@@ -6,14 +6,14 @@ SECTIONS
   {
     *(.text1)
   }
-  /* Same for alignment at beginning and end.  */
+  /* Same for alignment at beginning and end, although we need to be
+     careful in the expression used to align.  */
   .text2 ALIGN (4096) :
   {
     *(.text2)
-    . = ALIGN (4096);
+    . = ALIGN (. != 0 ? 4096 : 1);
   }
-  /* Same for alignment just at end, although we need to be careful in
-     the expression used to align.  */
+  /* Same for alignment just at end.  */
   .text3 :
   {
     *(.text3)

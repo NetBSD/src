@@ -1,7 +1,5 @@
 /* Linker file opening and searching.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -143,6 +141,14 @@ ldfile_try_open_bfd (const char *attempt,
 
   /* Linker needs to decompress sections.  */
   entry->the_bfd->flags |= BFD_DECOMPRESS;
+
+  /* This is a linker input BFD.  */
+  entry->the_bfd->is_linker_input = 1;
+
+#ifdef ENABLE_PLUGINS
+  if (entry->flags.lto_output)
+    entry->the_bfd->lto_output = 1;
+#endif
 
   /* If we are searching for this file, see if the architecture is
      compatible with the output file.  If it isn't, keep searching.
@@ -303,22 +309,10 @@ success:
      bfd_object that it sets the bfd's arch and mach, which
      will be needed when and if we want to bfd_create a new
      one using this one as a template.  */
-  if (bfd_check_format (entry->the_bfd, bfd_object)
-      && plugin_active_plugins_p ()
-      && !no_more_claiming)
-    {
-      int fd = open (attempt, O_RDONLY | O_BINARY);
-      if (fd >= 0)
-	{
-	  struct ld_plugin_input_file file;
-
-	  file.name = attempt;
-	  file.offset = 0;
-	  file.filesize = lseek (fd, 0, SEEK_END);
-	  file.fd = fd;
-	  plugin_maybe_claim (&file, entry);
-	}
-    }
+  if (link_info.lto_plugin_active
+      && !no_more_claiming
+      && bfd_check_format (entry->the_bfd, bfd_object))
+    plugin_maybe_claim (entry);
 #endif /* ENABLE_PLUGINS */
 
   /* It opened OK, the format checked out, and the plugins have had
@@ -363,13 +357,13 @@ ldfile_open_file_search (const char *arch,
     {
       char *string;
 
-      if (entry->flags.dynamic && ! link_info.relocatable)
+      if (entry->flags.dynamic && !bfd_link_relocatable (&link_info))
 	{
 	  if (ldemul_open_dynamic_archive (arch, search, entry))
 	    return TRUE;
 	}
 
-      if (entry->flags.maybe_archive)
+      if (entry->flags.maybe_archive && !entry->flags.full_name_provided)
 	string = concat (search->name, slash, lib, entry->filename,
 			 arch, suffix, (const char *) NULL);
       else
@@ -602,6 +596,7 @@ ldfile_open_command_file_1 (const char *name, bfd_boolean default_only)
     {
       bfd_set_error (bfd_error_system_call);
       einfo (_("%P%F: cannot open linker script file %s: %E\n"), name);
+      return;
     }
 
   lex_push_file (ldlex_input_stack, name, sysrooted);

@@ -1,7 +1,5 @@
 /* as.h - global header file
-   Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,13 +21,13 @@
 #ifndef GAS
 #define GAS 1
 /* I think this stuff is largely out of date.  xoxorich.
- 
+
    CAPITALISED names are #defined.
    "lowercaseH" is #defined if "lowercase.h" has been #include-d.
    "lowercaseT" is a typedef of "lowercase" objects.
    "lowercaseP" is type "pointer to object of type 'lowercase'".
    "lowercaseS" is typedef struct ... lowercaseS.
-  
+
    #define DEBUG to enable all the "know" assertion tests.
    #define SUSPECT when debugging hash code.
    #define COMMON as "extern" for all modules except one, where you #define
@@ -372,8 +370,8 @@ COMMON int flag_strip_local_absolute;
 /* True if we should generate a traditional format object file.  */
 COMMON int flag_traditional_format;
 
-/* TRUE if debug sections should be compressed.  */
-COMMON int flag_compress_debug;
+/* Type of compressed debug sections we should generate.   */
+COMMON enum compressed_debug_section_type flag_compress_debug;
 
 /* TRUE if .note.GNU-stack section with SEC_CODE should be created */
 COMMON int flag_execstack;
@@ -417,6 +415,7 @@ enum debug_info_type
 
 extern enum debug_info_type debug_type;
 extern int use_gnu_debug_info_extensions;
+COMMON bfd_boolean flag_dwarf_sections;
 
 /* Maximum level of macro nesting.  */
 extern int max_macro_nest;
@@ -590,6 +589,9 @@ COMMON enum
     size_check_warning
   }
 flag_size_check;
+
+/* If section name substitution sequences should be honored */
+COMMON int flag_sectname_subst;
 #endif
 
 #ifndef DOLLAR_AMBIGU

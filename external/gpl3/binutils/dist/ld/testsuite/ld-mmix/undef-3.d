@@ -2,7 +2,7 @@
 #ld: -u undefd -m elf64mmix
 #readelf: -S -s
 
-There are 5 section headers, starting at offset 0xa0:
+There are 5 section headers, starting at offset .*:
 
 Section Headers:
  +\[Nr\] Name +Type +Address +Offset
@@ -11,12 +11,12 @@ Section Headers:
  +0+ +0+ +0 +0 +0
  +\[ 1\] \.text +PROGBITS +0+ +0+78
  +0+4 +0+ +AX +0 +0 +4
- +\[ 2\] \.shstrtab +STRTAB +0+ +0+7c
+ +\[ 2\] \.shstrtab +STRTAB +0+ +[0-9a-f]+
  +0+21 +0+ +0 +0 +1
- +\[ 3\] \.symtab +SYMTAB +0+ +0+1e0
+ +\[ 3\] \.symtab +SYMTAB +0+ .*
  +0+c0 +0+18 +4 +2 +8
- +\[ 4\] \.strtab +STRTAB +0+ +0+2a0
- +0+2f +0+ +0 +0 +1
+ +\[ 4\] \.strtab +STRTAB +0+ .*
+ +0+28 +0+ +0 +0 +1
 Key to Flags:
 #...
 

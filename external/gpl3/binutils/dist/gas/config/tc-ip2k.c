@@ -1,6 +1,5 @@
 /* tc-ip2k.c -- Assembler for the Scenix IP2xxx.
-   Copyright (C) 2000, 2002, 2003, 2005, 2006, 2007, 2009
-   Free Software Foundation. Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,7 +19,7 @@
    Boston, MA 02110-1301, USA.  */
 
 #include "as.h"
-#include "subsegs.h"     
+#include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/ip2k-desc.h"
 #include "opcodes/ip2k-opc.h"
@@ -53,7 +52,7 @@ ip2k_insn;
 
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
-const char line_separator_chars[] = ""; 
+const char line_separator_chars[] = "";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
@@ -120,7 +119,7 @@ enum options
   OPTION_CPU_IP2022EXT
 };
 
-struct option md_longopts[] = 
+struct option md_longopts[] =
 {
   { "mip2022",     no_argument, NULL, OPTION_CPU_IP2022 },
   { "mip2022ext",  no_argument, NULL, OPTION_CPU_IP2022EXT },
@@ -165,7 +164,7 @@ void
 md_begin (void)
 {
   /* Initialize the `cgen' interface.  */
-  
+
   /* Set the machine number and endian.  */
   gas_cgen_cpu_desc = ip2k_cgen_cpu_open (CGEN_CPU_OPEN_MACHS,
 					  ip2k_mach_bitmask,
@@ -232,7 +231,7 @@ md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
 
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 
@@ -248,7 +247,7 @@ md_estimate_size_before_relax (fragS * fragP ATTRIBUTE_UNUSED,
 {
   as_fatal (_("relaxation not supported\n"));
   return 1;
-} 
+}
 
 
 /* *fragP has been relaxed to its final size, and now needs to have
@@ -421,7 +420,7 @@ ip2k_elf_section_flags (flagword flags,
      word alignment should be forced.  */
   if (flags & SEC_CODE)
     force_code_align = 1;
- 
+
   return flags;
 }
 

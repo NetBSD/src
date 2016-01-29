@@ -10,7 +10,7 @@
 2007-12-07  Bob Wilson  <bob.wilson@acm.org>
 
 	* readelf.c (is_32bit_pcrel_reloc): Add Xtensa.
-	
+
 2007-12-04  Alan Modra  <amodra@bigpond.net.au>
 
 	* readelf.c (is_32bit_abs_reloc, is_32bit_pcrel_reloc): Add SPU.
@@ -192,7 +192,7 @@
 	(close_input_stream): Check pclose error, and call fatal if
 	the preprocessor failed.
 	* windres.c (windres_add_include_dir): Assert that p is non-NULL,
-	and not an empty string. 
+	and not an empty string.
 
 2007-10-04  Nick Clifton  <nickc@redhat.com>
 
@@ -224,12 +224,12 @@
 2007-09-17  Nick Clifton  <nickc@redhat.com>
 
 	* doc/binutils.texi (objdump): Describe the output of the --syms
-	option in more detail. 
+	option in more detail.
 
 2007-09-17  Alon Bar-Lev  <alon.barlev@gmail.com>
 
 	PR binutils/4987
-        * resrc.c: (read_rc_file): Move 'filename' default initialization 
+        * resrc.c: (read_rc_file): Move 'filename' default initialization
 	to start of function.
 
 2007-08-31  Michael Meissner  <michael.meissner@amd.com>
@@ -1157,6 +1157,12 @@
 
 For older changes see ChangeLog-2006
 
+Copyright (C) 2007 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

@@ -16,4 +16,6 @@ SECTIONS
   .data : { *(.data) }
   HIDDEN (_gp = ALIGN (16) + 0x7ff0);
   .got : { *(.got) }
+
+  /DISCARD/ : { *(.MIPS.abiflags) *(.gnu.attributes) }
 }

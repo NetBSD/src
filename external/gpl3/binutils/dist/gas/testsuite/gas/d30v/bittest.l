@@ -19,16 +19,16 @@ GAS LISTING .*
   10 0000 00F00000 		nop -> ldw R1, @\(R2,R3\)
   10      84401083 
   11 0008 04406144 	        nop || ldw R6, @\(R5,R4\)
-.*  Warning:Swapping instruction order
+.*  Warning: Swapping instruction order
   11      00F00000 
   12              	        
   13 0010 00F00000 	        nop -> BSET R1, R2, R3 
   13      82201083 
   14 0018 80F00000 	        nop <- BTST F1, R2, R3 
-.*  Warning:Executing btst in IU in reverse serial may not work
+.*  Warning: Executing btst in IU in reverse serial may not work
   14      02001083 
   15 0020 00F00000 	        nop || BCLR R1, R2, R3
-.*  Warning:Executing bclr in IU may not work in parallel execution
+.*  Warning: Executing bclr in IU may not work in parallel execution
   15      02301083 
   16 0028 00F00000 	        nop -> BNOT R1, R2, R3
   16      82101083 
@@ -36,7 +36,8 @@ GAS LISTING .*
   17      80F00000 
   18              	        
   19 0038 047C0105 	        bset r1, r2, r3 || moddec r4, 5
-.*  Warning:Swapping instruction order
+.*  Warning: Executing bset in IU may not work
+.*  Warning: Swapping instruction order
   19      02201083 
   20              	
   21              	        bset r1, r2, r3

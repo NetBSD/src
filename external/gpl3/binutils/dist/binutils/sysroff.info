@@ -59,7 +59,7 @@
  (("segment shift") 	(1 byte) ("segsh"))
  (("entry point") 	(1 byte) ("ep"))
  (cond "ptr->ep"
-       (cond "ptr->mt != MTYPE_ABS_LM" 
+       (cond "ptr->mt != MTYPE_ABS_LM"
 	     (("unit appearance number") (2 bytes) ("uan"))
 	     (("section appearance number") (2 bytes) ("sa")))
        (cond "segmented_p"
@@ -96,7 +96,7 @@
 
 
 ("sc" 0x08
- (("format") (2 bits) ("format"))	
+ (("format") (2 bits) ("format"))
  (("spare") (6 bits) ("spare"))
  (("segment address") (segsize bytes) ("segadd"))
  (("address") (addrsize bytes) ("addr"))
@@ -129,7 +129,7 @@
 ("ss" 0x09
  (("neg number") (2 bytes) ("neg")))
 
-	
+
 ("er" 0x0c
  (("symbol type") (2 bits) ("type")
   (("ER_ENTRY" "0")
@@ -138,7 +138,7 @@
    ("ER_NOTSPEC" "3")))
  (("spare") (6 bits) ("spare"))
  (("symbol name") (chars variable byte) ("name")))
-	
+
 
 ("ed" 0x14
  (("section appearance number") (2 bytes) ("section"))
@@ -169,7 +169,7 @@
  (cond "ptr->cpf"
        (("comp reps") (addrsize bytes) ("compreps")))
  (("data") (barray counted byte) ("data")))
-	
+
 
 ("rl" 0x20
  (("boundary of relocatable area") (4 bits) ("boundary"))
@@ -188,7 +188,7 @@
    ("OP_EXT_REF" "2")))
  (cond "ptr->op == OP_EXT_REF"
        (("symbol number") (2 bytes) ("symn"))	)
-	
+
  (cond "ptr->op == OP_SEC_REF"
        (("section number") (2 bytes) ("secn"))
        (("const opcode") (1 byte) ("copcode_is_3"))
@@ -200,7 +200,7 @@
        (("dunno") (2 bytes) ("dunno")))
 
  (("end")  (1 byte) ("end")))
-	
+
 
 ("du" 0x30
  (("format") (2 bits) ("format"))
@@ -292,7 +292,7 @@
  (cond "ptr->type == STYPE_TAG"
        (("magic") (1 byte) ("magic"))))
 
- 
+
 
 ("dul" 0x52
  (("max declaration type flag") (1 bit) ("max_variable"))
@@ -373,7 +373,7 @@
 	       (("minimum") (addrsize bytes) ("min"))))
  (("negotiation") (2 bytes) ("neg")))
 
-	       
+
 ("dso" 0x3a
  (("function name") (2 bytes) ("sid"))
  (("sp update count") (4 bytes) ("spupdates"))
@@ -392,7 +392,7 @@
 	 (("call count") (2 bytes) ("cc"))
 	 )
  (("neg") (2 bytes) ("neg")))
- 
+
 ("dpp" 0x46
  (("start/end") (1 bit) ("end"))
  (("spare") (7 bits) ("spare"))
@@ -444,7 +444,7 @@
  (("rules") (chars variable byte) ("rules"))
  (("number of symbols") (2 bytes) ("nsymbols"))
  (("unknown" ) (2 bytes) ("fixme")))
-     
+
 ("pss" 0x40
  (("negotiation number") (2 bytes) ("efn"))
  (("number of source files") (2 bytes) ("ns"))
@@ -452,15 +452,15 @@
 	 (("directory reference bit") (1 bit) ("drb"))
 	 (("spare") (7 bits) ("spare"))
 	 (("completed file name") (chars variable byte) ("fname"))
-	 (cond "ptr->drb[n]" 
+	 (cond "ptr->drb[n]"
 	       (("directory apperance number") (2 bytes) ("dan"))))
- 
+
  (("number of directories") (2 bytes) ("ndir"))
  (repeat "ptr->ndir"
 	 (("directory name") (chars variable bytes) ("dname"))))
 
 
-; FIXME: the tr block has no contents. sysinfo, etc. aren't prepared 
+; FIXME: the tr block has no contents. sysinfo, etc. aren't prepared
 ; to deal with that.
 ; ("tr" 0x7f)
 
@@ -472,7 +472,7 @@
 	 (("directory reference bit") (1 bit) ("drb"))
 	 (("spare") (7 bits) ("spare"))
 	 (("completed file name") (chars variable byte) ("fname"))
-	 (cond "ptr->drb[n]" 
+	 (cond "ptr->drb[n]"
 	       (("directory apperance number") (2 bytes) ("dan"))))
  (("number of directories") (2 bytes) ("ndir"))
  (repeat "ptr->ndir"
@@ -493,7 +493,7 @@
        (("address") (addrsize bytes) ("address"))
        (("block size") (addrsize bytes) ("block_size"))
        (("nesting") (1 byte) ("nesting"))
-       (cond "ptr->type == BLOCK_TYPE_PROCEDURE 
+       (cond "ptr->type == BLOCK_TYPE_PROCEDURE
 	    || ptr->type == BLOCK_TYPE_FUNCTION"
 	     (("return address") (1 bit) ("retaddr"))
 	     (("interrupt function flag") (1 bit) ("intrflag"))

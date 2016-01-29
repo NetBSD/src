@@ -1,5 +1,4 @@
-@c Copyright 2005, 2006, 2009, 2010, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2005-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -37,7 +36,7 @@ is not used in assembler.  It's here such that GCC can easily pass down its
 @code{-mcpu=} option.  The assembler will issue an
 error message if an attempt is made to assemble an instruction which
 will not execute on the target processor.  The following processor names are
-recognized: 
+recognized:
 @code{bf504},
 @code{bf506},
 @code{bf512},
@@ -97,7 +96,7 @@ One instruction may extend across multiple lines or more than one
 instruction may appear on the same line.  White space (space, tab,
 comments or newline) may appear anywhere between tokens.  A token must
 not have embedded spaces.  Tokens include numbers, register names,
-keywords, user identifiers, and also some multicharacter special 
+keywords, user identifiers, and also some multicharacter special
 symbols like "+=", "/*" or "||".
 
 Comments are introduced by the @samp{#} character and extend to the
@@ -109,7 +108,7 @@ this case the line can also be a logical line number directive
 
 @item Instruction Delimiting
 A semicolon must terminate every instruction.  Sometimes a complete
-instruction will consist of more than one operation.  There are two 
+instruction will consist of more than one operation.  There are two
 cases where this occurs.  The first is when two general operations
 are combined.  Normally a comma separates the different parts, as in
 
@@ -136,9 +135,9 @@ R3.L, r3.l and r3.L are all equivalent input to the assembler.
 
 Register names are reserved and may not be used as program identifiers.
 
-Some operations (such as "Move Register") require a register pair. 
+Some operations (such as "Move Register") require a register pair.
 Register pairs are always data registers and are denoted using a colon,
-eg., R3:2.  The larger number must be written firsts.  Note that the 
+eg., R3:2.  The larger number must be written firsts.  Note that the
 hardware only supports odd-even pairs, eg., R7:6, R5:4, R3:2, and R1:0.
 
 Some instructions (such as --SP (Push Multiple)) require a group of
@@ -147,7 +146,7 @@ the range enclosed in parentheses and separated by a colon, eg., (R7:3).
 Again, the larger number appears first.
 
 Portions of a particular register may be individually specified.  This
-is written with a dot (".") following the register name and then a 
+is written with a dot (".") following the register name and then a
 letter denoting the desired portion.  For 32-bit registers, ".H"
 denotes the most significant ("High") portion.  ".L" denotes the
 least-significant portion.  The subdivisions of the 40-bit registers
@@ -171,7 +170,7 @@ extend beyond bit 31.
 
 @item Data Registers
 The set of 32-bit registers (R0, R1, R2, R3, R4, R5, R6 and R7) that
-normally contain data for manipulation.  These are abbreviated as 
+normally contain data for manipulation.  These are abbreviated as
 D-register or Dreg.  Data registers can be accessed as 32-bit registers
 or as two independent 16-bit registers.  The least significant 16 bits
 of each register is called the "low" half and is designated with ".L"

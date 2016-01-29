@@ -109,7 +109,7 @@
 	(is_32bit_abs_reloc): Add support for xc16c 32-bit absolute reloc.
 	(is_16bit_abs_reloc): Add support for xc16c 16-bit absolute reloc.
 	(is_none_reloc): Add support for xc16c null reloc.
-	
+
 2009-11-20  Ben Elliston  <bje@au.ibm.com>
 
 	* Makefile.am (syslex.o): Use $(NO_WERROR) not -Wno-error.
@@ -1347,6 +1347,12 @@
 
 For older changes see ChangeLog-2008
 
+Copyright (C) 2009 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

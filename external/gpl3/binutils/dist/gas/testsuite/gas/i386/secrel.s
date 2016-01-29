@@ -64,6 +64,8 @@ sam1f:	.ascii "<"
 	.byte 0x11
 	.ascii "<<<<<<<<"
 
+	leal	bar@SECREL32+44(%eax), %edx
+	
 .section .rdata
 
 	.ascii ">>>>"

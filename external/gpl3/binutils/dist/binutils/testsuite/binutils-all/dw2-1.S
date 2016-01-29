@@ -1,6 +1,6 @@
 /* This testcase is derived from a similar test in GDB.
 
-   Copyright 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,13 +20,13 @@
 	.text
 	.globl _start
 _start:
-	.int 0
+	.4byte 0
 .Lbegin_text1:
 	.globl func_cu1
 	.type func_cu1, %function
 func_cu1:
 .Lbegin_func_cu1:
-	.int 0
+	.4byte 0
 .Lend_func_cu1:
 	.size func_cu1, .-func_cu1
 .Lend_text1:

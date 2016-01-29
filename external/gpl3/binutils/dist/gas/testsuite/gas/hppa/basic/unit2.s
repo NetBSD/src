@@ -10,15 +10,9 @@
 	uxor,* %r4,%r5,%r6
 	uxor,*sbz %r4,%r5,%r6
 	uxor,*shz %r4,%r5,%r6
-	uxor,*sdc %r4,%r5,%r6
-	uxor,*sbc %r4,%r5,%r6
-	uxor,*shc %r4,%r5,%r6
 	uxor,*tr %r4,%r5,%r6
 	uxor,*nbz %r4,%r5,%r6
 	uxor,*nhz %r4,%r5,%r6
-	uxor,*ndc %r4,%r5,%r6
-	uxor,*nbc %r4,%r5,%r6
-	uxor,*nhc %r4,%r5,%r6
 
 	uaddcm,* %r4,%r5,%r6
 	uaddcm,*sbz %r4,%r5,%r6

@@ -1,7 +1,5 @@
 /* ECOFF debugging support.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.  A
    good deal of it comes directly from mips-tfile.c, by Michael
@@ -27,8 +25,7 @@
 #include "as.h"
 
 /* This file is compiled conditionally for those targets which use
-   ECOFF debugging information (e.g., MIPS ECOFF, MIPS ELF, Alpha
-   ECOFF).  */
+   ECOFF debugging information (e.g., MIPS ELF, Alpha ECOFF).  */
 
 #include "ecoff.h"
 
@@ -1555,8 +1552,8 @@ add_string (varray_t *vp,			/* string obstack */
 	    const char *str,			/* string */
 	    shash_t **ret_hash			/* return hash pointer */)
 {
-  register unsigned long len = strlen (str);
-  register shash_t *hash_ptr;
+  unsigned long len = strlen (str);
+  shash_t *hash_ptr;
 
   if (len >= PAGE_USIZE)
     as_fatal (_("string too big (%lu bytes)"), len);
@@ -1564,7 +1561,7 @@ add_string (varray_t *vp,			/* string obstack */
   hash_ptr = (shash_t *) hash_find (hash_tbl, str);
   if (hash_ptr == (shash_t *) NULL)
     {
-      register const char *err;
+      const char *err;
 
       if (vp->objects_last_page + len >= PAGE_USIZE)
 	{
@@ -1607,12 +1604,12 @@ add_ecoff_symbol (const char *str,	/* symbol name */
 		  symint_t indx		/* index to local/aux. syms */)
 {
   localsym_t *psym;
-  register scope_t *pscope;
-  register thead_t *ptag_head;
-  register tag_t *ptag;
-  register tag_t *ptag_next;
-  register varray_t *vp;
-  register int scope_delta = 0;
+  scope_t *pscope;
+  thead_t *ptag_head;
+  tag_t *ptag;
+  tag_t *ptag_next;
+  varray_t *vp;
+  int scope_delta = 0;
   shash_t *hash_ptr = (shash_t *) NULL;
 
   if (cur_file_ptr == (efdr_t *) NULL)
@@ -1805,8 +1802,8 @@ add_ecoff_symbol (const char *str,	/* symbol name */
 static symint_t
 add_aux_sym_symint (symint_t aux_word /* auxiliary information word */)
 {
-  register varray_t *vp;
-  register aux_t *aux_ptr;
+  varray_t *vp;
+  aux_t *aux_ptr;
 
   if (cur_file_ptr == (efdr_t *) NULL)
     as_fatal (_("no current file pointer"));
@@ -1828,8 +1825,8 @@ add_aux_sym_symint (symint_t aux_word /* auxiliary information word */)
 static symint_t
 add_aux_sym_rndx (int file_index, symint_t sym_index)
 {
-  register varray_t *vp;
-  register aux_t *aux_ptr;
+  varray_t *vp;
+  aux_t *aux_ptr;
 
   if (cur_file_ptr == (efdr_t *) NULL)
     as_fatal (_("no current file pointer"));
@@ -1855,8 +1852,8 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
 		 hash_state_t state,	/* whether to hash type or not */
 		 thash_t **hash_tbl	/* pointer to hash table to use */)
 {
-  register varray_t *vp;
-  register aux_t *aux_ptr;
+  varray_t *vp;
+  aux_t *aux_ptr;
   static AUXU init_aux;
   symint_t ret;
   int i;
@@ -1903,8 +1900,8 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
 
   if (state != hash_no)
     {
-      register thash_t *hash_ptr;
-      register symint_t hi;
+      thash_t *hash_ptr;
+      symint_t hi;
 
       hi = aux.isym & ((1 << HASHBITS) - 1);
       hi %= THASH_SIZE;
@@ -1960,9 +1957,9 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
       || t->basic_type == bt_Union
       || t->basic_type == bt_Enum)
     {
-      register symint_t file_index = t->tag_ptr->ifd;
-      register localsym_t *sym = t->tag_ptr->sym;
-      register forward_t *forward_ref = allocate_forward ();
+      symint_t file_index = t->tag_ptr->ifd;
+      localsym_t *sym = t->tag_ptr->sym;
+      forward_t *forward_ref = allocate_forward ();
 
       if (sym != (localsym_t *) NULL)
 	{
@@ -2117,8 +2114,8 @@ add_unknown_tag (tag_t *ptag /* pointer to tag information */)
 static void
 add_procedure (char *func /* func name */)
 {
-  register varray_t *vp;
-  register proc_t *new_proc_ptr;
+  varray_t *vp;
+  proc_t *new_proc_ptr;
   symbolS *sym;
 
 #ifdef ECOFF_DEBUG
@@ -2187,8 +2184,8 @@ ecoff_get_cur_proc_sym (void)
 static void
 add_file (const char *file_name, int indx ATTRIBUTE_UNUSED, int fake)
 {
-  register int first_ch;
-  register efdr_t *fil_ptr;
+  int first_ch;
+  efdr_t *fil_ptr;
 
 #ifdef ECOFF_DEBUG
   if (debug)
@@ -2437,14 +2434,13 @@ ecoff_directive_begin (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  name = input_line_pointer;
-  name_end = get_symbol_end ();
+  name_end = get_symbol_name (&name);
 
   (void) add_ecoff_symbol ((const char *) NULL, st_Block, sc_Text,
 			   symbol_find_or_make (name),
 			   (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
 
-  *input_line_pointer = name_end;
+  (void) restore_line_pointer (name_end);
 
   /* The line number follows, but we don't use it.  */
   (void) get_absolute_expression ();
@@ -2475,8 +2471,7 @@ ecoff_directive_bend (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  name = input_line_pointer;
-  name_end = get_symbol_end ();
+  name_end = get_symbol_name (&name);
 
   /* The value is the distance between the .bend directive and the
      corresponding symbol.  We fill in the offset when we write out
@@ -2488,7 +2483,7 @@ ecoff_directive_bend (int ignore ATTRIBUTE_UNUSED)
     (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text, endsym,
 			     (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
 
-  *input_line_pointer = name_end;
+  restore_line_pointer (name_end);
 
   /* The line number follows, but we don't use it.  */
   (void) get_absolute_expression ();
@@ -2522,8 +2517,7 @@ ecoff_directive_def (int ignore ATTRIBUTE_UNUSED)
 
   SKIP_WHITESPACE ();
 
-  name = input_line_pointer;
-  name_end = get_symbol_end ();
+  name_end = get_symbol_name (&name);
 
   if (coff_sym_name != (char *) NULL)
     as_warn (_(".def pseudo-op used inside of .def/.endef; ignored"));
@@ -2535,7 +2529,7 @@ ecoff_directive_def (int ignore ATTRIBUTE_UNUSED)
 	free (coff_sym_name);
       if (coff_tag != (char *) NULL)
 	free (coff_tag);
-      
+
       coff_sym_name = xstrdup (name);
       coff_type = type_info_init;
       coff_storage_class = sc_Nil;
@@ -2547,7 +2541,7 @@ ecoff_directive_def (int ignore ATTRIBUTE_UNUSED)
       coff_sym_addend = 0;
     }
 
-  *input_line_pointer = name_end;
+  restore_line_pointer (name_end);
 
   demand_empty_rest_of_line ();
 }
@@ -2760,12 +2754,11 @@ ecoff_directive_tag (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  name = input_line_pointer;
-  name_end = get_symbol_end ();
+  name_end = get_symbol_name (&name);
 
   coff_tag = xstrdup (name);
 
-  *input_line_pointer = name_end;
+  (void) restore_line_pointer (name_end);
 
   demand_empty_rest_of_line ();
 }
@@ -3007,13 +3000,12 @@ ecoff_directive_end (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  name = input_line_pointer;
-  name_end = get_symbol_end ();
+  name_end = get_symbol_name (&name);
 
   if (name == input_line_pointer)
     {
       as_warn (_(".end directive has no name"));
-      *input_line_pointer = name_end;
+      (void) restore_line_pointer (name_end);
       demand_empty_rest_of_line ();
       return;
     }
@@ -3034,7 +3026,7 @@ ecoff_directive_end (int ignore ATTRIBUTE_UNUSED)
 
   cur_proc_ptr = (proc_t *) NULL;
 
-  *input_line_pointer = name_end;
+  (void) restore_line_pointer (name_end);
   demand_empty_rest_of_line ();
 }
 
@@ -3056,20 +3048,19 @@ ecoff_directive_ent (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  name = input_line_pointer;
-  name_end = get_symbol_end ();
+  name_end = get_symbol_name (&name);
 
   if (name == input_line_pointer)
     {
       as_warn (_(".ent directive has no name"));
-      *input_line_pointer = name_end;
+      (void) restore_line_pointer (name_end);
       demand_empty_rest_of_line ();
       return;
     }
 
   add_procedure (name);
 
-  *input_line_pointer = name_end;
+  (void) restore_line_pointer (name_end);
 
   /* The .ent directive is sometimes followed by a number.  I'm not
      really sure what the number means.  I don't see any way to store
@@ -3098,10 +3089,9 @@ ecoff_directive_extern (int ignore ATTRIBUTE_UNUSED)
   symbolS *symbolp;
   valueT size;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   symbolp = symbol_find_or_make (name);
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   S_SET_EXTERNAL (symbolp);
 
@@ -3351,10 +3341,9 @@ ecoff_directive_weakext (int ignore ATTRIBUTE_UNUSED)
   symbolS *symbolP;
   expressionS exp;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   symbolP = symbol_find_or_make (name);
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   SKIP_WHITESPACE ();
 
@@ -3492,11 +3481,9 @@ ecoff_stab (segT sec ATTRIBUTE_UNUSED,
 	  return;
 	}
 
-      name = input_line_pointer;
-      name_end = get_symbol_end ();
-
+      name_end = get_symbol_name (&name);
       sym = symbol_find_or_make (name);
-      *input_line_pointer = name_end;
+      (void) restore_line_pointer (name_end);
 
       value = 0;
       addend = 0;
@@ -3670,7 +3657,7 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
 		    long *linecntptr)
 {
   char *bufptr;
-  register lineno_list_t *l;
+  lineno_list_t *l;
   lineno_list_t *last;
   efdr_t *file;
   proc_t *proc;
@@ -4595,7 +4582,7 @@ ecoff_build_fdr (const struct ecoff_debug_swap *backend,
 static void
 ecoff_setup_ext (void)
 {
-  register symbolS *sym;
+  symbolS *sym;
 
   for (sym = symbol_rootP; sym != (symbolS *) NULL; sym = symbol_next (sym))
     {
@@ -4791,7 +4778,7 @@ ecoff_build_debug (HDRR *hdr,
 static page_type *
 allocate_cluster (unsigned long npages)
 {
-  register page_type *value = (page_type *) xmalloc (npages * PAGE_USIZE);
+  page_type *value = (page_type *) xmalloc (npages * PAGE_USIZE);
 
 #ifdef ECOFF_DEBUG
   if (debug > 3)
@@ -4840,7 +4827,7 @@ allocate_page (void)
 static scope_t *
 allocate_scope (void)
 {
-  register scope_t *ptr;
+  scope_t *ptr;
   static scope_t initial_scope;
 
 #ifndef MALLOC_CHECK
@@ -4850,8 +4837,8 @@ allocate_scope (void)
     alloc_counts[(int) alloc_type_scope].free_list.f_scope = ptr->free;
   else
     {
-      register int unallocated	= alloc_counts[(int) alloc_type_scope].unallocated;
-      register page_type *cur_page	= alloc_counts[(int) alloc_type_scope].cur_page;
+      int unallocated	= alloc_counts[(int) alloc_type_scope].unallocated;
+      page_type *cur_page	= alloc_counts[(int) alloc_type_scope].cur_page;
 
       if (unallocated == 0)
 	{
@@ -4895,13 +4882,13 @@ free_scope (scope_t *ptr)
 static vlinks_t *
 allocate_vlinks (void)
 {
-  register vlinks_t *ptr;
+  vlinks_t *ptr;
   static vlinks_t initial_vlinks;
 
 #ifndef MALLOC_CHECK
 
-  register int unallocated = alloc_counts[(int) alloc_type_vlinks].unallocated;
-  register page_type *cur_page = alloc_counts[(int) alloc_type_vlinks].cur_page;
+  int unallocated = alloc_counts[(int) alloc_type_vlinks].unallocated;
+  page_type *cur_page = alloc_counts[(int) alloc_type_vlinks].cur_page;
 
   if (unallocated == 0)
     {
@@ -4929,13 +4916,13 @@ allocate_vlinks (void)
 static shash_t *
 allocate_shash (void)
 {
-  register shash_t *ptr;
+  shash_t *ptr;
   static shash_t initial_shash;
 
 #ifndef MALLOC_CHECK
 
-  register int unallocated = alloc_counts[(int) alloc_type_shash].unallocated;
-  register page_type *cur_page = alloc_counts[(int) alloc_type_shash].cur_page;
+  int unallocated = alloc_counts[(int) alloc_type_shash].unallocated;
+  page_type *cur_page = alloc_counts[(int) alloc_type_shash].cur_page;
 
   if (unallocated == 0)
     {
@@ -4963,13 +4950,13 @@ allocate_shash (void)
 static thash_t *
 allocate_thash (void)
 {
-  register thash_t *ptr;
+  thash_t *ptr;
   static thash_t initial_thash;
 
 #ifndef MALLOC_CHECK
 
-  register int unallocated = alloc_counts[(int) alloc_type_thash].unallocated;
-  register page_type *cur_page = alloc_counts[(int) alloc_type_thash].cur_page;
+  int unallocated = alloc_counts[(int) alloc_type_thash].unallocated;
+  page_type *cur_page = alloc_counts[(int) alloc_type_thash].cur_page;
 
   if (unallocated == 0)
     {
@@ -4997,7 +4984,7 @@ allocate_thash (void)
 static tag_t *
 allocate_tag (void)
 {
-  register tag_t *ptr;
+  tag_t *ptr;
   static tag_t initial_tag;
 
 #ifndef MALLOC_CHECK
@@ -5007,8 +4994,8 @@ allocate_tag (void)
     alloc_counts[(int) alloc_type_tag].free_list.f_tag = ptr->free;
   else
     {
-      register int unallocated = alloc_counts[(int) alloc_type_tag].unallocated;
-      register page_type *cur_page = alloc_counts[(int) alloc_type_tag].cur_page;
+      int unallocated = alloc_counts[(int) alloc_type_tag].unallocated;
+      page_type *cur_page = alloc_counts[(int) alloc_type_tag].cur_page;
 
       if (unallocated == 0)
 	{
@@ -5052,13 +5039,13 @@ free_tag (tag_t *ptr)
 static forward_t *
 allocate_forward (void)
 {
-  register forward_t *ptr;
+  forward_t *ptr;
   static forward_t initial_forward;
 
 #ifndef MALLOC_CHECK
 
-  register int unallocated = alloc_counts[(int) alloc_type_forward].unallocated;
-  register page_type *cur_page = alloc_counts[(int) alloc_type_forward].cur_page;
+  int unallocated = alloc_counts[(int) alloc_type_forward].unallocated;
+  page_type *cur_page = alloc_counts[(int) alloc_type_forward].cur_page;
 
   if (unallocated == 0)
     {
@@ -5086,7 +5073,7 @@ allocate_forward (void)
 static thead_t *
 allocate_thead (void)
 {
-  register thead_t *ptr;
+  thead_t *ptr;
   static thead_t initial_thead;
 
 #ifndef MALLOC_CHECK
@@ -5096,8 +5083,8 @@ allocate_thead (void)
     alloc_counts[(int) alloc_type_thead].free_list.f_thead = ptr->free;
   else
     {
-      register int unallocated = alloc_counts[(int) alloc_type_thead].unallocated;
-      register page_type *cur_page = alloc_counts[(int) alloc_type_thead].cur_page;
+      int unallocated = alloc_counts[(int) alloc_type_thead].unallocated;
+      page_type *cur_page = alloc_counts[(int) alloc_type_thead].cur_page;
 
       if (unallocated == 0)
 	{
@@ -5139,13 +5126,13 @@ free_thead (thead_t *ptr)
 static lineno_list_t *
 allocate_lineno_list (void)
 {
-  register lineno_list_t *ptr;
+  lineno_list_t *ptr;
   static lineno_list_t initial_lineno_list;
 
 #ifndef MALLOC_CHECK
 
-  register int unallocated = alloc_counts[(int) alloc_type_lineno].unallocated;
-  register page_type *cur_page = alloc_counts[(int) alloc_type_lineno].cur_page;
+  int unallocated = alloc_counts[(int) alloc_type_lineno].unallocated;
+  page_type *cur_page = alloc_counts[(int) alloc_type_lineno].cur_page;
 
   if (unallocated == 0)
     {

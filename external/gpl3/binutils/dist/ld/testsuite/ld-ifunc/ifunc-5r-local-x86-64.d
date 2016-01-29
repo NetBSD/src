@@ -7,4 +7,4 @@
 Relocation section '.rela.text' at .*
 [ ]+Offset[ ]+Info[ ]+Type[ ]+.*
 [0-9a-f]+[ ]+[0-9a-f]+[ ]+R_X86_64_PLT32[ ]+foo\(\)[ ]+foo - 4
-[0-9a-f]+[ ]+[0-9a-f]+[ ]+R_X86_64_GOTPCREL[ ]+foo\(\)[ ]+foo - 4
+[0-9a-f]+[ ]+[0-9a-f]+[ ]+R_X86_64_REX_GOTPCRELX[ ]+foo\(\)[ ]+foo - 4

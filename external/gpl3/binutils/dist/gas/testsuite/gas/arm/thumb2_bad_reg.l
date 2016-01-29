@@ -76,9 +76,9 @@
 [^:]*:[0-9]+: Error: r15 not allowed here -- `cmn.w r0,r15'
 [^:]*:[0-9]+: Error: r15 not allowed here -- `cmp.w r15,#1'
 [^:]*:[0-9]+: Error: r15 not allowed here -- `cmp r15,r0'
-[^:]*:[0-9]+: Warning: use of r13 is deprecated
+[^:]*:[0-9]+: use of r13 is deprecated
 [^:]*:[0-9]+: Error: r15 not allowed here -- `cmp r0,r15'
-[^:]*:[0-9]+: Warning: use of r13 is deprecated
+[^:]*:[0-9]+: use of r13 is deprecated
 [^:]*:[0-9]+: Error: r15 not allowed here -- `cmp.n r0,r15'
 [^:]*:[0-9]+: Error: r15 not allowed here -- `cmp.w r15,r0'
 [^:]*:[0-9]+: Error: r13 not allowed here -- `cmp.w r0,r13'
@@ -147,10 +147,10 @@
 [^:]*:[0-9]+: Error: r15 not allowed here -- `mov.w r15,r13'
 [^:]*:[0-9]+: Error: r15 not allowed here -- `mov.w r13,r15'
 [^:]*:[0-9]+: Error: r15 not allowed here -- `mov.w r15,r15'
-[^:]*:[0-9]+: Warning: Use of r13 as a source register is deprecated when r13 is the destination register.
-[^:]*:[0-9]+: Warning: Use of r13 as a source register is deprecated when r15 is the destination register.
-[^:]*:[0-9]+: Warning: Use of r15 as a source register is deprecated when r13 is the destination register.
-[^:]*:[0-9]+: Warning: Use of r15 as a source register is deprecated when r15 is the destination register.
+[^:]*:[0-9]+: Use of r13 as a source register is deprecated when r13 is the destination register.
+[^:]*:[0-9]+: Use of r13 as a source register is deprecated when r15 is the destination register.
+[^:]*:[0-9]+: Use of r15 as a source register is deprecated when r13 is the destination register.
+[^:]*:[0-9]+: Use of r15 as a source register is deprecated when r15 is the destination register.
 [^:]*:[0-9]+: Error: r13 not allowed here -- `movs r13,r13'
 [^:]*:[0-9]+: Error: r15 not allowed here -- `movs r15,r13'
 [^:]*:[0-9]+: Error: r13 not allowed here -- `movs r13,r15'

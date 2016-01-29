@@ -1,6 +1,6 @@
 /* spu.h -- Assembler for spu
 
-   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

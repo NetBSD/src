@@ -4,7 +4,7 @@ the application to open as many BFDs as it wants without
 regard to the underlying operating system's file descriptor
 limit (often as low as 20 open files).  The module in
 @code{cache.c} maintains a least recently used list of
-@code{BFD_CACHE_MAX_OPEN} files, and exports the name
+@code{bfd_cache_max_open} files, and exports the name
 @code{bfd_cache_lookup}, which runs around and makes sure that
 the required BFD is open. If not, then it chooses a file to
 close, closes it and opens the one wanted, returning its file

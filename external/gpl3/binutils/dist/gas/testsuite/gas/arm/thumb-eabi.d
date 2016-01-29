@@ -2,7 +2,7 @@
 # as: -mcpu=arm7t
 # objdump: -dr --prefix-addresses --show-raw-insn
 # source: thumb.s
-# target: *-*-*eabi *-*-symbianelf *-*-nacl*
+# target: *-*-*eabi* *-*-symbianelf *-*-nacl*
 
 .*: +file format .*arm.*
 
@@ -163,3 +163,8 @@ Disassembly of section \.text:
 0+942 <[^>]+> 4801      	ldr	r0, \[pc, #4\]	; \(0+948 <[^>]+>\)
 0+944 <[^>]+> 1c08      	adds	r0, r1, #0
 0+946 <[^>]+> 46c0      	nop			; \(mov r8, r8\)
+0+948 <[^>]+> a001      	add	r0, pc, #4	; \(adr r0, 00000950 <[^>]+>\)
+0+94a <[^>]+> a001      	add	r0, pc, #4	; \(adr r0, 00000950 <[^>]+>\)
+0+94c <[^>]+> a000      	add	r0, pc, #0	; \(adr r0, 00000950 <[^>]+>\)
+0+94e <[^>]+> 46c0      	nop			; \(mov r8, r8\)
+#pass

@@ -1,132 +1,132 @@
 [^:]*: Assembler messages:
-[^:]*:8: Error: selected processor does not support Thumb mode `pkhbt r0,r0,r0'
-[^:]*:9: Error: selected processor does not support Thumb mode `pkhbt r9,r0,r0'
-[^:]*:10: Error: selected processor does not support Thumb mode `pkhbt r0,r9,r0'
-[^:]*:11: Error: selected processor does not support Thumb mode `pkhbt r0,r0,r9'
-[^:]*:12: Error: selected processor does not support Thumb mode `pkhbt r0,r0,r0,lsl#0x14'
-[^:]*:13: Error: selected processor does not support Thumb mode `pkhbt r0,r0,r0,lsl#3'
-[^:]*:14: Error: selected processor does not support Thumb mode `pkhtb r1,r2,r3'
-[^:]*:15: Error: selected processor does not support Thumb mode `pkhtb r1,r2,r3,asr#0x11'
-[^:]*:18: Error: selected processor does not support Thumb mode `qadd r1,r2,r3'
-[^:]*:19: Error: selected processor does not support Thumb mode `qadd16 r1,r2,r3'
-[^:]*:20: Error: selected processor does not support Thumb mode `qadd8 r1,r2,r3'
-[^:]*:21: Error: selected processor does not support Thumb mode `qasx r1,r2,r3'
-[^:]*:22: Error: selected processor does not support Thumb mode `qaddsubx r1,r2,r3'
-[^:]*:23: Error: selected processor does not support Thumb mode `qdadd r1,r2,r3'
-[^:]*:24: Error: selected processor does not support Thumb mode `qdsub r1,r2,r3'
-[^:]*:25: Error: selected processor does not support Thumb mode `qsub r1,r2,r3'
-[^:]*:26: Error: selected processor does not support Thumb mode `qsub16 r1,r2,r3'
-[^:]*:27: Error: selected processor does not support Thumb mode `qsub8 r1,r2,r3'
-[^:]*:28: Error: selected processor does not support Thumb mode `qsax r1,r2,r3'
-[^:]*:29: Error: selected processor does not support Thumb mode `qsubaddx r1,r2,r3'
-[^:]*:30: Error: selected processor does not support Thumb mode `sadd16 r1,r2,r3'
-[^:]*:31: Error: selected processor does not support Thumb mode `sadd8 r1,r2,r3'
-[^:]*:32: Error: selected processor does not support Thumb mode `sasx r1,r2,r3'
-[^:]*:33: Error: selected processor does not support Thumb mode `saddsubx r1,r2,r3'
-[^:]*:34: Error: selected processor does not support Thumb mode `ssub16 r1,r2,r3'
-[^:]*:35: Error: selected processor does not support Thumb mode `ssub8 r1,r2,r3'
-[^:]*:36: Error: selected processor does not support Thumb mode `ssax r1,r2,r3'
-[^:]*:37: Error: selected processor does not support Thumb mode `ssubaddx r1,r2,r3'
-[^:]*:38: Error: selected processor does not support Thumb mode `shadd16 r1,r2,r3'
-[^:]*:39: Error: selected processor does not support Thumb mode `shadd8 r1,r2,r3'
-[^:]*:40: Error: selected processor does not support Thumb mode `shasx r1,r2,r3'
-[^:]*:41: Error: selected processor does not support Thumb mode `shaddsubx r1,r2,r3'
-[^:]*:42: Error: selected processor does not support Thumb mode `shsub16 r1,r2,r3'
-[^:]*:43: Error: selected processor does not support Thumb mode `shsub8 r1,r2,r3'
-[^:]*:44: Error: selected processor does not support Thumb mode `shsax r1,r2,r3'
-[^:]*:45: Error: selected processor does not support Thumb mode `shsubaddx r1,r2,r3'
-[^:]*:46: Error: selected processor does not support Thumb mode `uadd16 r1,r2,r3'
-[^:]*:47: Error: selected processor does not support Thumb mode `uadd8 r1,r2,r3'
-[^:]*:48: Error: selected processor does not support Thumb mode `uasx r1,r2,r3'
-[^:]*:49: Error: selected processor does not support Thumb mode `uaddsubx r1,r2,r3'
-[^:]*:50: Error: selected processor does not support Thumb mode `usub16 r1,r2,r3'
-[^:]*:51: Error: selected processor does not support Thumb mode `usub8 r1,r2,r3'
-[^:]*:52: Error: selected processor does not support Thumb mode `usax r1,r2,r3'
-[^:]*:53: Error: selected processor does not support Thumb mode `usubaddx r1,r2,r3'
-[^:]*:54: Error: selected processor does not support Thumb mode `uhadd16 r1,r2,r3'
-[^:]*:55: Error: selected processor does not support Thumb mode `uhadd8 r1,r2,r3'
-[^:]*:56: Error: selected processor does not support Thumb mode `uhasx r1,r2,r3'
-[^:]*:57: Error: selected processor does not support Thumb mode `uhaddsubx r1,r2,r3'
-[^:]*:58: Error: selected processor does not support Thumb mode `uhsub16 r1,r2,r3'
-[^:]*:59: Error: selected processor does not support Thumb mode `uhsub8 r1,r2,r3'
-[^:]*:60: Error: selected processor does not support Thumb mode `uhsax r1,r2,r3'
-[^:]*:61: Error: selected processor does not support Thumb mode `uhsubaddx r1,r2,r3'
-[^:]*:62: Error: selected processor does not support Thumb mode `uqadd16 r1,r2,r3'
-[^:]*:63: Error: selected processor does not support Thumb mode `uqadd8 r1,r2,r3'
-[^:]*:64: Error: selected processor does not support Thumb mode `uqasx r1,r2,r3'
-[^:]*:65: Error: selected processor does not support Thumb mode `uqaddsubx r1,r2,r3'
-[^:]*:66: Error: selected processor does not support Thumb mode `uqsub16 r1,r2,r3'
-[^:]*:67: Error: selected processor does not support Thumb mode `uqsub8 r1,r2,r3'
-[^:]*:68: Error: selected processor does not support Thumb mode `uqsax r1,r2,r3'
-[^:]*:69: Error: selected processor does not support Thumb mode `uqsubaddx r1,r2,r3'
-[^:]*:70: Error: selected processor does not support Thumb mode `sel r1,r2,r3'
-[^:]*:73: Error: selected processor does not support Thumb mode `smlabb r0,r0,r0,r0'
-[^:]*:74: Error: selected processor does not support Thumb mode `smlabb r9,r0,r0,r0'
-[^:]*:75: Error: selected processor does not support Thumb mode `smlabb r0,r9,r0,r0'
-[^:]*:76: Error: selected processor does not support Thumb mode `smlabb r0,r0,r9,r0'
-[^:]*:77: Error: selected processor does not support Thumb mode `smlabb r0,r0,r0,r9'
-[^:]*:79: Error: selected processor does not support Thumb mode `smlatb r0,r0,r0,r0'
-[^:]*:80: Error: selected processor does not support Thumb mode `smlabt r0,r0,r0,r0'
-[^:]*:81: Error: selected processor does not support Thumb mode `smlatt r0,r0,r0,r0'
-[^:]*:82: Error: selected processor does not support Thumb mode `smlawb r0,r0,r0,r0'
-[^:]*:83: Error: selected processor does not support Thumb mode `smlawt r0,r0,r0,r0'
-[^:]*:84: Error: selected processor does not support Thumb mode `smlad r0,r0,r0,r0'
-[^:]*:85: Error: selected processor does not support Thumb mode `smladx r0,r0,r0,r0'
-[^:]*:86: Error: selected processor does not support Thumb mode `smlsd r0,r0,r0,r0'
-[^:]*:87: Error: selected processor does not support Thumb mode `smlsdx r0,r0,r0,r0'
-[^:]*:88: Error: selected processor does not support Thumb mode `smmla r0,r0,r0,r0'
-[^:]*:89: Error: selected processor does not support Thumb mode `smmlar r0,r0,r0,r0'
-[^:]*:90: Error: selected processor does not support Thumb mode `smmls r0,r0,r0,r0'
-[^:]*:91: Error: selected processor does not support Thumb mode `smmlsr r0,r0,r0,r0'
-[^:]*:92: Error: selected processor does not support Thumb mode `usada8 r0,r0,r0,r0'
-[^:]*:95: Error: selected processor does not support Thumb mode `smlalbb r0,r0,r0,r0'
-[^:]*:96: Error: selected processor does not support Thumb mode `smlalbb r9,r0,r0,r0'
-[^:]*:97: Error: selected processor does not support Thumb mode `smlalbb r0,r9,r0,r0'
-[^:]*:98: Error: selected processor does not support Thumb mode `smlalbb r0,r0,r9,r0'
-[^:]*:99: Error: selected processor does not support Thumb mode `smlalbb r0,r0,r0,r9'
-[^:]*:101: Error: selected processor does not support Thumb mode `smlaltb r0,r0,r0,r0'
-[^:]*:102: Error: selected processor does not support Thumb mode `smlalbt r0,r0,r0,r0'
-[^:]*:103: Error: selected processor does not support Thumb mode `smlaltt r0,r0,r0,r0'
-[^:]*:104: Error: selected processor does not support Thumb mode `smlald r0,r0,r0,r0'
-[^:]*:105: Error: selected processor does not support Thumb mode `smlaldx r0,r0,r0,r0'
-[^:]*:106: Error: selected processor does not support Thumb mode `smlsld r0,r0,r0,r0'
-[^:]*:107: Error: selected processor does not support Thumb mode `smlsldx r0,r0,r0,r0'
-[^:]*:108: Error: selected processor does not support Thumb mode `umaal r0,r0,r0,r0'
-[^:]*:111: Error: selected processor does not support Thumb mode `smulbb r0,r0,r0'
-[^:]*:112: Error: selected processor does not support Thumb mode `smulbb r9,r0,r0'
-[^:]*:113: Error: selected processor does not support Thumb mode `smulbb r0,r9,r0'
-[^:]*:114: Error: selected processor does not support Thumb mode `smulbb r0,r0,r9'
-[^:]*:116: Error: selected processor does not support Thumb mode `smultb r0,r0,r0'
-[^:]*:117: Error: selected processor does not support Thumb mode `smulbt r0,r0,r0'
-[^:]*:118: Error: selected processor does not support Thumb mode `smultt r0,r0,r0'
-[^:]*:119: Error: selected processor does not support Thumb mode `smulwb r0,r0,r0'
-[^:]*:120: Error: selected processor does not support Thumb mode `smulwt r0,r0,r0'
-[^:]*:121: Error: selected processor does not support Thumb mode `smmul r0,r0,r0'
-[^:]*:122: Error: selected processor does not support Thumb mode `smmulr r0,r0,r0'
-[^:]*:123: Error: selected processor does not support Thumb mode `smuad r0,r0,r0'
-[^:]*:124: Error: selected processor does not support Thumb mode `smuadx r0,r0,r0'
-[^:]*:125: Error: selected processor does not support Thumb mode `smusd r0,r0,r0'
-[^:]*:126: Error: selected processor does not support Thumb mode `smusdx r0,r0,r0'
-[^:]*:127: Error: selected processor does not support Thumb mode `usad8 r0,r0,r0'
-[^:]*:130: Error: selected processor does not support Thumb mode `ssat16 r0,#1,r0'
-[^:]*:131: Error: selected processor does not support Thumb mode `ssat16 r9,#1,r0'
-[^:]*:132: Error: selected processor does not support Thumb mode `ssat16 r0,#10,r0'
-[^:]*:133: Error: selected processor does not support Thumb mode `ssat16 r0,#1,r9'
-[^:]*:135: Error: selected processor does not support Thumb mode `usat16 r0,#0,r0'
-[^:]*:136: Error: selected processor does not support Thumb mode `usat16 r9,#0,r0'
-[^:]*:137: Error: selected processor does not support Thumb mode `usat16 r0,#9,r0'
-[^:]*:138: Error: selected processor does not support Thumb mode `usat16 r0,#0,r9'
-[^:]*:141: Error: selected processor does not support Thumb mode `sxtb16 r1,r2'
-[^:]*:142: Error: selected processor does not support Thumb mode `sxtb16 r8,r9'
-[^:]*:143: Error: selected processor does not support Thumb mode `uxtb16 r1,r2'
-[^:]*:144: Error: selected processor does not support Thumb mode `uxtb16 r8,r9'
-[^:]*:147: Error: selected processor does not support Thumb mode `sxtab r0,r0,r0'
-[^:]*:148: Error: selected processor does not support Thumb mode `sxtab r0,r0,r0,ror#0'
-[^:]*:149: Error: selected processor does not support Thumb mode `sxtab r9,r0,r0,ror#8'
-[^:]*:150: Error: selected processor does not support Thumb mode `sxtab r0,r9,r0,ror#16'
-[^:]*:151: Error: selected processor does not support Thumb mode `sxtab r0,r0,r9,ror#24'
-[^:]*:153: Error: selected processor does not support Thumb mode `sxtab16 r1,r2,r3'
-[^:]*:154: Error: selected processor does not support Thumb mode `sxtah r1,r2,r3'
-[^:]*:155: Error: selected processor does not support Thumb mode `uxtab r1,r2,r3'
-[^:]*:156: Error: selected processor does not support Thumb mode `uxtab16 r1,r2,r3'
-[^:]*:157: Error: selected processor does not support Thumb mode `uxtah r1,r2,r3'
+[^:]*:8: Error: selected processor does not support `pkhbt r0,r0,r0' in Thumb mode
+[^:]*:9: Error: selected processor does not support `pkhbt r9,r0,r0' in Thumb mode
+[^:]*:10: Error: selected processor does not support `pkhbt r0,r9,r0' in Thumb mode
+[^:]*:11: Error: selected processor does not support `pkhbt r0,r0,r9' in Thumb mode
+[^:]*:12: Error: selected processor does not support `pkhbt r0,r0,r0,lsl#0x14' in Thumb mode
+[^:]*:13: Error: selected processor does not support `pkhbt r0,r0,r0,lsl#3' in Thumb mode
+[^:]*:14: Error: selected processor does not support `pkhtb r1,r2,r3' in Thumb mode
+[^:]*:15: Error: selected processor does not support `pkhtb r1,r2,r3,asr#0x11' in Thumb mode
+[^:]*:18: Error: selected processor does not support `qadd r1,r2,r3' in Thumb mode
+[^:]*:19: Error: selected processor does not support `qadd16 r1,r2,r3' in Thumb mode
+[^:]*:20: Error: selected processor does not support `qadd8 r1,r2,r3' in Thumb mode
+[^:]*:21: Error: selected processor does not support `qasx r1,r2,r3' in Thumb mode
+[^:]*:22: Error: selected processor does not support `qaddsubx r1,r2,r3' in Thumb mode
+[^:]*:23: Error: selected processor does not support `qdadd r1,r2,r3' in Thumb mode
+[^:]*:24: Error: selected processor does not support `qdsub r1,r2,r3' in Thumb mode
+[^:]*:25: Error: selected processor does not support `qsub r1,r2,r3' in Thumb mode
+[^:]*:26: Error: selected processor does not support `qsub16 r1,r2,r3' in Thumb mode
+[^:]*:27: Error: selected processor does not support `qsub8 r1,r2,r3' in Thumb mode
+[^:]*:28: Error: selected processor does not support `qsax r1,r2,r3' in Thumb mode
+[^:]*:29: Error: selected processor does not support `qsubaddx r1,r2,r3' in Thumb mode
+[^:]*:30: Error: selected processor does not support `sadd16 r1,r2,r3' in Thumb mode
+[^:]*:31: Error: selected processor does not support `sadd8 r1,r2,r3' in Thumb mode
+[^:]*:32: Error: selected processor does not support `sasx r1,r2,r3' in Thumb mode
+[^:]*:33: Error: selected processor does not support `saddsubx r1,r2,r3' in Thumb mode
+[^:]*:34: Error: selected processor does not support `ssub16 r1,r2,r3' in Thumb mode
+[^:]*:35: Error: selected processor does not support `ssub8 r1,r2,r3' in Thumb mode
+[^:]*:36: Error: selected processor does not support `ssax r1,r2,r3' in Thumb mode
+[^:]*:37: Error: selected processor does not support `ssubaddx r1,r2,r3' in Thumb mode
+[^:]*:38: Error: selected processor does not support `shadd16 r1,r2,r3' in Thumb mode
+[^:]*:39: Error: selected processor does not support `shadd8 r1,r2,r3' in Thumb mode
+[^:]*:40: Error: selected processor does not support `shasx r1,r2,r3' in Thumb mode
+[^:]*:41: Error: selected processor does not support `shaddsubx r1,r2,r3' in Thumb mode
+[^:]*:42: Error: selected processor does not support `shsub16 r1,r2,r3' in Thumb mode
+[^:]*:43: Error: selected processor does not support `shsub8 r1,r2,r3' in Thumb mode
+[^:]*:44: Error: selected processor does not support `shsax r1,r2,r3' in Thumb mode
+[^:]*:45: Error: selected processor does not support `shsubaddx r1,r2,r3' in Thumb mode
+[^:]*:46: Error: selected processor does not support `uadd16 r1,r2,r3' in Thumb mode
+[^:]*:47: Error: selected processor does not support `uadd8 r1,r2,r3' in Thumb mode
+[^:]*:48: Error: selected processor does not support `uasx r1,r2,r3' in Thumb mode
+[^:]*:49: Error: selected processor does not support `uaddsubx r1,r2,r3' in Thumb mode
+[^:]*:50: Error: selected processor does not support `usub16 r1,r2,r3' in Thumb mode
+[^:]*:51: Error: selected processor does not support `usub8 r1,r2,r3' in Thumb mode
+[^:]*:52: Error: selected processor does not support `usax r1,r2,r3' in Thumb mode
+[^:]*:53: Error: selected processor does not support `usubaddx r1,r2,r3' in Thumb mode
+[^:]*:54: Error: selected processor does not support `uhadd16 r1,r2,r3' in Thumb mode
+[^:]*:55: Error: selected processor does not support `uhadd8 r1,r2,r3' in Thumb mode
+[^:]*:56: Error: selected processor does not support `uhasx r1,r2,r3' in Thumb mode
+[^:]*:57: Error: selected processor does not support `uhaddsubx r1,r2,r3' in Thumb mode
+[^:]*:58: Error: selected processor does not support `uhsub16 r1,r2,r3' in Thumb mode
+[^:]*:59: Error: selected processor does not support `uhsub8 r1,r2,r3' in Thumb mode
+[^:]*:60: Error: selected processor does not support `uhsax r1,r2,r3' in Thumb mode
+[^:]*:61: Error: selected processor does not support `uhsubaddx r1,r2,r3' in Thumb mode
+[^:]*:62: Error: selected processor does not support `uqadd16 r1,r2,r3' in Thumb mode
+[^:]*:63: Error: selected processor does not support `uqadd8 r1,r2,r3' in Thumb mode
+[^:]*:64: Error: selected processor does not support `uqasx r1,r2,r3' in Thumb mode
+[^:]*:65: Error: selected processor does not support `uqaddsubx r1,r2,r3' in Thumb mode
+[^:]*:66: Error: selected processor does not support `uqsub16 r1,r2,r3' in Thumb mode
+[^:]*:67: Error: selected processor does not support `uqsub8 r1,r2,r3' in Thumb mode
+[^:]*:68: Error: selected processor does not support `uqsax r1,r2,r3' in Thumb mode
+[^:]*:69: Error: selected processor does not support `uqsubaddx r1,r2,r3' in Thumb mode
+[^:]*:70: Error: selected processor does not support `sel r1,r2,r3' in Thumb mode
+[^:]*:73: Error: selected processor does not support `smlabb r0,r0,r0,r0' in Thumb mode
+[^:]*:74: Error: selected processor does not support `smlabb r9,r0,r0,r0' in Thumb mode
+[^:]*:75: Error: selected processor does not support `smlabb r0,r9,r0,r0' in Thumb mode
+[^:]*:76: Error: selected processor does not support `smlabb r0,r0,r9,r0' in Thumb mode
+[^:]*:77: Error: selected processor does not support `smlabb r0,r0,r0,r9' in Thumb mode
+[^:]*:79: Error: selected processor does not support `smlatb r0,r0,r0,r0' in Thumb mode
+[^:]*:80: Error: selected processor does not support `smlabt r0,r0,r0,r0' in Thumb mode
+[^:]*:81: Error: selected processor does not support `smlatt r0,r0,r0,r0' in Thumb mode
+[^:]*:82: Error: selected processor does not support `smlawb r0,r0,r0,r0' in Thumb mode
+[^:]*:83: Error: selected processor does not support `smlawt r0,r0,r0,r0' in Thumb mode
+[^:]*:84: Error: selected processor does not support `smlad r0,r0,r0,r0' in Thumb mode
+[^:]*:85: Error: selected processor does not support `smladx r0,r0,r0,r0' in Thumb mode
+[^:]*:86: Error: selected processor does not support `smlsd r0,r0,r0,r0' in Thumb mode
+[^:]*:87: Error: selected processor does not support `smlsdx r0,r0,r0,r0' in Thumb mode
+[^:]*:88: Error: selected processor does not support `smmla r0,r0,r0,r0' in Thumb mode
+[^:]*:89: Error: selected processor does not support `smmlar r0,r0,r0,r0' in Thumb mode
+[^:]*:90: Error: selected processor does not support `smmls r0,r0,r0,r0' in Thumb mode
+[^:]*:91: Error: selected processor does not support `smmlsr r0,r0,r0,r0' in Thumb mode
+[^:]*:92: Error: selected processor does not support `usada8 r0,r0,r0,r0' in Thumb mode
+[^:]*:95: Error: selected processor does not support `smlalbb r0,r0,r0,r0' in Thumb mode
+[^:]*:96: Error: selected processor does not support `smlalbb r9,r0,r0,r0' in Thumb mode
+[^:]*:97: Error: selected processor does not support `smlalbb r0,r9,r0,r0' in Thumb mode
+[^:]*:98: Error: selected processor does not support `smlalbb r0,r0,r9,r0' in Thumb mode
+[^:]*:99: Error: selected processor does not support `smlalbb r0,r0,r0,r9' in Thumb mode
+[^:]*:101: Error: selected processor does not support `smlaltb r0,r0,r0,r0' in Thumb mode
+[^:]*:102: Error: selected processor does not support `smlalbt r0,r0,r0,r0' in Thumb mode
+[^:]*:103: Error: selected processor does not support `smlaltt r0,r0,r0,r0' in Thumb mode
+[^:]*:104: Error: selected processor does not support `smlald r0,r0,r0,r0' in Thumb mode
+[^:]*:105: Error: selected processor does not support `smlaldx r0,r0,r0,r0' in Thumb mode
+[^:]*:106: Error: selected processor does not support `smlsld r0,r0,r0,r0' in Thumb mode
+[^:]*:107: Error: selected processor does not support `smlsldx r0,r0,r0,r0' in Thumb mode
+[^:]*:108: Error: selected processor does not support `umaal r0,r0,r0,r0' in Thumb mode
+[^:]*:111: Error: selected processor does not support `smulbb r0,r0,r0' in Thumb mode
+[^:]*:112: Error: selected processor does not support `smulbb r9,r0,r0' in Thumb mode
+[^:]*:113: Error: selected processor does not support `smulbb r0,r9,r0' in Thumb mode
+[^:]*:114: Error: selected processor does not support `smulbb r0,r0,r9' in Thumb mode
+[^:]*:116: Error: selected processor does not support `smultb r0,r0,r0' in Thumb mode
+[^:]*:117: Error: selected processor does not support `smulbt r0,r0,r0' in Thumb mode
+[^:]*:118: Error: selected processor does not support `smultt r0,r0,r0' in Thumb mode
+[^:]*:119: Error: selected processor does not support `smulwb r0,r0,r0' in Thumb mode
+[^:]*:120: Error: selected processor does not support `smulwt r0,r0,r0' in Thumb mode
+[^:]*:121: Error: selected processor does not support `smmul r0,r0,r0' in Thumb mode
+[^:]*:122: Error: selected processor does not support `smmulr r0,r0,r0' in Thumb mode
+[^:]*:123: Error: selected processor does not support `smuad r0,r0,r0' in Thumb mode
+[^:]*:124: Error: selected processor does not support `smuadx r0,r0,r0' in Thumb mode
+[^:]*:125: Error: selected processor does not support `smusd r0,r0,r0' in Thumb mode
+[^:]*:126: Error: selected processor does not support `smusdx r0,r0,r0' in Thumb mode
+[^:]*:127: Error: selected processor does not support `usad8 r0,r0,r0' in Thumb mode
+[^:]*:130: Error: selected processor does not support `ssat16 r0,#1,r0' in Thumb mode
+[^:]*:131: Error: selected processor does not support `ssat16 r9,#1,r0' in Thumb mode
+[^:]*:132: Error: selected processor does not support `ssat16 r0,#10,r0' in Thumb mode
+[^:]*:133: Error: selected processor does not support `ssat16 r0,#1,r9' in Thumb mode
+[^:]*:135: Error: selected processor does not support `usat16 r0,#0,r0' in Thumb mode
+[^:]*:136: Error: selected processor does not support `usat16 r9,#0,r0' in Thumb mode
+[^:]*:137: Error: selected processor does not support `usat16 r0,#9,r0' in Thumb mode
+[^:]*:138: Error: selected processor does not support `usat16 r0,#0,r9' in Thumb mode
+[^:]*:141: Error: selected processor does not support `sxtb16 r1,r2' in Thumb mode
+[^:]*:142: Error: selected processor does not support `sxtb16 r8,r9' in Thumb mode
+[^:]*:143: Error: selected processor does not support `uxtb16 r1,r2' in Thumb mode
+[^:]*:144: Error: selected processor does not support `uxtb16 r8,r9' in Thumb mode
+[^:]*:147: Error: selected processor does not support `sxtab r0,r0,r0' in Thumb mode
+[^:]*:148: Error: selected processor does not support `sxtab r0,r0,r0,ror#0' in Thumb mode
+[^:]*:149: Error: selected processor does not support `sxtab r9,r0,r0,ror#8' in Thumb mode
+[^:]*:150: Error: selected processor does not support `sxtab r0,r9,r0,ror#16' in Thumb mode
+[^:]*:151: Error: selected processor does not support `sxtab r0,r0,r9,ror#24' in Thumb mode
+[^:]*:153: Error: selected processor does not support `sxtab16 r1,r2,r3' in Thumb mode
+[^:]*:154: Error: selected processor does not support `sxtah r1,r2,r3' in Thumb mode
+[^:]*:155: Error: selected processor does not support `uxtab r1,r2,r3' in Thumb mode
+[^:]*:156: Error: selected processor does not support `uxtab16 r1,r2,r3' in Thumb mode
+[^:]*:157: Error: selected processor does not support `uxtah r1,r2,r3' in Thumb mode

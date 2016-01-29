@@ -13,5 +13,5 @@ SECTIONS
   HIDDEN (_gp = . + 0x7ff0);
   .got : { *(.got) }
 
-  /DISCARD/ : { *(.reginfo) }
+  /DISCARD/ : { *(.reginfo) *(.MIPS.abiflags) }
 }

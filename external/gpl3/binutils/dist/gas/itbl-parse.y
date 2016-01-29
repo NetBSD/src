@@ -1,5 +1,5 @@
 /* itbl-parse.y
-   Copyright 1997, 2002, 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,7 +20,7 @@
 
 %{
 
-/* 
+/*
 
 Yacc grammar for instruction table entries.
 
@@ -43,7 +43,7 @@ The table is an ordinary text file that the GNU assembler reads when
 it starts.  Using the information in the table, the assembler
 generates an internal list of valid coprocessor registers and
 functions.  The assembler uses this internal list in addition to the
-standard MIPS registers and instructions which are built-in to the 
+standard MIPS registers and instructions which are built-in to the
 assembler during code generation.
 
 To specify the coprocessor table when invoking the GNU assembler, use
@@ -125,7 +125,7 @@ Here is the grammar for the coprocessor table:
 	    entrydef -> type name val
 	    entrydef -> 'insn' name val funcdef ; type of entry (instruction)
 
-	    z -> 'p'['0'..'3']	    	     ; processor number 
+	    z -> 'p'['0'..'3']	    	     ; processor number
 	    type -> ['dreg' | 'creg' | 'greg' ]	     ; type of entry (register)
 	; 'dreg', 'creg' or 'greg' specifies a data, control, or general
 	;	    register mnemonic, respectively
@@ -139,10 +139,10 @@ Here is the grammar for the coprocessor table:
 	    field -> [','] ftype frange flags
 	    flags -> ['*' flagexpr]
 	    flagexpr -> '[' flagexpr ']'
-	    flagexpr -> val '|' flagexpr 
+	    flagexpr -> val '|' flagexpr
 	    ftype -> [ type | 'immed' | 'addr' ]
 	; 'immed' specifies an immediate value; see grammar for "val" above
-	    	; 'addr' specifies a C identifier; name of symbol to be resolved at 
+	    	; 'addr' specifies a C identifier; name of symbol to be resolved at
 	;	    link time
 	    frange -> ':' val '-' val	; starting to ending bit positions, where
 	    	    	    	; where 0 is least significant bit
@@ -150,9 +150,9 @@ Here is the grammar for the coprocessor table:
 
 	    comment -> [';'|'#'] [char]*
 	    char -> any printable character
-	    ltr -> ['a'..'z'|'A'..'Z'] 
+	    ltr -> ['a'..'z'|'A'..'Z']
 	    dec -> ['0'..'9']*	    	    	    	    	     ; value in decimal
-	    hex -> '0x'['0'..'9' | 'a'..'f' | 'A'..'F']*	; value in hexadecimal 
+	    hex -> '0x'['0'..'9' | 'a'..'f' | 'A'..'F']*	; value in hexadecimal
 
 
 Examples
@@ -164,7 +164,7 @@ The table:
 
 	    p1 dreg d1 1	     ; data register "d1" for COP1 has value 1
 	    p1 creg c3 3	     ; ctrl register "c3" for COP1 has value 3
-	    p3 func fill 0x1f:24-20	      ; function "fill" for COP3 has value 31 and 
+	    p3 func fill 0x1f:24-20	      ; function "fill" for COP3 has value 31 and
 	    	    	; no fields
 
 will allow the assembler to accept the following coprocessor instructions:
@@ -172,8 +172,8 @@ will allow the assembler to accept the following coprocessor instructions:
 	    LWC1 d1,0x100 ($2)
 	    fill
 
-Here, the general purpose register "$2", and instruction "LWC1", are standard 
-mnemonics built-in to the MIPS assembler.  
+Here, the general purpose register "$2", and instruction "LWC1", are standard
+mnemonics built-in to the MIPS assembler.
 
 
 Example 2:
@@ -182,9 +182,9 @@ The table:
 
 	    p3 dreg d3 3	     ; data register "d3" for COP3 has value 3
 	    p3 creg c2 22	     ; control register "c2" for COP3 has value 22
-	    p3 func fee 0x1f:24-20 dreg:17-13 creg:12-8 immed:7-0 
-	    	; function "fee" for COP3 has value 31, and 3 fields 
-	    	; consisting of a data register, a control register, 
+	    p3 func fee 0x1f:24-20 dreg:17-13 creg:12-8 immed:7-0
+	    	; function "fee" for COP3 has value 31, and 3 fields
+	    	; consisting of a data register, a control register,
 	    	; and an immediate value.
 
 will allow the assembler to accept the following coprocessor instruction:
@@ -195,7 +195,7 @@ and will emit the object code:
 
 	    31-26  25 24-20 19-18  17-13 12-8  7-0
 	    COPz   CO fun	    	      dreg  creg  immed
-	    010011 1  11111 00	     00011 10110 00000001 
+	    010011 1  11111 00	     00011 10110 00000001
 
 	    0x4ff07601
 
@@ -216,8 +216,8 @@ instruction:
 and will emit the object code:
 
 	    31-26  25 24-20 19-18  17-13 12-8  7-0
-	    COPz   CO fun	    	      dreg  creg  
-	    010011 1  11111 00	     00011 10110 00000001 
+	    COPz   CO fun	    	      dreg  creg
+	    010011 1  11111 00	     00011 10110 00000001
 
 	    0x4ff07601
 
@@ -230,7 +230,7 @@ Additional notes:
 Encoding of ranges:
 To handle more than one bit position range within an instruction,
 use 0s to mask out the ranges which don't apply.
-May decide to modify the syntax to allow commas separate multiple 
+May decide to modify the syntax to allow commas separate multiple
 ranges within an instruction (range','range).
 
 Changes in grammar:
@@ -238,7 +238,7 @@ Changes in grammar:
 was deleted from the original format such that we now count the fields.
 
 ----
-FIXME! should really change lexical analyzer 
+FIXME! should really change lexical analyzer
 to recognize 'dreg' etc. in context sensitive way.
 Currently function names or mnemonics may be incorrectly parsed as keywords
 
@@ -263,13 +263,13 @@ FIXME! hex is ambiguous with any digit
 #if DBG_LVL >= 1
 #define DBG(x) printf x
 #else
-#define DBG(x) 
+#define DBG(x)
 #endif
 
 #if DBG_LVL >= 2
 #define DBGL2(x) printf x
 #else
-#define DBGL2(x) 
+#define DBGL2(x)
 #endif
 
 static int sbit, ebit;
@@ -278,7 +278,7 @@ static int yyerror (const char *);
 
 %}
 
-%union 
+%union
   {
     char *str;
     int num;
@@ -307,7 +307,7 @@ entrys:
 entry:
 	pnum regtype name value NL
 	  {
-	    DBG (("line %d: entry pnum=%d type=%d name=%s value=x%x\n", 
+	    DBG (("line %d: entry pnum=%d type=%d name=%s value=x%x\n",
 	    	    insntbl_line, $1, $2, $3, $4));
 	    itbl_add_reg ($1, $2, $3, $4);
 	  }
@@ -331,12 +331,12 @@ fieldspecs:
 	;
 
 ftype:
-	regtype 
+	regtype
 	  {
 	    DBGL2 (("ftype\n"));
 	    $$ = $1;
 	  }
-	| ADDR 
+	| ADDR
 	  {
 	    DBGL2 (("addr\n"));
 	    $$ = ADDR;
@@ -351,7 +351,7 @@ ftype:
 fieldspec:
 	ftype range flags
 	  {
-	    DBG (("line %d: field type=%d sbit=%d ebit=%d, flags=0x%x\n", 
+	    DBG (("line %d: field type=%d sbit=%d ebit=%d, flags=0x%x\n",
 	    	    insntbl_line, $1, sbit, ebit, $3));
 	    itbl_add_operand (insn, $1, sbit, ebit, $3);
 	  }
@@ -378,7 +378,7 @@ flags:
 	    DBGL2 (("flags=%d\n", $2));
 	    $$ = $2;
 	  }
-	| 
+	|
 	  {
 	    $$ = 0;
 	  }
@@ -397,7 +397,7 @@ range:
 	    ebit = 0;
 	  }
 	;
-	    
+
 pnum:
 	PNUM
 	  {
@@ -428,7 +428,7 @@ name:
 	ID
 	  {
 	    DBGL2 (("name=%s\n",$1));
-	    $$ = $1; 
+	    $$ = $1;
 	  }
 	;
 

@@ -13,8 +13,10 @@ f:
 	[a2] abs2 .L1X b23,a5
 	abs2 .L2 b3,b14
 	abs2 .L2X a28,b25
+	.word 0x0c180b20
 	absdp .S1 a7:a6,a25:a24
 	[a0] absdp .S2 b3:b2,b5:b4
+	.word 0x0c1feb20
 	abssp .S1 a9,a8
 	abssp .S1X b18,a16
 	[b0] abssp .S2 b0,b7
@@ -438,12 +440,18 @@ f:
 	dpackx2 .L1X a21,b18,a15:a14
 	dpackx2 .L2 b12,b9,b7:b6
 	dpackx2 .L2X b3,a0,b29:b28
+	.word 0x01900118
 	dpint .L1 a5:a4,a3
 	[!a0] dpint .L2 b5:b4,b3
+	.word 0x0197e118
+	.word 0x01900138
 	dpsp .L1 a5:a4,a3
 	[!b0] dpsp .L2 b5:b4,b3
+	.word 0x0197e138
+	.word 0x0190003a
 	[a1] dptrunc .L1 a5:a4,a3
 	dptrunc .L2 b5:b4,b3
+	.word 0x0197e03a
 	ext .S1 a5,0,31,a10
 	[b1] ext .S2 b10,31,0,b5
 	[!a1] ext .S1 a7,a14,a21
@@ -674,6 +682,7 @@ f:
 	mpy .M2 5,b9,b10
 	[a2] mpy .M2X -4,a11,b12
 	mpydp .M1 a1:a0,a3:a2,a5:a4
+	mpydp .M2X b1:b0,a1:a0,b1:b0
 	[b2] mpydp .M2 b7:b6,b9:b8,b11:b10
 	mpyh .M1 a0,a1,a2
 	[!a2] mpyh .M1X a3,b4,a5
@@ -1029,8 +1038,10 @@ f:
 	packl4 .L1X a5,b8,a13
 	packl4 .L2 b21,b2,b23
 	[b2] packl4 .L2X b25,a16,b9
+	.word 0x03100b60
 	rcpdp .S1 a5:a4,a7:a6
 	[!a2] rcpdp .S2 b9:b8,b11:b10
+	.word 0x0317eb60
 	rcpsp .S1 a0,a1
 	[!b2] rcpsp .S1X b2,a3
 	[a0] rcpsp .S2 b4,b5
@@ -1048,8 +1059,10 @@ f:
 	rpack2 .S1X a4,b5,a6
 	rpack2 .S2 b7,b8,b9
 	rpack2 .S2X b10,a11,b12
+	.word 0x03100ba0
 	rsqrdp .S1 a5:a4,a7:a6
 	[b1] rsqrdp .S2 b9:b8,b11:b10
+	.word 0x0317eba0
 	rsqrsp .S1 a0,a1
 	[!a1] rsqrsp .S1X b2,a3
 	[!b1] rsqrsp .S2 b4,b5

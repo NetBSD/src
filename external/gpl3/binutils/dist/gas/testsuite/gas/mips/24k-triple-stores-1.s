@@ -19,6 +19,7 @@ foo:
 	sw      $5,24($sp)
 	sw      $6,32($sp)
 
+	.ifndef r6
 	swr     $2,0($sp)
 	swr     $3,8($sp)
 	swr     $4,16($sp)
@@ -30,6 +31,7 @@ foo:
 	swl     $4,16($sp)
 	swl     $5,24($sp)
 	swl     $6,32($sp)
+	.endif
 
 	sc      $2,0($sp)
 	sc      $3,8($sp)
@@ -63,6 +65,7 @@ foo:
 	sdc2    $5,24($sp)
 	sdc2    $6,32($sp)
 
+	.ifndef r6
 	swxc1   $f0,$9($8)
 	swxc1   $f1,$10($8)
 	swxc1   $f2,$11($8)
@@ -80,6 +83,7 @@ foo:
 	suxc1   $f4,$11($8)
 	suxc1   $f6,$12($8)
 	suxc1   $f8,$13($8)
+	.endif
 
 # Force at least 8 (non-delay-slot) zero bytes,to make 'objdump' print ...
 	.align	2

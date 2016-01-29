@@ -206,3 +206,45 @@ g11:
 	nop
 	nop
 	nop
+g12:
+	.word 0x3014a120
+	.word 0x2010a120
+	.word 0x00000410
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	.word 0x80801021
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+g13:
+	.word 0x3014a120
+	.word 0x2010a120
+	.word 0x00000410	
+	nop
+	nop
+	nop
+	nop
+	.word 0xe0000000
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	.word 0x80801021
+	.word 0xe0000000

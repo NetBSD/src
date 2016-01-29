@@ -32,7 +32,7 @@ Disassembly of section .text:
     81e4:	000080b4 	.word	0x000080b4
     81e8:	4801      	ldr	r0, \[pc, #4\]	; .*
     81ea:	f7ff efe0 	blx	81ac <.*>
-    81ee:	46c0      	nop			; .*
+    81ee:	bf00      	nop
     81f0:	000080a5 	.word	0x000080a5
 
 Disassembly of section .foo:
@@ -48,7 +48,7 @@ Disassembly of section .foo:
  400101c:	fc00f284 	.word	0xfc00f284
  4001020:	4801      	ldr	r0, \[pc, #4\]	; .*
  4001022:	f000 e806 	blx	4001030 .*
- 4001026:	46c0      	nop			; .*
+ 4001026:	bf00      	nop
  4001028:	fc00f26d 	.word	0xfc00f26d
  400102c:	00000000 	.word	0x00000000
 

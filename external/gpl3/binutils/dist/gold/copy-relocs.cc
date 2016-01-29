@@ -1,6 +1,6 @@
 // copy-relocs.cc -- handle COPY relocations for gold.
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -28,25 +28,6 @@
 namespace gold
 {
 
-// Copy_relocs::Copy_reloc_entry methods.
-
-// Emit the reloc if appropriate.
-
-template<int sh_type, int size, bool big_endian>
-void
-Copy_relocs<sh_type, size, big_endian>::Copy_reloc_entry::emit(
-    Output_data_reloc<sh_type, true, size, big_endian>* reloc_section)
-{
-  // If the symbol is no longer defined in a dynamic object, then we
-  // emitted a COPY relocation, and we do not want to emit this
-  // dynamic relocation.
-  if (this->sym_->is_from_dynobj())
-    reloc_section->add_global_generic(this->sym_, this->reloc_type_,
-				      this->output_section_, this->relobj_,
-				      this->shndx_, this->address_,
-				      this->addend_);
-}
-
 // Copy_relocs methods.
 
 // Handle a relocation against a symbol which may force us to generate
@@ -61,7 +42,9 @@ Copy_relocs<sh_type, size, big_endian>::copy_reloc(
     Sized_relobj_file<size, big_endian>* object,
     unsigned int shndx,
     Output_section* output_section,
-    const Reloc& rel,
+    unsigned int r_type,
+    typename elfcpp::Elf_types<size>::Elf_Addr r_offset,
+    typename elfcpp::Elf_types<size>::Elf_Swxword r_addend,
     Output_data_reloc<sh_type, true, size, big_endian>* reloc_section)
 {
   if (this->need_copy_reloc(sym, object, shndx))
@@ -70,7 +53,8 @@ Copy_relocs<sh_type, size, big_endian>::copy_reloc(
     {
       // We may not need a COPY relocation.  Save this relocation to
       // possibly be emitted later.
-      this->save(sym, object, shndx, output_section, rel);
+      this->save(sym, object, shndx, output_section,
+		 r_type, r_offset, r_addend);
     }
 }
 
@@ -195,14 +179,13 @@ Copy_relocs<sh_type, size, big_endian>::save(
     Sized_relobj_file<size, big_endian>* object,
     unsigned int shndx,
     Output_section* output_section,
-    const Reloc& rel)
+    unsigned int r_type,
+    typename elfcpp::Elf_types<size>::Elf_Addr r_offset,
+    typename elfcpp::Elf_types<size>::Elf_Swxword r_addend)
 {
-  unsigned int reloc_type = elfcpp::elf_r_type<size>(rel.get_r_info());
-  typename elfcpp::Elf_types<size>::Elf_Addr addend =
-    Reloc_types<sh_type, size, big_endian>::get_reloc_addend_noerror(&rel);
-  this->entries_.push_back(Copy_reloc_entry(sym, reloc_type, object, shndx,
-					    output_section, rel.get_r_offset(),
-					    addend));
+  this->entries_.push_back(Copy_reloc_entry(sym, r_type, object, shndx,
+					    output_section, r_offset,
+					    r_addend));
 }
 
 // Emit any saved relocs.
@@ -215,7 +198,18 @@ Copy_relocs<sh_type, size, big_endian>::emit(
   for (typename Copy_reloc_entries::iterator p = this->entries_.begin();
        p != this->entries_.end();
        ++p)
-    p->emit(reloc_section);
+    {
+      Copy_reloc_entry& entry = *p;
+
+      // If the symbol is no longer defined in a dynamic object, then we
+      // emitted a COPY relocation, and we do not want to emit this
+      // dynamic relocation.
+      if (entry.sym_->is_from_dynobj())
+        reloc_section->add_global_generic(entry.sym_, entry.reloc_type_,
+                                          entry.output_section_, entry.relobj_,
+                                          entry.shndx_, entry.address_,
+                                          entry.addend_);
+    }
 
   // We no longer need the saved information.
   this->entries_.clear();

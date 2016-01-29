@@ -1,6 +1,5 @@
 # Expect script for simple PE tests that require the just-built binutils only.
-#   Copyright 2004, 2005, 2006, 2007, 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -34,29 +33,29 @@ if {[istarget i*86-*-cygwin*]
 
     if {[istarget x86_64-*-mingw*] } {
       set pe_tests {
-	{".secrel32" "" "" {secrel1.s secrel2.s}
+	{".secrel32" "" "" "" {secrel1.s secrel2.s}
 	 {{objdump -s secrel_64.d}} "secrel.x"}
-	{"Empty export table" "" "" "exports.s"
+	{"Empty export table" "" "" "" "exports.s"
 	 {{objdump -p exports64.d}} "exports.dll"}
-	{"TLS directory entry" "" "" "tlssec.s"
+	{"TLS directory entry" "" "" "" "tlssec.s"
 	 {{objdump -p tlssec64.d}} "tlssec.dll"}
       }
     } elseif {[istarget i*86-*-cygwin*] } {
       set pe_tests {
-	{".secrel32" "--disable-auto-import" "" {secrel1.s secrel2.s}
+	{".secrel32" "--disable-auto-import" "" "" {secrel1.s secrel2.s}
 	 {{objdump -s secrel.d}} "secrel.x"}
-	{"Empty export table" "" "" "exports.s"
+	{"Empty export table" "" "" "" "exports.s"
 	 {{objdump -p exports.d}} "exports.dll"}
-	{"TLS directory entry" "" "" "tlssec.s"
+	{"TLS directory entry" "" "" "" "tlssec.s"
 	 {{objdump -p tlssec32.d}} "tlssec.dll"}
       }
     } else {
       set pe_tests {
-	{".secrel32" "" "" {secrel1.s secrel2.s}
+	{".secrel32" "" "" "" {secrel1.s secrel2.s}
 	 {{objdump -s secrel.d}} "secrel.x"}
-	{"Empty export table" "" "" "exports.s"
+	{"Empty export table" "" "" "" "exports.s"
 	 {{objdump -p exports.d}} "exports.dll"}
-	{"TLS directory entry" "" "" "tlssec.s"
+	{"TLS directory entry" "" "" "" "tlssec.s"
 	 {{objdump -p tlssec32.d}} "tlssec.dll"}
       }
     }
@@ -84,7 +83,7 @@ if {[istarget x86_64-*-mingw*] } {
 }
 
 set foreign_sym_test {
-  {"non-C aligned common" "" "" {non-c-lang-syms.s}
+  {"non-C aligned common" "" "" "" {non-c-lang-syms.s}
    {{nm -C non-c-lang-syms.d}} "non-c-lang-syms.x"}
 }
 

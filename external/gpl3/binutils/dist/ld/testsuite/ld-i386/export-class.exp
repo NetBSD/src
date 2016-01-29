@@ -1,6 +1,6 @@
 # Expect script for symbol export classes, i386 variation.
 #
-# Copyright 2012 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -29,9 +29,11 @@ if { ![is_elf_format] } {
     return
 }
 
-# Exclude non-Linux targets; feel free to include your favorite one
+# Exclude some more targets; feel free to include your favorite one
 # if you like.
-if { ![istarget i?86-*-linux*] } {
+if { !([istarget i?86-*-linux*]
+       || [istarget i?86-*-nacl*]
+       || [istarget i?86-*-gnu*]) } {
     return
 }
 
@@ -42,7 +44,7 @@ set testname "i386 symbol export class test"
 run_ld_link_tests [list \
     [list \
 	"$testname (auxiliary shared object)" \
-	"-shared -version-script ../ld-elf/export-class-lib.ver" \
+	"-shared -version-script ../ld-elf/export-class-lib.ver" "" \
 	"" \
 	{ ../ld-elf/export-class-lib.s } \
 	{} \
@@ -56,7 +58,7 @@ run_ld_link_tests [list \
 run_ld_link_tests [list \
     [list \
 	"$testname (initial static object)" \
-	"-r" \
+	"-r" "" \
 	"" \
 	{ ../ld-elf/export-class-ref.s } \
 	{} \
@@ -73,7 +75,7 @@ run_ld_link_tests [list \
 run_ld_link_tests [list \
     [list \
 	"$testname (final shared object)" \
-	"-shared -Tdata=0x12340000 tmpdir/i386-export-class-ref-r.o tmpdir/i386-export-class-lib.so" \
+	"-shared -Tdata=0x12340000 tmpdir/i386-export-class-ref-r.o tmpdir/i386-export-class-lib.so" "" \
 	"" \
 	{ ../ld-elf/export-class-dep.s ../ld-elf/export-class-def.s } \
 	{ \

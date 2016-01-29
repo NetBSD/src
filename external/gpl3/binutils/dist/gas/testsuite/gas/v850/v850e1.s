@@ -37,3 +37,4 @@
 	zxb	r3
 	zxh	r4
 	st.w    lp, 156[sp]
+	prepare {r20,r24,r25,r26},0,-10

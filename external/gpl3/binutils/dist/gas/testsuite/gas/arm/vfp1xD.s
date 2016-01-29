@@ -381,13 +381,19 @@ F:
 	vmsr	FPSCR, r12
 	vmsr	FPSCR, r14
 
-	@ Priviledged externsions to VMSR/VMRS instructions
+	@ Priviledged extensions to VMSR/VMRS instructions
 	vmsr	FPSID, r1
 	vmsr	FPEXC, r2
+	vmsr	FPINST, r3
+	vmsr	FPINST2, r4
+	vmsr	C15, r5
 	vmrs	r3, FPSID
 	vmrs	r4, MVFR1
 	vmrs	r5, MVFR0
 	vmrs	r6, FPEXC
+	vmrs	r7, FPINST
+	vmrs	r8, FPINST2
+	vmrs	r9, C15
 	
 	nop
 	nop

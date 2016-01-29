@@ -2,14 +2,14 @@
 The mmo object format is used exclusively together with Professor
 Donald E.@: Knuth's educational 64-bit processor MMIX.  The simulator
 @command{mmix} which is available at
-@url{http://www-cs-faculty.stanford.edu/~knuth/programs/mmix.tar.gz}
+@url{http://mmix.cs.hm.edu/src/index.html}
 understands this format.  That package also includes a combined
 assembler and linker called @command{mmixal}.  The mmo format has
 no advantages feature-wise compared to e.g. ELF.  It is a simple
 non-relocatable object format with no support for archives or
 debugging information, except for symbol value information and
 line numbers (which is not yet implemented in BFD).  See
-@url{http://www-cs-faculty.stanford.edu/~knuth/mmix.html} for more
+@url{http://mmix.cs.hm.edu/} for more
 information about MMIX.  The ELF format is used for intermediate
 object files in the BFD implementation.
 
@@ -45,7 +45,7 @@ the next byte distinguished between the thirteen lopcodes.  The
 two remaining bytes, called the @samp{Y} and @samp{Z} fields, or
 the @samp{YZ} field (a 16-bit big-endian number), are used for
 various purposes different for each lopcode.  As documented in
-@url{http://www-cs-faculty.stanford.edu/~knuth/mmixal-intro.ps.gz},
+@url{http://mmix.cs.hm.edu/doc/mmixal.pdf},
 the lopcodes are:
 
 @table @code
@@ -58,7 +58,11 @@ starts with 0x98 or not.
 directive, setting the location for the next data to the next
 32-bit word (for @math{Z = 1}) or 64-bit word (for @math{Z = 2}),
 plus @math{Y * 2^56}.  Normally @samp{Y} is 0 for the text segment
-and 2 for the data segment.
+and 2 for the data segment.  Beware that the low bits of non-
+tetrabyte-aligned values are silently discarded when being
+automatically incremented and when storing contents (in contrast
+to e.g. its use as current location when followed by lop_fixo
+et al before the next possibly-quoted tetrabyte contents).
 
 @item lop_skip
 0x9802YYZZ.  Increase the current location by @samp{YZ} bytes.
@@ -170,8 +174,8 @@ can be represented this way in mmo:
 @end example
 @node Symbol-table, mmo section mapping, File layout, mmo
 @subsection Symbol table format
-From mmixal.w (or really, the generated mmixal.tex) in
-@url{http://www-cs-faculty.stanford.edu/~knuth/programs/mmix.tar.gz}):
+From mmixal.w (or really, the generated mmixal.tex) in the
+MMIXware package which also contains the @command{mmix} simulator:
 ``Symbols are stored and retrieved by means of a @samp{ternary
 search trie}, following ideas of Bentley and Sedgewick. (See
 ACM--SIAM Symp.@: on Discrete Algorithms @samp{8} (1997), 360--369;

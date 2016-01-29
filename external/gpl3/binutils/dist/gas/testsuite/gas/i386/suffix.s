@@ -10,4 +10,15 @@ foo:
 	vmresume
 	vmxoff
 
-	.p2align	4,0
+	iretw
+	iretl
+	iret
+	sysretl
+	sysret
+
+	.intel_syntax noprefix
+	iretw
+	iretd
+	iret
+	sysretd
+	sysret

@@ -1,7 +1,5 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
-   2000, 2001, 2002, 2003, 2005, 2007, 2008, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -32,7 +30,7 @@
    variants.  The following macros control its behaviour:
 
    TARGET_SYM
-     The C name of the BFD target vector.  The default is m68kcoff_vec.
+     The C name of the BFD target vector.  The default is m68k_coff_vec.
    TARGET_NAME
      The user visible target name.  The default is "coff-m68k".
    NAMES_HAVE_UNDERSCORE
@@ -145,6 +143,7 @@ m68k_rtype2howto (arelent *internal, int relocentry)
     case R_PCRWORD:	internal->howto = m68kcoff_howto_table + 4; break;
     case R_PCRLONG:	internal->howto = m68kcoff_howto_table + 5; break;
     case R_RELLONG_NEG:	internal->howto = m68kcoff_howto_table + 6; break;
+    default:            internal->howto = NULL; break;
     }
 }
 
@@ -361,7 +360,7 @@ m68kcoff_common_addend_special_fn (bfd *abfd,
       coffsym = (obj_symbols (abfd)				\
 	         + (cache_ptr->sym_ptr_ptr - symbols));		\
     else if (ptr)						\
-      coffsym = coff_symbol_from (abfd, ptr);			\
+      coffsym = coff_symbol_from (ptr);				\
     if (coffsym != (coff_symbol_type *) NULL			\
 	&& coffsym->native->u.syment.n_scnum == 0)		\
       cache_ptr->addend = - coffsym->native->u.syment.n_value;	\
@@ -447,7 +446,7 @@ bfd_m68k_coff_create_embedded_relocs (bfd *abfd,
   bfd_byte *p;
   bfd_size_type amt;
 
-  BFD_ASSERT (! info->relocatable);
+  BFD_ASSERT (! bfd_link_relocatable (info));
 
   *errmsg = NULL;
 
@@ -530,7 +529,7 @@ bfd_m68k_coff_create_embedded_relocs (bfd *abfd,
 #include "coffcode.h"
 
 #ifndef TARGET_SYM
-#define TARGET_SYM m68kcoff_vec
+#define TARGET_SYM m68k_coff_vec
 #endif
 
 #ifndef TARGET_NAME

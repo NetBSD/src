@@ -1,7 +1,6 @@
 # Test DEFINED in a linker script.
 # By Ian Lance Taylor, Cygnus Support.
-#   Copyright 2001, 2003, 2005, 2006, 2007, 2010
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -69,5 +68,8 @@ run_dump_test "defined3"
 run_dump_test "defined4"
 if ![is_aout_format] {
     run_dump_test "defined5"
+}
+if [is_elf_format] {
+    run_dump_test "defined6"
 }
 set LDFLAGS "$saved_LDFLAGS"

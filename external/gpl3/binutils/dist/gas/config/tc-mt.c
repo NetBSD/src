@@ -1,5 +1,5 @@
 /* tc-mt.c -- Assembler for the Morpho Technologies mt .
-   Copyright (C) 2005, 2006, 2007, 2010 Free Software Foundation.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,7 +20,7 @@
 
 #include "as.h"
 #include "dwarf2dbg.h"
-#include "subsegs.h"     
+#include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/mt-desc.h"
 #include "opcodes/mt-opc.h"
@@ -54,14 +54,14 @@ mt_insn;
 
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
-const char line_separator_chars[] = ""; 
+const char line_separator_chars[] = "";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
 /* The target specific pseudo-ops which we support.  */
 const pseudo_typeS md_pseudo_table[] =
 {
-    { "word",   cons,                   4 }, 
+    { "word",   cons,                   4 },
     { NULL, 	NULL,			0 }
 };
 
@@ -69,7 +69,7 @@ const pseudo_typeS md_pseudo_table[] =
 
 static int no_scheduling_restrictions = 0;
 
-struct option md_longopts[] = 
+struct option md_longopts[] =
 {
 #define OPTION_NO_SCHED_REST	(OPTION_MD_BASE)
   { "nosched",	   no_argument, NULL, OPTION_NO_SCHED_REST },
@@ -161,7 +161,7 @@ void
 md_begin (void)
 {
   /* Initialize the `cgen' interface.  */
-  
+
   /* Set the machine number and endian.  */
   gas_cgen_cpu_desc = mt_cgen_cpu_open (CGEN_CPU_OPEN_MACHS, mt_mach_bitmask,
 					CGEN_CPU_OPEN_ENDIAN,
@@ -267,7 +267,7 @@ md_assemble (char * str)
 	    as_warn (_("operand references R%ld of instruction before previous."),
 		     prev_delayed_load_register);
 	}
-      
+
       /* Detect data dependency between conditional branch instruction
          and an immediately preceding arithmetic or logical instruction.  */
       if (last_insn_was_arithmetic_or_logic
@@ -310,22 +310,22 @@ md_assemble (char * str)
 
   last_insn_was_branch_insn =
     CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_BR_INSN);
-  
+
   last_insn_was_conditional_branch_insn =
   CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_BR_INSN)
     && CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_USES_FRSR2);
-  
+
   prev_delayed_load_register = delayed_load_register;
-  
+
   if (CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_USES_FRDR))
-     delayed_load_register = insn.fields.f_dr; 
+     delayed_load_register = insn.fields.f_dr;
   else if (CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_USES_FRDRRR))
-     delayed_load_register = insn.fields.f_drrr; 
+     delayed_load_register = insn.fields.f_drrr;
   else  /* Insns has no destination register.  */
-     delayed_load_register = 0; 
+     delayed_load_register = 0;
 
   /* Generate dwarf2 line numbers.  */
-  dwarf2_emit_insn (4); 
+  dwarf2_emit_insn (4);
 }
 
 valueT
@@ -333,7 +333,7 @@ md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
 
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 symbolS *
@@ -348,7 +348,7 @@ md_estimate_size_before_relax (fragS * fragP ATTRIBUTE_UNUSED,
 {
   as_fatal (_("md_estimate_size_before_relax\n"));
   return 1;
-} 
+}
 
 /* *fragP has been relaxed to its final size, and now needs to have
    the bytes inside it modified to conform to the new size.
@@ -471,13 +471,13 @@ mt_fix_adjustable (fixS * fixP)
 
   if (fixP->fx_addsy == NULL)
     return TRUE;
-  
+
   /* Prevent all adjustments to global symbols.  */
   if (S_IS_EXTERNAL (fixP->fx_addsy))
     return FALSE;
-  
+
   if (S_IS_WEAK (fixP->fx_addsy))
     return FALSE;
-  
+
   return 1;
 }

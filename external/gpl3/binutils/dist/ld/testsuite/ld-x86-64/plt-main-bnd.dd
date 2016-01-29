@@ -1,0 +1,7 @@
+#...
+Disassembly of section .plt.got:
+
+[a-f0-9]+ <.plt.got>:
+[ 	]*[a-f0-9]+:	f2 ff 25 .. .. 20 00 	bnd jmpq \*0x20....\(%rip\)        # ...... <_DYNAMIC\+0x...>
+[ 	]*[a-f0-9]+:	90                   	nop
+#pass

@@ -1,5 +1,5 @@
 /* Mach-O object file format for gas, the assembler.
-   Copyright 2009, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -84,7 +84,7 @@ struct obj_mach_o_frag_data
   /* Symbol that corresponds to the subsection.  */
   symbolS *subsection;
 };
-  
+
 #define OBJ_FRAG_TYPE struct obj_mach_o_frag_data
 
 #define md_pre_output_hook obj_mach_o_pre_output_hook()

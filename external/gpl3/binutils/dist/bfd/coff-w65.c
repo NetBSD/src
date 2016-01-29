@@ -1,6 +1,5 @@
 /* BFD back-end for WDC 65816 COFF binaries.
-   Copyright 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -32,16 +31,18 @@
 static reloc_howto_type howto_table[] =
 {
   HOWTO (R_W65_ABS8,    0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
-    HOWTO (R_W65_ABS16,   1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, "abs16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO (R_W65_ABS24,   0,  2, 32, FALSE, 0, complain_overflow_bitfield, 0, "abs24", TRUE, 0x00ffffff, 0x00ffffff, FALSE),
-    HOWTO (R_W65_ABS8S8,  0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, ">abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
-    HOWTO (R_W65_ABS8S16, 0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "^abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
-    HOWTO (R_W65_ABS16S8, 1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, ">abs16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO (R_W65_ABS16S16,1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, "^abs16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO (R_W65_PCR8,    0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "pcrel8", TRUE, 0x000000ff, 0x000000ff, TRUE),
-    HOWTO (R_W65_PCR16,   1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, "pcrel16", TRUE, 0x0000ffff, 0x0000ffff, TRUE),
-    HOWTO (R_W65_DP,      0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "dp", TRUE, 0x000000ff, 0x000000ff, FALSE),
-  };
+  HOWTO (R_W65_ABS16,   1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, "abs16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
+  HOWTO (R_W65_ABS24,   0,  2, 32, FALSE, 0, complain_overflow_bitfield, 0, "abs24", TRUE, 0x00ffffff, 0x00ffffff, FALSE),
+  HOWTO (R_W65_ABS8S8,  0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, ">abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
+  HOWTO (R_W65_ABS8S16, 0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "^abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
+  HOWTO (R_W65_ABS16S8, 1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, ">abs16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
+  HOWTO (R_W65_ABS16S16,1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, "^abs16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
+  HOWTO (R_W65_PCR8,    0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "pcrel8", TRUE, 0x000000ff, 0x000000ff, TRUE),
+  HOWTO (R_W65_PCR16,   1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, "pcrel16", TRUE, 0x0000ffff, 0x0000ffff, TRUE),
+  HOWTO (R_W65_DP,      0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "dp", TRUE, 0x000000ff, 0x000000ff, FALSE),
+};
+
+#define NUM_HOWTOS (sizeof (howto_table) / sizeof (howto_table[0]))
 
 /* Turn a howto into a reloc number.  */
 
@@ -62,7 +63,7 @@ static reloc_howto_type howto_table[] =
 static int
 select_reloc (reloc_howto_type *howto)
 {
-  return howto->type ;
+  return howto->type;
 }
 
 /* Code to turn a r_type into a howto ptr, uses the above howto table.  */
@@ -71,7 +72,10 @@ static void
 rtype2howto (arelent *internal,
 	     struct internal_reloc *dst)
 {
-  internal->howto = howto_table + dst->r_type - 1;
+  if (dst->r_type > 0 && dst->r_type <= NUM_HOWTOS)
+    internal->howto = howto_table + dst->r_type - 1;
+  else
+    internal->howto = NULL;
 }
 
 #define RTYPE2HOWTO(internal, relocentry) rtype2howto(internal,relocentry)
@@ -375,4 +379,4 @@ w65_reloc16_extra_cases (bfd *abfd,
   bfd_coff_reloc16_get_relocated_section_contents
 #define coff_bfd_relax_section bfd_coff_reloc16_relax_section
 
-CREATE_LITTLE_COFF_TARGET_VEC (w65_vec, "coff-w65", BFD_IS_RELAXABLE, 0, '_', NULL, COFF_SWAP_TABLE)
+CREATE_LITTLE_COFF_TARGET_VEC (w65_coff_vec, "coff-w65", BFD_IS_RELAXABLE, 0, '_', NULL, COFF_SWAP_TABLE)

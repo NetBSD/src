@@ -1,5 +1,5 @@
 /* This file is tc-msp430.h
-   Copyright (C) 2002, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -99,8 +99,9 @@ extern long md_pcrel_from_section (struct fix *, segT);
      example, a value of 2 might print `1234 5678' where a value of 1
      would print `12 34 56 78'.  The default value is 4.  */
 
-#define LEX_DOLLAR 0
-/* MSP430 port does not use `$' as a logical line separator */
+/* Support symbols like: C$$IO$$.  */
+#undef  LEX_DOLLAR
+#define LEX_DOLLAR 1
 
 #define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 0
 /*   An `.lcomm' directive with no explicit alignment parameter will
@@ -116,9 +117,57 @@ extern long md_pcrel_from_section (struct fix *, segT);
 extern long msp430_relax_frag (segT, fragS *, long);
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX)	\
-   msp430_force_relocation_local(FIX)
-extern int msp430_force_relocation_local(struct fix *);
+   msp430_force_relocation_local (FIX)
+extern int msp430_force_relocation_local (struct fix *);
 
+/* We need to add reference symbols for .data/.bss.  */
+#define tc_frob_section(sec) msp430_frob_section (sec)
+extern void msp430_frob_section (asection *);
 
 extern int msp430_enable_relax;
 extern int msp430_enable_polys;
+
+#define tc_fix_adjustable(FIX) msp430_fix_adjustable (FIX)
+extern bfd_boolean             msp430_fix_adjustable (struct fix *);
+
+/* Allow hexadeciaml numbers with 'h' suffix.  Note that if the number
+   starts with a letter it will be interpreted as a symbol name not a
+   constant.  Thus "beach" is a symbol not the hex value 0xbeac.  So
+   is A5A5h...  */
+#define NUMBERS_WITH_SUFFIX 1
+
+#define md_end msp430_md_end
+extern void    msp430_md_end (void);
+
+/* Do not allow call frame debug info optimization as otherwise we could
+   generate the DWARF directives without the relocs necessary to patch
+   them up.  */
+#define md_allow_eh_opt 0
+
+/* The difference between same-section symbols may be affected by linker
+   relaxation, so do not resolve such expressions in the assembler.  */
+#define md_allow_local_subtract(l,r,s) msp430_allow_local_subtract (l, r, s)
+extern bfd_boolean msp430_allow_local_subtract (expressionS *, expressionS *, segT);
+
+#define RELOC_EXPANSION_POSSIBLE
+#define MAX_RELOC_EXPANSION 2
+
+#define DIFF_EXPR_OK
+
+/* Do not adjust relocations involving symbols in code sections,
+   because it breaks linker relaxations.  This could be fixed in the
+   linker, but this fix is simpler, and it pretty much only affects
+   object size a little bit.  */
+#define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEC)	\
+  (   ((SEC)->flags & SEC_CODE) != 0		\
+   || ((SEC)->flags & SEC_DEBUGGING) != 0	\
+   || ! SEG_NORMAL (SEC)			\
+   || TC_FORCE_RELOCATION (FIX))
+
+/* We validate subtract arguments within tc_gen_reloc(),
+   so don't report errors at this point.  */
+#define TC_VALIDATE_FIX_SUB(FIX, SEG) 1
+
+#define DWARF2_USE_FIXED_ADVANCE_PC 1
+
+#define TC_LINKRELAX_FIXUP(seg) ((seg->flags & SEC_CODE) || (seg->flags & SEC_DEBUGGING))
