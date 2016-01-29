@@ -1488,6 +1488,8 @@ enum options
     OPTION_NAN,
     OPTION_ODD_SPREG,
     OPTION_NO_ODD_SPREG,
+    OPTION_FIX_LOONGSON2F_BTB,
+    OPTION_NO_FIX_LOONGSON2F_BTB,
     OPTION_END_OF_ENUM
   };
 
@@ -1559,6 +1561,8 @@ struct option md_longopts[] =
   {"mno-fix-loongson2f-jump", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_JUMP},
   {"mfix-loongson2f-nop", no_argument, NULL, OPTION_FIX_LOONGSON2F_NOP},
   {"mno-fix-loongson2f-nop", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_NOP},
+  {"mfix-loongson2f-btb", no_argument, NULL, OPTION_FIX_LOONGSON2F_BTB},
+  {"mno-fix-loongson2f-btb", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_BTB},
   {"mfix-vr4120",    no_argument, NULL, OPTION_FIX_VR4120},
   {"mno-fix-vr4120", no_argument, NULL, OPTION_NO_FIX_VR4120},
   {"mfix-vr4130",    no_argument, NULL, OPTION_FIX_VR4130},
@@ -5596,11 +5600,6 @@ match_save_restore_list_operand (struct mips_arg_info *arg)
 		 | (frame_size & 0x0f));
     }
 
-  if (mips_fix_loongson2f)
-    fix_loongson2f (ip);
-  if (mips_trap_zero_jump)
-    trap_zero_jump (ip);
-
   /* If the branch is itself the target of a branch, we can not swap.
      We cheat on this; all we check for is whether there is a label on
      this instruction.  If there are any branches to anything other than
@@ -6681,6 +6680,11 @@ can_swap_branch_p (struct mips_cl_insn *ip, expressionS *address_expr,
      This means that the previous instruction was a 4-byte one anyhow.  */
   if (mips_opts.mips16 && history[0].fixp[0])
     return FALSE;
+
+  if (mips_fix_loongson2f)
+    fix_loongson2f (ip);
+  if (mips_trap_zero_jump)
+    trap_zero_jump (ip);
 
   /* If the branch is itself the target of a branch, we can not swap.
      We cheat on this; all we check for is whether there is a label on
@@ -11010,6 +11014,26 @@ macro (struct mips_cl_insn *ip, char *str)
       if (breg != 0)
 	macro_build (NULL, ADDRESS_ADD_INSN, "d,v,t", op[0], tempreg, breg);
       break;
+
+    case M_JR_S:
+      macro_build_jrpatch (&expr1, op[2]);
+      macro_build (NULL, "jr", "s", op[2]);
+      return;	/* didn't modify $at */
+
+    case M_J_S:
+      macro_build_jrpatch (&expr1, op[2]);
+      macro_build (NULL, "j", "s", op[2]);
+      return;	/* didn't modify $at */
+
+    case M_JALR_S:
+      macro_build_jrpatch (&expr1, op[2]);
+      macro_build (NULL, "jalr", "s", op[2]);
+      return;	/* didn't modify $at */
+
+    case M_JALR_DS:
+      macro_build_jrpatch (&expr1, op[2]);
+      macro_build (NULL, "jalr", "d,s", op[0], op[2]);
+      return;	/* didn't modify $at */
 
     case M_MSGSND:
       gas_assert (!mips_opts.micromips);
