@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.388 2016/01/07 10:08:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.389 2016/01/29 11:30:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.388 2016/01/07 10:08:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.389 2016/01/29 11:30:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2188,11 +2188,8 @@ alloc_retry:
 	/* XXX For other than 82580? */
 	if (sc->sc_type == WM_T_82580) {
 		wm_nvm_read(sc, NVM_OFF_CFG3_PORTA, 1, &nvmword);
-		printf("CFG3 = %08x\n", (uint32_t)nvmword);
-		if (nvmword & __BIT(13)) {
-			printf("SET ILOS\n");
+		if (nvmword & __BIT(13))
 			sc->sc_ctrl |= CTRL_ILOS;
-		}
 	}
 
 #if 0
