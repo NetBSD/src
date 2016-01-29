@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.12 2015/10/22 23:16:23 jmcneill Exp $
+#	$NetBSD: files.nouveau,v 1.13 2016/01/29 22:49:06 joerg Exp $
 
 define	nouveaufbbus	{ }
 device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
@@ -129,7 +129,7 @@ makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nv98.c"+="-Wno-missing-field-i
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nvc0.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nve0.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nv50_fence.c"+="-Wno-shadow"
-makeoptions	nouveau	"CWARNFLAGS.nouveau_nv50_display.c"+="-Wno-unused-but-set-variable"
+makeoptions 	nouveau	"CWARNFLAGS.nouveau_nv50_display.c"+="${${ACTIVE_CC} == gcc:? -Wno-unused-but-set-variable :}"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_base.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_nv50.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_nvc0.c"+="-Wno-missing-field-initializers"
