@@ -19,7 +19,7 @@ SECTIONS
   . = ALIGN (0x400);
   .tdata : { *(.tdata) }
 
-  /DISCARD/ : { *(.reginfo) }
+  /DISCARD/ : { *(.reginfo) *(.MIPS.abiflags) }
 }
 
 VERSION

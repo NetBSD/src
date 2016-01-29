@@ -1,7 +1,6 @@
 # Expect script for complex PE tests that require a C compiler
 # in addition to the just-built binutils.
-#   Copyright 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -130,13 +129,13 @@ if {[istarget i*86-*-cygwin*]
  }
 
 set align_tests {
-  {"aligned common 1" "" "" {aligncomm-1.c}
+  {"aligned common 1" "" "" "" {aligncomm-1.c}
    {{nm -C aligncomm.d}} "aligncomm-1.x"}
-  {"aligned common 2" "" "" {aligncomm-2.c}
+  {"aligned common 2" "" "" "" {aligncomm-2.c}
    {{nm -C aligncomm.d}} "aligncomm-2.x"}
-  {"aligned common 3" "" "" {aligncomm-3.c}
+  {"aligned common 3" "" "" "" {aligncomm-3.c}
    {{nm -C aligncomm.d}} "aligncomm-3.x"}
-  {"aligned common 4" "" "" {aligncomm-4.c}
+  {"aligned common 4" "" "" "" {aligncomm-4.c}
    {{nm -C aligncomm.d}} "aligncomm-4.x"}
 }
 

@@ -1,8 +1,7 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 fragment <<EOF
-/* Copyright 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -87,7 +86,7 @@ static char *
 gld960_get_script (int *isfile)
 EOF
 
-if test -n "$COMPILE_IN"
+if test x"$COMPILE_IN" = xyes
 then
 # Scripts compiled in.
 
@@ -98,11 +97,11 @@ fragment <<EOF
 {
   *isfile = 0;
 
-  if (link_info.relocatable && config.build_constructors)
+  if (bfd_link_relocatable (&link_info) && config.build_constructors)
     return
 EOF
 sed $sc ldscripts/${EMULATION_NAME}.xu                 >> e${EMULATION_NAME}.c
-echo '  ; else if (link_info.relocatable) return'     >> e${EMULATION_NAME}.c
+echo '  ; else if (bfd_link_relocatable (&link_info)) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xr                 >> e${EMULATION_NAME}.c
 echo '  ; else if (!config.text_read_only) return'     >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xbn                >> e${EMULATION_NAME}.c
@@ -119,9 +118,9 @@ fragment <<EOF
 {
   *isfile = 1;
 
-  if (link_info.relocatable && config.build_constructors)
+  if (bfd_link_relocatable (&link_info) && config.build_constructors)
     return "ldscripts/${EMULATION_NAME}.xu";
-  else if (link_info.relocatable)
+  else if (bfd_link_relocatable (&link_info))
     return "ldscripts/${EMULATION_NAME}.xr";
   else if (!config.text_read_only)
     return "ldscripts/${EMULATION_NAME}.xbn";
@@ -162,6 +161,7 @@ struct ld_emulation_xfer_struct ld_gld960coff_emulation =
   NULL,	/* list options */
   NULL,	/* recognized file */
   NULL,	/* find_potential_libraries */
-  NULL	/* new_vers_pattern */
+  NULL,	/* new_vers_pattern */
+  NULL	/* extra_map_file_text */
 };
 EOF

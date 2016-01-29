@@ -19,7 +19,7 @@ PLT=".plt          ${RELOCATING-0} : SPECIAL { *(.plt) }"
 DATA_PLT=yes
 TEXT_PLT=yes
 
-# Note that the number is always big-endian, thus we have to 
+# Note that the number is always big-endian, thus we have to
 # reverse the digit string.
 NOP=0x0000fe2f1f04ff47		# unop; nop
 

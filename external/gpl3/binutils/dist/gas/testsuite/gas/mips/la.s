@@ -106,6 +106,11 @@ data_label:
 	la	$4,small_external_common+0x1a5a5($5)
 	la	$4,big_local_common+0x1a5a5($5)
 	la	$4,small_local_common+0x1a5a5($5)
+	la	$4,($5)
+	la	$4,(0x123456)
+	la	$4,(0x123456)($5)
+	la	$4,(big_external_data_label)
+	la	$4,(big_external_data_label)($5)
 
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
 	.space  8

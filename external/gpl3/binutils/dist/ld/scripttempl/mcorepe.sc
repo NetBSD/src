@@ -1,4 +1,10 @@
 # Linker script for MCore PE.
+#
+# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
 
 if test -z "${RELOCATEABLE_OUTPUT_FORMAT}"; then
   RELOCATEABLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
@@ -45,6 +51,12 @@ EOF
 fi
 
 cat <<EOF
+/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
+
 ${LIB_SEARCH_DIRS}
 
 ${RELOCATING+ENTRY (_mainCRTStartup)}

@@ -1,5 +1,5 @@
 /* Assembler instructions for Motorola's Mcore processor
-   Copyright 1999, 2000, 2002, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -128,14 +128,14 @@ const mcore_opcode_info mcore_table[] =
   { "cmpnei",	OB,	0,	0x2A00 },
   { "bmaski",	OMa,	0,	0x2C00 },
   { "divu",	O1R1,	0,	0x2C10 },
-/* SPACE:                       0x2c20 - 0x2c7f */  
+/* SPACE:                       0x2c20 - 0x2c7f */
   { "bmaski",	OMb,	0,	0x2C80 },
   { "bmaski",	OMc,	0,	0x2D00 },
   { "andi",	OB,	0,	0x2E00 },
   { "bclri",	OB,	0,	0x3000 },
 /* SPACE:                       0x3200 - 0x320f */
   { "divs",	O1R1,	0,	0x3210 },
-/* SPACE:                       0x3220 - 0x326f */  
+/* SPACE:                       0x3220 - 0x326f */
   { "bgeni",	OBRa,	0,	0x3270 },
   { "bgeni",	OBRb,	0,	0x3280 },
   { "bgeni",	OBRc,	0,	0x3300 },

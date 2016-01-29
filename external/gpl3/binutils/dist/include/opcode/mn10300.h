@@ -1,5 +1,5 @@
 /* mn10300.h -- Header file for Matsushita 10300 opcode table
-   Copyright 1996, 1997, 1998, 1999, 2003, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Written by Jeff Law, Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.

@@ -18,6 +18,8 @@
 	mov	ax, mm0			; add	[bx+si], al
 	mov	ax, xmm0		; add	[bx+si], al
 	mov	ax, ymm0		; add	[bx+si], al
+	mov	ax, xmm16		; add	[bx+si], al
+	mov	ax, zmm0		; add	[bx+si], al
 
 	.arch generic32
 	.code32
@@ -34,6 +36,8 @@
 	mov	eax, mm0
 	mov	eax, xmm0
 	mov	eax, ymm0
+	mov	eax, xmm16
+	mov	eax, zmm0
 
 	.arch .387
 	ffree	st

@@ -10,7 +10,7 @@ ELF Header:
  +Version: +0x1
  +Entry point address: +0x10a5
  +Start of program headers: +52 \(bytes into file\)
- +Start of section headers: +504 \(bytes into file\)
+ +Start of section headers: .*
  +Flags: +0xa, sh5
  +Size of this header: +52 \(bytes\)
  +Size of program headers: +32 \(bytes\)
@@ -45,7 +45,6 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .*: 000010a4 +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 start2
 .*: 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
 .*: 000010bc +0 +NOTYPE +LOCAL +DEFAULT +2 sec3
-.*: 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
 .*: 000010c4 +0 +NOTYPE +GLOBAL +DEFAULT +\[<other>: 4\] +2 diversion
 .*: 00001160 +0 +NOTYPE +GLOBAL +DEFAULT +.* ___dtors
 .*: 00001160 +0 +NOTYPE +GLOBAL +DEFAULT +2 __bss_start

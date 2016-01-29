@@ -1,6 +1,5 @@
 /* macro.c - macro support for gas
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2011, 2012, 2013 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -211,6 +210,28 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
 		  ptr->len = line_start;
 		  break;
 		}
+	    }
+
+	  /* PR gas/16908
+	     Apply and discard .linefile directives that appear within
+	     the macro.  For long macros, one might want to report the
+	     line number information associated with the lines within
+	     the macro definition, but we would need more infrastructure
+	     to make that happen correctly (e.g. resetting the line
+	     number when expanding the macro), and since for short
+	     macros we clearly prefer reporting the point of expansion
+	     anyway, there's not an obviously better fix here.  */
+	  if (strncasecmp (ptr->ptr + i, "linefile", 8) == 0)
+	    {
+	      char *saved_input_line_pointer = input_line_pointer;
+	      char saved_eol_char = ptr->ptr[ptr->len];
+
+	      ptr->ptr[ptr->len] = '\0';
+	      input_line_pointer = ptr->ptr + i + 8;
+	      s_app_line (0);
+	      ptr->ptr[ptr->len] = saved_eol_char;
+	      input_line_pointer = saved_input_line_pointer;
+	      ptr->len = line_start;
 	    }
 	}
 

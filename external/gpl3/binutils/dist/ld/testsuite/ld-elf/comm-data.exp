@@ -1,6 +1,6 @@
 # Expect script for common symbol override.
 #
-# Copyright 2011, 2012 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,17 +24,22 @@
 # Written by Maciej W. Rozycki <macro@codesourcery.com>
 #
 
-# Exclude non-ELF targets.
-if ![is_elf_format] {
+# This test is for ELF shared-library targets.
+if { ![is_elf_format] || ![check_shared_lib_support] } {
     return
 }
 
-# Exclude some more targets; feel free to include your favorite one
-# if you like.
-if { ![istarget *-*-linux*]
-     && ![istarget *-*-nacl*]
-     && ![istarget *-*-gnu*] } {
-    return
+# This target requires extra GAS options when building code for shared
+# libraries.
+set AFLAGS_PIC ""
+if [istarget "tic6x-*-*"] {
+    append AFLAGS_PIC " -mpic -mpid=near"
+}
+# This target requires a non-default emulation for successful shared
+# library/executable builds.
+set LFLAGS ""
+if [istarget "tic6x-*-*"] {
+    append LFLAGS " -melf32_tic6x_le"
 }
 
 set testname "Common symbol override test"
@@ -43,8 +48,8 @@ set testname "Common symbol override test"
 run_ld_link_tests [list \
     [list \
 	"$testname (auxiliary shared object build)" \
-	"-shared" \
-	"" \
+	"$LFLAGS -shared" "" \
+	"$AFLAGS_PIC" \
 	{ comm-data1.s } \
 	{ \
 	    { readelf -s comm-data1.sd } \
@@ -58,8 +63,18 @@ set AFLAGS ""
 if [is_elf64 "tmpdir/libcomm-data.so"] {
     append AFLAGS " --defsym ELF64=1"
 }
+# HPUX targets use a different .comm syntax.
+if [istarget "*-*-hpux*"] {
+    append AFLAGS " --defsym HPUX=1"
+}
 
 setup_xfail "arm*-*-*" "ld/13802"
+
+# List targets here that keep copy relocs rather than eliminating
+# them where possible in favour to dynamic relocs in the relevant
+# loadable sections; see also the "-z nocopyreloc" command-line
+# option and the ELIMINATE_COPY_RELOCS macro some backends use.
+set copy_reloc [expr [istarget mn10300-*-*] || [istarget vax-*-*]]
 
 # Verify that a common symbol has been converted to an undefined
 # reference to the global symbol of the same name defined above
@@ -67,19 +82,21 @@ setup_xfail "arm*-*-*" "ld/13802"
 run_ld_link_tests [list \
     [list \
 	"$testname" \
-	"-Ltmpdir -lcomm-data" \
+	"$LFLAGS -T comm-data2.ld -Ltmpdir -lcomm-data" "" \
 	"$AFLAGS" \
 	{ comm-data2.s } \
-	{ \
-	    { readelf -s comm-data2.sd } \
-	    { readelf -r comm-data2.rd } \
-	    { readelf "-x .debug_foo" comm-data2.xd } \
-	} \
+	[list \
+	    [list readelf -s \
+		[expr { $copy_reloc ? "comm-data2r.sd" : "comm-data2.sd"}]] \
+	    [list readelf -r \
+		[expr { $copy_reloc ? "comm-data2r.rd" : "comm-data2.rd"}]] \
+	    [list readelf "-x .debug_foo" \
+		[expr { $copy_reloc ? "comm-data2r.xd" : "comm-data2.xd"}]]] \
 	"comm-data" \
     ] \
     [list \
 	"$testname 3a" \
-	"-static" \
+	"-static" "" \
 	"" \
 	{ comm-data3a.s comm-data3b.s } \
 	{ \
@@ -89,7 +106,7 @@ run_ld_link_tests [list \
     ] \
     [list \
 	"$testname 3b" \
-	"-static" \
+	"-static" "" \
 	"" \
 	{ comm-data3b.s comm-data3a.s } \
 	{ \

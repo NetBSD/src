@@ -1,5 +1,4 @@
-@c Copyright 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2011-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -25,8 +24,32 @@
 @cindex options, RL78
 @cindex RL78 options
 
-The Renesas RL78 port of @code{@value{AS}} has no target-specific
-options.
+@table @code
+@item relax
+Enable support for link-time relaxation.
+
+@item mg10
+Mark the generated binary as targeting the G10 variant of the RL78
+architecture.
+
+@item mg13
+Mark the generated binary as targeting the G13 variant of the RL78
+architecture.
+
+@item mg14
+@itemx mrl78
+Mark the generated binary as targeting the G14 variant of the RL78
+architecture.  This is the default.
+
+@item m32bit-doubles
+Mark the generated binary as one that uses 32-bits to hold the
+@code{double} floating point type.  This is the default.
+
+@item m64bit-doubles
+Mark the generated binary as one that uses 64-bits to hold the
+@code{double} floating point type.
+
+@end table
 
 @node RL78-Modifiers
 @section Symbolic Operand Modifiers
@@ -79,8 +102,10 @@ In addition to the common directives, the RL78 adds these:
 @table @code
 
 @item .double
-Output a constant in ``double'' format, which is a 32-bit floating
-point value on RL78.
+Output a constant in ``double'' format, which is either a 32-bit
+or a 64-bit floating point value, depending upon the setting of the
+@option{-m32bit-doubles}|@option{-m64bit-doubles} command line
+option.
 
 @item .bss
 Select the BSS section.

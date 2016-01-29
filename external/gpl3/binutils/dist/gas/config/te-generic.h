@@ -1,4 +1,4 @@
-/* Copyright 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,7 +19,7 @@
 
 /* This file is te-generic.h and is intended to be a template for
    target environment specific header files.
-  
+
    It is my intent that this file will evolve into a file suitable for config,
    compile, and copying as an aid for testing and porting.  xoxorich.  */
 

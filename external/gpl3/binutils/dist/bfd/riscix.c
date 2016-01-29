@@ -1,6 +1,5 @@
 /* BFD back-end for RISC iX (Acorn, arm) binaries.
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2004,
-   2005, 2007, 2010, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -45,7 +44,7 @@
 /* A reference to a shared library.
    The text portion of the object contains "overflow text" from
    the shared library to be linked in with an object.  */
-#define SLOMAGIC        (MF_IS_SL | OMAGIC) 
+#define SLOMAGIC        (MF_IS_SL | OMAGIC)
 
 /* Sqeezed demand paged.
    NOTE: This interpretation of QMAGIC seems to be at variance
@@ -98,7 +97,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (riscix_,OP)
+#define MY(OP) CONCAT2 (arm_aout_riscix_,OP)
 #define TARGETNAME "a.out-riscix"
 #define N_BADMAG(x) ((((x).a_info & ~007200) != ZMAGIC) \
                   && (((x).a_info & ~006000) != OMAGIC) \
@@ -171,7 +170,7 @@ riscix_fix_pcrel_26_done (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static bfd_reloc_status_type riscix_fix_pcrel_26 (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
-static const bfd_target *riscix_callback (bfd *);
+static const bfd_target *arm_aout_riscix_callback (bfd *);
 
 static reloc_howto_type riscix_std_reloc_howto[] =
 {
@@ -298,9 +297,9 @@ riscix_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 #define MY_bfd_final_link              _bfd_generic_final_link
 
 #define MY_bfd_reloc_type_lookup       riscix_reloc_type_lookup
-#define MY_bfd_reloc_name_lookup riscix_reloc_name_lookup
-#define MY_canonicalize_reloc          riscix_canonicalize_reloc
-#define MY_object_p                    riscix_object_p
+#define MY_bfd_reloc_name_lookup       riscix_reloc_name_lookup
+#define MY_canonicalize_reloc          arm_aout_riscix_canonicalize_reloc
+#define MY_object_p                    arm_aout_riscix_object_p
 
 static void
 riscix_swap_std_reloc_out (bfd *abfd,

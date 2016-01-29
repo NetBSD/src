@@ -1,6 +1,5 @@
 /* BFD back-end for Motorola m88k a.out (Mach 3) binaries.
-   Copyright 1990, 1991, 1993, 1994, 1995, 2001, 2003, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -36,7 +35,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (m88kmach3_,OP)
+#define MY(OP) CONCAT2 (m88k_aout_mach3_,OP)
 #define TARGETNAME "a.out-m88k-mach3"
 
 #include "aout-target.h"

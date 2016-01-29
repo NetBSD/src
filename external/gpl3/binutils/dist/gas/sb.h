@@ -1,6 +1,5 @@
 /* sb.h - header file for string buffer manipulation routines
-   Copyright 1994, 1995, 2000, 2003, 2005, 2006, 2007, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com

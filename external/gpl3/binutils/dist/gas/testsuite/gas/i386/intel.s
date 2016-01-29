@@ -698,3 +698,14 @@ fidivr  dword ptr [ebx]
  cmovpo edx, 0x90909090[eax]
  cmovpe  dx, 0x90909090[eax]
  cmovpo dx, 0x90909090[eax]
+
+	# Test that disassembly of a partial instruction shows the partial byte:
+	# https://www.sourceware.org/ml/binutils/2015-08/msg00226.html
+	.byte 0x24
+	.byte 0x2f
+	.byte 0x0f
+barn:
+        .byte 0x0f
+        .byte 0xba
+        .byte 0xe2
+        .byte 0x03

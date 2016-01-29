@@ -1,6 +1,5 @@
 # Expect script for common symbol tests
-#   Copyright 2003, 2005, 2006, 2007, 2008, 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -179,6 +178,10 @@ proc assembler_generates_commons {} {
 
     verbose "STT_COMMON's are generated"
     return 1
+}
+
+if [istarget nios2*-*-*] {
+    set CFLAGS "$CFLAGS -G0"
 }
 
 # Explicitly use "-fcommon" so that even if $CFLAGS includes

@@ -95,7 +95,7 @@ Contents of the .eh_frame section:
   DW_CFA_undefined: r16 \(rip\)
   DW_CFA_nop
 
-000000e8 000000c8 00000018 FDE cie=000000d4 pc=00000058..00000097
+000000e8 0000011[04] 00000018 FDE cie=000000d4 pc=00000058..000000af
   DW_CFA_advance_loc: 1 to 00000059
   DW_CFA_undefined: r0 \(rax\)
   DW_CFA_advance_loc: 1 to 0000005a
@@ -220,5 +220,53 @@ Contents of the .eh_frame section:
   DW_CFA_undefined: r47 \(mm6\)
   DW_CFA_advance_loc: 1 to 00000096
   DW_CFA_undefined: r48 \(mm7\)
+  DW_CFA_advance_loc: 1 to 00000097
+  DW_CFA_undefined: r67 \(xmm16\)
+  DW_CFA_advance_loc: 1 to 00000098
+  DW_CFA_undefined: r68 \(xmm17\)
+  DW_CFA_advance_loc: 1 to 00000099
+  DW_CFA_undefined: r69 \(xmm18\)
+  DW_CFA_advance_loc: 1 to 0000009a
+  DW_CFA_undefined: r70 \(xmm19\)
+  DW_CFA_advance_loc: 1 to 0000009b
+  DW_CFA_undefined: r71 \(xmm20\)
+  DW_CFA_advance_loc: 1 to 0000009c
+  DW_CFA_undefined: r72 \(xmm21\)
+  DW_CFA_advance_loc: 1 to 0000009d
+  DW_CFA_undefined: r73 \(xmm22\)
+  DW_CFA_advance_loc: 1 to 0000009e
+  DW_CFA_undefined: r74 \(xmm23\)
+  DW_CFA_advance_loc: 1 to 0000009f
+  DW_CFA_undefined: r75 \(xmm24\)
+  DW_CFA_advance_loc: 1 to 000000a0
+  DW_CFA_undefined: r76 \(xmm25\)
+  DW_CFA_advance_loc: 1 to 000000a1
+  DW_CFA_undefined: r77 \(xmm26\)
+  DW_CFA_advance_loc: 1 to 000000a2
+  DW_CFA_undefined: r78 \(xmm27\)
+  DW_CFA_advance_loc: 1 to 000000a3
+  DW_CFA_undefined: r79 \(xmm28\)
+  DW_CFA_advance_loc: 1 to 000000a4
+  DW_CFA_undefined: r80 \(xmm29\)
+  DW_CFA_advance_loc: 1 to 000000a5
+  DW_CFA_undefined: r81 \(xmm30\)
+  DW_CFA_advance_loc: 1 to 000000a6
+  DW_CFA_undefined: r82 \(xmm31\)
+  DW_CFA_advance_loc: 1 to 000000a7
+  DW_CFA_undefined: r118 \(k0\)
+  DW_CFA_advance_loc: 1 to 000000a8
+  DW_CFA_undefined: r119 \(k1\)
+  DW_CFA_advance_loc: 1 to 000000a9
+  DW_CFA_undefined: r120 \(k2\)
+  DW_CFA_advance_loc: 1 to 000000aa
+  DW_CFA_undefined: r121 \(k3\)
+  DW_CFA_advance_loc: 1 to 000000ab
+  DW_CFA_undefined: r122 \(k4\)
+  DW_CFA_advance_loc: 1 to 000000ac
+  DW_CFA_undefined: r123 \(k5\)
+  DW_CFA_advance_loc: 1 to 000000ad
+  DW_CFA_undefined: r124 \(k6\)
+  DW_CFA_advance_loc: 1 to 000000ae
+  DW_CFA_undefined: r125 \(k7\)
   DW_CFA_nop
 

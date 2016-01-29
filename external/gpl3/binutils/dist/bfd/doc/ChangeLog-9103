@@ -589,6 +589,12 @@ Wed May 24 12:03:25 2000  Hans-Peter Nilsson  <hp@axis.com>
 	  and mandir now keyed off datadir by default.
 
 
+Copyright (C) 1991-2003 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 version-control: never
 End:

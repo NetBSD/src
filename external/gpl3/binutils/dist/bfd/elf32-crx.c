@@ -1,6 +1,5 @@
 /* BFD back-end for National Semiconductor's CRX ELF
-   Copyright 2004, 2005, 2006, 2007, 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Written by Tomer Levi, NSC, Israel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -83,8 +82,8 @@ static reloc_howto_type crx_elf_howto_table[] =
 {
   HOWTO (R_CRX_NONE,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size */
-	 32,			/* bitsize */
+	 3,			/* size */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
@@ -332,7 +331,7 @@ static reloc_howto_type crx_elf_howto_table[] =
 	 0x0,  			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
- 
+
   /* An 8 bit switch table entry.  This is generated for an expression
      such as ``.byte L1 - L2''.  The offset holds the difference
      between the reloc address and L2.  */
@@ -424,7 +423,13 @@ elf_crx_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
 		       Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_CRX_MAX);
+  if (r_type >= R_CRX_MAX)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised CRX reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_CRX_NONE;
+    }
   cache_ptr->howto = &crx_elf_howto_table[r_type];
 }
 
@@ -475,10 +480,10 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
      case R_CRX_SWITCH8:
      case R_CRX_SWITCH16:
      case R_CRX_SWITCH32:
-       /* We only care about the addend, where the difference between 
+       /* We only care about the addend, where the difference between
 	  expressions is kept.  */
        Rvalue = 0;
-       
+
      default:
        break;
     }
@@ -585,7 +590,7 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
 /* Delete some bytes from a section while relaxing.  */
 
 static bfd_boolean
-elf32_crx_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd, 
+elf32_crx_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 			      asection *sec, bfd_vma addr, int count)
 {
   Elf_Internal_Shdr *symtab_hdr;
@@ -632,7 +637,7 @@ elf32_crx_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 	  && isym->st_value > addr
 	  && isym->st_value < toaddr)
 	{
-	  /* Adjust the addend of SWITCH relocations in this section, 
+	  /* Adjust the addend of SWITCH relocations in this section,
 	     which reference this local symbol.  */
 	  for (irel = elf_section_data (sec)->relocs; irel < irelend; irel++)
 	    {
@@ -677,22 +682,22 @@ elf32_crx_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
     {
       struct elf_link_hash_entry *sym_hash = *sym_hashes;
 
-      /* The '--wrap SYMBOL' option is causing a pain when the object file, 
-	 containing the definition of __wrap_SYMBOL, includes a direct 
-	 call to SYMBOL as well. Since both __wrap_SYMBOL and SYMBOL reference 
-	 the same symbol (which is __wrap_SYMBOL), but still exist as two 
-	 different symbols in 'sym_hashes', we don't want to adjust 
-	 the global symbol __wrap_SYMBOL twice.  
+      /* The '--wrap SYMBOL' option is causing a pain when the object file,
+	 containing the definition of __wrap_SYMBOL, includes a direct
+	 call to SYMBOL as well. Since both __wrap_SYMBOL and SYMBOL reference
+	 the same symbol (which is __wrap_SYMBOL), but still exist as two
+	 different symbols in 'sym_hashes', we don't want to adjust
+	 the global symbol __wrap_SYMBOL twice.
 	 This check is only relevant when symbols are being wrapped.  */
       if (link_info->wrap_hash != NULL)
 	{
 	  struct elf_link_hash_entry **cur_sym_hashes;
-	  
+
 	  /* Loop only over the symbols whom been already checked.  */
-	  for (cur_sym_hashes = start_hashes; cur_sym_hashes < sym_hashes; 
+	  for (cur_sym_hashes = start_hashes; cur_sym_hashes < sym_hashes;
 	       cur_sym_hashes++)
 	    {
-	      /* If the current symbol is identical to 'sym_hash', that means 
+	      /* If the current symbol is identical to 'sym_hash', that means
 		 the symbol was already adjusted (or at least checked).  */
 	      if (*cur_sym_hashes == sym_hash)
 		break;
@@ -865,19 +870,19 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned;
+	  bfd_boolean unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	}
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       r = crx_elf_final_link_relocate (howto, input_bfd, output_bfd,
@@ -974,7 +979,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
      code section.  */
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
@@ -1309,7 +1314,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 }
 
 /* Definitions for setting CRX target vector.  */
-#define TARGET_LITTLE_SYM		bfd_elf32_crx_vec
+#define TARGET_LITTLE_SYM		crx_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-crx"
 #define ELF_ARCH			bfd_arch_crx
 #define ELF_MACHINE_CODE		EM_CRX

@@ -2,7 +2,7 @@
    floating-point<->fixed-point conversion and
    floating-point<->integer conversion instructions.
 
-   Copyright 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
