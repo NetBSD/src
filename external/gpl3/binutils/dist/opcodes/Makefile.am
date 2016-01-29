@@ -1,4 +1,21 @@
 ## Process this file with automake to generate Makefile.in
+#
+#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
 
 AUTOMAKE_OPTIONS = 1.11 foreign no-dist
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
@@ -119,6 +136,8 @@ TARGET_LIBOPCODES_CFILES = \
 	frv-dis.c \
 	frv-ibld.c \
 	frv-opc.c \
+	ft32-dis.c \
+	ft32-opc.c \
 	h8300-dis.c \
 	h8500-dis.c \
 	hppa-dis.c \
@@ -172,6 +191,7 @@ TARGET_LIBOPCODES_CFILES = \
 	mep-dis.c \
 	mep-ibld.c \
 	mep-opc.c \
+	metag-dis.c \
 	microblaze-dis.c \
 	micromips-opc.c \
 	mips-dis.c \
@@ -181,12 +201,17 @@ TARGET_LIBOPCODES_CFILES = \
 	mmix-opc.c \
 	moxie-dis.c \
 	moxie-opc.c \
+	msp430-decode.c \
 	msp430-dis.c \
 	mt-asm.c \
 	mt-desc.c \
 	mt-dis.c \
 	mt-ibld.c \
 	mt-opc.c \
+	nds32-asm.c \
+	nds32-dis.c \
+	nios2-dis.c \
+	nios2-opc.c \
 	ns32k-dis.c \
 	or1k-asm.c \
 	or1k-desc.c \
@@ -228,6 +253,8 @@ TARGET_LIBOPCODES_CFILES = \
 	v850-dis.c \
 	v850-opc.c \
 	vax-dis.c \
+	visium-dis.c \
+	visium-opc.c \
 	w65-dis.c \
 	xc16x-asm.c \
 	xc16x-desc.c \
@@ -241,7 +268,7 @@ TARGET_LIBOPCODES_CFILES = \
 	xstormy16-opc.c \
 	xtensa-dis.c \
 	xgate-dis.c \
- 	xgate-opc.c \
+	xgate-opc.c \
 	z80-dis.c \
 	z8k-dis.c
 
@@ -272,9 +299,8 @@ ALL_MACHINES = $(TARGET_LIBOPCODES_CFILES:.c=.lo)
 
 OFILES = @BFD_MACHINES@
 
-# We should reconfigure whenever bfd/configure.in changes, because
-# that's where the version number in Makefile comes from.
-CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/configure.in
+# development.sh is used to determine -Werror default.
+CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
 
 AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@
 
@@ -367,15 +393,15 @@ EPIPHANY_DEPS =
 FR30_DEPS =
 FRV_DEPS =
 IP2K_DEPS =
-IQ2000_DEPS = 
-LM32_DEPS = 
+IQ2000_DEPS =
+LM32_DEPS =
 M32C_DEPS =
 M32R_DEPS =
 MEP_DEPS =
 MT_DEPS =
-OR1K_DEPS = 
-XC16X_DEPS = 
-XSTORMY16_DEPS = 
+OR1K_DEPS =
+XC16X_DEPS =
+XSTORMY16_DEPS =
 endif
 
 run-cgen:
@@ -494,6 +520,7 @@ MOSTLYCLEANFILES = aarch64-gen$(EXEEXT_FOR_BUILD) i386-gen$(EXEEXT_FOR_BUILD) \
 MAINTAINERCLEANFILES = $(srcdir)/aarch64-asm-2.c $(srcdir)/aarch64-dis-2.c \
 	$(srcdir)/aarch64-opc-2.c $(srcdir)/i386-tbl.h $(srcdir)/i386-init.h \
 	$(srcdir)/ia64-asmtab.c $(srcdir)/z8k-opc.h \
+	$(srcdir)/msp430-decode.c \
 	$(srcdir)/rl78-decode.c \
 	$(srcdir)/rx-decode.c
 
@@ -520,7 +547,7 @@ i386-gen.o: i386-gen.c i386-opc.h $(srcdir)/../include/opcode/i386.h \
 	config.h i386-opc.h sysdep.h
 	$(COMPILE_FOR_BUILD) -c $(srcdir)/i386-gen.c
 
-$(srcdir)/i386-tbl.h: $(srcdir)/i386-init.h 
+$(srcdir)/i386-tbl.h: $(srcdir)/i386-init.h
 	@echo $@
 
 $(srcdir)/i386-init.h: @MAINT@ i386-gen$(EXEEXT_FOR_BUILD) i386-opc.tbl i386-reg.tbl
@@ -547,17 +574,11 @@ $(srcdir)/ia64-asmtab.c: @MAINT@ $(ia64_asmtab_deps)
 
 ia64-opc.lo: $(srcdir)/ia64-asmtab.c
 
+$(srcdir)/msp430-decode.c: @MAINT@ $(srcdir)/msp430-decode.opc opc2c$(EXEEXT_FOR_BUILD)
+	./opc2c$(EXEEXT_FOR_BUILD) $(srcdir)/msp430-decode.opc > $(srcdir)/msp430-decode.c
+
 $(srcdir)/rl78-decode.c: @MAINT@ $(srcdir)/rl78-decode.opc opc2c$(EXEEXT_FOR_BUILD)
 	./opc2c$(EXEEXT_FOR_BUILD) $(srcdir)/rl78-decode.opc > $(srcdir)/rl78-decode.c
-
-micromips-opc.lo: micromips-opc.c
-	$(LTCOMPILE) $(NO_WMISSING_FIELD_INITIALIZERS) -c -o $@ $<
-
-mips-opc.lo: mips-opc.c
-	$(LTCOMPILE) $(NO_WMISSING_FIELD_INITIALIZERS) -c -o $@ $<
-
-mips16-opc.lo: mips16-opc.c
-	$(LTCOMPILE) $(NO_WMISSING_FIELD_INITIALIZERS) -c -o $@ $<
 
 $(srcdir)/rx-decode.c: @MAINT@ $(srcdir)/rx-decode.opc opc2c$(EXEEXT_FOR_BUILD)
 	./opc2c$(EXEEXT_FOR_BUILD) $(srcdir)/rx-decode.opc > $(srcdir)/rx-decode.c

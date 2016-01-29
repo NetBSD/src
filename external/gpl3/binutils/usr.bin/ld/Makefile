@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2016/01/26 19:37:48 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2016/01/29 14:42:49 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -7,7 +7,10 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-DTARGET=\"${G_target_alias}\" \
 		-DBINDIR=\"/usr/bin\" \
 		-DTOOLBINDIR=\"/usr/bin\" \
-		-DENABLE_PLUGINS
+		-DENABLE_PLUGINS \
+		-DELF_LIST_OPTIONS=TRUE \
+		-DELF_SHLIB_LIST_OPTIONS=TRUE \
+		-DELF_PLT_UNWIND_LIST_OPTIONS=TRUE
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"

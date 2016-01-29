@@ -1,6 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -1311,7 +1310,7 @@ is_inconsistent_linkonce_section (asection *sec)
      for Tensilica's XCC compiler.  */
   name = sec_name + linkonce_len;
   if (CONST_STRNEQ (name, "prop."))
-    name = strchr (name + 5, '.') + 1;
+    name = strchr (name + 5, '.') ? strchr (name + 5, '.') + 1 : name + 5;
   else if (name[1] == '.'
 	   && (name[0] == 'p' || name[0] == 'e' || name[0] == 'h'))
     name += 2;

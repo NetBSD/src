@@ -39,5 +39,3 @@ Disassembly of section \.text:
   6c:	(7c 17 43 a6|a6 43 17 7c) 	mtsprg  7,r0
   70:	(7c 17 43 a6|a6 43 17 7c) 	mtsprg  7,r0
   74:	(7c 05 32 2c|2c 32 05 7c) 	dcbt    r5,r6
-  78:	(7c 05 32 2c|2c 32 05 7c) 	dcbt    r5,r6
-  7c:	(7d 05 32 2c|2c 32 05 7d) 	dcbt    8,r5,r6

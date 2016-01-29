@@ -1,5 +1,4 @@
-@c Copyright 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-@c 2012 Free Software Foundation, Inc.
+@c Copyright (C) 2001-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -76,6 +75,9 @@ Generate code for PowerPC 7400/7410/7450/7455.
 @item -m750cl
 Generate code for PowerPC 750CL.
 
+@item -m821, -m850, -m860
+Generate code for PowerPC 821/850/860.
+
 @item -mppc64, -m620
 Generate code for PowerPC 620/625/630.
 
@@ -115,8 +117,14 @@ Generate code for PowerPC e300 family.
 @item -maltivec
 Generate code for processors with AltiVec instructions.
 
+@item -mvle
+Generate code for Freescale PowerPC VLE instructions.
+
 @item -mvsx
 Generate code for processors with Vector-Scalar (VSX) instructions.
+
+@item -mhtm
+Generate code for processors with Hardware Transactional Memory instructions.
 
 @item -mpower4, -mpwr4
 Generate code for Power4 architecture.
@@ -130,6 +138,13 @@ Generate code for Power6 architecture.
 @item -mpower7, -mpwr7
 Generate code for Power7 architecture.
 
+@item -mpower8, -mpwr8
+Generate code for Power8 architecture.
+
+@item -mpower9, -mpwr9
+Generate code for Power9 architecture.
+
+@item -mcell
 @item -mcell
 Generate code for Cell Broadband Engine architecture.
 

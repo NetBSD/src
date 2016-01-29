@@ -1,7 +1,5 @@
 /* bucomm.c -- Bin Utils COMmon code.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002,
-   2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -88,7 +86,7 @@ bfd_nonfatal_message (const char *filename,
   section_name = NULL;
   va_start (args, format);
   fprintf (stderr, "%s", program_name);
-  
+
   if (abfd)
     {
       if (!filename)
@@ -127,24 +125,26 @@ report (const char * format, va_list args)
 }
 
 void
-fatal VPARAMS ((const char *format, ...))
+fatal (const char *format, ...)
 {
-  VA_OPEN (args, format);
-  VA_FIXEDARG (args, const char *, format);
+  va_list args;
+
+  va_start (args, format);
 
   report (format, args);
-  VA_CLOSE (args);
+  va_end (args);
   xexit (1);
 }
 
 void
-non_fatal VPARAMS ((const char *format, ...))
+non_fatal (const char *format, ...)
 {
-  VA_OPEN (args, format);
-  VA_FIXEDARG (args, const char *, format);
+  va_list args;
+
+  va_start (args, format);
 
   report (format, args);
-  VA_CLOSE (args);
+  va_end (args);
 }
 
 /* Set the default BFD target based on the configured target.  Doing
@@ -429,8 +429,12 @@ print_arelt_descr (FILE *file, bfd *abfd, bfd_boolean verbose)
 	  const char *ctime_result = (const char *) ctime (&when);
 	  bfd_size_type size;
 
-	  /* POSIX format:  skip weekday and seconds from ctime output.  */
-	  sprintf (timebuf, "%.12s %.4s", ctime_result + 4, ctime_result + 20);
+	  /* PR binutils/17605: Check for corrupt time values.  */
+	  if (ctime_result == NULL)
+	    sprintf (timebuf, _("<time data corrupt>"));
+	  else
+	    /* POSIX format:  skip weekday and seconds from ctime output.  */
+	    sprintf (timebuf, "%.12s %.4s", ctime_result + 4, ctime_result + 20);
 
 	  mode_string (buf.st_mode, modebuf);
 	  modebuf[10] = '\0';
@@ -570,7 +574,7 @@ off_t
 get_file_size (const char * file_name)
 {
   struct stat statbuf;
-  
+
   if (stat (file_name, &statbuf) < 0)
     {
       if (errno == ENOENT)
@@ -578,7 +582,7 @@ get_file_size (const char * file_name)
       else
 	non_fatal (_("Warning: could not locate '%s'.  reason: %s"),
 		   file_name, strerror (errno));
-    }  
+    }
   else if (! S_ISREG (statbuf.st_mode))
     {
       if (!S_ISCHR(statbuf.st_mode))
@@ -607,7 +611,7 @@ bfd_get_archive_filename (const bfd *abfd)
   size_t needed;
 
   assert (abfd != NULL);
-  
+
   if (!abfd->my_archive)
     return bfd_get_filename (abfd);
 
@@ -630,4 +634,30 @@ bfd_get_archive_filename (const bfd *abfd)
   sprintf (buf, "%s(%s)", bfd_get_filename (abfd->my_archive),
 	   bfd_get_filename (abfd));
   return buf;
+}
+
+/* Returns TRUE iff PATHNAME, a filename of an archive member,
+   is valid for writing.  For security reasons absolute paths
+   and paths containing /../ are not allowed.  See PR 17533.  */
+
+bfd_boolean
+is_valid_archive_path (char const * pathname)
+{
+  const char * n = pathname;
+
+  if (IS_ABSOLUTE_PATH (n))
+    return FALSE;
+
+  while (*n)
+    {
+      if (*n == '.' && *++n == '.' && ( ! *++n || IS_DIR_SEPARATOR (*n)))
+	return FALSE;
+
+      while (*n && ! IS_DIR_SEPARATOR (*n))
+	n++;
+      while (IS_DIR_SEPARATOR (*n))
+	n++;
+    }
+
+  return TRUE;
 }

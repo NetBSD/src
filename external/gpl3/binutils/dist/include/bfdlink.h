@@ -1,7 +1,5 @@
 /* bfdlink.h -- header file for BFD link routines
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -93,7 +91,13 @@ struct bfd_link_hash_entry
   /* Type of this entry.  */
   ENUM_BITFIELD (bfd_link_hash_type) type : 8;
 
+  /* Symbol is referenced in a normal object file, as distict from a LTO
+     IR object file.  */
   unsigned int non_ir_ref : 1;
+
+  /* Symbol is a built-in define.  These will be overridden by PROVIDE
+     in a linker script.  */
+  unsigned int linker_def : 1;
 
   /* A union of information depending upon the type.  */
   union
@@ -169,6 +173,8 @@ struct bfd_link_hash_table
   struct bfd_link_hash_entry *undefs;
   /* Entries are added to the tail of the undefs list.  */
   struct bfd_link_hash_entry *undefs_tail;
+  /* Function to free the hash table on closing BFD.  */
+  void (*hash_table_free) (bfd *);
   /* The type of the link hash table.  */
   enum bfd_link_hash_table_type type;
 };
@@ -187,6 +193,12 @@ extern struct bfd_link_hash_entry *bfd_link_hash_lookup
 extern struct bfd_link_hash_entry *bfd_wrapped_link_hash_lookup
   (bfd *, struct bfd_link_info *, const char *, bfd_boolean,
    bfd_boolean, bfd_boolean);
+
+/* If H is a wrapped symbol, ie. the symbol name starts with "__wrap_"
+   and the remainder is found in wrap_hash, return the real symbol.  */
+
+extern struct bfd_link_hash_entry *unwrap_hash_lookup
+  (struct bfd_link_info *, bfd *, struct bfd_link_hash_entry *);
 
 /* Traverse a link hash table.  */
 extern void bfd_link_hash_traverse
@@ -247,22 +259,30 @@ struct flag_info
 struct bfd_elf_dynamic_list;
 struct bfd_elf_version_tree;
 
+/* Types of output.  */
+
+enum output_type
+{
+  type_pde,
+  type_pie,
+  type_relocatable,
+  type_dll,
+};
+
+#define bfd_link_pde(info)	   ((info)->type == type_pde)
+#define bfd_link_dll(info)	   ((info)->type == type_dll)
+#define bfd_link_relocatable(info) ((info)->type == type_relocatable)
+#define bfd_link_pie(info)	   ((info)->type == type_pie)
+#define bfd_link_executable(info)  (bfd_link_pde (info) || bfd_link_pie (info))
+#define bfd_link_pic(info)	   (bfd_link_dll (info) || bfd_link_pie (info))
+
 /* This structure holds all the information needed to communicate
    between BFD and the linker when doing a link.  */
 
 struct bfd_link_info
 {
-  /* TRUE if BFD should generate a shared object (or a pie).  */
-  unsigned int shared: 1;
-
-  /* TRUE if generating an executable, position independent or not.  */
-  unsigned int executable : 1;
-
-  /* TRUE if generating a position independent executable.  */
-  unsigned int pie: 1;
-
-  /* TRUE if BFD should generate a relocatable object file.  */
-  unsigned int relocatable: 1;
+  /* Output type.  */
+  ENUM_BITFIELD (output_type) type : 2;
 
   /* TRUE if BFD should pre-bind symbols in a shared object.  */
   unsigned int symbolic: 1;
@@ -286,8 +306,8 @@ struct bfd_link_info
      callback.  */
   unsigned int notice_all: 1;
 
-  /* TRUE if we are loading LTO outputs.  */
-  unsigned int loading_lto_outputs: 1;
+  /* TRUE if the LTO plugin is active.  */
+  unsigned int lto_plugin_active: 1;
 
   /* TRUE if global symbols in discarded sections should be stripped.  */
   unsigned int strip_discarded: 1;
@@ -330,9 +350,9 @@ struct bfd_link_info
   /* TRUE if PT_GNU_RELRO segment should be created.  */
   unsigned int relro: 1;
 
-  /* TRUE if .eh_frame_hdr section and PT_GNU_EH_FRAME ELF segment
-     should be created.  */
-  unsigned int eh_frame_hdr: 1;
+  /* Nonzero if .eh_frame_hdr section and PT_GNU_EH_FRAME ELF segment
+     should be created.  1 for DWARF2 tables, 2 for compact tables.  */
+  unsigned int eh_frame_hdr_type: 2;
 
   /* TRUE if we should warn when adding a DT_TEXTREL to a shared object.  */
   unsigned int warn_shared_textrel: 1;
@@ -408,6 +428,18 @@ struct bfd_link_info
   /* TRUE if the linker script contained an explicit PHDRS command.  */
   unsigned int user_phdrs: 1;
 
+  /* TRUE if BND prefix in PLT entries is always generated.  */
+  unsigned int bndplt: 1;
+
+  /* TRUE if generation of .interp/PT_INTERP should be suppressed.  */
+  unsigned int nointerp: 1;
+
+  /* TRUE if generate a 1-byte NOP as suffix for x86 call instruction.  */
+  unsigned int call_nop_as_suffix : 1;
+
+  /* The 1-byte NOP for x86 call instruction.  */
+  char call_nop_byte;
+
   /* Char that may appear as the first char of a symbol, but should be
      skipped (like symbol_leading_char) when looking up symbols in
      wrap_hash.  Used by PowerPC Linux for 'dot' symbols.  */
@@ -415,6 +447,31 @@ struct bfd_link_info
 
   /* Separator between archive and filename in linker script filespecs.  */
   char path_separator;
+
+  /* Compress DWARF debug sections.  */
+  enum compressed_debug_section_type compress_debug;
+
+  /* Default stack size.  Zero means default (often zero itself), -1
+     means explicitly zero-sized.  */
+  bfd_signed_vma stacksize;
+
+  /* Enable or disable target specific optimizations.
+
+     Not all targets have optimizations to enable.
+
+     Normally these optimizations are disabled by default but some targets
+     prefer to enable them by default.  So this field is a tri-state variable.
+     The values are:
+     
+     zero: Enable the optimizations (either from --relax being specified on
+       the command line or the backend's before_allocation emulation function.
+       
+     positive: The user has requested that these optimizations be disabled.
+       (Via the --no-relax command line option).
+
+     negative: The optimizations are disabled.  (Set when initializing the
+       args_type structure in ldmain.c:main.  */
+  signed int disable_target_specific_optimizations;
 
   /* Function callbacks.  */
   const struct bfd_link_callbacks *callbacks;
@@ -443,12 +500,9 @@ struct bfd_link_info
   bfd *output_bfd;
 
   /* The list of input BFD's involved in the link.  These are chained
-     together via the link_next field.  */
+     together via the link.next field.  */
   bfd *input_bfds;
   bfd **input_bfds_tail;
-
-  /* Non-NULL if .note.gnu.build-id section should be created.  */
-  char *emit_note_gnu_build_id;
 
   /* If a symbol should be created for each input BFD, this is section
      where those symbols should be placed.  It must be a section in
@@ -482,6 +536,11 @@ struct bfd_link_info
      time the relaxation pass is restarted due to a previous
      relaxation returning true in *AGAIN.  */
   int relax_trip;
+
+  /* > 0 to treat protected data defined in the shared library as
+     reference external.  0 to treat it as internal.  -1 to let
+     backend to decide.  */
+  int extern_protected_data;
 
   /* Non-zero if auto-import thunks for DATA items in pei386 DLLs
      should be generated/linked against.  Set to 1 if this feature
@@ -612,15 +671,14 @@ struct bfd_link_callbacks
     (struct bfd_link_info *, const char *name,
      bfd *abfd, asection *section, bfd_vma address);
   /* A function which is called when a symbol in notice_hash is
-     defined or referenced.  H is the symbol.  ABFD, SECTION and
-     ADDRESS are the (new) value of the symbol.  If SECTION is
-     bfd_und_section, this is a reference.  FLAGS are the symbol
-     BSF_* flags.  STRING is the name of the symbol to indirect to if
-     the sym is indirect, or the warning string if a warning sym.  */
+     defined or referenced.  H is the symbol, INH the indirect symbol
+     if applicable.  ABFD, SECTION and ADDRESS are the (new) value of
+     the symbol.  If SECTION is bfd_und_section, this is a reference.
+     FLAGS are the symbol BSF_* flags.  */
   bfd_boolean (*notice)
     (struct bfd_link_info *, struct bfd_link_hash_entry *h,
-     bfd *abfd, asection *section, bfd_vma address, flagword flags,
-     const char *string);
+     struct bfd_link_hash_entry *inh,
+     bfd *abfd, asection *section, bfd_vma address, flagword flags);
   /* Error or warning link info message.  */
   void (*einfo)
     (const char *fmt, ...);

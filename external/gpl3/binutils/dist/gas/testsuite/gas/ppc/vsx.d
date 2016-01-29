@@ -166,3 +166,8 @@ Disassembly of section \.text:
  26c:	(f1 12 e7 bf|bf e7 12 f1) 	xxsel   vs40,vs50,vs60,vs62
  270:	(f1 12 e2 17|17 e2 12 f1) 	xxsldwi vs40,vs50,vs60,2
  274:	(f1 02 e2 93|93 e2 02 f1) 	xxspltw vs40,vs60,2
+.*:	(7d 00 a6 99|99 a6 00 7d) 	lxvd2x  vs40,0,r20
+.*:	(7d 0a a6 99|99 a6 0a 7d) 	lxvd2x  vs40,r10,r20
+.*:	(7d 00 a7 99|99 a7 00 7d) 	stxvd2x vs40,0,r20
+.*:	(7d 0a a7 99|99 a7 0a 7d) 	stxvd2x vs40,r10,r20
+#pass

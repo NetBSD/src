@@ -2,6 +2,23 @@
 # autoconf generated configure script.  Putting it in a separate shell
 # file lets us skip running autoconf when modifying host specific
 # information.
+#
+#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
 
 # This file sets the following shell variables:
 #  HDEFINES		host specific compiler flags
@@ -39,6 +56,8 @@ case "${host}" in
 
 *-*-linux*)
   HOSTING_CRT0='-dynamic-linker `${CC} --help --verbose 2>&1 | egrep "ld[^ ]*\.so" | sed -e "s,.*-dynamic-linker[ 	][ 	]*\(.*/ld[^ ]*\.so..\).*,\1,"` `${CC} --print-file-name=crt1.o` `${CC} --print-file-name=crti.o` `if [ -f ../gcc/crtbegin.o ]; then echo ../gcc/crtbegin.o; else ${CC} --print-file-name=crtbegin.o; fi`'
+  HOSTING_SCRT0='-dynamic-linker `${CC} --help --verbose 2>&1 | egrep "ld[^ ]*\.so" | sed -e "s,.*-dynamic-linker[ 	][ 	]*\(.*/ld[^ ]*\.so..\).*,\1,"` `${CC} --print-file-name=Scrt1.o` `${CC} --print-file-name=crti.o` `if [ -f ../gcc/crtbeginS.o ]; then echo ../gcc/crtbeginS.o; else ${CC} --print-file-name=crtbeginS.o; fi`'
+  HOSTING_SLIBS='-L`dirname \`${CC} --print-file-name=libc.so\`` '"$HOSTING_LIBS"' `if [ -f ../gcc/crtendS.o ]; then echo ../gcc/crtendS.o; else ${CC} --print-file-name=crtendS.o; fi` `${CC} --print-file-name=crtn.o`'
   HOSTING_LIBS='-L`dirname \`${CC} --print-file-name=libc.so\`` '"$HOSTING_LIBS"' `if [ -f ../gcc/crtend.o ]; then echo ../gcc/crtend.o; else ${CC} --print-file-name=crtend.o; fi` `${CC} --print-file-name=crtn.o`'
   ;;
 
@@ -153,7 +172,7 @@ i[3-7]86-pc-interix*)
   HOSTING_LIBS='-L $$X/local_bin -L $$INTERIX_ROOT/usr/lib '"$HOSTING_LIBS"' -lcpsx -lc -lcpsx $$INTERIX_ROOT/usr/lib/psxdll.a $$INTERIX_ROOT/usr/lib/psxdll2.a'
   ;;
 
-i[3-7]86-*-cygwin*)
+i[3-7]86-*-cygwin* | x86_64-*-cygwin*)
   HOSTING_LIBS="$HOSTING_LIBS"' -lcygwin -L/usr/lib/w32api -luser32 -lkernel32 -ladvapi32 -lshell32 `if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else ${CC} -print-libgcc-file-name; fi`'
   ;;
 
@@ -161,7 +180,7 @@ i[3-7]86-*-mingw*)
   #We only support msvcrt.dll, crtid == 2.
   HOSTING_CRT0='/mingw/lib/crt2.o'
   HOSTING_LIBS='-L/mingw/lib -lmingw32 -lmoldname -lmingwex -lmsvcrt -luser32 -lkernel32 -ladvapi32 -lshell32 -lmingw32 -lmoldname -lmingwex -lmsvcrt `if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else ${CC} -print-libgcc-file-name; fi`'
-  ;; 
+  ;;
 
 mips*-sgi-irix4* | mips*-sgi-irix5*)
   HOSTING_CRT0=/usr/lib/crt1.o
@@ -225,3 +244,15 @@ alpha*-*-*)
   ;;
 
 esac
+
+# Provide default HOSTING_SCRT0.  Each host should define a proper one
+# if needed.
+if test -z "$HOSTING_SCRT0"; then
+  HOSTING_SCRT0="$HOSTING_CRT0"
+fi
+
+# Provide default HOSTING_SLIBS.  Each host should define a proper one
+# if needed.
+if test -z "$HOSTING_SLIBS"; then
+  HOSTING_SLIBS="$HOSTING_LIBS"
+fi

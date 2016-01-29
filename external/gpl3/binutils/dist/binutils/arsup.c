@@ -1,6 +1,5 @@
 /* arsup.c - Archive support for MRI compatibility
-   Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -39,6 +38,7 @@ static void ar_directory_doer (bfd *, bfd *);
 static void ar_addlib_doer (bfd *, bfd *);
 
 extern int verbose;
+extern int deterministic;
 
 static bfd *obfd;
 static char *real_name;
@@ -340,6 +340,9 @@ ar_save (void)
   else
     {
       char *ofilename = xstrdup (bfd_get_filename (obfd));
+
+      if (deterministic > 0)
+        obfd->flags |= BFD_DETERMINISTIC_OUTPUT;
 
       bfd_close (obfd);
 

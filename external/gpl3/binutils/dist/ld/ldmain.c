@@ -1,7 +1,5 @@
 /* Main program of GNU linker.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -43,7 +41,6 @@
 #ifdef ENABLE_PLUGINS
 #include "plugin.h"
 #include "plugin-api.h"
-#include "libbfd.h"
 #endif /* ENABLE_PLUGINS */
 
 /* Somewhere above, sys/stat.h got included.  */
@@ -82,7 +79,7 @@ const char *ld_sysroot;
 char * ld_canon_sysroot;
 int ld_canon_sysroot_len;
 
-/* Set by -G argument, for MIPS ECOFF target.  */
+/* Set by -G argument, for targets like MIPS ELF.  */
 int g_switch_value = 8;
 
 /* Nonzero means print names of input files as processed.  */
@@ -139,7 +136,7 @@ static bfd_boolean unattached_reloc
   (struct bfd_link_info *, const char *, bfd *, asection *, bfd_vma);
 static bfd_boolean notice
   (struct bfd_link_info *, struct bfd_link_hash_entry *,
-   bfd *, asection *, bfd_vma, flagword, const char *);
+   struct bfd_link_hash_entry *, bfd *, asection *, bfd_vma, flagword);
 
 static struct bfd_link_callbacks link_callbacks =
 {
@@ -191,6 +188,9 @@ main (int argc, char **argv)
 {
   char *emulation;
   long start_time = get_run_time ();
+#ifdef HAVE_SBRK
+  char *start_sbrk = (char *) sbrk (0);
+#endif
 
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
@@ -222,15 +222,7 @@ main (int argc, char **argv)
   /* Set up the sysroot directory.  */
   ld_sysroot = get_sysroot (argc, argv);
   if (*ld_sysroot)
-    {
-      if (*TARGET_SYSTEM_ROOT == 0)
-	{
-	  einfo ("%P%F: this linker was not configured to use sysroots\n");
-	  ld_sysroot = "";
-	}
-      else
-	ld_canon_sysroot = lrealpath (ld_sysroot);
-    }
+    ld_canon_sysroot = lrealpath (ld_sysroot);
   if (ld_canon_sysroot)
     ld_canon_sysroot_len = strlen (ld_canon_sysroot);
   else
@@ -260,11 +252,11 @@ main (int argc, char **argv)
   config.make_executable = TRUE;
   config.magic_demand_paged = TRUE;
   config.text_read_only = TRUE;
+  link_info.disable_target_specific_optimizations = -1;
 
   command_line.warn_mismatch = TRUE;
   command_line.warn_search_mismatch = TRUE;
   command_line.check_section_addresses = -1;
-  command_line.disable_target_specific_optimizations = -1;
 
   /* We initialize DEMANGLING based on the environment variable
      COLLECT_NO_DEMANGLE.  The gcc collect2 program will demangle the
@@ -285,9 +277,13 @@ main (int argc, char **argv)
   link_info.init_function = "_init";
   link_info.fini_function = "_fini";
   link_info.relax_pass = 1;
+  link_info.extern_protected_data = -1;
   link_info.pei386_auto_import = -1;
   link_info.spare_dynamic_tags = 5;
   link_info.path_separator = ':';
+#ifdef DEFAULT_FLAG_COMPRESS_DEBUG
+  link_info.compress_debug = COMPRESS_DEBUG_GABI_ZLIB;
+#endif
 
   ldfile_add_arch ("");
   emulation = get_emulation (argc, argv);
@@ -296,6 +292,7 @@ main (int argc, char **argv)
   config.maxpagesize = bfd_emul_get_maxpagesize (default_target);
   config.commonpagesize = bfd_emul_get_commonpagesize (default_target);
   lang_init ();
+  ldexp_init ();
   ldemul_before_parse ();
   lang_has_input_file = FALSE;
   parse_args (argc, argv);
@@ -377,6 +374,13 @@ main (int argc, char **argv)
 
   lang_final ();
 
+  /* If the only command line argument has been -v or --version or --verbose
+     then ignore any input files provided by linker scripts and exit now.
+     We do not want to create an output file when the linker is just invoked
+     to provide version information.  */
+  if (argc == 2 && version_printed)
+    xexit (0);
+
   if (!lang_has_input_file)
     {
       if (version_printed || command_line.print_output_format)
@@ -411,10 +415,17 @@ main (int argc, char **argv)
 
   /* Print error messages for any missing symbols, for any warning
      symbols, and possibly multiple definitions.  */
-  if (link_info.relocatable)
+  if (bfd_link_relocatable (&link_info))
     link_info.output_bfd->flags &= ~EXEC_P;
   else
     link_info.output_bfd->flags |= EXEC_P;
+
+  if ((link_info.compress_debug & COMPRESS_DEBUG))
+    {
+      link_info.output_bfd->flags |= BFD_COMPRESS;
+      if (link_info.compress_debug == COMPRESS_DEBUG_GABI_ZLIB)
+	link_info.output_bfd->flags |= BFD_COMPRESS_GABI;
+    }
 
   ldwrite ();
 
@@ -424,7 +435,17 @@ main (int argc, char **argv)
     output_cref (config.map_file != NULL ? config.map_file : stdout);
   if (nocrossref_list != NULL)
     check_nocrossrefs ();
+  if (command_line.print_memory_usage)
+    lang_print_memory_usage ();
+#if 0
+  {
+    struct bfd_link_hash_entry * h;
 
+    h = bfd_link_hash_lookup (link_info.hash, "__image_base__", 0,0,1);
+    fprintf (stderr, "lookup = %p val %lx\n", h, h ? h->u.def.value : 1);
+  }
+#endif
+  ldexp_finish ();
   lang_finish ();
 
   /* Even if we're producing relocatable output, some non-fatal errors should
@@ -447,7 +468,8 @@ main (int argc, char **argv)
       /* If the --force-exe-suffix is enabled, and we're making an
 	 executable file and it doesn't end in .exe, copy it to one
 	 which does.  */
-      if (! link_info.relocatable && command_line.force_exe_suffix)
+      if (!bfd_link_relocatable (&link_info)
+	  && command_line.force_exe_suffix)
 	{
 	  int len = strlen (output_filename);
 
@@ -468,10 +490,10 @@ main (int argc, char **argv)
 	      dst = fopen (dst_name, FOPEN_WB);
 
 	      if (!src)
-		einfo (_("%X%P: unable to open for source of copy `%s'\n"),
+		einfo (_("%P%F: unable to open for source of copy `%s'\n"),
 		       output_filename);
 	      if (!dst)
-		einfo (_("%X%P: unable to open for destination of copy `%s'\n"),
+		einfo (_("%P%F: unable to open for destination of copy `%s'\n"),
 		       dst_name);
 	      while ((l = fread (buf, 1, bsize, src)) > 0)
 		{
@@ -504,7 +526,7 @@ main (int argc, char **argv)
 	       program_name, run_time / 1000000, run_time % 1000000);
 #ifdef HAVE_SBRK
       fprintf (stderr, _("%s: data size %ld\n"), program_name,
-	       (long) (lim - (char *) &environ));
+	       (long) (lim - start_sbrk));
 #endif
       fflush (stderr);
     }
@@ -596,8 +618,10 @@ get_emulation (int argc, char **argv)
 		   || strcmp (argv[i], "-mips5") == 0
 		   || strcmp (argv[i], "-mips32") == 0
 		   || strcmp (argv[i], "-mips32r2") == 0
+		   || strcmp (argv[i], "-mips32r6") == 0
 		   || strcmp (argv[i], "-mips64") == 0
-		   || strcmp (argv[i], "-mips64r2") == 0)
+		   || strcmp (argv[i], "-mips64r2") == 0
+		   || strcmp (argv[i], "-mips64r6") == 0)
 	    {
 	      /* FIXME: The arguments -mips1, -mips2, -mips3, etc. are
 		 passed to the linker by some MIPS compilers.  They
@@ -643,19 +667,19 @@ add_ysym (const char *name)
 }
 
 void
-add_ignoresym (const char *name)
+add_ignoresym (struct bfd_link_info *info, const char *name)
 {
-  if (link_info.ignore_hash == NULL)
+  if (info->ignore_hash == NULL)
     {
-      link_info.ignore_hash = xmalloc (sizeof (struct bfd_hash_table));
-      if (! bfd_hash_table_init_n (link_info.ignore_hash,
+      info->ignore_hash = xmalloc (sizeof (struct bfd_hash_table));
+      if (! bfd_hash_table_init_n (info->ignore_hash,
 				   bfd_hash_newfunc,
 				   sizeof (struct bfd_hash_entry),
 				   61))
 	einfo (_("%P%F: bfd_hash_table_init failed: %E\n"));
     }
 
-  if (bfd_hash_lookup (link_info.ignore_hash, name, TRUE, TRUE) == NULL)
+  if (bfd_hash_lookup (info->ignore_hash, name, TRUE, TRUE) == NULL)
     einfo (_("%P%F: bfd_hash_lookup failed: %E\n"));
 }
 
@@ -743,6 +767,7 @@ add_keepsyms_file (const char *filename)
 
   free (buf);
   link_info.strip = strip_some;
+  fclose (file);
 }
 
 /* Callbacks from the BFD linker routines.  */
@@ -770,30 +795,14 @@ add_archive_element (struct bfd_link_info *info,
      BFD, but we still want to output the original BFD filename.  */
   orig_input = *input;
 #ifdef ENABLE_PLUGINS
-  if (plugin_active_plugins_p () && !no_more_claiming)
+  if (link_info.lto_plugin_active && !no_more_claiming)
     {
       /* We must offer this archive member to the plugins to claim.  */
-      const char *filename = (bfd_my_archive (abfd) != NULL
-			      ? bfd_my_archive (abfd)->filename : abfd->filename);
-      int fd = open (filename, O_RDONLY | O_BINARY);
-      if (fd >= 0)
+      plugin_maybe_claim (input);
+      if (input->flags.claimed)
 	{
-	  struct ld_plugin_input_file file;
-
-	  /* Offset and filesize must refer to the individual archive
-	     member, not the whole file, and must exclude the header.
-	     Fortunately for us, that is how the data is stored in the
-	     origin field of the bfd and in the arelt_data.  */
-	  file.name = filename;
-	  file.offset = abfd->origin;
-	  file.filesize = arelt_size (abfd);
-	  file.fd = fd;
-	  plugin_maybe_claim (&file, input);
-	  if (input->flags.claimed)
-	    {
-	      input->flags.claim_archive = TRUE;
-	      *subsbfd = input->the_bfd;
-	    }
+	  input->flags.claim_archive = TRUE;
+	  *subsbfd = input->the_bfd;
 	}
     }
 #endif /* ENABLE_PLUGINS */
@@ -839,7 +848,8 @@ add_archive_element (struct bfd_link_info *info,
 	{
 	  char buf[100];
 
-	  sprintf (buf, _("Archive member included because of file (symbol)\n\n"));
+	  sprintf (buf, _("Archive member included "
+			  "to satisfy reference by file (symbol)\n\n"));
 	  minfo ("%s", buf);
 	  header_printed = TRUE;
 	}
@@ -950,10 +960,10 @@ multiple_definition (struct bfd_link_info *info,
   if (obfd != NULL)
     einfo (_("%D: first defined here\n"), obfd, osec, oval);
 
-  if (RELAXATION_ENABLED)
+  if (RELAXATION_ENABLED_BY_USER)
     {
       einfo (_("%P: Disabling relaxation: it will not work with multiple definitions\n"));
-      command_line.disable_target_specific_optimizations = -1;
+      DISABLE_RELAXATION;
     }
 
   return TRUE;
@@ -1107,8 +1117,8 @@ constructor_callback (struct bfd_link_info *info,
 
   /* Ensure that BFD_RELOC_CTOR exists now, so that we can give a
      useful error message.  */
-  if (bfd_reloc_type_lookup (link_info.output_bfd, BFD_RELOC_CTOR) == NULL
-      && (info->relocatable
+  if (bfd_reloc_type_lookup (info->output_bfd, BFD_RELOC_CTOR) == NULL
+      && (bfd_link_relocatable (info)
 	  || bfd_reloc_type_lookup (abfd, BFD_RELOC_CTOR) == NULL))
     einfo (_("%P%F: BFD backend error: BFD_RELOC_CTOR unsupported\n"));
 
@@ -1147,6 +1157,25 @@ struct warning_callback_info
   asymbol **asymbols;
 };
 
+/* Look through the relocs to see if we can find a plausible address
+   for SYMBOL in ABFD.  Return TRUE if found.  Otherwise return FALSE.  */
+
+static bfd_boolean
+symbol_warning (const char *warning, const char *symbol, bfd *abfd)
+{
+  struct warning_callback_info cinfo;
+
+  if (!bfd_generic_link_read_symbols (abfd))
+    einfo (_("%B%F: could not read symbols: %E\n"), abfd);
+
+  cinfo.found = FALSE;
+  cinfo.warning = warning;
+  cinfo.symbol = symbol;
+  cinfo.asymbols = bfd_get_outsymbols (abfd);
+  bfd_map_over_sections (abfd, warning_find_reloc, &cinfo);
+  return cinfo.found;
+}
+
 /* This is called when there is a reference to a warning symbol.  */
 
 static bfd_boolean
@@ -1169,24 +1198,14 @@ warning_callback (struct bfd_link_info *info ATTRIBUTE_UNUSED,
     einfo ("%P: %s%s\n", _("warning: "), warning);
   else if (symbol == NULL)
     einfo ("%B: %s%s\n", abfd, _("warning: "), warning);
-  else
+  else if (! symbol_warning (warning, symbol, abfd))
     {
-      struct warning_callback_info cinfo;
-
-      /* Look through the relocs to see if we can find a plausible
-	 address.  */
-
-      if (!bfd_generic_link_read_symbols (abfd))
-	einfo (_("%B%F: could not read symbols: %E\n"), abfd);
-
-      cinfo.found = FALSE;
-      cinfo.warning = warning;
-      cinfo.symbol = symbol;
-      cinfo.asymbols = bfd_get_outsymbols (abfd);
-      bfd_map_over_sections (abfd, warning_find_reloc, &cinfo);
-
-      if (! cinfo.found)
-	einfo ("%B: %s%s\n", abfd, _("warning: "), warning);
+      bfd *b;
+      /* Search all input files for a reference to SYMBOL.  */
+      for (b = info->input_bfds; b; b = b->link.next)
+	if (b != abfd && symbol_warning (warning, symbol, b))
+	  return TRUE;
+      einfo ("%B: %s%s\n", abfd, _("warning: "), warning);
     }
 
   return TRUE;
@@ -1244,7 +1263,7 @@ warning_find_reloc (bfd *abfd, asection *sec, void *iarg)
 /* This is called when an undefined symbol is found.  */
 
 static bfd_boolean
-undefined_symbol (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+undefined_symbol (struct bfd_link_info *info,
 		  const char *name,
 		  bfd *abfd,
 		  asection *section,
@@ -1263,19 +1282,7 @@ undefined_symbol (struct bfd_link_info *info ATTRIBUTE_UNUSED,
   if (config.warn_once)
     {
       /* Only warn once about a particular undefined symbol.  */
-      if (info->ignore_hash == NULL)
-	{
-	  info->ignore_hash = xmalloc (sizeof (struct bfd_hash_table));
-	  if (!bfd_hash_table_init (info->ignore_hash, bfd_hash_newfunc,
-				    sizeof (struct bfd_hash_entry)))
-	    einfo (_("%F%P: bfd_hash_table_init failed: %E\n"));
-	}
-
-      if (bfd_hash_lookup (info->ignore_hash, name, FALSE, FALSE) != NULL)
-	return TRUE;
-
-      if (bfd_hash_lookup (info->ignore_hash, name, TRUE, TRUE) == NULL)
-	einfo (_("%F%P: bfd_hash_lookup failed: %E\n"));
+      add_ignoresym (info, name);
     }
 
   /* We never print more than a reasonable number of errors in a row
@@ -1353,7 +1360,7 @@ int overflow_cutoff_limit = 10;
 /* This is called when a reloc overflows.  */
 
 static bfd_boolean
-reloc_overflow (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+reloc_overflow (struct bfd_link_info *info,
 		struct bfd_link_hash_entry *entry,
 		const char *name,
 		const char *reloc_name,
@@ -1392,7 +1399,7 @@ reloc_overflow (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 		 reloc_name, entry->root.string,
 		 entry->u.def.section,
 		 entry->u.def.section == bfd_abs_section_ptr
-		 ? link_info.output_bfd : entry->u.def.section->owner);
+		 ? info->output_bfd : entry->u.def.section->owner);
 	  break;
 	default:
 	  abort ();
@@ -1447,11 +1454,11 @@ unattached_reloc (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 static bfd_boolean
 notice (struct bfd_link_info *info,
 	struct bfd_link_hash_entry *h,
+	struct bfd_link_hash_entry *inh ATTRIBUTE_UNUSED,
 	bfd *abfd,
 	asection *section,
 	bfd_vma value,
-	flagword flags ATTRIBUTE_UNUSED,
-	const char *string ATTRIBUTE_UNUSED)
+	flagword flags ATTRIBUTE_UNUSED)
 {
   const char *name;
 

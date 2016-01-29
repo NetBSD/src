@@ -66,3 +66,9 @@ start:
 	addg6s  10,11,12
 	ori	1,1,0
 	.p2align 4,,15
+	slbia
+	slbia   0
+	slbia   7
+	tlbie   10
+	tlbie   10,0
+	tlbie   10,1
