@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 2015/04/04 13:06:01 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.10 2016/01/29 01:54:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2015/04/04 13:06:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2016/01/29 01:54:14 macallan Exp $");
 
 #define __INTR_PRIVATE
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -46,9 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2015/04/04 13:06:01 macallan Exp $");
 
 #include "opt_ingenic.h"
 
+#ifdef INGENIC_INTR_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while (0) printf
+#endif
+
 extern void ingenic_clockintr(uint32_t);
 extern void ingenic_puts(const char *);
-
+extern struct clockframe cf;
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
@@ -122,7 +130,12 @@ evbmips_intr_init(void)
 	reg = MFC0(12, 4);	/* reset entry and interrupts */
 	reg &= 0xffff0000;
 	reg |= REIM_IRQ0_M | REIM_MIRQ0_M;
+#ifdef MULTIPROCESSOR
+	reg |= REIM_MIRQ1_M;
+#endif
 	MTC0(reg, 12, 4);
+	MTC0(0, 20, 1);	/* ping the 2nd core */
+	DPRINTF("%s %08x\n", __func__, reg);
 }
 
 void
@@ -143,7 +156,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 
 	/*
 	 * XXX
-	 * the manual counts the softint bits as INT0 and INT1, out headers
+	 * the manual counts the softint bits as INT0 and INT1, our headers
 	 * don't so everything here looks off by two
 	 */
 	if (ipending & MIPS_INT_MASK_1) {
@@ -151,6 +164,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		 * this is a mailbox interrupt / IPI
 		 */
 		uint32_t reg;
+		int s = splsched();
 
 		/* read pending IPIs */
 		reg = MFC0(12, 3);
@@ -176,7 +190,10 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 #ifdef MULTIPROCESSOR
 				uint32_t tag;
 				tag = MFC0(CP0_CORE_MBOX, 1);
-				ipi_process(curcpu(), tag);
+				ingenic_puts("1");
+				if (tag & 0x400)
+					hardclock(&cf);
+				//ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
 				    "IPI for core 1, msg %08x\n", tag);
@@ -188,6 +205,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 				MTC0(reg, 12, 3);
 			}
 		}
+		splx(s);
 	}
 	if (ipending & MIPS_INT_MASK_2) {
 		/* this is a timer interrupt */
@@ -211,9 +229,9 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		 */
 		mask = readreg(JZ_ICPR0);
 		if (mask & 0x0c000000) {
-			writereg(JZ_ICMSR0, mask);
+			writereg(JZ_ICMSR0, 0x0c000000);
 			ingenic_clockintr(id);
-			writereg(JZ_ICMCR0, mask);
+			writereg(JZ_ICMCR0, 0x0c000000);
 			clockintrs.ev_count++;
 		}
 		ingenic_irq(ipl);
