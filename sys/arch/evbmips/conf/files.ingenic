@@ -1,4 +1,4 @@
-#	$NetBSD: files.ingenic,v 1.5 2014/12/26 17:45:27 macallan Exp $
+#	$NetBSD: files.ingenic,v 1.6 2016/01/29 01:54:13 macallan Exp $
 
 
 file	arch/mips/mips/bus_dma.c
@@ -12,6 +12,7 @@ file	arch/evbmips/ingenic/autoconf.c
 file	arch/evbmips/ingenic/machdep.c
 file	arch/evbmips/ingenic/intr.c
 file	arch/evbmips/ingenic/clock.c
+file	arch/evbmips/ingenic/cpu_startup.S
 
 # System bus
 device	mainbus { }
@@ -20,7 +21,7 @@ file	arch/evbmips/ingenic/mainbus.c		mainbus
 
 device	cpu
 attach	cpu at mainbus
-file	arch/evbmips/evbmips/cpu.c		cpu
+file	arch/evbmips/ingenic/cpu.c		cpu
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
