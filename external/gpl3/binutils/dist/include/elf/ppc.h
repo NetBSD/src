@@ -1,6 +1,5 @@
 /* PPC ELF support for BFD.
-   Copyright 1995, 1996, 1998, 2000, 2001, 2002, 2003, 2005, 2007, 2008,
-   2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    By Michael Meissner, Cygnus Support, <meissner@cygnus.com>,
    from information in the System V Application Binary Interface,
@@ -150,6 +149,9 @@ START_RELOC_NUMBERS (elf_ppc_reloc_type)
   RELOC_NUMBER (R_PPC_VLE_SDAREL_HA16A,	231)
   RELOC_NUMBER (R_PPC_VLE_SDAREL_HA16D,	232)
 
+/* Power9 split rel16 for addpcis.  */
+  RELOC_NUMBER (R_PPC_REL16DX_HA,	246)
+
 /* Support STT_GNU_IFUNC plt calls.  */
   RELOC_NUMBER (R_PPC_IRELATIVE,	248)
 
@@ -176,7 +178,8 @@ END_RELOC_NUMBERS (R_PPC_max)
 #define DT_PPC_GOT		(DT_LOPROC)
 
 /* Specify that tls descriptors should be optimized.  */
-#define DT_PPC_TLSOPT		(DT_LOPROC + 1)
+#define DT_PPC_OPT		(DT_LOPROC + 1)
+#define PPC_OPT_TLS		1
 
 /* Processor specific flags for the ELF header e_flags field.  */
 

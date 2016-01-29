@@ -1,7 +1,5 @@
 /* Print SPARC instructions.
-   Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -88,7 +86,7 @@ static char *v9_priv_reg_names[] =
   "tpc", "tnpc", "tstate", "tt", "tick", "tba", "pstate", "tl",
   "pil", "cwp", "cansave", "canrestore", "cleanwin", "otherwin",
   "wstate", "fq", "gl"
-  /* "ver" - special cased */
+  /* "ver" and "pmcdper" - special cased */
 };
 
 /* These are ordered according to there register number in
@@ -96,10 +94,10 @@ static char *v9_priv_reg_names[] =
 static char *v9_hpriv_reg_names[] =
 {
   "hpstate", "htstate", "resv2", "hintp", "resv4", "htba", "hver",
-  "resv7", "resv8", "resv9", "resv10", "resv11", "resv12", "resv13", 
+  "resv7", "resv8", "resv9", "resv10", "resv11", "resv12", "resv13",
   "resv14", "resv15", "resv16", "resv17", "resv18", "resv19", "resv20",
   "resv21", "resv22", "resv23", "resv24", "resv25", "resv26", "resv27",
-  "resv28", "resv29", "resv30", "hstick_cmpr"
+  "hstick_offset", "hstick_enable", "resv30", "hstick_cmpr"
 };
 
 /* These are ordered according to there register number in
@@ -108,7 +106,7 @@ static char *v9a_asr_reg_names[] =
 {
   "pcr", "pic", "dcr", "gsr", "set_softint", "clear_softint",
   "softint", "tick_cmpr", "stick", "stick_cmpr", "cfr",
-  "pause", "cps"
+  "pause", "mwait"
 };
 
 /* Macros used to extract instruction fields.  Not all fields have
@@ -223,7 +221,8 @@ compute_arch_mask (unsigned long mach)
     {
     case 0 :
     case bfd_mach_sparc :
-      return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8);
+      return (SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8)
+              | SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_LEON));
     case bfd_mach_sparc_sparclet :
       return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_SPARCLET);
     case bfd_mach_sparc_sparclite :
@@ -338,8 +337,17 @@ compare_opcodes (const void * a, const void * b)
   i = strcmp (op0->name, op1->name);
   if (i)
     {
-      if (op0->flags & F_ALIAS) /* If they're both aliases, be arbitrary.  */
-	return i;
+      if (op0->flags & F_ALIAS)
+	{
+	  if (op0->flags & F_PREFERRED)
+	    return -1;
+	  if (op1->flags & F_PREFERRED)
+	    return 1;
+
+	  /* If they're both aliases, and neither is marked as preferred,
+	     be arbitrary.  */
+	  return i;
+	}
       else
 	fprintf (stderr,
 		 /* xgettext:c-format */
@@ -648,6 +656,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    break;
 		  case 'H':	/* Double/even.  */
 		  case 'J':	/* Quad/multiple of 4.  */
+		  case '}':     /* Double/even.  */
 		    fregx (X_RD (insn));
 		    break;
 #undef	freg
@@ -785,6 +794,10 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    (*info->fprintf_func) (stream, "%%fprs");
 		    break;
 
+		  case '{':
+		    (*info->fprintf_func) (stream, "%%mcdper");
+		    break;
+
 		  case 'o':
 		    (*info->fprintf_func) (stream, "%%asi");
 		    break;
@@ -800,6 +813,8 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		  case '?':
 		    if (X_RS1 (insn) == 31)
 		      (*info->fprintf_func) (stream, "%%ver");
+		    else if (X_RS1 (insn) == 23)
+		      (*info->fprintf_func) (stream, "%%pmcdper");
 		    else if ((unsigned) X_RS1 (insn) < 17)
 		      (*info->fprintf_func) (stream, "%%%s",
 					     v9_priv_reg_names[X_RS1 (insn)]);
@@ -808,7 +823,9 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    break;
 
 		  case '!':
-		    if ((unsigned) X_RD (insn) < 17)
+		    if (X_RD (insn) == 23)
+		      (*info->fprintf_func) (stream, "%%pmcdper");
+		    else if ((unsigned) X_RD (insn) < 17)
 		      (*info->fprintf_func) (stream, "%%%s",
 					     v9_priv_reg_names[X_RD (insn)]);
 		    else
