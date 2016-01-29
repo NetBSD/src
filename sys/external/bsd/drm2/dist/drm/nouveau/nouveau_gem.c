@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.4 2016/01/29 23:58:22 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.4 2016/01/29 23:58:22 riastradh Exp $");
 
 #include <subdev/fb.h>
 
@@ -883,19 +883,6 @@ out_next:
 	}
 
 	return nouveau_abi16_put(abi16, ret);
-}
-
-static inline uint32_t
-domain_to_ttm(struct nouveau_bo *nvbo, uint32_t domain)
-{
-	uint32_t flags = 0;
-
-	if (domain & NOUVEAU_GEM_DOMAIN_VRAM)
-		flags |= TTM_PL_FLAG_VRAM;
-	if (domain & NOUVEAU_GEM_DOMAIN_GART)
-		flags |= TTM_PL_FLAG_TT;
-
-	return flags;
 }
 
 int
