@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bios.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bios.c,v 1.2 2016/01/29 21:46:03 riastradh Exp $	*/
 
 /*
  * Copyright 2005-2006 Erik Waling
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bios.c,v 1.1.1.2 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bios.c,v 1.2 2016/01/29 21:46:03 riastradh Exp $");
 
 #include <subdev/bios.h>
 
@@ -1607,7 +1607,7 @@ void merge_like_dcb_entries(struct drm_device *dev, struct dcb_table *dcb)
 		for (j = i + 1; j < dcb->entries; j++) {
 			struct dcb_output *jent = &dcb->entry[j];
 
-			if (jent->type == 100) /* already merged entry */
+			if (jent->type == DCB_OUTPUT_MERGED)
 				continue;
 
 			/* merge heads field when all other fields the same */
@@ -1618,14 +1618,14 @@ void merge_like_dcb_entries(struct drm_device *dev, struct dcb_table *dcb)
 				NV_INFO(drm, "Merging DCB entries %d and %d\n",
 					 i, j);
 				ient->heads |= jent->heads;
-				jent->type = 100; /* dummy value */
+				jent->type = DCB_OUTPUT_MERGED;
 			}
 		}
 	}
 
 	/* Compact entries merged into others out of dcb */
 	for (i = 0; i < dcb->entries; i++) {
-		if (dcb->entry[i].type == 100)
+		if (dcb->entry[i].type == DCB_OUTPUT_MERGED)
 			continue;
 
 		if (newentries != i) {
