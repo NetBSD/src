@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.201 2015/08/24 07:21:14 christos Exp $
+# $NetBSD: postinstall,v 1.202 2016/01/30 23:45:37 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1361,6 +1361,7 @@ httpd
 identd
 ifwatchd
 inetd
+ip6addrctl
 ipfilter
 ipfs
 ipmon
