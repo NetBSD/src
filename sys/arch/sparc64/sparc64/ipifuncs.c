@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.55 2015/01/04 15:24:18 palle Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.56 2016/01/30 22:47:06 palle Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.55 2015/01/04 15:24:18 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.56 2016/01/30 22:47:06 palle Exp $");
 
 #include "opt_ddb.h"
 
@@ -237,7 +237,7 @@ sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1, uint64_t arg2)
 }
 
 /*
- * Send an interprocessor interrupt - sun4v.
+ * Send an interprocessor interrupt - sun4u.
  */
 void
 sparc64_send_ipi_sun4u(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
