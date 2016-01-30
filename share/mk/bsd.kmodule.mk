@@ -1,10 +1,17 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.56 2016/01/30 03:38:39 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.57 2016/01/30 04:07:27 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
+
+.if ${MKCTF:Uno} == "yes"
+CFLAGS+=	-g
+# Only need symbols for ctf, strip them after converting to CTF
+CTFFLAGS=	-L VERSION
+.endif
+
 .include <bsd.sys.mk>
 
 ##### Basic targets
@@ -43,11 +50,6 @@ LDFLAGS+=	-Wl,-m,elf64btsmip
 .elif ${MACHINE_ARCH} == "mips64el" && !defined(BSD_MK_COMPAT_FILE)
 CFLAGS+=	-mabi=64
 LDFLAGS+=	-Wl,-m,elf64ltsmip
-.endif
-
-.if ${MKCTF:Uno} == "yes"
-CFLAGS+=	-g
-#CTFFLAGS+=	-g
 .endif
 
 .if ${MACHINE_CPU} == "sparc64"
