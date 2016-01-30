@@ -579,7 +579,7 @@ static int
 process_import_file (char *message, char *vfile, char *vtag, int targc,
 		     char **targv)
 {
-    char *rcs;
+    char *rcs, *cleanmessage;
     int inattic = 0;
 
     rcs = Xasprintf ("%s/%s%s", repository, vfile, RCSEXT);
@@ -654,13 +654,14 @@ process_import_file (char *message, char *vfile, char *vtag, int targc,
 		Entries_Close (entries);
 	    }
 #endif
-
-	    retval = add_rcs_file (message, rcs, vfile, vhead, our_opt,
+	    cleanmessage = make_message_rcsvalid (message);
+	    retval = add_rcs_file (cleanmessage, rcs, vfile, vhead, our_opt,
 				   vbranch, vtag, targc, targv,
 				   NULL, 0, logfp, killnew);
 	    if (free_opt != NULL)
 		free (free_opt);
 	    free (rcs);
+	    free (cleanmessage);
 	    return retval;
 	}
 	free (attic_name);
