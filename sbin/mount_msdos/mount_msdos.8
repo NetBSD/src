@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.36 2012/11/16 15:00:18 tsutsui Exp $
+.\" $NetBSD: mount_msdos.8,v 1.37 2016/01/30 09:59:27 mlelstv Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nd mount an MS-DOS file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl 9Gls
+.Op Fl 9GlsU
 .Op Fl g Ar gid
 .Op Fl M Ar mask
 .Op Fl m Ar mask
@@ -111,6 +111,19 @@ is the default.
 Otherwise
 .Fl l
 is assumed.
+.It Fl U
+The MS-DOS file system stores filenames in a short
+version using 8-bit characters according to some
+character set and a long version with 16-bit unicode
+characters.
+The default method to store encoding-agnostic UNIX filenames
+is to copy them byte-wise into both fields. This is
+transparent but generates wrong unicode characters
+for anything that is not ASCII. Setting the
+.Fl U
+flag interprets UNIX filenames as UTF-8 and generates
+correctly encoded long filenames. This forces
+.Fl l .
 .It Fl M Ar mask
 Specify the maximum file permissions for directories
 in the file system.
