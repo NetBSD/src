@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.37 2016/01/30 09:59:27 mlelstv Exp $
+.\" $NetBSD: mount_msdos.8,v 1.38 2016/01/30 10:13:02 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd November 16, 2012
+.Dd January 30, 2016
 .Dt MOUNT_MSDOS 8
 .Os
 .Sh NAME
@@ -117,12 +117,15 @@ version using 8-bit characters according to some
 character set and a long version with 16-bit unicode
 characters.
 The default method to store encoding-agnostic UNIX filenames
-is to copy them byte-wise into both fields. This is
+is to copy them byte-wise into both fields.
+This is
 transparent but generates wrong unicode characters
-for anything that is not ASCII. Setting the
+for anything that is not ASCII.
+Setting the
 .Fl U
 flag interprets UNIX filenames as UTF-8 and generates
-correctly encoded long filenames. This forces
+correctly encoded long filenames.
+This forces
 .Fl l .
 .It Fl M Ar mask
 Specify the maximum file permissions for directories
