@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.55 2015/07/09 14:50:08 matt Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.56 2016/01/30 03:38:39 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -43,6 +43,11 @@ LDFLAGS+=	-Wl,-m,elf64btsmip
 .elif ${MACHINE_ARCH} == "mips64el" && !defined(BSD_MK_COMPAT_FILE)
 CFLAGS+=	-mabi=64
 LDFLAGS+=	-Wl,-m,elf64ltsmip
+.endif
+
+.if ${MKCTF:Uno} == "yes"
+CFLAGS+=	-g
+#CTFFLAGS+=	-g
 .endif
 
 .if ${MACHINE_CPU} == "sparc64"
