@@ -1,4 +1,4 @@
-#	$NetBSD: list.images,v 1.10 2014/11/24 08:08:23 tsutsui Exp $
+#	$NetBSD: list.images,v 1.11 2016/01/30 00:52:11 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/atari/stand
 LIBS	libhack.o -lprop -lrmt -lz -lutil -lcurses -lterminfo -ll -lm
@@ -11,7 +11,6 @@ COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 
 COPY	${CURDIR}/../common/dot.profile 	.profile
-COPY	${CURDIR}/../common/mount_gemdos	sbin/mount_gemdos	555
 
 # and the keyboard maps
 MTREE	./usr/share/keymaps	type=dir uname=root gname=wheel mode=0755
