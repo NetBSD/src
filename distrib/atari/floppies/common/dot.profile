@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.4 2012/06/30 10:20:26 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.5 2016/01/30 00:52:11 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -45,6 +45,8 @@ EDITOR=ed
 export EDITOR
 
 umask 022
+
+mount_gemdos() mount_msdos -G "$@"
 
 makerootwritable() {
 	# note, only handles up to partition 'j'
