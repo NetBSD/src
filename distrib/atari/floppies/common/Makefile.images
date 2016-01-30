@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.images,v 1.10 2015/08/12 18:08:02 tsutsui Exp $
+#	$NetBSD: Makefile.images,v 1.11 2016/01/30 05:15:18 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,7 +11,7 @@ DBG+=		-DNDEBUG	# to remove assert(3) macro
 
 CRUNCHBIN=	instbin
 LISTS=		${.CURDIR}/list ${.CURDIR}/../common/list.images
-MTREECONF=	${DISTRIBDIR}/common/mtree.common
+MTREECONF=	${.CURDIR}/../common/mtree.conf
 IMAGEENDIAN=	be
 IMAGEDEPENDS+=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd 
