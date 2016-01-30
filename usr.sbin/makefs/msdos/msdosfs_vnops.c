@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -154,12 +154,12 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 		break;
 	case 2:
 		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	case 3:
 		olddos = 0;
 		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	}
 
@@ -243,7 +243,8 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 					chksum = winChkName((const u_char *)cnp->cn_nameptr,
 							    cnp->cn_namelen,
 							    (struct winentry *)dep,
-							    chksum);
+							    chksum,
+							    pmp->pm_flags & MSDOSFSMNT_UTF8);
 					continue;
 				}
 

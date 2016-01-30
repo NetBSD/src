@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.9 2016/01/23 01:26:14 dholland Exp $	*/
+/*	$NetBSD: direntry.h,v 1.10 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -136,11 +136,12 @@ int	dos2unixfn(unsigned char dn[11], unsigned char *un, int lower);
 int	unix2dosfn(const unsigned char *un, unsigned char dn[12], int unlen,
 	    unsigned int gen);
 int	unix2winfn(const unsigned char *un, int unlen, struct winentry *wep,
-	    int cnt, int chksum);
+	    int cnt, int chksum, int utf8);
 int	winChkName(const unsigned char *un, int unlen, struct winentry *wep,
-	    int chksum);
-int	win2unixfn(struct winentry *wep, struct dirent *dp, int chksum);
+	    int chksum, int utf8);
+int	win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,	
+	    int utf8);
 uint8_t winChksum(uint8_t *name);
-int	winSlotCnt(const unsigned char *un, int unlen);
+int	winSlotCnt(const unsigned char *un, int unlen, int utf8);
 #endif /* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_DIRENTRY_H_ */

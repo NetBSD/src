@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.15 2015/10/16 16:40:02 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.15 2015/10/16 16:40:02 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -55,7 +55,9 @@ __RCSID("$NetBSD: msdos.c,v 1.15 2015/10/16 16:40:02 christos Exp $");
 #include <util.h>
 
 #include <ffs/buf.h>
+#include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/denode.h>
+#include <fs/msdosfs/msdosfsmount.h>
 #include "makefs.h"
 #include "msdos.h"
 #include "mkfs_msdos.h"
@@ -63,10 +65,15 @@ __RCSID("$NetBSD: msdos.c,v 1.15 2015/10/16 16:40:02 christos Exp $");
 static int msdos_populate_dir(const char *, struct denode *, fsnode *,
     fsnode *, fsinfo_t *);
 
+struct msdos_options_ex {
+	struct msdos_options options;
+	bool utf8;
+};
+
 void
 msdos_prep_opts(fsinfo_t *fsopts)
 {
-	struct msdos_options *msdos_opt = ecalloc(1, sizeof(*msdos_opt));
+	struct msdos_options_ex *msdos_opt = ecalloc(1, sizeof(*msdos_opt));
 	const option_t msdos_options[] = {
 #define AOPT(_opt, _type, _name, _min, _desc) { 			\
 	.letter = _opt,							\
@@ -76,7 +83,7 @@ msdos_prep_opts(fsinfo_t *fsopts)
 	    (sizeof(_type) == 1 ? OPT_INT8 :				\
 	    (sizeof(_type) == 2 ? OPT_INT16 :				\
 	    (sizeof(_type) == 4 ? OPT_INT32 : OPT_INT64)))),		\
-	.value = &msdos_opt->_name,					\
+	.value = &msdos_opt->options._name,				\
 	.minimum = _min,						\
 	.maximum = sizeof(_type) == 1 ? 0xff :				\
 	    (sizeof(_type) == 2 ? 0xffff :				\
@@ -85,6 +92,8 @@ msdos_prep_opts(fsinfo_t *fsopts)
 },
 ALLOPTS
 #undef AOPT	
+		{ 'U', "utf8", &msdos_opt->utf8, OPT_BOOL,
+		  0, 1, "Use UTF8 names" },
 		{ .name = NULL }
 	};
 
@@ -131,10 +140,11 @@ msdos_parse_opts(const char *option, fsinfo_t *fsopts)
 void
 msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
-	struct msdos_options *msdos_opt = fsopts->fs_specific;
+	struct msdos_options_ex *msdos_opt = fsopts->fs_specific;
 	struct vnode vp, rootvp;
 	struct timeval	start;
 	struct msdosfsmount *pmp;
+	uint32_t flags;
 
 	assert(image != NULL);
 	assert(dir != NULL);
@@ -145,31 +155,36 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	 * XXX: pick up other options from the msdos specific ones?
 	 * Is minsize right here?
 	 */
-	msdos_opt->create_size = MAX(msdos_opt->create_size, fsopts->minsize);
-	msdos_opt->offset = fsopts->offset;
-	if (msdos_opt->bytes_per_sector == 0) {
+	msdos_opt->options.create_size = MAX(msdos_opt->options.create_size,
+		fsopts->minsize);
+	msdos_opt->options.offset = fsopts->offset;
+	if (msdos_opt->options.bytes_per_sector == 0) {
 		if (fsopts->sectorsize == -1)
 			fsopts->sectorsize = 512;
-		msdos_opt->bytes_per_sector = fsopts->sectorsize;
+		msdos_opt->options.bytes_per_sector = fsopts->sectorsize;
 	} else if (fsopts->sectorsize == -1) {
-		fsopts->sectorsize = msdos_opt->bytes_per_sector;
-	} else if (fsopts->sectorsize != msdos_opt->bytes_per_sector) {
+		fsopts->sectorsize = msdos_opt->options.bytes_per_sector;
+	} else if (fsopts->sectorsize != msdos_opt->options.bytes_per_sector) {
 		err(1, "inconsistent sectorsize -S %u"
 		    "!= -o bytes_per_sector %u", 
-		    fsopts->sectorsize, msdos_opt->bytes_per_sector);
+		    fsopts->sectorsize, msdos_opt->options.bytes_per_sector);
 	}
 
 		/* create image */
 	printf("Creating `%s'\n", image);
 	TIMER_START(start);
-	if (mkfs_msdos(image, NULL, msdos_opt) == -1)
+	if (mkfs_msdos(image, NULL, &msdos_opt->options) == -1)
 		return;
 	TIMER_RESULTS(start, "mkfs_msdos");
 
 	fsopts->fd = open(image, O_RDWR);
 	vp.fs = fsopts;
 
-	if ((pmp = msdosfs_mount(&vp, 0)) == NULL)
+	flags = 0;
+	if (msdos_opt->utf8)
+		flags |= MSDOSFSMNT_UTF8;
+
+	if ((pmp = msdosfs_mount(&vp, flags)) == NULL)
 		err(1, "msdosfs_mount");
 
 	if (msdosfs_root(pmp, &rootvp) != 0)

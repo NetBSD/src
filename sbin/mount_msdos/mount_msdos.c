@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.47 2009/10/07 20:34:02 pooka Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.48 2016/01/30 09:59:27 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.47 2009/10/07 20:34:02 pooka Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.48 2016/01/30 09:59:27 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ mount_msdos_parseargs(int argc, char **argv,
 	*mntflags = set_gid = set_uid = set_mask = set_dirmask = set_gmtoff = 0;
 	(void)memset(args, '\0', sizeof(*args));
 
-	while ((c = getopt(argc, argv, "Gsl9u:g:m:M:o:t:")) != -1) {
+	while ((c = getopt(argc, argv, "Gsl9Uu:g:m:M:o:t:")) != -1) {
 		switch (c) {
 		case 'G':
 			args->flags |= MSDOSFSMNT_GEMDOSFS;
@@ -107,6 +107,9 @@ mount_msdos_parseargs(int argc, char **argv,
 			break;
 		case '9':
 			args->flags |= MSDOSFSMNT_NOWIN95;
+			break;
+		case 'U':
+			args->flags |= MSDOSFSMNT_UTF8;
 			break;
 		case 'u':
 			args->uid = a_uid(optarg);
