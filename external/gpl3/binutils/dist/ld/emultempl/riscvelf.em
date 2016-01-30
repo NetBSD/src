@@ -20,7 +20,18 @@
 
 fragment <<EOF
 
+#include "sysdep.h"
+#include "bfd.h"
+#include "bfdlink.h"
+#include "getopt.h"
+
+#include "ld.h"
 #include "ldmain.h"
+#include "ldmisc.h"
+#include "ldexp.h"
+#include "ldlang.h"
+#include "ldfile.h"
+#include "ldemul.h"
 #include "ldctor.h"
 #include "elf/riscv.h"
 #include "elfxx-riscv.h"
@@ -51,7 +62,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 
   /* Don't attempt to discard unused .eh_frame sections until the final link,
      as we can't reliably tell if they're used until after relaxation.  */
-  if (!link_info.relocatable)
+  if (!bfd_link_relocatable (&link_info))
     {
       need_layout = bfd_elf_discard_info (link_info.output_bfd, &link_info);
       if (need_layout < 0)
