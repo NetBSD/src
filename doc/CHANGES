@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2134 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2135 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -247,3 +247,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	gettext: Upgrade to 0.16.1 [christos 20160112]
 	bind: Import version 9.10.3-P3. [christos 20160119]
 	dhcpcd: Import dhcpcd 6.10.1. [roy 20160120]
+	openssl: Import openssl 1.0.1r [christos 20160130]
