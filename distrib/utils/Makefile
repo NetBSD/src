@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.21 2014/07/26 19:35:10 dholland Exp $
+#	$NetBSD: Makefile,v 1.22 2016/01/31 18:56:49 christos Exp $
 
 .if make(obj)
 
 SUBDIR=	libhack more ssh tls \
-	x_ed x_gzip x_ifconfig \
+	x_disklabel x_ed x_gzip x_ifconfig \
 	x_netstat x_ping x_route x_umount zcat
 
 .if ${MACHINE} == "acorn32"
