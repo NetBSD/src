@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2014/10/14 08:33:38 nonaka Exp $
+#	$NetBSD: Makefile,v 1.10 2016/01/31 15:32:13 christos Exp $
 
 WARNS?=	4
+
+.include <bsd.init.mk>
 
 S=	${.CURDIR}/../../../..
 
