@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.gzboot,v 1.31 2015/07/15 11:21:49 martin Exp $
+#	$NetBSD: Makefile.gzboot,v 1.32 2016/01/31 02:16:28 christos Exp $
 
 NOMAN=  # defined
 
 .include <bsd.obj.mk>		# Pull in OBJDIR name rules.
+MKPIE:=no
+MKCTF:=no
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
