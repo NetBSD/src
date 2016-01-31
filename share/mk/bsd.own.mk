@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.889 2016/01/29 15:33:51 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.890 2016/01/31 15:30:14 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -527,6 +527,13 @@ TOOL_VFONTEDPR=		/usr/libexec/vfontedpr
 TOOL_ZIC=		zic
 
 .endif	# USETOOLS != yes						# }
+
+# Standalone code should not be compiled with PIE or CTF
+# Should create a better test
+.if defined(BINDIR) && ${BINDIR} == "/usr/mdec"
+NOPIE=			# defined
+NOCTF=			# defined
+.endif
 
 # Fallback to ensure that all variables are defined to something
 TOOL_CC.false=		false
