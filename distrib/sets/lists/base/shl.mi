@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.760 2016/01/20 02:20:41 christos Exp $
+# $NetBSD: shl.mi,v 1.761 2016/01/31 18:41:35 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -187,8 +187,10 @@
 ./usr/lib/libavl.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libavl.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libavl.so.0.0          		base-zfs-shlib		compatfile,zfs
-./usr/lib/libbfd.so.13				base-sys-shlib		compatfile,binutils
-./usr/lib/libbfd.so.13.0			base-sys-shlib		compatfile,binutils
+./usr/lib/libbfd.so.13				base-sys-shlib		compatfile,binutils=223
+./usr/lib/libbfd.so.13.0			base-sys-shlib		compatfile,binutils=223
+./usr/lib/libbfd.so.14				base-sys-shlib		compatfile,binutils=226
+./usr/lib/libbfd.so.14.0			base-sys-shlib		compatfile,binutils=226
 ./usr/lib/libbind9.so				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.8				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.8.4			base-bind-shlib		compatfile
