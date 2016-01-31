@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.c,v 1.4 2015/07/18 06:00:46 htodd Exp $	*/
+/*	$NetBSD: bswap.c,v 1.5 2016/01/31 18:57:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Izumi Tsutsui.  All rights reserved.
@@ -54,6 +54,8 @@
  *
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
+#if !defined(NATIVELABEL_ONLY)
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -179,3 +181,5 @@ dkcksum_target(struct disklabel *lp)
 
 	return dkcksum_sized(lp, npartitions);
 }
+
+#endif /* !NATIVELABEL_ONLY */

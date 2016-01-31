@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.h,v 1.2 2013/05/03 16:05:12 matt Exp $	*/
+/*	$NetBSD: bswap.h,v 1.3 2016/01/31 18:57:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Izumi Tsutsui.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/endian.h>
 #endif
 
+#if !defined(NATIVELABEL_ONLY)
 extern int bswap_p;
 extern u_int maxpartitions;
 
@@ -49,3 +50,13 @@ extern u_int maxpartitions;
 void htotargetlabel(struct disklabel *, const struct disklabel *);
 void targettohlabel(struct disklabel *, const struct disklabel *);
 uint16_t dkcksum_target(struct disklabel *);
+#else
+#define htotarget16(x)		(x)
+#define target16toh(x)		(x)
+#define htotarget32(x)		(x)
+#define target32toh(x)		(x)
+
+#define htotargetlabel(dl, sl)	do { *(dl) = *(sl); } while (0)
+#define targettohlabel(dl, sl)	do { *(dl) = *(sl); } while (0)
+#define dkcksum_target(label)	dkcksum(label)
+#endif /* !NATIVELABEL_ONLY */
