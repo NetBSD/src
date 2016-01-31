@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.38 2013/05/03 16:05:12 matt Exp $	*/
+/*	$NetBSD: interact.c,v 1.39 2016/01/31 18:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -24,13 +24,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !defined(NO_INTERACT)
+
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.38 2013/05/03 16:05:12 matt Exp $");
+__RCSID("$NetBSD: interact.c,v 1.39 2016/01/31 18:57:29 christos Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -810,3 +812,5 @@ interact(struct disklabel *lp, int fd)
 			return;
 	}
 }
+
+#endif /* !NO_INTERACT */
