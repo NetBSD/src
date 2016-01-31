@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.14 2016/01/31 05:21:53 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.15 2016/01/31 05:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ typedef int		boolean_t;
 typedef longlong_t      hrtime_t;
 typedef int32_t		t_scalar_t;
 typedef uint32_t	t_uscalar_t;
-#ifdef _KERNTYPES
+#ifdef _KERNEL
 typedef vsize_t		pgcnt_t;
 #endif
 typedef u_longlong_t	len_t;
