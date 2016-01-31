@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.25 2015/12/08 14:52:06 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.26 2016/01/31 04:40:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -196,6 +196,7 @@ struct knote {
 #define	KN_DISABLED	0x04U			/* event is disabled */
 #define	KN_DETACHED	0x08U			/* knote is detached */
 #define	KN_MARKER	0x10U			/* is a marker */
+#define KN_BUSY		0x20U			/* is being scanned */
 
 #define	kn_id		kn_kevent.ident
 #define	kn_filter	kn_kevent.filter
