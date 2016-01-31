@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.29 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.30 2016/01/31 23:41:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.29 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.30 2016/01/31 23:41:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -288,12 +288,12 @@ add:
 	good = true;
 
 restore:
+out:
 	if (havetty) {
 		c = errno;
 		(void)tcsetattr(fd[0], TCSAFLUSH|TCSASOFT, &gt);
 		errno = c;
 	}
-out:
 	if (good && (flags & GETPASS_ECHO_NL))
 		(void)write(fd[1], "\n", 1);
 
