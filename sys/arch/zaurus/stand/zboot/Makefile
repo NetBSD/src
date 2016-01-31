@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/08/27 03:17:21 matt Exp $
+#	$NetBSD: Makefile,v 1.18 2016/01/31 15:32:12 christos Exp $
 
 PROG=		zboot
 
@@ -12,7 +12,7 @@ SRCS+=		pathfs.c
 
 NOMAN=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 CFLAGS+=	-Wall -Wno-main
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
