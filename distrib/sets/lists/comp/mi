@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2015 2016/01/24 17:14:10 christos Exp $
+#	$NetBSD: mi,v 1.2016 2016/01/31 23:14:34 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2661,6 +2661,7 @@
 ./usr/include/rump/rump_namei.h			comp-c-include	rump
 ./usr/include/rump/rump_syscalls.h		comp-c-include	rump
 ./usr/include/rump/rump_syscalls_compat.h	comp-c-include	rump
+./usr/include/rump/rump_syscallshotgun.h	comp-c-include	rump
 ./usr/include/rump/rumpclient.h			comp-c-include	rump
 ./usr/include/rump/rumpdefs.h			comp-c-include	rump
 ./usr/include/rump/rumperr.h			comp-c-include	rump
