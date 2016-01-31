@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2015/04/27 17:05:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2016/01/31 18:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.45 2015/04/27 17:05:58 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.46 2016/01/31 18:57:29 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -163,7 +163,9 @@ static int readlabel_direct(int);
 static void writelabel_direct(int);
 static int update_label(int, u_int, u_int);
 static struct disklabel *find_label(int, u_int);
+#if !defined(NATIVELABEL_ONLY)
 static void getmachineparams(const char *);
+#endif
 
 static void		 makedisktab(FILE *, struct disklabel *);
 static void		 makelabel(const char *, const char *);
@@ -184,6 +186,7 @@ static int		 getulong(const char *, char, char **,
 
 static int set_writable_fd = -1;
 
+#if !defined(NATIVELABEL_ONLY)
 static u_int labeloffset;
 static u_int labelsector;
 static int labelusesmbr;
@@ -347,6 +350,13 @@ static const struct arch_endian {
 
 /* Default location for label - only used if we don't find one to update */
 #define LABEL_OFFSET (dklabel_getlabelsector() * DEV_BSIZE + dklabel_getlabeloffset())
+#else
+#define labeloffset	LABELOFFSET
+#define labelsector	LABELSECTOR
+#define labelusesmbr	LABELUSESMBR
+#define maxpartitions	MAXPARTITIONS
+#define LABEL_OFFSET	LABELOFFSET
+#endif /* !NATIVELABEL_ONLY */
 
 /*
  * For portability it doesn't make sense to use any other value....
@@ -368,6 +378,7 @@ opendisk(const char *path, int flags, char *buf, int buflen, int cooked)
 }
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
+#if !defined(NATIVELABEL_ONLY)
 static void
 setbyteorder(int new_byteorder)
 {
@@ -444,6 +455,7 @@ dklabel_getlabeloffset(void)
 		err(EXIT_FAILURE, "DISKLABELOFFSET in environment");
 	return nval;
 }
+#endif /* !NATIVELABEL_ONLY */
 
 static void
 clear_writable(void)
@@ -458,22 +470,31 @@ main(int argc, char *argv[])
 	FILE	*t;
 	int	 ch, f, error;
 	char	*dkname;
+#if !defined(NATIVELABEL_ONLY)
 	char	*cp;
+#endif
 	struct stat sb;
 	int	 writable;
 	enum {
 		UNSPEC, EDIT, READ, RESTORE, SETWRITABLE, SETREADONLY,
-		WRITE, INTERACT, DELETE
+		WRITE,
+#if !defined(NO_INTERACT)
+		INTERACT,
+#endif
+		DELETE
 	} op = UNSPEC, old_op;
 
 #ifndef HAVE_NBTOOL_CONFIG_H
+#if !defined(NATIVELABEL_ONLY)
 	labeloffset = native_params.labeloffset = getlabeloffset();
 	labelsector = native_params.labelsector = getlabelsector();
 	labelusesmbr = native_params.labelusesmbr = getlabelusesmbr();
 	maxpartitions = native_params.maxpartitions = getmaxpartitions();
 	byteorder = native_params.byteorder = BYTE_ORDER;
 #endif
+#endif
 
+#if !defined(NATIVELABEL_ONLY)
 	if ((cp = getenv("MACHINE")) != NULL) {
 		getmachineparams(cp);
 	}
@@ -481,6 +502,7 @@ main(int argc, char *argv[])
 	if ((cp = getenv("MACHINE_ARCH")) != NULL) {
 		getarchbyteorder(cp);
 	}
+#endif
 
 	mflag = labelusesmbr;
 	if (mflag < 0) {
@@ -522,6 +544,7 @@ main(int argc, char *argv[])
 		case 'R':	/* Restore label from text file */
 			op = RESTORE;
 			break;
+#if !defined(NATIVELABEL_ONLY)
 		case 'B':	/* byteorder */
 			if (!strcmp(optarg, "be")) {
 				setbyteorder(BIG_ENDIAN);
@@ -534,6 +557,7 @@ main(int argc, char *argv[])
 		case 'M':	/* machine type */
 			getmachineparams(optarg);
 			break;
+#endif
 		case 'N':	/* Disallow writes to label sector */
 			op = SETREADONLY;
 			break;
@@ -547,9 +571,11 @@ main(int argc, char *argv[])
 			if (setdisktab(optarg) == -1)
 				usage();
 			break;
+#if !defined(NO_INTERACT)
 		case 'i':	/* Edit using built-in editor */
 			op = INTERACT;
 			break;
+#endif /* !NO_INTERACT */
 		case 'l':	/* List all known file system types and exit */
 			lflag = 1;
 			break;
@@ -576,6 +602,7 @@ main(int argc, char *argv[])
 			usage();
 	}
 
+#if !defined(NATIVELABEL_ONLY)
 	if (maxpartitions == 0) {
 		errx(1, "unknown label: use -M/-B and $MACHINE/$MACHINE_ARCH");
 	}
@@ -602,6 +629,7 @@ main(int argc, char *argv[])
 	if (!native_p)
 		Fflag = rflag = 1;
 #endif
+#endif /* !NATIVELABEL_ONLY */
 
 	argc -= optind;
 	argv += optind;
@@ -615,7 +643,11 @@ main(int argc, char *argv[])
 	if (argc < 1)
 		usage();
 
-	if (Iflag && op != EDIT && op != INTERACT)
+	if (Iflag && op != EDIT
+#if !defined(NO_INTERACT)
+	    && op != INTERACT
+#endif
+	    )
 		usage();
 
 	dkname = argv[0];
@@ -643,6 +675,7 @@ main(int argc, char *argv[])
 		error = edit(f);
 		break;
 
+#if !defined(NO_INTERACT)
 	case INTERACT:
 		if (argc != 1)
 			usage();
@@ -656,6 +689,7 @@ main(int argc, char *argv[])
 			lab.d_sbsize = SBLOCKSIZE;
 		interact(&lab, f);
 		break;
+#endif /* !NO_INTERACT */
 
 	case READ:
 		if (argc != 1)
@@ -2071,7 +2105,9 @@ usage(void)
 	{ "[-ABCFMrtv] disk", "(to read label)" },
 	{ "-w [-BDFMrv] [-f disktab] disk disktype [packid]", "(to write label)" },
 	{ "-e [-BCDFMIrv] disk", "(to edit label)" },
+#if !defined(NO_INTERACT)
 	{ "-i [-BDFMIrv] disk", "(to create a label interactively)" },
+#endif
 	{ "-D [-v] disk", "(to delete existing label(s))" },
 	{ "-R [-BDFMrv] disk protofile", "(to restore label)" },
 	{ "[-NW] disk", "(to write disable/enable label)" },
@@ -2172,10 +2208,12 @@ list_fs_types(void)
 int
 dk_ioctl(int f, u_long cmd, void *arg)
 {
+#if !defined(NATIVELABEL_ONLY)
 	if (!native_p) {
 		errno = ENOTTY;
 		return -1;
 	}
+#endif
 	return ioctl(f, cmd, arg);
 }
 #endif
