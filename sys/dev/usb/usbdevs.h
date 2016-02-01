@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.702 2016/01/24 15:03:39 christos Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.703 2016/02/01 14:55:09 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.710 2016/01/24 15:02:52 christos Exp
+ *	NetBSD: usbdevs,v 1.711 2016/02/01 14:54:33 nonaka Exp
  */
 
 /*
@@ -2674,6 +2674,8 @@
 
 /* Qualcomm products */
 #define	USB_PRODUCT_QUALCOMM_CDMA_MSM	0x6000		/* CDMA Technologies MSM phone */
+#define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L05A_MODEM	0x6124		/* NTT DOCOMO L-05A */
+#define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L05A_STORAGE	0x613a		/* NTT DOCOMO L-05A */
 #define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_MODEM	0x618f		/* NTT DOCOMO L-02C */
 #define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE	0x61dd		/* NTT DOCOMO L-02C */
 #define	USB_PRODUCT_QUALCOMM_MSM_HSDPA	0x6613		/* HSDPA MSM */
