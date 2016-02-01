@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.33 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34 2016/02/01 05:05:43 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.33 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34 2016/02/01 05:05:43 riz Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.33 2014/09/05 05:57:21 matt Exp $")
 #include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
+#include <sys/sdt.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -730,11 +735,16 @@ bdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	return rv;
 }
 
+SDT_PROVIDER_DECLARE(io);
+SDT_PROBE_DEFINE1(io, kernel, , start, "struct buf *"/*bp*/);
+
 void
 bdev_strategy(struct buf *bp)
 {
 	const struct bdevsw *d;
 	int mpflag;
+
+	SDT_PROBE1(io, kernel, , start, bp);
 
 	if ((d = bdevsw_lookup(bp->b_dev)) == NULL) {
 		bp->b_error = ENXIO;
