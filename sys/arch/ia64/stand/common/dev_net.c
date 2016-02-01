@@ -1,5 +1,5 @@
 /*	
- * $NetBSD: dev_net.c,v 1.9 2014/03/25 18:35:32 christos Exp $
+ * $NetBSD: dev_net.c,v 1.10 2016/02/01 17:38:31 christos Exp $
  */
 
 /*-
@@ -265,7 +265,7 @@ net_getparams(int sock)
      * before passing it along.  This allows us to be compatible with
      * the kernel's diskless (BOOTP_NFSROOT) booting conventions
      */
-    for (i = 0; rootpath[i] != '\0' && i < FNAME_SIZE; i++)
+    for (i = 0; i < FNAME_SIZE && rootpath[i] != '\0'; i++)
 	    if (rootpath[i] == ':')
 		    break;
     if (i && i != FNAME_SIZE && rootpath[i] == ':') {
