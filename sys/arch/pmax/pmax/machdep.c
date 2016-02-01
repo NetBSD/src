@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.249 2015/06/30 02:39:04 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.250 2016/02/01 17:39:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2015/06/30 02:39:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2016/02/01 17:39:41 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -524,7 +524,7 @@ memsize_bitmap(void *first)
 	segstart = curaddr = i = segnum = 0;
 	xsize = prom_memmap->pagesize * 8;
 	while (i < mapbytes) {
-		while (prom_memmap->bitmap[i] == 0xff && i < mapbytes) {
+		while (i < mapbytes && prom_memmap->bitmap[i] == 0xff) {
 			++i;
 			curaddr += xsize;
 		}
