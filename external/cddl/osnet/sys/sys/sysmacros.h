@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmacros.h,v 1.6 2015/12/27 21:40:21 christos Exp $	*/
+/*	$NetBSD: sysmacros.h,v 1.7 2016/02/01 02:12:55 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -33,6 +33,7 @@
 #define	_SYS_SYSMACROS_H
 
 #include <sys/param.h>
+#include <sys/opentypes.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -348,7 +349,7 @@ extern unsigned char bcd_to_byte[256];
  * because if a field crosses a byte boundary it's not likely to be meaningful
  * without reassembly in its nonnative endianness.
  */
-#if !defined(__NetBSD__) && !defined(__APPLE__)
+#ifdef notdef
 #if defined(_BIT_FIELDS_LTOH)
 #define	DECL_BITFIELD2(_a, _b)				\
 	uint8_t _a, _b
