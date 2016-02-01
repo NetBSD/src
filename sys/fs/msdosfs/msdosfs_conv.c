@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.11 2016/01/30 09:59:27 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.12 2016/02/01 02:59:33 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -62,7 +62,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.11 2016/01/30 09:59:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.12 2016/02/01 02:59:33 christos Exp $");
 
 /*
  * System include files.
@@ -1549,7 +1549,8 @@ winChkName(const u_char *un, int unlen, struct winentry *wep, int chksum, int ut
  * Returns the checksum or -1 if impossible
  */
 int
-win2unixfn(struct winentry *wep, struct dirent *dp, int chksum, int utf8)
+win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
+    uint16_t *namlen, int utf8)
 {
 	u_int16_t wn[WIN_CHARS], *p;
 	u_int8_t buf[WIN_CHARS*3];
@@ -1564,7 +1565,7 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum, int utf8)
 	 */
 	if (wep->weCnt & WIN_LAST) {
 		chksum = wep->weChksum;
-		dp->d_namlen = 0;
+		*namlen = 0;
 	} else if (chksum != wep->weChksum)
 		chksum = -1;
 	if (chksum == -1)
@@ -1591,6 +1592,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum, int utf8)
 	 */
 	len = utf8 ? ucs2utf8str(wn, WIN_CHARS, buf, sizeof(buf)) : ucs2char8str(wn, WIN_CHARS, buf, sizeof(buf));
 
+	if (len > sizeof(dp->d_name) - 1)
+		return -1;
+
 	/*
 	 * Prepend name segment to directory entry
 	 *
@@ -1602,11 +1606,15 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum, int utf8)
 	 * are silently discarded. This could also end in multiple
 	 * files using the same (truncated) name.
 	 */
-	dp->d_namlen += len;
-	if (dp->d_namlen > sizeof(dp->d_name)-1)
-		dp->d_namlen = sizeof(dp->d_name)-1;
-	memmove(&dp->d_name[len], &dp->d_name[0], dp->d_namlen - len);
+	*namlen += len;
+	if (*namlen > sizeof(dp->d_name) - 1)
+		*namlen = sizeof(dp->d_name) - 1;
+	memmove(&dp->d_name[len], &dp->d_name[0], *namlen - len);
 	memcpy(dp->d_name, buf, len);
+
+#ifdef __NetBSD__
+	dp->d_namlen = *namlen;
+#endif
 
 	return chksum;
 }
