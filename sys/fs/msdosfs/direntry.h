@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.10 2016/01/30 09:59:27 mlelstv Exp $	*/
+/*	$NetBSD: direntry.h,v 1.11 2016/02/01 02:59:33 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -140,7 +140,7 @@ int	unix2winfn(const unsigned char *un, int unlen, struct winentry *wep,
 int	winChkName(const unsigned char *un, int unlen, struct winentry *wep,
 	    int chksum, int utf8);
 int	win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,	
-	    int utf8);
+	    uint16_t *namlen, int utf8);
 uint8_t winChksum(uint8_t *name);
 int	winSlotCnt(const unsigned char *un, int unlen, int utf8);
 #endif /* _KERNEL || MAKEFS */
