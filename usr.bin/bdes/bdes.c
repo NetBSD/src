@@ -1,4 +1,4 @@
-/*	$NetBSD: bdes.c,v 1.9 2013/08/15 20:48:56 joerg Exp $	*/
+/*	$NetBSD: bdes.c,v 1.10 2016/02/01 17:41:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: bdes.c,v 1.9 2013/08/15 20:48:56 joerg Exp $");
+__RCSID("$NetBSD: bdes.c,v 1.10 2016/02/01 17:41:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,7 +425,7 @@ cvtkey(char *obuf, char *ibuf)
 			/*
 			 * now translate it, bombing on any illegal hex digit
 			 */
-			for (i = 0; ibuf[i] && i < 16; i++)
+			for (i = 0; i < 16 && ibuf[i]; i++)
 				if ((nbuf[i] = tobinhex(ibuf[i], 16)) == -1)
 					bdes_err(-1, "bad hex digit in key");
 			while (i < 16)
