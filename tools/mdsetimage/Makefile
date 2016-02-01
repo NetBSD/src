@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/10/31 08:14:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/02/01 13:44:52 christos Exp $
 
 NOMAN=	# defined
 
@@ -13,3 +13,9 @@ BFDDIR=		${TOOLCHAINOBJ}/build/bfd
 IBERTYDIR=	${TOOLCHAINOBJ}/build/libiberty
 
 .include "${.CURDIR}/../Makefile.host"
+
+LIBDL!=		grep -- -ldl ${TOOLCHAINOBJ}/build/ld/Makefile
+
+.if !empty(LIBDL)
+LDADD+=	-ldl
+.endif
