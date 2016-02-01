@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2014/03/24 20:06:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2016/02/01 17:37:39 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2016/02/01 17:37:39 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -221,7 +221,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	 * #ifdef orgy
 	 */
 	i = 0;
-	while ((eptrs[i] != 0) && (i < 128)) {
+	while (i < 128 && eptrs[i] != 0) {
 		envp[i] = (char *)(intptr_t)eptrs[i];	/* sign extend */
 		i++;
 	}
