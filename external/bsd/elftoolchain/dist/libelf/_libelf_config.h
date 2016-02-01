@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf_config.h,v 1.3 2015/09/29 19:43:39 christos Exp $	*/
+/*	$NetBSD: _libelf_config.h,v 1.4 2016/02/01 02:16:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 Joseph Koshy
@@ -156,6 +156,7 @@
  *     kernel such as GNU/kFreeBSD.
  */
 
+#ifndef HAVE_NBTOOL_CONFIG_H
 #if defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
 
 #if defined(__linux__)
@@ -177,3 +178,4 @@
 #endif
 
 #endif /* defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) */
+#endif /* HAVE_NBTOOL_CONFIG_H */
