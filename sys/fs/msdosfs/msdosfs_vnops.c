@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.95 2016/02/01 02:59:33 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.96 2016/02/01 16:53:23 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.95 2016/02/01 02:59:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.96 2016/02/01 16:53:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1544,6 +1544,8 @@ msdosfs_readdir(void *v)
 				chksum = win2unixfn((struct winentry *)dentp,
 				    dirbuf, chksum, &namlen,
 				    pmp->pm_flags & MSDOSFSMNT_UTF8);
+				if (chksum != -1)
+					dirbuf->d_namlen = namlen;
 				continue;
 			}
 
