@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1238 2016/01/22 09:34:44 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1239 2016/02/01 08:27:43 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1245 2016/01/22 09:34:26 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1246 2016/02/01 08:27:17 msaitoh Exp
  */
 
 /*
@@ -3514,8 +3514,8 @@
 #define	PCI_PRODUCT_INTEL_82801H_SATA_AHCI4	0x2824		/* 82801H AHCI SATA Controller w/ 4 ports */
 #define	PCI_PRODUCT_INTEL_82801H_SATA_2	0x2825		/* 82801H SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801HEM_SATA	0x2828		/* 82801HEM SATA Controller */
-#define	PCI_PRODUCT_INTEL_82801HBM_SATA_1	0x2829		/* 82801HBM SATA Controller */
-#define	PCI_PRODUCT_INTEL_82801HBM_SATA_2	0x282a		/* 82081HBM SATA Controller */
+#define	PCI_PRODUCT_INTEL_82801HBM_SATA_AHCI	0x2829		/* 82801HBM AHCI SATA Controller */
+#define	PCI_PRODUCT_INTEL_82801HBM_SATA_RAID	0x282a		/* 82801HBM SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_82801H_USB_1	0x2830		/* 82801H USB UHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801H_USB_2	0x2831		/* 82801H USB UHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801H_USB_3	0x2832		/* 82801H USB UHCI Controller */
