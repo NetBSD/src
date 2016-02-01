@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.2 2016/01/06 03:53:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.3 2016/02/01 08:53:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.2 2016/01/06 03:53:29 christos Exp $");
 #define ISMT_DESC_LPR	0x80	/* Large Packet Received */
 
 /* Macros */
-#define ISMT_DESC_ADDR_RW(addr, is_read) ((addr << 1) | (is_read))
+#define ISMT_DESC_ADDR_RW(addr, is_read) (((addr) << 1) | (is_read))
 
 /* iSMT General Register address offsets (SMBBAR + <addr>) */
 #define ISMT_GR_GCTRL		0x000	/* General Control */
