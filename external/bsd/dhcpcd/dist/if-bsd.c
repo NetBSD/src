@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.26 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.27 2016/02/01 16:47:00 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -466,6 +466,8 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 	char *cp;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	struct sockaddr_dl *sdl;
+	struct sockaddr_in *sin;
+	struct ipv4_addr *ia;
 
 	cp = (char *)(void *)(rtm + 1);
 	sa = (struct sockaddr *)(void *)cp;
@@ -504,9 +506,22 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 		sdl = (struct sockaddr_dl *)(void *)rti_info[RTAX_IFP];
 		rt->iface = if_findsdl(ctx, sdl);
 	} else if (rtm->rtm_addrs & RTA_GATEWAY) {
-		sdl = (struct sockaddr_dl *)(void *)rti_info[RTAX_GATEWAY];
-		if (sdl->sdl_family == AF_LINK)
+		sa = rti_info[RTAX_GATEWAY];
+		switch (sa->sa_family) {
+		case AF_LINK:
+			sdl = (void *)sa;
 			rt->iface = if_findsdl(ctx, sdl);
+			break;
+		case AF_INET:
+			sin = (void *)sa;
+			if ((ia = ipv4_findmaskaddr(ctx, &sin->sin_addr)))
+				rt->iface = ia->iface;
+			break;
+		default:
+			logger(ctx, LOG_ERR, "%s: Bad family %d", __func__,
+			    sa->sa_family);
+			return -1;
+		}
 	}
 
 	/* If we don't have an interface and it's a host route, it maybe
@@ -514,8 +529,6 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 	if (rt->iface == NULL &&
 	    !(~rtm->rtm_flags & (RTF_HOST | RTF_GATEWAY)))
 	{
-		struct ipv4_addr *ia;
-
 		if ((ia = ipv4_findaddr(ctx, &rt->dest)))
 			rt->iface = ia->iface;
 	}
