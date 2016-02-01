@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.348 2015/11/22 04:59:15 kamil Exp $
+#	$NetBSD: bsd.README,v 1.349 2016/02/01 15:00:43 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -158,6 +158,9 @@ MKCTF		If "no", do not build and install CTF tools, and also
 		don't generate and manipulate CTF data of ELF binaries
 		during build.
 		Default: no
+
+NOCTF		Don't generate and manipulate CTF data of ELF binaries
+		during build. It is set internally for standalone programs.
 
 MKCVS		If "no", don't build or install cvs(1).
 		Default: yes
@@ -350,6 +353,9 @@ MKPICLIB	If "no", don't build *_pic.a libraries, and build the
 MKPIE		If "no", create regular executables. Otherwise create
 		PIE (Position Independent Executables).
 		Default: no
+
+NOCTF		Don't create PIE (Position Independent Executables)
+		It is set internally for standalone programs.
 
 MKPIGZGZIP	If "no", only install pigz as pigz, not gzip.
 		Default: no
