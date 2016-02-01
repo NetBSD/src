@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.19 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.20 2016/02/01 16:47:00 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -132,6 +132,23 @@ ipv4_iffindaddr(struct interface *ifp,
 	return NULL;
 }
 
+static struct ipv4_addr *
+ipv4_iffindmaskaddr(struct interface *ifp, const struct in_addr *addr)
+{
+	struct ipv4_state *state;
+	struct ipv4_addr *ap;
+
+	state = IPV4_STATE(ifp);
+	if (state) {
+		TAILQ_FOREACH(ap, &state->addrs, next) {
+		     if ((ap->addr.s_addr & ap->net.s_addr) == 
+			(addr->s_addr & ap->net.s_addr))
+				return ap;
+		}
+	}
+	return NULL;
+}
+
 struct ipv4_addr *
 ipv4_iffindlladdr(struct interface *ifp)
 {
@@ -156,6 +173,20 @@ ipv4_findaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		ap = ipv4_iffindaddr(ifp, addr, NULL);
+		if (ap)
+			return ap;
+	}
+	return NULL;
+}
+
+struct ipv4_addr *
+ipv4_findmaskaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
+{
+	struct interface *ifp;
+	struct ipv4_addr *ap;
+
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		ap = ipv4_iffindmaskaddr(ifp, addr);
 		if (ap)
 			return ap;
 	}
