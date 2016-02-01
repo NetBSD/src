@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.13 2016/02/01 10:37:57 martin Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.14 2016/02/01 16:53:23 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -62,7 +62,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.13 2016/02/01 10:37:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.14 2016/02/01 16:53:23 christos Exp $");
 
 /*
  * System include files.
@@ -1590,9 +1590,10 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
 	/*
 	 * Translate ucs-2 to UNIX name
 	 */
-	len = utf8 ? ucs2utf8str(wn, WIN_CHARS, buf, sizeof(buf)) : ucs2char8str(wn, WIN_CHARS, buf, sizeof(buf));
+	len = utf8 ? ucs2utf8str(wn, WIN_CHARS, buf, sizeof(buf))
+	    : ucs2char8str(wn, WIN_CHARS, buf, sizeof(buf));
 
-	if (len < 0 || (size_t)len > sizeof(dp->d_name) - 1)
+	if ((size_t)len > sizeof(dp->d_name) - 1)
 		return -1;
 
 	/*
@@ -1611,10 +1612,6 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
 		*namlen = sizeof(dp->d_name) - 1;
 	memmove(&dp->d_name[len], &dp->d_name[0], *namlen - len);
 	memcpy(dp->d_name, buf, len);
-
-#ifdef __NetBSD__
-	dp->d_namlen = *namlen;
-#endif
 
 	return chksum;
 }
