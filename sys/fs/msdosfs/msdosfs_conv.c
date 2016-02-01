@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.12 2016/02/01 02:59:33 christos Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.13 2016/02/01 10:37:57 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -62,7 +62,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.12 2016/02/01 02:59:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.13 2016/02/01 10:37:57 martin Exp $");
 
 /*
  * System include files.
@@ -1592,7 +1592,7 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
 	 */
 	len = utf8 ? ucs2utf8str(wn, WIN_CHARS, buf, sizeof(buf)) : ucs2char8str(wn, WIN_CHARS, buf, sizeof(buf));
 
-	if (len > sizeof(dp->d_name) - 1)
+	if (len < 0 || (size_t)len > sizeof(dp->d_name) - 1)
 		return -1;
 
 	/*
