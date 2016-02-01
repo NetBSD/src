@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: errno.h,v 1.2 2016/02/01 02:09:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef EBADE
 #define	EBADE	ENOSR
+#endif
+#ifndef EBADR
 #define	EBADR	ENOSTR
+#endif
 
 #include_next <sys/errno.h>
