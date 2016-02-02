@@ -1,0 +1,1 @@
+NATDEPFILES= x86-nat.o x86-dregs.o windows-nat.o amd64-windows-nat.o
