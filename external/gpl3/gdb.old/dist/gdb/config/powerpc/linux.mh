@@ -1,0 +1,12 @@
+# Host: PowerPC, running Linux
+
+XM_CLIBS=
+
+NAT_FILE= config/nm-linux.h
+NATDEPFILES= inf-ptrace.o fork-child.o \
+	ppc-linux-nat.o proc-service.o linux-thread-db.o \
+	linux-nat.o linux-osdata.o linux-fork.o linux-procfs.o linux-ptrace.o \
+	linux-waitpid.o
+NAT_CDEPS = $(srcdir)/proc-service.list
+
+LOADLIBES = -ldl $(RDYNAMIC)
