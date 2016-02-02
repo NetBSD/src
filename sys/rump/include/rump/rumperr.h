@@ -1,4 +1,4 @@
-/*	$NetBSD: rumperr.h,v 1.5 2016/02/02 01:14:26 pooka Exp $	*/
+/*	$NetBSD: rumperr.h,v 1.6 2016/02/02 01:15:58 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.

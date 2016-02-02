@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.35 2016/02/02 01:14:26 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.36 2016/02/02 01:15:58 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -32,6 +32,31 @@
 #define	RUMP_O_CLOEXEC	0x00400000	/* set close on exec */
 #define	RUMP_O_SEARCH	0x00800000	/* skip search permission checks */
 #define	RUMP_O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
+#define	RUMP_F_WAIT		0x010		/* Wait until lock is granted */
+#define	RUMP_F_FLOCK		0x020	 	/* Use flock(2) semantics for lock */
+#define	RUMP_F_POSIX		0x040	 	/* Use POSIX semantics for lock */
+#define	RUMP_F_PARAM_MASK	0xfff
+#define	RUMP_F_PARAM_LEN(x)	(((x) >> 16) & RUMP_F_PARAM_MASK)
+#define	RUMP_F_FSCTL		(int)0x80000000	/* This fcntl goes to the fs */
+#define	RUMP_F_FSVOID	(int)0x40000000	/* no parameters */
+#define	RUMP_F_FSOUT		(int)0x20000000	/* copy out parameter */
+#define	RUMP_F_FSIN		(int)0x10000000	/* copy in parameter */
+#define	RUMP_F_FSINOUT	(RUMP_F_FSIN | RUMP_F_FSOUT)
+#define	RUMP_F_FSDIRMASK	(int)0x70000000	/* mask for IN/OUT/VOID */
+#define	RUMP_F_FSPRIV	(int)0x00008000	/* command is fs-specific */
+#define	RUMP__FCN(inout, num, len) \
+		(RUMP_F_FSCTL | inout | ((len & RUMP_F_PARAM_MASK) << 16) | (num))
+#define	RUMP__FCNO(c)	RUMP__FCN(RUMP_F_FSVOID,	(c), 0)
+#define	RUMP__FCNR(c, t)	RUMP__FCN(RUMP_F_FSIN,	(c), (int)sizeof(t))
+#define	RUMP__FCNW(c, t)	RUMP__FCN(RUMP_F_FSOUT,	(c), (int)sizeof(t))
+#define	RUMP__FCNRW(c, t)	RUMP__FCN(RUMP_F_FSINOUT,	(c), (int)sizeof(t))
+#define	RUMP__FCN_FSPRIV(inout, fs, num, len) \
+	(RUMP_F_FSCTL | RUMP_F_FSPRIV | inout | ((len & RUMP_F_PARAM_MASK) << 16) |	\
+	 (fs) << 8 | (num))
+#define	RUMP__FCNO_FSPRIV(f, c)	RUMP__FCN_FSPRIV(RUMP_F_FSVOID,  (f), (c), 0)
+#define	RUMP__FCNR_FSPRIV(f, c, t)	RUMP__FCN_FSPRIV(RUMP_F_FSIN,    (f), (c), (int)sizeof(t))
+#define	RUMP__FCNW_FSPRIV(f, c, t)	RUMP__FCN_FSPRIV(RUMP_F_FSOUT,   (f), (c), (int)sizeof(t))
+#define	RUMP__FCNRW_FSPRIV(f, c, t)	RUMP__FCN_FSPRIV(RUMP_F_FSINOUT, (f), (c), (int)sizeof(t))
 
 /*	NetBSD: vnode.h,v 1.259 2016/01/23 16:08:20 christos Exp 	*/
 enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VLNK, RUMP_VSOCK, RUMP_VFIFO, RUMP_VBAD };
