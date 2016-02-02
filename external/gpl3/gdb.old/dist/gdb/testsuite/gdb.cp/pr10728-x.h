@@ -5,5 +5,5 @@ struct X
   Y* y2;
 };
 
-X* y();
+X y();
 

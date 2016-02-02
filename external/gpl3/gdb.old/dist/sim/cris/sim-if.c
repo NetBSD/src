@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the CRIS.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -343,7 +343,7 @@ cris_program_offset_write (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf,
    files differently.  */
 
 SIM_RC
-sim_load (SIM_DESC sd, char *prog_name, struct bfd *prog_bfd,
+sim_load (SIM_DESC sd, const char *prog_name, struct bfd *prog_bfd,
 	  int from_tty ATTRIBUTE_UNUSED)
 {
   bfd *result_bfd;

@@ -13,15 +13,15 @@ int bar (int y)
   return z;
 }
 
+int func2 ()
+{
+  x = 6;
+}
+
 void func()
 {
   x = x + 5;
   func2 ();
-}
-
-int func2 ()
-{
-  x = 6;
 }
 
 int func3 ()

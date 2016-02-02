@@ -1,5 +1,5 @@
 /* Configurable Xtensa ISA support.
-   Copyright 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

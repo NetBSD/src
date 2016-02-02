@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2014 Free Software Foundation, Inc.
+   Copyright 2012-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,8 +17,17 @@
 
 class A {
  public:
+  int operator+ (const int a1);
+
+ public:
   int a;
 };
+
+int
+A::operator+ (const int a1)
+{
+  return a + a1;
+}
 
 union U {
   int a;
@@ -87,6 +96,8 @@ int
 main ()
 {
   A obj;
+
+  obj.a = 5;
 
   return func (obj);
 }

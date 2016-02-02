@@ -1,5 +1,5 @@
 /* Opcode decoder for the TI MSP430
-   Copyright 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@redhat.com>
 
    This file is part of GDB, the GNU Debugger.

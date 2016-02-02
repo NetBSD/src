@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -41,40 +41,32 @@
 #include "user-regs.h"
 #include <ctype.h>
 
-/* The general-purpose regset consists of 31 X registers, plus SP, PC,
-   and PSTATE registers, as defined in the AArch64 port of the Linux
-   kernel.  */
-#define AARCH64_LINUX_SIZEOF_GREGSET  (34 * X_REGISTER_SIZE)
-
-/* The fp regset consists of 32 V registers, plus FPCR and FPSR which
-   are 4 bytes wide each, and the whole structure is padded to 128 bit
-   alignment.  */
-#define AARCH64_LINUX_SIZEOF_FPREGSET (33 * V_REGISTER_SIZE)
-
 /* Signal frame handling.
 
-      +----------+  ^
-      | saved lr |  |
-   +->| saved fp |--+
-   |  |          |
-   |  |          |
-   |  +----------+
-   |  | saved lr |
-   +--| saved fp |
-   ^  |          |
-   |  |          |
-   |  +----------+
-   ^  |          |
-   |  | signal   |
-   |  |          |
-   |  | saved lr |-->interrupted_function_pc
-   +--| saved fp |
-   |  +----------+
-   |  | saved lr |--> default_restorer (movz x8, NR_sys_rt_sigreturn; svc 0)
-   +--| saved fp |<- FP
-      |          |
-      |          |<- SP
-      +----------+
+      +------------+  ^
+      | saved lr   |  |
+   +->| saved fp   |--+
+   |  |            |
+   |  |            |
+   |  +------------+
+   |  | saved lr   |
+   +--| saved fp   |
+   ^  |            |
+   |  |            |
+   |  +------------+
+   ^  |            |
+   |  | signal     |
+   |  |            |        SIGTRAMP_FRAME (struct rt_sigframe)
+   |  | saved regs |
+   +--| saved sp   |--> interrupted_sp
+   |  | saved pc   |--> interrupted_pc
+   |  |            |
+   |  +------------+
+   |  | saved lr   |--> default_restorer (movz x8, NR_sys_rt_sigreturn; svc 0)
+   +--| saved fp   |<- FP
+      |            |         NORMAL_FRAME
+      |            |<- SP
+      +------------+
 
   On signal delivery, the kernel will create a signal handler stack
   frame and setup the return address in LR to point at restorer stub.
@@ -123,6 +115,8 @@
   d28015a8        movz    x8, #0xad
   d4000001        svc     #0x0
 
+  This is a system call sys_rt_sigreturn.
+
   We detect signal frames by snooping the return code for the restorer
   instruction sequence.
 
@@ -146,7 +140,6 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, AARCH64_SP_REGNUM);
-  CORE_ADDR fp = get_frame_register_unsigned (this_frame, AARCH64_FP_REGNUM);
   CORE_ADDR sigcontext_addr =
     sp
     + AARCH64_RT_SIGFRAME_UCONTEXT_OFFSET
@@ -160,12 +153,14 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
 			       sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
 			       + i * AARCH64_SIGCONTEXT_REG_SIZE);
     }
+  trad_frame_set_reg_addr (this_cache, AARCH64_SP_REGNUM,
+			   sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
+			     + 31 * AARCH64_SIGCONTEXT_REG_SIZE);
+  trad_frame_set_reg_addr (this_cache, AARCH64_PC_REGNUM,
+			   sigcontext_addr + AARCH64_SIGCONTEXT_XO_OFFSET
+			     + 32 * AARCH64_SIGCONTEXT_REG_SIZE);
 
-  trad_frame_set_reg_addr (this_cache, AARCH64_FP_REGNUM, fp);
-  trad_frame_set_reg_addr (this_cache, AARCH64_LR_REGNUM, fp + 8);
-  trad_frame_set_reg_addr (this_cache, AARCH64_PC_REGNUM, fp + 8);
-
-  trad_frame_set_id (this_cache, frame_id_build (fp, func));
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
 }
 
 static const struct tramp_frame aarch64_linux_rt_sigframe =
@@ -185,88 +180,51 @@ static const struct tramp_frame aarch64_linux_rt_sigframe =
   aarch64_linux_sigframe_init
 };
 
-/* Fill GDB's register array with the general-purpose register values
-   in the buffer pointed by GREGS_BUF.  */
+/* Register maps.  */
 
-void
-aarch64_linux_supply_gregset (struct regcache *regcache,
-			      const gdb_byte *gregs_buf)
-{
-  int regno;
+static const struct regcache_map_entry aarch64_linux_gregmap[] =
+  {
+    { 31, AARCH64_X0_REGNUM, 8 }, /* x0 ... x30 */
+    { 1, AARCH64_SP_REGNUM, 8 },
+    { 1, AARCH64_PC_REGNUM, 8 },
+    { 1, AARCH64_CPSR_REGNUM, 8 },
+    { 0 }
+  };
 
-  for (regno = AARCH64_X0_REGNUM; regno <= AARCH64_CPSR_REGNUM; regno++)
-    regcache_raw_supply (regcache, regno,
-			 gregs_buf + X_REGISTER_SIZE
-			 * (regno - AARCH64_X0_REGNUM));
-}
+static const struct regcache_map_entry aarch64_linux_fpregmap[] =
+  {
+    { 32, AARCH64_V0_REGNUM, 16 }, /* v0 ... v31 */
+    { 1, AARCH64_FPSR_REGNUM, 4 },
+    { 1, AARCH64_FPCR_REGNUM, 4 },
+    { 0 }
+  };
 
-/* The "supply_regset" function for the general-purpose register set.  */
+/* Register set definitions.  */
 
-static void
-supply_gregset_from_core (const struct regset *regset,
-			  struct regcache *regcache,
-			  int regnum, const void *regbuf, size_t len)
-{
-  aarch64_linux_supply_gregset (regcache, (const gdb_byte *) regbuf);
-}
+const struct regset aarch64_linux_gregset =
+  {
+    aarch64_linux_gregmap,
+    regcache_supply_regset, regcache_collect_regset
+  };
 
-/* Fill GDB's register array with the floating-point register values
-   in the buffer pointed by FPREGS_BUF.  */
-
-void
-aarch64_linux_supply_fpregset (struct regcache *regcache,
-			       const gdb_byte *fpregs_buf)
-{
-  int regno;
-
-  for (regno = AARCH64_V0_REGNUM; regno <= AARCH64_V31_REGNUM; regno++)
-    regcache_raw_supply (regcache, regno,
-			 fpregs_buf + V_REGISTER_SIZE
-			 * (regno - AARCH64_V0_REGNUM));
-
-  regcache_raw_supply (regcache, AARCH64_FPSR_REGNUM,
-		       fpregs_buf + V_REGISTER_SIZE * 32);
-  regcache_raw_supply (regcache, AARCH64_FPCR_REGNUM,
-		       fpregs_buf + V_REGISTER_SIZE * 32 + 4);
-}
-
-/* The "supply_regset" function for the floating-point register set.  */
-
-static void
-supply_fpregset_from_core (const struct regset *regset,
-			   struct regcache *regcache,
-			   int regnum, const void *regbuf, size_t len)
-{
-  aarch64_linux_supply_fpregset (regcache, (const gdb_byte *) regbuf);
-}
+const struct regset aarch64_linux_fpregset =
+  {
+    aarch64_linux_fpregmap,
+    regcache_supply_regset, regcache_collect_regset
+  };
 
 /* Implement the "regset_from_core_section" gdbarch method.  */
 
-static const struct regset *
-aarch64_linux_regset_from_core_section (struct gdbarch *gdbarch,
-					const char *sect_name,
-					size_t sect_size)
+static void
+aarch64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					    iterate_over_regset_sections_cb *cb,
+					    void *cb_data,
+					    const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-
-  if (strcmp (sect_name, ".reg") == 0
-      && sect_size == AARCH64_LINUX_SIZEOF_GREGSET)
-    {
-      if (tdep->gregset == NULL)
-	tdep->gregset = regset_alloc (gdbarch, supply_gregset_from_core,
-				      NULL);
-      return tdep->gregset;
-    }
-
-  if (strcmp (sect_name, ".reg2") == 0
-      && sect_size == AARCH64_LINUX_SIZEOF_FPREGSET)
-    {
-      if (tdep->fpregset == NULL)
-	tdep->fpregset = regset_alloc (gdbarch, supply_fpregset_from_core,
-				       NULL);
-      return tdep->fpregset;
-    }
-  return NULL;
+  cb (".reg", AARCH64_LINUX_SIZEOF_GREGSET, &aarch64_linux_gregset,
+      NULL, cb_data);
+  cb (".reg2", AARCH64_LINUX_SIZEOF_FPREGSET, &aarch64_linux_fpregset,
+      NULL, cb_data);
 }
 
 /* Implementation of `gdbarch_stap_is_single_operand', as defined in
@@ -352,28 +310,28 @@ aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
 	return 0;
 
       /* The displacement.  */
-      write_exp_elt_opcode (OP_LONG);
-      write_exp_elt_type (builtin_type (gdbarch)->builtin_long);
-      write_exp_elt_longcst (displacement);
-      write_exp_elt_opcode (OP_LONG);
+      write_exp_elt_opcode (&p->pstate, OP_LONG);
+      write_exp_elt_type (&p->pstate, builtin_type (gdbarch)->builtin_long);
+      write_exp_elt_longcst (&p->pstate, displacement);
+      write_exp_elt_opcode (&p->pstate, OP_LONG);
       if (got_minus)
-	write_exp_elt_opcode (UNOP_NEG);
+	write_exp_elt_opcode (&p->pstate, UNOP_NEG);
 
       /* The register name.  */
-      write_exp_elt_opcode (OP_REGISTER);
+      write_exp_elt_opcode (&p->pstate, OP_REGISTER);
       str.ptr = regname;
       str.length = len;
-      write_exp_string (str);
-      write_exp_elt_opcode (OP_REGISTER);
+      write_exp_string (&p->pstate, str);
+      write_exp_elt_opcode (&p->pstate, OP_REGISTER);
 
-      write_exp_elt_opcode (BINOP_ADD);
+      write_exp_elt_opcode (&p->pstate, BINOP_ADD);
 
       /* Casting to the expected type.  */
-      write_exp_elt_opcode (UNOP_CAST);
-      write_exp_elt_type (lookup_pointer_type (p->arg_type));
-      write_exp_elt_opcode (UNOP_CAST);
+      write_exp_elt_opcode (&p->pstate, UNOP_CAST);
+      write_exp_elt_type (&p->pstate, lookup_pointer_type (p->arg_type));
+      write_exp_elt_opcode (&p->pstate, UNOP_CAST);
 
-      write_exp_elt_opcode (UNOP_IND);
+      write_exp_elt_opcode (&p->pstate, UNOP_IND);
 
       p->arg = tmp;
     }
@@ -414,8 +372,8 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable longjmp.  */
   tdep->jb_pc = 11;
 
-  set_gdbarch_regset_from_core_section (gdbarch,
-					aarch64_linux_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, aarch64_linux_iterate_over_regset_sections);
 
   /* SystemTap related.  */
   set_gdbarch_stap_integer_prefixes (gdbarch, stap_integer_prefixes);

@@ -1,6 +1,5 @@
 /* Disassembly routines for TMS320C54X architecture
-   Copyright 1999, 2000, 2001, 2005, 2007, 2009, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of the GNU opcodes library.

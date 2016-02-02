@@ -1,4 +1,4 @@
-# Copyright 2007-2014 Free Software Foundation, Inc.
+# Copyright 2007-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,18 +41,7 @@ gdb_load ${binfile}
 # We use gdb_run_cmd so this stands a chance to work for remote
 # targets too.
 gdb_run_cmd
-
-gdb_expect {
-    -re "Program received signal SIGTRAP.*$gdb_prompt $" {
-	pass "run past main"
-    }
-    -re ".*$gdb_prompt $" {
-	fail "run past main"
-    }
-    timeout {
-	fail "run past main (timeout)"
-    }
-}
+gdb_test "" "Program received signal SIGTRAP.*" "run past main"
 
 set message "backtrace shows the outer function"
 gdb_test_multiple "backtrace 10" $message {

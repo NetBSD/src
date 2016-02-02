@@ -1,6 +1,5 @@
 /* COFF specific linker code.
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -30,9 +29,11 @@
 #include "libcoff.h"
 #include "safe-ctype.h"
 
-static bfd_boolean coff_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info);
-static bfd_boolean coff_link_check_archive_element (bfd *abfd, struct bfd_link_info *info, bfd_boolean *pneeded);
-static bfd_boolean coff_link_add_symbols (bfd *abfd, struct bfd_link_info *info);
+static bfd_boolean coff_link_add_object_symbols (bfd *, struct bfd_link_info *);
+static bfd_boolean coff_link_check_archive_element
+  (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *, const char *,
+   bfd_boolean *);
+static bfd_boolean coff_link_add_symbols (bfd *, struct bfd_link_info *);
 
 /* Return TRUE if SYM is a weak, external symbol.  */
 #define IS_WEAK_EXTERNAL(abfd, sym)			\
@@ -191,74 +192,6 @@ coff_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
   return TRUE;
 }
 
-/* Look through the symbols to see if this object file should be
-   included in the link.  */
-
-static bfd_boolean
-coff_link_check_ar_symbols (bfd *abfd,
-			    struct bfd_link_info *info,
-			    bfd_boolean *pneeded,
-			    bfd **subsbfd)
-{
-  bfd_size_type symesz;
-  bfd_byte *esym;
-  bfd_byte *esym_end;
-
-  *pneeded = FALSE;
-
-  symesz = bfd_coff_symesz (abfd);
-  esym = (bfd_byte *) obj_coff_external_syms (abfd);
-  esym_end = esym + obj_raw_syment_count (abfd) * symesz;
-  while (esym < esym_end)
-    {
-      struct internal_syment sym;
-      enum coff_symbol_classification classification;
-
-      bfd_coff_swap_sym_in (abfd, esym, &sym);
-
-      classification = bfd_coff_classify_symbol (abfd, &sym);
-      if (classification == COFF_SYMBOL_GLOBAL
-	  || classification == COFF_SYMBOL_COMMON)
-	{
-	  const char *name;
-	  char buf[SYMNMLEN + 1];
-	  struct bfd_link_hash_entry *h;
-
-	  /* This symbol is externally visible, and is defined by this
-             object file.  */
-	  name = _bfd_coff_internal_syment_name (abfd, &sym, buf);
-	  if (name == NULL)
-	    return FALSE;
-	  h = bfd_link_hash_lookup (info->hash, name, FALSE, FALSE, TRUE);
-
-	  /* Auto import.  */
-	  if (!h
-	      && info->pei386_auto_import
-	      && CONST_STRNEQ (name, "__imp_"))
-	    h = bfd_link_hash_lookup (info->hash, name + 6, FALSE, FALSE, TRUE);
-
-	  /* We are only interested in symbols that are currently
-	     undefined.  If a symbol is currently known to be common,
-	     COFF linkers do not bring in an object file which defines
-	     it.  */
-	  if (h != (struct bfd_link_hash_entry *) NULL
-	      && h->type == bfd_link_hash_undefined)
-	    {
-	      if (!(*info->callbacks
-		    ->add_archive_element) (info, abfd, name, subsbfd))
-		return FALSE;
-	      *pneeded = TRUE;
-	      return TRUE;
-	    }
-	}
-
-      esym += (sym.n_numaux + 1) * symesz;
-    }
-
-  /* We do not need this object file.  */
-  return TRUE;
-}
-
 /* Check a single archive element to see if we need to include it in
    the link.  *PNEEDED is set according to whether this element is
    needed in the link or not.  This is called via
@@ -267,41 +200,23 @@ coff_link_check_ar_symbols (bfd *abfd,
 static bfd_boolean
 coff_link_check_archive_element (bfd *abfd,
 				 struct bfd_link_info *info,
+				 struct bfd_link_hash_entry *h,
+				 const char *name,
 				 bfd_boolean *pneeded)
 {
-  bfd *oldbfd;
-  bfd_boolean needed;
+  *pneeded = FALSE;
 
-  if (!_bfd_coff_get_external_symbols (abfd))
+  /* We are only interested in symbols that are currently undefined.
+     If a symbol is currently known to be common, COFF linkers do not
+     bring in an object file which defines it.  */
+  if (h->type != bfd_link_hash_undefined)
+    return TRUE;
+
+  if (!(*info->callbacks->add_archive_element) (info, abfd, name, &abfd))
     return FALSE;
+  *pneeded = TRUE;
 
-  oldbfd = abfd;
-  if (!coff_link_check_ar_symbols (abfd, info, pneeded, &abfd))
-    return FALSE;
-
-  needed = *pneeded;
-  if (needed)
-    {
-      /* Potentially, the add_archive_element hook may have set a
-	 substitute BFD for us.  */
-      if (abfd != oldbfd)
-	{
-	  if (!info->keep_memory
-	      && !_bfd_coff_free_symbols (oldbfd))
-	    return FALSE;
-	  if (!_bfd_coff_get_external_symbols (abfd))
-	    return FALSE;
-	}
-      if (!coff_link_add_symbols (abfd, info))
-	return FALSE;
-    }
-
-  if (!info->keep_memory || !needed)
-    {
-      if (!_bfd_coff_free_symbols (abfd))
-	return FALSE;
-    }
-  return TRUE;
+  return coff_link_add_object_symbols (abfd, info);
 }
 
 /* Add all the symbols from an object file to the hash table.  */
@@ -861,7 +776,7 @@ _bfd_coff_final_link (bfd *abfd,
      the opportunity to clear the output_has_begun fields of all the
      input BFD's.  */
   max_sym_count = 0;
-  for (sub = info->input_bfds; sub != NULL; sub = sub->link_next)
+  for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
     {
       size_t sz;
 
@@ -946,7 +861,7 @@ _bfd_coff_final_link (bfd *abfd,
   if (flaginfo.info->strip != strip_all && flaginfo.info->discard != discard_all)
     {
       /* Add local symbols from foreign inputs.  */
-      for (sub = info->input_bfds; sub != NULL; sub = sub->link_next)
+      for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
 	{
 	  unsigned int i;
 
@@ -2088,7 +2003,10 @@ _bfd_coff_link_input_bfd (struct coff_final_link_info *flaginfo, bfd *input_bfd)
 			  if (strings == NULL)
 			    return FALSE;
 			}
-		      filename = strings + auxp->x_file.x_n.x_offset;
+		      if ((bfd_size_type) auxp->x_file.x_n.x_offset >= obj_coff_strings_len (input_bfd))
+			filename = _("<corrupt>");
+		      else
+			filename = strings + auxp->x_file.x_n.x_offset;
 		      indx = _bfd_stringtab_add (flaginfo->strtab, filename,
 						 hash, copy);
 		      if (indx == (bfd_size_type) -1)
@@ -3060,6 +2978,11 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
 	  else
 	    {
 	      sec = sections[symndx];
+
+	      /* If the output section has been discarded then ignore this reloc.  */
+	      if (sec->output_section->vma == 0)
+		continue;
+
               val = (sec->output_section->vma
 		     + sec->output_offset
 		     + sym->n_value);

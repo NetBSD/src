@@ -1,6 +1,6 @@
 /* Test program for byte registers.
 
-   Copyright 2010-2014 Free Software Foundation, Inc.
+   Copyright 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,6 +39,21 @@ int data[] = {
 int
 main (int argc, char **argv)
 {
+  register int eax asm ("eax");
+  register int ebx asm ("ebx");
+  register int ecx asm ("ecx");
+  register int edx asm ("edx");
+  register int esi asm ("esi");
+  register int edi asm ("edi");
+  register long r8 asm ("r8");
+  register long r9 asm ("r9");
+  register long r10 asm ("r10");
+  register long r11 asm ("r11");
+  register long r12 asm ("r12");
+  register long r13 asm ("r13");
+  register long r14 asm ("r14");
+  register long r15 asm ("r15");
+
   asm ("mov 0(%0), %%eax\n\t"
        "mov 4(%0), %%ebx\n\t"
        "mov 8(%0), %%ecx\n\t"
@@ -61,15 +76,13 @@ main (int argc, char **argv)
        : /* no output operands */
        : "r" (data) 
        : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
-  asm ("nop"); /* second breakpoint here */
 
-  /* amd64-dword.exp writes eax-edi here.
-     Tell gcc they're clobbered so it doesn't try to keep "data" in
-     one of them.  */
-  asm (""
-       : /* no outputs */
-       : /* no inputs */
-       : "eax", "ebx", "ecx", "edx", "esi", "edi");
+  asm ("nop" /* second breakpoint here */
+       /* amd64-{byte,word,dword}.exp write eax-edi here.
+	  Tell gcc/clang they're live.  */
+       : "=r" (eax), "=r" (ebx), "=r" (ecx),
+	 "=r" (edx), "=r" (esi), "=r" (edi)
+       : /* no inputs */);
 
   asm ("mov %%eax, 0(%0)\n\t"
        "mov %%ebx, 4(%0)\n\t"
@@ -78,17 +91,18 @@ main (int argc, char **argv)
        "mov %%esi, 16(%0)\n\t"
        "mov %%edi, 20(%0)\n\t"
        : /* no output operands */
-       : "r" (data) 
-       : "eax", "ebx", "ecx", "edx", "esi", "edi");
-  asm ("nop"); /* third breakpoint here */
+       : "r" (data),
+	 /* Mark these as inputs so that gcc/clang won't try to use them as
+	    a temp to build %0.  */
+	 "r" (eax), "r" (ebx), "r" (ecx),
+	 "r" (edx), "r" (esi), "r" (edi));
 
-  /* amd64-dword.exp writes r8-r15 here.
-     Tell gcc they're clobbered so it doesn't try to keep "data" in
-     one of them.  */
-  asm (""
-       : /* no outputs */
-       : /* no inputs */
-       : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
+  asm ("nop" /* third breakpoint here */
+       /* amd64-{byte,word,dword}.exp write r8-r15 here.
+	  Tell gcc/clang they're live.  */
+       : "=r" (r8), "=r" (r9), "=r" (r10), "=r" (r11),
+	 "=r" (r12), "=r" (r13), "=r" (r14), "=r" (r15)
+       : /* no inputs */);
 
   asm ("mov %%r8d, 24(%0)\n\t"
        "mov %%r9d, 28(%0)\n\t"
@@ -99,8 +113,11 @@ main (int argc, char **argv)
        "mov %%r14d, 48(%0)\n\t"
        "mov %%r15d, 52(%0)\n\t"
        : /* no output operands */
-       : "r" (data) 
-       : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
+       : "r" (data),
+	 /* Mark these as inputs so that gcc/clang won't try to use them as
+	    a temp to build %0.  */
+	 "r" (r8), "r" (r9), "r" (r10), "r" (r11),
+	 "r" (r12), "r" (r13), "r" (r14), "r" (r15));
   puts ("Bye!"); /* forth breakpoint here */
 
   return 0;

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2014 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,14 +88,18 @@ gdb_test "python print(b_td\[b_fields\[0\]\]\['a'\])" "100" \
 gdb_test "python print(u\[u_fields\[0\]\])" "99.*" "u's first field via field"
 gdb_test "python print(u\[u_fields\[1\]\])" "99.*" "u's second field via field"
 
-gdb_test "python print len(x_fields)" "2" "number for fields in u"
-gdb_test "python print x\[x_fields\[0\]\]\['x'\]" "101" "x.x via field"
-gdb_test "python print x\[x_fields\[1\]\]\['a'\]" "102" "x.a via field"
-gdb_test "python print x_ptr\[x_fields\[0\]\]\['x'\]" "101" "x_ptr->x via field"
-gdb_test "python print x_ptr\[x_fields\[1\]\]\['a'\]" "102" "x_ptr->a via field"
-gdb_test "python print xtd\[x_fields\[0\]\]\['x'\]" "101" "xtd->x via field"
-gdb_test "python print xtd\[x_fields\[1\]\]\['a'\]" "102" "xtd->a via field"
+gdb_test "python print(len(x_fields))" "2" "number for fields in u"
+gdb_test "python print(x\[x_fields\[0\]\]\['x'\])" "101" "x.x via field"
+gdb_test "python print(x\[x_fields\[1\]\]\['a'\])" "102" "x.a via field"
+gdb_test "python print(x_ptr\[x_fields\[0\]\]\['x'\])" "101" "x_ptr->x via field"
+gdb_test "python print(x_ptr\[x_fields\[1\]\]\['a'\])" "102" "x_ptr->a via field"
+gdb_test "python print(xtd\[x_fields\[0\]\]\['x'\])" "101" "xtd->x via field"
+gdb_test "python print(xtd\[x_fields\[1\]\]\['a'\])" "102" "xtd->a via field"
 
-gdb_test "python print len(uu_fields)" "2" "number of fields in uu"
-gdb_test "python print uu\[uu_fields\[0\]\]\['x'\]" "1000" "uu.x via field"
-gdb_test "python print uu\[uu_fields\[1\]\]\['a'\]" "1000" "uu.a via field"
+gdb_test "python print(len(uu_fields))" "2" "number of fields in uu"
+gdb_test "python print(uu\[uu_fields\[0\]\]\['x'\])" "1000" "uu.x via field"
+gdb_test "python print(uu\[uu_fields\[1\]\]\['a'\])" "1000" "uu.a via field"
+
+# Test overloaded operators.
+gdb_test_no_output "python a = gdb.parse_and_eval('a')" "init a"
+gdb_test "python print(a + 5)" "10" "a + 5"

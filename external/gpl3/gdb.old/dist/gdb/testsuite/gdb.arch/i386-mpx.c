@@ -1,6 +1,6 @@
 /* Test program for MPX registers.
 
-   Copyright 2013-2014 Free Software Foundation, Inc.
+   Copyright 2013-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
-#include "i386-cpuid.h"
+#include "nat/x86-cpuid.h"
 
 #ifndef NOINLINE
 #define NOINLINE __attribute__ ((noinline))

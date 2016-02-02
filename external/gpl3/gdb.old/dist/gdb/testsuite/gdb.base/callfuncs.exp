@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,24 +23,6 @@ if [support_complex_tests] {
     lappend compile_flags "additional_flags=-DTEST_COMPLEX"
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $compile_flags] != "" } {
-     untested callfuncs.exp
-     return -1
-}
-
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-
-if [get_compiler_info] {
-    return -1
-}
-
-if {$hp_aCC_compiler} {
-    set prototypes 1
-} else {
-    set prototypes 0
-}
-
 # Some targets can't do function calls, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
@@ -57,7 +39,6 @@ if [target_info exists gdb,cannot_call_functions] {
 # (computed in the inferior) is 1 for true and 0 for false.
 
 proc do_function_calls {} {
-    global prototypes
     global gdb_prompt
 
     # We need to up this because this can be really slow on some boards.
@@ -117,15 +98,6 @@ proc do_function_calls {} {
 	# Test passing of arguments which might not be widened.
 	gdb_test "p t_float_values2(0.0,0.0)" " = 0"
 
-	# Although PR 5318 mentions SunOS specifically, this seems
-	# to be a generic problem on quite a few platforms.
-	if $prototypes then {
-	    setup_xfail "sparc-*-*" "mips*-*-*" 5318
-	    if { ! [test_compiler_info gcc-*-*] } then {
-		setup_xfail "alpha-dec-osf2*" "i*86-*-sysv4*" 5318
-	    }
-	}
-        
 	gdb_test "p t_float_values2(3.14159,float_val2)" " = 1"
 
 	gdb_test "p t_float_many_args (float_val1, float_val2, float_val3, float_val4, float_val5, float_val6, float_val7, float_val8, float_val9, float_val10, float_val11, float_val12, float_val13, float_val14, float_val15)" " = 1" "Call function with many float arguments."
@@ -321,23 +293,18 @@ proc fetch_all_registers {test} {
 proc rerun_and_prepare {} {
     global hp_aCC_compiler
 
+    if { ![runto_main] } {
+	gdb_suppress_tests
+    }
     if { $hp_aCC_compiler } {
 	# Do not set language explicitly to 'C'.  This will cause aCC
 	# tests to fail because promotion rules are different.  Just let
 	# the language be set to the default.
-
-	if { ![runto_main] } {
-	    gdb_suppress_tests
-	}
-
 	# However, turn off overload-resolution for aCC.  Having it on causes
 	# a lot of failures.
 
 	gdb_test_no_output "set overload-resolution 0"
     } else {
-	if { ![runto_main] } {
-	    gdb_suppress_tests
-	}
 	gdb_test_no_output "set language c"
     }
 
@@ -351,190 +318,194 @@ proc rerun_and_prepare {} {
 	"next to t_structs_c"
 }
 
+proc perform_all_tests {} {
+    gdb_test_no_output "set print sevenbit-strings"
+    gdb_test_no_output "set print address off"
+    gdb_test_no_output "set width 0"
 
-# Start with a fresh gdb.
+    rerun_and_prepare
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+    # Save all register contents.
+    set old_reg_content [fetch_all_registers "retrieve original register contents"]
 
-gdb_test_no_output "set print sevenbit-strings"
-gdb_test_no_output "set print address off"
-gdb_test_no_output "set width 0"
+    # Perform function calls.
+    do_function_calls
 
-rerun_and_prepare
+    # Check if all registers still have the same value.
+    set new_reg_content [fetch_all_registers \
+			     "register contents after gdb function calls"]
+    if {$old_reg_content == $new_reg_content} then {
+	pass "gdb function calls preserve register contents"
+    } else {
+	set old_reg_content $new_reg_content
+	fail "gdb function calls preserve register contents"
+    }
 
-# Save all register contents.
-set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    rerun_and_prepare
+    # Save all register contents.
+    set old_reg_content [fetch_all_registers "retrieve original register contents"]
 
-# Perform function calls.
-do_function_calls
+    # Set breakpoint at a function we will call from gdb.
+    gdb_breakpoint add
 
-# Check if all registers still have the same value.
-set new_reg_content [fetch_all_registers \
-		     "register contents after gdb function calls"]
-if {$old_reg_content == $new_reg_content} then {
-    pass "gdb function calls preserve register contents"
-} else {
-    set old_reg_content $new_reg_content
-    fail "gdb function calls preserve register contents"
-}
-
-rerun_and_prepare
-# Save all register contents.
-set old_reg_content [fetch_all_registers "retrieve original register contents"]
-
-# Set breakpoint at a function we will call from gdb.
-gdb_breakpoint add
-
-# Call function (causing a breakpoint hit in the call dummy) and do a continue,
-# make sure we are back at main and still have the same register contents.
-gdb_test "print add(4,5)" \
+    # Call function (causing a breakpoint hit in the call dummy) and do a continue,
+    # make sure we are back at main and still have the same register contents.
+    gdb_test "print add(4,5)" \
 	"The program being debugged stopped while.*" \
 	"stop at breakpoint in call dummy function"
-gdb_test "continue" "Continuing.*" "continue from call dummy breakpoint"
-if ![gdb_test "bt 2" \
-	      "#0  main.*" \
-	      "bt after continuing from call dummy breakpoint"] then {
-    set new_reg_content [fetch_all_registers \
-			 "register contents after stop in call dummy"]
-    if {$old_reg_content == $new_reg_content} then {
-	pass "continue after stop in call dummy preserves register contents"
-    } else {
-	fail "continue after stop in call dummy preserves register contents"
-    }
-}
+    gdb_test "continue" "Continuing.*" "continue from call dummy breakpoint"
+    if ![gdb_test "bt 2" \
+	     "#0  main.*" \
+	     "bt after continuing from call dummy breakpoint"] then {
+		 set new_reg_content [fetch_all_registers \
+					  "register contents after stop in call dummy"]
+		 if {$old_reg_content == $new_reg_content} then {
+		     pass "continue after stop in call dummy preserves register contents"
+		 } else {
+		     fail "continue after stop in call dummy preserves register contents"
+		 }
+	     }
 
-rerun_and_prepare
-# Set breakpoint at a function we will call from gdb.
-gdb_breakpoint add
-# Save all register contents.
-set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    rerun_and_prepare
+    # Set breakpoint at a function we will call from gdb.
+    gdb_breakpoint add
+    # Save all register contents.
+    set old_reg_content [fetch_all_registers "retrieve original register contents"]
 
-# Call function (causing a breakpoint hit in the call dummy) and do a finish,
-# make sure we are back at main and still have the same register contents.
-gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
+    # Call function (causing a breakpoint hit in the call dummy) and do a finish,
+    # make sure we are back at main and still have the same register contents.
+    gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
 	"call function causing a breakpoint then do a finish"
-gdb_test "finish" \
-	 "Value returned is .* = 9" \
-	 "finish from call dummy breakpoint returns correct value"
-if ![gdb_test "bt 2" \
-	      "#0  main.*" \
-	      "bt after finishing from call dummy breakpoint"] then {
-    set new_reg_content [fetch_all_registers \
-			 "register contents after finish in call dummy"]
-    if {$old_reg_content == $new_reg_content} then {
-	pass "finish after stop in call dummy preserves register contents"
-    } else {
-	fail "finish after stop in call dummy preserves register contents"
-    }
-}
+    gdb_test "finish" \
+	"Value returned is .* = 9" \
+	"finish from call dummy breakpoint returns correct value"
+    if ![gdb_test "bt 2" \
+	     "#0  main.*" \
+	     "bt after finishing from call dummy breakpoint"] then {
+		 set new_reg_content [fetch_all_registers \
+					  "register contents after finish in call dummy"]
+		 if {$old_reg_content == $new_reg_content} then {
+		     pass "finish after stop in call dummy preserves register contents"
+		 } else {
+		     fail "finish after stop in call dummy preserves register contents"
+		 }
+	     }
 
-rerun_and_prepare
-# Set breakpoint at a function we will call from gdb.
-gdb_breakpoint add
-# Save all register contents.
-set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    rerun_and_prepare
+    # Set breakpoint at a function we will call from gdb.
+    gdb_breakpoint add
+    # Save all register contents.
+    set old_reg_content [fetch_all_registers "retrieve original register contents"]
 
-# Call function (causing a breakpoint hit in the call dummy) and do a return
-# with a value, make sure we are back at main with the same register contents.
-gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
+    # Call function (causing a breakpoint hit in the call dummy) and do a return
+    # with a value, make sure we are back at main with the same register contents.
+    gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
 	"call function causing a breakpoint and then do a return"
-if ![gdb_test "return 7" \
-	      "#0  main.*" \
-	      "back at main after return from call dummy breakpoint" \
-	      "Make add return now. .y or n.*" \
-	      "y"] then {
-    set new_reg_content [fetch_all_registers \
-                         "register contents after return in call dummy"]
-    if {$old_reg_content == $new_reg_content} then {
-	pass "return after stop in call dummy preserves register contents"
-    } else {
-	fail "return after stop in call dummy preserves register contents"
-    }
-}
+    if ![gdb_test "return 7" \
+	     "#0  main.*" \
+	     "back at main after return from call dummy breakpoint" \
+	     "Make add return now. .y or n.*" \
+	     "y"] then {
+		 set new_reg_content [fetch_all_registers \
+					  "register contents after return in call dummy"]
+		 if {$old_reg_content == $new_reg_content} then {
+		     pass "return after stop in call dummy preserves register contents"
+		 } else {
+		     fail "return after stop in call dummy preserves register contents"
+		 }
+	     }
 
-rerun_and_prepare
-# Set breakpoint at a function we will call from gdb.
-gdb_breakpoint add
-set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    rerun_and_prepare
+    # Set breakpoint at a function we will call from gdb.
+    gdb_breakpoint add
+    set old_reg_content [fetch_all_registers "retrieve original register contents"]
 
-# Call function (causing a breakpoint hit in the call dummy), and
-# call another function from the call dummy frame (thereby setting up
-# several nested call dummy frames).  Test that backtrace and finish
-# work when several call dummies are nested.
-gdb_breakpoint sum10
-gdb_breakpoint t_small_values
-gdb_test "print add(2,3)" "The program being debugged stopped while.*" \
+    # Call function (causing a breakpoint hit in the call dummy), and
+    # call another function from the call dummy frame (thereby setting up
+    # several nested call dummy frames).  Test that backtrace and finish
+    # work when several call dummies are nested.
+    gdb_breakpoint sum10
+    gdb_breakpoint t_small_values
+    gdb_test "print add(2,3)" "The program being debugged stopped while.*" \
 	"stop at nested call level 1"
-gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"\#0  add \\(a=2, b=3\\).*\#1  <function called from gdb>.*\#2  main.*" \
 	"backtrace at nested call level 1"
-gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
+    gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
 	"stop at nested call level 2"
-gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"\#0  add \\(a=4, b=5\\).*\#1  <function called from gdb>.*\#2  add \\(a=2, b=3\\).*\#3  <function called from gdb>.*\#4  main.*" \
 	"backtrace at nested call level 2"
-gdb_test "print sum10(2,4,6,8,10,12,14,16,18,20)" \
+    gdb_test "print sum10(2,4,6,8,10,12,14,16,18,20)" \
 	"The program being debugged stopped while.*" \
 	"stop at nested call level 3"
-gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"\#0  sum10 \\(i0=2, i1=4, i2=6, i3=8, i4=10, i5=12, i6=14, i7=16, i8=18, i9=20\\).*\#1  <function called from gdb>.*\#2  add \\(a=4, b=5\\).*\#3  <function called from gdb>.*\#4  add \\(a=2, b=3\\).*\#5  <function called from gdb>.*\#6  main.*" \
 	"backtrace at nested call level 3"
-gdb_test "print t_small_values(1,3,5,7,9,11,13,15,17,19)" \
+    gdb_test "print t_small_values(1,3,5,7,9,11,13,15,17,19)" \
 	"The program being debugged stopped while.*" \
 	"stop at nested call level 4"
-gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"\#0  t_small_values \\(arg1=1 '.001', arg2=3, arg3=5, arg4=7 '.a', arg5=9, arg6=11 '.v', arg7=13, arg8=15, arg9=17, arg10=19\\).*\#2  sum10 \\(i0=2, i1=4, i2=6, i3=8, i4=10, i5=12, i6=14, i7=16, i8=18, i9=20\\).*\#3  <function called from gdb>.*\#4  add \\(a=4, b=5\\).*\#5  <function called from gdb>.*\#6  add \\(a=2, b=3\\).*\#7  <function called from gdb>.*\#8  main.*" \
 	"backtrace at nested call level 4"
-gdb_test "finish" "Value returned is .* = 100" \
+    gdb_test "finish" "Value returned is .* = 100" \
 	"Finish from nested call level 4"
-gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"\#0  sum10 \\(i0=2, i1=4, i2=6, i3=8, i4=10, i5=12, i6=14, i7=16, i8=18, i9=20\\).*\#1  <function called from gdb>.*\#2  add \\(a=4, b=5\\).*\#3  <function called from gdb>.*\#4  add \\(a=2, b=3\\).*\#5  <function called from gdb>.*\#6  main.*" \
 	"backtrace after finish from nested call level 4"
-gdb_test "finish" "Value returned is .* = 110" \
+    gdb_test "finish" "Value returned is .* = 110" \
 	"Finish from nested call level 3"
-gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"\#0  add \\(a=4, b=5\\).*\#1  <function called from gdb>.*\#2  add \\(a=2, b=3\\).*\#3  <function called from gdb>.*\#4  main.*" \
 	"backtrace after finish from nested call level 3"
-gdb_test "finish" "Value returned is .* = 9" \
+    gdb_test "finish" "Value returned is .* = 9" \
 	"Finish from nested call level 2"
-gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"\#0  add \\(a=2, b=3\\).*\#1  <function called from gdb>.*\#2  main.*" \
 	"backtrace after finish from nested call level 2"
-gdb_test "finish" "Value returned is .* = 5" \
+    gdb_test "finish" "Value returned is .* = 5" \
 	"Finish from nested call level 1"
-gdb_test "backtrace" "\#0  main .*" \
+    gdb_test "backtrace" "\#0  main .*" \
 	"backtrace after finish from nested call level 1"
 
-set new_reg_content [fetch_all_registers \
-		     "register contents after nested call dummies"]
-if {$old_reg_content == $new_reg_content} then {
-    pass "nested call dummies preserve register contents"
-} else {
-    fail "nested call dummies preserve register contents"
+    set new_reg_content [fetch_all_registers \
+			     "register contents after nested call dummies"]
+    if {$old_reg_content == $new_reg_content} then {
+	pass "nested call dummies preserve register contents"
+    } else {
+	fail "nested call dummies preserve register contents"
+    }
+
+    # GDB should not crash by internal error on $sp underflow during the inferior
+    # call.  It is OK it will stop on some: Cannot access memory at address 0x$hex.
+
+    if {![target_info exists gdb,nosignals] && ![istarget "*-*-uclinux*"]} {
+	gdb_test {set $old_sp = $sp}
+
+	gdb_test {set $sp = 0}
+	gdb_test "call doubleit (1)" ".*" "sp == 0: call doubleit (1)"
+
+	gdb_test {set $sp = -1}
+	gdb_test "call doubleit (1)" ".*" "sp == -1: call doubleit (1)"
+
+	gdb_test {set $sp = $old_sp}
+    }
+
+    # Test function descriptor resolution - the separate debug info .opd section
+    # handling vs. local labels `.L'... as `Lcallfunc' starts with `L'.
+
+    gdb_test "print callfunc (Lcallfunc, 5)" " = 12"
+
+    # Regression test for function pointer cast.
+    gdb_test "print *((int *(*) (void)) voidfunc)()" " = 23"
 }
 
-# GDB should not crash by internal error on $sp underflow during the inferior
-# call.  It is OK it will stop on some: Cannot access memory at address 0x$hex.
+# Perform all tests with and without function prototypes.
 
-if {![target_info exists gdb,nosignals] && ![istarget "*-*-uclinux*"]} {
-    gdb_test {set $old_sp = $sp}
-
-    gdb_test {set $sp = 0}
-    gdb_test "call doubleit (1)" ".*" "sp == 0: call doubleit (1)"
-
-    gdb_test {set $sp = -1}
-    gdb_test "call doubleit (1)" ".*" "sp == -1: call doubleit (1)"
-
-    gdb_test {set $sp = $old_sp}
+if { ![prepare_for_testing ${testfile}.exp $testfile $srcfile "$compile_flags additional_flags=-DPROTOTYPES"] } {
+    perform_all_tests
 }
 
-# Test function descriptor resolution - the separate debug info .opd section
-# handling vs. local labels `.L'... as `Lcallfunc' starts with `L'.
-
-gdb_test "print callfunc (Lcallfunc, 5)" " = 12"
-
-# Regression test for function pointer cast.
-gdb_test "print *((int *(*) (void)) voidfunc)()" " = 23"
+if { ![prepare_for_testing ${testfile}.exp $testfile $srcfile "$compile_flags additional_flags=-DNO_PROTOTYPES"] } {
+    with_test_prefix "noproto" perform_all_tests
+}

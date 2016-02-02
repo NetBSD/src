@@ -1,6 +1,6 @@
 /* Target-dependent code for the Matsushita MN10300 for GDB, the GNU debugger.
 
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,8 +22,6 @@
 #include "dis-asm.h"
 #include "gdbtypes.h"
 #include "regcache.h"
-#include <string.h>
-#include "gdb_assert.h"
 #include "gdbcore.h"	/* For write_memory_unsigned_integer.  */
 #include "value.h"
 #include "frame.h"
@@ -1361,13 +1359,26 @@ mn10300_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int dwarf2)
      appear in GCC's numbering, but have no counterpart in GDB's
      world, are marked with a -1.  */
   static int dwarf2_to_gdb[] = {
-    0,  1,  2,  3,  4,  5,  6,  7, -1, 8,
-    15, 16, 17, 18, 19, 20, 21, 22,
-    32, 33, 34, 35, 36, 37, 38, 39,
-    40, 41, 42, 43, 44, 45, 46, 47,
-    48, 49, 50, 51, 52, 53, 54, 55,
-    56, 57, 58, 59, 60, 61, 62, 63,
-    9, 11
+    E_D0_REGNUM, E_D1_REGNUM, E_D2_REGNUM, E_D3_REGNUM,
+    E_A0_REGNUM, E_A1_REGNUM, E_A2_REGNUM, E_A3_REGNUM,
+    -1, E_SP_REGNUM,
+
+    E_E0_REGNUM, E_E1_REGNUM, E_E2_REGNUM, E_E3_REGNUM,
+    E_E4_REGNUM, E_E5_REGNUM, E_E6_REGNUM, E_E7_REGNUM,
+
+    E_FS0_REGNUM + 0, E_FS0_REGNUM + 1, E_FS0_REGNUM + 2, E_FS0_REGNUM + 3,
+    E_FS0_REGNUM + 4, E_FS0_REGNUM + 5, E_FS0_REGNUM + 6, E_FS0_REGNUM + 7,
+
+    E_FS0_REGNUM + 8, E_FS0_REGNUM + 9, E_FS0_REGNUM + 10, E_FS0_REGNUM + 11,
+    E_FS0_REGNUM + 12, E_FS0_REGNUM + 13, E_FS0_REGNUM + 14, E_FS0_REGNUM + 15,
+
+    E_FS0_REGNUM + 16, E_FS0_REGNUM + 17, E_FS0_REGNUM + 18, E_FS0_REGNUM + 19,
+    E_FS0_REGNUM + 20, E_FS0_REGNUM + 21, E_FS0_REGNUM + 22, E_FS0_REGNUM + 23,
+
+    E_FS0_REGNUM + 24, E_FS0_REGNUM + 25, E_FS0_REGNUM + 26, E_FS0_REGNUM + 27,
+    E_FS0_REGNUM + 28, E_FS0_REGNUM + 29, E_FS0_REGNUM + 30, E_FS0_REGNUM + 31,
+
+    E_MDR_REGNUM, E_PSW_REGNUM, E_PC_REGNUM
   };
 
   if (dwarf2 < 0

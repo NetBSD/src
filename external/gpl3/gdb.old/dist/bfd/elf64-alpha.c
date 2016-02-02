@@ -1,7 +1,5 @@
 /* Alpha specific support for 64-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1444,17 +1442,19 @@ elf64_alpha_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 }
 
 static bfd_boolean
-elf64_alpha_find_nearest_line (bfd *abfd, asection *section, asymbol **symbols,
-			       bfd_vma offset, const char **filename_ptr,
+elf64_alpha_find_nearest_line (bfd *abfd, asymbol **symbols,
+			       asection *section, bfd_vma offset,
+			       const char **filename_ptr,
 			       const char **functionname_ptr,
-			       unsigned int *line_ptr)
+			       unsigned int *line_ptr,
+			       unsigned int *discriminator_ptr)
 {
   asection *msec;
 
-  if (_bfd_dwarf2_find_nearest_line (abfd, dwarf_debug_sections,
-                                     section, symbols, offset,
+  if (_bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section, offset,
 				     filename_ptr, functionname_ptr,
-				     line_ptr, NULL, 0,
+				     line_ptr, discriminator_ptr,
+				     dwarf_debug_sections, 0,
 				     &elf_tdata (abfd)->dwarf2_find_line_info))
     return TRUE;
 
@@ -1534,9 +1534,9 @@ elf64_alpha_find_nearest_line (bfd *abfd, asection *section, asymbol **symbols,
 
   /* Fall back on the generic ELF find_nearest_line routine.  */
 
-  return _bfd_elf_find_nearest_line (abfd, section, symbols, offset,
+  return _bfd_elf_find_nearest_line (abfd, symbols, section, offset,
 				     filename_ptr, functionname_ptr,
-				     line_ptr);
+				     line_ptr, discriminator_ptr);
 }
 
 /* Structure used to pass information to alpha_elf_output_extsym.  */
@@ -2468,7 +2468,8 @@ elf64_alpha_calc_got_offsets (struct bfd_link_info *info)
 /* Constructs the gots.  */
 
 static bfd_boolean
-elf64_alpha_size_got_sections (struct bfd_link_info *info)
+elf64_alpha_size_got_sections (struct bfd_link_info *info,
+                               bfd_boolean may_merge)
 {
   bfd *i, *got_list, *cur_got_obj = NULL;
   struct alpha_elf_link_hash_table * htab;
@@ -2482,7 +2483,7 @@ elf64_alpha_size_got_sections (struct bfd_link_info *info)
      consisting of all of the input files.  */
   if (got_list == NULL)
     {
-      for (i = info->input_bfds; i ; i = i->link_next)
+      for (i = info->input_bfds; i ; i = i->link.next)
 	{
 	  bfd *this_got;
 
@@ -2523,21 +2524,24 @@ elf64_alpha_size_got_sections (struct bfd_link_info *info)
   if (cur_got_obj == NULL)
     return FALSE;
 
-  i = alpha_elf_tdata(cur_got_obj)->got_link_next;
-  while (i != NULL)
+  if (may_merge)
     {
-      if (elf64_alpha_can_merge_gots (cur_got_obj, i))
+      i = alpha_elf_tdata(cur_got_obj)->got_link_next;
+      while (i != NULL)
 	{
-	  elf64_alpha_merge_gots (cur_got_obj, i);
+	  if (elf64_alpha_can_merge_gots (cur_got_obj, i))
+	    {
+	      elf64_alpha_merge_gots (cur_got_obj, i);
 
-	  alpha_elf_tdata(i)->got->size = 0;
-	  i = alpha_elf_tdata(i)->got_link_next;
-	  alpha_elf_tdata(cur_got_obj)->got_link_next = i;
-	}
-      else
-	{
-	  cur_got_obj = i;
-	  i = alpha_elf_tdata(i)->got_link_next;
+	      alpha_elf_tdata(i)->got->size = 0;
+	      i = alpha_elf_tdata(i)->got_link_next;
+	      alpha_elf_tdata(cur_got_obj)->got_link_next = i;
+	    }
+	  else
+	    {
+	      cur_got_obj = i;
+	      i = alpha_elf_tdata(i)->got_link_next;
+	    }
 	}
     }
 
@@ -2640,7 +2644,7 @@ elf64_alpha_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (htab == NULL)
     return FALSE;
 
-  if (!elf64_alpha_size_got_sections (info))
+  if (!elf64_alpha_size_got_sections (info, TRUE))
     return FALSE;
 
   /* Allocate space for all of the .got subsections.  */
@@ -3076,6 +3080,10 @@ elf64_alpha_relax_got_load (struct alpha_relax_info *info, bfd_vma symval,
 	}
       else
 	{
+	  /* We may only create GPREL relocs during the second pass.  */
+	  if (info->link_info->relax_pass == 0)
+	    return TRUE;
+
 	  disp = symval - info->gp;
 	  insn = (OP_LDA << 26) | (insn & 0x03ff0000);
 	  r_type = R_ALPHA_GPREL16;
@@ -3216,21 +3224,27 @@ static bfd_boolean
 elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 			       bfd_vma symval, Elf_Internal_Rela *irel)
 {
-  Elf_Internal_Rela *urel, *irelend = info->relend;
-  int flags, count, i;
+  Elf_Internal_Rela *urel, *erel, *irelend = info->relend;
+  int flags;
   bfd_signed_vma disp;
   bfd_boolean fits16;
   bfd_boolean fits32;
   bfd_boolean lit_reused = FALSE;
   bfd_boolean all_optimized = TRUE;
+  bfd_boolean changed_contents;
+  bfd_boolean changed_relocs;
+  bfd_byte *contents = info->contents;
+  bfd *abfd = info->abfd;
+  bfd_vma sec_output_vma;
   unsigned int lit_insn;
+  int relax_pass;
 
-  lit_insn = bfd_get_32 (info->abfd, info->contents + irel->r_offset);
+  lit_insn = bfd_get_32 (abfd, contents + irel->r_offset);
   if (lit_insn >> 26 != OP_LDQ)
     {
       ((*_bfd_error_handler)
        ("%B: %A+0x%lx: warning: LITERAL relocation against unexpected insn",
-	info->abfd, info->sec,
+	abfd, info->sec,
 	(unsigned long) irel->r_offset));
       return TRUE;
     }
@@ -3239,25 +3253,32 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
   if (alpha_elf_dynamic_symbol_p (&info->h->root, info->link_info))
     return TRUE;
 
+  changed_contents = info->changed_contents;
+  changed_relocs = info->changed_relocs;
+  sec_output_vma = info->sec->output_section->vma + info->sec->output_offset;
+  relax_pass = info->link_info->relax_pass;
+
   /* Summarize how this particular LITERAL is used.  */
-  for (urel = irel+1, flags = count = 0; urel < irelend; ++urel, ++count)
+  for (erel = irel+1, flags = 0; erel < irelend; ++erel)
     {
-      if (ELF64_R_TYPE (urel->r_info) != R_ALPHA_LITUSE)
+      if (ELF64_R_TYPE (erel->r_info) != R_ALPHA_LITUSE)
 	break;
-      if (urel->r_addend <= 6)
-	flags |= 1 << urel->r_addend;
+      if (erel->r_addend <= 6)
+	flags |= 1 << erel->r_addend;
     }
 
   /* A little preparation for the loop...  */
   disp = symval - info->gp;
 
-  for (urel = irel+1, i = 0; i < count; ++i, ++urel)
+  for (urel = irel+1; urel < erel; ++urel)
     {
+      bfd_vma urel_r_offset = urel->r_offset;
       unsigned int insn;
       int insn_disp;
       bfd_signed_vma xdisp;
+      Elf_Internal_Rela nrel;
 
-      insn = bfd_get_32 (info->abfd, info->contents + urel->r_offset);
+      insn = bfd_get_32 (abfd, contents + urel_r_offset);
 
       switch (urel->r_addend)
 	{
@@ -3269,6 +3290,13 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 	  break;
 
 	case LITUSE_ALPHA_BASE:
+	  /* We may only create GPREL relocs during the second pass.  */
+	  if (relax_pass == 0)
+	    {
+	      all_optimized = FALSE;
+	      break;
+	    }
+
 	  /* We can always optimize 16-bit displacements.  */
 
 	  /* Extract the displacement from the instruction, sign-extending
@@ -3286,14 +3314,20 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 	      /* Take the op code and dest from this insn, take the base
 		 register from the literal insn.  Leave the offset alone.  */
 	      insn = (insn & 0xffe0ffff) | (lit_insn & 0x001f0000);
-	      urel->r_info = ELF64_R_INFO (ELF64_R_SYM (irel->r_info),
-					   R_ALPHA_GPREL16);
-	      urel->r_addend = irel->r_addend;
-	      info->changed_relocs = TRUE;
+	      bfd_put_32 (abfd, (bfd_vma) insn, contents + urel_r_offset);
+	      changed_contents = TRUE;
 
-	      bfd_put_32 (info->abfd, (bfd_vma) insn,
-			  info->contents + urel->r_offset);
-	      info->changed_contents = TRUE;
+	      nrel = *urel;
+	      nrel.r_info = ELF64_R_INFO (ELF64_R_SYM (irel->r_info),
+					  R_ALPHA_GPREL16);
+	      nrel.r_addend = irel->r_addend;
+
+	      /* As we adjust, move the reloc to the end so that we don't
+	         break the LITERAL+LITUSE chain.  */
+	      if (urel < --erel)
+	        *urel-- = *erel;
+	      *erel = nrel;
+	      changed_relocs = TRUE;
 	    }
 
 	  /* If all mem+byte, we can optimize 32-bit mem displacements.  */
@@ -3304,15 +3338,16 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 	      irel->r_info = ELF64_R_INFO (ELF64_R_SYM (irel->r_info),
 					   R_ALPHA_GPRELHIGH);
 	      lit_insn = (OP_LDAH << 26) | (lit_insn & 0x03ff0000);
-	      bfd_put_32 (info->abfd, (bfd_vma) lit_insn,
-			  info->contents + irel->r_offset);
+	      bfd_put_32 (abfd, (bfd_vma) lit_insn, contents + irel->r_offset);
 	      lit_reused = TRUE;
-	      info->changed_contents = TRUE;
+	      changed_contents = TRUE;
 
+              /* Since all relocs must be optimized, don't bother swapping
+	         this relocation to the end.  */
 	      urel->r_info = ELF64_R_INFO (ELF64_R_SYM (irel->r_info),
 					   R_ALPHA_GPRELLOW);
 	      urel->r_addend = irel->r_addend;
-	      info->changed_relocs = TRUE;
+	      changed_relocs = TRUE;
 	    }
 	  else
 	    all_optimized = FALSE;
@@ -3326,14 +3361,19 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 
 	  insn &= ~ (unsigned) 0x001ff000;
 	  insn |= ((symval & 7) << 13) | 0x1000;
+	  bfd_put_32 (abfd, (bfd_vma) insn, contents + urel_r_offset);
+	  changed_contents = TRUE;
 
-	  urel->r_info = ELF64_R_INFO (0, R_ALPHA_NONE);
-	  urel->r_addend = 0;
-	  info->changed_relocs = TRUE;
+	  nrel = *urel;
+	  nrel.r_info = ELF64_R_INFO (0, R_ALPHA_NONE);
+	  nrel.r_addend = 0;
 
-	  bfd_put_32 (info->abfd, (bfd_vma) insn,
-		      info->contents + urel->r_offset);
-	  info->changed_contents = TRUE;
+	  /* As we adjust, move the reloc to the end so that we don't
+	     break the LITERAL+LITUSE chain.  */
+	  if (urel < --erel)
+	    *urel-- = *erel;
+	  *erel = nrel;
+	  changed_relocs = TRUE;
 	  break;
 
 	case LITUSE_ALPHA_JSR:
@@ -3350,18 +3390,15 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 	    if (info->h && info->h->root.root.type == bfd_link_hash_undefweak)
 	      {
 		insn |= 31 << 16;
-		bfd_put_32 (info->abfd, (bfd_vma) insn,
-			    info->contents + urel->r_offset);
+		bfd_put_32 (abfd, (bfd_vma) insn, contents + urel_r_offset);
 
-		info->changed_contents = TRUE;
+		changed_contents = TRUE;
 		break;
 	      }
 
 	    /* If not zero, place to jump without needing pv.  */
 	    optdest = elf64_alpha_relax_opt_call (info, symval);
-	    org = (info->sec->output_section->vma
-		   + info->sec->output_offset
-		   + urel->r_offset + 4);
+	    org = sec_output_vma + urel_r_offset + 4;
 	    odisp = (optdest ? optdest : symval) - org;
 
 	    if (odisp >= -0x400000 && odisp < 0x400000)
@@ -3373,27 +3410,32 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 		  insn = (OP_BSR << 26) | (insn & 0x03e00000);
 		else
 		  insn = (OP_BR << 26) | (insn & 0x03e00000);
+		bfd_put_32 (abfd, (bfd_vma) insn, contents + urel_r_offset);
+		changed_contents = TRUE;
 
-		urel->r_info = ELF64_R_INFO (ELF64_R_SYM (irel->r_info),
-					     R_ALPHA_BRADDR);
-		urel->r_addend = irel->r_addend;
+		nrel = *urel;
+		nrel.r_info = ELF64_R_INFO (ELF64_R_SYM (irel->r_info),
+					    R_ALPHA_BRADDR);
+		nrel.r_addend = irel->r_addend;
 
 		if (optdest)
-		  urel->r_addend += optdest - symval;
+		  nrel.r_addend += optdest - symval;
 		else
 		  all_optimized = FALSE;
 
-		bfd_put_32 (info->abfd, (bfd_vma) insn,
-			    info->contents + urel->r_offset);
-
 		/* Kill any HINT reloc that might exist for this insn.  */
 		xrel = (elf64_alpha_find_reloc_at_ofs
-			(info->relocs, info->relend, urel->r_offset,
+			(info->relocs, info->relend, urel_r_offset,
 			 R_ALPHA_HINT));
 		if (xrel)
 		  xrel->r_info = ELF64_R_INFO (0, R_ALPHA_NONE);
 
-		info->changed_contents = TRUE;
+		/* As we adjust, move the reloc to the end so that we don't
+		   break the LITERAL+LITUSE chain.  */
+		if (urel < --erel)
+		  *urel-- = *erel;
+		*erel = nrel;
+
 		info->changed_relocs = TRUE;
 	      }
 	    else
@@ -3405,14 +3447,14 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 	      {
 		Elf_Internal_Rela *gpdisp
 		  = (elf64_alpha_find_reloc_at_ofs
-		     (info->relocs, irelend, urel->r_offset + 4,
+		     (info->relocs, irelend, urel_r_offset + 4,
 		      R_ALPHA_GPDISP));
 		if (gpdisp)
 		  {
-		    bfd_byte *p_ldah = info->contents + gpdisp->r_offset;
+		    bfd_byte *p_ldah = contents + gpdisp->r_offset;
 		    bfd_byte *p_lda = p_ldah + gpdisp->r_addend;
-		    unsigned int ldah = bfd_get_32 (info->abfd, p_ldah);
-		    unsigned int lda = bfd_get_32 (info->abfd, p_lda);
+		    unsigned int ldah = bfd_get_32 (abfd, p_ldah);
+		    unsigned int lda = bfd_get_32 (abfd, p_lda);
 
 		    /* Verify that the instruction is "ldah $29,0($26)".
 		       Consider a function that ends in a noreturn call,
@@ -3421,12 +3463,12 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 		       In that case the insn would use $27 as the base.  */
 		    if (ldah == 0x27ba0000 && lda == 0x23bd0000)
 		      {
-			bfd_put_32 (info->abfd, (bfd_vma) INSN_UNOP, p_ldah);
-			bfd_put_32 (info->abfd, (bfd_vma) INSN_UNOP, p_lda);
+			bfd_put_32 (abfd, (bfd_vma) INSN_UNOP, p_ldah);
+			bfd_put_32 (abfd, (bfd_vma) INSN_UNOP, p_lda);
 
 			gpdisp->r_info = ELF64_R_INFO (0, R_ALPHA_NONE);
-			info->changed_contents = TRUE;
-			info->changed_relocs = TRUE;
+			changed_contents = TRUE;
+			changed_relocs = TRUE;
 		      }
 		  }
 	      }
@@ -3434,6 +3476,9 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
 	  break;
 	}
     }
+
+  /* If we reused the literal instruction, we must have optimized all.  */
+  BFD_ASSERT(!lit_reused || all_optimized);
 
   /* If all cases were optimized, we can reduce the use count on this
      got entry by one, possibly eliminating it.  */
@@ -3454,17 +3499,19 @@ elf64_alpha_relax_with_lituse (struct alpha_relax_info *info,
       if (!lit_reused)
 	{
 	  irel->r_info = ELF64_R_INFO (0, R_ALPHA_NONE);
-	  info->changed_relocs = TRUE;
+	  changed_relocs = TRUE;
 
-	  bfd_put_32 (info->abfd, (bfd_vma) INSN_UNOP,
-		      info->contents + irel->r_offset);
-	  info->changed_contents = TRUE;
+	  bfd_put_32 (abfd, (bfd_vma) INSN_UNOP, contents + irel->r_offset);
+	  changed_contents = TRUE;
 	}
-
-      return TRUE;
     }
-  else
-    return elf64_alpha_relax_got_load (info, symval, irel, R_ALPHA_LITERAL);
+
+  info->changed_contents = changed_contents;
+  info->changed_relocs = changed_relocs;
+
+  if (all_optimized || relax_pass == 0)
+    return TRUE;
+  return elf64_alpha_relax_got_load (info, symval, irel, R_ALPHA_LITERAL);
 }
 
 static bfd_boolean
@@ -3726,6 +3773,7 @@ elf64_alpha_relax_section (bfd *abfd, asection *sec,
   struct alpha_elf_got_entry **local_got_entries;
   struct alpha_relax_info info;
   struct alpha_elf_link_hash_table * htab;
+  int relax_pass;
 
   htab = alpha_elf_hash_table (link_info);
   if (htab == NULL)
@@ -3741,15 +3789,19 @@ elf64_alpha_relax_section (bfd *abfd, asection *sec,
     return TRUE;
 
   BFD_ASSERT (is_alpha_elf (abfd));
+  relax_pass = link_info->relax_pass;
 
   /* Make sure our GOT and PLT tables are up-to-date.  */
   if (htab->relax_trip != link_info->relax_trip)
     {
       htab->relax_trip = link_info->relax_trip;
 
-      /* This should never fail after the initial round, since the only
-	 error is GOT overflow, and relaxation only shrinks the table.  */
-      if (!elf64_alpha_size_got_sections (link_info))
+      /* This should never fail after the initial round, since the only error
+         is GOT overflow, and relaxation only shrinks the table.  However, we
+	 may only merge got sections during the first pass.  If we merge
+	 sections after we've created GPREL relocs, the GP for the merged
+	 section backs up which may put the relocs out of range.  */
+      if (!elf64_alpha_size_got_sections (link_info, relax_pass == 0))
 	abort ();
       if (elf_hash_table (link_info)->dynamic_sections_created)
 	{
@@ -3804,24 +3856,21 @@ elf64_alpha_relax_section (bfd *abfd, asection *sec,
       unsigned long r_symndx = ELF64_R_SYM (irel->r_info);
 
       /* Early exit for unhandled or unrelaxable relocations.  */
-      switch (r_type)
-	{
-	case R_ALPHA_LITERAL:
-	case R_ALPHA_GPRELHIGH:
-	case R_ALPHA_GPRELLOW:
-	case R_ALPHA_GOTDTPREL:
-	case R_ALPHA_GOTTPREL:
-	case R_ALPHA_TLSGD:
-	  break;
-
-	case R_ALPHA_TLSLDM:
-	  /* The symbol for a TLSLDM reloc is ignored.  Collapse the
-             reloc to the STN_UNDEF (0) symbol so that they all match.  */
-	  r_symndx = STN_UNDEF;
-	  break;
-
-	default:
-	  continue;
+      if (r_type != R_ALPHA_LITERAL)
+        {
+          /* We complete everything except LITERAL in the first pass.  */
+	  if (relax_pass != 0)
+	    continue;
+	  if (r_type == R_ALPHA_TLSLDM)
+	    {
+	      /* The symbol for a TLSLDM reloc is ignored.  Collapse the
+                 reloc to the STN_UNDEF (0) symbol so that they all match.  */
+	      r_symndx = STN_UNDEF;
+	    }
+	  else if (r_type != R_ALPHA_GOTDTPREL
+	           && r_type != R_ALPHA_GOTTPREL
+		   && r_type != R_ALPHA_TLSGD)
+	    continue;
 	}
 
       /* Get the value of the symbol referred to by the reloc.  */
@@ -5421,7 +5470,7 @@ static const struct elf_size_info alpha_elf_size_info =
   bfd_elf64_swap_reloca_out
 };
 
-#define TARGET_LITTLE_SYM	bfd_elf64_alpha_vec
+#define TARGET_LITTLE_SYM	alpha_elf64_vec
 #define TARGET_LITTLE_NAME	"elf64-alpha"
 #define ELF_ARCH		bfd_arch_alpha
 #define ELF_TARGET_ID		ALPHA_ELF_DATA
@@ -5513,7 +5562,7 @@ static const struct elf_size_info alpha_elf_size_info =
 /* FreeBSD support.  */
 
 #undef TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM	bfd_elf64_alpha_freebsd_vec
+#define TARGET_LITTLE_SYM	alpha_elf64_fbsd_vec
 #undef TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME	"elf64-alpha-freebsd"
 #undef	ELF_OSABI

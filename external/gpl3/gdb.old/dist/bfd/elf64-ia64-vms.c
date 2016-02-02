@@ -1,6 +1,5 @@
 /* IA-64 support for OpenVMS
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -976,40 +975,6 @@ elf64_ia64_local_htab_eq (const void *ptr1, const void *ptr2)
   return entry1->id == entry2->id && entry1->r_sym == entry2->r_sym;
 }
 
-/* Create the derived linker hash table.  The IA-64 ELF port uses this
-   derived hash table to keep information specific to the IA-64 ElF
-   linker (without using static variables).  */
-
-static struct bfd_link_hash_table *
-elf64_ia64_hash_table_create (bfd *abfd)
-{
-  struct elf64_ia64_link_hash_table *ret;
-
-  ret = bfd_zmalloc ((bfd_size_type) sizeof (*ret));
-  if (!ret)
-    return NULL;
-
-  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
-				      elf64_ia64_new_elf_hash_entry,
-				      sizeof (struct elf64_ia64_link_hash_entry),
-				      IA64_ELF_DATA))
-    {
-      free (ret);
-      return NULL;
-    }
-
-  ret->loc_hash_table = htab_try_create (1024, elf64_ia64_local_htab_hash,
-					 elf64_ia64_local_htab_eq, NULL);
-  ret->loc_hash_memory = objalloc_create ();
-  if (!ret->loc_hash_table || !ret->loc_hash_memory)
-    {
-      free (ret);
-      return NULL;
-    }
-
-  return &ret->root.root;
-}
-
 /* Free the global elf64_ia64_dyn_sym_info array.  */
 
 static bfd_boolean
@@ -1058,10 +1023,10 @@ elf64_ia64_local_dyn_info_free (void **slot,
 /* Destroy IA-64 linker hash table.  */
 
 static void
-elf64_ia64_hash_table_free (struct bfd_link_hash_table *hash)
+elf64_ia64_link_hash_table_free (bfd *obfd)
 {
   struct elf64_ia64_link_hash_table *ia64_info
-    = (struct elf64_ia64_link_hash_table *) hash;
+    = (struct elf64_ia64_link_hash_table *) obfd->link.hash;
   if (ia64_info->loc_hash_table)
     {
       htab_traverse (ia64_info->loc_hash_table,
@@ -1072,7 +1037,42 @@ elf64_ia64_hash_table_free (struct bfd_link_hash_table *hash)
     objalloc_free ((struct objalloc *) ia64_info->loc_hash_memory);
   elf_link_hash_traverse (&ia64_info->root,
 			  elf64_ia64_global_dyn_info_free, NULL);
-  _bfd_elf_link_hash_table_free (hash);
+  _bfd_elf_link_hash_table_free (obfd);
+}
+
+/* Create the derived linker hash table.  The IA-64 ELF port uses this
+   derived hash table to keep information specific to the IA-64 ElF
+   linker (without using static variables).  */
+
+static struct bfd_link_hash_table *
+elf64_ia64_hash_table_create (bfd *abfd)
+{
+  struct elf64_ia64_link_hash_table *ret;
+
+  ret = bfd_zmalloc ((bfd_size_type) sizeof (*ret));
+  if (!ret)
+    return NULL;
+
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      elf64_ia64_new_elf_hash_entry,
+				      sizeof (struct elf64_ia64_link_hash_entry),
+				      IA64_ELF_DATA))
+    {
+      free (ret);
+      return NULL;
+    }
+
+  ret->loc_hash_table = htab_try_create (1024, elf64_ia64_local_htab_hash,
+					 elf64_ia64_local_htab_eq, NULL);
+  ret->loc_hash_memory = objalloc_create ();
+  if (!ret->loc_hash_table || !ret->loc_hash_memory)
+    {
+      elf64_ia64_link_hash_table_free (abfd);
+      return NULL;
+    }
+  ret->root.root.hash_table_free = elf64_ia64_link_hash_table_free;
+
+  return &ret->root.root;
 }
 
 /* Traverse both local and global hash tables.  */
@@ -2819,7 +2819,7 @@ elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
         return FALSE;
 
       /* Add entries for shared libraries.  */
-      for (abfd = info->input_bfds; abfd; abfd = abfd->link_next)
+      for (abfd = info->input_bfds; abfd; abfd = abfd->link.next)
         {
           char *soname;
           size_t soname_len;
@@ -5459,8 +5459,6 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 /* Stuff for the BFD linker: */
 #define bfd_elf64_bfd_link_hash_table_create \
 	elf64_ia64_hash_table_create
-#define bfd_elf64_bfd_link_hash_table_free \
-	elf64_ia64_hash_table_free
 #define elf_backend_create_dynamic_sections \
 	elf64_ia64_create_dynamic_sections
 #define elf_backend_check_relocs \
@@ -5513,7 +5511,7 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 /* VMS-specific vectors.  */
 
 #undef  TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM		bfd_elf64_ia64_vms_vec
+#define TARGET_LITTLE_SYM		ia64_elf64_vms_vec
 #undef  TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME		"elf64-ia64-vms"
 #undef  TARGET_BIG_SYM

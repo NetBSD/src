@@ -1,6 +1,6 @@
 /* Target waitstatus definitions and prototypes.
 
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,6 @@
 #ifndef WAITSTATUS_H
 #define WAITSTATUS_H
 
-#include "common-utils.h"
-#include "ptid.h"
 #include "gdb_signals.h"
 
 /* Stuff for target_wait.  */

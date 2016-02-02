@@ -1,6 +1,5 @@
 /* Disassemble D30V instructions.
-   Copyright 1997, 1998, 2000, 2001, 2005, 2007, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

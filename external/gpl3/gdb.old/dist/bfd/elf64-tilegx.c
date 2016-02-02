@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for 64-bit ELF.
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -88,9 +88,9 @@ tilegx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define ELF_COMMONPAGESIZE	0x10000
 
 
-#define TARGET_BIG_SYM          bfd_elf64_tilegx_be_vec
+#define TARGET_BIG_SYM          tilegx_elf64_be_vec
 #define TARGET_BIG_NAME         "elf64-tilegx-be"
-#define TARGET_LITTLE_SYM       bfd_elf64_tilegx_le_vec
+#define TARGET_LITTLE_SYM       tilegx_elf64_le_vec
 #define TARGET_LITTLE_NAME      "elf64-tilegx-le"
 
 #define elf_backend_reloc_type_class	     tilegx_reloc_type_class

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Tilera TILE-Gx processor.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,7 @@
 enum tilegx_regnum
   {
     TILEGX_R0_REGNUM,
+    TILEGX_FIRST_EASY_REGNUM = TILEGX_R0_REGNUM,
     TILEGX_R1_REGNUM,
     TILEGX_R2_REGNUM,
     TILEGX_R3_REGNUM,

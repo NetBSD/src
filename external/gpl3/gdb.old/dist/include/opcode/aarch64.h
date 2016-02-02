@@ -1,6 +1,6 @@
 /* AArch64 assembler/disassembler support.
 
-   Copyright 2009, 2010, 2011, 2012, 2013  Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GNU Binutils.
@@ -38,6 +38,7 @@ typedef uint32_t aarch64_insn;
 #define AARCH64_FEATURE_FP	0x00020000	/* FP instructions.  */
 #define AARCH64_FEATURE_SIMD	0x00040000	/* SIMD instructions.  */
 #define AARCH64_FEATURE_CRC	0x00080000	/* CRC instructions.  */
+#define AARCH64_FEATURE_LSE	0x00100000	/* LSE instructions.  */
 
 /* Architectures are the sum of the base and extensions.  */
 #define AARCH64_ARCH_V8		AARCH64_FEATURE (AARCH64_FEATURE_V8, \
@@ -106,6 +107,7 @@ enum aarch64_opnd
 
   AARCH64_OPND_Rd_SP,	/* Integer Rd or SP.  */
   AARCH64_OPND_Rn_SP,	/* Integer Rn or SP.  */
+  AARCH64_OPND_PAIRREG,	/* Paired register operand.  */
   AARCH64_OPND_Rm_EXT,	/* Integer Rm extended.  */
   AARCH64_OPND_Rm_SFT,	/* Integer Rm shifted.  */
 
@@ -340,6 +342,7 @@ enum aarch64_insn_class
   loadlit,
   log_imm,
   log_shift,
+  lse_atomic,
   movewide,
   pcreladdr,
   ic_system,
@@ -550,7 +553,9 @@ extern aarch64_opcode aarch64_opcode_table[];
 #define F_N (1 << 23)
 /* Opcode dependent field.  */
 #define F_OD(X) (((X) & 0x7) << 24)
-/* Next bit is 27.  */
+/* Instruction has the field of 'sz'.  */
+#define F_LSE_SZ (1 << 27)
+/* Next bit is 28.  */
 
 static inline bfd_boolean
 alias_opcode_p (const aarch64_opcode *opcode)
@@ -599,7 +604,7 @@ get_opcode_dependent_value (const aarch64_opcode *opcode)
 static inline bfd_boolean
 opcode_has_special_coder (const aarch64_opcode *opcode)
 {
-  return (opcode->flags & (F_SF | F_SIZEQ | F_FPTYPE | F_SSIZE | F_T
+  return (opcode->flags & (F_SF | F_LSE_SZ | F_SIZEQ | F_FPTYPE | F_SSIZE | F_T
 	  | F_GPRSIZE_IN_Q | F_LDS_SIZE | F_MISC | F_N | F_COND)) ? TRUE
     : FALSE;
 }

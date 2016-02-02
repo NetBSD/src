@@ -1,5 +1,5 @@
 /* Annotation routines for GDB.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "breakpoint.h"
 #include "observer.h"
 #include "inferior.h"
+#include "infrun.h"
 
 
 /* Prototypes for local functions.  */
@@ -71,8 +72,17 @@ annotate_breakpoints_invalid (void)
       && (!breakpoints_invalid_emitted
 	  || async_background_execution_p ()))
     {
-      target_terminal_ours ();
+      /* If the inferior owns the terminal (e.g., we're resuming),
+	 make sure to leave with the inferior still owning it.  */
+      int was_inferior = target_terminal_is_inferior ();
+
+      target_terminal_ours_for_output ();
+
       printf_unfiltered (("\n\032\032breakpoints-invalid\n"));
+
+      if (was_inferior)
+	target_terminal_inferior ();
+
       breakpoints_invalid_emitted = 1;
     }
 }
@@ -209,8 +219,17 @@ annotate_frames_invalid (void)
       && (!frames_invalid_emitted
 	  || async_background_execution_p ()))
     {
-      target_terminal_ours ();
+      /* If the inferior owns the terminal (e.g., we're resuming),
+	 make sure to leave with the inferior still owning it.  */
+      int was_inferior = target_terminal_is_inferior ();
+
+      target_terminal_ours_for_output ();
+
       printf_unfiltered (("\n\032\032frames-invalid\n"));
+
+      if (was_inferior)
+	target_terminal_inferior ();
+
       frames_invalid_emitted = 1;
     }
 }

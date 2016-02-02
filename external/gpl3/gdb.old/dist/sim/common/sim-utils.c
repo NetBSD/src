@@ -1,5 +1,5 @@
 /* Miscellaneous simulator utilities.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -211,7 +211,7 @@ sim_add_commas (char *buf, int sizeof_buf, unsigned long value)
    bfd open.  */
 
 SIM_RC
-sim_analyze_program (SIM_DESC sd, char *prog_name, bfd *prog_bfd)
+sim_analyze_program (SIM_DESC sd, const char *prog_name, bfd *prog_bfd)
 {
   asection *s;
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);

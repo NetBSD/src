@@ -1,6 +1,6 @@
 /* C language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 struct ui_file;
 struct language_arch_info;
 struct type_print_options;
+struct parser_state;
 
 #include "value.h"
 #include "macroexp.h"
@@ -57,7 +58,7 @@ enum c_string_type
 
 /* Defined in c-exp.y.  */
 
-extern int c_parse (void);
+extern int c_parse (struct parser_state *);
 
 extern void c_error (char *);
 
@@ -140,5 +141,24 @@ extern int cp_is_vtbl_member (struct type *);
 
 extern int c_textual_element_type (struct type *, char);
 
+/* Create a new instance of the C compiler and return it.  The new
+   compiler is owned by the caller and must be freed using the destroy
+   method.  This function never returns NULL, but rather throws an
+   exception on failure.  This is suitable for use as the
+   la_get_compile_instance language method.  */
+
+extern struct compile_instance *c_get_compile_context (void);
+
+/* This takes the user-supplied text and returns a newly malloc'd bit
+   of code to compile.
+
+   This is used as the la_compute_program language method; see that
+   for a description of the arguments.  */
+
+extern char *c_compute_program (struct compile_instance *inst,
+				const char *input,
+				struct gdbarch *gdbarch,
+				const struct block *expr_block,
+				CORE_ADDR expr_pc);
 
 #endif /* !defined (C_LANG_H) */

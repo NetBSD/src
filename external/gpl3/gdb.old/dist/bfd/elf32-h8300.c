@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas H8/300 ELF binaries.
-   Copyright 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1705,7 +1705,7 @@ elf32_h8_get_relocated_section_contents (bfd *output_bfd,
 }
 
 
-#define TARGET_BIG_SYM			bfd_elf32_h8300_vec
+#define TARGET_BIG_SYM			h8300_elf32_vec
 #define TARGET_BIG_NAME			"elf32-h8300"
 #define ELF_ARCH			bfd_arch_h8300
 #define ELF_MACHINE_CODE		EM_H8_300

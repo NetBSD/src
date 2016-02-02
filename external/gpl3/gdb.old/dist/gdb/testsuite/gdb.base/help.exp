@@ -1,4 +1,4 @@
-#   Copyright 1988-2014 Free Software Foundation, Inc.
+#   Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,4 +124,4 @@ gdb_test "apropos \\\(print\[\^ bsiedf\\\".-\]\\\)" "handle -- Specify how to ha
 # test apropos >1 word string
 gdb_test "apropos handle signal" "handle -- Specify how to handle signals"
 # test apropos apropos
-gdb_test "apropos apropos" "apropos -- Search for commands matching a REGEXP"
+gdb_test "apropos apropos" "apropos -- Search for commands matching a REGEXP.*"

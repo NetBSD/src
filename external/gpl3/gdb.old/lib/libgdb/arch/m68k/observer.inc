@@ -4,7 +4,7 @@
 
 /* GDB Notifications to Observers.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -63,6 +63,259 @@ observer_notify_normal_stop (struct bpstats *bs, int print_frame)
   if (observer_debug)
     fprintf_unfiltered (gdb_stdlog, "observer_notify_normal_stop() called\n");
   generic_observer_notify (normal_stop_subject, &args);
+}
+
+/* signal_received notifications.  */
+
+static struct observer_list *signal_received_subject = NULL;
+
+struct signal_received_args { enum gdb_signal siggnal; };
+
+static void
+observer_signal_received_notification_stub (const void *data, const void *args_data)
+{
+  observer_signal_received_ftype *notify = (observer_signal_received_ftype *) data;
+  const struct signal_received_args *args = args_data;
+  notify (args->siggnal);
+}
+
+struct observer *
+observer_attach_signal_received (observer_signal_received_ftype *f)
+{
+  return generic_observer_attach (&signal_received_subject,
+				  &observer_signal_received_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_signal_received (struct observer *observer)
+{
+  generic_observer_detach (&signal_received_subject, observer);
+}
+
+void
+observer_notify_signal_received (enum gdb_signal siggnal)
+{
+  struct signal_received_args args;
+  args.siggnal = siggnal;
+
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_signal_received() called\n");
+  generic_observer_notify (signal_received_subject, &args);
+}
+
+/* end_stepping_range notifications.  */
+
+static struct observer_list *end_stepping_range_subject = NULL;
+
+static void
+observer_end_stepping_range_notification_stub (const void *data, const void *args_data)
+{
+  observer_end_stepping_range_ftype *notify = (observer_end_stepping_range_ftype *) data;
+  notify ();
+}
+
+struct observer *
+observer_attach_end_stepping_range (observer_end_stepping_range_ftype *f)
+{
+  return generic_observer_attach (&end_stepping_range_subject,
+				  &observer_end_stepping_range_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_end_stepping_range (struct observer *observer)
+{
+  generic_observer_detach (&end_stepping_range_subject, observer);
+}
+
+void
+observer_notify_end_stepping_range (void)
+{
+char *args = NULL;
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_end_stepping_range() called\n");
+  generic_observer_notify (end_stepping_range_subject, &args);
+}
+
+/* signal_exited notifications.  */
+
+static struct observer_list *signal_exited_subject = NULL;
+
+struct signal_exited_args { enum gdb_signal siggnal; };
+
+static void
+observer_signal_exited_notification_stub (const void *data, const void *args_data)
+{
+  observer_signal_exited_ftype *notify = (observer_signal_exited_ftype *) data;
+  const struct signal_exited_args *args = args_data;
+  notify (args->siggnal);
+}
+
+struct observer *
+observer_attach_signal_exited (observer_signal_exited_ftype *f)
+{
+  return generic_observer_attach (&signal_exited_subject,
+				  &observer_signal_exited_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_signal_exited (struct observer *observer)
+{
+  generic_observer_detach (&signal_exited_subject, observer);
+}
+
+void
+observer_notify_signal_exited (enum gdb_signal siggnal)
+{
+  struct signal_exited_args args;
+  args.siggnal = siggnal;
+
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_signal_exited() called\n");
+  generic_observer_notify (signal_exited_subject, &args);
+}
+
+/* exited notifications.  */
+
+static struct observer_list *exited_subject = NULL;
+
+struct exited_args { int exitstatus; };
+
+static void
+observer_exited_notification_stub (const void *data, const void *args_data)
+{
+  observer_exited_ftype *notify = (observer_exited_ftype *) data;
+  const struct exited_args *args = args_data;
+  notify (args->exitstatus);
+}
+
+struct observer *
+observer_attach_exited (observer_exited_ftype *f)
+{
+  return generic_observer_attach (&exited_subject,
+				  &observer_exited_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_exited (struct observer *observer)
+{
+  generic_observer_detach (&exited_subject, observer);
+}
+
+void
+observer_notify_exited (int exitstatus)
+{
+  struct exited_args args;
+  args.exitstatus = exitstatus;
+
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_exited() called\n");
+  generic_observer_notify (exited_subject, &args);
+}
+
+/* no_history notifications.  */
+
+static struct observer_list *no_history_subject = NULL;
+
+static void
+observer_no_history_notification_stub (const void *data, const void *args_data)
+{
+  observer_no_history_ftype *notify = (observer_no_history_ftype *) data;
+  notify ();
+}
+
+struct observer *
+observer_attach_no_history (observer_no_history_ftype *f)
+{
+  return generic_observer_attach (&no_history_subject,
+				  &observer_no_history_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_no_history (struct observer *observer)
+{
+  generic_observer_detach (&no_history_subject, observer);
+}
+
+void
+observer_notify_no_history (void)
+{
+char *args = NULL;
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_no_history() called\n");
+  generic_observer_notify (no_history_subject, &args);
+}
+
+/* sync_execution_done notifications.  */
+
+static struct observer_list *sync_execution_done_subject = NULL;
+
+static void
+observer_sync_execution_done_notification_stub (const void *data, const void *args_data)
+{
+  observer_sync_execution_done_ftype *notify = (observer_sync_execution_done_ftype *) data;
+  notify ();
+}
+
+struct observer *
+observer_attach_sync_execution_done (observer_sync_execution_done_ftype *f)
+{
+  return generic_observer_attach (&sync_execution_done_subject,
+				  &observer_sync_execution_done_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_sync_execution_done (struct observer *observer)
+{
+  generic_observer_detach (&sync_execution_done_subject, observer);
+}
+
+void
+observer_notify_sync_execution_done (void)
+{
+char *args = NULL;
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_sync_execution_done() called\n");
+  generic_observer_notify (sync_execution_done_subject, &args);
+}
+
+/* command_error notifications.  */
+
+static struct observer_list *command_error_subject = NULL;
+
+static void
+observer_command_error_notification_stub (const void *data, const void *args_data)
+{
+  observer_command_error_ftype *notify = (observer_command_error_ftype *) data;
+  notify ();
+}
+
+struct observer *
+observer_attach_command_error (observer_command_error_ftype *f)
+{
+  return generic_observer_attach (&command_error_subject,
+				  &observer_command_error_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_command_error (struct observer *observer)
+{
+  generic_observer_detach (&command_error_subject, observer);
+}
+
+void
+observer_notify_command_error (void)
+{
+char *args = NULL;
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_command_error() called\n");
+  generic_observer_notify (command_error_subject, &args);
 }
 
 /* target_changed notifications.  */
@@ -1218,6 +1471,123 @@ observer_notify_tsv_modified (const struct trace_state_variable *tsv)
   if (observer_debug)
     fprintf_unfiltered (gdb_stdlog, "observer_notify_tsv_modified() called\n");
   generic_observer_notify (tsv_modified_subject, &args);
+}
+
+/* inferior_call_pre notifications.  */
+
+static struct observer_list *inferior_call_pre_subject = NULL;
+
+struct inferior_call_pre_args { ptid_t thread; CORE_ADDR address; };
+
+static void
+observer_inferior_call_pre_notification_stub (const void *data, const void *args_data)
+{
+  observer_inferior_call_pre_ftype *notify = (observer_inferior_call_pre_ftype *) data;
+  const struct inferior_call_pre_args *args = args_data;
+  notify (args->thread, args->address);
+}
+
+struct observer *
+observer_attach_inferior_call_pre (observer_inferior_call_pre_ftype *f)
+{
+  return generic_observer_attach (&inferior_call_pre_subject,
+				  &observer_inferior_call_pre_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_inferior_call_pre (struct observer *observer)
+{
+  generic_observer_detach (&inferior_call_pre_subject, observer);
+}
+
+void
+observer_notify_inferior_call_pre (ptid_t thread, CORE_ADDR address)
+{
+  struct inferior_call_pre_args args;
+  args.thread = thread, args.address = address;
+
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_inferior_call_pre() called\n");
+  generic_observer_notify (inferior_call_pre_subject, &args);
+}
+
+/* inferior_call_post notifications.  */
+
+static struct observer_list *inferior_call_post_subject = NULL;
+
+struct inferior_call_post_args { ptid_t thread; CORE_ADDR address; };
+
+static void
+observer_inferior_call_post_notification_stub (const void *data, const void *args_data)
+{
+  observer_inferior_call_post_ftype *notify = (observer_inferior_call_post_ftype *) data;
+  const struct inferior_call_post_args *args = args_data;
+  notify (args->thread, args->address);
+}
+
+struct observer *
+observer_attach_inferior_call_post (observer_inferior_call_post_ftype *f)
+{
+  return generic_observer_attach (&inferior_call_post_subject,
+				  &observer_inferior_call_post_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_inferior_call_post (struct observer *observer)
+{
+  generic_observer_detach (&inferior_call_post_subject, observer);
+}
+
+void
+observer_notify_inferior_call_post (ptid_t thread, CORE_ADDR address)
+{
+  struct inferior_call_post_args args;
+  args.thread = thread, args.address = address;
+
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_inferior_call_post() called\n");
+  generic_observer_notify (inferior_call_post_subject, &args);
+}
+
+/* register_changed notifications.  */
+
+static struct observer_list *register_changed_subject = NULL;
+
+struct register_changed_args { struct frame_info *frame; int regnum; };
+
+static void
+observer_register_changed_notification_stub (const void *data, const void *args_data)
+{
+  observer_register_changed_ftype *notify = (observer_register_changed_ftype *) data;
+  const struct register_changed_args *args = args_data;
+  notify (args->frame, args->regnum);
+}
+
+struct observer *
+observer_attach_register_changed (observer_register_changed_ftype *f)
+{
+  return generic_observer_attach (&register_changed_subject,
+				  &observer_register_changed_notification_stub,
+				  (void *) f);
+}
+
+void
+observer_detach_register_changed (struct observer *observer)
+{
+  generic_observer_detach (&register_changed_subject, observer);
+}
+
+void
+observer_notify_register_changed (struct frame_info *frame, int regnum)
+{
+  struct register_changed_args args;
+  args.frame = frame, args.regnum = regnum;
+
+  if (observer_debug)
+    fprintf_unfiltered (gdb_stdlog, "observer_notify_register_changed() called\n");
+  generic_observer_notify (register_changed_subject, &args);
 }
 
 /* test_notification notifications.  */

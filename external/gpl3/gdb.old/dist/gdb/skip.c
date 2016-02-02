@@ -1,6 +1,6 @@
 /* Skipping uninteresting files and functions while stepping.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 #include "value.h"
 #include "valprint.h"
 #include "ui-out.h"
-#include <string.h>
 #include "symtab.h"
 #include "gdbcmd.h"
 #include "command.h"
@@ -30,7 +29,6 @@
 #include "arch-utils.h"
 #include "linespec.h"
 #include "objfiles.h"
-#include "exceptions.h"
 #include "breakpoint.h" /* for get_sal_arch () */
 #include "source.h"
 #include "filenames.h"
@@ -101,7 +99,7 @@ Ignore file pending future shared library load? ")))
       filename = arg;
     }
 
-  e = XZALLOC (struct skiplist_entry);
+  e = XCNEW (struct skiplist_entry);
   e->filename = xstrdup (filename);
   e->enabled = 1;
 
@@ -295,7 +293,7 @@ skip_delete_command (char *arg, int from_tty)
 static void
 skip_function (const char *name)
 {
-  struct skiplist_entry *e = XZALLOC (struct skiplist_entry);
+  struct skiplist_entry *e = XCNEW (struct skiplist_entry);
 
   e->enabled = 1;
   e->function_name = xstrdup (name);

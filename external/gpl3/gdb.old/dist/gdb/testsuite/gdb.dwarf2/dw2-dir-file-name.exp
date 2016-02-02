@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,13 @@ if {![dwarf2_support]} {
     return 0  
 }
 
+# Find length of addresses in bytes.
+if {[is_64_target]} {
+    set addr_len 8
+} else {
+    set addr_len 4
+}
+
 standard_testfile
 set asmsrcfile [standard_output_file ${testfile}asm.S]
 set asmobjfile [standard_output_file ${testfile}asm.o]
@@ -36,6 +43,7 @@ puts $f "/* DO NOT EDIT! GENERATED AUTOMATICALLY! */"
 
 proc out_cu { name cu_dir cu_name line_dir line_name } {
     global f
+    global addr_len
 
     puts -nonewline $f "\
 .L${name}_begin:
@@ -43,7 +51,7 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
 .L${name}_start:
 	.2byte	2				/* DWARF Version */
 	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
-	.byte	4				/* Pointer size */
+	.byte	${addr_len}			/* Pointer size */
 "
     if { $cu_dir != "" } {
 	puts $f "  .uleb128 ABBREV_COMP_DIR_NAME /* Abbrev: DW_TAG_compile_unit */"
@@ -54,8 +62,8 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
 	.ascii	\"GNU C\\0\"			/* DW_AT_producer */
 	.byte	2				/* DW_AT_language (DW_LANG_C) */
 	.4byte	.Lline_${name}_begin		/* DW_AT_stmt_list */
-	.4byte	${name}_start			/* DW_AT_low_pc */
-	.4byte	${name}_end			/* DW_AT_high_pc */
+	.${addr_len}byte ${name}_start		/* DW_AT_low_pc */
+	.${addr_len}byte ${name}_end		/* DW_AT_high_pc */
 "
     if { $cu_dir != "" } {
 	puts $f "  .ascii $cu_dir /* DW_AT_comp_dir */"
@@ -65,8 +73,8 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
 
 	.uleb128	3			/* Abbrev: DW_TAG_subprogram */
 	.asciz		\"${name}\"		/* DW_AT_name */
-	.4byte		${name}_start		/* DW_AT_low_pc */
-	.4byte		${name}_end		/* DW_AT_high_pc */
+	.${addr_len}byte ${name}_start		/* DW_AT_low_pc */
+	.${addr_len}byte ${name}_end		/* DW_AT_high_pc */
 
 	.byte		0			/* End of children of CU */
 .L${name}_end:
@@ -75,6 +83,7 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
 
 proc out_line { name cu_dir cu_name line_dir line_name } {
     global f
+    global addr_len
 
     puts -nonewline $f "\
 .Lline_${name}_begin:
@@ -120,16 +129,16 @@ proc out_line { name cu_dir cu_name line_dir line_name } {
 	.byte		3	/* DW_LNS_advance_line */
 	.sleb128	998	/* ... to 999 */
 	.byte		0	/* DW_LNE_set_address */
-	.uleb128	5
+	.uleb128	${addr_len}+1
 	.byte		2
-	.4byte		${name}_start
+	.${addr_len}byte ${name}_start
 	.byte		1	/* DW_LNS_copy */
 	.byte		3	/* DW_LNS_advance_line */
 	.sleb128	1	/* ... to 1000 */
 	.byte		0	/* DW_LNE_set_address */
-	.uleb128	5
+	.uleb128	${addr_len}+1
 	.byte		2
-	.4byte		${name}_end
+	.${addr_len}byte ${name}_end
 	.byte		1	/* DW_LNS_copy */
 	.byte		0	/* DW_LNE_end_of_sequence */
 	.uleb128	1

@@ -1,6 +1,6 @@
 /* Solaris threads debugging interface.
 
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,8 +64,10 @@
 #include "solib.h"
 #include "symfile.h"
 #include "observer.h"
-#include <string.h>
 #include "procfs.h"
+#include "symtab.h"
+#include "minsyms.h"
+#include "objfiles.h"
 
 struct target_ops sol_thread_ops;
 
@@ -542,13 +544,13 @@ sol_thread_store_registers (struct target_ops *ops,
    target_write_partial for details of each variant.  One, and only
    one, of readbuf or writebuf must be non-NULL.  */
 
-static LONGEST
+static enum target_xfer_status
 sol_thread_xfer_partial (struct target_ops *ops, enum target_object object,
 			  const char *annex, gdb_byte *readbuf,
 			  const gdb_byte *writebuf,
-			 ULONGEST offset, LONGEST len)
+			 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
-  int retval;
+  enum target_xfer_status retval;
   struct cleanup *old_chain;
   struct target_ops *beneath = find_target_beneath (ops);
 
@@ -564,8 +566,8 @@ sol_thread_xfer_partial (struct target_ops *ops, enum target_object object,
       inferior_ptid = procfs_first_available ();
     }
 
-  retval = beneath->to_xfer_partial (beneath, object, annex,
-				     readbuf, writebuf, offset, len);
+  retval = beneath->to_xfer_partial (beneath, object, annex, readbuf,
+				     writebuf, offset, len, xfered_len);
 
   do_cleanups (old_chain);
 
@@ -622,7 +624,7 @@ check_for_thread_db (void)
       if (ptid_get_pid (ptid) != -1)
 	inferior_ptid = ptid;
 
-      target_find_new_threads ();
+      target_update_thread_list ();
       break;
 
     default:
@@ -762,13 +764,13 @@ ps_err_e
 ps_pglobal_lookup (gdb_ps_prochandle_t ph, const char *ld_object_name,
 		   const char *ld_symbol_name, gdb_ps_addr_t *ld_symbol_addr)
 {
-  struct minimal_symbol *ms;
+  struct bound_minimal_symbol ms;
 
   ms = lookup_minimal_symbol (ld_symbol_name, NULL, NULL);
-  if (!ms)
+  if (!ms.minsym)
     return PS_NOSYM;
 
-  *ld_symbol_addr = SYMBOL_VALUE_ADDRESS (ms);
+  *ld_symbol_addr = BMSYMBOL_VALUE_ADDRESS (ms);
   return PS_OK;
 }
 
@@ -1054,11 +1056,11 @@ solaris_pid_to_str (struct target_ops *ops, ptid_t ptid)
 }
 
 
-/* Worker bee for find_new_threads.  Callback function that gets
+/* Worker bee for update_thread_list.  Callback function that gets
    called once per user-level thread (i.e. not for LWP's).  */
 
 static int
-sol_find_new_threads_callback (const td_thrhandle_t *th, void *ignored)
+sol_update_thread_list_callback (const td_thrhandle_t *th, void *ignored)
 {
   td_err_e retval;
   td_thrinfo_t ti;
@@ -1076,16 +1078,18 @@ sol_find_new_threads_callback (const td_thrhandle_t *th, void *ignored)
 }
 
 static void
-sol_find_new_threads (struct target_ops *ops)
+sol_update_thread_list (struct target_ops *ops)
 {
   struct target_ops *beneath = find_target_beneath (ops);
 
-  /* First Find any new LWP's.  */
-  if (beneath->to_find_new_threads != NULL)
-    beneath->to_find_new_threads (beneath);
+  /* Delete dead threads.  */
+  prune_threads ();
+
+  /* Find any new LWP's.  */
+  beneath->to_update_thread_list (beneath);
 
   /* Then find any new user-level threads.  */
-  p_td_ta_thr_iter (main_ta, sol_find_new_threads_callback, (void *) 0,
+  p_td_ta_thr_iter (main_ta, sol_update_thread_list_callback, (void *) 0,
 		    TD_THR_ANY_STATE, TD_THR_LOWEST_PRIORITY,
 		    TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS);
 }
@@ -1140,7 +1144,7 @@ info_cb (const td_thrhandle_t *th, void *s)
 
 	  printf_filtered ("   startfunc=%s",
 			   msym.minsym
-			   ? SYMBOL_PRINT_NAME (msym.minsym)
+			   ? MSYMBOL_PRINT_NAME (msym.minsym)
 			   : paddress (target_gdbarch (), ti.ti_startfunc));
 	}
 
@@ -1152,7 +1156,7 @@ info_cb (const td_thrhandle_t *th, void *s)
 
 	  printf_filtered ("   sleepfunc=%s",
 			   msym.minsym
-			   ? SYMBOL_PRINT_NAME (msym.minsym)
+			   ? MSYMBOL_PRINT_NAME (msym.minsym)
 			   : paddress (target_gdbarch (), ti.ti_pc));
 	}
 
@@ -1190,7 +1194,7 @@ thread_db_find_thread_from_tid (struct thread_info *thread, void *data)
 }
 
 static ptid_t
-sol_get_ada_task_ptid (long lwp, long thread)
+sol_get_ada_task_ptid (struct target_ops *self, long lwp, long thread)
 {
   struct thread_info *thread_info =
     iterate_over_threads (thread_db_find_thread_from_tid, &thread);
@@ -1199,7 +1203,7 @@ sol_get_ada_task_ptid (long lwp, long thread)
     {
       /* The list of threads is probably not up to date.  Find any
          thread that is missing from the list, and try again.  */
-      sol_find_new_threads (&current_target);
+      sol_update_thread_list (&current_target);
       thread_info = iterate_over_threads (thread_db_find_thread_from_tid,
                                           &thread);
     }
@@ -1224,7 +1228,7 @@ init_sol_thread_ops (void)
   sol_thread_ops.to_mourn_inferior = sol_thread_mourn_inferior;
   sol_thread_ops.to_thread_alive = sol_thread_alive;
   sol_thread_ops.to_pid_to_str = solaris_pid_to_str;
-  sol_thread_ops.to_find_new_threads = sol_find_new_threads;
+  sol_thread_ops.to_update_thread_list = sol_update_thread_list;
   sol_thread_ops.to_stratum = thread_stratum;
   sol_thread_ops.to_get_ada_task_ptid = sol_get_ada_task_ptid;
   sol_thread_ops.to_magic = OPS_MAGIC;

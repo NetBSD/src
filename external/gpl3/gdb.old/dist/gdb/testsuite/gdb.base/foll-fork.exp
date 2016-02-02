@@ -1,4 +1,4 @@
-#   Copyright 1997-2014 Free Software Foundation, Inc.
+#   Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,60 +53,134 @@ proc check_fork_catchpoints {} {
   }
 }
 
-proc default_fork_parent_follow {} {
+# Test follow-fork to ensure that the correct process is followed, that
+# the followed process stops where it is expected to stop, that processes
+# are detached (or not) as expected, and that the inferior list has the
+# expected contents after following the fork.  WHO is the argument to
+# the 'set follow-fork-mode' command, DETACH is the argument to the 
+# 'set detach-on-fork' command, and CMD is the GDB command used to 
+# execute the program past the fork.  If the value of WHO or DETACH is
+# 'default', the corresponding GDB command is skipped for that test.
+# The value of CMD must be either 'next 2' or 'continue'.
+proc test_follow_fork { who detach cmd } {
     global gdb_prompt
+    global srcfile
+    global testfile
 
-    gdb_test "show follow-fork" \
-	"Debugger response to a program call of fork or vfork is \"parent\".*" \
-	"default show parent follow, no catchpoints"
+    with_test_prefix "follow $who, detach $detach, command \"$cmd\"" {
 
-    gdb_test "next 2" \
-	"Detaching after fork from.*" \
-	"default parent follow, no catchpoints"
+	# Start a new debugger session each time so defaults are legitimate.
+	clean_restart $testfile
 
-    # The child has been detached; allow time for any output it might
-    # generate to arrive, so that output doesn't get confused with
-    # any expected debugger output from a subsequent testpoint.
-    #
-    exec sleep 1
-}
+	if ![runto_main] {
+	    untested "could not run to main"
+	    return -1
+	}
 
-proc explicit_fork_parent_follow {} {
-    global gdb_prompt
+	# The "Detaching..." and "Attaching..." messages may be hidden by
+	# default.
+	gdb_test_no_output "set verbose"
 
-    gdb_test_no_output "set follow-fork parent"
+	# Set follow-fork-mode if we aren't using the default.
+	if {$who == "default"} {
+	    set who "parent"
+	} else {
+	    gdb_test_no_output "set follow-fork $who"
+	}
 
-    gdb_test "show follow-fork" \
-	"Debugger response to a program call of fork or vfork is \"parent\"." \
-	"explicit show parent follow, no catchpoints"
+	gdb_test "show follow-fork" \
+	"Debugger response to a program call of fork or vfork is \"$who\"." \
+	"show follow-fork"
 
-    gdb_test "next 2" "Detaching after fork from.*" \
-	"explicit parent follow, no catchpoints"
+	# Set detach-on-fork mode if we aren't using the default.
+	if {$detach == "default"} {
+	    set detach "on"
+	} else {
+	    gdb_test_no_output "set detach-on-fork $detach"
+	}
 
-    # The child has been detached; allow time for any output it might
-    # generate to arrive, so that output doesn't get confused with
-    # any expected debugger output from a subsequent testpoint.
-    #
-    exec sleep 1
-}
+	gdb_test "show detach-on-fork" \
+		 "Whether gdb will detach.* fork is $detach." \
+		 "show detach-on-fork"
 
-proc explicit_fork_child_follow {} {
-    global gdb_prompt
+	# Set a breakpoint after the fork if we aren't single-stepping
+	# past the fork.
+	if {$cmd == "continue"} {
+	    set bp_after_fork [gdb_get_line_number "set breakpoint here"]
+	    gdb_test "break ${srcfile}:$bp_after_fork" \
+		     "Breakpoint.*, line $bp_after_fork.*" \
+		     "set breakpoint after fork"
+	}
 
-    gdb_test_no_output "set follow-fork child"
+	# Set up the output we expect to see after we run.
+	set expected_re ""
+	if {$who == "child"} {
+	    set expected_re "Attaching after.* fork to.*"
+	    if {$detach == "on"} {
+		append expected_re "Detaching after fork from .*"
+	    }
+	    append expected_re "set breakpoint here.*"
+	} elseif {$who == "parent" && $detach == "on"} {
+	    set expected_re "Detaching after fork from .*set breakpoint here.*"
+	} else {
+	    set expected_re ".*set breakpoint here.*"
+	}
 
-    gdb_test "show follow-fork" \
-	"Debugger response to a program call of fork or vfork is \"child\"." \
-	"explicit show child follow, no catchpoints"
+	# Test running past and following the fork, using the parameters
+	# set above.
+	gdb_test $cmd $expected_re "$cmd past fork"
 
-    gdb_test "next 2" "Attaching after.* fork to.*" \
-	"explicit child follow, no catchpoints"
+	# Check that we have the inferiors arranged correctly after 
+	# following the fork.
+	set resume_unfollowed 0
+	if {$who == "parent" && $detach == "on"} {
 
-    # The child has been detached; allow time for any output it might
-    # generate to arrive, so that output doesn't get confused with
-    # any gdb_expected debugger output from a subsequent testpoint.
-    #
-    exec sleep 1
+	    # Follow parent / detach child: the only inferior is the parent.
+	    gdb_test "info inferiors" "\\* 1 .* process.*" \
+		     "info inferiors"
+
+	} elseif {$who == "parent" && $detach == "off"} {
+
+	    # Follow parent / keep child: two inferiors under debug, the
+	    # parent is the current inferior.
+	    gdb_test "info inferiors" " 2 .*process.*\\* 1 .*process.*" \
+		     "info inferiors"
+
+	    gdb_test "inferior 2" "Switching to inferior 2 .*"
+	    set resume_unfollowed 1
+
+	} elseif {$who == "child" && $detach == "on"} {
+
+	    # Follow child / detach parent: the child is under debug and is
+	    # the current inferior.  The parent is listed but is not under
+	    # debug.
+	    gdb_test "info inferiors" "\\* 2 .*process.* 1 .*<null>.*" \
+		     "info inferiors"
+
+	} elseif {$who == "child" && $detach == "off"} {
+
+	    # Follow child / keep parent: two inferiors under debug, the
+	    # child is the current inferior.
+	    gdb_test "info inferiors" "\\* 2 .*process.* 1 .*process.*" \
+		     "info inferiors"
+
+	    gdb_test "inferior 1" "Switching to inferior 1 .*"
+	    set resume_unfollowed 1
+	}
+
+	if {$resume_unfollowed == 1} {
+	    if {$cmd == "next 2"} {
+
+		gdb_continue_to_end "continue unfollowed inferior to end"
+
+	    } elseif {$cmd == "continue"} {
+
+		gdb_continue_to_breakpoint \
+		    "continue unfollowed inferior to bp" \
+		    ".* set breakpoint here.*"
+	    }
+	}
+    }
 }
 
 proc catch_fork_child_follow {} {
@@ -148,9 +222,9 @@ proc catch_fork_child_follow {} {
 	"Temporary breakpoint.*, line $bp_after_fork.*" \
 	"set follow-fork child, tbreak"
 
-    gdb_test "continue" \
-	"Attaching after.* fork to.* at .*$bp_after_fork.*" \
-	"set follow-fork child, hit tbreak"
+    set expected_re "Attaching after.* fork to.*Detaching after fork from"
+    append expected_re ".* at .*$bp_after_fork.*"
+    gdb_test "continue" $expected_re "set follow-fork child, hit tbreak"
 
     # The parent has been detached; allow time for any output it might
     # generate to arrive, so that output doesn't get confused with
@@ -254,6 +328,7 @@ proc tcatch_fork_parent_follow {} {
 
 proc do_fork_tests {} {
     global gdb_prompt
+    global testfile
 
     # Verify that help is available for "set follow-fork-mode".
     #
@@ -286,31 +361,31 @@ By default, the debugger will follow the parent process..*" \
     # fork-following is supported.
     if [runto_main] then { check_fork_catchpoints }
 
-    # Test the default behaviour, which is to follow the parent of a
-    # fork, and detach from the child.  Do this without catchpoints.
+    # Test the basic follow-fork functionality using all combinations of
+    # values for follow-fork-mode and detach-on-fork, using either a
+    # breakpoint or single-step to execute past the fork.
     #
-    if [runto_main] then { default_fork_parent_follow }
+    # The first loop should be sufficient to test the defaults.  There
+    # is no need to test using the defaults in other permutations (e.g.
+    # "default" "on", "parent" "default", etc.).
+    foreach cmd {"next 2" "continue"} {
+        test_follow_fork "default" "default" $cmd
+    }
 
-    # Test the ability to explicitly follow the parent of a fork, and
-    # detach from the child.  Do this without catchpoints.
-    #
-    if [runto_main] then { explicit_fork_parent_follow }
+    # Now test all explicit permutations.
+    foreach who {"parent" "child"} {
+	foreach detach {"on" "off"} {
+	    foreach cmd {"next 2" "continue"} {
+		test_follow_fork $who $detach $cmd
+	    }
+	}
+    }
 
-    # Test the ability to follow the child of a fork, and detach from
-    # the parent.  Do this without catchpoints.
-    #
-    if [runto_main] then { explicit_fork_child_follow }
+    # Catchpoint tests.
 
-    # Test the ability to follow both child and parent of a fork.  Do
-    # this without catchpoints.
-    # ??rehrauer: NYI.  Will add testpoints here when implemented.
-    #
-
-    # Test the ability to have the debugger ask the user at fork-time
-    # whether to follow the parent, child or both.  Do this without
-    # catchpoints.
-    # ??rehrauer: NYI.  Will add testpoints here when implemented.
-    #
+    # Restart to eliminate any effects of the follow-fork tests.
+    clean_restart $testfile
+    gdb_test_no_output "set verbose"
 
     # Test the ability to catch a fork, specify that the child be
     # followed, and continue.  Make the catchpoint permanent.

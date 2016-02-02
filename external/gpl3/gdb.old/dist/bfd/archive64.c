@@ -1,5 +1,5 @@
 /* Support for 64-bit ELF archives.
-   Copyright 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -46,6 +46,7 @@ bfd_elf64_archive_slurp_armap (bfd *abfd)
   struct areltdata *mapdata;
   bfd_byte int_buf[8];
   char *stringbase;
+  char *stringend;
   bfd_byte *raw_armap = NULL;
   carsym *carsyms;
   bfd_size_type amt;
@@ -92,11 +93,18 @@ bfd_elf64_archive_slurp_armap (bfd *abfd)
   ptrsize = 8 * nsymz;
 
   amt = carsym_size + stringsize + 1;
+  if (carsym_size < nsymz || ptrsize < nsymz || amt < nsymz)
+    {
+      bfd_set_error (bfd_error_malformed_archive);
+      return FALSE;
+    }
   ardata->symdefs = (struct carsym *) bfd_zalloc (abfd, amt);
   if (ardata->symdefs == NULL)
     return FALSE;
   carsyms = ardata->symdefs;
   stringbase = ((char *) ardata->symdefs) + carsym_size;
+  stringbase[stringsize] = 0;
+  stringend = stringbase + stringsize;
 
   raw_armap = (bfd_byte *) bfd_alloc (abfd, ptrsize);
   if (raw_armap == NULL)
@@ -114,7 +122,8 @@ bfd_elf64_archive_slurp_armap (bfd *abfd)
     {
       carsyms->file_offset = bfd_getb64 (raw_armap + i * 8);
       carsyms->name = stringbase;
-      stringbase += strlen (stringbase) + 1;
+      if (stringbase < stringend)
+	stringbase += strlen (stringbase) + 1;
       ++carsyms;
     }
   *stringbase = '\0';

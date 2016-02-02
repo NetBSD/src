@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -27,14 +27,13 @@
 #include "objfiles.h"
 #include "gdbcmd.h"
 #include "regcache.h"
-#include "gdb_assert.h"
 #include "i386-tdep.h"
 #include "i387-tdep.h"
 #include "gdbarch.h"
 #include "arch-utils.h"
 #include "gdbcore.h"
 
-#include "i386-nat.h"
+#include "x86-nat.h"
 #include "darwin-nat.h"
 #include "i386-darwin-tdep.h"
 
@@ -74,6 +73,11 @@ i386_darwin_fetch_inferior_registers (struct target_ops *ops,
 				 (unsigned long) current_thread);
 	      MACH_CHECK_ERROR (ret);
 	    }
+
+	  /* Some kernels don't sanitize the values.  */
+	  gp_regs.uts.ts64.__fs &= 0xffff;
+	  gp_regs.uts.ts64.__gs &= 0xffff;
+
 	  amd64_supply_native_gregset (regcache, &gp_regs.uts, -1);
           fetched++;
         }
@@ -183,6 +187,10 @@ i386_darwin_store_inferior_registers (struct target_ops *ops,
           gdb_assert (gp_regs.tsh.count == x86_THREAD_STATE64_COUNT);
 
 	  amd64_collect_native_gregset (regcache, &gp_regs.uts, regno);
+
+	  /* Some kernels don't sanitize the values.  */
+	  gp_regs.uts.ts64.__fs &= 0xffff;
+	  gp_regs.uts.ts64.__gs &= 0xffff;
 
           ret = thread_set_state (current_thread, x86_THREAD_STATE,
                                   (thread_state_t) &gp_regs,
@@ -629,19 +637,19 @@ darwin_complete_target (struct target_ops *target)
   amd64_native_gregset32_num_regs = i386_darwin_thread_state_num_regs;
 #endif
 
-  i386_use_watchpoints (target);
+  x86_use_watchpoints (target);
 
-  i386_dr_low.set_control = i386_darwin_dr_set_control;
-  i386_dr_low.set_addr = i386_darwin_dr_set_addr;
-  i386_dr_low.get_addr = i386_darwin_dr_get_addr;
-  i386_dr_low.get_status = i386_darwin_dr_get_status;
-  i386_dr_low.get_control = i386_darwin_dr_get_control;
+  x86_dr_low.set_control = i386_darwin_dr_set_control;
+  x86_dr_low.set_addr = i386_darwin_dr_set_addr;
+  x86_dr_low.get_addr = i386_darwin_dr_get_addr;
+  x86_dr_low.get_status = i386_darwin_dr_get_status;
+  x86_dr_low.get_control = i386_darwin_dr_get_control;
 
   /* Let's assume that the kernel is 64 bits iff the executable is.  */
 #ifdef __x86_64__
-  i386_set_debug_register_length (8);
+  x86_set_debug_register_length (8);
 #else
-  i386_set_debug_register_length (4);
+  x86_set_debug_register_length (4);
 #endif
 
   target->to_fetch_registers = i386_darwin_fetch_inferior_registers;

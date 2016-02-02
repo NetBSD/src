@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -355,8 +355,8 @@ amd64_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	  call_dest = pc + 5 + extract_signed_integer (buf, 4, byte_order);
  	  s = lookup_minimal_symbol_by_pc (call_dest);
  	  if (s.minsym != NULL
- 	      && SYMBOL_LINKAGE_NAME (s.minsym) != NULL
- 	      && strcmp (SYMBOL_LINKAGE_NAME (s.minsym), "__main") == 0)
+ 	      && MSYMBOL_LINKAGE_NAME (s.minsym) != NULL
+ 	      && strcmp (MSYMBOL_LINKAGE_NAME (s.minsym), "__main") == 0)
  	    pc += 5;
  	}
     }
@@ -826,7 +826,7 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
 	  CORE_ADDR chain_vma;
 
 	  chain_vma = cache->image_base + unwind_info
-	    + sizeof (ex_ui) + ((codes_count + 1) & ~1) * 2 + 8;
+	    + sizeof (ex_ui) + ((codes_count + 1) & ~1) * 2;
 
 	  if (target_read_memory (chain_vma, (gdb_byte *) &d, sizeof (d)) != 0)
 	    return;
@@ -837,6 +837,15 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
 	    extract_unsigned_integer (d.rva_EndAddress, 4, byte_order);
 	  unwind_info =
 	    extract_unsigned_integer (d.rva_UnwindData, 4, byte_order);
+
+	  if (frame_debug)
+	    fprintf_unfiltered
+	      (gdb_stdlog,
+	       "amd64_windows_frame_decodes_insn (next in chain):"
+	       " unwind_data=%s, start_rva=%s, end_rva=%s\n",
+	       paddress (gdbarch, unwind_info),
+	       paddress (gdbarch, cache->start_rva),
+	       paddress (gdbarch, cache->end_rva));
 	}
 
       /* Allow the user to break this loop.  */
@@ -1144,7 +1153,7 @@ amd64_windows_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 	= (indirect_addr
 	   ? lookup_minimal_symbol_by_pc (indirect_addr).minsym
 	   : NULL);
-      const char *symname = indsym ? SYMBOL_LINKAGE_NAME (indsym) : NULL;
+      const char *symname = indsym ? MSYMBOL_LINKAGE_NAME (indsym) : NULL;
 
       if (symname)
 	{

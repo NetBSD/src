@@ -151,6 +151,73 @@ them, both to stdout and in the test suite log file.
 
 This setting is only meaningful in conjunction with GDB_PARALLEL.
 
+TESTS
+
+This variable is used to specify which set of tests to run.
+It is passed to make (not runtest) and its contents are a space separated
+list of tests to run.
+
+If using GNU make then the contents are wildcard-expanded using
+GNU make's $(wildcard) function.  Test paths must be fully specified,
+relative to the "testsuite" subdirectory.  This allows one to run all
+tests in a subdirectory by passing "gdb.subdir/*.exp", or more simply
+by using the check-gdb.subdir target in the Makefile.
+
+If for some strange reason one wanted to run all tests that begin with
+the letter "d" that is also possible: TESTS="*/d*.exp".
+
+Do not write */*.exp to specify all tests (assuming all tests are only
+nested one level deep, which is not necessarily true).  This will pick up
+.exp files in ancillary directories like "lib" and "config".
+Instead write gdb.*/*.exp.
+
+Example:
+
+	make -j10 check TESTS="gdb.server/[s-w]*.exp */x*.exp"
+
+If not using GNU make then the value is passed directly to runtest.
+If not specified, all tests are run.
+
+READ1
+
+This make (not runtest) variable is used to specify whether the
+testsuite preloads the read1.so library into expect.  Any non-empty
+value means true.  See "Race detection" below.
+
+Race detection
+**************
+
+The testsuite includes a mechanism that helps detect test races.
+
+For example, say the program running under expect outputs "abcd", and
+a test does something like this:
+
+  expect {
+    "a.*c" {
+    }
+    "b" {
+    }
+    "a" {
+    }
+  }
+
+Which case happens to match depends on what expect manages to read
+into its internal buffer in one go.  If it manages to read three bytes
+or more, then the first case matches.  If it manages to read two
+bytes, then the second case matches.  If it manages to read only one
+byte, then the third case matches.
+
+To help detect these cases, the race detection mechanism preloads a
+library into expect that forces the `read' system call to always
+return at most 1 byte.
+
+To enable this, either pass a non-empty value in the READ1 make
+variable, or use the check-read1 make target instead of check.
+
+Examples:
+
+	make -j10 check-read1 TESTS="*/paginate-*.exp"
+	make -j10 check READ1="1"
 
 Testsuite Configuration
 ***********************
@@ -178,6 +245,15 @@ to the same value as `timeout' during the testsuite initialization.
 The default value of the timeout is defined in the file
 `testsuite/config/unix.exp' (at least for Unix hosts; board files may
 have their own values).
+
+gdb_reverse_timeout
+
+Defining this variable changes the default timeout duration when tests
+under gdb.reverse directory are running.  Process record and reverse
+debugging is so slow that its tests have unexpected `TIMEOUT' test
+failures.  This global variable is useful to bump up the value of
+`timeout' for gdb.reverse tests and doesn't cause any delay where
+actual failures happen in the rest of the testsuite.
 
 
 Board Settings
@@ -237,6 +313,16 @@ gdb,skip_float_tests
 gdb,use_precord
 
   The board supports process record.
+
+gdb_init_command
+gdb_init_commands
+
+  Commands to send to GDB every time a program is about to be run.  The
+  first of these settings defines a single command as a string.  The
+  second defines a TCL list of commands being a string each.  The commands
+  are sent one by one in a sequence, first from `gdb_init_command', if any,
+  followed by individual commands from `gdb_init_command', if any, in this
+  list's order.
 
 gdb_server_prog
 

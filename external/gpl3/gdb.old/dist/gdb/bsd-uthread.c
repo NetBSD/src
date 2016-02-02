@@ -1,6 +1,6 @@
 /* BSD user-level threads support.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,6 @@
 #include "symfile.h"
 #include "target.h"
 
-#include "gdb_assert.h"
 #include "gdb_obstack.h"
 
 #include "bsd-uthread.h"
@@ -125,11 +124,11 @@ static int bsd_uthread_active;
 static CORE_ADDR
 bsd_uthread_lookup_address (const char *name, struct objfile *objfile)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
 
   sym = lookup_minimal_symbol (name, NULL, objfile);
-  if (sym)
-    return SYMBOL_VALUE_ADDRESS (sym);
+  if (sym.minsym)
+    return BMSYMBOL_VALUE_ADDRESS (sym);
 
   return 0;
 }
@@ -204,7 +203,7 @@ bsd_uthread_activate (struct objfile *objfile)
 /* Cleanup due to deactivation.  */
 
 static void
-bsd_uthread_close (void)
+bsd_uthread_close (struct target_ops *self)
 {
   bsd_uthread_active = 0;
   bsd_uthread_thread_run_addr = 0;
@@ -331,20 +330,6 @@ bsd_uthread_store_registers (struct target_ops *ops,
     }
 }
 
-/* FIXME: This function is only there because otherwise GDB tries to
-   invoke deprecate_xfer_memory.  */
-
-static LONGEST
-bsd_uthread_xfer_partial (struct target_ops *ops, enum target_object object,
-			  const char *annex, gdb_byte *readbuf,
-			  const gdb_byte *writebuf,
-			  ULONGEST offset, LONGEST len)
-{
-  gdb_assert (ops->beneath->to_xfer_partial);
-  return ops->beneath->to_xfer_partial (ops->beneath, object, annex, readbuf,
-					writebuf, offset, len);
-}
-
 static ptid_t
 bsd_uthread_wait (struct target_ops *ops,
 		  ptid_t ptid, struct target_waitstatus *status, int options)
@@ -427,11 +412,13 @@ bsd_uthread_thread_alive (struct target_ops *ops, ptid_t ptid)
 }
 
 static void
-bsd_uthread_find_new_threads (struct target_ops *ops)
+bsd_uthread_update_thread_list (struct target_ops *ops)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
   int offset = bsd_uthread_thread_next_offset;
   CORE_ADDR addr;
+
+  prune_threads ();
 
   addr = bsd_uthread_read_memory_address (bsd_uthread_thread_list_addr);
   while (addr != 0)
@@ -482,7 +469,8 @@ static char *bsd_uthread_state[] =
    INFO.  */
 
 static char *
-bsd_uthread_extra_thread_info (struct thread_info *info)
+bsd_uthread_extra_thread_info (struct target_ops *self,
+			       struct thread_info *info)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   CORE_ADDR addr = ptid_get_tid (info->ptid);
@@ -518,7 +506,7 @@ bsd_uthread_pid_to_str (struct target_ops *ops, ptid_t ptid)
 static struct target_ops *
 bsd_uthread_target (void)
 {
-  struct target_ops *t = XZALLOC (struct target_ops);
+  struct target_ops *t = XCNEW (struct target_ops);
 
   t->to_shortname = "bsd-uthreads";
   t->to_longname = "BSD user-level threads";
@@ -527,11 +515,10 @@ bsd_uthread_target (void)
   t->to_mourn_inferior = bsd_uthread_mourn_inferior;
   t->to_fetch_registers = bsd_uthread_fetch_registers;
   t->to_store_registers = bsd_uthread_store_registers;
-  t->to_xfer_partial = bsd_uthread_xfer_partial;
   t->to_wait = bsd_uthread_wait;
   t->to_resume = bsd_uthread_resume;
   t->to_thread_alive = bsd_uthread_thread_alive;
-  t->to_find_new_threads = bsd_uthread_find_new_threads;
+  t->to_update_thread_list = bsd_uthread_update_thread_list;
   t->to_extra_thread_info = bsd_uthread_extra_thread_info;
   t->to_pid_to_str = bsd_uthread_pid_to_str;
   t->to_stratum = thread_stratum;

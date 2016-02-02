@@ -1,6 +1,6 @@
 /* nto-tdep.h - QNX Neutrino target header.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -166,6 +166,6 @@ void nto_dummy_supply_regset (struct regcache *regcache, char *regs);
 
 int nto_in_dynsym_resolve_code (CORE_ADDR pc);
 
-char *nto_extra_thread_info (struct thread_info *);
+char *nto_extra_thread_info (struct target_ops *self, struct thread_info *);
 
 #endif

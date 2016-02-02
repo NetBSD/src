@@ -1,4 +1,4 @@
-#   Copyright 1988-2014 Free Software Foundation, Inc.
+#   Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -412,14 +412,6 @@ gdb_test "pwd" "Working directory .*" "pwd"
 #test run "r" abbreviation
 if $use_gdb_stub {
     # Only extended-remote supports "run".
-} elseif [istarget "*-*-vxworks*"] then {
-    gdb_test "set args" ".*" "" 
-
-    gdb_test "r" "Starting program: .*
-You must specify a function name to run, and arguments if any"\
-		"run \"r\" abbreviation"
-    gdb_test "set args main" ".*" "" 
-
 } else {
     gdb_test_multiple "r" "run \"r\" abbreviation" {
 	-re "Starting program:  .*You can't do that when your target is `None'.*$gdb_prompt $"\
@@ -442,13 +434,6 @@ You must specify a function name to run, and arguments if any"\
 #test run
 if $use_gdb_stub {
     # Only extended-remote supports "run".
-} elseif [istarget "*-*-vxworks*"] then {
-    gdb_test "set args" ".*" "" 
-
-    gdb_test "run" "Starting program: .*
-You must specify a function name to run, and arguments if any"
-    gdb_test "set args main" ".*" "" 
-
 } else {
     gdb_test_multiple "run" "run" {
 	-re "Starting program:.*You can't do that when your target is `None'.*$gdb_prompt $"\
@@ -630,6 +615,10 @@ if ![skip_python_tests] {
 	    {$_regex = <internal function _regex>} \
 	    {$_streq = <internal function _streq>} \
 	    {$_strlen = <internal function _strlen>} \
+	    {$_caller_is = <internal function _caller_is>} \
+	    {$_caller_matches = <internal function _caller_matches>} \
+	    {$_any_caller_is = <internal function _any_caller_is>} \
+	    {$_any_caller_matches = <internal function _any_caller_matches>} \
 	}
 }
 gdb_test_list_exact "show convenience" "show convenience" \
@@ -746,11 +735,8 @@ gdb_test "step" "The program is not being run." "step #2"
 #test symbol-file
 gdb_test "symbol-file" ".*" "symbol-file"
 
-#test target child
-gdb_test "target child" "Use the \"run\" command to start a Unix child process.*|Undefined target command: \"child\".  *Try \"help target\".*" "target child"
-
-#test target procfs
-gdb_test "target procfs" "Use the \"run\" command to start a Unix child process.*|Undefined target command: \"procfs\".  *Try \"help target\".*" "target procfs"
+#test target native
+gdb_test "target native" "Use the \"run\" command to start a process.*|Undefined target command: \"native\".  *Try \"help target\".*" "target native"
 
 #test target core
 send_gdb "target core\n"

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004-2014 Free Software Foundation, Inc.
+   Copyright 2004-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,11 +24,18 @@
 #include <errno.h>
 
 static volatile int done;
+static volatile int dummy;
+static volatile int no_handler;
 
 static void
 handler (int sig)
 {
+  /* This is more than one write so that the breakpoint location below
+     is more than one instruction away.  */
   done = 1;
+  done = 1;
+  done = 1;
+  done = 1; /* other handler location */
 } /* handler */
 
 struct itimerval itime;
@@ -43,11 +50,11 @@ enum {
 int
 main ()
 {
-
   int res;
+
   /* Set up the signal handler.  */
   memset (&action, 0, sizeof (action));
-  action.sa_handler = handler;
+  action.sa_handler = no_handler ? SIG_IGN : handler;
   sigaction (SIGVTALRM, &action, NULL);
   sigaction (SIGALRM, &action, NULL);
 
@@ -74,8 +81,10 @@ main ()
 	      return 1;
 	    }
 	}
-      /* Wait.  */
-      while (!done);
+      /* Wait.  Issue a couple writes to a dummy volatile var to be
+	 reasonably sure our simple "get-next-pc" logic doesn't
+	 stumble on branches.  */
+      dummy = 0; dummy = 0; while (!done);
       done = 0;
     }
   return 0;

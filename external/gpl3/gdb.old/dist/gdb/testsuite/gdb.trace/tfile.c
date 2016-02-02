@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2014 Free Software Foundation, Inc.
+   Copyright 2010-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,9 +20,11 @@
    GDB.  */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <stdint.h>
 
 char spbuf[200];
 
@@ -46,9 +48,17 @@ int
 start_trace_file (char *filename)
 {
   int fd;
+  mode_t mode = S_IRUSR | S_IWUSR;
 
-  fd = open (filename, O_WRONLY|O_CREAT|O_APPEND,
-	     S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+#ifdef S_IRGRP
+  mode |= S_IRGRP;
+#endif
+
+#ifdef S_IROTH
+  mode |= S_IROTH;
+#endif
+
+  fd = open (filename, O_WRONLY|O_CREAT|O_APPEND, mode);
 
   if (fd < 0)
     return fd;
@@ -67,30 +77,76 @@ finish_trace_file (int fd)
   close (fd);
 }
 
-
-void
-add_memory_block (char *addr, int size)
+static void
+tfile_write_64 (uint64_t value)
 {
-  short short_x;
-  unsigned long long ll_x;
+  memcpy (trptr, &value, sizeof (uint64_t));
+  trptr += sizeof (uint64_t);
+}
 
-  *((char *) trptr) = 'M';
-  trptr += 1;
-  ll_x = (unsigned long) addr;
-  memcpy (trptr, &ll_x, sizeof (unsigned long long));
-  trptr += sizeof (unsigned long long);
-  short_x = size;
-  memcpy (trptr, &short_x, 2);
-  trptr += 2;
+static void
+tfile_write_16 (uint16_t value)
+{
+  memcpy (trptr, &value, sizeof (uint16_t));
+  trptr += sizeof (uint16_t);
+}
+
+static void
+tfile_write_8 (uint8_t value)
+{
+  memcpy (trptr, &value, sizeof (uint8_t));
+  trptr += sizeof (uint8_t);
+}
+
+static void
+tfile_write_addr (char *addr)
+{
+  tfile_write_64 ((uint64_t) (uintptr_t) addr);
+}
+
+static void
+tfile_write_buf (const void *addr, size_t size)
+{
   memcpy (trptr, addr, size);
   trptr += size;
 }
 
 void
+add_memory_block (char *addr, int size)
+{
+  tfile_write_8 ('M');
+  tfile_write_addr (addr);
+  tfile_write_16 (size);
+  tfile_write_buf (addr, size);
+}
+
+/* Adjust a function's address to account for architectural
+   particularities.  */
+
+static uintptr_t
+adjust_function_address (uintptr_t func_addr)
+{
+#if defined(__thumb__) || defined(__thumb2__)
+  /* Although Thumb functions are two-byte aligned, function
+     pointers have the Thumb bit set.  Clear it.  */
+  return func_addr & ~1;
+#elif defined __powerpc64__ && _CALL_ELF != 2
+  /* Get function address from function descriptor.  */
+  return *(uintptr_t *) func_addr;
+#else
+  return func_addr;
+#endif
+}
+
+/* Get a function's address as an integer.  */
+
+#define FUNCTION_ADDRESS(FUN) adjust_function_address ((uintptr_t) &FUN)
+
+void
 write_basic_trace_file (void)
 {
   int fd, int_x;
-  short short_x;
+  unsigned long long func_addr;
 
   fd = start_trace_file (TFILE_DIR "tfile-basic.tf");
 
@@ -108,9 +164,9 @@ write_basic_trace_file (void)
 
   /* Dump tracepoint definitions, in syntax similar to that used
      for reconnection uploads.  */
-  /* FIXME need a portable way to print function address in hex */
-  snprintf (spbuf, sizeof spbuf, "tp T1:%lx:E:0:0\n",
-	    (long) &write_basic_trace_file);
+  func_addr = FUNCTION_ADDRESS (write_basic_trace_file);
+
+  snprintf (spbuf, sizeof spbuf, "tp T1:%llx:E:0:0\n", func_addr);
   write (fd, spbuf, strlen (spbuf));
   /* (Note that we would only need actions defined if we wanted to
      test tdump.) */
@@ -122,14 +178,13 @@ write_basic_trace_file (void)
   /* (Encapsulate better if we're going to do lots of this; note that
      buffer endianness is the target program's enddianness.) */
   trptr = trbuf;
-  short_x = 1;
-  memcpy (trptr, &short_x, 2);
-  trptr += 2;
+  tfile_write_16 (1);
+
   tfsizeptr = trptr;
   trptr += 4;
-  add_memory_block (&testglob, sizeof (testglob));
+  add_memory_block ((char *) &testglob, sizeof (testglob));
   /* Divide a variable between two separate memory blocks.  */
-  add_memory_block (&testglob2, 1);
+  add_memory_block ((char *) &testglob2, 1);
   add_memory_block (((char*) &testglob2) + 1, sizeof (testglob2) - 1);
   /* Go back and patch in the frame size.  */
   int_x = trptr - tfsizeptr - sizeof (int);
@@ -174,8 +229,8 @@ write_error_trace_file (void)
 {
   int fd;
   const char made_up[] = "made-up error";
+  char hex[(sizeof (made_up) - 1) * 2 + 1];
   int len = sizeof (made_up) - 1;
-  char *hex = alloca (len * 2 + 1);
 
   fd = start_trace_file (TFILE_DIR "tfile-error.tf");
 
@@ -199,9 +254,8 @@ write_error_trace_file (void)
 
   /* Dump tracepoint definitions, in syntax similar to that used
      for reconnection uploads.  */
-  /* FIXME need a portable way to print function address in hex */
-  snprintf (spbuf, sizeof spbuf, "tp T1:%lx:E:0:0\n",
-	    (long) &write_basic_trace_file);
+  snprintf (spbuf, sizeof spbuf, "tp T1:%llx:E:0:0\n",
+	    (unsigned long long) FUNCTION_ADDRESS (write_basic_trace_file));
   write (fd, spbuf, strlen (spbuf));
   /* (Note that we would only need actions defined if we wanted to
      test tdump.) */
@@ -226,7 +280,7 @@ done_making_trace_files (void)
 }
 
 int
-main (int argc, char **argv, char **envp)
+main (void)
 {
   write_basic_trace_file ();
 

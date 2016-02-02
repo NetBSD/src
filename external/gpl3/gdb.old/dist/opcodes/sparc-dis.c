@@ -1,7 +1,5 @@
 /* Print SPARC instructions.
-   Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -99,7 +97,7 @@ static char *v9_hpriv_reg_names[] =
   "resv7", "resv8", "resv9", "resv10", "resv11", "resv12", "resv13", 
   "resv14", "resv15", "resv16", "resv17", "resv18", "resv19", "resv20",
   "resv21", "resv22", "resv23", "resv24", "resv25", "resv26", "resv27",
-  "resv28", "resv29", "resv30", "hstick_cmpr"
+  "hstick_offset", "hstick_enable", "resv30", "hstick_cmpr"
 };
 
 /* These are ordered according to there register number in
@@ -108,7 +106,7 @@ static char *v9a_asr_reg_names[] =
 {
   "pcr", "pic", "dcr", "gsr", "set_softint", "clear_softint",
   "softint", "tick_cmpr", "stick", "stick_cmpr", "cfr",
-  "pause", "cps"
+  "pause", "mwait"
 };
 
 /* Macros used to extract instruction fields.  Not all fields have
@@ -658,6 +656,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    break;
 		  case 'H':	/* Double/even.  */
 		  case 'J':	/* Quad/multiple of 4.  */
+		  case '}':     /* Double/even.  */
 		    fregx (X_RD (insn));
 		    break;
 #undef	freg
@@ -793,6 +792,10 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 
 		  case 's':
 		    (*info->fprintf_func) (stream, "%%fprs");
+		    break;
+
+		  case '{':
+		    (*info->fprintf_func) (stream, "%%mcdper");
 		    break;
 
 		  case 'o':

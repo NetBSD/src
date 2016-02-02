@@ -1,4 +1,4 @@
-# Copyright 1994-2014 Free Software Foundation, Inc.
+# Copyright 1994-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,13 +113,11 @@ if ![file exists $binfile] then {
 		# other machines as well.
 
 		setup_xfail "sparc*-*-solaris2*"
-		setup_xfail "mips-*-ultrix*"
 		setup_xfail "i*86-*-solaris2*"
 		setup_xfail "*-*-sysv4*"
 		setup_xfail "vax-*-*"
 		setup_xfail "alpha-*-*"
 		setup_xfail "*-*-*bsd*"
-		setup_xfail "*-*-irix*"
 		setup_xfail "*-*-hpux*"
 		setup_xfail "*-*-*lynx*"
 		fail "call function when asleep (stays asleep)"

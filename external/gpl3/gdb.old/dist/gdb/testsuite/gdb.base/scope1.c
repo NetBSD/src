@@ -43,11 +43,7 @@ void usestatics1 ()
   useit1 (&filelocal_ro);
 }
 
-#ifdef PROTOTYPES
 void useit1 (const int *val)
-#else
-void useit1 (val) const int *val;
-#endif
 {
     static int usedval;
 

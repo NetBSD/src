@@ -1,6 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -234,7 +234,7 @@ extern void uo_field_string (struct ui_out *uiout, int fldno, int width,
 
 /* Create a ui_out object */
 
-extern struct ui_out *ui_out_new (struct ui_out_impl *impl,
+extern struct ui_out *ui_out_new (const struct ui_out_impl *impl,
 				  void *data,
 				  int flags);
 

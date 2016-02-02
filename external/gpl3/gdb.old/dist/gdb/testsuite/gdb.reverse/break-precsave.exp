@@ -1,4 +1,4 @@
-#   Copyright 2008-2014 Free Software Foundation, Inc.
+#   Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,73 +33,80 @@ set bar_location  [gdb_get_line_number "break in bar" ]
 set main_location [gdb_get_line_number "break in main"]
 set end_location  [gdb_get_line_number "end of main"  ]
 
-runto main
+proc precsave_tests {} {
+    global foo_location bar_location main_location end_location
+    global decimal srcfile precsave gdb_prompt
 
-if [supports_process_record] {
-    # Activate process record/replay
-    gdb_test_no_output "record" "Turn on process record"
+    runto main
+
+    if [supports_process_record] {
+	# Activate process record/replay
+	gdb_test_no_output "record" "Turn on process record"
+    }
+
+    gdb_test "break $end_location" \
+	"Breakpoint $decimal at .*$srcfile, line $end_location\." \
+	"BP at end of main"
+
+    gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+
+    gdb_test "record save $precsave" \
+	"Saved core file $precsave with execution log\."  \
+	"save process recfile"
+
+    gdb_test "kill" "" "Kill process, prepare to debug log file" \
+	"Kill the program being debugged\\? \\(y or n\\) " "y"
+
+    gdb_test "record restore $precsave" \
+	"Restored records from core file .*" \
+	"reload precord save file"
+
+    gdb_test "break foo" \
+	"Breakpoint $decimal at .* line $foo_location\." \
+	"set breakpoint on foo"
+
+    gdb_test "break bar" \
+	"Breakpoint $decimal at .* line $bar_location\." \
+	"set breakpoint on bar"
+
+    gdb_continue_to_breakpoint "foo" ".*$srcfile:$foo_location.*"
+    gdb_continue_to_breakpoint "bar" ".*$srcfile:$bar_location.*"
+    gdb_test_multiple "continue" "go to end of main forward" {
+	-re ".*Breakpoint $decimal,.*$srcfile:$end_location.*$gdb_prompt $"  {
+	    pass "go to end of main forward"
+	}
+	-re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
+	    pass "go to end of main forward"
+	}
+    }
+
+    gdb_test_no_output "set exec-direction reverse" "set reverse"
+
+    gdb_continue_to_breakpoint "bar backward"  ".*$srcfile:$bar_location.*"
+    gdb_continue_to_breakpoint "foo backward"  ".*$srcfile:$foo_location.*"
+
+    gdb_test_multiple "continue" "main backward" {
+	-re ".*Breakpoint $decimal,.*$srcfile:$main_location.*$gdb_prompt $" {
+	    pass "main backward"
+	}
+	-re "No more reverse-execution history.* break in main .*$gdb_prompt $" {
+	    pass "main backward"
+	}
+    }
+
+    gdb_test_no_output "set exec-direction forward" "set forward"
+
+    gdb_continue_to_breakpoint "foo" ".*$srcfile:$foo_location.*"
+    gdb_continue_to_breakpoint "bar" ".*$srcfile:$bar_location.*"
+
+    gdb_test_multiple "continue" "end of record log" {
+	-re ".*Breakpoint $decimal,.*$srcfile:$end_location.*$gdb_prompt $" {
+	    pass "end of record log"
+	}
+	-re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
+	    pass "end of record log"
+	}
+    }
 }
 
-gdb_test "break $end_location" \
-    "Breakpoint $decimal at .*/$srcfile, line $end_location\." \
-    "BP at end of main"
-
-gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
-
-gdb_test "record save $precsave" \
-    "Saved core file $precsave with execution log\."  \
-    "save process recfile"
-
-gdb_test "kill" "" "Kill process, prepare to debug log file" \
-    "Kill the program being debugged\\? \\(y or n\\) " "y"
-
-gdb_test "record restore $precsave" \
-    "Program terminated with signal .*" \
-    "reload precord save file"
-
-gdb_test "break foo" \
-    "Breakpoint $decimal at .* line $foo_location\." \
-    "set breakpoint on foo"
-
-gdb_test "break bar" \
-    "Breakpoint $decimal at .* line $bar_location\." \
-    "set breakpoint on bar"
-
-gdb_continue_to_breakpoint "foo" ".*/$srcfile:$foo_location.*"
-gdb_continue_to_breakpoint "bar" ".*/$srcfile:$bar_location.*"
-gdb_test_multiple "continue" "go to end of main forward" {
-    -re ".*Breakpoint $decimal,.*/$srcfile:$end_location.*$gdb_prompt $"  {
-	pass "go to end of main forward"
-    }
-    -re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
-	pass "go to end of main forward"
-    }
-}
-
-gdb_test_no_output "set exec-direction reverse" "set reverse"
-
-gdb_continue_to_breakpoint "bar backward"  ".*/$srcfile:$bar_location.*"
-gdb_continue_to_breakpoint "foo backward"  ".*/$srcfile:$foo_location.*"
-
-gdb_test_multiple "continue" "main backward" {
-    -re ".*Breakpoint $decimal,.*/$srcfile:$main_location.*$gdb_prompt $" {
-	pass "main backward"
-    }
-    -re "No more reverse-execution history.* break in main .*$gdb_prompt $" {
-	pass "main backward"
-    }
-}
-
-gdb_test_no_output "set exec-direction forward" "set forward"
-
-gdb_continue_to_breakpoint "foo" ".*/$srcfile:$foo_location.*"
-gdb_continue_to_breakpoint "bar" ".*/$srcfile:$bar_location.*"
-
-gdb_test_multiple "continue" "end of record log" {
-    -re ".*Breakpoint $decimal,.*/$srcfile:$end_location.*$gdb_prompt $" {
-	pass "end of record log"
-    }
-    -re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
-	pass "end of record log"
-    }
-}
+precsave_tests

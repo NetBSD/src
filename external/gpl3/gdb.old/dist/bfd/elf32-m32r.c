@@ -1,5 +1,5 @@
 /* M32R-specific support for 32-bit ELF.
-   Copyright 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1280,7 +1280,11 @@ m32r_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (ELF32_R_TYPE(dst->r_info) <= (unsigned int) R_M32R_GNU_VTENTRY);
+  if (r_type > (unsigned int) R_M32R_GNU_VTENTRY)
+    {
+      _bfd_error_handler (_("%A: invalid M32R reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &m32r_elf_howto_table[r_type];
 }
 
@@ -1919,7 +1923,7 @@ m32r_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
@@ -2177,7 +2181,7 @@ m32r_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;
@@ -2490,6 +2494,12 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  relocation = 0;
 
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+
+	  if (info->wrap_hash != NULL
+	      && (input_section->flags & SEC_DEBUGGING) != 0)
+	    h = ((struct elf_link_hash_entry *)
+		 unwrap_hash_lookup (info, input_bfd, &h->root));
+
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
@@ -4004,9 +4014,9 @@ m32r_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 #define ELF_MACHINE_ALT1	EM_CYGNUS_M32R
 #define ELF_MAXPAGESIZE		0x1 /* Explicitly requested by Mitsubishi.  */
 
-#define TARGET_BIG_SYM          bfd_elf32_m32r_vec
+#define TARGET_BIG_SYM          m32r_elf32_vec
 #define TARGET_BIG_NAME		"elf32-m32r"
-#define TARGET_LITTLE_SYM       bfd_elf32_m32rle_vec
+#define TARGET_LITTLE_SYM       m32r_elf32_le_vec
 #define TARGET_LITTLE_NAME      "elf32-m32rle"
 
 #define elf_info_to_howto			m32r_info_to_howto
@@ -4062,11 +4072,11 @@ m32r_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 #define ELF_MAXPAGESIZE         0x1000
 
 #undef  TARGET_BIG_SYM
-#define TARGET_BIG_SYM          bfd_elf32_m32rlin_vec
+#define TARGET_BIG_SYM          m32r_elf32_linux_vec
 #undef  TARGET_BIG_NAME
 #define TARGET_BIG_NAME         "elf32-m32r-linux"
 #undef  TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM       bfd_elf32_m32rlelin_vec
+#define TARGET_LITTLE_SYM       m32r_elf32_linux_le_vec
 #undef  TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME      "elf32-m32rle-linux"
 #undef  elf32_bed

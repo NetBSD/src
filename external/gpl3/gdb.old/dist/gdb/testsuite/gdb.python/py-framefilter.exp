@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 Free Software Foundation, Inc.
+# Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,6 +73,19 @@ gdb_test "bt full no-filters" \
 gdb_test "bt full" \
     ".*#0.*cnuf_dne.*h = 9.*f = 42.*g = 19.*bar = $hex \"Inside block x2\".*d = 15.*e = 14.*foo = $hex \"Inside block\".*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*" \
     "bt full with filters"
+
+# Test pagination can be aborted even for frame filters.
+gdb_test_no_output "set height 5" "pagination quit - set height limited"
+foreach bttype [list "bt" "bt full"] {
+    set test "pagination quit - $bttype"
+    gdb_test_multiple "$bttype" $test {
+	-re "$pagination_prompt$" {
+	    pass $test
+	}
+    }
+    gdb_test "q" "^q\r\nQuit" "pagination quit - $bttype - q"
+}
+gdb_test_no_output "set height unlimited" "pagination quit - set height unlimited"
 
 gdb_continue_to_breakpoint "Backtrace end breakpoint"
 
@@ -188,8 +201,6 @@ gdb_test_multiple "bt 1" $test {
     }
 }
 
-remote_file host delete ${remote_python_file}
-
 # Test with no debuginfo
 
 # We cannot use prepare_for_testing as we have to set the safe-patch
@@ -237,7 +248,7 @@ gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
 
 # Disable Reverse
 gdb_test_no_output "disable frame-filter global Reverse" \
-    "disable frame-filter gloval Reverse for no debuginfo"
+    "disable frame-filter global Reverse for no debuginfo"
 gdb_test "bt" \
     ".*#0..*in main \\(\\).*" \
     "bt for no debuginfo"

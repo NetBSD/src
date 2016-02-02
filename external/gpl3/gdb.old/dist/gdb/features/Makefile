@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2014 Free Software Foundation, Inc.
+# Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -25,24 +25,40 @@
 # GDB repository.
 
 # It can also update the C files in the features directory from their
-# XML master copies.  This relies on a GDB linked with expat and
-# configured for the correct architecture, so the files are again kept
-# in the GDB repository.  To generate C files:
+# XML master copies.  This relies on a GDB linked with expat and that
+# is configured to include support for the architecture, so the files
+# are kept in the GDB repository.
+#
+# By default we'll generate all C files, and you must point make at a
+# GDB that has been configured with --enable-targets=all:
+#
+#   make GDB=/path/to/gdb cfiles
+#
+# To regenerate all C files from scratch:
+#
+#   make GDB=/path/to/gdb clean-cfiles cfiles
+#
+# To generate specific C files, you can override the XMLTOC make
+# variable:
+#
 #   make GDB=/path/to/gdb XMLTOC="xml files" cfiles
 
 WHICH = aarch64 \
 	arm-with-iwmmxt arm-with-vfpv2 arm-with-vfpv3 arm-with-neon \
-	arm-with-m arm-with-m-fpa-layout arm-with-m-vfp-d16 \
 	i386/i386 i386/i386-linux \
 	i386/i386-mmx i386/i386-mmx-linux \
 	i386/amd64 i386/amd64-linux \
 	i386/i386-avx i386/i386-avx-linux \
 	i386/i386-mpx i386/i386-mpx-linux \
+	i386/i386-avx512 i386/i386-avx512-linux \
 	i386/amd64-avx i386/amd64-avx-linux \
 	i386/amd64-mpx i386/amd64-mpx-linux \
+	i386/amd64-avx512 i386/amd64-avx512-linux \
 	i386/x32 i386/x32-linux \
 	i386/x32-avx i386/x32-avx-linux \
+	i386/x32-avx512 i386/x32-avx512-linux \
 	mips-linux mips-dsp-linux \
+	microblaze-with-stack-protect \
 	mips64-linux mips64-dsp-linux \
 	nios2-linux \
 	rs6000/powerpc-32 \
@@ -67,20 +83,27 @@ i386/i386-avx-expedite = ebp,esp,eip
 i386/i386-avx-linux-expedite = ebp,esp,eip
 i386/i386-mpx-expedite = ebp,esp,eip
 i386/i386-mpx-linux-expedite = ebp,esp,eip
+i386/i386-avx512-expedite = ebp,esp,eip
+i386/i386-avx512-linux-expedite = ebp,esp,eip
 i386/i386-mmx-expedite = ebp,esp,eip
 i386/i386-mmx-linux-expedite = ebp,esp,eip
 i386/amd64-avx-expedite = rbp,rsp,rip
 i386/amd64-avx-linux-expedite = rbp,rsp,rip
 i386/amd64-mpx-expedite = rbp,rsp,rip
 i386/amd64-mpx-linux-expedite = rbp,rsp,rip
+i386/amd64-avx512-expedite = rbp,rsp,rip
+i386/amd64-avx512-linux-expedite = rbp,rsp,rip
 i386/x32-expedite = rbp,rsp,rip
 i386/x32-linux-expedite = rbp,rsp,rip
 i386/x32-avx-expedite = rbp,rsp,rip
 i386/x32-avx-linux-expedite = rbp,rsp,rip
+i386/x32-avx512-expedite = rbp,rsp,rip
+i386/x32-avx512-linux-expedite = rbp,rsp,rip
 mips-expedite = r29,pc
 mips-dsp-expedite = r29,pc
 mips64-expedite = r29,pc
 mips64-dsp-expedite = r29,pc
+microblaze-expedite = r1,rpc
 nios2-linux-expedite = sp,pc
 powerpc-expedite = r1,pc
 rs6000/powerpc-cell32l-expedite = r1,pc,r0,orig_r3,r4
@@ -91,7 +114,7 @@ s390-linux32v2-expedite = r14,r15,pswa
 s390-linux64-expedite = r14l,r15l,pswa
 s390-linux64v1-expedite = r14l,r15l,pswa
 s390-linux64v2-expedite = r14l,r15l,pswa
-s390-te-linux64-expedite = r14,r15,pswa
+s390-te-linux64-expedite = r14l,r15l,pswa
 s390x-linux64-expedite = r14,r15,pswa
 s390x-linux64v1-expedite = r14,r15,pswa
 s390x-linux64v2-expedite = r14,r15,pswa
@@ -108,14 +131,111 @@ XSLTPROC = xsltproc
 outdir = ../regformats
 OUTPUTS = $(patsubst %,$(outdir)/%.dat,$(WHICH))
 
-XMLTOC =
+# The set of xml files we'll generate .c files for GDB from.  By
+# default we'll build all .c files, which requires an
+# --enable-targets=all GDB.  You can override this by passing XMLTOC
+# to make on the command line.
+XMLTOC = \
+	aarch64.xml \
+	arm-with-iwmmxt.xml \
+	arm-with-m-fpa-layout.xml \
+	arm-with-m-vfp-d16.xml \
+	arm-with-m.xml \
+	arm-with-neon.xml \
+	arm-with-vfpv2.xml \
+	arm-with-vfpv3.xml \
+	i386/amd64-avx-linux.xml \
+	i386/amd64-avx.xml \
+	i386/amd64-avx512-linux.xml \
+	i386/amd64-avx512.xml \
+	i386/amd64-linux.xml \
+	i386/amd64-mpx-linux.xml \
+	i386/amd64-mpx.xml \
+	i386/amd64.xml \
+	i386/i386-avx-linux.xml \
+	i386/i386-avx.xml \
+	i386/i386-avx512-linux.xml \
+	i386/i386-avx512.xml \
+	i386/i386-linux.xml \
+	i386/i386-mmx-linux.xml \
+	i386/i386-mmx.xml \
+	i386/i386-mpx-linux.xml \
+	i386/i386-mpx.xml \
+	i386/i386.xml \
+	i386/x32-avx-linux.xml \
+	i386/x32-avx.xml \
+	i386/x32-avx512-linux.xml \
+	i386/x32-avx512.xml \
+	i386/x32-linux.xml \
+	i386/x32.xml \
+	microblaze-with-stack-protect.xml \
+	microblaze.xml \
+	mips-dsp-linux.xml \
+	mips-linux.xml \
+	mips64-dsp-linux.xml \
+	mips64-linux.xml \
+	nios2-linux.xml \
+	nios2.xml \
+	rs6000/powerpc-32.xml \
+	rs6000/powerpc-32l.xml \
+	rs6000/powerpc-403.xml \
+	rs6000/powerpc-403gc.xml \
+	rs6000/powerpc-405.xml \
+	rs6000/powerpc-505.xml \
+	rs6000/powerpc-601.xml \
+	rs6000/powerpc-602.xml \
+	rs6000/powerpc-603.xml \
+	rs6000/powerpc-604.xml \
+	rs6000/powerpc-64.xml \
+	rs6000/powerpc-64l.xml \
+	rs6000/powerpc-7400.xml \
+	rs6000/powerpc-750.xml \
+	rs6000/powerpc-860.xml \
+	rs6000/powerpc-altivec32.xml \
+	rs6000/powerpc-altivec32l.xml \
+	rs6000/powerpc-altivec64.xml \
+	rs6000/powerpc-altivec64l.xml \
+	rs6000/powerpc-cell32l.xml \
+	rs6000/powerpc-cell64l.xml \
+	rs6000/powerpc-e500.xml \
+	rs6000/powerpc-e500l.xml \
+	rs6000/powerpc-isa205-32l.xml \
+	rs6000/powerpc-isa205-64l.xml \
+	rs6000/powerpc-isa205-altivec32l.xml \
+	rs6000/powerpc-isa205-altivec64l.xml \
+	rs6000/powerpc-isa205-vsx32l.xml \
+	rs6000/powerpc-isa205-vsx64l.xml \
+	rs6000/powerpc-vsx32.xml \
+	rs6000/powerpc-vsx32l.xml \
+	rs6000/powerpc-vsx64.xml \
+	rs6000/powerpc-vsx64l.xml \
+	rs6000/rs6000.xml \
+	s390-linux32.xml \
+	s390-linux32v1.xml \
+	s390-linux32v2.xml \
+	s390-linux64.xml \
+	s390-linux64v1.xml \
+	s390-linux64v2.xml \
+	s390-te-linux64.xml \
+	s390x-linux64.xml \
+	s390x-linux64v1.xml \
+	s390x-linux64v2.xml \
+	s390x-te-linux64.xml \
+	tic6x-c62x-linux.xml \
+	tic6x-c62x.xml \
+	tic6x-c64x-linux.xml \
+	tic6x-c64x.xml \
+	tic6x-c64xp-linux.xml \
+	tic6x-c64xp.xml
+
 CFILES = $(patsubst %.xml,%.c,$(XMLTOC))
 GDB = false
 
 all: $(OUTPUTS)
 
 $(outdir)/%.dat: %.xml number-regs.xsl sort-regs.xsl gdbserver-regs.xsl
-	echo "# DO NOT EDIT: generated from $<" > $(outdir)/$*.tmp
+	echo "# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:" > $(outdir)/$*.tmp
+	echo "# Generated from: $<" >> $(outdir)/$*.tmp
 	echo "name:`echo $(notdir $*) | sed 's/-/_/g'`" >> $(outdir)/$*.tmp
 	echo "xmltarget:$(<F)" >> $(outdir)/$*.tmp
 	echo "expedite:$(if $($*-expedite),$($*-expedite),$($(firstword $(subst -, ,$(notdir $*)))-expedite))" \
@@ -146,6 +266,10 @@ $(outdir)/i386/i386-mpx.dat: i386/32bit-core.xml i386/32bit-avx.xml \
 			       i386/32bit-mpx.xml
 $(outdir)/i386/i386-mpx-linux.dat: i386/32bit-core.xml 	i386/32bit-avx.xml \
 			       i386/32bit-linux.xml i386/32bit-mpx.xml
+$(outdir)/i386/i386-avx512.dat: i386/32bit-core.xml i386/32bit-avx.xml \
+			       i386/32bit-mpx.xml i386/32bit-avx512.xml
+$(outdir)/i386/i386-avx512-linux.dat: i386/32bit-core.xml i386/32bit-avx.xml \
+			       i386/32bit-linux.xml i386/32bit-mpx.xml i386/32bit-avx512.xml
 $(outdir)/i386/i386-mmx.dat: i386/32bit-core.xml 
 $(outdir)/i386/i386-mmx-linux.dat: i386/32bit-core.xml i386/32bit-linux.xml
 $(outdir)/i386/amd64-avx.dat: i386/64bit-core.xml i386/64bit-avx.xml
@@ -155,9 +279,26 @@ $(outdir)/i386/amd64-mpx-linux.dat: i386/64bit-core.xml i386/64bit-avx.xml \
 			       i386/64bit-linux.xml i386/64bit-mpx.xml
 $(outdir)/i386/amd64-mpx.dat: i386/64bit-core.xml i386/64bit-avx.xml \
 			       i386/64bit-mpx.xml
+$(outdir)/i386/amd64-avx512.dat: i386/64bit-core.xml i386/64bit-avx.xml \
+			       i386/64bit-mpx.xml i386/64bit-avx512.xml
+$(outdir)/i386/amd64-avx512-linux.dat: i386/64bit-core.xml i386/64bit-avx.xml \
+			       i386/64bit-mpx.xml i386/64bit-avx512.xml \
+			       i386/64bit-linux.xml
 $(outdir)/i386/x32.dat: i386/x32-core.xml i386/64bit-sse.xml
 $(outdir)/i386/x32-linux.dat: i386/x32-core.xml i386/64bit-sse.xml \
 			      i386/64bit-linux.xml
 $(outdir)/i386/x32-avx.dat: i386/x32-core.xml i386/64bit-avx.xml
 $(outdir)/i386/x32-avx-linux.dat: i386/x32-core.xml i386/64bit-avx.xml \
 				  i386/64bit-linux.xml
+$(outdir)/i386/x32-avx512.dat: i386/x32-core.xml i386/64bit-avx.xml \
+			       i386/64bit-mpx.xml i386/64bit-avx512.xml
+$(outdir)/i386/x32-avx512-linux.dat: i386/x32-core.xml i386/64bit-avx.xml \
+			       i386/64bit-mpx.xml i386/64bit-avx512.xml i386/64bit-linux.xml
+
+# 'all' doesn't build the C files, so don't delete them in 'clean'
+# either.
+clean-cfiles:
+	rm -f $(CFILES)
+
+clean:
+	rm -f $(OUTPUTS)

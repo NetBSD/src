@@ -1,5 +1,5 @@
 /* MI Command Set - catch commands.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    Contributed by Intel Corporation.
 
@@ -22,7 +22,6 @@
 #include "arch-utils.h"
 #include "breakpoint.h"
 #include "gdb.h"
-#include "libiberty.h"
 #include "ada-lang.h"
 #include "mi-cmds.h"
 #include "mi-getopt.h"

@@ -1,6 +1,5 @@
 /* DWARF 1 find nearest line (_bfd_dwarf1_find_nearest_line).
-   Copyright 1998, 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Written by Gavin Romig-Koch of Cygnus Solutions (gavin@cygnus.com).
 
@@ -450,8 +449,8 @@ dwarf1_unit_find_nearest_line (struct dwarf1_debug* stash,
 
 bfd_boolean
 _bfd_dwarf1_find_nearest_line (bfd *abfd,
-			       asection *section,
 			       asymbol **symbols,
+			       asection *section,
 			       bfd_vma offset,
 			       const char **filename_ptr,
 			       const char **functionname_ptr,

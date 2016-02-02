@@ -1,6 +1,6 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,8 +23,6 @@
 #include "event-loop.h"
 
 #include "gdb_select.h"
-#include <string.h>
-#include "gdb_assert.h"
 #include <sys/time.h>
 #ifdef USE_WIN32API
 #include <winsock2.h>
@@ -498,14 +496,14 @@ serial_ttystate
 ser_base_get_tty_state (struct serial *scb)
 {
   /* Allocate a dummy.  */
-  return (serial_ttystate) XMALLOC (int);
+  return (serial_ttystate) XNEW (int);
 }
 
 serial_ttystate
 ser_base_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
   /* Allocate another dummy.  */
-  return (serial_ttystate) XMALLOC (int);
+  return (serial_ttystate) XNEW (int);
 }
 
 int

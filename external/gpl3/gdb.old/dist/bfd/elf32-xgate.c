@@ -1,6 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Sean Keys(skeys@ipdatasys.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -423,24 +422,28 @@ xgate_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT(r_type < (unsigned int) R_XGATE_max);
+  if (r_type >= (unsigned int) R_XGATE_max)
+    {
+      _bfd_error_handler (_("%A: invalid XGate reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &elf_xgate_howto_table[r_type];
 }
 
-/* Free the derived linker hash table.  */
+/* Destroy an XGATE ELF linker hash table.  */
 
-void
-xgate_elf_bfd_link_hash_table_free (struct bfd_link_hash_table *hash)
+static void
+xgate_elf_bfd_link_hash_table_free (bfd *obfd)
 {
   struct xgate_elf_link_hash_table *ret =
-      (struct xgate_elf_link_hash_table *) hash;
+      (struct xgate_elf_link_hash_table *) obfd->link.hash;
 
   bfd_hash_table_free (ret->stub_hash_table);
   free (ret->stub_hash_table);
-  _bfd_elf_link_hash_table_free (hash);
+  _bfd_elf_link_hash_table_free (obfd);
 }
 
-/* Create a XGATE ELF linker hash table.  */
+/* Create an XGATE ELF linker hash table.  */
 
 static struct bfd_link_hash_table*
 xgate_elf_bfd_link_hash_table_create (bfd *abfd)
@@ -465,7 +468,7 @@ xgate_elf_bfd_link_hash_table_create (bfd *abfd)
   ret->stub_hash_table = (struct bfd_hash_table*) bfd_zmalloc (amt);
   if (ret->stub_hash_table == NULL)
     {
-      free (ret);
+      _bfd_elf_link_hash_table_free (abfd);
       return NULL;
     }
 
@@ -473,9 +476,10 @@ xgate_elf_bfd_link_hash_table_create (bfd *abfd)
       sizeof(struct elf32_xgate_stub_hash_entry)))
     {
       free (ret->stub_hash_table);
-      free (ret);
+      _bfd_elf_link_hash_table_free (abfd);
       return NULL;
     }
+  ret->root.root.hash_table_free = xgate_elf_bfd_link_hash_table_free;
 
   return &ret->root.root;
 }
@@ -703,7 +707,7 @@ elf32_xgate_post_process_headers (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_in
 
 #define ELF_MAXPAGESIZE                      0x1000
 
-#define TARGET_BIG_SYM                       bfd_elf32_xgate_vec
+#define TARGET_BIG_SYM                       xgate_elf32_vec
 #define TARGET_BIG_NAME                      "elf32-xgate"
 
 #define elf_info_to_howto                    0
@@ -718,7 +722,6 @@ elf32_xgate_post_process_headers (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_in
 #define elf_backend_add_symbol_hook          elf32_xgate_add_symbol_hook
 
 #define bfd_elf32_bfd_link_hash_table_create xgate_elf_bfd_link_hash_table_create
-#define bfd_elf32_bfd_link_hash_table_free   xgate_elf_bfd_link_hash_table_free
 #define bfd_elf32_bfd_merge_private_bfd_data _bfd_xgate_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_set_private_flags      _bfd_xgate_elf_set_private_flags
 #define bfd_elf32_bfd_print_private_bfd_data _bfd_xgate_elf_print_private_bfd_data

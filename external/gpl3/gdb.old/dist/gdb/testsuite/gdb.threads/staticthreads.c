@@ -1,6 +1,6 @@
 /* This test program is part of GDB, The GNU debugger.
 
-   Copyright 2004-2014 Free Software Foundation, Inc.
+   Copyright 2004-2015 Free Software Foundation, Inc.
 
    Originally written by Jeff Johnston <jjohnstn@redhat.com>,
    contributed by Red Hat
@@ -28,18 +28,25 @@
 
 sem_t semaphore;
 
+#ifdef HAVE_TLS
+__thread int tlsvar;
+#endif
+
 void *
 thread_function (void *arg)
 {
-  printf ("Thread executing\n");
+#ifdef HAVE_TLS
+  tlsvar = 2;
+#endif
   while (sem_wait (&semaphore) != 0)
     {
       if (errno != EINTR)
 	{
 	  perror ("thread_function");
-	  return;
+	  return NULL;
 	}
     }
+  printf ("Thread executing\n"); /* tlsvar-is-set */
   return NULL;
 }
 
@@ -57,6 +64,9 @@ main (int argc, char **argv)
       return -1;
     }
 
+#ifdef HAVE_TLS
+  tlsvar = 1;
+#endif
 
   /* Create a thread, wait for it to complete.  */
   {

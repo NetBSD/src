@@ -1,5 +1,5 @@
 # Test macro scoping.
-# Copyright 2002-2014 Free Software Foundation, Inc.
+# Copyright 2002-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -517,74 +517,81 @@ gdb_test "macro undef" \
     "usage: macro undef.*" \
     "macro undef with no arguments"
 
-# Completion tests.
+# Do completion tests if readline is used.
 
-# The macro FIFTY_SEVEN is in scope at this point.
-send_gdb "p FIFTY_\t"
-gdb_expect  {
-        -re "^p FIFTY_SEVEN $"\
-            { send_gdb "\n"
-              gdb_expect {
-                      -re "^.* = 57.*$gdb_prompt $"\
-                                        { pass "complete 'p FIFTY_SEVEN'"}
-                      -re ".*$gdb_prompt $" { fail "complete 'p FIFTY_SEVEN'"}
-                      timeout           {fail "(timeout) complete 'p FIFTY_SEVEN'"}
-                     }
-            }
-        -re ".*$gdb_prompt $"       { fail "complete 'p FIFTY_SEVEN'" }
-        timeout         { fail "(timeout) complete 'p FIFTY_SEVEN' 2" }
-        }
+if { [readline_is_used] } {
 
-# The macro TWENTY_THREE is not in scope.
-send_gdb "p TWENTY_\t"
-gdb_expect  {
-        -re "^p TWENTY_\\\x07$"\
-            { send_gdb "\n"
-              gdb_expect {
-                      -re "No symbol \"TWENTY_\" in current context\\..*$gdb_prompt $"\
-                                        { pass "complete 'p TWENTY_'"}
-                      -re ".*$gdb_prompt $" { fail "complete 'p TWENTY_'"}
-                      timeout           {fail "(timeout) complete 'p TWENTY_'"}
-                     }
-            }
-        -re ".*$gdb_prompt $"       { fail "complete 'p TWENTY_'" }
-        timeout         { fail "(timeout) complete 'p TWENTY_' 2" }
-        }
+    # The macro FIFTY_SEVEN is in scope at this point.
+    send_gdb "p FIFTY_\t"
+    gdb_expect  {
+	-re "^p FIFTY_SEVEN $" {
+	    send_gdb "\n"
+	    gdb_expect {
+		-re "^.* = 57.*$gdb_prompt $" {
+		    pass "complete 'p FIFTY_SEVEN'"
+		}
+		-re ".*$gdb_prompt $" { fail "complete 'p FIFTY_SEVEN'" }
+		timeout { fail "(timeout) complete 'p FIFTY_SEVEN'" }
+	    }
+	}
+	-re ".*$gdb_prompt $" { fail "complete 'p FIFTY_SEVEN'" }
+	timeout { fail "(timeout) complete 'p FIFTY_SEVEN' 2" }
+    }
 
-# The macro FORTY_EIGHT was undefined and thus is not in scope.
-send_gdb "p FORTY_\t"
-gdb_expect  {
-        -re "^p FORTY_\\\x07$"\
-            { send_gdb "\n"
-              gdb_expect {
-                      -re "No symbol \"FORTY_\" in current context\\..*$gdb_prompt $"\
-                                        { pass "complete 'p FORTY_'"}
-                      -re ".*$gdb_prompt $" { fail "complete 'p FORTY_'"}
-                      timeout           {fail "(timeout) complete 'p FORTY_'"}
-                     }
-            }
-        -re ".*$gdb_prompt $"       { fail "complete 'p FORTY_'" }
-        timeout         { fail "(timeout) complete 'p FORTY_' 2" }
-        }
+    # The macro TWENTY_THREE is not in scope.
+    send_gdb "p TWENTY_\t"
+    gdb_expect  {
+	-re "^p TWENTY_\\\x07$" {
+	    send_gdb "\n"
+	    gdb_expect {
+		-re "No symbol \"TWENTY_\" in current context\\..*$gdb_prompt $" {
+		    pass "complete 'p TWENTY_'"
+		}
+		-re ".*$gdb_prompt $" { fail "complete 'p TWENTY_'" }
+		timeout { fail "(timeout) complete 'p TWENTY_'"}
+	    }
+	}
+	-re ".*$gdb_prompt $" { fail "complete 'p TWENTY_'" }
+	timeout { fail "(timeout) complete 'p TWENTY_' 2" }
+    }
 
-gdb_test_no_output "macro define TWENTY_THREE 25" \
-  "defining TWENTY_THREE"
+    # The macro FORTY_EIGHT was undefined and thus is not in scope.
+    send_gdb "p FORTY_\t"
+    gdb_expect  {
+	-re "^p FORTY_\\\x07$" {
+	    send_gdb "\n"
+	    gdb_expect {
+		-re "No symbol \"FORTY_\" in current context\\..*$gdb_prompt $" {
+		    pass "complete 'p FORTY_'"
+		}
+		-re ".*$gdb_prompt $" { fail "complete 'p FORTY_'" }
+		timeout {fail "(timeout) complete 'p FORTY_'"}
+	    }
+	}
+	-re ".*$gdb_prompt $" { fail "complete 'p FORTY_'" }
+	timeout { fail "(timeout) complete 'p FORTY_' 2" }
+    }
 
-# User-defined macros are always in scope.
-send_gdb "p TWENTY_\t"
-gdb_expect  {
-        -re "^p TWENTY_THREE $"\
-            { send_gdb "\n"
-              gdb_expect {
-                      -re "^.* = 25.*$gdb_prompt $"\
-                                        { pass "complete 'p TWENTY_THREE'"}
-                      -re ".*$gdb_prompt $" { fail "complete 'p TWENTY_THREE'"}
-                      timeout           {fail "(timeout) complete 'p TWENTY_THREE'"}
-                     }
-            }
-        -re ".*$gdb_prompt $"       { fail "complete 'p TWENTY_THREE'" }
-        timeout         { fail "(timeout) complete 'p TWENTY_THREE' 2" }
-        }
+    gdb_test_no_output "macro define TWENTY_THREE 25" \
+	"defining TWENTY_THREE"
+
+    # User-defined macros are always in scope.
+    send_gdb "p TWENTY_\t"
+    gdb_expect  {
+	-re "^p TWENTY_THREE $" {
+	    send_gdb "\n"
+	    gdb_expect {
+		-re "^.* = 25.*$gdb_prompt $" {
+		    pass "complete 'p TWENTY_THREE'"
+		}
+		-re ".*$gdb_prompt $" { fail "complete 'p TWENTY_THREE'"}
+		timeout { fail "(timeout) complete 'p TWENTY_THREE'" }
+	    }
+	}
+	-re ".*$gdb_prompt $" { fail "complete 'p TWENTY_THREE'" }
+	timeout { fail "(timeout) complete 'p TWENTY_THREE' 2" }
+    }
+}
 
 # Splicing tests.
 

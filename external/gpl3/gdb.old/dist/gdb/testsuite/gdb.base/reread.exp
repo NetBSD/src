@@ -1,4 +1,4 @@
-# Copyright 1998-2014 Free Software Foundation, Inc.
+# Copyright 1998-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,17 +62,7 @@ gdb_test "break foo" \
 # Run, should see "Breakpoint 1, foo () at hello1.c:14"
 
 gdb_run_cmd
-
-gdb_expect {
-    -re ".*Breakpoint.* foo .* at .*$srcfile1:14.*$gdb_prompt $"  {
-	pass "run to foo()"
-    }
-    -re ".*$gdb_prompt $" {
-	fail "run to foo()"
-	gdb_suppress_tests
-    }
-    timeout { fail "run to foo() (timeout)" ; gdb_suppress_tests }
-}
+gdb_test "" "Breakpoint.* foo .* at .*$srcfile1:14.*" "run to foo()"
 
 # Restore first executable to its original name, and move
 # second executable into its place.  Ensure that the new
@@ -87,24 +77,12 @@ gdb_touch_execfile ${binfile}
 # and reset the breakpoints correctly.
 # Should see "Breakpoint 1, foo () at reread2.c:9"
 
+set test "run to foo() second time"
 if [is_remote target] {
-    unsupported "run to foo() second time "
+    unsupported $test
 } else {
     gdb_run_cmd
-    gdb_expect {
-	#    -re ".*re-reading symbols.*Breakpoint.* foo .* at .*$srcfile2:9.*$gdb_prompt $" {}
-	-re ".*Breakpoint.* foo .* at .*:9.*$gdb_prompt $" {
-	    pass "run to foo() second time "
-	}
-	-re ".*$gdb_prompt $" {
-	    fail "run to foo() second time"
-	    gdb_suppress_tests
-	}
-	timeout { 
-	    fail "run to foo() second time (timeout)"
-	    gdb_suppress_tests 
-	}
-    }
+    gdb_test "" "Breakpoint.* foo .* at .*:9.*" $test
 }
 
 
@@ -120,28 +98,14 @@ if [is_remote target] {
     gdb_rename_execfile ${binfile1} ${binfile}
 
     # Restart GDB entirely.
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
+    clean_restart ${binfile}
 
     # Set a breakpoint on foo and run to it.
     gdb_test "break foo" \
             "Breakpoint.*at.* file .*$srcfile1, line 14.*" \
             "second pass: breakpoint foo in first file"
     gdb_run_cmd
-    gdb_expect {
-        -re ".*Breakpoint.* foo .* at .*$srcfile1:14.*$gdb_prompt $"  {
-            pass "second pass: run to foo()"
-        }
-        -re ".*$gdb_prompt $" {
-            fail "second pass: run to foo()"
-            gdb_suppress_tests
-        }
-        timeout {
-            fail "second pass: run to foo() (timeout)"
-            gdb_suppress_tests
-        }
-    }
+    gdb_test "" "Breakpoint.* foo .* at .*$srcfile1:14.*" "second pass: run to foo()"
 
     # This time, let the program run to completion.  If GDB checks the
     # executable file's timestamp now, it won't notice any change.
@@ -153,23 +117,9 @@ if [is_remote target] {
     gdb_rename_execfile ${binfile} ${binfile1}
     gdb_rename_execfile ${binfile2} ${binfile}
     gdb_run_cmd
-    gdb_expect {
-	-re ".*Breakpoint.* foo .* at .*:9.*$gdb_prompt $" {
-	    pass "second pass: run to foo() second time "
-	}
-	-re ".*$gdb_prompt $" {
-	    fail "second pass: run to foo() second time"
-	    gdb_suppress_tests
-	}
-	timeout { 
-	    fail "second pass: run to foo() second time (timeout)"
-	    gdb_suppress_tests 
-	}
-    }
+    gdb_test "" "Breakpoint.* foo .* at .*:9.*" "second pass: run to foo() second time"
 }
 
 # End of tests.
-
-gdb_stop_suppressing_tests
 
 return 0

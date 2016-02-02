@@ -1,6 +1,6 @@
 /* Header file for GDB command decoding library.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,15 +44,6 @@ cmd_types;
 /* This structure records one command'd definition.  */
 
 
-/* This flag is used by the code executing commands to warn the user
-   the first time a deprecated command is used, see the 'flags' field
-   in the following struct.
-*/
-#define CMD_DEPRECATED            0x1
-#define DEPRECATED_WARN_USER      0x2
-#define MALLOCED_REPLACEMENT      0x4
-#define DOC_ALLOCATED             0x8
-
 struct cmd_list_element
   {
     /* Points to next command in this list.  */
@@ -63,6 +54,54 @@ struct cmd_list_element
 
     /* Command class; class values are chosen by application program.  */
     enum command_class class;
+
+    /* When 1 indicated that this command is deprecated.  It may be
+       removed from gdb's command set in the future.  */
+
+    unsigned int cmd_deprecated : 1;
+
+    /* The user needs to be warned that this is a deprecated command.
+       The user should only be warned the first time a command is
+       used.  */
+        
+    unsigned int deprecated_warn_user : 1;
+
+    /* When functions are deprecated at compile time (this is the way
+       it should, in general, be done) the memory containing the
+       replacement string is statically allocated.  In some cases it
+       makes sense to deprecate commands at runtime (the testsuite is
+       one example).  In this case the memory for replacement is
+       malloc'ed.  When a command is undeprecated or re-deprecated at
+       runtime we don't want to risk calling free on statically
+       allocated memory, so we check this flag.  */
+
+    unsigned int malloced_replacement : 1;
+
+    /* Set if the doc field should be xfree'd.  */
+
+    unsigned int doc_allocated : 1;
+
+    /* Flag that specifies if this command is already running its hook.  */
+    /* Prevents the possibility of hook recursion.  */
+    unsigned int hook_in : 1;
+
+    /* For prefix commands only:
+       nonzero means do not get an error if subcommand is not
+       recognized; call the prefix's own function in that case.  */
+    unsigned int allow_unknown : 1;
+
+    /* Nonzero says this is an abbreviation, and should not
+       be mentioned in lists of commands.
+       This allows "br<tab>" to complete to "break", which it
+       otherwise wouldn't.  */
+    unsigned int abbrev_flag : 1;
+
+    /* Type of "set" or "show" command (or SET_NOT_SET if not "set"
+       or "show").  */
+    ENUM_BITFIELD (cmd_types) type : 2;
+
+    /* What kind of variable is *VAR?  */
+    ENUM_BITFIELD (var_types) var_type : 4;
 
     /* Function definition of this command.  NULL for command class
        names and for help topics that are not really commands.  NOTE:
@@ -89,38 +128,14 @@ struct cmd_list_element
        First line is brief documentation; remaining lines form, with it,
        the full documentation.  First line should end with a period.
        Entire string should also end with a period, not a newline.  */
-    char *doc;
+    const char *doc;
 
     /* For set/show commands.  A method for printing the output to the
        specified stream.  */
     show_value_ftype *show_value_func;
 
-    /* flags : a bitfield 
-       
-       bit 0: (LSB) CMD_DEPRECATED, when 1 indicated that this command
-       is deprecated.  It may be removed from gdb's command set in the
-       future.
-
-       bit 1: DEPRECATED_WARN_USER, the user needs to be warned that
-       this is a deprecated command.  The user should only be warned
-       the first time a command is used.
-        
-       bit 2: MALLOCED_REPLACEMENT, when functions are deprecated at
-       compile time (this is the way it should, in general, be done)
-       the memory containing the replacement string is statically
-       allocated.  In some cases it makes sense to deprecate commands
-       at runtime (the testsuite is one example).  In this case the
-       memory for replacement is malloc'ed.  When a command is
-       undeprecated or re-deprecated at runtime we don't want to risk
-       calling free on statically allocated memory, so we check this
-       flag.
-
-       bit 3: DOC_ALLOCATED, set if the doc field should be xfree'd.  */
-
-    int flags;
-
     /* If this command is deprecated, this is the replacement name.  */
-    char *replacement;
+    const char *replacement;
 
     /* If this command represents a show command, then this function
        is called before the variable's value is examined.  */
@@ -132,10 +147,6 @@ struct cmd_list_element
     /* Hook for another command to be executed after this command.  */
     struct cmd_list_element *hook_post;
 
-    /* Flag that specifies if this command is already running its hook.  */
-    /* Prevents the possibility of hook recursion.  */
-    int hook_in;
-
     /* Nonzero identifies a prefix command.  For them, the address
        of the variable containing the list of subcommands.  */
     struct cmd_list_element **prefixlist;
@@ -145,21 +156,10 @@ struct cmd_list_element
        plus any others needed to get to it.  Should end in a space.
        It is used before the word "command" in describing the
        commands reached through this prefix.  */
-    char *prefixname;
-
-    /* For prefix commands only:
-       nonzero means do not get an error if subcommand is not
-       recognized; call the prefix's own function in that case.  */
-    char allow_unknown;
+    const char *prefixname;
 
     /* The prefix command of this command.  */
     struct cmd_list_element *prefix;
-
-    /* Nonzero says this is an abbreviation, and should not
-       be mentioned in lists of commands.
-       This allows "br<tab>" to complete to "break", which it
-       otherwise wouldn't.  */
-    char abbrev_flag;
 
     /* Completion routine for this command.  TEXT is the text beyond
        what was matched for the command itself (leading whitespace is
@@ -176,21 +176,23 @@ struct cmd_list_element
        "baz/foo", return "baz/foobar".  */
     completer_ftype *completer;
 
+    /* Handle the word break characters for this completer.  Usually
+       this function need not be defined, but for some types of
+       completers (e.g., Python completers declared as methods inside
+       a class) the word break chars may need to be redefined
+       depending on the completer type (e.g., for filename
+       completers).  */
+
+    completer_ftype_void *completer_handle_brkchars;
+
     /* Destruction routine for this command.  If non-NULL, this is
        called when this command instance is destroyed.  This may be
        used to finalize the CONTEXT field, if needed.  */
     void (*destroyer) (struct cmd_list_element *self, void *context);
 
-    /* Type of "set" or "show" command (or SET_NOT_SET if not "set"
-       or "show").  */
-    cmd_types type;
-
     /* Pointer to variable affected by "set" and "show".  Doesn't
        matter if type is not_set.  */
     void *var;
-
-    /* What kind of variable is *VAR?  */
-    var_types var_type;
 
     /* Pointer to NULL terminated list of enumerated values (like
        argv).  */
@@ -219,14 +221,14 @@ struct cmd_list_element
   };
 
 extern void help_cmd_list (struct cmd_list_element *, enum command_class,
-			   char *, int, struct ui_file *);
+			   const char *, int, struct ui_file *);
 
 /* Functions that implement commands about CLI commands.  */
 
-extern void help_cmd (char *, struct ui_file *);
+extern void help_cmd (const char *, struct ui_file *);
 
 extern void apropos_cmd (struct ui_file *, struct cmd_list_element *,
-                         struct re_pattern_buffer *, char *);
+                         struct re_pattern_buffer *, const char *);
 
 /* Used to mark commands that don't do anything.  If we just leave the
    function field NULL, the command is interpreted as a help topic, or
@@ -236,8 +238,13 @@ extern void not_just_help_class_command (char *arg, int from_tty);
 
 /* Exported to cli/cli-setshow.c */
 
-extern void print_doc_line (struct ui_file *, char *);
+extern void print_doc_line (struct ui_file *, const char *);
 
 extern const char * const auto_boolean_enums[];
+
+/* Verify whether a given cmd_list_element is a user-defined command.
+   Return 1 if it is user-defined.  Return 0 otherwise.  */
+
+extern int cli_user_command_p (struct cmd_list_element *);
 
 #endif /* !defined (CLI_DECODE_H) */

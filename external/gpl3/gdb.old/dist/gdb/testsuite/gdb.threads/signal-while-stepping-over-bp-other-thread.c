@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2014 Free Software Foundation, Inc.
+   Copyright 2009-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 
 unsigned int args[2];
 
-pid_t pid;
 pthread_barrier_t barrier;
 pthread_t child_thread_2, child_thread_3;
 
@@ -36,24 +35,6 @@ handler (int signo)
 void
 callme (void)
 {
-}
-
-void
-block_signals (void)
-{
-  sigset_t mask;
-
-  sigfillset (&mask);
-  sigprocmask (SIG_BLOCK, &mask, NULL);
-}
-
-void
-unblock_signals (void)
-{
-  sigset_t mask;
-
-  sigfillset (&mask);
-  sigprocmask (SIG_UNBLOCK, &mask, NULL);
 }
 
 void *
@@ -78,8 +59,6 @@ child_function_2 (void *arg)
 {
   int my_number =  (long) arg;
   volatile int *myp = (int *) &args[my_number];
-
-  unblock_signals ();
 
   pthread_barrier_wait (&barrier);
 
@@ -106,10 +85,6 @@ main ()
   int res;
   long i;
 
-  /* Block signals in all threads but one, so that we're sure which
-     thread gets the signal we send from the command line.  */
-  block_signals ();
-
   signal (SIGUSR1, handler);
 
   /* Call these early so that PLTs for these are resolved soon,
@@ -119,10 +94,6 @@ main ()
   pthread_barrier_wait (&barrier);
 
   pthread_barrier_init (&barrier, NULL, 2);
-
-  /* The test uses this global to know where to send the signal
-     to.  */
-  pid = getpid ();
 
   i = 0;
   args[i] = 1;
@@ -137,6 +108,8 @@ main ()
 			NULL, child_function_3, (void *) i);
   pthread_barrier_wait (&barrier);
   callme (); /* set wait-thread-3 breakpoint here */
+
+  pthread_kill (child_thread_2, SIGUSR1);
 
   pthread_join (child_thread_2, NULL);
   pthread_join (child_thread_3, NULL);

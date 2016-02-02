@@ -1,6 +1,5 @@
 /* MeP-specific support for 32-bit ELF.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -401,6 +400,11 @@ mep_info_to_howto_rela
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
+  if (r_type >= R_MEP_max)
+    {
+      _bfd_error_handler (_("%A: invalid MEP reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = & mep_elf_howto_table [r_type];
 }
 
@@ -746,10 +750,10 @@ mep_elf_fake_sections (bfd *               abfd ATTRIBUTE_UNUSED,
 #define ELF_MACHINE_CODE	EM_CYGNUS_MEP
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM		bfd_elf32_mep_vec
+#define TARGET_BIG_SYM		mep_elf32_vec
 #define TARGET_BIG_NAME		"elf32-mep"
 
-#define TARGET_LITTLE_SYM	bfd_elf32_mep_little_vec
+#define TARGET_LITTLE_SYM	mep_elf32_le_vec
 #define TARGET_LITTLE_NAME	"elf32-mep-little"
 
 #define elf_info_to_howto_rel			NULL

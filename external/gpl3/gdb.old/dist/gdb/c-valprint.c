@@ -1,6 +1,6 @@
 /* Support for printing C values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -28,6 +27,7 @@
 #include "c-lang.h"
 #include "cp-abi.h"
 #include "target.h"
+#include "objfiles.h"
 
 
 /* A helper for c_textual_element_type.  This checks the name of the
@@ -172,9 +172,9 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 				      options->format)
 	      && value_bytes_available (original_value, embedded_offset,
 					TYPE_LENGTH (type))
-	      && value_bits_valid (original_value,
-				   TARGET_CHAR_BIT * embedded_offset,
-				   TARGET_CHAR_BIT * TYPE_LENGTH (type)))
+	      && !value_bits_any_optimized_out (original_value,
+						TARGET_CHAR_BIT * embedded_offset,
+						TARGET_CHAR_BIT * TYPE_LENGTH (type)))
 	    {
 	      int force_ellipses = 0;
 
@@ -316,12 +316,12 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	      /* If 'symbol_print' is set, we did the work above.  */
 	      if (!options->symbol_print
 		  && (msymbol.minsym != NULL)
-		  && (vt_address == SYMBOL_VALUE_ADDRESS (msymbol.minsym)))
+		  && (vt_address == BMSYMBOL_VALUE_ADDRESS (msymbol)))
 		{
 		  if (want_space)
 		    fputs_filtered (" ", stream);
 		  fputs_filtered (" <", stream);
-		  fputs_filtered (SYMBOL_PRINT_NAME (msymbol.minsym), stream);
+		  fputs_filtered (MSYMBOL_PRINT_NAME (msymbol.minsym), stream);
 		  fputs_filtered (">", stream);
 		  want_space = 1;
 		}
@@ -338,7 +338,7 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 		    fputs_filtered (" ", stream);
 
 		  if (msymbol.minsym != NULL)
-		    wsym = lookup_symbol (SYMBOL_LINKAGE_NAME (msymbol.minsym),
+		    wsym = lookup_symbol (MSYMBOL_LINKAGE_NAME (msymbol.minsym),
 					  block, VAR_DOMAIN,
 					  &is_this_fld);
 
@@ -495,7 +495,7 @@ c_value_print (struct value *val, struct ui_file *stream,
 	  /* Print nothing.  */
 	}
       else if (options->objectprint
-	       && (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_CLASS))
+	       && (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_STRUCT))
 	{
 	  int is_ref = TYPE_CODE (type) == TYPE_CODE_REF;
 
@@ -545,7 +545,7 @@ c_value_print (struct value *val, struct ui_file *stream,
   if (!value_initialized (val))
     fprintf_filtered (stream, " [uninitialized] ");
 
-  if (options->objectprint && (TYPE_CODE (type) == TYPE_CODE_CLASS))
+  if (options->objectprint && (TYPE_CODE (type) == TYPE_CODE_STRUCT))
     {
       /* Attempt to determine real type of object.  */
       real_type = value_rtti_type (val, &full, &top, &using_enc);

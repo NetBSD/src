@@ -1,6 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -2605,6 +2604,12 @@ s3_bfd_score_elf_relocate_section (bfd *output_bfd,
           /* For global symbols we look up the symbol in the hash-table.  */
           h = ((struct score_elf_link_hash_entry *)
                elf_sym_hashes (input_bfd) [r_symndx - extsymoff]);
+
+	  if (info->wrap_hash != NULL
+	      && (input_section->flags & SEC_DEBUGGING) != 0)
+	    h = ((struct score_elf_link_hash_entry *)
+		 unwrap_hash_lookup (info, input_bfd, &h->root.root));
+
           /* Find the real hash-table entry for this symbol.  */
           while (h->root.root.type == bfd_link_hash_indirect
                  || h->root.root.type == bfd_link_hash_warning)
@@ -3194,7 +3199,7 @@ s3_bfd_score_elf_always_size_sections (bfd *output_bfd,
 
   /* Calculate the total loadable size of the output.  That will give us the
      maximum number of GOT_PAGE entries required.  */
-  for (sub = info->input_bfds; sub; sub = sub->link_next)
+  for (sub = info->input_bfds; sub; sub = sub->link.next)
     {
       asection *subsection;
 
@@ -4447,9 +4452,9 @@ _bfd_score_elf_common_definition (Elf_Internal_Sym *sym)
 
 
 #define USE_REL                         1
-#define TARGET_LITTLE_SYM               bfd_elf32_littlescore_vec
+#define TARGET_LITTLE_SYM               score_elf32_le_vec
 #define TARGET_LITTLE_NAME              "elf32-littlescore"
-#define TARGET_BIG_SYM                  bfd_elf32_bigscore_vec
+#define TARGET_BIG_SYM                  score_elf32_be_vec
 #define TARGET_BIG_NAME                 "elf32-bigscore"
 #define ELF_ARCH                        bfd_arch_score
 #define ELF_MACHINE_CODE                EM_SCORE

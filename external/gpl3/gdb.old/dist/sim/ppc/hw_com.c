@@ -103,14 +103,14 @@
    input-buffering = "unbuffered" (optional)
 
    Specifying "unbuffered" buffering disables buffering on the serial
-   devices input stream (all data is immediatly read).  In the future,
+   devices input stream (all data is immediately read).  In the future,
    this option may be used to provide input buffering alternatives.
 
 
    output-buffering = "unbuffered" (optional)
 
    Specifying "unbuffered" buffering disables buffering on the serial 
-   devices output stream (all data is immediatly written).  In the future, 
+   devices output stream (all data is immediately written).  In the future, 
    this option may be extended to include other buffering alternatives.
 
 

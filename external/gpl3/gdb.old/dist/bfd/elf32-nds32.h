@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -46,6 +46,7 @@
 
 /* Relocation flags for R_NDS32_INSN16.  */
 
+/* Tag the nop16 can be removed.  */
 #define R_NDS32_INSN16_CONVERT_FLAG				(1 << 0)
 /* Convert a gp-relative access (e.g., lwi.gp)
    to fp-as-gp access (lwi37.fp).
@@ -67,15 +68,28 @@
    in this region due to performance drop.  */
 #define R_NDS32_RELAX_REGION_INNERMOST_LOOP_FLAG		(1 << 4)
 
+/* Tag range for LOADSTORE relocation.  */
+enum
+{
+  NDS32_LOADSTORE_NONE = 0x0,
+  NDS32_LOADSTORE_BYTE = 0x1,
+  NDS32_LOADSTORE_HALF = 0x2,
+  NDS32_LOADSTORE_WORD = 0x4,
+  NDS32_LOADSTORE_FLOAT_S = 0x8,
+  NDS32_LOADSTORE_FLOAT_D = 0x10,
+  NDS32_LOADSTORE_IMM = 0x20
+};
+
 /* Relax tag for nds32_elf_relax_section, we have to specify which
    optimization do in this round.  */
 enum
 {
   NDS32_RELAX_NONE_ROUND = 0,
-  NDS32_RELAX_JUMP_IFC_ROUND = 1,
+  NDS32_RELAX_NORMAL_ROUND,
+  NDS32_RELAX_JUMP_IFC_ROUND,
   NDS32_RELAX_EX9_BUILD_ROUND,
-  NDS32_RELAX_EX9_REPLACE_ROUND
-
+  NDS32_RELAX_EX9_REPLACE_ROUND,
+  NDS32_RELAX_EMPTY_ROUND
 };
 
 /* Optimization status mask.  */
@@ -85,29 +99,23 @@ enum
 /* Optimization turn on mask.  */
 #define NDS32_RELAX_JUMP_IFC_ON		(1 << 0)
 #define NDS32_RELAX_EX9_ON		(1 << 1)
-
-/* The break 0xea defined for ex9 table to keep for trace32 to use 0xeaea.  */
-#define INSN_BREAK_EA   0x64001d4a
 
 extern void nds32_insertion_sort
   (void *, size_t, size_t, int (*) (const void *, const void *));
 
 extern int         nds32_elf_ex9_init (void);
-extern void        nds32_elf_ex9_reloc_jmp (struct bfd_link_info *);
-extern void        nds32_elf_ex9_finish (struct bfd_link_info *);
-extern bfd_boolean nds32_elf_ex9_itb_base (struct bfd_link_info *);
-extern void        nds32_elf_ex9_import_table (struct bfd_link_info *);
-extern bfd_boolean nds32_elf_ifc_reloc (void);
-extern bfd_boolean nds32_elf_ifc_finish (struct bfd_link_info *);
 extern int         nds32_convert_32_to_16 (bfd *, uint32_t, uint16_t *, int *);
 extern int         nds32_convert_16_to_32 (bfd *, uint16_t, uint32_t *);
-extern void        bfd_elf32_nds32_set_target_option (struct bfd_link_info *, int, int,
-						      FILE *, int, int, int, int, FILE *, FILE *,
-						      int, int, bfd_boolean, bfd_boolean);
+extern void        bfd_elf32_nds32_set_target_option (struct bfd_link_info *,
+						      int, int, FILE *, int,
+						      int, int, int, FILE *,
+						      FILE *, int, int,
+						      bfd_boolean, bfd_boolean);
 
 #define nds32_elf_hash_table(info) \
   (elf_hash_table_id ((struct elf_link_hash_table *) ((info)->hash)) \
-   == NDS32_ELF_DATA ? ((struct elf_nds32_link_hash_table *) ((info)->hash)) : NULL)
+   == NDS32_ELF_DATA ? \
+   ((struct elf_nds32_link_hash_table *) ((info)->hash)) : NULL)
 
 /* Hash table structure for target nds32.  There are some members to
    save target options passed from nds32elf.em to bfd.  */

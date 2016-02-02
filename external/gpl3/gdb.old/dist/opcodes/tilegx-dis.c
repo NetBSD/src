@@ -1,5 +1,5 @@
 /* tilegx-dis.c.  Disassembly routines for the TILE-Gx architecture.
-   Copyright 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

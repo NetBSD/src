@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,15 +23,15 @@
 #include "buildsym.h"
 #include "gdbcmd.h"
 #include "inferior.h"		/* enum CALL_DUMMY_LOCATION et al.  */
-#include <string.h>
+#include "infrun.h"
 #include "regcache.h"
-#include "gdb_assert.h"
 #include "sim-regno.h"
 #include "gdbcore.h"
 #include "osabi.h"
 #include "target-descriptions.h"
 #include "objfiles.h"
 #include "language.h"
+#include "symtab.h"
 
 #include "version.h"
 
@@ -168,15 +168,33 @@ no_op_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 }
 
 void
-default_elf_make_msymbol_special (asymbol *sym, struct minimal_symbol *msym)
+default_coff_make_msymbol_special (int val, struct minimal_symbol *msym)
 {
   return;
 }
 
+/* See arch-utils.h.  */
+
 void
-default_coff_make_msymbol_special (int val, struct minimal_symbol *msym)
+default_make_symbol_special (struct symbol *sym, struct objfile *objfile)
 {
   return;
+}
+
+/* See arch-utils.h.  */
+
+CORE_ADDR
+default_adjust_dwarf2_addr (CORE_ADDR pc)
+{
+  return pc;
+}
+
+/* See arch-utils.h.  */
+
+CORE_ADDR
+default_adjust_dwarf2_line (CORE_ADDR addr, int rel)
+{
+  return addr;
 }
 
 int
@@ -242,6 +260,14 @@ default_remote_register_number (struct gdbarch *gdbarch,
 				int regno)
 {
   return regno;
+}
+
+/* See arch-utils.h.  */
+
+int
+default_vsyscall_range (struct gdbarch *gdbarch, struct mem_range *range)
+{
+  return 0;
 }
 
 
@@ -804,7 +830,57 @@ default_return_in_first_hidden_param_p (struct gdbarch *gdbarch,
   return language_pass_by_reference (type);
 }
 
-/* */
+int default_insn_is_call (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+  return 0;
+}
+
+int default_insn_is_ret (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+  return 0;
+}
+
+int default_insn_is_jump (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+  return 0;
+}
+
+void
+default_skip_permanent_breakpoint (struct regcache *regcache)
+{
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  CORE_ADDR current_pc = regcache_read_pc (regcache);
+  const gdb_byte *bp_insn;
+  int bp_len;
+
+  bp_insn = gdbarch_breakpoint_from_pc (gdbarch, &current_pc, &bp_len);
+  current_pc += bp_len;
+  regcache_write_pc (regcache, current_pc);
+}
+
+CORE_ADDR
+default_infcall_mmap (CORE_ADDR size, unsigned prot)
+{
+  error (_("This target does not support inferior memory allocation by mmap."));
+}
+
+/* -mcmodel=large is used so that no GOT (Global Offset Table) is needed to be
+   created in inferior memory by GDB (normally it is set by ld.so).  */
+
+char *
+default_gcc_target_options (struct gdbarch *gdbarch)
+{
+  return xstrprintf ("-m%d%s", gdbarch_ptr_bit (gdbarch),
+		     gdbarch_ptr_bit (gdbarch) == 64 ? " -mcmodel=large" : "");
+}
+
+/* gdbarch gnu_triplet_regexp method.  */
+
+const char *
+default_gnu_triplet_regexp (struct gdbarch *gdbarch)
+{
+  return gdbarch_bfd_arch_info (gdbarch)->arch_name;
+}
 
 /* -Wmissing-prototypes */
 extern initialize_file_ftype _initialize_gdbarch_utils;
