@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,19 +27,13 @@ void init_registers_arm (void);
 extern const struct target_desc *tdesc_arm;
 
 static void
-arm_get_thread_context (win32_thread_info *th, DEBUG_EVENT* current_event)
+arm_get_thread_context (win32_thread_info *th)
 {
   th->context.ContextFlags = \
     CONTEXT_FULL | \
     CONTEXT_FLOATING_POINT;
 
   GetThreadContext (th->h, &th->context);
-}
-
-static void
-arm_set_thread_context (win32_thread_info *th, DEBUG_EVENT* current_event)
-{
-  SetThreadContext (th->h, &th->context);
 }
 
 #define context_offset(x) ((int)&(((CONTEXT *)NULL)->x))
@@ -124,7 +118,7 @@ struct win32_target_ops the_low_target = {
   sizeof (mappings) / sizeof (mappings[0]),
   NULL, /* initial_stuff */
   arm_get_thread_context,
-  arm_set_thread_context,
+  NULL, /* prepare_to_resume */
   NULL, /* thread_added */
   arm_fetch_inferior_register,
   arm_store_inferior_register,
@@ -132,6 +126,7 @@ struct win32_target_ops the_low_target = {
   (const unsigned char *) &arm_wince_breakpoint,
   arm_wince_breakpoint_len,
   /* Watchpoint related functions.  See target.h for comments.  */
+  NULL, /* supports_z_point_type */
   NULL, /* insert_point */
   NULL, /* remove_point */
   NULL, /* stopped_by_watchpoint */

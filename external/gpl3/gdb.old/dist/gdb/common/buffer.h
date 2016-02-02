@@ -1,6 +1,6 @@
 /* A simple growing buffer for GDB.
   
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,6 @@
 
 #ifndef BUFFER_H
 #define BUFFER_H
-
-#include <stddef.h>
-#include <string.h>
-#include "ansidecl.h"
 
 struct buffer
 {

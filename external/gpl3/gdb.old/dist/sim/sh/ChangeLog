@@ -1,3 +1,32 @@
+2014-10-14  Oleg Endo <olegendo@gcc.gnu.org>  (tiny patch)
+
+	* gencode.c (fabs, fneg): Implement as integer operation
+	instead of using the FP_UNARY macro.
+
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (parse_and_set_memory_size): Add const to str.
+	(sim_do_command): Add const to cmd and sms_cmd.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_load): Add const to prog.
+
+2014-02-17  Mike Frysinger  <vapier@gentoo.org>
+
+	PR gdb/16450
+	* interp.c (control_c): Delete.
+	(sim_resume): Delete signal(SIGINT) handling.
+
 2013-09-23  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.
@@ -1030,7 +1059,7 @@ Thu Sep 14 19:32:59 1995  Stu Grossman  (grossman@cygnus.com)
 
 	* gencode.c:  Back up PC by 2 for breakpoints.
 	* interp.c:  Move fp regs beyond pc/pr/etc to avoid confusing GDB,
-	which expect pc to immediatly follow regs[].
+	which expect pc to immediately follow regs[].
 
 Fri Sep  8 14:18:13 1995  Ian Lance Taylor  <ian@cygnus.com>
 

@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,30 +17,30 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifdef GDBSERVER
-#include "server.h"
-#else
-#include "defs.h"
-#include "target.h"
-#include "inferior.h" /* for non_stop */
-#endif
-
-#include <string.h>
+#include "common-defs.h"
+#include "target/target.h"
+#include "common/symbol.h"
 #include <unistd.h>
 #include "agent.h"
 #include "filestuff.h"
 
 int debug_agent = 0;
 
-#ifdef GDBSERVER
-#define DEBUG_AGENT(fmt, args...)	\
-  if (debug_agent)			\
-    fprintf (stderr, fmt, ##args);
-#else
-#define DEBUG_AGENT(fmt, args...)	\
-  if (debug_agent)			\
-    fprintf_unfiltered (gdb_stdlog, fmt, ##args);
-#endif
+/* A stdarg wrapper for debug_vprintf.  */
+
+static void ATTRIBUTE_PRINTF (1, 2)
+debug_agent_printf (const char *fmt, ...)
+{
+  va_list ap;
+
+  if (!debug_agent)
+    return;
+  va_start (ap, fmt);
+  debug_vprintf (fmt, ap);
+  va_end (ap);
+}
+
+#define DEBUG_AGENT debug_agent_printf
 
 /* Global flag to determine using agent or not.  */
 int use_agent = 0;
@@ -57,7 +57,7 @@ struct ipa_sym_addresses
 
 /* Cache of the helper thread id.  FIXME: this global should be made
    per-process.  */
-static unsigned int helper_thread_id = 0;
+static uint32_t helper_thread_id = 0;
 
 static struct
 {
@@ -94,18 +94,9 @@ agent_look_up_symbols (void *arg)
     {
       CORE_ADDR *addrp =
 	(CORE_ADDR *) ((char *) &ipa_sym_addrs + symbol_list[i].offset);
-#ifdef GDBSERVER
 
-      if (look_up_one_symbol (symbol_list[i].name, addrp, 1) == 0)
-#else
-      struct minimal_symbol *sym =
-	lookup_minimal_symbol (symbol_list[i].name, NULL,
-			       (struct objfile *) arg);
-
-      if (sym != NULL)
-	*addrp = SYMBOL_VALUE_ADDRESS (sym);
-      else
-#endif
+      if (find_minimal_symbol_address (symbol_list[i].name, addrp,
+				       arg) != 0)
 	{
 	  DEBUG_AGENT ("symbol `%s' not found\n", symbol_list[i].name);
 	  return -1;
@@ -121,23 +112,9 @@ agent_get_helper_thread_id (void)
 {
   if  (helper_thread_id == 0)
     {
-#ifdef GDBSERVER
-      if (read_inferior_memory (ipa_sym_addrs.addr_helper_thread_id,
-				(unsigned char *) &helper_thread_id,
-				sizeof helper_thread_id))
-#else
-      enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-      gdb_byte buf[4];
-
-      if (target_read_memory (ipa_sym_addrs.addr_helper_thread_id,
-			      buf, sizeof buf) == 0)
-	helper_thread_id = extract_unsigned_integer (buf, sizeof buf,
-						     byte_order);
-      else
-#endif
-	{
-	  warning (_("Error reading helper thread's id in lib"));
-	}
+      if (target_read_uint32 (ipa_sym_addrs.addr_helper_thread_id,
+			      &helper_thread_id))
+	warning (_("Error reading helper thread's id in lib"));
     }
 
   return helper_thread_id;
@@ -216,13 +193,8 @@ agent_run_command (int pid, const char *cmd, int len)
   int tid = agent_get_helper_thread_id ();
   ptid_t ptid = ptid_build (pid, tid, 0);
 
-#ifdef GDBSERVER
-  int ret = write_inferior_memory (ipa_sym_addrs.addr_cmd_buf,
-				   (const unsigned char *) cmd, len);
-#else
   int ret = target_write_memory (ipa_sym_addrs.addr_cmd_buf,
 				 (gdb_byte *) cmd, len);
-#endif
 
   if (ret != 0)
     {
@@ -233,18 +205,7 @@ agent_run_command (int pid, const char *cmd, int len)
   DEBUG_AGENT ("agent: resumed helper thread\n");
 
   /* Resume helper thread.  */
-#ifdef GDBSERVER
-{
-  struct thread_resume resume_info;
-
-  resume_info.thread = ptid;
-  resume_info.kind = resume_continue;
-  resume_info.sig = GDB_SIGNAL_0;
-  (*the_target->resume) (&resume_info, 1);
-}
-#else
- target_resume (ptid, 0, GDB_SIGNAL_0);
-#endif
+  target_continue_no_signal (ptid);
 
   fd = gdb_connect_sync_socket (pid);
   if (fd >= 0)
@@ -276,41 +237,15 @@ agent_run_command (int pid, const char *cmd, int len)
   /* Need to read response with the inferior stopped.  */
   if (!ptid_equal (ptid, null_ptid))
     {
-      struct target_waitstatus status;
-      int was_non_stop = non_stop;
       /* Stop thread PTID.  */
       DEBUG_AGENT ("agent: stop helper thread\n");
-#ifdef GDBSERVER
-      {
-	struct thread_resume resume_info;
-
-	resume_info.thread = ptid;
-	resume_info.kind = resume_stop;
-	resume_info.sig = GDB_SIGNAL_0;
-	(*the_target->resume) (&resume_info, 1);
-      }
-
-      non_stop = 1;
-      mywait (ptid, &status, 0, 0);
-#else
-      non_stop = 1;
-      target_stop (ptid);
-
-      memset (&status, 0, sizeof (status));
-      target_wait (ptid, &status, 0);
-#endif
-      non_stop = was_non_stop;
+      target_stop_and_wait (ptid);
     }
 
   if (fd >= 0)
     {
-#ifdef GDBSERVER
-      if (read_inferior_memory (ipa_sym_addrs.addr_cmd_buf,
-				(unsigned char *) cmd, IPA_CMD_BUF_SIZE))
-#else
       if (target_read_memory (ipa_sym_addrs.addr_cmd_buf, (gdb_byte *) cmd,
 			      IPA_CMD_BUF_SIZE))
-#endif
 	{
 	  warning (_("Error reading command response"));
 	  return -1;
@@ -321,7 +256,7 @@ agent_run_command (int pid, const char *cmd, int len)
 }
 
 /* Each bit of it stands for a capability of agent.  */
-static unsigned int agent_capability = 0;
+static uint32_t agent_capability = 0;
 
 /* Return true if agent has capability AGENT_CAP, otherwise return false.  */
 
@@ -330,20 +265,8 @@ agent_capability_check (enum agent_capa agent_capa)
 {
   if (agent_capability == 0)
     {
-#ifdef GDBSERVER
-      if (read_inferior_memory (ipa_sym_addrs.addr_capability,
-				(unsigned char *) &agent_capability,
-				sizeof agent_capability))
-#else
-      enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-      gdb_byte buf[4];
-
-      if (target_read_memory (ipa_sym_addrs.addr_capability,
-			      buf, sizeof buf) == 0)
-	agent_capability = extract_unsigned_integer (buf, sizeof buf,
-						     byte_order);
-      else
-#endif
+      if (target_read_uint32 (ipa_sym_addrs.addr_capability,
+			      &agent_capability))
 	warning (_("Error reading capability of agent"));
     }
   return agent_capability & agent_capa;

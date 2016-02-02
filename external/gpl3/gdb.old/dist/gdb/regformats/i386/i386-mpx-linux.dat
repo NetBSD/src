@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from i386/i386-mpx-linux.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: i386/i386-mpx-linux.xml
 name:i386_mpx_linux
 xmltarget:i386-mpx-linux.xml
 expedite:ebp,esp,eip

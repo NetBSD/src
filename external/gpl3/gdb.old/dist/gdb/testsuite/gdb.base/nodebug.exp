@@ -1,4 +1,4 @@
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,29 +58,17 @@ if [runto inner] then {
     # On alpha (and other ecoff systems) the native compilers put
     # out debugging info for non-aggregate return values of functions
     # even without -g, which should be accepted.
-    # Irix5, even though it is ELF, counts as "ecoff" because it
-    # encapsulates ecoff debugging info in a .mdebug section.
-    # Irix6 gcc emits no debug info at all for static functions and
-    # variables, so all tests involving statics fail.
-    
-    if {![test_compiler_info "gcc-*"]} then { setup_xfail "mips-sgi-irix5*" "mips-sgi-irix6*" }
+
     gdb_test "p top" \
 	"\{(<(text variable|function), no debug info>|short \\(int\\)|short \\(\\))\} \[0-9a-fx]* <\\.?top(\\(int\\)|)>"
-    if {![test_compiler_info "gcc-*"]} then { setup_xfail "mips-sgi-irix5*" "mips-sgi-irix6*" }
     gdb_test "whatis top" \
 	"(<(text variable|function), no debug info>|short \\(int\\)|short \\(\\))"
-    if {![test_compiler_info "gcc-*"]} then { setup_xfail "mips-sgi-irix6*" }
     gdb_test "ptype top" "(short|int) \\((|void|int|<non-float parameter>|<non-float parameter>, <non-float parameter>)\\)"
     
-    if {![test_compiler_info "gcc-*"]} then { setup_xfail "mips-sgi-irix5*" }
-    setup_xfail "mips-sgi-irix6*"
     gdb_test "p middle" \
 	"\{(<(text variable|function), no debug info>|short \\(int\\)|short \\(\\))\} \[0-9a-fx]* <\\.?middle(\\(int\\)|)>"
-    if {![test_compiler_info "gcc-*"]} then { setup_xfail "mips-sgi-irix5*" }
-    setup_xfail "mips-sgi-irix6*"
     gdb_test "whatis middle" \
 	"(<(text variable|function), no debug info>|short \\(int\\)|short \\(\\))"
-    setup_xfail "mips-sgi-irix6*"
     gdb_test "ptype middle" "(short|int) \\((|void|int|<non-float parameter>|<non-float parameter>, <non-float parameter>)\\)"
     
     gdb_test "p dataglobal" "= 3"
@@ -93,9 +81,7 @@ if [runto inner] then {
     # doesn't know the variables exist at all.
     setup_xfail "rs6000*-*-aix*"
     setup_xfail "powerpc*-*-aix*"
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*"
-    } else {
+    if ![test_compiler_info "gcc-*"] {
         setup_xfail "hppa*-*-hpux*"
     }
 
@@ -103,9 +89,7 @@ if [runto inner] then {
 
     setup_xfail "rs6000*-*-aix*"
     setup_xfail "powerpc*-*-aix*"
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*"
-    } else {
+    if ![test_compiler_info "gcc-*"] {
         setup_xfail "hppa*-*-hpux*"
     }
 
@@ -113,9 +97,7 @@ if [runto inner] then {
 
     setup_xfail "rs6000*-*-aix*"
     setup_xfail "powerpc*-*-aix*"
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*"
-    } else {
+    if ![test_compiler_info "gcc-*"] {
         setup_xfail "hppa*-*-hpux*"
     }
 
@@ -126,9 +108,7 @@ if [runto inner] then {
     
     setup_xfail "rs6000*-*-aix*"
     setup_xfail "powerpc*-*-aix*"
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*"
-    } else {
+    if ![test_compiler_info "gcc-*"] {
         setup_xfail "hppa*-*-hpux*"
     }
 
@@ -136,9 +116,7 @@ if [runto inner] then {
 
     setup_xfail "rs6000*-*-aix*"
     setup_xfail "powerpc*-*-aix*"
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*"
-    } else {
+    if ![test_compiler_info "gcc-*"] {
         setup_xfail "hppa*-*-hpux*"
     }
 
@@ -146,17 +124,11 @@ if [runto inner] then {
 
     setup_xfail "rs6000*-*-aix*"
     setup_xfail "powerpc*-*-aix*"
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*"
-    } else {
+    if ![test_compiler_info "gcc-*"] {
         setup_xfail "hppa*-*-hpux*"
     }
     gdb_test "ptype bsslocal" "<(data variable|variable), no debug info>"
     
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*" 
-    }
-
     gdb_test "backtrace 10" "#0.*inner.*#1.*middle.*#2.*top.*#3.*main.*" \
 	"backtrace from inner in nodebug.exp"
     # Or if that doesn't work, at least hope for the external symbols
@@ -167,9 +139,6 @@ if [runto inner] then {
     
     # This test is not as obscure as it might look.  `p getenv ("TERM")'
     # is a real-world example, at least on many systems.
-    if { ! [test_compiler_info "gcc-*"]} {
-        setup_xfail "mips-sgi-irix6*" 
-    }
     if [target_info exists gdb,cannot_call_functions] {
 	setup_xfail "*-*-*" 2416
 	fail "p/c array_index(\"abcdef\",2)"
@@ -204,9 +173,6 @@ if [runto inner] then {
     
     # Now, try that we can give names of file-local symbols which happen
     # to be unique, and have it still work
-    if [test_compiler_info "gcc-*"] {
-        setup_xfail "mips-sgi-irix6*"
-    }
     if [runto middle] then {
 	gdb_test "backtrace 10" "#0.*middle.*#1.*top.*#2.*main.*" \
 	    "backtrace from middle in nodebug.exp"

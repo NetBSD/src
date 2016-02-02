@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.1 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
 
-Copyright (C) 1988-2014 Free Software Foundation, Inc.
+Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -17,6 +17,269 @@ START-INFO-DIR-ENTRY
 * Gdb: (gdb).                     The GNU debugger.
 * gdbserver: (gdb) Server.        The GNU debugging server.
 END-INFO-DIR-ENTRY
+
+   This file documents the GNU debugger GDB.
+
+   This is the Tenth Edition, of 'Debugging with GDB: the GNU
+Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software" and "Free Software Needs Free
+Documentation", with the Front-Cover Texts being "A GNU Manual," and
+with the Back-Cover Texts as in (a) below.
+
+   (a) The FSF's Back-Cover Text is: "You are free to copy and modify
+this GNU Manual.  Buying copies from GNU Press supports the FSF in
+developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Ambiguous Expressions,  Next: Variables,  Prev: Expressions,  Up: Data
+
+10.2 Ambiguous Expressions
+==========================
+
+Expressions can sometimes contain some ambiguous elements.  For
+instance, some programming languages (notably Ada, C++ and Objective-C)
+permit a single function name to be defined several times, for
+application in different contexts.  This is called "overloading".
+Another example involving Ada is generics.  A "generic package" is
+similar to C++ templates and is typically instantiated several times,
+resulting in the same function name being defined in different contexts.
+
+   In some cases and depending on the language, it is possible to adjust
+the expression to remove the ambiguity.  For instance in C++, you can
+specify the signature of the function you want to break on, as in 'break
+FUNCTION(TYPES)'.  In Ada, using the fully qualified name of your
+function often makes the expression unambiguous as well.
+
+   When an ambiguity that needs to be resolved is detected, the debugger
+has the capability to display a menu of numbered choices for each
+possibility, and then waits for the selection with the prompt '>'.  The
+first option is always '[0] cancel', and typing '0 <RET>' aborts the
+current command.  If the command in which the expression was used allows
+more than one choice to be selected, the next option in the menu is '[1]
+all', and typing '1 <RET>' selects all possible choices.
+
+   For example, the following session excerpt shows an attempt to set a
+breakpoint at the overloaded symbol 'String::after'.  We choose three
+particular definitions of that function name:
+
+     (gdb) b String::after
+     [0] cancel
+     [1] all
+     [2] file:String.cc; line number:867
+     [3] file:String.cc; line number:860
+     [4] file:String.cc; line number:875
+     [5] file:String.cc; line number:853
+     [6] file:String.cc; line number:846
+     [7] file:String.cc; line number:735
+     > 2 4 6
+     Breakpoint 1 at 0xb26c: file String.cc, line 867.
+     Breakpoint 2 at 0xb344: file String.cc, line 875.
+     Breakpoint 3 at 0xafcc: file String.cc, line 846.
+     Multiple breakpoints were set.
+     Use the "delete" command to delete unwanted
+      breakpoints.
+     (gdb)
+
+'set multiple-symbols MODE'
+
+     This option allows you to adjust the debugger behavior when an
+     expression is ambiguous.
+
+     By default, MODE is set to 'all'.  If the command with which the
+     expression is used allows more than one choice, then GDB
+     automatically selects all possible choices.  For instance,
+     inserting a breakpoint on a function using an ambiguous name
+     results in a breakpoint inserted on each possible match.  However,
+     if a unique choice must be made, then GDB uses the menu to help you
+     disambiguate the expression.  For instance, printing the address of
+     an overloaded function will result in the use of the menu.
+
+     When MODE is set to 'ask', the debugger always uses the menu when
+     an ambiguity is detected.
+
+     Finally, when MODE is set to 'cancel', the debugger reports an
+     error due to the ambiguity and the command is aborted.
+
+'show multiple-symbols'
+     Show the current value of the 'multiple-symbols' setting.
+
+
+File: gdb.info,  Node: Variables,  Next: Arrays,  Prev: Ambiguous Expressions,  Up: Data
+
+10.3 Program Variables
+======================
+
+The most common kind of expression to use is the name of a variable in
+your program.
+
+   Variables in expressions are understood in the selected stack frame
+(*note Selecting a Frame: Selection.); they must be either:
+
+   * global (or file-static)
+
+or
+
+   * visible according to the scope rules of the programming language
+     from the point of execution in that frame
+
+This means that in the function
+
+     foo (a)
+          int a;
+     {
+       bar (a);
+       {
+         int b = test ();
+         bar (b);
+       }
+     }
+
+you can examine and use the variable 'a' whenever your program is
+executing within the function 'foo', but you can only use or examine the
+variable 'b' while your program is executing inside the block where 'b'
+is declared.
+
+   There is an exception: you can refer to a variable or function whose
+scope is a single source file even if the current execution point is not
+in this file.  But it is possible to have more than one such variable or
+function with the same name (in different source files).  If that
+happens, referring to that name has unpredictable effects.  If you wish,
+you can specify a static variable in a particular function or file by
+using the colon-colon ('::') notation:
+
+     FILE::VARIABLE
+     FUNCTION::VARIABLE
+
+Here FILE or FUNCTION is the name of the context for the static
+VARIABLE.  In the case of file names, you can use quotes to make sure
+GDB parses the file name as a single word--for example, to print a
+global value of 'x' defined in 'f2.c':
+
+     (gdb) p 'f2.c'::x
+
+   The '::' notation is normally used for referring to static variables,
+since you typically disambiguate uses of local variables in functions by
+selecting the appropriate frame and using the simple name of the
+variable.  However, you may also use this notation to refer to local
+variables in frames enclosing the selected frame:
+
+     void
+     foo (int a)
+     {
+       if (a < 10)
+         bar (a);
+       else
+         process (a);    /* Stop here */
+     }
+
+     int
+     bar (int a)
+     {
+       foo (a + 5);
+     }
+
+For example, if there is a breakpoint at the commented line, here is
+what you might see when the program stops after executing the call
+'bar(0)':
+
+     (gdb) p a
+     $1 = 10
+     (gdb) p bar::a
+     $2 = 5
+     (gdb) up 2
+     #2  0x080483d0 in foo (a=5) at foobar.c:12
+     (gdb) p a
+     $3 = 5
+     (gdb) p bar::a
+     $4 = 0
+
+   These uses of '::' are very rarely in conflict with the very similar
+use of the same notation in C++.  When they are in conflict, the C++
+meaning takes precedence; however, this can be overridden by quoting the
+file or function name with single quotes.
+
+   For example, suppose the program is stopped in a method of a class
+that has a field named 'includefile', and there is also an include file
+named 'includefile' that defines a variable, 'some_global'.
+
+     (gdb) p includefile
+     $1 = 23
+     (gdb) p includefile::some_global
+     A syntax error in expression, near `'.
+     (gdb) p 'includefile'::some_global
+     $2 = 27
+
+     _Warning:_ Occasionally, a local variable may appear to have the
+     wrong value at certain points in a function--just after entry to a
+     new scope, and just before exit.
+   You may see this problem when you are stepping by machine
+instructions.  This is because, on most machines, it takes more than one
+instruction to set up a stack frame (including local variable
+definitions); if you are stepping by machine instructions, variables may
+appear to have the wrong values until the stack frame is completely
+built.  On exit, it usually also takes more than one machine instruction
+to destroy a stack frame; after you begin stepping through that group of
+instructions, local variable definitions may be gone.
+
+   This may also happen when the compiler does significant
+optimizations.  To be sure of always seeing accurate values, turn off
+all optimization when compiling.
+
+   Another possible effect of compiler optimizations is to optimize
+unused variables out of existence, or assign variables to registers (as
+opposed to memory addresses).  Depending on the support for such cases
+offered by the debug info format used by the compiler, GDB might not be
+able to display values for such local variables.  If that happens, GDB
+will print a message like this:
+
+     No symbol "foo" in current context.
+
+   To solve such problems, either recompile without optimizations, or
+use a different debug info format, if the compiler supports several such
+formats.  *Note Compilation::, for more information on choosing compiler
+options.  *Note C and C++: C, for more information about debug info
+formats that are best suited to C++ programs.
+
+   If you ask to print an object whose contents are unknown to GDB,
+e.g., because its data type is not completely specified by the debug
+information, GDB will say '<incomplete type>'.  *Note incomplete type:
+Symbols, for more about this.
+
+   If you append '@entry' string to a function parameter name you get
+its value at the time the function got called.  If the value is not
+available an error message is printed.  Entry values are available only
+with some compilers.  Entry values are normally also printed at the
+function parameter list according to *note set print entry-values::.
+
+     Breakpoint 1, d (i=30) at gdb.base/entry-value.c:29
+     29	  i++;
+     (gdb) next
+     30	  e (i);
+     (gdb) print i
+     $1 = 31
+     (gdb) print i@entry
+     $2 = 30
+
+   Strings are identified as arrays of 'char' values without specified
+signedness.  Arrays of either 'signed char' or 'unsigned char' get
+printed as arrays of 1 byte sized integers.  '-fsigned-char' or
+'-funsigned-char' GCC options have no effect as GDB defines literal
+string type '"char"' as 'char' without a sign.  For program code
+
+     char var0[] = "A";
+     signed char var1[] = "A";
+
+   You get during debugging
+     (gdb) print var0
+     $1 = "A"
+     (gdb) print var1
+     $2 = {65 'A', 0 '\0'}
 
 
 File: gdb.info,  Node: Arrays,  Next: Output Formats,  Prev: Variables,  Up: Data
@@ -300,16 +563,20 @@ output.
    When you are debugging a program running on a remote target machine
 (*note Remote Debugging::), you may wish to verify the program's image
 in the remote machine's memory against the executable file you
-downloaded to the target.  The 'compare-sections' command is provided
-for such situations.
+downloaded to the target.  Or, on any target, you may want to check
+whether the program has corrupted its own read-only sections.  The
+'compare-sections' command is provided for such situations.
 
-'compare-sections [SECTION-NAME]'
+'compare-sections [SECTION-NAME|-r]'
      Compare the data of a loadable section SECTION-NAME in the
      executable file of the program being debugged with the same section
-     in the remote machine's memory, and report any mismatches.  With no
-     arguments, compares all loadable sections.  This command's
-     availability depends on the target's support for the '"qCRC"'
-     remote request.
+     in the target machine's memory, and report any mismatches.  With no
+     arguments, compares all loadable sections.  With an argument of
+     '-r', compares all loadable read-only sections.
+
+     Note: for remote targets, this command can be accelerated if the
+     target supports computing the CRC checksum of a block of memory
+     (*note qCRC packet::).
 
 
 File: gdb.info,  Node: Auto Display,  Next: Print Settings,  Prev: Memory,  Up: Data
@@ -1392,6 +1659,60 @@ support, which means that they are always available.
 '$_strlen(STR)'
      Returns the length of string STR.
 
+'$_caller_is(NAME[, NUMBER_OF_FRAMES])'
+     Returns one if the calling function's name is equal to NAME.
+     Otherwise it returns zero.
+
+     If the optional argument NUMBER_OF_FRAMES is provided, it is the
+     number of frames up in the stack to look.  The default is 1.
+
+     Example:
+
+          (gdb) backtrace
+          #0  bottom_func ()
+              at testsuite/gdb.python/py-caller-is.c:21
+          #1  0x00000000004005a0 in middle_func ()
+              at testsuite/gdb.python/py-caller-is.c:27
+          #2  0x00000000004005ab in top_func ()
+              at testsuite/gdb.python/py-caller-is.c:33
+          #3  0x00000000004005b6 in main ()
+              at testsuite/gdb.python/py-caller-is.c:39
+          (gdb) print $_caller_is ("middle_func")
+          $1 = 1
+          (gdb) print $_caller_is ("top_func", 2)
+          $1 = 1
+
+'$_caller_matches(REGEXP[, NUMBER_OF_FRAMES])'
+     Returns one if the calling function's name matches the regular
+     expression REGEXP.  Otherwise it returns zero.
+
+     If the optional argument NUMBER_OF_FRAMES is provided, it is the
+     number of frames up in the stack to look.  The default is 1.
+
+'$_any_caller_is(NAME[, NUMBER_OF_FRAMES])'
+     Returns one if any calling function's name is equal to NAME.
+     Otherwise it returns zero.
+
+     If the optional argument NUMBER_OF_FRAMES is provided, it is the
+     number of frames up in the stack to look.  The default is 1.
+
+     This function differs from '$_caller_is' in that this function
+     checks all stack frames from the immediate caller to the frame
+     specified by NUMBER_OF_FRAMES, whereas '$_caller_is' only checks
+     the frame specified by NUMBER_OF_FRAMES.
+
+'$_any_caller_matches(REGEXP[, NUMBER_OF_FRAMES])'
+     Returns one if any calling function's name matches the regular
+     expression REGEXP.  Otherwise it returns zero.
+
+     If the optional argument NUMBER_OF_FRAMES is provided, it is the
+     number of frames up in the stack to look.  The default is 1.
+
+     This function differs from '$_caller_matches' in that this function
+     checks all stack frames from the immediate caller to the frame
+     specified by NUMBER_OF_FRAMES, whereas '$_caller_matches' only
+     checks the frame specified by NUMBER_OF_FRAMES.
+
    GDB provides the ability to list and get help on convenience
 functions.
 
@@ -1420,7 +1741,7 @@ machine.
 'info registers REGNAME ...'
      Print the "relativized" value of each specified register REGNAME.
      As discussed in detail below, register values are normally relative
-     to the selected stack frame.  REGNAME may be any register name
+     to the selected stack frame.  The REGNAME may be any register name
      valid on the machine you are using, with or without the initial
      '$'.
 
@@ -3053,10 +3374,10 @@ state variable and a convenience variable with the same name.
 'tvariable $NAME [ = EXPRESSION ]'
      The 'tvariable' command creates a new trace state variable named
      '$NAME', and optionally gives it an initial value of EXPRESSION.
-     EXPRESSION is evaluated when this command is entered; the result
-     will be converted to an integer if possible, otherwise GDB will
-     report an error.  A subsequent 'tvariable' command specifying the
-     same name does not create a variable, but instead assigns the
+     The EXPRESSION is evaluated when this command is entered; the
+     result will be converted to an integer if possible, otherwise GDB
+     will report an error.  A subsequent 'tvariable' command specifying
+     the same name does not create a variable, but instead assigns the
      supplied initial value to the existing variable of that name,
      overwriting any previous initial value.  The default initial value
      is 0.
@@ -3802,8 +4123,8 @@ data, via the 'target tfile' command.
      live target, but it is not possible to run any new trace
      experiments.  'tstatus' will report the state of the trace run at
      the moment the data was saved, as well as the current trace frame
-     you are examining.  FILENAME or DIRNAME must be on a filesystem
-     accessible to the host.
+     you are examining.  Both FILENAME and DIRNAME must be on a
+     filesystem accessible to the host.
 
           (gdb) target ctf ctf.ctf
           (gdb) tfind
@@ -4567,13 +4888,13 @@ increasing precedence:
 
 'OP='
      Used in an expression of the form 'A OP= B', and translated to
-     'A = A OP B'.  'OP=' and '=' have the same precedence.  OP is any
-     one of the operators '|', '^', '&', '<<', '>>', '+', '-', '*', '/',
-     '%'.
+     'A = A OP B'.  'OP=' and '=' have the same precedence.  The
+     operator OP is any one of the operators '|', '^', '&', '<<', '>>',
+     '+', '-', '*', '/', '%'.
 
 '?:'
      The ternary operator.  'A ? B : C' can be thought of as: if A then
-     B else C.  A should be of an integral type.
+     B else C.  The argument A should be of an integral type.
 
 '||'
      Logical OR.  Defined on integral types.
@@ -4883,6 +5204,10 @@ designed specifically for use with C++.  Here is a summary:
      tables of the object computed by EXPRESSION.  This shows one entry
      per virtual table; there may be multiple virtual tables when
      multiple inheritance is in use.
+
+'demangle NAME'
+     Demangle NAME.  *Note Symbols::, for a more complete description of
+     the 'demangle' command.
 
 'set print demangle'
 'show print demangle'
@@ -5448,17 +5773,20 @@ below.
 'ORD(X)'
      Returns the ordinal value of its argument.  For example, the
      ordinal value of a character is its ASCII value (on machines
-     supporting the ASCII character set).  X must be of an ordered type,
-     which include integral, character and enumerated types.
+     supporting the ASCII character set).  The argument X must be of an
+     ordered type, which include integral, character and enumerated
+     types.
 
 'SIZE(X)'
-     Returns the size of its argument.  X can be a variable or a type.
+     Returns the size of its argument.  The argument X can be a variable
+     or a type.
 
 'TRUNC(R)'
      Returns the integral part of R.
 
 'TSIZE(X)'
-     Returns the size of its argument.  X can be a variable or a type.
+     Returns the size of its argument.  The argument X can be a variable
+     or a type.
 
 'VAL(T,I)'
      Returns the member of the type T whose ordinal value is I.
@@ -6076,6 +6404,7 @@ Threads::).  GDB provides the following task-related commands:
              3   809a800   1   15 Child Activation Wait a
           *  4   80ae800   3   15 Runnable              c
 
+
      In this listing, the asterisk before the last task indicates it to
      be the task currently being inspected.
 
@@ -6190,14 +6519,14 @@ Threads::).  GDB provides the following task-related commands:
 'break LINESPEC task TASKNO'
 'break LINESPEC task TASKNO if ...'
      These commands are like the 'break ... thread ...' command (*note
-     Thread Stops::).  LINESPEC specifies source lines, as described in
-     *note Specify Location::.
+     Thread Stops::).  The LINESPEC argument specifies source lines, as
+     described in *note Specify Location::.
 
      Use the qualifier 'task TASKNO' with a breakpoint command to
      specify that you only want GDB to stop the program when a
-     particular Ada task reaches this breakpoint.  TASKNO is one of the
-     numeric task identifiers assigned by GDB, shown in the first column
-     of the 'info tasks' display.
+     particular Ada task reaches this breakpoint.  The TASKNO is one of
+     the numeric task identifiers assigned by GDB, shown in the first
+     column of the 'info tasks' display.
 
      If you do not specify 'task TASKNO' when you set a breakpoint, the
      breakpoint applies to _all_ tasks of your program.
@@ -6239,15 +6568,14 @@ File: gdb.info,  Node: Ada Tasks and Core Files,  Next: Ravenscar Profile,  Prev
 When inspecting a core file, as opposed to debugging a live program,
 tasking support may be limited or even unavailable, depending on the
 platform being used.  For instance, on x86-linux, the list of tasks is
-available, but task switching is not supported.  On Tru64, however, task
-switching will work as usual.
+available, but task switching is not supported.
 
-   On certain platforms, including Tru64, the debugger needs to perform
-some memory writes in order to provide Ada tasking support.  When
-inspecting a core file, this means that the core file must be opened
-with read-write privileges, using the command '"set write on"' (*note
-Patching::).  Under these circumstances, you should make a backup copy
-of the core file before inspecting it with GDB.
+   On certain platforms, the debugger needs to perform some memory
+writes in order to provide Ada tasking support.  When inspecting a core
+file, this means that the core file must be opened with read-write
+privileges, using the command '"set write on"' (*note Patching::).
+Under these circumstances, you should make a backup copy of the core
+file before inspecting it with GDB.
 
 
 File: gdb.info,  Node: Ravenscar Profile,  Next: Ada Glitches,  Prev: Ada Tasks and Core Files,  Up: Ada
@@ -6331,6 +6659,29 @@ around the issue, but the work-around has to be specifically enabled.
      fix the issue.  It is always safe to set 'ada trust-PAD-over-XVS'
      to 'off', but this incurs a slight performance penalty, so it is
      recommended to leave this setting to 'on' unless necessary.
+
+   Internally, the debugger also relies on the compiler following a
+number of conventions known as the 'GNAT Encoding', all documented in
+'gcc/ada/exp_dbug.ads' in the GCC sources.  This encoding describes how
+the debugging information should be generated for certain types.  In
+particular, this convention makes use of "descriptive types", which are
+artificial types generated purely to help the debugger.
+
+   These encodings were defined at a time when the debugging information
+format used was not powerful enough to describe some of the more complex
+types available in Ada.  Since DWARF allows us to express nearly all Ada
+features, the long-term goal is to slowly replace these descriptive
+types by their pure DWARF equivalent.  To facilitate that transition, a
+new maintenance option is available to force the debugger to ignore
+those descriptive types.  It allows the user to quickly evaluate how
+well GDB works without them.
+
+'maintenance ada set ignore-descriptive-types [on|off]'
+     Control whether the debugger should ignore descriptive types.  The
+     default is not to ignore descriptives types ('off').
+
+'maintenance ada show ignore-descriptive-types'
+     Show if descriptive types are ignored by GDB.
 
 
 File: gdb.info,  Node: Unsupported Languages,  Prev: Supported Languages,  Up: Languages
@@ -6450,6 +6801,17 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
           _start + 5 in section .text of /tmp/a.out
           (gdb) info symbol 0x2aaaac2811cf
           __read_nocancel + 6 in section .text of /usr/lib64/libc.so.6
+
+'demangle [-l LANGUAGE] [--] NAME'
+     Demangle NAME.  If LANGUAGE is provided it is the name of the
+     language to demangle NAME in.  Otherwise NAME is demangled in the
+     current language.
+
+     The '--' option specifies the end of options, and is useful when
+     NAME begins with a dash.
+
+     The parameter 'demangle-style' specifies how to interpret the kind
+     of mangling used.  *Note Print Settings::.
 
 'whatis[/FLAGS] [ARG]'
      Print the data type of ARG, which can be either an expression or a
@@ -6687,6 +7049,25 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
 'show opaque-type-resolution'
      Show whether opaque types are resolved or not.
 
+'set print symbol-loading'
+'set print symbol-loading full'
+'set print symbol-loading brief'
+'set print symbol-loading off'
+     The 'set print symbol-loading' command allows you to control the
+     printing of messages when GDB loads symbol information.  By default
+     a message is printed for the executable and one for each shared
+     library, and normally this is what you want.  However, when
+     debugging apps with large numbers of shared libraries these
+     messages can be annoying.  When set to 'brief' a message is printed
+     for each executable, and when GDB loads a collection of shared
+     libraries at once it will only print one message regardless of the
+     number of shared libraries.  When set to 'off' no messages are
+     printed.
+
+'show print symbol-loading'
+     Show whether messages will be printed when a GDB command entered
+     from the keyboard causes symbol information to be loaded.
+
 'maint print symbols FILENAME'
 'maint print psymbols FILENAME'
 'maint print msymbols FILENAME'
@@ -6776,6 +7157,7 @@ address, or even return prematurely from a function.
 * Returning::                   Returning from a function
 * Calling::                     Calling your program's functions
 * Patching::                    Patching your program
+* Compiling and Injecting Code:: Compiling and injecting code in GDB
 
 
 File: gdb.info,  Node: Assignment,  Next: Jumping,  Up: Altering
@@ -6915,10 +7297,10 @@ File: gdb.info,  Node: Signaling,  Next: Returning,  Prev: Jumping,  Up: Alterin
 =================================
 
 'signal SIGNAL'
-     Resume execution where your program stopped, but immediately give
-     it the signal SIGNAL.  SIGNAL can be the name or the number of a
-     signal.  For example, on many systems 'signal 2' and 'signal
-     SIGINT' are both ways of sending an interrupt signal.
+     Resume execution where your program is stopped, but immediately
+     give it the signal SIGNAL.  The SIGNAL can be the name or the
+     number of a signal.  For example, on many systems 'signal 2' and
+     'signal SIGINT' are both ways of sending an interrupt signal.
 
      Alternatively, if SIGNAL is zero, continue execution without giving
      a signal.  This is useful when your program stopped on account of a
@@ -6926,14 +7308,47 @@ File: gdb.info,  Node: Signaling,  Next: Returning,  Prev: Jumping,  Up: Alterin
      'continue' command; 'signal 0' causes it to resume without a
      signal.
 
+     _Note:_ When resuming a multi-threaded program, SIGNAL is delivered
+     to the currently selected thread, not the thread that last reported
+     a stop.  This includes the situation where a thread was stopped due
+     to a signal.  So if you want to continue execution suppressing the
+     signal that stopped a thread, you should select that same thread
+     before issuing the 'signal 0' command.  If you issue the 'signal 0'
+     command with another thread as the selected one, GDB detects that
+     and asks for confirmation.
+
+     Invoking the 'signal' command is not the same as invoking the
+     'kill' utility from the shell.  Sending a signal with 'kill' causes
+     GDB to decide what to do with the signal depending on the signal
+     handling tables (*note Signals::).  The 'signal' command passes the
+     signal directly to your program.
+
      'signal' does not repeat when you press <RET> a second time after
      executing the command.
 
-   Invoking the 'signal' command is not the same as invoking the 'kill'
-utility from the shell.  Sending a signal with 'kill' causes GDB to
-decide what to do with the signal depending on the signal handling
-tables (*note Signals::).  The 'signal' command passes the signal
-directly to your program.
+'queue-signal SIGNAL'
+     Queue SIGNAL to be delivered immediately to the current thread when
+     execution of the thread resumes.  The SIGNAL can be the name or the
+     number of a signal.  For example, on many systems 'signal 2' and
+     'signal SIGINT' are both ways of sending an interrupt signal.  The
+     handling of the signal must be set to pass the signal to the
+     program, otherwise GDB will report an error.  You can control the
+     handling of signals from GDB with the 'handle' command (*note
+     Signals::).
+
+     Alternatively, if SIGNAL is zero, any currently queued signal for
+     the current thread is discarded and when execution resumes no
+     signal will be delivered.  This is useful when your program stopped
+     on account of a signal and would ordinarily see the signal when
+     resumed with the 'continue' command.
+
+     This command differs from the 'signal' command in that the signal
+     is just queued, execution is not resumed.  And 'queue-signal'
+     cannot be used to pass a signal whose handling state has been set
+     to 'nopass' (*note Signals::).
+
+   *Note stepping into signal handlers::, for information on how
+stepping commands behave when the thread has a signal queued.
 
 
 File: gdb.info,  Node: Returning,  Next: Calling,  Prev: Signaling,  Up: Altering
@@ -7014,8 +7429,9 @@ File: gdb.info,  Node: Calling,  Next: Patching,  Prev: Returning,  Up: Altering
 ==============================
 
 'print EXPR'
-     Evaluate the expression EXPR and display the resulting value.  EXPR
-     may include calls to functions in the program being debugged.
+     Evaluate the expression EXPR and display the resulting value.  The
+     expression may include calls to functions in the program being
+     debugged.
 
 'call EXPR'
      Evaluate the expression EXPR without displaying 'void' returned
@@ -7070,588 +7486,4 @@ information, including the types of the function arguments, which causes
 GDB to call the inferior function incorrectly.  As a result, the called
 function will function erroneously and may even crash.  A solution to
 that is to use the name of the aliased function instead.
-
-
-File: gdb.info,  Node: Patching,  Prev: Calling,  Up: Altering
-
-17.6 Patching Programs
-======================
-
-By default, GDB opens the file containing your program's executable code
-(or the corefile) read-only.  This prevents accidental alterations to
-machine code; but it also prevents you from intentionally patching your
-program's binary.
-
-   If you'd like to be able to patch the binary, you can specify that
-explicitly with the 'set write' command.  For example, you might want to
-turn on internal debugging flags, or even to make emergency repairs.
-
-'set write on'
-'set write off'
-     If you specify 'set write on', GDB opens executable and core files
-     for both reading and writing; if you specify 'set write off' (the
-     default), GDB opens them read-only.
-
-     If you have already loaded a file, you must load it again (using
-     the 'exec-file' or 'core-file' command) after changing 'set write',
-     for your new setting to take effect.
-
-'show write'
-     Display whether executable files and core files are opened for
-     writing as well as reading.
-
-
-File: gdb.info,  Node: GDB Files,  Next: Targets,  Prev: Altering,  Up: Top
-
-18 GDB Files
-************
-
-GDB needs to know the file name of the program to be debugged, both in
-order to read its symbol table and in order to start your program.  To
-debug a core dump of a previous run, you must also tell GDB the name of
-the core dump file.
-
-* Menu:
-
-* Files::                       Commands to specify files
-* Separate Debug Files::        Debugging information in separate files
-* MiniDebugInfo::               Debugging information in a special section
-* Index Files::                 Index files speed up GDB
-* Symbol Errors::               Errors reading symbol files
-* Data Files::                  GDB data files
-
-
-File: gdb.info,  Node: Files,  Next: Separate Debug Files,  Up: GDB Files
-
-18.1 Commands to Specify Files
-==============================
-
-You may want to specify executable and core dump file names.  The usual
-way to do this is at start-up time, using the arguments to GDB's
-start-up commands (*note Getting In and Out of GDB: Invocation.).
-
-   Occasionally it is necessary to change to a different file during a
-GDB session.  Or you may run GDB and forget to specify a file you want
-to use.  Or you are debugging a remote target via 'gdbserver' (*note
-file: Server.).  In these situations the GDB commands to specify new
-files are useful.
-
-'file FILENAME'
-     Use FILENAME as the program to be debugged.  It is read for its
-     symbols and for the contents of pure memory.  It is also the
-     program executed when you use the 'run' command.  If you do not
-     specify a directory and the file is not found in the GDB working
-     directory, GDB uses the environment variable 'PATH' as a list of
-     directories to search, just as the shell does when looking for a
-     program to run.  You can change the value of this variable, for
-     both GDB and your program, using the 'path' command.
-
-     You can load unlinked object '.o' files into GDB using the 'file'
-     command.  You will not be able to "run" an object file, but you can
-     disassemble functions and inspect variables.  Also, if the
-     underlying BFD functionality supports it, you could use 'gdb
-     -write' to patch object files using this technique.  Note that GDB
-     can neither interpret nor modify relocations in this case, so
-     branches and some initialized variables will appear to go to the
-     wrong place.  But this feature is still handy from time to time.
-
-'file'
-     'file' with no argument makes GDB discard any information it has on
-     both executable file and the symbol table.
-
-'exec-file [ FILENAME ]'
-     Specify that the program to be run (but not the symbol table) is
-     found in FILENAME.  GDB searches the environment variable 'PATH' if
-     necessary to locate your program.  Omitting FILENAME means to
-     discard information on the executable file.
-
-'symbol-file [ FILENAME ]'
-     Read symbol table information from file FILENAME.  'PATH' is
-     searched when necessary.  Use the 'file' command to get both symbol
-     table and program to run from the same file.
-
-     'symbol-file' with no argument clears out GDB information on your
-     program's symbol table.
-
-     The 'symbol-file' command causes GDB to forget the contents of some
-     breakpoints and auto-display expressions.  This is because they may
-     contain pointers to the internal data recording symbols and data
-     types, which are part of the old symbol table data being discarded
-     inside GDB.
-
-     'symbol-file' does not repeat if you press <RET> again after
-     executing it once.
-
-     When GDB is configured for a particular environment, it understands
-     debugging information in whatever format is the standard generated
-     for that environment; you may use either a GNU compiler, or other
-     compilers that adhere to the local conventions.  Best results are
-     usually obtained from GNU compilers; for example, using 'GCC' you
-     can generate debugging information for optimized code.
-
-     For most kinds of object files, with the exception of old SVR3
-     systems using COFF, the 'symbol-file' command does not normally
-     read the symbol table in full right away.  Instead, it scans the
-     symbol table quickly to find which source files and which symbols
-     are present.  The details are read later, one source file at a
-     time, as they are needed.
-
-     The purpose of this two-stage reading strategy is to make GDB start
-     up faster.  For the most part, it is invisible except for
-     occasional pauses while the symbol table details for a particular
-     source file are being read.  (The 'set verbose' command can turn
-     these pauses into messages if desired.  *Note Optional Warnings and
-     Messages: Messages/Warnings.)
-
-     We have not implemented the two-stage strategy for COFF yet.  When
-     the symbol table is stored in COFF format, 'symbol-file' reads the
-     symbol table data in full right away.  Note that "stabs-in-COFF"
-     still does the two-stage strategy, since the debug info is actually
-     in stabs format.
-
-'symbol-file [ -readnow ] FILENAME'
-'file [ -readnow ] FILENAME'
-     You can override the GDB two-stage strategy for reading symbol
-     tables by using the '-readnow' option with any of the commands that
-     load symbol table information, if you want to be sure GDB has the
-     entire symbol table available.
-
-'core-file [FILENAME]'
-'core'
-     Specify the whereabouts of a core dump file to be used as the
-     "contents of memory".  Traditionally, core files contain only some
-     parts of the address space of the process that generated them; GDB
-     can access the executable file itself for other parts.
-
-     'core-file' with no argument specifies that no core file is to be
-     used.
-
-     Note that the core file is ignored when your program is actually
-     running under GDB.  So, if you have been running your program and
-     you wish to debug a core file instead, you must kill the subprocess
-     in which the program is running.  To do this, use the 'kill'
-     command (*note Killing the Child Process: Kill Process.).
-
-'add-symbol-file FILENAME ADDRESS'
-'add-symbol-file FILENAME ADDRESS [ -readnow ]'
-'add-symbol-file FILENAME ADDRESS -s SECTION ADDRESS ...'
-     The 'add-symbol-file' command reads additional symbol table
-     information from the file FILENAME.  You would use this command
-     when FILENAME has been dynamically loaded (by some other means)
-     into the program that is running.  ADDRESS should be the memory
-     address at which the file has been loaded; GDB cannot figure this
-     out for itself.  You can additionally specify an arbitrary number
-     of '-s SECTION ADDRESS' pairs, to give an explicit section name and
-     base address for that section.  You can specify any ADDRESS as an
-     expression.
-
-     The symbol table of the file FILENAME is added to the symbol table
-     originally read with the 'symbol-file' command.  You can use the
-     'add-symbol-file' command any number of times; the new symbol data
-     thus read is kept in addition to the old.
-
-     Changes can be reverted using the command 'remove-symbol-file'.
-
-     Although FILENAME is typically a shared library file, an executable
-     file, or some other object file which has been fully relocated for
-     loading into a process, you can also load symbolic information from
-     relocatable '.o' files, as long as:
-
-        * the file's symbolic information refers only to linker symbols
-          defined in that file, not to symbols defined by other object
-          files,
-        * every section the file's symbolic information refers to has
-          actually been loaded into the inferior, as it appears in the
-          file, and
-        * you can determine the address at which every section was
-          loaded, and provide these to the 'add-symbol-file' command.
-
-     Some embedded operating systems, like Sun Chorus and VxWorks, can
-     load relocatable files into an already running program; such
-     systems typically make the requirements above easy to meet.
-     However, it's important to recognize that many native systems use
-     complex link procedures ('.linkonce' section factoring and C++
-     constructor table assembly, for example) that make the requirements
-     difficult to meet.  In general, one cannot assume that using
-     'add-symbol-file' to read a relocatable object file's symbolic
-     information will have the same effect as linking the relocatable
-     object file into the program in the normal way.
-
-     'add-symbol-file' does not repeat if you press <RET> after using
-     it.
-
-'remove-symbol-file FILENAME'
-'remove-symbol-file -a ADDRESS'
-     Remove a symbol file added via the 'add-symbol-file' command.  The
-     file to remove can be identified by its FILENAME or by an ADDRESS
-     that lies within the boundaries of this symbol file in memory.
-     Example:
-
-          (gdb) add-symbol-file /home/user/gdb/mylib.so 0x7ffff7ff9480
-          add symbol table from file "/home/user/gdb/mylib.so" at
-              .text_addr = 0x7ffff7ff9480
-          (y or n) y
-          Reading symbols from /home/user/gdb/mylib.so...done.
-          (gdb) remove-symbol-file -a 0x7ffff7ff9480
-          Remove symbol table from file "/home/user/gdb/mylib.so"? (y or n) y
-          (gdb)
-
-     'remove-symbol-file' does not repeat if you press <RET> after using
-     it.
-
-'add-symbol-file-from-memory ADDRESS'
-     Load symbols from the given ADDRESS in a dynamically loaded object
-     file whose image is mapped directly into the inferior's memory.
-     For example, the Linux kernel maps a 'syscall DSO' into each
-     process's address space; this DSO provides kernel-specific code for
-     some system calls.  The argument can be any expression whose
-     evaluation yields the address of the file's shared object file
-     header.  For this command to work, you must have used 'symbol-file'
-     or 'exec-file' commands in advance.
-
-'add-shared-symbol-files LIBRARY-FILE'
-'assf LIBRARY-FILE'
-     The 'add-shared-symbol-files' command can currently be used only in
-     the Cygwin build of GDB on MS-Windows OS, where it is an alias for
-     the 'dll-symbols' command (*note Cygwin Native::).  GDB
-     automatically looks for shared libraries, however if GDB does not
-     find yours, you can invoke 'add-shared-symbol-files'.  It takes one
-     argument: the shared library's file name.  'assf' is a shorthand
-     alias for 'add-shared-symbol-files'.
-
-'section SECTION ADDR'
-     The 'section' command changes the base address of the named SECTION
-     of the exec file to ADDR.  This can be used if the exec file does
-     not contain section addresses, (such as in the 'a.out' format), or
-     when the addresses specified in the file itself are wrong.  Each
-     section must be changed separately.  The 'info files' command,
-     described below, lists all the sections and their addresses.
-
-'info files'
-'info target'
-     'info files' and 'info target' are synonymous; both print the
-     current target (*note Specifying a Debugging Target: Targets.),
-     including the names of the executable and core dump files currently
-     in use by GDB, and the files from which symbols were loaded.  The
-     command 'help target' lists all possible targets rather than
-     current ones.
-
-'maint info sections'
-     Another command that can give you extra information about program
-     sections is 'maint info sections'.  In addition to the section
-     information displayed by 'info files', this command displays the
-     flags and file offset of each section in the executable and core
-     dump files.  In addition, 'maint info sections' provides the
-     following command options (which may be arbitrarily combined):
-
-     'ALLOBJ'
-          Display sections for all loaded object files, including shared
-          libraries.
-     'SECTIONS'
-          Display info only for named SECTIONS.
-     'SECTION-FLAGS'
-          Display info only for sections for which SECTION-FLAGS are
-          true.  The section flags that GDB currently knows about are:
-          'ALLOC'
-               Section will have space allocated in the process when
-               loaded.  Set for all sections except those containing
-               debug information.
-          'LOAD'
-               Section will be loaded from the file into the child
-               process memory.  Set for pre-initialized code and data,
-               clear for '.bss' sections.
-          'RELOC'
-               Section needs to be relocated before loading.
-          'READONLY'
-               Section cannot be modified by the child process.
-          'CODE'
-               Section contains executable code only.
-          'DATA'
-               Section contains data only (no executable code).
-          'ROM'
-               Section will reside in ROM.
-          'CONSTRUCTOR'
-               Section contains data for constructor/destructor lists.
-          'HAS_CONTENTS'
-               Section is not empty.
-          'NEVER_LOAD'
-               An instruction to the linker to not output the section.
-          'COFF_SHARED_LIBRARY'
-               A notification to the linker that the section contains
-               COFF shared library information.
-          'IS_COMMON'
-               Section contains common symbols.
-'set trust-readonly-sections on'
-     Tell GDB that readonly sections in your object file really are
-     read-only (i.e. that their contents will not change).  In that
-     case, GDB can fetch values from these sections out of the object
-     file, rather than from the target program.  For some targets
-     (notably embedded ones), this can be a significant enhancement to
-     debugging performance.
-
-     The default is off.
-
-'set trust-readonly-sections off'
-     Tell GDB not to trust readonly sections.  This means that the
-     contents of the section might change while the program is running,
-     and must therefore be fetched from the target when needed.
-
-'show trust-readonly-sections'
-     Show the current setting of trusting readonly sections.
-
-   All file-specifying commands allow both absolute and relative file
-names as arguments.  GDB always converts the file name to an absolute
-file name and remembers it that way.
-
-   GDB supports GNU/Linux, MS-Windows, HP-UX, SunOS, SVr4, Irix, and IBM
-RS/6000 AIX shared libraries.
-
-   On MS-Windows GDB must be linked with the Expat library to support
-shared libraries.  *Note Expat::.
-
-   GDB automatically loads symbol definitions from shared libraries when
-you use the 'run' command, or when you examine a core file.  (Before you
-issue the 'run' command, GDB does not understand references to a
-function in a shared library, however--unless you are debugging a core
-file).
-
-   On HP-UX, if the program loads a library explicitly, GDB
-automatically loads the symbols at the time of the 'shl_load' call.
-
-   There are times, however, when you may wish to not automatically load
-symbol definitions from shared libraries, such as when they are
-particularly large or there are many of them.
-
-   To control the automatic loading of shared library symbols, use the
-commands:
-
-'set auto-solib-add MODE'
-     If MODE is 'on', symbols from all shared object libraries will be
-     loaded automatically when the inferior begins execution, you attach
-     to an independently started inferior, or when the dynamic linker
-     informs GDB that a new library has been loaded.  If MODE is 'off',
-     symbols must be loaded manually, using the 'sharedlibrary' command.
-     The default value is 'on'.
-
-     If your program uses lots of shared libraries with debug info that
-     takes large amounts of memory, you can decrease the GDB memory
-     footprint by preventing it from automatically loading the symbols
-     from shared libraries.  To that end, type 'set auto-solib-add off'
-     before running the inferior, then load each library whose debug
-     symbols you do need with 'sharedlibrary REGEXP', where REGEXP is a
-     regular expression that matches the libraries whose symbols you
-     want to be loaded.
-
-'show auto-solib-add'
-     Display the current autoloading mode.
-
-   To explicitly load shared library symbols, use the 'sharedlibrary'
-command:
-
-'info share REGEX'
-'info sharedlibrary REGEX'
-     Print the names of the shared libraries which are currently loaded
-     that match REGEX.  If REGEX is omitted then print all shared
-     libraries that are loaded.
-
-'sharedlibrary REGEX'
-'share REGEX'
-     Load shared object library symbols for files matching a Unix
-     regular expression.  As with files loaded automatically, it only
-     loads shared libraries required by your program for a core file or
-     after typing 'run'.  If REGEX is omitted all shared libraries
-     required by your program are loaded.
-
-'nosharedlibrary'
-     Unload all shared object library symbols.  This discards all
-     symbols that have been loaded from all shared libraries.  Symbols
-     from shared libraries that were loaded by explicit user requests
-     are not discarded.
-
-   Sometimes you may wish that GDB stops and gives you control when any
-of shared library events happen.  The best way to do this is to use
-'catch load' and 'catch unload' (*note Set Catchpoints::).
-
-   GDB also supports the the 'set stop-on-solib-events' command for
-this.  This command exists for historical reasons.  It is less useful
-than setting a catchpoint, because it does not allow for conditions or
-commands as a catchpoint does.
-
-'set stop-on-solib-events'
-     This command controls whether GDB should give you control when the
-     dynamic linker notifies it about some shared library event.  The
-     most common event of interest is loading or unloading of a new
-     shared library.
-
-'show stop-on-solib-events'
-     Show whether GDB stops and gives you control when shared library
-     events happen.
-
-   Shared libraries are also supported in many cross or remote debugging
-configurations.  GDB needs to have access to the target's libraries;
-this can be accomplished either by providing copies of the libraries on
-the host system, or by asking GDB to automatically retrieve the
-libraries from the target.  If copies of the target libraries are
-provided, they need to be the same as the target libraries, although the
-copies on the target can be stripped as long as the copies on the host
-are not.
-
-   For remote debugging, you need to tell GDB where the target libraries
-are, so that it can load the correct copies--otherwise, it may try to
-load the host's libraries.  GDB has two variables to specify the search
-directories for target libraries.
-
-'set sysroot PATH'
-     Use PATH as the system root for the program being debugged.  Any
-     absolute shared library paths will be prefixed with PATH; many
-     runtime loaders store the absolute paths to the shared library in
-     the target program's memory.  If you use 'set sysroot' to find
-     shared libraries, they need to be laid out in the same way that
-     they are on the target, with e.g. a '/lib' and '/usr/lib' hierarchy
-     under PATH.
-
-     If PATH starts with the sequence 'remote:', GDB will retrieve the
-     target libraries from the remote system.  This is only supported
-     when using a remote target that supports the 'remote get' command
-     (*note Sending files to a remote system: File Transfer.).  The part
-     of PATH following the initial 'remote:' (if present) is used as
-     system root prefix on the remote file system.  (1)
-
-     For targets with an MS-DOS based filesystem, such as MS-Windows and
-     SymbianOS, GDB tries prefixing a few variants of the target
-     absolute file name with PATH.  But first, on Unix hosts, GDB
-     converts all backslash directory separators into forward slashes,
-     because the backslash is not a directory separator on Unix:
-
-            c:\foo\bar.dll => c:/foo/bar.dll
-
-     Then, GDB attempts prefixing the target file name with PATH, and
-     looks for the resulting file name in the host file system:
-
-            c:/foo/bar.dll => /path/to/sysroot/c:/foo/bar.dll
-
-     If that does not find the shared library, GDB tries removing the
-     ':' character from the drive spec, both for convenience, and, for
-     the case of the host file system not supporting file names with
-     colons:
-
-            c:/foo/bar.dll => /path/to/sysroot/c/foo/bar.dll
-
-     This makes it possible to have a system root that mirrors a target
-     with more than one drive.  E.g., you may want to setup your local
-     copies of the target system shared libraries like so (note 'c' vs
-     'z'):
-
-           /path/to/sysroot/c/sys/bin/foo.dll
-           /path/to/sysroot/c/sys/bin/bar.dll
-           /path/to/sysroot/z/sys/bin/bar.dll
-
-     and point the system root at '/path/to/sysroot', so that GDB can
-     find the correct copies of both 'c:\sys\bin\foo.dll', and
-     'z:\sys\bin\bar.dll'.
-
-     If that still does not find the shared library, GDB tries removing
-     the whole drive spec from the target file name:
-
-            c:/foo/bar.dll => /path/to/sysroot/foo/bar.dll
-
-     This last lookup makes it possible to not care about the drive
-     name, if you don't want or need to.
-
-     The 'set solib-absolute-prefix' command is an alias for 'set
-     sysroot'.
-
-     You can set the default system root by using the configure-time
-     '--with-sysroot' option.  If the system root is inside GDB's
-     configured binary prefix (set with '--prefix' or '--exec-prefix'),
-     then the default system root will be updated automatically if the
-     installed GDB is moved to a new location.
-
-'show sysroot'
-     Display the current shared library prefix.
-
-'set solib-search-path PATH'
-     If this variable is set, PATH is a colon-separated list of
-     directories to search for shared libraries.  'solib-search-path' is
-     used after 'sysroot' fails to locate the library, or if the path to
-     the library is relative instead of absolute.  If you want to use
-     'solib-search-path' instead of 'sysroot', be sure to set 'sysroot'
-     to a nonexistent directory to prevent GDB from finding your host's
-     libraries.  'sysroot' is preferred; setting it to a nonexistent
-     directory may interfere with automatic loading of shared library
-     symbols.
-
-'show solib-search-path'
-     Display the current shared library search path.
-
-'set target-file-system-kind KIND'
-     Set assumed file system kind for target reported file names.
-
-     Shared library file names as reported by the target system may not
-     make sense as is on the system GDB is running on.  For example,
-     when remote debugging a target that has MS-DOS based file system
-     semantics, from a Unix host, the target may be reporting to GDB a
-     list of loaded shared libraries with file names such as
-     'c:\Windows\kernel32.dll'.  On Unix hosts, there's no concept of
-     drive letters, so the 'c:\' prefix is not normally understood as
-     indicating an absolute file name, and neither is the backslash
-     normally considered a directory separator character.  In that case,
-     the native file system would interpret this whole absolute file
-     name as a relative file name with no directory components.  This
-     would make it impossible to point GDB at a copy of the remote
-     target's shared libraries on the host using 'set sysroot', and
-     impractical with 'set solib-search-path'.  Setting
-     'target-file-system-kind' to 'dos-based' tells GDB to interpret
-     such file names similarly to how the target would, and to map them
-     to file names valid on GDB's native file system semantics.  The
-     value of KIND can be '"auto"', in addition to one of the supported
-     file system kinds.  In that case, GDB tries to determine the
-     appropriate file system variant based on the current target's
-     operating system (*note Configuring the Current ABI: ABI.).  The
-     supported file system settings are:
-
-     'unix'
-          Instruct GDB to assume the target file system is of Unix kind.
-          Only file names starting the forward slash ('/') character are
-          considered absolute, and the directory separator character is
-          also the forward slash.
-
-     'dos-based'
-          Instruct GDB to assume the target file system is DOS based.
-          File names starting with either a forward slash, or a drive
-          letter followed by a colon (e.g., 'c:'), are considered
-          absolute, and both the slash ('/') and the backslash ('\\')
-          characters are considered directory separators.
-
-     'auto'
-          Instruct GDB to use the file system kind associated with the
-          target operating system (*note Configuring the Current ABI:
-          ABI.).  This is the default.
-
-   When processing file names provided by the user, GDB frequently needs
-to compare them to the file names recorded in the program's debug info.
-Normally, GDB compares just the "base names" of the files as strings,
-which is reasonably fast even for very large programs.  (The base name
-of a file is the last portion of its name, after stripping all the
-leading directories.)  This shortcut in comparison is based upon the
-assumption that files cannot have more than one base name.  This is
-usually true, but references to files that use symlinks or similar
-filesystem facilities violate that assumption.  If your program records
-files using such facilities, or if you provide file names to GDB using
-symlinks etc., you can set 'basenames-may-differ' to 'true' to instruct
-GDB to completely canonicalize each pair of file names it needs to
-compare.  This will make file-name comparisons accurate, but at a price
-of a significant slowdown.
-
-'set basenames-may-differ'
-     Set whether a source file may have multiple base names.
-
-'show basenames-may-differ'
-     Show whether a source file may have multiple base names.
-
-   ---------- Footnotes ----------
-
-   (1) If you want to specify a local system root using a directory that
-happens to be named 'remote:', you need to use some equivalent variant
-of the name like './remote:'.
 

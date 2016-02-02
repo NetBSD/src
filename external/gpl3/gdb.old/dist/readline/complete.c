@@ -598,8 +598,21 @@ stat_char (filename)
 #endif
   else if (S_ISREG (finfo.st_mode))
     {
+#if defined (_WIN32) && !defined (__CYGWIN__)
+      /* Windows 'access' doesn't support X_OK and on latest Windows
+	 versions even invokes an invalid parameter exception.  */
+      char *ext = strrchr (filename, '.');
+
+      if (ext
+	  && (_rl_stricmp (ext, ".exe") == 0
+	      || _rl_stricmp (ext, ".cmd") == 0
+	      || _rl_stricmp (ext, ".bat") == 0
+	      || _rl_stricmp (ext, ".com") == 0))
+	character = '*';
+#else
       if (access (filename, X_OK) == 0)
 	character = '*';
+#endif
     }
   return (character);
 }

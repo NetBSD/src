@@ -1,6 +1,6 @@
 /* Xtensa GNU/Linux native support.
 
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,12 +18,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "frame.h"
 #include "inferior.h"
 #include "gdbcore.h"
 #include "regcache.h"
-#include "gdb_assert.h"
 #include "target.h"
 #include "linux-nat.h"
 

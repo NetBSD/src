@@ -1,6 +1,6 @@
 /* Memory ranges
 
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,15 @@ mem_ranges_overlap (CORE_ADDR start1, int len1,
   l = max (start1, start2);
   h = min (start1 + len1, start2 + len2);
   return (l < h);
+}
+
+/* See memrange.h.  */
+
+int
+address_in_mem_range (CORE_ADDR address, const struct mem_range *r)
+{
+  return (r->start <= address
+	  && (address - r->start) < r->length);
 }
 
 /* qsort comparison function, that compares mem_ranges.  Ranges are

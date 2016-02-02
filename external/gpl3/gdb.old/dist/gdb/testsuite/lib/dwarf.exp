@@ -1,4 +1,4 @@
-# Copyright 2010-2014 Free Software Foundation, Inc.
+# Copyright 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,6 +86,79 @@ proc build_executable_from_fission_assembler { testname executable sources optio
     return 0
 }
 
+# Return a list of expressions about function FUNC's address and length.
+# The first expression is the address of function FUNC, and the second
+# one is FUNC's length.  SRC is the source file having function FUNC.
+# An internal label ${func}_label must be defined inside FUNC:
+#
+#  int main (void)
+#  {
+#    asm ("main_label: .globl main_label");
+#    return 0;
+#  }
+#
+# This label is needed to compute the start address of function FUNC.
+# If the compiler is gcc, we can do the following to get function start
+# and end address too:
+#
+# asm ("func_start: .globl func_start");
+# static void func (void) {}
+# asm ("func_end: .globl func_end");
+#
+# however, this isn't portable, because other compilers, such as clang,
+# may not guarantee the order of global asms and function.  The code
+# becomes:
+#
+# asm ("func_start: .globl func_start");
+# asm ("func_end: .globl func_end");
+# static void func (void) {}
+#
+
+proc function_range { func src } {
+    global decimal gdb_prompt
+
+    set exe [standard_temp_file func_addr[pid].x]
+
+    gdb_compile $src $exe executable {debug}
+
+    gdb_exit
+    gdb_start
+    gdb_load "$exe"
+
+    # Compute the label offset, and we can get the function start address
+    # by "${func}_label - $func_label_offset".
+    set func_label_offset ""
+    set test "p ${func}_label - ${func}"
+    gdb_test_multiple $test $test {
+	-re ".* = ($decimal)\r\n$gdb_prompt $" {
+	    set func_label_offset $expect_out(1,string)
+	}
+    }
+
+    # Compute the function length.
+    global hex
+    set func_length ""
+    set test "disassemble $func"
+    gdb_test_multiple $test $test {
+	-re ".*$hex <\\+($decimal)>:\[^\r\n\]+\r\nEnd of assembler dump\.\r\n$gdb_prompt $" {
+	    set func_length $expect_out(1,string)
+	}
+    }
+
+    # Compute the size of the last instruction.
+    set test "x/2i $func+$func_length"
+    gdb_test_multiple $test $test {
+	-re ".*($hex) <$func\\+$func_length>:\[^\r\n\]+\r\n\[ \]+($hex).*\.\r\n$gdb_prompt $" {
+	    set start $expect_out(1,string)
+	    set end $expect_out(2,string)
+
+	    set func_length [expr $func_length + $end - $start]
+	}
+    }
+
+    return [list "${func}_label - $func_label_offset" $func_length]
+}
+
 # A DWARF assembler.
 #
 # All the variables in this namespace are private to the
@@ -121,6 +194,17 @@ proc build_executable_from_fission_assembler { testname executable sources optio
 # This can either be the full name, like 'DW_AT_name', or a shortened
 # name, like 'name'.  These are fully equivalent.
 #
+# Besides DWARF standard attributes, assembler supports 'macro' attribute
+# which will be substituted by one or more standard or macro attributes.
+# supported macro attributes are:
+#
+#  - MACRO_AT_range { FUNC FILE }
+#  It is substituted by DW_AT_low_pc and DW_AT_high_pc with the start and
+#  end address of function FUNC in file FILE.
+#
+#  - MACRO_AT_func { FUNC FILE }
+#  It is substituted by DW_AT_name with FUNC and MACRO_AT_range.
+#
 # If FORM is given, it should name a DW_FORM_ constant.
 # This can either be the short form, like 'DW_FORM_addr', or a
 # shortened version, like 'addr'.  If the form is given, VALUE
@@ -141,7 +225,9 @@ proc build_executable_from_fission_assembler { testname executable sources optio
 #   reference.  The rest of VALUE is taken to be the name of a label,
 #   and DW_FORM_ref4 is used.  See 'new_label' and 'define_label'.
 # * Otherwise, VALUE is taken to be a string and DW_FORM_string is
-#   used.
+#   used.  In order to prevent bugs where a numeric value is given but
+#   no form is specified, it is an error if the value looks like a number
+#   (using Tcl's "string is integer") and no form is provided.
 # More form-guessing functionality may be added.
 #
 # CHILDREN is just Tcl code that can be used to define child DIEs.  It
@@ -461,6 +547,45 @@ namespace eval Dwarf {
 	return $name
     }
 
+    proc _handle_attribute { attr_name attr_value attr_form } {
+	variable _abbrev_section
+	variable _constants
+
+	_handle_DW_FORM $attr_form $attr_value
+
+	_defer_output $_abbrev_section {
+	    _op .uleb128 $_constants($attr_name) $attr_name
+	    _op .uleb128 $_constants($attr_form) $attr_form
+	}
+    }
+
+    # Handle macro attribute MACRO_AT_range.
+
+    proc _handle_macro_at_range { attr_value } {
+	if {[llength $attr_value] != 2} {
+	    error "usage: MACRO_AT_range { func file }"
+	}
+
+	set func [lindex $attr_value 0]
+	set src [lindex $attr_value 1]
+	set result [function_range $func $src]
+
+	_handle_attribute DW_AT_low_pc [lindex $result 0] \
+	    DW_FORM_addr
+	_handle_attribute DW_AT_high_pc \
+	    "[lindex $result 0] + [lindex $result 1]" DW_FORM_addr
+    }
+
+    # Handle macro attribute MACRO_AT_func.
+
+    proc _handle_macro_at_func { attr_value } {
+	if {[llength $attr_value] != 2} {
+	    error "usage: MACRO_AT_func { func file }"
+	}
+	_handle_attribute DW_AT_name [lindex $attr_value 0] DW_FORM_string
+	_handle_macro_at_range $attr_value
+    }
+
     proc _handle_DW_TAG {tag_name {attrs {}} {children {}}} {
 	variable _abbrev_section
 	variable _abbrev_num
@@ -482,18 +607,24 @@ namespace eval Dwarf {
 	foreach attr $attrs {
 	    set attr_name [_map_name [lindex $attr 0] _AT]
 	    set attr_value [uplevel 2 [list subst [lindex $attr 1]]]
-	    if {[llength $attr] > 2} {
-		set attr_form [lindex $attr 2]
+
+	    if { [string equal "MACRO_AT_func" $attr_name] } {
+		_handle_macro_at_func $attr_value
+	    } elseif { [string equal "MACRO_AT_range" $attr_name] } {
+		_handle_macro_at_range $attr_value
 	    } else {
-		set attr_form [_guess_form $attr_value attr_value]
-	    }
-	    set attr_form [_map_name $attr_form _FORM]
+		if {[llength $attr] > 2} {
+		    set attr_form [lindex $attr 2]
+		} else {
+		    # If the value looks like an integer, a form is required.
+		    if [string is integer $attr_value] {
+			error "Integer value requires a form"
+		    }
+		    set attr_form [_guess_form $attr_value attr_value]
+		}
+		set attr_form [_map_name $attr_form _FORM]
 
-	    _handle_DW_FORM $attr_form $attr_value
-
-	    _defer_output $_abbrev_section {
-		_op .uleb128 $_constants($attr_name) $attr_name
-		_op .uleb128 $_constants($attr_form) $attr_form
+		_handle_attribute $attr_name $attr_value $attr_form
 	    }
 	}
 
@@ -678,7 +809,8 @@ namespace eval Dwarf {
 	variable _cu_offset_size
 
 	foreach line [split $body \n] {
-	    if {[lindex $line 0] == ""} {
+	    # Ignore blank lines, and allow embedded comments.
+	    if {[lindex $line 0] == "" || [regexp -- {^[ \t]*#} $line]} {
 		continue
 	    }
 	    set opcode [_map_name [lindex $line 0] _OP]
@@ -689,6 +821,7 @@ namespace eval Dwarf {
 		    _op .${_cu_addr_size}byte [lindex $line 1]
 		}
 
+		DW_OP_pick -
 		DW_OP_const1u -
 		DW_OP_const1s {
 		    _op .byte [lindex $line 1]
@@ -727,6 +860,11 @@ namespace eval Dwarf {
 		DW_OP_bit_piece {
 		    _op .uleb128 [lindex $line 1]
 		    _op .uleb128 [lindex $line 2]
+		}
+
+		DW_OP_skip -
+		DW_OP_bra {
+		    _op .2byte [lindex $line 1]
 		}
 
 		DW_OP_GNU_implicit_pointer {
@@ -829,7 +967,7 @@ namespace eval Dwarf {
 	}
 	define_label $start_label
 	_op .2byte $_cu_version Version
-	_op .4byte $my_abbrevs Abbrevs
+	_op .${_cu_offset_size}byte $my_abbrevs Abbrevs
 	_op .byte $_cu_addr_size "Pointer size"
 
 	_defer_output $_abbrev_section {
@@ -922,7 +1060,7 @@ namespace eval Dwarf {
 	}
 	define_label $start_label
 	_op .2byte $_cu_version Version
-	_op .4byte $my_abbrevs Abbrevs
+	_op .${_cu_offset_size}byte $my_abbrevs Abbrevs
 	_op .byte $_cu_addr_size "Pointer size"
 	_op .8byte $signature Signature
 	if { $type_label != "" } {

@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2014 Free Software Foundation, Inc.
+# Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,3 +34,23 @@ gdb_continue_to_breakpoint "break-here" ".* break-here .*"
 gdb_test "info threads" \
 	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n\\* 2 *Thread \[^\r\n\]* at \[^\r\n\]*" \
 	 "Single thread has been left"
+
+# Test that ctrl-c works even if the leader has exited.
+
+set test "continue for ctrl-c"
+gdb_test_multiple "continue" $test {
+    -re "Continuing" {
+	pass $test
+    }
+}
+
+sleep 1
+
+send_gdb "\003"
+
+set test "caught interrupt"
+gdb_test_multiple "" $test {
+    -re "Program received signal SIGINT.*$gdb_prompt $" {
+	pass $test
+    }
+}

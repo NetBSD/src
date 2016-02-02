@@ -1,4 +1,4 @@
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,7 @@ if { [istarget "hppa*-*-hpux*"] } {
     return 0
 }
 
-# are we on a target board
-if [is_remote target] then {
+if {![can_spawn_for_attach]} {
     return 0
 }
 
@@ -70,13 +69,7 @@ proc do_attach_tests {} {
     # Start the program running and then wait for a bit, to be sure
     # that it can be attached to.
 
-    set testpid [eval exec $binfile &]
-    exec sleep 2
-    if { [istarget "*-*-cygwin*"] } {
-	# testpid is the Cygwin PID, GDB uses the Windows PID, which might be
-	# different due to the way fork/exec works.
-	set testpid [ exec ps -e | gawk "{ if (\$1 == $testpid) print \$4; }" ]
-    }
+    set testpid [spawn_wait_for_attach $binfile]
 
     # Verify that we cannot attach to nonsense.
 
@@ -262,11 +255,8 @@ proc do_attach_tests {} {
 
     # Verify that the modification really happened.
 
-    gdb_test "tbreak 19" "Temporary breakpoint .*at.*$srcfile, line 19.*" \
-	"after attach2, set tbreak postloop"
-
-    gdb_test "continue" "main.*at.*$srcfile:19.*" \
-	"after attach2, reach tbreak postloop"
+    gdb_breakpoint [gdb_get_line_number "postloop"] temporary
+    gdb_continue_to_breakpoint "postloop" ".* postloop .*"
 
     # Allow the test process to exit, to cleanup after ourselves.
 
@@ -279,16 +269,7 @@ proc do_attach_tests {} {
    
     remote_exec build "kill -9 ${testpid}"
 
-    # Start the program running and then wait for a bit, to be sure
-    # that it can be attached to.
-   
-    set testpid [eval exec $binfile &]
-    exec sleep 2
-    if { [istarget "*-*-cygwin*"] } {
-	# testpid is the Cygwin PID, GDB uses the Windows PID, which might be
-	# different due to the way fork/exec works.
-	set testpid [ exec ps -e | gawk "{ if (\$1 == $testpid) print \$4; }" ]
-    }
+    set testpid [spawn_wait_for_attach $binfile]
 
     # Verify that we can attach to the process, and find its a.out
     # when we're cd'd to some directory that doesn't contain the
@@ -335,16 +316,7 @@ proc do_call_attach_tests {} {
     global gdb_prompt
     global binfile2
     
-    # Start the program running and then wait for a bit, to be sure
-    # that it can be attached to.
-   
-    set testpid [eval exec $binfile2 &]
-    exec sleep 2
-    if { [istarget "*-*-cygwin*"] } {
-	# testpid is the Cygwin PID, GDB uses the Windows PID, which might be
-	# different due to the way fork/exec works.
-	set testpid [ exec ps -e | gawk "{ if (\$1 == $testpid) print \$4; }" ]
-    }
+    set testpid [spawn_wait_for_attach $binfile2]
 
     # Attach
    
@@ -384,6 +356,86 @@ proc do_call_attach_tests {} {
     remote_exec build "kill -9 ${testpid}"
 }
 
+proc do_command_attach_tests {} {
+    global gdb_prompt
+    global binfile
+    global verbose
+    global GDB
+    global INTERNAL_GDBFLAGS
+    global GDBFLAGS
+
+    if ![isnative] then {
+	unsupported "command attach test"
+	return 0
+    }
+
+    set testpid [spawn_wait_for_attach $binfile]
+
+    gdb_exit
+    if $verbose>1 then {
+        send_user "Spawning $GDB $INTERNAL_GDBFLAGS $GDBFLAGS --pid=$testpid\n"
+    }
+
+    eval "spawn $GDB $INTERNAL_GDBFLAGS $GDBFLAGS --pid=$testpid"
+    set test "starting with --pid"
+    expect {
+	-re "Reading symbols from.*$gdb_prompt $" {
+	    pass "$test"
+	}
+	timeout {
+	    fail "$test (timeout)"
+	}
+    }
+
+    # Get rid of the process
+
+    remote_exec build "kill -9 ${testpid}"
+}
+
+# Test ' gdb --pid PID -ex "run" '.  GDB used to have a bug where
+# "run" would run before the attach finished - PR17347.
+
+proc test_command_line_attach_run {} {
+    global gdb_prompt
+    global binfile
+
+    if ![isnative] then {
+	unsupported "commandline attach run test"
+	return 0
+    }
+
+    with_test_prefix "cmdline attach run" {
+	set testpid [spawn_wait_for_attach $binfile]
+
+	set test "run to prompt"
+	gdb_exit
+
+	set res [gdb_spawn_with_cmdline_opts \
+		     "-iex \"set height 0\" -iex \"set width 0\" --pid=$testpid -ex \"start\""]
+	if { $res != 0} {
+	    fail $test
+	    remote_exec build "kill -9 ${testpid}"
+	    return $res
+	}
+	gdb_test_multiple "" $test {
+	    -re {Attaching to.*Start it from the beginning\? \(y or n\) } {
+		pass $test
+	    }
+	}
+
+	send_gdb "y\n"
+
+	set test "run to main"
+	gdb_test_multiple "" $test {
+	    -re "Temporary breakpoint .* main .*$gdb_prompt $" {
+		pass $test
+	    }
+	}
+
+	# Get rid of the process
+	remote_exec build "kill -9 ${testpid}"
+    }
+}
 
 # Start with a fresh gdb
 
@@ -403,5 +455,11 @@ gdb_start
 
 gdb_reinitialize_dir $srcdir/$subdir
 do_call_attach_tests
+
+# Test "gdb --pid"
+
+do_command_attach_tests
+
+test_command_line_attach_run
 
 return 0

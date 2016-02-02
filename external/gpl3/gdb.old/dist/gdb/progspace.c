@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -70,7 +70,7 @@ new_address_space (void)
 {
   struct address_space *aspace;
 
-  aspace = XZALLOC (struct address_space);
+  aspace = XCNEW (struct address_space);
   aspace->num = ++highest_address_space_num;
   address_space_alloc_data (aspace);
 
@@ -126,7 +126,7 @@ add_program_space (struct address_space *aspace)
 {
   struct program_space *pspace;
 
-  pspace = XZALLOC (struct program_space);
+  pspace = XCNEW (struct program_space);
 
   pspace->num = ++last_program_space_num;
   pspace->aspace = aspace;
@@ -160,38 +160,13 @@ release_program_space (struct program_space *pspace)
   free_all_objfiles ();
   if (!gdbarch_has_shared_address_space (target_gdbarch ()))
     free_address_space (pspace->aspace);
-  resize_section_table (&pspace->target_sections,
-			-resize_section_table (&pspace->target_sections, 0));
+  clear_section_table (&pspace->target_sections);
   clear_program_space_solib_cache (pspace);
     /* Discard any data modules have associated with the PSPACE.  */
   program_space_free_data (pspace);
   xfree (pspace);
 
   do_cleanups (old_chain);
-}
-
-/* Unlinks PSPACE from the pspace list, and releases it.  */
-
-void
-remove_program_space (struct program_space *pspace)
-{
-  struct program_space *ss, **ss_link;
-
-  ss = program_spaces;
-  ss_link = &program_spaces;
-  while (ss)
-    {
-      if (ss != pspace)
-	{
-	  ss_link = &ss->next;
-	  ss = *ss_link;
-	  continue;
-	}
-
-      *ss_link = ss->next;
-      release_program_space (ss);
-      ss = *ss_link;
-    }
 }
 
 /* Copies program space SRC to DEST.  Copies the main executable file,
@@ -305,10 +280,6 @@ print_program_space (struct ui_out *uiout, int requested)
   struct program_space *pspace;
   int count = 0;
   struct cleanup *old_chain;
-
-  /* Might as well prune away unneeded ones, so the user doesn't even
-     seem them.  */
-  prune_program_spaces ();
 
   /* Compute number of pspaces we will print.  */
   ALL_PSPACES (pspace)
@@ -488,8 +459,7 @@ save_current_space_and_thread (void)
   return old_chain;
 }
 
-/* Switches full context to program space PSPACE.  Switches to the
-   first thread found bound to PSPACE.  */
+/* See progspace.h  */
 
 void
 switch_to_program_space_and_thread (struct program_space *pspace)
@@ -497,7 +467,7 @@ switch_to_program_space_and_thread (struct program_space *pspace)
   struct inferior *inf;
 
   inf = find_inferior_for_program_space (pspace);
-  if (inf != NULL)
+  if (inf != NULL && inf->pid != 0)
     {
       struct thread_info *tp;
 

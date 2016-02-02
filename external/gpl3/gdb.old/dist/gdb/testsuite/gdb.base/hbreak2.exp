@@ -1,4 +1,4 @@
-#   Copyright 1988-2014 Free Software Foundation, Inc.
+#   Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 # board.  So, to be sure, we do a list command.
 #
 gdb_test "list main" \
-    ".*main \\(argc, argv, envp\\).*" \
+    ".*main \\(int argc, char ..argv, char ..envp\\).*" \
     "use `list' to establish default source file"
 gdb_test "hbreak $bp_location1" \
     "Hardware assisted breakpoint.*at.* file .*$srcfile, line $bp_location1\\." \
@@ -141,7 +141,6 @@ if {$hp_aCC_compiler} {
 
 set bp_location7 [gdb_get_line_number "set breakpoint 7 here"]
 set bp_location8 [gdb_get_line_number "set breakpoint 8 here" $srcfile1]
-set bp_location9 [gdb_get_line_number "set breakpoint 9 here" $srcfile1]
 
 gdb_test "info break" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
@@ -192,7 +191,7 @@ gdb_test "hbreak \"marker2\"" \
     "Hardware assisted breakpoint.*at.* file .*$srcfile1, line.*" \
     "hardware breakpoint quoted function (2)"
 gdb_test "continue" \
-    "Continuing\\..*Breakpoint \[0-9\]+, (0x\[0-9a-f\]+ in )?marker2 \\(a=43\\) at .*$srcfile1:($bp_location8|$bp_location9).*" \
+    "Continuing\\..*Breakpoint \[0-9\]+, (0x\[0-9a-f\]+ in )?marker2 \\(a=43\\) at .*$srcfile1:$bp_location8.*" \
     "run until quoted breakpoint"
 delete_breakpoints
 #
@@ -394,7 +393,7 @@ gdb_test "hbreak \$foo" \
 # Verify that we can set and trigger a breakpoint in a user-called function.
 #
 gdb_test "hbreak marker2" \
-    "Hardware assisted breakpoint (\[0-9\]*) at .*, line ($bp_location8|$bp_location9).*" \
+    "Hardware assisted breakpoint (\[0-9\]*) at .*, line $bp_location8.*" \
     "set hardware breakpoint on to-be-called function"
 
 gdb_test "print marker2(99)" \
@@ -408,10 +407,10 @@ gdb_test "print marker2(99)" \
 # for hppa*-*-hpux.
 #
 gdb_test_multiple "bt" "backtrace while in called function" {
-    -re "#0\[ \t\]*($hex in )?marker2.*:($bp_location8|$bp_location9)\r\n#1.*_sr4export.*$gdb_prompt $" {
+    -re "#0\[ \t\]*($hex in )?marker2.*:$bp_location8\r\n#1.*_sr4export.*$gdb_prompt $" {
 	pass "backtrace while in called function"
     }
-    -re "#0\[ \t\]*($hex in )?marker2.*:($bp_location8|$bp_location9)\r\n#1.*function called from gdb.*$gdb_prompt $" {
+    -re "#0\[ \t\]*($hex in )?marker2.*:$bp_location8\r\n#1.*function called from gdb.*$gdb_prompt $" {
 	pass "backtrace while in called function"
     }
 }
@@ -421,13 +420,13 @@ gdb_test_multiple "bt" "backtrace while in called function" {
 # breakpoint inserted by GDB at the program's entry point.
 #
 gdb_test_multiple "finish" "finish from called function" {
-    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.* in _sr4export.*$gdb_prompt $" {
+    -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.* in _sr4export.*$gdb_prompt $" {
 	pass "finish from called function"
     }
-    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.*function called from gdb.*$gdb_prompt $" {
+    -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.*function called from gdb.*$gdb_prompt $" {
 	pass "finish from called function"
     }
-    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.*Value returned.*$gdb_prompt $" {
+    -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.*Value returned.*$gdb_prompt $" {
 	pass "finish from called function"
     }
 }
@@ -577,19 +576,11 @@ gdb_test "hbreak marker4" \
 # has no exactly matching line symbol, and GDB reports the breakpoint
 # as if it were in the middle of a line rather than at the beginning.
 
-set bp_location13 [gdb_get_line_number "set breakpoint 13 here" $srcfile1]
 set bp_location14 [gdb_get_line_number "set breakpoint 14 here" $srcfile1]
 
 gdb_test_multiple "continue" \
     "run until hardware breakpoint set at small function, optimized file" {
-	-re "Breakpoint $decimal, marker4 \\(d=(d@entry=)?177601976\\) at .*$srcfile1:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
-	    pass "run until hardware breakpoint set at small function, optimized file"
-	}
-	-re "Breakpoint $decimal, $hex in marker4 \\(d=(d@entry=)?177601976\\) at .*$srcfile1:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
-	    pass "run until hardware breakpoint set at small function, optimized file"
-	}
 	-re "Breakpoint $decimal, marker4 \\(d=(d@entry=)?177601976\\) at .*$srcfile1:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*" {
-	    # marker4() is defined at line 46 when compiled with -DPROTOTYPES
 	    pass "run until hardware breakpoint set at small function, optimized file (line bp_location14)"
 	}
 	-re "Breakpoint $decimal, factorial \\(.*\\) .*\{\r\n$gdb_prompt" {

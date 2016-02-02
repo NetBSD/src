@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -68,14 +68,21 @@ extern gdbarch_convert_from_func_ptr_addr_ftype convert_from_func_ptr_addr_ident
 
 extern int no_op_reg_to_regnum (struct gdbarch *gdbarch, int reg);
 
-/* Do nothing version of elf_make_msymbol_special.  */
-
-void default_elf_make_msymbol_special (asymbol *sym,
-				       struct minimal_symbol *msym);
-
 /* Do nothing version of coff_make_msymbol_special.  */
 
 void default_coff_make_msymbol_special (int val, struct minimal_symbol *msym);
+
+/* Do nothing default implementation of gdbarch_make_symbol_special.  */
+
+void default_make_symbol_special (struct symbol *sym, struct objfile *objfile);
+
+/* Do nothing default implementation of gdbarch_adjust_dwarf2_addr.  */
+
+CORE_ADDR default_adjust_dwarf2_addr (CORE_ADDR pc);
+
+/* Do nothing default implementation of gdbarch_adjust_dwarf2_line.  */
+
+CORE_ADDR default_adjust_dwarf2_line (CORE_ADDR addr, int rel);
 
 /* Version of cannot_fetch_register() / cannot_store_register() that
    always fails.  */
@@ -170,4 +177,30 @@ extern const char *default_auto_wide_charset (void);
 
 extern int default_return_in_first_hidden_param_p (struct gdbarch *,
 						   struct type *);
+
+extern int default_insn_is_call (struct gdbarch *, CORE_ADDR);
+extern int default_insn_is_ret (struct gdbarch *, CORE_ADDR);
+extern int default_insn_is_jump (struct gdbarch *, CORE_ADDR);
+
+/* Do-nothing version of vsyscall_range.  Returns false.  */
+
+extern int default_vsyscall_range (struct gdbarch *gdbarch, struct mem_range *range);
+
+/* Default way to advance the PC to the next instruction in order to
+   skip a permanent breakpoint.  Increments the PC by the size of a
+   software breakpoint instruction, as determined with
+   gdbarch_breakpoint_from_pc.  This matches how the breakpoints
+   module determines whether a breakpoint is permanent.  */
+extern void default_skip_permanent_breakpoint (struct regcache *regcache);
+
+/* Symbols for gdbarch_infcall_mmap; their Linux PROT_* system
+   definitions would be dependent on compilation host.  */
+#define GDB_MMAP_PROT_READ	0x1	/* Page can be read.  */
+#define GDB_MMAP_PROT_WRITE	0x2	/* Page can be written.  */
+#define GDB_MMAP_PROT_EXEC	0x4	/* Page can be executed.  */
+
+extern CORE_ADDR default_infcall_mmap (CORE_ADDR size, unsigned prot);
+extern char *default_gcc_target_options (struct gdbarch *gdbarch);
+extern const char *default_gnu_triplet_regexp (struct gdbarch *gdbarch);
+
 #endif

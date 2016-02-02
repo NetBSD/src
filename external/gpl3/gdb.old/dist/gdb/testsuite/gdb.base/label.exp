@@ -1,4 +1,4 @@
-# Copyright 2010-2014 Free Software Foundation, Inc.
+# Copyright 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,24 +36,34 @@ if {![runto_main]} {
   return -1
 }
 
+set has_pr_14500_fixed 1
+if {[test_compiler_info {clang-*-*}]} {
+  set has_pr_14500_fixed 0
+}
+
+if {!$has_pr_14500_fixed} {  setup_xfail clang/14500 *-*-* }
 gdb_test "break here" \
   "Breakpoint.*at.*" \
   "breakpoint here"
 
+if {!$has_pr_14500_fixed} {  setup_xfail clang/14500 *-*-* }
 gdb_test "break main:there" \
   "Breakpoint.*at.*" \
   "breakpoint there"
 
+if {!$has_pr_14500_fixed} {  setup_xfail clang/14500 *-*-* }
 gdb_test "cont" \
   "Breakpoint 3,.*" \
   "continue to 'there'"
 
+if {!$has_pr_14500_fixed} {  setup_xfail clang/14500 *-*-* }
 gdb_test "cont" \
   "Breakpoint 2,.*" \
   "continue to 'here'"
 
 rerun_to_main
 
+if {!$has_pr_14500_fixed} {  setup_xfail clang/14500 *-*-* }
 gdb_test "cont" \
   "Breakpoint 3,.*" \
   "continue to 'there' after re-run"

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004-2014 Free Software Foundation, Inc.
+# Copyright 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,13 +55,9 @@ if ![runto_main] then {
 # especially on targets without an MMU.  Don't run the tests in that
 # case.
 
-gdb_test_multiple "x 0" "memory at address 0" {
-    -re "0x0:.*Cannot access memory at address 0x0.*$gdb_prompt $" { }
-    -re "0x0:.*Error accessing memory address 0x0.*$gdb_prompt $" { }
-    -re ".*$gdb_prompt $" {
-	untested "Memory at address 0 is possibly executable"
-	return
-    }
+if { [is_address_zero_readable] } {
+    untested "Memory at address 0 is possibly executable"
+    return
 }
 
 gdb_test "break keeper"
@@ -76,7 +72,7 @@ gdb_test "break keeper"
 set bowler_addrs bowler
 set segv_addr none
 gdb_test {display/i $pc}
-gdb_test "advance *bowler" "bowler.*" "advance to the bowler"
+gdb_test "advance bowler" "bowler.*" "advance to the bowler"
 set test "stepping to fault"
 set signame "SIGSEGV"
 gdb_test_multiple "stepi" "$test" {
@@ -160,7 +156,7 @@ proc stepi_out { name args } {
     set test "${name}; stepi out of handler"
     gdb_test_multiple "stepi" "$test" {
 	-re "Could not insert single-step breakpoint.*$gdb_prompt $" {
-	    setup_kfail gdb/1736 "sparc*-*-openbsd*"
+	    setup_kfail gdb/8841 "sparc*-*-openbsd*"
 	    fail "$test (could not insert single-step breakpoint)"
 	}
 	-re "keeper.*$gdb_prompt $" {
@@ -172,22 +168,22 @@ proc stepi_out { name args } {
 	    exp_continue
 	}
 	-re "Program received signal SIGSEGV.*$gdb_prompt $" {
-	    kfail gdb/1702 "$test (executed fault insn)"
+	    kfail gdb/8807 "$test (executed fault insn)"
 	}
 	-re "Breakpoint.*pc(\r\n| *)[at_segv] .*bowler.*$gdb_prompt $" {
 	    pass "$test (at breakpoint)"
 	}
 	-re "Breakpoint.*pc(\r\n| *)[after_segv] .*bowler.*$gdb_prompt $" {
-	    kfail gdb/1702 "$test (executed breakpoint)"
+	    kfail gdb/8807 "$test (executed breakpoint)"
 	}
 	-re "pc(\r\n| *)[at_segv] .*bowler.*$gdb_prompt $" {
 	    pass "$test"
 	}
 	-re "pc(\r\n| *)[after_segv] .*bowler.*$gdb_prompt $" {
-	    kfail gdb/1702 "$test (skipped fault insn)"
+	    kfail gdb/8807 "$test (skipped fault insn)"
 	}
 	-re "pc(\r\n| *)=> 0x\[a-z0-9\]* .*bowler.*$gdb_prompt $" {
-	    kfail gdb/1702 "$test (corrupt pc)"
+	    kfail gdb/8807 "$test (corrupt pc)"
 	}
     }
 

@@ -1,3 +1,215 @@
+2015-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* strerror.c <sys_nerr, sys_errlist>: Declare only if they aren't
+	macros.
+
+2014-12-24  Uros Bizjak  <ubizjak@gmail.com>
+	    Ben Elliston  <bje@au.ibm.com>
+	    Manuel Lopez-Ibanez  <manu@gcc.gnu.org>
+
+	* xasprintf.c: New file.
+	* Makefile.in (CFILES): Add xasprintf.c.
+	(REQUIRED_OFILES): Add xasprintf.$(objext).
+	(xasprintf.$(objext)): New target.
+	* functions.texi: Regenerate.
+
+2014-12-11  Uros Bizjak  <ubizjak@gmail.com>
+            Ben Elliston  <bje@au.ibm.com>
+            Manuel Lopez-Ibanez  <manu@gcc.gnu.org>
+
+	* xvasprintf.c: New file.
+	* vprintf-support.h: Likewise.
+	* vprintf-support.c: Likewise.
+	* Makefile.in (CFILES): Add vprintf-support.c, xvasprintf.c.
+	(REQUIRED_OFILES): Add vprintf-support.$(objext), xvasprintf.$(objext).
+	(vprintf-support.$(objext), xvasprintf.$(objext)): New targets.
+	(vasprintf.$(objext)): Depend on $(srcdir)/vprintf-support.h.
+	* functions.texi: Regenerate.
+	* vasprintf.c (int_vasprintf): Use libiberty_vprintf_buffer_size.
+
+2014-11-22  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR other/63694
+	* configure.ac: Check for strtol, strtoul, strtoll and strtoull
+	declarations.
+	* configure: Regenerated.
+
+2014-11-12  Kirill Yukhin  <kirill.yukhin@intel.com>
+
+	* testsuite/test-strtol.c (run_tests): Cast strtol return to
+	unsigned long.
+
+2014-11-11  Anthony Brandon  <anthony.brandon@gmail.com>
+	    Manuel López-Ibáñez  <manu@gcc.gnu.org>
+
+	PR driver/36312
+	* filename_cmp.c (canonical_filename_eq): New function to check if
+	file names are the same.
+	* functions.texi: Updated with documentation for new function.
+
+2014-11-11  David Malcolm  <dmalcolm@redhat.com>
+
+	* ChangeLog.jit: New.
+
+2014-11-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* sigsetmask.c (_POSIX_SOURCE): Remove.
+
+2014-10-28  Yury Gribov  <y.gribov@samsung.com>
+
+	* strtoll.c: New file.
+	* strtoull.c: New file.
+	* configure.ac: Add long long checks.  Add harness for strtoll and
+	strtoull.  Check decls for strtol, strtoul, strtoll, strtoull.
+	* Makefile.in (CFILES, CONFIGURED_OFILES): Add strtoll and strtoull.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* functions.texi: Regenerate.
+	* testsuite/Makefile.in (check-strtol): New rule.
+	(test-strtol): Likewise.
+	(mostlyclean): Clean up strtol test.
+	* testsuite/test-strtol.c: New test.
+
+2014-10-15  David Malcolm  <dmalcolm@redhat.com>
+
+	* choose-temp.c (choose_tmpdir): Remove now-redundant local
+	copy of prototype.
+	* functions.texi: Regenerate.
+	* make-temp-file.c (choose_tmpdir): Convert return type from
+	char * to const char * - given that this returns a pointer to
+	a memoized allocation, the caller must not touch it.
+
+2014-10-14  Joel Brobecker  <brobecker@adacore.com>
+
+	* d-demangle.c: Replace strtold with strtod in global comment.
+	(strtold): Remove declaration.
+	(strtod): New declaration.
+	(dlang_parse_real): Declare value as double instead of long
+	double.  Replace call to strtold by call to strtod.
+	Update format in call to snprintf.
+
+2014-09-26  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_substitution): Handle abi tags on abbreviation.
+
+2014-09-26  Max Ostapenko  <m.ostapenko@partner.samsung.com>
+
+	* pex-common.h (struct pex_funcs): Add new parameter for open_write field.
+	* pex-unix.c (pex_unix_open_write): Add support for new parameter.
+	* pex-djgpp.c (pex_djgpp_open_write): Likewise.
+	* pex-win32.c (pex_win32_open_write): Likewise.
+	* pex-common.c (pex_run_in_environment): Likewise.
+
+2014-09-23  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* Makefile.in (CFILES): Add d-demangle.c.
+	(REQUIRED_OFILES): Add d-demangle.o.
+	* cplus-dem.c (libiberty_demanglers): Add dlang_demangling case.
+	(cplus_demangle): Likewise.
+	* d-demangle.c: New file.
+	* testsuite/Makefile.in (really-check): Add check-d-demangle.
+	* testsuite/d-demangle-expected: New file.
+
+2014-09-19  Ian Lance Taylor  <iant@google.com>
+
+	* simple-object-elf.c (simple_object_elf_write_ehdr): Correctly
+	handle objects with more than SHN_LORESERVE sections.
+	(simple_object_elf_write_shdr): Add sh_link parameter.
+	(simple_object_elf_write_to_file): Correctly handle objects with
+	more than SHN_LORESERVE sections.
+
+2014-08-29  Andrew Burgess  <aburgess@broadcom.com>
+
+	* cp-demangle.c (d_dump): Only access field from s_fixed part of
+	the union for DEMANGLE_COMPONENT_FIXED_TYPE.
+	(d_count_templates_scopes): Likewise.
+
+2014-08-13  Gary Benson  <gbenson@redhat.com>
+
+	* testsuite/demangler-fuzzer.c: New file.
+	* testsuite/Makefile.in (fuzz-demangler): New rule.
+	(demangler-fuzzer): Likewise.
+	(mostlyclean): Clean up demangler fuzzer.
+
+2014-06-11  Andrew Burgess  <aburgess@broadcom.com>
+
+	* cplus-dem.c (do_type): Call string_delete even if the call to
+	demangle_template fails.
+
+2014-06-01  Ray Donnelly  <mingw.android@gmail.com>
+
+	* pex-win32.c (argv_to_cmdline): Don't quote
+	args unnecessarily
+
+2014-05-28  Pedro Alves  <palves@redhat.com>
+
+	* cp-demangle.c (d_dump): Handle DEMANGLE_COMPONENT_FUNCTION_PARAM
+	and DEMANGLE_COMPONENT_NUMBER.
+
+2014-05-22  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* testsuite/demangle-expected: Fix last commit.
+
+2014-05-14  Andrew Burgess  <aburgess@broadcom.com>
+
+	* cplus-dmem.c (internal_cplus_demangle): Free any resources
+	allocated by possible previous call to gnu_special.
+	(squangle_mop_up): Reset pointers to NULL after calling free.
+	* testsuite/demangle-expected: New test case.
+
+2014-05-08  Gary Benson  <gbenson@redhat.com>
+
+	* cp-demangle.c (struct d_component_stack): New structure.
+	(struct d_print_info): New field component_stack.
+	(d_print_init): Initialize the above.
+	(d_print_comp_inner): Renamed from d_print_comp.
+	Do not restore template stack if it would cause a loop.
+	(d_print_comp): New function.
+	* testsuite/demangle-expected: New test cases.
+
+2014-04-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/56781
+	* maint-tool: Also emit rule for noasan/ subdirectory.
+	* configure.ac (NOASANFLAG): Set and substitute.
+	* Makefile.in: Regenerated.
+	(NOASANFLAG): Set.
+	(all, $(TARGETLIB), mostlyclean): Handle noasan subdir like pic
+	subdir.
+	(stamp-noasandir): New goal.
+	* configure: Regenerated.
+
+2014-04-01  Richard Biener  <rguenther@suse.de>
+
+	* simple-object.c (simple_object_internal_write): Handle
+	EINTR and short writes.
+
+2014-03-28  Richard Biener  <rguenther@suse.de>
+
+	* simple-object.c (simple_object_internal_read): Handle
+	EINTR and short reads.
+
+2014-03-13  Uros Bizjak  <ubizjak@gmail.com>
+
+	* regex.c (bzero) [!_LIBC]: Define without coma expression.
+	(regerror): Cast the call to memcpy to (void) to avoid unused
+	value warnings.
+
+2014-01-28  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* cp-demangle.c (d_demangle_callback): Put an abort call in place,
+	to help the compiler.
+
+2014-01-21  Tom Tromey  <tromey@redhat.com>
+
+	* _doprint.c (checkit): Use stdarg, not VA_* macros.
+	* asprintf.c (asprintf): Use stdarg, not VA_* macros.
+	* concat.c (concat_length, concat_copy, concat_copy2, concat)
+	(reconcat): Use stdarg, not VA_* macros.
+	* snprintf.c (snprintf): Use stdarg, not VA_* macros.
+	* vasprintf.c (checkit): Use stdarg, not VA_* macros.
+	* vsnprintf.c (checkit): Use stdarg, not VA_* macros.
+
 2014-01-06  Mike Frysinger  <vapier@gentoo.org>
 
 	PR other/56780

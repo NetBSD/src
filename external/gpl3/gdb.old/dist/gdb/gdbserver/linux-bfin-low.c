@@ -1,6 +1,6 @@
 /* GNU/Linux/BFIN specific low level interface, for the remote server for GDB.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -21,7 +21,6 @@
 
 #include "server.h"
 #include "linux-low.h"
-#include "libiberty.h"
 #include <asm/ptrace.h>
 
 /* Defined in auto-generated file reg-bfin.c.  */

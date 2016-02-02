@@ -1,4 +1,4 @@
-/* Copyright 2010-2014 Free Software Foundation, Inc.
+/* Copyright 2010-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 text_start:
 _ZN1N1cE:
 	/* Valid function must have non-empty PC range.  */
-	.byte 0
+	.4byte	0
 text_end:
 
 	.section	.debug_info
@@ -117,7 +117,8 @@ dieaf:	.uleb128 0xe		/* DW_TAG_const_type */
 dieb4:	.uleb128 0xf		/* DW_TAG_subprogram */
 	.4byte	die95-d		/* DW_AT_abstract_origin */
 	.4byte	_ZN1N1cE	/* DW_AT_low_pc */
-	.4byte	_ZN1N1cE + 1	/* DW_AT_high_pc */
+	.4byte	_ZN1N1cE + (text_end - text_start)
+				/* DW_AT_high_pc */
 diec9:	.uleb128 0x10		/* DW_TAG_subprogram */
 	.4byte	die9f-d		/* DW_AT_abstract_origin */
 	.byte	2f-1f		/* DW_AT_location */
@@ -136,7 +137,8 @@ dieda:	.uleb128 0x11		/* DW_TAG_subprogram */
 	.4byte	.LASF8		/* DW_AT_name */
 	.4byte	dief2-d		/* DW_AT_type */
 	.4byte	_ZN1N1cE	/* DW_AT_low_pc */
-	.4byte	_ZN1N1cE + 1	/* DW_AT_high_pc */
+	.4byte	_ZN1N1cE + (text_end - text_start)
+				/* DW_AT_high_pc */
 dief2:	.uleb128 0x12		/* DW_TAG_base_type */
 	.byte	0x4		/* DW_AT_byte_size */
 	.byte	0x5		/* DW_AT_encoding */

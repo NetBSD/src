@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2006-2014 Free Software Foundation, Inc.
+   Copyright 2006-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,10 +23,19 @@ hello (void)
   printf ("Hello world.\n");
 }
 
+/* The test case uses "break *hello" to make sure to step at the very
+   first instruction of the function.  This causes a problem running
+   the test on powerpc64le-linux, since the first instruction belongs
+   to the global entry point prologue, which is skipped when doing a
+   local direct function call.  To make sure that first instruction is
+   indeed being executed and the breakpoint hits, we make sure to call
+   the routine via an indirect call.  */
+void (*ptr) (void) = hello;
+
 int
 main (void)
 {
-  hello ();
+  ptr ();
 
   return 0;
 }

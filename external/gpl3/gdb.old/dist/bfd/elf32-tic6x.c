@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -1919,7 +1919,7 @@ elf32_tic6x_gc_mark_extra_sections (struct bfd_link_info *info,
   while (again)
     {
       again = FALSE;
-      for (sub = info->input_bfds; sub != NULL; sub = sub->link_next)
+      for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
 	{
 	  asection *o;
 
@@ -2168,7 +2168,7 @@ elf32_tic6x_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   s = htab->sdynbss;
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 static bfd_boolean
@@ -3309,7 +3309,7 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;
@@ -4051,7 +4051,7 @@ elf32_tic6x_fix_exidx_coverage (asection **text_section_order,
 
   /* Walk over all EXIDX sections, and create backlinks from the corrsponding
      text sections.  */
-  for (inp = info->input_bfds; inp != NULL; inp = inp->link_next)
+  for (inp = info->input_bfds; inp != NULL; inp = inp->link.next)
     {
       asection *sec;
 
@@ -4345,9 +4345,9 @@ elf32_tic6x_write_section (bfd *output_bfd,
   return TRUE;
 }
 
-#define TARGET_LITTLE_SYM	bfd_elf32_tic6x_le_vec
+#define TARGET_LITTLE_SYM	tic6x_elf32_le_vec
 #define TARGET_LITTLE_NAME	"elf32-tic6x-le"
-#define TARGET_BIG_SYM		bfd_elf32_tic6x_be_vec
+#define TARGET_BIG_SYM		tic6x_elf32_be_vec
 #define TARGET_BIG_NAME		"elf32-tic6x-be"
 #define ELF_ARCH		bfd_arch_tic6x
 #define ELF_TARGET_ID		TIC6X_ELF_DATA
@@ -4416,11 +4416,11 @@ elf32_tic6x_write_section (bfd *output_bfd,
 #define	elf32_bed		elf32_tic6x_linux_bed
 
 #undef TARGET_LITTLE_SYM
-#define	TARGET_LITTLE_SYM		bfd_elf32_tic6x_linux_le_vec
+#define	TARGET_LITTLE_SYM		tic6x_elf32_linux_le_vec
 #undef TARGET_LITTLE_NAME
 #define	TARGET_LITTLE_NAME		"elf32-tic6x-linux-le"
 #undef TARGET_BIG_SYM
-#define TARGET_BIG_SYM			bfd_elf32_tic6x_linux_be_vec
+#define TARGET_BIG_SYM			tic6x_elf32_linux_be_vec
 #undef TARGET_BIG_NAME
 #define	TARGET_BIG_NAME			"elf32-tic6x-linux-be"
 #undef ELF_OSABI
@@ -4432,11 +4432,11 @@ elf32_tic6x_write_section (bfd *output_bfd,
 #define	elf32_bed		elf32_tic6x_elf_bed
 
 #undef TARGET_LITTLE_SYM
-#define	TARGET_LITTLE_SYM		bfd_elf32_tic6x_elf_le_vec
+#define	TARGET_LITTLE_SYM		tic6x_elf32_c6000_le_vec
 #undef TARGET_LITTLE_NAME
 #define	TARGET_LITTLE_NAME		"elf32-tic6x-elf-le"
 #undef TARGET_BIG_SYM
-#define TARGET_BIG_SYM			bfd_elf32_tic6x_elf_be_vec
+#define TARGET_BIG_SYM			tic6x_elf32_c6000_be_vec
 #undef TARGET_BIG_NAME
 #define	TARGET_BIG_NAME			"elf32-tic6x-elf-be"
 #undef ELF_OSABI

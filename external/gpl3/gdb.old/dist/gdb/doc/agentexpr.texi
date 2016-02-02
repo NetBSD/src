@@ -7,7 +7,7 @@
 
 @c This file is part of the GDB manual.
 @c
-@c Copyright (C) 2003-2014 Free Software Foundation, Inc.
+@c Copyright (C) 2003-2015 Free Software Foundation, Inc.
 @c
 @c See the file gdb.texinfo for copying conditions.
 
@@ -461,7 +461,7 @@ alignment within the bytecode stream; thus, on machines where fetching a
 16-bit on an unaligned address raises an exception, you should fetch the
 register number one byte at a time.
 
-@item @code{setv} (0x2d) @var{n}: @result{} @var{v}
+@item @code{setv} (0x2d) @var{n}: @var{v} @result{} @var{v}
 Set trace state variable number @var{n} to the value found on the top
 of the stack.  The stack is unchanged, so that the value is readily
 available if the assignment is part of a larger expression.  The

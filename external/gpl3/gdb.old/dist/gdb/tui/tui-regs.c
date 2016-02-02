@@ -1,6 +1,6 @@
 /* TUI display registers in window.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -30,13 +30,13 @@
 #include "regcache.h"
 #include "inferior.h"
 #include "target.h"
-#include <string.h>
 #include "tui/tui-layout.h"
 #include "tui/tui-win.h"
 #include "tui/tui-windata.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-file.h"
 #include "tui/tui-regs.h"
+#include "tui/tui-io.h"
 #include "reggroups.h"
 #include "valprint.h"
 
@@ -607,7 +607,7 @@ tui_reg_command (char *args, int from_tty)
 {
   printf_unfiltered (_("\"tui reg\" must be followed by the name of a "
                      "tui reg command.\n"));
-  help_list (tuireglist, "tui reg ", -1, gdb_stdout);
+  help_list (tuireglist, "tui reg ", all_commands, gdb_stdout);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
@@ -694,7 +694,9 @@ tui_register_format (struct frame_info *frame, int regnum)
   if (s && s[1] == 0)
     *s = 0;
 
-  ret = xstrdup (p);
+  /* Expand tabs into spaces, since ncurses on MS-Windows doesn't.  */
+  ret = tui_expand_tabs (p, 0);
+
   do_cleanups (cleanups);
 
   return ret;

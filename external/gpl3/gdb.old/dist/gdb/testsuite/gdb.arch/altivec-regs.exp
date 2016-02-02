@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2014 Free Software Foundation, Inc.
+# Copyright (C) 2002-2015 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,17 +79,16 @@ gdb_test "set \$vrsave = 1" "" ""
 
 gdb_test "next" "" ""
 
-send_gdb "show endian\n"
 set endianness ""
-gdb_expect {
+set msg "detect endianness"
+gdb_test_multiple "show endian" "$msg" {
     -re "(The target endianness is set automatically .currently )(big|little)( endian.*)$gdb_prompt $" {
-        pass "endianness"
-	set endianness $expect_out(2,string)
+        pass "$msg"
+        set endianness $expect_out(2,string)
     }
     -re ".*$gdb_prompt $" {
-	fail "couldn't get endianness"
+        fail "$msg"
     }
-    timeout		{ fail "(timeout) endianness" }
 }
 
 # And then read the AltiVec registers back, to see that
@@ -118,7 +117,7 @@ gdb_test "info reg vscr" "vscr.*0x1\t1" "info reg vscr"
 if {$endianness == "big"} {
      set decimal_vector ".uint128 = 0x00000001000000010000000100000001, v4_float = .1.*e-45, 1.*e-45, 1.*e-45, 1.*e-45., v4_int32 = .1, 1, 1, 1., v8_int16 = .0, 1, 0, 1, 0, 1, 0, 1., v16_int8 = .0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1.."
 } else {
-     set decimal_vector ".uint128 = 0x00000001000000010000000100000001, v4_float = .1.*e-45, 1.*e-45, 1.*e-45, 1.*e-45., v4_int32 = .1, 1, 1, 1., v8_int16 = .1, 0, 1, 0, 1, 0, 1, 0., v16_int8 = .1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.."
+     set decimal_vector ".uint128 = 0x00000001000000010000000100000001, v4_float = .1.*e-45, 1.*e-45, 1.*e-45, 1.*e-45., v4_int32 = .1, 1, 1, 1., v8_int16 = .1, 0, 1, 0, 1, 0, 1, 0., v16_int8 = .1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.."
 }
 
 for {set i 0} {$i < 32} {incr i 1} {
