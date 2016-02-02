@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.9 2015/12/19 08:27:01 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.10 2016/02/02 13:55:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.9 2015/12/19 08:27:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.10 2016/02/02 13:55:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,11 +290,24 @@ bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 	vaddr_t va;
 	const struct pmap_devmap *pd;
 	int pmap_flags;
-
+	bool match = false;
 
 	/* Attempt to find the PA device mapping */
-	pa = ba;
-	if ((pd = pmap_devmap_find_pa(ba, size)) != NULL) {
+	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
+	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE) {
+		match = true;
+		pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(ba);
+		
+	}
+#ifdef BCM2836
+	if (ba >= BCM2836_ARM_LOCAL_BASE &&
+	    ba < BCM2836_ARM_LOCAL_BASE + BCM2836_ARM_LOCAL_SIZE) {
+		match = true;
+		pa = ba;
+	}
+#endif
+
+	if (match && (pd = pmap_devmap_find_pa(pa, size)) != NULL) {
 		/* Device was statically mapped. */
 		*bshp = pd->pd_va + (pa - pd->pd_pa);
 		return 0;
