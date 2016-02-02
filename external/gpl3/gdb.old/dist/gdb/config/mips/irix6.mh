@@ -1,0 +1,4 @@
+# Host: SGI Iris running irix 6.x
+NATDEPFILES= fork-child.o irix5-nat.o procfs.o \
+	proc-api.o proc-events.o proc-flags.o proc-why.o
+HAVE_NATIVE_GCORE_HOST = 1

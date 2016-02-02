@@ -1,0 +1,10 @@
+# Host: Linux/MIPS
+NAT_FILE= config/nm-linux.h
+NATDEPFILES= inf-ptrace.o fork-child.o mips-linux-nat.o \
+	linux-thread-db.o proc-service.o \
+	linux-nat.o linux-osdata.o linux-fork.o \
+	linux-procfs.o linux-ptrace.o linux-waitpid.o \
+	mips-linux-watch.o
+NAT_CDEPS = $(srcdir)/proc-service.list
+
+LOADLIBES = -ldl $(RDYNAMIC)
