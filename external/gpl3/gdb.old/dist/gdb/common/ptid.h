@@ -1,6 +1,6 @@
 /* The ptid_t type and common functions operating on it.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,12 @@
    consists of the process id (pid), lightweight process id (lwp) and
    thread id (tid).  When manipulating ptids, the constructors,
    accessors, and predicates declared in this file should be used.  Do
-   NOT access the struct ptid members directly.  */
+   NOT access the struct ptid members directly.
+
+   process_stratum targets that handle threading themselves should
+   prefer using the ptid.lwp field, leaving the ptid.tid field for any
+   thread_stratum target that might want to sit on top.
+*/
 
 struct ptid
 {
@@ -77,5 +82,15 @@ int ptid_lwp_p (ptid_t ptid);
 
 /* Return true if PTID's tid member is non-zero.  */
 int ptid_tid_p (ptid_t ptid);
+
+/* Returns true if PTID matches filter FILTER.  FILTER can be the wild
+   card MINUS_ONE_PTID (all ptid match it); can be a ptid representing
+   a process (ptid_is_pid returns true), in which case, all lwps and
+   threads of that given process match, lwps and threads of other
+   processes do not; or, it can represent a specific thread, in which
+   case, only that thread will match true.  PTID must represent a
+   specific LWP or THREAD, it can never be a wild card.  */
+
+extern int ptid_match (ptid_t ptid, ptid_t filter);
 
 #endif

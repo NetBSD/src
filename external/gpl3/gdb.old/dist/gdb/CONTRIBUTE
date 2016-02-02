@@ -32,11 +32,12 @@ o	Coding Standards
 	Submissions which do not conform to the standards will be
 	returned with a request to reformat the changes.
 
-	GDB has certain additional coding requirements.  Those
-	requirements are explained in the GDB internals documentation
-	in the gdb/doc directory.
-
 	Ref: http://www.gnu.org/prep/standards_toc.html
+
+	GDB has certain additional coding requirements.  Those
+	requirements are explained in the GDB internals documentation.
+
+	Ref: http://sourceware.org/gdb/wiki/Internals%20Coding-Standards
 
 
 o	Copyright Assignment

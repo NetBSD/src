@@ -1,6 +1,6 @@
 /* Definitions for symbol file management in GDB.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,6 @@
 
 struct bcache;
 struct htab;
-struct symtab;
 struct objfile_data;
 
 /* This structure maintains information on a per-objfile basis about the
@@ -101,11 +100,17 @@ struct objfile_data;
 
 struct entry_info
   {
-    /* The relocated value we should use for this objfile entry point.  */
+    /* The unrelocated value we should use for this objfile entry point.  */
     CORE_ADDR entry_point;
+
+    /* The index of the section in which the entry point appears.  */
+    int the_bfd_section_index;
 
     /* Set to 1 iff ENTRY_POINT contains a valid value.  */
     unsigned entry_point_p : 1;
+
+    /* Set to 1 iff this object was initialized.  */
+    unsigned initialized : 1;
   };
 
 /* Sections in an objfile.  The section offsets are stored in the
@@ -145,7 +150,6 @@ struct obj_section
 
 struct objstats
   {
-    int n_minsyms;		/* Number of minimal symbols read */
     int n_psyms;		/* Number of partial symbols read */
     int n_syms;			/* Number of full symbols read */
     int n_stabs;		/* Number of ".stabs" read (if applicable) */
@@ -192,6 +196,56 @@ struct objfile_per_bfd_storage
      name, and the second is the demangled name or just a zero byte
      if the name doesn't demangle.  */
   struct htab *demangled_names_hash;
+
+  /* The per-objfile information about the entry point, the scope (file/func)
+     containing the entry point, and the scope of the user's main() func.  */
+
+  struct entry_info ei;
+
+  /* The name and language of any "main" found in this objfile.  The
+     name can be NULL, which means that the information was not
+     recorded.  */
+
+  const char *name_of_main;
+  enum language language_of_main;
+
+  /* Each file contains a pointer to an array of minimal symbols for all
+     global symbols that are defined within the file.  The array is
+     terminated by a "null symbol", one that has a NULL pointer for the
+     name and a zero value for the address.  This makes it easy to walk
+     through the array when passed a pointer to somewhere in the middle
+     of it.  There is also a count of the number of symbols, which does
+     not include the terminating null symbol.  The array itself, as well
+     as all the data that it points to, should be allocated on the
+     objfile_obstack for this file.  */
+
+  struct minimal_symbol *msymbols;
+  int minimal_symbol_count;
+
+  /* The number of minimal symbols read, before any minimal symbol
+     de-duplication is applied.  Note in particular that this has only
+     a passing relationship with the actual size of the table above;
+     use minimal_symbol_count if you need the true size.  */
+  int n_minsyms;
+
+  /* This is true if minimal symbols have already been read.  Symbol
+     readers can use this to bypass minimal symbol reading.  Also, the
+     minimal symbol table management code in minsyms.c uses this to
+     suppress new minimal symbols.  You might think that MSYMBOLS or
+     MINIMAL_SYMBOL_COUNT could be used for this, but it is possible
+     for multiple readers to install minimal symbols into a given
+     per-BFD.  */
+
+  unsigned int minsyms_read : 1;
+
+  /* This is a hash table used to index the minimal symbols by name.  */
+
+  struct minimal_symbol *msymbol_hash[MINIMAL_SYMBOL_HASH_SIZE];
+
+  /* This hash table is used to index the minimal symbols by their
+     demangled names.  */
+
+  struct minimal_symbol *msymbol_demangled_hash[MINIMAL_SYMBOL_HASH_SIZE];
 };
 
 /* Master structure for keeping track of each file from which
@@ -231,11 +285,10 @@ struct objfile
 
     struct program_space *pspace;
 
-    /* Each objfile points to a linked list of symtabs derived from this file,
-       one symtab structure for each compilation unit (source file).  Each link
-       in the symtab list contains a backpointer to this objfile.  */
+    /* List of compunits.
+       These are used to do symbol lookups and file/line-number lookups.  */
 
-    struct symtab *symtabs;
+    struct compunit_symtab *compunit_symtabs;
 
     /* Each objfile points to a linked list of partial symtabs derived from
        this file, one partial symtab structure for each compilation unit
@@ -285,28 +338,6 @@ struct objfile
     struct psymbol_allocation_list global_psymbols;
     struct psymbol_allocation_list static_psymbols;
 
-    /* Each file contains a pointer to an array of minimal symbols for all
-       global symbols that are defined within the file.  The array is
-       terminated by a "null symbol", one that has a NULL pointer for the
-       name and a zero value for the address.  This makes it easy to walk
-       through the array when passed a pointer to somewhere in the middle
-       of it.  There is also a count of the number of symbols, which does
-       not include the terminating null symbol.  The array itself, as well
-       as all the data that it points to, should be allocated on the
-       objfile_obstack for this file.  */
-
-    struct minimal_symbol *msymbols;
-    int minimal_symbol_count;
-
-    /* This is a hash table used to index the minimal symbols by name.  */
-
-    struct minimal_symbol *msymbol_hash[MINIMAL_SYMBOL_HASH_SIZE];
-
-    /* This hash table is used to index the minimal symbols by their
-       demangled names.  */
-
-    struct minimal_symbol *msymbol_demangled_hash[MINIMAL_SYMBOL_HASH_SIZE];
-
     /* Structure which keeps track of functions that manipulate objfile's
        of the same type as this objfile.  I.e. the function to read partial
        symbols for example.  Note that this structure is in statically
@@ -314,11 +345,6 @@ struct objfile
        object module reader of this type.  */
 
     const struct sym_fns *sf;
-
-    /* The per-objfile information about the entry point, the scope (file/func)
-       containing the entry point, and the scope of the user's main() func.  */
-
-    struct entry_info ei;
 
     /* Per objfile data-pointers required by other GDB modules.  */
 
@@ -399,12 +425,9 @@ struct objfile
 #define OBJF_REORDERED	(1 << 0)	/* Functions are reordered */
 
 /* Distinguish between an objfile for a shared library and a "vanilla"
-   objfile.  (If not set, the objfile may still actually be a solib.
-   This can happen if the user created the objfile by using the
-   add-symbol-file command.  GDB doesn't in that situation actually
-   check whether the file is a solib.  Rather, the target's
-   implementation of the solib interface is responsible for setting
-   this flag when noticing solibs used by an inferior.)  */
+   objfile.  This may come from a target's implementation of the solib
+   interface, from add-symbol-file, or any other mechanism that loads
+   dynamic objects.  */
 
 #define OBJF_SHARED     (1 << 1)	/* From a shared library */
 
@@ -440,7 +463,7 @@ struct objfile
 
 extern struct objfile *allocate_objfile (bfd *, const char *name, int);
 
-extern struct gdbarch *get_objfile_arch (struct objfile *);
+extern struct gdbarch *get_objfile_arch (const struct objfile *);
 
 extern int entry_point_address_query (CORE_ADDR *entry_p);
 
@@ -486,6 +509,12 @@ extern void objfile_set_sym_fns (struct objfile *objfile,
 extern void objfiles_changed (void);
 
 extern int is_addr_in_objfile (CORE_ADDR addr, const struct objfile *objfile);
+
+/* Return true if ADDRESS maps into one of the sections of a
+   OBJF_SHARED objfile of PSPACE and false otherwise.  */
+
+extern int shared_objfile_contains_address_p (struct program_space *pspace,
+					      CORE_ADDR address);
 
 /* This operation deletes all objfile entries that represent solibs that
    weren't explicitly loaded by the user, via e.g., the add-symbol-file
@@ -547,11 +576,6 @@ extern void default_iterate_over_objfiles_in_search_order
 #define ALL_PSPACE_OBJFILES(ss, obj)					\
   for ((obj) = ss->objfiles; (obj) != NULL; (obj) = (obj)->next)
 
-#define ALL_PSPACE_OBJFILES_SAFE(ss, obj, nxt)		\
-  for ((obj) = ss->objfiles;			\
-       (obj) != NULL? ((nxt)=(obj)->next,1) :0;	\
-       (obj) = (nxt))
-
 #define ALL_OBJFILES(obj)			    \
   for ((obj) = current_program_space->objfiles; \
        (obj) != NULL;				    \
@@ -564,42 +588,34 @@ extern void default_iterate_over_objfiles_in_search_order
 
 /* Traverse all symtabs in one objfile.  */
 
-#define	ALL_OBJFILE_SYMTABS(objfile, s) \
-    for ((s) = (objfile) -> symtabs; (s) != NULL; (s) = (s) -> next)
+#define ALL_OBJFILE_FILETABS(objfile, cu, s) \
+  ALL_OBJFILE_COMPUNITS (objfile, cu) \
+    ALL_COMPUNIT_FILETABS (cu, s)
 
-/* Traverse all primary symtabs in one objfile.  */
+/* Traverse all compunits in one objfile.  */
 
-#define ALL_OBJFILE_PRIMARY_SYMTABS(objfile, s) \
-  ALL_OBJFILE_SYMTABS ((objfile), (s)) \
-    if ((s)->primary)
+#define ALL_OBJFILE_COMPUNITS(objfile, cu) \
+  for ((cu) = (objfile) -> compunit_symtabs; (cu) != NULL; (cu) = (cu) -> next)
 
 /* Traverse all minimal symbols in one objfile.  */
 
-#define	ALL_OBJFILE_MSYMBOLS(objfile, m) \
-    for ((m) = (objfile) -> msymbols; SYMBOL_LINKAGE_NAME(m) != NULL; (m)++)
+#define	ALL_OBJFILE_MSYMBOLS(objfile, m)	\
+    for ((m) = (objfile)->per_bfd->msymbols;	\
+	 MSYMBOL_LINKAGE_NAME (m) != NULL;	\
+	 (m)++)
 
 /* Traverse all symtabs in all objfiles in the current symbol
    space.  */
 
-#define	ALL_SYMTABS(objfile, s) \
-  ALL_OBJFILES (objfile)	 \
-    ALL_OBJFILE_SYMTABS (objfile, s)
+#define ALL_FILETABS(objfile, ps, s)		\
+  ALL_OBJFILES (objfile)			\
+    ALL_OBJFILE_FILETABS (objfile, ps, s)
 
-#define ALL_PSPACE_SYMTABS(ss, objfile, s)		\
-  ALL_PSPACE_OBJFILES (ss, objfile)			\
-    ALL_OBJFILE_SYMTABS (objfile, s)
+/* Traverse all compunits in all objfiles in the current program space.  */
 
-/* Traverse all symtabs in all objfiles in the current program space,
-   skipping included files (which share a blockvector with their
-   primary symtab).  */
-
-#define ALL_PRIMARY_SYMTABS(objfile, s) \
+#define ALL_COMPUNITS(objfile, cu)	\
   ALL_OBJFILES (objfile)		\
-    ALL_OBJFILE_PRIMARY_SYMTABS (objfile, s)
-
-#define ALL_PSPACE_PRIMARY_SYMTABS(pspace, objfile, s)	\
-  ALL_PSPACE_OBJFILES (ss, objfile)			\
-    ALL_OBJFILE_PRIMARY_SYMTABS (objfile, s)
+    ALL_OBJFILE_COMPUNITS (objfile, cu)
 
 /* Traverse all minimal symbols in all objfiles in the current symbol
    space.  */
@@ -684,5 +700,14 @@ extern void default_iterate_over_objfiles_in_search_order
 void set_objfile_per_bfd (struct objfile *obj);
 
 const char *objfile_name (const struct objfile *objfile);
+
+/* Return the name to print for OBJFILE in debugging messages.  */
+
+extern const char *objfile_debug_name (const struct objfile *objfile);
+
+/* Set the objfile's notion of the "main" name and language.  */
+
+extern void set_objfile_main_name (struct objfile *objfile,
+				   const char *name, enum language lang);
 
 #endif /* !defined (OBJFILES_H) */

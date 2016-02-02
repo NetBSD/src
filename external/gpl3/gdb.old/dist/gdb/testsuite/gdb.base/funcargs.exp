@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,13 +54,7 @@ proc integral_args {} {
     # Run; should stop at call0a and print actual arguments.
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
     gdb_run_cmd
-    gdb_expect {
-	 -re ".* call0a \\(c=97 'a', s=1, i=2, l=3\\) .*$gdb_prompt $" {
-	    pass "run to call0a"
-	}
-	 -re "$gdb_prompt $"  { fail "run to call0a" ; gdb_suppress_tests }
-	 timeout { fail "(timeout) run to call0a" ; gdb_suppress_tests }
-    }
+    gdb_test "" " call0a \\(c=97 'a', s=1, i=2, l=3\\) .*" "run to call0a"
 
     # Print each arg as a double check to see if we can print
     # them here as well as with backtrace.
@@ -111,13 +105,7 @@ proc unsigned_integral_args {} {
     # Run; should stop at call1a and print actual arguments.
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
     gdb_run_cmd
-    gdb_expect {
-	 -re ".* call1a \\(uc=98 'b', us=6, ui=7, ul=8\\) .*$gdb_prompt $" {
-	    pass "run to call1a"
-	}
-	 -re "$gdb_prompt $" { fail "run to call1a" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to call1a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" " call1a \\(uc=98 'b', us=6, ui=7, ul=8\\) .*" "run to call1a"
 
     # Print each arg as a double check to see if we can print
     # them here as well as with backtrace.
@@ -170,13 +158,16 @@ proc float_and_integral_args {} {
 
     # Run; should stop at call2a and print actual arguments.
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" "mips-sgi-irix5*" }
+    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
     gdb_run_cmd
-    gdb_expect {
-	 -re ".* call2a \\(c=97 'a', f1=4, s=1, d1=5, i=2, f2=4, l=3, d2=5\\) .*$gdb_prompt $" { pass "run to call2a" }
-	 -re ".* call2a \\(c=97 'a', f1=.*, s=1, d1=5, i=2, f2=4, l=3, d2=5\\) .*$gdb_prompt $" { xfail "run to call2a" }
-	 -re "$gdb_prompt $" { fail "run to call2a" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to call2a" ; gdb_suppress_tests; }
+    set test "run to call2a"
+    gdb_test_multiple "" $test {
+	 -re ".* call2a \\(c=97 'a', f1=4, s=1, d1=5, i=2, f2=4, l=3, d2=5\\) .*$gdb_prompt $" {
+	     pass $test
+	 }
+	 -re ".* call2a \\(c=97 'a', f1=.*, s=1, d1=5, i=2, f2=4, l=3, d2=5\\) .*$gdb_prompt $" {
+	     xfail $test
+	 }
     }
 
     # Print each arg as a double check to see if we can print
@@ -190,7 +181,6 @@ proc float_and_integral_args {} {
     gdb_test "print d2" ".* = 5" "print d2 after run to call2a"
 
     setup_xfail "rs6000-*-*"
-    if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix*" }
     # Continue; should stop at call2b and print actual arguments.
     if [gdb_test "cont" ".* call2b \\(f1=4, s=1, d1=5, i=2, f2=4, l=3, d2=5, c=97 'a'\\) .*" "continue to call2b"] {
 	gdb_suppress_tests
@@ -257,10 +247,8 @@ proc complex_args {} {
 
     # Run; should stop at call1a and print actual arguments.
     gdb_run_cmd
-    gdb_expect {
-	-re ".* callca \\(f1=1 \\+ 2 \\* I, f2=1 \\+ 2 \\* I, f3=1 \\+ 2 \\* I\\) .*$gdb_prompt $" { pass "run to call2a" }
-	timeout { fail "(timeout) run to callca" ; gdb_suppress_tests; }
-    }
+    gdb_test "" " callca \\(f1=1 \\+ 2 \\* I, f2=1 \\+ 2 \\* I, f3=1 \\+ 2 \\* I\\) .*" "run to call2a"
+
     gdb_test "cont" ".* callcb \\(d1=3 \\+ 4 \\* I, d2=3 \\+ 4 \\* I, d3=3 \\+ 4 \\* I\\) .*" "continue to callcb"
     gdb_test "cont" ".* callcc \\(ld1=5 \\+ 6 \\* I, ld2=5 \\+ 6 \\* I, ld3=5 \\+ 6 \\* I\\) .*" "continue to callcc"
     gdb_test "cont" ".* callcd \\(fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*" "continue to callcd"
@@ -282,10 +270,8 @@ proc complex_integral_args {} {
 
     # Run; should stop at call1a and print actual arguments.
     gdb_run_cmd
-    gdb_expect {
-	-re ".* callc1a \\(c=97 'a', s=1, i=2, ui=7, l=3, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*$gdb_prompt $" { pass "run to callc1a" }
-	timeout { fail "(timeout) run to callc1a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" " callc1a \\(c=97 'a', s=1, i=2, ui=7, l=3, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*" "run to callc1a"
+
     gdb_test "cont" ".* callc1b \\(ldc1=5 \\+ 6 \\* I\\, c=97 'a', s=1, i=2, fc1=1 \\+ 2 \\* I, ui=7, l=3, dc1=3 \\+ 4 \\* I\\) .*" "continue to callc1b"
 }
 
@@ -302,10 +288,8 @@ proc complex_float_integral_args {} {
 
     # Run; should stop at call1a and print actual arguments.
     gdb_run_cmd
-    gdb_expect {
-	-re ".* callc2a \\(c=97 'a', s=1, i=2, ui=7, l=3, f=4, d=5, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*$gdb_prompt $" { pass "run to callc2a" }
-	timeout { fail "(timeout) run to callc1a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" " callc2a \\(c=97 'a', s=1, i=2, ui=7, l=3, f=4, d=5, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*" "run to callc2a"
+
     gdb_test "cont" ".* callc2b \\(fc1=1 \\+ 2 \\* I, c=97 'a', s=1, i=2, ui=7, ldc1=5 \\+ 6 \\* I\\, l=3, f=4, d=5, dc1=3 \\+ 4 \\* I\\) .*" "continue to callc2b"
 }
 
@@ -328,11 +312,7 @@ proc pointer_args {} {
     # Try dereferencing the arguments.
 
     gdb_run_cmd
-    gdb_expect {
-	 -re ".* call3a \\(cp=$hex <c> \"a.*\", sp=$hex <s>, ip=$hex <i>, lp=$hex <l>\\) .*$gdb_prompt $" { pass "run to call3a" }
-	 -re "$gdb_prompt $" { fail "run to call3a" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to call3a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" " call3a \\(cp=$hex <c> \"a.*\", sp=$hex <s>, ip=$hex <i>, lp=$hex <l>\\) .*" "run to call3a"
 
     gdb_test "print *cp" ".* = 97 'a'"
     gdb_test "print *sp" ".* = 1"
@@ -384,13 +364,7 @@ proc structs_by_reference {} {
     # Try dereferencing the arguments.
 
     gdb_run_cmd
-    gdb_expect {
-	 -re ".* call4a \\(stp=$hex <st>\\) .*$gdb_prompt $" {
-	    pass "run to call4a"
-	}
-	 -re "$gdb_prompt $" { fail "run to call4a" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to call4a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" " call4a \\(stp=$hex <st>\\) .*" "run to call4a"
 
     gdb_test "print *stp" ".* = \{s1 = 101, s2 = 102\}"
 
@@ -440,13 +414,7 @@ proc structs_by_value {} {
     # Try dereferencing the arguments.
 
     gdb_run_cmd
-    gdb_expect {
-	 -re ".* call5a \\(st=\{s1 = 101, s2 = 102\}\\) .*$gdb_prompt $" {
-	    pass "run to call5a"
-	}
-	 -re "$gdb_prompt $" { fail "run to call5a" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to call5a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" " call5a \\(st=\{s1 = 101, s2 = 102\}\\) .*" "run to call5a"
 
     gdb_test "print st" ".* = \{s1 = 101, s2 = 102\}"
 
@@ -513,17 +481,9 @@ proc discard_and_shuffle {} {
     # Print backtrace.
 
     gdb_run_cmd
-    gdb_expect {
-	 -re ".*Breakpoint $decimal, call6a .*$gdb_prompt $" { pass "run to call6a" }
-	 -re "$gdb_prompt $" { fail "run to call6a" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to call6a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" "Breakpoint $decimal, call6a .*" "run to call6a"
 
     setup_xfail "rs6000-*-*"
-
-    if {!$gcc_compiled} {
-	setup_xfail "mips-sgi-irix5*"
-    }
 
     gdb_test_multiple "backtrace 100" "backtrace from call6a" {
 	-re " call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) .* main \\(.*\\) .*$gdb_prompt $" {
@@ -743,15 +703,9 @@ proc shuffle_round_robin {} {
     # Print backtrace.
 
     gdb_run_cmd
-    gdb_expect {
-	 -re ".*Breakpoint $decimal, call7a .*$gdb_prompt $" {
-	    pass "run to call7a"
-	}
-	 -re "$gdb_prompt $" { fail "run to call7a" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to call7a" ; gdb_suppress_tests; }
-    }
+    gdb_test "" "Breakpoint $decimal, call7a .*" "run to call7a"
 
-    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" "mips-sgi-irix5*" }
+    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
     gdb_test_multiple "backtrace 100" "backtrace from call7a" {
 	-re " call7a \\(c=97 'a', i=2, s=1, l=3, f=4, uc=98 'b', d=5, us=6, ul=8, ui=7\\) .* main \\(.*\\) .*$gdb_prompt $" {
 	    pass "backtrace from call7a"
@@ -904,7 +858,6 @@ proc shuffle_round_robin {} {
 
     gdb_continue call7k
 
-    if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix*" }
     gdb_test_sequence "backtrace 100" "backtrace from call7k" {
 	"\[\r\n\]#0 .* call7k \\(c=97 'a', i=2, s=1, l=3, f=4, uc=98 'b', d=5, us=6, ul=8, ui=7\\) "
 	"\[\r\n\]#1 .* call7j \\(ui=7, c=97 'a', i=2, s=1, l=3, f=4, uc=98 'b', d=5, us=6, ul=8\\) "
@@ -939,11 +892,7 @@ proc recursive_structs_by_value {} {
     # Run; should stop at hitbottom and print actual arguments.
     # Print backtrace.
     gdb_run_cmd
-    gdb_expect {
-	 -re ".*Breakpoint $decimal, hitbottom .*$gdb_prompt $" { pass "run to hitbottom" }
-	 -re "$gdb_prompt $" { fail "run to hitbottom" ; gdb_suppress_tests; }
-	 timeout { fail "(timeout) run to hitbottom" ; gdb_suppress_tests; }
-    }
+    gdb_test "" "Breakpoint $decimal, hitbottom .*" "run to hitbottom"
 
     if ![istarget sparclet-*-*] {
 	gdb_test_sequence "backtrace 100" "recursive passing of structs by value" {

@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,18 +20,18 @@
 #ifndef SPARC_NAT_H
 #define SPARC_NAT_H 1
 
-struct sparc_gregset;
-struct sparc_fpregset;
+struct sparc_gregmap;
+struct sparc_fpregmap;
 
-extern const struct sparc_gregset *sparc_gregset;
-extern const struct sparc_fpregset *sparc_fpregset;
-extern void (*sparc_supply_gregset) (const struct sparc_gregset *,
+extern const struct sparc_gregmap *sparc_gregmap;
+extern const struct sparc_fpregmap *sparc_fpregmap;
+extern void (*sparc_supply_gregset) (const struct sparc_gregmap *,
 				     struct regcache *, int , const void *);
-extern void (*sparc_collect_gregset) (const struct sparc_gregset *,
+extern void (*sparc_collect_gregset) (const struct sparc_gregmap *,
 				      const struct regcache *, int, void *);
-extern void (*sparc_supply_fpregset) (const struct sparc_fpregset *,
+extern void (*sparc_supply_fpregset) (const struct sparc_fpregmap *,
 				      struct regcache *, int , const void *);
-extern void (*sparc_collect_fpregset) (const struct sparc_fpregset *,
+extern void (*sparc_collect_fpregset) (const struct sparc_fpregmap *,
 				       const struct regcache *, int , void *);
 extern int (*sparc_gregset_supplies_p) (struct gdbarch *gdbarch, int);
 extern int (*sparc_fpregset_supplies_p) (struct gdbarch *gdbarch, int);

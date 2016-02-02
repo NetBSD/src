@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 Free Software Foundation, Inc.
+# Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ PerfTest::assemble {
     # When GDB is debugging GDB, the prompt is changed to "(top-gdb) ".
     # In order to avoid the confusion of pattern matching, set the
     # gdb_prompt to '(top-gdb)' temporarily.
-    with_gdb_prompt "\\(top-gdb\\)" {
+    with_gdb_prompt "(top-gdb)" {
 	gdb_load ${binfile}
     }
 

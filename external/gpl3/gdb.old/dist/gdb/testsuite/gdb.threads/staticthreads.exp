@@ -1,6 +1,6 @@
 # static.exp -- test script, for GDB, the GNU debugger.
 
-# Copyright 2004-2014 Free Software Foundation, Inc.
+# Copyright 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,11 +22,16 @@
 standard_testfile
 set static_flag "-static"
 
-if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
-	 executable \
-	 [list debug "additional_flags=${static_flag}" \
-	     ]] != "" } {
-    return -1
+foreach have_tls { "-DHAVE_TLS" "" } {
+    if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
+	     executable \
+	     [list debug "additional_flags=${static_flag} ${have_tls}" \
+		 ]] == "" } {
+	break
+    }
+    if { $have_tls == "" } {
+	return -1
+    }
 }
 
 clean_restart ${binfile}
@@ -88,4 +93,19 @@ gdb_test_multiple "quit" "$test" {
     eof {
         pass "$test"
     }
+}
+clean_restart ${binfile}
+
+
+if { "$have_tls" != "" } {
+    if ![runto_main] {
+	return -1
+    }
+    gdb_breakpoint [gdb_get_line_number "tlsvar-is-set"]
+    gdb_continue_to_breakpoint "tlsvar-is-set" ".* tlsvar-is-set .*"
+    gdb_test "p tlsvar" " = 2" "tlsvar in thread"
+    gdb_test "thread 1" ".*"
+    # Unwind to main.
+    gdb_test "up 10" " in main .*"
+    gdb_test "p tlsvar" " = 1" "tlsvar in main"
 }

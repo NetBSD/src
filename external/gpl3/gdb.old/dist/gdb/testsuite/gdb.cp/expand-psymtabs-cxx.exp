@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,9 +30,9 @@ gdb_test_no_output "set language c++"
 
 # FAIL was:
 # $1 = {<text variable, no debug info>} 0
-gdb_test "p 'method(long)'" { = {void \(long\)} 0x0 <method.long.>} \
+gdb_test "p 'method(long)'" " = {void \\(long\\)} $hex <method.long.>" \
     "before expand"
-gdb_test "p method" { = {void \(long\)} 0x0 <method.long.>} \
+gdb_test "p method" " = {void \\(long\\)} $hex <method.long.>" \
     "force expand"
-gdb_test "p 'method(long)'" { = {void \(long\)} 0x0 <method.long.>} \
+gdb_test "p 'method(long)'" " = {void \\(long\\)} $hex <method.long.>" \
     "after expand"

@@ -1,4 +1,4 @@
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,8 +90,8 @@ Dwarf::assemble $asm_file {
 
 			im_foo_label: DW_TAG_subprogram {
 			    {name foo}
-			    {external 1}
-			    {declaration 1}
+			    {external 1 flag_present}
+			    {declaration 1 flag_present}
 			}
 		    }
 
@@ -108,8 +108,8 @@ Dwarf::assemble $asm_file {
 
 		    i_foo_label: subprogram {
 			{name foo}
-			{external 1}
-			{declaration 1}
+			{external 1 flag_present}
+			{declaration 1 flag_present}
 		    }
 		}
 
@@ -126,8 +126,8 @@ Dwarf::assemble $asm_file {
 
 		o_foo_label: subprogram {
 		    {name foo}
-		    {external 1}
-		    {declaration 1}
+		    {external 1 flag_present}
+		    {declaration 1 flag_present}
 		}
 	    }
 
@@ -153,20 +153,20 @@ Dwarf::assemble $asm_file {
 
 	    subprogram {
 		{specification :$im_foo_label}
-		{low_pc 0x0}
-		{high_pc 0x1}
+		{low_pc 0x4 DW_FORM_addr}
+		{high_pc 0x7 DW_FORM_addr}
 	    }
 
 	    subprogram {
 		{specification :$i_foo_label}
-		{low_pc 0x2}
-		{high_pc 0x3}
+		{low_pc 0x8 DW_FORM_addr}
+		{high_pc 0xb DW_FORM_addr}
 	    }
 
 	    subprogram {
 		{specification :$o_foo_label}
-		{low_pc 0x4}
-		{high_pc 0x5}
+		{low_pc 0xc DW_FORM_addr}
+		{high_pc 0xf DW_FORM_addr}
 	    }
 	}
     }

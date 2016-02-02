@@ -1,4 +1,4 @@
-# Copyright 2010-2014 Free Software Foundation, Inc.
+# Copyright 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,6 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
     gdb_test "disconnect" ".*"
 
     gdb_test "set non-stop $nonstop"
-    gdb_test "set target-async $nonstop"
 
     # It is required for the non-stop mode, GDB would try to step over
     # _dl_debug_state breakpoint will still only ld.so loaded in gdbserver.

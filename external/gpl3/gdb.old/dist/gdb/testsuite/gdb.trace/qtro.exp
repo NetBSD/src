@@ -1,4 +1,4 @@
-#   Copyright 1998-2014 Free Software Foundation, Inc.
+#   Copyright 1998-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,22 +34,6 @@ if ![runto_main] {
 
 # Check whether we're testing with the remote or extended-remote
 # targets, and whether the target supports tracepoints.
-
-proc gdb_is_target_remote { } {
-    global gdb_prompt
-
-    set test "probe for target remote"
-    gdb_test_multiple "maint print target-stack" $test {
-	-re ".*emote serial target in gdb-specific protocol.*$gdb_prompt $" {
-	    pass $test
-	    return 1
-	}
-	-re "$gdb_prompt $" {
-	    pass $test
-	}
-    }
-    return 0
-}
 
 if ![gdb_is_target_remote] {
     return -1
@@ -114,18 +98,7 @@ if { $traceframe_info_supported == -1 } {
 }
 
 # Check whether we're testing with our own GDBserver.
-set is_gdbserver -1
-set test "probe for GDBserver"
-gdb_test_multiple "monitor help" $test {
-    -re "The following monitor commands are supported.*debug-hw-points.*remote-debug.*GDBserver.*$gdb_prompt $" {
-	set is_gdbserver 1
-	pass $test
-    }
-    -re "$gdb_prompt $" {
-	set is_gdbserver 0
-	pass $test
-    }
-}
+set is_gdbserver [target_is_gdbserver]
 if { $is_gdbserver == -1 } {
     return -1
 }

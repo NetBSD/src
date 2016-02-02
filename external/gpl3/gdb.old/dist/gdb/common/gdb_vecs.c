@@ -1,6 +1,6 @@
 /* Some commonly-used VEC types.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifdef GDBSERVER
-#include "server.h"
-#else
-#include "defs.h"
-#endif
-
+#include "common-defs.h"
 #include "gdb_vecs.h"
 #include "host-defs.h"
 
@@ -44,6 +39,52 @@ free_char_ptr_vec (VEC (char_ptr) *char_ptr_vec)
   VEC_free (char_ptr, char_ptr_vec);
 }
 
+/* Worker function to split character delimiter separated string of fields
+   STR into a CHAR_PTR_VEC.  */
+
+static void
+delim_string_to_char_ptr_vec_append (VEC (char_ptr) **vecp,
+				     const char *str, char delimiter)
+{
+  do
+    {
+      size_t this_len;
+      char *next_field, *this_field;
+
+      next_field = strchr (str, delimiter);
+      if (next_field == NULL)
+	this_len = strlen (str);
+      else
+	{
+	  this_len = next_field - str;
+	  next_field++;
+	}
+
+      this_field = xmalloc (this_len + 1);
+      memcpy (this_field, str, this_len);
+      this_field[this_len] = '\0';
+      VEC_safe_push (char_ptr, *vecp, this_field);
+
+      str = next_field;
+    }
+  while (str != NULL);
+}
+
+/* Split STR, a list of DELIMITER-separated fields, into a CHAR_PTR_VEC.
+
+   You may modify the returned strings.
+   Read free_char_ptr_vec for its cleanup.  */
+
+VEC (char_ptr) *
+delim_string_to_char_ptr_vec (const char *str, char delimiter)
+{
+  VEC (char_ptr) *retval = NULL;
+  
+  delim_string_to_char_ptr_vec_append (&retval, str, delimiter);
+
+  return retval;
+}
+
 /* Extended version of dirnames_to_char_ptr_vec - additionally if *VECP is
    non-NULL the new list elements from DIRNAMES are appended to the existing
    *VECP list of entries.  *VECP address will be updated by this call.  */
@@ -51,28 +92,7 @@ free_char_ptr_vec (VEC (char_ptr) *char_ptr_vec)
 void
 dirnames_to_char_ptr_vec_append (VEC (char_ptr) **vecp, const char *dirnames)
 {
-  do
-    {
-      size_t this_len;
-      char *next_dir, *this_dir;
-
-      next_dir = strchr (dirnames, DIRNAME_SEPARATOR);
-      if (next_dir == NULL)
-	this_len = strlen (dirnames);
-      else
-	{
-	  this_len = next_dir - dirnames;
-	  next_dir++;
-	}
-
-      this_dir = xmalloc (this_len + 1);
-      memcpy (this_dir, dirnames, this_len);
-      this_dir[this_len] = '\0';
-      VEC_safe_push (char_ptr, *vecp, this_dir);
-
-      dirnames = next_dir;
-    }
-  while (dirnames != NULL);
+  delim_string_to_char_ptr_vec_append (vecp, dirnames, DIRNAME_SEPARATOR);
 }
 
 /* Split DIRNAMES by DIRNAME_SEPARATOR delimiter and return a list of all the

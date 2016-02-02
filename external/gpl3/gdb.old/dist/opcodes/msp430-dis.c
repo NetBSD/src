@@ -1,5 +1,5 @@
 /* Disassemble MSP430 instructions.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Dmitry Diky <diwil@mail.ru>
         
@@ -427,7 +427,7 @@ msp430_doubleoperand (disassemble_info *info,
 	      sprintf (op1, "0x%04x", PS (dst));
 	      sprintf (comm1, "PC rel. 0x%04x",
 		       PS ((short) addr + 2 + dst));
-	      if (extended_dst)
+	      if (extension_word)
 		{
 		  dst |= extended_dst << 16;
 		  if (dst & 0x80000)
@@ -448,7 +448,7 @@ msp430_doubleoperand (disassemble_info *info,
 	      cmd_len += 4;
 	      *cycles = 6;
 	      sprintf (op1, "&0x%04x", PS (dst));
-	      if (extended_dst)
+	      if (extension_word)
 		{
 		  dst |= extended_dst << 16;
 		  sprintf (op1, "&0x%05x", dst & 0xfffff);
@@ -458,7 +458,7 @@ msp430_doubleoperand (disassemble_info *info,
 	    {
 	      /* Indexed.  */
 	      dst = msp430dis_opcode (addr + 2, info);
-	      if (extended_dst)
+	      if (extension_word)
 		{
 		  dst |= extended_dst << 16;
 		  if (dst & 0x80000)
@@ -519,7 +519,7 @@ msp430_doubleoperand (disassemble_info *info,
 	  sprintf (op1, "#%d", dst);
 	  if (dst > 9 || dst < 0)
 	    sprintf (comm1, "#0x%04x", PS (dst));
-	  if (extended_src)
+	  if (extension_word)
 	    {
 	      dst |= extended_src << 16;
 	      if (dst & 0x80000)
@@ -543,7 +543,7 @@ msp430_doubleoperand (disassemble_info *info,
 	  sprintf (op1, "0x%04x", PS (dst));
 	  sprintf (comm1, "PC rel. 0x%04x",
 		   PS ((short) addr + 2 + dst));
-	  if (extended_src)
+	  if (extension_word)
 	    {
 	      dst |= extended_src << 16;
 	      if (dst & 0x80000)
@@ -561,7 +561,7 @@ msp430_doubleoperand (disassemble_info *info,
 	  cmd_len += 2;
 	  sprintf (op1, "&0x%04x", PS (dst));
 	  sprintf (comm1, "0x%04x", PS (dst));
-	  if (extended_src)
+	  if (extension_word)
 	    {
 	      dst |= extended_src << 16;
 	      sprintf (op1, "&0x%05x", dst & 0xfffff);
@@ -580,7 +580,7 @@ msp430_doubleoperand (disassemble_info *info,
 	  /* Indexed.  */
 	  dst = msp430dis_opcode (addr + 2, info);
 	  cmd_len += 2;
-	  if (extended_src)
+	  if (extension_word)
 	    {
 	      dst |= extended_src << 16;
 	      if (dst & 0x80000)
@@ -625,7 +625,7 @@ msp430_doubleoperand (disassemble_info *info,
 	  sprintf (op2, "0x%04x", PS (dst));
 	  sprintf (comm2, "PC rel. 0x%04x",
 		   PS ((short) addr + cmd_len + dst));
-	  if (extended_dst)
+	  if (extension_word)
 	    {
 	      dst |= extended_dst << 16;
 	      if (dst & 0x80000)
@@ -642,7 +642,7 @@ msp430_doubleoperand (disassemble_info *info,
 	  dst = msp430dis_opcode (addr + cmd_len, info);
 	  cmd_len += 2;
 	  sprintf (op2, "&0x%04x", PS (dst));
-	  if (extended_dst)
+	  if (extension_word)
 	    {
 	      dst |= extended_dst << 16;
 	      sprintf (op2, "&0x%05x", dst & 0xfffff);
@@ -656,7 +656,7 @@ msp430_doubleoperand (disassemble_info *info,
 	    dst |= -1 << 16;
 	  if (dst > 9 || dst < 0)
 	    sprintf (comm2, "0x%04x", PS (dst));
-	  if (extended_dst)
+	  if (extension_word)
 	    {
 	      dst |= extended_dst << 16;
 	      if (dst & 0x80000)

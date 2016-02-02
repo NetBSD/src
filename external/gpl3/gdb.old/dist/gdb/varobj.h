@@ -1,5 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -213,12 +213,18 @@ struct lang_varobj_ops
      Languages where types do not mutate can set this to NULL.  */
   int (*value_has_mutated) (struct varobj *var, struct value *new_value,
 			    struct type *new_type);
+
+  /* Return nonzero if VAR is a suitable path expression parent.
+
+     For C like languages with anonymous structures and unions an anonymous
+     structure or union is not a suitable parent.  */
+  int (*is_path_expr_parent) (struct varobj *var);
 };
 
-const struct lang_varobj_ops c_varobj_ops;
-const struct lang_varobj_ops cplus_varobj_ops;
-const struct lang_varobj_ops java_varobj_ops;
-const struct lang_varobj_ops ada_varobj_ops;
+extern const struct lang_varobj_ops c_varobj_ops;
+extern const struct lang_varobj_ops cplus_varobj_ops;
+extern const struct lang_varobj_ops java_varobj_ops;
+extern const struct lang_varobj_ops ada_varobj_ops;
 
 #define default_varobj_ops c_varobj_ops
 /* API functions */
@@ -306,7 +312,9 @@ extern void varobj_enable_pretty_printing (void);
 
 extern int varobj_has_more (struct varobj *var, int to);
 
-extern int varobj_pretty_printed_p (struct varobj *var);
+extern int varobj_is_dynamic_p (struct varobj *var);
+
+extern struct cleanup *varobj_ensure_python_env (struct varobj *var);
 
 extern int varobj_default_value_is_changeable_p (struct varobj *var);
 extern int varobj_value_is_changeable_p (struct varobj *var);
@@ -326,4 +334,7 @@ extern void varobj_formatted_print_options (struct value_print_options *opts,
 
 extern void varobj_restrict_range (VEC (varobj_p) *children, int *from,
 				   int *to);
+
+extern int varobj_default_is_path_expr_parent (struct varobj *var);
+
 #endif /* VAROBJ_H */

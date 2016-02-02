@@ -1,5 +1,5 @@
 /* CRIS exception, interrupt, and trap (EIT) support
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -2204,7 +2204,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		|| ((events = sim_core_read_unaligned_2 (current_cpu, pc,
 							 0, ufds + 4))
 		    != TARGET_POLLIN)
-		|| ((cb->fstat) (cb, fd, &buf) != 0
+		|| ((cb->to_fstat) (cb, fd, &buf) != 0
 		    || (buf.st_mode & S_IFIFO) == 0)
 		|| current_cpu->thread_data == NULL)
 	      {

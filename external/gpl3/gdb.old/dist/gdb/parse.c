@@ -1,6 +1,6 @@
 /* Parse expressions for GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo, 1991.
@@ -32,7 +32,6 @@
 #include "defs.h"
 #include <ctype.h>
 #include "arch-utils.h"
-#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "frame.h"
@@ -46,11 +45,9 @@
 #include "symfile.h"		/* for overlay functions */
 #include "inferior.h"
 #include "doublest.h"
-#include "gdb_assert.h"
 #include "block.h"
 #include "source.h"
 #include "objfiles.h"
-#include "exceptions.h"
 #include "user-regs.h"
 
 /* Standard set of definitions for printing, dumping, prefixifying,
@@ -67,9 +64,6 @@ const struct exp_descriptor exp_descriptor_standard =
   };
 
 /* Global variables declared in parser-defs.h (and commented there).  */
-struct expression *expout;
-int expout_size;
-int expout_ptr;
 const struct block *expression_context_block;
 CORE_ADDR expression_context_pc;
 const struct block *innermost_block;
@@ -185,37 +179,40 @@ free_funcalls (void *ignore)
     }
 }
 
-/* This page contains the functions for adding data to the struct expression
-   being constructed.  */
 
 /* See definition in parser-defs.h.  */
 
 void
-initialize_expout (int initial_size, const struct language_defn *lang,
+initialize_expout (struct parser_state *ps, size_t initial_size,
+		   const struct language_defn *lang,
 		   struct gdbarch *gdbarch)
 {
-  expout_size = initial_size;
-  expout_ptr = 0;
-  expout = xmalloc (sizeof (struct expression)
-		    + EXP_ELEM_TO_BYTES (expout_size));
-  expout->language_defn = lang;
-  expout->gdbarch = gdbarch;
+  ps->expout_size = initial_size;
+  ps->expout_ptr = 0;
+  ps->expout = xmalloc (sizeof (struct expression)
+			+ EXP_ELEM_TO_BYTES (ps->expout_size));
+  ps->expout->language_defn = lang;
+  ps->expout->gdbarch = gdbarch;
 }
 
 /* See definition in parser-defs.h.  */
 
 void
-reallocate_expout (void)
+reallocate_expout (struct parser_state *ps)
 {
   /* Record the actual number of expression elements, and then
      reallocate the expression memory so that we free up any
      excess elements.  */
 
-  expout->nelts = expout_ptr;
-  expout = xrealloc ((char *) expout,
-		     sizeof (struct expression)
-		     + EXP_ELEM_TO_BYTES (expout_ptr));
+  ps->expout->nelts = ps->expout_ptr;
+  ps->expout = (struct expression *)
+     xrealloc (ps->expout,
+	       sizeof (struct expression)
+	       + EXP_ELEM_TO_BYTES (ps->expout_ptr));
 }
+
+/* This page contains the functions for adding data to the struct expression
+   being constructed.  */
 
 /* Add one element to the end of the expression.  */
 
@@ -223,80 +220,80 @@ reallocate_expout (void)
    a register through here.  */
 
 static void
-write_exp_elt (const union exp_element *expelt)
+write_exp_elt (struct parser_state *ps, const union exp_element *expelt)
 {
-  if (expout_ptr >= expout_size)
+  if (ps->expout_ptr >= ps->expout_size)
     {
-      expout_size *= 2;
-      expout = (struct expression *)
-	xrealloc ((char *) expout, sizeof (struct expression)
-		  + EXP_ELEM_TO_BYTES (expout_size));
+      ps->expout_size *= 2;
+      ps->expout = (struct expression *)
+	xrealloc (ps->expout, sizeof (struct expression)
+		  + EXP_ELEM_TO_BYTES (ps->expout_size));
     }
-  expout->elts[expout_ptr++] = *expelt;
+  ps->expout->elts[ps->expout_ptr++] = *expelt;
 }
 
 void
-write_exp_elt_opcode (enum exp_opcode expelt)
+write_exp_elt_opcode (struct parser_state *ps, enum exp_opcode expelt)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.opcode = expelt;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_sym (struct symbol *expelt)
+write_exp_elt_sym (struct parser_state *ps, struct symbol *expelt)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.symbol = expelt;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_block (const struct block *b)
+write_exp_elt_block (struct parser_state *ps, const struct block *b)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.block = b;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_objfile (struct objfile *objfile)
+write_exp_elt_objfile (struct parser_state *ps, struct objfile *objfile)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.objfile = objfile;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_longcst (LONGEST expelt)
+write_exp_elt_longcst (struct parser_state *ps, LONGEST expelt)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.longconst = expelt;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_dblcst (DOUBLEST expelt)
+write_exp_elt_dblcst (struct parser_state *ps, DOUBLEST expelt)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.doubleconst = expelt;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_decfloatcst (gdb_byte expelt[16])
+write_exp_elt_decfloatcst (struct parser_state *ps, gdb_byte expelt[16])
 {
   union exp_element tmp;
   int index;
@@ -304,27 +301,27 @@ write_exp_elt_decfloatcst (gdb_byte expelt[16])
   for (index = 0; index < 16; index++)
     tmp.decfloatconst[index] = expelt[index];
 
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_type (struct type *expelt)
+write_exp_elt_type (struct parser_state *ps, struct type *expelt)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.type = expelt;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 void
-write_exp_elt_intern (struct internalvar *expelt)
+write_exp_elt_intern (struct parser_state *ps, struct internalvar *expelt)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.internalvar = expelt;
-  write_exp_elt (&tmp);
+  write_exp_elt (ps, &tmp);
 }
 
 /* Add a string constant to the end of the expression.
@@ -349,10 +346,10 @@ write_exp_elt_intern (struct internalvar *expelt)
 
 
 void
-write_exp_string (struct stoken str)
+write_exp_string (struct parser_state *ps, struct stoken str)
 {
   int len = str.length;
-  int lenelt;
+  size_t lenelt;
   char *strdata;
 
   /* Compute the number of expression elements required to hold the string
@@ -362,28 +359,19 @@ write_exp_string (struct stoken str)
 
   lenelt = 2 + BYTES_TO_EXP_ELEM (len + 1);
 
-  /* Ensure that we have enough available expression elements to store
-     everything.  */
-
-  if ((expout_ptr + lenelt) >= expout_size)
-    {
-      expout_size = max (expout_size * 2, expout_ptr + lenelt + 10);
-      expout = (struct expression *)
-	xrealloc ((char *) expout, (sizeof (struct expression)
-				    + EXP_ELEM_TO_BYTES (expout_size)));
-    }
+  increase_expout_size (ps, lenelt);
 
   /* Write the leading length expression element (which advances the current
      expression element index), then write the string constant followed by a
      terminating null byte, and then write the trailing length expression
      element.  */
 
-  write_exp_elt_longcst ((LONGEST) len);
-  strdata = (char *) &expout->elts[expout_ptr];
+  write_exp_elt_longcst (ps, (LONGEST) len);
+  strdata = (char *) &ps->expout->elts[ps->expout_ptr];
   memcpy (strdata, str.ptr, len);
   *(strdata + len) = '\0';
-  expout_ptr += lenelt - 2;
-  write_exp_elt_longcst ((LONGEST) len);
+  ps->expout_ptr += lenelt - 2;
+  write_exp_elt_longcst (ps, (LONGEST) len);
 }
 
 /* Add a vector of string constants to the end of the expression.
@@ -400,9 +388,11 @@ write_exp_string (struct stoken str)
    long constant, followed by the contents of the string.  */
 
 void
-write_exp_string_vector (int type, struct stoken_vector *vec)
+write_exp_string_vector (struct parser_state *ps, int type,
+			 struct stoken_vector *vec)
 {
-  int i, n_slots, len;
+  int i, len;
+  size_t n_slots;
 
   /* Compute the size.  We compute the size in number of slots to
      avoid issues with string padding.  */
@@ -421,28 +411,22 @@ write_exp_string_vector (int type, struct stoken_vector *vec)
   len = EXP_ELEM_TO_BYTES (n_slots) - 1;
 
   n_slots += 4;
-  if ((expout_ptr + n_slots) >= expout_size)
-    {
-      expout_size = max (expout_size * 2, expout_ptr + n_slots + 10);
-      expout = (struct expression *)
-	xrealloc ((char *) expout, (sizeof (struct expression)
-				    + EXP_ELEM_TO_BYTES (expout_size)));
-    }
+  increase_expout_size (ps, n_slots);
 
-  write_exp_elt_opcode (OP_STRING);
-  write_exp_elt_longcst (len);
-  write_exp_elt_longcst (type);
+  write_exp_elt_opcode (ps, OP_STRING);
+  write_exp_elt_longcst (ps, len);
+  write_exp_elt_longcst (ps, type);
 
   for (i = 0; i < vec->len; ++i)
     {
-      write_exp_elt_longcst (vec->tokens[i].length);
-      memcpy (&expout->elts[expout_ptr], vec->tokens[i].ptr,
+      write_exp_elt_longcst (ps, vec->tokens[i].length);
+      memcpy (&ps->expout->elts[ps->expout_ptr], vec->tokens[i].ptr,
 	      vec->tokens[i].length);
-      expout_ptr += BYTES_TO_EXP_ELEM (vec->tokens[i].length);
+      ps->expout_ptr += BYTES_TO_EXP_ELEM (vec->tokens[i].length);
     }
 
-  write_exp_elt_longcst (len);
-  write_exp_elt_opcode (OP_STRING);
+  write_exp_elt_longcst (ps, len);
+  write_exp_elt_opcode (ps, OP_STRING);
 }
 
 /* Add a bitstring constant to the end of the expression.
@@ -457,11 +441,11 @@ write_exp_string_vector (int type, struct stoken_vector *vec)
    either end of the bitstring.  */
 
 void
-write_exp_bitstring (struct stoken str)
+write_exp_bitstring (struct parser_state *ps, struct stoken str)
 {
   int bits = str.length;	/* length in bits */
   int len = (bits + HOST_CHAR_BIT - 1) / HOST_CHAR_BIT;
-  int lenelt;
+  size_t lenelt;
   char *strdata;
 
   /* Compute the number of expression elements required to hold the bitstring,
@@ -470,40 +454,32 @@ write_exp_bitstring (struct stoken str)
 
   lenelt = 2 + BYTES_TO_EXP_ELEM (len);
 
-  /* Ensure that we have enough available expression elements to store
-     everything.  */
-
-  if ((expout_ptr + lenelt) >= expout_size)
-    {
-      expout_size = max (expout_size * 2, expout_ptr + lenelt + 10);
-      expout = (struct expression *)
-	xrealloc ((char *) expout, (sizeof (struct expression)
-				    + EXP_ELEM_TO_BYTES (expout_size)));
-    }
+  increase_expout_size (ps, lenelt);
 
   /* Write the leading length expression element (which advances the current
      expression element index), then write the bitstring constant, and then
      write the trailing length expression element.  */
 
-  write_exp_elt_longcst ((LONGEST) bits);
-  strdata = (char *) &expout->elts[expout_ptr];
+  write_exp_elt_longcst (ps, (LONGEST) bits);
+  strdata = (char *) &ps->expout->elts[ps->expout_ptr];
   memcpy (strdata, str.ptr, len);
-  expout_ptr += lenelt - 2;
-  write_exp_elt_longcst ((LONGEST) bits);
+  ps->expout_ptr += lenelt - 2;
+  write_exp_elt_longcst (ps, (LONGEST) bits);
 }
 
 /* Add the appropriate elements for a minimal symbol to the end of
    the expression.  */
 
 void
-write_exp_msymbol (struct bound_minimal_symbol bound_msym)
+write_exp_msymbol (struct parser_state *ps,
+		   struct bound_minimal_symbol bound_msym)
 {
   struct minimal_symbol *msymbol = bound_msym.minsym;
   struct objfile *objfile = bound_msym.objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
 
-  CORE_ADDR addr = SYMBOL_VALUE_ADDRESS (msymbol);
-  struct obj_section *section = SYMBOL_OBJ_SECTION (objfile, msymbol);
+  CORE_ADDR addr = BMSYMBOL_VALUE_ADDRESS (bound_msym);
+  struct obj_section *section = MSYMBOL_OBJ_SECTION (objfile, msymbol);
   enum minimal_symbol_type type = MSYMBOL_TYPE (msymbol);
   CORE_ADDR pc;
 
@@ -519,7 +495,7 @@ write_exp_msymbol (struct bound_minimal_symbol bound_msym)
 
       if (ifunc_msym.minsym != NULL
 	  && MSYMBOL_TYPE (ifunc_msym.minsym) == mst_text_gnu_ifunc
-	  && SYMBOL_VALUE_ADDRESS (ifunc_msym.minsym) == pc)
+	  && BMSYMBOL_VALUE_ADDRESS (ifunc_msym) == pc)
 	{
 	  /* A function descriptor has been resolved but PC is still in the
 	     STT_GNU_IFUNC resolver body (such as because inferior does not
@@ -536,62 +512,62 @@ write_exp_msymbol (struct bound_minimal_symbol bound_msym)
   if (overlay_debugging)
     addr = symbol_overlayed_address (addr, section);
 
-  write_exp_elt_opcode (OP_LONG);
+  write_exp_elt_opcode (ps, OP_LONG);
   /* Let's make the type big enough to hold a 64-bit address.  */
-  write_exp_elt_type (objfile_type (objfile)->builtin_core_addr);
-  write_exp_elt_longcst ((LONGEST) addr);
-  write_exp_elt_opcode (OP_LONG);
+  write_exp_elt_type (ps, objfile_type (objfile)->builtin_core_addr);
+  write_exp_elt_longcst (ps, (LONGEST) addr);
+  write_exp_elt_opcode (ps, OP_LONG);
 
   if (section && section->the_bfd_section->flags & SEC_THREAD_LOCAL)
     {
-      write_exp_elt_opcode (UNOP_MEMVAL_TLS);
-      write_exp_elt_objfile (objfile);
-      write_exp_elt_type (objfile_type (objfile)->nodebug_tls_symbol);
-      write_exp_elt_opcode (UNOP_MEMVAL_TLS);
+      write_exp_elt_opcode (ps, UNOP_MEMVAL_TLS);
+      write_exp_elt_objfile (ps, objfile);
+      write_exp_elt_type (ps, objfile_type (objfile)->nodebug_tls_symbol);
+      write_exp_elt_opcode (ps, UNOP_MEMVAL_TLS);
       return;
     }
 
-  write_exp_elt_opcode (UNOP_MEMVAL);
+  write_exp_elt_opcode (ps, UNOP_MEMVAL);
   switch (type)
     {
     case mst_text:
     case mst_file_text:
     case mst_solib_trampoline:
-      write_exp_elt_type (objfile_type (objfile)->nodebug_text_symbol);
+      write_exp_elt_type (ps, objfile_type (objfile)->nodebug_text_symbol);
       break;
 
     case mst_text_gnu_ifunc:
-      write_exp_elt_type (objfile_type (objfile)
-					       ->nodebug_text_gnu_ifunc_symbol);
+      write_exp_elt_type (ps, objfile_type (objfile)
+			  ->nodebug_text_gnu_ifunc_symbol);
       break;
 
     case mst_data:
     case mst_file_data:
     case mst_bss:
     case mst_file_bss:
-      write_exp_elt_type (objfile_type (objfile)->nodebug_data_symbol);
+      write_exp_elt_type (ps, objfile_type (objfile)->nodebug_data_symbol);
       break;
 
     case mst_slot_got_plt:
-      write_exp_elt_type (objfile_type (objfile)->nodebug_got_plt_symbol);
+      write_exp_elt_type (ps, objfile_type (objfile)->nodebug_got_plt_symbol);
       break;
 
     default:
-      write_exp_elt_type (objfile_type (objfile)->nodebug_unknown_symbol);
+      write_exp_elt_type (ps, objfile_type (objfile)->nodebug_unknown_symbol);
       break;
     }
-  write_exp_elt_opcode (UNOP_MEMVAL);
+  write_exp_elt_opcode (ps, UNOP_MEMVAL);
 }
 
 /* Mark the current index as the starting location of a structure
    expression.  This is used when completing on field names.  */
 
 void
-mark_struct_expression (void)
+mark_struct_expression (struct parser_state *ps)
 {
   gdb_assert (parse_completion
 	      && expout_tag_completion_type == TYPE_CODE_UNDEF);
-  expout_last_struct = expout_ptr;
+  expout_last_struct = ps->expout_ptr;
 }
 
 /* Indicate that the current parser invocation is completing a tag.
@@ -607,7 +583,6 @@ mark_completion_tag (enum type_code tag, const char *ptr, int length)
 	      && expout_last_struct == -1);
   gdb_assert (tag == TYPE_CODE_UNION
 	      || tag == TYPE_CODE_STRUCT
-	      || tag == TYPE_CODE_CLASS
 	      || tag == TYPE_CODE_ENUM);
   expout_tag_completion_type = tag;
   expout_completion_name = xmalloc (length + 1);
@@ -638,7 +613,7 @@ mark_completion_tag (enum type_code tag, const char *ptr, int length)
    value in the value history, I.e. $$1  */
 
 void
-write_dollar_variable (struct stoken str)
+write_dollar_variable (struct parser_state *ps, struct stoken str)
 {
   struct symbol *sym = NULL;
   struct bound_minimal_symbol msym;
@@ -676,7 +651,7 @@ write_dollar_variable (struct stoken str)
 
   /* Handle tokens that refer to machine registers:
      $ followed by a register name.  */
-  i = user_reg_map_name_to_regnum (parse_gdbarch,
+  i = user_reg_map_name_to_regnum (parse_gdbarch (ps),
 				   str.ptr + 1, str.length - 1);
   if (i >= 0)
     goto handle_register;
@@ -686,9 +661,9 @@ write_dollar_variable (struct stoken str)
   isym = lookup_only_internalvar (copy_name (str) + 1);
   if (isym)
     {
-      write_exp_elt_opcode (OP_INTERNALVAR);
-      write_exp_elt_intern (isym);
-      write_exp_elt_opcode (OP_INTERNALVAR);
+      write_exp_elt_opcode (ps, OP_INTERNALVAR);
+      write_exp_elt_intern (ps, isym);
+      write_exp_elt_opcode (ps, OP_INTERNALVAR);
       return;
     }
 
@@ -699,36 +674,36 @@ write_dollar_variable (struct stoken str)
 		       VAR_DOMAIN, NULL);
   if (sym)
     {
-      write_exp_elt_opcode (OP_VAR_VALUE);
-      write_exp_elt_block (block_found);	/* set by lookup_symbol */
-      write_exp_elt_sym (sym);
-      write_exp_elt_opcode (OP_VAR_VALUE);
+      write_exp_elt_opcode (ps, OP_VAR_VALUE);
+      write_exp_elt_block (ps, block_found);	/* set by lookup_symbol */
+      write_exp_elt_sym (ps, sym);
+      write_exp_elt_opcode (ps, OP_VAR_VALUE);
       return;
     }
   msym = lookup_bound_minimal_symbol (copy_name (str));
   if (msym.minsym)
     {
-      write_exp_msymbol (msym);
+      write_exp_msymbol (ps, msym);
       return;
     }
 
   /* Any other names are assumed to be debugger internal variables.  */
 
-  write_exp_elt_opcode (OP_INTERNALVAR);
-  write_exp_elt_intern (create_internalvar (copy_name (str) + 1));
-  write_exp_elt_opcode (OP_INTERNALVAR);
+  write_exp_elt_opcode (ps, OP_INTERNALVAR);
+  write_exp_elt_intern (ps, create_internalvar (copy_name (str) + 1));
+  write_exp_elt_opcode (ps, OP_INTERNALVAR);
   return;
 handle_last:
-  write_exp_elt_opcode (OP_LAST);
-  write_exp_elt_longcst ((LONGEST) i);
-  write_exp_elt_opcode (OP_LAST);
+  write_exp_elt_opcode (ps, OP_LAST);
+  write_exp_elt_longcst (ps, (LONGEST) i);
+  write_exp_elt_opcode (ps, OP_LAST);
   return;
 handle_register:
-  write_exp_elt_opcode (OP_REGISTER);
+  write_exp_elt_opcode (ps, OP_REGISTER);
   str.length--;
   str.ptr++;
-  write_exp_string (str);
-  write_exp_elt_opcode (OP_REGISTER);
+  write_exp_string (ps, str);
+  write_exp_elt_opcode (ps, OP_REGISTER);
   return;
 }
 
@@ -1161,6 +1136,7 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
   volatile struct gdb_exception except;
   struct cleanup *old_chain, *inner_chain;
   const struct language_defn *lang = NULL;
+  struct parser_state ps;
   int subexp;
 
   lexptr = *stringptr;
@@ -1198,7 +1174,8 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
       struct symtab_and_line cursal = get_current_source_symtab_and_line ();
       if (cursal.symtab)
 	expression_context_block
-	  = BLOCKVECTOR_BLOCK (BLOCKVECTOR (cursal.symtab), STATIC_BLOCK);
+	  = BLOCKVECTOR_BLOCK (SYMTAB_BLOCKVECTOR (cursal.symtab),
+			       STATIC_BLOCK);
       if (expression_context_block)
 	expression_context_pc = BLOCK_START (expression_context_block);
     }
@@ -1233,47 +1210,48 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
      While we need CURRENT_LANGUAGE to be set to LANG (for lookup_symbol
      and others called from *.y) ensure CURRENT_LANGUAGE gets restored
      to the value matching SELECTED_FRAME as set by get_current_arch.  */
-  initialize_expout (10, lang, get_current_arch ());
+
+  initialize_expout (&ps, 10, lang, get_current_arch ());
   inner_chain = make_cleanup_restore_current_language ();
   set_language (lang->la_language);
 
   TRY_CATCH (except, RETURN_MASK_ALL)
     {
-      if (lang->la_parser ())
+      if (lang->la_parser (&ps))
         lang->la_error (NULL);
     }
   if (except.reason < 0)
     {
       if (! parse_completion)
 	{
-	  xfree (expout);
+	  xfree (ps.expout);
 	  throw_exception (except);
 	}
     }
 
-  reallocate_expout ();
+  reallocate_expout (&ps);
 
   /* Convert expression from postfix form as generated by yacc
      parser, to a prefix form.  */
 
   if (expressiondebug)
-    dump_raw_expression (expout, gdb_stdlog,
+    dump_raw_expression (ps.expout, gdb_stdlog,
 			 "before conversion to prefix form");
 
-  subexp = prefixify_expression (expout);
+  subexp = prefixify_expression (ps.expout);
   if (out_subexp)
     *out_subexp = subexp;
 
-  lang->la_post_parser (&expout, void_context_p);
+  lang->la_post_parser (&ps.expout, void_context_p);
 
   if (expressiondebug)
-    dump_prefix_expression (expout, gdb_stdlog);
+    dump_prefix_expression (ps.expout, gdb_stdlog);
 
   do_cleanups (inner_chain);
   discard_cleanups (old_chain);
 
   *stringptr = lexptr;
-  return expout;
+  return ps.expout;
 }
 
 /* Parse STRING as an expression, and complain if this fails
@@ -1512,7 +1490,7 @@ push_type_int (int n)
    item.  */
 
 void
-insert_type_address_space (char *string)
+insert_type_address_space (struct parser_state *pstate, char *string)
 {
   union type_stack_elt element;
   int slot;
@@ -1527,7 +1505,8 @@ insert_type_address_space (char *string)
 
   element.piece = tp_space_identifier;
   insert_into_type_stack (slot, element);
-  element.int_val = address_space_name_to_int (parse_gdbarch, string);
+  element.int_val = address_space_name_to_int (parse_gdbarch (pstate),
+					       string);
   insert_into_type_stack (slot, element);
 }
 
@@ -1710,7 +1689,8 @@ follow_types (struct type *follow_type)
 	  lookup_array_range_type (follow_type,
 				   0, array_size >= 0 ? array_size - 1 : 0);
 	if (array_size < 0)
-	  TYPE_ARRAY_UPPER_BOUND_IS_UNDEFINED (follow_type) = 1;
+	  TYPE_HIGH_BOUND_KIND (TYPE_INDEX_TYPE (follow_type))
+	    = PROP_UNDEFINED;
 	break;
       case tp_function:
 	/* FIXME-type-allocation: need a way to free this type when we are
@@ -1830,7 +1810,7 @@ operator_check_standard (struct expression *exp, int pos,
 
 	/* Check objfile where the variable itself is placed.
 	   SYMBOL_OBJ_SECTION (symbol) may be NULL.  */
-	if ((*objfile_func) (SYMBOL_SYMTAB (symbol)->objfile, data))
+	if ((*objfile_func) (symbol_objfile (symbol), data))
 	  return 1;
 
 	/* Check objfile where is placed the code touching the variable.  */
@@ -1852,12 +1832,12 @@ operator_check_standard (struct expression *exp, int pos,
   return 0;
 }
 
-/* Call OBJFILE_FUNC for any TYPE and OBJFILE found being referenced by EXP.
-   The functions are never called with NULL OBJFILE.  Functions get passed an
-   arbitrary caller supplied DATA pointer.  If any of the functions returns
-   non-zero value then (any other) non-zero value is immediately returned to
-   the caller.  Otherwise zero is returned after iterating through whole EXP.
-   */
+/* Call OBJFILE_FUNC for any objfile found being referenced by EXP.
+   OBJFILE_FUNC is never called with NULL OBJFILE.  OBJFILE_FUNC get
+   passed an arbitrary caller supplied DATA pointer.  If OBJFILE_FUNC
+   returns non-zero value then (any other) non-zero value is immediately
+   returned to the caller.  Otherwise zero is returned after iterating
+   through whole EXP.  */
 
 static int
 exp_iterate (struct expression *exp,
@@ -1907,6 +1887,21 @@ exp_uses_objfile (struct expression *exp, struct objfile *objfile)
   gdb_assert (objfile->separate_debug_objfile_backlink == NULL);
 
   return exp_iterate (exp, exp_uses_objfile_iter, objfile);
+}
+
+/* See definition in parser-defs.h.  */
+
+void
+increase_expout_size (struct parser_state *ps, size_t lenelt)
+{
+  if ((ps->expout_ptr + lenelt) >= ps->expout_size)
+    {
+      ps->expout_size = max (ps->expout_size * 2,
+			     ps->expout_ptr + lenelt + 10);
+      ps->expout = (struct expression *)
+	xrealloc (ps->expout, (sizeof (struct expression)
+			       + EXP_ELEM_TO_BYTES (ps->expout_size)));
+    }
 }
 
 void

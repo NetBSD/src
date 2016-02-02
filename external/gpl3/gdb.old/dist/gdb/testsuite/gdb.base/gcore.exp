@@ -1,4 +1,4 @@
-# Copyright 2002-2014 Free Software Foundation, Inc.
+# Copyright 2002-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,34 +24,9 @@ if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
     return -1
 }
 
-# Does this gdb support gcore?
-gdb_test_multiple "help gcore" "help gcore" {
-    -re "Undefined command: .gcore.*$gdb_prompt $" {
-	# gcore command not supported -- nothing to test here.
-	unsupported "gdb does not support gcore on this target"
-	return -1
-    }
-    -re "Save a core file .*$gdb_prompt $" {
-	pass "help gcore"
-    }
-}
-
 if { ! [ runto_main ] } then {
     untested gcore.exp
     return -1
-}
-
-proc capture_command_output { command prefix } {
-    global gdb_prompt
-    global expect_out
-
-    set output_string ""
-    gdb_test_multiple "$command" "capture_command_output for $command" {
-	-re "${command}\[\r\n\]+${prefix}(.*)\[\r\n\]+$gdb_prompt $" {
-	    set output_string $expect_out(1,string)
-	}
-    }
-    return $output_string
 }
 
 gdb_test "break terminal_func" "Breakpoint .* at .*${srcfile}, line .*" \

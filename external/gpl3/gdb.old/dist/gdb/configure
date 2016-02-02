@@ -658,6 +658,15 @@ TARGET_SYSTEM_ROOT
 CONFIG_LDFLAGS
 RDYNAMIC
 ALLOCA
+HAVE_GUILE_FALSE
+HAVE_GUILE_TRUE
+GUILE_LIBS
+GUILE_CPPFLAGS
+GUILD_TARGET_FLAG
+GUILD
+pkg_config_prog_path
+HAVE_PYTHON_FALSE
+HAVE_PYTHON_TRUE
 PYTHON_LIBS
 PYTHON_CPPFLAGS
 PYTHON_CFLAGS
@@ -813,6 +822,7 @@ with_gnu_ld
 enable_rpath
 with_libexpat_prefix
 with_python
+with_guile
 enable_libmcheck
 with_included_regex
 with_sysroot
@@ -1472,7 +1482,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
-  --enable-plugins        Enable support for plugins (defaults no)
+  --enable-plugins        Enable support for plugins
   --disable-largefile     omit support for large files
   --enable-targets=TARGETS
                           alternative target configurations
@@ -1530,6 +1540,8 @@ Optional Packages:
   --without-libexpat-prefix     don't search for libexpat in includedir and libdir
   --with-python[=PYTHON]  include python support
                           (auto/yes/no/<python-program>)
+  --with-guile[=GUILE]    include guile support
+                          (auto/yes/no/<guile-version>/<pkg-config-program>)
   --without-included-regex
                           don't use included regex; this is the default on
                           systems with version 2 of the GNU C library (use
@@ -1881,6 +1893,52 @@ $as_echo "$ac_res" >&6; }
 
 } # ac_fn_c_check_header_compile
 
+# ac_fn_c_try_link LINENO
+# -----------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_c_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+  return $ac_retval
+
+} # ac_fn_c_try_link
+
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
 # Tries to find the compile-time value of EXPR in a program that includes
@@ -2058,52 +2116,6 @@ rm -f conftest.val
   return $ac_retval
 
 } # ac_fn_c_compute_int
-
-# ac_fn_c_try_link LINENO
-# -----------------------
-# Try to link conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_link ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  rm -f conftest.$ac_objext conftest$ac_exeext
-  if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then :
-  ac_retval=0
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_retval=1
-fi
-  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
-  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
-  # interfere with the next link command; also delete a directory that is
-  # left behind by Apple's compiler.  We do this before executing the actions.
-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-  return $ac_retval
-
-} # ac_fn_c_try_link
 
 # ac_fn_c_check_func LINENO FUNC VAR
 # ----------------------------------
@@ -2708,7 +2720,7 @@ fi
 
 
 # Set the 'development' global.
-. $srcdir/development.sh
+. $srcdir/../bfd/development.sh
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -4078,17 +4090,106 @@ test -n "$target_alias" &&
 # even in directories otherwise not depending on the $plugins option.
 
 
-# Check whether --enable-plugins was given.
-if test "${enable_plugins+set}" = set; then :
-  enableval=$enable_plugins; case "${enableval}" in
-  yes | "") plugins=yes ;;
-  no) plugins=no ;;
-  *) plugins=yes ;;
- esac
-else
-  plugins=no
+  maybe_plugins=no
+  for ac_header in dlfcn.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "dlfcn.h" "ac_cv_header_dlfcn_h" "$ac_includes_default
+"
+if test "x$ac_cv_header_dlfcn_h" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DLFCN_H 1
+_ACEOF
+ maybe_plugins=yes
 fi
 
+done
+
+  for ac_header in windows.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "windows.h" "ac_cv_header_windows_h" "$ac_includes_default
+"
+if test "x$ac_cv_header_windows_h" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_WINDOWS_H 1
+_ACEOF
+ maybe_plugins=yes
+fi
+
+done
+
+
+  # Check whether --enable-plugins was given.
+if test "${enable_plugins+set}" = set; then :
+  enableval=$enable_plugins; case "${enableval}" in
+      no) plugins=no ;;
+      *) plugins=yes
+         if test "$maybe_plugins" != "yes" ; then
+	   as_fn_error "Building with plugin support requires a host that supports dlopen." "$LINENO" 5
+	 fi ;;
+     esac
+else
+  plugins=$maybe_plugins
+
+fi
+
+  if test "$plugins" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
+$as_echo_n "checking for library containing dlopen... " >&6; }
+if test "${ac_cv_search_dlopen+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char dlopen ();
+int
+main ()
+{
+return dlopen ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' dl; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_dlopen=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if test "${ac_cv_search_dlopen+set}" = set; then :
+  break
+fi
+done
+if test "${ac_cv_search_dlopen+set}" = set; then :
+
+else
+  ac_cv_search_dlopen=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
+$as_echo "$ac_cv_search_dlopen" >&6; }
+ac_res=$ac_cv_search_dlopen
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+  fi
 
 
 case "${host}" in
@@ -4734,6 +4835,12 @@ $as_echo "no" >&6; }
 fi
 
 
+gnulib_extra_configure_args=
+# If large-file support is disabled, make sure gnulib does the same.
+if test "$enable_largefile" = no; then
+gnulib_extra_configure_args="$gnulib_extra_configure_args --disable-largefile"
+fi
+
 # Configure gnulib.  We need to build gnulib under some other
 # directory not "gnulib", to avoid the problem of both GDB and
 # GDBserver wanting to build it in the same directory, when building
@@ -4741,6 +4848,7 @@ fi
 
   in_src="gnulib"
   in_build="build-gnulib"
+  in_extra_args="$gnulib_extra_configure_args"
 
   # Remove --cache-file, --srcdir, and --disable-option-checking arguments
   # so they do not pile up.
@@ -4824,6 +4932,11 @@ fi
   *) # Relative name.
     ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
   esac
+
+  if test -n "$in_extra_args"; then
+    # Add the extra args at the end.
+    ac_sub_configure_args="$ac_sub_configure_args $in_extra_args"
+  fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&5
 $as_echo "$as_me: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&6;}
@@ -6961,33 +7074,6 @@ _ACEOF
 fi
 
 
-# On alpha-osf, it appears that libtermcap and libcurses are not compatible.
-# There is a very specific comment in /usr/include/curses.h explaining that
-# termcap routines built into libcurses must not be used.
-#
-# The symptoms we observed so far is GDB unexpectedly changing
-# the terminal settings when tgetent is called - this is particularly
-# visible as the output is missing carriage returns, and so rapidly
-# becomes very hard to read.
-#
-# The readline configure script has already decided that libtermcap
-# was enough for its purposes, and so decided to build readline using
-# libtermcap.  Since the TUI mode requires curses, building GDB with
-# TUI enabled results in both libraries to be used at the same time,
-# which is not allowed.  This basically means that GDB with TUI is
-# broken on alpha-osf.
-
-case $host_os in
-  osf* )
-    if test x"$enable_tui" = xyes; then
-      as_fn_error "Building GDB with TUI mode is not supported on this host" "$LINENO" 5
-    fi
-    if test x"$enable_tui" = xauto; then
-      enable_tui=no
-    fi
-    ;;
-esac
-
 # For the TUI, we need enhanced curses functionality.
 if test x"$enable_tui" != xno; then
   prefer_curses=yes
@@ -7098,9 +7184,10 @@ case $host_os in
     ac_cv_search_tgetent="none required"
     ;;
   *mingw32*)
-    ac_cv_search_tgetent="none required"
-    CONFIG_OBS="$CONFIG_OBS windows-termcap.o"
-    ;;
+    if test x"$curses_found" != xyes; then
+      ac_cv_search_tgetent="none required"
+      CONFIG_OBS="$CONFIG_OBS windows-termcap.o"
+    fi ;;
 esac
 
 # These are the libraries checked by Readline.
@@ -8615,15 +8702,6 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 $as_echo "${PYTHON_CFLAGS}" >&6; }
   fi
 
-  # On IRIX, type siginfo is not defined.  Instead, sys/siginfo.h provides:
-  #    #if _SGIAPI
-  #    #define siginfo __siginfo
-  #    #endif
-  # The problem is that including Python causes some XOPEN macros to be
-  # unilaterally defined, and that in turn causes _SGIAPI to evaluate
-  # to false.  So, we work around this issue by defining siginfo ourself
-  # though the command-line.
-  #
   # On x64 Windows, Python's include headers, and pyconfig.h in
   # particular, rely on MS_WIN64 macro to detect that it's a 64bit
   # version of Windows.  Unfortunately, MS_WIN64 is only defined if
@@ -8633,10 +8711,6 @@ $as_echo "${PYTHON_CFLAGS}" >&6; }
   # solved as of 2012-10-02 (http://bugs.python.org/issue4709).
 
   case "$gdb_host" in
-    irix*) if test "${GCC}" = yes; then
-             CPPFLAGS="$CPPFLAGS -Dsiginfo=__siginfo"
-           fi
-           ;;
     mingw64)
            if test "${GCC}" = yes; then
              CPPFLAGS="$CPPFLAGS -DMS_WIN64"
@@ -8672,14 +8746,541 @@ rm -f conftest.err conftest.$ac_ext
 $as_echo "${python_has_threads}" >&6; }
   CPPFLAGS="${saved_CPPFLAGS}"
 else
-  # Even if Python support is not compiled in, we need to have these files
-  # included.
-  CONFIG_OBS="$CONFIG_OBS python.o py-value.o py-prettyprint.o py-auto-load.o"
-  CONFIG_SRCS="$CONFIG_SRCS python/python.c python/py-value.c \
-	python/py-prettyprint.c python/py-auto-load.c"
+  # Even if Python support is not compiled in, we need to have this file
+  # included so that the "python" command, et.al., still exists.
+  CONFIG_OBS="$CONFIG_OBS python.o"
+  CONFIG_SRCS="$CONFIG_SRCS python/python.c"
 fi
 
 
+
+ if test "${have_libpython}" != no; then
+  HAVE_PYTHON_TRUE=
+  HAVE_PYTHON_FALSE='#'
+else
+  HAVE_PYTHON_TRUE='#'
+  HAVE_PYTHON_FALSE=
+fi
+
+
+# -------------------- #
+# Check for libguile.  #
+# -------------------- #
+
+
+
+
+
+
+# Check whether --with-guile was given.
+if test "${with_guile+set}" = set; then :
+  withval=$with_guile;
+else
+  with_guile=auto
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use guile" >&5
+$as_echo_n "checking whether to use guile... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_guile" >&5
+$as_echo "$with_guile" >&6; }
+
+# Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_pkg_config_prog_path+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $pkg_config_prog_path in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_pkg_config_prog_path="$pkg_config_prog_path" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_pkg_config_prog_path="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_pkg_config_prog_path" && ac_cv_path_pkg_config_prog_path="missing"
+  ;;
+esac
+fi
+pkg_config_prog_path=$ac_cv_path_pkg_config_prog_path
+if test -n "$pkg_config_prog_path"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pkg_config_prog_path" >&5
+$as_echo "$pkg_config_prog_path" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+try_guile_versions="guile-2.2 guile-2.0"
+have_libguile=no
+case "${with_guile}" in
+no)
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: guile support disabled; some features will be unavailable." >&5
+$as_echo "$as_me: WARNING: guile support disabled; some features will be unavailable." >&2;}
+  ;;
+auto)
+  if test "${pkg_config_prog_path}" = "missing"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: pkg-config not found, guile support disabled" >&5
+$as_echo "$as_me: WARNING: pkg-config not found, guile support disabled" >&2;}
+  else
+
+  pkg_config=${pkg_config_prog_path}
+  guile_version_list=${try_guile_versions}
+  flag_errors=no
+
+  found_usable_guile=checking
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for usable guile from ${pkg_config}" >&5
+$as_echo_n "checking for usable guile from ${pkg_config}... " >&6; }
+  for guile_version in ${guile_version_list}; do
+    ${pkg_config} --exists ${guile_version} 2>/dev/null
+    if test $? != 0; then
+      continue
+    fi
+            new_CPPFLAGS=`${pkg_config} --cflags ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --cflags ${guile_version}" "$LINENO" 5
+    fi
+    new_LIBS=`${pkg_config} --libs ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --libs ${guile_version}" "$LINENO" 5
+    fi
+        found_usable_guile=${guile_version}
+    break
+  done
+  if test "${found_usable_guile}" = "checking"; then
+    if test "${flag_errors}" = "yes"; then
+      as_fn_error "unable to find usable guile version from \"${guile_version_list}\"" "$LINENO" 5
+    else
+      found_usable_guile=no
+    fi
+  fi
+      if test "${found_usable_guile}" != no; then
+    save_CPPFLAGS=$CPPFLAGS
+    save_LIBS=$LIBS
+    CPPFLAGS="$CPPFLAGS $new_CPPFLAGS"
+    LIBS="$LIBS $new_LIBS"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include "libguile.h"
+int
+main ()
+{
+scm_init_guile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  have_libguile=yes
+                    GUILE_CPPFLAGS=$new_CPPFLAGS
+                    GUILE_LIBS=$new_LIBS
+else
+  found_usable_guile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    CPPFLAGS=$save_CPPFLAGS
+    LIBS=$save_LIBS
+    if test "${found_usable_guile}" = no; then
+      if test "${flag_errors}" = yes; then
+        { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error "linking guile version ${guile_version} test program failed
+See \`config.log' for more details." "$LINENO" 5; }
+      fi
+    fi
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${found_usable_guile}" >&5
+$as_echo "${found_usable_guile}" >&6; }
+
+  fi
+  ;;
+yes)
+  if test "${pkg_config_prog_path}" = "missing"; then
+    as_fn_error "pkg-config not found" "$LINENO" 5
+  fi
+
+  pkg_config=${pkg_config_prog_path}
+  guile_version_list=${try_guile_versions}
+  flag_errors=yes
+
+  found_usable_guile=checking
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for usable guile from ${pkg_config}" >&5
+$as_echo_n "checking for usable guile from ${pkg_config}... " >&6; }
+  for guile_version in ${guile_version_list}; do
+    ${pkg_config} --exists ${guile_version} 2>/dev/null
+    if test $? != 0; then
+      continue
+    fi
+            new_CPPFLAGS=`${pkg_config} --cflags ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --cflags ${guile_version}" "$LINENO" 5
+    fi
+    new_LIBS=`${pkg_config} --libs ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --libs ${guile_version}" "$LINENO" 5
+    fi
+        found_usable_guile=${guile_version}
+    break
+  done
+  if test "${found_usable_guile}" = "checking"; then
+    if test "${flag_errors}" = "yes"; then
+      as_fn_error "unable to find usable guile version from \"${guile_version_list}\"" "$LINENO" 5
+    else
+      found_usable_guile=no
+    fi
+  fi
+      if test "${found_usable_guile}" != no; then
+    save_CPPFLAGS=$CPPFLAGS
+    save_LIBS=$LIBS
+    CPPFLAGS="$CPPFLAGS $new_CPPFLAGS"
+    LIBS="$LIBS $new_LIBS"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include "libguile.h"
+int
+main ()
+{
+scm_init_guile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  have_libguile=yes
+                    GUILE_CPPFLAGS=$new_CPPFLAGS
+                    GUILE_LIBS=$new_LIBS
+else
+  found_usable_guile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    CPPFLAGS=$save_CPPFLAGS
+    LIBS=$save_LIBS
+    if test "${found_usable_guile}" = no; then
+      if test "${flag_errors}" = yes; then
+        { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error "linking guile version ${guile_version} test program failed
+See \`config.log' for more details." "$LINENO" 5; }
+      fi
+    fi
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${found_usable_guile}" >&5
+$as_echo "${found_usable_guile}" >&6; }
+
+  ;;
+[\\/]* | ?:[\\/]*)
+  if test -x "${with_guile}"; then
+
+  pkg_config=${with_guile}
+  guile_version_list=${try_guile_versions}
+  flag_errors=yes
+
+  found_usable_guile=checking
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for usable guile from ${pkg_config}" >&5
+$as_echo_n "checking for usable guile from ${pkg_config}... " >&6; }
+  for guile_version in ${guile_version_list}; do
+    ${pkg_config} --exists ${guile_version} 2>/dev/null
+    if test $? != 0; then
+      continue
+    fi
+            new_CPPFLAGS=`${pkg_config} --cflags ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --cflags ${guile_version}" "$LINENO" 5
+    fi
+    new_LIBS=`${pkg_config} --libs ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --libs ${guile_version}" "$LINENO" 5
+    fi
+        found_usable_guile=${guile_version}
+    break
+  done
+  if test "${found_usable_guile}" = "checking"; then
+    if test "${flag_errors}" = "yes"; then
+      as_fn_error "unable to find usable guile version from \"${guile_version_list}\"" "$LINENO" 5
+    else
+      found_usable_guile=no
+    fi
+  fi
+      if test "${found_usable_guile}" != no; then
+    save_CPPFLAGS=$CPPFLAGS
+    save_LIBS=$LIBS
+    CPPFLAGS="$CPPFLAGS $new_CPPFLAGS"
+    LIBS="$LIBS $new_LIBS"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include "libguile.h"
+int
+main ()
+{
+scm_init_guile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  have_libguile=yes
+                    GUILE_CPPFLAGS=$new_CPPFLAGS
+                    GUILE_LIBS=$new_LIBS
+else
+  found_usable_guile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    CPPFLAGS=$save_CPPFLAGS
+    LIBS=$save_LIBS
+    if test "${found_usable_guile}" = no; then
+      if test "${flag_errors}" = yes; then
+        { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error "linking guile version ${guile_version} test program failed
+See \`config.log' for more details." "$LINENO" 5; }
+      fi
+    fi
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${found_usable_guile}" >&5
+$as_echo "${found_usable_guile}" >&6; }
+
+  else
+    as_fn_error "Guile config program not executable: ${with_guile}" "$LINENO" 5
+  fi
+  ;;
+"" | */*)
+  # Disallow --with=guile="" and --with-guile=foo/bar.
+  as_fn_error "invalid value for --with-guile" "$LINENO" 5
+  ;;
+*)
+  # A space separate list of guile versions to try, in order.
+  if test "${pkg_config_prog_path}" = "missing"; then
+    as_fn_error "pkg-config not found" "$LINENO" 5
+  fi
+
+  pkg_config=${pkg_config_prog_path}
+  guile_version_list=${with_guile}
+  flag_errors=yes
+
+  found_usable_guile=checking
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for usable guile from ${pkg_config}" >&5
+$as_echo_n "checking for usable guile from ${pkg_config}... " >&6; }
+  for guile_version in ${guile_version_list}; do
+    ${pkg_config} --exists ${guile_version} 2>/dev/null
+    if test $? != 0; then
+      continue
+    fi
+            new_CPPFLAGS=`${pkg_config} --cflags ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --cflags ${guile_version}" "$LINENO" 5
+    fi
+    new_LIBS=`${pkg_config} --libs ${guile_version}`
+    if test $? != 0; then
+      as_fn_error "failure running pkg-config --libs ${guile_version}" "$LINENO" 5
+    fi
+        found_usable_guile=${guile_version}
+    break
+  done
+  if test "${found_usable_guile}" = "checking"; then
+    if test "${flag_errors}" = "yes"; then
+      as_fn_error "unable to find usable guile version from \"${guile_version_list}\"" "$LINENO" 5
+    else
+      found_usable_guile=no
+    fi
+  fi
+      if test "${found_usable_guile}" != no; then
+    save_CPPFLAGS=$CPPFLAGS
+    save_LIBS=$LIBS
+    CPPFLAGS="$CPPFLAGS $new_CPPFLAGS"
+    LIBS="$LIBS $new_LIBS"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include "libguile.h"
+int
+main ()
+{
+scm_init_guile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  have_libguile=yes
+                    GUILE_CPPFLAGS=$new_CPPFLAGS
+                    GUILE_LIBS=$new_LIBS
+else
+  found_usable_guile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    CPPFLAGS=$save_CPPFLAGS
+    LIBS=$save_LIBS
+    if test "${found_usable_guile}" = no; then
+      if test "${flag_errors}" = yes; then
+        { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error "linking guile version ${guile_version} test program failed
+See \`config.log' for more details." "$LINENO" 5; }
+      fi
+    fi
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${found_usable_guile}" >&5
+$as_echo "${found_usable_guile}" >&6; }
+
+  ;;
+esac
+
+if test "${have_libguile}" != no; then
+    case "${with_guile}" in
+  [\\/]* | ?:[\\/]*)
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the absolute file name of the 'guild' command" >&5
+$as_echo_n "checking for the absolute file name of the 'guild' command... " >&6; }
+if test "${ac_cv_guild_program_name+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_guild_program_name="`"${with_guile}" --variable guild "${guile_version}"`"
+
+     # In Guile up to 2.0.11 included, guile-2.0.pc would not define
+     # the 'guild' and 'bindir' variables.  In that case, try to guess
+     # what the program name is, at the risk of getting it wrong if
+     # Guile was configured with '--program-suffix' or similar.
+     if test "x$ac_cv_guild_program_name" = "x"; then
+       guile_exec_prefix="`"${with_guile}" --variable exec_prefix "${guile_version}"`"
+       ac_cv_guild_program_name="$guile_exec_prefix/bin/guild"
+     fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_guild_program_name" >&5
+$as_echo "$ac_cv_guild_program_name" >&6; }
+
+  if ! "$ac_cv_guild_program_name" --version >&5 2>&5; then
+    as_fn_error "'$ac_cv_guild_program_name' appears to be unusable" "$LINENO" 5
+  fi
+
+  GUILD="$ac_cv_guild_program_name"
+
+
+    ;;
+  *)
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the absolute file name of the 'guild' command" >&5
+$as_echo_n "checking for the absolute file name of the 'guild' command... " >&6; }
+if test "${ac_cv_guild_program_name+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_guild_program_name="`"${pkg_config_prog_path}" --variable guild "${guile_version}"`"
+
+     # In Guile up to 2.0.11 included, guile-2.0.pc would not define
+     # the 'guild' and 'bindir' variables.  In that case, try to guess
+     # what the program name is, at the risk of getting it wrong if
+     # Guile was configured with '--program-suffix' or similar.
+     if test "x$ac_cv_guild_program_name" = "x"; then
+       guile_exec_prefix="`"${pkg_config_prog_path}" --variable exec_prefix "${guile_version}"`"
+       ac_cv_guild_program_name="$guile_exec_prefix/bin/guild"
+     fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_guild_program_name" >&5
+$as_echo "$ac_cv_guild_program_name" >&6; }
+
+  if ! "$ac_cv_guild_program_name" --version >&5 2>&5; then
+    as_fn_error "'$ac_cv_guild_program_name' appears to be unusable" "$LINENO" 5
+  fi
+
+  GUILD="$ac_cv_guild_program_name"
+
+
+    ;;
+  esac
+
+
+  if test "$cross_compiling" = no; then
+    GUILD_TARGET_FLAG=
+  else
+    GUILD_TARGET_FLAG="--target=$host"
+  fi
+
+
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether guild supports this host" >&5
+$as_echo_n "checking whether guild supports this host... " >&6; }
+if test "${ac_cv_guild_ok+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  echo "$ac_cv_guild_program_name compile $GUILD_TARGET_FLAG -o conftest.go $srcdir/guile/lib/gdb/support.scm" >&5
+     if "$ac_cv_guild_program_name" compile $GUILD_TARGET_FLAG -o conftest.go "$srcdir/guile/lib/gdb/support.scm" >&5 2>&5; then
+       ac_cv_guild_ok=yes
+     else
+       ac_cv_guild_ok=no
+     fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_guild_ok" >&5
+$as_echo "$ac_cv_guild_ok" >&6; }
+
+    if test "$ac_cv_guild_ok" = no; then
+    have_libguile=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: disabling guile support" >&5
+$as_echo "$as_me: WARNING: disabling guile support" >&2;}
+  fi
+fi
+
+if test "${have_libguile}" != no; then
+
+$as_echo "#define HAVE_GUILE 1" >>confdefs.h
+
+  CONFIG_OBS="$CONFIG_OBS \$(SUBDIR_GUILE_OBS)"
+  CONFIG_DEPS="$CONFIG_DEPS \$(SUBDIR_GUILE_DEPS)"
+  CONFIG_SRCS="$CONFIG_SRCS \$(SUBDIR_GUILE_SRCS)"
+  CONFIG_INSTALL="$CONFIG_INSTALL install-guile"
+  ENABLE_CFLAGS="$ENABLE_CFLAGS \$(SUBDIR_GUILE_CFLAGS)"
+
+    save_LIBS="$LIBS"
+  save_CPPFLAGS="$CPPFLAGS"
+  LIBS="$GUILE_LIBS"
+  CPPFLAGS="$GUILE_CPPFLAGS"
+  for ac_func in scm_new_smob
+do :
+  ac_fn_c_check_func "$LINENO" "scm_new_smob" "ac_cv_func_scm_new_smob"
+if test "x$ac_cv_func_scm_new_smob" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SCM_NEW_SMOB 1
+_ACEOF
+
+fi
+done
+
+  LIBS="$save_LIBS"
+  CPPFLAGS="$save_CPPFLAGS"
+else
+  # Even if Guile support is not compiled in, we need to have these files
+  # included.
+  CONFIG_OBS="$CONFIG_OBS guile.o"
+  CONFIG_SRCS="$CONFIG_SRCS guile/guile.c"
+fi
+
+
+ if test "${have_libguile}" != no; then
+  HAVE_GUILE_TRUE=
+  HAVE_GUILE_FALSE='#'
+else
+  HAVE_GUILE_TRUE='#'
+  HAVE_GUILE_FALSE=
+fi
 
 
 # --------------------- #
@@ -9484,196 +10085,6 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 # Checks for library functions.  #
 # ------------------------------ #
 
-# The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
-# for constant arguments.  Useless!
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for working alloca.h" >&5
-$as_echo_n "checking for working alloca.h... " >&6; }
-if test "${ac_cv_working_alloca_h+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <alloca.h>
-int
-main ()
-{
-char *p = (char *) alloca (2 * sizeof (int));
-			  if (p) return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_working_alloca_h=yes
-else
-  ac_cv_working_alloca_h=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_working_alloca_h" >&5
-$as_echo "$ac_cv_working_alloca_h" >&6; }
-if test $ac_cv_working_alloca_h = yes; then
-
-$as_echo "#define HAVE_ALLOCA_H 1" >>confdefs.h
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for alloca" >&5
-$as_echo_n "checking for alloca... " >&6; }
-if test "${ac_cv_func_alloca_works+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef __GNUC__
-# define alloca __builtin_alloca
-#else
-# ifdef _MSC_VER
-#  include <malloc.h>
-#  define alloca _alloca
-# else
-#  ifdef HAVE_ALLOCA_H
-#   include <alloca.h>
-#  else
-#   ifdef _AIX
- #pragma alloca
-#   else
-#    ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#    endif
-#   endif
-#  endif
-# endif
-#endif
-
-int
-main ()
-{
-char *p = (char *) alloca (1);
-				    if (p) return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_func_alloca_works=yes
-else
-  ac_cv_func_alloca_works=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_alloca_works" >&5
-$as_echo "$ac_cv_func_alloca_works" >&6; }
-
-if test $ac_cv_func_alloca_works = yes; then
-
-$as_echo "#define HAVE_ALLOCA 1" >>confdefs.h
-
-else
-  # The SVR3 libPW and SVR4 libucb both contain incompatible functions
-# that cause trouble.  Some versions do not even contain alloca or
-# contain a buggy version.  If you still want to use their alloca,
-# use ar to extract alloca.o from them instead of compiling alloca.c.
-
-ALLOCA=\${LIBOBJDIR}alloca.$ac_objext
-
-$as_echo "#define C_ALLOCA 1" >>confdefs.h
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether \`alloca.c' needs Cray hooks" >&5
-$as_echo_n "checking whether \`alloca.c' needs Cray hooks... " >&6; }
-if test "${ac_cv_os_cray+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#if defined CRAY && ! defined CRAY2
-webecray
-#else
-wenotbecray
-#endif
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "webecray" >/dev/null 2>&1; then :
-  ac_cv_os_cray=yes
-else
-  ac_cv_os_cray=no
-fi
-rm -f conftest*
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_os_cray" >&5
-$as_echo "$ac_cv_os_cray" >&6; }
-if test $ac_cv_os_cray = yes; then
-  for ac_func in _getb67 GETB67 getb67; do
-    as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-eval as_val=\$$as_ac_var
-   if test "x$as_val" = x""yes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define CRAY_STACKSEG_END $ac_func
-_ACEOF
-
-    break
-fi
-
-  done
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking stack direction for C alloca" >&5
-$as_echo_n "checking stack direction for C alloca... " >&6; }
-if test "${ac_cv_c_stack_direction+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "$cross_compiling" = yes; then :
-  ac_cv_c_stack_direction=0
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-int
-find_stack_direction ()
-{
-  static char *addr = 0;
-  auto char dummy;
-  if (addr == 0)
-    {
-      addr = &dummy;
-      return find_stack_direction ();
-    }
-  else
-    return (&dummy > addr) ? 1 : -1;
-}
-
-int
-main ()
-{
-  return find_stack_direction () < 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_c_stack_direction=1
-else
-  ac_cv_c_stack_direction=-1
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_stack_direction" >&5
-$as_echo "$ac_cv_c_stack_direction" >&6; }
-cat >>confdefs.h <<_ACEOF
-#define STACK_DIRECTION $ac_cv_c_stack_direction
-_ACEOF
-
-
-fi
-
 for ac_header in stdlib.h unistd.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -10080,13 +10491,13 @@ $as_echo "#define HAVE_WORKING_FORK 1" >>confdefs.h
 
 fi
 
-for ac_func in canonicalize_file_name realpath getrusage getuid getgid \
-		pipe poll pread pread64 pwrite readlink resize_term \
+for ac_func in getrusage getuid getgid \
+		pipe poll pread pread64 pwrite resize_term \
 		sbrk setpgid setpgrp setsid \
 		sigaction sigprocmask sigsetmask socketpair \
 		ttrace wborder wresize setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit posix_madvise waitpid lstat \
-		ptrace64
+		setrlimit getrlimit posix_madvise waitpid \
+		ptrace64 sigaltstack mkdtemp
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -10526,6 +10937,39 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sigsetjmp" >&5
+$as_echo_n "checking for sigsetjmp... " >&6; }
+if test "${gdb_cv_func_sigsetjmp+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <setjmp.h>
+
+int
+main ()
+{
+sigjmp_buf env; while (! sigsetjmp (env, 1)) siglongjmp (env, 1);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gdb_cv_func_sigsetjmp=yes
+else
+  gdb_cv_func_sigsetjmp=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gdb_cv_func_sigsetjmp" >&5
+$as_echo "$gdb_cv_func_sigsetjmp" >&6; }
+if test $gdb_cv_func_sigsetjmp = yes; then
+
+$as_echo "#define HAVE_SIGSETJMP 1" >>confdefs.h
+
+fi
+
 
 # Check the return and argument types of ptrace.  No canned test for
 # this, so roll our own.
@@ -10786,41 +11230,6 @@ if test $ac_cv_func_setpgrp_void = yes; then
   $as_echo "#define SETPGRP_VOID 1" >>confdefs.h
 
 fi
-fi
-
-# Check if sigsetjmp is available.  Using AC_CHECK_FUNCS won't do
-# since sigsetjmp might only be defined as a macro.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sigsetjmp" >&5
-$as_echo_n "checking for sigsetjmp... " >&6; }
-if test "${gdb_cv_func_sigsetjmp+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <setjmp.h>
-
-int
-main ()
-{
-sigjmp_buf env; while (! sigsetjmp (env, 1)) siglongjmp (env, 1);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  gdb_cv_func_sigsetjmp=yes
-else
-  gdb_cv_func_sigsetjmp=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gdb_cv_func_sigsetjmp" >&5
-$as_echo "$gdb_cv_func_sigsetjmp" >&6; }
-if test $gdb_cv_func_sigsetjmp = yes; then
-
-$as_echo "#define HAVE_SIGSETJMP 1" >>confdefs.h
-
 fi
 
 # Assume we'll default to using the included libiberty regex.
@@ -12625,65 +13034,6 @@ esac
   CFLAGS="-I${srcdir}/../include -I../bfd -I${srcdir}/../bfd $CFLAGS"
   LDFLAGS="-L../bfd -L../libiberty $LDFLAGS"
   intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
-  # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
-  if test "$plugins" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
-$as_echo_n "checking for library containing dlopen... " >&6; }
-if test "${ac_cv_search_dlopen+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dlopen ();
-int
-main ()
-{
-return dlopen ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' dl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_dlopen=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_dlopen+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_dlopen+set}" = set; then :
-
-else
-  ac_cv_search_dlopen=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
-$as_echo "$ac_cv_search_dlopen" >&6; }
-ac_res=$ac_cv_search_dlopen
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-  fi
   LIBS="-lbfd -liberty $intl $LIBS"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ELF support in BFD" >&5
 $as_echo_n "checking for ELF support in BFD... " >&6; }
@@ -12794,65 +13144,6 @@ fi
   CFLAGS="-I${srcdir}/../include -I../bfd -I${srcdir}/../bfd $CFLAGS"
   LDFLAGS="-L../bfd -L../libiberty $LDFLAGS"
   intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
-  # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
-  if test "$plugins" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
-$as_echo_n "checking for library containing dlopen... " >&6; }
-if test "${ac_cv_search_dlopen+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dlopen ();
-int
-main ()
-{
-return dlopen ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' dl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_dlopen=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_dlopen+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_dlopen+set}" = set; then :
-
-else
-  ac_cv_search_dlopen=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
-$as_echo "$ac_cv_search_dlopen" >&6; }
-ac_res=$ac_cv_search_dlopen
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-  fi
   LIBS="-lbfd -liberty $intl $LIBS"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Mach-O support in BFD" >&5
 $as_echo_n "checking for Mach-O support in BFD... " >&6; }
@@ -12901,65 +13192,6 @@ fi
   CFLAGS="-I${srcdir}/../include -I../bfd -I${srcdir}/../bfd $CFLAGS"
   LDFLAGS="-L../bfd -L../libiberty $LDFLAGS"
   intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
-  # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
-  if test "$plugins" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
-$as_echo_n "checking for library containing dlopen... " >&6; }
-if test "${ac_cv_search_dlopen+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dlopen ();
-int
-main ()
-{
-return dlopen ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' dl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_dlopen=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_dlopen+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_dlopen+set}" = set; then :
-
-else
-  ac_cv_search_dlopen=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
-$as_echo "$ac_cv_search_dlopen" >&6; }
-ac_res=$ac_cv_search_dlopen
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-  fi
   LIBS="-lbfd -liberty $intl $LIBS"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SOM support in BFD" >&5
 $as_echo_n "checking for SOM support in BFD... " >&6; }
@@ -14817,6 +15049,7 @@ struct bt_iter_pos *pos = bt_iter_get_pos (bt_ctf_get_iter (NULL));
 			struct bt_ctf_event *event = NULL;
 			const struct bt_definition *scope;
 
+			bt_iter_set_pos (bt_ctf_get_iter (NULL), pos);
 			scope = bt_ctf_get_top_level_scope (event,
 			      				   BT_STREAM_EVENT_HEADER);
 		        bt_ctf_get_uint64 (bt_ctf_get_field (event, scope, "id"));
@@ -15030,6 +15263,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${GMAKE_TRUE}" && test -z "${GMAKE_FALSE}"; then
   as_fn_error "conditional \"GMAKE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PYTHON_TRUE}" && test -z "${HAVE_PYTHON_FALSE}"; then
+  as_fn_error "conditional \"HAVE_PYTHON\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_GUILE_TRUE}" && test -z "${HAVE_GUILE_FALSE}"; then
+  as_fn_error "conditional \"HAVE_GUILE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ if { [prepare_for_testing $testfile.exp $testfile \
 
 set bp_location1  [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location7  [gdb_get_line_number "set breakpoint 7 here"]
-set bp_location9  [gdb_get_line_number "set breakpoint 9 here" "$srcfile2"]
+set bp_location8  [gdb_get_line_number "set breakpoint 8 here" "$srcfile2"]
 set bp_location19 [gdb_get_line_number "set breakpoint 19 here"]
 set bp_location20 [gdb_get_line_number "set breakpoint 20 here"]
 set bp_location21 [gdb_get_line_number "set breakpoint 21 here"]
@@ -45,25 +45,32 @@ if [supports_process_record] {
 
 set end_of_main [gdb_get_line_number "set breakpoint 10a here" ]
 gdb_test "break $end_of_main" \
-    "Breakpoint $decimal at .*/$srcfile, line $end_of_main\." \
+    "Breakpoint $decimal at .*$srcfile, line $end_of_main\." \
     "BP at end of main"
 
 # This can take awhile.
-set oldtimeout $timeout
-set timeout [expr $oldtimeout + 120]
+set savedtimeout $timeout
+if { [target_info exists gdb,timeout]
+     && $timeout < [target_info gdb,timeout] } {
+    set oldtimeout [target_info gdb,timeout]
+} else {
+    set oldtimeout $timeout
+}
+set timeout [expr $oldtimeout * 15]
 gdb_test "continue" "Breakpoint .* set breakpoint 10a here .*" "run to end of main"
 
 # So can this, against gdbserver, for example.
+set timeout [expr $oldtimeout * 3]
 gdb_test "record save $precsave" \
     "Saved core file $precsave with execution log\."  \
     "save process recfile"
-set timeout $oldtimeout
+set timeout $savedtimeout
 
 gdb_test "kill" "" "Kill process, prepare to debug log file" \
     "Kill the program being debugged\\? \\(y or n\\) " "y"
 
 gdb_test "record restore $precsave" \
-    "Program terminated with signal .*" \
+    "Restored records from core file .*" \
     "reload core file"
 
 # Verify that plain vanilla "until <location>" works.
@@ -95,7 +102,7 @@ gdb_test "finish" \
 # Advance to a function called by main (marker2)
 #
 gdb_test "advance marker2" \
-    "marker2 .a=43.*$srcfile2:$bp_location9.*" \
+    "marker2 .a=43.*$srcfile2:$bp_location8.*" \
     "advance to marker2"
 
 # Now issue an until with another function, not called by the current
@@ -126,7 +133,7 @@ gdb_test_no_output "set exec-dir reverse" "set reverse execution"
 #
 
 gdb_test "advance marker2" \
-    "marker2 .a=43.*$srcfile2:$bp_location9.*" \
+    "marker2 .a=43.*$srcfile2:$bp_location8.*" \
     "reverse-advance to marker2"
 
 # Finish out to main scope (backward)

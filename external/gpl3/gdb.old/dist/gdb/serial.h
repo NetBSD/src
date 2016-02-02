@@ -1,5 +1,5 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -304,7 +304,7 @@ extern void serial_add_interface (const struct serial_ops * optable);
 
 /* File in which to record the remote debugging session.  */
 
-extern void serial_log_command (const char *);
+extern void serial_log_command (struct target_ops *self, const char *);
 
 #ifdef USE_WIN32API
 

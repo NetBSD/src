@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,10 @@
    Currently the string can either be a number,  or "$" followed by the
    name of a convenience variable, or ("$" or "$$") followed by digits.  */
 
+extern int get_number_const (const char **);
+
+/* Like get_number_const, but takes a non-const "char **".  */
+
 extern int get_number (char **);
 
 /* An object of this type is passed to get_number_or_range.  It must
@@ -40,7 +44,7 @@ struct get_number_or_range_state
 
   /* The string being parsed.  When parsing has finished, this points
      past the last parsed token.  */
-  char *string;
+  const char *string;
 
   /* Last value returned.  */
   int last_retval;
@@ -50,7 +54,7 @@ struct get_number_or_range_state
 
   /* When parsing a range, a pointer past the final token in the
      range.  */
-  char *end_ptr;
+  const char *end_ptr;
 
   /* Non-zero when parsing a range.  */
   int in_range;
@@ -60,7 +64,7 @@ struct get_number_or_range_state
    get_number_or_range_state.  STRING is the string to be parsed.  */
 
 extern void init_number_or_range (struct get_number_or_range_state *state,
-				  char *string);
+				  const char *string);
 
 /* Parse a number or a range.
    A number will be of the form handled by get_number.
@@ -87,7 +91,7 @@ extern int get_number_or_range (struct get_number_or_range_state *state);
    be interpreted as typing a command such as "delete break" with 
    no arguments.  */
 
-extern int number_is_in_list (char *list, int number);
+extern int number_is_in_list (const char *list, int number);
 
 /* Skip leading whitespace characters in INP, returning an updated
    pointer.  If INP is NULL, return NULL.  */

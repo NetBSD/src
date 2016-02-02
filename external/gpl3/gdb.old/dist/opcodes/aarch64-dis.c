@@ -1,5 +1,5 @@
 /* aarch64-dis.c -- AArch64 disassembler.
-   Copyright 2009-2013  Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -224,6 +224,17 @@ aarch64_ext_regno (const aarch64_operand *self, aarch64_opnd_info *info,
   return 1;
 }
 
+int
+aarch64_ext_regno_pair (const aarch64_operand *self ATTRIBUTE_UNUSED, aarch64_opnd_info *info,
+		   const aarch64_insn code ATTRIBUTE_UNUSED,
+		   const aarch64_inst *inst ATTRIBUTE_UNUSED)
+{
+  assert (info->idx == 1
+	  || info->idx ==3);
+  info->reg.regno = inst->operands[info->idx - 1].reg.regno + 1;
+  return 1;
+}
+
 /* e.g. IC <ic_op>{, <Xt>}.  */
 int
 aarch64_ext_regrt_sysins (const aarch64_operand *self, aarch64_opnd_info *info,
@@ -422,11 +433,17 @@ aarch64_ext_ldst_elemlist (const aarch64_operand *self ATTRIBUTE_UNUSED,
       info->reglist.index = QSsize;
       break;
     case 0x1:
+      if (QSsize & 0x1)
+	/* UND.  */
+	return 0;
       info->qualifier = AARCH64_OPND_QLF_S_H;
       /* Index encoded in "Q:S:size<1>".  */
       info->reglist.index = QSsize >> 1;
       break;
     case 0x2:
+      if ((QSsize >> 1) & 0x1)
+	/* UND.  */
+	return 0;
       if ((QSsize & 0x1) == 0)
 	{
 	  info->qualifier = AARCH64_OPND_QLF_S_S;
@@ -435,12 +452,12 @@ aarch64_ext_ldst_elemlist (const aarch64_operand *self ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  info->qualifier = AARCH64_OPND_QLF_S_D;
-	  /* Index encoded in "Q".  */
-	  info->reglist.index = QSsize >> 3;
 	  if (extract_field (FLD_S, code, 0))
 	    /* UND */
 	    return 0;
+	  info->qualifier = AARCH64_OPND_QLF_S_D;
+	  /* Index encoded in "Q".  */
+	  info->reglist.index = QSsize >> 3;
 	}
       break;
     default:
@@ -1353,6 +1370,13 @@ do_special_decoding (aarch64_inst *inst)
       if ((inst->opcode->flags & F_N)
 	  && extract_field (FLD_N, inst->value, 0) != value)
 	return 0;
+    }
+  /* 'sf' field.  */
+  if (inst->opcode->flags & F_LSE_SZ)
+    {
+      idx = select_operand_for_sf_field_coding (inst->opcode);
+      value = extract_field (FLD_lse_sz, inst->value, 0);
+      inst->operands[idx].qualifier = get_greg_qualifier_from_value (value);
     }
   /* size:Q fields.  */
   if (inst->opcode->flags & F_SIZEQ)

@@ -1,4 +1,4 @@
-# Copyright 1998-2014 Free Software Foundation, Inc.
+# Copyright 1998-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@
 #maintenance expand-symtabs -- Expand symtabs matching a file regexp
 #maintenance set -- Set GDB internal variables used by the GDB maintainer
 #maintenance show -- Show GDB internal variables used by the GDB maintainer
-#maintenance demangle -- Demangle a C++ mangled name
 #maintenance dump-me -- Get fatal error; make debugger dump its core
 #maintenance print -- Maintenance command for printing GDB internal state
 #maintenance info -- Commands for showing internal info about the program being debugged
@@ -72,7 +71,7 @@ gdb_test "maint print registers" "Name.*Nr.*Rel.*Offset.*Size.*Type.*"
 gdb_test_no_output "mt set per on" "mt set per on for expand-symtabs"
 gdb_test_multiple "mt expand-symtabs $subdir/break\[.\]c$" \
     "mt expand-symtabs" {
-	-re "#primary symtabs: (1|2) \\(\[+\](0|1|2)\\),.*$gdb_prompt $" {
+	-re "#compunits: (1|2) \\(\[+\](0|1|2)\\),.*$gdb_prompt $" {
 	    # This should expand at most two primary symtabs.
 	    # "Normally" it will not expand any, because the symtab
 	    # holding "main" will already have been expanded, but if the
@@ -130,17 +129,11 @@ gdb_expect  {
 # tests here!!
 gdb_test_no_output "maint check-symtabs"
 
+# Test per-command stats.
 gdb_test_no_output "maint set per-command on"
-
-gdb_test "maint set per-command off" \
-    "Command execution time: \[0-9.\]+ \\(cpu\\), \[0-9.\]+ \\(wall\\)\[\r\n\]+Space used: $decimal \\(\\+$decimal for this command\\)\[\r\n\]+#symtabs: $decimal \\(\\+$decimal\\), #primary symtabs: $decimal \\(\\+$decimal\\), #blocks: $decimal \\(\\+$decimal\\)"
-
-gdb_test "maint demangle" \
-    "\"maintenance demangle\" takes an argument to demangle\\."
-
-gdb_test "maint demangle main" "Can't demangle \"main\""
-
-
+gdb_test "pwd" \
+    "Command execution time: \[0-9.\]+ \\(cpu\\), \[0-9.\]+ \\(wall\\)\[\r\n\]+Space used: $decimal \\(\\+$decimal for this command\\)\[\r\n\]+#symtabs: $decimal \\(\\+$decimal\\), #compunits: $decimal \\(\\+$decimal\\), #blocks: $decimal \\(\\+$decimal\\)"
+gdb_test_no_output "maint set per-command off"
 
 # The timeout value is raised, because printing all the symbols and
 # statistical information about Cygwin and Windows libraries takes a lot
@@ -483,7 +476,7 @@ set timeout $oldtimeout
 #============test help on maint commands
 
 gdb_test "help maint" \
-    "Commands for use by GDB maintainers\\..*Includes commands to dump specific internal GDB structures in.*a human readable form, to cause GDB to deliberately dump core,.*to test internal functions such as the C../ObjC demangler, etc\\..*List of maintenance subcommands:.*maintenance info.*maintenance internal-error.*maintenance print.*maintenance set.*maintenance show.*Type.*help maintenance.*followed by maintenance subcommand name for full documentation\\..*Command name abbreviations are allowed if unambiguous\\..*" 
+    "Commands for use by GDB maintainers\\..*Includes commands to dump specific internal GDB structures in.*a human readable form, to cause GDB to deliberately dump core, etc\\..*List of maintenance subcommands:.*maintenance info.*maintenance internal-error.*maintenance print.*maintenance set.*maintenance show.*Type.*help maintenance.*followed by maintenance subcommand name for full documentation\\..*Command name abbreviations are allowed if unambiguous\\..*" 
 
 gdb_test "help maint info" \
     "Commands for showing internal info about the program being debugged.*unambiguous\\..*"
@@ -495,8 +488,7 @@ test_prefix_command_help {"maint print" "maintenance print"} {
 test_prefix_command_help {"maint" "maintenance"} {
     "Commands for use by GDB maintainers\\.\[\r\n\]+"
     "Includes commands to dump specific internal GDB structures in\[\r\n\]+"
-    "a human readable form, to cause GDB to deliberately dump core,\[\r\n\]+"
-    "to test internal functions such as the C\\+\\+/ObjC demangler, etc\\.\[\r\n\]+"
+    "a human readable form, to cause GDB to deliberately dump core, etc\\.\[\r\n\]+"
 }
 
 #set oldtimeout $timeout

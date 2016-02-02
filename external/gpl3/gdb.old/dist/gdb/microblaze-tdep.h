@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,30 +26,8 @@ struct gdbarch_tdep
 {
 };
 
-struct microblaze_frame_cache
-{
-  /* Base address.  */
-  CORE_ADDR base;
-  CORE_ADDR pc;
-
-  /* Do we have a frame?  */
-  int frameless_p;
-
-  /* Frame size.  */
-  int framesize;
-
-  /* Frame register.  */
-  int fp_regnum;
-
-  /* Offsets to saved registers.  */
-  int register_offsets[57];	/* Must match MICROBLAZE_NUM_REGS.  */
-
-  /* Table of saved registers.  */
-  struct trad_frame_saved_reg *saved_regs;
-};
-
 /* Register numbers.  */
-enum microblaze_regnum 
+enum microblaze_regnum
 {
   MICROBLAZE_R0_REGNUM,
   MICROBLAZE_R1_REGNUM, MICROBLAZE_SP_REGNUM = MICROBLAZE_R1_REGNUM,
@@ -107,9 +85,33 @@ enum microblaze_regnum
   MICROBLAZE_RTLBX_REGNUM,
   MICROBLAZE_RTLBSX_REGNUM,
   MICROBLAZE_RTLBLO_REGNUM,
-  MICROBLAZE_RTLBHI_REGNUM
+  MICROBLAZE_RTLBHI_REGNUM,
+  MICROBLAZE_SLR_REGNUM, MICROBLAZE_NUM_CORE_REGS = MICROBLAZE_SLR_REGNUM,
+  MICROBLAZE_SHR_REGNUM,
+  MICROBLAZE_NUM_REGS
 };
 
+struct microblaze_frame_cache
+{
+  /* Base address.  */
+  CORE_ADDR base;
+  CORE_ADDR pc;
+
+  /* Do we have a frame?  */
+  int frameless_p;
+
+  /* Frame size.  */
+  int framesize;
+
+  /* Frame register.  */
+  int fp_regnum;
+
+  /* Offsets to saved registers.  */
+  int register_offsets[MICROBLAZE_NUM_REGS];
+
+  /* Table of saved registers.  */
+  struct trad_frame_saved_reg *saved_regs;
+};
 /* All registers are 32 bits.  */
 #define MICROBLAZE_REGISTER_SIZE 4
 
