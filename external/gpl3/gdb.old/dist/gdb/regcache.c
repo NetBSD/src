@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,12 +24,10 @@
 #include "gdbcmd.h"
 #include "regcache.h"
 #include "reggroups.h"
-#include "gdb_assert.h"
-#include <string.h>
 #include "observer.h"
-#include "exceptions.h"
 #include "remote.h"
 #include "valprint.h"
+#include "regset.h"
 
 /*
  * DATA STRUCTURE
@@ -217,22 +215,22 @@ regcache_xmalloc_1 (struct gdbarch *gdbarch, struct address_space *aspace,
 
   gdb_assert (gdbarch != NULL);
   descr = regcache_descr (gdbarch);
-  regcache = XMALLOC (struct regcache);
+  regcache = XNEW (struct regcache);
   regcache->descr = descr;
   regcache->readonly_p = readonly_p;
   if (readonly_p)
     {
       regcache->registers
-	= XCALLOC (descr->sizeof_cooked_registers, gdb_byte);
+	= XCNEWVEC (gdb_byte, descr->sizeof_cooked_registers);
       regcache->register_status
-	= XCALLOC (descr->sizeof_cooked_register_status, signed char);
+	= XCNEWVEC (signed char, descr->sizeof_cooked_register_status);
     }
   else
     {
       regcache->registers
-	= XCALLOC (descr->sizeof_raw_registers, gdb_byte);
+	= XCNEWVEC (gdb_byte, descr->sizeof_raw_registers);
       regcache->register_status
-	= XCALLOC (descr->sizeof_raw_register_status, signed char);
+	= XCNEWVEC (signed char, descr->sizeof_raw_register_status);
     }
   regcache->aspace = aspace;
   regcache->ptid = minus_one_ptid;
@@ -265,6 +263,32 @@ struct cleanup *
 make_cleanup_regcache_xfree (struct regcache *regcache)
 {
   return make_cleanup (do_regcache_xfree, regcache);
+}
+
+/* Cleanup routines for invalidating a register.  */
+
+struct register_to_invalidate
+{
+  struct regcache *regcache;
+  int regnum;
+};
+
+static void
+do_regcache_invalidate (void *data)
+{
+  struct register_to_invalidate *reg = data;
+
+  regcache_invalidate (reg->regcache, reg->regnum);
+}
+
+static struct cleanup *
+make_cleanup_regcache_invalidate (struct regcache *regcache, int regnum)
+{
+  struct register_to_invalidate* reg = XNEW (struct register_to_invalidate);
+
+  reg->regcache = regcache;
+  reg->regnum = regnum;
+  return make_cleanup_dtor (do_regcache_invalidate, (void *) reg, xfree);
 }
 
 /* Return REGCACHE's architecture.  */
@@ -511,6 +535,13 @@ get_current_regcache (void)
   return get_thread_regcache (inferior_ptid);
 }
 
+/* See common/common-regcache.h.  */
+
+struct regcache *
+get_thread_regcache_for_ptid (ptid_t ptid)
+{
+  return get_thread_regcache (ptid);
+}
 
 /* Observer for the target_changed event.  */
 
@@ -846,7 +877,8 @@ void
 regcache_raw_write (struct regcache *regcache, int regnum,
 		    const gdb_byte *buf)
 {
-  struct cleanup *old_chain;
+  struct cleanup *chain_before_save_inferior;
+  struct cleanup *chain_before_invalidate_register;
 
   gdb_assert (regcache != NULL && buf != NULL);
   gdb_assert (regnum >= 0 && regnum < regcache->descr->nr_raw_registers);
@@ -864,16 +896,26 @@ regcache_raw_write (struct regcache *regcache, int regnum,
 		  regcache->descr->sizeof_register[regnum]) == 0))
     return;
 
-  old_chain = save_inferior_ptid ();
+  chain_before_save_inferior = save_inferior_ptid ();
   inferior_ptid = regcache->ptid;
 
   target_prepare_to_store (regcache);
   memcpy (register_buffer (regcache, regnum), buf,
 	  regcache->descr->sizeof_register[regnum]);
   regcache->register_status[regnum] = REG_VALID;
+
+  /* Register a cleanup function for invalidating the register after it is
+     written, in case of a failure.  */
+  chain_before_invalidate_register
+    = make_cleanup_regcache_invalidate (regcache, regnum);
+
   target_store_registers (regcache, regnum);
 
-  do_cleanups (old_chain);
+  /* The target did not throw an error so we can discard invalidating the
+     register and restore the cleanup chain to what it was.  */
+  discard_cleanups (chain_before_invalidate_register);
+
+  do_cleanups (chain_before_save_inferior);
 }
 
 void
@@ -1029,6 +1071,92 @@ regcache_raw_collect (const struct regcache *regcache, int regnum, void *buf)
   regbuf = register_buffer (regcache, regnum);
   size = regcache->descr->sizeof_register[regnum];
   memcpy (buf, regbuf, size);
+}
+
+/* Transfer a single or all registers belonging to a certain register
+   set to or from a buffer.  This is the main worker function for
+   regcache_supply_regset and regcache_collect_regset.  */
+
+static void
+regcache_transfer_regset (const struct regset *regset,
+			  const struct regcache *regcache,
+			  struct regcache *out_regcache,
+			  int regnum, const void *in_buf,
+			  void *out_buf, size_t size)
+{
+  const struct regcache_map_entry *map;
+  int offs = 0, count;
+
+  for (map = regset->regmap; (count = map->count) != 0; map++)
+    {
+      int regno = map->regno;
+      int slot_size = map->size;
+
+      if (slot_size == 0 && regno != REGCACHE_MAP_SKIP)
+	slot_size = regcache->descr->sizeof_register[regno];
+
+      if (regno == REGCACHE_MAP_SKIP
+	  || (regnum != -1
+	      && (regnum < regno || regnum >= regno + count)))
+	  offs += count * slot_size;
+
+      else if (regnum == -1)
+	for (; count--; regno++, offs += slot_size)
+	  {
+	    if (offs + slot_size > size)
+	      break;
+
+	    if (out_buf)
+	      regcache_raw_collect (regcache, regno,
+				    (gdb_byte *) out_buf + offs);
+	    else
+	      regcache_raw_supply (out_regcache, regno, in_buf
+				   ? (const gdb_byte *) in_buf + offs
+				   : NULL);
+	  }
+      else
+	{
+	  /* Transfer a single register and return.  */
+	  offs += (regnum - regno) * slot_size;
+	  if (offs + slot_size > size)
+	    return;
+
+	  if (out_buf)
+	    regcache_raw_collect (regcache, regnum,
+				  (gdb_byte *) out_buf + offs);
+	  else
+	    regcache_raw_supply (out_regcache, regnum, in_buf
+				 ? (const gdb_byte *) in_buf + offs
+				 : NULL);
+	  return;
+	}
+    }
+}
+
+/* Supply register REGNUM from BUF to REGCACHE, using the register map
+   in REGSET.  If REGNUM is -1, do this for all registers in REGSET.
+   If BUF is NULL, set the register(s) to "unavailable" status. */
+
+void
+regcache_supply_regset (const struct regset *regset,
+			struct regcache *regcache,
+			int regnum, const void *buf, size_t size)
+{
+  regcache_transfer_regset (regset, regcache, regcache, regnum,
+			    buf, NULL, size);
+}
+
+/* Collect register REGNUM from REGCACHE to BUF, using the register
+   map in REGSET.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
+
+void
+regcache_collect_regset (const struct regset *regset,
+			 const struct regcache *regcache,
+			 int regnum, void *buf, size_t size)
+{
+  regcache_transfer_regset (regset, regcache, NULL, regnum,
+			    NULL, buf, size);
 }
 
 

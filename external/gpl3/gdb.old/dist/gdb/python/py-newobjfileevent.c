@@ -1,6 +1,6 @@
 /* Python interface to new object file loading events.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,8 @@
 #include "py-event.h"
 
 static PyTypeObject new_objfile_event_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
+static PyTypeObject clear_objfiles_event_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
 
 static PyObject *
@@ -72,3 +74,56 @@ GDBPY_NEW_EVENT_TYPE (new_objfile,
                       "GDB new object file event object",
                       event_object_type,
                       static);
+
+/* Subroutine of emit_clear_objfiles_event to simplify it.  */
+
+static PyObject *
+create_clear_objfiles_event_object (void)
+{
+  PyObject *objfile_event;
+  PyObject *py_progspace;
+
+  objfile_event = create_event_object (&clear_objfiles_event_object_type);
+  if (!objfile_event)
+    goto fail;
+
+  /* Note that pspace_to_pspace_object returns a borrowed reference,
+     so we don't need a decref here.  */
+  py_progspace = pspace_to_pspace_object (current_program_space);
+  if (!py_progspace || evpy_add_attribute (objfile_event,
+					   "progspace",
+					   py_progspace) < 0)
+    goto fail;
+
+  return objfile_event;
+
+ fail:
+  Py_XDECREF (objfile_event);
+  return NULL;
+}
+
+/* Callback function which notifies observers when the "clear objfiles"
+   event occurs.
+   This function will create a new Python clear_objfiles event object.
+   Return -1 if emit fails.  */
+
+int
+emit_clear_objfiles_event (void)
+{
+  PyObject *event;
+
+  if (evregpy_no_listeners_p (gdb_py_events.clear_objfiles))
+    return 0;
+
+  event = create_clear_objfiles_event_object ();
+  if (event)
+    return evpy_emit_event (event, gdb_py_events.clear_objfiles);
+  return -1;
+}
+
+GDBPY_NEW_EVENT_TYPE (clear_objfiles,
+		      "gdb.ClearObjFilesEvent",
+		      "ClearObjFilesEvent",
+		      "GDB clear object files event object",
+		      event_object_type,
+		      static);

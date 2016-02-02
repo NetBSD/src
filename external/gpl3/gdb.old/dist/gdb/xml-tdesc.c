@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -27,8 +27,6 @@
 #include "osabi.h"
 
 #include "filenames.h"
-
-#include "gdb_assert.h"
 
 #if !defined(HAVE_LIBEXPAT)
 

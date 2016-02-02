@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from rs6000/powerpc-e500l.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: rs6000/powerpc-e500l.xml
 name:powerpc_e500l
 xmltarget:powerpc-e500l.xml
 expedite:r1,pc

@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "target.h"
 #include "linux-nat.h"
 
-static const struct sparc_gregset sparc64_linux_ptrace_gregset =
+static const struct sparc_gregmap sparc64_linux_ptrace_gregmap =
 {
   16 * 8,			/* "tstate" */
   17 * 8,			/* %pc */
@@ -47,26 +47,26 @@ static const struct sparc_gregset sparc64_linux_ptrace_gregset =
 void
 supply_gregset (struct regcache *regcache, const prgregset_t *gregs)
 {
-  sparc64_supply_gregset (sparc_gregset, regcache, -1, gregs);
+  sparc64_supply_gregset (sparc_gregmap, regcache, -1, gregs);
 }
 
 void
 supply_fpregset (struct regcache *regcache, const prfpregset_t *fpregs)
 {
-  sparc64_supply_fpregset (&sparc64_bsd_fpregset, regcache, -1, fpregs);
+  sparc64_supply_fpregset (&sparc64_bsd_fpregmap, regcache, -1, fpregs);
 }
 
 void
 fill_gregset (const struct regcache *regcache, prgregset_t *gregs, int regnum)
 {
-  sparc64_collect_gregset (sparc_gregset, regcache, regnum, gregs);
+  sparc64_collect_gregset (sparc_gregmap, regcache, regnum, gregs);
 }
 
 void
 fill_fpregset (const struct regcache *regcache,
 	       prfpregset_t *fpregs, int regnum)
 {
-  sparc64_collect_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
+  sparc64_collect_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
@@ -80,6 +80,8 @@ _initialize_sparc64_linux_nat (void)
   /* Fill in the generic GNU/Linux methods.  */
   t = linux_target ();
 
+  sparc_fpregmap = &sparc64_bsd_fpregmap;
+
   /* Add our register access methods.  */
   t->to_fetch_registers = sparc_fetch_inferior_registers;
   t->to_store_registers = sparc_store_inferior_registers;
@@ -87,5 +89,5 @@ _initialize_sparc64_linux_nat (void)
   /* Register the target.  */
   linux_nat_add_target (t);
 
-  sparc_gregset = &sparc64_linux_ptrace_gregset;
+  sparc_gregmap = &sparc64_linux_ptrace_gregmap;
 }

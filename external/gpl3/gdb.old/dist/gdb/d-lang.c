@@ -1,6 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,181 +23,36 @@
 #include "varobj.h"
 #include "d-lang.h"
 #include "c-lang.h"
-#include <string.h>
-#include "parser-defs.h"
-#include "gdb_obstack.h"
+#include "demangle.h"
+#include "cp-support.h"
 
-#include <ctype.h>
+/* The name of the symbol to use to get the name of the main subprogram.  */
+static const char D_MAIN[] = "D main";
 
-/* Extract identifiers from MANGLED_STR and append it to TEMPBUF.
-   Return 1 on success or 0 on failure.  */
-static int
-extract_identifiers (const char *mangled_str, struct obstack *tempbuf)
+/* Function returning the special symbol name used by D for the main
+   procedure in the main program if it is found in minimal symbol list.
+   This function tries to find minimal symbols so that it finds them even
+   if the program was compiled without debugging information.  */
+
+const char *
+d_main_name (void)
 {
-  long i = 0;
+  struct bound_minimal_symbol msym;
 
-  while (isdigit (*mangled_str))
-    {
-      char *end_ptr;
+  msym = lookup_minimal_symbol (D_MAIN, NULL, NULL);
+  if (msym.minsym != NULL)
+    return D_MAIN;
 
-      i = strtol (mangled_str, &end_ptr, 10);
-      mangled_str = end_ptr;
-      if (i <= 0 || strlen (mangled_str) < i)
-        return 0;
-      obstack_grow (tempbuf, mangled_str, i);
-      mangled_str += i;
-      obstack_grow_str (tempbuf, ".");
-    }
-  if (*mangled_str == '\0' || i == 0)
-    return 0;
-  obstack_blank (tempbuf, -1);
-  return 1;
-}
-
-/* Extract and demangle type from MANGLED_STR and append it to TEMPBUF.
-   Return 1 on success or 0 on failure.  */
-static int
-extract_type_info (const char *mangled_str, struct obstack *tempbuf)
-{
-  if (*mangled_str == '\0')
-    return 0;
-  switch (*mangled_str++)
-    {
-      case 'A': /* dynamic array */
-      case 'G': /* static array */
-      case 'H': /* associative array */
-	if (!extract_type_info (mangled_str, tempbuf))
-	  return 0;
-	obstack_grow_str (tempbuf, "[]");
-	return 1;
-      case 'P': /* pointer */
-	if (!extract_type_info (mangled_str, tempbuf))
-	  return 0;
-	obstack_grow_str (tempbuf, "*");
-	return 1;
-      case 'R': /* reference */
-	if (!extract_type_info (mangled_str, tempbuf))
-	  return 0;
-	obstack_grow_str (tempbuf, "&");
-	return 1;
-      case 'Z': /* return value */
-	return extract_type_info (mangled_str, tempbuf);
-      case 'J': /* out */
-	obstack_grow_str (tempbuf, "out ");
-	return extract_type_info (mangled_str, tempbuf);
-      case 'K': /* inout */
-	obstack_grow_str (tempbuf, "inout ");
-	return extract_type_info (mangled_str, tempbuf);
-      case 'E': /* enum */
-      case 'T': /* typedef */
-      case 'D': /* delegate */
-      case 'C': /* class */
-      case 'S': /* struct */
-	return extract_identifiers (mangled_str, tempbuf);
-
-      /* basic types: */
-      case 'n': obstack_grow_str (tempbuf, "none"); return 1;
-      case 'v': obstack_grow_str (tempbuf, "void"); return 1;
-      case 'g': obstack_grow_str (tempbuf, "byte"); return 1;
-      case 'h': obstack_grow_str (tempbuf, "ubyte"); return 1;
-      case 's': obstack_grow_str (tempbuf, "short"); return 1;
-      case 't': obstack_grow_str (tempbuf, "ushort"); return 1;
-      case 'i': obstack_grow_str (tempbuf, "int"); return 1;
-      case 'k': obstack_grow_str (tempbuf, "uint"); return 1;
-      case 'l': obstack_grow_str (tempbuf, "long"); return 1;
-      case 'm': obstack_grow_str (tempbuf, "ulong"); return 1;
-      case 'f': obstack_grow_str (tempbuf, "float"); return 1;
-      case 'd': obstack_grow_str (tempbuf, "double"); return 1;
-      case 'e': obstack_grow_str (tempbuf, "real"); return 1;
-
-      /* imaginary and complex: */
-      case 'o': obstack_grow_str (tempbuf, "ifloat"); return 1;
-      case 'p': obstack_grow_str (tempbuf, "idouble"); return 1;
-      case 'j': obstack_grow_str (tempbuf, "ireal"); return 1;
-      case 'q': obstack_grow_str (tempbuf, "cfloat"); return 1;
-      case 'r': obstack_grow_str (tempbuf, "cdouble"); return 1;
-      case 'c': obstack_grow_str (tempbuf, "creal"); return 1;
-
-      /* other types: */
-      case 'b': obstack_grow_str (tempbuf, "bit"); return 1;
-      case 'a': obstack_grow_str (tempbuf, "char"); return 1;
-      case 'u': obstack_grow_str (tempbuf, "wchar"); return 1;
-      case 'w': obstack_grow_str (tempbuf, "dchar"); return 1;
-
-      default:
-	obstack_grow_str (tempbuf, "unknown");
-	return 1;
-    }
+  /* No known entry procedure found, the main program is probably not D.  */
+  return NULL;
 }
 
 /* Implements the la_demangle language_defn routine for language D.  */
+
 char *
 d_demangle (const char *symbol, int options)
 {
-  struct obstack tempbuf;
-  char *out_str;
-  unsigned char is_func = 0;
-
-  if (symbol == NULL)
-    return NULL;
-  else if (strcmp (symbol, "_Dmain") == 0)
-    return xstrdup ("D main");
-
-  obstack_init (&tempbuf);
-  
-  if (symbol[0] == '_' && symbol[1] == 'D')
-    {
-      symbol += 2;
-      is_func = 1;
-    }
-  else if (strncmp (symbol, "__Class_", 8) == 0)
-    symbol += 8;
-  else if (strncmp (symbol, "__init_", 7) == 0)
-    symbol += 7;
-  else if (strncmp (symbol, "__vtbl_", 7) == 0)
-    symbol += 7;
-  else if (strncmp (symbol, "__modctor_", 10) == 0)
-    symbol += 10;
-  else if (strncmp (symbol, "__moddtor_", 10) == 0)
-    symbol += 10;
-  else if (strncmp (symbol, "__ModuleInfo_", 13) == 0)
-    symbol += 13;
-  else
-    {
-      obstack_free (&tempbuf, NULL);
-      return NULL;
-    }
-  
-  if (!extract_identifiers (symbol, &tempbuf))
-    {
-      obstack_free (&tempbuf, NULL);
-      return NULL;
-    }
-
-  obstack_grow_str (&tempbuf, "(");
-  if (is_func == 1 && *symbol == 'F')
-    {
-      symbol++;
-      while (*symbol != '\0' && *symbol != 'Z')
-	{
-	  if (is_func == 1)
-	    is_func++;
-	  else
-	    obstack_grow_str (&tempbuf, ", ");
-	  if (!extract_type_info (symbol, &tempbuf))
-	    {
-	      obstack_free (&tempbuf, NULL);
-	      return NULL;
-	   }
-	}
-     }
-  obstack_grow_str0 (&tempbuf, ")");
-
-  /* Doesn't display the return type, but wouldn't be too hard to do.  */
-
-  out_str = xstrdup (obstack_finish (&tempbuf));
-  obstack_free (&tempbuf, NULL);
-  return out_str;
+  return gdb_demangle (symbol, options | DMGL_DLANG);
 }
 
 /* Table mapping opcodes into strings for printing operators
@@ -211,8 +66,8 @@ static const struct op_print d_op_print_tab[] =
   {"|", BINOP_BITWISE_IOR, PREC_BITWISE_IOR, 0},
   {"^", BINOP_BITWISE_XOR, PREC_BITWISE_XOR, 0},
   {"&", BINOP_BITWISE_AND, PREC_BITWISE_AND, 0},
-  {"==", BINOP_EQUAL, PREC_EQUAL, 0},
-  {"!=", BINOP_NOTEQUAL, PREC_EQUAL, 0},
+  {"==", BINOP_EQUAL, PREC_ORDER, 0},
+  {"!=", BINOP_NOTEQUAL, PREC_ORDER, 0},
   {"<=", BINOP_LEQ, PREC_ORDER, 0},
   {">=", BINOP_GEQ, PREC_ORDER, 0},
   {">", BINOP_GTR, PREC_ORDER, 0},
@@ -221,9 +76,11 @@ static const struct op_print d_op_print_tab[] =
   {"<<", BINOP_LSH, PREC_SHIFT, 0},
   {"+", BINOP_ADD, PREC_ADD, 0},
   {"-", BINOP_SUB, PREC_ADD, 0},
+  {"~", BINOP_CONCAT, PREC_ADD, 0},
   {"*", BINOP_MUL, PREC_MUL, 0},
   {"/", BINOP_DIV, PREC_MUL, 0},
   {"%", BINOP_REM, PREC_MUL, 0},
+  {"^^", BINOP_EXP, PREC_REPEAT, 0},
   {"@", BINOP_REPEAT, PREC_REPEAT, 0},
   {"-", UNOP_NEG, PREC_PREFIX, 0},
   {"!", UNOP_LOGICAL_NOT, PREC_PREFIX, 0},
@@ -236,6 +93,103 @@ static const struct op_print d_op_print_tab[] =
   {NULL, 0, 0, 0}
 };
 
+/* Mapping of all D basic data types into the language vector.  */
+
+enum d_primitive_types {
+  d_primitive_type_void,
+  d_primitive_type_bool,
+  d_primitive_type_byte,
+  d_primitive_type_ubyte,
+  d_primitive_type_short,
+  d_primitive_type_ushort,
+  d_primitive_type_int,
+  d_primitive_type_uint,
+  d_primitive_type_long,
+  d_primitive_type_ulong,
+  d_primitive_type_cent,    /* Signed 128 bit integer.  */
+  d_primitive_type_ucent,   /* Unsigned 128 bit integer.  */
+  d_primitive_type_float,
+  d_primitive_type_double,
+  d_primitive_type_real,
+  d_primitive_type_ifloat,  /* Imaginary float types.  */
+  d_primitive_type_idouble,
+  d_primitive_type_ireal,
+  d_primitive_type_cfloat,  /* Complex number of two float values.  */
+  d_primitive_type_cdouble,
+  d_primitive_type_creal,
+  d_primitive_type_char,    /* Unsigned character types.  */
+  d_primitive_type_wchar,
+  d_primitive_type_dchar,
+  nr_d_primitive_types
+};
+
+/* Implements the la_language_arch_info language_defn routine
+   for language D.  */
+
+static void
+d_language_arch_info (struct gdbarch *gdbarch,
+		      struct language_arch_info *lai)
+{
+  const struct builtin_d_type *builtin = builtin_d_type (gdbarch);
+
+  lai->string_char_type = builtin->builtin_char;
+  lai->primitive_type_vector
+    = GDBARCH_OBSTACK_CALLOC (gdbarch, nr_d_primitive_types + 1,
+			      struct type *);
+
+  lai->primitive_type_vector [d_primitive_type_void]
+    = builtin->builtin_void;
+  lai->primitive_type_vector [d_primitive_type_bool]
+    = builtin->builtin_bool;
+  lai->primitive_type_vector [d_primitive_type_byte]
+    = builtin->builtin_byte;
+  lai->primitive_type_vector [d_primitive_type_ubyte]
+    = builtin->builtin_ubyte;
+  lai->primitive_type_vector [d_primitive_type_short]
+    = builtin->builtin_short;
+  lai->primitive_type_vector [d_primitive_type_ushort]
+    = builtin->builtin_ushort;
+  lai->primitive_type_vector [d_primitive_type_int]
+    = builtin->builtin_int;
+  lai->primitive_type_vector [d_primitive_type_uint]
+    = builtin->builtin_uint;
+  lai->primitive_type_vector [d_primitive_type_long]
+    = builtin->builtin_long;
+  lai->primitive_type_vector [d_primitive_type_ulong]
+    = builtin->builtin_ulong;
+  lai->primitive_type_vector [d_primitive_type_cent]
+    = builtin->builtin_cent;
+  lai->primitive_type_vector [d_primitive_type_ucent]
+    = builtin->builtin_ucent;
+  lai->primitive_type_vector [d_primitive_type_float]
+    = builtin->builtin_float;
+  lai->primitive_type_vector [d_primitive_type_double]
+    = builtin->builtin_double;
+  lai->primitive_type_vector [d_primitive_type_real]
+    = builtin->builtin_real;
+  lai->primitive_type_vector [d_primitive_type_ifloat]
+    = builtin->builtin_ifloat;
+  lai->primitive_type_vector [d_primitive_type_idouble]
+    = builtin->builtin_idouble;
+  lai->primitive_type_vector [d_primitive_type_ireal]
+    = builtin->builtin_ireal;
+  lai->primitive_type_vector [d_primitive_type_cfloat]
+    = builtin->builtin_cfloat;
+  lai->primitive_type_vector [d_primitive_type_cdouble]
+    = builtin->builtin_cdouble;
+  lai->primitive_type_vector [d_primitive_type_creal]
+    = builtin->builtin_creal;
+  lai->primitive_type_vector [d_primitive_type_char]
+    = builtin->builtin_char;
+  lai->primitive_type_vector [d_primitive_type_wchar]
+    = builtin->builtin_wchar;
+  lai->primitive_type_vector [d_primitive_type_dchar]
+    = builtin->builtin_dchar;
+
+  lai->bool_type_symbol = "bool";
+  lai->bool_type_default = builtin->builtin_bool;
+}
+
 static const struct language_defn d_language_defn =
 {
   "d",
@@ -244,10 +198,10 @@ static const struct language_defn d_language_defn =
   range_check_off,
   case_sensitive_on,
   array_row_major,
-  macro_expansion_c,
+  macro_expansion_no,
   &exp_descriptor_c,
-  c_parse,
-  c_error,
+  d_parse,
+  d_error,
   null_post_parser,
   c_printchar,			/* Print a character constant.  */
   c_printstr,			/* Function to print string constant.  */
@@ -270,15 +224,106 @@ static const struct language_defn d_language_defn =
   0,				/* String lower bound.  */
   default_word_break_characters,
   default_make_symbol_completion_list,
-  c_language_arch_info,
+  d_language_arch_info,
   default_print_array_index,
   default_pass_by_reference,
   c_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &default_varobj_ops,
+  NULL,
+  NULL,
   LANG_MAGIC
 };
+
+/* Build all D language types for the specified architecture.  */
+
+static void *
+build_d_types (struct gdbarch *gdbarch)
+{
+  struct builtin_d_type *builtin_d_type
+    = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct builtin_d_type);
+
+  /* Basic types.  */
+  builtin_d_type->builtin_void
+    = arch_type (gdbarch, TYPE_CODE_VOID, 1, "void");
+  builtin_d_type->builtin_bool
+    = arch_boolean_type (gdbarch, 8, 1, "bool");
+  builtin_d_type->builtin_byte
+    = arch_integer_type (gdbarch, 8, 0, "byte");
+  builtin_d_type->builtin_ubyte
+    = arch_integer_type (gdbarch, 8, 1, "ubyte");
+  builtin_d_type->builtin_short
+    = arch_integer_type (gdbarch, 16, 0, "short");
+  builtin_d_type->builtin_ushort
+    = arch_integer_type (gdbarch, 16, 1, "ushort");
+  builtin_d_type->builtin_int
+    = arch_integer_type (gdbarch, 32, 0, "int");
+  builtin_d_type->builtin_uint
+    = arch_integer_type (gdbarch, 32, 1, "uint");
+  builtin_d_type->builtin_long
+    = arch_integer_type (gdbarch, 64, 0, "long");
+  builtin_d_type->builtin_ulong
+    = arch_integer_type (gdbarch, 64, 1, "ulong");
+  builtin_d_type->builtin_cent
+    = arch_integer_type (gdbarch, 128, 0, "cent");
+  builtin_d_type->builtin_ucent
+    = arch_integer_type (gdbarch, 128, 1, "ucent");
+  builtin_d_type->builtin_float
+    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch),
+		       "float", NULL);
+  builtin_d_type->builtin_double
+    = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch),
+		       "double", NULL);
+  builtin_d_type->builtin_real
+    = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
+		       "real", NULL);
+
+  TYPE_INSTANCE_FLAGS (builtin_d_type->builtin_byte)
+    |= TYPE_INSTANCE_FLAG_NOTTEXT;
+  TYPE_INSTANCE_FLAGS (builtin_d_type->builtin_ubyte)
+    |= TYPE_INSTANCE_FLAG_NOTTEXT;
+
+  /* Imaginary and complex types.  */
+  builtin_d_type->builtin_ifloat
+    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch),
+		       "ifloat", NULL);
+  builtin_d_type->builtin_idouble
+    = arch_float_type (gdbarch, gdbarch_double_bit (gdbarch),
+		       "idouble", NULL);
+  builtin_d_type->builtin_ireal
+    = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
+		       "ireal", NULL);
+  builtin_d_type->builtin_cfloat
+    = arch_complex_type (gdbarch, "cfloat",
+			 builtin_d_type->builtin_float);
+  builtin_d_type->builtin_cdouble
+    = arch_complex_type (gdbarch, "cdouble",
+			 builtin_d_type->builtin_double);
+  builtin_d_type->builtin_creal
+    = arch_complex_type (gdbarch, "creal",
+			 builtin_d_type->builtin_real);
+
+  /* Character types.  */
+  builtin_d_type->builtin_char
+    = arch_character_type (gdbarch, 8, 1, "char");
+  builtin_d_type->builtin_wchar
+    = arch_character_type (gdbarch, 16, 1, "wchar");
+  builtin_d_type->builtin_dchar
+    = arch_character_type (gdbarch, 32, 1, "dchar");
+
+  return builtin_d_type;
+}
+
+static struct gdbarch_data *d_type_data;
+
+/* Return the D type table for the specified architecture.  */
+
+const struct builtin_d_type *
+builtin_d_type (struct gdbarch *gdbarch)
+{
+  return gdbarch_data (gdbarch, d_type_data);
+}
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 extern initialize_file_ftype _initialize_d_language;
@@ -286,5 +331,7 @@ extern initialize_file_ftype _initialize_d_language;
 void
 _initialize_d_language (void)
 {
+  d_type_data = gdbarch_data_register_post_init (build_d_types);
+
   add_language (&d_language_defn);
 }

@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,6 @@
 
 #include "defs.h"
 #include "gdb_bfd.h"
-#include "gdb_assert.h"
-#include <string.h>
 #include "ui-out.h"
 #include "gdbcmd.h"
 #include "hashtab.h"

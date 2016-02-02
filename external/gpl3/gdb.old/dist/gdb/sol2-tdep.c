@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,16 +21,17 @@
 #include "frame.h"
 #include "symtab.h"
 #include "inferior.h"
+#include "objfiles.h"
 
 #include "sol2-tdep.h"
 
 CORE_ADDR
 sol2_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct minimal_symbol *msym;
+  struct bound_minimal_symbol msym;
 
   msym = lookup_minimal_symbol("elf_bndr", NULL, NULL);
-  if (msym && SYMBOL_VALUE_ADDRESS (msym) == pc)
+  if (msym.minsym && BMSYMBOL_VALUE_ADDRESS (msym) == pc)
     return frame_unwind_caller_pc (get_current_frame ());
 
   return 0;
@@ -59,7 +60,7 @@ sol2_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
   /* GDB didn't use to put a NT_PSTATUS note in Solaris cores.  If
      that's missing, then we're dealing with a fake PID corelow.c made
      up.  */
-  inf = find_inferior_pid (ptid_get_pid (ptid));
+  inf = find_inferior_ptid (ptid);
   if (inf == NULL || inf->fake_pid_p)
     {
       xsnprintf (buf, sizeof buf, "<core>");

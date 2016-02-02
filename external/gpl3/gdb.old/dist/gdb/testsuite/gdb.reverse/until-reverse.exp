@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ if { [prepare_for_testing $testfile.exp $testfile \
 
 set bp_location1  [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location7  [gdb_get_line_number "set breakpoint 7 here"]
-set bp_location9  [gdb_get_line_number "set breakpoint 9 here" "$srcfile2"]
+set bp_location8  [gdb_get_line_number "set breakpoint 8 here" "$srcfile2"]
 set bp_location19 [gdb_get_line_number "set breakpoint 19 here"]
 set bp_location20 [gdb_get_line_number "set breakpoint 20 here"]
 set bp_location21 [gdb_get_line_number "set breakpoint 21 here"]
@@ -70,7 +70,7 @@ gdb_test "finish" \
 # Advance to a function called by main (marker2)
 #
 gdb_test "advance marker2" \
-    "marker2 .a=43.*$srcfile2:$bp_location9.*" \
+    "marker2 .a=43.*$srcfile2:$bp_location8.*" \
     "advance to marker2"
 
 # Now issue an until with another function, not called by the current
@@ -101,7 +101,7 @@ gdb_test_no_output "set exec-dir reverse" "set reverse execution"
 #
 
 gdb_test "advance marker2" \
-    "marker2 .a=43.*$srcfile2:$bp_location9.*" \
+    "marker2 .a=43.*$srcfile2:$bp_location8.*" \
     "reverse-advance to marker2"
 
 # Finish out to main scope (backward)

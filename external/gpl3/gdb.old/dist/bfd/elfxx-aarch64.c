@@ -1,5 +1,5 @@
 /* AArch64-specific support for ELF.
-   Copyright 2009-2013  Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -20,6 +20,8 @@
 
 #include "sysdep.h"
 #include "elfxx-aarch64.h"
+#include <stdarg.h>
+#include <string.h>
 
 #define MASK(n) ((1u << (n)) - 1)
 
@@ -479,9 +481,10 @@ _bfd_aarch64_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 				  asection **secp ATTRIBUTE_UNUSED,
 				  bfd_vma *valp ATTRIBUTE_UNUSED)
 {
-  if ((abfd->flags & DYNAMIC) == 0
-      && (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
-	  || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE))
+  if ((ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
+       || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE)
+      && (abfd->flags & DYNAMIC) == 0
+      && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
     elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
 
   return TRUE;
@@ -519,4 +522,83 @@ _bfd_aarch64_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
   /* Make a ".reg/999" section.  */
   return _bfd_elfcore_make_pseudosection (abfd, ".reg",
 					  size, note->descpos + offset);
+}
+
+bfd_boolean
+_bfd_aarch64_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
+{
+  switch (note->descsz)
+    {
+    default:
+      return FALSE;
+
+    case 136:        /* This is sizeof(struct elf_prpsinfo) on Linux/aarch64.  */
+      elf_tdata (abfd)->core->pid = bfd_get_32 (abfd, note->descdata + 24);
+      elf_tdata (abfd)->core->program
+	= _bfd_elfcore_strndup (abfd, note->descdata + 40, 16);
+      elf_tdata (abfd)->core->command
+	= _bfd_elfcore_strndup (abfd, note->descdata + 56, 80);
+    }
+
+  /* Note that for some reason, a spurious space is tacked
+     onto the end of the args in some (at least one anyway)
+     implementations, so strip it off if it exists.  */
+
+  {
+    char *command = elf_tdata (abfd)->core->command;
+    int n = strlen (command);
+
+    if (0 < n && command[n - 1] == ' ')
+      command[n - 1] = '\0';
+  }
+
+  return TRUE;
+}
+
+char *
+_bfd_aarch64_elf_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_type,
+				  ...)
+{
+  switch (note_type)
+    {
+    default:
+      return NULL;
+
+    case NT_PRPSINFO:
+      {
+        char data[136];
+        va_list ap;
+
+        va_start (ap, note_type);
+        memset (data, 0, sizeof (data));
+        strncpy (data + 40, va_arg (ap, const char *), 16);
+        strncpy (data + 56, va_arg (ap, const char *), 80);
+        va_end (ap);
+
+        return elfcore_write_note (abfd, buf, bufsiz, "CORE",
+				   note_type, data, sizeof (data));
+      }
+
+    case NT_PRSTATUS:
+      {
+        char data[392];
+        va_list ap;
+        long pid;
+        int cursig;
+        const void *greg;
+
+        va_start (ap, note_type);
+        memset (data, 0, sizeof (data));
+        pid = va_arg (ap, long);
+        bfd_put_32 (abfd, pid, data + 32);
+        cursig = va_arg (ap, int);
+        bfd_put_16 (abfd, cursig, data + 12);
+        greg = va_arg (ap, const void *);
+        memcpy (data + 112, greg, 272);
+        va_end (ap);
+
+        return elfcore_write_note (abfd, buf, bufsiz, "CORE",
+				   note_type, data, sizeof (data));
+      }
+    }
 }

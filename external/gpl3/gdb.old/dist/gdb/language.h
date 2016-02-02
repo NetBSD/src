@@ -1,6 +1,6 @@
 /* Source-language-related definitions for GDB.
 
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    Contributed by the Department of Computer Science at the State University
    of New York at Buffalo.
@@ -34,6 +34,8 @@ struct ui_file;
 struct value_print_options;
 struct type_print_options;
 struct lang_varobj_ops;
+struct parser_state;
+struct compile_instance;
 
 #define MAX_FORTRAN_DIMS  7	/* Maximum number of F77 array dims.  */
 
@@ -109,6 +111,11 @@ struct language_arch_info
      expressions, regardless of whether the program being debugged
      actually defines such a type.  */
   struct type **primitive_type_vector;
+
+  /* Symbol wrappers around primitive_type_vector, so that the symbol lookup
+     machinery can return them.  */
+  struct symbol **primitive_type_symbols;
+
   /* Type of elements of strings.  */
   struct type *string_char_type;
 
@@ -164,7 +171,7 @@ struct language_defn
 
     /* Parser function.  */
 
-    int (*la_parser) (void);
+    int (*la_parser) (struct parser_state *);
 
     /* Parser error function.  */
 
@@ -260,7 +267,8 @@ struct language_defn
        the part of symbol lookup where C looks up static and global
        variables.  */
 
-    struct symbol *(*la_lookup_symbol_nonlocal) (const char *,
+    struct symbol *(*la_lookup_symbol_nonlocal) (const struct language_defn *,
+						 const char *,
 						 const struct block *,
 						 const domain_enum);
 
@@ -354,6 +362,36 @@ struct language_defn
     /* Various operations on varobj.  */
     const struct lang_varobj_ops *la_varobj_ops;
 
+    /* If this language allows compilation from the gdb command line,
+       this method should be non-NULL.  When called it should return
+       an instance of struct gcc_context appropriate to the language.
+       When defined this method must never return NULL; instead it
+       should throw an exception on failure.  The returned compiler
+       instance is owned by its caller and must be deallocated by
+       calling its 'destroy' method.  */
+
+    struct compile_instance *(*la_get_compile_instance) (void);
+
+    /* This method must be defined if 'la_get_gcc_context' is defined.
+       If 'la_get_gcc_context' is not defined, then this method is
+       ignored.
+
+       This takes the user-supplied text and returns a newly malloc'd
+       bit of code to compile.  The caller owns the result.
+
+       INST is the compiler instance being used.
+       INPUT is the user's input text.
+       GDBARCH is the architecture to use.
+       EXPR_BLOCK is the block in which the expression is being
+       parsed.
+       EXPR_PC is the PC at which the expression is being parsed.  */
+
+    char *(*la_compute_program) (struct compile_instance *inst,
+				 const char *input,
+				 struct gdbarch *gdbarch,
+				 const struct block *expr_block,
+				 CORE_ADDR expr_pc);
+
     /* Add fields above this point, so the magic number is always last.  */
     /* Magic number for compat checking.  */
 
@@ -403,9 +441,20 @@ struct type *language_bool_type (const struct language_defn *l,
 struct type *language_string_char_type (const struct language_defn *l,
 					struct gdbarch *gdbarch);
 
-struct type *language_lookup_primitive_type_by_name (const struct language_defn *l,
-						     struct gdbarch *gdbarch,
-						     const char *name);
+/* Look up type NAME in language L, and return its definition for architecture
+   GDBARCH.  Returns NULL if not found.  */
+
+struct type *language_lookup_primitive_type (const struct language_defn *l,
+					     struct gdbarch *gdbarch,
+					     const char *name);
+
+/* Wrapper around language_lookup_primitive_type to return the
+   corresponding symbol.  */
+
+struct symbol *
+  language_lookup_primitive_type_as_symbol (const struct language_defn *l,
+					    struct gdbarch *gdbarch,
+					    const char *name);
 
 
 /* These macros define the behaviour of the expression 
@@ -473,12 +522,6 @@ extern enum language set_language (enum language);
 /* Type predicates */
 
 extern int pointer_type (struct type *);
-
-/* Checks Binary and Unary operations for semantic type correctness.  */
-/* FIXME:  Does not appear to be used.  */
-#define unop_type_check(v,o) binop_type_check((v),NULL,(o))
-
-extern void binop_type_check (struct value *, struct value *, int);
 
 /* Error messages */
 

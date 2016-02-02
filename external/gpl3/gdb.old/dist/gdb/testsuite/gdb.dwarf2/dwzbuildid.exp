@@ -1,4 +1,4 @@
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ proc write_dwarf_file {filename buildid {value 99}} {
     set asm_file [standard_output_file $filename]
 
     Dwarf::assemble $asm_file {
-	declare_labels partial_label double_label int_label int_label2
+	declare_labels int_label int_label2
 
 	upvar buildid buildid
 	upvar value value
@@ -162,7 +162,7 @@ foreach testname {ok mismatch fallback} {
 	if {[runto_main]} {
 	    if {$testname == "mismatch"} {
 		gdb_test "print the_int" \
-		    "No symbol table is loaded.*"
+		    "(No symbol table is loaded|No symbol \"the_int\" in current context).*"
 	    } else {
 		gdb_test "print the_int" " = 99"
 	    }

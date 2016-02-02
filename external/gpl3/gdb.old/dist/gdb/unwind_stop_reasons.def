@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,6 +60,9 @@ SET (UNWIND_SAME_ID, "previous frame identical to this frame (corrupt stack?)")
    one to unwind further.  */
 SET (UNWIND_NO_SAVED_PC, "frame did not save the PC")
 
+/* There was an error accessing memory while unwinding this frame.  */
+SET (UNWIND_MEMORY_ERROR, "memory error while unwinding")
+
 #endif /* SET */
 
 
@@ -72,5 +75,5 @@ FIRST_ENTRY (UNWIND_NO_REASON)
 #endif
 
 #ifdef LAST_ENTRY
-LAST_ENTRY (UNWIND_NO_SAVED_PC)
+LAST_ENTRY (UNWIND_MEMORY_ERROR)
 #endif

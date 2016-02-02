@@ -1,4 +1,4 @@
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,13 +38,9 @@ clean_restart ${binfile}
 set bp_location1  [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location6  [gdb_get_line_number "set breakpoint 6 here"]
 set bp_location8  [gdb_get_line_number "set breakpoint 8 here" $srcfile2]
-set bp_location9  [gdb_get_line_number "set breakpoint 9 here" $srcfile2]
-set bp_location13 [gdb_get_line_number "set breakpoint 13 here" $srcfile2]
 set bp_location14 [gdb_get_line_number "set breakpoint 14 here" $srcfile2]
 set bp_location15 [gdb_get_line_number "set breakpoint 15 here" $srcfile2]
-set bp_location16 [gdb_get_line_number "set breakpoint 16 here" $srcfile2]
 set bp_location17 [gdb_get_line_number "set breakpoint 17 here" $srcfile2]
-set bp_location18 [gdb_get_line_number "set breakpoint 18 here" $srcfile2]
 
 #
 # test break at function
@@ -113,15 +109,15 @@ if {$hp_aCC_compiler} {
 gdb_test "info break" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location6.*
-\[0-9\]+\[\t \]+breakpoint     keep y.* in marker1$marker1_proto at .*$srcfile2:($bp_location15|$bp_location16).*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in marker1$marker1_proto at .*$srcfile2:$bp_location15.*
 \[\t \]+stop only if \\(1==1\\).*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location1.*
 \[\t \]+stop only if \\(1==1\\).*
-\[0-9\]+\[\t \]+breakpoint     keep y.* in marker2$marker2_proto at .*$srcfile2:($bp_location8|$bp_location9).*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in marker2$marker2_proto at .*$srcfile2:$bp_location8.*
 \[\t \]+stop only if \\(a==43\\).*
-\[0-9\]+\[\t \]+breakpoint     keep y.* in marker3$marker3_proto at .*$srcfile2:($bp_location17|$bp_location18).*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in marker3$marker3_proto at .*$srcfile2:$bp_location17.*
 \[\t \]+stop only if \\(multi_line_if_conditional\\(1,1,1\\)==0\\).*
-\[0-9\]+\[\t \]+breakpoint     keep y.* in marker4$marker4_proto at .*$srcfile2:($bp_location13|$bp_location14).*" \
+\[0-9\]+\[\t \]+breakpoint     keep y.* in marker4$marker4_proto at .*$srcfile2:$bp_location14.*" \
     "breakpoint info"
 
 
@@ -179,10 +175,10 @@ gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, main \\(argc=.*, argv=.
 #
 # Until the Dwarf2 writer gets fixed, I'm going to XFAIL its behavior.
 gdb_test_multiple "continue" "run until breakpoint at marker1" {
-    -re  "Continuing\\..*Breakpoint \[0-9\]+, marker1 \\(\\) at .*$srcfile2:($bp_location15|$bp_location16).*($bp_location15|$bp_location16)\[\t \]+.*$gdb_prompt $" {
+    -re  "Continuing\\..*Breakpoint \[0-9\]+, marker1 \\(\\) at .*$srcfile2:$bp_location15.*$bp_location15\[\t \]+.*$gdb_prompt $" {
 	pass "run until breakpoint at marker1"
     }
-    -re  "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker1 \\(\\) at .*$srcfile2:($bp_location15|$bp_location16).*($bp_location15|$bp_location16)\[\t \]+.*$gdb_prompt $" {
+    -re  "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker1 \\(\\) at .*$srcfile2:$bp_location15.*$bp_location15\[\t \]+.*$gdb_prompt $" {
 	xfail "run until breakpoint at marker1"
     }
 }
@@ -191,10 +187,10 @@ gdb_test_multiple "continue" "run until breakpoint at marker1" {
 # Same issues here as above.
 setup_xfail hppa2.0w-*-* 11512CLLbs
 gdb_test_multiple "continue" "run until breakpoint at marker2" {
-    -re "Continuing\\..*Breakpoint \[0-9\]+, marker2 \\(a=43\\) at .*$srcfile2:($bp_location8|$bp_location9).*($bp_location8|$bp_location9)\[\t \]+.*$gdb_prompt $" {
+    -re "Continuing\\..*Breakpoint \[0-9\]+, marker2 \\(a=43\\) at .*$srcfile2:$bp_location8.*$bp_location8\[\t \]+.*$gdb_prompt $" {
 	pass "run until breakpoint at marker2"
     }
-    -re "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker2 \\(a=43\\) at .*$srcfile2:($bp_location8|$bp_location9).*($bp_location8|$bp_location9)\[\t \]+.*$gdb_prompt $" {
+    -re "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker2 \\(a=43\\) at .*$srcfile2:$bp_location8.*$bp_location8\[\t \]+.*$gdb_prompt $" {
 	xfail "run until breakpoint at marker2"
     }
 }
@@ -228,20 +224,20 @@ gdb_test "break *main if (1==1) ta 999" \
 
 set test "run until breakpoint at marker3"
 gdb_test_multiple "continue" $test {
-    -re "Continuing\\..*Breakpoint \[0-9\]+, marker3 \\(a=$hex \"stack\", b=$hex \"trace\"\\) at .*$srcfile2:($bp_location17|$bp_location18).*($bp_location17|$bp_location18)\[\t \]+.*$gdb_prompt $" {
+    -re "Continuing\\..*Breakpoint \[0-9\]+, marker3 \\(a=$hex \"stack\", b=$hex \"trace\"\\) at .*$srcfile2:$bp_location17.*$bp_location17\[\t \]+.*$gdb_prompt $" {
 	pass $test
     }
-    -re "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker3 \\(a=$hex \"stack\", b=$hex \"trace\"\\) at .*$srcfile2:($bp_location17|$bp_location18).*($bp_location17|$bp_location18)\[\t \]+.*$gdb_prompt $" {
+    -re "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker3 \\(a=$hex \"stack\", b=$hex \"trace\"\\) at .*$srcfile2:$bp_location17.*$bp_location17\[\t \]+.*$gdb_prompt $" {
 	xfail $test
     }
 }
 
 set test "run until breakpoint at marker4"
 gdb_test_multiple "continue" $test {
-    -re "Continuing\\..*Breakpoint \[0-9\]+, marker4 \\(d=177601976\\) at .*$srcfile2:($bp_location13|$bp_location14).*($bp_location13|$bp_location14)\[\t \]+.*$gdb_prompt $" {
+    -re "Continuing\\..*Breakpoint \[0-9\]+, marker4 \\(d=177601976\\) at .*$srcfile2:$bp_location14.*$bp_location14\[\t \]+.*$gdb_prompt $" {
 	pass $test
     }
-    -re "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker4 \\(d=177601976\\) at .*$srcfile2:($bp_location13|$bp_location14).*($bp_location13|$bp_location14)\[\t \]+.*$gdb_prompt $" {
+    -re "Continuing\\..*Breakpoint \[0-9\]+, $hex in marker4 \\(d=177601976\\) at .*$srcfile2:$bp_location14.*$bp_location14\[\t \]+.*$gdb_prompt $" {
 	xfail $test
     }
 }

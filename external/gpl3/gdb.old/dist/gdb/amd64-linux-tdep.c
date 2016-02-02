@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -31,9 +31,7 @@
 #include "amd64-linux-tdep.h"
 #include "i386-linux-tdep.h"
 #include "linux-tdep.h"
-#include "i386-xstate.h"
-
-#include <string.h>
+#include "x86-xstate.h"
 
 #include "amd64-tdep.h"
 #include "solib-svr4.h"
@@ -43,23 +41,17 @@
 #include "features/i386/amd64-linux.c"
 #include "features/i386/amd64-avx-linux.c"
 #include "features/i386/amd64-mpx-linux.c"
+#include "features/i386/amd64-avx512-linux.c"
+
 #include "features/i386/x32-linux.c"
 #include "features/i386/x32-avx-linux.c"
+#include "features/i386/x32-avx512-linux.c"
 
 /* The syscall's XML filename for i386.  */
 #define XML_SYSCALL_FILENAME_AMD64 "syscalls/amd64-linux.xml"
 
 #include "record-full.h"
 #include "linux-record.h"
-
-/* Supported register note sections.  */
-static struct core_regset_section amd64_linux_regset_sections[] =
-{
-  { ".reg", 27 * 8, "general-purpose" },
-  { ".reg2", 512, "floating-point" },
-  { ".reg-xstate", I386_XSTATE_MAX_SIZE, "XSAVE extended state" },
-  { NULL, 0 }
-};
 
 /* Mapping between the general-purpose registers in `struct user'
    format and GDB's register cache layout.  */
@@ -99,7 +91,16 @@ int amd64_linux_gregset_reg_offset[] =
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1,		/* MPX registers BND0 ... BND3.  */
   -1, -1,			/* MPX registers BNDCFGU and BNDSTATUS.  */
-  15 * 8			/* "orig_rax" */
+  -1, -1, -1, -1, -1, -1, -1, -1,     /* xmm16 ... xmm31 (AVX512)  */
+  -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1,     /* ymm16 ... ymm31 (AVX512)  */
+  -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1,     /* k0 ... k7 (AVX512)  */
+  -1, -1, -1, -1, -1, -1, -1, -1,     /* zmm0 ... zmm31 (AVX512)  */
+  -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1,
+  15 * 8			      /* "orig_rax" */
 };
 
 
@@ -1573,14 +1574,20 @@ amd64_linux_core_read_description (struct gdbarch *gdbarch,
   /* Linux/x86-64.  */
   uint64_t xcr0 = i386_linux_core_read_xcr0 (abfd);
 
-  switch (xcr0 & I386_XSTATE_ALL_MASK)
+  switch (xcr0 & X86_XSTATE_ALL_MASK)
     {
-    case I386_XSTATE_MPX_MASK:
+    case X86_XSTATE_MPX_AVX512_MASK:
+    case X86_XSTATE_AVX512_MASK:
+      if (gdbarch_ptr_bit (gdbarch) == 32)
+	return tdesc_x32_avx512_linux;
+      else
+	return tdesc_amd64_avx512_linux;
+    case X86_XSTATE_MPX_MASK:
       if (gdbarch_ptr_bit (gdbarch) == 32)
 	return tdesc_x32_avx_linux;  /* No x32 MPX falling back to AVX.  */
       else
 	return tdesc_amd64_mpx_linux;
-    case I386_XSTATE_AVX_MASK:
+    case X86_XSTATE_AVX_MASK:
       if (gdbarch_ptr_bit (gdbarch) == 32)
 	return tdesc_x32_avx_linux;
       else
@@ -1591,6 +1598,49 @@ amd64_linux_core_read_description (struct gdbarch *gdbarch,
       else
 	return tdesc_amd64_linux;
     }
+}
+
+/* Similar to amd64_supply_fpregset, but use XSAVE extended state.  */
+
+static void
+amd64_linux_supply_xstateregset (const struct regset *regset,
+				 struct regcache *regcache, int regnum,
+				 const void *xstateregs, size_t len)
+{
+  amd64_supply_xsave (regcache, regnum, xstateregs);
+}
+
+/* Similar to amd64_collect_fpregset, but use XSAVE extended state.  */
+
+static void
+amd64_linux_collect_xstateregset (const struct regset *regset,
+				  const struct regcache *regcache,
+				  int regnum, void *xstateregs, size_t len)
+{
+  amd64_collect_xsave (regcache, regnum, xstateregs, 1);
+}
+
+static const struct regset amd64_linux_xstateregset =
+  {
+    NULL,
+    amd64_linux_supply_xstateregset,
+    amd64_linux_collect_xstateregset
+  };
+
+/* Iterate over core file register note sections.  */
+
+static void
+amd64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					  iterate_over_regset_sections_cb *cb,
+					  void *cb_data,
+					  const struct regcache *regcache)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  cb (".reg", 27 * 8, &i386_gregset, NULL, cb_data);
+  cb (".reg2", 512, &amd64_fpregset, NULL, cb_data);
+  cb (".reg-xstate",  regcache ? X86_XSTATE_MAX_SIZE : 0,
+      &amd64_linux_xstateregset, "XSAVE extended state", cb_data);
 }
 
 static void
@@ -1613,7 +1663,7 @@ amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->register_reggroup_p = amd64_linux_register_reggroup_p;
 
   /* Functions for 'catch syscall'.  */
-  set_xml_syscall_file_name (XML_SYSCALL_FILENAME_AMD64);
+  set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_AMD64);
   set_gdbarch_get_syscall_number (gdbarch,
                                   amd64_linux_get_syscall_number);
 
@@ -1627,8 +1677,9 @@ amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch)
   /* GNU/Linux uses the dynamic linker included in the GNU C Library.  */
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
 
-  /* Install supported register note sections.  */
-  set_gdbarch_core_regset_sections (gdbarch, amd64_linux_regset_sections);
+  /* Iterate over core file register note sections.  */
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, amd64_linux_iterate_over_regset_sections);
 
   set_gdbarch_core_read_description (gdbarch,
 				     amd64_linux_core_read_description);
@@ -2083,6 +2134,9 @@ _initialize_amd64_linux_tdep (void)
   initialize_tdesc_amd64_linux ();
   initialize_tdesc_amd64_avx_linux ();
   initialize_tdesc_amd64_mpx_linux ();
+  initialize_tdesc_amd64_avx512_linux ();
+
   initialize_tdesc_x32_linux ();
   initialize_tdesc_x32_avx_linux ();
+  initialize_tdesc_x32_avx512_linux ();
 }

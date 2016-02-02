@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004-2014 Free Software Foundation, Inc.
+# Copyright 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,13 +56,9 @@ if ![runto_main] then {
 # especially on targets without an MMU.  Don't run the tests in that
 # case.
 
-gdb_test_multiple "x 0" "memory at address 0" {
-    -re "0x0:.*Cannot access memory at address 0x0.*$gdb_prompt $" { }
-    -re "0x0:.*Error accessing memory address 0x0.*$gdb_prompt $" { }
-    -re ".*$gdb_prompt $" {
-	untested "Memory at address 0 is possibly executable"
-	return
-    }
+if { [is_address_zero_readable] } {
+    untested "Memory at address 0 is possibly executable"
+    return
 }
 
 # If an attempt to call a NULL pointer leaves the inferior in main,

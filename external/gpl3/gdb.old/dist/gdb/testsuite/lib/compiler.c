@@ -1,6 +1,6 @@
 /* This test file is part of GDB, the GNU debugger.
 
-   Copyright 1995-2014 Free Software Foundation, Inc.
+   Copyright 1995-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -72,4 +72,8 @@ set need_a_set [regsub -all {\.} [join {xlc __xlc__} -] - compiler_info]
 
 #if defined (__ARMCC_VERSION)
 set compiler_info [join {armcc __ARMCC_VERSION} -]
+#endif
+
+#if defined (__clang__)
+set compiler_info [join {clang __clang_major__ __clang_minor__ __clang_patchlevel__} -]
 #endif

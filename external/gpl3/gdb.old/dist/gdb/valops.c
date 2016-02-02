@@ -1,6 +1,6 @@
 /* Perform non-arithmetic operations on values, for GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,12 +36,9 @@
 #include "cp-support.h"
 #include "dfp.h"
 #include "tracepoint.h"
-#include <errno.h>
-#include <string.h>
-#include "gdb_assert.h"
 #include "observer.h"
 #include "objfiles.h"
-#include "exceptions.h"
+#include "extension.h"
 
 extern unsigned int overload_debug;
 /* Local functions.  */
@@ -69,11 +66,11 @@ int find_oload_champ_namespace_loop (struct value **, int,
 				     struct badness_vector **, int *,
 				     const int no_adl);
 
-static int find_oload_champ (struct value **, int, int, int,
-			     struct fn_field *, struct symbol **,
-			     struct badness_vector **);
+static int find_oload_champ (struct value **, int, int,
+			     struct fn_field *, VEC (xmethod_worker_ptr) *,
+			     struct symbol **, struct badness_vector **);
 
-static int oload_method_static (int, struct fn_field *, int);
+static int oload_method_static_p (struct fn_field *, int);
 
 enum oload_classification { STANDARD, NON_STANDARD, INCOMPATIBLE };
 
@@ -83,24 +80,25 @@ oload_classification classify_oload_match (struct badness_vector *,
 
 static struct value *value_struct_elt_for_reference (struct type *,
 						     int, struct type *,
-						     char *,
+						     const char *,
 						     struct type *,
 						     int, enum noside);
 
 static struct value *value_namespace_elt (const struct type *,
-					  char *, int , enum noside);
+					  const char *, int , enum noside);
 
 static struct value *value_maybe_namespace_elt (const struct type *,
-						char *, int,
+						const char *, int,
 						enum noside);
 
 static CORE_ADDR allocate_space_in_inferior (int);
 
 static struct value *cast_into_complex (struct type *, struct value *);
 
-static struct fn_field *find_method_list (struct value **, const char *,
-					  int, struct type *, int *,
-					  struct type **, int *);
+static void find_method_list (struct value **, const char *,
+			      int, struct type *, struct fn_field **, int *,
+			      VEC (xmethod_worker_ptr) **,
+			      struct type **, int *);
 
 void _initialize_valops (void);
 
@@ -141,7 +139,7 @@ find_function_in_inferior (const char *name, struct objfile **objf_p)
 	}
 
       if (objf_p)
-	*objf_p = SYMBOL_SYMTAB (sym)->objfile;
+	*objf_p = symbol_objfile (sym);
 
       return value_of_variable (sym, NULL);
     }
@@ -160,7 +158,7 @@ find_function_in_inferior (const char *name, struct objfile **objf_p)
 	  type = lookup_pointer_type (builtin_type (gdbarch)->builtin_char);
 	  type = lookup_function_type (type);
 	  type = lookup_pointer_type (type);
-	  maddr = SYMBOL_VALUE_ADDRESS (msymbol.minsym);
+	  maddr = BMSYMBOL_VALUE_ADDRESS (msymbol);
 
 	  if (objf_p)
 	    *objf_p = objfile;
@@ -266,6 +264,7 @@ value_cast_structs (struct type *type, struct value *v2)
 	{
 	  v = value_full_object (v2, real_type, full, top, using_enc);
 	  v = value_at_lazy (real_type, value_address (v));
+	  real_type = value_type (v);
 
 	  /* We might be trying to cast to the outermost enclosing
 	     type, in which case search_struct_field won't work.  */
@@ -333,7 +332,7 @@ value_cast_pointers (struct type *type, struct value *arg2,
 	  deprecated_set_value_type (v, type);
 	  return v;
 	}
-   }
+    }
 
   /* No superclass found, just change the pointer type.  */
   arg2 = value_copy (arg2);
@@ -413,10 +412,10 @@ value_cast (struct type *type, struct value *arg2)
 		       "divide object size in cast"));
 	  /* FIXME-type-allocation: need a way to free this type when
 	     we are done with it.  */
-	  range_type = create_range_type ((struct type *) NULL,
-					  TYPE_TARGET_TYPE (range_type),
-					  low_bound,
-					  new_length + low_bound - 1);
+	  range_type = create_static_range_type ((struct type *) NULL,
+						 TYPE_TARGET_TYPE (range_type),
+						 low_bound,
+						 new_length + low_bound - 1);
 	  deprecated_set_value_type (arg2, 
 				     create_array_type ((struct type *) NULL,
 							element_type, 
@@ -736,7 +735,7 @@ value_dynamic_cast (struct type *type, struct value *arg)
       && TYPE_CODE (resolved_type) != TYPE_CODE_REF)
     error (_("Argument to dynamic_cast must be a pointer or reference type"));
   if (TYPE_CODE (TYPE_TARGET_TYPE (resolved_type)) != TYPE_CODE_VOID
-      && TYPE_CODE (TYPE_TARGET_TYPE (resolved_type)) != TYPE_CODE_CLASS)
+      && TYPE_CODE (TYPE_TARGET_TYPE (resolved_type)) != TYPE_CODE_STRUCT)
     error (_("Argument to dynamic_cast must be pointer to class or `void *'"));
 
   class_type = check_typedef (TYPE_TARGET_TYPE (resolved_type));
@@ -749,7 +748,7 @@ value_dynamic_cast (struct type *type, struct value *arg)
       if (TYPE_CODE (arg_type) == TYPE_CODE_PTR)
 	{
 	  arg_type = check_typedef (TYPE_TARGET_TYPE (arg_type));
-	  if (TYPE_CODE (arg_type) != TYPE_CODE_CLASS)
+	  if (TYPE_CODE (arg_type) != TYPE_CODE_STRUCT)
 	    error (_("Argument to dynamic_cast does "
 		     "not have pointer to class type"));
 	}
@@ -762,7 +761,7 @@ value_dynamic_cast (struct type *type, struct value *arg)
     }
   else
     {
-      if (TYPE_CODE (arg_type) != TYPE_CODE_CLASS)
+      if (TYPE_CODE (arg_type) != TYPE_CODE_STRUCT)
 	error (_("Argument to dynamic_cast does not have class type"));
     }
 
@@ -801,6 +800,7 @@ value_dynamic_cast (struct type *type, struct value *arg)
     return value_at_lazy (type, addr);
 
   tem = value_at (type, addr);
+  type = value_type (tem);
 
   /* The first dynamic check specified in 5.2.7.  */
   if (is_public_ancestor (arg_type, TYPE_TARGET_TYPE (resolved_type)))
@@ -900,7 +900,10 @@ value_one (struct type *type)
   return val;
 }
 
-/* Helper function for value_at, value_at_lazy, and value_at_lazy_stack.  */
+/* Helper function for value_at, value_at_lazy, and value_at_lazy_stack.
+   The type of the created value may differ from the passed type TYPE.
+   Make sure to retrieve the returned values's new type after this call
+   e.g. in case the type is a variable length array.  */
 
 static struct value *
 get_value_at (struct type *type, CORE_ADDR addr, int lazy)
@@ -925,7 +928,10 @@ get_value_at (struct type *type, CORE_ADDR addr, int lazy)
    value_at_lazy instead.  value_at_lazy simply records the address of
    the data and sets the lazy-evaluation-required flag.  The lazy flag
    is tested in the value_contents macro, which is used if and when
-   the contents are actually required.
+   the contents are actually required.  The type of the created value
+   may differ from the passed type TYPE.  Make sure to retrieve the
+   returned values's new type after this call e.g. in case the type
+   is a variable length array.
 
    Note: value_at does *NOT* handle embedded offsets; perform such
    adjustments before or after calling it.  */
@@ -936,7 +942,10 @@ value_at (struct type *type, CORE_ADDR addr)
   return get_value_at (type, addr, 0);
 }
 
-/* Return a lazy value with type TYPE located at ADDR (cf. value_at).  */
+/* Return a lazy value with type TYPE located at ADDR (cf. value_at).
+   The type of the created value may differ from the passed type TYPE.
+   Make sure to retrieve the returned values's new type after this call
+   e.g. in case the type is a variable length array.  */
 
 struct value *
 value_at_lazy (struct type *type, CORE_ADDR addr)
@@ -949,81 +958,31 @@ read_value_memory (struct value *val, int embedded_offset,
 		   int stack, CORE_ADDR memaddr,
 		   gdb_byte *buffer, size_t length)
 {
-  if (length)
+  ULONGEST xfered = 0;
+
+  while (xfered < length)
     {
-      VEC(mem_range_s) *available_memory;
+      enum target_xfer_status status;
+      ULONGEST xfered_len;
 
-      if (!traceframe_available_memory (&available_memory, memaddr, length))
-	{
-	  if (stack)
-	    read_stack (memaddr, buffer, length);
-	  else
-	    read_memory (memaddr, buffer, length);
-	}
+      status = target_xfer_partial (current_target.beneath,
+				    TARGET_OBJECT_MEMORY, NULL,
+				    buffer + xfered, NULL,
+				    memaddr + xfered, length - xfered,
+				    &xfered_len);
+
+      if (status == TARGET_XFER_OK)
+	/* nothing */;
+      else if (status == TARGET_XFER_UNAVAILABLE)
+	mark_value_bytes_unavailable (val, embedded_offset + xfered,
+				      xfered_len);
+      else if (status == TARGET_XFER_EOF)
+	memory_error (TARGET_XFER_E_IO, memaddr + xfered);
       else
-	{
-	  struct target_section_table *table;
-	  struct cleanup *old_chain;
-	  CORE_ADDR unavail;
-	  mem_range_s *r;
-	  int i;
+	memory_error (status, memaddr + xfered);
 
-	  /* Fallback to reading from read-only sections.  */
-	  table = target_get_section_table (&exec_ops);
-	  available_memory =
-	    section_table_available_memory (available_memory,
-					    memaddr, length,
-					    table->sections,
-					    table->sections_end);
-
-	  old_chain = make_cleanup (VEC_cleanup(mem_range_s),
-				    &available_memory);
-
-	  normalize_mem_ranges (available_memory);
-
-	  /* Mark which bytes are unavailable, and read those which
-	     are available.  */
-
-	  unavail = memaddr;
-
-	  for (i = 0;
-	       VEC_iterate (mem_range_s, available_memory, i, r);
-	       i++)
-	    {
-	      if (mem_ranges_overlap (r->start, r->length,
-				      memaddr, length))
-		{
-		  CORE_ADDR lo1, hi1, lo2, hi2;
-		  CORE_ADDR start, end;
-
-		  /* Get the intersection window.  */
-		  lo1 = memaddr;
-		  hi1 = memaddr + length;
-		  lo2 = r->start;
-		  hi2 = r->start + r->length;
-		  start = max (lo1, lo2);
-		  end = min (hi1, hi2);
-
-		  gdb_assert (end - memaddr <= length);
-
-		  if (start > unavail)
-		    mark_value_bytes_unavailable (val,
-						  (embedded_offset
-						   + unavail - memaddr),
-						  start - unavail);
-		  unavail = end;
-
-		  read_memory (start, buffer + start - memaddr, end - start);
-		}
-	    }
-
-	  if (unavail != memaddr + length)
-	    mark_value_bytes_unavailable (val,
-					  embedded_offset + unavail - memaddr,
-					  (memaddr + length) - unavail);
-
-	  do_cleanups (old_chain);
-	}
+      xfered += xfered_len;
+      QUIT;
     }
 }
 
@@ -1152,52 +1111,54 @@ value_assign (struct value *toval, struct value *fromval)
 	  error (_("Value being assigned to is no longer active."));
 
 	gdbarch = get_frame_arch (frame);
-	if (gdbarch_convert_register_p (gdbarch, VALUE_REGNUM (toval), type))
+
+	if (value_bitsize (toval))
 	  {
-	    /* If TOVAL is a special machine register requiring
-	       conversion of program values to a special raw
-	       format.  */
-	    gdbarch_value_to_register (gdbarch, frame,
-				       VALUE_REGNUM (toval), type,
-				       value_contents (fromval));
+	    struct value *parent = value_parent (toval);
+	    int offset = value_offset (parent) + value_offset (toval);
+	    int changed_len;
+	    gdb_byte buffer[sizeof (LONGEST)];
+	    int optim, unavail;
+
+	    changed_len = (value_bitpos (toval)
+			   + value_bitsize (toval)
+			   + HOST_CHAR_BIT - 1)
+			  / HOST_CHAR_BIT;
+
+	    if (changed_len > (int) sizeof (LONGEST))
+	      error (_("Can't handle bitfields which "
+		       "don't fit in a %d bit word."),
+		     (int) sizeof (LONGEST) * HOST_CHAR_BIT);
+
+	    if (!get_frame_register_bytes (frame, value_reg, offset,
+					   changed_len, buffer,
+					   &optim, &unavail))
+	      {
+		if (optim)
+		  throw_error (OPTIMIZED_OUT_ERROR,
+			       _("value has been optimized out"));
+		if (unavail)
+		  throw_error (NOT_AVAILABLE_ERROR,
+			       _("value is not available"));
+	      }
+
+	    modify_field (type, buffer, value_as_long (fromval),
+			  value_bitpos (toval), value_bitsize (toval));
+
+	    put_frame_register_bytes (frame, value_reg, offset,
+				      changed_len, buffer);
 	  }
 	else
 	  {
-	    if (value_bitsize (toval))
+	    if (gdbarch_convert_register_p (gdbarch, VALUE_REGNUM (toval),
+					    type))
 	      {
-		struct value *parent = value_parent (toval);
-		int offset = value_offset (parent) + value_offset (toval);
-		int changed_len;
-		gdb_byte buffer[sizeof (LONGEST)];
-		int optim, unavail;
-
-		changed_len = (value_bitpos (toval)
-			       + value_bitsize (toval)
-			       + HOST_CHAR_BIT - 1)
-		  / HOST_CHAR_BIT;
-
-		if (changed_len > (int) sizeof (LONGEST))
-		  error (_("Can't handle bitfields which "
-			   "don't fit in a %d bit word."),
-			 (int) sizeof (LONGEST) * HOST_CHAR_BIT);
-
-		if (!get_frame_register_bytes (frame, value_reg, offset,
-					       changed_len, buffer,
-					       &optim, &unavail))
-		  {
-		    if (optim)
-		      throw_error (OPTIMIZED_OUT_ERROR,
-				   _("value has been optimized out"));
-		    if (unavail)
-		      throw_error (NOT_AVAILABLE_ERROR,
-				   _("value is not available"));
-		  }
-
-		modify_field (type, buffer, value_as_long (fromval),
-			      value_bitpos (toval), value_bitsize (toval));
-
-		put_frame_register_bytes (frame, value_reg, offset,
-					  changed_len, buffer);
+		/* If TOVAL is a special machine register requiring
+		   conversion of program values to a special raw
+		   format.  */
+		gdbarch_value_to_register (gdbarch, frame,
+					   VALUE_REGNUM (toval), type,
+					   value_contents (fromval));
 	      }
 	    else
 	      {
@@ -1208,6 +1169,7 @@ value_assign (struct value *toval, struct value *fromval)
 	      }
 	  }
 
+	observer_notify_register_changed (frame, value_reg);
 	if (deprecated_register_changed_hook)
 	  deprecated_register_changed_hook (-1);
 	break;
@@ -1361,6 +1323,7 @@ address_of_variable (struct symbol *var, const struct block *b)
      Lazy evaluation pays off here.  */
 
   val = value_of_variable (var, b);
+  type = value_type (val);
 
   if ((VALUE_LVAL (val) == lval_memory && value_lazy (val))
       || TYPE_CODE (type) == TYPE_CODE_FUNC)
@@ -1410,7 +1373,8 @@ value_must_coerce_to_target (struct value *val)
 
   /* The only lval kinds which do not live in target memory.  */
   if (VALUE_LVAL (val) != not_lval
-      && VALUE_LVAL (val) != lval_internalvar)
+      && VALUE_LVAL (val) != lval_internalvar
+      && VALUE_LVAL (val) != lval_xcallable)
     return 0;
 
   valtype = check_typedef (value_type (val));
@@ -1609,6 +1573,7 @@ value_ind (struct value *arg1)
 			      (value_as_address (arg1)
 			       - value_pointed_to_offset (arg1)));
 
+      enc_type = value_type (arg2);
       return readjust_indirect_value_type (arg2, enc_type, base_type, arg1);
     }
 
@@ -1756,7 +1721,7 @@ typecmp (int staticp, int varargs, int nargs,
       tt2 = check_typedef (value_type (t2[i]));
 
       if (TYPE_CODE (tt1) == TYPE_CODE_REF
-      /* We should be doing hairy argument matching, as below.  */
+	  /* We should be doing hairy argument matching, as below.  */
 	  && (TYPE_CODE (check_typedef (TYPE_TARGET_TYPE (tt1)))
 	      == TYPE_CODE (tt2)))
 	{
@@ -1860,9 +1825,7 @@ do_search_struct_field (const char *name, struct value *arg1, int offset,
 	  }
 
 	if (t_field_name
-	    && (t_field_name[0] == '\0'
-		|| (TYPE_CODE (type) == TYPE_CODE_UNION
-		    && (strcmp_iw (t_field_name, "else") == 0))))
+	    && t_field_name[0] == '\0')
 	  {
 	    struct type *field_type = TYPE_FIELD_TYPE (type, i);
 
@@ -2090,7 +2053,7 @@ search_struct_method (const char *name, struct value **arg1p,
 
 	  /* The virtual base class pointer might have been
 	     clobbered by the user program.  Make sure that it
-	    still points to a valid memory location.  */
+	     still points to a valid memory location.  */
 
 	  if (offset < 0 || offset >= TYPE_LENGTH (type))
 	    {
@@ -2220,8 +2183,8 @@ value_struct_elt (struct value **argp, struct value **args,
       return v;
     }
 
-    v = search_struct_method (name, argp, args, 0, 
-			      static_memfuncp, t);
+  v = search_struct_method (name, argp, args, 0, 
+			    static_memfuncp, t);
   
   if (v == (struct value *) - 1)
     {
@@ -2292,53 +2255,87 @@ value_struct_elt_bitpos (struct value **argp, int bitpos, struct type *ftype,
 }
 
 /* Search through the methods of an object (and its bases) to find a
-   specified method.  Return the pointer to the fn_field list of
-   overloaded instances.
+   specified method.  Return the pointer to the fn_field list FN_LIST of
+   overloaded instances defined in the source language.  If available
+   and matching, a vector of matching xmethods defined in extension
+   languages are also returned in XM_WORKER_VEC
 
    Helper function for value_find_oload_list.
    ARGP is a pointer to a pointer to a value (the object).
    METHOD is a string containing the method name.
    OFFSET is the offset within the value.
    TYPE is the assumed type of the object.
-   NUM_FNS is the number of overloaded instances.
+   FN_LIST is the pointer to matching overloaded instances defined in
+      source language.  Since this is a recursive function, *FN_LIST
+      should be set to NULL when calling this function.
+   NUM_FNS is the number of overloaded instances.  *NUM_FNS should be set to
+      0 when calling this function.
+   XM_WORKER_VEC is the vector of matching xmethod workers.  *XM_WORKER_VEC
+      should also be set to NULL when calling this function.
    BASETYPE is set to the actual type of the subobject where the
       method is found.
    BOFFSET is the offset of the base subobject where the method is found.  */
 
-static struct fn_field *
+static void
 find_method_list (struct value **argp, const char *method,
-		  int offset, struct type *type, int *num_fns,
+		  int offset, struct type *type,
+		  struct fn_field **fn_list, int *num_fns,
+		  VEC (xmethod_worker_ptr) **xm_worker_vec,
 		  struct type **basetype, int *boffset)
 {
   int i;
-  struct fn_field *f;
+  struct fn_field *f = NULL;
+  VEC (xmethod_worker_ptr) *worker_vec = NULL, *new_vec = NULL;
+
+  gdb_assert (fn_list != NULL && xm_worker_vec != NULL);
   CHECK_TYPEDEF (type);
 
-  *num_fns = 0;
-
-  /* First check in object itself.  */
-  for (i = TYPE_NFN_FIELDS (type) - 1; i >= 0; i--)
+  /* First check in object itself.
+     This function is called recursively to search through base classes.
+     If there is a source method match found at some stage, then we need not
+     look for source methods in consequent recursive calls.  */
+  if ((*fn_list) == NULL)
     {
-      /* pai: FIXME What about operators and type conversions?  */
-      const char *fn_field_name = TYPE_FN_FIELDLIST_NAME (type, i);
-
-      if (fn_field_name && (strcmp_iw (fn_field_name, method) == 0))
+      for (i = TYPE_NFN_FIELDS (type) - 1; i >= 0; i--)
 	{
-	  int len = TYPE_FN_FIELDLIST_LENGTH (type, i);
-	  struct fn_field *f = TYPE_FN_FIELDLIST1 (type, i);
+	  /* pai: FIXME What about operators and type conversions?  */
+	  const char *fn_field_name = TYPE_FN_FIELDLIST_NAME (type, i);
 
-	  *num_fns = len;
-	  *basetype = type;
-	  *boffset = offset;
+	  if (fn_field_name && (strcmp_iw (fn_field_name, method) == 0))
+	    {
+	      int len = TYPE_FN_FIELDLIST_LENGTH (type, i);
+	      f = TYPE_FN_FIELDLIST1 (type, i);
+	      *fn_list = f;
 
-	  /* Resolve any stub methods.  */
-	  check_stub_method_group (type, i);
+	      *num_fns = len;
+	      *basetype = type;
+	      *boffset = offset;
 
-	  return f;
+	      /* Resolve any stub methods.  */
+	      check_stub_method_group (type, i);
+
+	      break;
+	    }
 	}
     }
 
-  /* Not found in object, check in base subobjects.  */
+  /* Unlike source methods, xmethods can be accumulated over successive
+     recursive calls.  In other words, an xmethod named 'm' in a class
+     will not hide an xmethod named 'm' in its base class(es).  We want
+     it to be this way because xmethods are after all convenience functions
+     and hence there is no point restricting them with something like method
+     hiding.  Moreover, if hiding is done for xmethods as well, then we will
+     have to provide a mechanism to un-hide (like the 'using' construct).  */
+  worker_vec = get_matching_xmethod_workers (type, method);
+  new_vec = VEC_merge (xmethod_worker_ptr, *xm_worker_vec, worker_vec);
+
+  VEC_free (xmethod_worker_ptr, *xm_worker_vec);
+  VEC_free (xmethod_worker_ptr, worker_vec);
+  *xm_worker_vec = new_vec;
+
+  /* If source methods are not found in current class, look for them in the
+     base classes.  We also have to go through the base classes to gather
+     extension methods.  */
   for (i = TYPE_N_BASECLASSES (type) - 1; i >= 0; i--)
     {
       int base_offset;
@@ -2355,28 +2352,35 @@ find_method_list (struct value **argp, const char *method,
 	{
 	  base_offset = TYPE_BASECLASS_BITPOS (type, i) / 8;
 	}
-      f = find_method_list (argp, method, base_offset + offset,
-			    TYPE_BASECLASS (type, i), num_fns, 
-			    basetype, boffset);
-      if (f)
-	return f;
+
+      find_method_list (argp, method, base_offset + offset,
+			TYPE_BASECLASS (type, i), fn_list, num_fns,
+			xm_worker_vec, basetype, boffset);
     }
-  return NULL;
 }
 
-/* Return the list of overloaded methods of a specified name.
+/* Return the list of overloaded methods of a specified name.  The methods
+   could be those GDB finds in the binary, or xmethod.  Methods found in
+   the binary are returned in FN_LIST, and xmethods are returned in
+   XM_WORKER_VEC.
 
    ARGP is a pointer to a pointer to a value (the object).
    METHOD is the method name.
    OFFSET is the offset within the value contents.
+   FN_LIST is the pointer to matching overloaded instances defined in
+      source language.
    NUM_FNS is the number of overloaded instances.
+   XM_WORKER_VEC is the vector of matching xmethod workers defined in
+      extension languages.
    BASETYPE is set to the type of the base subobject that defines the
       method.
    BOFFSET is the offset of the base subobject which defines the method.  */
 
-static struct fn_field *
+static void
 value_find_oload_method_list (struct value **argp, const char *method,
-			      int offset, int *num_fns, 
+                              int offset, struct fn_field **fn_list,
+                              int *num_fns,
+                              VEC (xmethod_worker_ptr) **xm_worker_vec,
 			      struct type **basetype, int *boffset)
 {
   struct type *t;
@@ -2398,8 +2402,15 @@ value_find_oload_method_list (struct value **argp, const char *method,
     error (_("Attempt to extract a component of a "
 	     "value that is not a struct or union"));
 
-  return find_method_list (argp, method, 0, t, num_fns, 
-			   basetype, boffset);
+  gdb_assert (fn_list != NULL && xm_worker_vec != NULL);
+
+  /* Clear the lists.  */
+  *fn_list = NULL;
+  *num_fns = 0;
+  *xm_worker_vec = NULL;
+
+  find_method_list (argp, method, 0, t, fn_list, num_fns, xm_worker_vec,
+		    basetype, boffset);
 }
 
 /* Given an array of arguments (ARGS) (which includes an
@@ -2438,6 +2449,12 @@ value_find_oload_method_list (struct value **argp, const char *method,
    ADL overload candidates when performing overload resolution for a fully
    qualified name.
 
+   If NOSIDE is EVAL_AVOID_SIDE_EFFECTS, then OBJP's memory cannot be
+   read while picking the best overload match (it may be all zeroes and thus
+   not have a vtable pointer), in which case skip virtual function lookup.
+   This is ok as typically EVAL_AVOID_SIDE_EFFECTS is only used to determine
+   the result type.
+
    Note: This function does *not* check the value of
    overload_resolution.  Caller must check it to see whether overload
    resolution is permitted.  */
@@ -2447,23 +2464,31 @@ find_overload_match (struct value **args, int nargs,
 		     const char *name, enum oload_search_type method,
 		     struct value **objp, struct symbol *fsym,
 		     struct value **valp, struct symbol **symp, 
-		     int *staticp, const int no_adl)
+		     int *staticp, const int no_adl,
+		     const enum noside noside)
 {
   struct value *obj = (objp ? *objp : NULL);
   struct type *obj_type = obj ? value_type (obj) : NULL;
   /* Index of best overloaded function.  */
   int func_oload_champ = -1;
   int method_oload_champ = -1;
+  int src_method_oload_champ = -1;
+  int ext_method_oload_champ = -1;
+  int src_and_ext_equal = 0;
 
   /* The measure for the current best match.  */
   struct badness_vector *method_badness = NULL;
   struct badness_vector *func_badness = NULL;
+  struct badness_vector *ext_method_badness = NULL;
+  struct badness_vector *src_method_badness = NULL;
 
   struct value *temp = obj;
   /* For methods, the list of overloaded methods.  */
   struct fn_field *fns_ptr = NULL;
   /* For non-methods, the list of overloaded function symbols.  */
   struct symbol **oload_syms = NULL;
+  /* For xmethods, the VEC of xmethod workers.  */
+  VEC (xmethod_worker_ptr) *xm_worker_vec = NULL;
   /* Number of overloaded instances being considered.  */
   int num_fns = 0;
   struct type *basetype = NULL;
@@ -2475,6 +2500,8 @@ find_overload_match (struct value **args, int nargs,
   const char *func_name = NULL;
   enum oload_classification match_quality;
   enum oload_classification method_match_quality = INCOMPATIBLE;
+  enum oload_classification src_method_match_quality = INCOMPATIBLE;
+  enum oload_classification ext_method_match_quality = INCOMPATIBLE;
   enum oload_classification func_match_quality = INCOMPATIBLE;
 
   /* Get the list of overloaded methods or functions.  */
@@ -2503,12 +2530,11 @@ find_overload_match (struct value **args, int nargs,
 	}
 
       /* Retrieve the list of methods with the name NAME.  */
-      fns_ptr = value_find_oload_method_list (&temp, name, 
-					      0, &num_fns, 
-					      &basetype, &boffset);
+      value_find_oload_method_list (&temp, name, 0, &fns_ptr, &num_fns,
+				    &xm_worker_vec, &basetype, &boffset);
       /* If this is a method only search, and no methods were found
          the search has faild.  */
-      if (method == METHOD && (!fns_ptr || !num_fns))
+      if (method == METHOD && (!fns_ptr || !num_fns) && !xm_worker_vec)
 	error (_("Couldn't find method %s%s%s"),
 	       obj_type_name,
 	       (obj_type_name && *obj_type_name) ? "::" : "",
@@ -2519,18 +2545,83 @@ find_overload_match (struct value **args, int nargs,
       if (fns_ptr)
 	{
 	  gdb_assert (TYPE_DOMAIN_TYPE (fns_ptr[0].type) != NULL);
-	  method_oload_champ = find_oload_champ (args, nargs, method,
-	                                         num_fns, fns_ptr,
-	                                         oload_syms, &method_badness);
 
-	  method_match_quality =
-	      classify_oload_match (method_badness, nargs,
-	                            oload_method_static (method, fns_ptr,
-	                                                 method_oload_champ));
+	  src_method_oload_champ = find_oload_champ (args, nargs,
+						     num_fns, fns_ptr, NULL,
+						     NULL, &src_method_badness);
 
-	  make_cleanup (xfree, method_badness);
+	  src_method_match_quality = classify_oload_match
+	    (src_method_badness, nargs,
+	     oload_method_static_p (fns_ptr, src_method_oload_champ));
+
+	  make_cleanup (xfree, src_method_badness);
 	}
 
+      if (VEC_length (xmethod_worker_ptr, xm_worker_vec) > 0)
+	{
+	  ext_method_oload_champ = find_oload_champ (args, nargs,
+						     0, NULL, xm_worker_vec,
+						     NULL, &ext_method_badness);
+	  ext_method_match_quality = classify_oload_match (ext_method_badness,
+							   nargs, 0);
+	  make_cleanup (xfree, ext_method_badness);
+	  make_cleanup (free_xmethod_worker_vec, xm_worker_vec);
+	}
+
+      if (src_method_oload_champ >= 0 && ext_method_oload_champ >= 0)
+	{
+	  switch (compare_badness (ext_method_badness, src_method_badness))
+	    {
+	      case 0: /* Src method and xmethod are equally good.  */
+		src_and_ext_equal = 1;
+		/* If src method and xmethod are equally good, then
+		   xmethod should be the winner.  Hence, fall through to the
+		   case where a xmethod is better than the source
+		   method, except when the xmethod match quality is
+		   non-standard.  */
+		/* FALLTHROUGH */
+	      case 1: /* Src method and ext method are incompatible.  */
+		/* If ext method match is not standard, then let source method
+		   win.  Otherwise, fallthrough to let xmethod win.  */
+		if (ext_method_match_quality != STANDARD)
+		  {
+		    method_oload_champ = src_method_oload_champ;
+		    method_badness = src_method_badness;
+		    ext_method_oload_champ = -1;
+		    method_match_quality = src_method_match_quality;
+		    break;
+		  }
+		/* FALLTHROUGH */
+	      case 2: /* Ext method is champion.  */
+		method_oload_champ = ext_method_oload_champ;
+		method_badness = ext_method_badness;
+		src_method_oload_champ = -1;
+		method_match_quality = ext_method_match_quality;
+		break;
+	      case 3: /* Src method is champion.  */
+		method_oload_champ = src_method_oload_champ;
+		method_badness = src_method_badness;
+		ext_method_oload_champ = -1;
+		method_match_quality = src_method_match_quality;
+		break;
+	      default:
+		gdb_assert_not_reached ("Unexpected overload comparison "
+					"result");
+		break;
+	    }
+	}
+      else if (src_method_oload_champ >= 0)
+	{
+	  method_oload_champ = src_method_oload_champ;
+	  method_badness = src_method_badness;
+	  method_match_quality = src_method_match_quality;
+	}
+      else if (ext_method_oload_champ >= 0)
+	{
+	  method_oload_champ = ext_method_oload_champ;
+	  method_badness = ext_method_badness;
+	  method_match_quality = ext_method_match_quality;
+	}
     }
 
   if (method == NON_METHOD || method == BOTH)
@@ -2674,16 +2765,29 @@ find_overload_match (struct value **args, int nargs,
     }
 
   if (staticp != NULL)
-    *staticp = oload_method_static (method, fns_ptr, method_oload_champ);
+    *staticp = oload_method_static_p (fns_ptr, method_oload_champ);
 
   if (method_oload_champ >= 0)
     {
-      if (TYPE_FN_FIELD_VIRTUAL_P (fns_ptr, method_oload_champ))
-	*valp = value_virtual_fn_field (&temp, fns_ptr, method_oload_champ,
-					basetype, boffset);
+      if (src_method_oload_champ >= 0)
+	{
+	  if (TYPE_FN_FIELD_VIRTUAL_P (fns_ptr, method_oload_champ)
+	      && noside != EVAL_AVOID_SIDE_EFFECTS)
+	    {
+	      *valp = value_virtual_fn_field (&temp, fns_ptr,
+					      method_oload_champ, basetype,
+					      boffset);
+	    }
+	  else
+	    *valp = value_fn_field (&temp, fns_ptr, method_oload_champ,
+				    basetype, boffset);
+	}
       else
-	*valp = value_fn_field (&temp, fns_ptr, method_oload_champ,
-				basetype, boffset);
+	{
+	  *valp = value_of_xmethod (clone_xmethod_worker
+	    (VEC_index (xmethod_worker_ptr, xm_worker_vec,
+			ext_method_oload_champ)));
+	}
     }
   else
     *symp = oload_syms[func_oload_champ];
@@ -2834,8 +2938,8 @@ find_oload_champ_namespace_loop (struct value **args, int nargs,
   while (new_oload_syms[num_fns])
     ++num_fns;
 
-  new_oload_champ = find_oload_champ (args, nargs, 0, num_fns,
-				      NULL, new_oload_syms,
+  new_oload_champ = find_oload_champ (args, nargs, num_fns,
+				      NULL, NULL, new_oload_syms,
 				      &new_oload_champ_bv);
 
   /* Case 1: We found a good match.  Free earlier matches (if any),
@@ -2873,20 +2977,28 @@ find_oload_champ_namespace_loop (struct value **args, int nargs,
 
 /* Look for a function to take NARGS args of ARGS.  Find
    the best match from among the overloaded methods or functions
-   (depending on METHOD) given by FNS_PTR or OLOAD_SYMS, respectively.
-   The number of methods/functions in the list is given by NUM_FNS.
+   given by FNS_PTR or OLOAD_SYMS or XM_WORKER_VEC, respectively.
+   One, and only one of FNS_PTR, OLOAD_SYMS and XM_WORKER_VEC can be
+   non-NULL.
+
+   If XM_WORKER_VEC is NULL, then the length of the arrays FNS_PTR
+   or OLOAD_SYMS (whichever is non-NULL) is specified in NUM_FNS.
+
    Return the index of the best match; store an indication of the
    quality of the match in OLOAD_CHAMP_BV.
 
    It is the caller's responsibility to free *OLOAD_CHAMP_BV.  */
 
 static int
-find_oload_champ (struct value **args, int nargs, int method,
+find_oload_champ (struct value **args, int nargs,
 		  int num_fns, struct fn_field *fns_ptr,
+		  VEC (xmethod_worker_ptr) *xm_worker_vec,
 		  struct symbol **oload_syms,
 		  struct badness_vector **oload_champ_bv)
 {
   int ix;
+  int fn_count;
+  int xm_worker_vec_n = VEC_length (xmethod_worker_ptr, xm_worker_vec);
   /* A measure of how good an overloaded instance is.  */
   struct badness_vector *bv;
   /* Index of best overloaded function.  */
@@ -2895,34 +3007,49 @@ find_oload_champ (struct value **args, int nargs, int method,
   int oload_ambiguous = 0;
   /* 0 => no ambiguity, 1 => two good funcs, 2 => incomparable funcs.  */
 
+  /* A champion can be found among methods alone, or among functions
+     alone, or in xmethods alone, but not in more than one of these
+     groups.  */
+  gdb_assert ((fns_ptr != NULL) + (oload_syms != NULL) + (xm_worker_vec != NULL)
+	      == 1);
+
   *oload_champ_bv = NULL;
 
+  fn_count = (xm_worker_vec != NULL
+	      ? VEC_length (xmethod_worker_ptr, xm_worker_vec)
+	      : num_fns);
   /* Consider each candidate in turn.  */
-  for (ix = 0; ix < num_fns; ix++)
+  for (ix = 0; ix < fn_count; ix++)
     {
       int jj;
-      int static_offset = oload_method_static (method, fns_ptr, ix);
+      int static_offset = 0;
       int nparms;
       struct type **parm_types;
+      struct xmethod_worker *worker = NULL;
 
-      if (method)
+      if (xm_worker_vec != NULL)
 	{
-	  nparms = TYPE_NFIELDS (TYPE_FN_FIELD_TYPE (fns_ptr, ix));
+	  worker = VEC_index (xmethod_worker_ptr, xm_worker_vec, ix);
+	  parm_types = get_xmethod_arg_types (worker, &nparms);
 	}
       else
 	{
-	  /* If it's not a method, this is the proper place.  */
-	  nparms = TYPE_NFIELDS (SYMBOL_TYPE (oload_syms[ix]));
-	}
+	  if (fns_ptr != NULL)
+	    {
+	      nparms = TYPE_NFIELDS (TYPE_FN_FIELD_TYPE (fns_ptr, ix));
+	      static_offset = oload_method_static_p (fns_ptr, ix);
+	    }
+	  else
+	    nparms = TYPE_NFIELDS (SYMBOL_TYPE (oload_syms[ix]));
 
-      /* Prepare array of parameter types.  */
-      parm_types = (struct type **) 
-	xmalloc (nparms * (sizeof (struct type *)));
-      for (jj = 0; jj < nparms; jj++)
-	parm_types[jj] = (method
-			  ? (TYPE_FN_FIELD_ARGS (fns_ptr, ix)[jj].type)
-			  : TYPE_FIELD_TYPE (SYMBOL_TYPE (oload_syms[ix]), 
-					     jj));
+	  parm_types = (struct type **)
+	    xmalloc (nparms * (sizeof (struct type *)));
+	  for (jj = 0; jj < nparms; jj++)
+	    parm_types[jj] = (fns_ptr != NULL
+			      ? (TYPE_FN_FIELD_ARGS (fns_ptr, ix)[jj].type)
+			      : TYPE_FIELD_TYPE (SYMBOL_TYPE (oload_syms[ix]),
+						 jj));
+	}
 
       /* Compare parameter types to supplied argument types.  Skip
          THIS for static methods.  */
@@ -2957,10 +3084,14 @@ find_oload_champ (struct value **args, int nargs, int method,
       xfree (parm_types);
       if (overload_debug)
 	{
-	  if (method)
+	  if (fns_ptr != NULL)
 	    fprintf_filtered (gdb_stderr,
 			      "Overloaded method instance %s, # of parms %d\n",
 			      fns_ptr[ix].physname, nparms);
+	  else if (xm_worker_vec != NULL)
+	    fprintf_filtered (gdb_stderr,
+			      "Xmethod worker, # of parms %d\n",
+			      nparms);
 	  else
 	    fprintf_filtered (gdb_stderr,
 			      "Overloaded function instance "
@@ -2984,10 +3115,9 @@ find_oload_champ (struct value **args, int nargs, int method,
    a non-static method or a function that isn't a method.  */
 
 static int
-oload_method_static (int method, struct fn_field *fns_ptr, int index)
+oload_method_static_p (struct fn_field *fns_ptr, int index)
 {
-  if (method && fns_ptr && index >= 0
-      && TYPE_FN_FIELD_STATIC_P (fns_ptr, index))
+  if (fns_ptr && index >= 0 && TYPE_FN_FIELD_STATIC_P (fns_ptr, index))
     return 1;
   else
     return 0;
@@ -3050,6 +3180,42 @@ destructor_name_p (const char *name, struct type *type)
   return 0;
 }
 
+/* Find an enum constant named NAME in TYPE.  TYPE must be an "enum
+   class".  If the name is found, return a value representing it;
+   otherwise throw an exception.  */
+
+static struct value *
+enum_constant_from_type (struct type *type, const char *name)
+{
+  int i;
+  int name_len = strlen (name);
+
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_ENUM
+	      && TYPE_DECLARED_CLASS (type));
+
+  for (i = TYPE_N_BASECLASSES (type); i < TYPE_NFIELDS (type); ++i)
+    {
+      const char *fname = TYPE_FIELD_NAME (type, i);
+      int len;
+
+      if (TYPE_FIELD_LOC_KIND (type, i) != FIELD_LOC_KIND_ENUMVAL
+	  || fname == NULL)
+	continue;
+
+      /* Look for the trailing "::NAME", since enum class constant
+	 names are qualified here.  */
+      len = strlen (fname);
+      if (len + 2 >= name_len
+	  && fname[len - name_len - 2] == ':'
+	  && fname[len - name_len - 1] == ':'
+	  && strcmp (&fname[len - name_len], name) == 0)
+	return value_from_longest (type, TYPE_FIELD_ENUMVAL (type, i));
+    }
+
+  error (_("no constant named \"%s\" in enum \"%s\""),
+	 name, TYPE_TAG_NAME (type));
+}
+
 /* C++: Given an aggregate type CURTYPE, and a member name NAME,
    return the appropriate member (or the address of the member, if
    WANT_ADDRESS).  This function is used to resolve user expressions
@@ -3057,7 +3223,7 @@ destructor_name_p (const char *name, struct type *type)
    the comment before value_struct_elt_for_reference.  */
 
 struct value *
-value_aggregate_elt (struct type *curtype, char *name,
+value_aggregate_elt (struct type *curtype, const char *name,
 		     struct type *expect_type, int want_address,
 		     enum noside noside)
 {
@@ -3071,6 +3237,10 @@ value_aggregate_elt (struct type *curtype, char *name,
     case TYPE_CODE_NAMESPACE:
       return value_namespace_elt (curtype, name, 
 				  want_address, noside);
+
+    case TYPE_CODE_ENUM:
+      return enum_constant_from_type (curtype, name);
+
     default:
       internal_error (__FILE__, __LINE__,
 		      _("non-aggregate type in value_aggregate_elt"));
@@ -3138,7 +3308,7 @@ compare_parameters (struct type *t1, struct type *t2, int skip_artificial)
 
 static struct value *
 value_struct_elt_for_reference (struct type *domain, int offset,
-				struct type *curtype, char *name,
+				struct type *curtype, const char *name,
 				struct type *intype, 
 				int want_address,
 				enum noside noside)
@@ -3367,7 +3537,7 @@ value_struct_elt_for_reference (struct type *domain, int offset,
 
 static struct value *
 value_namespace_elt (const struct type *curtype,
-		     char *name, int want_address,
+		     const char *name, int want_address,
 		     enum noside noside)
 {
   struct value *retval = value_maybe_namespace_elt (curtype, name,
@@ -3389,7 +3559,7 @@ value_namespace_elt (const struct type *curtype,
 
 static struct value *
 value_maybe_namespace_elt (const struct type *curtype,
-			   char *name, int want_address,
+			   const char *name, int want_address,
 			   enum noside noside)
 {
   const char *namespace_name = TYPE_TAG_NAME (curtype);
@@ -3400,15 +3570,6 @@ value_maybe_namespace_elt (const struct type *curtype,
 				    get_selected_block (0), VAR_DOMAIN);
 
   if (sym == NULL)
-    {
-      char *concatenated_name = alloca (strlen (namespace_name) + 2
-					+ strlen (name) + 1);
-
-      sprintf (concatenated_name, "%s::%s", namespace_name, name);
-      sym = lookup_static_symbol_aux (concatenated_name, VAR_DOMAIN);
-    }
-
-  if (sym == NULL)
     return NULL;
   else if ((noside == EVAL_AVOID_SIDE_EFFECTS)
 	   && (SYMBOL_CLASS (sym) == LOC_TYPEDEF))
@@ -3416,7 +3577,7 @@ value_maybe_namespace_elt (const struct type *curtype,
   else
     result = value_of_variable (sym, get_selected_block (0));
 
-  if (result && want_address)
+  if (want_address)
     result = value_addr (result);
 
   return result;
@@ -3550,7 +3711,7 @@ struct value *
 value_of_this (const struct language_defn *lang)
 {
   struct symbol *sym;
-  struct block *b;
+  const struct block *b;
   struct frame_info *frame;
 
   if (!lang->la_name_of_this)
@@ -3612,34 +3773,35 @@ value_slice (struct value *array, int lowbound, int length)
 
   /* FIXME-type-allocation: need a way to free this type when we are
      done with it.  */
-  slice_range_type = create_range_type ((struct type *) NULL,
-					TYPE_TARGET_TYPE (range_type),
-					lowbound, 
-					lowbound + length - 1);
+  slice_range_type = create_static_range_type ((struct type *) NULL,
+					       TYPE_TARGET_TYPE (range_type),
+					       lowbound,
+					       lowbound + length - 1);
 
-    {
-      struct type *element_type = TYPE_TARGET_TYPE (array_type);
-      LONGEST offset =
-	(lowbound - lowerbound) * TYPE_LENGTH (check_typedef (element_type));
+  {
+    struct type *element_type = TYPE_TARGET_TYPE (array_type);
+    LONGEST offset
+      = (lowbound - lowerbound) * TYPE_LENGTH (check_typedef (element_type));
 
-      slice_type = create_array_type ((struct type *) NULL, 
-				      element_type,
-				      slice_range_type);
-      TYPE_CODE (slice_type) = TYPE_CODE (array_type);
+    slice_type = create_array_type ((struct type *) NULL,
+				    element_type,
+				    slice_range_type);
+    TYPE_CODE (slice_type) = TYPE_CODE (array_type);
 
-      if (VALUE_LVAL (array) == lval_memory && value_lazy (array))
-	slice = allocate_value_lazy (slice_type);
-      else
-	{
-	  slice = allocate_value (slice_type);
-	  value_contents_copy (slice, 0, array, offset,
-			       TYPE_LENGTH (slice_type));
-	}
+    if (VALUE_LVAL (array) == lval_memory && value_lazy (array))
+      slice = allocate_value_lazy (slice_type);
+    else
+      {
+	slice = allocate_value (slice_type);
+	value_contents_copy (slice, 0, array, offset,
+			     TYPE_LENGTH (slice_type));
+      }
 
-      set_value_component_location (slice, array);
-      VALUE_FRAME_ID (slice) = VALUE_FRAME_ID (array);
-      set_value_offset (slice, value_offset (array) + offset);
-    }
+    set_value_component_location (slice, array);
+    VALUE_FRAME_ID (slice) = VALUE_FRAME_ID (array);
+    set_value_offset (slice, value_offset (array) + offset);
+  }
+
   return slice;
 }
 

@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,6 +72,5 @@ gdb_test "p b->foo()"         "= 66"
 gdb_test "p c->foo()"         "= 66"
 gdb_test "p c->inta"          "= 77"
 
-setup_kfail "gdb/11606" "*-*-*"
 gdb_test "p c2->inta"          "= 77"
 

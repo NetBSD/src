@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #include "defs.h"
 #include "frame.h"
 #include "inferior.h"
+#include "infrun.h"
 #include "symtab.h"
 #include "target.h"
 #include "gdbcore.h"
@@ -39,6 +40,8 @@
 #include "dwarf2-frame.h"
 #include "target-descriptions.h"
 #include "user-regs.h"
+#include "record-full.h"
+#include "auxv.h"
 
 #include "libbfd.h"		/* for bfd_default_set_arch_mach */
 #include "coff/internal.h"	/* for libcoff.h */
@@ -48,12 +51,12 @@
 
 #include "elf-bfd.h"
 #include "elf/ppc.h"
+#include "elf/ppc64.h"
 
 #include "solib-svr4.h"
 #include "ppc-tdep.h"
 #include "ppc-ravenscar-thread.h"
 
-#include "gdb_assert.h"
 #include "dis-asm.h"
 
 #include "trad-frame.h"
@@ -504,7 +507,7 @@ ppc_supply_gregset (const struct regset *regset, struct regcache *regcache,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const struct ppc_reg_offsets *offsets = regset->descr;
+  const struct ppc_reg_offsets *offsets = regset->regmap;
   size_t offset;
   int regsize;
 
@@ -556,7 +559,7 @@ ppc_supply_fpregset (const struct regset *regset, struct regcache *regcache,
     return;
 
   tdep = gdbarch_tdep (gdbarch);
-  offsets = regset->descr;
+  offsets = regset->regmap;
   if (regnum == -1)
     {
       int i;
@@ -624,7 +627,7 @@ ppc_supply_vrregset (const struct regset *regset, struct regcache *regcache,
     return;
 
   tdep = gdbarch_tdep (gdbarch);
-  offsets = regset->descr;
+  offsets = regset->regmap;
   if (regnum == -1)
     {
       int i;
@@ -663,7 +666,7 @@ ppc_collect_gregset (const struct regset *regset,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const struct ppc_reg_offsets *offsets = regset->descr;
+  const struct ppc_reg_offsets *offsets = regset->regmap;
   size_t offset;
   int regsize;
 
@@ -717,7 +720,7 @@ ppc_collect_fpregset (const struct regset *regset,
     return;
 
   tdep = gdbarch_tdep (gdbarch);
-  offsets = regset->descr;
+  offsets = regset->regmap;
   if (regnum == -1)
     {
       int i;
@@ -790,7 +793,7 @@ ppc_collect_vrregset (const struct regset *regset,
     return;
 
   tdep = gdbarch_tdep (gdbarch);
-  offsets = regset->descr;
+  offsets = regset->regmap;
   if (regnum == -1)
     {
       int i;
@@ -871,14 +874,14 @@ insn_changes_sp_or_jumps (unsigned long insn)
            limit for the size of an epilogue.  */
 
 static int
-rs6000_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+rs6000_in_function_epilogue_frame_p (struct frame_info *curfrm,
+				     struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   bfd_byte insn_buf[PPC_INSN_SIZE];
   CORE_ADDR scan_pc, func_start, func_end, epilogue_start, epilogue_end;
   unsigned long insn;
-  struct frame_info *curfrm;
 
   /* Find the search limits based on function boundaries and hard limit.  */
 
@@ -890,8 +893,6 @@ rs6000_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 
   epilogue_end = pc + PPC_MAX_EPILOGUE_INSTRUCTIONS * PPC_INSN_SIZE;
   if (epilogue_end > func_end) epilogue_end = func_end;
-
-  curfrm = get_current_frame ();
 
   /* Scan forward until next 'blr'.  */
 
@@ -931,6 +932,15 @@ rs6000_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
     }
 
   return 0;
+}
+
+/* Implementation of gdbarch_in_function_epilogue_p.  */
+
+static int
+rs6000_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  return rs6000_in_function_epilogue_frame_p (get_current_frame (),
+					      gdbarch, pc);
 }
 
 /* Get the ith function argument for the current function.  */
@@ -2168,9 +2178,9 @@ rs6000_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
          to __eabi in case the GCC option "-fleading-underscore" was
 	 used to compile the program.  */
       if (s.minsym != NULL
-          && SYMBOL_LINKAGE_NAME (s.minsym) != NULL
-	  && (strcmp (SYMBOL_LINKAGE_NAME (s.minsym), "__eabi") == 0
-	      || strcmp (SYMBOL_LINKAGE_NAME (s.minsym), "___eabi") == 0))
+          && MSYMBOL_LINKAGE_NAME (s.minsym) != NULL
+	  && (strcmp (MSYMBOL_LINKAGE_NAME (s.minsym), "__eabi") == 0
+	      || strcmp (MSYMBOL_LINKAGE_NAME (s.minsym), "___eabi") == 0))
 	pc += 4;
     }
   return pc;
@@ -2254,7 +2264,7 @@ rs6000_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   msymbol = lookup_minimal_symbol_by_pc (pc);
   if (msymbol.minsym
       && rs6000_in_solib_return_trampoline (gdbarch, pc,
-					    SYMBOL_LINKAGE_NAME (msymbol.minsym)))
+					    MSYMBOL_LINKAGE_NAME (msymbol.minsym)))
     {
       /* Double-check that the third instruction from PC is relative "b".  */
       op = read_memory_integer (pc + 8, 4, byte_order);
@@ -2672,10 +2682,10 @@ dfp_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
   else
     {
       status = regcache_raw_read (regcache, tdep->ppc_fp0_regnum +
-				  2 * reg_index + 1, buffer + 8);
+				  2 * reg_index + 1, buffer);
       if (status == REG_VALID)
 	status = regcache_raw_read (regcache, tdep->ppc_fp0_regnum +
-				    2 * reg_index, buffer);
+				    2 * reg_index, buffer + 8);
     }
 
   return status;
@@ -2701,9 +2711,9 @@ dfp_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
   else
     {
       regcache_raw_write (regcache, tdep->ppc_fp0_regnum +
-			  2 * reg_index + 1, buffer + 8);
+			  2 * reg_index + 1, buffer);
       regcache_raw_write (regcache, tdep->ppc_fp0_regnum +
-			  2 * reg_index, buffer);
+			  2 * reg_index, buffer + 8);
     }
 }
 
@@ -2779,10 +2789,12 @@ efpr_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int reg_index = reg_nr - tdep->ppc_efpr0_regnum;
+  int offset = gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG ? 0 : 8;
 
   /* Read the portion that overlaps the VMX register.  */
-  return regcache_raw_read_part (regcache, tdep->ppc_vr0_regnum + reg_index, 0,
-				 register_size (gdbarch, reg_nr), buffer);
+  return regcache_raw_read_part (regcache, tdep->ppc_vr0_regnum + reg_index,
+				 offset, register_size (gdbarch, reg_nr),
+				 buffer);
 }
 
 /* Write method for POWER7 Extended FP pseudo-registers.  */
@@ -2792,10 +2804,12 @@ efpr_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int reg_index = reg_nr - tdep->ppc_efpr0_regnum;
+  int offset = gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG ? 0 : 8;
 
   /* Write the portion that overlaps the VMX register.  */
-  regcache_raw_write_part (regcache, tdep->ppc_vr0_regnum + reg_index, 0,
-			   register_size (gdbarch, reg_nr), buffer);
+  regcache_raw_write_part (regcache, tdep->ppc_vr0_regnum + reg_index,
+			   offset, register_size (gdbarch, reg_nr),
+			   buffer);
 }
 
 static enum register_status
@@ -3185,9 +3199,14 @@ rs6000_frame_cache (struct frame_info *this_frame, void **this_cache)
     }
 
   if (!fdata.frameless)
-    /* Frameless really means stackless.  */
-    cache->base
-      = read_memory_unsigned_integer (cache->base, wordsize, byte_order);
+    {
+      /* Frameless really means stackless.  */
+      LONGEST backchain;
+
+      if (safe_read_memory_integer (cache->base, wordsize,
+				    byte_order, &backchain))
+        cache->base = (CORE_ADDR) backchain;
+    }
 
   trad_frame_set_value (cache->saved_regs,
 			gdbarch_sp_regnum (gdbarch), cache->base);
@@ -3252,12 +3271,14 @@ rs6000_frame_cache (struct frame_info *this_frame, void **this_cache)
 	{
 	  int i;
 	  CORE_ADDR ev_addr = cache->base + fdata.ev_offset;
+	  CORE_ADDR off = (byte_order == BFD_ENDIAN_BIG ? 4 : 0);
+
 	  for (i = fdata.saved_ev; i < ppc_num_gprs; i++)
 	    {
 	      cache->saved_regs[tdep->ppc_ev0_regnum + i].addr = ev_addr;
-              cache->saved_regs[tdep->ppc_gp0_regnum + i].addr = ev_addr + 4;
+	      cache->saved_regs[tdep->ppc_gp0_regnum + i].addr = ev_addr + off;
 	      ev_addr += register_size (gdbarch, tdep->ppc_ev0_regnum);
-            }
+	    }
 	}
     }
 
@@ -3326,6 +3347,103 @@ static const struct frame_unwind rs6000_frame_unwind =
   rs6000_frame_prev_register,
   NULL,
   default_frame_sniffer
+};
+
+/* Allocate and initialize a frame cache for an epilogue frame.
+   SP is restored and prev-PC is stored in LR.  */
+
+static struct rs6000_frame_cache *
+rs6000_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
+{
+  volatile struct gdb_exception ex;
+  struct rs6000_frame_cache *cache;
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (*this_cache)
+    return *this_cache;
+
+  cache = FRAME_OBSTACK_ZALLOC (struct rs6000_frame_cache);
+  (*this_cache) = cache;
+  cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
+
+  TRY_CATCH (ex, RETURN_MASK_ERROR)
+    {
+      /* At this point the stack looks as if we just entered the
+	 function, and the return address is stored in LR.  */
+      CORE_ADDR sp, lr;
+
+      sp = get_frame_register_unsigned (this_frame, gdbarch_sp_regnum (gdbarch));
+      lr = get_frame_register_unsigned (this_frame, tdep->ppc_lr_regnum);
+
+      cache->base = sp;
+      cache->initial_sp = sp;
+
+      trad_frame_set_value (cache->saved_regs,
+			    gdbarch_pc_regnum (gdbarch), lr);
+    }
+  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
+    throw_exception (ex);
+
+  return cache;
+}
+
+/* Implementation of frame_unwind.this_id, as defined in frame_unwind.h.
+   Return the frame ID of an epilogue frame.  */
+
+static void
+rs6000_epilogue_frame_this_id (struct frame_info *this_frame,
+			       void **this_cache, struct frame_id *this_id)
+{
+  CORE_ADDR pc;
+  struct rs6000_frame_cache *info =
+    rs6000_epilogue_frame_cache (this_frame, this_cache);
+
+  pc = get_frame_func (this_frame);
+  if (info->base == 0)
+    (*this_id) = frame_id_build_unavailable_stack (pc);
+  else
+    (*this_id) = frame_id_build (info->base, pc);
+}
+
+/* Implementation of frame_unwind.prev_register, as defined in frame_unwind.h.
+   Return the register value of REGNUM in previous frame.  */
+
+static struct value *
+rs6000_epilogue_frame_prev_register (struct frame_info *this_frame,
+				     void **this_cache, int regnum)
+{
+  struct rs6000_frame_cache *info =
+    rs6000_epilogue_frame_cache (this_frame, this_cache);
+  return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
+}
+
+/* Implementation of frame_unwind.sniffer, as defined in frame_unwind.h.
+   Check whether this an epilogue frame.  */
+
+static int
+rs6000_epilogue_frame_sniffer (const struct frame_unwind *self,
+			       struct frame_info *this_frame,
+			       void **this_prologue_cache)
+{
+  if (frame_relative_level (this_frame) == 0)
+    return rs6000_in_function_epilogue_frame_p (this_frame,
+						get_frame_arch (this_frame),
+						get_frame_pc (this_frame));
+  else
+    return 0;
+}
+
+/* Frame unwinder for epilogue frame.  This is required for reverse step-over
+   a function without debug information.  */
+
+static const struct frame_unwind rs6000_epilogue_frame_unwind =
+{
+  NORMAL_FRAME,
+  default_frame_unwind_stop_reason,
+  rs6000_epilogue_frame_this_id, rs6000_epilogue_frame_prev_register,
+  NULL,
+  rs6000_epilogue_frame_sniffer
 };
 
 
@@ -3531,6 +3649,1689 @@ bfd_uses_spe_extensions (bfd *abfd)
   return success;
 }
 
+/* These are macros for parsing instruction fields (I.1.6.28)  */
+
+#define PPC_FIELD(value, from, len) \
+	(((value) >> (32 - (from) - (len))) & ((1 << (len)) - 1))
+#define PPC_SEXT(v, bs) \
+	((((CORE_ADDR) (v) & (((CORE_ADDR) 1 << (bs)) - 1)) \
+	  ^ ((CORE_ADDR) 1 << ((bs) - 1))) \
+	 - ((CORE_ADDR) 1 << ((bs) - 1)))
+#define PPC_OP6(insn)	PPC_FIELD (insn, 0, 6)
+#define PPC_EXTOP(insn)	PPC_FIELD (insn, 21, 10)
+#define PPC_RT(insn)	PPC_FIELD (insn, 6, 5)
+#define PPC_RS(insn)	PPC_FIELD (insn, 6, 5)
+#define PPC_RA(insn)	PPC_FIELD (insn, 11, 5)
+#define PPC_RB(insn)	PPC_FIELD (insn, 16, 5)
+#define PPC_NB(insn)	PPC_FIELD (insn, 16, 5)
+#define PPC_VRT(insn)	PPC_FIELD (insn, 6, 5)
+#define PPC_FRT(insn)	PPC_FIELD (insn, 6, 5)
+#define PPC_SPR(insn)	(PPC_FIELD (insn, 11, 5) \
+			| (PPC_FIELD (insn, 16, 5) << 5))
+#define PPC_BO(insn)	PPC_FIELD (insn, 6, 5)
+#define PPC_T(insn)	PPC_FIELD (insn, 6, 5)
+#define PPC_D(insn)	PPC_SEXT (PPC_FIELD (insn, 16, 16), 16)
+#define PPC_DS(insn)	PPC_SEXT (PPC_FIELD (insn, 16, 14), 14)
+#define PPC_BIT(insn,n)	((insn & (1 << (31 - (n)))) ? 1 : 0)
+#define PPC_OE(insn)	PPC_BIT (insn, 21)
+#define PPC_RC(insn)	PPC_BIT (insn, 31)
+#define PPC_Rc(insn)	PPC_BIT (insn, 21)
+#define PPC_LK(insn)	PPC_BIT (insn, 31)
+#define PPC_TX(insn)	PPC_BIT (insn, 31)
+#define PPC_LEV(insn)	PPC_FIELD (insn, 20, 7)
+
+#define PPC_XT(insn)	((PPC_TX (insn) << 5) | PPC_T (insn))
+#define PPC_XER_NB(xer)	(xer & 0x7f)
+
+/* Record Vector-Scalar Registers.
+   For VSR less than 32, it's represented by an FPR and an VSR-upper register.
+   Otherwise, it's just a VR register.  Record them accordingly.  */
+
+static int
+ppc_record_vsr (struct regcache *regcache, struct gdbarch_tdep *tdep, int vsr)
+{
+  if (vsr < 0 || vsr >= 64)
+    return -1;
+
+  if (vsr >= 32)
+    {
+      if (tdep->ppc_vr0_regnum >= 0)
+	record_full_arch_list_add_reg (regcache, tdep->ppc_vr0_regnum + vsr - 32);
+    }
+  else
+    {
+      if (tdep->ppc_fp0_regnum >= 0)
+	record_full_arch_list_add_reg (regcache, tdep->ppc_fp0_regnum + vsr);
+      if (tdep->ppc_vsr0_upper_regnum >= 0)
+	record_full_arch_list_add_reg (regcache,
+				       tdep->ppc_vsr0_upper_regnum + vsr);
+    }
+
+  return 0;
+}
+
+/* Parse and record instructions primary opcode-4 at ADDR.
+   Return 0 if successful.  */
+
+static int
+ppc_process_record_op4 (struct gdbarch *gdbarch, struct regcache *regcache,
+			CORE_ADDR addr, uint32_t insn)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int ext = PPC_FIELD (insn, 21, 11);
+
+  switch (ext & 0x3f)
+    {
+    case 32:		/* Vector Multiply-High-Add Signed Halfword Saturate */
+    case 33:		/* Vector Multiply-High-Round-Add Signed Halfword Saturate */
+    case 39:		/* Vector Multiply-Sum Unsigned Halfword Saturate */
+    case 41:		/* Vector Multiply-Sum Signed Halfword Saturate */
+      record_full_arch_list_add_reg (regcache, PPC_VSCR_REGNUM);
+      /* FALL-THROUGH */
+    case 42:		/* Vector Select */
+    case 43:		/* Vector Permute */
+    case 44:		/* Vector Shift Left Double by Octet Immediate */
+    case 45:		/* Vector Permute and Exclusive-OR */
+    case 60:		/* Vector Add Extended Unsigned Quadword Modulo */
+    case 61:		/* Vector Add Extended & write Carry Unsigned Quadword */
+    case 62:		/* Vector Subtract Extended Unsigned Quadword Modulo */
+    case 63:		/* Vector Subtract Extended & write Carry Unsigned Quadword */
+    case 34:		/* Vector Multiply-Low-Add Unsigned Halfword Modulo */
+    case 36:		/* Vector Multiply-Sum Unsigned Byte Modulo */
+    case 37:		/* Vector Multiply-Sum Mixed Byte Modulo */
+    case 38:		/* Vector Multiply-Sum Unsigned Halfword Modulo */
+    case 40:		/* Vector Multiply-Sum Signed Halfword Modulo */
+    case 46:		/* Vector Multiply-Add Single-Precision */
+    case 47:		/* Vector Negative Multiply-Subtract Single-Precision */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_vr0_regnum + PPC_VRT (insn));
+      return 0;
+    }
+
+  switch ((ext & 0x1ff))
+    {
+			/* 5.16 Decimal Integer Arithmetic Instructions */
+    case 1:		/* Decimal Add Modulo */
+    case 65:		/* Decimal Subtract Modulo */
+
+      /* Bit-21 should be set.  */
+      if (!PPC_BIT (insn, 21))
+	break;
+
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_vr0_regnum + PPC_VRT (insn));
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+    }
+
+  /* Bit-21 is used for RC */
+  switch (ext & 0x3ff)
+    {
+    case 6:		/* Vector Compare Equal To Unsigned Byte */
+    case 70:		/* Vector Compare Equal To Unsigned Halfword */
+    case 134:		/* Vector Compare Equal To Unsigned Word */
+    case 199:		/* Vector Compare Equal To Unsigned Doubleword */
+    case 774:		/* Vector Compare Greater Than Signed Byte */
+    case 838:		/* Vector Compare Greater Than Signed Halfword */
+    case 902:		/* Vector Compare Greater Than Signed Word */
+    case 967:		/* Vector Compare Greater Than Signed Doubleword */
+    case 518:		/* Vector Compare Greater Than Unsigned Byte */
+    case 646:		/* Vector Compare Greater Than Unsigned Word */
+    case 582:		/* Vector Compare Greater Than Unsigned Halfword */
+    case 711:		/* Vector Compare Greater Than Unsigned Doubleword */
+    case 966:		/* Vector Compare Bounds Single-Precision */
+    case 198:		/* Vector Compare Equal To Single-Precision */
+    case 454:		/* Vector Compare Greater Than or Equal To Single-Precision */
+    case 710:		/* Vector Compare Greater Than Single-Precision */
+      if (PPC_Rc (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_vr0_regnum + PPC_VRT (insn));
+      return 0;
+    }
+
+  switch (ext)
+    {
+    case 142:		/* Vector Pack Unsigned Halfword Unsigned Saturate */
+    case 206:		/* Vector Pack Unsigned Word Unsigned Saturate */
+    case 270:		/* Vector Pack Signed Halfword Unsigned Saturate */
+    case 334:		/* Vector Pack Signed Word Unsigned Saturate */
+    case 398:		/* Vector Pack Signed Halfword Signed Saturate */
+    case 462:		/* Vector Pack Signed Word Signed Saturate */
+    case 1230:		/* Vector Pack Unsigned Doubleword Unsigned Saturate */
+    case 1358:		/* Vector Pack Signed Doubleword Unsigned Saturate */
+    case 1486:		/* Vector Pack Signed Doubleword Signed Saturate */
+    case 512:		/* Vector Add Unsigned Byte Saturate */
+    case 576:		/* Vector Add Unsigned Halfword Saturate */
+    case 640:		/* Vector Add Unsigned Word Saturate */
+    case 768:		/* Vector Add Signed Byte Saturate */
+    case 832:		/* Vector Add Signed Halfword Saturate */
+    case 896:		/* Vector Add Signed Word Saturate */
+    case 1536:		/* Vector Subtract Unsigned Byte Saturate */
+    case 1600:		/* Vector Subtract Unsigned Halfword Saturate */
+    case 1664:		/* Vector Subtract Unsigned Word Saturate */
+    case 1792:		/* Vector Subtract Signed Byte Saturate */
+    case 1856:		/* Vector Subtract Signed Halfword Saturate */
+    case 1920:		/* Vector Subtract Signed Word Saturate */
+
+    case 1544:		/* Vector Sum across Quarter Unsigned Byte Saturate */
+    case 1800:		/* Vector Sum across Quarter Signed Byte Saturate */
+    case 1608:		/* Vector Sum across Quarter Signed Halfword Saturate */
+    case 1672:		/* Vector Sum across Half Signed Word Saturate */
+    case 1928:		/* Vector Sum across Signed Word Saturate */
+    case 970:		/* Vector Convert To Signed Fixed-Point Word Saturate */
+    case 906:		/* Vector Convert To Unsigned Fixed-Point Word Saturate */
+      record_full_arch_list_add_reg (regcache, PPC_VSCR_REGNUM);
+      /* FALL-THROUGH */
+    case 12:		/* Vector Merge High Byte */
+    case 14:		/* Vector Pack Unsigned Halfword Unsigned Modulo */
+    case 76:		/* Vector Merge High Halfword */
+    case 78:		/* Vector Pack Unsigned Word Unsigned Modulo */
+    case 140:		/* Vector Merge High Word */
+    case 268:		/* Vector Merge Low Byte */
+    case 332:		/* Vector Merge Low Halfword */
+    case 396:		/* Vector Merge Low Word */
+    case 526:		/* Vector Unpack High Signed Byte */
+    case 590:		/* Vector Unpack High Signed Halfword */
+    case 654:		/* Vector Unpack Low Signed Byte */
+    case 718:		/* Vector Unpack Low Signed Halfword */
+    case 782:		/* Vector Pack Pixel */
+    case 846:		/* Vector Unpack High Pixel */
+    case 974:		/* Vector Unpack Low Pixel */
+    case 1102:		/* Vector Pack Unsigned Doubleword Unsigned Modulo */
+    case 1614:		/* Vector Unpack High Signed Word */
+    case 1676:		/* Vector Merge Odd Word */
+    case 1742:		/* Vector Unpack Low Signed Word */
+    case 1932:		/* Vector Merge Even Word */
+    case 524:		/* Vector Splat Byte */
+    case 588:		/* Vector Splat Halfword */
+    case 652:		/* Vector Splat Word */
+    case 780:		/* Vector Splat Immediate Signed Byte */
+    case 844:		/* Vector Splat Immediate Signed Halfword */
+    case 908:		/* Vector Splat Immediate Signed Word */
+    case 452:		/* Vector Shift Left */
+    case 708:		/* Vector Shift Right */
+    case 1036:		/* Vector Shift Left by Octet */
+    case 1100:		/* Vector Shift Right by Octet */
+    case 0:		/* Vector Add Unsigned Byte Modulo */
+    case 64:		/* Vector Add Unsigned Halfword Modulo */
+    case 128:		/* Vector Add Unsigned Word Modulo */
+    case 192:		/* Vector Add Unsigned Doubleword Modulo */
+    case 256:		/* Vector Add Unsigned Quadword Modulo */
+    case 320:		/* Vector Add & write Carry Unsigned Quadword */
+    case 384:		/* Vector Add and Write Carry-Out Unsigned Word */
+    case 8:		/* Vector Multiply Odd Unsigned Byte */
+    case 72:		/* Vector Multiply Odd Unsigned Halfword */
+    case 136:		/* Vector Multiply Odd Unsigned Word */
+    case 264:		/* Vector Multiply Odd Signed Byte */
+    case 328:		/* Vector Multiply Odd Signed Halfword */
+    case 392:		/* Vector Multiply Odd Signed Word */
+    case 520:		/* Vector Multiply Even Unsigned Byte */
+    case 584:		/* Vector Multiply Even Unsigned Halfword */
+    case 648:		/* Vector Multiply Even Unsigned Word */
+    case 776:		/* Vector Multiply Even Signed Byte */
+    case 840:		/* Vector Multiply Even Signed Halfword */
+    case 904:		/* Vector Multiply Even Signed Word */
+    case 137:		/* Vector Multiply Unsigned Word Modulo */
+    case 1024:		/* Vector Subtract Unsigned Byte Modulo */
+    case 1088:		/* Vector Subtract Unsigned Halfword Modulo */
+    case 1152:		/* Vector Subtract Unsigned Word Modulo */
+    case 1216:		/* Vector Subtract Unsigned Doubleword Modulo */
+    case 1280:		/* Vector Subtract Unsigned Quadword Modulo */
+    case 1344:		/* Vector Subtract & write Carry Unsigned Quadword */
+    case 1408:		/* Vector Subtract and Write Carry-Out Unsigned Word */
+    case 1282:		/* Vector Average Signed Byte */
+    case 1346:		/* Vector Average Signed Halfword */
+    case 1410:		/* Vector Average Signed Word */
+    case 1026:		/* Vector Average Unsigned Byte */
+    case 1090:		/* Vector Average Unsigned Halfword */
+    case 1154:		/* Vector Average Unsigned Word */
+    case 258:		/* Vector Maximum Signed Byte */
+    case 322:		/* Vector Maximum Signed Halfword */
+    case 386:		/* Vector Maximum Signed Word */
+    case 450:		/* Vector Maximum Signed Doubleword */
+    case 2:		/* Vector Maximum Unsigned Byte */
+    case 66:		/* Vector Maximum Unsigned Halfword */
+    case 130:		/* Vector Maximum Unsigned Word */
+    case 194:		/* Vector Maximum Unsigned Doubleword */
+    case 770:		/* Vector Minimum Signed Byte */
+    case 834:		/* Vector Minimum Signed Halfword */
+    case 898:		/* Vector Minimum Signed Word */
+    case 962:		/* Vector Minimum Signed Doubleword */
+    case 514:		/* Vector Minimum Unsigned Byte */
+    case 578:		/* Vector Minimum Unsigned Halfword */
+    case 642:		/* Vector Minimum Unsigned Word */
+    case 706:		/* Vector Minimum Unsigned Doubleword */
+    case 1028:		/* Vector Logical AND */
+    case 1668:		/* Vector Logical Equivalent */
+    case 1092:		/* Vector Logical AND with Complement */
+    case 1412:		/* Vector Logical NAND */
+    case 1348:		/* Vector Logical OR with Complement */
+    case 1156:		/* Vector Logical OR */
+    case 1284:		/* Vector Logical NOR */
+    case 1220:		/* Vector Logical XOR */
+    case 4:		/* Vector Rotate Left Byte */
+    case 132:		/* Vector Rotate Left Word VX-form */
+    case 68:		/* Vector Rotate Left Halfword */
+    case 196:		/* Vector Rotate Left Doubleword */
+    case 260:		/* Vector Shift Left Byte */
+    case 388:		/* Vector Shift Left Word */
+    case 324:		/* Vector Shift Left Halfword */
+    case 1476:		/* Vector Shift Left Doubleword */
+    case 516:		/* Vector Shift Right Byte */
+    case 644:		/* Vector Shift Right Word */
+    case 580:		/* Vector Shift Right Halfword */
+    case 1732:		/* Vector Shift Right Doubleword */
+    case 772:		/* Vector Shift Right Algebraic Byte */
+    case 900:		/* Vector Shift Right Algebraic Word */
+    case 836:		/* Vector Shift Right Algebraic Halfword */
+    case 964:		/* Vector Shift Right Algebraic Doubleword */
+    case 10:		/* Vector Add Single-Precision */
+    case 74:		/* Vector Subtract Single-Precision */
+    case 1034:		/* Vector Maximum Single-Precision */
+    case 1098:		/* Vector Minimum Single-Precision */
+    case 842:		/* Vector Convert From Signed Fixed-Point Word */
+    case 778:		/* Vector Convert From Unsigned Fixed-Point Word */
+    case 714:		/* Vector Round to Single-Precision Integer toward -Infinity */
+    case 522:		/* Vector Round to Single-Precision Integer Nearest */
+    case 650:		/* Vector Round to Single-Precision Integer toward +Infinity */
+    case 586:		/* Vector Round to Single-Precision Integer toward Zero */
+    case 394:		/* Vector 2 Raised to the Exponent Estimate Floating-Point */
+    case 458:		/* Vector Log Base 2 Estimate Floating-Point */
+    case 266:		/* Vector Reciprocal Estimate Single-Precision */
+    case 330:		/* Vector Reciprocal Square Root Estimate Single-Precision */
+    case 1288:		/* Vector AES Cipher */
+    case 1289:		/* Vector AES Cipher Last */
+    case 1352:		/* Vector AES Inverse Cipher */
+    case 1353:		/* Vector AES Inverse Cipher Last */
+    case 1480:		/* Vector AES SubBytes */
+    case 1730:		/* Vector SHA-512 Sigma Doubleword */
+    case 1666:		/* Vector SHA-256 Sigma Word */
+    case 1032:		/* Vector Polynomial Multiply-Sum Byte */
+    case 1160:		/* Vector Polynomial Multiply-Sum Word */
+    case 1096:		/* Vector Polynomial Multiply-Sum Halfword */
+    case 1224:		/* Vector Polynomial Multiply-Sum Doubleword */
+    case 1292:		/* Vector Gather Bits by Bytes by Doubleword */
+    case 1794:		/* Vector Count Leading Zeros Byte */
+    case 1858:		/* Vector Count Leading Zeros Halfword */
+    case 1922:		/* Vector Count Leading Zeros Word */
+    case 1986:		/* Vector Count Leading Zeros Doubleword */
+    case 1795:		/* Vector Population Count Byte */
+    case 1859:		/* Vector Population Count Halfword */
+    case 1923:		/* Vector Population Count Word */
+    case 1987:		/* Vector Population Count Doubleword */
+    case 1356:		/* Vector Bit Permute Quadword */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_vr0_regnum + PPC_VRT (insn));
+      return 0;
+
+    case 1604:		/* Move To Vector Status and Control Register */
+      record_full_arch_list_add_reg (regcache, PPC_VSCR_REGNUM);
+      return 0;
+    case 1540:		/* Move From Vector Status and Control Register */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_vr0_regnum + PPC_VRT (insn));
+      return 0;
+    }
+
+  fprintf_unfiltered (gdb_stdlog, "Warning: Don't know how to record %08x "
+		      "at %s, 4-%d.\n", insn, paddress (gdbarch, addr), ext);
+  return -1;
+}
+
+/* Parse and record instructions of primary opcode-19 at ADDR.
+   Return 0 if successful.  */
+
+static int
+ppc_process_record_op19 (struct gdbarch *gdbarch, struct regcache *regcache,
+			   CORE_ADDR addr, uint32_t insn)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int ext = PPC_EXTOP (insn);
+
+  switch (ext)
+    {
+    case 0:		/* Move Condition Register Field */
+    case 33:		/* Condition Register NOR */
+    case 129:		/* Condition Register AND with Complement */
+    case 193:		/* Condition Register XOR */
+    case 225:		/* Condition Register NAND */
+    case 257:		/* Condition Register AND */
+    case 289:		/* Condition Register Equivalent */
+    case 417:		/* Condition Register OR with Complement */
+    case 449:		/* Condition Register OR */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    case 16:		/* Branch Conditional */
+    case 560:		/* Branch Conditional to Branch Target Address Register */
+      if ((PPC_BO (insn) & 0x4) == 0)
+	record_full_arch_list_add_reg (regcache, tdep->ppc_ctr_regnum);
+      /* FALL-THROUGH */
+    case 528:		/* Branch Conditional to Count Register */
+      if (PPC_LK (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_lr_regnum);
+      return 0;
+
+    case 150:		/* Instruction Synchronize */
+      /* Do nothing.  */
+      return 0;
+    }
+
+  fprintf_unfiltered (gdb_stdlog, "Warning: Don't know how to record %08x "
+		      "at %s, 19-%d.\n", insn, paddress (gdbarch, addr), ext);
+  return -1;
+}
+
+/* Parse and record instructions of primary opcode-31 at ADDR.
+   Return 0 if successful.  */
+
+static int
+ppc_process_record_op31 (struct gdbarch *gdbarch, struct regcache *regcache,
+			   CORE_ADDR addr, uint32_t insn)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int ext = PPC_EXTOP (insn);
+  int tmp, nr, nb, i;
+  CORE_ADDR at_dcsz, ea = 0;
+  ULONGEST rb, ra, xer;
+  int size = 0;
+
+  /* These instructions have OE bit.  */
+  switch (ext & 0x1ff)
+    {
+    /* These write RT and XER.  Update CR if RC is set.  */
+    case 8:		/* Subtract from carrying */
+    case 10:		/* Add carrying */
+    case 136:		/* Subtract from extended */
+    case 138:		/* Add extended */
+    case 200:		/* Subtract from zero extended */
+    case 202:		/* Add to zero extended */
+    case 232:		/* Subtract from minus one extended */
+    case 234:		/* Add to minus one extended */
+      /* CA is always altered, but SO/OV are only altered when OE=1.
+	 In any case, XER is always altered.  */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      return 0;
+
+    /* These write RT.  Update CR if RC is set and update XER if OE is set.  */
+    case 40:		/* Subtract from */
+    case 104:		/* Negate */
+    case 233:		/* Multiply low doubleword */
+    case 235:		/* Multiply low word */
+    case 266:		/* Add */
+    case 393:		/* Divide Doubleword Extended Unsigned */
+    case 395:		/* Divide Word Extended Unsigned */
+    case 425:		/* Divide Doubleword Extended */
+    case 427:		/* Divide Word Extended */
+    case 457:		/* Divide Doubleword Unsigned */
+    case 459:		/* Divide Word Unsigned */
+    case 489:		/* Divide Doubleword */
+    case 491:		/* Divide Word */
+      if (PPC_OE (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+      /* FALL-THROUGH */
+    case 9:		/* Multiply High Doubleword Unsigned */
+    case 11:		/* Multiply High Word Unsigned */
+    case 73:		/* Multiply High Doubleword */
+    case 75:		/* Multiply High Word */
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      return 0;
+    }
+
+  if ((ext & 0x1f) == 15)
+    {
+      /* Integer Select. bit[16:20] is used for BC.  */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      return 0;
+    }
+
+  switch (ext)
+    {
+    case 78:		/* Determine Leftmost Zero Byte */
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      return 0;
+
+    /* These only write RT.  */
+    case 19:		/* Move from condition register */
+			/* Move From One Condition Register Field */
+    case 74:		/* Add and Generate Sixes */
+    case 74 | 0x200:	/* Add and Generate Sixes (bit-21 dont-care) */
+    case 302:		/* Move From Branch History Rolling Buffer */
+    case 339:		/* Move From Special Purpose Register */
+    case 371:		/* Move From Time Base [Phased-Out]  */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      return 0;
+
+    /* These only write to RA.  */
+    case 51:		/* Move From VSR Doubleword */
+    case 115:		/* Move From VSR Word and Zero */
+    case 122:		/* Population count bytes */
+    case 378:		/* Population count words */
+    case 506:		/* Population count doublewords */
+    case 154:		/* Parity Word */
+    case 186:		/* Parity Doubleword */
+    case 252:		/* Bit Permute Doubleword */
+    case 282:		/* Convert Declets To Binary Coded Decimal */
+    case 314:		/* Convert Binary Coded Decimal To Declets */
+    case 508:		/* Compare bytes */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      return 0;
+
+    /* These write CR and optional RA.  */
+    case 792:		/* Shift Right Algebraic Word */
+    case 794:		/* Shift Right Algebraic Doubleword */
+    case 824:		/* Shift Right Algebraic Word Immediate */
+    case 826:		/* Shift Right Algebraic Doubleword Immediate (413) */
+    case 826 | 1:	/* Shift Right Algebraic Doubleword Immediate (413) */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      /* FALL-THROUGH */
+    case 0:		/* Compare */
+    case 32:		/* Compare logical */
+    case 144:		/* Move To Condition Register Fields */
+			/* Move To One Condition Register Field */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    /* These write to RT.  Update RA if 'update indexed.'  */
+    case 53:		/* Load Doubleword with Update Indexed */
+    case 119:		/* Load Byte and Zero with Update Indexed */
+    case 311:		/* Load Halfword and Zero with Update Indexed */
+    case 55:		/* Load Word and Zero with Update Indexed */
+    case 375:		/* Load Halfword Algebraic with Update Indexed */
+    case 373:		/* Load Word Algebraic with Update Indexed */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      /* FALL-THROUGH */
+    case 21:		/* Load Doubleword Indexed */
+    case 52:		/* Load Byte And Reserve Indexed */
+    case 116:		/* Load Halfword And Reserve Indexed */
+    case 20:		/* Load Word And Reserve Indexed */
+    case 84:		/* Load Doubleword And Reserve Indexed */
+    case 87:		/* Load Byte and Zero Indexed */
+    case 279:		/* Load Halfword and Zero Indexed */
+    case 23:		/* Load Word and Zero Indexed */
+    case 343:		/* Load Halfword Algebraic Indexed */
+    case 341:		/* Load Word Algebraic Indexed */
+    case 790:		/* Load Halfword Byte-Reverse Indexed */
+    case 534:		/* Load Word Byte-Reverse Indexed */
+    case 532:		/* Load Doubleword Byte-Reverse Indexed */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      return 0;
+
+    case 597:		/* Load String Word Immediate */
+    case 533:		/* Load String Word Indexed */
+      if (ext == 597)
+	{
+	nr = PPC_NB (insn);
+	if (nr == 0)
+	  nr = 32;
+	}
+      else
+	{
+	  regcache_raw_read_unsigned (regcache, tdep->ppc_xer_regnum, &xer);
+	  nr = PPC_XER_NB (xer);
+	}
+
+      nr = (nr + 3) >> 2;
+
+      /* If n=0, the contents of register RT are undefined.  */
+      if (nr == 0)
+	nr = 1;
+
+      for (i = 0; i < nr; i++)
+	record_full_arch_list_add_reg (regcache,
+				       tdep->ppc_gp0_regnum
+				       + ((PPC_RT (insn) + i) & 0x1f));
+      return 0;
+
+    case 276:		/* Load Quadword And Reserve Indexed */
+      tmp = tdep->ppc_gp0_regnum + (PPC_RT (insn) & ~1);
+      record_full_arch_list_add_reg (regcache, tmp);
+      record_full_arch_list_add_reg (regcache, tmp + 1);
+      return 0;
+
+    /* These write VRT.  */
+    case 6:		/* Load Vector for Shift Left Indexed */
+    case 38:		/* Load Vector for Shift Right Indexed */
+    case 7:		/* Load Vector Element Byte Indexed */
+    case 39:		/* Load Vector Element Halfword Indexed */
+    case 71:		/* Load Vector Element Word Indexed */
+    case 103:		/* Load Vector Indexed */
+    case 359:		/* Load Vector Indexed LRU */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_vr0_regnum + PPC_VRT (insn));
+      return 0;
+
+    /* These write FRT.  Update RA if 'update indexed.'  */
+    case 567:		/* Load Floating-Point Single with Update Indexed */
+    case 631:		/* Load Floating-Point Double with Update Indexed */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      /* FALL-THROUGH */
+    case 535:		/* Load Floating-Point Single Indexed */
+    case 599:		/* Load Floating-Point Double Indexed */
+    case 855:		/* Load Floating-Point as Integer Word Algebraic Indexed */
+    case 887:		/* Load Floating-Point as Integer Word and Zero Indexed */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      return 0;
+
+    case 791:		/* Load Floating-Point Double Pair Indexed */
+      tmp = tdep->ppc_fp0_regnum + (PPC_FRT (insn) & ~1);
+      record_full_arch_list_add_reg (regcache, tmp);
+      record_full_arch_list_add_reg (regcache, tmp + 1);
+      return 0;
+
+    case 179:		/* Move To VSR Doubleword */
+    case 211:		/* Move To VSR Word Algebraic */
+    case 243:		/* Move To VSR Word and Zero */
+    case 588:		/* Load VSX Scalar Doubleword Indexed */
+    case 524:		/* Load VSX Scalar Single-Precision Indexed */
+    case 76:		/* Load VSX Scalar as Integer Word Algebraic Indexed */
+    case 12:		/* Load VSX Scalar as Integer Word and Zero Indexed */
+    case 844:		/* Load VSX Vector Doubleword*2 Indexed */
+    case 332:		/* Load VSX Vector Doubleword & Splat Indexed */
+    case 780:		/* Load VSX Vector Word*4 Indexed */
+      ppc_record_vsr (regcache, tdep, PPC_XT (insn));
+      return 0;
+
+    /* These write RA.  Update CR if RC is set.  */
+    case 24:		/* Shift Left Word */
+    case 26:		/* Count Leading Zeros Word */
+    case 27:		/* Shift Left Doubleword */
+    case 28:		/* AND */
+    case 58:		/* Count Leading Zeros Doubleword */
+    case 60:		/* AND with Complement */
+    case 124:		/* NOR */
+    case 284:		/* Equivalent */
+    case 316:		/* XOR */
+    case 476:		/* NAND */
+    case 412:		/* OR with Complement */
+    case 444:		/* OR */
+    case 536:		/* Shift Right Word */
+    case 539:		/* Shift Right Doubleword */
+    case 922:		/* Extend Sign Halfword */
+    case 954:		/* Extend Sign Byte */
+    case 986:		/* Extend Sign Word */
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      return 0;
+
+    /* Store memory.  */
+    case 181:		/* Store Doubleword with Update Indexed */
+    case 183:		/* Store Word with Update Indexed */
+    case 247:		/* Store Byte with Update Indexed */
+    case 439:		/* Store Half Word with Update Indexed */
+    case 695:		/* Store Floating-Point Single with Update Indexed */
+    case 759:		/* Store Floating-Point Double with Update Indexed */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      /* FALL-THROUGH */
+    case 135:		/* Store Vector Element Byte Indexed */
+    case 167:		/* Store Vector Element Halfword Indexed */
+    case 199:		/* Store Vector Element Word Indexed */
+    case 231:		/* Store Vector Indexed */
+    case 487:		/* Store Vector Indexed LRU */
+    case 716:		/* Store VSX Scalar Doubleword Indexed */
+    case 140:		/* Store VSX Scalar as Integer Word Indexed */
+    case 652:		/* Store VSX Scalar Single-Precision Indexed */
+    case 972:		/* Store VSX Vector Doubleword*2 Indexed */
+    case 908:		/* Store VSX Vector Word*4 Indexed */
+    case 149:		/* Store Doubleword Indexed */
+    case 151:		/* Store Word Indexed */
+    case 215:		/* Store Byte Indexed */
+    case 407:		/* Store Half Word Indexed */
+    case 694:		/* Store Byte Conditional Indexed */
+    case 726:		/* Store Halfword Conditional Indexed */
+    case 150:		/* Store Word Conditional Indexed */
+    case 214:		/* Store Doubleword Conditional Indexed */
+    case 182:		/* Store Quadword Conditional Indexed */
+    case 662:		/* Store Word Byte-Reverse Indexed */
+    case 918:		/* Store Halfword Byte-Reverse Indexed */
+    case 660:		/* Store Doubleword Byte-Reverse Indexed */
+    case 663:		/* Store Floating-Point Single Indexed */
+    case 727:		/* Store Floating-Point Double Indexed */
+    case 919:		/* Store Floating-Point Double Pair Indexed */
+    case 983:		/* Store Floating-Point as Integer Word Indexed */
+      if (ext == 694 || ext == 726 || ext == 150 || ext == 214 || ext == 182)
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+
+      ra = 0;
+      if (PPC_RA (insn) != 0)
+	regcache_raw_read_unsigned (regcache,
+				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+      regcache_raw_read_unsigned (regcache,
+				  tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
+      ea = ra + rb;
+
+      switch (ext)
+	{
+	case 183:	/* Store Word with Update Indexed */
+	case 199:	/* Store Vector Element Word Indexed */
+	case 140:	/* Store VSX Scalar as Integer Word Indexed */
+	case 652:	/* Store VSX Scalar Single-Precision Indexed */
+	case 151:	/* Store Word Indexed */
+	case 150:	/* Store Word Conditional Indexed */
+	case 662:	/* Store Word Byte-Reverse Indexed */
+	case 663:	/* Store Floating-Point Single Indexed */
+	case 695:	/* Store Floating-Point Single with Update Indexed */
+	case 983:	/* Store Floating-Point as Integer Word Indexed */
+	  size = 4;
+	  break;
+	case 247:	/* Store Byte with Update Indexed */
+	case 135:	/* Store Vector Element Byte Indexed */
+	case 215:	/* Store Byte Indexed */
+	case 694:	/* Store Byte Conditional Indexed */
+	  size = 1;
+	  break;
+	case 439:	/* Store Halfword with Update Indexed */
+	case 167:	/* Store Vector Element Halfword Indexed */
+	case 407:	/* Store Halfword Indexed */
+	case 726:	/* Store Halfword Conditional Indexed */
+	case 918:	/* Store Halfword Byte-Reverse Indexed */
+	  size = 2;
+	  break;
+	case 181:	/* Store Doubleword with Update Indexed */
+	case 716:	/* Store VSX Scalar Doubleword Indexed */
+	case 149:	/* Store Doubleword Indexed */
+	case 214:	/* Store Doubleword Conditional Indexed */
+	case 660:	/* Store Doubleword Byte-Reverse Indexed */
+	case 727:	/* Store Floating-Point Double Indexed */
+	case 759:	/* Store Floating-Point Double with Update Indexed */
+	  size = 8;
+	  break;
+	case 972:	/* Store VSX Vector Doubleword*2 Indexed */
+	case 908:	/* Store VSX Vector Word*4 Indexed */
+	case 182:	/* Store Quadword Conditional Indexed */
+	case 231:	/* Store Vector Indexed */
+	case 487:	/* Store Vector Indexed LRU */
+	case 919:	/* Store Floating-Point Double Pair Indexed */
+	  size = 16;
+	  break;
+	default:
+	  gdb_assert (0);
+	}
+
+      /* Align address for Store Vector instructions.  */
+      switch (ext)
+	{
+	case 167:	/* Store Vector Element Halfword Indexed */
+	  addr = addr & ~0x1ULL;
+	  break;
+
+	case 199:	/* Store Vector Element Word Indexed */
+	  addr = addr & ~0x3ULL;
+	  break;
+
+	case 231:	/* Store Vector Indexed */
+	case 487:	/* Store Vector Indexed LRU */
+	  addr = addr & ~0xfULL;
+	  break;
+	}
+
+      record_full_arch_list_add_mem (addr, size);
+      return 0;
+
+    case 725:		/* Store String Word Immediate */
+      ra = 0;
+      if (PPC_RA (insn) != 0)
+	regcache_raw_read_unsigned (regcache, tdep->ppc_xer_regnum, &ra);
+      ea += ra;
+
+      nb = PPC_NB (insn);
+      if (nb == 0)
+	nb = 32;
+
+      record_full_arch_list_add_mem (ea, nb);
+
+      return 0;
+
+    case 661:		/* Store String Word Indexed */
+      ra = 0;
+      if (PPC_RA (insn) != 0)
+	regcache_raw_read_unsigned (regcache, tdep->ppc_xer_regnum, &ra);
+      ea += ra;
+
+      regcache_raw_read_unsigned (regcache, tdep->ppc_xer_regnum, &xer);
+      nb = PPC_XER_NB (xer);
+
+      if (nb != 0)
+	{
+	  regcache_raw_read_unsigned (regcache, tdep->ppc_xer_regnum, &rb);
+	  ea += rb;
+	  record_full_arch_list_add_mem (ea, nb);
+	}
+
+      return 0;
+
+    case 467:		/* Move To Special Purpose Register */
+      switch (PPC_SPR (insn))
+	{
+	case 1:			/* XER */
+	  record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+	  return 0;
+	case 8:			/* LR */
+	  record_full_arch_list_add_reg (regcache, tdep->ppc_lr_regnum);
+	  return 0;
+	case 9:			/* CTR */
+	  record_full_arch_list_add_reg (regcache, tdep->ppc_ctr_regnum);
+	  return 0;
+	case 256:		/* VRSAVE */
+	  record_full_arch_list_add_reg (regcache, tdep->ppc_vrsave_regnum);
+	  return 0;
+	}
+
+      goto UNKNOWN_OP;
+
+    case 147:		/* Move To Split Little Endian */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_ps_regnum);
+      return 0;
+
+    case 512:		/* Move to Condition Register from XER */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+      return 0;
+
+    case 4:		/* Trap Word */
+    case 68:		/* Trap Doubleword */
+    case 430:		/* Clear BHRB */
+    case 598:		/* Synchronize */
+    case 62:		/* Wait for Interrupt */
+    case 22:		/* Instruction Cache Block Touch */
+    case 854:		/* Enforce In-order Execution of I/O */
+    case 246:		/* Data Cache Block Touch for Store */
+    case 54:		/* Data Cache Block Store */
+    case 86:		/* Data Cache Block Flush */
+    case 278:		/* Data Cache Block Touch */
+    case 758:		/* Data Cache Block Allocate */
+    case 982:		/* Instruction Cache Block Invalidate */
+      return 0;
+
+    case 654:		/* Transaction Begin */
+    case 686:		/* Transaction End */
+    case 718:		/* Transaction Check */
+    case 750:		/* Transaction Suspend or Resume */
+    case 782:		/* Transaction Abort Word Conditional */
+    case 814:		/* Transaction Abort Doubleword Conditional */
+    case 846:		/* Transaction Abort Word Conditional Immediate */
+    case 878:		/* Transaction Abort Doubleword Conditional Immediate */
+    case 910:		/* Transaction Abort */
+      fprintf_unfiltered (gdb_stdlog, "Cannot record Transaction instructions. "
+			  "%08x at %s, 31-%d.\n",
+			  insn, paddress (gdbarch, addr), ext);
+      return -1;
+
+    case 1014:		/* Data Cache Block set to Zero */
+      if (target_auxv_search (&current_target, AT_DCACHEBSIZE, &at_dcsz) <= 0
+	  || at_dcsz == 0)
+	at_dcsz = 128; /* Assume 128-byte cache line size (POWER8)  */
+
+      if (PPC_RA (insn) != 0)
+	regcache_raw_read_unsigned (regcache,
+				    tdep->ppc_gp0_regnum + PPC_RA (insn), &ra);
+      regcache_raw_read_unsigned (regcache,
+				  tdep->ppc_gp0_regnum + PPC_RB (insn), &rb);
+      ea = (ra + rb) & ~((ULONGEST) (at_dcsz - 1));
+      record_full_arch_list_add_mem (ea, at_dcsz);
+      return 0;
+    }
+
+UNKNOWN_OP:
+  fprintf_unfiltered (gdb_stdlog, "Warning: Don't know how to record %08x "
+		      "at %s, 31-%d.\n", insn, paddress (gdbarch, addr), ext);
+  return -1;
+}
+
+/* Parse and record instructions of primary opcode-59 at ADDR.
+   Return 0 if successful.  */
+
+static int
+ppc_process_record_op59 (struct gdbarch *gdbarch, struct regcache *regcache,
+			   CORE_ADDR addr, uint32_t insn)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int ext = PPC_EXTOP (insn);
+
+  switch (ext & 0x1f)
+    {
+    case 18:		/* Floating Divide */
+    case 20:		/* Floating Subtract */
+    case 21:		/* Floating Add */
+    case 22:		/* Floating Square Root */
+    case 24:		/* Floating Reciprocal Estimate */
+    case 25:		/* Floating Multiply */
+    case 26:		/* Floating Reciprocal Square Root Estimate */
+    case 28:		/* Floating Multiply-Subtract */
+    case 29:		/* Floating Multiply-Add */
+    case 30:		/* Floating Negative Multiply-Subtract */
+    case 31:		/* Floating Negative Multiply-Add */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+
+      return 0;
+    }
+
+  switch (ext)
+    {
+    case 2:		/* DFP Add */
+    case 3:		/* DFP Quantize */
+    case 34:		/* DFP Multiply */
+    case 35:		/* DFP Reround */
+    case 67:		/* DFP Quantize Immediate */
+    case 99:		/* DFP Round To FP Integer With Inexact */
+    case 227:		/* DFP Round To FP Integer Without Inexact */
+    case 258:		/* DFP Convert To DFP Long! */
+    case 290:		/* DFP Convert To Fixed */
+    case 514:		/* DFP Subtract */
+    case 546:		/* DFP Divide */
+    case 770:		/* DFP Round To DFP Short! */
+    case 802:		/* DFP Convert From Fixed */
+    case 834:		/* DFP Encode BCD To DPD */
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      return 0;
+
+    case 130:		/* DFP Compare Ordered */
+    case 162:		/* DFP Test Exponent */
+    case 194:		/* DFP Test Data Class */
+    case 226:		/* DFP Test Data Group */
+    case 642:		/* DFP Compare Unordered */
+    case 674:		/* DFP Test Significance */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      return 0;
+
+    case 66:		/* DFP Shift Significand Left Immediate */
+    case 98:		/* DFP Shift Significand Right Immediate */
+    case 322:		/* DFP Decode DPD To BCD */
+    case 354:		/* DFP Extract Biased Exponent */
+    case 866:		/* DFP Insert Biased Exponent */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    case 846:		/* Floating Convert From Integer Doubleword Single */
+    case 974:		/* Floating Convert From Integer Doubleword Unsigned
+			   Single */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+
+      return 0;
+    }
+
+  fprintf_unfiltered (gdb_stdlog, "Warning: Don't know how to record %08x "
+		      "at %s, 59-%d.\n", insn, paddress (gdbarch, addr), ext);
+  return -1;
+}
+
+/* Parse and record instructions of primary opcode-60 at ADDR.
+   Return 0 if successful.  */
+
+static int
+ppc_process_record_op60 (struct gdbarch *gdbarch, struct regcache *regcache,
+			   CORE_ADDR addr, uint32_t insn)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int ext = PPC_EXTOP (insn);
+
+  switch (ext >> 2)
+    {
+    case 0:		/* VSX Scalar Add Single-Precision */
+    case 32:		/* VSX Scalar Add Double-Precision */
+    case 24:		/* VSX Scalar Divide Single-Precision */
+    case 56:		/* VSX Scalar Divide Double-Precision */
+    case 176:		/* VSX Scalar Copy Sign Double-Precision */
+    case 33:		/* VSX Scalar Multiply-Add Double-Precision */
+    case 41:		/* ditto */
+    case 1:		/* VSX Scalar Multiply-Add Single-Precision */
+    case 9:		/* ditto */
+    case 160:		/* VSX Scalar Maximum Double-Precision */
+    case 168:		/* VSX Scalar Minimum Double-Precision */
+    case 49:		/* VSX Scalar Multiply-Subtract Double-Precision */
+    case 57:		/* ditto */
+    case 17:		/* VSX Scalar Multiply-Subtract Single-Precision */
+    case 25:		/* ditto */
+    case 48:		/* VSX Scalar Multiply Double-Precision */
+    case 16:		/* VSX Scalar Multiply Single-Precision */
+    case 161:		/* VSX Scalar Negative Multiply-Add Double-Precision */
+    case 169:		/* ditto */
+    case 129:		/* VSX Scalar Negative Multiply-Add Single-Precision */
+    case 137:		/* ditto */
+    case 177:		/* VSX Scalar Negative Multiply-Subtract Double-Precision */
+    case 185:		/* ditto */
+    case 145:		/* VSX Scalar Negative Multiply-Subtract Single-Precision */
+    case 153:		/* ditto */
+    case 40:		/* VSX Scalar Subtract Double-Precision */
+    case 8:		/* VSX Scalar Subtract Single-Precision */
+    case 96:		/* VSX Vector Add Double-Precision */
+    case 64:		/* VSX Vector Add Single-Precision */
+    case 120:		/* VSX Vector Divide Double-Precision */
+    case 88:		/* VSX Vector Divide Single-Precision */
+    case 97:		/* VSX Vector Multiply-Add Double-Precision */
+    case 105:		/* ditto */
+    case 65:		/* VSX Vector Multiply-Add Single-Precision */
+    case 73:		/* ditto */
+    case 224:		/* VSX Vector Maximum Double-Precision */
+    case 192:		/* VSX Vector Maximum Single-Precision */
+    case 232:		/* VSX Vector Minimum Double-Precision */
+    case 200:		/* VSX Vector Minimum Single-Precision */
+    case 113:		/* VSX Vector Multiply-Subtract Double-Precision */
+    case 121:		/* ditto */
+    case 81:		/* VSX Vector Multiply-Subtract Single-Precision */
+    case 89:		/* ditto */
+    case 112:		/* VSX Vector Multiply Double-Precision */
+    case 80:		/* VSX Vector Multiply Single-Precision */
+    case 225:		/* VSX Vector Negative Multiply-Add Double-Precision */
+    case 233:		/* ditto */
+    case 193:		/* VSX Vector Negative Multiply-Add Single-Precision */
+    case 201:		/* ditto */
+    case 241:		/* VSX Vector Negative Multiply-Subtract Double-Precision */
+    case 249:		/* ditto */
+    case 209:		/* VSX Vector Negative Multiply-Subtract Single-Precision */
+    case 217:		/* ditto */
+    case 104:		/* VSX Vector Subtract Double-Precision */
+    case 72:		/* VSX Vector Subtract Single-Precision */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+    case 240:		/* VSX Vector Copy Sign Double-Precision */
+    case 208:		/* VSX Vector Copy Sign Single-Precision */
+    case 130:		/* VSX Logical AND */
+    case 138:		/* VSX Logical AND with Complement */
+    case 186:		/* VSX Logical Equivalence */
+    case 178:		/* VSX Logical NAND */
+    case 170:		/* VSX Logical OR with Complement */
+    case 162:		/* VSX Logical NOR */
+    case 146:		/* VSX Logical OR */
+    case 154:		/* VSX Logical XOR */
+    case 18:		/* VSX Merge High Word */
+    case 50:		/* VSX Merge Low Word */
+    case 10:		/* VSX Permute Doubleword Immediate (DM=0) */
+    case 10 | 0x20:	/* VSX Permute Doubleword Immediate (DM=1) */
+    case 10 | 0x40:	/* VSX Permute Doubleword Immediate (DM=2) */
+    case 10 | 0x60:	/* VSX Permute Doubleword Immediate (DM=3) */
+    case 2:		/* VSX Shift Left Double by Word Immediate (SHW=0) */
+    case 2 | 0x20:	/* VSX Shift Left Double by Word Immediate (SHW=1) */
+    case 2 | 0x40:	/* VSX Shift Left Double by Word Immediate (SHW=2) */
+    case 2 | 0x60:	/* VSX Shift Left Double by Word Immediate (SHW=3) */
+      ppc_record_vsr (regcache, tdep, PPC_XT (insn));
+      return 0;
+
+    case 61:		/* VSX Scalar Test for software Divide Double-Precision */
+    case 125:		/* VSX Vector Test for software Divide Double-Precision */
+    case 93:		/* VSX Vector Test for software Divide Single-Precision */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    case 35:		/* VSX Scalar Compare Unordered Double-Precision */
+    case 43:		/* VSX Scalar Compare Ordered Double-Precision */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      return 0;
+    }
+
+  switch ((ext >> 2) & 0x7f) /* Mask out Rc-bit.  */
+    {
+    case 99:		/* VSX Vector Compare Equal To Double-Precision */
+    case 67:		/* VSX Vector Compare Equal To Single-Precision */
+    case 115:		/* VSX Vector Compare Greater Than or
+			   Equal To Double-Precision */
+    case 83:		/* VSX Vector Compare Greater Than or
+			   Equal To Single-Precision */
+    case 107:		/* VSX Vector Compare Greater Than Double-Precision */
+    case 75:		/* VSX Vector Compare Greater Than Single-Precision */
+      if (PPC_Rc (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      ppc_record_vsr (regcache, tdep, PPC_XT (insn));
+      return 0;
+    }
+
+  switch (ext >> 1)
+    {
+    case 265:		/* VSX Scalar round Double-Precision to
+			   Single-Precision and Convert to
+			   Single-Precision format */
+    case 344:		/* VSX Scalar truncate Double-Precision to
+			   Integer and Convert to Signed Integer
+			   Doubleword format with Saturate */
+    case 88:		/* VSX Scalar truncate Double-Precision to
+			   Integer and Convert to Signed Integer Word
+			   Format with Saturate */
+    case 328:		/* VSX Scalar truncate Double-Precision integer
+			   and Convert to Unsigned Integer Doubleword
+			   Format with Saturate */
+    case 72:		/* VSX Scalar truncate Double-Precision to
+			   Integer and Convert to Unsigned Integer Word
+			   Format with Saturate */
+    case 329:		/* VSX Scalar Convert Single-Precision to
+			   Double-Precision format */
+    case 376:		/* VSX Scalar Convert Signed Integer
+			   Doubleword to floating-point format and
+			   Round to Double-Precision format */
+    case 312:		/* VSX Scalar Convert Signed Integer
+			   Doubleword to floating-point format and
+			   round to Single-Precision */
+    case 360:		/* VSX Scalar Convert Unsigned Integer
+			   Doubleword to floating-point format and
+			   Round to Double-Precision format */
+    case 296:		/* VSX Scalar Convert Unsigned Integer
+			   Doubleword to floating-point format and
+			   Round to Single-Precision */
+    case 73:		/* VSX Scalar Round to Double-Precision Integer
+			   Using Round to Nearest Away */
+    case 107:		/* VSX Scalar Round to Double-Precision Integer
+			   Exact using Current rounding mode */
+    case 121:		/* VSX Scalar Round to Double-Precision Integer
+			   Using Round toward -Infinity */
+    case 105:		/* VSX Scalar Round to Double-Precision Integer
+			   Using Round toward +Infinity */
+    case 89:		/* VSX Scalar Round to Double-Precision Integer
+			   Using Round toward Zero */
+    case 90:		/* VSX Scalar Reciprocal Estimate Double-Precision */
+    case 26:		/* VSX Scalar Reciprocal Estimate Single-Precision */
+    case 281:		/* VSX Scalar Round to Single-Precision */
+    case 74:		/* VSX Scalar Reciprocal Square Root Estimate
+			   Double-Precision */
+    case 10:		/* VSX Scalar Reciprocal Square Root Estimate
+			   Single-Precision */
+    case 75:		/* VSX Scalar Square Root Double-Precision */
+    case 11:		/* VSX Scalar Square Root Single-Precision */
+    case 393:		/* VSX Vector round Double-Precision to
+			   Single-Precision and Convert to
+			   Single-Precision format */
+    case 472:		/* VSX Vector truncate Double-Precision to
+			   Integer and Convert to Signed Integer
+			   Doubleword format with Saturate */
+    case 216:		/* VSX Vector truncate Double-Precision to
+			   Integer and Convert to Signed Integer Word
+			   Format with Saturate */
+    case 456:		/* VSX Vector truncate Double-Precision to
+			   Integer and Convert to Unsigned Integer
+			   Doubleword format with Saturate */
+    case 200:		/* VSX Vector truncate Double-Precision to
+			   Integer and Convert to Unsigned Integer Word
+			   Format with Saturate */
+    case 457:		/* VSX Vector Convert Single-Precision to
+			   Double-Precision format */
+    case 408:		/* VSX Vector truncate Single-Precision to
+			   Integer and Convert to Signed Integer
+			   Doubleword format with Saturate */
+    case 152:		/* VSX Vector truncate Single-Precision to
+			   Integer and Convert to Signed Integer Word
+			   Format with Saturate */
+    case 392:		/* VSX Vector truncate Single-Precision to
+			   Integer and Convert to Unsigned Integer
+			   Doubleword format with Saturate */
+    case 136:		/* VSX Vector truncate Single-Precision to
+			   Integer and Convert to Unsigned Integer Word
+			   Format with Saturate */
+    case 504:		/* VSX Vector Convert and round Signed Integer
+			   Doubleword to Double-Precision format */
+    case 440:		/* VSX Vector Convert and round Signed Integer
+			   Doubleword to Single-Precision format */
+    case 248:		/* VSX Vector Convert Signed Integer Word to
+			   Double-Precision format */
+    case 184:		/* VSX Vector Convert and round Signed Integer
+			   Word to Single-Precision format */
+    case 488:		/* VSX Vector Convert and round Unsigned
+			   Integer Doubleword to Double-Precision format */
+    case 424:		/* VSX Vector Convert and round Unsigned
+			   Integer Doubleword to Single-Precision format */
+    case 232:		/* VSX Vector Convert and round Unsigned
+			   Integer Word to Double-Precision format */
+    case 168:		/* VSX Vector Convert and round Unsigned
+			   Integer Word to Single-Precision format */
+    case 201:		/* VSX Vector Round to Double-Precision
+			   Integer using round to Nearest Away */
+    case 235:		/* VSX Vector Round to Double-Precision
+			   Integer Exact using Current rounding mode */
+    case 249:		/* VSX Vector Round to Double-Precision
+			   Integer using round toward -Infinity */
+    case 233:		/* VSX Vector Round to Double-Precision
+			   Integer using round toward +Infinity */
+    case 217:		/* VSX Vector Round to Double-Precision
+			   Integer using round toward Zero */
+    case 218:		/* VSX Vector Reciprocal Estimate Double-Precision */
+    case 154:		/* VSX Vector Reciprocal Estimate Single-Precision */
+    case 137:		/* VSX Vector Round to Single-Precision Integer
+			   Using Round to Nearest Away */
+    case 171:		/* VSX Vector Round to Single-Precision Integer
+			   Exact Using Current rounding mode */
+    case 185:		/* VSX Vector Round to Single-Precision Integer
+			   Using Round toward -Infinity */
+    case 169:		/* VSX Vector Round to Single-Precision Integer
+			   Using Round toward +Infinity */
+    case 153:		/* VSX Vector Round to Single-Precision Integer
+			   Using round toward Zero */
+    case 202:		/* VSX Vector Reciprocal Square Root Estimate
+			   Double-Precision */
+    case 138:		/* VSX Vector Reciprocal Square Root Estimate
+			   Single-Precision */
+    case 203:		/* VSX Vector Square Root Double-Precision */
+    case 139:		/* VSX Vector Square Root Single-Precision */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+    case 345:		/* VSX Scalar Absolute Value Double-Precision */
+    case 267:		/* VSX Scalar Convert Scalar Single-Precision to
+			   Vector Single-Precision format Non-signalling */
+    case 331:		/* VSX Scalar Convert Single-Precision to
+			   Double-Precision format Non-signalling */
+    case 361:		/* VSX Scalar Negative Absolute Value Double-Precision */
+    case 377:		/* VSX Scalar Negate Double-Precision */
+    case 473:		/* VSX Vector Absolute Value Double-Precision */
+    case 409:		/* VSX Vector Absolute Value Single-Precision */
+    case 489:		/* VSX Vector Negative Absolute Value Double-Precision */
+    case 425:		/* VSX Vector Negative Absolute Value Single-Precision */
+    case 505:		/* VSX Vector Negate Double-Precision */
+    case 441:		/* VSX Vector Negate Single-Precision */
+    case 164:		/* VSX Splat Word */
+      ppc_record_vsr (regcache, tdep, PPC_XT (insn));
+      return 0;
+
+    case 106:		/* VSX Scalar Test for software Square Root
+			   Double-Precision */
+    case 234:		/* VSX Vector Test for software Square Root
+			   Double-Precision */
+    case 170:		/* VSX Vector Test for software Square Root
+			   Single-Precision */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+    }
+
+  if (((ext >> 3) & 0x3) == 3)	/* VSX Select */
+    {
+      ppc_record_vsr (regcache, tdep, PPC_XT (insn));
+      return 0;
+    }
+
+  fprintf_unfiltered (gdb_stdlog, "Warning: Don't know how to record %08x "
+		      "at %s, 60-%d.\n", insn, paddress (gdbarch, addr), ext);
+  return -1;
+}
+
+/* Parse and record instructions of primary opcode-63 at ADDR.
+   Return 0 if successful.  */
+
+static int
+ppc_process_record_op63 (struct gdbarch *gdbarch, struct regcache *regcache,
+			   CORE_ADDR addr, uint32_t insn)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int ext = PPC_EXTOP (insn);
+  int tmp;
+
+  switch (ext & 0x1f)
+    {
+    case 18:		/* Floating Divide */
+    case 20:		/* Floating Subtract */
+    case 21:		/* Floating Add */
+    case 22:		/* Floating Square Root */
+    case 24:		/* Floating Reciprocal Estimate */
+    case 25:		/* Floating Multiply */
+    case 26:		/* Floating Reciprocal Square Root Estimate */
+    case 28:		/* Floating Multiply-Subtract */
+    case 29:		/* Floating Multiply-Add */
+    case 30:		/* Floating Negative Multiply-Subtract */
+    case 31:		/* Floating Negative Multiply-Add */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      return 0;
+
+    case 23:		/* Floating Select */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+    }
+
+  switch (ext)
+    {
+    case 2:		/* DFP Add Quad */
+    case 3:		/* DFP Quantize Quad */
+    case 34:		/* DFP Multiply Quad */
+    case 35:		/* DFP Reround Quad */
+    case 67:		/* DFP Quantize Immediate Quad */
+    case 99:		/* DFP Round To FP Integer With Inexact Quad */
+    case 227:		/* DFP Round To FP Integer Without Inexact Quad */
+    case 258:		/* DFP Convert To DFP Extended Quad */
+    case 514:		/* DFP Subtract Quad */
+    case 546:		/* DFP Divide Quad */
+    case 770:		/* DFP Round To DFP Long Quad */
+    case 802:		/* DFP Convert From Fixed Quad */
+    case 834:		/* DFP Encode BCD To DPD Quad */
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      tmp = tdep->ppc_fp0_regnum + (PPC_FRT (insn) & ~1);
+      record_full_arch_list_add_reg (regcache, tmp);
+      record_full_arch_list_add_reg (regcache, tmp + 1);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      return 0;
+
+    case 130:		/* DFP Compare Ordered Quad */
+    case 162:		/* DFP Test Exponent Quad */
+    case 194:		/* DFP Test Data Class Quad */
+    case 226:		/* DFP Test Data Group Quad */
+    case 642:		/* DFP Compare Unordered Quad */
+    case 674:		/* DFP Test Significance Quad */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      return 0;
+
+    case 66:		/* DFP Shift Significand Left Immediate Quad */
+    case 98:		/* DFP Shift Significand Right Immediate Quad */
+    case 322:		/* DFP Decode DPD To BCD Quad */
+    case 866:		/* DFP Insert Biased Exponent Quad */
+      tmp = tdep->ppc_fp0_regnum + (PPC_FRT (insn) & ~1);
+      record_full_arch_list_add_reg (regcache, tmp);
+      record_full_arch_list_add_reg (regcache, tmp + 1);
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    case 290:		/* DFP Convert To Fixed Quad */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      break;
+
+    case 354:		/* DFP Extract Biased Exponent Quad */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    case 12:		/* Floating Round to Single-Precision */
+    case 14:		/* Floating Convert To Integer Word */
+    case 15:		/* Floating Convert To Integer Word
+			   with round toward Zero */
+    case 142:		/* Floating Convert To Integer Word Unsigned */
+    case 143:		/* Floating Convert To Integer Word Unsigned
+			   with round toward Zero */
+    case 392:		/* Floating Round to Integer Nearest */
+    case 424:		/* Floating Round to Integer Toward Zero */
+    case 456:		/* Floating Round to Integer Plus */
+    case 488:		/* Floating Round to Integer Minus */
+    case 814:		/* Floating Convert To Integer Doubleword */
+    case 815:		/* Floating Convert To Integer Doubleword
+			   with round toward Zero */
+    case 846:		/* Floating Convert From Integer Doubleword */
+    case 942:		/* Floating Convert To Integer Doubleword Unsigned */
+    case 943:		/* Floating Convert To Integer Doubleword Unsigned
+			   with round toward Zero */
+    case 974:		/* Floating Convert From Integer Doubleword Unsigned */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      return 0;
+
+    case 583:		/* Move From FPSCR */
+    case 8:		/* Floating Copy Sign */
+    case 40:		/* Floating Negate */
+    case 72:		/* Floating Move Register */
+    case 136:		/* Floating Negative Absolute Value */
+    case 264:		/* Floating Absolute Value */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    case 838:		/* Floating Merge Odd Word */
+    case 966:		/* Floating Merge Even Word */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      return 0;
+
+    case 38:		/* Move To FPSCR Bit 1 */
+    case 70:		/* Move To FPSCR Bit 0 */
+    case 134:		/* Move To FPSCR Field Immediate */
+    case 711:		/* Move To FPSCR Fields */
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      break;
+
+    case 0:		/* Floating Compare Unordered */
+    case 32:		/* Floating Compare Ordered */
+    case 64:		/* Move to Condition Register from FPSCR */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_fpscr_regnum);
+      /* FALL-THROUGH */
+    case 128:		/* Floating Test for software Divide */
+    case 160:		/* Floating Test for software Square Root */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      return 0;
+
+    }
+
+  fprintf_unfiltered (gdb_stdlog, "Warning: Don't know how to record %08x "
+		      "at %s, 59-%d.\n", insn, paddress (gdbarch, addr), ext);
+  return -1;
+}
+
+/* Parse the current instruction and record the values of the registers and
+   memory that will be changed in current instruction to "record_arch_list".
+   Return -1 if something wrong.  */
+
+int
+ppc_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
+		      CORE_ADDR addr)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  uint32_t insn;
+  int op6, tmp, i;
+
+  insn = read_memory_unsigned_integer (addr, 4, byte_order);
+  op6 = PPC_OP6 (insn);
+
+  switch (op6)
+    {
+    case 2:		/* Trap Doubleword Immediate */
+    case 3:		/* Trap Word Immediate */
+      /* Do nothing.  */
+      break;
+
+    case 4:
+      if (ppc_process_record_op4 (gdbarch, regcache, addr, insn) != 0)
+	return -1;
+      break;
+
+    case 17:		/* System call */
+      if (PPC_LEV (insn) != 0)
+	goto UNKNOWN_OP;
+
+      if (tdep->ppc_syscall_record != NULL)
+	{
+	  if (tdep->ppc_syscall_record (regcache) != 0)
+	    return -1;
+	}
+      else
+	{
+	  printf_unfiltered (_("no syscall record support\n"));
+	  return -1;
+	}
+      break;
+
+    case 7:		/* Multiply Low Immediate */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      break;
+
+    case 8:		/* Subtract From Immediate Carrying */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      break;
+
+    case 10:		/* Compare Logical Immediate  */
+    case 11:		/* Compare Immediate */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      break;
+
+    case 13:		/* Add Immediate Carrying and Record */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      /* FALL-THROUGH */
+    case 12:		/* Add Immediate Carrying */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_xer_regnum);
+      /* FALL-THROUGH */
+    case 14:		/* Add Immediate */
+    case 15:		/* Add Immediate Shifted */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      break;
+
+    case 16:		/* Branch Conditional */
+      if ((PPC_BO (insn) & 0x4) == 0)
+	record_full_arch_list_add_reg (regcache, tdep->ppc_ctr_regnum);
+      /* FALL-THROUGH */
+    case 18:		/* Branch */
+      if (PPC_LK (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_lr_regnum);
+      break;
+
+    case 19:
+      if (ppc_process_record_op19 (gdbarch, regcache, addr, insn) != 0)
+	return -1;
+      break;
+
+    case 20:		/* Rotate Left Word Immediate then Mask Insert */
+    case 21:		/* Rotate Left Word Immediate then AND with Mask */
+    case 23:		/* Rotate Left Word then AND with Mask */
+    case 30:		/* Rotate Left Doubleword Immediate then Clear Left */
+			/* Rotate Left Doubleword Immediate then Clear Right */
+			/* Rotate Left Doubleword Immediate then Clear */
+			/* Rotate Left Doubleword then Clear Left */
+			/* Rotate Left Doubleword then Clear Right */
+			/* Rotate Left Doubleword Immediate then Mask Insert */
+      if (PPC_RC (insn))
+	record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      break;
+
+    case 28:		/* AND Immediate */
+    case 29:		/* AND Immediate Shifted */
+      record_full_arch_list_add_reg (regcache, tdep->ppc_cr_regnum);
+      /* FALL-THROUGH */
+    case 24:		/* OR Immediate */
+    case 25:		/* OR Immediate Shifted */
+    case 26:		/* XOR Immediate */
+    case 27:		/* XOR Immediate Shifted */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      break;
+
+    case 31:
+      if (ppc_process_record_op31 (gdbarch, regcache, addr, insn) != 0)
+	return -1;
+      break;
+
+    case 33:		/* Load Word and Zero with Update */
+    case 35:		/* Load Byte and Zero with Update */
+    case 41:		/* Load Halfword and Zero with Update */
+    case 43:		/* Load Halfword Algebraic with Update */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      /* FALL-THROUGH */
+    case 32:		/* Load Word and Zero */
+    case 34:		/* Load Byte and Zero */
+    case 40:		/* Load Halfword and Zero */
+    case 42:		/* Load Halfword Algebraic */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      break;
+
+    case 46:		/* Load Multiple Word */
+      for (i = PPC_RT (insn); i < 32; i++)
+	record_full_arch_list_add_reg (regcache, tdep->ppc_gp0_regnum + i);
+      break;
+
+    case 56:		/* Load Quadword */
+      tmp = tdep->ppc_gp0_regnum + (PPC_RT (insn) & ~1);
+      record_full_arch_list_add_reg (regcache, tmp);
+      record_full_arch_list_add_reg (regcache, tmp + 1);
+      break;
+
+    case 49:		/* Load Floating-Point Single with Update */
+    case 51:		/* Load Floating-Point Double with Update */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      /* FALL-THROUGH */
+    case 48:		/* Load Floating-Point Single */
+    case 50:		/* Load Floating-Point Double */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_fp0_regnum + PPC_FRT (insn));
+      break;
+
+    case 47:		/* Store Multiple Word */
+	{
+	  ULONGEST addr = 0;
+
+	  if (PPC_RA (insn) != 0)
+	    regcache_raw_read_unsigned (regcache,
+					tdep->ppc_gp0_regnum + PPC_RA (insn),
+					&addr);
+
+	  addr += PPC_D (insn);
+	  record_full_arch_list_add_mem (addr, 4 * (32 - PPC_RS (insn)));
+	}
+      break;
+
+    case 37:		/* Store Word with Update */
+    case 39:		/* Store Byte with Update */
+    case 45:		/* Store Halfword with Update */
+    case 53:		/* Store Floating-Point Single with Update */
+    case 55:		/* Store Floating-Point Double with Update */
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RA (insn));
+      /* FALL-THROUGH */
+    case 36:		/* Store Word */
+    case 38:		/* Store Byte */
+    case 44:		/* Store Halfword */
+    case 52:		/* Store Floating-Point Single */
+    case 54:		/* Store Floating-Point Double */
+	{
+	  ULONGEST addr = 0;
+	  int size = -1;
+
+	  if (PPC_RA (insn) != 0)
+	    regcache_raw_read_unsigned (regcache,
+					tdep->ppc_gp0_regnum + PPC_RA (insn),
+					&addr);
+	  addr += PPC_D (insn);
+
+	  if (op6 == 36 || op6 == 37 || op6 == 52 || op6 == 53)
+	    size = 4;
+	  else if (op6 == 54 || op6 == 55)
+	    size = 8;
+	  else if (op6 == 44 || op6 == 45)
+	    size = 2;
+	  else if (op6 == 38 || op6 == 39)
+	    size = 1;
+	  else
+	    gdb_assert (0);
+
+	  record_full_arch_list_add_mem (addr, size);
+	}
+      break;
+
+    case 57:		/* Load Floating-Point Double Pair */
+      if (PPC_FIELD (insn, 30, 2) != 0)
+	goto UNKNOWN_OP;
+      tmp = tdep->ppc_fp0_regnum + (PPC_RT (insn) & ~1);
+      record_full_arch_list_add_reg (regcache, tmp);
+      record_full_arch_list_add_reg (regcache, tmp + 1);
+      break;
+
+    case 58:		/* Load Doubleword */
+			/* Load Doubleword with Update */
+			/* Load Word Algebraic */
+      if (PPC_FIELD (insn, 30, 2) > 2)
+	goto UNKNOWN_OP;
+
+      record_full_arch_list_add_reg (regcache,
+				     tdep->ppc_gp0_regnum + PPC_RT (insn));
+      if (PPC_BIT (insn, 31))
+	record_full_arch_list_add_reg (regcache,
+				       tdep->ppc_gp0_regnum + PPC_RA (insn));
+      break;
+
+    case 59:
+      if (ppc_process_record_op59 (gdbarch, regcache, addr, insn) != 0)
+	return -1;
+      break;
+
+    case 60:
+      if (ppc_process_record_op60 (gdbarch, regcache, addr, insn) != 0)
+	return -1;
+      break;
+
+    case 61:		/* Store Floating-Point Double Pair */
+    case 62:		/* Store Doubleword */
+			/* Store Doubleword with Update */
+			/* Store Quadword with Update */
+	{
+	  ULONGEST addr = 0;
+	  int size;
+	  int sub2 = PPC_FIELD (insn, 30, 2);
+
+	  if ((op6 == 61 && sub2 != 0) || (op6 == 62 && sub2 > 2))
+	    goto UNKNOWN_OP;
+
+	  if (PPC_RA (insn) != 0)
+	    regcache_raw_read_unsigned (regcache,
+					tdep->ppc_gp0_regnum + PPC_RA (insn),
+					&addr);
+
+	  size = ((op6 == 61) || sub2 == 2) ? 16 : 8;
+
+	  addr += PPC_DS (insn) << 2;
+	  record_full_arch_list_add_mem (addr, size);
+
+	  if (op6 == 62 && sub2 == 1)
+	    record_full_arch_list_add_reg (regcache,
+					   tdep->ppc_gp0_regnum +
+					   PPC_RA (insn));
+
+	  break;
+	}
+
+    case 63:
+      if (ppc_process_record_op63 (gdbarch, regcache, addr, insn) != 0)
+	return -1;
+      break;
+
+    default:
+UNKNOWN_OP:
+      fprintf_unfiltered (gdb_stdlog, "Warning: Don't know how to record %08x "
+			  "at %s, %d.\n", insn, paddress (gdbarch, addr), op6);
+      return -1;
+    }
+
+  if (record_full_arch_list_add_reg (regcache, PPC_PC_REGNUM))
+    return -1;
+  if (record_full_arch_list_add_end ())
+    return -1;
+  return 0;
+}
+
 /* Initialize the current architecture based on INFO.  If possible, re-use an
    architecture from ARCHES, which is a list of architectures already created
    during this debugging session.
@@ -3550,6 +5351,7 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   enum auto_boolean soft_float_flag = powerpc_soft_float_global;
   int soft_float;
   enum powerpc_vector_abi vector_abi = powerpc_vector_abi_global;
+  enum powerpc_elf_abi elf_abi = POWERPC_ELF_AUTO;
   int have_fpu = 1, have_spe = 0, have_mq = 0, have_altivec = 0, have_dfp = 0,
       have_vsx = 0;
   int tdesc_wordsize = -1;
@@ -3645,10 +5447,6 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	"r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
 	"r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
-      };
-      static const char *const segment_regs[] = {
-	"sr0", "sr1", "sr2", "sr3", "sr4", "sr5", "sr6", "sr7",
-	"sr8", "sr9", "sr10", "sr11", "sr12", "sr13", "sr14", "sr15"
       };
       const struct tdesc_feature *feature;
       int i, valid_p;
@@ -3856,6 +5654,21 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     }
 
 #ifdef HAVE_ELF
+  if (from_elf_exec)
+    {
+      switch (elf_elfheader (info.abfd)->e_flags & EF_PPC64_ABI)
+	{
+	case 1:
+	  elf_abi = POWERPC_ELF_V1;
+	  break;
+	case 2:
+	  elf_abi = POWERPC_ELF_V2;
+	  break;
+	default:
+	  break;
+	}
+    }
+
   if (soft_float_flag == AUTO_BOOLEAN_AUTO && from_elf_exec)
     {
       switch (bfd_elf_get_obj_attr_int (info.abfd, OBJ_ATTR_GNU,
@@ -3891,6 +5704,21 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	}
     }
 #endif
+
+  /* At this point, the only supported ELF-based 64-bit little-endian
+     operating system is GNU/Linux, and this uses the ELFv2 ABI by
+     default.  All other supported ELF-based operating systems use the
+     ELFv1 ABI by default.  Therefore, if the ABI marker is missing,
+     e.g. because we run a legacy binary, or have attached to a process
+     and have not found any associated binary file, set the default
+     according to this heuristic.  */
+  if (elf_abi == POWERPC_ELF_AUTO)
+    {
+      if (wordsize == 8 && info.byte_order == BFD_ENDIAN_LITTLE)
+        elf_abi = POWERPC_ELF_V2;
+      else
+        elf_abi = POWERPC_ELF_V1;
+    }
 
   if (soft_float_flag == AUTO_BOOLEAN_TRUE)
     soft_float = 1;
@@ -3934,6 +5762,8 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
          meaningful, because 64-bit CPUs can run in 32-bit mode.  So, perform
          separate word size check.  */
       tdep = gdbarch_tdep (arches->gdbarch);
+      if (tdep && tdep->elf_abi != elf_abi)
+	continue;
       if (tdep && tdep->soft_float != soft_float)
 	continue;
       if (tdep && tdep->vector_abi != vector_abi)
@@ -3954,8 +5784,9 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        - "set arch"		trust blindly
        - GDB startup		useless but harmless */
 
-  tdep = XCALLOC (1, struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   tdep->wordsize = wordsize;
+  tdep->elf_abi = elf_abi;
   tdep->soft_float = soft_float;
   tdep->vector_abi = vector_abi;
 
@@ -4112,6 +5943,7 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     case GDB_OSABI_NETBSD_ELF:
     case GDB_OSABI_UNKNOWN:
       set_gdbarch_unwind_pc (gdbarch, rs6000_unwind_pc);
+      frame_unwind_append_unwinder (gdbarch, &rs6000_epilogue_frame_unwind);
       frame_unwind_append_unwinder (gdbarch, &rs6000_frame_unwind);
       set_gdbarch_dummy_id (gdbarch, rs6000_dummy_id);
       frame_base_append_sniffer (gdbarch, rs6000_frame_base_sniffer);
@@ -4120,6 +5952,7 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_believe_pcc_promotion (gdbarch, 1);
 
       set_gdbarch_unwind_pc (gdbarch, rs6000_unwind_pc);
+      frame_unwind_append_unwinder (gdbarch, &rs6000_epilogue_frame_unwind);
       frame_unwind_append_unwinder (gdbarch, &rs6000_frame_unwind);
       set_gdbarch_dummy_id (gdbarch, rs6000_dummy_id);
       frame_base_append_sniffer (gdbarch, rs6000_frame_base_sniffer);

@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2014 Free Software Foundation, Inc.
+   Copyright 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -30,7 +30,7 @@
 
    The table that follows determines how each field should be treated.
    Importantly it considers the case where the extracted field is to
-   be used immediatly or stored in an instruction cache.
+   be used immediately or stored in an instruction cache.
 
    <type>
 

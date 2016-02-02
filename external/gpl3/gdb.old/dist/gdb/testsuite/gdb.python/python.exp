@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,9 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
+set remote_source2_py [gdb_remote_download host \
+			   ${srcdir}/${subdir}/source2.py]
+
 # Do this instead of the skip_python_check.
 # We want to do some tests when Python is not present.
 gdb_test_multiple "python print (23)" "verify python support" {
@@ -38,9 +41,16 @@ gdb_test_multiple "python print (23)" "verify python support" {
 
       # If Python is not supported, verify that sourcing a python script
       # causes an error.
-      gdb_test "source $srcdir/$subdir/source2.py" \
+      gdb_test "source $remote_source2_py" \
 	  "Error in sourced command file:.*" \
 	  "source source2.py when python disabled"
+
+      # Verify multi-line python commands cause an error.
+      gdb_py_test_multiple "multi-line python command" \
+	  "python" "" \
+	  "print (23)" "" \
+	  "end" "not supported.*"
+
       return -1
     }
     -re "$gdb_prompt $"	{}
@@ -50,6 +60,22 @@ gdb_py_test_multiple "multi-line python command" \
   "python" "" \
   "print (23)" "" \
   "end" "23"
+
+# Spawn interactive Python help from a multi-line command, thus, after
+# a secondary prompt.
+
+with_test_prefix "python interactive help" {
+    set test "python; help(); end"
+    gdb_test_multiple "python\nhelp()\nend" $test {
+	-re ".*help utility.*help> $" {
+	    pass $test
+
+	    # The "quit" must be seen on the output.  A buggy GDB
+	    # would not display it.
+	    gdb_test "quit" "^quit.*leaving help.*" "quit help"
+	}
+    }
+}
 
 gdb_py_test_multiple "show python command" \
   "define zzq" "Type commands for definition of .* just \"end\"\\.*" \
@@ -66,7 +92,7 @@ gdb_py_test_multiple "indented multi-line python command" \
   "foo ()" "" \
   "end" "hello, world!"
 
-gdb_test "source $srcdir/$subdir/source2.py" "yes" "source source2.py"
+gdb_test "source $remote_source2_py" "yes" "source source2.py"
 
 gdb_test "source -s source2.py" "yes" "source -s source2.py"
 
@@ -168,7 +194,8 @@ if ![runto_main] then {
     return 0
 }
 
-runto [gdb_get_line_number "Break to end."]
+set lineno [gdb_get_line_number "Break to end."]
+runto $lineno
 
 # Test gdb.decode_line.
 gdb_test "python gdb.decode_line(\"main.c:43\")" \
@@ -178,14 +205,20 @@ gdb_py_test_silent_cmd "python symtab = gdb.decode_line()" "test decode_line cur
 gdb_test "python print (len(symtab))" "2" "Test decode_line current location"
 gdb_test "python print (symtab\[0\])" "None" "Test decode_line expression parse"
 gdb_test "python print (len(symtab\[1\]))" "1" "Test decode_line current location"
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*gdb.python/python.c.*" "Test decode_line current locationn filename"
-gdb_test "python print (symtab\[1\]\[0\].line)" "22" "Test decode_line current location line number"
+
+if { [is_remote host] } {
+    set python_c [string_to_regexp "python.c"]
+} else {
+    set python_c [string_to_regexp "gdb.python/python.c"]
+}
+gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "Test decode_line current location filename"
+gdb_test "python print (symtab\[1\]\[0\].line)" "$lineno" "Test decode_line current location line number"
 
 gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"python.c:26 if foo\")" "test decode_line python.c:26" 1
 gdb_test "python print (len(symtab))" "2" "Test decode_line python.c:26 length"
 gdb_test "python print (symtab\[0\])" "if foo" "Test decode_line expression parse"
 gdb_test "python print (len(symtab\[1\]))" "1" "Test decode_line python.c:26 length"
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*gdb.python/python.c.*" "Test decode_line python.c:26 filename"
+gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "Test decode_line python.c:26 filename"
 gdb_test "python print (symtab\[1\]\[0\].line)" "26" "Test decode_line python.c:26 line number"
 
 gdb_test "python gdb.decode_line(\"randomfunc\")" \
@@ -193,7 +226,13 @@ gdb_test "python gdb.decode_line(\"randomfunc\")" \
 gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"func1\")" "test decode_line func1()" 1
 gdb_test "python print (len(symtab))" "2" "Test decode_line func1 length"
 gdb_test "python print (len(symtab\[1\]))" "1" "Test decode_line func1 length"
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*gdb.python/python-1.c.*" "Test decode_line func1 filename"
+
+if { [is_remote host] } {
+    set python_1_c [string_to_regexp "python-1.c"]
+} else {
+    set python_1_c [string_to_regexp "gdb.python/python-1.c"]
+}
+gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_1_c}" "Test decode_line func1 filename"
 gdb_test "python print (symtab\[1\]\[0\].line)" "19" "Test decode_line func1 line number"
 gdb_py_test_silent_cmd {python symtab = gdb.decode_line ("func1,func2")} \
     "test decode_line func1,func2" 1
@@ -275,6 +314,13 @@ gdb_test_multiple "set prompt $gdb_prompt " "set default prompt" {
     }
 }
 
+set working_dir ""
+gdb_test_multiple "pwd" "pwd" {
+    -re "Working directory (.*)\\.\[\r\n\]+$gdb_prompt $" {
+	set working_dir $expect_out(1,string)
+    }
+}
+
 gdb_test_multiple "python gdb.prompt_hook = program_prompt" "set the hook" {
     -re "\[\r\n\]$gdb_prompt $" {
 	pass "set programming hook"
@@ -307,7 +353,7 @@ gdb_test_multiple "set extended-prompt one two three " \
 
 gdb_test_multiple "set extended-prompt \\w " \
     "set extended prompt working directory" {
-    -re "\[\r\n\].*gdb.*testsuite.* $" {
+    -re "\[\r\n\][string_to_regexp $working_dir] $" {
 	pass "set extended prompt working directory"
     }
 }

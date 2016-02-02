@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2014 Free Software Foundation, Inc.
+   Copyright 2010-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ typedef volatile const_my_int volatile_const_my_int;
 typedef const volatile_my_int const_volatile_my_int;
 
 my_int v_my_int (0);
-const_my_int v_const_my_int (1);
+__attribute__((used)) const_my_int v_const_my_int (1);
 volatile_my_int v_volatile_my_int (2);
 const_volatile_my_int v_const_volatile_my_int (3);
 volatile_const_my_int v_volatile_const_my_int (4);

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "inferior.h"
 #include "gdbcore.h"
 #include "arch-utils.h"
@@ -28,7 +27,6 @@
 #include "frame-base.h"
 #include "trad-frame.h"
 #include "dis-asm.h"
-#include "gdb_assert.h"
 #include "sim-regno.h"
 #include "gdb/sim-frv.h"
 #include "opcodes/frv-desc.h"	/* for the H_SPR_... enums */
@@ -39,6 +37,7 @@
 #include "infcall.h"
 #include "solib.h"
 #include "frv-tdep.h"
+#include "objfiles.h"
 
 extern void _initialize_frv_tdep (void);
 
@@ -1082,8 +1081,8 @@ frv_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       s = lookup_minimal_symbol_by_pc (call_dest);
 
       if (s.minsym != NULL
-          && SYMBOL_LINKAGE_NAME (s.minsym) != NULL
-	  && strcmp (SYMBOL_LINKAGE_NAME (s.minsym), "__main") == 0)
+          && MSYMBOL_LINKAGE_NAME (s.minsym) != NULL
+	  && strcmp (MSYMBOL_LINKAGE_NAME (s.minsym), "__main") == 0)
 	{
 	  pc += 4;
 	  return pc;
@@ -1391,7 +1390,7 @@ frv_frame_this_id (struct frame_info *this_frame,
     = frv_frame_unwind_cache (this_frame, this_prologue_cache);
   CORE_ADDR base;
   CORE_ADDR func;
-  struct minimal_symbol *msym_stack;
+  struct bound_minimal_symbol msym_stack;
   struct frame_id id;
 
   /* The FUNC is easy.  */
@@ -1399,7 +1398,7 @@ frv_frame_this_id (struct frame_info *this_frame,
 
   /* Check if the stack is empty.  */
   msym_stack = lookup_minimal_symbol ("_stack", NULL, NULL);
-  if (msym_stack && info->base == SYMBOL_VALUE_ADDRESS (msym_stack))
+  if (msym_stack.minsym && info->base == BMSYMBOL_VALUE_ADDRESS (msym_stack))
     return;
 
   /* Hopefully the prologue analysis either correctly determined the

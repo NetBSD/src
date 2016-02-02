@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ proc test_insert_delete_modify { } {
 	$test
     set test "dprintf marker, \"arg\" \""
     mi_gdb_test $test \
-	{.*=breakpoint-created,bkpt=\{number="6",type="dprintf".*,script=\{\"printf \\\\\"arg\\\\\" \\\\\"\"\}.*\}\r\n\^done} \
+	{.*=breakpoint-created,bkpt=\{number="6",type="dprintf".*,script=\{\"printf \\\"arg\\\" \\\"\"\}.*\}\r\n\^done} \
 	$test
 
     # 2. when modifying condition
@@ -104,6 +104,9 @@ proc test_insert_delete_modify { } {
     mi_gdb_test $test \
 	{.*=breakpoint-modified,bkpt=\{number="2",.*,cond=\"main > 0x0\".*\}.*\n\^done} \
 	$test
+    # Modify condition through MI command shouldn't trigger MI notification.
+    mi_gdb_test "-break-condition 2 main == 0x0" "\\^done" \
+	"-break-condition 2 main == 0x0"
 
     # 3. when modifying enableness
     set test "disable 3"
@@ -114,16 +117,30 @@ proc test_insert_delete_modify { } {
     mi_gdb_test $test \
 	{.*=breakpoint-modified,bkpt=\{number="3",.*,enabled=\"y\".*\}.*\n\^done} \
 	$test
+    # Modify enableness through MI commands shouldn't trigger MI
+    # notification.
+    mi_gdb_test "-break-enable 3" "\\^done" "-break-enable 3"
+    mi_gdb_test "-break-disable 3" "\\^done" "-break-disable 3"
+
     # 4. when modifying ignore count.
     set test "ignore 5 1"
     mi_gdb_test $test \
 	{.*=breakpoint-modified,bkpt=\{number="5",.*,ignore=\"1\".*\}.*\n\^done} \
 	$test
+    # Modify ignore count through MI command shouldn't trigger MI
+    # notification.
+    mi_gdb_test "-break-after 5 1" "\\^done" \
+	"-break-after 5 1"
+
     # 5. when modifying pass count.
     set test "passcount 1 4"
     mi_gdb_test $test \
 	{.*=breakpoint-modified,bkpt=\{number="4",.*pass="1".*\}.*\n\^done} \
 	$test
+    # Modify pass count through MI command shouldn't trigger MI
+    # notification.
+    mi_gdb_test "-break-passcount 4 1" "\\^done" \
+	"-break-passcount 4 1"
 
     # Delete some breakpoints and verify that '=breakpoint-deleted
     # notification is correctly emitted.

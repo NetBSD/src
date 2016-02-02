@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,11 +23,6 @@ set executable ${testfile}
 
 if [target_info exists gdb,nosignals] {
     verbose "Skipping ${testfile}.exp because of nosignals."
-    return -1
-}
-
-# Test uses host "kill".
-if { [is_remote target] } {
     return -1
 }
 
@@ -67,8 +62,6 @@ gdb_breakpoint [gdb_get_line_number "set wait-thread-3 breakpoint here"]
 gdb_continue_to_breakpoint "run to breakpoint"
 gdb_test "info threads" "" "info threads with thread 3"
 
-set testpid [get_value "pid" "get pid of inferior"]
-
 gdb_test "set scheduler-locking on"
 
 gdb_breakpoint [gdb_get_line_number "set breakpoint child_two here"]
@@ -91,8 +84,8 @@ gdb_test "p *myp = 0" " = 0" "force loop break in thread 2"
 # core.
 gdb_test "handle SIGUSR1 print nostop pass" "" ""
 
-# Queue a signal in thread 2.
-remote_exec host "kill -SIGUSR1 ${testpid}"
+gdb_test "thread 1" "" "switch to thread 1 to queue signal in thread 2"
+gdb_test "next 2" "pthread_join .*" "queue signal in thread 2"
 
 gdb_test "thread 3" "" "switch to thread 3 for stepping"
 set my_number [get_value "my_number" "get my_number"]
@@ -104,7 +97,7 @@ gdb_test "set debug infrun 1"
 
 gdb_test \
     "step" \
-    ".*prepare_to_proceed \\(step=1\\), switched to.*signal arrived while stepping over breakpoint.*switching back to stepped thread.*stepped to a different line.*callme.*" \
+    ".*need to step-over.*resume \\(step=1.*signal arrived while stepping over breakpoint.*switching back to stepped thread.*stepped to a different line.*callme.*" \
     "step"
 
 set cnt_after [get_value "args\[$my_number\]" "get count after step"]
