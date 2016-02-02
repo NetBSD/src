@@ -1,0 +1,22 @@
+VPATH = @srcdir@
+srcdir = @srcdir@
+
+EXECUTABLES = py-type py-value py-prettyprint py-template py-block \
+	py-symbol py-mi py-breakpoint py-inferior py-infthread \
+	py-shared python lib-types py-events py-evthreads py-frame \
+	py-mi py-pp-maint py-progspace py-section-script py-objfile \
+	py-finish-breakpoint py-finish-breakpoint2 py-value-cc py-explore \
+	py-explore-cc py-arch
+
+MISCELLANEOUS = py-shared-sl.sl py-events-shlib.so py-events-shlib-nodebug.so 
+
+all info install-info dvi install uninstall installcheck check:
+	@echo "Nothing to be done for $@..."
+
+clean mostlyclean:
+	-rm -f *~ *.o *.ci
+	-rm -f *.dwo *.dwp
+	-rm -f core $(EXECUTABLES) $(MISCELLANEOUS)
+
+distclean maintainer-clean realclean: clean
+	-rm -f Makefile config.status config.log gdb.log gdb.sum
