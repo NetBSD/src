@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.50 2014/12/03 20:36:33 snj Exp $
+.\"	$NetBSD: queue.3,v 1.51 2016/02/02 12:25:24 ryoon Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd May 17, 2014
+.Dd February 2, 2016
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -537,8 +537,8 @@ free(n2);
 n3 = SLIST_FIRST(\*[Am]head);
 SLIST_REMOVE_HEAD(\*[Am]head, entries);      /* Deletion from the head. */
 free(n3);
-                                        /* Forward traversal. */
-SLIST_FOREACH(np, \*[Am]head, entries)
+
+SLIST_FOREACH(np, \*[Am]head, entries)       /* Forward traversal. */
         np-\*[Gt] ...
 
 while (!SLIST_EMPTY(\*[Am]head)) {           /* List Deletion. */
@@ -672,7 +672,7 @@ always making the former empty.
 .Sh LIST EXAMPLE
 .Bd -literal
 LIST_HEAD(listhead, entry) head;
-struct listhead *headp;		/* List head. */
+struct listhead *headp;			/* List head. */
 struct entry {
 	...
 	LIST_ENTRY(entry) entries;	/* List. */
@@ -689,11 +689,11 @@ LIST_INSERT_AFTER(n1, n2, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 LIST_INSERT_BEFORE(n1, n2, entries);
-					/* Forward traversal. */
-LIST_FOREACH(np, \*[Am]head, entries)
+
+LIST_FOREACH(np, \*[Am]head, entries)	/* Forward traversal. */
 	np-\*[Gt] ...
-					/* Delete. */
-while (LIST_FIRST(\*[Am]head) != NULL)
+
+while (LIST_FIRST(\*[Am]head) != NULL)	/* Delete. */
 	LIST_REMOVE(LIST_FIRST(\*[Am]head), entries);
 if (LIST_EMPTY(\*[Am]head))			/* Test for emptiness. */
 	printf("nothing to do\\n");
@@ -857,11 +857,11 @@ SIMPLEQ_INSERT_TAIL(\*[Am]head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
 SIMPLEQ_INSERT_AFTER(\*[Am]head, n1, n2, entries);
-					/* Forward traversal. */
-SIMPLEQ_FOREACH(np, \*[Am]head, entries)
+
+SIMPLEQ_FOREACH(np, \*[Am]head, entries)	/* Forward traversal. */
 	np-\*[Gt] ...
-					/* Delete. */
-while (SIMPLEQ_FIRST(\*[Am]head) != NULL)
+
+while (SIMPLEQ_FIRST(\*[Am]head) != NULL)	/* Delete. */
 	SIMPLEQ_REMOVE_HEAD(\*[Am]head, entries);
 if (SIMPLEQ_EMPTY(\*[Am]head))		/* Test for emptiness. */
 	printf("nothing to do\\n");
@@ -1015,7 +1015,7 @@ removing all entries from the former.
 .Sh TAIL QUEUE EXAMPLE
 .Bd -literal
 TAILQ_HEAD(tailhead, entry) head;
-struct tailhead *headp;		/* Tail queue head. */
+struct tailhead *headp;			/* Tail queue head. */
 struct entry {
 	...
 	TAILQ_ENTRY(entry) entries;	/* Tail queue. */
@@ -1035,14 +1035,14 @@ TAILQ_INSERT_AFTER(\*[Am]head, n1, n2, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 TAILQ_INSERT_BEFORE(n1, n2, entries);
-					/* Forward traversal. */
-TAILQ_FOREACH(np, \*[Am]head, entries)
+
+TAILQ_FOREACH(np, \*[Am]head, entries)	/* Forward traversal. */
 	np-\*[Gt] ...
 					/* Reverse traversal. */
 TAILQ_FOREACH_REVERSE(np, \*[Am]head, tailhead, entries)
 	np-\*[Gt] ...
-					/* Delete. */
-while (TAILQ_FIRST(\*[Am]head) != NULL)
+					
+while (TAILQ_FIRST(\*[Am]head) != NULL)	/* Delete. */
 	TAILQ_REMOVE(\*[Am]head, TAILQ_FIRST(\*[Am]head), entries);
 if (TAILQ_EMPTY(\*[Am]head))			/* Test for emptiness. */
 	printf("nothing to do\\n");
