@@ -1,6 +1,6 @@
 /* Generic static probe support for GDB.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,12 +26,14 @@
 #include "symtab.h"
 #include "progspace.h"
 #include "filenames.h"
-#include "exceptions.h"
 #include "linespec.h"
 #include "gdb_regex.h"
 #include "frame.h"
 #include "arch-utils.h"
 #include <ctype.h>
+
+typedef struct bound_probe bound_probe_s;
+DEF_VEC_O (bound_probe_s);
 
 
 
@@ -56,7 +58,8 @@ parse_probes (char **argptr, struct linespec_result *canonical)
 
   cs = *argptr;
   probe_ops = probe_linespec_to_ops (&cs);
-  gdb_assert (probe_ops != NULL);
+  if (probe_ops == NULL)
+    error (_("'%s' is not a probe linespec"), arg_start);
 
   arg = (char *) cs;
   arg = skip_spaces (arg);
@@ -144,11 +147,12 @@ parse_probes (char **argptr, struct linespec_result *canonical)
 
 	    init_sal (sal);
 
-	    sal->pc = probe->address;
+	    sal->pc = get_probe_address (probe, objfile);
 	    sal->explicit_pc = 1;
 	    sal->section = find_pc_overlay (sal->pc);
 	    sal->pspace = pspace;
 	    sal->probe = probe;
+	    sal->objfile = objfile;
 	  }
       }
 
@@ -204,10 +208,14 @@ find_probes_in_objfile (struct objfile *objfile, const char *provider,
 
 /* See definition in probe.h.  */
 
-struct probe *
+struct bound_probe
 find_probe_by_pc (CORE_ADDR pc)
 {
   struct objfile *objfile;
+  struct bound_probe result;
+
+  result.objfile = NULL;
+  result.probe = NULL;
 
   ALL_OBJFILES (objfile)
   {
@@ -215,17 +223,22 @@ find_probe_by_pc (CORE_ADDR pc)
     int ix;
     struct probe *probe;
 
-    if (!objfile->sf || !objfile->sf->sym_probe_fns)
+    if (!objfile->sf || !objfile->sf->sym_probe_fns
+	|| objfile->sect_index_text == -1)
       continue;
 
     /* If this proves too inefficient, we can replace with a hash.  */
     probes = objfile->sf->sym_probe_fns->sym_get_probes (objfile);
     for (ix = 0; VEC_iterate (probe_p, probes, ix, probe); ix++)
-      if (probe->address == pc)
-	return probe;
+      if (get_probe_address (probe, objfile) == pc)
+	{
+	  result.objfile = objfile;
+	  result.probe = probe;
+	  return result;
+	}
   }
 
-  return NULL;
+  return result;
 }
 
 
@@ -234,16 +247,16 @@ find_probe_by_pc (CORE_ADDR pc)
    If POPS is not NULL, only probes of this certain probe_ops will match.
    Each argument is a regexp, or NULL, which matches anything.  */
 
-static VEC (probe_p) *
+static VEC (bound_probe_s) *
 collect_probes (char *objname, char *provider, char *probe_name,
 		const struct probe_ops *pops)
 {
   struct objfile *objfile;
-  VEC (probe_p) *result = NULL;
+  VEC (bound_probe_s) *result = NULL;
   struct cleanup *cleanup, *cleanup_temps;
   regex_t obj_pat, prov_pat, probe_pat;
 
-  cleanup = make_cleanup (VEC_cleanup (probe_p), &result);
+  cleanup = make_cleanup (VEC_cleanup (bound_probe_s), &result);
 
   cleanup_temps = make_cleanup (null_cleanup, NULL);
   if (provider != NULL)
@@ -272,6 +285,8 @@ collect_probes (char *objname, char *provider, char *probe_name,
 
       for (ix = 0; VEC_iterate (probe_p, probes, ix, probe); ix++)
 	{
+	  struct bound_probe bound;
+
 	  if (pops != NULL && probe->pops != pops)
 	    continue;
 
@@ -283,7 +298,9 @@ collect_probes (char *objname, char *provider, char *probe_name,
 	      && regexec (&probe_pat, probe->name, 0, NULL, 0) != 0)
 	    continue;
 
-	  VEC_safe_push (probe_p, result, probe);
+	  bound.objfile = objfile;
+	  bound.probe = probe;
+	  VEC_safe_push (bound_probe_s, result, &bound);
 	}
     }
 
@@ -292,26 +309,26 @@ collect_probes (char *objname, char *provider, char *probe_name,
   return result;
 }
 
-/* A qsort comparison function for probe_p objects.  */
+/* A qsort comparison function for bound_probe_s objects.  */
 
 static int
 compare_probes (const void *a, const void *b)
 {
-  const struct probe *pa = *((const struct probe **) a);
-  const struct probe *pb = *((const struct probe **) b);
+  const struct bound_probe *pa = (const struct bound_probe *) a;
+  const struct bound_probe *pb = (const struct bound_probe *) b;
   int v;
 
-  v = strcmp (pa->provider, pb->provider);
+  v = strcmp (pa->probe->provider, pb->probe->provider);
   if (v)
     return v;
 
-  v = strcmp (pa->name, pb->name);
+  v = strcmp (pa->probe->name, pb->probe->name);
   if (v)
     return v;
 
-  if (pa->address < pb->address)
+  if (pa->probe->address < pb->probe->address)
     return -1;
-  if (pa->address > pb->address)
+  if (pa->probe->address > pb->probe->address)
     return 1;
 
   return strcmp (objfile_name (pa->objfile), objfile_name (pb->objfile));
@@ -321,7 +338,7 @@ compare_probes (const void *a, const void *b)
    crafted by `info_probes_for_ops'.  */
 
 static void
-gen_ui_out_table_header_info (VEC (probe_p) *probes,
+gen_ui_out_table_header_info (VEC (bound_probe_s) *probes,
 			      const struct probe_ops *p)
 {
   /* `headings' refers to the names of the columns when printing `info
@@ -350,11 +367,11 @@ gen_ui_out_table_header_info (VEC (probe_p) *probes,
        VEC_iterate (info_probe_column_s, headings, ix, column);
        ++ix)
     {
-      struct probe *probe;
+      struct bound_probe *probe;
       int jx;
       size_t size_max = strlen (column->print_name);
 
-      for (jx = 0; VEC_iterate (probe_p, probes, jx, probe); ++jx)
+      for (jx = 0; VEC_iterate (bound_probe_s, probes, jx, probe); ++jx)
 	{
 	  /* `probe_fields' refers to the values of each new field that this
 	     probe will display.  */
@@ -363,11 +380,11 @@ gen_ui_out_table_header_info (VEC (probe_p) *probes,
 	  const char *val;
 	  int kx;
 
-	  if (probe->pops != p)
+	  if (probe->probe->pops != p)
 	    continue;
 
 	  c2 = make_cleanup (VEC_cleanup (const_char_ptr), &probe_fields);
-	  p->gen_info_probes_table_values (probe, &probe_fields);
+	  p->gen_info_probes_table_values (probe->probe, &probe_fields);
 
 	  gdb_assert (VEC_length (const_char_ptr, probe_fields)
 		      == headings_size);
@@ -468,32 +485,33 @@ get_number_extra_fields (const struct probe_ops *pops)
 /* See comment in probe.h.  */
 
 void
-info_probes_for_ops (char *arg, int from_tty, const struct probe_ops *pops)
+info_probes_for_ops (const char *arg, int from_tty,
+		     const struct probe_ops *pops)
 {
   char *provider, *probe_name = NULL, *objname = NULL;
   struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
-  VEC (probe_p) *probes;
+  VEC (bound_probe_s) *probes;
   int i, any_found;
   int ui_out_extra_fields = 0;
   size_t size_addr;
   size_t size_name = strlen ("Name");
   size_t size_objname = strlen ("Object");
   size_t size_provider = strlen ("Provider");
-  struct probe *probe;
+  struct bound_probe *probe;
   struct gdbarch *gdbarch = get_current_arch ();
 
   /* Do we have a `provider:probe:objfile' style of linespec?  */
-  provider = extract_arg (&arg);
+  provider = extract_arg_const (&arg);
   if (provider)
     {
       make_cleanup (xfree, provider);
 
-      probe_name = extract_arg (&arg);
+      probe_name = extract_arg_const (&arg);
       if (probe_name)
 	{
 	  make_cleanup (xfree, probe_name);
 
-	  objname = extract_arg (&arg);
+	  objname = extract_arg_const (&arg);
 	  if (objname)
 	    make_cleanup (xfree, objname);
 	}
@@ -523,22 +541,23 @@ info_probes_for_ops (char *arg, int from_tty, const struct probe_ops *pops)
   make_cleanup (VEC_cleanup (probe_p), &probes);
   make_cleanup_ui_out_table_begin_end (current_uiout,
 				       4 + ui_out_extra_fields,
-				       VEC_length (probe_p, probes),
+				       VEC_length (bound_probe_s, probes),
 				       "StaticProbes");
 
-  if (!VEC_empty (probe_p, probes))
-    qsort (VEC_address (probe_p, probes), VEC_length (probe_p, probes),
-	   sizeof (probe_p), compare_probes);
+  if (!VEC_empty (bound_probe_s, probes))
+    qsort (VEC_address (bound_probe_s, probes),
+	   VEC_length (bound_probe_s, probes),
+	   sizeof (bound_probe_s), compare_probes);
 
   /* What's the size of an address in our architecture?  */
   size_addr = gdbarch_addr_bit (gdbarch) == 64 ? 18 : 10;
 
   /* Determining the maximum size of each field (`provider', `name' and
      `objname').  */
-  for (i = 0; VEC_iterate (probe_p, probes, i, probe); ++i)
+  for (i = 0; VEC_iterate (bound_probe_s, probes, i, probe); ++i)
     {
-      size_name = max (strlen (probe->name), size_name);
-      size_provider = max (strlen (probe->provider), size_provider);
+      size_name = max (strlen (probe->probe->name), size_name);
+      size_provider = max (strlen (probe->probe->provider), size_provider);
       size_objname = max (strlen (objfile_name (probe->objfile)), size_objname);
     }
 
@@ -564,17 +583,17 @@ info_probes_for_ops (char *arg, int from_tty, const struct probe_ops *pops)
 		       _("Object"));
   ui_out_table_body (current_uiout);
 
-  for (i = 0; VEC_iterate (probe_p, probes, i, probe); ++i)
+  for (i = 0; VEC_iterate (bound_probe_s, probes, i, probe); ++i)
     {
       struct cleanup *inner;
 
       inner = make_cleanup_ui_out_tuple_begin_end (current_uiout, "probe");
 
-      ui_out_field_string (current_uiout, "provider", probe->provider);
-      ui_out_field_string (current_uiout, "name", probe->name);
+      ui_out_field_string (current_uiout, "provider", probe->probe->provider);
+      ui_out_field_string (current_uiout, "name", probe->probe->name);
       ui_out_field_core_addr (current_uiout, "addr",
-			      get_objfile_arch (probe->objfile),
-			      probe->address);
+			      probe->probe->arch,
+			      get_probe_address (probe->probe, probe->objfile));
 
       if (pops == NULL)
 	{
@@ -583,11 +602,11 @@ info_probes_for_ops (char *arg, int from_tty, const struct probe_ops *pops)
 
 	  for (ix = 0; VEC_iterate (probe_ops_cp, all_probe_ops, ix, po);
 	       ++ix)
-	    if (probe->pops == po)
-	      print_ui_out_info (probe);
+	    if (probe->probe->pops == po)
+	      print_ui_out_info (probe->probe);
 	}
       else
-	print_ui_out_info (probe);
+	print_ui_out_info (probe->probe);
 
       ui_out_field_string (current_uiout, "object",
 			   objfile_name (probe->objfile));
@@ -596,7 +615,7 @@ info_probes_for_ops (char *arg, int from_tty, const struct probe_ops *pops)
       do_cleanups (inner);
     }
 
-  any_found = !VEC_empty (probe_p, probes);
+  any_found = !VEC_empty (bound_probe_s, probes);
   do_cleanups (cleanup);
 
   if (!any_found)
@@ -609,6 +628,14 @@ static void
 info_probes_command (char *arg, int from_tty)
 {
   info_probes_for_ops (arg, from_tty, NULL);
+}
+
+/* See comments in probe.h.  */
+
+CORE_ADDR
+get_probe_address (struct probe *probe, struct objfile *objfile)
+{
+  return probe->pops->get_probe_address (probe, objfile);
 }
 
 /* See comments in probe.h.  */
@@ -641,18 +668,18 @@ evaluate_probe_argument (struct probe *probe, unsigned n,
 struct value *
 probe_safe_evaluate_at_pc (struct frame_info *frame, unsigned n)
 {
-  struct probe *probe;
+  struct bound_probe probe;
   unsigned n_args;
 
   probe = find_probe_by_pc (get_frame_pc (frame));
-  if (!probe)
+  if (!probe.probe)
     return NULL;
 
-  n_args = get_probe_argument_count (probe, frame);
+  n_args = get_probe_argument_count (probe.probe, frame);
   if (n >= n_args)
     return NULL;
 
-  return evaluate_probe_argument (probe, n, frame);
+  return evaluate_probe_argument (probe.probe, n, frame);
 }
 
 /* See comment in probe.h.  */

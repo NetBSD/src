@@ -1,5 +1,5 @@
 /* GNU/Linux on ARM native support.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 #include "defs.h"
 #include "inferior.h"
 #include "gdbcore.h"
-#include <string.h>
 #include "regcache.h"
 #include "target.h"
 #include "linux-nat.h"
@@ -636,7 +635,7 @@ arm_linux_read_description (struct target_ops *ops)
 
   if (target_auxv_search (ops, AT_HWCAP, &arm_hwcap) != 1)
     {
-      return NULL;
+      return ops->beneath->to_read_description (ops->beneath);
     }
 
   if (arm_hwcap & HWCAP_IWMMXT)
@@ -681,7 +680,7 @@ arm_linux_read_description (struct target_ops *ops)
       return result;
     }
 
-  return NULL;
+  return ops->beneath->to_read_description (ops->beneath);
 }
 
 /* Information describing the hardware breakpoint capabilities.  */
@@ -692,6 +691,11 @@ struct arm_linux_hwbp_cap
   gdb_byte wp_count;
   gdb_byte bp_count;
 };
+
+/* Since we cannot dynamically allocate subfields of arm_linux_process_info,
+   assume a maximum number of supported break-/watchpoints.  */
+#define MAX_BPTS 16
+#define MAX_WPTS 16
 
 /* Get hold of the Hardware Breakpoint information for the target we are
    attached to.  Returns NULL if the kernel doesn't support Hardware 
@@ -721,6 +725,20 @@ arm_linux_get_hwbp_cap (void)
 	  info.max_wp_length = (gdb_byte)((val >> 16) & 0xff);
 	  info.wp_count = (gdb_byte)((val >> 8) & 0xff);
 	  info.bp_count = (gdb_byte)(val & 0xff);
+
+      if (info.wp_count > MAX_WPTS)
+        {
+          warning (_("arm-linux-gdb supports %d hardware watchpoints but target \
+                      supports %d"), MAX_WPTS, info.wp_count);
+          info.wp_count = MAX_WPTS;
+        }
+
+      if (info.bp_count > MAX_BPTS)
+        {
+          warning (_("arm-linux-gdb supports %d hardware breakpoints but target \
+                      supports %d"), MAX_BPTS, info.bp_count);
+          info.bp_count = MAX_BPTS;
+        }
 	  available = (info.arch != 0);
 	}
     }
@@ -747,7 +765,8 @@ arm_linux_get_hw_watchpoint_count (void)
 /* Have we got a free break-/watch-point available for use?  Returns -1 if
    there is not an appropriate resource available, otherwise returns 1.  */
 static int
-arm_linux_can_use_hw_breakpoint (int type, int cnt, int ot)
+arm_linux_can_use_hw_breakpoint (struct target_ops *self,
+				 int type, int cnt, int ot)
 {
   if (type == bp_hardware_watchpoint || type == bp_read_watchpoint
       || type == bp_access_watchpoint || type == bp_watchpoint)
@@ -787,8 +806,8 @@ struct arm_linux_hw_breakpoint
   arm_hwbp_control_t control;
 };
 
-/* Structure containing arrays of the break and watch points which are have
-   active in each thread.
+/* Structure containing arrays of per process hardware break-/watchpoints
+   for caching address and control information.
 
    The Linux ptrace interface to hardware break-/watch-points presents the 
    values in a vector centred around 0 (which is used fo generic information).
@@ -808,49 +827,114 @@ struct arm_linux_hw_breakpoint
 
    We treat break-/watch-points with their enable bit clear as being deleted.
    */
-typedef struct arm_linux_thread_points
+struct arm_linux_debug_reg_state
 {
-  /* Thread ID.  */
-  int tid;
-  /* Breakpoints for thread.  */
-  struct arm_linux_hw_breakpoint *bpts;
-  /* Watchpoint for threads.  */
-  struct arm_linux_hw_breakpoint *wpts;
-} *arm_linux_thread_points_p;
-DEF_VEC_P (arm_linux_thread_points_p);
+  /* Hardware breakpoints for this process.  */
+  struct arm_linux_hw_breakpoint bpts[MAX_BPTS];
+  /* Hardware watchpoints for this process.  */
+  struct arm_linux_hw_breakpoint wpts[MAX_WPTS];
+};
 
-/* Vector of hardware breakpoints for each thread.  */
-VEC(arm_linux_thread_points_p) *arm_threads = NULL;
-
-/* Find the list of hardware break-/watch-points for a thread with id TID.
-   If no list exists for TID we return NULL if ALLOC_NEW is 0, otherwise we
-   create a new list and return that.  */
-static struct arm_linux_thread_points *
-arm_linux_find_breakpoints_by_tid (int tid, int alloc_new)
+/* Per-process arch-specific data we want to keep.  */
+struct arm_linux_process_info
 {
-  int i;
-  struct arm_linux_thread_points *t;
+  /* Linked list.  */
+  struct arm_linux_process_info *next;
+  /* The process identifier.  */
+  pid_t pid;
+  /* Hardware break-/watchpoints state information.  */
+  struct arm_linux_debug_reg_state state;
 
-  for (i = 0; VEC_iterate (arm_linux_thread_points_p, arm_threads, i, t); ++i)
+};
+
+/* Per-thread arch-specific data we want to keep.  */
+struct arch_lwp_info
+{
+  /* Non-zero if our copy differs from what's recorded in the thread.  */
+  char bpts_changed[MAX_BPTS];
+  char wpts_changed[MAX_WPTS];
+};
+
+static struct arm_linux_process_info *arm_linux_process_list = NULL;
+
+/* Find process data for process PID.  */
+
+static struct arm_linux_process_info *
+arm_linux_find_process_pid (pid_t pid)
+{
+  struct arm_linux_process_info *proc;
+
+  for (proc = arm_linux_process_list; proc; proc = proc->next)
+    if (proc->pid == pid)
+      return proc;
+
+  return NULL;
+}
+
+/* Add process data for process PID.  Returns newly allocated info
+   object.  */
+
+static struct arm_linux_process_info *
+arm_linux_add_process (pid_t pid)
+{
+  struct arm_linux_process_info *proc;
+
+  proc = xcalloc (1, sizeof (*proc));
+  proc->pid = pid;
+
+  proc->next = arm_linux_process_list;
+  arm_linux_process_list = proc;
+
+  return proc;
+}
+
+/* Get data specific info for process PID, creating it if necessary.
+   Never returns NULL.  */
+
+static struct arm_linux_process_info *
+arm_linux_process_info_get (pid_t pid)
+{
+  struct arm_linux_process_info *proc;
+
+  proc = arm_linux_find_process_pid (pid);
+  if (proc == NULL)
+    proc = arm_linux_add_process (pid);
+
+  return proc;
+}
+
+/* Called whenever GDB is no longer debugging process PID.  It deletes
+   data structures that keep track of debug register state.  */
+
+static void
+arm_linux_forget_process (pid_t pid)
+{
+  struct arm_linux_process_info *proc, **proc_link;
+
+  proc = arm_linux_process_list;
+  proc_link = &arm_linux_process_list;
+
+  while (proc != NULL)
     {
-      if (t->tid == tid)
-	return t;
+      if (proc->pid == pid)
+    {
+      *proc_link = proc->next;
+
+      xfree (proc);
+      return;
     }
 
-  t = NULL;
-
-  if (alloc_new)
-    {
-      t = xmalloc (sizeof (struct arm_linux_thread_points));
-      t->tid = tid;
-      t->bpts = xzalloc (arm_linux_get_hw_breakpoint_count ()
-			 * sizeof (struct arm_linux_hw_breakpoint));
-      t->wpts = xzalloc (arm_linux_get_hw_watchpoint_count ()
-			 * sizeof (struct arm_linux_hw_breakpoint));
-      VEC_safe_push (arm_linux_thread_points_p, arm_threads, t);
+      proc_link = &proc->next;
+      proc = *proc_link;
     }
+}
 
-  return t;
+/* Get hardware break-/watchpoint state for process PID.  */
+
+static struct arm_linux_debug_reg_state *
+arm_linux_get_debug_reg_state (pid_t pid)
+{
+  return &arm_linux_process_info_get (pid)->state;
 }
 
 /* Initialize an ARM hardware break-/watch-point control register value.
@@ -891,7 +975,7 @@ arm_linux_hw_breakpoint_initialize (struct gdbarch *gdbarch,
 				    struct arm_linux_hw_breakpoint *p)
 {
   unsigned mask;
-  CORE_ADDR address = bp_tgt->placed_address;
+  CORE_ADDR address = bp_tgt->placed_address = bp_tgt->reqstd_address;
 
   /* We have to create a mask for the control register which says which bits
      of the word pointed to by address to break on.  */
@@ -950,45 +1034,72 @@ arm_linux_hw_breakpoint_equal (const struct arm_linux_hw_breakpoint *p1,
   return p1->address == p2->address && p1->control == p2->control;
 }
 
+/* Callback to mark a watch-/breakpoint to be updated in all threads of
+   the current process.  */
+
+struct update_registers_data
+{
+  int watch;
+  int index;
+};
+
+static int
+update_registers_callback (struct lwp_info *lwp, void *arg)
+{
+  struct update_registers_data *data = (struct update_registers_data *) arg;
+
+  if (lwp->arch_private == NULL)
+    lwp->arch_private = XCNEW (struct arch_lwp_info);
+
+  /* The actual update is done later just before resuming the lwp,
+     we just mark that the registers need updating.  */
+  if (data->watch)
+    lwp->arch_private->wpts_changed[data->index] = 1;
+  else
+    lwp->arch_private->bpts_changed[data->index] = 1;
+
+  /* If the lwp isn't stopped, force it to momentarily pause, so
+     we can update its breakpoint registers.  */
+  if (!lwp->stopped)
+    linux_stop_lwp (lwp);
+
+  return 0;
+}
+
 /* Insert the hardware breakpoint (WATCHPOINT = 0) or watchpoint (WATCHPOINT
    =1) BPT for thread TID.  */
 static void
 arm_linux_insert_hw_breakpoint1 (const struct arm_linux_hw_breakpoint* bpt, 
-				int tid, int watchpoint)
+                                 int watchpoint)
 {
-  struct arm_linux_thread_points *t = arm_linux_find_breakpoints_by_tid (tid, 1);
+  int pid;
+  ptid_t pid_ptid;
   gdb_byte count, i;
   struct arm_linux_hw_breakpoint* bpts;
-  int dir;
+  struct update_registers_data data;
 
-  gdb_assert (t != NULL);
+  pid = ptid_get_pid (inferior_ptid);
+  pid_ptid = pid_to_ptid (pid);
 
   if (watchpoint)
     {
       count = arm_linux_get_hw_watchpoint_count ();
-      bpts = t->wpts;
-      dir = -1;
+      bpts = arm_linux_get_debug_reg_state (pid)->wpts;
     }
   else
     {
       count = arm_linux_get_hw_breakpoint_count ();
-      bpts = t->bpts;
-      dir = 1;
+      bpts = arm_linux_get_debug_reg_state (pid)->bpts;
     }
 
   for (i = 0; i < count; ++i)
     if (!arm_hwbp_control_is_enabled (bpts[i].control))
       {
-	errno = 0;
-	if (ptrace (PTRACE_SETHBPREGS, tid, dir * ((i << 1) + 1), 
-		    &bpt->address) < 0)
-	  perror_with_name (_("Unexpected error setting breakpoint address"));
-	if (ptrace (PTRACE_SETHBPREGS, tid, dir * ((i << 1) + 2), 
-		    &bpt->control) < 0)
-	  perror_with_name (_("Unexpected error setting breakpoint"));
-
-	memcpy (bpts + i, bpt, sizeof (struct arm_linux_hw_breakpoint));
-	break;
+        data.watch = watchpoint;
+        data.index = i;
+        bpts[i] = *bpt;
+        iterate_over_lwps (pid_ptid, update_registers_callback, &data);
+        break;
       }
 
   gdb_assert (i != count);
@@ -998,37 +1109,36 @@ arm_linux_insert_hw_breakpoint1 (const struct arm_linux_hw_breakpoint* bpt,
    (WATCHPOINT = 1) BPT for thread TID.  */
 static void
 arm_linux_remove_hw_breakpoint1 (const struct arm_linux_hw_breakpoint *bpt, 
-				 int tid, int watchpoint)
+                                 int watchpoint)
 {
-  struct arm_linux_thread_points *t = arm_linux_find_breakpoints_by_tid (tid, 0);
+  int pid;
   gdb_byte count, i;
-  struct arm_linux_hw_breakpoint *bpts;
-  int dir;
+  ptid_t pid_ptid;
+  struct arm_linux_hw_breakpoint* bpts;
+  struct update_registers_data data;
 
-  gdb_assert (t != NULL);
+  pid = ptid_get_pid (inferior_ptid);
+  pid_ptid = pid_to_ptid (pid);
 
   if (watchpoint)
     {
       count = arm_linux_get_hw_watchpoint_count ();
-      bpts = t->wpts;
-      dir = -1;
+      bpts = arm_linux_get_debug_reg_state (pid)->wpts;
     }
   else
     {
       count = arm_linux_get_hw_breakpoint_count ();
-      bpts = t->bpts;
-      dir = 1;
+      bpts = arm_linux_get_debug_reg_state (pid)->bpts;
     }
 
   for (i = 0; i < count; ++i)
     if (arm_linux_hw_breakpoint_equal (bpt, bpts + i))
       {
-	errno = 0;
-	bpts[i].control = arm_hwbp_control_disable (bpts[i].control);
-	if (ptrace (PTRACE_SETHBPREGS, tid, dir * ((i << 1) + 2), 
-		    &bpts[i].control) < 0)
-	  perror_with_name (_("Unexpected error clearing breakpoint"));
-	break;
+        data.watch = watchpoint;
+        data.index = i;
+        bpts[i].control = arm_hwbp_control_disable (bpts[i].control);
+        iterate_over_lwps (pid_ptid, update_registers_callback, &data);
+        break;
       }
 
   gdb_assert (i != count);
@@ -1036,7 +1146,8 @@ arm_linux_remove_hw_breakpoint1 (const struct arm_linux_hw_breakpoint *bpt,
 
 /* Insert a Hardware breakpoint.  */
 static int
-arm_linux_insert_hw_breakpoint (struct gdbarch *gdbarch, 
+arm_linux_insert_hw_breakpoint (struct target_ops *self,
+				struct gdbarch *gdbarch, 
 				struct bp_target_info *bp_tgt)
 {
   struct lwp_info *lp;
@@ -1046,15 +1157,16 @@ arm_linux_insert_hw_breakpoint (struct gdbarch *gdbarch,
     return -1;
 
   arm_linux_hw_breakpoint_initialize (gdbarch, bp_tgt, &p);
-  ALL_LWPS (lp)
-    arm_linux_insert_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 0);
+
+  arm_linux_insert_hw_breakpoint1 (&p, 0);
 
   return 0;
 }
 
 /* Remove a hardware breakpoint.  */
 static int
-arm_linux_remove_hw_breakpoint (struct gdbarch *gdbarch, 
+arm_linux_remove_hw_breakpoint (struct target_ops *self,
+				struct gdbarch *gdbarch, 
 				struct bp_target_info *bp_tgt)
 {
   struct lwp_info *lp;
@@ -1064,8 +1176,8 @@ arm_linux_remove_hw_breakpoint (struct gdbarch *gdbarch,
     return -1;
 
   arm_linux_hw_breakpoint_initialize (gdbarch, bp_tgt, &p);
-  ALL_LWPS (lp)
-    arm_linux_remove_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 0);
+
+  arm_linux_remove_hw_breakpoint1 (&p, 0);
 
   return 0;
 }
@@ -1073,7 +1185,8 @@ arm_linux_remove_hw_breakpoint (struct gdbarch *gdbarch,
 /* Are we able to use a hardware watchpoint for the LEN bytes starting at 
    ADDR?  */
 static int
-arm_linux_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
+arm_linux_region_ok_for_hw_watchpoint (struct target_ops *self,
+				       CORE_ADDR addr, int len)
 {
   const struct arm_linux_hwbp_cap *cap = arm_linux_get_hwbp_cap ();
   CORE_ADDR max_wp_length, aligned_addr;
@@ -1105,7 +1218,8 @@ arm_linux_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 
 /* Insert a Hardware breakpoint.  */
 static int
-arm_linux_insert_watchpoint (CORE_ADDR addr, int len, int rw,
+arm_linux_insert_watchpoint (struct target_ops *self,
+			     CORE_ADDR addr, int len, int rw,
 			     struct expression *cond)
 {
   struct lwp_info *lp;
@@ -1115,15 +1229,16 @@ arm_linux_insert_watchpoint (CORE_ADDR addr, int len, int rw,
     return -1;
 
   arm_linux_hw_watchpoint_initialize (addr, len, rw, &p);
-  ALL_LWPS (lp)
-    arm_linux_insert_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 1);
+
+  arm_linux_insert_hw_breakpoint1 (&p, 1);
 
   return 0;
 }
 
 /* Remove a hardware breakpoint.  */
 static int
-arm_linux_remove_watchpoint (CORE_ADDR addr, int len, int rw,
+arm_linux_remove_watchpoint (struct target_ops *self,
+			     CORE_ADDR addr, int len, int rw,
 			     struct expression *cond)
 {
   struct lwp_info *lp;
@@ -1133,8 +1248,8 @@ arm_linux_remove_watchpoint (CORE_ADDR addr, int len, int rw,
     return -1;
 
   arm_linux_hw_watchpoint_initialize (addr, len, rw, &p);
-  ALL_LWPS (lp)
-    arm_linux_remove_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 1);
+
+  arm_linux_remove_hw_breakpoint1 (&p, 1);
 
   return 0;
 }
@@ -1171,10 +1286,10 @@ arm_linux_stopped_data_address (struct target_ops *target, CORE_ADDR *addr_p)
 
 /* Has the target been stopped by hitting a watchpoint?  */
 static int
-arm_linux_stopped_by_watchpoint (void)
+arm_linux_stopped_by_watchpoint (struct target_ops *ops)
 {
   CORE_ADDR addr;
-  return arm_linux_stopped_data_address (&current_target, &addr);
+  return arm_linux_stopped_data_address (ops, &addr);
 }
 
 static int
@@ -1190,63 +1305,100 @@ arm_linux_watchpoint_addr_within_range (struct target_ops *target,
 static void
 arm_linux_new_thread (struct lwp_info *lp)
 {
-  int tid = ptid_get_lwp (lp->ptid);
-  const struct arm_linux_hwbp_cap *info = arm_linux_get_hwbp_cap ();
+  int i;
+  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
 
-  if (info != NULL)
+  /* Mark that all the hardware breakpoint/watchpoint register pairs
+     for this thread need to be initialized.  */
+
+  for (i = 0; i < MAX_BPTS; i++)
     {
-      int i;
-      struct arm_linux_thread_points *p;
-      struct arm_linux_hw_breakpoint *bpts;
-
-      if (VEC_empty (arm_linux_thread_points_p, arm_threads))
-	return;
-
-      /* Get a list of breakpoints from any thread. */
-      p = VEC_last (arm_linux_thread_points_p, arm_threads);
-
-      /* Copy that thread's breakpoints and watchpoints to the new thread. */
-      for (i = 0; i < info->bp_count; i++)
-	if (arm_hwbp_control_is_enabled (p->bpts[i].control))
-	  arm_linux_insert_hw_breakpoint1 (p->bpts + i, tid, 0);
-      for (i = 0; i < info->wp_count; i++)
-	if (arm_hwbp_control_is_enabled (p->wpts[i].control))
-	  arm_linux_insert_hw_breakpoint1 (p->wpts + i, tid, 1);
+      info->bpts_changed[i] = 1;
+      info->wpts_changed[i] = 1;
     }
+
+  lp->arch_private = info;
 }
 
-/* Handle thread exit.  Tidy up the memory that has been allocated for the
-   thread.  */
+/* Called when resuming a thread.
+   The hardware debug registers are updated when there is any change.  */
+
 static void
-arm_linux_thread_exit (struct thread_info *tp, int silent)
+arm_linux_prepare_to_resume (struct lwp_info *lwp)
 {
-  const struct arm_linux_hwbp_cap *info = arm_linux_get_hwbp_cap ();
+  int pid, i;
+  struct arm_linux_hw_breakpoint *bpts, *wpts;
+  struct arch_lwp_info *arm_lwp_info = lwp->arch_private;
 
-  if (info != NULL)
-    {
-      int i;
-      int tid = ptid_get_lwp (tp->ptid);
-      struct arm_linux_thread_points *t = NULL, *p;
+  pid = ptid_get_lwp (lwp->ptid);
+  bpts = arm_linux_get_debug_reg_state (ptid_get_pid (lwp->ptid))->bpts;
+  wpts = arm_linux_get_debug_reg_state (ptid_get_pid (lwp->ptid))->wpts;
 
-      for (i = 0; 
-	   VEC_iterate (arm_linux_thread_points_p, arm_threads, i, p); i++)
-	{
-	  if (p->tid == tid)
-	    {
-	      t = p;
-	      break;
-	    }
-	}
+  /* NULL means this is the main thread still going through the shell,
+     or, no watchpoint has been set yet.  In that case, there's
+     nothing to do.  */
+  if (arm_lwp_info == NULL)
+    return;
 
-      if (t == NULL)
-	return;
+  for (i = 0; i < arm_linux_get_hw_breakpoint_count (); i++)
+    if (arm_lwp_info->bpts_changed[i])
+      {
+        errno = 0;
+        if (arm_hwbp_control_is_enabled (bpts[i].control))
+          if (ptrace (PTRACE_SETHBPREGS, pid,
+              (PTRACE_TYPE_ARG3) ((i << 1) + 1), &bpts[i].address) < 0)
+            perror_with_name (_("Unexpected error setting breakpoint"));
 
-      VEC_unordered_remove (arm_linux_thread_points_p, arm_threads, i);
+        if (bpts[i].control != 0)
+          if (ptrace (PTRACE_SETHBPREGS, pid,
+              (PTRACE_TYPE_ARG3) ((i << 1) + 2), &bpts[i].control) < 0)
+            perror_with_name (_("Unexpected error setting breakpoint"));
 
-      xfree (t->bpts);
-      xfree (t->wpts);
-      xfree (t);
-    }
+        arm_lwp_info->bpts_changed[i] = 0;
+      }
+
+  for (i = 0; i < arm_linux_get_hw_watchpoint_count (); i++)
+    if (arm_lwp_info->wpts_changed[i])
+      {
+        errno = 0;
+        if (arm_hwbp_control_is_enabled (wpts[i].control))
+          if (ptrace (PTRACE_SETHBPREGS, pid,
+              (PTRACE_TYPE_ARG3) -((i << 1) + 1), &wpts[i].address) < 0)
+            perror_with_name (_("Unexpected error setting watchpoint"));
+
+        if (wpts[i].control != 0)
+          if (ptrace (PTRACE_SETHBPREGS, pid,
+              (PTRACE_TYPE_ARG3) -((i << 1) + 2), &wpts[i].control) < 0)
+            perror_with_name (_("Unexpected error setting watchpoint"));
+
+        arm_lwp_info->wpts_changed[i] = 0;
+      }
+}
+
+/* linux_nat_new_fork hook.  */
+
+static void
+arm_linux_new_fork (struct lwp_info *parent, pid_t child_pid)
+{
+  pid_t parent_pid;
+  struct arm_linux_debug_reg_state *parent_state;
+  struct arm_linux_debug_reg_state *child_state;
+
+  /* NULL means no watchpoint has ever been set in the parent.  In
+     that case, there's nothing to do.  */
+  if (parent->arch_private == NULL)
+    return;
+
+  /* GDB core assumes the child inherits the watchpoints/hw
+     breakpoints of the parent, and will remove them all from the
+     forked off process.  Copy the debug registers mirrors into the
+     new process so that all breakpoints and watchpoints can be
+     removed together.  */
+
+  parent_pid = ptid_get_pid (parent->ptid);
+  parent_state = arm_linux_get_debug_reg_state (parent_pid);
+  child_state = arm_linux_get_debug_reg_state (child_pid);
+  *child_state = *parent_state;
 }
 
 void _initialize_arm_linux_nat (void);
@@ -1279,7 +1431,11 @@ _initialize_arm_linux_nat (void)
   /* Register the target.  */
   linux_nat_add_target (t);
 
-  /* Handle thread creation and exit */
-  observer_attach_thread_exit (arm_linux_thread_exit);
+  /* Handle thread creation and exit.  */
   linux_nat_set_new_thread (t, arm_linux_new_thread);
+  linux_nat_set_prepare_to_resume (t, arm_linux_prepare_to_resume);
+
+  /* Handle process creation and exit.  */
+  linux_nat_set_new_fork (t, arm_linux_new_fork);
+  linux_nat_set_forget_process (t, arm_linux_forget_process);
 }

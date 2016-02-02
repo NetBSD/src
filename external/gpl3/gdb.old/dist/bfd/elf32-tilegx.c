@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for 32-bit ELF.
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -87,9 +87,9 @@ tilegx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define ELF_MAXPAGESIZE		0x10000
 #define ELF_COMMONPAGESIZE	0x10000
 
-#define TARGET_BIG_SYM          bfd_elf32_tilegx_be_vec
+#define TARGET_BIG_SYM          tilegx_elf32_be_vec
 #define TARGET_BIG_NAME         "elf32-tilegx-be"
-#define TARGET_LITTLE_SYM       bfd_elf32_tilegx_le_vec
+#define TARGET_LITTLE_SYM       tilegx_elf32_le_vec
 #define TARGET_LITTLE_NAME      "elf32-tilegx-le"
 
 #define elf_backend_reloc_type_class	     tilegx_reloc_type_class

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,3 +94,26 @@ gdb_test "python print ('result = %s' % f0.read_var ('variable_which_surely_does
 gdb_test "python print ('result = %s' % f0.read_var ('a'))" " = 1" "test Frame.read_var - success"
 
 gdb_test "python print ('result = %s' % (gdb.selected_frame () == f1))" " = True" "test gdb.selected_frame"
+
+# Can read SP register.
+gdb_test "python print ('result = %s' % (gdb.selected_frame ().read_register ('sp') == gdb.parse_and_eval ('\$sp')))" \
+  " = True" \
+  "test Frame.read_register(sp)"
+
+# PC value obtained via read_register is as expected.
+gdb_test "python print ('result = %s' % (f0.read_register('pc') == f0.pc()))" \
+  " = True" \
+  "test Frame.read_register(pc)"
+
+# Test arch-specific register name.
+set pc ""
+if {[is_amd64_regs_target]} {
+    set pc "rip"
+} elseif {[is_x86_like_target]} {
+    set pc "eip"
+}
+if { $pc != "" } {
+    gdb_test "python print ('result = %s' % (f0.read_register('pc') == f0.read_register('$pc')))" \
+	" = True" \
+	"test Frame.read_register($pc)"
+}

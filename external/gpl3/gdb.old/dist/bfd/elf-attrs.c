@@ -1,6 +1,5 @@
 /* ELF attributes support (based on ARM EABI attributes).
-   Copyright 2005, 2006, 2007, 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -431,9 +430,13 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 {
   bfd_byte *contents;
   bfd_byte *p;
+  bfd_byte *p_end;
   bfd_vma len;
   const char *std_sec;
 
+  /* PR 17512: file: 2844a11d.  */
+  if (hdr->sh_size == 0)
+    return;
   contents = (bfd_byte *) bfd_malloc (hdr->sh_size);
   if (!contents)
     return;
@@ -444,23 +447,31 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
       return;
     }
   p = contents;
+  p_end = p + hdr->sh_size;
   std_sec = get_elf_backend_data (abfd)->obj_attrs_vendor;
+  
   if (*(p++) == 'A')
     {
       len = hdr->sh_size - 1;
-      while (len > 0)
+
+      while (len > 0 && p < p_end - 4)
 	{
-	  int namelen;
+	  unsigned namelen;
 	  bfd_vma section_len;
 	  int vendor;
 
 	  section_len = bfd_get_32 (abfd, p);
 	  p += 4;
+	  if (section_len == 0)
+	    break;
 	  if (section_len > len)
 	    section_len = len;
 	  len -= section_len;
-	  namelen = strlen ((char *) p) + 1;
-	  section_len -= namelen + 4;
+	  section_len -= 4;
+	  namelen = strnlen ((char *) p, section_len) + 1;
+	  if (namelen == 0 || namelen >= section_len)
+	    break;
+	  section_len -= namelen;
 	  if (std_sec && strcmp ((char *) p, std_sec) == 0)
 	    vendor = OBJ_ATTR_PROC;
 	  else if (strcmp ((char *) p, "gnu") == 0)
@@ -473,7 +484,7 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 	    }
 
 	  p += namelen;
-	  while (section_len > 0)
+	  while (section_len > 0 && p < p_end)
 	    {
 	      int tag;
 	      unsigned int n;
@@ -481,15 +492,23 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 	      bfd_vma subsection_len;
 	      bfd_byte *end;
 
-	      tag = read_unsigned_leb128 (abfd, p, &n);
+	      tag = safe_read_leb128 (abfd, p, &n, FALSE, p_end);
 	      p += n;
-	      subsection_len = bfd_get_32 (abfd, p);
+	      if (p < p_end - 4)
+		subsection_len = bfd_get_32 (abfd, p);
+	      else
+		subsection_len = 0;
 	      p += 4;
+	      if (subsection_len == 0)
+		break;
 	      if (subsection_len > section_len)
 		subsection_len = section_len;
 	      section_len -= subsection_len;
 	      subsection_len -= n + 4;
 	      end = p + subsection_len;
+	      /* PR 17512: file: 0e8c0c90.  */
+	      if (end > p_end)
+		end = p_end;
 	      switch (tag)
 		{
 		case Tag_File:
@@ -497,25 +516,25 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 		    {
 		      int type;
 
-		      tag = read_unsigned_leb128 (abfd, p, &n);
+		      tag = safe_read_leb128 (abfd, p, &n, FALSE, end);
 		      p += n;
 		      type = _bfd_elf_obj_attrs_arg_type (abfd, vendor, tag);
 		      switch (type & (ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL))
 			{
 			case ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL:
-			  val = read_unsigned_leb128 (abfd, p, &n);
+			  val = safe_read_leb128 (abfd, p, &n, FALSE, end);
 			  p += n;
 			  bfd_elf_add_obj_attr_int_string (abfd, vendor, tag,
-							   val, (char *)p);
+							   val, (char *) p);
 			  p += strlen ((char *)p) + 1;
 			  break;
 			case ATTR_TYPE_FLAG_STR_VAL:
 			  bfd_elf_add_obj_attr_string (abfd, vendor, tag,
-						       (char *)p);
+						       (char *) p);
 			  p += strlen ((char *)p) + 1;
 			  break;
 			case ATTR_TYPE_FLAG_INT_VAL:
-			  val = read_unsigned_leb128 (abfd, p, &n);
+			  val = safe_read_leb128 (abfd, p, &n, FALSE, end);
 			  p += n;
 			  bfd_elf_add_obj_attr_int (abfd, vendor, tag, val);
 			  break;

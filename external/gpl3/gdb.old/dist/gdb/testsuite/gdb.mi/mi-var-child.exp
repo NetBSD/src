@@ -1,4 +1,4 @@
-# Copyright 1999-2014 Free Software Foundation, Inc.
+# Copyright 1999-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -668,9 +668,7 @@ mi_gdb_test "-var-delete weird" \
 
 # Test: c_variable-5.1
 # Desc: check that nothing changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\\\]" \
-	"update all vars. None changed"
+mi_varobj_update * {} "update all vars. None changed"
 
 # Step over "struct_declarations.integer = 123;"
 mi_step_to do_children_tests {} ".*${srcfile}" \
@@ -678,8 +676,7 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.2
 # Desc: check that integer changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"struct_declarations.integer\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {struct_declarations.integer} \
 	"update all vars struct_declarations.integer"
 
 # Step over:
@@ -691,8 +688,7 @@ mi_execute_to "exec-step 3" "end-stepping-range" do_children_tests {} ".*${srcfi
 
 # Test: c_variable-5.3
 # Desc: check that char_ptr changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"struct_declarations.char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.char_ptr.\\*char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {struct_declarations.char_ptr struct_declarations.char_ptr.\\*char_ptr} \
 	"update all vars struct_declarations.char_ptr"
 
 # Step over "struct_declarations.int_ptr_ptr = &foo;"
@@ -701,8 +697,12 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.4
 # Desc: check that int_ptr_ptr and children changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"weird->int_ptr_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"weird->int_ptr_ptr.\\*weird->int_ptr_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"weird->int_ptr_ptr.\\*weird->int_ptr_ptr.\\*\\*weird->int_ptr_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.int_ptr_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.int_ptr_ptr.\\*int_ptr_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.int_ptr_ptr.\\*int_ptr_ptr.\\*\\*int_ptr_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {weird->int_ptr_ptr
+    weird->int_ptr_ptr.\\*weird->int_ptr_ptr
+    weird->int_ptr_ptr.\\*weird->int_ptr_ptr.\\*\\*weird->int_ptr_ptr
+    struct_declarations.int_ptr_ptr
+    struct_declarations.int_ptr_ptr.\\*int_ptr_ptr
+    struct_declarations.int_ptr_ptr.\\*int_ptr_ptr.\\*\\*int_ptr_ptr} \
 	"update all vars int_ptr_ptr and children changed"
 
 # Step over "weird->long_array[0] = 1234;"
@@ -711,8 +711,7 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.5
 # Desc: check that long_array[0] changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"struct_declarations.long_array.0\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {struct_declarations.long_array.0} \
 	"update all vars struct_declarations.long_array.0 changed"
 
 # Step over "struct_declarations.long_array[1] = 2345;"
@@ -721,8 +720,7 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.6
 # Desc: check that long_array[1] changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"struct_declarations.long_array.1\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {struct_declarations.long_array.1} \
 	"update all vars struct_declarations.long_array.1 changed"
 
 # Step over "weird->long_array[2] = 3456;"
@@ -731,8 +729,7 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.7
 # Desc: check that long_array[2] changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"struct_declarations.long_array.2\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {struct_declarations.long_array.2} \
 	"update all vars struct_declarations.long_array.2 changed"
 
 # Step over:
@@ -750,9 +747,14 @@ mi_execute_to "exec-step 7" "end-stepping-range" do_children_tests {} ".*${srcfi
 
 # Test: c_variable-5.8
 # Desc: check that long_array[3-9] changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"struct_declarations.long_array.3\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.long_array.4\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.long_array.5\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.long_array.6\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.long_array.7\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.long_array.8\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"struct_declarations.long_array.9\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
-	"update all vars struct_declarations.long_array.3-9 changed"
+mi_varobj_update * {struct_declarations.long_array.3
+    struct_declarations.long_array.4
+    struct_declarations.long_array.5
+    struct_declarations.long_array.6
+    struct_declarations.long_array.7
+    struct_declarations.long_array.8
+    struct_declarations.long_array.9} \
+    "update all vars struct_declarations.long_array.3-9 changed"
 
 
 # Step over "weird->func_ptr = nothing";
@@ -761,13 +763,24 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.9
 # Desc: check that func_ptr changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"struct_declarations.func_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
-	"update all vars struct_declarations.func_ptr changed"
+mi_varobj_update * {struct_declarations.func_ptr} \
+    "update all vars struct_declarations.func_ptr changed"
+
+# Step over "weird->func_ptr_struct = nothing1"
+mi_step_to do_children_tests {} ".*${srcfile}" \
+    [expr $line_dct_nothing + 2] "step \$line_dct_nothing + 2"
+mi_varobj_update * {struct_declarations.func_ptr_struct} \
+    "update all vars struct_declarations.func_ptr_struct changed"
+
+# Step over "weird->func_ptr_ptr = nothing2"
+mi_step_to do_children_tests {} ".*${srcfile}" \
+    [expr $line_dct_nothing + 3] "step \$line_dct_nothing + 3"
+mi_varobj_update * {struct_declarations.func_ptr_ptr} \
+    "update all vars struct_declarations.func_ptr_ptr changed"
 
 # Step over "struct_declarations.long_array[10] = 3456";
 mi_step_to do_children_tests {} ".*${srcfile}" \
-    [expr $line_dct_nothing + 2] "step \$line_dct_nothing + 2"
+    [expr $line_dct_nothing + 4] "step \$line_dct_nothing + 4"
 
 mi_gdb_test "-var-update --no-values *" \
 	"\\^done,changelist=\\\[\{name=\"struct_declarations.long_array.10\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
@@ -806,10 +819,10 @@ mi_list_varobj_children {struct_declarations --simple-values} \
          [list struct_declarations.int_ptr_ptr int_ptr_ptr 1 "int \\*\\*" "$hex"] \
          {struct_declarations.long_array long_array 12 "long \\[12\\]"} \
          [list struct_declarations.func_ptr func_ptr 0 "void \\(\\*\\)\\((void)?\\)" "(@$hex: |)$hex <nothing>"] \
-         {struct_declarations.func_ptr_struct func_ptr_struct 0 \
-              "struct _struct_decl \\(\\*\\)(\\(int, char \\*, long\\))?" 0x0} \
-         {struct_declarations.func_ptr_ptr func_ptr_ptr 0 \
-              "struct _struct_decl \\*\\(\\*\\)\\((int, char \\*, long)?\\)" 0x0} \
+         [list struct_declarations.func_ptr_struct func_ptr_struct 0 \
+              "struct _struct_decl \\(\\*\\)(\\(int, char \\*, long\\))?" "$hex <nothing1>"] \
+         [list struct_declarations.func_ptr_ptr func_ptr_ptr 0 \
+              "struct _struct_decl \\*\\(\\*\\)\\((int, char \\*, long)?\\)" "$hex <nothing2>"] \
          {struct_declarations.u1 u1 4 "union \\{\\.\\.\\.\\}"} \
          {struct_declarations.s2 s2 4 "struct \\{\\.\\.\\.\\}"} \
 ] "listing of children, simple types: names, type and values, complex types: names and types"
@@ -1119,8 +1132,11 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.47
 # Desc: check that psnp->char_ptr (and [0].char_ptr) changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"psnp->ptrs.0.char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->char_ptr.\\*psnp->char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->char_ptr.\\*psnp->char_ptr.\\*\\*psnp->char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->char_ptr.\\*psnp->char_ptr.\\*\\*psnp->char_ptr.\\*\\*\\*psnp->char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->char_ptr.\\*psnp->char_ptr.\\*\\*psnp->char_ptr.\\*\\*\\*psnp->char_ptr.\\*\\*\\*\\*psnp->char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {psnp->ptrs.0.char_ptr
+    psnp->char_ptr
+    psnp->char_ptr.\\*psnp->char_ptr psnp->char_ptr.\\*psnp->char_ptr.\\*\\*psnp->char_ptr
+    psnp->char_ptr.\\*psnp->char_ptr.\\*\\*psnp->char_ptr.\\*\\*\\*psnp->char_ptr
+    psnp->char_ptr.\\*psnp->char_ptr.\\*\\*psnp->char_ptr.\\*\\*\\*psnp->char_ptr.\\*\\*\\*\\*psnp->char_ptr } \
 	"update all vars psnp->char_ptr (and 0.char_ptr) changed"
 
 #  Step over "snp1.char_ptr = &c3;"
@@ -1129,8 +1145,11 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.48
 # Desc: check that psnp->next->char_ptr (and [1].char_ptr) changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"psnp->ptrs.0.next.char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->ptrs.0.next.char_ptr.\\*char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->ptrs.0.next.char_ptr.\\*char_ptr.\\*\\*char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->ptrs.0.next.char_ptr.\\*char_ptr.\\*\\*char_ptr.\\*\\*\\*char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->ptrs.0.next.char_ptr.\\*char_ptr.\\*\\*char_ptr.\\*\\*\\*char_ptr.\\*\\*\\*\\*char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {psnp->ptrs.0.next.char_ptr
+    psnp->ptrs.0.next.char_ptr.\\*char_ptr
+    psnp->ptrs.0.next.char_ptr.\\*char_ptr.\\*\\*char_ptr
+    psnp->ptrs.0.next.char_ptr.\\*char_ptr.\\*\\*char_ptr.\\*\\*\\*char_ptr
+    psnp->ptrs.0.next.char_ptr.\\*char_ptr.\\*\\*char_ptr.\\*\\*\\*char_ptr.\\*\\*\\*\\*char_ptr} \
 	"update all vars psnp->next->char_ptr (and 1.char_ptr) changed"
 
 
@@ -1140,8 +1159,7 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.49
 # Desc: check that psnp->next->next->char_ptr (and [2].char_ptr) changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"psnp->ptrs.0.next.next.char_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {psnp->ptrs.0.next.next.char_ptr} \
 	"update all vars psnp->next->next->char_ptr (and 2.char_ptr) changed"
 
 
@@ -1151,8 +1169,11 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.50
 # Desc: check that psnp->long_ptr (and [0].long_ptr) changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"psnp->ptrs.0.long_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->long_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->long_ptr.\\*psnp->long_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->long_ptr.\\*psnp->long_ptr.\\*\\*psnp->long_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->long_ptr.\\*psnp->long_ptr.\\*\\*psnp->long_ptr.\\*\\*\\*psnp->long_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\},\{name=\"psnp->long_ptr.\\*psnp->long_ptr.\\*\\*psnp->long_ptr.\\*\\*\\*psnp->long_ptr.\\*\\*\\*\\*psnp->long_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {psnp->ptrs.0.long_ptr psnp->long_ptr
+    psnp->long_ptr.\\*psnp->long_ptr
+    psnp->long_ptr.\\*psnp->long_ptr.\\*\\*psnp->long_ptr
+    psnp->long_ptr.\\*psnp->long_ptr.\\*\\*psnp->long_ptr.\\*\\*\\*psnp->long_ptr
+    psnp->long_ptr.\\*psnp->long_ptr.\\*\\*psnp->long_ptr.\\*\\*\\*psnp->long_ptr.\\*\\*\\*\\*psnp->long_ptr} \
 	"update all vars psnp->long_ptr (and 0.long_ptr) changed"
 
 
@@ -1179,8 +1200,7 @@ mi_step_to do_children_tests {} ".*${srcfile}" \
 
 # Test: c_variable-5.52
 # Desc: check that psnp->next->next->long_ptr (and [2].long_ptr) changed
-mi_gdb_test "-var-update *" \
-	"\\^done,changelist=\\\[\{name=\"psnp->ptrs.0.next.next.long_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+mi_varobj_update * {psnp->ptrs.0.next.next.long_ptr} \
 	"update all vars psnp->next->next->long_ptr (and 2.long_ptr) changed"
 
 mi_prepare_inline_tests $srcfile

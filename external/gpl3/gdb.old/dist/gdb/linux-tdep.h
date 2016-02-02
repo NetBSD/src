@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux, architecture independent.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,9 +28,6 @@ typedef char *(*linux_collect_thread_registers_ftype) (const struct regcache *,
 						       ptid_t,
 						       bfd *, char *, int *,
 						       enum gdb_signal);
-
-char *linux_make_corefile_notes (struct gdbarch *, bfd *, int *,
-                                 linux_collect_thread_registers_ftype);
 
 struct type *linux_get_siginfo_type (struct gdbarch *);
 

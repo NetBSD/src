@@ -1,5 +1,5 @@
 /* Read AIX xcoff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
    Derived from coffread.c, dbxread.c, and a lot of hacking.
    Contributed by IBM Corporation.
 
@@ -24,8 +24,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <string.h>
-
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
@@ -771,7 +769,7 @@ process_linenos (CORE_ADDR start, CORE_ADDR end)
 	     fool it.  */
 
 #if 0
-	  start_subfile (inclTable[ii].name, (char *) 0);
+	  start_subfile (inclTable[ii].name);
 #else
 	  {
 	    /* Pick a fake name that will produce the same results as this
@@ -781,7 +779,7 @@ process_linenos (CORE_ADDR start, CORE_ADDR end)
 
 	    if (fakename == NULL)
 	      fakename = " ?";
-	    start_subfile (fakename, (char *) 0);
+	    start_subfile (fakename);
 	    xfree (current_subfile->name);
 	  }
 	  current_subfile->name = xstrdup (inclTable[ii].name);
@@ -803,7 +801,7 @@ process_linenos (CORE_ADDR start, CORE_ADDR end)
 
 	  current_subfile->line_vector_length =
 	    current_subfile->line_vector->nitems;
-	  start_subfile (pop_subfile (), (char *) 0);
+	  start_subfile (pop_subfile ());
 	}
     }
 
@@ -811,9 +809,6 @@ return_after_cleanup:
 
   /* We don't want to keep alloc/free'ing the global include file table.  */
   inclIndx = 0;
-
-  /* Start with a fresh subfile structure for the next file.  */
-  memset (&main_subfile, '\0', sizeof (struct subfile));
 }
 
 static void
@@ -948,7 +943,6 @@ record_minimal_symbol (const char *name, CORE_ADDR address,
   if (name[0] == '.')
     ++name;
 
-  address += ANOFFSET (objfile->section_offsets, section);
   prim_record_minimal_symbol_and_info (name, address, ms_type,
 				       secnum_to_section (n_scnum, objfile),
 				       objfile);
@@ -1056,7 +1050,7 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
   last_csect_name = 0;
 
   start_stabs ();
-  start_symtab (filestring, (char *) NULL, file_start_addr);
+  start_symtab (objfile, filestring, (char *) NULL, file_start_addr);
   record_debugformat (debugfmt);
   symnum = ((struct symloc *) pst->read_symtab_private)->first_symnum;
   max_symnum =
@@ -1142,13 +1136,13 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 	{
 	  if (get_last_source_file ())
 	    {
-	      pst->symtab = end_symtab (cur_src_end_addr, objfile,
-					SECT_OFF_TEXT (objfile));
+	      pst->compunit_symtab = end_symtab (cur_src_end_addr,
+						 SECT_OFF_TEXT (objfile));
 	      end_stabs ();
 	    }
 
 	  start_stabs ();
-	  start_symtab ("_globals_", (char *) NULL, (CORE_ADDR) 0);
+	  start_symtab (objfile, "_globals_", (char *) NULL, (CORE_ADDR) 0);
 	  record_debugformat (debugfmt);
 	  cur_src_end_addr = first_object_file_end;
 	  /* Done with all files, everything from here on is globals.  */
@@ -1200,13 +1194,13 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 			{
 			  complete_symtab (filestring, file_start_addr);
 			  cur_src_end_addr = file_end_addr;
-			  end_symtab (file_end_addr, objfile,
-				      SECT_OFF_TEXT (objfile));
+			  end_symtab (file_end_addr, SECT_OFF_TEXT (objfile));
 			  end_stabs ();
 			  start_stabs ();
 			  /* Give all csects for this source file the same
 			     name.  */
-			  start_symtab (filestring, NULL, (CORE_ADDR) 0);
+			  start_symtab (objfile, filestring, NULL,
+					(CORE_ADDR) 0);
 			  record_debugformat (debugfmt);
 			}
 
@@ -1322,7 +1316,7 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 
 	  complete_symtab (filestring, file_start_addr);
 	  cur_src_end_addr = file_end_addr;
-	  end_symtab (file_end_addr, objfile, SECT_OFF_TEXT (objfile));
+	  end_symtab (file_end_addr, SECT_OFF_TEXT (objfile));
 	  end_stabs ();
 
 	  /* XCOFF, according to the AIX 3.2 documentation, puts the
@@ -1341,7 +1335,7 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 	    filestring = cs->c_name;
 
 	  start_stabs ();
-	  start_symtab (filestring, (char *) NULL, (CORE_ADDR) 0);
+	  start_symtab (objfile, filestring, (char *) NULL, (CORE_ADDR) 0);
 	  record_debugformat (debugfmt);
 	  last_csect_name = 0;
 
@@ -1404,8 +1398,7 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 			    (fcn_cs_saved.c_value
 			     + fcn_aux_saved.x_sym.x_misc.x_fsize
 			     + ANOFFSET (objfile->section_offsets,
-					 SECT_OFF_TEXT (objfile))),
-			    objfile);
+					 SECT_OFF_TEXT (objfile))));
 	      within_function = 0;
 	    }
 	  break;
@@ -1496,8 +1489,7 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 				new->start_addr,
 				(cs->c_value
 				 + ANOFFSET (objfile->section_offsets,
-					     SECT_OFF_TEXT (objfile))),
-				objfile);
+					     SECT_OFF_TEXT (objfile))));
 		}
 	      local_symbols = new->locals;
 	    }
@@ -1511,17 +1503,17 @@ read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 
   if (get_last_source_file ())
     {
-      struct symtab *s;
+      struct compunit_symtab *cust;
 
       complete_symtab (filestring, file_start_addr);
       cur_src_end_addr = file_end_addr;
-      s = end_symtab (file_end_addr, objfile, SECT_OFF_TEXT (objfile));
+      cust = end_symtab (file_end_addr, SECT_OFF_TEXT (objfile));
       /* When reading symbols for the last C_FILE of the objfile, try
-         to make sure that we set pst->symtab to the symtab for the
+         to make sure that we set pst->compunit_symtab to the symtab for the
          file, not to the _globals_ symtab.  I'm not sure whether this
          actually works right or when/if it comes up.  */
-      if (pst->symtab == NULL)
-	pst->symtab = s;
+      if (pst->compunit_symtab == NULL)
+	pst->compunit_symtab = cust;
       end_stabs ();
     }
 }
@@ -1567,7 +1559,7 @@ process_xcoff_symbol (struct coff_symbol *cs, struct objfile *objfile)
   if (name[0] == '.')
     ++name;
 
-  initialize_symbol (sym);
+  initialize_objfile_symbol (sym);
 
   /* default assumptions */
   SYMBOL_VALUE_ADDRESS (sym) = cs->c_value + off;
@@ -2114,7 +2106,7 @@ xcoff_end_psymtab (struct objfile *objfile, struct partial_symtab *pst,
 	subpst->n_static_syms = 0;
 
       subpst->readin = 0;
-      subpst->symtab = 0;
+      subpst->compunit_symtab = NULL;
       subpst->read_symtab = pst->read_symtab;
     }
 

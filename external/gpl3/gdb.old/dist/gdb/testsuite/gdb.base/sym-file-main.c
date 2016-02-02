@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Free Software Foundation, Inc.
+/* Copyright 2013-2015 Free Software Foundation, Inc.
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
@@ -38,42 +38,56 @@ int
 main (int argc, const char *argv[])
 {
   const char *file = SHLIB_NAME;
-  Elf_External_Ehdr *ehdr = NULL;
-  struct segment *head_seg = NULL;
-  Elf_External_Shdr *text;
+  struct library *lib;
   char *text_addr = NULL;
   int (*pbar) () = NULL;
   int (*pfoo) (int) = NULL;
+  int (*pbaz) () = NULL;
+  int i;
 
-  if (load_shlib (file, &ehdr, &head_seg) != 0)
-    return -1;
+  lib = load_shlib (file);
+  if (lib == NULL)
+    return 1;
 
-  /* Get the text section.  */
-  text = find_shdr (ehdr, ".text");
-  if (text == NULL)
-    return -1;
-
-  /* Notify GDB to add the symbol file.  */
-  if (translate_offset (GET (text, sh_offset), head_seg, (void **) &text_addr)
-      != 0)
-    return -1;
+  if (get_text_addr (lib,  (void **) &text_addr) != 0)
+    return 1;
 
   gdb_add_symbol_file (text_addr, file);
 
   /* Call bar from SHLIB_NAME.  */
-  if (lookup_function ("bar", ehdr, head_seg, (void *) &pbar) != 0)
-    return -1;
+  if (lookup_function (lib, "bar", (void *) &pbar) != 0)
+    return 1;
 
   (*pbar) ();
 
   /* Call foo from SHLIB_NAME.  */
-  if (lookup_function ("foo", ehdr, head_seg, (void *) &pfoo) != 0)
-    return -1;
+  if (lookup_function (lib, "foo", (void *) &pfoo) != 0)
+    return 1;
 
   (*pfoo) (2);
 
-  /* Notify GDB to remove the symbol file.  */
+  /* Unload the library, invalidating all memory breakpoints.  */
+  unload_shlib (lib);
+
+  /* Notify GDB to remove the symbol file.  Also check that GDB
+     doesn't complain that it can't remove breakpoints from the
+     unmapped library.  */
   gdb_remove_symbol_file (text_addr);
 
-  return 0;
+  /* Reload the library.  */
+  lib = load_shlib (file); /* reload lib here */
+  if (lib == NULL)
+    return 1;
+
+  if (get_text_addr (lib,  (void **) &text_addr) != 0)
+    return 1;
+
+  gdb_add_symbol_file (text_addr, file);
+
+  if (lookup_function (lib, "baz", (void *) &pbaz) != 0)
+    return 1;
+
+  (*pbaz) ();
+
+  return 0; /* end here */
 }

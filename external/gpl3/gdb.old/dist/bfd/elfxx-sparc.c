@@ -1,6 +1,5 @@
 /* SPARC-specific support for ELF
-   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1103,6 +1102,21 @@ elf_sparc_get_local_sym_hash (struct _bfd_sparc_elf_link_hash_table *htab,
   return &ret->elf;
 }
 
+/* Destroy a SPARC ELF linker hash table.  */
+
+static void
+_bfd_sparc_elf_link_hash_table_free (bfd *obfd)
+{
+  struct _bfd_sparc_elf_link_hash_table *htab
+    = (struct _bfd_sparc_elf_link_hash_table *) obfd->link.hash;
+
+  if (htab->loc_hash_table)
+    htab_delete (htab->loc_hash_table);
+  if (htab->loc_hash_memory)
+    objalloc_free ((struct objalloc *) htab->loc_hash_memory);
+  _bfd_elf_link_hash_table_free (obfd);
+}
+
 /* Create a SPARC ELF linker hash table.  */
 
 struct bfd_link_hash_table *
@@ -1169,26 +1183,12 @@ _bfd_sparc_elf_link_hash_table_create (bfd *abfd)
   ret->loc_hash_memory = objalloc_create ();
   if (!ret->loc_hash_table || !ret->loc_hash_memory)
     {
-      free (ret);
+      _bfd_sparc_elf_link_hash_table_free (abfd);
       return NULL;
     }
+  ret->elf.root.hash_table_free = _bfd_sparc_elf_link_hash_table_free;
 
   return &ret->elf.root;
-}
-
-/* Destroy a SPARC ELF linker hash table.  */
-
-void
-_bfd_sparc_elf_link_hash_table_free (struct bfd_link_hash_table *hash)
-{
-  struct _bfd_sparc_elf_link_hash_table *htab
-    = (struct _bfd_sparc_elf_link_hash_table *) hash;
-
-  if (htab->loc_hash_table)
-    htab_delete (htab->loc_hash_table);
-  if (htab->loc_hash_memory)
-    objalloc_free ((struct objalloc *) htab->loc_hash_memory);
-  _bfd_generic_link_hash_table_free (hash);
 }
 
 /* Create .plt, .rela.plt, .got, .rela.got, .dynbss, and
@@ -1970,7 +1970,7 @@ _bfd_sparc_elf_gc_sweep_hook (bfd *abfd, struct bfd_link_info *info,
 	}
 
       r_type = SPARC_ELF_R_TYPE (rel->r_info);
-      r_type = sparc_elf_tls_transition (info, abfd, r_type, h != NULL);
+      r_type = sparc_elf_tls_transition (info, abfd, r_type, h == NULL);
       switch (r_type)
 	{
 	case R_SPARC_TLS_LDM_HI22:
@@ -2211,7 +2211,7 @@ _bfd_sparc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   s = htab->sdynbss;
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
@@ -2568,7 +2568,7 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;
@@ -4908,9 +4908,16 @@ _bfd_sparc_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 
   in_attr = &in_attrs[Tag_GNU_Sparc_HWCAPS];
   out_attr = &out_attrs[Tag_GNU_Sparc_HWCAPS];
-
+  
   out_attr->i |= in_attr->i;
   out_attr->type = 1;
+
+  in_attr = &in_attrs[Tag_GNU_Sparc_HWCAPS2];
+  out_attr = &out_attrs[Tag_GNU_Sparc_HWCAPS2];
+  
+  out_attr->i |= in_attr->i;
+  out_attr->type = 1;
+
 
   /* Merge Tag_compatibility attributes and any common GNU ones.  */
   _bfd_elf_merge_object_attributes (ibfd, obfd);

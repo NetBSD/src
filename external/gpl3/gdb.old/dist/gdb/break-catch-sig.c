@@ -1,6 +1,6 @@
 /* Everything about signal catchpoints, for GDB.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "breakpoint.h"
 #include "gdbcmd.h"
 #include "inferior.h"
+#include "infrun.h"
 #include "annotate.h"
 #include "valprint.h"
 #include "cli/cli-utils.h"
@@ -345,6 +346,7 @@ signal_catchpoint_print_recreate (struct breakpoint *b, struct ui_file *fp)
     }
   else if (c->catch_all)
     fprintf_unfiltered (fp, " all");
+  fputc_unfiltered ('\n', fp);
 }
 
 /* Implement the "explains_signal" breakpoint_ops method for signal

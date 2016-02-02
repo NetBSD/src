@@ -1,4 +1,4 @@
-# Copyright 2009-2014 Free Software Foundation, Inc.
+# Copyright 2009-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,15 +50,16 @@ mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load $binfile
 
 mi_gdb_test "-gdb-set non-stop 1" ".*"
-mi_gdb_test "-gdb-set target-async 1" ".*"
+mi_gdb_test "-gdb-set mi-async 1" ".*"
 mi_detect_async
 
 if { [mi_run_to_main] < 0 } {
     continue
 }
 
-mi_create_breakpoint thread_execler 2 keep thread_execler .* .* .* \
-    "breakpoint at thread_execler"
+mi_create_breakpoint thread_execler \
+    "breakpoint at thread_execler" \
+    -number 2 -function thread_execler
 
 # All threads should stop, except the main thread.
 mi_send_resuming_command "exec-continue --all" "resume all"
@@ -77,8 +78,10 @@ mi_check_thread_states {"stopped" "stopped"} "thread state, all stopped"
 # now that we know about all the threads, we can get rid of the breakpoints
 mi_delete_breakpoints
 
-mi_create_breakpoint main 3 keep main .* .* .* \
-    "breakpoint at main"
+mi_create_breakpoint main \
+    "breakpoint at main" \
+    -number 3 -func main
+
 
 # Now resume the execler thread.  Eventually, it execs.
 mi_send_resuming_command "exec-continue --thread 2" "resume execler thread"

@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 1992-2014 Free Software Foundation, Inc.
+   Copyright 1992-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -88,14 +88,14 @@ double		v_double_array[2];
    a special case kludge in GDB (Unix system include files like to define
    caddr_t), but for a variety of types.  */
 typedef char *char_addr;
-static char_addr a_char_addr;
+char_addr a_char_addr;
 typedef unsigned short *ushort_addr;
-static ushort_addr a_ushort_addr;
+ushort_addr a_ushort_addr;
 typedef signed long *slong_addr;
-static slong_addr a_slong_addr;
+slong_addr a_slong_addr;
 #ifndef NO_LONG_LONG
 typedef signed long long *slong_long_addr;
-static slong_long_addr a_slong_long_addr;
+slong_long_addr a_slong_long_addr;
 #endif
 
 char		*v_char_pointer;

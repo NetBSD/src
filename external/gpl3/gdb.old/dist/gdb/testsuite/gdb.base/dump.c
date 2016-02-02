@@ -27,6 +27,7 @@ zero_all ()
   memset ((char *) &intstruct2, 0, sizeof (intstruct2));
 }
 
+int
 main()
 {
   int i;
@@ -43,4 +44,5 @@ main()
   intstruct.g = 12 * 7;
 
   checkpoint1 ();
+  return 0;
 }

@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 #include "defs.h"
 #include "command.h"
 #include "gdbcmd.h"
-#include "gdb_assert.h"
 #include "inferior.h"
 #include "mips-tdep.h"
 #include "target.h"
@@ -36,7 +35,7 @@
 #include <sys/ptrace.h>
 #include <asm/ptrace.h>
 
-#include "mips-linux-watch.h"
+#include "nat/mips-linux-watch.h"
 
 #include "features/mips-linux.c"
 #include "features/mips-dsp-linux.c"
@@ -51,10 +50,6 @@
    we'll clear this and use PTRACE_PEEKUSER instead.  */
 static int have_ptrace_regsets = 1;
 
-/* Whether or not to print the mirrored debug registers.  */
-
-static int maint_show_dr;
-
 /* Saved function pointers to fetch and store a single register using
    PTRACE_PEEKUSER and PTRACE_POKEUSER.  */
 
@@ -63,7 +58,7 @@ static void (*super_fetch_registers) (struct target_ops *,
 static void (*super_store_registers) (struct target_ops *,
 				      struct regcache *, int);
 
-static void (*super_close) (void);
+static void (*super_close) (struct target_ops *);
 
 /* Map gdb internal register number to ptrace ``address''.
    These ``addresses'' are normally defined in <asm/ptrace.h>. 
@@ -440,6 +435,7 @@ mips_linux_read_description (struct target_ops *ops)
       if (tid == 0)
 	tid = ptid_get_pid (inferior_ptid);
 
+      errno = 0;
       ptrace (PTRACE_PEEKUSER, tid, DSP_CONTROL, 0);
       switch (errno)
 	{
@@ -512,7 +508,8 @@ mips_show_dr (const char *func, CORE_ADDR addr,
    handle the specified watch type.  */
 
 static int
-mips_linux_can_use_hw_breakpoint (int type, int cnt, int ot)
+mips_linux_can_use_hw_breakpoint (struct target_ops *self,
+				  int type, int cnt, int ot)
 {
   int i;
   uint32_t wanted_mask, irw_mask;
@@ -553,7 +550,7 @@ mips_linux_can_use_hw_breakpoint (int type, int cnt, int ot)
    register triggered.  */
 
 static int
-mips_linux_stopped_by_watchpoint (void)
+mips_linux_stopped_by_watchpoint (struct target_ops *ops)
 {
   int n;
   int num_valid;
@@ -588,7 +585,8 @@ mips_linux_stopped_data_address (struct target_ops *t, CORE_ADDR *paddr)
    the specified region can be covered by the watch registers.  */
 
 static int
-mips_linux_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
+mips_linux_region_ok_for_hw_watchpoint (struct target_ops *self,
+					CORE_ADDR addr, int len)
 {
   struct pt_watch_regs dummy_regs;
   int i;
@@ -644,7 +642,8 @@ mips_linux_new_thread (struct lwp_info *lp)
    watch.  Return zero on success.  */
 
 static int
-mips_linux_insert_watchpoint (CORE_ADDR addr, int len, int type,
+mips_linux_insert_watchpoint (struct target_ops *self,
+			      CORE_ADDR addr, int len, int type,
 			      struct expression *cond)
 {
   struct pt_watch_regs regs;
@@ -687,7 +686,7 @@ mips_linux_insert_watchpoint (CORE_ADDR addr, int len, int type,
   watch_mirror = regs;
   retval = write_watchpoint_regs ();
 
-  if (maint_show_dr)
+  if (show_debug_regs)
     mips_show_dr ("insert_watchpoint", addr, len, type);
 
   return retval;
@@ -697,7 +696,8 @@ mips_linux_insert_watchpoint (CORE_ADDR addr, int len, int type,
    Return zero on success.  */
 
 static int
-mips_linux_remove_watchpoint (CORE_ADDR addr, int len, int type,
+mips_linux_remove_watchpoint (struct target_ops *self,
+			      CORE_ADDR addr, int len, int type,
 			      struct expression *cond)
 {
   int retval;
@@ -734,7 +734,7 @@ mips_linux_remove_watchpoint (CORE_ADDR addr, int len, int type,
 
   retval = write_watchpoint_regs ();
 
-  if (maint_show_dr)
+  if (show_debug_regs)
     mips_show_dr ("remove_watchpoint", addr, len, type);
 
   return retval;
@@ -744,7 +744,7 @@ mips_linux_remove_watchpoint (CORE_ADDR addr, int len, int type,
    super implementation.  */
 
 static void
-mips_linux_close (void)
+mips_linux_close (struct target_ops *self)
 {
   struct mips_watchpoint *w;
   struct mips_watchpoint *nw;
@@ -760,7 +760,7 @@ mips_linux_close (void)
   current_watches = NULL;
 
   if (super_close)
-    super_close ();
+    super_close (self);
 }
 
 void _initialize_mips_linux_nat (void);
@@ -771,7 +771,7 @@ _initialize_mips_linux_nat (void)
   struct target_ops *t;
 
   add_setshow_boolean_cmd ("show-debug-regs", class_maintenance,
-			   &maint_show_dr, _("\
+			   &show_debug_regs, _("\
 Set whether to show variables that mirror the mips debug registers."), _("\
 Show whether to show variables that mirror the mips debug registers."), _("\
 Use \"on\" to enable, \"off\" to disable.\n\

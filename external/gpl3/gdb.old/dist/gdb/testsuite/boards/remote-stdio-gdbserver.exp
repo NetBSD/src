@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,40 +73,14 @@ proc get_remote_login { } {
     return $result
 }
 
-proc ${board}_build_remote_cmd { cmd } {
-    set stdio_gdbserver_template "| @RSH_CMD@ @GDBSERVER_PROG@ @ARGS@ stdio @PROG_AND_ARGS@"
-
-    # First parse $cmd, picking out the various pieces.
-    set gdbserver_prog [lindex $cmd 0]
-    set args ""
-    set len [llength $cmd]
-
-    for { set i 1 } { $i < $len } { incr i } {
-	set elm [lindex $cmd $i]
-	switch $elm {
-	    --multi {
-		set args "$args $elm"
-	    }
-	    --once {
-		set args "$args $elm"
-	    }
-	    default {
-		break
-	    }
-	}
-    }
-
-    set prog_and_args [lrange $cmd $i end]
-
-    set buf $stdio_gdbserver_template
-
+proc ${board}_get_remote_address { host port } {
+    global stdio_gdbserver_command
     set rsh_cmd "[board_info [target_info name] rsh_prog] [get_remote_login]"
-    regsub {@RSH_CMD@} $buf $rsh_cmd buf
-    regsub {@GDBSERVER_PROG@} $buf $gdbserver_prog buf
-    regsub {@ARGS@} $buf $args buf
-    regsub {@PROG_AND_ARGS@} $buf $prog_and_args buf
+    return "| $rsh_cmd $stdio_gdbserver_command"
+}
 
-    return $buf
+proc ${board}_get_comm_port { port } {
+    return $port
 }
 
 proc ${board}_download { board host dest } {

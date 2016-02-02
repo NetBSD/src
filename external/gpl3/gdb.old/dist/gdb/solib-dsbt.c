@@ -1,5 +1,5 @@
 /* Handle TIC6X (DSBT) shared libraries for GDB, the GNU Debugger.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
 
 
 #include "defs.h"
-#include <string.h>
 #include "inferior.h"
 #include "gdbcore.h"
 #include "solib.h"
@@ -29,7 +28,6 @@
 #include "command.h"
 #include "gdbcmd.h"
 #include "elf-bfd.h"
-#include "exceptions.h"
 #include "gdb_bfd.h"
 
 #define GOT_MODULE_OFFSET 4
@@ -181,7 +179,7 @@ get_dsbt_info (void)
   if (info != NULL)
     return info;
 
-  info = XZALLOC (struct dsbt_info);
+  info = XCNEW (struct dsbt_info);
   set_program_space_data (current_program_space, solib_dsbt_pspace_data, info);
 
   info->lm_base_cache = 0;
@@ -550,7 +548,7 @@ static CORE_ADDR
 lm_base (void)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  struct minimal_symbol *got_sym;
+  struct bound_minimal_symbol got_sym;
   CORE_ADDR addr;
   gdb_byte buf[TIC6X_PTR_SIZE];
   struct dsbt_info *info = get_dsbt_info ();
@@ -570,9 +568,9 @@ lm_base (void)
   got_sym = lookup_minimal_symbol ("_GLOBAL_OFFSET_TABLE_", NULL,
 				   symfile_objfile);
 
-  if (got_sym != 0)
+  if (got_sym.minsym != 0)
     {
-      addr = SYMBOL_VALUE_ADDRESS (got_sym);
+      addr = BMSYMBOL_VALUE_ADDRESS (got_sym);
       if (solib_dsbt_debug)
 	fprintf_unfiltered (gdb_stdlog,
 			    "lm_base: get addr %x by _GLOBAL_OFFSET_TABLE_.\n",

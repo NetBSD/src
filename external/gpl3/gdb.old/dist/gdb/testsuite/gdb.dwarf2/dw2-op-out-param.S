@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2014 Free Software Foundation, Inc.
+   Copyright 2012-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -369,20 +369,20 @@ int_param_two_reg_pieces:
         .uleb128 0x7                    /* DW_TAG_structure_type */
         .string "big"                   /* DW_AT_name */
         .byte   0x10                    /* DW_AT_byte_size */
-        .long   .LDI6                   /* DW_AT_sibling */
+        .long   .LDI6 - .Ldebug_info0   /* DW_AT_sibling */
 
 .LDI4:
         .uleb128 0x8                    /* DW_TAG_member */
         .string "a"                     /* DW_AT_name */
-        .long   .LDI2                   /* DW_AT_type */
+        .long   .LDI2 - .Ldebug_info0   /* DW_AT_type */
         .byte   0x2                     /* DW_AT_data_member_location : length */
         .byte   0x23                    /* DW_OP_plus_uconst */
         .uleb128 0x0                    /*   + 0 */
 
 .LDI5:
-        .uleb128 0x8                    /* DW_TAG_structure_type */
+        .uleb128 0x8                    /* DW_TAG_member */
         .string "b"                     /* DW_AT_name */
-        .long   .LDI2                   /* DW_AT_type */
+        .long   .LDI2 - .Ldebug_info0   /* DW_AT_type */
         .byte   0x2                     /* DW_AT_data_member_location : length */
         .byte   0x23                    /* DW_OP_plus_uconst */
         .uleb128 0x8                    /*   + 8 */
@@ -392,7 +392,7 @@ int_param_two_reg_pieces:
 	.uleb128 0x6                    /* DW_TAG_subprogram */
 	.byte	0x1                     /* DW_AT_external */
 	.string	"main"                  /* DW_AT_name */
-	.long	.LDI2                   /* DW_AT_type */
+	.long	.LDI2 - .Ldebug_info0   /* DW_AT_type */
 	.quad	.Ltext1                 /* DW_AT_low_pc */
 	.quad	.Ltext3                 /* DW_AT_high_pc */
 
@@ -403,26 +403,26 @@ int_param_two_reg_pieces:
 	.byte	0x1                     /* DW_AT_prototyped */
 	.quad	.Ltext5                 /* DW_AT_low_pc */
 	.quad	.Ltext7                 /* DW_AT_high_pc */
-	.long	.LDI11                  /* DW_AT_sibling */
+	.long	.LDI11 - .Ldebug_info0  /* DW_AT_sibling */
 
 .LDI8:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand0"              /* DW_AT_name */
-	.long	.LDI2                   /* DW_AT_type */
+	.long	.LDI2 - .Ldebug_info0   /* DW_AT_type */
 	.byte	1                       /* DW_AT_location : length */
 	.byte	0x52                    /* DW_OP_reg2 */
 
 .LDI9:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand1"              /* DW_AT_name */
-	.long	.LDI2                   /* DW_AT_type */
+	.long	.LDI2 - .Ldebug_info0   /* DW_AT_type */
 	.byte	1                       /* DW_AT_location : length */
 	.byte	0x53                    /* DW_OP_reg3 */
 
 .LDI10:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand2"              /* DW_AT_name */
-	.long	.LDI2                   /* DW_AT_type */
+	.long	.LDI2 - .Ldebug_info0   /* DW_AT_type */
 	.byte	1                       /* DW_AT_location : length */
 	.byte	0x54                    /* DW_OP_reg4 */
 
@@ -435,26 +435,26 @@ int_param_two_reg_pieces:
 	.byte	0x1                     /* DW_AT_prototyped */
 	.quad	.Ltext8                 /* DW_AT_low_pc */
 	.quad	.Ltext10                /* DW_AT_high_pc */
-	.long	.LDI15                   /* DW_AT_sibling */
+	.long	.LDI15 - .Ldebug_info0  /* DW_AT_sibling */
 
 .LDI12:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand0"              /* DW_AT_name */
-	.long	.LDI3                   /* DW_AT_type */
+	.long	.LDI3 - .Ldebug_info0   /* DW_AT_type */
 	.byte	1                       /* DW_AT_location : length */
 	.byte	0x53                    /* DW_OP_reg3 */
 
 .LDI13:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand1"              /* DW_AT_name */
-	.long	.LDI3                   /* DW_AT_type */
+	.long	.LDI3 - .Ldebug_info0   /* DW_AT_type */
 	.byte	1                       /* DW_AT_location : length */
 	.byte	0x52                    /* DW_OP_reg2 */
 
 .LDI14:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand2"              /* DW_AT_name */
-	.long	.LDI3                   /* DW_AT_type */
+	.long	.LDI3 - .Ldebug_info0   /* DW_AT_type */
 	.byte	1                       /* DW_AT_location : length */
 	.byte	0x54                    /* DW_OP_reg4 */
 
@@ -467,12 +467,12 @@ int_param_two_reg_pieces:
 	.byte	0x1                     /* DW_AT_prototyped */
 	.quad	.Ltext11                /* DW_AT_low_pc */
 	.quad	.Ltext13                /* DW_AT_high_pc */
-	.long	.LDI19                  /* DW_AT_sibling */
+	.long	.LDI19 - .Ldebug_info0  /* DW_AT_sibling */
 
 .LDI16:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand0"              /* DW_AT_name */
-	.long	.LDI3                   /* DW_AT_type */
+	.long	.LDI3 - .Ldebug_info0   /* DW_AT_type */
 	.byte	6                       /* DW_AT_location : length */
 	.byte	0x51                    /* DW_OP_reg1 */
         .byte   0x93                    /* DW_OP_piece */
@@ -484,7 +484,7 @@ int_param_two_reg_pieces:
 .LDI17:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand1"              /* DW_AT_name */
-	.long	.LDI3                   /* DW_AT_type */
+	.long	.LDI3 - .Ldebug_info0   /* DW_AT_type */
 	.byte	6                       /* DW_AT_location : length */
 	.byte	0x52                    /* DW_OP_reg2 */
         .byte   0x93                    /* DW_OP_piece */
@@ -496,7 +496,7 @@ int_param_two_reg_pieces:
 .LDI18:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand2"              /* DW_AT_name */
-	.long	.LDI3                   /* DW_AT_type */
+	.long	.LDI3 - .Ldebug_info0   /* DW_AT_type */
 	.byte	6                       /* DW_AT_location : length */
 	.byte	0x54                    /* DW_OP_reg4 */
         .byte   0x93                    /* DW_OP_piece */
@@ -514,12 +514,12 @@ int_param_two_reg_pieces:
 	.byte	0x1                     /* DW_AT_prototyped */
 	.quad	.Ltext14                /* DW_AT_low_pc */
 	.quad	.Ltext16                /* DW_AT_high_pc */
-	.long	.LDIE0                  /* DW_AT_sibling */
+	.long	.LDIE0 - .Ldebug_info0  /* DW_AT_sibling */
 
 .LDI20:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand0"              /* DW_AT_name */
-	.long	.LDI2                   /* DW_AT_type */
+	.long	.LDI2 - .Ldebug_info0   /* DW_AT_type */
 	.byte	6                       /* DW_AT_location : length */
 	.byte	0x51                    /* DW_OP_reg1 */
         .byte   0x93                    /* DW_OP_piece */
@@ -531,7 +531,7 @@ int_param_two_reg_pieces:
 .LDI21:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand1"              /* DW_AT_name */
-	.long	.LDI2                   /* DW_AT_type */
+	.long	.LDI2 - .Ldebug_info0   /* DW_AT_type */
 	.byte	6                       /* DW_AT_location : length */
 	.byte	0x52                    /* DW_OP_reg2 */
         .byte   0x93                    /* DW_OP_piece */
@@ -543,7 +543,7 @@ int_param_two_reg_pieces:
 .LDI22:
 	.uleb128 0x4                    /* DW_TAG_formal_parameter */
 	.string	"operand2"              /* DW_AT_name */
-	.long	.LDI2                   /* DW_AT_type */
+	.long	.LDI2 - .Ldebug_info0   /* DW_AT_type */
 	.byte	6                       /* DW_AT_location : length */
 	.byte	0x54                    /* DW_OP_reg4 */
         .byte   0x93                    /* DW_OP_piece */

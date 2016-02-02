@@ -22,6 +22,7 @@
 #define _HW_HTAB_C_
 
 #include "device_table.h"
+#include "device.h"
 
 #include "bfd.h"
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -157,7 +157,7 @@ bfin_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tramp_frame_prepend_unwinder (gdbarch, &bfin_linux_sigframe);
 
   /* Functions for 'catch syscall'.  */
-  set_xml_syscall_file_name ("syscalls/bfin-linux.xml");
+  set_xml_syscall_file_name (gdbarch, "syscalls/bfin-linux.xml");
   set_gdbarch_get_syscall_number (gdbarch,
                                   bfin_linux_get_syscall_number);
 }

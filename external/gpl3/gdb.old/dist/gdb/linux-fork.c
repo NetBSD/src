@@ -1,6 +1,6 @@
 /* GNU/Linux native-dependent code for debugging multiple forks.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,11 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include "inferior.h"
+#include "infrun.h"
 #include "regcache.h"
 #include "gdbcmd.h"
 #include "infcall.h"
 #include "objfiles.h"
-#include "gdb_assert.h"
-#include <string.h>
 #include "linux-fork.h"
 #include "linux-nat.h"
 #include "gdbthread.h"
@@ -81,7 +80,7 @@ add_fork (pid_t pid)
       add_fork (ptid_get_pid (inferior_ptid));	/* safe recursion */
     }
 
-  fp = XZALLOC (struct fork_info);
+  fp = XCNEW (struct fork_info);
   fp->ptid = ptid_build (pid, pid, 0);
   fp->num = ++highest_fork_num;
   fp->next = fork_list;
@@ -455,9 +454,10 @@ inferior_call_waitpid (ptid_t pptid, int pid)
   old_cleanup = make_cleanup (inferior_call_waitpid_cleanup, oldfp);
 
   /* Get the waitpid_fn.  */
-  if (lookup_minimal_symbol ("waitpid", NULL, NULL) != NULL)
+  if (lookup_minimal_symbol ("waitpid", NULL, NULL).minsym != NULL)
     waitpid_fn = find_function_in_inferior ("waitpid", &waitpid_objf);
-  if (!waitpid_fn && lookup_minimal_symbol ("_waitpid", NULL, NULL) != NULL)
+  if (!waitpid_fn
+      && lookup_minimal_symbol ("_waitpid", NULL, NULL).minsym != NULL)
     waitpid_fn = find_function_in_inferior ("_waitpid", &waitpid_objf);
   if (!waitpid_fn)
     goto out;
@@ -596,7 +596,7 @@ info_checkpoints_command (char *arg, int from_tty)
 
 	  msym = lookup_minimal_symbol_by_pc (pc);
 	  if (msym.minsym)
-	    printf_filtered (", <%s>", SYMBOL_LINKAGE_NAME (msym.minsym));
+	    printf_filtered (", <%s>", MSYMBOL_LINKAGE_NAME (msym.minsym));
 	}
 
       putchar_filtered ('\n');
@@ -668,10 +668,10 @@ checkpoint_command (char *args, int from_tty)
   
   /* Make the inferior fork, record its (and gdb's) state.  */
 
-  if (lookup_minimal_symbol ("fork", NULL, NULL) != NULL)
+  if (lookup_minimal_symbol ("fork", NULL, NULL).minsym != NULL)
     fork_fn = find_function_in_inferior ("fork", &fork_objf);
   if (!fork_fn)
-    if (lookup_minimal_symbol ("_fork", NULL, NULL) != NULL)
+    if (lookup_minimal_symbol ("_fork", NULL, NULL).minsym != NULL)
       fork_fn = find_function_in_inferior ("fork", &fork_objf);
   if (!fork_fn)
     error (_("checkpoint: can't find fork function in inferior."));
@@ -690,12 +690,15 @@ checkpoint_command (char *args, int from_tty)
 
   retpid = value_as_long (ret);
   get_last_target_status (&last_target_ptid, &last_target_waitstatus);
+
+  fp = find_fork_pid (retpid);
+
   if (from_tty)
     {
       int parent_pid;
 
-      printf_filtered (_("checkpoint: fork returned pid %ld.\n"),
-		       (long) retpid);
+      printf_filtered (_("checkpoint %d: fork returned pid %ld.\n"),
+		       fp != NULL ? fp->num : -1, (long) retpid);
       if (info_verbose)
 	{
 	  parent_pid = ptid_get_lwp (last_target_ptid);
@@ -706,7 +709,6 @@ checkpoint_command (char *args, int from_tty)
 	}
     }
 
-  fp = find_fork_pid (retpid);
   if (!fp)
     error (_("Failed to find new fork"));
   fork_save_infrun_state (fp, 1);

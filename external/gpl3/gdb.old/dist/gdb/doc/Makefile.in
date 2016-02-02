@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2014 Free Software Foundation, Inc.
+##Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -29,6 +29,8 @@ htmldir = @htmldir@
 mandir = @mandir@
 man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
+
+transform = @program_transform_name@
 
 SHELL = @SHELL@
 
@@ -62,6 +64,9 @@ TEXI2ROFF=texi2roff
 
 # where to find texi2dvi, ditto
 TEXI2DVI=texi2dvi
+
+# Package to install the docs under
+PACKAGE = @PACKAGE@
 
 # Package version and bug-reporting URL.
 PKGVERSION = @PKGVERSION@
@@ -130,6 +135,8 @@ GDB_DOC_BUILD_INCLUDES = \
 	GDBvn.texi
 GDB_DOC_FILES = \
 	$(srcdir)/gdb.texinfo \
+	$(srcdir)/guile.texi \
+	$(srcdir)/python.texi \
 	$(GDB_DOC_SOURCE_INCLUDES) \
 	$(GDB_DOC_BUILD_INCLUDES)
 
@@ -184,6 +191,43 @@ ps: gdb.ps stabs.ps refcard.ps annotate.ps
 html: $(HTMLFILES)
 pdf: $(PDFFILES)
 man: $(MANS)
+
+DOXYGEN = doxygen
+doxyedit = sed -e 's,@srcdir\@,$(srcdir),g'
+
+doxy:	doxy/index.html \
+	doxy/gdb-api/index.html \
+	doxy/gdb-xref/index.html \
+	doxy/gdbserver/index.html
+
+doxy/index.html: $(srcdir)/doxy-index.in
+	-mkdir -p doxy
+	cp $(srcdir)/doxy-index.in doxy/index.html
+
+doxy/gdb-api/index.html: Doxyfile-gdb-api Doxyfile-base
+	-mkdir -p doxy
+	$(DOXYGEN) Doxyfile-gdb-api
+
+doxy/gdb-xref/index.html: Doxyfile-gdb-xref Doxyfile-base
+	-mkdir -p doxy
+	$(DOXYGEN) Doxyfile-gdb-xref
+
+doxy/gdbserver/index.html: Doxyfile-gdbserver Doxyfile-base
+	-mkdir -p doxy
+	$(DOXYGEN) Doxyfile-gdbserver
+
+Doxyfile-base:	$(srcdir)/Doxyfile-base.in 
+	$(doxyedit) $(srcdir)/Doxyfile-base.in >Doxyfile-base
+
+Doxyfile-gdb-api:	$(srcdir)/Doxyfile-gdb-api.in 
+	$(doxyedit) $(srcdir)/Doxyfile-gdb-api.in >Doxyfile-gdb-api
+
+Doxyfile-gdb-xref:	$(srcdir)/Doxyfile-gdb-xref.in
+	$(doxyedit) $(srcdir)/Doxyfile-gdb-xref.in >Doxyfile-gdb-xref
+
+Doxyfile-gdbserver:	$(srcdir)/Doxyfile-gdbserver.in
+	$(doxyedit) $(srcdir)/Doxyfile-gdbserver.in >Doxyfile-gdbserver
+
 all-doc: info dvi ps # pdf
 diststuff: info man
 	rm -f gdb-cfg.texi GDBvn.texi
@@ -266,7 +310,7 @@ install-man1: $(MAN1S)
 	    continue; \
 	  fi; \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=`echo $$p | sed -e 's|^.*/||'`; \
+	  f=`echo $$p | sed -e 's|^.*/||' -e '$(transform)'`; \
 	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(man1dir)/$$f'"; \
 	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(man1dir)/$$f"; \
 	done
@@ -275,7 +319,7 @@ install-man5: $(MAN5S)
 	test -z "$(man5dir)" || $(mkinstalldirs) "$(DESTDIR)$(man5dir)"
 	@list='$(MAN5S)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=`echo $$p | sed -e 's|^.*/||'`; \
+	  f=`echo $$p | sed -e 's|^.*/||' -e '$(transform)'`; \
 	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(man5dir)/$$f'"; \
 	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(man5dir)/$$f"; \
 	done

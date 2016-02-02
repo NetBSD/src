@@ -1,4 +1,4 @@
-# Copyright 2010-2014 Free Software Foundation, Inc.
+# Copyright 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,4 +44,25 @@ proc gdb_py_test_multiple { name args } {
 	}
     }
     return 0
+}
+
+# Return the result of python expression EXPR.
+# DEFAULT is returned if there's an error.
+# This is modelled after get_integer_valueof.
+
+proc get_python_valueof { exp default } {
+    global gdb_prompt
+
+    set test "get python valueof \"${exp}\""
+    set val ${default}
+    gdb_test_multiple "python print (\"valueof: %s\" % (${exp}))" "$test" {
+	-re "valueof: (\[^\r\n\]*)\[\r\n\]*$gdb_prompt $" {
+	    set val $expect_out(1,string)
+	    pass "$test ($val)"
+	}
+	timeout {
+	    fail "$test (timeout)"
+	}
+    }
+    return ${val}
 }

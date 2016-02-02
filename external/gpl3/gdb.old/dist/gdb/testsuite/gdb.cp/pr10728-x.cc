@@ -2,6 +2,6 @@
 
 int main()
 {
-  X* x = y();
+  X x = y();
   return 0;		// marker 1
 }

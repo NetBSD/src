@@ -1,6 +1,6 @@
 /* Target dependent code for GDB on TI C6x systems.
 
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Yao Qi <yao@codesourcery.com>
 
@@ -44,7 +44,6 @@
 #include "linux-tdep.h"
 #include "solib.h"
 #include "objfiles.h"
-#include "gdb_assert.h"
 #include "osabi.h"
 #include "tic6x-tdep.h"
 #include "language.h"
@@ -1308,6 +1307,7 @@ tic6x_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   frame_unwind_append_unwinder (gdbarch, &tic6x_stub_unwind);
   frame_unwind_append_unwinder (gdbarch, &tic6x_frame_unwind);
+  frame_base_set_default (gdbarch, &tic6x_frame_base);
 
   dwarf2_frame_set_init_reg (gdbarch, tic6x_dwarf2_frame_init_reg);
 

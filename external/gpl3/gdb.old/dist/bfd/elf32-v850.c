@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1896,7 +1896,11 @@ v850_elf_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_V850_max);
+  if (r_type >= (unsigned int) R_V850_max)
+    {
+      _bfd_error_handler (_("%A: invalid V850 reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &v850_elf_howto_table[r_type];
 }
 
@@ -3770,7 +3774,7 @@ static const struct bfd_elf_special_section v850_elf_special_sections[] =
   { NULL,                     0,           0, 0,                0 }
 };
 
-#define TARGET_LITTLE_SYM			bfd_elf32_v850_vec
+#define TARGET_LITTLE_SYM			v850_elf32_vec
 #define TARGET_LITTLE_NAME			"elf32-v850"
 #define ELF_ARCH				bfd_arch_v850
 #define ELF_MACHINE_CODE			EM_V850
@@ -3905,7 +3909,7 @@ v800_elf_info_to_howto (bfd *               abfd,
 
 
 #undef  TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM			bfd_elf32_v850_rh850_vec
+#define TARGET_LITTLE_SYM			v800_elf32_vec
 #undef  TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME			"elf32-v850-rh850"
 #undef  ELF_ARCH

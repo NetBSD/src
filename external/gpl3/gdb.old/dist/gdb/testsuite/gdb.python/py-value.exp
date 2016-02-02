@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 load_lib gdb-python.exp
 
 standard_testfile
+
+set has_argv0 [gdb_has_argv0]
 
 # Build inferior to language specification.
 # LANG is one of "c" or "c++".
@@ -221,8 +223,12 @@ proc test_value_in_inferior {} {
   gdb_py_test_silent_cmd "python arg0 = argv.dereference ()" "dereference value" 1
 
   # Check that the dereferenced value is sane
-  if { ! [target_info exists noargs] } {
-    gdb_test "python print (arg0)" "0x.*$testfile\"" "verify dereferenced value"
+  global has_argv0
+  set test "verify dereferenced value"
+  if { $has_argv0 } {
+    gdb_test "python print (arg0)" "0x.*$testfile\"" $test
+  } else {
+    unsupported $test
   }
 
   # Smoke-test is_optimized_out attribute
@@ -234,14 +240,7 @@ proc test_value_in_inferior {} {
   # Test displaying a variable that is temporarily at a bad address.
   # But if we can examine what's at memory address 0, then we'll also be
   # able to display it without error.  Don't run the test in that case.
-  set can_read_0 0
-  gdb_test_multiple "x 0" "memory at address 0" {
-      -re "0x0:\[ \t\]*Cannot access memory at address 0x0\r\n$gdb_prompt $" { }
-      -re "0x0:\[ \t\]*Error accessing memory address 0x0\r\n$gdb_prompt $" { }
-      -re "\r\n$gdb_prompt $" {
-	  set can_read_0 1
-      }
-  }
+  set can_read_0 [is_address_zero_readable]
 
   # Test memory error.
   set test "parse_and_eval with memory error"
@@ -295,7 +294,7 @@ proc test_value_in_inferior {} {
   # Test fetching a string longer than its declared (in C) size.
   # PR 16286
   gdb_py_test_silent_cmd "python xstr = gdb.parse_and_eval('xstr')" "get xstr" 1
-  gdb_test "python print xstr\['text'\].string (length = xstr\['length'\])" "x{100}" \
+  gdb_test "python print(xstr\['text'\].string (length = xstr\['length'\]))" "x{100}" \
     "read string beyond declared size"
 }
 
@@ -309,7 +308,11 @@ proc test_lazy_strings {} {
   gdb_py_test_silent_cmd "python lstr = sptr.lazy_string()" "Aquire lazy string" 1
   gdb_test "python print (lstr.type)" "const char \*." "Test lazy-string type name equality"
   gdb_test "python print (sptr.type)" "const char \*." "Test string type name equality"
+
+  # Prevent symbol on address 0x0 being printed.
+  gdb_test_no_output "set print symbol off"
   gdb_test "print sn" "0x0"
+
   gdb_py_test_silent_cmd "python snptr = gdb.history (0)" "Get value from history" 1
   gdb_test "python snstr = snptr.lazy_string(length=5)" ".*Cannot create a lazy string with address.*" "Test lazy string"
   gdb_py_test_silent_cmd "python snstr = snptr.lazy_string(length=0)" "Succesfully create a lazy string" 1
@@ -416,6 +419,8 @@ proc test_subscript_regression {exefile lang} {
      # Likewise.
      gdb_test "python print (gdb.parse_and_eval('base').dynamic_type)" \
 	 "Derived \[*\]"
+     gdb_test "python print (gdb.parse_and_eval('base_ref').dynamic_type)" \
+	 "Derived \[&\]"
      # A static type case.
      gdb_test "python print (gdb.parse_and_eval('5').dynamic_type)" \
 	 "int"

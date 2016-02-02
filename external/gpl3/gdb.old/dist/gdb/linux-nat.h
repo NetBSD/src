@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,24 @@
 
 struct arch_lwp_info;
 
+/* Reasons an LWP last stopped.  */
+
+enum lwp_stop_reason
+{
+  /* Either not stopped, or stopped for a reason that doesn't require
+     special tracking.  */
+  LWP_STOPPED_BY_NO_REASON,
+
+  /* Stopped by a software breakpoint.  */
+  LWP_STOPPED_BY_SW_BREAKPOINT,
+
+  /* Stopped by a hardware breakpoint.  */
+  LWP_STOPPED_BY_HW_BREAKPOINT,
+
+  /* Stopped by a watchpoint.  */
+  LWP_STOPPED_BY_WATCHPOINT
+};
+
 /* Structure describing an LWP.  This is public only for the purposes
    of ALL_LWPS; target-specific code should generally not access it
    directly.  */
@@ -32,6 +50,10 @@ struct lwp_info
   /* The process id of the LWP.  This is a combination of the LWP id
      and overall process id.  */
   ptid_t ptid;
+
+  /* If this flag is set, we need to set the event request flags the
+     next time we see this LWP stop.  */
+  int must_set_ptrace_flags;
 
   /* Non-zero if this LWP is cloned.  In this context "cloned" means
      that the LWP is reporting to its parent using a signal other than
@@ -59,12 +81,19 @@ struct lwp_info
   /* If non-zero, a pending wait status.  */
   int status;
 
+  /* When 'stopped' is set, this is where the lwp last stopped, with
+     decr_pc_after_break already accounted for.  If the LWP is
+     running, and stepping, this is the address at which the lwp was
+     resumed (that is, it's the previous stop PC).  If the LWP is
+     running and not stepping, this is 0.  */
+  CORE_ADDR stop_pc;
+
   /* Non-zero if we were stepping this LWP.  */
   int step;
 
-  /* STOPPED_BY_WATCHPOINT is non-zero if this LWP stopped with a data
-     watchpoint trap.  */
-  int stopped_by_watchpoint;
+  /* The reason the LWP last stopped, if we need to track it
+     (breakpoint, watchpoint, etc.)  */
+  enum lwp_stop_reason stop_reason;
 
   /* On architectures where it is possible to know the data address of
      a triggered watchpoint, STOPPED_DATA_ADDRESS_P is non-zero, and

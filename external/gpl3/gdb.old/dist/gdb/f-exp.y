@@ -1,5 +1,6 @@
+
 /* YACC parser for Fortran expressions, for GDB.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -42,7 +43,6 @@
 %{
 
 #include "defs.h"
-#include <string.h>
 #include "expression.h"
 #include "value.h"
 #include "parser-defs.h"
@@ -54,8 +54,8 @@
 #include "block.h"
 #include <ctype.h>
 
-#define parse_type builtin_type (parse_gdbarch)
-#define parse_f_type builtin_f_type (parse_gdbarch)
+#define parse_type(ps) builtin_type (parse_gdbarch (ps))
+#define parse_f_type(ps) builtin_f_type (parse_gdbarch (ps))
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
    as well as gratuitiously global symbol names, so we can have multiple
@@ -65,7 +65,7 @@
    generators need to be fixed instead of adding those names to this list.  */
 
 #define	yymaxdepth f_maxdepth
-#define	yyparse	f_parse
+#define	yyparse f_parse_internal
 #define	yylex	f_lex
 #define	yyerror	f_error
 #define	yylval	f_lval
@@ -117,6 +117,11 @@
 
 #define YYFPRINTF parser_fprintf
 
+/* The state of the parser, used internally when we are parsing the
+   expression.  */
+
+static struct parser_state *pstate = NULL;
+
 int yyparse (void);
 
 static int yylex (void);
@@ -157,7 +162,8 @@ static int match_string_literal (void);
 
 %{
 /* YYSTYPE gets defined by %union */
-static int parse_number (const char *, int, int, YYSTYPE *);
+static int parse_number (struct parser_state *, const char *, int,
+			 int, YYSTYPE *);
 %}
 
 %type <voidval> exp  type_exp start variable 
@@ -239,9 +245,9 @@ start   :	exp
 	;
 
 type_exp:	type
-			{ write_exp_elt_opcode(OP_TYPE);
-			  write_exp_elt_type($1);
-			  write_exp_elt_opcode(OP_TYPE); }
+			{ write_exp_elt_opcode (pstate, OP_TYPE);
+			  write_exp_elt_type (pstate, $1);
+			  write_exp_elt_opcode (pstate, OP_TYPE); }
 	;
 
 exp     :       '(' exp ')'
@@ -250,27 +256,27 @@ exp     :       '(' exp ')'
 
 /* Expressions, not including the comma operator.  */
 exp	:	'*' exp    %prec UNARY
-			{ write_exp_elt_opcode (UNOP_IND); }
+			{ write_exp_elt_opcode (pstate, UNOP_IND); }
 	;
 
 exp	:	'&' exp    %prec UNARY
-			{ write_exp_elt_opcode (UNOP_ADDR); }
+			{ write_exp_elt_opcode (pstate, UNOP_ADDR); }
 	;
 
 exp	:	'-' exp    %prec UNARY
-			{ write_exp_elt_opcode (UNOP_NEG); }
+			{ write_exp_elt_opcode (pstate, UNOP_NEG); }
 	;
 
 exp	:	BOOL_NOT exp    %prec UNARY
-			{ write_exp_elt_opcode (UNOP_LOGICAL_NOT); }
+			{ write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT); }
 	;
 
 exp	:	'~' exp    %prec UNARY
-			{ write_exp_elt_opcode (UNOP_COMPLEMENT); }
+			{ write_exp_elt_opcode (pstate, UNOP_COMPLEMENT); }
 	;
 
 exp	:	SIZEOF exp       %prec UNARY
-			{ write_exp_elt_opcode (UNOP_SIZEOF); }
+			{ write_exp_elt_opcode (pstate, UNOP_SIZEOF); }
 	;
 
 /* No more explicit array operators, we treat everything in F77 as 
@@ -281,9 +287,12 @@ exp	:	SIZEOF exp       %prec UNARY
 exp	:	exp '(' 
 			{ start_arglist (); }
 		arglist ')'	
-			{ write_exp_elt_opcode (OP_F77_UNDETERMINED_ARGLIST);
-			  write_exp_elt_longcst ((LONGEST) end_arglist ());
-			  write_exp_elt_opcode (OP_F77_UNDETERMINED_ARGLIST); }
+			{ write_exp_elt_opcode (pstate,
+						OP_F77_UNDETERMINED_ARGLIST);
+			  write_exp_elt_longcst (pstate,
+						 (LONGEST) end_arglist ());
+			  write_exp_elt_opcode (pstate,
+					      OP_F77_UNDETERMINED_ARGLIST); }
 	;
 
 arglist	:
@@ -304,27 +313,27 @@ arglist	:	arglist ',' exp   %prec ABOVE_COMMA
 /* There are four sorts of subrange types in F90.  */
 
 subrange:	exp ':' exp	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (OP_F90_RANGE); 
-			  write_exp_elt_longcst (NONE_BOUND_DEFAULT);
-			  write_exp_elt_opcode (OP_F90_RANGE); }
+			{ write_exp_elt_opcode (pstate, OP_F90_RANGE); 
+			  write_exp_elt_longcst (pstate, NONE_BOUND_DEFAULT);
+			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
 	;
 
 subrange:	exp ':'	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (OP_F90_RANGE);
-			  write_exp_elt_longcst (HIGH_BOUND_DEFAULT);
-			  write_exp_elt_opcode (OP_F90_RANGE); }
+			{ write_exp_elt_opcode (pstate, OP_F90_RANGE);
+			  write_exp_elt_longcst (pstate, HIGH_BOUND_DEFAULT);
+			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
 	;
 
 subrange:	':' exp	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (OP_F90_RANGE);
-			  write_exp_elt_longcst (LOW_BOUND_DEFAULT);
-			  write_exp_elt_opcode (OP_F90_RANGE); }
+			{ write_exp_elt_opcode (pstate, OP_F90_RANGE);
+			  write_exp_elt_longcst (pstate, LOW_BOUND_DEFAULT);
+			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
 	;
 
 subrange:	':'	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (OP_F90_RANGE);
-			  write_exp_elt_longcst (BOTH_BOUND_DEFAULT);
-			  write_exp_elt_opcode (OP_F90_RANGE); }
+			{ write_exp_elt_opcode (pstate, OP_F90_RANGE);
+			  write_exp_elt_longcst (pstate, BOTH_BOUND_DEFAULT);
+			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
 	;
 
 complexnum:     exp ',' exp 
@@ -332,133 +341,139 @@ complexnum:     exp ',' exp
         ;
 
 exp	:	'(' complexnum ')'
-                	{ write_exp_elt_opcode(OP_COMPLEX);
-			  write_exp_elt_type (parse_f_type->builtin_complex_s16);
-                	  write_exp_elt_opcode(OP_COMPLEX); }
+			{ write_exp_elt_opcode (pstate, OP_COMPLEX);
+			  write_exp_elt_type (pstate,
+					      parse_f_type (pstate)
+					      ->builtin_complex_s16);
+			  write_exp_elt_opcode (pstate, OP_COMPLEX); }
 	;
 
 exp	:	'(' type ')' exp  %prec UNARY
-			{ write_exp_elt_opcode (UNOP_CAST);
-			  write_exp_elt_type ($2);
-			  write_exp_elt_opcode (UNOP_CAST); }
+			{ write_exp_elt_opcode (pstate, UNOP_CAST);
+			  write_exp_elt_type (pstate, $2);
+			  write_exp_elt_opcode (pstate, UNOP_CAST); }
 	;
 
 exp     :       exp '%' name
-                        { write_exp_elt_opcode (STRUCTOP_STRUCT);
-                          write_exp_string ($3);
-                          write_exp_elt_opcode (STRUCTOP_STRUCT); }
+                        { write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
+                          write_exp_string (pstate, $3);
+                          write_exp_elt_opcode (pstate, STRUCTOP_STRUCT); }
         ;
 
 /* Binary operators in order of decreasing precedence.  */
 
 exp	:	exp '@' exp
-			{ write_exp_elt_opcode (BINOP_REPEAT); }
+			{ write_exp_elt_opcode (pstate, BINOP_REPEAT); }
 	;
 
 exp	:	exp STARSTAR exp
-			{ write_exp_elt_opcode (BINOP_EXP); }
+			{ write_exp_elt_opcode (pstate, BINOP_EXP); }
 	;
 
 exp	:	exp '*' exp
-			{ write_exp_elt_opcode (BINOP_MUL); }
+			{ write_exp_elt_opcode (pstate, BINOP_MUL); }
 	;
 
 exp	:	exp '/' exp
-			{ write_exp_elt_opcode (BINOP_DIV); }
+			{ write_exp_elt_opcode (pstate, BINOP_DIV); }
 	;
 
 exp	:	exp '+' exp
-			{ write_exp_elt_opcode (BINOP_ADD); }
+			{ write_exp_elt_opcode (pstate, BINOP_ADD); }
 	;
 
 exp	:	exp '-' exp
-			{ write_exp_elt_opcode (BINOP_SUB); }
+			{ write_exp_elt_opcode (pstate, BINOP_SUB); }
 	;
 
 exp	:	exp LSH exp
-			{ write_exp_elt_opcode (BINOP_LSH); }
+			{ write_exp_elt_opcode (pstate, BINOP_LSH); }
 	;
 
 exp	:	exp RSH exp
-			{ write_exp_elt_opcode (BINOP_RSH); }
+			{ write_exp_elt_opcode (pstate, BINOP_RSH); }
 	;
 
 exp	:	exp EQUAL exp
-			{ write_exp_elt_opcode (BINOP_EQUAL); }
+			{ write_exp_elt_opcode (pstate, BINOP_EQUAL); }
 	;
 
 exp	:	exp NOTEQUAL exp
-			{ write_exp_elt_opcode (BINOP_NOTEQUAL); }
+			{ write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
 	;
 
 exp	:	exp LEQ exp
-			{ write_exp_elt_opcode (BINOP_LEQ); }
+			{ write_exp_elt_opcode (pstate, BINOP_LEQ); }
 	;
 
 exp	:	exp GEQ exp
-			{ write_exp_elt_opcode (BINOP_GEQ); }
+			{ write_exp_elt_opcode (pstate, BINOP_GEQ); }
 	;
 
 exp	:	exp LESSTHAN exp
-			{ write_exp_elt_opcode (BINOP_LESS); }
+			{ write_exp_elt_opcode (pstate, BINOP_LESS); }
 	;
 
 exp	:	exp GREATERTHAN exp
-			{ write_exp_elt_opcode (BINOP_GTR); }
+			{ write_exp_elt_opcode (pstate, BINOP_GTR); }
 	;
 
 exp	:	exp '&' exp
-			{ write_exp_elt_opcode (BINOP_BITWISE_AND); }
+			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_AND); }
 	;
 
 exp	:	exp '^' exp
-			{ write_exp_elt_opcode (BINOP_BITWISE_XOR); }
+			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_XOR); }
 	;
 
 exp	:	exp '|' exp
-			{ write_exp_elt_opcode (BINOP_BITWISE_IOR); }
+			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_IOR); }
 	;
 
 exp     :       exp BOOL_AND exp
-			{ write_exp_elt_opcode (BINOP_LOGICAL_AND); }
+			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
 	;
 
 
 exp	:	exp BOOL_OR exp
-			{ write_exp_elt_opcode (BINOP_LOGICAL_OR); }
+			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
 	;
 
 exp	:	exp '=' exp
-			{ write_exp_elt_opcode (BINOP_ASSIGN); }
+			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN); }
 	;
 
 exp	:	exp ASSIGN_MODIFY exp
-			{ write_exp_elt_opcode (BINOP_ASSIGN_MODIFY);
-			  write_exp_elt_opcode ($2);
-			  write_exp_elt_opcode (BINOP_ASSIGN_MODIFY); }
+			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
+			  write_exp_elt_opcode (pstate, $2);
+			  write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY); }
 	;
 
 exp	:	INT
-			{ write_exp_elt_opcode (OP_LONG);
-			  write_exp_elt_type ($1.type);
-			  write_exp_elt_longcst ((LONGEST)($1.val));
-			  write_exp_elt_opcode (OP_LONG); }
+			{ write_exp_elt_opcode (pstate, OP_LONG);
+			  write_exp_elt_type (pstate, $1.type);
+			  write_exp_elt_longcst (pstate, (LONGEST) ($1.val));
+			  write_exp_elt_opcode (pstate, OP_LONG); }
 	;
 
 exp	:	NAME_OR_INT
 			{ YYSTYPE val;
-			  parse_number ($1.stoken.ptr, $1.stoken.length, 0, &val);
-			  write_exp_elt_opcode (OP_LONG);
-			  write_exp_elt_type (val.typed_val.type);
-			  write_exp_elt_longcst ((LONGEST)val.typed_val.val);
-			  write_exp_elt_opcode (OP_LONG); }
+			  parse_number (pstate, $1.stoken.ptr,
+					$1.stoken.length, 0, &val);
+			  write_exp_elt_opcode (pstate, OP_LONG);
+			  write_exp_elt_type (pstate, val.typed_val.type);
+			  write_exp_elt_longcst (pstate,
+						 (LONGEST)val.typed_val.val);
+			  write_exp_elt_opcode (pstate, OP_LONG); }
 	;
 
 exp	:	FLOAT
-			{ write_exp_elt_opcode (OP_DOUBLE);
-			  write_exp_elt_type (parse_f_type->builtin_real_s8);
-			  write_exp_elt_dblcst ($1);
-			  write_exp_elt_opcode (OP_DOUBLE); }
+			{ write_exp_elt_opcode (pstate, OP_DOUBLE);
+			  write_exp_elt_type (pstate,
+					      parse_f_type (pstate)
+					      ->builtin_real_s8);
+			  write_exp_elt_dblcst (pstate, $1);
+			  write_exp_elt_opcode (pstate, OP_DOUBLE); }
 	;
 
 exp	:	variable
@@ -468,25 +483,28 @@ exp	:	VARIABLE
 	;
 
 exp	:	SIZEOF '(' type ')'	%prec UNARY
-			{ write_exp_elt_opcode (OP_LONG);
-			  write_exp_elt_type (parse_f_type->builtin_integer);
+			{ write_exp_elt_opcode (pstate, OP_LONG);
+			  write_exp_elt_type (pstate,
+					      parse_f_type (pstate)
+					      ->builtin_integer);
 			  CHECK_TYPEDEF ($3);
-			  write_exp_elt_longcst ((LONGEST) TYPE_LENGTH ($3));
-			  write_exp_elt_opcode (OP_LONG); }
+			  write_exp_elt_longcst (pstate,
+						 (LONGEST) TYPE_LENGTH ($3));
+			  write_exp_elt_opcode (pstate, OP_LONG); }
 	;
 
 exp     :       BOOLEAN_LITERAL
-			{ write_exp_elt_opcode (OP_BOOL);
-			  write_exp_elt_longcst ((LONGEST) $1);
-			  write_exp_elt_opcode (OP_BOOL);
+			{ write_exp_elt_opcode (pstate, OP_BOOL);
+			  write_exp_elt_longcst (pstate, (LONGEST) $1);
+			  write_exp_elt_opcode (pstate, OP_BOOL);
 			}
         ;
 
 exp	:	STRING_LITERAL
 			{
-			  write_exp_elt_opcode (OP_STRING);
-			  write_exp_string ($1);
-			  write_exp_elt_opcode (OP_STRING);
+			  write_exp_elt_opcode (pstate, OP_STRING);
+			  write_exp_string (pstate, $1);
+			  write_exp_elt_opcode (pstate, OP_STRING);
 			}
 	;
 
@@ -502,13 +520,13 @@ variable:	name_not_typename
 						       innermost_block))
 				    innermost_block = block_found;
 				}
-			      write_exp_elt_opcode (OP_VAR_VALUE);
+			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			      /* We want to use the selected frame, not
 				 another more inner frame which happens to
 				 be in the same block.  */
-			      write_exp_elt_block (NULL);
-			      write_exp_elt_sym (sym);
-			      write_exp_elt_opcode (OP_VAR_VALUE);
+			      write_exp_elt_block (pstate, NULL);
+			      write_exp_elt_sym (pstate, sym);
+			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			      break;
 			    }
 			  else
@@ -519,7 +537,7 @@ variable:	name_not_typename
 			      msymbol =
 				lookup_bound_minimal_symbol (arg);
 			      if (msymbol.minsym != NULL)
-				write_exp_msymbol (msymbol);
+				write_exp_msymbol (pstate, msymbol);
 			      else if (!have_full_symbols () && !have_partial_symbols ())
 				error (_("No symbol table is loaded.  Use the \"file\" command."));
 			      else
@@ -559,9 +577,10 @@ ptype	:	typebase
 			if (array_size != -1)
 			  {
 			    range_type =
-			      create_range_type ((struct type *) NULL,
-						 parse_f_type->builtin_integer,
-						 0, array_size - 1);
+			      create_static_range_type ((struct type *) NULL,
+							parse_f_type (pstate)
+							->builtin_integer,
+							0, array_size - 1);
 			    follow_type =
 			      create_array_type ((struct type *) NULL,
 						 follow_type, range_type);
@@ -606,31 +625,31 @@ typebase  /* Implements (approximately): (type-qualifier)* type-specifier */
 	:	TYPENAME
 			{ $$ = $1.type; }
 	|	INT_KEYWORD
-			{ $$ = parse_f_type->builtin_integer; }
+			{ $$ = parse_f_type (pstate)->builtin_integer; }
 	|	INT_S2_KEYWORD 
-			{ $$ = parse_f_type->builtin_integer_s2; }
+			{ $$ = parse_f_type (pstate)->builtin_integer_s2; }
 	|	CHARACTER 
-			{ $$ = parse_f_type->builtin_character; }
+			{ $$ = parse_f_type (pstate)->builtin_character; }
 	|	LOGICAL_S8_KEYWORD
-			{ $$ = parse_f_type->builtin_logical_s8; }
+			{ $$ = parse_f_type (pstate)->builtin_logical_s8; }
 	|	LOGICAL_KEYWORD 
-			{ $$ = parse_f_type->builtin_logical; }
+			{ $$ = parse_f_type (pstate)->builtin_logical; }
 	|	LOGICAL_S2_KEYWORD
-			{ $$ = parse_f_type->builtin_logical_s2; }
+			{ $$ = parse_f_type (pstate)->builtin_logical_s2; }
 	|	LOGICAL_S1_KEYWORD 
-			{ $$ = parse_f_type->builtin_logical_s1; }
+			{ $$ = parse_f_type (pstate)->builtin_logical_s1; }
 	|	REAL_KEYWORD 
-			{ $$ = parse_f_type->builtin_real; }
+			{ $$ = parse_f_type (pstate)->builtin_real; }
 	|       REAL_S8_KEYWORD
-			{ $$ = parse_f_type->builtin_real_s8; }
+			{ $$ = parse_f_type (pstate)->builtin_real_s8; }
 	|	REAL_S16_KEYWORD
-			{ $$ = parse_f_type->builtin_real_s16; }
+			{ $$ = parse_f_type (pstate)->builtin_real_s16; }
 	|	COMPLEX_S8_KEYWORD
-			{ $$ = parse_f_type->builtin_complex_s8; }
+			{ $$ = parse_f_type (pstate)->builtin_complex_s8; }
 	|	COMPLEX_S16_KEYWORD 
-			{ $$ = parse_f_type->builtin_complex_s16; }
+			{ $$ = parse_f_type (pstate)->builtin_complex_s16; }
 	|	COMPLEX_S32_KEYWORD 
-			{ $$ = parse_f_type->builtin_complex_s32; }
+			{ $$ = parse_f_type (pstate)->builtin_complex_s32; }
 	;
 
 nonempty_typelist
@@ -669,7 +688,8 @@ name_not_typename :	NAME
 /*** Needs some error checking for the float case ***/
 
 static int
-parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
+parse_number (struct parser_state *par_state,
+	      const char *p, int len, int parsed_float, YYSTYPE *putithere)
 {
   LONGEST n = 0;
   LONGEST prevn = 0;
@@ -775,20 +795,24 @@ parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
      are the same size.  So we shift it twice, with fewer bits
      each time, for the same result.  */
   
-  if ((gdbarch_int_bit (parse_gdbarch) != gdbarch_long_bit (parse_gdbarch)
+  if ((gdbarch_int_bit (parse_gdbarch (par_state))
+       != gdbarch_long_bit (parse_gdbarch (par_state))
        && ((n >> 2)
-	   >> (gdbarch_int_bit (parse_gdbarch)-2))) /* Avoid shift warning */
+	   >> (gdbarch_int_bit (parse_gdbarch (par_state))-2))) /* Avoid
+							    shift warning */
       || long_p)
     {
-      high_bit = ((ULONGEST)1) << (gdbarch_long_bit (parse_gdbarch)-1);
-      unsigned_type = parse_type->builtin_unsigned_long;
-      signed_type = parse_type->builtin_long;
+      high_bit = ((ULONGEST)1)
+      << (gdbarch_long_bit (parse_gdbarch (par_state))-1);
+      unsigned_type = parse_type (par_state)->builtin_unsigned_long;
+      signed_type = parse_type (par_state)->builtin_long;
     }
   else 
     {
-      high_bit = ((ULONGEST)1) << (gdbarch_int_bit (parse_gdbarch)-1);
-      unsigned_type = parse_type->builtin_unsigned_int;
-      signed_type = parse_type->builtin_int;
+      high_bit =
+	((ULONGEST)1) << (gdbarch_int_bit (parse_gdbarch (par_state)) - 1);
+      unsigned_type = parse_type (par_state)->builtin_unsigned_int;
+      signed_type = parse_type (par_state)->builtin_int;
     }    
   
   putithere->typed_val.val = n;
@@ -1090,7 +1114,8 @@ yylex (void)
 			 && (*p < 'A' || *p > 'Z')))
 	      break;
 	  }
-	toktype = parse_number (tokstart, p - tokstart, got_dot|got_e|got_d,
+	toktype = parse_number (pstate, tokstart, p - tokstart,
+				got_dot|got_e|got_d,
 				&yylval);
         if (toktype == ERROR)
           {
@@ -1164,7 +1189,7 @@ yylex (void)
   
   if (*tokstart == '$')
     {
-      write_dollar_variable (yylval.sval);
+      write_dollar_variable (pstate, yylval.sval);
       return VARIABLE;
     }
   
@@ -1192,8 +1217,8 @@ yylex (void)
 
 	sym = lookup_symbol (tmp, expression_context_block,
 			     lookup_domains[i],
-			     parse_language->la_language == language_cplus
-			     ? &is_a_field_of_this : NULL);
+			     parse_language (pstate)->la_language
+			     == language_cplus ? &is_a_field_of_this : NULL);
 	if (sym && SYMBOL_CLASS (sym) == LOC_TYPEDEF)
 	  {
 	    yylval.tsym.type = SYMBOL_TYPE (sym);
@@ -1205,8 +1230,8 @@ yylex (void)
       }
 
     yylval.tsym.type
-      = language_lookup_primitive_type_by_name (parse_language,
-						parse_gdbarch, tmp);
+      = language_lookup_primitive_type (parse_language (pstate),
+					parse_gdbarch (pstate), tmp);
     if (yylval.tsym.type != NULL)
       return TYPENAME;
     
@@ -1218,7 +1243,7 @@ yylex (void)
 	    || (tokstart[0] >= 'A' && tokstart[0] < 'A' + input_radix - 10)))
       {
  	YYSTYPE newlval;	/* Its value is ignored.  */
-	hextype = parse_number (tokstart, namelen, 0, &newlval);
+	hextype = parse_number (pstate, tokstart, namelen, 0, &newlval);
 	if (hextype == INT)
 	  {
 	    yylval.ssym.sym = sym;
@@ -1232,6 +1257,21 @@ yylex (void)
     yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
     return NAME;
   }
+}
+
+int
+f_parse (struct parser_state *par_state)
+{
+  int result;
+  struct cleanup *c = make_cleanup_clear_parser_state (&pstate);
+
+  /* Setting up the parser state.  */
+  gdb_assert (par_state != NULL);
+  pstate = par_state;
+
+  result = yyparse ();
+  do_cleanups (c);
+  return result;
 }
 
 void

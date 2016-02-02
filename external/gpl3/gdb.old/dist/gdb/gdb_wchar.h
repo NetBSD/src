@@ -1,5 +1,5 @@
 /* Wide characters for gdb
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,17 +49,17 @@
 #define PHONY_ICONV
 #endif
 
+#include <wchar.h>
+#include <wctype.h>
+
 /* We use "btowc" as a sentinel to detect functioning wchar_t support.
    We check for either __STDC_ISO_10646__ or a new-enough libiconv in
    order to ensure we can convert to and from wchar_t.  We choose
    libiconv version 0x108 because it is the first version with
    iconvlist.  */
-#if defined (HAVE_ICONV) && defined (HAVE_WCHAR_H) && defined (HAVE_BTOWC) \
+#if defined (HAVE_ICONV) && defined (HAVE_BTOWC) \
   && (defined (__STDC_ISO_10646__) \
       || (defined (_LIBICONV_VERSION) && _LIBICONV_VERSION >= 0x108))
-
-#include <wchar.h>
-#include <wctype.h>
 
 typedef wchar_t gdb_wchar_t;
 typedef wint_t gdb_wint_t;
@@ -94,7 +94,7 @@ const char *intermediate_encoding (void);
 
 /* If we got here and have wchar_t support, we might be on a system
    with some problem.  So, we just disable everything.  */
-#if defined (HAVE_WCHAR_H) && defined (HAVE_BTOWC)
+#if defined (HAVE_BTOWC)
 #define PHONY_ICONV
 #endif
 

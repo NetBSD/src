@@ -1,4 +1,4 @@
-# Copyright 2007-2014 Free Software Foundation, Inc.
+# Copyright 2007-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,6 +91,13 @@ proc gpc_compile {source dest type options} {
 		append add_flags " -g"
 	    }
 	}
+	if { $i == "class" } {
+	    if [board_info $dest exists pascal_class_flags] {
+		append add_flags " [board_info $dest pascal_class_flags]"
+	    } else {
+		append add_flags " --extended-syntax"
+	    }
+	}
     }
 
     set result [remote_exec host $gpc_compiler "-o $dest --automake $add_flags $source"]
@@ -118,6 +125,13 @@ proc fpc_compile {source dest type options} {
 		append add_flags " [board_info $dest debug_flags]"
 	    } else {
 		append add_flags " -g"
+	    }
+	}
+	if { $i == "class" } {
+	    if [board_info $dest exists pascal_class_flags] {
+		append add_flags " [board_info $dest pascal_class_flags]"
+	    } else {
+		append add_flags " -Mobjfpc"
 	    }
 	}
     }

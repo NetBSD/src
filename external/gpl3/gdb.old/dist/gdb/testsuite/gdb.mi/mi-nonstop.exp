@@ -1,4 +1,4 @@
-# Copyright 2002-2014 Free Software Foundation, Inc.
+# Copyright 2002-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,14 +50,15 @@ mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load $binfile
 
 mi_gdb_test "-gdb-set non-stop 1" ".*"
-mi_gdb_test "-gdb-set target-async 1" ".*"
+mi_gdb_test "-gdb-set mi-async 1" ".*"
 mi_detect_async
 
 if { [mi_run_to_main] < 0 } {
     continue
 }
 
-mi_create_breakpoint break_at_me 2 keep break_at_me .* .* .* "breakpoint at marker"
+mi_create_breakpoint break_at_me "breakpoint at marker" \
+    -number 2 -func break_at_me
 
 mi_nonstop_resume "exec-continue" "resume 1"
 mi_expect_stop "breakpoint-hit" "break_at_me" ".*" "non-stop.c" ".*" {"" "disp=\"keep\""} "w0,i0 stop"

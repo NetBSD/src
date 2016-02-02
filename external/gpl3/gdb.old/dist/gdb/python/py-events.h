@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,6 +46,10 @@ typedef struct
   eventregistry_object *cont;
   eventregistry_object *exited;
   eventregistry_object *new_objfile;
+  eventregistry_object *clear_objfiles;
+  eventregistry_object *inferior_call;
+  eventregistry_object *memory_changed;
+  eventregistry_object *register_changed;
 
   PyObject *module;
 

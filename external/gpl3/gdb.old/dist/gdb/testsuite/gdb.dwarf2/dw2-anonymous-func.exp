@@ -1,4 +1,4 @@
-# Copyright 2004-2014 Free Software Foundation, Inc.
+# Copyright 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@ if {[prepare_for_testing_full $testfile.exp \
 	 [list $testfile debug main.c debug $srcfile nodebug]]} {
     return -1
 }
+
+gdb_remote_download host ${srcdir}/${subdir}/${dwarf_srcfile}
 
 # Force the debugger to create the file1.txt symtab, to make sure that
 # the debugger does not crash doing so.

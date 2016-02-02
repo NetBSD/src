@@ -1,5 +1,5 @@
 /* Functions for deciding which macros are currently in scope.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -40,14 +40,17 @@ sal_macro_scope (struct symtab_and_line sal)
 {
   struct macro_source_file *main_file, *inclusion;
   struct macro_scope *ms;
+  struct compunit_symtab *cust;
 
-  if (! sal.symtab
-      || ! sal.symtab->macro_table)
-    return 0;
+  if (sal.symtab == NULL)
+    return NULL;
+  cust = SYMTAB_COMPUNIT (sal.symtab);
+  if (COMPUNIT_MACRO_TABLE (cust) == NULL)
+    return NULL;
 
   ms = (struct macro_scope *) xmalloc (sizeof (*ms));
 
-  main_file = macro_main (sal.symtab->macro_table);
+  main_file = macro_main (COMPUNIT_MACRO_TABLE (cust));
   inclusion = macro_lookup_inclusion (main_file, sal.symtab->filename);
 
   if (inclusion)

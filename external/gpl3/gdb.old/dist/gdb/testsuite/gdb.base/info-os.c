@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2014 Free Software Foundation, Inc.
+   Copyright 2011-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 

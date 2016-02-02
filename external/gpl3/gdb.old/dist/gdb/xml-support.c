@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,11 +19,8 @@
 
 #include "defs.h"
 #include "gdbcmd.h"
-#include "exceptions.h"
 #include "xml-support.h"
 #include "filestuff.h"
-
-#include <string.h>
 #include "safe-ctype.h"
 
 /* Debugging flag.  */
@@ -94,7 +91,7 @@ gdb_xml_body_text (void *data, const XML_Char *text, int length)
 
   if (scope->body == NULL)
     {
-      scope->body = XZALLOC (struct obstack);
+      scope->body = XCNEW (struct obstack);
       obstack_init (scope->body);
     }
 
@@ -454,7 +451,7 @@ gdb_xml_create_parser_and_cleanup (const char *name,
   struct cleanup *result;
 
   /* Initialize the parser.  */
-  parser = XZALLOC (struct gdb_xml_parser);
+  parser = XCNEW (struct gdb_xml_parser);
   parser->expat_parser = XML_ParserCreateNS (NULL, '!');
   if (parser->expat_parser == NULL)
     {
@@ -877,7 +874,7 @@ xml_process_xincludes (const char *name, const char *text,
   struct cleanup *back_to;
   char *result = NULL;
 
-  data = XZALLOC (struct xinclude_parsing_data);
+  data = XCNEW (struct xinclude_parsing_data);
   obstack_init (&data->obstack);
   back_to = make_cleanup (xml_xinclude_cleanup, data);
 

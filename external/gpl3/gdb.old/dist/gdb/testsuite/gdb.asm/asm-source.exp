@@ -1,4 +1,4 @@
-# Copyright 1998-2014 Free Software Foundation, Inc.
+# Copyright 1998-2015 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,6 +96,11 @@ switch -glob -- [istarget] {
     }
     "mips*-*" {
         set asm-arch mips
+    }
+    "powerpc64le-*" {
+        set asm-arch powerpc64le
+        set asm-flags "-a64 -I${srcdir}/${subdir} $obj_include"
+        append link-flags " -m elf64lppc"
     }
     "powerpc*-*" {
         if { [is_lp64_target] } {

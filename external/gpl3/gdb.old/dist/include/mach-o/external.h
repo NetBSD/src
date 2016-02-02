@@ -1,6 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -286,6 +285,24 @@ struct mach_o_dyld_info_command_external
   unsigned char lazy_bind_size[4];
   unsigned char export_off[4];
   unsigned char export_size[4];
+};
+
+struct mach_o_prebound_dylib_command_external
+{
+  unsigned char name[4];
+  unsigned char nmodules[4];
+  unsigned char linked_modules[4];
+};
+
+struct mach_o_prebind_cksum_command_external
+{
+  unsigned char cksum[4];
+};
+
+struct mach_o_twolevel_hints_command_external
+{
+  unsigned char offset[4];
+  unsigned char nhints[4];
 };
 
 struct mach_o_version_min_command_external

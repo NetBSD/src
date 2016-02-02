@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ gdb_test "continue" "Catchpoint.*" "1, get to the fork event"
 
 gdb_test "info threads" " Thread .* Thread .* Thread .* Thread .*" "1, multiple threads found"
 
-gdb_test "thread 2" ".*" "1, switched away from event thread"
+gdb_test "thread 1" ".*" "1, switched away from event thread"
 
 gdb_test "continue" "Not resuming.*" "1, refused to resume"
 

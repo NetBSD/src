@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -179,7 +179,7 @@ gdb_test_no_output "set history filename ~/foobar.baz" \
     "set history filename ~/foobar.baz"
 #test show history filename ~/foobar.baz
 gdb_test "show history filename" \
-    "The filename in which to record the command history is \"$HOME/foobar.baz\"..*" \
+    "The filename in which to record the command history is \"[string_to_regexp $HOME]/foobar.baz\"..*" \
     "show history filename (~/foobar.baz)"
 #get current working directory
 set PWD ""
@@ -195,7 +195,7 @@ gdb_test_no_output "set history filename foobar.baz" \
     "set history filename foobar.baz"
 #test show history filename foobar.baz
 gdb_test "show history filename" \
-    "The filename in which to record the command history is \"$PWD/foobar.baz\"..*" \
+    "The filename in which to record the command history is \"[string_to_regexp $PWD]/foobar.baz\"..*" \
     "show history filename (current_directory/foobar.baz)"
 #test set history save on
 gdb_test_no_output "set history save on" "set history save on" 

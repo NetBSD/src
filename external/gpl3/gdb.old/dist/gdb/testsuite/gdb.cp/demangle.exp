@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2014 Free Software Foundation, Inc.
+# Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ proc test_demangling_core {tester test result} {
 	set_demangling_style $style
     }
 
-    $tester "maintenance demangle $name" $result $test
+    $tester "demangle $name" $result $test
 }
 
 ### Demangle an identifier, and check that the result matches a pattern.
@@ -527,7 +527,7 @@ proc test_gnu_style_demangling {} {
     ## 1999-04-19: "Fix from Dale Hawkins".  Shouldn't segfault.
     # Accept even a dubious demangling; the string is ambiguous.
 
-    gdb_test_multiple "maintenance demangle __thunk_64__0RL__list__Q29CosNaming20_proxy_NamingContextUlRPt25_CORBA_Unbounded_Sequence1ZQ29CosNaming7BindingRPQ29CosNaming15BindingIterator" "gnu: __thunk_64__0RL__list__Q29CosNaming20_proxy_NamingContextUlRPt25_CORBA_Unbounded_Sequence1ZQ29CosNaming7BindingRPQ29CosNaming15BindingIterator" {
+    gdb_test_multiple "demangle __thunk_64__0RL__list__Q29CosNaming20_proxy_NamingContextUlRPt25_CORBA_Unbounded_Sequence1ZQ29CosNaming7BindingRPQ29CosNaming15BindingIterator" "gnu: __thunk_64__0RL__list__Q29CosNaming20_proxy_NamingContextUlRPt25_CORBA_Unbounded_Sequence1ZQ29CosNaming7BindingRPQ29CosNaming15BindingIterator" {
 	-re "virtual function thunk \\(delta:-64\\) for CosNaming::_proxy_NamingContext::_0RL__list\\(unsigned long, _CORBA_Unbounded_Sequence<CosNaming::Binding> \\*\\&, CosNaming::BindingIterator \\*\\&\\)\r\n$gdb_prompt $" {
 	    pass "gnu: __thunk_64__0RL__list__Q29CosNaming20_proxy_NamingContextUlRPt25_CORBA_Unbounded_Sequence1ZQ29CosNaming7BindingRPQ29CosNaming15BindingIterator"
 	}
@@ -1557,6 +1557,14 @@ proc do_tests {} {
     catch_demangling_errors test_gnu_style_demangling
     catch_demangling_errors test_arm_style_demangling
     catch_demangling_errors test_hp_style_demangling
+
+    # Verify specifying demangle language.
+    gdb_test_no_output "set language unknown"
+    set_demangling_style "auto"
+    gdb_test_exact "demangle -l c++ -- _ZSt4cout" "std::cout"
+    gdb_test_exact "demangle -l c++ _ZSt4cout" "std::cout"
+    gdb_test_exact "demangle -l c -- _ZSt4cout" "Can't demangle \"_ZSt4cout\""
+    gdb_test_exact "demangle -l garbage xyzdje" "Unknown language \"garbage\""
 }
 
 do_tests

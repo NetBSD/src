@@ -1,4 +1,4 @@
-#   Copyright 1988-2014 Free Software Foundation, Inc.
+#   Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 # board.  So, to be sure, we do a list command.
 #
 gdb_test "list main" \
-    ".*main \\(argc, argv, envp\\).*" \
+    ".*main \\(int argc, char \\*\\*argv, char \\*\\*envp\\).*" \
     "use `list' to establish default source file"
 gdb_test "break $bp_location1" \
     "Breakpoint.*at.* file .*$srcfile, line $bp_location1\\." \
@@ -154,12 +154,11 @@ set main_line $bp_location6
 
 set bp_location7 [gdb_get_line_number "set breakpoint 7 here"]
 set bp_location8 [gdb_get_line_number "set breakpoint 8 here"]
-set bp_location9 [gdb_get_line_number "set breakpoint 9 here"]
 
 gdb_test "info break" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$main_line.*
-\[0-9\]+\[\t \]+breakpoint     keep y.* in marker2 at .*$srcfile:($bp_location8|$bp_location9).*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in marker2 at .*$srcfile:$bp_location8.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in factorial at .*$srcfile:$bp_location7.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location1.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$bp_location1.*
@@ -177,17 +176,9 @@ gdb_test "info break" \
 # run until the breakpoint at main is hit. For non-stubs-using targets.
 #
 gdb_run_cmd
-gdb_expect {
-    -re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:$bp_location6.*$bp_location6\[\t \]+if .argc.* \{.*$gdb_prompt $" {
-	pass "run until function breakpoint"
-    }
-    -re "$gdb_prompt $" {
-	fail "run until function breakpoint"
-    }
-    timeout {
-	fail "run until function breakpoint (timeout)"
-    }
-}
+gdb_test "" \
+    "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:$bp_location6.*$bp_location6\[\t \]+if .argc.* \{.*" \
+    "run until function breakpoint"
 
 #
 # run until the breakpoint at a line number
@@ -206,7 +197,7 @@ for {set i 6} {$i >= 1} {incr i -1} {
 #
 # Run until the breakpoint set at a quoted function
 #
-gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, (0x\[0-9a-f\]+ in )?marker2 \\(a=43\\) at .*$srcfile:($bp_location8|$bp_location9).*" \
+gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, (0x\[0-9a-f\]+ in )?marker2 \\(a=43\\) at .*$srcfile:$bp_location8.*" \
 		"run until quoted breakpoint"
 #
 # run until the file:function breakpoint at a line number in a file
@@ -456,7 +447,7 @@ gdb_test "break \$foo" \
 #
 
 gdb_test "break marker2" \
-    "Breakpoint (\[0-9\]*) at .*, line ($bp_location8|$bp_location9).*" \
+    "Breakpoint (\[0-9\]*) at .*, line $bp_location8.*" \
     "set breakpoint on to-be-called function"
 
 gdb_test "print marker2(99)" \
@@ -471,10 +462,10 @@ gdb_test "print marker2(99)" \
 #
 
 gdb_test_multiple "bt" "backtrace while in called function" {
-    -re "#0\[ \t\]*($hex in )?marker2.*:($bp_location8|$bp_location9)\r\n#1.*_sr4export.*$gdb_prompt $" {
+    -re "#0\[ \t\]*($hex in )?marker2.*:$bp_location8\r\n#1.*_sr4export.*$gdb_prompt $" {
 	pass "backtrace while in called function"
     }
-    -re "#0\[ \t\]*($hex in )?marker2.*:($bp_location8|$bp_location9)\r\n#1.*function called from gdb.*$gdb_prompt $" {
+    -re "#0\[ \t\]*($hex in )?marker2.*:$bp_location8\r\n#1.*function called from gdb.*$gdb_prompt $" {
 	pass "backtrace while in called function"
     }
 }
@@ -485,13 +476,13 @@ gdb_test_multiple "bt" "backtrace while in called function" {
 #
 
 gdb_test_multiple "finish" "finish from called function" {
-    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.* in _sr4export.*$gdb_prompt $" {
+    -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.* in _sr4export.*$gdb_prompt $" {
 	pass "finish from called function"
     }
-    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.*function called from gdb.*$gdb_prompt $" {
+    -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.*function called from gdb.*$gdb_prompt $" {
 	pass "finish from called function"
     }
-    -re "Run till exit from .*marker2.* at .*($bp_location8|$bp_location9)\r\n.*Value returned.*$gdb_prompt $" {
+    -re "Run till exit from .*marker2.* at .*$bp_location8\r\n.*Value returned.*$gdb_prompt $" {
 	pass "finish from called function"
     }
 }
@@ -574,14 +565,7 @@ proc test_next_with_recursion {} {
     # Run until we call factorial with 6
 
     gdb_run_cmd
-    gdb_expect {
-	-re "Break.* factorial .value=6. .*$gdb_prompt $" {}
-	-re ".*$gdb_prompt $" {
-	    fail "run to factorial(6)"
-	    gdb_suppress_tests
-	}
-	timeout { fail "run to factorial(6) (timeout)" ; gdb_suppress_tests }
-    }
+    gdb_test "" "Break.* factorial .value=6. .*" "run to factorial(6)"
 
     # Continue until we call factorial recursively with 5.
 
@@ -686,18 +670,13 @@ proc test_different_dir {type test_different_dir xfail} {
 	if {$xfail} {
 	    setup_xfail "*-*-*"
 	}
-	gdb_expect {
+	set test "run until function breakpoint, optimized file"
+	gdb_test_multiple "" $test {
 	    -re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:$bp_location6.*$bp_location6\[\t \]+if .argc.* \{.*$gdb_prompt $" {
-		pass "run until function breakpoint, optimized file"
+		pass $test
 	    }
 	    -re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$gdb_prompt $" {
-		pass "run until function breakpoint, optimized file (code motion)"
-	    }
-	    -re "$gdb_prompt $" {
-		fail "run until function breakpoint, optimized file"
-	    }
-	    timeout {
-		fail "run until function breakpoint, optimized file (timeout)"
+		pass "$test (code motion)"
 	    }
 	}
 
@@ -714,31 +693,18 @@ proc test_different_dir {type test_different_dir xfail} {
 	# has no exactly matching line symbol, and GDB reports the breakpoint
 	# as if it were in the middle of a line rather than at the beginning.
 
-	set bp_location13 [gdb_get_line_number "set breakpoint 13 here"]
 	set bp_location14 [gdb_get_line_number "set breakpoint 14 here"]
 	if {$xfail} {
 	    setup_xfail "*-*-*"
 	}
 
 	gdb_test_multiple "continue" "run until breakpoint set at small function, optimized file" {
-	    -re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*$gdb_prompt $" {
-		pass "run until breakpoint set at small function, optimized file"
-	    }
-	    -re "Breakpoint $decimal, $hex in marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*$gdb_prompt $" {
-		pass "run until breakpoint set at small function, optimized file"
-	    }
 	    -re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*$gdb_prompt $" {
-		# marker4() is defined at line 46 when compiled with -DPROTOTYPES
 		pass "run until breakpoint set at small function, optimized file (line bp_location14)"
 	    }
-	}
-
-
-	# Reset the default arguments for VxWorks
-	if [istarget "*-*-vxworks*"] {
-	    set timeout 10
-	    verbose "Timeout is now $timeout seconds" 2
-	    gdb_test_no_output "set args main"
+	    -re "Breakpoint $decimal, $hex in marker4 \\(d=177601976\\) at .*$srcfile:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*$gdb_prompt $" {
+		pass "run until breakpoint set at small function, optimized file (line bp_location14)"
+	    }
 	}
 
 	# proc test_different_dir

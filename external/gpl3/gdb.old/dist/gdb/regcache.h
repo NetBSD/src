@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,10 @@
 #ifndef REGCACHE_H
 #define REGCACHE_H
 
+#include "common-regcache.h"
+
 struct regcache;
+struct regset;
 struct gdbarch;
 struct address_space;
 
@@ -135,7 +138,7 @@ void regcache_cooked_write_part (struct regcache *regcache, int regnum,
 
 /* Special routines to read/write the PC.  */
 
-extern CORE_ADDR regcache_read_pc (struct regcache *regcache);
+/* For regcache_read_pc see common/common-regcache.h.  */
 extern void regcache_write_pc (struct regcache *regcache, CORE_ADDR pc);
 
 /* Transfer a raw register [0..NUM_REGS) between the regcache and the
@@ -146,6 +149,51 @@ extern void regcache_raw_supply (struct regcache *regcache,
 				 int regnum, const void *buf);
 extern void regcache_raw_collect (const struct regcache *regcache,
 				  int regnum, void *buf);
+
+/* Mapping between register numbers and offsets in a buffer, for use
+   in the '*regset' functions below.  In an array of
+   'regcache_map_entry' each element is interpreted like follows:
+
+   - If 'regno' is a register number: Map register 'regno' to the
+     current offset (starting with 0) and increase the current offset
+     by 'size' (or the register's size, if 'size' is zero).  Repeat
+     this with consecutive register numbers up to 'regno+count-1'.
+
+   - If 'regno' is REGCACHE_MAP_SKIP: Add 'count*size' to the current
+     offset.
+
+   - If count=0: End of the map.  */
+
+struct regcache_map_entry
+{
+  int count;
+  int regno;
+  int size;
+};
+
+/* Special value for the 'regno' field in the struct above.  */
+
+enum
+  {
+    REGCACHE_MAP_SKIP = -1,
+  };
+
+/* Transfer a set of registers (as described by REGSET) between
+   REGCACHE and BUF.  If REGNUM == -1, transfer all registers
+   belonging to the regset, otherwise just the register numbered
+   REGNUM.  The REGSET's 'regmap' field must point to an array of
+   'struct regcache_map_entry'.
+
+   These functions are suitable for the 'regset_supply' and
+   'regset_collect' fields in a regset structure.  */
+
+extern void regcache_supply_regset (const struct regset *regset,
+				    struct regcache *regcache,
+				    int regnum, const void *buf,
+				    size_t size);
+extern void regcache_collect_regset (const struct regset *regset,
+				     const struct regcache *regcache,
+				     int regnum, void *buf, size_t size);
 
 
 /* The type of a register.  This function is slightly more efficient

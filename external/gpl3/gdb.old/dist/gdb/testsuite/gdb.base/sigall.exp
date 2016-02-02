@@ -1,4 +1,4 @@
-#   Copyright 1995-2014 Free Software Foundation, Inc.
+#   Copyright 1995-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,17 +53,6 @@ proc test_one_sig {nextsig} {
 	gdb_test "continue" \
 	    "Continuing.*Program received signal SIG$esig.*" \
 		"get signal $esig"
-    }
-    if [ istarget "alpha-dec-osf3*" ] then {
-	# OSF/1-3.x is unable to continue with a job control stop signal.
-	# The inferior remains stopped without an event of interest
-	# and GDB waits forever for the inferior to stop on an event
-	# of interest. Work around the kernel bug.
-	if { $thissig == "TSTP" || $thissig == "TTIN" || $thissig == "TTOU" } {
-	    setup_xfail "alpha-dec-osf3*"
-	    fail "cannot continue from signal $thissig"
-	    set need_another_continue 0
-	}
     }
 
     if $need_another_continue then {

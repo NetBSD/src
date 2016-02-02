@@ -1,5 +1,5 @@
 /* C preprocessor macro expansion for GDB.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -22,7 +22,6 @@
 #include "bcache.h"
 #include "macrotab.h"
 #include "macroexp.h"
-#include "gdb_assert.h"
 #include "c-lang.h"
 
 

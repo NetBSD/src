@@ -1,6 +1,5 @@
 /* Generic support for 32-bit ELF
-   Copyright 1993, 1995, 1998, 1999, 2001, 2002, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -87,9 +86,9 @@ elf32_generic_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
   return bfd_elf_link_add_symbols (abfd, info);
 }
 
-#define TARGET_LITTLE_SYM		bfd_elf32_little_generic_vec
+#define TARGET_LITTLE_SYM		elf32_le_vec
 #define TARGET_LITTLE_NAME		"elf32-little"
-#define TARGET_BIG_SYM			bfd_elf32_big_generic_vec
+#define TARGET_BIG_SYM			elf32_be_vec
 #define TARGET_BIG_NAME			"elf32-big"
 #define ELF_ARCH			bfd_arch_unknown
 #define ELF_MACHINE_CODE		EM_NONE

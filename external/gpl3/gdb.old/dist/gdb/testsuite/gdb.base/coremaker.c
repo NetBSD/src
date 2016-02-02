@@ -1,4 +1,4 @@
-/* Copyright 1992-2014 Free Software Foundation, Inc.
+/* Copyright 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #ifndef __STDC__
 #define	const	/**/

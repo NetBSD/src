@@ -1,4 +1,4 @@
-# Copyright 2007-2014 Free Software Foundation, Inc.
+# Copyright 2007-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,18 +30,6 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 # Start with a fresh gdb.
 
 clean_restart ${binfile}
-
-# Does this gdb support gcore?
-gdb_test_multiple "help gcore" "help gcore" {
-    -re "Undefined command: .gcore.*$gdb_prompt $" {
-	# gcore command not supported -- nothing to test here.
-	unsupported "gdb does not support gcore on this target"
-	return -1
-    }
-    -re "Save a core file .*$gdb_prompt $" {
-	pass "help gcore"
-    }
-}
 
 gdb_test_no_output "set args ${pattern}"	\
     "Set buffer exceeding arguments"

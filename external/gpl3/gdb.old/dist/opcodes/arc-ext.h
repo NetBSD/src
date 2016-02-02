@@ -1,5 +1,5 @@
 /* ARC target-dependent stuff. Extension data structures.
-   Copyright 1995, 1997, 2000, 2001, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 

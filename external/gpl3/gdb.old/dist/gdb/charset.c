@@ -1,6 +1,6 @@
 /* Character set conversion support for GDB.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 #include "defs.h"
 #include "charset.h"
 #include "gdbcmd.h"
-#include "gdb_assert.h"
 #include "gdb_obstack.h"
 #include "gdb_wait.h"
 #include "charset-list.h"
@@ -28,9 +27,6 @@
 #include "environ.h"
 #include "arch-utils.h"
 #include "gdb_vecs.h"
-
-#include <stddef.h>
-#include <string.h>
 #include <ctype.h>
 
 #ifdef USE_WIN32API
@@ -98,15 +94,6 @@
 
 #undef ICONV_CONST
 #define ICONV_CONST const
-
-/* Some systems don't have EILSEQ, so we define it here, but not as
-   EINVAL, because callers of `iconv' want to distinguish EINVAL and
-   EILSEQ.  This is what iconv.h from libiconv does as well.  Note
-   that wchar.h may also define EILSEQ, so this needs to be after we
-   include wchar.h, which happens in defs.h through gdb_wchar.h.  */
-#ifndef EILSEQ
-#define EILSEQ ENOENT
-#endif
 
 static iconv_t
 phony_iconv_open (const char *to, const char *from)
@@ -191,8 +178,28 @@ phony_iconv (iconv_t utf_flag, const char **inbuf, size_t *inbytesleft,
   return 0;
 }
 
-#endif
+#else /* PHONY_ICONV */
 
+/* On systems that don't have EILSEQ, GNU iconv's iconv.h defines it
+   to ENOENT, while gnulib defines it to a different value.  Always
+   map ENOENT to gnulib's EILSEQ, leaving callers agnostic.  */
+
+static size_t
+gdb_iconv (iconv_t utf_flag, ICONV_CONST char **inbuf, size_t *inbytesleft,
+	   char **outbuf, size_t *outbytesleft)
+{
+  size_t ret;
+
+  ret = iconv (utf_flag, inbuf, inbytesleft, outbuf, outbytesleft);
+  if (errno == ENOENT)
+    errno = EILSEQ;
+  return ret;
+}
+
+#undef iconv
+#define iconv gdb_iconv
+
+#endif /* PHONY_ICONV */
 
 
 /* The global lists of character sets and translations.  */
@@ -503,14 +510,14 @@ convert_between_encodings (const char *from, const char *to,
       old_size = obstack_object_size (output);
       obstack_blank (output, space_request);
 
-      outp = obstack_base (output) + old_size;
+      outp = (char *) obstack_base (output) + old_size;
       outleft = space_request;
 
       r = iconv (desc, &inp, &inleft, &outp, &outleft);
 
       /* Now make sure that the object on the obstack only includes
 	 bytes we have converted.  */
-      obstack_blank (output, - (int) outleft);
+      obstack_blank_fast (output, -outleft);
 
       if (r == (size_t) -1)
 	{
@@ -954,7 +961,7 @@ extern char your_gdb_wchar_t_is_bogus[(sizeof (gdb_wchar_t) == 2
 				       || sizeof (gdb_wchar_t) == 4)
 				      ? 1 : -1];
 
-/* intermediate_encoding returns the charset unsed internally by
+/* intermediate_encoding returns the charset used internally by
    GDB to convert between target and host encodings. As the test above
    compiled, sizeof (gdb_wchar_t) is either 2 or 4 bytes.
    UTF-16/32 is tested first, UCS-2/4 is tested as a second option,

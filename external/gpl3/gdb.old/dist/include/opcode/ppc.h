@@ -1,6 +1,5 @@
 /* ppc.h -- Header file for PowerPC opcode table
-   Copyright 1994, 1995, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -278,7 +277,7 @@ extern const unsigned int num_powerpc_operands;
 /* Use with the shift field of a struct powerpc_operand to indicate
      that BITM and SHIFT cannot be used to determine where the operand
      goes in the insn.  */
-#define PPC_OPSHIFT_INV (-1 << 31)
+#define PPC_OPSHIFT_INV (-0x80000000)
 
 /* Values defined for the flags field of a struct powerpc_operand.  */
 

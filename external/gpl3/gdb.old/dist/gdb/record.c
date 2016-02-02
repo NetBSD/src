@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,18 +57,12 @@ struct cmd_list_element *info_record_cmdlist = NULL;
   if (record_debug)							\
     fprintf_unfiltered (gdb_stdlog, "record: " msg "\n", ##args)
 
-/* Find the record target in the target stack.  */
+/* See record.h.  */
 
-static struct target_ops *
+struct target_ops *
 find_record_target (void)
 {
-  struct target_ops *t;
-
-  for (t = current_target.beneath; t != NULL; t = t->beneath)
-    if (t->to_stratum == record_stratum)
-      return t;
-
-  return NULL;
+  return find_target_at (record_stratum);
 }
 
 /* Check that recording is active.  Throw an error, if it isn't.  */
@@ -84,6 +78,17 @@ require_record_target (void)
 	     "Use one of the \"target record-<tab><tab>\" commands first."));
 
   return t;
+}
+
+/* See record.h.  */
+
+void
+record_preopen (void)
+{
+  /* Check if a record target is already running.  */
+  if (find_record_target () != NULL)
+    error (_("The process is already being recorded.  Use \"record stop\" to "
+	     "stop recording first."));
 }
 
 /* See record.h.  */
@@ -109,8 +114,7 @@ record_stop (struct target_ops *t)
 {
   DEBUG ("stop %s", t->to_shortname);
 
-  if (t->to_stop_recording != NULL)
-    t->to_stop_recording ();
+  t->to_stop_recording (t);
 }
 
 /* Unpush the record target.  */
@@ -126,7 +130,7 @@ record_unpush (struct target_ops *t)
 /* See record.h.  */
 
 void
-record_disconnect (struct target_ops *t, char *args, int from_tty)
+record_disconnect (struct target_ops *t, const char *args, int from_tty)
 {
   gdb_assert (t->to_stratum == record_stratum);
 
@@ -281,8 +285,7 @@ info_record_command (char *args, int from_tty)
     }
 
   printf_filtered (_("Active record target: %s\n"), t->to_shortname);
-  if (t->to_info_record != NULL)
-    t->to_info_record ();
+  t->to_info_record (t);
 }
 
 /* The "record save" command.  */
@@ -307,13 +310,10 @@ cmd_record_save (char *args, int from_tty)
   target_save_record (recfilename);
 }
 
-/* "record goto" command.  Argument is an instruction number,
-   as given by "info record".
-
-   Rewinds the recording (forward or backward) to the given instruction.  */
+/* See record.h.  */
 
 void
-cmd_record_goto (char *arg, int from_tty)
+record_goto (const char *arg)
 {
   ULONGEST insn;
 
@@ -324,6 +324,17 @@ cmd_record_goto (char *arg, int from_tty)
 
   require_record_target ();
   target_goto_record (insn);
+}
+
+/* "record goto" command.  Argument is an instruction number,
+   as given by "info record".
+
+   Rewinds the recording (forward or backward) to the given instruction.  */
+
+static void
+cmd_record_goto (char *arg, int from_tty)
+{
+  record_goto (arg);
 }
 
 /* The "record goto begin" command.  */
@@ -575,6 +586,9 @@ get_call_history_modifiers (char **arg)
 	    case 'i':
 	      modifiers |= RECORD_PRINT_INSN_RANGE;
 	      break;
+	    case 'c':
+	      modifiers |= RECORD_PRINT_INDENT_CALLS;
+	      break;
 	    default:
 	      error (_("Invalid modifier: %c."), *args);
 	    }
@@ -809,6 +823,7 @@ function.\n\
 Without modifiers, it prints the function name.\n\
 With a /l modifier, the source file and line number range is included.\n\
 With a /i modifier, the instruction number range is included.\n\
+With a /c modifier, the output is indented based on the call stack depth.\n\
 With no argument, prints ten more lines after the previous ten-line print.\n\
 \"record function-call-history -\" prints ten lines before a previous ten-line \
 print.\n\
