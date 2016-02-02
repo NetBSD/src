@@ -1,6 +1,6 @@
 /* Target-dependent code for PowerPC systems running FreeBSD.
 
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,12 +30,10 @@
 #include "target.h"
 #include "trad-frame.h"
 
-#include "gdb_assert.h"
-#include <string.h>
-
 #include "ppc-tdep.h"
 #include "ppc64-tdep.h"
 #include "ppcfbsd-tdep.h"
+#include "fbsd-tdep.h"
 #include "solib-svr4.h"
 
 
@@ -100,8 +98,7 @@ static const struct ppc_reg_offsets ppc64_fbsd_reg_offsets =
 static const struct regset ppc32_fbsd_gregset = {
   &ppc32_fbsd_reg_offsets,
   ppc_supply_gregset,
-  ppc_collect_gregset,
-  NULL
+  ppc_collect_gregset
 };
 
 /* 64-bit general-purpose register set.  */
@@ -109,13 +106,12 @@ static const struct regset ppc32_fbsd_gregset = {
 static const struct regset ppc64_fbsd_gregset = {
   &ppc64_fbsd_reg_offsets,
   ppc_supply_gregset,
-  ppc_collect_gregset,
-  NULL
+  ppc_collect_gregset
 };
 
 /* 32-/64-bit floating-point register set.  */
 
-static struct regset ppc32_fbsd_fpregset = {
+static const struct regset ppc32_fbsd_fpregset = {
   &ppc32_fbsd_reg_offsets,
   ppc_supply_fpregset,
   ppc_collect_fpregset
@@ -133,24 +129,21 @@ ppc_fbsd_fpregset (void)
   return &ppc32_fbsd_fpregset;
 }
 
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
+/* Iterate over core file register note sections.  */
 
-static const struct regset *
-ppcfbsd_regset_from_core_section (struct gdbarch *gdbarch,
-				  const char *sect_name, size_t sect_size)
+static void
+ppcfbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				      iterate_over_regset_sections_cb *cb,
+				      void *cb_data,
+				      const struct regcache *regcache)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  if (strcmp (sect_name, ".reg") == 0 && sect_size >= 148)
-    {
-      if (tdep->wordsize == 4)
-	return &ppc32_fbsd_gregset;
-      else
-	return &ppc64_fbsd_gregset;
-    }
-  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= 264)
-    return &ppc32_fbsd_fpregset;
-  return NULL;
+
+  if (tdep->wordsize == 4)
+    cb (".reg", 148, &ppc32_fbsd_gregset, NULL, cb_data);
+  else
+    cb (".reg", 296, &ppc64_fbsd_gregset, NULL, cb_data);
+  cb (".reg2", 264, &ppc32_fbsd_fpregset, NULL, cb_data);
 }
 
 /* Default page size.  */
@@ -305,6 +298,9 @@ ppcfbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
+  /* Generic FreeBSD support. */
+  fbsd_init_abi (info, gdbarch);
+
   /* FreeBSD doesn't support the 128-bit `long double' from the psABI.  */
   set_gdbarch_long_double_bit (gdbarch, 64);
   set_gdbarch_long_double_format (gdbarch, floatformats_ieee_double);
@@ -334,8 +330,8 @@ ppcfbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
       set_gdbarch_gcore_bfd_target (gdbarch, "elf64-powerpc");
     }
 
-  set_gdbarch_regset_from_core_section
-    (gdbarch, ppcfbsd_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, ppcfbsd_iterate_over_regset_sections);
 
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);

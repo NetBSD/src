@@ -5,12 +5,12 @@
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, see <http://www.gnu.org/licenses/>. */
 
@@ -38,9 +38,6 @@ handle_v6_thumb_insn (ARMul_State * state,
 		      ARMword       tinstr,
 		      tdstate *     pvalid)
 {
-  ARMword Rd;
-  ARMword Rm;
-
   if (! state->is_v6)
     {
       * pvalid = t_undefined;
@@ -56,33 +53,48 @@ handle_v6_thumb_insn (ARMul_State * state,
     case 0xba40: /* rev16 */
     case 0xbac0: /* revsh */
     case 0xb650: /* setend */
-    default:  
+    default:
       printf ("Unhandled v6 thumb insn: %04x\n", tinstr);
       * pvalid = t_undefined;
       return;
 
     case 0xb200: /* sxth */
-      Rm = state->Reg [(tinstr & 0x38) >> 3];
-      if (Rm & 0x8000)
-	state->Reg [(tinstr & 0x7)] = (Rm & 0xffff) | 0xffff0000;
-      else
-	state->Reg [(tinstr & 0x7)] = Rm & 0xffff;
-      break;
+      {
+	ARMword Rm = state->Reg [(tinstr & 0x38) >> 3];
+
+	if (Rm & 0x8000)
+	  state->Reg [(tinstr & 0x7)] = (Rm & 0xffff) | 0xffff0000;
+	else
+	  state->Reg [(tinstr & 0x7)] = Rm & 0xffff;
+	break;
+      }
+
     case 0xb240: /* sxtb */
-      Rm = state->Reg [(tinstr & 0x38) >> 3];
-      if (Rm & 0x80)
-	state->Reg [(tinstr & 0x7)] = (Rm & 0xff) | 0xffffff00;
-      else
-	state->Reg [(tinstr & 0x7)] = Rm & 0xff;
-      break;
+      {
+	ARMword Rm = state->Reg [(tinstr & 0x38) >> 3];
+
+	if (Rm & 0x80)
+	  state->Reg [(tinstr & 0x7)] = (Rm & 0xff) | 0xffffff00;
+	else
+	  state->Reg [(tinstr & 0x7)] = Rm & 0xff;
+	break;
+      }
+
     case 0xb280: /* uxth */
-      Rm = state->Reg [(tinstr & 0x38) >> 3];
-      state->Reg [(tinstr & 0x7)] = Rm & 0xffff;
-      break;
+      {
+	ARMword Rm = state->Reg [(tinstr & 0x38) >> 3];
+
+	state->Reg [(tinstr & 0x7)] = Rm & 0xffff;
+	break;
+      }
+
     case 0xb2c0: /* uxtb */
-      Rm = state->Reg [(tinstr & 0x38) >> 3];
-      state->Reg [(tinstr & 0x7)] = Rm & 0xff;
-      break;
+      {
+	ARMword Rm = state->Reg [(tinstr & 0x38) >> 3];
+
+	state->Reg [(tinstr & 0x7)] = Rm & 0xff;
+	break;
+      }
     }
   /* Indicate that the instruction has been processed.  */
   * pvalid = t_branch;
@@ -112,6 +124,9 @@ ARMul_ThumbDecode (ARMul_State * state,
       next_instr = tinstr >> 16;
       tinstr &= 0xFFFF;
     }
+
+  if (trace)
+    fprintf (stderr, "pc: %x, Thumb instr: %x", pc & ~1, tinstr);
 
 #if 1				/* debugging to catch non updates */
   *ainstr = 0xDEADC0DE;
@@ -413,7 +428,7 @@ ARMul_ThumbDecode (ARMul_State * state,
 	case 0x0e00:
 	  if (state->is_v5)
 	    {
-	      /* This is normally an undefined instruction.  The v5t architecture 
+	      /* This is normally an undefined instruction.  The v5t architecture
 		 defines this particular pattern as a BKPT instruction, for
 		 hardware assisted debugging.  We map onto the arm BKPT
 		 instruction.  */
@@ -550,6 +565,8 @@ ARMul_ThumbDecode (ARMul_State * state,
 	    state->Reg[14] = (tmp | 1);
 	    valid = t_branch;
 	    FLUSHPIPE;
+	    if (trace_funcs)
+	      fprintf (stderr, " pc changed to %x\n", state->Reg[15]);
 	    break;
 	  }
 	}
@@ -609,6 +626,9 @@ ARMul_ThumbDecode (ARMul_State * state,
       }
       break;
     }
+
+  if (trace && valid != t_decoded)
+    fprintf (stderr, "\n");
 
   return valid;
 }

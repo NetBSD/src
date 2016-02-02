@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,10 +89,10 @@ proc test_fields {lang} {
     gdb_py_test_silent_cmd "python ss = gdb.parse_and_eval('ss')" "init ss" 1
     gdb_py_test_silent_cmd "python ss_fields = ss.type.fields()" \
       "get fields from ss.type" 1
-    gdb_test "python print len(ss_fields)" "2" "Check length of ss_fields"
-    gdb_test "python print ss_fields\[0\].name is None" "True" \
+    gdb_test "python print(len(ss_fields))" "2" "Check length of ss_fields"
+    gdb_test "python print(ss_fields\[0\].name is None)" "True" \
       "Check ss_fields\[0\].name"
-    gdb_test "python print ss_fields\[1\].name is None" "True" \
+    gdb_test "python print(ss_fields\[1\].name is None)" "True" \
       "Check ss_fields\[1\].name"
     # Regression test for
     # http://sourceware.org/bugzilla/show_bug.cgi?id=12070.
@@ -246,6 +246,12 @@ restart_gdb "${binfile}"
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
+
+gdb_test "python print gdb.lookup_type('char').array(1, 0)" \
+    "char \\\[0\\\]"
+
+gdb_test "python print gdb.lookup_type('char').array(1, -1)" \
+    "Array length must not be negative.*"
 
 with_test_prefix "lang_c" {
     runto_bp "break to inspect struct and array."

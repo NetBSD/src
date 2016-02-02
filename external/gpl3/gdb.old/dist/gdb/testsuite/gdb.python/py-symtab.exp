@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,16 +50,24 @@ gdb_py_test_silent_cmd "step" "Step to the next line" 0
 gdb_py_test_silent_cmd "python new_pc = gdb.selected_frame().find_sal().pc" "Get new PC" 0
 
 # Test sal.
-gdb_test "python print (sal.symtab)" ".*gdb.python/py-symbol.c.*" "Test symtab"
+if { [is_remote host] } {
+    set py_symbol_c [string_to_regexp $srcfile]
+    set full_py_symbol_c $py_symbol_c
+} else {
+    set py_symbol_c [string_to_regexp ${srcdir}/${subdir}/${srcfile}]
+    set full_py_symbol_c [string_to_regexp testsuite/${subdir}/${srcfile}]
+}
+
+gdb_test "python print (sal.symtab)" ".*${py_symbol_c}" "Test symtab"
 gdb_test "python print (sal.pc)" "${decimal}" "Test sal.pc"
 gdb_test "python print (sal.last == (new_pc - 1))" "True" "Test sal.last"
 gdb_test "python print (sal.line)" "$line_no" "Test sal.line"
 gdb_test "python print (sal.is_valid())" "True" "Test sal.is_valid"
 
 # Test symbol table.
-gdb_test "python print (symtab.filename)" ".*gdb.python/py-symbol.c.*" "Test symtab.filename"
+gdb_test "python print (symtab.filename)" ".*${py_symbol_c}" "Test symtab.filename"
 gdb_test "python print (symtab.objfile)" "<gdb.Objfile object at ${hex}>" "Test symtab.objfile"
-gdb_test "python print (symtab.fullname())" "testsuite/gdb.python/py-symbol.c.*" "Test symtab.fullname"
+gdb_test "python print (symtab.fullname())" ".*${full_py_symbol_c}" "Test symtab.fullname"
 gdb_test "python print (symtab.is_valid())" "True" "Test symtab.is_valid()"
 gdb_test "python print (\"qq\" in global_symbols)" "True" "Test qq in global symbols"
 gdb_test "python print (\"func\" in global_symbols)" "True" "Test func in global symbols"

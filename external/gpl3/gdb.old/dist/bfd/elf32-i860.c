@@ -1,7 +1,5 @@
 /* Intel i860 specific support for 32-bit ELF.
-   Copyright 1993, 1995, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008,
-   2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    Full i860 support contributed by Jason Eckhardt <jle@cygnus.com>.
 
@@ -1251,9 +1249,9 @@ elf32_i860_is_local_label_name (bfd *abfd, const char *name)
   return _bfd_elf_is_local_label_name (abfd, name);
 }
 
-#define TARGET_BIG_SYM		bfd_elf32_i860_vec
+#define TARGET_BIG_SYM		i860_elf32_vec
 #define TARGET_BIG_NAME		"elf32-i860"
-#define TARGET_LITTLE_SYM	bfd_elf32_i860_little_vec
+#define TARGET_LITTLE_SYM	i860_elf32_le_vec
 #define TARGET_LITTLE_NAME	"elf32-i860-little"
 #define ELF_ARCH		bfd_arch_i860
 #define ELF_MACHINE_CODE	EM_860

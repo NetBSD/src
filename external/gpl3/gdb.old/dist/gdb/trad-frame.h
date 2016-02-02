@@ -1,6 +1,6 @@
 /* Traditional frame unwind support, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,8 +43,6 @@ CORE_ADDR trad_frame_get_this_base (struct trad_frame_cache *this_trad_cache);
 
 void trad_frame_set_reg_realreg (struct trad_frame_cache *this_trad_cache,
 				 int regnum, int realreg);
-void trad_frame_set_reg_unknown (struct trad_frame_cache *this_trad_cache,
-				 int regnum, CORE_ADDR addr);
 void trad_frame_set_reg_addr (struct trad_frame_cache *this_trad_cache,
 			      int regnum, CORE_ADDR addr);
 void trad_frame_set_reg_value (struct trad_frame_cache *this_cache,

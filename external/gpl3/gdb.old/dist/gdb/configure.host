@@ -19,8 +19,8 @@ case $host in
  sparc-*-netbsdelf* | \
  vax-*-netbsdelf*)
     ;;
- alpha*-*-osf1* | \
- alpha*-*-osf2* | \
+ *-*-irix* | \
+ alpha*-*-osf* | \
  arm*-*-netbsd* | \
  hppa*-*-hiux* | \
  i[34567]86-ncr-* | \
@@ -41,7 +41,9 @@ case $host in
  m68*-*-netbsd* | \
  sparc-*-netbsd* | \
  rs6000-*-lynxos* | \
+ vax-*-bsd* | \
  vax-*-netbsd* | \
+ vax-*-ultrix* | \
  null)
     echo "*** Configuration $host is obsolete." >&2
     echo "*** Support has been REMOVED." >&2
@@ -79,7 +81,6 @@ case "${host}" in
 
 aarch64*-*-linux*)	gdb_host=linux ;;
 
-alpha*-*-osf[3456789]*)	gdb_host=alpha-osf3 ;;
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
 alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
 			gdb_host=fbsd ;;
@@ -126,8 +127,6 @@ m68*-*-openbsd*)	gdb_host=obsd ;;
 
 m88*-*-openbsd*)	gdb_host=obsd ;;
 
-mips-sgi-irix5*)	gdb_host=irix5 ;;
-mips-sgi-irix6*)	gdb_host=irix6 ;;
 mips*-*-linux*)		gdb_host=linux ;;
 mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
@@ -166,18 +165,16 @@ sparc-*-netbsdelf* | sparc-*-knetbsd*-gnu)
 sparc64-*-netbsd* | sparc64-*-knetbsd*-gnu)
 			gdb_host=nbsd64 ;;
 sparc-*-openbsd*)	gdb_host=nbsdelf ;;
-sparc64-*-openbsd*)	gdb_host=nbsd64 ;;
+sparc64-*-openbsd*)	gdb_host=obsd64 ;;
 sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 			gdb_host=sol2
 			;;
 
 tilegx-*-linux*)	gdb_host=linux ;;
 
-vax-*-bsd*)		gdb_host=vax ;;
 vax-*-netbsdelf* | vax-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
 vax-*-openbsd*)		gdb_host=obsd ;;
-vax-*-ultrix*)		gdb_host=vax ;;
 
 x86_64-*-linux*)	gdb_host=linux64 ;;
 x86_64-*-freebsd* | x86_64-*-kfreebsd*-gnu)

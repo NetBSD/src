@@ -1,6 +1,6 @@
 /* Public partial symbol table definitions.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,12 +29,6 @@ struct psymbol_bcache;
 extern struct psymbol_bcache *psymbol_bcache_init (void);
 extern void psymbol_bcache_free (struct psymbol_bcache *);
 extern struct bcache *psymbol_bcache_get_bcache (struct psymbol_bcache *);
-
-void expand_partial_symbol_names (int (*fun) (const char *, void *),
-				  void *data);
-
-void map_partial_symbol_filenames (symbol_filename_ftype *fun, void *data,
-				   int need_fullname);
 
 extern const struct quick_symbol_functions psym_functions;
 

@@ -1,4 +1,4 @@
-# Copyright 2004-2014 Free Software Foundation, Inc.
+# Copyright 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,25 +30,10 @@ set timeout 10
 verbose "Timeout is now 10 seconds" 2
 
 proc expect_to_stop_here { ident } {
-    global gdb_prompt
-    global decimal
-
     # the "at foo.c:36" output we get with -g.
     # the "in func" output we get without -g.
-    gdb_expect {
-	-re "Breakpoint \[0-9\]*, stop_here .*$gdb_prompt $" { 
-	    return 1
-	}
-	-re "$gdb_prompt $" { 
-	    fail "running to stop_here $ident"
-	    return 0
-	}
-	timeout { 
-	    fail "running to stop_here $ident (timeout)"
-	    return 0
-	}
-    }
-    return 1
+
+    gdb_test "" "Breakpoint \[0-9\]*, stop_here .*" "running to stop_here $ident"
 }
 
 clean_restart ${binfile}
@@ -83,18 +68,14 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 } else {
 
     gdb_run_cmd
-    gdb_expect {
+
+    set test "running with invalidated bpt condition after executable changes"
+    gdb_test_multiple "" $test {
 	-re ".*$inferior_exited_re normally.*$gdb_prompt $" {
-	    pass "running with invalidated bpt condition after executable changes" 
+	    pass $test
 	}
 	-re ".*Breakpoint .*,( 0x.* in)? (\[^ \]*)exit .*$gdb_prompt $" {
-	    pass "running with invalidated bpt condition after executable changes" 
-	}
-	-re "$gdb_prompt $" { 
-	    fail "running with invalidated bpt condition after executable changes" 
-	}
-	timeout {
-	    fail "(timeout) running with invalidated bpt condition after executable changes" 
+	    pass $test
 	}
     }
 

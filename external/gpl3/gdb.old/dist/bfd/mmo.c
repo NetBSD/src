@@ -1,5 +1,5 @@
 /* BFD back-end for mmo objects (MMIX-specific object-format).
-   Copyright 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
    Infrastructure and other bits originally copied from srec.c and
    binary.c.
@@ -29,14 +29,14 @@ SECTION
 	The mmo object format is used exclusively together with Professor
 	Donald E.@: Knuth's educational 64-bit processor MMIX.  The simulator
 	@command{mmix} which is available at
-	@url{http://www-cs-faculty.stanford.edu/~knuth/programs/mmix.tar.gz}
+	@url{http://mmix.cs.hm.edu/src/index.html}
 	understands this format.  That package also includes a combined
 	assembler and linker called @command{mmixal}.  The mmo format has
 	no advantages feature-wise compared to e.g. ELF.  It is a simple
 	non-relocatable object format with no support for archives or
 	debugging information, except for symbol value information and
 	line numbers (which is not yet implemented in BFD).  See
-	@url{http://www-cs-faculty.stanford.edu/~knuth/mmix.html} for more
+	@url{http://mmix.cs.hm.edu/} for more
 	information about MMIX.  The ELF format is used for intermediate
 	object files in the BFD implementation.
 
@@ -75,7 +75,7 @@ SUBSECTION
 	two remaining bytes, called the @samp{Y} and @samp{Z} fields, or
 	the @samp{YZ} field (a 16-bit big-endian number), are used for
 	various purposes different for each lopcode.  As documented in
-	@url{http://www-cs-faculty.stanford.edu/~knuth/mmixal-intro.ps.gz},
+	@url{http://mmix.cs.hm.edu/doc/mmixal.pdf},
 	the lopcodes are:
 
 	@table @code
@@ -88,7 +88,11 @@ SUBSECTION
 	directive, setting the location for the next data to the next
 	32-bit word (for @math{Z = 1}) or 64-bit word (for @math{Z = 2}),
 	plus @math{Y * 2^56}.  Normally @samp{Y} is 0 for the text segment
-	and 2 for the data segment.
+	and 2 for the data segment.  Beware that the low bits of non-
+	tetrabyte-aligned values are silently discarded when being
+	automatically incremented and when storing contents (in contrast
+	to e.g. its use as current location when followed by lop_fixo
+	et al before the next possibly-quoted tetrabyte contents).
 
 	@item lop_skip
 	0x9802YYZZ.  Increase the current location by @samp{YZ} bytes.
@@ -822,6 +826,9 @@ mmo_write_chunk (bfd *abfd, const bfd_byte *loc, unsigned int len)
 
   if (len)
     {
+      /* We must have flushed a previous remainder if we get one from
+	 this chunk too.  */
+      BFD_ASSERT (mmop->byte_no == 0);
       memcpy (mmop->buf, loc, len);
       mmop->byte_no = len;
     }
@@ -869,25 +876,27 @@ static bfd_boolean
 mmo_write_loc_chunk (bfd *abfd, bfd_vma vma, const bfd_byte *loc,
 		     unsigned int len, bfd_vma *last_vmap)
 {
-  /* Find an initial and trailing section of zero tetras; we don't need to
-     write out zeros.  FIXME: When we do this, we should emit section size
-     and address specifiers, else objcopy can't always perform an identity
-     translation.  Only do this if we *don't* have left-over data from a
-     previous write or the vma of this chunk is *not* the next address,
-     because then data isn't tetrabyte-aligned and we're concatenating to
-     that left-over data.  */
+  /* Find an initial and trailing section of zero (aligned) tetras; we don't
+     need to write out zeros.  FIXME: When we do this, we should emit
+     section size and address specifiers, else objcopy can't always perform
+     an identity translation.  Only do this if we *don't* have left-over
+     data from a previous write (and will not add any) or else the vma of
+     this chunk is *not* the next address, because then data isn't
+     tetrabyte-aligned and we're concatenating to that left-over data.  */
 
-  if (abfd->tdata.mmo_data->byte_no == 0 || vma != *last_vmap)
+  if ((vma & 3) == 0
+      && (abfd->tdata.mmo_data->byte_no == 0 || vma != *last_vmap))
     {
-      while (len >= 4 && bfd_get_32 (abfd, loc) == 0)
+      while (len > 4 && bfd_get_32 (abfd, loc) == 0)
 	{
 	  vma += 4;
 	  len -= 4;
 	  loc += 4;
 	}
 
-      while (len >= 4 && bfd_get_32 (abfd, loc + len - 4) == 0)
-	len -= 4;
+      if ((len & 3) == 0)
+	while (len > 4 && bfd_get_32 (abfd, loc + len - 4) == 0)
+	  len -= 4;
     }
 
   /* Only write out the location if it's different than the one the caller
@@ -896,6 +905,22 @@ mmo_write_loc_chunk (bfd *abfd, bfd_vma vma, const bfd_byte *loc,
     {
       /* We might be in the middle of a sequence.  */
       mmo_flush_chunk (abfd);
+
+      /* This should not happen during normal usage, but can presumably
+	 happen with an erroneous linker-script, so handle gracefully.
+	 Avoid Knuth-specific terms in the message, such as "tetrabyte".
+	 Note that this function will get non-4-multiple lengths and
+	 unaligned vmas but those come in tuples (mostly pairs) and are
+	 continuous (i.e. the if-condition above false) and they are
+	 group-wise aligned.  */
+      if ((vma & 3) != 0)
+	{
+	  (*_bfd_error_handler)
+	    (_("%s: attempt to emit contents at non-multiple-of-4 address 0x%lx\n"),
+	     bfd_get_filename (abfd), (unsigned long) vma);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
+	}
 
       /* We always write the location as 64 bits; no use saving bytes
          here.  */
@@ -1206,8 +1231,8 @@ Symbol-table, mmo section mapping, File layout, mmo
 SUBSECTION
 	Symbol table format
 
-	From mmixal.w (or really, the generated mmixal.tex) in
-	@url{http://www-cs-faculty.stanford.edu/~knuth/programs/mmix.tar.gz}):
+	From mmixal.w (or really, the generated mmixal.tex) in the
+	MMIXware package which also contains the @command{mmix} simulator:
 	``Symbols are stored and retrieved by means of a @samp{ternary
 	search trie}, following ideas of Bentley and Sedgewick. (See
 	ACM--SIAM Symp.@: on Discrete Algorithms @samp{8} (1997), 360--369;
@@ -1583,9 +1608,9 @@ mmo_scan (bfd *abfd)
 	      if (bfd_bread (buf, 4, abfd) != 4)
 		goto error_return;
 
+	      vma &= ~3;
 	      mmo_xore_32 (sec, vma, bfd_get_32 (abfd, buf));
 	      vma += 4;
-	      vma &= ~3;
 	      lineno++;
 	      break;
 
@@ -1617,7 +1642,10 @@ mmo_scan (bfd *abfd)
 		  goto error_return;
 		}
 
-	      sec = mmo_decide_section (abfd, vma);
+	      /* When we decide which section the data goes into, we might
+		 create the section.  If that happens, make sure the VMA at
+		 creation time is tetra-aligned.  */
+	      sec = mmo_decide_section (abfd, vma & ~3);
 	      if (sec == NULL)
 		goto error_return;
 	      break;
@@ -3176,12 +3204,16 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_bfd_is_target_special_symbol  \
   ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 
+#define mmo_get_symbol_version_string \
+  _bfd_nosymbols_get_symbol_version_string
+
 /* Is this one really used or defined by anyone?  */
 #define mmo_get_lineno _bfd_nosymbols_get_lineno
 
 /* FIXME: We can do better on this one, if we have a dwarf2 .debug_line
    section or if MMO line numbers are implemented.  */
 #define mmo_find_nearest_line _bfd_nosymbols_find_nearest_line
+#define mmo_find_line _bfd_nosymbols_find_line
 #define mmo_find_inliner_info _bfd_nosymbols_find_inliner_info
 #define mmo_make_empty_symbol _bfd_generic_make_empty_symbol
 #define mmo_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
@@ -3195,7 +3227,6 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_bfd_gc_sections bfd_generic_gc_sections
 #define mmo_bfd_lookup_section_flags bfd_generic_lookup_section_flags
 #define mmo_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
-#define mmo_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define mmo_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define mmo_bfd_link_just_syms _bfd_generic_link_just_syms
 #define mmo_bfd_copy_link_hash_symbol_type \
@@ -3223,7 +3254,7 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_bfd_set_private_flags _bfd_generic_bfd_set_private_flags
 #define mmo_bfd_print_private_bfd_data _bfd_generic_bfd_print_private_bfd_data
 
-const bfd_target bfd_mmo_vec =
+const bfd_target mmix_mmo_vec =
 {
   "mmo",			/* name */
   bfd_target_mmo_flavour,

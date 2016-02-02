@@ -1,13 +1,6 @@
 #include <stdlib.h>
 
-#ifdef PROTOTYPES
 int main (int argc, char **argv, char **envp)
-#else
-main (argc, argv, envp)
-     int argc;
-     char **argv;
-     char **envp;
-#endif
 {
     extern void dummy();
     dummy();

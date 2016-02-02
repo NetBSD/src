@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from aarch64.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: aarch64.xml
 name:aarch64
 xmltarget:aarch64.xml
 expedite:x29,sp,pc

@@ -115,7 +115,6 @@ affiliation, and they act on behalf of the GNU project.
        Pedro Alves (Red Hat)
        Joel Brobecker (AdaCore)
        Doug Evans (Google)
-       Jan Kratochvil (Red Hat)
        Tom Tromey (Red Hat)
        Eli Zaretskii
 
@@ -157,7 +156,7 @@ Andrew Cagney			cagney@gnu.org
 Doug Evans			dje@google.com
 Daniel Jacobowitz		drow@false.org
 Mark Kettenis           	kettenis@gnu.org
-Jan Kratochvil			jan.kratochvil@redhat.com
+Yao Qi				yao@codesourcery.com
 Stan Shebs			stan@codesourcery.com
 Tom Tromey			tromey@redhat.com
 Ulrich Weigand			Ulrich.Weigand@de.ibm.com
@@ -296,6 +295,10 @@ the native maintainer when resolving ABI issues.
 	ms1		--target=ms1-elf ,-Werror
 			Kevin Buettner		kevinb@redhat.com
 
+	nios2		--target=nios2-elf ,-Werror
+			--target=nios2-linux-gnu ,-Werror
+			Yao Qi			yao@codesourcery.com
+
 	ns32k		Deleted
 
 	pa		--target=hppa-elf ,-Werror
@@ -382,6 +385,8 @@ documentation		Eli Zaretskii		eliz@gnu.org
 testsuite
   gdbtk (gdb.gdbtk)     Keith Seitz             keiths@redhat.com
 
+SystemTap		Sergio Durigan Junior	sergiodj@redhat.com
+
 
 UI: External (user) interfaces.
 
@@ -464,6 +469,7 @@ Scott Bambrough					scottb@netwinder.org
 Thiago Jung Bauermann				bauerman@br.ibm.com
 Jon Beniston					jon@beniston.com
 Gary Benson					gbenson@redhat.com
+Gabriel Krisman Bertazi				gabriel@krisman.be
 Jan Beulich					jbeulich@novell.com
 Anton Blanchard					anton@samba.org
 Jim Blandy					jimb@codesourcery.com
@@ -471,13 +477,15 @@ David Blaikie					dblaikie@gmail.com
 Philip Blundell					philb@gnu.org
 Eric Botcazou					ebotcazou@libertysurf.fr
 Per Bothner					per@bothner.com
+Don Breazeal					donb@codesourcery.com
 Joel Brobecker					brobecker@adacore.com
 Dave Brolley					brolley@redhat.com
 Samuel Bronson                                  naesten@gmail.com
 Paul Brook					paul@codesourcery.com
 Julian Brown					julian@codesourcery.com
+Iain Buclaw					ibuclaw@gdcproject.org
 Kevin Buettner					kevinb@redhat.com
-Andrew Burgess					aburgess@broadcom.com
+Andrew Burgess					andrew.burgess@embecosm.com
 Andrew Cagney					cagney@gnu.org
 David Carlton					carlton@bactrian.org
 Stephane Carrez					Stephane.Carrez@gmail.com
@@ -509,6 +517,7 @@ Doug Evans					dje@google.com
 Adam Fedor					fedor@gnu.org
 Brian Ford					ford@vss.fsi.com
 Orjan Friberg					orjanf@axis.com
+Andreas From					andreas.from@ericsson.com
 Nathan Froyd					froydnj@codesourcery.com
 Gary Funck					gary@intrepid.com
 Mircea Gherzan					mircea.gherzan@intel.com
@@ -527,6 +536,7 @@ Aldy Hernandez					aldyh@redhat.com
 Paul Hilfinger					hilfinger@gnat.com
 Matt Hiller					hiller@redhat.com
 Kazu Hirata					kazu@cs.umass.edu
+James Hogan					james.hogan@imgtec.com
 Jeff Holcomb					jeffh@redhat.com
 Don Howard					dhoward@redhat.com
 Nick Hudson					nick.hudson@dsl.pipex.com
@@ -560,9 +570,10 @@ Michal Ludvig                                   mludvig@suse.cz
 Edjunior B. Machado				emachado@linux.vnet.ibm.com
 Luis Machado					lgustavo@codesourcery.com
 Jose E. Marchesi                                jose.marchesi@oracle.com
+Simon Marchi					simon.marchi@ericsson.com
 Glen McCready					gkm@redhat.com
 Greg McGary					greg@mcgary.org
-Roland McGrath					roland@redhat.com
+Roland McGrath					roland@hack.frob.com
 Bryce McKinlay					mckinlay@redhat.com
 Jason Merrill					jason@redhat.com
 David S. Miller					davem@redhat.com
@@ -586,6 +597,7 @@ David O'Brien					obrien@freebsd.org
 Alexandre Oliva					aoliva@redhat.com
 Karen Osmond					karen.osmond@gmail.com
 Pawandeep Oza					oza.pawandeep@gmail.com
+Patrick Palka					patrick@parcs.ath.cx
 Denis Pilat					denis.pilat@st.com
 Andrew Pinski					apinski@cavium.com
 Kevin Pouget					kevin.pouget@st.com
@@ -595,6 +607,7 @@ Siddhesh Poyarekar				siddhesh@redhat.com
 Vladimir Prus                                   vladimir@codesourcery.com
 Yao Qi						yao@codesourcery.com
 Qinwei						qinwei@sunnorth.com.cn
+Ramana Radhakrishnan				ramana.radhakrishnan@arm.com
 Siva Chandra Reddy				sivachandra@google.com
 Matt Rice					ratmice@gmail.com
 Frederic Riss					frederic.riss@st.com
@@ -644,7 +657,7 @@ Corinna Vinschen				vinschen@redhat.com
 Sami Wagiaalla					swagiaal@redhat.com
 Keith Walker					keith.walker@arm.com
 Ricard Wanderlof				ricardw@axis.com
-Jiong Wang					jiwang@tilera.com
+Jiong Wang					jiong.wang@arm.com
 Kris Warkentin					kewarken@qnx.com
 Philippe Waroquiers				philippe.waroquiers@skynet.be
 Ulrich Weigand					uweigand@de.ibm.com
@@ -699,7 +712,6 @@ Christopher Faylor (MS Windows, host & native)
 Folks that have been caught up in a paper trail:
 
 David Carlton					carlton@bactrian.org
-Ramana Radhakrishnan 				ramana.r@gmail.com
 
 ;; Local Variables:
 ;; coding: utf-8

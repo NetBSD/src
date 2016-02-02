@@ -1,6 +1,5 @@
 /* i370-opc.c -- Instruction 370 (ESA/390) architecture opcode list
-   Copyright 1994, 1999, 2000, 2001, 2003, 2005, 2007, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    PowerPC version written by Ian Lance Taylor, Cygnus Support
    Rewritten for i370 ESA/390 support by Linas Vepstas <linas@linas.org> 1998, 1999
 

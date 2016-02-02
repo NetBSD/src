@@ -1,6 +1,5 @@
 /* Renesas / SuperH specific support for Symbian 32-bit ELF files
-   Copyright 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Red Hat
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -602,7 +601,7 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 				  contents, relocs, local_syms, local_sections);
 }
 
-#define TARGET_LITTLE_SYM	bfd_elf32_shl_symbian_vec
+#define TARGET_LITTLE_SYM	sh_elf32_symbian_le_vec
 #define TARGET_LITTLE_NAME      "elf32-shl-symbian"
 
 #undef  elf_backend_relocate_section

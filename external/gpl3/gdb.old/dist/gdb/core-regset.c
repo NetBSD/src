@@ -1,6 +1,6 @@
 /* Machine independent GDB support for core files on systems using "regsets".
 
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,8 +34,6 @@
 #include "regcache.h"
 
 #include <fcntl.h>
-#include <errno.h>
-#include <string.h>
 #include <time.h>
 #ifdef HAVE_SYS_PROCFS_H
 #include <sys/procfs.h>

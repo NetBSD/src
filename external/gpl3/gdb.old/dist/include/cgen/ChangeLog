@@ -1,3 +1,11 @@
+2015-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	Update copyright years.
+
 2014-01-06  Tom Tromey  <tromey@redhat.com>
 
 	* bitset.h: Remove uses of PARAMS.
@@ -22,7 +30,7 @@
 	* bitset.h: New file.  Moved here from ../opcode/cgen-bitset.h.
 	Update license to GPL v3.
 
-Copyright (C) 2009-2012 Free Software Foundation, Inc.
+Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

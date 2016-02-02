@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas Super-H, for GDB.
 
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,8 +32,6 @@
 #include "value.h"
 #include "dis-asm.h"
 #include "inferior.h"
-#include <string.h>
-#include "gdb_assert.h"
 #include "arch-utils.h"
 #include "regcache.h"
 #include "osabi.h"
@@ -224,7 +222,7 @@ sh64_elf_make_msymbol_special (asymbol *sym, struct minimal_symbol *msym)
   if (((elf_symbol_type *)(sym))->internal_elf_sym.st_other == STO_SH5_ISA32)
     {
       MSYMBOL_TARGET_FLAG_1 (msym) = 1;
-      SYMBOL_VALUE_ADDRESS (msym) |= 1;
+      SET_MSYMBOL_VALUE_ADDRESS (msym, MSYMBOL_VALUE_RAW_ADDRESS (msym) | 1);
     }
 }
 
@@ -2370,7 +2368,7 @@ sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = XMALLOC (struct gdbarch_tdep);
+  tdep = XNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Determine the ABI */

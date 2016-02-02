@@ -1,6 +1,6 @@
 /* GDB hooks for TUI.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,68 +61,6 @@ tui_new_objfile_hook (struct objfile* objfile)
 {
   if (tui_active)
     tui_display_main ();
-}
-
-static int ATTRIBUTE_PRINTF (1, 0)
-tui_query_hook (const char *msg, va_list argp)
-{
-  int retval;
-  int ans2;
-  int answer;
-  char *question;
-  struct cleanup *old_chain;
-
-  /* Format the question outside of the loop, to avoid reusing
-     ARGP.  */
-  question = xstrvprintf (msg, argp);
-  old_chain = make_cleanup (xfree, question);
-
-  echo ();
-  while (1)
-    {
-      wrap_here ("");		/* Flush any buffered output.  */
-      gdb_flush (gdb_stdout);
-
-      fputs_filtered (question, gdb_stdout);
-      printf_filtered (_("(y or n) "));
-
-      wrap_here ("");
-      gdb_flush (gdb_stdout);
-
-      answer = tui_getc (stdin);
-      clearerr (stdin);		/* in case of C-d */
-      if (answer == EOF)	/* C-d */
-	{
-	  retval = 1;
-	  break;
-	}
-      /* Eat rest of input line, to EOF or newline.  */
-      if (answer != '\n')
-	do
-	  {
-            ans2 = tui_getc (stdin);
-	    clearerr (stdin);
-	  }
-	while (ans2 != EOF && ans2 != '\n' && ans2 != '\r');
-
-      if (answer >= 'a')
-	answer -= 040;
-      if (answer == 'Y')
-	{
-	  retval = 1;
-	  break;
-	}
-      if (answer == 'N')
-	{
-	  retval = 0;
-	  break;
-	}
-      printf_filtered (_("Please answer y or n.\n"));
-    }
-  noecho ();
-
-  do_cleanups (old_chain);
-  return retval;
 }
 
 /* Prevent recursion of deprecated_register_changed_hook().  */
@@ -202,7 +140,7 @@ tui_selected_frame_level_changed_hook (int level)
     {
       struct symtab *s;
 
-      s = find_pc_symtab (pc);
+      s = find_pc_line_symtab (pc);
       /* elz: This if here fixes the problem with the pc not being
 	 displayed in the tui asm layout, with no debug symbols.  The
 	 value of s would be 0 here, and select_source_symtab would
@@ -262,8 +200,6 @@ tui_install_hooks (void)
     = tui_selected_frame_level_changed_hook;
   deprecated_print_frame_info_listing_hook
     = tui_print_frame_info_listing_hook;
-
-  deprecated_query_hook = tui_query_hook;
 
   /* Install the event hooks.  */
   tui_bp_created_observer

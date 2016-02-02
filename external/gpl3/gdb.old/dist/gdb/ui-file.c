@@ -1,6 +1,6 @@
 /* UI_FILE - a generic STDIO like output stream.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,11 +22,8 @@
 #include "defs.h"
 #include "ui-file.h"
 #include "gdb_obstack.h"
-#include <string.h>
 #include "gdb_select.h"
 #include "filestuff.h"
-
-#include <errno.h>
 
 static ui_file_isatty_ftype null_file_isatty;
 static ui_file_write_ftype null_file_write;
@@ -226,6 +223,12 @@ ui_file_write (struct ui_file *file,
 }
 
 void
+ui_file_write_for_put (void *data, const char *buffer, long length_buffer)
+{
+  ui_file_write (data, buffer, length_buffer);
+}
+
+void
 ui_file_write_async_safe (struct ui_file *file,
 			  const char *buf,
 			  long length_buf)
@@ -393,7 +396,7 @@ static int mem_file_magic;
 static struct ui_file *
 mem_file_new (void)
 {
-  struct mem_file *stream = XMALLOC (struct mem_file);
+  struct mem_file *stream = XNEW (struct mem_file);
   struct ui_file *file = ui_file_new ();
 
   set_ui_file_data (file, stream, mem_file_delete);

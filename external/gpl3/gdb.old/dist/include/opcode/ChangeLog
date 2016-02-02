@@ -1,3 +1,197 @@
+2015-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+2014-12-27  Anthony Green  <green@moxielogic.com>
+
+	* moxie.h (MOXIE_F1_AiB2, MOXIE_F1_ABi2): Renamed from
+	MOXIE_F1_AiB4 and MOXIE_F1_ABi2.
+
+2014-12-06  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* visium.h: New file.
+
+2014-11-28  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* nios2.h (NIOS2_INSN_ADDI, NIOS2_INSN_ANDI): Delete.
+	(NIOS2_INSN_ORI, NIOS2_INSN_XORI): Delete.
+	(NIOS2_INSN_OPTARG): Renumber.
+
+2014-11-06  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* nios2.h (nios2_find_opcode_hash): Add mach parameter to
+	declaration.  Fix obsolete comment.
+
+2014-10-23  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* nios2.h (enum iw_format_type): New.
+	(struct nios2_opcode): Update comments.  Add size and format fields.
+	(NIOS2_INSN_OPTARG): New.
+	(REG_NORMAL, REG_CONTROL, REG_COPROCESSOR): New.
+	(struct nios2_reg): Add regtype field.
+	(GET_INSN_FIELD, SET_INSN_FIELD): Delete.
+	(IW_A_LSB, IW_A_MSB, IW_A_SZ, IW_A_MASK): Delete.
+	(IW_B_LSB, IW_B_MSB, IW_B_SZ, IW_B_MASK): Delete.
+	(IW_C_LSB, IW_C_MSB, IW_C_SZ, IW_C_MASK): Delete.
+	(IW_IMM16_LSB, IW_IMM16_MSB, IW_IMM16_SZ, IW_IMM16_MASK): Delete.
+	(IW_IMM26_LSB, IW_IMM26_MSB, IW_IMM26_SZ, IW_IMM26_MASK): Delete.
+	(IW_OP_LSB, IW_OP_MSB, IW_OP_SZ, IW_OP_MASK): Delete.
+	(IW_OPX_LSB, IW_OPX_MSB, IW_OPX_SZ, IW_OPX_MASK): Delete.
+	(IW_SHIFT_IMM5_LSB, IW_SHIFT_IMM5_MSB): Delete.
+	(IW_SHIFT_IMM5_SZ, IW_SHIFT_IMM5_MASK): Delete.
+	(IW_CONTROL_REGNUM_LSB, IW_CONTROL_REGNUM_MSB): Delete.
+	(IW_CONTROL_REGNUM_SZ, IW_CONTROL_REGNUM_MASK): Delete.
+	(OP_MASK_OP, OP_SH_OP): Delete.
+	(OP_MASK_IOP, OP_SH_IOP): Delete.
+	(OP_MASK_IRD, OP_SH_IRD): Delete.
+	(OP_MASK_IRT, OP_SH_IRT): Delete.
+	(OP_MASK_IRS, OP_SH_IRS): Delete.
+	(OP_MASK_ROP, OP_SH_ROP): Delete.
+	(OP_MASK_RRD, OP_SH_RRD): Delete.
+	(OP_MASK_RRT, OP_SH_RRT): Delete.
+	(OP_MASK_RRS, OP_SH_RRS): Delete.
+	(OP_MASK_JOP, OP_SH_JOP): Delete.
+	(OP_MASK_IMM26, OP_SH_IMM26): Delete.
+	(OP_MASK_RCTL, OP_SH_RCTL): Delete.
+	(OP_MASK_IMM5, OP_SH_IMM5): Delete.
+	(OP_MASK_CACHE_OPX, OP_SH_CACHE_OPX): Delete.
+	(OP_MASK_CACHE_RRS, OP_SH_CACHE_RRS): Delete.
+	(OP_MASK_CUSTOM_A, OP_SH_CUSTOM_A): Delete.
+	(OP_MASK_CUSTOM_B, OP_SH_CUSTOM_B): Delete.
+	(OP_MASK_CUSTOM_C, OP_SH_CUSTOM_C): Delete.
+	(OP_MASK_CUSTOM_N, OP_SH_CUSTOM_N): Delete.
+	(OP_<insn>, OPX_<insn>, OP_MATCH_<insn>, OPX_MATCH_<insn>): Delete.
+	(OP_MASK_<insn>, OP_MASK): Delete.
+	(GET_IW_A, GET_IW_B, GET_IW_C, GET_IW_CONTROL_REGNUM): Delete.
+	(GET_IW_IMM16, GET_IW_IMM26, GET_IW_OP, GET_IW_OPX): Delete.
+	Include nios2r1.h to define new instruction opcode constants
+	and accessors.
+	(nios2_builtin_opcodes): Rename to nios2_r1_opcodes.
+	(bfd_nios2_num_builtin_opcodes): Rename to nios2_num_r1_opcodes.
+	(bfd_nios2_num_opcodes): Rename to nios2_num_opcodes.
+	(NUMOPCODES, NUMREGISTERS): Delete.
+	* nios2r1.h: New file.
+
+2014-10-17  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* sparc.h (HWCAP2_VIS3B): Documentation improved.
+
+2014-10-09  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* sparc.h (sparc_opcode): new field `hwcaps2'.
+	(HWCAP2_FJATHPLUS): New define.
+	(HWCAP2_VIS3B): Likewise.
+	(HWCAP2_ADP): Likewise.
+	(HWCAP2_SPARC5): Likewise.
+	(HWCAP2_MWAIT): Likewise.
+	(HWCAP2_XMPMUL): Likewise.
+	(HWCAP2_XMONT): Likewise.
+	(HWCAP2_NSEC): Likewise.
+	(HWCAP2_FJATHHPC): Likewise.
+	(HWCAP2_FJDES): Likewise.
+	(HWCAP2_FJAES): Likewise.
+	Document the new operand kind `{', corresponding to the mcdper
+	ancillary state register.
+	Document the new operand kind }, which represents frsd floating
+	point registers (double precision) which must be the same than
+	frs1 in its containing instruction.
+
+2014-09-16  Kuan-Lin Chen <kuanlinchentw@gmail.com>
+
+        * nds32.h: Add new opcode declaration.
+
+2014-09-15  Andrew Bennett  <andrew.bennett@imgtec.com>
+	    Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* mips.h (mips_operand_type): Add new entries: OP_SAME_RS_RT,
+	OP_CHECK_PREV and OP_NON_ZERO_REG.  Add descriptions for the MIPS R6
+	instruction arguments: -a, -b, -d, -s, -t, -u, -v, -w, -x, -y, -A, -B,
+	 +I, +O, +R, +:, +\, +", +;
+	(mips_check_prev_operand): New struct.
+	(INSN2_FORBIDDEN_SLOT): New define.
+	(INSN_ISA32R6): New define.
+	(INSN_ISA64R6): New define.
+	(INSN_UPTO32R6): New define.
+	(INSN_UPTO64R6): New define.
+	(mips_isa_table): Add INSN_UPTO32R6 and INSN_UPTO64R6.
+	(ISA_MIPS32R6): New define.
+	(ISA_MIPS64R6): New define.
+	(CPU_MIPS32R6): New define.
+	(CPU_MIPS64R6): New define.
+	(cpu_is_member): Add cases for CPU_MIPS32R6, and CPU_MIPS64R6.
+
+2014-09-03  Jiong Wang  <jiong.wang@arm.com>
+
+	* aarch64.h (AARCH64_FEATURE_LSE): New feature added.
+	(aarch64_opnd): Add AARCH64_OPND_PAIRREG.
+	(aarch64_insn_class): Add lse_atomic.
+	(F_LSE_SZ): New field added.
+	(opcode_has_special_coder): Recognize F_LSE_SZ.
+
+2014-08-26  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Document the move of `MICROMIPSOP_*_CODE10' from `B'
+	over to `+J'.
+
+2014-07-29  Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* mips.h (INSN_LOAD_COPROC_DELAY): Rename to...
+	(INSN_LOAD_COPROC): New define.
+	(INSN_COPROC_MOVE_DELAY): Rename to...
+	(INSN_COPROC_MOVE): New define.
+
+2014-07-01  Barney Stratford   <barney_stratford@fastmail.fm>
+            Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+            Pitchumani Sivanupandi  <pitchumani.s@atmel.com>
+            Soundararajan  <Sounderarajan.D@atmel.com>
+
+	* avr.h (AVR_ISA_TINY): Define avrtiny specific ISA.
+	(AVR_ISA_2xxxa): Define ISA without LPM.
+	(AVR_ISA_AVRTINY): Define avrtiny arch ISA.
+	Add doc for contraint used in 16 bit lds/sts.
+	Adjust ISA group for icall, ijmp, pop and push.
+	Add 16 bit lds/sts encoding and update 32 bit lds/sts constraints.
+
+2014-05-19  Nick Clifton  <nickc@redhat.com>
+
+	* msp430.h (struct msp430_operand_s): Add vshift field.
+
+2014-05-07  Andrew Bennett  <andrew.bennett@imgtec.com>
+
+	* mips.h (INSN_ISA_MASK): Updated.
+	(INSN_ISA32R3): New define.
+	(INSN_ISA32R5): New define.
+	(INSN_ISA64R3): New define.
+	(INSN_ISA64R5): New define.
+	(INSN_ISA64, INSN_ISA64R2, INSN_ISA3_32, INSN_ISA3_32R2, INSN_ISA4_32
+	INSN_ISA4_32R2, INSN_ISA5_32R2): Renumbered.
+	(mips_isa_table): Add entries for mips32r3, mips32r5, mips64r3 and
+	mips64r5.
+	(INSN_UPTO32R3): New define.
+	(INSN_UPTO32R5): New define.
+	(INSN_UPTO64R3): New define.
+	(INSN_UPTO64R5): New define.
+	(ISA_MIPS32R3): New define.
+	(ISA_MIPS32R5): New define.
+	(ISA_MIPS64R3): New define.
+	(ISA_MIPS64R5): New define.
+	(CPU_MIPS32R3): New define.
+	(CPU_MIPS32R5): New define.
+	(CPU_MIPS64R3): New define.
+	(CPU_MIPS64R5): New define.
+
+2014-05-01  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_isa_table): Avoid hard-coding INSN_ISA* values.
+
+2014-04-22  Christian Svensson  <blue@cmd.nu>
+
+	* or32.h: Delete.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	Update copyright years.
+
 2013-12-16  Andrew Bennett  <andrew.bennett@imgtec.com>
 
 	* mips.h: Updated description of +o, +u, +v and +w for MIPS and
@@ -1952,7 +2146,7 @@
 
 For older changes see ChangeLog-9103
 
-Copyright (C) 2004-2012 Free Software Foundation, Inc.
+Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

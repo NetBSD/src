@@ -1,5 +1,5 @@
 /* BFD back-end for OpenBSD/m88k a.out binaries.
-   Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,7 +28,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (m88kopenbsd_,OP)
+#define MY(OP) CONCAT2 (m88k_aout_obsd_,OP)
 #define TARGETNAME "a.out-m88k-openbsd"
 
 #include "netbsd.h"

@@ -1,5 +1,5 @@
 /* Infineon XC16X-specific support for 16-bit ELF.
-   Copyright 2006, 2007, 2009, 2010, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Contributed by KPIT Cummins Infosystems
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -462,7 +462,7 @@ elf32_xc16x_object_p (bfd *abfd)
 #define ELF_MACHINE_CODE	EM_XC16X
 #define ELF_MAXPAGESIZE		0x100
 
-#define TARGET_LITTLE_SYM       bfd_elf32_xc16x_vec
+#define TARGET_LITTLE_SYM       xc16x_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-xc16x"
 #define elf_backend_final_write_processing	elf32_xc16x_final_write_processing
 #define elf_backend_object_p   		elf32_xc16x_object_p

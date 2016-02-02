@@ -1,3 +1,65 @@
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2014-03-18  Nick Clifton  <nickc@redhat.com>
+
+	* wrapper.c: Convert function declarations to ISO C format.
+	(sim_open): Delete code for handling t,d and z command line
+	options.
+
+2014-03-14  Nick Clifton  <nickc@redhat.com>
+
+	* wrapper.c (op_print): New function.
+	(sim_dis_read): New function.
+	(print_insn): New function - disassembles the given instruction.
+	(sim_trace): Note that tracing is now allowed.
+	(sim_create_inferior): Default to emulating v6.
+	Initialise the disassembler machinery.
+	(sim_target_parse_command_line): Add support for -t -d and -z
+	options.
+	(sim_target_display_usage): Note existence of -d and -z options.
+	(sim_open): Parse -t -d and -z options.
+	* armemu.h: Add exports of trace, disas and trace_funcs.
+	Add prototype for print_insn.
+	* armemu.c (ARMul_Emulate26): Add tracing code.
+	Delete unused variables.
+	* thumbemu (handle_v6_thumb_insn): Delete unused variable Rd.
+	Move Rm variable into switch cases.
+	Add tracing code.
+
+	* armcopro.c (XScale_cp15_init): Add a return value.
+	(XScale_cp13_init): Likewise.
+	(XScale_cp14_init): Likewise.
+	(XScale_cp15_LDC): Delete unused function.
+	(XScale_cp15_STC): Likewise.
+	* maverick.c: Delete comment inside comment.
+	(DSPInit): Delete unused function.
+	(DSPMCR4): Fix compile time warning about missing parenthesis.
+	(DSPMCR5): Likewise.
+	(DSPCDP6): Delete unused variable opcode2.
+
+2014-03-14  David McQuillan  <dmcq@tao-group.com>
+
+	PR sim/8388
+	* armemu.c (WriteR15Load): New function.  Determines if the state
+	can be changed upon a write to R15.
+	(LoadMult): Use WriteR15Load.
+	* armemu.h (WRITEDESTB): Use WriteR15Load.
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_do_command): Add const to cmd.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_load): Add const to prog.
+
 2013-09-23  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.
