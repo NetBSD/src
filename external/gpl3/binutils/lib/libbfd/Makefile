@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2016/01/29 14:42:47 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2016/02/02 19:15:40 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -40,6 +40,8 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH} -I${DIST}/include -I. \
 .if (${BFD_MACHINE_ARCH} == "vax")
 CPPFLAGS.elf.c +=	-O0
 .endif
+
+COPTS.pei-x86_64.c += -Wno-stack-protector
 
 GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 		${G_libbfd_la_DEPENDENCIES:M*.lo}
