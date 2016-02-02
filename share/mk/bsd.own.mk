@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.893 2016/02/02 20:23:24 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.894 2016/02/02 22:35:46 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -128,9 +128,9 @@ USE_SSP?=	yes
 HAVE_GDB?=	79
 
 .if ${HAVE_GDB} == 79
-EXTERNAL_GDB_SUBDIR=		gdb
+EXTERNAL_GDB_SUBDIR=		gdb.old
 .else
-EXTERNAL_GDB_SUBDIR=		/does/not/exist
+EXTERNAL_GDB_SUBDIR=		gdb
 .endif
 
 .if ${MACHINE} == "amd64" || \
