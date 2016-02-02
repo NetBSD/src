@@ -1,4 +1,4 @@
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ if [runto middle] then {
     #   warning: Hit heuristic-fence-post without finding
     #   warning: enclosing function for pc 0x1006ead0
     if { [test_compiler_info gcc-*-*] } then {
-	setup_xfail "mips*-sgi-irix4*" "mips64*-*-elf"
+	setup_xfail "mips64*-*-elf"
     }
     # The call chain is main -> top -> middle.  But gcc can optimize a tail
     # call to a jump, so the stack may contain either main -> top -> middle

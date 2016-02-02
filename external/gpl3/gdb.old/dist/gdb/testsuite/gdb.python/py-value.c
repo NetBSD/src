@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2014 Free Software Foundation, Inc.
+   Copyright 2008-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -58,6 +58,8 @@ struct Derived : public Base {
 };
 
 Base *base = new Derived ();
+Derived derived;
+Base &base_ref = derived;
 
 void ptr_ref(int*& rptr_int)
 {

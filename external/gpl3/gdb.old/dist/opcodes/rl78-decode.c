@@ -1,6 +1,6 @@
 #line 1 "rl78-decode.opc"
 /* -*- c -*- */
-/* Copyright 2012-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 

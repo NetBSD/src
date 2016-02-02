@@ -1,5 +1,5 @@
 /* bfin.h -- Header file for ADI Blackfin opcode table
-   Copyright 2005, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GDB, GAS, and the GNU binutils.
 

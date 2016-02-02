@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,9 +33,6 @@
 #include "regcache.h"
 #include "target.h"
 #include "value.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "sparc64-tdep.h"
 
@@ -831,7 +828,7 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
                  quad-aligned, and thus a hole might be introduced
                  into the parameter array to force alignment."  Skip
                  an element if necessary.  */
-	      if (num_elements % 2)
+	      if ((num_elements % 2) && sparc64_16_byte_align_p (type))
 		num_elements++;
 	    }
 	  else
@@ -890,7 +887,7 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
       if (sparc64_structure_or_union_p (type)
 	  || (sparc64_complex_floating_p (type) && len == 32))
 	{
-	  /* Structure or Union arguments.  */
+	  /* Structure, Union or long double Complex arguments.  */
 	  gdb_assert (len <= 16);
 	  memset (buf, 0, sizeof (buf));
 	  valbuf = memcpy (buf, valbuf, len);
@@ -908,7 +905,25 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 	  if (element < 16)
 	    sparc64_store_floating_fields (regcache, type, valbuf, element, 0);
 	}
-      else if (sparc64_floating_p (type) || sparc64_complex_floating_p (type))
+      else if (sparc64_complex_floating_p (type))
+	{
+	  /* Float Complex or double Complex arguments.  */
+	  if (element < 16)
+	    {
+	      regnum = SPARC64_D0_REGNUM + element;
+
+	      if (len == 16)
+		{
+		  if (regnum < SPARC64_D30_REGNUM)
+		    regcache_cooked_write (regcache, regnum + 1, valbuf + 8);
+		  if (regnum < SPARC64_D10_REGNUM)
+		    regcache_cooked_write (regcache,
+					   SPARC_O0_REGNUM + element + 1,
+					   valbuf + 8);
+		}
+	    }
+	}
+      else if (sparc64_floating_p (type))
 	{
 	  /* Floating arguments.  */
 	  if (len == 16)
@@ -1196,6 +1211,7 @@ sparc64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, default_stabs_argument_has_addr);
 
   set_gdbarch_skip_prologue (gdbarch, sparc64_skip_prologue);
+  set_gdbarch_in_function_epilogue_p (gdbarch, sparc_in_function_epilogue_p);
 
   /* Hook in the DWARF CFI frame unwinder.  */
   dwarf2_frame_set_init_reg (gdbarch, sparc64_dwarf2_frame_init_reg);
@@ -1221,7 +1237,7 @@ sparc64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 #define PSR_XCC		0x000f0000
 
 void
-sparc64_supply_gregset (const struct sparc_gregset *gregset,
+sparc64_supply_gregset (const struct sparc_gregmap *gregmap,
 			struct regcache *regcache,
 			int regnum, const void *gregs)
 {
@@ -1236,7 +1252,7 @@ sparc64_supply_gregset (const struct sparc_gregset *gregset,
     {
       if (regnum == SPARC32_PSR_REGNUM || regnum == -1)
 	{
-	  int offset = gregset->r_tstate_offset;
+	  int offset = gregmap->r_tstate_offset;
 	  ULONGEST tstate, psr;
 	  gdb_byte buf[4];
 
@@ -1249,15 +1265,15 @@ sparc64_supply_gregset (const struct sparc_gregset *gregset,
 
       if (regnum == SPARC32_PC_REGNUM || regnum == -1)
 	regcache_raw_supply (regcache, SPARC32_PC_REGNUM,
-			     regs + gregset->r_pc_offset + 4);
+			     regs + gregmap->r_pc_offset + 4);
 
       if (regnum == SPARC32_NPC_REGNUM || regnum == -1)
 	regcache_raw_supply (regcache, SPARC32_NPC_REGNUM,
-			     regs + gregset->r_npc_offset + 4);
+			     regs + gregmap->r_npc_offset + 4);
 
       if (regnum == SPARC32_Y_REGNUM || regnum == -1)
 	{
-	  int offset = gregset->r_y_offset + 8 - gregset->r_y_size;
+	  int offset = gregmap->r_y_offset + 8 - gregmap->r_y_size;
 	  regcache_raw_supply (regcache, SPARC32_Y_REGNUM, regs + offset);
 	}
     }
@@ -1265,30 +1281,30 @@ sparc64_supply_gregset (const struct sparc_gregset *gregset,
     {
       if (regnum == SPARC64_STATE_REGNUM || regnum == -1)
 	regcache_raw_supply (regcache, SPARC64_STATE_REGNUM,
-			     regs + gregset->r_tstate_offset);
+			     regs + gregmap->r_tstate_offset);
 
       if (regnum == SPARC64_PC_REGNUM || regnum == -1)
 	regcache_raw_supply (regcache, SPARC64_PC_REGNUM,
-			     regs + gregset->r_pc_offset);
+			     regs + gregmap->r_pc_offset);
 
       if (regnum == SPARC64_NPC_REGNUM || regnum == -1)
 	regcache_raw_supply (regcache, SPARC64_NPC_REGNUM,
-			     regs + gregset->r_npc_offset);
+			     regs + gregmap->r_npc_offset);
 
       if (regnum == SPARC64_Y_REGNUM || regnum == -1)
 	{
 	  gdb_byte buf[8];
 
 	  memset (buf, 0, 8);
-	  memcpy (buf + 8 - gregset->r_y_size,
-		  regs + gregset->r_y_offset, gregset->r_y_size);
+	  memcpy (buf + 8 - gregmap->r_y_size,
+		  regs + gregmap->r_y_offset, gregmap->r_y_size);
 	  regcache_raw_supply (regcache, SPARC64_Y_REGNUM, buf);
 	}
 
       if ((regnum == SPARC64_FPRS_REGNUM || regnum == -1)
-	  && gregset->r_fprs_offset != -1)
+	  && gregmap->r_fprs_offset != -1)
 	regcache_raw_supply (regcache, SPARC64_FPRS_REGNUM,
-			     regs + gregset->r_fprs_offset);
+			     regs + gregmap->r_fprs_offset);
     }
 
   if (regnum == SPARC_G0_REGNUM || regnum == -1)
@@ -1296,7 +1312,7 @@ sparc64_supply_gregset (const struct sparc_gregset *gregset,
 
   if ((regnum >= SPARC_G1_REGNUM && regnum <= SPARC_O7_REGNUM) || regnum == -1)
     {
-      int offset = gregset->r_g1_offset;
+      int offset = gregmap->r_g1_offset;
 
       if (sparc32)
 	offset += 4;
@@ -1313,7 +1329,7 @@ sparc64_supply_gregset (const struct sparc_gregset *gregset,
     {
       /* Not all of the register set variants include Locals and
          Inputs.  For those that don't, we read them off the stack.  */
-      if (gregset->r_l0_offset == -1)
+      if (gregmap->r_l0_offset == -1)
 	{
 	  ULONGEST sp;
 
@@ -1322,7 +1338,7 @@ sparc64_supply_gregset (const struct sparc_gregset *gregset,
 	}
       else
 	{
-	  int offset = gregset->r_l0_offset;
+	  int offset = gregmap->r_l0_offset;
 
 	  if (sparc32)
 	    offset += 4;
@@ -1338,7 +1354,7 @@ sparc64_supply_gregset (const struct sparc_gregset *gregset,
 }
 
 void
-sparc64_collect_gregset (const struct sparc_gregset *gregset,
+sparc64_collect_gregset (const struct sparc_gregmap *gregmap,
 			 const struct regcache *regcache,
 			 int regnum, void *gregs)
 {
@@ -1352,7 +1368,7 @@ sparc64_collect_gregset (const struct sparc_gregset *gregset,
     {
       if (regnum == SPARC32_PSR_REGNUM || regnum == -1)
 	{
-	  int offset = gregset->r_tstate_offset;
+	  int offset = gregmap->r_tstate_offset;
 	  ULONGEST tstate, psr;
 	  gdb_byte buf[8];
 
@@ -1368,15 +1384,15 @@ sparc64_collect_gregset (const struct sparc_gregset *gregset,
 
       if (regnum == SPARC32_PC_REGNUM || regnum == -1)
 	regcache_raw_collect (regcache, SPARC32_PC_REGNUM,
-			      regs + gregset->r_pc_offset + 4);
+			      regs + gregmap->r_pc_offset + 4);
 
       if (regnum == SPARC32_NPC_REGNUM || regnum == -1)
 	regcache_raw_collect (regcache, SPARC32_NPC_REGNUM,
-			      regs + gregset->r_npc_offset + 4);
+			      regs + gregmap->r_npc_offset + 4);
 
       if (regnum == SPARC32_Y_REGNUM || regnum == -1)
 	{
-	  int offset = gregset->r_y_offset + 8 - gregset->r_y_size;
+	  int offset = gregmap->r_y_offset + 8 - gregmap->r_y_size;
 	  regcache_raw_collect (regcache, SPARC32_Y_REGNUM, regs + offset);
 	}
     }
@@ -1384,35 +1400,35 @@ sparc64_collect_gregset (const struct sparc_gregset *gregset,
     {
       if (regnum == SPARC64_STATE_REGNUM || regnum == -1)
 	regcache_raw_collect (regcache, SPARC64_STATE_REGNUM,
-			      regs + gregset->r_tstate_offset);
+			      regs + gregmap->r_tstate_offset);
 
       if (regnum == SPARC64_PC_REGNUM || regnum == -1)
 	regcache_raw_collect (regcache, SPARC64_PC_REGNUM,
-			      regs + gregset->r_pc_offset);
+			      regs + gregmap->r_pc_offset);
 
       if (regnum == SPARC64_NPC_REGNUM || regnum == -1)
 	regcache_raw_collect (regcache, SPARC64_NPC_REGNUM,
-			      regs + gregset->r_npc_offset);
+			      regs + gregmap->r_npc_offset);
 
       if (regnum == SPARC64_Y_REGNUM || regnum == -1)
 	{
 	  gdb_byte buf[8];
 
 	  regcache_raw_collect (regcache, SPARC64_Y_REGNUM, buf);
-	  memcpy (regs + gregset->r_y_offset,
-		  buf + 8 - gregset->r_y_size, gregset->r_y_size);
+	  memcpy (regs + gregmap->r_y_offset,
+		  buf + 8 - gregmap->r_y_size, gregmap->r_y_size);
 	}
 
       if ((regnum == SPARC64_FPRS_REGNUM || regnum == -1)
-	  && gregset->r_fprs_offset != -1)
+	  && gregmap->r_fprs_offset != -1)
 	regcache_raw_collect (regcache, SPARC64_FPRS_REGNUM,
-			      regs + gregset->r_fprs_offset);
+			      regs + gregmap->r_fprs_offset);
 
     }
 
   if ((regnum >= SPARC_G1_REGNUM && regnum <= SPARC_O7_REGNUM) || regnum == -1)
     {
-      int offset = gregset->r_g1_offset;
+      int offset = gregmap->r_g1_offset;
 
       if (sparc32)
 	offset += 4;
@@ -1430,9 +1446,9 @@ sparc64_collect_gregset (const struct sparc_gregset *gregset,
     {
       /* Not all of the register set variants include Locals and
          Inputs.  For those that don't, we read them off the stack.  */
-      if (gregset->r_l0_offset != -1)
+      if (gregmap->r_l0_offset != -1)
 	{
-	  int offset = gregset->r_l0_offset;
+	  int offset = gregmap->r_l0_offset;
 
 	  if (sparc32)
 	    offset += 4;
@@ -1448,7 +1464,7 @@ sparc64_collect_gregset (const struct sparc_gregset *gregset,
 }
 
 void
-sparc64_supply_fpregset (const struct sparc_fpregset *fpregset,
+sparc64_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 			 struct regcache *regcache,
 			 int regnum, const void *fpregs)
 {
@@ -1460,14 +1476,14 @@ sparc64_supply_fpregset (const struct sparc_fpregset *fpregset,
     {
       if (regnum == (SPARC_F0_REGNUM + i) || regnum == -1)
 	regcache_raw_supply (regcache, SPARC_F0_REGNUM + i,
-			     regs + fpregset->r_f0_offset + (i * 4));
+			     regs + fpregmap->r_f0_offset + (i * 4));
     }
 
   if (sparc32)
     {
       if (regnum == SPARC32_FSR_REGNUM || regnum == -1)
 	regcache_raw_supply (regcache, SPARC32_FSR_REGNUM,
-			     regs + fpregset->r_fsr_offset);
+			     regs + fpregmap->r_fsr_offset);
     }
   else
     {
@@ -1475,18 +1491,18 @@ sparc64_supply_fpregset (const struct sparc_fpregset *fpregset,
 	{
 	  if (regnum == (SPARC64_F32_REGNUM + i) || regnum == -1)
 	    regcache_raw_supply (regcache, SPARC64_F32_REGNUM + i,
-				 (regs + fpregset->r_f0_offset
+				 (regs + fpregmap->r_f0_offset
 				  + (32 * 4) + (i * 8)));
 	}
 
       if (regnum == SPARC64_FSR_REGNUM || regnum == -1)
 	regcache_raw_supply (regcache, SPARC64_FSR_REGNUM,
-			     regs + fpregset->r_fsr_offset);
+			     regs + fpregmap->r_fsr_offset);
     }
 }
 
 void
-sparc64_collect_fpregset (const struct sparc_fpregset *fpregset,
+sparc64_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 			  const struct regcache *regcache,
 			  int regnum, void *fpregs)
 {
@@ -1498,14 +1514,14 @@ sparc64_collect_fpregset (const struct sparc_fpregset *fpregset,
     {
       if (regnum == (SPARC_F0_REGNUM + i) || regnum == -1)
 	regcache_raw_collect (regcache, SPARC_F0_REGNUM + i,
-			      regs + fpregset->r_f0_offset + (i * 4));
+			      regs + fpregmap->r_f0_offset + (i * 4));
     }
 
   if (sparc32)
     {
       if (regnum == SPARC32_FSR_REGNUM || regnum == -1)
 	regcache_raw_collect (regcache, SPARC32_FSR_REGNUM,
-			      regs + fpregset->r_fsr_offset);
+			      regs + fpregmap->r_fsr_offset);
     }
   else
     {
@@ -1513,17 +1529,17 @@ sparc64_collect_fpregset (const struct sparc_fpregset *fpregset,
 	{
 	  if (regnum == (SPARC64_F32_REGNUM + i) || regnum == -1)
 	    regcache_raw_collect (regcache, SPARC64_F32_REGNUM + i,
-				  (regs + fpregset->r_f0_offset
+				  (regs + fpregmap->r_f0_offset
 				   + (32 * 4) + (i * 8)));
 	}
 
       if (regnum == SPARC64_FSR_REGNUM || regnum == -1)
 	regcache_raw_collect (regcache, SPARC64_FSR_REGNUM,
-			      regs + fpregset->r_fsr_offset);
+			      regs + fpregmap->r_fsr_offset);
     }
 }
 
-const struct sparc_fpregset sparc64_bsd_fpregset =
+const struct sparc_fpregmap sparc64_bsd_fpregmap =
 {
   0 * 8,			/* %f0 */
   32 * 8,			/* %fsr */

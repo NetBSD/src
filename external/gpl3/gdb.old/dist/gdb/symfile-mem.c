@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,7 +45,6 @@
 #include "symtab.h"
 #include "gdbcore.h"
 #include "objfiles.h"
-#include "exceptions.h"
 #include "gdbcmd.h"
 #include "target.h"
 #include "value.h"
@@ -76,13 +75,14 @@ target_read_memory_bfd (bfd_vma memaddr, bfd_byte *myaddr, bfd_size_type len)
 }
 
 /* Read inferior memory at ADDR to find the header of a loaded object file
-   and read its in-core symbols out of inferior memory.  TEMPL is a bfd
+   and read its in-core symbols out of inferior memory.  SIZE, if
+   non-zero, is the known size of the object.  TEMPL is a bfd
    representing the target's format.  NAME is the name to use for this
    symbol file in messages; it can be NULL or a malloc-allocated string
    which will be attached to the BFD.  */
 static struct objfile *
-symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr, char *name,
-			     int from_tty)
+symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
+			     size_t size, char *name, int from_tty)
 {
   struct objfile *objf;
   struct bfd *nbfd;
@@ -95,7 +95,7 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr, char *name,
   if (bfd_get_flavour (templ) != bfd_target_elf_flavour)
     error (_("add-symbol-file-from-memory not supported for this target"));
 
-  nbfd = bfd_elf_bfd_from_remote_memory (templ, addr, &loadbase,
+  nbfd = bfd_elf_bfd_from_remote_memory (templ, addr, size, &loadbase,
 					 target_read_memory_bfd);
   if (nbfd == NULL)
     error (_("Failed to read a valid object file image from memory."));
@@ -130,6 +130,8 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr, char *name,
 				   from_tty ? SYMFILE_VERBOSE : 0,
                                    sai, OBJF_SHARED, NULL);
 
+  add_target_sections_of_objfile (objf);
+
   /* This might change our ideas about frames already looked at.  */
   reinit_frame_cache ();
 
@@ -158,7 +160,7 @@ add_symbol_file_from_memory_command (char *args, int from_tty)
     error (_("Must use symbol-file or exec-file "
 	     "before add-symbol-file-from-memory."));
 
-  symbol_file_add_from_memory (templ, addr, NULL, from_tty);
+  symbol_file_add_from_memory (templ, addr, 0, NULL, from_tty);
 }
 
 /* Arguments for symbol_file_add_from_memory_wrapper.  */
@@ -167,6 +169,7 @@ struct symbol_file_add_from_memory_args
 {
   struct bfd *bfd;
   CORE_ADDR sysinfo_ehdr;
+  size_t size;
   char *name;
   int from_tty;
 };
@@ -179,8 +182,8 @@ symbol_file_add_from_memory_wrapper (struct ui_out *uiout, void *data)
 {
   struct symbol_file_add_from_memory_args *args = data;
 
-  symbol_file_add_from_memory (args->bfd, args->sysinfo_ehdr, args->name,
-			       args->from_tty);
+  symbol_file_add_from_memory (args->bfd, args->sysinfo_ehdr, args->size,
+			       args->name, args->from_tty);
   return 0;
 }
 
@@ -190,10 +193,9 @@ symbol_file_add_from_memory_wrapper (struct ui_out *uiout, void *data)
 static void
 add_vsyscall_page (struct target_ops *target, int from_tty)
 {
-  CORE_ADDR sysinfo_ehdr;
+  struct mem_range vsyscall_range;
 
-  if (target_auxv_search (target, AT_SYSINFO_EHDR, &sysinfo_ehdr) > 0
-      && sysinfo_ehdr != (CORE_ADDR) 0)
+  if (gdbarch_vsyscall_range (target_gdbarch (), &vsyscall_range))
     {
       struct bfd *bfd;
       struct symbol_file_add_from_memory_args args;
@@ -216,9 +218,11 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
 	  return;
 	}
       args.bfd = bfd;
-      args.sysinfo_ehdr = sysinfo_ehdr;
+      args.sysinfo_ehdr = vsyscall_range.start;
+      args.size = vsyscall_range.length;
+
       args.name = xstrprintf ("system-supplied DSO at %s",
-			      paddress (target_gdbarch (), sysinfo_ehdr));
+			      paddress (target_gdbarch (), vsyscall_range.start));
       /* Pass zero for FROM_TTY, because the action of loading the
 	 vsyscall DSO was not triggered by the user, even if the user
 	 typed "run" at the TTY.  */

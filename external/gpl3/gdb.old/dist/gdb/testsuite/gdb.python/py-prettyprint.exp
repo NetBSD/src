@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,7 +83,10 @@ proc run_lang_tests {exefile lang} {
 	gdb_py_test_silent_cmd "set print elements 200" "" 1
     }
 
-    gdb_test "print ns2" ".error reading variable: Cannot access memory at address 0x0."
+    if { ![is_address_zero_readable] } {
+	gdb_test "print ns2" \
+	    ".error reading variable: Cannot access memory at address 0x0."
+    }
 
     gdb_test "print x" " = \"this is x\""
     gdb_test "print cstring" " = \"const string\""
@@ -105,8 +108,6 @@ proc run_lang_tests {exefile lang} {
 	"print nstype on one line"
 
     gdb_continue_to_end
-
-    remote_file host delete ${remote_python_file}
 }
 
 run_lang_tests "${binfile}" "c"
@@ -152,5 +153,3 @@ gdb_test_no_output "python enable_lookup_function ()"
 
 gdb_test "print ss" " = a=< a=<1> b=<$hex>> b=< a=<2> b=<$hex>>" \
     "print ss enabled #2"
-
-remote_file host delete ${remote_python_file}

@@ -1,6 +1,6 @@
 /* TUI data manipulation routines.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -24,8 +24,6 @@
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-wingeneral.h"
-
-#include <string.h>
 #include "gdb_curses.h"
 
 /****************************
@@ -447,7 +445,7 @@ tui_alloc_generic_win_info (void)
 {
   struct tui_gen_win_info *win;
 
-  if ((win = XMALLOC (struct tui_gen_win_info)) != NULL)
+  if ((win = XNEW (struct tui_gen_win_info)) != NULL)
     tui_init_generic_part (win);
 
   return win;
@@ -570,7 +568,7 @@ tui_alloc_win_info (enum tui_win_type type)
 {
   struct tui_win_info *win_info;
 
-  win_info = XMALLOC (struct tui_win_info);
+  win_info = XNEW (struct tui_win_info);
   if (win_info != NULL)
     {
       win_info->generic.type = type;
@@ -647,7 +645,7 @@ tui_add_content_elements (struct tui_gen_win_info *win_info,
     {
       for (i = index_start; (i < num_elements + index_start); i++)
 	{
-	  if ((element_ptr = XMALLOC (struct tui_win_element)) != NULL)
+	  if ((element_ptr = XNEW (struct tui_win_element)) != NULL)
 	    {
 	      win_info->content[i] = (void *) element_ptr;
 	      init_content_element (element_ptr, win_info->type);

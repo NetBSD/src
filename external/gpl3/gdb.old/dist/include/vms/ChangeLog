@@ -1,3 +1,11 @@
+2015-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	Update copyright years.
+
 2012-03-08  Tristan Gingold  <gingold@adacore.com>
 
 	* lbr.h (struct vms_lhd): Add comments.
@@ -73,7 +81,7 @@
 	* eiaf.h, eicp.h, eiha.h, eihd.h, eihi.h, eihs.h, eihvn.h: Ditto.
 	* eisd.h, emh.h, eobjrec.h, esdf.h, esrf.h, etir.h, shl.h: Ditto.
 
-Copyright (C) 2010-2012 Free Software Foundation, Inc.
+Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,6 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2014
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -223,11 +222,11 @@ static reloc_howto_type elf_howto_table[] =
 	 FALSE, 0, 0, FALSE),
 
   /* Relocations for supporting difference of symbols.  */
-  HOWTO (R_XTENSA_DIFF8, 0, 0, 8, FALSE, 0, complain_overflow_bitfield,
+  HOWTO (R_XTENSA_DIFF8, 0, 0, 8, FALSE, 0, complain_overflow_signed,
 	 bfd_elf_xtensa_reloc, "R_XTENSA_DIFF8", FALSE, 0, 0xff, FALSE),
-  HOWTO (R_XTENSA_DIFF16, 0, 1, 16, FALSE, 0, complain_overflow_bitfield,
+  HOWTO (R_XTENSA_DIFF16, 0, 1, 16, FALSE, 0, complain_overflow_signed,
 	 bfd_elf_xtensa_reloc, "R_XTENSA_DIFF16", FALSE, 0, 0xffff, FALSE),
-  HOWTO (R_XTENSA_DIFF32, 0, 2, 32, FALSE, 0, complain_overflow_bitfield,
+  HOWTO (R_XTENSA_DIFF32, 0, 2, 32, FALSE, 0, complain_overflow_signed,
 	 bfd_elf_xtensa_reloc, "R_XTENSA_DIFF32", FALSE, 0, 0xffffffff, FALSE),
 
   /* General immediate operand relocations.  */
@@ -480,7 +479,11 @@ elf_xtensa_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
 
-  BFD_ASSERT (r_type < (unsigned int) R_XTENSA_max);
+  if (r_type >= (unsigned int) R_XTENSA_max)
+    {
+      _bfd_error_handler (_("%A: invalid XTENSA reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &elf_howto_table[r_type];
 }
 
@@ -1562,7 +1565,7 @@ elf_xtensa_allocate_local_got_size (struct bfd_link_info *info)
   if (htab == NULL)
     return;
 
-  for (i = info->input_bfds; i; i = i->link_next)
+  for (i = info->input_bfds; i; i = i->link.next)
     {
       bfd_signed_vma *local_got_refcounts;
       bfd_size_type j, cnt;
@@ -1701,7 +1704,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	 literal tables.  */
       sgotloc = htab->sgotloc;
       sgotloc->size = spltlittbl->size;
-      for (abfd = info->input_bfds; abfd != NULL; abfd = abfd->link_next)
+      for (abfd = info->input_bfds; abfd != NULL; abfd = abfd->link.next)
 	{
 	  if (abfd->flags & DYNAMIC)
 	    continue;
@@ -6747,14 +6750,14 @@ analyze_relocations (struct bfd_link_info *link_info)
   bfd_boolean is_relaxable = FALSE;
 
   /* Initialize the per-section relaxation info.  */
-  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link_next)
+  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link.next)
     for (sec = abfd->sections; sec != NULL; sec = sec->next)
       {
 	init_xtensa_relax_info (sec);
       }
 
   /* Mark relaxable sections (and count relocations against each one).  */
-  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link_next)
+  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link.next)
     for (sec = abfd->sections; sec != NULL; sec = sec->next)
       {
 	if (!find_relaxable_sections (abfd, sec, link_info, &is_relaxable))
@@ -6766,7 +6769,7 @@ analyze_relocations (struct bfd_link_info *link_info)
     return TRUE;
 
   /* Allocate space for source_relocs.  */
-  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link_next)
+  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link.next)
     for (sec = abfd->sections; sec != NULL; sec = sec->next)
       {
 	xtensa_relax_info *relax_info;
@@ -6783,7 +6786,7 @@ analyze_relocations (struct bfd_link_info *link_info)
       }
 
   /* Collect info on relocations against each relaxable section.  */
-  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link_next)
+  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link.next)
     for (sec = abfd->sections; sec != NULL; sec = sec->next)
       {
 	if (!collect_source_relocs (abfd, sec, link_info))
@@ -6791,7 +6794,7 @@ analyze_relocations (struct bfd_link_info *link_info)
       }
 
   /* Compute the text actions.  */
-  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link_next)
+  for (abfd = link_info->input_bfds; abfd != NULL; abfd = abfd->link.next)
     for (sec = abfd->sections; sec != NULL; sec = sec->next)
       {
 	if (!compute_text_actions (abfd, sec, link_info))
@@ -7125,10 +7128,43 @@ is_resolvable_asm_expansion (bfd *abfd,
 	  || is_reloc_sym_weak (abfd, irel)))
     return FALSE;
 
-  self_address = (sec->output_section->vma
-		  + sec->output_offset + irel->r_offset + 3);
-  dest_address = (target_sec->output_section->vma
-		  + target_sec->output_offset + target_offset);
+  if (target_sec->output_section != sec->output_section)
+    {
+      /* If the two sections are sufficiently far away that relaxation
+	 might take the call out of range, we can't simplify.  For
+	 example, a positive displacement call into another memory
+	 could get moved to a lower address due to literal removal,
+	 but the destination won't move, and so the displacment might
+	 get larger.
+
+	 If the displacement is negative, assume the destination could
+	 move as far back as the start of the output section.  The
+	 self_address will be at least as far into the output section
+	 as it is prior to relaxation.
+
+	 If the displacement is postive, assume the destination will be in
+	 it's pre-relaxed location (because relaxation only makes sections
+	 smaller).  The self_address could go all the way to the beginning
+	 of the output section.  */
+
+      dest_address = target_sec->output_section->vma;
+      self_address = sec->output_section->vma;
+
+      if (sec->output_section->vma > target_sec->output_section->vma)
+	self_address += sec->output_offset + irel->r_offset + 3;
+      else
+	dest_address += bfd_get_section_limit (abfd, target_sec->output_section);
+      /* Call targets should be four-byte aligned.  */
+      dest_address = (dest_address + 3) & ~3;
+    }
+  else
+    {
+
+      self_address = (sec->output_section->vma
+		      + sec->output_offset + irel->r_offset + 3);
+      dest_address = (target_sec->output_section->vma
+		      + target_sec->output_offset + target_offset);
+    }
 
   *is_reachable_p = pcrel_reloc_fits (direct_call_opcode, 0,
 				      self_address, dest_address);
@@ -9014,7 +9050,8 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 		  || r_type == R_XTENSA_DIFF16
 		  || r_type == R_XTENSA_DIFF32)
 		{
-		  bfd_vma diff_value = 0, new_end_offset, diff_mask = 0;
+		  bfd_signed_vma diff_value = 0;
+		  bfd_vma new_end_offset, diff_mask = 0;
 
 		  if (bfd_get_section_limit (abfd, sec) < old_source_offset)
 		    {
@@ -9028,15 +9065,15 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 		    {
 		    case R_XTENSA_DIFF8:
 		      diff_value =
-			bfd_get_8 (abfd, &contents[old_source_offset]);
+			bfd_get_signed_8 (abfd, &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF16:
 		      diff_value =
-			bfd_get_16 (abfd, &contents[old_source_offset]);
+			bfd_get_signed_16 (abfd, &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF32:
 		      diff_value =
-			bfd_get_32 (abfd, &contents[old_source_offset]);
+			bfd_get_signed_32 (abfd, &contents[old_source_offset]);
 		      break;
 		    }
 
@@ -9048,24 +9085,25 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 		  switch (r_type)
 		    {
 		    case R_XTENSA_DIFF8:
-		      diff_mask = 0xff;
-		      bfd_put_8 (abfd, diff_value,
+		      diff_mask = 0x7f;
+		      bfd_put_signed_8 (abfd, diff_value,
 				 &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF16:
-		      diff_mask = 0xffff;
-		      bfd_put_16 (abfd, diff_value,
+		      diff_mask = 0x7fff;
+		      bfd_put_signed_16 (abfd, diff_value,
 				  &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF32:
-		      diff_mask = 0xffffffff;
-		      bfd_put_32 (abfd, diff_value,
+		      diff_mask = 0x7fffffff;
+		      bfd_put_signed_32 (abfd, diff_value,
 				  &contents[old_source_offset]);
 		      break;
 		    }
 
-		  /* Check for overflow.  */
-		  if ((diff_value & ~diff_mask) != 0)
+		  /* Check for overflow. Sign bits must be all zeroes or all ones */
+		  if ((diff_value & ~diff_mask) != 0 &&
+		      (diff_value & ~diff_mask) != (-1 & ~diff_mask))
 		    {
 		      (*link_info->callbacks->reloc_dangerous)
 			(link_info, _("overflow after relaxation"),
@@ -10759,9 +10797,9 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
 
 #define ELF_TARGET_ID			XTENSA_ELF_DATA
 #ifndef ELF_ARCH
-#define TARGET_LITTLE_SYM		bfd_elf32_xtensa_le_vec
+#define TARGET_LITTLE_SYM		xtensa_elf32_le_vec
 #define TARGET_LITTLE_NAME		"elf32-xtensa-le"
-#define TARGET_BIG_SYM			bfd_elf32_xtensa_be_vec
+#define TARGET_BIG_SYM			xtensa_elf32_be_vec
 #define TARGET_BIG_NAME			"elf32-xtensa-be"
 #define ELF_ARCH			bfd_arch_xtensa
 

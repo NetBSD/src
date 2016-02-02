@@ -1,5 +1,5 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -24,9 +24,6 @@
 #include "defs.h"
 #include "gdbcmd.h"
 #include "serial.h"
-#include <string.h>
-
-
 /*
  * NS16550 UART registers
  */

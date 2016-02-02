@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,13 +58,21 @@ gdb_test_multiple "bt" $test {
 }
 
 if { $using_probes } {
+    set sysroot ""
+    set test "show sysroot"
+    gdb_test_multiple $test $test {
+	-re "The current system root is \"(.*)\"\..*${gdb_prompt} $" {
+	    set sysroot $expect_out(1,string)
+	}
+    }
+
     # Run til it loads our library
     set test "run til our library loads"
     set not_loaded_library 1
     while { $not_loaded_library } {
 	set not_loaded_library 0
 	gdb_test_multiple "c" $test {
-	    -re "Inferior loaded $binfile_lib\\M.*$gdb_prompt $" {
+	    -re "Inferior loaded $sysroot$binfile_lib\\M.*$gdb_prompt $" {
 		pass $test
 	    }
 	    -re "Stopped due to shared library event\\M.*$gdb_prompt $" {

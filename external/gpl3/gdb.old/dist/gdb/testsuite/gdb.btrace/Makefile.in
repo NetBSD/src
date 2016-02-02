@@ -1,7 +1,9 @@
 VPATH = @srcdir@
 srcdir = @srcdir@
 
-EXECUTABLES   = enable function_call_history instruction_history
+EXECUTABLES   = enable function_call_history instruction_history tailcall \
+  exception unknown_functions record_goto delta finish next nexti step \
+  stepi multi-thread-step rn-dl-bind data
 
 MISCELLANEOUS =
 

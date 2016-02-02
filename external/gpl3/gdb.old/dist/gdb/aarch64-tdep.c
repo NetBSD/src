@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on AArch64 systems.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -24,7 +24,6 @@
 #include "inferior.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include <string.h>
 #include "dis-asm.h"
 #include "regcache.h"
 #include "reggroups.h"
@@ -49,7 +48,6 @@
 #include "elf-bfd.h"
 #include "elf/aarch64.h"
 
-#include "gdb_assert.h"
 #include "vec.h"
 
 #include "features/aarch64.c"
@@ -2509,6 +2507,84 @@ value_of_aarch64_user_reg (struct frame_info *frame, const void *baton)
 }
 
 
+/* Implement the "software_single_step" gdbarch method, needed to
+   single step through atomic sequences on AArch64.  */
+
+static int
+aarch64_software_single_step (struct frame_info *frame)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct address_space *aspace = get_frame_address_space (frame);
+  enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
+  const int insn_size = 4;
+  const int atomic_sequence_length = 16; /* Instruction sequence length.  */
+  CORE_ADDR pc = get_frame_pc (frame);
+  CORE_ADDR breaks[2] = { -1, -1 };
+  CORE_ADDR loc = pc;
+  CORE_ADDR closing_insn = 0;
+  uint32_t insn = read_memory_unsigned_integer (loc, insn_size,
+						byte_order_for_code);
+  int index;
+  int insn_count;
+  int bc_insn_count = 0; /* Conditional branch instruction count.  */
+  int last_breakpoint = 0; /* Defaults to 0 (no breakpoints placed).  */
+
+  /* Look for a Load Exclusive instruction which begins the sequence.  */
+  if (!decode_masked_match (insn, 0x3fc00000, 0x08400000))
+    return 0;
+
+  for (insn_count = 0; insn_count < atomic_sequence_length; ++insn_count)
+    {
+      int32_t offset;
+      unsigned cond;
+
+      loc += insn_size;
+      insn = read_memory_unsigned_integer (loc, insn_size,
+					   byte_order_for_code);
+
+      /* Check if the instruction is a conditional branch.  */
+      if (decode_bcond (loc, insn, &cond, &offset))
+	{
+	  if (bc_insn_count >= 1)
+	    return 0;
+
+	  /* It is, so we'll try to set a breakpoint at the destination.  */
+	  breaks[1] = loc + offset;
+
+	  bc_insn_count++;
+	  last_breakpoint++;
+	}
+
+      /* Look for the Store Exclusive which closes the atomic sequence.  */
+      if (decode_masked_match (insn, 0x3fc00000, 0x08000000))
+	{
+	  closing_insn = loc;
+	  break;
+	}
+    }
+
+  /* We didn't find a closing Store Exclusive instruction, fall back.  */
+  if (!closing_insn)
+    return 0;
+
+  /* Insert breakpoint after the end of the atomic sequence.  */
+  breaks[0] = loc + insn_size;
+
+  /* Check for duplicated breakpoints, and also check that the second
+     breakpoint is not within the atomic sequence.  */
+  if (last_breakpoint
+      && (breaks[1] == breaks[0]
+	  || (breaks[1] >= pc && breaks[1] <= closing_insn)))
+    last_breakpoint = 0;
+
+  /* Insert the breakpoint at the end of the sequence, and one at the
+     destination of the conditional branch, if it exists.  */
+  for (index = 0; index <= last_breakpoint; index++)
+    insert_single_step_breakpoint (gdbarch, aspace, breaks[index]);
+
+  return 1;
+}
+
 /* Initialize the current architecture based on INFO.  If possible,
    re-use an architecture from ARCHES, which is a list of
    architectures already created during this debugging session.
@@ -2624,6 +2700,7 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_breakpoint_from_pc (gdbarch, aarch64_breakpoint_from_pc);
   set_gdbarch_cannot_step_breakpoint (gdbarch, 1);
   set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
+  set_gdbarch_software_single_step (gdbarch, aarch64_software_single_step);
 
   /* Information about registers, etc.  */
   set_gdbarch_sp_regnum (gdbarch, AARCH64_SP_REGNUM);

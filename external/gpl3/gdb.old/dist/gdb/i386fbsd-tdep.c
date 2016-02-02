@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,11 +23,10 @@
 #include "osabi.h"
 #include "regcache.h"
 
-#include "gdb_assert.h"
-
 #include "i386-tdep.h"
 #include "i387-tdep.h"
 #include "bsd-uthread.h"
+#include "fbsd-tdep.h"
 #include "solib-svr4.h"
 
 /* FreeBSD 3.0-RELEASE or later.  */
@@ -205,6 +204,9 @@ static void
 i386fbsd4_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  /* Generic FreeBSD support. */
+  fbsd_init_abi (info, gdbarch);
 
   /* Inherit stuff from older releases.  We assume that FreeBSD
      4.0-RELEASE always uses ELF.  */

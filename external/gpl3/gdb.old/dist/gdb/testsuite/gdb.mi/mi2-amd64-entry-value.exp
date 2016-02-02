@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load ${binfile}
 
 foreach name {different breakhere_different breakhere_validity breakhere_invalid} {
-    mi_create_breakpoint $name .* .* .* .* .* .* "break $name"
+    mi_create_breakpoint $name "break $name"
 }
 
 

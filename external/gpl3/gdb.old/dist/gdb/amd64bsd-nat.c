@@ -1,6 +1,6 @@
 /* Native-dependent code for AMD64 BSD's.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,9 @@
 #include "target.h"
 
 #include "gdb_assert.h"
+/* We include <signal.h> to make sure `struct fxsave64' is defined on
+   NetBSD, since NetBSD's <machine/reg.h> needs it.  */
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>

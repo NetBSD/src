@@ -1,5 +1,5 @@
 /* Disassembler code for CRX.
-   Copyright 2004, 2005, 2006, 2007, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Tomer Levi, NSC, Israel.
    Written by Tomer Levi.
 

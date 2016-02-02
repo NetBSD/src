@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2014 Free Software Foundation, Inc.
+   Copyright 2011-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,13 +15,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* Target-specific way of forcing an instruction label.  */
+#ifdef __mips__
+#define START_INSNS asm (".insn");
+#else
+#define START_INSNS
+#endif
+
 /* Use DW_LANG_Fortran90 for case insensitive DWARF.  */
 asm (".globl cu_text_start");
 asm ("cu_text_start:");
+START_INSNS
 
 asm (".globl FUNC_lang_start");
 asm (".p2align 4");
 asm ("FUNC_lang_start:");
+START_INSNS
 
 void
 FUNC_lang (void)

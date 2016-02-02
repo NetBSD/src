@@ -1,6 +1,6 @@
 /* MI Internal Functions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,10 @@ extern void mi_load_progress (const char *section_name,
 			      unsigned long grand_total);
 
 extern void mi_print_timing_maybe (void);
+
+/* Whether MI is in async mode.  */
+
+extern int mi_async_p (void);
 
 extern char *current_token;
 

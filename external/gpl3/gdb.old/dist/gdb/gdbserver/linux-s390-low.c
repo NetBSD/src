@@ -1,6 +1,6 @@
 /* GNU/Linux S/390 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -290,12 +290,6 @@ s390_fill_gregset (struct regcache *regcache, void *buf)
 /* Fill and store functions for extended register sets.  */
 
 static void
-s390_fill_last_break (struct regcache *regcache, void *buf)
-{
-  /* Last break address is read-only.  */
-}
-
-static void
 s390_store_last_break (struct regcache *regcache, const void *buf)
 {
   const char *p;
@@ -316,13 +310,30 @@ s390_store_system_call (struct regcache *regcache, const void *buf)
   supply_register_by_name (regcache, "system_call", buf);
 }
 
+static void
+s390_store_tdb (struct regcache *regcache, const void *buf)
+{
+  int tdb0 = find_regno (regcache->tdesc, "tdb0");
+  int tr0 = find_regno (regcache->tdesc, "tr0");
+  int i;
+
+  for (i = 0; i < 4; i++)
+    supply_register (regcache, tdb0 + i, (const char *) buf + 8 * i);
+
+  for (i = 0; i < 16; i++)
+    supply_register (regcache, tr0 + i, (const char *) buf + 8 * (16 + i));
+}
+
 static struct regset_info s390_regsets[] = {
   { 0, 0, 0, 0, GENERAL_REGS, s390_fill_gregset, NULL },
-  /* Last break address is read-only; do not attempt PTRACE_SETREGSET.  */
-  { PTRACE_GETREGSET, PTRACE_GETREGSET, NT_S390_LAST_BREAK, 0,
-    EXTENDED_REGS, s390_fill_last_break, s390_store_last_break },
+  /* Last break address is read-only; no fill function.  */
+  { PTRACE_GETREGSET, -1, NT_S390_LAST_BREAK, 0, EXTENDED_REGS,
+    NULL, s390_store_last_break },
   { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_S390_SYSTEM_CALL, 0,
     EXTENDED_REGS, s390_fill_system_call, s390_store_system_call },
+  /* TDB is read-only.  */
+  { PTRACE_GETREGSET, -1, NT_S390_TDB, 0, EXTENDED_REGS,
+    NULL, s390_store_tdb },
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
@@ -422,7 +433,7 @@ s390_arch_setup (void)
   struct regset_info *regset;
 
   /* Check whether the kernel supports extra register sets.  */
-  int pid = pid_of (get_thread_lwp (current_inferior));
+  int pid = pid_of (current_thread);
   int have_regset_last_break
     = s390_check_regset (pid, NT_S390_LAST_BREAK, 8);
   int have_regset_system_call
@@ -485,7 +496,7 @@ s390_arch_setup (void)
 #endif
 
   /* Update target_regsets according to available register sets.  */
-  for (regset = s390_regsets; regset->fill_function != NULL; regset++)
+  for (regset = s390_regsets; regset->size >= 0; regset++)
     if (regset->get_request == PTRACE_GETREGSET)
       switch (regset->nt_type)
 	{
@@ -583,6 +594,7 @@ struct linux_target_ops the_low_target = {
   NULL,
   s390_breakpoint_len,
   s390_breakpoint_at,
+  NULL,  /* supports_z_point_type */
   NULL,
   NULL,
   NULL,

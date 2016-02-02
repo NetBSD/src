@@ -1,5 +1,5 @@
 /* MI Command Set - file commands.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -55,7 +55,9 @@ mi_cmd_file_list_exec_source_file (char *command, char **argv, int argc)
 
   ui_out_field_string (uiout, "fullname", symtab_to_fullname (st.symtab));
 
-  ui_out_field_int (uiout, "macro-info", st.symtab->macro_table ? 1 : 0);
+  ui_out_field_int (uiout, "macro-info",
+		    COMPUNIT_MACRO_TABLE
+		      (SYMTAB_COMPUNIT (st.symtab)) != NULL);
 }
 
 /* A callback for map_partial_symbol_filenames.  */
@@ -80,6 +82,7 @@ void
 mi_cmd_file_list_exec_source_files (char *command, char **argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
+  struct compunit_symtab *cu;
   struct symtab *s;
   struct objfile *objfile;
 
@@ -89,8 +92,8 @@ mi_cmd_file_list_exec_source_files (char *command, char **argv, int argc)
   /* Print the table header.  */
   ui_out_begin (uiout, ui_out_type_list, "files");
 
-  /* Look at all of the symtabs.  */
-  ALL_SYMTABS (objfile, s)
+  /* Look at all of the file symtabs.  */
+  ALL_FILETABS (objfile, cu, s)
   {
     ui_out_begin (uiout, ui_out_type_tuple, NULL);
 
@@ -100,8 +103,8 @@ mi_cmd_file_list_exec_source_files (char *command, char **argv, int argc)
     ui_out_end (uiout, ui_out_type_tuple);
   }
 
-  map_partial_symbol_filenames (print_partial_file_name, NULL,
-				1 /*need_fullname*/);
+  map_symbol_filenames (print_partial_file_name, NULL,
+			1 /*need_fullname*/);
 
   ui_out_end (uiout, ui_out_type_list);
 }

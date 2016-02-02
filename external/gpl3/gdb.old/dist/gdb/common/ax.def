@@ -1,5 +1,5 @@
 /* Definition of agent opcode values.   -*- c -*-
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -83,7 +83,7 @@ DEFOP (pop, 0, 0, 1, 0, 0x29)
 DEFOP (zero_ext, 1, 0, 1, 1, 0x2a)
 DEFOP (swap, 0, 0, 2, 2, 0x2b)
 DEFOP (getv, 2, 0, 0, 1, 0x2c)
-DEFOP (setv, 2, 0, 0, 1, 0x2d)
+DEFOP (setv, 2, 0, 1, 1, 0x2d)
 DEFOP (tracev, 2, 0, 0, 1, 0x2e)
 DEFOP (tracenz, 0, 0, 2, 0, 0x2f)
 DEFOP (trace16, 2, 0, 1, 1, 0x30)

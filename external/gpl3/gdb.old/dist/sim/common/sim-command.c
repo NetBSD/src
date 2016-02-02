@@ -1,6 +1,6 @@
 /* Miscellaneous simulator utilities.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -26,7 +26,7 @@
    which add custom options via sim_add_option_table().  */
 
 void
-sim_do_command (SIM_DESC sd, char *cmd)
+sim_do_command (SIM_DESC sd, const char *cmd)
 {
   if (sim_args_command (sd, cmd) != SIM_RC_OK)
     sim_io_eprintf (sd, "Unknown sim command: \"%s\".  Try \"sim help\".\n",

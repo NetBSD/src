@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -193,9 +193,6 @@ struct gdbarch_tdep
   /* Convention for returning structures.  */
   enum struct_return struct_return;
 
-  /* Cached core file helpers.  */
-  struct regset *gregset, *fpregset, *vfpregset;
-
   /* ISA-specific data types.  */
   struct type *arm_ext_type;
   struct type *neon_double_type;
@@ -205,8 +202,8 @@ struct gdbarch_tdep
      instruction.  */
   CORE_ADDR (*syscall_next_pc) (struct frame_info *frame);
 
-   /* Parse swi insn args, sycall record.  */
-  int (*arm_swi_record) (struct regcache *regcache);
+   /* syscall record.  */
+  int (*arm_syscall_record) (struct regcache *regcache, unsigned long svc_number);
 };
 
 /* Structures used for displaced stepping.  */
@@ -344,9 +341,11 @@ extern int arm_process_record (struct gdbarch *gdbarch,
 /* Return the appropriate register set for the core section identified
    by SECT_NAME and SECT_SIZE.  */
 
-extern const struct regset *
-  armbsd_regset_from_core_section (struct gdbarch *gdbarch,
-				   const char *sect_name, size_t sect_size);
+extern void
+  armbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				       iterate_over_regset_sections_cb *cb,
+				       void *cb_data,
+				       const struct regcache *regcache);
 
 /* Target descriptions.  */
 extern struct target_desc *tdesc_arm_with_m;

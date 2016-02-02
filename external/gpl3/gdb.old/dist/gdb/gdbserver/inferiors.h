@@ -1,5 +1,5 @@
 /* Inferior process information for the remote server for GDB.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,7 +42,9 @@ struct process_info_private;
 
 struct process_info
 {
-  struct inferior_list_entry head;
+  /* This must appear first.
+     The list iterator functions assume it.  */
+  struct inferior_list_entry entry;
 
   /* Nonzero if this child process was attached rather than
      spawned.  */
@@ -70,8 +72,12 @@ struct process_info
   struct process_info_private *private;
 };
 
+#define ptid_of(inf) ((inf)->entry.id)
+#define pid_of(inf) ptid_get_pid ((inf)->entry.id)
+#define lwpid_of(inf) ptid_get_lwp ((inf)->entry.id)
+
 /* Return a pointer to the process that corresponds to the current
-   thread (current_inferior).  It is an error to call this if there is
+   thread (current_thread).  It is an error to call this if there is
    no current thread selected.  */
 
 struct process_info *current_process (void);
@@ -84,9 +90,42 @@ void add_inferior_to_list (struct inferior_list *list,
 void for_each_inferior (struct inferior_list *list,
 			void (*action) (struct inferior_list_entry *));
 
-extern struct thread_info *current_inferior;
+void for_each_inferior_with_data
+  (struct inferior_list *list,
+   void (*action) (struct inferior_list_entry *, void *),
+   void *data);
+
+void clear_inferior_list (struct inferior_list *list);
+
+int one_inferior_p (struct inferior_list *list);
+
+/* Helper for ALL_INFERIORS_TYPE.  Gets the next element starting at
+   CUR, if CUR is not NULL.  */
+#define A_I_NEXT(type, list, cur)					\
+  ((cur) != NULL							\
+   ? (type *) ((struct inferior_list_entry *) cur)->next		\
+   : NULL)
+
+/* Iterate over all inferiors of type TYPE in LIST, open loop
+   style.  */
+#define ALL_INFERIORS_TYPE(type, list, cur, tmp)				\
+  for ((cur) = (type *) (list)->head, (tmp) = A_I_NEXT (type, list, cur); \
+       (cur) != NULL;							\
+       (cur) = (tmp), (tmp) = A_I_NEXT (type, list, cur))
+
+/* Iterate over all inferiors in LIST, open loop style.  */
+#define ALL_INFERIORS(list, cur, tmp)				\
+  ALL_INFERIORS_TYPE (struct inferior_list_entry, list, cur, tmp)
+
+/* Iterate over all processes, open loop style.  */
+#define ALL_PROCESSES(cur, tmp)					\
+  ALL_INFERIORS_TYPE (struct process_info, &all_processes, cur, tmp)
+
+extern struct thread_info *current_thread;
 void remove_inferior (struct inferior_list *list,
 		      struct inferior_list_entry *entry);
+
+struct inferior_list_entry *get_first_inferior (struct inferior_list *list);
 
 struct process_info *add_process (int pid, int attached);
 void remove_process (struct process_info *process);
@@ -94,7 +133,6 @@ struct process_info *find_process_pid (int pid);
 int have_started_inferiors_p (void);
 int have_attached_inferiors_p (void);
 
-ptid_t thread_id_to_gdb_id (ptid_t);
 ptid_t thread_to_gdb_id (struct thread_info *);
 ptid_t gdb_id_to_thread_id (ptid_t);
 
@@ -106,6 +144,7 @@ struct inferior_list_entry *find_inferior
       void *arg);
 struct inferior_list_entry *find_inferior_id (struct inferior_list *list,
 					      ptid_t id);
+
 void *inferior_target_data (struct thread_info *);
 void set_inferior_target_data (struct thread_info *, void *);
 void *inferior_regcache_data (struct thread_info *);

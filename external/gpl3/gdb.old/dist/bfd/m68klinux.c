@@ -1,7 +1,5 @@
 /* BFD back-end for linux flavored m68k a.out binaries.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,7 +39,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (m68klinux_,OP)
+#define MY(OP) CONCAT2 (m68k_aout_linux_,OP)
 #define TARGETNAME "a.out-m68k-linux"
 
 extern const bfd_target MY(vec);

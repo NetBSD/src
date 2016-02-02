@@ -1,5 +1,5 @@
 /* YACC parser for Java expressions, for GDB.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,6 @@
 %{
 
 #include "defs.h"
-#include <string.h>
 #include <ctype.h>
 #include "expression.h"
 #include "value.h"
@@ -49,8 +48,8 @@
 #include "block.h"
 #include "completer.h"
 
-#define parse_type builtin_type (parse_gdbarch)
-#define parse_java_type builtin_java_type (parse_gdbarch)
+#define parse_type(ps) builtin_type (parse_gdbarch (ps))
+#define parse_java_type(ps) builtin_java_type (parse_gdbarch (ps))
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
    as well as gratuitiously global symbol names, so we can have multiple
@@ -60,7 +59,7 @@
    generators need to be fixed instead of adding those names to this list.  */
 
 #define	yymaxdepth java_maxdepth
-#define	yyparse	java_parse
+#define	yyparse	java_parse_internal
 #define	yylex	java_lex
 #define	yyerror	java_error
 #define	yylval	java_lval
@@ -112,6 +111,11 @@
 
 #define YYFPRINTF parser_fprintf
 
+/* The state of the parser, used internally when we are parsing the
+   expression.  */
+
+static struct parser_state *pstate = NULL;
+
 int yyparse (void);
 
 static int yylex (void);
@@ -119,11 +123,11 @@ static int yylex (void);
 void yyerror (char *);
 
 static struct type *java_type_from_name (struct stoken);
-static void push_expression_name (struct stoken);
-static void push_fieldnames (struct stoken);
+static void push_expression_name (struct parser_state *, struct stoken);
+static void push_fieldnames (struct parser_state *, struct stoken);
 
 static struct expression *copy_exp (struct expression *, int);
-static void insert_exp (int, struct expression *);
+static void insert_exp (struct parser_state *, int, struct expression *);
 
 %}
 
@@ -155,7 +159,8 @@ static void insert_exp (int, struct expression *);
 
 %{
 /* YYSTYPE gets defined by %union */
-static int parse_number (const char *, int, int, YYSTYPE *);
+static int parse_number (struct parser_state *, const char *, int,
+			 int, YYSTYPE *);
 %}
 
 %type <lval> rcurly Dims Dims_opt
@@ -215,9 +220,9 @@ start   :	exp1
 
 type_exp:	PrimitiveOrArrayType
 		{
-		  write_exp_elt_opcode(OP_TYPE);
-		  write_exp_elt_type($1);
-		  write_exp_elt_opcode(OP_TYPE);
+		  write_exp_elt_opcode (pstate, OP_TYPE);
+		  write_exp_elt_type (pstate, $1);
+		  write_exp_elt_opcode (pstate, OP_TYPE);
 		}
 	;
 
@@ -229,36 +234,38 @@ PrimitiveOrArrayType:
 StringLiteral:
 	STRING_LITERAL
 		{
-		  write_exp_elt_opcode (OP_STRING);
-		  write_exp_string ($1);
-		  write_exp_elt_opcode (OP_STRING);
+		  write_exp_elt_opcode (pstate, OP_STRING);
+		  write_exp_string (pstate, $1);
+		  write_exp_elt_opcode (pstate, OP_STRING);
 		}
 ;
 
 Literal:
 	INTEGER_LITERAL
-		{ write_exp_elt_opcode (OP_LONG);
-		  write_exp_elt_type ($1.type);
-		  write_exp_elt_longcst ((LONGEST)($1.val));
-		  write_exp_elt_opcode (OP_LONG); }
+		{ write_exp_elt_opcode (pstate, OP_LONG);
+		  write_exp_elt_type (pstate, $1.type);
+		  write_exp_elt_longcst (pstate, (LONGEST)($1.val));
+		  write_exp_elt_opcode (pstate, OP_LONG); }
 |	NAME_OR_INT
 		{ YYSTYPE val;
-		  parse_number ($1.ptr, $1.length, 0, &val);
-		  write_exp_elt_opcode (OP_LONG);
-		  write_exp_elt_type (val.typed_val_int.type);
-		  write_exp_elt_longcst ((LONGEST)val.typed_val_int.val);
-		  write_exp_elt_opcode (OP_LONG);
+		  parse_number (pstate, $1.ptr, $1.length, 0, &val);
+		  write_exp_elt_opcode (pstate, OP_LONG);
+		  write_exp_elt_type (pstate, val.typed_val_int.type);
+		  write_exp_elt_longcst (pstate,
+					 (LONGEST) val.typed_val_int.val);
+		  write_exp_elt_opcode (pstate, OP_LONG);
 		}
 |	FLOATING_POINT_LITERAL
-		{ write_exp_elt_opcode (OP_DOUBLE);
-		  write_exp_elt_type ($1.type);
-		  write_exp_elt_dblcst ($1.dval);
-		  write_exp_elt_opcode (OP_DOUBLE); }
+		{ write_exp_elt_opcode (pstate, OP_DOUBLE);
+		  write_exp_elt_type (pstate, $1.type);
+		  write_exp_elt_dblcst (pstate, $1.dval);
+		  write_exp_elt_opcode (pstate, OP_DOUBLE); }
 |	BOOLEAN_LITERAL
-		{ write_exp_elt_opcode (OP_LONG);
-		  write_exp_elt_type (parse_java_type->builtin_boolean);
-		  write_exp_elt_longcst ((LONGEST)$1);
-		  write_exp_elt_opcode (OP_LONG); }
+		{ write_exp_elt_opcode (pstate, OP_LONG);
+		  write_exp_elt_type (pstate,
+				  parse_java_type (pstate)->builtin_boolean);
+		  write_exp_elt_longcst (pstate, (LONGEST)$1);
+		  write_exp_elt_opcode (pstate, OP_LONG); }
 |	StringLiteral
 	;
 
@@ -272,7 +279,7 @@ Type:
 PrimitiveType:
 	NumericType
 |	BOOLEAN
-		{ $$ = parse_java_type->builtin_boolean; }
+		{ $$ = parse_java_type (pstate)->builtin_boolean; }
 ;
 
 NumericType:
@@ -282,22 +289,22 @@ NumericType:
 
 IntegralType:
 	BYTE
-		{ $$ = parse_java_type->builtin_byte; }
+		{ $$ = parse_java_type (pstate)->builtin_byte; }
 |	SHORT
-		{ $$ = parse_java_type->builtin_short; }
+		{ $$ = parse_java_type (pstate)->builtin_short; }
 |	INT
-		{ $$ = parse_java_type->builtin_int; }
+		{ $$ = parse_java_type (pstate)->builtin_int; }
 |	LONG
-		{ $$ = parse_java_type->builtin_long; }
+		{ $$ = parse_java_type (pstate)->builtin_long; }
 |	CHAR
-		{ $$ = parse_java_type->builtin_char; }
+		{ $$ = parse_java_type (pstate)->builtin_char; }
 ;
 
 FloatingPointType:
 	FLOAT
-		{ $$ = parse_java_type->builtin_float; }
+		{ $$ = parse_java_type (pstate)->builtin_float; }
 |	DOUBLE
-		{ $$ = parse_java_type->builtin_double; }
+		{ $$ = parse_java_type (pstate)->builtin_double; }
 ;
 
 /* UNUSED:
@@ -367,7 +374,7 @@ type_exp:	type
 /* Expressions, including the comma operator.  */
 exp1	:	Expression
 	|	exp1 ',' Expression
-			{ write_exp_elt_opcode (BINOP_COMMA); }
+			{ write_exp_elt_opcode (pstate, BINOP_COMMA); }
 	;
 
 Primary:
@@ -383,10 +390,10 @@ PrimaryNoNewArray:
 |	MethodInvocation
 |	ArrayAccess
 |	lcurly ArgumentList rcurly
-		{ write_exp_elt_opcode (OP_ARRAY);
-		  write_exp_elt_longcst ((LONGEST) 0);
-		  write_exp_elt_longcst ((LONGEST) $3);
-		  write_exp_elt_opcode (OP_ARRAY); }
+		{ write_exp_elt_opcode (pstate, OP_ARRAY);
+		  write_exp_elt_longcst (pstate, (LONGEST) 0);
+		  write_exp_elt_longcst (pstate, (LONGEST) $3);
+		  write_exp_elt_opcode (pstate, OP_ARRAY); }
 ;
 
 lcurly:
@@ -451,24 +458,24 @@ Dims_opt:
 
 FieldAccess:
 	Primary '.' SimpleName
-		{ push_fieldnames ($3); }
+		{ push_fieldnames (pstate, $3); }
 |	VARIABLE '.' SimpleName
-		{ push_fieldnames ($3); }
+		{ push_fieldnames (pstate, $3); }
 /*|	SUPER '.' SimpleName { FIXME } */
 ;
 
 FuncStart:
 	Name '('
-                { push_expression_name ($1); }
+                { push_expression_name (pstate, $1); }
 ;
 
 MethodInvocation:
 	FuncStart
                 { start_arglist(); }
 	ArgumentList_opt ')'
-                { write_exp_elt_opcode (OP_FUNCALL);
-		  write_exp_elt_longcst ((LONGEST) end_arglist ());
-		  write_exp_elt_opcode (OP_FUNCALL); }
+                { write_exp_elt_opcode (pstate, OP_FUNCALL);
+		  write_exp_elt_longcst (pstate, (LONGEST) end_arglist ());
+		  write_exp_elt_opcode (pstate, OP_FUNCALL); }
 |	Primary '.' SimpleName '(' ArgumentList_opt ')'
 		{ error (_("Form of method invocation not implemented")); }
 |	SUPER '.' SimpleName '(' ArgumentList_opt ')'
@@ -485,24 +492,27 @@ ArrayAccess:
 		     for our parsing kludges.  */
 		  struct expression *name_expr;
 
-		  push_expression_name ($1);
-		  name_expr = copy_exp (expout, expout_ptr);
-		  expout_ptr -= name_expr->nelts;
-		  insert_exp (expout_ptr-length_of_subexp (expout, expout_ptr),
+		  push_expression_name (pstate, $1);
+		  name_expr = copy_exp (pstate->expout, pstate->expout_ptr);
+		  pstate->expout_ptr -= name_expr->nelts;
+		  insert_exp (pstate,
+			      pstate->expout_ptr
+			      - length_of_subexp (pstate->expout,
+						  pstate->expout_ptr),
 			      name_expr);
 		  free (name_expr);
-		  write_exp_elt_opcode (BINOP_SUBSCRIPT);
+		  write_exp_elt_opcode (pstate, BINOP_SUBSCRIPT);
 		}
 |	VARIABLE '[' Expression ']'
-		{ write_exp_elt_opcode (BINOP_SUBSCRIPT); }
+		{ write_exp_elt_opcode (pstate, BINOP_SUBSCRIPT); }
 |	PrimaryNoNewArray '[' Expression ']'
-		{ write_exp_elt_opcode (BINOP_SUBSCRIPT); }
+		{ write_exp_elt_opcode (pstate, BINOP_SUBSCRIPT); }
 ;
 
 PostfixExpression:
 	Primary
 |	Name
-		{ push_expression_name ($1); }
+		{ push_expression_name (pstate, $1); }
 |	VARIABLE
 		/* Already written by write_dollar_variable.  */
 |	PostIncrementExpression
@@ -511,12 +521,12 @@ PostfixExpression:
 
 PostIncrementExpression:
 	PostfixExpression INCREMENT
-		{ write_exp_elt_opcode (UNOP_POSTINCREMENT); }
+		{ write_exp_elt_opcode (pstate, UNOP_POSTINCREMENT); }
 ;
 
 PostDecrementExpression:
 	PostfixExpression DECREMENT
-		{ write_exp_elt_opcode (UNOP_POSTDECREMENT); }
+		{ write_exp_elt_opcode (pstate, UNOP_POSTDECREMENT); }
 ;
 
 UnaryExpression:
@@ -524,144 +534,151 @@ UnaryExpression:
 |	PreDecrementExpression
 |	'+' UnaryExpression
 |	'-' UnaryExpression
-		{ write_exp_elt_opcode (UNOP_NEG); }
+		{ write_exp_elt_opcode (pstate, UNOP_NEG); }
 |	'*' UnaryExpression 
-		{ write_exp_elt_opcode (UNOP_IND); } /*FIXME not in Java  */
+		{ write_exp_elt_opcode (pstate,
+					UNOP_IND); } /*FIXME not in Java  */
 |	UnaryExpressionNotPlusMinus
 ;
 
 PreIncrementExpression:
 	INCREMENT UnaryExpression
-		{ write_exp_elt_opcode (UNOP_PREINCREMENT); }
+		{ write_exp_elt_opcode (pstate, UNOP_PREINCREMENT); }
 ;
 
 PreDecrementExpression:
 	DECREMENT UnaryExpression
-		{ write_exp_elt_opcode (UNOP_PREDECREMENT); }
+		{ write_exp_elt_opcode (pstate, UNOP_PREDECREMENT); }
 ;
 
 UnaryExpressionNotPlusMinus:
 	PostfixExpression
 |	'~' UnaryExpression
-		{ write_exp_elt_opcode (UNOP_COMPLEMENT); }
+		{ write_exp_elt_opcode (pstate, UNOP_COMPLEMENT); }
 |	'!' UnaryExpression
-		{ write_exp_elt_opcode (UNOP_LOGICAL_NOT); }
+		{ write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT); }
 |	CastExpression
 	;
 
 CastExpression:
 	'(' PrimitiveType Dims_opt ')' UnaryExpression
-		{ write_exp_elt_opcode (UNOP_CAST);
-		  write_exp_elt_type (java_array_type ($2, $3));
-		  write_exp_elt_opcode (UNOP_CAST); }
+		{ write_exp_elt_opcode (pstate, UNOP_CAST);
+		  write_exp_elt_type (pstate, java_array_type ($2, $3));
+		  write_exp_elt_opcode (pstate, UNOP_CAST); }
 |	'(' Expression ')' UnaryExpressionNotPlusMinus
 		{
-		  int last_exp_size = length_of_subexp(expout, expout_ptr);
+		  int last_exp_size = length_of_subexp (pstate->expout,
+							pstate->expout_ptr);
 		  struct type *type;
 		  int i;
-		  int base = expout_ptr - last_exp_size - 3;
-		  if (base < 0 || expout->elts[base+2].opcode != OP_TYPE)
+		  int base = pstate->expout_ptr - last_exp_size - 3;
+
+		  if (base < 0
+		      || pstate->expout->elts[base+2].opcode != OP_TYPE)
 		    error (_("Invalid cast expression"));
-		  type = expout->elts[base+1].type;
+		  type = pstate->expout->elts[base+1].type;
 		  /* Remove the 'Expression' and slide the
 		     UnaryExpressionNotPlusMinus down to replace it.  */
 		  for (i = 0;  i < last_exp_size;  i++)
-		    expout->elts[base + i] = expout->elts[base + i + 3];
-		  expout_ptr -= 3;
+		    pstate->expout->elts[base + i]
+		      = pstate->expout->elts[base + i + 3];
+		  pstate->expout_ptr -= 3;
 		  if (TYPE_CODE (type) == TYPE_CODE_STRUCT)
 		    type = lookup_pointer_type (type);
-		  write_exp_elt_opcode (UNOP_CAST);
-		  write_exp_elt_type (type);
-		  write_exp_elt_opcode (UNOP_CAST);
+		  write_exp_elt_opcode (pstate, UNOP_CAST);
+		  write_exp_elt_type (pstate, type);
+		  write_exp_elt_opcode (pstate, UNOP_CAST);
 		}
 |	'(' Name Dims ')' UnaryExpressionNotPlusMinus
-		{ write_exp_elt_opcode (UNOP_CAST);
-		  write_exp_elt_type (java_array_type (java_type_from_name ($2), $3));
-		  write_exp_elt_opcode (UNOP_CAST); }
+		{ write_exp_elt_opcode (pstate, UNOP_CAST);
+		  write_exp_elt_type (pstate,
+				      java_array_type (java_type_from_name
+						       ($2), $3));
+		  write_exp_elt_opcode (pstate, UNOP_CAST); }
 ;
 
 
 MultiplicativeExpression:
 	UnaryExpression
 |	MultiplicativeExpression '*' UnaryExpression
-		{ write_exp_elt_opcode (BINOP_MUL); }
+		{ write_exp_elt_opcode (pstate, BINOP_MUL); }
 |	MultiplicativeExpression '/' UnaryExpression
-		{ write_exp_elt_opcode (BINOP_DIV); }
+		{ write_exp_elt_opcode (pstate, BINOP_DIV); }
 |	MultiplicativeExpression '%' UnaryExpression
-		{ write_exp_elt_opcode (BINOP_REM); }
+		{ write_exp_elt_opcode (pstate, BINOP_REM); }
 ;
 
 AdditiveExpression:
 	MultiplicativeExpression
 |	AdditiveExpression '+' MultiplicativeExpression
-		{ write_exp_elt_opcode (BINOP_ADD); }
+		{ write_exp_elt_opcode (pstate, BINOP_ADD); }
 |	AdditiveExpression '-' MultiplicativeExpression
-		{ write_exp_elt_opcode (BINOP_SUB); }
+		{ write_exp_elt_opcode (pstate, BINOP_SUB); }
 ;
 
 ShiftExpression:
 	AdditiveExpression
 |	ShiftExpression LSH AdditiveExpression
-		{ write_exp_elt_opcode (BINOP_LSH); }
+		{ write_exp_elt_opcode (pstate, BINOP_LSH); }
 |	ShiftExpression RSH AdditiveExpression
-		{ write_exp_elt_opcode (BINOP_RSH); }
+		{ write_exp_elt_opcode (pstate, BINOP_RSH); }
 /* |	ShiftExpression >>> AdditiveExpression { FIXME } */
 ;
 
 RelationalExpression:
 	ShiftExpression
 |	RelationalExpression '<' ShiftExpression
-		{ write_exp_elt_opcode (BINOP_LESS); }
+		{ write_exp_elt_opcode (pstate, BINOP_LESS); }
 |	RelationalExpression '>' ShiftExpression
-		{ write_exp_elt_opcode (BINOP_GTR); }
+		{ write_exp_elt_opcode (pstate, BINOP_GTR); }
 |	RelationalExpression LEQ ShiftExpression
-		{ write_exp_elt_opcode (BINOP_LEQ); }
+		{ write_exp_elt_opcode (pstate, BINOP_LEQ); }
 |	RelationalExpression GEQ ShiftExpression
-		{ write_exp_elt_opcode (BINOP_GEQ); }
+		{ write_exp_elt_opcode (pstate, BINOP_GEQ); }
 /* | RelationalExpresion INSTANCEOF ReferenceType { FIXME } */
 ;
 
 EqualityExpression:
 	RelationalExpression
 |	EqualityExpression EQUAL RelationalExpression
-		{ write_exp_elt_opcode (BINOP_EQUAL); }
+		{ write_exp_elt_opcode (pstate, BINOP_EQUAL); }
 |	EqualityExpression NOTEQUAL RelationalExpression
-		{ write_exp_elt_opcode (BINOP_NOTEQUAL); }
+		{ write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
 ;
 
 AndExpression:
 	EqualityExpression
 |	AndExpression '&' EqualityExpression
-		{ write_exp_elt_opcode (BINOP_BITWISE_AND); }
+		{ write_exp_elt_opcode (pstate, BINOP_BITWISE_AND); }
 ;
 
 ExclusiveOrExpression:
 	AndExpression
 |	ExclusiveOrExpression '^' AndExpression
-		{ write_exp_elt_opcode (BINOP_BITWISE_XOR); }
+		{ write_exp_elt_opcode (pstate, BINOP_BITWISE_XOR); }
 ;
 InclusiveOrExpression:
 	ExclusiveOrExpression
 |	InclusiveOrExpression '|' ExclusiveOrExpression
-		{ write_exp_elt_opcode (BINOP_BITWISE_IOR); }
+		{ write_exp_elt_opcode (pstate, BINOP_BITWISE_IOR); }
 ;
 
 ConditionalAndExpression:
 	InclusiveOrExpression
 |	ConditionalAndExpression ANDAND InclusiveOrExpression
-		{ write_exp_elt_opcode (BINOP_LOGICAL_AND); }
+		{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
 ;
 
 ConditionalOrExpression:
 	ConditionalAndExpression
 |	ConditionalOrExpression OROR ConditionalAndExpression
-		{ write_exp_elt_opcode (BINOP_LOGICAL_OR); }
+		{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
 ;
 
 ConditionalExpression:
 	ConditionalOrExpression
 |	ConditionalOrExpression '?' Expression ':' ConditionalExpression
-		{ write_exp_elt_opcode (TERNOP_COND); }
+		{ write_exp_elt_opcode (pstate, TERNOP_COND); }
 ;
 
 AssignmentExpression:
@@ -671,16 +688,16 @@ AssignmentExpression:
 			  
 Assignment:
 	LeftHandSide '=' ConditionalExpression
-		{ write_exp_elt_opcode (BINOP_ASSIGN); }
+		{ write_exp_elt_opcode (pstate, BINOP_ASSIGN); }
 |	LeftHandSide ASSIGN_MODIFY ConditionalExpression
-		{ write_exp_elt_opcode (BINOP_ASSIGN_MODIFY);
-		  write_exp_elt_opcode ($2);
-		  write_exp_elt_opcode (BINOP_ASSIGN_MODIFY); }
+		{ write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
+		  write_exp_elt_opcode (pstate, $2);
+		  write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY); }
 ;
 
 LeftHandSide:
 	ForcedName
-		{ push_expression_name ($1); }
+		{ push_expression_name (pstate, $1); }
 |	VARIABLE
 		/* Already written by write_dollar_variable.  */
 |	FieldAccess
@@ -700,7 +717,8 @@ Expression:
 /*** Needs some error checking for the float case ***/
 
 static int
-parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
+parse_number (struct parser_state *par_state,
+	      const char *p, int len, int parsed_float, YYSTYPE *putithere)
 {
   ULONGEST n = 0;
   ULONGEST limit, limit_div_base;
@@ -721,16 +739,17 @@ parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
       suffix_len = p + len - suffix;
 
       if (suffix_len == 0)
-	putithere->typed_val_float.type = parse_type->builtin_double;
+	putithere->typed_val_float.type
+	  = parse_type (par_state)->builtin_double;
       else if (suffix_len == 1)
 	{
 	  /* See if it has `f' or `d' suffix (float or double).  */
 	  if (tolower (*suffix) == 'f')
 	    putithere->typed_val_float.type =
-	      parse_type->builtin_float;
+	      parse_type (par_state)->builtin_float;
 	  else if (tolower (*suffix) == 'd')
 	    putithere->typed_val_float.type =
-	      parse_type->builtin_double;
+	      parse_type (par_state)->builtin_double;
 	  else
 	    return ERROR;
 	}
@@ -777,12 +796,12 @@ parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
   limit = ((limit << 16) << 16) | limit;
   if (c == 'l' || c == 'L')
     {
-      type = parse_java_type->builtin_long;
+      type = parse_java_type (par_state)->builtin_long;
       len--;
     }
   else
     {
-      type = parse_java_type->builtin_int;
+      type = parse_java_type (par_state)->builtin_int;
     }
   limit_div_base = limit / (ULONGEST) base;
 
@@ -807,11 +826,13 @@ parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
 
   /* If the type is bigger than a 32-bit signed integer can be, implicitly
      promote to long.  Java does not do this, so mark it as
-     parse_type->builtin_uint64 rather than parse_java_type->builtin_long.
+     parse_type (par_state)->builtin_uint64 rather than
+     parse_java_type (par_state)->builtin_long.
      0x80000000 will become -0x80000000 instead of 0x80000000L, because we
      don't know the sign at this point.  */
-  if (type == parse_java_type->builtin_int && n > (ULONGEST)0x80000000)
-    type = parse_type->builtin_uint64;
+  if (type == parse_java_type (par_state)->builtin_int
+      && n > (ULONGEST)0x80000000)
+    type = parse_type (par_state)->builtin_uint64;
 
   putithere->typed_val_int.val = n;
   putithere->typed_val_int.type = type;
@@ -909,12 +930,12 @@ yylex (void)
       lexptr++;
       c = *lexptr++;
       if (c == '\\')
-	c = parse_escape (parse_gdbarch, &lexptr);
+	c = parse_escape (parse_gdbarch (pstate), &lexptr);
       else if (c == '\'')
 	error (_("Empty character constant"));
 
       yylval.typed_val_int.val = c;
-      yylval.typed_val_int.type = parse_java_type->builtin_char;
+      yylval.typed_val_int.type = parse_java_type (pstate)->builtin_char;
 
       c = *lexptr++;
       if (c != '\'')
@@ -1007,7 +1028,8 @@ yylex (void)
 				  && (*p < 'A' || *p > 'Z')))
 	      break;
 	  }
-	toktype = parse_number (tokstart, p - tokstart, got_dot|got_e, &yylval);
+	toktype = parse_number (pstate, tokstart, p - tokstart,
+				got_dot|got_e, &yylval);
         if (toktype == ERROR)
 	  {
 	    char *err_copy = (char *) alloca (p - tokstart + 1);
@@ -1072,7 +1094,7 @@ yylex (void)
 	    break;
 	  case '\\':
 	    tokptr++;
-	    c = parse_escape (parse_gdbarch, &tokptr);
+	    c = parse_escape (parse_gdbarch (pstate), &tokptr);
 	    if (c == -1)
 	      {
 		continue;
@@ -1184,7 +1206,7 @@ yylex (void)
 
   if (*tokstart == '$')
     {
-      write_dollar_variable (yylval.sval);
+      write_dollar_variable (pstate, yylval.sval);
       return VARIABLE;
     }
 
@@ -1195,11 +1217,27 @@ yylex (void)
        (tokstart[0] >= 'A' && tokstart[0] < 'A' + input_radix - 10)))
     {
       YYSTYPE newlval;	/* Its value is ignored.  */
-      int hextype = parse_number (tokstart, namelen, 0, &newlval);
+      int hextype = parse_number (pstate, tokstart, namelen, 0, &newlval);
       if (hextype == INTEGER_LITERAL)
 	return NAME_OR_INT;
     }
   return IDENTIFIER;
+}
+
+int
+java_parse (struct parser_state *par_state)
+{
+  int result;
+  struct cleanup *c = make_cleanup_clear_parser_state (&pstate);
+
+  /* Setting up the parser state.  */
+  gdb_assert (par_state != NULL);
+  pstate = par_state;
+
+  result = yyparse ();
+  do_cleanups (c);
+
+  return result;
 }
 
 void
@@ -1228,11 +1266,12 @@ java_type_from_name (struct stoken name)
    Otherwise, return 0.  */
 
 static int
-push_variable (struct stoken name)
+push_variable (struct parser_state *par_state, struct stoken name)
 {
   char *tmp = copy_name (name);
   struct field_of_this_result is_a_field_of_this;
   struct symbol *sym;
+
   sym = lookup_symbol (tmp, expression_context_block, VAR_DOMAIN,
 		       &is_a_field_of_this);
   if (sym && SYMBOL_CLASS (sym) != LOC_TYPEDEF)
@@ -1244,12 +1283,12 @@ push_variable (struct stoken name)
 	    innermost_block = block_found;
 	}
 
-      write_exp_elt_opcode (OP_VAR_VALUE);
+      write_exp_elt_opcode (par_state, OP_VAR_VALUE);
       /* We want to use the selected frame, not another more inner frame
 	 which happens to be in the same block.  */
-      write_exp_elt_block (NULL);
-      write_exp_elt_sym (sym);
-      write_exp_elt_opcode (OP_VAR_VALUE);
+      write_exp_elt_block (par_state, NULL);
+      write_exp_elt_sym (par_state, sym);
+      write_exp_elt_opcode (par_state, OP_VAR_VALUE);
       return 1;
     }
   if (is_a_field_of_this.type != NULL)
@@ -1259,11 +1298,11 @@ push_variable (struct stoken name)
       if (innermost_block == 0 || 
 	  contained_in (block_found, innermost_block))
 	innermost_block = block_found;
-      write_exp_elt_opcode (OP_THIS);
-      write_exp_elt_opcode (OP_THIS);
-      write_exp_elt_opcode (STRUCTOP_PTR);
-      write_exp_string (name);
-      write_exp_elt_opcode (STRUCTOP_PTR);
+      write_exp_elt_opcode (par_state, OP_THIS);
+      write_exp_elt_opcode (par_state, OP_THIS);
+      write_exp_elt_opcode (par_state, STRUCTOP_PTR);
+      write_exp_string (par_state, name);
+      write_exp_elt_opcode (par_state, STRUCTOP_PTR);
       return 1;
     }
   return 0;
@@ -1274,7 +1313,7 @@ push_variable (struct stoken name)
    qualified name (has '.'), generate a field access for each part.  */
 
 static void
-push_fieldnames (struct stoken name)
+push_fieldnames (struct parser_state *par_state, struct stoken name)
 {
   int i;
   struct stoken token;
@@ -1285,9 +1324,9 @@ push_fieldnames (struct stoken name)
 	{
 	  /* token.ptr is start of current field name.  */
 	  token.length = &name.ptr[i] - token.ptr;
-	  write_exp_elt_opcode (STRUCTOP_PTR);
-	  write_exp_string (token);
-	  write_exp_elt_opcode (STRUCTOP_PTR);
+	  write_exp_elt_opcode (par_state, STRUCTOP_PTR);
+	  write_exp_string (par_state, token);
+	  write_exp_elt_opcode (par_state, STRUCTOP_PTR);
 	  token.ptr += token.length + 1;
 	}
       if (i >= name.length)
@@ -1299,7 +1338,8 @@ push_fieldnames (struct stoken name)
    Handle a qualified name, where DOT_INDEX is the index of the first '.' */
 
 static void
-push_qualified_expression_name (struct stoken name, int dot_index)
+push_qualified_expression_name (struct parser_state *par_state,
+				struct stoken name, int dot_index)
 {
   struct stoken token;
   char *tmp;
@@ -1308,11 +1348,11 @@ push_qualified_expression_name (struct stoken name, int dot_index)
   token.ptr = name.ptr;
   token.length = dot_index;
 
-  if (push_variable (token))
+  if (push_variable (par_state, token))
     {
       token.ptr = name.ptr + dot_index + 1;
       token.length = name.length - dot_index - 1;
-      push_fieldnames (token);
+      push_fieldnames (par_state, token);
       return;
     }
 
@@ -1326,9 +1366,9 @@ push_qualified_expression_name (struct stoken name, int dot_index)
 	{
 	  if (dot_index == name.length)
 	    {
-	      write_exp_elt_opcode(OP_TYPE);
-	      write_exp_elt_type(typ);
-	      write_exp_elt_opcode(OP_TYPE);
+	      write_exp_elt_opcode (par_state, OP_TYPE);
+	      write_exp_elt_type (par_state, typ);
+	      write_exp_elt_opcode (par_state, OP_TYPE);
 	      return;
 	    }
 	  dot_index++;  /* Skip '.' */
@@ -1339,16 +1379,16 @@ push_qualified_expression_name (struct stoken name, int dot_index)
 	    dot_index++;
 	  token.ptr = name.ptr;
 	  token.length = dot_index;
-	  write_exp_elt_opcode (OP_SCOPE);
-	  write_exp_elt_type (typ);
-	  write_exp_string (token);
-	  write_exp_elt_opcode (OP_SCOPE); 
+	  write_exp_elt_opcode (par_state, OP_SCOPE);
+	  write_exp_elt_type (par_state, typ);
+	  write_exp_string (par_state, token);
+	  write_exp_elt_opcode (par_state, OP_SCOPE); 
 	  if (dot_index < name.length)
 	    {
 	      dot_index++;
 	      name.ptr += dot_index;
 	      name.length -= dot_index;
-	      push_fieldnames (name);
+	      push_fieldnames (par_state, name);
 	    }
 	  return;
 	}
@@ -1365,7 +1405,7 @@ push_qualified_expression_name (struct stoken name, int dot_index)
    Handle VAR, TYPE, TYPE.FIELD1....FIELDN and VAR.FIELD1....FIELDN.  */
 
 static void
-push_expression_name (struct stoken name)
+push_expression_name (struct parser_state *par_state, struct stoken name)
 {
   char *tmp;
   struct type *typ;
@@ -1376,22 +1416,22 @@ push_expression_name (struct stoken name)
       if (name.ptr[i] == '.')
 	{
 	  /* It's a Qualified Expression Name.  */
-	  push_qualified_expression_name (name, i);
+	  push_qualified_expression_name (par_state, name, i);
 	  return;
 	}
     }
 
   /* It's a Simple Expression Name.  */
   
-  if (push_variable (name))
+  if (push_variable (par_state, name))
     return;
   tmp = copy_name (name);
   typ = java_lookup_class (tmp);
   if (typ != NULL)
     {
-      write_exp_elt_opcode(OP_TYPE);
-      write_exp_elt_type(typ);
-      write_exp_elt_opcode(OP_TYPE);
+      write_exp_elt_opcode (par_state, OP_TYPE);
+      write_exp_elt_type (par_state, typ);
+      write_exp_elt_opcode (par_state, OP_TYPE);
     }
   else
     {
@@ -1399,7 +1439,7 @@ push_expression_name (struct stoken name)
 
       msymbol = lookup_bound_minimal_symbol (tmp);
       if (msymbol.minsym != NULL)
-	write_exp_msymbol (msymbol);
+	write_exp_msymbol (par_state, msymbol);
       else if (!have_full_symbols () && !have_partial_symbols ())
 	error (_("No symbol table is loaded.  Use the \"file\" command"));
       else
@@ -1423,6 +1463,7 @@ copy_exp (struct expression *expr, int endpos)
   int len = length_of_subexp (expr, endpos);
   struct expression *new
     = (struct expression *) malloc (sizeof (*new) + EXP_ELEM_TO_BYTES (len));
+
   new->nelts = len;
   memcpy (new->elts, expr->elts + endpos - len, EXP_ELEM_TO_BYTES (len));
   new->language_defn = 0;
@@ -1432,27 +1473,19 @@ copy_exp (struct expression *expr, int endpos)
 
 /* Insert the expression NEW into the current expression (expout) at POS.  */
 static void
-insert_exp (int pos, struct expression *new)
+insert_exp (struct parser_state *par_state, int pos, struct expression *new)
 {
   int newlen = new->nelts;
+  int i;
 
   /* Grow expout if necessary.  In this function's only use at present,
      this should never be necessary.  */
-  if (expout_ptr + newlen > expout_size)
-    {
-      expout_size = max (expout_size * 2, expout_ptr + newlen + 10);
-      expout = (struct expression *)
-	realloc ((char *) expout, (sizeof (struct expression)
-				    + EXP_ELEM_TO_BYTES (expout_size)));
-    }
+  increase_expout_size (par_state, newlen);
 
-  {
-    int i;
-
-    for (i = expout_ptr - 1; i >= pos; i--)
-      expout->elts[i + newlen] = expout->elts[i];
-  }
+  for (i = par_state->expout_ptr - 1; i >= pos; i--)
+    par_state->expout->elts[i + newlen] = par_state->expout->elts[i];
   
-  memcpy (expout->elts + pos, new->elts, EXP_ELEM_TO_BYTES (newlen));
-  expout_ptr += newlen;
+  memcpy (par_state->expout->elts + pos, new->elts,
+	  EXP_ELEM_TO_BYTES (newlen));
+  par_state->expout_ptr += newlen;
 }

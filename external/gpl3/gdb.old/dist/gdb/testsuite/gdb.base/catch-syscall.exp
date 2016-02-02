@@ -1,4 +1,4 @@
-#   Copyright 1997-2014 Free Software Foundation, Inc.
+#   Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,8 @@ if { ![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"] } {
 if { ![istarget "x86_64-*-linux*"] && ![istarget "i\[34567\]86-*-linux*"]
      && ![istarget "powerpc-*-linux*"] && ![istarget "powerpc64-*-linux*"]
      && ![istarget "sparc-*-linux*"] && ![istarget "sparc64-*-linux*"]
-     && ![istarget "mips*-linux*"] && ![istarget "arm*-linux*"] } {
+     && ![istarget "mips*-linux*"] && ![istarget "arm*-linux*"]
+     && ![istarget "s390*-linux*"] } {
      continue
 }
 
@@ -255,7 +256,8 @@ proc test_catch_syscall_fail_nodatadir {} {
 
 	# Make sure GDB doesn't load the syscalls xml from the system
 	# data directory.
-	gdb_test_no_output "set data-directory /the/path/to/nowhere"
+	gdb_test "set data-directory /the/path/to/nowhere" \
+	    "Warning: /the/path/to/nowhere: .*"
 
 	# Testing to see if we receive a warning when calling "catch
 	# syscall" without XML support (without datadir).
@@ -309,6 +311,10 @@ proc do_syscall_tests {} {
     # Testing the 'catch' syscall command during a restart of
     # the inferior.
     if [runto_main] then { test_catch_syscall_restarting_inferior }
+
+    # Testing if the 'catch syscall' command works when switching to
+    # different architectures on-the-fly (PR gdb/10737).
+    if [runto_main] then { test_catch_syscall_multi_arch }
 }
 
 proc test_catch_syscall_without_args_noxml {} {
@@ -370,10 +376,78 @@ proc test_catch_syscall_with_wrong_args_noxml {} {
     }
 }
 
+proc test_catch_syscall_multi_arch {} {
+    global decimal binfile
+
+    if { [istarget "i*86-*-*"] || [istarget "x86_64-*-*"] } {
+	set arch1 "i386"
+	set arch2 "i386:x86-64"
+	set syscall1_name "exit"
+	set syscall2_name "write"
+	set syscall_number 1
+    } elseif { [istarget "powerpc-*-linux*"] \
+		   || [istarget "powerpc64-*-linux*"] } {
+	set arch1 "powerpc:common"
+	set arch2 "powerpc:common64"
+	set syscall1_name "openat"
+	set syscall2_name "unlinkat"
+	set syscall_number 286
+    } elseif { [istarget "sparc-*-linux*"] \
+		   || [istarget "sparc64-*-linux*"] } {
+	set arch1 "sparc"
+	set arch2 "sparc:v9"
+	set syscall1_name "setresuid32"
+	set syscall2_name "setresuid"
+	set syscall_number 108
+    } elseif { [istarget "mips*-linux*"] } {
+	# MIPS does not use the same numbers for syscalls on 32 and 64
+	# bits.
+	verbose "Not testing MIPS for multi-arch syscall support"
+	return
+    } elseif { [istarget "arm*-linux*"] } {
+	# catch syscall supports only 32-bit ARM for now.
+	verbose "Not testing ARM for multi-arch syscall support"
+	return
+    } elseif { [istarget "s390*-linux*"] } {
+	set arch1 ""
+	set arch2 "s390:64-bit"
+	set syscall1_name "_newselect"
+	set syscall2_name "select"
+	set syscall_number 142
+    }
+
+    with_test_prefix "multiple targets" {
+	# We are not interested in loading any binary here, and in
+	# some systems (PowerPC, for example), if we load a binary
+	# there is no way to set other architecture.
+	gdb_exit
+	gdb_start
+
+	gdb_test "set architecture $arch1" \
+	    "The target architecture is assumed to be $arch1" \
+	    "set arch to $arch1"
+
+	gdb_test "catch syscall $syscall_number" \
+	    "Catchpoint $decimal \\(syscall .${syscall1_name}. \\\[${syscall_number}\\\]\\)" \
+	    "insert catch syscall on syscall $syscall_number -- $syscall1_name on $arch1"
+
+	gdb_test "set architecture $arch2" \
+	    "The target architecture is assumed to be $arch2" \
+	    "set arch to $arch2"
+
+	gdb_test "catch syscall $syscall_number" \
+	    "Catchpoint $decimal \\(syscall .${syscall2_name}. \\\[${syscall_number}\\\]\\)" \
+	    "insert catch syscall on syscall $syscall_number -- $syscall2_name on $arch2"
+
+	clean_restart $binfile
+    }
+}
+
 proc do_syscall_tests_without_xml {} {
     # Make sure GDB doesn't load the syscalls xml from the system data
     # directory.
-    gdb_test_no_output "set data-directory /the/path/to/nowhere"
+    gdb_test "set data-directory /the/path/to/nowhere" \
+	"Warning: /the/path/to/nowhere: .*"
 
     # Let's test if we can catch syscalls without XML support.
     # We should succeed, but GDB is not supposed to print syscall names.

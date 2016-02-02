@@ -1,5 +1,5 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 enum language;
 struct ui_file;
 struct typedef_hash_table;
+struct ext_lang_type_printers;
 
 struct type_print_options
 {
@@ -44,7 +45,7 @@ struct type_print_options
 
   /* The list of type printers associated with the global typedef
      table.  This is intentionally opaque.  */
-  void *global_printers;
+  struct ext_lang_type_printers *global_printers;
 };
 
 extern const struct type_print_options type_print_raw_options;
