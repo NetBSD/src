@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.1 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
 
-Copyright (C) 1988-2014 Free Software Foundation, Inc.
+Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.7.1.
+Source-Level Debugger' for GDB (GDB) Version 7.9.1.
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -44,9 +44,9 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Tenth Edition, for GDB (GDB) Version 7.7.1.
+   This is the Tenth Edition, for GDB (GDB) Version 7.9.1.
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    This edition of the GDB manual is dedicated to the memory of Fred
 Fish.  Fred was a long-standing contributor to GDB and to Free software
@@ -491,7 +491,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 7.7.1, Copyright 1999 Free Software Foundation, Inc...
+     GDB 7.9.1, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -721,9 +721,10 @@ processing.
 arguments (*note Arguments::) to '-O2 -c foo.c'.
 
    You can run 'gdb' without printing the front material, which
-describes GDB's non-warranty, by specifying '-silent':
+describes GDB's non-warranty, by specifying '--silent' (or
+'-q'/'--quiet'):
 
-     gdb -silent
+     gdb --silent
 
 You can further control how GDB starts up by using command-line options.
 GDB itself can remind you of the options available.
@@ -936,6 +937,7 @@ or quiet mode.
      current directory.
 
 '-data-directory DIRECTORY'
+'-D DIRECTORY'
      Run GDB using DIRECTORY as its data directory.  The data directory
      is where GDB searches for its auxiliary files.  *Note Data Files::.
 
@@ -1602,10 +1604,9 @@ File: gdb.info,  Node: Starting,  Next: Arguments,  Prev: Compilation,  Up: Runn
 'run'
 'r'
      Use the 'run' command to start your program under GDB.  You must
-     first specify the program name (except on VxWorks) with an argument
-     to GDB (*note Getting In and Out of GDB: Invocation.), or by using
-     the 'file' or 'exec-file' command (*note Commands to Specify Files:
-     Files.).
+     first specify the program name with an argument to GDB (*note
+     Getting In and Out of GDB: Invocation.), or by using the 'file' or
+     'exec-file' command (*note Commands to Specify Files: Files.).
 
    If you are running your program in an execution environment that
 supports processes, 'run' creates an inferior process and makes that
@@ -1751,6 +1752,50 @@ breakpoints.
      the Z shell, or the file specified in the 'BASH_ENV' environment
      variable for BASH.
 
+'set auto-connect-native-target'
+'set auto-connect-native-target on'
+'set auto-connect-native-target off'
+'show auto-connect-native-target'
+
+     By default, if not connected to any target yet (e.g., with 'target
+     remote'), the 'run' command starts your program as a native process
+     under GDB, on your local machine.  If you're sure you don't want to
+     debug programs on your local machine, you can tell GDB to not
+     connect to the native target automatically with the 'set
+     auto-connect-native-target off' command.
+
+     If 'on', which is the default, and if GDB is not connected to a
+     target already, the 'run' command automaticaly connects to the
+     native target, if one is available.
+
+     If 'off', and if GDB is not connected to a target already, the
+     'run' command fails with an error:
+
+          (gdb) run
+          Don't know how to run.  Try "help target".
+
+     If GDB is already connected to a target, GDB always uses it with
+     the 'run' command.
+
+     In any case, you can explicitly connect to the native target with
+     the 'target native' command.  For example,
+
+          (gdb) set auto-connect-native-target off
+          (gdb) run
+          Don't know how to run.  Try "help target".
+          (gdb) target native
+          (gdb) run
+          Starting program: ./a.out
+          [Inferior 1 (process 10421) exited normally]
+
+     In case you connected explicitly to the 'native' target, GDB
+     remains connected even if all inferiors exit, ready for the next
+     'run' command.  Use the 'disconnect' command to disconnect.
+
+     Examples of other commands that likewise respect the
+     'auto-connect-native-target' setting: 'attach', 'info proc', 'info
+     os'.
+
 'set disable-randomization'
 'set disable-randomization on'
      This option (enabled by default in GDB) will turn off the native
@@ -1876,11 +1921,11 @@ environment without having to start GDB over again.
 
 'set environment VARNAME [=VALUE]'
      Set environment variable VARNAME to VALUE.  The value changes for
-     your program only, not for GDB itself.  VALUE may be any string;
-     the values of environment variables are just strings, and any
-     interpretation is supplied by your program itself.  The VALUE
-     parameter is optional; if it is eliminated, the variable is set to
-     a null value.
+     your program (and the shell GDB uses to launch it), not for GDB
+     itself.  The VALUE may be any string; the values of environment
+     variables are just strings, and any interpretation is supplied by
+     your program itself.  The VALUE parameter is optional; if it is
+     eliminated, the variable is set to a null value.
 
      For example, this command:
 
@@ -1889,6 +1934,12 @@ environment without having to start GDB over again.
      tells the debugged program, when subsequently run, that its user is
      named 'foo'.  (The spaces around '=' are used for clarity here;
      they are not actually required.)
+
+     Note that on Unix systems, GDB runs your program via a shell, which
+     also inherits the environment set with 'set environment'.  If
+     necessary, you can avoid that by using the 'env' program as a
+     wrapper instead of using 'set environment'.  *Note set
+     exec-wrapper::, for an example doing just that.
 
 'unset environment VARNAME'
      Remove variable VARNAME from the environment to be passed to your
@@ -2127,7 +2178,7 @@ add inferiors to the debug session automatically by following calls to
 the 'remove-inferiors' command.
 
 'add-inferior [ -copies N ] [ -exec EXECUTABLE ]'
-     Adds N inferiors to be run using EXECUTABLE as the executable.  N
+     Adds N inferiors to be run using EXECUTABLE as the executable; N
      defaults to 1.  If no executable is specified, the inferiors begins
      empty, with no program.  You can still assign or change the program
      assigned to the inferior at any time by using the 'file' command
@@ -2135,7 +2186,7 @@ the 'remove-inferiors' command.
 
 'clone-inferior [ -copies N ] [ INFNO ]'
      Adds N inferiors ready to execute the same program as inferior
-     INFNO.  N defaults to 1.  INFNO defaults to the number of the
+     INFNO; N defaults to 1, and INFNO defaults to the number of the
      current inferior.  This is a convenient command when you want to
      run another instance of the inferior you are debugging.
 
@@ -2289,7 +2340,7 @@ perspective of the current thread.
 
    Whenever GDB detects a new thread in your program, it displays the
 target system's identification for the thread with a message in the form
-'[New SYSTAG]'.  SYSTAG is a thread identifier whose form varies
+'[New SYSTAG]', where SYSTAG is a thread identifier whose form varies
 depending on the particular system.  For example, on GNU/Linux, you
 might see
 
@@ -2862,18 +2913,19 @@ variables.
      more information on breakpoint conditions.
 
 'tbreak ARGS'
-     Set a breakpoint enabled only for one stop.  ARGS are the same as
-     for the 'break' command, and the breakpoint is set in the same way,
-     but the breakpoint is automatically deleted after the first time
-     your program stops there.  *Note Disabling Breakpoints: Disabling.
+     Set a breakpoint enabled only for one stop.  The ARGS are the same
+     as for the 'break' command, and the breakpoint is set in the same
+     way, but the breakpoint is automatically deleted after the first
+     time your program stops there.  *Note Disabling Breakpoints:
+     Disabling.
 
 'hbreak ARGS'
-     Set a hardware-assisted breakpoint.  ARGS are the same as for the
-     'break' command and the breakpoint is set in the same way, but the
-     breakpoint requires hardware support and some target hardware may
-     not have this support.  The main purpose of this is EPROM/ROM code
-     debugging, so you can set a breakpoint at an instruction without
-     changing the instruction.  This can be used with the new
+     Set a hardware-assisted breakpoint.  The ARGS are the same as for
+     the 'break' command and the breakpoint is set in the same way, but
+     the breakpoint requires hardware support and some target hardware
+     may not have this support.  The main purpose of this is EPROM/ROM
+     code debugging, so you can set a breakpoint at an instruction
+     without changing the instruction.  This can be used with the new
      trap-generation provided by SPARClite DSU and most x86-based
      targets.  These targets will generate traps when a program accesses
      some data or instruction address that is assigned to the debug
@@ -2887,9 +2939,9 @@ variables.
      GDB will use, see *note set remote hardware-breakpoint-limit::.
 
 'thbreak ARGS'
-     Set a hardware-assisted breakpoint enabled only for one stop.  ARGS
-     are the same as for the 'hbreak' command and the breakpoint is set
-     in the same way.  However, like the 'tbreak' command, the
+     Set a hardware-assisted breakpoint enabled only for one stop.  The
+     ARGS are the same as for the 'hbreak' command and the breakpoint is
+     set in the same way.  However, like the 'tbreak' command, the
      breakpoint is automatically deleted after the first time your
      program stops there.  Also, like the 'hbreak' command, the
      breakpoint requires hardware support and some target hardware may
@@ -3127,21 +3179,14 @@ with the following commands::
 'set breakpoint always-inserted off'
      All breakpoints, including newly added by the user, are inserted in
      the target only when the target is resumed.  All breakpoints are
-     removed from the target when it stops.
+     removed from the target when it stops.  This is the default mode.
 
 'set breakpoint always-inserted on'
      Causes all breakpoints to be inserted in the target at all times.
      If the user adds a new breakpoint, or changes an existing
      breakpoint, the breakpoints in the target are updated immediately.
      A breakpoint is removed from the target only when breakpoint itself
-     is removed.
-
-'set breakpoint always-inserted auto'
-     This is the default mode.  If GDB is controlling the inferior in
-     non-stop mode (*note Non-Stop Mode::), gdb behaves as if
-     'breakpoint always-inserted' mode is on.  If GDB is controlling the
-     inferior in all-stop mode, GDB behaves as if 'breakpoint
-     always-inserted' mode is off.
+     is deleted.
 
    GDB handles conditional breakpoints by evaluating these conditions
 when a breakpoint breaks.  If the condition is true, then the process
@@ -3392,7 +3437,7 @@ kinds of program events, such as C++ exceptions or the loading of a
 shared library.  Use the 'catch' command to set a catchpoint.
 
 'catch EVENT'
-     Stop when EVENT occurs.  EVENT can be any of the following:
+     Stop when EVENT occurs.  The EVENT can be any of the following:
 
      'throw [REGEXP]'
      'rethrow [REGEXP]'
@@ -4213,7 +4258,8 @@ source code, or one machine instruction (depending on what particular
 command you use).  Either when continuing or when stepping, your program
 may stop even sooner, due to a breakpoint or a signal.  (If it stops due
 to a signal, you may want to use 'handle', or use 'signal 0' to resume
-execution.  *Note Signals: Signals.)
+execution (*note Signals: Signals.), or you may step into the signal's
+handler (*note stepping and signal handlers::).)
 
 'continue [IGNORE-COUNT]'
 'c [IGNORE-COUNT]'
@@ -4359,17 +4405,17 @@ interesting, until you see the problem happen.
 
 'until LOCATION'
 'u LOCATION'
-     Continue running your program until either the specified location
-     is reached, or the current stack frame returns.  LOCATION is any of
-     the forms described in *note Specify Location::.  This form of the
-     command uses temporary breakpoints, and hence is quicker than
-     'until' without an argument.  The specified location is actually
-     reached only if it is in the current frame.  This implies that
-     'until' can be used to skip over recursive function invocations.
-     For instance in the code below, if the current location is line
-     '96', issuing 'until 99' will execute the program up to line '99'
-     in the same invocation of factorial, i.e., after the inner
-     invocations have returned.
+     Continue running your program until either the specified LOCATION
+     is reached, or the current stack frame returns.  The location is
+     any of the forms described in *note Specify Location::.  This form
+     of the command uses temporary breakpoints, and hence is quicker
+     than 'until' without an argument.  The specified location is
+     actually reached only if it is in the current frame.  This implies
+     that 'until' can be used to skip over recursive function
+     invocations.  For instance in the code below, if the current
+     location is line '96', issuing 'until 99' will execute the program
+     up to line '99' in the same invocation of factorial, i.e., after
+     the inner invocations have returned.
 
           94	int factorial (int value)
           95	{
@@ -4573,8 +4619,8 @@ settings with the 'handle' command.
      Catchpoints::, for details about this command.
 
 'handle SIGNAL [KEYWORDS...]'
-     Change the way GDB handles signal SIGNAL.  SIGNAL can be the number
-     of a signal or its name (with or without the 'SIG' at the
+     Change the way GDB handles signal SIGNAL.  The SIGNAL can be the
+     number of a signal or its name (with or without the 'SIG' at the
      beginning); a list of signal numbers of the form 'LOW-HIGH'; or the
      word 'all', meaning all the known signals.  Optional arguments
      KEYWORDS, described below, say what change to make.
@@ -4628,6 +4674,56 @@ more execution; but your program would probably terminate immediately as
 a result of the fatal signal once it saw the signal.  To prevent this,
 you can continue with 'signal 0'.  *Note Giving your Program a Signal:
 Signaling.
+
+   GDB optimizes for stepping the mainline code.  If a signal that has
+'handle nostop' and 'handle pass' set arrives while a stepping command
+(e.g., 'stepi', 'step', 'next') is in progress, GDB lets the signal
+handler run and then resumes stepping the mainline code once the signal
+handler returns.  In other words, GDB steps over the signal handler.
+This prevents signals that you've specified as not interesting (with
+'handle nostop') from changing the focus of debugging unexpectedly.
+Note that the signal handler itself may still hit a breakpoint, stop for
+another signal that has 'handle stop' in effect, or for any other event
+that normally results in stopping the stepping command sooner.  Also
+note that GDB still informs you that the program received a signal if
+'handle print' is set.
+
+   If you set 'handle pass' for a signal, and your program sets up a
+handler for it, then issuing a stepping command, such as 'step' or
+'stepi', when your program is stopped due to the signal will step _into_
+the signal handler (if the target supports that).
+
+   Likewise, if you use the 'queue-signal' command to queue a signal to
+be delivered to the current thread when execution of the thread resumes
+(*note Giving your Program a Signal: Signaling.), then a stepping
+command will step into the signal handler.
+
+   Here's an example, using 'stepi' to step to the first instruction of
+'SIGUSR1''s handler:
+
+     (gdb) handle SIGUSR1
+     Signal        Stop      Print   Pass to program Description
+     SIGUSR1       Yes       Yes     Yes             User defined signal 1
+     (gdb) c
+     Continuing.
+
+     Program received signal SIGUSR1, User defined signal 1.
+     main () sigusr1.c:28
+     28        p = 0;
+     (gdb) si
+     sigusr1_handler () at sigusr1.c:9
+     9       {
+
+   The same, but using 'queue-signal' instead of waiting for the program
+to receive the signal first:
+
+     (gdb) n
+     28        p = 0;
+     (gdb) queue-signal SIGUSR1
+     (gdb) si
+     sigusr1_handler () at sigusr1.c:9
+     9       {
+     (gdb)
 
    On some targets, GDB can inspect extra signal information associated
 with the intercepted signal, before it is actually delivered to the
@@ -4799,9 +4895,6 @@ simultaneously.
    To enter non-stop mode, use this sequence of commands before you run
 or attach to your program:
 
-     # Enable the async interface.
-     set target-async 1
-
      # If using the CLI, pagination breaks non-stop.
      set pagination off
 
@@ -4862,17 +4955,6 @@ foreground execution, GDB waits for the program to report that some
 thread has stopped before prompting for another command.  In background
 execution, GDB immediately gives a command prompt so that you can issue
 other commands while your program runs.
-
-   You need to explicitly enable asynchronous mode before you can use
-background execution commands.  You can use these commands to manipulate
-the asynchronous mode setting:
-
-'set target-async on'
-     Enable asynchronous mode.
-'set target-async off'
-     Disable asynchronous mode.
-'show target-async'
-     Show the current target-async setting.
 
    If the target doesn't support async mode, GDB issues an error message
 if you attempt to use the background execution commands.
@@ -4946,9 +5028,9 @@ on all threads, or on a particular thread.
 
      Use the qualifier 'thread THREADNO' with a breakpoint command to
      specify that you only want GDB to stop the program when a
-     particular thread reaches this breakpoint.  THREADNO is one of the
-     numeric thread identifiers assigned by GDB, shown in the first
-     column of the 'info threads' display.
+     particular thread reaches this breakpoint.  The THREADNO specifier
+     is one of the numeric thread identifiers assigned by GDB, shown in
+     the first column of the 'info threads' display.
 
      If you do not specify 'thread THREADNO' when you set a breakpoint,
      the breakpoint applies to _all_ threads of your program.
@@ -5262,7 +5344,9 @@ GDB provides the following commands:
 
      'btrace'
           Hardware-supported instruction recording.  This method does
-          not allow replaying and reverse execution.
+          not record data.  Further, the data is collected in a ring
+          buffer so old data will be overwritten when the buffer is
+          full.  It allows limited replay and reverse execution.
 
           This recording method may not be available on all processors.
 
@@ -5382,6 +5466,25 @@ GDB provides the following commands:
 'show record full memory-query'
      Show the current setting of 'memory-query'.
 
+     The 'btrace' record target does not trace data.  As a convenience,
+     when replaying, GDB reads read-only memory off the live program
+     directly, assuming that the addresses of the read-only areas don't
+     change.  This for example makes it possible to disassemble code
+     while replaying, but not to print variables.  In some cases, being
+     able to inspect variables might be useful.  You can use the
+     following command for that:
+
+'set record btrace replay-memory-access'
+     Control the behavior of the 'btrace' recording method when
+     accessing memory during replay.  If 'read-only' (the default), GDB
+     will only allow accesses to read-only memory.  If 'read-write', GDB
+     will allow accesses to read-only and to read-write memory.  Beware
+     that the accessed memory corresponds to the live target and not
+     necessarily to the current replay position.
+
+'show record btrace replay-memory-access'
+     Show the current setting of 'replay-memory-access'.
+
 'info record'
      Show various statistics about the recording depending on the
      recording method:
@@ -5440,7 +5543,7 @@ GDB provides the following commands:
      'record instruction-history BEGIN END'
           Disassembles instructions beginning with instruction number
           BEGIN until instruction number END.  The instruction number
-          END is not included.
+          END is included.
 
      This command may not be available for all recording methods.
 
@@ -5460,7 +5563,9 @@ GDB provides the following commands:
      function giving the name of that function, the source lines for
      this instruction sequence (if the '/l' modifier is specified), and
      the instructions numbers that form the sequence (if the '/i'
-     modifier is specified).
+     modifier is specified).  The function names are indented to reflect
+     the call stack depth if the '/c' modifier is specified.  The '/l',
+     '/i', and '/c' modifiers can be given together.
 
           (gdb) list 1, 10
           1   void foo (void)
@@ -5473,10 +5578,10 @@ GDB provides the following commands:
           8     foo ();
           9     ...
           10  }
-          (gdb) record function-call-history /l
-          1  foo.c:6-8   bar
-          2  foo.c:2-3   foo
-          3  foo.c:9-10  bar
+          (gdb) record function-call-history /ilc
+          1  bar     inst 1,4     at foo.c:6,8
+          2    foo   inst 5,10    at foo.c:2,3
+          3  bar     inst 11,13   at foo.c:9,10
 
      By default, ten lines are printed.  This can be changed using the
      'set record function-call-history-size' command.  Functions are
@@ -5500,7 +5605,7 @@ GDB provides the following commands:
 
      'record function-call-history BEGIN END'
           Prints functions beginning with function number BEGIN until
-          function number END.  The function number END is not included.
+          function number END.  The function number END is included.
 
      This command may not be available for all recording methods.
 
@@ -5596,11 +5701,11 @@ regards it as though it had a separate frame, which is numbered zero as
 usual, allowing correct tracing of the function call chain.  However,
 GDB has no provision for frameless functions elsewhere in the stack.
 
-'frame ARGS'
+'frame [FRAMESPEC]'
      The 'frame' command allows you to move from one stack frame to
-     another, and to print the stack frame you select.  ARGS may be
-     either the address of the frame or the stack frame number.  Without
-     an argument, 'frame' prints the current stack frame.
+     another, and to print the stack frame you select.  The FRAMESPEC
+     may be either the address of the frame or the stack frame number.
+     Without an argument, 'frame' prints the current stack frame.
 
 'select-frame'
      The 'select-frame' command allows you to move from one stack frame
@@ -5638,8 +5743,8 @@ up the stack.
 'bt full'
 'bt full N'
 'bt full -N'
-     Print the values of the local variables also.  N specifies the
-     number of frames to print, as described above.
+     Print the values of the local variables also.  As described above,
+     N specifies the number of frames to print.
 
 'backtrace no-filters'
 'bt no-filters'
@@ -5794,23 +5899,23 @@ within GDB, detailed here.
      showing their name, priority and enabled status.
 
 'disable frame-filter FILTER-DICTIONARY FILTER-NAME'
-     Disable a frame filter in the dictionary matching
-     FILTER-DICTIONARY, or 'all', and FILTER-NAME.  FILTER-DICTIONARY
-     may be 'all', 'global', 'progspace' or the name of the object file
-     where the frame filter dictionary resides.  When 'all' is
-     specified, all frame filters across all dictionaries are disabled.
-     FILTER-NAME is the name of the frame filter and is used when 'all'
-     is not the option for FILTER-DICTIONARY.  A disabled frame-filter
-     is not deleted, it may be enabled again later.
+     Disable a frame filter in the dictionary matching FILTER-DICTIONARY
+     and FILTER-NAME.  The FILTER-DICTIONARY may be 'all', 'global',
+     'progspace', or the name of the object file where the frame filter
+     dictionary resides.  When 'all' is specified, all frame filters
+     across all dictionaries are disabled.  The FILTER-NAME is the name
+     of the frame filter and is used when 'all' is not the option for
+     FILTER-DICTIONARY.  A disabled frame-filter is not deleted, it may
+     be enabled again later.
 
 'enable frame-filter FILTER-DICTIONARY FILTER-NAME'
-     Enable a frame filter in the dictionary matching FILTER-DICTIONARY,
-     or 'all', and FILTER-NAME.  FILTER-DICTIONARY may be 'all',
-     'global', 'progspace' or the name of the object file where the
-     frame filter dictionary resides.  When 'all' is specified, all
-     frame filters across all dictionaries are enabled.  FILTER-NAME is
-     the name of the frame filter and is used when 'all' is not the
-     option for FILTER-DICTIONARY.
+     Enable a frame filter in the dictionary matching FILTER-DICTIONARY
+     and FILTER-NAME.  The FILTER-DICTIONARY may be 'all', 'global',
+     'progspace' or the name of the object file where the frame filter
+     dictionary resides.  When 'all' is specified, all frame filters
+     across all dictionaries are enabled.  The FILTER-NAME is the name
+     of the frame filter and is used when 'all' is not the option for
+     FILTER-DICTIONARY.
 
      Example:
 
@@ -5864,15 +5969,15 @@ within GDB, detailed here.
 'set frame-filter priority FILTER-DICTIONARY FILTER-NAME PRIORITY'
      Set the PRIORITY of a frame filter in the dictionary matching
      FILTER-DICTIONARY, and the frame filter name matching FILTER-NAME.
-     FILTER-DICTIONARY may be 'global', 'progspace' or the name of the
-     object file where the frame filter dictionary resides.  PRIORITY is
-     an integer.
+     The FILTER-DICTIONARY may be 'global', 'progspace' or the name of
+     the object file where the frame filter dictionary resides.  The
+     PRIORITY is an integer.
 
 'show frame-filter priority FILTER-DICTIONARY FILTER-NAME'
      Show the PRIORITY of a frame filter in the dictionary matching
      FILTER-DICTIONARY, and the frame filter name matching FILTER-NAME.
-     FILTER-DICTIONARY may be 'global', 'progspace' or the name of the
-     object file where the frame filter dictionary resides.
+     The FILTER-DICTIONARY may be 'global', 'progspace' or the name of
+     the object file where the frame filter dictionary resides.
 
      Example:
 
@@ -5943,15 +6048,15 @@ brief description of the stack frame just selected.
      pointer, a program counter, and a memory stack pointer.
 
 'up N'
-     Move N frames up the stack.  For positive numbers N, this advances
-     toward the outermost frame, to higher frame numbers, to frames that
-     have existed longer.  N defaults to one.
+     Move N frames up the stack; N defaults to 1.  For positive numbers
+     N, this advances toward the outermost frame, to higher frame
+     numbers, to frames that have existed longer.
 
 'down N'
-     Move N frames down the stack.  For positive numbers N, this
-     advances toward the innermost frame, to lower frame numbers, to
-     frames that were created more recently.  N defaults to one.  You
-     may abbreviate 'down' as 'do'.
+     Move N frames down the stack; N defaults to 1.  For positive
+     numbers N, this advances toward the innermost frame, to lower frame
+     numbers, to frames that were created more recently.  You may
+     abbreviate 'down' as 'do'.
 
    All of these commands end by printing two lines of output describing
 the frame.  The first line shows the frame number, the function name,
@@ -6875,253 +6980,8 @@ programming languages:
 
 '{TYPE} ADDR'
      Refers to an object of type TYPE stored at address ADDR in memory.
-     ADDR may be any expression whose value is an integer or pointer
-     (but parentheses are required around binary operators, just as in a
-     cast).  This construct is allowed regardless of what kind of data
-     is normally supposed to reside at ADDR.
-
-
-File: gdb.info,  Node: Ambiguous Expressions,  Next: Variables,  Prev: Expressions,  Up: Data
-
-10.2 Ambiguous Expressions
-==========================
-
-Expressions can sometimes contain some ambiguous elements.  For
-instance, some programming languages (notably Ada, C++ and Objective-C)
-permit a single function name to be defined several times, for
-application in different contexts.  This is called "overloading".
-Another example involving Ada is generics.  A "generic package" is
-similar to C++ templates and is typically instantiated several times,
-resulting in the same function name being defined in different contexts.
-
-   In some cases and depending on the language, it is possible to adjust
-the expression to remove the ambiguity.  For instance in C++, you can
-specify the signature of the function you want to break on, as in 'break
-FUNCTION(TYPES)'.  In Ada, using the fully qualified name of your
-function often makes the expression unambiguous as well.
-
-   When an ambiguity that needs to be resolved is detected, the debugger
-has the capability to display a menu of numbered choices for each
-possibility, and then waits for the selection with the prompt '>'.  The
-first option is always '[0] cancel', and typing '0 <RET>' aborts the
-current command.  If the command in which the expression was used allows
-more than one choice to be selected, the next option in the menu is '[1]
-all', and typing '1 <RET>' selects all possible choices.
-
-   For example, the following session excerpt shows an attempt to set a
-breakpoint at the overloaded symbol 'String::after'.  We choose three
-particular definitions of that function name:
-
-     (gdb) b String::after
-     [0] cancel
-     [1] all
-     [2] file:String.cc; line number:867
-     [3] file:String.cc; line number:860
-     [4] file:String.cc; line number:875
-     [5] file:String.cc; line number:853
-     [6] file:String.cc; line number:846
-     [7] file:String.cc; line number:735
-     > 2 4 6
-     Breakpoint 1 at 0xb26c: file String.cc, line 867.
-     Breakpoint 2 at 0xb344: file String.cc, line 875.
-     Breakpoint 3 at 0xafcc: file String.cc, line 846.
-     Multiple breakpoints were set.
-     Use the "delete" command to delete unwanted
-      breakpoints.
-     (gdb)
-
-'set multiple-symbols MODE'
-
-     This option allows you to adjust the debugger behavior when an
-     expression is ambiguous.
-
-     By default, MODE is set to 'all'.  If the command with which the
-     expression is used allows more than one choice, then GDB
-     automatically selects all possible choices.  For instance,
-     inserting a breakpoint on a function using an ambiguous name
-     results in a breakpoint inserted on each possible match.  However,
-     if a unique choice must be made, then GDB uses the menu to help you
-     disambiguate the expression.  For instance, printing the address of
-     an overloaded function will result in the use of the menu.
-
-     When MODE is set to 'ask', the debugger always uses the menu when
-     an ambiguity is detected.
-
-     Finally, when MODE is set to 'cancel', the debugger reports an
-     error due to the ambiguity and the command is aborted.
-
-'show multiple-symbols'
-     Show the current value of the 'multiple-symbols' setting.
-
-
-File: gdb.info,  Node: Variables,  Next: Arrays,  Prev: Ambiguous Expressions,  Up: Data
-
-10.3 Program Variables
-======================
-
-The most common kind of expression to use is the name of a variable in
-your program.
-
-   Variables in expressions are understood in the selected stack frame
-(*note Selecting a Frame: Selection.); they must be either:
-
-   * global (or file-static)
-
-or
-
-   * visible according to the scope rules of the programming language
-     from the point of execution in that frame
-
-This means that in the function
-
-     foo (a)
-          int a;
-     {
-       bar (a);
-       {
-         int b = test ();
-         bar (b);
-       }
-     }
-
-you can examine and use the variable 'a' whenever your program is
-executing within the function 'foo', but you can only use or examine the
-variable 'b' while your program is executing inside the block where 'b'
-is declared.
-
-   There is an exception: you can refer to a variable or function whose
-scope is a single source file even if the current execution point is not
-in this file.  But it is possible to have more than one such variable or
-function with the same name (in different source files).  If that
-happens, referring to that name has unpredictable effects.  If you wish,
-you can specify a static variable in a particular function or file by
-using the colon-colon ('::') notation:
-
-     FILE::VARIABLE
-     FUNCTION::VARIABLE
-
-Here FILE or FUNCTION is the name of the context for the static
-VARIABLE.  In the case of file names, you can use quotes to make sure
-GDB parses the file name as a single word--for example, to print a
-global value of 'x' defined in 'f2.c':
-
-     (gdb) p 'f2.c'::x
-
-   The '::' notation is normally used for referring to static variables,
-since you typically disambiguate uses of local variables in functions by
-selecting the appropriate frame and using the simple name of the
-variable.  However, you may also use this notation to refer to local
-variables in frames enclosing the selected frame:
-
-     void
-     foo (int a)
-     {
-       if (a < 10)
-         bar (a);
-       else
-         process (a);    /* Stop here */
-     }
-
-     int
-     bar (int a)
-     {
-       foo (a + 5);
-     }
-
-For example, if there is a breakpoint at the commented line, here is
-what you might see when the program stops after executing the call
-'bar(0)':
-
-     (gdb) p a
-     $1 = 10
-     (gdb) p bar::a
-     $2 = 5
-     (gdb) up 2
-     #2  0x080483d0 in foo (a=5) at foobar.c:12
-     (gdb) p a
-     $3 = 5
-     (gdb) p bar::a
-     $4 = 0
-
-   These uses of '::' are very rarely in conflict with the very similar
-use of the same notation in C++.  When they are in conflict, the C++
-meaning takes precedence; however, this can be overridden by quoting the
-file or function name with single quotes.
-
-   For example, suppose the program is stopped in a method of a class
-that has a field named 'includefile', and there is also an include file
-named 'includefile' that defines a variable, 'some_global'.
-
-     (gdb) p includefile
-     $1 = 23
-     (gdb) p includefile::some_global
-     A syntax error in expression, near `'.
-     (gdb) p 'includefile'::some_global
-     $2 = 27
-
-     _Warning:_ Occasionally, a local variable may appear to have the
-     wrong value at certain points in a function--just after entry to a
-     new scope, and just before exit.
-   You may see this problem when you are stepping by machine
-instructions.  This is because, on most machines, it takes more than one
-instruction to set up a stack frame (including local variable
-definitions); if you are stepping by machine instructions, variables may
-appear to have the wrong values until the stack frame is completely
-built.  On exit, it usually also takes more than one machine instruction
-to destroy a stack frame; after you begin stepping through that group of
-instructions, local variable definitions may be gone.
-
-   This may also happen when the compiler does significant
-optimizations.  To be sure of always seeing accurate values, turn off
-all optimization when compiling.
-
-   Another possible effect of compiler optimizations is to optimize
-unused variables out of existence, or assign variables to registers (as
-opposed to memory addresses).  Depending on the support for such cases
-offered by the debug info format used by the compiler, GDB might not be
-able to display values for such local variables.  If that happens, GDB
-will print a message like this:
-
-     No symbol "foo" in current context.
-
-   To solve such problems, either recompile without optimizations, or
-use a different debug info format, if the compiler supports several such
-formats.  *Note Compilation::, for more information on choosing compiler
-options.  *Note C and C++: C, for more information about debug info
-formats that are best suited to C++ programs.
-
-   If you ask to print an object whose contents are unknown to GDB,
-e.g., because its data type is not completely specified by the debug
-information, GDB will say '<incomplete type>'.  *Note incomplete type:
-Symbols, for more about this.
-
-   If you append '@entry' string to a function parameter name you get
-its value at the time the function got called.  If the value is not
-available an error message is printed.  Entry values are available only
-with some compilers.  Entry values are normally also printed at the
-function parameter list according to *note set print entry-values::.
-
-     Breakpoint 1, d (i=30) at gdb.base/entry-value.c:29
-     29	  i++;
-     (gdb) next
-     30	  e (i);
-     (gdb) print i
-     $1 = 31
-     (gdb) print i@entry
-     $2 = 30
-
-   Strings are identified as arrays of 'char' values without specified
-signedness.  Arrays of either 'signed char' or 'unsigned char' get
-printed as arrays of 1 byte sized integers.  '-fsigned-char' or
-'-funsigned-char' GCC options have no effect as GDB defines literal
-string type '"char"' as 'char' without a sign.  For program code
-
-     char var0[] = "A";
-     signed char var1[] = "A";
-
-   You get during debugging
-     (gdb) print var0
-     $1 = "A"
-     (gdb) print var1
-     $2 = {65 'A', 0 '\0'}
+     The address ADDR may be any expression whose value is an integer or
+     pointer (but parentheses are required around binary operators, just
+     as in a cast).  This construct is allowed regardless of what kind
+     of data is normally supposed to reside at ADDR.
 

@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -23,5 +23,8 @@
 #define TUI_COMMAND_H
 
 extern unsigned int tui_dispatch_ctrl_char (unsigned int);
+
+/* Refresh the command window.  */
+extern void tui_refresh_cmd_win (void);
 
 #endif

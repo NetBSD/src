@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2014 Free Software Foundation, Inc.
+# Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -50,6 +50,8 @@ INSTALL_DATA = @INSTALL_DATA@
 RANLIB = @RANLIB@
 
 CC = @CC@
+AR = @AR@
+AR_FLAGS = rc
 
 # Dependency tracking information.
 DEPMODE = @CCDEPMODE@
@@ -82,6 +84,9 @@ CC-LD=${CC}
 # Where is the "include" directory?  Traditionally ../include or ./include
 INCLUDE_DIR =  ${srcdir}/../../include
 INCLUDE_DEP = $$(INCLUDE_DIR)
+
+LIBIBERTY_BUILDDIR = build-libiberty-gdbserver
+LIBIBERTY = $(LIBIBERTY_BUILDDIR)/libiberty.a
 
 # Where is ust?  These will be empty if ust was not available.
 ustlibs = @ustlibs@
@@ -123,10 +128,11 @@ WARN_CFLAGS_NO_FORMAT = `echo " $(WARN_CFLAGS) " \
 # CFLAGS is specifically reserved for setting from the command line
 # when running make.  I.E.  "make CFLAGS=-Wmissing-prototypes".
 CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@
 
 # INTERNAL_CFLAGS is the aggregate of all other *CFLAGS macros.
 INTERNAL_CFLAGS_BASE =  ${CFLAGS} ${GLOBAL_CFLAGS} \
-	${PROFILE_CFLAGS} ${INCLUDE_CFLAGS}
+	${PROFILE_CFLAGS} ${INCLUDE_CFLAGS} ${CPPFLAGS}
 INTERNAL_WARN_CFLAGS =  ${INTERNAL_CFLAGS_BASE} $(WARN_CFLAGS)
 INTERNAL_CFLAGS =  ${INTERNAL_WARN_CFLAGS} $(WERROR_CFLAGS) -DGDBSERVER
 
@@ -141,10 +147,10 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/mem-break.c $(srcdir)/proc-service.c \
 	$(srcdir)/proc-service.list $(srcdir)/regcache.c \
 	$(srcdir)/remote-utils.c $(srcdir)/server.c $(srcdir)/target.c \
-	$(srcdir)/thread-db.c $(srcdir)/utils.c \
+	$(srcdir)/thread-db.c $(srcdir)/utils.c $(srcdir)/debug.c \
 	$(srcdir)/linux-arm-low.c $(srcdir)/linux-bfin-low.c \
 	$(srcdir)/linux-cris-low.c $(srcdir)/linux-crisv32-low.c \
-	${srcdir}/i386-low.c $(srcdir)/i387-fp.c \
+	${srcdir}/x86-low.c $(srcdir)/i387-fp.c \
 	$(srcdir)/linux-ia64-low.c $(srcdir)/linux-low.c \
 	$(srcdir)/linux-m32r-low.c \
 	$(srcdir)/linux-m68k-low.c $(srcdir)/linux-mips-low.c \
@@ -160,10 +166,13 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/hostio.c $(srcdir)/hostio-errno.c \
 	$(srcdir)/common/vec.c $(srcdir)/common/gdb_vecs.c \
 	$(srcdir)/common/common-utils.c $(srcdir)/common/xml-utils.c \
-	$(srcdir)/common/linux-osdata.c $(srcdir)/common/ptid.c \
-	$(srcdir)/common/buffer.c $(srcdir)/common/linux-btrace.c \
+	$(srcdir)/nat/linux-osdata.c $(srcdir)/common/ptid.c \
+	$(srcdir)/common/buffer.c $(srcdir)/nat/linux-btrace.c \
 	$(srcdir)/common/filestuff.c $(srcdir)/target/waitstatus.c \
-    $(srcdir)/common/mips-linux-watch.c
+	$(srcdir)/nat/mips-linux-watch.c $(srcdir)/common/print-utils.c \
+	$(srcdir)/common/rsp-low.c $(srcdir)/common/errors.c \
+	$(srcdir)/common/common-debug.c $(srcdir)/common/cleanups.c \
+	$(srcdir)/common/common-exceptions.c $(srcdir)/symbol.c
 
 DEPFILES = @GDBSERVER_DEPFILES@
 
@@ -173,10 +182,12 @@ SOURCES = $(SFILES)
 TAGFILES = $(SOURCES) ${HFILES} ${ALLPARAM} ${POSSLIBS}
 
 OBS = agent.o ax.o inferiors.o regcache.o remote-utils.o server.o signals.o \
-      target.o waitstatus.o utils.o version.o vec.o gdb_vecs.o \
+      target.o waitstatus.o utils.o debug.o version.o vec.o gdb_vecs.o \
       mem-break.o hostio.o event-loop.o tracepoint.o xml-utils.o \
       common-utils.o ptid.o buffer.o format.o filestuff.o dll.o notif.o \
-      tdesc.o $(XML_BUILTIN) $(DEPFILES) $(LIBOBJS)
+      tdesc.o print-utils.o rsp-low.o errors.o common-debug.o cleanups.o \
+      common-exceptions.o symbol.o \
+      $(XML_BUILTIN) $(DEPFILES) $(LIBOBJS)
 GDBREPLAY_OBS = gdbreplay.o version.o
 GDBSERVER_LIBS = @GDBSERVER_LIBS@
 XM_CLIBS = @LIBS@
@@ -190,14 +201,14 @@ XML_BUILTIN = @srv_xmlbuiltin@
 IPA_DEPFILES = @IPA_DEPFILES@
 extra_libraries = @extra_libraries@
 
-SUBDIRS = $(GNULIB_BUILDDIR)
+SUBDIRS = $(GNULIB_BUILDDIR) $(LIBIBERTY_BUILDDIR)
 CLEANDIRS = $(SUBDIRS)
 
 # List of subdirectories in the build tree that must exist.
 # This is used to force build failures in existing trees when
 # a new directory is added.
 # The format here is for the `case' shell command.
-REQUIRED_SUBDIRS = $(GNULIB_BUILDDIR)
+REQUIRED_SUBDIRS = $(GNULIB_BUILDDIR) | $(LIBIBERTY_BUILDDIR)
 
 FLAGS_TO_PASS = \
 	"prefix=$(prefix)" \
@@ -258,7 +269,10 @@ install-only:
 	fi; \
 	$(SHELL) $(srcdir)/../../mkinstalldirs $(DESTDIR)$(bindir); \
 	$(INSTALL_PROGRAM) gdbserver$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT)
-	@$(MAKE) $(FLAGS_TO_PASS) DO=$@ "DODIRS=$(SUBDIRS)" subdir_do
+	# Note that we run install and not install-only, as the latter
+	# is not part of GNU standards and in particular not provided
+	# in libiberty.
+	@$(MAKE) $(FLAGS_TO_PASS) DO=install "DODIRS=$(SUBDIRS)" subdir_do
 
 uninstall: force
 	n=`echo gdbserver | sed '$(program_transform_name)'`; \
@@ -276,22 +290,25 @@ install-html:
 clean-info: force
 	@$(MAKE) $(FLAGS_TO_PASS) DO=$@ "DODIRS=$(SUBDIRS)" subdir_do
 
-gdbserver$(EXEEXT): $(OBS) ${ADD_DEPS} ${CDEPS} $(LIBGNU)
+gdbserver$(EXEEXT): $(OBS) ${ADD_DEPS} ${CDEPS} $(LIBGNU) $(LIBIBERTY)
 	rm -f gdbserver$(EXEEXT)
 	${CC-LD} $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbserver$(EXEEXT) $(OBS) \
-	$(LIBGNU) $(GDBSERVER_LIBS) $(XM_CLIBS)
+	$(LIBGNU) $(LIBIBERTY) $(GDBSERVER_LIBS) $(XM_CLIBS)
 
-$(LIBGNU) $(GNULIB_H): all-lib
-all-lib: $(GNULIB_BUILDDIR)/Makefile
-	@$(MAKE) $(FLAGS_TO_PASS) DO=all DODIRS=$(GNULIB_BUILDDIR) subdir_do
+$(LIBGNU) $(LIBIBERTY) $(GNULIB_H): all-lib
+all-lib: $(GNULIB_BUILDDIR)/Makefile $(LIBIBERTY_BUILDDIR)/Makefile
+	@$(MAKE) $(FLAGS_TO_PASS) DO=all DODIRS="$(SUBDIRS)" subdir_do
 .PHONY: all-lib
 
-gdbreplay$(EXEEXT): $(GDBREPLAY_OBS) $(LIBGNU)
+gdbreplay$(EXEEXT): $(GDBREPLAY_OBS) $(LIBGNU) $(LIBIBERTY)
 	rm -f gdbreplay$(EXEEXT)
 	${CC-LD} $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbreplay$(EXEEXT) $(GDBREPLAY_OBS) \
-	  $(XM_CLIBS) $(LIBGNU)
+	  $(XM_CLIBS) $(LIBGNU) $(LIBIBERTY)
 
-IPA_OBJS=ax-ipa.o tracepoint-ipa.o format-ipa.o utils-ipa.o regcache-ipa.o remote-utils-ipa.o common-utils-ipa.o tdesc-ipa.o ${IPA_DEPFILES}
+IPA_OBJS=ax-ipa.o tracepoint-ipa.o format-ipa.o utils-ipa.o \
+	regcache-ipa.o remote-utils-ipa.o common-utils-ipa.o \
+	tdesc-ipa.o print-utils-ipa.o rsp-low-ipa.o errors-ipa.o \
+	${IPA_DEPFILES}
 
 IPA_LIB=libinproctrace.so
 
@@ -327,7 +344,8 @@ clean:
 	rm -f reg-tilegx.c reg-tilegx32.c
 	rm -f arm-with-iwmmxt.c
 	rm -f arm-with-vfpv2.c arm-with-vfpv3.c arm-with-neon.c
-	rm -f mips-linux.c mips64-linux.c
+	rm -f mips-linux.c mips-dsp-linux.c
+	rm -f mips64-linux.c mips64-dsp-linux.c
 	rm -f nios2-linux.c
 	rm -f powerpc-32.c powerpc-32l.c powerpc-64l.c powerpc-e500l.c
 	rm -f powerpc-altivec32l.c powerpc-cell32l.c powerpc-vsx32l.c
@@ -343,11 +361,14 @@ clean:
 	rm -f xml-builtin.c stamp-xml
 	rm -f i386-avx.c i386-avx-linux.c
 	rm -f i386-mpx.c i386-mpx-linux.c
+	rm -f i386-avx512.c i386-avx512-linux.c
 	rm -f amd64-avx.c amd64-avx-linux.c
 	rm -f amd64-mpx.c amd64-mpx-linux.c
+	rm -f amd64-avx512.c amd64-avx512-linux.c
 	rm -f i386-mmx.c i386-mmx-linux.c
 	rm -f x32.c x32-linux.c
 	rm -f x32-avx.c x32-avx-linux.c
+	rm -f x32-avx512.c x32-avx512-linux.c
 	@$(MAKE) $(FLAGS_TO_PASS) DO=$@ "DODIRS=$(SUBDIRS)" subdir_do
 
 maintainer-clean realclean distclean: clean
@@ -386,7 +407,7 @@ $(GNULIB_BUILDDIR)/Makefile: $(srcdir)/../gnulib/Makefile.in config.status
 	  CONFIG_LINKS= \
 	  $(SHELL) config.status
 
-config.status: configure configure.srv $(srcdir)/../development.sh
+config.status: configure configure.srv $(srcdir)/../../bfd/development.sh
 	$(SHELL) ./config.status --recheck
 
 # automatic rebuilding in automake-generated Makefiles requires
@@ -428,7 +449,7 @@ UST_CFLAGS = $(ustinc) -DCONFIG_UST_GDB_INTEGRATION
 
 # Note, we only build the IPA if -fvisibility=hidden is supported in
 # the first place.
-IPAGENT_CFLAGS = $(CPPFLAGS) $(INTERNAL_CFLAGS) $(UST_CFLAGS) \
+IPAGENT_CFLAGS = $(INTERNAL_CFLAGS) $(UST_CFLAGS) \
 	-fPIC -DIN_PROCESS_AGENT \
 	-fvisibility=hidden
 
@@ -471,6 +492,15 @@ amd64-linux-ipa.o: amd64-linux.c
 tdesc-ipa.o: tdesc.c
 	$(IPAGENT_COMPILE) $<
 	$(POSTCOMPILE)
+print-utils-ipa.o: ../common/print-utils.c
+	$(IPAGENT_COMPILE) $<
+	$(POSTCOMPILE)
+rsp-low-ipa.o: ../common/rsp-low.c
+	$(IPAGENT_COMPILE) $<
+	$(POSTCOMPILE)
+errors-ipa.o: ../common/errors.c
+	$(IPAGENT_COMPILE) $<
+	$(POSTCOMPILE)
 
 ax.o: ax.c
 	$(COMPILE) $(WARN_CFLAGS_NO_FORMAT) $<
@@ -479,10 +509,10 @@ ax.o: ax.c
 signals.o: ../common/signals.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
-linux-procfs.o: ../common/linux-procfs.c
+print-utils.o: ../common/print-utils.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
-linux-ptrace.o: ../common/linux-ptrace.c
+rsp-low.o: ../common/rsp-low.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 common-utils.o: ../common/common-utils.c
@@ -495,9 +525,6 @@ gdb_vecs.o: ../common/gdb_vecs.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 xml-utils.o: ../common/xml-utils.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-linux-osdata.o: ../common/linux-osdata.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 ptid.o: ../common/ptid.c
@@ -515,38 +542,43 @@ filestuff.o: ../common/filestuff.c
 agent.o: ../common/agent.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
+errors.o: ../common/errors.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+common-debug.o: ../common/common-debug.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+cleanups.o: ../common/cleanups.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+common-exceptions.o: ../common/common-exceptions.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 waitstatus.o: ../target/waitstatus.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-
-linux-btrace.o: ../common/linux-btrace.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-
-mips-linux-watch.o: ../common/mips-linux-watch.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
 # Native object files rules from ../nat
 
+x86-dregs.o: ../nat/x86-dregs.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+linux-btrace.o: ../nat/linux-btrace.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+linux-osdata.o: ../nat/linux-osdata.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+linux-procfs.o: ../nat/linux-procfs.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+linux-ptrace.o: ../nat/linux-ptrace.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 linux-waitpid.o: ../nat/linux-waitpid.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
-
-# We build vasprintf with -DHAVE_CONFIG_H because we want that unit to
-# include our config.h file.  Otherwise, some system headers do not get
-# included, and the compiler emits a warning about implicitly defined
-# functions (missing declaration).
-vasprintf.o: $(srcdir)/../../libiberty/vasprintf.c
-	$(COMPILE) $< -DHAVE_CONFIG_H
-	$(POSTCOMPILE)
-vsnprintf.o: $(srcdir)/../../libiberty/vsnprintf.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-safe-ctype.o: $(srcdir)/../../libiberty/safe-ctype.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-lbasename.o: $(srcdir)/../../libiberty/lbasename.c
+mips-linux-watch.o: ../nat/mips-linux-watch.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
@@ -576,6 +608,10 @@ i386-avx.c : $(srcdir)/../regformats/i386/i386-avx.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-avx.dat i386-avx.c
 i386-avx-linux.c : $(srcdir)/../regformats/i386/i386-avx-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-avx-linux.dat i386-avx-linux.c
+i386-avx512.c : $(srcdir)/../regformats/i386/i386-avx512.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-avx512.dat i386-avx512.c
+i386-avx512-linux.c : $(srcdir)/../regformats/i386/i386-avx512-linux.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-avx512-linux.dat i386-avx512-linux.c
 i386-mpx.c : $(srcdir)/../regformats/i386/i386-mpx.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-mpx.dat i386-mpx.c
 i386-mpx-linux.c : $(srcdir)/../regformats/i386/i386-mpx-linux.dat $(regdat_sh)
@@ -676,10 +712,14 @@ amd64-linux.c : $(srcdir)/../regformats/i386/amd64-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-linux.dat amd64-linux.c
 amd64-avx.c : $(srcdir)/../regformats/i386/amd64-avx.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-avx.dat amd64-avx.c
-amd64-mpx.c : $(srcdir)/../regformats/i386/amd64-mpx.dat $(regdat_sh)
-	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-mpx.dat amd64-mpx.c
 amd64-avx-linux.c : $(srcdir)/../regformats/i386/amd64-avx-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-avx-linux.dat amd64-avx-linux.c
+amd64-avx512.c : $(srcdir)/../regformats/i386/amd64-avx512.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-avx512.dat amd64-avx512.c
+amd64-avx512-linux.c : $(srcdir)/../regformats/i386/amd64-avx512-linux.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-avx512-linux.dat amd64-avx512-linux.c
+amd64-mpx.c : $(srcdir)/../regformats/i386/amd64-mpx.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-mpx.dat amd64-mpx.c
 amd64-mpx-linux.c : $(srcdir)/../regformats/i386/amd64-mpx-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-mpx-linux.dat amd64-mpx-linux.c
 x32.c : $(srcdir)/../regformats/i386/x32.dat $(regdat_sh)
@@ -690,6 +730,10 @@ x32-avx.c : $(srcdir)/../regformats/i386/x32-avx.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/x32-avx.dat x32-avx.c
 x32-avx-linux.c : $(srcdir)/../regformats/i386/x32-avx-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/x32-avx-linux.dat x32-avx-linux.c
+x32-avx512.c : $(srcdir)/../regformats/i386/x32-avx512.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/x32-avx512.dat x32-avx512.c
+x32-avx512-linux.c : $(srcdir)/../regformats/i386/x32-avx512-linux.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/x32-avx512-linux.dat x32-avx512-linux.c
 reg-xtensa.c : $(srcdir)/../regformats/reg-xtensa.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/reg-xtensa.dat reg-xtensa.c
 reg-tilegx.c : $(srcdir)/../regformats/reg-tilegx.dat $(regdat_sh)

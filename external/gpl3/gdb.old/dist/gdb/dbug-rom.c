@@ -1,5 +1,5 @@
 /* Remote debugging interface to dBUG ROM monitor for GDB, the GNU debugger.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    Written by Stan Shebs of Cygnus Support.
 
@@ -31,8 +31,6 @@
 #include "regcache.h"
 
 #include "m68k-tdep.h"
-
-static void dbug_open (char *args, int from_tty);
 
 static void
 dbug_supply_register (struct regcache *regcache, char *regname,
@@ -155,7 +153,7 @@ init_dbug_cmds (void)
 }				/* init_debug_ops */
 
 static void
-dbug_open (char *args, int from_tty)
+dbug_open (const char *args, int from_tty)
 {
   monitor_open (args, &dbug_cmds, from_tty);
 }

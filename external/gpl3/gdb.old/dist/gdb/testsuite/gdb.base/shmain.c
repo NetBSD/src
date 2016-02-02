@@ -18,22 +18,12 @@ struct {
 
 int g;
 
-#ifdef PROTOTYPES
 int local_structarg(struct s x)
-#else
-int local_structarg(x)
-struct s x;
-#endif
 {
   return x.b;
 }
 
-#ifdef PROTOTYPES
 int mainshr1(int g)
-#else
-int mainshr1(g)
-int g;
-#endif
 {
   return 2*g;
 }

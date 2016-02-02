@@ -1895,6 +1895,7 @@ case "${target}" in
        ;;
    msp430*-*-*)
        sim_arch=msp430
+       sim_testsuite=yes
        ;;
    rl78-*-*)
        sim_arch=rl78

@@ -1,6 +1,6 @@
 /* Readline support for Python.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,13 +19,8 @@
 
 #include "defs.h"
 #include "python-internal.h"
-#include "exceptions.h"
 #include "top.h"
 #include "cli/cli-utils.h"
-#include <string.h>
-
-#include <stddef.h>
-
 /* Readline function suitable for PyOS_ReadlineFunctionPointer, which
    is used for Python's interactive parser and raw_input.  In both
    cases, sys_stdin and sys_stdout are always stdin and stdout
@@ -34,7 +29,11 @@
 
 static char *
 gdbpy_readline_wrapper (FILE *sys_stdin, FILE *sys_stdout,
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 4
+			const char *prompt)
+#else
 			char *prompt)
+#endif
 {
   int n;
   char *p = NULL, *q;

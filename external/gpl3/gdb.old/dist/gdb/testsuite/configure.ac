@@ -1,7 +1,7 @@
 #                                                       -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-# Copyright 2002-2014 Free Software Foundation, Inc.
+# Copyright 2002-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,14 +87,24 @@ AC_CHECK_HEADERS(pthread.h)
 
 AC_EXEEXT
 
+if test "${build}" = "${host}" -a "${host}" = "${target}"; then
+   case "${host}" in
+     *gnu*)
+       EXTRA_RULES=read1
+       ;;
+   esac
+fi
+AC_SUBST(EXTRA_RULES)
+
 AC_OUTPUT([Makefile \
   gdb.ada/Makefile \
   gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.btrace/Makefile \
-  gdb.cell/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile \
-  gdb.fortran/Makefile gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile \
+  gdb.cell/Makefile gdb.compile/Makefile gdb.cp/Makefile gdb.disasm/Makefile \
+  gdb.dwarf2/Makefile gdb.dlang/Makefile gdb.fortran/Makefile gdb.gdb/Makefile \
+  gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile \
   gdb.hp/Makefile gdb.hp/gdb.objdbg/Makefile gdb.hp/gdb.base-hp/Makefile \
   gdb.hp/gdb.aCC/Makefile gdb.hp/gdb.compat/Makefile \
-  gdb.hp/gdb.defects/Makefile gdb.linespec/Makefile \
+  gdb.hp/gdb.defects/Makefile gdb.guile/Makefile gdb.linespec/Makefile \
   gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile \
   gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile \
   gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile \

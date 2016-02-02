@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/i386.
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,9 +27,6 @@
 #include "symtab.h"
 #include "trad-frame.h"
 #include "tramp-frame.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "i386-tdep.h"
 #include "i387-tdep.h"

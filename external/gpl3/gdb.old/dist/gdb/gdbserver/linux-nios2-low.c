@@ -1,6 +1,6 @@
 /* GNU/Linux/Nios II specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    Contributed by Mentor Graphics, Inc.
 
@@ -127,7 +127,7 @@ static CORE_ADDR
 nios2_reinsert_addr (void)
 {
   union nios2_register ra;
-  struct regcache *regcache = get_thread_regcache (current_inferior, 1);
+  struct regcache *regcache = get_thread_regcache (current_thread, 1);
 
   collect_register_by_name (regcache, "ra", ra.buf);
   return ra.reg32;

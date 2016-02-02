@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,8 +26,6 @@
 #include "osabi.h"
 #include "reggroups.h"
 #include "regset.h"
-
-#include <string.h>
 
 #include "glibc-tdep.h"
 #include "solib-svr4.h"
@@ -346,19 +344,26 @@ static int m32r_pt_regs_offset[] = {
 #define SPU_OFFSET (4 * 23)
 #define SPI_OFFSET (4 * 26)
 
+#define M32R_LINUX_GREGS_SIZE (4 * 28)
+
 static void
 m32r_linux_supply_gregset (const struct regset *regset,
 			   struct regcache *regcache, int regnum,
 			   const void *gregs, size_t size)
 {
-  const char *regs = gregs;
-  unsigned long psw, bbpsw;
+  const gdb_byte *regs = gregs;
+  enum bfd_endian byte_order =
+    gdbarch_byte_order (get_regcache_arch (regcache));
+  ULONGEST psw, bbpsw;
+  gdb_byte buf[4];
+  const gdb_byte *p;
   int i;
 
-  psw = *((unsigned long *) (regs + PSW_OFFSET));
-  bbpsw = *((unsigned long *) (regs + BBPSW_OFFSET));
+  psw = extract_unsigned_integer (regs + PSW_OFFSET, 4, byte_order);
+  bbpsw = extract_unsigned_integer (regs + BBPSW_OFFSET, 4, byte_order);
+  psw = ((0x00c1 & bbpsw) << 8) | ((0xc100 & psw) >> 8);
 
-  for (i = 0; i < sizeof (m32r_pt_regs_offset) / 4; i++)
+  for (i = 0; i < ARRAY_SIZE (m32r_pt_regs_offset); i++)
     {
       if (regnum != -1 && regnum != i)
 	continue;
@@ -366,40 +371,77 @@ m32r_linux_supply_gregset (const struct regset *regset,
       switch (i)
 	{
 	case PSW_REGNUM:
-	  *((unsigned long *) (regs + m32r_pt_regs_offset[i])) =
-	    ((0x00c1 & bbpsw) << 8) | ((0xc100 & psw) >> 8);
+	  store_unsigned_integer (buf, 4, byte_order, psw);
+	  p = buf;
 	  break;
 	case CBR_REGNUM:
-	  *((unsigned long *) (regs + m32r_pt_regs_offset[i])) =
-	    ((psw >> 8) & 1);
+	  store_unsigned_integer (buf, 4, byte_order, psw & 1);
+	  p = buf;
 	  break;
 	case M32R_SP_REGNUM:
-	  if (psw & 0x8000)
-	    *((unsigned long *) (regs + m32r_pt_regs_offset[i])) =
-	      *((unsigned long *) (regs + SPU_OFFSET));
-	  else
-	    *((unsigned long *) (regs + m32r_pt_regs_offset[i])) =
-	      *((unsigned long *) (regs + SPI_OFFSET));
+	  p = regs + ((psw & 0x80) ? SPU_OFFSET : SPI_OFFSET);
 	  break;
+	default:
+	  p = regs + m32r_pt_regs_offset[i];
 	}
 
-      regcache_raw_supply (regcache, i,
-			   regs + m32r_pt_regs_offset[i]);
+      regcache_raw_supply (regcache, i, p);
     }
 }
 
-static struct regset m32r_linux_gregset = {
-  NULL, m32r_linux_supply_gregset
+static void
+m32r_linux_collect_gregset (const struct regset *regset,
+			    const struct regcache *regcache,
+			    int regnum, void *gregs, size_t size)
+{
+  gdb_byte *regs = gregs;
+  int i;
+  enum bfd_endian byte_order =
+    gdbarch_byte_order (get_regcache_arch (regcache));
+  ULONGEST psw;
+  gdb_byte buf[4];
+
+  regcache_raw_collect (regcache, PSW_REGNUM, buf);
+  psw = extract_unsigned_integer (buf, 4, byte_order);
+
+  for (i = 0; i < ARRAY_SIZE (m32r_pt_regs_offset); i++)
+    {
+      if (regnum != -1 && regnum != i)
+	continue;
+
+      switch (i)
+	{
+	case PSW_REGNUM:
+	  store_unsigned_integer (regs + PSW_OFFSET, 4, byte_order,
+				  (psw & 0xc1) << 8);
+	  store_unsigned_integer (regs + BBPSW_OFFSET, 4, byte_order,
+				  (psw >> 8) & 0xc1);
+	  break;
+	case CBR_REGNUM:
+	  break;
+	case M32R_SP_REGNUM:
+	  regcache_raw_collect (regcache, i, regs
+				+ ((psw & 0x80) ? SPU_OFFSET : SPI_OFFSET));
+	  break;
+	default:
+	  regcache_raw_collect (regcache, i,
+				regs + m32r_pt_regs_offset[i]);
+	}
+    }
+}
+
+static const struct regset m32r_linux_gregset = {
+  NULL,
+  m32r_linux_supply_gregset, m32r_linux_collect_gregset
 };
 
-static const struct regset *
-m32r_linux_regset_from_core_section (struct gdbarch *core_arch,
-				     const char *sect_name, size_t sect_size)
+static void
+m32r_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					 iterate_over_regset_sections_cb *cb,
+					 void *cb_data,
+					 const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (core_arch);
-  if (strcmp (sect_name, ".reg") == 0)
-    return &m32r_linux_gregset;
-  return NULL;
+  cb (".reg", M32R_LINUX_GREGS_SIZE, &m32r_linux_gregset, NULL, cb_data);
 }
 
 static void
@@ -421,8 +463,8 @@ m32r_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
   /* Core file support.  */
-  set_gdbarch_regset_from_core_section
-    (gdbarch, m32r_linux_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, m32r_linux_iterate_over_regset_sections);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,

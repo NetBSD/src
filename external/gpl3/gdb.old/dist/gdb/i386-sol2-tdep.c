@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris x86.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,6 @@
 #include "defs.h"
 #include "value.h"
 #include "osabi.h"
-
-#include <string.h>
 
 #include "sol2-tdep.h"
 #include "i386-tdep.h"

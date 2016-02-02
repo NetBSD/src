@@ -8,19 +8,13 @@
    */
 int  global_i = 0;
 
-#ifdef PROTOTYPES
 int main (int argc, char **argv)
-#else
-main (argc, argv)
-  int  argc;
-  char *  argv[];
-#endif
 {
   /* There is a local_j in foll-exec, which exec's us.  We
      should not be able to see that other definition of local_j
      after we are exec'd.
      */
-  int  local_j = argc;
+  int  local_j = argc;		/* after-exec */
   char *  s;
 
   printf ("Hello from execd-prog...\n");

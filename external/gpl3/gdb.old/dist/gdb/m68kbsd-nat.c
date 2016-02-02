@@ -1,6 +1,6 @@
 /* Native-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,6 @@
 #include "inferior.h"
 #include "regcache.h"
 
-#include "gdb_assert.h"
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>

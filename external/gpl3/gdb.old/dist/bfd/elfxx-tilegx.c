@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for ELF.
-   Copyright 2011, 2012, 2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2456,7 +2456,7 @@ tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, htab->sdynbss);
+  return _bfd_elf_adjust_dynamic_copy (info, h, htab->sdynbss);
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
@@ -2733,7 +2733,7 @@ tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;

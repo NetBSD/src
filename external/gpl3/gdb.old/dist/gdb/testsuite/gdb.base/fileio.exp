@@ -1,4 +1,4 @@
-#   Copyright 2002-2014 Free Software Foundation, Inc.
+#   Copyright 2002-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -180,20 +180,42 @@ gdb_test continue \
 "Continuing\\..*isatty 5:.*OK$stop_msg" \
 "Isatty (open file)"
 
-gdb_test continue \
-"Continuing\\..*system 1:.*OK$stop_msg" \
-"System says shell is available"
+gdb_test_no_output "set debug remote 1"
+set msg "System says shell is not available"
+gdb_test_multiple "continue" $msg {
+    -re "Continuing\\..*Fsystem.*system 1:.*OK$stop_msg\r\n$gdb_prompt $" {
+	pass $msg
+    }
+    -re ".*Fsystem.*$gdb_prompt $" {
+	fail $msg
+    }
+    -re "$gdb_prompt $" {
+	unsupported $msg
+    }
+}
+gdb_test_no_output "set debug remote 0"
 
 gdb_test_no_output "set remote system-call-allowed 1"
 
 gdb_test continue \
 "Continuing\\..*system 2:.*OK$stop_msg" \
+"System says shell is available"
+
+gdb_test continue \
+"Continuing\\..*system 3:.*OK$stop_msg" \
 "System(3) call"
 
 # Is this ok?  POSIX says system returns a waitpid status?
 gdb_test continue \
-"Continuing\\..*system 3:.*OK$stop_msg" \
+"Continuing\\..*system 4:.*OK$stop_msg" \
 "System with invalid command returns 127"
+
+# Prepare the directory for rename tests in case that test_system
+# failed to create.
+set dir1 [file join $outdir "dir1.fileio.test" "subdir.fileio.test"]
+remote_exec host "mkdir -p $dir1"
+set dir1 [file join $outdir "dir2.fileio.test"]
+remote_exec host "mkdir $dir1"
 
 gdb_test continue \
 "Continuing\\..*rename 1:.*OK$stop_msg" \

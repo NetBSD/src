@@ -1,6 +1,6 @@
 /* Minimal symbol table definitions for GDB.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -102,7 +102,7 @@ struct minimal_symbol *prim_record_minimal_symbol_full
 
 /* Like prim_record_minimal_symbol_full, but:
    - uses strlen to compute NAME_LEN,
-   - passes COPY_NAME = 0,
+   - passes COPY_NAME = 1,
    - and passes a default SECTION, depending on the type
    
    This variant does not return the new symbol.  */
@@ -113,7 +113,7 @@ void prim_record_minimal_symbol (const char *, CORE_ADDR,
 
 /* Like prim_record_minimal_symbol_full, but:
    - uses strlen to compute NAME_LEN,
-   - passes COPY_NAME = 0.  */
+   - passes COPY_NAME = 1.  */
 
 struct minimal_symbol *prim_record_minimal_symbol_and_info
     (const char *,
@@ -135,12 +135,6 @@ void install_minimal_symbols (struct objfile *);
    OBJFILE->msymbols[OBJFILE->minimal_symbol_count].  */
 
 void terminate_minimal_symbol_table (struct objfile *objfile);
-
-/* Sort all the minimal symbols in OBJFILE.  This should be only be
-   called after relocating symbols; it ensures that the minimal
-   symbols are properly sorted by address.  */
-
-void msymbols_sort (struct objfile *objfile);
 
 
 
@@ -164,17 +158,17 @@ unsigned int msymbol_hash_iw (const char *);
 
 /* Look through all the current minimal symbol tables and find the
    first minimal symbol that matches NAME.  If OBJF is non-NULL, limit
-   the search to that objfile.  If SFILE is non-NULL, the only file-scope
-   symbols considered will be from that source file (global symbols are
-   still preferred).  Returns a pointer to the minimal symbol that
-   matches, or NULL if no match is found.  */
+   the search to that objfile.  If SFILE is non-NULL, the only
+   file-scope symbols considered will be from that source file (global
+   symbols are still preferred).  Returns a bound minimal symbol that
+   matches, or an empty bound minimal symbol if no match is found.  */
 
-struct minimal_symbol *lookup_minimal_symbol (const char *,
-					      const char *,
-					      struct objfile *);
+struct bound_minimal_symbol lookup_minimal_symbol (const char *,
+						   const char *,
+						   struct objfile *);
 
-/* Like lookup_minimal_symbol, but searches all files and objfiles
-   and returns a bound minimal symbol.  */
+/* Like lookup_minimal_symbol, but searches all files and
+   objfiles.  */
 
 struct bound_minimal_symbol lookup_bound_minimal_symbol (const char *);
 
@@ -185,13 +179,14 @@ struct bound_minimal_symbol lookup_minimal_symbol_and_objfile (const char *);
 
 /* Look through all the current minimal symbol tables and find the
    first minimal symbol that matches NAME and has text type.  If OBJF
-   is non-NULL, limit the search to that objfile.  Returns a pointer
-   to the minimal symbol that matches, or NULL if no match is found.
+   is non-NULL, limit the search to that objfile.  Returns a bound
+   minimal symbol that matches, or an "empty" bound minimal symbol
+   otherwise.
 
    This function only searches the mangled (linkage) names.  */
 
-struct minimal_symbol *lookup_minimal_symbol_text (const char *,
-						   struct objfile *);
+struct bound_minimal_symbol lookup_minimal_symbol_text (const char *,
+							struct objfile *);
 
 /* Look through all the current minimal symbol tables and find the
    first minimal symbol that matches NAME and is a solib trampoline.
@@ -201,7 +196,7 @@ struct minimal_symbol *lookup_minimal_symbol_text (const char *,
 
    This function only searches the mangled (linkage) names.  */
 
-struct minimal_symbol *lookup_minimal_symbol_solib_trampoline
+struct bound_minimal_symbol lookup_minimal_symbol_solib_trampoline
     (const char *,
      struct objfile *);
 
@@ -248,5 +243,13 @@ void iterate_over_minimal_symbols (struct objfile *objf,
 				   void (*callback) (struct minimal_symbol *,
 						     void *),
 				   void *user_data);
+
+/* Compute the upper bound of MINSYM.  The upper bound is the last
+   address thought to be part of the symbol.  If the symbol has a
+   size, it is used.  Otherwise use the lesser of the next minimal
+   symbol in the same section, or the end of the section, as the end
+   of the function.  */
+
+CORE_ADDR minimal_symbol_upper_bound (struct bound_minimal_symbol minsym);
 
 #endif /* MINSYMS_H */

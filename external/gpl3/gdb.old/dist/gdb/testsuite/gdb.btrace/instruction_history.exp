@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2015 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <christian.himpel@intel.com>
 #
@@ -47,51 +47,57 @@ gdb_continue_to_breakpoint "cont to $bp_location" ".*$srcfile2:$bp_location.*"
 # it is necessary to count the number of lines that are
 # shown by the "record instruction-history" command.
 
+set traced {}
 set testname "determine number of recorded instructions"
 gdb_test_multiple "info record" $testname {
     -re "Active record target: record-btrace\r\nRecorded \(\[0-9\]*\) instructions in \(\[0-9\]*\) functions for thread 1 .*\\.\r\n$gdb_prompt $" {
         set traced $expect_out(1,string)
-        set traced_functions $expect_out(2,string)
         pass $testname
     }
 }
 
-# we have exactly 7 instructions here
-set message "exactly 7 instructions"
-if { $traced != 7 } {
+# we have exactly 11 instructions here
+set message "exactly 11 instructions"
+if { $traced != 11 } {
     fail $message
 } else {
     pass $message
 }
 
 # test that we see the expected instructions
-gdb_test "record instruction-history 1,6" "
-1\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-2\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax\r
-3\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-4\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax\r
-5\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r"
+gdb_test "record instruction-history 3,7" [join [list \
+  "3\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "4\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax" \
+  "5\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "6\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
+  "7\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
+  ] "\r\n"]
 
-gdb_test "record instruction-history /f 1,+5" "
-1\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-2\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax\r
-3\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-4\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax\r
-5\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r"
+gdb_test "record instruction-history /f 3,+5" [join [list \
+  "3\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "4\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax" \
+  "5\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "6\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
+  "7\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
+  ] "\r\n"]
 
-gdb_test "record instruction-history /p 6,-5" "
-1\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-2\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax\r
-3\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-4\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax\r
-5\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r"
+gdb_test "record instruction-history /p 7,-5" [join [list \
+  "3\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "4\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax" \
+  "5\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "6\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
+  "7\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
+  ] "\r\n"]
 
-gdb_test "record instruction-history /pf 1,6" "
-1\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-2\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax\r
-3\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r
-4\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax\r
-5\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r"
+gdb_test "record instruction-history /pf 3,7" [join [list \
+  "3\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "4\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax" \
+  "5\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "6\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
+  "7\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
+  ] "\r\n"]
+
+gdb_test "record instruction-history 3,3" "3\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r"
 
 # the following tests are checking the iterators
 # to avoid lots of regexps, we just check the number of lines that
@@ -117,7 +123,7 @@ proc test_lines_length { command message } {
 # all $traced instructions
 gdb_test_no_output "set record instruction-history-size 0"
 set message "record instruction-history - unlimited"
-set lines [test_lines_length "record instruction-history 0" $message]
+set lines [test_lines_length "record instruction-history 1" $message]
 if { $traced != $lines } {
     fail $message
 } else {
@@ -126,7 +132,7 @@ if { $traced != $lines } {
 
 gdb_test_no_output "set record instruction-history-size $traced"
 set message "record instruction-history - traced"
-set lines [test_lines_length "record instruction-history 0" $message]
+set lines [test_lines_length "record instruction-history 1" $message]
 if { $traced != $lines } {
     fail $message
 } else {
@@ -134,10 +140,10 @@ if { $traced != $lines } {
 }
 
 # test that the iterator works
-set history_size 3
+set history_size 4
 gdb_test_no_output "set record instruction-history-size $history_size"
 set message "browse history forward start"
-set lines [test_lines_length "record instruction-history 0" $message]
+set lines [test_lines_length "record instruction-history 1" $message]
 if { $lines != $history_size } {
     fail $message
 } else {
@@ -154,7 +160,7 @@ if { $lines != $history_size } {
 
 set message "browse history forward last"
 set lines [test_lines_length "record instruction-history +" $message]
-if { $lines != 1 } {
+if { $lines != 3 } {
     fail $message
 } else {
     pass $message
@@ -183,7 +189,7 @@ if { $lines != $history_size } {
 
 set message "browse history backward first"
 set lines [test_lines_length "record instruction-history -" $message]
-if { $lines != 1 } {
+if { $lines != 3 } {
     fail $message
 } else {
     pass $message

@@ -1,6 +1,6 @@
 /* Wrapper for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,5 +23,9 @@
 /* Wrapper function for waitpid which handles EINTR, and emulates
    __WALL for systems where that is not available.  */
 extern int my_waitpid (int pid, int *status, int flags);
+
+/* Convert wait status STATUS to a string.  Used for printing debug
+   messages only.  */
+extern char *status_to_str (int status);
 
 #endif /* LINUX_WAITPID_H */

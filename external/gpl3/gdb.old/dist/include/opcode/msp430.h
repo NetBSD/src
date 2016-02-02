@@ -1,6 +1,6 @@
 /* Opcode table for the TI MSP430 microcontrollers
 
-   Copyright 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
    
    This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,8 @@ struct msp430_operand_s
   int ol;	/* Operand length words.  */
   int am;	/* Addr mode.  */
   int reg;	/* Register.  */
-  int mode;	/* Pperand mode.  */
+  int mode;	/* Operand mode.  */
+  int vshift;   /* Number of bytes to shift operand down.  */
 #define OP_REG		0
 #define OP_EXP		1
 #ifndef DASM_SECTION

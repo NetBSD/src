@@ -1,3 +1,33 @@
+2015-12-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb-if.c (open): Rename to...
+	(rx_sim_is_open): This. Replace all uses of "open" by uses of
+	"rx_sim_is_open" throughout.
+
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* gdb-if.c (sim_do_command): Add const to cmd.  Move args
+	to top and add const.  Call strdup on cmd and free at end.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* gdb-if.c (sim_load): Add const to prog.
+
+2014-02-17  Kevin Buettner  <kevinb@redhat.com>
+
+	* gdb-if.c (rx_signal_to_host):  Rename to
+	`rx_signal_to_gdb_signal'.  Make static.  Update all callers
+	to use new name.  Use signal names from include/gdb/signals.h.
+
 2013-09-23  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

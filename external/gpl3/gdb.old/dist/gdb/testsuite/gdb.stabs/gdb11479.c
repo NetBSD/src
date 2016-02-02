@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2014 Free Software Foundation, Inc.
+   Copyright 2010-2015 Free Software Foundation, Inc.
 
    Contributed by Pierre Muller.
 
@@ -55,7 +55,7 @@ struct dummy {
 enum dummy_enum {
   enum1,
   enum2
-};
+} tag_dummy_enum;
 
 void *
 hack (const struct dummy *t, const enum dummy_enum *e)

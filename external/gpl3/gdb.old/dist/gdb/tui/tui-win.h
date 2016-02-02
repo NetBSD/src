@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -35,6 +35,7 @@ extern void tui_scroll (enum tui_scroll_direction,
 extern void tui_set_win_focus_to (struct tui_win_info *);
 extern void tui_resize_all (void);
 extern void tui_refresh_all_win (void);
+extern void tui_rehighlight_all (void);
 
 extern chtype tui_border_ulcorner;
 extern chtype tui_border_urcorner;
@@ -54,5 +55,8 @@ extern void tui_update_gdb_sizes (void);
 
 /* Create or get the TUI command list.  */
 struct cmd_list_element **tui_get_cmd_list (void);
+
+/* Set a TUI variable.  */
+void tui_set_var_cmd (char *, int, struct cmd_list_element *);
 
 #endif

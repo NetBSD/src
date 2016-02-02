@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -28,9 +28,6 @@
 #include "tui/tui-command.h"
 
 #include "gdb_curses.h"
-#include <string.h>
-
-
 /*****************************************
 ** STATIC LOCAL FUNCTIONS FORWARD DECLS    **
 ******************************************/
@@ -131,4 +128,19 @@ tui_dispatch_ctrl_char (unsigned int ch)
 	}
       return c;
     }
+}
+
+/* See tui-command.h.  */
+
+void
+tui_refresh_cmd_win (void)
+{
+  WINDOW *w = TUI_CMD_WIN->generic.handle;
+
+  wrefresh (w);
+
+  /* FIXME: It's not clear why this is here.
+     It was present in the original tui_puts code and is kept in order to
+     not introduce some subtle breakage.  */
+  fflush (stdout);
 }

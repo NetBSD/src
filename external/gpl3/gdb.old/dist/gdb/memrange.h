@@ -1,6 +1,6 @@
 /* The memory range data structure, and associated utilities.
 
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,6 +42,11 @@ DEF_VEC_O(mem_range_s);
 
 extern int mem_ranges_overlap (CORE_ADDR start1, int len1,
 			       CORE_ADDR start2, int len2);
+
+/* Returns true if ADDR is in RANGE.  */
+
+extern int address_in_mem_range (CORE_ADDR addr,
+				 const struct mem_range *range);
 
 /* Sort ranges by start address, then coalesce contiguous or
    overlapping ranges.  */

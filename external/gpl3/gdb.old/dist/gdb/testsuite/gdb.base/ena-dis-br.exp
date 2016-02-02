@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,14 +29,10 @@ if {[prepare_for_testing ${testfile}.exp ${testfile} \
 set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location7 [gdb_get_line_number "set breakpoint 7 here"]
 set bp_location8 [gdb_get_line_number "set breakpoint 8 here" $srcfile2]
-set bp_location9 [gdb_get_line_number "set breakpoint 9 here" $srcfile2]
 set bp_location11 [gdb_get_line_number "set breakpoint 11 here"]
-set bp_location13 [gdb_get_line_number "set breakpoint 13 here" $srcfile2]
 set bp_location14 [gdb_get_line_number "set breakpoint 14 here" $srcfile2]
 set bp_location15 [gdb_get_line_number "set breakpoint 15 here" $srcfile2]
-set bp_location16 [gdb_get_line_number "set breakpoint 16 here" $srcfile2]
 set bp_location17 [gdb_get_line_number "set breakpoint 17 here" $srcfile2]
-set bp_location18 [gdb_get_line_number "set breakpoint 18 here" $srcfile2]
 
 if ![runto_main] then { fail "enable/disable break tests suppressed" }
 
@@ -58,7 +54,7 @@ proc break_at { breakpoint where } {
     return $bp
 }
 
-set bp [break_at "marker1" " line ($bp_location15|$bp_location16)"]
+set bp [break_at "marker1" " line $bp_location15"]
 
 gdb_test_no_output "enable $bp" "enable break marker1"
 
@@ -82,7 +78,7 @@ gdb_test_no_output "delete $bp" "delete break marker1"
 
 # Verify that we can set a breakpoint to be self-disabling after the
 # first time it triggers.
-set bp [break_at "marker2" " line ($bp_location8|$bp_location9)"]
+set bp [break_at "marker2" " line $bp_location8"]
 
 gdb_test_no_output "enable once $bp" "enable once break marker2"
 
@@ -117,7 +113,7 @@ if ![runto_main] then {
     fail "enable/disable break tests suppressed"
 }
 
-set bp [break_at "marker3" " line ($bp_location17|$bp_location18)"]
+set bp [break_at "marker3" " line $bp_location17"]
 
 gdb_test_no_output "enable del $bp" "enable del break marker3"
 
@@ -126,7 +122,7 @@ gdb_test "info break $bp" \
     "info auto-deleted break marker2"
 
 gdb_test "continue" \
-    ".*marker3 .*:($bp_location17|$bp_location18).*" \
+    ".*marker3 .*:$bp_location17.*" \
     "continue to auto-deleted break marker3"
 
 gdb_test "info break $bp" \
@@ -136,7 +132,7 @@ gdb_test "info break $bp" \
 # Verify that we can set a breakpoint and manually disable it (we've
 # already proven that disabled bp's don't trigger).
 
-set bp [break_at "marker4" " line ($bp_location14|$bp_location13).*"]
+set bp [break_at "marker4" " line $bp_location14.*"]
 
 gdb_test_no_output "disable $bp" "disable break marker4"
 
@@ -153,7 +149,7 @@ if ![runto_main] then {
 
 set bp [break_at $bp_location7 "line $bp_location7"]
 
-set bp2 [break_at marker1 " line ($bp_location15|$bp_location16)"]
+set bp2 [break_at marker1 " line $bp_location15"]
 
 gdb_test_no_output "enable count 2 $bp" "disable break with count"
 
@@ -166,7 +162,7 @@ gdb_test "continue" \
     "continue from enable count, second time"
 
 gdb_test "continue" \
-    ".*marker1 .*:($bp_location15|$bp_location16).*" \
+    ".*marker1 .*:$bp_location15.*" \
     "continue through enable count, now disabled"
 
 # Verify that we can set a breakpoint with an ignore count N, which
@@ -177,7 +173,7 @@ if ![runto_main] then {
     fail "enable/disable break tests suppressed"
 }
 
-set bp [break_at "marker1" " line ($bp_location15|$bp_location16).*"]
+set bp [break_at "marker1" " line $bp_location15.*"]
 
 # Verify that an ignore of a non-existent breakpoint is gracefully
 # handled.
@@ -232,7 +228,7 @@ if ![runto_main] then {
     fail "enable/disable break tests suppressed"
 }
 
-set bp [break_at marker1 " line ($bp_location15|$bp_location16).*"]
+set bp [break_at marker1 " line $bp_location15.*"]
 
 gdb_test "ignore $bp 1" \
     "Will ignore next crossing of breakpoint \[0-9\]*.*" \
@@ -248,7 +244,7 @@ gdb_continue_to_end "no stop at ignored & auto-deleted break marker1"
 rerun_to_main
 
 gdb_test "continue" \
-    ".*marker1 .*:($bp_location15|$bp_location16).*" \
+    ".*marker1 .*:$bp_location15.*" \
     "continue to ignored & auto-deleted break marker1"
 
 # Verify that a disabled breakpoint's ignore count isn't updated when
@@ -258,7 +254,7 @@ if ![runto_main] then {
     fail "enable/disable break tests suppressed"
 }
 
-set bp [break_at marker1 " line ($bp_location15|$bp_location16)"]
+set bp [break_at marker1 " line $bp_location15"]
 
 gdb_test "ignore $bp 10" \
     "Will ignore next 10 crossings of breakpoint \[0-9\]*.*" \

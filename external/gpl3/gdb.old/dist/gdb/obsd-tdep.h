@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,5 +23,6 @@
 struct gdbarch;
 
 CORE_ADDR obsd_skip_solib_resolver (struct gdbarch *, CORE_ADDR);
+void obsd_init_abi (struct gdbarch_info, struct gdbarch *);
 
 #endif /* obsd-tdep.h */

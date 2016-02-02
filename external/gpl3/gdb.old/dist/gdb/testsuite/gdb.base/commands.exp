@@ -1,4 +1,4 @@
-#   Copyright 1988-2014 Free Software Foundation, Inc.
+#   Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,11 +59,6 @@ proc gdbvar_complex_if_while_test {} {
 proc progvar_simple_if_test {} {
     global gdb_prompt
 
-    if [target_info exists noargs] { 
-        verbose "Skipping progvar_simple_if_test because of noargs."
-        return
-    }
-
     if { ![runto factorial] } then { gdb_suppress_tests; }
     # Don't depend upon argument passing, since most simulators don't
     # currently support it.  Bash value variable to be what we want.
@@ -82,12 +77,6 @@ proc progvar_simple_if_test {} {
 proc progvar_simple_while_test {} {
     global gdb_prompt
 
-    if [target_info exists noargs] { 
-        verbose "Skipping progvar_simple_while_test because of noargs."
-        return
-    }
-
-    gdb_test_no_output "set args 5" "set args in progvar_simple_while_test"
     if { ![runto factorial] } then { gdb_suppress_tests }
     # Don't depend upon argument passing, since most simulators don't
     # currently support it.  Bash value variable to be what we want.
@@ -102,13 +91,6 @@ proc progvar_simple_while_test {} {
 proc progvar_complex_if_while_test {} {
     global gdb_prompt
 
-    if [target_info exists noargs] { 
-        verbose "Skipping progvar_simple_if_while_test because of noargs."
-        return
-    }
-
-    gdb_test_no_output "set args 4" \
-	"set args in progvar_complex_if_while_test"
     if { ![runto factorial] } then { gdb_suppress_tests }
     # Don't depend upon argument passing, since most simulators don't
     # currently support it.  Bash value variable to be what we want.
@@ -121,13 +103,7 @@ proc progvar_complex_if_while_test {} {
 }
 
 proc if_while_breakpoint_command_test {} {
-    if [target_info exists noargs] { 
-        verbose "Skipping if_while_breakpoint_command_test because of noargs."
-        return
-    }
 
-    gdb_test_no_output "set args 5" \
-	"set args in if_while_breakpoint_command_test"
     if { ![runto factorial] } then { gdb_suppress_tests }
     # Don't depend upon argument passing, since most simulators don't
     # currently support it.  Bash value variable to be what we want.
@@ -162,13 +138,7 @@ proc if_while_breakpoint_command_test {} {
 # subsection "Breakpoint command lists".
 
 proc infrun_breakpoint_command_test {} {
-    if [target_info exists noargs] { 
-        verbose "Skipping infrun_breakpoint_command_test because of noargs."
-        return
-    }
 
-    gdb_test_no_output "set args 6" \
-	"set args in infrun_breakpoint_command_test"
     if { ![runto factorial] } then { gdb_suppress_tests }
     # Don't depend upon argument passing, since most simulators don't
     # currently support it.  Bash value variable to be what we want.
@@ -197,12 +167,7 @@ proc infrun_breakpoint_command_test {} {
 }
 
 proc breakpoint_command_test {} {
-    if [target_info exists noargs] { 
-        verbose "Skipping breakpoint_command_test because of noargs."
-        return
-    }
 
-    gdb_test_no_output "set args 6" "set args in breakpoint_command_test"
     if { ![runto factorial] } then { gdb_suppress_tests; }
     # Don't depend upon argument passing, since most simulators don't
     # currently support it.  Bash value variable to be what we want.
@@ -243,23 +208,38 @@ proc user_defined_command_test {} {
    gdb_test "show user mycommand" \
 	"  while \\\$arg0.*set.*    if \\\(\\\$arg0.*p/x.*    else\[^\n\].*p/x.*    end\[^\n\].*  end\[^\n\].*" \
 	   "display user command in user_defined_command_test"
+
+    # Create and test a user-defined command with an empty body.
+    gdb_test_multiple "define myemptycommand" \
+	"define myemptycommand in user_defined_command_test" {
+	    -re "End with"  {
+		pass "define myemptycommand in user_defined_command_test"
+	    }
+	}
+    gdb_test "end" \
+	"" \
+	"end definition of user-defined command with empty body"
+
+    gdb_test_no_output "myemptycommand" \
+	"execute user-defined empty command in user_defined_command_test"
+
+    gdb_test "show user" \
+	"User command \"myemptycommand.*" \
+	"display empty command in command list in user_defined_command_test"
+
+    gdb_test "show user myemptycommand" \
+	"User command \"myemptycommand.*" \
+	"display user-defined empty command in user_defined_command_test"
 }
 
 proc watchpoint_command_test {} {
-    global noargs
     global gdb_prompt
-
-    if [target_info exists noargs] { 
-        verbose "Skipping watchpoint_command_test because of noargs."
-        return
-    }
 
     # Disable hardware watchpoints if necessary.
     if [target_info exists gdb,no_hardware_watchpoints] {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
 
-    gdb_test_no_output "set args 6" "set args in watchpoint_command_test"
     if { ![runto factorial] } then { return }
     delete_breakpoints
 
@@ -325,11 +305,6 @@ proc watchpoint_command_test {} {
 
 proc test_command_prompt_position {} {
     global gdb_prompt
-
-    if [target_info exists noargs] { 
-        verbose "Skipping test_command_prompt_position because of noargs."
-        return
-    }
 
     if { ![runto factorial] } then { gdb_suppress_tests; }
     # Don't depend upon argument passing, since most simulators don't
@@ -424,14 +399,7 @@ proc deprecated_command_test {} {
 
 proc bp_deleted_in_command_test {} {
     global gdb_prompt
-    
-    if [target_info exists noargs] { 
-        verbose "Skipping bp_deleted_in_command_test because of noargs."
-        return
-    }
 
-    gdb_test_no_output "set args 1" \
-	"set args in bp_deleted_in_command_test"
     delete_breakpoints
 
     # Create a breakpoint, and associate a command-list to it, with
@@ -471,28 +439,12 @@ proc bp_deleted_in_command_test {} {
 	"end commands"
 
     gdb_run_cmd
-    gdb_expect {
-        -re ".*factorial command-list executed.*$gdb_prompt $" {
-	    pass "run factorial until breakpoint"
-        }
-	-re ".*$gdb_prompt $" {
-	    fail "run factorial until breakpoint"
-	}
-	default { fail "(timeout) run factorial until breakpoint" }
-	timeout { fail "(timeout) run factorial until breakpoint" }
-    }
+    gdb_test "" "factorial command-list executed.*" "run factorial until breakpoint"
 }
 
 proc temporary_breakpoint_commands {} {
     global gdb_prompt
-    
-    if [target_info exists noargs] { 
-        verbose "Skipping temporary_breakpoint_commands because of noargs."
-        return
-    }
 
-    gdb_test_no_output "set args 1" \
-	"set args in temporary_breakpoint_commands"
     delete_breakpoints
 
     # Create a temporary breakpoint, and associate a commands list to it.
@@ -529,12 +481,8 @@ proc temporary_breakpoint_commands {} {
 	"end tbreak commands"
 
     gdb_run_cmd
-    gdb_expect {
-	-re ".*factorial tbreak commands executed.*$gdb_prompt $" {
-	    pass "run factorial until temporary breakpoint"
-	}
-	timeout { fail "(timeout) run factorial until temporary breakpoint" }
-    }
+    gdb_test "" "factorial tbreak commands executed.*" \
+	"run factorial until temporary breakpoint"
 }
 
 # Test that GDB can handle $arg0 outside of user functions without

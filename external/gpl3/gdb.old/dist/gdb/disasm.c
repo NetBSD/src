@@ -1,6 +1,6 @@
 /* Disassemble support for GDB.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,6 @@
 #include "target.h"
 #include "value.h"
 #include "ui-out.h"
-#include <string.h>
 #include "disasm.h"
 #include "gdbcore.h"
 #include "dis-asm.h"
@@ -376,7 +375,7 @@ fprintf_disasm (void *stream, const char *format, ...)
   return 0;
 }
 
-static struct disassemble_info
+struct disassemble_info
 gdb_disassemble_info (struct gdbarch *gdbarch, struct ui_file *file)
 {
   struct disassemble_info di;
@@ -411,23 +410,22 @@ gdb_disassembly (struct gdbarch *gdbarch, struct ui_out *uiout,
   struct ui_file *stb = mem_fileopen ();
   struct cleanup *cleanups = make_cleanup_ui_file_delete (stb);
   struct disassemble_info di = gdb_disassemble_info (gdbarch, stb);
-  /* To collect the instruction outputted from opcodes.  */
-  struct symtab *symtab = NULL;
+  struct symtab *symtab;
   struct linetable_entry *le = NULL;
   int nlines = -1;
 
   /* Assume symtab is valid for whole PC range.  */
-  symtab = find_pc_symtab (low);
+  symtab = find_pc_line_symtab (low);
 
-  if (symtab != NULL && symtab->linetable != NULL)
+  if (symtab != NULL && SYMTAB_LINETABLE (symtab) != NULL)
     {
       /* Convert the linetable to a bunch of my_line_entry's.  */
-      le = symtab->linetable->item;
-      nlines = symtab->linetable->nitems;
+      le = SYMTAB_LINETABLE (symtab)->item;
+      nlines = SYMTAB_LINETABLE (symtab)->nitems;
     }
 
   if (!(flags & DISASSEMBLY_SOURCE) || nlines <= 0
-      || symtab == NULL || symtab->linetable == NULL)
+      || symtab == NULL || SYMTAB_LINETABLE (symtab) == NULL)
     do_assembly_only (gdbarch, uiout, &di, low, high, how_many, flags, stb);
 
   else if (flags & DISASSEMBLY_SOURCE)

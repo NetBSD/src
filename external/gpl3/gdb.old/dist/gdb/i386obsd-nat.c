@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/i386.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 
 #include "i386-tdep.h"
 #include "i386bsd-nat.h"
+#include "obsd-nat.h"
 #include "bsd-kvm.h"
 
 static int
@@ -64,7 +65,7 @@ i386obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if ((pcb->pcb_flags & PCB_SAVECTX) == 0)
     {
       /* Yes, we have a frame that matches cpu_switch().  */
-      read_memory (pcb->pcb_esp, (char *) &sf, sizeof sf);
+      read_memory (pcb->pcb_esp, (gdb_byte *) &sf, sizeof sf);
       pcb->pcb_esp += sizeof (struct switchframe);
       regcache_raw_supply (regcache, I386_EDI_REGNUM, &sf.sf_edi);
       regcache_raw_supply (regcache, I386_ESI_REGNUM, &sf.sf_esi);
@@ -94,8 +95,8 @@ void _initialize_i386obsd_nat (void);
 void
 _initialize_i386obsd_nat (void)
 {
-  /* We've got nothing to add to the common *BSD/i386 target.  */
-  add_target (i386bsd_target ());
+  /* Add some extra features to the common *BSD/i386 target.  */
+  obsd_add_target (i386bsd_target ());
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386obsd_supply_pcb);

@@ -1,5 +1,5 @@
 /* Definitions for PRPSINFO structures under ELF on GNU/Linux.
-   Copyright 2013 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,10 +22,9 @@
 #include "regcache.h"
 #include "target.h"
 
-#include "gdb_assert.h"
-
 #include "amd64-tdep.h"
 #include "amd64-nat.h"
+#include "obsd-nat.h"
 
 /* Mapping between the general-purpose registers in OpenBSD/amd64
    `struct reg' format and GDB's register cache layout for
@@ -137,8 +136,8 @@ _initialize_amd64obsd_nat (void)
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64obsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64obsd_r_reg_offset;
 
-  /* We've got nothing to add to the common *BSD/amd64 target.  */
-  add_target (amd64bsd_target ());
+  /* Add some extra features to the common *BSD/amd64 target.  */
+  obsd_add_target (amd64bsd_target ());
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (amd64obsd_supply_pcb);

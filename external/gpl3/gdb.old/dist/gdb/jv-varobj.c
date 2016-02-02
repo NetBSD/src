@@ -1,6 +1,6 @@
 /* varobj support for Java.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -101,5 +101,6 @@ const struct lang_varobj_ops java_varobj_ops =
    java_type_of_child,
    java_value_of_variable,
    varobj_default_value_is_changeable_p,
-   NULL /* value_has_mutated */
+   NULL, /* value_has_mutated */
+   varobj_default_is_path_expr_parent
 };

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2014 Free Software Foundation, Inc.
+   Copyright 2012-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,12 +19,14 @@
 main:	.globl main
 
 gcc42:	.globl gcc42
+.Lgcc42_procstart:
 	.int 0
 	.type gcc42, %function
 	.size gcc42, . - gcc42
 .Lgcc42_procend:
 
 gcc43:	.globl gcc43
+.Lgcc43_procstart:
 	.int 0
 	.type gcc43, %function
 	.size gcc43, . - gcc43
@@ -43,7 +45,7 @@ gcc43:	.globl gcc43
 
 	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
 	.4byte	.Lgcc42_begin			/* DW_AT_stmt_list */
-	.4byte	gcc42				/* DW_AT_low_pc */
+	.4byte	.Lgcc42_procstart		/* DW_AT_low_pc */
 	.4byte	.Lgcc42_procend			/* DW_AT_high_pc */
 	.ascii	"/dir/d/dw2-compdir-oldgcc42.S\0"	/* DW_AT_name */
 	.ascii	"GNU C 4.2.0\0"			/* DW_AT_producer */
@@ -54,7 +56,7 @@ gcc43:	.globl gcc43
 	.byte		1			/* DW_AT_decl_file */
 	.byte		1			/* DW_AT_decl_line */
 	.ascii		"gcc42\0"		/* DW_AT_name */
-	.4byte		gcc42			/* DW_AT_low_pc */
+	.4byte		.Lgcc42_procstart	/* DW_AT_low_pc */
 	.4byte		.Lgcc42_procend		/* DW_AT_high_pc */
 
 	.byte		0			/* End of children of CU */
@@ -70,7 +72,7 @@ gcc43:	.globl gcc43
 
 	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
 	.4byte	.Lgcc43_begin			/* DW_AT_stmt_list */
-	.4byte	gcc43				/* DW_AT_low_pc */
+	.4byte	.Lgcc43_procstart		/* DW_AT_low_pc */
 	.4byte	.Lgcc43_procend			/* DW_AT_high_pc */
 	.ascii	"/dir/d/dw2-compdir-oldgcc43.S\0"	/* DW_AT_name */
 	.ascii	"GNU C 4.3.0\0"			/* DW_AT_producer */
@@ -81,7 +83,7 @@ gcc43:	.globl gcc43
 	.byte		1			/* DW_AT_decl_file */
 	.byte		1			/* DW_AT_decl_line */
 	.ascii		"gcc43\0"		/* DW_AT_name */
-	.4byte		gcc43			/* DW_AT_low_pc */
+	.4byte		.Lgcc43_procstart	/* DW_AT_low_pc */
 	.4byte		.Lgcc43_procend		/* DW_AT_high_pc */
 
 	.byte		0			/* End of children of CU */
