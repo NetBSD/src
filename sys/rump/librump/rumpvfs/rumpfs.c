@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.136 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.137 2016/02/02 12:22:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.136 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.137 2016/02/02 12:22:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.136 2016/01/26 23:12:18 pooka Exp $");
 #include <rump-sys/kern.h>
 #include <rump-sys/vfs.h>
 
+#include <rump/rumpfs.h>
 #include <rump/rumpuser.h>
 
 static int rump_vop_lookup(void *);
@@ -84,6 +85,7 @@ static int rump_vop_bmap(void *);
 static int rump_vop_strategy(void *);
 static int rump_vop_advlock(void *);
 static int rump_vop_access(void *);
+static int rump_vop_fcntl(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -128,6 +130,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_bmap_desc, rump_vop_bmap },
 	{ &vop_strategy_desc, rump_vop_strategy },
 	{ &vop_advlock_desc, rump_vop_advlock },
+	{ &vop_fcntl_desc, rump_vop_fcntl },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
@@ -209,6 +212,7 @@ struct rumpfs_node {
 #define RUMPNODE_DIR_ET		0x02
 #define RUMPNODE_DIR_ETSUBS	0x04
 #define RUMPNODE_ET_PHONE_HOST	0x10
+#define RUMPNODE_EXTSTORAGE	0x20
 
 struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
@@ -931,7 +935,12 @@ rump_vop_setattr(void *v)
 		copylen = MIN(rn->rn_dlen, newlen);
 		memset(newdata, 0, newlen);
 		memcpy(newdata, rn->rn_data, copylen);
-		rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+
+		if ((rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
+			rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+		} else {
+			rn->rn_flags &= ~RUMPNODE_EXTSTORAGE;
+		}
 
 		rn->rn_data = newdata;
 		rn->rn_dlen = newlen;
@@ -1456,7 +1465,11 @@ rump_vop_write(void *v)
 			rn->rn_dlen = oldlen;
 			uvm_vnp_setsize(vp, oldlen);
 		} else {
-			rump_hyperfree(olddata, oldlen);
+			if ((rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
+				rump_hyperfree(olddata, oldlen);
+			} else {
+				rn->rn_flags &= ~RUMPNODE_EXTSTORAGE;
+			}
 		}
 	}
 
@@ -1620,7 +1633,11 @@ rump_vop_reclaim(void *v)
 		if (vp->v_type == VREG
 		    && (rn->rn_flags & RUMPNODE_ET_PHONE_HOST) == 0
 		    && rn->rn_data) {
-			rump_hyperfree(rn->rn_data, rn->rn_dlen);
+			if ((rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
+				rump_hyperfree(rn->rn_data, rn->rn_dlen);
+			} else {
+				rn->rn_flags &= ~RUMPNODE_EXTSTORAGE;
+			}
 			rn->rn_data = NULL;
 		}
 
@@ -1674,6 +1691,65 @@ rump_vop_advlock(void *v)
 	struct rumpfs_node *rn = vp->v_data;
 
 	return lf_advlock(ap, &rn->rn_lockf, vp->v_size);
+}
+
+static int
+rump_vop_fcntl(void *v)
+{
+	struct vop_fcntl_args /* {
+		struct vnode *a_vp;
+		u_int a_command;
+		void *a_data;
+		int a_fflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct proc *p = curproc;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+	u_int cmd = ap->a_command;
+	int fflag = ap->a_fflag;
+	struct rumpfs_extstorage *rfse = ap->a_data;
+	int error = 0;
+
+	/* none of the current rumpfs fcntlops are defined for remotes */
+	if (!RUMP_LOCALPROC_P(p))
+		return EINVAL;
+
+	switch (cmd) {
+	case RUMPFS_FCNTL_EXTSTORAGE_ADD:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if ((fflag & FWRITE) == 0)
+		return EBADF;
+
+	if (vp->v_type != VREG || (rn->rn_flags & RUMPNODE_ET_PHONE_HOST))
+		return EINVAL;
+
+	if (rfse->rfse_flags != 0)
+		return EINVAL;
+
+	/*
+	 * Ok, we are good to go.  Process.
+	 */
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
+	KASSERT(cmd == RUMPFS_FCNTL_EXTSTORAGE_ADD);
+	if (rn->rn_data && (rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
+		rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+	}
+
+	rn->rn_data = rfse->rfse_data;
+	rn->rn_dlen = rfse->rfse_dlen;
+	uvm_vnp_setsize(vp, rn->rn_dlen);
+	rn->rn_flags |= RUMPNODE_EXTSTORAGE;
+
+	VOP_UNLOCK(vp);
+
+	return error;
 }
 
 /*
