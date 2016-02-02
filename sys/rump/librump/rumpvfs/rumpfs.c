@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.137 2016/02/02 12:22:23 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.138 2016/02/02 13:02:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.137 2016/02/02 12:22:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.138 2016/02/02 13:02:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -937,7 +937,7 @@ rump_vop_setattr(void *v)
 		memcpy(newdata, rn->rn_data, copylen);
 
 		if ((rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
-			rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+			rump_hyperfree(rn->rn_data, rn->rn_dlen);
 		} else {
 			rn->rn_flags &= ~RUMPNODE_EXTSTORAGE;
 		}
@@ -1739,7 +1739,7 @@ rump_vop_fcntl(void *v)
 
 	KASSERT(cmd == RUMPFS_FCNTL_EXTSTORAGE_ADD);
 	if (rn->rn_data && (rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
-		rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+		rump_hyperfree(rn->rn_data, rn->rn_dlen);
 	}
 
 	rn->rn_data = rfse->rfse_data;
