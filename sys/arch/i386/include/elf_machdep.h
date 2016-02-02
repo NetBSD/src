@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.11 2016/02/02 20:16:08 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.12 2016/02/02 20:16:59 christos Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -26,6 +26,7 @@
 #define	R_386_RELATIVE	8
 #define	R_386_GOTOFF	9
 #define	R_386_GOTPC	10
+#define	R_386_32PLT	11
 
 /* TLS relocations */
 #define	R_386_TLS_TPOFF	14
