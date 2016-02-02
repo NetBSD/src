@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_pwm.c,v 1.1 2015/11/21 07:41:29 mlelstv Exp $ */
+/*	$NetBSD: bcm2835_pwm.c,v 1.2 2016/02/02 13:55:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_pwm.c,v 1.1 2015/11/21 07:41:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_pwm.c,v 1.2 2016/02/02 13:55:50 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -67,12 +67,11 @@ struct bcm2835pwm_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_addr_t		sc_iob;
 
 	int			sc_clockrate;
 	struct bcm_pwm_channel	sc_channels[2];
 	kmutex_t		sc_lock;
-
-	uint32_t		sc_physaddr;
 };
 
 #define PWM_WRITE(sc, reg, val) \
@@ -114,7 +113,7 @@ bcmpwm_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = aaa->aaa_iot;
-	sc->sc_physaddr = aaa->aaa_addr;
+	sc->sc_iob = aaa->aaa_addr;
 
 	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_PWM_SIZE, 0,
 	    &sc->sc_ioh)) {
@@ -336,6 +335,6 @@ bcm_pwm_dma_address(struct bcm_pwm_channel *pwm)
 {
 	struct bcm2835pwm_softc *sc = pwm->sc;
 
-	return BCM2835_PERIPHERALS_TO_BUS(sc->sc_physaddr + PWM_FIFO);
+	return sc->sc_iob + PWM_FIFO;
 }
 
