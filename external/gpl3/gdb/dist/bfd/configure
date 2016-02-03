@@ -621,6 +621,8 @@ SHARED_LDFLAGS
 LIBM
 COREFLAG
 COREFILE
+zlibinc
+zlibdir
 EXEEXT_FOR_BUILD
 CC_FOR_BUILD
 BFD_HOSTPTR_T
@@ -798,7 +800,7 @@ enable_build_warnings
 enable_maintainer_mode
 enable_install_libbfd
 enable_nls
-with_zlib
+with_system_zlib
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1464,7 +1466,7 @@ Optional Packages:
   --with-pkgversion=PKG   Use PKG in the version string in place of "GNU
                           Binutils"
   --with-bugurl=URL       Direct users to URL to report a bug
-  --with-zlib             include zlib support (auto/yes/no) default=auto
+  --with-system-zlib      use installed libz
 
 Some influential environment variables:
   CC          C compiler command
@@ -11422,7 +11424,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11424 "configure"
+#line 11426 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11528,7 +11530,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11530 "configure"
+#line 11532 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12989,7 +12991,7 @@ $as_echo "$bfd_cv_build_exeext" >&6; }
 fi
 
 
-for ac_header in alloca.h stddef.h string.h strings.h stdlib.h time.h unistd.h wchar.h
+for ac_header in alloca.h stddef.h string.h strings.h stdlib.h time.h unistd.h wchar.h wctype.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -13818,6 +13820,28 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRSTR $ac_have_decl
 _ACEOF
 
+ac_fn_c_check_decl "$LINENO" "asprintf" "ac_cv_have_decl_asprintf" "$ac_includes_default"
+if test "x$ac_cv_have_decl_asprintf" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ASPRINTF $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "vasprintf" "ac_cv_have_decl_vasprintf" "$ac_includes_default"
+if test "x$ac_cv_have_decl_vasprintf" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VASPRINTF $ac_have_decl
+_ACEOF
+
 ac_fn_c_check_decl "$LINENO" "snprintf" "ac_cv_have_decl_snprintf" "$ac_includes_default"
 if test "x$ac_cv_have_decl_snprintf" = x""yes; then :
   ac_have_decl=1
@@ -13855,88 +13879,21 @@ _ACEOF
 # Link in zlib if we can.  This allows us to read compressed debug sections.
 # This is used only by compress.c.
 
-  # See if the user specified whether he wants zlib support or not.
+  # Use the system's zlib library.
+  zlibdir="-L\$(top_builddir)/../zlib"
+  zlibinc="-I\$(top_srcdir)/../zlib"
 
-# Check whether --with-zlib was given.
-if test "${with_zlib+set}" = set; then :
-  withval=$with_zlib;
-else
-  with_zlib=auto
-fi
-
-
-  if test "$with_zlib" != "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zlibVersion" >&5
-$as_echo_n "checking for library containing zlibVersion... " >&6; }
-if test "${ac_cv_search_zlibVersion+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char zlibVersion ();
-int
-main ()
-{
-return zlibVersion ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' z; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+# Check whether --with-system-zlib was given.
+if test "${with_system_zlib+set}" = set; then :
+  withval=$with_system_zlib; if test x$with_system_zlib = xyes ; then
+    zlibdir=
+    zlibinc=
   fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_zlibVersion=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_zlibVersion+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_zlibVersion+set}" = set; then :
-
-else
-  ac_cv_search_zlibVersion=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_zlibVersion" >&5
-$as_echo "$ac_cv_search_zlibVersion" >&6; }
-ac_res=$ac_cv_search_zlibVersion
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  for ac_header in zlib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "zlib.h" "ac_cv_header_zlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_zlib_h" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_ZLIB_H 1
-_ACEOF
 
 fi
 
-done
 
-fi
 
-    if test "$with_zlib" = "yes" -a "$ac_cv_header_zlib_h" != "yes"; then
-      as_fn_error "zlib (libz) library was explicitly requested but not found" "$LINENO" 5
-    fi
-  fi
 
 
 # If we are configured native, pick a core file support file.
@@ -15357,6 +15314,7 @@ do
     frv_elf32_fdpic_vec)	 tb="$tb elf32-frv.lo elf32.lo $elf" ;;
     h8300_coff_vec)		 tb="$tb coff-h8300.lo reloc16.lo $coffgen" ;;
     h8300_elf32_vec)		 tb="$tb elf32-h8300.lo elf32.lo $elf" ;;
+    h8300_elf32_linux_vec)	 tb="$tb elf32-h8300.lo elf32.lo $elf" ;;
     h8500_coff_vec)		 tb="$tb coff-h8500.lo reloc16.lo $coffgen" ;;
     hppa_elf32_vec)		 tb="$tb elf32-hppa.lo elf32.lo $elf" ;;
     hppa_elf32_linux_vec)	 tb="$tb elf32-hppa.lo elf32.lo $elf" ;;
@@ -15388,6 +15346,7 @@ do
     i386_nlm32_vec)		 tb="$tb nlm32-i386.lo nlm32.lo nlm.lo" ;;
     i386_pe_vec)		 tb="$tb pe-i386.lo peigen.lo $coff" ;;
     i386_pei_vec)		 tb="$tb pei-i386.lo peigen.lo $coff" ;;
+    iamcu_elf32_vec)		 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
     i860_coff_vec)		 tb="$tb coff-i860.lo $coff" ;;
     i860_elf32_vec)		 tb="$tb elf32-i860.lo elf32.lo $elf" ;;
     i860_elf32_le_vec)		 tb="$tb elf32-i860.lo elf32.lo $elf" ;;
@@ -15599,6 +15558,7 @@ do
     vax_aout_bsd_vec)		 tb="$tb vaxbsd.lo aout32.lo" ;;
     vax_aout_nbsd_vec)		 tb="$tb vaxnetbsd.lo aout32.lo" ;;
     vax_elf32_vec)		 tb="$tb elf32-vax.lo elf32.lo $elf" ;;
+    ft32_elf32_vec)		 tb="$tb elf32-ft32.lo elf32.lo $elf" ;;
     visium_elf32_vec)		 tb="$tb elf32-visium.lo elf32.lo $elf" ;;
     w65_coff_vec)		 tb="$tb coff-w65.lo reloc16.lo $coffgen" ;;
     we32k_coff_vec)		 tb="$tb coff-we32k.lo $coffgen" ;;
@@ -15606,6 +15566,7 @@ do
     x86_64_elf32_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
     x86_64_elf32_nacl_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
     x86_64_elf64_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    x86_64_elf64_cloudabi_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_nacl_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_sol2_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;

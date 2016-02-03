@@ -484,15 +484,15 @@ skip_prologue_function (struct gdbarch *gdbarch, CORE_ADDR pc, int is_thumb)
       /* On soft-float targets, __truncdfsf2 is called to convert promoted
 	 arguments to their argument types in non-prototyped
 	 functions.  */
-      if (strncmp (name, "__truncdfsf2", strlen ("__truncdfsf2")) == 0)
+      if (startswith (name, "__truncdfsf2"))
 	return 1;
-      if (strncmp (name, "__aeabi_d2f", strlen ("__aeabi_d2f")) == 0)
+      if (startswith (name, "__aeabi_d2f"))
 	return 1;
 
       /* Internal functions related to thread-local storage.  */
-      if (strncmp (name, "__tls_get_addr", strlen ("__tls_get_addr")) == 0)
+      if (startswith (name, "__tls_get_addr"))
 	return 1;
-      if (strncmp (name, "__aeabi_read_tp", strlen ("__aeabi_read_tp")) == 0)
+      if (startswith (name, "__aeabi_read_tp"))
 	return 1;
     }
   else
@@ -1314,9 +1314,7 @@ arm_skip_stack_protector(CORE_ADDR pc, struct gdbarch *gdbarch)
   /* ADDR must correspond to a symbol whose name is __stack_chk_guard.
      Otherwise, this sequence cannot be for stack protector.  */
   if (stack_chk_guard.minsym == NULL
-      || strncmp (MSYMBOL_LINKAGE_NAME (stack_chk_guard.minsym),
-		  "__stack_chk_guard",
-		  strlen ("__stack_chk_guard")) != 0)
+      || !startswith (MSYMBOL_LINKAGE_NAME (stack_chk_guard.minsym), "__stack_chk_guard"))
    return pc;
 
   if (is_thumb)
@@ -1413,10 +1411,8 @@ arm_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       if (post_prologue_pc
 	  && (cust == NULL
 	      || COMPUNIT_PRODUCER (cust) == NULL
-	      || strncmp (COMPUNIT_PRODUCER (cust), "GNU ",
-			  sizeof ("GNU ") - 1) == 0
-	      || strncmp (COMPUNIT_PRODUCER (cust), "clang ",
-			  sizeof ("clang ") - 1) == 0))
+	      || startswith (COMPUNIT_PRODUCER (cust), "GNU ")
+	      || startswith (COMPUNIT_PRODUCER (cust), "clang ")))
 	return post_prologue_pc;
 
       if (post_prologue_pc != 0)
@@ -2021,6 +2017,31 @@ arm_make_prologue_cache (struct frame_info *this_frame)
   return cache;
 }
 
+/* Implementation of the stop_reason hook for arm_prologue frames.  */
+
+static enum unwind_stop_reason
+arm_prologue_unwind_stop_reason (struct frame_info *this_frame,
+				 void **this_cache)
+{
+  struct arm_prologue_cache *cache;
+  CORE_ADDR pc;
+
+  if (*this_cache == NULL)
+    *this_cache = arm_make_prologue_cache (this_frame);
+  cache = *this_cache;
+
+  /* This is meant to halt the backtrace at "_start".  */
+  pc = get_frame_pc (this_frame);
+  if (pc <= gdbarch_tdep (get_frame_arch (this_frame))->lowest_pc)
+    return UNWIND_OUTERMOST;
+
+  /* If we've hit a wall, stop.  */
+  if (cache->prev_sp == 0)
+    return UNWIND_OUTERMOST;
+
+  return UNWIND_NO_REASON;
+}
+
 /* Our frame ID for a normal frame is the current function's starting PC
    and the caller's SP when we were called.  */
 
@@ -2037,18 +2058,10 @@ arm_prologue_this_id (struct frame_info *this_frame,
     *this_cache = arm_make_prologue_cache (this_frame);
   cache = *this_cache;
 
-  /* This is meant to halt the backtrace at "_start".  */
-  pc = get_frame_pc (this_frame);
-  if (pc <= gdbarch_tdep (get_frame_arch (this_frame))->lowest_pc)
-    return;
-
-  /* If we've hit a wall, stop.  */
-  if (cache->prev_sp == 0)
-    return;
-
   /* Use function start address as part of the frame ID.  If we cannot
      identify the start address (due to missing symbol information),
      fall back to just using the current PC.  */
+  pc = get_frame_pc (this_frame);
   func = get_frame_func (this_frame);
   if (!func)
     func = pc;
@@ -2117,7 +2130,7 @@ arm_prologue_prev_register (struct frame_info *this_frame,
 
 struct frame_unwind arm_prologue_unwind = {
   NORMAL_FRAME,
-  default_frame_unwind_stop_reason,
+  arm_prologue_unwind_stop_reason,
   arm_prologue_this_id,
   arm_prologue_prev_register,
   NULL,
@@ -3210,11 +3223,10 @@ arm_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
     }
 }
 
-/* Return true if we are in the function's epilogue, i.e. after the
-   instruction that destroyed the function's stack frame.  */
+/* Implement the stack_frame_destroyed_p gdbarch method.  */
 
 static int
-thumb_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+thumb_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   unsigned int insn, insn2;
@@ -3321,11 +3333,10 @@ thumb_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   return found_stack_adjust;
 }
 
-/* Return true if we are in the function's epilogue, i.e. after the
-   instruction that destroyed the function's stack frame.  */
+/* Implement the stack_frame_destroyed_p gdbarch method.  */
 
 static int
-arm_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+arm_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   unsigned int insn;
@@ -3333,7 +3344,7 @@ arm_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   CORE_ADDR func_start, func_end;
 
   if (arm_pc_is_thumb (gdbarch, pc))
-    return thumb_in_function_epilogue_p (gdbarch, pc);
+    return thumb_stack_frame_destroyed_p (gdbarch, pc);
 
   if (!find_pc_partial_function (pc, NULL, &func_start, &func_end))
     return 0;
@@ -4916,6 +4927,13 @@ arm_get_next_pc_raw (struct frame_info *frame, CORE_ADDR pc)
 	case 0x5:		/* data transfer */
 	case 0x6:
 	case 0x7:
+	  if (bits (this_instr, 25, 27) == 0x3 && bit (this_instr, 4) == 1)
+	    {
+	      /* Media instructions and architecturally undefined
+		 instructions.  */
+	      break;
+	    }
+
 	  if (bit (this_instr, 20))
 	    {
 	      /* load */
@@ -6394,7 +6412,7 @@ install_alu_reg (struct gdbarch *gdbarch, struct regcache *regs,
 
      Preparation: tmp1, tmp2, tmp3 <- r0, r1, r2;
 		  r0, r1, r2 <- rd, rn, rm
-     Insn: <op><cond> r0, r1, r2 [, <shift>]
+     Insn: <op><cond> r0, [r1,] r2 [, <shift>]
      Cleanup: rd <- r0; r0, r1, r2 <- tmp1, tmp2, tmp3
   */
 
@@ -6441,22 +6459,21 @@ thumb_copy_alu_reg (struct gdbarch *gdbarch, uint16_t insn,
 		    struct regcache *regs,
 		    struct displaced_step_closure *dsc)
 {
-  unsigned rn, rm, rd;
+  unsigned rm, rd;
 
-  rd = bits (insn, 3, 6);
-  rn = (bit (insn, 7) << 3) | bits (insn, 0, 2);
-  rm = 2;
+  rm = bits (insn, 3, 6);
+  rd = (bit (insn, 7) << 3) | bits (insn, 0, 2);
 
-  if (rd != ARM_PC_REGNUM && rn != ARM_PC_REGNUM)
+  if (rd != ARM_PC_REGNUM && rm != ARM_PC_REGNUM)
     return thumb_copy_unmodified_16bit (gdbarch, insn, "ALU reg", dsc);
 
   if (debug_displaced)
-    fprintf_unfiltered (gdb_stdlog, "displaced: copying reg %s insn %.4x\n",
-			"ALU", (unsigned short) insn);
+    fprintf_unfiltered (gdb_stdlog, "displaced: copying ALU reg insn %.4x\n",
+			(unsigned short) insn);
 
-  dsc->modinsn[0] = ((insn & 0xff00) | 0x08);
+  dsc->modinsn[0] = ((insn & 0xff00) | 0x10);
 
-  install_alu_reg (gdbarch, regs, dsc, rd, rn, rm);
+  install_alu_reg (gdbarch, regs, dsc, rd, rd, rm);
 
   return 0;
 }
@@ -9298,8 +9315,8 @@ arm_skip_stub (struct frame_info *frame, CORE_ADDR pc)
      _call_via_xx, where x is the register name.  The possible names
      are r0-r9, sl, fp, ip, sp, and lr.  ARM RealView has similar
      functions, named __ARM_call_via_r[0-7].  */
-  if (strncmp (name, "_call_via_", 10) == 0
-      || strncmp (name, "__ARM_call_via_", strlen ("__ARM_call_via_")) == 0)
+  if (startswith (name, "_call_via_")
+      || startswith (name, "__ARM_call_via_"))
     {
       /* Use the name suffix to determine which register contains the
          target PC.  */
@@ -9321,11 +9338,9 @@ arm_skip_stub (struct frame_info *frame, CORE_ADDR pc)
   namelen = strlen (name);
   if (name[0] == '_' && name[1] == '_'
       && ((namelen > 2 + strlen ("_from_thumb")
-	   && strncmp (name + namelen - strlen ("_from_thumb"), "_from_thumb",
-		       strlen ("_from_thumb")) == 0)
+	   && startswith (name + namelen - strlen ("_from_thumb"), "_from_thumb"))
 	  || (namelen > 2 + strlen ("_from_arm")
-	      && strncmp (name + namelen - strlen ("_from_arm"), "_from_arm",
-			  strlen ("_from_arm")) == 0)))
+	      && startswith (name + namelen - strlen ("_from_arm"), "_from_arm"))))
     {
       char *target_name;
       int target_len = namelen - 2;
@@ -9388,7 +9403,7 @@ static void
 set_fp_model_sfunc (char *args, int from_tty,
 		    struct cmd_list_element *c)
 {
-  enum arm_float_model fp_model;
+  int fp_model;
 
   for (fp_model = ARM_FLOAT_AUTO; fp_model != ARM_FLOAT_LAST; fp_model++)
     if (strcmp (current_fp_model, fp_model_strings[fp_model]) == 0)
@@ -9425,7 +9440,7 @@ static void
 arm_set_abi (char *args, int from_tty,
 	     struct cmd_list_element *c)
 {
-  enum arm_abi_kind arm_abi;
+  int arm_abi;
 
   for (arm_abi = ARM_ABI_AUTO; arm_abi != ARM_ABI_LAST; arm_abi++)
     if (strcmp (arm_abi_string, arm_abi_strings[arm_abi]) == 0)
@@ -9906,7 +9921,8 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   enum arm_float_model fp_model = arm_fp_model;
   struct tdesc_arch_data *tdesc_data = NULL;
   int i, is_m = 0;
-  int have_vfp_registers = 0, have_vfp_pseudos = 0, have_neon_pseudos = 0;
+  int vfp_register_count = 0, have_vfp_pseudos = 0, have_neon_pseudos = 0;
+  int have_wmmx_registers = 0;
   int have_neon = 0;
   int have_fpa_registers = 1;
   const struct target_desc *tdesc = info.target_desc;
@@ -9942,7 +9958,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 		 anyway, so assume APCS.  */
 	      arm_abi = ARM_ABI_APCS;
 	    }
-	  else if (ei_osabi == ELFOSABI_NONE)
+	  else if (ei_osabi == ELFOSABI_NONE || ei_osabi == ELFOSABI_GNU)
 	    {
 	      int eabi_ver = EF_ARM_EABI_VERSION (e_flags);
 	      int attr_arch, attr_profile;
@@ -10170,6 +10186,8 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	      tdesc_data_cleanup (tdesc_data);
 	      return NULL;
 	    }
+
+	  have_wmmx_registers = 1;
 	}
 
       /* If we have a VFP unit, check whether the single precision registers
@@ -10212,7 +10230,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  if (tdesc_unnumbered_register (feature, "s0") == 0)
 	    have_vfp_pseudos = 1;
 
-	  have_vfp_registers = 1;
+	  vfp_register_count = i;
 
 	  /* If we have VFP, also check for NEON.  The architecture allows
 	     NEON without VFP (integer vector operations only), but GDB
@@ -10281,7 +10299,11 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep->fp_model = fp_model;
   tdep->is_m = is_m;
   tdep->have_fpa_registers = have_fpa_registers;
-  tdep->have_vfp_registers = have_vfp_registers;
+  tdep->have_wmmx_registers = have_wmmx_registers;
+  gdb_assert (vfp_register_count == 0
+	      || vfp_register_count == 16
+	      || vfp_register_count == 32);
+  tdep->vfp_register_count = vfp_register_count;
   tdep->have_vfp_pseudos = have_vfp_pseudos;
   tdep->have_neon_pseudos = have_neon_pseudos;
   tdep->have_neon = have_neon;
@@ -10346,8 +10368,8 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Advance PC across function entry code.  */
   set_gdbarch_skip_prologue (gdbarch, arm_skip_prologue);
 
-  /* Detect whether PC is in function epilogue.  */
-  set_gdbarch_in_function_epilogue_p (gdbarch, arm_in_function_epilogue_p);
+  /* Detect whether PC is at a point where the stack has been destroyed.  */
+  set_gdbarch_stack_frame_destroyed_p (gdbarch, arm_stack_frame_destroyed_p);
 
   /* Skip trampolines.  */
   set_gdbarch_skip_trampoline_code (gdbarch, arm_skip_stub);
@@ -13794,7 +13816,7 @@ decode_insn (insn_decode_record *arm_record, record_type_t record_type,
 {
 
   /* (Starting from numerical 0); bits 25, 26, 27 decodes type of arm instruction.  */
-  static const sti_arm_hdl_fp_t arm_handle_insn[8] =                    
+  static const sti_arm_hdl_fp_t arm_handle_insn[8] =
   {
     arm_record_data_proc_misc_ld_str,   /* 000.  */
     arm_record_data_proc_imm,           /* 001.  */

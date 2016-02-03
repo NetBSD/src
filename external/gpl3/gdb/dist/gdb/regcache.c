@@ -391,6 +391,9 @@ do_cooked_read (void *src, int regnum, gdb_byte *buf)
   return regcache_cooked_read (regcache, regnum, buf);
 }
 
+static void regcache_cpy_no_passthrough (struct regcache *dst,
+					 struct regcache *src);
+
 void
 regcache_cpy (struct regcache *dst, struct regcache *src)
 {
@@ -407,7 +410,12 @@ regcache_cpy (struct regcache *dst, struct regcache *src)
     regcache_cpy_no_passthrough (dst, src);
 }
 
-void
+/* Copy/duplicate the contents of a register cache.  Unlike regcache_cpy,
+   which is pass-through, this does not go through to the target.
+   Only values values already in the cache are transferred.  The SRC and DST
+   buffers must not overlap.  */
+
+static void
 regcache_cpy_no_passthrough (struct regcache *dst, struct regcache *src)
 {
   gdb_assert (src != NULL && dst != NULL);
@@ -1342,7 +1350,7 @@ regcache_dump (struct regcache *regcache, struct ui_file *file,
 		t = n;
 	      }
 	    /* Chop a leading builtin_type.  */
-	    if (strncmp (t, blt, strlen (blt)) == 0)
+	    if (startswith (t, blt))
 	      t += strlen (blt);
 	  }
 	fprintf_unfiltered (file, " %-15s", t);
