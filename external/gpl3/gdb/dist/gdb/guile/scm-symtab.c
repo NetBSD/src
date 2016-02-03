@@ -590,19 +590,22 @@ gdbscm_find_pc_line (SCM pc_scm)
 {
   ULONGEST pc_ull;
   struct symtab_and_line sal;
-  volatile struct gdb_exception except;
 
   init_sal (&sal); /* -Wall */
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, NULL, "U", pc_scm, &pc_ull);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       CORE_ADDR pc = (CORE_ADDR) pc_ull;
 
       sal = find_pc_line (pc, 0);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return stscm_scm_from_sal (sal);
 }

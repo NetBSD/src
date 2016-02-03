@@ -18,12 +18,6 @@ if [target_info exists gdb,nointerrupts] {
     continue
 }
 
-if [target_info exists gdb,noinferiorio] {
-    verbose "Skipping interrupt.exp because of noinferiorio."
-    return
-}
-
-
 standard_testfile
 
 set options { debug }
@@ -49,26 +43,31 @@ if ![file exists $binfile] then {
     gdb_test "shell stty intr '^C'" ".*" \
 	"set interrupt character in interrupt.exp"
     if [runto_main] then {
-	send_gdb "continue\n"
-	gdb_expect {
-	    -re "\r\ntalk to me baby\r\n$" {
-		pass "child process is alive"
-	    }
-	    timeout { fail "run (timeout)" }
-	    eof { fail "run (eof)" }
+	global inferior_spawn_id gdb_spawn_id
+
+	if {[target_info exists gdb,noinferiorio] && $inferior_spawn_id == $gdb_spawn_id} {
+	    verbose "Skipping interrupt.exp because of noinferiorio."
+	    return
 	}
+
+	set msg "process is alive"
+	gdb_test_multiple "continue" $msg {
+	    -i "$inferior_spawn_id" -re "talk to me baby\r\n" {
+		pass $msg
+	    }
+	}
+
 	# This should appear twice, once for the echo and once for the
-	# program's output.  Under dejagnu (but not interactively) for
-	# SunOS4, it only appears once.  Don't worry about it, I imagine
-	# dejagnu has just done something to the tty modes.
-	send_gdb "a\n"
-	gdb_expect {
-	    -re "^a\r\n(|a\r\n)$" {
-		pass "child process ate our char"
+	# program's output.
+
+	set msg "child process ate our char"
+	send_inferior "a\n"
+	gdb_test_multiple "" $msg {
+	    -i "$inferior_spawn_id" -re "^a\r\na\r\n$" {
+		pass $msg
 	    }
-	    timeout { fail "echo a (timeout)" }
-	    eof { fail "echo a (eof)" }
 	}
+
 	# Wait until the program is in the read system call again.
 	sleep 2
 
@@ -81,18 +80,19 @@ if ![file exists $binfile] then {
 	# the read and delivering the cntrl-c.
 
 	send_gdb "\003"
-	gdb_expect {
+	set msg "send_gdb control C"
+	gdb_test_multiple "" $msg {
 	    -re "Program received signal SIGINT.*$gdb_prompt $" {
-		pass "send_gdb control C"
+		pass $msg
 	    }
-	    -re ".*$gdb_prompt $" { fail "send_gdb control C" }
-	    timeout { fail "send_gdb control C (timeout)" }
-	    eof { fail "send_gdb control C (eof)" }
 	}
 
+	set msg "call function when asleep"
 	send_gdb "p func1 ()\n"
-	gdb_expect {
-	    -re " = 4.*$gdb_prompt $" { pass "call function when asleep" }
+	gdb_test_multiple "" $msg {
+	    -re " = 4.*$gdb_prompt $" {
+		pass $msg
+	    }
 	    -re ".*Program received signal SIG(SEGV|ILL).*$gdb_prompt $" {
 		setup_xfail "i*86-pc-linux*-gnu*"
 		fail "child died when we called func1, skipped rest of tests"
@@ -120,12 +120,11 @@ if ![file exists $binfile] then {
 		setup_xfail "*-*-*bsd*"
 		setup_xfail "*-*-hpux*"
 		setup_xfail "*-*-*lynx*"
-		fail "call function when asleep (stays asleep)"
-		# Send_Gdb a newline to wake it up
-		send_gdb "\n"
+		fail "$msg (stays asleep)"
+		# Send the inferior a newline to wake it up.
+		send_inferior "\n"
 		gdb_test "" " = 4" "call function after waking it"
 	    }
-#	    eof { fail "call function when asleep (eof)" }
 	}
 
 	# Now try calling the function again.
@@ -139,26 +138,33 @@ if ![file exists $binfile] then {
 	send_gdb "continue\n"
 	# For some reason, i386-*-sysv4 gdb fails to issue the Continuing
 	# message, but otherwise appears normal (FIXME).
-	gdb_expect {
-	    -re "^continue\r\nContinuing.\r\n(\r\n|)$" { pass "continue" }
-	    -re "^continue\r\n\r\n" { fail "continue (missing Continuing.)" }
-	    -re "$gdb_prompt $" { fail "continue" }
-	    timeout { fail "continue (timeout)" }
-	    eof { fail "continue (eof)" }
+
+	set msg "continue"
+	gdb_test_multiple "" "$msg" {
+	    -re "^continue\r\nContinuing.\r\n(\r\n|)$" {
+		pass $msg
+	    }
+	    -re "^continue\r\n\r\n" {
+		fail "$msg (missing Continuing.)"
+	    }
 	}
 
-	send_gdb "data\n"
+	send_inferior "data\n"
 	# The optional leading \r\n is in case we sent a newline above
 	# to wake the program, in which case the program now sends it
 	# back.
         # FIXME: The pattern below leads to an expected success on HPUX-11.0
         # but the success is spurious. Need to provide the right reg.expr.
         # here.
-	gdb_expect {
-	    -re "^(\r\n|)data\r\n(|data\r\n)$" { pass "echo data" }
-	    -re "Undefined command.*$gdb_prompt " { fail "echo data" }
-	    timeout { fail "echo data (timeout)" }
-	    eof { fail "echo data (eof)" }
+
+	set msg "echo data"
+	gdb_test_multiple "" $msg {
+	    -i "$inferior_spawn_id" -re "^(\r\n|)data\r\ndata\r\n$" {
+		pass $msg
+	    }
+	    -i "$gdb_spawn_id" -re "Undefined command.*$gdb_prompt " {
+		fail $msg
+	    }
 	}
 
  	if { ! [target_info exists gdb,nosignals] } {
@@ -178,27 +184,55 @@ if ![file exists $binfile] then {
 	    # return to the loop.
 	    set msg "signal SIGINT"
 	    gdb_test_multiple "signal SIGINT" "$msg" {
-		-re "^signal SIGINT\r\nContinuing with signal SIGINT.\r\n(\r\n|)$" { pass "$msg" }
+		-re "^signal SIGINT\r\nContinuing with signal SIGINT.\r\n(\r\n|)$" {
+		    pass "$msg"
+		}
 	    }
 
 	    # We should be back in the loop.
-	    send_gdb "more data\n"
-	    gdb_expect {
-		-re "^(\r\n|)more data\r\n(|more data\r\n)$" { pass "echo more data" }
-		timeout { fail "echo more data (timeout)" }
-		eof { fail "echo more data (eof)" }
+	    send_inferior "more data\n"
+
+	    set msg "echo more data"
+	    gdb_test_multiple "" $msg {
+		-i "$inferior_spawn_id" -re "^(\r\n|)more data\r\nmore data\r\n$" {
+		    pass $msg
+		}
 	    }
 	}
 
-	send_gdb "\004"
-	gdb_expect {
-	    -re "end of file.*$inferior_exited_re normally.*$gdb_prompt $" {
-		pass "send end of file"
+	set saw_end_of_file 0
+	set saw_inferior_exit 0
+
+	set msg "send end of file"
+	send_inferior "\004"
+
+	set spawn_list "$inferior_spawn_id"
+
+	gdb_test_multiple "" $msg {
+	    -i spawn_list -re "end of file" {
+		set saw_end_of_file 1
+		verbose -log "saw \"end of file\""
+		if {!$saw_inferior_exit} {
+		    # When $inferior_spawn_id != $gdb_spawn_id, such
+		    # as when testing with gdbserver, we may see the
+		    # eof (the process exit, not the string just
+		    # matched) for $inferior_spawn_id before the
+		    # expected gdb output.  Clear this so we no longer
+		    # expect anything out of $inferior_spawn_id.
+		    set spawn_list ""
+		    exp_continue
+		}
 	    }
-	    -re "$gdb_prompt $" { fail "send end of file" }
-	    timeout { fail "send end of file (timeout)" }
-	    eof { fail "send end of file (eof)" }
+	    -i "$gdb_spawn_id" -re "$inferior_exited_re normally.*$gdb_prompt " {
+		set saw_inferior_exit 1
+		verbose -log "saw inferior exit"
+		if {!$saw_end_of_file} {
+		    exp_continue
+		}
+	    }
 	}
+
+	gdb_assert { $saw_end_of_file && $saw_inferior_exit } $msg
     }
 }
 return 0

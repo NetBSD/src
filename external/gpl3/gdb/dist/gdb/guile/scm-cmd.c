@@ -286,11 +286,6 @@ cmdscm_destroyer (struct cmd_list_element *self, void *context)
   command_smob *c_smob = (command_smob *) context;
 
   cmdscm_release_command (c_smob);
-
-  /* We allocated the name, doc string, and perhaps the prefix name.  */
-  xfree ((char *) self->name);
-  xfree ((char *) self->doc);
-  xfree ((char *) self->prefixname);
 }
 
 /* Called by gdb to invoke the command.  */
@@ -561,7 +556,7 @@ gdbscm_parse_command_name (const char *name,
 static const scheme_integer_constant command_classes[] =
 {
   /* Note: alias and user are special; pseudo appears to be unused,
-     and there is no reason to expose tui or xdb, I think.  */
+     and there is no reason to expose tui, I think.  */
   { "COMMAND_NONE", no_class },
   { "COMMAND_RUNNING", class_run },
   { "COMMAND_DATA", class_vars },
@@ -762,7 +757,6 @@ gdbscm_register_command_x (SCM self)
   char *cmd_name, *pfx_name;
   struct cmd_list_element **cmd_list;
   struct cmd_list_element *cmd = NULL;
-  volatile struct gdb_exception except;
 
   if (cmdscm_is_valid (c_smob))
     scm_misc_error (FUNC_NAME, _("command is already registered"), SCM_EOL);
@@ -772,7 +766,7 @@ gdbscm_register_command_x (SCM self)
   c_smob->cmd_name = gdbscm_gc_xstrdup (cmd_name);
   xfree (cmd_name);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       if (c_smob->is_prefix)
 	{
@@ -790,7 +784,11 @@ gdbscm_register_command_x (SCM self)
 			 NULL, c_smob->doc, cmd_list);
 	}
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   /* Note: At this point the command exists in gdb.
      So no more errors after this point.  */

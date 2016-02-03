@@ -1122,10 +1122,10 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   return sp;
 }
 
-/* This is the implementation of gdbarch method in_function_epilogue_p.  */
+/* This is the implementation of gdbarch method stack_frame_destroyed_p.  */
 
 static int
-tic6x_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+tic6x_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   unsigned long inst = tic6x_fetch_instruction (gdbarch, pc);
   /* Normally, the epilogue is composed by instruction `b .S2 b3'.  */
@@ -1328,7 +1328,7 @@ tic6x_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_get_longjmp_target (gdbarch, tic6x_get_longjmp_target);
 
-  set_gdbarch_in_function_epilogue_p (gdbarch, tic6x_in_function_epilogue_p);
+  set_gdbarch_stack_frame_destroyed_p (gdbarch, tic6x_stack_frame_destroyed_p);
 
   set_gdbarch_return_in_first_hidden_param_p (gdbarch,
 					      tic6x_return_in_first_hidden_param_p);

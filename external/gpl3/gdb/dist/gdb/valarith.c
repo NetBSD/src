@@ -284,14 +284,14 @@ unop_user_defined_p (enum exp_opcode op, struct value *arg1)
    situations or combinations thereof.  */
 
 static struct value *
-value_user_defined_cpp_op (struct value **args, int nargs, char *operator,
+value_user_defined_cpp_op (struct value **args, int nargs, char *oper,
                            int *static_memfuncp, enum noside noside)
 {
 
   struct symbol *symp = NULL;
   struct value *valp = NULL;
 
-  find_overload_match (args, nargs, operator, BOTH /* could be method */,
+  find_overload_match (args, nargs, oper, BOTH /* could be method */,
                        &args[0] /* objp */,
                        NULL /* pass NULL symbol since symbol is unknown */,
                        &valp, &symp, static_memfuncp, 0, noside);
@@ -308,7 +308,7 @@ value_user_defined_cpp_op (struct value **args, int nargs, char *operator,
       return value_of_variable (symp, 0);
     }
 
-  error (_("Could not find %s."), operator);
+  error (_("Could not find %s."), oper);
 }
 
 /* Lookup user defined operator NAME.  Return a value representing the

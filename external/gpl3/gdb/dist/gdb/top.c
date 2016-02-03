@@ -172,14 +172,6 @@ char *lim_at_start;
 
 /* Hooks for alternate command interfaces.  */
 
-/* Called after most modules have been initialized, but before taking
-   users command file.
-
-   If the UI fails to initialize and it wants GDB to continue using
-   the default UI, then it should clear this hook before returning.  */
-
-void (*deprecated_init_ui_hook) (char *argv0);
-
 /* This hook is called from within gdb's many mini-event loops which
    could steal control from a real user interface's event loop.  It
    returns non-zero if the user is requesting a detach, zero
@@ -462,7 +454,7 @@ execute_command (char *p, int from_tty)
 	deprecated_cmd_warning (line);
 
       /* c->user_commands would be NULL in the case of a python command.  */
-      if (c->class == class_user && c->user_commands)
+      if (c->theclass == class_user && c->user_commands)
 	execute_user_command (c, arg);
       else if (c->type == set_cmd)
 	do_set_command (arg, from_tty, c);
@@ -695,14 +687,28 @@ show_write_history_p (struct ui_file *file, int from_tty,
 }
 
 /* The variable associated with the "set/show history size"
-   command.  */
-static unsigned int history_size_setshow_var;
+   command.  The value -1 means unlimited, and -2 means undefined.  */
+static int history_size_setshow_var = -2;
 
 static void
 show_history_size (struct ui_file *file, int from_tty,
 		   struct cmd_list_element *c, const char *value)
 {
   fprintf_filtered (file, _("The size of the command history is %s.\n"),
+		    value);
+}
+
+/* Variable associated with the "history remove-duplicates" option.
+   The value -1 means unlimited.  */
+static int history_remove_duplicates = 0;
+
+static void
+show_history_remove_duplicates (struct ui_file *file, int from_tty,
+				struct cmd_list_element *c, const char *value)
+{
+  fprintf_filtered (file,
+		    _("The number of history entries to look back at for "
+		      "duplicates is %s.\n"),
 		    value);
 }
 
@@ -806,7 +812,7 @@ gdb_readline_wrapper_cleanup (void *arg)
   saved_after_char_processing_hook = NULL;
 
   if (cleanup->target_is_async_orig)
-    target_async (inferior_event_handler, 0);
+    target_async (1);
 
   xfree (cleanup);
 }
@@ -829,7 +835,7 @@ gdb_readline_wrapper (const char *prompt)
   back_to = make_cleanup (gdb_readline_wrapper_cleanup, cleanup);
 
   if (cleanup->target_is_async_orig)
-    target_async (NULL, NULL);
+    target_async (0);
 
   /* Display our prompt and prevent double prompt display.  */
   display_gdb_prompt (prompt);
@@ -905,8 +911,43 @@ static int command_count = 0;
 void
 gdb_add_history (const char *command)
 {
-  add_history (command);
   command_count++;
+
+  if (history_remove_duplicates != 0)
+    {
+      int lookbehind;
+      int lookbehind_threshold;
+
+      /* The lookbehind threshold for finding a duplicate history entry is
+	 bounded by command_count because we can't meaningfully delete
+	 history entries that are already stored in the history file since
+	 the history file is appended to.  */
+      if (history_remove_duplicates == -1
+	  || history_remove_duplicates > command_count)
+	lookbehind_threshold = command_count;
+      else
+	lookbehind_threshold = history_remove_duplicates;
+
+      using_history ();
+      for (lookbehind = 0; lookbehind < lookbehind_threshold; lookbehind++)
+	{
+	  HIST_ENTRY *temp = previous_history ();
+
+	  if (temp == NULL)
+	    break;
+
+	  if (strcmp (temp->line, command) == 0)
+	    {
+	      HIST_ENTRY *prev = remove_history (where_history ());
+	      command_count--;
+	      free_history_entry (prev);
+	      break;
+	    }
+	}
+      using_history ();
+    }
+
+  add_history (command);
 }
 
 /* Safely append new history entries to the history file in a corruption-free
@@ -949,7 +990,8 @@ gdb_safe_append_history (void)
       else
 	{
 	  append_history (command_count, local_history_filename);
-	  history_truncate_file (local_history_filename, history_max_entries);
+	  if (history_is_stifled ())
+	    history_truncate_file (local_history_filename, history_max_entries);
 	}
 
       ret = rename (local_history_filename, history_filename);
@@ -1316,15 +1358,6 @@ This GDB was configured as follows:\n\
     fprintf_filtered (stream, _("\
              --with-system-gdbinit=%s%s\n\
 "), SYSTEM_GDBINIT, SYSTEM_GDBINIT_RELOCATABLE ? " (relocatable)" : "");
-#if HAVE_ZLIB_H
-  fprintf_filtered (stream, _("\
-             --with-zlib\n\
-"));
-#else
-  fprintf_filtered (stream, _("\
-             --without-zlib\n\
-"));
-#endif
 #if HAVE_LIBBABELTRACE
     fprintf_filtered (stream, _("\
              --with-babeltrace\n\
@@ -1465,7 +1498,6 @@ quit_force (char *args, int from_tty)
 {
   int exit_code = 0;
   struct qt_args qt;
-  volatile struct gdb_exception ex;
 
   /* An optional expression may be used to cause gdb to terminate with the 
      value of that expression.  */
@@ -1481,47 +1513,55 @@ quit_force (char *args, int from_tty)
   qt.args = args;
   qt.from_tty = from_tty;
 
-  /* Wrappers to make the code below a bit more readable.  */
-#define DO_TRY \
-  TRY_CATCH (ex, RETURN_MASK_ALL)
-
-#define DO_PRINT_EX \
-  if (ex.reason < 0) \
-    exception_print (gdb_stderr, ex)
-
   /* We want to handle any quit errors and exit regardless.  */
 
   /* Get out of tfind mode, and kill or detach all inferiors.  */
-  DO_TRY
+  TRY
     {
       disconnect_tracing ();
       iterate_over_inferiors (kill_or_detach, &qt);
     }
-  DO_PRINT_EX;
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      exception_print (gdb_stderr, ex);
+    }
+  END_CATCH
 
   /* Give all pushed targets a chance to do minimal cleanup, and pop
      them all out.  */
-  DO_TRY
+  TRY
     {
       pop_all_targets ();
     }
-  DO_PRINT_EX;
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      exception_print (gdb_stderr, ex);
+    }
+  END_CATCH
 
   /* Save the history information if it is appropriate to do so.  */
-  DO_TRY
+  TRY
     {
       if (write_history_p && history_filename
 	  && input_from_terminal_p ())
 	gdb_safe_append_history ();
     }
-  DO_PRINT_EX;
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      exception_print (gdb_stderr, ex);
+    }
+  END_CATCH
 
   /* Do any final cleanups before exiting.  */
-  DO_TRY
+  TRY
     {
       do_final_cleanups (all_cleanups ());
     }
-  DO_PRINT_EX;
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      exception_print (gdb_stderr, ex);
+    }
+  END_CATCH
 
   exit (exit_code);
 }
@@ -1620,34 +1660,26 @@ show_commands (char *args, int from_tty)
     }
 }
 
+/* Update the size of our command history file to HISTORY_SIZE.
+
+   A HISTORY_SIZE of -1 stands for unlimited.  */
+
+static void
+set_readline_history_size (int history_size)
+{
+  gdb_assert (history_size >= -1);
+
+  if (history_size == -1)
+    unstifle_history ();
+  else
+    stifle_history (history_size);
+}
+
 /* Called by do_setshow_command.  */
 static void
 set_history_size_command (char *args, int from_tty, struct cmd_list_element *c)
 {
-  /* Readline's history interface works with 'int', so it can only
-     handle history sizes up to INT_MAX.  The command itself is
-     uinteger, so UINT_MAX means "unlimited", but we only get that if
-     the user does "set history size 0" -- "set history size <UINT_MAX>"
-     throws out-of-range.  */
-  if (history_size_setshow_var > INT_MAX
-      && history_size_setshow_var != UINT_MAX)
-    {
-      unsigned int new_value = history_size_setshow_var;
-
-      /* Restore previous value before throwing.  */
-      if (history_is_stifled ())
-	history_size_setshow_var = history_max_entries;
-      else
-	history_size_setshow_var = UINT_MAX;
-
-      error (_("integer %u out of range"), new_value);
-    }
-
-  /* Commit the new value to readline's history.  */
-  if (history_size_setshow_var == UINT_MAX)
-    unstifle_history ();
-  else
-    stifle_history (history_size_setshow_var);
+  set_readline_history_size (history_size_setshow_var);
 }
 
 void
@@ -1698,29 +1730,45 @@ init_history (void)
 {
   char *tmpenv;
 
-  tmpenv = getenv ("HISTSIZE");
+  tmpenv = getenv ("GDBHISTSIZE");
   if (tmpenv)
     {
-      int var;
+      long var;
+      int saved_errno;
+      char *endptr;
 
-      var = atoi (tmpenv);
-      if (var < 0)
-	{
-	  /* Prefer ending up with no history rather than overflowing
-	     readline's history interface, which uses signed 'int'
-	     everywhere.  */
-	  var = 0;
-	}
+      tmpenv = skip_spaces (tmpenv);
+      errno = 0;
+      var = strtol (tmpenv, &endptr, 10);
+      saved_errno = errno;
+      endptr = skip_spaces (endptr);
 
-      history_size_setshow_var = var;
+      /* If GDBHISTSIZE is non-numeric then ignore it.  If GDBHISTSIZE is the
+	 empty string, a negative number or a huge positive number (larger than
+	 INT_MAX) then set the history size to unlimited.  Otherwise set our
+	 history size to the number we have read.  This behavior is consistent
+	 with how bash handles HISTSIZE.  */
+      if (*endptr != '\0')
+	;
+      else if (*tmpenv == '\0'
+	       || var < 0
+	       || var > INT_MAX
+	       /* On targets where INT_MAX == LONG_MAX, we have to look at
+		  errno after calling strtol to distinguish between a value that
+		  is exactly INT_MAX and an overflowing value that was clamped
+		  to INT_MAX.  */
+	       || (var == INT_MAX && saved_errno == ERANGE))
+	history_size_setshow_var = -1;
+      else
+	history_size_setshow_var = var;
     }
-  /* If the init file hasn't set a size yet, pick the default.  */
-  else if (history_size_setshow_var == 0)
+
+  /* If neither the init file nor GDBHISTSIZE has set a size yet, pick the
+     default.  */
+  if (history_size_setshow_var == -2)
     history_size_setshow_var = 256;
 
-  /* Note that unlike "set history size 0", "HISTSIZE=0" really sets
-     the history size to 0...  */
-  stifle_history (history_size_setshow_var);
+  set_readline_history_size (history_size_setshow_var);
 
   tmpenv = getenv ("GDBHISTFILE");
   if (tmpenv)
@@ -1828,6 +1876,7 @@ init_main (void)
   rl_completion_entry_function = readline_line_completion_function;
   rl_completer_word_break_characters = default_word_break_characters ();
   rl_completer_quote_characters = get_gdb_completer_quote_characters ();
+  rl_completion_display_matches_hook = cli_display_match_list;
   rl_readline_name = "gdb";
   rl_terminal_name = getenv ("TERM");
 
@@ -1868,16 +1917,32 @@ Without an argument, saving is enabled."),
 			   show_write_history_p,
 			   &sethistlist, &showhistlist);
 
-  add_setshow_uinteger_cmd ("size", no_class, &history_size_setshow_var, _("\
+  add_setshow_zuinteger_unlimited_cmd ("size", no_class,
+				       &history_size_setshow_var, _("\
 Set the size of the command history,"), _("\
 Show the size of the command history,"), _("\
 ie. the number of previous commands to keep a record of.\n\
 If set to \"unlimited\", the number of commands kept in the history\n\
 list is unlimited.  This defaults to the value of the environment\n\
-variable \"HISTSIZE\", or to 256 if this variable is not set."),
+variable \"GDBHISTSIZE\", or to 256 if this variable is not set."),
 			    set_history_size_command,
 			    show_history_size,
 			    &sethistlist, &showhistlist);
+
+  add_setshow_zuinteger_unlimited_cmd ("remove-duplicates", no_class,
+				       &history_remove_duplicates, _("\
+Set how far back in history to look for and remove duplicate entries."), _("\
+Show how far back in history to look for and remove duplicate entries."), _("\
+If set to a nonzero value N, GDB will look back at the last N history entries\n\
+and remove the first history entry that is a duplicate of the most recent\n\
+entry, each time a new history entry is added.\n\
+If set to \"unlimited\", this lookbehind is unbounded.\n\
+Only history entries added during this session are considered for removal.\n\
+If set to 0, removal of duplicate history entries is disabled.\n\
+By default this option is set to 0."),
+			   NULL,
+			   show_history_remove_duplicates,
+			   &sethistlist, &showhistlist);
 
   add_setshow_filename_cmd ("filename", no_class, &history_filename, _("\
 Set the filename in which to record the command history"), _("\
@@ -1940,6 +2005,8 @@ gdb_init (char *argv0)
   initialize_targets ();    /* Setup target_terminal macros for utils.c.  */
   initialize_utils ();	    /* Make errors and warnings possible.  */
 
+  init_page_info ();
+
   /* Here is where we call all the _initialize_foo routines.  */
   initialize_all_files ();
 
@@ -1968,12 +2035,6 @@ gdb_init (char *argv0)
      during startup.  */
   set_language (language_c);
   expected_language = current_language;	/* Don't warn about the change.  */
-
-  /* Allow another UI to initialize.  If the UI fails to initialize,
-     and it wants GDB to revert to the CLI, it should clear
-     deprecated_init_ui_hook.  */
-  if (deprecated_init_ui_hook)
-    deprecated_init_ui_hook (argv0);
 
   /* Python initialization, for example, can require various commands to be
      installed.  For example "info pretty-printer" needs the "info"

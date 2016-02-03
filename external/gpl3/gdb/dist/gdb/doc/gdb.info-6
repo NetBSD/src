@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+Source-Level Debugger' for GDB (GDB) Version 7.10.1.
 
    Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
@@ -35,6 +35,919 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Installing GDB,  Next: Maintenance Commands,  Prev: Formatting Documentation,  Up: Top
+
+Appendix C Installing GDB
+*************************
+
+* Menu:
+
+* Requirements::                Requirements for building GDB
+* Running Configure::           Invoking the GDB 'configure' script
+* Separate Objdir::             Compiling GDB in another directory
+* Config Names::                Specifying names for hosts and targets
+* Configure Options::           Summary of options for configure
+* System-wide configuration::   Having a system-wide init file
+
+
+File: gdb.info,  Node: Requirements,  Next: Running Configure,  Up: Installing GDB
+
+C.1 Requirements for Building GDB
+=================================
+
+Building GDB requires various tools and packages to be available.  Other
+packages will be used only if they are found.
+
+Tools/Packages Necessary for Building GDB
+=========================================
+
+ISO C90 compiler
+     GDB is written in ISO C90.  It should be buildable with any working
+     C90 compiler, e.g. GCC.
+
+Tools/Packages Optional for Building GDB
+========================================
+
+Expat
+     GDB can use the Expat XML parsing library.  This library may be
+     included with your operating system distribution; if it is not, you
+     can get the latest version from <http://expat.sourceforge.net>.
+     The 'configure' script will search for this library in several
+     standard locations; if it is installed in an unusual path, you can
+     use the '--with-libexpat-prefix' option to specify its location.
+
+     Expat is used for:
+
+        * Remote protocol memory maps (*note Memory Map Format::)
+        * Target descriptions (*note Target Descriptions::)
+        * Remote shared library lists (*Note Library List Format::, or
+          alternatively *note Library List Format for SVR4 Targets::)
+        * MS-Windows shared libraries (*note Shared Libraries::)
+        * Traceframe info (*note Traceframe Info Format::)
+        * Branch trace (*note Branch Trace Format::, *note Branch Trace
+          Configuration Format::)
+
+zlib
+     GDB will use the 'zlib' library, if available, to read compressed
+     debug sections.  Some linkers, such as GNU gold, are capable of
+     producing binaries with compressed debug sections.  If GDB is
+     compiled with 'zlib', it will be able to read the debug information
+     in such binaries.
+
+     The 'zlib' library is likely included with your operating system
+     distribution; if it is not, you can get the latest version from
+     <http://zlib.net>.
+
+iconv
+     GDB's features related to character sets (*note Character Sets::)
+     require a functioning 'iconv' implementation.  If you are on a GNU
+     system, then this is provided by the GNU C Library.  Some other
+     systems also provide a working 'iconv'.
+
+     If GDB is using the 'iconv' program which is installed in a
+     non-standard place, you will need to tell GDB where to find it.
+     This is done with '--with-iconv-bin' which specifies the directory
+     that contains the 'iconv' program.
+
+     On systems without 'iconv', you can install GNU Libiconv.  If you
+     have previously installed Libiconv, you can use the
+     '--with-libiconv-prefix' option to configure.
+
+     GDB's top-level 'configure' and 'Makefile' will arrange to build
+     Libiconv if a directory named 'libiconv' appears in the top-most
+     source directory.  If Libiconv is built this way, and if the
+     operating system does not provide a suitable 'iconv'
+     implementation, then the just-built library will automatically be
+     used by GDB.  One easy way to set this up is to download GNU
+     Libiconv, unpack it, and then rename the directory holding the
+     Libiconv source code to 'libiconv'.
+
+
+File: gdb.info,  Node: Running Configure,  Next: Separate Objdir,  Prev: Requirements,  Up: Installing GDB
+
+C.2 Invoking the GDB 'configure' Script
+=======================================
+
+GDB comes with a 'configure' script that automates the process of
+preparing GDB for installation; you can then use 'make' to build the
+'gdb' program.
+
+   The GDB distribution includes all the source code you need for GDB in
+a single directory, whose name is usually composed by appending the
+version number to 'gdb'.
+
+   For example, the GDB version 7.10.1 distribution is in the
+'gdb-7.10.1' directory.  That directory contains:
+
+'gdb-7.10.1/configure (and supporting files)'
+     script for configuring GDB and all its supporting libraries
+
+'gdb-7.10.1/gdb'
+     the source specific to GDB itself
+
+'gdb-7.10.1/bfd'
+     source for the Binary File Descriptor library
+
+'gdb-7.10.1/include'
+     GNU include files
+
+'gdb-7.10.1/libiberty'
+     source for the '-liberty' free software library
+
+'gdb-7.10.1/opcodes'
+     source for the library of opcode tables and disassemblers
+
+'gdb-7.10.1/readline'
+     source for the GNU command-line interface
+
+'gdb-7.10.1/glob'
+     source for the GNU filename pattern-matching subroutine
+
+'gdb-7.10.1/mmalloc'
+     source for the GNU memory-mapped malloc package
+
+   The simplest way to configure and build GDB is to run 'configure'
+from the 'gdb-VERSION-NUMBER' source directory, which in this example is
+the 'gdb-7.10.1' directory.
+
+   First switch to the 'gdb-VERSION-NUMBER' source directory if you are
+not already in it; then run 'configure'.  Pass the identifier for the
+platform on which GDB will run as an argument.
+
+   For example:
+
+     cd gdb-7.10.1
+     ./configure HOST
+     make
+
+where HOST is an identifier such as 'sun4' or 'decstation', that
+identifies the platform where GDB will run.  (You can often leave off
+HOST; 'configure' tries to guess the correct value by examining your
+system.)
+
+   Running 'configure HOST' and then running 'make' builds the 'bfd',
+'readline', 'mmalloc', and 'libiberty' libraries, then 'gdb' itself.
+The configured source files, and the binaries, are left in the
+corresponding source directories.
+
+   'configure' is a Bourne-shell ('/bin/sh') script; if your system does
+not recognize this automatically when you run a different shell, you may
+need to run 'sh' on it explicitly:
+
+     sh configure HOST
+
+   If you run 'configure' from a directory that contains source
+directories for multiple libraries or programs, such as the 'gdb-7.10.1'
+source directory for version 7.10.1, 'configure' creates configuration
+files for every directory level underneath (unless you tell it not to,
+with the '--norecursion' option).
+
+   You should run the 'configure' script from the top directory in the
+source tree, the 'gdb-VERSION-NUMBER' directory.  If you run 'configure'
+from one of the subdirectories, you will configure only that
+subdirectory.  That is usually not what you want.  In particular, if you
+run the first 'configure' from the 'gdb' subdirectory of the
+'gdb-VERSION-NUMBER' directory, you will omit the configuration of
+'bfd', 'readline', and other sibling directories of the 'gdb'
+subdirectory.  This leads to build errors about missing include files
+such as 'bfd/bfd.h'.
+
+   You can install 'gdb' anywhere; it has no hardwired paths.  However,
+you should make sure that the shell on your path (named by the 'SHELL'
+environment variable) is publicly readable.  Remember that GDB uses the
+shell to start your program--some systems refuse to let GDB debug child
+processes whose programs are not readable.
+
+
+File: gdb.info,  Node: Separate Objdir,  Next: Config Names,  Prev: Running Configure,  Up: Installing GDB
+
+C.3 Compiling GDB in Another Directory
+======================================
+
+If you want to run GDB versions for several host or target machines, you
+need a different 'gdb' compiled for each combination of host and target.
+'configure' is designed to make this easy by allowing you to generate
+each configuration in a separate subdirectory, rather than in the source
+directory.  If your 'make' program handles the 'VPATH' feature (GNU
+'make' does), running 'make' in each of these directories builds the
+'gdb' program specified there.
+
+   To build 'gdb' in a separate directory, run 'configure' with the
+'--srcdir' option to specify where to find the source.  (You also need
+to specify a path to find 'configure' itself from your working
+directory.  If the path to 'configure' would be the same as the argument
+to '--srcdir', you can leave out the '--srcdir' option; it is assumed.)
+
+   For example, with version 7.10.1, you can build GDB in a separate
+directory for a Sun 4 like this:
+
+     cd gdb-7.10.1
+     mkdir ../gdb-sun4
+     cd ../gdb-sun4
+     ../gdb-7.10.1/configure sun4
+     make
+
+   When 'configure' builds a configuration using a remote source
+directory, it creates a tree for the binaries with the same structure
+(and using the same names) as the tree under the source directory.  In
+the example, you'd find the Sun 4 library 'libiberty.a' in the directory
+'gdb-sun4/libiberty', and GDB itself in 'gdb-sun4/gdb'.
+
+   Make sure that your path to the 'configure' script has just one
+instance of 'gdb' in it.  If your path to 'configure' looks like
+'../gdb-7.10.1/gdb/configure', you are configuring only one subdirectory
+of GDB, not the whole package.  This leads to build errors about missing
+include files such as 'bfd/bfd.h'.
+
+   One popular reason to build several GDB configurations in separate
+directories is to configure GDB for cross-compiling (where GDB runs on
+one machine--the "host"--while debugging programs that run on another
+machine--the "target").  You specify a cross-debugging target by giving
+the '--target=TARGET' option to 'configure'.
+
+   When you run 'make' to build a program or library, you must run it in
+a configured directory--whatever directory you were in when you called
+'configure' (or one of its subdirectories).
+
+   The 'Makefile' that 'configure' generates in each source directory
+also runs recursively.  If you type 'make' in a source directory such as
+'gdb-7.10.1' (or in a separate configured directory configured with
+'--srcdir=DIRNAME/gdb-7.10.1'), you will build all the required
+libraries, and then build GDB.
+
+   When you have multiple hosts or targets configured in separate
+directories, you can run 'make' on them in parallel (for example, if
+they are NFS-mounted on each of the hosts); they will not interfere with
+each other.
+
+
+File: gdb.info,  Node: Config Names,  Next: Configure Options,  Prev: Separate Objdir,  Up: Installing GDB
+
+C.4 Specifying Names for Hosts and Targets
+==========================================
+
+The specifications used for hosts and targets in the 'configure' script
+are based on a three-part naming scheme, but some short predefined
+aliases are also supported.  The full naming scheme encodes three pieces
+of information in the following pattern:
+
+     ARCHITECTURE-VENDOR-OS
+
+   For example, you can use the alias 'sun4' as a HOST argument, or as
+the value for TARGET in a '--target=TARGET' option.  The equivalent full
+name is 'sparc-sun-sunos4'.
+
+   The 'configure' script accompanying GDB does not provide any query
+facility to list all supported host and target names or aliases.
+'configure' calls the Bourne shell script 'config.sub' to map
+abbreviations to full names; you can read the script, if you wish, or
+you can use it to test your guesses on abbreviations--for example:
+
+     % sh config.sub i386-linux
+     i386-pc-linux-gnu
+     % sh config.sub alpha-linux
+     alpha-unknown-linux-gnu
+     % sh config.sub hp9k700
+     hppa1.1-hp-hpux
+     % sh config.sub sun4
+     sparc-sun-sunos4.1.1
+     % sh config.sub sun3
+     m68k-sun-sunos4.1.1
+     % sh config.sub i986v
+     Invalid configuration `i986v': machine `i986v' not recognized
+
+'config.sub' is also distributed in the GDB source directory
+('gdb-7.10.1', for version 7.10.1).
+
+
+File: gdb.info,  Node: Configure Options,  Next: System-wide configuration,  Prev: Config Names,  Up: Installing GDB
+
+C.5 'configure' Options
+=======================
+
+Here is a summary of the 'configure' options and arguments that are most
+often useful for building GDB.  'configure' also has several other
+options not listed here.  *note (configure.info)What Configure Does::,
+for a full explanation of 'configure'.
+
+     configure [--help]
+               [--prefix=DIR]
+               [--exec-prefix=DIR]
+               [--srcdir=DIRNAME]
+               [--norecursion] [--rm]
+               [--target=TARGET]
+               HOST
+
+You may introduce options with a single '-' rather than '--' if you
+prefer; but you may abbreviate option names if you use '--'.
+
+'--help'
+     Display a quick summary of how to invoke 'configure'.
+
+'--prefix=DIR'
+     Configure the source to install programs and files under directory
+     'DIR'.
+
+'--exec-prefix=DIR'
+     Configure the source to install programs under directory 'DIR'.
+
+'--srcdir=DIRNAME'
+     *Warning: using this option requires GNU 'make', or another 'make'
+     that implements the 'VPATH' feature.*
+     Use this option to make configurations in directories separate from
+     the GDB source directories.  Among other things, you can use this
+     to build (or maintain) several configurations simultaneously, in
+     separate directories.  'configure' writes configuration-specific
+     files in the current directory, but arranges for them to use the
+     source in the directory DIRNAME.  'configure' creates directories
+     under the working directory in parallel to the source directories
+     below DIRNAME.
+
+'--norecursion'
+     Configure only the directory level where 'configure' is executed;
+     do not propagate configuration to subdirectories.
+
+'--target=TARGET'
+     Configure GDB for cross-debugging programs running on the specified
+     TARGET.  Without this option, GDB is configured to debug programs
+     that run on the same machine (HOST) as GDB itself.
+
+     There is no convenient way to generate a list of all available
+     targets.
+
+'HOST ...'
+     Configure GDB to run on the specified HOST.
+
+     There is no convenient way to generate a list of all available
+     hosts.
+
+   There are many other options available as well, but they are
+generally needed for special purposes only.
+
+
+File: gdb.info,  Node: System-wide configuration,  Prev: Configure Options,  Up: Installing GDB
+
+C.6 System-wide configuration and settings
+==========================================
+
+GDB can be configured to have a system-wide init file; this file will be
+read and executed at startup (*note What GDB does during startup:
+Startup.).
+
+   Here is the corresponding configure option:
+
+'--with-system-gdbinit=FILE'
+     Specify that the default location of the system-wide init file is
+     FILE.
+
+   If GDB has been configured with the option '--prefix=$prefix', it may
+be subject to relocation.  Two possible cases:
+
+   * If the default location of this init file contains '$prefix', it
+     will be subject to relocation.  Suppose that the configure options
+     are '--prefix=$prefix --with-system-gdbinit=$prefix/etc/gdbinit';
+     if GDB is moved from '$prefix' to '$install', the system init file
+     is looked for as '$install/etc/gdbinit' instead of
+     '$prefix/etc/gdbinit'.
+
+   * By contrast, if the default location does not contain the prefix,
+     it will not be relocated.  E.g. if GDB has been configured with
+     '--prefix=/usr/local --with-system-gdbinit=/usr/share/gdb/gdbinit',
+     then GDB will always look for '/usr/share/gdb/gdbinit', wherever
+     GDB is installed.
+
+   If the configured location of the system-wide init file (as given by
+the '--with-system-gdbinit' option at configure time) is in the
+data-directory (as specified by '--with-gdb-datadir' at configure time)
+or in one of its subdirectories, then GDB will look for the system-wide
+init file in the directory specified by the '--data-directory'
+command-line option.  Note that the system-wide init file is only read
+once, during GDB initialization.  If the data-directory is changed after
+GDB has started with the 'set data-directory' command, the file will not
+be reread.
+
+* Menu:
+
+* System-wide Configuration Scripts::  Installed System-wide Configuration Scripts
+
+
+File: gdb.info,  Node: System-wide Configuration Scripts,  Up: System-wide configuration
+
+C.6.1 Installed System-wide Configuration Scripts
+-------------------------------------------------
+
+The 'system-gdbinit' directory, located inside the data-directory (as
+specified by '--with-gdb-datadir' at configure time) contains a number
+of scripts which can be used as system-wide init files.  To
+automatically source those scripts at startup, GDB should be configured
+with '--with-system-gdbinit'.  Otherwise, any user should be able to
+source them by hand as needed.
+
+   The following scripts are currently available:
+
+   * 'elinos.py' This script is useful when debugging a program on an
+     ELinOS target.  It takes advantage of the environment variables
+     defined in a standard ELinOS environment in order to determine the
+     location of the system shared libraries, and then sets the
+     'solib-absolute-prefix' and 'solib-search-path' variables
+     appropriately.
+
+   * 'wrs-linux.py' This script is useful when debugging a program on a
+     target running Wind River Linux.  It expects the 'ENV_PREFIX' to be
+     set to the host-side sysroot used by the target system.
+
+
+File: gdb.info,  Node: Maintenance Commands,  Next: Remote Protocol,  Prev: Installing GDB,  Up: Top
+
+Appendix D Maintenance Commands
+*******************************
+
+In addition to commands intended for GDB users, GDB includes a number of
+commands intended for GDB developers, that are not documented elsewhere
+in this manual.  These commands are provided here for reference.  (For
+commands that turn on debugging messages, see *note Debugging Output::.)
+
+'maint agent [-at LOCATION,] EXPRESSION'
+'maint agent-eval [-at LOCATION,] EXPRESSION'
+     Translate the given EXPRESSION into remote agent bytecodes.  This
+     command is useful for debugging the Agent Expression mechanism
+     (*note Agent Expressions::).  The 'agent' version produces an
+     expression useful for data collection, such as by tracepoints,
+     while 'maint agent-eval' produces an expression that evaluates
+     directly to a result.  For instance, a collection expression for
+     'globa + globb' will include bytecodes to record four bytes of
+     memory at each of the addresses of 'globa' and 'globb', while
+     discarding the result of the addition, while an evaluation
+     expression will do the addition and return the sum.  If '-at' is
+     given, generate remote agent bytecode for LOCATION.  If not,
+     generate remote agent bytecode for current frame PC address.
+
+'maint agent-printf FORMAT,EXPR,...'
+     Translate the given format string and list of argument expressions
+     into remote agent bytecodes and display them as a disassembled
+     list.  This command is useful for debugging the agent version of
+     dynamic printf (*note Dynamic Printf::).
+
+'maint info breakpoints'
+     Using the same format as 'info breakpoints', display both the
+     breakpoints you've set explicitly, and those GDB is using for
+     internal purposes.  Internal breakpoints are shown with negative
+     breakpoint numbers.  The type column identifies what kind of
+     breakpoint is shown:
+
+     'breakpoint'
+          Normal, explicitly set breakpoint.
+
+     'watchpoint'
+          Normal, explicitly set watchpoint.
+
+     'longjmp'
+          Internal breakpoint, used to handle correctly stepping through
+          'longjmp' calls.
+
+     'longjmp resume'
+          Internal breakpoint at the target of a 'longjmp'.
+
+     'until'
+          Temporary internal breakpoint used by the GDB 'until' command.
+
+     'finish'
+          Temporary internal breakpoint used by the GDB 'finish'
+          command.
+
+     'shlib events'
+          Shared library events.
+
+'maint info bfds'
+     This prints information about each 'bfd' object that is known to
+     GDB.  *Note BFD: (bfd)Top.
+
+'maint info btrace'
+     Pint information about raw branch tracing data.
+
+'maint btrace packet-history'
+     Print the raw branch trace packets that are used to compute the
+     execution history for the 'record btrace' command.  Both the
+     information and the format in which it is printed depend on the
+     btrace recording format.
+
+     'bts'
+          For the BTS recording format, print a list of blocks of
+          sequential code.  For each block, the following information is
+          printed:
+
+          Block number
+               Newer blocks have higher numbers.  The oldest block has
+               number zero.
+          Lowest 'PC'
+          Highest 'PC'
+
+     'pt'
+          For the Intel(R) Processor Trace recording format, print a
+          list of Intel(R) Processor Trace packets.  For each packet,
+          the following information is printed:
+
+          Packet number
+               Newer packets have higher numbers.  The oldest packet has
+               number zero.
+          Trace offset
+               The packet's offset in the trace stream.
+          Packet opcode and payload
+
+'maint btrace clear-packet-history'
+     Discards the cached packet history printed by the 'maint btrace
+     packet-history' command.  The history will be computed again when
+     needed.
+
+'maint btrace clear'
+     Discard the branch trace data.  The data will be fetched anew and
+     the branch trace will be recomputed when needed.
+
+     This implicitly truncates the branch trace to a single branch trace
+     buffer.  When updating branch trace incrementally, the branch trace
+     available to GDB may be bigger than a single branch trace buffer.
+
+'maint set btrace pt skip-pad'
+'maint show btrace pt skip-pad'
+     Control whether GDB will skip PAD packets when computing the packet
+     history.
+
+'set displaced-stepping'
+'show displaced-stepping'
+     Control whether or not GDB will do "displaced stepping" if the
+     target supports it.  Displaced stepping is a way to single-step
+     over breakpoints without removing them from the inferior, by
+     executing an out-of-line copy of the instruction that was
+     originally at the breakpoint location.  It is also known as
+     out-of-line single-stepping.
+
+     'set displaced-stepping on'
+          If the target architecture supports it, GDB will use displaced
+          stepping to step over breakpoints.
+
+     'set displaced-stepping off'
+          GDB will not use displaced stepping to step over breakpoints,
+          even if such is supported by the target architecture.
+
+     'set displaced-stepping auto'
+          This is the default mode.  GDB will use displaced stepping
+          only if non-stop mode is active (*note Non-Stop Mode::) and
+          the target architecture supports displaced stepping.
+
+'maint check-psymtabs'
+     Check the consistency of currently expanded psymtabs versus
+     symtabs.  Use this to check, for example, whether a symbol is in
+     one but not the other.
+
+'maint check-symtabs'
+     Check the consistency of currently expanded symtabs.
+
+'maint expand-symtabs [REGEXP]'
+     Expand symbol tables.  If REGEXP is specified, only expand symbol
+     tables for file names matching REGEXP.
+
+'maint set catch-demangler-crashes [on|off]'
+'maint show catch-demangler-crashes'
+     Control whether GDB should attempt to catch crashes in the symbol
+     name demangler.  The default is to attempt to catch crashes.  If
+     enabled, the first time a crash is caught, a core file is created,
+     the offending symbol is displayed and the user is presented with
+     the option to terminate the current session.
+
+'maint cplus first_component NAME'
+     Print the first C++ class/namespace component of NAME.
+
+'maint cplus namespace'
+     Print the list of possible C++ namespaces.
+
+'maint deprecate COMMAND [REPLACEMENT]'
+'maint undeprecate COMMAND'
+     Deprecate or undeprecate the named COMMAND.  Deprecated commands
+     cause GDB to issue a warning when you use them.  The optional
+     argument REPLACEMENT says which newer command should be used in
+     favor of the deprecated one; if it is given, GDB will mention the
+     replacement as part of the warning.
+
+'maint dump-me'
+     Cause a fatal signal in the debugger and force it to dump its core.
+     This is supported only on systems which support aborting a program
+     with the 'SIGQUIT' signal.
+
+'maint internal-error [MESSAGE-TEXT]'
+'maint internal-warning [MESSAGE-TEXT]'
+'maint demangler-warning [MESSAGE-TEXT]'
+
+     Cause GDB to call the internal function 'internal_error',
+     'internal_warning' or 'demangler_warning' and hence behave as
+     though an internal problem has been detected.  In addition to
+     reporting the internal problem, these functions give the user the
+     opportunity to either quit GDB or (for 'internal_error' and
+     'internal_warning') create a core file of the current GDB session.
+
+     These commands take an optional parameter MESSAGE-TEXT that is used
+     as the text of the error or warning message.
+
+     Here's an example of using 'internal-error':
+
+          (gdb) maint internal-error testing, 1, 2
+          .../maint.c:121: internal-error: testing, 1, 2
+          A problem internal to GDB has been detected.  Further
+          debugging may prove unreliable.
+          Quit this debugging session? (y or n) n
+          Create a core file? (y or n) n
+          (gdb)
+
+'maint set internal-error ACTION [ask|yes|no]'
+'maint show internal-error ACTION'
+'maint set internal-warning ACTION [ask|yes|no]'
+'maint show internal-warning ACTION'
+'maint set demangler-warning ACTION [ask|yes|no]'
+'maint show demangler-warning ACTION'
+     When GDB reports an internal problem (error or warning) it gives
+     the user the opportunity to both quit GDB and create a core file of
+     the current GDB session.  These commands let you override the
+     default behaviour for each particular ACTION, described in the
+     table below.
+
+     'quit'
+          You can specify that GDB should always (yes) or never (no)
+          quit.  The default is to ask the user what to do.
+
+     'corefile'
+          You can specify that GDB should always (yes) or never (no)
+          create a core file.  The default is to ask the user what to
+          do.  Note that there is no 'corefile' option for
+          'demangler-warning': demangler warnings always create a core
+          file and this cannot be disabled.
+
+'maint packet TEXT'
+     If GDB is talking to an inferior via the serial protocol, then this
+     command sends the string TEXT to the inferior, and displays the
+     response packet.  GDB supplies the initial '$' character, the
+     terminating '#' character, and the checksum.
+
+'maint print architecture [FILE]'
+     Print the entire architecture configuration.  The optional argument
+     FILE names the file where the output goes.
+
+'maint print c-tdesc'
+     Print the current target description (*note Target Descriptions::)
+     as a C source file.  The created source file can be used in GDB
+     when an XML parser is not available to parse the description.
+
+'maint print dummy-frames'
+     Prints the contents of GDB's internal dummy-frame stack.
+
+          (gdb) b add
+          ...
+          (gdb) print add(2,3)
+          Breakpoint 2, add (a=2, b=3) at ...
+          58	  return (a + b);
+          The program being debugged stopped while in a function called from GDB.
+          ...
+          (gdb) maint print dummy-frames
+          0xa8206d8: id={stack=0xbfffe734,code=0xbfffe73f,!special}, ptid=process 9353
+          (gdb)
+
+     Takes an optional file parameter.
+
+'maint print registers [FILE]'
+'maint print raw-registers [FILE]'
+'maint print cooked-registers [FILE]'
+'maint print register-groups [FILE]'
+'maint print remote-registers [FILE]'
+     Print GDB's internal register data structures.
+
+     The command 'maint print raw-registers' includes the contents of
+     the raw register cache; the command 'maint print cooked-registers'
+     includes the (cooked) value of all registers, including registers
+     which aren't available on the target nor visible to user; the
+     command 'maint print register-groups' includes the groups that each
+     register is a member of; and the command 'maint print
+     remote-registers' includes the remote target's register numbers and
+     offsets in the 'G' packets.
+
+     These commands take an optional parameter, a file name to which to
+     write the information.
+
+'maint print reggroups [FILE]'
+     Print GDB's internal register group data structures.  The optional
+     argument FILE tells to what file to write the information.
+
+     The register groups info looks like this:
+
+          (gdb) maint print reggroups
+           Group      Type
+           general    user
+           float      user
+           all        user
+           vector     user
+           system     user
+           save       internal
+           restore    internal
+
+'flushregs'
+     This command forces GDB to flush its internal register cache.
+
+'maint print objfiles [REGEXP]'
+     Print a dump of all known object files.  If REGEXP is specified,
+     only print object files whose names match REGEXP.  For each object
+     file, this command prints its name, address in memory, and all of
+     its psymtabs and symtabs.
+
+'maint print user-registers'
+     List all currently available "user registers".  User registers
+     typically provide alternate names for actual hardware registers.
+     They include the four "standard" registers '$fp', '$pc', '$sp', and
+     '$ps'.  *Note standard registers::.  User registers can be used in
+     expressions in the same way as the canonical register names, but
+     only the latter are listed by the 'info registers' and 'maint print
+     registers' commands.
+
+'maint print section-scripts [REGEXP]'
+     Print a dump of scripts specified in the '.debug_gdb_section'
+     section.  If REGEXP is specified, only print scripts loaded by
+     object files matching REGEXP.  For each script, this command prints
+     its name as specified in the objfile, and the full path if known.
+     *Note dotdebug_gdb_scripts section::.
+
+'maint print statistics'
+     This command prints, for each object file in the program, various
+     data about that object file followed by the byte cache ("bcache")
+     statistics for the object file.  The objfile data includes the
+     number of minimal, partial, full, and stabs symbols, the number of
+     types defined by the objfile, the number of as yet unexpanded psym
+     tables, the number of line tables and string tables, and the amount
+     of memory used by the various tables.  The bcache statistics
+     include the counts, sizes, and counts of duplicates of all and
+     unique objects, max, average, and median entry size, total memory
+     used and its overhead and savings, and various measures of the hash
+     table size and chain lengths.
+
+'maint print target-stack'
+     A "target" is an interface between the debugger and a particular
+     kind of file or process.  Targets can be stacked in "strata", so
+     that more than one target can potentially respond to a request.  In
+     particular, memory accesses will walk down the stack of targets
+     until they find a target that is interested in handling that
+     particular address.
+
+     This command prints a short description of each layer that was
+     pushed on the "target stack", starting from the top layer down to
+     the bottom one.
+
+'maint print type EXPR'
+     Print the type chain for a type specified by EXPR.  The argument
+     can be either a type name or a symbol.  If it is a symbol, the type
+     of that symbol is described.  The type chain produced by this
+     command is a recursive definition of the data type as stored in
+     GDB's data structures, including its flags and contained types.
+
+'maint set dwarf always-disassemble'
+'maint show dwarf always-disassemble'
+     Control the behavior of 'info address' when using DWARF debugging
+     information.
+
+     The default is 'off', which means that GDB should try to describe a
+     variable's location in an easily readable format.  When 'on', GDB
+     will instead display the DWARF location expression in an
+     assembly-like format.  Note that some locations are too complex for
+     GDB to describe simply; in this case you will always see the
+     disassembly form.
+
+     Here is an example of the resulting disassembly:
+
+          (gdb) info addr argc
+          Symbol "argc" is a complex DWARF expression:
+               1: DW_OP_fbreg 0
+
+     For more information on these expressions, see the DWARF standard
+     (http://www.dwarfstd.org/).
+
+'maint set dwarf max-cache-age'
+'maint show dwarf max-cache-age'
+     Control the DWARF compilation unit cache.
+
+     In object files with inter-compilation-unit references, such as
+     those produced by the GCC option '-feliminate-dwarf2-dups', the
+     DWARF reader needs to frequently refer to previously read
+     compilation units.  This setting controls how long a compilation
+     unit will remain in the cache if it is not referenced.  A higher
+     limit means that cached compilation units will be stored in memory
+     longer, and more total memory will be used.  Setting it to zero
+     disables caching, which will slow down GDB startup, but reduce
+     memory consumption.
+
+'maint set profile'
+'maint show profile'
+     Control profiling of GDB.
+
+     Profiling will be disabled until you use the 'maint set profile'
+     command to enable it.  When you enable profiling, the system will
+     begin collecting timing and execution count data; when you disable
+     profiling or exit GDB, the results will be written to a log file.
+     Remember that if you use profiling, GDB will overwrite the
+     profiling log file (often called 'gmon.out').  If you have a record
+     of important profiling data in a 'gmon.out' file, be sure to move
+     it to a safe location.
+
+     Configuring with '--enable-profiling' arranges for GDB to be
+     compiled with the '-pg' compiler option.
+
+'maint set show-debug-regs'
+'maint show show-debug-regs'
+     Control whether to show variables that mirror the hardware debug
+     registers.  Use 'on' to enable, 'off' to disable.  If enabled, the
+     debug registers values are shown when GDB inserts or removes a
+     hardware breakpoint or watchpoint, and when the inferior triggers a
+     hardware-assisted breakpoint or watchpoint.
+
+'maint set show-all-tib'
+'maint show show-all-tib'
+     Control whether to show all non zero areas within a 1k block
+     starting at thread local base, when using the 'info w32
+     thread-information-block' command.
+
+'maint set target-async'
+'maint show target-async'
+     This controls whether GDB targets operate in synchronous or
+     asynchronous mode (*note Background Execution::).  Normally the
+     default is asynchronous, if it is available; but this can be
+     changed to more easily debug problems occurring only in synchronous
+     mode.
+
+'maint set per-command'
+'maint show per-command'
+
+     GDB can display the resources used by each command.  This is useful
+     in debugging performance problems.
+
+     'maint set per-command space [on|off]'
+     'maint show per-command space'
+          Enable or disable the printing of the memory used by GDB for
+          each command.  If enabled, GDB will display how much memory
+          each command took, following the command's own output.  This
+          can also be requested by invoking GDB with the '--statistics'
+          command-line switch (*note Mode Options::).
+
+     'maint set per-command time [on|off]'
+     'maint show per-command time'
+          Enable or disable the printing of the execution time of GDB
+          for each command.  If enabled, GDB will display how much time
+          it took to execute each command, following the command's own
+          output.  Both CPU time and wallclock time are printed.
+          Printing both is useful when trying to determine whether the
+          cost is CPU or, e.g., disk/network latency.  Note that the CPU
+          time printed is for GDB only, it does not include the
+          execution time of the inferior because there's no mechanism
+          currently to compute how much time was spent by GDB and how
+          much time was spent by the program been debugged.  This can
+          also be requested by invoking GDB with the '--statistics'
+          command-line switch (*note Mode Options::).
+
+     'maint set per-command symtab [on|off]'
+     'maint show per-command symtab'
+          Enable or disable the printing of basic symbol table
+          statistics for each command.  If enabled, GDB will display the
+          following information:
+
+            a. number of symbol tables
+            b. number of primary symbol tables
+            c. number of blocks in the blockvector
+
+'maint space VALUE'
+     An alias for 'maint set per-command space'.  A non-zero value
+     enables it, zero disables it.
+
+'maint time VALUE'
+     An alias for 'maint set per-command time'.  A non-zero value
+     enables it, zero disables it.
+
+'maint translate-address [SECTION] ADDR'
+     Find the symbol stored at the location specified by the address
+     ADDR and an optional section name SECTION.  If found, GDB prints
+     the name of the closest symbol and an offset from the symbol's
+     location to the specified address.  This is similar to the 'info
+     address' command (*note Symbols::), except that this command also
+     allows to find symbols in other sections.
+
+     If section was not specified, the section in which the symbol was
+     found is also printed.  For dynamically linked executables, the
+     name of executable or shared library containing the symbol is
+     printed as well.
+
+   The following command is useful for non-interactive invocations of
+GDB, such as in the test suite.
+
+'set watchdog NSEC'
+     Set the maximum number of seconds GDB will wait for the target
+     operation to finish.  If this time expires, GDB reports and error
+     and the command is aborted.
+
+'show watchdog'
+     Show the current setting of the target wait timeout.
 
 
 File: gdb.info,  Node: Remote Protocol,  Next: Agent Expressions,  Prev: Maintenance Commands,  Up: Top
@@ -63,6 +976,7 @@ Appendix E GDB Remote Serial Protocol
 * Thread List Format::
 * Traceframe Info Format::
 * Branch Trace Format::
+* Branch Trace Configuration Format::
 
 
 File: gdb.info,  Node: Overview,  Next: Packets,  Up: Remote Protocol
@@ -412,8 +1326,9 @@ letter, other than those described here, are reserved for future use.
      packet::).
 
 'm ADDR,LENGTH'
-     Read LENGTH bytes of memory starting at address ADDR.  Note that
-     ADDR may not be aligned to any particular boundary.
+     Read LENGTH addressable memory units starting at address ADDR
+     (*note addressable memory unit::).  Note that ADDR may not be
+     aligned to any particular boundary.
 
      The stub need not use any particular size or alignment when
      gathering data from memory for the response; even if ADDR is
@@ -424,16 +1339,16 @@ letter, other than those described here, are reserved for future use.
      Reply:
      'XX...'
           Memory contents; each byte is transmitted as a two-digit
-          hexadecimal number.  The reply may contain fewer bytes than
-          requested if the server was able to read only part of the
-          region of memory.
+          hexadecimal number.  The reply may contain fewer addressable
+          memory units than requested if the server was able to read
+          only part of the region of memory.
      'E NN'
           NN is errno
 
 'M ADDR,LENGTH:XX...'
-     Write LENGTH bytes of memory starting at address ADDR.  The data is
-     given by XX...; each byte is transmitted as a two-digit hexadecimal
-     number.
+     Write LENGTH addressable memory units starting at address ADDR
+     (*note addressable memory unit::).  The data is given by XX...;
+     each byte is transmitted as a two-digit hexadecimal number.
 
      Reply:
      'OK'
@@ -686,8 +1601,9 @@ letter, other than those described here, are reserved for future use.
 
 'X ADDR,LENGTH:XX...'
      Write data to memory, where the data is transmitted in binary.
-     Memory is specified by its address ADDR and number of bytes LENGTH;
-     'XX...' is binary data (*note Binary Data::).
+     Memory is specified by its address ADDR and number of addressable
+     memory units LENGTH (*note addressable memory unit::); 'XX...' is
+     binary data (*note Binary Data::).
 
      Reply:
      'OK'
@@ -725,6 +1641,9 @@ letter, other than those described here, are reserved for future use.
      on the target's side.  These are the conditions that should be
      taken into consideration when deciding if the breakpoint trigger
      should be reported back to GDBN.
+
+     See also the 'swbreak' stop reason (*note swbreak stop reason::)
+     for how to best report a memory breakpoint event to GDB.
 
      The COND_LIST parameter is comprised of a series of expressions,
      concatenated without separators.  Each expression has the following
@@ -887,6 +1806,70 @@ components.
           the beginning when executing backward) of the log.  The value
           of R will be either 'begin' or 'end'.  *Note Reverse
           Execution::, for more information.
+
+     'swbreak'
+          The packet indicates a memory breakpoint instruction was
+          executed, irrespective of whether it was GDB that planted the
+          breakpoint or the breakpoint is hardcoded in the program.  The
+          R part must be left empty.
+
+          On some architectures, such as x86, at the architecture level,
+          when a breakpoint instruction executes the program counter
+          points at the breakpoint address plus an offset.  On such
+          targets, the stub is responsible for adjusting the PC to point
+          back at the breakpoint address.
+
+          This packet should not be sent by default; older GDB versions
+          did not support it.  GDB requests it, by supplying an
+          appropriate 'qSupported' feature (*note qSupported::).  The
+          remote stub must also supply the appropriate 'qSupported'
+          feature indicating support.
+
+          This packet is required for correct non-stop mode operation.
+
+     'hwbreak'
+          The packet indicates the target stopped for a hardware
+          breakpoint.  The R part must be left empty.
+
+          The same remarks about 'qSupported' and non-stop mode above
+          apply.
+
+     'fork'
+          The packet indicates that 'fork' was called, and R is the
+          thread ID of the new child process.  Refer to *note thread-id
+          syntax:: for the format of the THREAD-ID field.  This packet
+          is only applicable to targets that support fork events.
+
+          This packet should not be sent by default; older GDB versions
+          did not support it.  GDB requests it, by supplying an
+          appropriate 'qSupported' feature (*note qSupported::).  The
+          remote stub must also supply the appropriate 'qSupported'
+          feature indicating support.
+
+     'vfork'
+          The packet indicates that 'vfork' was called, and R is the
+          thread ID of the new child process.  Refer to *note thread-id
+          syntax:: for the format of the THREAD-ID field.  This packet
+          is only applicable to targets that support vfork events.
+
+          This packet should not be sent by default; older GDB versions
+          did not support it.  GDB requests it, by supplying an
+          appropriate 'qSupported' feature (*note qSupported::).  The
+          remote stub must also supply the appropriate 'qSupported'
+          feature indicating support.
+
+     'vforkdone'
+          The packet indicates that a child process created by a vfork
+          has either called 'exec' or terminated, so that the address
+          spaces of the parent and child process are no longer shared.
+          The R part is ignored.  This packet is only applicable to
+          targets that support vforkdone events.
+
+          This packet should not be sent by default; older GDB versions
+          did not support it.  GDB requests it, by supplying an
+          appropriate 'qSupported' feature (*note qSupported::).  The
+          remote stub must also supply the appropriate 'qSupported'
+          feature indicating support.
 
 'W AA'
 'W AA ; process:PID'
@@ -1396,6 +2379,28 @@ GDB packet uses spaces to separate its components.
           packet (*note Relocate instruction reply packet: Tracepoint
           Packets.).
 
+     'swbreak'
+          This feature indicates whether GDB supports the swbreak stop
+          reason in stop replies.  *Note swbreak stop reason::, for
+          details.
+
+     'hwbreak'
+          This feature indicates whether GDB supports the hwbreak stop
+          reason in stop replies.  *Note swbreak stop reason::, for
+          details.
+
+     'fork-events'
+          This feature indicates whether GDB supports fork event
+          extensions to the remote protocol.  GDB does not use such
+          extensions unless the stub also reports that it supports them
+          by including 'fork-events+' in its 'qSupported' reply.
+
+     'vfork-events'
+          This feature indicates whether GDB supports vfork event
+          extensions to the remote protocol.  GDB does not use such
+          extensions unless the stub also reports that it supports them
+          by including 'vfork-events+' in its 'qSupported' reply.
+
      Stubs should ignore any unknown values for GDBFEATURE.  Any GDB
      which sends a 'qSupported' packet supports receiving packets of
      unlimited length (earlier versions of GDB may reject overly long
@@ -1437,6 +2442,10 @@ GDB packet uses spaces to separate its components.
                                                         
      'qXfer:btrace:read'       No             '-'       Yes
                                                         
+     'qXfer:btrace-conf:read'  No             '-'       Yes
+                                                        
+     'qXfer:exec-file:read'    No             '-'       Yes
+                                                        
      'qXfer:features:read'     No             '-'       Yes
                                                         
      'qXfer:libraries:read'    No             '-'       Yes
@@ -1468,6 +2477,12 @@ GDB packet uses spaces to separate its components.
      'Qbtrace:off'             Yes            '-'       Yes
                                                         
      'Qbtrace:bts'             Yes            '-'       Yes
+                                                        
+     'Qbtrace:pt'              Yes            '-'       Yes
+                                                        
+     'Qbtrace-conf:bts:size'   Yes            '-'       Yes
+                                                        
+     'Qbtrace-conf:pt:size'    Yes            '-'       Yes
                                                         
      'QNonStop'                No             '-'       Yes
                                                         
@@ -1501,6 +2516,14 @@ GDB packet uses spaces to separate its components.
                                                         
      'BreakpointCommands'      No             '-'       No
                                                         
+     'swbreak'                 No             '-'       No
+                                                        
+     'hwbreak'                 No             '-'       No
+                                                        
+     'fork-events'             No             '-'       No
+                                                        
+     'vfork-events'            No             '-'       No
+                                                        
 
      These are the currently defined stub features, in more detail:
 
@@ -1522,6 +2545,14 @@ GDB packet uses spaces to separate its components.
      'qXfer:btrace:read'
           The remote stub understands the 'qXfer:btrace:read' packet
           (*note qXfer btrace read::).
+
+     'qXfer:btrace-conf:read'
+          The remote stub understands the 'qXfer:btrace-conf:read'
+          packet (*note qXfer btrace-conf read::).
+
+     'qXfer:exec-file:read'
+          The remote stub understands the 'qXfer:exec-file:read' packet
+          (*note qXfer executable filename read::).
 
      'qXfer:features:read'
           The remote stub understands the 'qXfer:features:read' packet
@@ -1673,6 +2704,32 @@ GDB packet uses spaces to separate its components.
      'Qbtrace:bts'
           The remote stub understands the 'Qbtrace:bts' packet.
 
+     'Qbtrace:pt'
+          The remote stub understands the 'Qbtrace:pt' packet.
+
+     'Qbtrace-conf:bts:size'
+          The remote stub understands the 'Qbtrace-conf:bts:size'
+          packet.
+
+     'Qbtrace-conf:pt:size'
+          The remote stub understands the 'Qbtrace-conf:pt:size' packet.
+
+     'swbreak'
+          The remote stub reports the 'swbreak' stop reason for memory
+          breakpoints.
+
+     'hwbreak'
+          The remote stub reports the 'hwbreak' stop reason for hardware
+          breakpoints.
+
+     'fork-events'
+          The remote stub reports the 'fork' stop reason for fork
+          events.
+
+     'vfork-events'
+          The remote stub reports the 'vfork' stop reason for vfork
+          events and vforkdone events.
+
 'qSymbol::'
      Notify the target that GDB is prepared to serve symbol lookup
      requests.  Accept requests from the target for the values of
@@ -1797,6 +2854,27 @@ GDB packet uses spaces to separate its components.
 
           This packet is not probed by default; the remote stub must
           request it by supplying an appropriate 'qSupported' response
+          (*note qSupported::).
+
+     'qXfer:btrace-conf:read::OFFSET,LENGTH'
+
+          Return a description of the current branch trace
+          configuration.  *Note Branch Trace Configuration Format::.
+
+          This packet is not probed by default; the remote stub must
+          request it by supplying an appropriate 'qSupported' response
+          (*note qSupported::).
+
+     'qXfer:exec-file:read:ANNEX:OFFSET,LENGTH'
+          Return the full absolute name of the file that was executed to
+          create a process running on the remote system.  The annex
+          specifies the numeric process ID of the process to query,
+          encoded as a hexadecimal number.  If the annex part is empty
+          the remote stub should return the filename corresponding to
+          the currently executing process.
+
+          This packet is not probed by default; the remote stub must
+          request it, by supplying an appropriate 'qSupported' response
           (*note qSupported::).
 
      'qXfer:features:read:ANNEX:OFFSET,LENGTH'
@@ -2043,7 +3121,18 @@ GDB packet uses spaces to separate its components.
           A badly formed request or an error was encountered.
 
 'Qbtrace:bts'
-     Enable branch tracing for the current thread using bts tracing.
+     Enable branch tracing for the current thread using Branch Trace
+     Store.
+
+     Reply:
+     'OK'
+          Branch tracing has been enabled.
+     'E.errtext'
+          A badly formed request or an error was encountered.
+
+'Qbtrace:pt'
+     Enable branch tracing for the current thread using Intel(R)
+     Processor Trace.
 
      Reply:
      'OK'
@@ -2057,6 +3146,26 @@ GDB packet uses spaces to separate its components.
      Reply:
      'OK'
           Branch tracing has been disabled.
+     'E.errtext'
+          A badly formed request or an error was encountered.
+
+'Qbtrace-conf:bts:size=VALUE'
+     Set the requested ring buffer size for new threads that use the
+     btrace recording method in bts format.
+
+     Reply:
+     'OK'
+          The ring buffer size has been set.
+     'E.errtext'
+          A badly formed request or an error was encountered.
+
+'Qbtrace-conf:pt:size=VALUE'
+     Set the requested ring buffer size for new threads that use the
+     btrace recording method in pt format.
+
+     Reply:
+     'OK'
+          The ring buffer size has been set.
      'E.errtext'
           A badly formed request or an error was encountered.
 
@@ -2284,13 +3393,17 @@ Tracepoints::).
      discrepancy could cause 'tdump' not to work, or a particular trace
      frame not be found.
 
-'QTDV:N:VALUE'
+'QTDV:N:VALUE:BUILTIN:NAME'
      Create a new trace state variable, number N, with an initial value
      of VALUE, which is a 64-bit signed integer.  Both N and VALUE are
      encoded as hexadecimal values.  GDB has the option of not using
      this packet for initial values of zero; the target should simply
      create the trace state variables as they are mentioned in
-     expressions.
+     expressions.  The value BUILTIN should be 1 (one) if the trace
+     state variable is builtin and 0 (zero) if it is not builtin.  GDB
+     only sets BUILTIN to 1 if a previous 'qTfV' or 'qTsV' packet had it
+     set.  The contents of NAME is the hex-encoded name (without the
+     leading '$') of the trace state variable.
 
 'QTFrame:N'
      Select the N'th tracepoint frame from the buffer, and use the
@@ -2689,6 +3802,13 @@ its arguments.  They have this format:
      number of bytes written, which may be shorter than the length of
      DATA, or -1 if an error occurred.
 
+'vFile:fstat: FD'
+     Get information about the open file corresponding to FD.  On
+     success the information is returned as a binary attachment and the
+     return value is the size of this attachment in bytes.  If an error
+     occurs the return value is -1.  The format of the returned binary
+     attachment is as described in *note struct stat::.
+
 'vFile:unlink: FILENAME'
      Delete the file at FILENAME on the target.  Return 0, or -1 if an
      error occurs.  The FILENAME is a string.
@@ -2702,6 +3822,18 @@ its arguments.  They have this format:
      binary attachment (i.e. a trailing semicolon).  The return value is
      the number of target bytes read; the binary attachment may be
      longer if some characters were escaped.
+
+'vFile:setfs: PID'
+     Select the filesystem on which 'vFile' operations with FILENAME
+     arguments will operate.  This is required for GDB to be able to
+     access files on remote targets where the remote stub does not share
+     a common filesystem with the inferior(s).
+
+     If PID is nonzero, select the filesystem as seen by process PID.
+     If PID is zero, select the filesystem as seen by the remote stub.
+     Return 0 on success, or -1 if an error occurs.  If 'vFile:setfs:'
+     indicates success, the selected filesystem remains selected until
+     the next successful 'vFile:setfs:' operation.
 
 
 File: gdb.info,  Node: Interrupts,  Next: Notification Packets,  Prev: Host I/O Packets,  Up: Remote Protocol
@@ -2896,6 +4028,19 @@ described above.  The target must not send asynchronous stop reply
 notifications until the sequence is complete.  If all threads are
 running when the target receives the '?' packet, or if the target is not
 attached to any process, it shall respond 'OK'.
+
+   If the stub supports non-stop mode, it should also support the
+'swbreak' stop reason if software breakpoints are supported, and the
+'hwbreak' stop reason if hardware breakpoints are supported (*note
+swbreak stop reason::).  This is because given the asynchronous nature
+of non-stop mode, between the time a thread hits a breakpoint and the
+time the event is finally processed by GDB, the breakpoint may have
+already been removed from the target.  Due to this, GDB needs to be able
+to tell whether a trap stop was caused by a delayed breakpoint event,
+which should be ignored, as opposed to a random trap signal, which
+should be reported to the user.  Note the 'swbreak' feature implies that
+the target is responsible for adjusting the PC when a software
+breakpoint triggers, if necessary, such as on the x86 architecture.
 
 
 File: gdb.info,  Node: Packet Acknowledgment,  Next: Examples,  Prev: Remote Non-Stop,  Up: Remote Protocol
@@ -4268,7 +5413,7 @@ info discovery.  *Note Expat::.
      <!ATTLIST tvar          id      CDATA   #REQUIRED>
 
 
-File: gdb.info,  Node: Branch Trace Format,  Prev: Traceframe Info Format,  Up: Remote Protocol
+File: gdb.info,  Node: Branch Trace Format,  Next: Branch Trace Configuration Format,  Prev: Traceframe Info Format,  Up: Remote Protocol
 
 E.19 Branch Trace Format
 ========================
@@ -4301,12 +5446,62 @@ info discovery.  *Note Expat::.
 
    The formal DTD for the branch trace format is given below:
 
-     <!ELEMENT btrace  (block)* >
+     <!ELEMENT btrace  (block* | pt) >
      <!ATTLIST btrace  version CDATA   #FIXED "1.0">
 
      <!ELEMENT block        EMPTY>
      <!ATTLIST block        begin  CDATA   #REQUIRED
                             end    CDATA   #REQUIRED>
+
+     <!ELEMENT pt (pt-config?, raw?)>
+
+     <!ELEMENT pt-config (cpu?)>
+
+     <!ELEMENT cpu EMPTY>
+     <!ATTLIST cpu vendor   CDATA #REQUIRED
+                   family   CDATA #REQUIRED
+                   model    CDATA #REQUIRED
+                   stepping CDATA #REQUIRED>
+
+     <!ELEMENT raw (#PCDATA)>
+
+
+File: gdb.info,  Node: Branch Trace Configuration Format,  Prev: Branch Trace Format,  Up: Remote Protocol
+
+E.20 Branch Trace Configuration Format
+======================================
+
+For each inferior thread, GDB can obtain the branch trace configuration
+using the 'qXfer:btrace-conf:read' (*note qXfer btrace-conf read::)
+packet.
+
+   The configuration describes the branch trace format and configuration
+settings for that format.  The following information is described:
+
+'bts'
+     This thread uses the "Branch Trace Store" (BTS) format.
+     'size'
+          The size of the BTS ring buffer in bytes.
+'pt'
+     This thread uses the "Intel(R) Processor Trace" (Intel(R) PT)
+     format.
+     'size'
+          The size of the Intel(R) PT ring buffer in bytes.
+
+   GDB must be linked with the Expat library to support XML branch trace
+configuration discovery.  *Note Expat::.
+
+   The formal DTD for the branch trace configuration format is given
+below:
+
+     <!ELEMENT btrace-conf	(bts?, pt?)>
+     <!ATTLIST btrace-conf	version	CDATA	#FIXED "1.0">
+
+     <!ELEMENT bts	EMPTY>
+     <!ATTLIST bts	size	CDATA	#IMPLIED>
+
+     <!ELEMENT pt	EMPTY>
+     <!ATTLIST pt	size	CDATA	#IMPLIED>
 
 
 File: gdb.info,  Node: Agent Expressions,  Next: Target Descriptions,  Prev: Remote Protocol,  Up: Top
@@ -5667,6 +6862,13 @@ register, whose width depends on the addressing mode, as well as the
    The 'org.gnu.gdb.s390.tdb' feature is optional.  It should contain
 the 64-bit registers 'tdb0', 'tac', 'tct', 'atia', and 'tr0' through
 'tr15'.
+
+   The 'org.gnu.gdb.s390.vx' feature is optional.  It should contain
+64-bit wide registers 'v0l' through 'v15l', which will be combined by
+GDB with the floating point registers 'f0' through 'f15' to present the
+128-bit wide vector registers 'v0' through 'v15'.  In addition, this
+feature should contain the 128-bit wide vector registers 'v16' through
+'v31'.
 
 
 File: gdb.info,  Node: TIC6x Features,  Prev: S/390 and System z Features,  Up: Standard Target Features
@@ -7144,486 +8346,4 @@ library, you may consider it more useful to permit linking proprietary
 applications with the library.  If this is what you want to do, use the
 GNU Lesser General Public License instead of this License.  But first,
 please read <http://www.gnu.org/philosophy/why-not-lgpl.html>.
-
-
-File: gdb.info,  Node: GNU Free Documentation License,  Next: Concept Index,  Prev: Copying,  Up: Top
-
-Appendix M GNU Free Documentation License
-*****************************************
-
-                     Version 1.3, 3 November 2008
-
-     Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
-     <http://fsf.org/>
-
-     Everyone is permitted to copy and distribute verbatim copies
-     of this license document, but changing it is not allowed.
-
-  0. PREAMBLE
-
-     The purpose of this License is to make a manual, textbook, or other
-     functional and useful document "free" in the sense of freedom: to
-     assure everyone the effective freedom to copy and redistribute it,
-     with or without modifying it, either commercially or
-     noncommercially.  Secondarily, this License preserves for the
-     author and publisher a way to get credit for their work, while not
-     being considered responsible for modifications made by others.
-
-     This License is a kind of "copyleft", which means that derivative
-     works of the document must themselves be free in the same sense.
-     It complements the GNU General Public License, which is a copyleft
-     license designed for free software.
-
-     We have designed this License in order to use it for manuals for
-     free software, because free software needs free documentation: a
-     free program should come with manuals providing the same freedoms
-     that the software does.  But this License is not limited to
-     software manuals; it can be used for any textual work, regardless
-     of subject matter or whether it is published as a printed book.  We
-     recommend this License principally for works whose purpose is
-     instruction or reference.
-
-  1. APPLICABILITY AND DEFINITIONS
-
-     This License applies to any manual or other work, in any medium,
-     that contains a notice placed by the copyright holder saying it can
-     be distributed under the terms of this License.  Such a notice
-     grants a world-wide, royalty-free license, unlimited in duration,
-     to use that work under the conditions stated herein.  The
-     "Document", below, refers to any such manual or work.  Any member
-     of the public is a licensee, and is addressed as "you".  You accept
-     the license if you copy, modify or distribute the work in a way
-     requiring permission under copyright law.
-
-     A "Modified Version" of the Document means any work containing the
-     Document or a portion of it, either copied verbatim, or with
-     modifications and/or translated into another language.
-
-     A "Secondary Section" is a named appendix or a front-matter section
-     of the Document that deals exclusively with the relationship of the
-     publishers or authors of the Document to the Document's overall
-     subject (or to related matters) and contains nothing that could
-     fall directly within that overall subject.  (Thus, if the Document
-     is in part a textbook of mathematics, a Secondary Section may not
-     explain any mathematics.)  The relationship could be a matter of
-     historical connection with the subject or with related matters, or
-     of legal, commercial, philosophical, ethical or political position
-     regarding them.
-
-     The "Invariant Sections" are certain Secondary Sections whose
-     titles are designated, as being those of Invariant Sections, in the
-     notice that says that the Document is released under this License.
-     If a section does not fit the above definition of Secondary then it
-     is not allowed to be designated as Invariant.  The Document may
-     contain zero Invariant Sections.  If the Document does not identify
-     any Invariant Sections then there are none.
-
-     The "Cover Texts" are certain short passages of text that are
-     listed, as Front-Cover Texts or Back-Cover Texts, in the notice
-     that says that the Document is released under this License.  A
-     Front-Cover Text may be at most 5 words, and a Back-Cover Text may
-     be at most 25 words.
-
-     A "Transparent" copy of the Document means a machine-readable copy,
-     represented in a format whose specification is available to the
-     general public, that is suitable for revising the document
-     straightforwardly with generic text editors or (for images composed
-     of pixels) generic paint programs or (for drawings) some widely
-     available drawing editor, and that is suitable for input to text
-     formatters or for automatic translation to a variety of formats
-     suitable for input to text formatters.  A copy made in an otherwise
-     Transparent file format whose markup, or absence of markup, has
-     been arranged to thwart or discourage subsequent modification by
-     readers is not Transparent.  An image format is not Transparent if
-     used for any substantial amount of text.  A copy that is not
-     "Transparent" is called "Opaque".
-
-     Examples of suitable formats for Transparent copies include plain
-     ASCII without markup, Texinfo input format, LaTeX input format,
-     SGML or XML using a publicly available DTD, and standard-conforming
-     simple HTML, PostScript or PDF designed for human modification.
-     Examples of transparent image formats include PNG, XCF and JPG.
-     Opaque formats include proprietary formats that can be read and
-     edited only by proprietary word processors, SGML or XML for which
-     the DTD and/or processing tools are not generally available, and
-     the machine-generated HTML, PostScript or PDF produced by some word
-     processors for output purposes only.
-
-     The "Title Page" means, for a printed book, the title page itself,
-     plus such following pages as are needed to hold, legibly, the
-     material this License requires to appear in the title page.  For
-     works in formats which do not have any title page as such, "Title
-     Page" means the text near the most prominent appearance of the
-     work's title, preceding the beginning of the body of the text.
-
-     The "publisher" means any person or entity that distributes copies
-     of the Document to the public.
-
-     A section "Entitled XYZ" means a named subunit of the Document
-     whose title either is precisely XYZ or contains XYZ in parentheses
-     following text that translates XYZ in another language.  (Here XYZ
-     stands for a specific section name mentioned below, such as
-     "Acknowledgements", "Dedications", "Endorsements", or "History".)
-     To "Preserve the Title" of such a section when you modify the
-     Document means that it remains a section "Entitled XYZ" according
-     to this definition.
-
-     The Document may include Warranty Disclaimers next to the notice
-     which states that this License applies to the Document.  These
-     Warranty Disclaimers are considered to be included by reference in
-     this License, but only as regards disclaiming warranties: any other
-     implication that these Warranty Disclaimers may have is void and
-     has no effect on the meaning of this License.
-
-  2. VERBATIM COPYING
-
-     You may copy and distribute the Document in any medium, either
-     commercially or noncommercially, provided that this License, the
-     copyright notices, and the license notice saying this License
-     applies to the Document are reproduced in all copies, and that you
-     add no other conditions whatsoever to those of this License.  You
-     may not use technical measures to obstruct or control the reading
-     or further copying of the copies you make or distribute.  However,
-     you may accept compensation in exchange for copies.  If you
-     distribute a large enough number of copies you must also follow the
-     conditions in section 3.
-
-     You may also lend copies, under the same conditions stated above,
-     and you may publicly display copies.
-
-  3. COPYING IN QUANTITY
-
-     If you publish printed copies (or copies in media that commonly
-     have printed covers) of the Document, numbering more than 100, and
-     the Document's license notice requires Cover Texts, you must
-     enclose the copies in covers that carry, clearly and legibly, all
-     these Cover Texts: Front-Cover Texts on the front cover, and
-     Back-Cover Texts on the back cover.  Both covers must also clearly
-     and legibly identify you as the publisher of these copies.  The
-     front cover must present the full title with all words of the title
-     equally prominent and visible.  You may add other material on the
-     covers in addition.  Copying with changes limited to the covers, as
-     long as they preserve the title of the Document and satisfy these
-     conditions, can be treated as verbatim copying in other respects.
-
-     If the required texts for either cover are too voluminous to fit
-     legibly, you should put the first ones listed (as many as fit
-     reasonably) on the actual cover, and continue the rest onto
-     adjacent pages.
-
-     If you publish or distribute Opaque copies of the Document
-     numbering more than 100, you must either include a machine-readable
-     Transparent copy along with each Opaque copy, or state in or with
-     each Opaque copy a computer-network location from which the general
-     network-using public has access to download using public-standard
-     network protocols a complete Transparent copy of the Document, free
-     of added material.  If you use the latter option, you must take
-     reasonably prudent steps, when you begin distribution of Opaque
-     copies in quantity, to ensure that this Transparent copy will
-     remain thus accessible at the stated location until at least one
-     year after the last time you distribute an Opaque copy (directly or
-     through your agents or retailers) of that edition to the public.
-
-     It is requested, but not required, that you contact the authors of
-     the Document well before redistributing any large number of copies,
-     to give them a chance to provide you with an updated version of the
-     Document.
-
-  4. MODIFICATIONS
-
-     You may copy and distribute a Modified Version of the Document
-     under the conditions of sections 2 and 3 above, provided that you
-     release the Modified Version under precisely this License, with the
-     Modified Version filling the role of the Document, thus licensing
-     distribution and modification of the Modified Version to whoever
-     possesses a copy of it.  In addition, you must do these things in
-     the Modified Version:
-
-       A. Use in the Title Page (and on the covers, if any) a title
-          distinct from that of the Document, and from those of previous
-          versions (which should, if there were any, be listed in the
-          History section of the Document).  You may use the same title
-          as a previous version if the original publisher of that
-          version gives permission.
-
-       B. List on the Title Page, as authors, one or more persons or
-          entities responsible for authorship of the modifications in
-          the Modified Version, together with at least five of the
-          principal authors of the Document (all of its principal
-          authors, if it has fewer than five), unless they release you
-          from this requirement.
-
-       C. State on the Title page the name of the publisher of the
-          Modified Version, as the publisher.
-
-       D. Preserve all the copyright notices of the Document.
-
-       E. Add an appropriate copyright notice for your modifications
-          adjacent to the other copyright notices.
-
-       F. Include, immediately after the copyright notices, a license
-          notice giving the public permission to use the Modified
-          Version under the terms of this License, in the form shown in
-          the Addendum below.
-
-       G. Preserve in that license notice the full lists of Invariant
-          Sections and required Cover Texts given in the Document's
-          license notice.
-
-       H. Include an unaltered copy of this License.
-
-       I. Preserve the section Entitled "History", Preserve its Title,
-          and add to it an item stating at least the title, year, new
-          authors, and publisher of the Modified Version as given on the
-          Title Page.  If there is no section Entitled "History" in the
-          Document, create one stating the title, year, authors, and
-          publisher of the Document as given on its Title Page, then add
-          an item describing the Modified Version as stated in the
-          previous sentence.
-
-       J. Preserve the network location, if any, given in the Document
-          for public access to a Transparent copy of the Document, and
-          likewise the network locations given in the Document for
-          previous versions it was based on.  These may be placed in the
-          "History" section.  You may omit a network location for a work
-          that was published at least four years before the Document
-          itself, or if the original publisher of the version it refers
-          to gives permission.
-
-       K. For any section Entitled "Acknowledgements" or "Dedications",
-          Preserve the Title of the section, and preserve in the section
-          all the substance and tone of each of the contributor
-          acknowledgements and/or dedications given therein.
-
-       L. Preserve all the Invariant Sections of the Document, unaltered
-          in their text and in their titles.  Section numbers or the
-          equivalent are not considered part of the section titles.
-
-       M. Delete any section Entitled "Endorsements".  Such a section
-          may not be included in the Modified Version.
-
-       N. Do not retitle any existing section to be Entitled
-          "Endorsements" or to conflict in title with any Invariant
-          Section.
-
-       O. Preserve any Warranty Disclaimers.
-
-     If the Modified Version includes new front-matter sections or
-     appendices that qualify as Secondary Sections and contain no
-     material copied from the Document, you may at your option designate
-     some or all of these sections as invariant.  To do this, add their
-     titles to the list of Invariant Sections in the Modified Version's
-     license notice.  These titles must be distinct from any other
-     section titles.
-
-     You may add a section Entitled "Endorsements", provided it contains
-     nothing but endorsements of your Modified Version by various
-     parties--for example, statements of peer review or that the text
-     has been approved by an organization as the authoritative
-     definition of a standard.
-
-     You may add a passage of up to five words as a Front-Cover Text,
-     and a passage of up to 25 words as a Back-Cover Text, to the end of
-     the list of Cover Texts in the Modified Version.  Only one passage
-     of Front-Cover Text and one of Back-Cover Text may be added by (or
-     through arrangements made by) any one entity.  If the Document
-     already includes a cover text for the same cover, previously added
-     by you or by arrangement made by the same entity you are acting on
-     behalf of, you may not add another; but you may replace the old
-     one, on explicit permission from the previous publisher that added
-     the old one.
-
-     The author(s) and publisher(s) of the Document do not by this
-     License give permission to use their names for publicity for or to
-     assert or imply endorsement of any Modified Version.
-
-  5. COMBINING DOCUMENTS
-
-     You may combine the Document with other documents released under
-     this License, under the terms defined in section 4 above for
-     modified versions, provided that you include in the combination all
-     of the Invariant Sections of all of the original documents,
-     unmodified, and list them all as Invariant Sections of your
-     combined work in its license notice, and that you preserve all
-     their Warranty Disclaimers.
-
-     The combined work need only contain one copy of this License, and
-     multiple identical Invariant Sections may be replaced with a single
-     copy.  If there are multiple Invariant Sections with the same name
-     but different contents, make the title of each such section unique
-     by adding at the end of it, in parentheses, the name of the
-     original author or publisher of that section if known, or else a
-     unique number.  Make the same adjustment to the section titles in
-     the list of Invariant Sections in the license notice of the
-     combined work.
-
-     In the combination, you must combine any sections Entitled
-     "History" in the various original documents, forming one section
-     Entitled "History"; likewise combine any sections Entitled
-     "Acknowledgements", and any sections Entitled "Dedications".  You
-     must delete all sections Entitled "Endorsements."
-
-  6. COLLECTIONS OF DOCUMENTS
-
-     You may make a collection consisting of the Document and other
-     documents released under this License, and replace the individual
-     copies of this License in the various documents with a single copy
-     that is included in the collection, provided that you follow the
-     rules of this License for verbatim copying of each of the documents
-     in all other respects.
-
-     You may extract a single document from such a collection, and
-     distribute it individually under this License, provided you insert
-     a copy of this License into the extracted document, and follow this
-     License in all other respects regarding verbatim copying of that
-     document.
-
-  7. AGGREGATION WITH INDEPENDENT WORKS
-
-     A compilation of the Document or its derivatives with other
-     separate and independent documents or works, in or on a volume of a
-     storage or distribution medium, is called an "aggregate" if the
-     copyright resulting from the compilation is not used to limit the
-     legal rights of the compilation's users beyond what the individual
-     works permit.  When the Document is included in an aggregate, this
-     License does not apply to the other works in the aggregate which
-     are not themselves derivative works of the Document.
-
-     If the Cover Text requirement of section 3 is applicable to these
-     copies of the Document, then if the Document is less than one half
-     of the entire aggregate, the Document's Cover Texts may be placed
-     on covers that bracket the Document within the aggregate, or the
-     electronic equivalent of covers if the Document is in electronic
-     form.  Otherwise they must appear on printed covers that bracket
-     the whole aggregate.
-
-  8. TRANSLATION
-
-     Translation is considered a kind of modification, so you may
-     distribute translations of the Document under the terms of section
-     4.  Replacing Invariant Sections with translations requires special
-     permission from their copyright holders, but you may include
-     translations of some or all Invariant Sections in addition to the
-     original versions of these Invariant Sections.  You may include a
-     translation of this License, and all the license notices in the
-     Document, and any Warranty Disclaimers, provided that you also
-     include the original English version of this License and the
-     original versions of those notices and disclaimers.  In case of a
-     disagreement between the translation and the original version of
-     this License or a notice or disclaimer, the original version will
-     prevail.
-
-     If a section in the Document is Entitled "Acknowledgements",
-     "Dedications", or "History", the requirement (section 4) to
-     Preserve its Title (section 1) will typically require changing the
-     actual title.
-
-  9. TERMINATION
-
-     You may not copy, modify, sublicense, or distribute the Document
-     except as expressly provided under this License.  Any attempt
-     otherwise to copy, modify, sublicense, or distribute it is void,
-     and will automatically terminate your rights under this License.
-
-     However, if you cease all violation of this License, then your
-     license from a particular copyright holder is reinstated (a)
-     provisionally, unless and until the copyright holder explicitly and
-     finally terminates your license, and (b) permanently, if the
-     copyright holder fails to notify you of the violation by some
-     reasonable means prior to 60 days after the cessation.
-
-     Moreover, your license from a particular copyright holder is
-     reinstated permanently if the copyright holder notifies you of the
-     violation by some reasonable means, this is the first time you have
-     received notice of violation of this License (for any work) from
-     that copyright holder, and you cure the violation prior to 30 days
-     after your receipt of the notice.
-
-     Termination of your rights under this section does not terminate
-     the licenses of parties who have received copies or rights from you
-     under this License.  If your rights have been terminated and not
-     permanently reinstated, receipt of a copy of some or all of the
-     same material does not give you any rights to use it.
-
-  10. FUTURE REVISIONS OF THIS LICENSE
-
-     The Free Software Foundation may publish new, revised versions of
-     the GNU Free Documentation License from time to time.  Such new
-     versions will be similar in spirit to the present version, but may
-     differ in detail to address new problems or concerns.  See
-     <http://www.gnu.org/copyleft/>.
-
-     Each version of the License is given a distinguishing version
-     number.  If the Document specifies that a particular numbered
-     version of this License "or any later version" applies to it, you
-     have the option of following the terms and conditions either of
-     that specified version or of any later version that has been
-     published (not as a draft) by the Free Software Foundation.  If the
-     Document does not specify a version number of this License, you may
-     choose any version ever published (not as a draft) by the Free
-     Software Foundation.  If the Document specifies that a proxy can
-     decide which future versions of this License can be used, that
-     proxy's public statement of acceptance of a version permanently
-     authorizes you to choose that version for the Document.
-
-  11. RELICENSING
-
-     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
-     World Wide Web server that publishes copyrightable works and also
-     provides prominent facilities for anybody to edit those works.  A
-     public wiki that anybody can edit is an example of such a server.
-     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
-     site means any set of copyrightable works thus published on the MMC
-     site.
-
-     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
-     license published by Creative Commons Corporation, a not-for-profit
-     corporation with a principal place of business in San Francisco,
-     California, as well as future copyleft versions of that license
-     published by that same organization.
-
-     "Incorporate" means to publish or republish a Document, in whole or
-     in part, as part of another Document.
-
-     An MMC is "eligible for relicensing" if it is licensed under this
-     License, and if all works that were first published under this
-     License somewhere other than this MMC, and subsequently
-     incorporated in whole or in part into the MMC, (1) had no cover
-     texts or invariant sections, and (2) were thus incorporated prior
-     to November 1, 2008.
-
-     The operator of an MMC Site may republish an MMC contained in the
-     site under CC-BY-SA on the same site at any time before August 1,
-     2009, provided the MMC is eligible for relicensing.
-
-ADDENDUM: How to use this License for your documents
-====================================================
-
-To use this License in a document you have written, include a copy of
-the License in the document and put the following copyright and license
-notices just after the title page:
-
-       Copyright (C)  YEAR  YOUR NAME.
-       Permission is granted to copy, distribute and/or modify this document
-       under the terms of the GNU Free Documentation License, Version 1.3
-       or any later version published by the Free Software Foundation;
-       with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
-       Texts.  A copy of the license is included in the section entitled ``GNU
-       Free Documentation License''.
-
-   If you have Invariant Sections, Front-Cover Texts and Back-Cover
-Texts, replace the "with...Texts."  line with this:
-
-         with the Invariant Sections being LIST THEIR TITLES, with
-         the Front-Cover Texts being LIST, and with the Back-Cover Texts
-         being LIST.
-
-   If you have Invariant Sections without Cover Texts, or some other
-combination of the three, merge those two alternatives to suit the
-situation.
-
-   If your document contains nontrivial examples of program code, we
-recommend releasing these examples in parallel under your choice of free
-software license, such as the GNU General Public License, to permit
-their use in free software.
 

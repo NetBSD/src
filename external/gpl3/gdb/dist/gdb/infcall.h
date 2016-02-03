@@ -20,6 +20,8 @@
 #ifndef INFCALL_H
 #define INFCALL_H
 
+#include "dummy-frame.h"
+
 struct value;
 struct type;
 
@@ -42,11 +44,19 @@ extern struct value *call_function_by_hand (struct value *function, int nargs,
    register_dummy_frame_dtor with DUMMY_DTOR and DUMMY_DTOR_DATA for the
    created inferior call dummy frame.  */
 
-typedef void (call_function_by_hand_dummy_dtor_ftype) (void *data);
 extern struct value *
   call_function_by_hand_dummy (struct value *function, int nargs,
 			       struct value **args,
-			     call_function_by_hand_dummy_dtor_ftype *dummy_dtor,
+			       dummy_frame_dtor_ftype *dummy_dtor,
 			       void *dummy_dtor_data);
+
+struct dummy_frame_context_saver;
+extern void dummy_frame_context_saver_drop
+  (struct dummy_frame_context_saver *data);
+extern void dummy_frame_context_saver_cleanup (void *data_voidp);
+extern struct regcache *dummy_frame_context_saver_get_regs
+  (struct dummy_frame_context_saver *saver);
+extern struct dummy_frame_context_saver *dummy_frame_context_saver_setup
+  (struct frame_id dummy_id, ptid_t ptid);
 
 #endif

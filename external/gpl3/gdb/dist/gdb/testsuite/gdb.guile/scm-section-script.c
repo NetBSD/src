@@ -19,17 +19,51 @@
 #include "gdb/section-scripts.h"
 
 /* Put the path to the pretty-printer script in .debug_gdb_scripts so
-   gdb will automagically loaded it.  */
+   gdb will automagically loaded it.
+   Normally "MS" would appear here, as in
+   .pushsection ".debug_gdb_scripts", "MS",@progbits,1
+   but we remove it to test files appearing twice in the section.  */
 
 #define DEFINE_GDB_SCRIPT(script_name) \
   asm("\
-.pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n\
+.pushsection \".debug_gdb_scripts\", \"S\",@progbits\n\
 .byte " XSTRING (SECTION_SCRIPT_ID_SCHEME_FILE) "\n\
 .asciz \"" script_name "\"\n\
 .popsection \n\
 ");
 
+#ifndef SCRIPT_FILE
+#error "SCRIPT_FILE not defined"
+#endif
+
+/* Specify it twice to verify the file is only loaded once.  */
 DEFINE_GDB_SCRIPT (SCRIPT_FILE)
+DEFINE_GDB_SCRIPT (SCRIPT_FILE)
+
+/* Inlined scripts are harder to create in the same way as
+   DEFINE_GDB_SCRIPT_FILE.  Keep things simple and just define it here.
+   Normally "MS" would appear here, as in
+   .pushsection ".debug_gdb_scripts", "MS",@progbits,1
+   but we remove it to test scripts appearing twice in the section.  */
+
+#define DEFINE_GDB_SCRIPT_TEXT \
+asm( \
+".pushsection \".debug_gdb_scripts\", \"S\",@progbits\n" \
+".byte " XSTRING (SECTION_SCRIPT_ID_SCHEME_TEXT) "\n" \
+".ascii \"gdb.inlined-script\\n\"\n" \
+".ascii \"(define test-cmd\\n\"\n" \
+".ascii \" (make-command \\\"test-cmd\\\"\\n\"\n" \
+".ascii \"  #:command-class COMMAND_OBSCURE\\n\"\n" \
+".ascii \"  #:invoke (lambda (self arg from-tty)\\n\"\n" \
+".ascii \"    (display (format #f \\\"test-cmd output, arg = ~a\\n\\\" arg)))))\\n\"\n" \
+".ascii \"(register-command! test-cmd)\\n\"\n" \
+".byte 0\n" \
+".popsection\n" \
+);
+
+/* Specify it twice to verify the script is only executed once.  */
+DEFINE_GDB_SCRIPT_TEXT
+DEFINE_GDB_SCRIPT_TEXT
 
 struct ss
 {

@@ -72,6 +72,15 @@ struct psymbol_allocation_list
   int size;
 };
 
+struct other_sections
+{
+  CORE_ADDR addr;
+  char *name;
+
+  /* SECTINDEX must be valid for associated BFD or set to -1.  */
+  int sectindex;
+};
+
 /* Define an array of addresses to accommodate non-contiguous dynamic
    loading of modules.  This is for use when entering commands, so we
    can keep track of the section names until we read the file and can
@@ -85,14 +94,7 @@ struct section_addr_info
      available.  */
   size_t num_sections;
   /* Sections whose names are file format dependent.  */
-  struct other_sections
-  {
-    CORE_ADDR addr;
-    char *name;
-
-    /* SECTINDEX must be valid for associated BFD or set to -1.  */
-    int sectindex;
-  } other[1];
+  struct other_sections other[1];
 };
 
 
@@ -136,6 +138,12 @@ typedef int (expand_symtabs_file_matcher_ftype) (const char *filename,
 
 typedef int (expand_symtabs_symbol_matcher_ftype) (const char *name,
 						   void *data);
+
+/* Callback for quick_symbol_functions->expand_symtabs_matching
+   to be called after a symtab has been expanded.  */
+
+typedef void (expand_symtabs_exp_notify_ftype) \
+  (struct compunit_symtab *symtab, void *data);
 
 /* The "quick" symbol functions exist so that symbol readers can
    avoiding an initial read of all the symbols.  For example, symbol
@@ -232,7 +240,7 @@ struct quick_symbol_functions
   void (*expand_symtabs_with_fullname) (struct objfile *objfile,
 					const char *fullname);
 
-  /* Find global or static symbols in all tables that are in NAMESPACE 
+  /* Find global or static symbols in all tables that are in DOMAIN
      and for which MATCH (symbol name, NAME) == 0, passing each to 
      CALLBACK, reading in partial symbol tables as needed.  Look
      through global symbols if GLOBAL and otherwise static symbols.
@@ -250,7 +258,7 @@ struct quick_symbol_functions
      non-zero to indicate that the scan should be terminated.  */
 
   void (*map_matching_symbols) (struct objfile *,
-				const char *name, domain_enum namespace,
+				const char *name, domain_enum domain,
 				int global,
 				int (*callback) (struct block *,
 						 struct symbol *, void *),
@@ -282,6 +290,7 @@ struct quick_symbol_functions
     (struct objfile *objfile,
      expand_symtabs_file_matcher_ftype *file_matcher,
      expand_symtabs_symbol_matcher_ftype *symbol_matcher,
+     expand_symtabs_exp_notify_ftype *expansion_notify,
      enum search_domain kind,
      void *data);
 
@@ -427,6 +436,10 @@ extern void add_compunit_symtab_to_objfile (struct compunit_symtab *cu);
 
 extern void add_symtab_fns (enum bfd_flavour flavour, const struct sym_fns *);
 
+extern void clear_symtab_users (int add_flags);
+
+extern enum language deduce_language_from_filename (const char *);
+
 /* This enum encodes bit-flags passed as ADD_FLAGS parameter to
    symbol_file_add, etc.  */
 
@@ -446,8 +459,6 @@ enum symfile_add_flags
        symbols are read when the objfile is created.  */
     SYMFILE_NO_READ = 1 << 4
   };
-
-extern void new_symfile_objfile (struct objfile *, int);
 
 extern struct objfile *symbol_file_add (const char *, int,
 					struct section_addr_info *, int);
@@ -502,8 +513,6 @@ extern void set_initial_language (void);
 extern void find_lowest_section (bfd *, asection *, void *);
 
 extern bfd *symfile_bfd_open (const char *);
-
-extern bfd *gdb_bfd_open_maybe_remote (const char *);
 
 extern int get_section_index (struct objfile *, char *);
 
@@ -569,6 +578,7 @@ extern struct cleanup *increment_reading_symtab (void);
 
 void expand_symtabs_matching (expand_symtabs_file_matcher_ftype *,
 			      expand_symtabs_symbol_matcher_ftype *,
+			      expand_symtabs_exp_notify_ftype *,
 			      enum search_domain kind, void *data);
 
 void map_symbol_filenames (symbol_filename_ftype *fun, void *data,

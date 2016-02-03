@@ -494,7 +494,7 @@ v850_elf_perform_relocation (bfd *abfd,
     {
     default:
 #ifdef DEBUG
-      fprintf (stderr, "reloc number %d not recognised\n", r_type);
+      fprintf (stderr, "%B: reloc number %d not recognised\n", abfd, r_type);
 #endif
       return bfd_reloc_notsupported;
 
@@ -895,11 +895,11 @@ static reloc_howto_type v850_elf_howto_table[] =
   /* This reloc does nothing.  */
   HOWTO (R_V850_NONE,			/* Type.  */
 	 0,				/* Rightshift.  */
-	 2,				/* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,				/* Bitsize.  */
+	 3,				/* Size (0 = byte, 1 = short, 2 = long).  */
+	 0,				/* Bitsize.  */
 	 FALSE,				/* PC_relative.  */
 	 0,				/* Bitpos.  */
-	 complain_overflow_bitfield,	/* Complain_on_overflow.  */
+	 complain_overflow_dont,	/* Complain_on_overflow.  */
 	 bfd_elf_generic_reloc,		/* Special_function.  */
 	 "R_V850_NONE",			/* Name.  */
 	 FALSE,				/* Partial_inplace.  */
@@ -1898,7 +1898,7 @@ v850_elf_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_V850_max)
     {
-      _bfd_error_handler (_("%A: invalid V850 reloc number: %d"), abfd, r_type);
+      _bfd_error_handler (_("%B: invalid V850 reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
   cache_ptr->howto = &v850_elf_howto_table[r_type];
@@ -1914,7 +1914,11 @@ v850_elf_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_V850_max);
+  if (r_type >= (unsigned int) R_V850_max)
+    {
+      _bfd_error_handler (_("%B: invalid V850 reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &v850_elf_howto_table[r_type];
 }
 
@@ -2143,7 +2147,7 @@ v850_elf_final_link_relocate (reloc_howto_type *howto,
 
     default:
 #ifdef DEBUG
-      fprintf (stderr, "reloc number %d not recognised\n", r_type);
+      fprintf (stderr, "%B: reloc number %d not recognised\n", input_bfd, r_type);
 #endif
       return bfd_reloc_notsupported;
     }
@@ -2340,6 +2344,327 @@ v850_elf_gc_mark_hook (asection *sec,
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
 }
 
+static void
+v850_set_note (bfd * abfd, asection * s, enum v850_notes note, unsigned int val)
+{
+  bfd_byte * data = s->contents + ((note - 1) * SIZEOF_V850_NOTE);
+
+  bfd_put_32 (abfd, 4, data + 0);
+  bfd_put_32 (abfd, 4, data + 4);
+  bfd_put_32 (abfd, note, data + 8);
+  memcpy (data + 12, V850_NOTE_NAME, 4);
+  bfd_put_32 (abfd, val, data + 16);
+}
+
+/* Create the note section if not already present.  This is done early so
+   that the linker maps the sections to the right place in the output.  */
+
+static asection *
+v850_elf_make_note_section (bfd * abfd)
+{  
+  asection *s;
+  bfd_byte *data;
+  flagword flags;
+  enum v850_notes id;
+
+  /* Make the note section.  */
+  flags = SEC_READONLY | SEC_HAS_CONTENTS | SEC_IN_MEMORY | SEC_MERGE;
+
+  s = bfd_make_section_anyway_with_flags (abfd, V850_NOTE_SECNAME, flags);
+  if (s == NULL)
+    return NULL;
+
+  if (!bfd_set_section_alignment (abfd, s, 2))
+    return NULL;
+
+  /* Allocate space for all known notes.  */
+  if (!bfd_set_section_size (abfd, s, NUM_V850_NOTES * SIZEOF_V850_NOTE))
+    return NULL;
+
+  data = bfd_zalloc (abfd, NUM_V850_NOTES * SIZEOF_V850_NOTE);
+  if (data == NULL)
+    return NULL;
+
+  s->contents = data;
+
+  /* Provide default (= uninitilaised) values for all of the notes.  */
+  for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
+    v850_set_note (abfd, s, id,  0);
+
+  return s;
+}
+
+/* Create the note section if not already present.  This is done early so
+   that the linker maps the sections to the right place in the output.  */
+
+bfd_boolean
+v850_elf_create_sections (struct bfd_link_info * info)
+{
+  bfd * ibfd;
+
+  /* If we already have a note section, do not make another.  */
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
+    if (bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME) != NULL)
+      return TRUE;
+
+  return v850_elf_make_note_section (info->input_bfds) != NULL;
+}
+
+bfd_boolean
+v850_elf_set_note (bfd * abfd, enum v850_notes note, unsigned int val)
+{
+  asection * notes = bfd_get_section_by_name (abfd, V850_NOTE_SECNAME);
+
+  if (val > 2)
+    /* At the moment, no known note has a value over 2.  */
+    return FALSE;
+
+  if (notes == NULL)
+    notes = v850_elf_make_note_section (abfd);
+  if (notes == NULL)
+    return FALSE;
+
+  v850_set_note (abfd, notes, note, val);
+  return TRUE;
+}
+
+/* Copy backend specific data from one object module to another.  */
+
+static bfd_boolean
+v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
+{
+  asection * onotes;
+  asection * inotes;
+
+  /* If the output bfd does not have a note section, then
+     skip the merge.  The normal input to output section
+     copying will take care of everythng for us.  */
+  if ((onotes = bfd_get_section_by_name (obfd, V850_NOTE_SECNAME)) == NULL)
+    return TRUE;
+
+  if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) != NULL)
+    {
+      bfd_byte * icont;
+      bfd_byte * ocont;
+
+      BFD_ASSERT (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes));
+
+      if ((icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (ibfd, inotes, & icont));
+
+      if ((ocont = elf_section_data (onotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (obfd, onotes, & ocont));
+
+      /* Copy/overwrite notes from the input to the output.  */
+      memcpy (ocont, icont, bfd_section_size (obfd, onotes));
+    }
+
+  return TRUE;
+}
+#define bfd_elf32_bfd_copy_private_bfd_data	v850_elf_copy_private_bfd_data
+
+static bfd_boolean 
+v850_elf_merge_notes (bfd * ibfd, bfd *obfd)
+{
+  asection * onotes;
+  asection * inotes;
+  bfd_boolean result = TRUE;
+
+  /* If the output bfd does not have a note section, then
+     skip the merge.  The normal input to output section
+     copying will take care of everythng for us.  */
+  if ((onotes = bfd_get_section_by_name (obfd, V850_NOTE_SECNAME)) == NULL)
+    return TRUE;
+
+  if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) != NULL)
+    {
+      enum v850_notes id;
+      bfd_byte * icont;
+      bfd_byte * ocont;
+
+      BFD_ASSERT (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes));
+
+      if ((icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (ibfd, inotes, & icont));
+
+      if ((ocont = elf_section_data (onotes)->this_hdr.contents) == NULL)
+	BFD_ASSERT (bfd_malloc_and_get_section (obfd, onotes, & ocont));
+
+      for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
+	{
+	  unsigned int ival;
+	  unsigned int oval;
+	  bfd_byte * idata = icont + ((id - 1) * SIZEOF_V850_NOTE) + 16;
+	  bfd_byte * odata = ocont + ((id - 1) * SIZEOF_V850_NOTE) + 16;
+
+	  ival = bfd_get_32 (ibfd, idata);
+	  oval = bfd_get_32 (obfd, odata);
+
+	  if (ival == 0 || ival == oval)
+	    continue;
+	  
+	  if (oval == 0)
+	    {
+	      bfd_put_32 (obfd, ival, odata);
+	      v850_set_note (obfd, onotes, id, ival);
+	      continue;
+	    }
+
+	  /* We have a mismatch.  The ABI defines how to handle
+	     this siutation on a per note type basis.  */
+	  switch (id)
+	    {
+	    case V850_NOTE_ALIGNMENT:
+	      if (oval == EF_RH850_DATA_ALIGN4)
+		{
+		  _bfd_error_handler
+		    (_("error: %B needs 8-byte aligment but %B is set for 4-byte alignment"),
+				      ibfd, obfd);
+		  result = FALSE;
+		}
+	      else
+		/* ibfd uses 4-byte alignment, obfd uses 8-byte alignment.
+		   Leave the obfd alignment as it is.  */
+		BFD_ASSERT (oval == EF_RH850_DATA_ALIGN8);
+
+	      break;
+
+	    case V850_NOTE_DATA_SIZE:
+	      if (oval == EF_RH850_DOUBLE32)
+		{
+		  _bfd_error_handler (_("error: %B uses 64-bit doubles but %B uses 32-bit doubles"),
+				      ibfd, obfd);
+		  result = FALSE;
+		}
+	      else
+		/* ibfd uses 32-bit doubles, obfd uses 64-bit doubles.
+		   This is acceptable.  Honest, that is what the ABI says.  */
+		BFD_ASSERT (oval == EF_RH850_DOUBLE64);
+	      break;
+
+	    case V850_NOTE_FPU_INFO:
+	      if (oval == EF_RH850_FPU20)
+		{
+		  _bfd_error_handler (_("error: %B uses FPU-3.0 but %B only supports FPU-2.0"),
+				     ibfd, obfd);
+		  result = FALSE;
+		}
+	      else
+		/* ibfd uses FPU-2.0, obfd uses FPU-3.0.  Leave obfd as it is.  */
+		BFD_ASSERT (oval == EF_RH850_FPU30);
+
+	      break;
+
+	    default:
+	      /* None of the other conflicts matter.
+		 Stick with the current output values.  */
+	      break;
+	    }
+	}
+
+      /* FIXME:  We should also check for conflicts between the notes
+	 and the EF flags in the ELF header.  */
+    }
+
+  return result;
+}
+
+static void
+print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
+{
+  unsigned int value = bfd_get_32 (abfd, data + ((id - 1) * SIZEOF_V850_NOTE) + 16);
+
+  switch (id)
+    {
+    case V850_NOTE_ALIGNMENT:
+      fprintf (file, _(" alignment of 8-byte entities: "));
+      switch (value)
+	{
+	case EF_RH850_DATA_ALIGN4: fprintf (file, _("4-byte")); break;
+	case EF_RH850_DATA_ALIGN8: fprintf (file, _("8-byte")); break;
+	case 0:  fprintf (file, _("not set")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+	
+    case V850_NOTE_DATA_SIZE:
+      fprintf (file, _(" size of doubles: "));
+      switch (value)
+	{
+	case EF_RH850_DOUBLE32: fprintf (file, _("4-bytes")); break;
+	case EF_RH850_DOUBLE64: fprintf (file, _("8-bytes")); break;
+	case 0:  fprintf (file, _("not set")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+	
+    case V850_NOTE_FPU_INFO:
+      fprintf (file, _(" FPU support required: "));
+      switch (value)
+	{
+	case EF_RH850_FPU20: fprintf (file, _("FPU-2.0")); break;
+	case EF_RH850_FPU30: fprintf (file, _("FPU-3.0")); break;
+	case 0:  fprintf (file, _("none")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+	
+    case V850_NOTE_SIMD_INFO:
+      fprintf (file, _("SIMD use: "));
+      switch (value)
+	{
+	case EF_RH850_SIMD: fprintf (file, _("yes")); break;
+	case 0:  fprintf (file, _("no")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+	
+    case V850_NOTE_CACHE_INFO:
+      fprintf (file, _("CACHE use: "));
+      switch (value)
+	{
+	case EF_RH850_CACHE: fprintf (file, _("yes")); break;
+	case 0:  fprintf (file, _("no")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+	
+    case V850_NOTE_MMU_INFO:
+      fprintf (file, _("MMU use: "));
+      switch (value)
+	{
+	case EF_RH850_MMU: fprintf (file, _("yes")); break;
+	case 0:  fprintf (file, _("no")); break;
+	default: fprintf (file, _("unknown: %x"), value); break;
+	}
+      fputc ('\n', file);
+      break;
+	
+    default:
+      BFD_ASSERT (0);
+    }
+}
+
+static void
+v850_elf_print_notes (bfd * abfd, FILE * file)
+{
+  asection * notes = bfd_get_section_by_name (abfd, V850_NOTE_SECNAME);
+  enum v850_notes id;
+
+  if (notes == NULL || notes->contents == NULL)
+    return;
+
+  BFD_ASSERT (bfd_section_size (abfd, notes) == NUM_V850_NOTES * SIZEOF_V850_NOTE);
+
+  for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
+    print_v850_note (abfd, file, notes->contents, id);
+}
+
 /* Set the right machine number and architecture.  */
 
 static bfd_boolean
@@ -2435,10 +2760,13 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   flagword out_flags;
   flagword in_flags;
+  bfd_boolean result = TRUE;
 
   if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
+
+  result &= v850_elf_merge_notes (ibfd, obfd);
 
   in_flags = elf_elfheader (ibfd)->e_flags;
   out_flags = elf_elfheader (obfd)->e_flags;
@@ -2459,14 +2787,14 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 
       if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
 	  && bfd_get_arch_info (obfd)->the_default)
-	return bfd_set_arch_mach (obfd, bfd_get_arch (ibfd), bfd_get_mach (ibfd));
+	result &= bfd_set_arch_mach (obfd, bfd_get_arch (ibfd), bfd_get_mach (ibfd));
 
-      return TRUE;
+      return result;
     }
 
   /* Check flag compatibility.  */
   if (in_flags == out_flags)
-    return TRUE;
+    return result;
 
   if (bfd_get_arch (obfd) == bfd_arch_v850_rh850)
     {
@@ -2477,14 +2805,7 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	  elf_elfheader (obfd)->e_flags |= EF_V800_850E3;
 	}
 
-      if ((in_flags & EF_RH850_DATA_ALIGN8) != (out_flags & EF_RH850_DATA_ALIGN8))
-	{
-	  _bfd_error_handler (_("%B: Alignment mismatch with previous modules"),
-			      ibfd);
-	  elf_elfheader (obfd)->e_flags |= EF_RH850_DATA_ALIGN8;
-	}
-
-      return TRUE;
+      return result;
     }
 
   if ((in_flags & EF_V850_ARCH) != (out_flags & EF_V850_ARCH)
@@ -2495,14 +2816,14 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
          which we set to v850e.  */
       if (   (in_flags  & EF_V850_ARCH) == E_V850E1_ARCH
           && (out_flags & EF_V850_ARCH) == E_V850E_ARCH)
-        return TRUE;
+        return result;
 
       if (   (in_flags  & EF_V850_ARCH) == E_V850_ARCH
 	  && (out_flags & EF_V850_ARCH) == E_V850E_ARCH)
 	{
 	  elf_elfheader (obfd)->e_flags =
 	    ((out_flags & ~ EF_V850_ARCH) | E_V850E_ARCH);
-	  return TRUE;
+	  return result;
 	}
 
       if ((   (in_flags & EF_V850_ARCH) == E_V850_ARCH
@@ -2511,7 +2832,7 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	{
 	  elf_elfheader (obfd)->e_flags =
 	    ((out_flags & ~ EF_V850_ARCH) | E_V850E2_ARCH);
-	  return TRUE;
+	  return result;
 	}
 
       if ((   (in_flags & EF_V850_ARCH) == E_V850_ARCH
@@ -2521,7 +2842,7 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	{
 	  elf_elfheader (obfd)->e_flags =
 	    ((out_flags & ~ EF_V850_ARCH) | E_V850E2V3_ARCH);
-	  return TRUE;
+	  return result;
 	}
 
       if ((   (in_flags & EF_V850_ARCH) == E_V850_ARCH
@@ -2532,14 +2853,14 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	{
 	  elf_elfheader (obfd)->e_flags =
 	    ((out_flags & ~ EF_V850_ARCH) | E_V850E3V5_ARCH);
-	  return TRUE;
+	  return result;
 	}
 
       _bfd_error_handler (_("%B: Architecture mismatch with previous modules"),
 			  ibfd);
     }
 
-  return TRUE;
+  return result;
 }
 
 /* Display the flags field.  */
@@ -2564,9 +2885,6 @@ v850_elf_print_private_bfd_data (bfd *abfd, void * ptr)
 	fprintf (file, _("v850 E3 architecture"));
       else
 	fprintf (file, _("v850 architecture"));
-
-      if (elf_elfheader (abfd)->e_flags & EF_RH850_DATA_ALIGN8)
-	fprintf (file, _(", 8-byte data alignment"));
     }
   else
     {
@@ -2583,6 +2901,8 @@ v850_elf_print_private_bfd_data (bfd *abfd, void * ptr)
     }
 
   fputc ('\n', file);
+
+  v850_elf_print_notes (abfd, file);
 
   return TRUE;
 }
@@ -2856,6 +3176,12 @@ v850_elf_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
     hdr->sh_type = SHT_V850_TCOMMON;
   else if (strcmp (name, ".zcommon") == 0)
     hdr->sh_type = SHT_V850_ZCOMMON;
+  /* Tweak the section type of .note.renesas.  */
+  else if (strcmp (name, V850_NOTE_SECNAME) == 0)
+    {
+      hdr->sh_type = SHT_RENESAS_INFO;
+      hdr->sh_entsize = SIZEOF_V850_NOTE;
+    }
 
   return TRUE;
 }
@@ -3797,8 +4123,8 @@ static const struct bfd_elf_special_section v850_elf_special_sections[] =
 #define elf_backend_gc_mark_hook                v850_elf_gc_mark_hook
 #define elf_backend_special_sections		v850_elf_special_sections
 
-#define elf_backend_can_gc_sections 1
-#define elf_backend_rela_normal 1
+#define elf_backend_can_gc_sections 		1
+#define elf_backend_rela_normal			1
 
 #define bfd_elf32_bfd_is_local_label_name	v850_elf_is_local_label_name
 #define bfd_elf32_bfd_is_target_special_symbol	v850_elf_is_target_special_symbol
@@ -3907,7 +4233,6 @@ v800_elf_info_to_howto (bfd *               abfd,
   cache_ptr->howto = v800_elf_howto_table + r_type;
 }
 
-
 #undef  TARGET_LITTLE_SYM
 #define TARGET_LITTLE_SYM			v800_elf32_vec
 #undef  TARGET_LITTLE_NAME

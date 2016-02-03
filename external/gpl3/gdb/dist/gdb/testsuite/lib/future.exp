@@ -104,6 +104,17 @@ proc gdb_find_objcopy {} {
     return $objcopy
 }
 
+# find target objdump
+proc gdb_find_objdump {} {
+    global OBJDUMP_FOR_TARGET
+    if [info exists OBJDUMP_FOR_TARGET] {
+	set objdump $OBJDUMP_FOR_TARGET
+    } else {
+	set objdump [transform objdump]
+    }
+    return $objdump
+}
+
 proc gdb_find_readelf {} {
     global READELF_FOR_TARGET
     if [info exists READELF_FOR_TARGET] {
