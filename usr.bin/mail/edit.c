@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.27 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.28 2016/02/03 05:18:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.27 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.28 2016/02/03 05:18:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ edit1(int *msgvec, int editortype)
 	 * Deal with each message to be edited . . .
 	 */
 	msgCount = get_msgCount();
-	for (i = 0; msgvec[i] && i < msgCount; i++) {
+	for (i = 0; i < msgCount && msgvec[i]; i++) {
 		sigset_t oset;
 		struct sigaction osa;
 
