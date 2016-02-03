@@ -22,6 +22,10 @@
 /* Define to 1 if you have the <alloca.h> header file. */
 /* #undef HAVE_ALLOCA_H */
 
+/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
+   don't. */
+#define HAVE_DECL_ASPRINTF 1
+
 /* Define to 1 if you have the declaration of `basename', and to 0 if you
    don't. */
 #define HAVE_DECL_BASENAME 0
@@ -76,6 +80,10 @@
 /* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
    */
 #define HAVE_DECL_STRSTR 1
+
+/* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
+   don't. */
+#define HAVE_DECL_VASPRINTF 1
 
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
@@ -267,14 +275,14 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
+/* Define to 1 if you have the <wctype.h> header file. */
+#define HAVE_WCTYPE_H 1
+
 /* Define if <sys/procfs.h> has win32_pstatus_t. */
 /* #undef HAVE_WIN32_PSTATUS_T */
 
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
-
-/* Define to 1 if you have the <zlib.h> header file. */
-#define HAVE_ZLIB_H 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
