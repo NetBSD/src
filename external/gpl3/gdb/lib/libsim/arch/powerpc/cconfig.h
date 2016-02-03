@@ -141,9 +141,6 @@
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
 
-/* Define to 1 if you have the <zlib.h> header file. */
-#define HAVE_ZLIB_H 1
-
 /* Define to 1 if you have the `__setfpucw' function. */
 /* #undef HAVE___SETFPUCW */
 
@@ -173,7 +170,7 @@
 #define PACKAGE_VERSION ""
 
 /* Additional package description */
-#define PKGVERSION "(GDB) "
+#define PKGVERSION "(SIM) "
 
 /* Bug reporting address */
 #define REPORT_BUGS_TO "<http://www.gnu.org/software/gdb/bugs/>"
@@ -215,3 +212,5 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
+
+#include "tconfig.h"
