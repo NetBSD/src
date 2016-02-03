@@ -88,9 +88,8 @@ static const char *crname[] = {
 static const unsigned isiz[] = { 2, 0, 1, 0 };
 
 int
-print_insn_mcore (memaddr, info)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
+print_insn_mcore (bfd_vma memaddr,
+		  struct disassemble_info *info)
 {
   unsigned char ibytes[4];
   fprintf_ftype print_func = info->fprintf_func;
@@ -233,6 +232,9 @@ print_insn_mcore (memaddr, info)
 
 	    val = (memaddr + 2 + ((inst & 0xFF) << 2)) & 0xFFFFFFFC;
 
+	    /* We are not reading an instruction, so allow
+	       reads to extend beyond the next symbol.  */
+	    info->stop_vma = 0;
 	    status = info->read_memory_func (val, ibytes, 4, info);
 	    if (status != 0)
 	      {
@@ -263,6 +265,9 @@ print_insn_mcore (memaddr, info)
 
 	    val = (memaddr + 2 + ((inst & 0xFF) << 2)) & 0xFFFFFFFC;
 
+	    /* We are not reading an instruction, so allow
+	       reads to extend beyond the next symbol.  */
+	    info->stop_vma = 0;
 	    status = info->read_memory_func (val, ibytes, 4, info);
 	    if (status != 0)
 	      {

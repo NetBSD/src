@@ -874,14 +874,18 @@ solib_svr4_r_map (struct svr4_info *info)
   struct link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
   struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
   CORE_ADDR addr = 0;
-  volatile struct gdb_exception ex;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       addr = read_memory_typed_address (info->debug_base + lmo->r_map_offset,
                                         ptr_type);
     }
-  exception_print (gdb_stderr, ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      exception_print (gdb_stderr, ex);
+    }
+  END_CATCH
+
   return addr;
 }
 
@@ -906,13 +910,22 @@ solib_svr4_r_ldsomap (struct svr4_info *info)
   struct link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
   struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  ULONGEST version;
+  ULONGEST version = 0;
 
-  /* Check version, and return zero if `struct r_debug' doesn't have
-     the r_ldsomap member.  */
-  version
-    = read_memory_unsigned_integer (info->debug_base + lmo->r_version_offset,
-				    lmo->r_version_size, byte_order);
+  TRY
+    {
+      /* Check version, and return zero if `struct r_debug' doesn't have
+	 the r_ldsomap member.  */
+      version
+	= read_memory_unsigned_integer (info->debug_base + lmo->r_version_offset,
+					lmo->r_version_size, byte_order);
+    }
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      exception_print (gdb_stderr, ex);
+    }
+  END_CATCH
+
   if (version < 2 || lmo->r_ldsomap_offset == -1)
     return 0;
 
@@ -932,7 +945,7 @@ svr4_keep_data_in_core (CORE_ADDR vaddr, unsigned long size)
 {
   struct svr4_info *info;
   CORE_ADDR ldsomap;
-  struct so_list *new;
+  struct so_list *newobj;
   struct cleanup *old_chain;
   CORE_ADDR name_lm;
 
@@ -947,11 +960,11 @@ svr4_keep_data_in_core (CORE_ADDR vaddr, unsigned long size)
   if (!ldsomap)
     return 0;
 
-  new = XCNEW (struct so_list);
-  old_chain = make_cleanup (xfree, new);
-  new->lm_info = lm_info_read (ldsomap);
-  make_cleanup (xfree, new->lm_info);
-  name_lm = new->lm_info ? new->lm_info->l_name : 0;
+  newobj = XCNEW (struct so_list);
+  old_chain = make_cleanup (xfree, newobj);
+  newobj->lm_info = lm_info_read (ldsomap);
+  make_cleanup (xfree, newobj->lm_info);
+  name_lm = newobj->lm_info ? newobj->lm_info->l_name : 0;
   do_cleanups (old_chain);
 
   return (name_lm >= vaddr && name_lm < vaddr + size);
@@ -1087,17 +1100,17 @@ svr4_copy_library_list (struct so_list *src)
 
   while (src != NULL)
     {
-      struct so_list *new;
+      struct so_list *newobj;
 
-      new = xmalloc (sizeof (struct so_list));
-      memcpy (new, src, sizeof (struct so_list));
+      newobj = xmalloc (sizeof (struct so_list));
+      memcpy (newobj, src, sizeof (struct so_list));
 
-      new->lm_info = xmalloc (sizeof (struct lm_info));
-      memcpy (new->lm_info, src->lm_info, sizeof (struct lm_info));
+      newobj->lm_info = xmalloc (sizeof (struct lm_info));
+      memcpy (newobj->lm_info, src->lm_info, sizeof (struct lm_info));
 
-      new->next = NULL;
-      *link = new;
-      link = &new->next;
+      newobj->next = NULL;
+      *link = newobj;
+      link = &newobj->next;
 
       src = src->next;
     }
@@ -1272,24 +1285,24 @@ static struct so_list *
 svr4_default_sos (void)
 {
   struct svr4_info *info = get_svr4_info ();
-  struct so_list *new;
+  struct so_list *newobj;
 
   if (!info->debug_loader_offset_p)
     return NULL;
 
-  new = XCNEW (struct so_list);
+  newobj = XCNEW (struct so_list);
 
-  new->lm_info = xzalloc (sizeof (struct lm_info));
+  newobj->lm_info = xzalloc (sizeof (struct lm_info));
 
   /* Nothing will ever check the other fields if we set l_addr_p.  */
-  new->lm_info->l_addr = info->debug_loader_offset;
-  new->lm_info->l_addr_p = 1;
+  newobj->lm_info->l_addr = info->debug_loader_offset;
+  newobj->lm_info->l_addr_p = 1;
 
-  strncpy (new->so_name, info->debug_loader_name, SO_NAME_MAX_PATH_SIZE - 1);
-  new->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-  strcpy (new->so_original_name, new->so_name);
+  strncpy (newobj->so_name, info->debug_loader_name, SO_NAME_MAX_PATH_SIZE - 1);
+  newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
+  strcpy (newobj->so_original_name, newobj->so_name);
 
-  return new;
+  return newobj;
 }
 
 /* Read the whole inferior libraries chain starting at address LM.
@@ -1309,28 +1322,28 @@ svr4_read_so_list (CORE_ADDR lm, CORE_ADDR prev_lm,
 
   for (; lm != 0; prev_lm = lm, lm = next_lm)
     {
-      struct so_list *new;
+      struct so_list *newobj;
       struct cleanup *old_chain;
       int errcode;
       char *buffer;
 
-      new = XCNEW (struct so_list);
-      old_chain = make_cleanup_free_so (new);
+      newobj = XCNEW (struct so_list);
+      old_chain = make_cleanup_free_so (newobj);
 
-      new->lm_info = lm_info_read (lm);
-      if (new->lm_info == NULL)
+      newobj->lm_info = lm_info_read (lm);
+      if (newobj->lm_info == NULL)
 	{
 	  do_cleanups (old_chain);
 	  return 0;
 	}
 
-      next_lm = new->lm_info->l_next;
+      next_lm = newobj->lm_info->l_next;
 
-      if (new->lm_info->l_prev != prev_lm)
+      if (newobj->lm_info->l_prev != prev_lm)
 	{
 	  warning (_("Corrupted shared library list: %s != %s"),
 		   paddress (target_gdbarch (), prev_lm),
-		   paddress (target_gdbarch (), new->lm_info->l_prev));
+		   paddress (target_gdbarch (), newobj->lm_info->l_prev));
 	  do_cleanups (old_chain);
 	  return 0;
 	}
@@ -1340,18 +1353,18 @@ svr4_read_so_list (CORE_ADDR lm, CORE_ADDR prev_lm,
          SVR4, it has no name.  For others (Solaris 2.3 for example), it
          does have a name, so we can no longer use a missing name to
          decide when to ignore it.  */
-      if (ignore_first && new->lm_info->l_prev == 0)
+      if (ignore_first && newobj->lm_info->l_prev == 0)
 	{
 	  struct svr4_info *info = get_svr4_info ();
 
-	  first_l_name = new->lm_info->l_name;
-	  info->main_lm_addr = new->lm_info->lm_addr;
+	  first_l_name = newobj->lm_info->l_name;
+	  info->main_lm_addr = newobj->lm_info->lm_addr;
 	  do_cleanups (old_chain);
 	  continue;
 	}
 
       /* Extract this shared object's name.  */
-      target_read_string (new->lm_info->l_name, &buffer,
+      target_read_string (newobj->lm_info->l_name, &buffer,
 			  SO_NAME_MAX_PATH_SIZE - 1, &errcode);
       if (errcode != 0)
 	{
@@ -1359,30 +1372,30 @@ svr4_read_so_list (CORE_ADDR lm, CORE_ADDR prev_lm,
 	     inferior executable, then this is not a normal shared
 	     object, but (most likely) a vDSO.  In this case, silently
 	     skip it; otherwise emit a warning. */
-	  if (first_l_name == 0 || new->lm_info->l_name != first_l_name)
+	  if (first_l_name == 0 || newobj->lm_info->l_name != first_l_name)
 	    warning (_("Can't read pathname for load map: %s."),
 		     safe_strerror (errcode));
 	  do_cleanups (old_chain);
 	  continue;
 	}
 
-      strncpy (new->so_name, buffer, SO_NAME_MAX_PATH_SIZE - 1);
-      new->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      strcpy (new->so_original_name, new->so_name);
+      strncpy (newobj->so_name, buffer, SO_NAME_MAX_PATH_SIZE - 1);
+      newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
+      strcpy (newobj->so_original_name, newobj->so_name);
       xfree (buffer);
 
       /* If this entry has no name, or its name matches the name
 	 for the main executable, don't include it in the list.  */
-      if (! new->so_name[0] || match_main (new->so_name))
+      if (! newobj->so_name[0] || match_main (newobj->so_name))
 	{
 	  do_cleanups (old_chain);
 	  continue;
 	}
 
       discard_cleanups (old_chain);
-      new->next = 0;
-      **link_ptr_ptr = new;
-      *link_ptr_ptr = &new->next;
+      newobj->next = 0;
+      **link_ptr_ptr = newobj;
+      *link_ptr_ptr = &newobj->next;
     }
 
   return 1;
@@ -2266,7 +2279,6 @@ enable_break (struct svr4_info *info, int from_tty)
       struct so_list *so;
       bfd *tmp_bfd = NULL;
       struct target_ops *tmp_bfd_target;
-      volatile struct gdb_exception ex;
 
       sym_addr = 0;
 
@@ -2279,10 +2291,15 @@ enable_break (struct svr4_info *info, int from_tty)
          be trivial on GNU/Linux).  Therefore, we have to try an alternate
          mechanism to find the dynamic linker's base address.  */
 
-      TRY_CATCH (ex, RETURN_MASK_ALL)
+      TRY
         {
 	  tmp_bfd = solib_bfd_open (interp_name);
 	}
+      CATCH (ex, RETURN_MASK_ALL)
+	{
+	}
+      END_CATCH
+
       if (tmp_bfd == NULL)
 	goto bkpt_at_symbol;
 
@@ -2543,7 +2560,7 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
 {
   /* ENTRY_POINT is a possible function descriptor - before
      a call to gdbarch_convert_from_func_ptr_addr.  */
-  CORE_ADDR entry_point, displacement;
+  CORE_ADDR entry_point, exec_displacement;
 
   if (exec_bfd == NULL)
     return 0;
@@ -2558,9 +2575,9 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
   if (target_auxv_search (&current_target, AT_ENTRY, &entry_point) <= 0)
     return 0;
 
-  displacement = entry_point - bfd_get_start_address (exec_bfd);
+  exec_displacement = entry_point - bfd_get_start_address (exec_bfd);
 
-  /* Verify the DISPLACEMENT candidate complies with the required page
+  /* Verify the EXEC_DISPLACEMENT candidate complies with the required page
      alignment.  It is cheaper than the program headers comparison below.  */
 
   if (bfd_get_flavour (exec_bfd) == bfd_target_elf_flavour)
@@ -2572,7 +2589,7 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
 	   p_offset % p_align == p_vaddr % p_align
 	 Kernel is free to load the executable with lower alignment.  */
 
-      if ((displacement & (elf->minpagesize - 1)) != 0)
+      if ((exec_displacement & (elf->minpagesize - 1)) != 0)
 	return 0;
     }
 
@@ -2893,11 +2910,11 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
 
       printf_unfiltered (_("Using PIE (Position Independent Executable) "
 			   "displacement %s for \"%s\".\n"),
-			 paddress (target_gdbarch (), displacement),
+			 paddress (target_gdbarch (), exec_displacement),
 			 bfd_get_filename (exec_bfd));
     }
 
-  *displacementp = displacement;
+  *displacementp = exec_displacement;
   return 1;
 }
 

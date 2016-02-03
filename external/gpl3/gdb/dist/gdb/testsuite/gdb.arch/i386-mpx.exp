@@ -22,10 +22,15 @@ if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
 
 standard_testfile
 
-set comp_flags "-fmpx -I${srcdir}/../common"
+if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
+    verbose "Skipping x86 MPX tests."
+    return
+}
+
+set comp_flags "-fmpx -I${srcdir}/../nat/"
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
- [list debug nowarnings additional_flags=${comp_flags}]] } {
+     [list debug nowarnings additional_flags=${comp_flags}]] } {
     return -1
 }
 
@@ -34,21 +39,21 @@ if ![runto_main] {
     return -1
 }
 
-send_gdb "print have_mpx ()\r"
-gdb_expect {
-    -re ".. = 1\r\n$gdb_prompt " {
-        pass "check whether processor supports MPX"
+set supports_mpx 0
+set test "probe MPX support"
+gdb_test_multiple "print have_mpx()" $test {
+    -re ".. = 1\r\n$gdb_prompt $" {
+        pass $test
+        set supports_mpx 1
     }
-    -re ".. = 0\r\n$gdb_prompt " {
-        verbose "processor does not support MPX; skipping MPX tests"
-        return
+    -re ".. = 0\r\n$gdb_prompt $" {
+        pass $test
     }
-    -re ".*$gdb_prompt $" {
-        fail "check whether processor supports MPX"
-    }
-    timeout {
-        fail "check whether processor supports MPX (timeout)"
-    }
+}
+
+if { !$supports_mpx } {
+    unsupported "processor does not support MPX"
+    return
 }
 
 # Test bndcfg register and bndstatus at startup

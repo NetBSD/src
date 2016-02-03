@@ -303,7 +303,9 @@
 /* ??? Temporary, pending decision to always use extern inline and do a vast
    cleanup of inline support.  */
 #ifndef INLINE2
-#if defined (__GNUC__)
+#if defined (__GNUC_GNU_INLINE__) || defined (__GNUC_STDC_INLINE__)
+#define INLINE2 __inline__ __attribute__ ((__gnu_inline__))
+#elif defined (__GNUC__)
 #define INLINE2 __inline__
 #else
 #define INLINE2 /*inline*/

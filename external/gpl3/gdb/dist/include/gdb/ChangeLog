@@ -1,3 +1,24 @@
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.h (CB_TARGET_DEFS_MAP): Add name member.
+	(cb_host_str_syscall, cb_host_str_errno, cb_host_str_signal,
+	cb_target_str_syscall, cb_target_str_errno, cb_target_str_signal):
+	Declare.
+
+2015-03-28  James Bowman  <james.bowman@ftdichip.com>
+
+	* sim-ft32.h: New file.
+
+2015-05-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (struct host_callback_struct): Define.
+
+2015-01-31  Doug Evans  <xdje42@gmail.com>
+
+	* section-scripts.h: Remove "future extension" comment.
+	(SECTION_SCRIPT_ID_PYTHON_TEXT): New macro.
+	(SECTION_SCRIPT_ID_SCHEME_TEXT): New macro.
+
 2014-12-03  Joel Brobecker  <brobecker@adacore.com>
 
 	* callback.h (struct host_callback_struct) <to_stat>: Renamed

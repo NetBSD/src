@@ -173,7 +173,7 @@ int main(void)
 
   for (int i = 0; i < 10; i++)
     {
-      a1.array[i] = a2.array[i] = i;
+      a1.array[i] = a2.array[i] = b1.array[i] = i;
     }
 
   return 0; /* Break here.  */

@@ -20,7 +20,7 @@
 #include "defs.h"
 #include "py-stopevent.h"
 
-static PyTypeObject breakpoint_event_object_type
+extern PyTypeObject breakpoint_event_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
 
 /* Create and initialize a BreakpointEvent object.  This acquires new
@@ -55,5 +55,4 @@ GDBPY_NEW_EVENT_TYPE (breakpoint,
                       "gdb.BreakpointEvent",
                       "BreakpointEvent",
                       "GDB breakpoint stop event object",
-                      stop_event_object_type,
-                      static);
+                      stop_event_object_type);

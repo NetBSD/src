@@ -1,3 +1,155 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (cr16_pc_get, cr16_pc_set): New functions.
+	(sim_open): Call CPU_PC_FETCH & CPU_PC_STORE for all cpus.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o.
+
+2015-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_set_profile, sim_set_profile_size): Delete.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (simops.o): New rule.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* cr16_sim.h (text, text_start, text_end, prog_bfd): Delete.
+	(SEXT8, SEXT16, SEXT32): Undefine.
+	* interp.c: Delete run-sim.h and cr16_sim.h includes.  Include
+	sim-main.h and sim-options.h.
+	(myname, sim_kind, init_text_p, prog_bfd_was_opened_p, prog_bfd,
+	text, text_start, text_end, decode_pc, sim_set_profile,
+	sim_set_profile_size, sim_set_trace, sim_info, sim_set_callbacks,
+	sim_trace, sim_complete_command, sim_do_command, sim_load): Delete.
+	(do_run): Delete prototype.
+	(INLINE): Delete define.
+	(do_run, xfer_mem): Pass in SIM_DESC.  Set cr16_callback locally from
+	it.
+	(sim_size): Mark static.
+	(sim_write, sim_read): Pass sd to xfer_mem.
+	(free_state): New function.
+	(trace_sd): Declare global variable.
+	(sim_open): Rewrite to use new common logic.
+	(sim_close): Delete body.
+	(sim_resume): Pass sd to do_run.
+	* Makefile.in (SIM_RUN_OBJS, SIM_EXTRA_CFLAGS): Delete.
+	(SIM_OBJS): Change to $(SIM_NEW_COMMON_OBJS).
+	* sim-main.h: New file.
+	* simops.c: Change cr16_sim.h include to sim-main.h.
+	(trace_input_func): Rewrite pc checks to use trace_sd.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Delete -DNEED_UI_LOOP_HOOK.
+	* interp.c [NEED_UI_LOOP_HOOK] (UI_LOOP_POLL_INTERVAL,
+	ui_loop_hook_counter, deprecated_ui_loop_hook): Delete.
+	(sim_resume) [NEED_UI_LOOP_HOOK]: Delete ui code.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (old_segment_mapping, ins_type_counters, add_commas,
+	set_dmap_register, set_imap_register, HELD_SPI_IDX, HELD_SPU_IDX,
+	spu_register, spi_register, set_spi_register, set_spu_register):
+	Delete.
+	(sim_cr16_translate_addr): Delete old_segment_mapping handling.
+	(sim_open): Likewise.
+	(sim_info): Delete function body.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (gencode.o, cr16-opc.o): Add $(WARN_CFLAGS).
+	(gencode): Add $(BUILD_LDFLAGS).
+	* endian.c (get_word, get_longword, get_longlong, write_word,
+	write_longword, write_longlong): Convert old style prototypes.
+	* gencode.c: Include string.h.
+	(write_header): Convert old style prototype and fix printf format.
+	(write_template, write_opcodes): Likewise.
+	(check_opcodes): Mark static void and put behind #if 0.
+	* interp.c: Include inttypes.h and run-sim.h.
+	(add_commas): Delete prototype.
+	(decode_pc): Convert old style prototype.
+	(do_run): Change h->op compare to 0.
+	(add_commas, set_dmap_register, set_imap_register, HELD_SPI_IDX,
+	HELD_SPU_IDX, spu_register, spi_register, set_spi_register,
+	set_spu_register): Wrap in #if 0.
+	(sim_write, sim_read, sim_close, sim_stop, sim_set_callbacks,
+	sim_stop_reason, sim_fetch_register, sim_store_register,
+	sim_do_command): Convert old style prototypes.
+	(sim_create_inferior): Fix pointer cast to use uintptr_t.
+	* simops.c [HAVE_TIME_H]: Include time.h.
+	[HAVE_SYS_TIME_H]: Include sys/time.h.
+	[TARGET_SYS_utime]: Include utime.h.
+	[TARGET_SYS_wait]: Include sys/wait.h.
+	(strrchr): Delete prototype.
+	(cond_stat): Mark static.
+	(trace_input_func): Mark name static.
+	(trace_input_func, trace_output_void, trace_output_flag): Convert old style prototypes.
+	(trace_output_40): Wrap in #if 0.
+	(OP_*): Convert old style prototypes.  Move trace_input call below
+	all variable decls.  Initialize tmp to 0 when appropriate.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Delete -DSIM_HAVE_ENVIRONMENT.
+	(interp.o, simops.o, endian.o, table.o): Delete rules.
+	* configure.ac: Call SIM_AC_OPTION_ENDIAN, SIM_AC_OPTION_ALIGNMENT,
+	SIM_AC_OPTION_HOSTENDIAN, SIM_AC_OPTION_ENVIRONMENT, and
+	SIM_AC_OPTION_INLINE.
+	* config.in, configure: Regenerate.
+	* interp.c (sim_trace): Define.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Add
+	-DSIM_USE_DEPRECATED_RUN_FRONTEND.
+	(SIM_RUN_OBJS): Set to run.o.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete.
+	* aclocal.m4, configure: Regenerate.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

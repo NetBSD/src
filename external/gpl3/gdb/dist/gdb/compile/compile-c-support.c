@@ -131,7 +131,9 @@ print_one_macro (const char *name, const struct macro_definition *macro,
   if (line == 0)
     return;
 
-  fprintf_filtered (file, "#define %s", name);
+  /* None of -Wno-builtin-macro-redefined, #undef first
+     or plain #define of the same value would avoid a warning.  */
+  fprintf_filtered (file, "#ifndef %s\n# define %s", name, name);
 
   if (macro->kind == macro_function_like)
     {
@@ -147,7 +149,7 @@ print_one_macro (const char *name, const struct macro_definition *macro,
       fputs_filtered (")", file);
     }
 
-  fprintf_filtered (file, " %s\n", macro->replacement);
+  fprintf_filtered (file, " %s\n#endif\n", macro->replacement);
 }
 
 /* Write macro definitions at PC to FILE.  */
@@ -188,6 +190,24 @@ add_code_header (enum compile_i_scope_types type, struct ui_file *buf)
 			") {\n",
 			buf);
       break;
+    case COMPILE_I_PRINT_ADDRESS_SCOPE:
+    case COMPILE_I_PRINT_VALUE_SCOPE:
+      /* <string.h> is needed for a memcpy call below.  */
+      fputs_unfiltered ("#include <string.h>\n"
+			"void "
+			GCC_FE_WRAPPER_FUNCTION
+			" (struct "
+			COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
+			" *"
+			COMPILE_I_SIMPLE_REGISTER_ARG_NAME
+			", "
+			COMPILE_I_PRINT_OUT_ARG_TYPE
+			" "
+			COMPILE_I_PRINT_OUT_ARG
+			") {\n",
+			buf);
+      break;
+
     case COMPILE_I_RAW_SCOPE:
       break;
     default:
@@ -205,6 +225,8 @@ add_code_footer (enum compile_i_scope_types type, struct ui_file *buf)
   switch (type)
     {
     case COMPILE_I_SIMPLE_SCOPE:
+    case COMPILE_I_PRINT_ADDRESS_SCOPE:
+    case COMPILE_I_PRINT_VALUE_SCOPE:
       fputs_unfiltered ("}\n", buf);
       break;
     case COMPILE_I_RAW_SCOPE:
@@ -252,7 +274,7 @@ generate_register_struct (struct ui_file *stream, struct gdbarch *gdbarch,
 	    switch (TYPE_CODE (regtype))
 	      {
 	      case TYPE_CODE_PTR:
-		fprintf_filtered (stream, "void *%s", regname);
+		fprintf_filtered (stream, "__gdb_uintptr %s", regname);
 		break;
 
 	      case TYPE_CODE_INT:
@@ -340,8 +362,6 @@ c_compute_program (struct compile_instance *inst,
 							  expr_block, expr_pc);
       make_cleanup (xfree, registers_used);
 
-      generate_register_struct (buf, gdbarch, registers_used);
-
       fputs_unfiltered ("typedef unsigned int"
 			" __attribute__ ((__mode__(__pointer__)))"
 			" __gdb_uintptr;\n",
@@ -363,11 +383,15 @@ c_compute_program (struct compile_instance *inst,
 			      " __gdb_int_%s;\n",
 			      mode, mode);
 	}
+
+      generate_register_struct (buf, gdbarch, registers_used);
     }
 
   add_code_header (inst->scope, buf);
 
-  if (inst->scope == COMPILE_I_SIMPLE_SCOPE)
+  if (inst->scope == COMPILE_I_SIMPLE_SCOPE
+      || inst->scope == COMPILE_I_PRINT_ADDRESS_SCOPE
+      || inst->scope == COMPILE_I_PRINT_VALUE_SCOPE)
     {
       ui_file_put (var_stream, ui_file_write_for_put, buf);
       fputs_unfiltered ("#pragma GCC user_expression\n", buf);
@@ -381,7 +405,25 @@ c_compute_program (struct compile_instance *inst,
     fputs_unfiltered ("{\n", buf);
 
   fputs_unfiltered ("#line 1 \"gdb command line\"\n", buf);
-  fputs_unfiltered (input, buf);
+
+  switch (inst->scope)
+    {
+    case COMPILE_I_PRINT_ADDRESS_SCOPE:
+    case COMPILE_I_PRINT_VALUE_SCOPE:
+      fprintf_unfiltered (buf,
+"__auto_type " COMPILE_I_EXPR_VAL " = %s;\n"
+"typeof (%s) *" COMPILE_I_EXPR_PTR_TYPE ";\n"
+"memcpy (" COMPILE_I_PRINT_OUT_ARG ", %s" COMPILE_I_EXPR_VAL ",\n"
+	 "sizeof (*" COMPILE_I_EXPR_PTR_TYPE "));\n"
+			  , input, input,
+			  (inst->scope == COMPILE_I_PRINT_ADDRESS_SCOPE
+			   ? "&" : ""));
+      break;
+    default:
+      fputs_unfiltered (input, buf);
+      break;
+    }
+
   fputs_unfiltered ("\n", buf);
 
   /* For larger user expressions the automatic semicolons may be

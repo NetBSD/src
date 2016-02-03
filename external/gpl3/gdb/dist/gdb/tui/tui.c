@@ -90,11 +90,10 @@ static Keymap tui_readline_standard_keymap;
 static int
 tui_rl_switch_mode (int notused1, int notused2)
 {
-  volatile struct gdb_exception ex;
 
   /* Don't let exceptions escape.  We're in the middle of a readline
      callback that isn't prepared for that.  */
-  TRY_CATCH (ex, RETURN_MASK_ALL)
+  TRY
     {
       if (tui_active)
 	{
@@ -108,13 +107,14 @@ tui_rl_switch_mode (int notused1, int notused2)
 	  tui_enable ();
 	}
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ALL)
     {
       exception_print (gdb_stderr, ex);
 
       if (!tui_active)
 	rl_prep_terminal (0);
     }
+  END_CATCH
 
   /* Clear the readline in case switching occurred in middle of
      something.  */
@@ -150,7 +150,6 @@ tui_rl_change_windows (int notused1, int notused2)
   if (tui_active)
     {
       enum tui_layout_type new_layout;
-      enum tui_register_display_type regs_type = TUI_UNDEFINED_REGS;
 
       new_layout = tui_current_layout ();
 
@@ -182,7 +181,7 @@ tui_rl_change_windows (int notused1, int notused2)
 	  new_layout = SRC_COMMAND;
 	  break;
 	}
-      tui_set_layout (new_layout, regs_type);
+      tui_set_layout (new_layout);
     }
   return 0;
 }
@@ -198,7 +197,6 @@ tui_rl_delete_other_windows (int notused1, int notused2)
   if (tui_active)
     {
       enum tui_layout_type new_layout;
-      enum tui_register_display_type regs_type = TUI_UNDEFINED_REGS;
 
       new_layout = tui_current_layout ();
 
@@ -217,7 +215,7 @@ tui_rl_delete_other_windows (int notused1, int notused2)
 	  new_layout = DISASSEM_COMMAND;
 	  break;
 	}
-      tui_set_layout (new_layout, regs_type);
+      tui_set_layout (new_layout);
     }
   return 0;
 }
@@ -464,7 +462,7 @@ tui_enable (void)
       def_prog_mode ();
 
       tui_show_frame_info (0);
-      tui_set_layout (SRC_COMMAND, TUI_UNDEFINED_REGS);
+      tui_set_layout (SRC_COMMAND);
       tui_set_win_focus_to (TUI_SRC_WIN);
       keypad (TUI_CMD_WIN->generic.handle, TRUE);
       wrefresh (TUI_CMD_WIN->generic.handle);
@@ -487,11 +485,22 @@ tui_enable (void)
   tui_setup_io (1);
 
   tui_active = 1;
+
+  /* Resize windows before anything might display/refresh a
+     window.  */
+  if (tui_win_resized ())
+    {
+      tui_set_win_resized_to (FALSE);
+      tui_resize_all ();
+    }
+
   if (deprecated_safe_get_selected_frame ())
-     tui_show_frame_info (deprecated_safe_get_selected_frame ());
+    tui_show_frame_info (deprecated_safe_get_selected_frame ());
 
   /* Restore TUI keymap.  */
   tui_set_key_mode (tui_current_key_mode);
+
+  /* Refresh the screen.  */
   tui_refresh_all_win ();
 
   /* Update gdb's knowledge of its terminal.  */
@@ -529,6 +538,22 @@ tui_disable (void)
 
   tui_active = 0;
   tui_update_gdb_sizes ();
+}
+
+/* Command wrapper for enabling tui mode.  */
+
+static void
+tui_enable_command (char *args, int from_tty)
+{
+  tui_enable ();
+}
+
+/* Command wrapper for leaving tui mode.  */
+
+static void
+tui_disable_command (char *args, int from_tty)
+{
+  tui_disable ();
 }
 
 void
@@ -642,4 +667,22 @@ tui_get_command_dimension (unsigned int *width,
   *width = TUI_CMD_WIN->generic.width;
   *height = TUI_CMD_WIN->generic.height;
   return 1;
+}
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+extern initialize_file_ftype _initialize_tui;
+
+void
+_initialize_tui (void)
+{
+  struct cmd_list_element **tuicmd;
+
+  tuicmd = tui_get_cmd_list ();
+
+  add_cmd ("enable", class_tui, tui_enable_command,
+	   _("Enable TUI display mode."),
+	   tuicmd);
+  add_cmd ("disable", class_tui, tui_disable_command,
+	   _("Disable TUI display mode."),
+	   tuicmd);
 }

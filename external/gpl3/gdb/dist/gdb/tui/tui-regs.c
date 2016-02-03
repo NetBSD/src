@@ -39,6 +39,7 @@
 #include "tui/tui-io.h"
 #include "reggroups.h"
 #include "valprint.h"
+#include "completer.h"
 
 #include "gdb_curses.h"
 
@@ -57,9 +58,6 @@ static enum tui_status tui_show_register_group (struct reggroup *group,
 static enum tui_status tui_get_register (struct frame_info *frame,
 					 struct tui_data_element *data,
 					 int regnum, int *changedp);
-
-static void tui_scroll_regs_forward_command (char *, int);
-static void tui_scroll_regs_backward_command (char *, int);
 
 
 
@@ -142,7 +140,7 @@ tui_show_registers (struct reggroup *group)
   /* Make sure the register window is visible.  If not, select an
      appropriate layout.  */
   if (TUI_DATA_WIN == NULL || !TUI_DATA_WIN->generic.is_visible)
-    tui_set_layout_for_display_command (DATA_NAME);
+    tui_set_layout_by_name (DATA_NAME);
 
   display_info = &TUI_DATA_WIN->detail.data_display_info;
   if (group == 0)
@@ -174,7 +172,7 @@ tui_show_registers (struct reggroup *group)
 
 	  data_item_win = &display_info->regs_content[i]
             ->which_element.data_window;
-          win = (struct tui_win_element *) data_item_win->content[0];
+          win = data_item_win->content[0];
           win->which_element.data.highlight = FALSE;
 	}
       display_info->current_group = group;
@@ -277,8 +275,7 @@ tui_show_register_group (struct reggroup *group,
 
 	  data_item_win =
             &display_info->regs_content[pos]->which_element.data_window;
-          data = &((struct tui_win_element *)
-		   data_item_win->content[0])->which_element.data;
+          data = &data_item_win->content[0]->which_element.data;
           if (data)
             {
               if (!refresh_values_only)
@@ -325,8 +322,7 @@ tui_display_registers_from (int start_element_no)
 
           data_item_win
 	    = &display_info->regs_content[i]->which_element.data_window;
-          data = &((struct tui_win_element *)
-                   data_item_win->content[0])->which_element.data;
+          data = &data_item_win->content[0]->which_element.data;
           len = 0;
           p = data->content;
           if (p != 0)
@@ -368,8 +364,7 @@ tui_display_registers_from (int start_element_no)
 	      /* Create the window if necessary.  */
 	      data_item_win = &display_info->regs_content[i]
                 ->which_element.data_window;
-	      data_element_ptr = &((struct tui_win_element *)
-				   data_item_win->content[0])->which_element.data;
+	      data_element_ptr = &data_item_win->content[0]->which_element.data;
               if (data_item_win->handle != (WINDOW*) NULL
                   && (data_item_win->height != 1
                       || data_item_win->width != item_win_width
@@ -511,8 +506,7 @@ tui_check_register_values (struct frame_info *frame)
 
 	      data_item_win_ptr = &display_info->regs_content[i]->
                 which_element.data_window;
-	      data = &((struct tui_win_element *)
-                       data_item_win_ptr->content[0])->which_element.data;
+	      data = &data_item_win_ptr->content[0]->which_element.data;
 	      was_hilighted = data->highlight;
 
               tui_get_register (frame, data,
@@ -563,51 +557,135 @@ tui_display_register (struct tui_data_element *data,
     }
 }
 
-static void
-tui_reg_next_command (char *arg, int from_tty)
-{
-  struct gdbarch *gdbarch = get_current_arch ();
+/* Helper for "tui reg next", wraps a call to REGGROUP_NEXT, but adds wrap
+   around behaviour.  Returns the next register group, or NULL if the
+   register window is not currently being displayed.  */
 
-  if (TUI_DATA_WIN != 0)
+static struct reggroup *
+tui_reg_next (struct gdbarch *gdbarch)
+{
+  struct reggroup *group = NULL;
+
+  if (TUI_DATA_WIN != NULL)
     {
-      struct reggroup *group
-        = TUI_DATA_WIN->detail.data_display_info.current_group;
-
+      group = TUI_DATA_WIN->detail.data_display_info.current_group;
       group = reggroup_next (gdbarch, group);
-      if (group == 0)
-        group = reggroup_next (gdbarch, 0);
-
-      if (group)
-        tui_show_registers (group);
+      if (group == NULL)
+        group = reggroup_next (gdbarch, NULL);
     }
+  return group;
 }
 
-static void
-tui_reg_float_command (char *arg, int from_tty)
+/* Helper for "tui reg prev", wraps a call to REGGROUP_PREV, but adds wrap
+   around behaviour.  Returns the previous register group, or NULL if the
+   register window is not currently being displayed.  */
+
+static struct reggroup *
+tui_reg_prev (struct gdbarch *gdbarch)
 {
-  tui_show_registers (float_reggroup);
+  struct reggroup *group = NULL;
+
+  if (TUI_DATA_WIN != NULL)
+    {
+      group = TUI_DATA_WIN->detail.data_display_info.current_group;
+      group = reggroup_prev (gdbarch, group);
+      if (group == NULL)
+	group = reggroup_prev (gdbarch, NULL);
+    }
+  return group;
 }
 
-static void
-tui_reg_general_command (char *arg, int from_tty)
-{
-  tui_show_registers (general_reggroup);
-}
-
-static void
-tui_reg_system_command (char *arg, int from_tty)
-{
-  tui_show_registers (system_reggroup);
-}
-
-static struct cmd_list_element *tuireglist;
+/* Implement the 'tui reg' command.  Changes the register group displayed
+   in the tui register window.  Displays the tui register window if it is
+   not already on display.  */
 
 static void
 tui_reg_command (char *args, int from_tty)
 {
-  printf_unfiltered (_("\"tui reg\" must be followed by the name of a "
-                     "tui reg command.\n"));
-  help_list (tuireglist, "tui reg ", all_commands, gdb_stdout);
+  struct gdbarch *gdbarch = get_current_arch ();
+
+  if (args != NULL)
+    {
+      struct reggroup *group, *match = NULL;
+      size_t len = strlen (args);
+
+      /* Make sure the curses mode is enabled.  */
+      tui_enable ();
+
+      /* Make sure the register window is visible.  If not, select an
+	 appropriate layout.  We need to do this before trying to run the
+	 'next' or 'prev' commands.  */
+      if (TUI_DATA_WIN == NULL || !TUI_DATA_WIN->generic.is_visible)
+	tui_set_layout_by_name (DATA_NAME);
+
+      if (strncmp (args, "next", len) == 0)
+	match = tui_reg_next (gdbarch);
+      else if (strncmp (args, "prev", len) == 0)
+	match = tui_reg_prev (gdbarch);
+
+      /* This loop matches on the initial part of a register group
+	 name.  If this initial part in ARGS matches only one register
+	 group then the switch is made.  */
+      for (group = reggroup_next (gdbarch, NULL);
+	   group != NULL;
+	   group = reggroup_next (gdbarch, group))
+	{
+	  if (strncmp (reggroup_name (group), args, len) == 0)
+	    {
+	      if (match != NULL)
+		error (_("ambiguous register group name '%s'"), args);
+	      match = group;
+	    }
+	}
+
+      if (match == NULL)
+	error (_("unknown register group '%s'"), args);
+
+      tui_show_registers (match);
+    }
+  else
+    {
+      struct reggroup *group;
+      int first;
+
+      printf_unfiltered (_("\"tui reg\" must be followed by the name of "
+			   "either a register group,\nor one of 'next' "
+			   "or 'prev'.  Known register groups are:\n"));
+
+      for (first = 1, group = reggroup_next (gdbarch, NULL);
+	   group != NULL;
+	   first = 0, group = reggroup_next (gdbarch, group))
+	{
+	  if (!first)
+	    printf_unfiltered (", ");
+	  printf_unfiltered ("%s", reggroup_name (group));
+	}
+
+      printf_unfiltered ("\n");
+    }
+}
+
+/* Complete names of register groups, and add the special "prev" and "next"
+   names.  */
+
+static VEC (char_ptr) *
+tui_reggroup_completer (struct cmd_list_element *ignore,
+			const char *text, const char *word)
+{
+  VEC (char_ptr) *result = NULL;
+  static const char *extra[] = { "next", "prev", NULL };
+  size_t len = strlen (word);
+  const char **tmp;
+
+  result = reggroup_completer (ignore, text, word);
+
+  for (tmp = extra; *tmp != NULL; ++tmp)
+    {
+      if (strncmp (word, *tmp, len) == 0)
+	VEC_safe_push (char_ptr, result, xstrdup (*tmp));
+    }
+
+  return result;
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
@@ -616,41 +694,13 @@ extern initialize_file_ftype _initialize_tui_regs;
 void
 _initialize_tui_regs (void)
 {
-  struct cmd_list_element **tuicmd;
+  struct cmd_list_element **tuicmd, *cmd;
 
   tuicmd = tui_get_cmd_list ();
 
-  add_prefix_cmd ("reg", class_tui, tui_reg_command,
-                  _("TUI commands to control the register window."),
-                  &tuireglist, "tui reg ", 0,
-                  tuicmd);
-
-  add_cmd ("float", class_tui, tui_reg_float_command,
-           _("Display only floating point registers."),
-           &tuireglist);
-  add_cmd ("general", class_tui, tui_reg_general_command,
-           _("Display only general registers."),
-           &tuireglist);
-  add_cmd ("system", class_tui, tui_reg_system_command,
-           _("Display only system registers."),
-           &tuireglist);
-  add_cmd ("next", class_tui, tui_reg_next_command,
-           _("Display next register group."),
-           &tuireglist);
-
-  if (xdb_commands)
-    {
-      add_com ("fr", class_tui, tui_reg_float_command,
-	       _("Display only floating point registers\n"));
-      add_com ("gr", class_tui, tui_reg_general_command,
-	       _("Display only general registers\n"));
-      add_com ("sr", class_tui, tui_reg_system_command,
-	       _("Display only special registers\n"));
-      add_com ("+r", class_tui, tui_scroll_regs_forward_command,
-	       _("Scroll the registers window forward\n"));
-      add_com ("-r", class_tui, tui_scroll_regs_backward_command,
-	       _("Scroll the register window backward\n"));
-    }
+  cmd = add_cmd ("reg", class_tui, tui_reg_command, _("\
+TUI command to control the register window."), tuicmd);
+  set_cmd_completer (cmd, tui_reggroup_completer);
 }
 
 
@@ -729,17 +779,4 @@ tui_get_register (struct frame_info *frame,
       ret = TUI_SUCCESS;
     }
   return ret;
-}
-
-static void
-tui_scroll_regs_forward_command (char *arg, int from_tty)
-{
-  tui_scroll (FORWARD_SCROLL, TUI_DATA_WIN, 1);
-}
-
-
-static void
-tui_scroll_regs_backward_command (char *arg, int from_tty)
-{
-  tui_scroll (BACKWARD_SCROLL, TUI_DATA_WIN, 1);
 }

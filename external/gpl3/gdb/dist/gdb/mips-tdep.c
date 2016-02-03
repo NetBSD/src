@@ -1345,14 +1345,13 @@ mips_in_frame_stub (CORE_ADDR pc)
     return 0;
 
   /* If the PC is in __mips16_call_stub_*, this is a call/return stub.  */
-  if (strncmp (name, mips_str_mips16_call_stub,
-	       strlen (mips_str_mips16_call_stub)) == 0)
+  if (startswith (name, mips_str_mips16_call_stub))
     return 1;
   /* If the PC is in __call_stub_*, this is a call/return or a call stub.  */
-  if (strncmp (name, mips_str_call_stub, strlen (mips_str_call_stub)) == 0)
+  if (startswith (name, mips_str_call_stub))
     return 1;
   /* If the PC is in __fn_stub_*, this is a call stub.  */
-  if (strncmp (name, mips_str_fn_stub, strlen (mips_str_fn_stub)) == 0)
+  if (startswith (name, mips_str_fn_stub))
     return 1;
 
   return 0;			/* Not a stub.  */
@@ -3813,7 +3812,7 @@ mips_stub_frame_sniffer (const struct frame_unwind *self,
   msym = lookup_minimal_symbol_by_pc (pc);
   if (msym.minsym != NULL
       && MSYMBOL_LINKAGE_NAME (msym.minsym) != NULL
-      && strncmp (MSYMBOL_LINKAGE_NAME (msym.minsym), ".pic.", 5) == 0)
+      && startswith (MSYMBOL_LINKAGE_NAME (msym.minsym), ".pic."))
     return 1;
 
   return 0;
@@ -6694,10 +6693,11 @@ mips_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
     return mips32_scan_prologue (gdbarch, pc, limit_pc, NULL, NULL);
 }
 
-/* Check whether the PC is in a function epilogue (32-bit version).
-   This is a helper function for mips_in_function_epilogue_p.  */
+/* Implement the stack_frame_destroyed_p gdbarch method (32-bit version).
+   This is a helper function for mips_stack_frame_destroyed_p.  */
+
 static int
-mips32_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+mips32_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   CORE_ADDR func_addr = 0, func_end = 0;
 
@@ -6732,11 +6732,11 @@ mips32_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   return 0;
 }
 
-/* Check whether the PC is in a function epilogue (microMIPS version).
-   This is a helper function for mips_in_function_epilogue_p.  */
+/* Implement the stack_frame_destroyed_p gdbarch method (microMIPS version).
+   This is a helper function for mips_stack_frame_destroyed_p.  */
 
 static int
-micromips_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+micromips_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   CORE_ADDR func_addr = 0;
   CORE_ADDR func_end = 0;
@@ -6833,10 +6833,11 @@ micromips_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   return 1;
 }
 
-/* Check whether the PC is in a function epilogue (16-bit version).
-   This is a helper function for mips_in_function_epilogue_p.  */
+/* Implement the stack_frame_destroyed_p gdbarch method (16-bit version).
+   This is a helper function for mips_stack_frame_destroyed_p.  */
+
 static int
-mips16_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+mips16_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   CORE_ADDR func_addr = 0, func_end = 0;
 
@@ -6873,17 +6874,20 @@ mips16_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   return 0;
 }
 
-/* The epilogue is defined here as the area at the end of a function,
+/* Implement the stack_frame_destroyed_p gdbarch method.
+
+   The epilogue is defined here as the area at the end of a function,
    after an instruction which destroys the function's stack frame.  */
+
 static int
-mips_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+mips_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   if (mips_pc_is_mips16 (gdbarch, pc))
-    return mips16_in_function_epilogue_p (gdbarch, pc);
+    return mips16_stack_frame_destroyed_p (gdbarch, pc);
   else if (mips_pc_is_micromips (gdbarch, pc))
-    return micromips_in_function_epilogue_p (gdbarch, pc);
+    return micromips_stack_frame_destroyed_p (gdbarch, pc);
   else
-    return mips32_in_function_epilogue_p (gdbarch, pc);
+    return mips32_stack_frame_destroyed_p (gdbarch, pc);
 }
 
 /* Root of all "set mips "/"show mips " commands.  This will eventually be
@@ -7846,8 +7850,8 @@ mips_skip_mips16_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 
   /* If the PC is in __call_stub_* or __fn_stub*, this is one of the
      compiler-generated call or call/return stubs.  */
-  if (strncmp (name, mips_str_fn_stub, strlen (mips_str_fn_stub)) == 0
-      || strncmp (name, mips_str_call_stub, strlen (mips_str_call_stub)) == 0)
+  if (startswith (name, mips_str_fn_stub)
+      || startswith (name, mips_str_call_stub))
     {
       if (pc == start_addr)
 	/* This is the 'call' part of a call stub.  Call this helper
@@ -7934,7 +7938,7 @@ mips_skip_pic_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   if (msym.minsym == NULL
       || BMSYMBOL_VALUE_ADDRESS (msym) != pc
       || MSYMBOL_LINKAGE_NAME (msym.minsym) == NULL
-      || strncmp (MSYMBOL_LINKAGE_NAME (msym.minsym), ".pic.", 5) != 0)
+      || !startswith (MSYMBOL_LINKAGE_NAME (msym.minsym), ".pic."))
     return 0;
 
   /* A two-instruction header.  */
@@ -8099,7 +8103,7 @@ mips_find_abi_section (bfd *abfd, asection *sect, void *obj)
   if (*abip != MIPS_ABI_UNKNOWN)
     return;
 
-  if (strncmp (name, ".mdebug.", 8) != 0)
+  if (!startswith (name, ".mdebug."))
     return;
 
   if (strcmp (name, ".mdebug.abi32") == 0)
@@ -8124,11 +8128,11 @@ mips_find_long_section (bfd *abfd, asection *sect, void *obj)
   int *lbp = (int *) obj;
   const char *name = bfd_get_section_name (abfd, sect);
 
-  if (strncmp (name, ".gcc_compiled_long32", 20) == 0)
+  if (startswith (name, ".gcc_compiled_long32"))
     *lbp = 32;
-  else if (strncmp (name, ".gcc_compiled_long64", 20) == 0)
+  else if (startswith (name, ".gcc_compiled_long64"))
     *lbp = 64;
-  else if (strncmp (name, ".gcc_compiled_long", 18) == 0)
+  else if (startswith (name, ".gcc_compiled_long"))
     warning (_("unrecognized .gcc_compiled_longXX"));
 }
 
@@ -8844,7 +8848,7 @@ mips_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, mips_skip_prologue);
 
-  set_gdbarch_in_function_epilogue_p (gdbarch, mips_in_function_epilogue_p);
+  set_gdbarch_stack_frame_destroyed_p (gdbarch, mips_stack_frame_destroyed_p);
 
   set_gdbarch_pointer_to_address (gdbarch, signed_pointer_to_address);
   set_gdbarch_address_to_pointer (gdbarch, address_to_signed_pointer);

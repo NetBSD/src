@@ -150,6 +150,35 @@ reggroup_next (struct gdbarch *gdbarch, struct reggroup *last)
   return NULL;
 }
 
+/* See reggroups.h.  */
+
+struct reggroup *
+reggroup_prev (struct gdbarch *gdbarch, struct reggroup *curr)
+{
+  struct reggroups *groups;
+  struct reggroup_el *el;
+  struct reggroup *prev;
+
+  /* Don't allow this function to be called during architecture
+     creation.  If there are no groups, use the default groups list.  */
+  groups = gdbarch_data (gdbarch, reggroups_data);
+  gdb_assert (groups != NULL);
+  if (groups->first == NULL)
+    groups = &default_groups;
+
+  prev = NULL;
+  for (el = groups->first; el != NULL; el = el->next)
+    {
+      gdb_assert (el->group != NULL);
+      if (el->group == curr)
+	return prev;
+      prev = el->group;
+    }
+  if (curr == NULL)
+    return prev;
+  return NULL;
+}
+
 /* Is REGNUM a member of REGGROUP?  */
 int
 default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,

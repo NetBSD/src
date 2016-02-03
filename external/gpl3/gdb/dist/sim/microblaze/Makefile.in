@@ -17,12 +17,12 @@
 
 ## COMMON_PRE_CONFIG_FRAG
 
-SIM_OBJS = interp.o sim-load.o
-SIM_EXTRA_LIBS = -lm
-SIM_EXTRA_CLEAN = microblaze-clean
+SIM_OBJS = \
+	interp.o \
+	$(SIM_NEW_COMMON_OBJS) \
+	sim-hload.o \
+	sim-reason.o \
+	sim-resume.o \
+	sim-stop.o
 
 ## COMMON_POST_CONFIG_FRAG
-
-interp.o: interp.c
-
-microblaze-clean:

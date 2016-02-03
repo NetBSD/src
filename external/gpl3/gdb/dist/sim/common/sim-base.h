@@ -28,9 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    information), include ``sim-base.h'':
 
      #include "sim-basics.h"
-     typedef address_word sim_cia;
      /-* If `sim_cia' is not an integral value (e.g. a struct), define
          CIA_ADDR to return the integral value.  *-/
+     /-* typedef struct {...} sim_cia; *-/
      /-* #define CIA_ADDR(cia) (...) *-/
      #include "sim-base.h"
 
@@ -44,11 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
      struct sim_state {
        sim_cpu *cpu[MAX_NR_PROCESSORS];
-     #if (WITH_SMP)
-     #define STATE_CPU(sd,n) ((sd)->cpu[n])
-     #else
-     #define STATE_CPU(sd,n) ((sd)->cpu[0])
-     #endif
        ... simulator specific members ...
        sim_state_base base;
      };
@@ -71,11 +66,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    (e.g. for delay slot handling).  */
 #ifndef CIA_ADDR
 #define CIA_ADDR(cia) (cia)
+typedef address_word sim_cia;
 #endif
 #ifndef INVALID_INSTRUCTION_ADDRESS
 #define INVALID_INSTRUCTION_ADDRESS ((address_word)0 - 1)
 #endif
 
+/* TODO: Probably should just delete SIM_CPU.  */
+typedef struct _sim_cpu SIM_CPU;
 typedef struct _sim_cpu sim_cpu;
 
 #include "sim-module.h"
@@ -113,6 +111,15 @@ extern struct sim_state *current_state;
 /* The simulator may provide different (and faster) definition.  */
 #ifndef CURRENT_STATE
 #define CURRENT_STATE current_state
+#endif
+
+
+/* We require all sims to dynamically allocate cpus.  See comment up top about
+   struct sim_state.  */
+#if (WITH_SMP)
+# define STATE_CPU(sd, n) ((sd)->cpu[n])
+#else
+# define STATE_CPU(sd, n) ((sd)->cpu[0])
 #endif
 
 

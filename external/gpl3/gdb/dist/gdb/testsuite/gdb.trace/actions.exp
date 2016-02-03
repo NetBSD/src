@@ -235,9 +235,18 @@ gdb_test "info tracepoints" \
 \[\t \]+not installed on target." \
 		"5.10a: verify teval actions set for two tracepoints"
 
-gdb_test "break main"
+# Load the binary to the target too.
+gdb_load $binfile
+
+# Can't use runto_main here, because that would delete the tracepoints
+# created above.
+gdb_breakpoint "main"
 gdb_run_cmd
-gdb_test "" "Breakpoint .*"
+if {[gdb_test "" "Breakpoint .*"] != 0} {
+    fail "Can't run to main"
+    return -1
+}
+
 if ![gdb_target_supports_trace] {
     unsupported "target does not support trace"
     return -1

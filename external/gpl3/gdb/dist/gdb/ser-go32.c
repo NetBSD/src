@@ -864,6 +864,7 @@ static const struct serial_ops dos_ops =
   dos_noflush_set_tty_state,
   dos_setbaudrate,
   dos_setstopbits,
+  dos_noop,
   dos_noop,			/* Wait for output to drain.  */
   (void (*)(struct serial *, int))NULL	/* Change into async mode.  */
 };

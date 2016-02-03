@@ -753,9 +753,9 @@ frame_find_by_id (struct frame_id id)
 
   for (frame = get_current_frame (); ; frame = prev_frame)
     {
-      struct frame_id this = get_frame_id (frame);
+      struct frame_id self = get_frame_id (frame);
 
-      if (frame_id_eq (id, this))
+      if (frame_id_eq (id, self))
 	/* An exact match.  */
 	return frame;
 
@@ -769,7 +769,7 @@ frame_find_by_id (struct frame_id id)
 	 frame in the current frame chain can have this ID.  See the
 	 comment at frame_id_inner for details.   */
       if (get_frame_type (frame) == NORMAL_FRAME
-	  && !frame_id_inner (get_frame_arch (frame), id, this)
+	  && !frame_id_inner (get_frame_arch (frame), id, self)
 	  && frame_id_inner (get_frame_arch (prev_frame), id,
 			     get_frame_id (prev_frame)))
 	return NULL;
@@ -784,9 +784,9 @@ frame_unwind_pc (struct frame_info *this_frame)
     {
       if (gdbarch_unwind_pc_p (frame_unwind_arch (this_frame)))
 	{
-	  volatile struct gdb_exception ex;
 	  struct gdbarch *prev_gdbarch;
 	  CORE_ADDR pc = 0;
+	  int pc_p = 0;
 
 	  /* The right way.  The `pure' way.  The one true way.  This
 	     method depends solely on the register-unwind code to
@@ -806,11 +806,12 @@ frame_unwind_pc (struct frame_info *this_frame)
 	     different ways that a PC could be unwound.  */
 	  prev_gdbarch = frame_unwind_arch (this_frame);
 
-	  TRY_CATCH (ex, RETURN_MASK_ERROR)
+	  TRY
 	    {
 	      pc = gdbarch_unwind_pc (prev_gdbarch, this_frame);
+	      pc_p = 1;
 	    }
-	  if (ex.reason < 0)
+	  CATCH (ex, RETURN_MASK_ERROR)
 	    {
 	      if (ex.error == NOT_AVAILABLE_ERROR)
 		{
@@ -835,7 +836,9 @@ frame_unwind_pc (struct frame_info *this_frame)
 	      else
 		throw_exception (ex);
 	    }
-	  else
+	  END_CATCH
+
+	  if (pc_p)
 	    {
 	      this_frame->prev_pc.value = pc;
 	      this_frame->prev_pc.status = CC_VALUE;
@@ -1573,8 +1576,6 @@ select_frame (struct frame_info *fi)
   selected_frame = fi;
   /* NOTE: cagney/2002-05-04: FI can be NULL.  This occurs when the
      frame is being invalidated.  */
-  if (deprecated_selected_frame_level_changed_hook)
-    deprecated_selected_frame_level_changed_hook (frame_relative_level (fi));
 
   /* FIXME: kseitz/2002-08-28: It would be nice to call
      selected_frame_level_changed_event() right here, but due to limitations
@@ -1963,14 +1964,13 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
 struct frame_info *
 get_prev_frame_always (struct frame_info *this_frame)
 {
-  volatile struct gdb_exception ex;
   struct frame_info *prev_frame = NULL;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       prev_frame = get_prev_frame_always_1 (this_frame);
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ERROR)
     {
       if (ex.error == MEMORY_ERROR)
 	{
@@ -1994,6 +1994,7 @@ get_prev_frame_always (struct frame_info *this_frame)
       else
 	throw_exception (ex);
     }
+  END_CATCH
 
   return prev_frame;
 }
@@ -2222,21 +2223,21 @@ get_frame_pc (struct frame_info *frame)
 int
 get_frame_pc_if_available (struct frame_info *frame, CORE_ADDR *pc)
 {
-  volatile struct gdb_exception ex;
 
   gdb_assert (frame->next != NULL);
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       *pc = frame_unwind_pc (frame->next);
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ERROR)
     {
       if (ex.error == NOT_AVAILABLE_ERROR)
 	return 0;
       else
 	throw_exception (ex);
     }
+  END_CATCH
 
   return 1;
 }
@@ -2307,18 +2308,20 @@ int
 get_frame_address_in_block_if_available (struct frame_info *this_frame,
 					 CORE_ADDR *pc)
 {
-  volatile struct gdb_exception ex;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       *pc = get_frame_address_in_block (this_frame);
     }
-  if (ex.reason < 0 && ex.error == NOT_AVAILABLE_ERROR)
-    return 0;
-  else if (ex.reason < 0)
-    throw_exception (ex);
-  else
-    return 1;
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error == NOT_AVAILABLE_ERROR)
+	return 0;
+      throw_exception (ex);
+    }
+  END_CATCH
+
+  return 1;
 }
 
 void

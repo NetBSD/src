@@ -20,7 +20,11 @@
 int
 main (void)
 {
-  alarm (60);
+  /* Allow for as much timeout as DejaGnu wants, plus a bit of
+     slack.  */
+  unsigned int seconds = TIMEOUT + 20;
+
+  alarm (seconds);
 
   for (;;); /* loop-line */
 }

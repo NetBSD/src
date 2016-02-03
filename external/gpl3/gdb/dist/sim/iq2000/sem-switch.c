@@ -201,13 +201,13 @@ This file is part of the GNU simulators.
 
 /* If hyper-fast [well not unnecessarily slow] execution is selected, turn
    off frills like tracing and profiling.  */
-/* FIXME: A better way would be to have TRACE_RESULT check for something
+/* FIXME: A better way would be to have CGEN_TRACE_RESULT check for something
    that can cause it to be optimized out.  Another way would be to emit
    special handlers into the instruction "stream".  */
 
 #if FAST_P
-#undef TRACE_RESULT
-#define TRACE_RESULT(cpu, abuf, name, type, val)
+#undef CGEN_TRACE_RESULT
+#define CGEN_TRACE_RESULT(cpu, abuf, name, type, val)
 #endif
 
 #undef GET_ATTR
@@ -392,7 +392,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -411,7 +411,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -430,7 +430,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -449,7 +449,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -473,7 +473,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ORSI (SLLSI (tmp_high, 16), tmp_low);
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -493,7 +493,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ANDSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -512,7 +512,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ANDSI (GET_H_GR (FLD (f_rs)), ZEXTSISI (FLD (f_imm)));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -531,7 +531,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ANDSI (GET_H_GR (FLD (f_rs)), ORSI (0xffff0000, EXTHISI (TRUNCSIHI (FLD (f_imm)))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -550,7 +550,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = INVSI (ORSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt))));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -569,7 +569,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ORSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -588,7 +588,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ORSI (GET_H_GR (FLD (f_rs)), ZEXTSISI (FLD (f_imm)));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -608,17 +608,17 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = RORSI (GET_H_GR (FLD (f_rt)), FLD (f_shamt));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = ANDSI (GET_H_GR (FLD (f_rd)), SRLSI (0xffffffff, FLD (f_maskl)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = ANDSI (GET_H_GR (FLD (f_rd)), SLLSI (0xffffffff, FLD (f_rs)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -638,7 +638,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = SLLSI (GET_H_GR (FLD (f_rt)), FLD (f_shamt));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -657,7 +657,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = SLLSI (GET_H_GR (FLD (f_rt)), ANDSI (GET_H_GR (FLD (f_rs)), 31));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -676,7 +676,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ANDSI (SLLSI (GET_H_GR (FLD (f_rt)), FLD (f_shamt)), SRLSI (0xffffffff, GET_H_GR (FLD (f_rs))));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -697,14 +697,14 @@ if (LTSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
     SI opval = 1;
     SET_H_GR (FLD (f_rd), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = 0;
     SET_H_GR (FLD (f_rd), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -727,14 +727,14 @@ if (LTSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))))) {
     SI opval = 1;
     SET_H_GR (FLD (f_rt), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = 0;
     SET_H_GR (FLD (f_rt), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -757,14 +757,14 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))))) {
     SI opval = 1;
     SET_H_GR (FLD (f_rt), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = 0;
     SET_H_GR (FLD (f_rt), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -787,14 +787,14 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
     SI opval = 1;
     SET_H_GR (FLD (f_rd), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = 0;
     SET_H_GR (FLD (f_rd), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -815,7 +815,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = SRASI (GET_H_GR (FLD (f_rt)), FLD (f_shamt));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -834,7 +834,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = SRASI (GET_H_GR (FLD (f_rt)), ANDSI (GET_H_GR (FLD (f_rs)), 31));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -853,7 +853,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = SRLSI (GET_H_GR (FLD (f_rt)), FLD (f_shamt));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -872,7 +872,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = SRLSI (GET_H_GR (FLD (f_rt)), ANDSI (GET_H_GR (FLD (f_rs)), 31));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -891,7 +891,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = ANDSI (SRLSI (GET_H_GR (FLD (f_rt)), FLD (f_shamt)), SLLSI (0xffffffff, GET_H_GR (FLD (f_rs))));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -910,7 +910,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = SUBSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -929,7 +929,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = SUBSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -948,7 +948,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = XORSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)));
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -967,7 +967,7 @@ if (LTUSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
   {
     SI opval = XORSI (GET_H_GR (FLD (f_rs)), ZEXTSISI (FLD (f_imm)));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -990,7 +990,7 @@ if (ANDSI (GET_H_GR (FLD (f_rs)), SLLSI (1, FLD (f_rt)))) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1017,7 +1017,7 @@ if (NOTSI (ANDSI (GET_H_GR (FLD (f_rs)), SLLSI (1, FLD (f_rt))))) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1044,7 +1044,7 @@ if (ANDSI (GET_H_GR (FLD (f_rs)), SLLSI (1, ANDSI (GET_H_GR (FLD (f_rt)), 31))))
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1071,7 +1071,7 @@ if (NOTSI (ANDSI (GET_H_GR (FLD (f_rs)), SLLSI (1, ANDSI (GET_H_GR (FLD (f_rt)),
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1098,7 +1098,7 @@ if (EQSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1125,7 +1125,7 @@ if (EQSI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 } else {
@@ -1155,7 +1155,7 @@ if (GESI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1182,14 +1182,14 @@ if (GESI (GET_H_GR (FLD (f_rs)), 0)) {
     SI opval = ADDSI (pc, 8);
     SET_H_GR (((UINT) 31), opval);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1217,14 +1217,14 @@ if (GESI (GET_H_GR (FLD (f_rs)), 0)) {
     SI opval = ADDSI (pc, 8);
     SET_H_GR (((UINT) 31), opval);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1255,7 +1255,7 @@ if (GESI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 } else {
@@ -1285,7 +1285,7 @@ if (LTSI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1312,7 +1312,7 @@ if (LTSI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 } else {
@@ -1342,14 +1342,14 @@ if (LTSI (GET_H_GR (FLD (f_rs)), 0)) {
     SI opval = ADDSI (pc, 8);
     SET_H_GR (((UINT) 31), opval);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1377,14 +1377,14 @@ if (LTSI (GET_H_GR (FLD (f_rs)), 0)) {
     SI opval = ADDSI (pc, 8);
     SET_H_GR (((UINT) 31), opval);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1415,7 +1415,7 @@ if (EQSI (ANDSI (GET_H_GR (FLD (f_rs)), 255), ANDSI (GET_H_GR (FLD (f_rt)), 255)
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1442,7 +1442,7 @@ if (EQSI (ANDSI (GET_H_GR (FLD (f_rs)), 65280), ANDSI (GET_H_GR (FLD (f_rt)), 65
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1469,7 +1469,7 @@ if (EQSI (ANDSI (GET_H_GR (FLD (f_rs)), 16711680), ANDSI (GET_H_GR (FLD (f_rt)),
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1496,7 +1496,7 @@ if (EQSI (ANDSI (GET_H_GR (FLD (f_rs)), 0xff000000), ANDSI (GET_H_GR (FLD (f_rt)
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1523,7 +1523,7 @@ if (NESI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1550,7 +1550,7 @@ if (NESI (GET_H_GR (FLD (f_rs)), GET_H_GR (FLD (f_rt)))) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 } else {
@@ -1579,12 +1579,12 @@ if (1)
   {
     SI opval = ADDSI (pc, 8);
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     USI opval = GET_H_GR (FLD (f_rs));
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1608,7 +1608,7 @@ if (1)
   {
     USI opval = GET_H_GR (FLD (f_rs));
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 
@@ -1629,7 +1629,7 @@ if (1)
   {
     SI opval = EXTQISI (GETMEMQI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1648,7 +1648,7 @@ if (1)
   {
     SI opval = ZEXTQISI (GETMEMQI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1667,7 +1667,7 @@ if (1)
   {
     SI opval = EXTHISI (GETMEMHI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1686,7 +1686,7 @@ if (1)
   {
     SI opval = ZEXTHISI (GETMEMHI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm))))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1705,7 +1705,7 @@ if (1)
   {
     SI opval = SLLSI (FLD (f_imm), 16);
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1724,7 +1724,7 @@ if (1)
   {
     SI opval = GETMEMSI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm)))));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1743,7 +1743,7 @@ if (1)
   {
     QI opval = ANDQI (GET_H_GR (FLD (f_rt)), 255);
     SETMEMQI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm)))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -1762,7 +1762,7 @@ if (1)
   {
     HI opval = ANDHI (GET_H_GR (FLD (f_rt)), 65535);
     SETMEMHI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm)))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -1781,7 +1781,7 @@ if (1)
   {
     SI opval = GET_H_GR (FLD (f_rt));
     SETMEMSI (current_cpu, pc, ADDSI (GET_H_GR (FLD (f_rs)), EXTHISI (TRUNCSIHI (FLD (f_imm)))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -1830,7 +1830,7 @@ do_syscall (current_cpu);
   {
     SI opval = ANDSI (GET_H_GR (FLD (f_rs)), ORSI (SLLSI (FLD (f_imm), 16), 65535));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1849,7 +1849,7 @@ do_syscall (current_cpu);
   {
     SI opval = ORSI (GET_H_GR (FLD (f_rs)), SLLSI (FLD (f_imm), 16));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 
 #undef FLD
@@ -1872,7 +1872,7 @@ if (GTSI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1899,7 +1899,7 @@ if (GTSI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 } else {
@@ -1929,7 +1929,7 @@ if (LESI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -1956,7 +1956,7 @@ if (LESI (GET_H_GR (FLD (f_rs)), 0)) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 } else {
@@ -2004,7 +2004,7 @@ if (NOTSI (ANDSI (FLD (f_mask), SLLSI (1, 3)))) {
   {
     SI opval = tmp_temp;
     SET_H_GR (FLD (f_rd), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -3112,12 +3112,12 @@ if (NOTSI (ANDSI (FLD (f_mask), SLLSI (1, 3)))) {
   {
     SI opval = GETMEMSI (current_cpu, pc, tmp_addr);
     SET_H_GR (ADDSI (FLD (f_rt), 1), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = GETMEMSI (current_cpu, pc, ADDSI (tmp_addr, 4));
     SET_H_GR (FLD (f_rt), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 
@@ -3140,12 +3140,12 @@ if (NOTSI (ANDSI (FLD (f_mask), SLLSI (1, 3)))) {
   {
     SI opval = GET_H_GR (FLD (f_rt));
     SETMEMSI (current_cpu, pc, ADDSI (tmp_addr, 4), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     SI opval = GET_H_GR (ADDSI (FLD (f_rt), 1));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 
@@ -3167,7 +3167,7 @@ if (NOTSI (ANDSI (FLD (f_mask), SLLSI (1, 3)))) {
   {
     USI opval = FLD (i_jmptarg);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 
@@ -3191,12 +3191,12 @@ if (NOTSI (ANDSI (FLD (f_mask), SLLSI (1, 3)))) {
   {
     SI opval = ADDSI (pc, 8);
     SET_H_GR (((UINT) 31), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     USI opval = FLD (i_jmptarg);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -3237,7 +3237,7 @@ if (tmp_branch_) {
     USI opval = FLD (i_offset);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
