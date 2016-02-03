@@ -71,12 +71,13 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/plugins.m4 \
 	$(top_srcdir)/../config/po.m4 \
 	$(top_srcdir)/../config/progtest.m4 \
-	$(top_srcdir)/../config/stdint.m4 $(top_srcdir)/../libtool.m4 \
+	$(top_srcdir)/../config/stdint.m4 \
+	$(top_srcdir)/../config/zlib.m4 $(top_srcdir)/../libtool.m4 \
 	$(top_srcdir)/../ltoptions.m4 $(top_srcdir)/../ltsugar.m4 \
 	$(top_srcdir)/../ltversion.m4 $(top_srcdir)/../lt~obsolete.m4 \
 	$(top_srcdir)/bfd.m4 $(top_srcdir)/warning.m4 \
-	$(top_srcdir)/acinclude.m4 $(top_srcdir)/../config/zlib.m4 \
-	$(top_srcdir)/version.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/acinclude.m4 $(top_srcdir)/version.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/../mkinstalldirs
@@ -289,6 +290,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 wordsize = @wordsize@
+zlibdir = @zlibdir@
+zlibinc = @zlibinc@
 AUTOMAKE_OPTIONS = 1.9 cygnus
 DOCFILES = aoutx.texi  archive.texi archures.texi \
 	bfdt.texi  cache.texi coffcode.texi \
@@ -962,6 +965,9 @@ libbfd.h: $(LIBBFD_H_DEP)
 		./$(MKDOC) -i -f $(srcdir)/proto.str < $$file >> $@ ;; \
 	  esac; \
 	done
+	echo "#ifdef __cplusplus" >> $@
+	echo "}" >> $@
+	echo "#endif" >> $@
 
 libcoff.h: $(LIBCOFF_H_DEP)
 	echo "$(LIBCOFF_H_DEP)" | sed -f $(srcdir)/header.sed > $@
@@ -974,6 +980,9 @@ libcoff.h: $(LIBCOFF_H_DEP)
 		./$(MKDOC) -i -f $(srcdir)/proto.str < $$file >> $@ ;; \
 	  esac; \
 	done
+	echo "#ifdef __cplusplus" >> $@
+	echo "}" >> $@
+	echo "#endif" >> $@
 
 bfd.h: $(BFD_H_DEP)
 	echo "$(BFD_H_DEP)" | sed -f $(srcdir)/header.sed > $@

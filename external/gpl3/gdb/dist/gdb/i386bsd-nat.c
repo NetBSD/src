@@ -81,6 +81,10 @@ static int i386bsd_r_reg_offset[] =
    so that we try PT_GETXMMREGS the first time around.  */
 static int have_ptrace_xmmregs = -1;
 #endif
+
+#ifdef PT_GETXSTATE_INFO
+size_t i386bsd_xsave_len;
+#endif
 
 
 /* Supply the general-purpose registers in GREGS, to REGCACHE.  */
@@ -148,7 +152,24 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
       struct fpreg fpregs;
 #ifdef HAVE_PT_GETXMMREGS
       char xmmregs[512];
+#endif
 
+#ifdef PT_GETXSTATE_INFO
+      if (i386bsd_xsave_len != 0)
+	{
+	  char *xstateregs;
+
+	  xstateregs = alloca (i386bsd_xsave_len);
+	  if (ptrace (PT_GETXSTATE, ptid_get_pid (inferior_ptid),
+		      (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	    perror_with_name (_("Couldn't get extended state status"));
+
+	  i387_supply_xsave (regcache, -1, xstateregs);
+	  return;
+	}
+#endif
+      
+#ifdef HAVE_PT_GETXMMREGS
       if (have_ptrace_xmmregs != 0
 	  && ptrace(PT_GETXMMREGS, ptid_get_pid (inferior_ptid),
 		    (PTRACE_TYPE_ARG3) xmmregs, ptid_get_lwp (inferior_ptid)) == 0)
@@ -158,18 +179,15 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
 	}
       else
 	{
+	  have_ptrace_xmmregs = 0;
+#endif
           if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		      (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	    perror_with_name (_("Couldn't get floating point status"));
 
 	  i387_supply_fsave (regcache, -1, &fpregs);
+#ifdef HAVE_PT_GETXMMREGS
 	}
-#else
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
-	perror_with_name (_("Couldn't get floating point status"));
-
-      i387_supply_fsave (regcache, -1, &fpregs);
 #endif
     }
 }
@@ -204,7 +222,28 @@ i386bsd_store_inferior_registers (struct target_ops *ops,
       struct fpreg fpregs;
 #ifdef HAVE_PT_GETXMMREGS
       char xmmregs[512];
+#endif
 
+#ifdef PT_GETXSTATE_INFO
+      if (i386bsd_xsave_len != 0)
+	{
+	  char *xstateregs;
+
+	  xstateregs = alloca (i386bsd_xsave_len);
+	  if (ptrace (PT_GETXSTATE, ptid_get_pid (inferior_ptid),
+		      (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	    perror_with_name (_("Couldn't get extended state status"));
+
+	  i387_collect_xsave (regcache, -1, xstateregs, 0);
+
+	  if (ptrace (PT_SETXSTATE, ptid_get_pid (inferior_ptid),
+		      (PTRACE_TYPE_ARG3) xstateregs, i386bsd_xsave_len) == -1)
+	    perror_with_name (_("Couldn't write extended state status"));
+	  return;
+	}
+#endif
+
+#ifdef HAVE_PT_GETXMMREGS
       if (have_ptrace_xmmregs != 0
 	  && ptrace(PT_GETXMMREGS, ptid_get_pid (inferior_ptid),
 		    (PTRACE_TYPE_ARG3) xmmregs, ptid_get_lwp (inferior_ptid)) == 0)
