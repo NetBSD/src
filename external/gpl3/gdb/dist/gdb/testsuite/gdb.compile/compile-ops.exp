@@ -416,7 +416,7 @@ if {[skip_compile_feature_tests]} {
 }
 
 # If we have a bug, this will hang.
-gdb_test_no_output "compile code param"
+gdb_test_no_output "compile code (void) param"
 
 # We can't access optimized-out variables, but their presence should
 # not affect compilations that don't refer to them.

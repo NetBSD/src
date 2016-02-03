@@ -627,14 +627,14 @@ m:int:in_solib_return_trampoline:CORE_ADDR pc, const char *name:pc, name::generi
 
 # A target might have problems with watchpoints as soon as the stack
 # frame of the current function has been destroyed.  This mostly happens
-# as the first action in a funtion's epilogue.  in_function_epilogue_p()
+# as the first action in a function's epilogue.  stack_frame_destroyed_p()
 # is defined to return a non-zero value if either the given addr is one
 # instruction after the stack destroying instruction up to the trailing
 # return instruction or if we can figure out that the stack frame has
 # already been invalidated regardless of the value of addr.  Targets
 # which don't suffer from that problem could just let this functionality
 # untouched.
-m:int:in_function_epilogue_p:CORE_ADDR addr:addr:0:generic_in_function_epilogue_p::0
+m:int:stack_frame_destroyed_p:CORE_ADDR addr:addr:0:generic_stack_frame_destroyed_p::0
 # Process an ELF symbol in the minimal symbol table in a backend-specific
 # way.  Normally this hook is supposed to do nothing, however if required,
 # then this hook can be used to apply tranformations to symbols that are
@@ -985,6 +985,21 @@ M:int:stap_is_single_operand:const char *s:s
 # parser), and should advance the buffer pointer (p->arg).
 M:int:stap_parse_special_token:struct stap_parse_info *p:p
 
+# DTrace related functions.
+
+# The expression to compute the NARTGth+1 argument to a DTrace USDT probe.
+# NARG must be >= 0.
+M:void:dtrace_parse_probe_argument:struct parser_state *pstate, int narg:pstate, narg
+
+# True if the given ADDR does not contain the instruction sequence
+# corresponding to a disabled DTrace is-enabled probe.
+M:int:dtrace_probe_is_enabled:CORE_ADDR addr:addr
+
+# Enable a DTrace is-enabled probe at ADDR.
+M:void:dtrace_enable_probe:CORE_ADDR addr:addr
+
+# Disable a DTrace is-enabled probe at ADDR.
+M:void:dtrace_disable_probe:CORE_ADDR addr:addr
 
 # True if the list of shared libraries is one and only for all
 # processes, as opposed to a list of shared libraries per inferior.
@@ -1082,6 +1097,10 @@ m:int:vsyscall_range:struct mem_range *range:range::default_vsyscall_range::0
 # Throw an error if it is not possible.  Returned address is always valid.
 f:CORE_ADDR:infcall_mmap:CORE_ADDR size, unsigned prot:size, prot::default_infcall_mmap::0
 
+# Deallocate SIZE bytes of memory at ADDR in inferior from gdbarch_infcall_mmap.
+# Print a warning if it is not possible.
+f:void:infcall_munmap:CORE_ADDR addr, CORE_ADDR size:addr, size::default_infcall_munmap::0
+
 # Return string (caller has to use xfree for it) with options for GCC
 # to produce code for this target, typically "-m64", "-m32" or "-m31".
 # These options are put before CU's DW_AT_producer compilation options so that
@@ -1094,6 +1113,12 @@ m:char *:gcc_target_options:void:::default_gcc_target_options::0
 # returns the BFD architecture name, which is correct in nearly every
 # case.
 m:const char *:gnu_triplet_regexp:void:::default_gnu_triplet_regexp::0
+
+# Return the size in 8-bit bytes of an addressable memory unit on this
+# architecture.  This corresponds to the number of 8-bit bytes associated to
+# each address in memory.
+m:int:addressable_memory_unit_size:void:::default_addressable_memory_unit_size::0
+
 EOF
 }
 
@@ -1213,10 +1238,13 @@ struct syscall;
 struct agent_expr;
 struct axs_value;
 struct stap_parse_info;
+struct parser_state;
 struct ravenscar_arch_ops;
 struct elf_internal_linux_prpsinfo;
 struct mem_range;
 struct syscalls_info;
+
+#include "regcache.h"
 
 /* The architecture associated with the inferior through the
    connection to the target.
@@ -2350,7 +2378,7 @@ gdbarch_find_by_info (struct gdbarch_info info)
   if (new_gdbarch->initialized_p)
     {
       struct gdbarch_list **list;
-      struct gdbarch_list *this;
+      struct gdbarch_list *self;
       if (gdbarch_debug)
 	fprintf_unfiltered (gdb_stdlog, "gdbarch_find_by_info: "
 			    "Previous architecture %s (%s) selected\n",
@@ -2362,12 +2390,12 @@ gdbarch_find_by_info (struct gdbarch_info info)
 	   list = &(*list)->next);
       /* It had better be in the list of architectures.  */
       gdb_assert ((*list) != NULL && (*list)->gdbarch == new_gdbarch);
-      /* Unlink THIS.  */
-      this = (*list);
-      (*list) = this->next;
-      /* Insert THIS at the front.  */
-      this->next = rego->arches;
-      rego->arches = this;
+      /* Unlink SELF.  */
+      self = (*list);
+      (*list) = self->next;
+      /* Insert SELF at the front.  */
+      self->next = rego->arches;
+      rego->arches = self;
       /* Return it.  */
       return new_gdbarch;
     }
@@ -2382,10 +2410,10 @@ gdbarch_find_by_info (struct gdbarch_info info)
   /* Insert the new architecture into the front of the architecture
      list (keep the list sorted Most Recently Used).  */
   {
-    struct gdbarch_list *this = XNEW (struct gdbarch_list);
-    this->next = rego->arches;
-    this->gdbarch = new_gdbarch;
-    rego->arches = this;
+    struct gdbarch_list *self = XNEW (struct gdbarch_list);
+    self->next = rego->arches;
+    self->gdbarch = new_gdbarch;
+    rego->arches = self;
   }    
 
   /* Check that the newly installed architecture is valid.  Plug in

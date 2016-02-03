@@ -1,3 +1,152 @@
+2015-06-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (trace_register): Delete.
+	* sim-main.h (trace_register, TRACE_REGISTER, TRACE_REG): Delete.
+
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c: Include sim-syscall.h.
+	(syscall_read_mem, syscall_write_mem): Delete.
+	(bfin_syscall): Change syscall_read_mem/syscall_write_mem to
+	sim_syscall_read_mem/sim_syscall_write_mem.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* linux-targ-map.h: Update example comments.
+	(cb_linux_syscall_map): Fill out name field.
+	(cb_linux_errno_map, cb_linux_open_map, cb_linux_signal_map):
+	Likewise.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c: Expand comment on CB_SYS_xxx defines.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (hwloop_get_next_pc): Change TRACE_BRANCH to
+	BFIN_TRACE_BRANCH.
+	(decode_ProgCtrl_0, decode_BRCC_0, decode_UJUMP_0, decode_CALLa_0):
+	Likewise.
+	* bfin-sim.h (__PUT_MEM, __GET_MEM): Change TRACE_CORE to
+	BFIN_TRACE_CORE.
+	* dv-bfin_cec.c (_cec_raise, cec_latch, cec_return): Change
+	TRACE_BRANCH to BFIN_TRACE_BRANCH.
+	* interp.c (syscall_read_mem, syscall_write_mem): Change MAYBE_TRACE
+	to TRACE_CORE.
+	* sim-main.h (MAYBE_TRACE, TRACE_INSN, TRACE_DECODE, TRACE_EXTRACT,
+	TRACE_SYSCALL, TRACE_EVENTS): Delete.
+	(TRACE_CORE): Rename to ...
+	(BFIN_TRACE_CORE): ... this.  Change MAYBE_TRACE to TRACE_CORE.
+	(TRACE_BRANCH): Rename to ...
+	(BFIN_TRACE_BRANCH): ... this.  Change MAYBE_TRACE to TRACE_BRANCH.
+
+2015-04-24  David Binderman  <dcb314@hotmail.com>
+	    Nick Clifton  <nickc@redhat.com>
+
+	PR 18273
+	* bfin-sim.c (decode_dsp32alu_0): Remove spurious check for
+	s == 1.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Add note to clean this up.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o and sim-hrw.o.
+
+2015-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete $(SIM_EXTRA_OBJS).
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* configure.ac (BFIN_SIM_EXTRA_OBJS): Delete.
+	* Makefile.in (SIM_OBJS): Delete @BFIN_SIM_EXTRA_OBJS@.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_uart.c [!HAVE_DV_SOCKSER] (dv_sockser_status,
+	dv_sockser_write, dv_sockser_read): Delete.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h: Delete run-sim.h include.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+	* tconfig.in: Rename file ...
+	* tconfig.h: ... here.
+
+2015-03-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.in: Delete includes.
+	[HAVE_DV_SOCKSER]: Delete.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Change v to bu32.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Delete.
+
+2015-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/13160
+	* Makefile.in ($(srcdir)/linux-fixed-code.h): Put a ; after the
+	print sed command for BSD compatibility.
+
+2015-03-08  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/13160
+	* Makefile.in ($(srcdir)/linux-fixed-code.h): Specify the asm input
+	directly rather than use $<.  Move the file name to the end of the
+	sed command to be POSIX compliant.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

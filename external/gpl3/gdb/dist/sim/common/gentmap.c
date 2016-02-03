@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct tdefs {
   char *symbol;
@@ -30,7 +31,7 @@ static struct tdefs open_tdefs[] = {
 };
 
 static void
-gen_targ_vals_h ()
+gen_targ_vals_h (void)
 {
   struct tdefs *t;
 
@@ -59,7 +60,7 @@ gen_targ_vals_h ()
 }
 
 static void
-gen_targ_map_c ()
+gen_targ_map_c (void)
 {
   struct tdefs *t;
 
@@ -79,10 +80,11 @@ gen_targ_map_c ()
   for (t = &sys_tdefs[0]; t->symbol; ++t)
     {
       printf ("#ifdef CB_%s\n", t->symbol);
-      printf ("  { CB_%s, TARGET_%s },\n", t->symbol, t->symbol);
+      /* Skip the "SYS_" prefix for the name.  */
+      printf ("  { \"%s\", CB_%s, TARGET_%s },\n", t->symbol + 4, t->symbol, t->symbol);
       printf ("#endif\n");
     }
-  printf ("  { -1, -1 }\n");
+  printf ("  { 0, -1, -1 }\n");
   printf ("};\n\n");
 
   printf ("/* errno mapping table */\n");
@@ -90,10 +92,10 @@ gen_targ_map_c ()
   for (t = &errno_tdefs[0]; t->symbol; ++t)
     {
       printf ("#ifdef %s\n", t->symbol);
-      printf ("  { %s, TARGET_%s },\n", t->symbol, t->symbol);
+      printf ("  { \"%s\", %s, TARGET_%s },\n", t->symbol, t->symbol, t->symbol);
       printf ("#endif\n");
     }
-  printf ("  { 0, 0 }\n");
+  printf ("  { 0, 0, 0 }\n");
   printf ("};\n\n");
 
   printf ("/* open flags mapping table */\n");
@@ -101,17 +103,15 @@ gen_targ_map_c ()
   for (t = &open_tdefs[0]; t->symbol; ++t)
     {
       printf ("#ifdef %s\n", t->symbol);
-      printf ("  { %s, TARGET_%s },\n", t->symbol, t->symbol);
+      printf ("  { \"%s\", %s, TARGET_%s },\n", t->symbol, t->symbol, t->symbol);
       printf ("#endif\n");
     }
-  printf ("  { -1, -1 }\n");
+  printf ("  { 0, -1, -1 }\n");
   printf ("};\n\n");
 }
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   if (argc != 2)
     abort ();

@@ -37,13 +37,8 @@ extern int streq (const char *, const char *);
 
 extern int subset_compare (char *, char *);
 
-ULONGEST strtoulst (const char *num, const char **trailer, int base);
-
 int compare_positive_ints (const void *ap, const void *bp);
 int compare_strings (const void *ap, const void *bp);
-
-/* This is defined in *-hdep.c, e.g., posix-hdep.c.  */
-extern char *safe_strerror (int);
 
 /* A wrapper for bfd_errmsg to produce a more helpful error message
    in the case of bfd_error_file_ambiguously recognized.
@@ -83,7 +78,7 @@ struct section_addr_info;
 extern struct cleanup *(make_cleanup_free_section_addr_info 
                         (struct section_addr_info *));
 
-extern struct cleanup *make_cleanup_close (int fd);
+/* For make_cleanup_close see common/filestuff.h.  */
 
 extern struct cleanup *make_cleanup_fclose (FILE *file);
 
@@ -176,6 +171,10 @@ extern struct ui_file *gdb_stdlog;
 extern struct ui_file *gdb_stdtarg;
 extern struct ui_file *gdb_stdtargerr;
 extern struct ui_file *gdb_stdtargin;
+
+/* Set the screen dimensions to WIDTH and HEIGHT.  */
+
+extern void set_screen_width_and_height (int width, int height);
 
 /* More generic printf like operations.  Filtered versions may return
    non-locally on error.  */
@@ -305,6 +304,7 @@ extern pid_t wait_to_die_with_timeout (pid_t pid, int *status, int timeout);
 #endif
 
 extern int producer_is_gcc_ge_4 (const char *producer);
+extern int producer_is_gcc (const char *producer, int *major, int *minor);
 
 extern int myread (int, char *, int);
 

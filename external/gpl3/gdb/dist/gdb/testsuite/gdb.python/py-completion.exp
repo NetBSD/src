@@ -40,7 +40,8 @@ gdb_test_multiple "" "completefileinit completion" {
 }
 
 # Just discarding whatever we typed.
-gdb_test " " ".*" "discard #1"
+set discard 0
+gdb_test " " ".*" "discard #[incr discard]"
 
 # This is the problematic one.
 send_gdb "completefilemethod ${testdir_complete}\t"
@@ -54,7 +55,7 @@ gdb_test_multiple "" "completefilemethod completion" {
 }
 
 # Discarding again
-gdb_test " " ".*" "discard #2"
+gdb_test " " ".*" "discard #[incr discard]"
 
 # Another problematic
 set completion_regex "[string_to_regexp [standard_output_file "py-completion-t"]]"
@@ -66,4 +67,64 @@ gdb_test_multiple "" "completefilecommandcond completion" {
     -re "^completefilecommandcond ${completion_regex}\007$" {
 	pass "completefilecommandcond completion"
     }
+}
+
+# Start gdb over again to clear out current state.  This can interfere
+# with the expected output of the below tests in a buggy gdb.
+gdb_exit
+gdb_start
+gdb_test_no_output "source ${srcdir}/${subdir}/${testfile}.py"
+
+gdb_test_sequence "complete completel" \
+    "list all completions of 'complete completel'" {
+	"completelimit1"
+	"completelimit2"
+	"completelimit3"
+	"completelimit4"
+	"completelimit5"
+	"completelimit6"
+	"completelimit7"
+    }
+
+# Discarding again
+gdb_test " " ".*" "discard #[incr discard]"
+
+gdb_test_sequence "complete completelimit1 c" \
+    "list all completions of 'complete completelimit1 c'" {
+	"completelimit1 cl11"
+	"completelimit1 cl12"
+	"completelimit1 cl13"
+    }
+
+# Discarding again
+gdb_test " " ".*" "discard #[incr discard]"
+
+# If using readline, we can TAB-complete.  This used to trigger a bug
+# because the cached result from the completer was being reused for
+# a different python command.
+if {[readline_is_used]} {
+    set testname "tab-complete 'completelimit1 c'"
+    send_gdb "completelimit1 c\t"
+    gdb_test_multiple "" $testname {
+	-re "^completelimit1 c\\\x07l1$" {
+	    pass $testname
+
+	    # Discard the command line
+	    gdb_test " " ".*" "discard #[incr discard]"
+	}
+    }
+
+    gdb_test_sequence "complete completelimit2 c" \
+	"list all completions of 'complete completelimit2 c'" {
+	    "completelimit2 cl21"
+	    "completelimit2 cl210"
+	    "completelimit2 cl22"
+	    "completelimit2 cl23"
+	    "completelimit2 cl24"
+	    "completelimit2 cl25"
+	    "completelimit2 cl26"
+	    "completelimit2 cl27"
+	    "completelimit2 cl28"
+	    "completelimit2 cl29"
+	}
 }

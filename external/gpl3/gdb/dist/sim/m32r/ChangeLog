@@ -1,3 +1,120 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* traps.c (m32r_trap): Replace call to cb_syscall with
+	sim_syscall_multi.
+	* traps-linux.c (m32r_trap): Likewise.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* traps-linux.c: Include sim-syscall.h.
+	(syscall_read_mem, syscall_write_mem): Delete.
+	(m32r_trap): Change syscall_read_mem/syscall_write_mem
+	to sim_syscall_read_mem/sim_syscall_write_mem.
+	* traps.c: Include sim-syscall.h.
+	(syscall_read_mem, syscall_write_mem): Delete.
+	(m32r_trap): Change syscall_read_mem/syscall_write_mem
+	to sim_syscall_read_mem/sim_syscall_write_mem.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* decode.c (m32rbf_decode): Change TRACE_EXTRACT to CGEN_TRACE_EXTRACT.
+	* decode2.c (m32r2f_decode): Likewise.
+	* decodex.c (m32rxf_decode): Likewise.
+	* mloop.in (execute): Change TRACE_INSN_INIT to CGEN_TRACE_INSN_INIT,
+	TRACE_INSN to CGEN_TRACE_INSN, and TRACE_INSN_FINI to CGEN_TRACE_INSN_FINI.
+	* sem.c: Rename TRACE_RESULT to CGEN_TRACE_RESULT.
+	* sem-switch.c: Likewise.
+	* sem-switch2.c: Likewise.
+	* sem-switchx.c: Likewise.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_ENGINE_HALT_HOOK, SIM_ENGINE_RESTART_HOOK): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (USING_SIM_BASE_H): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (_sim_cpu, SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (struct sim_state): Change cpu to an array of pointers.
+	(STATE_CPU): Handle WITH_SMP.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o and sim-hrw.o.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Delete dv_sockser_install call.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+	* tconfig.in: Rename file ...
+	* tconfig.h: ... here.
+
+2015-03-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.in [HAVE_DV_SOCKSER]: Delete.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Delete.
+
 2014-08-23  Hans-Peter Nilsson  <hp@axis.com>
 
 	* configure.ac: Default simulator hardware to off again.  Remove

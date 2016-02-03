@@ -101,16 +101,30 @@ gdb_test "print * (B *) abp" \
     "= {.*a1 = 200.*b1 = 201.*b2 = 202}" \
     "print * (B *) abp at marker return 0"
 
+# Print the "D" object.
+
+gdb_test "print delta" \
+    "= {.*d1 = 400}" \
+    "print delta with \"print object\" off"
+
 # Printing the value of an object containing no data fields:
 
 gdb_test "p e" "= \{<No data fields>\}" "print object with no data fields"
 
-# Printing NULL pointers with "set print object on"
+# Printing NULL pointers with "set print object on".
 
 gdb_test_no_output "set print object on"
 gdb_test "p acp" "= \\(C \\*\\) ${hex}"
 gdb_test "p acp->c1" "\\(A \\*\\) 0x0"
 gdb_test "p acp->c2" "\\(A \\*\\) ${hex}f"
+
+# Print the "D" object with "set print object on".
+# There's no difference in output, but this exercises vtable lookup
+# with a typedef'd baseclass.
+
+gdb_test "print delta" \
+    "= {.*d1 = 400}" \
+    "print delta with \"print object\" on"
 
 # Regression test for PR c++/15401.
 # Check that the type printed is a reference.

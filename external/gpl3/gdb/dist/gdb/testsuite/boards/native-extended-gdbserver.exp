@@ -27,7 +27,9 @@ load_board_description "gdbserver-base"
 # matches localhost.  Force it to be NOT remote.
 global board
 global board_info
-set board_info($board,isremote) 0
+# Remove any target variant specifications from the name.
+set baseboard [lindex [split $board "/"] 0]
+set board_info($baseboard,isremote) 0
 
 set_board_info sockethost "localhost:"
 
@@ -62,14 +64,19 @@ if { [info procs extended_gdbserver_mi_gdb_start] == "" } {
     rename mi_gdb_start extended_gdbserver_mi_gdb_start
 }
 proc mi_gdb_start { args } {
+    global gdbserver_reconnect_p
+
     # Spawn GDB.
     set res [extended_gdbserver_mi_gdb_start $args]
     if { $res } {
 	return $res
     }
 
-    # And then GDBserver, ready for extended-remote mode.
-    mi_gdbserver_start_multi
+    # And then spawn GDBserver and connect to it in extended-remote
+    # mode, unless the test wants to explicitly test reconnection.
+    if {![info exists gdbserver_reconnect_p] || !$gdbserver_reconnect_p} {
+	mi_gdbserver_start_multi
+    }
     return 0
 }
 

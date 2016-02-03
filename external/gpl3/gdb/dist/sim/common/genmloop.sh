@@ -1112,7 +1112,7 @@ void
 	    }
 	}
 
-      TRACE_INSN_FINI (current_cpu, cur_abuf, 0 /*last_p*/);
+      CGEN_TRACE_INSN_FINI (current_cpu, cur_abuf, 0 /*last_p*/);
     }
 
   /* FIXME: Later make cover macros: PROFILE_INSN_{INIT,FINI}.  */
@@ -1120,8 +1120,8 @@ void
       && ARGBUF_PROFILE_P (cur_abuf))
     @prefix@_model_insn_before (current_cpu, first_p);
 
-  TRACE_INSN_INIT (current_cpu, cur_abuf, first_p);
-  TRACE_INSN (current_cpu, cur_idesc->idata, cur_abuf, pc);
+  CGEN_TRACE_INSN_INIT (current_cpu, cur_abuf, first_p);
+  CGEN_TRACE_INSN (current_cpu, cur_idesc->idata, cur_abuf, pc);
 }
 
 /* x-after handler.
@@ -1146,7 +1146,7 @@ void
       cycles = (*prev_idesc->timing->model_fn) (current_cpu, prev_sem_arg);
       @prefix@_model_insn_after (current_cpu, 1 /*last_p*/, cycles);
     }
-  TRACE_INSN_FINI (current_cpu, prev_abuf, 1 /*last_p*/);
+  CGEN_TRACE_INSN_FINI (current_cpu, prev_abuf, 1 /*last_p*/);
 }
 
 #define FAST_P 0

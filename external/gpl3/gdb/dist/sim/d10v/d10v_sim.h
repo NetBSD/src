@@ -278,10 +278,6 @@ struct _state
 extern host_callback *d10v_callback;
 extern uint16 OP[4];
 extern struct simops Simops[];
-extern asection *text;
-extern bfd_vma text_start;
-extern bfd_vma text_end;
-extern bfd *prog_bfd;
 
 enum
 {
@@ -396,6 +392,12 @@ enum
 #define SIG_D10V_STOP	-1
 #define SIG_D10V_EXIT	-2
 #define SIG_D10V_BUS    -3
+
+/* TODO: Resolve conflicts with common headers.  */
+#undef SEXT8
+#undef SEXT16
+#undef SEXT32
+#undef MASK32
 
 #define SEXT3(x)	((((x)&0x7)^(~3))+4)	
 

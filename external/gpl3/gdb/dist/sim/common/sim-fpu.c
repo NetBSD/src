@@ -1107,7 +1107,7 @@ sim_fpu_add (sim_fpu *f,
 
     /* sign? */
     f->class = sim_fpu_class_number;
-    if ((signed64) f->fraction >= 0)
+    if (((signed64) f->fraction) >= 0)
       f->sign = 0;
     else
       {
@@ -1261,7 +1261,7 @@ sim_fpu_sub (sim_fpu *f,
 
     /* sign? */
     f->class = sim_fpu_class_number;
-    if ((signed64) f->fraction >= 0)
+    if (((signed64) f->fraction) >= 0)
       f->sign = 0;
     else
       {

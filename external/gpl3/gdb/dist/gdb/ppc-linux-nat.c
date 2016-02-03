@@ -26,8 +26,6 @@
 #include "regcache.h"
 #include "target.h"
 #include "linux-nat.h"
-
-#include <stdint.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <sys/user.h>
@@ -46,57 +44,7 @@
 #include "elf/common.h"
 #include "auxv.h"
 
-/* This sometimes isn't defined.  */
-#ifndef PT_ORIG_R3
-#define PT_ORIG_R3 34
-#endif
-#ifndef PT_TRAP
-#define PT_TRAP 40
-#endif
-
-/* The PPC_FEATURE_* defines should be provided by <asm/cputable.h>.
-   If they aren't, we can provide them ourselves (their values are fixed
-   because they are part of the kernel ABI).  They are used in the AT_HWCAP
-   entry of the AUXV.  */
-#ifndef PPC_FEATURE_CELL
-#define PPC_FEATURE_CELL 0x00010000
-#endif
-#ifndef PPC_FEATURE_BOOKE
-#define PPC_FEATURE_BOOKE 0x00008000
-#endif
-#ifndef PPC_FEATURE_HAS_DFP
-#define PPC_FEATURE_HAS_DFP	0x00000400  /* Decimal Floating Point.  */
-#endif
-
-/* Glibc's headers don't define PTRACE_GETVRREGS so we cannot use a
-   configure time check.  Some older glibc's (for instance 2.2.1)
-   don't have a specific powerpc version of ptrace.h, and fall back on
-   a generic one.  In such cases, sys/ptrace.h defines
-   PTRACE_GETFPXREGS and PTRACE_SETFPXREGS to the same numbers that
-   ppc kernel's asm/ptrace.h defines PTRACE_GETVRREGS and
-   PTRACE_SETVRREGS to be.  This also makes a configury check pretty
-   much useless.  */
-
-/* These definitions should really come from the glibc header files,
-   but Glibc doesn't know about the vrregs yet.  */
-#ifndef PTRACE_GETVRREGS
-#define PTRACE_GETVRREGS 18
-#define PTRACE_SETVRREGS 19
-#endif
-
-/* PTRACE requests for POWER7 VSX registers.  */
-#ifndef PTRACE_GETVSXREGS
-#define PTRACE_GETVSXREGS 27
-#define PTRACE_SETVSXREGS 28
-#endif
-
-/* Similarly for the ptrace requests for getting / setting the SPE
-   registers (ev0 -- ev31, acc, and spefscr).  See the description of
-   gdb_evrregset_t for details.  */
-#ifndef PTRACE_GETEVRREGS
-#define PTRACE_GETEVRREGS 20
-#define PTRACE_SETEVRREGS 21
-#endif
+#include "nat/ppc-linux.h"
 
 /* Similarly for the hardware watchpoint support.  These requests are used
    when the PowerPC HWDEBUG ptrace interface is not available.  */
@@ -2417,7 +2365,7 @@ ppc_linux_target_wordsize (void)
 
   errno = 0;
   msr = (long) ptrace (PTRACE_PEEKUSER, tid, PT_MSR * 8, 0);
-  if (errno == 0 && msr < 0)
+  if (errno == 0 && ppc64_64bit_inferior_p (msr))
     wordsize = 8;
 #endif
 
