@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.12 2011/06/22 03:56:17 mrg Exp $	*/
+/*	$NetBSD: vi.c,v 1.13 2016/02/03 05:26:16 christos Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.12 2011/06/22 03:56:17 mrg Exp $");
+__RCSID("$NetBSD: vi.c,v 1.13 2016/02/03 05:26:16 christos Exp $");
 #endif
 
 #include "config.h"
@@ -835,7 +835,7 @@ vi_cmd(argcnt, cmd)
 						(cmd[1]=='w' || cmd[1]=='W') &&
 						!isspace((unsigned char)es->cbuf[es->cursor])) {
 					while (isspace((unsigned char)es->cbuf[--ncursor]))
-						;
+						continue;
 					ncursor++;
 				}
 				if (ncursor > es->cursor) {
@@ -865,7 +865,7 @@ vi_cmd(argcnt, cmd)
 			if (es->linelen != 0)
 				es->cursor++;
 			while (putbuf(ybuf, yanklen, 0) == 0 && --argcnt > 0)
-				;
+				continue;
 			if (es->cursor != 0)
 				es->cursor--;
 			if (argcnt != 0)
@@ -1572,15 +1572,16 @@ forwword(argcnt)
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
 		if (is_wordch(es->cbuf[ncursor]))
-			while (is_wordch(es->cbuf[ncursor]) &&
-					ncursor < es->linelen)
+			while (ncursor < es->linelen &&
+			    is_wordch(es->cbuf[ncursor]))
 				ncursor++;
 		else if (!isspace((unsigned char)es->cbuf[ncursor]))
-			while (!is_wordch(es->cbuf[ncursor]) &&
-					!isspace((unsigned char)es->cbuf[ncursor]) &&
-					ncursor < es->linelen)
+			while (ncursor < es->linelen &&
+			    !is_wordch(es->cbuf[ncursor]) &&
+			    !isspace((unsigned char)es->cbuf[ncursor]))
 				ncursor++;
-		while (isspace((unsigned char)es->cbuf[ncursor]) && ncursor < es->linelen)
+		while (ncursor < es->linelen &&
+		    isspace((unsigned char)es->cbuf[ncursor]))
 			ncursor++;
 	}
 	return ncursor;
@@ -1595,17 +1596,17 @@ backword(argcnt)
 	ncursor = es->cursor;
 	while (ncursor > 0 && argcnt--) {
 		while (--ncursor > 0 && isspace((unsigned char)es->cbuf[ncursor]))
-			;
+			continue;
 		if (ncursor > 0) {
 			if (is_wordch(es->cbuf[ncursor]))
 				while (--ncursor >= 0 &&
 				   is_wordch(es->cbuf[ncursor]))
-					;
+					continue;
 			else
 				while (--ncursor >= 0 &&
 				   !is_wordch(es->cbuf[ncursor]) &&
 				   !isspace((unsigned char)es->cbuf[ncursor]))
-					;
+					continue;
 			ncursor++;
 		}
 	}
@@ -1621,18 +1622,18 @@ endword(argcnt)
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
 		while (++ncursor < es->linelen - 1 &&
-				isspace((unsigned char)es->cbuf[ncursor]))
-			;
+		    isspace((unsigned char)es->cbuf[ncursor]))
+			continue;
 		if (ncursor < es->linelen - 1) {
 			if (is_wordch(es->cbuf[ncursor]))
 				while (++ncursor < es->linelen &&
-					  is_wordch(es->cbuf[ncursor]))
-					;
+				    is_wordch(es->cbuf[ncursor]))
+					continue;
 			else
 				while (++ncursor < es->linelen &&
 				   !is_wordch(es->cbuf[ncursor]) &&
 				   !isspace((unsigned char)es->cbuf[ncursor]))
-					;
+					continue;
 			ncursor--;
 		}
 	}
@@ -1647,9 +1648,11 @@ Forwword(argcnt)
 
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
-		while (!isspace((unsigned char)es->cbuf[ncursor]) && ncursor < es->linelen)
+		while (ncursor < es->linelen &&
+		    !isspace((unsigned char)es->cbuf[ncursor]))
 			ncursor++;
-		while (isspace((unsigned char)es->cbuf[ncursor]) && ncursor < es->linelen)
+		while (ncursor < es->linelen &&
+		    isspace((unsigned char)es->cbuf[ncursor]))
 			ncursor++;
 	}
 	return ncursor;
@@ -1664,7 +1667,7 @@ Backword(argcnt)
 	ncursor = es->cursor;
 	while (ncursor > 0 && argcnt--) {
 		while (--ncursor >= 0 && isspace((unsigned char)es->cbuf[ncursor]))
-			;
+			continue;
 		while (ncursor >= 0 && !isspace((unsigned char)es->cbuf[ncursor]))
 			ncursor--;
 		ncursor++;
@@ -1681,12 +1684,12 @@ Endword(argcnt)
 	ncursor = es->cursor;
 	while (ncursor < es->linelen - 1 && argcnt--) {
 		while (++ncursor < es->linelen - 1 &&
-				isspace((unsigned char)es->cbuf[ncursor]))
-			;
+		    isspace((unsigned char)es->cbuf[ncursor]))
+			continue;
 		if (ncursor < es->linelen - 1) {
 			while (++ncursor < es->linelen &&
-					!isspace((unsigned char)es->cbuf[ncursor]))
-				;
+			    !isspace((unsigned char)es->cbuf[ncursor]))
+				continue;
 			ncursor--;
 		}
 	}
