@@ -165,9 +165,23 @@ static struct
     /* Ptr to head of file handler list.  */
     file_handler *first_file_handler;
 
+    /* Next file handler to handle, for the select variant.  To level
+       the fairness across event sources, we serve file handlers in a
+       round-robin-like fashion.  The number and order of the polled
+       file handlers may change between invocations, but this is good
+       enough.  */
+    file_handler *next_file_handler;
+
 #ifdef HAVE_POLL
     /* Ptr to array of pollfd structures.  */
     struct pollfd *poll_fds;
+
+    /* Next file descriptor to handle, for the poll variant.  To level
+       the fairness across event sources, we poll the file descriptors
+       in a round-robin-like fashion.  The number and order of the
+       polled file descriptors may change between invocations, but
+       this is good enough.  */
+    int next_poll_fds_index;
 
     /* Timeout in milliseconds for calls to poll().  */
     int poll_timeout;
@@ -326,14 +340,13 @@ start_event_loop (void)
      processes it.  */
   while (1)
     {
-      volatile struct gdb_exception ex;
       int result = 0;
 
-      TRY_CATCH (ex, RETURN_MASK_ALL)
+      TRY
 	{
 	  result = gdb_do_one_event ();
 	}
-      if (ex.reason < 0)
+      CATCH (ex, RETURN_MASK_ALL)
 	{
 	  exception_print (gdb_stderr, ex);
 
@@ -356,6 +369,8 @@ start_event_loop (void)
 	  /* Maybe better to set a flag to be checked somewhere as to
 	     whether display the prompt or not.  */
 	}
+      END_CATCH
+
       if (result < 0)
 	break;
     }
@@ -493,6 +508,31 @@ create_file_handler (int fd, int mask, handler_func * proc,
   file_ptr->mask = mask;
 }
 
+/* Return the next file handler to handle, and advance to the next
+   file handler, wrapping around if the end of the list is
+   reached.  */
+
+static file_handler *
+get_next_file_handler_to_handle_and_advance (void)
+{
+  file_handler *curr_next;
+
+  /* The first time around, this is still NULL.  */
+  if (gdb_notifier.next_file_handler == NULL)
+    gdb_notifier.next_file_handler = gdb_notifier.first_file_handler;
+
+  curr_next = gdb_notifier.next_file_handler;
+  gdb_assert (curr_next != NULL);
+
+  /* Advance.  */
+  gdb_notifier.next_file_handler = curr_next->next_file;
+  /* Wrap around, if necessary.  */
+  if (gdb_notifier.next_file_handler == NULL)
+    gdb_notifier.next_file_handler = gdb_notifier.first_file_handler;
+
+  return curr_next;
+}
+
 /* Remove the file descriptor FD from the list of monitored fd's: 
    i.e. we don't care anymore about events on the FD.  */
 void
@@ -574,6 +614,17 @@ delete_file_handler (int fd)
      so that it will not fire again.  */
 
   file_ptr->mask = 0;
+
+  /* If this file handler was going to be the next one to be handled,
+     advance to the next's next, if any.  */
+  if (gdb_notifier.next_file_handler == file_ptr)
+    {
+      if (file_ptr->next_file == NULL
+	  && file_ptr == gdb_notifier.first_file_handler)
+	gdb_notifier.next_file_handler = NULL;
+      else
+	get_next_file_handler_to_handle_and_advance ();
+    }
 
   /* Get rid of the file handler in the file handler list.  */
   if (file_ptr == gdb_notifier.first_file_handler)
@@ -671,7 +722,6 @@ gdb_wait_for_event (int block)
 {
   file_handler *file_ptr;
   int num_found = 0;
-  int i;
 
   /* Make sure all output is done before getting another event.  */
   gdb_flush (gdb_stdout);
@@ -742,37 +792,47 @@ gdb_wait_for_event (int block)
 	}
     }
 
+  /* Avoid looking at poll_fds[i]->revents if no event fired.  */
+  if (num_found <= 0)
+    return 0;
+
   /* Run event handlers.  We always run just one handler and go back
      to polling, in case a handler changes the notifier list.  Since
      events for sources we haven't consumed yet wake poll/select
      immediately, no event is lost.  */
 
+  /* To level the fairness across event descriptors, we handle them in
+     a round-robin-like fashion.  The number and order of descriptors
+     may change between invocations, but this is good enough.  */
   if (use_poll)
     {
 #ifdef HAVE_POLL
-      for (i = 0; (i < gdb_notifier.num_fds) && (num_found > 0); i++)
+      int i;
+      int mask;
+
+      while (1)
 	{
+	  if (gdb_notifier.next_poll_fds_index >= gdb_notifier.num_fds)
+	    gdb_notifier.next_poll_fds_index = 0;
+	  i = gdb_notifier.next_poll_fds_index++;
+
+	  gdb_assert (i < gdb_notifier.num_fds);
 	  if ((gdb_notifier.poll_fds + i)->revents)
-	    num_found--;
-	  else
-	    continue;
-
-	  for (file_ptr = gdb_notifier.first_file_handler;
-	       file_ptr != NULL;
-	       file_ptr = file_ptr->next_file)
-	    {
-	      if (file_ptr->fd == (gdb_notifier.poll_fds + i)->fd)
-		break;
-	    }
-
-	  if (file_ptr)
-	    {
-	      int mask = (gdb_notifier.poll_fds + i)->revents;
-
-	      handle_file_event (file_ptr, mask);
-	      return 1;
-	    }
+	    break;
 	}
+
+      for (file_ptr = gdb_notifier.first_file_handler;
+	   file_ptr != NULL;
+	   file_ptr = file_ptr->next_file)
+	{
+	  if (file_ptr->fd == (gdb_notifier.poll_fds + i)->fd)
+	    break;
+	}
+      gdb_assert (file_ptr != NULL);
+
+      mask = (gdb_notifier.poll_fds + i)->revents;
+      handle_file_event (file_ptr, mask);
+      return 1;
 #else
       internal_error (__FILE__, __LINE__,
 		      _("use_poll without HAVE_POLL"));
@@ -780,11 +840,12 @@ gdb_wait_for_event (int block)
     }
   else
     {
-      for (file_ptr = gdb_notifier.first_file_handler;
-	   (file_ptr != NULL) && (num_found > 0);
-	   file_ptr = file_ptr->next_file)
+      /* See comment about even source fairness above.  */
+      int mask = 0;
+
+      do
 	{
-	  int mask = 0;
+	  file_ptr = get_next_file_handler_to_handle_and_advance ();
 
 	  if (FD_ISSET (file_ptr->fd, &gdb_notifier.ready_masks[0]))
 	    mask |= GDB_READABLE;
@@ -792,15 +853,11 @@ gdb_wait_for_event (int block)
 	    mask |= GDB_WRITABLE;
 	  if (FD_ISSET (file_ptr->fd, &gdb_notifier.ready_masks[2]))
 	    mask |= GDB_EXCEPTION;
-
-	  if (!mask)
-	    continue;
-	  else
-	    num_found--;
-
-	  handle_file_event (file_ptr, mask);
-	  return 1;
 	}
+      while (mask == 0);
+
+      handle_file_event (file_ptr, mask);
+      return 1;
     }
   return 0;
 }
@@ -849,6 +906,22 @@ void
 mark_async_signal_handler (async_signal_handler * async_handler_ptr)
 {
   async_handler_ptr->ready = 1;
+}
+
+/* See event-loop.h.  */
+
+void
+clear_async_signal_handler (async_signal_handler *async_handler_ptr)
+{
+  async_handler_ptr->ready = 0;
+}
+
+/* See event-loop.h.  */
+
+int
+async_signal_handler_is_marked (async_signal_handler *async_handler_ptr)
+{
+  return async_handler_ptr->ready;
 }
 
 /* Call all the handlers that are ready.  Returns true if any was

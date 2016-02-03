@@ -683,14 +683,17 @@ extern char etext;
 
 static int profiling_state;
 
+EXTERN_C void _mcleanup (void);
+
 static void
 mcleanup_wrapper (void)
 {
-  extern void _mcleanup (void);
-
   if (profiling_state)
     _mcleanup ();
 }
+
+EXTERN_C void monstartup (unsigned long, unsigned long);
+extern int main ();
 
 static void
 maintenance_set_profile_cmd (char *args, int from_tty,
@@ -704,9 +707,6 @@ maintenance_set_profile_cmd (char *args, int from_tty,
   if (maintenance_profile_p)
     {
       static int profiling_initialized;
-
-      extern void monstartup (unsigned long, unsigned long);
-      extern int main();
 
       if (!profiling_initialized)
 	{

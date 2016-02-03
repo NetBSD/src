@@ -77,5 +77,4 @@ GDBPY_NEW_EVENT_TYPE (thread,
                       "gdb.ThreadEvent",
                       "ThreadEvent",
                       "GDB thread event object",
-                      event_object_type,
-                      /*no qual*/);
+                      event_object_type);

@@ -512,7 +512,7 @@ fetch_instruction (CORE_ADDR addr, instruction_type *it, long long *instr)
 {
   gdb_byte bundle[BUNDLE_LEN];
   int slotnum = (int) (addr & 0x0f) / SLOT_MULTIPLIER;
-  long long template;
+  long long templ;
   int val;
 
   /* Warn about slot numbers greater than 2.  We used to generate
@@ -543,8 +543,8 @@ fetch_instruction (CORE_ADDR addr, instruction_type *it, long long *instr)
     return 0;
 
   *instr = slotN_contents (bundle, slotnum);
-  template = extract_bit_field (bundle, 0, 5);
-  *it = template_encoding_table[(int)template][slotnum];
+  templ = extract_bit_field (bundle, 0, 5);
+  *it = template_encoding_table[(int)templ][slotnum];
 
   if (slotnum == 2 || (slotnum == 1 && *it == L))
     addr += 16;
@@ -642,7 +642,7 @@ ia64_memory_insert_breakpoint (struct gdbarch *gdbarch,
   int slotnum = (int) (addr & 0x0f) / SLOT_MULTIPLIER, shadow_slotnum;
   long long instr_breakpoint;
   int val;
-  int template;
+  int templ;
   struct cleanup *cleanup;
 
   if (slotnum > 2)
@@ -671,8 +671,8 @@ ia64_memory_insert_breakpoint (struct gdbarch *gdbarch,
      a breakpoint on an L-X instruction.  */
   bp_tgt->shadow_len = BUNDLE_LEN - shadow_slotnum;
 
-  template = extract_bit_field (bundle, 0, 5);
-  if (template_encoding_table[template][slotnum] == X)
+  templ = extract_bit_field (bundle, 0, 5);
+  if (template_encoding_table[templ][slotnum] == X)
     {
       /* X unit types can only be used in slot 2, and are actually
 	 part of a 2-slot L-X instruction.  We cannot break at this
@@ -681,7 +681,7 @@ ia64_memory_insert_breakpoint (struct gdbarch *gdbarch,
       gdb_assert (slotnum == 2);
       error (_("Can't insert breakpoint for non-existing slot X"));
     }
-  if (template_encoding_table[template][slotnum] == L)
+  if (template_encoding_table[templ][slotnum] == L)
     {
       /* L unit types can only be used in slot 1.  But the associated
 	 opcode for that instruction is in slot 2, so bump the slot number
@@ -739,7 +739,7 @@ ia64_memory_remove_breakpoint (struct gdbarch *gdbarch,
   int slotnum = (addr & 0x0f) / SLOT_MULTIPLIER, shadow_slotnum;
   long long instr_breakpoint, instr_saved;
   int val;
-  int template;
+  int templ;
   struct cleanup *cleanup;
 
   addr &= ~0x0f;
@@ -761,8 +761,8 @@ ia64_memory_remove_breakpoint (struct gdbarch *gdbarch,
      for addressing the SHADOW_CONTENTS placement.  */
   shadow_slotnum = slotnum;
 
-  template = extract_bit_field (bundle_mem, 0, 5);
-  if (template_encoding_table[template][slotnum] == X)
+  templ = extract_bit_field (bundle_mem, 0, 5);
+  if (template_encoding_table[templ][slotnum] == X)
     {
       /* X unit types can only be used in slot 2, and are actually
 	 part of a 2-slot L-X instruction.  We refuse to insert
@@ -776,7 +776,7 @@ ia64_memory_remove_breakpoint (struct gdbarch *gdbarch,
       do_cleanups (cleanup);
       return -1;
     }
-  if (template_encoding_table[template][slotnum] == L)
+  if (template_encoding_table[templ][slotnum] == L)
     {
       /* L unit types can only be used in slot 1.  But the breakpoint
 	 was actually saved using slot 2, so update the slot number
@@ -829,7 +829,7 @@ ia64_breakpoint_from_pc (struct gdbarch *gdbarch,
   int slotnum = (int) (*pcptr & 0x0f) / SLOT_MULTIPLIER, shadow_slotnum;
   long long instr_fetched;
   int val;
-  int template;
+  int templ;
   struct cleanup *cleanup;
 
   if (slotnum > 2)
@@ -857,13 +857,13 @@ ia64_breakpoint_from_pc (struct gdbarch *gdbarch,
 
   /* Check for L type instruction in slot 1, if present then bump up the slot
      number to the slot 2.  */
-  template = extract_bit_field (bundle, 0, 5);
-  if (template_encoding_table[template][slotnum] == X)
+  templ = extract_bit_field (bundle, 0, 5);
+  if (template_encoding_table[templ][slotnum] == X)
     {
       gdb_assert (slotnum == 2);
       error (_("Can't insert breakpoint for non-existing slot X"));
     }
-  if (template_encoding_table[template][slotnum] == L)
+  if (template_encoding_table[templ][slotnum] == L)
     {
       gdb_assert (slotnum == 1);
       slotnum = 2;

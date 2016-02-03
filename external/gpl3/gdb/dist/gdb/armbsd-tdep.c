@@ -98,7 +98,9 @@ armbsd_supply_gregset (const struct regset *regset,
 static const struct regset armbsd_gregset =
 {
   NULL,
-  armbsd_supply_gregset
+  armbsd_supply_gregset,
+  NULL,
+  REGSET_VARIABLE_SIZE
 };
 
 static const struct regset armbsd_fpregset =

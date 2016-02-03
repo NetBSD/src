@@ -238,6 +238,7 @@
 #define _bfd_XXi_swap_debugdir_in			_bfd_pex64i_swap_debugdir_in
 #define _bfd_XXi_swap_debugdir_out			_bfd_pex64i_swap_debugdir_out
 #define _bfd_XXi_write_codeview_record			_bfd_pex64i_write_codeview_record
+#define _bfd_XXi_slurp_codeview_record			_bfd_pex64i_slurp_codeview_record
 
 #elif defined COFF_WITH_pep
 
@@ -272,6 +273,7 @@
 #define _bfd_XXi_swap_debugdir_in			_bfd_pepi_swap_debugdir_in
 #define _bfd_XXi_swap_debugdir_out			_bfd_pepi_swap_debugdir_out
 #define _bfd_XXi_write_codeview_record			_bfd_pepi_write_codeview_record
+#define _bfd_XXi_slurp_codeview_record			_bfd_pepi_slurp_codeview_record
 
 #else /* !COFF_WITH_pep */
 
@@ -306,6 +308,7 @@
 #define _bfd_XXi_swap_debugdir_in			_bfd_pei_swap_debugdir_in
 #define _bfd_XXi_swap_debugdir_out			_bfd_pei_swap_debugdir_out
 #define _bfd_XXi_write_codeview_record			_bfd_pei_write_codeview_record
+#define _bfd_XXi_slurp_codeview_record			_bfd_pei_slurp_codeview_record
 
 #endif /* !COFF_WITH_pep */
 
@@ -351,6 +354,7 @@ bfd_boolean _bfd_XXi_final_link_postscript (bfd *, struct coff_final_link_info *
 void        _bfd_XXi_swap_debugdir_in (bfd *, void *, void *);
 unsigned    _bfd_XXi_swap_debugdir_out (bfd *, void *, void *);
 unsigned    _bfd_XXi_write_codeview_record (bfd *, file_ptr, CODEVIEW_INFO *);
+CODEVIEW_INFO * _bfd_XXi_slurp_codeview_record (bfd * abfd, file_ptr where, unsigned long length, CODEVIEW_INFO *cvinfo);
 
 /* The following are needed only for ONE of pe or pei, but don't
    otherwise vary; peicode.h fixes up ifdefs but we provide the

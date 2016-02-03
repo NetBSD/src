@@ -334,16 +334,78 @@ mips_linux_new_process (void)
    Mark the watch registers as changed, so the threads' copies will
    be updated.  */
 
-static struct arch_lwp_info *
-mips_linux_new_thread (void)
+static void
+mips_linux_new_thread (struct lwp_info *lwp)
 {
   struct arch_lwp_info *info = xcalloc (1, sizeof (*info));
 
   info->watch_registers_changed = 1;
 
-  return info;
+  lwp->arch_private = info;
 }
 
+/* Create a new mips_watchpoint and add it to the list.  */
+
+static void
+mips_add_watchpoint (struct arch_process_info *private, CORE_ADDR addr,
+		     int len, int watch_type)
+{
+  struct mips_watchpoint *new_watch;
+  struct mips_watchpoint **pw;
+
+  new_watch = xmalloc (sizeof (struct mips_watchpoint));
+  new_watch->addr = addr;
+  new_watch->len = len;
+  new_watch->type = watch_type;
+  new_watch->next = NULL;
+
+  pw = &private->current_watches;
+  while (*pw != NULL)
+    pw = &(*pw)->next;
+  *pw = new_watch;
+}
+
+/* Hook to call when a new fork is attached.  */
+
+static void
+mips_linux_new_fork (struct process_info *parent,
+			struct process_info *child)
+{
+  struct arch_process_info *parent_private;
+  struct arch_process_info *child_private;
+  struct mips_watchpoint *wp;
+
+  /* These are allocated by linux_add_process.  */
+  gdb_assert (parent->priv != NULL
+	      && parent->priv->arch_private != NULL);
+  gdb_assert (child->priv != NULL
+	      && child->priv->arch_private != NULL);
+
+  /* Linux kernel before 2.6.33 commit
+     72f674d203cd230426437cdcf7dd6f681dad8b0d
+     will inherit hardware debug registers from parent
+     on fork/vfork/clone.  Newer Linux kernels create such tasks with
+     zeroed debug registers.
+
+     GDB core assumes the child inherits the watchpoints/hw
+     breakpoints of the parent, and will remove them all from the
+     forked off process.  Copy the debug registers mirrors into the
+     new process so that all breakpoints and watchpoints can be
+     removed together.  The debug registers mirror will become zeroed
+     in the end before detaching the forked off process, thus making
+     this compatible with older Linux kernels too.  */
+
+  parent_private = parent->priv->arch_private;
+  child_private = child->priv->arch_private;
+
+  child_private->watch_readback_valid = parent_private->watch_readback_valid;
+  child_private->watch_readback = parent_private->watch_readback;
+
+  for (wp = parent_private->current_watches; wp != NULL; wp = wp->next)
+    mips_add_watchpoint (child_private, wp->addr, wp->len, wp->type);
+
+  child_private->watch_mirror = parent_private->watch_mirror;
+}
 /* This is the implementation of linux_target_ops method
    prepare_to_resume.  If the watch regs have changed, update the
    thread's copies.  */
@@ -353,19 +415,19 @@ mips_linux_prepare_to_resume (struct lwp_info *lwp)
 {
   ptid_t ptid = ptid_of (get_lwp_thread (lwp));
   struct process_info *proc = find_process_pid (ptid_get_pid (ptid));
-  struct arch_process_info *private = proc->private->arch_private;
+  struct arch_process_info *priv = proc->priv->arch_private;
 
   if (lwp->arch_private->watch_registers_changed)
     {
       /* Only update the watch registers if we have set or unset a
 	 watchpoint already.  */
-      if (mips_linux_watch_get_num_valid (&private->watch_mirror) > 0)
+      if (mips_linux_watch_get_num_valid (&priv->watch_mirror) > 0)
 	{
 	  /* Write the mirrored watch register values.  */
 	  int tid = ptid_get_lwp (ptid);
 
 	  if (-1 == ptrace (PTRACE_SET_WATCH_REGS, tid,
-			    &private->watch_mirror))
+			    &priv->watch_mirror))
 	    perror_with_name ("Couldn't write watch register");
 	}
 
@@ -395,10 +457,8 @@ mips_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
 		   int len, struct raw_breakpoint *bp)
 {
   struct process_info *proc = current_process ();
-  struct arch_process_info *private = proc->private->arch_private;
+  struct arch_process_info *priv = proc->priv->arch_private;
   struct pt_watch_regs regs;
-  struct mips_watchpoint *new_watch;
-  struct mips_watchpoint **pw;
   int pid;
   long lwpid;
   enum target_hw_bp_type watch_type;
@@ -406,17 +466,17 @@ mips_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
 
   lwpid = lwpid_of (current_thread);
   if (!mips_linux_read_watch_registers (lwpid,
-					&private->watch_readback,
-					&private->watch_readback_valid,
+					&priv->watch_readback,
+					&priv->watch_readback_valid,
 					0))
     return -1;
 
   if (len <= 0)
     return -1;
 
-  regs = private->watch_readback;
+  regs = priv->watch_readback;
   /* Add the current watches.  */
-  mips_linux_watch_populate_regs (private->current_watches, &regs);
+  mips_linux_watch_populate_regs (priv->current_watches, &regs);
 
   /* Now try to add the new watch.  */
   watch_type = raw_bkpt_type_to_target_hw_bp_type (type);
@@ -425,18 +485,9 @@ mips_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
     return -1;
 
   /* It fit.  Stick it on the end of the list.  */
-  new_watch = xmalloc (sizeof (struct mips_watchpoint));
-  new_watch->addr = addr;
-  new_watch->len = len;
-  new_watch->type = watch_type;
-  new_watch->next = NULL;
+  mips_add_watchpoint (priv, addr, len, watch_type);
 
-  pw = &private->current_watches;
-  while (*pw != NULL)
-    pw = &(*pw)->next;
-  *pw = new_watch;
-
-  private->watch_mirror = regs;
+  priv->watch_mirror = regs;
 
   /* Only update the threads of this process.  */
   pid = pid_of (proc);
@@ -453,7 +504,7 @@ mips_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
 		   int len, struct raw_breakpoint *bp)
 {
   struct process_info *proc = current_process ();
-  struct arch_process_info *private = proc->private->arch_private;
+  struct arch_process_info *priv = proc->priv->arch_private;
 
   int deleted_one;
   int pid;
@@ -465,7 +516,7 @@ mips_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
   /* Search for a known watch that matches.  Then unlink and free it.  */
   watch_type = raw_bkpt_type_to_target_hw_bp_type (type);
   deleted_one = 0;
-  pw = &private->current_watches;
+  pw = &priv->current_watches;
   while ((w = *pw))
     {
       if (w->addr == addr && w->len == len && w->type == watch_type)
@@ -483,11 +534,11 @@ mips_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
 
   /* At this point watch_readback is known to be valid because we
      could not have added the watch without reading it.  */
-  gdb_assert (private->watch_readback_valid == 1);
+  gdb_assert (priv->watch_readback_valid == 1);
 
-  private->watch_mirror = private->watch_readback;
-  mips_linux_watch_populate_regs (private->current_watches,
-				  &private->watch_mirror);
+  priv->watch_mirror = priv->watch_readback;
+  mips_linux_watch_populate_regs (priv->current_watches,
+				  &priv->watch_mirror);
 
   /* Only update the threads of this process.  */
   pid = pid_of (proc);
@@ -503,21 +554,21 @@ static int
 mips_stopped_by_watchpoint (void)
 {
   struct process_info *proc = current_process ();
-  struct arch_process_info *private = proc->private->arch_private;
+  struct arch_process_info *priv = proc->priv->arch_private;
   int n;
   int num_valid;
   long lwpid = lwpid_of (current_thread);
 
   if (!mips_linux_read_watch_registers (lwpid,
-					&private->watch_readback,
-					&private->watch_readback_valid,
+					&priv->watch_readback,
+					&priv->watch_readback_valid,
 					1))
     return 0;
 
-  num_valid = mips_linux_watch_get_num_valid (&private->watch_readback);
+  num_valid = mips_linux_watch_get_num_valid (&priv->watch_readback);
 
   for (n = 0; n < MAX_DEBUG_REGISTER && n < num_valid; n++)
-    if (mips_linux_watch_get_watchhi (&private->watch_readback, n)
+    if (mips_linux_watch_get_watchhi (&priv->watch_readback, n)
 	& (R_MASK | W_MASK))
       return 1;
 
@@ -531,7 +582,7 @@ static CORE_ADDR
 mips_stopped_data_address (void)
 {
   struct process_info *proc = current_process ();
-  struct arch_process_info *private = proc->private->arch_private;
+  struct arch_process_info *priv = proc->priv->arch_private;
   int n;
   int num_valid;
   long lwpid = lwpid_of (current_thread);
@@ -543,28 +594,28 @@ mips_stopped_data_address (void)
      triggered.  */
 
   if (!mips_linux_read_watch_registers (lwpid,
-					&private->watch_readback,
-					&private->watch_readback_valid,
+					&priv->watch_readback,
+					&priv->watch_readback_valid,
 					0))
     return 0;
 
-  num_valid = mips_linux_watch_get_num_valid (&private->watch_readback);
+  num_valid = mips_linux_watch_get_num_valid (&priv->watch_readback);
 
   for (n = 0; n < MAX_DEBUG_REGISTER && n < num_valid; n++)
-    if (mips_linux_watch_get_watchhi (&private->watch_readback, n)
+    if (mips_linux_watch_get_watchhi (&priv->watch_readback, n)
 	& (R_MASK | W_MASK))
       {
 	CORE_ADDR t_low, t_hi;
 	int t_irw;
 	struct mips_watchpoint *watch;
 
-	t_low = mips_linux_watch_get_watchlo (&private->watch_readback, n);
+	t_low = mips_linux_watch_get_watchlo (&priv->watch_readback, n);
 	t_irw = t_low & IRW_MASK;
-	t_hi = (mips_linux_watch_get_watchhi (&private->watch_readback, n)
+	t_hi = (mips_linux_watch_get_watchhi (&priv->watch_readback, n)
 		| IRW_MASK);
 	t_low &= ~(CORE_ADDR)t_hi;
 
-	for (watch = private->current_watches;
+	for (watch = priv->current_watches;
 	     watch != NULL;
 	     watch = watch->next)
 	  {
@@ -845,6 +896,7 @@ struct linux_target_ops the_low_target = {
   NULL, /* siginfo_fixup */
   mips_linux_new_process,
   mips_linux_new_thread,
+  mips_linux_new_fork,
   mips_linux_prepare_to_resume
 };
 

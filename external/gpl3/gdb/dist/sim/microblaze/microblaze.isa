@@ -261,19 +261,19 @@ INSTRUCTION(ncput,
             INST_TYPE_R1_IMM12,
             PC += INST_SIZE) 
 
-INSTRUCTION(or,
+INSTRUCTION(microblaze_or,
 	    0x20,
             INST_TYPE_RD_RA_RB,
 	    RD = RA | RB;
 	    PC += INST_SIZE)
 
-INSTRUCTION(and,
+INSTRUCTION(microblaze_and,
 	    0x21,
             INST_TYPE_RD_RA_RB,
 	    RD = RA & RB;
 	    PC += INST_SIZE)
 
-INSTRUCTION(xor,
+INSTRUCTION(microblaze_xor,
 	    0x22,
             INST_TYPE_RD_RA_RB,
 	    RD = RA ^ RB;

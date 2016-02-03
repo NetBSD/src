@@ -212,6 +212,7 @@
  frame-older
  frame-newer
  frame-sal
+ frame-read-register
  frame-read-var
  frame-select
  newest-frame
@@ -271,6 +272,7 @@
  objfile?
  objfile-valid?
  objfile-filename
+ objfile-progspace
  objfile-pretty-printers
  set-objfile-pretty-printers!
  current-objfile

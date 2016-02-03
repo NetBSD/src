@@ -20,8 +20,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef _SIM_ALU_H_
-#define _SIM_ALU_H_
+#ifndef SIM_ALU_H
+#define SIM_ALU_H
 
 #include "symcat.h"
 

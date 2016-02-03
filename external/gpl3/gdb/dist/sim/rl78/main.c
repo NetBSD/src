@@ -68,7 +68,7 @@ main (int argc, char **argv)
 
   xmalloc_set_program_name (argv[0]);
 
-  while ((o = getopt (argc, argv, "tvdr:D:")) != -1)
+  while ((o = getopt (argc, argv, "tvdr:D:M:")) != -1)
     {
       switch (o)
 	{
@@ -87,6 +87,27 @@ main (int argc, char **argv)
 	case 'D':
 	  dump_counts_filename = optarg;
 	  break;
+	case 'M':
+	  if (strcmp (optarg, "g10") == 0)
+	    {
+	      rl78_g10_mode = 1;
+	      g13_multiply = 0;
+	      g14_multiply = 0;
+	      mem_set_mirror (0, 0xf8000, 4096);
+	    }
+	  if (strcmp (optarg, "g13") == 0)
+	    {
+	      rl78_g10_mode = 0;
+	      g13_multiply = 1;
+	      g14_multiply = 0;
+	    }
+	  if (strcmp (optarg, "g14") == 0)
+	    {
+	      rl78_g10_mode = 0;
+	      g13_multiply = 0;
+	      g14_multiply = 1;
+	    }
+	  break;
 	case '?':
 	  {
 	    fprintf (stderr,
@@ -96,6 +117,7 @@ main (int argc, char **argv)
 		     "\t-t\t\t- trace.\n"
 		     "\t-d\t\t- disassemble.\n"
 		     "\t-r <bytes>\t- ram size.\n"
+		     "\t-M <mcu>\t- mcu type, default none, allowed: g10,g13,g14\n"
 		     "\t-D <filename>\t- dump cycle count histogram\n");
 	    exit (1);
 	  }

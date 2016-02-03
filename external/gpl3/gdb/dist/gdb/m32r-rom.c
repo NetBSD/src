@@ -447,7 +447,7 @@ m32r_upload_command (char *args, int from_tty)
 
       myIPaddress = skip_spaces (myIPaddress);
 
-      if (!strncmp (myIPaddress, "0.0.", 4))	/* empty */
+      if (startswith (myIPaddress, "0.0."))	/* empty */
 	error (_("Please use 'set board-address' to "
 		 "set the M32R-EVA board's IP address."));
       if (strchr (myIPaddress, '('))

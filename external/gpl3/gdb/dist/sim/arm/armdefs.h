@@ -17,6 +17,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define FALSE 0
 #define TRUE 1
@@ -25,22 +26,10 @@
 #define LOWHIGH 1
 #define HIGHLOW 2
 
-#ifndef __STDC__
-typedef char *VoidStar;
-#endif
-
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
 typedef uint32_t ARMword;
 typedef int32_t ARMsword;
 typedef uint64_t ARMdword;
 typedef int64_t ARMsdword;
-#else
-typedef unsigned int ARMword;	/* must be 32 bits wide */
-typedef signed int ARMsword;
-typedef unsigned long long ARMdword;	/* Must be at least 64 bits wide.  */
-typedef signed long long ARMsdword;
-#endif
 typedef struct ARMul_State ARMul_State;
 
 typedef unsigned ARMul_CPInits (ARMul_State * state);
@@ -59,6 +48,25 @@ typedef unsigned ARMul_CPReads (ARMul_State * state, unsigned reg,
 				ARMword * value);
 typedef unsigned ARMul_CPWrites (ARMul_State * state, unsigned reg,
 				 ARMword value);
+
+typedef double ARMdval;	/* FIXME: Must be a 64-bit floating point type.  */
+typedef float  ARMfval;	/* FIXME: Must be a 32-bit floating point type.  */
+
+typedef union
+{
+  ARMword  uword[2];
+  ARMsword sword[2];
+  ARMfval  fval[2];
+  ARMdword dword;
+  ARMdval  dval;
+} ARM_VFP_reg;
+
+#define VFP_fval(N)  (state->VFP_Reg[(N)>> 1].fval[(N) & 1])
+#define VFP_uword(N) (state->VFP_Reg[(N)>> 1].uword[(N) & 1])
+#define VFP_sword(N) (state->VFP_Reg[(N)>> 1].sword[(N) & 1])
+
+#define VFP_dval(N)  (state->VFP_Reg[(N)].dval)
+#define VFP_dword(N) (state->VFP_Reg[(N)].dword)
 
 struct ARMul_State
 {
@@ -149,6 +157,9 @@ struct ARMul_State
   unsigned is_iWMMXt;		/* Are we emulating an iWMMXt co-processor ?  */
   unsigned is_ep9312;		/* Are we emulating a Cirrus Maverick co-processor ?  */
   unsigned verbose;		/* Print various messages like the banner */
+
+  ARM_VFP_reg  VFP_Reg[32];     /* Advanced SIMD registers.  */
+  ARMword      FPSCR;		/* Floating Point Status Register.  */
 };
 
 #define ResetPin NresetSig

@@ -142,11 +142,11 @@ static reloc_howto_type elf_mn10300_howto_table[] =
   /* Dummy relocation.  Does nothing.  */
   HOWTO (R_MN10300_NONE,
 	 0,
-	 2,
-	 16,
+	 3,
+	 0,
 	 FALSE,
 	 0,
-	 complain_overflow_bitfield,
+	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_MN10300_NONE",
 	 FALSE,
@@ -806,7 +806,13 @@ mn10300_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_MN10300_MAX);
+  if (r_type >= R_MN10300_MAX)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised MN10300 reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_MN10300_NONE;
+    }
   cache_ptr->howto = elf_mn10300_howto_table + r_type;
 }
 

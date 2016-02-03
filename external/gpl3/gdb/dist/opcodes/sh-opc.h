@@ -415,7 +415,7 @@ const sh_opcode_info sh_table[] =
 
 /* 0000000000101000 clrmac              */{"clrmac",{0},{HEX_0,HEX_0,HEX_2,HEX_8}, arch_sh_up},
 
-/* 0000000001001000 clrs                */{"clrs",{0},{HEX_0,HEX_0,HEX_4,HEX_8}, arch_sh_up},
+/* 0000000001001000 clrs                */{"clrs",{0},{HEX_0,HEX_0,HEX_4,HEX_8}, arch_sh3_nommu_up},
 
 /* 0000000000001000 clrt                */{"clrt",{0},{HEX_0,HEX_0,HEX_0,HEX_8}, arch_sh_up},
 
@@ -683,7 +683,7 @@ const sh_opcode_info sh_table[] =
 
 /* 11001111i8*1.... or.b #<imm>,@(R0,GBR)*/{"or.b",{A_IMM,A_R0_GBR},{HEX_C,HEX_F,IMM0_8}, arch_sh_up},
 
-/* 0000nnnn10000011 pref @<REG_N>       */{"pref",{A_IND_N},{HEX_0,REG_N,HEX_8,HEX_3}, arch_sh2a_nofpu_or_sh4_nommu_nofpu_up},
+/* 0000nnnn10000011 pref @<REG_N>       */{"pref",{A_IND_N},{HEX_0,REG_N,HEX_8,HEX_3}, arch_sh2a_nofpu_or_sh3_nommu_up},
 
 /* 0000nnnn11010011 prefi @<REG_N>      */{"prefi",{A_IND_N},{HEX_0,REG_N,HEX_D,HEX_3}, arch_sh4a_nofpu_up},
 
@@ -702,7 +702,7 @@ const sh_opcode_info sh_table[] =
 /* 0000000010011000 setdmx              */{"setdmx",{0},{HEX_0,HEX_0,HEX_9,HEX_8}, arch_sh4al_dsp_up},
 /* 0000000011001000 setdmy              */{"setdmy",{0},{HEX_0,HEX_0,HEX_C,HEX_8}, arch_sh4al_dsp_up},
 
-/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh_up},
+/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up},
 /* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up},
 
 /* 0100nnnn00010100 setrc <REG_N>       */{"setrc",{A_REG_N},{HEX_4,REG_N,HEX_1,HEX_4}, arch_sh_dsp_up},

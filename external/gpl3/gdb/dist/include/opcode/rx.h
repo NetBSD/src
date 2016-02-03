@@ -23,6 +23,10 @@
    analyzer, and the disassembler.  Given an opcode data source,
    it decodes the next opcode into the following structures.  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
   RX_AnySize = 0,
@@ -212,3 +216,7 @@ typedef struct
    registers.  32..47 are condition codes.  */
 
 int rx_decode_opcode (unsigned long, RX_Opcode_Decoded *, int (*)(void *), void *);
+
+#ifdef __cplusplus
+}
+#endif

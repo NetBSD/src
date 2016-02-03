@@ -30,7 +30,8 @@ gdb_install_guile_utils
 gdb_install_guile_module
 
 # We use "." here instead of ":" so that this works on win32 too.
-gdb_test "guile (print (parameter-value \"directories\"))" "$srcdir/$subdir.\\\$cdir.\\\$cwd"
+set escaped_directory [string_to_regexp "$srcdir/$subdir"]
+gdb_test "guile (print (parameter-value \"directories\"))" "$escaped_directory.\\\$cdir.\\\$cwd"
 
 # Test a simple boolean parameter, and parameter? while we're at it.
 

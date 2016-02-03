@@ -311,8 +311,12 @@ _bfd_look_for_bfd_in_cache (bfd *arch_bfd, file_ptr filepos)
       struct ar_cache *entry = (struct ar_cache *) htab_find (hash_table, &m);
       if (!entry)
 	return NULL;
-      else
-	return entry->arbfd;
+
+      /* Unfortunately this flag is set after checking that we have
+	 an archive, and checking for an archive means one element has
+	 sneaked into the cache.  */
+      entry->arbfd->no_export = arch_bfd->no_export;
+      return entry->arbfd;
     }
   else
     return NULL;
@@ -375,10 +379,27 @@ _bfd_add_bfd_to_archive_cache (bfd *arch_bfd, file_ptr filepos, bfd *new_elt)
 }
 
 static bfd *
-_bfd_find_nested_archive (bfd *arch_bfd, const char *filename)
+open_nested_file (const char *filename, bfd *archive)
+{
+  const char *target;
+  bfd *n_bfd;
+
+  target = NULL;
+  if (!archive->target_defaulted)
+    target = archive->xvec->name;
+  n_bfd = bfd_openr (filename, target);
+  if (n_bfd != NULL)
+    {
+      n_bfd->lto_output = archive->lto_output;
+      n_bfd->no_export = archive->no_export;
+    }
+  return n_bfd;
+}
+
+static bfd *
+find_nested_archive (const char *filename, bfd *arch_bfd)
 {
   bfd *abfd;
-  const char *target;
 
   /* PR 15140: Don't allow a nested archive pointing to itself.  */
   if (filename_cmp (filename, arch_bfd->filename) == 0)
@@ -394,10 +415,7 @@ _bfd_find_nested_archive (bfd *arch_bfd, const char *filename)
       if (filename_cmp (filename, abfd->filename) == 0)
 	return abfd;
     }
-  target = NULL;
-  if (!arch_bfd->target_defaulted)
-    target = arch_bfd->xvec->name;
-  abfd = bfd_openr (filename, target);
+  abfd = open_nested_file (filename, arch_bfd);
   if (abfd)
     {
       abfd->archive_next = arch_bfd->nested_archives;
@@ -626,12 +644,12 @@ bfd *
 _bfd_get_elt_at_filepos (bfd *archive, file_ptr filepos)
 {
   struct areltdata *new_areldata;
-  bfd *n_nfd;
+  bfd *n_bfd;
   char *filename;
 
-  n_nfd = _bfd_look_for_bfd_in_cache (archive, filepos);
-  if (n_nfd)
-    return n_nfd;
+  n_bfd = _bfd_look_for_bfd_in_cache (archive, filepos);
+  if (n_bfd)
+    return n_bfd;
 
   if (0 > bfd_seek (archive, filepos, SEEK_SET))
     return NULL;
@@ -643,8 +661,6 @@ _bfd_get_elt_at_filepos (bfd *archive, file_ptr filepos)
 
   if (bfd_is_thin_archive (archive))
     {
-      const char *target;
-
       /* This is a proxy entry for an external file.  */
       if (! IS_ABSOLUTE_PATH (filename))
 	{
@@ -660,7 +676,7 @@ _bfd_get_elt_at_filepos (bfd *archive, file_ptr filepos)
 	{
 	  /* This proxy entry refers to an element of a nested archive.
 	     Locate the member of that archive and return a bfd for it.  */
-	  bfd *ext_arch = _bfd_find_nested_archive (archive, filename);
+	  bfd *ext_arch = find_nested_archive (filename, archive);
 
 	  if (ext_arch == NULL
 	      || ! bfd_check_format (ext_arch, bfd_archive))
@@ -668,57 +684,60 @@ _bfd_get_elt_at_filepos (bfd *archive, file_ptr filepos)
 	      free (new_areldata);
 	      return NULL;
 	    }
-	  n_nfd = _bfd_get_elt_at_filepos (ext_arch, new_areldata->origin);
-	  if (n_nfd == NULL)
+	  n_bfd = _bfd_get_elt_at_filepos (ext_arch, new_areldata->origin);
+	  if (n_bfd == NULL)
 	    {
 	      free (new_areldata);
 	      return NULL;
 	    }
-	  n_nfd->proxy_origin = bfd_tell (archive);
-	  return n_nfd;
+	  n_bfd->proxy_origin = bfd_tell (archive);
+	  return n_bfd;
 	}
+
       /* It's not an element of a nested archive;
 	 open the external file as a bfd.  */
-      target = NULL;
-      if (!archive->target_defaulted)
-	target = archive->xvec->name;
-      n_nfd = bfd_openr (filename, target);
-      if (n_nfd == NULL)
+      n_bfd = open_nested_file (filename, archive);
+      if (n_bfd == NULL)
 	bfd_set_error (bfd_error_malformed_archive);
     }
   else
     {
-      n_nfd = _bfd_create_empty_archive_element_shell (archive);
+      n_bfd = _bfd_create_empty_archive_element_shell (archive);
     }
 
-  if (n_nfd == NULL)
+  if (n_bfd == NULL)
     {
       free (new_areldata);
       return NULL;
     }
 
-  n_nfd->proxy_origin = bfd_tell (archive);
+  n_bfd->proxy_origin = bfd_tell (archive);
 
   if (bfd_is_thin_archive (archive))
     {
-      n_nfd->origin = 0;
+      n_bfd->origin = 0;
     }
   else
     {
-      n_nfd->origin = n_nfd->proxy_origin;
-      n_nfd->filename = xstrdup (filename);
+      n_bfd->origin = n_bfd->proxy_origin;
+      n_bfd->filename = xstrdup (filename);
     }
 
-  n_nfd->arelt_data = new_areldata;
+  n_bfd->arelt_data = new_areldata;
 
-  /* Copy BFD_COMPRESS and BFD_DECOMPRESS flags.  */
-  n_nfd->flags |= archive->flags & (BFD_COMPRESS | BFD_DECOMPRESS);
+  /* Copy BFD_COMPRESS, BFD_DECOMPRESS and BFD_COMPRESS_GABI flags.  */
+  n_bfd->flags |= archive->flags & (BFD_COMPRESS
+				    | BFD_DECOMPRESS
+				    | BFD_COMPRESS_GABI);
 
-  if (_bfd_add_bfd_to_archive_cache (archive, filepos, n_nfd))
-    return n_nfd;
+  /* Copy is_linker_input.  */
+  n_bfd->is_linker_input = archive->is_linker_input;
+
+  if (_bfd_add_bfd_to_archive_cache (archive, filepos, n_bfd))
+    return n_bfd;
 
   free (new_areldata);
-  n_nfd->arelt_data = NULL;
+  n_bfd->arelt_data = NULL;
   return NULL;
 }
 

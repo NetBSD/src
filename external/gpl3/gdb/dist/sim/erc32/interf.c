@@ -1,30 +1,26 @@
-/*
- * This file is part of SIS.
- * 
- * SIS, SPARC instruction simulator V1.6 Copyright (C) 1995 Jiri Gaisler,
- * European Space Agency
- * 
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 3 of the License, or (at your option)
- * any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- * 
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, see <http://www.gnu.org/licenses/>.
- * 
- */
+/* This file is part of SIS (SPARC instruction simulator)
+
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Contributed by Jiri Gaisler, European Space Agency
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <sys/fcntl.h>
 #include "sis.h"
 #include "libiberty.h"
@@ -41,7 +37,6 @@ extern struct disassemble_info dinfo;
 extern struct pstate sregs;
 extern struct estate ebase;
 
-extern int	current_target_byte_order;
 extern int      ctrl_c;
 extern int      nfp;
 extern int      ift;
@@ -76,8 +71,10 @@ run_sim(sregs, icount, dis)
 	(*sim_callback->printf_filtered) (sim_callback, "resuming at %x\n",
 					  sregs->pc);
    init_stdio();
-   sregs->starttime = time(NULL);
+   sregs->starttime = get_time();
    irq = 0;
+   if ((sregs->pc != 0) && (ebase.simtime == 0))
+	boot_init();
    while (!sregs->err_mode & (icount > 0)) {
 
 	sregs->fhold = 0;
@@ -94,9 +91,8 @@ run_sim(sregs, icount, dis)
             if (sregs->pc == 0 || sregs->npc == 0)
                 printf ("bogus pc or npc\n");
 #endif
-        mexc = memory_read(sregs->asi, sregs->pc, &sregs->inst,
-                           2, &sregs->hold);
-#if 1	/* DELETE ME! for debugging purposes only */
+        mexc = memory_iread (sregs->pc, &sregs->inst, &sregs->hold);
+#if 0	/* DELETE ME! for debugging purposes only */
         if (sis_verbose > 2)
             printf("pc %x, np %x, sp %x, fp %x, wm %x, cw %x, i %08x\n",
                    sregs->pc, sregs->npc,
@@ -124,7 +120,7 @@ run_sim(sregs, icount, dis)
                         sim_halt();
 			restore_stdio();
 			clearerr(stdin);
-			return (BPT_HIT);
+			return BPT_HIT;
 		    } else
 			dispatch_instruction(sregs);
 		}
@@ -141,37 +137,24 @@ run_sim(sregs, icount, dis)
 	}
     }
     sim_halt();
-    sregs->tottime += time(NULL) - sregs->starttime;
+    sregs->tottime += get_time() - sregs->starttime;
     restore_stdio();
     clearerr(stdin);
     if (sregs->err_mode)
 	error_mode(sregs->pc);
     if (sregs->err_mode)
-	return (ERROR);
+	return ERROR;
     if (sregs->bphit) {
 	if (sis_verbose)
 	    (*sim_callback->printf_filtered) (sim_callback,
 					      "HW BP hit at %x\n", sregs->pc);
-	return (BPT_HIT);
+	return BPT_HIT;
     }
     if (ctrl_c) {
 	ctrl_c = 0;
-	return (CTRL_C);
+	return CTRL_C;
     }
-    return (TIME_OUT);
-}
-
-void
-sim_set_callbacks (ptr)
-     host_callback *ptr;
-{
-  sim_callback = ptr;
-}
-
-void
-sim_size (memsize)
-     int memsize;
-{
+    return TIME_OUT;
 }
 
 SIM_DESC
@@ -265,7 +248,11 @@ sim_open (kind, callback, abfd, argv)
     sregs.freq = freq ? freq : 15;
     termsave = fcntl(0, F_GETFL, 0);
     INIT_DISASSEMBLE_INFO(dinfo, stdout,(fprintf_ftype)fprintf);
+#ifdef HOST_LITTLE_ENDIAN
+    dinfo.endian = BFD_ENDIAN_LITTLE;
+#else
     dinfo.endian = BFD_ENDIAN_BIG;
+#endif
     reset_all();
     ebase.simtime = 0;
     init_sim();
@@ -324,14 +311,10 @@ sim_store_register(sd, regno, value, length)
     unsigned char  *value;
     int length;
 {
-    /* FIXME: Review the computation of regval.  */
     int regval;
-    if (current_target_byte_order == BIG_ENDIAN)
-	regval = (value[0] << 24) | (value[1] << 16)
+
+    regval = (value[0] << 24) | (value[1] << 16)
 		 | (value[2] << 8) | value[3];
-    else
-	regval = (value[3] << 24) | (value[2] << 16)
-		 | (value[1] << 8) | value[0];
     set_regi(&sregs, regno, regval);
     return length;
 }
@@ -349,23 +332,25 @@ sim_fetch_register(sd, regno, buf, length)
 }
 
 int
-sim_write(sd, mem, buf, length)
-     SIM_DESC sd;
-    SIM_ADDR             mem;
-    const unsigned char  *buf;
-    int             length;
+sim_write (SIM_DESC sd, SIM_ADDR mem, const unsigned char *buf, int length)
 {
-    return (sis_memory_write(mem, buf, length));
+    int i, len;
+
+    for (i = 0; i < length; i++) {
+	sis_memory_write ((mem + i) ^ EBT, &buf[i], 1);
+    }
+    return length;
 }
 
 int
-sim_read(sd, mem, buf, length)
-     SIM_DESC sd;
-     SIM_ADDR mem;
-     unsigned char *buf;
-     int length;
+sim_read (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf, int length)
 {
-    return (sis_memory_read(mem, buf, length));
+    int i, len;
+
+    for (i = 0; i < length; i++) {
+	sis_memory_read ((mem + i) ^ EBT, &buf[i], 1);
+    }
+    return length;
 }
 
 void
@@ -465,15 +450,6 @@ sim_resume(SIM_DESC sd, int step, int siggnal)
     simstat = run_sim(&sregs, UINT64_MAX, 0);
 
     if (sis_gdb_break) flush_windows ();
-}
-
-int
-sim_trace (sd)
-     SIM_DESC sd;
-{
-  /* FIXME: unfinished */
-  sim_resume (sd, 0, 0);
-  return 1;
 }
 
 void

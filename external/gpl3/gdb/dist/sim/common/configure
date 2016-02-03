@@ -633,6 +633,8 @@ SED
 LIBTOOL
 PLUGINS_FALSE
 PLUGINS_TRUE
+zlibinc
+zlibdir
 CATOBJEXT
 GENCAT
 INSTOBJEXT
@@ -743,7 +745,7 @@ sim_environment'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_zlib
+with_system_zlib
 enable_plugins
 enable_shared
 enable_static
@@ -1396,21 +1398,25 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
-  --enable-sim-bswap			Use Host specific BSWAP instruction.
-  --enable-sim-cflags=opts		Extra CFLAGS for use in building simulator
-  --enable-sim-debug=opts		Enable debugging flags
-  --enable-sim-stdio			Specify whether to use stdio for console input/output.
-  --enable-sim-trace=opts		Enable tracing flags
-  --enable-sim-profile=opts		Enable profiling flags
+  --enable-sim-bswap      Use Host specific BSWAP instruction
+  --enable-sim-cflags=opts
+                          Extra CFLAGS for use in building simulator
+  --enable-sim-debug=opts Enable debugging flags (for developers of the sim
+                          itself)
+  --enable-sim-stdio      Specify whether to use stdio for console
+                          input/output
+  --enable-sim-trace=opts Enable tracing of simulated programs
+  --enable-sim-profile=opts
+                          Enable profiling flags
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-zlib             include zlib support (auto/yes/no) default=auto
+  --with-system-zlib      use installed libz
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
-  --with-pkgversion=PKG   Use PKG in the version string in place of "GDB"
+  --with-pkgversion=PKG   Use PKG in the version string in place of "SIM"
   --with-bugurl=URL       Direct users to URL to report a bug
 
 Some influential environment variables:
@@ -6541,6 +6547,8 @@ else
 fi
 
 
+
+
 # Some of the common include files depend on bfd.h, and bfd.h checks
 # that config.h is included first by testing that the PACKAGE macro
 # is defined.
@@ -6951,88 +6959,21 @@ fi
 # BFD conditionally uses zlib, so we must link it in if libbfd does, by
 # using the same condition.
 
-  # See if the user specified whether he wants zlib support or not.
+  # Use the system's zlib library.
+  zlibdir="-L\$(top_builddir)/../zlib"
+  zlibinc="-I\$(top_srcdir)/../zlib"
 
-# Check whether --with-zlib was given.
-if test "${with_zlib+set}" = set; then :
-  withval=$with_zlib;
-else
-  with_zlib=auto
-fi
-
-
-  if test "$with_zlib" != "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zlibVersion" >&5
-$as_echo_n "checking for library containing zlibVersion... " >&6; }
-if test "${ac_cv_search_zlibVersion+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char zlibVersion ();
-int
-main ()
-{
-return zlibVersion ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' z; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+# Check whether --with-system-zlib was given.
+if test "${with_system_zlib+set}" = set; then :
+  withval=$with_system_zlib; if test x$with_system_zlib = xyes ; then
+    zlibdir=
+    zlibinc=
   fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_zlibVersion=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_zlibVersion+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_zlibVersion+set}" = set; then :
-
-else
-  ac_cv_search_zlibVersion=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_zlibVersion" >&5
-$as_echo "$ac_cv_search_zlibVersion" >&6; }
-ac_res=$ac_cv_search_zlibVersion
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  for ac_header in zlib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "zlib.h" "ac_cv_header_zlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_zlib_h" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_ZLIB_H 1
-_ACEOF
 
 fi
 
-done
 
-fi
 
-    if test "$with_zlib" = "yes" -a "$ac_cv_header_zlib_h" != "yes"; then
-      as_fn_error "zlib (libz) library was explicitly requested but not found" "$LINENO" 5
-    fi
-  fi
 
 
 # BFD uses libdl when when plugins enabled.
@@ -10623,7 +10564,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10626 "configure"
+#line 10567 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10729,7 +10670,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10732 "configure"
+#line 10673 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11065,10 +11006,10 @@ fi
 # Check whether --enable-sim-trace was given.
 if test "${enable_sim_trace+set}" = set; then :
   enableval=$enable_sim_trace; case "${enableval}" in
-  yes)	sim_trace="-DTRACE=1 -DWITH_TRACE=-1";;
-  no)	sim_trace="-DTRACE=0 -DWITH_TRACE=0";;
+  yes)	sim_trace="-DWITH_TRACE=-1";;
+  no)	sim_trace="-DWITH_TRACE=0";;
   [-0-9]*)
-	sim_trace="-DTRACE='(${enableval})' -DWITH_TRACE='(${enableval})'";;
+	sim_trace="-DWITH_TRACE='(${enableval})'";;
   [[:lower:]]*)
 	sim_trace=""
 	for x in `echo "$enableval" | sed -e "s/,/ /g"`; do
@@ -11125,7 +11066,7 @@ if test "${with_pkgversion+set}" = set; then :
       *)   PKGVERSION="($withval) " ;;
      esac
 else
-  PKGVERSION="(GDB) "
+  PKGVERSION="(SIM) "
 
 fi
 
@@ -11209,14 +11150,6 @@ _ACEOF
 
 sim_link_files=
 sim_link_links=
-
-sim_link_links=tconfig.h
-if test -f ${srcdir}/tconfig.in
-then
-  sim_link_files=tconfig.in
-else
-  sim_link_files=../common/tconfig.in
-fi
 
 # targ-vals.def points to the libc macro description file.
 case "${target}" in
