@@ -95,19 +95,19 @@ gdb_test "set scheduler-locking off"
 # Make sure we're exercising the paths we want to.
 gdb_test "set debug infrun 1"
 
-gdb_test \
-    "step" \
-    ".*need to step-over.*resume \\(step=1.*signal arrived while stepping over breakpoint.*switching back to stepped thread.*stepped to a different line.*callme.*" \
-    "step"
+set test "step"
+gdb_test_sequence $test $test {
+    "need to step-over"
+    "resume \\(step=1"
+    "signal arrived while stepping over breakpoint"
+    "switching back to stepped thread"
+    "stepped to a different line"
+    "callme"
+}
 
 set cnt_after [get_value "args\[$my_number\]" "get count after step"]
 
 # Test that GDB doesn't inadvertently resume the stepped thread when a
 # signal arrives while stepping over a breakpoint in another thread.
 
-set test "stepped thread under control"
-if { $cnt_before + 1 == $cnt_after } {
-    pass $test
-} else {
-    fail $test
-}
+gdb_assert { $cnt_before + 1 == $cnt_after } "stepped thread under control"

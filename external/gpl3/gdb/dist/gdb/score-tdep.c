@@ -737,8 +737,10 @@ score3_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   return pc;
 }
 
+/* Implement the stack_frame_destroyed_p gdbarch method. */
+
 static int
-score7_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR cur_pc)
+score7_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR cur_pc)
 {
   inst_t *inst = score7_fetch_inst (gdbarch, cur_pc, NULL);
 
@@ -761,8 +763,10 @@ score7_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR cur_pc)
     return 0;
 }
 
+/* Implement the stack_frame_destroyed_p gdbarch method. */
+
 static int
-score3_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR cur_pc)
+score3_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR cur_pc)
 {
   CORE_ADDR pc = cur_pc;
   inst_t *inst
@@ -1494,8 +1498,8 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     case bfd_mach_score7:
       set_gdbarch_breakpoint_from_pc (gdbarch, score7_breakpoint_from_pc);
       set_gdbarch_skip_prologue (gdbarch, score7_skip_prologue);
-      set_gdbarch_in_function_epilogue_p (gdbarch,
-					  score7_in_function_epilogue_p);
+      set_gdbarch_stack_frame_destroyed_p (gdbarch,
+					   score7_stack_frame_destroyed_p);
       set_gdbarch_register_name (gdbarch, score7_register_name);
       set_gdbarch_num_regs (gdbarch, SCORE7_NUM_REGS);
       /* Core file support.  */
@@ -1506,8 +1510,8 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     case bfd_mach_score3:
       set_gdbarch_breakpoint_from_pc (gdbarch, score3_breakpoint_from_pc);
       set_gdbarch_skip_prologue (gdbarch, score3_skip_prologue);
-      set_gdbarch_in_function_epilogue_p (gdbarch,
-					  score3_in_function_epilogue_p);
+      set_gdbarch_stack_frame_destroyed_p (gdbarch,
+					   score3_stack_frame_destroyed_p);
       set_gdbarch_register_name (gdbarch, score3_register_name);
       set_gdbarch_num_regs (gdbarch, SCORE3_NUM_REGS);
       break;

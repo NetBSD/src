@@ -19,6 +19,9 @@
 #ifndef HOSTIO_H
 #define HOSTIO_H
 
+/* Per-connection setup.  */
+extern void hostio_handle_new_gdb_connection (void);
+
 /* Functions from hostio.c.  */
 extern int handle_vFile (char *, int, int *);
 

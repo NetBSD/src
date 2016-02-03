@@ -550,7 +550,7 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc_in,
 {
   int lo;
   int hi;
-  int new;
+  int newobj;
   struct objfile *objfile;
   struct minimal_symbol *msymbol;
   struct minimal_symbol *best_symbol = NULL;
@@ -617,15 +617,15 @@ lookup_minimal_symbol_by_pc_section_1 (CORE_ADDR pc_in,
 		{
 		  /* pc is still strictly less than highest address.  */
 		  /* Note "new" will always be >= lo.  */
-		  new = (lo + hi) / 2;
-		  if ((MSYMBOL_VALUE_RAW_ADDRESS (&msymbol[new]) >= pc)
-		      || (lo == new))
+		  newobj = (lo + hi) / 2;
+		  if ((MSYMBOL_VALUE_RAW_ADDRESS (&msymbol[newobj]) >= pc)
+		      || (lo == newobj))
 		    {
-		      hi = new;
+		      hi = newobj;
 		    }
 		  else
 		    {
-		      lo = new;
+		      lo = newobj;
 		    }
 		}
 
@@ -975,7 +975,7 @@ prim_record_minimal_symbol_full (const char *name, int name_len, int copy_name,
 				 struct objfile *objfile)
 {
   struct obj_section *obj_section;
-  struct msym_bunch *new;
+  struct msym_bunch *newobj;
   struct minimal_symbol *msymbol;
 
   /* Don't put gcc_compiled, __gnu_compiled_cplus, and friends into
@@ -996,15 +996,15 @@ prim_record_minimal_symbol_full (const char *name, int name_len, int copy_name,
       --name_len;
     }
 
-  if (ms_type == mst_file_text && strncmp (name, "__gnu_compiled", 14) == 0)
+  if (ms_type == mst_file_text && startswith (name, "__gnu_compiled"))
     return (NULL);
 
   if (msym_bunch_index == BUNCH_SIZE)
     {
-      new = XCNEW (struct msym_bunch);
+      newobj = XCNEW (struct msym_bunch);
       msym_bunch_index = 0;
-      new->next = msym_bunch;
-      msym_bunch = new;
+      newobj->next = msym_bunch;
+      msym_bunch = newobj;
     }
   msymbol = &msym_bunch->contents[msym_bunch_index];
   MSYMBOL_SET_LANGUAGE (msymbol, language_auto,

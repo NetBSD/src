@@ -40,7 +40,7 @@
 #include <time.h>
 #include "gdb_bfd.h"
 #include "cli/cli-utils.h"
-
+#include "symfile.h"
 #include "serial.h"
 
 /* Descriptor for I/O to remote machine.  */
@@ -362,7 +362,8 @@ m32r_open (const char *args, int from_tty)
 {
   struct hostent *host_ent;
   struct sockaddr_in server_addr;
-  char *port_str, hostname[256];
+  char hostname[256];
+  const char *port_str;
   int port;
   int i, n;
   int yes = 1;
@@ -1265,9 +1266,9 @@ m32r_load (struct target_ops *self, const char *args, int from_tty)
 
       if (*arg != '-')
 	filename = arg;
-      else if (strncmp (arg, "-quiet", strlen (arg)) == 0)
+      else if (startswith ("-quiet", arg))
 	quiet = 1;
-      else if (strncmp (arg, "-nostart", strlen (arg)) == 0)
+      else if (startswith ("-nostart", arg))
 	nostart = 1;
       else
 	error (_("Unknown option `%s'"), arg);

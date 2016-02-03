@@ -176,6 +176,9 @@ void free_so (struct so_list *so);
 /* Return address of first so_list entry in master shared object list.  */
 struct so_list *master_so_list (void);
 
+/* Find main executable binary file.  */
+extern char *exec_file_find (char *in_pathname, int *fd);
+
 /* Find shared library binary file.  */
 extern char *solib_find (char *in_pathname, int *fd);
 

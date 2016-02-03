@@ -21,7 +21,7 @@
 if { [skip_btrace_tests] } { return -1 }
 
 # start inferior
-standard_testfile x86-record_goto.S
+standard_testfile record_goto.c
 if [prepare_for_testing gcore.exp $testfile $srcfile] {
     return -1
 }

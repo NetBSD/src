@@ -212,6 +212,14 @@ typedef struct disassemble_info
   /* Command line options specific to the target disassembler.  */
   char * disassembler_options;
 
+  /* If non-zero then try not disassemble beyond this address, even if
+     there are values left in the buffer.  This address is the address
+     of the nearest symbol forwards from the start of the disassembly,
+     and it is assumed that it lies on the boundary between instructions.
+     If an instruction spans this address then this is an error in the
+     file being disassembled.  */
+  bfd_vma stop_vma;
+
 } disassemble_info;
 
 
@@ -236,6 +244,7 @@ extern int print_insn_dlx 		(bfd_vma, disassemble_info *);
 extern int print_insn_epiphany		(bfd_vma, disassemble_info *);
 extern int print_insn_fr30		(bfd_vma, disassemble_info *);
 extern int print_insn_frv		(bfd_vma, disassemble_info *);
+extern int print_insn_ft32  		(bfd_vma, disassemble_info *);
 extern int print_insn_h8300		(bfd_vma, disassemble_info *);
 extern int print_insn_h8300h		(bfd_vma, disassemble_info *);
 extern int print_insn_h8300s		(bfd_vma, disassemble_info *);
@@ -306,9 +315,13 @@ extern int print_insn_z8001		(bfd_vma, disassemble_info *);
 extern int print_insn_z8002		(bfd_vma, disassemble_info *);
 extern int print_insn_rx		(bfd_vma, disassemble_info *);
 extern int print_insn_rl78		(bfd_vma, disassemble_info *);
+extern int print_insn_rl78_g10		(bfd_vma, disassemble_info *);
+extern int print_insn_rl78_g13		(bfd_vma, disassemble_info *);
+extern int print_insn_rl78_g14		(bfd_vma, disassemble_info *);
 
 extern disassembler_ftype arc_get_disassembler (void *);
 extern disassembler_ftype cris_get_disassembler (bfd *);
+extern disassembler_ftype rl78_get_disassembler (bfd *);
 
 extern void print_aarch64_disassembler_options (FILE *);
 extern void print_i386_disassembler_options (FILE *);

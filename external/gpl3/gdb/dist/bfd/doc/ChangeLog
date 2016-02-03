@@ -1,3 +1,13 @@
+2015-06-21  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am: Expand $<.
+	* Makefile.in: Regenerate.
+
+2015-02-11  Pedro Alves  <palves@redhat.com>
+
+	* Makefile.am (libbfd.h, libcoff.h): Close extern "C" scope.
+	* Makefile.in: Regenerate.
+
 2015-01-12  Bernd Edlinger  <bernd.edlinger@hotmail.de>
 	    Alan Modra  <amodra@gmail.com>
 

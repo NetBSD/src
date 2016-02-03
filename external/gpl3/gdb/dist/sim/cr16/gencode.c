@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
+#include <string.h>
 #include "ansidecl.h"
 #include "opcode/cr16.h"
 
@@ -43,7 +44,7 @@ main (int argc, char *argv[])
 
 
 static void
-write_header ()
+write_header (void)
 {
   int i = 0; 
 
@@ -52,9 +53,8 @@ write_header ()
 
   /* Loop over instruction table until a full match is found.  */
   for ( ; i < NUMOPCODES; i++)
-  {
-   printf("void OP_%X_%X (void);\t\t/* %s */\n",cr16_instruction[i].match, (32 - cr16_instruction[i].match_bits), cr16_instruction[i].mnemonic);
-  }
+    printf("void OP_%lX_%X (void);\t\t/* %s */\n", cr16_instruction[i].match,
+	   (32 - cr16_instruction[i].match_bits), cr16_instruction[i].mnemonic);
 }
 
 
@@ -62,7 +62,7 @@ write_header ()
    ready to be filled out.  */
 
 static void
-write_template ()
+write_template (void)
 {
   int i = 0,j, k, flags;
 
@@ -73,7 +73,8 @@ write_template ()
     {
       if (cr16_instruction[i].size != 0)
 {
-  printf("/* %s */\nvoid\nOP_%X_%X ()\n{\n",cr16_instruction[i].mnemonic,cr16_instruction[i].match,(32 - cr16_instruction[i].match_bits));
+  printf("/* %s */\nvoid\nOP_%lX_%X ()\n{\n", cr16_instruction[i].mnemonic,
+	 cr16_instruction[i].match, (32 - cr16_instruction[i].match_bits));
   
   /* count operands.  */
   j = 0;
@@ -110,18 +111,20 @@ write_template ()
 long Opcodes[512];
 static int curop=0;
 
+#if 0
+static void
 check_opcodes( long op)
 {
   int i;
 
   for (i=0;i<curop;i++)
     if (Opcodes[i] == op)
-      fprintf(stderr,"DUPLICATE OPCODES: %x\n",op);
+      fprintf(stderr,"DUPLICATE OPCODES: %lx\n", op);
 }
-
+#endif
 
 static void
-write_opcodes ()
+write_opcodes (void)
 {
   int i = 0, j = 0, k;
   
@@ -134,7 +137,7 @@ write_opcodes ()
     {
       if (cr16_instruction[i].size != 0)
 {
-           printf ("  { \"%s\", %ld, %d, %d, %d, \"OP_%X_%X\", OP_%X_%X, ", 
+           printf ("  { \"%s\", %u, %d, %ld, %u, \"OP_%lX_%X\", OP_%lX_%X, ", 
                     cr16_instruction[i].mnemonic, cr16_instruction[i].size, 
                     cr16_instruction[i].match_bits, cr16_instruction[i].match,
                      cr16_instruction[i].flags, ((BIN(cr16_instruction[i].match, cr16_instruction[i].match_bits))>>(cr16_instruction[i].match_bits)),
@@ -170,5 +173,5 @@ write_opcodes ()
  printf ("},\n");
         }
     }
-  printf (" { \"NULL\",1,8,0,0,\"OP_0_20\",OP_0_20,0,{0,0,0}},\n};\n");
+  printf (" { \"NULL\",1,8,0,0,\"OP_0_20\",OP_0_20,0,{{0,0},{0,0},{0,0},{0,0}}},\n};\n");
 }

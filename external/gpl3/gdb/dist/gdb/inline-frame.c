@@ -225,6 +225,8 @@ inline_frame_sniffer (const struct frame_unwind *self,
     {
       if (block_inlined_p (cur_block))
 	depth++;
+      else if (BLOCK_FUNCTION (cur_block) != NULL)
+	break;
 
       cur_block = BLOCK_SUPERBLOCK (cur_block);
     }
@@ -331,6 +333,9 @@ skip_inline_frames (ptid_t ptid)
 	      else
 		break;
 	    }
+	  else if (BLOCK_FUNCTION (cur_block) != NULL)
+	    break;
+
 	  cur_block = BLOCK_SUPERBLOCK (cur_block);
 	}
     }

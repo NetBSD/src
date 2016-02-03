@@ -510,8 +510,6 @@
 @V@/gdb/amd64-linux-nat.c @V@/gdb/amd64-lnat.c
 @V@/gdb/hppa-linux-tdep.c @V@/gdb/palnxtdep.c
 @V@/gdb/hppa-linux-nat.c @V@/gdb/palnxnat.c
-@V@/gdb/hppa-hpux-nat.c @V@/gdb/pahpuxnat.c
-@V@/gdb/hppa-hpux-tdep.c @V@/gdb/pahpuxtdep.c
 @V@/gdb/hppanbsd-nat.c @V@/gdb/panbsd-nat.c
 @V@/gdb/hppanbsd-tdep.c @V@/gdb/panbsd-tdep.c
 @V@/gdb/amd64-windows-nat.c @V@/gdb/amd64-wnat.c

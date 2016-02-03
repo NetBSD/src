@@ -39,7 +39,9 @@ set remote_python_file [gdb_remote_download host \
 set quoted_name "\"$remote_python_file\""
 
 if {[build_executable $testfile.exp $testfile $srcfile \
-	 [list debug additional_flags=-DSCRIPT_FILE=$quoted_name]] == -1} {
+	 [list debug \
+	      additional_flags=-I${srcdir}/../../include \
+	      additional_flags=-DSCRIPT_FILE=$quoted_name]] == -1} {
     return -1
 }
 
@@ -51,13 +53,51 @@ gdb_start
 if { [skip_python_tests] } { continue }
 
 gdb_reinitialize_dir $srcdir/$subdir
-gdb_test_no_output "set auto-load safe-path ${remote_python_file}" "set auto-load safe-path"
+
+# Try first with a restrictive safe-path.
+
+gdb_test_no_output "set auto-load safe-path /restricted" \
+    "set restricted auto-load safe-path"
 gdb_load ${binfile}
 
-# Verify gdb loaded the script.
-gdb_test "info auto-load python-scripts" "Yes.*${testfile}.py.*"
+# Verify gdb did not load the scripts.
+set test_name "verify scripts not loaded"
+gdb_test_multiple "info auto-load python-scripts" "$test_name" {
+    -re "Yes.*${testfile}.py.*Yes.*inlined-script.*$gdb_prompt $" {
+	fail "$test_name"
+    }
+    -re "No.*${testfile}.py.*No.*inlined-script.*$gdb_prompt $" {
+	pass "$test_name"
+    }
+}
+
+# Try again with a working safe-path.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+gdb_test_no_output "set auto-load safe-path ${remote_python_file}:${binfile}" \
+    "set auto-load safe-path"
+gdb_load ${binfile}
+
+# Verify gdb loaded each script and they appear once in the list.
+set test_name "verify scripts loaded"
+gdb_test_multiple "info auto-load python-scripts" "$test_name" {
+    -re "${testfile}.py.*${testfile}.py.*$gdb_prompt $" {
+	fail "$test_name"
+    }
+    -re "inlined-script.*inlined-script.*$gdb_prompt $" {
+	fail "$test_name"
+    }
+    -re "Yes.*${testfile}.py.*Yes.*inlined-script.*$gdb_prompt $" {
+	pass "$test_name"
+    }
+}
+
 # Again, with a regexp this time.
 gdb_test "info auto-load python-scripts ${testfile}" "Yes.*${testfile}.py.*"
+
 # Again, with a regexp that matches no scripts.
 gdb_test "info auto-load python-scripts no-script-matches-this" \
   "No auto-load scripts matching no-script-matches-this."
@@ -72,3 +112,5 @@ gdb_test "b [gdb_get_line_number {break to inspect} ${testfile}.c ]" \
 gdb_test "continue" ".*Breakpoint.*"
 
 gdb_test "print ss" " = a=<1> b=<2>"
+
+gdb_test "test-cmd 1 2 3" "test-cmd output, arg = 1 2 3"

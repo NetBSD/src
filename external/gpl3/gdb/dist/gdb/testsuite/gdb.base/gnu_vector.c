@@ -17,15 +17,27 @@
 
    Contributed by Ken Werner <ken.werner@de.ibm.com>  */
 
-typedef int __attribute__ ((vector_size (4 * sizeof(int)))) int4;
-typedef unsigned int __attribute__ ((vector_size (4 * sizeof(unsigned int)))) uint4;
-typedef char __attribute__ ((vector_size (4 * sizeof(char)))) char4;
-typedef float __attribute__ ((vector_size (4 * sizeof(float)))) float4;
+#include <stdarg.h>
+#include <stdio.h>
 
-typedef int __attribute__ ((vector_size (2 * sizeof(int)))) int2;
-typedef long long __attribute__ ((vector_size (2 * sizeof(long long)))) longlong2;
-typedef float __attribute__ ((vector_size (2 * sizeof(float)))) float2;
-typedef double __attribute__ ((vector_size (2 * sizeof(double)))) double2;
+#define VECTOR(n, type)					\
+  type __attribute__ ((vector_size (n * sizeof(type))))
+
+typedef VECTOR (8, int) int8;
+
+typedef VECTOR (4, int) int4;
+typedef VECTOR (4, unsigned int) uint4;
+typedef VECTOR (4, char) char4;
+typedef VECTOR (4, float) float4;
+
+typedef VECTOR (2, int) int2;
+typedef VECTOR (2, long long) longlong2;
+typedef VECTOR (2, float) float2;
+typedef VECTOR (2, double) double2;
+
+typedef VECTOR (1, char) char1;
+typedef VECTOR (1, int) int1;
+typedef VECTOR (1, double) double1;
 
 int ia = 2;
 int ib = 1;
@@ -46,18 +58,91 @@ double2 d2 = {1, 2};
 union
 {
   int i;
-  char cv __attribute__ ((vector_size (sizeof (int))));
+  VECTOR (sizeof(int), char) cv;
 } union_with_vector_1;
 
 struct
 {
   int i;
-  char cv __attribute__ ((vector_size (sizeof (int))));
+  VECTOR (sizeof(int), char) cv;
   float4 f4;
 } struct_with_vector_1;
+
+struct just_int2
+{
+  int2 i;
+};
+
+struct two_int2
+{
+  int2 i, j;
+};
+
+
+/* Simple vector-valued function with a few 16-byte vector
+   arguments.  */
+
+int4
+add_some_intvecs (int4 a, int4 b, int4 c)
+{
+  return a + b + c;
+}
+
+/* Many small vector arguments, 4 bytes each.  */
+
+char4
+add_many_charvecs (char4 a, char4 b, char4 c, char4 d, char4 e,
+		   char4 f, char4 g, char4 h, char4 i, char4 j)
+{
+  return (a + b + c + d + e + f + g + h + i + j);
+}
+
+/* Varargs: One fixed and N-1 variable vector arguments.  */
+
+float4
+add_various_floatvecs (int n, float4 a, ...)
+{
+  int i;
+  va_list argp;
+
+  va_start (argp, a);
+  for (i = 1; i < n; i++)
+    a += va_arg (argp, float4);
+  va_end (argp);
+
+  return a;
+}
+
+/* Struct-wrapped vectors (might be passed as if not wrapped).  */
+
+struct just_int2
+add_structvecs (int2 a, struct just_int2 b, struct two_int2 c)
+{
+  struct just_int2 res;
+
+  res.i = a + b.i + c.i + c.j;
+  return res;
+}
+
+/* Single-element vectors (might be treated like scalars).  */
+
+double1
+add_singlevecs (char1 a, int1 b, double1 c)
+{
+  return (double1) {a[0] + b[0] + c[0]};
+}
+
 
 int
 main ()
 {
+  int4 res;
+
+  res = add_some_intvecs (i4a, i4a + i4b, i4b);
+  printf ("%d %d %d %d\n", res[0], res[1], res[2], res[3]);
+
+  res = add_some_intvecs (i4a, i4a + i4b, i4b);
+  printf ("%d %d %d %d\n", res[0], res[1], res[2], res[3]);
+
   return 0;
 }

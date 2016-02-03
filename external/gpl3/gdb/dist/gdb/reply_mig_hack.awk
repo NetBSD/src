@@ -49,7 +49,7 @@ parse_phase == 2 {
   print; next;
 }
 
-parse_phase == 3 && /}/ {
+parse_phase == 3 && /} Request/ {
   # The args structure is over.
   if (num_args > 1)
     parse_phase = 5;
@@ -60,19 +60,36 @@ parse_phase == 3 && /}/ {
   print; next;
 }
 
-parse_phase == 3 {
+parse_phase == 3 && num_args == 0 {
   # The type field for an argument.
+  # This won't be accurate in case of unions being used in the Request struct,
+  # but that doesn't matter, as we'll only be looking at arg_type_code_name[0],
+  # which will not be a union type.
   arg_type_code_name[num_args] = $2;
   sub (/;$/, "", arg_type_code_name[num_args]) # Get rid of the semi-colon
   parse_phase = 4;
   print; next;
 }
 
+parse_phase == 3 && num_args == 1 {
+  # We've got more than one argument (but we don't care what it is).
+  num_args++;
+  print; next;
+}
+
+parse_phase == 3 {
+  # We've know everything we need; now just wait for the end of the Request
+  # struct.
+  print; next;
+}
+
 parse_phase == 4 {
   # The value field for an argument.
+  # This won't be accurate in case of unions being used in the Request struct,
+  # but that doesn't matter, as we'll only be looking at arg_name[0], which
+  # will not be a union type.
   arg_name[num_args] = $2;
   sub (/;$/, "", arg_name[num_args]) # Get rid of the semi-colon
-  arg_type[num_args] = $1;
   num_args++;
   parse_phase = 3;
   print; next;
@@ -109,15 +126,11 @@ parse_phase == 5 && /^#if[ \t]TypeCheck/ {
   print "\t    && In0P->" arg_name[0] " != 0)";
   print "\t  /* Error return, only the error code argument is passed.  */";
   print "\t  {";
-  # Force the function into a type that only takes the first two args, via
-  # the temp variable SFUN (is there another way to correctly do this cast?).
+  # Force the function user_function_name into a type that only takes the first
+  # two arguments.
   # This is possibly bogus, but easier than supplying bogus values for all
   # the other args (we can't just pass 0 for them, as they might not be scalar).
-  printf ("\t    kern_return_t (*sfun)(mach_port_t");
-  for (i = 0; i < num_args; i++)
-    printf (", %s", arg_type[i]);
-  printf (") = %s;\n", user_function_name);
-  print "\t    OutP->RetCode = (*(kern_return_t (*)(mach_port_t, kern_return_t))sfun) (In0P->Head.msgh_request_port, In0P->" arg_name[0] ");";
+  print "\t    OutP->RetCode = (*(kern_return_t (*)(mach_port_t, kern_return_t)) " user_function_name ") (In0P->Head.msgh_request_port, In0P->" arg_name[0] ");";
   print "\t    return;";
   print "\t  }";
   print "";
