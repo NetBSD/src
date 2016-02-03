@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.386 2015/11/06 15:30:59 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.387 2016/02/03 20:33:52 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -129,7 +129,7 @@
 	
 #ifdef SUN4V
 	.macro	SET_MMU_CONTEXTID_SUN4V ctxid,ctx
-	stxa	\ctxid, [\ctx] ASI_MMU;
+	stxa	\ctxid, [\ctx] ASI_MMU_CONTEXTID;
 	.endm
 #endif	
 		

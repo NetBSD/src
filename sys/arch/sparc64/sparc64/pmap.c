@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.300 2015/11/27 13:51:24 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.301 2016/02/03 20:33:52 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2015/11/27 13:51:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2016/02/03 20:33:52 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -157,6 +157,25 @@ static int ctx_alloc(struct pmap *);
 static bool pmap_is_referenced_locked(struct vm_page *);
 
 static void ctx_free(struct pmap *, struct cpu_info *);
+
+/* set dmmu secondary context */
+static __inline void
+dmmu_set_secondary_context(uint ctx)
+{
+	if (!CPU_ISSUN4V)
+		__asm volatile(
+			"stxa %0,[%1]%2;	"
+			"membar #Sync		"
+			: : "r" (ctx), "r" (CTX_SECONDARY), "n" (ASI_DMMU)
+			: "memory");
+	else
+		__asm volatile(
+			"stxa %0,[%1]%2;	"
+			"membar #Sync		"
+			: : "r" (ctx), "r" (CTX_SECONDARY), "n" (ASI_MMU_CONTEXTID)
+			: "memory");
+		
+}
 
 /*
  * Check if any MMU has a non-zero context
