@@ -36,6 +36,10 @@
 #include "inf-ptrace.h"
 
 
+#ifdef PT_GETXSTATE_INFO
+size_t amd64bsd_xsave_len;
+#endif
+
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers (including the floating-point registers).  */
 
@@ -61,6 +65,20 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
       struct fpreg fpregs;
+#ifdef PT_GETXSTATE_INFO
+      char *xstateregs;
+
+      if (amd64bsd_xsave_len != 0)
+	{
+	  xstateregs = alloca (amd64bsd_xsave_len);
+	  if (ptrace (PT_GETXSTATE, ptid_get_pid (inferior_ptid),
+		      (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	    perror_with_name (_("Couldn't get extended state status"));
+
+	  amd64_supply_xsave (regcache, -1, xstateregs);
+	  return;
+	}
+#endif
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
@@ -100,6 +118,24 @@ amd64bsd_store_inferior_registers (struct target_ops *ops,
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
       struct fpreg fpregs;
+#ifdef PT_GETXSTATE_INFO
+      char *xstateregs;
+
+      if (amd64bsd_xsave_len != 0)
+	{
+	  xstateregs = alloca (amd64bsd_xsave_len);
+	  if (ptrace (PT_GETXSTATE, ptid_get_pid (inferior_ptid),
+		      (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	    perror_with_name (_("Couldn't get extended state status"));
+
+	  amd64_collect_xsave (regcache, regnum, xstateregs, 0);
+
+	  if (ptrace (PT_SETXSTATE, ptid_get_pid (inferior_ptid),
+		      (PTRACE_TYPE_ARG3) xstateregs, amd64bsd_xsave_len) == -1)
+	    perror_with_name (_("Couldn't write extended state status"));
+	  return;
+	}
+#endif
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)

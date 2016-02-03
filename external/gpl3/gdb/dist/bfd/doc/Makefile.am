@@ -275,6 +275,9 @@ libbfd.h: $(LIBBFD_H_DEP)
 		./$(MKDOC) -i -f $(srcdir)/proto.str < $$file >> $@ ;; \
 	  esac; \
 	done
+	echo "#ifdef __cplusplus" >> $@
+	echo "}" >> $@
+	echo "#endif" >> $@
 
 LIBCOFF_H_DEP = \
 	$(srcdir)/../libcoff-in.h	\
@@ -294,6 +297,9 @@ libcoff.h: $(LIBCOFF_H_DEP)
 		./$(MKDOC) -i -f $(srcdir)/proto.str < $$file >> $@ ;; \
 	  esac; \
 	done
+	echo "#ifdef __cplusplus" >> $@
+	echo "}" >> $@
+	echo "#endif" >> $@
 
 BFD_H_DEP = \
 	$(srcdir)/../bfd-in.h 		\
