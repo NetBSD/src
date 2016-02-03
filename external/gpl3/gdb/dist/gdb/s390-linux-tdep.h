@@ -29,6 +29,10 @@
 #define HWCAP_S390_TE 1024
 #endif
 
+#ifndef HWCAP_S390_VX
+#define HWCAP_S390_VX 2048
+#endif
+
 /* Register information.  */
 
 /* Program Status Word.  */
@@ -129,8 +133,41 @@
 #define S390_TDB_R13_REGNUM 87
 #define S390_TDB_R14_REGNUM 88
 #define S390_TDB_R15_REGNUM 89
+/* Vector registers.  */
+#define S390_V0_LOWER_REGNUM 90
+#define S390_V1_LOWER_REGNUM 91
+#define S390_V2_LOWER_REGNUM 92
+#define S390_V3_LOWER_REGNUM 93
+#define S390_V4_LOWER_REGNUM 94
+#define S390_V5_LOWER_REGNUM 95
+#define S390_V6_LOWER_REGNUM 96
+#define S390_V7_LOWER_REGNUM 97
+#define S390_V8_LOWER_REGNUM 98
+#define S390_V9_LOWER_REGNUM 99
+#define S390_V10_LOWER_REGNUM 100
+#define S390_V11_LOWER_REGNUM 101
+#define S390_V12_LOWER_REGNUM 102
+#define S390_V13_LOWER_REGNUM 103
+#define S390_V14_LOWER_REGNUM 104
+#define S390_V15_LOWER_REGNUM 105
+#define S390_V16_REGNUM 106
+#define S390_V17_REGNUM 107
+#define S390_V18_REGNUM 108
+#define S390_V19_REGNUM 109
+#define S390_V20_REGNUM 110
+#define S390_V21_REGNUM 111
+#define S390_V22_REGNUM 112
+#define S390_V23_REGNUM 113
+#define S390_V24_REGNUM 114
+#define S390_V25_REGNUM 115
+#define S390_V26_REGNUM 116
+#define S390_V27_REGNUM 117
+#define S390_V28_REGNUM 118
+#define S390_V29_REGNUM 119
+#define S390_V30_REGNUM 120
+#define S390_V31_REGNUM 121
 /* Total.  */
-#define S390_NUM_REGS 90
+#define S390_NUM_REGS 122
 
 /* Special register usage.  */
 #define S390_SP_REGNUM S390_R15_REGNUM
@@ -159,6 +196,8 @@ extern const struct regset s390x_last_break_regset;
 extern const struct regset s390_system_call_regset;
 extern const struct regset s390_tdb_regset;
 #define s390_sizeof_tdbregset 0x100
+extern const struct regset s390_vxrs_low_regset;
+extern const struct regset s390_vxrs_high_regset;
 
 /* GNU/Linux target descriptions.  */
 extern struct target_desc *tdesc_s390_linux32;
@@ -168,9 +207,13 @@ extern struct target_desc *tdesc_s390_linux64;
 extern struct target_desc *tdesc_s390_linux64v1;
 extern struct target_desc *tdesc_s390_linux64v2;
 extern struct target_desc *tdesc_s390_te_linux64;
+extern struct target_desc *tdesc_s390_vx_linux64;
+extern struct target_desc *tdesc_s390_tevx_linux64;
 extern struct target_desc *tdesc_s390x_linux64;
 extern struct target_desc *tdesc_s390x_linux64v1;
 extern struct target_desc *tdesc_s390x_linux64v2;
 extern struct target_desc *tdesc_s390x_te_linux64;
+extern struct target_desc *tdesc_s390x_vx_linux64;
+extern struct target_desc *tdesc_s390x_tevx_linux64;
 
 #endif

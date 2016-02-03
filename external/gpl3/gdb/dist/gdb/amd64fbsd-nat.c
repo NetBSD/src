@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
+#include <sys/user.h>
 #include <machine/reg.h>
 
 #include "fbsd-nat.h"
@@ -150,6 +151,50 @@ amd64fbsd_mourn_inferior (struct target_ops *ops)
   super_mourn_inferior (ops);
 }
 
+/* Implement the to_read_description method.  */
+
+static const struct target_desc *
+amd64fbsd_read_description (struct target_ops *ops)
+{
+#ifdef PT_GETXSTATE_INFO
+  static int xsave_probed;
+  static uint64_t xcr0;
+#endif
+  struct reg regs;
+  int is64;
+
+  if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+    perror_with_name (_("Couldn't get registers"));
+  is64 = (regs.r_cs == GSEL (GUCODE_SEL, SEL_UPL));
+#ifdef PT_GETXSTATE_INFO
+  if (!xsave_probed)
+    {
+      struct ptrace_xstate_info info;
+
+      if (ptrace (PT_GETXSTATE_INFO, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
+	{
+	  amd64bsd_xsave_len = info.xsave_len;
+	  xcr0 = info.xsave_mask;
+	}
+      xsave_probed = 1;
+    }
+
+  if (amd64bsd_xsave_len != 0)
+    {
+      if (is64)
+	return amd64_target_description (xcr0);
+      else
+	return i386_target_description (xcr0);
+    }
+#endif
+  if (is64)
+    return tdesc_amd64;
+  else
+    return tdesc_i386;
+}
+
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_amd64fbsd_nat (void);
 
@@ -180,10 +225,9 @@ _initialize_amd64fbsd_nat (void)
 
   super_mourn_inferior = t->to_mourn_inferior;
   t->to_mourn_inferior = amd64fbsd_mourn_inferior;
+  t->to_read_description = amd64fbsd_read_description;
 
-  t->to_pid_to_exec_file = fbsd_pid_to_exec_file;
-  t->to_find_memory_regions = fbsd_find_memory_regions;
-  add_target (t);
+  fbsd_nat_add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (amd64fbsd_supply_pcb);
@@ -244,24 +288,31 @@ Please report this to <bug-gdb@gnu.org>."),
 
   SC_RBP_OFFSET = offset;
 
-  /* FreeBSD provides a kern.ps_strings sysctl that we can use to
-     locate the sigtramp.  That way we can still recognize a sigtramp
-     if its location is changed in a new kernel.  Of course this is
-     still based on the assumption that the sigtramp is placed
-     directly under the location where the program arguments and
-     environment can be found.  */
+#ifdef KERN_PROC_SIGTRAMP
+  /* Normally signal frames are detected via amd64fbsd_sigtramp_p.
+     However, FreeBSD 9.2 through 10.1 do not include the page holding
+     the signal code in core dumps.  These releases do provide a
+     kern.proc.sigtramp.<pid> sysctl that returns the location of the
+     signal trampoline for a running process.  We fetch the location
+     of the current (gdb) process and use this to identify signal
+     frames in core dumps from these releases.  Note that this only
+     works for core dumps of 64-bit (FreeBSD/amd64) processes and does
+     not handle core dumps of 32-bit (FreeBSD/i386) processes.  */
   {
-    int mib[2];
-    long ps_strings;
+    int mib[4];
+    struct kinfo_sigtramp kst;
     size_t len;
 
     mib[0] = CTL_KERN;
-    mib[1] = KERN_PS_STRINGS;
-    len = sizeof (ps_strings);
-    if (sysctl (mib, 2, &ps_strings, &len, NULL, 0) == 0)
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_SIGTRAMP;
+    mib[3] = getpid ();
+    len = sizeof (kst);
+    if (sysctl (mib, 4, &kst, &len, NULL, 0) == 0)
       {
-	amd64fbsd_sigtramp_start_addr = ps_strings - 32;
-	amd64fbsd_sigtramp_end_addr = ps_strings;
+	amd64fbsd_sigtramp_start_addr = (uintptr_t) kst.ksigtramp_start;
+	amd64fbsd_sigtramp_end_addr = (uintptr_t) kst.ksigtramp_end;
       }
   }
+#endif
 }

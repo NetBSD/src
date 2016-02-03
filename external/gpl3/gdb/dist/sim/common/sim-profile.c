@@ -520,15 +520,8 @@ profile_pc_event (SIM_DESC sd,
 {
   sim_cpu *cpu = (sim_cpu*) data;
   PROFILE_DATA *profile = CPU_PROFILE_DATA (cpu);
-  address_word pc;
+  address_word pc = sim_pc_get (cpu);
   unsigned i;
-  switch (STATE_WATCHPOINTS (sd)->sizeof_pc)
-    {
-    case 2: pc = *(unsigned_2*)(STATE_WATCHPOINTS (sd)->pc) ; break;
-    case 4: pc = *(unsigned_4*)(STATE_WATCHPOINTS (sd)->pc) ; break;
-    case 8: pc = *(unsigned_8*)(STATE_WATCHPOINTS (sd)->pc) ; break;
-    default: pc = 0;
-    }
   i = (pc - PROFILE_PC_START (profile)) >> PROFILE_PC_SHIFT (profile);
   if (i < PROFILE_PC_NR_BUCKETS (profile))
     PROFILE_PC_COUNT (profile) [i] += 1; /* Overflow? */
@@ -547,8 +540,7 @@ profile_pc_init (SIM_DESC sd)
     {
       sim_cpu *cpu = STATE_CPU (sd, n);
       PROFILE_DATA *data = CPU_PROFILE_DATA (cpu);
-      if (CPU_PROFILE_FLAGS (STATE_CPU (sd, n))[PROFILE_PC_IDX]
-	  && STATE_WATCHPOINTS (sd)->pc != NULL)
+      if (CPU_PROFILE_FLAGS (STATE_CPU (sd, n))[PROFILE_PC_IDX])
 	{
 	  int bucket_size;
 	  /* fill in the frequency if not specified */
@@ -571,7 +563,7 @@ profile_pc_init (SIM_DESC sd)
 		    {
 		      /* nr_buckets = (full-address-range / 2) / (bucket_size / 2) */
 		      PROFILE_PC_NR_BUCKETS (data) =
-			((1 << (STATE_WATCHPOINTS (sd)->sizeof_pc) * (8 - 1))
+			((1 << sizeof (sim_cia) * (8 - 1))
 			 / (PROFILE_PC_BUCKET_SIZE (data) / 2));
 		    }
 		  else
@@ -590,7 +582,7 @@ profile_pc_init (SIM_DESC sd)
 	    {
 	      if (PROFILE_PC_END (data) == 0)
 		/* bucket_size = (full-address-range / 2) / (nr_buckets / 2) */
-		bucket_size = ((1 << ((STATE_WATCHPOINTS (sd)->sizeof_pc * 8) - 1))
+		bucket_size = ((1 << ((sizeof (sim_cia) * 8) - 1))
 			       / (PROFILE_PC_NR_BUCKETS (data) / 2));
 	      else
 		bucket_size = ((PROFILE_PC_END (data)

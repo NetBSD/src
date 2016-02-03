@@ -41,6 +41,7 @@
 #include "coff-pe-read.h"
 
 #include "psymtab.h"
+#include "build-id.h"
 
 extern void _initialize_coffread (void);
 
@@ -231,7 +232,7 @@ coff_locate_sections (bfd *abfd, asection *sectp, void *csip)
       csi->textaddr = bfd_section_vma (abfd, sectp);
       csi->textsize += bfd_section_size (abfd, sectp);
     }
-  else if (strncmp (name, ".text", sizeof ".text" - 1) == 0)
+  else if (startswith (name, ".text"))
     {
       csi->textsize += bfd_section_size (abfd, sectp);
     }
@@ -239,7 +240,7 @@ coff_locate_sections (bfd *abfd, asection *sectp, void *csip)
     {
       csi->stabstrsect = sectp;
     }
-  else if (strncmp (name, ".stab", sizeof ".stab" - 1) == 0)
+  else if (startswith (name, ".stab"))
     {
       const char *s;
 
@@ -448,7 +449,7 @@ is_import_fixup_symbol (struct coff_symbol *cs,
     return 0;
 
   /* The name must start with "__fu<digits>__".  */
-  if (strncmp (cs->c_name, "__fu", 4) != 0)
+  if (!startswith (cs->c_name, "__fu"))
     return 0;
   if (! isdigit (cs->c_name[4]))
     return 0;
@@ -605,8 +606,8 @@ coff_symfile_read (struct objfile *objfile, int symfile_flags)
      FIXME: We should use BFD to read the symbol table, and thus avoid
      this problem.  */
   pe_file =
-    strncmp (bfd_get_target (objfile->obfd), "pe", 2) == 0
-    || strncmp (bfd_get_target (objfile->obfd), "epoc-pe", 7) == 0;
+    startswith (bfd_get_target (objfile->obfd), "pe")
+    || startswith (bfd_get_target (objfile->obfd), "epoc-pe");
 
   /* End of warning.  */
 
@@ -671,20 +672,31 @@ coff_symfile_read (struct objfile *objfile, int symfile_flags)
 	     or "_imp_", get rid of the prefix, and search the minimal
 	     symbol in OBJFILE.  Note that 'maintenance print msymbols'
 	     shows that type of these "_imp_XXXX" symbols is mst_data.  */
-	  if (MSYMBOL_TYPE (msym) == mst_data
-	      && (strncmp (name, "__imp_", 6) == 0
-		  || strncmp (name, "_imp_", 5) == 0))
+	  if (MSYMBOL_TYPE (msym) == mst_data)
 	    {
-	      const char *name1 = (name[1] == '_' ? &name[7] : &name[6]);
-	      struct bound_minimal_symbol found;
+	      const char *name1 = NULL;
 
-	      found = lookup_minimal_symbol (name1, NULL, objfile);
-	      /* If found, there are symbols named "_imp_foo" and "foo"
-		 respectively in OBJFILE.  Set the type of symbol "foo"
-		 as 'mst_solib_trampoline'.  */
-	      if (found.minsym != NULL
-		  && MSYMBOL_TYPE (found.minsym) == mst_text)
-		MSYMBOL_TYPE (found.minsym) = mst_solib_trampoline;
+	      if (startswith (name, "_imp_"))
+		name1 = name + 5;
+	      else if (startswith (name, "__imp_"))
+		name1 = name + 6;
+	      if (name1 != NULL)
+		{
+		  int lead = bfd_get_symbol_leading_char (objfile->obfd);
+		  struct bound_minimal_symbol found;
+
+                  if (lead != '\0' && *name1 == lead)
+		    name1 += 1;
+
+		  found = lookup_minimal_symbol (name1, NULL, objfile);
+
+		  /* If found, there are symbols named "_imp_foo" and "foo"
+		     respectively in OBJFILE.  Set the type of symbol "foo"
+		     as 'mst_solib_trampoline'.  */
+		  if (found.minsym != NULL
+		      && MSYMBOL_TYPE (found.minsym) == mst_text)
+		    MSYMBOL_TYPE (found.minsym) = mst_solib_trampoline;
+		}
 	    }
 	}
     }
@@ -727,7 +739,10 @@ coff_symfile_read (struct objfile *objfile, int symfile_flags)
     {
       char *debugfile;
 
-      debugfile = find_separate_debug_file_by_debuglink (objfile);
+      debugfile = find_separate_debug_file_by_buildid (objfile);
+
+      if (debugfile == NULL)
+	debugfile = find_separate_debug_file_by_debuglink (objfile);
       make_cleanup (xfree, debugfile);
 
       if (debugfile)
@@ -773,7 +788,7 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 		  struct objfile *objfile)
 {
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
-  struct context_stack *new;
+  struct context_stack *newobj;
   struct coff_symbol coff_symbol;
   struct coff_symbol *cs = &coff_symbol;
   static struct internal_syment main_sym;
@@ -946,14 +961,14 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 	    }
 	  else if (!SDB_TYPE (cs->c_type)
 		   && cs->c_name[0] == 'L'
-		   && (strncmp (cs->c_name, "LI%", 3) == 0
-		       || strncmp (cs->c_name, "LF%", 3) == 0
-		       || strncmp (cs->c_name, "LC%", 3) == 0
-		       || strncmp (cs->c_name, "LP%", 3) == 0
-		       || strncmp (cs->c_name, "LPB%", 4) == 0
-		       || strncmp (cs->c_name, "LBB%", 4) == 0
-		       || strncmp (cs->c_name, "LBE%", 4) == 0
-		       || strncmp (cs->c_name, "LPBX%", 5) == 0))
+		   && (startswith (cs->c_name, "LI%")
+		       || startswith (cs->c_name, "LF%")
+		       || startswith (cs->c_name, "LC%")
+		       || startswith (cs->c_name, "LP%")
+		       || startswith (cs->c_name, "LPB%")
+		       || startswith (cs->c_name, "LBB%")
+		       || startswith (cs->c_name, "LBE%")
+		       || startswith (cs->c_name, "LPBX%")))
 	    /* At least on a 3b1, gcc generates swbeg and string labels
 	       that look like this.  Ignore them.  */
 	    break;
@@ -1067,9 +1082,9 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 	         context_stack_depth is zero, and complain if not.  */
 
 	      depth = 0;
-	      new = push_context (depth, fcn_start_addr);
+	      newobj = push_context (depth, fcn_start_addr);
 	      fcn_cs_saved.c_name = getsymname (&fcn_sym_saved);
-	      new->name =
+	      newobj->name =
 		process_coff_symbol (&fcn_cs_saved, 
 				     &fcn_aux_saved, objfile);
 	    }
@@ -1092,9 +1107,9 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 		  break;
 		}
 
-	      new = pop_context ();
+	      newobj = pop_context ();
 	      /* Stack must be empty now.  */
-	      if (context_stack_depth > 0 || new == NULL)
+	      if (context_stack_depth > 0 || newobj == NULL)
 		{
 		  complaint (&symfile_complaints,
 			     _("Unmatched .ef symbol(s) ignored "
@@ -1129,8 +1144,8 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 		enter_linenos (fcn_line_ptr, fcn_first_line,
 			       fcn_last_line, objfile);
 
-	      finish_block (new->name, &local_symbols,
-			    new->old_blocks, new->start_addr,
+	      finish_block (newobj->name, &local_symbols,
+			    newobj->old_blocks, newobj->start_addr,
 			    fcn_cs_saved.c_value
 			    + fcn_aux_saved.x_sym.x_misc.x_fsize
 			    + ANOFFSET (objfile->section_offsets,
@@ -1158,8 +1173,8 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 		  break;
 		}
 
-	      new = pop_context ();
-	      if (depth-- != new->depth)
+	      newobj = pop_context ();
+	      if (depth-- != newobj->depth)
 		{
 		  complaint (&symfile_complaints,
 			     _("Mismatched .eb symbol ignored "
@@ -1173,11 +1188,11 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 		    cs->c_value + ANOFFSET (objfile->section_offsets,
 					    SECT_OFF_TEXT (objfile));
 		  /* Make a block for the local symbols within.  */
-		  finish_block (0, &local_symbols, new->old_blocks,
-				new->start_addr, tmpaddr);
+		  finish_block (0, &local_symbols, newobj->old_blocks,
+				newobj->start_addr, tmpaddr);
 		}
 	      /* Now pop locals of block just finished.  */
-	      local_symbols = new->locals;
+	      local_symbols = newobj->locals;
 	    }
 	  break;
 
@@ -2060,7 +2075,7 @@ coff_read_struct_type (int index, int length, int lastsym,
 
   struct type *type;
   struct nextfield *list = 0;
-  struct nextfield *new;
+  struct nextfield *newobj;
   int nfields = 0;
   int n;
   char *name;
@@ -2087,9 +2102,9 @@ coff_read_struct_type (int index, int length, int lastsym,
 	case C_MOU:
 
 	  /* Get space to record the next field's data.  */
-	  new = (struct nextfield *) alloca (sizeof (struct nextfield));
-	  new->next = list;
-	  list = new;
+	  newobj = (struct nextfield *) alloca (sizeof (struct nextfield));
+	  newobj->next = list;
+	  list = newobj;
 
 	  /* Save the data.  */
 	  list->field.name = obstack_copy0 (&objfile->objfile_obstack,
@@ -2104,9 +2119,9 @@ coff_read_struct_type (int index, int length, int lastsym,
 	case C_FIELD:
 
 	  /* Get space to record the next field's data.  */
-	  new = (struct nextfield *) alloca (sizeof (struct nextfield));
-	  new->next = list;
-	  list = new;
+	  newobj = (struct nextfield *) alloca (sizeof (struct nextfield));
+	  newobj->next = list;
+	  list = newobj;
 
 	  /* Save the data.  */
 	  list->field.name = obstack_copy0 (&objfile->objfile_obstack,

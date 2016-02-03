@@ -603,8 +603,8 @@ BEGIN { doc["strerror"] = "\
 Do not use strerror(), instead use safe_strerror()"
     category["strerror"] = ari_regression
     fix("strerror", "gdb/gdb_string.h", 1)
-    fix("strerror", "gdb/mingw-hdep.c", 1)
-    fix("strerror", "gdb/posix-hdep.c", 1)
+    fix("strerror", "gdb/common/mingw-strerror.c", 1)
+    fix("strerror", "gdb/common/posix-strerror.c", 1)
 }
 /(^|[^_[:alnum:]])strerror[[:space:]]*\(/ {
     fail("strerror")

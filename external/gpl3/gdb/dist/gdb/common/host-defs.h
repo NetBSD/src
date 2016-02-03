@@ -19,6 +19,27 @@
 #ifndef HOST_DEFS_H
 #define HOST_DEFS_H
 
+#include <limits.h>
+
+/* Static host-system-dependent parameters for GDB.  */
+
+/* * Number of bits in a char or unsigned char for the target machine.
+   Just like CHAR_BIT in <limits.h> but describes the target machine.  */
+#if !defined (TARGET_CHAR_BIT)
+#define TARGET_CHAR_BIT 8
+#endif
+
+/* * If we picked up a copy of CHAR_BIT from a configuration file
+   (which may get it by including <limits.h>) then use it to set
+   the number of bits in a host char.  If not, use the same size
+   as the target.  */
+
+#if defined (CHAR_BIT)
+#define HOST_CHAR_BIT CHAR_BIT
+#else
+#define HOST_CHAR_BIT TARGET_CHAR_BIT
+#endif
+
 #ifdef __MSDOS__
 # define CANT_FORK
 # define GLOBAL_CURDIR

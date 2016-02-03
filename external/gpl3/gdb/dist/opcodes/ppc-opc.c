@@ -53,6 +53,7 @@ static unsigned long insert_bo (unsigned long, long, ppc_cpu_t, const char **);
 static long extract_bo (unsigned long, ppc_cpu_t, int *);
 static unsigned long insert_boe (unsigned long, long, ppc_cpu_t, const char **);
 static long extract_boe (unsigned long, ppc_cpu_t, int *);
+static unsigned long insert_esync (unsigned long, long, ppc_cpu_t, const char **);
 static unsigned long insert_fxm (unsigned long, long, ppc_cpu_t, const char **);
 static long extract_fxm (unsigned long, ppc_cpu_t, int *);
 static unsigned long insert_li20 (unsigned long, long, ppc_cpu_t, const char **);
@@ -382,10 +383,12 @@ const struct powerpc_operand powerpc_operands[] =
 
   /* Power4 version for mfcr.  */
 #define FXM4 FXM + 1
-  { 0xff, 12, insert_fxm, extract_fxm, PPC_OPERAND_OPTIONAL },
+  { 0xff, 12, insert_fxm, extract_fxm, PPC_OPERAND_OPTIONAL | PPC_OPERAND_OPTIONAL_VALUE},
+  /* If the FXM4 operand is ommitted, use the sentinel value -1.  */
+  { -1, -1, NULL, NULL, 0},
 
   /* The IMM20 field in an LI instruction.  */
-#define IMM20 FXM4 + 1
+#define IMM20 FXM4 + 2
   { 0xfffff, PPC_OPSHIFT_INV, insert_li20, extract_li20, PPC_OPERAND_SIGNED},
 
   /* The L field in a D or X form instruction.  */
@@ -415,7 +418,7 @@ const struct powerpc_operand powerpc_operands[] =
   /* The LS or WC field in an X (sync or wait) form instruction.  */
 #define LS LIA + 1
 #define WC LS
-  { 0x3, 21, NULL, NULL, PPC_OPERAND_OPTIONAL },
+  { 0x3, 21, insert_ls, NULL, PPC_OPERAND_OPTIONAL },
 
   /* The ME field in an M form instruction.  */
 #define ME LS + 1
@@ -633,7 +636,7 @@ const struct powerpc_operand powerpc_operands[] =
 
   /* The ESYNC field in an X (sync) form instruction.  */
 #define ESYNC STRM + 1
-  { 0xf, 16, insert_ls, NULL, PPC_OPERAND_OPTIONAL },
+  { 0xf, 16, insert_esync, NULL, PPC_OPERAND_OPTIONAL },
 
   /* The SV field in a POWER SC form instruction.  */
 #define SV ESYNC + 1
@@ -642,10 +645,12 @@ const struct powerpc_operand powerpc_operands[] =
   /* The TBR field in an XFX form instruction.  This is like the SPR
      field, but it is optional.  */
 #define TBR SV + 1
-  { 0x3ff, 11, insert_tbr, extract_tbr, PPC_OPERAND_OPTIONAL },
+  { 0x3ff, 11, insert_tbr, extract_tbr, PPC_OPERAND_OPTIONAL | PPC_OPERAND_OPTIONAL_VALUE},
+  /* If the TBR operand is ommitted, use the value 268.  */
+  { -1, 268, NULL, NULL, 0},
 
   /* The TO field in a D or X form instruction.  */
-#define TO TBR + 1
+#define TO TBR + 2
 #define DUI TO
 #define TO_MASK (0x1f << 21)
   { 0x1f, 21, NULL, NULL, 0 },
@@ -747,12 +752,12 @@ const struct powerpc_operand powerpc_operands[] =
 #define PSD PSQM + 1
   {  0xfff, 0, 0, 0,  PPC_OPERAND_PARENS | PPC_OPERAND_SIGNED },
 
+  /* The L field in an mtmsrd or A form instruction or W in an X form.  */
 #define A_L PSD + 1
 #define W A_L
-#define MTMSRD_L W
   { 0x1, 16, NULL, NULL, PPC_OPERAND_OPTIONAL },
 
-#define RMC MTMSRD_L + 1
+#define RMC A_L + 1
   { 0x3, 9, NULL, NULL, 0 },
 
 #define R RMC + 1
@@ -766,10 +771,12 @@ const struct powerpc_operand powerpc_operands[] =
 
   /* The S field in a XL form instruction.  */
 #define SXL S + 1
-  { 0x1, 11, NULL, NULL, PPC_OPERAND_OPTIONAL },
+  { 0x1, 11, NULL, NULL, PPC_OPERAND_OPTIONAL | PPC_OPERAND_OPTIONAL_VALUE},
+  /* If the SXL operand is ommitted, use the value 1.  */
+  { -1, 1, NULL, NULL, 0},
 
   /* SH field starting at bit position 16.  */
-#define SH16 SXL + 1
+#define SH16 SXL + 2
   /* The DCM and DGM fields in a Z form instruction.  */
 #define DCM SH16
 #define DGM DCM
@@ -866,6 +873,9 @@ const struct powerpc_operand powerpc_operands[] =
 
 #define ERAT_T UIM + 1
   { 0x7, 21, NULL, NULL, 0 },
+
+#define IH ERAT_T + 1
+  { 0x7, 21, NULL, NULL, PPC_OPERAND_OPTIONAL },
 };
 
 const unsigned int num_powerpc_operands = (sizeof (powerpc_operands)
@@ -1281,19 +1291,13 @@ insert_fxm (unsigned long insn,
 	}
     }
 
-  /* If the optional field on mfcr is missing that means we want to use
-     the old form of the instruction that moves the whole cr.  In that
-     case we'll have VALUE zero.  There doesn't seem to be a way to
-     distinguish this from the case where someone writes mfcr %r3,0.  */
-  else if (value == 0)
-    ;
-
   /* If only one bit of the FXM field is set, we can use the new form
      of the instruction, which is faster.  Unlike the Power4 branch hint
      encoding, this is not backward compatible.  Do not generate the
      new form unless -mpower4 has been given, or -many and the two
      operand form of mfcr was used.  */
-  else if ((value & -value) == value
+  else if (value > 0
+	   && (value & -value) == value
 	   && ((dialect & PPC_OPCODE_POWER4) != 0
 	       || ((dialect & PPC_OPCODE_ANY) != 0
 		   && (insn & (0x3ff << 1)) == 19 << 1)))
@@ -1302,7 +1306,10 @@ insert_fxm (unsigned long insn,
   /* Any other value on mfcr is an error.  */
   else if ((insn & (0x3ff << 1)) == 19 << 1)
     {
-      *errmsg = _("ignoring invalid mfcr mask");
+      /* A value of -1 means we used the one operand form of
+	 mfcr which is valid.  */
+      if (value != -1)
+        *errmsg = _("ignoring invalid mfcr mask");
       value = 0;
     }
 
@@ -1329,6 +1336,8 @@ extract_fxm (unsigned long insn,
     {
       if (mask != 0)
 	*invalid = 1;
+      else
+	mask = -1;
     }
 
   return mask;
@@ -1357,17 +1366,40 @@ extract_li20 (unsigned long insn,
          | (insn & 0x7ff);
 }
 
-/* The LS field in a sync instruction that accepts 2 operands
-   Values 2 and 3 are reserved,
-     must be treated as 0 for future compatibility
-   Values 0 and 1 can be accepted, if field ESYNC is zero
-   Otherwise L = complement of ESYNC-bit2 (1<<18) */
+/* The 2-bit L field in a SYNC or WC field in a WAIT instruction.
+   For SYNC, some L values are reserved:
+     * Value 3 is reserved on newer server cpus.
+     * Values 2 and 3 are reserved on all other cpus.  */
 
 static unsigned long
 insert_ls (unsigned long insn,
 	   long value,
-	   ppc_cpu_t dialect ATTRIBUTE_UNUSED,
-	   const char **errmsg ATTRIBUTE_UNUSED)
+	   ppc_cpu_t dialect,
+	   const char **errmsg)
+{
+  /* For SYNC, some L values are illegal.  */
+  if (((insn >> 1) & 0x3ff) == 598)
+    {
+      long max_lvalue = (dialect & PPC_OPCODE_POWER4) ? 2 : 1;
+      if (value > max_lvalue)
+	{
+	  *errmsg = _("illegal L operand value");
+	  return insn;
+	}
+    }
+
+  return insn | ((value & 0x3) << 21);
+}
+
+/* The 4-bit E field in a sync instruction that accepts 2 operands.
+   If ESYNC is non-zero, then the L field must be either 0 or 1 and
+   the complement of ESYNC-bit2.  */
+
+static unsigned long
+insert_esync (unsigned long insn,
+	      long value,
+	      ppc_cpu_t dialect ATTRIBUTE_UNUSED,
+	      const char **errmsg)
 {
   unsigned long ls;
 
@@ -1375,12 +1407,15 @@ insert_ls (unsigned long insn,
   if (value == 0)
     {
       if (ls > 1)
-	return insn & ~(0x3 << 21);
+	*errmsg = _("illegal L operand value");
       return insn;
     }
-  if ((value & 0x2) != 0)
-    return (insn & ~(0x3 << 21)) | ((value & 0xf) << 16);
-  return (insn & ~(0x3 << 21)) | (0x1 << 21) | ((value & 0xf) << 16);
+
+  if ((ls & ~0x1)
+      || (((value >> 1) & 0x1) ^ ls) == 0)
+        *errmsg = _("incompatible L operand value");
+
+  return insn | ((value & 0xf) << 16);
 }
 
 /* The MB and ME fields in an M form instruction expressed as a single
@@ -1865,12 +1900,7 @@ extract_sprg (unsigned long insn,
 }
 
 /* The TBR field in an XFX instruction.  This is just like SPR, but it
-   is optional.  When TBR is omitted, it must be inserted as 268 (the
-   magic number of the TB register).  These functions treat 0
-   (indicating an omitted optional operand) as 268.  This means that
-   ``mftb 4,0'' is not handled correctly.  This does not matter very
-   much, since the architecture manual does not define mftb as
-   accepting any values other than 268 or 269.  */
+   is optional.  */
 
 static unsigned long
 insert_tbr (unsigned long insn,
@@ -1878,8 +1908,6 @@ insert_tbr (unsigned long insn,
 	    ppc_cpu_t dialect ATTRIBUTE_UNUSED,
 	    const char **errmsg)
 {
-  if (value == 0)
-    value = 268;
   if (value != 268 && value != 269)
     *errmsg = _("invalid tbr number");
   return insn | ((value & 0x1f) << 16) | ((value & 0x3e0) << 6);
@@ -1895,8 +1923,6 @@ extract_tbr (unsigned long insn,
   ret = ((insn >> 16) & 0x1f) | ((insn >> 6) & 0x3e0);
   if (ret != 268 && ret != 269)
     *invalid = 1;
-  if (ret == 268)
-    ret = 0;
   return ret;
 }
 
@@ -2025,6 +2051,7 @@ extract_dm (unsigned long insn,
     *invalid = 1;
   return (value) ? 1 : 0;
 }
+
 /* The VLESIMM field in an I16A form instruction.  This is split.  */
 
 static unsigned long
@@ -2720,9 +2747,9 @@ extract_vleil (unsigned long insn,
 #define PPC440	PPC_OPCODE_440
 #define PPC464	PPC440
 #define PPC476	PPC_OPCODE_476
-#define PPC750	PPC
-#define PPC7450 PPC
-#define PPC860	PPC
+#define PPC750	PPC_OPCODE_750
+#define PPC7450 PPC_OPCODE_7450
+#define PPC860	PPC_OPCODE_860
 #define PPCPS	PPC_OPCODE_PPCPS
 #define PPCVEC	PPC_OPCODE_ALTIVEC
 #define PPCVEC2	PPC_OPCODE_ALTIVEC2
@@ -2756,6 +2783,12 @@ extract_vleil (unsigned long insn,
 #define E6500	PPC_OPCODE_E6500
 #define PPCVLE  PPC_OPCODE_VLE
 #define PPCHTM  PPC_OPCODE_HTM
+/* The list of embedded processors that use the embedded operand ordering
+   for the 3 operand dcbt and dcbtst instructions.  */
+#define DCBT_EO	(PPC_OPCODE_E500 | PPC_OPCODE_E500MC | PPC_OPCODE_476 \
+		 | PPC_OPCODE_A2 | PPC_OPCODE_VLE)
+
+
 
 /* The opcode table.
 
@@ -4463,7 +4496,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"mfvrd",	X(31,51)|1,	XX1RB_MASK|1, PPCVSX2,	PPCNONE,	{RA, VS}},
 {"eratilx",	X(31,51),	X_MASK,	     PPCA2,	PPCNONE,	{ERAT_T, RA, RB}},
 
-{"lbarx",	X(31,52),	XEH_MASK,    POWER7|PPCVLE, PPCNONE,	{RT, RA0, RB, EH}},
+{"lbarx",	X(31,52),	XEH_MASK,    POWER8|PPCVLE, PPCNONE,	{RT, RA0, RB, EH}},
 
 {"ldux",	X(31,53),	X_MASK,      PPC64|PPCVLE, PPCNONE,	{RT, RAL, RB}},
  
@@ -4478,9 +4511,9 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"andc",	XRC(31,60,0),	X_MASK,	     COM|PPCVLE, PPCNONE,	{RA, RS, RB}},
 {"andc.",	XRC(31,60,1),	X_MASK,	     COM|PPCVLE, PPCNONE,	{RA, RS, RB}},
 
-{"waitrsv",	X(31,62)|(1<<21), 0xffffffff, POWER7|E500MC|PPCA2, PPCNONE, {0}},
-{"waitimpl",	X(31,62)|(2<<21), 0xffffffff, POWER7|E500MC|PPCA2, PPCNONE, {0}},
-{"wait",	X(31,62),	XWC_MASK,    POWER7|E500MC|PPCA2|PPCVLE, PPCNONE, {WC}},
+{"waitrsv",	X(31,62)|(1<<21), 0xffffffff, E500MC|PPCA2, PPCNONE,	{0}},
+{"waitimpl",	X(31,62)|(2<<21), 0xffffffff, E500MC|PPCA2, PPCNONE,	{0}},
+{"wait",	X(31,62),	XWC_MASK,    E500MC|PPCA2|PPCVLE, PPCNONE, {WC}},
  
 {"dcbstep",	XRT(31,63,0),	XRT_MASK,    E500MC|PPCA2|PPCVLE, PPCNONE, {RA0, RB}},
 
@@ -4543,7 +4576,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"mfvrwz",	X(31,115)|1,	XX1RB_MASK|1, PPCVSX2,	PPCNONE,	{RA, VS}},
 {"mfvsrwz",	X(31,115),	XX1RB_MASK,   PPCVSX2,	PPCNONE,	{RA, XS6}},
 
-{"lharx",	X(31,116),	XEH_MASK,    POWER7|PPCVLE, PPCNONE,	{RT, RA0, RB, EH}},
+{"lharx",	X(31,116),	XEH_MASK,    POWER8|PPCVLE, PPCNONE,	{RT, RA0, RB, EH}},
 
 {"clf",		X(31,118),	XTO_MASK,    POWER,	PPCNONE,	{RA, RB}},
 
@@ -4711,9 +4744,10 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"mtvsrwz",	X(31,243),	XX1RB_MASK,   PPCVSX2,	PPCNONE,	{XT6, RA}},
 
 {"dcbtstt",	XRT(31,246,0x10), XRT_MASK,  POWER7,	PPCNONE,	{RA0, RB}},
-{"dcbtst",	X(31,246),	X_MASK,      POWER4,	PPCNONE,	{RA0, RB, CT}},
-{"dcbtst",	X(31,246),	X_MASK,      PPC|PPCVLE, POWER4,	{CT, RA0, RB}},
- 
+{"dcbtst",	X(31,246),	X_MASK,      POWER4,	DCBT_EO,	{RA0, RB, CT}},
+{"dcbtst",	X(31,246),	X_MASK,      DCBT_EO,	PPCNONE,	{CT, RA0, RB}},
+{"dcbtst",	X(31,246),	X_MASK,      PPC,	POWER4|DCBT_EO,	{RA0, RB}},
+
 {"stbux",	X(31,247),	X_MASK,	     COM|PPCVLE, PPCNONE,	{RS, RAS, RB}},
 
 {"slliq",	XRC(31,248,0),	X_MASK,      M601,	PPCNONE,	{RA, RS, SH}},
@@ -4753,9 +4787,10 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"lscbx.",	XRC(31,277,1),	X_MASK,      M601,	PPCNONE,	{RT, RA, RB}},
 
 {"dcbtt",	XRT(31,278,0x10), XRT_MASK,  POWER7,	PPCNONE,	{RA0, RB}},
-{"dcbt",	X(31,278),	X_MASK,      POWER4,	PPCNONE,	{RA0, RB, CT}},
-{"dcbt",	X(31,278),	X_MASK,      PPC|PPCVLE, POWER4,	{CT, RA0, RB}},
- 
+{"dcbt",	X(31,278),	X_MASK,      POWER4,	DCBT_EO,	{RA0, RB, CT}},
+{"dcbt",	X(31,278),	X_MASK,      DCBT_EO,	PPCNONE,	{CT, RA0, RB}},
+{"dcbt",	X(31,278),	X_MASK,      PPC,	POWER4|DCBT_EO,	{RA0, RB}},
+
 {"lhzx",	X(31,279),	X_MASK,      COM|PPCVLE, PPCNONE,	{RT, RA0, RB}},
 
 {"cdtbcd",	X(31,282),	XRB_MASK,    POWER6,	PPCNONE,	{RA, RS}},
@@ -4772,7 +4807,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 
 {"mfbhrbe",	X(31,302),	X_MASK,      POWER8,	PPCNONE,	{RT, BHRBE}},
 
-{"tlbie",	X(31,306),	XRTLRA_MASK, PPC,	TITAN,  	{RB, L}},
+{"tlbie",	X(31,306),	XRA_MASK,    POWER7,	TITAN,  	{RB, RS}},
+{"tlbie",	X(31,306),	XRTLRA_MASK, PPC,	POWER7|TITAN,  	{RB, L}},
 {"tlbi",	X(31,306),	XRT_MASK,    POWER,	PPCNONE,	{RA0, RB}},
 
 {"eciwx",	X(31,310),	X_MASK,      PPC,	TITAN,  	{RT, RA0, RB}},
@@ -5364,7 +5400,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 
 {"icbtlse",	X(31,494),	X_MASK,      PPCCHLK,	E500MC,		{CT, RA, RB}},
 
-{"slbia",	X(31,498),	0xffffffff,  PPC64,	PPCNONE,	{0}},
+{"slbia",	X(31,498),	0xff1fffff,  POWER6,	PPCNONE,	{IH}},
+{"slbia",	X(31,498),	0xffffffff,  PPC64,	POWER6,		{0}},
 
 {"cli",		X(31,502),	XRB_MASK,    POWER,	PPCNONE,	{RT, RA}},
 
@@ -5452,6 +5489,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"lswi",	X(31,597),	X_MASK,  PPCCOM|PPCVLE, E500|E500MC,	{RT, RAX, NBI}},
 {"lsi",		X(31,597),	X_MASK,      PWRCOM,	PPCNONE,	{RT, RA0, NB}},
 
+{"hwsync",	XSYNC(31,598,0), 0xffffffff, POWER4,	BOOKE|PPC476,	{0}},
 {"lwsync",	XSYNC(31,598,1), 0xffffffff, PPC,	E500,		{0}},
 {"ptesync",	XSYNC(31,598,2), 0xffffffff, PPC64,	PPCNONE,	{0}},
 {"sync",	X(31,598),	XSYNCLE_MASK,E6500,	PPCNONE,	{LS, ESYNC}},
@@ -5531,7 +5569,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"tendall.",	XRC(31,686,1)|(1<<25), XRTRARB_MASK, PPCHTM, PPCNONE,	{0}},
 {"tend.",	XRC(31,686,1), XRTARARB_MASK, PPCHTM,	PPCNONE,	{HTM_A}},
 
-{"stbcx.",	XRC(31,694,1),	X_MASK,      POWER7,	PPCNONE,	{RS, RA0, RB}},
+{"stbcx.",	XRC(31,694,1),	X_MASK,      POWER8,	PPCNONE,	{RS, RA0, RB}},
 
 {"stfsux",	X(31,695),	X_MASK,      COM,	PPCEFS,		{FRS, RAS, RB}},
 
@@ -5561,7 +5599,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"stswi",	X(31,725),	X_MASK, PPCCOM|PPCVLE,	E500|E500MC,	{RS, RA0, NB}},
 {"stsi",	X(31,725),	X_MASK,      PWRCOM,	PPCNONE,	{RS, RA0, NB}},
 
-{"sthcx.",	XRC(31,726,1),	X_MASK,      POWER7,	PPCNONE,	{RS, RA0, RB}},
+{"sthcx.",	XRC(31,726,1),	X_MASK,      POWER8,	PPCNONE,	{RS, RA0, RB}},
 
 {"stfdx",	X(31,727),	X_MASK,      COM,	PPCEFS,		{FRS, RA0, RB}},
 
@@ -5794,6 +5832,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 {"tlbwehi",	XTLB(31,978,0),	XTLB_MASK,   PPC403,	PPCNONE,	{RT, RA}},
 {"tlbwelo",	XTLB(31,978,1),	XTLB_MASK,   PPC403,	PPCNONE,	{RT, RA}},
 {"tlbwe",	X(31,978),	X_MASK, PPC403|BOOKE|PPCA2|PPC476, PPCNONE, {RSO, RAOPT, SHO}},
+
+{"slbfee.",	XRC(31,979,1),	XRA_MASK,    POWER6,	PPCNONE,	{RT, RB}},
 
 {"stbcix",	X(31,981),	X_MASK,      POWER6,	PPCNONE,	{RS, RA0, RB}},
 

@@ -174,6 +174,7 @@ struct linux_record_tdep
   int arg4;
   int arg5;
   int arg6;
+  int arg7;
 };
 
 /* Enum that defines the gdb-canonical set of Linux syscall identifiers.

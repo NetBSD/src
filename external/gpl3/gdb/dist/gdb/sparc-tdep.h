@@ -194,7 +194,7 @@ extern struct sparc_frame_cache *
   sparc32_frame_cache (struct frame_info *this_frame, void **this_cache);
 
 extern int
-  sparc_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc);
+  sparc_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc);
 
 
 

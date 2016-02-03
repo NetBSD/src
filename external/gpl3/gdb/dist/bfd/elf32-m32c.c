@@ -40,6 +40,8 @@ void dump_symtab (bfd *, void *, void *);
 #endif
 static bfd_boolean m32c_elf_relax_section
 (bfd *abfd, asection *sec, struct bfd_link_info *link_info, bfd_boolean *again);
+static bfd_reloc_status_type m32c_apply_reloc_24
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 
 
 static reloc_howto_type m32c_elf_howto_table [] =
@@ -47,11 +49,11 @@ static reloc_howto_type m32c_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_M32C_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
+	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M32C_NONE",		/* name */
 	 FALSE,			/* partial_inplace */
@@ -83,7 +85,7 @@ static reloc_howto_type m32c_elf_howto_table [] =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
+	 m32c_apply_reloc_24,	/* special_function */
 	 "R_M32C_24",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
@@ -264,7 +266,7 @@ m32c_reloc_type_lookup
 {
   unsigned int i;
 
-  for (i = ARRAY_SIZE (m32c_reloc_map); --i;)
+  for (i = ARRAY_SIZE (m32c_reloc_map); i--;)
     if (m32c_reloc_map [i].bfd_reloc_val == code)
       return & m32c_elf_howto_table [m32c_reloc_map[i].m32c_reloc_val];
 
@@ -299,13 +301,55 @@ m32c_info_to_howto_rela
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_M32C_max)
     {
-      _bfd_error_handler (_("%A: invalid M32C reloc number: %d"), abfd, r_type);
+      _bfd_error_handler (_("%B: invalid M32C reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
   cache_ptr->howto = & m32c_elf_howto_table [r_type];
 }
 
 
+
+/* Apply R_M32C_24 relocations.  We have to do this because it's not a
+   power-of-two size, and the generic code may think it overruns the
+   section if it's right at the end.
+
+   Must return something other than bfd_reloc_continue to avoid the
+   above problem.  Typical return values include bfd_reloc_ok or
+   bfd_reloc_overflow.
+*/
+
+static bfd_reloc_status_type m32c_apply_reloc_24 (bfd *abfd ATTRIBUTE_UNUSED,
+						  arelent *reloc_entry,
+						  asymbol *symbol,
+						  void *vdata_start ATTRIBUTE_UNUSED,
+						  asection *input_section,
+						  bfd *ibfd ATTRIBUTE_UNUSED,
+						  char **error_msg ATTRIBUTE_UNUSED)
+{
+  bfd_vma relocation;
+  bfd_reloc_status_type s;
+
+  s = bfd_elf_generic_reloc (abfd, reloc_entry, symbol,
+			     vdata_start,
+			     input_section, ibfd, error_msg);
+  if (s != bfd_reloc_continue)
+    return s;
+
+  /* Get symbol value.  (Common symbols are special.)  */
+  if (bfd_is_com_section (symbol->section))
+    relocation = 0;
+  else
+    relocation = symbol->value;
+
+  relocation += symbol->section->output_offset;
+
+  /* Add in supplied addend.  */
+  relocation += reloc_entry->addend;
+
+  reloc_entry->addend = relocation;
+  reloc_entry->address += input_section->output_offset;
+  return bfd_reloc_ok;
+}
 
 /* Relocate an M32C ELF section.
    There is some attempt to make this function usable for many architectures,
@@ -535,9 +579,32 @@ m32c_elf_relocate_section
 	printf ("\n");
       }
 #endif
-      r = _bfd_final_link_relocate (howto, input_bfd, input_section,
-                                    contents, rel->r_offset, relocation,
-                                    rel->r_addend);
+      switch (ELF32_R_TYPE(rel->r_info))
+	{
+	case R_M32C_24:
+	  /* Like m32c_apply_reloc_24, we must handle this one separately.  */
+	  relocation += rel->r_addend;
+
+	  /* Sanity check the address.  */
+	  if (rel->r_offset + 3
+	      > bfd_get_section_limit_octets (input_bfd, input_section))
+	    r = bfd_reloc_outofrange;
+	  else
+	    {
+	      bfd_put_8 (input_bfd, relocation & 0xff, contents + rel->r_offset);
+	      bfd_put_8 (input_bfd, (relocation >> 8) & 0xff, contents + rel->r_offset + 1);
+	      bfd_put_8 (input_bfd, (relocation >> 16) & 0xff, contents + rel->r_offset + 2);
+	      r = bfd_reloc_ok;
+	    }
+
+	  break;
+
+	default:
+	  r = _bfd_final_link_relocate (howto, input_bfd, input_section,
+					contents, rel->r_offset, relocation,
+					rel->r_addend);
+	  break;
+	}
 
       if (r != bfd_reloc_ok)
 	{

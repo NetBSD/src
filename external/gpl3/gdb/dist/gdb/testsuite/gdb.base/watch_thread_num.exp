@@ -21,7 +21,9 @@
 
 # This test verifies that a watchpoint is detected in the proper thread
 # so the test is only meaningful on a system with hardware watchpoints.
-if {[skip_hw_watchpoint_tests]} {
+# More specifically, the implementation of this test uses access
+# watchpoints, so skip it when those are not available.
+if {[skip_hw_watchpoint_access_tests]} {
     return 0
 }
 

@@ -64,6 +64,24 @@ func_cu1:
 	.byte		1			/* DW_AT_frame_base: length */
 	.byte		0x55			/* DW_AT_frame_base: DW_OP_reg5 */
 
+	/* This type is named "int1" and not "int" to ensure it is unique,
+	   and thus we can easily ensure we expand this CU and not some
+	   other CU with "int".  */
+.Ltype_int1_in_cu1:
+	.uleb128	3			/* Abbrev: DW_TAG_base_type */
+	.ascii		"int1\0"		/* DW_AT_name */
+	.byte		4			/* DW_AT_byte_size */
+	.byte		5			/* DW_AT_encoding */
+
+.Ltype_const_int1_in_cu1:
+	.uleb128	4			/* Abbrev: DW_TAG_const_type */
+	.4byte		 .Ltype_int1_in_cu1-.Lcu1_begin /* DW_AT_type */
+
+	.uleb128	5			/* Abbrev: DW_TAG_variable */
+	.ascii		"one\0"			/* DW_AT_name */
+	.4byte		.Ltype_const_int1_in_cu1-.Lcu1_begin   /* DW_AT_type */
+	.byte		1			/* DW_AT_const_value */
+
 	.byte		0			/* End of children of CU */
 
 .Lcu1_end:
@@ -91,6 +109,15 @@ func_cu1:
 	.ascii		"int2\0"		/* DW_AT_name */
 	.byte		4			/* DW_AT_byte_size */
 	.byte		5			/* DW_AT_encoding */
+
+.Ltype_const_int2_in_cu2:
+	.uleb128	3			/* Abbrev: DW_TAG_const_type */
+	.4byte		 .Ltype_int2_in_cu2-.Lcu2_begin /* DW_AT_type */
+
+	.uleb128	4			/* Abbrev: DW_TAG_variable */
+	.ascii		"two\0"			/* DW_AT_name */
+	.4byte		.Ltype_const_int2_in_cu2-.Lcu2_begin   /* DW_AT_type */
+	.byte		2			/* DW_AT_const_value */
 
 	.byte		0			/* End of children of CU */
 
@@ -139,6 +166,38 @@ func_cu1:
 	.byte		0x0			/* Terminator */
 	.byte		0x0			/* Terminator */
 
+	.uleb128	3			/* Abbrev code */
+	.uleb128	0x24			/* DW_TAG_base_type */
+	.byte		0			/* has_children */
+	.uleb128	0x3			/* DW_AT_name */
+	.uleb128	0x8			/* DW_FORM_string */
+	.uleb128	0xb			/* DW_AT_byte_size */
+	.uleb128	0xb			/* DW_FORM_data1 */
+	.uleb128	0x3e			/* DW_AT_encoding */
+	.uleb128	0xb			/* DW_FORM_data1 */
+	.byte		0x0			/* Terminator */
+	.byte		0x0			/* Terminator */
+
+	.uleb128	4			/* Abbrev code */
+	.uleb128	0x26			/* DW_TAG_const_type */
+	.byte		0x0			/* DW_children_no */
+	.uleb128	0x49			/* DW_AT_type */
+	.uleb128	0x13			/* DW_FORM_ref4 */
+	.byte		0x0			/* Terminator */
+	.byte		0x0			/* Terminator */
+
+	.uleb128	5			/* Abbrev code */
+	.uleb128	0x34			/* DW_TAG_variable */
+	.byte		0x0			/* DW_children_no */
+	.uleb128	0x3			/* DW_AT_name */
+	.uleb128	0x8			/* DW_FORM_string */
+	.uleb128	0x49			/* DW_AT_type */
+	.uleb128	0x13			/* DW_FORM_ref4 */
+	.uleb128	0x1c			/* DW_AT_const_value */
+	.uleb128	0xb			/* DW_FORM_data1 */
+	.byte		0x0			/* Terminator */
+	.byte		0x0			/* Terminator */
+
 	.byte		0x0			/* Terminator */
 	.byte		0x0			/* Terminator */
 
@@ -163,6 +222,26 @@ func_cu1:
 	.uleb128	0xb			/* DW_AT_byte_size */
 	.uleb128	0xb			/* DW_FORM_data1 */
 	.uleb128	0x3e			/* DW_AT_encoding */
+	.uleb128	0xb			/* DW_FORM_data1 */
+	.byte		0x0			/* Terminator */
+	.byte		0x0			/* Terminator */
+
+	.uleb128	3			/* Abbrev code */
+	.uleb128	0x26			/* DW_TAG_const_type */
+	.byte		0x0			/* DW_children_no */
+	.uleb128	0x49			/* DW_AT_type */
+	.uleb128	0x13			/* DW_FORM_ref4 */
+	.byte		0x0			/* Terminator */
+	.byte		0x0			/* Terminator */
+
+	.uleb128	4			/* Abbrev code */
+	.uleb128	0x34			/* DW_TAG_variable */
+	.byte		0x0			/* DW_children_no */
+	.uleb128	0x3			/* DW_AT_name */
+	.uleb128	0x8			/* DW_FORM_string */
+	.uleb128	0x49			/* DW_AT_type */
+	.uleb128	0x13			/* DW_FORM_ref4 */
+	.uleb128	0x1c			/* DW_AT_const_value */
 	.uleb128	0xb			/* DW_FORM_data1 */
 	.byte		0x0			/* Terminator */
 	.byte		0x0			/* Terminator */

@@ -37,6 +37,8 @@
 #include "mem.h"
 #include "load.h"
 
+static disassembler_ftype rl78_disasm_fn = NULL;
+
 static int
 sim_dis_read (bfd_vma memaddr, bfd_byte * ptr, unsigned int length,
 	      struct disassemble_info *info)
@@ -111,6 +113,7 @@ void
 sim_disasm_init (bfd *prog)
 {
   current_bfd = prog;
+  rl78_disasm_fn = NULL;
 }
 
 typedef struct Files
@@ -256,6 +259,18 @@ sim_disasm_one (void)
 
   trace = 0;
 
+  if (!rl78_disasm_fn)
+    {
+      if (rl78_g10_mode)
+	rl78_disasm_fn = print_insn_rl78_g10;
+      else if (g14_multiply)
+	rl78_disasm_fn = print_insn_rl78_g14;
+      else if (g13_multiply)
+	rl78_disasm_fn = print_insn_rl78_g13;
+      else
+	rl78_disasm_fn = print_insn_rl78;
+    }
+
   if (filename && functionname && lineno)
     {
       if (lineno != prev_lineno || strcmp (prev_filename, filename))
@@ -323,7 +338,7 @@ sim_disasm_one (void)
   printf ("\033[33m %08llx %06x: ", total_clocks, mypc);
 #endif
 
-  max = print_insn_rl78 (mypc, & info);
+  max = rl78_disasm_fn (mypc, & info);
 
   for (i = 0; i < max; i ++)
     printf ("%02x", mem_get_qi (mypc + i));

@@ -183,21 +183,27 @@ vcomplaint (struct complaints **c, const char *file,
   else
     series = complaints->series;
 
+  /* Pass 'fmt' instead of 'complaint->fmt' to printf-like callees
+     from here on, to avoid "format string is not a string literal"
+     warnings.  'fmt' is this function's printf-format parameter, so
+     the compiler can assume the passed in argument is a literal
+     string somewhere up the call chain.  */
+  gdb_assert (complaint->fmt == fmt);
+
   if (complaint->file != NULL)
-    internal_vwarning (complaint->file, complaint->line, 
-		       complaint->fmt, args);
+    internal_vwarning (complaint->file, complaint->line, fmt, args);
   else if (deprecated_warning_hook)
-    (*deprecated_warning_hook) (complaint->fmt, args);
+    (*deprecated_warning_hook) (fmt, args);
   else
     {
       if (complaints->explanation == NULL)
 	/* A [v]warning() call always appends a newline.  */
-	vwarning (complaint->fmt, args);
+	vwarning (fmt, args);
       else
 	{
 	  char *msg;
 	  struct cleanup *cleanups;
-	  msg = xstrvprintf (complaint->fmt, args);
+	  msg = xstrvprintf (fmt, args);
 	  cleanups = make_cleanup (xfree, msg);
 	  wrap_here ("");
 	  if (series != SUBSEQUENT_MESSAGE)

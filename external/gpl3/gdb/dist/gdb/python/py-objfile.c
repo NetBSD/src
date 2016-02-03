@@ -23,7 +23,6 @@
 #include "objfiles.h"
 #include "language.h"
 #include "build-id.h"
-#include "elf-bfd.h"
 #include "symtab.h"
 
 typedef struct
@@ -42,6 +41,10 @@ typedef struct
 
   /* The frame filter list of functions.  */
   PyObject *frame_filters;
+
+  /* The list of frame unwinders.  */
+  PyObject *frame_unwinders;
+
   /* The type-printer list.  */
   PyObject *type_printers;
 
@@ -49,7 +52,7 @@ typedef struct
   PyObject *xmethods;
 } objfile_object;
 
-static PyTypeObject objfile_object_type
+extern PyTypeObject objfile_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("objfile_object");
 
 static const struct objfile_data *objfpy_objfile_data_key;
@@ -78,6 +81,25 @@ objfpy_get_filename (PyObject *self, void *closure)
     return PyString_Decode (objfile_name (obj->objfile),
 			    strlen (objfile_name (obj->objfile)),
 			    host_charset (), NULL);
+  Py_RETURN_NONE;
+}
+
+/* An Objfile method which returns the objfile's file name, as specified
+   by the user, or None.  */
+
+static PyObject *
+objfpy_get_username (PyObject *self, void *closure)
+{
+  objfile_object *obj = (objfile_object *) self;
+
+  if (obj->objfile)
+    {
+      const char *username = obj->objfile->original_name;
+
+      return PyString_Decode (username, strlen (username),
+			      host_charset (), NULL);
+    }
+
   Py_RETURN_NONE;
 }
 
@@ -111,16 +133,19 @@ objfpy_get_build_id (PyObject *self, void *closure)
 {
   objfile_object *obj = (objfile_object *) self;
   struct objfile *objfile = obj->objfile;
-  const struct elf_build_id *build_id = NULL;
-  volatile struct gdb_exception except;
+  const struct bfd_build_id *build_id = NULL;
 
   OBJFPY_REQUIRE_VALID (obj);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       build_id = build_id_bfd_get (objfile->obfd);
     }
-  GDB_PY_HANDLE_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
 
   if (build_id != NULL)
     {
@@ -162,6 +187,7 @@ objfpy_dealloc (PyObject *o)
   Py_XDECREF (self->dict);
   Py_XDECREF (self->printers);
   Py_XDECREF (self->frame_filters);
+  Py_XDECREF (self->frame_unwinders);
   Py_XDECREF (self->type_printers);
   Py_XDECREF (self->xmethods);
   Py_TYPE (self)->tp_free (self);
@@ -182,6 +208,10 @@ objfpy_initialize (objfile_object *self)
 
   self->frame_filters = PyDict_New ();
   if (self->frame_filters == NULL)
+    return 0;
+
+  self->frame_unwinders = PyList_New (0);
+  if (self->frame_unwinders == NULL)
     return 0;
 
   self->type_printers = PyList_New (0);
@@ -291,6 +321,48 @@ objfpy_set_frame_filters (PyObject *o, PyObject *filters, void *ignore)
   return 0;
 }
 
+/* Return the frame unwinders attribute for this object file.  */
+
+PyObject *
+objfpy_get_frame_unwinders (PyObject *o, void *ignore)
+{
+  objfile_object *self = (objfile_object *) o;
+
+  Py_INCREF (self->frame_unwinders);
+  return self->frame_unwinders;
+}
+
+/* Set this object file's frame unwinders list to UNWINDERS.  */
+
+static int
+objfpy_set_frame_unwinders (PyObject *o, PyObject *unwinders, void *ignore)
+{
+  PyObject *tmp;
+  objfile_object *self = (objfile_object *) o;
+
+  if (!unwinders)
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("Cannot delete the frame unwinders attribute."));
+      return -1;
+    }
+
+  if (!PyList_Check (unwinders))
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("The frame_unwinders attribute must be a list."));
+      return -1;
+    }
+
+  /* Take care in case the LHS and RHS are related somehow.  */
+  tmp = self->frame_unwinders;
+  Py_INCREF (unwinders);
+  self->frame_unwinders = unwinders;
+  Py_XDECREF (tmp);
+
+  return 0;
+}
+
 /* Get the 'type_printers' attribute.  */
 
 static PyObject *
@@ -367,20 +439,23 @@ objfpy_add_separate_debug_file (PyObject *self, PyObject *args, PyObject *kw)
   objfile_object *obj = (objfile_object *) self;
   const char *file_name;
   int symfile_flags = 0;
-  volatile struct gdb_exception except;
 
   OBJFPY_REQUIRE_VALID (obj);
 
   if (!PyArg_ParseTupleAndKeywords (args, kw, "s", keywords, &file_name))
     return NULL;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       bfd *abfd = symfile_bfd_open (file_name);
 
       symbol_file_add_separate (abfd, file_name, symfile_flags, obj->objfile);
     }
-  GDB_PY_HANDLE_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
 
   Py_RETURN_NONE;
 }
@@ -408,7 +483,7 @@ objfpy_build_id_ok (const char *string)
    It is assumed that objfpy_build_id_ok (string) returns TRUE.  */
 
 static int
-objfpy_build_id_matches (const struct elf_build_id *build_id,
+objfpy_build_id_matches (const struct bfd_build_id *build_id,
 			 const char *string)
 {
   size_t i;
@@ -438,12 +513,18 @@ objfpy_lookup_objfile_by_name (const char *name)
 
   ALL_OBJFILES (objfile)
     {
+      const char *filename;
+
       if ((objfile->flags & OBJF_NOT_FILENAME) != 0)
 	continue;
       /* Don't return separate debug files.  */
       if (objfile->separate_debug_objfile_backlink != NULL)
 	continue;
-      if (compare_filenames_for_search (objfile_name (objfile), name))
+
+      filename = objfile_filename (objfile);
+      if (filename != NULL && compare_filenames_for_search (filename, name))
+	return objfile;
+      if (compare_filenames_for_search (objfile->original_name, name))
 	return objfile;
     }
 
@@ -460,7 +541,7 @@ objfpy_lookup_objfile_by_build_id (const char *build_id)
 
   ALL_OBJFILES (objfile)
     {
-      const struct elf_build_id *obfd_build_id;
+      const struct bfd_build_id *obfd_build_id;
 
       if (objfile->obfd == NULL)
 	continue;
@@ -607,6 +688,8 @@ static PyGetSetDef objfile_getset[] =
     "The __dict__ for this objfile.", &objfile_object_type },
   { "filename", objfpy_get_filename, NULL,
     "The objfile's filename, or None.", NULL },
+  { "username", objfpy_get_username, NULL,
+    "The name of the objfile as provided by the user, or None.", NULL },
   { "owner", objfpy_get_owner, NULL,
     "The objfile owner of separate debug info objfiles, or None.",
     NULL },
@@ -618,6 +701,8 @@ static PyGetSetDef objfile_getset[] =
     "Pretty printers.", NULL },
   { "frame_filters", objfpy_get_frame_filters,
     objfpy_set_frame_filters, "Frame Filters.", NULL },
+  { "frame_unwinders", objfpy_get_frame_unwinders,
+    objfpy_set_frame_unwinders, "Frame Unwinders", NULL },
   { "type_printers", objfpy_get_type_printers, objfpy_set_type_printers,
     "Type printers.", NULL },
   { "xmethods", objfpy_get_xmethods, NULL,
@@ -625,7 +710,7 @@ static PyGetSetDef objfile_getset[] =
   { NULL }
 };
 
-static PyTypeObject objfile_object_type =
+PyTypeObject objfile_object_type =
 {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Objfile",		  /*tp_name*/

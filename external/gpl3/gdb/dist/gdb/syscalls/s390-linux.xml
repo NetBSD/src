@@ -328,4 +328,15 @@
   <syscall name="process_vm_writev" number="341"/>
   <syscall name="s390_runtime_instr" number="342"/>
   <syscall name="kcmp" number="343"/>
+  <syscall name="finit_module" number="344"/>
+  <syscall name="sched_setattr" number="345"/>
+  <syscall name="sched_getattr" number="346"/>
+  <syscall name="renameat2" number="347"/>
+  <syscall name="seccomp" number="348"/>
+  <syscall name="getrandom" number="349"/>
+  <syscall name="memfd_create" number="350"/>
+  <syscall name="bpf" number="351"/>
+  <syscall name="s390_pci_mmio_write" number="352"/>
+  <syscall name="s390_pci_mmio_read" number="353"/>
+  <syscall name="execveat" number="354"/>
 </syscalls_info>

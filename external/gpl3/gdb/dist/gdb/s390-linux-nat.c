@@ -27,6 +27,7 @@
 #include "auxv.h"
 #include "gregset.h"
 #include "regset.h"
+#include "nat/linux-ptrace.h"
 
 #include "s390-linux-tdep.h"
 #include "elf/common.h"
@@ -38,17 +39,18 @@
 #include <sys/ucontext.h>
 #include <elf.h>
 
-#ifndef PTRACE_GETREGSET
-#define PTRACE_GETREGSET 0x4204
-#endif
+/* Per-thread arch-specific data.  */
 
-#ifndef PTRACE_SETREGSET
-#define PTRACE_SETREGSET 0x4205
-#endif
+struct arch_lwp_info
+{
+  /* Non-zero if the thread's PER info must be re-written.  */
+  int per_info_changed;
+};
 
 static int have_regset_last_break = 0;
 static int have_regset_system_call = 0;
 static int have_regset_tdb = 0;
+static int have_regset_vxrs = 0;
 
 /* Register map for 32-bit executables running under a 64-bit
    kernel.  */
@@ -147,19 +149,29 @@ fill_gregset (const struct regcache *regcache, gregset_t *regp, int regno)
 	  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 	  ULONGEST pswa, pswm;
 	  gdb_byte buf[4];
+	  gdb_byte *pswm_p = (gdb_byte *) regp + S390_PSWM_OFFSET;
+	  gdb_byte *pswa_p = (gdb_byte *) regp + S390_PSWA_OFFSET;
 
-	  regcache_raw_collect (regcache, S390_PSWM_REGNUM, buf);
-	  pswm = extract_unsigned_integer (buf, 4, byte_order);
-	  regcache_raw_collect (regcache, S390_PSWA_REGNUM, buf);
-	  pswa = extract_unsigned_integer (buf, 4, byte_order);
+	  pswm = extract_unsigned_integer (pswm_p, 8, byte_order);
 
 	  if (regno == -1 || regno == S390_PSWM_REGNUM)
-	    store_unsigned_integer ((gdb_byte *) regp + S390_PSWM_OFFSET, 8,
-				    byte_order, ((pswm & 0xfff7ffff) << 32) |
-				    (pswa & 0x80000000));
+	    {
+	      pswm &= 0x80000000;
+	      regcache_raw_collect (regcache, S390_PSWM_REGNUM, buf);
+	      pswm |= (extract_unsigned_integer (buf, 4, byte_order)
+		       & 0xfff7ffff) << 32;
+	    }
+
 	  if (regno == -1 || regno == S390_PSWA_REGNUM)
-	    store_unsigned_integer ((gdb_byte *) regp + S390_PSWA_OFFSET, 8,
-				    byte_order, pswa & 0x7fffffff);
+	    {
+	      regcache_raw_collect (regcache, S390_PSWA_REGNUM, buf);
+	      pswa = extract_unsigned_integer (buf, 4, byte_order);
+	      pswm ^= (pswm ^ pswa) & 0x80000000;
+	      pswa &= 0x7fffffff;
+	      store_unsigned_integer (pswa_p, 8, byte_order, pswa);
+	    }
+
+	  store_unsigned_integer (pswm_p, 8, byte_order, pswm);
 	}
       return;
     }
@@ -367,6 +379,18 @@ s390_linux_fetch_inferior_registers (struct target_ops *ops,
     if (regnum == -1 || S390_IS_TDBREGSET_REGNUM (regnum))
       fetch_regset (regcache, tid, NT_S390_TDB, s390_sizeof_tdbregset,
 		    &s390_tdb_regset);
+
+  if (have_regset_vxrs)
+    {
+      if (regnum == -1 || (regnum >= S390_V0_LOWER_REGNUM
+			   && regnum <= S390_V15_LOWER_REGNUM))
+	fetch_regset (regcache, tid, NT_S390_VXRS_LOW, 16 * 8,
+		      &s390_vxrs_low_regset);
+      if (regnum == -1 || (regnum >= S390_V16_REGNUM
+			   && regnum <= S390_V31_REGNUM))
+	fetch_regset (regcache, tid, NT_S390_VXRS_HIGH, 16 * 16,
+		      &s390_vxrs_high_regset);
+    }
 }
 
 /* Store register REGNUM back into the child process.  If REGNUM is
@@ -389,6 +413,18 @@ s390_linux_store_inferior_registers (struct target_ops *ops,
     if (regnum == -1 || regnum == S390_SYSTEM_CALL_REGNUM)
       store_regset (regcache, tid, NT_S390_SYSTEM_CALL, 4,
 		    &s390_system_call_regset);
+
+  if (have_regset_vxrs)
+    {
+      if (regnum == -1 || (regnum >= S390_V0_LOWER_REGNUM
+			   && regnum <= S390_V15_LOWER_REGNUM))
+	store_regset (regcache, tid, NT_S390_VXRS_LOW, 16 * 8,
+		      &s390_vxrs_low_regset);
+      if (regnum == -1 || (regnum >= S390_V16_REGNUM
+			   && regnum <= S390_V31_REGNUM))
+	store_regset (regcache, tid, NT_S390_VXRS_HIGH, 16 * 16,
+		      &s390_vxrs_high_regset);
+    }
 }
 
 
@@ -440,8 +476,10 @@ s390_stopped_by_watchpoint (struct target_ops *ops)
   return result;
 }
 
+/* Each time before resuming a thread, update its PER info.  */
+
 static void
-s390_fix_watch_points (struct lwp_info *lp)
+s390_prepare_to_resume (struct lwp_info *lp)
 {
   int tid;
 
@@ -450,6 +488,12 @@ s390_fix_watch_points (struct lwp_info *lp)
 
   CORE_ADDR watch_lo_addr = (CORE_ADDR)-1, watch_hi_addr = 0;
   struct watch_area *area;
+
+  if (lp->arch_private == NULL
+      || !lp->arch_private->per_info_changed)
+    return;
+
+  lp->arch_private->per_info_changed = 0;
 
   tid = ptid_get_lwp (lp->ptid);
   if (tid == 0)
@@ -484,6 +528,30 @@ s390_fix_watch_points (struct lwp_info *lp)
     perror_with_name (_("Couldn't modify watchpoint status"));
 }
 
+/* Make sure that LP is stopped and mark its PER info as changed, so
+   the next resume will update it.  */
+
+static void
+s390_refresh_per_info (struct lwp_info *lp)
+{
+  if (lp->arch_private == NULL)
+    lp->arch_private = XCNEW (struct arch_lwp_info);
+
+  lp->arch_private->per_info_changed = 1;
+
+  if (!lp->stopped)
+    linux_stop_lwp (lp);
+}
+
+/* When attaching to a new thread, mark its PER info as changed.  */
+
+static void
+s390_new_thread (struct lwp_info *lp)
+{
+  lp->arch_private = XCNEW (struct arch_lwp_info);
+  lp->arch_private->per_info_changed = 1;
+}
+
 static int
 s390_insert_watchpoint (struct target_ops *self,
 			CORE_ADDR addr, int len, int type,
@@ -502,7 +570,7 @@ s390_insert_watchpoint (struct target_ops *self,
   watch_base = area;
 
   ALL_LWPS (lp)
-    s390_fix_watch_points (lp);
+    s390_refresh_per_info (lp);
   return 0;
 }
 
@@ -531,7 +599,7 @@ s390_remove_watchpoint (struct target_ops *self,
   xfree (area);
 
   ALL_LWPS (lp)
-    s390_fix_watch_points (lp);
+    s390_refresh_per_info (lp);
   return 0;
 }
 
@@ -591,19 +659,6 @@ s390_auxv_parse (struct target_ops *ops, gdb_byte **readptr,
   return 1;
 }
 
-#ifdef __s390x__
-static unsigned long
-s390_get_hwcap (void)
-{
-  CORE_ADDR field;
-
-  if (target_auxv_search (&current_target, AT_HWCAP, &field))
-    return (unsigned long) field;
-
-  return 0;
-}
-#endif
-
 static const struct target_desc *
 s390_read_description (struct target_ops *ops)
 {
@@ -614,27 +669,41 @@ s390_read_description (struct target_ops *ops)
   have_regset_system_call
     = check_regset (tid, NT_S390_SYSTEM_CALL, 4);
 
-#ifdef __s390x__
   /* If GDB itself is compiled as 64-bit, we are running on a machine in
      z/Architecture mode.  If the target is running in 64-bit addressing
      mode, report s390x architecture.  If the target is running in 31-bit
      addressing mode, but the kernel supports using 64-bit registers in
      that mode, report s390 architecture with 64-bit GPRs.  */
+#ifdef __s390x__
+  {
+    CORE_ADDR hwcap = 0;
 
-  have_regset_tdb = (s390_get_hwcap () & HWCAP_S390_TE) ?
-    check_regset (tid, NT_S390_TDB, s390_sizeof_tdbregset) : 0;
+    target_auxv_search (&current_target, AT_HWCAP, &hwcap);
+    have_regset_tdb = (hwcap & HWCAP_S390_TE)
+      && check_regset (tid, NT_S390_TDB, s390_sizeof_tdbregset);
 
-  if (s390_target_wordsize () == 8)
-    return (have_regset_tdb ? tdesc_s390x_te_linux64 :
-	    have_regset_system_call? tdesc_s390x_linux64v2 :
-	    have_regset_last_break? tdesc_s390x_linux64v1 :
-	    tdesc_s390x_linux64);
+    have_regset_vxrs = (hwcap & HWCAP_S390_VX)
+      && check_regset (tid, NT_S390_VXRS_LOW, 16 * 8)
+      && check_regset (tid, NT_S390_VXRS_HIGH, 16 * 16);
 
-  if (s390_get_hwcap () & HWCAP_S390_HIGH_GPRS)
-    return (have_regset_tdb ? tdesc_s390_te_linux64 :
-	    have_regset_system_call? tdesc_s390_linux64v2 :
-	    have_regset_last_break? tdesc_s390_linux64v1 :
-	    tdesc_s390_linux64);
+    if (s390_target_wordsize () == 8)
+      return (have_regset_vxrs ?
+	      (have_regset_tdb ? tdesc_s390x_tevx_linux64 :
+	       tdesc_s390x_vx_linux64) :
+	      have_regset_tdb ? tdesc_s390x_te_linux64 :
+	      have_regset_system_call ? tdesc_s390x_linux64v2 :
+	      have_regset_last_break ? tdesc_s390x_linux64v1 :
+	      tdesc_s390x_linux64);
+
+    if (hwcap & HWCAP_S390_HIGH_GPRS)
+      return (have_regset_vxrs ?
+	      (have_regset_tdb ? tdesc_s390_tevx_linux64 :
+	       tdesc_s390_vx_linux64) :
+	      have_regset_tdb ? tdesc_s390_te_linux64 :
+	      have_regset_system_call ? tdesc_s390_linux64v2 :
+	      have_regset_last_break ? tdesc_s390_linux64v1 :
+	      tdesc_s390_linux64);
+  }
 #endif
 
   /* If GDB itself is compiled as 31-bit, or if we're running a 31-bit inferior
@@ -673,5 +742,6 @@ _initialize_s390_nat (void)
 
   /* Register the target.  */
   linux_nat_add_target (t);
-  linux_nat_set_new_thread (t, s390_fix_watch_points);
+  linux_nat_set_new_thread (t, s390_new_thread);
+  linux_nat_set_prepare_to_resume (t, s390_prepare_to_resume);
 }

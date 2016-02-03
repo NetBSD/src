@@ -124,8 +124,8 @@ execute (SIM_CPU *current_cpu, SCACHE *sc, int fast_p)
 	  if (PROFILE_MODEL_P (current_cpu)
 	      && ARGBUF_PROFILE_P (abuf))
 	    sh64_media_model_insn_before (current_cpu, 1 /*first_p*/);
-	  TRACE_INSN_INIT (current_cpu, abuf, 1);
-	  TRACE_INSN (current_cpu, idesc->idata,
+	  CGEN_TRACE_INSN_INIT (current_cpu, abuf, 1);
+	  CGEN_TRACE_INSN (current_cpu, idesc->idata,
 		      (const struct argbuf *) abuf, abuf->addr);
 	}
 #if WITH_SCACHE
@@ -144,7 +144,7 @@ execute (SIM_CPU *current_cpu, SCACHE *sc, int fast_p)
 	      cycles = (*idesc->timing->model_fn) (current_cpu, sc);
 	      sh64_media_model_insn_after (current_cpu, 1 /*last_p*/, cycles);
 	    }
-	  TRACE_INSN_FINI (current_cpu, abuf, 1);
+	  CGEN_TRACE_INSN_FINI (current_cpu, abuf, 1);
 	}
 #else
       abort ();
@@ -446,7 +446,7 @@ sh64_media_pbb_before (SIM_CPU *current_cpu, SCACHE *sc)
 	    }
 	}
 
-      TRACE_INSN_FINI (current_cpu, cur_abuf, 0 /*last_p*/);
+      CGEN_TRACE_INSN_FINI (current_cpu, cur_abuf, 0 /*last_p*/);
     }
 
   /* FIXME: Later make cover macros: PROFILE_INSN_{INIT,FINI}.  */
@@ -454,8 +454,8 @@ sh64_media_pbb_before (SIM_CPU *current_cpu, SCACHE *sc)
       && ARGBUF_PROFILE_P (cur_abuf))
     sh64_media_model_insn_before (current_cpu, first_p);
 
-  TRACE_INSN_INIT (current_cpu, cur_abuf, first_p);
-  TRACE_INSN (current_cpu, cur_idesc->idata, cur_abuf, pc);
+  CGEN_TRACE_INSN_INIT (current_cpu, cur_abuf, first_p);
+  CGEN_TRACE_INSN (current_cpu, cur_idesc->idata, cur_abuf, pc);
 }
 
 /* x-after handler.
@@ -480,7 +480,7 @@ sh64_media_pbb_after (SIM_CPU *current_cpu, SCACHE *sc)
       cycles = (*prev_idesc->timing->model_fn) (current_cpu, prev_sem_arg);
       sh64_media_model_insn_after (current_cpu, 1 /*last_p*/, cycles);
     }
-  TRACE_INSN_FINI (current_cpu, prev_abuf, 1 /*last_p*/);
+  CGEN_TRACE_INSN_FINI (current_cpu, prev_abuf, 1 /*last_p*/);
 }
 
 #define FAST_P 0
