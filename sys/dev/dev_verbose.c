@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.c,v 1.1 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: dev_verbose.c,v 1.2 2016/02/03 05:29:43 christos Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dev_verbose.c,v 1.1 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dev_verbose.c,v 1.2 2016/02/03 05:29:43 christos Exp $");
 
 #include <sys/param.h>
 
@@ -65,7 +65,7 @@ dev_findvendor(char *buf, size_t len, const char *words, size_t nwords,
 
 		/* Skip Tokens */
 		n++;
-		while (vendors[n] != 0 && n < nvendors)
+		while (n < nvendors && vendors[n] != 0)
 			n++;
 	}
 	snprintf(buf, len, "vendor %4.4x", vendor);
@@ -86,7 +86,7 @@ dev_findproduct(char *buf, size_t len, const char *words, size_t nwords,
 
 		/* Skip Tokens */
 		n += 2;
-		while (products[n] != 0 && n < nproducts)
+		while (n < nproducts && products[n] != 0)
 			n++;
 	}
 	snprintf(buf, len, "product %4.4x", product);
