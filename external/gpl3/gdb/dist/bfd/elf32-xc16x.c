@@ -32,11 +32,11 @@ static reloc_howto_type xc16x_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_XC16X_NONE,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
+	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_XC16X_NONE",	/* name */
 	 FALSE,			/* partial_inplace */

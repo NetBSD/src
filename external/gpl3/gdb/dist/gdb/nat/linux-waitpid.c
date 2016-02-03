@@ -144,7 +144,7 @@ my_waitpid (int pid, int *status, int flags)
     }
 
   linux_debug ("my_waitpid (%d, 0x%x): status(%x), %d\n",
-	       pid, flags, status ? *status : -1, ret);
+	       pid, flags, (ret > 0 && status != NULL) ? *status : -1, ret);
 
   errno = out_errno;
   return ret;

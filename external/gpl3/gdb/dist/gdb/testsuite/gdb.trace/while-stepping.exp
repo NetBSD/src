@@ -99,9 +99,19 @@ gdb_test "info tracepoints" \
 .*end.*" \
 	"5.16: confirm actions, step without collecting anything"
 
-gdb_test "break main"
+# Can't use runto_main here, because that would delete the tracepoints
+# created above.
+
+# Load the binary to the target too.
+gdb_load $binfile
+
+gdb_breakpoint "main"
 gdb_run_cmd
-gdb_test "" "Breakpoint .*"
+if {[gdb_test "" "Breakpoint .*"] != 0} {
+    fail "Can't run to main"
+    return -1
+}
+
 if ![gdb_target_supports_trace] {
     unsupported "target does not support trace"
     return -1

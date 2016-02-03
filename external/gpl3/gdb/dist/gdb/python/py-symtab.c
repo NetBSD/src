@@ -37,7 +37,7 @@ typedef struct stpy_symtab_object {
   struct stpy_symtab_object *next;
 } symtab_object;
 
-static PyTypeObject symtab_object_type
+extern PyTypeObject symtab_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("symtab_object");
 static const struct objfile_data *stpy_objfile_data_key;
 
@@ -68,7 +68,7 @@ typedef struct salpy_sal_object {
   struct salpy_sal_object *next;
 } sal_object;
 
-static PyTypeObject sal_object_type
+extern PyTypeObject sal_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("sal_object");
 static const struct objfile_data *salpy_objfile_data_key;
 
@@ -576,7 +576,7 @@ Return the Linetable associated with this symbol table" },
   {NULL}  /* Sentinel */
 };
 
-static PyTypeObject symtab_object_type = {
+PyTypeObject symtab_object_type = {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Symtab",			  /*tp_name*/
   sizeof (symtab_object),	  /*tp_basicsize*/
@@ -626,7 +626,7 @@ Return true if this symbol table and line is valid, false if not." },
   {NULL}  /* Sentinel */
 };
 
-static PyTypeObject sal_object_type = {
+PyTypeObject sal_object_type = {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Symtab_and_line",	  /*tp_name*/
   sizeof (sal_object),		  /*tp_basicsize*/

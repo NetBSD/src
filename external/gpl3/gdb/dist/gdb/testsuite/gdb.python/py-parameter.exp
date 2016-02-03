@@ -32,7 +32,8 @@ if { [is_remote host] } {
     # doesn't set search directories on remote host.
     set directories ".*\\\$cdir.\\\$cwd"
 } else {
-    set directories "$srcdir/$subdir.\\\$cdir.\\\$cwd"
+    set escaped_directory [string_to_regexp "$srcdir/$subdir"]
+    set directories "$escaped_directory.\\\$cdir.\\\$cwd"
 }
 gdb_test "python print (gdb.parameter ('directories'))" $directories
 

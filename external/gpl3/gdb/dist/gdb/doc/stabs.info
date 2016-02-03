@@ -3845,7 +3845,8 @@ F.2 Having the Linker Relocate Stabs in ELF
 ===========================================
 
 This section describes some Sun hacks for Stabs in ELF; it does not
-apply to COFF or SOM.
+apply to COFF or SOM. While GDB no longer supports this hack for Sun
+Stabs in ELF, this section is kept to document the issue.
 
    To keep linking fast, you don't want the linker to have to relocate
 very many stabs.  Making sure this is done for 'N_SLINE', 'N_RBRAC', and
@@ -3882,17 +3883,18 @@ from the ELF symbols.
    Finding the correct 'Bbss.bss', etc., symbol is difficult, because
 the linker simply concatenates the '.stab' sections from each '.o' file
 without including any information about which part of a '.stab' section
-comes from which '.o' file.  The way GDB does this is to look for an ELF
-'STT_FILE' symbol which has the same name as the last component of the
-file name from the 'N_SO' symbol in the stabs (for example, if the file
-name is '../../gdb/main.c', it looks for an ELF 'STT_FILE' symbol named
-'main.c').  This loses if different files have the same name (they could
-be in different directories, a library could have been copied from one
-system to another, etc.).  It would be much cleaner to have the
-'Bbss.bss' symbols in the stabs themselves.  Having the linker relocate
-them there is no more work than having the linker relocate ELF symbols,
-and it solves the problem of having to associate the ELF and stab
-symbols.  However, no one has yet designed or implemented such a scheme.
+comes from which '.o' file.  The way GDB use to do this is to look for
+an ELF 'STT_FILE' symbol which has the same name as the last component
+of the file name from the 'N_SO' symbol in the stabs (for example, if
+the file name is '../../gdb/main.c', it looks for an ELF 'STT_FILE'
+symbol named 'main.c').  This loses if different files have the same
+name (they could be in different directories, a library could have been
+copied from one system to another, etc.).  It would be much cleaner to
+have the 'Bbss.bss' symbols in the stabs themselves.  Having the linker
+relocate them there is no more work than having the linker relocate ELF
+symbols, and it solves the problem of having to associate the ELF and
+stab symbols.  However, no one has yet designed or implemented such a
+scheme.
 
 
 File: stabs.info,  Node: GNU Free Documentation License,  Next: Symbol Types Index,  Prev: Stab Sections,  Up: Top
@@ -4571,7 +4573,7 @@ Node: Questions141077
 Node: Stab Sections142718
 Node: Stab Section Basics143328
 Node: ELF Linker Relocation146670
-Node: GNU Free Documentation License150079
-Node: Symbol Types Index175239
+Node: GNU Free Documentation License150189
+Node: Symbol Types Index175349
 
 End Tag Table

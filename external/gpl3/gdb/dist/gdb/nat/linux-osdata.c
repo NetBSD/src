@@ -662,6 +662,104 @@ linux_xfer_osdata_threads (gdb_byte *readbuf,
   return len;
 }
 
+/* Collect data about the cpus/cores on the system */
+
+static LONGEST
+linux_xfer_osdata_cpus (gdb_byte *readbuf,
+			   ULONGEST offset, ULONGEST len)
+{
+  static const char *buf;
+  static LONGEST len_avail = -1;
+  static struct buffer buffer;
+
+  if (offset == 0)
+    {
+      FILE *fp;
+      int first_item = 1;
+
+      if (len_avail != -1 && len_avail != 0)
+	buffer_free (&buffer);
+      len_avail = 0;
+      buf = NULL;
+      buffer_init (&buffer);
+      buffer_grow_str (&buffer, "<osdata type=\"cpus\">\n");
+
+      fp = gdb_fopen_cloexec ("/proc/cpuinfo", "r");
+      if (fp != NULL)
+	{
+	  char buf[8192];
+
+	  do
+	    {
+	      if (fgets (buf, sizeof (buf), fp))
+		{
+		  char *key, *value;
+		  int i = 0;
+
+		  key = strtok (buf, ":");
+		  if (key == NULL)
+		    continue;
+
+		  value = strtok (NULL, ":");
+		  if (value == NULL)
+		    continue;
+
+		  while (key[i] != '\t' && key[i] != '\0')
+		    i++;
+
+		  key[i] = '\0';
+
+		  i = 0;
+		  while (value[i] != '\t' && value[i] != '\0')
+		    i++;
+
+		  value[i] = '\0';
+
+		  if (strcmp (key, "processor") == 0)
+		    {
+		      if (first_item)
+			buffer_grow_str (&buffer, "<item>");
+		      else
+			buffer_grow_str (&buffer, "</item><item>");
+
+		      first_item = 0;
+		    }
+
+		  buffer_xml_printf (&buffer,
+				     "<column name=\"%s\">%s</column>",
+				     key,
+				     value);
+		}
+	    }
+	  while (!feof (fp));
+
+	  if (first_item == 0)
+	    buffer_grow_str (&buffer, "</item>");
+
+	  fclose (fp);
+	}
+
+      buffer_grow_str0 (&buffer, "</osdata>\n");
+      buf = buffer_finish (&buffer);
+      len_avail = strlen (buf);
+    }
+
+  if (offset >= len_avail)
+    {
+      /* Done.  Get rid of the buffer.  */
+      buffer_free (&buffer);
+      buf = NULL;
+      len_avail = 0;
+      return 0;
+    }
+
+  if (len > len_avail - offset)
+    len = len_avail - offset;
+  memcpy (readbuf, buf + offset, len);
+
+  return len;
+}
+
 /* Collect all the open file descriptors found in /proc and put the details
    found about them into READBUF.  */
 
@@ -1532,24 +1630,26 @@ struct osdata_type {
   char *description;
   LONGEST (*getter) (gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
 } osdata_table[] = {
+  { "cpus", "CPUs", "Listing of all cpus/cores on the system",
+    linux_xfer_osdata_cpus },
+  { "files", "File descriptors", "Listing of all file descriptors",
+    linux_xfer_osdata_fds },
+  { "modules", "Kernel modules", "Listing of all loaded kernel modules",
+    linux_xfer_osdata_modules },
+  { "msg", "Message queues", "Listing of all message queues",
+    linux_xfer_osdata_msg },
   { "processes", "Processes", "Listing of all processes",
     linux_xfer_osdata_processes },
   { "procgroups", "Process groups", "Listing of all process groups",
     linux_xfer_osdata_processgroups },
-  { "threads", "Threads", "Listing of all threads",
-    linux_xfer_osdata_threads },
-  { "files", "File descriptors", "Listing of all file descriptors",
-    linux_xfer_osdata_fds },
-  { "sockets", "Sockets", "Listing of all internet-domain sockets",
-    linux_xfer_osdata_isockets },
-  { "shm", "Shared-memory regions", "Listing of all shared-memory regions",
-    linux_xfer_osdata_shm },
   { "semaphores", "Semaphores", "Listing of all semaphores",
     linux_xfer_osdata_sem },
-  { "msg", "Message queues", "Listing of all message queues",
-    linux_xfer_osdata_msg },
-  { "modules", "Kernel modules", "Listing of all loaded kernel modules",
-    linux_xfer_osdata_modules },
+  { "shm", "Shared-memory regions", "Listing of all shared-memory regions",
+    linux_xfer_osdata_shm },
+  { "sockets", "Sockets", "Listing of all internet-domain sockets",
+    linux_xfer_osdata_isockets },
+  { "threads", "Threads", "Listing of all threads",
+    linux_xfer_osdata_threads },
   { NULL, NULL, NULL }
 };
 

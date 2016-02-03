@@ -20,20 +20,19 @@
 
 standard_testfile .c
 
-if [get_compiler_info] {
+# If supported by the compiler, "-mcpu=native" or "-march=native"
+# should enable the highest available vector ABI.  Try both, then try
+# without a CPU option.  If all variants fail, assume that the
+# compiler can not handle GNU vectors.
+
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} executable {debug quiet additional_flags=-mcpu=native}] != ""
+     && [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} executable {debug quiet additional_flags=-march=native}] != ""
+     && [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} executable {debug quiet}] != ""} {
+    untested "compiler can't handle the vector_size attribute?"
     return -1
 }
 
-# Check if our compiler is a GCC that suppports the vector extension
-if { ![test_compiler_info gcc-4-*] } {
-    setup_xfail "*-*-*"
-    fail "This compiler can not handle GNU vectors"
-    return 0
-}
-
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug}] } {
-    return -1
-}
+clean_restart ${binfile}
 
 if { ![runto main] } {
     fail "runto main"
@@ -175,3 +174,34 @@ gdb_test "ptype float4" "type = float __attribute__ \\(\\(vector_size\\(4\\)\\)\
 
 gdb_test "ptype union_with_vector_1" "type = union {\r\n\[\t \]+int i;\r\n\[\t \]+char cv __attribute__ \\(\\(vector_size\\(4\\)\\)\\);\r\n}"
 gdb_test "ptype struct_with_vector_1" "type = struct {\r\n\[\t \]+int i;\r\n\[\t \]+char cv __attribute__ \\(\\(vector_size\\(4\\)\\)\\);\r\n\[\t \]+float4 f4;\r\n}"
+
+# Test inferior function calls with vector arguments and/or vector
+# return values.
+setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
+gdb_test "print add_some_intvecs(i4a, i4b, 3 * i4a)" "= \\{17, 34, 72, 132\\}" \
+    "call add_some_intvecs"
+setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
+gdb_test "print add_many_charvecs(c4, c4, c4, c4, c4, c4, c4, c4, c4, c4)" \
+    "= \\{10, 20, 30, 40\\}" "call add_many_charvecs"
+setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
+gdb_test "print add_various_floatvecs(2, f4a, f4b)" "= \\{3, 6, 16, 20\\}" \
+    "call add_various_floatvecs"
+setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
+gdb_test "print add_structvecs(i2, (struct just_int2)\{2*i2\}, (struct two_int2)\{3*i2, 4*i2\})" \
+    "= \\{i = \\{10, 20\\}\\}" "call add_structvecs"
+gdb_test "print add_singlevecs((char1) \{6\}, (int1) \{12\}, (double1) \{24\})" "= \\{42\\}" \
+    "call add_singlevecs"
+
+# Test vector return value handling with "finish" and "return".
+gdb_breakpoint "add_some_intvecs"
+gdb_continue "add_some_intvecs"
+setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
+gdb_test "finish" "Value returned is .* = \\{10, 20, 48, 72\\}" \
+    "finish shows vector return value"
+gdb_continue "add_some_intvecs"
+gdb_test "return (int4) \{4, 2, 7, 6\}" \
+    "#0 .* main .*" \
+    "set vector return value" \
+    "Make add_some_intvecs return now. .y or n.*" "y"
+setup_kfail gdb/18537 "i?86-*-*" "x86_64-*-*"
+gdb_test "continue" "4 2 7 6\r\n.*" "verify vector return value"

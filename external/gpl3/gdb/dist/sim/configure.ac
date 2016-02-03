@@ -30,7 +30,7 @@ AC_SUBST(CFLAGS_FOR_BUILD)
 # If a cpu ever has more than one simulator to choose from, use
 # --enable-sim=... to choose.
 AC_ARG_ENABLE(sim,
-[  --enable-sim ],
+[AS_HELP_STRING([--enable-sim], [Enable the GNU simulator])],
 [case "${enableval}" in
 yes | no) ;;
 *)	AC_MSG_ERROR(bad value ${enableval} given for --enable-sim option) ;;
@@ -42,9 +42,7 @@ m4_define([SIM_ARCH], [
 ])
 if test "${enable_sim}" != no; then
    sinclude(configure.tgt)
-   if test "$sim_testsuite" = yes; then
-      AC_CONFIG_SUBDIRS(testsuite)
-   fi
+   AC_CONFIG_SUBDIRS(testsuite)
    if test "$sim_common" = yes; then
       AC_CONFIG_SUBDIRS(common)
    fi

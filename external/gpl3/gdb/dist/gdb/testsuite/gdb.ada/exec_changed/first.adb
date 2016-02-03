@@ -14,6 +14,12 @@
 --  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 procedure First is
+
+   procedure Break_Me is
+   begin
+      null;
+   end Break_Me;
+
 begin
-   null;
+   Break_Me;
 end First;

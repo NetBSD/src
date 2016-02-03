@@ -236,7 +236,8 @@ help_command (char *command, int from_tty)
   help_cmd (command, gdb_stdout);
 }
 
-/* The "complete" command is used by Emacs to implement completion.  */
+/* Note: The "complete" command is used by Emacs to implement completion.
+   [Is that why this function writes output with *_unfiltered?]  */
 
 static void
 complete_command (char *arg, int from_tty)
@@ -246,6 +247,18 @@ complete_command (char *arg, int from_tty)
   VEC (char_ptr) *completions;
 
   dont_repeat ();
+
+  if (max_completions == 0)
+    {
+      /* Only print this for non-mi frontends.  An MI frontend may not
+	 be able to handle this.  */
+      if (!ui_out_is_mi_like_p (current_uiout))
+	{
+	  printf_unfiltered (_("max-completions is zero,"
+			       " completion is disabled.\n"));
+	}
+      return;
+    }
 
   if (arg == NULL)
     arg = "";
@@ -293,6 +306,15 @@ complete_command (char *arg, int from_tty)
 
       xfree (prev);
       VEC_free (char_ptr, completions);
+
+      if (size == max_completions)
+	{
+	  /* ARG_PREFIX and POINT are included in the output so that emacs
+	     will include the message in the output.  */
+	  printf_unfiltered (_("%s%s %s\n"),
+			     arg_prefix, point,
+			     get_max_completions_reached_message ());
+	}
     }
 }
 
@@ -1824,10 +1846,7 @@ Lines can be specified in these ways:\n\
 With two args if one is empty it stands for ten lines away from \
 the other arg."));
 
-  if (!xdb_commands)
-    add_com_alias ("l", "list", class_files, 1);
-  else
-    add_com_alias ("v", "list", class_files, 1);
+  add_com_alias ("l", "list", class_files, 1);
 
   if (dbx_commands)
     add_com_alias ("file", "list", class_files, 1);
@@ -1846,8 +1865,6 @@ like in the \"break\" command.\n\
 So, for example, if you want to disassemble function bar in file foo.c\n\
 you must type \"disassemble 'foo.c'::bar\" and not \"disassemble foo.c:bar\"."));
   set_cmd_completer (c, location_completer);
-  if (xdb_commands)
-    add_com_alias ("va", "disassemble", class_xdb, 0);
 
   add_com_alias ("!", "shell", class_support, 0);
 

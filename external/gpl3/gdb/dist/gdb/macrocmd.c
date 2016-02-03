@@ -325,7 +325,7 @@ extract_identifier (char **expp, int is_parameter)
   char *p = *expp;
   unsigned int len;
 
-  if (is_parameter && !strncmp (p, "...", 3))
+  if (is_parameter && startswith (p, "..."))
     {
       /* Ok.  */
     }
@@ -339,7 +339,7 @@ extract_identifier (char **expp, int is_parameter)
 	;
     }
 
-  if (is_parameter && !strncmp (p, "...", 3))      
+  if (is_parameter && startswith (p, "..."))      
     p += 3;
 
   len = p - *expp;

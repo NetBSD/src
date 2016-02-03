@@ -95,7 +95,7 @@ proc interrupt_and_wait { message } {
 	    #  foo () at foo.c:31
 	    #  31      bar ();
 	    #
-	    fail $test
+	    fail $message
 	}
     }
 }

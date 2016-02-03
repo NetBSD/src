@@ -21,8 +21,6 @@
 #define TARGET_COMMON_H
 
 #include "target/waitstatus.h"
-#include <stdint.h>
-
 /* This header is a stopgap until more code is shared.  */
 
 /* Read LEN bytes of target memory at address MEMADDR, placing the

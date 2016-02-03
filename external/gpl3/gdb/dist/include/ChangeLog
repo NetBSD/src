@@ -1,3 +1,88 @@
+2015-06-26  Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* elf/mips.h (DT_MIPS_RLD_MAP_REL): New macro.
+
+2015-06-22  Nick Clifton  <nickc@redhat.com>
+
+	* dis-asm.h (struct disassemble_info): Add stop_vma field.
+
+2015-05-28  Catherine Moore  <clm@codesourcery.com>
+
+	include/
+	* bfdlink.h: Rename eh_frame_hdr to eh_frame_hdr_type.
+
+2015-05-22  Yunlian Jiang  <yunlian@google.com>
+
+	* libiberty.h (asprintf): Don't declare if HAVE_DECL_ASPRINTF is
+	not defined.
+
+2015-05-12  Jiong Wang  <jiong.wang@arm.com>
+
+	* elf/aarch64.h (R_AARCH64_P32_LD32_GOTPAGE_LO14): New enumeration.
+
+2015-05-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Merge with gcc:
+	2014-11-11  Anthony Brandon  <anthony.brandon@gmail.com>
+		    Manuel López-Ibáñez  <manu@gcc.gnu.org>
+
+	PR driver/36312
+	* filenames.h: Add prototype for canonical_filename_eq.
+
+2015-04-30  DJ Delorie  <dj@redhat.com>
+
+	* dis-asm.h (print_insn_rl78_g10): New.
+	(print_insn_rl78_g13): New.
+	(print_insn_rl78_g14): New.
+	(rl78_get_disassembler): New.
+
+2015-04-17  Richard Earnshaw  <rearnsha@arm.com>
+
+	Merge from gcc:
+	2015-03-19  Richard Biener  <rguenther@suse.de>
+
+		* partition.h (struct partition_elem): Re-order elements to
+		avoid padding.
+
+2015-04-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bfdlink.h (bfd_link_info): Add compress_debug.
+
+2015-04-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/pr17709
+	* bfdlink.h (bfd_link_info): Add extern_protected_data.
+
+2015-03-10  Matthew Wahab  <matthew.wahab@arm.com>
+
+	PR ld/16572
+	* elf/arm.h (EF_ARM_HASENTRY): Remove.
+
+2015-02-19  Pedro Alves  <palves@redhat.com>
+
+	* floatformat.h [__cplusplus]: Wrap in extern "C".
+
+2015-02-14  Alan Modra  <amodra@gmail.com>
+
+	PR ld/17973
+	* bfdlink.h (struct bfd_link_info): Delete loading_lto_outputs.
+
+2015-02-09  Mark Wielaard  <mjw@redhat.com>
+
+	* dwarf2.h: Add DW_LANG_Fortran03 and DW_LANG_Fortran08.
+
+2015-02-09  Mark Wielaard  <mjw@redhat.com>
+
+	* dwarf2.def: Add DW_TAG_atomic_type.
+
+2015-01-28  James Bowman  <james.bowman@ftdichip.com>
+
+	* dis-asm.h (print_insn_ft32): Declare.
+
+2015-01-15  Mark Wielaard  <mjw@redhat.com>
+
+	* dwarf2.def (DW_AT_noreturn): New DWARF5 attribute.
+
 2015-01-14  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
 
 	* libiberty.h: Merge from GCC.

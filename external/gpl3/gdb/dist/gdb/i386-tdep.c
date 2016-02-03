@@ -50,8 +50,6 @@
 
 #include "record.h"
 #include "record-full.h"
-#include <stdint.h>
-
 #include "features/i386/i386.c"
 #include "features/i386/i386-avx.c"
 #include "features/i386/i386-mpx.c"
@@ -1824,8 +1822,7 @@ i386_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
       if (post_prologue_pc
 	  && (cust != NULL
 	      && COMPUNIT_PRODUCER (cust) != NULL
-	      && strncmp (COMPUNIT_PRODUCER (cust), "clang ",
-			  sizeof ("clang ") - 1) == 0))
+	      && startswith (COMPUNIT_PRODUCER (cust), "clang ")))
         return max (start_pc, post_prologue_pc);
     }
  
@@ -2050,7 +2047,6 @@ i386_frame_cache_1 (struct frame_info *this_frame,
 static struct i386_frame_cache *
 i386_frame_cache (struct frame_info *this_frame, void **this_cache)
 {
-  volatile struct gdb_exception ex;
   struct i386_frame_cache *cache;
 
   if (*this_cache)
@@ -2059,12 +2055,16 @@ i386_frame_cache (struct frame_info *this_frame, void **this_cache)
   cache = i386_alloc_frame_cache ();
   *this_cache = cache;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       i386_frame_cache_1 (this_frame, cache);
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -2176,12 +2176,14 @@ static const struct frame_unwind i386_frame_unwind =
 
 /* Normal frames, but in a function epilogue.  */
 
-/* The epilogue is defined here as the 'ret' instruction, which will
+/* Implement the stack_frame_destroyed_p gdbarch method.
+
+   The epilogue is defined here as the 'ret' instruction, which will
    follow any instruction such as 'leave' or 'pop %ebp' that destroys
    the function's stack frame.  */
 
 static int
-i386_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+i386_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   gdb_byte insn;
   struct compunit_symtab *cust;
@@ -2205,8 +2207,8 @@ i386_epilogue_frame_sniffer (const struct frame_unwind *self,
 			     void **this_prologue_cache)
 {
   if (frame_relative_level (this_frame) == 0)
-    return i386_in_function_epilogue_p (get_frame_arch (this_frame),
-					get_frame_pc (this_frame));
+    return i386_stack_frame_destroyed_p (get_frame_arch (this_frame),
+					 get_frame_pc (this_frame));
   else
     return 0;
 }
@@ -2214,7 +2216,6 @@ i386_epilogue_frame_sniffer (const struct frame_unwind *self,
 static struct i386_frame_cache *
 i386_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
 {
-  volatile struct gdb_exception ex;
   struct i386_frame_cache *cache;
   CORE_ADDR sp;
 
@@ -2224,7 +2225,7 @@ i386_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
   cache = i386_alloc_frame_cache ();
   *this_cache = cache;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       cache->pc = get_frame_func (this_frame);
 
@@ -2238,8 +2239,12 @@ i386_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
 
       cache->base_p = 1;
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -2397,7 +2402,6 @@ i386_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  volatile struct gdb_exception ex;
   struct i386_frame_cache *cache;
   CORE_ADDR addr;
   gdb_byte buf[4];
@@ -2407,7 +2411,7 @@ i386_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 
   cache = i386_alloc_frame_cache ();
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       get_frame_register (this_frame, I386_ESP_REGNUM, buf);
       cache->base = extract_unsigned_integer (buf, 4, byte_order) - 4;
@@ -2431,8 +2435,12 @@ i386_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 
       cache->base_p = 1;
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   *this_cache = cache;
   return cache;
@@ -3854,8 +3862,8 @@ i386_pe_skip_trampoline_code (struct frame_info *frame,
 
       if (symname)
 	{
-	  if (strncmp (symname, "__imp_", 6) == 0
-	      || strncmp (symname, "_imp_", 5) == 0)
+	  if (startswith (symname, "__imp_")
+	      || startswith (symname, "_imp_"))
 	    return name ? 1 :
 		   read_memory_unsigned_integer (indirect, 4, byte_order);
 	}
@@ -4270,7 +4278,8 @@ i386_stap_parse_special_token (struct gdbarch *gdbarch,
       TRIPLET,
       THREE_ARG_DISPLACEMENT,
       DONE
-    } current_state;
+    };
+  int current_state;
 
   current_state = TRIPLET;
 
@@ -8589,6 +8598,279 @@ i386_coff_osabi_sniffer (bfd *abfd)
 }
 
 
+/* Return the target description for a specified XSAVE feature mask.  */
+
+const struct target_desc *
+i386_target_description (uint64_t xcr0)
+{
+  switch (xcr0 & X86_XSTATE_ALL_MASK)
+    {
+    case X86_XSTATE_MPX_AVX512_MASK:
+    case X86_XSTATE_AVX512_MASK:
+      return tdesc_i386_avx512;
+    case X86_XSTATE_MPX_MASK:
+      return tdesc_i386_mpx;
+    case X86_XSTATE_AVX_MASK:
+      return tdesc_i386_avx;
+    default:
+      return tdesc_i386;
+    }
+}
+
+#define MPX_BASE_MASK (~(ULONGEST) 0xfff)
+
+/* Find the bound directory base address.  */
+
+static unsigned long
+i386_mpx_bd_base (void)
+{
+  struct regcache *rcache;
+  struct gdbarch_tdep *tdep;
+  ULONGEST ret;
+  enum register_status regstatus;
+  struct gdb_exception except;
+
+  rcache = get_current_regcache ();
+  tdep = gdbarch_tdep (get_regcache_arch (rcache));
+
+  regstatus = regcache_raw_read_unsigned (rcache, tdep->bndcfgu_regnum, &ret);
+
+  if (regstatus != REG_VALID)
+    error (_("BNDCFGU register invalid, read status %d."), regstatus);
+
+  return ret & MPX_BASE_MASK;
+}
+
+/* Check if the current target is MPX enabled.  */
+
+static int
+i386_mpx_enabled (void)
+{
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (get_current_arch ());
+  const struct target_desc *tdesc = tdep->tdesc;
+
+  return (tdesc_find_feature (tdesc, "org.gnu.gdb.i386.mpx") != NULL);
+}
+
+#define MPX_BD_MASK     0xfffffff00000ULL	/* select bits [47:20]  */
+#define MPX_BT_MASK     0x0000000ffff8	        /* select bits [19:3]   */
+#define MPX_BD_MASK_32  0xfffff000	        /* select bits [31:12]  */
+#define MPX_BT_MASK_32  0x00000ffc	        /* select bits [11:2]   */
+
+/* Find the bound table entry given the pointer location and the base
+   address of the table.  */
+
+static CORE_ADDR
+i386_mpx_get_bt_entry (CORE_ADDR ptr, CORE_ADDR bd_base)
+{
+  CORE_ADDR offset1;
+  CORE_ADDR offset2;
+  CORE_ADDR mpx_bd_mask, bd_ptr_r_shift, bd_ptr_l_shift;
+  CORE_ADDR bt_mask, bt_select_r_shift, bt_select_l_shift;
+  CORE_ADDR bd_entry_addr;
+  CORE_ADDR bt_addr;
+  CORE_ADDR bd_entry;
+  struct gdbarch *gdbarch = get_current_arch ();
+  struct type *data_ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
+
+
+  if (gdbarch_ptr_bit (gdbarch) == 64)
+    {
+      mpx_bd_mask = (CORE_ADDR) MPX_BD_MASK;
+      bd_ptr_r_shift = 20;
+      bd_ptr_l_shift = 3;
+      bt_select_r_shift = 3;
+      bt_select_l_shift = 5;
+      bt_mask = (CORE_ADDR) MPX_BT_MASK;
+
+      if ( sizeof (CORE_ADDR) == 4)
+	error (_("operation not supported"));
+    }
+  else
+    {
+      mpx_bd_mask = MPX_BD_MASK_32;
+      bd_ptr_r_shift = 12;
+      bd_ptr_l_shift = 2;
+      bt_select_r_shift = 2;
+      bt_select_l_shift = 4;
+      bt_mask = MPX_BT_MASK_32;
+    }
+
+  offset1 = ((ptr & mpx_bd_mask) >> bd_ptr_r_shift) << bd_ptr_l_shift;
+  bd_entry_addr = bd_base + offset1;
+  bd_entry = read_memory_typed_address (bd_entry_addr, data_ptr_type);
+
+  if ((bd_entry & 0x1) == 0)
+    error (_("Invalid bounds directory entry at %s."),
+	   paddress (get_current_arch (), bd_entry_addr));
+
+  /* Clearing status bit.  */
+  bd_entry--;
+  bt_addr = bd_entry & ~bt_select_r_shift;
+  offset2 = ((ptr & bt_mask) >> bt_select_r_shift) << bt_select_l_shift;
+
+  return bt_addr + offset2;
+}
+
+/* Print routine for the mpx bounds.  */
+
+static void
+i386_mpx_print_bounds (const CORE_ADDR bt_entry[4])
+{
+  struct ui_out *uiout = current_uiout;
+  LONGEST size;
+  struct gdbarch *gdbarch = get_current_arch ();
+  CORE_ADDR onecompl = ~((CORE_ADDR) 0);
+  int bounds_in_map = ((~bt_entry[1] == 0 && bt_entry[0] == onecompl) ? 1 : 0);
+
+  if (bounds_in_map == 1)
+    {
+      ui_out_text (uiout, "Null bounds on map:");
+      ui_out_text (uiout, " pointer value = ");
+      ui_out_field_core_addr (uiout, "pointer-value", gdbarch, bt_entry[2]);
+      ui_out_text (uiout, ".");
+      ui_out_text (uiout, "\n");
+    }
+  else
+    {
+      ui_out_text (uiout, "{lbound = ");
+      ui_out_field_core_addr (uiout, "lower-bound", gdbarch, bt_entry[0]);
+      ui_out_text (uiout, ", ubound = ");
+
+      /* The upper bound is stored in 1's complement.  */
+      ui_out_field_core_addr (uiout, "upper-bound", gdbarch, ~bt_entry[1]);
+      ui_out_text (uiout, "}: pointer value = ");
+      ui_out_field_core_addr (uiout, "pointer-value", gdbarch, bt_entry[2]);
+
+      if (gdbarch_ptr_bit (gdbarch) == 64)
+	size = ( (~(int64_t) bt_entry[1]) - (int64_t) bt_entry[0]);
+      else
+	size = ( ~((int32_t) bt_entry[1]) - (int32_t) bt_entry[0]);
+
+      /* In case the bounds are 0x0 and 0xffff... the difference will be -1.
+	 -1 represents in this sense full memory access, and there is no need
+	 one to the size.  */
+
+      size = (size > -1 ? size + 1 : size);
+      ui_out_text (uiout, ", size = ");
+      ui_out_field_fmt (uiout, "size", "%s", plongest (size));
+
+      ui_out_text (uiout, ", metadata = ");
+      ui_out_field_core_addr (uiout, "metadata", gdbarch, bt_entry[3]);
+      ui_out_text (uiout, "\n");
+    }
+}
+
+/* Implement the command "show mpx bound".  */
+
+static void
+i386_mpx_info_bounds (char *args, int from_tty)
+{
+  CORE_ADDR bd_base = 0;
+  CORE_ADDR addr;
+  CORE_ADDR bt_entry_addr = 0;
+  CORE_ADDR bt_entry[4];
+  int i;
+  struct gdbarch *gdbarch = get_current_arch ();
+  struct type *data_ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
+
+  if (!i386_mpx_enabled ())
+    {
+      printf_unfiltered (_("Intel(R) Memory Protection Extensions not "
+			   "supported on this target.\n"));
+      return;
+    }
+
+  if (args == NULL)
+    {
+      printf_unfiltered (_("Address of pointer variable expected.\n"));
+      return;
+    }
+
+  addr = parse_and_eval_address (args);
+
+  bd_base = i386_mpx_bd_base ();
+  bt_entry_addr = i386_mpx_get_bt_entry (addr, bd_base);
+
+  memset (bt_entry, 0, sizeof (bt_entry));
+
+  for (i = 0; i < 4; i++)
+    bt_entry[i] = read_memory_typed_address (bt_entry_addr
+					     + i * data_ptr_type->length,
+					     data_ptr_type);
+
+  i386_mpx_print_bounds (bt_entry);
+}
+
+/* Implement the command "set mpx bound".  */
+
+static void
+i386_mpx_set_bounds (char *args, int from_tty)
+{
+  CORE_ADDR bd_base = 0;
+  CORE_ADDR addr, lower, upper;
+  CORE_ADDR bt_entry_addr = 0;
+  CORE_ADDR bt_entry[2];
+  const char *input = args;
+  int i;
+  struct gdbarch *gdbarch = get_current_arch ();
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  struct type *data_ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
+
+  if (!i386_mpx_enabled ())
+    error (_("Intel(R) Memory Protection Extensions not supported\
+ on this target."));
+
+  if (args == NULL)
+    error (_("Pointer value expected."));
+
+  addr = value_as_address (parse_to_comma_and_eval (&input));
+
+  if (input[0] == ',')
+    ++input;
+  if (input[0] == '\0')
+    error (_("wrong number of arguments: missing lower and upper bound."));
+  lower = value_as_address (parse_to_comma_and_eval (&input));
+
+  if (input[0] == ',')
+    ++input;
+  if (input[0] == '\0')
+    error (_("Wrong number of arguments; Missing upper bound."));
+  upper = value_as_address (parse_to_comma_and_eval (&input));
+
+  bd_base = i386_mpx_bd_base ();
+  bt_entry_addr = i386_mpx_get_bt_entry (addr, bd_base);
+  for (i = 0; i < 2; i++)
+    bt_entry[i] = read_memory_typed_address (bt_entry_addr
+					     + i * data_ptr_type->length,
+					     data_ptr_type);
+  bt_entry[0] = (uint64_t) lower;
+  bt_entry[1] = ~(uint64_t) upper;
+
+  for (i = 0; i < 2; i++)
+    write_memory_unsigned_integer (bt_entry_addr + i * data_ptr_type->length,
+				   data_ptr_type->length, byte_order,
+				   bt_entry[i]);
+}
+
+static struct cmd_list_element *mpx_set_cmdlist, *mpx_show_cmdlist;
+
+/* Helper function for the CLI commands.  */
+
+static void
+set_mpx_cmd (char *args, int from_tty)
+{
+  help_list (mpx_set_cmdlist, "set mpx ", all_commands, gdb_stdout);
+}
+
+/* Helper function for the CLI commands.  */
+
+static void
+show_mpx_cmd (char *args, int from_tty)
+{
+  cmd_show_list (mpx_show_cmdlist, from_tty, "");
+}
+
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_i386_tdep (void);
 
@@ -8618,6 +8900,34 @@ is \"default\"."),
 			NULL,
 			NULL, /* FIXME: i18n: */
 			&setlist, &showlist);
+
+  /* Add "mpx" prefix for the set commands.  */
+
+  add_prefix_cmd ("mpx", class_support, set_mpx_cmd, _("\
+Set Intel(R) Memory Protection Extensions specific variables."),
+		  &mpx_set_cmdlist, "set mpx ",
+		  0 /* allow-unknown */, &setlist);
+
+  /* Add "mpx" prefix for the show commands.  */
+
+  add_prefix_cmd ("mpx", class_support, show_mpx_cmd, _("\
+Show Intel(R) Memory Protection Extensions specific variables."),
+		  &mpx_show_cmdlist, "show mpx ",
+		  0 /* allow-unknown */, &showlist);
+
+  /* Add "bound" command for the show mpx commands list.  */
+
+  add_cmd ("bound", no_class, i386_mpx_info_bounds,
+	   "Show the memory bounds for a given array/pointer storage\
+ in the bound table.",
+	   &mpx_show_cmdlist);
+
+  /* Add "bound" command for the set mpx commands list.  */
+
+  add_cmd ("bound", no_class, i386_mpx_set_bounds,
+	   "Set the memory bounds for a given array/pointer storage\
+ in the bound table.",
+	   &mpx_set_cmdlist);
 
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_coff_flavour,
 				  i386_coff_osabi_sniffer);

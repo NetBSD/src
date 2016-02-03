@@ -343,10 +343,11 @@ gdb_fopen_cloexec (const char *filename, const char *opentype)
 /* See filestuff.h.  */
 
 int
-gdb_socketpair_cloexec (int namespace, int style, int protocol, int filedes[2])
+gdb_socketpair_cloexec (int domain, int style, int protocol,
+			int filedes[2])
 {
 #ifdef HAVE_SOCKETPAIR
-  int result = socketpair (namespace, style | SOCK_CLOEXEC, protocol, filedes);
+  int result = socketpair (domain, style | SOCK_CLOEXEC, protocol, filedes);
 
   if (result != -1)
     {
@@ -363,9 +364,9 @@ gdb_socketpair_cloexec (int namespace, int style, int protocol, int filedes[2])
 /* See filestuff.h.  */
 
 int
-gdb_socket_cloexec (int namespace, int style, int protocol)
+gdb_socket_cloexec (int domain, int style, int protocol)
 {
-  int result = socket (namespace, style | SOCK_CLOEXEC, protocol);
+  int result = socket (domain, style | SOCK_CLOEXEC, protocol);
 
   if (result != -1)
     socket_mark_cloexec (result);
@@ -402,4 +403,25 @@ gdb_pipe_cloexec (int filedes[2])
 #endif /* HAVE_PIPE2 */
 
   return result;
+}
+
+/* Helper function which does the work for make_cleanup_close.  */
+
+static void
+do_close_cleanup (void *arg)
+{
+  int *fd = arg;
+
+  close (*fd);
+}
+
+/* See cleanup-utils.h.  */
+
+struct cleanup *
+make_cleanup_close (int fd)
+{
+  int *saved_fd = xmalloc (sizeof (fd));
+
+  *saved_fd = fd;
+  return make_cleanup_dtor (do_close_cleanup, saved_fd, xfree);
 }

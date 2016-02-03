@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Manipulation with PID on target is not supported.
-if [is_remote target] then {
+if {![can_spawn_for_attach]} {
     return 0
 }
 
@@ -53,8 +52,10 @@ if {$arch == ""} {
     return 0
 }
 
-set testpid [eval exec $binfile &]
-exec sleep 2
+# Start the program running and then wait for a bit, to be sure
+# that it can be attached to.
+
+set testpid [spawn_wait_for_attach $binfile]
 
 gdb_start
 file delete -- $binfile

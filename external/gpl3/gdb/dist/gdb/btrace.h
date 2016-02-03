@@ -27,9 +27,30 @@
    list of sequential control-flow blocks, one such list per thread.  */
 
 #include "btrace-common.h"
+#include "target/waitstatus.h" /* For enum target_stop_reason.  */
+
+#if defined (HAVE_LIBIPT)
+#  include <intel-pt.h>
+#endif
 
 struct thread_info;
 struct btrace_function;
+
+/* A coarse instruction classification.  */
+enum btrace_insn_class
+{
+  /* The instruction is something not listed below.  */
+  BTRACE_INSN_OTHER,
+
+  /* The instruction is a function call.  */
+  BTRACE_INSN_CALL,
+
+  /* The instruction is a function return.  */
+  BTRACE_INSN_RETURN,
+
+  /* The instruction is an unconditional jump.  */
+  BTRACE_INSN_JUMP
+};
 
 /* A branch trace instruction.
 
@@ -38,6 +59,12 @@ struct btrace_insn
 {
   /* The address of this instruction.  */
   CORE_ADDR pc;
+
+  /* The size of this instruction in bytes.  */
+  gdb_byte size;
+
+  /* The instruction class of this instruction.  */
+  enum btrace_insn_class iclass;
 };
 
 /* A vector of branch trace instructions.  */
@@ -64,12 +91,40 @@ enum btrace_function_flag
   BFUN_UP_LINKS_TO_TAILCALL = (1 << 1)
 };
 
+/* Decode errors for the BTS recording format.  */
+enum btrace_bts_error
+{
+  /* The instruction trace overflowed the end of the trace block.  */
+  BDE_BTS_OVERFLOW = 1,
+
+  /* The instruction size could not be determined.  */
+  BDE_BTS_INSN_SIZE
+};
+
+/* Decode errors for the Intel(R) Processor Trace recording format.  */
+enum btrace_pt_error
+{
+  /* The user cancelled trace processing.  */
+  BDE_PT_USER_QUIT = 1,
+
+  /* Tracing was temporarily disabled.  */
+  BDE_PT_DISABLED,
+
+  /* Trace recording overflowed.  */
+  BDE_PT_OVERFLOW
+
+  /* Negative numbers are used by the decoder library.  */
+};
+
 /* A branch trace function segment.
 
    This represents a function segment in a branch trace, i.e. a consecutive
    number of instructions belonging to the same function.
 
-   We do not allow function segments without any instructions.  */
+   In case of decode errors, we add an empty function segment to indicate
+   the gap in the trace.
+
+   We do not allow function segments without instructions otherwise.  */
 struct btrace_function
 {
   /* The full and minimal symbol for the function.  Both may be NULL.  */
@@ -88,14 +143,23 @@ struct btrace_function
   struct btrace_function *up;
 
   /* The instructions in this function segment.
-     The instruction vector will never be empty.  */
+     The instruction vector will be empty if the function segment
+     represents a decode error.  */
   VEC (btrace_insn_s) *insn;
 
+  /* The error code of a decode error that led to a gap.
+     Must be zero unless INSN is empty; non-zero otherwise.  */
+  int errcode;
+
   /* The instruction number offset for the first instruction in this
-     function segment.  */
+     function segment.
+     If INSN is empty this is the insn_offset of the succeding function
+     segment in control-flow order.  */
   unsigned int insn_offset;
 
-  /* The function number in control-flow order.  */
+  /* The function number in control-flow order.
+     If INSN is empty indicating a gap in the trace due to a decode error,
+     we still count the gap as a function.  */
   unsigned int number;
 
   /* The function level in a back trace across the entire branch trace.
@@ -105,9 +169,6 @@ struct btrace_function
      the corresponding calls.  The branch trace thread information provides
      a fixup to normalize function levels so the smallest level is zero.  */
   int level;
-
-  /* The source line range of this function segment (both inclusive).  */
-  int lbegin, lend;
 
   /* A bit-vector of btrace_function_flag.  */
   enum btrace_function_flag flags;
@@ -172,6 +233,66 @@ enum btrace_thread_flag
   BTHR_MOVE = (BTHR_STEP | BTHR_RSTEP | BTHR_CONT | BTHR_RCONT)
 };
 
+#if defined (HAVE_LIBIPT)
+/* A packet.  */
+struct btrace_pt_packet
+{
+  /* The offset in the trace stream.  */
+  uint64_t offset;
+
+  /* The decode error code.  */
+  enum pt_error_code errcode;
+
+  /* The decoded packet.  Only valid if ERRCODE == pte_ok.  */
+  struct pt_packet packet;
+};
+
+/* Define functions operating on a vector of packets.  */
+typedef struct btrace_pt_packet btrace_pt_packet_s;
+DEF_VEC_O (btrace_pt_packet_s);
+#endif /* defined (HAVE_LIBIPT)  */
+
+/* Branch trace iteration state for "maintenance btrace packet-history".  */
+struct btrace_maint_packet_history
+{
+  /* The branch trace packet range from BEGIN (inclusive) to
+     END (exclusive) that has been covered last time.  */
+  unsigned int begin;
+  unsigned int end;
+};
+
+/* Branch trace maintenance information per thread.
+
+   This information is used by "maintenance btrace" commands.  */
+struct btrace_maint_info
+{
+  /* Most information is format-specific.
+     The format can be found in the BTRACE.DATA.FORMAT field of each thread.  */
+  union
+  {
+    /* BTRACE.DATA.FORMAT == BTRACE_FORMAT_BTS  */
+    struct
+    {
+      /* The packet history iterator.
+	 We are iterating over BTRACE.DATA.FORMAT.VARIANT.BTS.BLOCKS.  */
+      struct btrace_maint_packet_history packet_history;
+    } bts;
+
+#if defined (HAVE_LIBIPT)
+    /* BTRACE.DATA.FORMAT == BTRACE_FORMAT_PT  */
+    struct
+    {
+      /* A vector of decoded packets.  */
+      VEC (btrace_pt_packet_s) *packets;
+
+      /* The packet history iterator.
+	 We are iterating over the above PACKETS vector.  */
+      struct btrace_maint_packet_history packet_history;
+    } pt;
+#endif /* defined (HAVE_LIBIPT)  */
+  } variant;
+};
+
 /* Branch trace information per thread.
 
    This represents the branch trace configuration as well as the entry point
@@ -187,6 +308,9 @@ struct btrace_thread_info
      the underlying architecture.  */
   struct btrace_target_info *target;
 
+  /* The raw branch trace data for the below branch trace.  */
+  struct btrace_data data;
+
   /* The current branch trace for this thread (both inclusive).
 
      The last instruction of END is the current instruction, which is not
@@ -201,6 +325,9 @@ struct btrace_thread_info
      becomes zero.  */
   int level;
 
+  /* The number of gaps in the trace.  */
+  unsigned int ngaps;
+
   /* A bit-vector of btrace_thread_flag.  */
   enum btrace_thread_flag flags;
 
@@ -210,12 +337,26 @@ struct btrace_thread_info
   /* The function call history iterator.  */
   struct btrace_call_history *call_history;
 
-  /* The current replay position.  NULL if not replaying.  */
+  /* The current replay position.  NULL if not replaying.
+     Gaps are skipped during replay, so REPLAY always points to a valid
+     instruction.  */
   struct btrace_insn_iterator *replay;
+
+  /* Why the thread stopped, if we need to track it.  */
+  enum target_stop_reason stop_reason;
+
+  /* Maintenance information.  */
+  struct btrace_maint_info maint;
 };
 
 /* Enable branch tracing for a thread.  */
-extern void btrace_enable (struct thread_info *tp);
+extern void btrace_enable (struct thread_info *tp,
+			   const struct btrace_config *conf);
+
+/* Get the branch trace configuration for a thread.
+   Return NULL if branch tracing is not enabled for that thread.  */
+extern const struct btrace_config *
+  btrace_conf (const struct btrace_thread_info *);
 
 /* Disable branch tracing for a thread.
    This will also delete the current branch trace data.  */
@@ -235,11 +376,15 @@ extern void btrace_clear (struct thread_info *);
 /* Clear the branch trace for all threads when an object file goes away.  */
 extern void btrace_free_objfile (struct objfile *);
 
-/* Parse a branch trace xml document into a block vector.  */
-extern VEC (btrace_block_s) *parse_xml_btrace (const char*);
+/* Parse a branch trace xml document XML into DATA.  */
+extern void parse_xml_btrace (struct btrace_data *data, const char *xml);
+
+/* Parse a branch trace configuration xml document XML into CONF.  */
+extern void parse_xml_btrace_conf (struct btrace_config *conf, const char *xml);
 
 /* Dereference a branch trace instruction iterator.  Return a pointer to the
-   instruction the iterator points to.  */
+   instruction the iterator points to.
+   May return NULL if the iterator points to a gap in the trace.  */
 extern const struct btrace_insn *
   btrace_insn_get (const struct btrace_insn_iterator *);
 
@@ -339,5 +484,7 @@ extern int btrace_is_replaying (struct thread_info *tp);
 /* Return non-zero if the branch trace for TP is empty; zero otherwise.  */
 extern int btrace_is_empty (struct thread_info *tp);
 
+/* Create a cleanup for DATA.  */
+extern struct cleanup *make_cleanup_btrace_data (struct btrace_data *data);
 
 #endif /* BTRACE_H */

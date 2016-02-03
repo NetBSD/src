@@ -83,7 +83,7 @@ picobug_dumpregs (struct regcache *regcache)
       if (strchr (p, '-'))
 	{
 	  /* Got a range.  Either r0-r7, r8-r15 or ss0-ss4.  */
-	  if (strncmp (p, "r0", 2) == 0 || strncmp (p, "r8", 2) == 0)
+	  if (startswith (p, "r0") || startswith (p, "r8"))
 	    {
 	      int rn = (p[1] == '0' ? 0 : 8);
 	      int i = 0;
@@ -97,7 +97,7 @@ picobug_dumpregs (struct regcache *regcache)
 		  i++;
 		}
 	    }
-	  else if (strncmp (p, "ss", 2) == 0)
+	  else if (startswith (p, "ss"))
 	    {
 	      /* Get the next five values, ignoring the first.  */
 	      int rn;

@@ -21,17 +21,6 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } 
   return -1
 }
 
-# A convenience function that joins all the arguments together,
-# with a regexp that matches zero-or-more end of lines in between
-# each argument.  This function is ideal to write the expected output
-# of a GDB command that generates more than a couple of lines, as
-# this allows us to write each line as a separate string, which is
-# easier to read by a human being.
-
-proc multi_line { args } {
-    return [join $args "\[\r\n\]*"]
-}
-
 clean_restart ${testfile}
 
 set bp_location [gdb_get_line_number "STOP" ${testdir}/comp_bug.adb]

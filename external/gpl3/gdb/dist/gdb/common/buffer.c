@@ -21,8 +21,6 @@
 #include "xml-utils.h"
 #include "buffer.h"
 #include "inttypes.h"
-#include <stdint.h>
-
 void
 buffer_grow (struct buffer *buffer, const char *data, size_t size)
 {

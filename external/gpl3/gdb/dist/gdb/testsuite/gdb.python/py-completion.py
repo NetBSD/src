@@ -53,6 +53,95 @@ class CompleteFileCommandCond(gdb.Command):
 		else:
 			return gdb.COMPLETE_FILENAME
 
+class CompleteLimit1(gdb.Command):
+	def __init__(self):
+		gdb.Command.__init__(self,'completelimit1',gdb.COMMAND_USER)
+
+	def invoke(self,argument,from_tty):
+		raise gdb.GdbError('not implemented')
+
+	def complete(self,text,word):
+                return ["cl11", "cl12", "cl13"]
+
+class CompleteLimit2(gdb.Command):
+	def __init__(self):
+		gdb.Command.__init__(self,'completelimit2',
+                                     gdb.COMMAND_USER)
+
+	def invoke(self,argument,from_tty):
+		raise gdb.GdbError('not implemented')
+
+	def complete(self,text,word):
+		return ["cl21", "cl23", "cl25", "cl27", "cl29",
+                        "cl22", "cl24", "cl26", "cl28", "cl210"]
+
+class CompleteLimit3(gdb.Command):
+	def __init__(self):
+		gdb.Command.__init__(self,'completelimit3',
+                                     gdb.COMMAND_USER)
+
+	def invoke(self,argument,from_tty):
+		raise gdb.GdbError('not implemented')
+
+	def complete(self,text,word):
+		return ["cl31", "cl33", "cl35", "cl37", "cl39",
+                        "cl32", "cl34", "cl36", "cl38", "cl310"]
+
+class CompleteLimit4(gdb.Command):
+	def __init__(self):
+		gdb.Command.__init__(self,'completelimit4',
+                                     gdb.COMMAND_USER)
+
+	def invoke(self,argument,from_tty):
+		raise gdb.GdbError('not implemented')
+
+	def complete(self,text,word):
+		return ["cl41", "cl43", "cl45", "cl47", "cl49",
+                        "cl42", "cl44", "cl46", "cl48", "cl410"]
+
+class CompleteLimit5(gdb.Command):
+	def __init__(self):
+		gdb.Command.__init__(self,'completelimit5',
+                                     gdb.COMMAND_USER)
+
+	def invoke(self,argument,from_tty):
+		raise gdb.GdbError('not implemented')
+
+	def complete(self,text,word):
+		return ["cl51", "cl53", "cl55", "cl57", "cl59",
+                        "cl52", "cl54", "cl56", "cl58", "cl510"]
+
+class CompleteLimit6(gdb.Command):
+	def __init__(self):
+		gdb.Command.__init__(self,'completelimit6',
+                                     gdb.COMMAND_USER)
+
+	def invoke(self,argument,from_tty):
+		raise gdb.GdbError('not implemented')
+
+	def complete(self,text,word):
+		return ["cl61", "cl63", "cl65", "cl67", "cl69",
+                        "cl62", "cl64", "cl66", "cl68", "cl610"]
+
+class CompleteLimit7(gdb.Command):
+	def __init__(self):
+		gdb.Command.__init__(self,'completelimit7',
+                                     gdb.COMMAND_USER)
+
+	def invoke(self,argument,from_tty):
+		raise gdb.GdbError('not implemented')
+
+	def complete(self,text,word):
+		return ["cl71", "cl73", "cl75", "cl77", "cl79",
+                        "cl72", "cl74", "cl76", "cl78", "cl710"]
+
 CompleteFileInit()
 CompleteFileMethod()
 CompleteFileCommandCond()
+CompleteLimit1()
+CompleteLimit2()
+CompleteLimit3()
+CompleteLimit4()
+CompleteLimit5()
+CompleteLimit6()
+CompleteLimit7()

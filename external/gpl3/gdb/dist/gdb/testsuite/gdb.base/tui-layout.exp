@@ -19,4 +19,11 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} $srcfile] } {
     return -1
 }
 
+if {[skip_tui_tests]} {
+    # TUI support is disabled.  Check for error message.
+    gdb_test "layout asm" "Undefined command: \"layout\".  Try \"help\"."
+    return
+}
+
+# Just check the command does not cause gdb to crash.
 gdb_test "layout asm"

@@ -30,6 +30,7 @@
 #include "gdbthread.h"
 #include "regcache.h"
 #include "inf-child.h"
+#include "filestuff.h"
 
 #if defined (NEW_PROC_API)
 #define _STRUCTURED_PROC 1	/* Should be done by configure script.  */

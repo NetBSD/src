@@ -242,3 +242,73 @@ elf_s390_add_symbol_hook (bfd *abfd,
 
   return TRUE;
 }
+
+/* Whether to sort relocs output by ld -r or ld --emit-relocs, by
+   r_offset.  Don't do so for code sections.  We want to keep ordering
+   of GDCALL / PLT32DBL for TLS optimizations as is.  On the other
+   hand, elf-eh-frame.c processing requires .eh_frame relocs to be
+   sorted.  */
+
+static bfd_boolean
+elf_s390_elf_sort_relocs_p (asection *sec)
+{
+  return (sec->flags & SEC_CODE) == 0;
+}
+
+/* Merge object attributes from IBFD into OBFD.  Raise an error if
+   there are conflicting attributes.  */
+static bfd_boolean
+elf_s390_merge_obj_attributes (bfd *ibfd, bfd *obfd)
+{
+  obj_attribute *in_attr, *in_attrs;
+  obj_attribute *out_attr, *out_attrs;
+
+  if (!elf_known_obj_attributes_proc (obfd)[0].i)
+    {
+      /* This is the first object.  Copy the attributes.  */
+      _bfd_elf_copy_obj_attributes (ibfd, obfd);
+
+      /* Use the Tag_null value to indicate the attributes have been
+	 initialized.  */
+      elf_known_obj_attributes_proc (obfd)[0].i = 1;
+
+      return TRUE;
+    }
+
+  in_attrs = elf_known_obj_attributes (ibfd)[OBJ_ATTR_GNU];
+  out_attrs = elf_known_obj_attributes (obfd)[OBJ_ATTR_GNU];
+
+  /* Check for conflicting Tag_GNU_S390_ABI_Vector attributes and
+     merge non-conflicting ones.  */
+  in_attr = &in_attrs[Tag_GNU_S390_ABI_Vector];
+  out_attr = &out_attrs[Tag_GNU_S390_ABI_Vector];
+
+  if (in_attr->i > 2)
+    _bfd_error_handler
+      (_("Warning: %B uses unknown vector ABI %d"), ibfd,
+       in_attr->i);
+  else if (out_attr->i > 2)
+    _bfd_error_handler
+      (_("Warning: %B uses unknown vector ABI %d"), obfd,
+       out_attr->i);
+  else if (in_attr->i != out_attr->i)
+    {
+      out_attr->type = ATTR_TYPE_FLAG_INT_VAL;
+
+      if (in_attr->i && out_attr->i)
+	{
+	  const char abi_str[3][9] = { "none", "software", "hardware" };
+
+	  _bfd_error_handler
+	    (_("Warning: %B uses vector %s ABI, %B uses %s ABI"),
+	     ibfd, obfd, abi_str[in_attr->i], abi_str[out_attr->i]);
+	}
+      if (in_attr->i > out_attr->i)
+	out_attr->i = in_attr->i;
+    }
+
+  /* Merge Tag_compatibility attributes and any common GNU ones.  */
+  _bfd_elf_merge_object_attributes (ibfd, obfd);
+
+  return TRUE;
+}

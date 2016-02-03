@@ -36,6 +36,7 @@
 #include "elfxx-mips.h"
 #include "elf/mips.h"
 #include "elf-vxworks.h"
+#include "dwarf2.h"
 
 /* Get the ECOFF swapping routines.  */
 #include "coff/sym.h"
@@ -6194,11 +6195,13 @@ mips_elf_obtain_contents (reloc_howto_type *howto,
 			  const Elf_Internal_Rela *relocation,
 			  bfd *input_bfd, bfd_byte *contents)
 {
-  bfd_vma x;
+  bfd_vma x = 0;
   bfd_byte *location = contents + relocation->r_offset;
+  unsigned int size = bfd_get_reloc_size (howto);
 
   /* Obtain the bytes.  */
-  x = bfd_get ((8 * bfd_get_reloc_size (howto)), input_bfd, location);
+  if (size != 0)
+    x = bfd_get (8 * size, input_bfd, location);
 
   return x;
 }
@@ -6223,6 +6226,7 @@ mips_elf_perform_relocation (struct bfd_link_info *info,
   bfd_vma x;
   bfd_byte *location;
   int r_type = ELF_R_TYPE (input_bfd, relocation->r_info);
+  unsigned int size;
 
   /* Figure out where the relocation is occurring.  */
   location = contents + relocation->r_offset;
@@ -6316,7 +6320,9 @@ mips_elf_perform_relocation (struct bfd_link_info *info,
     }
 
   /* Put the value into the output.  */
-  bfd_put (8 * bfd_get_reloc_size (howto), input_bfd, x, location);
+  size = bfd_get_reloc_size (howto);
+  if (size != 0)
+    bfd_put (8 * size, input_bfd, x, location);
 
   _bfd_mips_elf_reloc_shuffle (input_bfd, r_type, !info->relocatable,
 			       location);
@@ -7608,7 +7614,7 @@ _bfd_mips_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   htab->sstubs = s;
 
   if (!mips_elf_hash_table (info)->use_rld_obj_head
-      && !info->shared
+      && info->executable
       && bfd_get_linker_section (abfd, ".rld_map") == NULL)
     {
       s = bfd_make_section_anyway_with_flags (abfd, ".rld_map",
@@ -7672,7 +7678,7 @@ _bfd_mips_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 	(void) bfd_set_section_alignment (abfd, s, MIPS_ELF_LOG_FILE_ALIGN (abfd));
     }
 
-  if (!info->shared)
+  if (info->executable)
     {
       const char *name;
 
@@ -9713,7 +9719,7 @@ _bfd_mips_elf_size_dynamic_sections (bfd *output_bfd,
 	      info->combreloc = 0;
 	    }
 	}
-      else if (! info->shared
+      else if (info->executable
 	       && ! mips_elf_hash_table (info)->use_rld_obj_head
 	       && CONST_STRNEQ (name, ".rld_map"))
 	{
@@ -9774,6 +9780,10 @@ _bfd_mips_elf_size_dynamic_sections (bfd *output_bfd,
 	 may only look at the first one they see.  */
       if (!info->shared
 	  && !MIPS_ELF_ADD_DYNAMIC_ENTRY (info, DT_MIPS_RLD_MAP, 0))
+	return FALSE;
+
+      if (info->executable
+	  && !MIPS_ELF_ADD_DYNAMIC_ENTRY (info, DT_MIPS_RLD_MAP_REL, 0))
 	return FALSE;
 
       /* The DT_DEBUG entry may be filled in by the dynamic linker and
@@ -11481,8 +11491,34 @@ _bfd_mips_elf_finish_dynamic_sections (bfd *output_bfd,
 		    break;
 		  }
 		s = h->root.u.def.section;
+
+		/* The MIPS_RLD_MAP tag stores the absolute address of the
+		   debug pointer.  */
 		dyn.d_un.d_ptr = (s->output_section->vma + s->output_offset
 				  + h->root.u.def.value);
+	      }
+	      break;
+
+	    case DT_MIPS_RLD_MAP_REL:
+	      {
+		struct elf_link_hash_entry *h;
+		bfd_vma dt_addr, rld_addr;
+		h = mips_elf_hash_table (info)->rld_symbol;
+		if (!h)
+		  {
+		    dyn_to_skip = MIPS_ELF_DYN_SIZE (dynobj);
+		    swap_out_p = FALSE;
+		    break;
+		  }
+		s = h->root.u.def.section;
+
+		/* The MIPS_RLD_MAP_REL tag stores the offset to the debug
+		   pointer, relative to the address of the tag.  */
+		dt_addr = (sdyn->output_section->vma + sdyn->output_offset
+			   + b - sdyn->contents);
+		rld_addr = (s->output_section->vma + s->output_offset
+			    + h->root.u.def.value);
+		dyn.d_un.d_ptr = rld_addr - dt_addr;
 	      }
 	      break;
 
@@ -15415,6 +15451,8 @@ _bfd_mips_elf_get_target_dtag (bfd_vma dtag)
       return "MIPS_HIPAGENO";
     case DT_MIPS_RLD_MAP:
       return "MIPS_RLD_MAP";
+    case DT_MIPS_RLD_MAP_REL:
+      return "MIPS_RLD_MAP_REL";
     case DT_MIPS_DELTA_CLASS:
       return "MIPS_DELTA_CLASS";
     case DT_MIPS_DELTA_CLASS_NO:
@@ -16103,4 +16141,18 @@ _bfd_mips_post_process_headers (bfd *abfd, struct bfd_link_info *link_info)
   if (mips_elf_tdata (abfd)->abiflags.fp_abi == Val_GNU_MIPS_ABI_FP_64
       || mips_elf_tdata (abfd)->abiflags.fp_abi == Val_GNU_MIPS_ABI_FP_64A)
     i_ehdrp->e_ident[EI_ABIVERSION] = 3;
+}
+
+int
+_bfd_mips_elf_compact_eh_encoding (struct bfd_link_info *link_info ATTRIBUTE_UNUSED)
+{
+  return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+}
+
+/* Return the opcode for can't unwind.  */
+
+int
+_bfd_mips_elf_cant_unwind_opcode (struct bfd_link_info *link_info ATTRIBUTE_UNUSED)
+{
+  return COMPACT_EH_CANT_UNWIND_OPCODE;
 }

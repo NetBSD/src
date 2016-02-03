@@ -212,9 +212,7 @@ _initialize_ppcfbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = ppcfbsd_fetch_inferior_registers;
   t->to_store_registers = ppcfbsd_store_inferior_registers;
-  t->to_pid_to_exec_file = fbsd_pid_to_exec_file;
-  t->to_find_memory_regions = fbsd_find_memory_regions;
-  add_target (t);
+  fbsd_nat_add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (ppcfbsd_supply_pcb);

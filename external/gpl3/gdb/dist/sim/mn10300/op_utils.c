@@ -1,4 +1,5 @@
 #include "sim-main.h"
+#include "sim-syscall.h"
 #include "targ-vals.h"
 
 #ifdef HAVE_UTIME_H
@@ -140,32 +141,19 @@ genericBtst(unsigned32 leftOpnd, unsigned32 rightOpnd)
   PSW |= (z ? PSW_Z : 0) | (n ? PSW_N : 0);
 }
 
-/* Read/write functions for system call interface.  */
-INLINE_SIM_MAIN (int)
-syscall_read_mem (host_callback *cb, struct cb_syscall *sc,
-		  unsigned long taddr, char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  sim_cpu *cpu = STATE_CPU(sd, 0);
-
-  return sim_core_read_buffer (sd, cpu, read_map, buf, taddr, bytes);
-}
-
-INLINE_SIM_MAIN (int)
-syscall_write_mem (host_callback *cb, struct cb_syscall *sc,
-		   unsigned long taddr, const char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  sim_cpu *cpu = STATE_CPU(sd, 0);
-
-  return sim_core_write_buffer (sd, cpu, write_map, buf, taddr, bytes);
-}
-
-
 /* syscall */
 INLINE_SIM_MAIN (void)
 do_syscall (void)
 {
+  /* Registers passed to trap 0.  */
+
+  /* Function number.  */
+  reg_t func = State.regs[0];
+  /* Parameters.  */
+  reg_t parm1 = State.regs[1];
+  reg_t parm2 = load_word (State.regs[REG_SP] + 12);
+  reg_t parm3 = load_word (State.regs[REG_SP] + 16);
+  reg_t parm4 = load_word (State.regs[REG_SP] + 20);
 
   /* We use this for simulated system calls; we may need to change
      it to a reserved instruction if we conflict with uses at
@@ -173,55 +161,24 @@ do_syscall (void)
   int save_errno = errno;	
   errno = 0;
 
-/* Registers passed to trap 0 */
-
-/* Function number.  */
-#define FUNC   (State.regs[0])
-
-/* Parameters.  */
-#define PARM1   (State.regs[1])
-#define PARM2   (load_word (State.regs[REG_SP] + 12))
-#define PARM3   (load_word (State.regs[REG_SP] + 16))
-
-/* Registers set by trap 0 */
-
-#define RETVAL State.regs[0]	/* return value */
-#define RETERR State.regs[1]	/* return error code */
-
-/* Turn a pointer in a register into a pointer into real memory. */
-#define MEMPTR(x) (State.mem + x)
-
-  if ( FUNC == TARGET_SYS_exit )
+  if (func == TARGET_SYS_exit)
     {
-      /* EXIT - caller can look in PARM1 to work out the reason */
-      if (PARM1 == 0xdead)
-	State.exception = SIGABRT;
-      else
-	{
-	  sim_engine_halt (simulator, STATE_CPU (simulator, 0), NULL, PC,
-			   sim_exited, PARM1);
-	  State.exception = SIGQUIT;
-	}
-      State.exited = 1;
+      /* EXIT - caller can look in parm1 to work out the reason */
+      sim_engine_halt (simulator, STATE_CPU (simulator, 0), NULL, PC,
+		       (parm1 == 0xdead ? SIM_SIGABRT : sim_exited), parm1);
     }
   else
     {
-      CB_SYSCALL syscall;
+      long result, result2;
+      int errcode;
 
-      CB_SYSCALL_INIT (&syscall);
-      syscall.arg1 = PARM1;
-      syscall.arg2 = PARM2;
-      syscall.arg3 = PARM3;
-      syscall.func = FUNC;
-      syscall.p1 = (PTR) simulator;
-      syscall.read_mem = syscall_read_mem;
-      syscall.write_mem = syscall_write_mem;
-      cb_syscall (STATE_CALLBACK (simulator), &syscall);
-      RETERR = syscall.errcode;
-      RETVAL = syscall.result;
+      sim_syscall_multi (STATE_CPU (simulator, 0), func, parm1, parm2,
+			 parm3, parm4, &result, &result2, &errcode);
+
+      /* Registers set by trap 0.  */
+      State.regs[0] = errcode;
+      State.regs[1] = result;
     }
-
 
   errno = save_errno;
 }
-

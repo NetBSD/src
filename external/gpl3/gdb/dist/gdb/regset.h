@@ -43,6 +43,13 @@ struct regset
 
   /* Function collecting values in a register set from a register cache.  */
   collect_regset_ftype *collect_regset;
+
+  unsigned flags;
 };
+
+/* Values for a regset's 'flags' field.  */
+
+#define REGSET_VARIABLE_SIZE 1	/* Accept a larger regset section size
+				   in a core file without warning.  */
 
 #endif /* regset.h */

@@ -75,17 +75,8 @@ gdb_test "watch g" "atchpoint 3: g" "set watchpoint on g"
 gdb_test "continue" ".*New value = 1.*" "continue to watchpoint hit"
 rerun_to_main
 
-set savedtimeout $timeout
-if { [target_info exists gdb,timeout]
-     && $timeout < [target_info gdb,timeout] } {
-    set oldtimeout [target_info gdb,timeout]
-} else {
-    set oldtimeout $timeout
+with_timeout_factor 30 {
+    gdb_test "continue" ".*Breakpoint 2.*foo.*" "continue to foo again"
 }
-set timeout [expr $oldtimeout * 30]
-
-gdb_test "continue" ".*Breakpoint 2.*foo.*" "continue to foo again"
-
-set timeout $savedtimeout
 
 gdb_test "continue" ".*New value = 1.*" "continue to watchpoint hit again"

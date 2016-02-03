@@ -23,8 +23,25 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/* System V IPC identifiers.  */
+static int shmid = -1, semid = -1, msqid = -1;
+
+/* Delete any System V IPC resources that were allocated.  */
+
+static void
+ipc_cleanup (void)
+{
+  if (shmid >= 0)
+    shmctl (shmid, IPC_RMID, NULL);
+  if (semid >= 0)
+    semctl (semid, 0, IPC_RMID, NULL);
+  if (msqid >= 0)
+    msgctl (msqid, IPC_RMID, NULL);
+}
 
 void *
 thread_proc (void *args)
@@ -38,7 +55,6 @@ main (void)
 {
   const int flags = IPC_CREAT | 0666;
   key_t shmkey = 3925, semkey = 7428, msgkey = 5294;
-  int shmid, semid, msqid;
   FILE *fd;
   pthread_t thread;
   struct sockaddr_in sock_addr;
@@ -46,6 +62,8 @@ main (void)
   unsigned short port;
   socklen_t size;
   int status, try, retries = 1000;
+
+  atexit (ipc_cleanup);
 
   for (try = 0; try < retries; ++try)
     {
@@ -135,9 +153,6 @@ main (void)
 
   /* Set breakpoint here.  */
 
-  shmctl (shmid, IPC_RMID, NULL);
-  semctl (semid, 0, IPC_RMID, NULL);
-  msgctl (msqid, IPC_RMID, NULL);
   fclose (fd);
   close (sock);
 

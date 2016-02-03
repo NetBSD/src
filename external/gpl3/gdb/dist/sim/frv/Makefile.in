@@ -21,13 +21,11 @@ FRV_OBJS = frv.o cpu.o decode.o sem.o model.o mloop.o cgen-par.o
 
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-cpu.o \
 	sim-hload.o \
-	sim-hrw.o \
 	sim-model.o \
 	sim-reg.o \
 	cgen-utils.o cgen-trace.o cgen-scache.o cgen-fpu.o cgen-accfp.o \
-	cgen-run.o sim-reason.o sim-engine.o sim-stop.o \
+	cgen-run.o sim-reason.o sim-stop.o \
 	sim-if.o arch.o \
 	$(FRV_OBJS) \
 	traps.o interrupts.o memory.o cache.o pipeline.o \
@@ -43,7 +41,6 @@ SIM_EXTRA_DEPS = \
 
 SIM_EXTRA_CFLAGS = @sim_trapdump@
 
-SIM_RUN_OBJS = nrun.o
 SIM_EXTRA_CLEAN = frv-clean
 
 # This selects the frv newlib/libgloss syscall definitions.

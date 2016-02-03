@@ -85,9 +85,9 @@ proc test_command_param_changed { } {
 
 	# No notification is emitted for 'maint set' commands.
 	foreach boolean_opt { "on" "off" } {
-	    mi_gdb_test "maint set dwarf2 always-disassemble ${boolean_opt}" \
-		"\\&\"maint set dwarf2 always-disassemble ${boolean_opt}\\\\n\"\r\n\\^done" \
-		"\"maint dwarf2 always-disassemble ${boolean_opt}\""
+	    mi_gdb_test "maint set dwarf always-disassemble ${boolean_opt}" \
+		"\\&\"maint set dwarf always-disassemble ${boolean_opt}\\\\n\"\r\n\\^done" \
+		"\"maint dwarf always-disassemble ${boolean_opt}\""
 	}
 
 	# Full command parameters are included in the notification when a

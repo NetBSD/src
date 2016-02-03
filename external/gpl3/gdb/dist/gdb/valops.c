@@ -47,7 +47,7 @@ static int typecmp (int staticp, int varargs, int nargs,
 		    struct field t1[], struct value *t2[]);
 
 static struct value *search_struct_field (const char *, struct value *, 
-					  int, struct type *, int);
+					  struct type *, int);
 
 static struct value *search_struct_method (const char *, struct value **,
 					   struct value **,
@@ -245,7 +245,7 @@ value_cast_structs (struct type *type, struct value *v2)
   if (TYPE_NAME (t1) != NULL)
     {
       v = search_struct_field (type_name_no_tag (t1),
-			       v2, 0, t2, 1);
+			       v2, t2, 1);
       if (v)
 	return v;
     }
@@ -272,7 +272,7 @@ value_cast_structs (struct type *type, struct value *v2)
 	      && !strcmp (TYPE_NAME (real_type), TYPE_NAME (t1)))
 	    return v;
 
-	  v = search_struct_field (type_name_no_tag (t2), v, 0, real_type, 1);
+	  v = search_struct_field (type_name_no_tag (t2), v, real_type, 1);
 	  if (v)
 	    return v;
 	}
@@ -281,7 +281,7 @@ value_cast_structs (struct type *type, struct value *v2)
 	 T2.  This wouldn't work properly for classes with virtual
 	 bases, but those were handled above.  */
       v = search_struct_field (type_name_no_tag (t2),
-			       value_zero (t1, not_lval), 0, t1, 1);
+			       value_zero (t1, not_lval), t1, 1);
       if (v)
 	{
 	  /* Downcasting is possible (t1 is superclass of v2).  */
@@ -1949,21 +1949,20 @@ do_search_struct_field (const char *name, struct value *arg1, int offset,
 }
 
 /* Helper function used by value_struct_elt to recurse through
-   baseclasses.  Look for a field NAME in ARG1.  Adjust the address of
-   ARG1 by OFFSET bytes, and search in it assuming it has (class) type
-   TYPE.  If found, return value, else return NULL.
+   baseclasses.  Look for a field NAME in ARG1.  Search in it assuming
+   it has (class) type TYPE.  If found, return value, else return NULL.
 
    If LOOKING_FOR_BASECLASS, then instead of looking for struct
    fields, look for a baseclass named NAME.  */
 
 static struct value *
-search_struct_field (const char *name, struct value *arg1, int offset,
+search_struct_field (const char *name, struct value *arg1,
 		     struct type *type, int looking_for_baseclass)
 {
   struct value *result = NULL;
   int boffset = 0;
 
-  do_search_struct_field (name, arg1, offset, type, looking_for_baseclass,
+  do_search_struct_field (name, arg1, 0, type, looking_for_baseclass,
 			  &result, &boffset, type);
   return result;
 }
@@ -1992,9 +1991,9 @@ search_struct_method (const char *name, struct value **arg1p,
       const char *t_field_name = TYPE_FN_FIELDLIST_NAME (type, i);
 
       /* FIXME!  May need to check for ARM demangling here.  */
-      if (strncmp (t_field_name, "__", 2) == 0 ||
-	  strncmp (t_field_name, "op", 2) == 0 ||
-	  strncmp (t_field_name, "type", 4) == 0)
+      if (startswith (t_field_name, "__") ||
+	  startswith (t_field_name, "op") ||
+	  startswith (t_field_name, "type"))
 	{
 	  if (cplus_demangle_opname (t_field_name, dem_opname, DMGL_ANSI))
 	    t_field_name = dem_opname;
@@ -2162,7 +2161,7 @@ value_struct_elt (struct value **argp, struct value **args,
 
       /* Try as a field first, because if we succeed, there is less
          work to be done.  */
-      v = search_struct_field (name, *argp, 0, t, 0);
+      v = search_struct_field (name, *argp, t, 0);
       if (v)
 	return v;
 
@@ -2196,7 +2195,7 @@ value_struct_elt (struct value **argp, struct value **args,
       /* See if user tried to invoke data as function.  If so, hand it
          back.  If it's not callable (i.e., a pointer to function),
          gdb should give an error.  */
-      v = search_struct_field (name, *argp, 0, t, 0);
+      v = search_struct_field (name, *argp, t, 0);
       /* If we found an ordinary field, then it is not a method call.
 	 So, treat it as if it were a static member function.  */
       if (v && static_memfuncp)
@@ -2519,7 +2518,7 @@ find_overload_match (struct value **args, int nargs,
 	 a function.  */
       if (TYPE_CODE (check_typedef (value_type (obj))) == TYPE_CODE_STRUCT)
 	{
-	  *valp = search_struct_field (name, obj, 0,
+	  *valp = search_struct_field (name, obj,
 				       check_typedef (value_type (obj)), 0);
 	  if (*valp)
 	    {
@@ -2544,7 +2543,7 @@ find_overload_match (struct value **args, int nargs,
 	 value_find_oload_method_list above.  */
       if (fns_ptr)
 	{
-	  gdb_assert (TYPE_DOMAIN_TYPE (fns_ptr[0].type) != NULL);
+	  gdb_assert (TYPE_SELF_TYPE (fns_ptr[0].type) != NULL);
 
 	  src_method_oload_champ = find_oload_champ (args, nargs,
 						     num_fns, fns_ptr, NULL,
@@ -3360,7 +3359,7 @@ value_struct_elt_for_reference (struct type *domain, int offset,
 		  type = check_typedef (value_type (ptr));
 		  gdb_assert (type != NULL
 			      && TYPE_CODE (type) == TYPE_CODE_MEMBERPTR);
-		  tmp = lookup_pointer_type (TYPE_DOMAIN_TYPE (type));
+		  tmp = lookup_pointer_type (TYPE_SELF_TYPE (type));
 		  v = value_cast_pointers (tmp, v, 1);
 		  mem_offset = value_as_long (ptr);
 		  tmp = lookup_pointer_type (TYPE_TARGET_TYPE (type));
@@ -3386,9 +3385,9 @@ value_struct_elt_for_reference (struct type *domain, int offset,
       const char *t_field_name = TYPE_FN_FIELDLIST_NAME (t, i);
       char dem_opname[64];
 
-      if (strncmp (t_field_name, "__", 2) == 0 
-	  || strncmp (t_field_name, "op", 2) == 0 
-	  || strncmp (t_field_name, "type", 4) == 0)
+      if (startswith (t_field_name, "__") 
+	  || startswith (t_field_name, "op") 
+	  || startswith (t_field_name, "type"))
 	{
 	  if (cplus_demangle_opname (t_field_name, 
 				     dem_opname, DMGL_ANSI))
@@ -3592,7 +3591,7 @@ struct type *
 value_rtti_indirect_type (struct value *v, int *full, 
 			  int *top, int *using_enc)
 {
-  struct value *target;
+  struct value *target = NULL;
   struct type *type, *real_type, *target_type;
 
   type = value_type (v);
@@ -3600,7 +3599,25 @@ value_rtti_indirect_type (struct value *v, int *full,
   if (TYPE_CODE (type) == TYPE_CODE_REF)
     target = coerce_ref (v);
   else if (TYPE_CODE (type) == TYPE_CODE_PTR)
-    target = value_ind (v);
+    {
+
+      TRY
+        {
+	  target = value_ind (v);
+        }
+      CATCH (except, RETURN_MASK_ERROR)
+	{
+	  if (except.error == MEMORY_ERROR)
+	    {
+	      /* value_ind threw a memory error. The pointer is NULL or
+	         contains an uninitialized value: we can't determine any
+	         type.  */
+	      return NULL;
+	    }
+	  throw_exception (except);
+	}
+      END_CATCH
+    }
   else
     return NULL;
 
@@ -3736,12 +3753,15 @@ struct value *
 value_of_this_silent (const struct language_defn *lang)
 {
   struct value *ret = NULL;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ERROR)
+  TRY
     {
       ret = value_of_this (lang);
     }
+  CATCH (except, RETURN_MASK_ERROR)
+    {
+    }
+  END_CATCH
 
   return ret;
 }

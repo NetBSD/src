@@ -227,31 +227,31 @@ deliver_mn103cpu_interrupt (struct hw *me,
   else if (controller->pending_nmi)
     {
       controller->pending_nmi = 0;
-      store_word (SP - 4, CIA_GET (cpu));
+      store_word (SP - 4, CPU_PC_GET (cpu));
       store_half (SP - 8, PSW);
       PSW &= ~PSW_IE;
       SP = SP - 8;
-      CIA_SET (cpu, 0x40000008);
+      CPU_PC_SET (cpu, 0x40000008);
       HW_TRACE ((me, "nmi pc=0x%08lx psw=0x%04x sp=0x%08lx",
-		 (long) CIA_GET (cpu), (unsigned) PSW, (long) SP));
+		 (long) CPU_PC_GET (cpu), (unsigned) PSW, (long) SP));
     }
   else if ((controller->pending_level < EXTRACT_PSW_LM)
 	   && (PSW & PSW_IE))
     {
       /* Don't clear pending level.  Request continues to be pending
          until the interrupt controller clears/changes it */
-      store_word (SP - 4, CIA_GET (cpu));
+      store_word (SP - 4, CPU_PC_GET (cpu));
       store_half (SP - 8, PSW);
       PSW &= ~PSW_IE;
       PSW &= ~PSW_LM;
       PSW |= INSERT_PSW_LM (controller->pending_level);
       SP = SP - 8;
-      CIA_SET (cpu, 0x40000000 + controller->interrupt_vector[controller->pending_level]);
+      CPU_PC_SET (cpu, 0x40000000 + controller->interrupt_vector[controller->pending_level]);
       HW_TRACE ((me, "port-out ack %d", controller->pending_level));
       hw_port_event (me, ACK_PORT, controller->pending_level);
       HW_TRACE ((me, "int level=%d pc=0x%08lx psw=0x%04x sp=0x%08lx",
 		 controller->pending_level,
-		 (long) CIA_GET (cpu), (unsigned) PSW, (long) SP));
+		 (long) CPU_PC_GET (cpu), (unsigned) PSW, (long) SP));
     }
 
   if (controller->pending_level < 7) /* FIXME */

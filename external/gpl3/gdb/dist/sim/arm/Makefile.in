@@ -17,41 +17,21 @@
 
 ## COMMON_PRE_CONFIG_FRAG
 
-SIM_EXTRA_CFLAGS = -DMODET -DNEED_UI_LOOP_HOOK -DSIM_TARGET_SWITCHES
+SIM_EXTRA_CFLAGS = -DMODET
+SIM_EXTRA_LIBS = -lm
 
-COPRO=@COPRO@
-
-SIM_OBJS = armemu26.o armemu32.o arminit.o armos.o armsupp.o \
-	armvirt.o bag.o thumbemu.o wrapper.o sim-load.o $(COPRO) 
+SIM_OBJS = \
+	wrapper.o \
+	$(SIM_NEW_COMMON_OBJS) \
+	sim-hload.o \
+	armemu26.o armemu32.o arminit.o armos.o armsupp.o \
+	armvirt.o bag.o thumbemu.o \
+	armcopro.o maverick.o iwmmxt.o
 
 ## COMMON_POST_CONFIG_FRAG
 
-
-armos.o: armos.c armdefs.h armos.h armfpe.h targ-vals.h
-
-armcopro.o: armcopro.c armdefs.h
-maverick.o: maverick.c armdefs.h
-iwmmxt.o: iwmmxt.c iwmmxt.h armdefs.h
-
-armemu26.o: armemu.c armdefs.h armemu.h 
+armemu26.o: armemu.c armdefs.h armemu.h
 	$(CC) -c $(srcdir)/armemu.c -o armemu26.o $(ALL_CFLAGS)
 
 armemu32.o: armemu.c armdefs.h armemu.h
 	$(CC) -c $(srcdir)/armemu.c -o armemu32.o -DMODE32 $(ALL_CFLAGS)
-
-arminit.o: arminit.c armdefs.h armemu.h
-
-armrdi.o: armrdi.c armdefs.h armemu.h armos.h dbg_cp.h dbg_conf.h dbg_rdi.h \
-	dbg_hif.h communicate.h
-
-armsupp.o: armsupp.c armdefs.h armemu.h
-
-thumbemu.o: thumbemu.c armdefs.h armemu.h
-
-bag.o: bag.c bag.h
-
-wrapper.o: armdefs.h armemu.h dbg_rdi.h \
-	$(srcdir)/../common/run-sim.h \
-	$(srcdir)/../common/sim-utils.h \
-	$(srcdir)/../../include/gdb/sim-arm.h \
-	$(srcdir)/../../include/gdb/remote-sim.h

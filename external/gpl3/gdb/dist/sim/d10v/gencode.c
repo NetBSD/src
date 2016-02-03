@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
+#include <string.h>
 #include "ansidecl.h"
 #include "opcode/d10v.h"
 
@@ -10,9 +11,7 @@ static void write_opcodes (void);
 static void write_template (void);
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   if ((argc > 1) && (strcmp (argv[1],"-h") == 0))
     write_header();
@@ -25,13 +24,13 @@ main (argc, argv)
 
 
 static void
-write_header ()
+write_header (void)
 {
   struct d10v_opcode *opcode;
 
   for (opcode = (struct d10v_opcode *)d10v_opcodes; opcode->name; opcode++)
     if (opcode->format != OPCODE_FAKE)
-      printf("void OP_%X (void);\t\t/* %s */\n",opcode->opcode, opcode->name);
+      printf("void OP_%lX (void);\t\t/* %s */\n", opcode->opcode, opcode->name);
 }
 
 
@@ -39,7 +38,7 @@ write_header ()
 /* to be filled out */
 
 static void
-write_template ()
+write_template (void)
 {
   struct d10v_opcode *opcode;
   int i,j;
@@ -51,7 +50,7 @@ write_template ()
     {
       if (opcode->format != OPCODE_FAKE)
 	{
-	  printf("/* %s */\nvoid\nOP_%X ()\n{\n",opcode->name,opcode->opcode);
+	  printf("/* %s */\nvoid\nOP_%lX ()\n{\n", opcode->name, opcode->opcode);
 	  
 	  /* count operands */
 	  j = 0;
@@ -87,18 +86,18 @@ write_template ()
 long Opcodes[512];
 static int curop=0;
 
+static void
 check_opcodes( long op)
 {
   int i;
 
   for (i=0;i<curop;i++)
     if (Opcodes[i] == op)
-      fprintf(stderr,"DUPLICATE OPCODES: %x\n",op);
+      fprintf(stderr,"DUPLICATE OPCODES: %lx\n", op);
 }
 
-
 static void
-write_opcodes ()
+write_opcodes (void)
 {
   struct d10v_opcode *opcode;
   int i, j;
@@ -112,7 +111,7 @@ write_opcodes ()
     {
       if (opcode->format != OPCODE_FAKE)
 	{
-	  printf ("  { %ld,%d,%ld,%d,%d,%d,%d,OP_%X,", opcode->opcode, 
+	  printf ("  { %ld,%d,%ld,%d,%d,%d,%d,OP_%lX,", opcode->opcode,
 		  (opcode->format & LONG_OPCODE) ? 1 : 0, opcode->mask, opcode->format, 
 		  opcode->cycles, opcode->unit, opcode->exec_type, opcode->opcode);
       

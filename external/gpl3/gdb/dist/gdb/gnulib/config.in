@@ -117,6 +117,9 @@
 /* Define to 1 when the gnulib module strstr should be tested. */
 #undef GNULIB_TEST_STRSTR
 
+/* Define to 1 when the gnulib module strtok_r should be tested. */
+#undef GNULIB_TEST_STRTOK_R
+
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
 
@@ -164,6 +167,10 @@
 /* Define to 1 if you have the declaration of `memmem', and to 0 if you don't.
    */
 #undef HAVE_DECL_MEMMEM
+
+/* Define to 1 if you have the declaration of `strtok_r', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRTOK_R
 
 /* Define to 1 if you have the declaration of `towlower', and to 0 if you
    don't. */
@@ -1061,6 +1068,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strtok_r' function. */
+#undef HAVE_STRTOK_R
 
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK

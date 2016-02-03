@@ -1099,8 +1099,8 @@ syms_from_objfile (struct objfile *objfile,
    symbols for a new objfile, or mapping in the symbols from a reusable
    objfile.  ADD_FLAGS is a bitmask of enum symfile_add_flags.  */
 
-void
-new_symfile_objfile (struct objfile *objfile, int add_flags)
+static void
+finish_new_objfile (struct objfile *objfile, int add_flags)
 {
   /* If this is the main symbol file we have to clean up all users of the
      old main symbol file.  Otherwise it is sufficient to fixup all the
@@ -1234,7 +1234,7 @@ symbol_file_add_with_addrs (bfd *abfd, const char *name, int add_flags,
       return objfile;	/* No symbols.  */
     }
 
-  new_symfile_objfile (objfile, add_flags);
+  finish_new_objfile (objfile, add_flags);
 
   observer_notify_new_objfile (objfile);
 
@@ -1368,7 +1368,7 @@ separate_debug_file_exists (const char *name, unsigned long crc,
   if (filename_cmp (name, objfile_name (parent_objfile)) == 0)
     return 0;
 
-  abfd = gdb_bfd_open_maybe_remote (name);
+  abfd = gdb_bfd_open (name, gnutarget, -1);
 
   if (!abfd)
     return 0;
@@ -1377,11 +1377,12 @@ separate_debug_file_exists (const char *name, unsigned long crc,
 
      Some operating systems, e.g. Windows, do not provide a meaningful
      st_ino; they always set it to zero.  (Windows does provide a
-     meaningful st_dev.)  Do not indicate a duplicate library in that
-     case.  While there is no guarantee that a system that provides
-     meaningful inode numbers will never set st_ino to zero, this is
-     merely an optimization, so we do not need to worry about false
-     negatives.  */
+     meaningful st_dev.)  Files accessed from gdbservers that do not
+     support the vFile:fstat packet will also have st_ino set to zero.
+     Do not indicate a duplicate library in either case.  While there
+     is no guarantee that a system that provides meaningful inode
+     numbers will never set st_ino to zero, this is merely an
+     optimization, so we do not need to worry about false negatives.  */
 
   if (bfd_stat (abfd, &abfd_stat) == 0
       && abfd_stat.st_ino != 0
@@ -1409,9 +1410,9 @@ separate_debug_file_exists (const char *name, unsigned long crc,
     {
       unsigned long parent_crc;
 
-      /* If one (or both) the files are accessed for example the via "remote:"
-	 gdbserver way it does not support the bfd_stat operation.  Verify
-	 whether those two files are not the same manually.  */
+      /* If the files could not be verified as different with
+	 bfd_stat then we need to calculate the parent's CRC
+	 to verify whether the files are different or not.  */
 
       if (!verified_as_different)
 	{
@@ -1711,83 +1712,57 @@ set_initial_language (void)
   expected_language = current_language; /* Don't warn the user.  */
 }
 
-/* If NAME is a remote name open the file using remote protocol, otherwise
-   open it normally.  Returns a new reference to the BFD.  On error,
-   returns NULL with the BFD error set.  */
-
-bfd *
-gdb_bfd_open_maybe_remote (const char *name)
-{
-  bfd *result;
-
-  if (remote_filename_p (name))
-    result = remote_bfd_open (name, gnutarget);
-  else
-    result = gdb_bfd_open (name, gnutarget, -1);
-
-  return result;
-}
-
 /* Open the file specified by NAME and hand it off to BFD for
    preliminary analysis.  Return a newly initialized bfd *, which
    includes a newly malloc'd` copy of NAME (tilde-expanded and made
    absolute).  In case of trouble, error() is called.  */
 
 bfd *
-symfile_bfd_open (const char *cname)
+symfile_bfd_open (const char *name)
 {
   bfd *sym_bfd;
-  int desc;
-  char *name, *absolute_name;
-  struct cleanup *back_to;
+  int desc = -1;
+  struct cleanup *back_to = make_cleanup (null_cleanup, 0);
 
-  if (remote_filename_p (cname))
+  if (!is_target_filename (name))
     {
-      sym_bfd = remote_bfd_open (cname, gnutarget);
-      if (!sym_bfd)
-	error (_("`%s': can't open to read symbols: %s."), cname,
-	       bfd_errmsg (bfd_get_error ()));
+      char *expanded_name, *absolute_name;
 
-      if (!bfd_check_format (sym_bfd, bfd_object))
+      expanded_name = tilde_expand (name); /* Returns 1st new malloc'd copy.  */
+
+      /* Look down path for it, allocate 2nd new malloc'd copy.  */
+      desc = openp (getenv ("PATH"),
+		    OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH,
+		    expanded_name, O_RDONLY | O_BINARY, &absolute_name);
+#if defined(__GO32__) || defined(_WIN32) || defined (__CYGWIN__)
+      if (desc < 0)
 	{
-	  make_cleanup_bfd_unref (sym_bfd);
-	  error (_("`%s': can't read symbols: %s."), cname,
-		 bfd_errmsg (bfd_get_error ()));
+	  char *exename = alloca (strlen (expanded_name) + 5);
+
+	  strcat (strcpy (exename, expanded_name), ".exe");
+	  desc = openp (getenv ("PATH"),
+			OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH,
+			exename, O_RDONLY | O_BINARY, &absolute_name);
+	}
+#endif
+      if (desc < 0)
+	{
+	  make_cleanup (xfree, expanded_name);
+	  perror_with_name (expanded_name);
 	}
 
-      return sym_bfd;
+      xfree (expanded_name);
+      make_cleanup (xfree, absolute_name);
+      name = absolute_name;
     }
-
-  name = tilde_expand (cname);	/* Returns 1st new malloc'd copy.  */
-
-  /* Look down path for it, allocate 2nd new malloc'd copy.  */
-  desc = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH, name,
-		O_RDONLY | O_BINARY, &absolute_name);
-#if defined(__GO32__) || defined(_WIN32) || defined (__CYGWIN__)
-  if (desc < 0)
-    {
-      char *exename = alloca (strlen (name) + 5);
-
-      strcat (strcpy (exename, name), ".exe");
-      desc = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH,
-		    exename, O_RDONLY | O_BINARY, &absolute_name);
-    }
-#endif
-  if (desc < 0)
-    {
-      make_cleanup (xfree, name);
-      perror_with_name (name);
-    }
-
-  xfree (name);
-  name = absolute_name;
-  back_to = make_cleanup (xfree, name);
 
   sym_bfd = gdb_bfd_open (name, gnutarget, desc);
   if (!sym_bfd)
     error (_("`%s': can't open to read symbols: %s."), name,
 	   bfd_errmsg (bfd_get_error ()));
-  bfd_set_cacheable (sym_bfd, 1);
+
+  if (!gdb_bfd_has_target_filename (sym_bfd))
+    bfd_set_cacheable (sym_bfd, 1);
 
   if (!bfd_check_format (sym_bfd, bfd_object))
     {
@@ -2595,7 +2570,7 @@ reread_symbols (void)
 	    obfd_filename = bfd_get_filename (objfile->obfd);
 	    /* Open the new BFD before freeing the old one, so that
 	       the filename remains live.  */
-	    objfile->obfd = gdb_bfd_open_maybe_remote (obfd_filename);
+	    objfile->obfd = gdb_bfd_open (obfd_filename, gnutarget, -1);
 	    if (objfile->obfd == NULL)
 	      {
 		/* We have to make a cleanup and error here, rather
@@ -3441,7 +3416,7 @@ static void
 unmap_overlay_command (char *args, int from_tty)
 {
   struct objfile *objfile;
-  struct obj_section *sec;
+  struct obj_section *sec = NULL;
 
   if (!overlay_debugging)
     error (_("Overlay debugging not enabled.  "
@@ -3941,6 +3916,7 @@ symfile_free_objfile (struct objfile *objfile)
 void
 expand_symtabs_matching (expand_symtabs_file_matcher_ftype *file_matcher,
 			 expand_symtabs_symbol_matcher_ftype *symbol_matcher,
+			 expand_symtabs_exp_notify_ftype *expansion_notify,
 			 enum search_domain kind,
 			 void *data)
 {
@@ -3950,7 +3926,8 @@ expand_symtabs_matching (expand_symtabs_file_matcher_ftype *file_matcher,
   {
     if (objfile->sf)
       objfile->sf->qf->expand_symtabs_matching (objfile, file_matcher,
-						symbol_matcher, kind,
+						symbol_matcher,
+						expansion_notify, kind,
 						data);
   }
 }

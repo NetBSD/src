@@ -62,4 +62,39 @@ int xsnprintf (char *str, size_t size, const char *format, ...)
 
 char *savestring (const char *ptr, size_t len);
 
+/* The strerror() function can return NULL for errno values that are
+   out of range.  Provide a "safe" version that always returns a
+   printable string.  */
+
+extern char *safe_strerror (int);
+
+/* Return non-zero if the start of STRING matches PATTERN, zero
+   otherwise.  */
+
+static inline int
+startswith (const char *string, const char *pattern)
+{
+  return strncmp (string, pattern, strlen (pattern)) == 0;
+}
+
+ULONGEST strtoulst (const char *num, const char **trailer, int base);
+
+/* Skip leading whitespace characters in INP, returning an updated
+   pointer.  If INP is NULL, return NULL.  */
+
+extern char *skip_spaces (char *inp);
+
+/* A const-correct version of the above.  */
+
+extern const char *skip_spaces_const (const char *inp);
+
+/* Skip leading non-whitespace characters in INP, returning an updated
+   pointer.  If INP is NULL, return NULL.  */
+
+#define skip_to_space(INP) ((char *) skip_to_space_const (INP))
+
+/* A const-correct version of the above.  */
+
+extern const char *skip_to_space_const (const char *inp);
+
 #endif

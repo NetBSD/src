@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "../lib/unbuffer_output.c"
+
 #ifdef SIGNALS
 #include <signal.h>
 
@@ -17,6 +19,9 @@ main ()
 {
   char x;
   int nbytes;
+
+  gdb_unbuffer_output ();
+
 #ifdef SIGNALS
   signal (SIGINT, sigint_handler);
 #endif

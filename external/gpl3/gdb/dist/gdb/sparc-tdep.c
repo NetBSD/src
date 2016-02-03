@@ -452,10 +452,10 @@ sparc32_pseudo_register_write (struct gdbarch *gdbarch,
   regcache_raw_write (regcache, regnum + 1, buf + 4);
 }
 
-/* Implement "in_function_epilogue_p".  */
+/* Implement the stack_frame_destroyed_p gdbarch method.  */
 
 int
-sparc_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+sparc_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   /* This function must return true if we are one instruction after an
      instruction that destroyed the stack frame of the current

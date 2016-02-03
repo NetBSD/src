@@ -79,12 +79,16 @@ MSGMERGE = msgmerge
 PACKAGE = @PACKAGE@
 CATALOGS = @CATALOGS@
 
+# The name of the compiler to use.
+COMPILER = @COMPILER@
+
 # If you are compiling with GCC, make sure that either 1) You have the
 # fixed include files where GCC can reach them, or 2) You use the
 # -traditional flag.  Otherwise the ioctl calls in inflow.c
 # will be incorrectly compiled.  The "fixincludes" script in the gcc
 # distribution will fix your include files up.
 CC=@CC@
+CXX=@CXX@
 
 # Dependency tracking information.
 DEPMODE = @CCDEPMODE@
@@ -93,7 +97,7 @@ depcomp = $(SHELL) $(srcdir)/../depcomp
 
 # Note that these are overridden by GNU make-specific code below if
 # GNU make is used.  The overrides implement dependency tracking.
-COMPILE.pre = $(CC)
+COMPILE.pre = $(COMPILER)
 COMPILE.post = -c -o $@
 COMPILE = $(COMPILE.pre) $(INTERNAL_CFLAGS) $(COMPILE.post)
 POSTCOMPILE = @true
@@ -101,6 +105,7 @@ POSTCOMPILE = @true
 # Directory containing source files.
 srcdir = @srcdir@
 VPATH = @srcdir@
+top_srcdir = @top_srcdir@
 
 YACC=@YACC@
 
@@ -123,7 +128,7 @@ MAKEHTMLFLAGS =
 # Set this up with gcc if you have gnu ld and the loader will print out
 # line numbers for undefined references.
 #CC_LD=gcc -static
-CC_LD=$(CC)
+CC_LD=$(COMPILER)
 
 # Where is our "include" directory?  Typically $(srcdir)/../include.
 # This is essentially the header file directory for the library
@@ -139,6 +144,12 @@ BFD_DIR = ../bfd
 BFD = $(BFD_DIR)/libbfd.a
 BFD_SRC = $(srcdir)/$(BFD_DIR)
 BFD_CFLAGS = -I$(BFD_DIR) -I$(BFD_SRC)
+
+# This is where we get zlib from.  zlibdir is -L../zlib and zlibinc is
+# -I../zlib, unless we were configured with --with-system-zlib, in which
+# case both are empty.
+ZLIB = @zlibdir@ -lz
+ZLIBINC = @zlibinc@
 
 # Where is the decnumber library?  Typically in ../libdecnumber.
 LIBDECNUMBER_DIR = ../libdecnumber
@@ -162,6 +173,9 @@ LIBLZMA = @LIBLZMA@
 # Where is libbabeltrace? This will be empty if lbabeltrace was not
 # available.
 LIBBABELTRACE = @LIBBABELTRACE@
+
+# Where is libipt?  This will be empty if libipt was not available.
+LIBIPT = @LIBIPT@
 
 WARN_CFLAGS = @WARN_CFLAGS@
 WERROR_CFLAGS = @WERROR_CFLAGS@
@@ -394,6 +408,7 @@ SUBDIR_PYTHON_OBS = \
 	py-symtab.o \
 	py-threadevent.o \
 	py-type.o \
+	py-unwind.o \
 	py-utils.o \
 	py-value.o \
 	py-varobj.o
@@ -433,6 +448,7 @@ SUBDIR_PYTHON_SRCS = \
 	python/py-symtab.c \
 	python/py-threadevent.c \
 	python/py-type.c \
+	python/py-unwind.c \
 	python/py-utils.c \
 	python/py-value.c \
 	python/py-varobj.c
@@ -552,7 +568,7 @@ CXXFLAGS = -g -O
 # INTERNAL_CFLAGS is the aggregate of all other *CFLAGS macros.
 INTERNAL_CFLAGS_BASE = \
 	$(CFLAGS) $(GLOBAL_CFLAGS) $(PROFILE_CFLAGS) \
-	$(GDB_CFLAGS) $(OPCODES_CFLAGS) $(READLINE_CFLAGS) \
+	$(GDB_CFLAGS) $(OPCODES_CFLAGS) $(READLINE_CFLAGS) $(ZLIBINC) \
 	$(BFD_CFLAGS) $(INCLUDE_CFLAGS) $(LIBDECNUMBER_CFLAGS) \
 	$(INTL_CFLAGS) $(INCGNU) $(ENABLE_CFLAGS) $(INTERNAL_CPPFLAGS)
 INTERNAL_WARN_CFLAGS = $(INTERNAL_CFLAGS_BASE) $(GDB_WARN_CFLAGS)
@@ -574,10 +590,10 @@ INTERNAL_LDFLAGS = $(CFLAGS) $(GLOBAL_CFLAGS) $(MH_LDFLAGS) $(LDFLAGS) $(CONFIG_
 # Libraries and corresponding dependencies for compiling gdb.
 # XM_CLIBS, defined in *config files, have host-dependent libs.
 # LIBIBERTY appears twice on purpose.
-CLIBS = $(SIM) $(READLINE) $(OPCODES) $(BFD) $(INTL) $(LIBIBERTY) $(LIBDECNUMBER) \
+CLIBS = $(SIM) $(READLINE) $(OPCODES) $(BFD) $(ZLIB) $(INTL) $(LIBIBERTY) $(LIBDECNUMBER) \
 	$(XM_CLIBS) $(NAT_CLIBS) $(GDBTKLIBS) \
 	@LIBS@ @GUILE_LIBS@ @PYTHON_LIBS@ \
-	$(LIBEXPAT) $(LIBLZMA) $(LIBBABELTRACE) \
+	$(LIBEXPAT) $(LIBLZMA) $(LIBBABELTRACE) $(LIBIPT) \
 	$(LIBIBERTY) $(WIN32LIBS) $(LIBGNU)
 CDEPS = $(XM_CDEPS) $(NAT_CDEPS) $(SIM) $(BFD) $(READLINE_DEPS) \
 	$(OPCODES) $(INTL_DEPS) $(LIBIBERTY) $(CONFIG_DEPS) $(LIBGNU)
@@ -601,7 +617,7 @@ XMLFILES = $(srcdir)/features/gdb-target.dtd $(srcdir)/features/xinclude.dtd \
 	$(srcdir)/features/library-list-aix.dtd \
 	$(srcdir)/features/library-list-svr4.dtd $(srcdir)/features/osdata.dtd \
 	$(srcdir)/features/threads.dtd $(srcdir)/features/traceframe-info.dtd \
-	$(srcdir)/features/btrace.dtd
+	$(srcdir)/features/btrace.dtd $(srcdir)/features/btrace-conf.dtd
 
 # This is ser-unix.o for any system which supports a v7/BSD/SYSV/POSIX
 # interface to the serial port.  Hopefully if get ported to OS/2, VMS,
@@ -631,7 +647,7 @@ ALL_64_TARGET_OBS = \
 	amd64fbsd-tdep.o amd64-darwin-tdep.o amd64-dicos-tdep.o \
 	amd64-linux-tdep.o amd64nbsd-tdep.o \
 	amd64obsd-tdep.o amd64-sol2-tdep.o amd64-tdep.o amd64-windows-tdep.o \
-	ia64-hpux-tdep.o ia64-linux-tdep.o ia64-vms-tdep.o ia64-tdep.o \
+	ia64-linux-tdep.o ia64-vms-tdep.o ia64-tdep.o \
 	mips64obsd-tdep.o \
 	sparc64fbsd-tdep.o sparc64-linux-tdep.o sparc64nbsd-tdep.o \
 	sparc64obsd-tdep.o sparc64-sol2-tdep.o sparc64-tdep.o
@@ -647,9 +663,10 @@ ALL_TARGET_OBS = \
 	dicos-tdep.o \
 	fbsd-tdep.o \
 	frv-linux-tdep.o frv-tdep.o \
+	ft32-tdep.o \
 	h8300-tdep.o \
 	hppabsd-tdep.o hppanbsd-tdep.o hppaobsd-tdep.o \
-	hppa-hpux-tdep.o hppa-linux-tdep.o hppa-tdep.o \
+	hppa-linux-tdep.o hppa-tdep.o \
 	i386bsd-tdep.o i386-cygwin-tdep.o i386fbsd-tdep.o i386gnu-tdep.o \
 	i386-linux-tdep.o i386nbsd-tdep.o i386-nto-tdep.o i386obsd-tdep.o \
 	i386-sol2-tdep.o i386-tdep.o i387-tdep.o \
@@ -694,7 +711,7 @@ ALL_TARGET_OBS = \
 	nbsd-tdep.o obsd-tdep.o \
 	sol2-tdep.o \
 	solib-frv.o solib-svr4.o \
-	solib-som.o solib-pa64.o solib-darwin.o solib-dsbt.o \
+	solib-darwin.o solib-dsbt.o \
 	dbug-rom.o dink32-rom.o ppcbug-rom.o m32r-rom.o dsrec.o monitor.o \
 	remote-m32r-sdi.o remote-mips.o \
 	xcoffread.o \
@@ -762,19 +779,18 @@ CC_FOR_TARGET = ` \
     fi; \
   fi`
 
-CXX = gcc
 CXX_FOR_TARGET = ` \
-  if [ -f $${rootme}/../gcc/xgcc ] ; then \
+  if [ -f $${rootme}/../gcc/xg++ ] ; then \
     if [ -f $${rootme}/../$(target_subdir)newlib/Makefile ] ; then \
-      echo $${rootme}/../gcc/xgcc -B$${rootme}/../gcc/ -idirafter $${rootme}/$(target_subdir)newlib/targ-include -idirafter $${rootsrc}/../$(target_subdir)newlib/libc/include -nostdinc -B$${rootme}/../$(target_subdir)newlib/; \
+      echo $${rootme}/../gcc/xg++ -B$${rootme}/../gcc/ -idirafter $${rootme}/$(target_subdir)newlib/targ-include -idirafter $${rootsrc}/../$(target_subdir)newlib/libc/include -nostdinc -B$${rootme}/../$(target_subdir)newlib/; \
     else \
-      echo $${rootme}/../gcc/xgcc -B$${rootme}/../gcc/; \
+      echo $${rootme}/../gcc/xg++ -B$${rootme}/../gcc/; \
     fi; \
   else \
     if [ "$(host_canonical)" = "$(target_canonical)" ] ; then \
       echo $(CXX); \
     else \
-      t='$(program_transform_name)'; echo gcc | sed -e '' $$t; \
+      t='$(program_transform_name)'; echo g++ | sed -e '' $$t; \
     fi; \
   fi`
 
@@ -813,6 +829,7 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	bfd-target.c \
 	block.c blockframe.c \
 	breakpoint.c break-catch-sig.c break-catch-throw.c \
+	break-catch-syscall.c \
 	build-id.c buildsym.c \
 	c-exp.y c-lang.c c-typeprint.c c-valprint.c c-varobj.c \
 	charset.c common/cleanups.c cli-out.c coffread.c coff-pe-read.c \
@@ -820,7 +837,8 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	cp-abi.c cp-support.c cp-namespace.c cp-valprint.c \
 	d-exp.y d-lang.c d-valprint.c \
 	cp-name-parser.y \
-	dbxread.c demangle.c dictionary.c disasm.c doublest.c dummy-frame.c \
+	dbxread.c demangle.c dictionary.c disasm.c doublest.c \
+	dtrace-probe.c dummy-frame.c \
 	dwarf2expr.c dwarf2loc.c dwarf2read.c dwarf2-frame.c \
 	dwarf2-frame-tailcall.c \
 	elfread.c environ.c eval.c event-loop.c event-top.c \
@@ -867,12 +885,13 @@ SFILES = ada-exp.y ada-lang.c ada-typeprint.c ada-valprint.c ada-tasks.c \
 	jit.c \
 	xml-syscall.c \
 	annotate.c common/signals.c copying.c dfp.c gdb.c inf-child.c \
-	sol-thread.c windows-termcap.c \
+	sol-thread.c stub-termcap.c \
 	common/gdb_vecs.c common/common-utils.c common/xml-utils.c \
 	common/ptid.c common/buffer.c gdb-dlfcn.c common/agent.c \
 	common/format.c common/filestuff.c btrace.c record-btrace.c ctf.c \
 	target/waitstatus.c common/print-utils.c common/rsp-low.c \
 	common/errors.c common/common-debug.c common/common-exceptions.c \
+	common/btrace-common.c common/fileio.c \
 	$(SUBDIR_GCC_COMPILE_SRCS)
 
 LINTFILES = $(SFILES) $(YYFILES) $(CONFIG_SRCS) init.c
@@ -888,7 +907,7 @@ common/gdb_signals.h nat/gdb_thread_db.h common/gdb_vecs.h \
 common/x86-xstate.h nat/linux-ptrace.h nat/mips-linux-watch.h \
 proc-utils.h aarch64-tdep.h arm-tdep.h ax-gdb.h ppcfbsd-tdep.h \
 ppcnbsd-tdep.h cli-out.h gdb_expat.h breakpoint.h infcall.h obsd-tdep.h \
-exec.h m32r-tdep.h osabi.h gdbcore.h solib-som.h amd64bsd-nat.h \
+exec.h m32r-tdep.h osabi.h gdbcore.h amd64bsd-nat.h \
 i386bsd-nat.h xml-support.h xml-tdesc.h alphabsd-tdep.h gdb_obstack.h \
 ia64-tdep.h ada-lang.h varobj.h varobj-iter.h frv-tdep.h \
 nto-tdep.h serial.h \
@@ -905,7 +924,7 @@ ser-unix.h inf-ptrace.h terminal.h ui-out.h frame-base.h \
 f-lang.h dwarf2loc.h value.h sparc-tdep.h defs.h target-descriptions.h \
 objfiles.h common/vec.h disasm.h mips-tdep.h ser-base.h \
 gdb_curses.h bfd-target.h memattr.h inferior.h ax.h dummy-frame.h \
-inflow.h fbsd-nat.h ia64-libunwind-tdep.h completer.h inf-ttrace.h \
+inflow.h fbsd-nat.h ia64-libunwind-tdep.h completer.h \
 solib-target.h gdb_vfork.h alpha-tdep.h dwarf2expr.h \
 m2-lang.h stack.h charset.h addrmap.h command.h solist.h source.h \
 target.h target-dcache.h prologue-value.h cp-abi.h tui/tui-hooks.h tui/tui.h \
@@ -922,7 +941,7 @@ complaints.h gdb_proc_service.h gdb_regex.h xtensa-tdep.h inf-loop.h \
 common/gdb_wait.h common/gdb_assert.h solib.h ppc-tdep.h cp-support.h glibc-tdep.h \
 interps.h auxv.h gdbcmd.h tramp-frame.h mipsnbsd-tdep.h	\
 amd64-linux-tdep.h linespec.h i387-tdep.h mn10300-tdep.h \
-sparc64-tdep.h monitor.h ppcobsd-tdep.h srec.h solib-pa64.h \
+sparc64-tdep.h monitor.h ppcobsd-tdep.h srec.h \
 coff-pe-read.h parser-defs.h gdb_ptrace.h mips-linux-tdep.h \
 m68k-tdep.h spu-tdep.h jv-lang.h environ.h amd64-tdep.h \
 doublest.h regset.h hppa-tdep.h ppc-linux-tdep.h ppc64-tdep.h \
@@ -939,15 +958,16 @@ annotate.h sim-regno.h dictionary.h dfp.h main.h frame-unwind.h	\
 remote-fileio.h i386-linux-tdep.h vax-tdep.h objc-lang.h \
 sentinel-frame.h bcache.h symfile.h windows-tdep.h linux-tdep.h \
 gdb_usleep.h jit.h xml-syscall.h microblaze-tdep.h \
-psymtab.h psympriv.h progspace.h bfin-tdep.h ia64-hpux-tdep.h \
+psymtab.h psympriv.h progspace.h bfin-tdep.h \
 amd64-darwin-tdep.h charset-list.h \
 config/djgpp/langinfo.h config/djgpp/nl_types.h darwin-nat.h \
 dicos-tdep.h filesystem.h gcore.h gdb_wchar.h hppabsd-tdep.h \
-i386-darwin-tdep.h x86-nat.h linux-record.h moxie-tdep.h nios2-tdep.h \
+i386-darwin-tdep.h i386-nat.h linux-record.h moxie-tdep.h nios2-tdep.h \
+ft32-tdep.h \
 osdata.h procfs.h python/py-event.h python/py-events.h python/py-stopevent.h \
 python/python-internal.h python/python.h ravenscar-thread.h record.h \
 record-full.h solib-aix.h \
-solib-darwin.h solib-ia64-hpux.h solib-spu.h windows-nat.h xcoffread.h \
+solib-darwin.h solib-spu.h windows-nat.h xcoffread.h \
 gnulib/import/extra/snippet/arg-nonnull.h gnulib/import/extra/snippet/c++defs.h \
 gnulib/import/extra/snippet/warn-on-use.h \
 gnulib/import/stddef.in.h gnulib/import/inttypes.in.h inline-frame.h skip.h \
@@ -955,13 +975,15 @@ common/common-utils.h common/xml-utils.h common/buffer.h common/ptid.h \
 common/format.h common/host-defs.h utils.h common/queue.h \
 nat/linux-osdata.h gdb-dlfcn.h auto-load.h probe.h stap-probe.h \
 gdb_bfd.h sparc-ravenscar-thread.h ppc-ravenscar-thread.h nat/linux-btrace.h \
-ctf.h nat/x86-cpuid.h nat/x86-gcc-cpuid.h target/resume.h \
+nat/ppc-linux.h ctf.h nat/x86-cpuid.h nat/x86-gcc-cpuid.h target/resume.h \
 target/wait.h target/waitstatus.h nat/linux-nat.h nat/linux-waitpid.h \
 common/print-utils.h common/rsp-low.h nat/x86-dregs.h x86-linux-nat.h \
 i386-linux-nat.h common/common-defs.h common/errors.h common/common-types.h \
 common/common-debug.h common/cleanups.h common/gdb_setjmp.h \
 common/common-exceptions.h target/target.h common/symbol.h \
-common/common-regcache.h fbsd-tdep.h
+common/common-regcache.h fbsd-tdep.h nat/linux-personality.h \
+common/fileio.h nat/x86-linux.h nat/x86-linux-dregs.h \
+nat/linux-namespaces.h
 
 # Header files that already have srcdir in them, or which are in objdir.
 
@@ -997,6 +1019,7 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	agent.o \
 	bfd-target.o \
 	blockframe.o breakpoint.o break-catch-sig.o break-catch-throw.o \
+	break-catch-syscall.o \
 	findvar.o regcache.o cleanups.o \
 	charset.o continuations.o corelow.o disasm.o dummy-frame.o dfp.o \
 	source.o value.o eval.o valops.o valarith.o valprint.o printcmd.o \
@@ -1060,7 +1083,7 @@ COMMON_OBS = $(DEPFILES) $(CONFIG_OBS) $(YYOBJ) \
 	common-utils.o buffer.o ptid.o gdb-dlfcn.o common-agent.o \
 	format.o registry.o btrace.o record-btrace.o waitstatus.o \
 	print-utils.o rsp-low.o errors.o common-debug.o debug.o \
-	common-exceptions.o \
+	common-exceptions.o btrace-common.o fileio.o \
 	$(SUBDIR_GCC_COMPILE_OBS)
 
 TSOBS = inflow.o
@@ -1526,6 +1549,7 @@ aclocal_m4_deps = \
 	configure.ac \
 	acx_configure_dir.m4 \
 	libmcheck.m4 \
+	transform.m4 \
 	../bfd/bfd.m4 \
 	../config/acinclude.m4 \
 	../config/plugins.m4 \
@@ -1646,13 +1670,14 @@ ALLDEPFILES = \
 	fbsd-nat.c \
 	fbsd-tdep.c \
 	fork-child.c \
+	ft32-tdep.c \
 	glibc-tdep.c \
 	go32-nat.c h8300-tdep.c \
-	hppa-tdep.c hppa-hpux-tdep.c hppa-hpux-nat.c \
+	hppa-tdep.c \
 	hppa-linux-tdep.c hppa-linux-nat.c \
-	hppabsd-nat.c hppabsd-tdep.c \
-	hppaobsd-tdep.c \
+	hppabsd-tdep.c \
 	hppanbsd-nat.c hppanbsd-tdep.c \
+	hppaobsd-nat.c hppaobsd-tdep.c \
 	i386-tdep.c i386-linux-nat.c \
 	i386v4-nat.c i386-cygwin-tdep.c \
 	i386bsd-nat.c i386bsd-tdep.c i386fbsd-nat.c i386fbsd-tdep.c \
@@ -1663,9 +1688,8 @@ ALLDEPFILES = \
 	i386-linux-tdep.c x86-nat.c \
 	i386-sol2-nat.c i386-sol2-tdep.c \
 	i386gnu-nat.c i386gnu-tdep.c \
-	ia64-hpux-nat.c ia64-hpux-tdep.c \
 	ia64-linux-nat.c ia64-linux-tdep.c ia64-tdep.c ia64-vms-tdep.c \
-	inf-ptrace.c inf-ttrace.c \
+	inf-ptrace.c \
 	ia64-libunwind-tdep.c \
 	linux-fork.c \
 	linux-tdep.c \
@@ -1679,7 +1703,7 @@ ALLDEPFILES = \
 	m68klinux-nat.c m68klinux-tdep.c \
 	m88k-tdep.c m88kbsd-nat.c \
 	microblaze-tdep.c microblaze-linux-tdep.c \
-	mingw-hdep.c \
+	mingw-hdep.c common/mingw-strerror.c \
 	mips-linux-nat.c mips-linux-tdep.c \
 	mips-sde-tdep.c \
 	mips-tdep.c \
@@ -1688,8 +1712,7 @@ ALLDEPFILES = \
 	msp430-tdep.c \
 	nios2-tdep.c nios2-linux-tdep.c \
 	nbsd-nat.c nbsd-tdep.c obsd-nat.c obsd-tdep.c \
-	somread.c solib-som.c \
-	posix-hdep.c \
+	posix-hdep.c common/posix-strerror.c \
 	ppc-sysv-tdep.c ppc-linux-nat.c ppc-linux-tdep.c ppc64-tdep.c \
 	ppcfbsd-nat.c ppcfbsd-tdep.c \
 	ppcnbsd-nat.c ppcnbsd-tdep.c \
@@ -2226,6 +2249,21 @@ common-exceptions.o: ${srcdir}/common/common-exceptions.c
 	$(COMPILE) $(srcdir)/common/common-exceptions.c
 	$(POSTCOMPILE)
 
+posix-strerror.o: ${srcdir}/common/posix-strerror.c
+	$(COMPILE) $(srcdir)/common/posix-strerror.c
+	$(POSTCOMPILE)
+
+mingw-strerror.o: ${srcdir}/common/mingw-strerror.c
+	$(COMPILE) $(srcdir)/common/mingw-strerror.c
+	$(POSTCOMPILE)
+
+btrace-common.o: ${srcdir}/common/btrace-common.c
+	$(COMPILE) $(srcdir)/common/btrace-common.c
+	$(POSTCOMPILE)
+
+fileio.o: ${srcdir}/common/fileio.c
+	$(COMPILE) $(srcdir)/common/fileio.c
+	$(POSTCOMPILE)
 #
 # gdb/target/ dependencies
 #
@@ -2267,6 +2305,26 @@ linux-waitpid.o: ${srcdir}/nat/linux-waitpid.c
 
 mips-linux-watch.o: ${srcdir}/nat/mips-linux-watch.c
 	$(COMPILE) $(srcdir)/nat/mips-linux-watch.c
+	$(POSTCOMPILE)
+
+ppc-linux.o: ${srcdir}/nat/ppc-linux.c
+	$(COMPILE) $(srcdir)/nat/ppc-linux.c
+	$(POSTCOMPILE)
+
+linux-personality.o: ${srcdir}/nat/linux-personality.c
+	$(COMPILE) $(srcdir)/nat/linux-personality.c
+	$(POSTCOMPILE)
+
+x86-linux.o: ${srcdir}/nat/x86-linux.c
+	$(COMPILE) $(srcdir)/nat/x86-linux.c
+	$(POSTCOMPILE)
+
+x86-linux-dregs.o: ${srcdir}/nat/x86-linux-dregs.c
+	$(COMPILE) $(srcdir)/nat/x86-linux-dregs.c
+	$(POSTCOMPILE)
+
+linux-namespaces.o: ${srcdir}/nat/linux-namespaces.c
+	$(COMPILE) $(srcdir)/nat/linux-namespaces.c
 	$(POSTCOMPILE)
 
 #
@@ -2590,6 +2648,10 @@ py-threadevent.o: $(srcdir)/python/py-threadevent.c
 
 py-type.o: $(srcdir)/python/py-type.c
 	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-type.c
+	$(POSTCOMPILE)
+
+py-unwind.o: $(srcdir)/python/py-unwind.c
+	$(COMPILE) $(PYTHON_CFLAGS) $(srcdir)/python/py-unwind.c
 	$(POSTCOMPILE)
 
 py-utils.o: $(srcdir)/python/py-utils.c

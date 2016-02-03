@@ -27,14 +27,16 @@ SIM_AC_COMMON
 AC_CHECK_HEADERS(getopt.h)
 
 AC_ARG_ENABLE(cycle-accurate,
-[  --disable-cycle-accurate ],
+[AS_HELP_STRING([--disable-cycle-accurate],
+		[Disable cycle accurate simulation (faster runtime)])],
 [case "${enableval}" in
 yes | no) ;;
 *)	AC_MSG_ERROR(bad value ${enableval} given for --enable-cycle-accurate option) ;;
 esac])
 
 AC_ARG_ENABLE(cycle-stats,
-[  --disable-cycle-stats ],
+[AS_HELP_STRING([--disable-cycle-stats],
+		[Disable cycle statistics (faster runtime)])],
 [case "${enableval}" in
 yes | no) ;;
 *)	AC_MSG_ERROR(bad value ${enableval} given for --enable-cycle-stats option) ;;

@@ -144,6 +144,7 @@ optional arguments while skipping others.  Example:
 * Frame Filter API::            Filtering Frames.
 * Frame Decorator API::         Decorating Frames.
 * Writing a Frame Filter::      Writing a Frame Filter.
+* Unwinding Frames in Python::  Writing frame unwinder.
 * Xmethods In Python::          Adding and replacing methods of C++ classes.
 * Xmethod API::                 Xmethod types.
 * Writing an Xmethod::          Writing an xmethod.
@@ -780,6 +781,16 @@ The @code{gdb.Value} object @code{py_val} is identical to that
 corresponding to @code{val}.
 @end defun
 
+@defun Value.reference_value ()
+Return a @code{gdb.Value} object which is a reference to the value
+encapsulated by this instance.
+@end defun
+
+@defun Value.const_value ()
+Return a @code{gdb.Value} object which is a @code{const} version of the
+value encapsulated by this instance.
+@end defun
+
 @defun Value.dynamic_cast (type)
 Like @code{Value.cast}, but works as if the C@t{++} @code{dynamic_cast}
 operator were used.  Consult a C@t{++} reference for details.
@@ -1059,6 +1070,11 @@ If @var{block} is given, then @var{name} is looked up in that scope.
 Otherwise, it is searched for globally.
 @end defun
 
+@defun Type.optimized_out ()
+Return @code{gdb.Value} instance of this type whose value is optimized
+out.  This allows a frame decorator to indicate that the value of an
+argument or a local variable is not known.
+@end defun
 
 Each type has a code, which indicates what category this type falls
 into.  The available type categories are represented by constants
@@ -2178,6 +2194,148 @@ printed hierarchically.  Another approach would be to combine the
 marker in the inlined frame, and also show the hierarchical
 relationship.
 
+@node Unwinding Frames in Python
+@subsubsection Unwinding Frames in Python
+@cindex unwinding frames in Python
+
+In @value{GDBN} terminology ``unwinding'' is the process of finding
+the previous frame (that is, caller's) from the current one.  An
+unwinder has three methods.  The first one checks if it can handle
+given frame (``sniff'' it).  For the frames it can sniff an unwinder
+provides two additional methods: it can return frame's ID, and it can
+fetch registers from the previous frame.  A running @value{GDBN}
+mantains a list of the unwinders and calls each unwinder's sniffer in
+turn until it finds the one that recognizes the current frame.  There
+is an API to register an unwinder.
+
+The unwinders that come with @value{GDBN} handle standard frames.
+However, mixed language applications (for example, an application
+running Java Virtual Machine) sometimes use frame layouts that cannot
+be handled by the @value{GDBN} unwinders.  You can write Python code
+that can handle such custom frames.
+
+You implement a frame unwinder in Python as a class with which has two
+attributes, @code{name} and @code{enabled}, with obvious meanings, and
+a single method @code{__call__}, which examines a given frame and
+returns an object (an instance of @code{gdb.UnwindInfo class)}
+describing it.  If an unwinder does not recognize a frame, it should
+return @code{None}.  The code in @value{GDBN} that enables writing
+unwinders in Python uses this object to return frame's ID and previous
+frame registers when @value{GDBN} core asks for them.
+
+@subheading Unwinder Input
+
+An object passed to an unwinder (a @code{gdb.PendingFrame} instance)
+provides a method to read frame's registers:
+
+@defun PendingFrame.read_register (reg)
+This method returns the contents of the register @var{regn} in the
+frame as a @code{gdb.Value} object.  @var{reg} can be either a
+register number or a register name; the values are platform-specific.
+They are usually found in the corresponding
+@file{@var{platform}-tdep.h} file in the @value{GDBN} source tree.
+@end defun
+
+It also provides a factory method to create a @code{gdb.UnwindInfo}
+instance to be returned to @value{GDBN}:
+
+@defun PendingFrame.create_unwind_info (frame_id)
+Returns a new @code{gdb.UnwindInfo} instance identified by given
+@var{frame_id}.  The argument is used to build @value{GDBN}'s frame ID
+using one of functions provided by @value{GDBN}.  @var{frame_id}'s attributes
+determine which function will be used, as follows:
+
+@table @code
+@item sp, pc, special
+@code{frame_id_build_special (@var{frame_id}.sp, @var{frame_id}.pc, @var{frame_id}.special)}
+
+@item sp, pc
+@code{frame_id_build (@var{frame_id}.sp, @var{frame_id}.pc)}
+
+This is the most common case.
+
+@item sp
+@code{frame_id_build_wild (@var{frame_id}.sp)}
+@end table
+The attribute values should be @code{gdb.Value}
+
+@end defun
+
+@subheading Unwinder Output: UnwindInfo
+
+Use @code{PendingFrame.create_unwind_info} method described above to
+create a @code{gdb.UnwindInfo} instance.  Use the following method to
+specify caller registers that have been saved in this frame:
+
+@defun gdb.UnwindInfo.add_saved_register (reg, value)
+@var{reg} identifies the register.  It can be a number or a name, just
+as for the @code{PendingFrame.read_register} method above.
+@var{value} is a register value (a @code{gdb.Value} object).
+@end defun
+
+@subheading Unwinder Skeleton Code
+
+@value{GDBN} comes with the module containing the base @code{Unwinder}
+class.  Derive your unwinder class from it and structure the code as
+follows:
+
+@smallexample
+from gdb.unwinders import Unwinder
+
+class FrameId(object):
+    def __init__(self, sp, pc):
+        self.sp = sp
+        self.pc = pc
+
+
+class MyUnwinder(Unwinder):
+    def __init__(....):
+        supe(MyUnwinder, self).__init___(<expects unwinder name argument>)
+
+    def __call__(pending_frame):
+        if not <we recognize frame>:
+            return None
+        # Create UnwindInfo.  Usually the frame is identified by the stack 
+        # pointer and the program counter.
+        sp = pending_frame.read_register(<SP number>)
+        pc = pending_frame.read_register(<PC number>)
+        unwind_info = pending_frame.create_unwind_info(FrameId(sp, pc))
+
+        # Find the values of the registers in the caller's frame and 
+        # save them in the result:
+        unwind_info.add_saved_register(<register>, <value>)
+        ....
+
+        # Return the result:
+        return unwind_info
+
+@end smallexample
+
+@subheading Registering a Unwinder
+
+An object file, a program space, and the @value{GDBN} proper can have
+unwinders registered with it.
+
+The @code{gdb.unwinders} module provides the function to register a
+unwinder:
+
+@defun gdb.unwinder.register_unwinder (locus, unwinder, replace=False)
+@var{locus} is specifies an object file or a program space to which
+@var{unwinder} is added.  Passing @code{None} or @code{gdb} adds
+@var{unwinder} to the @value{GDBN}'s global unwinder list.  The newly
+added @var{unwinder} will be called before any other unwinder from the
+same locus.  Two unwinders in the same locus cannot have the same
+name.  An attempt to add a unwinder with already existing name raises
+an exception unless @var{replace} is @code{True}, in which case the
+old unwinder is deleted.
+@end defun
+
+@subheading Unwinder Precedence
+
+@value{GDBN} first calls the unwinders from all the object files in no
+particular order, then the unwinders from the current program space,
+and finally the unwinders from @value{GDBN}.
+
 @node Xmethods In Python
 @subsubsection Xmethods In Python
 @cindex xmethods in Python
@@ -2217,7 +2375,7 @@ xmethod worker is found to be equivalent to the winning C@t{++}
 method, then the xmethod worker is treated as a replacement for
 the C@t{++} method.  @value{GDBN} uses the overall winner to invoke the
 method.  If the winning xmethod worker is the overall winner, then
-the corresponding xmethod is invoked via the @code{invoke} method
+the corresponding xmethod is invoked via the @code{__call__} method
 of the worker object.
 
 If one wants to implement an xmethod as a replacement for an
@@ -2591,7 +2749,7 @@ return an empty tuple.
 
 @findex Inferior.read_memory
 @defun Inferior.read_memory (address, length)
-Read @var{length} bytes of memory from the inferior, starting at
+Read @var{length} addressable memory units from the inferior, starting at
 @var{address}.  Returns a buffer object, which behaves much like an array
 or a string.  It can be modified and given to the
 @code{Inferior.write_memory} function.  In @code{Python} 3, the return
@@ -2604,7 +2762,8 @@ Write the contents of @var{buffer} to the inferior, starting at
 @var{address}.  The @var{buffer} parameter must be a Python object
 which supports the buffer protocol, i.e., a string, an array or the
 object returned from @code{Inferior.read_memory}.  If given, @var{length}
-determines the number of bytes from @var{buffer} to be written.
+determines the number of addressable memory units from @var{buffer} to be
+written.
 @end defun
 
 @findex gdb.search_memory
@@ -3529,7 +3688,17 @@ Each objfile is represented by an instance of the @code{gdb.Objfile}
 class.
 
 @defvar Objfile.filename
-The file name of the objfile as a string.
+The file name of the objfile as a string, with symbolic links resolved.
+
+The value is @code{None} if the objfile is no longer valid.
+See the @code{gdb.Objfile.is_valid} method, described below.
+@end defvar
+
+@defvar Objfile.username
+The file name of the objfile as specified by the user as a string.
+
+The value is @code{None} if the objfile is no longer valid.
+See the @code{gdb.Objfile.is_valid} method, described below.
 @end defvar
 
 @defvar Objfile.owner
@@ -4760,8 +4929,9 @@ Show whether auto-loading of Python scripts is enabled or disabled.
 Print the list of all Python scripts that @value{GDBN} auto-loaded.
 
 Also printed is the list of Python scripts that were mentioned in
-the @code{.debug_gdb_scripts} section and were not found
-(@pxref{dotdebug_gdb_scripts section}).
+the @code{.debug_gdb_scripts} section and were either not found
+(@pxref{dotdebug_gdb_scripts section}) or were not auto-loaded due to
+@code{auto-load safe-path} rejection (@pxref{Auto-loading}).
 This is useful because their names are not printed when @value{GDBN}
 tries to load them and fails.  There may be many of them, and printing
 an error message for each one is problematic.
@@ -4779,7 +4949,7 @@ No     my-foo-pretty-printers.py
 @end smallexample
 @end table
 
-When reading an auto-loaded file, @value{GDBN} sets the
+When reading an auto-loaded file or script, @value{GDBN} sets the
 @dfn{current objfile}.  This is available via the @code{gdb.current_objfile}
 function (@pxref{Objfiles In Python}).  This can be useful for
 registering objfile-specific pretty-printers and frame-filters.

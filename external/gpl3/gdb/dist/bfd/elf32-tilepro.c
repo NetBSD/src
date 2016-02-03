@@ -34,11 +34,11 @@ static reloc_howto_type tilepro_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_TILEPRO_NONE,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
+	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_NONE",	/* name */
 	 FALSE,			/* partial_inplace */
@@ -774,7 +774,7 @@ tilepro_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
 {
   unsigned int i;
 
-  for (i = ARRAY_SIZE (tilepro_reloc_map); --i;)
+  for (i = ARRAY_SIZE (tilepro_reloc_map); i--;)
     {
       const reloc_map * entry;
 

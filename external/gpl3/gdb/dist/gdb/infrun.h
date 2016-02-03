@@ -73,13 +73,6 @@ enum exec_direction_kind
    compatible with make_cleanup_restore_integer.  */
 extern int execution_direction;
 
-/* Save register contents here when executing a "finish" command or
-   are about to pop a stack dummy frame, if-and-only-if
-   proceed_to_finish is set.  Thus this contains the return value from
-   the called function (assuming values are returned in a
-   register).  */
-extern struct regcache *stop_registers;
-
 extern void start_remote (int from_tty);
 
 /* Clear out all variables saying what to do when inferior is
@@ -88,14 +81,20 @@ extern void start_remote (int from_tty);
    step/stepi command.  */
 extern void clear_proceed_status (int step);
 
-extern void proceed (CORE_ADDR, enum gdb_signal, int);
+extern void proceed (CORE_ADDR, enum gdb_signal);
 
 /* The `resume' routine should only be called in special circumstances.
    Normally, use `proceed', which handles a lot of bookkeeping.  */
-extern void resume (int, enum gdb_signal);
+extern void resume (enum gdb_signal);
 
 /* Return a ptid representing the set of threads that we will proceed,
-   in the perspective of the user/frontend.  */
+   in the perspective of the user/frontend.  We may actually resume
+   fewer threads at first, e.g., if a thread is stopped at a
+   breakpoint that needs stepping-off, but that should not be visible
+   to the user/frontend, and neither should the frontend/user be
+   allowed to proceed any of the threads that happen to be stopped for
+   internal run control handling, if a previous command wanted them
+   resumed.  */
 extern ptid_t user_visible_resume_ptid (int step);
 
 extern void wait_for_inferior (void);

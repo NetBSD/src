@@ -1,3 +1,150 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change configure.in to configure.ac.
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c [TRACE]: Delete.
+	(TRACE): Change to WITH_TRACE_ANY_P.
+	[!WITH_TRACE_ANY_P] (open_trace): Define.
+	(mips_option_handler, open_trace, sim_close, dotrace):
+	Change defined(TRACE) to WITH_TRACE_ANY_P.
+	(sim_open): Delete TRACE ifdef check.
+	* sim-main.c (load_memory): Delete TRACE ifdef check.
+	(store_memory): Likewise.
+	* sim-main.h [WITH_TRACE_ANY_P] (dotrace, tracefh): Protect decls.
+	[!WITH_TRACE_ANY_P] (dotrace): Define.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_ENGINE_HALT_HOOK, SIM_ENGINE_RESTART_HOOK): Delete
+	comments.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-tx3904cpu.c (deliver_tx3904cpu_interrupt): Change CIA_GET to
+	PU_PC_GET.
+	* interp.c (interrupt_event): Change CIA_GET to CPU_PC_GET.
+	(sim_create_inferior): Change CIA_SET to CPU_PC_SET.
+	* m16run.c (sim_engine_run): Change CIA_GET to CPU_PC_GET and
+	CIA_SET to CPU_PC_SET.
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-cpu.o.
+	* interp.c (mips_pc_get, mips_pc_set): New functions.
+	(sim_open): Declare new local var i.  Call sim_cpu_alloc_all.
+	Call CPU_PC_FETCH & CPU_PC_STORE for all cpus.
+	(sim_pc_get): Delete.
+	* sim-main.h (SIM_CPU): Define.
+	(struct sim_state): Change cpu to an array of pointers.
+	(STATE_CPU): Drop &.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (mips_option_handler, open_trace, sim_close,
+	sim_write, sim_read, sim_store_register, sim_fetch_register,
+	sim_create_inferior, pr_addr, pr_uword64): Convert old style
+	prototypes.
+	(sim_open): Convert old style prototype.  Change casts with
+	sim_write to unsigned char *.
+	(fetch_str): Change null to unsigned char, and change cast to
+	unsigned char *.
+	(sim_monitor): Change c & ch to unsigned char.  Change cast to
+	unsigned char *.
+
+2015-04-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Move interp.o to the start of the list.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o.
+
+2015-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HAVE_PROFILE): Delete.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_pc_get): New function.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_HAVE_BIENDIAN): Delete.
+	* tconfig.h (SIM_HAVE_BIENDIAN): Delete.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* configure.ac (mips_extra_objs): Delete.
+	* Makefile.in (MIPS_EXTRA_OBJS): Delete.
+	(SIM_OBJS): Delete MIPS_EXTRA_OBJS.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* configure.ac: Delete sim_hw checks for dv-sockser.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+	* tconfig.in: Rename file ...
+	* tconfig.h: ... here.
+
+2015-03-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.in: Delete includes.
+	[HAVE_DV_SOCKSER]: Delete.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Delete.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete.
+	* aclocal.m4, configure: Regenerate.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

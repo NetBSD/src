@@ -443,19 +443,22 @@ info_common_command_for_block (const struct block *block, const char *comname,
 	for (index = 0; index < common->n_entries; index++)
 	  {
 	    struct value *val = NULL;
-	    volatile struct gdb_exception except;
 
 	    printf_filtered ("%s = ",
 			     SYMBOL_PRINT_NAME (common->contents[index]));
 
-	    TRY_CATCH (except, RETURN_MASK_ERROR)
+	    TRY
 	      {
 		val = value_of_variable (common->contents[index], block);
 		value_print (val, gdb_stdout, &opts);
 	      }
 
-	    if (except.reason < 0)
-	      printf_filtered ("<error reading variable: %s>", except.message);
+	    CATCH (except, RETURN_MASK_ERROR)
+	      {
+		printf_filtered ("<error reading variable: %s>", except.message);
+	      }
+	    END_CATCH
+
 	    putchar_filtered ('\n');
 	  }
       }
@@ -513,7 +516,4 @@ _initialize_f_valprint (void)
 {
   add_info ("common", info_common_command,
 	    _("Print out the values contained in a Fortran COMMON block."));
-  if (xdb_commands)
-    add_com ("lc", class_info, info_common_command,
-	     _("Print out the values contained in a Fortran COMMON block."));
 }

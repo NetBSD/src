@@ -70,9 +70,7 @@ _initialize_sparc64fbsd_nat (void)
 
   /* Add some extra features to the generic SPARC target.  */
   t = sparc_target ();
-  t->to_pid_to_exec_file = fbsd_pid_to_exec_file;
-  t->to_find_memory_regions = fbsd_find_memory_regions;
-  add_target (t);
+  fbsd_nat_add_target (t);
 
   sparc_gregmap = &sparc64fbsd_gregmap;
 

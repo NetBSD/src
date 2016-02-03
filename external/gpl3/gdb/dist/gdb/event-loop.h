@@ -102,6 +102,15 @@ void call_async_signal_handler (struct async_signal_handler *handler);
    below, with IMMEDIATE_P == 0.  */
 void mark_async_signal_handler (struct async_signal_handler *handler);
 
+/* Returns true if HANDLER is marked ready.  */
+
+extern int
+  async_signal_handler_is_marked (struct async_signal_handler *handler);
+
+/* Mark HANDLER as NOT ready.  */
+
+extern void clear_async_signal_handler (struct async_signal_handler *handler);
+
 /* Wrapper for the body of signal handlers.  Call this function from
    any SIGINT handler which needs to access GDB data structures or
    escape via longjmp.  If IMMEDIATE_P is set, this triggers either

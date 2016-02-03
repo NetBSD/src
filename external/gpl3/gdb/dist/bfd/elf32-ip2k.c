@@ -141,7 +141,7 @@ static reloc_howto_type ip2k_elf_howto_table [] =
           pr)                   /* pcrel_offset */
 
   /* This reloc does nothing.  */
-  IP2K_HOWTO (R_IP2K_NONE, 0,2,32, FALSE, 0, "R_IP2K_NONE", 0, 0),
+  IP2K_HOWTO (R_IP2K_NONE, 0,3,0, FALSE, 0, "R_IP2K_NONE", 0, 0),
   /* A 16 bit absolute relocation.  */
   IP2K_HOWTO (R_IP2K_16, 0,1,16, FALSE, 0, "R_IP2K_16", 0, 0xffff),
   /* A 32 bit absolute relocation.  */
@@ -1241,7 +1241,7 @@ ip2k_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_IP2K_max)
     {
-      _bfd_error_handler (_("%A: invalid IP2K reloc number: %d"), abfd, r_type);
+      _bfd_error_handler (_("%B: invalid IP2K reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
   cache_ptr->howto = & ip2k_elf_howto_table [r_type];

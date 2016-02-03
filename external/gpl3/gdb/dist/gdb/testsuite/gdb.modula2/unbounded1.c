@@ -30,7 +30,7 @@ foo (unbounded a)
     return 1;
 }
 
-
+int
 main ()
 {
   unbounded t;

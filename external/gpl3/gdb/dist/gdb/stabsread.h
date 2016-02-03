@@ -189,8 +189,6 @@ extern void coffstab_build_psymtabs
 extern void stabsect_build_psymtabs (struct objfile *objfile, char *stab_name,
 				     char *stabstr_name, char *text_name);
 
-extern void elfstab_offset_sections (struct objfile *,
-				     struct partial_symtab *);
 extern int symbol_reference_defined (char **);
 
 extern void ref_add (int, struct symbol *, char *, CORE_ADDR);

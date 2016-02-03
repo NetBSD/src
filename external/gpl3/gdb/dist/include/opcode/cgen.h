@@ -27,6 +27,10 @@
 /* ??? IWBN to replace bfd in the name.  */
 #include "bfd_stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ??? This file requires bfd.h but only to get bfd_vma.
    Seems like an awful lot to require just to get such a fundamental type.
    Perhaps the definition of bfd_vma can be moved outside of bfd.h.
@@ -1475,5 +1479,9 @@ extern void cgen_clear_signed_overflow_ok (CGEN_CPU_DESC);
 
 /* Will an error message be generated if a signed field in an instruction overflows ? */
 extern unsigned int cgen_signed_overflow_ok_p (CGEN_CPU_DESC);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OPCODE_CGEN_H */

@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
+#include <sys/user.h>
 
 #include "fbsd-nat.h"
 #include "i386-tdep.h"
@@ -115,6 +116,37 @@ i386fbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 }
 
 
+#ifdef PT_GETXSTATE_INFO
+/* Implement the to_read_description method.  */
+
+static const struct target_desc *
+i386fbsd_read_description (struct target_ops *ops)
+{
+  static int xsave_probed;
+  static uint64_t xcr0;
+
+  if (!xsave_probed)
+    {
+      struct ptrace_xstate_info info;
+
+      if (ptrace (PT_GETXSTATE_INFO, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
+	{
+	  i386bsd_xsave_len = info.xsave_len;
+	  xcr0 = info.xsave_mask;
+	}
+      xsave_probed = 1;
+    }
+
+  if (i386bsd_xsave_len != 0)
+    {
+      return i386_target_description (xcr0);
+    }
+  else
+    return tdesc_i386;
+}
+#endif
+
 /* Prevent warning from -Wmissing-prototypes.  */
 void _initialize_i386fbsd_nat (void);
 
@@ -139,34 +171,38 @@ _initialize_i386fbsd_nat (void)
 
 #endif /* HAVE_PT_GETDBREGS */
 
+#ifdef PT_GETXSTATE_INFO
+  t->to_read_description = i386fbsd_read_description;
+#endif
 
   t->to_resume = i386fbsd_resume;
-  t->to_pid_to_exec_file = fbsd_pid_to_exec_file;
-  t->to_find_memory_regions = fbsd_find_memory_regions;
-  add_target (t);
+  fbsd_nat_add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386fbsd_supply_pcb);
 
-  /* FreeBSD provides a kern.ps_strings sysctl that we can use to
-     locate the sigtramp.  That way we can still recognize a sigtramp
-     if its location is changed in a new kernel.  Of course this is
-     still based on the assumption that the sigtramp is placed
-     directly under the location where the program arguments and
-     environment can be found.  */
-#ifdef KERN_PS_STRINGS
+#ifdef KERN_PROC_SIGTRAMP
+  /* Normally signal frames are detected via i386fbsd_sigtramp_p.
+     However, FreeBSD 9.2 through 10.1 do not include the page holding
+     the signal code in core dumps.  These releases do provide a
+     kern.proc.sigtramp.<pid> sysctl that returns the location of the
+     signal trampoline for a running process.  We fetch the location
+     of the current (gdb) process and use this to identify signal
+     frames in core dumps from these releases.  */
   {
-    int mib[2];
-    u_long ps_strings;
+    int mib[4];
+    struct kinfo_sigtramp kst;
     size_t len;
 
     mib[0] = CTL_KERN;
-    mib[1] = KERN_PS_STRINGS;
-    len = sizeof (ps_strings);
-    if (sysctl (mib, 2, &ps_strings, &len, NULL, 0) == 0)
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_SIGTRAMP;
+    mib[3] = getpid ();
+    len = sizeof (kst);
+    if (sysctl (mib, 4, &kst, &len, NULL, 0) == 0)
       {
-	i386fbsd_sigtramp_start_addr = ps_strings - 128;
-	i386fbsd_sigtramp_end_addr = ps_strings;
+	i386fbsd_sigtramp_start_addr = (uintptr_t) kst.ksigtramp_start;
+	i386fbsd_sigtramp_end_addr = (uintptr_t) kst.ksigtramp_end;
       }
   }
 #endif

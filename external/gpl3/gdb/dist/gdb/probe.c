@@ -30,6 +30,9 @@
 #include "gdb_regex.h"
 #include "frame.h"
 #include "arch-utils.h"
+#include "value.h"
+#include "ax.h"
+#include "ax-gdb.h"
 #include <ctype.h>
 
 typedef struct bound_probe bound_probe_s;
@@ -410,6 +413,31 @@ gen_ui_out_table_header_info (VEC (bound_probe_s) *probes,
   do_cleanups (c);
 }
 
+/* Helper function to print not-applicable strings for all the extra
+   columns defined in a probe_ops.  */
+
+static void
+print_ui_out_not_applicables (const struct probe_ops *pops)
+{
+  struct cleanup *c;
+  VEC (info_probe_column_s) *headings = NULL;
+  info_probe_column_s *column;
+  int ix;
+
+  if (pops->gen_info_probes_table_header == NULL)
+    return;
+
+  c = make_cleanup (VEC_cleanup (info_probe_column_s), &headings);
+  pops->gen_info_probes_table_header (&headings);
+
+  for (ix = 0;
+       VEC_iterate (info_probe_column_s, headings, ix, column);
+       ++ix)
+    ui_out_field_string (current_uiout, column->field_name, _("n/a"));
+
+  do_cleanups (c);
+}
+
 /* Helper function to print extra information about a probe and an objfile
    represented by PROBE.  */
 
@@ -482,6 +510,41 @@ get_number_extra_fields (const struct probe_ops *pops)
   return n;
 }
 
+/* Helper function that returns 1 if there is a probe in PROBES
+   featuring the given POPS.  It returns 0 otherwise.  */
+
+static int
+exists_probe_with_pops (VEC (bound_probe_s) *probes,
+			const struct probe_ops *pops)
+{
+  struct bound_probe *probe;
+  int ix;
+
+  for (ix = 0; VEC_iterate (bound_probe_s, probes, ix, probe); ++ix)
+    if (probe->probe->pops == pops)
+      return 1;
+
+  return 0;
+}
+
+/* Helper function that parses a probe linespec of the form [PROVIDER
+   [PROBE [OBJNAME]]] from the provided string STR.  */
+
+static void
+parse_probe_linespec (const char *str, char **provider,
+		      char **probe_name, char **objname)
+{
+  *probe_name = *objname = NULL;
+
+  *provider = extract_arg_const (&str);
+  if (*provider != NULL)
+    {
+      *probe_name = extract_arg_const (&str);
+      if (*probe_name != NULL)
+	*objname = extract_arg_const (&str);
+    }
+}
+
 /* See comment in probe.h.  */
 
 void
@@ -497,25 +560,17 @@ info_probes_for_ops (const char *arg, int from_tty,
   size_t size_name = strlen ("Name");
   size_t size_objname = strlen ("Object");
   size_t size_provider = strlen ("Provider");
+  size_t size_type = strlen ("Type");
   struct bound_probe *probe;
   struct gdbarch *gdbarch = get_current_arch ();
 
-  /* Do we have a `provider:probe:objfile' style of linespec?  */
-  provider = extract_arg_const (&arg);
-  if (provider)
-    {
-      make_cleanup (xfree, provider);
+  parse_probe_linespec (arg, &provider, &probe_name, &objname);
+  make_cleanup (xfree, provider);
+  make_cleanup (xfree, probe_name);
+  make_cleanup (xfree, objname);
 
-      probe_name = extract_arg_const (&arg);
-      if (probe_name)
-	{
-	  make_cleanup (xfree, probe_name);
-
-	  objname = extract_arg_const (&arg);
-	  if (objname)
-	    make_cleanup (xfree, objname);
-	}
-    }
+  probes = collect_probes (objname, provider, probe_name, pops);
+  make_cleanup (VEC_cleanup (probe_p), &probes);
 
   if (pops == NULL)
     {
@@ -529,18 +584,18 @@ info_probes_for_ops (const char *arg, int from_tty,
 
 	 To do that, we iterate over all probe_ops, querying each one about
 	 its extra fields, and incrementing `ui_out_extra_fields' to reflect
-	 that number.  */
+	 that number.  But note that we ignore the probe_ops for which no probes
+	 are defined with the given search criteria.  */
 
       for (ix = 0; VEC_iterate (probe_ops_cp, all_probe_ops, ix, po); ++ix)
-	ui_out_extra_fields += get_number_extra_fields (po);
+	if (exists_probe_with_pops (probes, po))
+	  ui_out_extra_fields += get_number_extra_fields (po);
     }
   else
     ui_out_extra_fields = get_number_extra_fields (pops);
 
-  probes = collect_probes (objname, provider, probe_name, pops);
-  make_cleanup (VEC_cleanup (probe_p), &probes);
   make_cleanup_ui_out_table_begin_end (current_uiout,
-				       4 + ui_out_extra_fields,
+				       5 + ui_out_extra_fields,
 				       VEC_length (bound_probe_s, probes),
 				       "StaticProbes");
 
@@ -552,15 +607,19 @@ info_probes_for_ops (const char *arg, int from_tty,
   /* What's the size of an address in our architecture?  */
   size_addr = gdbarch_addr_bit (gdbarch) == 64 ? 18 : 10;
 
-  /* Determining the maximum size of each field (`provider', `name' and
-     `objname').  */
+  /* Determining the maximum size of each field (`type', `provider',
+     `name' and `objname').  */
   for (i = 0; VEC_iterate (bound_probe_s, probes, i, probe); ++i)
     {
+      const char *probe_type = probe->probe->pops->type_name (probe->probe);
+
+      size_type = max (strlen (probe_type), size_type);
       size_name = max (strlen (probe->probe->name), size_name);
       size_provider = max (strlen (probe->probe->provider), size_provider);
       size_objname = max (strlen (objfile_name (probe->objfile)), size_objname);
     }
 
+  ui_out_table_header (current_uiout, size_type, ui_left, "type", _("Type"));
   ui_out_table_header (current_uiout, size_provider, ui_left, "provider",
 		       _("Provider"));
   ui_out_table_header (current_uiout, size_name, ui_left, "name", _("Name"));
@@ -571,10 +630,12 @@ info_probes_for_ops (const char *arg, int from_tty,
       const struct probe_ops *po;
       int ix;
 
-      /* We have to generate the table header for each new probe type that we
-	 will print.  */
+      /* We have to generate the table header for each new probe type
+	 that we will print.  Note that this excludes probe types not
+	 having any defined probe with the search criteria.  */
       for (ix = 0; VEC_iterate (probe_ops_cp, all_probe_ops, ix, po); ++ix)
-	gen_ui_out_table_header_info (probes, po);
+	if (exists_probe_with_pops (probes, po))
+	  gen_ui_out_table_header_info (probes, po);
     }
   else
     gen_ui_out_table_header_info (probes, pops);
@@ -586,9 +647,11 @@ info_probes_for_ops (const char *arg, int from_tty,
   for (i = 0; VEC_iterate (bound_probe_s, probes, i, probe); ++i)
     {
       struct cleanup *inner;
+      const char *probe_type = probe->probe->pops->type_name (probe->probe);
 
       inner = make_cleanup_ui_out_tuple_begin_end (current_uiout, "probe");
 
+      ui_out_field_string (current_uiout, "type",probe_type);
       ui_out_field_string (current_uiout, "provider", probe->probe->provider);
       ui_out_field_string (current_uiout, "name", probe->probe->name);
       ui_out_field_core_addr (current_uiout, "addr",
@@ -604,6 +667,8 @@ info_probes_for_ops (const char *arg, int from_tty,
 	       ++ix)
 	    if (probe->probe->pops == po)
 	      print_ui_out_info (probe->probe);
+	    else if (exists_probe_with_pops (probes, po))
+	      print_ui_out_not_applicables (po);
 	}
       else
 	print_ui_out_info (probe->probe);
@@ -628,6 +693,98 @@ static void
 info_probes_command (char *arg, int from_tty)
 {
   info_probes_for_ops (arg, from_tty, NULL);
+}
+
+/* Implementation of the `enable probes' command.  */
+
+static void
+enable_probes_command (char *arg, int from_tty)
+{
+  char *provider, *probe_name = NULL, *objname = NULL;
+  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  VEC (bound_probe_s) *probes;
+  struct bound_probe *probe;
+  int i;
+
+  parse_probe_linespec ((const char *) arg, &provider, &probe_name, &objname);
+  make_cleanup (xfree, provider);
+  make_cleanup (xfree, probe_name);
+  make_cleanup (xfree, objname);
+
+  probes = collect_probes (objname, provider, probe_name, NULL);
+  if (VEC_empty (bound_probe_s, probes))
+    {
+      ui_out_message (current_uiout, 0, _("No probes matched.\n"));
+      do_cleanups (cleanup);
+      return;
+    }
+
+  /* Enable the selected probes, provided their backends support the
+     notion of enabling a probe.  */
+  for (i = 0; VEC_iterate (bound_probe_s, probes, i, probe); ++i)
+    {
+      const struct probe_ops *pops = probe->probe->pops;
+
+      if (pops->enable_probe != NULL)
+	{
+	  pops->enable_probe (probe->probe);
+	  ui_out_message (current_uiout, 0,
+			  _("Probe %s:%s enabled.\n"),
+			  probe->probe->provider, probe->probe->name);
+	}
+      else
+	ui_out_message (current_uiout, 0,
+			_("Probe %s:%s cannot be enabled.\n"),
+			probe->probe->provider, probe->probe->name);
+    }
+
+  do_cleanups (cleanup);
+}
+
+/* Implementation of the `disable probes' command.  */
+
+static void
+disable_probes_command (char *arg, int from_tty)
+{
+  char *provider, *probe_name = NULL, *objname = NULL;
+  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+  VEC (bound_probe_s) *probes;
+  struct bound_probe *probe;
+  int i;
+
+  parse_probe_linespec ((const char *) arg, &provider, &probe_name, &objname);
+  make_cleanup (xfree, provider);
+  make_cleanup (xfree, probe_name);
+  make_cleanup (xfree, objname);
+
+  probes = collect_probes (objname, provider, probe_name, NULL /* pops */);
+  if (VEC_empty (bound_probe_s, probes))
+    {
+      ui_out_message (current_uiout, 0, _("No probes matched.\n"));
+      do_cleanups (cleanup);
+      return;
+    }
+
+  /* Disable the selected probes, provided their backends support the
+     notion of enabling a probe.  */
+  for (i = 0; VEC_iterate (bound_probe_s, probes, i, probe); ++i)
+    {
+      const struct probe_ops *pops = probe->probe->pops;
+
+      if (pops->disable_probe != NULL)
+	{
+	  pops->disable_probe (probe->probe);
+	  ui_out_message (current_uiout, 0,
+			  _("Probe %s:%s disabled.\n"),
+			  probe->probe->provider, probe->probe->name);
+	}
+      else
+	ui_out_message (current_uiout, 0,
+			_("Probe %s:%s cannot be disabled.\n"),
+			probe->probe->provider, probe->probe->name);
+    }
+
+  do_cleanups (cleanup);
 }
 
 /* See comments in probe.h.  */
@@ -770,6 +927,87 @@ will show information about all types of probes."),
   return &info_probes_cmdlist;
 }
 
+
+
+/* This is called to compute the value of one of the $_probe_arg*
+   convenience variables.  */
+
+static struct value *
+compute_probe_arg (struct gdbarch *arch, struct internalvar *ivar,
+		   void *data)
+{
+  struct frame_info *frame = get_selected_frame (_("No frame selected"));
+  CORE_ADDR pc = get_frame_pc (frame);
+  int sel = (int) (uintptr_t) data;
+  struct bound_probe pc_probe;
+  const struct sym_probe_fns *pc_probe_fns;
+  unsigned n_args;
+
+  /* SEL == -1 means "_probe_argc".  */
+  gdb_assert (sel >= -1);
+
+  pc_probe = find_probe_by_pc (pc);
+  if (pc_probe.probe == NULL)
+    error (_("No probe at PC %s"), core_addr_to_string (pc));
+
+  n_args = get_probe_argument_count (pc_probe.probe, frame);
+  if (sel == -1)
+    return value_from_longest (builtin_type (arch)->builtin_int, n_args);
+
+  if (sel >= n_args)
+    error (_("Invalid probe argument %d -- probe has %u arguments available"),
+	   sel, n_args);
+
+  return evaluate_probe_argument (pc_probe.probe, sel, frame);
+}
+
+/* This is called to compile one of the $_probe_arg* convenience
+   variables into an agent expression.  */
+
+static void
+compile_probe_arg (struct internalvar *ivar, struct agent_expr *expr,
+		   struct axs_value *value, void *data)
+{
+  CORE_ADDR pc = expr->scope;
+  int sel = (int) (uintptr_t) data;
+  struct bound_probe pc_probe;
+  const struct sym_probe_fns *pc_probe_fns;
+  int n_args;
+  struct frame_info *frame = get_selected_frame (NULL);
+
+  /* SEL == -1 means "_probe_argc".  */
+  gdb_assert (sel >= -1);
+
+  pc_probe = find_probe_by_pc (pc);
+  if (pc_probe.probe == NULL)
+    error (_("No probe at PC %s"), core_addr_to_string (pc));
+
+  n_args = get_probe_argument_count (pc_probe.probe, frame);
+
+  if (sel == -1)
+    {
+      value->kind = axs_rvalue;
+      value->type = builtin_type (expr->gdbarch)->builtin_int;
+      ax_const_l (expr, n_args);
+      return;
+    }
+
+  gdb_assert (sel >= 0);
+  if (sel >= n_args)
+    error (_("Invalid probe argument %d -- probe has %d arguments available"),
+	   sel, n_args);
+
+  pc_probe.probe->pops->compile_to_ax (pc_probe.probe, expr, value, sel);
+}
+
+static const struct internalvar_funcs probe_funcs =
+{
+  compute_probe_arg,
+  compile_probe_arg,
+  NULL
+};
+
+
 VEC (probe_ops_cp) *all_probe_ops;
 
 void _initialize_probe (void);
@@ -779,8 +1017,58 @@ _initialize_probe (void)
 {
   VEC_safe_push (probe_ops_cp, all_probe_ops, &probe_ops_any);
 
+  create_internalvar_type_lazy ("_probe_argc", &probe_funcs,
+				(void *) (uintptr_t) -1);
+  create_internalvar_type_lazy ("_probe_arg0", &probe_funcs,
+				(void *) (uintptr_t) 0);
+  create_internalvar_type_lazy ("_probe_arg1", &probe_funcs,
+				(void *) (uintptr_t) 1);
+  create_internalvar_type_lazy ("_probe_arg2", &probe_funcs,
+				(void *) (uintptr_t) 2);
+  create_internalvar_type_lazy ("_probe_arg3", &probe_funcs,
+				(void *) (uintptr_t) 3);
+  create_internalvar_type_lazy ("_probe_arg4", &probe_funcs,
+				(void *) (uintptr_t) 4);
+  create_internalvar_type_lazy ("_probe_arg5", &probe_funcs,
+				(void *) (uintptr_t) 5);
+  create_internalvar_type_lazy ("_probe_arg6", &probe_funcs,
+				(void *) (uintptr_t) 6);
+  create_internalvar_type_lazy ("_probe_arg7", &probe_funcs,
+				(void *) (uintptr_t) 7);
+  create_internalvar_type_lazy ("_probe_arg8", &probe_funcs,
+				(void *) (uintptr_t) 8);
+  create_internalvar_type_lazy ("_probe_arg9", &probe_funcs,
+				(void *) (uintptr_t) 9);
+  create_internalvar_type_lazy ("_probe_arg10", &probe_funcs,
+				(void *) (uintptr_t) 10);
+  create_internalvar_type_lazy ("_probe_arg11", &probe_funcs,
+				(void *) (uintptr_t) 11);
+
   add_cmd ("all", class_info, info_probes_command,
 	   _("\
 Show information about all type of probes."),
 	   info_probes_cmdlist_get ());
+
+  add_cmd ("probes", class_breakpoint, enable_probes_command, _("\
+Enable probes.\n\
+Usage: enable probes [PROVIDER [NAME [OBJECT]]]\n\
+Each argument is a regular expression, used to select probes.\n\
+PROVIDER matches probe provider names.\n\
+NAME matches the probe names.\n\
+OBJECT matches the executable or shared library name.\n\
+If you do not specify any argument then the command will enable\n\
+all defined probes."),
+	   &enablelist);
+
+  add_cmd ("probes", class_breakpoint, disable_probes_command, _("\
+Disable probes.\n\
+Usage: disable probes [PROVIDER [NAME [OBJECT]]]\n\
+Each argument is a regular expression, used to select probes.\n\
+PROVIDER matches probe provider names.\n\
+NAME matches the probe names.\n\
+OBJECT matches the executable or shared library name.\n\
+If you do not specify any argument then the command will disable\n\
+all defined probes."),
+	   &disablelist);
+
 }

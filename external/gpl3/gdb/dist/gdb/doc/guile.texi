@@ -2246,7 +2246,13 @@ if it is invalid at the time the procedure is called.
 @end deffn
 
 @deffn {Scheme Procedure} objfile-filename objfile
-Return the file name of @var{objfile} as a string.
+Return the file name of @var{objfile} as a string,
+with symbolic links resolved.
+@end deffn
+
+@deffn {Scheme Procedure} objfile-progspace objfile
+Return the @code{<gdb:progspace>} that this object file lives in.
+@xref{Progspaces In Guile}, for more on progspaces.
 @end deffn
 
 @deffn {Scheme Procedure} objfile-pretty-printers objfile
@@ -2428,6 +2434,11 @@ Return the frame called by @var{frame}.
 @deffn {Scheme Procedure} frame-sal frame
 Return the frame's @code{<gdb:sal>} (symtab and line) object.
 @xref{Symbol Tables In Guile}.
+@end deffn
+
+@deffn {Scheme Procedure} frame-read-register frame register
+Return the value of @var{register} in @var{frame}.  @var{register}
+should be a string, like @samp{pc}.
 @end deffn
 
 @deffn {Scheme Procedure} frame-read-var frame variable @r{[}#:block block@r{]}
@@ -3514,11 +3525,13 @@ returns a port object.  One can then read/write memory using that object.
 @deffn {Scheme Procedure} open-memory @r{[}#:mode mode{]} @r{[}#:start address{]} @r{[}#:size size{]}
 Return a port object that can be used for reading and writing memory.
 The port will be open according to @var{mode}, which is the standard
-mode argument to Guile port open routines, except that it is
-restricted to one of @samp{"r"}, @samp{"w"}, or @samp{"r+"}.  For
-compatibility @samp{"b"} (binary) may also be present, but we ignore
-it: memory ports are binary only.  The default is @samp{"r"},
-read-only.
+mode argument to Guile port open routines, except that the @samp{"a"}
+and @samp{"l"} modes are not supported.
+@xref{File Ports,,, guile, GNU Guile Reference Manual}.
+The @samp{"b"} (binary) character may be present, but is ignored:
+memory ports are binary only.  If @samp{"0"} is appended then
+the port is marked as unbuffered.
+The default is @samp{"r"}, read-only and buffered.
 
 The chunk of memory that can be accessed can be bounded.
 If both @var{start} and @var{size} are unspecified, all of memory can be

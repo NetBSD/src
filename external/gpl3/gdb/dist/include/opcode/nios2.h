@@ -25,6 +25,10 @@
 
 #include "bfd.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /****************************************************************************
  * This file contains structures, bit masks and shift counts used
  * by the GNU toolchain to define the Nios II instruction set and
@@ -33,11 +37,38 @@
 
 /* Instruction encoding formats.  */
 enum iw_format_type {
-  /* R1 formats */
+  /* R1 formats.  */
   iw_i_type,
   iw_r_type,
   iw_j_type,
-  iw_custom_type
+  iw_custom_type,
+
+  /* 32-bit R2 formats.  */
+  iw_L26_type,
+  iw_F2I16_type,
+  iw_F2X4I12_type,
+  iw_F1X4I12_type,
+  iw_F1X4L17_type,
+  iw_F3X6L5_type,
+  iw_F2X6L10_type,
+  iw_F3X6_type,
+  iw_F3X8_type,
+
+  /* 16-bit R2 formats.  */
+  iw_I10_type,
+  iw_T1I7_type,
+  iw_T2I4_type,
+  iw_T1X1I6_type,
+  iw_X1I7_type,
+  iw_L5I4X1_type,
+  iw_T2X1L3_type,
+  iw_T2X1I3_type,
+  iw_T3X1_type,
+  iw_T2X3_type,
+  iw_F1X1_type,
+  iw_X2L5_type,
+  iw_F1I5_type,
+  iw_F2_type
 };
 
 /* Identify different overflow situations for error messages.  */
@@ -49,7 +80,9 @@ enum overflow_type
   signed_immed16_overflow,
   unsigned_immed16_overflow,
   unsigned_immed5_overflow,
+  signed_immed12_overflow,
   custom_opcode_overflow,
+  enumeration_overflow,
   no_overflow
 };
 
@@ -61,12 +94,32 @@ enum overflow_type
      d - a 5-bit destination register index
      s - a 5-bit left source register index
      t - a 5-bit right source register index
+     D - a 3-bit encoded destination register
+     S - a 3-bit encoded left source register
+     T - a 3-bit encoded right source register
      i - a 16-bit signed immediate
-     u - a 16-bit unsigned immediate
-     o - a 16-bit signed program counter relative offset
      j - a 5-bit unsigned immediate
+     k - a (second) 5-bit unsigned immediate
      l - a 8-bit custom instruction constant
      m - a 26-bit unsigned immediate
+     o - a 16-bit signed pc-relative offset
+     u - a 16-bit unsigned immediate
+     I - a 12-bit signed immediate
+     M - a 6-bit unsigned immediate
+     N - a 6-bit unsigned immediate with 2-bit shift
+     O - a 10-bit signed pc-relative offset with 1-bit shift
+     P - a 7-bit signed pc-relative offset with 1-bit shift
+     U - a 7-bit unsigned immediate with 2-bit shift
+     V - a 5-bit unsigned immediate with 2-bit shift
+     W - a 4-bit unsigned immediate with 2-bit shift
+     X - a 4-bit unsigned immediate with 1-bit shift
+     Y - a 4-bit unsigned immediate
+     e - an immediate coded as an enumeration for addi.n/subi.n
+     f - an immediate coded as an enumeration for slli.n/srli.n
+     g - an immediate coded as an enumeration for andi.n
+     h - an immediate coded as an enumeration for movi.n
+     R - a reglist for ldwm/stwm or push.n/pop.n
+     B - a base register specifier and option list for ldwm/stwm
    Literal ',', '(', and ')' characters may also appear in the args as
    delimiters.
 
@@ -126,6 +179,9 @@ struct nios2_opcode
 #define REG_NORMAL	(1<<0)	/* Normal registers.  */
 #define REG_CONTROL	(1<<1)  /* Control registers.  */
 #define REG_COPROCESSOR	(1<<2)  /* For custom instructions.  */
+#define REG_3BIT	(1<<3)  /* For R2 CDX instructions.  */
+#define REG_LDWM	(1<<4)  /* For R2 ldwm/stwm.  */
+#define REG_POP		(1<<5)  /* For R2 pop.n/push.n.  */
 
 struct nios2_reg
 {
@@ -136,10 +192,13 @@ struct nios2_reg
 
 /* Pull in the instruction field accessors, opcodes, and masks.  */
 #include "nios2r1.h"
+#include "nios2r2.h"
 
 /* These are the data structures used to hold the instruction information.  */
 extern const struct nios2_opcode nios2_r1_opcodes[];
 extern const int nios2_num_r1_opcodes;
+extern const struct nios2_opcode nios2_r2_opcodes[];
+extern const int nios2_num_r2_opcodes;
 extern struct nios2_opcode *nios2_opcodes;
 extern int nios2_num_opcodes;
 
@@ -152,5 +211,25 @@ extern int nios2_num_regs;
 /* Return the opcode descriptor for a single instruction.  */
 extern const struct nios2_opcode *
 nios2_find_opcode_hash (unsigned long, unsigned long);
+
+/* Lookup tables for R2 immediate decodings.  */
+extern unsigned int nios2_r2_asi_n_mappings[];
+extern const int nios2_num_r2_asi_n_mappings;
+extern unsigned int nios2_r2_shi_n_mappings[];
+extern const int nios2_num_r2_shi_n_mappings;
+extern unsigned int nios2_r2_andi_n_mappings[];
+extern const int nios2_num_r2_andi_n_mappings;
+
+/* Lookup table for 3-bit register decodings.  */
+extern int nios2_r2_reg3_mappings[];
+extern const int nios2_num_r2_reg3_mappings;
+
+/* Lookup table for REG_RANGE value list decodings.  */
+extern unsigned long nios2_r2_reg_range_mappings[];
+extern const int nios2_num_r2_reg_range_mappings;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NIOS2_H */

@@ -46,7 +46,7 @@ extern const char * const reg_names[];
 
 void init_cpu (void);
 void set_flags (int mask, int newbits);
-void set_c (int c);
+void set_c (int);
 int  get_c (void);
 
 const char *bits (int v, int b);
@@ -96,5 +96,9 @@ extern int pending_clocks;
 extern int timer_enabled;
 extern void dump_counts_per_insn (const char * filename);
 extern unsigned int counts_per_insn[0x100000];
+
+extern int rl78_g10_mode;
+extern int g13_multiply;
+extern int g14_multiply;
 
 #endif

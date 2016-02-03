@@ -139,14 +139,15 @@ extern SCM gdbscm_string_string;
 
 /* scm-utils.c */
 
-extern void gdbscm_define_variables (const scheme_variable *, int public);
+extern void gdbscm_define_variables (const scheme_variable *, int is_public);
 
-extern void gdbscm_define_functions (const scheme_function *, int public);
+extern void gdbscm_define_functions (const scheme_function *, int is_public);
 
 extern void gdbscm_define_integer_constants (const scheme_integer_constant *,
-					     int public);
+					     int is_public);
 
-extern void gdbscm_printf (SCM port, const char *format, ...);
+extern void gdbscm_printf (SCM port, const char *format, ...)
+  ATTRIBUTE_PRINTF (2, 3);
 
 extern void gdbscm_debug_display (SCM obj);
 
@@ -484,7 +485,8 @@ extern char *gdbscm_scm_to_c_string (SCM string);
 
 extern SCM gdbscm_scm_from_c_string (const char *string);
 
-extern SCM gdbscm_scm_from_printf (const char *format, ...);
+extern SCM gdbscm_scm_from_printf (const char *format, ...)
+    ATTRIBUTE_PRINTF (1, 2);
 
 extern char *gdbscm_scm_to_string (SCM string, size_t *lenp,
 				   const char *charset,
@@ -549,6 +551,7 @@ extern struct value *vlscm_convert_value_from_scheme
 /* stript_lang methods */
 
 extern objfile_script_sourcer_func gdbscm_source_objfile_script;
+extern objfile_script_executor_func gdbscm_execute_objfile_script;
 
 extern int gdbscm_auto_load_enabled (const struct extension_language_defn *);
 

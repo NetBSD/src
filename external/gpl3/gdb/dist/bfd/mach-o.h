@@ -24,6 +24,10 @@
 #include "bfd.h"
 #include "mach-o/loader.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct bfd_mach_o_header
 {
   unsigned long magic;
@@ -745,5 +749,9 @@ bfd_mach_o_backend_data;
 
 #define SYM_MACHO_FIELDS_UNSET ((bfd_vma) -1)
 #define SYM_MACHO_FIELDS_NOT_VALIDATED ((bfd_vma) -2)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _BFD_MACH_O_H_ */

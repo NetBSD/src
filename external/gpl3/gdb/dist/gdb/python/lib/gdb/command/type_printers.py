@@ -47,7 +47,7 @@ class InfoTypePrinter(gdb.Command):
         sep = ''
         for objfile in gdb.objfiles():
             if objfile.type_printers:
-                print ("%sType printers for %s:" % (sep, objfile.name))
+                print ("%sType printers for %s:" % (sep, objfile.filename))
                 self.list_type_printers(objfile.type_printers)
                 sep = '\n'
         if gdb.current_progspace().type_printers:

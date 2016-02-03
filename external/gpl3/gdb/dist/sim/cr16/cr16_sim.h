@@ -285,10 +285,6 @@ extern host_callback *cr16_callback;
 extern uint32 OP[4];
 extern uint32 sign_flag;
 extern struct simops Simops[];
-extern asection *text;
-extern bfd_vma text_start;
-extern bfd_vma text_end;
-extern bfd *prog_bfd;
 
 enum
 {
@@ -402,6 +398,11 @@ enum
 #define SIG_CR16_EXIT	-2
 #define SIG_CR16_BUS    -3
 #define SIG_CR16_IAD    -4
+
+/* TODO: Resolve conflicts with common headers.  */
+#undef SEXT8
+#undef SEXT16
+#undef SEXT32
 
 #define SEXT3(x)	((((x)&0x7)^(~3))+4)	
 

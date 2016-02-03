@@ -275,6 +275,7 @@ if { [istarget "m6811-*-*"] || [istarget "m6812-*-*"] } {
 }
 
 # Collect some line numbers.
+set line_enter      [expr [gdb_get_line_number "main enter" "asmsrc1.s"] + 1]
 set line_main       [expr [gdb_get_line_number "main start" "asmsrc1.s"] + 1]
 set line_call_foo2  [expr [gdb_get_line_number "call foo2"  "asmsrc1.s"] + 1]
 set line_search_comment [expr [gdb_get_line_number "search" "asmsrc1.s"] + 1]
@@ -298,7 +299,10 @@ if ![runto_main] then {
 }
 
 # Execute the `f' command and see if the result includes source info.
-gdb_test "f" "asmsrc1\[.\]s:$line_main.*several_nops" "f at main"
+gdb_test "f" "asmsrc1\[.\]s:$line_enter.*gdbasm_enter" "f at main"
+
+# Execute the `n' command.
+gdb_test "n" "$line_main\[ 	\]*.*several_nops" "n at main"
 
 # See if we properly `next' over a macro with several insns.
 gdb_test "n" "$line_call_foo2\[ 	\]*.*foo2" "next over macro"

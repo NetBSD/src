@@ -57,6 +57,7 @@ struct esdid
 {
   asection *section;		/* Ptr to bfd version.  */
   unsigned char *contents;	/* Used to build image.  */
+  bfd_size_type content_size;	/* The size of the contents buffer.  */
   int pc;
   int relocs;			/* Reloc count, valid end of pass 1.  */
   int donerel;			/* Have relocs been translated.  */
@@ -372,7 +373,7 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
   | (otr->map[2] << 8)
   | (otr->map[3] << 0);
 
-  struct esdid *esdid = &EDATA (abfd, otr->esdid - 1);
+  struct esdid *esdid;
   unsigned char *contents;
   bfd_boolean need_contents = FALSE;
   unsigned int dst_idx;
@@ -381,6 +382,7 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
   if (otr->esdid == 0)
     return;
   
+  esdid = &EDATA (abfd, otr->esdid - 1);
   contents = esdid->contents;
   dst_idx = esdid->pc;
   
@@ -406,7 +408,7 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
 
 	      if (pass == 1)
 		need_contents = TRUE;
-	      else if (contents && dst_idx < esdid->section->size - sizeinwords * 2)
+	      else if (contents && dst_idx < esdid->content_size - sizeinwords * 2)
 		for (j = 0; j < sizeinwords * 2; j++)
 		  {
 		    contents[dst_idx + (sizeinwords * 2) - j - 1] = val;
@@ -449,7 +451,7 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
 	{
 	  need_contents = TRUE;
 
-	  if (esdid->section && contents && dst_idx < esdid->section->size)
+	  if (esdid->section && contents && dst_idx < esdid->content_size - 1)
 	    if (pass == 2)
 	      {
 		/* Absolute code, comes in 16 bit lumps.  */
@@ -472,6 +474,7 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
 
 	  size = esdid->section->size;
 	  esdid->contents = bfd_alloc (abfd, size);
+	  esdid->content_size = size;
 	}
       else
 	esdid->contents = NULL;
@@ -686,12 +689,20 @@ versados_get_section_contents (bfd *abfd,
 			       file_ptr offset,
 			       bfd_size_type count)
 {
+  struct esdid *esdid;
+
   if (!versados_pass_2 (abfd))
     return FALSE;
 
-  memcpy (location,
-	  EDATA (abfd, section->target_index).contents + offset,
-	  (size_t) count);
+  esdid = &EDATA (abfd, section->target_index);
+
+  if (esdid->contents == NULL
+      || offset < 0
+      || (bfd_size_type) offset > esdid->content_size
+      || offset + count > esdid->content_size)
+    return FALSE;
+
+  memcpy (location, esdid->contents + offset, (size_t) count);
 
   return TRUE;
 }

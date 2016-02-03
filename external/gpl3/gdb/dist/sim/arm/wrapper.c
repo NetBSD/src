@@ -28,40 +28,31 @@
 #include <signal.h>
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
-#include "armdefs.h"
+#include "sim-main.h"
+#include "sim-options.h"
 #include "armemu.h"
 #include "dbg_rdi.h"
 #include "ansidecl.h"
-#include "sim-utils.h"
-#include "run-sim.h"
 #include "gdb/sim-arm.h"
 #include "gdb/signals.h"
 #include "libiberty.h"
 #include "iwmmxt.h"
 
+/* TODO: This should get pulled from the SIM_DESC.  */
 host_callback *sim_callback;
 
-static struct ARMul_State *state;
-
-/* Who is using the simulator.  */
-static SIM_OPEN_KIND sim_kind;
-
-/* argv[0] */
-static char *myname;
+/* TODO: This should get merged into sim_cpu.  */
+struct ARMul_State *state;
 
 /* Memory size in bytes.  */
+/* TODO: Memory should be converted to the common memory module.  */
 static int mem_size = (1 << 21);
-
-/* Non-zero to display start up banner, and maybe other things.  */
-static int verbosity;
-
-/* Non-zero to set big endian mode.  */
-static int big_endian;
 
 int stop_simulator;
 
 #include "dis-asm.h"
 
+/* TODO: Tracing should be converted to common tracing module.  */
 int trace = 0;
 int disas = 0;
 int trace_funcs = 0;
@@ -149,33 +140,12 @@ init (void)
     {
       ARMul_EmulateInit ();
       state = ARMul_NewState ();
-      state->bigendSig = (big_endian ? HIGH : LOW);
+      state->bigendSig = (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN ? HIGH : LOW);
       ARMul_MemoryInit (state, mem_size);
       ARMul_OSInit (state);
-      state->verbose = verbosity;
+      state->verbose = 0;
       done = 1;
     }
-}
-
-/* Set verbosity level of simulator.
-   This is not intended to produce detailed tracing or debugging information.
-   Just summaries.  */
-/* FIXME: common/run.c doesn't do this yet.  */
-
-void
-sim_set_verbose (int v)
-{
-  verbosity = v;
-}
-
-/* Set the memory size to SIZE bytes.
-   Must be called before initializing simulator.  */
-/* FIXME: Rename to sim_set_mem_size.  */
-
-void
-sim_size (int size)
-{
-  mem_size = size;
 }
 
 void
@@ -234,14 +204,6 @@ sim_read (SIM_DESC sd ATTRIBUTE_UNUSED,
 }
 
 int
-sim_trace (SIM_DESC sd ATTRIBUTE_UNUSED)
-{
-  trace = 1;
-  sim_resume (sd, 0, 0);
-  return 1;
-}
-
-int
 sim_stop (SIM_DESC sd ATTRIBUTE_UNUSED)
 {
   state->Emulate = STOP;
@@ -294,6 +256,11 @@ sim_create_inferior (SIM_DESC sd ATTRIBUTE_UNUSED,
       ARMul_SetPC (state, 0);	/* ??? */
       mach = 0;
     }
+
+#ifdef MODET
+  if (abfd != NULL && (bfd_get_start_address (abfd) & 1))
+    SETT;
+#endif
 
   switch (mach)
     {
@@ -379,17 +346,6 @@ sim_create_inferior (SIM_DESC sd ATTRIBUTE_UNUSED,
       break;
     }
 
-  if (   mach != bfd_mach_arm_3
-      && mach != bfd_mach_arm_3M
-      && mach != bfd_mach_arm_2
-      && mach != bfd_mach_arm_2a)
-    {
-      /* Reset mode to ARM.  A gdb user may rerun a program that had entered
-	 THUMB mode from the start and cause the ARM-mode startup code to be
-	 executed in THUMB mode.  */
-      ARMul_SetCPSR (state, SVC32MODE);
-    }
-  
   memset (& info, 0, sizeof (info));
   INIT_DISASSEMBLE_INFO (info, stdout, op_printf);
   info.read_memory_func = sim_dis_read;
@@ -449,12 +405,6 @@ sim_create_inferior (SIM_DESC sd ATTRIBUTE_UNUSED,
     }
 
   return SIM_RC_OK;
-}
-
-void
-sim_info (SIM_DESC sd ATTRIBUTE_UNUSED,
-	  int verbose ATTRIBUTE_UNUSED)
-{
 }
 
 static int
@@ -742,7 +692,7 @@ static swi_options options[] =
   };
 
 
-int
+static int
 sim_target_parse_command_line (int argc, char ** argv)
 {
   int i;
@@ -844,88 +794,111 @@ sim_target_parse_arg_array (char ** argv)
   sim_target_parse_command_line (i, argv);
 }
 
-void
-sim_target_display_usage (int help)
+static sim_cia
+arm_pc_get (sim_cpu *cpu)
 {
-  FILE *stream = help ? stdout : stderr;
+  return PC;
+}
 
-  fprintf (stream, "%s=<list>  Comma seperated list of SWI protocols to supoport.\n\
-                This list can contain: NONE, DEMON, ANGEL, REDBOOT and/or ALL.\n",
-	   SWI_SWITCH);
-  fprintf (stream, "-d\t\tEnable disassembly of instructions during tracing.\n");
-  fprintf (stream, "-z\t\tTrace entering and leaving functions.\n\n");
+static void
+arm_pc_set (sim_cpu *cpu, sim_cia pc)
+{
+  ARMul_SetPC (state, pc);
+}
+
+static void
+free_state (SIM_DESC sd)
+{
+  if (STATE_MODULES (sd) != NULL)
+    sim_module_uninstall (sd);
+  sim_cpu_free_all (sd);
+  sim_state_free (sd);
 }
 
 SIM_DESC
-sim_open (SIM_OPEN_KIND   kind,
-	  host_callback * ptr,
-	  struct bfd *    abfd,
-	  char **         argv)
+sim_open (SIM_OPEN_KIND kind,
+	  host_callback *cb,
+	  struct bfd *abfd,
+	  char **argv)
 {
-  sim_kind = kind;
+  int i;
+  SIM_DESC sd = sim_state_alloc (kind, cb);
+  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
-  if (myname)
-    free (myname);
-  myname = (char *) xstrdup (argv[0]);
+  /* The cpu data is kept in a separately allocated chunk of memory.  */
+  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
 
-  sim_callback = ptr;
+  if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
 
-#ifdef SIM_TARGET_SWITCHES
+  /* getopt will print the error message so we just have to exit if this fails.
+     FIXME: Hmmm...  in the case of gdb we need getopt to call
+     print_filtered.  */
+  if (sim_parse_args (sd, argv) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* Check for/establish the a reference program image.  */
+  if (sim_analyze_program (sd,
+			   (STATE_PROG_ARGV (sd) != NULL
+			    ? *STATE_PROG_ARGV (sd)
+			    : NULL), abfd) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* Configure/verify the target byte order and other runtime
+     configuration options.  */
+  if (sim_config (sd) != SIM_RC_OK)
+    {
+      sim_module_uninstall (sd);
+      return 0;
+    }
+
+  if (sim_post_argv_init (sd) != SIM_RC_OK)
+    {
+      /* Uninstall the modules to avoid memory leaks,
+	 file descriptor leaks, etc.  */
+      sim_module_uninstall (sd);
+      return 0;
+    }
+
+  /* CPU specific initialization.  */
+  for (i = 0; i < MAX_NR_PROCESSORS; ++i)
+    {
+      SIM_CPU *cpu = STATE_CPU (sd, i);
+
+      CPU_PC_FETCH (cpu) = arm_pc_get;
+      CPU_PC_STORE (cpu) = arm_pc_set;
+    }
+
+  sim_callback = cb;
+
   sim_target_parse_arg_array (argv);
-#endif
-  
-  /* Decide upon the endian-ness of the processor.
-     If we can, get the information from the bfd itself.
-     Otherwise look to see if we have been given a command
-     line switch that tells us.  Otherwise default to little endian.  */
-  if (abfd != NULL)
-    big_endian = bfd_big_endian (abfd);
-  else if (argv[1] != NULL)
+
+  if (argv[1] != NULL)
     {
       int i;
 
-      /* Scan for endian-ness and memory-size switches.  */
+      /* Scan for memory-size switches.  */
       for (i = 0; (argv[i] != NULL) && (argv[i][0] != 0); i++)
-	if (argv[i][0] == '-' && argv[i][1] == 'E')
-	  {
-	    char c;
-
-	    if ((c = argv[i][2]) == 0)
-	      {
-		++i;
-		c = argv[i][0];
-	      }
-
-	    switch (c)
-	      {
-	      case 0:
-		sim_callback->printf_filtered
-		  (sim_callback, "No argument to -E option provided\n");
-		break;
-
-	      case 'b':
-	      case 'B':
-		big_endian = 1;
-		break;
-
-	      case 'l':
-	      case 'L':
-		big_endian = 0;
-		break;
-
-	      default:
-		sim_callback->printf_filtered
-		  (sim_callback, "Unrecognised argument to -E option\n");
-		break;
-	      }
-	  }
-	else if (argv[i][0] == '-' && argv[i][1] == 'm')
+	if (argv[i][0] == '-' && argv[i][1] == 'm')
 	  {
 	    if (argv[i][2] != '\0')
-	      sim_size (atoi (&argv[i][2]));
+	      mem_size = atoi (&argv[i][2]);
 	    else if (argv[i + 1] != NULL)
 	      {
-		sim_size (atoi (argv[i + 1]));
+		mem_size = atoi (argv[i + 1]);
 		i++;
 	      }
 	    else
@@ -938,34 +911,14 @@ sim_open (SIM_OPEN_KIND   kind,
 	  }
     }
 
-  return (SIM_DESC) 1;
+  return sd;
 }
 
 void
 sim_close (SIM_DESC sd ATTRIBUTE_UNUSED,
 	   int quitting ATTRIBUTE_UNUSED)
 {
-  if (myname)
-    free (myname);
-  myname = NULL;
-}
-
-SIM_RC
-sim_load (SIM_DESC sd,
-	  const char *prog,
-	  bfd *abfd,
-	  int from_tty ATTRIBUTE_UNUSED)
-{
-  bfd *prog_bfd;
-
-  prog_bfd = sim_load_file (sd, myname, sim_callback, prog, abfd,
-			    sim_kind == SIM_OPEN_DEBUG, 0, sim_write);
-  if (prog_bfd == NULL)
-    return SIM_RC_FAIL;
-  ARMul_SetPC (state, bfd_get_start_address (prog_bfd));
-  if (abfd == NULL)
-    bfd_close (prog_bfd);
-  return SIM_RC_OK;
+  /* Nothing to do.  */
 }
 
 void
@@ -994,25 +947,4 @@ sim_stop_reason (SIM_DESC sd ATTRIBUTE_UNUSED,
       else
 	*sigrc = 0;
     }
-}
-
-void
-sim_do_command (SIM_DESC sd ATTRIBUTE_UNUSED,
-		const char *cmd ATTRIBUTE_UNUSED)
-{  
-  (*sim_callback->printf_filtered)
-    (sim_callback,
-     "This simulator does not accept any commands.\n");
-}
-
-void
-sim_set_callbacks (host_callback *ptr)
-{
-  sim_callback = ptr;
-}
-
-char **
-sim_complete_command (SIM_DESC sd, const char *text, const char *word)
-{
-  return NULL;
 }

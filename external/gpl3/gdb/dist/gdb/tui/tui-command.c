@@ -20,7 +20,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <ctype.h>
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-win.h"
@@ -54,80 +53,40 @@ tui_dispatch_ctrl_char (unsigned int ch)
      on through and do nothing here.  */
   if (win_info == NULL || win_info == TUI_CMD_WIN)
     return ch;
-  else
+
+  switch (ch)
     {
-      unsigned int c = 0, ch_copy = ch;
-      int i;
-      char *term;
-
-      /* If this is an xterm, page next/prev keys aren't returned by
-         keypad as a single char, so we must handle them here.  Seems
-         like a bug in the curses library?  */
-      term = (char *) getenv ("TERM");
-      if (term)
-	{
-	  for (i = 0; term[i]; i++)
-	    term[i] = toupper (term[i]);
-	  if ((strcmp (term, "XTERM") == 0) 
-	      && key_is_start_sequence (ch))
-	    {
-	      unsigned int page_ch = 0;
-	      unsigned int tmp_char;
-              WINDOW *w = TUI_CMD_WIN->generic.handle;
-
-	      tmp_char = 0;
-	      while (!key_is_end_sequence (tmp_char))
-		{
-		  tmp_char = (int) wgetch (w);
-		  if (tmp_char == ERR)
-		    {
-		      return ch;
-		    }
-		  if (!tmp_char)
-		    break;
-		  if (tmp_char == 53)
-		    page_ch = KEY_PPAGE;
-		  else if (tmp_char == 54)
-		    page_ch = KEY_NPAGE;
-		  else
-		    {
-		      return 0;
-		    }
-		}
-	      ch_copy = page_ch;
-	    }
-	}
-
-      switch (ch_copy)
-	{
-	case KEY_NPAGE:
-	  tui_scroll_forward (win_info, 0);
-	  break;
-	case KEY_PPAGE:
-	  tui_scroll_backward (win_info, 0);
-	  break;
-	case KEY_DOWN:
-	case KEY_SF:
-	  tui_scroll_forward (win_info, 1);
-	  break;
-	case KEY_UP:
-	case KEY_SR:
-	  tui_scroll_backward (win_info, 1);
-	  break;
-	case KEY_RIGHT:
-	  tui_scroll_left (win_info, 1);
-	  break;
-	case KEY_LEFT:
-	  tui_scroll_right (win_info, 1);
-	  break;
-	case '\f':
-          break;
-	default:
-	  c = ch_copy;
-	  break;
-	}
-      return c;
+    case KEY_NPAGE:
+      tui_scroll_forward (win_info, 0);
+      break;
+    case KEY_PPAGE:
+      tui_scroll_backward (win_info, 0);
+      break;
+    case KEY_DOWN:
+    case KEY_SF:
+      tui_scroll_forward (win_info, 1);
+      break;
+    case KEY_UP:
+    case KEY_SR:
+      tui_scroll_backward (win_info, 1);
+      break;
+    case KEY_RIGHT:
+      tui_scroll_left (win_info, 1);
+      break;
+    case KEY_LEFT:
+      tui_scroll_right (win_info, 1);
+      break;
+    case '\f':
+      break;
+    default:
+      /* We didn't recognize the character as a control character, so pass it
+         through.  */
+      return ch;
     }
+
+  /* We intercepted the control character, so return 0 (which readline
+     will interpret as a no-op).  */
+  return 0;
 }
 
 /* See tui-command.h.  */

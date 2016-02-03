@@ -20,6 +20,7 @@
 #include "linux-procfs.h"
 #include "filestuff.h"
 #include <dirent.h>
+#include <sys/stat.h>
 
 /* Return the TGID of LWPID from /proc/pid/status.  Returns -1 if not
    found.  */
@@ -92,7 +93,7 @@ linux_proc_pid_get_state (pid_t pid, char *buffer, size_t buffer_size,
 
   have_state = 0;
   while (fgets (buffer, buffer_size, procfile) != NULL)
-    if (strncmp (buffer, "State:", 6) == 0)
+    if (startswith (buffer, "State:"))
       {
 	have_state = 1;
 	break;
@@ -150,6 +151,15 @@ linux_proc_pid_is_stopped (pid_t pid)
   return linux_proc_pid_has_state (pid, "T (stopped)", 1);
 }
 
+/* Detect `T (tracing stop)' in `/proc/PID/status'.
+   Other states including `T (stopped)' are reported as false.  */
+
+int
+linux_proc_pid_is_trace_stopped_nowarn (pid_t pid)
+{
+  return linux_proc_pid_has_state (pid, "T (tracing stop)", 1);
+}
+
 /* Return non-zero if PID is a zombie.  If WARN, warn on failure to
    open the /proc file.  */
 
@@ -173,25 +183,6 @@ int
 linux_proc_pid_is_zombie (pid_t pid)
 {
   return linux_proc_pid_is_zombie_maybe_warn (pid, 1);
-}
-
-/* See linux-procfs.h declaration.  */
-
-char *
-linux_proc_pid_get_ns (pid_t pid, const char *ns)
-{
-  char buf[100];
-  char nsval[64];
-  int ret;
-  xsnprintf (buf, sizeof (buf), "/proc/%d/ns/%s", (int) pid, ns);
-  ret = readlink (buf, nsval, sizeof (nsval));
-  if (0 < ret && ret < sizeof (nsval))
-    {
-      nsval[ret] = '\0';
-      return xstrdup (nsval);
-    }
-
-  return NULL;
 }
 
 /* See linux-procfs.h.  */
@@ -250,4 +241,35 @@ linux_proc_attach_tgid_threads (pid_t pid,
     }
 
   closedir (dir);
+}
+
+/* See linux-procfs.h.  */
+
+int
+linux_proc_task_list_dir_exists (pid_t pid)
+{
+  char pathname[128];
+  struct stat buf;
+
+  xsnprintf (pathname, sizeof (pathname), "/proc/%ld/task", (long) pid);
+  return (stat (pathname, &buf) == 0);
+}
+
+/* See linux-procfs.h.  */
+
+char *
+linux_proc_pid_to_exec_file (int pid)
+{
+  static char buf[PATH_MAX];
+  char name[PATH_MAX];
+  ssize_t len;
+
+  xsnprintf (name, PATH_MAX, "/proc/%d/exe", pid);
+  len = readlink (name, buf, PATH_MAX - 1);
+  if (len <= 0)
+    strcpy (buf, name);
+  else
+    buf[len] = '\0';
+
+  return buf;
 }

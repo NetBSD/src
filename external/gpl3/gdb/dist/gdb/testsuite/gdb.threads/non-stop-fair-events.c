@@ -22,6 +22,9 @@
 
 #define NUM_THREADS 10
 const int num_threads = NUM_THREADS;
+/* Allow for as much timeout as DejaGnu wants, plus a bit of
+   slack.  */
+#define SECONDS (TIMEOUT + 20)
 
 pthread_t child_thread[NUM_THREADS];
 volatile pthread_t signal_thread;
@@ -53,6 +56,8 @@ child_function (void *arg)
 
   while (1)
     {
+      /* Reset the timer before going to INF_LOOP.  */
+      alarm (SECONDS);
       INF_LOOP; /* set thread breakpoint here */
       loop_broke ();
     }
@@ -64,8 +69,6 @@ main (void)
   int res;
   int i;
 
-  alarm (60);
-
   signal (SIGUSR1, handler);
 
   for (i = 0; i < NUM_THREADS; i++)
@@ -76,6 +79,8 @@ main (void)
   while (1)
     {
       pthread_kill (signal_thread, SIGUSR1); /* set kill breakpoint here */
+      /* Reset the timer before going to INF_LOOP.  */
+      alarm (SECONDS);
       INF_LOOP;
       loop_broke ();
     }

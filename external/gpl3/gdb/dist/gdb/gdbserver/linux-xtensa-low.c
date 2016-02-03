@@ -59,7 +59,7 @@ xtensa_fill_gregset (struct regcache *regcache, void *buf)
 
   /* Loop registers, if hardware has it.  */
 
-#if XCHAL_HAVE_LOOP
+#if XCHAL_HAVE_LOOPS
   collect_register_by_name (regcache, "lbeg", (char*)&rset[R_LBEG]);
   collect_register_by_name (regcache, "lend", (char*)&rset[R_LEND]);
   collect_register_by_name (regcache, "lcount", (char*)&rset[R_LCOUNT]);
@@ -94,7 +94,7 @@ xtensa_store_gregset (struct regcache *regcache, const void *buf)
 
   /* Loop registers, if hardware has it.  */
 
-#if XCHAL_HAVE_LOOP
+#if XCHAL_HAVE_LOOPS
   supply_register_by_name (regcache, "lbeg", (char*)&rset[R_LBEG]);
   supply_register_by_name (regcache, "lend", (char*)&rset[R_LEND]);
   supply_register_by_name (regcache, "lcount", (char*)&rset[R_LCOUNT]);
@@ -186,16 +186,10 @@ static struct regsets_info xtensa_regsets_info =
     NULL, /* disabled_regsets */
   };
 
-static struct usrregs_info xtensa_usrregs_info =
-  {
-    xtensa_num_regs,
-    xtensa_regmap,
-  };
-
 static struct regs_info regs_info =
   {
     NULL, /* regset_bitmap */
-    &xtensa_usrregs_info,
+    NULL, /* usrregs */
     &xtensa_regsets_info
   };
 

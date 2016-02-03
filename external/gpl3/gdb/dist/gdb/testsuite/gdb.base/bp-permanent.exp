@@ -96,7 +96,7 @@ proc test {always_inserted sw_watchpoint} {
 
 	# Run the "setup" function in the inferior.  This memcpy's the
 	# breakpoint instruction to a buffer in the inferior.
-	gdb_test "next" "test.*" "next over setup"
+	gdb_test "next" "test_basics \\(\\).*" "next over setup"
 
 	delete_breakpoints
 
@@ -104,7 +104,19 @@ proc test {always_inserted sw_watchpoint} {
 	# to memory manually.
 	set count [expr $address_after_bp - $address_bp]
 	for {set i 0} {$i < $count} {incr i} {
-	    gdb_test "p /x addr_bp\[$i\] = buffer\[$i\]" " = .*"
+	    set test "p /x addr_bp\[$i\] = buffer\[$i\]"
+	    gdb_test_multiple $test $test {
+		-re "Cannot access memory at address $hex.*$gdb_prompt $" {
+		    # Some targets (QEMU for one) will disallow writes to the
+		    # .text section under certain circumstances.  It is no use
+		    # continuing with the test at this point.  Just return.
+		    unsupported "Cannot modify memory"
+		    return
+		}
+		-re " = .*$gdb_prompt $" {
+		    pass $test
+		}
+	    }
 	}
     }
 

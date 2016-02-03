@@ -498,9 +498,8 @@ dcache_read_memory_partial (struct target_ops *ops, DCACHE *dcache,
     {
       /* Even though reading the whole line failed, we may be able to
 	 read a piece starting where the caller wanted.  */
-      return ops->to_xfer_partial (ops, TARGET_OBJECT_MEMORY, NULL,
-				   myaddr, NULL, memaddr, len,
-				   xfered_len);
+      return raw_memory_xfer_partial (ops, myaddr, NULL, memaddr, len,
+				      xfered_len);
     }
   else
     {

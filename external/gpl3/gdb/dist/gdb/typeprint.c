@@ -335,9 +335,9 @@ find_typedef_in_hash (const struct type_print_options *flags, struct type *t)
    NEW is the new name for a type TYPE.  */
 
 void
-typedef_print (struct type *type, struct symbol *new, struct ui_file *stream)
+typedef_print (struct type *type, struct symbol *newobj, struct ui_file *stream)
 {
-  LA_PRINT_TYPEDEF (type, new, stream);
+  LA_PRINT_TYPEDEF (type, newobj, stream);
 }
 
 /* The default way to print a typedef.  */
@@ -372,18 +372,20 @@ type_to_string (struct type *type)
   char *s = NULL;
   struct ui_file *stb;
   struct cleanup *old_chain;
-  volatile struct gdb_exception except;
 
   stb = mem_fileopen ();
   old_chain = make_cleanup_ui_file_delete (stb);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       type_print (type, "", stb, -1);
       s = ui_file_xstrdup (stb, NULL);
     }
-  if (except.reason < 0)
-    s = NULL;
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      s = NULL;
+    }
+  END_CATCH
 
   do_cleanups (old_chain);
 
@@ -499,9 +501,9 @@ whatis_command (char *exp, int from_tty)
 /* TYPENAME is either the name of a type, or an expression.  */
 
 static void
-ptype_command (char *typename, int from_tty)
+ptype_command (char *type_name, int from_tty)
 {
-  whatis_exp (typename, 1);
+  whatis_exp (type_name, 1);
 }
 
 /* Print integral scalar data VAL, of type TYPE, onto stdio stream STREAM.
@@ -592,16 +594,16 @@ print_type_scalar (struct type *type, LONGEST val, struct ui_file *stream)
    and whatis_command().  */
 
 void
-maintenance_print_type (char *typename, int from_tty)
+maintenance_print_type (char *type_name, int from_tty)
 {
   struct value *val;
   struct type *type;
   struct cleanup *old_chain;
   struct expression *expr;
 
-  if (typename != NULL)
+  if (type_name != NULL)
     {
-      expr = parse_expression (typename);
+      expr = parse_expression (type_name);
       old_chain = make_cleanup (free_current_contents, &expr);
       if (expr->elts[0].opcode == OP_TYPE)
 	{

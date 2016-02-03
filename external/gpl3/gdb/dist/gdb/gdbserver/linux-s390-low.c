@@ -36,12 +36,8 @@
 #define HWCAP_S390_TE 1024
 #endif
 
-#ifndef PTRACE_GETREGSET
-#define PTRACE_GETREGSET 0x4204
-#endif
-
-#ifndef PTRACE_SETREGSET
-#define PTRACE_SETREGSET 0x4205
+#ifndef HWCAP_S390_VX
+#define HWCAP_S390_VX 2048
 #endif
 
 /* Defined in auto-generated file s390-linux32.c.  */
@@ -72,6 +68,14 @@ extern const struct target_desc *tdesc_s390_linux64v2;
 void init_registers_s390_te_linux64 (void);
 extern const struct target_desc *tdesc_s390_te_linux64;
 
+/* Defined in auto-generated file s390-vx-linux64.c.  */
+void init_registers_s390_vx_linux64 (void);
+extern const struct target_desc *tdesc_s390_vx_linux64;
+
+/* Defined in auto-generated file s390-tevx-linux64.c.  */
+void init_registers_s390_tevx_linux64 (void);
+extern const struct target_desc *tdesc_s390_tevx_linux64;
+
 /* Defined in auto-generated file s390x-linux64.c.  */
 void init_registers_s390x_linux64 (void);
 extern const struct target_desc *tdesc_s390x_linux64;
@@ -87,6 +91,14 @@ extern const struct target_desc *tdesc_s390x_linux64v2;
 /* Defined in auto-generated file s390x-te-linux64.c.  */
 void init_registers_s390x_te_linux64 (void);
 extern const struct target_desc *tdesc_s390x_te_linux64;
+
+/* Defined in auto-generated file s390x-vx-linux64.c.  */
+void init_registers_s390x_vx_linux64 (void);
+extern const struct target_desc *tdesc_s390x_vx_linux64;
+
+/* Defined in auto-generated file s390x-tevx-linux64.c.  */
+void init_registers_s390x_tevx_linux64 (void);
+extern const struct target_desc *tdesc_s390x_tevx_linux64;
 
 #define s390_num_regs 52
 
@@ -324,6 +336,46 @@ s390_store_tdb (struct regcache *regcache, const void *buf)
     supply_register (regcache, tr0 + i, (const char *) buf + 8 * (16 + i));
 }
 
+static void
+s390_fill_vxrs_low (struct regcache *regcache, void *buf)
+{
+  int v0 = find_regno (regcache->tdesc, "v0l");
+  int i;
+
+  for (i = 0; i < 16; i++)
+    collect_register (regcache, v0 + i, (char *) buf + 8 * i);
+}
+
+static void
+s390_store_vxrs_low (struct regcache *regcache, const void *buf)
+{
+  int v0 = find_regno (regcache->tdesc, "v0l");
+  int i;
+
+  for (i = 0; i < 16; i++)
+    supply_register (regcache, v0 + i, (const char *) buf + 8 * i);
+}
+
+static void
+s390_fill_vxrs_high (struct regcache *regcache, void *buf)
+{
+  int v16 = find_regno (regcache->tdesc, "v16");
+  int i;
+
+  for (i = 0; i < 16; i++)
+    collect_register (regcache, v16 + i, (char *) buf + 16 * i);
+}
+
+static void
+s390_store_vxrs_high (struct regcache *regcache, const void *buf)
+{
+  int v16 = find_regno (regcache->tdesc, "v16");
+  int i;
+
+  for (i = 0; i < 16; i++)
+    supply_register (regcache, v16 + i, (const char *) buf + 16 * i);
+}
+
 static struct regset_info s390_regsets[] = {
   { 0, 0, 0, 0, GENERAL_REGS, s390_fill_gregset, NULL },
   /* Last break address is read-only; no fill function.  */
@@ -334,6 +386,10 @@ static struct regset_info s390_regsets[] = {
   /* TDB is read-only.  */
   { PTRACE_GETREGSET, -1, NT_S390_TDB, 0, EXTENDED_REGS,
     NULL, s390_store_tdb },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_S390_VXRS_LOW, 0,
+    EXTENDED_REGS, s390_fill_vxrs_low, s390_store_vxrs_low },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_S390_VXRS_HIGH, 0,
+    EXTENDED_REGS, s390_fill_vxrs_high, s390_store_vxrs_high },
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
@@ -439,6 +495,8 @@ s390_arch_setup (void)
   int have_regset_system_call
     = s390_check_regset (pid, NT_S390_SYSTEM_CALL, 4);
   int have_regset_tdb = s390_check_regset (pid, NT_S390_TDB, 256);
+  int have_regset_vxrs = s390_check_regset (pid, NT_S390_VXRS_LOW, 128)
+    && s390_check_regset (pid, NT_S390_VXRS_HIGH, 256);
 
   /* Assume 31-bit inferior process.  */
   if (have_regset_system_call)
@@ -464,8 +522,14 @@ s390_arch_setup (void)
 	if (have_regset_tdb)
 	  have_regset_tdb =
 	    (s390_get_hwcap (tdesc_s390x_linux64v2) & HWCAP_S390_TE) != 0;
+	if (have_regset_vxrs)
+	  have_regset_vxrs =
+	    (s390_get_hwcap (tdesc_s390x_linux64v2) & HWCAP_S390_VX) != 0;
 
-	if (have_regset_tdb)
+	if (have_regset_vxrs)
+	  tdesc = (have_regset_tdb ? tdesc_s390x_tevx_linux64 :
+		   tdesc_s390x_vx_linux64);
+	else if (have_regset_tdb)
 	  tdesc = tdesc_s390x_te_linux64;
 	else if (have_regset_system_call)
 	  tdesc = tdesc_s390x_linux64v2;
@@ -482,8 +546,13 @@ s390_arch_setup (void)
 	have_hwcap_s390_high_gprs = 1;
 	if (have_regset_tdb)
 	  have_regset_tdb = (s390_get_hwcap (tdesc) & HWCAP_S390_TE) != 0;
+	if (have_regset_vxrs)
+	  have_regset_vxrs = (s390_get_hwcap (tdesc) & HWCAP_S390_VX) != 0;
 
-	if (have_regset_tdb)
+	if (have_regset_vxrs)
+	  tdesc = (have_regset_tdb ? tdesc_s390_tevx_linux64 :
+		   tdesc_s390_vx_linux64);
+	else if (have_regset_tdb)
 	  tdesc = tdesc_s390_te_linux64;
 	else if (have_regset_system_call)
 	  tdesc = tdesc_s390_linux64v2;
@@ -508,6 +577,13 @@ s390_arch_setup (void)
 	  break;
 	case NT_S390_TDB:
 	  regset->size = have_regset_tdb ? 256 : 0;
+	  break;
+	case NT_S390_VXRS_LOW:
+	  regset->size = have_regset_vxrs ? 128 : 0;
+	  break;
+	case NT_S390_VXRS_HIGH:
+	  regset->size = have_regset_vxrs ? 256 : 0;
+	  break;
 	default:
 	  break;
 	}
@@ -615,10 +691,14 @@ initialize_low_arch (void)
   init_registers_s390_linux64v1 ();
   init_registers_s390_linux64v2 ();
   init_registers_s390_te_linux64 ();
+  init_registers_s390_vx_linux64 ();
+  init_registers_s390_tevx_linux64 ();
   init_registers_s390x_linux64 ();
   init_registers_s390x_linux64v1 ();
   init_registers_s390x_linux64v2 ();
   init_registers_s390x_te_linux64 ();
+  init_registers_s390x_vx_linux64 ();
+  init_registers_s390x_tevx_linux64 ();
 
   initialize_regsets_info (&s390_regsets_info);
 #ifdef __s390x__

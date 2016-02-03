@@ -66,10 +66,14 @@ if {${data_address} > ${max_32bit_address}} then {
 set filenames {}
 set all_files {
     intarr1.bin intarr1b.bin intarr1.ihex
-    intarr1.srec intarr1.tekhex intarr2.bin intarr2b.bin intarr2.ihex
-    intarr2.srec intarr2.tekhex intstr1.bin intstr1b.bin intstr1.ihex
-    intstr1.srec intstr1.tekhex intstr2.bin intstr2b.bin intstr2.ihex
-    intstr2.srec intstr2.tekhex intarr3.srec
+    intarr1.srec intarr1.tekhex intarr1.verilog
+    intarr2.bin intarr2b.bin intarr2.ihex
+    intarr2.srec intarr2.tekhex intarr2.verilog
+    intstr1.bin intstr1b.bin intstr1.ihex
+    intstr1.srec intstr1.tekhex intstr1.verilog
+    intstr2.bin intstr2b.bin intstr2.ihex
+    intstr2.srec intstr2.tekhex intstr2.verilog
+    intarr3.srec
 }
 
 # This loop sets variables dynamically -- each name listed in
@@ -146,6 +150,12 @@ make_dump_file "dump tekhex val [set intarr1.tekhex] intarray" \
 
 make_dump_file "dump tekhex val [set intstr1.tekhex] intstruct" \
 	"dump struct as value, tekhex"
+
+make_dump_file "dump verilog val [set intarr1.verilog] intarray" \
+	"dump array as value, intel hex"
+
+make_dump_file "dump verilog val [set intstr1.verilog] intstruct" \
+	"dump struct as value, intel hex"
 
 proc capture_value { expression args } {
     global gdb_prompt
@@ -241,6 +251,12 @@ make_dump_file "dump tekhex mem [set intarr2.tekhex] $array_start $array_end" \
 
 make_dump_file "dump tekhex mem [set intstr2.tekhex] $struct_start $struct_end" \
 	"dump struct as memory, tekhex"
+
+make_dump_file "dump verilog mem [set intarr2.verilog] $array_start $array_end" \
+	"dump array as memory, verilog"
+
+make_dump_file "dump verilog mem [set intstr2.verilog] $struct_start $struct_end" \
+	"dump struct as memory, verilog"
 
 # test complex expressions
 make_dump_file \

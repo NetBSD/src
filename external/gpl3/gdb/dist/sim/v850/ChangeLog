@@ -1,3 +1,133 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (INLINE): Delete define.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-cpu.o.
+	* interp.c (v850_pc_get, v850_pc_set): New functions.
+	(sim_open): Declare new local var i.  Call sim_cpu_alloc_all.
+	Call CPU_PC_FETCH & CPU_PC_STORE for all cpus.
+	(sim_pc_get): Delete.
+	* sim-main.h (SIM_CPU): Define.
+	(struct sim_state): Change cpu to an array of pointers.
+	(STATE_CPU): Drop &.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o and sim-hrw.o.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_pc_get): New function.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Delete.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete unistd.h & stdlib.h &
+	string.h & strings.h & time.h.
+	* aclocal.m4, configure: Regenerate.
+
+2015-02-27  Nick Clifton  <nickc@redhat.com>
+
+	* sim-main.h (reg64_t): New type.
+	(v850_regs): Add selID_sregs field.
+	(VR, SAT16, SAT32, ABS16, ABS32 ): New macros.
+	* v850-dc: Add fields for v850e3v5 instructions.
+	* v850.igen (cvtf.dl): Use correctly signed local value.
+	(cvtf.dw, cvtf.sw, trncf.dul, trncf.dl, trncf.sul, trncf.sw):
+	Likewise.
+	* interp.c: Fix old style function declarations.
+	* simops.c: Likewise.
+
+2015-02-24  Nick Clifton  <nickc@redhat.com>
+
+	* v850.igen: Add more e3v5 support.
+	(FMAF.S): New pattern.
+	(FMSF.S): New pattern.
+	(FNMAF.S): New pattern.
+	(FNMSF.S): New pattern.
+	(cnvq15q30): New pattern.
+	(cnvq30q15): New pattern.
+	(cnvq31q62): New pattern.
+	(cnvq62q31): New pattern.
+	(dup.h): New pattern.
+	(dup.w): New pattern.
+	(expq31): New pattern.
+	(modadd): New pattern.
+	(mov.dw): New pattern.
+	(mov.h): New pattern.
+	(mov.w): New pattern.
+	(pki16i32): New pattern.
+	(pki16ui8): New pattern.
+	(pki32i16): New pattern.
+	(pki64i32): New pattern.
+	(pkq15q31): New pattern.
+	(pkq30q31): New pattern.
+	(pkq31q15): New pattern.
+	(pkui8i16): New pattern.
+	(vabs.h): New pattern.
+	(vabs.w): New pattern.
+	(vadd.dw): New placeholder pattern.
+	(vadd.h): New placeholder pattern.
+	(vadd.w): New placeholder pattern.
+	(vadds.h): New placeholder pattern.
+	(vadds.w): New placeholder pattern.
+	(vaddsat.h): New placeholder pattern.
+	(vaddsat.w): New placeholder pattern.
+	(vand): New pattern.
+	(vbiq.h): New placeholder pattern.
+	(vbswap.dw): New placeholder pattern.
+	(vbswap.h): New placeholder pattern.
+	(vbswap.w): New placeholder pattern.
+	(vcalc.h): New placeholder pattern.
+	(vcalc.w): New placeholder pattern.
+	(vcmov): New placeholder pattern.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

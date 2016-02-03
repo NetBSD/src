@@ -25,6 +25,9 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "fileio.h"
 
 extern int remote_debug;
 
@@ -240,36 +243,53 @@ hostio_reply_with_data (char *own_buf, char *buffer, int len,
   return input_index;
 }
 
-static int
-fileio_open_flags_to_host (int fileio_open_flags, int *open_flags_p)
+/* Process ID of inferior whose filesystem hostio functions
+   that take FILENAME arguments will use.  Zero means to use
+   our own filesystem.  */
+
+static int hostio_fs_pid;
+
+/* See hostio.h.  */
+
+void
+hostio_handle_new_gdb_connection (void)
 {
-  int open_flags = 0;
+  hostio_fs_pid = 0;
+}
 
-  if (fileio_open_flags & ~FILEIO_O_SUPPORTED)
-    return -1;
+/* Handle a "vFile:setfs:" packet.  */
 
-  if (fileio_open_flags & FILEIO_O_CREAT)
-    open_flags |= O_CREAT;
-  if (fileio_open_flags & FILEIO_O_EXCL)
-    open_flags |= O_EXCL;
-  if (fileio_open_flags & FILEIO_O_TRUNC)
-    open_flags |= O_TRUNC;
-  if (fileio_open_flags & FILEIO_O_APPEND)
-    open_flags |= O_APPEND;
-  if (fileio_open_flags & FILEIO_O_RDONLY)
-    open_flags |= O_RDONLY;
-  if (fileio_open_flags & FILEIO_O_WRONLY)
-    open_flags |= O_WRONLY;
-  if (fileio_open_flags & FILEIO_O_RDWR)
-    open_flags |= O_RDWR;
-/* On systems supporting binary and text mode, always open files in
-   binary mode. */
-#ifdef O_BINARY
-  open_flags |= O_BINARY;
-#endif
+static void
+handle_setfs (char *own_buf)
+{
+  char *p;
+  int pid;
 
-  *open_flags_p = open_flags;
-  return 0;
+  /* If the target doesn't have any of the in-filesystem-of methods
+     then there's no point in GDB sending "vFile:setfs:" packets.  We
+     reply with an empty packet (i.e. we pretend we don't understand
+     "vFile:setfs:") and that should stop GDB sending any more.  */
+  if (the_target->multifs_open == NULL
+      && the_target->multifs_unlink == NULL
+      && the_target->multifs_readlink == NULL)
+    {
+      own_buf[0] = '\0';
+      return;
+    }
+
+  p = own_buf + strlen ("vFile:setfs:");
+
+  if (require_int (&p, &pid)
+      || pid < 0
+      || require_end (p))
+    {
+      hostio_packet_error (own_buf);
+      return;
+    }
+
+  hostio_fs_pid = pid;
+
+  hostio_reply (own_buf, 0);
 }
 
 static void
@@ -277,7 +297,8 @@ handle_open (char *own_buf)
 {
   char filename[HOSTIO_PATH_MAX];
   char *p;
-  int fileio_flags, mode, flags, fd;
+  int fileio_flags, fileio_mode, flags, fd;
+  mode_t mode;
   struct fd_list *new_fd;
 
   p = own_buf + strlen ("vFile:open:");
@@ -286,9 +307,10 @@ handle_open (char *own_buf)
       || require_comma (&p)
       || require_int (&p, &fileio_flags)
       || require_comma (&p)
-      || require_int (&p, &mode)
+      || require_int (&p, &fileio_mode)
       || require_end (p)
-      || fileio_open_flags_to_host (fileio_flags, &flags))
+      || fileio_to_host_openflags (fileio_flags, &flags)
+      || fileio_to_host_mode (fileio_mode, &mode))
     {
       hostio_packet_error (own_buf);
       return;
@@ -296,7 +318,11 @@ handle_open (char *own_buf)
 
   /* We do not need to convert MODE, since the fileio protocol
      uses the standard values.  */
-  fd = open (filename, flags, mode);
+  if (hostio_fs_pid != 0 && the_target->multifs_open != NULL)
+    fd = the_target->multifs_open (hostio_fs_pid, filename,
+				   flags, mode);
+  else
+    fd = open (filename, flags, mode);
 
   if (fd == -1)
     {
@@ -318,6 +344,7 @@ handle_pread (char *own_buf, int *new_packet_len)
 {
   int fd, ret, len, offset, bytes_sent;
   char *p, *data;
+  static int max_reply_size = -1;
 
   p = own_buf + strlen ("vFile:pread:");
 
@@ -332,6 +359,17 @@ handle_pread (char *own_buf, int *new_packet_len)
       hostio_packet_error (own_buf);
       return;
     }
+
+  /* Do not attempt to read more than the maximum number of bytes
+     hostio_reply_with_data can fit in a packet.  We may still read
+     too much because of escaping, but this is handled below.  */
+  if (max_reply_size == -1)
+    {
+      sprintf (own_buf, "F%x;", PBUFSIZ);
+      max_reply_size = PBUFSIZ - strlen (own_buf);
+    }
+  if (len > max_reply_size)
+    len = max_reply_size;
 
   data = xmalloc (len);
 #ifdef HAVE_PREAD
@@ -412,6 +450,42 @@ handle_pwrite (char *own_buf, int packet_len)
 }
 
 static void
+handle_fstat (char *own_buf, int *new_packet_len)
+{
+  int fd, bytes_sent;
+  char *p;
+  struct stat st;
+  struct fio_stat fst;
+
+  p = own_buf + strlen ("vFile:fstat:");
+
+  if (require_int (&p, &fd)
+      || require_valid_fd (fd)
+      || require_end (p))
+    {
+      hostio_packet_error (own_buf);
+      return;
+    }
+
+  if (fstat (fd, &st) == -1)
+    {
+      hostio_error (own_buf);
+      return;
+    }
+
+  host_to_fileio_stat (&st, &fst);
+
+  bytes_sent = hostio_reply_with_data (own_buf,
+				       (char *) &fst, sizeof (fst),
+				       new_packet_len);
+
+  /* If the response does not fit into a single packet, do not attempt
+     to return a partial response, but simply fail.  */
+  if (bytes_sent < sizeof (fst))
+    write_enn (own_buf);
+}
+
+static void
 handle_close (char *own_buf)
 {
   int fd, ret;
@@ -464,7 +538,10 @@ handle_unlink (char *own_buf)
       return;
     }
 
-  ret = unlink (filename);
+  if (hostio_fs_pid != 0 && the_target->multifs_unlink != NULL)
+    ret = the_target->multifs_unlink (hostio_fs_pid, filename);
+  else
+    ret = unlink (filename);
 
   if (ret == -1)
     {
@@ -491,7 +568,13 @@ handle_readlink (char *own_buf, int *new_packet_len)
       return;
     }
 
-  ret = readlink (filename, linkname, sizeof (linkname) - 1);
+  if (hostio_fs_pid != 0 && the_target->multifs_readlink != NULL)
+    ret = the_target->multifs_readlink (hostio_fs_pid, filename,
+					linkname,
+					sizeof (linkname) - 1);
+  else
+    ret = readlink (filename, linkname, sizeof (linkname) - 1);
+
   if (ret == -1)
     {
       hostio_error (own_buf);
@@ -511,18 +594,22 @@ handle_readlink (char *own_buf, int *new_packet_len)
 int
 handle_vFile (char *own_buf, int packet_len, int *new_packet_len)
 {
-  if (strncmp (own_buf, "vFile:open:", 11) == 0)
+  if (startswith (own_buf, "vFile:open:"))
     handle_open (own_buf);
-  else if (strncmp (own_buf, "vFile:pread:", 11) == 0)
+  else if (startswith (own_buf, "vFile:pread:"))
     handle_pread (own_buf, new_packet_len);
-  else if (strncmp (own_buf, "vFile:pwrite:", 12) == 0)
+  else if (startswith (own_buf, "vFile:pwrite:"))
     handle_pwrite (own_buf, packet_len);
-  else if (strncmp (own_buf, "vFile:close:", 12) == 0)
+  else if (startswith (own_buf, "vFile:fstat:"))
+    handle_fstat (own_buf, new_packet_len);
+  else if (startswith (own_buf, "vFile:close:"))
     handle_close (own_buf);
-  else if (strncmp (own_buf, "vFile:unlink:", 13) == 0)
+  else if (startswith (own_buf, "vFile:unlink:"))
     handle_unlink (own_buf);
-  else if (strncmp (own_buf, "vFile:readlink:", 15) == 0)
+  else if (startswith (own_buf, "vFile:readlink:"))
     handle_readlink (own_buf, new_packet_len);
+  else if (startswith (own_buf, "vFile:setfs:"))
+    handle_setfs (own_buf);
   else
     return 0;
 

@@ -21,12 +21,28 @@
 #include "server.h"
 #include "regcache.h"
 #include "ax.h"
-#include <stdint.h>
-
 const unsigned char *breakpoint_data;
 int breakpoint_len;
 
 #define MAX_BREAKPOINT_LEN 8
+
+/* Helper macro used in loops that append multiple items to a singly-linked
+   list instead of inserting items at the head of the list, as, say, in the
+   breakpoint lists.  LISTPP is a pointer to the pointer that is the head of
+   the new list.  ITEMP is a pointer to the item to be added to the list.
+   TAILP must be defined to be the same type as ITEMP, and initialized to
+   NULL.  */
+
+#define APPEND_TO_LIST(listpp, itemp, tailp) \
+	  do \
+	    { \
+	      if ((tailp) == NULL) \
+		*(listpp) = (itemp); \
+	      else \
+		(tailp)->next = (itemp); \
+	      (tailp) = (itemp); \
+	    } \
+	  while (0)
 
 /* GDB will never try to install multiple breakpoints at the same
    address.  However, we can see GDB requesting to insert a breakpoint
@@ -1912,4 +1928,91 @@ free_all_breakpoints (struct process_info *proc)
      current_process from here on.  */
   while (proc->breakpoints)
     delete_breakpoint_1 (proc, proc->breakpoints);
+}
+
+/* Clone an agent expression.  */
+
+static struct agent_expr *
+clone_agent_expr (const struct agent_expr *src_ax)
+{
+  struct agent_expr *ax;
+
+  ax = xcalloc (1, sizeof (*ax));
+  ax->length = src_ax->length;
+  ax->bytes = xcalloc (ax->length, 1);
+  memcpy (ax->bytes, src_ax->bytes, ax->length);
+  return ax;
+}
+
+/* Deep-copy the contents of one breakpoint to another.  */
+
+static struct breakpoint *
+clone_one_breakpoint (const struct breakpoint *src)
+{
+  struct breakpoint *dest;
+  struct raw_breakpoint *dest_raw;
+  struct point_cond_list *current_cond;
+  struct point_cond_list *new_cond;
+  struct point_cond_list *cond_tail = NULL;
+  struct point_command_list *current_cmd;
+  struct point_command_list *new_cmd;
+  struct point_command_list *cmd_tail = NULL;
+
+  /* Clone the raw breakpoint.  */
+  dest_raw = xcalloc (1, sizeof (*dest_raw));
+  dest_raw->raw_type = src->raw->raw_type;
+  dest_raw->refcount = src->raw->refcount;
+  dest_raw->pc = src->raw->pc;
+  dest_raw->size = src->raw->size;
+  memcpy (dest_raw->old_data, src->raw->old_data, MAX_BREAKPOINT_LEN);
+  dest_raw->inserted = src->raw->inserted;
+
+  /* Clone the high-level breakpoint.  */
+  dest = xcalloc (1, sizeof (*dest));
+  dest->type = src->type;
+  dest->raw = dest_raw;
+  dest->handler = src->handler;
+
+  /* Clone the condition list.  */
+  for (current_cond = src->cond_list; current_cond != NULL;
+       current_cond = current_cond->next)
+    {
+      new_cond = xcalloc (1, sizeof (*new_cond));
+      new_cond->cond = clone_agent_expr (current_cond->cond);
+      APPEND_TO_LIST (&dest->cond_list, new_cond, cond_tail);
+    }
+
+  /* Clone the command list.  */
+  for (current_cmd = src->command_list; current_cmd != NULL;
+       current_cmd = current_cmd->next)
+    {
+      new_cmd = xcalloc (1, sizeof (*new_cmd));
+      new_cmd->cmd = clone_agent_expr (current_cmd->cmd);
+      new_cmd->persistence = current_cmd->persistence;
+      APPEND_TO_LIST (&dest->command_list, new_cmd, cmd_tail);
+    }
+
+  return dest;
+}
+
+/* Create a new breakpoint list NEW_LIST that is a copy of the
+   list starting at SRC_LIST.  Create the corresponding new
+   raw_breakpoint list NEW_RAW_LIST as well.  */
+
+void
+clone_all_breakpoints (struct breakpoint **new_list,
+		       struct raw_breakpoint **new_raw_list,
+		       const struct breakpoint *src_list)
+{
+  const struct breakpoint *bp;
+  struct breakpoint *new_bkpt;
+  struct breakpoint *bkpt_tail = NULL;
+  struct raw_breakpoint *raw_bkpt_tail = NULL;
+
+  for (bp = src_list; bp != NULL; bp = bp->next)
+    {
+      new_bkpt = clone_one_breakpoint (bp);
+      APPEND_TO_LIST (new_list, new_bkpt, bkpt_tail);
+      APPEND_TO_LIST (new_raw_list, new_bkpt->raw, raw_bkpt_tail);
+    }
 }

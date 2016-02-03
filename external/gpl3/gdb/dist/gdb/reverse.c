@@ -255,9 +255,9 @@ goto_bookmark_command (char *args, int from_tty)
   if (args == NULL || args[0] == '\0')
     error (_("Command requires an argument."));
 
-  if (strncmp (args, "start", strlen ("start")) == 0
-      || strncmp (args, "begin", strlen ("begin")) == 0
-      || strncmp (args, "end",   strlen ("end")) == 0)
+  if (startswith (args, "start")
+      || startswith (args, "begin")
+      || startswith (args, "end"))
     {
       /* Special case.  Give target opportunity to handle.  */
       target_goto_bookmark ((gdb_byte *) args, from_tty);

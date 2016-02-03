@@ -60,9 +60,10 @@ typedef enum {
 } SIM_RC;
 
 
-/* The bfd struct, as an opaque type.  */
+/* Some structs, as opaque types.  */
 
 struct bfd;
+struct host_callback_struct;
 
 
 /* Main simulator entry points.  */

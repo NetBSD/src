@@ -115,5 +115,4 @@ GDBPY_NEW_EVENT_TYPE (stop,
                       "gdb.StopEvent",
                       "StopEvent",
                       "GDB stop event object",
-                      thread_event_object_type,
-                      /*no qual*/);
+                      thread_event_object_type);

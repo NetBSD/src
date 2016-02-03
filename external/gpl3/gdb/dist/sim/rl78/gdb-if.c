@@ -86,6 +86,37 @@ sim_open (SIM_OPEN_KIND kind,
 
   sim_disasm_init (abfd);
   open = 1;
+
+  while (argv != NULL && *argv != NULL)
+    {
+      if (strcmp (*argv, "g10") == 0 || strcmp (*argv, "-Mg10") == 0)
+	{
+	  fprintf (stderr, "rl78 g10 support enabled.\n");
+	  rl78_g10_mode = 1;
+	  g13_multiply = 0;
+	  g14_multiply = 0;
+	  mem_set_mirror (0, 0xf8000, 4096);
+	  break;
+	}
+      if (strcmp (*argv, "g13") == 0 || strcmp (*argv, "-Mg13") == 0)
+	{
+	  fprintf (stderr, "rl78 g13 support enabled.\n");
+	  rl78_g10_mode = 0;
+	  g13_multiply = 1;
+	  g14_multiply = 0;
+	  break;
+	}
+      if (strcmp (*argv, "g14") == 0 || strcmp (*argv, "-Mg14") == 0)
+	{
+	  fprintf (stderr, "rl78 g14 support enabled.\n");
+	  rl78_g10_mode = 0;
+	  g13_multiply = 0;
+	  g14_multiply = 1;
+	  break;
+	}
+      argv++;
+    }
+
   return &the_minisim;
 }
 

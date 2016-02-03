@@ -100,6 +100,8 @@ gdb_test "p a1.geta()" "From Python <A_geta>.*5" "After: a1.geta()"
 gdb_test "p ++a1" "From Python <plus_plus_A>.*6" "After: ++a1"
 gdb_test "p a1.getarrayind(5)" "From Python <A_getarrayind>.*5" \
   "After: a1.getarrayind(5)"
+gdb_test "P a1\[6\]" ".*int &.*6" "After a1\[\]"
+gdb_test "P b1\[7\]" ".*const int &.*7" "After b1\[\]"
 # Note the following test.  Xmethods on dynamc types are not looked up
 # currently.  Hence, even though a_ptr points to a B object, the xmethod
 # defined for A objects is invoked.
@@ -150,6 +152,9 @@ gdb_test_no_output "disable xmethod progspace E_methods;method_int" \
   "disable xmethod progspace E_methods;method_int"
 gdb_test "info xmethod progspace E_methods;method_int" ".* \\\[disabled\\\]" \
   "info xmethod xmethods E_methods;method_int"
+gdb_test_no_output "disable xmethod progspace G_methods" "Disable G_methods 2"
+gdb_test "info xmethod progspace" ".*G_methods \\\[disabled\\\].*" \
+  "info xmethod progspace"
 
 # PR 18285
 # First make sure both are enabled.

@@ -402,7 +402,8 @@ print_insn_vax (bfd_vma memaddr, disassemble_info *info)
   argp = NULL;
   /* Check if the info buffer has more than one byte left since
      the last opcode might be a single byte with no argument data.  */
-  if (info->buffer_length - (memaddr - info->buffer_vma) > 1)
+  if (info->buffer_length - (memaddr - info->buffer_vma) > 1
+      && (info->stop_vma == 0 || memaddr < (info->stop_vma - 1)))
     {
       FETCH_DATA (info, buffer + 2);
     }

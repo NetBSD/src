@@ -22,7 +22,6 @@
 #include "defs.h"
 #include "gdbcmd.h"
 #include "remote.h"
-#include "gdb/fileio.h"
 #include "gdb_wait.h"
 #include <sys/stat.h>
 #include "remote-fileio.h"
@@ -194,99 +193,6 @@ remote_fileio_mode_to_host (long mode, int open_call)
   return hmode;
 }
 
-static LONGEST
-remote_fileio_mode_to_target (mode_t mode)
-{
-  mode_t tmode = 0;
-
-  if (S_ISREG(mode))
-    tmode |= FILEIO_S_IFREG;
-  if (S_ISDIR(mode))
-    tmode |= FILEIO_S_IFDIR;
-  if (S_ISCHR(mode))
-    tmode |= FILEIO_S_IFCHR;
-  if (mode & S_IRUSR)
-    tmode |= FILEIO_S_IRUSR;
-  if (mode & S_IWUSR)
-    tmode |= FILEIO_S_IWUSR;
-  if (mode & S_IXUSR)
-    tmode |= FILEIO_S_IXUSR;
-#ifdef S_IRGRP
-  if (mode & S_IRGRP)
-    tmode |= FILEIO_S_IRGRP;
-#endif
-#ifdef S_IWRGRP
-  if (mode & S_IWGRP)
-    tmode |= FILEIO_S_IWGRP;
-#endif
-#ifdef S_IXGRP
-  if (mode & S_IXGRP)
-    tmode |= FILEIO_S_IXGRP;
-#endif
-  if (mode & S_IROTH)
-    tmode |= FILEIO_S_IROTH;
-#ifdef S_IWOTH
-  if (mode & S_IWOTH)
-    tmode |= FILEIO_S_IWOTH;
-#endif
-#ifdef S_IXOTH
-  if (mode & S_IXOTH)
-    tmode |= FILEIO_S_IXOTH;
-#endif
-  return tmode;
-}
-
-static int
-remote_fileio_errno_to_target (int error)
-{
-  switch (error)
-    {
-      case EPERM:
-        return FILEIO_EPERM;
-      case ENOENT:
-        return FILEIO_ENOENT;
-      case EINTR:
-        return FILEIO_EINTR;
-      case EIO:
-        return FILEIO_EIO;
-      case EBADF:
-        return FILEIO_EBADF;
-      case EACCES:
-        return FILEIO_EACCES;
-      case EFAULT:
-        return FILEIO_EFAULT;
-      case EBUSY:
-        return FILEIO_EBUSY;
-      case EEXIST:
-        return FILEIO_EEXIST;
-      case ENODEV:
-        return FILEIO_ENODEV;
-      case ENOTDIR:
-        return FILEIO_ENOTDIR;
-      case EISDIR:
-        return FILEIO_EISDIR;
-      case EINVAL:
-        return FILEIO_EINVAL;
-      case ENFILE:
-        return FILEIO_ENFILE;
-      case EMFILE:
-        return FILEIO_EMFILE;
-      case EFBIG:
-        return FILEIO_EFBIG;
-      case ENOSPC:
-        return FILEIO_ENOSPC;
-      case ESPIPE:
-        return FILEIO_ESPIPE;
-      case EROFS:
-        return FILEIO_EROFS;
-      case ENOSYS:
-        return FILEIO_ENOSYS;
-      case ENAMETOOLONG:
-        return FILEIO_ENAMETOOLONG;
-    }
-  return FILEIO_EUNKNOWN;
-}
-
 static int
 remote_fileio_seek_flag_to_host (long num, int *flag)
 {
@@ -381,84 +287,16 @@ remote_fileio_extract_ptr_w_len (char **buf, CORE_ADDR *ptrval, int *length)
   return 0;
 }
 
-/* Convert to big endian.  */
-static void
-remote_fileio_to_be (LONGEST num, char *buf, int bytes)
-{
-  int i;
-
-  for (i = 0; i < bytes; ++i)
-    buf[i] = (num >> (8 * (bytes - i - 1))) & 0xff;
-}
-
-static void
-remote_fileio_to_fio_uint (long num, fio_uint_t fnum)
-{
-  remote_fileio_to_be ((LONGEST) num, (char *) fnum, 4);
-}
-
-static void
-remote_fileio_to_fio_mode (mode_t num, fio_mode_t fnum)
-{
-  remote_fileio_to_be (remote_fileio_mode_to_target(num), (char *) fnum, 4);
-}
-
-static void
-remote_fileio_to_fio_time (time_t num, fio_time_t fnum)
-{
-  remote_fileio_to_be ((LONGEST) num, (char *) fnum, 4);
-}
-
 static void
 remote_fileio_to_fio_long (LONGEST num, fio_long_t fnum)
 {
-  remote_fileio_to_be (num, (char *) fnum, 8);
-}
-
-static void
-remote_fileio_to_fio_ulong (LONGEST num, fio_ulong_t fnum)
-{
-  remote_fileio_to_be (num, (char *) fnum, 8);
-}
-
-static void
-remote_fileio_to_fio_stat (struct stat *st, struct fio_stat *fst)
-{
-  LONGEST blksize;
-
-  /* `st_dev' is set in the calling function.  */
-  remote_fileio_to_fio_uint ((long) st->st_ino, fst->fst_ino);
-  remote_fileio_to_fio_mode (st->st_mode, fst->fst_mode);
-  remote_fileio_to_fio_uint ((long) st->st_nlink, fst->fst_nlink);
-  remote_fileio_to_fio_uint ((long) st->st_uid, fst->fst_uid);
-  remote_fileio_to_fio_uint ((long) st->st_gid, fst->fst_gid);
-  remote_fileio_to_fio_uint ((long) st->st_rdev, fst->fst_rdev);
-  remote_fileio_to_fio_ulong ((LONGEST) st->st_size, fst->fst_size);
-#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
-  blksize = st->st_blksize;
-#else
-  blksize = 512;
-#endif
-  remote_fileio_to_fio_ulong (blksize, fst->fst_blksize);
-#if HAVE_STRUCT_STAT_ST_BLOCKS
-  remote_fileio_to_fio_ulong ((LONGEST) st->st_blocks, fst->fst_blocks);
-#else
-  /* FIXME: This is correct for DJGPP, but other systems that don't
-     have st_blocks, if any, might prefer 512 instead of st_blksize.
-     (eliz, 30-12-2003)  */
-  remote_fileio_to_fio_ulong (((LONGEST) st->st_size + blksize - 1)
-			      / blksize,
-			      fst->fst_blocks);
-#endif
-  remote_fileio_to_fio_time (st->st_atime, fst->fst_atime);
-  remote_fileio_to_fio_time (st->st_mtime, fst->fst_mtime);
-  remote_fileio_to_fio_time (st->st_ctime, fst->fst_ctime);
+  host_to_bigendian (num, (char *) fnum, 8);
 }
 
 static void
 remote_fileio_to_fio_timeval (struct timeval *tv, struct fio_timeval *ftv)
 {
-  remote_fileio_to_fio_time (tv->tv_sec, ftv->ftv_sec);
+  host_to_fileio_time (tv->tv_sec, ftv->ftv_sec);
   remote_fileio_to_fio_long (tv->tv_usec, ftv->ftv_usec);
 }
 
@@ -570,7 +408,7 @@ static void
 remote_fileio_return_errno (int retcode)
 {
   remote_fileio_reply (retcode, retcode < 0
-		       ? remote_fileio_errno_to_target (errno) : 0);
+		       ? host_to_fileio_error (errno) : 0);
 }
 
 static void
@@ -1115,8 +953,8 @@ remote_fileio_func_stat (char *buf)
     }
   if (statptr)
     {
-      remote_fileio_to_fio_stat (&st, &fst);
-      remote_fileio_to_fio_uint (0, fst.fst_dev);
+      host_to_fileio_stat (&st, &fst);
+      host_to_fileio_uint (0, fst.fst_dev);
 
       errno = target_write_memory (statptr, (gdb_byte *) &fst, sizeof fst);
       if (errno != 0)
@@ -1162,7 +1000,7 @@ remote_fileio_func_fstat (char *buf)
   remote_fio_no_longjmp = 1;
   if (fd == FIO_FD_CONSOLE_IN || fd == FIO_FD_CONSOLE_OUT)
     {
-      remote_fileio_to_fio_uint (1, fst.fst_dev);
+      host_to_fileio_uint (1, fst.fst_dev);
       memset (&st, 0, sizeof (st));
       st.st_mode = S_IFCHR | (fd == FIO_FD_CONSOLE_IN ? S_IRUSR : S_IWUSR);
       st.st_nlink = 1;
@@ -1194,7 +1032,7 @@ remote_fileio_func_fstat (char *buf)
     }
   if (ptrval)
     {
-      remote_fileio_to_fio_stat (&st, &fst);
+      host_to_fileio_stat (&st, &fst);
 
       errno = target_write_memory (ptrval, (gdb_byte *) &fst, sizeof fst);
       if (errno != 0)
@@ -1432,6 +1270,70 @@ remote_fileio_request (char *buf, int ctrlc_pending_p)
 
   remote_fileio_sig_exit ();
 }
+
+
+/* Unpack an fio_uint_t.  */
+
+static unsigned int
+remote_fileio_to_host_uint (fio_uint_t fnum)
+{
+  return extract_unsigned_integer ((gdb_byte *) fnum, 4,
+				   BFD_ENDIAN_BIG);
+}
+
+/* Unpack an fio_ulong_t.  */
+
+static ULONGEST
+remote_fileio_to_host_ulong (fio_ulong_t fnum)
+{
+  return extract_unsigned_integer ((gdb_byte *) fnum, 8,
+				   BFD_ENDIAN_BIG);
+}
+
+/* Unpack an fio_mode_t.  */
+
+static mode_t
+remote_fileio_to_host_mode (fio_mode_t fnum)
+{
+  return remote_fileio_mode_to_host (remote_fileio_to_host_uint (fnum),
+				     0);
+}
+
+/* Unpack an fio_time_t.  */
+
+static time_t
+remote_fileio_to_host_time (fio_time_t fnum)
+{
+  return remote_fileio_to_host_uint (fnum);
+}
+
+
+/* See remote-fileio.h.  */
+
+void
+remote_fileio_to_host_stat (struct fio_stat *fst, struct stat *st)
+{
+  memset (st, 0, sizeof (struct stat));
+
+  st->st_dev = remote_fileio_to_host_uint (fst->fst_dev);
+  st->st_ino = remote_fileio_to_host_uint (fst->fst_ino);
+  st->st_mode = remote_fileio_to_host_mode (fst->fst_mode);
+  st->st_nlink = remote_fileio_to_host_uint (fst->fst_nlink);
+  st->st_uid = remote_fileio_to_host_uint (fst->fst_uid);
+  st->st_gid = remote_fileio_to_host_uint (fst->fst_gid);
+  st->st_rdev = remote_fileio_to_host_uint (fst->fst_rdev);
+  st->st_size = remote_fileio_to_host_ulong (fst->fst_size);
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
+  st->st_blksize = remote_fileio_to_host_ulong (fst->fst_blksize);
+#endif
+#if HAVE_STRUCT_STAT_ST_BLOCKS
+  st->st_blocks = remote_fileio_to_host_ulong (fst->fst_blocks);
+#endif
+  st->st_atime = remote_fileio_to_host_time (fst->fst_atime);
+  st->st_mtime = remote_fileio_to_host_time (fst->fst_mtime);
+  st->st_ctime = remote_fileio_to_host_time (fst->fst_ctime);
+}
+
 
 static void
 set_system_call_allowed (char *args, int from_tty)

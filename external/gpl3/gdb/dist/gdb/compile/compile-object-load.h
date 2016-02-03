@@ -17,6 +17,8 @@
 #ifndef GDB_COMPILE_OBJECT_LOAD_H
 #define GDB_COMPILE_OBJECT_LOAD_H
 
+struct munmap_list;
+
 struct compile_module
 {
   /* objfile for the compiled module.  */
@@ -25,15 +27,34 @@ struct compile_module
   /* .c file OBJFILE was built from.  It needs to be xfree-d.  */
   char *source_file;
 
-  /* Inferior function address.  */
-  CORE_ADDR func_addr;
+  /* Inferior function GCC_FE_WRAPPER_FUNCTION.  */
+  struct symbol *func_sym;
 
   /* Inferior registers address or NULL if the inferior function does not
      require any.  */
   CORE_ADDR regs_addr;
+
+  /* The "scope" of this compilation.  */
+  enum compile_i_scope_types scope;
+
+  /* User data for SCOPE in use.  */
+  void *scope_data;
+
+  /* Inferior parameter out value type or NULL if the inferior function does not
+     have one.  */
+  struct type *out_value_type;
+
+  /* If the inferior function has an out value, this is its address.
+     Otherwise it is zero.  */
+  CORE_ADDR out_value_addr;
+
+  /* Track inferior memory reserved by inferior mmap.  */
+  struct munmap_list *munmap_list_head;
 };
 
-extern struct compile_module *compile_object_load (const char *object_file,
-						   const char *source_file);
+extern struct compile_module *compile_object_load
+  (const char *object_file, const char *source_file,
+   enum compile_i_scope_types scope, void *scope_data);
+extern void munmap_list_free (struct munmap_list *head);
 
 #endif /* GDB_COMPILE_OBJECT_LOAD_H */

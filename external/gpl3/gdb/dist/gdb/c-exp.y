@@ -164,7 +164,7 @@ static int type_aggregate_p (struct type *);
 
     struct type_stack *type_stack;
 
-    struct objc_class_str class;
+    struct objc_class_str theclass;
   }
 
 %{
@@ -215,11 +215,11 @@ static void c_print_token (FILE *file, int type, YYSTYPE value);
 %token <ssym> UNKNOWN_CPP_NAME
 %token <voidval> COMPLETE
 %token <tsym> TYPENAME
-%token <class> CLASSNAME	/* ObjC Class name */
+%token <theclass> CLASSNAME	/* ObjC Class name */
 %type <sval> name
 %type <svec> string_exp
 %type <ssym> name_not_typename
-%type <tsym> typename
+%type <tsym> type_name
 
  /* This is like a '[' token, but is only generated when parsing
     Objective C.  This lets us reuse the same parser without
@@ -238,7 +238,7 @@ static void c_print_token (FILE *file, int type, YYSTYPE value);
 %token TEMPLATE
 %token ERROR
 %token NEW DELETE
-%type <sval> operator
+%type <sval> oper
 %token REINTERPRET_CAST DYNAMIC_CAST STATIC_CAST CONST_CAST
 %token ENTRY
 %token TYPEOF
@@ -479,17 +479,17 @@ exp	:	exp OBJC_LBRAC exp1 ']'
 
 exp	: 	OBJC_LBRAC TYPENAME
 			{
-			  CORE_ADDR class;
+			  CORE_ADDR theclass;
 
-			  class = lookup_objc_class (parse_gdbarch (pstate),
+			  theclass = lookup_objc_class (parse_gdbarch (pstate),
 						     copy_name ($2.stoken));
-			  if (class == 0)
+			  if (theclass == 0)
 			    error (_("%s is not an ObjC Class"),
 				   copy_name ($2.stoken));
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  write_exp_elt_type (pstate,
 					    parse_type (pstate)->builtin_int);
-			  write_exp_elt_longcst (pstate, (LONGEST) class);
+			  write_exp_elt_longcst (pstate, (LONGEST) theclass);
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  start_msglist();
 			}
@@ -505,7 +505,7 @@ exp	:	OBJC_LBRAC CLASSNAME
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  write_exp_elt_type (pstate,
 					    parse_type (pstate)->builtin_int);
-			  write_exp_elt_longcst (pstate, (LONGEST) $2.class);
+			  write_exp_elt_longcst (pstate, (LONGEST) $2.theclass);
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  start_msglist();
 			}
@@ -1390,7 +1390,7 @@ typebase  /* Implements (approximately): (type-qualifier)* type-specifier */
 					       $2.length);
 			  $$ = NULL;
 			}
-	|	UNSIGNED typename
+	|	UNSIGNED type_name
 			{ $$ = lookup_unsigned_typename (parse_language (pstate),
 							 parse_gdbarch (pstate),
 							 TYPE_NAME($2.type)); }
@@ -1398,7 +1398,7 @@ typebase  /* Implements (approximately): (type-qualifier)* type-specifier */
 			{ $$ = lookup_unsigned_typename (parse_language (pstate),
 							 parse_gdbarch (pstate),
 							 "int"); }
-	|	SIGNED_KEYWORD typename
+	|	SIGNED_KEYWORD type_name
 			{ $$ = lookup_signed_typename (parse_language (pstate),
 						       parse_gdbarch (pstate),
 						       TYPE_NAME($2.type)); }
@@ -1419,7 +1419,7 @@ typebase  /* Implements (approximately): (type-qualifier)* type-specifier */
 			{ $$ = follow_types ($1); }
 	;
 
-typename:	TYPENAME
+type_name:	TYPENAME
 	|	INT_KEYWORD
 		{
 		  $$.stoken.ptr = "int";
@@ -1501,7 +1501,7 @@ const_or_volatile_noopt:  	const_and_volatile
 			{ insert_type (tp_volatile); }
 	;
 
-operator:	OPERATOR NEW
+oper:	OPERATOR NEW
 			{ $$ = operator_stoken (" new"); }
 	|	OPERATOR DELETE
 			{ $$ = operator_stoken (" delete"); }
@@ -1632,7 +1632,7 @@ name	:	NAME { $$ = $1.stoken; }
 	|	TYPENAME { $$ = $1.stoken; }
 	|	NAME_OR_INT  { $$ = $1.stoken; }
 	|	UNKNOWN_CPP_NAME  { $$ = $1.stoken; }
-	|	operator { $$ = $1; }
+	|	oper { $$ = $1; }
 	;
 
 name_not_typename :	NAME
@@ -1644,7 +1644,7 @@ name_not_typename :	NAME
    context where only a name could occur, this might be useful.
   	|	NAME_OR_INT
  */
-	|	operator
+	|	oper
 			{
 			  struct field_of_this_result is_a_field_of_this;
 
@@ -2274,7 +2274,7 @@ enum token_flags
 
 struct token
 {
-  char *operator;
+  char *oper;
   int token;
   enum exp_opcode opcode;
   enum token_flags flags;
@@ -2493,7 +2493,7 @@ lex_one_token (struct parser_state *par_state, int *is_quoted_name)
   tokstart = lexptr;
   /* See if it is a special token of length 3.  */
   for (i = 0; i < sizeof tokentab3 / sizeof tokentab3[0]; i++)
-    if (strncmp (tokstart, tokentab3[i].operator, 3) == 0)
+    if (strncmp (tokstart, tokentab3[i].oper, 3) == 0)
       {
 	if ((tokentab3[i].flags & FLAG_CXX) != 0
 	    && parse_language (par_state)->la_language != language_cplus)
@@ -2506,7 +2506,7 @@ lex_one_token (struct parser_state *par_state, int *is_quoted_name)
 
   /* See if it is a special token of length 2.  */
   for (i = 0; i < sizeof tokentab2 / sizeof tokentab2[0]; i++)
-    if (strncmp (tokstart, tokentab2[i].operator, 2) == 0)
+    if (strncmp (tokstart, tokentab2[i].oper, 2) == 0)
       {
 	if ((tokentab2[i].flags & FLAG_CXX) != 0
 	    && parse_language (par_state)->la_language != language_cplus)
@@ -2803,7 +2803,7 @@ lex_one_token (struct parser_state *par_state, int *is_quoted_name)
   /* Catch specific keywords.  */
   copy = copy_name (yylval.sval);
   for (i = 0; i < sizeof ident_tokens / sizeof ident_tokens[0]; i++)
-    if (strcmp (copy, ident_tokens[i].operator) == 0)
+    if (strcmp (copy, ident_tokens[i].oper) == 0)
       {
 	if ((ident_tokens[i].flags & FLAG_CXX) != 0
 	    && parse_language (par_state)->la_language != language_cplus)
@@ -2946,10 +2946,10 @@ classify_name (struct parser_state *par_state, const struct block *block,
       CORE_ADDR Class = lookup_objc_class (parse_gdbarch (par_state), copy);
       if (Class)
 	{
-	  yylval.class.class = Class;
+	  yylval.theclass.theclass = Class;
 	  sym = lookup_struct_typedef (copy, expression_context_block, 1);
 	  if (sym)
-	    yylval.class.type = SYMBOL_TYPE (sym);
+	    yylval.theclass.type = SYMBOL_TYPE (sym);
 	  return CLASSNAME;
 	}
     }
@@ -3004,7 +3004,8 @@ classify_inner_name (struct parser_state *par_state,
     return ERROR;
 
   copy = copy_name (yylval.ssym.stoken);
-  yylval.ssym.sym = cp_lookup_nested_symbol (type, copy, block);
+  /* N.B. We assume the symbol can only be in VAR_DOMAIN.  */
+  yylval.ssym.sym = cp_lookup_nested_symbol (type, copy, block, VAR_DOMAIN);
 
   /* If no symbol was found, search for a matching base class named
      COPY.  This will allow users to enter qualified names of class members

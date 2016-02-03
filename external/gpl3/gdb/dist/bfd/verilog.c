@@ -191,7 +191,7 @@ verilog_write_record (bfd *abfd,
 		      const bfd_byte *data,
 		      const bfd_byte *end)
 {
-  char buffer[48];
+  char buffer[50];
   const bfd_byte *src = data;
   char *dst = buffer;
   bfd_size_type wrlen;

@@ -541,6 +541,14 @@ ser_base_setstopbits (struct serial *scb, int num)
   return 0;			/* Never fails!  */
 }
 
+/* Implement the "setparity" serial_ops callback.  */
+
+int
+ser_base_setparity (struct serial *scb, int parity)
+{
+  return 0;			/* Never fails!  */
+}
+
 /* Put the SERIAL device into/out-of ASYNC mode.  */
 
 void

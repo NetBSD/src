@@ -44,8 +44,6 @@
 
 #include "record-full.h"
 #include "linux-record.h"
-#include <stdint.h>
-
 #include "features/i386/i386-linux.c"
 #include "features/i386/i386-mmx-linux.c"
 #include "features/i386/i386-mpx-linux.c"
@@ -690,8 +688,7 @@ i386_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
   cb (".reg", 68, &i386_gregset, NULL, cb_data);
 
   if (tdep->xcr0 & X86_XSTATE_AVX)
-    /* Use max size for writing, accept any size when reading.  */
-    cb (".reg-xstate", regcache ? X86_XSTATE_MAX_SIZE : 0,
+    cb (".reg-xstate", X86_XSTATE_SIZE (tdep->xcr0),
 	&i386_linux_xstateregset, "XSAVE extended state", cb_data);
   else if (tdep->xcr0 & X86_XSTATE_SSE)
     cb (".reg-xfp", 512, &i386_fpregset, "extended floating-point",
@@ -991,14 +988,12 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_displaced_step_free_closure (gdbarch,
                                            simple_displaced_step_free_closure);
   set_gdbarch_displaced_step_location (gdbarch,
-                                       displaced_step_at_entry_point);
+                                       linux_displaced_step_location);
 
   /* Functions for 'catch syscall'.  */
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_I386);
   set_gdbarch_get_syscall_number (gdbarch,
                                   i386_linux_get_syscall_number);
-
-  set_gdbarch_get_siginfo_type (gdbarch, linux_get_siginfo_type);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

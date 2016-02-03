@@ -83,6 +83,7 @@ static int hardwire_readchar (struct serial *scb, int timeout);
 static int do_hardwire_readchar (struct serial *scb, int timeout);
 static int rate_to_code (int rate);
 static int hardwire_setbaudrate (struct serial *scb, int rate);
+static int hardwire_setparity (struct serial *scb, int parity);
 static void hardwire_close (struct serial *scb);
 static int get_tty_state (struct serial *scb,
 			  struct hardwire_ttystate * state);
@@ -409,7 +410,7 @@ hardwire_raw (struct serial *scb)
   state.termios.c_iflag = 0;
   state.termios.c_oflag = 0;
   state.termios.c_lflag = 0;
-  state.termios.c_cflag &= ~(CSIZE | PARENB);
+  state.termios.c_cflag &= ~CSIZE;
   state.termios.c_cflag |= CLOCAL | CS8;
 #ifdef CRTSCTS
   /* h/w flow control.  */
@@ -432,7 +433,7 @@ hardwire_raw (struct serial *scb)
   state.termio.c_iflag = 0;
   state.termio.c_oflag = 0;
   state.termio.c_lflag = 0;
-  state.termio.c_cflag &= ~(CSIZE | PARENB);
+  state.termio.c_cflag &= ~CSIZE;
   state.termio.c_cflag |= CLOCAL | CS8;
   state.termio.c_cc[VMIN] = 0;
   state.termio.c_cc[VTIME] = 0;
@@ -893,6 +894,51 @@ hardwire_setstopbits (struct serial *scb, int num)
   return set_tty_state (scb, &state);
 }
 
+/* Implement the "setparity" serial_ops callback.  */
+
+static int
+hardwire_setparity (struct serial *scb, int parity)
+{
+  struct hardwire_ttystate state;
+  int newparity = 0;
+
+  if (get_tty_state (scb, &state))
+    return -1;
+
+  switch (parity)
+    {
+    case GDBPARITY_NONE:
+      newparity = 0;
+      break;
+    case GDBPARITY_ODD:
+      newparity = PARENB | PARODD;
+      break;
+    case GDBPARITY_EVEN:
+      newparity = PARENB;
+      break;
+    default:
+      internal_warning (__FILE__, __LINE__,
+			"Incorrect parity value: %d", parity);
+      return -1;
+    }
+
+#ifdef HAVE_TERMIOS
+  state.termios.c_cflag &= ~(PARENB | PARODD);
+  state.termios.c_cflag |= newparity;
+#endif
+
+#ifdef HAVE_TERMIO
+  state.termio.c_cflag &= ~(PARENB | PARODD);
+  state.termio.c_cflag |= newparity;
+#endif
+
+#ifdef HAVE_SGTTY
+  return 0;            /* sgtty doesn't support this */
+#endif
+  return set_tty_state (scb, &state);
+}
+
+
 static void
 hardwire_close (struct serial *scb)
 {
@@ -929,6 +975,7 @@ static const struct serial_ops hardwire_ops =
   hardwire_noflush_set_tty_state,
   hardwire_setbaudrate,
   hardwire_setstopbits,
+  hardwire_setparity,
   hardwire_drain_output,
   ser_base_async,
   ser_unix_read_prim,

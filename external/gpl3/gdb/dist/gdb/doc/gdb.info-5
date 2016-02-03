@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+Source-Level Debugger' for GDB (GDB) Version 7.10.1.
 
    Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
@@ -35,6 +35,780 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: TUI Commands,  Next: TUI Configuration,  Prev: TUI Single Key Mode,  Up: TUI
+
+25.4 TUI-specific Commands
+==========================
+
+The TUI has specific commands to control the text windows.  These
+commands are always available, even when GDB is not in the TUI mode.
+When GDB is in the standard mode, most of these commands will
+automatically switch to the TUI mode.
+
+   Note that if GDB's 'stdout' is not connected to a terminal, or GDB
+has been started with the machine interface interpreter (*note The
+GDB/MI Interface: GDB/MI.), most of these commands will fail with an
+error, because it would not be possible or desirable to enable curses
+window management.
+
+'tui enable'
+     Activate TUI mode.  The last active TUI window layout will be used
+     if TUI mode has prevsiouly been used in the current debugging
+     session, otherwise a default layout is used.
+
+'tui disable'
+     Disable TUI mode, returning to the console interpreter.
+
+'info win'
+     List and give the size of all displayed windows.
+
+'layout next'
+     Display the next layout.
+
+'layout prev'
+     Display the previous layout.
+
+'layout src'
+     Display the source window only.
+
+'layout asm'
+     Display the assembly window only.
+
+'layout split'
+     Display the source and assembly window.
+
+'layout regs'
+     Display the register window together with the source or assembly
+     window.
+
+'focus next'
+     Make the next window active for scrolling.
+
+'focus prev'
+     Make the previous window active for scrolling.
+
+'focus src'
+     Make the source window active for scrolling.
+
+'focus asm'
+     Make the assembly window active for scrolling.
+
+'focus regs'
+     Make the register window active for scrolling.
+
+'focus cmd'
+     Make the command window active for scrolling.
+
+'refresh'
+     Refresh the screen.  This is similar to typing 'C-L'.
+
+'tui reg GROUP'
+     Changes the register group displayed in the tui register window to
+     GROUP.  If the register window is not currently displayed this
+     command will cause the register window to be displayed.  The list
+     of register groups, as well as their order is target specific.  The
+     following groups are available on most targets:
+     'next'
+          Repeatedly selecting this group will cause the display to
+          cycle through all of the available register groups.
+
+     'prev'
+          Repeatedly selecting this group will cause the display to
+          cycle through all of the available register groups in the
+          reverse order to NEXT.
+
+     'general'
+          Display the general registers.
+     'float'
+          Display the floating point registers.
+     'system'
+          Display the system registers.
+     'vector'
+          Display the vector registers.
+     'all'
+          Display all registers.
+
+'update'
+     Update the source window and the current execution point.
+
+'winheight NAME +COUNT'
+'winheight NAME -COUNT'
+     Change the height of the window NAME by COUNT lines.  Positive
+     counts increase the height, while negative counts decrease it.  The
+     NAME parameter can be one of 'src' (the source window), 'cmd' (the
+     command window), 'asm' (the disassembly window), or 'regs' (the
+     register display window).
+
+'tabset NCHARS'
+     Set the width of tab stops to be NCHARS characters.  This setting
+     affects the display of TAB characters in the source and assembly
+     windows.
+
+
+File: gdb.info,  Node: TUI Configuration,  Prev: TUI Commands,  Up: TUI
+
+25.5 TUI Configuration Variables
+================================
+
+Several configuration variables control the appearance of TUI windows.
+
+'set tui border-kind KIND'
+     Select the border appearance for the source, assembly and register
+     windows.  The possible values are the following:
+     'space'
+          Use a space character to draw the border.
+
+     'ascii'
+          Use ASCII characters '+', '-' and '|' to draw the border.
+
+     'acs'
+          Use the Alternate Character Set to draw the border.  The
+          border is drawn using character line graphics if the terminal
+          supports them.
+
+'set tui border-mode MODE'
+'set tui active-border-mode MODE'
+     Select the display attributes for the borders of the inactive
+     windows or the active window.  The MODE can be one of the
+     following:
+     'normal'
+          Use normal attributes to display the border.
+
+     'standout'
+          Use standout mode.
+
+     'reverse'
+          Use reverse video mode.
+
+     'half'
+          Use half bright mode.
+
+     'half-standout'
+          Use half bright and standout mode.
+
+     'bold'
+          Use extra bright or bold mode.
+
+     'bold-standout'
+          Use extra bright or bold and standout mode.
+
+
+File: gdb.info,  Node: Emacs,  Next: GDB/MI,  Prev: TUI,  Up: Top
+
+26 Using GDB under GNU Emacs
+****************************
+
+A special interface allows you to use GNU Emacs to view (and edit) the
+source files for the program you are debugging with GDB.
+
+   To use this interface, use the command 'M-x gdb' in Emacs.  Give the
+executable file you want to debug as an argument.  This command starts
+GDB as a subprocess of Emacs, with input and output through a newly
+created Emacs buffer.
+
+   Running GDB under Emacs can be just like running GDB normally except
+for two things:
+
+   * All "terminal" input and output goes through an Emacs buffer,
+     called the GUD buffer.
+
+     This applies both to GDB commands and their output, and to the
+     input and output done by the program you are debugging.
+
+     This is useful because it means that you can copy the text of
+     previous commands and input them again; you can even use parts of
+     the output in this way.
+
+     All the facilities of Emacs' Shell mode are available for
+     interacting with your program.  In particular, you can send signals
+     the usual way--for example, 'C-c C-c' for an interrupt, 'C-c C-z'
+     for a stop.
+
+   * GDB displays source code through Emacs.
+
+     Each time GDB displays a stack frame, Emacs automatically finds the
+     source file for that frame and puts an arrow ('=>') at the left
+     margin of the current line.  Emacs uses a separate buffer for
+     source display, and splits the screen to show both your GDB session
+     and the source.
+
+     Explicit GDB 'list' or search commands still produce output as
+     usual, but you probably have no reason to use them from Emacs.
+
+   We call this "text command mode".  Emacs 22.1, and later, also uses a
+graphical mode, enabled by default, which provides further buffers that
+can control the execution and describe the state of your program.  *Note
+(Emacs)GDB Graphical Interface::.
+
+   If you specify an absolute file name when prompted for the 'M-x gdb'
+argument, then Emacs sets your current working directory to where your
+program resides.  If you only specify the file name, then Emacs sets
+your current working directory to the directory associated with the
+previous buffer.  In this case, GDB may find your program by searching
+your environment's 'PATH' variable, but on some operating systems it
+might not find the source.  So, although the GDB input and output
+session proceeds normally, the auxiliary buffer does not display the
+current source and line of execution.
+
+   The initial working directory of GDB is printed on the top line of
+the GUD buffer and this serves as a default for the commands that
+specify files for GDB to operate on.  *Note Commands to Specify Files:
+Files.
+
+   By default, 'M-x gdb' calls the program called 'gdb'.  If you need to
+call GDB by a different name (for example, if you keep several
+configurations around, with different names) you can customize the Emacs
+variable 'gud-gdb-command-name' to run the one you want.
+
+   In the GUD buffer, you can use these special Emacs commands in
+addition to the standard Shell mode commands:
+
+'C-h m'
+     Describe the features of Emacs' GUD Mode.
+
+'C-c C-s'
+     Execute to another source line, like the GDB 'step' command; also
+     update the display window to show the current file and location.
+
+'C-c C-n'
+     Execute to next source line in this function, skipping all function
+     calls, like the GDB 'next' command.  Then update the display window
+     to show the current file and location.
+
+'C-c C-i'
+     Execute one instruction, like the GDB 'stepi' command; update
+     display window accordingly.
+
+'C-c C-f'
+     Execute until exit from the selected stack frame, like the GDB
+     'finish' command.
+
+'C-c C-r'
+     Continue execution of your program, like the GDB 'continue'
+     command.
+
+'C-c <'
+     Go up the number of frames indicated by the numeric argument (*note
+     Numeric Arguments: (Emacs)Arguments.), like the GDB 'up' command.
+
+'C-c >'
+     Go down the number of frames indicated by the numeric argument,
+     like the GDB 'down' command.
+
+   In any source file, the Emacs command 'C-x <SPC>' ('gud-break') tells
+GDB to set a breakpoint on the source line point is on.
+
+   In text command mode, if you type 'M-x speedbar', Emacs displays a
+separate frame which shows a backtrace when the GUD buffer is current.
+Move point to any frame in the stack and type <RET> to make it become
+the current frame and display the associated source in the source
+buffer.  Alternatively, click 'Mouse-2' to make the selected frame
+become the current one.  In graphical mode, the speedbar displays watch
+expressions.
+
+   If you accidentally delete the source-display buffer, an easy way to
+get it back is to type the command 'f' in the GDB buffer, to request a
+frame display; when you run under Emacs, this recreates the source
+buffer if necessary to show you the context of the current frame.
+
+   The source files displayed in Emacs are in ordinary Emacs buffers
+which are visiting the source files in the usual way.  You can edit the
+files with these buffers if you wish; but keep in mind that GDB
+communicates with Emacs in terms of line numbers.  If you add or delete
+lines from the text, the line numbers that GDB knows cease to correspond
+properly with the code.
+
+   A more detailed description of Emacs' interaction with GDB is given
+in the Emacs manual (*note (Emacs)Debuggers::).
+
+
+File: gdb.info,  Node: GDB/MI,  Next: Annotations,  Prev: Emacs,  Up: Top
+
+27 The GDB/MI Interface
+***********************
+
+Function and Purpose
+====================
+
+GDB/MI is a line based machine oriented text interface to GDB and is
+activated by specifying using the '--interpreter' command line option
+(*note Mode Options::).  It is specifically intended to support the
+development of systems which use the debugger as just one small
+component of a larger system.
+
+   This chapter is a specification of the GDB/MI interface.  It is
+written in the form of a reference manual.
+
+   Note that GDB/MI is still under construction, so some of the features
+described below are incomplete and subject to change (*note GDB/MI
+Development and Front Ends: GDB/MI Development and Front Ends.).
+
+Notation and Terminology
+========================
+
+This chapter uses the following notation:
+
+   * '|' separates two alternatives.
+
+   * '[ SOMETHING ]' indicates that SOMETHING is optional: it may or may
+     not be given.
+
+   * '( GROUP )*' means that GROUP inside the parentheses may repeat
+     zero or more times.
+
+   * '( GROUP )+' means that GROUP inside the parentheses may repeat one
+     or more times.
+
+   * '"STRING"' means a literal STRING.
+
+* Menu:
+
+* GDB/MI General Design::
+* GDB/MI Command Syntax::
+* GDB/MI Compatibility with CLI::
+* GDB/MI Development and Front Ends::
+* GDB/MI Output Records::
+* GDB/MI Simple Examples::
+* GDB/MI Command Description Format::
+* GDB/MI Breakpoint Commands::
+* GDB/MI Catchpoint Commands::
+* GDB/MI Program Context::
+* GDB/MI Thread Commands::
+* GDB/MI Ada Tasking Commands::
+* GDB/MI Program Execution::
+* GDB/MI Stack Manipulation::
+* GDB/MI Variable Objects::
+* GDB/MI Data Manipulation::
+* GDB/MI Tracepoint Commands::
+* GDB/MI Symbol Query::
+* GDB/MI File Commands::
+* GDB/MI Target Manipulation::
+* GDB/MI File Transfer Commands::
+* GDB/MI Ada Exceptions Commands::
+* GDB/MI Support Commands::
+* GDB/MI Miscellaneous Commands::
+
+
+File: gdb.info,  Node: GDB/MI General Design,  Next: GDB/MI Command Syntax,  Up: GDB/MI
+
+27.1 GDB/MI General Design
+==========================
+
+Interaction of a GDB/MI frontend with GDB involves three parts--commands
+sent to GDB, responses to those commands and notifications.  Each
+command results in exactly one response, indicating either successful
+completion of the command, or an error.  For the commands that do not
+resume the target, the response contains the requested information.  For
+the commands that resume the target, the response only indicates whether
+the target was successfully resumed.  Notifications is the mechanism for
+reporting changes in the state of the target, or in GDB state, that
+cannot conveniently be associated with a command and reported as part of
+that command response.
+
+   The important examples of notifications are:
+
+   * Exec notifications.  These are used to report changes in target
+     state--when a target is resumed, or stopped.  It would not be
+     feasible to include this information in response of resuming
+     commands, because one resume commands can result in multiple events
+     in different threads.  Also, quite some time may pass before any
+     event happens in the target, while a frontend needs to know whether
+     the resuming command itself was successfully executed.
+
+   * Console output, and status notifications.  Console output
+     notifications are used to report output of CLI commands, as well as
+     diagnostics for other commands.  Status notifications are used to
+     report the progress of a long-running operation.  Naturally,
+     including this information in command response would mean no output
+     is produced until the command is finished, which is undesirable.
+
+   * General notifications.  Commands may have various side effects on
+     the GDB or target state beyond their official purpose.  For
+     example, a command may change the selected thread.  Although such
+     changes can be included in command response, using notification
+     allows for more orthogonal frontend design.
+
+   There's no guarantee that whenever an MI command reports an error,
+GDB or the target are in any specific state, and especially, the state
+is not reverted to the state before the MI command was processed.
+Therefore, whenever an MI command results in an error, we recommend that
+the frontend refreshes all the information shown in the user interface.
+
+* Menu:
+
+* Context management::
+* Asynchronous and non-stop modes::
+* Thread groups::
+
+
+File: gdb.info,  Node: Context management,  Next: Asynchronous and non-stop modes,  Up: GDB/MI General Design
+
+27.1.1 Context management
+-------------------------
+
+27.1.1.1 Threads and Frames
+...........................
+
+In most cases when GDB accesses the target, this access is done in
+context of a specific thread and frame (*note Frames::).  Often, even
+when accessing global data, the target requires that a thread be
+specified.  The CLI interface maintains the selected thread and frame,
+and supplies them to target on each command.  This is convenient,
+because a command line user would not want to specify that information
+explicitly on each command, and because user interacts with GDB via a
+single terminal, so no confusion is possible as to what thread and frame
+are the current ones.
+
+   In the case of MI, the concept of selected thread and frame is less
+useful.  First, a frontend can easily remember this information itself.
+Second, a graphical frontend can have more than one window, each one
+used for debugging a different thread, and the frontend might want to
+access additional threads for internal purposes.  This increases the
+risk that by relying on implicitly selected thread, the frontend may be
+operating on a wrong one.  Therefore, each MI command should explicitly
+specify which thread and frame to operate on.  To make it possible, each
+MI command accepts the '--thread' and '--frame' options, the value to
+each is GDB identifier for thread and frame to operate on.
+
+   Usually, each top-level window in a frontend allows the user to
+select a thread and a frame, and remembers the user selection for
+further operations.  However, in some cases GDB may suggest that the
+current thread be changed.  For example, when stopping on a breakpoint
+it is reasonable to switch to the thread where breakpoint is hit.  For
+another example, if the user issues the CLI 'thread' command via the
+frontend, it is desirable to change the frontend's selected thread to
+the one specified by user.  GDB communicates the suggestion to change
+current thread using the '=thread-selected' notification.  No such
+notification is available for the selected frame at the moment.
+
+   Note that historically, MI shares the selected thread with CLI, so
+frontends used the '-thread-select' to execute commands in the right
+context.  However, getting this to work right is cumbersome.  The
+simplest way is for frontend to emit '-thread-select' command before
+every command.  This doubles the number of commands that need to be
+sent.  The alternative approach is to suppress '-thread-select' if the
+selected thread in GDB is supposed to be identical to the thread the
+frontend wants to operate on.  However, getting this optimization right
+can be tricky.  In particular, if the frontend sends several commands to
+GDB, and one of the commands changes the selected thread, then the
+behaviour of subsequent commands will change.  So, a frontend should
+either wait for response from such problematic commands, or explicitly
+add '-thread-select' for all subsequent commands.  No frontend is known
+to do this exactly right, so it is suggested to just always pass the
+'--thread' and '--frame' options.
+
+27.1.1.2 Language
+.................
+
+The execution of several commands depends on which language is selected.
+By default, the current language (*note show language::) is used.  But
+for commands known to be language-sensitive, it is recommended to use
+the '--language' option.  This option takes one argument, which is the
+name of the language to use while executing the command.  For instance:
+
+     -data-evaluate-expression --language c "sizeof (void*)"
+     ^done,value="4"
+     (gdb)
+
+   The valid language names are the same names accepted by the 'set
+language' command (*note Manually::), excluding 'auto', 'local' or
+'unknown'.
+
+
+File: gdb.info,  Node: Asynchronous and non-stop modes,  Next: Thread groups,  Prev: Context management,  Up: GDB/MI General Design
+
+27.1.2 Asynchronous command execution and non-stop mode
+-------------------------------------------------------
+
+On some targets, GDB is capable of processing MI commands even while the
+target is running.  This is called "asynchronous command execution"
+(*note Background Execution::).  The frontend may specify a preferrence
+for asynchronous execution using the '-gdb-set mi-async 1' command,
+which should be emitted before either running the executable or
+attaching to the target.  After the frontend has started the executable
+or attached to the target, it can find if asynchronous execution is
+enabled using the '-list-target-features' command.
+
+'-gdb-set mi-async on'
+'-gdb-set mi-async off'
+     Set whether MI is in asynchronous mode.
+
+     When 'off', which is the default, MI execution commands (e.g.,
+     '-exec-continue') are foreground commands, and GDB waits for the
+     program to stop before processing further commands.
+
+     When 'on', MI execution commands are background execution commands
+     (e.g., '-exec-continue' becomes the equivalent of the 'c&' CLI
+     command), and so GDB is capable of processing MI commands even
+     while the target is running.
+
+'-gdb-show mi-async'
+     Show whether MI asynchronous mode is enabled.
+
+   Note: In GDB version 7.7 and earlier, this option was called
+'target-async' instead of 'mi-async', and it had the effect of both
+putting MI in asynchronous mode and making CLI background commands
+possible.  CLI background commands are now always possible "out of the
+box" if the target supports them.  The old spelling is kept as a
+deprecated alias for backwards compatibility.
+
+   Even if GDB can accept a command while target is running, many
+commands that access the target do not work when the target is running.
+Therefore, asynchronous command execution is most useful when combined
+with non-stop mode (*note Non-Stop Mode::).  Then, it is possible to
+examine the state of one thread, while other threads are running.
+
+   When a given thread is running, MI commands that try to access the
+target in the context of that thread may not work, or may work only on
+some targets.  In particular, commands that try to operate on thread's
+stack will not work, on any target.  Commands that read memory, or
+modify breakpoints, may work or not work, depending on the target.  Note
+that even commands that operate on global state, such as 'print', 'set',
+and breakpoint commands, still access the target in the context of a
+specific thread, so frontend should try to find a stopped thread and
+perform the operation on that thread (using the '--thread' option).
+
+   Which commands will work in the context of a running thread is highly
+target dependent.  However, the two commands '-exec-interrupt', to stop
+a thread, and '-thread-info', to find the state of a thread, will always
+work.
+
+
+File: gdb.info,  Node: Thread groups,  Prev: Asynchronous and non-stop modes,  Up: GDB/MI General Design
+
+27.1.3 Thread groups
+--------------------
+
+GDB may be used to debug several processes at the same time.  On some
+platfroms, GDB may support debugging of several hardware systems, each
+one having several cores with several different processes running on
+each core.  This section describes the MI mechanism to support such
+debugging scenarios.
+
+   The key observation is that regardless of the structure of the
+target, MI can have a global list of threads, because most commands that
+accept the '--thread' option do not need to know what process that
+thread belongs to.  Therefore, it is not necessary to introduce neither
+additional '--process' option, nor an notion of the current process in
+the MI interface.  The only strictly new feature that is required is the
+ability to find how the threads are grouped into processes.
+
+   To allow the user to discover such grouping, and to support arbitrary
+hierarchy of machines/cores/processes, MI introduces the concept of a
+"thread group".  Thread group is a collection of threads and other
+thread groups.  A thread group always has a string identifier, a type,
+and may have additional attributes specific to the type.  A new command,
+'-list-thread-groups', returns the list of top-level thread groups,
+which correspond to processes that GDB is debugging at the moment.  By
+passing an identifier of a thread group to the '-list-thread-groups'
+command, it is possible to obtain the members of specific thread group.
+
+   To allow the user to easily discover processes, and other objects, he
+wishes to debug, a concept of "available thread group" is introduced.
+Available thread group is an thread group that GDB is not debugging, but
+that can be attached to, using the '-target-attach' command.  The list
+of available top-level thread groups can be obtained using
+'-list-thread-groups --available'.  In general, the content of a thread
+group may be only retrieved only after attaching to that thread group.
+
+   Thread groups are related to inferiors (*note Inferiors and
+Programs::).  Each inferior corresponds to a thread group of a special
+type 'process', and some additional operations are permitted on such
+thread groups.
+
+
+File: gdb.info,  Node: GDB/MI Command Syntax,  Next: GDB/MI Compatibility with CLI,  Prev: GDB/MI General Design,  Up: GDB/MI
+
+27.2 GDB/MI Command Syntax
+==========================
+
+* Menu:
+
+* GDB/MI Input Syntax::
+* GDB/MI Output Syntax::
+
+
+File: gdb.info,  Node: GDB/MI Input Syntax,  Next: GDB/MI Output Syntax,  Up: GDB/MI Command Syntax
+
+27.2.1 GDB/MI Input Syntax
+--------------------------
+
+'COMMAND ==>'
+     'CLI-COMMAND | MI-COMMAND'
+
+'CLI-COMMAND ==>'
+     '[ TOKEN ] CLI-COMMAND NL', where CLI-COMMAND is any existing GDB
+     CLI command.
+
+'MI-COMMAND ==>'
+     '[ TOKEN ] "-" OPERATION ( " " OPTION )* [ " --" ] ( " " PARAMETER
+     )* NL'
+
+'TOKEN ==>'
+     "any sequence of digits"
+
+'OPTION ==>'
+     '"-" PARAMETER [ " " PARAMETER ]'
+
+'PARAMETER ==>'
+     'NON-BLANK-SEQUENCE | C-STRING'
+
+'OPERATION ==>'
+     _any of the operations described in this chapter_
+
+'NON-BLANK-SEQUENCE ==>'
+     _anything, provided it doesn't contain special characters such as
+     "-", NL, """ and of course " "_
+
+'C-STRING ==>'
+     '""" SEVEN-BIT-ISO-C-STRING-CONTENT """'
+
+'NL ==>'
+     'CR | CR-LF'
+
+Notes:
+
+   * The CLI commands are still handled by the MI interpreter; their
+     output is described below.
+
+   * The 'TOKEN', when present, is passed back when the command
+     finishes.
+
+   * Some MI commands accept optional arguments as part of the parameter
+     list.  Each option is identified by a leading '-' (dash) and may be
+     followed by an optional argument parameter.  Options occur first in
+     the parameter list and can be delimited from normal parameters
+     using '--' (this is useful when some parameters begin with a dash).
+
+   Pragmatics:
+
+   * We want easy access to the existing CLI syntax (for debugging).
+
+   * We want it to be easy to spot a MI operation.
+
+
+File: gdb.info,  Node: GDB/MI Output Syntax,  Prev: GDB/MI Input Syntax,  Up: GDB/MI Command Syntax
+
+27.2.2 GDB/MI Output Syntax
+---------------------------
+
+The output from GDB/MI consists of zero or more out-of-band records
+followed, optionally, by a single result record.  This result record is
+for the most recent command.  The sequence of output records is
+terminated by '(gdb)'.
+
+   If an input command was prefixed with a 'TOKEN' then the
+corresponding output for that command will also be prefixed by that same
+TOKEN.
+
+'OUTPUT ==>'
+     '( OUT-OF-BAND-RECORD )* [ RESULT-RECORD ] "(gdb)" NL'
+
+'RESULT-RECORD ==>'
+     ' [ TOKEN ] "^" RESULT-CLASS ( "," RESULT )* NL'
+
+'OUT-OF-BAND-RECORD ==>'
+     'ASYNC-RECORD | STREAM-RECORD'
+
+'ASYNC-RECORD ==>'
+     'EXEC-ASYNC-OUTPUT | STATUS-ASYNC-OUTPUT | NOTIFY-ASYNC-OUTPUT'
+
+'EXEC-ASYNC-OUTPUT ==>'
+     '[ TOKEN ] "*" ASYNC-OUTPUT NL'
+
+'STATUS-ASYNC-OUTPUT ==>'
+     '[ TOKEN ] "+" ASYNC-OUTPUT NL'
+
+'NOTIFY-ASYNC-OUTPUT ==>'
+     '[ TOKEN ] "=" ASYNC-OUTPUT NL'
+
+'ASYNC-OUTPUT ==>'
+     'ASYNC-CLASS ( "," RESULT )*'
+
+'RESULT-CLASS ==>'
+     '"done" | "running" | "connected" | "error" | "exit"'
+
+'ASYNC-CLASS ==>'
+     '"stopped" | OTHERS' (where OTHERS will be added depending on the
+     needs--this is still in development).
+
+'RESULT ==>'
+     ' VARIABLE "=" VALUE'
+
+'VARIABLE ==>'
+     ' STRING '
+
+'VALUE ==>'
+     ' CONST | TUPLE | LIST '
+
+'CONST ==>'
+     'C-STRING'
+
+'TUPLE ==>'
+     ' "{}" | "{" RESULT ( "," RESULT )* "}" '
+
+'LIST ==>'
+     ' "[]" | "[" VALUE ( "," VALUE )* "]" | "[" RESULT ( "," RESULT )*
+     "]" '
+
+'STREAM-RECORD ==>'
+     'CONSOLE-STREAM-OUTPUT | TARGET-STREAM-OUTPUT | LOG-STREAM-OUTPUT'
+
+'CONSOLE-STREAM-OUTPUT ==>'
+     '"~" C-STRING NL'
+
+'TARGET-STREAM-OUTPUT ==>'
+     '"@" C-STRING NL'
+
+'LOG-STREAM-OUTPUT ==>'
+     '"&" C-STRING NL'
+
+'NL ==>'
+     'CR | CR-LF'
+
+'TOKEN ==>'
+     _any sequence of digits_.
+
+Notes:
+
+   * All output sequences end in a single line containing a period.
+
+   * The 'TOKEN' is from the corresponding request.  Note that for all
+     async output, while the token is allowed by the grammar and may be
+     output by future versions of GDB for select async output messages,
+     it is generally omitted.  Frontends should treat all async output
+     as reporting general changes in the state of the target and there
+     should be no need to associate async output to any prior command.
+
+   * STATUS-ASYNC-OUTPUT contains on-going status information about the
+     progress of a slow operation.  It can be discarded.  All status
+     output is prefixed by '+'.
+
+   * EXEC-ASYNC-OUTPUT contains asynchronous state change on the target
+     (stopped, started, disappeared).  All async output is prefixed by
+     '*'.
+
+   * NOTIFY-ASYNC-OUTPUT contains supplementary information that the
+     client should handle (e.g., a new breakpoint information).  All
+     notify output is prefixed by '='.
+
+   * CONSOLE-STREAM-OUTPUT is output that should be displayed as is in
+     the console.  It is the textual response to a CLI command.  All the
+     console output is prefixed by '~'.
+
+   * TARGET-STREAM-OUTPUT is the output produced by the target program.
+     All the target output is prefixed by '@'.
+
+   * LOG-STREAM-OUTPUT is output text coming from GDB's internals, for
+     instance messages that should be displayed as part of an error log.
+     All the log output is prefixed by '&'.
+
+   * New GDB/MI commands should only output LISTS containing VALUES.
+
+   *Note GDB/MI Stream Records: GDB/MI Stream Records, for more details
+about the various output records.
 
 
 File: gdb.info,  Node: GDB/MI Compatibility with CLI,  Next: GDB/MI Development and Front Ends,  Prev: GDB/MI Command Syntax,  Up: GDB/MI
@@ -242,7 +1016,7 @@ activity (e.g., target stopped).
      'syscall-entry'
           The inferior entered a system call.  This is reported when
           'catch syscall' (*note Set Catchpoints::) has been used.
-     'syscall-entry'
+     'syscall-return'
           The inferior returned from a system call.  This is reported
           when 'catch syscall' (*note Set Catchpoints::) has been used.
      'exec'
@@ -3459,6 +4233,9 @@ File: gdb.info,  Node: GDB/MI Data Manipulation,  Next: GDB/MI Tracepoint Comman
 This section describes the GDB/MI commands that manipulate data: examine
 memory and registers, evaluate expressions, etc.
 
+   For details about what an addressable memory unit is, *note
+addressable memory unit::.
+
 The '-data-disassemble' Command
 -------------------------------
 
@@ -3935,24 +4712,25 @@ The '-data-read-memory-bytes' Command
 Synopsis
 ........
 
-      -data-read-memory-bytes [ -o BYTE-OFFSET ]
+      -data-read-memory-bytes [ -o OFFSET ]
         ADDRESS COUNT
 
 where:
 
 'ADDRESS'
-     An expression specifying the address of the first memory word to be
-     read.  Complex expressions containing embedded white space should
-     be quoted using the C convention.
+     An expression specifying the address of the first addressable
+     memory unit to be read.  Complex expressions containing embedded
+     white space should be quoted using the C convention.
 
 'COUNT'
-     The number of bytes to read.  This should be an integer literal.
+     The number of addressable memory units to read.  This should be an
+     integer literal.
 
-'BYTE-OFFSET'
-     The offsets in bytes relative to ADDRESS at which to start reading.
-     This should be an integer literal.  This option is provided so that
-     a frontend is not required to first evaluate address and then
-     perform address arithmetics itself.
+'OFFSET'
+     The offset relative to ADDRESS at which to start reading.  This
+     should be an integer literal.  This option is provided so that a
+     frontend is not required to first evaluate address and then perform
+     address arithmetics itself.
 
    This command attempts to read all accessible memory regions in the
 specified range.  First, all regions marked as unreadable in the memory
@@ -3961,13 +4739,14 @@ Attributes::.  Second, GDB will attempt to read the remaining regions.
 For each one, if reading full region results in an errors, GDB will try
 to read a subset of the region.
 
-   In general, every single byte in the region may be readable or not,
-and the only way to read every readable byte is to try a read at every
-address, which is not practical.  Therefore, GDB will attempt to read
-all accessible bytes at either beginning or the end of the region, using
-a binary division scheme.  This heuristic works well for reading accross
-a memory map boundary.  Note that if a region has a readable range that
-is neither at the beginning or the end, GDB will not read it.
+   In general, every single memory unit in the region may be readable or
+not, and the only way to read every readable unit is to try a read at
+every address, which is not practical.  Therefore, GDB will attempt to
+read all accessible memory units at either beginning or the end of the
+region, using a binary division scheme.  This heuristic works well for
+reading accross a memory map boundary.  Note that if a region has a
+readable range that is neither at the beginning or the end, GDB will not
+read it.
 
    The result record (*note GDB/MI Result Records::) that is output of
 the command includes a field named 'memory' whose content is a list of
@@ -4014,17 +4793,18 @@ Synopsis
 where:
 
 'ADDRESS'
-     An expression specifying the address of the first memory word to be
-     read.  Complex expressions containing embedded white space should
-     be quoted using the C convention.
+     An expression specifying the address of the first addressable
+     memory unit to be written.  Complex expressions containing embedded
+     white space should be quoted using the C convention.
 
 'CONTENTS'
-     The hex-encoded bytes to write.
+     The hex-encoded data to write.  It is an error if CONTENTS does not
+     represent an integral number of addressable memory units.
 
 'COUNT'
-     Optional argument indicating the number of bytes to be written.  If
-     COUNT is greater than CONTENTS' length, GDB will repeatedly write
-     CONTENTS until it fills COUNT bytes.
+     Optional argument indicating the number of addressable memory units
+     to be written.  If COUNT is greater than CONTENTS' length, GDB will
+     repeatedly write CONTENTS until it fills COUNT memory units.
 
 GDB Command
 ...........
@@ -5318,28 +6098,30 @@ this:
 
      gdb
      -info-os
-     ^done,OSDataTable={nr_rows="9",nr_cols="3",
+     ^done,OSDataTable={nr_rows="10",nr_cols="3",
      hdr=[{width="10",alignment="-1",col_name="col0",colhdr="Type"},
           {width="10",alignment="-1",col_name="col1",colhdr="Description"},
           {width="10",alignment="-1",col_name="col2",colhdr="Title"}],
-     body=[item={col0="processes",col1="Listing of all processes",
+     body=[item={col0="cpus",col1="Listing of all cpus/cores on the system",
+                 col2="CPUs"},
+           item={col0="files",col1="Listing of all file descriptors",
+                 col2="File descriptors"},
+           item={col0="modules",col1="Listing of all loaded kernel modules",
+                 col2="Kernel modules"},
+           item={col0="msg",col1="Listing of all message queues",
+                 col2="Message queues"},
+           item={col0="processes",col1="Listing of all processes",
                  col2="Processes"},
            item={col0="procgroups",col1="Listing of all process groups",
                  col2="Process groups"},
-           item={col0="threads",col1="Listing of all threads",
-                 col2="Threads"},
-           item={col0="files",col1="Listing of all file descriptors",
-                 col2="File descriptors"},
-           item={col0="sockets",col1="Listing of all internet-domain sockets",
-                 col2="Sockets"},
-           item={col0="shm",col1="Listing of all shared-memory regions",
-                 col2="Shared-memory regions"},
            item={col0="semaphores",col1="Listing of all semaphores",
                  col2="Semaphores"},
-           item={col0="msg",col1="Listing of all message queues",
-                 col2="Message queues"},
-           item={col0="modules",col1="Listing of all loaded kernel modules",
-                 col2="Kernel modules"}]}
+           item={col0="shm",col1="Listing of all shared-memory regions",
+                 col2="Shared-memory regions"},
+           item={col0="sockets",col1="Listing of all internet-domain sockets",
+                 col2="Sockets"},
+           item={col0="threads",col1="Listing of all threads",
+                 col2="Threads"}]
      gdb
      -info-os processes
      ^done,OSDataTable={nr_rows="190",nr_cols="4",
@@ -7963,7 +8745,7 @@ and TeX (or 'texi2roff') to typeset the printed version.
 
    GDB includes an already formatted copy of the on-line Info version of
 this manual in the 'gdb' subdirectory.  The main Info file is
-'gdb-7.9.1/gdb/gdb.info', and it refers to subordinate files matching
+'gdb-7.10.1/gdb/gdb.info', and it refers to subordinate files matching
 'gdb.info*' in the same directory.  If necessary, you can print out
 these files, or read them with any editor; but they are easier to read
 using the 'info' subsystem in GNU Emacs or the standalone 'info'
@@ -7973,8 +8755,8 @@ program, available as part of the GNU Texinfo distribution.
 Info formatting programs, such as 'texinfo-format-buffer' or 'makeinfo'.
 
    If you have 'makeinfo' installed, and are in the top level GDB source
-directory ('gdb-7.9.1', in the case of version 7.9.1), you can make the
-Info file by typing:
+directory ('gdb-7.10.1', in the case of version 7.10.1), you can make
+the Info file by typing:
 
      cd gdb
      make gdb.info
@@ -7999,7 +8781,7 @@ On its own, TeX cannot either read or typeset a Texinfo file.
 
    If you have TeX and a DVI printer program installed, you can typeset
 and print this manual.  First switch to the 'gdb' subdirectory of the
-main source directory (for example, to 'gdb-7.9.1/gdb') and type:
+main source directory (for example, to 'gdb-7.10.1/gdb') and type:
 
      make gdb.dvi
 
@@ -8007,867 +8789,5 @@ main source directory (for example, to 'gdb-7.9.1/gdb') and type:
 
    ---------- Footnotes ----------
 
-   (1) In 'gdb-7.9.1/gdb/refcard.ps' of the version 7.9.1 release.
-
-
-File: gdb.info,  Node: Installing GDB,  Next: Maintenance Commands,  Prev: Formatting Documentation,  Up: Top
-
-Appendix C Installing GDB
-*************************
-
-* Menu:
-
-* Requirements::                Requirements for building GDB
-* Running Configure::           Invoking the GDB 'configure' script
-* Separate Objdir::             Compiling GDB in another directory
-* Config Names::                Specifying names for hosts and targets
-* Configure Options::           Summary of options for configure
-* System-wide configuration::   Having a system-wide init file
-
-
-File: gdb.info,  Node: Requirements,  Next: Running Configure,  Up: Installing GDB
-
-C.1 Requirements for Building GDB
-=================================
-
-Building GDB requires various tools and packages to be available.  Other
-packages will be used only if they are found.
-
-Tools/Packages Necessary for Building GDB
-=========================================
-
-ISO C90 compiler
-     GDB is written in ISO C90.  It should be buildable with any working
-     C90 compiler, e.g. GCC.
-
-Tools/Packages Optional for Building GDB
-========================================
-
-Expat
-     GDB can use the Expat XML parsing library.  This library may be
-     included with your operating system distribution; if it is not, you
-     can get the latest version from <http://expat.sourceforge.net>.
-     The 'configure' script will search for this library in several
-     standard locations; if it is installed in an unusual path, you can
-     use the '--with-libexpat-prefix' option to specify its location.
-
-     Expat is used for:
-
-        * Remote protocol memory maps (*note Memory Map Format::)
-        * Target descriptions (*note Target Descriptions::)
-        * Remote shared library lists (*Note Library List Format::, or
-          alternatively *note Library List Format for SVR4 Targets::)
-        * MS-Windows shared libraries (*note Shared Libraries::)
-        * Traceframe info (*note Traceframe Info Format::)
-        * Branch trace (*note Branch Trace Format::)
-
-zlib
-     GDB will use the 'zlib' library, if available, to read compressed
-     debug sections.  Some linkers, such as GNU gold, are capable of
-     producing binaries with compressed debug sections.  If GDB is
-     compiled with 'zlib', it will be able to read the debug information
-     in such binaries.
-
-     The 'zlib' library is likely included with your operating system
-     distribution; if it is not, you can get the latest version from
-     <http://zlib.net>.
-
-iconv
-     GDB's features related to character sets (*note Character Sets::)
-     require a functioning 'iconv' implementation.  If you are on a GNU
-     system, then this is provided by the GNU C Library.  Some other
-     systems also provide a working 'iconv'.
-
-     If GDB is using the 'iconv' program which is installed in a
-     non-standard place, you will need to tell GDB where to find it.
-     This is done with '--with-iconv-bin' which specifies the directory
-     that contains the 'iconv' program.
-
-     On systems without 'iconv', you can install GNU Libiconv.  If you
-     have previously installed Libiconv, you can use the
-     '--with-libiconv-prefix' option to configure.
-
-     GDB's top-level 'configure' and 'Makefile' will arrange to build
-     Libiconv if a directory named 'libiconv' appears in the top-most
-     source directory.  If Libiconv is built this way, and if the
-     operating system does not provide a suitable 'iconv'
-     implementation, then the just-built library will automatically be
-     used by GDB.  One easy way to set this up is to download GNU
-     Libiconv, unpack it, and then rename the directory holding the
-     Libiconv source code to 'libiconv'.
-
-
-File: gdb.info,  Node: Running Configure,  Next: Separate Objdir,  Prev: Requirements,  Up: Installing GDB
-
-C.2 Invoking the GDB 'configure' Script
-=======================================
-
-GDB comes with a 'configure' script that automates the process of
-preparing GDB for installation; you can then use 'make' to build the
-'gdb' program.
-
-   The GDB distribution includes all the source code you need for GDB in
-a single directory, whose name is usually composed by appending the
-version number to 'gdb'.
-
-   For example, the GDB version 7.9.1 distribution is in the 'gdb-7.9.1'
-directory.  That directory contains:
-
-'gdb-7.9.1/configure (and supporting files)'
-     script for configuring GDB and all its supporting libraries
-
-'gdb-7.9.1/gdb'
-     the source specific to GDB itself
-
-'gdb-7.9.1/bfd'
-     source for the Binary File Descriptor library
-
-'gdb-7.9.1/include'
-     GNU include files
-
-'gdb-7.9.1/libiberty'
-     source for the '-liberty' free software library
-
-'gdb-7.9.1/opcodes'
-     source for the library of opcode tables and disassemblers
-
-'gdb-7.9.1/readline'
-     source for the GNU command-line interface
-
-'gdb-7.9.1/glob'
-     source for the GNU filename pattern-matching subroutine
-
-'gdb-7.9.1/mmalloc'
-     source for the GNU memory-mapped malloc package
-
-   The simplest way to configure and build GDB is to run 'configure'
-from the 'gdb-VERSION-NUMBER' source directory, which in this example is
-the 'gdb-7.9.1' directory.
-
-   First switch to the 'gdb-VERSION-NUMBER' source directory if you are
-not already in it; then run 'configure'.  Pass the identifier for the
-platform on which GDB will run as an argument.
-
-   For example:
-
-     cd gdb-7.9.1
-     ./configure HOST
-     make
-
-where HOST is an identifier such as 'sun4' or 'decstation', that
-identifies the platform where GDB will run.  (You can often leave off
-HOST; 'configure' tries to guess the correct value by examining your
-system.)
-
-   Running 'configure HOST' and then running 'make' builds the 'bfd',
-'readline', 'mmalloc', and 'libiberty' libraries, then 'gdb' itself.
-The configured source files, and the binaries, are left in the
-corresponding source directories.
-
-   'configure' is a Bourne-shell ('/bin/sh') script; if your system does
-not recognize this automatically when you run a different shell, you may
-need to run 'sh' on it explicitly:
-
-     sh configure HOST
-
-   If you run 'configure' from a directory that contains source
-directories for multiple libraries or programs, such as the 'gdb-7.9.1'
-source directory for version 7.9.1, 'configure' creates configuration
-files for every directory level underneath (unless you tell it not to,
-with the '--norecursion' option).
-
-   You should run the 'configure' script from the top directory in the
-source tree, the 'gdb-VERSION-NUMBER' directory.  If you run 'configure'
-from one of the subdirectories, you will configure only that
-subdirectory.  That is usually not what you want.  In particular, if you
-run the first 'configure' from the 'gdb' subdirectory of the
-'gdb-VERSION-NUMBER' directory, you will omit the configuration of
-'bfd', 'readline', and other sibling directories of the 'gdb'
-subdirectory.  This leads to build errors about missing include files
-such as 'bfd/bfd.h'.
-
-   You can install 'gdb' anywhere; it has no hardwired paths.  However,
-you should make sure that the shell on your path (named by the 'SHELL'
-environment variable) is publicly readable.  Remember that GDB uses the
-shell to start your program--some systems refuse to let GDB debug child
-processes whose programs are not readable.
-
-
-File: gdb.info,  Node: Separate Objdir,  Next: Config Names,  Prev: Running Configure,  Up: Installing GDB
-
-C.3 Compiling GDB in Another Directory
-======================================
-
-If you want to run GDB versions for several host or target machines, you
-need a different 'gdb' compiled for each combination of host and target.
-'configure' is designed to make this easy by allowing you to generate
-each configuration in a separate subdirectory, rather than in the source
-directory.  If your 'make' program handles the 'VPATH' feature (GNU
-'make' does), running 'make' in each of these directories builds the
-'gdb' program specified there.
-
-   To build 'gdb' in a separate directory, run 'configure' with the
-'--srcdir' option to specify where to find the source.  (You also need
-to specify a path to find 'configure' itself from your working
-directory.  If the path to 'configure' would be the same as the argument
-to '--srcdir', you can leave out the '--srcdir' option; it is assumed.)
-
-   For example, with version 7.9.1, you can build GDB in a separate
-directory for a Sun 4 like this:
-
-     cd gdb-7.9.1
-     mkdir ../gdb-sun4
-     cd ../gdb-sun4
-     ../gdb-7.9.1/configure sun4
-     make
-
-   When 'configure' builds a configuration using a remote source
-directory, it creates a tree for the binaries with the same structure
-(and using the same names) as the tree under the source directory.  In
-the example, you'd find the Sun 4 library 'libiberty.a' in the directory
-'gdb-sun4/libiberty', and GDB itself in 'gdb-sun4/gdb'.
-
-   Make sure that your path to the 'configure' script has just one
-instance of 'gdb' in it.  If your path to 'configure' looks like
-'../gdb-7.9.1/gdb/configure', you are configuring only one subdirectory
-of GDB, not the whole package.  This leads to build errors about missing
-include files such as 'bfd/bfd.h'.
-
-   One popular reason to build several GDB configurations in separate
-directories is to configure GDB for cross-compiling (where GDB runs on
-one machine--the "host"--while debugging programs that run on another
-machine--the "target").  You specify a cross-debugging target by giving
-the '--target=TARGET' option to 'configure'.
-
-   When you run 'make' to build a program or library, you must run it in
-a configured directory--whatever directory you were in when you called
-'configure' (or one of its subdirectories).
-
-   The 'Makefile' that 'configure' generates in each source directory
-also runs recursively.  If you type 'make' in a source directory such as
-'gdb-7.9.1' (or in a separate configured directory configured with
-'--srcdir=DIRNAME/gdb-7.9.1'), you will build all the required
-libraries, and then build GDB.
-
-   When you have multiple hosts or targets configured in separate
-directories, you can run 'make' on them in parallel (for example, if
-they are NFS-mounted on each of the hosts); they will not interfere with
-each other.
-
-
-File: gdb.info,  Node: Config Names,  Next: Configure Options,  Prev: Separate Objdir,  Up: Installing GDB
-
-C.4 Specifying Names for Hosts and Targets
-==========================================
-
-The specifications used for hosts and targets in the 'configure' script
-are based on a three-part naming scheme, but some short predefined
-aliases are also supported.  The full naming scheme encodes three pieces
-of information in the following pattern:
-
-     ARCHITECTURE-VENDOR-OS
-
-   For example, you can use the alias 'sun4' as a HOST argument, or as
-the value for TARGET in a '--target=TARGET' option.  The equivalent full
-name is 'sparc-sun-sunos4'.
-
-   The 'configure' script accompanying GDB does not provide any query
-facility to list all supported host and target names or aliases.
-'configure' calls the Bourne shell script 'config.sub' to map
-abbreviations to full names; you can read the script, if you wish, or
-you can use it to test your guesses on abbreviations--for example:
-
-     % sh config.sub i386-linux
-     i386-pc-linux-gnu
-     % sh config.sub alpha-linux
-     alpha-unknown-linux-gnu
-     % sh config.sub hp9k700
-     hppa1.1-hp-hpux
-     % sh config.sub sun4
-     sparc-sun-sunos4.1.1
-     % sh config.sub sun3
-     m68k-sun-sunos4.1.1
-     % sh config.sub i986v
-     Invalid configuration `i986v': machine `i986v' not recognized
-
-'config.sub' is also distributed in the GDB source directory
-('gdb-7.9.1', for version 7.9.1).
-
-
-File: gdb.info,  Node: Configure Options,  Next: System-wide configuration,  Prev: Config Names,  Up: Installing GDB
-
-C.5 'configure' Options
-=======================
-
-Here is a summary of the 'configure' options and arguments that are most
-often useful for building GDB.  'configure' also has several other
-options not listed here.  *note (configure.info)What Configure Does::,
-for a full explanation of 'configure'.
-
-     configure [--help]
-               [--prefix=DIR]
-               [--exec-prefix=DIR]
-               [--srcdir=DIRNAME]
-               [--norecursion] [--rm]
-               [--target=TARGET]
-               HOST
-
-You may introduce options with a single '-' rather than '--' if you
-prefer; but you may abbreviate option names if you use '--'.
-
-'--help'
-     Display a quick summary of how to invoke 'configure'.
-
-'--prefix=DIR'
-     Configure the source to install programs and files under directory
-     'DIR'.
-
-'--exec-prefix=DIR'
-     Configure the source to install programs under directory 'DIR'.
-
-'--srcdir=DIRNAME'
-     *Warning: using this option requires GNU 'make', or another 'make'
-     that implements the 'VPATH' feature.*
-     Use this option to make configurations in directories separate from
-     the GDB source directories.  Among other things, you can use this
-     to build (or maintain) several configurations simultaneously, in
-     separate directories.  'configure' writes configuration-specific
-     files in the current directory, but arranges for them to use the
-     source in the directory DIRNAME.  'configure' creates directories
-     under the working directory in parallel to the source directories
-     below DIRNAME.
-
-'--norecursion'
-     Configure only the directory level where 'configure' is executed;
-     do not propagate configuration to subdirectories.
-
-'--target=TARGET'
-     Configure GDB for cross-debugging programs running on the specified
-     TARGET.  Without this option, GDB is configured to debug programs
-     that run on the same machine (HOST) as GDB itself.
-
-     There is no convenient way to generate a list of all available
-     targets.
-
-'HOST ...'
-     Configure GDB to run on the specified HOST.
-
-     There is no convenient way to generate a list of all available
-     hosts.
-
-   There are many other options available as well, but they are
-generally needed for special purposes only.
-
-
-File: gdb.info,  Node: System-wide configuration,  Prev: Configure Options,  Up: Installing GDB
-
-C.6 System-wide configuration and settings
-==========================================
-
-GDB can be configured to have a system-wide init file; this file will be
-read and executed at startup (*note What GDB does during startup:
-Startup.).
-
-   Here is the corresponding configure option:
-
-'--with-system-gdbinit=FILE'
-     Specify that the default location of the system-wide init file is
-     FILE.
-
-   If GDB has been configured with the option '--prefix=$prefix', it may
-be subject to relocation.  Two possible cases:
-
-   * If the default location of this init file contains '$prefix', it
-     will be subject to relocation.  Suppose that the configure options
-     are '--prefix=$prefix --with-system-gdbinit=$prefix/etc/gdbinit';
-     if GDB is moved from '$prefix' to '$install', the system init file
-     is looked for as '$install/etc/gdbinit' instead of
-     '$prefix/etc/gdbinit'.
-
-   * By contrast, if the default location does not contain the prefix,
-     it will not be relocated.  E.g. if GDB has been configured with
-     '--prefix=/usr/local --with-system-gdbinit=/usr/share/gdb/gdbinit',
-     then GDB will always look for '/usr/share/gdb/gdbinit', wherever
-     GDB is installed.
-
-   If the configured location of the system-wide init file (as given by
-the '--with-system-gdbinit' option at configure time) is in the
-data-directory (as specified by '--with-gdb-datadir' at configure time)
-or in one of its subdirectories, then GDB will look for the system-wide
-init file in the directory specified by the '--data-directory'
-command-line option.  Note that the system-wide init file is only read
-once, during GDB initialization.  If the data-directory is changed after
-GDB has started with the 'set data-directory' command, the file will not
-be reread.
-
-* Menu:
-
-* System-wide Configuration Scripts::  Installed System-wide Configuration Scripts
-
-
-File: gdb.info,  Node: System-wide Configuration Scripts,  Up: System-wide configuration
-
-C.6.1 Installed System-wide Configuration Scripts
--------------------------------------------------
-
-The 'system-gdbinit' directory, located inside the data-directory (as
-specified by '--with-gdb-datadir' at configure time) contains a number
-of scripts which can be used as system-wide init files.  To
-automatically source those scripts at startup, GDB should be configured
-with '--with-system-gdbinit'.  Otherwise, any user should be able to
-source them by hand as needed.
-
-   The following scripts are currently available:
-
-   * 'elinos.py' This script is useful when debugging a program on an
-     ELinOS target.  It takes advantage of the environment variables
-     defined in a standard ELinOS environment in order to determine the
-     location of the system shared libraries, and then sets the
-     'solib-absolute-prefix' and 'solib-search-path' variables
-     appropriately.
-
-   * 'wrs-linux.py' This script is useful when debugging a program on a
-     target running Wind River Linux.  It expects the 'ENV_PREFIX' to be
-     set to the host-side sysroot used by the target system.
-
-
-File: gdb.info,  Node: Maintenance Commands,  Next: Remote Protocol,  Prev: Installing GDB,  Up: Top
-
-Appendix D Maintenance Commands
-*******************************
-
-In addition to commands intended for GDB users, GDB includes a number of
-commands intended for GDB developers, that are not documented elsewhere
-in this manual.  These commands are provided here for reference.  (For
-commands that turn on debugging messages, see *note Debugging Output::.)
-
-'maint agent [-at LOCATION,] EXPRESSION'
-'maint agent-eval [-at LOCATION,] EXPRESSION'
-     Translate the given EXPRESSION into remote agent bytecodes.  This
-     command is useful for debugging the Agent Expression mechanism
-     (*note Agent Expressions::).  The 'agent' version produces an
-     expression useful for data collection, such as by tracepoints,
-     while 'maint agent-eval' produces an expression that evaluates
-     directly to a result.  For instance, a collection expression for
-     'globa + globb' will include bytecodes to record four bytes of
-     memory at each of the addresses of 'globa' and 'globb', while
-     discarding the result of the addition, while an evaluation
-     expression will do the addition and return the sum.  If '-at' is
-     given, generate remote agent bytecode for LOCATION.  If not,
-     generate remote agent bytecode for current frame PC address.
-
-'maint agent-printf FORMAT,EXPR,...'
-     Translate the given format string and list of argument expressions
-     into remote agent bytecodes and display them as a disassembled
-     list.  This command is useful for debugging the agent version of
-     dynamic printf (*note Dynamic Printf::).
-
-'maint info breakpoints'
-     Using the same format as 'info breakpoints', display both the
-     breakpoints you've set explicitly, and those GDB is using for
-     internal purposes.  Internal breakpoints are shown with negative
-     breakpoint numbers.  The type column identifies what kind of
-     breakpoint is shown:
-
-     'breakpoint'
-          Normal, explicitly set breakpoint.
-
-     'watchpoint'
-          Normal, explicitly set watchpoint.
-
-     'longjmp'
-          Internal breakpoint, used to handle correctly stepping through
-          'longjmp' calls.
-
-     'longjmp resume'
-          Internal breakpoint at the target of a 'longjmp'.
-
-     'until'
-          Temporary internal breakpoint used by the GDB 'until' command.
-
-     'finish'
-          Temporary internal breakpoint used by the GDB 'finish'
-          command.
-
-     'shlib events'
-          Shared library events.
-
-'maint info bfds'
-     This prints information about each 'bfd' object that is known to
-     GDB.  *Note BFD: (bfd)Top.
-
-'set displaced-stepping'
-'show displaced-stepping'
-     Control whether or not GDB will do "displaced stepping" if the
-     target supports it.  Displaced stepping is a way to single-step
-     over breakpoints without removing them from the inferior, by
-     executing an out-of-line copy of the instruction that was
-     originally at the breakpoint location.  It is also known as
-     out-of-line single-stepping.
-
-     'set displaced-stepping on'
-          If the target architecture supports it, GDB will use displaced
-          stepping to step over breakpoints.
-
-     'set displaced-stepping off'
-          GDB will not use displaced stepping to step over breakpoints,
-          even if such is supported by the target architecture.
-
-     'set displaced-stepping auto'
-          This is the default mode.  GDB will use displaced stepping
-          only if non-stop mode is active (*note Non-Stop Mode::) and
-          the target architecture supports displaced stepping.
-
-'maint check-psymtabs'
-     Check the consistency of currently expanded psymtabs versus
-     symtabs.  Use this to check, for example, whether a symbol is in
-     one but not the other.
-
-'maint check-symtabs'
-     Check the consistency of currently expanded symtabs.
-
-'maint expand-symtabs [REGEXP]'
-     Expand symbol tables.  If REGEXP is specified, only expand symbol
-     tables for file names matching REGEXP.
-
-'maint set catch-demangler-crashes [on|off]'
-'maint show catch-demangler-crashes'
-     Control whether GDB should attempt to catch crashes in the symbol
-     name demangler.  The default is to attempt to catch crashes.  If
-     enabled, the first time a crash is caught, a core file is created,
-     the offending symbol is displayed and the user is presented with
-     the option to terminate the current session.
-
-'maint cplus first_component NAME'
-     Print the first C++ class/namespace component of NAME.
-
-'maint cplus namespace'
-     Print the list of possible C++ namespaces.
-
-'maint deprecate COMMAND [REPLACEMENT]'
-'maint undeprecate COMMAND'
-     Deprecate or undeprecate the named COMMAND.  Deprecated commands
-     cause GDB to issue a warning when you use them.  The optional
-     argument REPLACEMENT says which newer command should be used in
-     favor of the deprecated one; if it is given, GDB will mention the
-     replacement as part of the warning.
-
-'maint dump-me'
-     Cause a fatal signal in the debugger and force it to dump its core.
-     This is supported only on systems which support aborting a program
-     with the 'SIGQUIT' signal.
-
-'maint internal-error [MESSAGE-TEXT]'
-'maint internal-warning [MESSAGE-TEXT]'
-'maint demangler-warning [MESSAGE-TEXT]'
-
-     Cause GDB to call the internal function 'internal_error',
-     'internal_warning' or 'demangler_warning' and hence behave as
-     though an internal problam has been detected.  In addition to
-     reporting the internal problem, these functions give the user the
-     opportunity to either quit GDB or (for 'internal_error' and
-     'internal_warning') create a core file of the current GDB session.
-
-     These commands take an optional parameter MESSAGE-TEXT that is used
-     as the text of the error or warning message.
-
-     Here's an example of using 'internal-error':
-
-          (gdb) maint internal-error testing, 1, 2
-          .../maint.c:121: internal-error: testing, 1, 2
-          A problem internal to GDB has been detected.  Further
-          debugging may prove unreliable.
-          Quit this debugging session? (y or n) n
-          Create a core file? (y or n) n
-          (gdb)
-
-'maint set internal-error ACTION [ask|yes|no]'
-'maint show internal-error ACTION'
-'maint set internal-warning ACTION [ask|yes|no]'
-'maint show internal-warning ACTION'
-'maint set demangler-warning ACTION [ask|yes|no]'
-'maint show demangler-warning ACTION'
-     When GDB reports an internal problem (error or warning) it gives
-     the user the opportunity to both quit GDB and create a core file of
-     the current GDB session.  These commands let you override the
-     default behaviour for each particular ACTION, described in the
-     table below.
-
-     'quit'
-          You can specify that GDB should always (yes) or never (no)
-          quit.  The default is to ask the user what to do.
-
-     'corefile'
-          You can specify that GDB should always (yes) or never (no)
-          create a core file.  The default is to ask the user what to
-          do.  Note that there is no 'corefile' option for
-          'demangler-warning': demangler warnings always create a core
-          file and this cannot be disabled.
-
-'maint packet TEXT'
-     If GDB is talking to an inferior via the serial protocol, then this
-     command sends the string TEXT to the inferior, and displays the
-     response packet.  GDB supplies the initial '$' character, the
-     terminating '#' character, and the checksum.
-
-'maint print architecture [FILE]'
-     Print the entire architecture configuration.  The optional argument
-     FILE names the file where the output goes.
-
-'maint print c-tdesc'
-     Print the current target description (*note Target Descriptions::)
-     as a C source file.  The created source file can be used in GDB
-     when an XML parser is not available to parse the description.
-
-'maint print dummy-frames'
-     Prints the contents of GDB's internal dummy-frame stack.
-
-          (gdb) b add
-          ...
-          (gdb) print add(2,3)
-          Breakpoint 2, add (a=2, b=3) at ...
-          58	  return (a + b);
-          The program being debugged stopped while in a function called from GDB.
-          ...
-          (gdb) maint print dummy-frames
-          0xa8206d8: id={stack=0xbfffe734,code=0xbfffe73f,!special}, ptid=process 9353
-          (gdb)
-
-     Takes an optional file parameter.
-
-'maint print registers [FILE]'
-'maint print raw-registers [FILE]'
-'maint print cooked-registers [FILE]'
-'maint print register-groups [FILE]'
-'maint print remote-registers [FILE]'
-     Print GDB's internal register data structures.
-
-     The command 'maint print raw-registers' includes the contents of
-     the raw register cache; the command 'maint print cooked-registers'
-     includes the (cooked) value of all registers, including registers
-     which aren't available on the target nor visible to user; the
-     command 'maint print register-groups' includes the groups that each
-     register is a member of; and the command 'maint print
-     remote-registers' includes the remote target's register numbers and
-     offsets in the 'G' packets.
-
-     These commands take an optional parameter, a file name to which to
-     write the information.
-
-'maint print reggroups [FILE]'
-     Print GDB's internal register group data structures.  The optional
-     argument FILE tells to what file to write the information.
-
-     The register groups info looks like this:
-
-          (gdb) maint print reggroups
-           Group      Type
-           general    user
-           float      user
-           all        user
-           vector     user
-           system     user
-           save       internal
-           restore    internal
-
-'flushregs'
-     This command forces GDB to flush its internal register cache.
-
-'maint print objfiles [REGEXP]'
-     Print a dump of all known object files.  If REGEXP is specified,
-     only print object files whose names match REGEXP.  For each object
-     file, this command prints its name, address in memory, and all of
-     its psymtabs and symtabs.
-
-'maint print user-registers'
-     List all currently available "user registers".  User registers
-     typically provide alternate names for actual hardware registers.
-     They include the four "standard" registers '$fp', '$pc', '$sp', and
-     '$ps'.  *Note standard registers::.  User registers can be used in
-     expressions in the same way as the canonical register names, but
-     only the latter are listed by the 'info registers' and 'maint print
-     registers' commands.
-
-'maint print section-scripts [REGEXP]'
-     Print a dump of scripts specified in the '.debug_gdb_section'
-     section.  If REGEXP is specified, only print scripts loaded by
-     object files matching REGEXP.  For each script, this command prints
-     its name as specified in the objfile, and the full path if known.
-     *Note dotdebug_gdb_scripts section::.
-
-'maint print statistics'
-     This command prints, for each object file in the program, various
-     data about that object file followed by the byte cache ("bcache")
-     statistics for the object file.  The objfile data includes the
-     number of minimal, partial, full, and stabs symbols, the number of
-     types defined by the objfile, the number of as yet unexpanded psym
-     tables, the number of line tables and string tables, and the amount
-     of memory used by the various tables.  The bcache statistics
-     include the counts, sizes, and counts of duplicates of all and
-     unique objects, max, average, and median entry size, total memory
-     used and its overhead and savings, and various measures of the hash
-     table size and chain lengths.
-
-'maint print target-stack'
-     A "target" is an interface between the debugger and a particular
-     kind of file or process.  Targets can be stacked in "strata", so
-     that more than one target can potentially respond to a request.  In
-     particular, memory accesses will walk down the stack of targets
-     until they find a target that is interested in handling that
-     particular address.
-
-     This command prints a short description of each layer that was
-     pushed on the "target stack", starting from the top layer down to
-     the bottom one.
-
-'maint print type EXPR'
-     Print the type chain for a type specified by EXPR.  The argument
-     can be either a type name or a symbol.  If it is a symbol, the type
-     of that symbol is described.  The type chain produced by this
-     command is a recursive definition of the data type as stored in
-     GDB's data structures, including its flags and contained types.
-
-'maint set dwarf2 always-disassemble'
-'maint show dwarf2 always-disassemble'
-     Control the behavior of 'info address' when using DWARF debugging
-     information.
-
-     The default is 'off', which means that GDB should try to describe a
-     variable's location in an easily readable format.  When 'on', GDB
-     will instead display the DWARF location expression in an
-     assembly-like format.  Note that some locations are too complex for
-     GDB to describe simply; in this case you will always see the
-     disassembly form.
-
-     Here is an example of the resulting disassembly:
-
-          (gdb) info addr argc
-          Symbol "argc" is a complex DWARF expression:
-               1: DW_OP_fbreg 0
-
-     For more information on these expressions, see the DWARF standard
-     (http://www.dwarfstd.org/).
-
-'maint set dwarf2 max-cache-age'
-'maint show dwarf2 max-cache-age'
-     Control the DWARF 2 compilation unit cache.
-
-     In object files with inter-compilation-unit references, such as
-     those produced by the GCC option '-feliminate-dwarf2-dups', the
-     DWARF 2 reader needs to frequently refer to previously read
-     compilation units.  This setting controls how long a compilation
-     unit will remain in the cache if it is not referenced.  A higher
-     limit means that cached compilation units will be stored in memory
-     longer, and more total memory will be used.  Setting it to zero
-     disables caching, which will slow down GDB startup, but reduce
-     memory consumption.
-
-'maint set profile'
-'maint show profile'
-     Control profiling of GDB.
-
-     Profiling will be disabled until you use the 'maint set profile'
-     command to enable it.  When you enable profiling, the system will
-     begin collecting timing and execution count data; when you disable
-     profiling or exit GDB, the results will be written to a log file.
-     Remember that if you use profiling, GDB will overwrite the
-     profiling log file (often called 'gmon.out').  If you have a record
-     of important profiling data in a 'gmon.out' file, be sure to move
-     it to a safe location.
-
-     Configuring with '--enable-profiling' arranges for GDB to be
-     compiled with the '-pg' compiler option.
-
-'maint set show-debug-regs'
-'maint show show-debug-regs'
-     Control whether to show variables that mirror the hardware debug
-     registers.  Use 'on' to enable, 'off' to disable.  If enabled, the
-     debug registers values are shown when GDB inserts or removes a
-     hardware breakpoint or watchpoint, and when the inferior triggers a
-     hardware-assisted breakpoint or watchpoint.
-
-'maint set show-all-tib'
-'maint show show-all-tib'
-     Control whether to show all non zero areas within a 1k block
-     starting at thread local base, when using the 'info w32
-     thread-information-block' command.
-
-'maint set target-async'
-'maint show target-async'
-     This controls whether GDB targets operate in synchronous or
-     asynchronous mode (*note Background Execution::).  Normally the
-     default is asynchronous, if it is available; but this can be
-     changed to more easily debug problems occurring only in synchronous
-     mode.
-
-'maint set per-command'
-'maint show per-command'
-
-     GDB can display the resources used by each command.  This is useful
-     in debugging performance problems.
-
-     'maint set per-command space [on|off]'
-     'maint show per-command space'
-          Enable or disable the printing of the memory used by GDB for
-          each command.  If enabled, GDB will display how much memory
-          each command took, following the command's own output.  This
-          can also be requested by invoking GDB with the '--statistics'
-          command-line switch (*note Mode Options::).
-
-     'maint set per-command time [on|off]'
-     'maint show per-command time'
-          Enable or disable the printing of the execution time of GDB
-          for each command.  If enabled, GDB will display how much time
-          it took to execute each command, following the command's own
-          output.  Both CPU time and wallclock time are printed.
-          Printing both is useful when trying to determine whether the
-          cost is CPU or, e.g., disk/network latency.  Note that the CPU
-          time printed is for GDB only, it does not include the
-          execution time of the inferior because there's no mechanism
-          currently to compute how much time was spent by GDB and how
-          much time was spent by the program been debugged.  This can
-          also be requested by invoking GDB with the '--statistics'
-          command-line switch (*note Mode Options::).
-
-     'maint set per-command symtab [on|off]'
-     'maint show per-command symtab'
-          Enable or disable the printing of basic symbol table
-          statistics for each command.  If enabled, GDB will display the
-          following information:
-
-            a. number of symbol tables
-            b. number of primary symbol tables
-            c. number of blocks in the blockvector
-
-'maint space VALUE'
-     An alias for 'maint set per-command space'.  A non-zero value
-     enables it, zero disables it.
-
-'maint time VALUE'
-     An alias for 'maint set per-command time'.  A non-zero value
-     enables it, zero disables it.
-
-'maint translate-address [SECTION] ADDR'
-     Find the symbol stored at the location specified by the address
-     ADDR and an optional section name SECTION.  If found, GDB prints
-     the name of the closest symbol and an offset from the symbol's
-     location to the specified address.  This is similar to the 'info
-     address' command (*note Symbols::), except that this command also
-     allows to find symbols in other sections.
-
-     If section was not specified, the section in which the symbol was
-     found is also printed.  For dynamically linked executables, the
-     name of executable or shared library containing the symbol is
-     printed as well.
-
-   The following command is useful for non-interactive invocations of
-GDB, such as in the test suite.
-
-'set watchdog NSEC'
-     Set the maximum number of seconds GDB will wait for the target
-     operation to finish.  If this time expires, GDB reports and error
-     and the command is aborted.
-
-'show watchdog'
-     Show the current setting of the target wait timeout.
+   (1) In 'gdb-7.10.1/gdb/refcard.ps' of the version 7.10.1 release.
 
