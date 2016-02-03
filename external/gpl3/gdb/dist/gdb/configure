@@ -12264,8 +12264,8 @@ if test "${gdb_cv_struct_lwp+set}" = set; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <sys/param.h>
 #define _KMEMUSER
+#include <sys/param.h>
 #include <sys/lwp.h>
 int
 main ()
