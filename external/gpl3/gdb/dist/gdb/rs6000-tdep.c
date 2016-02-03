@@ -934,10 +934,10 @@ rs6000_in_function_epilogue_frame_p (struct frame_info *curfrm,
   return 0;
 }
 
-/* Implementation of gdbarch_in_function_epilogue_p.  */
+/* Implement the stack_frame_destroyed_p gdbarch method.  */
 
 static int
-rs6000_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+rs6000_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   return rs6000_in_function_epilogue_frame_p (get_current_frame (),
 					      gdbarch, pc);
@@ -2220,7 +2220,7 @@ static int
 rs6000_in_solib_return_trampoline (struct gdbarch *gdbarch,
 				   CORE_ADDR pc, const char *name)
 {
-  return name && !strncmp (name, "@FIX", 4);
+  return name && startswith (name, "@FIX");
 }
 
 /* Skip code that the user doesn't want to see when stepping:
@@ -3355,7 +3355,6 @@ static const struct frame_unwind rs6000_frame_unwind =
 static struct rs6000_frame_cache *
 rs6000_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
 {
-  volatile struct gdb_exception ex;
   struct rs6000_frame_cache *cache;
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -3367,7 +3366,7 @@ rs6000_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
   (*this_cache) = cache;
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       /* At this point the stack looks as if we just entered the
 	 function, and the return address is stored in LR.  */
@@ -3382,8 +3381,12 @@ rs6000_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
       trad_frame_set_value (cache->saved_regs,
 			    gdbarch_pc_regnum (gdbarch), lr);
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -5397,8 +5400,8 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   else
     {
       if (info.bfd_arch_info != NULL && info.bfd_arch_info->bits_per_word != 0)
-	wordsize = info.bfd_arch_info->bits_per_word /
-	  info.bfd_arch_info->bits_per_byte;
+	wordsize = (info.bfd_arch_info->bits_per_word
+		    / info.bfd_arch_info->bits_per_byte);
       else
 	wordsize = 4;
     }
@@ -5887,7 +5890,7 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     set_gdbarch_push_dummy_call (gdbarch, ppc64_sysv_abi_push_dummy_call);
 
   set_gdbarch_skip_prologue (gdbarch, rs6000_skip_prologue);
-  set_gdbarch_in_function_epilogue_p (gdbarch, rs6000_in_function_epilogue_p);
+  set_gdbarch_stack_frame_destroyed_p (gdbarch, rs6000_stack_frame_destroyed_p);
   set_gdbarch_skip_main_prologue (gdbarch, rs6000_skip_main_prologue);
 
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
@@ -6049,7 +6052,7 @@ powerpc_set_vector_abi (char *args, int from_tty,
 			struct cmd_list_element *c)
 {
   struct gdbarch_info info;
-  enum powerpc_vector_abi vector_abi;
+  int vector_abi;
 
   for (vector_abi = POWERPC_VEC_AUTO;
        vector_abi != POWERPC_VEC_LAST;

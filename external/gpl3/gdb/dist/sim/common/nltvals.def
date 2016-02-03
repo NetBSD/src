@@ -366,6 +366,24 @@
 /* end m32r sys target macros */
 #endif
 #endif
+#ifdef NL_TARGET_mcore
+#ifdef sys_defs
+/* from syscall.h */
+/* begin mcore sys target macros */
+ { "SYS_access", 33 },
+ { "SYS_close", 6 },
+ { "SYS_creat", 8 },
+ { "SYS_link", 9 },
+ { "SYS_lseek", 19 },
+ { "SYS_open", 5 },
+ { "SYS_read", 3 },
+ { "SYS_time", 13 },
+ { "SYS_times", 43 },
+ { "SYS_unlink", 10 },
+ { "SYS_write", 4 },
+/* end mcore sys target macros */
+#endif
+#endif
 #ifdef NL_TARGET_mn10200
 #ifdef sys_defs
 /* from syscall.h */

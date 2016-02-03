@@ -105,9 +105,6 @@ static char *default_pid_to_str (struct target_ops *ops, ptid_t ptid);
 static enum exec_direction_kind default_execution_direction
     (struct target_ops *self);
 
-static CORE_ADDR default_target_decr_pc_after_break (struct target_ops *ops,
-						     struct gdbarch *gdbarch);
-
 static struct target_ops debug_target;
 
 #include "target-delegates.c"
@@ -817,9 +814,8 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
   if (gdbarch_fetch_tls_load_module_address_p (target_gdbarch ()))
     {
       ptid_t ptid = inferior_ptid;
-      volatile struct gdb_exception ex;
 
-      TRY_CATCH (ex, RETURN_MASK_ALL)
+      TRY
 	{
 	  CORE_ADDR lm_addr;
 	  
@@ -832,7 +828,7 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
 	}
       /* If an error occurred, print TLS related messages here.  Otherwise,
          throw the error to some higher catcher.  */
-      if (ex.reason < 0)
+      CATCH (ex, RETURN_MASK_ALL)
 	{
 	  int objfile_is_library = (objfile->flags & OBJF_SHARED);
 
@@ -881,6 +877,7 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
 	      break;
 	    }
 	}
+      END_CATCH
     }
   /* It wouldn't be wrong here to try a gdbarch method, too; finding
      TLS is an ABI-specific thing.  But we don't do that yet.  */
@@ -1063,7 +1060,7 @@ memory_xfer_check_region (gdb_byte *readbuf, const gdb_byte *writebuf,
    instance, could have some of memory but delegate other bits to
    the target below it.  So, we must manually try all targets.  */
 
-static enum target_xfer_status
+enum target_xfer_status
 raw_memory_xfer_partial (struct target_ops *ops, gdb_byte *readbuf,
 			 const gdb_byte *writebuf, ULONGEST memaddr, LONGEST len,
 			 ULONGEST *xfered_len)
@@ -1595,28 +1592,37 @@ target_read (struct target_ops *ops,
 	     const char *annex, gdb_byte *buf,
 	     ULONGEST offset, LONGEST len)
 {
-  LONGEST xfered = 0;
+  LONGEST xfered_total = 0;
+  int unit_size = 1;
 
-  while (xfered < len)
+  /* If we are reading from a memory object, find the length of an addressable
+     unit for that architecture.  */
+  if (object == TARGET_OBJECT_MEMORY
+      || object == TARGET_OBJECT_STACK_MEMORY
+      || object == TARGET_OBJECT_CODE_MEMORY
+      || object == TARGET_OBJECT_RAW_MEMORY)
+    unit_size = gdbarch_addressable_memory_unit_size (target_gdbarch ());
+
+  while (xfered_total < len)
     {
-      ULONGEST xfered_len;
+      ULONGEST xfered_partial;
       enum target_xfer_status status;
 
       status = target_read_partial (ops, object, annex,
-				    (gdb_byte *) buf + xfered,
-				    offset + xfered, len - xfered,
-				    &xfered_len);
+				    buf + xfered_total * unit_size,
+				    offset + xfered_total, len - xfered_total,
+				    &xfered_partial);
 
       /* Call an observer, notifying them of the xfer progress?  */
       if (status == TARGET_XFER_EOF)
-	return xfered;
+	return xfered_total;
       else if (status == TARGET_XFER_OK)
 	{
-	  xfered += xfered_len;
+	  xfered_total += xfered_partial;
 	  QUIT;
 	}
       else
-	return -1;
+	return TARGET_XFER_E_IO;
 
     }
   return len;
@@ -1645,7 +1651,8 @@ target_read (struct target_ops *ops,
 
 static void
 read_whatever_is_readable (struct target_ops *ops,
-			   ULONGEST begin, ULONGEST end,
+			   const ULONGEST begin, const ULONGEST end,
+			   int unit_size,
 			   VEC(memory_read_result_s) **result)
 {
   gdb_byte *buf = xmalloc (end - begin);
@@ -1672,7 +1679,7 @@ read_whatever_is_readable (struct target_ops *ops,
       ++current_begin;
     }
   else if (target_read_partial (ops, TARGET_OBJECT_MEMORY, NULL,
-				buf + (end-begin) - 1, end - 1, 1,
+				buf + (end - begin) - 1, end - 1, 1,
 				&xfered_len) == TARGET_XFER_OK)
     {
       forward = 0;
@@ -1694,7 +1701,7 @@ read_whatever_is_readable (struct target_ops *ops,
       ULONGEST first_half_begin, first_half_end;
       ULONGEST second_half_begin, second_half_end;
       LONGEST xfer;
-      ULONGEST middle = current_begin + (current_end - current_begin)/2;
+      ULONGEST middle = current_begin + (current_end - current_begin) / 2;
 
       if (forward)
 	{
@@ -1712,7 +1719,7 @@ read_whatever_is_readable (struct target_ops *ops,
 	}
 
       xfer = target_read (ops, TARGET_OBJECT_MEMORY, NULL,
-			  buf + (first_half_begin - begin),
+			  buf + (first_half_begin - begin) * unit_size,
 			  first_half_begin,
 			  first_half_end - first_half_begin);
 
@@ -1726,7 +1733,7 @@ read_whatever_is_readable (struct target_ops *ops,
       else
 	{
 	  /* This half is not readable.  Because we've tried one byte, we
-	     know some part of this half if actually redable.  Go to the next
+	     know some part of this half if actually readable.  Go to the next
 	     iteration to divide again and try to read.
 
 	     We don't handle the other half, because this function only tries
@@ -1746,10 +1753,11 @@ read_whatever_is_readable (struct target_ops *ops,
   else
     {
       /* The [current_end, end) range has been read.  */
-      LONGEST rlen = end - current_end;
+      LONGEST region_len = end - current_end;
 
-      r.data = xmalloc (rlen);
-      memcpy (r.data, buf + current_end - begin, rlen);
+      r.data = xmalloc (region_len * unit_size);
+      memcpy (r.data, buf + (current_end - begin) * unit_size,
+	      region_len * unit_size);
       r.begin = current_end;
       r.end = end;
       xfree (buf);
@@ -1772,57 +1780,60 @@ free_memory_read_result_vector (void *x)
 }
 
 VEC(memory_read_result_s) *
-read_memory_robust (struct target_ops *ops, ULONGEST offset, LONGEST len)
+read_memory_robust (struct target_ops *ops,
+		    const ULONGEST offset, const LONGEST len)
 {
   VEC(memory_read_result_s) *result = 0;
+  int unit_size = gdbarch_addressable_memory_unit_size (target_gdbarch ());
 
-  LONGEST xfered = 0;
-  while (xfered < len)
+  LONGEST xfered_total = 0;
+  while (xfered_total < len)
     {
-      struct mem_region *region = lookup_mem_region (offset + xfered);
-      LONGEST rlen;
+      struct mem_region *region = lookup_mem_region (offset + xfered_total);
+      LONGEST region_len;
 
       /* If there is no explicit region, a fake one should be created.  */
       gdb_assert (region);
 
       if (region->hi == 0)
-	rlen = len - xfered;
+	region_len = len - xfered_total;
       else
-	rlen = region->hi - offset;
+	region_len = region->hi - offset;
 
       if (region->attrib.mode == MEM_NONE || region->attrib.mode == MEM_WO)
 	{
 	  /* Cannot read this region.  Note that we can end up here only
 	     if the region is explicitly marked inaccessible, or
 	     'inaccessible-by-default' is in effect.  */
-	  xfered += rlen;
+	  xfered_total += region_len;
 	}
       else
 	{
-	  LONGEST to_read = min (len - xfered, rlen);
-	  gdb_byte *buffer = (gdb_byte *)xmalloc (to_read);
+	  LONGEST to_read = min (len - xfered_total, region_len);
+	  gdb_byte *buffer = (gdb_byte *) xmalloc (to_read * unit_size);
 
-	  LONGEST xfer = target_read (ops, TARGET_OBJECT_MEMORY, NULL,
-				      (gdb_byte *) buffer,
-				      offset + xfered, to_read);
+	  LONGEST xfered_partial =
+	      target_read (ops, TARGET_OBJECT_MEMORY, NULL,
+			   (gdb_byte *) buffer,
+			   offset + xfered_total, to_read);
 	  /* Call an observer, notifying them of the xfer progress?  */
-	  if (xfer <= 0)
+	  if (xfered_partial <= 0)
 	    {
 	      /* Got an error reading full chunk.  See if maybe we can read
 		 some subrange.  */
 	      xfree (buffer);
-	      read_whatever_is_readable (ops, offset + xfered,
-					 offset + xfered + to_read, &result);
-	      xfered += to_read;
+	      read_whatever_is_readable (ops, offset + xfered_total, unit_size,
+					 offset + xfered_total + to_read, &result);
+	      xfered_total += to_read;
 	    }
 	  else
 	    {
 	      struct memory_read_result r;
 	      r.data = buffer;
-	      r.begin = offset + xfered;
-	      r.end = r.begin + xfer;
+	      r.begin = offset + xfered_total;
+	      r.end = r.begin + xfered_partial;
 	      VEC_safe_push (memory_read_result_s, result, &r);
-	      xfered += xfer;
+	      xfered_total += xfered_partial;
 	    }
 	  QUIT;
 	}
@@ -1840,29 +1851,38 @@ target_write_with_progress (struct target_ops *ops,
 			    ULONGEST offset, LONGEST len,
 			    void (*progress) (ULONGEST, void *), void *baton)
 {
-  LONGEST xfered = 0;
+  LONGEST xfered_total = 0;
+  int unit_size = 1;
+
+  /* If we are writing to a memory object, find the length of an addressable
+     unit for that architecture.  */
+  if (object == TARGET_OBJECT_MEMORY
+      || object == TARGET_OBJECT_STACK_MEMORY
+      || object == TARGET_OBJECT_CODE_MEMORY
+      || object == TARGET_OBJECT_RAW_MEMORY)
+    unit_size = gdbarch_addressable_memory_unit_size (target_gdbarch ());
 
   /* Give the progress callback a chance to set up.  */
   if (progress)
     (*progress) (0, baton);
 
-  while (xfered < len)
+  while (xfered_total < len)
     {
-      ULONGEST xfered_len;
+      ULONGEST xfered_partial;
       enum target_xfer_status status;
 
       status = target_write_partial (ops, object, annex,
-				     (gdb_byte *) buf + xfered,
-				     offset + xfered, len - xfered,
-				     &xfered_len);
+				     buf + xfered_total * unit_size,
+				     offset + xfered_total, len - xfered_total,
+				     &xfered_partial);
 
       if (status != TARGET_XFER_OK)
-	return status == TARGET_XFER_EOF ? xfered : -1;
+	return status == TARGET_XFER_EOF ? xfered_total : TARGET_XFER_E_IO;
 
       if (progress)
-	(*progress) (xfered_len, baton);
+	(*progress) (xfered_partial, baton);
 
-      xfered += xfered_len;
+      xfered_total += xfered_partial;
       QUIT;
     }
   return len;
@@ -2687,12 +2707,85 @@ default_fileio_target (void)
     return find_default_run_target ("file I/O");
 }
 
-/* Open FILENAME on the target, using FLAGS and MODE.  Return a
-   target file descriptor, or -1 if an error occurs (and set
-   *TARGET_ERRNO).  */
-int
-target_fileio_open (const char *filename, int flags, int mode,
-		    int *target_errno)
+/* File handle for target file operations.  */
+
+typedef struct
+{
+  /* The target on which this file is open.  */
+  struct target_ops *t;
+
+  /* The file descriptor on the target.  */
+  int fd;
+} fileio_fh_t;
+
+DEF_VEC_O (fileio_fh_t);
+
+/* Vector of currently open file handles.  The value returned by
+   target_fileio_open and passed as the FD argument to other
+   target_fileio_* functions is an index into this vector.  This
+   vector's entries are never freed; instead, files are marked as
+   closed, and the handle becomes available for reuse.  */
+static VEC (fileio_fh_t) *fileio_fhandles;
+
+/* Macro to check whether a fileio_fh_t represents a closed file.  */
+#define is_closed_fileio_fh(fd) ((fd) < 0)
+
+/* Index into fileio_fhandles of the lowest handle that might be
+   closed.  This permits handle reuse without searching the whole
+   list each time a new file is opened.  */
+static int lowest_closed_fd;
+
+/* Acquire a target fileio file descriptor.  */
+
+static int
+acquire_fileio_fd (struct target_ops *t, int fd)
+{
+  fileio_fh_t *fh, buf;
+
+  gdb_assert (!is_closed_fileio_fh (fd));
+
+  /* Search for closed handles to reuse.  */
+  for (;
+       VEC_iterate (fileio_fh_t, fileio_fhandles,
+                    lowest_closed_fd, fh);
+       lowest_closed_fd++)
+    if (is_closed_fileio_fh (fh->fd))
+      break;
+
+  /* Push a new handle if no closed handles were found.  */
+  if (lowest_closed_fd == VEC_length (fileio_fh_t, fileio_fhandles))
+    fh = VEC_safe_push (fileio_fh_t, fileio_fhandles, NULL);
+
+  /* Fill in the handle.  */
+  fh->t = t;
+  fh->fd = fd;
+
+  /* Return its index, and start the next lookup at
+     the next index.  */
+  return lowest_closed_fd++;
+}
+
+/* Release a target fileio file descriptor.  */
+
+static void
+release_fileio_fd (int fd, fileio_fh_t *fh)
+{
+  fh->fd = -1;
+  lowest_closed_fd = min (lowest_closed_fd, fd);
+}
+
+/* Return a pointer to the fileio_fhandle_t corresponding to FD.  */
+
+#define fileio_fd_to_fh(fd) \
+  VEC_index (fileio_fh_t, fileio_fhandles, (fd))
+
+/* Helper for target_fileio_open and
+   target_fileio_open_warn_if_slow.  */
+
+static int
+target_fileio_open_1 (struct inferior *inf, const char *filename,
+		      int flags, int mode, int warn_if_slow,
+		      int *target_errno)
 {
   struct target_ops *t;
 
@@ -2700,13 +2793,22 @@ target_fileio_open (const char *filename, int flags, int mode,
     {
       if (t->to_fileio_open != NULL)
 	{
-	  int fd = t->to_fileio_open (t, filename, flags, mode, target_errno);
+	  int fd = t->to_fileio_open (t, inf, filename, flags, mode,
+				      warn_if_slow, target_errno);
+
+	  if (fd < 0)
+	    fd = -1;
+	  else
+	    fd = acquire_fileio_fd (t, fd);
 
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog,
-				"target_fileio_open (%s,0x%x,0%o) = %d (%d)\n",
+				"target_fileio_open (%d,%s,0x%x,0%o,%d)"
+				" = %d (%d)\n",
+				inf == NULL ? 0 : inf->num,
 				filename, flags, mode,
-				fd, fd != -1 ? 0 : *target_errno);
+				warn_if_slow, fd,
+				fd != -1 ? 0 : *target_errno);
 	  return fd;
 	}
     }
@@ -2715,95 +2817,123 @@ target_fileio_open (const char *filename, int flags, int mode,
   return -1;
 }
 
-/* Write up to LEN bytes from WRITE_BUF to FD on the target.
-   Return the number of bytes written, or -1 if an error occurs
-   (and set *TARGET_ERRNO).  */
+/* See target.h.  */
+
+int
+target_fileio_open (struct inferior *inf, const char *filename,
+		    int flags, int mode, int *target_errno)
+{
+  return target_fileio_open_1 (inf, filename, flags, mode, 0,
+			       target_errno);
+}
+
+/* See target.h.  */
+
+int
+target_fileio_open_warn_if_slow (struct inferior *inf,
+				 const char *filename,
+				 int flags, int mode, int *target_errno)
+{
+  return target_fileio_open_1 (inf, filename, flags, mode, 1,
+			       target_errno);
+}
+
+/* See target.h.  */
+
 int
 target_fileio_pwrite (int fd, const gdb_byte *write_buf, int len,
 		      ULONGEST offset, int *target_errno)
 {
-  struct target_ops *t;
+  fileio_fh_t *fh = fileio_fd_to_fh (fd);
+  int ret = -1;
 
-  for (t = default_fileio_target (); t != NULL; t = t->beneath)
-    {
-      if (t->to_fileio_pwrite != NULL)
-	{
-	  int ret = t->to_fileio_pwrite (t, fd, write_buf, len, offset,
-					 target_errno);
+  if (is_closed_fileio_fh (fh->fd))
+    *target_errno = EBADF;
+  else
+    ret = fh->t->to_fileio_pwrite (fh->t, fh->fd, write_buf,
+				   len, offset, target_errno);
 
-	  if (targetdebug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"target_fileio_pwrite (%d,...,%d,%s) "
-				"= %d (%d)\n",
-				fd, len, pulongest (offset),
-				ret, ret != -1 ? 0 : *target_errno);
-	  return ret;
-	}
-    }
-
-  *target_errno = FILEIO_ENOSYS;
-  return -1;
+  if (targetdebug)
+    fprintf_unfiltered (gdb_stdlog,
+			"target_fileio_pwrite (%d,...,%d,%s) "
+			"= %d (%d)\n",
+			fd, len, pulongest (offset),
+			ret, ret != -1 ? 0 : *target_errno);
+  return ret;
 }
 
-/* Read up to LEN bytes FD on the target into READ_BUF.
-   Return the number of bytes read, or -1 if an error occurs
-   (and set *TARGET_ERRNO).  */
+/* See target.h.  */
+
 int
 target_fileio_pread (int fd, gdb_byte *read_buf, int len,
 		     ULONGEST offset, int *target_errno)
 {
-  struct target_ops *t;
+  fileio_fh_t *fh = fileio_fd_to_fh (fd);
+  int ret = -1;
 
-  for (t = default_fileio_target (); t != NULL; t = t->beneath)
-    {
-      if (t->to_fileio_pread != NULL)
-	{
-	  int ret = t->to_fileio_pread (t, fd, read_buf, len, offset,
-					target_errno);
+  if (is_closed_fileio_fh (fh->fd))
+    *target_errno = EBADF;
+  else
+    ret = fh->t->to_fileio_pread (fh->t, fh->fd, read_buf,
+				  len, offset, target_errno);
 
-	  if (targetdebug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"target_fileio_pread (%d,...,%d,%s) "
-				"= %d (%d)\n",
-				fd, len, pulongest (offset),
-				ret, ret != -1 ? 0 : *target_errno);
-	  return ret;
-	}
-    }
-
-  *target_errno = FILEIO_ENOSYS;
-  return -1;
+  if (targetdebug)
+    fprintf_unfiltered (gdb_stdlog,
+			"target_fileio_pread (%d,...,%d,%s) "
+			"= %d (%d)\n",
+			fd, len, pulongest (offset),
+			ret, ret != -1 ? 0 : *target_errno);
+  return ret;
 }
 
-/* Close FD on the target.  Return 0, or -1 if an error occurs
-   (and set *TARGET_ERRNO).  */
+/* See target.h.  */
+
+int
+target_fileio_fstat (int fd, struct stat *sb, int *target_errno)
+{
+  fileio_fh_t *fh = fileio_fd_to_fh (fd);
+  int ret = -1;
+
+  if (is_closed_fileio_fh (fh->fd))
+    *target_errno = EBADF;
+  else
+    ret = fh->t->to_fileio_fstat (fh->t, fh->fd, sb, target_errno);
+
+  if (targetdebug)
+    fprintf_unfiltered (gdb_stdlog,
+			"target_fileio_fstat (%d) = %d (%d)\n",
+			fd, ret, ret != -1 ? 0 : *target_errno);
+  return ret;
+}
+
+/* See target.h.  */
+
 int
 target_fileio_close (int fd, int *target_errno)
 {
-  struct target_ops *t;
+  fileio_fh_t *fh = fileio_fd_to_fh (fd);
+  int ret = -1;
 
-  for (t = default_fileio_target (); t != NULL; t = t->beneath)
+  if (is_closed_fileio_fh (fh->fd))
+    *target_errno = EBADF;
+  else
     {
-      if (t->to_fileio_close != NULL)
-	{
-	  int ret = t->to_fileio_close (t, fd, target_errno);
-
-	  if (targetdebug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"target_fileio_close (%d) = %d (%d)\n",
-				fd, ret, ret != -1 ? 0 : *target_errno);
-	  return ret;
-	}
+      ret = fh->t->to_fileio_close (fh->t, fh->fd, target_errno);
+      release_fileio_fd (fd, fh);
     }
 
-  *target_errno = FILEIO_ENOSYS;
-  return -1;
+  if (targetdebug)
+    fprintf_unfiltered (gdb_stdlog,
+			"target_fileio_close (%d) = %d (%d)\n",
+			fd, ret, ret != -1 ? 0 : *target_errno);
+  return ret;
 }
 
-/* Unlink FILENAME on the target.  Return 0, or -1 if an error
-   occurs (and set *TARGET_ERRNO).  */
+/* See target.h.  */
+
 int
-target_fileio_unlink (const char *filename, int *target_errno)
+target_fileio_unlink (struct inferior *inf, const char *filename,
+		      int *target_errno)
 {
   struct target_ops *t;
 
@@ -2811,12 +2941,15 @@ target_fileio_unlink (const char *filename, int *target_errno)
     {
       if (t->to_fileio_unlink != NULL)
 	{
-	  int ret = t->to_fileio_unlink (t, filename, target_errno);
+	  int ret = t->to_fileio_unlink (t, inf, filename,
+					 target_errno);
 
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog,
-				"target_fileio_unlink (%s) = %d (%d)\n",
-				filename, ret, ret != -1 ? 0 : *target_errno);
+				"target_fileio_unlink (%d,%s)"
+				" = %d (%d)\n",
+				inf == NULL ? 0 : inf->num, filename,
+				ret, ret != -1 ? 0 : *target_errno);
 	  return ret;
 	}
     }
@@ -2825,11 +2958,11 @@ target_fileio_unlink (const char *filename, int *target_errno)
   return -1;
 }
 
-/* Read value of symbolic link FILENAME on the target.  Return a
-   null-terminated string allocated via xmalloc, or NULL if an error
-   occurs (and set *TARGET_ERRNO).  */
+/* See target.h.  */
+
 char *
-target_fileio_readlink (const char *filename, int *target_errno)
+target_fileio_readlink (struct inferior *inf, const char *filename,
+			int *target_errno)
 {
   struct target_ops *t;
 
@@ -2837,11 +2970,14 @@ target_fileio_readlink (const char *filename, int *target_errno)
     {
       if (t->to_fileio_readlink != NULL)
 	{
-	  char *ret = t->to_fileio_readlink (t, filename, target_errno);
+	  char *ret = t->to_fileio_readlink (t, inf, filename,
+					     target_errno);
 
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog,
-				"target_fileio_readlink (%s) = %s (%d)\n",
+				"target_fileio_readlink (%d,%s)"
+				" = %s (%d)\n",
+				inf == NULL ? 0 : inf->num,
 				filename, ret? ret : "(nil)",
 				ret? 0 : *target_errno);
 	  return ret;
@@ -2861,14 +2997,16 @@ target_fileio_close_cleanup (void *opaque)
   target_fileio_close (fd, &target_errno);
 }
 
-/* Read target file FILENAME.  Store the result in *BUF_P and
-   return the size of the transferred data.  PADDING additional bytes are
-   available in *BUF_P.  This is a helper function for
-   target_fileio_read_alloc; see the declaration of that function for more
-   information.  */
+/* Read target file FILENAME, in the filesystem as seen by INF.  If
+   INF is NULL, use the filesystem seen by the debugger (GDB or, for
+   remote targets, the remote stub).  Store the result in *BUF_P and
+   return the size of the transferred data.  PADDING additional bytes
+   are available in *BUF_P.  This is a helper function for
+   target_fileio_read_alloc; see the declaration of that function for
+   more information.  */
 
 static LONGEST
-target_fileio_read_alloc_1 (const char *filename,
+target_fileio_read_alloc_1 (struct inferior *inf, const char *filename,
 			    gdb_byte **buf_p, int padding)
 {
   struct cleanup *close_cleanup;
@@ -2878,7 +3016,8 @@ target_fileio_read_alloc_1 (const char *filename,
   int fd;
   int target_errno;
 
-  fd = target_fileio_open (filename, FILEIO_O_RDONLY, 0700, &target_errno);
+  fd = target_fileio_open (inf, filename, FILEIO_O_RDONLY, 0700,
+			   &target_errno);
   if (fd == -1)
     return -1;
 
@@ -2925,30 +3064,25 @@ target_fileio_read_alloc_1 (const char *filename,
     }
 }
 
-/* Read target file FILENAME.  Store the result in *BUF_P and return
-   the size of the transferred data.  See the declaration in "target.h"
-   function for more information about the return value.  */
+/* See target.h.  */
 
 LONGEST
-target_fileio_read_alloc (const char *filename, gdb_byte **buf_p)
+target_fileio_read_alloc (struct inferior *inf, const char *filename,
+			  gdb_byte **buf_p)
 {
-  return target_fileio_read_alloc_1 (filename, buf_p, 0);
+  return target_fileio_read_alloc_1 (inf, filename, buf_p, 0);
 }
 
-/* Read target file FILENAME.  The result is NUL-terminated and
-   returned as a string, allocated using xmalloc.  If an error occurs
-   or the transfer is unsupported, NULL is returned.  Empty objects
-   are returned as allocated but empty strings.  A warning is issued
-   if the result contains any embedded NUL bytes.  */
+/* See target.h.  */
 
 char *
-target_fileio_read_stralloc (const char *filename)
+target_fileio_read_stralloc (struct inferior *inf, const char *filename)
 {
   gdb_byte *buffer;
   char *bufstr;
   LONGEST i, transferred;
 
-  transferred = target_fileio_read_alloc_1 (filename, &buffer, 1);
+  transferred = target_fileio_read_alloc_1 (inf, filename, &buffer, 1);
   bufstr = (char *) buffer;
 
   if (transferred < 0)
@@ -3161,6 +3295,14 @@ target_stop (ptid_t ptid)
     }
 
   (*current_target.to_stop) (&current_target, ptid);
+}
+
+/* See target.h.  */
+
+void
+target_check_pending_interrupt (void)
+{
+  (*current_target.to_check_pending_interrupt) (&current_target);
 }
 
 /* See target/target.h.  */
@@ -3389,10 +3531,18 @@ target_ranged_break_num_registers (void)
 
 /* See target.h.  */
 
-struct btrace_target_info *
-target_enable_btrace (ptid_t ptid)
+int
+target_supports_btrace (enum btrace_format format)
 {
-  return current_target.to_enable_btrace (&current_target, ptid);
+  return current_target.to_supports_btrace (&current_target, format);
+}
+
+/* See target.h.  */
+
+struct btrace_target_info *
+target_enable_btrace (ptid_t ptid, const struct btrace_config *conf)
+{
+  return current_target.to_enable_btrace (&current_target, ptid, conf);
 }
 
 /* See target.h.  */
@@ -3414,11 +3564,19 @@ target_teardown_btrace (struct btrace_target_info *btinfo)
 /* See target.h.  */
 
 enum btrace_error
-target_read_btrace (VEC (btrace_block_s) **btrace,
+target_read_btrace (struct btrace_data *btrace,
 		    struct btrace_target_info *btinfo,
 		    enum btrace_read_type type)
 {
   return current_target.to_read_btrace (&current_target, btrace, btinfo, type);
+}
+
+/* See target.h.  */
+
+const struct btrace_config *
+target_btrace_conf (const struct btrace_target_info *btinfo)
+{
+  return current_target.to_btrace_conf (&current_target, btinfo);
 }
 
 /* See target.h.  */
@@ -3554,23 +3712,6 @@ const struct frame_unwind *
 target_get_tailcall_unwinder (void)
 {
   return current_target.to_get_tailcall_unwinder (&current_target);
-}
-
-/* Default implementation of to_decr_pc_after_break.  */
-
-static CORE_ADDR
-default_target_decr_pc_after_break (struct target_ops *ops,
-				    struct gdbarch *gdbarch)
-{
-  return gdbarch_decr_pc_after_break (gdbarch);
-}
-
-/* See target.h.  */
-
-CORE_ADDR
-target_decr_pc_after_break (struct gdbarch *gdbarch)
-{
-  return current_target.to_decr_pc_after_break (&current_target, gdbarch);
 }
 
 /* See target.h.  */

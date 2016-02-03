@@ -38,6 +38,10 @@
 #endif
 #include "x86-xstate.h"
 #include "nat/linux-btrace.h"
+#include "nat/linux-nat.h"
+#include "nat/x86-linux.h"
+#include "nat/x86-linux-dregs.h"
+#include "nat/linux-ptrace.h"
 
 /* Per-thread arch-specific data we want to keep.  */
 
@@ -47,186 +51,6 @@ struct arch_lwp_info
   int debug_registers_changed;
 };
 
-/* Does the current host support PTRACE_GETREGSET?  */
-int have_ptrace_getregset = -1;
-
-
-/* Support for debug registers.  */
-
-/* Get debug register REGNUM value from only the one LWP of PTID.  */
-
-static unsigned long
-x86_linux_dr_get (ptid_t ptid, int regnum)
-{
-  int tid;
-  unsigned long value;
-
-  gdb_assert (ptid_lwp_p (ptid));
-  tid = ptid_get_lwp (ptid);
-
-  errno = 0;
-  value = ptrace (PTRACE_PEEKUSER, tid,
-		  offsetof (struct user, u_debugreg[regnum]), 0);
-  if (errno != 0)
-    perror_with_name (_("Couldn't read debug register"));
-
-  return value;
-}
-
-/* Set debug register REGNUM to VALUE in only the one LWP of PTID.  */
-
-static void
-x86_linux_dr_set (ptid_t ptid, int regnum, unsigned long value)
-{
-  int tid;
-
-  gdb_assert (ptid_lwp_p (ptid));
-  tid = ptid_get_lwp (ptid);
-
-  errno = 0;
-  ptrace (PTRACE_POKEUSER, tid,
-	  offsetof (struct user, u_debugreg[regnum]), value);
-  if (errno != 0)
-    perror_with_name (_("Couldn't write debug register"));
-}
-
-/* Return the inferior's debug register REGNUM.  */
-
-static CORE_ADDR
-x86_linux_dr_get_addr (int regnum)
-{
-  /* DR6 and DR7 are retrieved with some other way.  */
-  gdb_assert (DR_FIRSTADDR <= regnum && regnum <= DR_LASTADDR);
-
-  return x86_linux_dr_get (inferior_ptid, regnum);
-}
-
-/* Return the inferior's DR7 debug control register.  */
-
-static unsigned long
-x86_linux_dr_get_control (void)
-{
-  return x86_linux_dr_get (inferior_ptid, DR_CONTROL);
-}
-
-/* Get DR_STATUS from only the one LWP of INFERIOR_PTID.  */
-
-static unsigned long
-x86_linux_dr_get_status (void)
-{
-  return x86_linux_dr_get (inferior_ptid, DR_STATUS);
-}
-
-/* Callback for iterate_over_lwps.  Update the debug registers of
-   LWP.  */
-
-static int
-update_debug_registers_callback (struct lwp_info *lwp, void *arg)
-{
-  if (lwp->arch_private == NULL)
-    lwp->arch_private = XCNEW (struct arch_lwp_info);
-
-  /* The actual update is done later just before resuming the lwp, we
-     just mark that the registers need updating.  */
-  lwp->arch_private->debug_registers_changed = 1;
-
-  /* If the lwp isn't stopped, force it to momentarily pause, so we
-     can update its debug registers.  */
-  if (!lwp->stopped)
-    linux_stop_lwp (lwp);
-
-  /* Continue the iteration.  */
-  return 0;
-}
-
-/* Set DR_CONTROL to CONTROL in all LWPs of the current inferior.  */
-
-static void
-x86_linux_dr_set_control (unsigned long control)
-{
-  ptid_t pid_ptid = pid_to_ptid (ptid_get_pid (inferior_ptid));
-
-  iterate_over_lwps (pid_ptid, update_debug_registers_callback, NULL);
-}
-
-/* Set address REGNUM (zero based) to ADDR in all LWPs of the current
-   inferior.  */
-
-static void
-x86_linux_dr_set_addr (int regnum, CORE_ADDR addr)
-{
-  ptid_t pid_ptid = pid_to_ptid (ptid_get_pid (inferior_ptid));
-
-  gdb_assert (regnum >= 0 && regnum <= DR_LASTADDR - DR_FIRSTADDR);
-
-  iterate_over_lwps (pid_ptid, update_debug_registers_callback, NULL);
-}
-
-/* Called when resuming a thread.
-   If the debug regs have changed, update the thread's copies.  */
-
-static void
-x86_linux_prepare_to_resume (struct lwp_info *lwp)
-{
-  int clear_status = 0;
-
-  /* NULL means this is the main thread still going through the shell,
-     or, no watchpoint has been set yet.  In that case, there's
-     nothing to do.  */
-  if (lwp->arch_private == NULL)
-    return;
-
-  if (lwp->arch_private->debug_registers_changed)
-    {
-      struct x86_debug_reg_state *state
-	= x86_debug_reg_state (ptid_get_pid (lwp->ptid));
-      int i;
-
-      /* On Linux kernel before 2.6.33 commit
-	 72f674d203cd230426437cdcf7dd6f681dad8b0d
-	 if you enable a breakpoint by the DR_CONTROL bits you need to have
-	 already written the corresponding DR_FIRSTADDR...DR_LASTADDR registers.
-
-	 Ensure DR_CONTROL gets written as the very last register here.  */
-
-      /* Clear DR_CONTROL first.  In some cases, setting DR0-3 to a
-	 value that doesn't match what is enabled in DR_CONTROL
-	 results in EINVAL.  */
-      x86_linux_dr_set (lwp->ptid, DR_CONTROL, 0);
-
-      ALL_DEBUG_ADDRESS_REGISTERS (i)
-	if (state->dr_ref_count[i] > 0)
-	  {
-	    x86_linux_dr_set (lwp->ptid, i, state->dr_mirror[i]);
-
-	    /* If we're setting a watchpoint, any change the inferior
-	       had done itself to the debug registers needs to be
-	       discarded, otherwise, x86_stopped_data_address can get
-	       confused.  */
-	    clear_status = 1;
-	  }
-
-      /* If DR_CONTROL is supposed to be zero, we've already set it
-	 above.  */
-      if (state->dr_control_mirror != 0)
-	x86_linux_dr_set (lwp->ptid, DR_CONTROL, state->dr_control_mirror);
-
-      lwp->arch_private->debug_registers_changed = 0;
-    }
-
-  if (clear_status || lwp->stop_reason == LWP_STOPPED_BY_WATCHPOINT)
-    x86_linux_dr_set (lwp->ptid, DR_STATUS, 0);
-}
-
-static void
-x86_linux_new_thread (struct lwp_info *lp)
-{
-  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
-
-  info->debug_registers_changed = 1;
-
-  lp->arch_private = info;
-}
 
 
 /* linux_nat_new_fork hook.   */
@@ -338,13 +162,13 @@ x86_linux_read_description (struct target_ops *ops)
       if (ptrace (PTRACE_GETFPXREGS, tid, 0, (int) &fpxregs) < 0)
 	{
 	  have_ptrace_getfpxregs = 0;
-	  have_ptrace_getregset = 0;
+	  have_ptrace_getregset = TRIBOOL_FALSE;
 	  return tdesc_i386_mmx_linux;
 	}
     }
 #endif
 
-  if (have_ptrace_getregset == -1)
+  if (have_ptrace_getregset == TRIBOOL_UNKNOWN)
     {
       uint64_t xstateregs[(X86_XSTATE_SSE_SIZE / sizeof (uint64_t))];
       struct iovec iov;
@@ -355,10 +179,10 @@ x86_linux_read_description (struct target_ops *ops)
       /* Check if PTRACE_GETREGSET works.  */
       if (ptrace (PTRACE_GETREGSET, tid,
 		  (unsigned int) NT_X86_XSTATE, &iov) < 0)
-	have_ptrace_getregset = 0;
+	have_ptrace_getregset = TRIBOOL_FALSE;
       else
 	{
-	  have_ptrace_getregset = 1;
+	  have_ptrace_getregset = TRIBOOL_TRUE;
 
 	  /* Get XCR0 from XSAVE extended state.  */
 	  xcr0 = xstateregs[(I386_LINUX_XSAVE_XCR0_OFFSET
@@ -370,7 +194,7 @@ x86_linux_read_description (struct target_ops *ops)
      PTRACE_GETREGSET is not available then set xcr0_features_bits to
      zero so that the "no-features" descriptions are returned by the
      switches below.  */
-  if (have_ptrace_getregset)
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
     xcr0_features_bits = xcr0 & X86_XSTATE_ALL_MASK;
   else
     xcr0_features_bits = 0;
@@ -427,22 +251,25 @@ x86_linux_read_description (struct target_ops *ops)
 /* Enable branch tracing.  */
 
 static struct btrace_target_info *
-x86_linux_enable_btrace (struct target_ops *self, ptid_t ptid)
+x86_linux_enable_btrace (struct target_ops *self, ptid_t ptid,
+			 const struct btrace_config *conf)
 {
   struct btrace_target_info *tinfo;
   struct gdbarch *gdbarch;
 
   errno = 0;
-  tinfo = linux_enable_btrace (ptid);
+  tinfo = linux_enable_btrace (ptid, conf);
 
   if (tinfo == NULL)
     error (_("Could not enable branch tracing for %s: %s."),
 	   target_pid_to_str (ptid), safe_strerror (errno));
 
   /* Fill in the size of a pointer in bits.  */
-  gdbarch = target_thread_architecture (ptid);
-  tinfo->ptr_bits = gdbarch_ptr_bit (gdbarch);
-
+  if (tinfo->ptr_bits == 0)
+    {
+      gdbarch = target_thread_architecture (ptid);
+      tinfo->ptr_bits = gdbarch_ptr_bit (gdbarch);
+    }
   return tinfo;
 }
 
@@ -470,12 +297,22 @@ x86_linux_teardown_btrace (struct target_ops *self,
 
 static enum btrace_error
 x86_linux_read_btrace (struct target_ops *self,
-		       VEC (btrace_block_s) **data,
+		       struct btrace_data *data,
 		       struct btrace_target_info *btinfo,
 		       enum btrace_read_type type)
 {
   return linux_read_btrace (data, btinfo, type);
 }
+
+/* See to_btrace_conf in target.h.  */
+
+static const struct btrace_config *
+x86_linux_btrace_conf (struct target_ops *self,
+		       const struct btrace_target_info *btinfo)
+{
+  return linux_btrace_conf (btinfo);
+}
+
 
 
 /* Helper for ps_get_thread_area.  Sets BASE_ADDR to a pointer to
@@ -550,6 +387,7 @@ x86_linux_create_target (void)
   t->to_disable_btrace = x86_linux_disable_btrace;
   t->to_teardown_btrace = x86_linux_teardown_btrace;
   t->to_read_btrace = x86_linux_read_btrace;
+  t->to_btrace_conf = x86_linux_btrace_conf;
 
   return t;
 }

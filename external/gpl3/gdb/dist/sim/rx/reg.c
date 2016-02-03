@@ -253,7 +253,7 @@ put_reg (int id, unsigned int v)
       }
 
     default:
-      if (id >= 1 || id <= 15)
+      if (id >= 1 && id <= 15)
 	regs.r[id] = v;
       else
 	abort ();

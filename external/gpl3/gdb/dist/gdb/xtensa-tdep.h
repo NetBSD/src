@@ -162,6 +162,13 @@ typedef enum
 } call_abi_t;
 
 
+struct ctype_cache
+{
+  struct ctype_cache *next;
+  int size;
+  struct type *virtual_type;
+};
+
 /*  Xtensa-specific target dependencies.  */
 
 struct gdbarch_tdep
@@ -228,12 +235,7 @@ struct gdbarch_tdep
   unsigned long *gregmap;
 
   /* Cached register types.  */
-  struct ctype_cache
-    {
-      struct ctype_cache *next;
-      int size;
-      struct type *virtual_type;
-    } *type_entries;
+  struct ctype_cache *type_entries;
 };
 
 /* Macro to instantiate a gdbarch_tdep structure.  */

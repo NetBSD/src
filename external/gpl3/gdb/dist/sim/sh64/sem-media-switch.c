@@ -265,13 +265,13 @@ This file is part of the GNU simulators.
 
 /* If hyper-fast [well not unnecessarily slow] execution is selected, turn
    off frills like tracing and profiling.  */
-/* FIXME: A better way would be to have TRACE_RESULT check for something
+/* FIXME: A better way would be to have CGEN_TRACE_RESULT check for something
    that can cause it to be optimized out.  Another way would be to emit
    special handlers into the instruction "stream".  */
 
 #if FAST_P
-#undef TRACE_RESULT
-#define TRACE_RESULT(cpu, abuf, name, type, val)
+#undef CGEN_TRACE_RESULT
+#define CGEN_TRACE_RESULT(cpu, abuf, name, type, val)
 #endif
 
 #undef GET_ATTR
@@ -456,7 +456,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -475,7 +475,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = ADDSI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), SUBWORDDISI (GET_H_GR (FLD (f_right)), 1));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -494,7 +494,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -513,7 +513,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = EXTSIDI (ADDSI (EXTSISI (FLD (f_disp10)), SUBWORDDISI (GET_H_GR (FLD (f_left)), 1)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -532,7 +532,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = ZEXTSIDI (ADDSI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), SUBWORDDISI (GET_H_GR (FLD (f_right)), 1)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -552,7 +552,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = GET_H_GR (FLD (f_left));
     SET_H_GR (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 ((void) 0); /*nop*/
 }
@@ -573,7 +573,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = ANDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -592,7 +592,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = ANDDI (GET_H_GR (FLD (f_left)), INVDI (GET_H_GR (FLD (f_right))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -611,7 +611,7 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     DI opval = ANDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -635,7 +635,7 @@ if (EQDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -663,7 +663,7 @@ if (EQDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_imm6)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -691,7 +691,7 @@ if (GEDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -719,7 +719,7 @@ if (GEUDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -747,7 +747,7 @@ if (GTDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -775,7 +775,7 @@ if (GTUDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -800,12 +800,12 @@ if (GTUDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) {
   {
     DI opval = ORDI (ADDDI (pc, 4), 1);
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
   {
     UDI opval = CPU (h_tr[FLD (f_trb)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 if (EQSI (FLD (f_dest), 63)) {
 ((void) 0); /*nop*/
@@ -836,7 +836,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -864,7 +864,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_imm6)))) {
     UDI opval = CPU (h_tr[FLD (f_tra)]);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'D', opval);
   }
 }
 }
@@ -939,7 +939,7 @@ sh64_break (current_cpu, pc);
   {
     DI opval = tmp_result;
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -959,7 +959,7 @@ sh64_break (current_cpu, pc);
   {
     DI opval = ((EQDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) ? (1) : (0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -978,7 +978,7 @@ sh64_break (current_cpu, pc);
   {
     DI opval = ((GTDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) ? (1) : (0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -997,7 +997,7 @@ sh64_break (current_cpu, pc);
   {
     DI opval = ((GTUDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))) ? (1) : (0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1018,7 +1018,7 @@ if (EQDI (GET_H_GR (FLD (f_left)), 0)) {
     DI opval = GET_H_GR (FLD (f_right));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -1041,7 +1041,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
     DI opval = GET_H_GR (FLD (f_right));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -1062,7 +1062,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DF opval = sh64_fabsd (current_cpu, GET_H_DR (FLD (f_left_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1081,7 +1081,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     SF opval = sh64_fabss (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1100,7 +1100,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DF opval = sh64_faddd (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1119,7 +1119,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     SF opval = sh64_fadds (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1138,7 +1138,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpeqd (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1157,7 +1157,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpeqs (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)])));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1176,7 +1176,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpged (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1195,7 +1195,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpges (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)])));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1214,7 +1214,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpgtd (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1233,7 +1233,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpgts (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)])));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1252,7 +1252,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpund (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1271,7 +1271,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DI opval = ZEXTBIDI (sh64_fcmpuns (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)])));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1290,7 +1290,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     SF opval = sh64_fcnvds (current_cpu, GET_H_DR (FLD (f_left_right)));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1309,7 +1309,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DF opval = sh64_fcnvsd (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1328,7 +1328,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DF opval = sh64_fdivd (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1347,7 +1347,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     SF opval = sh64_fdivs (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1366,7 +1366,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     SF opval = SUBWORDSISF (CPU (h_fpscr));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1386,17 +1386,17 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     SF opval = GET_H_FV (FLD (f_left));
     SET_H_FV (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
   }
   {
     SF opval = GET_H_FV (FLD (f_right));
     SET_H_FV (FLD (f_right), opval);
-    TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
   }
   {
     SF opval = sh64_fiprs (current_cpu, FLD (f_left), FLD (f_right));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 }
 
@@ -1416,7 +1416,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     DF opval = GETMEMDF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), FLD (f_disp10x8)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1436,7 +1436,7 @@ if (NEDI (GET_H_GR (FLD (f_left)), 0)) {
   {
     SF opval = GET_H_FP (FLD (f_dest));
     SET_H_FP (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
   }
 sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_dest));
 }
@@ -1457,7 +1457,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_de
   {
     SF opval = GETMEMSF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), FLD (f_disp10x4)));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1476,7 +1476,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_de
   {
     DF opval = GETMEMDF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1496,7 +1496,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_de
   {
     SF opval = GET_H_FP (FLD (f_dest));
     SET_H_FP (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
   }
 sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), FLD (f_dest));
 }
@@ -1517,7 +1517,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = GETMEMSF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1536,7 +1536,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_floatld (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1555,7 +1555,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_floatls (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1574,7 +1574,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_floatqd (current_cpu, GET_H_DR (FLD (f_left_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1593,7 +1593,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_floatqs (current_cpu, GET_H_DR (FLD (f_left_right)));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1612,7 +1612,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_fadds (current_cpu, CPU (h_fr[FLD (f_dest)]), sh64_fmuls (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)])));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1631,7 +1631,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = GET_H_DR (FLD (f_left_right));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1650,7 +1650,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DI opval = SUBWORDDFDI (GET_H_DR (FLD (f_left_right)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1669,7 +1669,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = SUBWORDSISF (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1688,7 +1688,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = SUBWORDDIDF (GET_H_GR (FLD (f_left)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1707,7 +1707,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = CPU (h_fr[FLD (f_left_right)]);
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1726,7 +1726,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DI opval = EXTSIDI (SUBWORDSFSI (CPU (h_fr[FLD (f_left_right)])));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -1745,7 +1745,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_fmuld (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1764,7 +1764,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_fmuls (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1783,7 +1783,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_fnegd (current_cpu, GET_H_DR (FLD (f_left_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1802,7 +1802,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_fnegs (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1821,7 +1821,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SI opval = SUBWORDSFSI (CPU (h_fr[FLD (f_left_right)]));
     CPU (h_fpscr) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fpscr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fpscr", 'x', opval);
   }
 
 #undef FLD
@@ -1840,7 +1840,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_fsqrtd (current_cpu, GET_H_DR (FLD (f_left_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -1859,7 +1859,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_fsqrts (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -1878,7 +1878,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = GET_H_DR (FLD (f_dest));
     SETMEMDF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), FLD (f_disp10x8)), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
   }
 
 #undef FLD
@@ -1898,7 +1898,7 @@ sh64_fldp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = GET_H_FP (FLD (f_dest));
     SET_H_FP (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
   }
 sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_dest));
 }
@@ -1919,7 +1919,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_de
   {
     SF opval = CPU (h_fr[FLD (f_dest)]);
     SETMEMSF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), FLD (f_disp10x4)), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
   }
 
 #undef FLD
@@ -1938,7 +1938,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_de
   {
     DF opval = GET_H_DR (FLD (f_dest));
     SETMEMDF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
   }
 
 #undef FLD
@@ -1958,7 +1958,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), FLD (f_disp10x8), FLD (f_de
   {
     SF opval = GET_H_FP (FLD (f_dest));
     SET_H_FP (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fp", 'f', opval);
   }
 sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), FLD (f_dest));
 }
@@ -1979,7 +1979,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = CPU (h_fr[FLD (f_dest)]);
     SETMEMSF (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'f', opval);
   }
 
 #undef FLD
@@ -1998,7 +1998,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_fsubd (current_cpu, GET_H_DR (FLD (f_left)), GET_H_DR (FLD (f_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -2017,7 +2017,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_fsubs (current_cpu, CPU (h_fr[FLD (f_left)]), CPU (h_fr[FLD (f_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -2036,7 +2036,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_ftrcdl (current_cpu, GET_H_DR (FLD (f_left_right)));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -2055,7 +2055,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = sh64_ftrcsl (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     CPU (h_fr[FLD (f_dest)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fr", 'f', opval);
   }
 
 #undef FLD
@@ -2074,7 +2074,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_ftrcdq (current_cpu, GET_H_DR (FLD (f_left_right)));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -2093,7 +2093,7 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     DF opval = sh64_ftrcsq (current_cpu, CPU (h_fr[FLD (f_left_right)]));
     SET_H_DR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "dr", 'f', opval);
   }
 
 #undef FLD
@@ -2113,17 +2113,17 @@ sh64_fstp (current_cpu, pc, GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)), F
   {
     SF opval = GET_H_FMTX (FLD (f_left));
     SET_H_FMTX (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "fmtx", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fmtx", 'f', opval);
   }
   {
     SF opval = GET_H_FV (FLD (f_right));
     SET_H_FV (FLD (f_right), opval);
-    TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
   }
   {
     SF opval = GET_H_FV (FLD (f_dest));
     SET_H_FV (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "fv", 'f', opval);
   }
 sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
 }
@@ -2148,7 +2148,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = GETMEMSI (current_cpu, pc, tmp_address);
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2168,7 +2168,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = GET_H_CR (FLD (f_left));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2187,7 +2187,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = CPU (h_tr[FLD (f_trb)]);
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2207,7 +2207,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = GET_H_GR (FLD (f_left));
     SET_H_GR (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 ((void) 0); /*nop*/
 }
@@ -2228,7 +2228,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = EXTQIDI (GETMEMQI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2247,7 +2247,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = EXTSIDI (GETMEMSI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10x4)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2266,7 +2266,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = GETMEMDI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10x8))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2285,7 +2285,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = ZEXTQIDI (GETMEMQI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2304,7 +2304,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = ZEXTHIDI (GETMEMHI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10x2)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2323,7 +2323,7 @@ sh64_ftrvs (current_cpu, FLD (f_left), FLD (f_right), FLD (f_dest));
   {
     DI opval = EXTHIDI (GETMEMHI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10x2)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2351,7 +2351,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     DI opval = EXTSIDI (GETMEMSI (current_cpu, pc, ANDDI (tmp_addr, -4)));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -2366,7 +2366,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     DI opval = EXTSIDI (tmp_val);
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 } else {
@@ -2381,7 +2381,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     DI opval = EXTSIDI (SLLSI (tmp_val, SUBSI (32, MULSI (8, tmp_bytecount))));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 }
@@ -2414,7 +2414,7 @@ if (ANDQI (tmp_bytecount, 8)) {
     DI opval = GETMEMDI (current_cpu, pc, ANDDI (tmp_addr, -8));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -2432,7 +2432,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     DI opval = tmp_val;
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 } else {
@@ -2450,7 +2450,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     DI opval = SLLDI (tmp_val, SUBSI (64, MULSI (8, tmp_bytecount)));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 }
@@ -2483,7 +2483,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     DI opval = EXTSIDI (GETMEMSI (current_cpu, pc, tmp_addr));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -2498,7 +2498,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     DI opval = EXTSIDI (SLLSI (tmp_val, SUBSI (32, MULSI (8, tmp_bytecount))));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 } else {
@@ -2513,7 +2513,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     DI opval = EXTSIDI (tmp_val);
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 }
@@ -2546,7 +2546,7 @@ if (ANDQI (tmp_bytecount, 8)) {
     DI opval = GETMEMDI (current_cpu, pc, tmp_addr);
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -2564,7 +2564,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     DI opval = SLLDI (tmp_val, SUBSI (64, MULSI (8, tmp_bytecount)));
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 } else {
@@ -2582,7 +2582,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     DI opval = tmp_val;
     SET_H_GR (FLD (f_dest), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 }
@@ -2606,7 +2606,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTQIDI (GETMEMQI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2625,7 +2625,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (GETMEMSI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2644,7 +2644,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GETMEMDI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2663,7 +2663,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ZEXTQIDI (GETMEMUQI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2682,7 +2682,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ZEXTHIDI (GETMEMUHI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2701,7 +2701,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTHIDI (GETMEMHI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -2725,7 +2725,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2754,7 +2754,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2779,7 +2779,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2808,7 +2808,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2833,7 +2833,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2870,7 +2870,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2899,7 +2899,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2936,7 +2936,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2961,7 +2961,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -2990,7 +2990,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3015,7 +3015,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3052,7 +3052,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3081,7 +3081,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3101,7 +3101,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (ANDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))), ANDDI (GET_H_GR (FLD (f_dest)), INVDI (GET_H_GR (FLD (f_right)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -3129,7 +3129,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3166,7 +3166,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3203,7 +3203,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3232,7 +3232,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (tmp_rhs, SLLDI (ANDDI (GET_H_GR (FLD (f_right)), tmp_mask), tmp_count));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3261,7 +3261,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (tmp_rhs, SLLDI (ANDDI (GET_H_GR (FLD (f_right)), tmp_mask), tmp_count));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3290,7 +3290,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (tmp_rhs, SLLDI (ANDDI (GET_H_GR (FLD (f_right)), tmp_mask), tmp_count));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3319,7 +3319,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (tmp_rhs, SLLDI (ANDDI (GET_H_GR (FLD (f_right)), tmp_mask), tmp_count));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3348,7 +3348,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (tmp_rhs, SLLDI (ANDDI (GET_H_GR (FLD (f_right)), tmp_mask), tmp_count));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3377,7 +3377,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (tmp_rhs, SLLDI (ANDDI (GET_H_GR (FLD (f_right)), tmp_mask), tmp_count));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3406,7 +3406,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (tmp_rhs, SLLDI (ANDDI (GET_H_GR (FLD (f_right)), tmp_mask), tmp_count));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3438,7 +3438,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3470,7 +3470,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3495,7 +3495,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3524,7 +3524,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3552,7 +3552,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3586,7 +3586,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3622,7 +3622,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3647,7 +3647,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3672,7 +3672,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3698,7 +3698,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ADDDI (GET_H_GR (FLD (f_dest)), tmp_acc);
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3718,7 +3718,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (FLD (f_imm16));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -3748,7 +3748,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3778,7 +3778,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ADDDI (GET_H_GR (FLD (f_dest)), tmp_acc);
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3803,7 +3803,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3832,7 +3832,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3857,7 +3857,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3886,7 +3886,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3906,7 +3906,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ((LTDI (SRADI (GET_H_GR (FLD (f_left)), ANDDI (GET_H_GR (FLD (f_right)), 63)), NEGDI (SLLDI (1, SUBSI (16, 1))))) ? (NEGDI (SLLDI (1, SUBSI (16, 1)))) : (((LTDI (SRADI (GET_H_GR (FLD (f_left)), ANDDI (GET_H_GR (FLD (f_right)), 63)), SLLDI (1, SUBSI (16, 1)))) ? (SRADI (GET_H_GR (FLD (f_left)), ANDDI (GET_H_GR (FLD (f_right)), 63))) : (SUBDI (SLLDI (1, SUBSI (16, 1)), 1)))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -3942,7 +3942,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3967,7 +3967,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -3996,7 +3996,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4033,7 +4033,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4058,7 +4058,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4087,7 +4087,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4112,7 +4112,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4141,7 +4141,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4166,7 +4166,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4195,7 +4195,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4220,7 +4220,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4249,7 +4249,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTHIDI (tmp_result3), 48), ORDI (SLLDI (ZEXTHIDI (tmp_result2), 32), ORDI (SLLDI (ZEXTHIDI (tmp_result1), 16), ZEXTHIDI (tmp_result0))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4274,7 +4274,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTSIDI (tmp_result1), 32), ZEXTSIDI (tmp_result0));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4311,7 +4311,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4348,7 +4348,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (ZEXTQIDI (tmp_result7), 56), ORDI (SLLDI (ZEXTQIDI (tmp_result6), 48), ORDI (SLLDI (ZEXTQIDI (tmp_result5), 40), ORDI (SLLDI (ZEXTQIDI (tmp_result4), 32), ORDI (SLLDI (ZEXTQIDI (tmp_result3), 24), ORDI (SLLDI (ZEXTQIDI (tmp_result2), 16), ORDI (SLLDI (ZEXTQIDI (tmp_result1), 8), ZEXTQIDI (tmp_result0))))))));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -4368,7 +4368,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = MULDI (EXTSIDI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1)), EXTSIDI (SUBWORDDISI (GET_H_GR (FLD (f_right)), 1)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4387,7 +4387,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = MULDI (ZEXTSIDI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1)), ZEXTSIDI (SUBWORDDISI (GET_H_GR (FLD (f_right)), 1)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4421,7 +4421,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = sh64_nsb (current_cpu, GET_H_GR (FLD (f_left)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4441,7 +4441,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GET_H_GR (FLD (f_left));
     SET_H_GR (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 ((void) 0); /*nop*/
 }
@@ -4463,7 +4463,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GET_H_GR (FLD (f_left));
     SET_H_GR (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 ((void) 0); /*nop*/
 }
@@ -4485,7 +4485,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GET_H_GR (FLD (f_left));
     SET_H_GR (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 ((void) 0); /*nop*/
 }
@@ -4506,7 +4506,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4525,7 +4525,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_imm10)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4545,7 +4545,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GET_H_GR (FLD (f_left));
     SET_H_GR (FLD (f_left), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 ((void) 0); /*nop*/
 }
@@ -4568,7 +4568,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ADDSI (FLD (f_disp16), 1);
     CPU (h_tr[FLD (f_tra)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
   }
 }
 
@@ -4590,7 +4590,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GET_H_GR (FLD (f_right));
     CPU (h_tr[FLD (f_tra)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
   }
 }
 
@@ -4612,7 +4612,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = FLD (f_disp16);
     CPU (h_tr[FLD (f_tra)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
   }
 }
 
@@ -4634,7 +4634,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ADDDI (pc, GET_H_GR (FLD (f_right)));
     CPU (h_tr[FLD (f_tra)]) = opval;
-    TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "tr", 'D', opval);
   }
 }
 
@@ -4658,7 +4658,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     SI opval = GET_H_GR (FLD (f_dest));
     SETMEMSI (current_cpu, pc, tmp_address, opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 
@@ -4678,7 +4678,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GET_H_GR (FLD (f_left));
     SET_H_CR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "cr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cr", 'D', opval);
   }
 
 #undef FLD
@@ -4712,7 +4712,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = SRADI (GET_H_GR (FLD (f_left)), ANDDI (GET_H_GR (FLD (f_right)), 63));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4731,7 +4731,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (SRASI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), ANDDI (GET_H_GR (FLD (f_right)), 63)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4750,7 +4750,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = SRADI (GET_H_GR (FLD (f_left)), FLD (f_uimm6));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4769,7 +4769,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (SRASI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), ANDSI (FLD (f_uimm6), 63)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4788,7 +4788,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = SLLDI (GET_H_GR (FLD (f_left)), ANDDI (GET_H_GR (FLD (f_right)), 63));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4807,7 +4807,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (SLLSI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), ANDDI (GET_H_GR (FLD (f_right)), 63)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4826,7 +4826,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = SLLDI (GET_H_GR (FLD (f_left)), FLD (f_uimm6));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4845,7 +4845,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (SLLSI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), ANDSI (FLD (f_uimm6), 63)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4864,7 +4864,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = SRLDI (GET_H_GR (FLD (f_left)), ANDDI (GET_H_GR (FLD (f_right)), 63));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4883,7 +4883,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (SRLSI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), ANDDI (GET_H_GR (FLD (f_right)), 63)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4902,7 +4902,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = SRLDI (GET_H_GR (FLD (f_left)), FLD (f_uimm6));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4921,7 +4921,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = EXTSIDI (SRLSI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), ANDSI (FLD (f_uimm6), 63)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4940,7 +4940,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = ORDI (SLLDI (GET_H_GR (FLD (f_dest)), 16), ZEXTSIDI (FLD (f_uimm16)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -4974,7 +4974,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     UQI opval = ANDQI (GET_H_GR (FLD (f_dest)), 255);
     SETMEMUQI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -4993,7 +4993,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     SI opval = ANDSI (GET_H_GR (FLD (f_dest)), 0xffffffff);
     SETMEMSI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10x4))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -5012,7 +5012,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     DI opval = GET_H_GR (FLD (f_dest));
     SETMEMDI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10x8))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
   }
 
 #undef FLD
@@ -5031,7 +5031,7 @@ if (ANDQI (tmp_bytecount, 1)) {
   {
     HI opval = ANDHI (GET_H_GR (FLD (f_dest)), 65535);
     SETMEMHI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_disp10x2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -5058,7 +5058,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     SI opval = GET_H_GR (FLD (f_dest));
     SETMEMSI (current_cpu, pc, ANDDI (tmp_addr, -4), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -5070,7 +5070,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5081,7 +5081,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     HI opval = ANDHI (tmp_val, 65535);
     SETMEMHI (current_cpu, pc, ANDDI (tmp_addr, -4), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5096,7 +5096,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     HI opval = ANDHI (tmp_val, 65535);
     SETMEMHI (current_cpu, pc, ANDDI (tmp_addr, -4), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5107,7 +5107,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5142,7 +5142,7 @@ if (ANDQI (tmp_bytecount, 8)) {
     DI opval = GET_H_GR (FLD (f_dest));
     SETMEMDI (current_cpu, pc, ANDDI (tmp_addr, -8), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -5154,7 +5154,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5165,7 +5165,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     HI opval = ANDHI (tmp_val, 65535);
     SETMEMHI (current_cpu, pc, ANDDI (tmp_addr, -4), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5176,7 +5176,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     SI opval = ANDSI (tmp_val, 0xffffffff);
     SETMEMSI (current_cpu, pc, ANDDI (tmp_addr, -8), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 32);
 }
@@ -5191,7 +5191,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     SI opval = ANDSI (tmp_val, 0xffffffff);
     SETMEMSI (current_cpu, pc, ANDDI (tmp_addr, -8), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 32);
 }
@@ -5202,7 +5202,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     HI opval = ANDHI (tmp_val, 65535);
     SETMEMHI (current_cpu, pc, ANDDI (tmp_addr, -4), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5213,7 +5213,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5248,7 +5248,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     USI opval = GET_H_GR (FLD (f_dest));
     SETMEMUSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -5260,7 +5260,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     UHI opval = ANDHI (tmp_val, 65535);
     SETMEMUHI (current_cpu, pc, ANDDI (ADDDI (tmp_addr, 1), -2), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5271,7 +5271,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5286,7 +5286,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5297,7 +5297,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     UHI opval = ANDHI (tmp_val, 65535);
     SETMEMUHI (current_cpu, pc, ANDDI (ADDDI (tmp_addr, 1), -2), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5332,7 +5332,7 @@ if (ANDQI (tmp_bytecount, 8)) {
     UDI opval = GET_H_GR (FLD (f_dest));
     SETMEMUDI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
   }
 } else {
 if (GET_H_ENDIAN ()) {
@@ -5344,7 +5344,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     USI opval = ANDSI (tmp_val, 0xffffffff);
     SETMEMUSI (current_cpu, pc, ANDDI (ADDDI (tmp_addr, 3), -4), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 32);
 }
@@ -5355,7 +5355,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     UHI opval = ANDHI (tmp_val, 65535);
     SETMEMUHI (current_cpu, pc, ANDDI (ADDDI (tmp_addr, 1), -2), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5366,7 +5366,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5381,7 +5381,7 @@ if (ANDQI (tmp_bytecount, 1)) {
     UQI opval = ANDQI (tmp_val, 255);
     SETMEMUQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 8);
 }
@@ -5392,7 +5392,7 @@ if (ANDQI (tmp_bytecount, 2)) {
     UHI opval = ANDHI (tmp_val, 65535);
     SETMEMUHI (current_cpu, pc, ANDDI (ADDDI (tmp_addr, 1), -2), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 16);
 }
@@ -5403,7 +5403,7 @@ if (ANDQI (tmp_bytecount, 4)) {
     USI opval = ANDSI (tmp_val, 0xffffffff);
     SETMEMUSI (current_cpu, pc, ANDDI (ADDDI (tmp_addr, 3), -4), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_val = SRLDI (tmp_val, 32);
 }
@@ -5430,7 +5430,7 @@ if (ANDQI (tmp_bytecount, 4)) {
   {
     UQI opval = SUBWORDDIQI (GET_H_GR (FLD (f_dest)), 7);
     SETMEMUQI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -5449,7 +5449,7 @@ if (ANDQI (tmp_bytecount, 4)) {
   {
     SI opval = SUBWORDDISI (GET_H_GR (FLD (f_dest)), 1);
     SETMEMSI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -5468,7 +5468,7 @@ if (ANDQI (tmp_bytecount, 4)) {
   {
     DI opval = GET_H_GR (FLD (f_dest));
     SETMEMDI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
   }
 
 #undef FLD
@@ -5487,7 +5487,7 @@ if (ANDQI (tmp_bytecount, 4)) {
   {
     HI opval = SUBWORDDIHI (GET_H_GR (FLD (f_dest)), 3);
     SETMEMHI (current_cpu, pc, ADDDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right))), opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 
 #undef FLD
@@ -5506,7 +5506,7 @@ if (ANDQI (tmp_bytecount, 4)) {
   {
     DI opval = SUBDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -5525,7 +5525,7 @@ if (ANDQI (tmp_bytecount, 4)) {
   {
     DI opval = EXTSIDI (SUBSI (SUBWORDDISI (GET_H_GR (FLD (f_left)), 1), SUBWORDDISI (GET_H_GR (FLD (f_right)), 1)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -5549,12 +5549,12 @@ if (ANDQI (tmp_bytecount, 4)) {
   {
     DI opval = GET_H_GR (FLD (f_dest));
     SETMEMDI (current_cpu, pc, tmp_addr, opval);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'D', opval);
   }
   {
     DI opval = tmp_temp;
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 }
 
@@ -5619,7 +5619,7 @@ sh64_trapa (current_cpu, GET_H_GR (FLD (f_left)), pc);
   {
     DI opval = XORDI (GET_H_GR (FLD (f_left)), GET_H_GR (FLD (f_right)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD
@@ -5638,7 +5638,7 @@ sh64_trapa (current_cpu, GET_H_GR (FLD (f_left)), pc);
   {
     DI opval = XORDI (GET_H_GR (FLD (f_left)), EXTSIDI (FLD (f_imm6)));
     SET_H_GR (FLD (f_dest), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'D', opval);
   }
 
 #undef FLD

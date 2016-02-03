@@ -136,7 +136,7 @@ hppa_linux_sigtramp_find_sigcontext (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   unsigned int dummy[HPPA_MAX_INSN_PATTERN_LEN];
   int offs = 0;
-  int try;
+  int attempt;
   /* offsets to try to find the trampoline */
   static int pcoffs[] = { 0, 4*4, 5*4 };
   /* offsets to the rt_sigframe structure */
@@ -154,12 +154,12 @@ hppa_linux_sigtramp_find_sigcontext (struct gdbarch *gdbarch, CORE_ADDR pc)
      e4008200 be,l 0x100(%sr2, %r0), %sr0, %r31
      08000240 nop  */
 
-  for (try = 0; try < ARRAY_SIZE (pcoffs); try++)
+  for (attempt = 0; attempt < ARRAY_SIZE (pcoffs); attempt++)
     {
-      if (insns_match_pattern (gdbarch, sp + pcoffs[try],
+      if (insns_match_pattern (gdbarch, sp + pcoffs[attempt],
 			       hppa_sigtramp, dummy))
 	{
-          offs = sfoffs[try];
+          offs = sfoffs[attempt];
 	  break;
 	}
     }
@@ -171,8 +171,8 @@ hppa_linux_sigtramp_find_sigcontext (struct gdbarch *gdbarch, CORE_ADDR pc)
 	  /* sigaltstack case: we have no way of knowing which offset to 
 	     use in this case; default to new kernel handling.  If this is
 	     wrong the unwinding will fail.  */
-	  try = 2;
-	  sp = pc - pcoffs[try];
+	  attempt = 2;
+	  sp = pc - pcoffs[attempt];
 	}
       else
       {
@@ -186,7 +186,7 @@ hppa_linux_sigtramp_find_sigcontext (struct gdbarch *gdbarch, CORE_ADDR pc)
      bad we cannot include system specific headers :-(.
      sizeof(struct siginfo) == 128
      offsetof(struct ucontext, uc_mcontext) == 24.  */
-  return sp + sfoffs[try] + 128 + 24;
+  return sp + sfoffs[attempt] + 128 + 24;
 }
 
 struct hppa_linux_sigtramp_unwind_cache

@@ -110,11 +110,11 @@ static reloc_howto_type mcore_elf_howto_raw[] =
   /* This reloc does nothing.  */
   HOWTO (R_MCORE_NONE,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield,  /* complain_on_overflow */
+	 complain_overflow_dont,  /* complain_on_overflow */
 	 NULL,                  /* special_function */
 	 "R_MCORE_NONE",	/* name */
 	 FALSE,			/* partial_inplace */
@@ -340,13 +340,22 @@ mcore_elf_info_to_howto (bfd * abfd ATTRIBUTE_UNUSED,
 			 arelent * cache_ptr,
 			 Elf_Internal_Rela * dst)
 {
+  unsigned int r_type;
+
   if (! mcore_elf_howto_table [R_MCORE_PCRELIMM8BY4])
     /* Initialize howto table if needed.  */
     mcore_elf_howto_init ();
 
-  BFD_ASSERT (ELF32_R_TYPE (dst->r_info) < (unsigned int) R_MCORE_max);
+  r_type = ELF32_R_TYPE (dst->r_info);
+  if (r_type >= R_MCORE_max)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised MCore reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_MCORE_NONE;
+    }
 
-  cache_ptr->howto = mcore_elf_howto_table [ELF32_R_TYPE (dst->r_info)];
+  cache_ptr->howto = mcore_elf_howto_table [r_type];
 }
 
 /* The RELOCATE_SECTION function is called by the ELF backend linker

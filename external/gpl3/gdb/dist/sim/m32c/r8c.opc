@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #define tprintf if (trace) printf
 
 static unsigned char
-getbyte ()
+getbyte (void)
 {
   int tsave = trace;
   unsigned char b;
@@ -77,7 +77,7 @@ unsupported (char *tag, int orig_pc)
 }
 
 static int
-IMM(bw)
+IMM (int bw)
 {
   int rv = getbyte ();
   if (bw)
@@ -306,7 +306,7 @@ static int bmcnd_cond_map[] = {
 };
 
 int
-decode_r8c()
+decode_r8c (void)
 {
   unsigned char op[40];
   int opi = 0;

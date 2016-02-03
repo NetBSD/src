@@ -26,6 +26,9 @@ if {[prepare_for_testing $testfile $exefile $srcfile \
 # Turn off the pending breakpoint queries.
 gdb_test_no_output "set breakpoint pending off"
 
+# Turn off completion limiting
+gdb_test_no_output "set max-completions unlimited"
+
 # We intentionally do not use gdb_breakpoint for these tests.
 
 # Break at 'linespec' and expect the message in ::error_messages indexed by

@@ -29,6 +29,10 @@
 
 #include "hashtab.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Align an address upward to a boundary, expressed as a number of bytes.
    E.g. align to an 8-byte boundary with argument of 8.  Take care never
    to wrap around if the address is within boundary-1 of the end of the
@@ -552,6 +556,10 @@ extern bfd_boolean _bfd_dwarf2_find_nearest_line
    const char **, const char **, unsigned int *, unsigned int *,
    const struct dwarf_debug_section *, unsigned int, void **);
 
+/* Find the bias between DWARF addresses and real addresses.  */
+extern bfd_signed_vma _bfd_dwarf2_find_symbol_bias
+  (asymbol **, void **);
+  
 /* Find inliner info after calling bfd_find_nearest_line. */
 extern bfd_boolean _bfd_dwarf2_find_inliner_info
   (bfd *, const char **, const char **, unsigned int *, void **);
@@ -1192,6 +1200,11 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_MIPS_JUMP_SLOT",
 
   "BFD_RELOC_MOXIE_10_PCREL",
+
+  "BFD_RELOC_FT32_10",
+  "BFD_RELOC_FT32_20",
+  "BFD_RELOC_FT32_17",
+  "BFD_RELOC_FT32_18",
 
   "BFD_RELOC_FRV_LABEL16",
   "BFD_RELOC_FRV_LABEL24",
@@ -2101,6 +2114,7 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_RL78_HI8",
   "BFD_RELOC_RL78_LO16",
   "BFD_RELOC_RL78_CODE",
+  "BFD_RELOC_RL78_SADDR",
   "BFD_RELOC_RX_NEG8",
   "BFD_RELOC_RX_NEG16",
   "BFD_RELOC_RX_NEG24",
@@ -2586,6 +2600,19 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_NIOS2_GOT_HA",
   "BFD_RELOC_NIOS2_CALL_LO",
   "BFD_RELOC_NIOS2_CALL_HA",
+  "BFD_RELOC_NIOS2_R2_S12",
+  "BFD_RELOC_NIOS2_R2_I10_1_PCREL",
+  "BFD_RELOC_NIOS2_R2_T1I7_1_PCREL",
+  "BFD_RELOC_NIOS2_R2_T1I7_2",
+  "BFD_RELOC_NIOS2_R2_T2I4",
+  "BFD_RELOC_NIOS2_R2_T2I4_1",
+  "BFD_RELOC_NIOS2_R2_T2I4_2",
+  "BFD_RELOC_NIOS2_R2_X1I7_2",
+  "BFD_RELOC_NIOS2_R2_X2L5",
+  "BFD_RELOC_NIOS2_R2_F1I5_2",
+  "BFD_RELOC_NIOS2_R2_L5I4X1",
+  "BFD_RELOC_NIOS2_R2_T1X1I6",
+  "BFD_RELOC_NIOS2_R2_T1X1I6_2",
   "BFD_RELOC_IQ2000_OFFSET_16",
   "BFD_RELOC_IQ2000_OFFSET_21",
   "BFD_RELOC_IQ2000_UHI16",
@@ -2720,7 +2747,11 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_AARCH64_ADR_GOT_PAGE",
   "BFD_RELOC_AARCH64_LD64_GOT_LO12_NC",
   "BFD_RELOC_AARCH64_LD32_GOT_LO12_NC",
+  "BFD_RELOC_AARCH64_LD64_GOTOFF_LO15",
+  "BFD_RELOC_AARCH64_LD32_GOTPAGE_LO14",
+  "BFD_RELOC_AARCH64_LD64_GOTPAGE_LO15",
   "BFD_RELOC_AARCH64_TLSGD_ADR_PAGE21",
+  "BFD_RELOC_AARCH64_TLSGD_ADR_PREL21",
   "BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC",
   "BFD_RELOC_AARCH64_TLSIE_MOVW_GOTTPREL_G1",
   "BFD_RELOC_AARCH64_TLSIE_MOVW_GOTTPREL_G0_NC",
@@ -3010,3 +3041,6 @@ void *bfd_arch_default_fill (bfd_size_type count,
     bfd_boolean code);
 
 /* Extracted from elf.c.  */
+#ifdef __cplusplus
+}
+#endif

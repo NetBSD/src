@@ -20,8 +20,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef _SIM_ENDIAN_H_
-#define _SIM_ENDIAN_H_
+#ifndef SIM_ENDIAN_H
+#define SIM_ENDIAN_H
 
 
 /* C byte conversion functions */
@@ -411,4 +411,4 @@ do { \
 #include "sim-endian.c"
 #endif
 
-#endif /* _SIM_ENDIAN_H_ */
+#endif /* SIM_ENDIAN_H */

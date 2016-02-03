@@ -356,7 +356,7 @@ union YYSTYPE
 
     struct type_stack *type_stack;
 
-    struct objc_class_str class;
+    struct objc_class_str theclass;
   
 
 #line 363 "c-exp.c" /* yacc.c:355  */
@@ -746,10 +746,10 @@ static const char *const yytname[] =
   "cv_with_space_id", "const_or_volatile_or_space_identifier_noopt",
   "const_or_volatile_or_space_identifier", "ptr_operator", "$@6", "$@7",
   "ptr_operator_ts", "abs_decl", "direct_abs_decl", "array_mod",
-  "func_mod", "type", "typebase", "typename", "parameter_typelist",
+  "func_mod", "type", "typebase", "type_name", "parameter_typelist",
   "nonempty_typelist", "ptype", "conversion_type_id",
   "conversion_declarator", "const_and_volatile", "const_or_volatile_noopt",
-  "operator", "name", "name_not_typename", YY_NULLPTR
+  "oper", "name", "name_not_typename", YY_NULLPTR
 };
 #endif
 
@@ -2290,17 +2290,17 @@ yyreduce:
   case 39:
 #line 481 "c-exp.y" /* yacc.c:1646  */
     {
-			  CORE_ADDR class;
+			  CORE_ADDR theclass;
 
-			  class = lookup_objc_class (parse_gdbarch (pstate),
+			  theclass = lookup_objc_class (parse_gdbarch (pstate),
 						     copy_name ((yyvsp[0].tsym).stoken));
-			  if (class == 0)
+			  if (theclass == 0)
 			    error (_("%s is not an ObjC Class"),
 				   copy_name ((yyvsp[0].tsym).stoken));
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  write_exp_elt_type (pstate,
 					    parse_type (pstate)->builtin_int);
-			  write_exp_elt_longcst (pstate, (LONGEST) class);
+			  write_exp_elt_longcst (pstate, (LONGEST) theclass);
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  start_msglist();
 			}
@@ -2322,7 +2322,7 @@ yyreduce:
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  write_exp_elt_type (pstate,
 					    parse_type (pstate)->builtin_int);
-			  write_exp_elt_longcst (pstate, (LONGEST) (yyvsp[0].class).class);
+			  write_exp_elt_longcst (pstate, (LONGEST) (yyvsp[0].theclass).theclass);
 			  write_exp_elt_opcode (pstate, OP_LONG);
 			  start_msglist();
 			}
@@ -4858,7 +4858,7 @@ enum token_flags
 
 struct token
 {
-  char *operator;
+  char *oper;
   int token;
   enum exp_opcode opcode;
   enum token_flags flags;
@@ -5077,7 +5077,7 @@ lex_one_token (struct parser_state *par_state, int *is_quoted_name)
   tokstart = lexptr;
   /* See if it is a special token of length 3.  */
   for (i = 0; i < sizeof tokentab3 / sizeof tokentab3[0]; i++)
-    if (strncmp (tokstart, tokentab3[i].operator, 3) == 0)
+    if (strncmp (tokstart, tokentab3[i].oper, 3) == 0)
       {
 	if ((tokentab3[i].flags & FLAG_CXX) != 0
 	    && parse_language (par_state)->la_language != language_cplus)
@@ -5090,7 +5090,7 @@ lex_one_token (struct parser_state *par_state, int *is_quoted_name)
 
   /* See if it is a special token of length 2.  */
   for (i = 0; i < sizeof tokentab2 / sizeof tokentab2[0]; i++)
-    if (strncmp (tokstart, tokentab2[i].operator, 2) == 0)
+    if (strncmp (tokstart, tokentab2[i].oper, 2) == 0)
       {
 	if ((tokentab2[i].flags & FLAG_CXX) != 0
 	    && parse_language (par_state)->la_language != language_cplus)
@@ -5387,7 +5387,7 @@ lex_one_token (struct parser_state *par_state, int *is_quoted_name)
   /* Catch specific keywords.  */
   copy = copy_name (yylval.sval);
   for (i = 0; i < sizeof ident_tokens / sizeof ident_tokens[0]; i++)
-    if (strcmp (copy, ident_tokens[i].operator) == 0)
+    if (strcmp (copy, ident_tokens[i].oper) == 0)
       {
 	if ((ident_tokens[i].flags & FLAG_CXX) != 0
 	    && parse_language (par_state)->la_language != language_cplus)
@@ -5530,10 +5530,10 @@ classify_name (struct parser_state *par_state, const struct block *block,
       CORE_ADDR Class = lookup_objc_class (parse_gdbarch (par_state), copy);
       if (Class)
 	{
-	  yylval.class.class = Class;
+	  yylval.theclass.theclass = Class;
 	  sym = lookup_struct_typedef (copy, expression_context_block, 1);
 	  if (sym)
-	    yylval.class.type = SYMBOL_TYPE (sym);
+	    yylval.theclass.type = SYMBOL_TYPE (sym);
 	  return CLASSNAME;
 	}
     }
@@ -5588,7 +5588,8 @@ classify_inner_name (struct parser_state *par_state,
     return ERROR;
 
   copy = copy_name (yylval.ssym.stoken);
-  yylval.ssym.sym = cp_lookup_nested_symbol (type, copy, block);
+  /* N.B. We assume the symbol can only be in VAR_DOMAIN.  */
+  yylval.ssym.sym = cp_lookup_nested_symbol (type, copy, block, VAR_DOMAIN);
 
   /* If no symbol was found, search for a matching base class named
      COPY.  This will allow users to enter qualified names of class members

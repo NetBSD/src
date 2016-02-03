@@ -133,6 +133,55 @@ delete_breakpoints
 
 set cur_addr [get_pc]
 
+# Return true if the memory range [buf.byte + OFFSET, +WIDTH] can be
+# monitored by CMD, otherwise return false.
+
+proc valid_addr_p {cmd offset width} {
+
+    if { [istarget "aarch64*-*-linux*"] } {
+	# The aarch64 Linux kernel port only accepts 4-byte aligned addresses
+	# for hardware breakpoints and 8-byte aligned addresses for hardware
+	# watchpoints.  However, both GDB and GDBserver support unaligned
+	# watchpoints by using more than one properly aligned watchpoint
+	# registers to represent the whole unaligned region.  Breakpoint
+	# addresses must still be aligned though.
+	if {$cmd == "hbreak" } {
+	    if { [expr ($offset) % 4] != 0 } {
+		return 0
+	    }
+	}
+    } elseif { [istarget "arm*-*-linux*"] } {
+	if { $cmd == "hbreak" } {
+	    # Breakpoints must be of length 2 (thumb) or 4 (ARM) bytes.
+	    if { $width != 2 && $width != 4 } {
+		return 0
+	    }
+	} else {
+	    # Watchpoints can be of length 1, 2, 4 or 8 bytes.
+	    if { [expr $width % 2] != 0 } {
+		return 0
+	    }
+	}
+
+	if { [expr ($offset) % 8] == 0 && $width == 8 } {
+	    # If WIDTH is 8 byte, the address should be 8-byte aligned.
+	    return 1
+	} elseif { [expr ($offset) % 4] == 0 } {
+	    return 1
+	} elseif { [expr ($offset) % 4] == 2 && $width == 2 } {
+	    # Halfword watchpoints and breakpoints.
+	    return 1
+	} elseif { [expr ($offset) % 4] == 1 && $width == 1 && $cmd != "hbreak" } {
+	    # Single byte watchpoints.
+	    return 1
+	} else {
+	    return 0
+	}
+    }
+
+    return 1
+}
+
 # Watch WIDTH bytes at BASE + OFFSET.  CMD specifices the specific
 # type of watchpoint to use.  If CMD is "hbreak", WIDTH is ignored.
 
@@ -172,6 +221,15 @@ foreach always_inserted {"off" "on" } {
 		}
 
 		for {set x 0} {$x < 4} {incr x} {
+
+		    if { ![valid_addr_p $cmd1 $x $width]
+			 || ![valid_addr_p $cmd2 $x+1 $width] } {
+			# Skip tests if requested address or length
+			# of breakpoint or watchpoint don't meet
+			# target or kernel requirements.
+			continue
+		    }
+
 		    set prefix "always-inserted $always_inserted: "
 		    append prefix "$cmd1 x $cmd2: "
 		    with_test_prefix "$prefix: width $width, iter $x" {

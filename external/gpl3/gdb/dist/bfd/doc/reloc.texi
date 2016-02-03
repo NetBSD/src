@@ -961,6 +961,12 @@ MIPS ELF relocations (VxWorks and PLT extensions).
 @deffn {} BFD_RELOC_MOXIE_10_PCREL
 Moxie ELF relocations.
 @end deffn
+@deffn {} BFD_RELOC_FT32_10
+@deffnx {} BFD_RELOC_FT32_20
+@deffnx {} BFD_RELOC_FT32_17
+@deffnx {} BFD_RELOC_FT32_18
+FT32 ELF relocations.
+@end deffn
 @deffn {} BFD_RELOC_FRV_LABEL16
 @deffnx {} BFD_RELOC_FRV_LABEL24
 @deffnx {} BFD_RELOC_FRV_LO16
@@ -2494,6 +2500,7 @@ number for the SBIC, SBIS, SBI and CBI instructions
 @deffnx {} BFD_RELOC_RL78_HI8
 @deffnx {} BFD_RELOC_RL78_LO16
 @deffnx {} BFD_RELOC_RL78_CODE
+@deffnx {} BFD_RELOC_RL78_SADDR
 Renesas RL78 Relocations.
 @end deffn
 @deffn {} BFD_RELOC_RX_NEG8
@@ -3259,6 +3266,19 @@ msp430 specific relocation codes
 @deffnx {} BFD_RELOC_NIOS2_GOT_HA
 @deffnx {} BFD_RELOC_NIOS2_CALL_LO
 @deffnx {} BFD_RELOC_NIOS2_CALL_HA
+@deffnx {} BFD_RELOC_NIOS2_R2_S12
+@deffnx {} BFD_RELOC_NIOS2_R2_I10_1_PCREL
+@deffnx {} BFD_RELOC_NIOS2_R2_T1I7_1_PCREL
+@deffnx {} BFD_RELOC_NIOS2_R2_T1I7_2
+@deffnx {} BFD_RELOC_NIOS2_R2_T2I4
+@deffnx {} BFD_RELOC_NIOS2_R2_T2I4_1
+@deffnx {} BFD_RELOC_NIOS2_R2_T2I4_2
+@deffnx {} BFD_RELOC_NIOS2_R2_X1I7_2
+@deffnx {} BFD_RELOC_NIOS2_R2_X2L5
+@deffnx {} BFD_RELOC_NIOS2_R2_F1I5_2
+@deffnx {} BFD_RELOC_NIOS2_R2_L5I4X1
+@deffnx {} BFD_RELOC_NIOS2_R2_T1X1I6
+@deffnx {} BFD_RELOC_NIOS2_R2_T1X1I6_2
 Relocations used by the Altera Nios II core.
 @end deffn
 @deffn {} BFD_RELOC_IQ2000_OFFSET_16
@@ -3646,11 +3666,24 @@ Unsigned 12 bit byte offset for 32 bit load/store from the page of
 the GOT entry for this symbol.  Used in conjunction with
 BFD_RELOC_AARCH64_ADR_GOTPAGE.  Valid in ILP32 ABI only.
 @end deffn
+@deffn {} BFD_RELOC_AARCH64_LD64_GOTOFF_LO15
+Unsigned 15 bit byte offset for 64 bit load/store from the page of
+the GOT entry for this symbol. Valid in ILP64 ABI only.
+@end deffn
+@deffn {} BFD_RELOC_AARCH64_LD32_GOTPAGE_LO14
+Scaled 14 bit byte offset to the page base of the global offset table.
+@end deffn
+@deffn {} BFD_RELOC_AARCH64_LD64_GOTPAGE_LO15
+Scaled 15 bit byte offset to the page base of the global offset table.
+@end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSGD_ADR_PAGE21
 Get to the page base of the global offset table entry for a symbols
 tls_index structure as part of an adrp instruction using a 21 bit PC
 relative value.  Used in conjunction with
 BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC.
+@end deffn
+@deffn {} BFD_RELOC_AARCH64_TLSGD_ADR_PREL21
+AArch64 TLS General Dynamic
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC
 Unsigned 12 bit byte offset to global offset table entry for a symbols

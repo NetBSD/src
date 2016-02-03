@@ -11,5 +11,5 @@ func sub (a,b int) (int) {
 var v_int int
 
 func main () {
-  v_int = 42 // set breakpoint 1 here
+  v_int = 42
 }

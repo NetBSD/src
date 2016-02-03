@@ -334,6 +334,10 @@ CODE_FRAGMENT
 .     executables or shared objects. This is for COFF only.  *}
 .#define SEC_COFF_SHARED 0x8000000
 .
+.  {* This section should be compressed.  This is for ELF linker
+.     internal use only.  *}
+.#define SEC_ELF_COMPRESS 0x8000000
+.
 .  {* When a section with this flag is being linked, then if the size of
 .     the input section is less than a page, it should not cross a page
 .     boundary.  If the size of the input section is one page or more,
@@ -341,10 +345,17 @@ CODE_FRAGMENT
 .     TMS320C54X only.  *}
 .#define SEC_TIC54X_BLOCK 0x10000000
 .
+.  {* This section should be renamed.  This is for ELF linker
+.     internal use only.  *}
+.#define SEC_ELF_RENAME 0x10000000
+.
 .  {* Conditionally link this section; do not link if there are no
 .     references found to any symbol in the section.  This is for TI
 .     TMS320C54X only.  *}
 .#define SEC_TIC54X_CLINK 0x20000000
+.
+.  {* This section contains vliw code.  This is for Toshiba MeP only.  *}
+.#define SEC_MEP_VLIW 0x20000000
 .
 .  {* Indicate that section has the no read flag set. This happens
 .     when memory read flag isn't set. *}
@@ -386,6 +397,7 @@ CODE_FRAGMENT
 .#define SEC_INFO_TYPE_EH_FRAME  3
 .#define SEC_INFO_TYPE_JUST_SYMS 4
 .#define SEC_INFO_TYPE_TARGET    5
+.#define SEC_INFO_TYPE_EH_FRAME_ENTRY 6
 .
 .  {* Nonzero if this section uses RELA relocations, rather than REL.  *}
 .  unsigned int use_rela_p:1;

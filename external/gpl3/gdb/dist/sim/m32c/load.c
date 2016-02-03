@@ -27,8 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "cpu.h"
 #include "mem.h"
+#include "load.h"
 
-int (*decode_opcode) () = 0;
+int (*decode_opcode) (void) = 0;
 int default_machine = 0;
 
 void
@@ -88,12 +89,13 @@ m32c_load (bfd * prog)
 	{
 	  char *buf;
 	  bfd_size_type size;
+	  bfd_vma base;
 
 	  size = bfd_get_section_size (s);
 	  if (size <= 0)
 	    continue;
 
-	  bfd_vma base = bfd_section_lma (prog, s);
+	  base = bfd_section_lma (prog, s);
 	  if (verbose)
 	    fprintf (stderr, "[load a=%08x s=%08x %s]\n",
 		     (int) base, (int) size, bfd_get_section_name (prog, s));

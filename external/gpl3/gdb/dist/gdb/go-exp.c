@@ -2603,7 +2603,7 @@ parse_string_or_char (const char *tokptr, const char **outptr,
 
 struct token
 {
-  char *operator;
+  char *oper;
   int token;
   enum exp_opcode opcode;
 };
@@ -2690,7 +2690,7 @@ lex_one_token (struct parser_state *par_state)
   tokstart = lexptr;
   /* See if it is a special token of length 3.  */
   for (i = 0; i < sizeof (tokentab3) / sizeof (tokentab3[0]); i++)
-    if (strncmp (tokstart, tokentab3[i].operator, 3) == 0)
+    if (strncmp (tokstart, tokentab3[i].oper, 3) == 0)
       {
 	lexptr += 3;
 	yylval.opcode = tokentab3[i].opcode;
@@ -2699,7 +2699,7 @@ lex_one_token (struct parser_state *par_state)
 
   /* See if it is a special token of length 2.  */
   for (i = 0; i < sizeof (tokentab2) / sizeof (tokentab2[0]); i++)
-    if (strncmp (tokstart, tokentab2[i].operator, 2) == 0)
+    if (strncmp (tokstart, tokentab2[i].oper, 2) == 0)
       {
 	lexptr += 2;
 	yylval.opcode = tokentab2[i].opcode;
@@ -2930,7 +2930,7 @@ lex_one_token (struct parser_state *par_state)
   /* Catch specific keywords.  */
   copy = copy_name (yylval.sval);
   for (i = 0; i < sizeof (ident_tokens) / sizeof (ident_tokens[0]); i++)
-    if (strcmp (copy, ident_tokens[i].operator) == 0)
+    if (strcmp (copy, ident_tokens[i].oper) == 0)
       {
 	/* It is ok to always set this, even though we don't always
 	   strictly need to.  */

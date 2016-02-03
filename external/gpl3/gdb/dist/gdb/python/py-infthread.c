@@ -22,7 +22,7 @@
 #include "inferior.h"
 #include "python-internal.h"
 
-static PyTypeObject thread_object_type
+extern PyTypeObject thread_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("thread_object");
 
 /* Require that INFERIOR be a valid inferior ID.  */
@@ -147,15 +147,18 @@ static PyObject *
 thpy_switch (PyObject *self, PyObject *args)
 {
   thread_object *thread_obj = (thread_object *) self;
-  volatile struct gdb_exception except;
 
   THPY_REQUIRE_VALID (thread_obj);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       switch_to_thread (thread_obj->thread->ptid);
     }
-  GDB_PY_HANDLE_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
 
   Py_RETURN_NONE;
 }
@@ -307,7 +310,7 @@ Return whether the thread is exited." },
   { NULL }
 };
 
-static PyTypeObject thread_object_type =
+PyTypeObject thread_object_type =
 {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.InferiorThread",		  /*tp_name*/

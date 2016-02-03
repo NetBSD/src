@@ -146,38 +146,67 @@ bin2hex (const gdb_byte *bin, char *hex, int count)
   return i;
 }
 
+/* Return whether byte B needs escaping when sent as part of binary data.  */
+
+static int
+needs_escaping (gdb_byte b)
+{
+  return b == '$' || b == '#' || b == '}' || b == '*';
+}
+
 /* See rsp-low.h.  */
 
 int
-remote_escape_output (const gdb_byte *buffer, int len,
-		      gdb_byte *out_buf, int *out_len,
-		      int out_maxlen)
+remote_escape_output (const gdb_byte *buffer, int len_units, int unit_size,
+		      gdb_byte *out_buf, int *out_len_units,
+		      int out_maxlen_bytes)
 {
-  int input_index, output_index;
+  int input_unit_index, output_byte_index = 0, byte_index_in_unit;
+  int number_escape_bytes_needed;
 
-  output_index = 0;
-  for (input_index = 0; input_index < len; input_index++)
+  /* Try to copy integral addressable memory units until
+     (1) we run out of space or
+     (2) we copied all of them.  */
+  for (input_unit_index = 0;
+       input_unit_index < len_units;
+       input_unit_index++)
     {
-      gdb_byte b = buffer[input_index];
-
-      if (b == '$' || b == '#' || b == '}' || b == '*')
+      /* Find out how many escape bytes we need for this unit.  */
+      number_escape_bytes_needed = 0;
+      for (byte_index_in_unit = 0;
+	   byte_index_in_unit < unit_size;
+	   byte_index_in_unit++)
 	{
-	  /* These must be escaped.  */
-	  if (output_index + 2 > out_maxlen)
-	    break;
-	  out_buf[output_index++] = '}';
-	  out_buf[output_index++] = b ^ 0x20;
+	  int idx = input_unit_index * unit_size + byte_index_in_unit;
+	  gdb_byte b = buffer[idx];
+	  if (needs_escaping (b))
+	    number_escape_bytes_needed++;
 	}
-      else
+
+      /* Check if we have room to fit this escaped unit.  */
+      if (output_byte_index + unit_size + number_escape_bytes_needed >
+	    out_maxlen_bytes)
+	  break;
+
+      /* Copy the unit byte per byte, adding escapes.  */
+      for (byte_index_in_unit = 0;
+	   byte_index_in_unit < unit_size;
+	   byte_index_in_unit++)
 	{
-	  if (output_index + 1 > out_maxlen)
-	    break;
-	  out_buf[output_index++] = b;
+	  int idx = input_unit_index * unit_size + byte_index_in_unit;
+	  gdb_byte b = buffer[idx];
+	  if (needs_escaping (b))
+	    {
+	      out_buf[output_byte_index++] = '}';
+	      out_buf[output_byte_index++] = b ^ 0x20;
+	    }
+	  else
+	    out_buf[output_byte_index++] = b;
 	}
     }
 
-  *out_len = input_index;
-  return output_index;
+  *out_len_units = input_unit_index;
+  return output_byte_index;
 }
 
 /* See rsp-low.h.  */

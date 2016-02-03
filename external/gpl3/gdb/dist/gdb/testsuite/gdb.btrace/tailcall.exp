@@ -20,15 +20,23 @@
 # check for btrace support
 if { [skip_btrace_tests] } { return -1 }
 
-# start inferior
-standard_testfile x86-tailcall.S
-
+# This test requires the compiler to generate a tail call.  To guarantee that
+# we always get one, we use an assembly source file.
+#
+# We use different assembly sources based on the target architecture.
+#
+# Luckily, they are similar enough that a single test script can handle
+# both.
 set opts {}
 if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.btrace/tailcall.exp COMPILE=1"
-    standard_testfile x86-tailcall.c
+    standard_testfile tailcall.c
     lappend opts debug optimize=-O2
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
+} elseif {[istarget "x86_64-*-*"]} {
+	standard_testfile x86_64-tailcall.S
+} elseif {[istarget "i?86-*-*"]} {
+	standard_testfile i686-tailcall.S
+} else {
     verbose "Skipping ${testfile}."
     return
 }
@@ -45,48 +53,48 @@ gdb_test_no_output "set record function-call-history-size 0"
 
 # trace the call to foo
 gdb_test_no_output "record btrace"
-gdb_test "next"
+gdb_test "next 2"
 
 # show the flat branch trace
-gdb_test "record function-call-history 1" [join [list \
+gdb_test "record function-call-history 1" [multi_line \
   "1\tmain" \
   "2\tfoo" \
   "3\tbar" \
   "4\tmain" \
-  ] "\r\n"] "flat"
+  ] "flat"
 
 # show the branch trace with calls indented
-gdb_test "record function-call-history /c 1" [join [list \
+gdb_test "record function-call-history /c 1" [multi_line \
   "1\tmain" \
   "2\t  foo" \
   "3\t    bar" \
   "4\tmain" \
-  ] "\r\n"] "indented"
+  ] "indented"
 
 # go into bar
-gdb_test "record goto 4" ".*bar \\(\\) at .*x86-tailcall.c:24\r\n.*"
+gdb_test "record goto 4" ".*bar \\(\\) at .*tailcall.c:24\r\n.*"
 
 # check the backtrace
-gdb_test "backtrace" [join [list \
-  "#0.*bar \\(\\) at x86-tailcall.c:24" \
-  "#1.*foo \\(\\) at x86-tailcall.c:29" \
-  "#2.*main \\(\\) at x86-tailcall.c:37" \
+gdb_test "backtrace" [multi_line \
+  "#0.*bar \\(\\) at tailcall.c:24" \
+  "#1.*foo \\(\\) at tailcall.c:29" \
+  "#2.*main \\(\\) at tailcall.c:37" \
   "Backtrace stopped: not enough registers or memory available to unwind further" \
-  ] "\r\n"]
+  ]
 
 # walk the backtrace
-gdb_test "up" "#1\[^\r\n\]*foo \\(\\) at x86-tailcall.c:29\r\n.*" "up to foo"
-gdb_test "up" "#2\[^\r\n\]*main \\(\\) at x86-tailcall.c:37\r\n.*" "up to main"
-gdb_test "down" "#1\[^\r\n\]*foo \\(\\) at x86-tailcall.c:29\r\n.*" "down to foo"
+gdb_test "up" "#1\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*" "up to foo"
+gdb_test "up" "#2\[^\r\n\]*main \\(\\) at tailcall.c:37\r\n.*" "up to main"
+gdb_test "down" "#1\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*" "down to foo"
 
 # test stepping into and out of tailcalls.
-gdb_test "finish" "\[^\r\n\]*main \\(\\) at x86-tailcall.c:37\r\n.*"
-gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at x86-tailcall.c:24\r\n.*"
-gdb_test "reverse-finish" "\[^\r\n\]*foo \\(\\) at x86-tailcall.c:29\r\n.*"
-gdb_test "reverse-step" "\[^\r\n\]*main \\(\\) at x86-tailcall.c:37\r\n.*"
-gdb_test "next" "\[^\r\n\]*main \\(\\) at x86-tailcall.c:39\r\n.*"
-gdb_test "reverse-next" "\[^\r\n\]*main \\(\\) at x86-tailcall.c:37\r\n.*"
-gdb_test "step" "\[^\r\n\]*foo \\(\\) at x86-tailcall.c:29\r\n.*"
-gdb_test "finish" "\[^\r\n\]*main \\(\\) at x86-tailcall.c:37\r\n.*"
-gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at x86-tailcall.c:24\r\n.*"
-gdb_test "finish" "\[^\r\n\]*main \\(\\) at x86-tailcall.c:37\r\n.*"
+gdb_test "finish" "\[^\r\n\]*main \\(\\) at tailcall.c:38\r\n.*"
+gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at tailcall.c:24\r\n.*"
+gdb_test "reverse-finish" "\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*"
+gdb_test "reverse-step" "\[^\r\n\]*main \\(\\) at tailcall.c:37\r\n.*"
+gdb_test "next" "\[^\r\n\]*38.*"
+gdb_test "reverse-next" "\[^\r\n\]*main \\(\\) at tailcall.c:37\r\n.*"
+gdb_test "step" "\[^\r\n\]*foo \\(\\) at tailcall.c:29\r\n.*"
+gdb_test "finish" "\[^\r\n\]*main \\(\\) at tailcall.c:38\r\n.*"
+gdb_test "reverse-step" "\[^\r\n\]*bar \\(\\) at tailcall.c:24\r\n.*"
+gdb_test "finish" "\[^\r\n\]*main \\(\\) at tailcall.c:38\r\n.*"
