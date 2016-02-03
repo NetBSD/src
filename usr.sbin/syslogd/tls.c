@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.11 2013/05/27 23:15:51 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.12 2016/02/03 05:34:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.11 2013/05/27 23:15:51 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.12 2016/02/03 05:34:21 christos Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -1590,8 +1590,8 @@ tls_split_messages(struct TLS_Incoming_Conn *c)
 	}
 
 	/* read length prefix, always at start of buffer */
-	while (isdigit((unsigned char)c->inbuf[offset])
-	    && offset < c->read_pos) {
+	while (offset < c->read_pos && isdigit((unsigned char)c->inbuf[offset]))
+	{
 		msglen *= 10;
 		msglen += c->inbuf[offset] - '0';
 		offset++;
