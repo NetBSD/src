@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.14 2008/12/21 02:33:13 christos Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.15 2016/02/03 05:32:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.14 2008/12/21 02:33:13 christos Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.15 2016/02/03 05:32:14 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -154,8 +154,8 @@ tabify(const char *line, size_t len)
 				dcol = (1 + dcol / DSTOP) * DSTOP;
 				continue;
 			} else {
-				for (n = 0; tabstops[n] - 1 < dcol &&
-				    n < nstops; n++)
+				for (n = 0; n < nstops &&
+				    tabstops[n] - 1 < dcol; n++)
 					continue;
 				if (n < nstops - 1 && tabstops[n] - 1 < limit) {
 					dcol = tabstops[n];
@@ -174,10 +174,10 @@ tabify(const char *line, size_t len)
 				ocol = (1 + ocol / DSTOP) * DSTOP;
 			}
 		} else {
-			for (n = 0; tabstops[n] <= ocol && n < nstops; n++)
+			for (n = 0; n < nstops && tabstops[n] <= ocol; n++)
 				continue;
-			while (tabstops[n] <= dcol && ocol < dcol &&
-			    n < nstops && ocol < limit) {
+			while (n < nstops && tabstops[n] <= dcol && ocol < dcol
+			    && ocol < limit) {
 				if (putchar('\t') == EOF)
 					goto out;
 				ocol = tabstops[n++];
