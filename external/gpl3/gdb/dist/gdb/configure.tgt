@@ -24,6 +24,8 @@ case $targ in
  mips*-*-pe | \
  rs6000-*-lynxos* | \
  sh*-*-pe | \
+ hppa*-*-hpux* | \
+ ia64-*-hpux* | \
  null)
     echo "*** Configuration $targ is obsolete." >&2
     echo "*** Support has been REMOVED." >&2
@@ -43,7 +45,7 @@ aarch64*-*-linux*)
 	# Target: AArch64 linux
 	gdb_target_obs="aarch64-tdep.o aarch64-linux-tdep.o \
 			glibc-tdep.o linux-tdep.o solib-svr4.o \
-			symfile-mem.o"
+			symfile-mem.o linux-record.o"
 	build_gdbserver=yes
 	;;
 
@@ -159,10 +161,6 @@ h8300-*-*)
 	gdb_sim=../sim/h8300/libsim.a
 	;;
 
-hppa*-*-hpux*)
-	# Target: HP PA-RISC running hpux
-	gdb_target_obs="hppa-tdep.o hppa-hpux-tdep.o solib-som.o solib-pa64.o"
-	;;
 hppa*-*-linux*)
 	# Target: HP PA-RISC running Linux
 	gdb_target_obs="hppa-tdep.o hppa-linux-tdep.o glibc-tdep.o \
@@ -257,10 +255,6 @@ i[34567]86-*-*)
 	gdb_target_obs="i386-tdep.o i387-tdep.o"
 	;;
 
-ia64-*-hpux*)
-	# Target: Intel IA-64 running HP-UX
-	gdb_target_obs="ia64-tdep.o ia64-hpux-tdep.o"
-	;;
 ia64-*-linux*)
 	# Target: Intel IA-64 running GNU/Linux
 	gdb_target_obs="ia64-tdep.o ia64-linux-tdep.o linux-tdep.o \
@@ -631,6 +625,11 @@ xstormy16-*-*)
 	# Target: Sanyo Xstormy16a processor
 	gdb_target_obs="xstormy16-tdep.o"
 	# No simulator libraries are needed -- target uses SID.
+	;;
+
+ft32-*-elf)
+	gdb_target_obs="ft32-tdep.o"
+	gdb_sim=../sim/ft32/libsim.a
 	;;
 
 v850*-*-elf | v850*-*-rtems*)
