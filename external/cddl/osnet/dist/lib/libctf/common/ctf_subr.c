@@ -73,7 +73,7 @@ ctf_strerror(int err)
 }
 
 /*PRINTFLIKE1*/
-void
+void __printflike(1, 2)
 ctf_dprintf(const char *format, ...)
 {
 	if (_libctf_debug) {
