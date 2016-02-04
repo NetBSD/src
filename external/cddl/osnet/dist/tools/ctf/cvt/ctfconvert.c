@@ -76,7 +76,7 @@ terminate_cleanup(void)
 #endif
 }
 
-static void
+static void __dead
 handle_sig(int sig)
 {
 	terminate("Caught signal %d - exiting\n", sig);

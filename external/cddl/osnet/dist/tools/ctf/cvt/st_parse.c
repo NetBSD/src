@@ -1125,7 +1125,7 @@ compute_sum(const char *w)
 	return (HASH(sum));
 }
 
-static void
+static void __dead
 reset(void)
 {
 	longjmp(resetbuf, 1);
