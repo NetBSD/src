@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.16 2015/07/06 15:09:17 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.17 2016/02/04 15:04:11 seanb Exp $	*/
 /* $OpenBSD: session.c,v 1.278 2015/04/24 01:36:00 deraadt Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.16 2015/07/06 15:09:17 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.17 2016/02/04 15:04:11 seanb Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1339,16 +1339,17 @@ do_nologin(struct passwd *pw)
 	if (login_getcapbool(lc, "ignorenologin", 0) || pw->pw_uid == 0)
 		return;
 	nl = login_getcapstr(lc, "nologin", def_nl, def_nl);
-
+#else
+	if (pw->pw_uid == 0)
+		return;
+	nl = def_nl;
+#endif
 	if (stat(nl, &sb) == -1) {
 		if (nl != def_nl)
 			free(nl);
 		return;
 	}
-#else
-	if (pw->pw_uid)
-		nl = def_nl;
-#endif
+
 	/* /etc/nologin exists.  Print its contents if we can and exit. */
 	logit("User %.100s not allowed because %s exists", pw->pw_name, nl);
 	if ((f = fopen(nl, "r")) != NULL) {
