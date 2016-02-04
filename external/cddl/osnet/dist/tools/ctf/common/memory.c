@@ -37,7 +37,7 @@
 #include <strings.h>
 #include "memory.h"
 
-static void
+static void __dead
 memory_bailout(void)
 {
 	(void) fprintf(stderr, "Out of memory\n");
