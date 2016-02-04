@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.184 2016/01/08 08:50:07 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.185 2016/02/04 02:48:37 riastradh Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.184 2016/01/08 08:50:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.185 2016/02/04 02:48:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -127,7 +127,6 @@ static void clear_llinfo_pqueue(struct llentry *);
 
 callout_t nd6_slowtimo_ch;
 callout_t nd6_timer_ch;
-extern callout_t in6_tmpaddrtimer_ch;
 
 static int fill_drlist(void *, size_t *, size_t);
 static int fill_prlist(void *, size_t *, size_t);
