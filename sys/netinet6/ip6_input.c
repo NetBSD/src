@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.154 2016/01/08 03:55:39 knakahara Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.155 2016/02/04 02:48:37 riastradh Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.154 2016/01/08 03:55:39 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.155 2016/02/04 02:48:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -135,8 +135,6 @@ extern struct domain inet6domain;
 u_char ip6_protox[IPPROTO_MAX];
 struct in6_ifaddr *in6_ifaddr;
 pktqueue_t *ip6_pktq __read_mostly;
-
-extern callout_t in6_tmpaddrtimer_ch;
 
 int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
