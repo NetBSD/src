@@ -173,7 +173,7 @@ usage(FILE *fp)
 	return (E_USAGE);
 }
 
-static void
+static void __printflike(1, 0)
 verror(const char *fmt, va_list ap)
 {
 	int error = errno;
@@ -186,7 +186,7 @@ verror(const char *fmt, va_list ap)
 }
 
 /*PRINTFLIKE1*/
-static void
+static void __printflike(1, 2) __dead
 fatal(const char *fmt, ...)
 {
 	va_list ap;
@@ -199,7 +199,7 @@ fatal(const char *fmt, ...)
 }
 
 /*PRINTFLIKE1*/
-static void
+static void __printflike(1, 2) __dead
 dfatal(const char *fmt, ...)
 {
 #if !defined(sun) && defined(NEED_ERRLOC)
@@ -239,7 +239,7 @@ dfatal(const char *fmt, ...)
 }
 
 /*PRINTFLIKE1*/
-static void
+static void __printflike(1, 2)
 error(const char *fmt, ...)
 {
 	va_list ap;
@@ -250,7 +250,7 @@ error(const char *fmt, ...)
 }
 
 /*PRINTFLIKE1*/
-static void
+static void __printflike(1, 2)
 notice(const char *fmt, ...)
 {
 	va_list ap;
@@ -264,7 +264,7 @@ notice(const char *fmt, ...)
 }
 
 /*PRINTFLIKE1*/
-static void
+static void __printflike(1, 2)
 oprintf(const char *fmt, ...)
 {
 	va_list ap;
@@ -770,7 +770,7 @@ compile_str(dtrace_cmd_t *dcp)
 }
 
 /*ARGSUSED*/
-static void
+static void __dead
 prochandler(struct ps_prochandle *P, const char *msg, void *arg)
 {
 fatal("DOODAD in function %s, file %s, line %d\n",__FUNCTION__,__FILE__,__LINE__);
@@ -896,7 +896,7 @@ bufhandler(const dtrace_bufdata_t *bufdata, void *arg)
 	    { "AGGFORMAT",	DTRACE_BUFDATA_AGGFORMAT },
 	    { "AGGLAST",	DTRACE_BUFDATA_AGGLAST },
 	    { "???",		UINT32_MAX },
-	    { NULL }
+	    { NULL,		0 }
 	};
 
 	if (bufdata->dtbda_probe != NULL) {
@@ -1052,7 +1052,7 @@ chew(const dtrace_probedata_t *data, void *arg)
 			(void) snprintf(name, sizeof (name), "%s:%s",
 			    pd->dtpd_func, pd->dtpd_name);
 
-			oprintf("%3d %6d %32s ", cpu, pd->dtpd_id, name);
+			oprintf("%3d %6d %32s ", (int)cpu, pd->dtpd_id, name);
 		}
 	} else {
 		int indent = data->dtpda_indent;
@@ -1072,7 +1072,7 @@ chew(const dtrace_probedata_t *data, void *arg)
 			    data->dtpda_prefix, pd->dtpd_func);
 		}
 
-		oprintf("%3d %-41s ", cpu, name);
+		oprintf("%3d %-41s ", (int)cpu, name);
 	}
 
 	return (DTRACE_CONSUME_THIS);
@@ -1092,11 +1092,11 @@ go(void)
 		{ "aggregation size", "aggsize", 0 },
 		{ "speculation size", "specsize", 0 },
 		{ "dynamic variable size", "dynvarsize", 0 },
-		{ NULL }
+		{ NULL, NULL, 0 }
 	}, rates[] = {
 		{ "cleaning rate", "cleanrate", 0 },
 		{ "status rate", "statusrate", 0 },
-		{ NULL }
+		{ NULL, NULL ,0 }
 	};
 
 	for (i = 0; bufs[i].name != NULL; i++) {
