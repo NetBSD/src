@@ -39,10 +39,10 @@ extern "C" {
 #define	E_ERROR		1		/* Exit status for error */
 #define	E_USAGE		2		/* Exit status for usage error */
 
-extern void vwarn(const char *, va_list);
-extern void warn(const char *, ...);
-extern void vdie(const char  *, va_list);
-extern void die(const char *, ...);
+extern void vwarn(const char *, va_list) __printflike(1, 0);
+extern void warn(const char *, ...) __printflike(1, 2);
+extern void vdie(const char  *, va_list) __printflike(1, 0) __dead;
+extern void die(const char *, ...) __printflike(1, 2) __dead;
 
 extern const char *getpname(void);
 
