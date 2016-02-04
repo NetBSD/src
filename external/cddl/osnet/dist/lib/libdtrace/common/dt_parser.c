@@ -1280,7 +1280,7 @@ dt_node_int(uintmax_t value)
 	}
 
 	xyerror(D_INT_OFLOW, "integer constant 0x%llx cannot be represented "
-	    "in any built-in integral type\n", (u_longlong_t)value);
+	    "in any built-in integral type\n", (unsigned long long)value);
 	/*NOTREACHED*/
 	return (NULL);		/* keep gcc happy */
 }
@@ -2184,19 +2184,20 @@ dt_node_pdesc_by_id(uintmax_t id)
 		longjmp(yypcb->pcb_jmpbuf, EDT_NOMEM);
 
 	if (id > UINT_MAX) {
-		xyerror(D_PDESC_INVAL, "identifier %llu exceeds maximum "
-		    "probe id\n", (u_longlong_t)id);
+		xyerror(D_PDESC_INVAL, "identifier %"PRIuMAX" exceeds maximum "
+		    "probe id\n", id);
 	}
 
 	if (yypcb->pcb_pspec != DTRACE_PROBESPEC_NAME) {
-		xyerror(D_PDESC_INVAL, "probe identifier %llu not permitted "
-		    "when specifying %s\n", (u_longlong_t)id,
+		xyerror(D_PDESC_INVAL, "probe identifier %"PRIuMAX
+		    " not permitted when specifying %s\n", id,
 		    names[yypcb->pcb_pspec]);
 	}
 
 	if (dtrace_id2desc(dtp, (dtrace_id_t)id, dnp->dn_desc) != 0) {
-		xyerror(D_PDESC_INVAL, "invalid probe identifier %llu: %s\n",
-		    (u_longlong_t)id, dtrace_errmsg(dtp, dtrace_errno(dtp)));
+		xyerror(D_PDESC_INVAL, "invalid probe identifier %"PRIuMAX
+		    ": %s\n",
+		    id, dtrace_errmsg(dtp, dtrace_errno(dtp)));
 	}
 
 	return (dnp);
