@@ -81,7 +81,7 @@ struct ctf_buf {
 static int target_requires_swap;
 
 /*PRINTFLIKE1*/
-static void __printflike(1, 2)
+static void __printflike(1, 2) __dead
 parseterminate(const char *fmt, ...)
 {
 	static char msgbuf[1024]; /* sigh */
