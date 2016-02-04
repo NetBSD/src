@@ -262,16 +262,19 @@ typedef enum {
 	YYS_CONTROL	/* lex/yacc state for parsing control lines */
 } yystate_t;
 
-extern void dnerror(const dt_node_t *, dt_errtag_t, const char *, ...);
-extern void dnwarn(const dt_node_t *, dt_errtag_t, const char *, ...);
+extern void dnerror(const dt_node_t *, dt_errtag_t, const char *, ...)
+    __printflike(3, 4) __dead;
+extern void dnwarn(const dt_node_t *, dt_errtag_t, const char *, ...)
+    __printflike(3, 4);
 
-extern void xyerror(dt_errtag_t, const char *, ...);
-extern void xywarn(dt_errtag_t, const char *, ...);
-extern void xyvwarn(dt_errtag_t, const char *, va_list);
+extern void xyerror(dt_errtag_t, const char *, ...) __printflike(2, 3)
+    __dead;
+extern void xywarn(dt_errtag_t, const char *, ...) __printflike(2, 3);
+extern void xyvwarn(dt_errtag_t, const char *, va_list) __printflike(2, 0);
 
-extern void yyerror(const char *, ...);
-extern void yywarn(const char *, ...);
-extern void yyvwarn(const char *, va_list);
+extern void yyerror(const char *, ...) __printflike(1, 2) __dead;
+extern void yywarn(const char *, ...) __printflike(1, 2);
+extern void yyvwarn(const char *, va_list) __printflike(1, 0);
 
 extern void yylabel(const char *);
 extern void yybegin(yystate_t);
