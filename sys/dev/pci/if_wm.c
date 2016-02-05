@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.389 2016/01/29 11:30:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.390 2016/02/05 13:06:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.389 2016/01/29 11:30:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.390 2016/02/05 13:06:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3021,7 +3021,7 @@ wm_set_filter(struct wm_softc *sc)
 	struct ether_multistep step;
 	bus_addr_t mta_reg;
 	uint32_t hash, reg, bit;
-	int i, size, max;
+	int i, size, ralmax;
 
 	if (sc->sc_type >= WM_T_82544)
 		mta_reg = WMREG_CORDOVA_MTA;
@@ -3065,20 +3065,20 @@ wm_set_filter(struct wm_softc *sc)
 		switch (i) {
 		case 0:
 			/* We can use all entries */
-			max = size;
+			ralmax = size;
 			break;
 		case 1:
 			/* Only RAR[0] */
-			max = 1;
+			ralmax = 1;
 			break;
 		default:
 			/* available SHRA + RAR[0] */
-			max = i + 1;
+			ralmax = i + 1;
 		}
 	} else
-		max = size;
+		ralmax = size;
 	for (i = 1; i < size; i++) {
-		if (i < max)
+		if (i < ralmax)
 			wm_set_ral(sc, NULL, i);
 	}
 
