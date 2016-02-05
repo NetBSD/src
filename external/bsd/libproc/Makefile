@@ -1,5 +1,12 @@
-# $NetBSD: Makefile,v 1.1 2015/09/24 14:12:47 christos Exp $
+# $NetBSD: Makefile,v 1.2 2016/02/05 10:16:12 roy Exp $
 
-SUBDIR= lib .WAIT tests
+.include <bsd.own.mk>
+
+TEST_SUBDIRS=
+.if ${MKATF} != "no"
+TEST_SUBDIRS+=	tests
+.endif
+
+SUBDIR= lib .WAIT ${TEST_SUBDIRS}
 
 .include <bsd.subdir.mk>
