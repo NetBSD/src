@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.195 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.196 2016/02/05 04:18:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -469,8 +469,10 @@ extern bool vm_page_zero_enable;
 #include <uvm/uvm_param.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_pmap.h>
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
+#endif
 
 /*
  * helpers for calling ubc_release()
@@ -482,6 +484,7 @@ extern bool vm_page_zero_enable;
 #endif
 #define UBC_UNMAP_FLAG(vp) (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0)
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /*
  * Shareable process virtual address space.
  * May eventually be merged with vm_map.
@@ -507,6 +510,7 @@ struct vmspace {
 	size_t vm_aslr_delta_mmap;	/* mmap() random delta for ASLR */
 };
 #define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
+#endif
 
 #ifdef _KERNEL
 
