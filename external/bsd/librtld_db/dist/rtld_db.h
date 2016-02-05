@@ -73,7 +73,7 @@ typedef struct rd_loadobj {
 		/* XXX some types missing */
 		RDL_TYPE_UNKNOWN = 255
 	} rdl_type;
-	unsigned char	rdl_path[PATH_MAX];
+	char		rdl_path[PATH_MAX];
 } rd_loadobj_t;
 
 typedef enum {
