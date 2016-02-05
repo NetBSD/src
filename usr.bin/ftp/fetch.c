@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.220 2016/01/05 11:41:00 wiz Exp $	*/
+/*	$NetBSD: fetch.c,v 1.221 2016/02/05 03:41:05 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.220 2016/01/05 11:41:00 wiz Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.221 2016/02/05 03:41:05 nonaka Exp $");
 #endif /* not lint */
 
 /*
@@ -1196,6 +1196,8 @@ connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
 			goto cleanup_fetch_url;
 		if (len == 0)
 			break;
+
+		cp = buf;
 		if (match_token(&cp, "Proxy-Authenticate:")) {
 			const char *token;
 			if (!(token = match_token(&cp, "Basic"))) {
