@@ -30,6 +30,10 @@
  * Routines for manipulating linked lists
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
