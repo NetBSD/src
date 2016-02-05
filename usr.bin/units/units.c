@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.26 2016/02/05 03:30:08 dholland Exp $	*/
+/*	$NetBSD: units.c,v 1.27 2016/02/05 03:32:49 dholland Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -455,7 +455,8 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 					assert(pos > 0);
 				}
 				if (pos < len) {
-					if (pos > 0 && item[pos - 1] == '-') {
+					if (pos > 1 && item[pos - 1] == '-' &&
+					    item[pos - 2] == '^') {
 						/* allow negative exponents */
 						pos--;
 					}
