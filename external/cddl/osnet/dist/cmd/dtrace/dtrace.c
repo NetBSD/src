@@ -819,7 +819,7 @@ fatal("DOODAD in function %s, file %s, line %d\n",__FUNCTION__,__FILE__,__LINE__
 static int
 errhandler(const dtrace_errdata_t *data, void *arg)
 {
-	error(data->dteda_msg);
+	error("%s", data->dteda_msg);
 	return (DTRACE_HANDLE_OK);
 }
 
@@ -827,7 +827,7 @@ errhandler(const dtrace_errdata_t *data, void *arg)
 static int
 drophandler(const dtrace_dropdata_t *data, void *arg)
 {
-	error(data->dtdda_msg);
+	error("%s", data->dtdda_msg);
 	return (DTRACE_HANDLE_OK);
 }
 

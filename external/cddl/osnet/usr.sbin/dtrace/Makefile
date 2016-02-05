@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/02/04 21:26:48 roy Exp $
+#	$NetBSD: Makefile,v 1.9 2016/02/05 10:14:49 roy Exp $
 
 # $FreeBSD: src/cddl/usr.sbin/dtrace/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -30,8 +30,6 @@ CFLAGS+=	-I${OSNETDIR}/sys \
 
 COPTS.dtrace.c += -Wno-stack-protector
 COPTS.dtrace.c += -Wno-format-extra-args
-COPTS.dtrace.c += -Wno-format-nonliteral
-COPTS.dtrace.c += -Wno-format-security
 
 LDFLAGS+=	-pthread
 
