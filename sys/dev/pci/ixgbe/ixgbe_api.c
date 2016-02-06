@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_api.c,v 1.10 2016/02/06 02:39:18 riastradh Exp $*/
+/*$NetBSD: ixgbe_api.c,v 1.11 2016/02/06 02:40:49 riastradh Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -1006,7 +1006,7 @@ s32 ixgbe_fc_enable(struct ixgbe_hw *hw)
  * ixgbe_set_fw_drv_ver - Try to send the driver version number FW
  * @hw: pointer to hardware structure
  * @maj: driver major number to be sent to firmware
- * @min: driver minor number to be sent to firmware
+ * @minr: driver minor number to be sent to firmware
  * @build: driver build number to be sent to firmware
  * @ver: driver version number to be sent to firmware
  **/
