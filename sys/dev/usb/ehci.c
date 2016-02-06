@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.79 2016/01/11 22:24:58 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.80 2016/02/06 08:47:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.79 2016/01/11 22:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.80 2016/02/06 08:47:06 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -877,6 +877,8 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	    sizeof(lsqtd->qtd.qtd_status), BUS_DMASYNC_PREREAD);
 	if (status & EHCI_QTD_ACTIVE) {
 		USBHIST_LOGN(ehcidebug, 10, "active ex=%p", ex, 0, 0, 0);
+
+		/* last qTD has already been checked */
 		for (sqtd = fsqtd; sqtd != lsqtd; sqtd = sqtd->nextqtd) {
 			usb_syncmem(&sqtd->dma,
 			    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
@@ -3281,7 +3283,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		fsqtd = exfer->ex_sqtdstart;
 		lsqtd = exfer->ex_sqtdend;
 	}
-	for (sqtd = fsqtd; sqtd != lsqtd; sqtd = sqtd->nextqtd) {
+	for (sqtd = fsqtd; ; sqtd = sqtd->nextqtd) {
 		usb_syncmem(&sqtd->dma,
 		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
 		    sizeof(sqtd->qtd.qtd_status),
@@ -3291,6 +3293,8 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
 		    sizeof(sqtd->qtd.qtd_status),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+		if (sqtd == lsqtd)
+			break;
 	}
 
 	/*
@@ -3317,8 +3321,10 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	cur = EHCI_LINK_ADDR(le32toh(sqh->qh.qh_curqtd));
 	hit = 0;
-	for (sqtd = fsqtd; sqtd != lsqtd; sqtd = sqtd->nextqtd) {
+	for (sqtd = fsqtd; ; sqtd = sqtd->nextqtd) {
 		hit |= cur == sqtd->physaddr;
+		if (sqtd == lsqtd)
+			break;
 	}
 	sqtd = sqtd->nextqtd;
 	/* Zap curqtd register if hardware pointed inside the xfer. */
