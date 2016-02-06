@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.196.4.1 2015/11/16 14:45:03 msaitoh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.196.4.2 2016/02/06 20:58:13 snj Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.196.4.1 2015/11/16 14:45:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.196.4.2 2016/02/06 20:58:13 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.196.4.1 2015/11/16 14:45:03 msaitoh E
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/select.h>
@@ -206,6 +207,33 @@ usbd_trim_spaces(char *p)
 	*e = '\0';			/* kill trailing spaces */
 }
 
+static void
+usbd_get_device_string(struct usbd_device *ud, uByte index, char **buf)
+{
+	char *b = kmem_alloc(USB_MAX_ENCODED_STRING_LEN, KM_SLEEP);
+	if (b) {
+		usbd_status err = usbd_get_string0(ud, index, b, true);
+		if (err != USBD_NORMAL_COMPLETION) {
+			kmem_free(b, USB_MAX_ENCODED_STRING_LEN);
+			b = NULL;
+		} else {
+			usbd_trim_spaces(b);
+		}
+	}
+	*buf = b;
+}
+
+void
+usbd_get_device_strings(struct usbd_device *ud)
+{
+	usb_device_descriptor_t *udd = &ud->ddesc;
+
+	usbd_get_device_string(ud, udd->iManufacturer, &ud->ud_vendor);
+	usbd_get_device_string(ud, udd->iProduct, &ud->ud_product);
+	usbd_get_device_string(ud, udd->iSerialNumber, &ud->ud_serial);
+}
+
+
 Static void
 usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t vl, char *p,
     size_t pl, int usedev, int useencoded)
@@ -223,6 +251,13 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t vl, char *p,
 		if (usbd_get_string0(dev, udd->iProduct, p, useencoded) ==
 		    USBD_NORMAL_COMPLETION)
 			usbd_trim_spaces(p);
+	} else {
+		if (dev->ud_vendor) {
+			strlcpy(v, dev->ud_vendor, vl);
+		}
+		if (dev->ud_product) {
+			strlcpy(p, dev->ud_product, pl);
+		}
 	}
 	if (v[0] == '\0')
 		get_usb_vendor(v, vl, UGETW(udd->idVendor));
@@ -260,7 +295,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 	ep = cp + l;
 
 	usbd_devinfo_vp(dev, vendor, USB_MAX_ENCODED_STRING_LEN,
-	    product, USB_MAX_ENCODED_STRING_LEN, 1, 1);
+	    product, USB_MAX_ENCODED_STRING_LEN, 0, 1);
 	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += snprintf(cp, ep - cp, ", class %d/%d",
@@ -831,19 +866,10 @@ usbd_attach_roothub(device_t parent, usbd_device_handle dev)
 static void
 usbd_serialnumber(device_t dv, usbd_device_handle dev)
 {
-	usb_device_descriptor_t *dd = &dev->ddesc;
-	char *serialnumber;
-
-	serialnumber = malloc(USB_MAX_ENCODED_STRING_LEN, M_USB, M_NOWAIT);
-	if (serialnumber == NULL)
-		return;
-	serialnumber[0] = '\0';
-	(void)usbd_get_string(dev, dd->iSerialNumber, serialnumber);
-	if (serialnumber[0]) {
+	if (dev->ud_serial) {
 		prop_dictionary_set_cstring(device_properties(dv),
-		    "serialnumber", serialnumber);
+		    "serialnumber", dev->ud_serial);
 	}
-	free(serialnumber, M_USB);
 }
 
 static usbd_status
@@ -1309,6 +1335,8 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	DPRINTF(("usbd_new_device: new dev (addr %d), dev=%p, parent=%p\n",
 		 addr, dev, parent));
 
+	usbd_get_device_strings(dev);
+
 	usbd_add_dev_event(USB_EVENT_DEVICE_ATTACH, dev);
 
 	if (port == 0) { /* root hub */
@@ -1430,10 +1458,21 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	    di->udi_product, sizeof(di->udi_product), usedev, 1);
 	usbd_printBCD(di->udi_release, sizeof(di->udi_release),
 	    UGETW(dev->ddesc.bcdDevice));
-	di->udi_serial[0] = 0;
-	if (usedev)
-		(void)usbd_get_string(dev, dev->ddesc.iSerialNumber,
-				      di->udi_serial);
+	if (usedev) {
+		usbd_status uerr = usbd_get_string(dev,
+		    dev->ddesc.iSerialNumber, di->udi_serial);
+		if (uerr != USBD_NORMAL_COMPLETION) {
+			di->udi_serial[0] = '\0';
+		} else {
+			usbd_trim_spaces(di->udi_serial);
+		}
+	} else {
+		di->udi_serial[0] = '\0';
+		if (dev->ud_serial) {
+			strlcpy(di->udi_serial, dev->ud_serial,
+			    sizeof(di->udi_serial));
+		}
+	}
 	di->udi_vendorNo = UGETW(dev->ddesc.idVendor);
 	di->udi_productNo = UGETW(dev->ddesc.idProduct);
 	di->udi_releaseNo = UGETW(dev->ddesc.bcdDevice);
@@ -1573,6 +1612,15 @@ usb_free_device(usbd_device_handle dev)
 	if (dev->subdevlen > 0) {
 		free(dev->subdevs, M_USB);
 		dev->subdevlen = 0;
+	}
+	if (dev->ud_vendor) {
+		kmem_free(dev->ud_vendor, USB_MAX_ENCODED_STRING_LEN);
+	}
+	if (dev->ud_product) {
+		kmem_free(dev->ud_product, USB_MAX_ENCODED_STRING_LEN);
+	}
+	if (dev->ud_serial) {
+		kmem_free(dev->ud_serial, USB_MAX_ENCODED_STRING_LEN);
 	}
 	free(dev, M_USB);
 }
