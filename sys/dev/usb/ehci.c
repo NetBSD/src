@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.83 2016/02/06 10:21:45 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.84 2016/02/06 10:24:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.83 2016/02/06 10:21:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.84 2016/02/06 10:24:58 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1268,12 +1268,10 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 	}
 
     end:
-	/*
-	 * XXX transfer_complete memcpys out transfer data (for in endpoints)
-	 * during this call, before methods->done is called: dma sync required
-	 * beforehand?
-	 */
-	usb_transfer_complete(xfer);
+
+	ehci_del_intr_list(sc, ex);
+	TAILQ_INSERT_TAIL(cq, ex, ex_next);
+
 	USBHIST_LOG(ehcidebug, "ex=%p done", ex, 0, 0, 0);
 }
 
