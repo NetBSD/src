@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.14 2015/10/02 17:13:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.15 2016/02/06 18:19:59 joerg Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -408,8 +408,8 @@ sdt_linker_file_cb(linker_file_t lf, void *arg __unused)
  */
 #undef __weak
 #define __weak
-__link_set_decl(sdt_providers_set, struct std_provider);
-__link_set_decl(sdt_probes_set, struct std_probe);
+__link_set_decl(sdt_providers_set, struct sdt_provider);
+__link_set_decl(sdt_probes_set, struct sdt_probe);
 __link_set_decl(sdt_argtypes_set, struct sdt_argtype);
 
 /*
@@ -422,8 +422,8 @@ static void
 sdt_link_set_load(void)
 {
 	struct sdt_provider * const *provider;
-	struct sdt_probe **probe;
-	struct sdt_argtype **argtype;
+	struct sdt_probe * const *probe;
+	struct sdt_argtype * const *argtype;
 
 	__link_set_foreach(provider, sdt_providers_set) {
 		sdt_create_provider(*provider);
@@ -445,7 +445,7 @@ sdt_link_set_load(void)
 static void
 sdt_link_set_unload(void)
 {
-	struct sdt_provider **curr, *prov, *tmp;
+	struct sdt_provider * const *curr, *prov, *tmp;
 
 	/*
 	 * Go through all the providers declared in this linker file and
