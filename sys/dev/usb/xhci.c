@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.50 2016/02/06 08:50:52 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.51 2016/02/06 08:58:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.50 2016/02/06 08:50:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.51 2016/02/06 08:58:07 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1023,16 +1023,12 @@ xhci_intr1(struct xhci_softc * const sc)
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
 	DPRINTFN(16, "IMAN0 %08x", iman, 0, 0, 0);
 
-#if 0
-#ifdef __HAVE_PCI_MSI_MSIX
 	/* XXX 4.17.5 IP may be 0 if MSI/MSI-X is used */
 	if (!(sc->sc_quirks & XHCI_QUIRK_FORCE_INTR)) {
 		if ((iman & XHCI_IMAN_INTR_PEND) == 0) {
 			return 0;
 		}
 	}
-#endif
-#endif
 
 	xhci_rt_write_4(sc, XHCI_IMAN(0), iman);
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
