@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.48 2016/01/30 09:59:27 mlelstv Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.49 2016/02/06 10:35:58 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.48 2016/01/30 09:59:27 mlelstv Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.49 2016/02/06 10:35:58 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -214,7 +214,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-9Gls] [-g gid] [-M mask] [-m mask] "
+	fprintf(stderr, "usage: %s [-9GlsU] [-g gid] [-M mask] [-m mask] "
 	    "[-o options]\n\t[-t gmtoff] [-u uid] special mountpath\n",
 	    getprogname());
 	exit(1);
