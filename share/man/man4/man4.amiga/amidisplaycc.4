@@ -1,4 +1,4 @@
-.\" $NetBSD: amidisplaycc.4,v 1.10 2009/03/11 13:41:25 joerg Exp $
+.\" $NetBSD: amidisplaycc.4,v 1.11 2016/02/06 20:20:18 jandberg Exp $
 .Dd November 12, 2003
 .Dt AMIDISPLAYCC 4 amiga
 .Os
@@ -23,11 +23,10 @@ Currently it does not support running X.
 It can however coexist well enough with grf0 to make possible running
 X the old way, but be warned, you cannot switch screens while
 in X and when quitting it, it seems to hang. Switching a screen
-then will bring up the text console. As always, we apologise for
-the inconvenience.
+then will bring up the text console.
 .Pp
-What it does support is hilite (bold), underline, reverse and
-foreground/background colors.
+It supports foreground and background color, and the hilite (bold),
+underline, and reverse text attributes.
 .Ss Virtual terminals and screen types
 The number of virtual screens is limited only by
 the available chip memory.
