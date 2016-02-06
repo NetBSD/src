@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.3 2016/02/06 01:51:39 riastradh Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.4 2016/02/06 01:59:55 riastradh Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.3 2016/02/06 01:51:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.4 2016/02/06 01:59:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2991,7 +2991,7 @@ rtwn_get_txpower(struct rtwn_softc *sc, int chain,
 				maxpwr = rom->ht40_max_pwr[group];
 			else
 				maxpwr = rom->ht20_max_pwr[group];
-			maxpwr = (max >> (chain * 4)) & 0xf;
+			maxpwr = (maxpwr >> (chain * 4)) & 0xf;
 			if (power[ridx] > maxpwr)
 				power[ridx] = maxpwr;
 		} else if (sc->regulatory == 1) {
