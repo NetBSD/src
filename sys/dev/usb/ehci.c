@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.84 2016/02/06 10:24:58 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.85 2016/02/06 11:23:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.84 2016/02/06 10:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.85 2016/02/06 11:23:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -834,10 +834,10 @@ ehci_softintr(void *v)
 
 	TAILQ_FOREACH_SAFE(ex, &cq, ex_next, nextex) {
 		/*
-		* XXX transfer_complete memcpys out transfer data (for in
-		* endpoints) during this call, before methods->done is called.
-		* A dma sync required beforehand.
-		*/
+		 * XXX transfer_complete memcpys out transfer data (for in
+		 * endpoints) during this call, before methods->done is called.
+		 * A dma sync required beforehand.
+		 */
 		usb_transfer_complete(&ex->ex_xfer);
 	}
 
@@ -4907,7 +4907,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 
 		/*
 		 * Step 1.5, initialize uframes
-		*/
+		 */
 		for (j = 0; j < EHCI_ITD_NUFRAMES; j += uframes) {
 			/* Calculate which page in the list this starts in */
 			int addr = DMAADDR(dma_buf, froffs);
