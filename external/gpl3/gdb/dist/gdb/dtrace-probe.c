@@ -421,7 +421,8 @@ dtrace_process_dof_probe (struct objfile *objfile,
 	  arg.type_str = xstrdup (p);
 
 	  /* Use strtab_size as a sentinel.  */
-	  while (*p++ != '\0' && p - strtab < strtab_size);
+	  while (*p != '\0' && p - strtab < strtab_size)
+	    ++p;
 
 	  /* Try to parse a type expression from the type string.  If
 	     this does not work then we set the type to `long
