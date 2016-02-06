@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.135 2012/12/22 16:57:09 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.136 2016/02/06 21:23:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.135 2012/12/22 16:57:09 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.136 2016/02/06 21:23:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1967,15 +1967,15 @@ dotrans(char *dst, size_t dlen, const char *src)
 	char *cp2 = dst;
 	size_t i, ostop;
 
-	for (ostop = 0; *(ntout + ostop) && ostop < 16; ostop++)
+	for (ostop = 0; ntout[ostop] && ostop < sizeof(ntout); ostop++)
 		continue;
 	for (cp1 = src; *cp1; cp1++) {
 		int found = 0;
-		for (i = 0; *(ntin + i) && i < 16; i++) {
-			if (*cp1 == *(ntin + i)) {
+		for (i = 0; ntin[i] && i < sizeof(ntin); i++) {
+			if (*cp1 == ntin[i]) {
 				found++;
 				if (i < ostop) {
-					*cp2++ = *(ntout + i);
+					*cp2++ = ntout[i];
 					if (cp2 - dst >= (ptrdiff_t)(dlen - 1))
 						goto out;
 				}
