@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.113 2015/12/14 22:07:37 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.114 2016/02/06 19:33:07 riastradh Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.113 2015/12/14 22:07:37 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.114 2016/02/06 19:33:07 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -807,7 +807,7 @@ match_addrselectpolicy(struct sockaddr *addr, struct policyhead *head)
 #ifdef INET6
 	struct policyqueue *ent, *bestent = NULL;
 	struct in6_addrpolicy *pol;
-	int matchlen, bestmatchlen = -1;
+	int curmatchlen, bestmatchlen = -1;
 	u_char *mp, *ep, *k, *p, m;
 	struct sockaddr_in6 key;
 
@@ -831,7 +831,7 @@ match_addrselectpolicy(struct sockaddr *addr, struct policyhead *head)
 
 	for (ent = TAILQ_FIRST(head); ent; ent = TAILQ_NEXT(ent, pc_entry)) {
 		pol = &ent->pc_policy;
-		matchlen = 0;
+		curmatchlen = 0;
 
 		mp = (u_char *)&pol->addrmask.sin6_addr;
 		ep = mp + 16;	/* XXX: scope field? */
@@ -842,19 +842,19 @@ match_addrselectpolicy(struct sockaddr *addr, struct policyhead *head)
 			if ((*k & m) != *p)
 				goto next; /* not match */
 			if (m == 0xff) /* short cut for a typical case */
-				matchlen += 8;
+				curmatchlen += 8;
 			else {
 				while (m >= 0x80) {
-					matchlen++;
+					curmatchlen++;
 					m <<= 1;
 				}
 			}
 		}
 
 		/* matched.  check if this is better than the current best. */
-		if (matchlen > bestmatchlen) {
+		if (curmatchlen > bestmatchlen) {
 			bestent = ent;
-			bestmatchlen = matchlen;
+			bestmatchlen = curmatchlen;
 		}
 
 	  next:
