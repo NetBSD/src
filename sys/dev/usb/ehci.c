@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.82 2016/02/06 09:02:57 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.83 2016/02/06 10:21:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.82 2016/02/06 09:02:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.83 2016/02/06 10:21:45 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -148,16 +148,20 @@ struct ehci_pipe {
 	};
 };
 
+typedef TAILQ_HEAD(ex_completeq, ehci_xfer) ex_completeq_t;
+
 Static usbd_status	ehci_open(struct usbd_pipe *);
 Static void		ehci_poll(struct usbd_bus *);
 Static void		ehci_softintr(void *);
 Static int		ehci_intr1(ehci_softc_t *);
 Static void		ehci_waitintr(ehci_softc_t *, struct usbd_xfer *);
-Static void		ehci_check_intr(ehci_softc_t *, struct ehci_xfer *);
-Static void		ehci_check_qh_intr(ehci_softc_t *, struct ehci_xfer *);
-Static void		ehci_check_itd_intr(ehci_softc_t *, struct ehci_xfer *);
-Static void		ehci_check_sitd_intr(ehci_softc_t *, struct ehci_xfer *);
-Static void		ehci_idone(struct ehci_xfer *);
+Static void		ehci_check_qh_intr(ehci_softc_t *, struct ehci_xfer *,
+			    ex_completeq_t *);
+Static void		ehci_check_itd_intr(ehci_softc_t *, struct ehci_xfer *,
+			    ex_completeq_t *);
+Static void		ehci_check_sitd_intr(ehci_softc_t *, struct ehci_xfer *,
+			    ex_completeq_t *);
+Static void		ehci_idone(struct ehci_xfer *, ex_completeq_t *);
 Static void		ehci_timeout(void *);
 Static void		ehci_timeout_task(void *);
 Static void		ehci_intrlist_timeout(void *);
@@ -292,14 +296,19 @@ Static void		ehci_dump_exfer(struct ehci_xfer *);
 
 #define EHCI_NULL htole32(EHCI_LINK_TERMINATE)
 
-#define ehci_add_intr_list(sc, ex) \
-	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ex), ex_next);
-#define ehci_del_intr_list(sc, ex) \
-	do { \
-		TAILQ_REMOVE(&sc->sc_intrhead, (ex), ex_next); \
-		(ex)->ex_next.tqe_prev = NULL; \
-	} while (0)
-#define ehci_active_intr_list(ex) ((ex)->ex_next.tqe_prev != NULL)
+static inline void
+ehci_add_intr_list(ehci_softc_t *sc, struct ehci_xfer *ex)
+{
+
+	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, ex_next);
+}
+
+static inline void
+ehci_del_intr_list(ehci_softc_t *sc, struct ehci_xfer *ex)
+{
+
+	TAILQ_REMOVE(&sc->sc_intrhead, ex, ex_next);
+}
 
 Static const struct usbd_bus_methods ehci_bus_methods = {
 	.ubm_open =	ehci_open,
@@ -790,15 +799,46 @@ ehci_softintr(void *v)
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
+	ex_completeq_t cq;
+	TAILQ_INIT(&cq);
+
 	/*
 	 * The only explanation I can think of for why EHCI is as brain dead
 	 * as UHCI interrupt-wise is that Intel was involved in both.
 	 * An interrupt just tells us that something is done, we have no
 	 * clue what, so we need to scan through all active transfers. :-(
 	 */
-	for (ex = TAILQ_FIRST(&sc->sc_intrhead); ex; ex = nextex) {
-		nextex = TAILQ_NEXT(ex, ex_next);
-		ehci_check_intr(sc, ex);
+
+	/*
+	 * ehci_idone will remove transfer from sc->sc_intrhead if it's
+	 * complete and add to our cq list
+	 * */
+	TAILQ_FOREACH_SAFE(ex, &sc->sc_intrhead, ex_next, nextex) {
+		switch (ex->ex_type) {
+		case EX_CTRL:
+		case EX_BULK:
+		case EX_INTR:
+			ehci_check_qh_intr(sc, ex, &cq);
+			break;
+		case EX_ISOC:
+			ehci_check_itd_intr(sc, ex, &cq);
+			break;
+		case EX_FS_ISOC:
+			ehci_check_sitd_intr(sc, ex, &cq);
+			break;
+		default:
+			KASSERT(false);
+		}
+
+	}
+
+	TAILQ_FOREACH_SAFE(ex, &cq, ex_next, nextex) {
+		/*
+		* XXX transfer_complete memcpys out transfer data (for in
+		* endpoints) during this call, before methods->done is called.
+		* A dma sync required beforehand.
+		*/
+		usb_transfer_complete(&ex->ex_xfer);
 	}
 
 	/* Schedule a callout to catch any dropped transactions. */
@@ -813,37 +853,8 @@ ehci_softintr(void *v)
 	}
 }
 
-/* Check for an interrupt. */
 Static void
-ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
-{
-
-	USBHIST_FUNC();	USBHIST_CALLED(ehcidebug);
-	USBHIST_LOG(ehcidebug, "ex = %p", ex, 0, 0, 0);
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-
-	switch (ex->ex_type) {
-	case EX_CTRL:
-	case EX_BULK:
-	case EX_INTR:
-		ehci_check_qh_intr(sc, ex);
-		break;
-	case EX_ISOC:
-		ehci_check_itd_intr(sc, ex);
-		break;
-	case EX_FS_ISOC:
-		ehci_check_sitd_intr(sc, ex);
-		break;
-	default:
-		KASSERT(false);
-	}
-
-	return;
-}
-
-Static void
-ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
+ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 {
 	ehci_soft_qtd_t *sqtd, *fsqtd, *lsqtd;
 	uint32_t status;
@@ -924,11 +935,11 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
  done:
 	USBHIST_LOGN(ehcidebug, 10, "ex=%p done", ex, 0, 0, 0);
 	callout_stop(&ex->ex_xfer.ux_callout);
-	ehci_idone(ex);
+	ehci_idone(ex, cq);
 }
 
 Static void
-ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
+ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 {
 	ehci_soft_itd_t *itd;
 	int i;
@@ -971,11 +982,11 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 done:
 	USBHIST_LOG(ehcidebug, "ex %p done", ex, 0, 0, 0);
 	callout_stop(&ex->ex_xfer.ux_callout);
-	ehci_idone(ex);
+	ehci_idone(ex, cq);
 }
 
 void
-ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
+ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 {
 	ehci_soft_sitd_t *sitd;
 
@@ -1009,12 +1020,12 @@ ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 
 	USBHIST_LOGN(ehcidebug, 10, "ex=%p done", ex, 0, 0, 0);
 	callout_stop(&(ex->ex_xfer.ux_callout));
-	ehci_idone(ex);
+	ehci_idone(ex, cq);
 }
 
 
 Static void
-ehci_idone(struct ehci_xfer *ex)
+ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 {
 	struct usbd_xfer *xfer = &ex->ex_xfer;
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
@@ -3264,6 +3275,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 */
 	xfer->ux_status = status;	/* make software ignore it */
 	callout_stop(&xfer->ux_callout);
+	ehci_del_intr_list(sc, exfer);
 
 	usb_syncmem(&sqh->dma,
 	    sqh->offs + offsetof(ehci_qh_t, qh_qtd.qtd_status),
@@ -3783,8 +3795,7 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 Static void
 ehci_device_ctrl_done(struct usbd_xfer *xfer)
 {
-	struct ehci_xfer *ex = EHCI_XFER2EXFER(xfer);
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	ehci_softc_t *sc __diagused = EHCI_XFER2SC(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	usb_device_request_t *req = &xfer->ux_request;
 	int len = UGETW(req->wLength);
@@ -3796,14 +3807,11 @@ ehci_device_ctrl_done(struct usbd_xfer *xfer)
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
-	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(sc, ex);	/* remove from active list */
-		usb_syncmem(&epipe->ctrl.reqdma, 0, sizeof(*req),
-		    BUS_DMASYNC_POSTWRITE);
-		if (len)
-			usb_syncmem(&xfer->ux_dmabuf, 0, len,
-			    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	}
+	usb_syncmem(&epipe->ctrl.reqdma, 0, sizeof(*req),
+	    BUS_DMASYNC_POSTWRITE);
+	if (len)
+		usb_syncmem(&xfer->ux_dmabuf, 0, len,
+		    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	USBHIST_LOG(ehcidebug, "length=%d", xfer->ux_actlen, 0, 0, 0);
 }
@@ -4019,8 +4027,7 @@ ehci_device_bulk_close(struct usbd_pipe *pipe)
 Static void
 ehci_device_bulk_done(struct usbd_xfer *xfer)
 {
-	struct ehci_xfer *ex = EHCI_XFER2EXFER(xfer);
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	ehci_softc_t *sc __diagused = EHCI_XFER2SC(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	int endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 	int rd = UE_GET_DIR(endpt) == UE_DIR_IN;
@@ -4032,11 +4039,8 @@ ehci_device_bulk_done(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(sc, ex);	/* remove from active list */
-		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-		    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	}
+	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+	    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	USBHIST_LOG(ehcidebug, "length=%d", xfer->ux_actlen, 0, 0, 0);
 }
@@ -4281,10 +4285,9 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 			callout_reset(&xfer->ux_callout,
 			    mstohz(xfer->ux_timeout), ehci_timeout, xfer);
 		}
-
+		ehci_add_intr_list(sc, exfer);
 		xfer->ux_status = USBD_IN_PROGRESS;
-	} else if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(exfer)) {
-		ehci_del_intr_list(sc, exfer); /* remove from active list */
+	} else {
 		endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 		isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
@@ -4678,8 +4681,7 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	epipe->isoc.cur_xfers--;
-	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(exfer)) {
-		ehci_del_intr_list(sc, exfer);
+	if (exfer->ex_isrunning) {
 		ehci_remove_sitd_chain(sc, exfer->ex_itdstart);
 		exfer->ex_isrunning = false;
 	}
@@ -5101,8 +5103,7 @@ ehci_device_isoc_done(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	epipe->isoc.cur_xfers--;
-	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(exfer)) {
-		ehci_del_intr_list(sc, exfer);
+	if (exfer->ex_isrunning) {
 		ehci_remove_itd_chain(sc, exfer->ex_sitdstart);
 		exfer->ex_isrunning = false;
 	}
