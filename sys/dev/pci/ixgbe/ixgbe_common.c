@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_common.c,v 1.6 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixgbe_common.c,v 1.7 2016/02/06 02:40:49 riastradh Exp $*/
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -4407,7 +4407,7 @@ out:
  *  ixgbe_set_fw_drv_ver_generic - Sends driver version to firmware
  *  @hw: pointer to the HW structure
  *  @maj: driver version major number
- *  @min: driver version minor number
+ *  @minr: driver version minor number
  *  @build: driver version build number
  *  @sub: driver version sub build number
  *
@@ -4416,7 +4416,7 @@ out:
  *  else returns IXGBE_ERR_SWFW_SYNC when encountering an error acquiring
  *  semaphore or IXGBE_ERR_HOST_INTERFACE_COMMAND when command fails.
  **/
-s32 ixgbe_set_fw_drv_ver_generic(struct ixgbe_hw *hw, u8 maj, u8 min,
+s32 ixgbe_set_fw_drv_ver_generic(struct ixgbe_hw *hw, u8 maj, u8 minr,
 				 u8 build, u8 sub)
 {
 	struct ixgbe_hic_drv_info fw_cmd;
@@ -4436,7 +4436,7 @@ s32 ixgbe_set_fw_drv_ver_generic(struct ixgbe_hw *hw, u8 maj, u8 min,
 	fw_cmd.hdr.cmd_or_resp.cmd_resv = FW_CEM_CMD_RESERVED;
 	fw_cmd.port_num = (u8)hw->bus.func;
 	fw_cmd.ver_maj = maj;
-	fw_cmd.ver_min = min;
+	fw_cmd.ver_min = minr;
 	fw_cmd.ver_build = build;
 	fw_cmd.ver_sub = sub;
 	fw_cmd.hdr.checksum = 0;
