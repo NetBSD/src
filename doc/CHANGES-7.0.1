@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.31 2016/01/26 23:55:52 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.32 2016/02/06 21:34:37 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -923,4 +923,34 @@ etc/ssh/ssh_known_hosts				1.9
 
 	Add keys for wip.pkgsrc.org.
 	[wiz, ticket #1074]
+
+sys/arch/hp300/hp300/intr.c			1.42
+
+	Fix fatal "intr_dispatch: stray level 6 interrupt" panic by the
+	GENERIC kernel on machines without arcofi(4) audio (i.e. all
+	hp300 except HP425e).
+	[tsutsui, ticket #1093]
+
+sys/nfs/nfs_vnops.c				1.309
+
+	Return an error if NFSPROC_LOOKUP returns the file handle of the
+	current directory.  Treating it as DOT lookup would put garbage
+	into the name cache and could panic on future lookups.
+	PR kern/50664
+	[hannken, ticket #1094]
+
+lib/libquota/quota_nfs.c			1.5
+
+	Some NFS servers return RPC_PROGNOTREGISTERED instead of
+	RPC_PROGVERSMISMATCH when they don't support EXT_RQUOTAVERS but
+	support RQUOTAVERS, so retry with RQUOTAVERS for both
+	RPC_PROGNOTREGISTERED and RPC_PROGVERSMISMATCH return codes.
+	[bouyer, ticket #1098]
+
+external/gpl2/xcvs/dist/src/import.c		1.4
+
+	Remove trailing whitespace from imported messages when adding
+	new files.  This is done in RCS_checkin() but we have a "fast
+	path" for new files here that does not do it.
+	[christos, ticket #1099]
 
