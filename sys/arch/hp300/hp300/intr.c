@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.40.34.1 2014/08/29 11:42:15 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.40.34.1.2.1 2016/02/06 20:49:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40.34.1 2014/08/29 11:42:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40.34.1.2.1 2016/02/06 20:49:37 snj Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -199,9 +199,12 @@ intr_dispatch(int evec /* format | vector offset */)
 
 	list = &hp300_intr_list[ipl];
 	if (LIST_FIRST(&list->hi_q) == NULL) {
-		printf("intr_dispatch: ipl %d unexpected\n", ipl);
-		if (++unexpected > 10)
-			panic("intr_dispatch: too many unexpected interrupts");
+		if (ipl != 6) {
+			printf("intr_dispatch: ipl %d unexpected\n", ipl);
+			if (++unexpected > 10)
+				panic("intr_dispatch:"
+				    " too many unexpected interrupts");
+		}
 		return;
 	}
 
