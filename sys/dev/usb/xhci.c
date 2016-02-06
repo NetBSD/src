@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.49 2016/01/10 10:33:43 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.50 2016/02/06 08:50:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.49 2016/01/10 10:33:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.50 2016/02/06 08:50:52 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1023,12 +1023,16 @@ xhci_intr1(struct xhci_softc * const sc)
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
 	DPRINTFN(16, "IMAN0 %08x", iman, 0, 0, 0);
 
+#if 0
+#ifdef __HAVE_PCI_MSI_MSIX
 	/* XXX 4.17.5 IP may be 0 if MSI/MSI-X is used */
 	if (!(sc->sc_quirks & XHCI_QUIRK_FORCE_INTR)) {
 		if ((iman & XHCI_IMAN_INTR_PEND) == 0) {
 			return 0;
 		}
 	}
+#endif
+#endif
 
 	xhci_rt_write_4(sc, XHCI_IMAN(0), iman);
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
@@ -3206,27 +3210,25 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_3_IDT_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
-	if (len == 0)
-		goto no_data;
+	if (len != 0) {
+		/* data phase */
+		parameter = DMAADDR(dma, 0);
+		KASSERT(len <= 0x10000);
+		status = XHCI_TRB_2_IRQ_SET(0) |
+		    XHCI_TRB_2_TDSZ_SET(1) |
+		    XHCI_TRB_2_BYTES_SET(len);
+		control = (isread ? XHCI_TRB_3_DIR_IN : 0) |
+		    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DATA_STAGE) |
+		    XHCI_TRB_3_CHAIN_BIT | XHCI_TRB_3_ENT_BIT;
+		xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
-	/* data phase */
-	parameter = DMAADDR(dma, 0);
-	KASSERT(len <= 0x10000);
-	status = XHCI_TRB_2_IRQ_SET(0) |
-	    XHCI_TRB_2_TDSZ_SET(1) |
-	    XHCI_TRB_2_BYTES_SET(len);
-	control = (isread ? XHCI_TRB_3_DIR_IN : 0) |
-	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DATA_STAGE) |
-	    XHCI_TRB_3_CHAIN_BIT | XHCI_TRB_3_ENT_BIT;
-	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+		parameter = (uintptr_t)xfer | 0x3;
+		status = XHCI_TRB_2_IRQ_SET(0);
+		control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_EVENT_DATA) |
+		    XHCI_TRB_3_IOC_BIT;
+		xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	}
 
-	parameter = (uintptr_t)xfer | 0x3;
-	status = XHCI_TRB_2_IRQ_SET(0);
-	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_EVENT_DATA) |
-	    XHCI_TRB_3_IOC_BIT;
-	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
-
-no_data:
 	parameter = 0;
 	status = XHCI_TRB_2_IRQ_SET(0);
 	/* the status stage has inverted direction */
