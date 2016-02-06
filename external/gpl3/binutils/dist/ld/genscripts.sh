@@ -209,7 +209,8 @@ if [ "${LIB_PATH}" != ":" ] ; then
     esac
     libs="${exec_prefix}/${TOOL_LIB}/lib ${libs}"
   fi
-  append_to_lib_path ${libs}
+  #NetBSD: don't spam linker scripts like this.
+  #append_to_lib_path ${libs}
 fi
 
 if [ "x${LIB_PATH}" = "x" ] && [ "x${USE_LIBPATH}" = xyes ] ; then
