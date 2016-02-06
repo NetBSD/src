@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.12 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.13 2016/02/06 08:01:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.12 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.13 2016/02/06 08:01:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.12 2015/10/06 21:32:15 skrll E
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbhist.h>
 
+#define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(usbdebug,1,FMT,A,B,C,D)
 #define	DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usbdebug,N,FMT,A,B,C,D)
 
 usbd_status
@@ -75,8 +76,8 @@ usbd_status
 usbd_get_config_desc(struct usbd_device *dev, int confidx,
 		     usb_config_descriptor_t *d)
 {
-	usbd_status err;
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	usbd_status err;
 
 	DPRINTFN(3, "confidx=%d", confidx, 0, 0, 0);
 	err = usbd_get_desc(dev, UDESC_CONFIG, confidx,
@@ -104,8 +105,8 @@ usbd_status
 usbd_get_bos_desc(struct usbd_device *dev, int confidx,
 		     usb_bos_descriptor_t *d)
 {
-	usbd_status err;
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	usbd_status err;
 
 	DPRINTFN(3, "confidx=%d", confidx, 0, 0, 0);
 	err = usbd_get_desc(dev, UDESC_BOS, confidx,
@@ -141,6 +142,7 @@ usbd_get_device_desc(struct usbd_device *dev, usb_device_descriptor_t *d)
 usbd_status
 usbd_get_device_status(struct usbd_device *dev, usb_status_t *st)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
 	req.bmRequestType = UT_READ_DEVICE;
@@ -154,8 +156,10 @@ usbd_get_device_status(struct usbd_device *dev, usb_status_t *st)
 usbd_status
 usbd_get_hub_status(struct usbd_device *dev, usb_hub_status_t *st)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p", dev, 0, 0, 0);
 	req.bmRequestType = UT_READ_CLASS_DEVICE;
 	req.bRequest = UR_GET_STATUS;
 	USETW(req.wValue, 0);
@@ -167,8 +171,10 @@ usbd_get_hub_status(struct usbd_device *dev, usb_hub_status_t *st)
 usbd_status
 usbd_set_address(struct usbd_device *dev, int addr)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p addr %d", dev, addr, 0, 0);
 	req.bmRequestType = UT_WRITE_DEVICE;
 	req.bRequest = UR_SET_ADDRESS;
 	USETW(req.wValue, addr);
@@ -180,8 +186,10 @@ usbd_set_address(struct usbd_device *dev, int addr)
 usbd_status
 usbd_get_port_status(struct usbd_device *dev, int port, usb_port_status_t *ps)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p port %d", dev, port, 0, 0);
 	req.bmRequestType = UT_READ_CLASS_OTHER;
 	req.bRequest = UR_GET_STATUS;
 	USETW(req.wValue, 0);
@@ -195,8 +203,10 @@ usbd_status
 usbd_get_port_status_ext(struct usbd_device *dev, int port,
     usb_port_status_ext_t *pse)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p port %d", dev, port, 0, 0);
 	req.bmRequestType = UT_READ_CLASS_OTHER;
 	req.bRequest = UR_GET_STATUS;
 	USETW2(req.wValue, 0, UR_PST_EXT_PORT_STATUS);
@@ -208,8 +218,10 @@ usbd_get_port_status_ext(struct usbd_device *dev, int port,
 usbd_status
 usbd_clear_hub_feature(struct usbd_device *dev, int sel)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p sel %d", dev, sel, 0, 0);
 	req.bmRequestType = UT_WRITE_CLASS_DEVICE;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, sel);
@@ -221,8 +233,10 @@ usbd_clear_hub_feature(struct usbd_device *dev, int sel)
 usbd_status
 usbd_set_hub_feature(struct usbd_device *dev, int sel)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p sel %d", dev, sel, 0, 0);
 	req.bmRequestType = UT_WRITE_CLASS_DEVICE;
 	req.bRequest = UR_SET_FEATURE;
 	USETW(req.wValue, sel);
@@ -234,8 +248,10 @@ usbd_set_hub_feature(struct usbd_device *dev, int sel)
 usbd_status
 usbd_clear_port_feature(struct usbd_device *dev, int port, int sel)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p port %d sel %d", dev, port, sel, 0);
 	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, sel);
@@ -247,8 +263,10 @@ usbd_clear_port_feature(struct usbd_device *dev, int port, int sel)
 usbd_status
 usbd_set_port_feature(struct usbd_device *dev, int port, int sel)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p port %d sel %d", dev, sel, 0, 0);
 	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	req.bRequest = UR_SET_FEATURE;
 	USETW(req.wValue, sel);
@@ -260,8 +278,10 @@ usbd_set_port_feature(struct usbd_device *dev, int port, int sel)
 usbd_status
 usbd_set_port_u1_timeout(struct usbd_device *dev, int port, int timeout)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p port %d timeout %d", dev, port, timeout, 0);
 	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	req.bRequest = UR_SET_FEATURE;
 	USETW(req.wValue, UHF_PORT_U1_TIMEOUT);
@@ -273,8 +293,10 @@ usbd_set_port_u1_timeout(struct usbd_device *dev, int port, int timeout)
 usbd_status
 usbd_set_port_u2_timeout(struct usbd_device *dev, int port, int timeout)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p port %d timeout %d", dev, port, timeout, 0);
 	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	req.bRequest = UR_SET_FEATURE;
 	USETW(req.wValue, UHF_PORT_U2_TIMEOUT);
@@ -395,8 +417,10 @@ usbd_status
 usbd_get_report_descriptor(struct usbd_device *dev, int ifcno,
 			   int size, void *d)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p ifcno %d size %d", dev, ifcno, size, 0);
 	req.bmRequestType = UT_READ_INTERFACE;
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, UDESC_REPORT, 0); /* report id should be 0 */
@@ -464,8 +488,10 @@ usbd_read_report_desc(struct usbd_interface *ifc, void **descp, int *sizep)
 usbd_status
 usbd_get_config(struct usbd_device *dev, uint8_t *conf)
 {
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_device_request_t req;
 
+	DPRINTF("dev %p", dev, 0, 0, 0);
 	req.bmRequestType = UT_READ_DEVICE;
 	req.bRequest = UR_GET_CONFIG;
 	USETW(req.wValue, 0);
