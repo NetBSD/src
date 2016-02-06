@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.27 2015/12/23 08:07:40 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.28 2016/02/06 08:53:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -39,10 +39,13 @@
  * NOTE: The current implementation only supports Device Side Mode!
  */
 
-#include "opt_motg.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.27 2015/12/23 08:07:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.28 2016/02/06 08:53:03 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_motg.h"
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 
