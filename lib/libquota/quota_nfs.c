@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_nfs.c,v 1.4 2014/06/11 08:43:01 martin Exp $	*/
+/*	$NetBSD: quota_nfs.c,v 1.4.2.1 2016/02/06 21:01:39 snj Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_nfs.c,v 1.4 2014/06/11 08:43:01 martin Exp $");
+__RCSID("$NetBSD: quota_nfs.c,v 1.4.2.1 2016/02/06 21:01:39 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h> /* XXX for DEV_BSIZE */
@@ -179,7 +179,8 @@ __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 	ret = callaurpc(host, RQUOTAPROG, EXT_RQUOTAVERS,
 	    RQUOTAPROC_GETQUOTA, (xdrproc_t)xdr_ext_getquota_args,
 	    &ext_gq_args, (xdrproc_t)xdr_getquota_rslt, &gq_rslt);
-	if (ret == RPC_PROGVERSMISMATCH && rpcqtype == RQUOTA_USRQUOTA) {
+	if ((ret == RPC_PROGVERSMISMATCH || ret == RPC_PROGNOTREGISTERED)
+	    && rpcqtype == RQUOTA_USRQUOTA) {
 		/* try RQUOTAVERS */
 		gq_args.gqa_pathp = path;
 		gq_args.gqa_uid = qk->qk_id;
