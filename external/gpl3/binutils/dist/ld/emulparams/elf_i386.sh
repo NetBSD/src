@@ -19,10 +19,11 @@ IREL_IN_PLT=
 
 case "$target" in
   x86_64-*-netbsd*)
-    # Don't override autoconf entry
-    if [ -z "$LIB_PATH" ]; then
-      LIB_PATH='=/usr/lib/i386'
-    fi
+    case "$EMULATION_NAME" in
+      *i386*)
+       LIB_PATH='=/usr/lib/i386'
+       ;;
+    esac
     ;;
 esac
 
