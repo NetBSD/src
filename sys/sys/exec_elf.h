@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.151 2015/11/01 17:44:42 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.152 2016/02/06 15:36:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,12 +44,8 @@
 #include <sys/types.h>
 #else
 #include <inttypes.h>
+#include <stddef.h>
 #endif /* _KERNEL || _STANDALONE */
-
-#ifdef   _BSD_SIZE_T_
-typedef  _BSD_SIZE_T_    size_t;
-#undef   _BSD_SIZE_T_
-#endif
 
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/machine/elf_machdep.h>
