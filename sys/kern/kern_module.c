@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.109 2015/12/09 16:26:16 maxv Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.110 2016/02/06 22:48:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.109 2015/12/09 16:26:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.110 2016/02/06 22:48:07 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -936,21 +936,19 @@ module_do_load(const char *name, bool isdep, int flags,
 		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
 	} else {
 		/*
-		 * If a requisite module, check to see if it is
-		 * already present.
+		 * Check to see if module is already present.
 		 */
-		if (isdep) {
-			mod = module_lookup(name);
-			if (mod != NULL) {
-				if (modp != NULL) {
-					*modp = mod;
-				}
-				module_print("dependent module `%s' already "
-				    "loaded", name);
-				depth--;
-				return 0;
+		mod = module_lookup(name);
+		if (mod != NULL) {
+			if (modp != NULL) {
+				*modp = mod;
 			}
+			module_print("%s module `%s' already loaded",
+			    isdep ? "dependent" : "requested", name);
+			depth--;
+			return EEXIST;
 		}
+
 		mod = module_newmodule(MODULE_SOURCE_FILESYS);
 		if (mod == NULL) {
 			module_error("out of memory for `%s'", name);
@@ -1030,19 +1028,6 @@ module_do_load(const char *name, bool isdep, int flags,
 	}
 
 	/*
-	 * Check to see if the module is already loaded.  If so, we may
-	 * have been recursively called to handle a dependency, so be sure
-	 * to set modp.
-	 */
-	if ((mod2 = module_lookup(mi->mi_name)) != NULL) {
-		if (modp != NULL)
-			*modp = mod2;
-		module_print("module `%s' already loaded", mi->mi_name);
-		error = EEXIST;
-		goto fail;
-	}
-
-	/*
 	 * Block circular dependencies.
 	 */
 	TAILQ_FOREACH(mod2, pending, mod_chain) {
@@ -1093,7 +1078,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			}
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod2, MODULE_CLASS_ANY, true);
-			if (error != 0) {
+			if (error != 0 && error != EEXIST) {
 				module_error("recursive load failed for `%s' "
 				    "(`%s' required), error %d", mi->mi_name,
 				    buf, error);
