@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.81 2016/02/06 09:01:39 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.82 2016/02/06 09:02:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.81 2016/02/06 09:01:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.82 2016/02/06 09:02:57 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2208,7 +2208,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 
 	error = cv_timedwait(&sc->sc_doorbell, &sc->sc_lock, hz); /* bell wait */
 
-	USBHIST_LOG(ehcidebug, "cmd = 0x%08x sts = 0x%08x",
+	USBHIST_LOG(ehcidebug, "cmd = 0x%08x sts = 0x%08x ... done",
 		    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 #ifdef DIAGNOSTIC
 	if (error)
