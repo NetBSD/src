@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.896 2016/02/03 15:28:02 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.897 2016/02/06 16:56:23 riz Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -351,6 +351,7 @@ TOOL_CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
 TOOL_CRUNCHGEN=		MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
 TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
 TOOL_CTFCONVERT=	${TOOLDIR}/bin/${_TOOL_PREFIX}ctfconvert
+TOOL_CTFDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfdump
 TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_CVSLATEST=		${TOOLDIR}/bin/${_TOOL_PREFIX}cvslatest
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
@@ -463,6 +464,7 @@ TOOL_CONFIG=		config
 TOOL_CRUNCHGEN=		crunchgen
 TOOL_CTAGS=		ctags
 TOOL_CTFCONVERT=	ctfconvert
+TOOL_CTFDUMP=		ctfdump
 TOOL_CTFMERGE=		ctfmerge
 TOOL_CVSLATEST=		cvslatest
 TOOL_DB=		db
@@ -566,12 +568,6 @@ CPP=		${TOOL_CPP.${ACTIVE_CPP}}
 CXX=		${TOOL_CXX.${ACTIVE_CXX}}
 FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
-
-# Override with tools versions if needed
-.if ${MKCTF:Uno} != "no" && !defined(NOCTF)
-CTFCONVERT=	${TOOL_CTFCONVERT}
-CTFMERGE=	${TOOL_CTFMERGE}
-.endif
 
 # For each ${MACHINE_CPU}, list the ports that use it.
 MACHINES.aarch64=	evbarm64
@@ -1476,5 +1472,11 @@ TARGETS+=	lintmanpages
 .endif
 
 TESTSBASE=	/usr/tests${MLIBDIR:D/${MLIBDIR}}
+
+# Override with tools versions if needed
+.if ${MKCTF:Uno} != "no" && !defined(NOCTF)
+CTFCONVERT=	${TOOL_CTFCONVERT}
+CTFMERGE=	${TOOL_CTFMERGE}
+.endif
 
 .endif	# !defined(_BSD_OWN_MK_)
