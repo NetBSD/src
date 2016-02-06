@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.897 2016/02/06 16:56:23 riz Exp $
+#	$NetBSD: bsd.own.mk,v 1.898 2016/02/06 16:58:31 riz Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -351,7 +351,6 @@ TOOL_CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
 TOOL_CRUNCHGEN=		MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
 TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
 TOOL_CTFCONVERT=	${TOOLDIR}/bin/${_TOOL_PREFIX}ctfconvert
-TOOL_CTFDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfdump
 TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_CVSLATEST=		${TOOLDIR}/bin/${_TOOL_PREFIX}cvslatest
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
@@ -464,7 +463,6 @@ TOOL_CONFIG=		config
 TOOL_CRUNCHGEN=		crunchgen
 TOOL_CTAGS=		ctags
 TOOL_CTFCONVERT=	ctfconvert
-TOOL_CTFDUMP=		ctfdump
 TOOL_CTFMERGE=		ctfmerge
 TOOL_CVSLATEST=		cvslatest
 TOOL_DB=		db
