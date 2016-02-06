@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.80 2016/02/06 08:47:06 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.81 2016/02/06 09:01:39 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.80 2016/02/06 08:47:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.81 2016/02/06 09:01:39 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2883,7 +2883,7 @@ ehci_alloc_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 		/* The EHCI hardware can handle at most 5 pages. */
 		va = (vaddr_t)KERNADDR(dma, curoffs);
 		va_offs = EHCI_PAGE_OFFSET(va);
-		if (len-curoffs < EHCI_QTD_MAXTRANSFER - va_offs) {
+		if (len - curoffs < EHCI_QTD_MAXTRANSFER - va_offs) {
 			/* we can handle it in this QTD */
 			curlen = len - curoffs;
 		} else {
