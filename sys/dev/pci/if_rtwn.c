@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.2 2015/11/06 14:22:17 nonaka Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.3 2016/02/06 01:51:39 riastradh Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.2 2015/11/06 14:22:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.3 2016/02/06 01:51:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2954,7 +2954,7 @@ rtwn_get_txpower(struct rtwn_softc *sc, int chain,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct r92c_rom *rom = &sc->rom;
-	uint16_t cckpow, ofdmpow, htpow, diff, max;
+	uint16_t cckpow, ofdmpow, htpow, diff, maxpwr;
 	const struct rtwn_txpwr *base;
 	int ridx, chan, group;
 
@@ -2988,12 +2988,12 @@ rtwn_get_txpower(struct rtwn_softc *sc, int chain,
 			power[ridx] = base->pwr[0][ridx];
 			/* Apply vendor limits. */
 			if (extc != NULL)
-				max = rom->ht40_max_pwr[group];
+				maxpwr = rom->ht40_max_pwr[group];
 			else
-				max = rom->ht20_max_pwr[group];
-			max = (max >> (chain * 4)) & 0xf;
-			if (power[ridx] > max)
-				power[ridx] = max;
+				maxpwr = rom->ht20_max_pwr[group];
+			maxpwr = (max >> (chain * 4)) & 0xf;
+			if (power[ridx] > maxpwr)
+				power[ridx] = maxpwr;
 		} else if (sc->regulatory == 1) {
 			if (extc == NULL)
 				power[ridx] = base->pwr[group][ridx];
