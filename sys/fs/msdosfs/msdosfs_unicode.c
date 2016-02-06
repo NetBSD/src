@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_unicode.c,v 1.1 2016/02/06 10:40:58 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_unicode.c,v 1.2 2016/02/06 14:11:58 joerg Exp $	*/
 
 /*
  * Unicode 5.0 case folding derived from
@@ -51,6 +51,10 @@
  * written authorization of the copyright holder.
  * 
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
