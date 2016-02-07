@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.349 2016/02/01 15:00:43 christos Exp $
+#	$NetBSD: bsd.README,v 1.350 2016/02/07 14:31:21 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -354,7 +354,7 @@ MKPIE		If "no", create regular executables. Otherwise create
 		PIE (Position Independent Executables).
 		Default: no
 
-NOCTF		Don't create PIE (Position Independent Executables)
+NOPIE		Don't create PIE (Position Independent Executables)
 		It is set internally for standalone programs.
 
 MKPIGZGZIP	If "no", only install pigz as pigz, not gzip.
