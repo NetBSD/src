@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.85 2016/02/06 11:23:43 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.86 2016/02/07 13:58:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.85 2016/02/06 11:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.86 2016/02/07 13:58:19 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3259,8 +3259,8 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 #endif
 		/* Override the status which might be USBD_TIMEOUT. */
 		xfer->ux_status = status;
-		USBHIST_LOG(ehcidebug, "waiting for abort to finish",
-			0, 0, 0, 0);
+		USBHIST_LOG(ehcidebug, "waiting for abort to finish", 0, 0, 0,
+		    0);
 		xfer->ux_hcflags |= UXFER_ABORTWAIT;
 		while (xfer->ux_hcflags & UXFER_ABORTING)
 			cv_wait(&xfer->ux_hccv, &sc->sc_lock);
