@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.41 2015/12/28 10:13:45 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.42 2016/02/07 15:50:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.41 2015/12/28 10:13:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.42 2016/02/07 15:50:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -572,7 +572,8 @@ usbd_setup_default_xfer(struct usbd_xfer *xfer, struct usbd_device *dev,
     void *priv, uint32_t timeout, usb_device_request_t *req, void *buffer,
     uint32_t length, uint16_t flags, usbd_callback callback)
 {
-	xfer->ux_pipe = dev->ud_pipe0;
+	KASSERT(xfer->ux_pipe == dev->ud_pipe0);
+
 	xfer->ux_priv = priv;
 	xfer->ux_buffer = buffer;
 	xfer->ux_length = length;
@@ -1075,27 +1076,18 @@ usbd_start_next(struct usbd_pipe *pipe)
 usbd_status
 usbd_do_request(struct usbd_device *dev, usb_device_request_t *req, void *data)
 {
-	return (usbd_do_request_flags(dev, req, data, 0, 0,
-				      USBD_DEFAULT_TIMEOUT));
+
+	return usbd_do_request_flags(dev, req, data, 0, 0,
+	    USBD_DEFAULT_TIMEOUT);
 }
 
 usbd_status
 usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
-		      void *data, uint16_t flags, int *actlen, uint32_t timo)
+    void *data, uint16_t flags, int *actlen, uint32_t timeout)
 {
-	return (usbd_do_request_flags_pipe(dev, dev->ud_pipe0, req,
-					   data, flags, actlen, timo));
-}
-
-usbd_status
-usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
-	usb_device_request_t *req, void *data, uint16_t flags, int *actlen,
-	uint32_t timeout)
-{
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	struct usbd_xfer *xfer;
 	usbd_status err;
-
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
 	ASSERT_SLEEPABLE();
 
@@ -1104,9 +1096,9 @@ usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
 	if (error)
 		return error;
 
-	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
-				data, UGETW(req->wLength), flags, NULL);
-	xfer->ux_pipe = pipe;
+	usbd_setup_default_xfer(xfer, dev, 0, timeout, req, data,
+	    UGETW(req->wLength), flags, NULL);
+	KASSERT(xfer->ux_pipe == dev->ud_pipe0);
 	err = usbd_sync_transfer(xfer);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (xfer->ux_actlen > xfer->ux_length) {
