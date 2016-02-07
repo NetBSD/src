@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.96 2012/02/22 06:58:54 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.97 2016/02/07 05:03:36 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1501,10 +1501,17 @@ netpgp_sign_memory(netpgp_t *netpgp,
 					&pubkey->key.pubkey, 0);
 			}
 		}
-		/* now decrypt key */
-		seckey = pgp_decrypt_seckey(keypair, netpgp->passfp);
-		if (seckey == NULL) {
-			(void) fprintf(io->errs, "Bad passphrase\n");
+		if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
+			/* now decrypt key */
+			seckey = pgp_decrypt_seckey(keypair, netpgp->passfp);
+			if (seckey == NULL) {
+				(void) fprintf(io->errs, "Bad passphrase\n");
+			}
+		} else {
+			pgp_keyring_t	*secring;
+
+			secring = netpgp->secring;
+			seckey = &secring->keys[0].key.seckey;
 		}
 	}
 	if (seckey == NULL) {
