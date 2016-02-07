@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $NetBSD: amidisplaycc.4,v 1.12 2016/02/07 10:46:08 jandberg Exp $
+.\" $NetBSD: amidisplaycc.4,v 1.13 2016/02/07 14:06:04 wiz Exp $
 .Dd November 12, 2003
 .Dt AMIDISPLAYCC 4 amiga
 .Os
@@ -39,15 +39,15 @@ framework and the Amiga custom chip driver functions.
 It exports the internal
 .Xr wsdisplay 4
 interface and contains the necessary rendering functions to
-operate a text terminal with virtual screens. It uses the
-Amiga abstract graphic driver (grfabs) functions for the low-level
-display management.
+operate a text terminal with virtual screens.
+It uses the Amiga abstract graphic driver (grfabs) functions for
+the low-level display management.
 .Pp
 Currently it does not support running X.
 It can however coexist well enough with grf0 to make possible running
 X the old way, but be warned, you cannot switch screens while
-in X and when quitting it, it seems to hang. Switching a screen
-then will bring up the text console.
+in X and when quitting it, it seems to hang.
+Switching a screen then will bring up the text console.
 .Pp
 It supports foreground and background color, and the hilite (bold),
 underline, and reverse text attributes.
