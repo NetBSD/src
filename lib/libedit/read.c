@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.71 2014/07/06 18:15:34 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.72 2016/02/08 17:18:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.71 2014/07/06 18:15:34 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.72 2016/02/08 17:18:43 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -317,6 +317,7 @@ read_char(EditLine *el, Char *cp)
 	char cbuf[MB_LEN_MAX];
 	size_t cbp = 0;
 	int bytes = 0;
+	int save_errno = errno;
 
  again:
 	el->el_signal->sig_no = 0;
@@ -332,9 +333,10 @@ read_char(EditLine *el, Char *cp)
 		default:
 			break;
 		}
-		if (!tried && read__fixio(el->el_infd, e) == 0)
+		if (!tried && read__fixio(el->el_infd, e) == 0) {
+			errno = save_errno;
 			tried = 1;
-		else {
+		} else {
 			errno = e;
 			*cp = '\0';
 			return -1;
@@ -343,24 +345,47 @@ read_char(EditLine *el, Char *cp)
 
 	/* Test for EOF */
 	if (num_read == 0) {
-		errno = 0;
 		*cp = '\0';
 		return 0;
 	}
 
 #ifdef WIDECHAR
 	if (el->el_flags & CHARSET_IS_UTF8) {
+		mbstate_t mbs;
+		size_t rbytes;
+again_lastbyte:
 		if (!utf8_islead((unsigned char)cbuf[0]))
 			goto again; /* discard the byte we read and try again */
 		++cbp;
-		if ((bytes = ct_mbtowc(cp, cbuf, cbp)) == -1) {
-			ct_mbtowc_reset;
+		/* This only works because UTF8 is stateless */
+		memset(&mbs, 0, sizeof(mbs));
+		switch (rbytes = ct_mbrtowc(cp, cbuf, cbp, &mbs)) {
+		case (size_t)-1:
+			if (cbp > 1) {
+				/*
+				 * Invalid sequence, discard all bytes
+				 * except the last one.
+				 */
+				cbuf[0] = cbuf[cbp - 1];
+				cbp = 0;
+				goto again_lastbyte;
+			} else {
+				/* Invalid byte, discard it. */
+				cbp = 0;
+				goto again;
+			}
+		case (size_t)-2:
 			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
 				errno = EILSEQ;
 				*cp = '\0';
 				return -1;
 			}
+			/* Incomplete sequence, read another byte. */
 			goto again;
+		default:
+			/* Valid character, process it. */
+			bytes = (int)rbytes;
+			break;
 		}
 	} else if (isascii((unsigned char)cbuf[0]) ||
 		/* we don't support other multibyte charsets */
