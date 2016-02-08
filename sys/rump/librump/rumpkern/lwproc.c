@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.37 2016/01/26 23:12:17 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.38 2016/02/08 18:18:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.37 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.38 2016/02/08 18:18:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -334,8 +334,8 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 
 	l->l_fd = p->p_fd;
-	l->l_cpu = rump_cpu;
-	l->l_target_cpu = rump_cpu; /* Initial target CPU always the same */
+	l->l_cpu = &rump_bootcpu;
+	l->l_target_cpu = &rump_bootcpu; /* Initial target CPU always same */
 	l->l_stat = LSRUN;
 	l->l_mutex = &unruntime_lock;
 	TAILQ_INIT(&l->l_ld_locks);

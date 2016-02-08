@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.327 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.328 2016/02/08 18:18:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.327 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.328 2016/02/08 18:18:19 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -246,7 +246,7 @@ rump_init(void)
 	/* init minimal lwp/cpu context */
 	rump_lwproc_init();
 	l = &lwp0;
-	l->l_cpu = l->l_target_cpu = rump_cpu;
+	l->l_cpu = l->l_target_cpu = &rump_bootcpu;
 	rump_lwproc_curlwp_set(l);
 
 	/* retrieve env vars which affect the early stage of bootstrap */
