@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.h,v 1.2 2016/02/02 13:07:30 pooka Exp $	*/
+/*	$NetBSD: kern.h,v 1.3 2016/02/08 18:18:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -144,7 +144,7 @@ typedef void	(*rump_proc_vfs_release_fn)(struct proc *);
 extern rump_proc_vfs_init_fn rump_proc_vfs_init;
 extern rump_proc_vfs_release_fn rump_proc_vfs_release;
 
-extern struct cpu_info *rump_cpu;
+extern struct cpu_info rump_bootcpu;
 
 extern bool rump_ttycomponent;
 
