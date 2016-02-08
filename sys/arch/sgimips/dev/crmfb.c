@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.41 2015/09/23 20:09:45 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.42 2016/02/08 16:44:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.41 2015/09/23 20:09:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.42 2016/02/08 16:44:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1107,36 +1107,37 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	bus_space_write_8(sc->sc_iot, sc->sc_reh, 0x40, 0);
 	
 	switch (depth) {
-		case 8:
-			sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_8 |
-			    DE_MODE_TYPE_CI | DE_MODE_PIXDEPTH_8;
-			sc->sc_mte_mode = MTE_MODE_DST_ECC |
-			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
-			    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
-			    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT);
-			sc->sc_mte_x_shift = 0;
-			break;
-		case 16:
-			sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_16 |
-			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_16;
-			sc->sc_mte_mode = MTE_MODE_DST_ECC |
-			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
-			    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
-			    (MTE_DEPTH_16 << MTE_DEPTH_SHIFT);
-			sc->sc_mte_x_shift = 1;
-			break;
-		case 32:
-			sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
-			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32;
-			break;
-			sc->sc_mte_mode = MTE_MODE_DST_ECC |
-			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
-			    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
-			    (MTE_DEPTH_32 << MTE_DEPTH_SHIFT);
-			sc->sc_mte_x_shift = 2;
-		default:
-			panic("%s: unsuported colour depth %d\n", __func__,
-			    depth);
+	case 8:
+		sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_8 |
+		    DE_MODE_TYPE_CI | DE_MODE_PIXDEPTH_8;
+		sc->sc_mte_mode = MTE_MODE_DST_ECC |
+		    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+		    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+		    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT);
+		sc->sc_mte_x_shift = 0;
+		break;
+	case 16:
+		sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_16 |
+		    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_16;
+		sc->sc_mte_mode = MTE_MODE_DST_ECC |
+		    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+		    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+		    (MTE_DEPTH_16 << MTE_DEPTH_SHIFT);
+		sc->sc_mte_x_shift = 1;
+		break;
+	case 32:
+		sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+		    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32;
+		break;
+		sc->sc_mte_mode = MTE_MODE_DST_ECC |
+		    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+		    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+		    (MTE_DEPTH_32 << MTE_DEPTH_SHIFT);
+		sc->sc_mte_x_shift = 2;
+		break;
+	default:
+		panic("%s: unsuported colour depth %d\n", __func__,
+		    depth);
 	}
 	sc->sc_needs_sync = 0;
 	sc->sc_src_mode = 0xffffffff;
