@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.898 2016/02/06 16:58:31 riz Exp $
+#	$NetBSD: bsd.own.mk,v 1.899 2016/02/08 10:39:09 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -610,6 +610,7 @@ OBJCOPY_ELF2AOUT_FLAGS?=	\
 	-R .ARM.attributes	\
 	-R .ARM.exidx		\
 	-R .ARM.extab		\
+	-R .SUNW_ctf		\
 	-R .arm.atpcs		\
 	-R .comment		\
 	-R .debug_abbrev	\
