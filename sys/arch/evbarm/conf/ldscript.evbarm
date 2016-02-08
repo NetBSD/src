@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.evbarm,v 1.12 2015/08/23 08:57:25 uebayasi Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.13 2016/02/08 21:08:03 skrll Exp $	*/
 
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
@@ -77,8 +77,8 @@ SECTIONS
     *(.start)
   } =0
 
-  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
-  AT (LOADADDR(.start) + SIZEOF(.start))
+  .text (KERNEL_BASE_virt + ALIGN(SIZEOF(.start), ALIGNOF(.text))) :
+  AT (LOADADDR(.start) + ALIGN(SIZEOF(.start), ALIGNOF(.text)))
   {
     *(.text)
   } =0
