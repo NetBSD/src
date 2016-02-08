@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.57 2016/02/06 08:52:26 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.58 2016/02/08 11:16:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.57 2016/02/06 08:52:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.58 2016/02/08 11:16:02 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -181,7 +181,7 @@ Static usbd_status	uhci_alloc_std_chain(uhci_softc_t *, struct usbd_xfer *,
 Static void		uhci_free_stds(uhci_softc_t *, struct uhci_xfer *);
 
 Static void		uhci_reset_std_chain(uhci_softc_t *, struct usbd_xfer *,
-			    int, int, int *, uhci_soft_td_t *, uhci_soft_td_t **);
+			    int, int, int *, uhci_soft_td_t **);
 
 Static void		uhci_poll_hub(void *);
 Static void		uhci_waitintr(uhci_softc_t *, struct usbd_xfer *);
@@ -2107,8 +2107,7 @@ uhci_free_stds(uhci_softc_t *sc, struct uhci_xfer *ux)
 
 Static void
 uhci_reset_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer,
-    int length, int isread, int *toggle,
-    uhci_soft_td_t *fstd, uhci_soft_td_t **lstd)
+    int length, int isread, int *toggle, uhci_soft_td_t **lstd)
 {
 	struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
 	struct usbd_pipe *pipe = xfer->ux_pipe;
@@ -2321,7 +2320,7 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	mutex_enter(&sc->sc_lock);
 
 	uhci_reset_std_chain(sc, xfer, len, isread, &upipe->nexttoggle,
-	    ux->ux_stdstart, &dataend);
+	    &dataend);
 
 	data = ux->ux_stdstart;
 	ux->ux_stdend = dataend;
@@ -2335,7 +2334,7 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	if (uhcidebug >= 10) {
 		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		DPRINTFN(10, "before transfer", 0, 0, 0, 0);
-		uhci_dump_tds(ux->ux_stdstart);
+		uhci_dump_tds(data);
 		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
@@ -2648,7 +2647,7 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 		upipe->nexttoggle = 1;
 		next = uxfer->ux_data;
 		uhci_reset_std_chain(sc, xfer, len, isread,
-		    &upipe->nexttoggle, next, &dataend);
+		    &upipe->nexttoggle, &dataend);
 		dataend->link.std = stat;
 		dataend->td.td_link = htole32(stat->physaddr | UHCI_PTR_TD);
 		usb_syncmem(&dataend->dma,
@@ -2845,7 +2844,7 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	/* Take lock to protect nexttoggle */
 	mutex_enter(&sc->sc_lock);
 	uhci_reset_std_chain(sc, xfer, xfer->ux_length, isread,
-	    &upipe->nexttoggle, data, &dataend);
+	    &upipe->nexttoggle, &dataend);
 
 	dataend->td.td_status |= htole32(UHCI_TD_IOC);
 	usb_syncmem(&dataend->dma,
@@ -3411,7 +3410,7 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 
 		data = ux->ux_stdstart;
 		uhci_reset_std_chain(sc, xfer, xfer->ux_length, isread,
-		    &upipe->nexttoggle, data, &dataend);
+		    &upipe->nexttoggle, &dataend);
 		dataend->td.td_status |= htole32(UHCI_TD_IOC);
 		usb_syncmem(&dataend->dma,
 		    dataend->offs + offsetof(uhci_td_t, td_status),
