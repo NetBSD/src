@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.30 2014/04/08 19:52:27 ragge Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.5 2014/07/24 19:29:33 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.31 2014/12/24 08:43:29 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.6 2016/02/09 20:29:20 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -39,8 +39,7 @@
 #define F77LIBLIST { "-L/usr/local/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
 #endif
 
-/* host-independent */
-#define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.elf_so", NULL }
+#define	DYNLINKLIB	"/usr/libexec/ld.elf_so"
 
 #define CRTEND_T	"crtend.o"
 
