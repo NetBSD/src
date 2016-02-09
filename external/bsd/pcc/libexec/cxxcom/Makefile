@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/07/24 20:20:49 plunky Exp $
+#	$NetBSD: Makefile,v 1.2 2016/02/09 20:40:45 plunky Exp $
 
 WARNS?=	2
 
@@ -22,13 +22,12 @@ MAN=
 # generate cgram.h
 YHEADER=
 
+CPPFLAGS+=	-DLANG_CXX
 CPPFLAGS+=	-I${.OBJDIR}
 CPPFLAGS+=	-I${PCC_DIST}/mip
 CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
 CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIST}/cc/cxxcom
-
-COPTS.pftn.c+=	${${ACTIVE_CC} == "gcc" :? -Wno-uninitialized :}
 
 DPSRCS=	external.c
 
