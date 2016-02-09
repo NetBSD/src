@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.27 2014/06/01 11:35:03 ragge Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.5 2014/07/24 19:20:47 plunky Exp $	*/
+/*	Id: local2.c,v 1.28 2015/01/04 19:17:23 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.6 2016/02/09 20:28:31 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -358,7 +358,7 @@ stasg(NODE *p)
 	int val = l->n_lval;
 
         /* R3 = dest, R4 = src, R5 = len */
-        printf("\tli %s,%d\n", rnames[R5], p->n_stsize);
+        printf("\tli %s,%d\n", rnames[R5], attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0));
         if (l->n_op == OREG) {
                 printf("\taddi %s,%s,%d\n", rnames[R3], rnames[regno(l)], val);
         } else if (l->n_op == NAME) {
@@ -1145,7 +1145,7 @@ argsize(NODE *p)
 	if (t == DOUBLE || t == LDOUBLE)
 		return 8;
 	if (t == STRTY || t == UNIONTY)
-		return p->n_stsize;
+		return attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0);
 	comperr("argsize");
 	return 0;
 }

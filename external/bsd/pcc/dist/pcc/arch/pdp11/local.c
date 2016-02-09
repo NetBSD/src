@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.12 2011/06/05 10:29:10 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.3 2011/09/01 12:46:44 plunky Exp $	*/
+/*	Id: local.c,v 1.15 2015/09/03 19:24:51 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.4 2016/02/09 20:28:27 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -28,6 +28,12 @@
 
 #include "pass1.h"
 
+#define	NODE P1ND
+#undef NIL
+#define NIL NULL
+#define fwalk p1fwalk
+#define nfree p1nfree
+
 /*	this file contains code which is dependent on the target machine */
 
 /* clocal() is called to do local transformations on
@@ -48,7 +54,6 @@ clocal(NODE *p)
 	register struct symtab *q;
 	register NODE *r, *l;
 	register int o;
-	int m;
 
 #ifdef PCC_DEBUG
 	if (xdebug) {
@@ -88,136 +93,6 @@ clocal(NODE *p)
 		case EXTERN:
 		case EXTDEF:
 			break;
-		}
-		break;
-
-	case PCONV:
-		/* Remove redundant PCONV's. Be careful */
-		l = p->n_left;
-		if (l->n_op == ICON) {
-			l->n_lval = (unsigned)l->n_lval;
-			goto delp;
-		}
-		if (l->n_type < INT || l->n_type == LONGLONG || 
-		    l->n_type == ULONGLONG) {
-			/* float etc? */
-			p->n_left = block(SCONV, l, NIL, UNSIGNED, 0, 0);
-			break;
-		}
-		/* if left is SCONV, cannot remove */
-		if (l->n_op == SCONV)
-			break;
-
-		/* avoid ADDROF TEMP */
-		if (l->n_op == ADDROF && l->n_left->n_op == TEMP)
-			break;
-
-		/* if conversion to another pointer type, just remove */
-		if (p->n_type > BTMASK && l->n_type > BTMASK)
-			goto delp;
-		break;
-
-	delp:	l->n_type = p->n_type;
-		l->n_qual = p->n_qual;
-		l->n_df = p->n_df;
-		l->n_sue = p->n_sue;
-		nfree(p);
-		p = l;
-		break;
-		
-	case SCONV:
-		l = p->n_left;
-
-#if 0
-		if (p->n_type == l->n_type) {
-			nfree(p);
-			return l;
-		}
-
-		if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
-		    btdims[p->n_type].suesize == btdims[l->n_type].suesize) {
-			if (p->n_type != FLOAT && p->n_type != DOUBLE &&
-			    l->n_type != FLOAT && l->n_type != DOUBLE &&
-			    l->n_type != LDOUBLE && p->n_type != LDOUBLE) {
-				if (l->n_op == NAME || l->n_op == UMUL ||
-				    l->n_op == TEMP) {
-					l->n_type = p->n_type;
-					nfree(p);
-					return l;
-				}
-			}
-		}
-
-		if (DEUNSIGN(p->n_type) == INT && DEUNSIGN(l->n_type) == INT &&
-		    coptype(l->n_op) == BITYPE) {
-			l->n_type = p->n_type;
-			nfree(p);
-			return l;
-		}
-#endif
-		o = l->n_op;
-		m = p->n_type;
-
-		if (o == ICON) {
-			CONSZ val = l->n_lval;
-
-			if (!ISPTR(m)) /* Pointers don't need to be conv'd */
-			    switch (m) {
-			case BOOL:
-				l->n_lval = l->n_lval != 0;
-				break;
-			case CHAR:
-				l->n_lval = (char)val;
-				break;
-			case UCHAR:
-				l->n_lval = val & 0377;
-				break;
-			case INT:
-				l->n_lval = (short)val;
-				break;
-			case UNSIGNED:
-				l->n_lval = val & 0177777;
-				break;
-			case ULONG:
-				l->n_lval = val & 0xffffffff;
-				break;
-			case LONG:
-				l->n_lval = (long)val;
-				break;
-			case LONGLONG:
-				l->n_lval = (long long)val;
-				break;
-			case ULONGLONG:
-				l->n_lval = val;
-				break;
-			case VOID:
-				break;
-			case LDOUBLE:
-			case DOUBLE:
-			case FLOAT:
-				l->n_op = FCON;
-				l->n_dcon = FLOAT_CAST(val, l->n_type);
-				break;
-			default:
-				cerror("unknown type %d", m);
-			}
-			l->n_type = m;
-			l->n_sue = 0;
-			nfree(p);
-			return l;
-		} else if (l->n_op == FCON) {
-			l->n_lval = FLOAT_VAL(l->n_dcon);
-			l->n_sp = NULL;
-			l->n_op = ICON;
-			l->n_type = m;
-			l->n_sue = 0;
-			nfree(p);
-			return clocal(l);
-		}
-		if (DEUNSIGN(p->n_type) == INT &&
-		    DEUNSIGN(l->n_type) == INT) {
-			nfree(p);
-			p = l;
 		}
 		break;
 
@@ -268,17 +143,18 @@ myp2tree(NODE *p)
 	if (p->n_op != FCON)
 		return;
 
-	sp = inlalloc(sizeof(struct symtab));
+	sp = tmpalloc(sizeof(struct symtab));
 	sp->sclass = STATIC;
-	sp->ssue = 0;
+	sp->sap = 0;
 	sp->slevel = 1; /* fake numeric label */
 	sp->soffset = getlab();
 	sp->sflags = 0;
 	sp->stype = p->n_type;
 	sp->squal = (CON >> TSHIFT);
 
+	locctr(DATA, sp);
 	defloc(sp);
-	ninval(0, sp->ssue->suesize, p);
+	ninval(0, tsize(sp->stype, sp->sdf, sp->sap), p);
 
 	p->n_op = NAME;
 	p->n_lval = 0;
@@ -323,7 +199,7 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 	ecomp(buildtree(MINUSEQ, sp, p));
 
 	/* save the address of sp */
-	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
+	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_ap);
 	sp->n_lval = 0;
 	sp->n_rval = STKREG;
 	t->n_type = sp->n_type;
@@ -361,62 +237,6 @@ instring(struct symtab *sp)
 	printf("%s0\n", cnt ? "" : ".byte ");
 }
 
-static int inbits, xinval;
-
-/*
- * set fsz bits in sequence to zero.
- */
-void
-zbits(OFFSZ off, int fsz)
-{
-	int m;
-
-	if (idebug)
-		printf("zbits off %lld, fsz %d inbits %d\n", off, fsz, inbits);
-	if ((m = (inbits % SZCHAR))) {
-		m = SZCHAR - m;
-		if (fsz < m) {
-			inbits += fsz;
-			return;
-		} else {
-			fsz -= m;
-			printf("\t.byte %d\n", xinval);
-			xinval = inbits = 0;
-		}
-	}
-	if (fsz >= SZCHAR) {
-		printf(".=.+%o\n", fsz/SZCHAR);
-		fsz -= (fsz/SZCHAR) * SZCHAR;
-	}
-	if (fsz) {
-		xinval = 0;
-		inbits = fsz;
-	}
-}
-
-/*
- * Initialize a bitfield.
- */
-void
-infld(CONSZ off, int fsz, CONSZ val)
-{
-	if (idebug)
-		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
-		    off, fsz, val, inbits);
-	val &= ((CONSZ)1 << fsz)-1;
-	while (fsz + inbits >= SZCHAR) {
-		xinval |= (val << inbits);
-		printf("\t.byte %d\n", xinval & 255);
-		fsz -= (SZCHAR - inbits);
-		val >>= (SZCHAR - inbits);
-		xinval = inbits = 0;
-	}
-	if (fsz) {
-		xinval |= (val << inbits);
-		inbits += fsz;
-	}
-}
-
 /*
  * print out a constant node, may be associated with a label.
  * Do not free the node after use.
@@ -426,20 +246,13 @@ infld(CONSZ off, int fsz, CONSZ val)
 int
 ninval(CONSZ off, int fsz, NODE *p)
 {
-#ifdef __pdp11__
+#if defined(__pdp11__) || 1
 	union { float f; double d; short s[4]; int i[2]; } u;
 #endif
-	struct symtab *q;
 	TWORD t;
 	int i;
 
 	t = p->n_type;
-	if (t > BTMASK)
-		p->n_type = t = INT; /* pointer */
-
-	if (p->n_op == ICON && p->n_sp != NULL && DEUNSIGN(t) != INT)
-		uerror("element not constant");
-
 	switch (t) {
 	case LONGLONG:
 	case ULONGLONG:
@@ -455,19 +268,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 		printf("%o ; %o\n", (int)((p->n_lval >> 16) & 0177777),
 		    (int)(p->n_lval & 0177777));
 		break;
-	case INT:
-	case UNSIGNED:
-		printf("%o", (int)(p->n_lval & 0177777));
-		if ((q = p->n_sp) != NULL) {
-			if ((q->sclass == STATIC && q->slevel > 0)) {
-				printf("+" LABFMT, q->soffset);
-			} else {
-				printf("+%s", q->soname ? q->soname : exname(q->sname));
-			}
-		}
-		printf("\n");
-		break;
-#ifdef __pdp11__
+#if defined(__pdp11__) || 1
 	case FLOAT:
 		u.f = (float)p->n_dcon;
 		printf("%o ; %o\n", u.i[0], u.i[1]);
@@ -557,7 +358,7 @@ defzero(struct symtab *sp)
 	char *n;
 	int off;
 
-	off = tsize(sp->stype, sp->sdf, sp->ssue);
+	off = tsize(sp->stype, sp->sdf, sp->sap);
 	off = (off+(SZCHAR-1))/SZCHAR;
 	n = sp->soname ? sp->soname : exname(sp->sname);
 	if (sp->sclass == STATIC) {

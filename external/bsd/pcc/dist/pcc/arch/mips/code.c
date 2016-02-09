@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.24 2014/04/19 07:47:51 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.5 2014/07/24 19:18:14 plunky Exp $	*/
+/*	Id: code.c,v 1.27 2016/01/06 16:11:24 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.6 2016/02/09 20:28:21 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -35,6 +35,15 @@
 
 #include <assert.h>
 #include "pass1.h"
+
+#ifndef LANG_CXX
+#undef NIL
+#define NIL NULL
+#define NODE P1ND
+#define nfree p1nfree
+#define ccopy p1tcopy
+#define tfree p1tfree
+#endif
 
 /*
  * Print out assembler segment name.
@@ -76,8 +85,7 @@ defloc(struct symtab *sp)
 	if (ISFTN(sp->stype))
 		return; /* XXX until fixed */
 
-	if ((n = sp->soname) == NULL)
-		n = exname(sp->sname);
+	n = getexname(sp);
 
 	if (sp->sclass == EXTDEF)
 		printf("	.globl %s\n", n);
@@ -427,7 +435,10 @@ bjobcode(void)
 {
 	printf("\t.section .mdebug.abi32\n");
 	printf("\t.previous\n");
-	printf("\t.abicalls\n");
+
+	/* only if -fpic or -fPIC */
+	if (kflag > 0)
+		printf("\t.abicalls\n");
 }
 
 #ifdef notdef

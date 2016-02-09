@@ -17,3 +17,15 @@ e??/
 +??/
 foo
 foo.123.foo.456+foo+789.foo
+
+#if 0xfaff
+0xfaff
+#endif
+
+#if 0xfe00
+0xfe00
+#endif
+
+#if 0xfeff
+0xfeff
+#endif

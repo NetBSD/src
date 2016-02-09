@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.19 2014/06/01 11:35:03 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.5 2014/07/24 19:21:48 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.22 2015/11/24 17:35:12 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.6 2016/02/09 20:28:36 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -60,6 +60,7 @@
 # define ALPOINT 32
 # define ALSTRUCT 8
 # define  ALSTACK 32 
+#define MYVAARGSZ SZINT
 
 /*
  * Min/max values.
@@ -251,12 +252,17 @@ int COLORMAP(int c, int *r);
 /*
  * Builtins.
  */
-#define NODE struct node
-struct node;
+#ifdef LANG_CXX
+#define P1ND struct node
+#else
+#define P1ND struct p1node
+#endif
+struct p1node;
 struct bitable;
 
 #define	TARGET_FFS		/* target-specific ffs */
-NODE *builtin_ffs(const struct bitable *, NODE *a);
-NODE *builtin_ffsl(const struct bitable *, NODE *a);
-NODE *builtin_ffsll(const struct bitable *, NODE *a);
-#undef NODE
+P1ND *builtin_ffs(const struct bitable *, P1ND *a);
+P1ND *builtin_ffsl(const struct bitable *, P1ND *a);
+P1ND *builtin_ffsll(const struct bitable *, P1ND *a);
+#undef P1ND
+#define NATIVE_FLOATING_POINT

@@ -1,5 +1,5 @@
-/*	Id: order.c,v 1.17 2014/04/29 18:16:09 ragge Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.4 2014/07/24 19:15:41 plunky Exp $	*/
+/*	Id: order.c,v 1.18 2015/12/13 09:00:04 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.5 2016/02/09 20:28:10 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -60,7 +60,7 @@ findls(NODE *p, int check)
 		p = p->n_left; /* Ignore pointless SCONVs here */
 	if (p->n_op != LS || p->n_right->n_op != ICON)
 		return 0;
-	if ((c = p->n_right->n_lval) != 1 && c != 2 && c != 3)
+	if ((c = getlval(p->n_right)) != 1 && c != 2 && c != 3)
 		return 0;
 	if (check == 1 && p->n_left->n_op != REG)
 		return 0;
@@ -98,7 +98,7 @@ offstar(NODE *p, int shape)
 	if ((p->n_op == PLUS || p->n_op == MINUS) &&
 	    p->n_left->n_op == ICON &&
 	    p->n_left->n_name[0] == '\0' &&
-	    notoff(0, 0,  p->n_left->n_lval, 0) == 0) {
+	    notoff(0, 0,  getlval(p->n_left), 0) == 0) {
 		l = p->n_right;
 		if (isreg(l))
 			return; /* Matched 4(%rax) */
@@ -153,7 +153,7 @@ myormake(NODE *q)
 	r = p = q->n_left;
 
 	if ((p->n_op == PLUS || p->n_op == MINUS) && p->n_left->n_op == ICON) {
-		c = p->n_left->n_lval;
+		c = getlval(p->n_left);
 		n = p->n_left->n_name;
 		p = p->n_right;
 	}
@@ -166,7 +166,7 @@ myormake(NODE *q)
 	if (findls(p, 1)) {
 		if (p->n_op == SCONV)
 			p = p->n_left;
-		sh = shtbl[(int)p->n_right->n_lval];
+		sh = shtbl[(int)getlval(p->n_right)];
 		r2 = regno(p->n_left);
 		mkconv = 1;
 	} else if (risreg(p)) {
@@ -179,7 +179,7 @@ myormake(NODE *q)
 		return;
 
 	q->n_op = OREG;
-	q->n_lval = c;
+	setlval(q, c);
 	q->n_rval = R2PACK(r1, r2, sh);
 	q->n_name = n;
 	tfree(r);

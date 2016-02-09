@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.14 2010/09/19 13:54:41 ragge Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.3 2011/09/01 12:46:40 plunky Exp $	*/
+/*	Id: table.c,v 1.18 2016/01/05 12:23:22 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.4 2016/02/09 20:28:23 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -58,341 +58,87 @@ struct optab table[] = {
 		"	# convert between word and pointer", },
 
 /*
- * Conversions of integral<->integral types
- */
-
-{ SCONV,	INAREG,
-	SOREG,  TCHAR,
-	SAREG,	TSWORD|TSHORT,
-		NAREG,	RESC1,
-		"	lb A1,AL	# convert oreg char to short/int\n"
-		"	nop\n", },
-
-{ SCONV, 	INAREG,
-	SOREG,	TCHAR,
-	SAREG,	TUWORD|TUSHORT|TUCHAR,
-		NAREG,	RESC1,
-		"	lbu A1,AL	# convert oreg char to uchar/ushort/uint\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,  TUCHAR,
-	SAREG,	TWORD|TSHORT|TUSHORT,
-		NAREG,	RESC1,
-		"	lbu A1,AL	# convert oreg uchar to (u)short/(u)int\n"
-		"	nop\n", },
-
-{ SCONV,	INBREG,
-	SOREG,	TCHAR,
-	SBREG,	TLONGLONG,
-		NBREG,	RESC1,
-      		"	lb A1,AL	# convert oreg char to longlong\n"
-      		"	nop\n"
-      		"	sra U1,A1,31\n", },
-
-/* chor -> ulonglong handled later */
-
-{ SCONV,	INBREG,
-	SOREG,	TUCHAR,
-	SBREG,	TLONGLONG|TULONGLONG,
-		NBREG,	RESC1,
-		"	lbu A1,AL	# convert oreg uchar to (u)longlong\n"
-      		"	move U1,$zero\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TSHORT|TUSHORT,
-	SAREG,	TCHAR,
-		NAREG,	RESC1,
-		"	lb A1,AL	# convert oreg (u)short to char (endianness problem?)\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TSHORT|TUSHORT,
-	SAREG,  TUCHAR,
-		NAREG,	RESC1,
-		"	lbu A1,AL	# convert oreg (u)short to uchar (endianness problem?)\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TSHORT,
-	SAREG,	TSWORD,
-		NAREG,	RESC1,
-		"	lh A1,AL	# convert oreg short to int\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TSHORT,
-	SAREG,	TUWORD,
-		NAREG,	RESC1,
-		"	lhu A1,AL	# convert oreg short to uint\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TUSHORT,
-	SAREG,	TWORD,
-		NAREG,	RESC1,
-		"	lhu A1,AL	# convert oreg ushort to (u)int\n"
-		"	nop\n", },
-
-{ SCONV,	INBREG,
-	SOREG,	TSHORT,
-	SBREG,	TLONGLONG,
-		NBREG,	RESC1,
-      		"	lh A1,AL	# convert oreg short to longlong\n"
-      		"	nop\n"
-      		"	sra U1,A1,31\n", },
-
-{ SCONV,	INBREG,
-	SOREG,	TSHORT,
-	SBREG,	TULONGLONG,
-		NBREG,	RESC1,
-      		"	lhu A1,AL	# convert oreg short to ulonglong\n"
-      		"	nop\n"
-		"	move U1,$zero\n", },
-
-{ SCONV,	INBREG,
-	SOREG,	TUSHORT,
-	SBREG,	TLONGLONG|TULONGLONG,
-		NBREG,	RESC1,
-		"	lhu A1,AL	# convert oreg ushort to (u)longlong\n"
-      		"	move U1,$zero\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TWORD,
-	SAREG,	TCHAR,
-		NAREG,	RESC1,
-		"	lb A1,AL	# convert oreg word to char (endianness problem here?)\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TWORD,
-	SAREG,	TUCHAR,
-		NAREG,	RESC1,
-		"	lbu A1,AL	# convert oreg word to uchar (endianness problem here?)\n"
-		"	nop\n", },
-    
-{ SCONV,	INAREG,
-	SOREG,	TWORD,
-	SAREG,	TSHORT,
-		NAREG,	RESC1,
-		"	lh A1,AL	# convert oreg word to short (endianness problem here?)\n"
-		"	nop\n", },
-
-/* convert (u)long to ushort */
-{ SCONV,	INAREG,
-	SOREG,	TWORD,
-	SAREG,	TUSHORT,
-		NAREG,	RESC1,
-		"	lhu A1,AL	# convert oreg word to ushort (endianness problem here?)\n"
-		"	nop\n", },
-
-{ SCONV,	INBREG,
-	SOREG,	TSWORD,
-	SBREG,	TLONGLONG|TULONGLONG,
-		NBREG,	RESC1,
-      		"	lw A1,AL	# convert oreg int/long to (u)llong (endianness problem here?)\n"
-      		"	nop\n"
-      		"	sra U1,A1,31\n" },
-
-{ SCONV,	INBREG,
-	SOREG,	TUWORD,
-	SBREG,	TLONGLONG|TULONGLONG,
-		NBREG,	RESC1,
-		"	lw A1,AL	# convert oreg (u)int to (u)llong (endianness problem here?)\n"
-      		"	move U1,$zero\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TLONGLONG|TULONGLONG,
-	SAREG,	TCHAR,
-		NAREG,	RESC1,
-		"	lb A1,AL	# convert oreg (u)llong to char	(endianness problem here?)\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TLONGLONG|TULONGLONG,
-	SAREG,	TUCHAR,
-		NAREG,	RESC1,
-		"	lbu A1,AL	# convert oreg (u)llong to uchar (endianness problem?)\n"
-		"	nop\n", },
-    
-{ SCONV,	INAREG,
-	SOREG,	TLONGLONG|TULONGLONG,
-	SAREG,	TSHORT,
-		NAREG,	RESC1,
-		"	lh A1,AL	# convert oreg (u)llong to short (endianness problem?)\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TLONGLONG|TULONGLONG,
-	SAREG,	TUSHORT,
-		NAREG,	RESC1,
-		"	lhu A1,AL	# convert oreg (u)llong to ushort (endianness problem here?)\n"
-		"	nop\n", },
-
-{ SCONV,	INAREG,
-	SOREG,	TLONGLONG|TULONGLONG,
-	SAREG,	TWORD,
-		NAREG,	RESC1,
-      		"	lw A1,AL	# convert oreg (u)llong to (u)int (endianness problem here?)\n"
-		"	nop\n", },
-
-/*
  * Conversions of integral types (register-register)
  *
  * For each deunsigned type, they look something like this:
  *
  * signed -> bigger signed      - nothing to do
- * signed -> bigger unsigned    - clear the top bits (of source type)
+ * unsigned -> bigger           - nothing to do
  *
+ * signed -> bigger unsigned    - clear the top bits (of source type)
  * signed -> smaller signed     - sign-extend the bits (to dest type)
  * signed -> smaller unsigned   - clear the top bits (of dest type)
  * unsigned -> smaller signed   - sign-extend top bits (to dest type)
  * unsigned -> smaller unsigned - clear the top bits (of dest type)
  *
- * unsigned -> bigger           - nothing to do
  */
 
+/* convert between int and ptr */
 { SCONV,	INAREG,
 	SAREG,	TPOINT|TWORD,
-	SAREG,	TPOINT|TWORD,
+	SAREG,	TWORD|TPOINT,
 		0,	RLEFT,
-		"	# convert int to int\n", },
+		"", },
 
+/* convert between LL and uLL */
 { SCONV,	INBREG,
 	SBREG,	TLONGLONG|TULONGLONG,
-	SBREG,	TLONGLONG|TULONGLONG,
+	SBREG,	TULONGLONG|TLONGLONG,
 		0,	RLEFT,
-		"	# convert (u)longlong to (u)longlong", },
+		"", },
 
+/* (u)char to (u)char/(u)short/(u)int */
 { SCONV,	INAREG,
-	SAREG,	TCHAR,
-	SAREG,	TSWORD|TSHORT,
+	SAREG,	TCHAR|TUCHAR,
+	SAREG,	TCHAR|TUCHAR|TWORD|TSHORT|TUSHORT,
 		0,	RLEFT,
-		"	# convert char to short/int\n", },
+		"", },
 
+/* (u)short to (u)int */
 { SCONV,	INAREG,
-	SAREG,	TCHAR,
-	SAREG,	TUWORD|TUSHORT|TUCHAR,
-		NAREG|NASL,	RESC1,
-		"	andi A1,AL,255	# convert char to uchar/ushort/uint\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TUCHAR,
-	SAREG,	TCHAR,
-		NAREG|NASL,	RESC1,
-		"	sll A1,AL,24	# convert uchar to char\n"
-		"	sra A1,A1,24\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TUCHAR,
+	SAREG,	TSHORT|TUSHORT,
 	SAREG,	TWORD|TSHORT|TUSHORT,
 		0,	RLEFT,
-		"	# convert uchar to (u)short/(u)int\n", },
+		"", },
 
+/* (u)int to (u)int */
 { SCONV,	INAREG,
-	SAREG,	TSHORT,
-	SAREG,	TCHAR,
-		NAREG|NASL,	RESC1,
-		"	sll A1,AL,24	# convert short to char\n"
-		"	sra A1,A1,24\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TSHORT,
-	SAREG,	TUCHAR,
-		NAREG|NASL,	RESC1,
-		"	andi A1,AL,255	# convert short to uchar\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TSHORT,
-	SAREG,	TUWORD|TUSHORT,
-		NAREG|NASL,	RESC1,
-		"	andi A1,AL,65535	# convert short to ushort\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TSHORT,
-	SAREG,	TSWORD,
-		NAREG|NASL,	RESC1,
-		"	sll A1,AL,16	# convert short to ushort\n"
-		"	sra A1,A1,16\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TUSHORT,
-	SAREG,	TCHAR,
-		NAREG|NASL,	RESC1,
-		"	sll A1,AL,24	# convert short to char\n"
-		"	sra A1,A1,24\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TUSHORT,
-	SAREG,	TUCHAR,
-		NAREG|NASL,	RESC1,
-		"	andi A1,AL,255	# convert ushort to char\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TUSHORT,
-	SAREG,	TSHORT,
-		NAREG|NASL,	RESC1,
-		"	sll A1,AL,16	# convert short to ushort\n"
-		"	sra A1,A1,16\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TUSHORT,
 	SAREG,	TWORD,
-		0,	RDEST,
-		"	# convert ushort to (u)int\n", },
+	SAREG,	TWORD,
+		0,	RLEFT,
+		"", },
 
+/* (u)int/(u)short to char */
 { SCONV,	INAREG,
-	SAREG,	TSWORD,
+	SAREG,	TWORD|TSHORT|TUSHORT,
 	SAREG,	TCHAR,
 		NAREG|NASL,	RESC1,
-		"	sll A1,AL,8	# convert int to char\n"
-		"	sra A1,A1,8\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TSWORD,
-	SAREG,	TUCHAR,
-		NAREG|NASL,	RESC1,
-		"	andi A1,AL,255	# convert int to uchar\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TSWORD,
-	SAREG,	TSHORT,
-		NAREG|NASL,	RESC1,
-		"	sll A1,AL,16	# convert int to short\n"
-		"	sra A1,A1,16\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TSWORD,
-	SAREG,	TUSHORT,
-		NAREG|NASL,	RESC1,
-		"	andi A1,AL,65535	# convert int to ushort\n", },
-
-{ SCONV,	INAREG,
-	SAREG,	TUWORD,
-	SAREG,	TCHAR,
-		NAREG|NASL,	RESC1,
-		"	sll A1,AL,24	# convert int to char\n"
+		"	sll A1,AL,24\n"
 		"	sra A1,A1,24\n", },
 
+/* (u)int/(u)short to uchar */
 { SCONV,	INAREG,
-	SAREG,	TUWORD,
+	SAREG,	TWORD|TSHORT|TUSHORT,
 	SAREG,	TUCHAR,
 		NAREG|NASL,	RESC1,
-		"	andi A1,AL,255	# convert int to uchar\n", },
+		"	andi A1,AL,255\n", },
 
+/* (u)int to short */
 { SCONV,	INAREG,
-	SAREG,	TUWORD,
+	SAREG,	TWORD,
 	SAREG,	TSHORT,
 		NAREG|NASL,	RESC1,
-		"	sll A1,AL,16	# convert int to short\n"
+		"	sll A1,AL,16\n"
 		"	sra A1,A1,16\n", },
 
+/* (u)int to ushort */
 { SCONV,	INAREG,
-	SAREG,	TUWORD,
+	SAREG,	TWORD,
 	SAREG,	TUSHORT,
 		NAREG|NASL,	RESC1,
-		"	andi A1,AL,65535	# convert int to ushort\n", },
+		"	andi A1,AL,65535\n", },
 
+/* longlong casts below */
 { SCONV,	INBREG,
 	SAREG,	TSWORD|TSHORT|TCHAR,
 	SBREG,	TLONGLONG,
@@ -553,9 +299,9 @@ struct optab table[] = {
 	SAREG,	TUWORD|TUSHORT|TUCHAR,
 		NAREG|NASR|NASL,	RESC1,
 		"	multu AL,AR	# unsigned multiply\n"
-		"	mflo A1\n"
 		"	nop\n"
-		"	nop\n", },
+		"	nop\n"
+		"	mflo A1\n" },
 
 /* this previous will match on unsigned/unsigned multiplication first */
 { MUL,	INAREG,
@@ -563,9 +309,9 @@ struct optab table[] = {
 	SAREG,	TWORD|TUSHORT|TSHORT|TUCHAR|TCHAR,
 		NAREG|NASR|NASL,	RESC1,
 		"	mult AL,AR	# signed multiply\n"
-		"	mflo A1\n"
 		"	nop\n"
-		"	nop\n", },
+		"	nop\n"
+		"	mflo A1\n", },
 
 { MUL,	INBREG,
 	SBREG,	TLONGLONG|TULONGLONG,

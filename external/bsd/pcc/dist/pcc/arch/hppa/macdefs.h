@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.20 2014/06/01 11:35:02 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.5 2014/07/24 19:16:40 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.21 2015/11/24 17:35:11 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.6 2016/02/09 20:28:15 plunky Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -471,3 +471,4 @@ int COLORMAP(int c, int *r);
 #define	SPCNLW		(MAXSPECIAL+6)	/* LL const w/ 0 in high word */
 #define	SPIMM		(MAXSPECIAL+7)	/* immidiate const for depi/comib */
 #define	SPNAME		(MAXSPECIAL+8)	/* ext symbol reference load/store */
+#define NATIVE_FLOATING_POINT

@@ -1,5 +1,5 @@
-/*	Id: pftn.c,v 1.11 2014/06/20 07:04:48 plunky Exp 	*/	
-/*	$NetBSD: pftn.c,v 1.1.1.3 2014/07/24 19:26:25 plunky Exp $	*/
+/*	Id: pftn.c,v 1.15 2015/11/24 17:30:20 ragge Exp 	*/	
+/*	$NetBSD: pftn.c,v 1.1.1.4 2016/02/09 20:29:02 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -276,7 +276,7 @@ defid(NODE *q, int class)
 		if (p->slevel == blevel) {
 			for (ap = q->n_ap; ap; ap = ap->next) {
 				if (ap->atype > ATTR_MAX)
-					p->sap = attr_add(p->sap, attr_dup(ap, 3));
+					p->sap = attr_add(p->sap, attr_dup(ap));
 			}
 		} else
 			p->sap = q->n_ap;
@@ -1305,9 +1305,9 @@ inwstring(struct symtab *sp)
 	p = xbcon(0, NULL, WCHAR_TYPE);
 	do {
 		if (*s++ == '\\')
-			p->n_lval = esccon(&s);
+			glval(p) = esccon(&s);
 		else
-			p->n_lval = (unsigned char)s[-1];
+			glval(p) = (unsigned char)s[-1];
 		inval(0, tsize(WCHAR_TYPE, NULL, NULL), p);
 	} while (s[-1] != 0);
 	nfree(p);
@@ -1921,7 +1921,7 @@ typenode(NODE *p)
 	}
 	q->n_ap = attr_add(q->n_ap, tc.post);
 	q->n_qual = tc.qual;
-	q->n_lval = tc.class;
+	glval(q) = tc.class;
 #ifdef GCC_COMPAT
 	if (tc.post) {
 		/* Can only occur for TYPEDEF, STRUCT or UNION */
@@ -2089,7 +2089,7 @@ tyreduce(NODE *p, struct tylnk **tylkp, int *ntdim)
 			r = p->n_right;
 			o = RB;
 		} else {
-			dim.ddim = (int)p->n_right->n_lval;
+			dim.ddim = (int)glval(p->n_right);
 			nfree(p->n_right);
 #ifdef notdef
 	/* XXX - check dimensions at usage time */
@@ -2461,14 +2461,14 @@ incomp:					uerror("incompatible types for arg %d",
 			goto skip; /* void *f = some pointer */
 		if (arrt > BTMASK && BTYPE(type) == VOID)
 			goto skip; /* some *f = void pointer */
-		if (apole->node->n_op == ICON && apole->node->n_lval == 0)
+		if (apole->node->n_op == ICON && glval(apole->node) == 0)
 			goto skip; /* Anything assigned a zero */
 
 		if ((type & ~BTMASK) == (arrt & ~BTMASK)) {
 			/* do not complain for pointers with signedness */
 			if ((DEUNSIGN(BTYPE(type)) == DEUNSIGN(BTYPE(arrt))) &&
 			    (BTYPE(type) != BTYPE(arrt))) {
-				warner(Wpointer_sign, NULL);
+				warner(Wpointer_sign);
 				goto skip;
 			}
 		}
@@ -2867,7 +2867,7 @@ sspstart(void)
 	q = clocal(q);
 
 	p = block(REG, NIL, NIL, INT, 0, 0);
-	p->n_lval = 0;
+	glval(p) = 0;
 	p->n_rval = FPREG;
 	q = block(ER, p, q, INT, 0, 0);
 	q = clocal(q);
@@ -2901,7 +2901,7 @@ sspend(void)
 	p = clocal(p);
 
 	q = block(REG, NIL, NIL, INT, 0, 0);
-	q->n_lval = 0;
+	glval(q) = 0;
 	q->n_rval = FPREG;
 	q = block(ER, p, q, INT, 0, 0);
 
@@ -2938,71 +2938,6 @@ void *
 inlalloc(int size)
 {
 	return isinlining ?  permalloc(size) : tmpalloc(size);
-}
-
-struct attr *
-attr_new(int type, int nelem)
-{
-	struct attr *ap;
-	int sz;
-
-	sz = sizeof(struct attr) + nelem * sizeof(union aarg);
-
-	ap = memset(blkalloc(sz), 0, sz);
-	ap->atype = type;
-	return ap;
-}
-
-/*
- * Add attribute list new before old and return new.
- */
-struct attr *
-attr_add(struct attr *old, struct attr *new)
-{
-	struct attr *ap;
-
-	if (new == NULL)
-		return old; /* nothing to add */
-
-	for (ap = new; ap->next; ap = ap->next)
-		;
-	ap->next = old;
-	return new;
-}
-
-/*
- * Search for attribute type in list ap.  Return entry or NULL.
- */
-struct attr *
-attr_find(struct attr *ap, int type)
-{
-
-	for (; ap && ap->atype != type; ap = ap->next)
-		;
-	return ap;
-}
-
-/*
- * Copy an attribute struct.
- * Return destination.
- */
-struct attr *
-attr_copy(struct attr *aps, struct attr *apd, int n)
-{
-	int sz = sizeof(struct attr) + n * sizeof(union aarg);
-	return memcpy(apd, aps, sz);
-}
-
-/*
- * Duplicate an attribute, like strdup.
- */
-struct attr *
-attr_dup(struct attr *ap, int n)
-{
-	int sz = sizeof(struct attr) + n * sizeof(union aarg);
-	ap = memcpy(blkalloc(sz), ap, sz);
-	ap->next = NULL;
-	return ap;
 }
 
 /*

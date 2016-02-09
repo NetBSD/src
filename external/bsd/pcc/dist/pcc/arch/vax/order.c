@@ -1,5 +1,5 @@
-/*	Id: order.c,v 1.9 2011/07/28 19:41:39 ragge Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.3 2011/09/01 12:46:52 plunky Exp $	*/
+/*	Id: order.c,v 1.10 2014/10/12 13:16:32 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.4 2016/02/09 20:28:36 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -611,7 +611,7 @@ nspecial(struct optab *q)
 		{
 		static struct rspecial s[] = {
 		    { NEVER, R0, }, { NEVER, R1, }, { NEVER, R2, },
-		    { NEVER, R3, }, { NEVER, R4, }, { NEVER, R5 } };
+		    { NEVER, R3, }, { NEVER, R4, }, { NEVER, R5 }, { 0 } };
 		return s;
 		}
 	case MOD:
@@ -621,7 +621,7 @@ nspecial(struct optab *q)
 		static struct rspecial s[] = {
 		    { NEVER, R0, }, { NEVER, R1, }, { NEVER, R2, },
 		    { NEVER, R3, }, { NEVER, R4, }, { NEVER, R5 },
-		    { NRES, XR0 }, };
+		    { NRES, XR0 }, { 0 }, };
 		return s;
 		}
 	default:

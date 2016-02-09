@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.30 2011/06/05 08:54:42 plunky Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.4 2011/09/01 12:46:33 plunky Exp $	*/
+/*	Id: local2.c,v 1.31 2015/01/04 19:17:23 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.5 2016/02/09 20:28:14 plunky Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -301,12 +301,12 @@ argsiz(NODE *p)
 	if (t == LDOUBLE)
 		return 8;	/* LDOUBLE is 16 */
 	if ((t == STRTY || t == UNIONTY) && p->n_right->n_op == STARG)
-		return 4 + p->n_right->n_stsize;
+		return 4 + attr_find(p->n_right->n_ap, ATTR_P2STRUCT)->iarg(0);
         /* perhaps it's down there somewhere -- let me take another look! */
 	if ((t == STRTY || t == UNIONTY) && p->n_right->n_op == CALL) {
 		q = p->n_right->n_right->n_left->n_left->n_right;
 		if (q->n_op == STARG)
-			return 4 + q->n_stsize;
+			return 4 + attr_find(q->n_ap, ATTR_P2STRUCT)->iarg(0);
 	}
 	comperr("argsiz %p", p);
 	return 0;
@@ -608,8 +608,9 @@ fixcalls(NODE *p, void *arg)
 	switch (o = p->n_op) {
 	case STCALL:
 	case USTCALL:
-		if (p->n_stsize + p2autooff > stkpos)
-			stkpos = p->n_stsize + p2autooff;
+		if (attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0)
+		    + p2autooff > stkpos)
+			stkpos = attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0) + p2autooff;
 		/* FALLTHROGH */
 	case CALL:
 	case UCALL:

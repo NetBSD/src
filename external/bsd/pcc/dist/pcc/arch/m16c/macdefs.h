@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.25 2014/06/01 11:35:02 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.4 2014/07/24 19:17:52 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.26 2015/11/24 17:35:11 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.5 2016/02/09 20:28:20 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -194,3 +194,4 @@ int COLORMAP(int c, int *r);
 //#define TAILCALL
 #endif
 #define	SFTN	(SPECIAL|6)
+#define NATIVE_FLOATING_POINT

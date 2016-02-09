@@ -1,5 +1,5 @@
-/*      Id: local.c,v 1.32 2011/11/13 22:30:18 gmcgarry Exp     */	
-/*      $NetBSD: local.c,v 1.1.1.5 2012/01/11 20:32:42 plunky Exp $    */
+/*      Id: local.c,v 1.33 2015/01/07 05:20:48 gmcgarry Exp     */	
+/*      $NetBSD: local.c,v 1.1.1.6 2016/02/09 20:28:11 plunky Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -81,27 +81,27 @@ clocal(NODE *p)
 	case CALL:
 	case STCALL:
 	case USTCALL:
-                if (p->n_type == VOID)
-                        break;
-                /*
-                 * if the function returns void*, ecode() invokes
-                 * delvoid() to convert it to uchar*.
-                 * We just let this happen on the ASSIGN to the temp,
-                 * and cast the pointer back to void* on access
-                 * from the temp.
-                 */
-                if (p->n_type == PTR+VOID)
-                        isptrvoid = 1;
-                r = tempnode(0, p->n_type, p->n_df, p->n_ap);
-                tmpnr = regno(r);
-                r = block(ASSIGN, r, p, p->n_type, p->n_df, p->n_ap);
+		if (p->n_type == VOID)
+			break;
+		/*
+		 * if the function returns void*, ecode() invokes
+		 * delvoid() to convert it to uchar*.
+		 * We just let this happen on the ASSIGN to the temp,
+		 * and cast the pointer back to void* on access
+		 * from the temp.
+		 */
+		if (p->n_type == PTR+VOID)
+			isptrvoid = 1;
+		r = tempnode(0, p->n_type, p->n_df, p->n_ap);
+		tmpnr = regno(r);
+		r = block(ASSIGN, r, p, p->n_type, p->n_df, p->n_ap);
 
-                p = tempnode(tmpnr, r->n_type, r->n_df, r->n_ap);
-                if (isptrvoid) {
-                        p = block(PCONV, p, NIL, PTR+VOID, p->n_df, 0);
-                }
-                p = buildtree(COMOP, r, p);
-                break;
+		p = tempnode(tmpnr, r->n_type, r->n_df, r->n_ap);
+		if (isptrvoid) {
+			p = block(PCONV, p, NIL, PTR+VOID, p->n_df, 0);
+		}
+		p = buildtree(COMOP, r, p);
+		break;
 
 	case NAME:
 		if ((q = p->n_sp) == NULL)
@@ -112,19 +112,19 @@ clocal(NODE *p)
 		switch (q->sclass) {
 		case PARAM:
 		case AUTO:
-                        /* fake up a structure reference */
-                        r = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
-                        r->n_lval = 0;
-                        r->n_rval = FPREG;
-                        p = stref(block(STREF, r, p, 0, 0, 0));
-                        break;
-                case REGISTER:
-                        p->n_op = REG;
-                        p->n_lval = 0;
-                        p->n_rval = q->soffset;
-                        break;
-                case STATIC:
-                        if (q->slevel > 0) {
+			/* fake up a structure reference */
+			r = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
+			r->n_lval = 0;
+			r->n_rval = FPREG;
+			p = stref(block(STREF, r, p, 0, 0, 0));
+			break;
+		case REGISTER:
+			p->n_op = REG;
+			p->n_lval = 0;
+			p->n_rval = q->soffset;
+			break;
+		case STATIC:
+			if (q->slevel > 0) {
 				p->n_lval = 0;
 				p->n_sp = q;
 			}
@@ -151,14 +151,14 @@ clocal(NODE *p)
 		p = block(UMUL, p, NIL, ty, p->n_df, p->n_ap);
 		break;
 
-        case FORCE:
-                /* put return value in return reg */
-                p->n_op = ASSIGN;
-                p->n_right = p->n_left;
-                p->n_left = block(REG, NIL, NIL, p->n_type, 0, 0);
-                p->n_left->n_rval = p->n_left->n_type == BOOL ? 
-                    RETREG(BOOL_TYPE) : RETREG(p->n_type);
-                break;
+	case FORCE:
+		/* put return value in return reg */
+		p->n_op = ASSIGN;
+		p->n_right = p->n_left;
+		p->n_left = block(REG, NIL, NIL, p->n_type, 0, 0);
+		p->n_left->n_rval = p->n_left->n_type == BOOL ? 
+		    RETREG(BOOL_TYPE) : RETREG(p->n_type);
+		break;
 
 	case SCONV:
 		l = p->n_left;
@@ -166,70 +166,70 @@ clocal(NODE *p)
 			nfree(p);
 			return l;
 		}
-                if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
-                    tsize(p->n_type, p->n_df, p->n_ap) == tsize(l->n_type, l->n_df, l->n_ap)) {
-                        if (p->n_type != FLOAT && p->n_type != DOUBLE &&
-                            l->n_type != FLOAT && l->n_type != DOUBLE &&
-                            l->n_type != LDOUBLE && p->n_type != LDOUBLE) {
-                                if (l->n_op == NAME || l->n_op == UMUL ||
-                                    l->n_op == TEMP) {
-                                        l->n_type = p->n_type;
-                                        nfree(p);
-                                        return l;
-                                }
-                        }
-                }
+		if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
+		    tsize(p->n_type, p->n_df, p->n_ap) == tsize(l->n_type, l->n_df, l->n_ap)) {
+			if (p->n_type != FLOAT && p->n_type != DOUBLE &&
+			    l->n_type != FLOAT && l->n_type != DOUBLE &&
+			    l->n_type != LDOUBLE && p->n_type != LDOUBLE) {
+				if (l->n_op == NAME || l->n_op == UMUL ||
+				    l->n_op == TEMP) {
+					l->n_type = p->n_type;
+					nfree(p);
+					return l;
+				}
+			}
+		}
 
-                if (l->n_op == ICON) {
-                        CONSZ val = l->n_lval;
+		if (l->n_op == ICON) {
+			CONSZ val = l->n_lval;
 
-                        if (!ISPTR(p->n_type)) /* Pointers don't need to be conv'd */
-                        switch (p->n_type) {
-                        case BOOL:
-                                l->n_lval = l->n_lval != 0;
-                                break;
-                        case CHAR:
-                                l->n_lval = (char)val;
-                                break;
-                        case UCHAR:
-                                l->n_lval = val & 0377;
-                                break;
-                        case SHORT:
-                                l->n_lval = (short)val;
-                                break;
-                        case USHORT:
-                                l->n_lval = val & 0177777;
-                                break;
-                        case ULONG:
-                        case UNSIGNED:
-                                l->n_lval = val & 0xffffffff;
-                                break;
-                        case LONG:
-                        case INT:
-                                l->n_lval = (int)val;
-                                break;
-                        case LONGLONG:
-                                l->n_lval = (long long)val;
-                                break;
-                        case ULONGLONG:
-                                l->n_lval = val;
-                                break;
-                        case VOID:
-                                break;
-                        case LDOUBLE:
-                        case DOUBLE:
-                        case FLOAT:
-                                l->n_op = FCON;
-                                l->n_dcon = val;
-                                break;
-                        default:
-                                cerror("unknown type %d", l->n_type);
-                        }
+			if (!ISPTR(p->n_type)) /* Pointers don't need to be conv'd */
+			switch (p->n_type) {
+			case BOOL:
+				l->n_lval = l->n_lval != 0;
+				break;
+			case CHAR:
+				l->n_lval = (char)val;
+				break;
+			case UCHAR:
+				l->n_lval = val & 0377;
+				break;
+			case SHORT:
+				l->n_lval = (short)val;
+				break;
+			case USHORT:
+				l->n_lval = val & 0177777;
+				break;
+			case ULONG:
+			case UNSIGNED:
+				l->n_lval = val & 0xffffffff;
+				break;
+			case LONG:
+			case INT:
+				l->n_lval = (int)val;
+				break;
+			case LONGLONG:
+				l->n_lval = (long long)val;
+				break;
+			case ULONGLONG:
+				l->n_lval = val;
+				break;
+			case VOID:
+				break;
+			case LDOUBLE:
+			case DOUBLE:
+			case FLOAT:
+				l->n_op = FCON;
+				l->n_dcon = val;
+				break;
+			default:
+				cerror("unknown type %d", l->n_type);
+			}
 			l->n_type = p->n_type;
 			l->n_ap = 0;
-                        nfree(p);
-                        return l;
-                } else if (p->n_op == FCON) {
+			nfree(p);
+			return l;
+		} else if (p->n_op == FCON) {
 			l->n_lval = l->n_dcon;
 			l->n_sp = NULL;
 			l->n_op = ICON;
@@ -238,14 +238,14 @@ clocal(NODE *p)
 			nfree(p);
 			return clocal(l);
 		}
-                if ((DEUNSIGN(p->n_type) == CHAR ||
-                    DEUNSIGN(p->n_type) == SHORT) &&
-                    (l->n_type == FLOAT || l->n_type == DOUBLE ||
-                    l->n_type == LDOUBLE)) {
-                        p = block(SCONV, p, NIL, p->n_type, p->n_df, p->n_ap);
-                        p->n_left->n_type = INT;
-                        return p;
-                }
+		if ((DEUNSIGN(p->n_type) == CHAR ||
+		    DEUNSIGN(p->n_type) == SHORT) &&
+		    (l->n_type == FLOAT || l->n_type == DOUBLE ||
+		    l->n_type == LDOUBLE)) {
+			p = block(SCONV, p, NIL, p->n_type, p->n_df, p->n_ap);
+			p->n_left->n_type = INT;
+			return p;
+		}
 		break;
 
 	case PCONV:
@@ -491,7 +491,7 @@ defzero(struct symtab *sp)
 
 	off = tsize(sp->stype, sp->sdf, sp->sap);
 	off = (off+(SZCHAR-1))/SZCHAR;
-	printf("        .%scomm ", sp->sclass == STATIC ? "l" : "");
+	printf("	.%scomm ", sp->sclass == STATIC ? "l" : "");
 	if (sp->slevel == 0)
 		printf("%s,0%o\n",
 		    sp->soname ? sp->soname : exname(sp->sname), off);
@@ -508,118 +508,116 @@ defzero(struct symtab *sp)
  *	ap   last
  */
 NODE *
-arm_builtin_stdarg_start(NODE *f, NODE *a)
+arm_builtin_stdarg_start(const struct bitable *bt, NODE *a)
 {
-        NODE *p, *q;
-        int sz = 1;
+	NODE *p, *q;
+	int sz = 1;
 
-        /* check num args and type */
-        if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
-            !ISPTR(a->n_left->n_type))
-                goto bad;
+	/* check num args and type */
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+	    !ISPTR(a->n_left->n_type))
+		goto bad;
 
-        /* must first deal with argument size; use int size */
-        p = a->n_right;
-        if (p->n_type < INT) {
-                /* round up to word */
-                sz = SZINT / tsize(p->n_type, p->n_df, p->n_ap);
-        }
+	/* must first deal with argument size; use int size */
+	p = a->n_right;
+	if (p->n_type < INT) {
+		/* round up to word */
+		sz = SZINT / tsize(p->n_type, p->n_df, p->n_ap);
+	}
 
-        p = buildtree(ADDROF, p, NIL);  /* address of last arg */
-        p = optim(buildtree(PLUS, p, bcon(sz)));
-        q = block(NAME, NIL, NIL, PTR+VOID, 0, 0);
-        q = buildtree(CAST, q, p);
-        p = q->n_right;
-        nfree(q->n_left);
-        nfree(q);
-        p = buildtree(ASSIGN, a->n_left, p);
-        tfree(f);
-        nfree(a);
+	p = buildtree(ADDROF, p, NIL);  /* address of last arg */
+	p = optim(buildtree(PLUS, p, bcon(sz)));
+	q = block(NAME, NIL, NIL, PTR+VOID, 0, 0);
+	q = buildtree(CAST, q, p);
+	p = q->n_right;
+	nfree(q->n_left);
+	nfree(q);
+	p = buildtree(ASSIGN, a->n_left, p);
+	nfree(a);
 
-        return p;
+	return p;
 
 bad:
-        uerror("bad argument to __builtin_stdarg_start");
-        return bcon(0);
+	uerror("bad argument to __builtin_stdarg_start");
+	return bcon(0);
 }
 
 NODE *
-arm_builtin_va_arg(NODE *f, NODE *a)
+arm_builtin_va_arg(const struct bitable *bt, NODE *a)
 {
-        NODE *p, *q, *r;
-        int sz, tmpnr;
+	NODE *p, *q, *r;
+	int sz, tmpnr;
 
-        /* check num args and type */
-        if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
-            !ISPTR(a->n_left->n_type) || a->n_right->n_op != TYPE)
-                goto bad;
+	/* check num args and type */
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+	    !ISPTR(a->n_left->n_type) || a->n_right->n_op != TYPE)
+		goto bad;
 
-        r = a->n_right;
+	r = a->n_right;
 
-        /* get type size */
-        sz = tsize(r->n_type, r->n_df, r->n_ap) / SZCHAR;
-        if (sz < SZINT/SZCHAR) {
-                werror("%s%s promoted to int when passed through ...",
-                        ISUNSIGNED(r->n_type) ? "unsigned " : "",
-                        DEUNSIGN(r->n_type) == SHORT ? "short" : "char");
-                sz = SZINT/SZCHAR;
-        }
+	/* get type size */
+	sz = tsize(r->n_type, r->n_df, r->n_ap) / SZCHAR;
+	if (sz < SZINT/SZCHAR) {
+		werror("%s%s promoted to int when passed through ...",
+			ISUNSIGNED(r->n_type) ? "unsigned " : "",
+			DEUNSIGN(r->n_type) == SHORT ? "short" : "char");
+		sz = SZINT/SZCHAR;
+	}
 
-        /* alignment */
-        p = tcopy(a->n_left);
-        if (sz > SZINT/SZCHAR && r->n_type != UNIONTY && r->n_type != STRTY) {
-                p = buildtree(PLUS, p, bcon(ALSTACK/8 - 1));
-                p = block(AND, p, bcon(-ALSTACK/8), p->n_type, p->n_df, p->n_ap);
-        }
+	/* alignment */
+	p = tcopy(a->n_left);
+	if (sz > SZINT/SZCHAR && r->n_type != UNIONTY && r->n_type != STRTY) {
+		p = buildtree(PLUS, p, bcon(ALSTACK/8 - 1));
+		p = block(AND, p, bcon(-ALSTACK/8), p->n_type, p->n_df, p->n_ap);
+	}
 
-        /* create a copy to a temp node */
-        q = tempnode(0, p->n_type, p->n_df, p->n_ap);
-        tmpnr = regno(q);
-        p = buildtree(ASSIGN, q, p);
+	/* create a copy to a temp node */
+	q = tempnode(0, p->n_type, p->n_df, p->n_ap);
+	tmpnr = regno(q);
+	p = buildtree(ASSIGN, q, p);
 
-        q = tempnode(tmpnr, p->n_type, p->n_df,p->n_ap);
-        q = buildtree(PLUS, q, bcon(sz));
-        q = buildtree(ASSIGN, a->n_left, q);
+	q = tempnode(tmpnr, p->n_type, p->n_df,p->n_ap);
+	q = buildtree(PLUS, q, bcon(sz));
+	q = buildtree(ASSIGN, a->n_left, q);
 
-        q = buildtree(COMOP, p, q);
+	q = buildtree(COMOP, p, q);
 
-        nfree(a->n_right);
-        nfree(a);
-        nfree(f);
+	nfree(a->n_right);
+	nfree(a);
 
-        p = tempnode(tmpnr, INCREF(r->n_type), r->n_df, r->n_ap);
-        p = buildtree(UMUL, p, NIL);
-        p = buildtree(COMOP, q, p);
+	p = tempnode(tmpnr, INCREF(r->n_type), r->n_df, r->n_ap);
+	p = buildtree(UMUL, p, NIL);
+	p = buildtree(COMOP, q, p);
 
-        return p;
+	return p;
 
 bad:
-        uerror("bad argument to __builtin_va_arg");
-        return bcon(0);
+	uerror("bad argument to __builtin_va_arg");
+	return bcon(0);
 }
 
 NODE *
-arm_builtin_va_end(NODE *f, NODE *a)
+arm_builtin_va_end(const struct bitable *bt, NODE *a)
 {
-	tfree(f);
 	tfree(a);
  
 	return bcon(0);
 }
 
 NODE *
-arm_builtin_va_copy(NODE *f, NODE *a)
+arm_builtin_va_copy(const struct bitable *bt, NODE *a)
 {
-        if (a == NULL || a->n_op != CM || a->n_left->n_op == CM)
-                goto bad;
-        tfree(f);
-        f = buildtree(ASSIGN, a->n_left, a->n_right);
-        nfree(a);
-        return f;
+	NODE  *f;
+
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM)
+		goto bad;
+	f = buildtree(ASSIGN, a->n_left, a->n_right);
+	nfree(a);
+	return f;
 
 bad:
-        uerror("bad argument to __buildtin_va_copy");
-        return bcon(0);
+	uerror("bad argument to __buildtin_va_copy");
+	return bcon(0);
 }
 
 char *nextsect;

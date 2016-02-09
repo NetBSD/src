@@ -1,6 +1,6 @@
 %{
-/*	Id: scan.l,v 1.4 2014/05/03 09:47:51 ragge Exp 	*/	
-/*	$NetBSD: scan.l,v 1.1.1.2 2014/07/24 19:27:00 plunky Exp $	*/
+/*	Id: scan.l,v 1.6 2015/11/13 11:33:14 ragge Exp 	*/	
+/*	$NetBSD: scan.l,v 1.1.1.3 2016/02/09 20:29:02 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -146,8 +146,8 @@ extern void yyset_lineno (int);
 0[xX]{H}+{IS}?		{ yylval.nodep = cvtdig(16); return(C_ICON); }
 0{D}+{IS}?		{ yylval.nodep = cvtdig(8); return(C_ICON); }
 {D}+{IS}?		{ yylval.nodep = cvtdig(10); return(C_ICON); }
-L'(\\.|[^\\'])+'	{ yylval.nodep = wcharcon(); return(C_ICON); }
-'(\\.|[^\\'])+'		{ yylval.nodep = charcon(); return(C_ICON); }
+L'(\\.|[^\\'])*'	{ yylval.nodep = wcharcon(); return(C_ICON); }
+'(\\.|[^\\'])*'		{ yylval.nodep = charcon(); return(C_ICON); }
 
 {D}+{E}{FS}?		{ yylval.nodep = floatcon(yytext); return(C_FCON); }
 {D}*"."{D}+({E})?{FS}?	{ yylval.nodep = floatcon(yytext); return(C_FCON); }
@@ -344,7 +344,8 @@ f2(char *str)
 #endif
 	dc = typround(dc, eptr, &tw);
 	p = block(FCON, NIL, NIL, tw, 0, 0);
-	p->n_dcon = dc;
+	p->n_dcon = tmpalloc(sizeof(union flt));;
+	((union flt *)p->n_dcon)->fp = dc;
 	return p;
 }
 
@@ -407,7 +408,8 @@ fhexcon(char *c)
 		d /= 2, ed++;
 	d = typround(d, ep, &tw);
 	p = block(FCON, NIL, NIL, tw, 0, 0);
-	p->n_dcon = d;
+	p->n_dcon = tmpalloc(sizeof(union flt));;
+	((union flt *)p->n_dcon)->fp = d;
 	return p;
 }
 #endif
@@ -574,9 +576,7 @@ charcon(void)
 	int val, i = 0;
 	char *pp = yytext;
 
-	if (*pp == 'L')
-		pp++;
-	pp++;
+	pp++;	/* skip ' */
 	while (*pp != '\'') {
 		if (*pp++ == '\\') {
 			val = esccon(&pp);
@@ -588,7 +588,7 @@ charcon(void)
 
 	if (i == 0)
 		uerror("empty character constant");
-	if (i > (SZINT/SZCHAR) || (i>1))
+	else if (i > (SZINT/SZCHAR) || (i>1))
 		werror("too many characters in character constant");
 	return bcon(lastcon);
 }
@@ -600,9 +600,8 @@ wcharcon(void)
 	unsigned int val, i = 0;
 	char *pp = yytext;
 
-	if (*pp == 'L')
-		pp++;
-	pp++;
+	pp++;	/* skip L */
+	pp++;	/* skip ' */
 	while (*pp != '\'') {
 		if (*pp++ == '\\') {
 			val = esccon(&pp);
@@ -618,7 +617,7 @@ wcharcon(void)
 
 	if (i == 0)
 		uerror("empty wide-character constant");
-	if (i > 1)
+	else if (i > 1)
 		werror("too many characters in wide-character constant");
 	return xbcon(lastcon, NULL, ctype(UNSIGNED));
 }

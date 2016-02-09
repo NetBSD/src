@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.6 2012/04/22 21:07:40 plunky Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.4 2014/07/24 19:20:04 plunky Exp $	*/
+/*	Id: code.c,v 1.8 2015/09/03 19:24:51 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.5 2016/02/09 20:28:27 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,7 +30,36 @@
 
 # include "pass1.h"
 
-int lastloc = -1;
+#define NODE P1ND
+#undef NIL
+#define NIL NULL
+#define	talloc p1alloc
+
+/*
+ * Print out assembler segment name.
+ */
+void
+setseg(int seg, char *name)
+{
+	switch (seg) {
+	case PROG: name = ".text"; break;
+	case DATA:
+	case LDATA: name = ".data"; break;
+	case UDATA: break;
+	case STRNG:
+	case RDATA: name = ".rodata"; break;
+	default:
+		cerror("setseg");
+	}
+	printf("\t%s\n", name);
+}
+
+void
+defalign(int al)
+{
+	if (al > ALCHAR)
+		printf(".even\n");
+}
 
 /*
  * Define everything needed to print out some data (or text).
@@ -44,22 +73,14 @@ defloc(struct symtab *sp)
 	char *n;
 	int s;
 
-	if (sp == NULL) {
-		lastloc = -1;
-		return;
-	}
 	t = sp->stype;
 	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
 	if (s != lastloc)
 		printf("	.%s\n", loctbl[s]);
 	lastloc = s;
-	while (ISARY(t))
-		t = DECREF(t);
 	n = sp->soname ? sp->soname : exname(sp->sname);
 	if (sp->sclass == EXTDEF)
 		printf("	.globl %s\n", n);
-	if (ISFTN(sp->stype) || talign(sp->stype, sp->ssue) > ALCHAR)
-		printf(".even\n");
 	if (sp->slevel == 0) {
 		printf("%s:\n", n);
 	} else {
@@ -79,11 +100,11 @@ efcode(void)
 	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
 		return;
 	/* Create struct assignment */
-	q = block(OREG, NIL, NIL, PTR+STRTY, 0, cftnsp->ssue);
+	q = block(OREG, NIL, NIL, PTR+STRTY, 0, cftnsp->sap);
 	q->n_rval = R5;
 	q->n_lval = 8; /* return buffer offset */
 	q = buildtree(UMUL, q, NIL);
-	p = block(REG, NIL, NIL, PTR+STRTY, 0, cftnsp->ssue);
+	p = block(REG, NIL, NIL, PTR+STRTY, 0, cftnsp->sap);
 	p = buildtree(UMUL, p, NIL);
 	p = buildtree(ASSIGN, q, p);
 	ecomp(p);
@@ -115,7 +136,7 @@ bfcode(struct symtab **sp, int cnt)
 		    cisreg(sp[i]->stype) == 0)
 			continue;
 		sp2 = sp[i];
-		n = tempnode(0, sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
+		n = tempnode(0, sp[i]->stype, sp[i]->sdf, sp[i]->sap);
 		n = buildtree(ASSIGN, n, nametree(sp2));
 		sp[i]->soffset = regno(n->n_left);
 		sp[i]->sflags |= STNODE;
@@ -151,7 +172,7 @@ funcode(NODE *p)
 		if (r->n_right->n_op != STARG)
 			r->n_right = block(FUNARG, r->n_right, NIL,
 			    r->n_right->n_type, r->n_right->n_df,
-			    r->n_right->n_sue);
+			    r->n_right->n_ap);
 	}
 	if (r->n_op != STARG) {
 		l = talloc();
@@ -176,4 +197,83 @@ int
 mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
 	return 0;
+}
+
+/*
+ * Return "canonical frame address".
+ */
+NODE *
+builtin_cfa(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+
+NODE *
+builtin_return_address(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+
+NODE *
+builtin_frame_address(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+
+NODE *
+builtin_huge_val(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_huge_valf(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_huge_vall(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_inf(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_inff(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_infl(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_nan(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_nanf(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
+}
+NODE *
+builtin_nanl(const struct bitable *bt, NODE *a)
+{
+	uerror(__func__);
+	return bcon(0);
 }

@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.25 2012/12/12 17:45:23 ragge Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.5 2014/07/24 19:29:33 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.28 2014/12/24 08:43:28 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.6 2016/02/09 20:29:20 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -40,29 +40,60 @@
 
 #if defined(mach_i386)
 #define CPPMDADD	{ "-D__i386__", NULL, }
-#define DYNLINKER	{ "-dynamic-linker", "/lib/ld-linux.so.2", NULL }
+#define	DYNLINKLIB	"/lib/ld-linux.so.2"
+#define MUSL_DYLIB	"/lib/ld-musl-i386.so.1"
 #elif defined(mach_powerpc)
 #define CPPMDADD	{ "-D__ppc__", NULL, }
-#define DYNLINKER	{ "-dynamic-linker", "/lib/ld-linux.so.2", NULL }
+#define	DYNLINKLIB	"/lib/ld-linux.so.2"
+#define MUSL_DYLIB	"/lib/ld-musl-powerpc.so.1"
 #elif defined(mach_amd64)
-#define CPPMDADD	{ "-D__x86_64__", "-D__x86_64", "-D__amd64__", \
-	"-D__amd64", "-D__LP64__", "-D_LP64", NULL, }
-#define	DYNLINKER { "-dynamic-linker", "/lib64/ld-linux-x86-64.so.2", NULL }
+#include "../inc/amd64.h"
+#define	DYNLINKLIB	"/lib64/ld-linux-x86-64.so.2"
+#define MUSL_DYLIB	"/lib/ld-musl-x86_64.so.1"
+#ifndef MULTIARCH_PATH
 #define	DEFLIBDIRS	{ "/usr/lib64/", 0 }
+#else
+#define	DEFLIBDIRS	{ "/usr/lib64/", "/usr/lib/" MULTIARCH_PATH "/", 0 }
+#endif
 #elif defined(mach_mips)
-#define CPPMDADD { "-D__mips__", NULL, }
-#define DYNLINKER { "-dynamic-linker", "/lib/ld.so.1", NULL }
+#define CPPMDADD	{ "-D__mips__", NULL, }
+#define	DYNLINKLIB	"/lib/ld.so.1"
+#define MUSL_ROOT	"/lib/ld-musl-mips"
+#define MUSL_EL		"el"
+#define MUSL_SF		"-sf"
 #else
 #error defines for arch missing
 #endif
 
-/* fixup small m options */
-#if defined(mach_amd64)
-#define PCC_EARLY_ARG_CHECK	{					\
-	if (match(argp, "-m32")) {					\
-		argp = "-melf_i386";					\
-	} else if (match(argp, "-m64")) {				\
-		argp = "-melf_x86_64";					\
-	}								\
-}
+/*
+ * When USE_MUSL is defined, we either provide MUSL_DYLIB, or
+ * code to construct the dynamic linker name at runtime
+ */
+#ifdef USE_MUSL
+#ifdef MUSL_DYLIB
+#define DYNLINKLIB MUSL_DYLIB
+#else
+#ifndef MUSL_EB
+#define MUSL_EB	NULL
+#endif
+#ifndef MUSL_EL
+#define MUSL_EL	NULL
+#endif
+#ifndef MUSL_SF
+#define MUSL_SF	NULL
+#endif
+#ifndef MUSL_HF
+#define MUSL_HF	NULL
+#endif
+#ifndef MUSL_EXT
+#define MUSL_EXT ".so.1"
+#endif
+
+#define PCC_SETUP_LD_ARGS	{				\
+		char *t = MUSL_ROOT;				\
+		t = cat(t, bigendian ? MUSL_EB : MUSL_EL);	\
+		t = cat(t, softfloat ? MUSL_SF : MUSL_HF);	\
+		dynlinklib = cat(t, MUSL_EXT);			\
+	}
+#endif
 #endif

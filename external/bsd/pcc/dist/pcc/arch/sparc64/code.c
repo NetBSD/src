@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.22 2014/04/19 07:47:51 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.5 2014/07/24 19:21:10 plunky Exp $	*/
+/*	Id: code.c,v 1.23 2015/07/24 07:57:01 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.6 2016/02/09 20:28:32 plunky Exp $	*/
 
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
@@ -246,4 +246,28 @@ int
 mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
 	return 0;
+}
+
+/*
+ * Return "canonical frame address".
+ */
+NODE *
+builtin_cfa(const struct bitable *bt, NODE *a)
+{
+	uerror("missing %s", __func__);
+	return bcon(0);
+}
+
+NODE *
+builtin_frame_address(const struct bitable *bt, NODE *a)
+{
+	uerror("missing %s", __func__);
+	return bcon(0);
+}
+
+NODE *  
+builtin_return_address(const struct bitable *bt, NODE *a)
+{
+	uerror("missing %s", __func__);
+	return bcon(0);
 }

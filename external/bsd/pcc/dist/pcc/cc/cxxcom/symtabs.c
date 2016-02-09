@@ -1,5 +1,5 @@
-/*	Id: symtabs.c,v 1.3 2014/06/20 07:07:33 plunky Exp 	*/	
-/*	$NetBSD: symtabs.c,v 1.1.1.2 2014/07/24 19:27:12 plunky Exp $	*/
+/*	Id: symtabs.c,v 1.4 2015/09/15 20:01:10 ragge Exp 	*/	
+/*	$NetBSD: symtabs.c,v 1.1.1.3 2016/02/09 20:29:02 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -459,3 +459,12 @@ symdirec(struct symtab *sp)
 #endif
 }
 #endif
+
+char *
+getexname(struct symtab *sp)
+{  
+	char *s;
+	if ((s = sp->soname) == NULL)
+		s = addname(exname(sp->sname));
+	return s;
+}

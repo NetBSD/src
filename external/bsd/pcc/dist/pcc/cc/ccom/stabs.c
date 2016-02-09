@@ -1,5 +1,5 @@
-/*	Id: stabs.c,v 1.34 2012/04/22 21:07:41 plunky Exp 	*/	
-/*	$NetBSD: stabs.c,v 1.1.1.6 2014/07/24 19:24:35 plunky Exp $	*/
+/*	Id: stabs.c,v 1.35 2015/09/15 20:01:10 ragge Exp 	*/	
+/*	$NetBSD: stabs.c,v 1.1.1.7 2016/02/09 20:28:52 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -275,8 +275,7 @@ stabs_func(struct symtab *s)
 {
 	char str[MAXPSTR];
 
-	if ((curfun = s->soname) == NULL)
-		curfun = addname(exname(s->sname));
+	curfun = getexname(s);
 	printtype(s, str, sizeof(str));
 	cprint(1, "\t.stabs	\"%s:%c%s\",%d,0,%d,%s\n",
 	    curfun, s->sclass == STATIC ? 'f' : 'F', str,
@@ -340,8 +339,7 @@ stabs_newsym(struct symtab *s)
 	    s->sclass == TYPEDEF || (s->sclass & FIELD) || ISSOU(s->stype))
 		return; /* XXX - fix structs */
 
-	if ((sname = s->soname) == NULL)
-		sname = exname(s->sname);
+	sname = getexname(s);
 	sz = tsize(s->stype, s->sdf, s->sap);
 	suesize = BIT2BYTE(sz);
 	if (suesize > 32767)

@@ -1,5 +1,5 @@
-/*	Id: optim.c,v 1.57 2014/04/08 19:54:56 ragge Exp 	*/	
-/*	$NetBSD: optim.c,v 1.1.1.6 2014/07/24 19:23:48 plunky Exp $	*/
+/*	Id: optim.c,v 1.61 2016/02/09 17:57:35 ragge Exp 	*/	
+/*	$NetBSD: optim.c,v 1.1.1.7 2016/02/09 20:28:50 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -36,13 +36,17 @@
 
 # include "pass1.h"
 
+#define	NODE P1ND
+#define	nfree p1nfree
+#define	tfree p1tfree
+
 # define SWAP(p,q) {sp=p; p=q; q=sp;}
 # define RCON(p) (p->n_right->n_op==ICON)
 # define RO(p) p->n_right->n_op
-# define RV(p) p->n_right->n_lval
+# define RV(p) getlval(p->n_right)
 # define LCON(p) (p->n_left->n_op==ICON)
 # define LO(p) p->n_left->n_op
-# define LV(p) p->n_left->n_lval
+# define LV(p) getlval(p->n_left)
 
 /* remove left node */
 static NODE *
@@ -364,7 +368,7 @@ again:	o = p->n_op;
 		break;
 
 	case DIV:
-		if( nncon( p->n_right ) && p->n_right->n_lval == 1 )
+		if( nncon( p->n_right ) && getlval(p->n_right) == 1 )
 			goto zapright;
 		if (LCON(p) && RCON(p) && conval(p->n_left, DIV, p->n_right))
 			goto zapright;
@@ -447,6 +451,33 @@ again:	o = p->n_op;
 		}
 		break;
 #endif
+
+	case ANDAND:
+		if (!nncon(p->n_left))
+			break;
+		if (LV(p) == 0) { /* right not evaluated */
+			p1walkf(p, putjops, 0);
+			p1tfree(p);
+			p = bcon(0);
+		} else {
+			q = p->n_right;
+			nfree(nfree(p));
+			p = cast(q, INT, 0);
+		}
+		break;
+	case OROR:
+		if (!nncon(p->n_left))
+			break;
+		if (LV(p) != 0) { /* right not evaluated */
+			p1walkf(p, putjops, 0);
+			p1tfree(p);
+			p = bcon(1);
+		} else {
+			q = p->n_right;
+			nfree(nfree(p));
+			p = cast(q, INT, 0);
+		}
+		break;
 	}
 
 	return(p);

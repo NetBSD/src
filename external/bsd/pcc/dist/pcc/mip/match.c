@@ -1,5 +1,5 @@
-/*      Id: match.c,v 1.101 2014/04/08 19:53:24 ragge Exp    */	
-/*      $NetBSD: match.c,v 1.1.1.6 2014/07/24 19:28:50 plunky Exp $   */
+/*      Id: match.c,v 1.104 2015/11/17 19:19:40 ragge Exp    */	
+/*      $NetBSD: match.c,v 1.1.1.7 2016/02/09 20:29:15 plunky Exp $   */
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -104,16 +104,16 @@ tshape(NODE *p, int shape)
 		case SCCON:
 			if (o != ICON || p->n_name[0])
 				return SRNOPE;
-			if (p->n_lval == 0 && shape == SZERO)
+			if (getlval(p)== 0 && shape == SZERO)
 				return SRDIR;
-			if (p->n_lval == 1 && shape == SONE)
+			if (getlval(p) == 1 && shape == SONE)
 				return SRDIR;
-			if (p->n_lval == -1 && shape == SMONE)
+			if (getlval(p) == -1 && shape == SMONE)
 				return SRDIR;
-			if (p->n_lval > -257 && p->n_lval < 256 &&
+			if (getlval(p) > -257 && getlval(p) < 256 &&
 			    shape == SCCON)
 				return SRDIR;
-			if (p->n_lval > -32769 && p->n_lval < 32768 &&
+			if (getlval(p) > -32769 && getlval(p) < 32768 &&
 			    shape == SSCON)
 				return SRDIR;
 			return SRNOPE;
@@ -135,7 +135,7 @@ tshape(NODE *p, int shape)
 		return SRDIR;
 
 	if ((shape&SWADD) && (o==NAME||o==OREG))
-		if (BYTEOFF(p->n_lval))
+		if (BYTEOFF(getlval(p)))
 			return SRNOPE;
 
 	switch (o) {
@@ -319,7 +319,7 @@ expand(NODE *p, int cookie, char *cp)
 			if (*++cp == 'C')
 				printf(LABFMT, p->n_label);
 			else
-				printf(LABFMT, (int)getlr(p,*cp)->n_lval);
+				printf(LABFMT, (int)getlval(getlr(p,*cp)));
 			continue;
 
 		case 'O':  /* opcode string */
@@ -332,7 +332,7 @@ expand(NODE *p, int cookie, char *cp)
 			continue;
 
 		case 'B':  /* byte offset in word */
-			val = getlr(p,*++cp)->n_lval;
+			val = getlval(getlr(p,*++cp));
 			val = BYTEOFF(val);
 			printf( CONFMT, val );
 			continue;
@@ -646,7 +646,7 @@ relops(NODE *p)
 {
 	extern int *qtable[];
 	struct optab *q;
-	int i, shl = 0, shr = 0;
+	int i, shl = 0, shr = 0, sh;
 	NODE *l, *r;
 	int *ixp, idx = 0;
 	int lvl = 10, gol = 0, gor = 0;
@@ -702,10 +702,16 @@ relops(NODE *p)
 
 	(void)shswitch(-1, p->n_right, q->rshape, INREGS,
 	    q->rewrite & RRIGHT, gor);
-	
+
+	sh = 0;
+	if (q->rewrite & RLEFT)
+		sh = ffs(q->lshape & INREGS)-1;
+	else if (q->rewrite & RRIGHT)
+		sh = ffs(q->rshape & INREGS)-1;
+
 	F2DEBUG(("relops: node %p\n", p));
 	p->n_su = MKIDX(idx, 0);
-	SCLASS(p->n_su, 0); /* XXX */
+	SCLASS(p->n_su, sh);
 	return 0;
 }
 
@@ -837,7 +843,7 @@ findasg(NODE *p, int cookie)
 	SCLASS(p->n_su, sh);
 #endif /* mach_pdp11 */
 #ifdef FINDMOPS
-	p->n_flags &= ~1;
+	p->n_su &= ~ISMOPS;
 #endif
 	return sh;
 }
@@ -1189,7 +1195,7 @@ findmops(NODE *p, int cookie)
 	/* Trickery:  Set table index on assign to op instead */
 	/* gencode() will remove useless nodes */
 	p->n_su = MKIDX(idx, 0);
-	p->n_flags |= 1; /* XXX tell gencode to reduce the right tree */
+	p->n_su |= ISMOPS; /* XXX tell gencode to reduce the right tree */
 	SCLASS(p->n_su, sh);
 
 	return sh;
@@ -1210,7 +1216,7 @@ treecmp(NODE *p1, NODE *p2)
 		return treecmp(p1->n_left, p2->n_left);
 
 	case OREG:
-		if (p1->n_lval != p2->n_lval || p1->n_rval != p2->n_rval)
+		if (getlval(p1) != getlval(p2) || p1->n_rval != p2->n_rval)
 			return 0;
 		break;
 
@@ -1219,7 +1225,7 @@ treecmp(NODE *p1, NODE *p2)
 		if (strcmp(p1->n_name, p2->n_name))
 			return 0;
 		/* FALLTHROUGH */
-		if (p1->n_lval != p2->n_lval)
+		if (getlval(p1) != getlval(p2))
 			return 0;
 		break;
 

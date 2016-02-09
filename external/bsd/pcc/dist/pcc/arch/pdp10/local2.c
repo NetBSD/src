@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.105 2012/09/26 20:33:03 plunky Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.4 2014/07/24 19:19:32 plunky Exp $	*/
+/*	Id: local2.c,v 1.106 2015/01/04 19:17:23 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.5 2016/02/09 20:28:26 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -724,7 +724,8 @@ zzzcode(NODE *p, int c)
 		break;
 
 	case 'G': /* structure argument */
-		printf("	addl %%17,0%o\n", p->n_stsize/(SZINT/SZCHAR));
+		printf("	addl %%17,0%o\n",
+		    attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0)/(SZINT/SZCHAR));
 		printf("	foo...\n");
 		break;
 
@@ -1247,7 +1248,7 @@ argsiz(NODE *p)
 	TWORD t = p->n_type;
 
 	if (t == STRTY || t == UNIONTY)
-		return p->n_stsize/(SZINT/SZCHAR);
+		return attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0)/(SZINT/SZCHAR);
 	return szty(t);
 }
 

@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.18 2014/06/01 11:35:02 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.5 2014/07/24 19:18:25 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.22 2015/12/31 16:31:09 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.6 2016/02/09 20:28:22 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -36,7 +36,7 @@
  * Machine-dependent defines for both passes.
  */
 
-#if defined(os_netbsd)
+#if defined(os_netbsd) || defined(os_litebsd)
 #define USE_GAS
 #endif
 
@@ -89,13 +89,13 @@
 #define	MIN_SHORT	-32768
 #define	MAX_SHORT	32767
 #define	MAX_USHORT	65535
-#define	MIN_INT		-1
+#define	MIN_INT		(-0x7fffffff-1)
 #define	MAX_INT		0x7fffffff
-#define	MAX_UNSIGNED	0xffffffff
+#define	MAX_UNSIGNED	0xffffffffU
 #define	MIN_LONG	MIN_INT
 #define	MAX_LONG	MAX_INT
 #define	MAX_ULONG	MAX_UNSIGNED
-#define	MIN_LONGLONG	0x8000000000000000LL
+#define	MIN_LONGLONG	(-0x7fffffffffffffffLL-1)
 #define	MAX_LONGLONG	0x7fffffffffffffffLL
 #define	MAX_ULONGLONG	0xffffffffffffffffULL
 
@@ -346,11 +346,16 @@ extern int nargregs;
 	{ "__builtin_va_end", mips_builtin_va_end, 0, 1, 0, VOID },    \
 	{ "__builtin_va_copy", mips_builtin_va_copy, 0, 2, 0, VOID },
 
-#define NODE struct node
+#ifdef LANG_CXX
+#define P1ND struct node
+#else
+#define P1ND struct p1node
+#endif
 struct node;
 struct bitable;
-NODE *mips_builtin_stdarg_start(const struct bitable *, NODE *a);
-NODE *mips_builtin_va_arg(const struct bitable *, NODE *a);
-NODE *mips_builtin_va_end(const struct bitable *, NODE *a);
-NODE *mips_builtin_va_copy(const struct bitable *, NODE *a);
-#undef NODE
+P1ND *mips_builtin_stdarg_start(const struct bitable *, P1ND *a);
+P1ND *mips_builtin_va_arg(const struct bitable *, P1ND *a);
+P1ND *mips_builtin_va_end(const struct bitable *, P1ND *a);
+P1ND *mips_builtin_va_copy(const struct bitable *, P1ND *a);
+#undef P1ND
+#define NATIVE_FLOATING_POINT

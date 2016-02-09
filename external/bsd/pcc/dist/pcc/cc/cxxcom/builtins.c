@@ -1,5 +1,5 @@
-/*	Id: builtins.c,v 1.4 2012/10/22 08:51:48 plunky Exp 	*/	
-/*	$NetBSD: builtins.c,v 1.1.1.3 2014/07/24 19:25:33 plunky Exp $	*/
+/*	Id: builtins.c,v 1.6 2015/11/24 17:30:20 ragge Exp 	*/	
+/*	$NetBSD: builtins.c,v 1.1.1.4 2016/02/09 20:28:56 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -109,8 +109,8 @@ builtin_abs(const struct bitable *bt, NODE *a)
 		a = cast(a, INT, 0);
 
 	if (a->n_op == ICON) {
-		if (a->n_lval < 0)
-			a->n_lval = -a->n_lval;
+		if (getlval(a) < 0)
+			setlval(a, -getlval(a));
 		p = a;
 	} else {
 		t = tempnode(0, a->n_type, a->n_df, a->n_ap);
@@ -570,7 +570,8 @@ static const unsigned char nLDOUBLE[] = { 0x7f, 0xff, 0xc0, 0, 0, 0, 0, 0, 0, 0 
 	x = MIN(sizeof(n ## TYP), sizeof(d));			\
 	memcpy(&d, v ## TYP, x);				\
 	f = block(FCON, NIL, NIL, TYP, NULL, 0);	\
-	f->n_dcon = d;						\
+	f->n_dcon = tmpalloc(sizeof(union flt));		\
+	((union flt *)f->n_dcon)->fp = d;					\
 	return f;						\
 }
 
@@ -597,7 +598,8 @@ builtin_nanx(const struct bitable *bt, NODE *a)
 	} else if (a->n_op == STRING && *a->n_name == '\0') {
 		a->n_op = FCON;
 		a->n_type = bt->rt;
-		memcpy(&a->n_dcon, nLDOUBLE, sizeof(a->n_dcon));
+		a->n_dcon = tmpalloc(sizeof(union flt));
+		memcpy(&((union flt *)a->n_dcon)->fp, nLDOUBLE, sizeof(long double));
 	} else
 		a = binhelp(eve(a), bt->rt, &bt->name[10]);
 	return a;

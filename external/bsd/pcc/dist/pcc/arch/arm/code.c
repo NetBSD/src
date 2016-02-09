@@ -1,5 +1,5 @@
-/*      Id: code.c,v 1.28 2014/04/19 07:47:51 ragge Exp     */	
-/*      $NetBSD: code.c,v 1.1.1.6 2014/07/24 19:16:08 plunky Exp $    */
+/*      Id: code.c,v 1.29 2015/01/07 05:20:48 gmcgarry Exp     */	
+/*      $NetBSD: code.c,v 1.1.1.7 2016/02/09 20:28:11 plunky Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -842,6 +842,27 @@ retstruct(NODE *p)
 	}
 
 	return p;
+}
+
+NODE *
+builtin_frame_address(const struct bitable *bt, NODE *a)
+{
+	assert(0);
+	return NULL;
+}
+
+NODE *
+builtin_return_address(const struct bitable *bt, NODE *a)
+{
+	assert(0);
+	return NULL;
+}
+
+NODE *
+builtin_cfa(const struct bitable *bt, NODE *a)
+{
+	assert(0);
+	return NULL;
 }
 
 /*

@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.28 2012/12/13 16:01:25 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.5 2014/07/24 19:21:36 plunky Exp $	*/
+/*	Id: local.c,v 1.31 2015/11/13 11:38:47 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.6 2016/02/09 20:28:35 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -35,6 +35,14 @@
  */
 
 # include "pass1.h"
+
+#ifndef LANG_CXX
+#define NODE P1ND
+#undef NIL
+#define	NIL NULL
+#define	nfree p1nfree
+#define	fwalk p1fwalk
+#endif
 
 static void r1arg(NODE *p, NODE *q);
 
@@ -191,7 +199,7 @@ myp2tree(NODE *p)
 	if (p->n_op != FCON) 
 		return;
 
-	sp = inlalloc(sizeof(struct symtab));
+	sp = tmpalloc(sizeof(struct symtab));
 	sp->sclass = STATIC;
 	sp->sap = 0;
 	sp->slevel = 1; /* fake numeric label */
@@ -299,8 +307,7 @@ defzero(struct symtab *sp)
 	int off, al;
 	char *name;
 
-	if ((name = sp->soname) == NULL)
-		name = exname(sp->sname);
+	name = getexname(sp);
 	off = tsize(sp->stype, sp->sdf, sp->sap);
 	SETOFF(off,SZCHAR);
 	off /= SZCHAR;
@@ -333,15 +340,15 @@ ninval(CONSZ off, int fsz, NODE *p)
 	switch (p->n_type) {
 	case LDOUBLE:
 		u.i[2] = 0;
-		u.l = (long double)p->n_dcon;
+		u.l = (long double)((union flt *)p->n_dcon)->fp;
 		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
 		break;
 	case DOUBLE:
-		u.d = (double)p->n_dcon;
+		u.d = (double)((union flt *)p->n_dcon)->fp;
 		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
 		break;
 	case FLOAT:
-		u.f = (float)p->n_dcon;
+		u.f = (float)((union flt *)p->n_dcon)->fp;
 		printf("\t.long\t0x%x\n", u.i[0]);
 		break;
 	default:

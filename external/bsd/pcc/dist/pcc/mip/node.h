@@ -1,5 +1,5 @@
-/*	Id: node.h,v 1.36 2010/08/11 14:08:44 ragge Exp 	*/	
-/*	$NetBSD: node.h,v 1.1.1.4 2011/09/01 12:47:13 plunky Exp $	*/
+/*	Id: node.h,v 1.43 2015/11/17 19:19:40 ragge Exp 	*/	
+/*	$NetBSD: node.h,v 1.1.1.5 2016/02/09 20:29:16 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -42,9 +42,13 @@ union aarg {
 
 struct attr {
 	struct attr *next;
-	int atype;
+	unsigned int atype:12, sz:2;
 	union aarg aa[];
 };
+
+#define iarg(x) aa[x].iarg
+#define sarg(x) aa[x].sarg
+#define varg(x) aa[x].varg
 
 /*
  * The node structure is the basic element in the compiler.
@@ -56,12 +60,9 @@ struct attr {
 typedef unsigned int TWORD;
 #define NIL (NODE *)0
 
-struct symtab;
-struct suedef;
 struct regw;
 
 typedef struct node {
-	struct	node *next;
 	int	n_op;
 	union {
 		int _reg;
@@ -74,35 +75,28 @@ typedef struct node {
 	int	n_su;
 	union {
 		char *	_name;
-		int	_stsize;
-		union	dimfun *_df;
-	} n_5;
-	union {
 		int	_label;
-		int	_stalign;
-		int	_flags;
-#if 0
-		/* not anymore */
-		struct	suedef *_sue;
-#else
-		struct attr *_ap;
+#ifdef LANG_CXX
+		union	dimfun *_df;
 #endif
-	} n_6;
+	} n_5;
+	struct attr *n_ap;
 	union {
 		struct {
 			union {
 				struct node *_left;
-				CONSZ _lval;
-#ifdef SPECIAL_INTEGERS
-				SPECLVAL _slval;
-#endif
+				CONSZ _val;
 			} n_l;
 			union {
 				struct node *_right;
 				int _rval;
+#ifdef LANG_CXX
 				struct symtab *_sp;
+#endif
 			} n_r;
 		} n_u;
+		void *_dcon;
+#if 0
 #ifdef SOFTFLOAT
 #ifdef FDFLOAT
 		/* To store F- or D-floats */
@@ -115,25 +109,23 @@ typedef struct node {
 #else
 		long double	_dcon;
 #endif
+#endif
 	} n_f;
 } NODE;
 
 #define	n_name	n_5._name
-#define	n_stsize n_5._stsize
 #define	n_df	n_5._df
-
-#define	n_label	n_6._label
-#define	n_stalign n_6._stalign
-#define	n_flags n_6._flags
-#define	n_ap	n_6._ap
+#define	n_label	n_5._label
 
 #define	n_left	n_f.n_u.n_l._left
-#define	n_lval	n_f.n_u.n_l._lval
+#define	n_val	n_f.n_u.n_l._val
 #define	n_slval	n_f.n_u.n_l._slval
 #define	n_right	n_f.n_u.n_r._right
 #define	n_rval	n_f.n_u.n_r._rval
 #define	n_sp	n_f.n_u.n_r._sp
 #define	n_dcon	n_f._dcon
+#define	getlval(p) 	((p)->n_f.n_u.n_l._val)
+#define	setlval(p,v)	((p)->n_f.n_u.n_l._val = (v))
 
 #define	NLOCAL1	010000
 #define	NLOCAL2	020000
@@ -228,7 +220,6 @@ typedef struct node {
 #define XASM	53
 #define	GOTO	54
 #define	RETURN	55
-#define STREF	56
 #define	FUNARG	57
 #define	ADDROF	58
 

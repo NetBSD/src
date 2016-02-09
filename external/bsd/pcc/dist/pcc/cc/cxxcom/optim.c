@@ -1,5 +1,5 @@
-/*	Id: optim.c,v 1.4 2012/04/22 21:07:41 plunky Exp 	*/	
-/*	$NetBSD: optim.c,v 1.1.1.3 2014/07/24 19:26:39 plunky Exp $	*/
+/*	Id: optim.c,v 1.5 2015/11/24 17:30:20 ragge Exp 	*/	
+/*	$NetBSD: optim.c,v 1.1.1.4 2016/02/09 20:29:00 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -39,10 +39,10 @@
 # define SWAP(p,q) {sp=p; p=q; q=sp;}
 # define RCON(p) (p->n_right->n_op==ICON)
 # define RO(p) p->n_right->n_op
-# define RV(p) p->n_right->n_lval
+# define RV(p) glval(p->n_right)
 # define LCON(p) (p->n_left->n_op==ICON)
 # define LO(p) p->n_left->n_op
-# define LV(p) p->n_left->n_lval
+# define LV(p) glval(p->n_left)
 
 /* remove left node */
 static NODE *
@@ -190,7 +190,7 @@ again:	o = p->n_op;
 				/* too many shifts */
 				tfree(p->n_left);
 				nfree(p->n_right);
-				p->n_op = ICON; p->n_lval = 0; p->n_sp = NULL;
+				p->n_op = ICON; glval(p) = 0; p->n_sp = NULL;
 			} else
 #endif
 			/* avoid larger shifts than type size */
@@ -231,7 +231,7 @@ again:	o = p->n_op;
 				/* too many shifts */
 				tfree(p->n_left);
 				nfree(p->n_right);
-				p->n_op = ICON; p->n_lval = 0; p->n_sp = NULL;
+				p->n_op = ICON; glval(p) = 0; p->n_sp = NULL;
 			} else
 #endif
 			/* avoid larger shifts than type size */
@@ -348,7 +348,7 @@ again:	o = p->n_op;
 		break;
 
 	case DIV:
-		if( nncon( p->n_right ) && p->n_right->n_lval == 1 )
+		if( nncon( p->n_right ) && glval(p->n_right) == 1 )
 			goto zapright;
 		if (LCON(p) && RCON(p) && conval(p->n_left, DIV, p->n_right))
 			goto zapright;
