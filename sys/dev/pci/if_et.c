@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.9 2015/06/29 12:27:41 maxv Exp $	*/
+/*	$NetBSD: if_et.c,v 1.10 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.9 2015/06/29 12:27:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.10 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1759,7 +1759,7 @@ et_rxeof(struct et_softc *sc)
 				bpf_mtap(ifp, m);
 
 				ifp->if_ipackets++;
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 		} else {
 			ifp->if_ierrors++;

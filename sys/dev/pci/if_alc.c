@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.18 2016/01/26 16:02:50 christos Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.19 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2596,7 +2596,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 			bpf_mtap(ifp, m);
 
 			/* Pass it on. */
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 	}
 	/* Reset mbuf chains. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.83 2015/11/19 16:23:54 christos Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.84 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.83 2015/11/19 16:23:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.84 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -240,8 +240,9 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = vlan_ioctl;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	vlan_reset_linkname(ifp);
+	if_register(ifp);
 
 	return (0);
 }
@@ -907,5 +908,5 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	bpf_mtap(&ifv->ifv_if, m);
 
 	m->m_flags &= ~M_PROMISC;
-	ifv->ifv_if.if_input(&ifv->ifv_if, m);
+	if_input(&ifv->ifv_if, m);
 }

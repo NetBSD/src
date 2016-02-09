@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.82 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.83 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.82 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.83 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -947,7 +947,7 @@ dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
 	 */
 	bpf_mtap(ifp, m);
 
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 

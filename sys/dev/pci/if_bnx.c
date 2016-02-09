@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.57 2014/07/09 16:30:11 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.58 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.57 2014/07/09 16:30:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.58 2016/02/09 08:32:11 ozaki-r Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4647,7 +4647,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			ifp->if_ipackets++;
 			DBPRINT(sc, BNX_VERBOSE_RECV,
 			    "%s(): Passing received frame up.\n", __func__);
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 			DBRUNIF(1, sc->rx_mbuf_alloc--);
 
 		}

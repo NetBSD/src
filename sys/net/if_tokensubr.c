@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.72 2015/12/16 05:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.73 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.72 2015/12/16 05:44:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.73 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -501,7 +501,7 @@ token_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_dlt = DLT_IEEE802;
 	ifp->if_mtu = ISO88025_MTU;
 	ifp->if_output = token_output;
-	ifp->if_input = token_input;
+	ifp->_if_input = token_input;
 	ifp->if_broadcastaddr = tokenbroadcastaddr;
 #ifdef IFF_NOTRAILERS
 	ifp->if_flags |= IFF_NOTRAILERS;

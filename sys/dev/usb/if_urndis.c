@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9 2014/07/19 08:38:28 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.10 2016/02/09 08:32:12 ozaki-r Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9 2014/07/19 08:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.10 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -874,7 +874,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, uint32_t len)
 
 			bpf_mtap(ifp, m);
 
-			(*(ifp)->if_input)((ifp), (m));
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 		splx(s);
 

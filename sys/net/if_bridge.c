@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.105 2015/11/19 16:23:54 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.106 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.105 2015/11/19 16:23:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.106 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -453,7 +453,8 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	bridge_sysctl_fwdq_setup(&ifp->if_sysctl_log, sc);
 
-	if_attach(ifp);
+	if_initialize(ifp);
+	if_register(ifp);
 
 	if_alloc_sadl(ifp);
 
@@ -834,7 +835,7 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 
 	KASSERT(BRIDGE_LOCKED(sc));
 
-	ifs->if_input = ether_input;
+	ifs->_if_input = ether_input;
 	ifs->if_bridge = NULL;
 	ifs->if_bridgeif = NULL;
 
@@ -882,7 +883,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	if (ifs->if_bridge != NULL)
 		return (EBUSY);
 
-	if (ifs->if_input != ether_input)
+	if (ifs->_if_input != ether_input)
 		return EINVAL;
 
 	/* FIXME: doesn't work with non-IFF_SIMPLEX interfaces */
@@ -919,7 +920,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	ifs->if_bridge = sc;
 	ifs->if_bridgeif = bif;
 	LIST_INSERT_HEAD(&sc->sc_iflist, bif, bif_next);
-	ifs->if_input = bridge_input;
+	ifs->_if_input = bridge_input;
 
 	BRIDGE_UNLOCK(sc);
 
@@ -1886,6 +1887,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_softc *sc = ifp->if_bridge;
 	struct bridge_iflist *bif;
 	struct ether_header *eh;
+
+	KASSERT(!cpu_intr_p());
 
 	if (__predict_false(sc == NULL) ||
 	    (sc->sc_if.if_flags & IFF_RUNNING) == 0) {

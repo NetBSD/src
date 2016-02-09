@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.28 2015/09/12 19:21:50 christos Exp $	*/
+/*	$NetBSD: if_il.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.28 2015/09/12 19:21:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -533,7 +533,7 @@ ilrint(void *arg)
 
 	/* Shave off status hdr */
 	m_adj(m, 4);
-	(*sc->sc_if.if_input)(&sc->sc_if, m);
+	if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 setup:
 	/*
 	 * Reset for next packet if possible.

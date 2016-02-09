@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.44 2012/10/27 17:18:23 chs Exp $	*/
+/*	$NetBSD: tropic.c,v 1.45 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.44 2012/10/27 17:18:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.45 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1251,7 +1251,7 @@ tr_rint(struct tr_softc *sc)
 		++ifp->if_ipackets;
 
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }
 

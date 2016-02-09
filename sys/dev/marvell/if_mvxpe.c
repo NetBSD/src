@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.2 2015/06/03 03:55:47 hsuenaga Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.3 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.2 2015/06/03 03:55:47 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.3 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2448,7 +2448,7 @@ mvxpe_rx_queue(struct mvxpe_softc *sc, int q, int npkt)
 		mvxpe_rx_set_csumflag(ifp, r, m);
 		ifp->if_ipackets++;
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		chunk = NULL; /* the BM chunk goes to networking stack now */
 rx_done:
 		if (chunk) {

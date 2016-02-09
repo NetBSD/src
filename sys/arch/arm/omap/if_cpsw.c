@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.12 2015/04/16 21:50:35 jmcneill Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.13 2016/02/09 08:32:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.12 2015/04/16 21:50:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.13 2016/02/09 08:32:08 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1170,7 +1170,7 @@ cpsw_rxintr(void *arg)
 
 		bpf_mtap(ifp, m);
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 next:
 		sc->sc_rxhead = RXDESC_NEXT(sc->sc_rxhead);

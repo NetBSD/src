@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.23 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.24 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.23 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.24 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -1303,7 +1303,7 @@ cas_rint(struct cas_softc *sc)
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
 				ifp->if_ierrors++;
 		}
@@ -1336,7 +1336,7 @@ cas_rint(struct cas_softc *sc)
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
 				ifp->if_ierrors++;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.12 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.13 2016/02/09 08:32:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.12 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.13 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1131,7 +1131,7 @@ vte_rxeof(struct vte_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	if (prog > 0) {

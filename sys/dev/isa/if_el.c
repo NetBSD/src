@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.91 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: if_el.c,v 1.92 2016/02/09 08:32:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.91 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.92 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -591,7 +591,7 @@ elread(struct el_softc *sc, int len)
 	 */
 	bpf_mtap(ifp, m);
 
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*

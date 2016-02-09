@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.194 2016/01/04 09:08:38 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.195 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -251,6 +251,7 @@ struct bridge_softc;
 struct bridge_iflist;
 struct callout;
 struct krwlock;
+struct if_percpuq;
 
 typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
@@ -271,7 +272,7 @@ typedef struct ifnet {
 	int	(*if_output)		/* output routine (enqueue) */
 		    (struct ifnet *, struct mbuf *, const struct sockaddr *,
 		     struct rtentry *);
-	void	(*if_input)		/* input routine (from h/w driver) */
+	void	(*_if_input)		/* input routine (from h/w driver) */
 		    (struct ifnet *, struct mbuf *);
 	void	(*if_start)		/* initiate output routine */
 		    (struct ifnet *);
@@ -351,11 +352,12 @@ typedef struct ifnet {
 	struct ifnet_lock *if_ioctl_lock;
 #ifdef _KERNEL /* XXX kvm(3) */
 	struct callout *if_slowtimo_ch;
-#endif
 #ifdef GATEWAY
 	struct kmutex	*if_afdata_lock;
 #else
 	struct krwlock	*if_afdata_lock;
+#endif
+	struct if_percpuq	*if_percpuq; /* We should remove it in the future */
 #endif
 } ifnet_t;
  
@@ -946,6 +948,14 @@ int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
 int	if_flags_set(struct ifnet *, const short);
 int	if_clone_list(int, char *, int *);
+
+void	if_input(struct ifnet *, struct mbuf *);
+
+struct if_percpuq *
+	if_percpuq_create(struct ifnet *);
+void	if_percpuq_destroy(struct if_percpuq *);
+void
+	if_percpuq_enqueue(struct if_percpuq *, struct mbuf *);
 
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);

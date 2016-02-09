@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.103 2015/08/30 04:17:48 dholland Exp $ */
+/*	$NetBSD: gem.c,v 1.104 2016/02/09 08:32:10 ozaki-r Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.103 2015/08/30 04:17:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.104 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1940,7 +1940,7 @@ swcsum:
 			m->m_pkthdr.csum_flags = 0;
 #endif
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	if (progress) {

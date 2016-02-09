@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.5 2012/01/21 22:09:56 reinoud Exp $ */
+/* $NetBSD: if_veth.c,v 1.6 2016/02/09 08:32:10 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5 2012/01/21 22:09:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.6 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -137,8 +137,9 @@ veth_attach(device_t parent, device_t self, void *opaque)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifq->if_snd);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ether_ifattach(ifp, sc->sc_eaddr);
+	if_register(ifp);
 
 	ifmedia_init(&sc->sc_ifmedia, 0,
 	    veth_ifmedia_change,
@@ -236,7 +237,7 @@ veth_softrx(void *priv)
 		bpf_mtap(ifp, m);
 
 		s = splnet();
-		ifp->if_input(ifp, m);
+		if_input(ifp, m);
 		splx(s);
 	}
 }

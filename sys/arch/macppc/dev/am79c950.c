@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.33 2014/03/14 21:59:41 mrg Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.34 2016/02/09 08:32:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.33 2014/03/14 21:59:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.34 2016/02/09 08:32:08 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -597,7 +597,7 @@ mace_read(struct mc_softc *sc, uint8_t *pkt, int len)
 	bpf_mtap(ifp, m); 
 
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*

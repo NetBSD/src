@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.65 2015/11/19 17:01:40 christos Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.66 2016/02/09 08:32:10 ozaki-r Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.65 2015/11/19 17:01:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.66 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1107,7 +1107,7 @@ again:
 		ifp->if_ipackets++;
 
 		/* Pass the packet up. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	xen_rmb();
 	sc->sc_rx_ring.rsp_cons = i;

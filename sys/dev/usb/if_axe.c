@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.69 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.70 2016/02/09 08:32:12 ozaki-r Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.69 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.70 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1095,7 +1095,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 		DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->axe_dev),
 		    __func__, m->m_len));
-		(*(ifp)->if_input)((ifp), (m));
+		if_percpuq_enqueue((ifp)->if_percpuq, (m));
 
 		splx(s);
 

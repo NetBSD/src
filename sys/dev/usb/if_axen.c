@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.6 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.7 2016/02/09 08:32:12 ozaki-r Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.6 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.7 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1112,7 +1112,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		/* push the packet up */
 		s = splnet();
 		bpf_mtap(ifp, m);
-		(*(ifp)->if_input)((ifp), (m));
+		if_percpuq_enqueue((ifp)->if_percpuq, (m));
 		splx(s);
 
 nextpkt:

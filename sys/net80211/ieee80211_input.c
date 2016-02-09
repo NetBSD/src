@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.79 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.80 2016/02/09 08:32:12 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.79 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.80 2016/02/09 08:32:12 ozaki-r Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -766,7 +766,13 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 			/* XXX goto err? */
 			VLAN_INPUT_TAG(ifp, m, ni->ni_vlan, goto out);
 		}
-		(*ifp->if_input)(ifp, m);
+
+		/*
+		 * XXX once ieee80211_input (or rxintr itself) runs in softint
+		 * we have to change here too to use if_input.
+		 */
+		KASSERT(ifp->if_percpuq);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	return;
   out:

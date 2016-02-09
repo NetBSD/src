@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.55 2016/01/28 04:37:01 ozaki-r Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.56 2016/02/09 08:32:12 ozaki-r Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.55 2016/01/28 04:37:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.56 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -257,7 +257,7 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 	switch (etype) {
 #ifdef INET
 	case ETHERTYPE_IP:
-#ifdef GATEWAY
+#if 0	/* XXX re-enable once atm_input runs in softint */
 		if (ipflow_fastforward(m))
 			return;
 #endif
@@ -266,7 +266,7 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 #endif /* INET */
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-#ifdef GATEWAY
+#if 0	/* XXX re-enable once atm_input runs in softint */
 		if (ip6flow_fastforward(&m))
 			return;
 #endif

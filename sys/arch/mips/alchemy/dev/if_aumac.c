@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.39 2015/04/13 21:18:42 riastradh Exp $ */
+/* $NetBSD: if_aumac.c,v 1.40 2016/02/09 08:32:09 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.39 2015/04/13 21:18:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.40 2016/02/09 08:32:09 ozaki-r Exp $");
 
 
 
@@ -719,7 +719,7 @@ aumac_rxintr(struct aumac_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		ifp->if_ipackets++;
 	}
 	if (pkts)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.18 2010/04/05 07:21:47 joerg Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.19 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.18 2010/04/05 07:21:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.19 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -586,7 +586,7 @@ qtrint(struct qt_softc *sc)
 			goto rnext;
 		}
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 rnext:
 		--sc->nrcv;
 		rp->rmd3 = 0;

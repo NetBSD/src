@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.55 2012/10/27 17:18:22 chs Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.56 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.55 2012/10/27 17:18:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.56 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -249,7 +249,7 @@ pdq_os_receive_pdu(
     }
 
     m->m_pkthdr.rcvif = &sc->sc_if;
-    (*sc->sc_if.if_input)(&sc->sc_if, m);
+    if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 }
 
 void

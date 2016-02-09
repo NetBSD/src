@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.90 2015/08/30 04:11:40 dholland Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.91 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.90 2015/08/30 04:11:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.91 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1243,7 +1243,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	 */
 	bpf_mtap(ifp, m);
 
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 
  out:
 	/*

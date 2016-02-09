@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.43 2015/04/13 16:33:24 riastradh Exp $ */
+/* $NetBSD: lemac.c,v 1.44 2016/02/09 08:32:10 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.43 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.44 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -317,7 +317,7 @@ lemac_input(
     }
     m->m_pkthdr.len = m->m_len = length;
     m->m_pkthdr.rcvif = &sc->sc_if;
-    (*sc->sc_if.if_input)(&sc->sc_if, m);
+    if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 }
 
 static void

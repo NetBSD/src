@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.63 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: qe.c,v 1.64 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.63 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.64 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #define QEDEBUG
 
@@ -429,7 +429,7 @@ qe_read(struct qe_softc *sc, int idx, int len)
 	 */
 	bpf_mtap(ifp, m);
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.8 2015/06/12 17:24:02 macallan Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.9 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -827,7 +827,7 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 				if (ifp->if_bpf)
 					bpf_mtap(ifp, m);
 				ifp->if_ipackets++;
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 
 		} else if (ready != 0x00) {

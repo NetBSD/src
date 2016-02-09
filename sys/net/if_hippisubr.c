@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.44 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.45 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.44 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.45 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -288,7 +288,7 @@ hippi_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_dlt = DLT_HIPPI;
 	ifp->if_mtu = HIPPIMTU;
 	ifp->if_output = hippi_output;
-	ifp->if_input = hippi_input;
+	ifp->_if_input = hippi_input;
 	ifp->if_baudrate = IF_Mbps(800);	/* XXX double-check */
 
 	if_set_sadl(ifp, lla, 6, true);

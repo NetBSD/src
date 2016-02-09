@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.117 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.118 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.117 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.118 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1393,7 +1393,7 @@ ex_intr(void *arg)
 					    M_CSUM_TCP_UDP_BAD;
 			}
 		}
-					(*ifp->if_input)(ifp, m);
+					if_percpuq_enqueue(ifp->if_percpuq, m);
 				}
 				goto rcvloop;
 			}
