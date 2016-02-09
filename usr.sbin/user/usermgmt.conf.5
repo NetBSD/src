@@ -1,4 +1,4 @@
-.\" $NetBSD: usermgmt.conf.5,v 1.7 2009/12/31 20:14:19 wiz Exp $
+.\" $NetBSD: usermgmt.conf.5,v 1.8 2016/02/09 14:14:02 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 31, 2009
+.Dd February 9, 2016
 .Dt USERMGMT.CONF 5
 .Os
 .\" turn off hyphenation
@@ -135,12 +135,28 @@ sets the default login shell for new users.
 sets the default skeleton directory in which to find files
 with which to populate the new user's home directory.
 .El
+.Ss SYNTAX
+The
+.Nm
+file uses a simple syntax format.
+Each line must contain one option.
+That option must be in the front of the line (no spaces).
+Any number of white spaces such as ' ' and '\et' may follow.
+The line ends with a list of options from each.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .It Pa /etc/skel/*
 .It Pa /etc/login.conf
 .El
+.Sh EXAMPLES
+.Bd -unfilled -offset indent -compact
+group     wheel
+base_dir  /home/
+skel_dir  /etc/skel
+shell     /bin/sh
+inactive  0
+.Ed
 .Sh SEE ALSO
 .Xr login.conf 5 ,
 .Xr passwd 5 ,
