@@ -1,5 +1,5 @@
-/*	Id: reader.c,v 1.288 2014/06/01 11:33:52 ragge Exp 	*/	
-/*	$NetBSD: reader.c,v 1.1.1.7 2014/07/24 19:29:10 plunky Exp $	*/
+/*	Id: reader.c,v 1.299 2015/11/17 19:19:40 ragge Exp 	*/	
+/*	$NetBSD: reader.c,v 1.1.1.8 2016/02/09 20:29:20 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -90,18 +90,22 @@ static void afree(void);
 
 struct p2env p2env;
 
+int crslab2 = 11; 
+/*
+ * Return a number for internal labels.
+ */
 int
 getlab2(void)
 {
-	extern int getlab(void);
-	int rv = getlab();
-#ifdef PCC_DEBUG
-	if (p2env.epp->ip_lblnum != rv)
-		comperr("getlab2 error: %d != %d", p2env.epp->ip_lblnum, rv);
-#endif
-	p2env.epp->ip_lblnum++;
-	return rv;
+        crslab2++;
+	if (crslab2 < p2env.ipp->ip_lblnum)
+		comperr("getlab2 %d outside boundaries %d-%d",
+		    crslab2, p2env.ipp->ip_lblnum, p2env.epp->ip_lblnum);
+	if (crslab2 >= p2env.epp->ip_lblnum)
+		p2env.epp->ip_lblnum = crslab2+1;
+        return crslab2++;
 }
+
 
 #ifdef PCC_DEBUG
 static int *lbldef, *lbluse;
@@ -121,7 +125,7 @@ cktree(NODE *p, void *arg)
 	if (p->n_op == CBRANCH) {
 		 if (!logop(p->n_left->n_op))
 			cerror("%p) not logop branch", p);
-		i = (int)p->n_right->n_lval;
+		i = (int)getlval(p->n_right);
 		if (i < p2env.ipp->ip_lblnum || i >= p2env.epp->ip_lblnum)
 			cerror("%p) label %d outside boundaries %d-%d",
 			    p, i, p2env.ipp->ip_lblnum, p2env.epp->ip_lblnum);
@@ -134,7 +138,7 @@ cktree(NODE *p, void *arg)
 		cerror("%p) temporary %d outside boundaries %d-%d",
 		    p, regno(p), p2env.ipp->ip_tmpnum, p2env.epp->ip_tmpnum);
 	if (p->n_op == GOTO && p->n_left->n_op == ICON) {
-		i = (int)p->n_left->n_lval;
+		i = (int)getlval(p->n_left);
 		if (i < p2env.ipp->ip_lblnum || i >= p2env.epp->ip_lblnum)
 			cerror("%p) label %d outside boundaries %d-%d",
 			    p, i, p2env.ipp->ip_lblnum, p2env.epp->ip_lblnum);
@@ -149,12 +153,11 @@ static void
 sanitychecks(struct p2env *p2e)
 {
 	struct interpass *ip;
-	int i;
-#ifdef notyet
-	TMPMARK();
-#endif
-	lbldef = tmpcalloc(sizeof(int) * (p2e->epp->ip_lblnum - p2e->ipp->ip_lblnum));
-	lbluse = tmpcalloc(sizeof(int) * (p2e->epp->ip_lblnum - p2e->ipp->ip_lblnum));
+	int i, sz;
+
+	sz = sizeof(int) * (p2e->epp->ip_lblnum - p2e->ipp->ip_lblnum);
+	lbldef = xcalloc(sz, 1);
+	lbluse = xcalloc(sz, 1);
 
 	DLIST_FOREACH(ip, &p2env.ipole, qelem) {
 		if (ip->type == IP_DEFLAB) {
@@ -172,9 +175,8 @@ sanitychecks(struct p2env *p2e)
 			cerror("internal label %d not defined",
 			    i + p2e->ipp->ip_lblnum);
 
-#ifdef notyet
-	TMPFREE();
-#endif
+	free(lbldef);
+	free(lbluse);
 }
 #endif
 
@@ -184,7 +186,7 @@ sanitychecks(struct p2env *p2e)
  * a new place, and remove the move-to-temp statement.
  */
 static int
-stkarg(int tnr, int *soff)
+stkarg(int tnr, int (*soff)[2])
 {
 	struct p2env *p2e = &p2env;
 	struct interpass *ip;
@@ -219,9 +221,11 @@ stkarg(int tnr, int *soff)
 		    p->n_left->n_op == PLUS &&
 		    p->n_left->n_left->n_op == REG &&
 		    p->n_left->n_right->n_op == ICON) {
-			soff[0] = (int)p->n_left->n_right->n_lval;
+			soff[0][0] = regno(p->n_left->n_left);
+			soff[0][1] = (int)getlval(p->n_left->n_right);
 		} else if (p->n_op == OREG) {
-			soff[0] = (int)p->n_lval;
+			soff[0][0] = regno(p);
+			soff[0][1] = (int)getlval(p);
 		} else
 			comperr("stkarg: bad arg");
 		tfree(ip->ip_node);
@@ -238,17 +242,18 @@ stkarg(int tnr, int *soff)
 static void
 findaof(NODE *p, void *arg)
 {
-	int *aof = arg;
+	int (*aof)[2] = arg;
 	int tnr;
 
 	if (p->n_op != ADDROF || p->n_left->n_op != TEMP)
 		return;
 	tnr = regno(p->n_left);
-	if (aof[tnr])
+	if (aof[tnr][0])
 		return; /* already gotten stack address */
 	if (stkarg(tnr, &aof[tnr]))
 		return;	/* argument was on stack */
-	aof[tnr] = freetemp(szty(p->n_left->n_type));
+	aof[tnr][0] = FPREG;
+	aof[tnr][1] = freetemp(szty(p->n_left->n_type));
 }
 
 /*
@@ -316,6 +321,252 @@ deluseless(NODE *p)
 	return NULL;
 }
 
+#ifdef PASS2
+
+#define	SKIPWS(p) while (*p == ' ') p++
+#define	SZIBUF 	256
+static int inpline;
+static char inpbuf[SZIBUF];
+static char *
+rdline(void)
+{
+	int l;
+
+	if (fgets(inpbuf, sizeof(inpbuf), stdin) == NULL)
+		return NULL;
+	inpline++;
+	l = strlen(inpbuf);
+	if (inpbuf[0] < 33 || inpbuf[1] != ' ' || inpbuf[l-1] != '\n')
+		comperr("sync error in-line %d string '%s'", inpline, inpbuf);
+	inpbuf[l-1] = 0;
+	return inpbuf;
+}
+
+/*
+ * Read an int and traverse over it. count up s.
+ */
+static int
+rdint(char **s)
+{
+	char *p = *s;
+	int rv;
+
+	SKIPWS(p);
+	rv = atoi(p);
+	if (*p == '-' || *p == '+') p++;
+	while (*p >= '0' && *p <= '9') p++;
+	*s = p;
+	return rv;
+}
+
+static struct attr *
+rdattr(char **p)
+{
+	struct attr *ap, *app = NULL;
+	int i, a, sz;
+
+	(*p)++; /* skip + */
+onemore:
+	a = rdint(p);
+	sz = rdint(p);
+	ap = attr_new(a, sz);
+	for (i = 0; i < sz; i++)
+		ap->iarg(i) = rdint(p);
+	ap->next = app;
+	app = ap;
+	SKIPWS((*p));
+	if (**p != 0)
+		goto onemore;
+
+	return app;
+}
+
+/*
+ * Read in an indentifier and save on tmp heap.  Return saved string.
+ */
+static char *
+rdstr(char **p)
+{
+	char *t, *s = *p;
+	int sz;
+
+	SKIPWS(s);
+	*p = s;
+	for (sz = 0; *s && *s != ' '; s++, sz++)
+		;
+	t = tmpalloc(sz+1);
+	memcpy(t, *p, sz);
+	t[sz] = 0;
+	*p = s;
+	return t;
+}
+
+/*
+ * Read and check node structs from pass1.
+ */
+static NODE *
+rdnode(char *s)
+{
+	NODE *p = talloc();
+	int ty;
+
+	if (s[0] != '"')
+		comperr("rdnode sync error");
+	s++; s++;
+	p->n_regw = NULL;
+	p->n_ap = NULL;
+	p->n_su = p->n_lval = p->n_rval = 0;
+	p->n_op = rdint(&s);
+	p->n_type = rdint(&s);
+	p->n_qual = rdint(&s);
+	p->n_name = "";
+	SKIPWS(s);
+	ty = optype(p->n_op);
+	if (p->n_op == XASM) {
+		int i = strlen(s);
+		p->n_name = tmpalloc(i+1);
+		memcpy(p->n_name, s, i);
+		p->n_name[i] = 0;
+		s += i;
+	}
+	if (ty == UTYPE) {
+		p->n_rval = rdint(&s);
+	} else if (ty == LTYPE) {
+		p->n_lval = strtoll(s, &s, 10);
+		if (p->n_op == NAME || p->n_op == ICON) {
+			SKIPWS(s);
+			if (*s && *s != '+')
+				p->n_name = rdstr(&s);
+		} else
+			p->n_rval = rdint(&s);
+	}
+	SKIPWS(s);
+	if (p->n_op == XARG) {
+		int i = strlen(s);
+		p->n_name = tmpalloc(i+1);
+		memcpy(p->n_name, s, i);
+		p->n_name[i] = 0;
+		s += i;
+	}
+	if (*s == '+')
+		p->n_ap = rdattr(&s);
+	SKIPWS(s);
+	if (*s)
+		comperr("in-line %d failed read, buf '%s'", inpline, inpbuf);
+	if (ty != LTYPE)
+		p->n_left = rdnode(rdline());
+	if (ty == BITYPE)
+		p->n_right = rdnode(rdline());
+	return p;
+}
+
+/*
+ * Read everything from pass1.
+ */
+void
+mainp2()
+{
+	static int foo[] = { 0 };
+	struct interpass_prolog *ipp;
+	struct interpass *ip;
+	char nam[SZIBUF], *p, *b;
+	extern char *ftitle;
+
+	while ((p = rdline()) != NULL) {
+		b = p++;
+		p++;
+
+		switch (*b) {
+		case '*': /* pass thru line */
+			printf("%s\n", p);
+			break;
+		case '&': /* current filename */
+			free(ftitle);
+			ftitle = xstrdup(p);
+			break;
+		case '#':
+			lineno = atoi(p);
+			break;
+		case '"':
+			ip = malloc(sizeof(struct interpass));
+			ip->type = IP_NODE;
+			ip->ip_node = rdnode(b);
+			pass2_compile(ip);
+			break;
+		case '^':
+			ip = malloc(sizeof(struct interpass));
+			ip->type = IP_DEFLAB;
+			ip->ip_lbl = atoi(p);
+			pass2_compile(ip);
+			break;
+		case '!': /* prolog */
+			ipp = malloc(sizeof(struct interpass_prolog));
+			ip = (void *)ipp;
+			ip->type = IP_PROLOG;
+			sscanf(p, "%d %d %d %d %d %s", &ipp->ipp_type,
+			    &ipp->ipp_vis, &ip->ip_lbl, &ipp->ip_tmpnum,
+			    &ipp->ip_lblnum, nam);
+			ipp->ipp_name = xstrdup(nam);
+			memset(ipp->ipp_regs, -1, sizeof(ipp->ipp_regs));
+			ipp->ipp_autos = -1;
+			ipp->ip_labels = foo;
+#ifdef TARGET_IPP_MEMBERS
+			if (*(p = rdline()) != '(')
+				comperr("target member error");
+			p += 2;
+			target_members_read_prolog(ipp);
+			SKIPWS(p);
+			if (*p)
+				comperr("bad prolog '%s' '%s'", p, inpbuf);
+#endif
+			pass2_compile((struct interpass *)ipp);
+			break;
+
+		case '%': /* epilog */
+			ipp = malloc(sizeof(struct interpass_prolog));
+			ip = (void *)ipp;
+			ip->type = IP_EPILOG;
+			ipp->ipp_autos = rdint(&p);
+			ip->ip_lbl = rdint(&p);
+			ipp->ip_tmpnum = rdint(&p);
+			ipp->ip_lblnum = rdint(&p);
+			ipp->ipp_name = rdstr(&p);
+			memset(ipp->ipp_regs, 0, sizeof(ipp->ipp_regs));
+			SKIPWS(p);
+			if (*p == '+') {
+				int num, i;
+				p++;
+				num = rdint(&p) + 1;
+				ipp->ip_labels = tmpalloc(sizeof(int)*num);
+				for (i = 0; i < num; i++)
+					ipp->ip_labels[i] = rdint(&p);
+				ipp->ip_labels[num] = 0;
+			} else
+				ipp->ip_labels = foo;
+			SKIPWS(p);
+			if (*p)
+				comperr("bad epilog '%s' '%s'", p, inpbuf);
+#ifdef TARGET_IPP_MEMBERS
+			if (*(p = rdline()) != ')')
+				comperr("target epi member error");
+			p += 2;
+			target_members_read_epilog(ipp);
+			SKIPWS(p);
+			if (*p)
+				comperr("bad epilog2 '%s' '%s'", p, inpbuf);
+#endif
+			pass2_compile((struct interpass *)ipp);
+			break;
+
+		default:
+			comperr("bad string %s", b);
+		}
+	}
+}
+
+
+#endif
+
 /*
  * Receives interpass structs from pass1.
  */
@@ -324,12 +575,13 @@ pass2_compile(struct interpass *ip)
 {
 	void deljumps(struct p2env *);
 	struct p2env *p2e = &p2env;
-	int *addrp;
-	MARK mark;
+	int (*addrp)[2];
 
 	if (ip->type == IP_PROLOG) {
 		memset(p2e, 0, sizeof(struct p2env));
 		p2e->ipp = (struct interpass_prolog *)ip;
+		if (crslab2 < p2e->ipp->ip_lblnum)
+			crslab2 = p2e->ipp->ip_lblnum;
 		DLIST_INIT(&p2e->ipole, qelem);
 	}
 	DLIST_INSERT_BEFORE(&p2e->ipole, ip, qelem);
@@ -359,9 +611,9 @@ pass2_compile(struct interpass *ip)
 	 * - second, do the actual conversions, in case of not xtemps
 	 *   convert all temporaries to stack references.
 	 */
-	markset(&mark);
+
 	if (p2e->epp->ip_tmpnum != p2e->ipp->ip_tmpnum) {
-		addrp = tmpcalloc(sizeof(*addrp) *
+		addrp = xcalloc(sizeof(*addrp),
 		    (p2e->epp->ip_tmpnum - p2e->ipp->ip_tmpnum));
 		addrp -= p2e->ipp->ip_tmpnum;
 	} else
@@ -375,7 +627,8 @@ pass2_compile(struct interpass *ip)
 	DLIST_FOREACH(ip, &p2e->ipole, qelem)
 		if (ip->type == IP_NODE)
 			walkf(ip->ip_node, deltemp, addrp);
-	markfree(&mark);
+	if (addrp)
+		free(addrp + p2e->ipp->ip_tmpnum);
 
 #ifdef PCC_DEBUG
 	if (e2debug) {
@@ -445,7 +698,7 @@ emit(struct interpass *ip)
 			if (op->rewrite & RESCC) {
 				o = p->n_left->n_op;
 				gencode(r, FORCC);
-				cbgen(o, p->n_right->n_lval);
+				cbgen(o, getlval(p->n_right));
 			} else {
 				gencode(r, FORCC);
 			}
@@ -567,7 +820,7 @@ again:	switch (o = p->n_op) {
 	case UGT:
 		p1 = p->n_left;
 		p2 = p->n_right;
-		if (p2->n_op == ICON && p2->n_lval == 0 && *p2->n_name == 0 &&
+		if (p2->n_op == ICON && getlval(p2) == 0 && *p2->n_name == 0 &&
 		    (dope[p1->n_op] & (FLOFLG|DIVFLG|SIMPFLG|SHFFLG))) {
 #ifdef mach_pdp11 /* XXX all targets? */
 			if ((rv = geninsn(p1, FORCC|QUIET)) != FFAIL)
@@ -641,7 +894,7 @@ again:	switch (o = p->n_op) {
 	case CBRANCH:
 		p1 = p->n_left;
 		p2 = p->n_right;
-		p1->n_label = (int)p2->n_lval;
+		p1->n_label = (int)getlval(p2);
 		(void)geninsn(p1, FORCC);
 		p->n_su = 0;
 		break;
@@ -659,9 +912,6 @@ again:	switch (o = p->n_op) {
 
 	case XARG:
 		/* generate code for correct class here */
-#if 0
-		geninsn(p->n_left, 1 << p->n_label);
-#endif
 		break;
 
 	default:
@@ -728,7 +978,7 @@ rewrite(NODE *p, int dorewrite, int cookie)
 	r = getlr(p, 'R');
 	o = p->n_op;
 	p->n_op = REG;
-	p->n_lval = 0;
+	setlval(p, 0);
 	p->n_name = "";
 
 	if (o == ASSIGN || o == STASG) {
@@ -805,7 +1055,7 @@ genxasm(NODE *p)
 				q = nary[(int)w[2]-'0']; 
 				if (q->n_left->n_op != ICON)
 					uerror("impossible constraint");
-				printf(CONFMT, q->n_left->n_lval);
+				printf(CONFMT, getlval(q->n_left));
 				w++;
 			} else if (w[1] < '0' || w[1] > (n + '0'))
 				uerror("bad xasm arg number %c", w[1]);
@@ -856,7 +1106,7 @@ allo(NODE *p, struct optab *q)
 		MYALLOTEMP(resc[i], stktemp);
 #else
 		resc[i].n_op = OREG;
-		resc[i].n_lval = stktemp;
+		setlval(&resc[i], stktemp);
 		resc[i].n_rval = FPREG;
 		resc[i].n_su = p->n_su; /* ??? */
 		resc[i].n_name = "";
@@ -880,7 +1130,7 @@ gencode(NODE *p, int cookie)
 	NODE *p1, *l, *r;
 	int o = optype(p->n_op);
 #ifdef FINDMOPS
-	int ismops = (p->n_op == ASSIGN && (p->n_flags & 1));
+	int ismops = (p->n_op == ASSIGN && (p->n_su & ISMOPS));
 #endif
 
 	l = p->n_left;
@@ -1039,6 +1289,7 @@ size_t negrelsize = sizeof negrel / sizeof negrel[0];
 void
 e2print(NODE *p, int down, int *a, int *b)
 {
+	struct attr *ap;
 #ifdef PRTABLE
 	extern int tablesize;
 #endif
@@ -1083,8 +1334,9 @@ e2print(NODE *p, int down, int *a, int *b)
 	case USTCALL:
 	case STARG:
 	case STASG:
-		printf(" size=%d", p->n_stsize );
-		printf(" align=%d", p->n_stalign );
+		ap = attr_find(p->n_ap, ATTR_P2STRUCT);
+		printf(" size=%d", ap->iarg(0));
+		printf(" align=%d", ap->iarg(1));
 		break;
 		}
 
@@ -1093,7 +1345,7 @@ e2print(NODE *p, int down, int *a, int *b)
 	printf(", " );
 
 	prtreg(p);
-	printf(", SU= %d(%cREG,%s,%s,%s,%s,%s,%s)\n",
+	printf(", SU= %d(%cREG,%s,%s,%s,%s)\n",
 	    TBLIDX(p->n_su), 
 	    TCLASS(p->n_su)+'@',
 #ifdef PRTABLE
@@ -1102,7 +1354,6 @@ e2print(NODE *p, int down, int *a, int *b)
 #else
 	    "",
 #endif
-	    p->n_su & LREG ? "LREG" : "", p->n_su & RREG ? "RREG" : "",
 	    p->n_su & RVEFF ? "RVEFF" : "", p->n_su & RVCC ? "RVCC" : "",
 	    p->n_su & DORIGHT ? "DORIGHT" : "");
 }
@@ -1114,22 +1365,23 @@ e2print(NODE *p, int down, int *a, int *b)
 void
 deltemp(NODE *p, void *arg)
 {
-	int *aor = arg;
+	int (*aor)[2] = arg;
 	NODE *l;
 
 	if (p->n_op == TEMP) {
-		if (aor[regno(p)] == 0) {
+		if (aor[regno(p)][0] == 0) {
 			if (xtemps)
 				return;
-			aor[regno(p)] = freetemp(szty(p->n_type));
+			aor[regno(p)][0] = FPREG;
+			aor[regno(p)][1] = freetemp(szty(p->n_type));
 		}
-		storemod(p, aor[regno(p)]);
+		storemod(p, aor[regno(p)][1], aor[regno(p)][0]);
 	} else if (p->n_op == ADDROF && p->n_left->n_op == OREG) {
 		p->n_op = PLUS;
 		l = p->n_left;
 		l->n_op = REG;
 		l->n_type = INCREF(l->n_type);
-		p->n_right = mklnode(ICON, l->n_lval, 0, INT);
+		p->n_right = mklnode(ICON, getlval(l), 0, INT);
 	} else if (p->n_op == ADDROF && p->n_left->n_op == UMUL) {
 		l = p->n_left;
 		*p = *p->n_left->n_left;
@@ -1180,7 +1432,7 @@ oregok(NODE *p, int sharp)
 	    q->n_rval == DECRA(q->n_reg, 0)) {
 #endif
 	if (q->n_op == REG || (q->n_op == TEMP && !sharp)) {
-		temp = q->n_lval;
+		temp = getlval(q);
 		r = q->n_rval;
 		cp = q->n_name;
 		goto ormake;
@@ -1221,10 +1473,10 @@ oregok(NODE *p, int sharp)
 	if ((q->n_op==PLUS || q->n_op==MINUS) && qr->n_op == ICON &&
 	    (ql->n_op==REG || (ql->n_op==TEMP && !sharp))) {
 	    
-		temp = qr->n_lval;
+		temp = getlval(qr);
 		if( q->n_op == MINUS ) temp = -temp;
 		r = ql->n_rval;
-		temp += ql->n_lval;
+		temp += getlval(ql);
 		cp = qr->n_name;
 		if( *cp && ( q->n_op == MINUS || *ql->n_name ) )
 			return 0;
@@ -1248,7 +1500,7 @@ ormake(NODE *p)
 
 	p->n_op = OREG;
 	p->n_rval = oregr;
-	p->n_lval = oregtemp;
+	setlval(p, oregtemp);
 	p->n_name = oregcp;
 	tfree(q);
 }
@@ -1337,17 +1589,17 @@ storenode(TWORD t, int off)
 
 	p = talloc();
 	p->n_type = t;
-	storemod(p, off);
+	storemod(p, off, FPREG); /* XXX */
 	return p;
 }
 
 #ifndef MYSTOREMOD
 void
-storemod(NODE *q, int off)
+storemod(NODE *q, int off, int reg)
 {
 	NODE *l, *r, *p;
 
-	l = mklnode(REG, 0, FPREG, INCREF(q->n_type));
+	l = mklnode(REG, 0, reg, INCREF(q->n_type));
 	r = mklnode(ICON, off, 0, INT);
 	p = mkbinode(PLUS, l, r, INCREF(q->n_type));
 	q->n_op = UMUL;
@@ -1363,9 +1615,9 @@ mklnode(int op, CONSZ lval, int rval, TWORD type)
 
 	p->n_name = "";
 	p->n_qual = 0;
+	p->n_ap = 0;
 	p->n_op = op;
-	p->n_label = 0;
-	p->n_lval = lval;
+	setlval(p, lval);
 	p->n_rval = rval;
 	p->n_type = type;
 	p->n_regw = NULL;
@@ -1380,8 +1632,8 @@ mkbinode(int op, NODE *left, NODE *right, TWORD type)
 
 	p->n_name = "";
 	p->n_qual = 0;
+	p->n_ap = 0;
 	p->n_op = op;
-	p->n_label = 0;
 	p->n_left = left;
 	p->n_right = right;
 	p->n_type = type;
@@ -1397,8 +1649,8 @@ mkunode(int op, NODE *left, int rval, TWORD type)
 
 	p->n_name = "";
 	p->n_qual = 0;
+	p->n_ap = 0;
 	p->n_op = op;
-	p->n_label = 0;
 	p->n_left = left;
 	p->n_rval = rval;
 	p->n_type = type;
@@ -1519,7 +1771,6 @@ again:
 		/* FALLTHROUGH */
 	case 'r': /* general reg */
 		/* set register class */
-		p->n_label = gclass(p->n_left->n_type);
 		if (p->n_left->n_op == REG || p->n_left->n_op == TEMP)
 			break;
 		q = p->n_left;
@@ -1644,7 +1895,7 @@ xconv(NODE *p, void *arg)
 {
 	if (p->n_op != TEMP || p->n_rval != xasnum)
 		return;
-	storemod(p, xoffnum);
+	storemod(p, xoffnum, FPREG); /* XXX */
 }
 
 /*

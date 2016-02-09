@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.3 2011/06/04 19:27:26 plunky Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.4 2011/09/01 12:47:17 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.5 2014/12/24 08:43:29 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.5 2016/02/09 20:29:20 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,10 +32,6 @@
  * Various settings that controls how the C compiler works.
  */
 
-#ifndef LIBDIR
-#define LIBDIR "/usr/lib/"
-#endif
-
 /* common cpp predefines */
 #define	CPPADD	{		\
 	"-D__NeXT__",		\
@@ -43,14 +39,23 @@
 	"-I" LIBDIR "bsd",	\
 	NULL			\
 }
-#define	DYNLINKER { NULL }
-#define CRT0FILE LIBDIR "crt1.o"
-#define CRT0FILE_PROFILE LIBDIR "gcrt1.o"
-#define STARTFILES { NULL }
-#define	ENDFILES { NULL }
+
+#define CRTBEGIN	0
+#define CRTBEGIN_S	0
+#define CRTBEGIN_T	0
+#define CRTEND		0
+#define CRTEND_S	0
+#define CRTEND_T	0
+#define CRTI		0
+#define CRTN		0
+
+#define CRT0		"crt1.o"
+#define GCRT0		"gcrt1.o"
+
 #define LIBCLIBS { "-lc", "-lpcc", NULL }
 #define LIBCLIBS_PROFILE { "-lc", "-lpcc", NULL }
-#define STARTLABEL "start"
+
+#define STARTLABEL	"start"
 
 /*
 ld -arch ppc -weak_reference_mismatches non-weak -o a.out -lcrt1.o -lcrt2.o -L/usr/lib/gcc/powerpc-apple-darwin8/4.0.1 hello_ppc.o -lgcc -lSystemStubs -lSystem

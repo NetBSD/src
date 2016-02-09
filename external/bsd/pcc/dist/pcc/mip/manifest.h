@@ -1,5 +1,5 @@
-/*	Id: manifest.h,v 1.104 2014/06/07 07:04:10 plunky Exp 	*/	
-/*	$NetBSD: manifest.h,v 1.1.1.6 2014/07/24 19:28:40 plunky Exp $	*/
+/*	Id: manifest.h,v 1.110 2015/08/11 20:08:22 ragge Exp 	*/	
+/*	$NetBSD: manifest.h,v 1.1.1.7 2016/02/09 20:29:14 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -306,6 +306,29 @@ struct interpass_prolog;
 #define	MAXIP		7
 
 void send_passt(int type, ...);
+
+
+/*
+ * Attributes common to all passes.
+ */
+enum {
+	ATTR_NONE,
+#ifdef GCC_COMPAT
+	GCC_ATYP_STDCALL,
+	GCC_ATYP_CDECL,
+#endif
+#ifdef ATTR_MI_TARGET
+	ATTR_MI_TARGET,
+#endif
+	ATTR_MI_MAX
+};
+
+struct attr *attr_add(struct attr *orig, struct attr *new);
+struct attr *attr_new(int, int);
+struct attr *attr_find(struct attr *, int);
+struct attr *attr_copy(struct attr *src, struct attr *dst, int nelem);
+struct attr *attr_dup(struct attr *ap);
+
 /*
  * External declarations, typedefs and the like
  */
@@ -326,6 +349,11 @@ char *newstring(char *, size_t);
 char *tmpstrdup(char *str);
 void markset(struct mark *m);
 void markfree(struct mark *m);
+void *xmalloc(int size);
+void *xcalloc(int a, int b);
+void *xstrdup(char *s);
+
+int getlab(void);
 
 /* command-line processing */
 void mflags(char *);
@@ -347,9 +375,9 @@ void fwalk(NODE *t, void (*f)(NODE *, int, int *, int *), int down);
 void flist(NODE *p, void (*f)(NODE *, void *), void *);
 void listf(NODE *p, void (*f)(NODE *));
 NODE *listarg(NODE *p, int n, int *cnt);
-void cerror(char *s, ...);
-void werror(char *s, ...);
-void uerror(char *s, ...);
+void cerror(const char *s, ...);
+void werror(const char *s, ...);
+void uerror(const char *s, ...);
 void mkdope(void);
 void tcheck(void);
 

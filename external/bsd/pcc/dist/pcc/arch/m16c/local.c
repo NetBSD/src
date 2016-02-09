@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.21 2011/09/23 18:17:51 plunky Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.5 2012/01/11 20:32:50 plunky Exp $	*/
+/*	Id: local.c,v 1.22 2015/08/18 10:15:08 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.6 2016/02/09 20:28:19 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -412,7 +412,7 @@ myp2tree(NODE *p)
 
 	case FCON:
 		/* Write float constants to memory */
-		sp = inlalloc(sizeof(struct symtab));
+		sp = tmpalloc(sizeof(struct symtab));
 		sp->sclass = STATIC;
 		sp->ssue = 0;
 		sp->slevel = 1; /* fake numeric label */
