@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/07/24 20:55:45 plunky Exp $
+#	$NetBSD: Makefile,v 1.11 2016/02/09 20:40:46 plunky Exp $
 
 WARNS?=	2
 
@@ -29,7 +29,11 @@ pcc.1:	cc.1
 		    -e "s,Xr cpp,Xr pcpp,"	\
 		    ${.ALLSRC} > ${.TARGET}
 
+CPPFLAGS+=	-DCPPROGNAME=\"pcpp\"
+SYMLINKS+=	${BINDIR}/pcc /usr/bin/pcpp
+
 .if ${MKCXX} != "no"
+CPPFLAGS+=	-DCXXPROGNAME=\"p++\"
 SYMLINKS+=	${BINDIR}/pcc /usr/bin/p++
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/07/24 20:20:49 plunky Exp $
+#	$NetBSD: Makefile,v 1.14 2016/02/09 20:40:45 plunky Exp $
 
 WARNS?=	2
 
@@ -10,14 +10,14 @@ WARNS?=	2
 
 PROG=	ccom
 
-SRCS=   cgram.y
+SRCS=	cgram.y
 SRCS+=	scan.l
 SRCS+=	optim.c pftn.c trees.c inline.c symtabs.c
 SRCS+=	gcc_compat.c init.c local.c code.c stabs.c builtins.c
 SRCS+=	match.c reader.c optim2.c regs.c local2.c order.c table.c
 SRCS+=	common.c main.c external.c unicode.c
 
-MAN=    ccom.1
+MAN=	ccom.1
 
 # generate cgram.h
 YHEADER=
@@ -28,7 +28,7 @@ CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
 CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIST}/cc/ccom
 
-COPTS.pftn.c+=	${${ACTIVE_CC} == "gcc" :? -Wno-uninitialized :}
+COPTS+=		${${ACTIVE_CC} == "gcc" :? -Wno-error=stack-protector :}
 
 DPSRCS=	external.c
 
