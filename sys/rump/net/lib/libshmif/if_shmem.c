@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.64 2016/01/26 23:12:19 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.65 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.64 2016/01/26 23:12:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.65 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -187,8 +187,9 @@ allocif(int unit, struct shmif_sc **scp)
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ether_ifattach(ifp, enaddr);
+	if_register(ifp);
 
 	aprint_verbose("shmif%d: Ethernet address %s\n",
 	    unit, ether_sprintf(enaddr));
@@ -766,7 +767,7 @@ shmif_rcv(void *arg)
 			ifp->if_ipackets++;
 			KERNEL_LOCK(1, NULL);
 			bpf_mtap(ifp, m);
-			ifp->if_input(ifp, m);
+			if_input(ifp, m);
 			KERNEL_UNLOCK_ONE(NULL);
 			m = NULL;
 		}

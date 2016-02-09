@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.40 2013/10/19 19:47:55 martin Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.41 2016/02/09 08:32:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.40 2013/10/19 19:47:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.41 2016/02/09 08:32:08 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -585,7 +585,7 @@ mace_read(struct mc_softc *sc, void *pkt, int len)
 	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*
