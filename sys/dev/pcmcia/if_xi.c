@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.75 2015/05/25 08:29:01 ozaki-r Exp $ */
+/*	$NetBSD: if_xi.c,v 1.76 2016/02/09 08:32:11 ozaki-r Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.75 2015/05/25 08:29:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.76 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -475,7 +475,7 @@ xi_get(struct xi_softc *sc)
 
 	bpf_mtap(ifp, top);
 
-	(*ifp->if_input)(ifp, top);
+	if_percpuq_enqueue(ifp->if_percpuq, top);
 	return (recvcount);
 }
 

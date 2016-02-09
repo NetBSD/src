@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.33 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.34 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.33 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.34 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -158,7 +158,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 #endif
 
 	bpf_mtap(ifp, m);
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*

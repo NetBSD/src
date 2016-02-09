@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.2 2011/05/18 01:01:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.3 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2176,7 +2176,7 @@ t3_rx_eth(struct adapter *adap, struct sge_rspq *rq, struct mbuf *m, int ethpad)
      */
     m_adj(m, sizeof(*cpl) + ethpad);
 
-    (*ifp->if_input)(ifp, m);
+    if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /**

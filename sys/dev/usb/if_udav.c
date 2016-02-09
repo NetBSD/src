@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.44 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.45 2016/02/09 08:32:12 ozaki-r Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.44 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.45 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1203,7 +1203,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTF(("%s: %s: deliver %d\n", device_xname(sc->sc_dev),
 		 __func__, m->m_len));
-	(*(ifp)->if_input)((ifp), (m));
+	if_percpuq_enqueue((ifp)->if_percpuq, (m));
 
  done1:
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.94 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.95 2016/02/09 08:32:11 ozaki-r Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.94 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.95 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1046,7 +1046,7 @@ iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh, int rxle
 
 
 	bpf_mtap(ifp, top);
-	(*ifp->if_input)(ifp, top);
+	if_percpuq_enqueue(ifp->if_percpuq, top);
 	return;
 
 dropped:

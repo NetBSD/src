@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.159 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.160 2016/02/09 08:32:11 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.159 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.160 2016/02/09 08:32:11 ozaki-r Exp $");
 
 
 
@@ -2242,7 +2242,7 @@ gsip_rxintr(struct sip_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */
@@ -2409,7 +2409,7 @@ sip_rxintr(struct sip_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

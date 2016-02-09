@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.136 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: elink3.c,v 1.137 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.136 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.137 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1496,7 +1496,7 @@ again:
 	 */
 	bpf_mtap(ifp, m);
 
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 
 	/*
 	 * In periods of high traffic we can actually receive enough

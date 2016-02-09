@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.12 2014/06/16 16:48:16 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.13 2016/02/09 08:32:09 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.12 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.13 2016/02/09 08:32:09 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1002,7 +1002,7 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		ifp->if_ipackets++;
 	}
 #ifdef ADMSW_EVENT_COUNTERS
