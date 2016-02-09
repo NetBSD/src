@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.25 2014/04/19 07:47:50 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.5 2014/07/24 19:21:36 plunky Exp $	*/
+/*	Id: code.c,v 1.27 2015/10/12 18:07:13 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.6 2016/02/09 20:28:35 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -35,6 +35,15 @@
  */
 
 # include "pass1.h"
+
+#ifndef LANG_CXX
+#define	NODE	P1ND
+#undef NIL
+#define	NIL NULL
+#define	tfree p1tfree
+#define	talloc p1alloc
+#define	ccopy p1tcopy
+#endif
 
 /*
  * Print out assembler segment name.
@@ -93,8 +102,7 @@ defloc(struct symtab *sp)
 {
 	char *name;
 
-	if ((name = sp->soname) == NULL)
-		name = exname(sp->sname);
+	name = getexname(sp);
 
 	if (sp->sclass == EXTDEF) {
 		printf("\t.globl %s\n", name);
@@ -146,7 +154,7 @@ bfcode(struct symtab **sp, int n)
 {
 	struct symtab *sp2;
 	NODE *p, *q;
-	int i;
+	int i, argbase, sz;
 
 	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
 		/* Move return address into temporary */
@@ -156,6 +164,18 @@ bfcode(struct symtab **sp, int n)
 		regno(q) = R1;
 		ecomp(buildtree(ASSIGN, p, q));
 	}
+
+	/* correct arg alignment XXX should be done somewhere else */
+	argbase = ARGINIT;
+	for (i = 0; i < n; i++) {
+		sp2 = sp[i];
+		sz = tsize(sp2->stype, sp2->sdf, sp2->sap);
+
+		SETOFF(sz, SZINT);
+		sp2->soffset = argbase;
+		argbase += sz;
+	}
+
 	if (xtemps == 0)
 		return;
 
@@ -402,14 +422,17 @@ NODE *
 builtin_return_address(const struct bitable *bt, NODE *a)
 {
 	NODE *f;
+	int v;
 
 	if (a->n_op != ICON)
 		goto bad;
-
-	if (a->n_lval != 0)
-		werror("unsupported argument");
-
+	v =a->n_lval;
 	tfree(a);
+
+	if (v != 0) {
+		werror("unsupported argument");
+		return xbcon(0, NULL, VOID|PTR);
+	}
 
 	f = block(REG, NIL, NIL, INCREF(PTR+CHAR), 0, 0);
 	regno(f) = FPREG;

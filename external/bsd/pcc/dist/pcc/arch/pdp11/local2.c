@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.8 2009/07/29 12:34:19 ragge Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.2 2010/06/03 18:57:25 plunky Exp $	*/
+/*	Id: local2.c,v 1.10 2015/06/29 18:49:36 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.3 2016/02/09 20:28:27 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -236,7 +234,7 @@ zzzcode(NODE *p, int c)
 		
 	case 'C': /* subtract stack after call */
 		spcoff -= p->n_qual;
-		if (spcoff == 0 && !(p->n_flags & NLOCAL1))
+		if (spcoff == 0 /* && !(p->n_flags & NLOCAL1) XXX FIXME */)
 			p->n_qual -= 2;
 		if (p->n_qual == 2)
 			printf("tst	(sp)+\n");
@@ -268,7 +266,7 @@ zzzcode(NODE *p, int c)
 		break;
 
 	case 'Q': /* struct assignment, no rv */
-		printf("mov	$%o,", p->n_stsize/2);
+		printf("mov	$%o,", attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0)/2);
 		expand(p, INAREG, "A1\n");
 		printf("1:\n");
 		expand(p, INAREG, "mov	(AR)+,(AL)+\n");
@@ -277,7 +275,7 @@ zzzcode(NODE *p, int c)
 		break;
 
 	case 'R': /* struct assignment with rv */
-		printf("mov	$%o,", p->n_stsize/2);
+		printf("mov	$%o,", attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0)/2);
 		expand(p, INAREG, "A1\n");
 		expand(p, INAREG, "mov	AR,A2\n");
 		printf("1:\n");
@@ -742,7 +740,7 @@ argsiz(NODE *p)
 	if (t == DOUBLE)
 		return 8;
 	if (t == STRTY || t == UNIONTY)
-		return p->n_stsize;
+		return attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0);
 	return 2;
 }
 
@@ -772,11 +770,13 @@ lastcall(NODE *p)
 
 	if (p->n_op == CM)
 		p = p->n_right;
+#if 0 /* XXX fixme */
 	if (p->n_type == FLOAT || p->n_type == DOUBLE ||
 	    p->n_type == STRTY || p->n_type == UNIONTY)
 		op->n_flags |= NLOCAL1;	/* Does not use stack slot */
 	else
 		op->n_flags &= ~NLOCAL1;
+#endif
 	op->n_qual = size; /* XXX */
 }
 

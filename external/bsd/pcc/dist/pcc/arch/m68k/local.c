@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.6 2014/04/08 19:51:31 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.1 2014/07/24 19:21:16 plunky Exp $	*/
+/*	Id: local.c,v 1.16 2016/01/30 17:26:19 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.2 2016/02/09 20:28:34 plunky Exp $	*/
 /*
  * Copyright (c) 2014 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -28,7 +28,122 @@
 
 #include "pass1.h"
 
+#undef NIL
+#define NIL NULL
+
+#ifdef LANG_CXX
+#define P1ND NODE
+#define p1nfree nfree
+#define p1fwalk fwalk
+#define p1tcopy tcopy
+#define p1alloc talloc
+#else
+#define	NODE P1ND
+#define	nfree p1nfree
+#define	fwalk p1fwalk
+#endif
+
+
 /*	this file contains code which is dependent on the target machine */
+
+int gotnr;
+
+/*
+ * Make a symtab entry for PIC use.
+ */
+static struct symtab *
+picsymtab(char *p, char *s, char *s2)
+{
+	struct symtab *sp = permalloc(sizeof(struct symtab));
+	size_t len = strlen(p) + strlen(s) + strlen(s2) + 1;
+	
+	sp->sname = permalloc(len);
+	strlcpy(sp->sname, p, len);
+	strlcat(sp->sname, s, len);
+	strlcat(sp->sname, s2, len);
+	sp->sap = attr_new(ATTR_SONAME, 1);
+	sp->sap->sarg(0) = sp->sname;
+	sp->sclass = EXTERN;
+	sp->sflags = sp->slevel = 0;
+	sp->stype = 0xdeadbeef;
+	return sp;
+}
+
+/*
+ * Create a reference for an extern variable.
+ */
+static NODE *
+picext(NODE *p)
+{
+	NODE *q, *r;
+	struct symtab *sp;
+	char *name;
+
+	q = tempnode(gotnr, PTR|VOID, 0, 0);
+	name = getexname(p->n_sp);
+
+#ifdef notdef
+	struct attr *ga;
+	if ((ga = attr_find(p->n_sp->sap, GCC_ATYP_VISIBILITY)) &&
+	    strcmp(ga->sarg(0), "hidden") == 0) {
+		/* For hidden vars use GOTOFF */
+		sp = picsymtab("", name, "@GOTOFF");
+		r = xbcon(0, sp, INT);
+		q = buildtree(PLUS, q, r);
+		q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_ap);
+		q->n_sp = p->n_sp; /* for init */
+		nfree(p);
+		return q;
+	}
+#endif
+
+	sp = picsymtab("", name, "@GOT");
+	r = xbcon(0, sp, INT);
+	q = buildtree(PLUS, q, r);
+	q = block(UMUL, q, 0, PTR|VOID, 0, 0);
+	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_ap);
+	q->n_sp = p->n_sp; /* for init */
+	nfree(p);
+	return q;
+}
+
+static char *
+getsoname(struct symtab *sp)
+{
+	struct attr *ap;
+	return (ap = attr_find(sp->sap, ATTR_SONAME)) ?
+	    ap->sarg(0) : sp->sname;
+	
+}
+
+
+static NODE *
+picstatic(NODE *p)
+{
+	NODE *q, *r;
+	struct symtab *sp;
+
+	q = tempnode(gotnr, PTR|VOID, 0, 0);
+	if (p->n_sp->slevel > 0) {
+		char buf[32];
+		if ((p->n_sp->sflags & SMASK) == SSTRING)
+			p->n_sp->sflags |= SASG;
+		snprintf(buf, 32, LABFMT, (int)p->n_sp->soffset);
+		sp = picsymtab("", buf, "@GOT");
+	} else {
+		sp = picsymtab("", getsoname(p->n_sp), "@GOT");
+	}
+	
+	sp->sclass = STATIC;
+	sp->stype = p->n_sp->stype;
+	r = xbcon(0, sp, INT);
+	q = buildtree(PLUS, q, r);
+	q = block(UMUL, q, 0, PTR|VOID, 0, 0);
+	q = block(UMUL, q, 0, p->n_type, p->n_df, p->n_ap);
+	q->n_sp = p->n_sp; /* for init */
+	nfree(p);
+	return q;
+}
 
 /* clocal() is called to do local transformations on
  * an expression tree preparitory to its being
@@ -68,29 +183,53 @@ clocal(NODE *p)
 		case AUTO:
 			/* fake up a structure reference */
 			r = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
-			r->n_lval = 0;
+			slval(r, 0);
 			r->n_rval = FPREG;
 			p = stref(block(STREF, r, p, 0, 0, 0));
 			break;
 
-		case USTATIC:
-			if (kflag == 0)
-				break;
-			/* FALLTHROUGH */
-		case STATIC:
-			break;
-
 		case REGISTER:
 			p->n_op = REG;
-			p->n_lval = 0;
+			slval(p, 0);
 			p->n_rval = q->soffset;
+			break;
+
+		case USTATIC:
+		case STATIC:
+			if (kflag == 0)
+				break;
+			if (blevel > 0 && !statinit)
+				p = picstatic(p);
 			break;
 
 		case EXTERN:
 		case EXTDEF:
+			if (kflag == 0)
+				break;
+			if (blevel > 0 && !statinit)
+				p = picext(p);
 			break;
 		}
 		break;
+
+	case ADDROF:
+		if (kflag == 0 || blevel == 0 || statinit)
+			break;
+		/* char arrays may end up here */
+		l = p->n_left;
+		if (l->n_op != NAME ||
+		    (l->n_type != ARY+CHAR && l->n_type != ARY+WCHAR_TYPE))
+			break;
+		l = p;
+		p = picstatic(p->n_left);
+		nfree(l);
+		if (p->n_op != UMUL)
+			cerror("ADDROF error");
+		l = p;
+		p = p->n_left;
+		nfree(l);
+		break;
+
 	case STASG: /* convert struct assignment to call memcpy */
 		l = p->n_left;
 		if (l->n_op == NAME && ISFTN(l->n_sp->stype))
@@ -154,6 +293,20 @@ void
 myp2tree(NODE *p)
 {
 	struct symtab *sp;
+	NODE *l;
+
+	if (cdope(p->n_op) & CALLFLG) {
+		if (p->n_left->n_op == ADDROF &&
+		    p->n_left->n_left->n_op == NAME) {
+			p->n_left = nfree(p->n_left);
+			l = p->n_left;
+			l->n_op = ICON;
+			if (l->n_sp->sclass != STATIC &&
+			    l->n_sp->sclass != USTATIC)
+				l->n_sp =
+				    picsymtab(l->n_sp->sname, "@PLTPC", "");
+		}
+	}
 
 	if (p->n_op != FCON)
 		return;
@@ -166,14 +319,14 @@ myp2tree(NODE *p)
 	sp->sflags = 0;
 	sp->stype = p->n_type;
 	sp->squal = (CON >> TSHIFT);
-	sp->sname = sp->soname = NULL;
+	sp->sname = NULL;
 
 	locctr(DATA, sp);
 	defloc(sp);
 	ninval(0, tsize(sp->stype, sp->sdf, sp->sap), p);
 
 	p->n_op = NAME;
-	p->n_lval = 0;
+	slval(p, 0);
 	p->n_sp = sp;
 
 }
@@ -189,7 +342,7 @@ andable(NODE *p)
 	if (p->n_sp->sclass == STATIC || p->n_sp->sclass == USTATIC)
 		return 1;
 #endif
-	return !kflag;
+	return 1;
 }
 
 /*
@@ -213,20 +366,23 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 
 	p = buildtree(MUL, p, bcon(off/SZCHAR));
 	p = buildtree(PLUS, p, bcon(30));
-	p = buildtree(AND, p, xbcon(-16, NULL, LONG));
+	p = buildtree(AND, p, xbcon(-16, NULL, UNSIGNED));
+	p = cast(p, UNSIGNED, 0);
 
 	/* sub the size from sp */
-	sp = block(REG, NIL, NIL, p->n_type, 0, 0);
-	sp->n_lval = 0;
+	sp = block(REG, NIL, NIL, UNSIGNED+PTR, 0, 0);
+	slval(sp, 0);
 	sp->n_rval = STKREG;
-	ecomp(buildtree(MINUSEQ, sp, p));
+	p = (buildtree(MINUSEQ, sp, p));
+	ecomp(p);
 
 	/* save the address of sp */
-	sp = block(REG, NIL, NIL, PTR+LONG, t->n_df, t->n_ap);
-	sp->n_lval = 0;
+	sp = block(REG, NIL, NIL, PTR+UNSIGNED, t->n_df, t->n_ap);
+	slval(sp, 0);
 	sp->n_rval = STKREG;
 	t->n_type = sp->n_type;
-	ecomp(buildtree(ASSIGN, t, sp)); /* Emit! */
+	p = (buildtree(ASSIGN, t, sp)); /* Emit! */
+	ecomp(p);
 
 }
 
@@ -244,7 +400,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 	switch (p->n_type) {
 	case LDOUBLE:
 		u.i[2] = 0;
-		u.l = (long double)p->n_dcon;
+		u.l = (long double)((union flt *)p->n_dcon)->fp;
 #if defined(HOST_LITTLE_ENDIAN)
 		/* XXX probably broken on most hosts */
 		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[2], u.i[1], u.i[0]);
@@ -253,7 +409,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 #endif
 		break;
 	case DOUBLE:
-		u.d = (double)p->n_dcon;
+		u.d = (double)((union flt *)p->n_dcon)->fp;
 #if defined(HOST_LITTLE_ENDIAN)
 		printf("\t.long\t0x%x,0x%x\n", u.i[1], u.i[0]);
 #else
@@ -261,7 +417,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 #endif
 		break;
 	case FLOAT:
-		u.f = (float)p->n_dcon;
+		u.f = (float)((union flt *)p->n_dcon)->fp;
 		printf("\t.long\t0x%x\n", u.i[0]);
 		break;
 
@@ -318,8 +474,7 @@ defzero(struct symtab *sp)
 	int off, al;
 	char *name;
 
-	if ((name = sp->soname) == NULL)
-		name = exname(sp->sname);
+	name = getexname(sp);
 	off = tsize(sp->stype, sp->sdf, sp->sap);
 	SETOFF(off,SZCHAR);
 	off /= SZCHAR;
@@ -363,7 +518,7 @@ fixdef(struct symtab *sp)
 	/* not many as'es have this directive */
 	if ((ga = attr_find(sp->sap, GCC_ATYP_WEAKREF)) != NULL) {
 		char *wr = ga->sarg(0);
-		char *sn = sp->soname ? sp->soname : sp->sname;
+		char *sn = getsoname(sp);
 		if (wr == NULL) {
 			if ((ga = attr_find(sp->sap, GCC_ATYP_ALIAS))) {
 				wr = ga->sarg(0);
@@ -376,7 +531,7 @@ fixdef(struct symtab *sp)
 	} else
 	       if ((ga = attr_find(sp->sap, GCC_ATYP_ALIAS)) != NULL) {
 		char *an = ga->sarg(0);
-		char *sn = sp->soname ? sp->soname : sp->sname;
+		char *sn = getsoname(sp);
 		char *v;
 
 		v = attr_find(sp->sap, GCC_ATYP_WEAK) ? "weak" : "globl";
@@ -384,13 +539,14 @@ fixdef(struct symtab *sp)
 		printf("\t.set %s,%s\n", sn, an);
 	}
 	if (alias != NULL && (sp->sclass != PARAM)) {
-		printf("\t.globl %s\n", exname(sp->soname));
-		printf("%s = ", exname(sp->soname));
+		char *name = getexname(sp);
+		printf("\t.globl %s\n", name);
+		printf("%s = ", name);
 		printf("%s\n", exname(alias));
 		alias = NULL;
 	}
 	if ((constructor || destructor) && (sp->sclass != PARAM)) {
-		NODE *p = talloc();
+		NODE *p = p1alloc();
 
 		p->n_op = NAME;
 		p->n_sp =

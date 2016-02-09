@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.16 2014/06/01 11:35:03 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.4 2014/07/24 19:21:10 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.17 2015/11/24 17:35:12 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.5 2016/02/09 20:28:32 plunky Exp $	*/
 
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
@@ -265,3 +265,4 @@ typedef long long OFFSZ;
 #define ENCRD(x)	(x)
 
 int COLORMAP(int c, int *r);
+#define NATIVE_FLOATING_POINT

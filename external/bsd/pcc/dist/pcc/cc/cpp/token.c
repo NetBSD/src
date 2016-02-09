@@ -1,5 +1,5 @@
-/*	Id: token.c,v 1.116 2014/06/06 15:32:53 plunky Exp 	*/	
-/*	$NetBSD: token.c,v 1.1.1.5 2014/07/24 19:22:42 plunky Exp $	*/
+/*	Id: token.c,v 1.157 2016/01/09 09:53:44 ragge Exp 	*/	
+/*	$NetBSD: token.c,v 1.1.1.6 2016/02/09 20:28:44 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 Anders Magnusson. All rights reserved.
@@ -30,7 +30,6 @@
  * There are three main routines:
  *	- fastscan() loops over the input stream searching for magic
  *		characters that may require actions.
- *	- sloscan() tokenize the input stream and returns tokens.
  *	- yylex() returns something from the input stream that
  *		is suitable for yacc.
  *
@@ -38,6 +37,26 @@
  *	- inpch() returns a raw character from the current input stream.
  *	- inch() is like inpch but \\n and trigraphs are expanded.
  *	- unch() pushes back a character to the input stream.
+ *
+ * Input data can be read from either stdio or a buffer.
+ * If a buffer is read, it will return EOF when ended and then jump back
+ * to the previous buffer.
+ *	- setibuf(usch *ptr). Buffer to read from, until NULL, return EOF.
+ *		When EOF returned, pop buffer.
+ *	- setobuf(usch *ptr).  Buffer to write to
+ *
+ * There are three places data is read:
+ *	- fastscan() which has a small loop that will scan over input data.
+ *	- flscan() where everything is skipped except directives (flslvl)
+ *	- inch() that everything else uses.
+ *
+ * 5.1.1.2 Translation phases:
+ *	1) Convert UCN to UTF-8 which is what pcc uses internally (chkucn).
+ *	   Remove \r (unwanted)
+ *	   Convert trigraphs (chktg)
+ *	2) Remove \\\n.  Need extra care for identifiers and #line.
+ *	3) Tokenize.
+ *	   Remove comments (fastcmnt)
  */
 
 #include "config.h"
@@ -51,11 +70,10 @@
 
 #include "compat.h"
 #include "cpp.h"
-#include "cpy.h"
 
-static void cvtdig(int);
+static void cvtdig(usch **);
 static int dig2num(int);
-static int charcon(usch *);
+static int charcon(usch **);
 static void elsestmt(void);
 static void ifdefstmt(void);
 static void ifndefstmt(void);
@@ -67,12 +85,15 @@ static void undefstmt(void);
 static void pragmastmt(void);
 static void elifstmt(void);
 
+static int inpch(void);
+static int chktg(void);
+static int chkucn(void);
+static void unch(int c);
+
 #define	PUTCH(ch) if (!flslvl) putch(ch)
 /* protection against recursion in #include */
 #define MAX_INCLEVEL	100
 static int inclevel;
-
-usch yytext[CPPBUF];
 
 struct includ *ifiles;
 
@@ -91,9 +112,9 @@ usch spechr[256] = {
 	0,	0,	0,	0,	0,	0,	0,	0,
 
 	C_WSNL,	C_2,	C_SPEC,	0,	0,	0,	C_2,	C_SPEC,
-	0,	0,	0,	C_2,	0,	C_2,	0,	C_SPEC|C_2,
+	0,	0,	0,	C_2,	0,	C_2,	0,	C_SPEC,
 	C_DX,	C_DX,	C_DX,	C_DX,	C_DX,	C_DX,	C_DX,	C_DX,
-	C_DX,	C_DX,	0,	0,	C_2,	C_2,	C_2,	0,
+	C_DX,	C_DX,	0,	0,	C_2,	C_2,	C_2,	C_SPEC,
 
 	0,	C_IX,	C_IX,	C_IX,	C_IX,	C_IXE,	C_IX,	C_I,
 	C_I,	C_I,	C_I,	C_I,	C_I,	C_I,	C_I,	C_I,
@@ -147,6 +168,32 @@ inpbuf(void)
 	}
 	return len;
 }
+
+/*
+ * Fillup input buffer to contain at least minsz characters.
+ */
+static int
+refill(int minsz)
+{
+	usch *dp;
+	int i, sz;
+
+	if (ifiles->curptr+minsz < ifiles->maxread)
+		return 0; /* already enough in input buffer */
+
+	sz = ifiles->maxread - ifiles->curptr;
+	dp = ifiles->buffer - sz;
+	for (i = 0; i < sz; i++)
+		dp[i] = ifiles->curptr[i];
+	i = inpbuf();
+	ifiles->curptr = dp;
+	if (i == 0) {
+		ifiles->maxread = ifiles->buffer;
+		ifiles->buffer[0] = 0;
+	}
+	return 0;
+}
+#define	REFILL(x) if (ifiles->curptr+x >= ifiles->maxread) refill(x)
 
 /*
  * return a raw character from the input stream
@@ -209,47 +256,96 @@ chktg(void)
 }
 
 /*
- * check for (and eat) end-of-line
+ * 5.1.1.2 Translation phase 1.
  */
 static int
-chkeol(void)
+inc1(void)
 {
-	int ch;
+	int ch, c2;
 
-	ch = inpch();
-	if (ch == '\r') {
+	do {
 		ch = inpch();
-		if (ch == '\n')
-			return '\n';
+	} while (ch == '\r' || (ch == '\\' && chkucn()));
+	if (ch == '?' && (c2 = chktg()))
+		ch = c2;
+	return ch;
+}
 
+
+/*
+ * 5.1.1.2 Translation phase 2.
+ */
+int
+inc2(void)
+{
+	int ch, c2;
+
+	if ((ch = inc1()) != '\\')
+		return ch;
+	if ((c2 = inc1()) == '\n') {
+		ifiles->escln++;
+		ch = inc2();
+	} else
+		unch(c2);
+	return ch;
+}
+
+static int incmnt;
+/*
+ * deal with comments in the fast scanner.
+ * ps prints out the initial '/' if failing to batch comment.
+ */
+static int
+fastcmnt(int ps)
+{
+	int ch, rv = 1;
+
+	incmnt = 1;
+	if ((ch = inc2()) == '/') { /* C++ comment */
+		while ((ch = inc2()) != '\n')
+			;
 		unch(ch);
-		unch('\r');
-		return 0;
-	}
-	if (ch == '\n')
-		return '\n';
-
-	unch(ch);
-	return 0;
+	} else if (ch == '*') {
+		for (;;) {
+			if ((ch = inc2()) < 0)
+				break;
+			if (ch == '*') {
+				if ((ch = inc2()) == '/') {
+					break;
+				} else
+					unch(ch);
+			} else if (ch == '\n') {
+				ifiles->lineno++;
+				putch('\n');
+			}
+		}
+	} else {
+		if (ps) PUTCH('/'); /* XXX ? */
+		unch(ch);
+		rv = 0;
+        }
+	if (ch < 0)
+		error("file ends in comment");
+	incmnt = 0;
+	return rv;
 }
 
 /*
- * return next char, after converting trigraphs and
- * skipping escaped line endings
+ * return next char, partly phase 3.
  */
-static inline int
+static int
 inch(void)
 {
-	int ch;
+	int ch, n;
 
-	for (;;) {
-		ch = inpch();
-		if (ch == '?' && (ch = chktg()) == 0)
-			return '?';
-		if (ch != '\\' || chkeol() == 0)
-			return ch;
-		ifiles->escln++;
+	ch = inc2();
+	n = ifiles->lineno;
+	if (ch == '/' && Cflag == 0 && fastcmnt(0)) {
+		/* Comments 5.1.1.2 p3 */
+		/* no space if traditional or multiline */
+		ch = (tflag || n != ifiles->lineno) ? inch() : ' ';
 	}
+	return ch;
 }
 
 /*
@@ -262,7 +358,9 @@ chkucn(void)
 	unsigned long cp, m;
 	int ch, n;
 
-	if ((ch = inch()) == -1)
+	if (incmnt)
+		return 0;
+	if ((ch = inpch()) == -1)
 		return 0;
 	if (ch == 'u')
 		n = 4;
@@ -275,7 +373,7 @@ chkucn(void)
 
 	cp = 0;
 	while (n-- > 0) {
-		if ((ch = inch()) == -1 || (spechr[ch] & C_HEX) == 0) {
+		if ((ch = inpch()) == -1 || (spechr[ch] & C_HEX) == 0) {
 			warning("invalid universal character name");
 			// XXX should actually unput the chars and return 0
 			unch(ch); // XXX eof
@@ -302,38 +400,179 @@ chkucn(void)
 	return 1;
 }
 
-static int
-eatcmnt(void)
+/*
+ * deal with comments when -C is active.
+ * Save comments in expanded macros???
+ */
+int
+Ccmnt(void (*d)(int))
 {
 	int ch;
 
-	if (Cflag) {
-		PUTCH('/'); PUTCH('*');
+	if ((ch = inch()) == '/') { /* C++ comment */
+		d(ch);
+		do {
+			d(ch);
+		} while ((ch = inch()) != '\n');
+		unch(ch);
+		return 1;
+	} else if (ch == '*') {
+		d('/');
+		d('*');
+		for (;;) {
+			ch = inch();
+			d(ch);
+			if (ch == '*') {
+				if ((ch = inch()) == '/') {
+					d(ch);
+					return 1;
+				} else
+					unch(ch);
+			} else if (ch == '\n') {
+				ifiles->lineno++;
+			}
+		}
+	}
+	d('/');
+        unch(ch);
+        return 0;
+}
+
+/*
+ * Traverse over spaces and comments from the input stream,
+ * Returns first non-space character.
+ */
+static int
+fastspc(void)
+{
+	int ch;
+
+	while ((ch = inch()), ISWS(ch))
+		;
+	return ch;
+}
+
+/*
+ * As above but only between \n and #.
+ */
+static int
+fastspcg(void)
+{
+	int ch, c2;
+
+	while ((ch = inch()) == '/' || ch == '%' || ISWS(ch)) {
+		if (ch == '%') {
+			if ((c2 = inch()) == ':')
+				ch = '#'; /* digraphs */
+			else
+				unch(c2);
+			break;
+		}
+		if (ch == '/') {
+			if (Cflag)
+				return ch;
+			if (fastcmnt(0) == 0)
+				break;
+			putch(' ');
+		} else
+			putch(ch);
+	}
+	return ch;
+}
+
+/*
+ * readin chars and store on heap. Warn about too long names.
+ */
+usch *
+heapid(int ch)
+{
+	usch *bp = stringbuf;
+	do {
+		savch(ch);
+	} while (spechr[ch = inch()] & C_ID);
+	savch(0);
+	unch(ch);
+	return bp;
+}
+
+/*
+ * get a string or character constant and save it as given by d.
+ */
+void
+faststr(int bc, void (*d)(int))
+{
+	int ch;
+
+	incmnt = 1;
+	d(bc);
+	while ((ch = inc2()) != bc) {
+		if (ch == '\n') {
+			warning("unterminated literal");
+			incmnt = 0;
+			unch(ch);
+			return;
+		}
+		if (ch < 0)
+			return;
+		if (ch == '\\') {
+			incmnt = 0;
+			if (chkucn())
+				continue;
+			incmnt = 1;
+			d(ch);
+			ch = inc2();
+		}
+		d(ch);
+	}
+	d(ch);
+	incmnt = 0;
+}
+
+/*
+ * get a preprocessing number and save it as given by d.
+ * Initial char ch is always stored.
+ * returns first non-pp-number char.
+ *
+ *	pp-number:	digit
+ *			. digit
+ *			pp-number digit
+ *			pp-number identifier-nondigit
+ *			pp-number e sign
+ *			pp-number E sign
+ *			pp-number p sign
+ *			pp-number P sign
+ *			pp-number .
+ */
+int
+fastnum(int ch, void (*d)(int))
+{
+	int c2;
+
+	if ((spechr[ch] & C_DIGIT) == 0) {
+		/* not digit, dot */
+		d(ch);
+		ch = inch();
+		if ((spechr[ch] & C_DIGIT) == 0)
+			return ch;
 	}
 	for (;;) {
-		ch = inch();
-		if (ch == '\n') {
-			ifiles->lineno++;
-			putch('\n');
-			continue;
-		}
-		if (ch == -1)
+		d(ch);
+		if ((ch = inch()) < 0)
 			return -1;
-		if (ch == '*') {
-			ch = inch();
-			if (ch == '/')
+		if ((spechr[ch] & C_EP)) {
+			if ((c2 = inch()) != '-' && c2 != '+') {
+				if (c2 >= 0)
+					unch(c2);
 				break;
-			unch(ch);
-			ch = '*';
-		}
-		if (Cflag) PUTCH(ch);
+			}
+			d(ch);
+			ch = c2;
+		} else if (ch == '.' || (spechr[ch] & C_ID)) {
+			continue;
+		} else
+			break;
 	}
-	if (Cflag) {
-		PUTCH('*'); PUTCH('/');
-	} else
-		PUTCH(' ');
-
-	return 0;
+	return ch;
 }
 
 /*
@@ -344,172 +583,112 @@ eatcmnt(void)
  *
  *	Handle strings, numbers and trigraphs with care.
  *	Only data from pp files are scanned here, never any rescans.
- *	TODO: Only print out strings before calling other functions.
+ *	This loop is always at trulvl.
  */
 static void
 fastscan(void)
 {
 	struct symtab *nl;
-	int ch, i;
-	usch *cp;
+	int ch, c2, i, nch;
+	usch *cp, *cp2;
 
 	goto run;
+
 	for (;;) {
-		ch = inch();
-xloop:		if (ch == -1)
-			return;
-#ifdef PCC_DEBUG
-		if (dflag>1)
-			printf("fastscan ch %d (%c)\n", ch, ch > 31 ? ch : '@');
-#endif
-		if ((spechr[ch] & C_SPEC) == 0) {
-			PUTCH(ch);
-			continue;
+		/* tight loop to find special chars */
+		/* should use getchar/putchar here */
+		for (;;) {
+			if (ifiles->curptr < ifiles->maxread) {
+				ch = *ifiles->curptr++;
+			} else {
+				if (inpbuf() > 0)
+					continue;
+				return;
+			}
+xloop:			if (ch < 0)
+				return; /* EOF */
+			if ((spechr[ch] & C_SPEC) != 0)
+				break;
+			putch(ch);
 		}
+
+		REFILL(2);
+		nch = *ifiles->curptr;
 		switch (ch) {
-		case EBLOCK:
 		case WARN:
 		case CONC:
 			error("bad char passed");
 			break;
 
 		case '/': /* Comments */
-			if ((ch = inch()) == '/') {
-cppcmt:				if (Cflag) { PUTCH(ch); } else { PUTCH(' '); }
-				do {
-					if (Cflag) PUTCH(ch);
-					ch = inch();
-					if (ch == -1)
-						goto eof;
-				} while (ch != '\n');
-				goto xloop;
-			} else if (ch == '*') {
-				if (eatcmnt() == -1)
-					goto eof;
-			} else {
-				PUTCH('/');
-				goto xloop;
+			if (nch != '/' && nch != '*') {
+				putch(ch);
+				continue;
 			}
+			if (Cflag == 0) {
+				if (fastcmnt(1))
+					putch(' '); /* 5.1.1.2 p3 */
+			} else
+				Ccmnt(putch);
 			break;
 
 		case '\n': /* newlines, for pp directives */
+			/* take care of leftover \n */
 			i = ifiles->escln + 1;
 			ifiles->lineno += i;
 			ifiles->escln = 0;
 			while (i-- > 0)
 				putch('\n');
-run:			for(;;) {
-				ch = inch();
-				if (ch == '/') {
-					ch = inch();
-					if (ch == '/')
-						goto cppcmt;
-					if (ch == '*') {
-						if (eatcmnt() == -1)
-							goto eof;
-						continue;
-					}
-					unch(ch);
-					ch = '/';
-				}
-				if (ch != ' ' && ch != '\t')
-					break;
-				PUTCH(ch);
-			}
-			if (ch == '#') {
-				ppdir();
-				continue;
-			} else if (ch == '%') {
-				ch = inch();
-				if (ch == ':') {
-					ppdir();
-					continue;
-				}
-				unch(ch);
-				ch = '%';
-			}
-			goto xloop;
 
-		case '\"': /* strings */
-str:			PUTCH(ch);
-			while ((ch = inch()) != '\"') {
-				if (ch == '\\') {
-					if (chkucn())
-						continue;
-					PUTCH('\\');
-					ch = inch();
-				}
-				if (ch == '\n') {
-					warning("unterminated string literal");
-					goto xloop;
-				}
-				if (ch == -1)
-					goto eof;
-				PUTCH(ch);
+			/* search for a # */
+run:			while ((ch = inch()) == '\t' || ch == ' ')
+				putch(ch);
+			if (ch == '%') {
+				if ((c2 = inch()) != ':')
+					unch(c2);
+				else
+					ch = '#';
 			}
-			PUTCH(ch);
+			if (ch  == '#')
+				ppdir();
+			else
+				goto xloop;
+			break;
+
+		case '?':
+			if (nch == '?' && (ch = chktg()))
+				goto xloop;
+			putch('?');
+			break;
+
+		case '\'': /* character constant */
+			if (tflag) {
+				putch(ch);
+				break;	/* character constants ignored */
+			}
+			/* FALLTHROUGH */
+		case '\"': /* strings */
+			faststr(ch, putch);
 			break;
 
 		case '.':  /* for pp-number */
-			PUTCH(ch);
-			ch = inch();
-			if (ch < '0' || ch > '9')
-				goto xloop;
-
-			/* FALLTHROUGH */
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			do {
-nxp:				PUTCH(ch);
-				ch = inch();
-				if (ch == -1)
-					goto eof;
-				if ((spechr[ch] & C_EP)) {
-					PUTCH(ch);
-					ch = inch();
-					if (ch == '-' || ch == '+')
-						goto nxp;
-					if (ch == -1)
-						goto eof;
-				}
-			} while ((spechr[ch] & C_ID) || (ch == '.'));
+			ch = fastnum(ch, putch);
 			goto xloop;
 
-		case '\'': /* character constant */
-con:			PUTCH(ch);
-			if (tflag)
-				break; /* character constants ignored */
-			while ((ch = inch()) != '\'') {
-				if (ch == '\\') {
-					if (chkucn())
-						continue;
-					PUTCH('\\');
-					ch = inch();
-				}
-				if (ch == '\n') {
-					warning("unterminated character constant");
-					goto xloop;
-				}
-				if (ch == -1)
-					goto eof;
-				PUTCH(ch);
+		case 'u':
+			if (nch == '8' && ifiles->curptr[1] == '\"') {
+				putch(ch);
+				break;
 			}
-			PUTCH(ch);
-			break;
-
+			/* FALLTHROUGH */
 		case 'L':
-			ch = inch();
-			if (ch == '\"') {
-				PUTCH('L');
-				goto str;
+		case 'U':
+			if (nch == '\"' || nch == '\'') {
+				putch(ch);
+				break;
 			}
-			if (ch == '\'') {
-				PUTCH('L');
-				goto con;
-			}
-			unch(ch);
-			ch = 'L';
-
 			/* FALLTHROUGH */
 		default:
 #ifdef PCC_DEBUG
@@ -517,288 +696,124 @@ con:			PUTCH(ch);
 				error("fastscan");
 #endif
 		ident:
-			i = 0;
-			yytext[i++] = (usch)ch;
-			for (;;) {
-				if ((ch = inch()) == -1)
-					break;
-				if (ch == '\\') {
-					if (chkucn())
-						continue;
-					unch(ch);
-					break;
+			if (flslvl)
+				error("fastscan flslvl");
+			cp = stringbuf;
+			heapid(ch);
+			stringbuf = cp;
+			if ((nl = lookup(cp, FIND))) {
+				if (kfind(nl)) {
+					if (*cp == '-' || *cp == '+')
+						putch(' ');
+					putstr(cp);
+					for (cp2 = cp; *cp2; cp2++)
+						;
+					if (cp2[-1] == '-' || cp2[-1] == '+')
+						putch(' ');
 				}
-				if ((spechr[ch] & C_ID) == 0) {
-					unch(ch);
-					break;
-				}
-				yytext[i++] = (usch)ch;
-			}
-			yytext[i] = 0;
-
-			if (flslvl == 0) {
-				cp = stringbuf;
-				if ((nl = lookup(yytext, FIND)) && kfind(nl))
-					putstr(stringbuf);
-				else
-					putstr(yytext);
-				stringbuf = cp;
-			}
-			if (ch == -1)
-				goto eof;
-
+			} else
+				putstr(cp);
+			stringbuf = cp;
 			break;
 
 		case '\\':
+			if (nch == '\n') {
+				ifiles->escln++;
+				ifiles->curptr++;
+				break;
+			}
 			if (chkucn()) {
 				ch = inch();
 				goto ident;
 			}
-
-			PUTCH('\\');
+			putch('\\');
 			break;
 		}
 	}
 
-eof:	warning("unexpected EOF");
+/*eof:*/	warning("unexpected EOF");
 	putch('\n');
 }
 
-int
-sloscan(void)
+/*
+ * Store an if/elif line on heap for parsing, evaluate macros and 
+ * call yyparse().
+ */
+static usch *yyinp;
+int inexpr;
+static int
+exprline(void)
 {
-	int ch;
-	int yyp;
+	struct symtab *nl;
+	int oCflag = Cflag;
+	usch *cp, *bp = stringbuf;
+	int c, d, ifdef;
 
-zagain:
-	yyp = 0;
-	ch = inch();
-	yytext[yyp++] = (usch)ch;
-	switch (ch) {
-	case -1: /* EOF */
-		return 0;
+	Cflag = ifdef = 0;
 
-	case '\n': /* do not pass NL */
-		unch(ch);
-		yytext[yyp] = 0;
-		return ch;
-
-	case '\r': /* Ignore CR */
-		goto zagain;
-
-	case '0': case '1': case '2': case '3': case '4': case '5':
-	case '6': case '7': case '8': case '9':
-		/* reading a "pp-number" */
-ppnum:		for (;;) {
-			ch = inch();
-			if (ch == -1)
+	while ((c = inch()) != '\n') {
+		if (c == '\'' || c == '\"') {
+			faststr(c, savch);
+			continue;
+		}
+		if (ISDIGIT(c) || c == '.') {
+			c = fastnum(c, savch);
+			if (c == '\n')
 				break;
-			if ((spechr[ch] & C_EP)) {
-				yytext[yyp++] = (usch)ch;
-				ch = inch();
-				if (ch == '-' || ch == '+') {
-					yytext[yyp++] = (usch)ch;
+			unch(c);
+			continue;
+		}
+		if (c == 'L' || c == 'u' || c == 'U') {
+			unch(d = inch());
+			if (d == '\'')	/* discard wide designator */
+				continue;
+		}
+		if (ISID0(c)) {
+			cp = heapid(c);
+			stringbuf = cp;
+			nl = lookup(cp, FIND);
+			if (strcmp((char *)cp, "defined") == 0) {
+				ifdef = 1;
+			} else if (ifdef) {
+				savch(nl ? '1' : '0');
+				ifdef = 0;
+			} else if (nl != NULL) {
+				inexpr = 1;
+				if (kfind(nl)) {
+					while (*stringbuf)
+						stringbuf++;
 				} else
-					unch(ch);
-				continue;
-			}
-			if ((spechr[ch] & C_ID) || ch == '.') {
-				yytext[yyp++] = (usch)ch;
-				continue;
-			}
-			break;
-		}
-		unch(ch);
-		yytext[yyp] = 0;
-		return NUMBER;
-
-	case '\'':
-chlit:
-		for (;;) {
-			if ((ch = inch()) == '\\') {
-				if (chkucn())
-					continue;
-				yytext[yyp++] = (usch)ch;
-				ch = inch();
-			} else if (ch == '\'')
-				break;
-			if (ch == -1 || ch == '\n') {
-				/* not a constant */
-				while (yyp > 1)
-					unch(yytext[--yyp]);
-				goto any;
-			}
-			yytext[yyp++] = (usch)ch;
-		}
-		yytext[yyp++] = (usch)'\'';
-		yytext[yyp] = 0;
-		return NUMBER;
-
-	case ' ':
-	case '\t':
-		while ((ch = inch()) == ' ' || ch == '\t')
-			yytext[yyp++] = (usch)ch;
-		unch(ch);
-		yytext[yyp] = 0;
-		return WSPACE;
-
-	case '/':
-		if ((ch = inch()) == '/') {	/* C++ comment */
-			do {
-				yytext[yyp++] = (usch)ch;
-				ch = inch();
-			} while (ch != -1 && ch != '\n');
-			yytext[yyp] = 0;
-			unch(ch);
-			goto zagain;
-		} else if (ch == '*') {		/* C comment */
-			int c, wrn;
-			extern int readmac;
-
-			if (Cflag && !flslvl && readmac) {
-				unch(ch);
-				yytext[yyp] = 0;
-				return CMNT;
-			}
-
-			wrn = 0;
-		more:	while ((c = inch()) != '*') {
-				if (c == -1)
-					return 0;
-				if (c == '\n')
-					putch(c), ifiles->lineno++;
-				else if (c == EBLOCK) {
-					(void)inch();
-					(void)inch();
-				} else if (c == WARN)
-					wrn = 1;
-			}
-			if ((c = inch()) == -1)
-				return 0;
-			if (c != '/') {
-				unch(c);
-				goto more;
-			}
-			if (!tflag && !Cflag && !flslvl)
-				unch(' ');
-			if (wrn)
-				unch(WARN);
-			goto zagain;
-		}
-		unch(ch);
-		goto any;
-
-	case '.':
-		if ((ch = inch()) == -1)
-			goto any;
-		if ((spechr[ch] & C_DIGIT)) {
-			yytext[yyp++] = (usch)ch;
-			goto ppnum;
-		}
-		unch(ch);
-		goto any;
-
-	case '\"':
-		if (tflag && defining)
-			goto any;
-	strng:
-		for (;;) {
-			if ((ch = inch()) == '\\') {
-				if (chkucn())
-					continue;
-				yytext[yyp++] = (usch)ch;
-				ch = inch();
-			} else if (ch == '\"') {
-				yytext[yyp++] = (usch)ch;
-				break;
-			}
-			if (ch == -1 || ch == '\n') {
-				warning("unterminated string");
-				unch(ch);
-				break;	// XXX the STRING does not have a closing quote
-			}
-			yytext[yyp++] = (usch)ch;
-		}
-		yytext[yyp] = 0;
-		return STRING;
-
-	case '\\':
-		if (chkucn()) {
-			--yyp;
-			goto ident;
-		}
-		goto any;
-
-	case 'L':
-		if ((ch = inch()) == '\"' && !tflag) {
-			yytext[yyp++] = (usch)ch;
-			goto strng;
-		} else if (ch == '\'' && !tflag) {
-			yytext[yyp++] = (usch)ch;
-			goto chlit;
-		}
-		unch(ch);
-		/* FALLTHROUGH */
-
-	/* Yetch, all identifiers */
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-	case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
-	case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
-	case 's': case 't': case 'u': case 'v': case 'w': case 'x':
-	case 'y': case 'z':
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-	case 'G': case 'H': case 'I': case 'J': case 'K':
-	case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
-	case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
-	case 'Y': case 'Z':
-	case '_': /* {L}({L}|{D})* */
-
-	ident:
-		for (;;) { /* get chars */
-			if ((ch = inch()) == -1)
-				break;
-			if (ch == '\\') {
-				if (chkucn())
-					continue;
-				unch('\\');
-				break;
-			}
-			if ((spechr[ch] & C_ID) == 0) {
-				unch(ch);
-				break;
-			}
-			yytext[yyp++] = (usch)ch;
-		}
-		yytext[yyp] = 0; /* need already string */
-		return IDENT;
-
-	default:
-		if ((ch & 0x80))
-			goto ident;
-
-	any:
-		yytext[yyp] = 0;
-		return yytext[0];
-	} /* endcase */
-
-	/* NOTREACHED */
+					savch('0');
+				inexpr = 0;
+			} else
+				savch('0');
+		} else
+			savch(c);
+	}
+	savch(0);
+	unch('\n');
+	yyinp = bp;
+	c = yyparse();
+	stringbuf = bp;
+	Cflag = oCflag;
+	return c;
 }
 
 int
 yylex(void)
 {
-	static int ifdef, noex;
-	struct symtab *nl;
-	int ch, c2;
+	int ch, c2, t;
 
-	while ((ch = sloscan()) == WSPACE)
+	while ((ch = *yyinp++) == ' ' || ch == '\t')
 		;
+	t = ISDIGIT(ch) ? NUMBER : ch;
 	if (ch < 128 && (spechr[ch] & C_2))
-		c2 = inch();
+		c2 = *yyinp++;
 	else
 		c2 = 0;
 
-	switch (ch) {
+	switch (t) {
+	case 0: return WARN;
 	case '=':
 		if (c2 == '=') return EQ;
 		break;
@@ -825,65 +840,26 @@ yylex(void)
 			error("invalid preprocessor operator %c%c", ch, c2);
 		break;
 
-	case '/':
-		if (Cflag == 0 || c2 != '*')
-			break;
-		/* Found comment that need to be skipped */
-		for (;;) {
-			ch = inch();
-		c1:	if (ch != '*')
-				continue;
-			if ((ch = inch()) == '/')
-				break;
-			goto c1;
-		}
-		return yylex();
+	case '\'':
+		yynode.op = NUMBER;
+		yynode.nd_val = charcon(&yyinp);
+		return NUMBER;
 
 	case NUMBER:
-		if (yytext[0] == '\'') {
-			yylval.node.op = NUMBER;
-			yylval.node.nd_val = charcon(yytext);
-		} else
-			cvtdig(yytext[0] != '0' ? 10 :
-			    yytext[1] == 'x' || yytext[1] == 'X' ? 16 : 8);
+		cvtdig(&yyinp);
 		return NUMBER;
 
-	case IDENT:
-		if (strcmp((char *)yytext, "defined") == 0) {
-			ifdef = 1;
-			return DEFINED;
-		}
-		nl = lookup(yytext, FIND);
-		if (ifdef) {
-			yylval.node.nd_val = nl != NULL;
-			ifdef = 0;
-		} else if (nl && noex == 0) {
-			usch *och = stringbuf;
-			int i;
-
-			i = kfind(nl);
-			unch(WARN);
-			if (i)
-				unpstr(stringbuf);
-			else
-				unpstr(nl->namep);
-			stringbuf = och;
-			noex = 1;
-			return yylex();
-		} else {
-			yylval.node.nd_val = 0;
-		}
-		yylval.node.op = NUMBER;
-		return NUMBER;
-	case WARN:
-		noex = 0;
-		/* FALLTHROUGH */
-	case PHOLD:
-		return yylex();
 	default:
+		if (ISID0(t)) {
+			yyinp--;
+			while (ISID(*yyinp))
+				yyinp++;
+			yynode.nd_val = 0;
+			return NUMBER;
+		}
 		return ch;
 	}
-	unch(c2);
+	yyinp--;
 	return ch;
 }
 
@@ -958,7 +934,7 @@ pushfile(const usch *file, const usch *fn, int idx, void *incs)
 #ifndef BUF_STACK
 	ic->bbuf = malloc(BBUFSZ);
 #endif
-	ic->buffer = ic->bbuf+NAMEMAX;
+	ic->buffer = ic->bbuf+PBMAX;
 	ic->curptr = ic->buffer;
 	ifiles = ic;
 	ic->lineno = 1;
@@ -967,7 +943,7 @@ pushfile(const usch *file, const usch *fn, int idx, void *incs)
 	ic->idx = idx;
 	ic->incs = incs;
 	ic->fn = fn;
-	prtline();
+	prtline(1);
 	if (initar) {
 		int oin = ic->infil;
 		ic->infil = -1;
@@ -975,9 +951,9 @@ pushfile(const usch *file, const usch *fn, int idx, void *incs)
 		prinit(initar, ic);
 		initar = NULL;
 		if (dMflag)
-			xwrite(ofd, ic->buffer, strlen((char *)ic->buffer));
+			printf("%s", (char *)ic->buffer);
 		fastscan();
-		prtline();
+		prtline(1);
 		ic->infil = oin;
 	}
 
@@ -1001,25 +977,25 @@ pushfile(const usch *file, const usch *fn, int idx, void *incs)
  * Print current position to output file.
  */
 void
-prtline(void)
+prtline(int nl)
 {
 	usch *sb = stringbuf;
 
 	if (Mflag) {
 		if (dMflag)
 			return; /* no output */
-		if (ifiles->lineno == 1) {
-			sheap("%s: %s\n", Mfile, ifiles->fname);
+		if (ifiles->lineno == 1 &&
+		    (MMDflag == 0 || ifiles->idx != SYSINC)) {
+			printf("%s: %s\n", Mfile, ifiles->fname);
 			if (MPflag &&
 			    strcmp((const char *)ifiles->fname, (char *)MPfile))
-				sheap("%s:\n", ifiles->fname);
-			xwrite(ofd, sb, stringbuf - sb);
+				printf("%s:\n", ifiles->fname);
 		}
 	} else if (!Pflag) {
 		sheap("\n# %d \"%s\"", ifiles->lineno, ifiles->fname);
 		if (ifiles->idx == SYSINC)
 			sheap(" 3");
-		sheap("\n");
+		if (nl) sheap("\n");
 		putstr(sb);
 	}
 	stringbuf = sb;
@@ -1050,42 +1026,46 @@ dig2num(int c)
  * Convert string numbers to unsigned long long and check overflow.
  */
 static void
-cvtdig(int rad)
+cvtdig(usch **yyp)
 {
 	unsigned long long rv = 0;
 	unsigned long long rv2 = 0;
-	usch *y = yytext;
-	int c;
+	usch *y = *yyp;
+	int rad;
 
-	c = *y++;
+	y--;
+	rad = *y != '0' ? 10 : y[1] == 'x' ||  y[1] == 'X' ? 16 : 8;
 	if (rad == 16)
-		y++;
-	while ((spechr[c] & C_HEX)) {
-		rv = rv * rad + dig2num(c);
+		y += 2;
+	while ((spechr[*y] & C_HEX)) {
+		rv = rv * rad + dig2num(*y);
 		/* check overflow */
 		if (rv / rad < rv2)
-			error("constant \"%s\" is out of range", yytext);
+			error("constant is out of range");
 		rv2 = rv;
-		c = *y++;
-	}
-	y--;
-	while (*y == 'l' || *y == 'L')
 		y++;
-	yylval.node.op = *y == 'u' || *y == 'U' ? UNUMBER : NUMBER;
-	yylval.node.nd_uval = rv;
-	if ((rad == 8 || rad == 16) && yylval.node.nd_val < 0)
-		yylval.node.op = UNUMBER;
-	if (yylval.node.op == NUMBER && yylval.node.nd_val < 0)
+	}
+	yynode.op = NUMBER;
+	while (*y == 'l' || *y == 'L' || *y == 'u' || *y == 'U') {
+		if (*y == 'u' || *y == 'U')
+			yynode.op = UNUMBER;
+		y++;
+	}
+	yynode.nd_uval = rv;
+	if ((rad == 8 || rad == 16) && yynode.nd_val < 0)
+		yynode.op = UNUMBER;
+	if (yynode.op == NUMBER && yynode.nd_val < 0)
 		/* too large for signed, see 6.4.4.1 */
-		error("constant \"%s\" is out of range", yytext);
+		error("constant is out of range");
+	*yyp = y;
 }
 
 static int
-charcon(usch *p)
+charcon(usch **yyp)
 {
 	int val, c;
+	usch *p = *yyp;
 
-	p++; /* skip first ' */
 	val = 0;
 	if (*p++ == '\\') {
 		switch (*p++) {
@@ -1118,33 +1098,29 @@ charcon(usch *p)
 
 	} else
 		val = p[-1];
+	if (*p != '\'')
+		error("bad charcon");
+	*yyp = ++p;
 	return val;
 }
 
 static void
 chknl(int ignore)
 {
+	void (*f)(const char *, ...);
 	int t;
 
-	while ((t = sloscan()) == WSPACE)
-		;
-	if (t != '\n') {
+	f = ignore ? warning : error;
+	if ((t = fastspc()) != '\n') {
 		if (t) {
-			if (ignore) {
-				warning("newline expected, got \"%s\"", yytext);
-				/* ignore rest of line */
-				while ((t = sloscan()) && t != '\n')
-					;
-			}
-			else
-				error("newline expected, got \"%s\"", yytext);
-		} else {
-			if (ignore)
-				warning("no newline at end of file");
-			else
-				error("no newline at end of file");
-		}
+			f("newline expected");
+			/* ignore rest of line */
+			while ((t = inch()) >= 0 && t != '\n')
+				;
+		} else
+			f("no newline at end of file");
 	}
+	unch(t);
 }
 
 static void
@@ -1171,19 +1147,15 @@ elsestmt(void)
 static void
 ifdefstmt(void)
 {
-	int t;
+	usch *bp;
+	int ch;
 
-	if (flslvl) {
-		flslvl++;
-		while ((t = sloscan()) && t != '\n')
-			;
-		return;
-	}
-	while ((t = sloscan()) == WSPACE)
-		;
-	if (t != IDENT)
+	if (!ISID0(ch = fastspc()))
 		error("bad #ifdef");
-	if (lookup(yytext, FIND) == NULL)
+	bp = heapid(ch);
+	stringbuf = bp;
+
+	if (lookup(bp, FIND) == NULL)
 		flslvl++;
 	else
 		trulvl++;
@@ -1193,19 +1165,14 @@ ifdefstmt(void)
 static void
 ifndefstmt(void)
 {
-	int t;
+	usch *bp;
+	int ch;
 
-	if (flslvl) {
-		flslvl++;
-		while ((t = sloscan()) && t != '\n')
-			;
-		return;
-	}
-	while ((t = sloscan()) == WSPACE)
-		;
-	if (t != IDENT)
+	if (!ISID0(ch = fastspc()))
 		error("bad #ifndef");
-	if (lookup(yytext, FIND) != NULL)
+	bp = heapid(ch);
+	stringbuf = bp;
+	if (lookup(bp, FIND) != NULL)
 		flslvl++;
 	else
 		trulvl++;
@@ -1230,10 +1197,7 @@ endifstmt(void)
 static void
 ifstmt(void)
 {
-	if (flslvl || yyparse() == 0)
-		flslvl++;
-	else
-		trulvl++;
+	exprline() ? trulvl++ : flslvl++;
 }
 
 static void
@@ -1246,7 +1210,7 @@ elifstmt(void)
 			;
 		else if (--flslvl!=0)
 			flslvl++;
-		else if (yyparse())
+		else if (exprline())
 			trulvl++;
 		else
 			flslvl++;
@@ -1280,28 +1244,17 @@ static void
 cpperror(void)
 {
 	usch *cp;
-	int c;
 
-	if (flslvl)
-		return;
-	c = sloscan();
-	if (c != WSPACE && c != '\n')
-		error("bad #error");
 	cp = savln();
 	error("#error %s", cp);
+	stringbuf = cp;
 }
 
 static void
 cppwarning(void)
 {
 	usch *cp;
-	int c;
 
-	if (flslvl)
-		return;
-	c = sloscan();
-	if (c != WSPACE && c != '\n')
-		error("bad #warning");
 	cp = savln();
 	warning("#warning %s", cp);
 	stringbuf = cp;
@@ -1311,68 +1264,86 @@ static void
 undefstmt(void)
 {
 	struct symtab *np;
+	usch *bp;
+	int ch;
 
-	if (flslvl)
-		return;
-	if (sloscan() != WSPACE || sloscan() != IDENT)
+	if (!ISID0(ch = fastspc()))
 		error("bad #undef");
-	if ((np = lookup(yytext, FIND)) != NULL)
+	bp = heapid(ch);
+	if ((np = lookup(bp, FIND)) != NULL)
 		np->value = 0;
+	stringbuf = bp;
 	chknl(0);
 }
 
 static void
 identstmt(void)
 {
-	/* Just ignore */
-	if (sloscan() != WSPACE || sloscan() != STRING)
-		error("bad #ident directive");
+	struct symtab *sp;
+	usch *bp;
+	int ch;
+
+	bp = stringbuf;
+	if (ISID0(ch = fastspc())) {
+		bp = heapid(ch);
+		stringbuf = bp;
+		if ((sp = lookup(bp, FIND)))
+			kfind(sp);
+		if (bp[0] != '\"')
+			goto bad;
+	} else if (ch == '\"') {
+		faststr(ch, savch);
+	} else
+		goto bad;
+	stringbuf = bp;
+	chknl(1);
 	return;
+bad:
+	error("bad #ident directive");
 }
 
 static void
 pragmastmt(void)
 {
-	usch *sb;
+	int ch;
 
-	if (flslvl)
-		return;
-	if (sloscan() != WSPACE)
-		error("bad #pragma");
-	sb = stringbuf;
-	savstr((const usch *)"\n#pragma ");
-	savln();
-	putstr(sb);
-	prtline();
-	stringbuf = sb;
+	putstr((const usch *)"\n#pragma");
+	while ((ch = inch()) != '\n' && ch > 0)
+		putch(ch);
+	unch(ch);
+	prtline(1);
 }
 
 int
 cinput(void)
 {
+
 	return inch();
 }
 
+#define	DIR_FLSLVL	001
+#define	DIR_FLSINC	002
 static struct {
 	const char *name;
 	void (*fun)(void);
+	int flags;
 } ppd[] = {
-	{ "ifndef", ifndefstmt },
-	{ "ifdef", ifdefstmt },
-	{ "if", ifstmt },
-	{ "include", include },
-	{ "else", elsestmt },
-	{ "endif", endifstmt },
-	{ "error", cpperror },
-	{ "warning", cppwarning },
-	{ "define", define },
-	{ "undef", undefstmt },
-	{ "line", line },
-	{ "pragma", pragmastmt },
-	{ "elif", elifstmt },
-	{ "ident", identstmt },
+	{ "ifndef", ifndefstmt, DIR_FLSINC },
+	{ "ifdef", ifdefstmt, DIR_FLSINC },
+	{ "if", ifstmt, DIR_FLSINC },
+	{ "include", include, 0 },
+	{ "else", elsestmt, DIR_FLSLVL },
+	{ "endif", endifstmt, DIR_FLSLVL },
+	{ "error", cpperror, 0 },
+	{ "warning", cppwarning, 0 },
+	{ "define", define, 0 },
+	{ "undef", undefstmt, 0 },
+	{ "line", line, 0 },
+	{ "pragma", pragmastmt, 0 },
+	{ "elif", elifstmt, DIR_FLSLVL },
+	{ "ident", identstmt, 0 },
 #ifdef GCC_COMPAT
-	{ "include_next", include_next },
+	{ "include_next", include_next, 0 },
 #endif
 };
 #define	NPPD	(int)(sizeof(ppd) / sizeof(ppd[0]))
@@ -1392,55 +1363,74 @@ skpln(void)
 }
 
 /*
+ * do an even faster scan than fastscan while at flslvl.
+ * just search for a new directive.
+ */
+static void
+flscan(void)
+{
+	int ch;
+
+	for (;;) {
+		switch (ch = inch()) {
+		case -1:
+			return;
+		case '\n':
+			ifiles->lineno++;
+			putch('\n');
+			if ((ch = fastspcg()) == '#')
+				return;
+			unch(ch);
+			break;
+		case '/':
+			fastcmnt(0);	/* may be around directives */
+			break;
+		}
+        }
+}
+
+
+/*
  * Handle a preprocessor directive.
+ * # is already found.
  */
 void
 ppdir(void)
 {
-	char bp[20];
-	int ch, i;
+	int ch, i, oldC;
+	usch *bp;
 
-redo:	while ((ch = inch()) == ' ' || ch == '\t')
-		;
-	if (ch == '/') {
-		if ((ch = inch()) == '/') {
-			skpln();
-			return;
-		}
-		if (ch == '*') {
-			while ((ch = inch()) != -1) {
-				if (ch == '*') {
-					if ((ch = inch()) == '/')
-						goto redo;
-					unch(ch);
-				} else if (ch == '\n') {
-					putch('\n');
-					ifiles->lineno++;
-				}
-			}
-		}
-	}
-	if (ch == '\n') { /* empty directive */
+	oldC = Cflag;
+redo:	Cflag = 0;
+	if ((ch = fastspc()) == '\n') { /* empty directive */
 		unch(ch);
+		Cflag = oldC;
 		return;
 	}
-	if (ch < 'a' || ch > 'z')
-		goto out; /* something else, ignore */
-	i = 0;
-	do {
-		bp[i++] = (usch)ch;
-		if (i == sizeof(bp)-1)
-			goto out; /* too long */
-		ch = inch();
-	} while ((ch >= 'a' && ch <= 'z') || (ch == '_'));
-	unch(ch);
-	bp[i++] = 0;
+	Cflag = oldC;
+	if ((spechr[ch] & C_ID0) == 0)
+		goto out;
+	bp = heapid(ch);
+	stringbuf = bp;
 
-	/* got keyword */
+	/* got some keyword */
 	for (i = 0; i < NPPD; i++) {
-		if (bp[0] == ppd[i].name[0] && strcmp(bp, ppd[i].name) == 0) {
-			(*ppd[i].fun)();
-			return;
+		if (bp[0] == ppd[i].name[0] &&
+		    strcmp((char *)bp, ppd[i].name) == 0) {
+			if (flslvl == 0) {
+				(*ppd[i].fun)();
+				if (flslvl == 0)
+					return;
+			} else {
+				if (ppd[i].flags & DIR_FLSLVL) {
+					(*ppd[i].fun)();
+					if (flslvl == 0)
+						return;
+				}else if (ppd[i].flags & DIR_FLSINC)
+					flslvl++;
+			}
+			flscan();
+			goto redo;
 		}
 	}
 

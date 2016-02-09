@@ -1,5 +1,5 @@
-/*	Id: symtabs.c,v 1.26 2014/06/20 07:07:33 plunky Exp 	*/	
-/*	$NetBSD: symtabs.c,v 1.1.1.4 2014/07/24 19:25:00 plunky Exp $	*/
+/*	Id: symtabs.c,v 1.38 2015/09/15 20:01:10 ragge Exp 	*/	
+/*	$NetBSD: symtabs.c,v 1.1.1.5 2016/02/09 20:28:53 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -29,6 +29,11 @@
 
 
 #include "pass1.h"
+#include "unicode.h"
+#include <stdlib.h>
+
+#define	NODE P1ND
+#define	fwalk p1fwalk
 
 /*
  * These definitions are used in the patricia tree that stores
@@ -46,12 +51,14 @@ struct tree {
 	struct tree *lr[2];
 };
 
+extern int dimfuncnt;
 static struct tree *firstname;
 int nametabs, namestrlen;
 static struct tree *firststr;
-int strtabs, strstrlen;
+int strtabs, strstrlen, symtreecnt;
 static char *symtab_add(char *key, struct tree **, int *, int *);
 int lastloc = NOSEG;
+int treestrsz = sizeof(struct tree);
 
 #define	P_BIT(key, bit) (key[bit >> 3] >> (bit & 7)) & 1
 #define	getree() permalloc(sizeof(struct tree))
@@ -202,7 +209,9 @@ lookup(char *key, int stype)
 		if (stype & SNOCREAT)
 			return NULL;
 		if (uselvl) {
-			sym = getsymtab(key, stype|STEMP);
+			if (type == SNORMAL)
+				stype |= SBLK;
+			sym = getsymtab(key, stype);
 			sym->snext = tmpsyms[type];
 			tmpsyms[type] = sym;
 			return sym;
@@ -266,8 +275,7 @@ lookup(char *key, int stype)
 	for (cix = 0; (ix & 1) == 0; ix >>= 1, cix++)
 		;
 
-	new = stype & STEMP ? tmpalloc(sizeof(struct tree)) :
-	    permalloc(sizeof(struct tree));
+	new = (symtreecnt++, permalloc(sizeof(struct tree)));
 	bit = (code >> cix) & 1;
 	new->bitno = cix | (bit ? RIGHT_IS_LEAF : LEFT_IS_LEAF);
 	new->lr[bit] = (struct tree *)getsymtab(key, stype);
@@ -351,8 +359,6 @@ hide(struct symtab *sym)
 	new->snext = tmpsyms[typ];
 	tmpsyms[typ] = new;
 
-	warner(Wshadow, sym->sname, sym->slevel ? "local" : "global");
-
 #ifdef PCC_DEBUG
 	if (ddebug)
 		printf("\t%s hidden at level %d (%p -> %p)\n",
@@ -430,7 +436,7 @@ defalign(int al)
 #define	P2ALIGN(x)	(x)
 #endif
 	if (al != ALCHAR)
-		printf("\t.align %d\n", P2ALIGN(al/ALCHAR));
+		printf(PRTPREF "\t.align %d\n", P2ALIGN(al/ALCHAR));
 }
 #endif
 
@@ -445,17 +451,211 @@ symdirec(struct symtab *sp)
 	struct attr *ga;
 	char *name;
 
-	if ((name = sp->soname) == NULL)
-		name = exname(sp->sname);
+	name = getexname(sp);
 	if ((ga = attr_find(sp->sap, GCC_ATYP_WEAK)) != NULL)
-		printf("\t.weak %s\n", name);
+		printf(PRTPREF "\t.weak %s\n", name);
 	if ((ga = attr_find(sp->sap, GCC_ATYP_VISIBILITY)) &&
 	    strcmp(ga->sarg(0), "default"))
-		printf("\t.%s %s\n", ga->sarg(0), name);
+		printf(PRTPREF "\t.%s %s\n", ga->sarg(0), name);
 	if ((ga = attr_find(sp->sap, GCC_ATYP_ALIASWEAK))) {
-		printf("\t.weak %s\n", ga->sarg(0));
-		printf("\t.set %s,%s\n", ga->sarg(0), name);
+		printf(PRTPREF "\t.weak %s\n", ga->sarg(0));
+		printf(PRTPREF "\t.set %s,%s\n", ga->sarg(0), name);
 	}
 #endif
+}
+#endif
+
+char *
+getexname(struct symtab *sp)
+{
+	struct attr *ap = attr_find(sp->sap, ATTR_SONAME);
+
+	return (ap ? ap->sarg(0) : addname(exname(sp->sname)));
+}
+
+static char *csbuf;
+static int csbufp, cssz, strtype;
+#ifndef NO_STRING_SAVE
+static struct symtab *strpole;
+#endif
+#define	STCHNK	128
+
+static void
+savch(int ch)
+{
+	if (csbufp == cssz) {
+		cssz += STCHNK;
+		csbuf = realloc(csbuf, cssz);
+	}
+	csbuf[csbufp++] = ch;
+}
+
+/*
+ * save value as 3-digit octal escape sequence
+ */
+static void
+voct(unsigned int v)
+{
+	savch('\\');
+	savch(((v & 0700) >> 6) + '0');
+	savch(((v & 0070) >> 3) + '0');
+	savch((v & 0007) + '0');
+}
+
+
+/*
+ * Add string new to string old.  
+ * String new must come directly after old.
+ * new is expected to be utf-8.  Will be cleaned slightly here.
+ */
+char *
+stradd(char *old, char *new)
+{
+	if (old == NULL) {
+		strtype = 0;
+		csbufp = 0;
+	} else if (old != csbuf)
+		cerror("string synk error");
+
+	/* special hack for function names */
+	for (old = new; *old; old++)
+		;
+	if (old[-1] != '\"') {
+		do {
+			savch(*new);
+		} while (*new++);
+		return csbuf;
+	}
+
+	if (*new != '\"') {
+		int ny = *new++;
+		if (ny == 'u' && *new == '8')
+			ny = '8', new++;
+		if (strtype && ny != strtype)
+			uerror("clash in string types");
+		strtype = ny;
+	}
+	if (*new++ != '\"')
+		cerror("snuff synk error");
+
+	while (*new != '\"') {
+		if (*new == '\\') {
+			voct(esccon(&new));
+		} else if (*new < ' ' || *new > '~') {
+			voct(*(unsigned char *)new++);
+		} else {
+			savch(*new++);
+		}
+	}
+	savch(0);
+	csbufp--;
+	return csbuf;
+}
+
+TWORD
+styp(void)
+{
+	TWORD t;
+
+	if (strtype == 0 || strtype == '8')
+		t = xuchar ? UCHAR+ARY : CHAR+ARY;
+	else if (strtype == 'u')
+		t = ctype(USHORT)+ARY;
+	else if (strtype == 'L')
+		t = WCHAR_TYPE+ARY;
+	else
+		t = ctype(SZINT < 32 ? ULONG : UNSIGNED)+ARY;
+	return t;
+}
+
+/*
+ * Create a string struct.
+ */
+static void
+strst(struct symtab *sp, TWORD t)
+{
+	char *wr;
+	int i;
+
+	sp->sclass = STATIC;
+	sp->slevel = 1;
+	sp->soffset = getlab();
+	sp->squal = (CON >> TSHIFT);
+#ifndef NO_STRING_SAVE
+	sp->sdf = permalloc(sizeof(union dimfun));
+#else
+	sp->sdf = stmtalloc(sizeof(union dimfun));
+#endif
+	dimfuncnt++;
+	sp->stype = t;
+
+	for (wr = sp->sname, i = 1; *wr; i++) {
+		if (strtype == 'L' || strtype == 'U' || strtype == 'u')
+			(void)u82cp(&wr);
+		else if (*wr == '\\')
+			(void)esccon(&wr);
+		else
+			wr++;
+	}
+	sp->sdf->ddim = i;
+#ifndef NO_STRING_SAVE
+	sp->snext = strpole;
+	strpole = sp;
+#endif
+}
+
+/*
+ * Save string (if needed) and return NODE for it.
+ * String is already in utf-8 format.
+ */
+NODE *
+strend(char *s, TWORD t)
+{
+	struct symtab *sp, *sp2;
+	NODE *p;
+
+#ifdef NO_STRING_SAVE
+	sp = getsymtab(s, SSTRING|SSTMT);
+#else
+	s = addstring(s);
+	sp = lookup(s, SSTRING);
+#endif
+
+	if (sp->soffset && sp->stype != t) {
+		/* same string stored but different type */
+		/* This is uncommon, create a new symtab struct for it */
+		sp2 = permalloc(sizeof(*sp));
+		*sp2 = *sp;
+		strst(sp2, t);
+		sp = sp2;
+	} else if (sp->soffset == 0) { /* No string */
+		strst(sp, t);
+	}
+	if (cssz > STCHNK) {
+		cssz = STCHNK;
+		csbuf = realloc(csbuf, cssz);
+	}
+#ifdef NO_STRING_SAVE
+	instring(sp);
+#endif
+	p = block(NAME, NIL, NIL, sp->stype, sp->sdf, sp->sap);
+	p->n_sp = sp;
+	return(clocal(p));
+}
+
+#ifndef NO_STRING_SAVE
+/*
+ * Print out strings that have been referenced.
+ */
+void
+strprint(void)
+{
+	struct symtab *sp;
+
+	for (sp = strpole; sp; sp = sp->snext) {
+		if ((sp->sflags & SASG) == 0)
+			continue; /* not referenced */
+		instring(sp);
+	}
 }
 #endif
