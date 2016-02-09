@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.42 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.43 2016/02/09 12:53:17 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,12 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.42 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.43 2016/02/09 12:53:17 kiyohara Exp $");
 
 #include "opt_multiprocessor.h"
 
 #if defined MULTIPROCESSOR
-#warning Queue Management Method 'Counters' not support yet 
+#warning Queue Management Method 'Counters' not support. Please use mvxpe instead of this.
 #endif
 
 #include <sys/param.h>
