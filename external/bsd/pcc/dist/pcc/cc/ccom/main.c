@@ -1,5 +1,5 @@
-/*	Id: main.c,v 1.122 2014/05/07 16:46:31 ragge Exp 	*/	
-/*	$NetBSD: main.c,v 1.3 2014/07/24 20:12:50 plunky Exp $	*/
+/*	Id: main.c,v 1.132 2015/12/29 10:00:42 ragge Exp 	*/	
+/*	$NetBSD: main.c,v 1.4 2016/02/09 20:37:32 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -40,7 +40,7 @@
 #include "pass2.h"
 
 int bdebug, ddebug, edebug, idebug, ndebug;
-int odebug, pdebug, sdebug, tdebug, xdebug;
+int odebug, pdebug, sdebug, tdebug, xdebug, wdebug;
 int b2debug, c2debug, e2debug, f2debug, g2debug, o2debug;
 int r2debug, s2debug, t2debug, u2debug, x2debug;
 int gflag, kflag;
@@ -49,7 +49,7 @@ int sspflag;
 int xssa, xtailcall, xtemps, xdeljumps, xdce, xinline, xccp, xgnu89, xgnu99;
 int xuchar;
 int freestanding;
-char *prgname;
+char *prgname, *ftitle;
 
 static void prtstats(void);
 
@@ -111,6 +111,7 @@ fflags(char *str)
 		flagval = 0;
 	}
 
+#ifndef PASS2
 	if (strcmp(str, "stack-protector") == 0)
 		sspflag = flagval;
 	else if (strcmp(str, "stack-protector-all") == 0)
@@ -123,6 +124,7 @@ fflags(char *str)
 		fprintf(stderr, "unknown -f option '%s'\n", str);
 		usage();
 	}
+#endif
 }
 
 /* control multiple files */
@@ -142,7 +144,7 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "OT:VW:X:Z:f:gkm:psvwx:")) != -1) {
 		switch (ch) {
-#if !defined(MULTIPASS) || defined(PASS1)
+#ifndef PASS2
 		case 'X':	/* pass1 debugging */
 			while (*optarg)
 				switch (*optarg++) {
@@ -163,7 +165,7 @@ main(int argc, char *argv[])
 				}
 			break;
 #endif
-#if !defined(MULTIPASS) || defined(PASS2)
+#ifndef PASS1
 		case 'Z':	/* pass2 debugging */
 			while (*optarg)
 				switch (*optarg++) {
@@ -234,6 +236,10 @@ main(int argc, char *argv[])
 			++sflag;
 			break;
 
+		case 'w': /* No warnings emitted */
+			++wdebug;
+			break;
+
 		case 'W': /* Enable different warnings */
 			Wflags(optarg);
 			break;
@@ -254,6 +260,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	ftitle = xstrdup("<stdin>");
 	if (argc > 0 && strcmp(argv[0], "-") != 0) {
 		if (freopen(argv[0], "r", stdin) == NULL) {
 			fprintf(stderr, "open input file '%s':",
@@ -276,7 +283,8 @@ main(int argc, char *argv[])
 #ifdef SIGBUS
 	signal(SIGBUS, segvcatch);
 #endif
-	fregs = FREGS;	/* number of free registers */
+
+#ifndef PASS2
 	lineno = 1;
 #ifdef GCC_COMPAT
 	gcc_init();
@@ -288,14 +296,15 @@ main(int argc, char *argv[])
 	bjobcode();
 #ifndef TARGET_VALIST
 	{
-		NODE *p = block(NAME, NIL, NIL, PTR|CHAR, NULL, 0);
+		P1ND *p = block(NAME, NULL, NULL, PTR|CHAR, NULL, 0);
 		struct symtab *sp = lookup(addname("__builtin_va_list"), 0);
 		p->n_sp = sp;
 		defid(p, TYPEDEF);
-		nfree(p);
+		p1nfree(p);
 	}
 #endif
 	complinit();
+	kwinit();
 #ifndef NO_BUILTIN
 	builtin_init();
 #endif
@@ -309,19 +318,34 @@ main(int argc, char *argv[])
 
 	if (sspflag)
 		sspinit();
+#endif /* PASS2 */
 
+#ifndef PASS1
+	fregs = FREGS;	/* number of free registers */
+#ifdef PASS2
+	mainp2();
+#endif
+#endif
+
+#ifndef PASS2
 	(void) yyparse();
 	yyaccpt();
 
-	if (!nerrors)
+	if (!nerrors) {
 		lcommprint();
+#ifndef NO_STRING_SAVE
+		strprint();
+#endif
+	}
+#endif
 
+#ifndef PASS2
 #ifdef STABS
 	if (gflag)
 		stabs_efile(argc ? argv[0] : "");
 #endif
-
 	ejobcode( nerrors ? 1 : 0 );
+#endif
 
 #ifdef TIMING
 	(void)gettimeofday(&t2, NULL);
@@ -344,20 +368,57 @@ main(int argc, char *argv[])
 void
 prtstats(void)
 {
-	extern int nametabs, namestrlen;
-	extern int arglistcnt, dimfuncnt, inlnodecnt, inlstatcnt;
-	extern int symtabcnt, suedefcnt;
+#ifndef PASS2
+	extern int nametabs, namestrlen, treestrsz;
+	extern int arglistcnt, dimfuncnt, inlstatcnt;
+	extern int symtabcnt, suedefcnt, strtabs, strstrlen;
+	extern int blkalloccnt, lcommsz, istatsz;
+	extern int savstringsz, newattrsz, nodesszcnt, symtreecnt;
+#endif
 	extern size_t permallocsize, tmpallocsize, lostmem;
 
-	fprintf(stderr, "Name table entries:		%d pcs\n", nametabs);
-	fprintf(stderr, "Name string size:		%d B\n", namestrlen);
+	/* common allocations */
 	fprintf(stderr, "Permanent allocated memory:	%zu B\n", permallocsize);
 	fprintf(stderr, "Temporary allocated memory:	%zu B\n", tmpallocsize);
 	fprintf(stderr, "Lost memory:			%zu B\n", lostmem);
+
+#ifndef PASS2
+	/* pass1 allocations */
+	fprintf(stderr, "Name table entries:		%d pcs\n", nametabs);
+	fprintf(stderr, "String table entries:		%d pcs\n", strtabs);
 	fprintf(stderr, "Argument list unions:		%d pcs\n", arglistcnt);
 	fprintf(stderr, "Dimension/function unions:	%d pcs\n", dimfuncnt);
 	fprintf(stderr, "Struct/union/enum blocks:	%d pcs\n", suedefcnt);
-	fprintf(stderr, "Inline node count:		%d pcs\n", inlnodecnt);
 	fprintf(stderr, "Inline control blocks:		%d pcs\n", inlstatcnt);
 	fprintf(stderr, "Permanent symtab entries:	%d pcs\n", symtabcnt);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Name table tree size:		%d B\n",
+	    nametabs * treestrsz);
+	fprintf(stderr, "Name string size:		%d B\n", namestrlen);
+	fprintf(stderr, "String table tree size:		%d B\n",
+	    strtabs * treestrsz);
+	fprintf(stderr, "String size:			%d B\n", strstrlen);
+	fprintf(stderr, "Inline control block size:	%d B\n",
+	    inlstatcnt * istatsz);
+	fprintf(stderr, "Argument list size:		%d B\n",
+	    arglistcnt * (int)sizeof(union arglist));
+	fprintf(stderr, "Dimension/function size:	%d B\n",
+	    dimfuncnt * (int)sizeof(union dimfun));
+	fprintf(stderr, "Permanent symtab size:		%d B\n",
+	    symtabcnt * (int)sizeof(struct symtab));
+	fprintf(stderr, "Symtab tree size:		%d B\n",
+	    symtreecnt * treestrsz);
+	fprintf(stderr, "lcomm struct size:		%d B\n", lcommsz);
+	fprintf(stderr, "blkalloc size:			%d B\n", blkalloccnt);
+	fprintf(stderr, "(saved strings size):		%d B\n", savstringsz);
+	fprintf(stderr, "attribute size:			%d B\n", newattrsz);
+	fprintf(stderr, "nodes size:			%d B\n", nodesszcnt);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Not accounted for:		%d B\n",
+	    (int)permallocsize-(nametabs * treestrsz)-namestrlen-strstrlen-
+	    (arglistcnt * (int)sizeof(union arglist))-(strtabs * treestrsz)-
+	    (dimfuncnt * (int)sizeof(union dimfun))-(inlstatcnt * istatsz)-
+	    (symtabcnt * (int)sizeof(struct symtab))-(symtreecnt * treestrsz)-
+	    lcommsz-blkalloccnt-newattrsz-nodesszcnt);
+#endif
 }

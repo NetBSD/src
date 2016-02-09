@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.74 2014/07/03 14:03:50 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.2 2014/08/13 13:18:08 plunky Exp $	*/
+/*	Id: code.c,v 1.85 2015/12/13 09:00:04 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.3 2016/02/09 20:37:32 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -30,6 +30,15 @@
 
 
 # include "pass1.h"
+
+#ifndef LANG_CXX
+#undef NIL
+#define	NIL NULL
+#define	NODE P1ND
+#define	nfree p1nfree
+#define	ccopy p1tcopy
+#define	tfree p1tfree
+#endif
 
 static int nsse, ngpr, nrsp, rsaoff;
 static int thissse, thisgpr, thisrsp;
@@ -128,8 +137,7 @@ defloc(struct symtab *sp)
 {
 	char *name;
 
-	if ((name = sp->soname) == NULL)
-		name = exname(sp->sname);
+	name = getexname(sp);
 
 	if (sp->sclass == EXTDEF) {
 		printf("\t.globl %s\n", name);
@@ -199,9 +207,13 @@ efcode(void)
 			r1 = XMM0, t1 = DOUBLE;
 		else
 			r1 = RAX, t1 = LONG;
-		if (typ == STRSSE || typ == STRIF)
+		if (typ == STRSSE)
 			r2 = XMM1, t2 = DOUBLE;
-		else
+		else if (typ == STRFI)
+			r2 = RAX, t2 = LONG;
+		else if (typ == STRIF)
+			r2 = XMM0, t2 = DOUBLE;
+		else /* if (typ == STRREG) */
 			r2 = RDX, t2 = LONG;
 
 		if (tsize(t, sp->sdf, sp->sap) > SZLONG) {
@@ -522,6 +534,15 @@ bjobcode(void)
 	NODE *p, *q;
 	char *c;
 
+#if defined(__GNUC__) || defined(__PCC__)
+	/* Be sure that the compiler uses full x87 */
+	/* XXX cross-compiling will fail here */
+	int fcw = 0;
+	__asm("fstcw (%0)" : : "r"(&fcw));
+	fcw |= 0x33f;
+	__asm("fldcw (%0)" : : "r"(&fcw));
+#endif
+
 	/* amd64 names for some asm constant printouts */
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
 	astypnames[LONG] = astypnames[ULONG] = "\t.quad";
@@ -713,7 +734,7 @@ movtomem(NODE *p, int off, int reg)
 	s.sclass = AUTO;
 
 	l = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
-	l->n_lval = 0;
+	slval(l, 0);
 	regno(l) = reg;
 
 	r = block(NAME, NIL, NIL, p->n_type, p->n_df, p->n_ap);
@@ -739,17 +760,46 @@ movtomem(NODE *p, int off, int reg)
  * - If the eight-byte only contains float or double, use a SSE register
  * - Otherwise use memory.
  *
+ * Arrays must be broken up as separate elements, since the elements
+ * are classified separately. For example;
+ * 	struct s { short s; float f[3]; } S;
+ * will have the first 64 bits passed in general reg and the second in SSE.
+ *
  * sp below is a pointer to a member list.
  * off tells whether is is the first or second eight-byte to check.
  */
 static int
 classifystruct(struct symtab *sp, int off)
 {
+	struct symtab sps[16];
+	union dimfun *df;
 	TWORD t;
-	int cl, cl2;
+	int cl, cl2, sz, i;
+
 
 	for (cl = 0; sp; sp = sp->snext) {
 		t = sp->stype;
+
+		/* fake a linked list of all array members */
+		if (ISARY(t)) {
+			sz = 1;
+			df = sp->sdf;
+			do {
+				sz *= df->ddim;
+				t = DECREF(t);
+				df++;
+			} while (ISARY(t));
+			for (i = 0; i < sz; i++) {
+				sps[i] = *sp;
+				sps[i].stype = t;
+				sps[i].sdf = df;
+				sps[i].snext = &sps[i+1];
+				sps[i].soffset = i * tsize(t, df, sp->sap);
+				sps[i].soffset += sp->soffset;
+			}
+			sps[i-1].snext = sp->snext;
+			sp = &sps[0];
+		}
 
 		if (off == 0) {
 			if (sp->soffset >= SZLONG)
@@ -768,9 +818,12 @@ classifystruct(struct symtab *sp, int off)
 		} else if (t == LDOUBLE) {
 			return STRMEM;
 		} else if (ISSOU(t)) {
+#ifdef GCC_COMPAT
 			if (attr_find(sp->sap, GCC_ATYP_PACKED)) {
 				cl = STRMEM;
-			} else {
+			} else
+#endif
+			{
 				cl2 = classifystruct(strmemb(sp->sap), off);
 				if (cl2 == STRMEM) {
 					cl = STRMEM;
@@ -821,9 +874,12 @@ argtyp(TWORD t, union dimfun *df, struct attr *ap)
 	} else if (t == STRTY || t == UNIONTY) {
 		int sz = tsize(t, df, ap);
 
+#ifdef GCC_COMPAT
 		if (attr_find(ap, GCC_ATYP_PACKED)) {
 			cl = STRMEM;
-		} else if (iscplx87(strmemb(ap)) == STRX87) {
+		} else
+#endif
+		if (iscplx87(strmemb(ap)) == STRX87) {
 			cl = STRX87;
 		} else if (sz > 2*SZLONG) {
 			cl = STRMEM;
@@ -904,6 +960,8 @@ argput(NODE *p)
 	case INTMEM:
 		r = nrsp;
 		nrsp += SZLONG;
+		if (p->n_type < INT || p->n_type == BOOL)
+			p = cast(p, INT, 0);
 		p = movtomem(p, r, STKREG);
 		break;
 
@@ -966,7 +1024,7 @@ argput(NODE *p)
 		nrsp += tsize(p->n_type, p->n_df, p->n_ap);
 
 		l = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
-		l->n_lval = 0;
+		slval(l, 0);
 		regno(l) = STKREG;
 
 		t = block(NAME, NIL, NIL, p->n_type, p->n_df, p->n_ap);
@@ -1127,7 +1185,7 @@ builtin_return_address(const struct bitable *bt, NODE *a)
 	int nframes;
 	NODE *f;
 
-	nframes = a->n_lval;
+	nframes = glval(a);
 	tfree(a);
 
 	f = block(REG, NIL, NIL, PTR+VOID, 0, 0);
@@ -1151,7 +1209,7 @@ builtin_frame_address(const struct bitable *bt, NODE *a)
 	int nframes;
 	NODE *f;
 
-	nframes = a->n_lval;
+	nframes = glval(a);
 	tfree(a);
 
 	f = block(REG, NIL, NIL, PTR+VOID, 0, 0);
@@ -1180,9 +1238,17 @@ int codeatyp(NODE *);
 int
 codeatyp(NODE *p)
 {
+	TWORD t;
 	int typ;
 
 	ngpr = nsse = 0;
-	typ = argtyp(DECREF(p->n_type), p->n_df, p->n_ap);
+	t = DECREF(p->n_type);
+	if (ISSOU(t) == 0) {
+		p = p->n_left;
+		t = DECREF(DECREF(p->n_type));
+	}
+	if (ISSOU(t) == 0)
+		cerror("codeatyp");
+	typ = argtyp(t, p->n_df, p->n_ap);
 	return typ;
 }

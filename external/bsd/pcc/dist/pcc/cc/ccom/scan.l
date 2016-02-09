@@ -1,6 +1,6 @@
 %{
-/*	Id: scan.l,v 1.122 2014/07/03 17:30:31 ragge Exp 	*/	
-/*	$NetBSD: scan.l,v 1.5 2014/07/24 20:12:50 plunky Exp $	*/
+/*	Id: scan.l,v 1.145 2016/02/07 18:04:28 ragge Exp 	*/	
+/*	$NetBSD: scan.l,v 1.6 2016/02/09 20:37:32 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -30,14 +30,17 @@
 %}
 
 
+B			[0-1]
 D			[0-9]
 L			[a-zA-Z_]
 H			[a-fA-F0-9]
 E			[Ee][+-]?{D}+
 P			[Pp][+-]?{D}+
-FS			(f|F|l|L|i)*
+FS			((f|F|l|L)?i|i?(f|F|l|L))
 IS			(u|U|l|L|i)*
 UL			({L}|[\x80-\xFF])
+UC			(L|u|U)
+US			(L|u|U|u8)
 
 %{
 #include <stdlib.h>
@@ -50,13 +53,15 @@ UL			({L}|[\x80-\xFF])
 #include "cgram.h"
 #include "unicode.h"
 
-static NODE *cvtdig(int radix);
-static NODE *charcon(void);
-static NODE *wcharcon(void);
+#define	bdebug flexbdebug
+
+static P1ND *cvtdig(int radix);
+static P1ND *charcon(void);
+static P1ND *wcharcon(void);
 static void control(int);
 static void pragma(void);
 int notype, parbal, inattr, parlvl, nodinit, inoso;
-static int resw(TWORD, int);
+int kwdecode(struct symtab *s);
 
 #define	CPP_IDENT 	2
 #define	CPP_LINE 	3
@@ -86,55 +91,14 @@ extern void yyset_lineno (int);
 
 %%
 
-"__func__"		{
-				if (cftnsp == NULL)
-					uerror("__func__ outside function");
-				yylval.strp = cftnsp->sname; /* XXX - not C99 */
-				return(C_STRING);
-			}
-"asm"			{ return(C_ASM); }
-"auto"			{ 	return resw(AUTO, C_CLASS); }
-"_Bool"			{ 	return resw(BOOL, C_TYPE); }
-"break"			{ return(C_BREAK); }
-"case"			{ return(C_CASE); }
-"char"			{ 	return resw(CHAR, C_TYPE); }
-"_Complex"		{ 	return resw(COMPLEX, C_TYPE); }
-"const"			{ 	return resw(CON, C_QUALIFIER); }
-"continue"		{ return(C_CONTINUE); }
-"default"		{ return(C_DEFAULT); }
-"do"			{ return(C_DO); }
-"double"		{ 	return resw(DOUBLE, C_TYPE); }
-"else"			{ return(C_ELSE); }
-"enum"			{ notype=1; return(C_ENUM); }
-"extern"		{ 	return resw(EXTERN, C_CLASS); }
-"float"			{ 	return resw(FLOAT, C_TYPE); }
-"for"			{ return(C_FOR); }
-"goto"			{ notype=1; return(C_GOTO); }
-"if"			{ return(C_IF); }
-"_Imaginary"		{ 	return resw(IMAG, C_TYPE); }
-"inline"		{ return(C_FUNSPEC); }
-"int"			{ 	return resw(INT, C_TYPE); }
-"long"			{ 	return resw(LONG, C_TYPE); }
-"register"		{ 	return resw(REGISTER, C_CLASS); }
-"restrict"		{ return resw(0, C_QUALIFIER); }
-"return"		{ return(C_RETURN); }
-"short"			{ 	return resw(SHORT, C_TYPE); }
-"signed"		{ 	return resw(SIGNED, C_TYPE); }
-"sizeof"		{ return(C_SIZEOF); }
-"static"		{ 	return resw(STATIC, C_CLASS); }
-"struct"		{ yylval.intval = STNAME; notype=1; return(C_STRUCT); }
-"switch"		{ return(C_SWITCH); }
-"typedef"		{ 	return resw(TYPEDEF, C_CLASS); }
-"union"			{ yylval.intval = UNAME; notype=1; return(C_STRUCT); }
-"unsigned"		{ 	return resw(UNSIGNED, C_TYPE); }
-"void"			{ 	return resw(VOID, C_TYPE); }
-"volatile"		{	return resw(VOL, C_QUALIFIER); }
-"while"			{ return(C_WHILE); }
-
 {UL}({UL}|{D})*	{ 	struct symtab *s;
 			int i = 0;
 
 			yylval.strp = addname(yytext);
+			if ((s = lookup(yylval.strp, SNOCREAT)) != NULL &&
+			    s->sclass == KEYWORD)
+				return kwdecode(s);
+
 #ifdef GCC_COMPAT
 			if (doing_init && nodinit == 0) {
 				/* check for name: for old gcc compat */
@@ -144,7 +108,7 @@ extern void yyset_lineno (int);
 					return(GCC_DESIG);
 				unput(i);
 			}
-			if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0) {
+			if ((i = gcc_keyword(yylval.strp)) > 0) {
 				if (i == PCC_OFFSETOF)
 					inoso = 1;
 				return i;
@@ -153,7 +117,6 @@ extern void yyset_lineno (int);
 			if (i == 0) {
 				if (notype)
 					return(C_NAME);
-				s = lookup(yylval.strp, SNOCREAT);
 				return s && s->sclass == TYPEDEF ?
 				    notype=1, C_TYPENAME : C_NAME;
 			}
@@ -161,18 +124,19 @@ extern void yyset_lineno (int);
 
 0[xX]{H}+{IS}?		{ yylval.nodep = cvtdig(16); return(C_ICON); }
 0{D}+{IS}?		{ yylval.nodep = cvtdig(8); return(C_ICON); }
+0[bB]{B}+{IS}?		{ yylval.nodep = cvtdig(2); return(C_ICON); }
 {D}+{IS}?		{ yylval.nodep = cvtdig(10); return(C_ICON); }
-L'(\\.|[^\\'])+'	{ yylval.nodep = wcharcon(); return(C_ICON); }
-'(\\.|[^\\'])+'		{ yylval.nodep = charcon(); return(C_ICON); }
+{UC}'(\\.|[^\\'])*'	{ yylval.nodep = wcharcon(); return(C_ICON); }
+'(\\.|[^\\'])*'		{ yylval.nodep = charcon(); return(C_ICON); }
 
-{D}+{E}{FS}?		{ yylval.nodep = floatcon(yytext); return(C_FCON); }
-{D}*"."{D}+({E})?{FS}?	{ yylval.nodep = floatcon(yytext); return(C_FCON); }
-{D}+"."{D}*({E})?{FS}?	{ yylval.nodep = floatcon(yytext); return(C_FCON); }
-0[xX]{H}*"."{H}+{P}{FS}? { yylval.nodep = fhexcon(yytext); return(C_FCON); }
-0[xX]{H}+"."{P}{FS}?	{ yylval.nodep = fhexcon(yytext); return(C_FCON); }
-0[xX]{H}+{P}{FS}?	{ yylval.nodep = fhexcon(yytext); return(C_FCON); }
+{D}+{E}{FS}?		{ yylval.flt = floatcon(yytext); return(C_FCON); }
+{D}*"."{D}+({E})?{FS}?	{ yylval.flt = floatcon(yytext); return(C_FCON); }
+{D}+"."{D}*({E})?{FS}?	{ yylval.flt = floatcon(yytext); return(C_FCON); }
+0[xX]{H}*"."{H}+{P}{FS}? { yylval.flt = fhexcon(yytext); return(C_FCON); }
+0[xX]{H}+"."{P}{FS}?	{ yylval.flt = fhexcon(yytext); return(C_FCON); }
+0[xX]{H}+{P}{FS}?	{ yylval.flt = fhexcon(yytext); return(C_FCON); }
 
-L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
+{US}?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 "..."			{ return(C_ELLIPSIS); }
 ">>="			{ yylval.intval = RSEQ; return(C_ASOP); }
@@ -238,7 +202,6 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 %%
 
 int lineno, issyshdr;
-char *ftitle = "<stdin>";
 
 int
 yywrap(void)
@@ -247,36 +210,127 @@ yywrap(void)
 	return(1);
 }
 
-int
-resw(TWORD t, int rv)
+#define	DEFKW	500
+#define	KWFUNC	501
+#define	KWNOT	502
+
+struct keywords {
+	char *name;
+	int cword, wclass;
+} keywords[] = {
+	{ "__func__", 0, KWFUNC },
+	{ "_Alignas", C_ALIGNAS, DEFKW },
+	{ "_Alignof", C_ALIGNOF, DEFKW },
+	{ "_Atomic", C_ATOMIC, DEFKW },
+	{ "asm", C_ASM, DEFKW },
+	{ "auto", AUTO, C_CLASS },
+	{ "_Bool", BOOL, C_TYPE },
+	{ "break", C_BREAK, DEFKW },
+	{ "case", C_CASE, DEFKW },
+	{ "char", CHAR, C_TYPE },
+	{ "continue", C_CONTINUE, DEFKW },
+	{ "_Complex", COMPLEX, C_TYPE },
+	{ "const", CON, C_QUALIFIER },
+	{ "default", C_DEFAULT, DEFKW },
+	{ "do", C_DO, DEFKW },
+	{ "double", DOUBLE, C_TYPE },
+	{ "else", C_ELSE, DEFKW },
+	{ "enum", C_ENUM, KWNOT },
+	{ "extern", EXTERN, C_CLASS },
+	{ "float", FLOAT, C_TYPE },
+	{ "for", C_FOR, DEFKW },
+	{ "_Generic", C_GENERIC, DEFKW },
+	{ "goto", C_GOTO, KWNOT },
+	{ "if", C_IF, DEFKW },
+	{ "_Imaginary", IMAG, C_TYPE },
+	{ "inline", INLINE, C_FUNSPEC },
+	{ "int", INT, C_TYPE },
+	{ "long", LONG, C_TYPE },
+	{ "_Noreturn", NORETURN, C_FUNSPEC },
+	{ "register", REGISTER, C_CLASS },
+	{ "restrict", 0, C_QUALIFIER },
+	{ "return", C_RETURN, DEFKW },
+	{ "short", SHORT, C_TYPE },
+	{ "signed", SIGNED, C_TYPE },
+	{ "sizeof", C_SIZEOF, DEFKW },
+	{ "static", STATIC, C_CLASS },
+	{ "_Static_assert", C_STATICASSERT, DEFKW },
+	{ "struct", STNAME, C_STRUCT },
+	{ "switch", C_SWITCH, DEFKW },
+	{ "_Thread_local", THLOCAL, C_CLASS },
+	{ "typedef", TYPEDEF, C_CLASS },
+	{ "union", UNAME, C_STRUCT },
+	{ "unsigned", UNSIGNED, C_TYPE },
+	{ "void", VOID, C_TYPE },
+	{ "volatile", VOL, C_QUALIFIER },
+	{ "while", C_WHILE, DEFKW },
+};
+	
+
+void
+kwinit(void)
 {
-	if (inattr) {
-		yylval.strp = addname(yytext);
-		return C_NAME;
+	struct symtab *s;
+	int i, n = sizeof(keywords) / sizeof(keywords[0]);
+
+	for (i = 0; i < n; i++) {
+		s = lookup(addname(keywords[i].name), 0);
+		s->sclass = KEYWORD;
+		s->soffset = i;
 	}
-
-	switch (rv) {
-	case C_CLASS:
-		yylval.nodep = block(CLASS, NIL, NIL, t, 0, 0);
-		return rv;
-
-	case C_QUALIFIER:
-		yylval.nodep = block(QUALIFIER, NIL, NIL, 0, 0, 0);
-		yylval.nodep->n_qual = t;
-		return rv;
-
-	case C_TYPE:
-		yylval.nodep = mkty(t, 0, 0);
-		notype=1;
-		return(rv);
-
-	default:
-		cerror("resw");
-	}
-	return 0;
 }
 
-#ifndef SOFTFLOAT
+int
+kwdecode(struct symtab *s)
+{
+	struct keywords *kw = &keywords[s->soffset];
+
+	if (inattr && kw->cword != C_SIZEOF)
+		return C_NAME;
+
+	switch (kw->wclass) {
+	case C_TYPE:
+		yylval.type = kw->cword;
+		notype=1;
+		break;
+
+	case C_CLASS:
+		if (kw->cword == THLOCAL)
+			uerror("_Thread_local not supported");
+		yylval.type = kw->cword;
+		break;
+
+	case C_QUALIFIER:
+		yylval.type = kw->cword;
+		break;
+
+	case C_FUNSPEC:
+		yylval.type = kw->cword;
+		break;
+
+	case DEFKW:
+		return kw->cword;
+
+	case KWFUNC:
+		if (cftnsp == NULL)
+			uerror("__func__ outside function");
+		yylval.strp = cftnsp->sname;
+		return(C_STRING);
+
+	case KWNOT:
+		notype = 1;
+		return kw->cword;
+
+	case C_STRUCT:
+		notype = 1;
+		yylval.intval = kw->cword;
+		break;
+
+	default:
+		cerror("keyword %s not found", kw->name);
+	}
+	return kw->wclass;
+}
 
 static long double
 typround(long double dc, char *e, TWORD *tw)
@@ -311,32 +365,62 @@ typround(long double dc, char *e, TWORD *tw)
 }
 
 /*
- * XXX floatcon() and fhexcon() should be in support libraries for
- * the target floating point.
+ * Return which type current fp string has.
  */
-static NODE *
-f2(char *str)
+static TWORD
+endtyp(char *s)
 {
-	TWORD tw;
-	NODE *p;
-	long double dc;
-	char *eptr;
+	TWORD tw = DOUBLE;
 
-#ifdef HAVE_STRTOLD
-	dc = strtold(str, &eptr); /* XXX - avoid strtod() */
-#else
-	dc = strtod(str, &eptr); /* XXX - avoid strtod() */
-#endif
-	dc = typround(dc, eptr, &tw);
-	p = block(FCON, NIL, NIL, tw, 0, 0);
-	p->n_dcon = dc;
-	return p;
+	for (; *s; s++)
+		;
+	s--;
+	if (*s == 'i' || *s == 'I')
+		tw += (FIMAG-FLOAT), s--;
+	if (*s == 'f' || *s == 'F')
+		tw--, s--;
+	else if (*s == 'l' || *s == 'L')
+		tw++, s--;
+	if ((*s == 'i' || *s == 'I') && ISFTY(tw))
+		tw += (FIMAG-FLOAT), s--;
+/* XXX complain */
+	return tw;
 }
 
-NODE *
+#ifdef NATIVE_FLOATING_POINT
+/*
+ * Convert floating point string to union flt.
+ */
+static union flt *
+strtoflt(char *str)
+{
+	union flt *flt;
+	long double dc;
+
+#ifdef HAVE_STRTOLD
+	dc = strtold(str, NULL);
+#else
+	dc = strtod(str, NULL);
+#endif
+
+	flt = stmtalloc(sizeof(union flt));
+	flt->fp = dc;
+	return flt;
+}
+#endif
+
+union flt *
 floatcon(char *s)
 {
-	return f2(s);
+	union flt *flt;
+	TWORD tw;
+
+	flt = strtoflt(s);			/* parse number */
+	tw = flt->fa[FP_TOP] = endtyp(s);	/* parse type */
+	if (ISITY(tw))
+		tw -= (FIMAG-FLOAT);
+	FLOAT_FP2FP(flt, tw);			/* cast accordingly */
+	return flt;
 }
 
 static int
@@ -366,7 +450,7 @@ fdecl(char *c, char **ep)
 
 	while (isdigit((int)*c)) {
 		val *= 10;
-		val += *c++;
+		val += *c++ - '0';
 		if (val > 32769)
 			val = 32769;
 	}
@@ -376,14 +460,14 @@ fdecl(char *c, char **ep)
 	return val;
 }
 
-NODE *
+union flt *
 fhexcon(char *c)
 {
+	union flt *flt;
 	TWORD tw;
 	char *ep;
 	long double d;
 	int i, ed;
-	NODE *p;
 
 	d = 0.0;
 	ed = 0;
@@ -417,24 +501,24 @@ fhexcon(char *c)
 	while (ed < 0)
 		d /= 2, ed++;
 	d = typround(d, ep, &tw);
-	p = block(FCON, NIL, NIL, tw, 0, 0);
-	p->n_dcon = d;
-	return p;
+	flt = stmtalloc(sizeof(union flt));
+	flt->fp = d;
+	flt->fa[FP_TOP] = tw;
+	return flt;
 }
-#endif
 
-NODE *
+P1ND *
 cvtdig(int radix)
 {
-	NODE *p;
-	TWORD otype, ntype;
+	P1ND *p;
+	TWORD ntype;
 	unsigned long long v;
 	char *ch = yytext;
 	int n, numl, numu;
 
-	if (radix == 16)
-		ch += 2; /* Skip 0x */
-	
+	if (radix == 16 || radix == 2)
+		ch += 2; /* Skip 0x or 0b */
+
 	v = 0;
 	while ((*ch >= '0' && *ch <= '9') || (*ch >= 'a' && *ch <= 'f') ||
 	    (*ch >= 'A' && *ch <= 'F')) {
@@ -463,48 +547,46 @@ cvtdig(int radix)
 	if (*ch)
 		uerror("constant has too many '%c'", *ch);
 
-	otype = ntype;
 	switch (ntype) {
 	case DOUBLE: /* special case */
-		p = block(FCON, NIL, NIL, IMAG, 0, 0);
-		p->n_dcon = FLOAT_CAST(v, DOUBLE);
+		p = block(FCON, NULL, NULL, IMAG, 0, 0);
+		p->n_dcon = stmtalloc(sizeof(union flt));
+		FLOAT_INT2FP(p->n_dcon, v, ULONGLONG);
+		FLOAT_FP2FP(p->n_dcon, DOUBLE);
 		return p;
 
 	case INT:
 	case LONG:
 	case LONGLONG:
 		if (radix == 10) {
-			if (otype == LONGLONG)
+			if (ntype == LONGLONG)
 				break;
-			if (v > MAX_LONG) { 
+			if (v > MAX_LONG)
 				ntype = LONGLONG;
-				if (otype == LONG)
-					break;
-			} else if (v > MAX_INT)
+			else if (v > MAX_INT)
 				ntype = LONG;
 		} else {
 			if (v > MAX_LONGLONG) {
 				ntype = ULONGLONG;
-				if (otype == LONGLONG)
-					break;
 			} else if (v > MAX_ULONG) {
-				ntype = LONGLONG;
+				if (ntype < LONGLONG)
+					ntype = LONGLONG;
 			} else if (v > MAX_LONG) {
-				ntype = ULONG;
-				if (otype == LONG)
-					break;
+				if (ntype < ULONG)
+					ntype = ULONG;
 			} else if (v > MAX_UNSIGNED) {
-				ntype = LONG;
-			} else if (v > MAX_INT)
-				ntype = UNSIGNED;
+				if (ntype < LONG)
+					ntype = LONG;
+			} else if (v > MAX_INT) {
+				if (ntype < UNSIGNED)
+					ntype = UNSIGNED;
+			}
 		}
 		break;
 	case UNSIGNED:
 	case ULONG:
 		if (v > MAX_ULONG) {
 			ntype = ULONGLONG;
-			if (otype == ULONG)
-				break;
 		} else if (v > MAX_UNSIGNED)
 			ntype = ULONG;
 		break;	
@@ -518,51 +600,136 @@ cvtdig(int radix)
 }
 
 /*
- * Convert a character constant to an 8-bit integer.
+ * return value of escaped character constant
  */
-NODE *
+unsigned int
+esccon(char **sptr)
+{
+	unsigned int val;
+	char *wr = *sptr;
+	char c;
+
+	wr++;	/* skip \ */
+	switch (c = *wr++) {
+	case 'a': val = '\a'; break;
+	case 'b': val = '\b'; break;
+#ifdef GCC_COMPAT
+	case 'e': val = '\033'; break;
+#endif
+	case 'f': val = '\f'; break;
+	case 'n': val = '\n'; break;
+	case 'r': val = '\r'; break;
+	case 't': val = '\t'; break;
+	case 'v': val = '\v'; break;
+
+	case '\"': val = '\"'; break;
+	case '\'': val = '\''; break;
+	case '\?': val = '\?'; break;
+	case '\\': val = '\\'; break;
+
+	case 'x':
+		val = 0;
+		for (;;) {
+			c = *wr;
+			if (c >= '0' && c <= '9')
+				c = c - '0';
+			else if (c >= 'a' && c <= 'f')
+				c = c - 'a' + 10;
+			else if (c >= 'A' && c <= 'F')
+				c = c - 'A' + 10;
+			else
+				break;
+
+			val = (val << 4) + c;
+			wr++;
+		}
+		break;
+
+	case '0': case '1': case '2': case '3':
+	case '4': case '5': case '6': case '7':
+		val = (c - '0');
+		c = *wr;
+		if (c >= '0' && c <= '7') {
+			wr++;
+			val = (val << 3) + (c - '0');
+			c = *wr;
+			if (c >= '0' && c <= '7') {
+				wr++;
+				val = (val << 3) + (c - '0');
+			}
+		}
+		break;
+
+	default:
+		werror("unknown escape sequence \\%c", c);
+		val = c;
+		break;
+	}
+
+	*sptr = wr;
+	return val;
+}
+
+/*
+ * Convert (one) character constant to an int.
+ * Handle as unsigned except if only one character and char is signed.
+ */
+P1ND *
 charcon(void)
 {
-	int val = 0, i = 0;
+	unsigned int val = 0, i = 0;
 	char *pp = yytext;
 
-	if (*pp == 'L')
-		pp++;
-	pp++;
+	pp++;	/* skip ' */
 	while (*pp != '\'') {
-		val=esc2char(&pp);
+		val <<= SZCHAR; /* XXX big endian? */
+		if (*pp == '\\')
+			val |= esccon(&pp);
+		else
+			val |= (*pp++ & ((1 << SZCHAR)-1));
 		i++;
 	}
 
 	if (i == 0)
 		uerror("empty character constant");
+	else if (i == 1 && xuchar == 0)
+		val = (signed char)val; /* XXX other sizes of char? */
 	else if (i > 1)
-		werror("%d too many characters in character constant",i-1);
+		werror("too many characters in character constant");
+
 	return bcon(val);
 }
 
 /*
- * Convert a utf-8 character constant to an 32-bit integer.
+ * Convert a wide-character constant to an unsigned int
  */
-NODE *
+P1ND *
 wcharcon(void)
 {
 	unsigned int val = 0, i = 0;
 	char *pp = yytext;
 
-	if (*pp == 'L')
-		pp++;
-	pp++;
+	pp++;	/* skip L */
+	pp++;	/* skip ' */
 	while (*pp != '\'') {
-		if(*pp == '\\') val=esc2char(&pp);
-		else val=u82cp(&pp);
+		/*
+		 * although u82cp() does handle escaped values, we deal
+		 * with them directly since otherwise you can't process
+		 * values which might be valid utf8 prefix
+		 */
+		if (*pp == '\\')
+			val = esccon(&pp);
+		else
+			val = u82cp(&pp);
+
 		i++;
 	}
 
 	if (i == 0)
 		uerror("empty wide-character constant");
-	if (i > 1)
-		werror("%d too many characters in wide-character constant",i-1);
+	else if (i > 1)
+		werror("too many characters in wide-character constant");
+
 	return xbcon(val, NULL, ctype(UNSIGNED));
 }
 
@@ -599,7 +766,8 @@ control(int t)
 		if (*wr != '\"')
 			goto bad;
 		*wr++ = 0;
-		ftitle = addstring(eptr);
+		free(ftitle);
+		ftitle = xstrdup(eptr);
 		while (*wr == ' ')
 			wr++;
 		issyshdr = 0;
