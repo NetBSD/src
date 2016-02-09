@@ -1,5 +1,5 @@
-/*	Id: optim2.c,v 1.89 2014/06/01 11:33:52 ragge Exp 	*/	
-/*	$NetBSD: optim2.c,v 1.3 2014/07/24 20:12:50 plunky Exp $	*/
+/*	Id: optim2.c,v 1.92 2015/11/17 19:19:40 ragge Exp 	*/	
+/*	$NetBSD: optim2.c,v 1.4 2016/02/09 20:37:32 plunky Exp $	*/
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -316,13 +316,13 @@ listsetup(struct interpass *ipole, struct dlnod *dl)
 			case GOTO:
 				if (q->n_left->n_op == ICON) {
 					p->op = JBR;
-					p->labno = q->n_left->n_lval;
+					p->labno = getlval(q->n_left);
 				} else 
 					p->op = STMT;
 				break;
 			case CBRANCH:
 				p->op = CBR;
-				p->labno = q->n_right->n_lval;
+				p->labno = getlval(q->n_right);
 				break;
 			case ASSIGN:
 				/* remove ASSIGN to self for regs */
@@ -398,9 +398,9 @@ setlab(struct dlnod *p, int labno)
 {
 	p->labno = labno;
 	if (p->op == JBR)
-		p->dlip->ip_node->n_left->n_lval = labno;
+		setlval(p->dlip->ip_node->n_left, labno);
 	else if (p->op == CBR) {
-		p->dlip->ip_node->n_right->n_lval = labno;
+		setlval(p->dlip->ip_node->n_right, labno);
 		p->dlip->ip_node->n_left->n_label = labno;
 	} else
 		comperr("setlab bad op %d", p->op);
@@ -857,10 +857,10 @@ cfg_build(struct p2env *p2e)
 		p = bb->last->ip_node;
 		if (bb->last->type == IP_NODE && p->n_op == GOTO) {
 			if (p->n_left->n_op == ICON) {
-				if (p->n_left->n_lval - p2e->labinfo.low > p2e->labinfo.size)
+				if (getlval(p->n_left) - p2e->labinfo.low > p2e->labinfo.size)
 					comperr("Label out of range: %d, base %d", 
-					    p->n_left->n_lval, p2e->labinfo.low);
-				cnode->bblock = p2e->labinfo.arr[p->n_left->n_lval - p2e->labinfo.low];
+					    getlval(p->n_left), p2e->labinfo.low);
+				cnode->bblock = p2e->labinfo.arr[getlval(p->n_left) - p2e->labinfo.low];
 				SLIST_INSERT_LAST(&cnode->bblock->parents, pnode, cfgelem);
 				SLIST_INSERT_LAST(&bb->child, cnode, chld);
 			} else {
@@ -878,10 +878,10 @@ cfg_build(struct p2env *p2e)
 			continue;
 		}
 		if ((bb->last->type == IP_NODE) && p->n_op == CBRANCH) {
-			if (p->n_right->n_lval - p2e->labinfo.low > p2e->labinfo.size) 
-				comperr("Label out of range: %d", p->n_left->n_lval);
+			if (getlval(p->n_right) - p2e->labinfo.low > p2e->labinfo.size) 
+				comperr("Label out of range: %d", getlval(p->n_left));
 
-			cnode->bblock = p2e->labinfo.arr[p->n_right->n_lval - p2e->labinfo.low];
+			cnode->bblock = p2e->labinfo.arr[getlval(p->n_right) - p2e->labinfo.low];
 			SLIST_INSERT_LAST(&cnode->bblock->parents, pnode, cfgelem);
 			SLIST_INSERT_LAST(&bb->child, cnode, chld);
 			cnode = tmpalloc(sizeof(struct cfgnode));
@@ -1393,11 +1393,11 @@ removephi(struct p2env *p2e)
 
 				if (pip->type == IP_NODE && pip->ip_node->n_op == GOTO) {
 					BDEBUG((" GOTO "));
-					label = (int)pip->ip_node->n_left->n_lval;
+					label = (int)getlval(pip->ip_node->n_left);
 					complex = pred_goto ;
 				} else if (pip->type == IP_NODE && pip->ip_node->n_op == CBRANCH) {
 					BDEBUG((" CBRANCH "));
-					label = (int)pip->ip_node->n_right->n_lval;
+					label = (int)getlval(pip->ip_node->n_right);
 					
 					if (bb==p2e->labinfo.arr[label - p2e->ipp->ip_lblnum])
 						complex = pred_cond ;
@@ -1454,7 +1454,7 @@ removephi(struct p2env *p2e)
 					/* add a jump to us */
 					ip = ipnode(mkunode(GOTO, mklnode(ICON, label, 0, INT), 0, INT));
 					DLIST_INSERT_BEFORE((bb->first), ip, qelem);
-					pip->ip_node->n_right->n_lval=newlabel;
+					setlval(pip->ip_node->n_right,newlabel);
 					if (!logop(pip->ip_node->n_left->n_op))
 						comperr("SSA not logop");
 					pip->ip_node->n_left->n_label=newlabel;
@@ -1610,6 +1610,7 @@ void flownodeprint(NODE *p,FILE *flowdiagramfile);
 void
 flownodeprint(NODE *p,FILE *flowdiagramfile)
 {	
+	struct attr *ap;
 	int opty;
 	char *o;
 
@@ -1651,8 +1652,9 @@ flownodeprint(NODE *p,FILE *flowdiagramfile)
 		case USTCALL:
 		case STARG:
 		case STASG:
-			fprintf(flowdiagramfile, " size=%d", p->n_stsize );
-			fprintf(flowdiagramfile, " align=%d", p->n_stalign );
+			ap = attr_find(p->n_ap, ATTR_P2STRUCT);
+			fprintf(flowdiagramfile, " size=%d", ap->iarg(0));
+			fprintf(flowdiagramfile, " align=%d", ap->iarg(1));
 			break;
 	}
 	
@@ -1754,7 +1756,7 @@ printflowdiagram(struct p2env *p2e, char *type) {
 			struct interpass *pip=bbb->last;
 
 			if (pip->type == IP_NODE && pip->ip_node->n_op == CBRANCH) {
-				int label = (int)pip->ip_node->n_right->n_lval;
+				int label = (int)getlval(pip->ip_node->n_right);
 				
 				if (cn->bblock==p2e->labinfo.arr[label - p2e->ipp->ip_lblnum])
 					color="red";
@@ -1928,7 +1930,7 @@ void TraceSchedule(struct p2env* p2e)
 
 	map = tmpalloc(block_count * sizeof(struct block_map));
 
-	(void)map_blocks(p2e, map, block_count) ;
+	(void)map_blocks(p2e, map, block_count);
 
 	back = map[0].block->last ;
 	for (i=1; i < block_count; i++) {
