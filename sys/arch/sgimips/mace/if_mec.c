@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.51 2015/04/13 21:22:34 riastradh Exp $ */
+/* $NetBSD: if_mec.c,v 1.52 2016/02/09 08:32:10 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.51 2015/04/13 21:22:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.52 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 
@@ -1739,7 +1739,7 @@ mec_rxintr(struct mec_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* update RX pointer */

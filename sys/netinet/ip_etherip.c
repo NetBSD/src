@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.15 2015/08/24 22:21:26 pooka Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.16 2016/02/09 08:32:12 ozaki-r Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.15 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.16 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -259,7 +259,7 @@ ip_etherip_input(struct mbuf *m, ...)
 	ifp->if_ipackets++;
 
 	s = splnet();
-	(ifp->if_input)(ifp, m);
+	if_input(ifp, m);
 	splx(s);
 
 	return;

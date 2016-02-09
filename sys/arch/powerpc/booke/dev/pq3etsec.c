@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.25 2015/02/17 01:53:21 nonaka Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.26 2016/02/09 08:32:09 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.25 2015/02/17 01:53:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.26 2016/02/09 08:32:09 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1577,7 +1577,7 @@ pq3etsec_rx_input(
 	 */
 	int s = splnet();
 	bpf_mtap(ifp, m);
-	(*ifp->if_input)(ifp, m);
+	if_input(ifp, m);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.7 2016/02/09 08:32:09 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.7 2016/02/09 08:32:09 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1490,7 +1490,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 
 		/* Pass it on. */
 		sc->sc_evcnt_input.ev_count++;
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		fe_write(sc, RA_FE_PDMA_RX0_CPU_IDX, rx_cpu_idx);
 	}

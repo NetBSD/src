@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.48 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.49 2016/02/09 08:32:12 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.48 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.49 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -300,13 +300,14 @@ upl_attach(device_t parent, device_t self, void *aux)
 	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = 0;
 	ifp->if_output = upl_output;
-	ifp->if_input = upl_input;
+	ifp->_if_input = upl_input;
 	ifp->if_baudrate = 12000000;
 	ifp->if_dlt = DLT_RAW;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
-	if_attach(ifp);
+	if_initialize(ifp);
+	if_register(ifp);
 	if_alloc_sadl(ifp);
 
 	bpf_attach(ifp, DLT_RAW, 0);
@@ -546,7 +547,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->sc_dev),
 		    __func__, m->m_len));
 
-	(*(ifp)->if_input)((ifp), (m));
+	if_input((ifp), (m));
 
  done1:
 	splx(s);
