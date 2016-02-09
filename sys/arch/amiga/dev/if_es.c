@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.53 2015/05/20 09:17:17 ozaki-r Exp $ */
+/*	$NetBSD: if_es.c,v 1.54 2016/02/09 08:32:07 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.53 2015/05/20 09:17:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.54 2016/02/09 08:32:07 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -721,7 +721,7 @@ esrint(struct es_softc *sc)
 	 * the raw packet to bpf.
 	 */
 	bpf_mtap(ifp, top);
-	(*ifp->if_input)(ifp, top);
+	if_percpuq_enqueue(ifp->if_percpuq, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {
 		printf("%s: esintr busy on exit\n", device_xname(sc->sc_dev));

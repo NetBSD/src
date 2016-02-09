@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.13 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.14 2016/02/09 08:32:11 ozaki-r Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.13 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.14 2016/02/09 08:32:11 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1001,7 +1001,7 @@ lii_rxintr(struct lii_softc *sc)
 
 		bpf_mtap(ifp, m);
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	AT_WRITE_4(sc, ATL2_MB_RXD_RD_IDX, sc->sc_rxcur);

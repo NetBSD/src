@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.322 2016/01/21 15:41:29 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.323 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.322 2016/01/21 15:41:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.323 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -117,6 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.322 2016/01/21 15:41:29 riastradh Exp $");
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -198,6 +200,14 @@ static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
 static int if_clone_create(const char *);
 static int if_clone_destroy(const char *);
+
+struct if_percpuq {
+	struct ifnet	*ipq_ifp;
+	void		*ipq_si;
+	struct percpu	*ipq_ifqs;	/* struct ifqueue */
+};
+
+static struct mbuf *if_percpuq_dequeue(struct if_percpuq *);
 
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
@@ -649,13 +659,151 @@ if_register(ifnet_t *ifp)
 }
 
 /*
- * Deprecated. Use if_initialize and if_register instead.
+ * The if_percpuq framework
+ *
+ * It allows network device drivers to execute the network stack
+ * in softint (so called softint-based if_input). It utilizes
+ * softint and percpu ifqueue. It doesn't distribute any packets
+ * between CPUs, unlike pktqueue(9).
+ *
+ * Currently we support two options for device drivers to apply the framework:
+ * - Use it implicitly with less changes
+ *   - If you use if_attach in driver's _attach function and if_input in
+ *     driver's Rx interrupt handler, a packet is queued and a softint handles
+ *     the packet implicitly
+ * - Use it explicitly in each driver (recommended)
+ *   - You can use if_percpuq_* directly in your driver
+ *   - In this case, you need to allocate struct if_percpuq in driver's softc
+ *   - See wm(4) as a reference implementation
+ */
+
+static void
+if_percpuq_softint(void *arg)
+{
+	struct if_percpuq *ipq = arg;
+	struct ifnet *ifp = ipq->ipq_ifp;
+	struct mbuf *m;
+
+	while ((m = if_percpuq_dequeue(ipq)) != NULL)
+		ifp->_if_input(ifp, m);
+}
+
+static void
+if_percpuq_init_ifq(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct ifqueue *const ifq = p;
+
+	memset(ifq, 0, sizeof(*ifq));
+	ifq->ifq_maxlen = IFQ_MAXLEN;
+}
+
+struct if_percpuq *
+if_percpuq_create(struct ifnet *ifp)
+{
+	struct if_percpuq *ipq;
+
+	ipq = kmem_zalloc(sizeof(*ipq), KM_SLEEP);
+	if (ipq == NULL)
+		panic("kmem_zalloc failed");
+
+	ipq->ipq_ifp = ifp;
+	ipq->ipq_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	    if_percpuq_softint, ipq);
+	ipq->ipq_ifqs = percpu_alloc(sizeof(struct ifqueue));
+	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_init_ifq, NULL);
+
+	return ipq;
+}
+
+static struct mbuf *
+if_percpuq_dequeue(struct if_percpuq *ipq)
+{
+	struct mbuf *m;
+	struct ifqueue *ifq;
+	int s;
+
+	s = splnet();
+	ifq = percpu_getref(ipq->ipq_ifqs);
+	IF_DEQUEUE(ifq, m);
+	percpu_putref(ipq->ipq_ifqs);
+	splx(s);
+
+	return m;
+}
+
+static void
+if_percpuq_purge_ifq(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct ifqueue *const ifq = p;
+
+	IF_PURGE(ifq);
+}
+
+void
+if_percpuq_destroy(struct if_percpuq *ipq)
+{
+
+	/* if_detach may already destroy it */
+	if (ipq == NULL)
+		return;
+
+	softint_disestablish(ipq->ipq_si);
+	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_purge_ifq, NULL);
+	percpu_free(ipq->ipq_ifqs, sizeof(struct ifqueue));
+}
+
+void
+if_percpuq_enqueue(struct if_percpuq *ipq, struct mbuf *m)
+{
+	struct ifqueue *ifq;
+	int s;
+
+	KASSERT(ipq != NULL);
+
+	s = splnet();
+	ifq = percpu_getref(ipq->ipq_ifqs);
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
+		m_freem(m);
+		goto out;
+	}
+	IF_ENQUEUE(ifq, m);
+	percpu_putref(ipq->ipq_ifqs);
+
+	softint_schedule(ipq->ipq_si);
+out:
+	splx(s);
+}
+
+/*
+ * The common interface input routine that is called by device drivers,
+ * which should be used only when the driver's rx handler already runs
+ * in softint.
+ */
+void
+if_input(struct ifnet *ifp, struct mbuf *m)
+{
+
+	KASSERT(ifp->if_percpuq == NULL);
+	KASSERT(!cpu_intr_p());
+
+	ifp->_if_input(ifp, m);
+}
+
+/*
+ * DEPRECATED. Use if_initialize and if_register instead.
  * See the above comment of if_initialize.
+ *
+ * Note that it implicitly enables if_percpuq to make drivers easy to
+ * migrate softinet-based if_input without much changes. If you don't
+ * want to enable it, use if_initialize instead.
  */
 void
 if_attach(ifnet_t *ifp)
 {
+
 	if_initialize(ifp);
+	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
 }
 
@@ -702,7 +850,7 @@ if_deactivate(struct ifnet *ifp)
 	s = splnet();
 
 	ifp->if_output	 = if_nulloutput;
-	ifp->if_input	 = if_nullinput;
+	ifp->_if_input	 = if_nullinput;
 	ifp->if_start	 = if_nullstart;
 	ifp->if_ioctl	 = if_nullioctl;
 	ifp->if_init	 = if_nullinit;
@@ -924,6 +1072,11 @@ again:
 #endif
 	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
 	xc_wait(xc);
+
+	if (ifp->if_percpuq != NULL) {
+		if_percpuq_destroy(ifp->if_percpuq);
+		ifp->if_percpuq = NULL;
+	}
 
 	splx(s);
 }
