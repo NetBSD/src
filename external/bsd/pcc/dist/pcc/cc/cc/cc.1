@@ -1,5 +1,5 @@
-.\"	Id: cc.1,v 1.42 2014/06/20 19:07:34 plunky Exp 	
-.\"	$NetBSD: cc.1,v 1.6 2014/07/24 20:12:50 plunky Exp $
+.\"	Id: cc.1,v 1.43 2014/12/24 09:55:32 plunky Exp 	
+.\"	$NetBSD: cc.1,v 1.7 2016/02/09 20:37:32 plunky Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -313,7 +313,12 @@ preprocessor to remove the initial macro definition.
 .It Fl v
 Outputs the version of
 .Nm
-and shows what commands will be run with their command line arguments.
+and shows commands as they are run with their command line arguments.
+.It Fl ###
+As per
+.Fl v
+except that the commands are not run, and the arguments will be quoted
+if they contain unusual characters or spaces.
 .It Fl Wa Ns , Ns Ar options
 Comma separated list of options for the assembler.
 .It Fl Wc Ns , Ns Ar options
