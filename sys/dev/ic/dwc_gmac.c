@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.35 2016/02/09 08:32:10 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.35 2016/02/09 08:32:10 ozaki-r Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1127,7 +1127,7 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 
 		bpf_mtap(ifp, m);
 		ifp->if_ipackets++;
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 skip:
 		bus_dmamap_sync(sc->sc_dmat, data->rd_map, 0,

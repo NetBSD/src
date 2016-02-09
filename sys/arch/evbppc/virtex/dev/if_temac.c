@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.9 2012/07/22 14:32:51 matt Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.10 2016/02/09 08:32:08 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.9 2012/07/22 14:32:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.10 2016/02/09 08:32:08 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1211,7 +1211,7 @@ temac_rxreap(struct temac_softc *sc)
 		bpf_mtap(ifp, m);
 
 		ifp->if_ipackets++;
-		(ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		/* Refresh descriptor, bail out if we're out of buffers. */
 		if (temac_rxalloc(sc, tail, 1) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.39 2015/04/13 16:33:25 riastradh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.40 2016/02/09 08:32:12 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.39 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.40 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -722,7 +722,7 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	bpf_mtap(ifp, m);
 
-	(*(ifp)->if_input)((ifp), (m));
+	if_percpuq_enqueue((ifp)->if_percpuq, (m));
 
 done1:
 	splx(s);

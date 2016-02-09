@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.70 2015/04/14 21:09:48 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.71 2016/02/09 08:32:12 ozaki-r Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.70 2015/04/14 21:09:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.71 2016/02/09 08:32:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -798,7 +798,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->cue_dev),
 		    __func__, m->m_len));
-	(*(ifp)->if_input)((ifp), (m));
+	if_percpuq_enqueue(ifp->if_percpuq, m);
  done1:
 	splx(s);
 

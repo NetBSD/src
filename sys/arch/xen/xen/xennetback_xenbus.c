@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.54 2016/01/06 15:28:40 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.55 2016/02/09 08:32:10 ozaki-r Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.54 2016/01/06 15:28:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.55 2016/02/09 08:32:10 ozaki-r Exp $");
 
 #include "opt_xen.h"
 
@@ -891,7 +891,7 @@ so always copy for now.
 		ifp->if_ipackets++;
 		
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	xen_rmb(); /* be sure to read the request before updating pointer */
 	xneti->xni_txring.req_cons = req_cons;
