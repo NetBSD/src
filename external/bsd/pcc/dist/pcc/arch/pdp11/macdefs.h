@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.8 2014/06/01 11:35:03 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.4 2014/07/24 19:20:14 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.10 2015/11/24 17:35:12 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.5 2016/02/09 20:28:27 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -117,6 +117,7 @@ typedef long long OFFSZ;
 #undef	FIELDOPS		/* no bit-field instructions */
 #define TARGET_ENDIAN TARGET_LE /* XXX TARGET_PDP */
 #define	MYINSTRING
+#define	MYALIGN
 
 /* Definitions mostly used in pass2 */
 
@@ -126,7 +127,6 @@ typedef long long OFFSZ;
 #define STOARG(p)
 #define STOFARG(p)
 #define STOSTARG(p)
-#define genfcall(a,b)	gencall(a,b)
 
 #define	FINDMOPS	/* pdp11 has instructions that modifies memory */
 
@@ -234,3 +234,4 @@ int COLORMAP(int c, int *r);
 #define	SINCW		(MAXSPECIAL+3)	/* post-increment */
 #define	SARGSUB		(MAXSPECIAL+4)	/* arg pointer to array */
 #define	SARGINC		(MAXSPECIAL+5)	/* post-increment arg */
+#define NATIVE_FLOATING_POINT

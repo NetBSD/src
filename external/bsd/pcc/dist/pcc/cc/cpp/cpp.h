@@ -1,5 +1,5 @@
-/*	Id: cpp.h,v 1.68 2014/05/28 08:52:42 plunky Exp 	*/	
-/*	$NetBSD: cpp.h,v 1.1.1.6 2014/07/24 19:22:35 plunky Exp $	*/
+/*	Id: cpp.h,v 1.90 2016/02/06 09:39:21 ragge Exp 	*/	
+/*	$NetBSD: cpp.h,v 1.1.1.7 2016/02/09 20:28:42 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004,2010 Anders Magnusson (ragge@ludd.luth.se).
@@ -29,7 +29,6 @@
 #include <stdio.h>	/* for debug/printf */
 
 typedef unsigned char usch;
-extern usch yytext[];
 extern usch *stringbuf;
 
 extern	int	trulvl;
@@ -38,10 +37,10 @@ extern	int	elflvl;
 extern	int	elslvl;
 extern	int	dflag;
 extern	int	tflag, Aflag, Cflag, Pflag;
-extern	int	Mflag, dMflag, MPflag;
-extern	usch	*Mfile, *MPfile;
-extern	int	ofd;
+extern	int	Mflag, dMflag, MPflag, MMDflag;
+extern	char	*Mfile, *MPfile;
 extern	int	defining;
+extern	FILE	*of;
 
 /* args for lookup() */
 #define FIND    0
@@ -52,34 +51,31 @@ extern	int	defining;
 #if defined(mach_pdp11)
 #define CPPBUF  BUFSIZ
 #define	BUF_STACK
-#elif defined(os_win32)
-/* winxp seems to fail > 26608 bytes */
-#define CPPBUF	16384
 #else
-#define CPPBUF	(65536*2)
+#define CPPBUF	16384
 #endif
 #endif
 
 #define	MAXARGS	128	/* Max # of args to a macro. Should be enough */
 
-#define	NAMEMAX	CPPBUF	/* currently pushbackbuffer */
-#define	BBUFSZ	(NAMEMAX+CPPBUF+1)
+#define	PBMAX	10	/* min pushbackbuffer size */
+#define	BBUFSZ	(PBMAX+CPPBUF+1)
 
+#define	CTRLOC	0xf8	/* __COUNTER__ */
+#define	DEFLOC	0xf9	/* defined */
+#define	PRAGLOC	0xfa	/* _Pragma */
+#define	LINLOC	0xfb	/* __LINE__ */
+#define	FILLOC	0xfc	/* __FILE__ */
 #define GCCARG	0xfd	/* has gcc varargs that may be replaced with 0 */
 #define VARG	0xfe	/* has varargs */
 #define OBJCT	0xff
 #define WARN	1	/* SOH, not legal char */
 #define CONC	2	/* STX, not legal char */
 #define SNUFF	3	/* ETX, not legal char */
-#define	EBLOCK	4	/* EOT, not legal char */
-#define	PHOLD	5	/* ENQ, not legal char */
+#define	BLKID	4	/* EOT, not legal char */
 
 /* Used in macro expansion */
 #define RECMAX	10000			/* max # of recursive macros */
-extern struct symtab *norep[RECMAX];
-extern int norepptr;
-extern unsigned short bptr[RECMAX];
-extern int bidx;
 #define	MKB(l,h)	(l+((h)<<8))
 
 /* quick checks for some characters */
@@ -94,9 +90,15 @@ extern int bidx;
 
 extern usch spechr[];
 
-#define iswsnl(x)	(spechr[x] & (C_WSNL))
+#define ISWSNL(x)	(spechr[x] & (C_WSNL))
+#define ISWS(x)		((x) == '\t' || (x) == ' ')
+#define ISID(x)		(spechr[x] & C_ID)
+#define ISID0(x)	(spechr[x] & C_ID0)
+#define	ISDIGIT(x)	(spechr[x] & C_DIGIT)
 
-/* definition for include file info */
+/*
+ * definition for include file info
+ */
 struct includ {
 	struct includ *next;
 	const usch *fname;	/* current fn, changed if #line found */
@@ -136,6 +138,16 @@ struct initar {
 	char *str;
 };
 
+/* buffer definition */
+struct iobuf {
+	usch *buf;
+	usch *cptr;
+	usch *bsz;
+	int ro:1, inuse:1;
+};
+extern struct iobuf *obufp;
+extern struct iobuf *ibufp;
+
 /*
  * Struct used in parse tree evaluation.
  * op is one of:
@@ -149,16 +161,20 @@ struct nd {
 		unsigned long long uval;
 	} n;
 };
+extern struct nd yynode;
 
 #define nd_val n.val
 #define nd_uval n.uval
 
+enum { NUMBER = 257, UNUMBER, LS, RS, EQ, NE, STRING, WSPACE, CMNT, IDENT,
+	OROR, ANDAND, DEFINED, LE, GE };
+
+#define	SLO_IGNOREWS	001
+
 struct symtab *lookup(const usch *namep, int enterf);
-usch *gotident(struct symtab *nl);
-int submac(struct symtab *nl, int);
+struct blocker;
+struct iobuf *submac(struct symtab *nl, int, struct iobuf *, struct blocker *);
 int kfind(struct symtab *nl);
-int doexp(void);
-int donex(void);
 void ppdir(void);
 
 void define(void);
@@ -167,26 +183,22 @@ void include_next(void);
 void line(void);
 
 int pushfile(const usch *fname, const usch *fn, int idx, void *incs);
-void popfile(void);
-void prtline(void);
+void prtline(int nl);
 int yylex(void);
-int sloscan(void);
 void cunput(int);
-int curline(void);
-char *curfile(void);
-void setline(int);
-void setfile(char *);
 int yyparse(void);
-void unpstr(const usch *);
 usch *savstr(const usch *str);
 void savch(int c);
-void mainscan(void);
 void putch(int);
 void putstr(const usch *s);
-void line(void);
 usch *sheap(const char *fmt, ...);
 void warning(const char *fmt, ...);
 void error(const char *fmt, ...);
 int cinput(void);
-void getcmnt(void);
-void xwrite(int, const void *, unsigned int);
+int inc2(void);
+int Ccmnt(void (*d)(int));
+usch *heapid(int ch);
+void faststr(int bc, void (*d)(int));
+int fastnum(int ch, void (*d)(int));
+
+

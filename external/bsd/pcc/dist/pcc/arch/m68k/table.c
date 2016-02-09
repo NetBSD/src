@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.7 2014/04/08 19:51:31 ragge Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.1 2014/07/24 19:21:36 plunky Exp $	*/
+/*	Id: table.c,v 1.13 2015/10/27 14:48:50 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.2 2016/02/09 20:28:35 plunky Exp $	*/
 /*
  * Copyright (c) 2014 Anders Magnusson (ragge@ludd.ltu.se).
  * All rights reserved.
@@ -273,12 +273,12 @@ struct optab table[] = {
 	SDREG,	TFLOAT,
 	SAREG,	TUNSIGNED,
 		NAREG|NDREG|NDSL,	RESC1,
-		"Z2	fcmp.d #0x4f000000,A2\n"
+		"Z2	fcmp.s #0x4f000000,A2\n"
 		"	fjge 2f\n"
 		"	fintrz.x A2,A2\n"
 		"	fmove.l A2,A1\n"
 		"	jra 3f\n"
-		"2:	fsub.d #0x4f000000,A2\n"
+		"2:	fsub.s #0x4f000000,A2\n"
 		"	fintrz.x A2,A2\n"
 		"	fmove.l A2,A1\n"
 		"	add.l #-2147483648,A1\n3:\n", },
@@ -443,7 +443,7 @@ struct optab table[] = {
 		0,	0,
 		"	sub.l AR,AL\n", },
 
-{ MINUS, FOREFF|INAREG,
+{ MINUS, INAREG,
 	SBREG,		TPOINT,
 	SBREG,		TPOINT,
 		NAREG,	RESC1,
@@ -534,13 +534,13 @@ struct optab table[] = {
 		0,	RLEFT|RESCC,
 		"	neg.ZA AL\n", },
 
-{ UMINUS,	FOREFF|INDREG|FORCC,
+{ UMINUS,	INDREG|FORCC,
 	SDREG,	TFP,
 	SDREG,	TFP,
 		NDREG,	RESC1|RESCC,
 		"	fmovecr #0xf,A1\n	fsub.x AL,A1\n", },
 
-{ UMINUS,	FOREFF|INDREG|FORCC,
+{ UMINUS,	INDREG|FORCC,
 	SNAME|SOREG,	TFP,
 	SDREG,		TFP,
 		NDREG,	RESC1|RESCC,
@@ -656,14 +656,14 @@ struct optab table[] = {
  * DIV/MOD/MUL 
  */
 { DIV,	INAREG,
-	SAREG,			TINT,
 	SAREG|SNAME|SOREG,	TINT,
+	SAREG,			TINT,
 		0,	RLEFT,
 		"	divs.l AR,AL\n", },
 
 { DIV,	INAREG,
-	SAREG,			TUNSIGNED,
 	SAREG|SNAME|SOREG,	TUNSIGNED,
+	SAREG,			TUNSIGNED,
 		0,	RLEFT,
 		"	divu.l AR,AL\n", },
 
@@ -688,18 +688,18 @@ struct optab table[] = {
 { MOD,	INAREG,
 	SAREG,			TINT,
 	SAREG|SNAME|SOREG,	TINT,
-		NAREG,	RESC1,
-		"	divsl.l AR,A1:AL\n", },
+		NAREG*2,	RESC1,
+		"mov.l AL,A2\n	divsl.l AR,A1:A2\n", },
 
 { MOD,	INAREG,
 	SAREG,			TUNSIGNED,
 	SAREG|SNAME|SOREG,	TUNSIGNED,
-		NAREG,	RESC1,
-		"	divul.l AR,A1:AL\n", },
+		NAREG*2,	RESC1,
+		"mov.l AL,A2\n	divul.l AR,A1:A2\n", },
 
 { MUL,	INAREG,
-	SAREG,			TWORD,
 	SAREG|SNAME|SOREG,	TWORD,
+	SAREG,			TWORD,
 		0,	RLEFT,
 		"	muls.l AR,AL\n", },
 
@@ -730,13 +730,13 @@ struct optab table[] = {
 	SCON,	TANY,
 	SANY,	TANY,
 		0,	0,
-		"	jsr CL\n", },
+		"	ZC CL\n", },
 
 { CALL,		FOREFF,
 	SCON,	TANY,
 	SANY,	TANY,
 		0,	0,
-		"	jsr CL\nZB", },
+		"	ZC CL\nZB", },
 
 { UCALL,	FOREFF,
 	SBREG,	TANY,
@@ -755,13 +755,13 @@ struct optab table[] = {
 	SCON,	TANY,
 	SAREG,	TAREG,
 		NAREG|NASL,	RESC1,
-		"	jsr CL\n", },
+		"	ZC CL\n", },
 
 { CALL,		INAREG,
 	SCON,	TANY,
 	SAREG,	TAREG,
 		NAREG|NASL,	RESC1,
-		"	jsr CL\nZB", },
+		"	ZC CL\nZB", },
 
 { UCALL,	INAREG,
 	SBREG,	TANY,
@@ -780,13 +780,13 @@ struct optab table[] = {
 	SCON,	TANY,
 	SCREG,	TLL,
 		NCREG|NCSL,	RESC1,
-		"	jsr CL\n", },
+		"	ZC CL\n", },
 
 { CALL,		INCREG,
 	SCON,	TANY,
 	SCREG,	TLL,
 		NCREG|NCSL,	RESC1,
-		"	jsr CL\nZB", },
+		"	ZC CL\nZB", },
 
 { UCALL,	INCREG,
 	SBREG,	TANY,
@@ -805,13 +805,13 @@ struct optab table[] = {
 	SCON,	TANY,
 	SDREG,	TFP,
 		NDREG|NDSL,	RESC1,
-		"	jsr CL\n", },
+		"	ZC CL\n", },
 
 { CALL,		INDREG,
 	SCON,	TANY,
 	SDREG,	TFP,
 		NDREG|NDSL,	RESC1,
-		"	jsr CL\nZB", },
+		"	ZC CL\nZB", },
 
 { UCALL,	INDREG,
 	SBREG,	TANY,
@@ -830,13 +830,13 @@ struct optab table[] = {
 	SCON,	TANY,
 	SBREG,	TWORD|TPOINT,
 		NBREG|NBSL,	RESC1,
-		"	jsr CL\n", },
+		"	ZC CL\n", },
 
 { CALL,		INBREG,
 	SCON,	TANY,
 	SBREG,	TWORD|TPOINT,
 		NBREG|NBSL,	RESC1,
-		"	jsr CL\nZB", },
+		"	ZC CL\nZB", },
 
 { UCALL,	INBREG,
 	SBREG,	TANY,
@@ -856,13 +856,13 @@ struct optab table[] = {
 	SCON,	TANY,
 	SBREG,	TWORD|TPOINT,
 		NBREG|NBSL,	RESC1,
-		"ZP	jsr CL\n", },
+		"ZP	ZC CL\n", },
 
 { STCALL,	INBREG|FOREFF,
 	SCON,	TANY,
 	SBREG,	TWORD|TPOINT,
 		NBREG|NBSL,	RESC1,
-		"ZP	jsr CL\nZB", },
+		"ZP	ZC CL\nZB", },
 
 { USTCALL,	INBREG|FOREFF,
 	SBREG,	TANY,
@@ -935,7 +935,7 @@ struct optab table[] = {
 		"ZD", },
 #endif
 
-{ OPLOG,	FORCC,
+{ OPLOG,	INCREG|FORCC,
 	SCREG,	TLL,
 	SCREG,	TLL,
 		0,	RESCC|RLEFT, /* trash left nodes */
@@ -975,6 +975,14 @@ struct optab table[] = {
 	SANY,	TANY,
 		0,	RNOP,
 		"	jmp LL\n", },
+
+#if defined(GCC_COMPAT) || defined(LANG_F77)
+{ GOTO,		FOREFF,
+	SBREG,	TANY,
+	SANY,	TANY,
+		0,	RNOP,
+		"	jmp (AL)\n", },
+#endif
 
 # define DF(x) FORREW,SANY,TANY,SANY,TANY,REWRITE,x,""
 

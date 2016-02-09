@@ -19,3 +19,15 @@ testing that pp-numbers are parsed correctly
 
 
 FOO.123.foo.456+FOO+789.foo
+
+
+0xfaff
+
+
+
+0xfe00
+
+
+
+0xfeff
+
