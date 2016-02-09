@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.24 2015/08/02 11:55:28 mlelstv Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.25 2016/02/09 08:32:12 ozaki-r Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1410,7 +1410,7 @@ smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		/* push the packet up */
 		s = splnet();
 		bpf_mtap(ifp, m);
-		ifp->if_input(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		splx(s);
 	}
 

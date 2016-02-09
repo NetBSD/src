@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.81 2012/12/07 05:45:17 msaitoh Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.82 2016/02/09 08:32:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.81 2012/12/07 05:45:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.82 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1517,7 +1517,7 @@ done:
 	bpf_mtap(ifp, m);
 	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
 	ifp->if_ipackets++;
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*

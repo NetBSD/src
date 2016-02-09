@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.29 2015/06/28 15:13:28 maxv Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.30 2016/02/09 08:32:08 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.29 2015/06/28 15:13:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.30 2016/02/09 08:32:08 ozaki-r Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1055,7 +1055,7 @@ npe_rxdone(int qid, void *arg)
 			 * Tap off here if there is a bpf listener.
 			 */
 			bpf_mtap(ifp, mrx);
-			ifp->if_input(ifp, mrx);
+			if_percpuq_enqueue(ifp->if_percpuq, mrx);
 		} else {
 fail:
 			/* discard frame and re-use mbuf */

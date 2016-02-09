@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.34 2012/10/27 17:18:23 chs Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.35 2016/02/09 08:32:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.34 2012/10/27 17:18:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.35 2016/02/09 08:32:10 ozaki-r Exp $");
 #endif
 
 
@@ -1048,7 +1048,7 @@ ndis_rxeof(ndis_handle adapter, ndis_packet **packets, uint32_t pktcnt)
 
 			bpf_mtap(ifp, m0);
 
-			(*ifp->if_input)(ifp, m0);
+			if_percpuq_enqueue(ifp->if_percpuq, m0);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.35 2015/05/20 09:17:17 ozaki-r Exp $ */
+/* $NetBSD: if_ie.c,v 1.36 2016/02/09 08:32:07 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.35 2015/05/20 09:17:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.36 2016/02/09 08:32:07 ozaki-r Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1282,7 +1282,7 @@ ie_read_frame(struct ie_softc *sc, int num)
 
     bpf_mtap(ifp, m);
 
-    (*ifp->if_input)(ifp, m);
+    if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.43 2014/10/18 08:33:26 snj Exp $ */
+/* $NetBSD: sbmac.c,v 1.44 2016/02/09 08:32:09 ozaki-r Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43 2014/10/18 08:33:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.44 2016/02/09 08:32:09 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -938,7 +938,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			/*
 			 * Pass the buffer to the kernel
 			 */
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 		} else {
 			/*
 			 * Packet was mangled somehow.  Just drop it and

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.46 2012/07/22 14:32:51 matt Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.47 2016/02/09 08:32:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.46 2012/07/22 14:32:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.47 2016/02/09 08:32:08 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -502,7 +502,7 @@ bmac_rint(void *v)
 		 * If so, hand off the raw packet to BPF.
 		 */
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		ifp->if_ipackets++;
 
 next:

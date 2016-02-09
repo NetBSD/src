@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.45 2015/04/13 16:33:25 riastradh Exp $ */
+/*	$NetBSD: if_age.c,v 1.46 2016/02/09 08:32:11 ozaki-r Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.45 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.46 2016/02/09 08:32:11 ozaki-r Exp $");
 
 #include "vlan.h"
 
@@ -1505,7 +1505,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 
 			bpf_mtap(ifp, m);
 			/* Pass it on. */
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 
 			/* Reset mbuf chains. */
 			AGE_RXCHAIN_RESET(sc);
