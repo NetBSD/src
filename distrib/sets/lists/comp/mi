@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2017 2016/02/02 12:22:23 pooka Exp $
+#	$NetBSD: mi,v 1.2018 2016/02/09 20:42:44 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -74,6 +74,7 @@
 ./usr/bin/objdump				comp-util-bin		binutils
 ./usr/bin/p++					comp-cxx-bin		pcc,cxx
 ./usr/bin/pcc					comp-c-bin		pcc
+./usr/bin/pcpp					comp-c-bin		pcc
 ./usr/bin/protoize				comp-obsolete		obsolete
 ./usr/bin/ranlib				comp-util-bin		binutils
 ./usr/bin/rcs2log				comp-cvs-bin		cvs
