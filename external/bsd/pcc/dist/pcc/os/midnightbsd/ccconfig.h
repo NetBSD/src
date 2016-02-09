@@ -1,5 +1,5 @@
-/* Id: ccconfig.h,v 1.5 2011/06/04 19:27:25 plunky Exp  */	
-/* $NetBSD: ccconfig.h,v 1.1.1.3 2011/09/01 12:47:17 plunky Exp $ */
+/* Id: ccconfig.h,v 1.7 2014/12/24 08:43:28 plunky Exp  */	
+/* $NetBSD: ccconfig.h,v 1.1.1.4 2016/02/09 20:29:20 plunky Exp $ */
 /*-
  * Copyright (c) 2007, 2008
  *	Thorsten Glaser <tg@mirbsd.de>
@@ -26,10 +26,6 @@
 
 /* === mi part === */
 
-#ifndef LIBDIR
-#define LIBDIR			"/usr/lib/"
-#endif
-
 /* cpp MI defines */
 #define CPPADD			{		\
 	"-D__MidnightBSD__",			\
@@ -43,62 +39,13 @@
 }
 
 /* for dynamically linked binaries */
-#define DYNLINKER		{		\
-	"-dynamic-linker",			\
-	"/libexec/ld-elf.so.1",			\
-	NULL					\
-}
-#define STARTFILES		{		\
-	LIBDIR "crti.o",			\
-	LIBDIR "crtbegin.o",			\
-	NULL					\
-}
-#define ENDFILES		{		\
-	LIBDIR "crtend.o",			\
-	LIBDIR "crtn.o",			\
-	NULL					\
-}
-
-/* for shared libraries */
-#define STARTFILES_S		{		\
-	LIBDIR "crti.o",			\
-	LIBDIR "crtbeginS.o",			\
-	NULL					\
-}
-#define ENDFILES_S		{		\
-	LIBDIR "crtendS.o",			\
-	LIBDIR "crtn.o",			\
-	NULL					\
-}
-
-/* for statically linked binaries */
-#define STARTFILES_T		{		\
-	LIBDIR "crti.o",			\
-	LIBDIR "crtbeginT.o",			\
-	NULL					\
-}
-#define ENDFILES_T		{		\
-	LIBDIR "crtend.o",			\
-	LIBDIR "crtn.o",			\
-	NULL					\
-}
-
-#define LIBCLIBS		{		\
-	"-lc",					\
-	"-lpcc",				\
-	NULL					\
-}
-#define LIBCLIBS_PROFILE	{		\
-	"-lc_p",				\
-	"-lpcc",				\
-	NULL					\
-}
-
+#define	DYNLINKLIB	"/libexec/ld-elf.so.1"
 
 /* C run-time startup */
-#define CRT0FILE		LIBDIR "crt1.o"
-#define CRT0FILE_PROFILE	LIBDIR "gcrt1.o"
-#define STARTLABEL		"_start"
+#define CRT0		"crt1.o"
+#define GCRT0		"gcrt1.o"
+
+#define CRTEND_T	"crtend.o"
 
 /* === md part === */
 

@@ -1,5 +1,5 @@
-/*	Id: inline.c,v 1.5 2014/05/29 19:20:03 plunky Exp 	*/	
-/*	$NetBSD: inline.c,v 1.1.1.3 2014/07/24 19:26:25 plunky Exp $	*/
+/*	Id: inline.c,v 1.6 2015/11/24 17:30:20 ragge Exp 	*/	
+/*	$NetBSD: inline.c,v 1.1.1.4 2016/02/09 20:28:59 plunky Exp $	*/
 /*
  * Copyright (c) 2003, 2008 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -277,9 +277,9 @@ puto(struct istat *w)
 
 				p = nip->ip_node = ccopy(nip->ip_node);
 				if (p->n_op == GOTO)
-					p->n_left->n_lval += lbloff;
+					glval(p->n_left) += lbloff;
 				else if (p->n_op == CBRANCH)
-					p->n_right->n_lval += lbloff;
+					glval(p->n_right) += lbloff;
 			} else if (nip->type == IP_DEFLAB)
 				nip->ip_lbl += lbloff;
 			pass2_compile(nip);
@@ -473,9 +473,9 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 		case IP_NODE:
 			p = ccopy(ip->ip_node);
 			if (p->n_op == GOTO)
-				p->n_left->n_lval += lmin;
+				glval(p->n_left) += lmin;
 			else if (p->n_op == CBRANCH)
-				p->n_right->n_lval += lmin;
+				glval(p->n_right) += lmin;
 			walkf(p, rtmps, 0);
 #ifdef PCC_DEBUG
 			if (sdebug) {

@@ -1,5 +1,5 @@
-/*	Id: pass1.h,v 1.10 2014/05/03 09:47:51 ragge Exp 	*/	
-/*	$NetBSD: pass1.h,v 1.1.1.3 2014/07/24 19:26:39 plunky Exp $	*/
+/*	Id: pass1.h,v 1.19 2015/11/24 17:30:20 ragge Exp 	*/	
+/*	$NetBSD: pass1.h,v 1.1.1.4 2016/02/09 20:28:59 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -42,6 +42,7 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+#include <stdlib.h>
 
 #ifndef MKEXT
 #include "external.h"
@@ -49,6 +50,7 @@
 typedef unsigned int bittype; /* XXX - for basicblock */
 #endif
 #include "manifest.h"
+#include "softfloat.h"
 
 /*
  * Storage classes
@@ -397,56 +399,9 @@ NODE *rmpconv(NODE *);
 #endif
 NODE *nlabel(int label);
 int isbuiltin(char *n);
+char *getexname(struct symtab *);
 
-#ifdef SOFTFLOAT
-typedef struct softfloat SF;
-SF soft_neg(SF);
-SF soft_cast(CONSZ v, TWORD);
-SF soft_plus(SF, SF);
-SF soft_minus(SF, SF);
-SF soft_mul(SF, SF);
-SF soft_div(SF, SF);
-int soft_cmp_eq(SF, SF);
-int soft_cmp_ne(SF, SF);
-int soft_cmp_ge(SF, SF);
-int soft_cmp_gt(SF, SF);
-int soft_cmp_le(SF, SF);
-int soft_cmp_lt(SF, SF);
-int soft_isz(SF);
-CONSZ soft_val(SF);
-#define FLOAT_NEG(sf)		soft_neg(sf)
-#define	FLOAT_CAST(v,t)		soft_cast(v, t)
-#define	FLOAT_PLUS(x1,x2)	soft_plus(x1, x2)
-#define	FLOAT_MINUS(x1,x2)	soft_minus(x1, x2)
-#define	FLOAT_MUL(x1,x2)	soft_mul(x1, x2)
-#define	FLOAT_DIV(x1,x2)	soft_div(x1, x2)
-#define	FLOAT_ISZERO(sf)	soft_isz(sf)
-#define	FLOAT_VAL(sf)		soft_val(sf)
-#define FLOAT_EQ(x1,x2)		soft_cmp_eq(x1, x2)
-#define FLOAT_NE(x1,x2)		soft_cmp_ne(x1, x2)
-#define FLOAT_GE(x1,x2)		soft_cmp_ge(x1, x2)
-#define FLOAT_GT(x1,x2)		soft_cmp_gt(x1, x2)
-#define FLOAT_LE(x1,x2)		soft_cmp_le(x1, x2)
-#define FLOAT_LT(x1,x2)		soft_cmp_lt(x1, x2)
-#else
-#define	FLOAT_NEG(p)		-(p)
-#define	FLOAT_CAST(p,v)		(ISUNSIGNED(v) ? \
-		(long double)(U_CONSZ)(p) : (long double)(CONSZ)(p))
-#define	FLOAT_PLUS(x1,x2)	(x1) + (x2)
-#define	FLOAT_MINUS(x1,x2)	(x1) - (x2)
-#define	FLOAT_MUL(x1,x2)	(x1) * (x2)
-#define	FLOAT_DIV(x1,x2)	(x1) / (x2)
-#define	FLOAT_ISZERO(p)		(p) == 0.0
-#define FLOAT_VAL(p)		(CONSZ)(p)
-#define FLOAT_EQ(x1,x2)		(x1) == (x2)
-#define FLOAT_NE(x1,x2)		(x1) != (x2)
-#define FLOAT_GE(x1,x2)		(x1) >= (x2)
-#define FLOAT_GT(x1,x2)		(x1) > (x2)
-#define FLOAT_LE(x1,x2)		(x1) <= (x2)
-#define FLOAT_LT(x1,x2)		(x1) < (x2)
-#endif
-
-enum {	ATTR_NONE,
+enum {	ATTR_FIRST = ATTR_MI_MAX + 1,
 
 	/* PCC used attributes */
 	ATTR_COMPLEX,	/* Internal definition of complex */
@@ -455,6 +410,8 @@ enum {	ATTR_NONE,
 	ATTR_ALIGNED,
 	ATTR_STRUCT,	/* Internal; element list */
 #define	ATTR_MAX ATTR_STRUCT
+
+	ATTR_SONAME,
 
 #ifdef GCC_COMPAT
 	/* type attributes */
@@ -483,8 +440,6 @@ enum {	ATTR_NONE,
 	GCC_ATYP_CONSTRUCTOR,
 	GCC_ATYP_DESTRUCTOR,
 	GCC_ATYP_VISIBILITY,
-	GCC_ATYP_STDCALL,
-	GCC_ATYP_CDECL,
 	GCC_ATYP_WARN_UNUSED_RESULT,
 	GCC_ATYP_USED,
 	GCC_ATYP_NO_INSTR_FUN,
@@ -496,12 +451,18 @@ enum {	ATTR_NONE,
 	GCC_ATYP_TLSMODEL,
 	GCC_ATYP_ALIASWEAK,
 	GCC_ATYP_REGPARM,
+	GCC_ATYP_FASTCALL,
 
 	/* other stuff */
 	GCC_ATYP_BOUNDED,	/* OpenBSD extra boundary checks */
 
-	GCC_ATYP_MAX
+	GCC_ATYP_MAX,
 #endif
+#ifdef ATTR_P1_TARGET
+	ATTR_P1_TARGET,
+#endif
+	ATTR_P1_MAX
+
 };
 
 
@@ -539,12 +500,6 @@ struct attr *gcc_attr_parse(NODE *);
 void gcc_tcattrfix(NODE *);
 struct gcc_attrib *gcc_get_attr(struct suedef *, int);
 void dump_attr(struct attr *gap);
-
-struct attr *attr_add(struct attr *orig, struct attr *new);
-struct attr *attr_new(int, int);
-struct attr *attr_find(struct attr *, int);
-struct attr *attr_copy(struct attr *src, struct attr *dst, int nelem);
-struct attr *attr_dup(struct attr *ap, int n);
 
 #ifndef NO_C_BUILTINS
 struct bitable {
@@ -599,6 +554,12 @@ void stabs_struct(struct symtab *, struct attr *);
 #error int size unknown
 #endif
 
+#ifdef TWOPASS
+#define PRTPREF "* "  
+#else
+#define PRTPREF "" 
+#endif 
+
 /* Generate a bitmask from a given type size */
 #define SZMASK(y) ((((1LL << ((y)-1))-1) << 1) | 1)
 
@@ -644,6 +605,7 @@ void stabs_struct(struct symtab *, struct attr *);
 #define XIMAG		(MAXOP+32)
 #define TYMERGE		(MAXOP+33)
 #define LABEL		(MAXOP+34)
+#define STREF		(MAXOP+35)
 
 /*
  * The following types are only used in pass1.
@@ -666,6 +628,9 @@ void stabs_struct(struct symtab *, struct attr *);
 #define coptype(o)	(cdope(o)&TYFLG)
 #define clogop(o)	(cdope(o)&LOGFLG)
 #define casgop(o)	(cdope(o)&ASGFLG)
+
+#define	slval	setlval
+#define	glval	getlval
 
 #include <cxxdefs.h>
 

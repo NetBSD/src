@@ -1,5 +1,5 @@
-/*	Id: order.c,v 1.4 2014/04/08 19:51:31 ragge Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.1 2014/07/24 19:21:25 plunky Exp $	*/
+/*	Id: order.c,v 1.5 2016/01/30 17:26:19 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.2 2016/02/09 20:28:35 plunky Exp $	*/
 /*
  * Copyright (c) 2014 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -67,7 +67,7 @@ offstar(NODE *p, int shape)
 
 	q = p->n_right;
 	if ((p->n_op == PLUS || p->n_op == MINUS) && q->n_op == ICON &&
-	    notoff(0, 0, q->n_lval, 0) == 0 && !isreg(p->n_left)) {
+	    notoff(0, 0, getlval(q), 0) == 0 && !isreg(p->n_left)) {
 		(void)geninsn(p->n_left, INBREG);
 		return;
 	}

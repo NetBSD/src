@@ -1,5 +1,5 @@
-/*	Id: order.c,v 1.61 2014/06/04 06:43:49 gmcgarry Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.5 2014/07/24 19:17:25 plunky Exp $	*/
+/*	Id: order.c,v 1.63 2015/11/17 19:19:40 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.6 2016/02/09 20:28:17 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -67,7 +67,7 @@ offstar(NODE *p, int shape)
 			return;
 		}
 		if (r->n_op == LS && r->n_right->n_op == ICON &&
-		    r->n_right->n_lval == 2 && p->n_op == PLUS) {
+		    getlval(r->n_right) == 2 && p->n_op == PLUS) {
 			if (isreg(p->n_left) == 0)
 				(void)geninsn(p->n_left, INAREG);
 			if (isreg(r->n_left) == 0)
@@ -91,10 +91,10 @@ myormake(NODE *q)
 
 	p = q->n_left;
 	if (p->n_op == PLUS && (r = p->n_right)->n_op == LS &&
-	    r->n_right->n_op == ICON && r->n_right->n_lval == 2 &&
+	    r->n_right->n_op == ICON && getlval(r->n_right) == 2 &&
 	    p->n_left->n_op == REG && r->n_left->n_op == REG) {
 		q->n_op = OREG;
-		q->n_lval = 0;
+		setlval(q, 0);
 		q->n_rval = R2PACK(p->n_left->n_rval, r->n_left->n_rval, 0);
 		tfree(p);
 	}
@@ -162,7 +162,7 @@ nspecial(struct optab *q)
 	case STASG:
 		{
 			static struct rspecial s[] = {
-				{ NEVER, EDI },
+				{ NEVER, EDI }, { NEVER, ESI },
 				{ NRIGHT, ESI }, { NOLEFT, ESI },
 				{ NOLEFT, ECX }, { NORIGHT, ECX },
 				{ NEVER, ECX }, { 0 } };
