@@ -38,7 +38,7 @@
 #define SZLONGLONG	64
 #define SZFLOAT		32
 #define SZDOUBLE	64
-#define SZLDOUBLE	96	/* actually 80 */
+#define SZLDOUBLE	128
 
 /*
  * Alignment constraints
@@ -46,16 +46,16 @@
 #define ALCHAR		8
 #define ALBOOL		8
 #define ALSHORT		16
-#define ALINT		16
-#define ALLONG		16
-#define ALPOINT		16
-#define ALLONGLONG	16
-#define ALFLOAT		16
-#define ALDOUBLE	16
-#define ALLDOUBLE	16
+#define ALINT		32
+#define ALLONG		32
+#define ALPOINT		32
+#define ALLONGLONG	64
+#define ALFLOAT		32
+#define ALDOUBLE	64
+#define ALLDOUBLE	32	/* ???? */
 /* #undef ALSTRUCT	m68k struct alignment is member defined */
-#define ALSTACK		16
-#define ALMAX		16 
+#define ALSTACK		32
+#define ALMAX		64 
 
 /*
  * Min/max values.
@@ -69,9 +69,9 @@
 #define MIN_INT		(-0x7fffffff-1)
 #define MAX_INT		0x7fffffff
 #define MAX_UNSIGNED	0xffffffffU
-#define MIN_LONG	0x8000000000000000LL
-#define MAX_LONG	0x7fffffffffffffffLL
-#define MAX_ULONG	0xffffffffffffffffULL
+#define MIN_LONG	MIN_INT
+#define MAX_LONG	MAX_INT
+#define MAX_ULONG	MAX_UNSIGNED
 #define MIN_LONGLONG	0x8000000000000000LL
 #define MAX_LONGLONG	0x7fffffffffffffffLL
 #define MAX_ULONGLONG	0xffffffffffffffffULL
@@ -242,3 +242,11 @@ int COLORMAP(int c, int *r);
 
 #define HAVE_WEAKREF
 #define TARGET_FLT_EVAL_METHOD	2	/* all as long double */
+
+/*
+ * Extended assembler macros.
+ */
+int targarg(char *w, void *arg);
+#define XASM_TARGARG(w, ary) (w[1] == 'b' ? w++, 0 : targarg(w, ary))
+
+#define NATIVE_FLOATING_POINT
