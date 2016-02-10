@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.24 2015/06/01 06:14:43 matt Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.25 2016/02/10 06:30:23 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -322,6 +322,7 @@ struct bridge_softc {
 	kmutex_t		*sc_rtlist_lock;
 	pserialize_t		sc_rtlist_psz;
 	struct workqueue	*sc_rtage_wq;
+	struct work		sc_rtage_wk;
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
 	pktqueue_t *		sc_fwd_pktq;
