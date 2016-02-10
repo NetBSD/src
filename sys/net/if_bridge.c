@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.106 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.107 2016/02/10 06:30:23 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.106 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.107 2016/02/10 06:30:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -217,7 +217,6 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 int	bridge_rtable_prune_period = BRIDGE_RTABLE_PRUNE_PERIOD;
 
 static struct pool bridge_rtnode_pool;
-static struct work bridge_rtage_wk;
 
 static int	bridge_clone_create(struct if_clone *, int);
 static int	bridge_clone_destroy(struct ifnet *);
@@ -2275,7 +2274,7 @@ bridge_timer(void *arg)
 {
 	struct bridge_softc *sc = arg;
 
-	workqueue_enqueue(sc->sc_rtage_wq, &bridge_rtage_wk, NULL);
+	workqueue_enqueue(sc->sc_rtage_wq, &sc->sc_rtage_wk, NULL);
 }
 
 static void
@@ -2283,7 +2282,7 @@ bridge_rtage_work(struct work *wk, void *arg)
 {
 	struct bridge_softc *sc = arg;
 
-	KASSERT(wk == &bridge_rtage_wk);
+	KASSERT(wk == &sc->sc_rtage_wk);
 
 	bridge_rtage(sc);
 
