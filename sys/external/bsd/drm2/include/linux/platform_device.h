@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_device.h,v 1.4 2014/08/06 15:01:33 riastradh Exp $	*/
+/*	$NetBSD: platform_device.h,v 1.4.2.1 2016/02/11 22:52:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,8 +35,15 @@
 #include <sys/device.h>
 
 struct platform_device {
-	struct device	dev;	/* XXX DON'T BELIEVE ME */
+	device_t	pd_dev;
 	uint64_t	id;
 };
+
+static inline device_t
+platform_device_dev(const struct platform_device *platformdev)
+{
+
+	return platformdev->pd_dev;
+}
 
 #endif  /* _LINUX_PLATFORM_DEVICE_H_ */

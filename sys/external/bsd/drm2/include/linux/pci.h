@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.7.2.8 2016/01/27 00:01:07 snj Exp $	*/
+/*	$NetBSD: pci.h,v 1.7.2.9 2016/02/11 22:52:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -142,7 +142,6 @@ struct pci_dev {
 	}			pd_resources[PCI_NUM_RESOURCES];
 	struct pci_conf_state	*pd_saved_state;
 	struct acpi_devnode	*pd_ad;
-	struct device		dev;		/* XXX Don't believe me!  */
 	struct pci_bus		*bus;
 	uint32_t		devfn;
 	uint16_t		vendor;
@@ -158,14 +157,6 @@ static inline device_t
 pci_dev_dev(struct pci_dev *pdev)
 {
 	return pdev->pd_dev;
-}
-
-/* XXX Nouveau kludge!  Don't believe me!  */
-static inline struct pci_dev *
-to_pci_dev(struct device *dev)
-{
-
-	return container_of(dev, struct pci_dev, dev);
 }
 
 /* XXX Nouveau kludge!  */
