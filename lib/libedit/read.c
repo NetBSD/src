@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.72 2016/02/08 17:18:43 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.73 2016/02/11 16:08:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.72 2016/02/08 17:18:43 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.73 2016/02/11 16:08:47 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -294,18 +294,6 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 	return OKCMD;
 }
 
-#ifdef WIDECHAR
-/* utf8_islead():
- *	Test whether a byte is a leading byte of a UTF-8 sequence.
- */
-private int
-utf8_islead(int c)
-{
-	return c < 0x80 ||	       /* single byte char */
-	       (c >= 0xc2 && c <= 0xf4); /* start of multibyte sequence */
-}
-#endif
-
 /* read_char():
  *	Read a character from the tty.
  */
@@ -354,8 +342,6 @@ read_char(EditLine *el, Char *cp)
 		mbstate_t mbs;
 		size_t rbytes;
 again_lastbyte:
-		if (!utf8_islead((unsigned char)cbuf[0]))
-			goto again; /* discard the byte we read and try again */
 		++cbp;
 		/* This only works because UTF8 is stateless */
 		memset(&mbs, 0, sizeof(mbs));
