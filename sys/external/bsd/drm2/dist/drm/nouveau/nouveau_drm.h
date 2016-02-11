@@ -40,7 +40,11 @@
 
 struct nouveau_channel;
 
+#ifdef _LP64
 #define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
+#else
+#define DRM_FILE_PAGE_OFFSET (0xa0000000UL >> PAGE_SHIFT)
+#endif
 
 #include "nouveau_fence.h"
 #include "nouveau_bios.h"
