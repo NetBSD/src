@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.3.4.2 2014/12/03 23:00:17 snj Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.3.4.3 2016/02/11 23:02:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.3.4.2 2014/12/03 23:00:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.3.4.3 2016/02/11 23:02:54 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -168,8 +168,8 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	KASSERT(sc->sc_scheduled);
 
 	/* XXX Ugh...  Pass these parameters some other way!  */
-	prop_dictionary_set_uint32(dict, "width", sizes->fb_width);
-	prop_dictionary_set_uint32(dict, "height", sizes->fb_height);
+	prop_dictionary_set_uint32(dict, "width", sizes->surface_width);
+	prop_dictionary_set_uint32(dict, "height", sizes->surface_height);
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
 	prop_dictionary_set_uint16(dict, "linebytes", rfa->rfa_fb_linebytes);
 	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
