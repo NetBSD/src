@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.32 2016/02/06 21:34:37 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.33 2016/02/11 23:13:25 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -953,4 +953,10 @@ external/gpl2/xcvs/dist/src/import.c		1.4
 	new files.  This is done in RCS_checkin() but we have a "fast
 	path" for new files here that does not do it.
 	[christos, ticket #1099]
+
+sys/external/bsd/drm2/linux/linux_work.c	1.12
+
+	Avoid NULL dereference in linux_worker_intr() in
+	WORK_DELAYED_CANCELLED case.  PR#49560.
+	[riastradh, ticket #1086]
 
