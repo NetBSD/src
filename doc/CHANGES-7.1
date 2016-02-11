@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.54 2016/02/06 21:23:30 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.55 2016/02/11 23:59:00 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1914,4 +1914,123 @@ external/gpl2/xcvs/dist/src/import.c		1.4
 	new files.  This is done in RCS_checkin() but we have a "fast
 	path" for new files here that does not do it.
 	[christos, ticket #1099]
+
+sys/external/bsd/drm2/nouveau/files.nouveau	1.9
+sys/external/bsd/drm2/nouveau/nouveau_module.c	1.4
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.4
+sys/external/bsd/drm2/nouveau/nouveau_pci.h	1.2
+sys/external/bsd/drm2/nouveau/nouveaufb.c	1.3
+
+	Split nouveau@pci from nouveau so we can attach it to other busses.
+	[riastradh, ticket #1092]
+
+sys/external/bsd/drm2/dist/drm/i915/intel_i2c.c	1.14
+sys/external/bsd/drm2/dist/drm/i915/intel_pm.c	1.8
+sys/external/bsd/drm2/dist/drm/i915/intel_sdvo.c 1.7
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/core/device.h 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/bios/nouveau_subdev_bios_base.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c 1.7
+sys/external/bsd/drm2/dist/drm/radeon/radeon_display.c 1.5
+sys/external/bsd/drm2/dist/drm/radeon/radeon_gem.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/radeon_i2c.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/radeon_kms.c 1.3
+sys/external/bsd/drm2/include/linux/pci.h	1.21
+sys/external/bsd/drm2/include/linux/platform_device.h 1.7
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.5
+
+	Remove a broken Linux struct pci_device compatibility shim.
+	[riastradh, ticket #1080]
+
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.6
+
+	Push the real attach down via config_mountroot, like radeon, as
+	we need firmware files.
+	[riastradh, ticket #1081]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/device/nouveau_engine_device_base.c 1.6-1.8
+
+	Fix misuse of bus_space_map in nouveau.
+	[riastradh, ticket #1082]
+
+sys/external/bsd/drm2/radeon/radeondrmkmsfb.c	1.6
+
+	Set the framebuffer "width" and "height" parameters from the
+	surface_width and surface_height members.
+	[riastradh, ticket #1083]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/therm/nouveau_subdev_therm_base.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/therm/nouveau_subdev_therm_fan.c 1.2
+
+	Disable the once-a-second and many-times-a-minute logs about
+	thermals.
+	[riastradh, ticket #1084]
+
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_bo.c 1.6
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.h 1.3
+
+	- Implement VM pager operations for nouveau using ttm
+	- Work around a DRM_FILE_PAGE_OFFSET integer overflow on
+	  LP32 systems
+	[riastradh, ticket #1085]
+
+sys/external/bsd/drm2/linux/linux_work.c	1.12
+
+	Avoid NULL dereference in linux_worker_intr() in
+	WORK_DELAYED_CANCELLED case.  PR#49560.
+	[riastradh, ticket #1086]
+
+sys/external/bsd/drm2/drm/drm_drv.c		1.17
+
+	Only clear agp hook on last close when agp is in use.
+	[riastradh, ticket #1087]
+
+sys/external/bsd/drm2/drm/drmfb.c		1.2
+
+	If the "is_console" property is already specified, do not
+	overwrite it.
+	[riastradh, ticket #1088]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nv50.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nvc0.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/vm/nouveau_subdev_vm_nv04.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/vm/nouveau_subdev_vm_nv44.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_display.c 1.4
+
+	Use pci_dma64_available() to choose a valid DMA tag.
+	[riastradh, ticket #1090]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_dma.c	1.17, 1.18
+
+	Fix minor mistakes in error branches in i915drmkms attach
+	failure.
+	[riastradh, ticket #1091]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/perfmon/nouveau_engine_perfmon_base.c 1.3
+
+	Don't ask `size < 0' when size is unsigned.
+	[riastradh, ticket #1110]
+
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_display.c 1.5
+
+	Omit unused definition of readw.
+	[riastradh, ticket #1111]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/therm/nouveau_subdev_therm_temp.c 1.2
+
+	More useful array bounds check for enum values.
+	[riastradh, ticket #1112]
+
+sys/external/bsd/drm2/include/asm/unaligned.h	1.4
+
+	Don't return void.
+	[riastradh, ticket #1113]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_base.c 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/engine/fifo.h 1.4
+
+	Fix the nouveau fifo channel destructor routine in the case
+	that the constructor routine failed partway through.  Without
+	this change, nouveau panics or traps immediately at boot on
+	some machines.
+	[riastradh, ticket #1116]
 
