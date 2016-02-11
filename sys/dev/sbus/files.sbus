@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.41 2015/01/04 18:18:20 macallan Exp $
+#	$NetBSD: files.sbus,v 1.42 2016/02/11 02:23:44 macallan Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -156,7 +156,8 @@ attach	cgtwelve at sbus
 file	dev/sbus/cgtwelve.c		cgtwelve
 
 # SSB MGX
-defflag opt_mgx.h	MGX_DEBUG
-device	mgx: fb, rasops8, wsemuldisplaydev, vcons, glyphcache
+defflag 	opt_mgx.h	MGX_DEBUG
+defparam	opt_mgx.h	MGX_DEPTH=8
+device	mgx: fb, rasops8, rasops32, wsemuldisplaydev, vcons, glyphcache
 attach	mgx at sbus
 file	dev/sbus/mgx.c			mgx
