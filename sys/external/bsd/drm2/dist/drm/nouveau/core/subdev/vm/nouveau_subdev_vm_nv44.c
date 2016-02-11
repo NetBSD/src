@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $	*/
+/*	$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.4.2 2016/02/11 23:20:11 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.4.2 2016/02/11 23:20:11 snj Exp $");
 
 #include <core/gpuobj.h>
 #include <core/option.h>
@@ -192,8 +192,8 @@ nv44_vmmgr_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 
 #ifdef __NetBSD__
     {
-	/* XXX pa_dmat or pa_dmat64?  */
-	const bus_dma_tag_t dmat = device->pdev->pd_pa.pa_dmat64;
+	const bus_dma_tag_t dmat = pci_dma64_available(&device->pdev->pd_pa) ?
+	    device->pdev->pd_pa.pa_dmat64 : device->pdev->pd_pa.pa_dmat;
 	int nsegs;
 
 	/* XXX errno NetBSD->Linux */
