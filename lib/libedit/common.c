@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.29 2012/03/24 20:08:43 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.30 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.29 2012/03/24 20:08:43 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.30 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -85,14 +85,14 @@ ed_insert(EditLine *el, Int c)
 		    || el->el_line.cursor >= el->el_line.lastchar)
 			c_insert(el, 1);
 
-		*el->el_line.cursor++ = c;
+		*el->el_line.cursor++ = (Char)c;
 		re_fastaddc(el);		/* fast refresh for one char. */
 	} else {
 		if (el->el_state.inputmode != MODE_REPLACE_1)
 			c_insert(el, el->el_state.argument);
 
 		while (count-- && el->el_line.cursor < el->el_line.lastchar)
-			*el->el_line.cursor++ = c;
+			*el->el_line.cursor++ = (Char)c;
 		re_refresh(el);
 	}
 
@@ -264,7 +264,7 @@ ed_transpose_chars(EditLine *el, Int c)
 		/* must have at least two chars entered */
 		c = el->el_line.cursor[-2];
 		el->el_line.cursor[-2] = el->el_line.cursor[-1];
-		el->el_line.cursor[-1] = c;
+		el->el_line.cursor[-1] = (Char)c;
 		return CC_REFRESH;
 	} else
 		return CC_ERROR;

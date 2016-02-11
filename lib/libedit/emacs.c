@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.25 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.26 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.25 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.26 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -244,7 +244,7 @@ em_gosmacs_transpose(EditLine *el, Int c)
 		/* must have at least two chars entered */
 		c = el->el_line.cursor[-2];
 		el->el_line.cursor[-2] = el->el_line.cursor[-1];
-		el->el_line.cursor[-1] = c;
+		el->el_line.cursor[-1] = (Char)c;
 		return CC_REFRESH;
 	} else
 		return CC_ERROR;

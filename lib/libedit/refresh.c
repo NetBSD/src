@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.37 2011/07/29 23:44:45 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.38 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.37 2011/07/29 23:44:45 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.38 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -170,7 +170,7 @@ re_putc(EditLine *el, Int c, int shift)
 	    re_putc(el, ' ', 1);
 
 	el->el_vdisplay[el->el_refresh.r_cursor.v]
-	    [el->el_refresh.r_cursor.h] = c;
+	    [el->el_refresh.r_cursor.h] = (Char)c;
 	/* assumes !shift is only used for single-column chars */
 	i = w;
 	while (--i > 0)
@@ -1059,7 +1059,7 @@ re_fastputc(EditLine *el, Int c)
 	    re_fastputc(el, ' ');
 
 	terminal__putc(el, c);
-	el->el_display[el->el_cursor.v][el->el_cursor.h++] = c;
+	el->el_display[el->el_cursor.v][el->el_cursor.h++] = (Char)c;
 	while (--w > 0)
 		el->el_display[el->el_cursor.v][el->el_cursor.h++]
 			= MB_FILL_CHAR;
