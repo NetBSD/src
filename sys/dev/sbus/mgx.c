@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.5 2016/02/11 02:23:44 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.6 2016/02/11 20:53:06 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.5 2016/02/11 02:23:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.6 2016/02/11 20:53:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ struct mgx_softc {
 	bus_space_handle_t sc_vgah;
 	bus_addr_t	sc_paddr;
 	void		*sc_fbaddr;
+	uint8_t		*sc_cursor;
 	int		sc_width;
 	int		sc_height;
 	int		sc_stride;
@@ -78,6 +79,9 @@ struct mgx_softc {
 	u_char		sc_cmap_red[256];
 	u_char		sc_cmap_green[256];
 	u_char		sc_cmap_blue[256];
+	int		sc_cursor_x, sc_cursor_y;
+	int		sc_hotspot_x, sc_hotspot_y;
+	int		sc_video;
 	void (*sc_putchar)(void *, int, int, u_int, long);
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
@@ -112,6 +116,10 @@ static void	mgx_copycols(void *, int, int, int, int);
 static void	mgx_erasecols(void *, int, int, int, long);
 static void	mgx_copyrows(void *, int, int, int);
 static void	mgx_eraserows(void *, int, int, long);
+
+static int	mgx_do_cursor(struct mgx_softc *, struct wsdisplay_cursor *);
+static void	mgx_set_cursor(struct mgx_softc *);
+static void	mgx_set_video(struct mgx_softc *, int);
 
 CFATTACH_DECL_NEW(mgx, sizeof(struct mgx_softc),
     mgx_match, mgx_attach, NULL, NULL);
@@ -149,6 +157,12 @@ static inline uint8_t
 mgx_read_1(struct mgx_softc *sc, uint32_t reg)
 {
 	return bus_space_read_1(sc->sc_tag, sc->sc_blith, reg ^ 3);
+}
+
+static inline void
+mgx_write_2(struct mgx_softc *sc, uint32_t reg, uint16_t val)
+{
+	bus_space_write_2(sc->sc_tag, sc->sc_blith, reg ^ 2, val);
 }
 
 static inline void
@@ -240,6 +254,13 @@ mgx_attach(device_t parent, device_t self, void *args)
 		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 		NULL
 	};
+	
+	sc->sc_cursor_x = 0;
+	sc->sc_cursor_y = 0;
+	sc->sc_hotspot_x = 0;
+	sc->sc_hotspot_y = 0;
+	sc->sc_video = WSDISPLAYIO_VIDEO_ON;
+
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 
@@ -526,6 +547,17 @@ mgx_setup(struct mgx_softc *sc, int depth)
 	mgx_write_vga(sc, CRTC_DATA, stride & 0xff);
 	mgx_write_vga(sc, CRTC_INDEX, 0x1c);
 	mgx_write_vga(sc, CRTC_DATA, (stride & 0xf00) >> 4);
+
+	/* clean up the screen if we're switching to != 8bit */
+	if (depth != MGX_DEPTH) 
+		mgx_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, 0);	
+
+	/* initialize hardware cursor stuff */
+	mgx_write_2(sc, ATR_CURSOR_ADDRESS, (sc->sc_fbsize - 1024) >> 10);
+	mgx_write_1(sc, ATR_CURSOR_ENABLE, 0);
+	sc->sc_cursor = (uint8_t *)sc->sc_fbaddr + sc->sc_fbsize - 1024;
+	memset(sc->sc_cursor, 0xf0, 1024);
+
 #ifdef MGX_DEBUG
 	int j;
 	mgx_write_vga(sc, SEQ_INDEX, 0x10);
@@ -812,11 +844,12 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 		case FBIOGVIDEO:
 		case WSDISPLAYIO_GVIDEO:
-			*(int *)data = 1;
+			*(int *)data = sc->sc_video;
 			return 0;
 
 		case WSDISPLAYIO_SVIDEO:
 		case FBIOSVIDEO:
+			mgx_set_video(sc, *(int *)data);
 			return 0;
 
 		case WSDISPLAYIO_LINEBYTES:
@@ -852,11 +885,45 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_PUTCMAP:
 			return mgx_putcmap(sc, (struct wsdisplay_cmap *)data);
 
+		case WSDISPLAYIO_GCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = sc->sc_cursor_x;
+				cp->y = sc->sc_cursor_y;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				sc->sc_cursor_x = cp->x;
+				sc->sc_cursor_y = cp->y;
+				mgx_set_cursor(sc);
+			}
+			return 0;
+
+		case WSDISPLAYIO_GCURMAX:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = 64;
+				cp->y = 64;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURSOR:
+			{
+				struct wsdisplay_cursor *cursor = (void *)data;
+
+				return mgx_do_cursor(sc, cursor);
+			}
 		case WSDISPLAYIO_GET_FBINFO:
 			{
 				struct wsdisplayio_fbinfo *fbi = data;
 				
-				fbi->fbi_fbsize = sc->sc_fbsize;
+				fbi->fbi_fbsize = sc->sc_fbsize - 1024;
 				fbi->fbi_width = sc->sc_width;
 				fbi->fbi_height = sc->sc_height;
 				fbi->fbi_bitsperpixel = sc->sc_depth;
@@ -889,4 +956,114 @@ mgx_mmap(void *v, void *vs, off_t offset, int prot)
 	}
 
 	return -1;
+}
+
+static int
+mgx_do_cursor(struct mgx_softc *sc, struct wsdisplay_cursor *cur)
+{
+	int i;
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		if (cur->enable) {
+			mgx_set_cursor(sc);
+			mgx_write_1(sc, ATR_CURSOR_ENABLE, 1);
+		} else {
+			mgx_write_1(sc, ATR_CURSOR_ENABLE, 0);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hotspot_x = cur->hot.x;
+		sc->sc_hotspot_y = cur->hot.y;
+		mgx_set_cursor(sc);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		sc->sc_cursor_x = cur->pos.x;
+		sc->sc_cursor_y = cur->pos.y;
+		mgx_set_cursor(sc);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int cnt = min(2, cur->cmap.count);
+		uint8_t c;
+		uint8_t r[2], g[2], b[2];
+
+		copyin(cur->cmap.red, r, cnt);
+		copyin(cur->cmap.green, g, cnt);
+		copyin(cur->cmap.blue, b, cnt);
+	
+		for (i = 0; i < cnt; i++) {
+			c = r[i] & 0xe0;
+			c |= (g[i] & 0xe0) >> 3;
+			c |= (b[i] & 0xc0) >> 6;
+			mgx_write_1(sc, ATR_CURSOR_FG + i, c);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		int j;
+		uint8_t *fb = sc->sc_cursor;
+		uint8_t temp;
+		uint8_t im, ma, px;
+
+		for (i = 0; i < 512; i++) {
+			temp = 0;
+			copyin(&cur->image[i], &im, 1);
+			copyin(&cur->mask[i], &ma, 1);
+			for (j = 0; j < 4; j++) {
+				temp >>= 2;
+				px = (ma & 1) ? 0 : 0x80;
+				if (px == 0)
+					px |= (im & 1) ? 0 : 0x40;
+				temp |= px;
+				im >>= 1;
+				ma >>= 1;
+			}
+			*fb = temp;
+			fb++;
+			temp = 0;
+			for (j = 0; j < 4; j++) {
+				temp >>= 2;
+				px = (ma & 1) ? 0 : 0x80;
+				if (px == 0)
+					px |= (im & 1) ? 0 : 0x40;
+				temp |= px;
+				im >>= 1;
+				ma >>= 1;
+			}
+			*fb = temp;
+			fb++;
+		}
+	}
+	return 0;
+}
+
+static void
+mgx_set_cursor(struct mgx_softc *sc)
+{
+	uint32_t reg;
+	uint16_t hot;
+
+	reg = (sc->sc_cursor_y << 16) | (sc->sc_cursor_x & 0xffff);
+	mgx_write_4(sc, ATR_CURSOR_POSITION, reg);
+	hot = (sc->sc_hotspot_y << 8) | (sc->sc_hotspot_x & 0xff);
+	mgx_write_2(sc, ATR_CURSOR_HOTSPOT, hot);
+}
+
+static void
+mgx_set_video(struct mgx_softc *sc, int v)
+{
+	uint8_t reg;
+
+	if (sc->sc_video == v)
+		return;
+
+	sc->sc_video = v;
+	reg = mgx_read_1(sc, ATR_DPMS);
+
+	if (v == WSDISPLAYIO_VIDEO_ON) {
+		reg &= ~DPMS_SYNC_DISABLE_ALL;
+	} else {
+		reg |= DPMS_SYNC_DISABLE_ALL;
+	}
+	mgx_write_1(sc, ATR_DPMS, reg);
 }
