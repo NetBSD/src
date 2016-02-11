@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.2.4.3 2015/11/06 23:03:20 riz Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.2.4.4 2016/02/11 22:52:58 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.2.4.3 2015/11/06 23:03:20 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.2.4.4 2016/02/11 22:52:58 snj Exp $");
 
 #include <linux/console.h>
 #include <linux/module.h>
@@ -614,8 +614,13 @@ fail_display:
 
 int nouveau_pmops_suspend(struct device *dev)
 {
+#ifdef __NetBSD__
+	struct drm_device *drm_dev = device_private(dev);
+	struct pci_dev *pdev __unused = drm_dev->pdev;
+#else
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
+#endif
 	int ret;
 
 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_OFF ||
@@ -671,8 +676,13 @@ nouveau_do_resume(struct drm_device *dev)
 
 int nouveau_pmops_resume(struct device *dev)
 {
+#ifdef __NetBSD__
+	struct drm_device *drm_dev = device_private(dev);
+	struct pci_dev *pdev __unused = drm_dev->pdev;
+#else
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
+#endif
 	int ret;
 
 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_OFF ||

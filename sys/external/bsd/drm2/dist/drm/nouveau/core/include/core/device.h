@@ -152,8 +152,9 @@ nv_device_is_pci(struct nouveau_device *device)
 static inline struct device *
 nv_device_base(struct nouveau_device *device)
 {
-	return nv_device_is_pci(device) ? &device->pdev->dev :
-					  &device->platformdev->dev;
+	return nv_device_is_pci(device)
+	    ? pci_dev_dev(device->pdev)
+	    : platform_device_dev(device->platformdev);
 }
 
 #ifdef __NetBSD__

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $	*/
+/*	$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1.4.2 2016/02/11 22:52:58 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1.4.2 2016/02/11 22:52:58 snj Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -376,7 +376,8 @@ nouveau_bios_shadow(struct nouveau_bios *bios)
 		} while ((++mthd)->shadow);
 
 		/* attempt to load firmware image */
-		ret = request_firmware(&fw, source, &nv_device(bios)->pdev->dev);
+		ret = request_firmware(&fw, source,
+		    nv_device_base(nv_device(bios)));
 		if (ret == 0) {
 			bios->size = fw->size;
 			bios->data = kmemdup(fw->data, fw->size, GFP_KERNEL);
