@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1304 2016/01/30 17:00:53 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1305 2016/02/11 13:36:00 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -497,7 +497,7 @@ we use BSD-licensed implementation from Citrus project (see entry for
 
 Package:	grep
 Version:	2.5.1a (last GPLv2+ version)
-Current Vers:	2.21
+Current Vers:	2.23
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
@@ -1289,7 +1289,7 @@ Notes:
 
 Package:	texinfo
 Version:	4.8a (Last GPLv2+ version)
-Current Vers:	5.2
+Current Vers:	6.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
