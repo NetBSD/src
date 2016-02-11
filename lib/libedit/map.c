@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.35 2015/05/14 10:44:15 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.36 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.35 2015/05/14 10:44:15 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.36 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1148,9 +1148,9 @@ map_print_some_keys(EditLine *el, el_action_t *map, Int first, Int last)
 	Char firstbuf[2], lastbuf[2];
 	char unparsbuf[EL_BUFSIZ], extrabuf[EL_BUFSIZ];
 
-	firstbuf[0] = first;
+	firstbuf[0] = (Char)first;
 	firstbuf[1] = 0;
-	lastbuf[0] = last;
+	lastbuf[0] = (Char)last;
 	lastbuf[1] = 0;
 	if (map[first] == ED_UNASSIGNED) {
 		if (first == last) {

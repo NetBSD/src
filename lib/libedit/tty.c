@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.49 2015/12/08 16:53:27 gson Exp $	*/
+/*	$NetBSD: tty.c,v 1.50 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.49 2015/12/08 16:53:27 gson Exp $");
+__RCSID("$NetBSD: tty.c,v 1.50 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -903,8 +903,8 @@ tty_bind_char(EditLine *el, int force)
 	}
 
 	for (tp = tty_map; tp->nch != (Int)-1; tp++) {
-		new[0] = t_n[tp->nch];
-		old[0] = t_o[tp->och];
+		new[0] = (Char)t_n[tp->nch];
+		old[0] = (Char)t_o[tp->och];
 		if (new[0] == old[0] && !force)
 			continue;
 		/* Put the old default binding back, and set the new binding */
