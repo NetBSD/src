@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.17 2011/09/28 14:08:04 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.18 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,6 +115,11 @@ typedef unsigned int	u_int32_t;
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
+
+#ifndef WIDECHAR
+#define	setlocale(c, l) 	/*LINTED*/NULL
+#define	nl_langinfo(i)		""
+#endif
 
 #if defined(__sun)
 extern int tgetent(char *, const char *);

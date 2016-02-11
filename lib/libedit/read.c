@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.73 2016/02/11 16:08:47 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.74 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.73 2016/02/11 16:08:47 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.74 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -259,7 +259,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 
 		if (el->el_state.metanext) {
 			el->el_state.metanext = 0;
-			*ch |= 0200;
+			*ch |= (unsigned char)0200;
 		}
 #ifdef WIDECHAR
 		if (*ch >= N_KEYS)
@@ -379,7 +379,7 @@ again_lastbyte:
 		/* Try non-ASCII characters in a 8-bit character set */
 		(bytes = ct_mbtowc(cp, cbuf, cbp)) != 1)
 #endif
-		*cp = (unsigned char)cbuf[0];
+		*cp = (Char)(unsigned char)cbuf[0];
 
 	if ((el->el_flags & IGNORE_EXTCHARS) && bytes > 1) {
 		cbp = 0; /* skip this character */

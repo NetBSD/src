@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.74 2015/12/08 12:56:55 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.75 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.74 2015/12/08 12:56:55 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.75 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -50,8 +50,11 @@ __RCSID("$NetBSD: el.c,v 1.74 2015/12/08 12:56:55 christos Exp $");
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
+#ifdef WIDECHAR
 #include <locale.h>
 #include <langinfo.h>
+#endif
+
 #include "el.h"
 
 /* el_init():
@@ -93,12 +96,10 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
          * Initialize all the modules. Order is important!!!
          */
 	el->el_flags = 0;
-#ifdef WIDECHAR
 	if (setlocale(LC_CTYPE, NULL) != NULL){
 		if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
 			el->el_flags |= CHARSET_IS_UTF8;
 	}
-#endif
 
 	if (terminal_init(el) == -1) {
 		el_free(el->el_prog);
@@ -207,7 +208,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
 		int c = va_arg(ap, int);
 
-		rv = prompt_set(el, p, c, op, 1);
+		rv = prompt_set(el, p, (Char)c, op, 1);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.7 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.8 2016/02/11 19:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.7 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.8 2016/02/11 19:21:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -465,7 +465,7 @@ node__get(Int ch)
 	ptr = el_malloc(sizeof(*ptr));
 	if (ptr == NULL)
 		return NULL;
-	ptr->ch = ch;
+	ptr->ch = (Char)ch;
 	ptr->type = XK_NOD;
 	ptr->val.str = NULL;
 	ptr->next = NULL;
