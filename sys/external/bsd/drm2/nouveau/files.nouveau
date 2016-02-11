@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.13 2016/01/29 22:49:06 joerg Exp $
+#	$NetBSD: files.nouveau,v 1.14 2016/02/11 04:43:32 riastradh Exp $
 
 define	nouveaufbbus	{ }
 device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
@@ -19,9 +19,8 @@ makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core/include"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/nouveau"
 
-# XXX DEBUG ALL THE BUGS!
-makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG=1000"
-makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG_DEFAULT=6"
+makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG=5"
+makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG_DEFAULT=3"
 
 # XXX If you find a way to apply the warning flags to all Nouveau
 # sources, please apply it here and remove this stupidly gigantic list!
