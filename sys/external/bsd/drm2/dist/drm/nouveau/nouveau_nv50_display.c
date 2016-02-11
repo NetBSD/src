@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv50_display.c,v 1.1.1.1.4.3 2016/02/11 23:20:11 snj Exp $	*/
+/*	$NetBSD: nouveau_nv50_display.c,v 1.1.1.1.4.4 2016/02/11 23:28:05 snj Exp $	*/
 
 	/*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.1.1.1.4.3 2016/02/11 23:20:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.1.1.1.4.4 2016/02/11 23:28:05 snj Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
@@ -59,19 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.1.1.1.4.3 2016/02/11 23:2
  */
 
 #  define	__iomem		volatile
-#  define	readw		fake_readw
 #  define	writew		fake_writew
-
-static inline uint32_t
-fake_readw(const void __iomem *ptr)
-{
-	uint16_t v;
-
-	v = *(const uint16_t __iomem *)ptr;
-	membar_consumer();
-
-	return v;
-}
 
 static inline void
 fake_writew(uint16_t v, void __iomem *ptr)
