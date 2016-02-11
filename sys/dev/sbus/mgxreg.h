@@ -1,4 +1,4 @@
-/*	$NetBSD: mgxreg.h,v 1.3 2016/02/11 02:23:44 macallan Exp $ */
+/*	$NetBSD: mgxreg.h,v 1.4 2016/02/11 20:53:06 macallan Exp $ */
 
 /* register definitions based on OpenBSD's atxxreg.h: */
 
@@ -178,6 +178,7 @@
 #define ATR_DPMS                        0x00d0  /* byte access */
 #define DPMS_HSYNC_DISABLE              0x01
 #define DPMS_VSYNC_DISABLE              0x02
+#define DPMS_SYNC_DISABLE_ALL		0x03
 
 /*
  * RAMDAC
@@ -195,12 +196,12 @@
  * cross the upper-left corner.
  */
 
-#define ATR_CURSOR_ENABLE               0x0140
-#define ATR_CURSOR_FG                   0x0141  /* 3:3:2 */
-#define ATR_CURSOR_BG                   0x0142  /* 3:3:2 */
-#define ATR_CURSOR_ADDRESS              0x0144  /* in KB from vram */
-#define ATR_CURSOR_POSITION             0x0148
-#define ATR_CURSOR_OFFSET               0x014c  /* short access */
+#define ATR_CURSOR_ENABLE		0x0140
+#define ATR_CURSOR_FG			0x0141  /* 3:3:2 */
+#define ATR_CURSOR_BG			0x0142  /* 3:3:2 */
+#define ATR_CURSOR_ADDRESS		0x0144  /* in KB from vram */
+#define ATR_CURSOR_POSITION		0x0148
+#define ATR_CURSOR_HOTSPOT		0x014c  /* short access */
 
 /*
  * Identification Register
