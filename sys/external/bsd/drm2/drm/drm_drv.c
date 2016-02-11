@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.9.2.4 2015/03/17 17:52:49 riz Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.9.2.5 2016/02/11 23:14:41 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.4 2015/03/17 17:52:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.5 2016/02/11 23:14:41 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -392,7 +392,8 @@ drm_lastclose(struct drm_device *dev)
 		drm_irq_uninstall(dev);
 
 	mutex_lock(&dev->struct_mutex);
-	drm_agp_clear_hook(dev);
+	if (dev->agp)
+		drm_agp_clear_hook(dev);
 	drm_legacy_sg_cleanup(dev);
 	list_for_each_entry_safe(vma, vma_temp, &dev->vmalist, head) {
 		list_del(&vma->head);
