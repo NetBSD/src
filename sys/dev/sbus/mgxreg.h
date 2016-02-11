@@ -1,40 +1,10 @@
-/*	$NetBSD: mgxreg.h,v 1.2 2015/01/04 18:18:20 macallan Exp $ */
-
-/*-
- * Copyright (c) 2014 Michael Lorenz
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-#ifndef MGX_REG_H
-#define MGX_REG_H
-
-#define VGA_BASE 0x3c0
+/*	$NetBSD: mgxreg.h,v 1.3 2016/02/11 02:23:44 macallan Exp $ */
 
 /* register definitions based on OpenBSD's atxxreg.h: */
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
+ * Copyright (c) 2014 Michael Lorenz
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -56,6 +26,28 @@
  * apparently do not believe in meaningful constants for numbers. See
  * apm_regs.h for more madness.
  */
+
+#ifndef MGX_REG_H
+#define MGX_REG_H
+
+#define VGA_BASE 0x3c0
+#define CRTC_INDEX	0x3d4
+#define CRTC_DATA	0x3d5
+#define SEQ_INDEX	0x3c4
+#define SEQ_DATA	0x3c5
+
+/*
+ * some bits from the XFree86 3.x vga256 / apm driver:
+ * - sequencer registers 0x11 - 0x17 contain the chip's ID, 'Pro6424' for AT24
+ */
+
+#define	SEQ_APERTURE	0x1c
+	#define	AP_SIZE_MASK	0x06
+	#define AP_SIZE_1MB	0x00
+	#define AP_SIZE_2MB	0x02
+	#define AP_SIZE_4MB	0x04
+	#define AP_SIZE_6MB	0x06
+	#define AP_SIMULTANEOUS	0x20	/* sim. access to VRAM? */
 
 /*
  * Clipping Control
