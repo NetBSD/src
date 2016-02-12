@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183.2.2 2015/04/23 07:31:16 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183.2.3 2016/02/12 10:55:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.2 2015/04/23 07:31:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.3 2016/02/12 10:55:35 snj Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -490,7 +490,7 @@ void
 pmap_pv_init(void)
 {
 
-	mutex_init(&pv_unmanaged.lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&pv_unmanaged.lock, MUTEX_DEFAULT, IPL_NONE);
 	pv_unmanaged.psz = pserialize_create();
 	pv_unmanaged.list = NULL;
 }
@@ -503,6 +503,9 @@ pmap_pv_track(paddr_t start, psize_t size)
 
 	KASSERT(start == trunc_page(start));
 	KASSERT(size == trunc_page(size));
+
+	/* We may sleep for allocation.  */
+	ASSERT_SLEEPABLE();
 
 	npages = size >> PAGE_SHIFT;
 	pvt = kmem_zalloc(offsetof(struct pv_track, pvt_pages[npages]),
@@ -525,6 +528,9 @@ pmap_pv_untrack(paddr_t start, psize_t size)
 
 	KASSERT(start == trunc_page(start));
 	KASSERT(size == trunc_page(size));
+
+	/* We may sleep for pserialize_perform.  */
+	ASSERT_SLEEPABLE();
 
 	mutex_enter(&pv_unmanaged.lock);
 	for (pvtp = &pv_unmanaged.list;
