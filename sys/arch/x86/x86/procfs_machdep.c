@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.10 2016/01/18 05:59:37 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.11 2016/02/12 05:32:47 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.10 2016/01/18 05:59:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.11 2016/02/12 05:32:47 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.10 2016/01/18 05:59:37 msaitoh 
 #include <machine/specialreg.h>
 
 /*
- *  The feature table. The order is the saame as Linux's
+ *  The feature table. The order is the same as Linux's
  *  x86/include/asm/cpufeatures.h.
  */
 static const char * const x86_features[][32] = {
