@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1239 2016/02/01 08:27:43 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1240 2016/02/12 08:36:29 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1246 2016/02/01 08:27:17 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1247 2016/02/12 08:36:08 mrg Exp
  */
 
 /*
@@ -5140,6 +5140,22 @@
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_12	0x0abf		/* nForce MCP79 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_210_HDA	0x0be3		/* GeForce 210 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_GF_GT640M	0x0fd2		/* GeForce GT 640M */
+#define	PCI_PRODUCT_NVIDIA_GT520	0x1040		/* GeForce GT 520 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_510	0x1042		/* GeForce 510 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_605	0x1048		/* GeForce 605 */
+#define	PCI_PRODUCT_NVIDIA_GT620	0x1049		/* GeForce GT 620 */
+#define	PCI_PRODUCT_NVIDIA_GT610	0x104a		/* GeForce GT 610 */
+#define	PCI_PRODUCT_NVIDIA_GT520M	0x1050		/* GeForce GT 520M */
+#define	PCI_PRODUCT_NVIDIA_GT520MX	0x1051		/* GeForce GT 520MX */
+#define	PCI_PRODUCT_NVIDIA_GT520M2	0x1052		/* GeForce GT 520M */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_410M	0x1054		/* GeForce 410M */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_410M2	0x1055		/* GeForce 410M */
+#define	PCI_PRODUCT_NVIDIA_NVS_4200M	0x1056		/* GeForce NVS 4200M */
+#define	PCI_PRODUCT_NVIDIA_NVS_4200M2	0x1057		/* GeForce NVS 4200M */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_610M	0x1058		/* GeForce 610M */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_610M2	0x1059		/* GeForce 610M */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_610M3	0x1059		/* GeForce 610M */
+#define	PCI_PRODUCT_NVIDIA_GT610M	0x105A		/* GeForce GT 610M */
 #define	PCI_PRODUCT_NVIDIA_GF116	0x1244		/* GeForce GTX 550 Ti */
 
 /* Nvidia & SGS-Thomson Microelectronics */
