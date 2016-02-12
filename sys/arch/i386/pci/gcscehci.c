@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.11.2.3 2014/12/05 13:23:37 skrll Exp $ */
+/* $NetBSD: gcscehci.c,v 1.11.2.4 2016/02/12 16:36:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11.2.3 2014/12/05 13:23:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11.2.4 2016/02/12 16:36:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_ncomp = ncomp;
 
 	int err = ehci_init(&sc->sc);
-	if (err != USBD_NORMAL_COMPLETION) {
+	if (err) {
 		aprint_error("%s: init failed, error=%d\n", devname, err);
 		return;
 	}

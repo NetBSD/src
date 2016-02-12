@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.17.2.4 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.17.2.5 2016/02/12 16:27:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -235,7 +235,7 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": EHCI USB controller\n");
 
 	int error = ehci_init(sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		return;
 	}
