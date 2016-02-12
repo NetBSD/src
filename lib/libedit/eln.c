@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.20 2016/02/12 15:36:08 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.21 2016/02/12 17:23:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.20 2016/02/12 15:36:08 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.21 2016/02/12 17:23:21 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -73,8 +73,10 @@ el_gets(EditLine *el, int *nread)
 
 	tmp = el_wgets(el, nread);
 	if (tmp != NULL) {
+	    int i;
 	    size_t nwread = 0;
-	    for (int i = 0; i < *nread; i++)
+
+	    for (i = 0; i < *nread; i++)
 		nwread += ct_enc_width(tmp[i]);
 	    *nread = (int)nwread;
 	}
