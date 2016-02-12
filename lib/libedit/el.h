@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.25 2011/07/29 23:44:44 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.26 2016/02/12 15:36:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,7 +58,6 @@
 #define	EDIT_DISABLED	0x04
 #define	UNBUFFERED	0x08
 #define	CHARSET_IS_UTF8 0x10
-#define	IGNORE_EXTCHARS 0x20            /* Ignore characters read > 0xff */
 #define	NARROW_HISTORY	0x40
 #define	NARROW_READ	0x80
 
