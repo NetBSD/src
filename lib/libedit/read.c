@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.74 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.75 2016/02/12 15:11:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.74 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.75 2016/02/12 15:11:09 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -239,6 +239,7 @@ FUN(el,push)(EditLine *el, const Char *str)
 private int
 read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 {
+	static const Char meta = (Char)0x80;
 	el_action_t cmd;
 	int num;
 
@@ -250,7 +251,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 		}
 
 #ifdef	KANJI
-		if ((*ch & 0200)) {
+		if ((*ch & meta)) {
 			el->el_state.metanext = 0;
 			cmd = CcViMap[' '];
 			break;
@@ -259,7 +260,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 
 		if (el->el_state.metanext) {
 			el->el_state.metanext = 0;
-			*ch |= (unsigned char)0200;
+			*ch |= meta;
 		}
 #ifdef WIDECHAR
 		if (*ch >= N_KEYS)
@@ -338,7 +339,7 @@ read_char(EditLine *el, Char *cp)
 	}
 
 #ifdef WIDECHAR
-	if (el->el_flags & CHARSET_IS_UTF8) {
+	do {
 		mbstate_t mbs;
 		size_t rbytes;
 again_lastbyte:
@@ -361,7 +362,13 @@ again_lastbyte:
 				goto again;
 			}
 		case (size_t)-2:
-			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
+			/*
+			 * We don't support other multibyte charsets.
+			 * The second condition shouldn't happen
+			 * and is here merely for additional safety.
+			 */
+			if ((el->el_flags & CHARSET_IS_UTF8) == 0 ||
+			    cbp >= MB_LEN_MAX) {
 				errno = EILSEQ;
 				*cp = '\0';
 				return -1;
@@ -373,13 +380,10 @@ again_lastbyte:
 			bytes = (int)rbytes;
 			break;
 		}
-	} else if (isascii((unsigned char)cbuf[0]) ||
-		/* we don't support other multibyte charsets */
-		++cbp != 1 ||
-		/* Try non-ASCII characters in a 8-bit character set */
-		(bytes = ct_mbtowc(cp, cbuf, cbp)) != 1)
-#endif
+	} while (/*CONSTCOND*/0);
+#else
 		*cp = (Char)(unsigned char)cbuf[0];
+#endif
 
 	if ((el->el_flags & IGNORE_EXTCHARS) && bytes > 1) {
 		cbp = 0; /* skip this character */
