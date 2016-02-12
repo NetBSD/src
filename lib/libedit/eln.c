@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.19 2015/05/18 15:07:04 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.20 2016/02/12 15:36:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.19 2015/05/18 15:07:04 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.20 2016/02/12 15:36:08 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -50,12 +50,7 @@ el_getc(EditLine *el, char *cp)
 	int num_read;
 	wchar_t wc = 0;
 
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags |= IGNORE_EXTCHARS;
 	num_read = el_wgetc (el, &wc);
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags &= ~IGNORE_EXTCHARS;
-
 	if (num_read > 0)
 		*cp = (char)wc;
 	return num_read;
@@ -76,8 +71,6 @@ el_gets(EditLine *el, int *nread)
 {
 	const wchar_t *tmp;
 
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags |= IGNORE_EXTCHARS;
 	tmp = el_wgets(el, nread);
 	if (tmp != NULL) {
 	    size_t nwread = 0;
@@ -85,8 +78,6 @@ el_gets(EditLine *el, int *nread)
 		nwread += ct_enc_width(tmp[i]);
 	    *nread = (int)nwread;
 	}
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags &= ~IGNORE_EXTCHARS;
 	return ct_encode_string(tmp, &el->el_lgcyconv);
 }
 
