@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.2 2015/06/03 03:55:47 hsuenaga Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.3 2016/02/12 09:24:15 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -608,7 +608,7 @@
 /* Port MAC Control 0 (MVXPE_PMACC0) */
 #define MVXPE_PMACC0_PORTEN		(1 << 0)
 #define MVXPE_PMACC0_PORTTYPE		(1 << 1)
-#define MVXPE_PMACC0_FRAMESIZELIMIT(x)	((((x) >> 1) & 0x7ffc) << 2)
+#define MVXPE_PMACC0_FRAMESIZELIMIT(x)	((((x) >> 1) & 0x1fff) << 2)
 #define MVXPE_PMACC0_MUSTSET		(1 << 15)
 
 /* Port MAC Control 1 (MVXPE_PMACC1) */
