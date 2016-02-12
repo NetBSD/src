@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.55 2016/02/11 23:59:00 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.56 2016/02/12 10:56:48 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2033,4 +2033,9 @@ sys/external/bsd/drm2/dist/drm/nouveau/core/include/engine/fifo.h 1.4
 	this change, nouveau panics or traps immediately at boot on
 	some machines.
 	[riastradh, ticket #1116]
+
+sys/arch/x86/x86/pmap.c				patch
+
+	Use IPL_NONE for pserialized lock.  Assert sleepable.
+	[riastradh, ticket #1115]
 
