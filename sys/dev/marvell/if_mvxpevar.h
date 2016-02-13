@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.2 2015/06/03 03:55:47 hsuenaga Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.3 2016/02/13 08:05:06 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -40,18 +40,17 @@
  * Default limit of queue length
  *
  * queue 0 is lowest priority and queue 7 is highest priority.
- * IP packet is received on queue 7 by default.
  *
  * XXX: packet classifier is not implement yet
  */
-#define MVXPE_RX_QUEUE_LIMIT_0	8
+#define MVXPE_RX_QUEUE_LIMIT_0	IFQ_MAXLEN
 #define MVXPE_RX_QUEUE_LIMIT_1	8
 #define MVXPE_RX_QUEUE_LIMIT_2	8
 #define MVXPE_RX_QUEUE_LIMIT_3	8
 #define MVXPE_RX_QUEUE_LIMIT_4	8
 #define MVXPE_RX_QUEUE_LIMIT_5	8
 #define MVXPE_RX_QUEUE_LIMIT_6	8
-#define MVXPE_RX_QUEUE_LIMIT_7	IFQ_MAXLEN
+#define MVXPE_RX_QUEUE_LIMIT_7	8
 
 #define MVXPE_TX_QUEUE_LIMIT_0	IFQ_MAXLEN
 #define MVXPE_TX_QUEUE_LIMIT_1	8

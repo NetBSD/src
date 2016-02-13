@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.11 2016/02/13 06:44:22 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.12 2016/02/13 08:05:06 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.11 2016/02/13 06:44:22 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.12 2016/02/13 08:05:06 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -923,6 +923,13 @@ mvxpe_initreg(struct ifnet *ifp)
 	/* Port MAC Control set 3 is used for IPG tune */
 
 	/* Port MAC Control set 4 is not used */
+
+	/* Port Configuration */
+	/* Use queue 0 only */
+	reg = MVXPE_READ(sc, MVXPE_PXC);
+	reg &= ~(MVXPE_PXC_RXQ_MASK | MVXPE_PXC_RXQARP_MASK |
+	    MVXPE_PXC_TCPQ_MASK | MVXPE_PXC_UDPQ_MASK | MVXPE_PXC_BPDUQ_MASK);
+	MVXPE_WRITE(sc, MVXPE_PXC, reg);
 
 	/* Port Configuration Extended: enable Tx CRC generation */
 	reg = MVXPE_READ(sc, MVXPE_PXCX);
@@ -2717,11 +2724,11 @@ mvxpe_filter_setup(struct mvxpe_softc *sc)
 		if (memcmp(enm->enm_addrlo, special, 5) == 0) {
 			i = enm->enm_addrlo[5];
 			dfsmt[i>>2] |=
-			    MVXPE_DF(i&3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+			    MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 		} else {
 			i = mvxpe_crc8(enm->enm_addrlo, ETHER_ADDR_LEN);
 			dfomt[i>>2] |=
-			    MVXPE_DF(i&3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+			    MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 		}
 
 		ETHER_NEXT_MULTI(step, enm);
@@ -2732,10 +2739,10 @@ allmulti:
 	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
 		for (i = 0; i < MVXPE_NDFSMT; i++) {
 			dfsmt[i] = dfomt[i] = 
-			    MVXPE_DF(0, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS) |
-			    MVXPE_DF(1, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS) |
-			    MVXPE_DF(2, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS) |
-			    MVXPE_DF(3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+			    MVXPE_DF(0, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(1, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(2, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 		}
 	}
 
@@ -2752,8 +2759,20 @@ set:
 	MVXPE_WRITE(sc, MVXPE_PXC, pxc);
 
 	/* Set Destination Address Filter Unicast Table */
-	i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
-	dfut[i>>2] = MVXPE_DF(i&3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+	if (ifp->if_flags & IFF_PROMISC) {
+		/* pass all unicast addresses */
+		for (i = 0; i < MVXPE_NDFUT; i++) {
+			dfut[i] =
+			    MVXPE_DF(0, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(1, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(2, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
+		}
+	}
+	else {
+		i = sc->sc_enaddr[5] & 0xf;             /* last nibble */
+		dfut[i>>2] = MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
+	}
 	MVXPE_WRITE_REGION(sc, MVXPE_DFUT(0), dfut, MVXPE_NDFUT);
 
 	/* Set Destination Address Filter Multicast Tables */
