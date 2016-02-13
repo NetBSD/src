@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1130 2016/01/22 21:56:56 riz Exp $
+# $NetBSD: GENERIC,v 1.1131 2016/02/13 19:53:23 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1130 $"
+#ident 		"GENERIC-$Revision: 1.1131 $"
 
 maxusers	64		# estimated number of users
 
@@ -578,8 +578,8 @@ intelfb* 	at intelfbbus?
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
-#nouveau*	at pci? dev ? function ?
-#nouveaufb*	at nouveaufbbus?
+nouveau*	at pci? dev ? function ?
+nouveaufb*	at nouveaufbbus?
 
 # DRMUMS drivers
 #viadrmums* 	at drm?
