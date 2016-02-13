@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.3 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.4 2016/02/13 03:33:02 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.3 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.4 2016/02/13 03:33:02 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -850,7 +850,6 @@ mvxpe_initreg(struct ifnet *ifp)
 			aprint_error_ifnet(ifp,
 			    "initialization failed: cannot initialize queue\n");
 			mvxpe_rx_unlockq(sc, q);
-			mvxpe_tx_unlockq(sc, q);
 			return ENOBUFS;
 		}
 		mvxpe_rx_unlockq(sc, q);
@@ -859,7 +858,6 @@ mvxpe_initreg(struct ifnet *ifp)
 		if (mvxpe_tx_queue_init(ifp, q) != 0) {
 			aprint_error_ifnet(ifp,
 			    "initialization failed: cannot initialize queue\n");
-			mvxpe_rx_unlockq(sc, q);
 			mvxpe_tx_unlockq(sc, q);
 			return ENOBUFS;
 		}
@@ -1421,8 +1419,10 @@ mvxpe_rxtxth_intr(void *arg)
 
 	mvxpe_sc_lock(sc);
 	ic = MVXPE_READ(sc, MVXPE_PRXTXTIC);
-	if (ic == 0)
+	if (ic == 0) {
+		mvxpe_sc_unlock(sc);
 		return 0;
+	}
 	MVXPE_WRITE(sc, MVXPE_PRXTXTIC, ~ic);
 	datum = datum ^ ic;
 
@@ -1441,8 +1441,10 @@ mvxpe_rxtxth_intr(void *arg)
 		DPRINTIFNET(ifp, 2, "PTXTXTIC: +PRXTXICSUMMARY\n");
 		mvxpe_rxtx_intr(sc);
 	}
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if (!(ifp->if_flags & IFF_RUNNING)) {
+		mvxpe_sc_unlock(sc);
 		return 1;
+	}
 
 	/* RxTxTH interrupt */
 	queues = MVXPE_PRXTXTI_GET_RBICTAPQ(ic);
@@ -2316,12 +2318,16 @@ mvxpe_tx_queue_complete(struct mvxpe_softc *sc, int q)
 			switch (t->flags & MVXPE_TX_F_EC_MASK) {
 			case MVXPE_TX_F_EC_LC:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_lc);
+				break;
 			case MVXPE_TX_F_EC_UR:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_ur);
+				break;
 			case MVXPE_TX_F_EC_RL:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_rl);
+				break;
 			default:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_oth);
+				break;
 			}
 			error = 1;
 		}
