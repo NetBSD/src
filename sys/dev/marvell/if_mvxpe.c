@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.5 2016/02/13 05:21:11 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.6 2016/02/13 05:44:01 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.5 2016/02/13 05:21:11 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.6 2016/02/13 05:44:01 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1277,11 +1277,6 @@ mvxpe_rx_queue_enable(struct ifnet *ifp, int q)
 	reg  = MVXPE_PRXITTH_RITT(rx->rx_queue_th_time);
 	MVXPE_WRITE(sc, MVXPE_PRXITTH(q), reg);
 
-	/* Unmask RXTX Intr. */
-	reg = MVXPE_READ(sc, MVXPE_PRXTXIM);
-	reg |= MVXPE_PRXTXI_RREQ(q); /* Rx resource error */
-	MVXPE_WRITE(sc, MVXPE_PRXTXIM, reg);
-
 	/* Unmask RXTX_TH Intr. */
 	reg = MVXPE_READ(sc, MVXPE_PRXTXTIM);
 	reg |= MVXPE_PRXTXTI_RBICTAPQ(q); /* Rx Buffer Interrupt Coalese */
@@ -1385,13 +1380,19 @@ mvxpe_enable_intr(struct mvxpe_softc *sc)
 	reg |= MVXPE_PMI_TXUNDRN;
 	reg |= MVXPE_PMI_PRBSERROR;
 	reg |= MVXPE_PMI_SRSE;
+#if 0
+	/*
+	 * The device may raise false interrupts for SERDES even if the device
+	 * is not configured to use SERDES connection.
+	 */
+	reg |= MVXPE_PMI_PRBSERROR;
+	reg |= MVXPE_PMI_SRSE;
+#else
+	reg &= ~MVXPE_PMI_PRBSERROR;
+	reg &= ~MVXPE_PMI_SRSE;
+#endif
 	reg |= MVXPE_PMI_TREQ_MASK;
 	MVXPE_WRITE(sc, MVXPE_PMIM, reg);
-
-	/* Enable RXTX Intr. (via RXTX_TH Summary bit) */
-	reg  = MVXPE_READ(sc, MVXPE_PRXTXIM);
-	reg |= MVXPE_PRXTXI_RREQ_MASK; /* Rx resource error */
-	MVXPE_WRITE(sc, MVXPE_PRXTXIM, reg);
 
 	/* Enable Summary Bit to check all interrupt cause. */
 	reg  = MVXPE_READ(sc, MVXPE_PRXTXTIM);
