@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.51 2016/02/06 08:58:07 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.52 2016/02/13 09:33:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.51 2016/02/06 08:58:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.52 2016/02/13 09:33:12 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1904,9 +1904,11 @@ xhci_event_transfer(struct xhci_softc * const sc,
 
 	if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
 		if ((trb_0 & 0x3) == 0x0) {
+			callout_stop(&xfer->ux_callout);
 			usb_transfer_complete(xfer);
 		}
 	} else {
+		callout_stop(&xfer->ux_callout);
 		usb_transfer_complete(xfer);
 	}
 }
@@ -3263,8 +3265,6 @@ xhci_device_ctrl_done(struct usbd_xfer *xfer)
 {
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	callout_stop(&xfer->ux_callout); /* XXX wrong place */
-
 }
 
 static void
@@ -3361,6 +3361,11 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
+	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
+		    xhci_timeout, xfer);
+	}
+
 	if (sc->sc_bus.ub_usepolling) {
 		DPRINTFN(1, "polling", 0, 0, 0, 0);
 		//xhci_waitintr(sc, xfer);
@@ -3381,8 +3386,6 @@ xhci_device_bulk_done(struct usbd_xfer *xfer)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	DPRINTFN(15, "%p slot %u dci %u", xfer, xs->xs_idx, dci, 0);
-
-	callout_stop(&xfer->ux_callout); /* XXX wrong place */
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
@@ -3468,6 +3471,11 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
+	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
+		    xhci_timeout, xfer);
+	}
+
 	if (sc->sc_bus.ub_usepolling) {
 		DPRINTFN(1, "polling", 0, 0, 0, 0);
 		//xhci_waitintr(sc, xfer);
@@ -3506,10 +3514,7 @@ xhci_device_intr_done(struct usbd_xfer *xfer)
 
 	if (xfer->ux_pipe->up_repeat) {
 		xfer->ux_status = xhci_device_intr_start(xfer);
-	} else {
-		callout_stop(&xfer->ux_callout); /* XXX */
 	}
-
 }
 
 static void
