@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.10 2016/02/13 06:33:21 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.11 2016/02/13 06:44:22 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.10 2016/02/13 06:33:21 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.11 2016/02/13 06:44:22 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -3058,7 +3058,7 @@ sysctl_mvxpe_init(struct mvxpe_softc *sc)
 	/* hw.mvxpe.debug */
 	if (sysctl_createv(&sc->sc_mvxpe_clog, 0, NULL, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
-	    SYSCTL_DESCR("mvgbe device driver debug control"),
+	    SYSCTL_DESCR("mvxpe device driver debug control"),
 	    NULL, 0, &mvxpe_debug, 0,
 	    CTL_HW, mvxpe_root_num, CTL_CREATE, CTL_EOL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "couldn't create sysctl node\n");
@@ -3101,10 +3101,10 @@ sysctl_mvxpe_init(struct mvxpe_softc *sc)
 #ifdef SYSCTL_INCLUDE_DESCR
 #define MVXPE_SYSCTL_DESCR(num) "configuration parameters for queue " # num
 		static const char *sysctl_queue_descrs[] = {
-			MVXPE_SYSCTL_DESC(0), MVXPE_SYSCTL_DESC(1),
-			MVXPE_SYSCTL_DESC(2), MVXPE_SYSCTL_DESC(3),
-			MVXPE_SYSCTL_DESC(4), MVXPE_SYSCTL_DESC(5),
-			MVXPE_SYSCTL_DESC(6), MVXPE_SYSCTL_DESC(7),
+			MVXPE_SYSCTL_DESCR(0), MVXPE_SYSCTL_DESCR(1),
+			MVXPE_SYSCTL_DESCR(2), MVXPE_SYSCTL_DESCR(3),
+			MVXPE_SYSCTL_DESCR(4), MVXPE_SYSCTL_DESCR(5),
+			MVXPE_SYSCTL_DESCR(6), MVXPE_SYSCTL_DESCR(7),
 		};
 #undef MVXPE_SYSCTL_DESCR
 #endif /* SYSCTL_INCLUDE_DESCR */
@@ -3181,7 +3181,7 @@ sysctl_mvxpe_init(struct mvxpe_softc *sc)
 	/* hw.mvxpe.mvxpe[unit].clear_mib */
 	if (sysctl_createv(&sc->sc_mvxpe_clog, 0, NULL, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "clear_mib",
-	    SYSCTL_DESCR("mvgbe device driver debug control"),
+	    SYSCTL_DESCR("mvxpe device driver debug control"),
 	    sysctl_clear_mib, 0, (void *)sc, 0,
 	    CTL_HW, mvxpe_root_num, mvxpe_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
