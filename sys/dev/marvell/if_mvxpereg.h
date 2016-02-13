@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.3 2016/02/12 09:24:15 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.4 2016/02/13 06:33:21 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -244,7 +244,7 @@
 /* Rx */
 #define MVXPE_MIB_RX_GOOD_OCT		0x00 /* 64bit */
 #define MVXPE_MIB_RX_BAD_OCT		0x08
-#define MVXPE_MIB_RX_MAC_TRNS_ERR	0x0c
+#define MVXPE_MIB_TX_MAC_TRNS_ERR	0x0c
 #define MVXPE_MIB_RX_GOOD_FRAME		0x10
 #define MVXPE_MIB_RX_BAD_FRAME		0x14
 #define MVXPE_MIB_RX_BCAST_FRAME	0x18
