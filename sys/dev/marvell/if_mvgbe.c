@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.43 2016/02/09 12:53:17 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.44 2016/02/13 08:44:22 hikaru Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.43 2016/02/09 12:53:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.44 2016/02/13 08:44:22 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2238,8 +2238,19 @@ set:
 	MVGBE_WRITE(sc, MVGBE_PXC, pxc);
 
 	/* Set Destination Address Filter Unicast Table */
-	i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
-	dfut[i>>2] = MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+	if (ifp->if_flags & IFF_PROMISC) {
+		/* pass all unicast addresses */
+		for (i = 0; i < MVGBE_NDFUT; i++) {
+			dfut[i] =
+			    MVGBE_DF(0, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(1, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(2, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+		}
+	} else {
+		i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
+		dfut[i>>2] = MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+	}
 	MVGBE_WRITE_FILTER(sc, MVGBE_DFUT, dfut, MVGBE_NDFUT);
 
 	/* Set Destination Address Filter Multicast Tables */
