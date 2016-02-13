@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.244 2016/01/28 10:20:40 pgoyette Exp $
+$NetBSD: acronyms,v 1.245 2016/02/13 23:12:34 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -107,6 +107,7 @@ DKDC	don't know, don't care
 DM	dungeon master
 DMZ	demilitarized zone
 DND	do not disturb
+DNF	did not finish
 DOA	dead on arrival
 DRY	don't repeat yourself
 DSTM	don't shoot the messenger
