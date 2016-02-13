@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.4 2016/02/13 03:33:02 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.5 2016/02/13 05:21:11 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.4 2016/02/13 03:33:02 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.5 2016/02/13 05:21:11 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2130,7 +2130,7 @@ mvxpe_tx_queue(struct mvxpe_softc *sc, struct mbuf *m, int q)
 	MVXPE_TX_MBUF(sc, q, tx->tx_cpu) = m;
 	bus_dmamap_sync(sc->sc_dmat,
 	    MVXPE_TX_MAP(sc, q, tx->tx_cpu), 0, m->m_pkthdr.len,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* load to tx descriptors */
 	start = tx->tx_cpu;
