@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.6 2016/02/13 05:44:01 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.7 2016/02/13 05:47:38 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.6 2016/02/13 05:44:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.7 2016/02/13 05:47:38 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1378,8 +1378,6 @@ mvxpe_enable_intr(struct mvxpe_softc *sc)
 	reg |= MVXPE_PMI_RXCRCERROR;
 	reg |= MVXPE_PMI_RXLARGEPACKET;
 	reg |= MVXPE_PMI_TXUNDRN;
-	reg |= MVXPE_PMI_PRBSERROR;
-	reg |= MVXPE_PMI_SRSE;
 #if 0
 	/*
 	 * The device may raise false interrupts for SERDES even if the device
