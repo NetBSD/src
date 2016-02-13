@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.9 2016/02/13 06:12:46 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.10 2016/02/13 06:33:21 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.9 2016/02/13 06:12:46 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.10 2016/02/13 06:33:21 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -189,67 +189,71 @@ STATIC struct mvxpe_mib_def {
 	int reg64;
 	const char *sysctl_name;
 	const char *desc;
+	int ext;
+#define MVXPE_MIBEXT_IF_OERRORS	1
+#define MVXPE_MIBEXT_IF_IERRORS	2
+#define MVXPE_MIBEXT_IF_COLLISIONS	3
 } mvxpe_mib_list[] = {
 	{MVXPE_MIB_RX_GOOD_OCT, 1,	"rx_good_oct",
-	    "Good Octets Rx"},
+	    "Good Octets Rx", 0},
 	{MVXPE_MIB_RX_BAD_OCT, 0,	"rx_bad_oct",
-	    "Bad  Octets Rx"},
-	{MVXPE_MIB_RX_MAC_TRNS_ERR, 0,	"rx_mac_err",
-	    "MAC Transmit Error"},
+	    "Bad  Octets Rx", 0},
+	{MVXPE_MIB_TX_MAC_TRNS_ERR, 0,	"tx_mac_err",
+	    "MAC Transmit Error", MVXPE_MIBEXT_IF_OERRORS},
 	{MVXPE_MIB_RX_GOOD_FRAME, 0,	"rx_good_frame",
-	    "Good Frames Rx"},
+	    "Good Frames Rx", 0},
 	{MVXPE_MIB_RX_BAD_FRAME, 0,	"rx_bad_frame",
-	    "Bad Frames Rx"},
+	    "Bad Frames Rx", 0},
 	{MVXPE_MIB_RX_BCAST_FRAME, 0,	"rx_bcast_frame",
-	    "Broadcast Frames Rx"},
+	    "Broadcast Frames Rx", 0},
 	{MVXPE_MIB_RX_MCAST_FRAME, 0,	"rx_mcast_frame",
-	    "Multicast Frames Rx"},
+	    "Multicast Frames Rx", 0},
 	{MVXPE_MIB_RX_FRAME64_OCT, 0,	"rx_frame_1_64",
-	    "Frame Size    1 -   64"},
+	    "Frame Size    1 -   64", 0},
 	{MVXPE_MIB_RX_FRAME127_OCT, 0,	"rx_frame_65_127",
-	    "Frame Size   65 -  127"},
+	    "Frame Size   65 -  127", 0},
 	{MVXPE_MIB_RX_FRAME255_OCT, 0,	"rx_frame_128_255",
-	    "Frame Size  128 -  255"},
+	    "Frame Size  128 -  255", 0},
 	{MVXPE_MIB_RX_FRAME511_OCT, 0,	"rx_frame_256_511",
 	    "Frame Size  256 -  511"},
 	{MVXPE_MIB_RX_FRAME1023_OCT, 0,	"rx_frame_512_1023",
-	    "Frame Size  512 - 1023"},
+	    "Frame Size  512 - 1023", 0},
 	{MVXPE_MIB_RX_FRAMEMAX_OCT, 0,	"rx_fame_1024_max",
-	    "Frame Size 1024 -  Max"},
+	    "Frame Size 1024 -  Max", 0},
 	{MVXPE_MIB_TX_GOOD_OCT, 1,	"tx_good_oct",
-	    "Good Octets Tx"},
+	    "Good Octets Tx", 0},
 	{MVXPE_MIB_TX_GOOD_FRAME, 0,	"tx_good_frame",
-	    "Good Frames Tx"},
+	    "Good Frames Tx", 0},
 	{MVXPE_MIB_TX_EXCES_COL, 0,	"tx_exces_collision",
-	    "Excessive Collision"},
+	    "Excessive Collision", MVXPE_MIBEXT_IF_OERRORS},
 	{MVXPE_MIB_TX_MCAST_FRAME, 0,	"tx_mcast_frame",
 	    "Multicast Frames Tx"},
 	{MVXPE_MIB_TX_BCAST_FRAME, 0,	"tx_bcast_frame",
 	    "Broadcast Frames Tx"},
 	{MVXPE_MIB_TX_MAC_CTL_ERR, 0,	"tx_mac_err",
-	    "Unknown MAC Control"},
+	    "Unknown MAC Control", 0},
 	{MVXPE_MIB_FC_SENT, 0,		"fc_tx",
-	    "Flow Control Tx"},
+	    "Flow Control Tx", 0},
 	{MVXPE_MIB_FC_GOOD, 0,		"fc_rx_good",
-	    "Good Flow Control Rx"},
+	    "Good Flow Control Rx", 0},
 	{MVXPE_MIB_FC_BAD, 0,		"fc_rx_bad",
-	    "Bad Flow Control Rx"},
+	    "Bad Flow Control Rx", 0},
 	{MVXPE_MIB_PKT_UNDERSIZE, 0,	"pkt_undersize",
-	    "Undersized Packets Rx"},
+	    "Undersized Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_PKT_FRAGMENT, 0,	"pkt_fragment",
-	    "Fragmented Packets Rx"},
+	    "Fragmented Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_PKT_OVERSIZE, 0,	"pkt_oversize",
-	    "Oversized Packets Rx"},
+	    "Oversized Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_PKT_JABBER, 0,	"pkt_jabber",
-	    "Jabber Packets Rx"},
+	    "Jabber Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_MAC_RX_ERR, 0,	"mac_rx_err",
-	    "MAC Rx Errors"},
+	    "MAC Rx Errors", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_MAC_CRC_ERR, 0,	"mac_crc_err",
-	    "MAC CRC Errors"},
+	    "MAC CRC Errors", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_MAC_COL, 0,		"mac_collision",
-	    "MAC Collision"},
+	    "MAC Collision", MVXPE_MIBEXT_IF_COLLISIONS},
 	{MVXPE_MIB_MAC_LATE_COL, 0,	"mac_late_collision",
-	    "MAC Late Collision"},
+	    "MAC Late Collision", MVXPE_MIBEXT_IF_OERRORS},
 };
 
 /*
@@ -1690,6 +1694,7 @@ mvxpe_start(struct ifnet *ifp)
 		    sc->sc_tx_ring[q].tx_queue_len);
 		DPRINTIFNET(ifp, 1, "a packet is added to tx ring\n");
 		sc->sc_tx_pending++;
+		ifp->if_opackets++;
 		ifp->if_timer = 1;
 		sc->sc_wdogsoft = 1;
 		bpf_mtap(ifp, m);
@@ -3207,6 +3212,7 @@ mvxpe_clear_mib(struct mvxpe_softc *sc)
 STATIC void
 mvxpe_update_mib(struct mvxpe_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 
 	KASSERT_SC_MTX(sc);
@@ -3214,6 +3220,7 @@ mvxpe_update_mib(struct mvxpe_softc *sc)
 	for (i = 0; i < __arraycount(mvxpe_mib_list); i++) {
 		uint32_t val_hi;
 		uint32_t val_lo;
+		uint64_t val;
 
 		if (mvxpe_mib_list[i].reg64) {
 			/* XXX: implement bus_space_read_8() */
@@ -3229,8 +3236,23 @@ mvxpe_update_mib(struct mvxpe_softc *sc)
 		if ((val_lo | val_hi) == 0)
 			continue;
 
-		sc->sc_sysctl_mib[i].counter +=
-	       	    ((uint64_t)val_hi << 32) | (uint64_t)val_lo;
+		val = ((uint64_t)val_hi << 32) | (uint64_t)val_lo;
+		sc->sc_sysctl_mib[i].counter += val;
+
+		switch (mvxpe_mib_list[i].ext) {
+		case MVXPE_MIBEXT_IF_OERRORS:
+			ifp->if_oerrors += val;
+			break;
+		case MVXPE_MIBEXT_IF_IERRORS:
+			ifp->if_ierrors += val;
+			break;
+		case MVXPE_MIBEXT_IF_COLLISIONS:
+			ifp->if_collisions += val;
+			break;
+		default:
+			break;
+		}
+
 	}
 }
 
