@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.7 2016/02/13 05:47:38 hikaru Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.8 2016/02/13 06:02:31 hikaru Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.7 2016/02/13 05:47:38 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.8 2016/02/13 06:02:31 hikaru Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2620,8 +2620,9 @@ mvxpe_rx_set_csumflag(struct ifnet *ifp,
 
 	/* L3 */
 	if (r->status & MVXPE_RX_L3_IP) {
-		csum_flags |= M_CSUM_IPv4;
-		if ((r->status & MVXPE_RX_IP_HEADER_OK) == 0) {
+		csum_flags |= M_CSUM_IPv4 & ifp->if_csum_flags_rx;
+		if ((r->status & MVXPE_RX_IP_HEADER_OK) == 0 &&
+		    (csum_flags & M_CSUM_IPv4)) {
 			csum_flags |= M_CSUM_IPv4_BAD;
 			goto finish;
 		}
@@ -2638,26 +2639,25 @@ mvxpe_rx_set_csumflag(struct ifnet *ifp,
 	switch (r->status & MVXPE_RX_L4_MASK) {
 	case MVXPE_RX_L4_TCP:
 		if (r->status & MVXPE_RX_L3_IP)
-			csum_flags |= M_CSUM_TCPv4;
+			csum_flags |= M_CSUM_TCPv4 & ifp->if_csum_flags_rx;
 		else
-			csum_flags |= M_CSUM_TCPv6;
-		if ((r->status & MVXPE_RX_L4_CHECKSUM_OK) == 0)
-			csum_flags |= M_CSUM_TCP_UDP_BAD;
+			csum_flags |= M_CSUM_TCPv6 & ifp->if_csum_flags_rx;
 		break;
 	case MVXPE_RX_L4_UDP:
 		if (r->status & MVXPE_RX_L3_IP)
-			csum_flags |= M_CSUM_UDPv4;
+			csum_flags |= M_CSUM_UDPv4 & ifp->if_csum_flags_rx;
 		else
-			csum_flags |= M_CSUM_UDPv6;
-		if ((r->status & MVXPE_RX_L4_CHECKSUM_OK) == 0)
-			csum_flags |= M_CSUM_TCP_UDP_BAD;
+			csum_flags |= M_CSUM_UDPv6 & ifp->if_csum_flags_rx;
 		break;
 	case MVXPE_RX_L4_OTH:
 	default:
 		break;
 	}
+	if ((r->status & MVXPE_RX_L4_CHECKSUM_OK) == 0 && (csum_flags &
+	    (M_CSUM_TCPv4 | M_CSUM_TCPv6 | M_CSUM_UDPv4 | M_CSUM_UDPv6)))
+		csum_flags |= M_CSUM_TCP_UDP_BAD;
 finish:
-	m0->m_pkthdr.csum_flags |= (csum_flags & ifp->if_csum_flags_rx);
+	m0->m_pkthdr.csum_flags = csum_flags;
 }
 
 /*
