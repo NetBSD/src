@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.38 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.39 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.38 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.39 2016/02/14 14:49:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,11 +52,11 @@ __RCSID("$NetBSD: refresh.c,v 1.38 2016/02/11 19:21:04 christos Exp $");
 #include "el.h"
 
 private void	re_nextline(EditLine *);
-private void	re_addc(EditLine *, Int);
+private void	re_addc(EditLine *, wint_t);
 private void	re_update_line(EditLine *, Char *, Char *, int);
 private void	re_insert (EditLine *, Char *, int, int, Char *, int);
 private void	re_delete(EditLine *, Char *, int, int, int);
-private void	re_fastputc(EditLine *, Int);
+private void	re_fastputc(EditLine *, wint_t);
 private void	re_clear_eol(EditLine *, int, int, int);
 private void	re__strncopy(Char *, Char *, size_t);
 private void	re__copy_and_pad(Char *, const Char *, size_t);
@@ -125,7 +125,7 @@ re_nextline(EditLine *el)
  *	Draw c, expanding tabs, control chars etc.
  */
 private void
-re_addc(EditLine *el, Int c)
+re_addc(EditLine *el, wint_t c)
 {
 	switch (ct_chr_class((Char)c)) {
 	case CHTYPE_TAB:        /* expand the tab */
@@ -161,10 +161,10 @@ re_addc(EditLine *el, Int c)
  *	Draw the character given
  */
 protected void
-re_putc(EditLine *el, Int c, int shift)
+re_putc(EditLine *el, wint_t c, int shift)
 {
 	int i, w = Width(c);
-	ELRE_DEBUG(1, (__F, "printing %5x '%c'\r\n", c, c));
+	ELRE_DEBUG(1, (__F, "printing %5x '%lc'\r\n", c, c));
 
 	while (shift && (el->el_refresh.r_cursor.h + w > el->el_terminal.t_size.h))
 	    re_putc(el, ' ', 1);
@@ -1052,7 +1052,7 @@ re_refresh_cursor(EditLine *el)
  *	Add a character fast.
  */
 private void
-re_fastputc(EditLine *el, Int c)
+re_fastputc(EditLine *el, wint_t c)
 {
 	int w = Width((Char)c);
 	while (w > 1 && el->el_cursor.h + w > el->el_terminal.t_size.h)
