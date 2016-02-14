@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.11 2016/02/14 10:34:09 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.12 2016/02/14 10:53:30 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -109,6 +109,7 @@ struct dwc2_qh;
  * @qh:                 QH for the transfer being processed by this channel
  * @hc_list_entry:      For linking to list of host channels
  * @desc_list_addr:     Current QH's descriptor list DMA address
+ * @desc_list_sz:       Current QH's descriptor list size
  *
  * This structure represents the state of a single host channel when acting in
  * host mode. It contains the data items needed to transfer packets to an
@@ -161,7 +162,9 @@ struct dwc2_host_chan {
 	u32 hcint;
 	struct dwc2_qh *qh;
 	struct list_head hc_list_entry;
+	usb_dma_t desc_list_usbdma;
 	dma_addr_t desc_list_addr;
+	u32 desc_list_sz;
 };
 
 struct dwc2_hcd_pipe_info {
@@ -257,6 +260,7 @@ enum dwc2_transaction_type {
  *                      schedule
  * @desc_list:          List of transfer descriptors
  * @desc_list_dma:      Physical address of desc_list
+ * @desc_list_sz:       Size of descriptors list
  * @n_bytes:            Xfer Bytes array. Each element corresponds to a transfer
  *                      descriptor and indicates original XferSize value for the
  *                      descriptor
@@ -293,6 +297,7 @@ struct dwc2_qh {
 	usb_dma_t desc_list_usbdma;
 	struct dwc2_hcd_dma_desc *desc_list;
 	dma_addr_t desc_list_dma;
+	u32 desc_list_sz;
 	u32 *n_bytes;
 	unsigned tt_buffer_dirty:1;
 };
@@ -349,6 +354,8 @@ struct dwc2_qtd {
 	u8 isoc_split_pos;
 	u16 isoc_frame_index;
 	u16 isoc_split_offset;
+	u16 isoc_td_last;
+	u16 isoc_td_first;
 	u32 ssplit_out_xfer_count;
 	u8 error_count;
 	u8 n_desc;
@@ -384,19 +391,6 @@ static inline void disable_hc_int(struct dwc2_hsotg *hsotg, int chnum, u32 intr)
 
 	mask &= ~intr;
 	DWC2_WRITE_4(hsotg, HCINTMSK(chnum), mask);
-}
-
-/*
- * Returns the mode of operation, host or device
- */
-static inline int dwc2_is_host_mode(struct dwc2_hsotg *hsotg)
-{
-	return (DWC2_READ_4(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) != 0;
-}
-
-static inline int dwc2_is_device_mode(struct dwc2_hsotg *hsotg)
-{
-	return (DWC2_READ_4(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) == 0;
 }
 
 /*
@@ -533,6 +527,19 @@ static inline bool dbg_perio(void) { return false; }
 
 /* Packet size for any kind of endpoint descriptor */
 #define dwc2_max_packet(wmaxpacketsize) ((wmaxpacketsize) & 0x07ff)
+
+/*
+ * Returns true if frame1 index is greater than frame2 index. The comparison
+ * is done modulo FRLISTEN_64_SIZE. This accounts for the rollover of the
+ * frame number when the max index frame number is reached.
+ */
+static inline bool dwc2_frame_idx_num_gt(u16 fr_idx1, u16 fr_idx2)
+{
+	u16 diff = fr_idx1 - fr_idx2;
+	u16 sign = diff & (FRLISTEN_64_SIZE >> 1);
+
+	return diff && !sign;
+}
 
 /*
  * Returns true if frame1 is less than or equal to frame2. The comparison is

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.13 2015/08/31 06:12:55 uebayasi Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.14 2016/02/14 10:53:30 skrll Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.13 2015/08/31 06:12:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.14 2016/02/14 10:53:30 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -118,6 +118,9 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 				USB_SPEED_HIGH : dev_speed, qh->ep_is_in,
 				qh->ep_type == USB_ENDPOINT_XFER_ISOC,
 				bytecount);
+
+		/* Ensure frame_number corresponds to the reality */
+		hsotg->frame_number = dwc2_hcd_get_frame_number(hsotg);
 		/* Start in a slightly future (micro)frame */
 		qh->sched_frame = dwc2_frame_num_inc(hsotg->frame_number,
 						     SCHEDULE_SLOP);
@@ -247,8 +250,7 @@ struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	struct dwc2_softc *sc = hsotg->hsotg_sc;
-
-	if (hsotg->core_params->dma_desc_enable > 0) {
+	if (qh->desc_list) {
 		dwc2_hcd_qh_free_ddma(hsotg, qh);
 	} else if (qh->dw_align_buf) {
 		usb_freemem(&sc->sc_bus, &qh->dw_align_buf_usbdma);
@@ -601,6 +603,14 @@ int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	if (!list_empty(&qh->qh_list_entry))
 		/* QH already in a schedule */
 		return 0;
+
+	if (!dwc2_frame_num_le(qh->sched_frame, hsotg->frame_number) &&
+			!hsotg->frame_number) {
+		dev_dbg(hsotg->dev,
+				"reset frame number counter\n");
+		qh->sched_frame = dwc2_frame_num_inc(hsotg->frame_number,
+				SCHEDULE_SLOP);
+	}
 
 	/* Add the new QH to the appropriate schedule */
 	if (dwc2_qh_is_non_per(qh)) {

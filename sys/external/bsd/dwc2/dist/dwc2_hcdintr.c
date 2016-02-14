@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.12 2015/08/30 12:59:59 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.13 2016/02/14 10:53:30 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.12 2015/08/30 12:59:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.13 2016/02/14 10:53:30 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -125,6 +125,9 @@ static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 	struct dwc2_qh *qh;
 	enum dwc2_transaction_type tr_type;
 
+	/* Clear interrupt */
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_SOF);
+
 #ifdef DEBUG_SOF
 	dev_vdbg(hsotg->dev, "--Start of Frame Interrupt--\n");
 #endif
@@ -149,9 +152,6 @@ static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 	tr_type = dwc2_hcd_select_transactions(hsotg);
 	if (tr_type != DWC2_TRANSACTION_NONE)
 		dwc2_hcd_queue_transactions(hsotg, tr_type);
-
-	/* Clear interrupt */
-	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_SOF);
 }
 
 /*
@@ -317,6 +317,7 @@ static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
 
 	if (do_reset) {
 		*hprt0_modify |= HPRT0_RST;
+		DWC2_WRITE_4(hsotg, HPRT0, *hprt0_modify);
 		queue_delayed_work(hsotg->wq_otg, &hsotg->reset_work,
 				   msecs_to_jiffies(60));
 	} else {
@@ -354,15 +355,12 @@ static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
 	 * Set flag and clear if detected
 	 */
 	if (hprt0 & HPRT0_CONNDET) {
+		DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify | HPRT0_CONNDET);
+
 		dev_vdbg(hsotg->dev,
 			 "--Port Interrupt HPRT0=0x%08x Port Connect Detected--\n",
 			 hprt0);
-		if (hsotg->lx_state != DWC2_L0)
-			usb_hcd_resume_root_hub(hsotg->priv);
-
-		hsotg->flags.b.port_connect_status_change = 1;
-		hsotg->flags.b.port_connect_status = 1;
-		hprt0_modify |= HPRT0_CONNDET;
+		dwc2_hcd_connect(hsotg);
 
 		/*
 		 * The Hub driver asserts a reset when it sees port connect
@@ -375,27 +373,35 @@ static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
 	 * Clear if detected - Set internal flag if disabled
 	 */
 	if (hprt0 & HPRT0_ENACHG) {
+		DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify | HPRT0_ENACHG);
 		dev_vdbg(hsotg->dev,
 			 "  --Port Interrupt HPRT0=0x%08x Port Enable Changed (now %d)--\n",
 			 hprt0, !!(hprt0 & HPRT0_ENA));
-		hprt0_modify |= HPRT0_ENACHG;
-		if (hprt0 & HPRT0_ENA)
+		if (hprt0 & HPRT0_ENA) {
+			hsotg->new_connection = true;
 			dwc2_hprt0_enable(hsotg, hprt0, &hprt0_modify);
-		else
+		} else {
 			hsotg->flags.b.port_enable_change = 1;
+			if (hsotg->core_params->dma_desc_fs_enable) {
+				u32 hcfg;
+
+				hsotg->core_params->dma_desc_enable = 0;
+				hsotg->new_connection = false;
+				hcfg = DWC2_READ_4(hsotg, HCFG);
+				hcfg &= ~HCFG_DESCDMA;
+				DWC2_WRITE_4(hsotg, HCFG, hcfg);
+			}
+		}
 	}
 
 	/* Overcurrent Change Interrupt */
 	if (hprt0 & HPRT0_OVRCURRCHG) {
+		DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify | HPRT0_OVRCURRCHG);
 		dev_vdbg(hsotg->dev,
 			 "  --Port Interrupt HPRT0=0x%08x Port Overcurrent Changed--\n",
 			 hprt0);
 		hsotg->flags.b.port_over_current_change = 1;
-		hprt0_modify |= HPRT0_OVRCURRCHG;
 	}
-
-	/* Clear Port Interrupts */
-	DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify);
 
 	if (hsotg->flags.b.port_connect_status_change ||
 	    hsotg->flags.b.port_enable_change ||
@@ -1984,6 +1990,24 @@ static void dwc2_hc_chhltd_intr(struct dwc2_hsotg *hsotg,
 	}
 }
 
+/*
+ * Check if the given qtd is still the top of the list (and thus valid).
+ *
+ * If dwc2_hcd_qtd_unlink_and_free() has been called since we grabbed
+ * the qtd from the top of the list, this will return false (otherwise true).
+ */
+static bool dwc2_check_qtd_still_ok(struct dwc2_qtd *qtd, struct dwc2_qh *qh)
+{
+	struct dwc2_qtd *cur_head;
+
+	if (qh == NULL)
+		return false;
+
+	cur_head = list_first_entry(&qh->qtd_list, struct dwc2_qtd,
+				    qtd_list_entry);
+	return (cur_head == qtd);
+}
+
 /* Handles interrupt for a specific Host Channel */
 static void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
 {
@@ -2066,27 +2090,59 @@ static void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
 		 */
 		hcint &= ~HCINTMSK_NYET;
 	}
-	if (hcint & HCINTMSK_CHHLTD)
-		dwc2_hc_chhltd_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_AHBERR)
-		dwc2_hc_ahberr_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_STALL)
-		dwc2_hc_stall_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_NAK)
-		dwc2_hc_nak_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_ACK)
-		dwc2_hc_ack_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_NYET)
-		dwc2_hc_nyet_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_XACTERR)
-		dwc2_hc_xacterr_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_BBLERR)
-		dwc2_hc_babble_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_FRMOVRUN)
-		dwc2_hc_frmovrun_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_DATATGLERR)
-		dwc2_hc_datatglerr_intr(hsotg, chan, chnum, qtd);
 
+	if (hcint & HCINTMSK_CHHLTD) {
+		dwc2_hc_chhltd_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_AHBERR) {
+		dwc2_hc_ahberr_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_STALL) {
+		dwc2_hc_stall_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_NAK) {
+		dwc2_hc_nak_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_ACK) {
+		dwc2_hc_ack_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_NYET) {
+		dwc2_hc_nyet_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_XACTERR) {
+		dwc2_hc_xacterr_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_BBLERR) {
+		dwc2_hc_babble_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_FRMOVRUN) {
+		dwc2_hc_frmovrun_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_DATATGLERR) {
+		dwc2_hc_datatglerr_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+
+exit:
 	chan->hcint = 0;
 }
 

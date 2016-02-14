@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hw.h,v 1.3 2015/08/30 12:59:59 skrll Exp $	*/
+/*	$NetBSD: dwc2_hw.h,v 1.4 2016/02/14 10:53:30 skrll Exp $	*/
 
 /*
  * hw.h - DesignWare HS OTG Controller hardware definitions
@@ -144,6 +144,7 @@
 #define GINTSTS_RESETDET		(1 << 23)
 #define GINTSTS_FET_SUSP		(1 << 22)
 #define GINTSTS_INCOMPL_IP		(1 << 21)
+#define GINTSTS_INCOMPL_SOOUT		(1 << 21)
 #define GINTSTS_INCOMPL_SOIN		(1 << 20)
 #define GINTSTS_OEPINT			(1 << 19)
 #define GINTSTS_IEPINT			(1 << 18)
@@ -770,10 +771,6 @@
 #define TSIZ_XFERSIZE_SHIFT		0
 
 #define HCDMA(_ch)			HSOTG_REG(0x0514 + 0x20 * (_ch))
-#define HCDMA_DMA_ADDR_MASK		(0x1fffff << 11)
-#define HCDMA_DMA_ADDR_SHIFT		11
-#define HCDMA_CTD_MASK			(0xff << 3)
-#define HCDMA_CTD_SHIFT			3
 
 #define HCDMAB(_ch)			HSOTG_REG(0x051c + 0x20 * (_ch))
 
