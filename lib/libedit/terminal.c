@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.15 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.16 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.15 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.16 2016/02/14 14:49:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1239,11 +1239,11 @@ terminal_tputs(EditLine *el, const char *cap, int affcnt)
  *	Add a character
  */
 protected int
-terminal__putc(EditLine *el, Int c)
+terminal__putc(EditLine *el, wint_t c)
 {
 	char buf[MB_LEN_MAX +1];
 	ssize_t i;
-	if (c == (Int)MB_FILL_CHAR)
+	if (c == (wint_t)MB_FILL_CHAR)
 		return 0;
 	i = ct_encode_char(buf, (size_t)MB_LEN_MAX, (Char)c);
 	if (i <= 0)
@@ -1266,7 +1266,7 @@ terminal__flush(EditLine *el)
  *	Write the given character out, in a human readable form
  */
 protected void
-terminal_writec(EditLine *el, Int c)
+terminal_writec(EditLine *el, wint_t c)
 {
 	Char visbuf[VISUAL_WIDTH_MAX +1];
 	ssize_t vcnt = ct_visual_char(visbuf, VISUAL_WIDTH_MAX, (Char)c);
