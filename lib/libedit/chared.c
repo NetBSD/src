@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.40 2014/06/18 18:12:28 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.41 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.40 2014/06/18 18:12:28 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.41 2016/02/14 14:49:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -199,7 +199,7 @@ c_delbefore1(EditLine *el)
  *	Return if p is part of a word according to emacs
  */
 protected int
-ce__isword(Int p)
+ce__isword(wint_t p)
 {
 	return Isalnum(p) || Strchr(STR("*?_-.[]~="), p) != NULL;
 }
@@ -209,7 +209,7 @@ ce__isword(Int p)
  *	Return if p is part of a word according to vi
  */
 protected int
-cv__isword(Int p)
+cv__isword(wint_t p)
 {
 	if (Isalnum(p) || p == '_')
 		return 1;
@@ -223,7 +223,7 @@ cv__isword(Int p)
  *	Return if p is part of a big word according to vi
  */
 protected int
-cv__isWord(Int p)
+cv__isWord(wint_t p)
 {
 	return !Isspace(p);
 }
@@ -233,7 +233,7 @@ cv__isWord(Int p)
  *	Find the previous word
  */
 protected Char *
-c__prev_word(Char *p, Char *low, int n, int (*wtest)(Int))
+c__prev_word(Char *p, Char *low, int n, int (*wtest)(wint_t))
 {
 	p--;
 
@@ -257,7 +257,7 @@ c__prev_word(Char *p, Char *low, int n, int (*wtest)(Int))
  *	Find the next word
  */
 protected Char *
-c__next_word(Char *p, Char *high, int n, int (*wtest)(Int))
+c__next_word(Char *p, Char *high, int n, int (*wtest)(wint_t))
 {
 	while (n--) {
 		while ((p < high) && !(*wtest)(*p))
@@ -275,7 +275,7 @@ c__next_word(Char *p, Char *high, int n, int (*wtest)(Int))
  *	Find the next word vi style
  */
 protected Char *
-cv_next_word(EditLine *el, Char *p, Char *high, int n, int (*wtest)(Int))
+cv_next_word(EditLine *el, Char *p, Char *high, int n, int (*wtest)(wint_t))
 {
 	int test;
 
@@ -304,7 +304,7 @@ cv_next_word(EditLine *el, Char *p, Char *high, int n, int (*wtest)(Int))
  *	Find the previous word vi style
  */
 protected Char *
-cv_prev_word(Char *p, Char *low, int n, int (*wtest)(Int))
+cv_prev_word(Char *p, Char *low, int n, int (*wtest)(wint_t))
 {
 	int test;
 
@@ -368,7 +368,7 @@ cv_delfini(EditLine *el)
  *	Go to the end of this word according to vi
  */
 protected Char *
-cv__endword(Char *p, Char *high, int n, int (*wtest)(Int))
+cv__endword(Char *p, Char *high, int n, int (*wtest)(wint_t))
 {
 	int test;
 

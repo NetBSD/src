@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.8 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.9 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.8 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.9 2016/02/14 14:49:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -85,7 +85,7 @@ private int		 node_trav(EditLine *, keymacro_node_t *, Char *,
     keymacro_value_t *);
 private int		 node__try(EditLine *, keymacro_node_t *, const Char *,
     keymacro_value_t *, int);
-private keymacro_node_t	*node__get(Int);
+private keymacro_node_t	*node__get(wint_t);
 private void		 node__free(keymacro_node_t *);
 private void		 node__put(EditLine *, keymacro_node_t *);
 private int		 node__delete(EditLine *, keymacro_node_t **,
@@ -458,7 +458,7 @@ node__put(EditLine *el, keymacro_node_t *ptr)
  *	Returns pointer to a keymacro_node_t for ch.
  */
 private keymacro_node_t *
-node__get(Int ch)
+node__get(wint_t ch)
 {
 	keymacro_node_t *ptr;
 
