@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.38 2015/12/22 14:31:36 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.39 2016/02/14 10:56:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.38 2015/12/22 14:31:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.39 2016/02/14 10:56:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1685,7 +1685,7 @@ dwc2_init(struct dwc2_softc *sc)
 		retval = dwc2_hcd_init(hsotg);
 		if (retval) {
 			if (hsotg->gadget_enabled)
-				s3c_hsotg_remove(hsotg);
+				dwc2_hsotg_remove(hsotg);
 			goto fail2;
 		}
 	    hsotg->hcd_enabled = 1;
@@ -1788,28 +1788,28 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	ed = xfer->pipe->endpoint->edesc;
 	xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 
-	xfer->actlen = dwc2_hcd_urb_get_actual_length(qtd->urb);
+	struct dwc2_hcd_urb *urb = qtd->urb;
+	xfer->actlen = dwc2_hcd_urb_get_actual_length(urb);
 
 	DPRINTFN(3, "xfer=%p actlen=%d\n", xfer, xfer->actlen);
+
+	if (xfertype == UE_ISOCHRONOUS) {
+		int i;
+		xfer->actlen = 0;
+		for (i = 0; i < xfer->nframes; ++i) {
+			xfer->frlengths[i] =
+				dwc2_hcd_urb_get_iso_desc_actual_length(
+						urb, i);
+			xfer->actlen += xfer->frlengths[i];
+		}
+	}
 
 	if (xfertype == UE_ISOCHRONOUS && dbg_perio()) {
 		int i;
 
 		for (i = 0; i < xfer->nframes; i++)
 			dev_vdbg(hsotg->dev, " ISO Desc %d status %d\n",
-				 i, qtd->urb->iso_descs[i].status);
-	}
-
-	if (xfertype == UE_ISOCHRONOUS) {
-		int i;
-
-		xfer->actlen = 0;
-		for (i = 0; i < xfer->nframes; ++i) {
-			xfer->frlengths[i] =
-				dwc2_hcd_urb_get_iso_desc_actual_length(
-						qtd->urb, i);
-			xfer->actlen += xfer->frlengths[i];
-		}
+				 i, urb->iso_descs[i].status);
 	}
 
 	if (!status) {
@@ -1838,6 +1838,7 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		xfer->status = USBD_IOERROR;
 		break;
 	default:
+		xfer->status = USBD_IOERROR;
 		printf("%s: unknown error status %d\n", __func__, status);
 	}
 
@@ -1883,6 +1884,13 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 	dev_dbg(hsotg->dev, "DWC OTG HCD START\n");
 
 	mutex_spin_enter(&hsotg->lock);
+
+	hsotg->lx_state = DWC2_L0;
+	
+	if (dwc2_is_device_mode(hsotg)) {
+		mutex_spin_exit(&hsotg->lock);
+		return 0;	/* why 0 ?? */
+	}
 
 	dwc2_hcd_reinit(hsotg);
 
