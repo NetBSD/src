@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.21 2016/02/12 17:23:21 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.22 2016/02/14 17:06:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.21 2016/02/12 17:23:21 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.22 2016/02/14 17:06:24 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
 #include "el.h"
 #include "read.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,10 +51,18 @@ el_getc(EditLine *el, char *cp)
 	int num_read;
 	wchar_t wc = 0;
 
-	num_read = el_wgetc (el, &wc);
-	if (num_read > 0)
-		*cp = (char)wc;
-	return num_read;
+	num_read = el_wgetc(el, &wc);
+	*cp = '\0';
+	if (num_read <= 0)
+		return num_read;
+	num_read = ct_wctob(wc);
+	if (num_read == EOF) {
+		errno = ERANGE;
+		return -1;
+	} else {
+		*cp = (char)num_read;
+		return 1;
+	}
 }
 
 
