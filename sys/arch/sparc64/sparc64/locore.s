@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.387 2016/02/03 20:33:52 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.388 2016/02/14 21:13:33 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1075,7 +1075,9 @@ _C_LABEL(trapbase_sun4v):
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0f4 fill_5_other
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0f8 fill_6_other
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0fc fill_7_other
-	sun4v_trap_entry 256					! 0x100-0x1ff
+	sun4v_trap_entry 1					! 0x100
+	BPT							! 0x101 = pseudo breakpoint instruction
+	sun4v_trap_entry 254					! 0x102-0x1ff
 	!
 	! trap level 1
 	!
