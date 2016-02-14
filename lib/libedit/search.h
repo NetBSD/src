@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.9 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: search.h,v 1.10 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@ protected void		c_setpat(EditLine *);
 protected el_action_t	ce_inc_search(EditLine *, int);
 protected el_action_t	cv_search(EditLine *, int);
 protected el_action_t	ce_search_line(EditLine *, int);
-protected el_action_t	cv_repeat_srch(EditLine *, Int);
-protected el_action_t	cv_csearch(EditLine *, int, Int, int, int);
+protected el_action_t	cv_repeat_srch(EditLine *, wint_t);
+protected el_action_t	cv_csearch(EditLine *, int, wint_t, int, int);
 
 #endif /* _h_el_search */
