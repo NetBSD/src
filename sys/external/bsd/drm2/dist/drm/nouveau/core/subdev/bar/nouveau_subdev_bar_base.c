@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_bar_base.c,v 1.3 2015/10/18 15:42:00 jmcneill Exp $	*/
+/*	$NetBSD: nouveau_subdev_bar_base.c,v 1.4 2016/02/14 03:06:06 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bar_base.c,v 1.3 2015/10/18 15:42:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bar_base.c,v 1.4 2016/02/14 03:06:06 riastradh Exp $");
 
 #include <core/object.h>
 
@@ -66,9 +66,11 @@ nouveau_barobj_ctor(struct nouveau_object *parent,
 
 #ifdef __NetBSD__
 	barobj->iomemt = bar->iomemt;
-	if (bus_space_subregion(bar->iomemt, bar->iomemh, barobj->vma.offset,
-		bar->iomemsz - barobj->vma.offset, &barobj->iomemh) != 0)
-		/* XXX error branch */
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_space_subregion(bar->iomemt, bar->iomemh,
+	    barobj->vma.offset, bar->iomemsz - barobj->vma.offset,
+	    &barobj->iomemh);
+	if (ret)
 		return ret;
 #else
 	barobj->iomem = bar->iomem + (u32)barobj->vma.offset;
