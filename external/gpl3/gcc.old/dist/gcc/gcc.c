@@ -2819,8 +2819,9 @@ execute (void)
 	      }
 	    else
 #endif
-	      internal_error ("%s (program %s)",
-			      strsignal (WTERMSIG (status)), commands[i].prog);
+	      internal_error ("%s (program %s received signal %d)",
+			      strsignal (WTERMSIG (status)), commands[i].prog,
+			      WTERMSIG (status));
 	  }
 	else if (WIFEXITED (status)
 		 && WEXITSTATUS (status) >= MIN_FATAL_STATUS)
