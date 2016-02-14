@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.28 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.29 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.28 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.29 2016/02/14 14:49:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -139,7 +139,7 @@ protected int
 parse__escape(const Char **ptr)
 {
 	const Char *p;
-	Int c;
+	wint_t c;
 
 	p = *ptr;
 

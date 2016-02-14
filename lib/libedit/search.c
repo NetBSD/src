@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.32 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.33 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.32 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.33 2016/02/14 14:49:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -567,7 +567,7 @@ ce_search_line(EditLine *el, int dir)
  *	Vi repeat search
  */
 protected el_action_t
-cv_repeat_srch(EditLine *el, Int c)
+cv_repeat_srch(EditLine *el, wint_t c)
 {
 
 #ifdef SDEBUG
@@ -593,14 +593,14 @@ cv_repeat_srch(EditLine *el, Int c)
  *	Vi character search
  */
 protected el_action_t
-cv_csearch(EditLine *el, int direction, Int ch, int count, int tflag)
+cv_csearch(EditLine *el, int direction, wint_t ch, int count, int tflag)
 {
 	Char *cp;
 
 	if (ch == 0)
 		return CC_ERROR;
 
-	if (ch == (Int)-1) {
+	if (ch == (wint_t)-1) {
 		Char c;
 		if (FUN(el,getc)(el, &c) != 1)
 			return ed_end_of_file(el, 0);
@@ -614,14 +614,14 @@ cv_csearch(EditLine *el, int direction, Int ch, int count, int tflag)
 
 	cp = el->el_line.cursor;
 	while (count--) {
-		if ((Int)*cp == ch)
+		if ((wint_t)*cp == ch)
 			cp += direction;
 		for (;;cp += direction) {
 			if (cp >= el->el_line.lastchar)
 				return CC_ERROR;
 			if (cp < el->el_line.buffer)
 				return CC_ERROR;
-			if ((Int)*cp == ch)
+			if ((wint_t)*cp == ch)
 				break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.18 2016/02/14 14:47:48 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.19 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -67,11 +67,9 @@
 #define ct_mbstowcs          mbstowcs
 
 #define Char			wchar_t
-#define Int			wint_t
 #define FUN(prefix,rest)	prefix ## _w ## rest
 #define FUNW(type)		type ## _w
 #define TYPE(type)		type ## W
-#define FCHAR			"%lc"
 #define FSTR			"%ls"
 #define STR(x) 			L ## x
 #define UC(c)			c
@@ -121,11 +119,9 @@ size_t 	ct_mbrtowc(char *, const char *, size_t, void *);
 #define ct_mbstowcs(a, b, c)    (strncpy(a, b, c), strlen(a))
 
 #define Char			char
-#define Int			int
 #define FUN(prefix,rest)	prefix ## _ ## rest
 #define FUNW(type)		type
 #define TYPE(type)		type
-#define FCHAR			"%c"
 #define FSTR			"%s"
 #define STR(x) 			x
 #define UC(c)			(unsigned char)(c)
