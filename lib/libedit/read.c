@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.76 2016/02/12 15:36:08 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.77 2016/02/14 14:47:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.76 2016/02/12 15:36:08 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.77 2016/02/14 14:47:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -337,10 +337,9 @@ read_char(EditLine *el, Char *cp)
 		return 0;
 	}
 
-#ifdef WIDECHAR
-	do {
+	for (;;) {
 		mbstate_t mbs;
-again_lastbyte:
+
 		++cbp;
 		/* This only works because UTF8 is stateless */
 		memset(&mbs, 0, sizeof(mbs));
@@ -353,7 +352,7 @@ again_lastbyte:
 				 */
 				cbuf[0] = cbuf[cbp - 1];
 				cbp = 0;
-				goto again_lastbyte;
+				break;
 			} else {
 				/* Invalid byte, discard it. */
 				cbp = 0;
@@ -375,14 +374,9 @@ again_lastbyte:
 			goto again;
 		default:
 			/* Valid character, process it. */
-			break;
+			return 1;
 		}
-	} while (/*CONSTCOND*/0);
-#else
-	*cp = (Char)(unsigned char)cbuf[0];
-#endif
-
-	return 1;
+	}
 }
 
 /* read_pop():
