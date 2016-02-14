@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.10 2015/08/30 12:59:59 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.11 2016/02/14 10:34:09 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -733,7 +733,7 @@ do {									\
 			   qtd_list_entry);				\
 	if (usb_pipeint(_qtd_->urb->pipe) &&				\
 	    (_qh_)->start_split_frame != 0 && !_qtd_->complete_split) {	\
-		_hfnum_.d32 = DWC2_READ_4(hsotg, (_hcd_)->regs + HFNUM);		\
+		_hfnum_.d32 = DWC2_READ_4((_hcd_), HFNUM);		\
 		switch (_hfnum_.b.frnum & 0x7) {			\
 		case 7:							\
 			(_hcd_)->hfnum_7_samples_##_letter_++;		\
