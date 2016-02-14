@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.11 2011/07/17 20:54:47 joerg Exp $	*/
+/*	$NetBSD: disk.c,v 1.12 2016/02/14 18:09:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,8 +112,8 @@ diskopen(struct open_file *f, ...)
 	va_list ap;
 
 	va_start(ap, f);
-
 	device = va_arg(ap, char *);
+	va_end(ap);
 
 	/*
 	 * For NetBSD/sgimips, since we use the SGI partition map directly,
