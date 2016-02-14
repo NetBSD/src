@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.23 2014/03/14 21:59:41 mrg Exp $ */
+/*	$NetBSD: pmu.c,v 1.24 2016/02/14 19:54:20 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.23 2014/03/14 21:59:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.24 2016/02/14 19:54:20 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,6 +385,7 @@ next:
 bat_done:
 
 #if notyet
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = pmu_i2c_acquire_bus;

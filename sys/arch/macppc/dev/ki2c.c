@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.18 2011/07/26 08:36:02 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.19 2016/02/14 19:54:20 chs Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -125,6 +125,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = ki2c_i2c_exec;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 

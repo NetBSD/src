@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.10 2016/01/01 22:37:07 marty Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.11 2016/02/14 19:54:20 chs Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.10 2016/01/01 22:37:07 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.11 2016/02/14 19:54:20 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -187,8 +187,8 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_read_byte   = exynos_i2c_read_byte;
 	sc->sc_ic.ic_write_byte  = exynos_i2c_write_byte;
 
+	memset(&iba, 0, sizeof(iba));
 	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);
-
 }
 
 static i2c_tag_t
