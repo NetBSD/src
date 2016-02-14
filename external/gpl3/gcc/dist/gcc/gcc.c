@@ -2928,9 +2928,10 @@ execute (void)
 	      }
 	    else
 #endif
-	      internal_error_no_backtrace ("%s (program %s)",
+	      internal_error_no_backtrace ("%s (program %s received signal %d)",
 					   strsignal (WTERMSIG (status)),
-					   commands[i].prog);
+					   commands[i].prog,
+					   WTERMSIG (status));
 	  }
 	else if (WIFEXITED (status)
 		 && WEXITSTATUS (status) >= MIN_FATAL_STATUS)
