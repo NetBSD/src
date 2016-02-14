@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.36 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.37 2016/02/14 14:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.36 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.37 2016/02/14 14:49:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: map.c,v 1.36 2016/02/11 19:21:04 christos Exp $");
 #include "el.h"
 
 private void	map_print_key(EditLine *, el_action_t *, const Char *);
-private void	map_print_some_keys(EditLine *, el_action_t *, Int, Int);
+private void	map_print_some_keys(EditLine *, el_action_t *, wint_t, wint_t);
 private void	map_print_all_keys(EditLine *);
 private void	map_init_nls(EditLine *);
 private void	map_init_meta(EditLine *);
@@ -1142,7 +1142,7 @@ map_print_key(EditLine *el, el_action_t *map, const Char *in)
  *	Print keys from first to last
  */
 private void
-map_print_some_keys(EditLine *el, el_action_t *map, Int first, Int last)
+map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 {
 	el_bindings_t *bp, *ep;
 	Char firstbuf[2], lastbuf[2];
@@ -1300,8 +1300,8 @@ map_bind(EditLine *el, int argc, const Char **argv)
 				return 0;
 			default:
 				(void) fprintf(el->el_errfile,
-				    "" FSTR ": Invalid switch `" FCHAR "'.\n",
-				    argv[0], (Int)p[1]);
+				    "" FSTR ": Invalid switch `%lc'.\n",
+				    argv[0], (wint_t)p[1]);
 			}
 		else
 			break;
