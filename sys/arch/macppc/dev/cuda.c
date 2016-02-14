@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.20 2014/08/13 10:56:35 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.21 2016/02/14 19:54:20 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.20 2014/08/13 10:56:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.21 2016/02/14 19:54:20 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,6 +251,7 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &caa, cuda_print);
 #endif
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = cuda_i2c_acquire_bus;
