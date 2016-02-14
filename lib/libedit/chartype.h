@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.17 2016/02/11 19:10:18 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.18 2016/02/14 14:47:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@
 #warning Build environment does not support non-BMP characters
 #endif
 
-#define ct_mbtowc            mbtowc
 #define ct_mbrtowc           mbrtowc
 #define ct_wctomb            wctomb
 #define ct_wctomb_reset      wctomb(0,0)
@@ -115,8 +114,7 @@ Width(wchar_t c)
 
 #else /* NARROW */
 
-#define ct_mbtowc            error
-#define ct_mbrtowc           error
+size_t 	ct_mbrtowc(char *, const char *, size_t, void *);
 #define ct_wctomb            error
 #define ct_wctomb_reset      
 #define ct_wcstombs(a, b, c)    (strncpy(a, b, c), strlen(a))
