@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_coreintr.c,v 1.9 2015/08/30 12:59:59 skrll Exp $	*/
+/*	$NetBSD: dwc2_coreintr.c,v 1.10 2016/02/14 10:53:30 skrll Exp $	*/
 
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.9 2015/08/30 12:59:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.10 2016/02/14 10:53:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,9 +100,6 @@ static void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
 		hprt0 &= ~HPRT0_ENA;
 		DWC2_WRITE_4(hsotg, HPRT0, hprt0);
 	}
-
-	/* Clear interrupt */
-	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_PRTINT);
 }
 
 /**
@@ -112,11 +109,11 @@ static void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_handle_mode_mismatch_intr(struct dwc2_hsotg *hsotg)
 {
-	dev_warn(hsotg->dev, "Mode Mismatch Interrupt: currently in %s mode\n",
-		 dwc2_is_host_mode(hsotg) ? "Host" : "Device");
-
 	/* Clear interrupt */
 	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_MODEMIS);
+
+	dev_warn(hsotg->dev, "Mode Mismatch Interrupt: currently in %s mode\n",
+		 dwc2_is_host_mode(hsotg) ? "Host" : "Device");
 }
 
 /**
@@ -143,7 +140,7 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 		gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 
 		if (dwc2_is_device_mode(hsotg))
-			s3c_hsotg_disconnect(hsotg);
+			dwc2_hsotg_disconnect(hsotg);
 
 		if (hsotg->op_state == OTG_STATE_B_HOST) {
 			hsotg->op_state = OTG_STATE_B_PERIPHERAL;
@@ -253,7 +250,7 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 			dev_dbg(hsotg->dev, "a_suspend->a_peripheral (%d)\n",
 				hsotg->op_state);
 			spin_unlock(&hsotg->lock);
-			dwc2_hcd_disconnect(hsotg);
+			dwc2_hcd_disconnect(hsotg, false);
 			spin_lock(&hsotg->lock);
 			hsotg->op_state = OTG_STATE_A_PERIPHERAL;
 		} else {
@@ -290,9 +287,13 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 {
-	u32 gintmsk = DWC2_READ_4(hsotg, GINTMSK);
+	u32 gintmsk;
+
+	/* Clear interrupt */
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_CONIDSTSCHNG);
 
 	/* Need to disable SOF interrupt immediately */
+	gintmsk = DWC2_READ_4(hsotg, GINTMSK);
 	gintmsk &= ~GINTSTS_SOF;
 	DWC2_WRITE_4(hsotg, GINTMSK, gintmsk);
 
@@ -309,9 +310,6 @@ static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 		workqueue_enqueue(hsotg->wq_otg, &hsotg->wf_otg, NULL);
 		spin_lock(&hsotg->lock);
 	}
-
-	/* Clear interrupt */
-	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_CONIDSTSCHNG);
 }
 
 /**
@@ -327,16 +325,28 @@ static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_handle_session_req_intr(struct dwc2_hsotg *hsotg)
 {
-	dev_dbg(hsotg->dev, "++Session Request Interrupt++\n");
+	int ret;
 
 	/* Clear interrupt */
 	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_SESSREQINT);
 
-	/*
-	 * Report disconnect if there is any previous session established
-	 */
-	if (dwc2_is_device_mode(hsotg))
-		s3c_hsotg_disconnect(hsotg);
+	dev_dbg(hsotg->dev, "Session request interrupt - lx_state=%d\n",
+							hsotg->lx_state);
+
+	if (dwc2_is_device_mode(hsotg)) {
+		if (hsotg->lx_state == DWC2_L2) {
+			ret = dwc2_exit_hibernation(hsotg, true);
+			if (ret && (ret != -ENOTSUPP))
+				dev_err(hsotg->dev,
+					"exit hibernation failed\n");
+		}
+
+		/*
+		 * Report disconnect if there is any previous session
+		 * established
+		 */
+		dwc2_hsotg_disconnect(hsotg);
+	}
 }
 
 /*
@@ -349,6 +359,10 @@ static void dwc2_handle_session_req_intr(struct dwc2_hsotg *hsotg)
 static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 {
 	int ret;
+
+	/* Clear interrupt */
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_WKUPINT);
+
 	dev_dbg(hsotg->dev, "++Resume or Remote Wakeup Detected Interrupt++\n");
 	dev_dbg(hsotg->dev, "%s lxstate = %d\n", __func__, hsotg->lx_state);
 
@@ -369,6 +383,9 @@ static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 		/* Change to L0 state */
 		hsotg->lx_state = DWC2_L0;
 	} else {
+		if (hsotg->core_params->hibernation)
+			return;
+
 		if (hsotg->lx_state != DWC2_L1) {
 			u32 pcgcctl = DWC2_READ_4(hsotg, PCGCTL);
 
@@ -382,9 +399,6 @@ static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 			hsotg->lx_state = DWC2_L0;
 		}
 	}
-
-	/* Clear interrupt */
-	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_WKUPINT);
 }
 
 /*
@@ -393,17 +407,14 @@ static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_handle_disconnect_intr(struct dwc2_hsotg *hsotg)
 {
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_DISCONNINT);
+
 	dev_dbg(hsotg->dev, "++Disconnect Detected Interrupt++ (%s) %s\n",
 		dwc2_is_host_mode(hsotg) ? "Host" : "Device",
 		dwc2_op_state_str(hsotg));
 
 	if (hsotg->op_state == OTG_STATE_A_HOST)
-		dwc2_hcd_disconnect(hsotg);
-
-	/* Change to L3 (OFF) state */
-	hsotg->lx_state = DWC2_L3;
-
-	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_DISCONNINT);
+		dwc2_hcd_disconnect(hsotg, false);
 }
 
 /*
@@ -418,6 +429,9 @@ static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 {
 	u32 dsts;
 	int ret;
+
+	/* Clear interrupt */
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_USBSUSP);
 
 	dev_dbg(hsotg->dev, "USB SUSPEND\n");
 
@@ -437,7 +451,7 @@ static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 			if (!dwc2_is_device_connected(hsotg)) {
 				dev_dbg(hsotg->dev,
 						"ignore suspend request before enumeration\n");
-				goto clear_int;
+				return;
 			}
 
 			ret = dwc2_enter_hibernation(hsotg);
@@ -476,10 +490,6 @@ skip_power_saving:
 			hsotg->op_state = OTG_STATE_A_HOST;
 		}
 	}
-
-clear_int:
-	/* Clear interrupt */
-	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_USBSUSP);
 }
 
 #define GINTMSK_COMMON	(GINTSTS_WKUPINT | GINTSTS_SESSREQINT |		\
