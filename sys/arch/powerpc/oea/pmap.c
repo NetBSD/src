@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2014/08/10 17:49:04 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2016/02/14 18:07:49 dholland Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2014/08/10 17:49:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2016/02/14 18:07:49 dholland Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3133,6 +3133,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
             (void)pmap_pte_insert(ptegidx, &pte);
         }
     }
+    va_end(ap);
 
     TLBSYNC();
     SYNC();
