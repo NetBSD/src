@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.76 2016/02/15 15:18:01 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.77 2016/02/15 15:53:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.76 2016/02/15 15:18:01 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.77 2016/02/15 15:53:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -513,6 +513,7 @@ el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
 	size_t len;
+	ssize_t slen;
 	char *ptr;
 	char *path = NULL;
 	const Char *dptr;
@@ -549,15 +550,17 @@ el_source(EditLine *el, const char *fname)
 		return -1;
 	}
 
-	for (; (ptr = fparseln(fp, &len, NULL, NULL, 0)) != NULL; free(ptr)) {
+	ptr = NULL;
+	len = 0;
+	while ((slen = getline(&ptr, &len, fp)) != -1) {
 		if (*ptr == '\n')
 			continue;	/* Empty line. */
+		if (slen > 0 && ptr[--slen] == '\n')
+			ptr[slen] = '\0';
+
 		dptr = ct_decode_string(ptr, &el->el_scratch);
 		if (!dptr)
 			continue;
-		if (len > 0 && dptr[len - 1] == '\n')
-			--len;
-
 		/* loop until first non-space char or EOL */
 		while (*dptr != '\0' && Isspace(*dptr))
 			dptr++;
