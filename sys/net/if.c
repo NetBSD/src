@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.323 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.324 2016/02/15 08:08:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.323 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.324 2016/02/15 08:08:04 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -200,6 +200,7 @@ static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
 static int if_clone_create(const char *);
 static int if_clone_destroy(const char *);
+static void if_link_state_change_si(void *);
 
 struct if_percpuq {
 	struct ifnet	*ipq_ifp;
@@ -602,6 +603,7 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
+	ifp->if_old_link_state = LINK_STATE_UNKNOWN;
 
 	ifp->if_capenable = 0;
 	ifp->if_csum_flags_tx = 0;
@@ -626,6 +628,10 @@ if_initialize(ifnet_t *ifp)
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
 
 	IF_AFDATA_LOCK_INIT(ifp);
+
+	ifp->if_link_si = softint_establish(SOFTINT_NET, if_link_state_change_si, ifp);
+	if (ifp->if_link_si == NULL)
+		panic("%s: softint_establish() failed", __func__);
 
 	if_getindex(ifp);
 }
@@ -1044,6 +1050,9 @@ again:
 	ifioctl_detach(ifp);
 
 	IF_AFDATA_LOCK_DESTROY(ifp);
+
+	softint_disestablish(ifp->if_link_si);
+	ifp->if_link_si = NULL;
 
 	/*
 	 * remove packets that came from ifp, from software interrupt queues.
@@ -1562,8 +1571,6 @@ void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
 	int s;
-	int old_link_state;
-	struct domain *dp;
 
 	s = splnet();
 	if (ifp->if_link_state == link_state) {
@@ -1571,8 +1578,26 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		return;
 	}
 
-	old_link_state = ifp->if_link_state;
 	ifp->if_link_state = link_state;
+	softint_schedule(ifp->if_link_si);
+
+	splx(s);
+}
+
+
+static void
+if_link_state_change_si(void *arg)
+{
+	struct ifnet *ifp = arg;
+	int s;
+	int link_state, old_link_state;
+	struct domain *dp;
+
+	s = splnet();
+	link_state = ifp->if_link_state;
+	old_link_state = ifp->if_old_link_state;
+	ifp->if_old_link_state = ifp->if_link_state;
+
 #ifdef DEBUG
 	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
 		link_state == LINK_STATE_UP ? "UP" :
