@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2016/01/23 21:22:48 christos Exp $
+# $NetBSD: Makefile,v 1.39 2016/02/15 14:59:38 christos Exp $
 
 NOMAN=		# defined
 
@@ -46,8 +46,8 @@ CPPFLAGS+=	-D_KERNTYPES
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
 SRCS.t_extent=		t_extent.c subr_extent.c
-CPPFLAGS.t_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
-CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
+CPPFLAGS.t_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE -D_KERNTYPES
+CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE -D_KERNTYPES
 
 t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 	${HOST_SH} ${.ALLSRC} ${.TARGET}
