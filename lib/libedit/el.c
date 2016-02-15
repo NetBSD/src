@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.75 2016/02/11 19:21:04 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.76 2016/02/15 15:18:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.75 2016/02/11 19:21:04 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.76 2016/02/15 15:18:01 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -549,7 +549,7 @@ el_source(EditLine *el, const char *fname)
 		return -1;
 	}
 
-	while ((ptr = fgetln(fp, &len)) != NULL) {
+	for (; (ptr = fparseln(fp, &len, NULL, NULL, 0)) != NULL; free(ptr)) {
 		if (*ptr == '\n')
 			continue;	/* Empty line. */
 		dptr = ct_decode_string(ptr, &el->el_scratch);
@@ -566,6 +566,7 @@ el_source(EditLine *el, const char *fname)
 		if ((error = parse_line(el, dptr)) == -1)
 			break;
 	}
+	free(ptr);
 
 	el_free(path);
 	(void) fclose(fp);
