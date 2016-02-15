@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.37 2015/06/02 15:36:45 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.38 2016/02/15 21:58:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -216,6 +216,8 @@ int		 rl_generic_bind(int, const char *, const char *, Keymap);
 int		 rl_bind_key_in_map(int, rl_command_func_t *, Keymap);
 void		 rl_cleanup_after_signal(void);
 void		 rl_free_line_state(void);
+int		 rl_set_keyboard_input_timeout(int);
+
 #ifdef __cplusplus
 }
 #endif
