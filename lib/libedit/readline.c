@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.119 2016/02/15 22:48:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.120 2016/02/15 23:36:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.119 2016/02/15 22:48:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.120 2016/02/15 23:36:30 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2327,7 +2327,7 @@ rl_free_line_state(void)
 
 int
 /*ARGSUSED*/
-rl_set_keyboard_input_timeout(int u)
+rl_set_keyboard_input_timeout(int u __attribute__((__unused__)))
 {
 	return 0;
 }
