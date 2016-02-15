@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.210 2016/02/14 23:47:57 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.211 2016/02/15 14:59:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.210 2016/02/14 23:47:57 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.211 2016/02/15 14:59:03 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -136,6 +136,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.210 2016/02/14 23:47:57 rtr Exp $")
 #include <netinet/in_offload.h>
 
 #ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
 #include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>

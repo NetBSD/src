@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.194 2015/12/12 23:34:25 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.195 2016/02/15 14:59:03 rtr Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.194 2015/12/12 23:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.195 2016/02/15 14:59:03 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2553,6 +2553,19 @@ in6_domifdetach(struct ifnet *ifp, void *aux)
 }
 
 /*
+ * Convert IPv4 address stored in struct in_addr to IPv4-Mapped IPv6 address
+ * stored in struct in6_addr as defined in RFC 4921 section 2.5.5.2.
+ */
+void
+in6_in_2_v4mapin6(const struct in_addr *in, struct in6_addr *in6)
+{
+	in6->s6_addr32[0] = 0;
+	in6->s6_addr32[1] = 0;
+	in6->s6_addr32[2] = IPV6_ADDR_INT32_SMP;
+	in6->s6_addr32[3] = in->s_addr;
+}
+
+/*
  * Convert sockaddr_in6 to sockaddr_in.  Original sockaddr_in6 must be
  * v4 mapped addr or v4 compat addr
  */
@@ -2574,10 +2587,7 @@ in6_sin_2_v4mapsin6(const struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_port = sin->sin_port;
-	sin6->sin6_addr.s6_addr32[0] = 0;
-	sin6->sin6_addr.s6_addr32[1] = 0;
-	sin6->sin6_addr.s6_addr32[2] = IPV6_ADDR_INT32_SMP;
-	sin6->sin6_addr.s6_addr32[3] = sin->sin_addr.s_addr;
+	in6_in_2_v4mapin6(&sin->sin_addr, &sin6->sin6_addr);
 }
 
 /* Convert sockaddr_in6 into sockaddr_in. */

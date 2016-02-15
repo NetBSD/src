@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.223 2016/01/20 22:01:18 riastradh Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.224 2016/02/15 14:59:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.223 2016/01/20 22:01:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.224 2016/02/15 14:59:03 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -405,16 +405,12 @@ udp_input(struct mbuf *m, ...)
 		memset(&src6, 0, sizeof(src6));
 		src6.sin6_family = AF_INET6;
 		src6.sin6_len = sizeof(struct sockaddr_in6);
-		src6.sin6_addr.s6_addr[10] = src6.sin6_addr.s6_addr[11] = 0xff;
-		memcpy(&src6.sin6_addr.s6_addr[12], &ip->ip_src,
-			sizeof(ip->ip_src));
+		in6_in_2_v4mapin6(&ip->ip_src, &src6.sin6_addr);
 		src6.sin6_port = uh->uh_sport;
 		memset(&dst6, 0, sizeof(dst6));
 		dst6.sin6_family = AF_INET6;
 		dst6.sin6_len = sizeof(struct sockaddr_in6);
-		dst6.sin6_addr.s6_addr[10] = dst6.sin6_addr.s6_addr[11] = 0xff;
-		memcpy(&dst6.sin6_addr.s6_addr[12], &ip->ip_dst,
-			sizeof(ip->ip_dst));
+		in6_in_2_v4mapin6(&ip->ip_dst, &dst6.sin6_addr);
 		dst6.sin6_port = uh->uh_dport;
 
 		n += udp6_realinput(AF_INET, &src6, &dst6, m, iphlen);

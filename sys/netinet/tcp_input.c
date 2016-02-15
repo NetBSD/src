@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.344 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.345 2016/02/15 14:59:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.344 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.345 2016/02/15 14:59:03 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1424,12 +1424,8 @@ findpcb:
 			struct in6_addr s, d;
 
 			/* mapped addr case */
-			memset(&s, 0, sizeof(s));
-			s.s6_addr16[5] = htons(0xffff);
-			bcopy(&ip->ip_src, &s.s6_addr32[3], sizeof(ip->ip_src));
-			memset(&d, 0, sizeof(d));
-			d.s6_addr16[5] = htons(0xffff);
-			bcopy(&ip->ip_dst, &d.s6_addr32[3], sizeof(ip->ip_dst));
+			in6_in_2_v4mapin6(&ip->ip_src, &s);
+			in6_in_2_v4mapin6(&ip->ip_dst, &d);
 			in6p = in6_pcblookup_connect(&tcbtable, &s,
 						     th->th_sport, &d, th->th_dport,
 						     0, &vestige);
@@ -4086,14 +4082,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		memcpy(&sin6, src, src->sa_len);
 		if (src->sa_family == AF_INET) {
 			/* IPv4 packet to AF_INET6 socket */
-			memset(&sin6, 0, sizeof(sin6));
-			sin6.sin6_family = AF_INET6;
-			sin6.sin6_len = sizeof(sin6);
-			sin6.sin6_port = ((struct sockaddr_in *)src)->sin_port;
-			sin6.sin6_addr.s6_addr16[5] = htons(0xffff);
-			bcopy(&((struct sockaddr_in *)src)->sin_addr,
-				&sin6.sin6_addr.s6_addr32[3],
-				sizeof(sin6.sin6_addr.s6_addr32[3]));
+			in6_sin_2_v4mapsin6((struct sockaddr_in *)src, &sin6);
 		}
 		if (in6_pcbconnect(in6p, &sin6, NULL)) {
 			goto resetandabort;
