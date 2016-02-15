@@ -20,8 +20,8 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
-/* Define to 1 if you have the `fgetln' function. */
-#define HAVE_FGETLN 1
+/* Define to 1 if you have the `getline' function. */
+#define HAVE_GETLINE 1
 
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
