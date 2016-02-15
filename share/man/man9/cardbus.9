@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.19 2014/07/13 11:03:26 mbalmer Exp $
+.\"     $NetBSD: cardbus.9,v 1.20 2016/02/15 22:37:54 riastradh Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -267,7 +267,7 @@ above.
 During autoconfiguration, a
 .Nm
 driver will receive a pointer to
-.Fa struct isapnp_attach_args
+.Fa struct cardbus_attach_args
 describing the device attaches to the CardBus.
 Drivers match the device using the
 .Fa ca_id
