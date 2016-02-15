@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.50 2016/02/15 15:53:45 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.51 2016/02/15 21:35:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.50 2016/02/15 15:53:45 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.51 2016/02/15 21:35:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -756,7 +756,6 @@ history_load(TYPE(History) *h, const char *fname)
 	ptr = h_malloc((max_size = 1024) * sizeof(*ptr));
 	if (ptr == NULL)
 		goto done;
-	free(line);
 	for (i = 0; (sz = getline(&line, &llen, fp)) != -1; i++) {
 		if (sz > 0 && line[sz - 1] == '\n')
 			line[--sz] = '\0';
@@ -775,7 +774,6 @@ history_load(TYPE(History) *h, const char *fname)
 			i = -1;
 			goto oomem;
 		}
-		free(line);
 	}
 oomem:
 	h_free(ptr);
