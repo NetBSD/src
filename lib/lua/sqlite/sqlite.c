@@ -1,7 +1,7 @@
-/*	$NetBSD: sqlite.c,v 1.7 2014/07/19 18:38:34 lneto Exp $ */
+/*	$NetBSD: sqlite.c,v 1.8 2016/02/15 15:56:33 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2011, 2013 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2011, 2013, 2016 Marc Balmer <marc@msys.ch>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -392,7 +392,7 @@ static const struct constant sqlite_constant[] = {
 };
 
 static void
-gpio_set_info(lua_State *L)
+sqlite_set_info(lua_State *L)
 {
 	lua_pushliteral(L, "_COPYRIGHT");
 	lua_pushliteral(L, "Copyright (C) 2011, 2012, 2013 by "
@@ -449,7 +449,7 @@ luaopen_sqlite(lua_State* L)
 	luaL_newlib(L, sqlite_methods);
 	luaL_setfuncs(L, db_methods, 0);
 	luaL_setfuncs(L, stmt_methods, 0);
-	gpio_set_info(L);
+	sqlite_set_info(L);
 
 	/* The database connection metatable */
 	if (luaL_newmetatable(L, SQLITE_DB_METATABLE)) {
