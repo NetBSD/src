@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.19 2016/02/15 16:14:39 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.20 2016/02/15 17:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@ size_t	strlcat(char *dst, const char *src, size_t size);
 size_t	strlcpy(char *dst, const char *src, size_t size);
 #endif
 
-#ifndef HAVE_FGETLN
+#ifndef HAVE_GETLINE
 #define	getline libedit_getline
 ssize_t	getline(char **line, size_t *len, FILE *fp);
 #endif
