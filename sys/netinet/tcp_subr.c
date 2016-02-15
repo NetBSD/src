@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.264 2015/09/07 01:56:50 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.265 2016/02/15 14:59:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.264 2015/09/07 01:56:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.265 2016/02/15 14:59:03 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1603,11 +1603,8 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 */
 		th = (struct tcphdr *)((char *)ip + (ip->ip_hl << 2));
 #ifdef INET6
-		memset(&src6, 0, sizeof(src6));
-		memset(&dst6, 0, sizeof(dst6));
-		src6.s6_addr16[5] = dst6.s6_addr16[5] = 0xffff;
-		memcpy(&src6.s6_addr32[3], &ip->ip_src, sizeof(struct in_addr));
-		memcpy(&dst6.s6_addr32[3], &ip->ip_dst, sizeof(struct in_addr));
+		in6_in_2_v4mapin6(&ip->ip_src, &src6);
+		in6_in_2_v4mapin6(&ip->ip_dst, &dst6);
 #endif
 		if ((inp = in_pcblookup_connect(&tcbtable, ip->ip_dst,
 						th->th_dport, ip->ip_src, th->th_sport, 0)) != NULL)
@@ -1752,9 +1749,7 @@ tcp_mtudisc_callback(struct in_addr faddr)
 
 	in_pcbnotifyall(&tcbtable, faddr, EMSGSIZE, tcp_mtudisc);
 #ifdef INET6
-	memset(&in6, 0, sizeof(in6));
-	in6.s6_addr16[5] = 0xffff;
-	memcpy(&in6.s6_addr32[3], &faddr, sizeof(struct in_addr));
+	in6_in_2_v4mapin6(&faddr, &in6);
 	tcp6_mtudisc_callback(&in6);
 #endif
 }
