@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.47 2014/05/11 01:05:17 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.48 2016/02/15 15:26:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.47 2014/05/11 01:05:17 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.48 2016/02/15 15:26:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -743,7 +743,7 @@ history_load(TYPE(History) *h, const char *fname)
 	if ((fp = fopen(fname, "r")) == NULL)
 		return i;
 
-	if ((line = fgetln(fp, &sz)) == NULL)
+	if ((line = fparseln(fp, &sz, NULL, NULL, 0)) == NULL)
 		goto done;
 
 	if (strncmp(line, hist_cookie, sz) != 0)
@@ -752,14 +752,8 @@ history_load(TYPE(History) *h, const char *fname)
 	ptr = h_malloc((max_size = 1024) * sizeof(*ptr));
 	if (ptr == NULL)
 		goto done;
-	for (i = 0; (line = fgetln(fp, &sz)) != NULL; i++) {
-		char c = line[sz];
-
-		if (sz != 0 && line[sz - 1] == '\n')
-			line[--sz] = '\0';
-		else
-			line[sz] = '\0';
-
+	free(line);
+	for (i = 0; (line = fparseln(fp, &sz, NULL, NULL, 0)) != NULL; i++) {
 		if (max_size < sz) {
 			char *nptr;
 			max_size = (sz + 1024) & (size_t)~1023;
@@ -771,15 +765,16 @@ history_load(TYPE(History) *h, const char *fname)
 			ptr = nptr;
 		}
 		(void) strunvis(ptr, line);
-		line[sz] = c;
 		if (HENTER(h, &ev, ct_decode_string(ptr, &conv)) == -1) {
 			i = -1;
 			goto oomem;
 		}
+		free(line);
 	}
 oomem:
 	h_free(ptr);
 done:
+	free(line);
 	(void) fclose(fp);
 	return i;
 }
