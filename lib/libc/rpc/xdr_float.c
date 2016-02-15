@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.40 2014/08/24 17:07:00 matt Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.41 2016/02/15 11:07:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.40 2014/08/24 17:07:00 matt Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.41 2016/02/15 11:07:48 martin Exp $");
 #endif
 #endif
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: xdr_float.c,v 1.40 2014/08/24 17:07:00 matt Exp $");
 #include <sys/param.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -303,7 +304,7 @@ xdr_double(XDR *xdrs, double *dp)
 		vd.mantissa4 = (id.mantissa2 << 3);
 	doneit:
 		vd.sign = id.sign;
-		*dp = *((double *)(void *)&vd);
+		memcpy(dp, &vd, sizeof(double));
 		return (TRUE);
 #endif
 
