@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.18 2016/02/15 22:53:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.18 2016/02/15 22:53:38 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -507,8 +507,7 @@ terminal_move_to_line(EditLine *el, int where)
 	if (where > el->el_terminal.t_size.v) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "terminal_move_to_line: where is ridiculous: %d\r\n",
-		    where);
+		    "%s: where is ridiculous: %d\r\n", __func__, where);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
@@ -574,8 +573,7 @@ mc_again:
 	if (where > el->el_terminal.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "terminal_move_to_char: where is riduculous: %d\r\n",
-		    where);
+		    "%s: where is ridiculous: %d\r\n", __func__, where);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
@@ -669,7 +667,7 @@ terminal_overwrite(EditLine *el, const Char *cp, size_t n)
 	if (n > (size_t)el->el_terminal.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "terminal_overwrite: n is riduculous: %d\r\n", n);
+		    "%s: n is ridiculous: %d\r\n", __func__, n);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
@@ -725,7 +723,7 @@ terminal_deletechars(EditLine *el, int num)
 	if (num > el->el_terminal.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "terminal_deletechars: num is riduculous: %d\r\n", num);
+		    "%s: num is ridiculous: %d\r\n", __func__, num);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
@@ -766,7 +764,7 @@ terminal_insertwrite(EditLine *el, Char *cp, int num)
 	if (num > el->el_terminal.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "StartInsert: num is riduculous: %d\r\n", num);
+		    "%s: num is ridiculous: %d\r\n", __func__, num);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
