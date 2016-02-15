@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.20 2016/02/15 17:35:39 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.21 2016/02/15 22:48:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -109,8 +109,8 @@ wchar_t *wcsdup(const wchar_t *);
 typedef unsigned int	u_int32_t;
 #endif
 
-#ifndef SIZE_T_MAX
-#define SIZE_T_MAX	((size_t)-1)
+#ifndef HAVE_SIZE_MAX
+#define SIZE_MAX	((size_t)-1)
 #endif
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */
