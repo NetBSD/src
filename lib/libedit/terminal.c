@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.16 2016/02/14 14:49:34 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.16 2016/02/14 14:49:34 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -272,31 +272,45 @@ terminal_init(EditLine *el)
 	el->el_terminal.t_buf = el_malloc(TC_BUFSIZE *
 	    sizeof(*el->el_terminal.t_buf));
 	if (el->el_terminal.t_buf == NULL)
-		return -1;
+		goto fail1;
 	el->el_terminal.t_cap = el_malloc(TC_BUFSIZE *
 	    sizeof(*el->el_terminal.t_cap));
 	if (el->el_terminal.t_cap == NULL)
-		return -1;
+		goto fail2;
 	el->el_terminal.t_fkey = el_malloc(A_K_NKEYS *
 	    sizeof(*el->el_terminal.t_fkey));
 	if (el->el_terminal.t_fkey == NULL)
-		return -1;
+		goto fail3;
 	el->el_terminal.t_loc = 0;
 	el->el_terminal.t_str = el_malloc(T_str *
 	    sizeof(*el->el_terminal.t_str));
 	if (el->el_terminal.t_str == NULL)
-		return -1;
+		goto fail4;
 	(void) memset(el->el_terminal.t_str, 0, T_str *
 	    sizeof(*el->el_terminal.t_str));
 	el->el_terminal.t_val = el_malloc(T_val *
 	    sizeof(*el->el_terminal.t_val));
 	if (el->el_terminal.t_val == NULL)
-		return -1;
+		goto fail5;
 	(void) memset(el->el_terminal.t_val, 0, T_val *
 	    sizeof(*el->el_terminal.t_val));
 	(void) terminal_set(el, NULL);
 	terminal_init_arrow(el);
 	return 0;
+fail5:
+	free(el->el_terminal.t_str);
+	el->el_terminal.t_str = NULL;
+fail4:
+	free(el->el_terminal.t_fkey);
+	el->el_terminal.t_fkey = NULL;
+fail3:
+	free(el->el_terminal.t_cap);
+	el->el_terminal.t_cap = NULL;
+fail2:
+	free(el->el_terminal.t_buf);
+	el->el_terminal.t_buf = NULL;
+fail1:
+	return -1;
 }
 
 /* terminal_end():
@@ -418,14 +432,14 @@ terminal_alloc_display(EditLine *el)
 
 	b =  el_malloc(sizeof(*b) * (size_t)(c->v + 1));
 	if (b == NULL)
-		return -1;
+		goto done;
 	for (i = 0; i < c->v; i++) {
 		b[i] = el_malloc(sizeof(**b) * (size_t)(c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				el_free(b[i]);
 			el_free(b);
-			return -1;
+			goto done;
 		}
 	}
 	b[c->v] = NULL;
@@ -433,19 +447,22 @@ terminal_alloc_display(EditLine *el)
 
 	b = el_malloc(sizeof(*b) * (size_t)(c->v + 1));
 	if (b == NULL)
-		return -1;
+		goto done;
 	for (i = 0; i < c->v; i++) {
 		b[i] = el_malloc(sizeof(**b) * (size_t)(c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				el_free(b[i]);
 			el_free(b);
-			return -1;
+			goto done;
 		}
 	}
 	b[c->v] = NULL;
 	el->el_vdisplay = b;
 	return 0;
+done:
+	terminal_free_display(el);
+	return -1;
 }
 
 
