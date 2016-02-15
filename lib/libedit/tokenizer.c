@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.22 2016/01/30 04:02:51 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.23 2016/02/15 15:37:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.22 2016/01/30 04:02:51 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.23 2016/02/15 15:37:20 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -413,8 +413,10 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 			Char **p;
 			tok->amax += AINCR;
 			p = tok_realloc(tok->argv, tok->amax * sizeof(*p));
-			if (p == NULL)
+			if (p == NULL) {
+				tok->amax -= AINCR;
 				return -1;
+			}
 			tok->argv = p;
 		}
 	}
