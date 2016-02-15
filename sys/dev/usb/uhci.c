@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.58 2016/02/08 11:16:02 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.59 2016/02/15 17:00:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.58 2016/02/08 11:16:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.59 2016/02/15 17:00:27 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1319,7 +1319,8 @@ uhci_intr1(uhci_softc_t *sc)
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	status = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
-	if (status == 0)	/* The interrupt was not for us. */
+	/* Check if the interrupt was for us. */
+	if (status == 0)
 		return 0;
 
 	if (sc->sc_suspend != PWR_RESUME) {
