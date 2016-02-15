@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.22 2016/02/14 17:06:24 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.23 2016/02/15 21:56:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.22 2016/02/14 17:06:24 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.23 2016/02/15 21:56:35 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -233,7 +233,7 @@ el_set(EditLine *el, int op, ...)
 		    ret = -1;
 		    goto out;
 		}
-		// XXX: The two strdup's leak
+		/* XXX: The two strdup's leak */
 		ret = map_addfunc(el, Strdup(wargv[0]), Strdup(wargv[1]),
 		    func);
 		ct_free_argv(wargv);
