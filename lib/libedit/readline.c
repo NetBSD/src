@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.118 2016/02/15 21:58:37 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.119 2016/02/15 22:48:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.118 2016/02/15 21:58:37 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.119 2016/02/15 22:48:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <dirent.h>
 #include <string.h>
 #include <pwd.h>
@@ -2201,7 +2202,7 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 	}
 	qsort(&list[1], len - 1, sizeof(*list),
 	    (int (*)(const void *, const void *)) strcmp);
-	min = SIZE_T_MAX;
+	min = SIZE_MAX;
 	for (i = 1, a = list[i]; i < len - 1; i++, a = b) {
 		b = list[i + 1];
 		for (j = 0; a[j] && a[j] == b[j]; j++)
