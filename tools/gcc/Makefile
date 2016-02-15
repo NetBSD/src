@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.75 2016/01/24 05:10:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.76 2016/02/15 13:25:12 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -209,7 +209,7 @@ MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h unwind.h
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h unwind.h); \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so)
 .for _lib in ${MKNATIVE_CONFIG_TARGET_LIBS}
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
