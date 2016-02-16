@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.17 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.18 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,10 +38,14 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.17 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.18 2016/02/16 22:53:14 christos Exp $");
 #endif /* not lint && not SCCSID */
-#include "el.h"
+
+#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "el.h"
 
 #define CT_BUFSIZ ((size_t)1024)
 

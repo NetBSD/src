@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.31 2016/02/16 19:11:25 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.32 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,8 +48,6 @@
 
 #include "histedit.h"
 #include "chartype.h"
-#include <stdio.h>
-#include <sys/types.h>
 
 #define	EL_BUFSIZ	((size_t)1024)	/* Maximum line size		*/
 
