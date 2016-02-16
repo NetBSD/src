@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.22 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.23 2016/02/16 15:54:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.22 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.23 2016/02/16 15:54:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: sig.c,v 1.22 2016/02/16 15:53:48 christos Exp $");
  */
 #include "el.h"
 #include <stdlib.h>
+#include <errno.h>
 
 private EditLine *sel = NULL;
 
