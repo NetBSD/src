@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.27 2016/02/16 14:06:05 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.28 2016/02/16 14:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,6 @@
 #define	VIDEFAULT
 #define	ANCHOR
 
-#include "chartype.h"
 #include <stdio.h>
 #include <sys/types.h>
 

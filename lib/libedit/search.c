@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.34 2016/02/16 14:06:05 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.35 2016/02/16 14:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.34 2016/02/16 14:06:05 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.35 2016/02/16 14:08:25 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: search.c,v 1.34 2016/02/16 14:06:05 christos Exp $");
 #endif
 
 #include "histedit.h"
+#include "chartype.h"
 #include "el.h"
 
 /*
