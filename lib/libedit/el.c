@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.77 2016/02/15 15:53:45 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.78 2016/02/16 14:06:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.77 2016/02/15 15:53:45 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.78 2016/02/16 14:06:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: el.c,v 1.77 2016/02/15 15:53:45 christos Exp $");
 #include <langinfo.h>
 #endif
 
+#include "histedit.h"
 #include "el.h"
 
 /* el_init():

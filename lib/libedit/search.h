@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.10 2016/02/14 14:49:34 christos Exp $	*/
+/*	$NetBSD: search.h,v 1.11 2016/02/16 14:06:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,8 +39,6 @@
  */
 #ifndef _h_el_search
 #define	_h_el_search
-
-#include "histedit.h"
 
 typedef struct el_search_t {
 	Char	*patbuf;		/* The pattern buffer		*/

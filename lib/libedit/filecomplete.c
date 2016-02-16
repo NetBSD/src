@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.34 2014/10/18 15:07:02 riz Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.35 2016/02/16 14:06:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.34 2014/10/18 15:07:02 riz Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.35 2016/02/16 14:06:05 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -47,9 +47,9 @@ __RCSID("$NetBSD: filecomplete.c,v 1.34 2014/10/18 15:07:02 riz Exp $");
 #include <errno.h>
 #include <fcntl.h>
 
+#include "histedit.h"
 #include "el.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
-#include "histedit.h"
 #include "filecomplete.h"
 
 static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',

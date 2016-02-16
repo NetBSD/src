@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.14 2016/02/14 14:47:48 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.15 2016/02/16 14:06:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.14 2016/02/14 14:47:48 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.15 2016/02/16 14:06:05 christos Exp $");
 #endif /* not lint && not SCCSID */
+
+#include "histedit.h"
 #include "el.h"
 #include <stdlib.h>
 
