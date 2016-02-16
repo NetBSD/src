@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.30 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.31 2016/02/16 19:11:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,8 +60,6 @@
 #define	CHARSET_IS_UTF8 0x10
 #define	NARROW_HISTORY	0x40
 #define	NARROW_READ	0x80
-
-typedef int bool_t;			/* True or not			*/
 
 typedef unsigned char el_action_t;	/* Index to command array	*/
 

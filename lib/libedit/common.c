@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.35 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.36 2016/02/16 19:11:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.35 2016/02/16 19:08:41 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.36 2016/02/16 19:11:25 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -710,7 +710,7 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const Char *hp;
 	int h;
-	bool_t found = 0;
+	int found = 0;
 
 	el->el_chared.c_vcmd.action = NOP;
 	el->el_chared.c_undo.len = -1;
@@ -749,7 +749,7 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 			    (el->el_line.lastchar - el->el_line.buffer)) ||
 			hp[el->el_line.lastchar - el->el_line.buffer]) &&
 		    c_hmatch(el, hp)) {
-			found++;
+			found = 1;
 			break;
 		}
 		h++;
@@ -778,7 +778,7 @@ ed_search_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const Char *hp;
 	int h;
-	bool_t found = 0;
+	int found = 0;
 
 	el->el_chared.c_vcmd.action = NOP;
 	el->el_chared.c_undo.len = -1;
