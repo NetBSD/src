@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.26 2015/07/19 09:26:50 martin Exp $
+# $NetBSD: INSTALL,v 1.27 2016/02/16 05:14:31 nonaka Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -28,12 +28,14 @@ no options 		INSECURE
 
 no file-system		KERNFS
 no file-system		NULLFS
+no file-system		PUFFS
 no file-system		PROCFS
 no file-system		PTYFS
 no file-system		TMPFS
 
 no options 		WAPBL
 
+no options		COMPAT_NETBSD32
 no options		COMPAT_13
 no options		COMPAT_14
 no options		COMPAT_15
@@ -88,3 +90,6 @@ no pseudo-device	accf_http
 no pseudo-device	ksyms
 no pseudo-device	wsfont
 options 	NO_DEV_PTM
+no pseudo-device	clockctl
+no pseudo-device	drvctl
+no pseudo-device	putter
