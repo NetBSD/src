@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.23 2016/02/15 21:56:35 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.24 2016/02/16 14:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.23 2016/02/15 21:56:35 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.24 2016/02/16 14:08:25 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
+#include "chartype.h"
 #include "el.h"
 #include "read.h"
 #include <errno.h>

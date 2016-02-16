@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.78 2016/02/16 14:06:05 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.79 2016/02/16 14:08:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.78 2016/02/16 14:06:05 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.79 2016/02/16 14:08:25 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: read.c,v 1.78 2016/02/16 14:06:05 christos Exp $");
 #include <limits.h>
 
 #include "histedit.h"
+#include "chartype.h"
 #include "el.h"
 
 #define OKCMD	-1	/* must be -1! */
