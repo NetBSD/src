@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.22 2016/02/06 07:53:11 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.23 2016/02/16 08:02:49 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.22 2016/02/06 07:53:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.23 2016/02/16 08:02:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -256,9 +256,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	int p, port, nports, nremov, pwrdly;
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
-#if 0 /* notyet */
 	struct usbd_tt *tts = NULL;
-#endif
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
@@ -411,14 +409,12 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	 *        proceed with device attachment
 	 */
 
-#if 0
 	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
 		tts = kmem_alloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
 			     sizeof(struct usbd_tt), KM_SLEEP);
 		if (!tts)
 			goto bad;
 	}
-#endif
 	/* Set up data structures */
 	for (p = 0; p < nports; p++) {
 		struct usbd_port *up = &hub->uh_ports[p];
@@ -432,14 +428,12 @@ uhub_attach(device_t parent, device_t self, void *aux)
 			up->up_power = USB_MIN_POWER;
 		up->up_restartcnt = 0;
 		up->up_reattach = 0;
-#if 0
 		if (UHUB_IS_HIGH_SPEED(sc)) {
-			up->tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
-			up->tt->hub = hub;
+			up->up_tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
+			up->up_tt->utt_hub = hub;
 		} else {
-			up->tt = NULL;
+			up->up_tt = NULL;
 		}
-#endif
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
@@ -840,12 +834,10 @@ uhub_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub, sc->sc_dev);
 
-#if 0
-	if (hub->ports[0].tt)
-		kmem_free(hub->ports[0].tt,
+	if (hub->uh_ports[0].up_tt)
+		kmem_free(hub->uh_ports[0].up_tt,
 		    (UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
 		    sizeof(struct usbd_tt));
-#endif
 	kmem_free(hub,
 	    sizeof(*hub) + (nports-1) * sizeof(struct usbd_port));
 	sc->sc_hub->ud_hub = NULL;
