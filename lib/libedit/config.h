@@ -187,9 +187,6 @@
 /* Define to 1 if you have the `vis' function. */
 #define HAVE_VIS 1
 
-/* Define to 1 if you have the `wcsdup' function. */
-#define HAVE_WCSDUP 1
-
 /* Define to 1 if `fork' works. */
 #define HAVE_WORKING_FORK 1
 
