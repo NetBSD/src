@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.22 2016/01/10 10:33:43 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.23 2016/02/16 08:02:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -115,11 +115,9 @@ struct usbd_pipe_methods {
 	void		      (*upm_done)(struct usbd_xfer *);
 };
 
-#if 0 /* notyet */
 struct usbd_tt {
-	struct usbd_hub	       *hub;
+	struct usbd_hub	       *utt_hub;
 };
-#endif
 
 struct usbd_port {
 	usb_port_status_t	up_status;
@@ -130,9 +128,7 @@ struct usbd_port {
 	uint8_t			up_reattach;
 	struct usbd_device     *up_dev;		/* Connected device */
 	struct usbd_device     *up_parent;	/* The ports hub */
-#if 0
 	struct usbd_tt	       *up_tt;	/* Transaction translator (if any) */
-#endif
 };
 
 struct usbd_hub {
