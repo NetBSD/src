@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.43 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.44 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.43 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.44 2016/02/16 15:53:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,9 +45,6 @@ __RCSID("$NetBSD: chared.c,v 1.43 2016/02/16 14:08:25 christos Exp $");
  * chared.c: Character editor utilities
  */
 #include <stdlib.h>
-
-#include "histedit.h"
-#include "chartype.h"
 #include "el.h"
 
 private void ch__clearmacro (EditLine *);
