@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.51 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.52 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.51 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.52 2016/02/16 19:08:41 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -50,6 +50,9 @@ __RCSID("$NetBSD: vi.c,v 1.51 2016/02/16 15:53:48 christos Exp $");
  * vi.c: Vi mode commands.
  */
 #include "el.h"
+#include "common.h"
+#include "emacs.h"
+#include "vi.h"
 
 private el_action_t	cv_action(EditLine *, wint_t);
 private el_action_t	cv_paste(EditLine *, wint_t);
