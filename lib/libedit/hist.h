@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.15 2016/01/30 15:05:27 christos Exp $	*/
+/*	$NetBSD: hist.h,v 1.16 2016/02/16 14:06:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,8 +39,6 @@
  */
 #ifndef _h_el_hist
 #define	_h_el_hist
-
-#include "histedit.h"
 
 typedef int (*hist_fun_t)(void *, TYPE(HistEvent) *, int, ...);
 
