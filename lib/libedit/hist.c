@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.23 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.24 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.23 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.24 2016/02/16 22:53:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: hist.c,v 1.23 2016/02/16 15:53:48 christos Exp $");
  * hist.c: History access functions
  */
 #include <stdlib.h>
+#include <string.h>
+
 #include "el.h"
 
 /* hist_init():
