@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.50 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.51 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,15 +42,13 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.50 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.51 2016/02/16 15:53:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * vi.c: Vi mode commands.
  */
-#include "histedit.h"
-#include "chartype.h"
 #include "el.h"
 
 private el_action_t	cv_action(EditLine *, wint_t);
