@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.1.2.5 2016/02/16 21:26:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.1.2.5 2016/02/16 21:26:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,7 +126,7 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_USB, 0,
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_USB, IST_MPSAFE,
 	    ehci_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
