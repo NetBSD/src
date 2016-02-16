@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.21 2016/02/15 22:48:59 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.22 2016/02/16 19:29:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,11 +90,6 @@ size_t	strlcpy(char *dst, const char *src, size_t size);
 #ifndef HAVE_GETLINE
 #define	getline libedit_getline
 ssize_t	getline(char **line, size_t *len, FILE *fp);
-#endif
-
-#ifndef HAVE_WCSDUP
-#include <wchar.h>
-wchar_t *wcsdup(const wchar_t *);
 #endif
 
 #ifndef _DIAGASSERT

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.53 2014/06/18 18:12:28 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.54 2016/02/16 19:29:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -249,19 +249,8 @@ int		 tok_str(Tokenizer *, const char *,
 /*
  * Begin Wide Character Support
  */
-#ifdef __linux__
-/* Apparently we need _GNU_SOURCE defined to get access to wcsdup on Linux */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#endif
-
 #include <wchar.h>
 #include <wctype.h>
-
-/*
- * Wide character versions
- */
 
 /*
  * ==== Editing ====
