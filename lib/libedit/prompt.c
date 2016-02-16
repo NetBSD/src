@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.22 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.23 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.22 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.23 2016/02/16 15:53:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,9 +45,6 @@ __RCSID("$NetBSD: prompt.c,v 1.22 2016/02/16 14:08:25 christos Exp $");
  * prompt.c: Prompt printing functions
  */
 #include <stdio.h>
-
-#include "histedit.h"
-#include "chartype.h"
 #include "el.h"
 
 private Char	*prompt_default(EditLine *);
