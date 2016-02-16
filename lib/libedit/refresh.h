@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.h,v 1.7 2016/02/14 14:49:34 christos Exp $	*/
+/*	$NetBSD: refresh.h,v 1.8 2016/02/16 14:06:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,8 +39,6 @@
  */
 #ifndef _h_el_refresh
 #define	_h_el_refresh
-
-#include "histedit.h"
 
 typedef struct {
 	coord_t	r_cursor;	/* Refresh cursor position	*/
