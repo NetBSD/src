@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.60 2016/02/16 07:30:46 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.61 2016/02/16 21:17:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.60 2016/02/16 07:30:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.61 2016/02/16 21:17:27 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -159,6 +159,8 @@ struct uhci_pipe {
 	};
 };
 
+typedef TAILQ_HEAD(ux_completeq, uhci_xfer) ux_completeq_t;
+
 Static void		uhci_globalreset(uhci_softc_t *);
 Static usbd_status	uhci_portreset(uhci_softc_t*, int);
 Static void		uhci_reset(uhci_softc_t *);
@@ -185,8 +187,9 @@ Static void		uhci_reset_std_chain(uhci_softc_t *, struct usbd_xfer *,
 
 Static void		uhci_poll_hub(void *);
 Static void		uhci_waitintr(uhci_softc_t *, struct usbd_xfer *);
-Static void		uhci_check_intr(uhci_softc_t *, struct uhci_xfer *);
-Static void		uhci_idone(struct uhci_xfer *);
+Static void		uhci_check_intr(uhci_softc_t *, struct uhci_xfer *,
+			    ux_completeq_t *);
+Static void		uhci_idone(struct uhci_xfer *, ux_completeq_t *);
 
 Static void		uhci_abort_xfer(struct usbd_xfer *, usbd_status);
 
@@ -383,14 +386,19 @@ const struct usbd_pipe_methods uhci_device_isoc_methods = {
 	.upm_done =	uhci_device_isoc_done,
 };
 
-#define uhci_add_intr_list(sc, ux) \
-	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ux), ux_list)
-#define uhci_del_intr_list(sc, ux) \
-	do { \
-		TAILQ_REMOVE(&(sc)->sc_intrhead, (ux), ux_list); \
-		(ux)->ux_list.tqe_prev = NULL; \
-	} while (0)
-#define uhci_active_intr_list(ux) ((ux)->ux_list.tqe_prev != NULL)
+static inline void
+uhci_add_intr_list(uhci_softc_t *sc, struct uhci_xfer *ux)
+{
+
+	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ux, ux_list);
+}
+
+static inline void
+uhci_del_intr_list(uhci_softc_t *sc, struct uhci_xfer *ux)
+{
+
+	TAILQ_REMOVE(&sc->sc_intrhead, ux, ux_list);
+}
 
 static inline uhci_soft_qh_t *
 uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
@@ -1383,12 +1391,14 @@ uhci_softintr(void *v)
 	struct usbd_bus *bus = v;
 	uhci_softc_t *sc = UHCI_BUS2SC(bus);
 	struct uhci_xfer *ux, *nextux;
+	ux_completeq_t cq;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTF("sc %p", sc, 0, 0, 0);
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
+	TAILQ_INIT(&cq);
 	/*
 	 * Interrupts on UHCI really suck.  When the host controller
 	 * interrupts because a transfer is completed there is no
@@ -1400,9 +1410,18 @@ uhci_softintr(void *v)
 	 * We scan all interrupt descriptors to see if any have
 	 * completed.
 	 */
-	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux; ux = nextux) {
-		nextux = TAILQ_NEXT(ux, ux_list);
-		uhci_check_intr(sc, ux);
+	TAILQ_FOREACH_SAFE(ux, &sc->sc_intrhead, ux_list, nextux) {
+		uhci_check_intr(sc, ux, &cq);
+	}
+
+	/*
+	 * We abuse ux_list for the interrupt and complete lists and
+	 * interrupt transfers will get re-added here so use
+	 * the _SAFE version of TAILQ_FOREACH.
+	 */
+	TAILQ_FOREACH_SAFE(ux, &cq, ux_list, nextux) {
+		DPRINTF("ux %p", ux, 0, 0, 0);
+		usb_transfer_complete(&ux->ux_xfer);
 	}
 
 	if (sc->sc_softwake) {
@@ -1413,7 +1432,7 @@ uhci_softintr(void *v)
 
 /* Check for an interrupt. */
 void
-uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux)
+uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux, ux_completeq_t *cqp)
 {
 	uhci_soft_td_t *std, *fstd = NULL, *lstd = NULL;
 	uint32_t status;
@@ -1466,7 +1485,7 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux)
 		DPRINTFN(12, "ux=%p done", ux, 0, 0, 0);
 
 		callout_stop(&xfer->ux_callout);
-		uhci_idone(ux);
+		uhci_idone(ux, cqp);
 		return;
 	}
 
@@ -1534,7 +1553,7 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux)
 
 /* Called with USB lock held. */
 void
-uhci_idone(struct uhci_xfer *ux)
+uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 {
 	struct usbd_xfer *xfer = &ux->ux_xfer;
 	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
@@ -1569,7 +1588,7 @@ uhci_idone(struct uhci_xfer *ux)
 
 		nframes = xfer->ux_nframes;
 		actlen = 0;
-		n = UHCI_XFER2UXFER(xfer)->ux_curframe;
+		n = ux->ux_curframe;
 		for (i = 0; i < nframes; i++) {
 			std = stds[n];
 #ifdef UHCI_DEBUG
@@ -1665,7 +1684,10 @@ uhci_idone(struct uhci_xfer *ux)
 	}
 
  end:
-	usb_transfer_complete(xfer);
+	uhci_del_intr_list(sc, ux);
+	if (cqp)
+		TAILQ_INSERT_TAIL(cqp, ux, ux_list);
+
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 	DPRINTFN(12, "ux=%p done", ux, 0, 0, 0);
 }
@@ -1752,7 +1774,8 @@ uhci_waitintr(uhci_softc_t *sc, struct usbd_xfer *xfer)
 
 	KASSERT(ux != NULL);
 
-	uhci_idone(ux);
+	uhci_idone(ux, NULL);
+	usb_transfer_complete(&ux->ux_xfer);
 
 done:
 	mutex_exit(&sc->sc_lock);
@@ -2437,6 +2460,8 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 */
 	xfer->ux_status = status;	/* make software ignore it */
 	callout_stop(&xfer->ux_callout);
+	uhci_del_intr_list(sc, ux);
+
 	DPRINTF("stop ux=%p", ux, 0, 0, 0);
 	for (std = ux->ux_stdstart; std != NULL; std = std->link.std) {
 		usb_syncmem(&std->dma,
@@ -3133,8 +3158,9 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 void
 uhci_device_isoc_abort(struct usbd_xfer *xfer)
 {
-	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
+	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
+	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	uhci_soft_td_t **stds = upipe->isoc.stds;
 	uhci_soft_td_t *std;
 	int i, n, nframes, maxlen, len;
@@ -3152,7 +3178,7 @@ uhci_device_isoc_abort(struct usbd_xfer *xfer)
 
 	/* make hardware ignore it, */
 	nframes = xfer->ux_nframes;
-	n = UHCI_XFER2UXFER(xfer)->ux_curframe;
+	n = ux->ux_curframe;
 	maxlen = 0;
 	for (i = 0; i < nframes; i++) {
 		std = stds[n];
@@ -3180,9 +3206,12 @@ uhci_device_isoc_abort(struct usbd_xfer *xfer)
 	delay(maxlen);
 
 #ifdef DIAGNOSTIC
-	UHCI_XFER2UXFER(xfer)->ux_isdone = true;
+	ux->ux_isdone = true;
 #endif
-	/* Run callback and remove from interrupt list. */
+	/* Remove from interrupt list. */
+	uhci_del_intr_list(sc, ux);
+
+	/* Run callback. */
 	usb_transfer_complete(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -3327,17 +3356,12 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 {
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	int i, offs;
 	int rd = UE_GET_DIR(upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN;
-
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(4, "length=%d, ux_state=0x%08x",
 	    xfer->ux_actlen, xfer->ux_state, 0, 0);
-
-	if (!uhci_active_intr_list(ux))
-		return;
 
 #ifdef DIAGNOSTIC
 	if (ux->ux_stdend == NULL) {
@@ -3361,8 +3385,6 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	    ux->ux_stdend->offs + offsetof(uhci_td_t, td_status),
 	    sizeof(ux->ux_stdend->td.td_status),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-	uhci_del_intr_list(sc, ux);	/* remove from active list */
 
 	offs = 0;
 	for (i = 0; i < xfer->ux_nframes; i++) {
@@ -3437,11 +3459,7 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		}
 		xfer->ux_status = USBD_IN_PROGRESS;
-		/* The ux is already on the examined list, just leave it. */
-	} else {
-		DPRINTFN(5, "removing", 0, 0, 0, 0);
-		if (uhci_active_intr_list(ux))
-			uhci_del_intr_list(sc, ux);
+		uhci_add_intr_list(sc, ux);
 	}
 }
 
@@ -3450,7 +3468,6 @@ void
 uhci_device_ctrl_done(struct usbd_xfer *xfer)
 {
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	int len = UGETW(xfer->ux_request.wLength);
 	int isread = (xfer->ux_request.bmRequestType & UT_READ);
@@ -3461,11 +3478,7 @@ uhci_device_ctrl_done(struct usbd_xfer *xfer)
 
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
-	if (!uhci_active_intr_list(ux))
-		return;
-
-	uhci_del_intr_list(sc, ux);	/* remove from active list */
-
+	/* XXXNH move to uhci_idone??? */
 	if (upipe->pipe.up_dev->ud_speed == USB_SPEED_LOW)
 		uhci_remove_ls_ctrl(sc, upipe->ctrl.sqh);
 	else
@@ -3497,11 +3510,6 @@ uhci_device_bulk_done(struct usbd_xfer *xfer)
 	    upipe);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-
-	if (!uhci_active_intr_list(ux))
-		return;
-
-	uhci_del_intr_list(sc, ux);	/* remove from active list */
 
 	uhci_remove_bulk(sc, upipe->bulk.sqh);
 
