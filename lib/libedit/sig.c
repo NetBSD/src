@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.19 2016/02/16 14:04:58 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.20 2016/02/16 14:07:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.19 2016/02/16 14:04:58 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.20 2016/02/16 14:07:47 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,9 +46,11 @@ __RCSID("$NetBSD: sig.c,v 1.19 2016/02/16 14:04:58 christos Exp $");
  *	  our policy is to trap all signals, set a good state
  *	  and pass the ball to our caller.
  */
-#include "el.h"
 #include <errno.h>
 #include <stdlib.h>
+
+#include "histedit.h"
+#include "el.h"
 
 private EditLine *sel = NULL;
 
