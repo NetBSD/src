@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.59 2016/02/15 17:00:27 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.60 2016/02/16 07:30:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.59 2016/02/15 17:00:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.60 2016/02/16 07:30:46 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -967,7 +967,7 @@ uhci_dump_iis(struct uhci_softc *sc)
 	struct uhci_xfer *ux;
 
 	printf("interrupt list:\n");
-	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux; ux = TAILQ_NEXT(ux, ux_list))
+	TAILQ_FOREACH(ux, &sc->sc_intrhead, ux_list)
 		uhci_dump_ii(ux);
 }
 
@@ -1746,8 +1746,7 @@ uhci_waitintr(uhci_softc_t *sc, struct usbd_xfer *xfer)
 
 	/* Timeout */
 	DPRINTF("timeout", 0, 0, 0, 0);
-	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux != NULL;
-	    ux = TAILQ_NEXT(ux, ux_list))
+	TAILQ_FOREACH(ux, &sc->sc_intrhead, ux_list)
 		if (&ux->ux_xfer == xfer)
 			break;
 
