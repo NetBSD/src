@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.11 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.12 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.11 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.12 2016/02/16 15:53:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -66,8 +66,6 @@ __RCSID("$NetBSD: keymacro.c,v 1.11 2016/02/16 14:08:25 christos Exp $");
 #include <string.h>
 #include <stdlib.h>
 
-#include "histedit.h"
-#include "chartype.h"
 #include "el.h"
 
 /*
