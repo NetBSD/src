@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.24 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.25 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,17 +34,15 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.24 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.25 2016/02/16 15:53:48 christos Exp $");
 #endif /* not lint && not SCCSID */
 
-#include "histedit.h"
-#include "chartype.h"
-#include "el.h"
-#include "read.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "el.h"
 
 public int
 el_getc(EditLine *el, char *cp)

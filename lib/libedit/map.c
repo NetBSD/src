@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.39 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.40 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.39 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.40 2016/02/16 15:53:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,9 +45,6 @@ __RCSID("$NetBSD: map.c,v 1.39 2016/02/16 14:08:25 christos Exp $");
  * map.c: Editor function definitions
  */
 #include <stdlib.h>
-
-#include "histedit.h"
-#include "chartype.h"
 #include "el.h"
 
 private void	map_print_key(EditLine *, el_action_t *, const Char *);

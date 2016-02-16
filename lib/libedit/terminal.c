@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.20 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.21 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.20 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.21 2016/02/16 15:53:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -73,8 +73,6 @@ __RCSID("$NetBSD: terminal.c,v 1.20 2016/02/16 14:08:25 christos Exp $");
 #include <pthread.h>
 #endif
 
-#include "histedit.h"
-#include "chartype.h"
 #include "el.h"
 
 /*

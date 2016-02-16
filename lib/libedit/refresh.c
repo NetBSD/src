@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.41 2016/02/16 14:08:25 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.42 2016/02/16 15:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.41 2016/02/16 14:08:25 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.42 2016/02/16 15:53:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -49,8 +49,6 @@ __RCSID("$NetBSD: refresh.c,v 1.41 2016/02/16 14:08:25 christos Exp $");
 #include <unistd.h>
 #include <string.h>
 
-#include "histedit.h"
-#include "chartype.h"
 #include "el.h"
 
 private void	re_nextline(EditLine *);
