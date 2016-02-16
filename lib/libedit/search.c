@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.37 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.38 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.37 2016/02/16 19:08:41 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.38 2016/02/16 22:53:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: search.c,v 1.37 2016/02/16 19:08:41 christos Exp $");
  * search.c: History and character search functions
  */
 #include <stdlib.h>
+#include <string.h>
 #if defined(REGEX)
 #include <regex.h>
 #elif defined(REGEXP)

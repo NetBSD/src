@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.41 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.42 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,14 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.41 2016/02/16 19:08:41 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.42 2016/02/16 22:53:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * map.c: Editor function definitions
  */
+#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "el.h"
 #include "help.h"

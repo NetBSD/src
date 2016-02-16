@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.52 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.53 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,22 +33,24 @@
  */
 
 #include "config.h"
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
-#include <sys/wait.h>
-
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.52 2016/02/16 19:08:41 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.53 2016/02/16 22:53:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * vi.c: Vi mode commands.
  */
+#include <sys/wait.h>
+#include <ctype.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "el.h"
 #include "common.h"
 #include "emacs.h"

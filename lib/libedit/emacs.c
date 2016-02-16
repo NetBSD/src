@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.31 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.32 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,13 +37,15 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.31 2016/02/16 19:08:41 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.32 2016/02/16 22:53:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * emacs.c: Emacs functions
  */
+#include <ctype.h>
+
 #include "el.h"
 #include "emacs.h"
 

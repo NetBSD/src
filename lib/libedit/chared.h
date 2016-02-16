@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.26 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.27 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,9 +39,6 @@
  */
 #ifndef _h_el_chared
 #define	_h_el_chared
-
-#include <ctype.h>
-#include <string.h>
 
 #define	EL_MAXMACRO	10
 
