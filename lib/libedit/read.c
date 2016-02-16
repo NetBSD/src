@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.80 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.81 2016/02/16 22:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.80 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.81 2016/02/16 22:53:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,11 +45,14 @@ __RCSID("$NetBSD: read.c,v 1.80 2016/02/16 15:53:48 christos Exp $");
  * read.c: Clean this junk up! This is horrible code.
  *	   Terminal read functions
  */
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
+
 #include "el.h"
 
 #define OKCMD	-1	/* must be -1! */
