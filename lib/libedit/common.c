@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.34 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.35 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.34 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.35 2016/02/16 19:08:41 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,6 +45,9 @@ __RCSID("$NetBSD: common.c,v 1.34 2016/02/16 15:53:48 christos Exp $");
  * common.c: Common Editor functions
  */
 #include "el.h"
+#include "common.h"
+#include "parse.h"
+#include "vi.h"
 
 /* ed_end_of_file():
  *	Indicate end of file

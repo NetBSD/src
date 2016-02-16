@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.36 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.37 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.36 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.37 2016/02/16 19:08:41 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -50,7 +50,9 @@ __RCSID("$NetBSD: search.c,v 1.36 2016/02/16 15:53:48 christos Exp $");
 #elif defined(REGEXP)
 #include <regexp.h>
 #endif
+
 #include "el.h"
+#include "common.h"
 
 /*
  * Adjust cursor in vi mode to include the character under it

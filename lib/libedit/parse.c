@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.32 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.33 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.32 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.33 2016/02/16 19:08:41 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,8 +54,10 @@ __RCSID("$NetBSD: parse.c,v 1.32 2016/02/16 15:53:48 christos Exp $");
  *	settc
  *	setty
  */
-#include "el.h"
 #include <stdlib.h>
+
+#include "el.h"
+#include "parse.h"
 
 private const struct {
 	const Char *name;

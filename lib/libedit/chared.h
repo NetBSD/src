@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.25 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.26 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -136,12 +136,6 @@ typedef struct el_chared_t {
 #define	MODE_INSERT	0
 #define	MODE_REPLACE	1
 #define	MODE_REPLACE_1	2
-
-#include "common.h"
-#include "vi.h"
-#include "emacs.h"
-#include "search.h"
-#include "fcns.h"
 
 
 protected int	 cv__isword(wint_t);

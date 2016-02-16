@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.123 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.124 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.123 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.124 2016/02/16 19:08:41 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: readline.c,v 1.123 2016/02/16 15:53:48 christos Exp $");
 
 #include "readline/readline.h"
 #include "el.h"
-#include "fcns.h"		/* for EL_NUM_FCNS */
 #include "filecomplete.h"
 
 void rl_prep_terminal(int);

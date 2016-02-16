@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.30 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.31 2016/02/16 19:08:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.30 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.31 2016/02/16 19:08:41 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: emacs.c,v 1.30 2016/02/16 15:53:48 christos Exp $");
  * emacs.c: Emacs functions
  */
 #include "el.h"
+#include "emacs.h"
 
 /* em_delete_or_list():
  *	Delete character under cursor or list completions if at end of line
