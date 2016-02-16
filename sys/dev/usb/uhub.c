@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.130 2016/02/05 15:41:49 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.131 2016/02/16 07:51:13 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.130 2016/02/05 15:41:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.131 2016/02/16 07:51:13 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -184,9 +184,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	int p, port, nports, nremov, pwrdly;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
-#if 0 /* notyet */
 	struct usbd_tt *tts = NULL;
-#endif
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
@@ -334,14 +332,12 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	 *        proceed with device attachment
 	 */
 
-#if 0
 	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
 		tts = malloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
 			     sizeof (struct usbd_tt), M_USBDEV, M_NOWAIT);
 		if (!tts)
 			goto bad;
 	}
-#endif
 	/* Set up data structures */
 	for (p = 0; p < nports; p++) {
 		struct usbd_port *up = &hub->ports[p];
@@ -355,14 +351,12 @@ uhub_attach(device_t parent, device_t self, void *aux)
 			up->power = USB_MIN_POWER;
 		up->restartcnt = 0;
 		up->reattach = 0;
-#if 0
 		if (UHUB_IS_HIGH_SPEED(sc)) {
 			up->tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
 			up->tt->hub = hub;
 		} else {
 			up->tt = NULL;
 		}
-#endif
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
@@ -678,10 +672,8 @@ uhub_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub, sc->sc_dev);
 
-#if 0
 	if (hub->ports[0].tt)
 		free(hub->ports[0].tt, M_USBDEV);
-#endif
 	free(hub, M_USBDEV);
 	sc->sc_hub->hub = NULL;
 	if (sc->sc_status)
