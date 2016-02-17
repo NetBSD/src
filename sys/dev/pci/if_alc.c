@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.19 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.20 2016/02/17 20:05:45 christos Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2389,13 +2389,6 @@ alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd, bool init)
 	    sc->alc_cdata.alc_rx_sparemap, m, BUS_DMA_NOWAIT);
 
 	if (error != 0) {
-		if (!error) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->alc_cdata.alc_rx_sparemap);
-			error = EFBIG;
-			printf("%s: too many segments?!\n",
-			    device_xname(sc->sc_dev));
-		}
 		m_freem(m);
 
 		if (init)
