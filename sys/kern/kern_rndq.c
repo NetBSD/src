@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.75 2016/01/11 14:55:52 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.76 2016/02/17 00:43:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.75 2016/01/11 14:55:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.76 2016/02/17 00:43:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -156,7 +156,7 @@ static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
 static	      void	rnd_process_events(void);
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
-					uint32_t, uint32_t, uint32_t);
+					uint32_t, uint32_t, uint32_t, bool);
 static inline void	rnd_schedule_process(void);
 
 int			rnd_ready = 0;
@@ -299,6 +299,18 @@ rnd_getmore(size_t byteswanted)
 		    rs->name, byteswanted);
 	}
 	mutex_spin_exit(&rnd_global.lock);
+
+	/*
+	 * Assume some callback is likely to have entered entropy
+	 * synchronously.  In that case, we may need to distribute
+	 * entropy to waiters.  Do that, if we can do it
+	 * asynchronously.  (Otherwise we may end up trying to
+	 * distribute to the very rndsink that is trying to get more
+	 * entropy in the first place, leading to lock recursion in
+	 * that rndsink's callback.)
+	 */
+	if (__predict_true(rnd_process))
+		rnd_schedule_process();
 }
 
 /*
@@ -789,7 +801,7 @@ _rnd_add_uint32(krndsource_t *rs, uint32_t val)
 	 */
 	entropy = rnd_estimate(rs, ts, val);
 
-	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts);
+	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts, true);
 }
 
 void
@@ -813,7 +825,7 @@ _rnd_add_uint64(krndsource_t *rs, uint64_t val)
 	 */
 	entropy = rnd_estimate(rs, ts, (uint32_t)(val & (uint64_t)0xffffffff));
 
-	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts);
+	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts, true);
 }
 
 void
@@ -831,13 +843,22 @@ rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 		rndpool_add_data(&rnd_global.pool, data, len, entropy);
 		mutex_spin_exit(&rnd_global.lock);
 	} else {
-		rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
+		rnd_add_data_ts(rs, data, len, entropy, rnd_counter(), true);
 	}
+}
+
+void
+rnd_add_data_sync(krndsource_t *rs, const void *data, uint32_t len,
+    uint32_t entropy)
+{
+
+	KASSERT(rs != NULL);
+	rnd_add_data_ts(rs, data, len, entropy, rnd_counter(), false);
 }
 
 static void
 rnd_add_data_ts(krndsource_t *rs, const void *const data, uint32_t len,
-    uint32_t entropy, uint32_t ts)
+    uint32_t entropy, uint32_t ts, bool schedule)
 {
 	rnd_sample_t *state = NULL;
 	const uint8_t *p = data;
@@ -942,8 +963,9 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, uint32_t len,
 	}
 	mutex_spin_exit(&rnd_samples.lock);
 
-	/* Cause processing of queued samples */
-	rnd_schedule_process();
+	/* Cause processing of queued samples, if caller wants it.  */
+	if (schedule)
+		rnd_schedule_process();
 }
 
 static int
