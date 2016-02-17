@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.11 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.12 2016/02/17 19:51:29 christos Exp $	*/
 /*	$KAME: quip_client.c,v 1.9 2003/05/17 05:59:00 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -357,7 +357,7 @@ quip_selectqdisc(char *ifname, char *qdisc_name)
 	if (result_code != 200)
 		errx(1, "can't get qdisc info");
 
-	if (sscanf(buf, "%s", qdisc) != 1)
+	if (sscanf(buf, "%63s", qdisc) != 1)
 		errx(1, "can't get qdisc name");
 
 	if (qdisc_name != NULL && strcmp(qdisc, qdisc_name) != 0)
