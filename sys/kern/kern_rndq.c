@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.76 2016/02/17 00:43:42 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.77 2016/02/17 00:57:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.76 2016/02/17 00:43:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.77 2016/02/17 00:57:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1127,15 +1127,10 @@ skip:		SIMPLEQ_INSERT_TAIL(&df_samples, sample, next);
 
 	/*
 	 * If we filled the pool past the threshold, wake anyone
-	 * waiting for entropy.  Otherwise, ask all the entropy sources
-	 * for more.
+	 * waiting for entropy.
 	 */
 	if (pool_entropy > RND_ENTROPY_THRESHOLD * 8) {
 		wake++;
-	} else {
-		rnd_getmore(howmany((RND_POOLBITS - pool_entropy), NBBY));
-		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
-		    (int)(howmany((RND_POOLBITS - pool_entropy), NBBY)));
 	}
 
 	/* Now we hold no locks: clean up. */
