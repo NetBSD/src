@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.81 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.82 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.81 2016/02/16 19:08:41 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.82 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,10 +46,10 @@ __RCSID("$NetBSD: el.c,v 1.81 2016/02/16 19:08:41 christos Exp $");
  */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <ctype.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef WIDECHAR
 #include <locale.h>
 #include <langinfo.h>
@@ -437,7 +437,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		char *argv[20];
 		int i;
 
- 		for (i = 1; i < (int)__arraycount(argv); i++)
+		for (i = 1; i < (int)__arraycount(argv); i++)
 			if ((argv[i] = va_arg(ap, char *)) == NULL)
 				break;
 

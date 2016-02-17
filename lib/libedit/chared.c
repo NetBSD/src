@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.46 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.47 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.46 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.47 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -526,7 +526,7 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 
 	/* zero the newly added memory, leave old data in */
 	(void) memset(&newbuffer[sz], 0, (newsz - sz) * sizeof(*newbuffer));
-	    
+
 	oldbuf = el->el_line.buffer;
 
 	el->el_line.buffer = newbuffer;
@@ -575,7 +575,7 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	el->el_chared.c_redo.lim = newbuffer +
 			(el->el_chared.c_redo.lim - el->el_chared.c_redo.buf);
 	el->el_chared.c_redo.buf = newbuffer;
-	
+
 	if (!hist_enlargebuf(el, sz, newsz))
 		return 0;
 
