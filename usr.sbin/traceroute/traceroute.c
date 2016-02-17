@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.82 2015/10/26 08:53:45 shm Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.83 2016/02/17 19:57:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997, 1998, 1999, 2000
@@ -30,7 +30,7 @@ static const char rcsid[] =
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997,\
  1998, 1999, 2000\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: traceroute.c,v 1.82 2015/10/26 08:53:45 shm Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.83 2016/02/17 19:57:01 christos Exp $");
 #endif
 #endif
 
@@ -1244,7 +1244,7 @@ dump_packet(void)
 	Fprintf(stderr, "packet data:");
 
 #ifdef __hpux
-	for (p = useicmp ? (u_char *)outicmp : (u_char *)outudp, i = 0; i < 
+	for (p = useicmp ? (u_char *)outicmp : (u_char *)outudp, i = 0;
 	    i < packlen - (sizeof(*outip) + optlen); i++)
 #else
 	for (p = (u_char *)outip, i = 0; i < packlen; i++)
