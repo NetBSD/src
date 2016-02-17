@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.79 2016/02/17 01:09:49 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.80 2016/02/17 01:23:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.79 2016/02/17 01:09:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.80 2016/02/17 01:23:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1161,7 +1161,6 @@ static uint32_t
 rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 {
 	static int timed_in;
-	int entropy_count;
 	uint32_t retval;
 
 	mutex_spin_enter(&rnd_global.lock);
@@ -1184,7 +1183,8 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 
 #ifdef DIAGNOSTIC
 	while (!rnd_tested) {
-		entropy_count = rndpool_get_entropy_count(&rnd_global.pool);
+		int entropy_count =
+		    rndpool_get_entropy_count(&rnd_global.pool);
 		rnd_printf_verbose("rnd: starting statistical RNG test,"
 		    " entropy = %d.\n",
 		    entropy_count);
@@ -1224,7 +1224,6 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 		rnd_tested++;
 	}
 #endif
-	entropy_count = rndpool_get_entropy_count(&rnd_global.pool);
 	retval = rndpool_extract_data(&rnd_global.pool, p, len, flags);
 	mutex_spin_exit(&rnd_global.lock);
 
