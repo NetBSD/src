@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.208 2015/03/26 20:13:28 nakayama Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.209 2016/02/17 20:00:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.208 2015/03/26 20:13:28 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.209 2016/02/17 20:00:15 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2766,17 +2766,14 @@ pccbb_pcmcia_intr_establish(pcmcia_chipset_handle_t pch,
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)pch;
 
-	if (!(pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)) {
-		/* what should I do? */
-		if ((pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)) {
-			DPRINTF(("%s does not provide edge nor pulse "
-			    "interrupt\n", device_xname(sc->sc_dev)));
-			return NULL;
-		}
+	if (!(pf->cfe->flags & (PCMCIA_CFE_IRQLEVEL|PCMCIA_CFE_IRQPULSE))) {
 		/*
 		 * XXX Noooooo!  The interrupt flag must set properly!!
 		 * dumb pcmcia driver!!
 		 */
+		DPRINTF(("%s does not provide edge nor pulse interrupt\n",
+		    device_xname(sc->sc_dev)));
+		return NULL;
 	}
 
 	return pccbb_intr_establish(sc, ipl, func, arg);
