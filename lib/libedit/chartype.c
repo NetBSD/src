@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.18 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.19 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.18 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.19 2016/02/17 19:47:49 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -76,7 +76,7 @@ ct_conv_wbuff_resize(ct_buffer_t *conv, size_t wsize)
 {
 	void *p;
 
-	if (wsize <= conv->wsize) 
+	if (wsize <= conv->wsize)
 		return 0;
 
 	conv->wsize = wsize;

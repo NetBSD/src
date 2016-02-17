@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.21 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.22 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.21 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.22 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,12 +46,14 @@ __RCSID("$NetBSD: terminal.c,v 1.21 2016/02/16 15:53:48 christos Exp $");
  *	       We have to declare a static variable here, since the
  *	       termcap putchar routine does not take an argument!
  */
-#include <stdio.h>
-#include <signal.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #ifdef HAVE_TERMCAP_H
 #include <termcap.h>
 #endif
@@ -65,9 +67,6 @@ __RCSID("$NetBSD: terminal.c,v 1.21 2016/02/16 15:53:48 christos Exp $");
 #if defined(HAVE_TERM_H) && !defined(__sun) && !defined(HAVE_TERMCAP_H)
 #include <term.h>
 #endif
- 
-#include <sys/types.h>
-#include <sys/ioctl.h>
 
 #ifdef _REENTRANT
 #include <pthread.h>
@@ -494,7 +493,7 @@ terminal_free_display(EditLine *el)
 
 /* terminal_move_to_line():
  *	move to line <where> (first line == 0)
- * 	as efficiently as possible
+ *	as efficiently as possible
  */
 protected void
 terminal_move_to_line(EditLine *el, int where)
@@ -609,7 +608,7 @@ mc_again:
 						    i < (where & ~0x7);
 						    i += 8)
 							terminal__putc(el,
-							    '\t');	
+							    '\t');
 							/* then tab over */
 						el->el_cursor.h = where & ~0x7;
 					}
@@ -1298,7 +1297,7 @@ terminal_writec(EditLine *el, wint_t c)
  */
 protected int
 /*ARGSUSED*/
-terminal_telltc(EditLine *el, int argc __attribute__((__unused__)), 
+terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
     const Char **argv __attribute__((__unused__)))
 {
 	const struct termcapstr *t;
