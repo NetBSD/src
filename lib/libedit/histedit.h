@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.54 2016/02/16 19:29:51 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.55 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -128,7 +128,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
  * For operations that support set or set/get, the argument types listed are for
  * the "set" operation. For "get", each listed type must be a pointer.
  * E.g. EL_EDITMODE takes an int when set, but an int* when get.
- * 
+ *
  * Operations that only support "get" have the correct argument types listed.
  */
 #define	EL_PROMPT	0	/* , prompt_func);		      set/get */
@@ -141,7 +141,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_ECHOTC	7	/* , const Char *, ..., NULL);        set     */
 #define	EL_SETTY	8	/* , const Char *, ..., NULL);        set     */
 #define	EL_ADDFN	9	/* , const Char *, const Char,        set     */
-				/*   el_func_t);		 	      */
+				/*   el_func_t);			      */
 #define	EL_HIST		10	/* , hist_fun_t, const void *);	      set     */
 #define	EL_EDITMODE	11	/* , int);			      set/get */
 #define	EL_RPROMPT	12	/* , prompt_func);		      set/get */

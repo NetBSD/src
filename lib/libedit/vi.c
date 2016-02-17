@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.53 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.54 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.53 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.54 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -585,7 +585,7 @@ vi_zero(EditLine *el, wint_t c)
 
 
 /* vi_delete_prev_char():
- * 	Vi move to previous character (backspace)
+ *	Vi move to previous character (backspace)
  *	[^H] in insert mode only
  */
 protected el_action_t
@@ -977,7 +977,7 @@ vi_to_history_line(EditLine *el, wint_t c __attribute__((__unused__)))
 		el->el_history.eventno = 1;
 		if (hist_get(el) == CC_ERROR)
 			return CC_ERROR;
-		el->el_history.eventno = 1 + el->el_history.ev.num 
+		el->el_history.eventno = 1 + el->el_history.ev.num
 					- el->el_state.argument;
 		if (el->el_history.eventno < 0) {
 			el->el_history.eventno = sv_event_no;

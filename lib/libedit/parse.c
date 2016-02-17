@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.34 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.35 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.34 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.35 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -64,9 +64,9 @@ private const struct {
 	const Char *name;
 	int (*func)(EditLine *, int, const Char **);
 } cmds[] = {
-	{ STR("bind"),  	map_bind	},
+	{ STR("bind"),		map_bind	},
 	{ STR("echotc"),	terminal_echotc	},
-	{ STR("edit"),  	el_editmode	},
+	{ STR("edit"),		el_editmode	},
 	{ STR("history"),	hist_command	},
 	{ STR("telltc"),	terminal_telltc	},
 	{ STR("settc"),	        terminal_settc	},

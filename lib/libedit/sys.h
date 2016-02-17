@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.22 2016/02/16 19:29:51 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.23 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #  define __END_DECLS
 # endif
 #endif
- 
+
 #ifndef public
 # define public		/* Externally visible functions/variables */
 #endif
@@ -112,7 +112,7 @@ typedef unsigned int	u_int32_t;
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
 
 #ifndef WIDECHAR
-#define	setlocale(c, l) 	/*LINTED*/NULL
+#define	setlocale(c, l)		/*LINTED*/NULL
 #define	nl_langinfo(i)		""
 #endif
 

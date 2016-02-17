@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.42 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.43 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.42 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.43 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1159,7 +1159,7 @@ map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 	lastbuf[1] = 0;
 	if (map[first] == ED_UNASSIGNED) {
 		if (first == last) {
-			(void) keymacro__decode_str(firstbuf, unparsbuf, 
+			(void) keymacro__decode_str(firstbuf, unparsbuf,
 			    sizeof(unparsbuf), STRQQ);
 			(void) fprintf(el->el_outfile,
 			    "%-15s->  is undefined\n", unparsbuf);
@@ -1170,14 +1170,14 @@ map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 	for (bp = el->el_map.help; bp < ep; bp++) {
 		if (bp->func == map[first]) {
 			if (first == last) {
-				(void) keymacro__decode_str(firstbuf, unparsbuf, 
+				(void) keymacro__decode_str(firstbuf, unparsbuf,
 				    sizeof(unparsbuf), STRQQ);
 				(void) fprintf(el->el_outfile, "%-15s->  " FSTR "\n",
 				    unparsbuf, bp->name);
 			} else {
-				(void) keymacro__decode_str(firstbuf, unparsbuf, 
+				(void) keymacro__decode_str(firstbuf, unparsbuf,
 				    sizeof(unparsbuf), STRQQ);
-				(void) keymacro__decode_str(lastbuf, extrabuf, 
+				(void) keymacro__decode_str(lastbuf, extrabuf,
 				    sizeof(extrabuf), STRQQ);
 				(void) fprintf(el->el_outfile,
 				    "%-4s to %-7s->  " FSTR "\n",
@@ -1188,14 +1188,14 @@ map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 	}
 #ifdef MAP_DEBUG
 	if (map == el->el_map.key) {
-		(void) keymacro__decode_str(firstbuf, unparsbuf, 
+		(void) keymacro__decode_str(firstbuf, unparsbuf,
 		    sizeof(unparsbuf), STRQQ);
 		(void) fprintf(el->el_outfile,
 		    "BUG!!! %s isn't bound to anything.\n", unparsbuf);
 		(void) fprintf(el->el_outfile, "el->el_map.key[%d] == %d\n",
 		    first, el->el_map.key[first]);
 	} else {
-		(void) keymacro__decode_str(firstbuf, unparsbuf, 
+		(void) keymacro__decode_str(firstbuf, unparsbuf,
 		    sizeof(unparsbuf), STRQQ);
 		(void) fprintf(el->el_outfile,
 		    "BUG!!! %s isn't bound to anything.\n", unparsbuf);

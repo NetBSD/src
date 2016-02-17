@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.56 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.57 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.56 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.57 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,10 +46,10 @@ __RCSID("$NetBSD: tty.c,v 1.56 2016/02/16 22:53:14 christos Exp $");
  */
 #include <assert.h>
 #include <errno.h>
-#include <unistd.h>	/* for isatty */
-#include <strings.h>	/* for ffs */
 #include <stdlib.h>	/* for abort */
 #include <string.h>
+#include <strings.h>	/* for ffs */
+#include <unistd.h>	/* for isatty */
 
 #include "el.h"
 #include "parse.h"
@@ -978,7 +978,7 @@ tty_update_char(EditLine *el, int mode, int c) {
 
 
 /* tty_rawmode():
- * 	Set terminal into 1 character at a time mode.
+ *	Set terminal into 1 character at a time mode.
  */
 protected int
 tty_rawmode(EditLine *el)

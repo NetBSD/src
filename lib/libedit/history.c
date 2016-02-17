@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.51 2016/02/15 21:35:52 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.52 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,18 +37,18 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.51 2016/02/15 21:35:52 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.52 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * hist.c: TYPE(History) access functions
  */
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <vis.h>
 #include <sys/stat.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vis.h>
 
 static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
@@ -437,7 +437,7 @@ history_def_del(void *p, TYPE(HistEvent) *ev __attribute__((__unused__)),
  */
 /* ARGSUSED */
 private void
-history_def_delete(history_t *h, 
+history_def_delete(history_t *h,
 		   TYPE(HistEvent) *ev __attribute__((__unused__)), hentry_t *hp)
 {
 	HistEventPrivate *evp = (void *)&hp->ev;
