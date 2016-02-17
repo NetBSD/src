@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.77 2016/02/17 00:57:36 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.78 2016/02/17 01:01:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.77 2016/02/17 00:57:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.78 2016/02/17 01:01:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1231,12 +1231,6 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 	entropy_count = rndpool_get_entropy_count(&rnd_global.pool);
 	retval = rndpool_extract_data(&rnd_global.pool, p, len, flags);
 	mutex_spin_exit(&rnd_global.lock);
-
-	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * NBBY) {
-		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
-		    (int)(howmany((RND_POOLBITS - entropy_count), NBBY)));
-		rnd_getmore(howmany((RND_POOLBITS - entropy_count), NBBY));
-	}
 
 	return retval;
 }
