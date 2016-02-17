@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.78 2016/02/17 01:01:42 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.79 2016/02/17 01:09:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.78 2016/02/17 01:01:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.79 2016/02/17 01:09:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -162,7 +162,7 @@ static inline void	rnd_schedule_process(void);
 int			rnd_ready = 0;
 int			rnd_initial_entropy = 0;
 
-static int		rnd_printing = 0;
+static volatile unsigned	rnd_printing = 0;
 
 #ifdef DIAGNOSTIC
 static int		rnd_tested = 0;
@@ -177,12 +177,8 @@ rnd_printf(const char *fmt, ...)
 {
 	va_list ap;
 
-	membar_consumer();
-	if (rnd_printing) {
+	if (atomic_cas_uint(&rnd_printing, 0, 1) != 0)
 		return;
-	}
-	rnd_printing = 1;
-	membar_producer();
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
