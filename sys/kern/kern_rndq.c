@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.80 2016/02/17 01:23:32 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.81 2016/02/17 19:44:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.80 2016/02/17 01:23:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.81 2016/02/17 19:44:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -297,15 +297,15 @@ rnd_getmore(size_t byteswanted)
 	mutex_spin_exit(&rnd_global.lock);
 
 	/*
-	 * Assume some callback is likely to have entered entropy
-	 * synchronously.  In that case, we may need to distribute
-	 * entropy to waiters.  Do that, if we can do it
-	 * asynchronously.  (Otherwise we may end up trying to
-	 * distribute to the very rndsink that is trying to get more
-	 * entropy in the first place, leading to lock recursion in
-	 * that rndsink's callback.)
+	 * Check whether we got entropy samples to process.  In that
+	 * case, we may need to distribute entropy to waiters.  Do
+	 * that, if we can do it asynchronously.
+	 *
+	 * - Conditionally because we don't want a softint loop.
+	 * - Asynchronously because if we did it synchronously, we may
+	 *   end up with lock recursion on rndsinks_lock.
 	 */
-	if (__predict_true(rnd_process))
+	if (!SIMPLEQ_EMPTY(&rnd_samples.q) && rnd_process != NULL)
 		rnd_schedule_process();
 }
 
