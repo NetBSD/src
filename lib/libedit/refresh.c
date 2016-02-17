@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.43 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.44 2016/02/17 19:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.43 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.44 2016/02/17 19:47:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,8 +45,8 @@ __RCSID("$NetBSD: refresh.c,v 1.43 2016/02/16 22:53:14 christos Exp $");
  * refresh.c: Lower level screen refreshing functions
  */
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "el.h"
 
@@ -63,7 +63,7 @@ private void	re__copy_and_pad(Char *, const Char *, size_t);
 #ifdef DEBUG_REFRESH
 private void	re_printstr(EditLine *, const char *, char *, char *);
 #define	__F el->el_errfile
-#define	ELRE_ASSERT(a, b, c)	do 				\
+#define	ELRE_ASSERT(a, b, c)	do				\
 				    if (/*CONSTCOND*/ a) {	\
 					(void) fprintf b;	\
 					c;			\
@@ -109,7 +109,7 @@ re_nextline(EditLine *el)
 		for(i = 1; i < lins; i++)
 			el->el_vdisplay[i - 1] = el->el_vdisplay[i];
 
-		firstline[0] = '\0';		/* empty the string */	
+		firstline[0] = '\0';		/* empty the string */
 		el->el_vdisplay[i - 1] = firstline;
 	} else
 		el->el_refresh.r_cursor.v++;
@@ -191,7 +191,7 @@ re_putc(EditLine *el, wint_t c, int shift)
 
 /* re_refresh():
  *	draws the new virtual screen image from the current input
- *  	line, then goes line-by-line changing the real image to the new
+ *	line, then goes line-by-line changing the real image to the new
  *	virtual image. The routine to re-draw a line can be replaced
  *	easily in hopes of a smarter one being placed there.
  */
@@ -450,7 +450,7 @@ re__strncopy(Char *a, Char *b, size_t n)
  *	in order to make sure that we have cleared the previous contents of
  *	the line. fx and sx is the number of characters inserted or deleted
  *	in the first or second diff, diff is the difference between the
- * 	number of characters between the new and old line.
+ *	number of characters between the new and old line.
  */
 private void
 re_clear_eol(EditLine *el, int fx, int sx, int diff)
@@ -1076,7 +1076,7 @@ re_fastputc(EditLine *el, wint_t c)
 		if (el->el_cursor.v + 1 >= el->el_terminal.t_size.v) {
 			int i, lins = el->el_terminal.t_size.v;
 			Char *firstline = el->el_display[0];
-	
+
 			for(i = 1; i < lins; i++)
 				el->el_display[i - 1] = el->el_display[i];
 
