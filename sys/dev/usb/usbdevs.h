@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.703 2016/02/01 14:55:09 nonaka Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.704 2016/02/17 00:48:57 riastradh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.711 2016/02/01 14:54:33 nonaka Exp
+ *	NetBSD: usbdevs,v 1.712 2016/02/17 00:46:17 riastradh Exp
  */
 
 /*
@@ -882,7 +882,13 @@
 #define	USB_PRODUCT_APPLE_IPAD_MINI	0x12ab		/* Apple iPad Mini */
 #define	USB_PRODUCT_APPLE_ETHERNET	0x1402		/* Apple USB to Ethernet */
 #define	USB_PRODUCT_APPLE_BLUETOOTH2	0x8205		/* Bluetooth */
-#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_C	0x821f		/* Bluetooth USB Host Controller */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_1	0x8213		/* Bluetooth USB Host Controller MacBookPro 7,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_2	0x8215		/* Bluetooth USB Host Controller iMac 11,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_3	0x821a		/* Bluetooth USB Host Controller MacBookPro 8,2 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_4	0x821b		/* Bluetooth USB Host Controller MacBookAir 3,1 3,2 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_5	0x821f		/* Bluetooth USB Host Controller MacBookAir 4,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_6	0x8281		/* Bluetooth USB Host Controller MacMini 5,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_7	0x828f		/* Bluetooth USB Host Controller MacBookAir 6,1 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH	0x8300		/* Bluetooth */
 
 /* ArkMicroChips products */
