@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.185 2016/01/17 17:45:21 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.186 2016/02/18 18:29:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.185 2016/01/17 17:45:21 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.186 2016/02/18 18:29:14 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.185 2016/01/17 17:45:21 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.186 2016/02/18 18:29:14 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -701,7 +701,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 
     numCommands += 1;
 
-    cmdStart = cmd = Var_Subst(NULL, cmd, job->node, FALSE, TRUE, FALSE);
+    cmdStart = cmd = Var_Subst(NULL, cmd, job->node, VARF_WANTRES);
 
     cmdTemplate = "%s\n";
 
@@ -888,7 +888,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 static int
 JobSaveCommand(void *cmd, void *gn)
 {
-    cmd = Var_Subst(NULL, (char *)cmd, (GNode *)gn, FALSE, TRUE, FALSE);
+    cmd = Var_Subst(NULL, (char *)cmd, (GNode *)gn, VARF_WANTRES);
     (void)Lst_AtEnd(postCommands->commands, cmd);
     return(0);
 }
@@ -2176,7 +2176,7 @@ Job_SetPrefix(void)
     }
 
     targPrefix = Var_Subst(NULL, "${" MAKE_JOB_PREFIX "}",
-			   VAR_GLOBAL, FALSE, TRUE, FALSE);
+			   VAR_GLOBAL, VARF_WANTRES);
 }
 
 /*-
