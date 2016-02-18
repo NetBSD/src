@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.71 2016/02/18 18:29:14 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.72 2016/02/18 20:25:08 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,6 +118,7 @@ void Finish(int) MAKE_ATTR_DEAD;
 int eunlink(const char *);
 void execError(const char *, const char *);
 char *getTmpdir(void);
+Boolean s2Boolean(const char *, Boolean);
 Boolean getBoolean(const char *, Boolean);
 
 /* parse.c */
