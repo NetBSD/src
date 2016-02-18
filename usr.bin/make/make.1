@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.251 2016/02/18 06:18:58 sjg Exp $
+.\"	$NetBSD: make.1,v 1.252 2016/02/18 20:25:08 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd February 17, 2016
+.Dd February 18, 2016
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1579,6 +1579,10 @@ This allows exporting a value to the environment which is different from that
 used by
 .Nm
 internally.
+.It Ic .export-literal Ar variable ...
+The same as
+.Ql .export-env ,
+except that variables in the value are not expanded.
 .It Ic .info Ar message
 The message is printed along with the name of the makefile and line number.
 .It Ic .undef Ar variable
