@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.62 2015/08/24 14:04:24 uebayasi Exp $
+#	$NetBSD: Makefile.mips,v 1.63 2016/02/18 20:50:44 macallan Exp $
 
 # Makefile for NetBSD
 #
@@ -46,6 +46,18 @@ GENASSYM_CONF=	${MIPS}/mips/genassym.cf
 CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
+
+# XXX
+# gcc does not pass floating point options to the assembler
+# by default, because it is afraid that the stricter tests
+# will break userland code. The new binutils is pickier about
+# this. Gcc 5.x fixes the issue so for now, set explicitly
+# the assembler soft-float flags when we build the kernel.
+# see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64569
+
+CFLAGS+=	-Wa,-msoft-float
+COPTS.mips_fpu.c+=	-Wa,-mhard-float
+
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24
 .if defined(LP64) && ${LP64} == "yes"
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
