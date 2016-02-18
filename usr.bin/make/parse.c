@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.209 2016/01/17 17:45:21 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.210 2016/02/18 05:02:49 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.209 2016/01/17 17:45:21 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.210 2016/02/18 05:02:49 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.209 2016/01/17 17:45:21 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.210 2016/02/18 05:02:49 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -157,6 +157,7 @@ typedef struct IFile {
     int             lineno;         /* current line number in file */
     int             first_lineno;   /* line number of start of text */
     int             cond_depth;     /* 'if' nesting when file opened */
+    Boolean         depending;      /* state of doing_depend on EOF */
     char            *P_str;         /* point to base of string buffer */
     char            *P_ptr;         /* point to next char of string buffer */
     char            *P_end;         /* point to the end of string buffer */
@@ -2139,7 +2140,7 @@ Parse_AddIncludeDir(char *dir)
  */
 
 static void
-Parse_include_file(char *file, Boolean isSystem, int silent)
+Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 {
     struct loadedfile *lf;
     char          *fullname;	/* full pathname of file */
@@ -2239,6 +2240,9 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
     /* Start reading from this file next */
     Parse_SetInput(fullname, 0, -1, loadedfile_nextbuf, lf);
     curFile->lf = lf;
+    curFile->depending = doing_depend;	/* restore this on EOF */
+    if (depinc)
+	doing_depend = depinc;		/* only turn it on */
 }
 
 static void
@@ -2288,7 +2292,7 @@ ParseDoInclude(char *line)
      */
     file = Var_Subst(NULL, file, VAR_CMD, FALSE, TRUE, FALSE);
 
-    Parse_include_file(file, endc == '>', silent);
+    Parse_include_file(file, endc == '>', (*line == 'd'), silent);
     free(file);
 }
 
@@ -2532,7 +2536,7 @@ ParseTraditionalInclude(char *line)
 	else
 	    done = 1;
 
-	Parse_include_file(file, FALSE, silent);
+	Parse_include_file(file, FALSE, FALSE, silent);
     }
     free(all_files);
 }
@@ -2610,6 +2614,7 @@ ParseEOF(void)
 
     assert(curFile->nextbuf != NULL);
 
+    doing_depend = curFile->depending;	/* restore this */
     /* get next input buffer, if any */
     ptr = curFile->nextbuf(curFile->nextbuf_arg, &len);
     curFile->P_ptr = ptr;
@@ -2972,7 +2977,7 @@ Parse_File(const char *name, int fd)
 		    continue;
 		}
 		if (strncmp(cp, "include", 7) == 0 ||
-			((cp[0] == 's' || cp[0] == '-') &&
+			((cp[0] == 'd' || cp[0] == 's' || cp[0] == '-') &&
 			    strncmp(&cp[1], "include", 7) == 0)) {
 		    ParseDoInclude(cp);
 		    continue;
