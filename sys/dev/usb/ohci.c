@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.43 2016/02/18 16:50:28 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.44 2016/02/18 17:34:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.43 2016/02/18 16:50:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.44 2016/02/18 17:34:30 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -558,7 +558,6 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 	dataphysend = OHCI_PAGE(dataphys + len - 1);
 	tdflags = HTOO32(
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
-	    (flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
 	for (size_t j = 0;;) {
@@ -681,7 +680,6 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 	    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	tdflags = HTOO32(
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
-	    (flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
 	for (size_t j = 1;;) {
@@ -729,6 +727,9 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		dataphys += curlen;
 		cur = next;
 	}
+	cur->td.td_flags |=
+	    (xfer->ux_flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0);
+
 	if (!rd &&
 	    (flags & USBD_FORCE_SHORT_XFER) &&
 	    alen % mps == 0) {
@@ -1549,11 +1550,18 @@ ohci_softintr(void *v)
 				ohci_hash_rem_td(sc, p);
 			}
 
-			/* clear halt */
-			opipe->sed->ed.ed_headp = HTOO32(p->physaddr);
+			ohci_soft_ed_t *sed = opipe->sed;
+
+			/* clear halt and TD chain */
+			sed->ed.ed_headp = HTOO32(p->physaddr);
+			usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
 			OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
 
-			if (cc == OHCI_CC_STALL)
+			if (cc == OHCI_CC_DATA_UNDERRUN)
+				xfer->ux_status = USBD_NORMAL_COMPLETION;
+			else if (cc == OHCI_CC_STALL)
 				xfer->ux_status = USBD_STALLED;
 			else
 				xfer->ux_status = USBD_IOERROR;
