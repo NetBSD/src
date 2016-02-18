@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.45 2016/02/18 05:01:39 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.46 2016/02/18 05:40:50 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -322,7 +322,7 @@ is_submake(void *cmdp, void *gnp)
     }
     cp = strchr(cmd, '$');
     if ((cp)) {
-	mp = Var_Subst(NULL, cmd, gn, FALSE, TRUE, TRUE);
+	mp = Var_Subst(NULL, cmd, gn, FALSE, TRUE, FALSE);
 	cmd = mp;
     }
     cp2 = strstr(cmd, p_make);
@@ -364,7 +364,7 @@ printCMD(void *cmdp, void *mfpp)
     char *cp = NULL;
 
     if (strchr(cmd, '$')) {
-	cmd = cp = Var_Subst(NULL, cmd, mfp->gn, FALSE, TRUE, TRUE);
+	cmd = cp = Var_Subst(NULL, cmd, mfp->gn, FALSE, TRUE, FALSE);
     }
     fprintf(mfp->fp, "CMD %s\n", cmd);
     free(cp);
@@ -458,7 +458,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	char *mp;
 
 	/* Describe the target we are building */
-	mp = Var_Subst(NULL, "${" MAKE_META_PREFIX "}", gn, FALSE, TRUE, TRUE);
+	mp = Var_Subst(NULL, "${" MAKE_META_PREFIX "}", gn, FALSE, TRUE, FALSE);
 	if (*mp)
 	    fprintf(stdout, "%s\n", mp);
 	free(mp);
@@ -601,7 +601,7 @@ meta_mode_init(const char *make_mode)
      */
     metaBailiwick = Lst_Init(FALSE);
     cp = Var_Subst(NULL, "${.MAKE.META.BAILIWICK:O:u:tA}", VAR_GLOBAL,
-		   FALSE, TRUE, TRUE);
+		   FALSE, TRUE, FALSE);
     if (cp) {
 	str2Lst_Append(metaBailiwick, cp, NULL);
     }
@@ -613,7 +613,7 @@ meta_mode_init(const char *make_mode)
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
     cp = Var_Subst(NULL,
 		   "${" MAKE_META_IGNORE_PATHS ":O:u:tA}", VAR_GLOBAL,
-		   FALSE, TRUE, TRUE);
+		   FALSE, TRUE, FALSE);
     if (cp) {
 	str2Lst_Append(metaIgnorePaths, cp, NULL);
     }
@@ -725,7 +725,7 @@ meta_job_output(Job *job, char *cp, const char *nl)
 		char *cp2;
 
 		meta_prefix = Var_Subst(NULL, "${" MAKE_META_PREFIX "}",
-					VAR_GLOBAL, FALSE, TRUE, TRUE);
+					VAR_GLOBAL, FALSE, TRUE, FALSE);
 		if ((cp2 = strchr(meta_prefix, '$')))
 		    meta_prefix_len = cp2 - meta_prefix;
 		else
@@ -1309,7 +1309,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			if (DEBUG(META))
 			    fprintf(debug_file, "%s: %d: cannot compare command using .OODATE\n", fname, lineno);
 		    }
-		    cmd = Var_Subst(NULL, cmd, gn, TRUE, TRUE, TRUE);
+		    cmd = Var_Subst(NULL, cmd, gn, TRUE, TRUE, FALSE);
 
 		    if ((cp = strchr(cmd, '\n'))) {
 			int n;
