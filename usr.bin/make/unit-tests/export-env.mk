@@ -1,4 +1,4 @@
-# $Id: export-env.mk,v 1.1 2014/08/21 13:44:51 apb Exp $
+# $Id: export-env.mk,v 1.2 2016/02/18 20:25:08 sjg Exp $
 
 # our normal .export, subsequent changes affect the environment
 UT_TEST=this
@@ -15,9 +15,12 @@ UT_EXP=before-export
 export UT_EXP=exported
 UT_EXP=not-exported
 
+UT_LIT= literal ${UT_TEST}
+.export-literal UT_LIT
+
 all:
-	@echo make:; ${UT_TEST UT_ENV UT_EXP:L:@v@echo $v=${$v};@}
-	@echo env:; ${UT_TEST UT_ENV UT_EXP:L:@v@echo $v=$${$v};@}
+	@echo make:; ${UT_TEST UT_ENV UT_EXP UT_LIT:L:@v@echo $v=${$v};@}
+	@echo env:; ${UT_TEST UT_ENV UT_EXP UT_LIT:L:@v@echo $v=$${$v};@}
 
 
 
