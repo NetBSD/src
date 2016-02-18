@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.73 2016/01/17 17:45:21 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.74 2016/02/18 18:29:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.73 2016/01/17 17:45:21 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.74 2016/02/18 18:29:14 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.73 2016/01/17 17:45:21 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.74 2016/02/18 18:29:14 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -289,7 +289,8 @@ CondGetArg(char **linePtr, char **argPtr, const char *func)
 	    int		len;
 	    void	*freeIt;
 
-	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, TRUE, FALSE, &len, &freeIt);
+	    cp2 = Var_Parse(cp, VAR_CMD, VARF_UNDEFERR|VARF_WANTRES,
+			    &len, &freeIt);
 	    Buf_AddBytes(&buf, strlen(cp2), cp2);
 	    free(freeIt);
 	    cp += len;
@@ -573,8 +574,9 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	    break;
 	case '$':
 	    /* if we are in quotes, then an undefined variable is ok */
-	    str = Var_Parse(condExpr, VAR_CMD, (qt ? 0 : doEval),
-			    TRUE, FALSE, &len, freeIt);
+	    str = Var_Parse(condExpr, VAR_CMD,
+			    ((!qt && doEval) ? VARF_UNDEFERR : 0) |
+			    VARF_WANTRES, &len, freeIt);
 	    if (str == var_Error) {
 		if (*freeIt) {
 		    free(*freeIt);
@@ -824,7 +826,7 @@ get_mpt_arg(char **linePtr, char **argPtr, const char *func MAKE_ATTR_UNUSED)
     /* We do all the work here and return the result as the length */
     *argPtr = NULL;
 
-    val = Var_Parse(cp - 1, VAR_CMD, FALSE, TRUE, FALSE, &length, &freeIt);
+    val = Var_Parse(cp - 1, VAR_CMD, VARF_WANTRES, &length, &freeIt);
     /*
      * Advance *linePtr to beyond the closing ). Note that
      * we subtract one because 'length' is calculated from 'cp - 1'.
