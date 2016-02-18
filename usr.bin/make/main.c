@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.239 2016/02/18 18:29:14 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.240 2016/02/18 20:25:08 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.239 2016/02/18 18:29:14 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.240 2016/02/18 20:25:08 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.239 2016/02/18 18:29:14 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.240 2016/02/18 20:25:08 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1950,6 +1950,44 @@ mkTempFile(const char *pattern, char **fnamep)
     return fd;
 }
 
+/*
+ * Convert a string representation of a boolean.
+ * Anything that looks like "No", "False", "Off", "0" etc,
+ * is FALSE, otherwise TRUE.
+ */
+Boolean
+s2Boolean(const char *s, Boolean bf)
+{
+    if (s) {
+	switch(*s) {
+	case '\0':			/* not set - the default wins */
+	    break;
+	case '0':
+	case 'F':
+	case 'f':
+	case 'N':
+	case 'n':
+	    bf = FALSE;
+	    break;
+	case 'O':
+	case 'o':
+	    switch (s[1]) {
+	    case 'F':
+	    case 'f':
+		bf = FALSE;
+		break;
+	    default:
+		bf = TRUE;
+		break;
+	    }
+	    break;
+	default:
+	    bf = TRUE;
+	    break;
+	}
+    }
+    return (bf);
+}
 
 /*
  * Return a Boolean based on setting of a knob.
@@ -1968,28 +2006,7 @@ getBoolean(const char *name, Boolean bf)
 	cp = Var_Subst(NULL, tmp, VAR_GLOBAL, VARF_WANTRES);
 
 	if (cp) {
-	    switch(*cp) {
-	    case '\0':			/* not set - the default wins */
-		break;
-	    case '0':
-	    case 'f':
-	    case 'n':
-		bf = FALSE;
-		break;
-	    case 'o':
-		switch (cp[1]) {
-		case 'f':
-		    bf = FALSE;
-		    break;
-		default:
-		    bf = TRUE;
-		    break;
-		}
-		break;
-	    default:
-		bf = TRUE;
-		break;
-	    }
+	    bf = s2Boolean(cp, bf);
 	    free(cp);
 	}
     }

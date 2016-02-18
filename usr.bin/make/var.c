@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.202 2016/02/18 18:29:14 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.203 2016/02/18 20:25:08 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.202 2016/02/18 18:29:14 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.203 2016/02/18 20:25:08 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.202 2016/02/18 18:29:14 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.203 2016/02/18 20:25:08 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -217,7 +217,11 @@ static int var_exportedVars = VAR_EXPORTED_NONE;
  * We pass this to Var_Export when doing the initial export
  * or after updating an exported var.
  */
-#define VAR_EXPORT_PARENT 1
+#define VAR_EXPORT_PARENT	1
+/*
+ * We pass this to Var_Export1 to tell it to leave the value alone.
+ */
+#define VAR_EXPORT_LITERAL	2
 
 /* Var*Pattern flags */
 #define VAR_SUB_GLOBAL	0x01	/* Apply substitution globally */
@@ -581,12 +585,13 @@ Var_Delete(const char *name, GNode *ctxt)
  * We only manipulate flags of vars if 'parent' is set.
  */
 static int
-Var_Export1(const char *name, int parent)
+Var_Export1(const char *name, int flags)
 {
     char tmp[BUFSIZ];
     Var *v;
     char *val = NULL;
     int n;
+    int parent = (flags & VAR_EXPORT_PARENT);
 
     if (*name == '.')
 	return 0;			/* skip internals */
@@ -614,7 +619,7 @@ Var_Export1(const char *name, int parent)
 	return 0;			/* nothing to do */
     }
     val = Buf_GetAll(&v->val, NULL);
-    if (strchr(val, '$')) {
+    if ((flags & VAR_EXPORT_LITERAL) == 0 && strchr(val, '$')) {
 	if (parent) {
 	    /*
 	     * Flag this as something we need to re-export.
@@ -726,7 +731,7 @@ Var_Export(char *str, int isExport)
     char *val;
     char **av;
     char *as;
-    int track;
+    int flags;
     int ac;
     int i;
 
@@ -735,11 +740,14 @@ Var_Export(char *str, int isExport)
 	return;
     }
 
+    flags = 0;
     if (strncmp(str, "-env", 4) == 0) {
-	track = 0;
 	str += 4;
+    } else if (strncmp(str, "-literal", 8) == 0) {
+	str += 8;
+	flags |= VAR_EXPORT_LITERAL;
     } else {
-	track = VAR_EXPORT_PARENT;
+	flags |= VAR_EXPORT_PARENT;
     }
     val = Var_Subst(NULL, str, VAR_GLOBAL, VARF_WANTRES);
     if (*val) {
@@ -761,10 +769,10 @@ Var_Export(char *str, int isExport)
 		    continue;
 		}
 	    }
-	    if (Var_Export1(name, track)) {
+	    if (Var_Export1(name, flags)) {
 		if (VAR_EXPORTED_ALL != var_exportedVars)
 		    var_exportedVars = VAR_EXPORTED_YES;
-		if (isExport && track) {
+		if (isExport && (flags & VAR_EXPORT_PARENT)) {
 		    Var_Append(MAKE_EXPORTED, name, VAR_GLOBAL);
 		}
 	    }
