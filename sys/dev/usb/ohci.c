@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.42 2016/01/10 10:16:00 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.43 2016/02/18 16:50:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.42 2016/01/10 10:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.43 2016/02/18 16:50:28 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1541,8 +1541,7 @@ ohci_softintr(void *v)
 			ohci_soft_td_t *p, *n;
 			opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
 
-			DPRINTFN(15, "error cc=%d",
-			    OHCI_TD_GET_CC(O32TOH(std->td.td_flags)), 0, 0, 0);
+			DPRINTFN(10, "error cc=%d", cc, 0, 0, 0);
 
 			/* remove xfer's TDs from the hash */
 			for (p = std; p->xfer == xfer; p = n) {
