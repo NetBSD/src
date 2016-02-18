@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.210 2016/02/18 05:02:49 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.211 2016/02/18 18:29:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.210 2016/02/18 05:02:49 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.211 2016/02/18 18:29:14 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.210 2016/02/18 05:02:49 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.211 2016/02/18 18:29:14 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -802,7 +802,7 @@ ParseMessage(char *line)
     while (isspace((u_char)*line))
 	line++;
 
-    line = Var_Subst(NULL, line, VAR_CMD, FALSE, TRUE, FALSE);
+    line = Var_Subst(NULL, line, VAR_CMD, VARF_WANTRES);
     Parse_Error(mtype, "%s", line);
     free(line);
 
@@ -1219,7 +1219,8 @@ ParseDoDependency(char *line)
 		int 	length;
 		void    *freeIt;
 
-		(void)Var_Parse(cp, VAR_CMD, TRUE, TRUE, FALSE, &length, &freeIt);
+		(void)Var_Parse(cp, VAR_CMD, VARF_UNDEFERR|VARF_WANTRES,
+				&length, &freeIt);
 		free(freeIt);
 		cp += length-1;
 	    }
@@ -1933,7 +1934,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	if (!Var_Exists(line, ctxt))
 	    Var_Set(line, "", ctxt, 0);
 
-	cp = Var_Subst(NULL, cp, ctxt, FALSE, TRUE, TRUE);
+	cp = Var_Subst(NULL, cp, ctxt, VARF_WANTRES|VARF_ASSIGN);
 	oldVars = oldOldVars;
 	freeCp = TRUE;
 
@@ -1948,7 +1949,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	     * expansion on the whole thing. The resulting string will need
 	     * freeing when we're done, so set freeCmd to TRUE.
 	     */
-	    cp = Var_Subst(NULL, cp, VAR_CMD, TRUE, TRUE, FALSE);
+	    cp = Var_Subst(NULL, cp, VAR_CMD, VARF_UNDEFERR|VARF_WANTRES);
 	    freeCp = TRUE;
 	}
 
@@ -2290,7 +2291,7 @@ ParseDoInclude(char *line)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    file = Var_Subst(NULL, file, VAR_CMD, FALSE, TRUE, FALSE);
+    file = Var_Subst(NULL, file, VAR_CMD, VARF_WANTRES);
 
     Parse_include_file(file, endc == '>', (*line == 'd'), silent);
     free(file);
@@ -2518,7 +2519,7 @@ ParseTraditionalInclude(char *line)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    all_files = Var_Subst(NULL, file, VAR_CMD, FALSE, TRUE, FALSE);
+    all_files = Var_Subst(NULL, file, VAR_CMD, VARF_WANTRES);
 
     if (*file == '\0') {
 	Parse_Error(PARSE_FATAL,
@@ -2586,7 +2587,7 @@ ParseGmakeExport(char *line)
     /*
      * Expand the value before putting it in the environment.
      */
-    value = Var_Subst(NULL, value, VAR_CMD, FALSE, TRUE, FALSE);
+    value = Var_Subst(NULL, value, VAR_CMD, VARF_WANTRES);
     setenv(variable, value, 1);
 }
 #endif
@@ -3136,7 +3137,7 @@ Parse_File(const char *name, int fd)
 	     * variables expanded before being parsed. Tell the variable
 	     * module to complain if some variable is undefined...
 	     */
-	    line = Var_Subst(NULL, line, VAR_CMD, TRUE, TRUE, FALSE);
+	    line = Var_Subst(NULL, line, VAR_CMD, VARF_UNDEFERR|VARF_WANTRES);
 
 	    /*
 	     * Need a non-circular list for the target nodes
