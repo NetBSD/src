@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.44 2016/02/18 17:34:30 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.45 2016/02/18 17:38:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.44 2016/02/18 17:34:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.45 2016/02/18 17:38:37 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1554,7 +1554,9 @@ ohci_softintr(void *v)
 
 			/* clear halt and TD chain */
 			sed->ed.ed_headp = HTOO32(p->physaddr);
-			usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
+			usb_syncmem(&sed->dma,
+			    sed->offs + offsetof(ohci_ed_t, ed_ed_headp),
+			    sizeof(sed->ed.ed_headp),
 			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 			OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
