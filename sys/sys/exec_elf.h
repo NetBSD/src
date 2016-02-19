@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.152 2016/02/06 15:36:36 riastradh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.153 2016/02/19 20:45:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -209,7 +209,8 @@ typedef struct {
 #define EM_386		3	/* Intel 80386 */
 #define EM_68K		4	/* Motorola 68000 */
 #define EM_88K		5	/* Motorola 88000 */
-#define EM_486		6	/* Intel 80486 */
+#define EM_486		6	/* Intel 80486 [old] */
+#define EM_IAMCU	6	/* Intel MCU. */
 #define EM_860		7	/* Intel 80860 */
 #define EM_MIPS		8	/* MIPS I Architecture */
 #define EM_S370		9	/* Amdahl UTS on System/370 */
