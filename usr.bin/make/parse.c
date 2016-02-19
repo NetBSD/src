@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.211 2016/02/18 18:29:14 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.212 2016/02/19 06:19:06 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.211 2016/02/18 18:29:14 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.212 2016/02/19 06:19:06 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.211 2016/02/18 18:29:14 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.212 2016/02/19 06:19:06 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2241,7 +2241,6 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
     /* Start reading from this file next */
     Parse_SetInput(fullname, 0, -1, loadedfile_nextbuf, lf);
     curFile->lf = lf;
-    curFile->depending = doing_depend;	/* restore this on EOF */
     if (depinc)
 	doing_depend = depinc;		/* only turn it on */
 }
@@ -2459,6 +2458,7 @@ Parse_SetInput(const char *name, int line, int fd,
     curFile->nextbuf = nextbuf;
     curFile->nextbuf_arg = arg;
     curFile->lf = NULL;
+    curFile->depending = doing_depend;	/* restore this on EOF */
 
     assert(nextbuf != NULL);
 
