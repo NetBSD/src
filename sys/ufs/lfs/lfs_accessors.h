@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.43 2016/02/19 03:43:42 riastradh Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.44 2016/02/19 04:18:32 riastradh Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -1275,9 +1275,9 @@ static __inline const char *
 lfs_sb_getfsmnt(STRUCT_LFS *fs)
 {
 	if (fs->lfs_is64) {
-		return fs->lfs_dlfs_u.u_64.dlfs_fsmnt;
+		return (const char *)fs->lfs_dlfs_u.u_64.dlfs_fsmnt;
 	} else {
-		return fs->lfs_dlfs_u.u_32.dlfs_fsmnt;
+		return (const char *)fs->lfs_dlfs_u.u_32.dlfs_fsmnt;
 	}
 }
 
@@ -1285,10 +1285,10 @@ static __inline void
 lfs_sb_setfsmnt(STRUCT_LFS *fs, const char *str)
 {
 	if (fs->lfs_is64) {
-		(void)strncpy(fs->lfs_dlfs_u.u_64.dlfs_fsmnt, str,
+		(void)strncpy((char *)fs->lfs_dlfs_u.u_64.dlfs_fsmnt, str,
 			sizeof(fs->lfs_dlfs_u.u_64.dlfs_fsmnt));
 	} else {
-		(void)strncpy(fs->lfs_dlfs_u.u_32.dlfs_fsmnt, str,
+		(void)strncpy((char *)fs->lfs_dlfs_u.u_32.dlfs_fsmnt, str,
 			sizeof(fs->lfs_dlfs_u.u_32.dlfs_fsmnt));
 	}
 }
