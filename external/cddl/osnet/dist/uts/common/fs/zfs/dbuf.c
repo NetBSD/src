@@ -1267,7 +1267,13 @@ dbuf_undirty(dmu_buf_impl_t *db, dmu_tx_t *tx)
 	return (0);
 }
 
-#pragma weak dmu_buf_will_dirty = dbuf_will_dirty
+__attribute__((__weak__)) void
+dmu_buf_will_dirty(dmu_buf_t *db_fake, dmu_tx_t *tx)
+{
+	dmu_buf_impl_t *db = (dmu_buf_impl_t *)db_fake;
+	dbuf_will_dirty(db, tx);
+}
+
 void
 dbuf_will_dirty(dmu_buf_impl_t *db, dmu_tx_t *tx)
 {
@@ -1309,7 +1315,13 @@ dmu_buf_will_fill(dmu_buf_t *db_fake, dmu_tx_t *tx)
 	(void) dbuf_dirty(db, tx);
 }
 
-#pragma weak dmu_buf_fill_done = dbuf_fill_done
+__attribute__((__weak__)) void
+dmu_buf_fill_done(dmu_buf_t *db_fake, dmu_tx_t *tx)
+{
+	dmu_buf_impl_t *db = (dmu_buf_impl_t *)db_fake;
+	dbuf_fill_done(db, tx);
+}
+
 /* ARGSUSED */
 void
 dbuf_fill_done(dmu_buf_impl_t *db, dmu_tx_t *tx)
@@ -1815,7 +1827,13 @@ dbuf_create_bonus(dnode_t *dn)
 	dn->dn_bonus = dbuf_create(dn, 0, DB_BONUS_BLKID, dn->dn_dbuf, NULL);
 }
 
-#pragma weak dmu_buf_add_ref = dbuf_add_ref
+__attribute__((__weak__)) void
+dmu_buf_add_ref(dmu_buf_t *db_fake, void *tag)
+{
+	dmu_buf_impl_t *db = (dmu_buf_impl_t *)db_fake;
+	dbuf_add_ref(db, tag);
+}
+
 void
 dbuf_add_ref(dmu_buf_impl_t *db, void *tag)
 {
@@ -1823,7 +1841,13 @@ dbuf_add_ref(dmu_buf_impl_t *db, void *tag)
 	ASSERT(holds > 1);
 }
 
-#pragma weak dmu_buf_rele = dbuf_rele
+__attribute__((__weak__)) void
+dmu_buf_rele(dmu_buf_t *db_fake, void *tag)
+{
+	dmu_buf_impl_t *db = (dmu_buf_impl_t *)db_fake;
+	dbuf_rele(db, tag);
+}
+
 void
 dbuf_rele(dmu_buf_impl_t *db, void *tag)
 {
@@ -1889,7 +1913,13 @@ dbuf_rele_and_unlock(dmu_buf_impl_t *db, void *tag)
 	}
 }
 
-#pragma weak dmu_buf_refcount = dbuf_refcount
+__attribute__((__weak__)) uint64_t
+dmu_buf_refcount(dmu_buf_t *db_fake)
+{
+	dmu_buf_impl_t *db = (dmu_buf_impl_t *)db_fake;
+	return dbuf_refcount(db);
+}
+
 uint64_t
 dbuf_refcount(dmu_buf_impl_t *db)
 {
