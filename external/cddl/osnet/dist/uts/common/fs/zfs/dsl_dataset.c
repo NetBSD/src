@@ -2304,7 +2304,7 @@ dsl_valid_rename(const char *oldname, void *arg)
 
 #pragma weak dmu_objset_rename = dsl_dataset_rename
 int
-dsl_dataset_rename(char *oldname, const char *newname, boolean_t recursive)
+dsl_dataset_rename(const char *oldname, const char *newname, boolean_t recursive)
 {
 	dsl_dir_t *dd;
 	dsl_dataset_t *ds;
