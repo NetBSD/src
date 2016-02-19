@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.86 2016/02/07 13:58:19 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.87 2016/02/19 16:23:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.86 2016/02/07 13:58:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.87 2016/02/19 16:23:15 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -832,6 +832,11 @@ ehci_softintr(void *v)
 
 	}
 
+	/*
+	 * We abuse ex_next for the interrupt and complete lists and
+	 * interrupt transfers will get re-added here so use
+	 * the _SAFE version of TAILQ_FOREACH.
+	 */
 	TAILQ_FOREACH_SAFE(ex, &cq, ex_next, nextex) {
 		/*
 		 * XXX transfer_complete memcpys out transfer data (for in
