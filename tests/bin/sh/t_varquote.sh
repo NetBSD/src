@@ -1,4 +1,4 @@
-# $NetBSD: t_varquote.sh,v 1.2 2012/03/25 18:50:19 christos Exp $
+# $NetBSD: t_varquote.sh,v 1.3 2016/02/19 13:48:28 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,7 +75,18 @@ nested_quotes_multiword_body() {
 	    /bin/sh -c 'echo "${foo:="first-word"} second-word"'
 }
 
+atf_test_case default_assignment_with_arith
+default_assignment_with_arith_head() {
+	atf_set "descr" "Tests default variable assignment with arithmetic" \
+	    "string works (PR bin/50827)"
+}
+default_assignment_with_arith_body() {
+	atf_check -s eq:0 -o empty -e empty /bin/sh -c ': "${x=$((1))}"'
+
+}
+
 atf_init_test_cases() {
 	atf_add_test_case all
 	atf_add_test_case nested_quotes_multiword
+	atf_add_test_case default_assignment_with_arith
 }
