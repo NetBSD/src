@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.93 2014/08/29 09:35:19 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.94 2016/02/19 13:50:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.93 2014/08/29 09:35:19 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.94 2016/02/19 13:50:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -931,6 +931,15 @@ breakloop:
     else \
 	dblquotep[(varnest / 32) - 1] &= ~(1 << (varnest % 32))
 
+#define INCREASENEST() \
+	do { \
+		if (varnest++ >= maxnest) { \
+			dblquotep = ckrealloc(dblquotep, maxnest / 8); \
+			dblquotep[(maxnest / 32) - 1] = 0; \
+			maxnest += 32; \
+		} \
+	} while (/*CONSTCOND*/0)
+
 STATIC int
 readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 {
@@ -1106,13 +1115,11 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					--parenlevel;
 				} else {
 					if (pgetc() == ')') {
+						if (varnest > 0)  /* always */
+							varnest--;
 						if (--arinest == 0) {
 							USTPUTC(CTLENDARI, out);
 							syntax = prevsyntax;
-							if (syntax == DQSYNTAX)
-								SETDBLQUOTE();
-							else
-								CLRDBLQUOTE();
 						} else
 							USTPUTC(')', out);
 					} else {
@@ -1377,14 +1384,8 @@ badsub:			synerror("Bad substitution");
 		if (ISDBLQUOTE() || arinest)
 			flags |= VSQUOTE;
 		*(stackblock() + typeloc) = subtype | flags;
-		if (subtype != VSNORMAL) {
-			varnest++;
-			if (varnest >= maxnest) {
-				dblquotep = ckrealloc(dblquotep, maxnest / 8);
-				dblquotep[(maxnest / 32) - 1] = 0;
-				maxnest += 32;
-			}
-		}
+		if (subtype != VSNORMAL)
+			INCREASENEST();
 	}
 	goto parsesub_return;
 }
@@ -1562,6 +1563,7 @@ parsearith: {
 		 */
 		USTPUTC('(', out);
 	}
+	INCREASENEST();
 	goto parsearith_return;
 }
 
