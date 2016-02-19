@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.42 2016/01/10 16:14:27 christos Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.43 2016/02/19 03:43:42 riastradh Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -151,9 +151,14 @@
 
 #include <sys/bswap.h>
 
+#include <ufs/lfs/lfs.h>
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
+#include <string.h>
 #define KASSERT assert
+#else
+#include <sys/systm.h>
 #endif
 
 /*
@@ -492,7 +497,7 @@ LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, uid);
 LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, gid);
 
 /* XXX this should be done differently (it's a fake field) */
-LFS_DEF_DINO_ACCESSOR(uint64_t, int32_t, rdev);
+LFS_DEF_DINO_ACCESSOR(int64_t, int32_t, rdev);
 
 static __inline daddr_t
 lfs_dino_getdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
@@ -742,30 +747,30 @@ LFS_DEF_FI_ACCESSOR(uint64_t, uint32_t, ino);
 LFS_DEF_FI_ACCESSOR(uint32_t, uint32_t, lastlength);
 
 static __inline daddr_t
-lfs_fi_getblock(STRUCT_LFS *fs, FINFO *fip, unsigned index)
+lfs_fi_getblock(STRUCT_LFS *fs, FINFO *fip, unsigned idx)
 {
 	void *firstblock;
 
 	firstblock = (char *)fip + FINFOSIZE(fs);
-	KASSERT(index < lfs_fi_getnblocks(fs, fip));
+	KASSERT(idx < lfs_fi_getnblocks(fs, fip));
 	if (fs->lfs_is64) {
-		return ((int64_t *)firstblock)[index];
+		return ((int64_t *)firstblock)[idx];
 	} else {
-		return ((int32_t *)firstblock)[index];
+		return ((int32_t *)firstblock)[idx];
 	}
 }
 
 static __inline void
-lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
+lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned idx, daddr_t blk)
 {
 	void *firstblock;
 
 	firstblock = (char *)fip + FINFOSIZE(fs);
-	KASSERT(index < lfs_fi_getnblocks(fs, fip));
+	KASSERT(idx < lfs_fi_getnblocks(fs, fip));
 	if (fs->lfs_is64) {
-		((int64_t *)firstblock)[index] = blk;
+		((int64_t *)firstblock)[idx] = blk;
 	} else {
-		((int32_t *)firstblock)[index] = blk;
+		((int32_t *)firstblock)[idx] = blk;
 	}
 }
 
@@ -1412,22 +1417,22 @@ lfs_blocks_fromfinfo(STRUCT_LFS *fs, union lfs_blocks *bp, FINFO *fip)
 }
 
 static __inline daddr_t
-lfs_blocks_get(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index)
+lfs_blocks_get(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned idx)
 {
 	if (fs->lfs_is64) {
-		return bp->b64[index];
+		return bp->b64[idx];
 	} else {
-		return bp->b32[index];
+		return bp->b32[idx];
 	}
 }
 
 static __inline void
-lfs_blocks_set(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index, daddr_t val)
+lfs_blocks_set(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned idx, daddr_t val)
 {
 	if (fs->lfs_is64) {
-		bp->b64[index] = val;
+		bp->b64[idx] = val;
 	} else {
-		bp->b32[index] = val;
+		bp->b32[idx] = val;
 	}
 }
 
