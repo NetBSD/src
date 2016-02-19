@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.2 2013/10/06 21:05:50 ast Exp $
+# $NetBSD: t_expand.sh,v 1.3 2016/02/19 13:48:28 christos Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,7 +91,7 @@ strip_head() {
 strip_body() {
 	line='#define bindir "/usr/bin" /* comment */'
 	stripped='#define bindir "/usr/bin" '
-	atf_expect_fail "PR bin/43469"
+#	atf_expect_fail "PR bin/43469"
 	atf_check_equal '$stripped' '${line%%/\**}'
 }
 
