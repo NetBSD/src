@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.43 2016/02/08 18:18:19 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.44 2016/02/19 18:38:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.43 2016/02/08 18:18:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.44 2016/02/19 18:38:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -79,6 +79,8 @@ struct cpu_info rump_bootcpu;
 kcpuset_t *kcpuset_attached = NULL;
 kcpuset_t *kcpuset_running = NULL;
 int ncpu, ncpuonline;
+
+kmutex_t cpu_lock;
 
 #define RCPULWP_BUSY	((void *)-1)
 #define RCPULWP_WANTED	((void *)-2)
@@ -140,6 +142,8 @@ rump_cpus_bootstrap(int *nump)
 		    "available (adjusted)\n", num, MAXCPUS);
 		num = MAXCPUS;
 	}
+
+	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	kcpuset_create(&kcpuset_attached, true);
 	kcpuset_create(&kcpuset_running, true);
