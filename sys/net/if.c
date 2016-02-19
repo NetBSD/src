@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.324 2016/02/15 08:08:04 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.325 2016/02/19 20:05:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.324 2016/02/15 08:08:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.325 2016/02/19 20:05:43 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -603,7 +603,7 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
-	ifp->if_old_link_state = LINK_STATE_UNKNOWN;
+	ifp->if_link_queue = -1; /* all bits set, see link_state_change() */
 
 	ifp->if_capenable = 0;
 	ifp->if_csum_flags_tx = 0;
@@ -1563,48 +1563,128 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 }
 
 /*
- * Handle a change in the interface link state.
- * XXX: We should listen to the routing socket in-kernel rather
- * than calling in6_if_link_* functions directly from here.
+ * bitmask macros to manage a densely packed link_state change queue.
+ * Because we need to store LINK_STATE_UNKNOWN(0), LINK_STATE_DOWN(1) and
+ * LINK_STATE_UP(2) we need 2 bits for each state change.
+ * As a state change to store is 0, treat all bits set as an unset item.
+ */
+#define LQ_ITEM_BITS		2
+#define LQ_ITEM_MASK		((1 << LQ_ITEM_BITS) - 1)
+#define LQ_MASK(i)		(LQ_ITEM_MASK << (i) * LQ_ITEM_BITS)
+#define LINK_STATE_UNSET	LQ_ITEM_MASK
+#define LQ_ITEM(q, i)		(((q) & LQ_MASK((i))) >> (i) * LQ_ITEM_BITS)
+#define LQ_STORE(q, i, v)						      \
+	do {								      \
+		(q) &= ~LQ_MASK((i));					      \
+		(q) |= (v) << (i) * LQ_ITEM_BITS;			      \
+	} while (0 /* CONSTCOND */)
+#define LQ_MAX(q)		((sizeof((q)) * NBBY) / LQ_ITEM_BITS)
+#define LQ_POP(q, v)							      \
+	do {								      \
+		(v) = LQ_ITEM((q), 0);					      \
+		(q) >>= LQ_ITEM_BITS;					      \
+		(q) |= LINK_STATE_UNSET << (LQ_MAX((q)) - 1) * LQ_ITEM_BITS;  \
+	} while (0 /* CONSTCOND */)
+#define LQ_PUSH(q, v)							      \
+	do {								      \
+		(q) >>= LQ_ITEM_BITS;					      \
+		(q) |= (v) << (LQ_MAX((q)) - 1) * LQ_ITEM_BITS;		      \
+	} while (0 /* CONSTCOND */)
+#define LQ_FIND_UNSET(q, i)						      \
+	for ((i) = 0; i < LQ_MAX((q)); (i)++) {				      \
+		if (LQ_ITEM((q), (i)) == LINK_STATE_UNSET)		      \
+			break;						      \
+	}
+/*
+ * Handle a change in the interface link state and
+ * queue notifications.
  */
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	int s;
+	int s, idx;
 
-	s = splnet();
-	if (ifp->if_link_state == link_state) {
-		splx(s);
+	/* Ensure change is to a valid state */
+	switch (link_state) {
+	case LINK_STATE_UNKNOWN:	/* FALLTHROUGH */
+	case LINK_STATE_DOWN:		/* FALLTHROUGH */
+	case LINK_STATE_UP:
+		break;
+	default:
+#ifdef DEBUG
+		printf("%s: invalid link state %d\n",
+		    ifp->if_xname, link_state);
+#endif
 		return;
 	}
 
-	ifp->if_link_state = link_state;
+	s = splnet();
+
+	/* Find the last unset event in the queue. */
+	LQ_FIND_UNSET(ifp->if_link_queue, idx);
+
+	/*
+	 * Ensure link_state doesn't match the last event in the queue.
+	 * ifp->if_link_state is not checked and set here because
+	 * that would present an inconsistent picture to the system.
+	 */
+	if (idx != 0 &&
+	    LQ_ITEM(ifp->if_link_queue, idx - 1) == (uint8_t)link_state)
+		goto out;
+
+	/* Handle queue overflow. */
+	if (idx == LQ_MAX(ifp->if_link_queue)) {
+		uint8_t lost;
+
+		/*
+		 * The DOWN state must be protected from being pushed off
+		 * the queue to ensure that userland will always be
+		 * in a sane state.
+		 * Because DOWN is protected, there is no need to protect
+		 * UNKNOWN.
+		 * It should be invalid to change from any other state to
+		 * UNKNOWN anyway ...
+		 */
+		lost = LQ_ITEM(ifp->if_link_queue, 0);
+		LQ_PUSH(ifp->if_link_queue, (uint8_t)link_state);
+		if (lost == LINK_STATE_DOWN) {
+			lost = LQ_ITEM(ifp->if_link_queue, 0);
+			LQ_STORE(ifp->if_link_queue, 0, LINK_STATE_DOWN);
+		}
+		printf("%s: lost link state change %s\n",
+		    ifp->if_xname,
+		    lost == LINK_STATE_UP ? "UP" :
+		    lost == LINK_STATE_DOWN ? "DOWN" :
+		    "UNKNOWN");
+	} else
+		LQ_STORE(ifp->if_link_queue, idx, (uint8_t)link_state);
+
 	softint_schedule(ifp->if_link_si);
 
+out:
 	splx(s);
 }
 
-
+/*
+ * Handle interface link state change notifications.
+ * Must be called at splnet().
+ */
 static void
-if_link_state_change_si(void *arg)
+if_link_state_change0(struct ifnet *ifp, int link_state)
 {
-	struct ifnet *ifp = arg;
-	int s;
-	int link_state, old_link_state;
 	struct domain *dp;
 
-	s = splnet();
-	link_state = ifp->if_link_state;
-	old_link_state = ifp->if_old_link_state;
-	ifp->if_old_link_state = ifp->if_link_state;
+	/* Ensure the change is still valid. */
+	if (ifp->if_link_state == link_state)
+		return;
 
 #ifdef DEBUG
 	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
 		link_state == LINK_STATE_UP ? "UP" :
 		link_state == LINK_STATE_DOWN ? "DOWN" :
 		"UNKNOWN",
-		 old_link_state == LINK_STATE_UP ? "UP" :
-		old_link_state == LINK_STATE_DOWN ? "DOWN" :
+		ifp->if_link_state == LINK_STATE_UP ? "UP" :
+		ifp->if_link_state == LINK_STATE_DOWN ? "DOWN" :
 		"UNKNOWN");
 #endif
 
@@ -1618,7 +1698,7 @@ if_link_state_change_si(void *arg)
 	 * away.
 	 */
 	if (link_state == LINK_STATE_UP &&
-	    old_link_state == LINK_STATE_UNKNOWN)
+	    ifp->if_link_state == LINK_STATE_UNKNOWN)
 	{
 		DOMAIN_FOREACH(dp) {
 			if (dp->dom_if_link_state_change != NULL)
@@ -1626,6 +1706,8 @@ if_link_state_change_si(void *arg)
 				    LINK_STATE_DOWN);
 		}
 	}
+
+	ifp->if_link_state = link_state;
 
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
@@ -1639,6 +1721,27 @@ if_link_state_change_si(void *arg)
 		if (dp->dom_if_link_state_change != NULL)
 			dp->dom_if_link_state_change(ifp, link_state);
 	}
+}
+
+/*
+ * Process the interface link state change queue.
+ */
+static void
+if_link_state_change_si(void *arg)
+{
+	struct ifnet *ifp = arg;
+	int s;
+	uint8_t state;
+
+	s = splnet();
+
+	/* Pop a link state change from the queue and process it. */
+	LQ_POP(ifp->if_link_queue, state);
+	if_link_state_change0(ifp, state);
+
+	/* If there is a link state change to come, schedule it. */
+	if (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET)
+		softint_schedule(ifp->if_link_si);
 
 	splx(s);
 }
