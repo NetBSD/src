@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.69 2015/10/15 06:24:55 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.70 2016/02/19 03:53:46 riastradh Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,6 +80,7 @@
 #include <err.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
