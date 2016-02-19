@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.7 2015/08/30 13:02:42 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.8 2016/02/19 21:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -260,10 +260,13 @@ ndelay(unsigned long nsecs)
 }
 
 static inline void
-msleep(unsigned int msecs)
+msleep(unsigned int msec)
 {
-
-	kpause("mdelay", false, mstohz(msecs), NULL);
+	if (cold ||
+	    ((hz < 1000) && (msec < (1000/hz))))
+		udelay(msec * 1000);
+	else
+		(void)kpause("mdelay", false, mstohz(msec), NULL);
 }
 
 #define	EREMOTEIO	EIO
