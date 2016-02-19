@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.55 2015/10/15 06:25:04 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.56 2016/02/19 03:54:37 riastradh Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <semaphore.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
