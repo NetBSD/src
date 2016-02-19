@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.197 2016/02/16 01:31:26 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.198 2016/02/19 20:05:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -351,7 +351,7 @@ typedef struct ifnet {
 	struct krwlock	*if_afdata_lock;
 	struct if_percpuq	*if_percpuq; /* We should remove it in the future */
 	void	*if_link_si;		/* softint to handle link state changes */
-	int	if_old_link_state;	/* previous link state */
+	uint16_t	if_link_queue;	/* masked link state change queue */
 #endif
 } ifnet_t;
  
