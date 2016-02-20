@@ -1,11 +1,17 @@
-#	$NetBSD: bsd.host.mk,v 1.2 2014/04/10 19:02:18 plunky Exp $
+#	$NetBSD: bsd.host.mk,v 1.3 2016/02/20 15:18:46 christos Exp $
 
 .if !defined(_BSD_HOST_MK_)
 _BSD_HOST_MK_=1
 
+.if ${MKTOOLSDEBUG:Uno} == "yes"
+HOST_DBG?= -g
+.else
+HOST_DBG?= -O
+.endif
+
 # Helpers for cross-compiling
 HOST_CC?=	cc
-HOST_CFLAGS?=	-O
+HOST_CFLAGS?=	${HOST_DBG}
 HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
 HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
 HOST_LINK.cc?=  ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
@@ -16,7 +22,7 @@ HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
 .endif
 
 HOST_CXX?=	c++
-HOST_CXXFLAGS?=	-O
+HOST_CXXFLAGS?=	${HOST_DBG}
 
 HOST_CPP?=	cpp
 HOST_CPPFLAGS?=

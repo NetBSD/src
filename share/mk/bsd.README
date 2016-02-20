@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.350 2016/02/07 14:31:21 christos Exp $
+#	$NetBSD: bsd.README,v 1.351 2016/02/20 15:18:46 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -393,6 +393,9 @@ MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 MKSTATICLIB	If "no", don't build or install the normal static (*.a)
 		libraries.
 		Default: yes
+
+MKTOOLSDEBUG	If "yes" build the tools with debugging symbols.
+		Default: no
 
 MKTPM		If "no" then don't build the Trusted Platform Module
 		infrastructure.
