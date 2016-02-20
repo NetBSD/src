@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm.armeb,v 1.5 2015/08/17 16:31:15 christos Exp $
+# $NetBSD: md.evbarm.armeb,v 1.6 2016/02/20 14:43:14 christos Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	debuglib,xorg
@@ -17,11 +17,14 @@
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.2.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libws_drv.so.1.debug	obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	obsolete	xorg,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/modesetting_drv.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-	xorg,debug
