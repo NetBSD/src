@@ -1,3 +1,4 @@
+/*	$NetBSD: libelf_memory.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Joseph Koshy
  * All rights reserved.
@@ -31,7 +32,8 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: libelf_memory.c 2368 2011-12-29 06:34:28Z jkoshy ");
+__RCSID("$NetBSD: libelf_memory.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
+ELFTC_VCSID("Id: libelf_memory.c 3013 2014-03-23 06:16:59Z jkoshy ");
 
 /*
  * Create an ELF descriptor for a memory image, optionally reporting
@@ -39,7 +41,7 @@ ELFTC_VCSID("Id: libelf_memory.c 2368 2011-12-29 06:34:28Z jkoshy ");
  */
 
 Elf *
-_libelf_memory(char *image, size_t sz, int reporterror)
+_libelf_memory(unsigned char *image, size_t sz, int reporterror)
 {
 	Elf *e;
 	int e_class;
@@ -89,7 +91,7 @@ _libelf_memory(char *image, size_t sz, int reporterror)
 			e->e_version = e_version;
 		}
 	} else if (sz >= SARMAG &&
-	    strncmp(image, ARMAG, (size_t) SARMAG) == 0)
+	    strncmp((const char *) image, ARMAG, (size_t) SARMAG) == 0)
 		return (_libelf_ar_open(e, reporterror));
 
 	return (e);

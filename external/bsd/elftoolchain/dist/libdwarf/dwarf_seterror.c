@@ -1,3 +1,4 @@
+/*	$NetBSD: dwarf_seterror.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2010 Joseph Koshy
  * All rights reserved.
@@ -26,6 +27,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: dwarf_seterror.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
 ELFTC_VCSID("Id: dwarf_seterror.c 2075 2011-10-27 03:47:28Z jkoshy ");
 
 #define	_SET_FIELD(R, F, V)					\

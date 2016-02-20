@@ -1,3 +1,4 @@
+/*	$NetBSD: elf_types.m4,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.

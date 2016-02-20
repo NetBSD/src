@@ -1,3 +1,4 @@
+/*	$NetBSD: elf_end.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
 /*-
  * Copyright (c) 2006,2008-2009,2011 Joseph Koshy
  * All rights reserved.
@@ -24,8 +25,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include <assert.h>
 #include <libelf.h>
 #include <stdlib.h>
@@ -36,7 +35,8 @@
 #include <sys/mman.h>
 #endif
 
-ELFTC_VCSID("Id: elf_end.c 2240 2011-11-28 06:36:48Z jkoshy ");
+__RCSID("$NetBSD: elf_end.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
+ELFTC_VCSID("Id: elf_end.c 3174 2015-03-27 17:13:41Z emaste ");
 
 int
 elf_end(Elf *e)

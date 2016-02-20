@@ -1,3 +1,4 @@
+/*	$NetBSD: dwarf_nametbl.m4,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2009,2011 Kai Wang
  * All rights reserved.

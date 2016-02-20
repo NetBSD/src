@@ -1,3 +1,4 @@
+/*	$NetBSD: gelf_shdr.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,16 +25,16 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include <assert.h>
 #include <gelf.h>
 #include <libelf.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: gelf_shdr.c 2268 2011-12-03 17:05:11Z jkoshy ");
+__RCSID("$NetBSD: gelf_shdr.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
+ELFTC_VCSID("Id: gelf_shdr.c 3177 2015-03-30 18:19:41Z emaste ");
 
 Elf32_Shdr *
 elf32_getshdr(Elf_Scn *s)

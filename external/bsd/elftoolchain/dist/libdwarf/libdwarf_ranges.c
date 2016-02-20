@@ -1,3 +1,4 @@
+/*	$NetBSD: libdwarf_ranges.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2009 Kai Wang
  * All rights reserved.
@@ -26,6 +27,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: libdwarf_ranges.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_ranges.c 2972 2013-12-23 06:46:04Z kaiwang27 ");
 
 static int

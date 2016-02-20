@@ -1,3 +1,4 @@
+/*	$NetBSD: libelf_allocate.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
  * All rights reserved.
@@ -28,8 +29,6 @@
  * Internal APIs
  */
 
-#include <sys/cdefs.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <libelf.h>
@@ -38,7 +37,8 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: libelf_allocate.c 2272 2011-12-03 17:07:31Z jkoshy ");
+__RCSID("$NetBSD: libelf_allocate.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
+ELFTC_VCSID("Id: libelf_allocate.c 3174 2015-03-27 17:13:41Z emaste ");
 
 Elf *
 _libelf_allocate_elf(void)

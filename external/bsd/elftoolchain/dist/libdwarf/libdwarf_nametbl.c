@@ -1,3 +1,4 @@
+/*	$NetBSD: libdwarf_nametbl.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2009,2010 Kai Wang
  * All rights reserved.
@@ -26,7 +27,8 @@
 
 #include "_libdwarf.h"
 
-ELFTC_VCSID("Id: libdwarf_nametbl.c 2070 2011-10-27 03:05:32Z jkoshy ");
+__RCSID("$NetBSD: libdwarf_nametbl.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_nametbl.c 3029 2014-04-21 23:26:02Z kaiwang27 ");
 
 void
 _dwarf_nametbl_cleanup(Dwarf_NameSec *nsp)
@@ -103,7 +105,7 @@ _dwarf_nametbl_init(Dwarf_Debug dbg, Dwarf_NameSec *namesec, Dwarf_Section *ds,
 		nt->nt_cu_length = dbg->read(ds->ds_data, &offset, dwarf_size);
 
 		if (!dbg->dbg_info_loaded) {
-			ret = _dwarf_info_load(dbg, 1, error);
+			ret = _dwarf_info_load(dbg, 1, 1, error);
 			if (ret != DW_DLE_NONE)
 				goto fail_cleanup;
 		}

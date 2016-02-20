@@ -1,3 +1,4 @@
+/*	$NetBSD: dwarf_reloc.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -26,15 +27,16 @@
 
 #include "_libdwarf.h"
 
-ELFTC_VCSID("Id: dwarf_reloc.c 2075 2011-10-27 03:47:28Z jkoshy ");
+__RCSID("$NetBSD: dwarf_reloc.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
+ELFTC_VCSID("Id: dwarf_reloc.c 3161 2015-02-15 21:43:36Z emaste ");
 
 int
 dwarf_set_reloc_application(int apply)
 {
 	int oldapply;
 
-	oldapply = _libdwarf.applyrela;
-	_libdwarf.applyrela = apply;
+	oldapply = _libdwarf.applyreloc;
+	_libdwarf.applyreloc = apply;
 
 	return (oldapply);
 }

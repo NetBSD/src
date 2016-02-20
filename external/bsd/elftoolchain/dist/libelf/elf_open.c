@@ -1,3 +1,4 @@
+/*	$NetBSD: elf_open.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Joseph Koshy
  * All rights reserved.
@@ -28,6 +29,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: elf_open.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
 ELFTC_VCSID("Id");
 
 /*
@@ -63,5 +65,5 @@ elf_openmemory(char *image, size_t sz)
 		return (NULL);
 	}
 
-	return (_libelf_memory(image, sz, 0));
+	return (_libelf_memory((unsigned char *) image, sz, 0));
 }

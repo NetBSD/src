@@ -1,3 +1,4 @@
+/*	$NetBSD: libdwarf_reloc.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -26,7 +27,8 @@
 
 #include "_libdwarf.h"
 
-ELFTC_VCSID("Id: libdwarf_reloc.c 2948 2013-05-30 21:25:52Z kaiwang27 ");
+__RCSID("$NetBSD: libdwarf_reloc.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_reloc.c 3198 2015-05-14 18:36:19Z emaste ");
 
 Dwarf_Unsigned
 _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
@@ -35,6 +37,8 @@ _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
 	assert(dbg != NULL);
 
 	switch (dbg->dbgp_isa) {
+	case DW_ISA_AARCH64:
+		return (is64 ? R_AARCH64_ABS64 : R_AARCH64_ABS32);
 	case DW_ISA_X86:
 		return (R_386_32);
 	case DW_ISA_X86_64:
@@ -62,11 +66,18 @@ _dwarf_get_reloc_size(Dwarf_Debug dbg, Dwarf_Unsigned rel_type)
 	switch (dbg->dbg_machine) {
 	case EM_NONE:
 		break;
+	case EM_AARCH64:
+		if (rel_type == R_AARCH64_ABS32)
+			return (4);
+		else if (rel_type == R_AARCH64_ABS64)
+			return (8);
+		break;
 	case EM_ARM:
 		if (rel_type == R_ARM_ABS32)
 			return (4);
 		break;
 	case EM_386:
+	case EM_IAMCU:
 		if (rel_type == R_386_32)
 			return (4);
 		break;

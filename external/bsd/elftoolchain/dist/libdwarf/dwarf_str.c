@@ -1,3 +1,4 @@
+/*	$NetBSD: dwarf_str.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2009 Kai Wang
  * All rights reserved.
@@ -26,7 +27,8 @@
 
 #include "_libdwarf.h"
 
-ELFTC_VCSID("Id: dwarf_str.c 2075 2011-10-27 03:47:28Z jkoshy ");
+__RCSID("$NetBSD: dwarf_str.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
+ELFTC_VCSID("Id: dwarf_str.c 3295 2016-01-08 22:08:10Z jkoshy ");
 
 int
 dwarf_get_str(Dwarf_Debug dbg, Dwarf_Off offset, char **string,
@@ -34,7 +36,7 @@ dwarf_get_str(Dwarf_Debug dbg, Dwarf_Off offset, char **string,
 {
 	Dwarf_Section *ds;
 
-	if (dbg == NULL || offset < 0 || string == NULL || ret_strlen == NULL) {
+	if (dbg == NULL || string == NULL || ret_strlen == NULL) {
 		DWARF_SET_ERROR(dbg, error, DW_DLE_ARGUMENT);
 		return (DW_DLV_ERROR);
 	}
@@ -45,12 +47,12 @@ dwarf_get_str(Dwarf_Debug dbg, Dwarf_Off offset, char **string,
 		return (DW_DLV_NO_ENTRY);
 	}
 
-	if ((Dwarf_Unsigned) offset > ds->ds_size) {
+	if (offset > ds->ds_size) {
 		DWARF_SET_ERROR(dbg, error, DW_DLE_ARGUMENT);
 		return (DW_DLV_ERROR);
 	}
 
-	if ((Dwarf_Unsigned) offset == ds->ds_size) {
+	if (offset == ds->ds_size) {
 		DWARF_SET_ERROR(dbg, error, DW_DLE_NO_ENTRY);
 		return (DW_DLV_NO_ENTRY);
 	}
