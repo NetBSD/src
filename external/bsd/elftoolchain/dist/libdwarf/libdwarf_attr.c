@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_attr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf_attr.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_attr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_attr.c 2966 2013-09-21 14:40:14Z kaiwang27 ");
+__RCSID("$NetBSD: libdwarf_attr.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_attr.c 3064 2014-06-06 19:35:55Z kaiwang27 ");
 
 int
 _dwarf_attr_alloc(Dwarf_Die die, Dwarf_Attribute *atp, Dwarf_Error *error)
@@ -109,6 +109,7 @@ _dwarf_attr_init(Dwarf_Debug dbg, Dwarf_Section *ds, uint64_t *offsetp,
 	ret = DW_DLE_NONE;
 	memset(&atref, 0, sizeof(atref));
 	atref.at_die = die;
+	atref.at_offset = *offsetp;
 	atref.at_attrib = ad->ad_attrib;
 	atref.at_form = indirect ? form : ad->ad_form;
 	atref.at_indirect = indirect;
@@ -165,7 +166,7 @@ _dwarf_attr_init(Dwarf_Debug dbg, Dwarf_Section *ds, uint64_t *offsetp,
 		if (cu->cu_version == 2)
 			atref.u[0].u64 = dbg->read(ds->ds_data, offsetp,
 			    cu->cu_pointer_size);
-		else if (cu->cu_version == 3)
+		else
 			atref.u[0].u64 = dbg->read(ds->ds_data, offsetp,
 			    dwarf_size);
 		break;
