@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.127 2016/02/20 09:38:28 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.128 2016/02/20 17:07:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.127 2016/02/20 09:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.128 2016/02/20 17:07:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1342,7 +1342,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 		endpt = ed->bEndpointAddress;
 		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
 		sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][dir];
-		sce->sc = 0;
+		sce->sc = NULL;
 		sce->edesc = NULL;
 		sce->iface = NULL;
 	}
