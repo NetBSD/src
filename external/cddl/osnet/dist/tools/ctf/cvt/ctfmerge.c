@@ -624,7 +624,7 @@ terminate_cleanup(void)
 	if (outfile == NULL)
 		return;
 
-#if !defined(__FreeBSD__)
+#if 0
 	if (dounlink) {
 		fprintf(stderr, "Removing %s\n", outfile);
 		unlink(outfile);
