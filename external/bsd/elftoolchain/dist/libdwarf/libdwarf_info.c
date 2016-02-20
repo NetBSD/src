@@ -1,8 +1,8 @@
-/*	$NetBSD: libdwarf_info.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf_info.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
- * Copyright (c) 2010,2011 Kai Wang
+ * Copyright (c) 2010,2011,2014 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_info.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_info.c 2942 2013-05-04 23:03:54Z kaiwang27 ");
+__RCSID("$NetBSD: libdwarf_info.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_info.c 3136 2014-12-24 16:04:38Z kaiwang27 ");
 
 int
 _dwarf_info_first_cu(Dwarf_Debug dbg, Dwarf_Error *error)
@@ -49,11 +49,37 @@ _dwarf_info_first_cu(Dwarf_Debug dbg, Dwarf_Error *error)
 		return (DW_DLE_NO_ENTRY);
 
 	dbg->dbg_info_off = 0;
-	ret = _dwarf_info_load(dbg, 0, error);
+	ret = _dwarf_info_load(dbg, 0, 1, error);
 	if (ret != DW_DLE_NONE)
 		return (ret);
 
 	dbg->dbg_cu_current = STAILQ_FIRST(&dbg->dbg_cu);
+
+	return (DW_DLE_NONE);
+}
+
+int
+_dwarf_info_first_tu(Dwarf_Debug dbg, Dwarf_Error *error)
+{
+	Dwarf_CU tu;
+	int ret;
+
+	assert(dbg->dbg_tu_current == NULL);
+	tu = STAILQ_FIRST(&dbg->dbg_tu);
+	if (tu != NULL) {
+		dbg->dbg_tu_current = tu;
+		return (DW_DLE_NONE);
+	}
+
+	if (dbg->dbg_types_loaded)
+		return (DW_DLE_NO_ENTRY);
+
+	dbg->dbg_types_off = 0;
+	ret = _dwarf_info_load(dbg, 0, 0, error);
+	if (ret != DW_DLE_NONE)
+		return (ret);
+
+	dbg->dbg_tu_current = STAILQ_FIRST(&dbg->dbg_tu);
 
 	return (DW_DLE_NONE);
 }
@@ -76,7 +102,7 @@ _dwarf_info_next_cu(Dwarf_Debug dbg, Dwarf_Error *error)
 		return (DW_DLE_NO_ENTRY);
 	}
 
-	ret = _dwarf_info_load(dbg, 0, error);
+	ret = _dwarf_info_load(dbg, 0, 1, error);
 	if (ret != DW_DLE_NONE)
 		return (ret);
 
@@ -86,7 +112,35 @@ _dwarf_info_next_cu(Dwarf_Debug dbg, Dwarf_Error *error)
 }
 
 int
-_dwarf_info_load(Dwarf_Debug dbg, int load_all, Dwarf_Error *error)
+_dwarf_info_next_tu(Dwarf_Debug dbg, Dwarf_Error *error)
+{
+	Dwarf_CU cu;
+	int ret;
+
+	assert(dbg->dbg_tu_current != NULL);
+	cu = STAILQ_NEXT(dbg->dbg_tu_current, cu_next);
+	if (cu != NULL) {
+		dbg->dbg_tu_current = cu;
+		return (DW_DLE_NONE);
+	}
+
+	if (dbg->dbg_types_loaded) {
+		dbg->dbg_tu_current = NULL;
+		return (DW_DLE_NO_ENTRY);
+	}
+
+	ret = _dwarf_info_load(dbg, 0, 0, error);
+	if (ret != DW_DLE_NONE)
+		return (ret);
+
+	dbg->dbg_tu_current = STAILQ_NEXT(dbg->dbg_tu_current, cu_next);
+
+	return (DW_DLE_NONE);
+}
+
+int
+_dwarf_info_load(Dwarf_Debug dbg, Dwarf_Bool load_all, Dwarf_Bool is_info,
+    Dwarf_Error *error)
 {
 	Dwarf_CU cu;
 	Dwarf_Section *ds;
@@ -96,12 +150,23 @@ _dwarf_info_load(Dwarf_Debug dbg, int load_all, Dwarf_Error *error)
 	uint64_t offset;
 
 	ret = DW_DLE_NONE;
-	if (dbg->dbg_info_loaded)
-		return (DW_DLE_NONE);
 
-	offset = dbg->dbg_info_off;
-	ds = dbg->dbg_info_sec;
-	assert(ds != NULL);
+	if (is_info) {
+		if (dbg->dbg_info_loaded)
+			return (ret);
+		offset = dbg->dbg_info_off;
+		ds = dbg->dbg_info_sec;
+		if (ds == NULL)
+			return (DW_DLE_NO_ENTRY);
+	} else {
+		if (dbg->dbg_types_loaded)
+			return (ret);
+		offset = dbg->dbg_types_off;
+		ds = dbg->dbg_types_sec;
+		if (ds == NULL)
+			return (DW_DLE_NO_ENTRY);
+	}
+
 	while (offset < ds->ds_size) {
 		if ((cu = calloc(1, sizeof(struct _Dwarf_CU))) == NULL) {
 			DWARF_SET_ERROR(dbg, error, DW_DLE_MEMORY);
@@ -109,6 +174,7 @@ _dwarf_info_load(Dwarf_Debug dbg, int load_all, Dwarf_Error *error)
 		}
 
 		cu->cu_dbg = dbg;
+		cu->cu_is_info = is_info;
 		cu->cu_offset = offset;
 
 		length = dbg->read(ds->ds_data, &offset, 4);
@@ -132,7 +198,10 @@ _dwarf_info_load(Dwarf_Debug dbg, int load_all, Dwarf_Error *error)
 
 		/* Compute the offset to the next compilation unit: */
 		next_offset = offset + length;
-		dbg->dbg_info_off = next_offset;
+		if (is_info)
+			dbg->dbg_info_off = next_offset;
+		else
+			dbg->dbg_types_off = next_offset;
 
 		/* Initialise the compilation unit. */
 		cu->cu_length		 = length;
@@ -144,8 +213,20 @@ _dwarf_info_load(Dwarf_Debug dbg, int load_all, Dwarf_Error *error)
 		cu->cu_pointer_size	 = dbg->read(ds->ds_data, &offset, 1);
 		cu->cu_next_offset	 = next_offset;
 
+		/* .debug_types extra fields. */
+		if (!is_info) {
+			memcpy(cu->cu_type_sig.signature,
+			    (char *) ds->ds_data + offset, 8);
+			offset += 8;
+			cu->cu_type_offset = dbg->read(ds->ds_data, &offset,
+			    dwarf_size);
+		}
+
 		/* Add the compilation unit to the list. */
-		STAILQ_INSERT_TAIL(&dbg->dbg_cu, cu, cu_next);
+		if (is_info)
+			STAILQ_INSERT_TAIL(&dbg->dbg_cu, cu, cu_next);
+		else
+			STAILQ_INSERT_TAIL(&dbg->dbg_tu, cu, cu_next);
 
 		if (cu->cu_version < 2 || cu->cu_version > 4) {
 			DWARF_SET_ERROR(dbg, error, DW_DLE_VERSION_STAMP_ERROR);
@@ -161,8 +242,13 @@ _dwarf_info_load(Dwarf_Debug dbg, int load_all, Dwarf_Error *error)
 			break;
 	}
 
-	if ((Dwarf_Unsigned) dbg->dbg_info_off >= ds->ds_size)
-		dbg->dbg_info_loaded = 1;		
+	if (is_info) {
+		if ((Dwarf_Unsigned) dbg->dbg_info_off >= ds->ds_size)
+			dbg->dbg_info_loaded = 1;
+	} else {
+		if ((Dwarf_Unsigned) dbg->dbg_types_off >= ds->ds_size)
+			dbg->dbg_types_loaded = 1;
+	}
 
 	return (ret);
 }
@@ -181,6 +267,22 @@ _dwarf_info_cleanup(Dwarf_Debug dbg)
 			_dwarf_lineno_cleanup(cu->cu_lineinfo);
 			cu->cu_lineinfo = NULL;
 		}
+		free(cu);
+	}
+
+	_dwarf_type_unit_cleanup(dbg);
+}
+
+void
+_dwarf_type_unit_cleanup(Dwarf_Debug dbg)
+{
+	Dwarf_CU cu, tcu;
+
+	assert(dbg != NULL && dbg->dbg_mode == DW_DLC_READ);
+
+	STAILQ_FOREACH_SAFE(cu, &dbg->dbg_tu, cu_next, tcu) {
+		STAILQ_REMOVE(&dbg->dbg_tu, cu, _Dwarf_CU, cu_next);
+		_dwarf_abbrev_cleanup(cu);
 		free(cu);
 	}
 }
