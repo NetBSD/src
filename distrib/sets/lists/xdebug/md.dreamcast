@@ -1,4 +1,4 @@
-# $NetBSD: md.dreamcast,v 1.5 2016/01/25 17:59:35 christos Exp $
+# $NetBSD: md.dreamcast,v 1.6 2016/02/20 14:42:18 christos Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	debuglib,xorg,obsolete
@@ -20,6 +20,10 @@
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-	xorg,debug
