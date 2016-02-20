@@ -1325,7 +1325,7 @@ die_funcptr_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp)
 static intr_t *
 die_base_name_parse(const char *name, char **newp)
 {
-	char buf[100];
+	char buf[1024];
 	char const *base;
 	char *c;
 	int nlong = 0, nshort = 0, nchar = 0, nint = 0;
@@ -2019,8 +2019,15 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 	}
 
 	if ((rc = dwarf_next_cu_header_b(dw.dw_dw, &hdrlen, &vers, &abboff,
-	    &addrsz, &offsz, NULL, &nxthdr, &dw.dw_err)) != DW_DLV_OK)
+	    &addrsz, &offsz, NULL, &nxthdr, &dw.dw_err)) != DW_DLV_OK) {
+		if (dwarf_errno(dw.dw_err) == DW_DLE_NO_ENTRY) {
+			/*
+			 * There's no DWARF section...
+			 */
+			return (0);
+		}
 		terminate("rc = %d %s\n", rc, dwarf_errmsg(dw.dw_err));
+	}
 
 	if ((cu = die_sibling(&dw, NULL)) == NULL)
 		goto out;
