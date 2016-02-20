@@ -70,7 +70,7 @@ GENSRCS=	libelf_fsize.c libelf_msize.c libelf_convert.c
 CLEANFILES+=	${GENSRCS}
 CPPFLAGS+=	-I. -I${SRCDIR} -I${TOP}/common
 
-SHLIB_MAJOR=	1
+SHLIB_MAJOR=	2
 SHLIB_MINOR=	0
 
 MAN=	elf.3							\
