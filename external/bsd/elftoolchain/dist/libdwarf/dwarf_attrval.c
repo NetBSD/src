@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_attrval.c,v 1.3 2015/01/14 09:29:27 martin Exp $	*/
+/*	$NetBSD: dwarf_attrval.c,v 1.4 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_attrval.c,v 1.3 2015/01/14 09:29:27 martin Exp $");
-ELFTC_VCSID("Id: dwarf_attrval.c 2072 2011-10-27 03:26:49Z jkoshy ");
+__RCSID("$NetBSD: dwarf_attrval.c,v 1.4 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: dwarf_attrval.c 3159 2015-02-15 21:43:27Z emaste ");
 
 int
 dwarf_attrval_flag(Dwarf_Die die, Dwarf_Half attr, Dwarf_Bool *valp, Dwarf_Error *err)

@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_elf_init.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf_elf_init.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_elf_init.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_elf_init.c 2972 2013-12-23 06:46:04Z kaiwang27 ");
+__RCSID("$NetBSD: libdwarf_elf_init.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_elf_init.c 3161 2015-02-15 21:43:36Z emaste ");
 
 static const char *debug_name[] = {
 	".debug_abbrev",
@@ -53,32 +53,46 @@ static const char *debug_name[] = {
 };
 
 static void
-_dwarf_elf_apply_reloc(Dwarf_Debug dbg, void *buf, Elf_Data *rel_data,
+_dwarf_elf_write_reloc(Dwarf_Debug dbg, Elf_Data *symtab_data, int endian,
+    void *buf, uint64_t offset, GElf_Xword r_info, GElf_Sxword r_addend)
+{
+	GElf_Sym sym;
+	int size;
+
+	if (gelf_getsym(symtab_data, GELF_R_SYM(r_info), &sym) == NULL)
+		return;
+	if ((size = _dwarf_get_reloc_size(dbg, GELF_R_TYPE(r_info))) == 0)
+		return; /* Unknown or non-absolute relocation. */
+	if (endian == ELFDATA2MSB)
+		_dwarf_write_msb(buf, &offset, sym.st_value + r_addend, size);
+	else
+		_dwarf_write_lsb(buf, &offset, sym.st_value + r_addend, size);
+}
+
+static void
+_dwarf_elf_apply_rel_reloc(Dwarf_Debug dbg, void *buf, Elf_Data *rel_data,
     Elf_Data *symtab_data, int endian)
 {
-	Dwarf_Unsigned type;
-	GElf_Rela rela;
-	GElf_Sym sym;
-	size_t symndx;
-	uint64_t offset;
-	int size, j;
+	GElf_Rel rel;
+	int j;
 
 	j = 0;
-	while (gelf_getrela(rel_data, j++, &rela) != NULL) {
-		symndx = GELF_R_SYM(rela.r_info);
-		type = GELF_R_TYPE(rela.r_info);
+	while (gelf_getrel(rel_data, j++, &rel) != NULL)
+		_dwarf_elf_write_reloc(dbg, symtab_data, endian, buf,
+		     rel.r_offset, rel.r_info, 0);
+}
 
-		if (gelf_getsym(symtab_data, symndx, &sym) == NULL)
-			continue;
+static void
+_dwarf_elf_apply_rela_reloc(Dwarf_Debug dbg, void *buf, Elf_Data *rel_data,
+    Elf_Data *symtab_data, int endian)
+{
+	GElf_Rela rela;
+	int j;
 
-		offset = rela.r_offset;
-		size = _dwarf_get_reloc_size(dbg, type);
-
-		if (endian == ELFDATA2MSB)
-			_dwarf_write_msb(buf, &offset, rela.r_addend, size);
-		else
-			_dwarf_write_lsb(buf, &offset, rela.r_addend, size);
-	}
+	j = 0;
+	while (gelf_getrela(rel_data, j++, &rela) != NULL)
+		_dwarf_elf_write_reloc(dbg, symtab_data, endian, buf,
+		    rela.r_offset, rela.r_info, rela.r_addend);
 }
 
 static int
@@ -107,7 +121,8 @@ _dwarf_elf_relocate(Dwarf_Debug dbg, Elf *elf, Dwarf_Elf_Data *ed, size_t shndx,
 			return (DW_DLE_ELF);
 		}
 
-		if (sh.sh_type != SHT_RELA || sh.sh_size == 0)
+		if ((sh.sh_type != SHT_REL && sh.sh_type != SHT_RELA) ||
+		     sh.sh_size == 0)
 			continue;
 
 		if (sh.sh_info == shndx && sh.sh_link == symtab) {
@@ -128,8 +143,12 @@ _dwarf_elf_relocate(Dwarf_Debug dbg, Elf *elf, Dwarf_Elf_Data *ed, size_t shndx,
 			}
 			memcpy(ed->ed_alloc, ed->ed_data->d_buf,
 			    ed->ed_data->d_size);
-			_dwarf_elf_apply_reloc(dbg, ed->ed_alloc, rel,
-			    symtab_data, eh.e_ident[EI_DATA]);
+			if (sh.sh_type == SHT_REL)
+				_dwarf_elf_apply_rel_reloc(dbg, ed->ed_alloc,
+				    rel, symtab_data, eh.e_ident[EI_DATA]);
+			else
+				_dwarf_elf_apply_rela_reloc(dbg, ed->ed_alloc,
+				    rel, symtab_data, eh.e_ident[EI_DATA]);
 
 			return (DW_DLE_NONE);
 		}
@@ -285,7 +304,7 @@ _dwarf_elf_init(Dwarf_Debug dbg, Elf *elf, Dwarf_Error *error)
 				}
 			}
 
-			if (_libdwarf.applyrela) {
+			if (_libdwarf.applyreloc) {
 				if (_dwarf_elf_relocate(dbg, elf,
 				    &e->eo_data[j], elf_ndxscn(scn), symtab_ndx,
 				    symtab_data, error) != DW_DLE_NONE)
