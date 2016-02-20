@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.251 2016/01/31 15:30:14 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.252 2016/02/20 16:36:08 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -14,7 +14,8 @@ error2:
 	@(echo "bsd.own.mk must be included before bsd.sys.mk" >& 2; exit 1)
 .endif
 
-.if ${MKREPRO:Uno} == "yes"
+# XXX: LLVM does not support -iremap and -fdebug-*
+.if ${MKREPRO:Uno} == "yes" && ${MKLLVM:Uno} != "yes"
 .export NETBSDSRCDIR DESTDIR X11SRCDIR
 
 .if !empty(DESTDIR)
