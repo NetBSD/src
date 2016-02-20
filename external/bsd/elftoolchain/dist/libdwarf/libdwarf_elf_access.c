@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_elf_access.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf_elf_access.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Kai Wang
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_elf_access.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
+__RCSID("$NetBSD: libdwarf_elf_access.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_elf_access.c 2070 2011-10-27 03:05:32Z jkoshy ");
 
 int

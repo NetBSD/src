@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getdata.3,v 1.2 2014/03/09 16:58:04 christos Exp $
+.\"	$NetBSD: elf_getdata.3,v 1.3 2016/02/20 02:43:42 christos Exp $
 .\"
 .\" Copyright (c) 2006,2008,2010-2011 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getdata.3 1766 2011-08-22 06:01:03Z jkoshy 
+.\" Id: elf_getdata.3 3181 2015-04-10 13:22:51Z emaste 
 .\"
 .Dd January 26, 2011
 .Os
@@ -193,7 +193,7 @@ These functions return a valid pointer to a data descriptor if successful, or
 if an error occurs.
 .Sh ERRORS
 These functions may fail with the following errors:
-.Bl -tag -width "[ELF_E_RESOURCE]" 
+.Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Either of the arguments
 .Ar scn

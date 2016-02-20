@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_seterror.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: dwarf_seterror.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Joseph Koshy
@@ -28,14 +28,14 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_seterror.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
+__RCSID("$NetBSD: dwarf_seterror.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
 ELFTC_VCSID("Id: dwarf_seterror.c 2075 2011-10-27 03:47:28Z jkoshy ");
 
 #define	_SET_FIELD(R, F, V)					\
 	do {							\
 		(R) = (F);					\
 		(F) = (V);					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	SET_FIELD(D, R, F)					\
 	do {							\
@@ -43,7 +43,7 @@ ELFTC_VCSID("Id: dwarf_seterror.c 2075 2011-10-27 03:47:28Z jkoshy ");
 			_SET_FIELD(R, (D)->dbg_##F, F);		\
 		else						\
 			_SET_FIELD(R, _libdwarf.F, F);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 Dwarf_Handler
 dwarf_seterrhand(Dwarf_Debug dbg, Dwarf_Handler errhand)
