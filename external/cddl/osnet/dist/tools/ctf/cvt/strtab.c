@@ -28,8 +28,8 @@
 
 #include <sys/types.h>
 #include <sys/sysmacros.h>
-#include <strings.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <stdio.h>
 
 #include "strtab.h"
