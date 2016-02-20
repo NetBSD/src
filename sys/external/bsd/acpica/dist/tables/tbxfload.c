@@ -228,7 +228,7 @@ AcpiTbLoadNamespace (
     if (!TablesFailed)
     {
         ACPI_INFO ((AE_INFO,
-            "%u ACPI AML tables successfully acquired and loaded\n",
+            "%u ACPI AML tables successfully acquired and loaded",
             TablesLoaded));
     }
     else
