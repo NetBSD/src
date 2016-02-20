@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_shdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libelf_shdr.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -26,15 +26,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include <gelf.h>
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_shdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libelf_shdr.c 2225 2011-11-26 18:55:54Z jkoshy ");
+__RCSID("$NetBSD: libelf_shdr.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
+ELFTC_VCSID("Id: libelf_shdr.c 3174 2015-03-27 17:13:41Z emaste ");
 
 void *
 _libelf_getshdr(Elf_Scn *s, int ec)

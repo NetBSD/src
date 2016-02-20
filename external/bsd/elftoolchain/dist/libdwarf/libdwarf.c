@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Kai Wang
@@ -28,11 +28,11 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libdwarf.c 2070 2011-10-27 03:05:32Z jkoshy ");
+__RCSID("$NetBSD: libdwarf.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: libdwarf.c 3161 2015-02-15 21:43:36Z emaste ");
 
 struct _libdwarf_globals _libdwarf = {
 	.errhand	= NULL,
 	.errarg		= NULL,
-	.applyrela	= 1
+	.applyreloc	= 1
 };

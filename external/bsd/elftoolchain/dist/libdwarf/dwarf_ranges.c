@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_ranges.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: dwarf_ranges.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009,2011 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_ranges.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: dwarf_ranges.c 2075 2011-10-27 03:47:28Z jkoshy ");
+__RCSID("$NetBSD: dwarf_ranges.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: dwarf_ranges.c 3029 2014-04-21 23:26:02Z kaiwang27 ");
 
 static int
 _dwarf_get_ranges(Dwarf_Debug dbg, Dwarf_CU cu, Dwarf_Off off,
@@ -66,7 +66,7 @@ dwarf_get_ranges(Dwarf_Debug dbg, Dwarf_Off offset, Dwarf_Ranges **ranges,
 	}
 
 	if (!dbg->dbg_info_loaded) {
-		if (_dwarf_info_load(dbg, 1, error) != DW_DLE_NONE)
+		if (_dwarf_info_load(dbg, 1, 1, error) != DW_DLE_NONE)
 			return (DW_DLV_ERROR);
 	}
 

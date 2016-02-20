@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_sections.c,v 1.1.1.1 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: dwarf_sections.c,v 1.2 2016/02/20 02:43:41 christos Exp $	*/
 /*-
  * Copyright (c) 2014 Kai Wang
  * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_sections.c,v 1.1.1.1 2016/02/20 02:42:01 christos Exp $");
+__RCSID("$NetBSD: dwarf_sections.c,v 1.2 2016/02/20 02:43:41 christos Exp $");
 ELFTC_VCSID("Id: dwarf_sections.c 3226 2015-06-23 13:00:16Z emaste ");
 
 #define	SET(N, V)				\

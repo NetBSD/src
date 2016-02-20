@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ehdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libelf_ehdr.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -39,8 +39,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_ehdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libelf_ehdr.c 2225 2011-11-26 18:55:54Z jkoshy ");
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
+ELFTC_VCSID("Id: libelf_ehdr.c 3174 2015-03-27 17:13:41Z emaste ");
 
 /*
  * Retrieve counts for sections, phdrs and the section string table index
@@ -52,7 +52,8 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 {
 	Elf_Scn *scn;
 	size_t fsz;
-	int (*xlator)(char *_d, size_t _dsz, char *_s, size_t _c, int _swap);
+	int (*xlator)(unsigned char *_d, size_t _dsz, unsigned char *_s,
+	    size_t _c, int _swap);
 	uint32_t shtype;
 
 	assert(STAILQ_EMPTY(&e->e_u.e_elf.e_scn));
@@ -75,7 +76,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 
 	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec);
 	(*xlator)((void *) &scn->s_shdr, sizeof(scn->s_shdr),
-	    e->e_rawfile + shoff, (size_t) 1,
+	    (unsigned char *) e->e_rawfile + shoff, (size_t) 1,
 	    e->e_byteorder != _libelf_host_byteorder());
 
 #define	GET_SHDR_MEMBER(M) ((ec == ELFCLASS32) ? scn->s_shdr.s_shdr32.M : \
@@ -91,7 +92,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 		return (0);
 	}
 
-	e->e_u.e_elf.e_nscn = (unsigned int)GET_SHDR_MEMBER(sh_size);
+	e->e_u.e_elf.e_nscn = (size_t) GET_SHDR_MEMBER(sh_size);
 	e->e_u.e_elf.e_nphdr = (phnum != PN_XNUM) ? phnum :
 	    GET_SHDR_MEMBER(sh_info);
 	e->e_u.e_elf.e_strndx = (strndx != SHN_XINDEX) ? strndx :
@@ -109,7 +110,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 		eh->e_ident[EI_MAG3] = ELFMAG3;				\
 		eh->e_ident[EI_CLASS] = ELFCLASS##SZ;			\
 		eh->e_ident[EI_DATA]  = ELFDATANONE;			\
-		eh->e_ident[EI_VERSION] = LIBELF_PRIVATE(version);	\
+		eh->e_ident[EI_VERSION] = LIBELF_PRIVATE(version) & 0xFFU; \
 		eh->e_machine = EM_NONE;				\
 		eh->e_type    = ELF_K_NONE;				\
 		eh->e_version = LIBELF_PRIVATE(version);		\
@@ -122,7 +123,8 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 	size_t fsz, msz;
 	uint16_t phnum, shnum, strndx;
 	uint64_t shoff;
-	int (*xlator)(char *_d, size_t _dsz, char *_s, size_t _c, int _swap);
+	int (*xlator)(unsigned char *_d, size_t _dsz, unsigned char *_s,
+	    size_t _c, int _swap);
 
 	assert(ec == ELFCLASS32 || ec == ELFCLASS64);
 
@@ -184,7 +186,7 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 		return (ehdr);
 
 	xlator = _libelf_get_translator(ELF_T_EHDR, ELF_TOMEMORY, ec);
-	(*xlator)(ehdr, msz, e->e_rawfile, (size_t) 1,
+	(*xlator)((void *)ehdr, msz, e->e_rawfile, (size_t) 1,
 	    e->e_byteorder != _libelf_host_byteorder());
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_memory.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: elf_memory.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -30,8 +30,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_memory.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: elf_memory.c 2368 2011-12-29 06:34:28Z jkoshy ");
+__RCSID("$NetBSD: elf_memory.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
+ELFTC_VCSID("Id: elf_memory.c 3013 2014-03-23 06:16:59Z jkoshy ");
 
 Elf *
 elf_memory(char *image, size_t sz)
@@ -46,5 +46,5 @@ elf_memory(char *image, size_t sz)
 		return (NULL);
 	}
 
-	return (_libelf_memory(image, sz, 1));
+	return (_libelf_memory((unsigned char *) image, sz, 1));
 }
