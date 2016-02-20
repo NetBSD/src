@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.204 2016/02/18 23:33:25 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.205 2016/02/20 01:19:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.204 2016/02/18 23:33:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.205 2016/02/20 01:19:03 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.204 2016/02/18 23:33:25 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.205 2016/02/20 01:19:03 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -160,6 +160,16 @@ char 	var_Error[] = "";
  * to condense identical string instances...
  */
 static char	varNoError[] = "";
+
+/*
+ * Traditionally we consume $$ during := like any other expansion.
+ * Other make's do not.
+ * This knob allows controlling the behavior.
+ * FALSE for old behavior.
+ * TRUE for new compatible.
+ */
+#define SAVE_DOLLARS ".MAKE.SAVE_DOLLARS"
+static Boolean save_dollars = TRUE;
 
 /*
  * Internally, variables are contained in four different contexts.
@@ -992,7 +1002,11 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
-	
+    if (*name == '.') {
+	if (strcmp(name, SAVE_DOLLARS) == 0)
+	    save_dollars = s2Boolean(val, save_dollars);
+    }
+
  out:
     free(expanded_name);
     if (v != NULL)
@@ -3989,7 +4003,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, int flags)
 	     * In such a case, we skip over the escape character and store the
 	     * dollar sign into the buffer directly.
 	     */
-	    if (flags & VARF_ASSIGN)
+	    if (save_dollars && (flags & VARF_ASSIGN))
 		Buf_AddByte(&buf, *str);
 	    str++;
 	    Buf_AddByte(&buf, *str);
