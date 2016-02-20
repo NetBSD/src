@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.253 2016/02/20 01:19:03 sjg Exp $
+.\"	$NetBSD: make.1,v 1.254 2016/02/20 01:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -293,7 +293,7 @@ then
 will search for the specified file or directory named in the remaining part
 of the argument string.
 The search starts with the current directory of
-the Makefile and then works upward towards the root of the filesystem.
+the Makefile and then works upward towards the root of the file system.
 If the search is successful, then the resulting directory replaces the
 .Qq \&.../
 specification in the
@@ -868,7 +868,7 @@ This can be overridden by setting
 .Va bf
 to a value which represents True.
 .It Pa env
-For debugging, it can be useful to inlcude the environment
+For debugging, it can be useful to include the environment
 in the .meta file.
 .It Pa verbose
 If in "meta" mode, print a clue about the target being built.
@@ -918,7 +918,7 @@ The default value is:
 This variable is used to record the names of variables assigned to
 on the command line, so that they may be exported as part of
 .Ql Ev MAKEFLAGS .
-This behaviour can be disabled by assigning an empty value to
+This behavior can be disabled by assigning an empty value to
 .Ql Va .MAKEOVERRIDES
 within a makefile.
 Extra variables can be exported from a makefile
@@ -942,12 +942,12 @@ The process-id of
 The parent process-id of
 .Nm .
 .It Va .MAKE.SAVE_DOLLARS
-value should be a boolen that controls wether
+value should be a boolean that controls whether
 .Ql $$
 are preserved when doing
 .Ql :=
 assignments.
-The default is true, for compatability with other makes.
+The default is true, for compatibility with other makes.
 If set to false,
 .Ql $$
 becomes
@@ -1056,7 +1056,7 @@ sets
 to the value of
 .Ql Ev PWD
 instead.
-This behaviour is disabled if
+This behavior is disabled if
 .Ql Ev MAKEOBJDIRPREFIX
 is set or
 .Ql Ev MAKEOBJDIR
@@ -1126,7 +1126,7 @@ The wildcard characters may be escaped with a backslash
 As a consequence of the way values are split into words, matched,
 and then joined, a construct like
 .Dl ${VAR:M*}
-will normalise the inter-word spacing, removing all leading and
+will normalize the inter-word spacing, removing all leading and
 trailing space, and converting multiple consecutive spaces
 to single spaces.
 .
@@ -1146,7 +1146,7 @@ Randomize words in variable.
 The results will be different each time you are referring to the
 modified variable; use the assignment with expansion
 .Pq Ql Cm \&:=
-to prevent such behaviour.
+to prevent such behavior.
 For example,
 .Bd -literal -offset indent
 LIST=			uno due tre quattro
@@ -1178,7 +1178,7 @@ The value is a format string for
 using the current
 .Xr gmtime 3 .
 .It Cm \&:hash
-Compute a 32bit hash of the value and encode it as hex digits.
+Compute a 32-bit hash of the value and encode it as hex digits.
 .It Cm \&:localtime
 The value is a format string for
 .Xr strftime 3 ,
@@ -1456,7 +1456,7 @@ value is divided into words.
 .Pp
 Ordinarily, a value is treated as a sequence of words
 delimited by white space.
-Some modifiers suppress this behaviour,
+Some modifiers suppress this behavior,
 causing a value to be treated as a single word
 (possibly containing embedded white space).
 An empty value, or a value that consists entirely of white-space,
@@ -2092,7 +2092,7 @@ The sources are a set of
 pairs.
 .Bl -tag -width hasErrCtls
 .It Ar name
-This is the minimal specification, used to select one of the builtin
+This is the minimal specification, used to select one of the built-in
 shell specs;
 .Ar sh ,
 .Ar ksh ,
