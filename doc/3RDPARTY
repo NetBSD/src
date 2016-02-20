@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1305 2016/02/11 13:36:00 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1306 2016/02/20 02:50:33 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1574,7 +1574,7 @@ Notes:
 		Need to feed back local changes
 
 Package:	elftoolchain (libelf/libdwarf)
-Version:	FreeBSD-2014-03-08
+Version:	FreeBSD-2016-02-19-r295822
 Current Vers:	FreeBSD-XXXX-YY-ZZ
 Maintainer:	Joseph Koshi <jkoshi@freebsd.org>
 Archive Site:	none
