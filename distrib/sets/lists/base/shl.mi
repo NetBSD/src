@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.761 2016/01/31 18:41:35 christos Exp $
+# $NetBSD: shl.mi,v 1.762 2016/02/20 02:44:51 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -254,14 +254,14 @@
 ./usr/lib/libdtrace.so.3			base-sys-shlib		compatfile,dtrace
 ./usr/lib/libdtrace.so.3.0			base-sys-shlib		compatfile,dtrace
 ./usr/lib/libdwarf.so				base-sys-shlib		compatfile
-./usr/lib/libdwarf.so.1				base-sys-shlib		compatfile
-./usr/lib/libdwarf.so.1.0			base-sys-shlib		compatfile
+./usr/lib/libdwarf.so.2				base-sys-shlib		compatfile
+./usr/lib/libdwarf.so.2.0			base-sys-shlib		compatfile
 ./usr/lib/libedit.so				base-sys-shlib		compatfile
 ./usr/lib/libedit.so.3				base-sys-shlib		compatfile
 ./usr/lib/libedit.so.3.1			base-sys-shlib		compatfile
 ./usr/lib/libelf.so				base-sys-shlib		compatfile
-./usr/lib/libelf.so.1				base-sys-shlib		compatfile
-./usr/lib/libelf.so.1.0				base-sys-shlib		compatfile
+./usr/lib/libelf.so.2				base-sys-shlib		compatfile
+./usr/lib/libelf.so.2.0				base-sys-shlib		compatfile
 ./usr/lib/libevent.so				base-sys-shlib		compatfile
 ./usr/lib/libevent.so.4				base-sys-shlib		compatfile
 ./usr/lib/libevent.so.4.0			base-sys-shlib		compatfile
