@@ -1,4 +1,4 @@
-.\"	$NetBSD: sched.3,v 1.11 2011/12/04 21:08:44 jym Exp $
+.\"	$NetBSD: sched.3,v 1.12 2016/02/20 16:00:10 riastradh Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,6 +82,12 @@ contains at least one member:
 .Bl -tag -width flags
 .It Fa sched_priority
 Specifies the priority of the process.
+For
+.Dv SCHED_OTHER ,
+must be
+.Dv PRI_NONE ;
+the kernel will dynamically assign priorities to the thread based on
+CPU load.
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
