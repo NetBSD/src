@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.64 2016/02/19 22:09:09 macallan Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.65 2016/02/20 15:20:23 christos Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.64 2016/02/19 22:09:09 macallan Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.65 2016/02/20 15:20:23 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -445,7 +445,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			rdbg(("TPREL %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[r_symndx].st_name,
-			    obj->path, (void *)where, defobj->path));
+			    obj->path, where, defobj->path));
 			break;
 		}
 
