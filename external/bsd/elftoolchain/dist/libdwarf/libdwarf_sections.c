@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_sections.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf_sections.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_sections.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_sections.c 2379 2012-01-05 02:08:20Z jkoshy ");
+__RCSID("$NetBSD: libdwarf_sections.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_sections.c 3041 2014-05-18 15:11:03Z kaiwang27 ");
 
 #define	_SECTION_INIT_SIZE	128
 
@@ -215,13 +215,34 @@ _dwarf_find_section(Dwarf_Debug dbg, const char *name)
 	Dwarf_Section *ds;
 	Dwarf_Half i;
 
-	assert(name != NULL);
+	assert(dbg != NULL && name != NULL);
 
 	for (i = 0; i < dbg->dbg_seccnt; i++) {
 		ds = &dbg->dbg_section[i];
 		if (ds->ds_name != NULL && !strcmp(ds->ds_name, name))
 			return (ds);
 	}
+
+	return (NULL);
+}
+
+Dwarf_Section *
+_dwarf_find_next_types_section(Dwarf_Debug dbg, Dwarf_Section *ds)
+{
+
+	assert(dbg != NULL);
+
+	if (ds == NULL)
+		return (_dwarf_find_section(dbg, ".debug_types"));
+
+	assert(ds->ds_name != NULL);
+
+	do {
+		ds++;
+		if (ds->ds_name != NULL &&
+		    !strcmp(ds->ds_name, ".debug_types"))
+			return (ds);
+	} while (ds->ds_name != NULL);
 
 	return (NULL);
 }

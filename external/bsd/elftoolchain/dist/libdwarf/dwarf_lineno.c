@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_lineno.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: dwarf_lineno.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009,2011 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_lineno.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: dwarf_lineno.c 2074 2011-10-27 03:34:33Z jkoshy ");
+__RCSID("$NetBSD: dwarf_lineno.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: dwarf_lineno.c 2983 2014-02-09 00:24:31Z kaiwang27 ");
 
 int
 dwarf_srclines(Dwarf_Die die, Dwarf_Line **linebuf, Dwarf_Signed *linecount,
@@ -78,8 +78,8 @@ dwarf_srclines(Dwarf_Die die, Dwarf_Line **linebuf, Dwarf_Signed *linecount,
 		return (DW_DLV_OK);
 	}
 
-	if ((li->li_lnarray = malloc(*linecount *
-	    sizeof(struct _Dwarf_Line))) == NULL) {
+	if ((li->li_lnarray = malloc(*linecount * sizeof(Dwarf_Line))) ==
+	    NULL) {
 		DWARF_SET_ERROR(dbg, error, DW_DLE_MEMORY);
 		return (DW_DLV_ERROR);
 	}

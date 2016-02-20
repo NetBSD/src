@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_die.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf_die.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_die.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_die.c 2948 2013-05-30 21:25:52Z kaiwang27 ");
+__RCSID("$NetBSD: libdwarf_die.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_die.c 3039 2014-05-18 15:10:56Z kaiwang27 ");
 
 int
 _dwarf_die_alloc(Dwarf_Debug dbg, Dwarf_Die *ret_die, Dwarf_Error *error)
@@ -84,6 +84,7 @@ Dwarf_Die
 _dwarf_die_find(Dwarf_Die die, Dwarf_Unsigned off)
 {
 	Dwarf_Debug dbg;
+	Dwarf_Section *ds;
 	Dwarf_CU cu;
 	Dwarf_Die die1;
 	Dwarf_Error de;
@@ -91,9 +92,10 @@ _dwarf_die_find(Dwarf_Die die, Dwarf_Unsigned off)
 
 	cu = die->die_cu;
 	dbg = die->die_dbg;
+	ds = cu->cu_is_info ? dbg->dbg_info_sec : dbg->dbg_types_sec;
 
-	ret = _dwarf_die_parse(dbg, dbg->dbg_info_sec, cu, cu->cu_dwarf_size,
-	    off, cu->cu_next_offset, &die1, 0, &de);
+	ret = _dwarf_die_parse(dbg, ds, cu, cu->cu_dwarf_size, off,
+	    cu->cu_next_offset, &die1, 0, &de);
 
 	if (ret == DW_DLE_NONE)
 		return (die1);

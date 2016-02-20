@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_cap.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: gelf_cap.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -35,11 +35,12 @@
 #include <assert.h>
 #include <gelf.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_cap.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: gelf_cap.c 2272 2011-12-03 17:07:31Z jkoshy ");
+__RCSID("$NetBSD: gelf_cap.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
+ELFTC_VCSID("Id: gelf_cap.c 3177 2015-03-30 18:19:41Z emaste ");
 
 GElf_Cap *
 gelf_getcap(Elf_Data *ed, int ndx, GElf_Cap *dst)
@@ -79,7 +80,7 @@ gelf_getcap(Elf_Data *ed, int ndx, GElf_Cap *dst)
 
 	assert(msz > 0);
 
-	if (msz * ndx >= d->d_data.d_size) {
+	if (msz * (size_t) ndx >= d->d_data.d_size) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
 		return (NULL);
 	}
@@ -138,7 +139,7 @@ gelf_update_cap(Elf_Data *ed, int ndx, GElf_Cap *gc)
 	msz = _libelf_msize(ELF_T_CAP, ec, e->e_version);
 	assert(msz > 0);
 
-	if (msz * ndx >= d->d_data.d_size) {
+	if (msz * (size_t) ndx >= d->d_data.d_size) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
 		return (0);
 	}

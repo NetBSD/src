@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_strptr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: elf_strptr.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -37,8 +37,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_strptr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: elf_strptr.c 2271 2011-12-03 17:06:35Z jkoshy ");
+__RCSID("$NetBSD: elf_strptr.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
+ELFTC_VCSID("Id: elf_strptr.c 2990 2014-03-17 09:56:58Z jkoshy ");
 
 /*
  * Convert an ELF section#,offset pair to a string pointer.
@@ -49,8 +49,8 @@ elf_strptr(Elf *e, size_t scndx, size_t offset)
 {
 	Elf_Scn *s;
 	Elf_Data *d;
-	size_t alignment, count;
 	GElf_Shdr shdr;
+	uint64_t alignment, count;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
@@ -97,7 +97,7 @@ elf_strptr(Elf *e, size_t scndx, size_t offset)
 		 * account 'holes' in coverage of the section introduced
 		 * by alignment requirements.
 		 */
-		count = (size_t) 0;	/* cumulative count of bytes seen */
+		count = (uint64_t) 0;	/* cumulative count of bytes seen */
 		while ((d = elf_getdata(s, d)) != NULL && count <= offset) {
 
 			if (d->d_buf == NULL || d->d_size == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_arange.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libdwarf_arange.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_arange.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_arange.c 2070 2011-10-27 03:05:32Z jkoshy ");
+__RCSID("$NetBSD: libdwarf_arange.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_arange.c 3029 2014-04-21 23:26:02Z kaiwang27 ");
 
 void
 _dwarf_arange_cleanup(Dwarf_Debug dbg)
@@ -70,7 +70,7 @@ _dwarf_arange_init(Dwarf_Debug dbg, Dwarf_Error *error)
 		return (DW_DLE_NONE);
 
 	if (!dbg->dbg_info_loaded) {
-		ret = _dwarf_info_load(dbg, 1, error);
+		ret = _dwarf_info_load(dbg, 1, 1, error);
 		if (ret != DW_DLE_NONE)
 			return (ret);
 	}
@@ -140,8 +140,8 @@ _dwarf_arange_init(Dwarf_Debug dbg, Dwarf_Error *error)
 
 	/* Build arange array. */
 	if (dbg->dbg_arange_cnt > 0) {
-		if  ((dbg->dbg_arange_array = malloc(dbg->dbg_arange_cnt *
-		    sizeof(struct _Dwarf_Arange))) == NULL) {
+		if ((dbg->dbg_arange_array = malloc(dbg->dbg_arange_cnt *
+		    sizeof(Dwarf_Arange))) == NULL) {
 			DWARF_SET_ERROR(dbg, error, DW_DLE_MEMORY);
 			ret = DW_DLE_MEMORY;
 			goto fail_cleanup;

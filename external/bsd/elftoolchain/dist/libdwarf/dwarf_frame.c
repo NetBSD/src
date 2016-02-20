@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_frame.c,v 1.2 2014/03/09 16:58:03 christos Exp $	*/
+/*	$NetBSD: dwarf_frame.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009,2011 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_frame.c,v 1.2 2014/03/09 16:58:03 christos Exp $");
-ELFTC_VCSID("Id: dwarf_frame.c 2073 2011-10-27 03:30:47Z jkoshy ");
+__RCSID("$NetBSD: dwarf_frame.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
+ELFTC_VCSID("Id: dwarf_frame.c 3106 2014-12-19 16:00:58Z kaiwang27 ");
 
 int
 dwarf_get_fde_list(Dwarf_Debug dbg, Dwarf_Cie **cie_list,
@@ -542,8 +542,8 @@ dwarf_expand_frame_instructions(Dwarf_Cie cie, Dwarf_Ptr instruction,
 		return (DW_DLV_ERROR);
 	}
 
-	ret = _dwarf_frame_get_fop(dbg, instruction, len, ret_oplist, ret_opcnt,
-	    error);
+	ret = _dwarf_frame_get_fop(dbg, cie->cie_addrsize, instruction, len,
+	    ret_oplist, ret_opcnt, error);
 	if (ret != DW_DLE_NONE)
 		return (DW_DLV_ERROR);
 
