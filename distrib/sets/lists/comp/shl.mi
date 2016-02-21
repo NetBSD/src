@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.285 2016/01/31 18:41:36 christos Exp $
+# $NetBSD: shl.mi,v 1.286 2016/02/21 04:16:16 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -26,7 +26,7 @@
 ./usr/lib/libcrypt_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libcrypto_pic.a			comp-c-piclib		compatfile,picinstall,crypto
 ./usr/lib/libcrypto_rc5_pic.a			comp-c-piclib		compatfile,picinstall,crypto,crypto_rc5
-./usr/lib/libctf_pic.a				comp-c-piclib		compatfile,picinstall,dtrace
+./usr/lib/libctf_pic.a				comp-c-piclib		compatfile,picinstall,ctf
 ./usr/lib/libcurses_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libdes_pic.a				comp-c-piclib		compatfile,picinstall,crypto
 ./usr/lib/libdevmapper_pic.a			comp-lvm-piclib		compatfile,picinstall,lvm
