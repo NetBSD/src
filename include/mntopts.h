@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.16 2016/01/22 22:26:45 dholland Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.17 2016/02/21 22:45:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -55,6 +55,7 @@ struct mntopt {
 #define MOPT_USERQUOTA		{ "userquota",	0, 0, 0 }
 #define MOPT_GROUPQUOTA		{ "groupquota",	0, 0, 0 }
 #define MOPT_NOATIME		{ "atime",	1, MNT_NOATIME, 0 }
+#define MOPT_RELATIME		{ "relatime",	0, MNT_RELATIME, 0 }
 #define MOPT_SYMPERM		{ "symperm",	0, MNT_SYMPERM, 0 }
 #define MOPT_SOFTDEP		{ "softdep",	0, MNT_SOFTDEP, 0 }
 #define MOPT_LOG		{ "log",	0, MNT_LOG, 0 }
