@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.2 2016/02/21 03:33:18 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2016/02/21 14:50:05 christos Exp $
 
 NOPIE=yes
 NOCTF=yes
-NODEBUG=yes
 BINDIR=		/usr/mdec
 
 .include <bsd.init.mk>
