@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.351 2016/02/20 15:18:46 christos Exp $
+#	$NetBSD: bsd.README,v 1.352 2016/02/21 03:34:27 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -168,6 +168,9 @@ MKCVS		If "no", don't build or install cvs(1).
 MKDEBUG		If "no", don't build and install separate debugging symbols
 		into /usr/libdata/debug.
 		Default: no
+
+NODEBUG		Don't compile with debugging symbols during build.
+		It is set internally for standalone programs.
 
 MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 		with -DDEBUG.

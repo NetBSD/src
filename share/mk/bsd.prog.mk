@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.295 2016/01/31 15:30:14 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.296 2016/02/21 03:34:27 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -55,7 +55,7 @@ LDFLAGS+=	${PIE_LDFLAGS}
 .endif
 
 CFLAGS+=	${COPTS}
-.if defined(MKDEBUG) && (${MKDEBUG} != "no")
+.if ${MKDEBUG:Uno} != "no" && !defined(NODEBUG)
 CFLAGS+=	-g
 .endif
 OBJCFLAGS+=	${OBJCOPTS}
@@ -434,7 +434,7 @@ _CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 BINDIR.${_P}?=		${BINDIR}
 PROGNAME.${_P}?=	${_P}
 
-.if ${MKDEBUG} != "no" && !commands(${_P})
+.if ${MKDEBUG:Uno} != "no" && !defined(NODEBUG) && !commands(${_P})
 _PROGDEBUG.${_P}:=	${PROGNAME.${_P}}.debug
 .endif
 
