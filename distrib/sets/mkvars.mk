@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.25 2016/01/31 18:41:35 christos Exp $
+# $NetBSD: mkvars.mk,v 1.26 2016/02/21 04:16:36 christos Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -104,7 +104,7 @@ mkextravars: .PHONY
 .endif
 
 mksolaris: .PHONY
-.if (${MKDTRACE} != "no" || ${MKZFS} != "no")
+.if (${MKDTRACE} != "no" || ${MKZFS} != "no" || ${MKCTF} != "no")
 	@echo MKSOLARIS="yes"
 .else
 	@echo MKSOLARIS="no"
