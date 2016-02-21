@@ -1,4 +1,4 @@
-/* $NetBSD: mount_nilfs.c,v 1.2 2013/10/19 01:09:59 christos Exp $ */
+/* $NetBSD: mount_nilfs.c,v 1.3 2016/02/21 22:51:29 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_nilfs.c,v 1.2 2013/10/19 01:09:59 christos Exp $");
+__RCSID("$NetBSD: mount_nilfs.c,v 1.3 2016/02/21 22:51:29 christos Exp $");
 #endif /* not lint */
 
 
@@ -69,6 +69,7 @@ static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,		/* `normal' options		*/
 	MOPT_ASYNC,		/* default			*/
 	MOPT_NOATIME,		/* dont update access times	*/
+	MOPT_RELATIME,		/* update access times on change*/
 	MOPT_UPDATE,		/* not yet supported		*/
 	MOPT_GETARGS,		/* printing			*/
 	MOPT_NULL,
