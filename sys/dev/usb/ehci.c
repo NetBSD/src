@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.87 2016/02/19 16:23:15 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.88 2016/02/21 07:04:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.87 2016/02/19 16:23:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.88 2016/02/21 07:04:13 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3425,6 +3425,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	xfer->ux_status = status;
 	callout_stop(&xfer->ux_callout);
+	ehci_del_intr_list(sc, exfer);
 
 	if (xfer->ux_pipe->up_dev->ud_speed == USB_SPEED_HIGH) {
 		for (itd = exfer->ex_itdstart; itd != NULL;
