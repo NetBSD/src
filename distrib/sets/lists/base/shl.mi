@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.762 2016/02/20 02:44:51 christos Exp $
+# $NetBSD: shl.mi,v 1.763 2016/02/21 04:16:16 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -229,9 +229,9 @@
 ./usr/lib/libcrypto_rc5.so			base-crypto-shlib	compatfile,crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7			base-crypto-shlib	compatfile,crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7.0			base-crypto-shlib	compatfile,crypto,crypto_rc5
-./usr/lib/libctf.so				base-sys-shlib		compatfile,dtrace
-./usr/lib/libctf.so.3				base-sys-shlib		compatfile,dtrace
-./usr/lib/libctf.so.3.0				base-sys-shlib		compatfile,dtrace
+./usr/lib/libctf.so				base-sys-shlib		compatfile,ctf
+./usr/lib/libctf.so.3				base-sys-shlib		compatfile,ctf
+./usr/lib/libctf.so.3.0				base-sys-shlib		compatfile,ctf
 ./usr/lib/libcurses.so				base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7			base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7.0			base-sys-shlib		compatfile

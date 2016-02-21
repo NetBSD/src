@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.143 2016/02/09 20:42:45 plunky Exp $
+# $NetBSD: mi,v 1.144 2016/02/21 04:16:16 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -45,7 +45,7 @@
 ./usr/lib/libcrypto_idea_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libcrypto_mdc2_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libcrypto_rc5_g.a			comp-c-debuglib		debuglib,crypto_rc5,compatfile
-./usr/lib/libctf_g.a				comp-c-debuglib		debuglib,compatfile,dtrace
+./usr/lib/libctf_g.a				comp-c-debuglib		debuglib,compatfile,ctf
 ./usr/lib/libcurses_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libdes_g.a				comp-c-debuglib		debuglib,crypto,compatfile
 ./usr/lib/libdevmapper_g.a			comp-c-debuglib		debuglib,compatfile,lvm

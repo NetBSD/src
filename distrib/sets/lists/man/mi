@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1518 2016/01/18 00:21:44 kamil Exp $
+# $NetBSD: mi,v 1.1519 2016/02/21 04:16:16 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2034,7 +2034,7 @@
 ./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/core.0			man-sys-catman		.cat
 ./usr/share/man/cat5/crontab.0			man-cron-catman		.cat
-./usr/share/man/cat5/ctf.0			man-sys-catman		dtrace,.cat
+./usr/share/man/cat5/ctf.0			man-sys-catman		ctf,.cat
 ./usr/share/man/cat5/daily.0			man-sys-catman		.cat
 ./usr/share/man/cat5/daily.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/dhclient.conf.0		man-dhclient-catman	.cat
@@ -5026,7 +5026,7 @@
 ./usr/share/man/html5/cidr_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/core.html			man-sys-htmlman		html
 ./usr/share/man/html5/crontab.html		man-cron-htmlman	html
-./usr/share/man/html5/ctf.html			man-sys-catman		dtrace,html
+./usr/share/man/html5/ctf.html			man-sys-catman		ctf,html
 ./usr/share/man/html5/daily.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/daily.html		man-sys-htmlman		html
 ./usr/share/man/html5/dhclient.conf.html	man-dhclient-htmlman	html
