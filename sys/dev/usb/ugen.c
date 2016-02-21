@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.128 2016/02/20 17:07:32 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.129 2016/02/21 09:50:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.128 2016/02/20 17:07:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.129 2016/02/21 09:50:10 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -381,7 +381,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	for (dir = OUT; dir <= IN; dir++) {
 		if (flag & (dir == OUT ? FWRITE : FREAD)) {
 			sce = &sc->sc_endpoints[endpt][dir];
-			if (sce == NULL || sce->edesc == NULL)
+			if (sce->edesc == NULL)
 				return (ENXIO);
 		}
 	}
@@ -535,7 +535,7 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 		if (!(flag & (dir == OUT ? FWRITE : FREAD)))
 			continue;
 		sce = &sc->sc_endpoints[endpt][dir];
-		if (sce == NULL || sce->pipeh == NULL)
+		if (sce->pipeh == NULL)
 			continue;
 		DPRINTFN(5, ("ugenclose: endpt=%d dir=%d sce=%p\n",
 			     endpt, dir, sce));
@@ -1035,7 +1035,7 @@ ugen_detach(device_t self, int flags)
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
 			sce = &sc->sc_endpoints[i][dir];
-			if (sce && sce->pipeh)
+			if (sce->pipeh)
 				usbd_abort_pipe(sce->pipeh);
 		}
 	}
