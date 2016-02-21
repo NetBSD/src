@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.363 2016/01/31 15:30:14 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.364 2016/02/21 03:34:27 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -156,7 +156,7 @@ MKSHLIBOBJS= yes
 MKSHLIBOBJS= no
 .endif
 
-.if (defined(MKDEBUG) && (${MKDEBUG} != "no")) || \
+.if (${MKDEBUG:Uno} != "no" && !defined(NODEBUG)) || \
     (defined(CFLAGS) && !empty(CFLAGS:M*-g*))
 # We only add -g to the shared library objects
 # because we don't currently split .a archives.
@@ -407,7 +407,7 @@ _LIB.so:=${_LIB}.so
 _LIB.so.major:=${_LIB}.so.${SHLIB_MAJOR}
 _LIB.so.full:=${_LIB}.so.${SHLIB_FULLVERSION}
 _LIB.so.link:=${_LIB}.so.${SHLIB_FULLVERSION}.link
-.if ${MKDEBUG} != "no"
+.if ${MKDEBUG:Uno} != "no" && !defined(NODEBUG)
 _LIB.so.debug:=${_LIB.so.full}.debug
 .endif
 .endif
