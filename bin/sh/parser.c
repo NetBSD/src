@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.96 2016/02/22 19:38:10 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.97 2016/02/22 19:42:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.96 2016/02/22 19:38:10 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.97 2016/02/22 19:42:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -515,6 +515,12 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		tokpushback++;
 		n1 = simplecmd(rpp, redir);
 		goto checkneg;
+	case TENDCASE:
+		if (redir) {
+			tokpushback++;
+			goto checkneg;
+		}
+		/* FALLTHROUGH */
 	default:
 		synexpect(-1);
 		/* NOTREACHED */
