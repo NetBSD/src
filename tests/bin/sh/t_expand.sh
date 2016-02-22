@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.4 2016/02/19 13:49:01 christos Exp $
+# $NetBSD: t_expand.sh,v 1.5 2016/02/22 20:02:29 christos Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,12 +86,11 @@ atf_test_case strip
 strip_head() {
 	atf_set "descr" "Checks that the %% operator works and strips" \
 	                "the contents of a variable from the given point" \
-			"to the end"
+			"to the end (PR bin/43469)"
 }
 strip_body() {
 	line='#define bindir "/usr/bin" /* comment */'
 	stripped='#define bindir "/usr/bin" '
-	atf_expect_fail "PR bin/43469"
 	atf_check_equal '$stripped' '${line%%/\**}'
 }
 
