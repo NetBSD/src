@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.95 2016/02/22 19:25:26 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.96 2016/02/22 19:38:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.95 2016/02/22 19:25:26 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.96 2016/02/22 19:38:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -902,6 +902,138 @@ breakloop:
  * will run code that appears at the end of readtoken1.
  */
 
+/*
+ * We used to remember only the current syntax, variable nesting level,
+ * double quote state for each var nexting level, and arith nesting
+ * level (unrelated to var nesting) and one prev syntax when in arith
+ * syntax.  This worked for simple cases, but can't handle arith inside
+ * var expansion inside arith inside var with some quoted and some not.
+ *
+ * Inspired by FreeBSD's implementation (though it was the obvious way)
+ * though implemented differently, we now have a stack that keeps track
+ * of what we are doing now, and what we were doing previously.
+ * Every time something changes, which will eventually end and should
+ * revert to the previous state, we push this stack, and then pop it
+ * again later (that is every ${} with an operator (to parse the word
+ * or pattern that follows) ${x} and $x are too * simple to need it)
+ * $(( )) $( ) and "...".   Always.   Really, always!
+ *
+ * The stack is implemented as one static (on the C stack) base block
+ * containing LEVELS_PER_BLOCK (8) stack entries, which should be
+ * enough for the vast majority of cases.  For torture tests, we
+ * malloc more blocks as needed.  All accesses through the inline
+ * functions below.
+ */
+
+/*
+ * varnest & arinest will typically be 0 or 1
+ * (varnest can increment in usages like ${x=${y}} but probably
+ *  does not really need to)
+ * parenlevel allows balancing parens inside a $(( )), it is reset
+ * at each new nesting level ( $(( ( x + 3 ${unset-)} )) does not work.
+ * quoted is special - we need to know 2 things ... are we inside "..."
+ * (even if inherited from some previous nesting level) and was there
+ * an opening '"' at this level (so the next will be closing).
+ * "..." can span nexting levels, but cannot be opened in one and
+ * closed in a different one.
+ * To handle this, "quoted" has two fields, the bottom 4 (really 2)
+ * bits are 0, 1, or 2, for un, single, and double quoted (single quoted
+ * is really so special that this setting is not very important)
+ * and 0x10 that indicates that an opening quote has been seen.
+ * The bottom 4 bits are inherited, the 0x10 bit is not.
+ */
+struct tokenstate {
+	const char *ts_syntax;
+	unsigned short ts_parenlevel;	/* counters */
+	unsigned short ts_varnest;	/* 64000 levels should be enough! */
+	unsigned short ts_arinest;
+	unsigned short ts_quoted;	/* 1 -> single, 2 -> double */
+};
+
+#define	NQ	0x00
+#define	SQ	0x01
+#define	DQ	0x02
+#define	QF	0x0F
+#define	QS	0x10
+
+#define	LEVELS_PER_BLOCK	8
+#define	VSS			volatile struct statestack
+
+struct statestack {
+	VSS *prev;		/* previous block in list */
+	int cur;		/* which of our tokenstates is current */
+	struct tokenstate tokenstate[LEVELS_PER_BLOCK];
+};
+
+static inline volatile struct tokenstate *
+currentstate(VSS *stack)
+{
+	return &stack->tokenstate[stack->cur];
+}
+
+static inline volatile struct tokenstate *
+prevstate(VSS *stack)
+{
+	if (stack->cur != 0)
+		return &stack->tokenstate[stack->cur - 1];
+	if (stack->prev == NULL)	/* cannot drop below base */
+		return &stack->tokenstate[0];
+	return &stack->prev->tokenstate[LEVELS_PER_BLOCK - 1];
+}
+
+static inline VSS *
+bump_state_level(VSS *stack)
+{
+	volatile struct tokenstate *os, *ts;
+
+	os = currentstate(stack);
+
+	if (++stack->cur >= LEVELS_PER_BLOCK) {
+		VSS *ss;
+
+		ss = (VSS *)ckmalloc(sizeof (struct statestack));
+		ss->cur = 0;
+		ss->prev = stack;
+		stack = ss;
+	}
+
+	ts = currentstate(stack);
+
+	ts->ts_parenlevel = 0;	/* parens inside never match outside */
+
+	ts->ts_quoted  = os->ts_quoted & QF;	/* these are default settings */
+	ts->ts_varnest = os->ts_varnest;
+	ts->ts_arinest = os->ts_arinest;	/* when appropriate	   */
+	ts->ts_syntax  = os->ts_syntax;		/*    they will be altered */
+
+	return stack;
+}
+
+static inline VSS *
+drop_state_level(VSS *stack)
+{
+	if (stack->cur == 0) {
+		VSS *ss;
+
+		ss = stack;
+		stack = ss->prev;
+		if (stack == NULL)
+			return ss;
+		ckfree(__UNVOLATILE(ss));
+	}
+	--stack->cur;
+	return stack;
+}
+
+static inline void
+cleanup_state_stack(VSS *stack)
+{
+	while (stack->prev != NULL) {
+		stack->cur = 0;
+		stack = drop_state_level(stack);
+	}
+}
+
 #define	CHECKEND()	{goto checkend; checkend_return:;}
 #define	PARSEREDIR()	{goto parseredir; parseredir_return:;}
 #define	PARSESUB()	{goto parsesub; parsesub_return:;}
@@ -910,60 +1042,51 @@ breakloop:
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
 
 /*
- * Keep track of nested doublequotes in dblquote and doublequotep.
- * We use dblquote for the first 32 levels, and we expand to a malloc'ed
- * region for levels above that. Usually we never need to malloc.
- * This code assumes that an int is 32 bits. We don't use uint32_t,
- * because the rest of the code does not.
+ * The following macros all assume the existance of a local var "stack"
+ * which contains a pointer to the current struct stackstate
  */
-#define ISDBLQUOTE() ((varnest < 32) ? (dblquote & (1 << varnest)) : \
-    (dblquotep[(varnest / 32) - 1] & (1 << (varnest % 32))))
 
-#define SETDBLQUOTE() \
-    if (varnest < 32) \
-	dblquote |= (1 << varnest); \
-    else \
-	dblquotep[(varnest / 32) - 1] |= (1 << (varnest % 32))
+/*
+ * These are macros rather than inline funcs to avoid code churn as much
+ * as possible - they replace macros of the same name used previously.
+ */
+#define	ISDBLQUOTE()	(currentstate(stack)->ts_quoted & QS)
+#define	SETDBLQUOTE()	(currentstate(stack)->ts_quoted = QS | DQ)
+#define	CLRDBLQUOTE()	(currentstate(stack)->ts_quoted =		\
+			    stack->cur != 0 || stack->prev ?		\
+				prevstate(stack)->ts_quoted & QF : 0)
 
-#define CLRDBLQUOTE() \
-    if (varnest < 32) \
-	dblquote &= ~(1 << varnest); \
-    else \
-	dblquotep[(varnest / 32) - 1] &= ~(1 << (varnest % 32))
-
-#define INCREASENEST() \
-	do { \
-		if (varnest++ >= maxnest) { \
-			dblquotep = ckrealloc(dblquotep, maxnest / 8); \
-			dblquotep[(maxnest / 32) - 1] = 0; \
-			maxnest += 32; \
-		} \
-	} while (/*CONSTCOND*/0)
+/*
+ * This set are just to avoid excess typing and line lengths...
+ * The ones that "look like" var names must be implemented to be lvalues
+ */
+#define	syntax		(currentstate(stack)->ts_syntax)
+#define	parenlevel	(currentstate(stack)->ts_parenlevel)
+#define	varnest		(currentstate(stack)->ts_varnest)
+#define	arinest		(currentstate(stack)->ts_arinest)
+#define	quoted		(currentstate(stack)->ts_quoted)
+#define	TS_PUSH()	(stack = bump_state_level(stack))
+#define	TS_POP()	(stack = drop_state_level(stack))
 
 STATIC int
 readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 {
-	char const * volatile syntax = syn;
 	int c = firstc;
 	char * volatile out;
 	int len;
 	char line[EOFMARKLEN + 1];
 	struct nodelist *bqlist;
 	volatile int quotef;
-	int * volatile dblquotep = NULL;
-	volatile size_t maxnest = 32;
-	volatile int dblquote;
-	volatile size_t varnest;	/* levels of variables expansion */
-	volatile int arinest;	/* levels of arithmetic expansion */
-	volatile int parenlevel;	/* levels of parens in arithmetic */
 	volatile int oldstyle;
-	char const * volatile prevsyntax;	/* syntax before arithmetic */
-#ifdef __GNUC__
-	prevsyntax = NULL;	/* XXX gcc4 */
-#endif
+	VSS static_stack;
+	VSS *stack = &static_stack;
+
+	stack->prev = NULL;
+	stack->cur = 0;
+
+	syntax = syn;
 
 	startlinno = plinno;
-	dblquote = 0;
 	varnest = 0;
 	if (syntax == DQSYNTAX) {
 		SETDBLQUOTE();
@@ -972,6 +1095,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	bqlist = NULL;
 	arinest = 0;
 	parenlevel = 0;
+	quoted = 0;
 
 	STARTSTACKSTR(out);
 	loop: {	/* for each line, until end of word */
@@ -1044,7 +1168,9 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					if (eofmark == NULL)
 						USTPUTC(CTLQUOTEMARK, out);
 					quotef = 1;
+					TS_PUSH();
 					syntax = SQSYNTAX;
+					quoted = SQ;
 					break;
 				}
 				if (eofmark != NULL && arinest == 0 &&
@@ -1054,13 +1180,9 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					break;
 				}
 				/* End of single quotes... */
-				if (arinest)
-					syntax = ARISYNTAX;
-				else {
-					syntax = BASESYNTAX;
-					if (varnest != 0)
-						USTPUTC(CTLQUOTEEND, out);
-				}
+				TS_POP();
+				if (syntax == BASESYNTAX && varnest != 0)
+					USTPUTC(CTLQUOTEEND, out);
 				break;
 			case CDQUOTE:
 				if (eofmark != NULL && arinest == 0 &&
@@ -1072,9 +1194,9 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				quotef = 1;
 				if (arinest) {
 					if (ISDBLQUOTE()) {
-						syntax = ARISYNTAX;
-						CLRDBLQUOTE();
+						TS_POP();
 					} else {
+						TS_PUSH();
 						syntax = DQSYNTAX;
 						SETDBLQUOTE();
 						USTPUTC(CTLQUOTEMARK, out);
@@ -1084,11 +1206,11 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				if (eofmark != NULL)
 					break;
 				if (ISDBLQUOTE()) {
+					TS_POP();
 					if (varnest != 0)
 						USTPUTC(CTLQUOTEEND, out);
-					syntax = BASESYNTAX;
-					CLRDBLQUOTE();
 				} else {
+					TS_PUSH();
 					syntax = DQSYNTAX;
 					SETDBLQUOTE();
 					USTPUTC(CTLQUOTEMARK, out);
@@ -1099,7 +1221,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				break;
 			case CENDVAR:	/* CLOSEBRACE */
 				if (varnest > 0 && !ISDBLQUOTE()) {
-					varnest--;
+					TS_POP();
 					USTPUTC(CTLENDVAR, out);
 				} else {
 					USTPUTC(c, out);
@@ -1115,11 +1237,9 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					--parenlevel;
 				} else {
 					if (pgetc() == ')') {
-						if (varnest > 0)  /* always */
-							varnest--;
 						if (--arinest == 0) {
+							TS_POP();
 							USTPUTC(CTLENDARI, out);
-							syntax = prevsyntax;
 						} else
 							USTPUTC(')', out);
 					} else {
@@ -1146,11 +1266,16 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 		}
 	}
 endword:
-	if (syntax == ARISYNTAX)
+	if (syntax == ARISYNTAX) {
+		cleanup_state_stack(stack);
 		synerror("Missing '))'");
-	if (syntax != BASESYNTAX && /* ! parsebackquote && */ eofmark == NULL)
+	}
+	if (syntax != BASESYNTAX && /* ! parsebackquote && */ eofmark == NULL) {
+		cleanup_state_stack(stack);
 		synerror("Unterminated quoted string");
+	}
 	if (varnest != 0) {
+		cleanup_state_stack(stack);
 		startlinno = plinno;
 		/* { */
 		synerror("Missing '}'");
@@ -1163,6 +1288,7 @@ endword:
 		 && quotef == 0
 		 && (*out == '\0' || is_number(out))) {
 			PARSEREDIR();
+			cleanup_state_stack(stack);
 			return lasttoken = TREDIR;
 		} else {
 			pungetc();
@@ -1172,8 +1298,7 @@ endword:
 	backquotelist = bqlist;
 	grabstackblock(len);
 	wordtext = out;
-	if (dblquotep != NULL)
-	    ckfree(dblquotep);
+	cleanup_state_stack(stack);
 	return lasttoken = TWORD;
 /* end of readtoken routine */
 
@@ -1348,8 +1473,11 @@ parsesub: {
 			USTPUTC(c, out);
 			c = pgetc();
 		}
-		else
-badsub:			synerror("Bad substitution");
+		else {
+badsub:
+			cleanup_state_stack(stack);
+			synerror("Bad substitution");
+		}
 
 		STPUTC('=', out);
 		if (subtype == 0) {
@@ -1384,8 +1512,15 @@ badsub:			synerror("Bad substitution");
 		if (ISDBLQUOTE() || arinest)
 			flags |= VSQUOTE;
 		*(stackblock() + typeloc) = subtype | flags;
-		if (subtype != VSNORMAL)
-			INCREASENEST();
+		if (subtype != VSNORMAL) {
+			TS_PUSH();
+			varnest++;
+			arinest = 0;
+			if (subtype > VSASSIGN) {	/* # ## % %% */
+				syntax = BASESYNTAX;
+				CLRDBLQUOTE();
+			}
+		}
 	}
 	goto parsesub_return;
 }
@@ -1412,6 +1547,7 @@ parsebackq: {
 	if (setjmp(jmploc.loc)) {
 		if (str)
 			ckfree(str);
+		cleanup_state_stack(stack);
 		parsebackquote = 0;
 		handler = savehandler;
 		longjmp(handler->loc, 1);
@@ -1435,7 +1571,11 @@ parsebackq: {
                 int psavelen;
                 char *pstr;
 
-
+		/*
+		 * Because the entire `...` is read here, we don't
+		 * need to bother the state stack.  That will be used
+		 * (as appropriate) when the processed string is re-read.
+		 */
                 STARTSTACKSTR(pout);
 		for (;;) {
 			if (needprompt) {
@@ -1507,8 +1647,10 @@ done:
 	if (oldstyle)
 		doprompt = saveprompt;
 	else {
-		if (readtoken() != TRP)
+		if (readtoken() != TRP) {
+			cleanup_state_stack(stack);
 			synexpect(TRP);
+		}
 	}
 
 	(*nlpp)->n = n;
@@ -1548,22 +1690,30 @@ done:
  */
 parsearith: {
 
-	if (++arinest == 1) {
-		prevsyntax = syntax;
+	if (syntax == ARISYNTAX) {
+		/*
+		 * we collapse embedded arithmetic expansion to
+		 * parentheses, which should be equivalent
+		 */
+		USTPUTC('(', out);
+		USTPUTC('(', out);
+		/*
+		 * Need 2 of them because there will (should be)
+		 * two closing ))'s to follow later.
+		 */
+		parenlevel += 2;
+	} else {
+		TS_PUSH();
 		syntax = ARISYNTAX;
+		++arinest;
+		varnest = 0;
+
 		USTPUTC(CTLARI, out);
 		if (ISDBLQUOTE())
 			USTPUTC('"',out);
 		else
 			USTPUTC(' ',out);
-	} else {
-		/*
-		 * we collapse embedded arithmetic expansion to
-		 * parenthesis, which should be equivalent
-		 */
-		USTPUTC('(', out);
 	}
-	INCREASENEST();
 	goto parsearith_return;
 }
 
