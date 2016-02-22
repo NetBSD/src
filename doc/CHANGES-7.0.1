@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.33 2016/02/11 23:13:25 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.34 2016/02/22 11:25:39 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -959,4 +959,10 @@ sys/external/bsd/drm2/linux/linux_work.c	1.12
 	Avoid NULL dereference in linux_worker_intr() in
 	WORK_DELAYED_CANCELLED case.  PR#49560.
 	[riastradh, ticket #1086]
+
+crypto/external/bsd/openssh/dist/readconf.c	patch
+crypto/external/bsd/openssh/dist/ssh.c		patch
+
+	Fix CVE CVE-2016-0777 by disabling roaming completely.
+	[christos, ticket #1075]
 
