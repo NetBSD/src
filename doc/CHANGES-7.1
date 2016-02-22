@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.56 2016/02/12 10:56:48 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.57 2016/02/22 11:25:01 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2038,4 +2038,10 @@ sys/arch/x86/x86/pmap.c				patch
 
 	Use IPL_NONE for pserialized lock.  Assert sleepable.
 	[riastradh, ticket #1115]
+
+crypto/external/bsd/openssh/dist/readconf.c	patch
+crypto/external/bsd/openssh/dist/ssh.c		patch
+
+	Fix CVE CVE-2016-0777 by disabling roaming completely.
+	[christos, ticket #1075]
 
