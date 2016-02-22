@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.111 2016/01/04 03:00:24 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.112 2016/02/22 20:03:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.111 2016/01/04 03:00:24 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.112 2016/02/22 20:03:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,8 @@ evalstring(char *s, int flag)
 	setinputstring(s, 1);
 
 	while ((n = parsecmd(0)) != NEOF) {
-		evaltree(n, flag);
+		if (nflag == 0)
+			evaltree(n, flag);
 		popstackmark(&smark);
 	}
 	popfile();
