@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.19 2014/09/04 04:06:07 mrg Exp $	*/
+/*	$NetBSD: indent.c,v 1.20 2016/02/22 19:04:18 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.19 2014/09/04 04:06:07 mrg Exp $");
+__RCSID("$NetBSD: indent.c,v 1.20 2016/02/22 19:04:18 ginsbach Exp $");
 #endif
 #endif				/* not lint */
 
@@ -236,8 +236,7 @@ main(int argc, char **argv)
 								 * output file */
 					if (strcmp(in_name, out_name) == 0) {	/* attempt to overwrite
 										 * the file */
-						fprintf(stderr, "indent: input and output files must be different\n");
-						exit(1);
+						errx(1, "input and output files must be different");
 					}
 					output = fopen(out_name, "w");
 					if (output == 0)	/* check for create
@@ -245,8 +244,7 @@ main(int argc, char **argv)
 						err(1, "%s", out_name);
 					continue;
 				}
-			fprintf(stderr, "indent: unknown parameter: %s\n", argv[i]);
-			exit(1);
+			errx(1, "unknown parameter: %s", argv[i]);
 		} else
 			set_option(argv[i]);
 	}			/* end of for */
