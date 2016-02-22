@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.12 2016/02/22 19:04:18 ginsbach Exp $	*/
+/*	$NetBSD: args.c,v 1.13 2016/02/22 21:20:29 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: args.c,v 1.12 2016/02/22 19:04:18 ginsbach Exp $");
+__RCSID("$NetBSD: args.c,v 1.13 2016/02/22 21:20:29 ginsbach Exp $");
 #endif
 #endif				/* not lint */
 
@@ -432,7 +432,7 @@ found:
 			break;
 
 		default:
-			errx(1, "set_option: internal error: p_special %d\n",
+			errx(1, "set_option: internal error: p_special %d",
 			     p->p_special);
 		}
 		break;
