@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.94 2016/02/19 13:50:37 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.95 2016/02/22 19:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.94 2016/02/19 13:50:37 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.95 2016/02/22 19:25:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -389,8 +389,9 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			if (lasttoken != TNL && lasttoken != TSEMI)
 				synexpect(-1);
 		} else {
-			static char argvars[5] = {CTLVAR, VSNORMAL|VSQUOTE,
-								   '@', '=', '\0'};
+			static char argvars[5] = {
+			    CTLVAR, VSNORMAL|VSQUOTE, '@', '=', '\0'
+			};
 			n2 = (union node *)stalloc(sizeof (struct narg));
 			n2->type = NARG;
 			n2->narg.text = argvars;
@@ -641,8 +642,9 @@ makename(void)
 	return n;
 }
 
-void fixredir(union node *n, const char *text, int err)
-	{
+void
+fixredir(union node *n, const char *text, int err)
+{
 	TRACE(("Fix redir %s %d\n", text, err));
 	if (!err)
 		n->ndup.vname = NULL;
@@ -766,13 +768,11 @@ readtoken(void)
 		/*
 		 * check for keywords and aliases
 		 */
-		if (t == TWORD && !quoteflag)
-		{
+		if (t == TWORD && !quoteflag) {
 			const char *const *pp;
 
 			for (pp = parsekwd; *pp; pp++) {
-				if (**pp == *wordtext && equal(*pp, wordtext))
-				{
+				if (**pp == *wordtext && equal(*pp, wordtext)) {
 					lasttoken = t = pp -
 					    parsekwd + KWDOFFSET;
 					TRACE(("keyword %s recognized\n", tokname[t]));
@@ -902,11 +902,11 @@ breakloop:
  * will run code that appears at the end of readtoken1.
  */
 
-#define CHECKEND()	{goto checkend; checkend_return:;}
-#define PARSEREDIR()	{goto parseredir; parseredir_return:;}
-#define PARSESUB()	{goto parsesub; parsesub_return:;}
-#define PARSEBACKQOLD()	{oldstyle = 1; goto parsebackq; parsebackq_oldreturn:;}
-#define PARSEBACKQNEW()	{oldstyle = 0; goto parsebackq; parsebackq_newreturn:;}
+#define	CHECKEND()	{goto checkend; checkend_return:;}
+#define	PARSEREDIR()	{goto parseredir; parseredir_return:;}
+#define	PARSESUB()	{goto parsesub; parsesub_return:;}
+#define	PARSEBACKQOLD()	{oldstyle = 1; goto parsebackq; parsebackq_oldreturn:;}
+#define	PARSEBACKQNEW()	{oldstyle = 0; goto parsebackq; parsebackq_newreturn:;}
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
 
 /*
