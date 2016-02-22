@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.97 2016/02/22 19:42:46 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.98 2016/02/22 20:02:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.97 2016/02/22 19:42:46 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.98 2016/02/22 20:02:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1517,6 +1517,8 @@ badsub:
 		}
 		if (ISDBLQUOTE() || arinest)
 			flags |= VSQUOTE;
+		if (subtype >= VSTRIMLEFT && subtype <= VSTRIMRIGHTMAX)
+			flags |= VSPATQ;
 		*(stackblock() + typeloc) = subtype | flags;
 		if (subtype != VSNORMAL) {
 			TS_PUSH();
