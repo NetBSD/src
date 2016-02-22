@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.14.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/*	$NetBSD: ssh.c,v 1.14.4.2 2016/02/22 11:23:29 snj Exp $	*/
 /* $OpenBSD: ssh.c,v 1.416 2015/03/03 06:48:58 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.14.4.1 2015/04/30 06:07:30 riz Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.14.4.2 2016/02/22 11:23:29 snj Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1962,9 +1962,6 @@ ssh_session2(void)
 		} else
 			fork_postauth();
 	}
-
-	if (options.use_roaming)
-		request_roaming();
 
 	return client_loop(tty_flag, tty_flag ?
 	    options.escape_char : SSH_ESCAPECHAR_NONE, id);
