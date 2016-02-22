@@ -141,8 +141,3 @@ along with GCC; see the file COPYING3.  If not see
 #undef TARGET_SYNC_LIBCALL
 #define TARGET_SYNC_LIBCALL 1
 #endif
-
-#if 0
-#undef TARGET_SYNC_LIBCALL
-#define TARGET_SYNC_LIBCALL 1
-#endif
