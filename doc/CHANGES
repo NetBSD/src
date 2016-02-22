@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2136 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2137 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -249,3 +249,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd: Import dhcpcd 6.10.1. [roy 20160120]
 	openssl: Import openssl 1.0.1r [christos 20160130]
 	elftoolchain: Import FreeBSD-2016-02-19. [christos 20160219]
+	openresolv: Import openresolv-3.7.3. [roy 20160222]
