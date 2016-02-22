@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.20 2016/02/22 19:04:18 ginsbach Exp $	*/
+/*	$NetBSD: indent.c,v 1.21 2016/02/22 22:01:48 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.20 2016/02/22 19:04:18 ginsbach Exp $");
+__RCSID("$NetBSD: indent.c,v 1.21 2016/02/22 22:01:48 ginsbach Exp $");
 #endif
 #endif				/* not lint */
 
@@ -134,7 +134,7 @@ main(int argc, char **argv)
         \*-----------------------------------------------*/
 
 	if (!setlocale(LC_ALL, ""))
-		fprintf(stderr, "indent: can't set locale.\n");
+		warnx("can't set locale.");
 
 	hd_type = 0;
 	ps.p_stack[0] = stmt;	/* this is the parser's stack */
