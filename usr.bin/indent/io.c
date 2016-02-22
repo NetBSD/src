@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.15 2014/09/04 04:06:07 mrg Exp $	*/
+/*	$NetBSD: io.c,v 1.16 2016/02/22 19:04:18 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.15 2014/09/04 04:06:07 mrg Exp $");
+__RCSID("$NetBSD: io.c,v 1.16 2016/02/22 19:04:18 ginsbach Exp $");
 #endif
 #endif				/* not lint */
 
@@ -668,8 +668,7 @@ parsefont(struct fstate *f, const char *s0)
 						if (*s == '-')
 							sizedelta--;
 						else {
-							fprintf(stderr, "indent: bad font specification: %s\n", s0);
-							exit(1);
+							errx(1, "bad font specification: %s", s0);
 						}
 		s++;
 	}
