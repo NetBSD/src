@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.130 2016/02/22 07:46:00 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.131 2016/02/22 08:06:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.130 2016/02/22 07:46:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.131 2016/02/22 08:06:47 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -175,6 +175,7 @@ Static usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
 					       int index, int *lenp);
 Static usbd_status ugen_set_interface(struct ugen_softc *, int, int);
 Static int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
+Static void ugen_clear_endpoints(struct ugen_softc *);
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
 #define UGENENDPOINT(n) (minor(n) & 0xf)
