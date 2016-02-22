@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.93 2015/08/27 07:46:47 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.94 2016/02/22 20:02:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.93 2015/08/27 07:46:47 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.94 2016/02/22 20:02:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -511,7 +511,7 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 	case VSTRIMLEFTMAX:
 	case VSTRIMRIGHT:
 	case VSTRIMRIGHTMAX:
-		how = (varflags & VSQUOTE) ? 0 : EXP_CASE;
+		how = (varflags & (VSQUOTE|VSPATQ)) == VSQUOTE ? 0 : EXP_CASE;
 		break;
 	default:
 		how = 0;
