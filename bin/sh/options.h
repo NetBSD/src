@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.22 2015/05/26 21:35:15 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.23 2016/02/23 16:22:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ DEF_OPT( "interactive",'i' )	/* interactive shell */
 #define iflag optlist[3].val
 DEF_OPT( "monitor",	'm' )	/* job control */
 #define mflag optlist[4].val
-DEF_OPT( "noexec",	'n' )	/* [U] do not exec commands */
+DEF_OPT( "noexec",	'n' )	/* do not exec commands */
 #define nflag optlist[5].val
 DEF_OPT( "stdin",	's' )	/* read from stdin */
 #define sflag optlist[6].val
@@ -102,10 +102,12 @@ DEF_OPT( "tabcomplete",	0 )	/* <tab> causes filename expansion */
 DEF_OPT( "fork",	'F' )	/* use fork(2) instead of vfork(2) */
 #define	usefork optlist[19].val
 DEF_OPT( "nopriv",	'p' )	/* preserve privs even if set{u,g}id */
-#define pflag optlist[20].val
+#define	pflag optlist[20].val
+DEF_OPT( "hashall",	'h' )	/* [U] locate cmds in funcs when defined */
+#define	hflag optlist[21].val
 #ifdef DEBUG
 DEF_OPT( "debug",	0 )	/* enable debug prints */
-#define	debug optlist[21].val
+#define	debug optlist[22].val
 #endif
 
 #ifdef DEFINE_OPTIONS
