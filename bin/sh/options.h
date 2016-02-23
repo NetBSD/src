@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.23 2016/02/23 16:22:43 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.24 2016/02/23 18:30:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -103,7 +103,7 @@ DEF_OPT( "fork",	'F' )	/* use fork(2) instead of vfork(2) */
 #define	usefork optlist[19].val
 DEF_OPT( "nopriv",	'p' )	/* preserve privs even if set{u,g}id */
 #define	pflag optlist[20].val
-DEF_OPT( "hashall",	'h' )	/* [U] locate cmds in funcs when defined */
+DEF_OPT( "trackall",	'h' )	/* [U] locate cmds in funcs when defined */
 #define	hflag optlist[21].val
 #ifdef DEBUG
 DEF_OPT( "debug",	0 )	/* enable debug prints */
