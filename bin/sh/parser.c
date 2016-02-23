@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.98 2016/02/22 20:02:00 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.99 2016/02/23 14:51:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.98 2016/02/22 20:02:00 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.99 2016/02/23 14:51:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1094,6 +1094,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 
 	startlinno = plinno;
 	varnest = 0;
+	quoted = 0;
 	if (syntax == DQSYNTAX) {
 		SETDBLQUOTE();
 	}
@@ -1101,7 +1102,6 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	bqlist = NULL;
 	arinest = 0;
 	parenlevel = 0;
-	quoted = 0;
 
 	STARTSTACKSTR(out);
 	loop: {	/* for each line, until end of word */
