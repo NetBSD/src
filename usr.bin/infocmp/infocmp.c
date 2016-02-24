@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.8 2013/10/01 09:01:49 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.9 2016/02/24 13:31:54 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.8 2013/10/01 09:01:49 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.9 2016/02/24 13:31:54 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -102,7 +102,7 @@ outstr(FILE *f, const char *str)
 			}
 			goto prnt;
 		}
-		
+
 		if (f != NULL)
 			fputc('\\', f);
 		r++;
@@ -142,11 +142,11 @@ static void
 print_ent(const TIENT *ents, size_t nents)
 {
 	size_t col, i, l;
-	char nbuf[64];	
+	char nbuf[64];
 
 	if (nents == 0)
 		return;
-	
+
 	col = SW;
 	printf("\t");
 	for (i = 0; i < nents; i++) {
@@ -230,7 +230,7 @@ load_ents(TIENT *ents, TERMINAL *t, char type)
 	default:
 		max = TISTRMAX;
 	}
-	
+
 	n = 0;
 	for (i = 0; i <= max; i++) {
 		switch (type) {
@@ -263,7 +263,7 @@ load_ents(TIENT *ents, TERMINAL *t, char type)
 			break;
 		}
 	}
-	
+
 	if (xflag != 0 && t->_nuserdefs != 0) {
 		for (i = 0; i < t->_nuserdefs; i++) {
 			ud = &t->_userdefs[i];
@@ -293,7 +293,7 @@ load_ents(TIENT *ents, TERMINAL *t, char type)
 			}
 		}
 	}
-	
+
 	qsort(ents, n, sizeof(TIENT), ent_compare);
 	return n;
 }
@@ -308,7 +308,7 @@ cprint_ent(TIENT *ent)
 		else
 			printf("-");
 	}
-	
+
 	switch (ent->type) {
 	case 'f':
 		if (VALID_BOOLEAN(ent->flag))
@@ -351,7 +351,7 @@ compare_ents(TIENT *ents1, size_t n1, TIENT *ents2, size_t n2)
 	size_t i1, i2;
 	TIENT *e1, *e2, ee;
 	int c;
-	
+
 	i1 = i2 = 0;
 	ee.type = 'f';
 	ee.flag = ABSENT_BOOLEAN;
@@ -452,7 +452,7 @@ show_missing(TERMINAL *t1, TERMINAL *t2, char type)
 {
 	ssize_t i, max;
 	const char *id;
-	
+
 	switch (type) {
 	case 'f':
 		max = TIFLAGMAX;
@@ -518,7 +518,7 @@ use_terms(TERMINAL *term, size_t nuse, char **uterms)
 				errx(1, "cannot use same terminal");
 		terms[i] = load_term(*uterms++);
 	}
-	
+
 	for (i = 0; i < TIFLAGMAX + 1; i++) {
 		agree = absent = data = 0;
 		for (j = 0; j < nuse; j++) {
@@ -538,7 +538,7 @@ use_terms(TERMINAL *term, size_t nuse, char **uterms)
 		else if (term->flags[i] == ABSENT_BOOLEAN)
 			term->flags[i] = CANCELLED_BOOLEAN;
 	}
-	
+
 	for (i = 0; i < TINUMMAX + 1; i++) {
 		agree = absent = data = 0;
 		for (j = 0; j < nuse; j++) {
@@ -558,7 +558,7 @@ use_terms(TERMINAL *term, size_t nuse, char **uterms)
 		else if (term->nums[i] == ABSENT_NUMERIC)
 			term->nums[i] = CANCELLED_NUMERIC;
 	}
-	
+
 	for (i = 0; i < TISTRMAX + 1; i++) {
 		agree = absent = data = 0;
 		for (j = 0; j < nuse; j++) {
