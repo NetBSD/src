@@ -788,10 +788,10 @@ const dtrace_pattr_t _dtrace_prvdesc = {
 };
 
 #ifdef illumos
-const char *_dtrace_defcpp = "/usr/ccs/lib/cpp"; /* default cpp(1) to invoke */
+const char *_dtrace_defcpps[] = { "/usr/ccs/lib/cpp" }; /* default cpp(1) to invoke */
 const char *_dtrace_defld = "/usr/ccs/bin/ld";   /* default ld(1) to invoke */
 #else
-const char *_dtrace_defcpp = "cpp"; /* default cpp(1) to invoke */
+const char *_dtrace_defcpps[] = { "/usr/bin/cpp", "/usr/bin/clang-cpp" }; /* default cpp(1) to invoke */
 const char *_dtrace_defld = "ld";   /* default ld(1) to invoke */
 const char *_dtrace_defobjcopy = "objcopy"; /* default objcopy(1) to invoke */
 #endif
@@ -1195,7 +1195,16 @@ alloc:
 	dtp->dt_provs = calloc(dtp->dt_provbuckets, sizeof (dt_provider_t *));
 	dt_proc_hash_create(dtp);
 	dtp->dt_vmax = DT_VERS_LATEST;
-	dtp->dt_cpp_path = strdup(_dtrace_defcpp);
+	dtp->dt_cpp_path = NULL;
+	for (i = 0; i < (int)sizeof(_dtrace_defcpps) / sizeof(_dtrace_defcpps[0]); ++i) {
+		if (access(_dtrace_defcpps[i], X_OK) == 0) {
+			dtp->dt_cpp_path = strdup(_dtrace_defcpps[i]);
+			break;
+		}
+	}
+	if (dtp->dt_cpp_path == NULL)
+		dtp->dt_cpp_path = strdup("cpp");
+
 	dtp->dt_cpp_argv = malloc(sizeof (char *));
 	dtp->dt_cpp_argc = 1;
 	dtp->dt_cpp_args = 1;
