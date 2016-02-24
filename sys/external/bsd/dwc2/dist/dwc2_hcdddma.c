@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.7 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.8 2016/02/24 22:14:39 skrll Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.7 2016/02/14 10:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.8 2016/02/24 22:14:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -566,7 +566,7 @@ static void dwc2_fill_host_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 		dma_desc->status |= HOST_DMA_IOC;
 #endif
 
-	usb_syncmem(&qh->desc_list_usbdma, 
+	usb_syncmem(&qh->desc_list_usbdma,
 	    (idx * sizeof(struct dwc2_hcd_dma_desc)),
 	    sizeof(struct dwc2_hcd_dma_desc),
 	    BUS_DMASYNC_PREWRITE);
@@ -640,7 +640,7 @@ static void dwc2_init_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 		idx = dwc2_desclist_idx_dec(qh->td_last, inc, qh->dev_speed);
 		qh->desc_list[idx].status |= HOST_DMA_IOC;
 
-		usb_syncmem(&qh->desc_list_usbdma, 
+		usb_syncmem(&qh->desc_list_usbdma,
 		    (idx * sizeof(struct dwc2_hcd_dma_desc)),
 		    sizeof(struct dwc2_hcd_dma_desc),
 		    BUS_DMASYNC_PREWRITE);
@@ -673,7 +673,7 @@ static void dwc2_init_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 		idx = dwc2_desclist_idx_dec(qh->td_last, inc, qh->dev_speed);
 
 	qh->desc_list[idx].status |= HOST_DMA_IOC;
-	usb_syncmem(&qh->desc_list_usbdma, 
+	usb_syncmem(&qh->desc_list_usbdma,
 	    (idx * sizeof(struct dwc2_hcd_dma_desc)),
 	    sizeof(struct dwc2_hcd_dma_desc),
 	    BUS_DMASYNC_PREWRITE);
@@ -714,7 +714,7 @@ static void dwc2_fill_host_dma_desc(struct dwc2_hsotg *hsotg,
 
 	dma_desc->buf = (u32)chan->xfer_dma;
 
-	usb_syncmem(&qh->desc_list_usbdma, 
+	usb_syncmem(&qh->desc_list_usbdma,
 	    (n_desc * sizeof(struct dwc2_hcd_dma_desc)),
 	    sizeof(struct dwc2_hcd_dma_desc),
 	    BUS_DMASYNC_PREWRITE);
@@ -769,7 +769,7 @@ static void dwc2_init_non_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 					 "set A bit in desc %d (%p)\n",
 					 n_desc - 1,
 					 &qh->desc_list[n_desc - 1]);
-				usb_syncmem(&qh->desc_list_usbdma, 
+				usb_syncmem(&qh->desc_list_usbdma,
 				    ((n_desc - 1) *
 				    sizeof(struct dwc2_hcd_dma_desc)),
 				    sizeof(struct dwc2_hcd_dma_desc),
@@ -799,7 +799,7 @@ static void dwc2_init_non_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 				HOST_DMA_IOC | HOST_DMA_EOL | HOST_DMA_A;
 		dev_vdbg(hsotg->dev, "set IOC/EOL/A bits in desc %d (%p)\n",
 			 n_desc - 1, &qh->desc_list[n_desc - 1]);
-		usb_syncmem(&qh->desc_list_usbdma, 
+		usb_syncmem(&qh->desc_list_usbdma,
 		    ((n_desc - 1) * sizeof(struct dwc2_hcd_dma_desc)),
 		    sizeof(struct dwc2_hcd_dma_desc),
 		    BUS_DMASYNC_PREWRITE);
@@ -896,7 +896,7 @@ static int dwc2_cmpl_host_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 	    (idx * sizeof(struct dwc2_hcd_dma_desc)),
 	    sizeof(struct dwc2_hcd_dma_desc),
 	    BUS_DMASYNC_POSTREAD);
-	
+
 	dma_desc = &qh->desc_list[idx];
 
 	frame_desc = &qtd->urb->iso_descs[qtd->isoc_frame_index_last];
@@ -1154,7 +1154,7 @@ static int dwc2_process_non_isoc_desc(struct dwc2_hsotg *hsotg,
 	if (!urb)
 		return -EINVAL;
 
-	usb_syncmem(&qh->desc_list_usbdma, 
+	usb_syncmem(&qh->desc_list_usbdma,
 	    (desc_num * sizeof(struct dwc2_hcd_dma_desc)),
 	    sizeof(struct dwc2_hcd_dma_desc),
 	    BUS_DMASYNC_POSTREAD);
