@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.47 2016/02/24 09:00:59 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.48 2016/02/24 09:06:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.47 2016/02/24 09:00:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.48 2016/02/24 09:06:04 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3725,7 +3725,8 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	isoc->next = isoc->next + ncur;
 	isoc->inuse += nframes;
 
-	xfer->ux_actlen = offs;	/* XXX pretend we did it all */
+	/* XXX pretend we did it all */
+	xfer->ux_actlen = offs;
 
 	xfer->ux_status = USBD_IN_PROGRESS;
 
