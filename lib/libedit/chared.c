@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.47 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.48 2016/02/24 14:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.47 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.48 2016/02/24 14:25:38 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -675,9 +675,9 @@ out:
 protected int
 c_gets(EditLine *el, Char *buf, const Char *prompt)
 {
-	Char ch;
+	wchar_t wch;
 	ssize_t len;
-	Char *cp = el->el_line.buffer;
+	Char *cp = el->el_line.buffer, ch;
 
 	if (prompt) {
 		len = (ssize_t)Strlen(prompt);
@@ -692,15 +692,16 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 		el->el_line.lastchar = cp + 1;
 		re_refresh(el);
 
-		if (FUN(el,getc)(el, &ch) != 1) {
+		if (el_wgetc(el, &wch) != 1) {
 			ed_end_of_file(el, 0);
 			len = -1;
 			break;
 		}
+		ch = (Char)wch;
 
 		switch (ch) {
 
-		case 0010:	/* Delete and backspace */
+		case L'\b':	/* Delete and backspace */
 		case 0177:
 			if (len == 0) {
 				len = -1;
@@ -710,8 +711,8 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 			continue;
 
 		case 0033:	/* ESC */
-		case '\r':	/* Newline */
-		case '\n':
+		case L'\r':	/* Newline */
+		case L'\n':
 			buf[len] = ch;
 			break;
 

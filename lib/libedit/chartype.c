@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.19 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.20 2016/02/24 14:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.19 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.20 2016/02/24 14:25:38 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -218,8 +218,9 @@ ct_encode_char(char *dst, size_t len, Char c)
 #else
 
 size_t
+/*ARGSUSED*/
 ct_mbrtowc(char *wc, const char *s, size_t n,
-    void *mbs __attribute((__unused__))) {
+    void *mbs __attribute__((__unused__))) {
 	if (s == NULL)
 		return 0;
 	if (n == 0)
