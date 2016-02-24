@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.13 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.14 2016/02/24 14:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.13 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.14 2016/02/24 14:25:38 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -280,16 +280,18 @@ keymacro_print(EditLine *el, const Char *key)
 private int
 node_trav(EditLine *el, keymacro_node_t *ptr, Char *ch, keymacro_value_t *val)
 {
+	wchar_t wc;
 
 	if (ptr->ch == *ch) {
 		/* match found */
 		if (ptr->next) {
 			/* key not complete so get next char */
-			if (FUN(el,getc)(el, ch) != 1) {/* if EOF or error */
+			if (el_wgetc(el, &wc) != 1) {/* if EOF or error */
 				val->cmd = ED_END_OF_FILE;
 				return XK_CMD;
 				/* PWP: Pretend we just read an end-of-file */
 			}
+			*ch = (Char)wc;
 			return node_trav(el, ptr->next, ch, val);
 		} else {
 			*val = ptr->val;
