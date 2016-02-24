@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.12 2016/02/24 22:14:39 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.13 2016/02/24 22:17:54 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.12 2016/02/24 22:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.13 2016/02/24 22:17:54 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.12 2016/02/24 22:14:39 skrll Exp $")
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
-#include <sys/workqueue.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
