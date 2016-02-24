@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.53 2015/07/31 04:02:40 ozaki-r Exp $ */
+/*	$NetBSD: arp.c,v 1.54 2016/02/24 08:01:09 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.53 2015/07/31 04:02:40 ozaki-r Exp $");
+__RCSID("$NetBSD: arp.c,v 1.54 2016/02/24 08:01:09 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ set(int argc, char **argv)
 		}
 		else if (strncmp(argv[0], "pub", 3) == 0) {
 			flags |= RTF_ANNOUNCE;
-			doing_proxy = SIN_PROXY;
+			doing_proxy = 1;
 			if (argc && strncmp(argv[1], "pro", 3) == 0) {
 			        export_only = 1;
 			        argc--; argv++;
