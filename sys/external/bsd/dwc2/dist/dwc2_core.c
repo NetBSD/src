@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.11 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.12 2016/02/24 22:14:39 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.11 2016/02/14 10:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.12 2016/02/24 22:14:39 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -2102,7 +2102,7 @@ void dwc2_hc_start_transfer_ddma(struct dwc2_hsotg *hsotg,
 			dev_vdbg(hsotg->dev, "Wrote %pad to ext dma(%d)\n",
 				&chan->desc_list_addr, chan->hc_num);
 	}
-	
+
 	hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 	hcchar &= ~HCCHAR_MULTICNT_MASK;
 	hcchar |= chan->multi_count << HCCHAR_MULTICNT_SHIFT &
