@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.39 2016/02/14 10:56:22 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.40 2016/02/24 22:09:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.39 2016/02/14 10:56:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.40 2016/02/24 22:09:09 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1886,7 +1886,7 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 	mutex_spin_enter(&hsotg->lock);
 
 	hsotg->lx_state = DWC2_L0;
-	
+
 	if (dwc2_is_device_mode(hsotg)) {
 		mutex_spin_exit(&hsotg->lock);
 		return 0;	/* why 0 ?? */
