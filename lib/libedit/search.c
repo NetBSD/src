@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.38 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.39 2016/02/24 14:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.38 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.39 2016/02/24 14:25:38 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -212,8 +212,9 @@ ce_inc_search(EditLine *el, int dir)
 	     STRbck[] = {'b', 'c', 'k', '\0'};
 	static Char pchar = ':';/* ':' = normal, '?' = failed */
 	static Char endcmd[2] = {'\0', '\0'};
-	Char ch, *ocursor = el->el_line.cursor, oldpchar = pchar;
+	Char *ocursor = el->el_line.cursor, oldpchar = pchar, ch;
 	const Char *cp;
+	wchar_t wch;
 
 	el_action_t ret = CC_NORM;
 
@@ -252,8 +253,10 @@ ce_inc_search(EditLine *el, int dir)
 		*el->el_line.lastchar = '\0';
 		re_refresh(el);
 
-		if (FUN(el,getc)(el, &ch) != 1)
+		if (el_wgetc(el, &wch) != 1)
 			return ed_end_of_file(el, 0);
+
+		ch = (Char)wch;
 
 		switch (el->el_map.current[(unsigned char) ch]) {
 		case ED_INSERT:
@@ -348,14 +351,14 @@ ce_inc_search(EditLine *el, int dir)
 
 			/* Can't search if unmatched '[' */
 			for (cp = &el->el_search.patbuf[el->el_search.patlen-1],
-			    ch = ']';
+			    ch = L']';
 			    cp >= &el->el_search.patbuf[LEN];
 			    cp--)
 				if (*cp == '[' || *cp == ']') {
 					ch = *cp;
 					break;
 				}
-			if (el->el_search.patlen > LEN && ch != '[') {
+			if (el->el_search.patlen > LEN && ch != L'[') {
 				if (redo && newdir == dir) {
 					if (pchar == '?') { /* wrap around */
 						el->el_history.eventno =
@@ -604,10 +607,8 @@ cv_csearch(EditLine *el, int direction, wint_t ch, int count, int tflag)
 		return CC_ERROR;
 
 	if (ch == (wint_t)-1) {
-		Char c;
-		if (FUN(el,getc)(el, &c) != 1)
+		if (el_wgetc(el, &ch) != 1)
 			return ed_end_of_file(el, 0);
-		ch = c;
 	}
 
 	/* Save for ';' and ',' commands */
