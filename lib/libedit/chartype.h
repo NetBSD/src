@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.21 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.22 2016/02/24 17:13:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ Width(wchar_t c)
 
 #else /* NARROW */
 
-size_t	ct_mbrtowc(char *, const char *, size_t, void *);
+size_t	ct_mbrtowc(wchar_t *, const char *, size_t, void *);
 #define ct_wctob(w)          ((int)(w))
 #define ct_wctomb            error
 #define ct_wctomb_reset

@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.83 2016/02/24 14:25:38 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.84 2016/02/24 17:13:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.83 2016/02/24 14:25:38 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.84 2016/02/24 17:13:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: read.c,v 1.83 2016/02/24 14:25:38 christos Exp $");
 
 private int	read__fixio(int, int);
 private int	read_preread(EditLine *);
-private int	read_char(EditLine *, Char *);
+private int	read_char(EditLine *, wchar_t *);
 private int	read_getcmd(EditLine *, el_action_t *, Char *);
 private void	read_pop(c_macro_t *);
 
@@ -304,7 +304,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
  *	Read a character from the tty.
  */
 private int
-read_char(EditLine *el, Char *cp)
+read_char(EditLine *el, wchar_t *cp)
 {
 	ssize_t num_read;
 	int tried = 0;
@@ -331,14 +331,14 @@ read_char(EditLine *el, Char *cp)
 			tried = 1;
 		} else {
 			errno = e;
-			*cp = '\0';
+			*cp = L'\0';
 			return -1;
 		}
 	}
 
 	/* Test for EOF */
 	if (num_read == 0) {
-		*cp = '\0';
+		*cp = L'\0';
 		return 0;
 	}
 
@@ -372,7 +372,7 @@ read_char(EditLine *el, Char *cp)
 			if ((el->el_flags & CHARSET_IS_UTF8) == 0 ||
 			    cbp >= MB_LEN_MAX) {
 				errno = EILSEQ;
-				*cp = '\0';
+				*cp = L'\0';
 				return -1;
 			}
 			/* Incomplete sequence, read another byte. */
@@ -407,7 +407,6 @@ el_wgetc(EditLine *el, wchar_t *cp)
 {
 	int num_read;
 	c_macro_t *ma = &el->el_chared.c_macro;
-	Char cp_temp;
 
 	terminal__flush(el);
 	for (;;) {
@@ -443,14 +442,9 @@ el_wgetc(EditLine *el, wchar_t *cp)
 #ifdef DEBUG_READ
 	(void) fprintf(el->el_errfile, "Reading a character\n");
 #endif /* DEBUG_READ */
-	num_read = (*el->el_read.read_char)(el, &cp_temp);
+	num_read = (*el->el_read.read_char)(el, cp);
 	if (num_read < 0)
 		el->el_errno = errno;
-	*cp = cp_temp;
-#ifdef WIDECHAR
-	if (el->el_flags & NARROW_READ)
-		*cp = *(char *)(void *)cp;
-#endif
 #ifdef DEBUG_READ
 	(void) fprintf(el->el_errfile, "Got it %lc\n", *cp);
 #endif /* DEBUG_READ */
@@ -493,6 +487,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 	int retval;
 	el_action_t cmdnum = 0;
 	int num;		/* how many chars we have read at NL */
+	wchar_t wc;
 	Char ch, *cp;
 	int crlf = 0;
 	int nrb;
@@ -508,7 +503,8 @@ FUN(el,gets)(EditLine *el, int *nread)
 		size_t idx;
 
 		cp = el->el_line.buffer;
-		while ((num = (*el->el_read.read_char)(el, cp)) == 1) {
+		while ((num = (*el->el_read.read_char)(el, &wc)) == 1) {
+			*cp = (Char)wc;
 			/* make sure there is space for next character */
 			if (cp + 1 >= el->el_line.limit) {
 				idx = (size_t)(cp - el->el_line.buffer);
@@ -560,7 +556,8 @@ FUN(el,gets)(EditLine *el, int *nread)
 
 		terminal__flush(el);
 
-		while ((num = (*el->el_read.read_char)(el, cp)) == 1) {
+		while ((num = (*el->el_read.read_char)(el, &wc)) == 1) {
+			*cp = (Char)wc;
 			/* make sure there is space next character */
 			if (cp + 1 >= el->el_line.limit) {
 				idx = (size_t)(cp - el->el_line.buffer);
