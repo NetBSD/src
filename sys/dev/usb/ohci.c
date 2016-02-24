@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.46 2016/02/19 08:22:40 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.47 2016/02/24 09:00:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.46 2016/02/19 08:22:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.47 2016/02/24 09:00:59 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1369,10 +1369,12 @@ ohci_intr1(ohci_softc_t *sc)
 		usb_schedsoftintr(&sc->sc_bus);
 	}
 	if (eintrs & OHCI_RD) {
+		DPRINTFN(5, "resume detect", sc, 0, 0, 0);
 		printf("%s: resume detect\n", device_xname(sc->sc_dev));
 		/* XXX process resume detect */
 	}
 	if (eintrs & OHCI_UE) {
+		DPRINTFN(5, "unrecoverable error", sc, 0, 0, 0);
 		printf("%s: unrecoverable error, controller halted\n",
 		       device_xname(sc->sc_dev));
 		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
@@ -2077,7 +2079,7 @@ ohci_dump_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 	    __SHIFTOUT(flags, OHCI_TD_TOGGLE_MASK));
 	DPRINTF("    EC=%d CC=%d", OHCI_TD_GET_EC(flags), OHCI_TD_GET_CC(flags),
 	    0, 0);
-	DPRINTF("    cbp=0x%08lx nexttd=0x%08lx be=0x%08lx",
+	DPRINTF("    td_cbp=0x%08lx td_nexttd=0x%08lx td_be=0x%08lx",
 	       (u_long)O32TOH(std->td.td_cbp),
 	       (u_long)O32TOH(std->td.td_nexttd),
 	       (u_long)O32TOH(std->td.td_be), 0);
