@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.117 2016/01/06 00:22:21 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.118 2016/02/24 14:35:51 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,6 +33,7 @@
 .\"
 .Dd January 5, 2015
 .Dt SH 1
+.ds flags abCEeFfhnuvxIimpqV
 .Os
 .Sh NAME
 .Nm sh
@@ -40,8 +41,8 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl aCefnuvxIimqVEb
-.Op Cm +aCefnuvxIimqVEb
+.Op Fl \*[flags]
+.Op Cm +\*[flags]
 .Ek
 .Bk -words
 .Op Fl o Ar option_name
@@ -53,8 +54,8 @@
 .Nm
 .Fl c
 .Bk -words
-.Op Fl abCEefnuvxIimpqV
-.Op Cm +abCEefnuvxIimpqV
+.Op Fl \*[flags]
+.Op Cm +\*[flags]
 .Ek
 .Bk -words
 .Op Fl o Ar option_name
@@ -67,8 +68,8 @@
 .Nm
 .Fl s
 .Bk -words
-.Op Fl abCEefnuvxIimpqV
-.Op Cm +abCEefnuvxIimpqV
+.Op Fl \*[flags]
+.Op Cm +\*[flags]
 .Ek
 .Bk -words
 .Op Fl o Ar option_name
@@ -222,6 +223,11 @@ Special parameter 0 will be set from the
 .Ar command_name
 operand and the positional parameters ($1, $2, etc.)
 set from the remaining argument operands.
+.Fl c
+is only available at invocation, it cannot be
+.Ic set ,
+and there is no form using
+.Dq \&+ .
 .It Fl C Em noclobber
 Don't overwrite existing files with
 .Dq \*[Gt] .
@@ -238,7 +244,15 @@ or if the command is the left hand operand of an
 .Dq \*[Am]\*[Am]
 or
 .Dq ||
+operator,
+or if it is a pipeline (or simple command) preceded by the
+.Dq \&!
 operator.
+With pipelines, only the status of the entire pipeline
+(indicated by the last command it contains)
+is tested when
+.Fl e
+is set to determine if the shell should exit.
 .It Fl f Em noglob
 Disable pathname expansion.
 .It Fl n Em noexec
@@ -276,7 +290,7 @@ Turn on job control (set automatically when interactive).
 .It Fl s Em stdin
 Read commands from standard input (set automatically if no file arguments
 are present).
-This option has no effect when set after the shell has
+This option has no effect when set or reset after the shell has
 already started running (i.e. with
 .Ic set ) .
 .It Fl V Em vi
@@ -299,6 +313,26 @@ section below.)
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
+.It Fl F Em fork
+Cause the shell to always use
+.Xr fork 2
+instead of attempting
+.Xr vfork 2
+when it needs to create a new process.
+This should normally have no visible effect,
+but can slow execution.
+The
+.Nm
+can be compiled to always use
+.Xr fork 2
+in which case altering the
+.Fl F
+flag has no effect.
+.It Fl h Em trackall
+Bind commands in functions to filesystem paths when the function is defined.
+When off,
+the filesystem is searched for commands each time the function is invoked.
+(Not implemented.)
 .It Fl p Em nopriv
 Do not attempt to reset effective uid if it does not match uid.
 This is not set by default to help avoid incorrect usage by setuid
@@ -311,6 +345,13 @@ Make an interactive shell always print the new directory name when
 changed by the
 .Ic cd
 command.
+.It "\ \ " Em nolog
+Prevent the entry of function definitions into the command history (see
+.Ic fc
+in the
+.Sx Built-ins
+section.)
+(Not implemented.)
 .It "\ \ " Em tabcomplete
 Enables filename completion in the command line editor.
 Typing a tab character will extend the current input word to match a
@@ -688,6 +729,11 @@ This is not the way it works in C.
 Also, if you forget the left-hand side (for example when continuing lines but
 forgetting to use a backslash) it defaults to a true statement.
 This behavior is not useful and should not be relied upon.
+Similarly, if input to the
+.Nm
+reaches end of file immediately after one of these operators,
+it is assumed that a true statement follows.
+This behavior is also not useful and should not be relied upon.
 .Ss Flow-Control Constructs -- if, while, for, case
 The syntax of the if command is
 .Bd -literal -offset indent
@@ -1574,7 +1620,7 @@ except for functions.
 .It inputrc Ar file
 Read the
 .Va file
-to set keybindings as defined by
+to set key bindings as defined by
 .Xr editrc 5 .
 .It jobid Op Ar job
 Print the process id's of the processes in the job.
