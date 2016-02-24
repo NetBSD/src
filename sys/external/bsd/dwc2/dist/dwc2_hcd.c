@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.18 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.19 2016/02/24 22:17:54 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.18 2016/02/14 10:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.19 2016/02/24 22:17:54 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/workqueue.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -58,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.18 2016/02/14 10:53:30 skrll Exp $");
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/err.h>
+#include <linux/workqueue.h>
 
 #include <dwc2/dwc2.h>
 #include <dwc2/dwc2var.h>
@@ -1365,8 +1365,7 @@ void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 	}
 }
 
-void
-dwc2_conn_id_status_change(struct work *work)
+static void dwc2_conn_id_status_change(struct work_struct *work)
 {
 	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
 						wf_otg);
@@ -1427,7 +1426,7 @@ dwc2_conn_id_status_change(struct work *work)
 	}
 }
 
-void dwc2_wakeup_detected(void * data)
+void dwc2_wakeup_detected(void *data)
 {
 	struct dwc2_hsotg *hsotg = (struct dwc2_hsotg *)data;
 	u32 hprt0;
@@ -2157,8 +2156,7 @@ void dwc2_host_disconnect(struct dwc2_hsotg *hsotg)
 /*
  * Work queue function for starting the HCD when A-Cable is connected
  */
-void
-dwc2_hcd_start_func(struct work *work)
+static void dwc2_hcd_start_func(struct work_struct *work)
 {
 	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
 						start_work.work);
@@ -2170,8 +2168,7 @@ dwc2_hcd_start_func(struct work *work)
 /*
  * Reset work queue function
  */
-void
-dwc2_hcd_reset_func(struct work *work)
+static void dwc2_hcd_reset_func(struct work_struct *work)
 {
 	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
 						reset_work.work);
@@ -2261,7 +2258,9 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 	}
 
 	if (hsotg->wq_otg) {
-		workqueue_destroy(hsotg->wq_otg);
+		if (!cancel_work_sync(&hsotg->wf_otg))
+			flush_workqueue(hsotg->wq_otg);
+		destroy_workqueue(hsotg->wq_otg);
 	}
 
 	kmem_free(hsotg->core_params, sizeof(*hsotg->core_params));
@@ -2287,7 +2286,7 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 {
 	struct dwc2_host_chan *channel;
 	int i, num_channels;
-	int err, retval;
+	int retval;
 
 	if (usb_disabled())
 		return -ENODEV;
@@ -2326,14 +2325,12 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 
 	/* Create new workqueue and init work */
 	retval = -ENOMEM;
-	err = workqueue_create(&hsotg->wq_otg, "dwc2", dwc2_worker, hsotg,
-			 PRI_BIO, IPL_USB, WQ_MPSAFE);
-
-	retval = -err;
-	if (err) {
+	hsotg->wq_otg = create_singlethread_workqueue("dwc2");
+	if (!hsotg->wq_otg) {
 		dev_err(hsotg->dev, "Failed to create workqueue\n");
 		goto error2;
 	}
+	INIT_WORK(&hsotg->wf_otg, dwc2_conn_id_status_change);
 
 	callout_init(&hsotg->wkp_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hsotg->wkp_timer, dwc2_wakeup_detected, hsotg);
