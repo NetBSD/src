@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.48 2016/02/24 14:25:38 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.49 2016/02/24 14:29:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.48 2016/02/24 14:25:38 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.49 2016/02/24 14:29:21 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -707,6 +707,7 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 				len = -1;
 				break;
 			}
+			len--;
 			cp--;
 			continue;
 
