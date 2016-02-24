@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.26 2016/02/24 14:25:38 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.27 2016/02/24 17:13:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.26 2016/02/24 14:25:38 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.27 2016/02/24 17:13:22 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -247,10 +247,8 @@ el_set(EditLine *el, int op, ...)
 		break;
 	}
 
-	/* XXX: do we need to change el_rfunc_t? */
 	case EL_GETCFN:         /* el_rfunc_t */
 		ret = el_wset(el, op, va_arg(ap, el_rfunc_t));
-		el->el_flags |= NARROW_READ;
 		break;
 
 	case EL_CLIENTDATA:     /* void * */
@@ -344,7 +342,6 @@ el_get(EditLine *el, int op, ...)
 		break;
 	}
 
-	/* XXX: do we need to change el_rfunc_t? */
 	case EL_GETCFN:         /* el_rfunc_t */
 		ret = el_wget(el, op, va_arg(ap, el_rfunc_t *));
 		break;

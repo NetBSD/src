@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.125 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.126 2016/02/24 17:13:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.125 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.126 2016/02/24 17:13:22 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -166,13 +166,13 @@ static jmp_buf topbuf;
 static unsigned char	 _el_rl_complete(EditLine *, int);
 static unsigned char	 _el_rl_tstp(EditLine *, int);
 static char		*_get_prompt(EditLine *);
-static int		 _getc_function(EditLine *, char *);
+static int		 _getc_function(EditLine *, wchar_t *);
 static HIST_ENTRY	*_move_history(int);
 static int		 _history_expand_command(const char *, size_t, size_t,
     char **);
 static char		*_rl_compat_sub(const char *, const char *,
     const char *, int);
-static int		 _rl_event_read_char(EditLine *, char *);
+static int		 _rl_event_read_char(EditLine *, wchar_t *);
 static void		 _rl_update_pos(void);
 
 
@@ -209,14 +209,14 @@ _move_history(int op)
  */
 static int
 /*ARGSUSED*/
-_getc_function(EditLine *el __attribute__((__unused__)), char *c)
+_getc_function(EditLine *el __attribute__((__unused__)), wchar_t *c)
 {
 	int i;
 
 	i = (*rl_getc_function)(NULL);
 	if (i == -1)
 		return 0;
-	*c = (char)i;
+	*c = (wchar_t)i;
 	return 1;
 }
 
@@ -2099,12 +2099,14 @@ rl_stuff_char(int c)
 }
 
 static int
-_rl_event_read_char(EditLine *el, char *cp)
+_rl_event_read_char(EditLine *el, wchar_t *wc)
 {
+	char	ch;
 	int	n;
 	ssize_t num_read = 0;
 
-	*cp = '\0';
+	ch = '\0';
+	*wc = L'\0';
 	while (rl_event_hook) {
 
 		(*rl_event_hook)();
@@ -2113,7 +2115,7 @@ _rl_event_read_char(EditLine *el, char *cp)
 		if (ioctl(el->el_infd, FIONREAD, &n) < 0)
 			return -1;
 		if (n)
-			num_read = read(el->el_infd, cp, (size_t)1);
+			num_read = read(el->el_infd, &ch, (size_t)1);
 		else
 			num_read = 0;
 #elif defined(F_SETFL) && defined(O_NDELAY)
@@ -2121,12 +2123,12 @@ _rl_event_read_char(EditLine *el, char *cp)
 			return -1;
 		if (fcntl(el->el_infd, F_SETFL, n|O_NDELAY) < 0)
 			return -1;
-		num_read = read(el->el_infd, cp, 1);
+		num_read = read(el->el_infd, &ch, 1);
 		if (fcntl(el->el_infd, F_SETFL, n))
 			return -1;
 #else
 		/* not non-blocking, but what you gonna do? */
-		num_read = read(el->el_infd, cp, 1);
+		num_read = read(el->el_infd, &ch, 1);
 		return -1;
 #endif
 
@@ -2138,6 +2140,7 @@ _rl_event_read_char(EditLine *el, char *cp)
 	}
 	if (!rl_event_hook)
 		el_set(el, EL_GETCFN, EL_BUILTIN_GETCFN);
+	*wc = (wchar_t)ch;
 	return (int)num_read;
 }
 
