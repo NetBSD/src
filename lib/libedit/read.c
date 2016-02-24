@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.84 2016/02/24 17:13:22 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.85 2016/02/24 17:20:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.84 2016/02/24 17:13:22 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.85 2016/02/24 17:20:01 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -343,12 +343,9 @@ read_char(EditLine *el, wchar_t *cp)
 	}
 
 	for (;;) {
-		mbstate_t mbs;
 
 		++cbp;
-		/* This only works because UTF8 is stateless */
-		memset(&mbs, 0, sizeof(mbs));
-		switch (ct_mbrtowc(cp, cbuf, cbp, &mbs)) {
+		switch (ct_mbrtowc(cp, cbuf, cbp)) {
 		case (size_t)-1:
 			if (cbp > 1) {
 				/*

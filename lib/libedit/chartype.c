@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.21 2016/02/24 17:13:22 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.22 2016/02/24 17:20:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.21 2016/02/24 17:13:22 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.22 2016/02/24 17:20:01 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -215,12 +215,19 @@ ct_encode_char(char *dst, size_t len, Char c)
 	return l;
 }
 
+size_t
+ct_mbrtowc(wchar_t *wc, const char *s, size_t n)
+{
+	mbstate_t mbs;
+	/* This only works because UTF-8 is stateless */
+	memset(&mbs, 0, sizeof(mbs));
+	return mbrtowc(wc, s, n, &mbs);
+}
+
 #else
 
 size_t
-/*ARGSUSED*/
-ct_mbrtowc(wchar_t *wc, const char *s, size_t n,
-    void *mbs __attribute__((__unused__))) {
+ct_mbrtowc(wchar_t *wc, const char *s, size_t n)
 	if (s == NULL)
 		return 0;
 	if (n == 0)
