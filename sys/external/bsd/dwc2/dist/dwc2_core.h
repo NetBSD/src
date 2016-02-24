@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.h,v 1.7 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.h,v 1.8 2016/02/24 22:17:54 skrll Exp $	*/
 
 /*
  * core.h - DesignWare HS OTG Controller common declarations
@@ -40,7 +40,6 @@
 #define __DWC2_CORE_H__
 
 #include <sys/stdint.h>
-#include <sys/workqueue.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/device.h>
@@ -723,8 +722,8 @@ struct dwc2_hsotg {
 	unsigned int queuing_high_bandwidth:1;
 	unsigned int srp_success:1;
 
-	struct workqueue *wq_otg;
-	struct work wf_otg;
+	struct workqueue_struct *wq_otg;
+	struct work_struct wf_otg;
 	struct callout wkp_timer;
 	enum dwc2_lx_state lx_state;
 	struct dwc2_gregs_backup gr_backup;
