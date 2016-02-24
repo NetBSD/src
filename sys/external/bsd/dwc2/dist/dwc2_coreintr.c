@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_coreintr.c,v 1.10 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_coreintr.c,v 1.11 2016/02/24 22:17:54 skrll Exp $	*/
 
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.10 2016/02/14 10:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.11 2016/02/24 22:17:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -307,7 +307,7 @@ static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 	 */
 	if (hsotg->wq_otg) {
 		spin_unlock(&hsotg->lock);
-		workqueue_enqueue(hsotg->wq_otg, &hsotg->wf_otg, NULL);
+		queue_work(hsotg->wq_otg, &hsotg->wf_otg);
 		spin_lock(&hsotg->lock);
 	}
 }
