@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.38 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.39 2016/02/24 14:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.38 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.39 2016/02/24 14:25:38 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -365,11 +365,9 @@ protected el_action_t
 ed_quoted_insert(EditLine *el, wint_t c)
 {
 	int num;
-	Char tc;
 
 	tty_quotemode(el);
-	num = FUN(el,getc)(el, &tc);
-	c = tc;
+	num = el_wgetc(el, &c);
 	tty_noquotemode(el);
 	if (num == 1)
 		return ed_insert(el, c);
