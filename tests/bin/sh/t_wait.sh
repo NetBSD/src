@@ -1,4 +1,4 @@
-# $NetBSD: t_wait.sh,v 1.4 2016/02/24 14:42:06 christos Exp $
+# $NetBSD: t_wait.sh,v 1.5 2016/02/24 14:42:50 christos Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -89,7 +89,7 @@ EOF
 	wait
 
 	output="$(cat $z | tr '\n' ' ')"
-	# rm -f $s $z
+	rm -f $s $z
 	if [ "$output" != "SIGHUP 129 3 127 " ]; then
 		atf_fail "${output} != 'SIGHUP 129 '"
 	fi
