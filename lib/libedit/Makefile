@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2016/02/17 19:47:49 christos Exp $
+#	$NetBSD: Makefile,v 1.55 2016/02/24 14:25:38 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -15,7 +15,7 @@ COPTS+=	-Wunused-parameter
 CWARNFLAGS.gcc+=	-Wconversion
 CWARNFLAGS.clang+=	-Wno-cast-qual
 
-OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
+OSRCS=	chared.c common.c el.c eln.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \
 	parse.c prompt.c read.c refresh.c search.c sig.c terminal.c tty.c vi.c
 
@@ -37,7 +37,6 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 SRCS=	editline.c readline.c tokenizer.c history.c
 
 .if ${WIDECHAR} == "yes"
-OSRCS += eln.c
 SRCS += tokenizern.c historyn.c
 CLEANFILES+=tokenizern.c.tmp tokenizern.c historyn.c.tmp historyn.c
 CPPFLAGS+=-DWIDECHAR
