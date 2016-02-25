@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.21 2016/02/22 22:01:48 ginsbach Exp $	*/
+/*	$NetBSD: indent.c,v 1.22 2016/02/25 13:23:27 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.21 2016/02/22 22:01:48 ginsbach Exp $");
+__RCSID("$NetBSD: indent.c,v 1.22 2016/02/25 13:23:27 ginsbach Exp $");
 #endif
 #endif				/* not lint */
 
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (ps.com_ind <= 1)
-		ps.com_ind = 2;	/* dont put normal comments before column 2 */
+		ps.com_ind = 2;	/* don't put normal comments before column 2 */
 	if (troff) {
 		if (bodyf.font[0] == 0)
 			parsefont(&bodyf, "R");
@@ -355,7 +355,7 @@ main(int argc, char **argv)
 			case lbrace:	/* this is a brace that starts the
 					 * compound stmt */
 				if (sc_end == 0) {	/* ignore buffering if a
-							 * comment wasnt stored
+							 * comment wasn't stored
 							 * up */
 					ps.search_brace = false;
 					goto check_type;
@@ -420,7 +420,7 @@ main(int argc, char **argv)
 					force_nl = false;
 
 				if (sc_end == 0) {	/* ignore buffering if
-							 * comment wasnt saved
+							 * comment wasn't saved
 							 * up */
 					ps.search_brace = false;
 					goto check_type;
@@ -503,7 +503,7 @@ check_type:
 					diag(0, "Line broken");
 				flushed_nl = false;
 				dump_line();
-				ps.want_blank = false;	/* dont insert blank at
+				ps.want_blank = false;	/* don't insert blank at
 							 * line start */
 				force_nl = false;
 			}
@@ -623,7 +623,7 @@ check_type:
 				ps.last_u_d = true;	/* inform lexi that a
 							 * following operator is
 							 * unary */
-				ps.in_stmt = false;	/* dont use stmt
+				ps.in_stmt = false;	/* don't use stmt
 							 * continuation
 							 * indentation */
 
@@ -785,8 +785,8 @@ check_type:
 
 			ps.in_decl = (ps.dec_nest > 0);	/* if we were in a first
 							 * level structure
-							 * declaration, we arent
-							 * any more */
+							 * declaration, we
+							 * aren't any more */
 
 			if ((!sp_sw || hd_type != forstmt) && ps.p_l_follow > 0) {
 
@@ -801,8 +801,8 @@ check_type:
 						 * while, etc. with unbalanced
 						 * parens */
 					sp_sw = false;
-					parse(hd_type);	/* dont lose the if, or
-							 * whatever */
+					parse(hd_type);	/* don't lose the if,
+							 * or whatever */
 				}
 			}
 			*e_code++ = ';';
@@ -819,7 +819,7 @@ check_type:
 			break;
 
 		case lbrace:	/* got a '{' */
-			ps.in_stmt = false;	/* dont indent the {} */
+			ps.in_stmt = false;	/* don't indent the {} */
 			if (!ps.block_init)
 				force_nl = true;	/* force other stuff on
 							 * same line as '{' onto
@@ -856,7 +856,7 @@ check_type:
 				}
 			}
 			if (s_code == e_code)
-				ps.ind_stmt = false;	/* dont put extra
+				ps.ind_stmt = false;	/* don't put extra
 							 * indentation on line
 							 * with '{' */
 			if (ps.in_decl && ps.in_or_st) {	/* this is either a
@@ -865,9 +865,9 @@ check_type:
 				di_stack[ps.dec_nest++] = dec_ind;
 				/* ?		dec_ind = 0; */
 			} else {
-				ps.decl_on_line = false;	/* we cant be in the
+				ps.decl_on_line = false;	/* we can't be in the
 								 * middle of a
-								 * declaration, so dont
+								 * declaration, so don't
 								 * do special
 								 * indentation of
 								 * comments */
@@ -1088,7 +1088,7 @@ check_type:
 		case period:	/* treat a period kind of like a binary
 				 * operation */
 			*e_code++ = '.';	/* move the period into line */
-			ps.want_blank = false;	/* dont put a blank after a
+			ps.want_blank = false;	/* don't put a blank after a
 						 * period */
 			break;
 
@@ -1256,7 +1256,7 @@ check_type:
 						 * line here */
 				flushed_nl = false;
 				dump_line();
-				ps.want_blank = false;	/* dont insert blank at
+				ps.want_blank = false;	/* don't insert blank at
 							 * line start */
 				force_nl = false;
 			}
