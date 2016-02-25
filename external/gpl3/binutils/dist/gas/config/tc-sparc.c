@@ -1402,13 +1402,17 @@ md_assemble (char *str)
 	  || (last_opcode & ANNUL) == 0))
     as_warn (_("FP branch in delay slot"));
 
-  /* SPARC before v9 requires a nop instruction between a floating
-     point instruction and a floating point branch.  We insert one
-     automatically, with a warning.  */
-  if (max_architecture < SPARC_OPCODE_ARCH_V9
-      && last_insn != NULL
+  /* SPARC before v8 requires a nop instruction between a floating
+     point instruction and a floating point branch.  SPARCv8 requires
+     a nop only immediately after FPop2 (fcmp*) instructions.
+     We insert one automatically, with a warning.
+   */
+  if (last_insn != NULL
       && (insn->flags & F_FBR) != 0
-      && (last_insn->flags & F_FLOAT) != 0)
+      && (last_insn->flags & F_FLOAT) != 0
+      && (max_architecture < SPARC_OPCODE_ARCH_V8 ||
+          (max_architecture < SPARC_OPCODE_ARCH_V9 &&
+           strncmp(last_insn->name, "fcmp", 4) == 0)))
     {
       struct sparc_it nop_insn;
 
