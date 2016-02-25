@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.5 2015/12/31 12:14:01 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.6 2016/02/25 12:22:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.5 2015/12/31 12:14:01 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.6 2016/02/25 12:22:30 joerg Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -96,10 +96,6 @@ u_int uboot_args[4] = { 0 };
 
 void nitrogen6_setup_iomux(void);
 void nitrogen6_device_register(device_t, void *);
-
-static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
-static const int comcnspeed = CONSPEED;
-static const int comcnmode = CONMODE | CLOCAL;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
