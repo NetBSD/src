@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.48 2016/02/24 09:06:04 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.49 2016/02/25 12:52:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.48 2016/02/24 09:06:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.49 2016/02/25 12:52:09 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2976,22 +2976,6 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 			    ohci_timeout, xfer);
 	}
 
-#ifdef OHCI_DEBUG
-	DPRINTFN(20, "--- dump start ---", 0, 0, 0, 0);
-	if (ohcidebug >= 20) {
-		delay(10000);
-		DPRINTFN(20, "status=%x", OREAD4(sc, OHCI_COMMAND_STATUS),
-		    0, 0, 0);
-		ohci_dumpregs(sc);
-		DPRINTFN(20, "ctrl head:", 0, 0, 0, 0);
-		ohci_dump_ed(sc, sc->sc_ctrl_head);
-		DPRINTF("sed:", 0, 0, 0, 0);
-		ohci_dump_ed(sc, sed);
-		ohci_dump_tds(sc, setup);
-	}
-	DPRINTFN(20, "--- dump start ---", 0, 0, 0, 0);
-#endif
-
 	DPRINTF("done", 0, 0, 0, 0);
 
 	mutex_exit(&sc->sc_lock);
@@ -3748,16 +3732,6 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	    sizeof(sed->ed.ed_flags),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	mutex_exit(&sc->sc_lock);
-
-#ifdef OHCI_DEBUG
-	if (ohcidebug >= 5) {
-		delay(150000);
-		DPRINTF("after frame=%d", O32TOH(sc->sc_hcca->hcca_frame_number),
-		    0, 0, 0);
-		ohci_dump_itds(sc, xfer->ux_hcpriv);
-		ohci_dump_ed(sc, sed);
-	}
-#endif
 }
 
 usbd_status
