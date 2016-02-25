@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.9 2003/08/07 11:14:09 agc Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.10 2016/02/25 13:23:27 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr_comment.c,v 1.9 2003/08/07 11:14:09 agc Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.10 2016/02/25 13:23:27 ginsbach Exp $");
 #endif
 #endif				/* not lint */
 
@@ -126,7 +126,7 @@ pr_comment(void)
 	int     l_just_saw_decl = ps.just_saw_decl;
 	/*
          * int         ps.last_nl = 0;	/ * true iff the last significant thing
-         * weve seen is a newline
+         * we've seen is a newline
          */
 	int     one_liner = 1;	/* true iff this comment is a one-liner */
 	adj_max_col = max_col;
@@ -159,8 +159,8 @@ pr_comment(void)
 		if ( /* ps.bl_line && */ (s_lab == e_lab) && (s_code == e_code)) {
 			/* klg: check only if this line is blank */
 			/*
-		         * If this (*and previous lines are*) blank, dont put comment way
-		         * out at left
+		         * If this (*and previous lines are*) blank, don't
+			 * put comment way out at left
 		         */
 			ps.com_col = (ps.ind_level - ps.unindent_displace) * ps.ind_size + 1;
 			adj_max_col = block_comment_max_col;
@@ -243,7 +243,7 @@ pr_comment(void)
 			}
 			one_liner = 0;
 			if (ps.box_com || ps.last_nl) {	/* if this is a boxed
-							 * comment, we dont
+							 * comment, we don't
 							 * ignore the newline */
 				if (s_com == e_com) {
 					*e_com++ = ' ';
