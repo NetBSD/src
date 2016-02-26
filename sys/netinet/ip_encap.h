@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.17 2016/01/26 06:00:10 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.18 2016/02/26 07:35:17 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -44,14 +44,14 @@ struct encapsw {
 		struct encapsw4 {
 			void	(*pr_input)	/* input to protocol (from below) */
 				(struct mbuf *, int, int);
-			void    *(*pr_ctlinput)	/* control input (from below) */
-				(int, const struct sockaddr *, void *);
+			void	*(*pr_ctlinput)		/* control input (from below) */
+				(int, const struct sockaddr *, void *, void *);
 		} _encapsw4;
 		struct encapsw6 {
 			int	(*pr_input)	/* input to protocol (from below) */
 				(struct mbuf **, int *, int);
-			void	*(*pr_ctlinput)	/* control input (from below) */
-				(int, const struct sockaddr *, void *);
+			void	*(*pr_ctlinput)		/* control input (from below) */
+				(int, const struct sockaddr *, void *, void *);
 		} _encapsw6;
 	} encapsw46;
 };
@@ -105,6 +105,20 @@ const struct encaptab *encap_attach_func(int, int,
 void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
 void	*encap_getarg(struct mbuf *);
+
+void encap_lock_enter(void);
+void encap_lock_exit(void);
+
+#define	ENCAP_PR_WRAP_CTLINPUT(name)				\
+static void *							\
+name##_wrapper(int a, const struct sockaddr *b, void *c, void *d) \
+{								\
+	void *rv;						\
+	KERNEL_LOCK(1, NULL);					\
+	rv = name(a, b, c, d);					\
+	KERNEL_UNLOCK_ONE(NULL);				\
+	return rv;						\
+}
 #endif
 
 #endif /* !_NETINET_IP_ENCAP_H_ */

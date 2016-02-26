@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.105 2016/01/18 06:08:26 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.106 2016/02/26 07:35:17 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.105 2016/01/18 06:08:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.106 2016/02/26 07:35:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,7 +90,7 @@ static void	gifintr(void *);
 /*
  * gif global variable definitions
  */
-LIST_HEAD(, gif_softc) gif_softc_list;	/* XXX should be static */
+static LIST_HEAD(, gif_softc) gif_softc_list;
 
 static void	gif_sysctl_setup(struct sysctllog **);
 

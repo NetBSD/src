@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.71 2016/01/26 05:58:05 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.72 2016/02/26 07:35:17 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.71 2016/01/26 05:58:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.72 2016/02/26 07:35:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -75,8 +75,6 @@ static int gif_validate6(const struct ip6_hdr *, struct gif_softc *,
 	struct ifnet *);
 
 int	ip6_gif_hlim = GIF_HLIM;
-
-extern LIST_HEAD(, gif_softc) gif_softc_list;
 
 static const struct encapsw in6_gif_encapsw;
 
@@ -398,9 +396,9 @@ in6_gif_detach(struct gif_softc *sc)
 }
 
 void *
-in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
+in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 {
-	struct gif_softc *sc;
+	struct gif_softc *sc = (struct gif_softc *)eparg;
 	struct ip6ctlparam *ip6cp = NULL;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *dst6;
@@ -427,29 +425,22 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	if (!ip6)
 		return NULL;
 
-	/*
-	 * for now we don't care which type it was, just flush the route cache.
-	 * XXX slow.  sc (or sc->encap_cookie6) should be passed from
-	 * ip_encap.c.
-	 */
-	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
-		if ((sc->gif_if.if_flags & IFF_RUNNING) == 0)
-			continue;
-		if (sc->gif_psrc->sa_family != AF_INET6)
-			continue;
+	if ((sc->gif_if.if_flags & IFF_RUNNING) == 0)
+		return NULL;
+	if (sc->gif_psrc->sa_family != AF_INET6)
+		return NULL;
 
-		dst6 = satocsin6(rtcache_getdst(&sc->gif_ro));
-		/* XXX scope */
-		if (dst6 == NULL)
-			;
-		else if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
-			rtcache_free(&sc->gif_ro);
-	}
+	dst6 = satocsin6(rtcache_getdst(&sc->gif_ro));
+	/* XXX scope */
+	if (dst6 == NULL)
+		;
+	else if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
+		rtcache_free(&sc->gif_ro);
 
 	return NULL;
 }
 
-PR_WRAP_CTLINPUT(in6_gif_ctlinput)
+ENCAP_PR_WRAP_CTLINPUT(in6_gif_ctlinput)
 #define	in6_gif_ctlinput	in6_gif_ctlinput_wrapper
 
 static const struct encapsw in6_gif_encapsw = {

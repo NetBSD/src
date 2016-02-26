@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.51 2016/01/26 05:58:05 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.52 2016/02/26 07:35:17 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.51 2016/01/26 05:58:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.52 2016/02/26 07:35:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -676,7 +676,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 		/* XXX need to pass ep->arg or ep itself to listeners */
 		esw = ep->esw;
 		if (esw && esw->encapsw6.pr_ctlinput) {
-			(*esw->encapsw6.pr_ctlinput)(cmd, sa, d);
+			(*esw->encapsw6.pr_ctlinput)(cmd, sa, d, ep->arg);
 		}
 	}
 
