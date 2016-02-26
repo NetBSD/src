@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.35 2016/02/26 21:33:18 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.36 2016/02/26 21:53:10 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -970,4 +970,14 @@ distrib/sets/lists/debug/md.sparc6		patch
 
 	Fix debug setlist.
 	[martin, ticket #1122]
+
+sys/arch/x86/x86/pmap.c				1.190
+
+	Operation pmap_pp_clear_attrs() may remove the "used"
+	attribute from a page that is still cached in the TLB
+	of other CPUs.
+
+	Call pmap_tlb_shootnow() here before enabling preemption
+	to clear the TLB entries on other CPUs.
+	[hannken, ticket #1100]
 
