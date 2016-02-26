@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.38 2015/05/20 04:37:45 matt Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.39 2016/02/26 17:12:53 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.38 2015/05/20 04:37:45 matt Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.39 2016/02/26 17:12:53 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -187,7 +187,7 @@ ELFNAMEEND(__fdnlist)(int fd, struct nlist *list)
 			    && (uintptr_t)sym.st_value == sym.st_value
 #endif
 #endif
-			    && 1) {
+			    && /*CONSTCOND*/1) {
 				p->n_value = (uintptr_t)sym.st_value;
 				switch (ELF_ST_TYPE(sym.st_info)) {
 				case STT_NOTYPE:
