@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.55 2013/12/19 19:11:50 rmind Exp $	*/
+/*	$NetBSD: unistd.h,v 1.56 2016/02/26 17:10:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -306,6 +306,9 @@
 /* These are implemented */
 #define	_SC_SPAWN			86
 #define	_SC_SHARED_MEMORY_OBJECTS	87
+
+#define	_SC_TIMER_MAX			88
+
 
 /* Extensions found in Solaris and Linux. */
 #define	_SC_PHYS_PAGES		121
