@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.158 2016/01/28 10:20:40 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.159 2016/02/26 08:20:27 jnemeth Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -370,6 +370,8 @@ DVI	Digital Visual Interface
 DVR	digital video recorder
 E-XER	extended XML encoding rules
 EABI	embedded-application binary interface
+EAI	Email Address Internationalization
+EAI	Enterprise Application Integration
 EAP	Extensible Authentication Protocol
 EBCDIC	Extended Binary Coded Decimal Interchange Code
 EBR	extended boot record
