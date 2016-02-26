@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.57 2016/02/22 11:25:01 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.58 2016/02/26 23:06:33 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2044,4 +2044,164 @@ crypto/external/bsd/openssh/dist/ssh.c		patch
 
 	Fix CVE CVE-2016-0777 by disabling roaming completely.
 	[christos, ticket #1075]
+
+distrib/sets/lists/debug/md.sparc6		patch
+
+	Fix debug setlist.
+	[martin, ticket #1122]
+
+sys/dev/usb/hid.c				1.43
+
+	Avoid undefined behaviour, with likely possible sign-extension
+	where zero-extension was intended, in USB HID parsing.
+	[riastradh, ticket #1089]
+
+sys/arch/x86/x86/pmap.c				1.190
+
+	Operation pmap_pp_clear_attrs() may remove the "used" attribute
+	from a page that is still cached in the TLB of other CPUs.
+
+	Call pmap_tlb_shootnow() here before enabling preemption to clear
+	the TLB entries on other CPUs.
+	[hannken, ticket #1100]
+
+lib/libc/gen/getpass.c				1.30
+
+	PR/50695: ctrl-c in su password input breaks shell
+	Always restore the tty settings.
+	[christos, ticket #1101]
+
+sys/dev/mii/igphy.c				1.25
+sys/dev/mii/ukphy.c				1.48
+sys/dev/pci/if_wm.c				1.308, 1.318, 1.320, 1.324-1.332, 1.334, 1.336, 1.343-1.344, 1.347-1.348, 1.350, 1.376-1.382, 1.386-1.389 via patch
+sys/dev/pci/if_wmreg.h				1.68-1.70, 1.73-1.77, 1.79-1.80, 1.82, 1.86-1.88 via patch
+sys/dev/pci/if_wmvar.h				1.22-1.23, 1.25-1.30 via patch
+
+	Sync wm(4) as of if_wm.c rev 1.389 except MSI/MSI-X, multiqueue
+	and NET_MPSAFE:
+	- Add C2000 KX and 2.5G support.
+	- Set ICH9 and ICH10's PBA size to 14K if the RX buffer size is
+	  more than 4096. Almost the same as other OSes.
+	- For 82576 and newer devices, the PBA register is deleted.
+	  Don't write PBA for those chips. Also change the calculation
+	  of RX packet buffer size in new way.
+	- Fix a lot of bugs to make 82575 and newer SERDES based systems
+	  work.
+	- Print NVM image version and option ROM version.
+	- Add workaround for I210 Errata 25 and I211 Errata 10 (PLL
+	  bug). This workaround is required if the NVM image version
+	  < 3.25.
+	- Fix a bug that wm_detach() didn't unmap the FHASH's area. Now
+	  "drvct -d wm0" -> "drvctl -r pci0" works on ICH* and PCH*.
+	- Add workaround for 82574 Errata 25 and 82583 Errata 12
+	  "Dropped RX packets" and for 82573 (unknown). Set
+	  GCR_L1_ACT_WITHOUT_L0S_RX bit. The NVM Image version 2.1.4 and
+	  newer have this workaround.
+	- Check PHY type correctly. This change is required to use
+	  igphy(4) device correctly.
+	- Disable LPLU (Low Power Link Up) on D0 state on 82574, 82583
+	  and ICH* too.
+	- Call wm_get_hw_control() correctly. This change fixes a bug
+	  that some AMT based systems doesn't linkup at 1000BaseT. The
+	  problem was observed on HP Compaq dc7700. A lot of fixes have
+	  been done for wm(4) and igphy(4), so now PR#44893 should be
+	  fixed.
+	- Call wm_get_wakeup(sc) before checking WM_F_HAS_AMT. It's
+	  required to check the existence of AMT correctly.
+	- Fix a problem that wm_gate_hw_phy_config_ich8lan() isn't called
+	  in wm_reset() on PCH2.
+	- Clear WMREG_WUC in wm_reset() if the chip >= 82544. This might
+	  fix the behavior on suspend/resume.
+	- Fix logic of wm_check_reset_block() on ICH* and PCH*. This
+	  change might fix a problem that PHY's read/write functions
+	  can't get semaphore.
+	- On ICH8, call wm_gig_downshift_workaround_ich8lan() when link
+	  changed down.
+	- Drop PHY_CTRL_GBE_DIS explicitly in wm_lplu_d0_disable() in
+	  case BIOS sets this bit.
+	- Fix two bugs in wm_kmrn_lock_loss_workaround_ich8lan(). Now
+	  the function checks the status correctly but it causes
+	  linkdown up to 10 times, so it's disabled for the time being.
+	- PR/50527: David Binderman: Fix impossible code. Odd offsets
+	  need special treatment.
+	- Fix RAL table's size of PCH2 and PCH_LPT.
+	- PCH_LPT (and newer device) is required to check FWSM_WLOCK_MAC
+	  bit to determine the range of the RAL.
+	- Use sc->sc_itr instead of hard-coded number.
+	- Rename wm_tbi_check_link() to wm_tbi_tick() because this
+	  function acts as mii_tick().
+	- ACK Accelerate Disable in the RFCTL register is not bit 13
+	  but 12.  No binary change because this definition has not
+	  used yet.
+	- Add ACK data Disable bit's definition (not used yet).
+	- PHY_CTRL_GBE_DIS is not bit 4 but bit 6. This change has no
+	  any effect by default because WM_WOL is not defined yet and
+	  m_kmrn_lock_loss_workaround_ich8lan() is broken.
+	- Fix wm_check_mng_mode_ich8lan(). This function is used only
+	  when WM_WOL is defined and it's disabled by default.
+	- Rename wm_check_reset_block() to wm_phy_resetisblocked() and
+	  make it returns bool. No functional change.
+	- Reorder function definitions and macro definitions. No
+	  functional change.
+	- Fix comment. Add comment. Update comment.
+	- KNF.
+	[msaitoh, ticket #1102]
+
+sys/arch/arm/arm/disassem.c			1.29-1.34
+
+	ARM disassembler:
+	- Remove duplicate entry
+	- Document 'e'
+	- Remove incorrect entries
+	- More instructions. Lots left to do.
+	- Move /* A5.2.10 Synchronisation primitives */ block
+	  earlier so it matches correctly
+	- Move mcrr and mrrc up the list so they match ahead of
+	  ldc/ldc2
+	[skrll, ticket #1104]
+
+common/lib/libc/arch/arm/atomic/atomic_nand_16.S 1.3
+common/lib/libc/arch/arm/atomic/atomic_nand_32.S 1.3
+common/lib/libc/arch/arm/atomic/atomic_nand_64.S 1.4
+common/lib/libc/arch/arm/atomic/atomic_nand_8.S	1.3
+common/lib/libc/arch/arm/atomic/sync_fetch_and_nand_8.S 1.5
+
+	Use gcc 4.4 and later operation for nand, i.e.
+	*ptr = ~(tmp & value) instead of *ptr = ~tmp & value
+
+	Also fix another bug in sync_fetch_and_nand_8.
+
+	PR port-arm32/50513.
+	[skrll, ticket #1105]
+
+sys/arch/arm/arm32/pmap.c			1.332
+
+	Delete pmap_pmaps and its only user pmap_dump_all.  The list
+	wasn't being updated in an MP-safe manner.
+	[skrll, ticket #1106]
+
+libexec/ld.elf_so/sysident.h			1.18, 1.19
+
+	Fix .note.netbsd.march by ensuring correct padding
+	[skrll, ticket #1109]
+
+external/broadcom/rpi-firmware/dist/LICENCE.broadcom 1.2
+external/broadcom/rpi-firmware/dist/bootcode.bin 1.8
+external/broadcom/rpi-firmware/dist/fixup.dat	1.8
+external/broadcom/rpi-firmware/dist/fixup_cd.dat 1.8
+external/broadcom/rpi-firmware/dist/start.elf	1.8
+external/broadcom/rpi-firmware/dist/start_cd.elf 1.8
+sys/arch/arm/broadcom/bcm2835_emmc.c		1.29
+sys/arch/arm/broadcom/bcm2835_gpio.c		1.3
+sys/arch/arm/broadcom/bcm2835_gpio_subr.c	1.4
+sys/arch/arm/broadcom/bcm2835_space.c		1.9, 1.10
+sys/arch/arm/broadcom/bcm2835reg.h		patch
+sys/arch/arm/cortex/a9_mpsubr.S			1.45, 1.46
+sys/arch/evbarm/conf/CUBIEBOARD			1.45
+sys/arch/evbarm/conf/std.awin			1.9
+sys/arch/evbarm/rpi/rpi2_start.S		1.3
+sys/arch/evbarm/rpi/rpi_machdep.c		1.68
+
+	Update RPI firmware and add RPI0 support.
+	[skrll, ticket #1107]
 
