@@ -611,11 +611,26 @@ powerpc64-*-freebsd*)
 			tdir_elf32ppc=`echo "${targ_alias}" | sed -e 's/64//'`
 			tdir_elf32ppc_fbsd=$tdir_elf32ppc
 			;;
+powerpc-*-netbsd*)
+			targ_emul=elf32ppc_nbsd
+			targ_extra_emuls="elf32ppc elf32ppcsim"
+			targ_extra_libpath=elf32ppc;
+			tdir_elf32ppcsim=`echo ${targ_alias} | sed -e 's/ppc/ppcsim/'`
+			targ64_extra_emuls=elf64ppc
+			targ64_extra_libpath=elf64ppc
+			;;
+powerpc64-*-netbsd*)
+			targ_emul=elf64ppc
+			targ_extra_emuls="elf32ppc elf32ppc_nbsd elf32ppcsim"
+			targ_extra_libpath="elf32ppc_nbsd elf32ppc"
+			tdir_elf32ppc=`echo "${targ_alias}" | sed -e 's/64//'`
+			tdir_elf32ppc_fbsd=$tdir_elf32ppc
+			;;
 powerpc-*-vxworks*)
 			targ_emul=elf32ppcvxworks
 			targ_extra_emuls="elf32ppc elf32ppclinux elf32ppcsim" ;;
 powerpc*-*-elf* | powerpc*-*-eabi* | powerpc*-*-sysv* \
-  | powerpc*-*-linux* | powerpc*-*-netbsd* | powerpc*-*-openbsd* \
+  | powerpc*-*-linux* | powerpc*-*-openbsd* \
   | powerpc*-*-solaris* | powerpc*-*-kaos* | powerpc*-*-vxworks*)
 			case "${targ}" in
 			*64*)	targ_emul=elf64ppc
