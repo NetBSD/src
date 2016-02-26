@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.9.4.4 2014/12/15 11:53:58 martin Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.9.4.5 2016/02/26 22:52:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9.4.4 2014/12/15 11:53:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9.4.5 2016/02/26 22:52:53 snj Exp $");
 
 #include "bcmdmac.h"
 
@@ -60,6 +60,7 @@ struct bcmemmc_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
 	struct sdhc_host	*sc_hosts[1];
 	void			*sc_ih;
@@ -74,8 +75,6 @@ struct bcmemmc_softc {
 	bus_dmamap_t		sc_dmamap;
 	bus_dma_segment_t	sc_segs[1];	/* XXX assumes enough descriptors fit in one page */
 	struct bcm_dmac_conblk	*sc_cblk;
-
-	uint32_t		sc_physaddr;
 };
 
 static int bcmemmc_match(device_t, struct cfdata *, void *);
@@ -137,8 +136,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 		    "can't map registers for %s: %d\n", aaa->aaa_name, error);
 		return;
 	}
+	sc->sc_iob = aaa->aaa_addr;
 	sc->sc_ios = aaa->aaa_size;
-	sc->sc_physaddr = aaa->aaa_addr;
 
 	aprint_naive(": SDHC controller\n");
 	aprint_normal(": SDHC controller\n");
@@ -265,8 +264,7 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 				sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_WIDTH;
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_DREQ;
 			sc->sc_cblk[seg].cb_source_ad =
-			    BCM2835_PERIPHERALS_TO_BUS(sc->sc_physaddr +
-			    SDHC_DATA);
+			    sc->sc_iob + SDHC_DATA;
 			sc->sc_cblk[seg].cb_dest_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
 		} else {
@@ -282,8 +280,7 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			sc->sc_cblk[seg].cb_source_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
 			sc->sc_cblk[seg].cb_dest_ad =
-			    BCM2835_PERIPHERALS_TO_BUS(sc->sc_physaddr +
-			    SDHC_DATA);
+			    sc->sc_iob + SDHC_DATA;
 		}
 		sc->sc_cblk[seg].cb_stride = 0;
 		if (seg == cmd->c_dmamap->dm_nsegs - 1) {

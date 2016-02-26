@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.12.2.5 2014/11/16 10:33:57 martin Exp $
+#	$NetBSD: CUBIEBOARD,v 1.12.2.6 2016/02/26 22:52:53 snj Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -19,6 +19,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="cubieboard"
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 #options 	UVMHIST,UVMHIST_PRINT
 options 	CPU_CORTEXA8
 options 	CPU_CORTEXA7
