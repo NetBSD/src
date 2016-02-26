@@ -2453,6 +2453,7 @@ copy_object (bfd *ibfd, bfd *obfd, const bfd_arch_info_type *input_arch)
 						  off, now))
 		    {
 		      bfd_nonfatal_message (NULL, obfd, osections[i], NULL);
+		      free (buf);
 		      return FALSE;
 		    }
 
@@ -2461,6 +2462,7 @@ copy_object (bfd *ibfd, bfd *obfd, const bfd_arch_info_type *input_arch)
 		}
 	    }
 	}
+      free (buf);
     }
 
   /* Allow the BFD backend to copy any private data it understands
