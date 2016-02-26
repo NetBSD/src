@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.60.2.4 2015/06/10 16:43:51 snj Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.60.2.5 2016/02/26 22:08:17 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -315,7 +315,9 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
 #define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
-#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dymamic Gating Enable */
+#define	CTRL_EXT_SDLPE		(1U << 18) /* SerDes Low Power Enable */
+#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dynamic Gating Enable */
+#define	CTRL_EXT_PHYPDEN	__BIT(20)
 #define	CTRL_EXT_LINK_MODE_MASK		0x00C00000
 #define	CTRL_EXT_LINK_MODE_GMII		0x00000000
 #define	CTRL_EXT_LINK_MODE_KMRN		0x00000000
@@ -324,7 +326,6 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_LINK_MODE_PCIX_SERDES	0x00800000
 #define	CTRL_EXT_LINK_MODE_TBI		0x00C00000
 #define	CTRL_EXT_LINK_MODE_PCIE_SERDES	0x00C00000
-#define	CTRL_EXT_PHYPDEN	0x00100000
 #define CTRL_EXT_I2C_ENA	0x02000000  /* I2C enable */
 #define	CTRL_EXT_DRV_LOAD	0x10000000
 
@@ -414,6 +415,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WM_RAL_TABSIZE		15	/* RAL size for old devices */
 #define	WM_RAL_TABSIZE_ICH8	7	/* RAL size for ICH* and PCH* */
+#define	WM_RAL_TABSIZE_PCH2	5	/* RAL size for PCH2 */
+#define	WM_RAL_TABSIZE_PCH_LPT	12	/* RAL size for PCH_LPT */
 #define	WM_RAL_TABSIZE_82575	16	/* RAL size for 82575 */
 #define	WM_RAL_TABSIZE_82576	24	/* RAL size for 82576 and 82580 */
 #define	WM_RAL_TABSIZE_I350	32	/* RAL size for I350 */
@@ -656,14 +659,13 @@ struct livengood_tcpip_ctxdesc {
 #define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
 #define EXTCNFCTR_GATE_PHY_CFG		0x00000080
 #define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
-#define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
 
 #define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
 #define	PHY_CTRL_SPD_EN		(1 << 0)
 #define	PHY_CTRL_D0A_LPLU	(1 << 1)
 #define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
 #define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
-#define	PHY_CTRL_GBE_DIS	(1 << 4)
+#define	PHY_CTRL_GBE_DIS	(1 << 6)
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
@@ -671,6 +673,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_8K		0x0008
 #define	PBA_10K		0x000a
 #define	PBA_12K		0x000c
+#define	PBA_14K		0x000e
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
 #define	PBA_20K		0x0014
 #define	PBA_22K		0x0016
@@ -740,6 +743,9 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_EITR(x)	(0x01680 + (0x4 * (x)))
 #define EITR_ITR_INT_MASK	0x0000ffff
 
+#define	WMREG_RXPBS	0x2404	/* Rx Packet Buffer Size  */
+#define RXPBS_SIZE_MASK_82576	0x0000007F
+
 #define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
 #define	WMREG_RDFT	0x2418	/* Receive Data FIFO Tail */
 #define	WMREG_RDFHS	0x2420	/* Receive Data FIFO Head Saved */
@@ -797,6 +803,28 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
 #define WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
 
+#define	WMREG_PCS_CFG	0x4200	/* PCS Configuration */
+#define	PCS_CFG_PCS_EN	__BIT(3)
+
+#define	WMREG_PCS_LCTL	0x4208	/* PCS Link Control */
+#define	PCS_LCTL_FSV_1000 __BIT(2)	/* AN Timeout Enable */
+#define	PCS_LCTL_FDV_FULL __BIT(3)	/* AN Timeout Enable */
+#define	PCS_LCTL_FSD __BIT(4)	/* AN Timeout Enable */
+#define	PCS_LCTL_FORCE_FC __BIT(7)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_ENABLE __BIT(16)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_RESTART __BIT(17)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_TIMEOUT __BIT(18)	/* AN Timeout Enable */
+
+#define	WMREG_PCS_LSTS	0x420c	/* PCS Link Status */
+#define PCS_LSTS_LINKOK	__BIT(0)
+#define PCS_LSTS_SPEED_100  __BIT(1)
+#define PCS_LSTS_SPEED_1000 __BIT(2)
+#define PCS_LSTS_FDX	__BIT(3)
+#define PCS_LSTS_AN_COMP __BIT(16)
+
+#define	WMREG_PCS_ANADV	0x4218	/* AN Advertsement */
+#define	WMREG_PCS_LPAB	0x421c	/* Link Partnet Ability */
+
 #define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
 #define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
@@ -808,7 +836,8 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_RFCTL	0x5008	/* Receive Filter Control */
 #define WMREG_RFCTL_NFSWDIS	__BIT(6)  /* NFS Write Disable */
 #define WMREG_RFCTL_NFSRDIS	__BIT(7)  /* NFS Read Disable */
-#define WMREG_RFCTL_ACKDIS	__BIT(13) /* ACK Accelerate Disable */
+#define WMREG_RFCTL_ACKDIS	__BIT(12) /* ACK Accelerate Disable */
+#define WMREG_RFCTL_ACKD_DIS	__BIT(13) /* ACK data Disable */
 #define WMREG_RFCTL_IPV6EXDIS	__BIT(16) /* IPv6 Extension Header Disable */
 #define WMREG_RFCTL_NEWIPV6EXDIS __BIT(17) /* New IPv6 Extension Header */
 
@@ -836,7 +865,7 @@ struct livengood_tcpip_ctxdesc {
 #define	MANC_EN_MAC_ADDR_FILTER	0x00100000
 #define	MANC_EN_MNG2HOST	0x00200000
 
-#define	WMREG_MANC2H	0x5860	/* Manaegment Control To Host - RW */
+#define	WMREG_MANC2H	0x5860	/* Management Control To Host - RW */
 #define MANC2H_PORT_623		(1 << 5)
 #define MANC2H_PORT_624		(1 << 6)
 
@@ -851,6 +880,7 @@ struct livengood_tcpip_ctxdesc {
 #define GCR_CMPL_TMOUT_10MS	0x00001000
 #define GCR_CMPL_TMOUT_RESEND	0x00010000
 #define GCR_CAP_VER2		0x00040000
+#define GCR_L1_ACT_WITHOUT_L0S_RX 0x08000000
 
 #define WMREG_FACTPS	0x5b30	/* Function Active and Power State to MNG */
 #define FACTPS_MNGCG		0x20000000
@@ -867,12 +897,12 @@ struct livengood_tcpip_ctxdesc {
 #define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
 
 #define	WMREG_FWSM	0x5b54	/* FW Semaphore */
-#define	FWSM_MODE_MASK		0xe
-#define	FWSM_MODE_SHIFT		0x1
+#define	FWSM_MODE		__BITS(1, 3)
 #define	MNG_ICH_IAMT_MODE	0x2	/* PT mode? */
 #define	MNG_IAMT_MODE		0x3
-#define FWSM_RSPCIPHY		0x00000040	/* Reset PHY on PCI reset */
-#define FWSM_FW_VALID		0x00008000 /* FW established a valid mode */
+#define FWSM_RSPCIPHY		__BIT(6)  /* Reset PHY on PCI reset */
+#define FWSM_WLOCK_MAC		__BITS(7, 9)  /* Reset PHY on PCI reset */
+#define FWSM_FW_VALID		__BIT(15) /* FW established a valid mode */
 
 #define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */
 #define SWSM2_LOCK		0x00000002 /* Secondary driver semaphore bit */
@@ -895,6 +925,7 @@ struct livengood_tcpip_ctxdesc {
 #define EEC_FLASH_DETECTED (1U << 19)	/* FLASH */
 #define EEC_FLUPD	(1U << 23)	/* Update FLASH */
 
+#define WMREG_EEARBC_I210 0x12024
 
 /*
  * NVM related values.
@@ -928,6 +959,7 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_OFF_MACADDR2	0x0002	/* MAC address offset 2 */
 #define NVM_OFF_COMPAT		0x0003
 #define NVM_OFF_ID_LED_SETTINGS	0x0004
+#define NVM_OFF_VERSION		0x0005
 #define	NVM_OFF_CFG1		0x000a	/* config word 1 */
 #define	NVM_OFF_CFG2		0x000f	/* config word 2 */
 #define	NVM_OFF_EEPROM_SIZE	0x0012	/* NVM SIZE */
@@ -941,6 +973,9 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_OFF_SWDPIN		0x0020	/* SWD Pins (Cordova) */
 #define	NVM_OFF_CFG3_PORTA	0x0024	/* config word 3 */
 #define NVM_OFF_ALT_MAC_ADDR_PTR 0x0037	/* to the alternative MAC addresses */
+#define NVM_OFF_COMB_VER_PTR	0x003d
+#define NVM_OFF_IMAGE_UID0	0x0042
+#define NVM_OFF_IMAGE_UID1	0x0043
 
 #define NVM_COMPAT_VALID_CHECKSUM	0x0001
 
@@ -980,6 +1015,8 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_CFG2_MNGM_NCSI	1
 #define	NVM_CFG2_MNGM_PT	2
 
+#define	NVM_COMPAT_SERDES_FORCE_MODE	__BIT(14) /* Don't use autonego */
+
 #define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
 
 #define	NVM_K1_CONFIG_ENABLE	0x01
@@ -991,6 +1028,8 @@ struct livengood_tcpip_ctxdesc {
 #define NVM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
 
 #define NVM_CFG3_APME		(1U << 10)	
+#define NVM_CFG3_PORTA_EXT_MDIO	(1U << 2)	/* External MDIO Interface */
+#define NVM_CFG3_PORTA_COM_MDIO	(1U << 3)	/* MDIO Interface is shared */
 
 #define	NVM_OFF_MACADDR_82571(x)	(3 * (x))
 
@@ -1000,8 +1039,17 @@ struct livengood_tcpip_ctxdesc {
  */
 #define NVM_OFF_LAN_FUNC_82580(x)	((x) ? (0x40 + (0x40 * (x))) : 0)
 
+#define NVM_COMBO_VER_OFF	0x0083
+
+#define NVM_MAJOR_MASK		0xf000
+#define NVM_MAJOR_SHIFT		12
+#define NVM_MINOR_MASK		0x0ff0
+#define NVM_MINOR_SHIFT		4
+#define NVM_BUILD_MASK		0x000f
+#define NVM_UID_VALID		0x8000
+
 /* iNVM Registers for i21[01] */
-#define E1000_INVM_DATA_REG(reg)	(0x12120 + 4*(reg))
+#define WM_INVM_DATA_REG(reg)	(0x12120 + 4*(reg))
 #define INVM_SIZE			64 /* Number of INVM Data Registers */
 
 /* iNVM default vaule */
@@ -1020,10 +1068,21 @@ struct livengood_tcpip_ctxdesc {
 #define INVM_CSR_AUTOLOAD_STRUCTURE		0x2
 #define INVM_PHY_REGISTER_AUTOLOAD_STRUCTURE	0x3
 #define INVM_RSA_KEY_SHA256_STRUCTURE		0x4
-#define INVM_INVALIDATED_STRUCTURE		0x5
+#define INVM_INVALIDATED_STRUCTURE		0xf
 
 #define INVM_RSA_KEY_SHA256_DATA_SIZE_IN_DWORDS	8
 #define INVM_CSR_AUTOLOAD_DATA_SIZE_IN_DWORDS	1
+
+#define INVM_DEFAULT_AL		0x202f
+#define INVM_AUTOLOAD		0x0a
+#define INVM_PLL_WO_VAL		0x0010
+
+/* Version and Image Type field */
+#define INVM_VER_1	__BITS(12,3)
+#define INVM_VER_2	__BITS(22,13)
+#define INVM_IMGTYPE	__BITS(28,23)
+#define INVM_MINOR	__BITS(3,0)
+#define INVM_MAJOR	__BITS(9,4)
 
 /* Word definitions for ID LED Settings */
 #define ID_LED_RESERVED_FFFF 0xFFFF
@@ -1098,6 +1157,13 @@ struct livengood_tcpip_ctxdesc {
 #define SFF_SFP_ETH_FLAGS_1000T		0x08
 #define SFF_SFP_ETH_FLAGS_100FX		0x10
 
+/* I21[01] PHY related definitions */
+#define GS40G_PAGE_SELECT	0x16
+#define GS40G_PAGE_SHIFT	16
+#define GS40G_OFFSET_MASK	0xffff
+#define GS40G_PHY_PLL_FREQ_PAGE	0xfc0000
+#define GS40G_PHY_PLL_FREQ_REG	0x000e
+#define GS40G_PHY_PLL_UNCONF	0xff
 
 /* advanced TX descriptor for 82575 and newer */
 typedef union nq_txdesc {
