@@ -1,4 +1,4 @@
-/* $NetBSD: auvolconv.c,v 1.2 2014/11/23 12:23:25 jmcneill Exp $ */
+/* $NetBSD: auvolconv.c,v 1.3 2016/02/26 13:08:28 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvolconv.c,v 1.2 2014/11/23 12:23:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvolconv.c,v 1.3 2016/02/26 13:08:28 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +63,7 @@ auvolconv_slinear16_le_fetch_to(struct audio_softc *asc,
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = le16dec(s);
 		wp = (int16_t *)d;
-		le16enc(wp, (j * vol) / 255);
+		le16enc(wp, (int32_t)(j * vol) / 255);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 
 	return 0;
@@ -91,7 +91,7 @@ auvolconv_slinear16_be_fetch_to(struct audio_softc *asc,
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = be16dec(s);
 		wp = (int16_t *)d;
-		be16enc(wp, (j * vol) / 255);
+		be16enc(wp, (int32_t)(j * vol) / 255);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 
 	return 0;
