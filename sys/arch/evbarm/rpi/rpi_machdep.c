@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.43.2.5 2015/07/30 09:37:37 martin Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.43.2.6 2016/02/26 22:52:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.5 2015/07/30 09:37:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.6 2016/02/26 22:52:53 snj Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -130,15 +130,7 @@ static void rpi_device_register(device_t, void *);
 #define RPI_FB_HEIGHT	720
 #endif
 
-#if 0
 #define	PLCONADDR BCM2835_UART0_BASE
-#endif
-
-#ifdef BCM2836
-#define	PLCONADDR 0x3f201000
-#else
-#define	PLCONADDR 0x20201000
-#endif
 
 #ifndef CONSDEVNAME
 #define CONSDEVNAME "plcom"
@@ -387,8 +379,9 @@ extern void bcmgenfb_ddb_trap_callback(int where);
 static void
 rpi_bootparams(void)
 {
-	bus_space_tag_t iot = &bcm2835_bs_tag;
-	bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(BCM2835_ARMMBOX_BASE);
+	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2835_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
 	uint32_t res;
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANPM, (

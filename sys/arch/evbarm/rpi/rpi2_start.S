@@ -38,7 +38,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: rpi2_start.S,v 1.1.2.2 2015/03/11 20:22:56 snj Exp $")
+RCSID("$NetBSD: rpi2_start.S,v 1.1.2.3 2016/02/26 22:52:53 snj Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl plputc
@@ -78,11 +78,6 @@ _C_LABEL(rpi_start):
 #ifdef __ARMEB__
 	setend	be			/* force big endian */
 #endif
-	mov	r9, #0
-
-	/* Move into supervisor mode and disable IRQs/FIQs. */
-	cpsid	if, #PSR_SVC32_MODE
-
 	/*
 	 * Save any arguments passed to us.
 	 */
@@ -101,7 +96,7 @@ _C_LABEL(rpi_start):
 	stmia	r4, {r0-r3}		// Save the arguments
 
 	/*
-	 * Turn on the SMP bit
+	 * Setup the CPU
 	 */
 	bl	cortex_init
 

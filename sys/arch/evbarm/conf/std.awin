@@ -1,4 +1,4 @@
-#	$NetBSD: std.awin,v 1.1.2.5 2014/11/13 09:55:45 martin Exp $
+#	$NetBSD: std.awin,v 1.1.2.6 2016/02/26 22:52:53 snj Exp $
 #
 # standard NetBSD/evbarm for Allwinner based options
 
@@ -26,7 +26,7 @@ makeoptions	KERNEL_BASE_PHYS="0x40007800"
 makeoptions	KERNEL_BASE_VIRT="0x80007800"
 makeoptions	BOARDTYPE="awin"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.awin"
-makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
+makeoptions	CPUFLAGS="-mcpu=generic-armv7-a -mfpu=neon"
 
 options 	ARM_INTR_IMPL="<arch/arm/allwinner/awin_intr.h>"
 options		ARM_GENERIC_TODR

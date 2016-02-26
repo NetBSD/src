@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.18.2.3 2015/03/21 08:51:18 snj Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.18.2.4 2016/02/26 22:52:53 snj Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -331,9 +331,31 @@ xputc:
 cortex_init:
 	mov	r10, lr				// save lr
 
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
+	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
+	mrs	r0, cpsr
+	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
+	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
+	bne	1f
+
+	/* Ensure that IRQ, and FIQ will be disabled after eret */
+	mrs	r0, cpsr
+	bic	r0, r0, #(PSR_MODE)
+	orr	r0, r0, #(PSR_SVC32_MODE)
+	orr	r0, r0, #(I32_bit | F32_bit)
+	msr	spsr_cxsf, r0
+	/* Exit hypervisor mode */
+	adr	lr, 2f
+	msr	elr_hyp, lr
+	eret
+#endif
+
+1:
 	cpsid	if, #PSR_SVC32_MODE		// SVC32 with no interrupts
-        mov	r0, #0
-        msr	spsr_sxc, r0			// set SPSR[23:8] to known value
+
+2:
+	mov	r0, #0
+	msr	spsr_sxc, r0			// set SPSR[23:8] to known value
 
 	XPUTC(#64)
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
