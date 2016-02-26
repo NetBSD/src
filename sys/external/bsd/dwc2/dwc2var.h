@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.7 2015/10/22 11:15:42 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.8 2016/02/26 07:36:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ typedef struct dwc2_softc {
 	char sc_dying;
 
 	TAILQ_HEAD(, dwc2_xfer) sc_complete;	/* complete transfers */
-
 
 	pool_cache_t sc_xferpool;
 	pool_cache_t sc_qhpool;
