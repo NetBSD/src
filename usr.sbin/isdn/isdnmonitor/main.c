@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.12 2011/08/31 13:32:37 joerg Exp $ */
+/* $NetBSD: main.c,v 1.13 2016/02/26 18:20:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1169,7 +1169,7 @@ mprintf(const char *fmt, ...)
 	vsnprintf(buffer, PRBUFLEN-1, fmt, ap);
 	va_end(ap);
 
-	if (!fullscreen || (fullscreen && (!curses_ready)))
+	if (!fullscreen || !curses_ready)
 		printf("%s", buffer);
 	
 	if (logfilename != NULL)
