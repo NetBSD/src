@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.13 2016/02/26 18:20:00 christos Exp $ */
+/* $NetBSD: main.c,v 1.14 2016/02/26 18:20:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ print_logevent(time_t tstamp, int prio, char * what, char * msg)
 #ifndef WIN32
 	if (fullscreen)
 	{
-		if ((!debug_noscreen) || (debug_noscreen && (((strcmp(what, "DBG"))) != 0)))
+		if (!debug_noscreen && strcmp(what, "DBG") != 0)
 		{
 /*
  * FreeBSD-current integrated ncurses. Since then it is no longer possible
