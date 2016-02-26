@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.36 2013/12/19 19:11:50 rmind Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.37 2016/02/26 17:13:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.36 2013/12/19 19:11:50 rmind Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.37 2016/02/26 17:13:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -418,6 +418,8 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		return -1;
 	case _SC_TTY_NAME_MAX:
 		return pathconf(_PATH_DEV, _PC_NAME_MAX);
+	case _SC_TIMER_MAX:
+		return _POSIX_TIMER_MAX;
 	default:
 		errno = EINVAL;
 		return (-1);
