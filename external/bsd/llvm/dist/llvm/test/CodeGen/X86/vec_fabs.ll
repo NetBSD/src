@@ -1,10 +1,10 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7-avx | FileCheck %s
-
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx512f | FileCheck %s
 
 define <2 x double> @fabs_v2f64(<2 x double> %p)
 {
   ; CHECK-LABEL: fabs_v2f64
-  ; CHECK: vandps
+  ; CHECK: vandpd
   %t = call <2 x double> @llvm.fabs.v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
@@ -22,7 +22,7 @@ declare <4 x float> @llvm.fabs.v4f32(<4 x float> %p)
 define <4 x double> @fabs_v4f64(<4 x double> %p)
 {
   ; CHECK-LABEL: fabs_v4f64
-  ; CHECK: vandps
+  ; CHECK: vandpd
   %t = call <4 x double> @llvm.fabs.v4f64(<4 x double> %p)
   ret <4 x double> %t
 }

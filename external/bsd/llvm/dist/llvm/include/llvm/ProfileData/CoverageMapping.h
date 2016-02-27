@@ -18,21 +18,43 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/iterator.h"
+#include "llvm/ProfileData/InstrProf.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
+#include <tuple>
+
+namespace llvm {
+namespace coverage {
+enum class coveragemap_error {
+  success = 0,
+  eof,
+  no_data_found,
+  unsupported_version,
+  truncated,
+  malformed
+};
+} // end of coverage namespace.
+}
+
+namespace std {
+template <>
+struct is_error_code_enum<llvm::coverage::coveragemap_error> : std::true_type {
+};
+}
 
 namespace llvm {
 class IndexedInstrProfReader;
 namespace coverage {
 
-class ObjectFileCoverageMappingReader;
+class CoverageMappingReader;
 
 class CoverageMapping;
 struct CounterExpressions;
-
-enum CoverageMappingVersion { CoverageMappingVersion1 };
 
 /// \brief A Counter is an abstract value that describes how to compute the
 /// execution count for a region of code using the collected profile count data.
@@ -62,8 +84,12 @@ public:
 
   unsigned getExpressionID() const { return ID; }
 
-  bool operator==(const Counter &Other) const {
-    return Kind == Other.Kind && ID == Other.ID;
+  friend bool operator==(const Counter &LHS, const Counter &RHS) {
+    return LHS.Kind == RHS.Kind && LHS.ID == RHS.ID;
+  }
+
+  friend bool operator!=(const Counter &LHS, const Counter &RHS) {
+    return !(LHS == RHS);
   }
 
   friend bool operator<(const Counter &LHS, const Counter &RHS) {
@@ -97,7 +123,7 @@ struct CounterExpression {
 };
 
 /// \brief A Counter expression builder is used to construct the
-/// counter expressions. It avoids unecessary duplication
+/// counter expressions. It avoids unnecessary duplication
 /// and simplifies algebraic expressions.
 class CounterExpressionBuilder {
   /// \brief A list of all the counter expressions
@@ -153,24 +179,40 @@ struct CounterMappingRegion {
     SkippedRegion
   };
 
-  static const unsigned EncodingHasCodeBeforeBits = 1;
-
   Counter Count;
   unsigned FileID, ExpandedFileID;
   unsigned LineStart, ColumnStart, LineEnd, ColumnEnd;
   RegionKind Kind;
-  /// \brief A flag that is set to true when there is already code before
-  /// this region on the same line.
-  /// This is useful to accurately compute the execution counts for a line.
-  bool HasCodeBefore;
 
-  CounterMappingRegion(Counter Count, unsigned FileID, unsigned LineStart,
-                       unsigned ColumnStart, unsigned LineEnd,
-                       unsigned ColumnEnd, bool HasCodeBefore = false,
-                       RegionKind Kind = CodeRegion)
-      : Count(Count), FileID(FileID), ExpandedFileID(0), LineStart(LineStart),
-        ColumnStart(ColumnStart), LineEnd(LineEnd), ColumnEnd(ColumnEnd),
-        Kind(Kind), HasCodeBefore(HasCodeBefore) {}
+  CounterMappingRegion(Counter Count, unsigned FileID, unsigned ExpandedFileID,
+                       unsigned LineStart, unsigned ColumnStart,
+                       unsigned LineEnd, unsigned ColumnEnd, RegionKind Kind)
+      : Count(Count), FileID(FileID), ExpandedFileID(ExpandedFileID),
+        LineStart(LineStart), ColumnStart(ColumnStart), LineEnd(LineEnd),
+        ColumnEnd(ColumnEnd), Kind(Kind) {}
+
+  static CounterMappingRegion
+  makeRegion(Counter Count, unsigned FileID, unsigned LineStart,
+             unsigned ColumnStart, unsigned LineEnd, unsigned ColumnEnd) {
+    return CounterMappingRegion(Count, FileID, 0, LineStart, ColumnStart,
+                                LineEnd, ColumnEnd, CodeRegion);
+  }
+
+  static CounterMappingRegion
+  makeExpansion(unsigned FileID, unsigned ExpandedFileID, unsigned LineStart,
+                unsigned ColumnStart, unsigned LineEnd, unsigned ColumnEnd) {
+    return CounterMappingRegion(Counter(), FileID, ExpandedFileID, LineStart,
+                                ColumnStart, LineEnd, ColumnEnd,
+                                ExpansionRegion);
+  }
+
+  static CounterMappingRegion
+  makeSkipped(unsigned FileID, unsigned LineStart, unsigned ColumnStart,
+              unsigned LineEnd, unsigned ColumnEnd) {
+    return CounterMappingRegion(Counter(), FileID, 0, LineStart, ColumnStart,
+                                LineEnd, ColumnEnd, SkippedRegion);
+  }
+
 
   inline std::pair<unsigned, unsigned> startLoc() const {
     return std::pair<unsigned, unsigned>(LineStart, ColumnStart);
@@ -213,11 +255,13 @@ class CounterMappingContext {
 
 public:
   CounterMappingContext(ArrayRef<CounterExpression> Expressions,
-                        ArrayRef<uint64_t> CounterValues = ArrayRef<uint64_t>())
+                        ArrayRef<uint64_t> CounterValues = None)
       : Expressions(Expressions), CounterValues(CounterValues) {}
 
+  void setCounts(ArrayRef<uint64_t> Counts) { CounterValues = Counts; }
+
   void dump(const Counter &C, llvm::raw_ostream &OS) const;
-  void dump(const Counter &C) const { dump(C, llvm::outs()); }
+  void dump(const Counter &C) const { dump(C, dbgs()); }
 
   /// \brief Return the number of times that a region of code associated with
   /// this counter was executed.
@@ -235,10 +279,14 @@ struct FunctionRecord {
   /// \brief The number of times this function was executed.
   uint64_t ExecutionCount;
 
-  FunctionRecord(StringRef Name, ArrayRef<StringRef> Filenames,
-                 uint64_t ExecutionCount)
-      : Name(Name), Filenames(Filenames.begin(), Filenames.end()),
-        ExecutionCount(ExecutionCount) {}
+  FunctionRecord(StringRef Name, ArrayRef<StringRef> Filenames)
+      : Name(Name), Filenames(Filenames.begin(), Filenames.end()) {}
+
+  void pushRegion(CounterMappingRegion Region, uint64_t Count) {
+    if (CountedRegions.empty())
+      ExecutionCount = Count;
+    CountedRegions.emplace_back(Region, Count);
+  }
 };
 
 /// \brief Iterator over Functions, optionally filtered to a single file.
@@ -312,10 +360,22 @@ struct CoverageSegment {
   CoverageSegment(unsigned Line, unsigned Col, bool IsRegionEntry)
       : Line(Line), Col(Col), Count(0), HasCount(false),
         IsRegionEntry(IsRegionEntry) {}
+
+  CoverageSegment(unsigned Line, unsigned Col, uint64_t Count,
+                  bool IsRegionEntry)
+      : Line(Line), Col(Col), Count(Count), HasCount(true),
+        IsRegionEntry(IsRegionEntry) {}
+
+  friend bool operator==(const CoverageSegment &L, const CoverageSegment &R) {
+    return std::tie(L.Line, L.Col, L.Count, L.HasCount, L.IsRegionEntry) ==
+           std::tie(R.Line, R.Col, R.Count, R.HasCount, R.IsRegionEntry);
+  }
+
   void setCount(uint64_t NewCount) {
     Count = NewCount;
     HasCount = true;
   }
+
   void addCount(uint64_t NewCount) { setCount(Count + NewCount); }
 };
 
@@ -363,12 +423,13 @@ class CoverageMapping {
 public:
   /// \brief Load the coverage mapping using the given readers.
   static ErrorOr<std::unique_ptr<CoverageMapping>>
-  load(ObjectFileCoverageMappingReader &CoverageReader,
+  load(CoverageMappingReader &CoverageReader,
        IndexedInstrProfReader &ProfileReader);
 
   /// \brief Load the coverage mapping from the given files.
   static ErrorOr<std::unique_ptr<CoverageMapping>>
-  load(StringRef ObjectFilename, StringRef ProfileFilename);
+  load(StringRef ObjectFilename, StringRef ProfileFilename,
+       StringRef Arch = StringRef());
 
   /// \brief The number of functions that couldn't have their profiles mapped.
   ///
@@ -401,7 +462,7 @@ public:
 
   /// \brief Get the list of function instantiations in the file.
   ///
-  /// Fucntions that are instantiated more than once, such as C++ template
+  /// Functions that are instantiated more than once, such as C++ template
   /// specializations, have distinct coverage records for each instantiation.
   std::vector<const FunctionRecord *> getInstantiations(StringRef Filename);
 
@@ -410,6 +471,76 @@ public:
 
   /// \brief Get the coverage for an expansion within a coverage set.
   CoverageData getCoverageForExpansion(const ExpansionRecord &Expansion);
+};
+
+const std::error_category &coveragemap_category();
+
+inline std::error_code make_error_code(coveragemap_error E) {
+  return std::error_code(static_cast<int>(E), coveragemap_category());
+}
+
+// Profile coverage map has the following layout:
+// [CoverageMapFileHeader]
+// [ArrayStart]
+//  [CovMapFunctionRecord]
+//  [CovMapFunctionRecord]
+//  ...
+// [ArrayEnd]
+// [Encoded Region Mapping Data]
+LLVM_PACKED_START
+template <class IntPtrT> struct CovMapFunctionRecord {
+#define COVMAP_FUNC_RECORD(Type, LLVMType, Name, Init) Type Name;
+#include "llvm/ProfileData/InstrProfData.inc"
+
+  // Return the structural hash associated with the function.
+  template <support::endianness Endian> uint64_t getFuncHash() const {
+    return support::endian::byte_swap<uint64_t, Endian>(FuncHash);
+  }
+  // Return the coverage map data size for the funciton.
+  template <support::endianness Endian> uint32_t getDataSize() const {
+    return support::endian::byte_swap<uint32_t, Endian>(DataSize);
+  }
+  // Return function lookup key. The value is consider opaque.
+  template <support::endianness Endian> IntPtrT getFuncNameRef() const {
+    return support::endian::byte_swap<IntPtrT, Endian>(NamePtr);
+  }
+  // Return the PGO name of the function */
+  template <support::endianness Endian>
+  std::error_code getFuncName(InstrProfSymtab &ProfileNames,
+                              StringRef &FuncName) const {
+    IntPtrT NameRef = getFuncNameRef<Endian>();
+    uint32_t NameS = support::endian::byte_swap<uint32_t, Endian>(NameSize);
+    FuncName = ProfileNames.getFuncName(NameRef, NameS);
+    if (NameS && FuncName.empty())
+      return coveragemap_error::malformed;
+    return std::error_code();
+  }
+};
+// Per module coverage mapping data header, i.e. CoverageMapFileHeader
+// documented above.
+struct CovMapHeader {
+#define COVMAP_HEADER(Type, LLVMType, Name, Init) Type Name;
+#include "llvm/ProfileData/InstrProfData.inc"
+  template <support::endianness Endian> uint32_t getNRecords() const {
+    return support::endian::byte_swap<uint32_t, Endian>(NRecords);
+  }
+  template <support::endianness Endian> uint32_t getFilenamesSize() const {
+    return support::endian::byte_swap<uint32_t, Endian>(FilenamesSize);
+  }
+  template <support::endianness Endian> uint32_t getCoverageSize() const {
+    return support::endian::byte_swap<uint32_t, Endian>(CoverageSize);
+  }
+  template <support::endianness Endian> uint32_t getVersion() const {
+    return support::endian::byte_swap<uint32_t, Endian>(Version);
+  }
+};
+
+LLVM_PACKED_END
+
+enum CoverageMappingVersion {
+  CoverageMappingVersion1 = 0,
+  // The current versin is Version1
+  CoverageMappingCurrentVersion = INSTR_PROF_COVMAP_VERSION
 };
 
 } // end namespace coverage
@@ -441,7 +572,6 @@ template<> struct DenseMapInfo<coverage::CounterExpression> {
     return LHS.Kind == RHS.Kind && LHS.LHS == RHS.LHS && LHS.RHS == RHS.RHS;
   }
 };
-
 
 } // end namespace llvm
 

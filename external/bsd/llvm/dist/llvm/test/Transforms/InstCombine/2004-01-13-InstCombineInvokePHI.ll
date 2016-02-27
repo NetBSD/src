@@ -9,7 +9,7 @@
 
 declare i8* @test()
 
-define i32 @foo() {
+define i32 @foo() personality i32 (...)* @__gxx_personality_v0 {
 entry:
         br i1 true, label %cont, label %call
 
@@ -19,11 +19,11 @@ call:           ; preds = %entry
 
 cont:           ; preds = %call, %entry
         %P2 = phi i32* [ %P, %call ], [ null, %entry ]          ; <i32*> [#uses=1]
-        %V = load i32* %P2              ; <i32> [#uses=1]
+        %V = load i32, i32* %P2              ; <i32> [#uses=1]
         ret i32 %V
 
 N:              ; preds = %call
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
         ret i32 0
 }

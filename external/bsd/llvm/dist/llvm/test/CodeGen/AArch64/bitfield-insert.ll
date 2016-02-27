@@ -28,10 +28,10 @@ define void @test_whole32(i32* %existing, i32* %new) {
 
 ; CHECK: bfi {{w[0-9]+}}, {{w[0-9]+}}, #26, #5
 
-  %oldval = load volatile i32* %existing
+  %oldval = load volatile i32, i32* %existing
   %oldval_keep = and i32 %oldval, 2214592511 ; =0x83ffffff
 
-  %newval = load volatile i32* %new
+  %newval = load volatile i32, i32* %new
   %newval_shifted = shl i32 %newval, 26
   %newval_masked = and i32 %newval_shifted, 2080374784 ; = 0x7c000000
 
@@ -47,10 +47,10 @@ define void @test_whole64(i64* %existing, i64* %new) {
 ; CHECK-NOT: and
 ; CHECK: ret
 
-  %oldval = load volatile i64* %existing
+  %oldval = load volatile i64, i64* %existing
   %oldval_keep = and i64 %oldval, 18446742974265032703 ; = 0xffffff0003ffffffL
 
-  %newval = load volatile i64* %new
+  %newval = load volatile i64, i64* %new
   %newval_shifted = shl i64 %newval, 26
   %newval_masked = and i64 %newval_shifted, 1099444518912 ; = 0xfffc000000
 
@@ -68,10 +68,10 @@ define void @test_whole32_from64(i64* %existing, i64* %new) {
 
 ; CHECK: ret
 
-  %oldval = load volatile i64* %existing
+  %oldval = load volatile i64, i64* %existing
   %oldval_keep = and i64 %oldval, 4294901760 ; = 0xffff0000
 
-  %newval = load volatile i64* %new
+  %newval = load volatile i64, i64* %new
   %newval_masked = and i64 %newval, 65535 ; = 0xffff
 
   %combined = or i64 %oldval_keep, %newval_masked
@@ -86,10 +86,10 @@ define void @test_32bit_masked(i32 *%existing, i32 *%new) {
 ; CHECK: and
 ; CHECK: bfi [[INSERT:w[0-9]+]], {{w[0-9]+}}, #3, #4
 
-  %oldval = load volatile i32* %existing
+  %oldval = load volatile i32, i32* %existing
   %oldval_keep = and i32 %oldval, 135 ; = 0x87
 
-  %newval = load volatile i32* %new
+  %newval = load volatile i32, i32* %new
   %newval_shifted = shl i32 %newval, 3
   %newval_masked = and i32 %newval_shifted, 120 ; = 0x78
 
@@ -104,10 +104,10 @@ define void @test_64bit_masked(i64 *%existing, i64 *%new) {
 ; CHECK: and
 ; CHECK: bfi [[INSERT:x[0-9]+]], {{x[0-9]+}}, #40, #8
 
-  %oldval = load volatile i64* %existing
+  %oldval = load volatile i64, i64* %existing
   %oldval_keep = and i64 %oldval, 1095216660480 ; = 0xff_0000_0000
 
-  %newval = load volatile i64* %new
+  %newval = load volatile i64, i64* %new
   %newval_shifted = shl i64 %newval, 40
   %newval_masked = and i64 %newval_shifted, 280375465082880 ; = 0xff00_0000_0000
 
@@ -124,10 +124,10 @@ define void @test_32bit_complexmask(i32 *%existing, i32 *%new) {
 ; CHECK: and
 ; CHECK: bfi {{w[0-9]+}}, {{w[0-9]+}}, #3, #4
 
-  %oldval = load volatile i32* %existing
+  %oldval = load volatile i32, i32* %existing
   %oldval_keep = and i32 %oldval, 647 ; = 0x287
 
-  %newval = load volatile i32* %new
+  %newval = load volatile i32, i32* %new
   %newval_shifted = shl i32 %newval, 3
   %newval_masked = and i32 %newval_shifted, 120 ; = 0x278
 
@@ -144,10 +144,10 @@ define void @test_32bit_badmask(i32 *%existing, i32 *%new) {
 ; CHECK-NOT: bfm
 ; CHECK: ret
 
-  %oldval = load volatile i32* %existing
+  %oldval = load volatile i32, i32* %existing
   %oldval_keep = and i32 %oldval, 135 ; = 0x87
 
-  %newval = load volatile i32* %new
+  %newval = load volatile i32, i32* %new
   %newval_shifted = shl i32 %newval, 3
   %newval_masked = and i32 %newval_shifted, 632 ; = 0x278
 
@@ -164,10 +164,10 @@ define void @test_64bit_badmask(i64 *%existing, i64 *%new) {
 ; CHECK-NOT: bfm
 ; CHECK: ret
 
-  %oldval = load volatile i64* %existing
+  %oldval = load volatile i64, i64* %existing
   %oldval_keep = and i64 %oldval, 135 ; = 0x87
 
-  %newval = load volatile i64* %new
+  %newval = load volatile i64, i64* %new
   %newval_shifted = shl i64 %newval, 3
   %newval_masked = and i64 %newval_shifted, 664 ; = 0x278
 
@@ -182,10 +182,10 @@ define void @test_64bit_badmask(i64 *%existing, i64 *%new) {
 define void @test_32bit_with_shr(i32* %existing, i32* %new) {
 ; CHECK-LABEL: test_32bit_with_shr:
 
-  %oldval = load volatile i32* %existing
+  %oldval = load volatile i32, i32* %existing
   %oldval_keep = and i32 %oldval, 2214592511 ; =0x83ffffff
 
-  %newval = load i32* %new
+  %newval = load i32, i32* %new
   %newval_shifted = shl i32 %newval, 12
   %newval_masked = and i32 %newval_shifted, 2080374784 ; = 0x7c000000
 
@@ -195,4 +195,45 @@ define void @test_32bit_with_shr(i32* %existing, i32* %new) {
 ; CHECK: bfi {{w[0-9]+}}, [[BIT]], #26, #5
 
   ret void
+}
+
+; Bitfield insert where the second or operand is a better match to be folded into the BFM
+define void @test_32bit_opnd1_better(i32* %existing, i32* %new) {
+; CHECK-LABEL: test_32bit_opnd1_better:
+
+  %oldval = load volatile i32, i32* %existing
+  %oldval_keep = and i32 %oldval, 65535 ; 0x0000ffff
+
+  %newval = load i32, i32* %new
+  %newval_shifted = shl i32 %newval, 16
+  %newval_masked = and i32 %newval_shifted, 16711680 ; 0x00ff0000
+
+  %combined = or i32 %oldval_keep, %newval_masked
+  store volatile i32 %combined, i32* %existing
+; CHECK: and [[BIT:w[0-9]+]], {{w[0-9]+}}, #0xffff
+; CHECK: bfi [[BIT]], {{w[0-9]+}}, #16, #8
+
+  ret void
+}
+
+; Tests when all the bits from one operand are not useful
+define i32 @test_nouseful_bits(i8 %a, i32 %b) {
+; CHECK-LABEL: test_nouseful_bits:
+; CHECK: bfi
+; CHECK: bfi
+; CHECK: bfi
+; CHECK-NOT: bfi
+; CHECK-NOT: or
+; CHECK: lsl
+  %conv = zext i8 %a to i32     ;   0  0  0  A
+  %shl = shl i32 %b, 8          ;   B2 B1 B0 0
+  %or = or i32 %conv, %shl      ;   B2 B1 B0 A
+  %shl.1 = shl i32 %or, 8       ;   B1 B0 A 0
+  %or.1 = or i32 %conv, %shl.1  ;   B1 B0 A A
+  %shl.2 = shl i32 %or.1, 8     ;   B0 A A 0
+  %or.2 = or i32 %conv, %shl.2  ;   B0 A A A
+  %shl.3 = shl i32 %or.2, 8     ;   A A A 0
+  %or.3 = or i32 %conv, %shl.3  ;   A A A A
+  %shl.4 = shl i32 %or.3, 8     ;   A A A 0
+  ret i32 %shl.4
 }

@@ -33,6 +33,7 @@
 #define LLVM_IR_CONSTANTRANGE_H
 
 #include "llvm/ADT/APInt.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -59,15 +60,38 @@ public:
   /// assert out if the two APInt's are not the same bit width.
   ConstantRange(APIntMoveTy Lower, APIntMoveTy Upper);
 
-  /// Produce the smallest range that contains all values that
-  /// might satisfy the comparison specified by Pred when compared to any value
-  /// contained within Other.
+  /// Produce the smallest range such that all values that may satisfy the given
+  /// predicate with any value contained within Other is contained in the
+  /// returned range.  Formally, this returns a superset of
+  /// 'union over all y in Other . { x : icmp op x y is true }'.  If the exact
+  /// answer is not representable as a ConstantRange, the return value will be a
+  /// proper superset of the above.
   ///
-  /// Solves for range X in 'for all x in X, there exists a y in Y such that
-  /// icmp op x, y is true'. Every value that might make the comparison true
-  /// is included in the resulting range.
-  static ConstantRange makeICmpRegion(unsigned Pred,
-                                      const ConstantRange &Other);
+  /// Example: Pred = ult and Other = i8 [2, 5) returns Result = [0, 4)
+  static ConstantRange makeAllowedICmpRegion(CmpInst::Predicate Pred,
+                                             const ConstantRange &Other);
+
+  /// Produce the largest range such that all values in the returned range
+  /// satisfy the given predicate with all values contained within Other.
+  /// Formally, this returns a subset of
+  /// 'intersection over all y in Other . { x : icmp op x y is true }'.  If the
+  /// exact answer is not representable as a ConstantRange, the return value
+  /// will be a proper subset of the above.
+  ///
+  /// Example: Pred = ult and Other = i8 [2, 5) returns [0, 2)
+  static ConstantRange makeSatisfyingICmpRegion(CmpInst::Predicate Pred,
+                                                const ConstantRange &Other);
+
+  /// Return the largest range containing all X such that "X BinOpC C" does not
+  /// wrap (overflow).
+  ///
+  /// Example:
+  ///  typedef OverflowingBinaryOperator OBO;
+  ///  makeNoWrapRegion(Add, i8 1, OBO::NoSignedWrap) == [-128, 127)
+  ///  makeNoWrapRegion(Add, i8 1, OBO::NoUnsignedWrap) == [0, -1)
+  ///  makeNoWrapRegion(Add, i8 0, OBO::NoUnsignedWrap) == Full Set
+  static ConstantRange makeNoWrapRegion(Instruction::BinaryOps BinOp,
+                                        const APInt &C, unsigned NoWrapKind);
 
   /// Return the lower value for this range.
   ///
@@ -194,7 +218,7 @@ public:
   /// Make this range have the bit width given by \p BitWidth. The
   /// value is zero extended, truncated, or left alone to make it that width.
   ConstantRange zextOrTrunc(uint32_t BitWidth) const;
-  
+
   /// Make this range have the bit width given by \p BitWidth. The
   /// value is sign extended, truncated, or left alone to make it that width.
   ConstantRange sextOrTrunc(uint32_t BitWidth) const;
@@ -208,8 +232,8 @@ public:
   ConstantRange sub(const ConstantRange &Other) const;
 
   /// Return a new range representing the possible values resulting
-  /// from a multiplication of a value in this range and a value in \p Other.
-  /// TODO: This isn't fully implemented yet.
+  /// from a multiplication of a value in this range and a value in \p Other,
+  /// treating both this and \p Other as unsigned ranges.
   ConstantRange multiply(const ConstantRange &Other) const;
 
   /// Return a new range representing the possible values resulting
@@ -245,7 +269,7 @@ public:
   /// Return a new range that is the logical not of the current set.
   ///
   ConstantRange inverse() const;
-  
+
   /// Print out the bounds to a stream.
   ///
   void print(raw_ostream &OS) const;

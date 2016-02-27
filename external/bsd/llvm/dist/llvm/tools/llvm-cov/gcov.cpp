@@ -23,9 +23,10 @@
 #include <system_error>
 using namespace llvm;
 
-void reportCoverage(StringRef SourceFile, StringRef ObjectDir,
-                    const std::string &InputGCNO, const std::string &InputGCDA,
-                    bool DumpGCOV, const GCOVOptions &Options) {
+static void reportCoverage(StringRef SourceFile, StringRef ObjectDir,
+                           const std::string &InputGCNO,
+                           const std::string &InputGCDA, bool DumpGCOV,
+                           const GCOV::Options &Options) {
   SmallString<128> CoverageFileStem(ObjectDir);
   if (CoverageFileStem.empty()) {
     // If no directory was specified with -o, look next to the source file.
@@ -80,7 +81,7 @@ void reportCoverage(StringRef SourceFile, StringRef ObjectDir,
 
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
-  FI.print(SourceFile, GCNO, GCDA);
+  FI.print(llvm::outs(), SourceFile, GCNO, GCDA);
 }
 
 int gcovMain(int argc, const char *argv[]) {
@@ -142,8 +143,8 @@ int gcovMain(int argc, const char *argv[]) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM code coverage tool\n");
 
-  GCOVOptions Options(AllBlocks, BranchProb, BranchCount, FuncSummary,
-                      PreservePaths, UncondBranch, LongNames, NoOutput);
+  GCOV::Options Options(AllBlocks, BranchProb, BranchCount, FuncSummary,
+                        PreservePaths, UncondBranch, LongNames, NoOutput);
 
   for (const auto &SourceFile : SourceFiles)
     reportCoverage(SourceFile, ObjectDir, InputGCNO, InputGCDA, DumpGCOV,

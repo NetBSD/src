@@ -1,5 +1,18 @@
-; RUN: llc -O0 -mtriple=x86_64-linux -asm-verbose=false < %s | FileCheck %s
-; RUN: llc -O0 -mtriple=x86_64-windows-itanium -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-linux -asm-verbose=false -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-windows-itanium -asm-verbose=false -verify-machineinstrs < %s | FileCheck %s
+
+; Fast-isel mustn't add a block to the MBB successor/predecessor list twice.
+; The machine verifier will catch and complain about this case.
+; CHECK-LABEL: baz
+; CHECK: retq
+define void @baz() {
+entry:
+  br i1 undef, label %exit, label %exit
+
+exit:
+  ret void
+}
+
 ; rdar://8337108
 
 ; Fast-isel shouldn't try to look through the compare because it's in a
@@ -12,7 +25,7 @@
 
 declare void @bar()
 
-define void @foo(i32 %a, i32 %b) nounwind {
+define void @foo(i32 %a, i32 %b) nounwind personality i32 (...)* @__gxx_personality_v0 {
 entry:
   %q = add i32 %a, 7
   %r = add i32 %b, 9
@@ -26,7 +39,7 @@ true:
 return:
   ret void
 unw:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   unreachable
 }

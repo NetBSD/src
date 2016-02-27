@@ -13,10 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "OrcLazyJIT.h"
+#include "RemoteJITUtils.h"
 #include "llvm/IR/LLVMContext.h"
-#include "RemoteMemoryManager.h"
-#include "RemoteTarget.h"
-#include "RemoteTargetExternal.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
@@ -25,7 +25,9 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
+#include "llvm/ExecutionEngine/OrcMCJITReplacement.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/ExecutionEngine/Orc/OrcRemoteTargetClient.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
@@ -41,6 +43,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
@@ -64,6 +67,9 @@ using namespace llvm;
 #define DEBUG_TYPE "lli"
 
 namespace {
+
+  enum class JITKind { MCJIT, OrcMCJITReplacement, OrcLazy };
+
   cl::opt<std::string>
   InputFile(cl::desc("<input bitcode>"), cl::Positional, cl::init("-"));
 
@@ -73,6 +79,20 @@ namespace {
   cl::opt<bool> ForceInterpreter("force-interpreter",
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
+
+  cl::opt<JITKind> UseJITKind("jit-kind",
+                              cl::desc("Choose underlying JIT kind."),
+                              cl::init(JITKind::MCJIT),
+                              cl::values(
+                                clEnumValN(JITKind::MCJIT, "mcjit",
+                                           "MCJIT"),
+                                clEnumValN(JITKind::OrcMCJITReplacement,
+                                           "orc-mcjit",
+                                           "Orc-based MCJIT replacement"),
+                                clEnumValN(JITKind::OrcLazy,
+                                           "orc-lazy",
+                                           "Orc-based lazy JIT."),
+                                clEnumValEnd));
 
   // The MCJIT supports building for a target address space separate from
   // the JIT compilation process. Use a forked process and a copying
@@ -215,23 +235,6 @@ namespace {
                      clEnumValN(FloatABI::Hard, "hard",
                                 "Hard float ABI (uses FP registers)"),
                      clEnumValEnd));
-  cl::opt<bool>
-// In debug builds, make this default to true.
-#ifdef NDEBUG
-#define EMIT_DEBUG false
-#else
-#define EMIT_DEBUG true
-#endif
-  EmitJitDebugInfo("jit-emit-debug",
-    cl::desc("Emit debug information to debugger"),
-    cl::init(EMIT_DEBUG));
-#undef EMIT_DEBUG
-
-  static cl::opt<bool>
-  EmitJitDebugInfoToDisk("jit-emit-debug-to-disk",
-    cl::Hidden,
-    cl::desc("Emit debug info objfiles to disk"),
-    cl::init(false));
 }
 
 //===----------------------------------------------------------------------===//
@@ -251,7 +254,7 @@ public:
         this->CacheDir[this->CacheDir.size() - 1] != '/')
       this->CacheDir += '/';
   }
-  virtual ~LLIObjectCache() {}
+  ~LLIObjectCache() override {}
 
   void notifyObjectCompiled(const Module *M, MemoryBufferRef Obj) override {
     const std::string ModuleID = M->getModuleIdentifier();
@@ -259,8 +262,7 @@ public:
     if (!getCacheFilename(ModuleID, CacheName))
       return;
     if (!CacheDir.empty()) { // Create user-defined cache dir.
-      SmallString<128> dir(CacheName);
-      sys::path::remove_filename(dir);
+      SmallString<128> dir(sys::path::parent_path(CacheName));
       sys::fs::create_directories(Twine(dir));
     }
     std::error_code EC;
@@ -362,6 +364,19 @@ static void addCygMingExtraModule(ExecutionEngine *EE,
   EE->addModule(std::move(M));
 }
 
+CodeGenOpt::Level getOptLevel() {
+  switch (OptLevel) {
+  default:
+    errs() << "lli: Invalid optimization level.\n";
+    exit(1);
+  case '0': return CodeGenOpt::None;
+  case '1': return CodeGenOpt::Less;
+  case ' ':
+  case '2': return CodeGenOpt::Default;
+  case '3': return CodeGenOpt::Aggressive;
+  }
+  llvm_unreachable("Unrecognized opt level.");
+}
 
 //===----------------------------------------------------------------------===//
 // main Driver function
@@ -395,6 +410,9 @@ int main(int argc, char **argv, char * const *envp) {
     return 1;
   }
 
+  if (UseJITKind == JITKind::OrcLazy)
+    return runOrcLazyJIT(std::move(Owner), argc, argv);
+
   if (EnableCacheManager) {
     std::string CacheName("file:");
     CacheName.append(InputFile);
@@ -403,7 +421,7 @@ int main(int argc, char **argv, char * const *envp) {
 
   // If not jitting lazily, load the whole bitcode file eagerly too.
   if (NoLazyCompilation) {
-    if (std::error_code EC = Mod->materializeAllPermanently()) {
+    if (std::error_code EC = Mod->materializeAll()) {
       errs() << argv[0] << ": bitcode didn't read correctly.\n";
       errs() << "Reason: " << EC.message() << "\n";
       exit(1);
@@ -421,6 +439,7 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter
                         : EngineKind::JIT);
+  builder.setUseOrcMCJITReplacement(UseJITKind == JITKind::OrcMCJITReplacement);
 
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
@@ -430,7 +449,7 @@ int main(int argc, char **argv, char * const *envp) {
   RTDyldMemoryManager *RTDyldMM = nullptr;
   if (!ForceInterpreter) {
     if (RemoteMCJIT)
-      RTDyldMM = new RemoteMemoryManager();
+      RTDyldMM = new ForwardingMemoryManager();
     else
       RTDyldMM = new SectionMemoryManager();
 
@@ -444,31 +463,11 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
-  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
-  switch (OptLevel) {
-  default:
-    errs() << argv[0] << ": invalid optimization level.\n";
-    return 1;
-  case ' ': break;
-  case '0': OLvl = CodeGenOpt::None; break;
-  case '1': OLvl = CodeGenOpt::Less; break;
-  case '2': OLvl = CodeGenOpt::Default; break;
-  case '3': OLvl = CodeGenOpt::Aggressive; break;
-  }
-  builder.setOptLevel(OLvl);
+  builder.setOptLevel(getOptLevel());
 
   TargetOptions Options;
-  Options.UseSoftFloat = GenerateSoftFloatCalls;
   if (FloatABIForCalls != FloatABI::Default)
     Options.FloatABIType = FloatABIForCalls;
-  if (GenerateSoftFloatCalls)
-    FloatABIForCalls = FloatABI::Soft;
-
-  // Remote target execution doesn't handle EH or debug registration.
-  if (!RemoteMCJIT) {
-    Options.JITEmitDebugInfo = EmitJitDebugInfo;
-    Options.JITEmitDebugInfoToDisk = EmitJitDebugInfoToDisk;
-  }
 
   builder.setTargetOptions(Options);
 
@@ -556,7 +555,7 @@ int main(int argc, char **argv, char * const *envp) {
   // If the user specifically requested an argv[0] to pass into the program,
   // do it now.
   if (!FakeArgv0.empty()) {
-    InputFile = FakeArgv0;
+    InputFile = static_cast<std::string>(FakeArgv0);
   } else {
     // Otherwise, if there is a .bc suffix on the executable strip it off, it
     // might confuse the program.
@@ -583,12 +582,31 @@ int main(int argc, char **argv, char * const *envp) {
 
   int Result;
 
+  // Sanity check use of remote-jit: LLI currently only supports use of the
+  // remote JIT on Unix platforms.
+  if (RemoteMCJIT) {
+#ifndef LLVM_ON_UNIX
+    errs() << "Warning: host does not support external remote targets.\n"
+           << "  Defaulting to local execution execution\n";
+    return -1;
+#else
+    if (ChildExecPath.empty()) {
+      errs() << "-remote-mcjit requires -mcjit-remote-process.\n";
+      exit(1);
+    } else if (!sys::fs::can_execute(ChildExecPath)) {
+      errs() << "Unable to find usable child executable: '" << ChildExecPath
+             << "'\n";
+      return -1;
+    }
+#endif
+  }
+
   if (!RemoteMCJIT) {
     // If the program doesn't explicitly call exit, we will need the Exit
     // function later on to make an explicit call, so get the function now.
     Constant *Exit = Mod->getOrInsertFunction("exit", Type::getVoidTy(Context),
                                                       Type::getInt32Ty(Context),
-                                                      NULL);
+                                                      nullptr);
 
     // Run static constructors.
     if (!ForceInterpreter) {
@@ -630,66 +648,123 @@ int main(int argc, char **argv, char * const *envp) {
     // Remote target MCJIT doesn't (yet) support static constructors. No reason
     // it couldn't. This is a limitation of the LLI implemantation, not the
     // MCJIT itself. FIXME.
-    //
-    RemoteMemoryManager *MM = static_cast<RemoteMemoryManager*>(RTDyldMM);
-    // Everything is prepared now, so lay out our program for the target
-    // address space, assign the section addresses to resolve any relocations,
-    // and send it to the target.
 
-    std::unique_ptr<RemoteTarget> Target;
-    if (!ChildExecPath.empty()) { // Remote execution on a child process
-#ifndef LLVM_ON_UNIX
-      // FIXME: Remove this pointless fallback mode which causes tests to "pass"
-      // on platforms where they should XFAIL.
-      errs() << "Warning: host does not support external remote targets.\n"
-             << "  Defaulting to simulated remote execution\n";
-      Target.reset(new RemoteTarget);
-#else
-      if (!sys::fs::can_execute(ChildExecPath)) {
-        errs() << "Unable to find usable child executable: '" << ChildExecPath
-               << "'\n";
-        return -1;
-      }
-      Target.reset(new RemoteTargetExternal(ChildExecPath));
-#endif
-    } else {
-      // No child process name provided, use simulated remote execution.
-      Target.reset(new RemoteTarget);
+    // Lanch the remote process and get a channel to it.
+    std::unique_ptr<FDRPCChannel> C = launchRemote();
+    if (!C) {
+      errs() << "Failed to launch remote JIT.\n";
+      exit(1);
     }
 
-    // Give the memory manager a pointer to our remote target interface object.
-    MM->setRemoteTarget(Target.get());
-
-    // Create the remote target.
-    if (!Target->create()) {
-      errs() << "ERROR: " << Target->getErrorMsg() << "\n";
-      return EXIT_FAILURE;
+    // Create a remote target client running over the channel.
+    typedef orc::remote::OrcRemoteTargetClient<orc::remote::RPCChannel> MyRemote;
+    ErrorOr<MyRemote> R = MyRemote::Create(*C);
+    if (!R) {
+      errs() << "Could not create remote: " << R.getError().message() << "\n";
+      exit(1);
     }
 
-    // Since we're executing in a (at least simulated) remote address space,
-    // we can't use the ExecutionEngine::runFunctionAsMain(). We have to
-    // grab the function address directly here and tell the remote target
-    // to execute the function.
-    //
-    // Our memory manager will map generated code into the remote address
-    // space as it is loaded and copy the bits over during the finalizeMemory
-    // operation.
-    //
+    // Create a remote memory manager.
+    std::unique_ptr<MyRemote::RCMemoryManager> RemoteMM;
+    if (auto EC = R->createRemoteMemoryManager(RemoteMM)) {
+      errs() << "Could not create remote memory manager: " << EC.message() << "\n";
+      exit(1);
+    }
+
+    // Forward MCJIT's memory manager calls to the remote memory manager.
+    static_cast<ForwardingMemoryManager*>(RTDyldMM)->setMemMgr(
+      std::move(RemoteMM));
+
+    // Forward MCJIT's symbol resolution calls to the remote.
+    static_cast<ForwardingMemoryManager*>(RTDyldMM)->setResolver(
+      orc::createLambdaResolver(
+        [&](const std::string &Name) {
+          orc::TargetAddress Addr = 0;
+          if (auto EC = R->getSymbolAddress(Addr, Name)) {
+            errs() << "Failure during symbol lookup: " << EC.message() << "\n";
+            exit(1);
+          }
+          return RuntimeDyld::SymbolInfo(Addr, JITSymbolFlags::Exported);
+        },
+        [](const std::string &Name) { return nullptr; }
+      ));
+
+    // Grab the target address of the JIT'd main function on the remote and call
+    // it.
     // FIXME: argv and envp handling.
-    uint64_t Entry = EE->getFunctionAddress(EntryFn->getName().str());
-
+    orc::TargetAddress Entry = EE->getFunctionAddress(EntryFn->getName().str());
+    EE->finalizeObject();
     DEBUG(dbgs() << "Executing '" << EntryFn->getName() << "' at 0x"
                  << format("%llx", Entry) << "\n");
-
-    if (!Target->executeCode(Entry, Result))
-      errs() << "ERROR: " << Target->getErrorMsg() << "\n";
+    if (auto EC = R->callIntVoid(Result, Entry))
+      errs() << "ERROR: " << EC.message() << "\n";
 
     // Like static constructors, the remote target MCJIT support doesn't handle
     // this yet. It could. FIXME.
 
-    // Stop the remote target
-    Target->stop();
+    // Delete the EE - we need to tear it down *before* we terminate the session
+    // with the remote, otherwise it'll crash when it tries to release resources
+    // on a remote that has already been disconnected.
+    delete EE;
+    EE = nullptr;
+
+    // Signal the remote target that we're done JITing.
+    R->terminateSession();
   }
 
   return Result;
+}
+
+std::unique_ptr<FDRPCChannel> launchRemote() {
+#ifndef LLVM_ON_UNIX
+  llvm_unreachable("launchRemote not supported on non-Unix platforms");
+#else
+  int PipeFD[2][2];
+  pid_t ChildPID;
+
+  // Create two pipes.
+  if (pipe(PipeFD[0]) != 0 || pipe(PipeFD[1]) != 0)
+    perror("Error creating pipe: ");
+
+  ChildPID = fork();
+
+  if (ChildPID == 0) {
+    // In the child...
+
+    // Close the parent ends of the pipes
+    close(PipeFD[0][1]);
+    close(PipeFD[1][0]);
+
+
+    // Execute the child process.
+    std::unique_ptr<char[]> ChildPath, ChildIn, ChildOut;
+    {
+      ChildPath.reset(new char[ChildExecPath.size() + 1]);
+      std::copy(ChildExecPath.begin(), ChildExecPath.end(), &ChildPath[0]);
+      ChildPath[ChildExecPath.size()] = '\0';
+      std::string ChildInStr = utostr(PipeFD[0][0]);
+      ChildIn.reset(new char[ChildInStr.size() + 1]);
+      std::copy(ChildInStr.begin(), ChildInStr.end(), &ChildIn[0]);
+      ChildIn[ChildInStr.size()] = '\0';
+      std::string ChildOutStr = utostr(PipeFD[1][1]);
+      ChildOut.reset(new char[ChildOutStr.size() + 1]);
+      std::copy(ChildOutStr.begin(), ChildOutStr.end(), &ChildOut[0]);
+      ChildOut[ChildOutStr.size()] = '\0';
+    }
+
+    char * const args[] = { &ChildPath[0], &ChildIn[0], &ChildOut[0], nullptr };
+    int rc = execv(ChildExecPath.c_str(), args);
+    if (rc != 0)
+      perror("Error executing child process: ");
+    llvm_unreachable("Error executing child process");
+  }
+  // else we're the parent...
+
+  // Close the child ends of the pipes
+  close(PipeFD[0][0]);
+  close(PipeFD[1][1]);
+
+  // Return an RPC channel connected to our end of the pipes.
+  return llvm::make_unique<FDRPCChannel>(PipeFD[1][0], PipeFD[0][1]);
+#endif
 }

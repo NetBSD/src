@@ -48,9 +48,9 @@ define void @test4() {
 ; CHECK-NOT: fadd fast float
 ; CHECK: ret void
 
-  %A = load float* @fa
-  %B = load float* @fb
-  %C = load float* @fc
+  %A = load float, float* @fa
+  %B = load float, float* @fb
+  %C = load float, float* @fc
   %t1 = fadd fast float %A, %B
   %t2 = fadd fast float %t1, %C
   %t3 = fadd fast float %C, %A
@@ -69,9 +69,9 @@ define void @test5() {
 ; CHECK-NOT: fadd
 ; CHECK: ret void
 
-  %A = load float* @fa
-  %B = load float* @fb
-  %C = load float* @fc
+  %A = load float, float* @fa
+  %B = load float, float* @fb
+  %C = load float, float* @fc
   %t1 = fadd fast float %A, %B
   %t2 = fadd fast float %t1, %C
   %t3 = fadd fast float %C, %A
@@ -90,9 +90,9 @@ define void @test6() {
 ; CHECK-NOT: fadd
 ; CHECK: ret void
 
-  %A = load float* @fa
-  %B = load float* @fb
-  %C = load float* @fc
+  %A = load float, float* @fa
+  %B = load float, float* @fb
+  %C = load float, float* @fc
   %t1 = fadd fast float %B, %A
   %t2 = fadd fast float %t1, %C
   %t3 = fadd fast float %C, %A
@@ -108,7 +108,7 @@ define float @test7(float %A, float %B, float %C) {
 ; CHECK-LABEL: @test7
 ; CHECK-NEXT: fadd fast float %C, %B
 ; CHECK-NEXT: fmul fast float %A, %A
-; CHECK-NEXT: fmul fast float %1, %tmp2
+; CHECK-NEXT: fmul fast float %tmp3, %tmp2
 ; CHECK-NEXT: ret float
 
   %aa = fmul fast float %A, %A

@@ -1,4 +1,6 @@
-; RUN: llc -mtriple=thumbv7-apple-none-macho < %s | FileCheck %s
+; Disable shrink-wrapping on the first test otherwise we wouldn't
+; exerce the path for PR18136.
+; RUN: llc -mtriple=thumbv7-apple-none-macho < %s -enable-shrink-wrap=false | FileCheck %s
 ; RUN: llc -mtriple=thumbv6m-apple-none-macho -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-T1
 ; RUN: llc -mtriple=thumbv7-apple-darwin-ios -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-IOS
 ; RUN: llc -mtriple=thumbv7--linux-gnueabi -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-LINUX
@@ -12,11 +14,11 @@ declare void @bar(i8*)
 
 define void @check_simple() minsize {
 ; CHECK-LABEL: check_simple:
-; CHECK: push.w {r7, r8, r9, r10, r11, lr}
+; CHECK: push {r3, r4, r5, r6, r7, lr}
 ; CHECK-NOT: sub sp, sp,
 ; ...
 ; CHECK-NOT: add sp, sp,
-; CHECK: pop.w {r0, r1, r2, r3, r11, pc}
+; CHECK: pop {r0, r1, r2, r3, r7, pc}
 
 ; CHECK-T1-LABEL: check_simple:
 ; CHECK-T1: push {r3, r4, r5, r6, r7, lr}
@@ -44,11 +46,11 @@ define void @check_simple() minsize {
 
 define void @check_simple_too_big() minsize {
 ; CHECK-LABEL: check_simple_too_big:
-; CHECK: push.w {r11, lr}
+; CHECK: push {r7, lr}
 ; CHECK: sub sp,
 ; ...
 ; CHECK: add sp,
-; CHECK: pop.w {r11, pc}
+; CHECK: pop {r7, pc}
   %var = alloca i8, i32 64
   call void @bar(i8* %var)
   ret void
@@ -60,20 +62,19 @@ define void @check_vfp_fold() minsize {
 ; CHECK: vpush {d6, d7, d8, d9}
 ; CHECK-NOT: sub sp,
 ; ...
-; CHECK: vldmia r[[GLOBREG]], {d8, d9}
-; ...
 ; CHECK-NOT: add sp,
 ; CHECK: vpop {d6, d7, d8, d9}
-; CHECKL pop {r[[GLOBREG]], pc}
+; CHECK: pop {r[[GLOBREG]], pc}
 
   ; iOS uses aligned NEON stores here, which is convenient since we
   ; want to make sure that works too.
 ; CHECK-IOS-LABEL: check_vfp_fold:
-; CHECK-IOS: push {r0, r1, r2, r3, r4, r7, lr}
+; CHECK-IOS: push {r4, r7, lr}
 ; CHECK-IOS: sub.w r4, sp, #16
 ; CHECK-IOS: bfc r4, #0, #4
 ; CHECK-IOS: mov sp, r4
 ; CHECK-IOS: vst1.64 {d8, d9}, [r4:128]
+; CHECK-IOS: sub sp, #16
 ; ...
 ; CHECK-IOS: add r4, sp, #16
 ; CHECK-IOS: vld1.64 {d8, d9}, [r4:128]
@@ -82,9 +83,8 @@ define void @check_vfp_fold() minsize {
 
   %var = alloca i8, i32 16
 
-  %tmp = load %bigVec* @var
+  call void asm "", "r,~{d8},~{d9}"(i8* %var)
   call void @bar(i8* %var)
-  store %bigVec %tmp, %bigVec* @var
 
   ret void
 }
@@ -93,11 +93,11 @@ define void @check_vfp_fold() minsize {
 ; folded in except that doing so would clobber the value being returned.
 define i64 @check_no_return_clobber() minsize {
 ; CHECK-LABEL: check_no_return_clobber:
-; CHECK: push.w {r5, r6, r7, r8, r9, r10, r11, lr}
+; CHECK: push {r1, r2, r3, r4, r5, r6, r7, lr}
 ; CHECK-NOT: sub sp,
 ; ...
 ; CHECK: add sp, #24
-; CHECK: pop.w {r11, pc}
+; CHECK: pop {r7, pc}
 
   ; Just to keep iOS FileCheck within previous function:
 ; CHECK-IOS-LABEL: check_no_return_clobber:
@@ -119,7 +119,7 @@ define arm_aapcs_vfpcc double @check_vfp_no_return_clobber() minsize {
 
   %var = alloca i8, i32 64
 
-  %tmp = load %bigVec* @var
+  %tmp = load %bigVec, %bigVec* @var
   call void @bar(i8* %var)
   store %bigVec %tmp, %bigVec* @var
 
@@ -152,7 +152,7 @@ define void @test_fold_point(i1 %tst) minsize {
 
   ; We want a long-lived floating register so that a callee-saved dN is used and
   ; there's both a vpop and a pop.
-  %live_val = load double* @dbl
+  %live_val = load double, double* @dbl
   br i1 %tst, label %true, label %end
 true:
   call void @bar(i8* %var)
@@ -170,15 +170,15 @@ define void @test_varsize(...) minsize {
 ; CHECK-T1: push	{r5, r6, r7, lr}
 ; ...
 ; CHECK-T1: pop	{r2, r3, r7}
-; CHECK-T1: pop	{r3}
+; CHECK-T1: pop {[[POP_REG:r[0-3]]]}
 ; CHECK-T1: add	sp, #16
-; CHECK-T1: bx	r3
+; CHECK-T1: bx	[[POP_REG]]
 
 ; CHECK-LABEL: test_varsize:
 ; CHECK: sub	sp, #16
-; CHECK: push.w {r9, r10, r11, lr}
+; CHECK: push	{r5, r6, r7, lr}
 ; ...
-; CHECK: pop.w	{r2, r3, r11, lr}
+; CHECK: pop.w	{r2, r3, r7, lr}
 ; CHECK: add	sp, #16
 ; CHECK: bx	lr
 

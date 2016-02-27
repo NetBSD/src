@@ -33,7 +33,7 @@ public:
     ObjMap[ModuleID] = copyBuffer(Obj);
   }
 
-  virtual std::unique_ptr<MemoryBuffer> getObject(const Module* M) override {
+  std::unique_ptr<MemoryBuffer> getObject(const Module *M) override {
     const MemoryBuffer* BufferFound = getObjectInternal(M);
     ModulesLookedUp.insert(M->getModuleIdentifier());
     if (!BufferFound)
@@ -78,13 +78,12 @@ private:
 
 class MCJITObjectCacheTest : public testing::Test, public MCJITTestBase {
 protected:
-
   enum {
     OriginalRC = 6,
     ReplacementRC = 7
   };
 
-  virtual void SetUp() {
+  void SetUp() override {
     M.reset(createEmptyModule("<main>"));
     Main = insertMainFunction(M.get(), OriginalRC);
   }
@@ -101,7 +100,7 @@ protected:
     EXPECT_TRUE(nullptr != vPtr)
       << "Unable to get pointer to main() from JIT";
 
-    int (*FuncPtr)(void) = (int(*)(void))(intptr_t)vPtr;
+    int (*FuncPtr)() = (int(*)())(intptr_t)vPtr;
     int returnCode = FuncPtr();
     EXPECT_EQ(returnCode, ExpectedRC);
   }
@@ -118,7 +117,6 @@ TEST_F(MCJITObjectCacheTest, SetNullObjectCache) {
 
   compileAndRun();
 }
-
 
 TEST_F(MCJITObjectCacheTest, VerifyBasicObjectCaching) {
   SKIP_UNSUPPORTED_PLATFORM;
@@ -228,5 +226,4 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
   EXPECT_FALSE(Cache->wereDuplicatesInserted());
 }
 
-} // Namespace
-
+} // end anonymous namespace
