@@ -28,9 +28,17 @@ namespace llvm {
 /// type can be copied around with memcpy instead of running ctors etc.
 template <typename T>
 struct isPodLike {
-#if __has_feature(is_trivially_copyable)
+  // std::is_trivially_copyable is available in libc++ with clang, libstdc++
+  // that comes with GCC 5.
+#if (__has_feature(is_trivially_copyable) && defined(_LIBCPP_VERSION)) ||      \
+    (defined(__GNUC__) && __GNUC__ >= 5)
   // If the compiler supports the is_trivially_copyable trait use it, as it
   // matches the definition of isPodLike closely.
+  static const bool value = std::is_trivially_copyable<T>::value;
+#elif __has_feature(is_trivially_copyable)
+  // Use the internal name if the compiler supports is_trivially_copyable but we
+  // don't know if the standard library does. This is the case for clang in
+  // conjunction with libstdc++ from GCC 4.x.
   static const bool value = __is_trivially_copyable(T);
 #else
   // If we don't know anything else, we can (at least) assume that all non-class
@@ -84,6 +92,15 @@ struct add_const_past_pointer<
 };
 
 }
+
+// If the compiler supports detecting whether a class is final, define
+// an LLVM_IS_FINAL macro. If it cannot be defined properly, this
+// macro will be left undefined.
+#if __cplusplus >= 201402L
+#define LLVM_IS_FINAL(Ty) std::is_final<Ty>()
+#elif __has_feature(is_final) || LLVM_GNUC_PREREQ(4, 7, 0)
+#define LLVM_IS_FINAL(Ty) __is_final(Ty)
+#endif
 
 #ifdef LLVM_DEFINED_HAS_FEATURE
 #undef __has_feature

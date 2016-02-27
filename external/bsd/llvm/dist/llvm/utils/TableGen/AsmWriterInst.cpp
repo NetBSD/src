@@ -29,8 +29,8 @@ static bool isIdentChar(char C) {
 std::string AsmWriterOperand::getCode() const {
   if (OperandType == isLiteralTextOperand) {
     if (Str.size() == 1)
-      return "O << '" + Str + "'; ";
-    return "O << \"" + Str + "\"; ";
+      return "O << '" + Str + "';";
+    return "O << \"" + Str + "\";";
   }
 
   if (OperandType == isLiteralStatementOperand)
@@ -39,16 +39,19 @@ std::string AsmWriterOperand::getCode() const {
   std::string Result = Str + "(MI";
   if (MIOpNo != ~0U)
     Result += ", " + utostr(MIOpNo);
+  if (PassSubtarget)
+    Result += ", STI";
   Result += ", O";
   if (!MiModifier.empty())
     Result += ", \"" + MiModifier + '"';
-  return Result + "); ";
+  return Result + ");";
 }
 
 /// ParseAsmString - Parse the specified Instruction's AsmString into this
 /// AsmWriterInst.
 ///
-AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
+AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant,
+                             unsigned PassSubtarget) {
   this->CGI = &CGI;
 
   // NOTE: Any extensions to this code need to be mirrored in the
@@ -160,25 +163,22 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
 
       if (VarName.empty()) {
         // Just a modifier, pass this into PrintSpecial.
-        Operands.push_back(AsmWriterOperand("PrintSpecial",
-                                            ~0U,
-                                            ~0U,
-                                            Modifier));
+        Operands.emplace_back("PrintSpecial", ~0U, ~0U, Modifier,
+                              PassSubtarget);
       } else {
         // Otherwise, normal operand.
         unsigned OpNo = CGI.Operands.getOperandNamed(VarName);
         CGIOperandList::OperandInfo OpInfo = CGI.Operands[OpNo];
 
         unsigned MIOp = OpInfo.MIOperandNo;
-        Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName,
-                                            OpNo, MIOp, Modifier));
+        Operands.emplace_back(OpInfo.PrinterMethodName, OpNo, MIOp, Modifier,
+                              PassSubtarget);
       }
       LastEmitted = VarEnd;
     }
   }
 
-  Operands.push_back(AsmWriterOperand("return;",
-    AsmWriterOperand::isLiteralStatementOperand));
+  Operands.emplace_back("return;", AsmWriterOperand::isLiteralStatementOperand);
 }
 
 /// MatchesAllButOneOp - If this instruction is exactly identical to the

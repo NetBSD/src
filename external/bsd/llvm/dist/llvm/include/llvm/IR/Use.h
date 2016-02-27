@@ -25,7 +25,6 @@
 #ifndef LLVM_IR_USE_H
 #define LLVM_IR_USE_H
 
-#include "llvm-c/Core.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
@@ -77,7 +76,7 @@ public:
   typedef PointerIntPair<User *, 1, unsigned> UserRef;
 
 private:
-  Use(const Use &U) LLVM_DELETED_FUNCTION;
+  Use(const Use &U) = delete;
 
   /// Destructor - Only for zap()
   ~Use() {

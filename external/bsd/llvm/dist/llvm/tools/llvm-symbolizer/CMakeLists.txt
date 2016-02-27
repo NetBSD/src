@@ -4,12 +4,13 @@
 # targets as well. Currently, there is no support for such a build strategy.
 
 set(LLVM_LINK_COMPONENTS
-  DebugInfo
+  DebugInfoDWARF
+  DebugInfoPDB
   Object
   Support
+  Symbolize
   )
 
 add_llvm_tool(llvm-symbolizer
-  LLVMSymbolize.cpp
   llvm-symbolizer.cpp
   )

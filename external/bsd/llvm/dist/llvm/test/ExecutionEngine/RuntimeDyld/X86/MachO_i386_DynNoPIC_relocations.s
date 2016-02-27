@@ -1,7 +1,10 @@
 # RUN: llvm-mc -triple=i386-apple-macosx10.4 -relocation-model=dynamic-no-pic -filetype=obj -o %T/test_i386.o %s
 # RUN: llvm-rtdyld -triple=i386-apple-macosx10.4 -verify -check=%s %/T/test_i386.o
 
-	.section	__TEXT,__text,regular,pure_instructions
+// Put the section used in the test at a non zero address.
+	.long 4
+
+	.section	__TEXT,__text2,regular,pure_instructions
 	.globl	bar
 	.align	4, 0x90
 bar:
@@ -9,9 +12,9 @@ bar:
 tmp0$pb:
 	popl	%eax
 # Test section difference relocation to non-lazy ptr section.
-# rtdyld-check: decode_operand(inst1, 4) = x$non_lazy_ptr - tmp0$pb
+# rtdyld-check: decode_operand(inst1, 4) = x$non_lazy_ptr - tmp0$pb + 8
 inst1:
-	movl	x$non_lazy_ptr-tmp0$pb(%eax), %eax
+	movl	(x$non_lazy_ptr-tmp0$pb)+8(%eax), %eax
         movl    (%eax), %ebx
 
 # Test VANILLA relocation to jump table.

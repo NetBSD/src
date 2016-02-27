@@ -10,7 +10,7 @@ entry:
   br label %exit
 
 unreachable:
-  %x = load i32* %p
+  %x = load i32, i32* %p
   br label %exit
 
 exit:
@@ -18,7 +18,7 @@ exit:
   ret i32 %z
 }
 
-; CHECK: @Func
+; CHECK-LABEL: @Func
 ; CHECK: store i32 0, {{.*}} @__msan_retval_tls
 ; CHECK: ret i32 42
 
@@ -34,6 +34,6 @@ xxx:
   br label %zzz
 }
 
-; CHECK: @UnreachableLoop
+; CHECK-LABEL: @UnreachableLoop
 ; CHECK: store i32 0, {{.*}} @__msan_retval_tls
 ; CHECK: ret i32 0

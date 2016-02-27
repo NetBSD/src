@@ -58,3 +58,52 @@ while.end:                                        ; preds = %while.body, %entry
   %t = trunc i64 %a.addr.0.lcssa to i32
   ret i32 %t
 }
+
+; Check that copy propagation does not kill thing like:
+; dst = copy src <-- do not kill that.
+; ... = op1 dst<undef>
+; ... = op2 dst <-- this is used here.
+;
+; CHECK-LABEL: foo:
+; CHECK: psllw $7,
+; CHECK: psllw $7, [[SRC1:%xmm[0-9]+]]
+; CHECK-NEXT: pand {{.*}}(%rip), [[SRC1]]
+; CHECK-NEXT: pcmpgtb [[SRC1]], [[SRC2:%xmm[0-9]+]]
+; CHECK-NEXT: pand %xmm{{[0-9]+}}, [[SRC2]]
+; CHECK-NEXT: movdqa [[SRC2]], [[CPY1:%xmm[0-9]+]]
+; CHECK-NEXT: punpcklbw %xmm{{[0-9]+}}, [[CPY1]]
+; Check that CPY1 is not redefined.
+; CHECK-NOT:  , [[CPY1]]
+; CHECK: punpckhwd %xmm{{[0-9]+}}, [[CPY1]]
+; CHECK-NEXT: pslld $31, [[CPY1]]
+; CHECK-NEXT: psrad $31, [[CPY1]]
+; CHECK: punpckhbw %xmm{{[0-9]+}}, [[CPY2:%xmm[0-9]+]]
+; Check that CPY2 is not redefined.
+; CHECK-NOT:  , [[CPY2]]
+; CHECK: punpckhwd %xmm{{[0-9]+}}, [[CPY2]]
+; CHECK-NEXT: pslld $31, [[CPY2]]
+; CHECK-NEXT: psrad $31, [[CPY2]]
+define <16 x float> @foo(<16 x float> %x) {
+bb:
+  %v3 = icmp slt <16 x i32> undef, zeroinitializer
+  %v14 = zext <16 x i1> %v3 to <16 x i32>
+  %v16 = fcmp olt <16 x float> %x, zeroinitializer
+  %v17 = sext <16 x i1> %v16 to <16 x i32>
+  %v18 = zext <16 x i1> %v16 to <16 x i32>
+  %v19 = xor <16 x i32> %v14, %v18
+  %v20 = or <16 x i32> %v17, undef
+  %v21 = fptosi <16 x float> %x to <16 x i32>
+  %v22 = sitofp <16 x i32> %v21 to <16 x float>
+  %v69 = fcmp ogt <16 x float> %v22, zeroinitializer
+  %v75 = and <16 x i1> %v69, %v3
+  %v77 = bitcast <16 x float> %v22 to <16 x i32>
+  %v79 = sext <16 x i1> %v75 to <16 x i32>
+  %v80 = and <16 x i32> undef, %v79
+  %v81 = xor <16 x i32> %v77, %v80
+  %v82 = and <16 x i32> undef, %v81
+  %v83 = xor <16 x i32> %v19, %v82
+  %v84 = and <16 x i32> %v83, %v20
+  %v85 = xor <16 x i32> %v19, %v84
+  %v86 = bitcast <16 x i32> %v85 to <16 x float>
+  ret <16 x float> %v86
+}

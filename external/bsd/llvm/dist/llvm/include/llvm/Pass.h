@@ -83,8 +83,8 @@ class Pass {
   AnalysisResolver *Resolver;  // Used to resolve analysis
   const void *PassID;
   PassKind Kind;
-  void operator=(const Pass&) LLVM_DELETED_FUNCTION;
-  Pass(const Pass &) LLVM_DELETED_FUNCTION;
+  void operator=(const Pass&) = delete;
+  Pass(const Pass &) = delete;
 
 public:
   explicit Pass(PassKind K, char &pid)
@@ -250,7 +250,7 @@ public:
 
   explicit ModulePass(char &pid) : Pass(PT_Module, pid) {}
   // Force out-of-line virtual method.
-  virtual ~ModulePass();
+  ~ModulePass() override;
 };
 
 
@@ -279,7 +279,7 @@ public:
   : ModulePass(pid) {}
 
   // Force out-of-line virtual method.
-  virtual ~ImmutablePass();
+  ~ImmutablePass() override;
 };
 
 //===----------------------------------------------------------------------===//
@@ -369,6 +369,10 @@ protected:
 /// @brief This is the storage for the -time-passes option.
 extern bool TimePassesIsEnabled;
 
+/// isFunctionInPrintList - returns true if a function should be printed via
+//  debugging options like -print-after-all/-print-before-all.
+//  @brief Tells if the function IR should be printed by PrinterPass.
+extern bool isFunctionInPrintList(StringRef FunctionName);
 } // End llvm namespace
 
 // Include support files that contain important APIs commonly used by Passes,

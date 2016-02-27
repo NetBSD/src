@@ -24,13 +24,14 @@
 #else  /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #include <pthread.h>
 #include <dlfcn.h>
+#include <stdint.h>
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 #include <malloc.h>
 #include <stdlib.h>
 
 #include "jitprofiling.h"
 
-static const char rcsid[] = "\n@(#) $Revision: 1.1.1.1 $\n";
+static const char rcsid[] = "\n@(#) $Revision: 1.1.1.2 $\n";
 
 #define DLL_ENVIRONMENT_VAR             "VS_PROFILER"
 
@@ -371,7 +372,7 @@ static int loadiJIT_Funcs()
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
     FUNC_NotifyEvent = (TPNotify)GetProcAddress(m_libHandle, "NotifyEvent");
 #else  /* ITT_PLATFORM==ITT_PLATFORM_WIN */
-    FUNC_NotifyEvent = (TPNotify)dlsym(m_libHandle, "NotifyEvent");
+    FUNC_NotifyEvent = (TPNotify)(intptr_t)dlsym(m_libHandle, "NotifyEvent");
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
     if (!FUNC_NotifyEvent) 
     {
@@ -382,7 +383,7 @@ static int loadiJIT_Funcs()
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
     FUNC_Initialize = (TPInitialize)GetProcAddress(m_libHandle, "Initialize");
 #else  /* ITT_PLATFORM==ITT_PLATFORM_WIN */
-    FUNC_Initialize = (TPInitialize)dlsym(m_libHandle, "Initialize");
+    FUNC_Initialize = (TPInitialize)(intptr_t)dlsym(m_libHandle, "Initialize");
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
     if (!FUNC_Initialize) 
     {

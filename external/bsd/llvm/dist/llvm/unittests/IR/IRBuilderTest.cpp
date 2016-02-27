@@ -10,12 +10,14 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/NoFolder.h"
+#include "llvm/IR/Verifier.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -24,7 +26,7 @@ namespace {
 
 class IRBuilderTest : public testing::Test {
 protected:
-  virtual void SetUp() {
+  void SetUp() override {
     M.reset(new Module("MyModule", Ctx));
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
                                           /*isVarArg=*/false);
@@ -34,7 +36,7 @@ protected:
                             GlobalValue::ExternalLinkage, nullptr);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     BB = nullptr;
     M.reset();
   }
@@ -102,17 +104,16 @@ TEST_F(IRBuilderTest, CreateCondBr) {
 
 TEST_F(IRBuilderTest, LandingPadName) {
   IRBuilder<> Builder(BB);
-  LandingPadInst *LP = Builder.CreateLandingPad(Builder.getInt32Ty(),
-                                                Builder.getInt32(0), 0, "LP");
+  LandingPadInst *LP = Builder.CreateLandingPad(Builder.getInt32Ty(), 0, "LP");
   EXPECT_EQ(LP->getName(), "LP");
 }
 
 TEST_F(IRBuilderTest, DataLayout) {
   std::unique_ptr<Module> M(new Module("test", Ctx));
   M->setDataLayout("e-n32");
-  EXPECT_TRUE(M->getDataLayout()->isLegalInteger(32));
+  EXPECT_TRUE(M->getDataLayout().isLegalInteger(32));
   M->setDataLayout("e");
-  EXPECT_FALSE(M->getDataLayout()->isLegalInteger(32));
+  EXPECT_FALSE(M->getDataLayout().isLegalInteger(32));
 }
 
 TEST_F(IRBuilderTest, GetIntTy) {
@@ -121,7 +122,7 @@ TEST_F(IRBuilderTest, GetIntTy) {
   EXPECT_EQ(Ty1, IntegerType::get(Ctx, 1));
 
   DataLayout* DL = new DataLayout(M.get());
-  IntegerType *IntPtrTy = Builder.getIntPtrTy(DL);
+  IntegerType *IntPtrTy = Builder.getIntPtrTy(*DL);
   unsigned IntPtrBitSize =  DL->getPointerSizeInBits(0);
   EXPECT_EQ(IntPtrTy, IntegerType::get(Ctx, IntPtrBitSize));
   delete DL;
@@ -129,8 +130,8 @@ TEST_F(IRBuilderTest, GetIntTy) {
 
 TEST_F(IRBuilderTest, FastMathFlags) {
   IRBuilder<> Builder(BB);
-  Value *F;
-  Instruction *FDiv, *FAdd;
+  Value *F, *FC;
+  Instruction *FDiv, *FAdd, *FCmp, *FCall;
 
   F = Builder.CreateLoad(GV);
   F = Builder.CreateFAdd(F, F);
@@ -141,13 +142,13 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   EXPECT_FALSE(FAdd->hasNoNaNs());
 
   FastMathFlags FMF;
-  Builder.SetFastMathFlags(FMF);
+  Builder.setFastMathFlags(FMF);
 
   F = Builder.CreateFAdd(F, F);
   EXPECT_FALSE(Builder.getFastMathFlags().any());
 
   FMF.setUnsafeAlgebra();
-  Builder.SetFastMathFlags(FMF);
+  Builder.setFastMathFlags(FMF);
 
   F = Builder.CreateFAdd(F, F);
   EXPECT_TRUE(Builder.getFastMathFlags().any());
@@ -178,7 +179,7 @@ TEST_F(IRBuilderTest, FastMathFlags) {
 
   FMF.clear();
   FMF.setAllowReciprocal();
-  Builder.SetFastMathFlags(FMF);
+  Builder.setFastMathFlags(FMF);
 
   F = Builder.CreateFDiv(F, F);
   EXPECT_TRUE(Builder.getFastMathFlags().any());
@@ -186,6 +187,54 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   ASSERT_TRUE(isa<Instruction>(F));
   FDiv = cast<Instruction>(F);
   EXPECT_TRUE(FDiv->hasAllowReciprocal());
+
+  Builder.clearFastMathFlags();
+
+  FC = Builder.CreateFCmpOEQ(F, F);
+  ASSERT_TRUE(isa<Instruction>(FC));
+  FCmp = cast<Instruction>(FC);
+  EXPECT_FALSE(FCmp->hasAllowReciprocal());
+
+  FMF.clear();
+  FMF.setAllowReciprocal();
+  Builder.setFastMathFlags(FMF);
+
+  FC = Builder.CreateFCmpOEQ(F, F);
+  EXPECT_TRUE(Builder.getFastMathFlags().any());
+  EXPECT_TRUE(Builder.getFastMathFlags().AllowReciprocal);
+  ASSERT_TRUE(isa<Instruction>(FC));
+  FCmp = cast<Instruction>(FC);
+  EXPECT_TRUE(FCmp->hasAllowReciprocal());
+
+  Builder.clearFastMathFlags();
+ 
+  // Test a call with FMF.
+  auto CalleeTy = FunctionType::get(Type::getFloatTy(Ctx),
+                                    /*isVarArg=*/false);
+  auto Callee =
+      Function::Create(CalleeTy, Function::ExternalLinkage, "", M.get());
+
+  FCall = Builder.CreateCall(Callee, None);
+  EXPECT_FALSE(FCall->hasNoNaNs());
+
+  Value *V = 
+      Function::Create(CalleeTy, Function::ExternalLinkage, "", M.get());
+  FCall = Builder.CreateCall(V, None);
+  EXPECT_FALSE(FCall->hasNoNaNs());
+
+  FMF.clear();
+  FMF.setNoNaNs();
+  Builder.setFastMathFlags(FMF);
+
+  FCall = Builder.CreateCall(Callee, None);
+  EXPECT_TRUE(Builder.getFastMathFlags().any());
+  EXPECT_TRUE(Builder.getFastMathFlags().NoNaNs);
+  EXPECT_TRUE(FCall->hasNoNaNs());
+
+  FCall = Builder.CreateCall(V, None);
+  EXPECT_TRUE(Builder.getFastMathFlags().any());
+  EXPECT_TRUE(Builder.getFastMathFlags().NoNaNs);
+  EXPECT_TRUE(FCall->hasNoNaNs());
 
   Builder.clearFastMathFlags();
 
@@ -260,14 +309,14 @@ TEST_F(IRBuilderTest, RAIIHelpersTest) {
   MDNode *FPMathA = MDB.createFPMath(0.01f);
   MDNode *FPMathB = MDB.createFPMath(0.1f);
 
-  Builder.SetDefaultFPMathTag(FPMathA);
+  Builder.setDefaultFPMathTag(FPMathA);
 
   {
     IRBuilder<>::FastMathFlagGuard Guard(Builder);
     FastMathFlags FMF;
     FMF.setAllowReciprocal();
-    Builder.SetFastMathFlags(FMF);
-    Builder.SetDefaultFPMathTag(FPMathB);
+    Builder.setFastMathFlags(FMF);
+    Builder.setDefaultFPMathTag(FPMathB);
     EXPECT_TRUE(Builder.getFastMathFlags().allowReciprocal());
     EXPECT_EQ(FPMathB, Builder.getDefaultFPMathTag());
   }
@@ -280,12 +329,93 @@ TEST_F(IRBuilderTest, RAIIHelpersTest) {
   {
     IRBuilder<>::InsertPointGuard Guard(Builder);
     Builder.SetInsertPoint(cast<Instruction>(F));
-    EXPECT_EQ(F, Builder.GetInsertPoint());
+    EXPECT_EQ(F, &*Builder.GetInsertPoint());
   }
 
   EXPECT_EQ(BB->end(), Builder.GetInsertPoint());
   EXPECT_EQ(BB, Builder.GetInsertBlock());
 }
 
+TEST_F(IRBuilderTest, DIBuilder) {
+  IRBuilder<> Builder(BB);
+  DIBuilder DIB(*M);
+  auto File = DIB.createFile("F.CBL", "/");
+  auto CU = DIB.createCompileUnit(dwarf::DW_LANG_Cobol74, "F.CBL", "/",
+                                  "llvm-cobol74", true, "", 0);
+  auto Type = DIB.createSubroutineType(DIB.getOrCreateTypeArray(None));
+  auto SP =
+      DIB.createFunction(CU, "foo", "", File, 1, Type, false, true, 1, 0, true);
+  F->setSubprogram(SP);
+  AllocaInst *I = Builder.CreateAlloca(Builder.getInt8Ty());
+  auto BarSP =
+      DIB.createFunction(CU, "bar", "", File, 1, Type, false, true, 1, 0, true);
+  auto BadScope = DIB.createLexicalBlockFile(BarSP, File, 0);
+  I->setDebugLoc(DebugLoc::get(2, 0, BadScope));
+  DIB.finalize();
+  EXPECT_TRUE(verifyModule(*M));
+}
 
+TEST_F(IRBuilderTest, InsertExtractElement) {
+  IRBuilder<> Builder(BB);
+
+  auto VecTy = VectorType::get(Builder.getInt64Ty(), 4);
+  auto Elt1 = Builder.getInt64(-1);
+  auto Elt2 = Builder.getInt64(-2);
+  Value *Vec = UndefValue::get(VecTy);
+  Vec = Builder.CreateInsertElement(Vec, Elt1, Builder.getInt8(1));
+  Vec = Builder.CreateInsertElement(Vec, Elt2, 2);
+  auto X1 = Builder.CreateExtractElement(Vec, 1);
+  auto X2 = Builder.CreateExtractElement(Vec, Builder.getInt32(2));
+  EXPECT_EQ(Elt1, X1);
+  EXPECT_EQ(Elt2, X2);
+}
+
+TEST_F(IRBuilderTest, CreateGlobalStringPtr) {
+  IRBuilder<> Builder(BB);
+
+  auto String1a = Builder.CreateGlobalStringPtr("TestString", "String1a");
+  auto String1b = Builder.CreateGlobalStringPtr("TestString", "String1b", 0);
+  auto String2 = Builder.CreateGlobalStringPtr("TestString", "String2", 1);
+  auto String3 = Builder.CreateGlobalString("TestString", "String3", 2);
+
+  EXPECT_TRUE(String1a->getType()->getPointerAddressSpace() == 0);
+  EXPECT_TRUE(String1b->getType()->getPointerAddressSpace() == 0);
+  EXPECT_TRUE(String2->getType()->getPointerAddressSpace() == 1);
+  EXPECT_TRUE(String3->getType()->getPointerAddressSpace() == 2);
+}
+
+TEST_F(IRBuilderTest, DebugLoc) {
+  auto CalleeTy = FunctionType::get(Type::getVoidTy(Ctx),
+                                    /*isVarArg=*/false);
+  auto Callee =
+      Function::Create(CalleeTy, Function::ExternalLinkage, "", M.get());
+
+  DIBuilder DIB(*M);
+  auto File = DIB.createFile("tmp.cpp", "/");
+  auto CU = DIB.createCompileUnit(dwarf::DW_LANG_C_plus_plus_11, "tmp.cpp", "/",
+                                  "", true, "", 0);
+  auto SPType = DIB.createSubroutineType(DIB.getOrCreateTypeArray(None));
+  auto SP =
+      DIB.createFunction(CU, "foo", "foo", File, 1, SPType, false, true, 1);
+  DebugLoc DL1 = DILocation::get(Ctx, 2, 0, SP);
+  DebugLoc DL2 = DILocation::get(Ctx, 3, 0, SP);
+
+  auto BB2 = BasicBlock::Create(Ctx, "bb2", F);
+  auto Br = BranchInst::Create(BB2, BB);
+  Br->setDebugLoc(DL1);
+
+  IRBuilder<> Builder(Ctx);
+  Builder.SetInsertPoint(Br);
+  EXPECT_EQ(DL1, Builder.getCurrentDebugLocation());
+  auto Call1 = Builder.CreateCall(Callee, None);
+  EXPECT_EQ(DL1, Call1->getDebugLoc());
+
+  Call1->setDebugLoc(DL2);
+  Builder.SetInsertPoint(Call1->getParent(), Call1->getIterator());
+  EXPECT_EQ(DL2, Builder.getCurrentDebugLocation());
+  auto Call2 = Builder.CreateCall(Callee, None);
+  EXPECT_EQ(DL2, Call2->getDebugLoc());
+
+  DIB.finalize();
+}
 }

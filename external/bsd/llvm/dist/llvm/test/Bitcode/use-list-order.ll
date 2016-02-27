@@ -1,7 +1,7 @@
 ; RUN: verify-uselistorder < %s
 
 @a = global [4 x i1] [i1 0, i1 1, i1 0, i1 1]
-@b = alias i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
+@b = alias i1, getelementptr ([4 x i1], [4 x i1]* @a, i64 0, i64 2)
 
 ; Check use-list order of constants used by globals.
 @glob1 = global i5 7
@@ -10,9 +10,9 @@
 
 ; Check use-list order between variables and aliases.
 @target = global i3 zeroinitializer
-@alias1 = alias i3* @target
-@alias2 = alias i3* @target
-@alias3 = alias i3* @target
+@alias1 = alias i3, i3* @target
+@alias2 = alias i3, i3* @target
+@alias3 = alias i3, i3* @target
 @var1 = global i3* @target
 @var2 = global i3* @target
 @var3 = global i3* @target
@@ -31,9 +31,9 @@
 
 ; Same as above, but for aliases.
 @const.target = global i62 1
-@const.alias = alias i62* @const.target
-@const.alias.ptr = alias i62* @const.alias
-@const.alias.2 = alias i62* @const.target
+@const.alias = alias i62, i62* @const.target
+@const.alias.ptr = alias i62, i62* @const.alias
+@const.alias.2 = alias i62, i62* @const.target
 
 define i64 @f(i64 %f) {
 entry:
@@ -79,13 +79,13 @@ entry:
 
 define i1 @loadb() {
 entry:
-  %b = load i1* @b
+  %b = load i1, i1* @b
   ret i1 %b
 }
 
 define i1 @loada() {
 entry:
-  %a = load i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
+  %a = load i1, i1* getelementptr ([4 x i1], [4 x i1]* @a, i64 0, i64 2)
   ret i1 %a
 }
 
@@ -115,7 +115,7 @@ first:
 
 define i4 @globalAndFunctionFunctionUser() {
 entry:
-  %local = load i4* @globalAndFunction
+  %local = load i4, i4* @globalAndFunction
   ret i4 %local
 }
 
@@ -134,11 +134,11 @@ loop2:
 
 ; Check that block addresses work.
 @ba1 = constant i8* blockaddress (@bafunc1, %bb)
-@ba2 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
-@ba3 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+@ba2 = constant i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
+@ba3 = constant i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
 
 define i8* @babefore() {
-  ret i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+  ret i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
 bb1:
   ret i8* blockaddress (@bafunc1, %bb)
 bb2:
