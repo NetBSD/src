@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.99 2016/02/23 14:51:25 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.100 2016/02/27 16:23:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.99 2016/02/23 14:51:25 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.100 2016/02/27 16:23:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -719,14 +719,17 @@ parseheredoc(void)
 	union node *n;
 
 	while (heredoclist) {
+		int c;
 		here = heredoclist;
 		heredoclist = here->next;
 		if (needprompt) {
 			setprompt(2);
 			needprompt = 0;
 		}
-		readtoken1(pgetc(), here->here->type == NHERE? SQSYNTAX : DQSYNTAX,
-				here->eofmark, here->striptabs);
+		if ((c = pgetc()) == PEOF)
+			continue;
+		readtoken1(c, here->here->type == NHERE? SQSYNTAX : DQSYNTAX,
+		    here->eofmark, here->striptabs);
 		n = (union node *)stalloc(sizeof (struct narg));
 		n->narg.type = NARG;
 		n->narg.next = NULL;
