@@ -55,6 +55,26 @@ void bitwise_rel(unsigned i) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:14-[[@LINE-2]]:14}:"("
   // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:19-[[@LINE-3]]:19}:")"
 
+  (void)(i ^ i | i); // expected-warning {{'^' within '|'}} \
+                     // expected-note {{place parentheses around the '^' expression to silence this warning}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:10-[[@LINE-2]]:10}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:15-[[@LINE-3]]:15}:")"
+
+  (void)(i | i ^ i); // expected-warning {{'^' within '|'}} \
+                     // expected-note {{place parentheses around the '^' expression to silence this warning}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:14-[[@LINE-2]]:14}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:19-[[@LINE-3]]:19}:")"
+
+  (void)(i & i ^ i); // expected-warning {{'&' within '^'}} \
+                     // expected-note {{place parentheses around the '&' expression to silence this warning}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:10-[[@LINE-2]]:10}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:15-[[@LINE-3]]:15}:")"
+
+  (void)(i ^ i & i); // expected-warning {{'&' within '^'}} \
+                     // expected-note {{place parentheses around the '&' expression to silence this warning}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:14-[[@LINE-2]]:14}:"("
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:19-[[@LINE-3]]:19}:")"
+
   (void)(i ||
              i && i); // expected-warning {{'&&' within '||'}} \
                       // expected-note {{place parentheses around the '&&' expression to silence this warning}}
@@ -80,7 +100,7 @@ void bitwise_rel(unsigned i) {
 
 _Bool someConditionFunc();
 
-void conditional_op(int x, int y, _Bool b) {
+void conditional_op(int x, int y, _Bool b, void* p) {
   (void)(x + someConditionFunc() ? 1 : 2); // expected-warning {{operator '?:' has lower precedence than '+'}} \
                                            // expected-note {{place parentheses around the '+' expression to silence this warning}} \
                                            // expected-note {{place parentheses around the '?:' expression to evaluate it first}}
@@ -116,6 +136,14 @@ void conditional_op(int x, int y, _Bool b) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-6]]:24-[[@LINE-6]]:24}:")"
 
   (void)(x % 2 ? 1 : 2); // no warning
+
+  (void)(x + p ? 1 : 2); // expected-warning {{operator '?:' has lower precedence than '+'}} expected-note 2{{place parentheses}}
+  (void)(p + x ? 1 : 2); // no warning
+
+  (void)(p + b ? 1 : 2); // expected-warning {{operator '?:' has lower precedence than '+'}} expected-note 2{{place parentheses}}
+
+  (void)(x + y > 0 ? 1 : 2); // no warning
+  (void)(x + (y > 0) ? 1 : 2); // expected-warning {{operator '?:' has lower precedence than '+'}} expected-note 2{{place parentheses}}
 }
 
 // RUN: not %clang_cc1 -fsyntax-only -Wparentheses -Werror -fdiagnostics-show-option %s 2>&1 | FileCheck %s -check-prefix=CHECK-FLAG

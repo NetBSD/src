@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -debug-info-kind=limited %s -o - | FileCheck %s
 __attribute((objc_root_class)) @interface NSObject {
 	id isa;
 }
@@ -36,7 +36,12 @@ int main()
     }
 }
 // Verify that the debug type for both variables is 'id'.
-// CHECK:  !"0x101\00bad_carrier\00{{[0-9]+}}\000", !{{[0-9]+}}, null, ![[IDTYPE:[0-9]+]]} ; [ DW_TAG_arg_variable ] [bad_carrier] [line 0]
+// CHECK:  ![[IDTYPE:[0-9]+]] = !DIDerivedType(tag: DW_TAG_typedef, name: "id"
 //
-// CHECK:  !"0x101\00good_carrier\00{{[0-9]+}}\000", !{{[0-9]+}}, null, ![[IDTYPE]]} ; [ DW_TAG_arg_variable ] [good_carrier] [line 0]
-// CHECK !{{.*}}[[IDTYPE]] = !{!"0x16\00id\00{{[0-9]+}}\000\000\000\000", null, !{{[0-9]+}}, !{{[0-9]+}}} ; [ DW_TAG_typedef ] [id]
+// CHECK:  !DILocalVariable(name: "bad_carrier", arg:
+// CHECK-NOT:               line:
+// CHECK-SAME:              type: ![[IDTYPE]]
+//
+// CHECK:  !DILocalVariable(name: "good_carrier", arg:
+// CHECK-NOT:               line:
+// CHECK-SAME:              type: ![[IDTYPE]]

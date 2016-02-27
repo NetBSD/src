@@ -32,8 +32,8 @@ public:
       : Collector(Collector) {}
   bool needsInputFileVisitation() override { return true; }
   bool needsSystemInputFileVisitation() override { return true; }
-  bool visitInputFile(StringRef Filename, bool IsSystem,
-                      bool IsOverridden) override;
+  bool visitInputFile(StringRef Filename, bool IsSystem, bool IsOverridden,
+                      bool IsExplicitModule) override;
 };
 }
 
@@ -67,7 +67,7 @@ std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
   path::native(AbsoluteSrc);
   // TODO: We probably need to handle .. as well as . in order to have valid
   // input to the YAMLVFSWriter.
-  FileManager::removeDotPaths(AbsoluteSrc);
+  path::remove_dots(AbsoluteSrc);
 
   // Build the destination path.
   SmallString<256> Dest = Collector.getDest();
@@ -77,15 +77,16 @@ std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
   if (std::error_code EC = fs::create_directories(path::parent_path(Dest),
                                                    /*IgnoreExisting=*/true))
     return EC;
-  if (std::error_code EC = fs::copy_file(AbsoluteSrc.str(), Dest.str()))
+  if (std::error_code EC = fs::copy_file(AbsoluteSrc, Dest))
     return EC;
   // Use the absolute path under the root for the file mapping.
-  Collector.addFileMapping(AbsoluteSrc.str(), Dest.str());
+  Collector.addFileMapping(AbsoluteSrc, Dest);
   return std::error_code();
 }
 
 bool ModuleDependencyListener::visitInputFile(StringRef Filename, bool IsSystem,
-                                              bool IsOverridden) {
+                                              bool IsOverridden,
+                                              bool IsExplicitModule) {
   if (Collector.insertSeen(Filename))
     if (copyToRoot(Filename))
       Collector.setHasErrors();

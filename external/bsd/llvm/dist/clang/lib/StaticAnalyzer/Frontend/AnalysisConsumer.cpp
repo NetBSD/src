@@ -14,7 +14,7 @@
 #include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 #include "ModelInjector.h"
 #include "clang/AST/ASTConsumer.h"
-#include "clang/AST/DataRecursiveASTVisitor.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -92,7 +92,7 @@ class ClangDiagPathDiagConsumer : public PathDiagnosticConsumer {
 public:
   ClangDiagPathDiagConsumer(DiagnosticsEngine &Diag)
     : Diag(Diag), IncludePath(false) {}
-  virtual ~ClangDiagPathDiagConsumer() {}
+  ~ClangDiagPathDiagConsumer() override {}
   StringRef getName() const override { return "ClangDiags"; }
 
   bool supportsLogicalOpControlFlow() const override { return true; }
@@ -141,7 +141,7 @@ public:
 namespace {
 
 class AnalysisConsumer : public AnalysisASTConsumer,
-                         public DataRecursiveASTVisitor<AnalysisConsumer> {
+                         public RecursiveASTVisitor<AnalysisConsumer> {
   enum {
     AM_None = 0,
     AM_Syntax = 0x1,
@@ -168,7 +168,7 @@ public:
   /// The local declaration to all declarations ratio might be very small when
   /// working with a PCH file.
   SetOfDecls LocalTUDecls;
-                           
+
   // Set of PathDiagnosticConsumers.  Owned by AnalysisManager.
   PathDiagnosticConsumers PathConsumers;
 
@@ -199,7 +199,7 @@ public:
     }
   }
 
-  ~AnalysisConsumer() {
+  ~AnalysisConsumer() override {
     if (Opts->PrintStats)
       delete TUTotalTimer;
   }
@@ -364,17 +364,20 @@ public:
     }
     return true;
   }
-  
+
   bool VisitBlockDecl(BlockDecl *BD) {
     if (BD->hasBody()) {
       assert(RecVisitorMode == AM_Syntax || Mgr->shouldInlineCall() == false);
-      HandleCode(BD, RecVisitorMode);
+      // Since we skip function template definitions, we should skip blocks
+      // declared in those functions as well.
+      if (!BD->isDependentContext()) {
+        HandleCode(BD, RecVisitorMode);
+      }
     }
     return true;
   }
 
-  virtual void
-  AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) override {
+  void AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) override {
     PathConsumers.push_back(Consumer);
   }
 
@@ -476,7 +479,7 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
 
     CallGraphNode *N = *I;
     Decl *D = N->getDecl();
-    
+
     // Skip the abstract root node.
     if (!D)
       continue;
@@ -493,10 +496,11 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
                (Mgr->options.InliningMode == All ? nullptr : &VisitedCallees));
 
     // Add the visited callees to the global visited set.
-    for (SetOfConstDecls::iterator I = VisitedCallees.begin(),
-                                   E = VisitedCallees.end(); I != E; ++I) {
-        Visited.insert(*I);
-    }
+    for (const Decl *Callee : VisitedCallees)
+      // Decls from CallGraph are already canonical. But Decls coming from
+      // CallExprs may be not. We should canonicalize them manually.
+      Visited.insert(isa<ObjCMethodDecl>(Callee) ? Callee
+                                                 : Callee->getCanonicalDecl());
     VisitedAsTopLevel.insert(D);
   }
 }
@@ -589,8 +593,11 @@ AnalysisConsumer::getModeForDecl(Decl *D, AnalysisMode Mode) {
   // - Header files: run non-path-sensitive checks only.
   // - System headers: don't run any checks.
   SourceManager &SM = Ctx->getSourceManager();
-  SourceLocation SL = SM.getExpansionLoc(D->getLocation());
-  if (!Opts->AnalyzeAll && !SM.isInMainFile(SL)) {
+  const Stmt *Body = D->getBody();
+  SourceLocation SL = Body ? Body->getLocStart() : D->getLocation();
+  SL = SM.getExpansionLoc(SL);
+
+  if (!Opts->AnalyzeAll && !SM.isWrittenInMainFile(SL)) {
     if (SL.isInvalid() || SM.isInSystemHeader(SL))
       return AM_None;
     return Mode & ~AM_Path;
@@ -677,11 +684,11 @@ void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
   case LangOptions::NonGC:
     ActionExprEngine(D, false, IMode, Visited);
     break;
-  
+
   case LangOptions::GCOnly:
     ActionExprEngine(D, true, IMode, Visited);
     break;
-  
+
   case LangOptions::HybridGC:
     ActionExprEngine(D, false, IMode, Visited);
     ActionExprEngine(D, true, IMode, Visited);
@@ -724,7 +731,7 @@ class UbigraphViz : public ExplodedNode::Auditor {
 public:
   UbigraphViz(std::unique_ptr<raw_ostream> Out, StringRef Filename);
 
-  ~UbigraphViz();
+  ~UbigraphViz() override;
 
   void AddEdge(ExplodedNode *Src, ExplodedNode *Dst) override;
 };
@@ -735,7 +742,7 @@ static std::unique_ptr<ExplodedNode::Auditor> CreateUbiViz() {
   SmallString<128> P;
   int FD;
   llvm::sys::fs::createTemporaryFile("llvm_ubi", "", FD, P);
-  llvm::errs() << "Writing '" << P.str() << "'.\n";
+  llvm::errs() << "Writing '" << P << "'.\n";
 
   auto Stream = llvm::make_unique<llvm::raw_fd_ostream>(FD, true);
 
@@ -776,8 +783,9 @@ void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {
        << ", ('arrow','true'), ('oriented', 'true'))\n";
 }
 
-UbigraphViz::UbigraphViz(std::unique_ptr<raw_ostream> Out, StringRef Filename)
-    : Out(std::move(Out)), Filename(Filename), Cntr(0) {
+UbigraphViz::UbigraphViz(std::unique_ptr<raw_ostream> OutStream,
+                         StringRef Filename)
+    : Out(std::move(OutStream)), Filename(Filename), Cntr(0) {
 
   *Out << "('vertex_style_attribute', 0, ('shape', 'icosahedron'))\n";
   *Out << "('vertex_style', 1, 0, ('shape', 'sphere'), ('color', '#ffcc66'),"

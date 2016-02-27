@@ -139,7 +139,7 @@ public:
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
       Diagnose(Redecl == Sema::NotForRedeclaration),
-      AllowHidden(Redecl == Sema::ForRedeclaration),
+      AllowHidden(false),
       Shadowed(false)
   {
     configure();
@@ -161,7 +161,7 @@ public:
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
       Diagnose(Redecl == Sema::NotForRedeclaration),
-      AllowHidden(Redecl == Sema::ForRedeclaration),
+      AllowHidden(false),
       Shadowed(false)
   {
     configure();
@@ -228,10 +228,11 @@ public:
 
   /// \brief Determine whether this lookup is permitted to see hidden
   /// declarations, such as those in modules that have not yet been imported.
-  bool isHiddenDeclarationVisible() const {
-    return AllowHidden || LookupKind == Sema::LookupTagName;
+  bool isHiddenDeclarationVisible(NamedDecl *ND) const {
+    return AllowHidden ||
+           (isForRedeclaration() && ND->isExternallyVisible());
   }
-  
+
   /// Sets whether tag declarations should be hidden by non-tag
   /// declarations during resolution.  The default is true.
   void setHideTags(bool Hide) {
@@ -291,9 +292,6 @@ public:
     if (!D->isHidden())
       return true;
 
-    if (SemaRef.ActiveTemplateInstantiations.empty())
-      return false;
-
     // During template instantiation, we can refer to hidden declarations, if
     // they were visible in any module along the path of instantiation.
     return isVisibleSlow(SemaRef, D);
@@ -305,7 +303,7 @@ public:
     if (!D->isInIdentifierNamespace(IDNS))
       return nullptr;
 
-    if (isHiddenDeclarationVisible() || isVisible(getSema(), D))
+    if (isVisible(getSema(), D) || isHiddenDeclarationVisible(D))
       return D;
 
     return getAcceptableDeclSlow(D);
@@ -514,10 +512,10 @@ public:
   /// \brief Change this lookup's redeclaration kind.
   void setRedeclarationKind(Sema::RedeclarationKind RK) {
     Redecl = RK;
-    AllowHidden = (RK == Sema::ForRedeclaration);
     configure();
   }
 
+  void dump();
   void print(raw_ostream &);
 
   /// Suppress the diagnostics that would normally fire because of this
@@ -568,6 +566,11 @@ public:
     {}
 
   public:
+    Filter(Filter &&F)
+        : Results(F.Results), I(F.I), Changed(F.Changed),
+          CalledDone(F.CalledDone) {
+      F.CalledDone = true;
+    }
     ~Filter() {
       assert(CalledDone &&
              "LookupResult::Filter destroyed without done() call");
@@ -735,22 +738,18 @@ public:
   }
 
   class iterator
-      : public std::iterator<std::forward_iterator_tag, NamedDecl *> {
-    typedef llvm::DenseMap<NamedDecl*,NamedDecl*>::iterator inner_iterator;
-    inner_iterator iter;
-
+      : public llvm::iterator_adaptor_base<
+            iterator, llvm::DenseMap<NamedDecl *, NamedDecl *>::iterator,
+            std::forward_iterator_tag, NamedDecl *> {
     friend class ADLResult;
-    iterator(const inner_iterator &iter) : iter(iter) {}
+
+    iterator(llvm::DenseMap<NamedDecl *, NamedDecl *>::iterator Iter)
+        : iterator_adaptor_base(std::move(Iter)) {}
+
   public:
     iterator() {}
 
-    iterator &operator++() { ++iter; return *this; }
-    iterator operator++(int) { return iterator(iter++); }
-
-    value_type operator*() const { return iter->second; }
-
-    bool operator==(const iterator &other) const { return iter == other.iter; }
-    bool operator!=(const iterator &other) const { return iter != other.iter; }
+    value_type operator*() const { return I->second; }
   };
 
   iterator begin() { return iterator(Decls.begin()); }

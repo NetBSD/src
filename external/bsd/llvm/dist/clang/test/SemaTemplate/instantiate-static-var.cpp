@@ -1,4 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+
 template<typename T, T Divisor>
 class X {
 public:
@@ -11,7 +14,13 @@ X<int, 0> xi0; // expected-note{{in instantiation of template class 'X<int, 0>' 
 
 template<typename T>
 class Y {
-  static const T value = 0; // expected-warning{{in-class initializer for static data member of type 'const float' is a GNU extension}}
+  static const T value = 0; 
+#if __cplusplus <= 199711L
+// expected-warning@-2 {{in-class initializer for static data member of type 'const float' is a GNU extension}}
+#else
+// expected-error@-4 {{in-class initializer for static data member of type 'const float' requires 'constexpr' specifier}}
+// expected-note@-5 {{add 'constexpr'}}
+#endif
 };
 
 Y<float> fy; // expected-note{{in instantiation of template class 'Y<float>' requested here}}
@@ -113,4 +122,16 @@ namespace PR6449 {
   template class X0<char>;
   template class X1<char>;
 
+}
+
+typedef char MyString[100];
+template <typename T>
+struct StaticVarWithTypedefString {
+  static MyString str;
+};
+template <typename T>
+MyString StaticVarWithTypedefString<T>::str = "";
+
+void testStaticVarWithTypedefString() {
+  (void)StaticVarWithTypedefString<int>::str;
 }
