@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.94 2016/02/22 20:02:00 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.95 2016/02/27 16:28:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.94 2016/02/22 20:02:00 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.95 2016/02/27 16:28:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	} else {
 		if (flag & EXP_REDIR) /*XXX - for now, just remove escapes */
 			rmescapes(p);
-		sp = (struct strlist *)stalloc(sizeof (struct strlist));
+		sp = stalloc(sizeof(*sp));
 		sp->text = p;
 		*exparg.lastp = sp;
 		exparg.lastp = &sp->next;
@@ -1002,7 +1002,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 	if (ifslastp == NULL) {
 		/* Return entire argument, IFS doesn't apply to any of it */
-		sp = (struct strlist *)stalloc(sizeof *sp);
+		sp = stalloc(sizeof(*sp));
 		sp->text = start;
 		*arglist->lastp = sp;
 		arglist->lastp = &sp->next;
@@ -1043,7 +1043,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 			/* Save this argument... */
 			*q = '\0';
-			sp = (struct strlist *)stalloc(sizeof *sp);
+			sp = stalloc(sizeof(*sp));
 			sp->text = start;
 			*arglist->lastp = sp;
 			arglist->lastp = &sp->next;
@@ -1077,7 +1077,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 	 * should only generate one....
 	 */
 	if (had_param_ch || *start != 0) {
-		sp = (struct strlist *)stalloc(sizeof *sp);
+		sp = stalloc(sizeof(*sp));
 		sp->text = start;
 		*arglist->lastp = sp;
 		arglist->lastp = &sp->next;
@@ -1300,7 +1300,7 @@ addfname(char *name)
 
 	p = stalloc(strlen(name) + 1);
 	scopy(name, p);
-	sp = (struct strlist *)stalloc(sizeof *sp);
+	sp = stalloc(sizeof(*sp));
 	sp->text = p;
 	*exparg.lastp = sp;
 	exparg.lastp = &sp->next;
