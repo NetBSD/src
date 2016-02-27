@@ -1,4 +1,4 @@
-$NetBSD: TODO.clang,v 1.18 2016/02/27 18:50:39 joerg Exp $
+$NetBSD: TODO.clang,v 1.19 2016/02/27 21:42:14 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
@@ -14,3 +14,7 @@ macro (ab)use.
 
 src/tests/lib/libc/sync disables tests for atomics shorter than 32bit on
 SPARC64 due to missing codegen support.
+
+src/external/bsd/llvm/lib/libLLVMSupport and src/external/bsd/libc++/lib
+explicitly require -Wa,-Av8plus at the moment, because atomic ops are
+always lowered to CAS.
