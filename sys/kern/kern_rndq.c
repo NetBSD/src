@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.81 2016/02/17 19:44:40 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.82 2016/02/27 00:09:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.81 2016/02/17 19:44:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.82 2016/02/27 00:09:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.81 2016/02/17 19:44:40 riastradh Exp
 
 #ifdef COMPAT_50
 #include <compat/sys/rnd.h>
+#endif
+
+#if defined(__HAVE_CPU_RNG)
+#include <machine/cpu_rng.h>
 #endif
 
 #if defined(__HAVE_CPU_COUNTER)
@@ -183,17 +187,6 @@ rnd_printf(const char *fmt, ...)
 	vprintf(fmt, ap);
 	va_end(ap);
 	rnd_printing = 0;
-}
-
-void
-rnd_init_softint(void)
-{
-
-	rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-	    rnd_intr, NULL);
-	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
-	    rnd_wake, NULL);
-	rnd_schedule_process();
 }
 
 /*
@@ -412,6 +405,38 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 	return ret;
 }
 
+#if defined(__HAVE_CPU_RNG)
+static struct {
+	kmutex_t	lock;	/* unfortunately, must protect krndsource */
+	krndsource_t	source;
+} rnd_cpu __cacheline_aligned;
+	
+static void
+rnd_cpu_get(size_t bytes, void *priv)
+{
+	krndsource_t *cpusrcp = priv;
+	KASSERT(cpusrcp == &rnd_cpu.source);
+
+        if (RND_ENABLED(cpusrcp)) {
+		cpu_rng_t buf[2 * RND_ENTROPY_THRESHOLD / sizeof(cpu_rng_t)];
+		cpu_rng_t *bufp;
+		size_t cnt = howmany(sizeof(buf), sizeof(cpu_rng_t));
+		size_t entropy = 0;
+
+		for (bufp = buf; bufp < buf + cnt; bufp++) {
+			entropy += cpu_rng(bufp);
+		}
+		if (__predict_true(entropy)) {
+			mutex_spin_enter(&rnd_cpu.lock);
+			rnd_add_data_sync(cpusrcp, buf, sizeof(buf), entropy);
+			explicit_memset(buf, 0, sizeof(buf));
+			mutex_spin_exit(&rnd_cpu.lock);
+		}
+        }
+}
+
+#endif
+
 #if defined(__HAVE_CPU_COUNTER)
 static struct {
 	kmutex_t	lock;
@@ -470,6 +495,17 @@ rnd_skew_intr(void *arg)
 	mutex_spin_exit(&rnd_skew.lock);
 }
 #endif
+
+void
+rnd_init_softint(void)
+{
+
+	rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
+	    rnd_intr, NULL);
+	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
+	    rnd_wake, NULL);
+	rnd_schedule_process();
+}
 
 /*
  * Entropy was just added to the pool.  If we crossed the threshold for
@@ -548,6 +584,21 @@ rnd_init(void)
 		rndpool_add_data(&rnd_global.pool, &c, sizeof(c), 1);
 		mutex_spin_exit(&rnd_global.lock);
 	}
+
+	/*
+	 * Attach CPU RNG if available.
+	 */
+#if defined(__HAVE_CPU_RNG)
+	if (cpu_rng_init()) {
+		/* IPL_VM because taken while rnd_global.lock is held.  */
+		mutex_init(&rnd_cpu.lock, MUTEX_DEFAULT, IPL_VM);
+		rndsource_setcb(&rnd_cpu.source, rnd_cpu_get, &rnd_cpu.source);
+		rnd_attach_source(&rnd_cpu.source, "cpurng",
+		    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|
+		    RND_FLAG_HASCB|RND_FLAG_HASENABLE);
+		rnd_cpu_get(RND_ENTROPY_THRESHOLD, &rnd_cpu.source);
+	}
+#endif
 
 	/*
 	 * If we have a cycle counter, take its error with respect
@@ -1217,7 +1268,7 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 		explicit_memset(&rnd_rt, 0, sizeof(rnd_rt));
 		rndpool_add_data(&rnd_global.pool, rnd_testbits,
 		    sizeof(rnd_testbits), entropy_count);
-		memset(rnd_testbits, 0, sizeof(rnd_testbits));
+		explicit_memset(rnd_testbits, 0, sizeof(rnd_testbits));
 		rnd_printf_verbose("rnd: statistical RNG test done,"
 		    " entropy = %d.\n",
 		    rndpool_get_entropy_count(&rnd_global.pool));

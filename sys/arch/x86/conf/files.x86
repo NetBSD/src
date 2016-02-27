@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.86 2016/01/28 01:09:56 christos Exp $
+#	$NetBSD: files.x86,v 1.87 2016/02/27 00:09:45 tls Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -27,6 +27,7 @@ define  ipmibus {}
 device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+file	arch/x86/x86/cpu_rng.c		cpu
 
 device	acpicpu: acpi
 attach	acpicpu at cpufeaturebus
