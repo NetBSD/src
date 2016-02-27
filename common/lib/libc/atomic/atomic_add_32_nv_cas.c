@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.6 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.7 2016/02/27 19:20:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ atomic_add_32_nv(volatile uint32_t *addr, int32_t val)
 #undef atomic_add_32_nv
 atomic_op_alias(atomic_add_32_nv,_atomic_add_32_nv)
 crt_alias(__sync_add_and_fetch_4,_atomic_add_32_nv)
+crt_alias(__atomic_add_fetch_4,_atomic_add_32_nv)
 
 #undef atomic_add_int_nv
 atomic_op_alias(atomic_add_int_nv,_atomic_add_32_nv)
