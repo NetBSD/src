@@ -24,7 +24,7 @@
 
 // seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-su_int __fixunsdfsi(double a);
+COMPILER_RT_ABI su_int __fixunsdfsi(double a);
 
 int test__fixunsdfsi(double a, su_int expected)
 {
@@ -74,6 +74,8 @@ int main()
 #endif
 
     if (test__fixunsdfsi(0x1.000000p+31, 0x80000000))
+        return 1;
+    if (test__fixunsdfsi(0x1.000000p+32, 0xFFFFFFFF))
         return 1;
     if (test__fixunsdfsi(0x1.FFFFFEp+31, 0xFFFFFF00))
         return 1;
