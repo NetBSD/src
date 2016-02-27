@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.89 2016/02/27 16:53:22 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.90 2016/02/27 17:03:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.89 2016/02/27 16:53:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.90 2016/02/27 17:03:58 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1059,7 +1059,8 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 		USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	KASSERT(!ex->ex_isdone);
+	KASSERTMSG(!ex->ex_isdone, "xfer %p type %d status %d", xfer,
+	    ex->ex_type, xfer->ux_status);
 	ex->ex_isdone = true;
 #endif
 
