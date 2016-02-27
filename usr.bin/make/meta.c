@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.48 2016/02/27 00:13:21 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.49 2016/02/27 16:14:23 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -697,7 +697,7 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
     }
     getcwd(cwd, sizeof(cwd));
     Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL, 0);
-    if (pbm && pbm->meta_fname[0]) {
+    if (pbm->meta_fname[0]) {
 	Var_Set(".ERROR_META_FILE", pbm->meta_fname, VAR_GLOBAL, 0);
     }
     meta_job_finish(job);
