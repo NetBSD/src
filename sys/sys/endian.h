@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.29 2014/03/18 14:28:37 riastradh Exp $	*/
+/*	$NetBSD: endian.h,v 1.30 2016/02/27 21:37:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -193,7 +193,7 @@ __END_DECLS
 #if __GNUC_PREREQ__(2, 95)
 
 #define __GEN_ENDIAN_ENC(bits, endian) \
-static __inline __unused void \
+static __inline void __unused \
 endian ## bits ## enc(void *dst, uint ## bits ## _t u) \
 { \
 	u = hto ## endian ## bits (u); \
@@ -209,7 +209,7 @@ __GEN_ENDIAN_ENC(64, le)
 #undef __GEN_ENDIAN_ENC
 
 #define __GEN_ENDIAN_DEC(bits, endian) \
-static __inline __unused uint ## bits ## _t \
+static __inline uint ## bits ## _t __unused \
 endian ## bits ## dec(const void *buf) \
 { \
 	uint ## bits ## _t u; \
