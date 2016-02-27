@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2015/01/29 20:41:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.31 2016/02/27 21:42:14 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -117,6 +117,10 @@ SRCS+=	Host.inc \
 .for src in ${SRCS:M*.c}
 CPPFLAGS.${src}+=	-std=gnu99
 .endfor
+
+.if !defined(HOSTLIB) && ${MACHINE_ARCH} == "sparc"
+COPTS.Atomic.cpp+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus :}
+.endif
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
