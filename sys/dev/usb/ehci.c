@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.88 2016/02/21 07:04:13 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.89 2016/02/27 16:53:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.88 2016/02/21 07:04:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.89 2016/02/27 16:53:22 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4720,6 +4720,7 @@ ehci_device_isoc_init(struct usbd_xfer *xfer)
 	KASSERT(exfer->ex_isdone);
 
 	exfer->ex_type = EX_ISOC;
+	exfer->ex_isrunning = false;
 
 	/*
 	 * Step 1: Allocate and initialize itds, how many do we need?
