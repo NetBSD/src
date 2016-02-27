@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.136 2016/02/06 21:23:09 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.137 2016/02/27 16:31:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.136 2016/02/06 21:23:09 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.137 2016/02/27 16:31:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1971,7 +1971,7 @@ dotrans(char *dst, size_t dlen, const char *src)
 		continue;
 	for (cp1 = src; *cp1; cp1++) {
 		int found = 0;
-		for (i = 0; ntin[i] && i < sizeof(ntin); i++) {
+		for (i = 0; i < sizeof(ntin) && ntin[i]; i++) {
 			if (*cp1 == ntin[i]) {
 				found++;
 				if (i < ostop) {
