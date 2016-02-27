@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.14 2016/02/01 17:46:22 christos Exp $ */
+/* $NetBSD: acpi.c,v 1.15 2016/02/27 16:40:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.14 2016/02/01 17:46:22 christos Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.15 2016/02/27 16:40:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1950,7 +1950,7 @@ acpi_print_rsdt(ACPI_TABLE_HEADER *rsdp)
 	ACPI_TABLE_RSDT *rsdt;
 	ACPI_TABLE_XSDT *xsdt;
 	int	i, entries;
-	u_long	addr;
+	u_long	addr = 0;
 
 	rsdt = (ACPI_TABLE_RSDT *)rsdp;
 	xsdt = (ACPI_TABLE_XSDT *)rsdp;
@@ -1969,7 +1969,7 @@ acpi_print_rsdt(ACPI_TABLE_HEADER *rsdp)
 			addr = le64toh(xsdt->TableOffsetEntry[i]);
 			break;
 		default:
-			assert((addr == 0));
+			assert(addr == 0);
 		}
 		printf("0x%08lx", addr);
 	}
@@ -2219,7 +2219,7 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 	ACPI_TABLE_HEADER *sdp;
 	ACPI_TABLE_RSDT *rsdt;
 	ACPI_TABLE_XSDT *xsdt;
-	vm_offset_t addr;
+	vm_offset_t addr = 0;
 	int entries, i;
 
 	acpi_print_rsdt(rsdp);
@@ -2235,7 +2235,7 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			addr = le64toh(xsdt->TableOffsetEntry[i]);
 			break;
 		default:
-			assert((addr == 0));
+			assert(addr == 0);
 		}
 
 		sdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(addr);
@@ -2456,7 +2456,7 @@ sdt_from_rsdt(ACPI_TABLE_HEADER *rsdp, const char *sig, ACPI_TABLE_HEADER *last)
 	ACPI_TABLE_HEADER *sdt;
 	ACPI_TABLE_RSDT *rsdt;
 	ACPI_TABLE_XSDT *xsdt;
-	vm_offset_t addr;
+	vm_offset_t addr = 0;
 	int entries, i;
 
 	rsdt = (ACPI_TABLE_RSDT *)rsdp;
@@ -2471,7 +2471,7 @@ sdt_from_rsdt(ACPI_TABLE_HEADER *rsdp, const char *sig, ACPI_TABLE_HEADER *last)
 			addr = le64toh(xsdt->TableOffsetEntry[i]);
 			break;
 		default:
-			assert((addr == 0));
+			assert(addr == 0);
 		}
 		sdt = (ACPI_TABLE_HEADER *)acpi_map_sdt(addr);
 		if (last != NULL) {
