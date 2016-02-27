@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/10/14 01:37:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/02/27 21:47:36 joerg Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -22,6 +22,7 @@ SRCS+=	APSIntType.cpp \
 	CommonBugCategories.cpp \
 	ConstraintManager.cpp \
 	CoreEngine.cpp \
+	DynamicTypeMap.cpp \
 	Environment.cpp \
 	ExplodedGraph.cpp \
 	ExprEngine.cpp \
@@ -31,6 +32,8 @@ SRCS+=	APSIntType.cpp \
 	ExprEngineObjC.cpp \
 	FunctionSummary.cpp \
 	HTMLDiagnostics.cpp \
+	IssueHash.cpp \
+	LoopWidening.cpp \
 	MemRegion.cpp \
 	PathDiagnostic.cpp \
 	PlistDiagnostics.cpp \

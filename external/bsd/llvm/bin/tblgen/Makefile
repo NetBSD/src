@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2014/08/10 17:34:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2016/02/27 21:47:32 joerg Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -10,6 +10,7 @@ NOMAN=		yes
 SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
 	AsmWriterInst.cpp \
+	Attributes.cpp \
 	CTagsEmitter.cpp \
 	CallingConvEmitter.cpp \
 	CodeEmitterGen.cpp \

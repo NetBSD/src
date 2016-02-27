@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2014/08/10 17:34:19 joerg Exp $
+#	$NetBSD: Makefile,v 1.22 2016/02/27 21:47:30 joerg Exp $
 
 PROG_CXX=	llc
 NOMAN=		yes
@@ -10,6 +10,7 @@ NOMAN=		yes
 SRCS=	llc.cpp
 
 LLVM_LIBS+= \
+	MIRParser \
 	AsmPrinter \
 	IRReader \
 	AsmParser \
@@ -50,6 +51,7 @@ LLVM_LIBS+= \
 	Object \
 	SelectionDAG \
 	CodeGen \
+	Instrumentation \
 	ScalarOpts \
 	TransformsUtils \
 	Analysis \

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.31 2016/02/27 21:42:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.32 2016/02/27 21:47:34 joerg Exp $
 
 LIB=	LLVMSupport
-
-NOGCCERROR=	yes
 
 .include <bsd.init.mk>
 
@@ -17,6 +15,7 @@ SRCS+=	APFloat.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
 	circular_raw_ostream.cpp \
+	COM.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
 	ConvertUTF.c \
@@ -38,8 +37,7 @@ SRCS+=	APFloat.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
 	IntrusiveRefCntPtr.cpp \
-	IsInf.cpp \
-	IsNAN.cpp \
+	JamCRC.cpp \
 	LEB128.cpp \
 	LineIterator.cpp \
 	Locale.cpp \
@@ -63,7 +61,9 @@ SRCS+=	APFloat.cpp \
 	StringMap.cpp \
 	StringPool.cpp \
 	StringRef.cpp \
+	StringSaver.cpp \
 	SystemUtils.cpp \
+	TargetParser.cpp \
 	TargetRegistry.cpp \
 	Timer.cpp \
 	ToolOutputFile.cpp \
@@ -96,6 +96,7 @@ SRCS+=	Atomic.cpp \
 	SearchForAddressOfSpecialSymbol.cpp \
 	Signals.cpp \
 	ThreadLocal.cpp \
+	ThreadPool.cpp \
 	Threading.cpp \
 	TimeValue.cpp \
 	Valgrind.cpp

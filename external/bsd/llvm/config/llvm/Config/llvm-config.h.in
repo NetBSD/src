@@ -30,6 +30,9 @@
 /* Installation directory for documentation */
 #define LLVM_DOCSDIR "/usr/share/doc/llvm"
 
+/* Define to enable checks that alter the LLVM C++ ABI */
+#define LLVM_ENABLE_ABI_BREAKING_CHECKS 1
+
 /* Define if threads enabled */
 #define LLVM_ENABLE_THREADS 1
 
@@ -91,12 +94,12 @@
 #define LLVM_VERSION_MAJOR 3
 
 /* Minor version of the LLVM API */
-#define LLVM_VERSION_MINOR 6
+#define LLVM_VERSION_MINOR 8
 
 /* Patch version of the LLVM API */
-#define LLVM_VERSION_PATCH 1
+#define LLVM_VERSION_PATCH 0
 
 /* LLVM version string */
-#define LLVM_VERSION_STRING "3.6.1"
+#define LLVM_VERSION_STRING "3.8.0"
 
 #endif

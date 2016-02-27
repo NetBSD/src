@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/01/29 20:41:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/02/27 21:47:35 joerg Exp $
 
 LIB=	clangDriver
 
@@ -13,6 +13,7 @@ SRCS+=	Action.cpp \
 	DriverOptions.cpp \
 	Job.cpp \
 	MSVCToolChain.cpp \
+	MinGWToolChain.cpp \
 	Multilib.cpp \
 	Phases.cpp \
 	SanitizerArgs.cpp \

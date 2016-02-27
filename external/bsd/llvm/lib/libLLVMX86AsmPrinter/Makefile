@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2016/02/27 21:47:35 joerg Exp $
 
 LIB=	LLVMX86AsmPrinter
-NOGCCERROR=	yes
 
 .include <bsd.init.mk>
 
