@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2013/01/23 15:02:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/02/27 21:47:34 joerg Exp $
 
 LIB=	LLVMOption
-
-NOGCCERROR=	yes
 
 .include <bsd.init.mk>
 

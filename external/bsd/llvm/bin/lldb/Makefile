@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/08/10 17:34:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2016/02/27 21:47:30 joerg Exp $
 
 PROG_CXX=	lldb
 NOMAN=		yes
@@ -147,7 +147,6 @@ LLVM_LIBS+= \
 	Linker \
 	TransformsUtils \
 	Analysis \
-	ipa \
 	IR \
 	ProfileData \
 	Option \

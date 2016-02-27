@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.79 2015/05/29 17:37:50 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.80 2016/02/27 21:47:30 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -6,9 +6,9 @@ LLVM_TOPLEVEL_MK=
 .include <bsd.own.mk>
 
 SVN_ROOT=		http://llvm.org/svn/llvm-project
-SVN_BRANCH=		branches/release_36
+SVN_BRANCH=		branches/release_38
 
-COMMON_REVISION=	237755
+COMMON_REVISION=	r261930
 CLANG_REVISION=		${COMMON_REVISION}
 LLD_REVISION=		${COMMON_REVISION}
 LLDB_REVISION=		${COMMON_REVISION}
@@ -17,9 +17,9 @@ LLVM_REVISION=		${COMMON_REVISION}
 MCLINKER_REVISION=	deeb2a77b4165827316f88e0a7ba4ba6b743a080
 MCLINKER_ROOT=		https://code.google.com/p/mclinker/
 
-LLVM_VERSION=		3.6.1
-CLANG_VERSION=		3.6.1
-LLD_VERSION=		3.6.1
+LLVM_VERSION=		3.8.0
+CLANG_VERSION=		3.8.0
+LLD_VERSION=		3.8.0
 
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
 LLD_SRCDIR:=	${.PARSEDIR}/dist/lld
@@ -56,6 +56,8 @@ CXXFLAGS+=	-std=c++11
 CXXFLAGS+=	-fno-rtti -fno-exceptions
 CXXFLAGS+=	-ffunction-sections -fdata-sections
 LDFLAGS+=	-Wl,--gc-sections
+DPADD+=		${LIBEXECINFO}
+LDADD+=		-lexecinfo
 .endif
 CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 		-I${CLANG_INCLUDE_CONFIG} -I${MCLINKER_INCLUDE_CONFIG}
@@ -66,6 +68,7 @@ LLVM_CONFIGURE_ARGS=	\
 	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION:R}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
+	--with-clang-default-openmp-runtime=libomp \
 	--with-clang-srcdir=${CLANG_SRCDIR} \
 	--host=${LLVM_PLATFORM} --disable-compiler-version-checks \
 	--disable-bindings llvm_cv_gnu_make_command=${MAKE}
