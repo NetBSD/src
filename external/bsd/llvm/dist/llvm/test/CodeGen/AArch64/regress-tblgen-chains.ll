@@ -19,7 +19,7 @@ define i64 @test_chains() {
   call void @bar(i8* %locvar)
 ; CHECK: bl {{_?bar}}
 
-  %inc.1 = load i8* %locvar
+  %inc.1 = load i8, i8* %locvar
   %inc.2 = zext i8 %inc.1 to i64
   %inc.3 = add i64 %inc.2, 1
   %inc.4 = trunc i64 %inc.3 to i8
@@ -27,10 +27,10 @@ define i64 @test_chains() {
 
 ; CHECK: ldurb {{w[0-9]+}}, [x29, [[LOCADDR:#-?[0-9]+]]]
 ; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, #1
-; CHECK: sturb {{w[0-9]+}}, [x29, [[LOCADDR]]]
-; CHECK: ldurb {{w[0-9]+}}, [x29, [[LOCADDR]]]
+; CHECK: sturb w[[STRVAL:[0-9]+]], [x29, [[LOCADDR]]]
+; CHECK; and w0, w[[STRVAL]], #0xff
 
-  %ret.1 = load i8* %locvar
+  %ret.1 = load i8, i8* %locvar
   %ret.2 = zext i8 %ret.1 to i64
   ret i64 %ret.2
 ; CHECK: ret

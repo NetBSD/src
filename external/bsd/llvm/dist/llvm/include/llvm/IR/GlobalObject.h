@@ -24,12 +24,14 @@ class Comdat;
 class Module;
 
 class GlobalObject : public GlobalValue {
-  GlobalObject(const GlobalObject &) LLVM_DELETED_FUNCTION;
+  GlobalObject(const GlobalObject &) = delete;
 
 protected:
   GlobalObject(Type *Ty, ValueTy VTy, Use *Ops, unsigned NumOps,
-               LinkageTypes Linkage, const Twine &Name)
-      : GlobalValue(Ty, VTy, Ops, NumOps, Linkage, Name), ObjComdat(nullptr) {
+               LinkageTypes Linkage, const Twine &Name,
+               unsigned AddressSpace = 0)
+      : GlobalValue(Ty, VTy, Ops, NumOps, Linkage, Name, AddressSpace),
+        ObjComdat(nullptr) {
     setGlobalValueSubClassData(0);
   }
 

@@ -32,10 +32,10 @@ define void @test100() {
 ; Smallest stack for which we use a constant pool
 define void @test2() {
 ; CHECK-LABEL: test2:
-; CHECK: ldr r0,
-; CHECK: add sp, r0
-; EABI: ldr r0,
-; EABI: add sp, r0
+; CHECK: ldr [[TEMP:r[0-7]]],
+; CHECK: add sp, [[TEMP]]
+; EABI: ldr [[TEMP:r[0-7]]],
+; EABI: add sp, [[TEMP]]
 ; IOS: subs r4, r7, #4
 ; IOS: mov sp, r4
     %tmp = alloca [ 1528 x i8 ] , align 4
@@ -44,19 +44,19 @@ define void @test2() {
 
 define i32 @test3() {
 ; CHECK-LABEL: test3:
-; CHECK: ldr r1,
-; CHECK: add sp, r1
-; CHECK: ldr r1,
-; CHECK: add r1, sp
-; EABI: ldr r1,
-; EABI: add sp, r1
+; CHECK: ldr [[TEMP:r[0-7]]],
+; CHECK: add sp, [[TEMP]]
+; CHECK: ldr [[TEMP]],
+; CHECK: add [[TEMP]], sp
+; EABI: ldr [[TEMP:r[0-7]]],
+; EABI: add sp, [[TEMP]]
 ; IOS: subs r4, r7, #4
 ; IOS: mov sp, r4
     %retval = alloca i32, align 4
     %tmp = alloca i32, align 4
     %a = alloca [805306369 x i8], align 16
     store i32 0, i32* %tmp
-    %tmp1 = load i32* %tmp
+    %tmp1 = load i32, i32* %tmp
     ret i32 %tmp1
 }
 

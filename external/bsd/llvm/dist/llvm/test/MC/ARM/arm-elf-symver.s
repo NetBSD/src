@@ -23,7 +23,7 @@ defined3:
 global1:
 
 @ CHECK: Relocations [
-@ CHECK-NEXT:   Section (2) .rel.text {
+@ CHECK-NEXT:   Section {{.*}} .rel.text {
 @ CHECK-NEXT:     0x0 R_ARM_ABS32 .text 0x0
 @ CHECK-NEXT:     0x4 R_ARM_ABS32 bar2@zed 0x0
 @ CHECK-NEXT:     0x8 R_ARM_ABS32 .text 0x0
@@ -39,7 +39,7 @@ global1:
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: None (0x0)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
+@ CHECK-NEXT:     Section: .text
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
 @ CHECK-NEXT:     Name: bar3@@zed
@@ -48,7 +48,7 @@ global1:
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: None (0x0)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
+@ CHECK-NEXT:     Section: .text
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
 @ CHECK-NEXT:     Name: bar5@@zed
@@ -57,7 +57,7 @@ global1:
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: None (0x0)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
+@ CHECK-NEXT:     Section: .text
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
 @ CHECK-NEXT:     Name: defined1
@@ -66,7 +66,7 @@ global1:
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: None (0x0)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
+@ CHECK-NEXT:     Section: .text
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
 @ CHECK-NEXT:     Name: defined2
@@ -75,52 +75,16 @@ global1:
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: None (0x0)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
+@ CHECK-NEXT:     Section: .text
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
-@ CHECK-NEXT:     Name: .text (0)
+@ CHECK-NEXT:     Name: (0)
 @ CHECK-NEXT:     Value: 0x0
 @ CHECK-NEXT:     Size: 0
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: Section (0x3)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
-@ CHECK-NEXT:   }
-@ CHECK-NEXT:   Symbol {
-@ CHECK-NEXT:     Name: .data (0)
-@ CHECK-NEXT:     Value: 0x0
-@ CHECK-NEXT:     Size: 0
-@ CHECK-NEXT:     Binding: Local (0x0)
-@ CHECK-NEXT:     Type: Section (0x3)
-@ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .data (0x3)
-@ CHECK-NEXT:   }
-@ CHECK-NEXT:   Symbol {
-@ CHECK-NEXT:     Name: .bss (0)
-@ CHECK-NEXT:     Value: 0x0
-@ CHECK-NEXT:     Size: 0
-@ CHECK-NEXT:     Binding: Local (0x0)
-@ CHECK-NEXT:     Type: Section (0x3)
-@ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .bss (0x4)
-@ CHECK-NEXT:   }
-@ CHECK-NEXT:   Symbol {
-@ CHECK-NEXT:     Name: g1@@zed
-@ CHECK-NEXT:     Value: 0x14
-@ CHECK-NEXT:     Size: 0
-@ CHECK-NEXT:     Binding: Global (0x1)
-@ CHECK-NEXT:     Type: None (0x0)
-@ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
-@ CHECK-NEXT:   }
-@ CHECK-NEXT:   Symbol {
-@ CHECK-NEXT:     Name: global1
-@ CHECK-NEXT:     Value: 0x14
-@ CHECK-NEXT:     Size: 0
-@ CHECK-NEXT:     Binding: Global (0x1)
-@ CHECK-NEXT:     Type: None (0x0)
-@ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .text (0x1)
+@ CHECK-NEXT:     Section: .text
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
 @ CHECK-NEXT:     Name: bar2@zed
@@ -139,5 +103,23 @@ global1:
 @ CHECK-NEXT:     Type: None (0x0)
 @ CHECK-NEXT:     Other: 0
 @ CHECK-NEXT:     Section: Undefined (0x0)
+@ CHECK-NEXT:   }
+@ CHECK-NEXT:   Symbol {
+@ CHECK-NEXT:     Name: g1@@zed
+@ CHECK-NEXT:     Value: 0x14
+@ CHECK-NEXT:     Size: 0
+@ CHECK-NEXT:     Binding: Global (0x1)
+@ CHECK-NEXT:     Type: None (0x0)
+@ CHECK-NEXT:     Other: 0
+@ CHECK-NEXT:     Section: .text
+@ CHECK-NEXT:   }
+@ CHECK-NEXT:   Symbol {
+@ CHECK-NEXT:     Name: global1
+@ CHECK-NEXT:     Value: 0x14
+@ CHECK-NEXT:     Size: 0
+@ CHECK-NEXT:     Binding: Global (0x1)
+@ CHECK-NEXT:     Type: None (0x0)
+@ CHECK-NEXT:     Other: 0
+@ CHECK-NEXT:     Section: .text
 @ CHECK-NEXT:   }
 @ CHECK-NEXT: ]

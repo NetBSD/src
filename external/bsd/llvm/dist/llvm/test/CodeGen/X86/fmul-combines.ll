@@ -56,10 +56,10 @@ define <4 x float> @fmul_c3_c4_v4f32(<4 x float> %x) #0 {
 }
 
 ; We should be able to pre-multiply the two constant vectors.
-; CHECK: float 5.000000e+00
-; CHECK: float 1.200000e+01
-; CHECK: float 2.100000e+01
-; CHECK: float 3.200000e+01
+; CHECK: float 5
+; CHECK: float 12
+; CHECK: float 21
+; CHECK: float 32
 ; CHECK-LABEL: fmul_v4f32_two_consts_no_splat:
 ; CHECK: mulps
 ; CHECK-NOT: mulps
@@ -71,10 +71,10 @@ define <4 x float> @fmul_v4f32_two_consts_no_splat(<4 x float> %x) #0 {
 }
 
 ; Same as above, but reverse operands to make sure non-canonical form is also handled.
-; CHECK: float 5.000000e+00
-; CHECK: float 1.200000e+01
-; CHECK: float 2.100000e+01
-; CHECK: float 3.200000e+01
+; CHECK: float 5
+; CHECK: float 12
+; CHECK: float 21
+; CHECK: float 32
 ; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_non_canonical:
 ; CHECK: mulps
 ; CHECK-NOT: mulps
@@ -86,21 +86,53 @@ define <4 x float> @fmul_v4f32_two_consts_no_splat_non_canonical(<4 x float> %x)
 }
 
 ; More than one use of a constant multiply should not inhibit the optimization.
-; Instead of a chain of 2 dependent mults, this test will have 2 independent mults. 
-; CHECK: float 5.000000e+00
-; CHECK: float 1.200000e+01
-; CHECK: float 2.100000e+01
-; CHECK: float 3.200000e+01
+; Instead of a chain of 2 dependent mults, this test will have 2 independent mults.
+; CHECK: float 6
+; CHECK: float 14
+; CHECK: float 24
+; CHECK: float 36
 ; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_multiple_use:
 ; CHECK: mulps
-; CHECK: mulps
-; CHECK: addps
 ; CHECK: ret
 define <4 x float> @fmul_v4f32_two_consts_no_splat_multiple_use(<4 x float> %x) #0 {
   %y = fmul <4 x float> %x, <float 1.0, float 2.0, float 3.0, float 4.0>
   %z = fmul <4 x float> %y, <float 5.0, float 6.0, float 7.0, float 8.0>
   %a = fadd <4 x float> %y, %z
   ret <4 x float> %a
+}
+
+; PR22698 - http://llvm.org/bugs/show_bug.cgi?id=22698
+; Make sure that we don't infinite loop swapping constants back and forth.
+
+define <4 x float> @PR22698_splats(<4 x float> %a) #0 {
+  %mul1 = fmul fast <4 x float> <float 2.0, float 2.0, float 2.0, float 2.0>, <float 3.0, float 3.0, float 3.0, float 3.0>
+  %mul2 = fmul fast <4 x float> <float 4.0, float 4.0, float 4.0, float 4.0>, %mul1
+  %mul3 = fmul fast <4 x float> %a, %mul2
+  ret <4 x float> %mul3
+
+; CHECK: float 24
+; CHECK: float 24
+; CHECK: float 24
+; CHECK: float 24
+; CHECK-LABEL: PR22698_splats:
+; CHECK: mulps
+; CHECK: ret
+}
+
+; Same as above, but verify that non-splat vectors are handled correctly too.
+define <4 x float> @PR22698_no_splats(<4 x float> %a) #0 {
+  %mul1 = fmul fast <4 x float> <float 1.0, float 2.0, float 3.0, float 4.0>, <float 5.0, float 6.0, float 7.0, float 8.0>
+  %mul2 = fmul fast <4 x float> <float 9.0, float 10.0, float 11.0, float 12.0>, %mul1
+  %mul3 = fmul fast <4 x float> %a, %mul2
+  ret <4 x float> %mul3
+
+; CHECK: float 45
+; CHECK: float 120
+; CHECK: float 231
+; CHECK: float 384
+; CHECK-LABEL: PR22698_no_splats:
+; CHECK: mulps
+; CHECK: ret
 }
 
 ; CHECK-LABEL: fmul_c2_c4_f32:

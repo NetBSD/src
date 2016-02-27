@@ -7,16 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMFPUName.h"
 #include "ARMFeatures.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
-#include "MCTargetDesc/ARMArchName.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
@@ -30,6 +29,7 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/MC/MCParser/MCAsmParserUtils.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSection.h"
@@ -39,6 +39,7 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/ARMBuildAttributes.h"
 #include "llvm/Support/ARMEHABI.h"
+#include "llvm/Support/TargetParser.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
@@ -128,7 +129,6 @@ public:
 };
 
 class ARMAsmParser : public MCTargetAsmParser {
-  MCSubtargetInfo &STI;
   const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
   UnwindContext UC;
@@ -189,9 +189,9 @@ class ARMAsmParser : public MCTargetAsmParser {
     return getParser().Error(L, Msg, Ranges);
   }
 
-  bool validatetLDMRegList(MCInst Inst, const OperandVector &Operands,
+  bool validatetLDMRegList(const MCInst &Inst, const OperandVector &Operands,
                            unsigned ListNo, bool IsARPop = false);
-  bool validatetSTMRegList(MCInst Inst, const OperandVector &Operands,
+  bool validatetSTMRegList(const MCInst &Inst, const OperandVector &Operands,
                            unsigned ListNo);
 
   int tryParseRegister();
@@ -242,47 +242,53 @@ class ARMAsmParser : public MCTargetAsmParser {
                              bool &CanAcceptCarrySet,
                              bool &CanAcceptPredicationCode);
 
+  void tryConvertingToTwoOperandForm(StringRef Mnemonic, bool CarrySetting,
+                                     OperandVector &Operands);
   bool isThumb() const {
     // FIXME: Can tablegen auto-generate this?
-    return (STI.getFeatureBits() & ARM::ModeThumb) != 0;
+    return getSTI().getFeatureBits()[ARM::ModeThumb];
   }
   bool isThumbOne() const {
-    return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2) == 0;
+    return isThumb() && !getSTI().getFeatureBits()[ARM::FeatureThumb2];
   }
   bool isThumbTwo() const {
-    return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2);
+    return isThumb() && getSTI().getFeatureBits()[ARM::FeatureThumb2];
   }
   bool hasThumb() const {
-    return STI.getFeatureBits() & ARM::HasV4TOps;
+    return getSTI().getFeatureBits()[ARM::HasV4TOps];
   }
   bool hasV6Ops() const {
-    return STI.getFeatureBits() & ARM::HasV6Ops;
+    return getSTI().getFeatureBits()[ARM::HasV6Ops];
   }
   bool hasV6MOps() const {
-    return STI.getFeatureBits() & ARM::HasV6MOps;
+    return getSTI().getFeatureBits()[ARM::HasV6MOps];
   }
   bool hasV7Ops() const {
-    return STI.getFeatureBits() & ARM::HasV7Ops;
+    return getSTI().getFeatureBits()[ARM::HasV7Ops];
   }
   bool hasV8Ops() const {
-    return STI.getFeatureBits() & ARM::HasV8Ops;
+    return getSTI().getFeatureBits()[ARM::HasV8Ops];
   }
   bool hasARM() const {
-    return !(STI.getFeatureBits() & ARM::FeatureNoARM);
+    return !getSTI().getFeatureBits()[ARM::FeatureNoARM];
   }
-  bool hasThumb2DSP() const {
-    return STI.getFeatureBits() & ARM::FeatureDSPThumb2;
+  bool hasDSP() const {
+    return getSTI().getFeatureBits()[ARM::FeatureDSP];
   }
   bool hasD16() const {
-    return STI.getFeatureBits() & ARM::FeatureD16;
+    return getSTI().getFeatureBits()[ARM::FeatureD16];
+  }
+  bool hasV8_1aOps() const {
+    return getSTI().getFeatureBits()[ARM::HasV8_1aOps];
   }
 
   void SwitchMode() {
+    MCSubtargetInfo &STI = copySTI();
     uint64_t FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
     setAvailableFeatures(FB);
   }
   bool isMClass() const {
-    return STI.getFeatureBits() & ARM::FeatureMClass;
+    return getSTI().getFeatureBits()[ARM::FeatureMClass];
   }
 
   /// @name Auto-generated Match Functions
@@ -337,15 +343,16 @@ public:
     Match_RequiresNotITBlock,
     Match_RequiresV6,
     Match_RequiresThumb2,
+    Match_RequiresV8,
 #define GET_OPERAND_DIAGNOSTIC_TYPES
 #include "ARMGenAsmMatcher.inc"
 
   };
 
-  ARMAsmParser(MCSubtargetInfo & _STI, MCAsmParser & _Parser,
+  ARMAsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
                const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI), MII(MII), UC(_Parser) {
-    MCAsmParserExtension::Initialize(_Parser);
+    : MCTargetAsmParser(Options, STI), MII(MII), UC(Parser) {
+    MCAsmParserExtension::Initialize(Parser);
 
     // Cache the MCRegisterInfo.
     MRI = getContext().getRegisterInfo();
@@ -558,87 +565,6 @@ class ARMOperand : public MCParsedAsmOperand {
 
 public:
   ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
-  ARMOperand(const ARMOperand &o) : MCParsedAsmOperand() {
-    Kind = o.Kind;
-    StartLoc = o.StartLoc;
-    EndLoc = o.EndLoc;
-    switch (Kind) {
-    case k_CondCode:
-      CC = o.CC;
-      break;
-    case k_ITCondMask:
-      ITMask = o.ITMask;
-      break;
-    case k_Token:
-      Tok = o.Tok;
-      break;
-    case k_CCOut:
-    case k_Register:
-      Reg = o.Reg;
-      break;
-    case k_RegisterList:
-    case k_DPRRegisterList:
-    case k_SPRRegisterList:
-      Registers = o.Registers;
-      break;
-    case k_VectorList:
-    case k_VectorListAllLanes:
-    case k_VectorListIndexed:
-      VectorList = o.VectorList;
-      break;
-    case k_CoprocNum:
-    case k_CoprocReg:
-      Cop = o.Cop;
-      break;
-    case k_CoprocOption:
-      CoprocOption = o.CoprocOption;
-      break;
-    case k_Immediate:
-      Imm = o.Imm;
-      break;
-    case k_MemBarrierOpt:
-      MBOpt = o.MBOpt;
-      break;
-    case k_InstSyncBarrierOpt:
-      ISBOpt = o.ISBOpt;
-    case k_Memory:
-      Memory = o.Memory;
-      break;
-    case k_PostIndexRegister:
-      PostIdxReg = o.PostIdxReg;
-      break;
-    case k_MSRMask:
-      MMask = o.MMask;
-      break;
-    case k_BankedReg:
-      BankedReg = o.BankedReg;
-      break;
-    case k_ProcIFlags:
-      IFlags = o.IFlags;
-      break;
-    case k_ShifterImmediate:
-      ShifterImm = o.ShifterImm;
-      break;
-    case k_ShiftedRegister:
-      RegShiftedReg = o.RegShiftedReg;
-      break;
-    case k_ShiftedImmediate:
-      RegShiftedImm = o.RegShiftedImm;
-      break;
-    case k_RotateImmediate:
-      RotImm = o.RotImm;
-      break;
-    case k_ModifiedImmediate:
-      ModImm = o.ModImm;
-      break;
-    case k_BitfieldDescriptor:
-      Bitfield = o.Bitfield;
-      break;
-    case k_VectorIndex:
-      VectorIndex = o.VectorIndex;
-      break;
-    }
-  }
 
   /// getStartLoc - Get the location of the first token of this operand.
   SMLoc getStartLoc() const override { return StartLoc; }
@@ -1049,7 +975,7 @@ public:
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return (ARM_AM::getSOImmVal(Value) != -1 ||
-            ARM_AM::getSOImmVal(-Value) != -1);;
+            ARM_AM::getSOImmVal(-Value) != -1);
   }
   bool isT2SOImm() const {
     if (!isImm()) return false;
@@ -1747,62 +1673,62 @@ public:
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
     if (!Expr)
-      Inst.addOperand(MCOperand::CreateImm(0));
+      Inst.addOperand(MCOperand::createImm(0));
     else if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+      Inst.addOperand(MCOperand::createImm(CE->getValue()));
     else
-      Inst.addOperand(MCOperand::CreateExpr(Expr));
+      Inst.addOperand(MCOperand::createExpr(Expr));
   }
 
   void addCondCodeOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
+    Inst.addOperand(MCOperand::createImm(unsigned(getCondCode())));
     unsigned RegNum = getCondCode() == ARMCC::AL ? 0: ARM::CPSR;
-    Inst.addOperand(MCOperand::CreateReg(RegNum));
+    Inst.addOperand(MCOperand::createReg(RegNum));
   }
 
   void addCoprocNumOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getCoproc()));
+    Inst.addOperand(MCOperand::createImm(getCoproc()));
   }
 
   void addCoprocRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getCoproc()));
+    Inst.addOperand(MCOperand::createImm(getCoproc()));
   }
 
   void addCoprocOptionOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(CoprocOption.Val));
+    Inst.addOperand(MCOperand::createImm(CoprocOption.Val));
   }
 
   void addITMaskOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(ITMask.Mask));
+    Inst.addOperand(MCOperand::createImm(ITMask.Mask));
   }
 
   void addITCondCodeOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
+    Inst.addOperand(MCOperand::createImm(unsigned(getCondCode())));
   }
 
   void addCCOutOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getReg()));
+    Inst.addOperand(MCOperand::createReg(getReg()));
   }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getReg()));
+    Inst.addOperand(MCOperand::createReg(getReg()));
   }
 
   void addRegShiftedRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
     assert(isRegShiftedReg() &&
            "addRegShiftedRegOperands() on non-RegShiftedReg!");
-    Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.SrcReg));
-    Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.ShiftReg));
-    Inst.addOperand(MCOperand::CreateImm(
+    Inst.addOperand(MCOperand::createReg(RegShiftedReg.SrcReg));
+    Inst.addOperand(MCOperand::createReg(RegShiftedReg.ShiftReg));
+    Inst.addOperand(MCOperand::createImm(
       ARM_AM::getSORegOpc(RegShiftedReg.ShiftTy, RegShiftedReg.ShiftImm)));
   }
 
@@ -1810,16 +1736,16 @@ public:
     assert(N == 2 && "Invalid number of operands!");
     assert(isRegShiftedImm() &&
            "addRegShiftedImmOperands() on non-RegShiftedImm!");
-    Inst.addOperand(MCOperand::CreateReg(RegShiftedImm.SrcReg));
+    Inst.addOperand(MCOperand::createReg(RegShiftedImm.SrcReg));
     // Shift of #32 is encoded as 0 where permitted
     unsigned Imm = (RegShiftedImm.ShiftImm == 32 ? 0 : RegShiftedImm.ShiftImm);
-    Inst.addOperand(MCOperand::CreateImm(
+    Inst.addOperand(MCOperand::createImm(
       ARM_AM::getSORegOpc(RegShiftedImm.ShiftTy, Imm)));
   }
 
   void addShifterImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm((ShifterImm.isASR << 5) |
+    Inst.addOperand(MCOperand::createImm((ShifterImm.isASR << 5) |
                                          ShifterImm.Imm));
   }
 
@@ -1828,7 +1754,7 @@ public:
     const SmallVectorImpl<unsigned> &RegList = getRegList();
     for (SmallVectorImpl<unsigned>::const_iterator
            I = RegList.begin(), E = RegList.end(); I != E; ++I)
-      Inst.addOperand(MCOperand::CreateReg(*I));
+      Inst.addOperand(MCOperand::createReg(*I));
   }
 
   void addDPRRegListOperands(MCInst &Inst, unsigned N) const {
@@ -1842,7 +1768,7 @@ public:
   void addRotImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     // Encoded as val>>3. The printer handles display as 8, 16, 24.
-    Inst.addOperand(MCOperand::CreateImm(RotImm.Imm >> 3));
+    Inst.addOperand(MCOperand::createImm(RotImm.Imm >> 3));
   }
 
   void addModImmOperands(MCInst &Inst, unsigned N) const {
@@ -1852,21 +1778,21 @@ public:
     if (isImm())
       return addImmOperands(Inst, N);
 
-    Inst.addOperand(MCOperand::CreateImm(ModImm.Bits | (ModImm.Rot << 7)));
+    Inst.addOperand(MCOperand::createImm(ModImm.Bits | (ModImm.Rot << 7)));
   }
 
   void addModImmNotOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     uint32_t Enc = ARM_AM::getSOImmVal(~CE->getValue());
-    Inst.addOperand(MCOperand::CreateImm(Enc));
+    Inst.addOperand(MCOperand::createImm(Enc));
   }
 
   void addModImmNegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     uint32_t Enc = ARM_AM::getSOImmVal(-CE->getValue());
-    Inst.addOperand(MCOperand::CreateImm(Enc));
+    Inst.addOperand(MCOperand::createImm(Enc));
   }
 
   void addBitfieldOperands(MCInst &Inst, unsigned N) const {
@@ -1877,7 +1803,7 @@ public:
     // Make a 32-bit mask w/ the referenced bits clear and all other bits set.
     uint32_t Mask = ~(((uint32_t)0xffffffff >> lsb) << (32 - width) >>
                       (32 - (lsb + width)));
-    Inst.addOperand(MCOperand::CreateImm(Mask));
+    Inst.addOperand(MCOperand::createImm(Mask));
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
@@ -1888,20 +1814,20 @@ public:
   void addFBits16Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(16 - CE->getValue()));
+    Inst.addOperand(MCOperand::createImm(16 - CE->getValue()));
   }
 
   void addFBits32Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(32 - CE->getValue()));
+    Inst.addOperand(MCOperand::createImm(32 - CE->getValue()));
   }
 
   void addFPImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     int Val = ARM_AM::getFP32Imm(APInt(32, CE->getValue()));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addImm8s4Operands(MCInst &Inst, unsigned N) const {
@@ -1909,7 +1835,7 @@ public:
     // FIXME: We really want to scale the value here, but the LDRD/STRD
     // instruction don't encode operands that way yet.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+    Inst.addOperand(MCOperand::createImm(CE->getValue()));
   }
 
   void addImm0_1020s4Operands(MCInst &Inst, unsigned N) const {
@@ -1917,7 +1843,7 @@ public:
     // The immediate is scaled by four in the encoding and is stored
     // in the MCInst as such. Lop off the low two bits here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
+    Inst.addOperand(MCOperand::createImm(CE->getValue() / 4));
   }
 
   void addImm0_508s4NegOperands(MCInst &Inst, unsigned N) const {
@@ -1925,7 +1851,7 @@ public:
     // The immediate is scaled by four in the encoding and is stored
     // in the MCInst as such. Lop off the low two bits here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(-(CE->getValue() / 4)));
+    Inst.addOperand(MCOperand::createImm(-(CE->getValue() / 4)));
   }
 
   void addImm0_508s4Operands(MCInst &Inst, unsigned N) const {
@@ -1933,7 +1859,7 @@ public:
     // The immediate is scaled by four in the encoding and is stored
     // in the MCInst as such. Lop off the low two bits here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
+    Inst.addOperand(MCOperand::createImm(CE->getValue() / 4));
   }
 
   void addImm1_16Operands(MCInst &Inst, unsigned N) const {
@@ -1941,7 +1867,7 @@ public:
     // The constant encodes as the immediate-1, and we store in the instruction
     // the bits as encoded, so subtract off one here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(CE->getValue() - 1));
+    Inst.addOperand(MCOperand::createImm(CE->getValue() - 1));
   }
 
   void addImm1_32Operands(MCInst &Inst, unsigned N) const {
@@ -1949,7 +1875,7 @@ public:
     // The constant encodes as the immediate-1, and we store in the instruction
     // the bits as encoded, so subtract off one here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(CE->getValue() - 1));
+    Inst.addOperand(MCOperand::createImm(CE->getValue() - 1));
   }
 
   void addImmThumbSROperands(MCInst &Inst, unsigned N) const {
@@ -1958,7 +1884,7 @@ public:
     // zero.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     unsigned Imm = CE->getValue();
-    Inst.addOperand(MCOperand::CreateImm((Imm == 32 ? 0 : Imm)));
+    Inst.addOperand(MCOperand::createImm((Imm == 32 ? 0 : Imm)));
   }
 
   void addPKHASRImmOperands(MCInst &Inst, unsigned N) const {
@@ -1967,7 +1893,7 @@ public:
     // the instruction as well.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     int Val = CE->getValue();
-    Inst.addOperand(MCOperand::CreateImm(Val == 32 ? 0 : Val));
+    Inst.addOperand(MCOperand::createImm(Val == 32 ? 0 : Val));
   }
 
   void addT2SOImmNotOperands(MCInst &Inst, unsigned N) const {
@@ -1975,7 +1901,7 @@ public:
     // The operand is actually a t2_so_imm, but we have its bitwise
     // negation in the assembly source, so twiddle it here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(~CE->getValue()));
+    Inst.addOperand(MCOperand::createImm(~CE->getValue()));
   }
 
   void addT2SOImmNegOperands(MCInst &Inst, unsigned N) const {
@@ -1983,7 +1909,7 @@ public:
     // The operand is actually a t2_so_imm, but we have its
     // negation in the assembly source, so twiddle it here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(-CE->getValue()));
+    Inst.addOperand(MCOperand::createImm(-CE->getValue()));
   }
 
   void addImm0_4095NegOperands(MCInst &Inst, unsigned N) const {
@@ -1991,18 +1917,18 @@ public:
     // The operand is actually an imm0_4095, but we have its
     // negation in the assembly source, so twiddle it here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(-CE->getValue()));
+    Inst.addOperand(MCOperand::createImm(-CE->getValue()));
   }
 
   void addUnsignedOffset_b8s2Operands(MCInst &Inst, unsigned N) const {
     if(const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm())) {
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue() >> 2));
+      Inst.addOperand(MCOperand::createImm(CE->getValue() >> 2));
       return;
     }
 
     const MCSymbolRefExpr *SR = dyn_cast<MCSymbolRefExpr>(Imm.Val);
     assert(SR && "Unknown value type!");
-    Inst.addOperand(MCOperand::CreateExpr(SR));
+    Inst.addOperand(MCOperand::createExpr(SR));
   }
 
   void addThumbMemPCOperands(MCInst &Inst, unsigned N) const {
@@ -2010,40 +1936,40 @@ public:
     if (isImm()) {
       const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
       if (CE) {
-        Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+        Inst.addOperand(MCOperand::createImm(CE->getValue()));
         return;
       }
 
       const MCSymbolRefExpr *SR = dyn_cast<MCSymbolRefExpr>(Imm.Val);
       assert(SR && "Unknown value type!");
-      Inst.addOperand(MCOperand::CreateExpr(SR));
+      Inst.addOperand(MCOperand::createExpr(SR));
       return;
     }
 
     assert(isMem()  && "Unknown value type!");
     assert(isa<MCConstantExpr>(Memory.OffsetImm) && "Unknown value type!");
-    Inst.addOperand(MCOperand::CreateImm(Memory.OffsetImm->getValue()));
+    Inst.addOperand(MCOperand::createImm(Memory.OffsetImm->getValue()));
   }
 
   void addMemBarrierOptOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getMemBarrierOpt())));
+    Inst.addOperand(MCOperand::createImm(unsigned(getMemBarrierOpt())));
   }
 
   void addInstSyncBarrierOptOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getInstSyncBarrierOpt())));
+    Inst.addOperand(MCOperand::createImm(unsigned(getInstSyncBarrierOpt())));
   }
 
   void addMemNoOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
   }
 
   void addMemPCRelImm12Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     int32_t Imm = Memory.OffsetImm->getValue();
-    Inst.addOperand(MCOperand::CreateImm(Imm));
+    Inst.addOperand(MCOperand::createImm(Imm));
   }
 
   void addAdrLabelOperands(MCInst &Inst, unsigned N) const {
@@ -2053,19 +1979,19 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. 
     if (!isa<MCConstantExpr>(getImm())) {
-      Inst.addOperand(MCOperand::CreateExpr(getImm()));
+      Inst.addOperand(MCOperand::createExpr(getImm()));
       return;
     }
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     int Val = CE->getValue();
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addAlignedMemoryOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Memory.Alignment));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Memory.Alignment));
   }
 
   void addDupAlignedMemoryNoneOperands(MCInst &Inst, unsigned N) const {
@@ -2127,9 +2053,9 @@ public:
       Val = ARM_AM::getAM2Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add,
                               Memory.ShiftImm, Memory.ShiftType);
     }
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addAM2OffsetImmOperands(MCInst &Inst, unsigned N) const {
@@ -2142,8 +2068,8 @@ public:
     if (Val == INT32_MIN) Val = 0;
     if (Val < 0) Val = -Val;
     Val = ARM_AM::getAM2Opc(AddSub, Val, ARM_AM::no_shift);
-    Inst.addOperand(MCOperand::CreateReg(0));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(0));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addAddrMode3Operands(MCInst &Inst, unsigned N) const {
@@ -2152,9 +2078,9 @@ public:
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
     if (isImm()) {
-      Inst.addOperand(MCOperand::CreateExpr(getImm()));
-      Inst.addOperand(MCOperand::CreateReg(0));
-      Inst.addOperand(MCOperand::CreateImm(0));
+      Inst.addOperand(MCOperand::createExpr(getImm()));
+      Inst.addOperand(MCOperand::createReg(0));
+      Inst.addOperand(MCOperand::createImm(0));
       return;
     }
 
@@ -2170,9 +2096,9 @@ public:
       // here.
       Val = ARM_AM::getAM3Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add, 0);
     }
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addAM3OffsetOperands(MCInst &Inst, unsigned N) const {
@@ -2180,8 +2106,8 @@ public:
     if (Kind == k_PostIndexRegister) {
       int32_t Val =
         ARM_AM::getAM3Opc(PostIdxReg.isAdd ? ARM_AM::add : ARM_AM::sub, 0);
-      Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
-      Inst.addOperand(MCOperand::CreateImm(Val));
+      Inst.addOperand(MCOperand::createReg(PostIdxReg.RegNum));
+      Inst.addOperand(MCOperand::createImm(Val));
       return;
     }
 
@@ -2193,8 +2119,8 @@ public:
     if (Val == INT32_MIN) Val = 0;
     if (Val < 0) Val = -Val;
     Val = ARM_AM::getAM3Opc(AddSub, Val);
-    Inst.addOperand(MCOperand::CreateReg(0));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(0));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addAddrMode5Operands(MCInst &Inst, unsigned N) const {
@@ -2203,8 +2129,8 @@ public:
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
     if (isImm()) {
-      Inst.addOperand(MCOperand::CreateExpr(getImm()));
-      Inst.addOperand(MCOperand::CreateImm(0));
+      Inst.addOperand(MCOperand::createExpr(getImm()));
+      Inst.addOperand(MCOperand::createImm(0));
       return;
     }
 
@@ -2215,8 +2141,8 @@ public:
     if (Val == INT32_MIN) Val = 0;
     if (Val < 0) Val = -Val;
     Val = ARM_AM::getAM5Opc(AddSub, Val);
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemImm8s4OffsetOperands(MCInst &Inst, unsigned N) const {
@@ -2225,29 +2151,29 @@ public:
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
     if (isImm()) {
-      Inst.addOperand(MCOperand::CreateExpr(getImm()));
-      Inst.addOperand(MCOperand::CreateImm(0));
+      Inst.addOperand(MCOperand::createExpr(getImm()));
+      Inst.addOperand(MCOperand::createImm(0));
       return;
     }
 
     int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemImm0_1020s4OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     // The lower two bits are always zero and as such are not encoded.
     int32_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() / 4 : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemImm8OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemPosImm8OffsetOperands(MCInst &Inst, unsigned N) const {
@@ -2263,14 +2189,14 @@ public:
     // If this is an immediate, it's a label reference.
     if (isImm()) {
       addExpr(Inst, getImm());
-      Inst.addOperand(MCOperand::CreateImm(0));
+      Inst.addOperand(MCOperand::createImm(0));
       return;
     }
 
     // Otherwise, it's a normal memory reg+offset.
     int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemImm12OffsetOperands(MCInst &Inst, unsigned N) const {
@@ -2278,26 +2204,26 @@ public:
     // If this is an immediate, it's a label reference.
     if (isImm()) {
       addExpr(Inst, getImm());
-      Inst.addOperand(MCOperand::CreateImm(0));
+      Inst.addOperand(MCOperand::createImm(0));
       return;
     }
 
     // Otherwise, it's a normal memory reg+offset.
     int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemTBBOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.OffsetRegNum));
   }
 
   void addMemTBHOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.OffsetRegNum));
   }
 
   void addMemRegOffsetOperands(MCInst &Inst, unsigned N) const {
@@ -2305,50 +2231,50 @@ public:
     unsigned Val =
       ARM_AM::getAM2Opc(Memory.isNegative ? ARM_AM::sub : ARM_AM::add,
                         Memory.ShiftImm, Memory.ShiftType);
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addT2MemRegOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Memory.ShiftImm));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::createImm(Memory.ShiftImm));
   }
 
   void addMemThumbRROperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Memory.OffsetRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createReg(Memory.OffsetRegNum));
   }
 
   void addMemThumbRIs4Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue() / 4) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemThumbRIs2Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue() / 2) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemThumbRIs1Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue()) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addMemThumbSPIOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Memory.OffsetImm ? (Memory.OffsetImm->getValue() / 4) : 0;
-    Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createReg(Memory.BaseRegNum));
+    Inst.addOperand(MCOperand::createImm(Val));
   }
 
   void addPostIdxImm8Operands(MCInst &Inst, unsigned N) const {
@@ -2359,7 +2285,7 @@ public:
     bool isAdd = Imm >= 0;
     if (Imm == INT32_MIN) Imm = 0;
     Imm = (Imm < 0 ? -Imm : Imm) | (int)isAdd << 8;
-    Inst.addOperand(MCOperand::CreateImm(Imm));
+    Inst.addOperand(MCOperand::createImm(Imm));
   }
 
   void addPostIdxImm8s4Operands(MCInst &Inst, unsigned N) const {
@@ -2371,65 +2297,65 @@ public:
     if (Imm == INT32_MIN) Imm = 0;
     // Immediate is scaled by 4.
     Imm = ((Imm < 0 ? -Imm : Imm) / 4) | (int)isAdd << 8;
-    Inst.addOperand(MCOperand::CreateImm(Imm));
+    Inst.addOperand(MCOperand::createImm(Imm));
   }
 
   void addPostIdxRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
-    Inst.addOperand(MCOperand::CreateImm(PostIdxReg.isAdd));
+    Inst.addOperand(MCOperand::createReg(PostIdxReg.RegNum));
+    Inst.addOperand(MCOperand::createImm(PostIdxReg.isAdd));
   }
 
   void addPostIdxRegShiftedOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
+    Inst.addOperand(MCOperand::createReg(PostIdxReg.RegNum));
     // The sign, shift type, and shift amount are encoded in a single operand
     // using the AM2 encoding helpers.
     ARM_AM::AddrOpc opc = PostIdxReg.isAdd ? ARM_AM::add : ARM_AM::sub;
     unsigned Imm = ARM_AM::getAM2Opc(opc, PostIdxReg.ShiftImm,
                                      PostIdxReg.ShiftTy);
-    Inst.addOperand(MCOperand::CreateImm(Imm));
+    Inst.addOperand(MCOperand::createImm(Imm));
   }
 
   void addMSRMaskOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getMSRMask())));
+    Inst.addOperand(MCOperand::createImm(unsigned(getMSRMask())));
   }
 
   void addBankedRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getBankedReg())));
+    Inst.addOperand(MCOperand::createImm(unsigned(getBankedReg())));
   }
 
   void addProcIFlagsOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(unsigned(getProcIFlags())));
+    Inst.addOperand(MCOperand::createImm(unsigned(getProcIFlags())));
   }
 
   void addVecListOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
+    Inst.addOperand(MCOperand::createReg(VectorList.RegNum));
   }
 
   void addVecListIndexedOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
-    Inst.addOperand(MCOperand::CreateImm(VectorList.LaneIndex));
+    Inst.addOperand(MCOperand::createReg(VectorList.RegNum));
+    Inst.addOperand(MCOperand::createImm(VectorList.LaneIndex));
   }
 
   void addVectorIndex8Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
+    Inst.addOperand(MCOperand::createImm(getVectorIndex()));
   }
 
   void addVectorIndex16Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
+    Inst.addOperand(MCOperand::createImm(getVectorIndex()));
   }
 
   void addVectorIndex32Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
+    Inst.addOperand(MCOperand::createImm(getVectorIndex()));
   }
 
   void addNEONi8splatOperands(MCInst &Inst, unsigned N) const {
@@ -2437,7 +2363,7 @@ public:
     // The immediate encodes the type of constant as well as the value.
     // Mask in that this is an i8 splat.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(CE->getValue() | 0xe00));
+    Inst.addOperand(MCOperand::createImm(CE->getValue() | 0xe00));
   }
 
   void addNEONi16splatOperands(MCInst &Inst, unsigned N) const {
@@ -2446,7 +2372,7 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     unsigned Value = CE->getValue();
     Value = ARM_AM::encodeNEONi16splat(Value);
-    Inst.addOperand(MCOperand::CreateImm(Value));
+    Inst.addOperand(MCOperand::createImm(Value));
   }
 
   void addNEONi16splatNotOperands(MCInst &Inst, unsigned N) const {
@@ -2455,7 +2381,7 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     unsigned Value = CE->getValue();
     Value = ARM_AM::encodeNEONi16splat(~Value & 0xffff);
-    Inst.addOperand(MCOperand::CreateImm(Value));
+    Inst.addOperand(MCOperand::createImm(Value));
   }
 
   void addNEONi32splatOperands(MCInst &Inst, unsigned N) const {
@@ -2464,7 +2390,7 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     unsigned Value = CE->getValue();
     Value = ARM_AM::encodeNEONi32splat(Value);
-    Inst.addOperand(MCOperand::CreateImm(Value));
+    Inst.addOperand(MCOperand::createImm(Value));
   }
 
   void addNEONi32splatNotOperands(MCInst &Inst, unsigned N) const {
@@ -2473,7 +2399,7 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     unsigned Value = CE->getValue();
     Value = ARM_AM::encodeNEONi32splat(~Value);
-    Inst.addOperand(MCOperand::CreateImm(Value));
+    Inst.addOperand(MCOperand::createImm(Value));
   }
 
   void addNEONinvByteReplicateOperands(MCInst &Inst, unsigned N) const {
@@ -2487,7 +2413,7 @@ public:
            "always must be replaced with VMOVv8i8 or VMOVv16i8.");
     unsigned B = ((~Value) & 0xff);
     B |= 0xe00; // cmode = 0b1110
-    Inst.addOperand(MCOperand::CreateImm(B));
+    Inst.addOperand(MCOperand::createImm(B));
   }
   void addNEONi32vmovOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
@@ -2500,7 +2426,7 @@ public:
       Value = (Value >> 16) | ((Value & 0xff) ? 0xd00 : 0x400);
     else if (Value > 0xffffff)
       Value = (Value >> 24) | 0x600;
-    Inst.addOperand(MCOperand::CreateImm(Value));
+    Inst.addOperand(MCOperand::createImm(Value));
   }
 
   void addNEONvmovByteReplicateOperands(MCInst &Inst, unsigned N) const {
@@ -2514,7 +2440,7 @@ public:
            "always must be replaced with VMOVv8i8 or VMOVv16i8.");
     unsigned B = Value & 0xff;
     B |= 0xe00; // cmode = 0b1110
-    Inst.addOperand(MCOperand::CreateImm(B));
+    Inst.addOperand(MCOperand::createImm(B));
   }
   void addNEONi32vmovNegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
@@ -2527,7 +2453,7 @@ public:
       Value = (Value >> 16) | ((Value & 0xff) ? 0xd00 : 0x400);
     else if (Value > 0xffffff)
       Value = (Value >> 24) | 0x600;
-    Inst.addOperand(MCOperand::CreateImm(Value));
+    Inst.addOperand(MCOperand::createImm(Value));
   }
 
   void addNEONi64splatOperands(MCInst &Inst, unsigned N) const {
@@ -2539,7 +2465,7 @@ public:
     for (unsigned i = 0; i < 8; ++i, Value >>= 8) {
       Imm |= (Value & 1) << i;
     }
-    Inst.addOperand(MCOperand::CreateImm(Imm | 0x1e00));
+    Inst.addOperand(MCOperand::createImm(Imm | 0x1e00));
   }
 
   void print(raw_ostream &OS) const override;
@@ -2868,7 +2794,7 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << "<banked reg: " << getBankedReg() << ">";
     break;
   case k_Immediate:
-    getImm()->print(OS);
+    OS << *getImm();
     break;
   case k_MemBarrierOpt:
     OS << "<ARM_MB::" << MemBOptToString(getMemBarrierOpt(), false) << ">";
@@ -4048,7 +3974,7 @@ ARMAsmParser::parseMSRMaskOperand(OperandVector &Operands) {
     if (FlagsVal == ~0U)
       return MatchOperand_NoMatch;
 
-    if (!hasThumb2DSP() && (FlagsVal & 0x400))
+    if (!hasDSP() && (FlagsVal & 0x400))
       // The _g and _nzcvqg versions are only valid if the DSP extension is
       // available.
       return MatchOperand_NoMatch;
@@ -4250,7 +4176,7 @@ ARMAsmParser::parseSetEndImm(OperandVector &Operands) {
     Error(S, "'be' or 'le' operand expected");
     return MatchOperand_ParseFail;
   }
-  Operands.push_back(ARMOperand::CreateImm(MCConstantExpr::Create(Val,
+  Operands.push_back(ARMOperand::CreateImm(MCConstantExpr::create(Val,
                                                                   getContext()),
                                            S, Tok.getEndLoc()));
   return MatchOperand_Success;
@@ -4424,11 +4350,6 @@ ARMAsmParser::parseModImm(OperandVector &Operands) {
   if (CE) {
     // Immediate must fit within 32-bits
     Imm1 = CE->getValue();
-    if (Imm1 < INT32_MIN || Imm1 > UINT32_MAX) {
-      Error(Sx1, "immediate operand must be representable with 32 bits");
-      return MatchOperand_ParseFail;
-    }
-
     int Enc = ARM_AM::getSOImmVal(Imm1);
     if (Enc != -1 && Parser.getTok().is(AsmToken::EndOfStatement)) {
       // We have a match!
@@ -4659,7 +4580,7 @@ ARMAsmParser::parseAM3Offset(OperandVector &Operands) {
       Val = INT32_MIN;
 
     Operands.push_back(
-      ARMOperand::CreateImm(MCConstantExpr::Create(Val, getContext()), S, E));
+      ARMOperand::CreateImm(MCConstantExpr::create(Val, getContext()), S, E));
 
     return MatchOperand_Success;
   }
@@ -4889,7 +4810,7 @@ bool ARMAsmParser::parseMemory(OperandVector &Operands) {
     // If the constant was #-0, represent it as INT32_MIN.
     int32_t Val = CE->getValue();
     if (isNegative && Val == 0)
-      CE = MCConstantExpr::Create(INT32_MIN, getContext());
+      CE = MCConstantExpr::create(INT32_MIN, getContext());
 
     // Now we should have the closing ']'
     if (Parser.getTok().isNot(AsmToken::RBrac))
@@ -5076,7 +4997,7 @@ ARMAsmParser::parseFPImm(OperandVector &Operands) {
     IntVal ^= (uint64_t)isNegative << 31;
     Parser.Lex(); // Eat the token.
     Operands.push_back(ARMOperand::CreateImm(
-          MCConstantExpr::Create(IntVal, getContext()),
+          MCConstantExpr::create(IntVal, getContext()),
           S, Parser.getTok().getLoc()));
     return MatchOperand_Success;
   }
@@ -5093,7 +5014,7 @@ ARMAsmParser::parseFPImm(OperandVector &Operands) {
     Val = APFloat(RealVal).bitcastToAPInt().getZExtValue();
 
     Operands.push_back(ARMOperand::CreateImm(
-        MCConstantExpr::Create(Val, getContext()), S,
+        MCConstantExpr::create(Val, getContext()), S,
         Parser.getTok().getLoc()));
     return MatchOperand_Success;
   }
@@ -5182,7 +5103,7 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
       if (CE) {
         int32_t Val = CE->getValue();
         if (isNegative && Val == 0)
-          ImmVal = MCConstantExpr::Create(INT32_MIN, getContext());
+          ImmVal = MCConstantExpr::create(INT32_MIN, getContext());
       }
       E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
       Operands.push_back(ARMOperand::CreateImm(ImmVal, S, E));
@@ -5201,6 +5122,7 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
     // FALLTHROUGH
   }
   case AsmToken::Colon: {
+    S = Parser.getTok().getLoc();
     // ":lower16:" and ":upper16:" expression prefixes
     // FIXME: Check it's an expression prefix,
     // e.g. (FOO - :lower16:BAR) isn't legal.
@@ -5212,15 +5134,16 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
     if (getParser().parseExpression(SubExprVal))
       return true;
 
-    const MCExpr *ExprVal = ARMMCExpr::Create(RefKind, SubExprVal,
+    const MCExpr *ExprVal = ARMMCExpr::create(RefKind, SubExprVal,
                                               getContext());
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(ARMOperand::CreateImm(ExprVal, S, E));
     return false;
   }
   case AsmToken::Equal: {
+    S = Parser.getTok().getLoc();
     if (Mnemonic != "ldr") // only parse for ldr pseudo (e.g. ldr r0, =val)
-      return Error(Parser.getTok().getLoc(), "unexpected token in operand");
+      return Error(S, "unexpected token in operand");
 
     Parser.Lex(); // Eat '='
     const MCExpr *SubExprVal;
@@ -5228,7 +5151,8 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
       return true;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
 
-    const MCExpr *CPLoc = getTargetStreamer().addConstantPoolEntry(SubExprVal);
+    const MCExpr *CPLoc =
+        getTargetStreamer().addConstantPoolEntry(SubExprVal, S);
     Operands.push_back(ARMOperand::CreateImm(CPLoc, S, E));
     return false;
   }
@@ -5420,47 +5344,44 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
 /// inclusion of carry set or predication code operands.
 //
 // FIXME: It would be nice to autogen this.
-void ARMAsmParser::
-getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
-                     bool &CanAcceptCarrySet, bool &CanAcceptPredicationCode) {
-  if (Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
+void ARMAsmParser::getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
+                                         bool &CanAcceptCarrySet,
+                                         bool &CanAcceptPredicationCode) {
+  CanAcceptCarrySet =
+      Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
       Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
-      Mnemonic == "add" || Mnemonic == "adc" ||
-      Mnemonic == "mul" || Mnemonic == "bic" || Mnemonic == "asr" ||
-      Mnemonic == "orr" || Mnemonic == "mvn" ||
-      Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
-      Mnemonic == "sbc" || Mnemonic == "eor" || Mnemonic == "neg" ||
-      Mnemonic == "vfm" || Mnemonic == "vfnm" ||
-      (!isThumb() && (Mnemonic == "smull" || Mnemonic == "mov" ||
-                      Mnemonic == "mla" || Mnemonic == "smlal" ||
-                      Mnemonic == "umlal" || Mnemonic == "umull"))) {
-    CanAcceptCarrySet = true;
-  } else
-    CanAcceptCarrySet = false;
+      Mnemonic == "add" || Mnemonic == "adc" || Mnemonic == "mul" ||
+      Mnemonic == "bic" || Mnemonic == "asr" || Mnemonic == "orr" ||
+      Mnemonic == "mvn" || Mnemonic == "rsb" || Mnemonic == "rsc" ||
+      Mnemonic == "orn" || Mnemonic == "sbc" || Mnemonic == "eor" ||
+      Mnemonic == "neg" || Mnemonic == "vfm" || Mnemonic == "vfnm" ||
+      (!isThumb() &&
+       (Mnemonic == "smull" || Mnemonic == "mov" || Mnemonic == "mla" ||
+        Mnemonic == "smlal" || Mnemonic == "umlal" || Mnemonic == "umull"));
 
   if (Mnemonic == "bkpt" || Mnemonic == "cbnz" || Mnemonic == "setend" ||
-      Mnemonic == "cps" ||  Mnemonic == "it" ||  Mnemonic == "cbz" ||
+      Mnemonic == "cps" || Mnemonic == "it" || Mnemonic == "cbz" ||
       Mnemonic == "trap" || Mnemonic == "hlt" || Mnemonic == "udf" ||
       Mnemonic.startswith("crc32") || Mnemonic.startswith("cps") ||
-      Mnemonic.startswith("vsel") ||
-      Mnemonic == "vmaxnm" || Mnemonic == "vminnm" || Mnemonic == "vcvta" ||
-      Mnemonic == "vcvtn" || Mnemonic == "vcvtp" || Mnemonic == "vcvtm" ||
-      Mnemonic == "vrinta" || Mnemonic == "vrintn" || Mnemonic == "vrintp" ||
-      Mnemonic == "vrintm" || Mnemonic.startswith("aes") || Mnemonic == "hvc" ||
+      Mnemonic.startswith("vsel") || Mnemonic == "vmaxnm" ||
+      Mnemonic == "vminnm" || Mnemonic == "vcvta" || Mnemonic == "vcvtn" ||
+      Mnemonic == "vcvtp" || Mnemonic == "vcvtm" || Mnemonic == "vrinta" ||
+      Mnemonic == "vrintn" || Mnemonic == "vrintp" || Mnemonic == "vrintm" ||
+      Mnemonic.startswith("aes") || Mnemonic == "hvc" || Mnemonic == "setpan" ||
       Mnemonic.startswith("sha1") || Mnemonic.startswith("sha256") ||
       (FullInst.startswith("vmull") && FullInst.endswith(".p64"))) {
     // These mnemonics are never predicable
     CanAcceptPredicationCode = false;
   } else if (!isThumb()) {
     // Some instructions are only predicable in Thumb mode
-    CanAcceptPredicationCode
-      = Mnemonic != "cdp2" && Mnemonic != "clrex" && Mnemonic != "mcr2" &&
+    CanAcceptPredicationCode =
+        Mnemonic != "cdp2" && Mnemonic != "clrex" && Mnemonic != "mcr2" &&
         Mnemonic != "mcrr2" && Mnemonic != "mrc2" && Mnemonic != "mrrc2" &&
         Mnemonic != "dmb" && Mnemonic != "dsb" && Mnemonic != "isb" &&
         Mnemonic != "pld" && Mnemonic != "pli" && Mnemonic != "pldw" &&
-        Mnemonic != "ldc2" && Mnemonic != "ldc2l" &&
-        Mnemonic != "stc2" && Mnemonic != "stc2l" &&
-        !Mnemonic.startswith("rfe") && !Mnemonic.startswith("srs");
+        Mnemonic != "ldc2" && Mnemonic != "ldc2l" && Mnemonic != "stc2" &&
+        Mnemonic != "stc2l" && !Mnemonic.startswith("rfe") &&
+        !Mnemonic.startswith("srs");
   } else if (isThumbOne()) {
     if (hasV6MOps())
       CanAcceptPredicationCode = Mnemonic != "movs";
@@ -5468,6 +5389,92 @@ getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
       CanAcceptPredicationCode = Mnemonic != "nop" && Mnemonic != "movs";
   } else
     CanAcceptPredicationCode = true;
+}
+
+// \brief Some Thumb instructions have two operand forms that are not
+// available as three operand, convert to two operand form if possible.
+//
+// FIXME: We would really like to be able to tablegen'erate this.
+void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
+                                                 bool CarrySetting,
+                                                 OperandVector &Operands) {
+  if (Operands.size() != 6)
+    return;
+
+  const auto &Op3 = static_cast<ARMOperand &>(*Operands[3]);
+        auto &Op4 = static_cast<ARMOperand &>(*Operands[4]);
+  if (!Op3.isReg() || !Op4.isReg())
+    return;
+
+  auto Op3Reg = Op3.getReg();
+  auto Op4Reg = Op4.getReg();
+
+  // For most Thumb2 cases we just generate the 3 operand form and reduce
+  // it in processInstruction(), but the 3 operand form of ADD (t2ADDrr)
+  // won't accept SP or PC so we do the transformation here taking care
+  // with immediate range in the 'add sp, sp #imm' case.
+  auto &Op5 = static_cast<ARMOperand &>(*Operands[5]);
+  if (isThumbTwo()) {
+    if (Mnemonic != "add")
+      return;
+    bool TryTransform = Op3Reg == ARM::PC || Op4Reg == ARM::PC ||
+                        (Op5.isReg() && Op5.getReg() == ARM::PC);
+    if (!TryTransform) {
+      TryTransform = (Op3Reg == ARM::SP || Op4Reg == ARM::SP ||
+                      (Op5.isReg() && Op5.getReg() == ARM::SP)) &&
+                     !(Op3Reg == ARM::SP && Op4Reg == ARM::SP &&
+                       Op5.isImm() && !Op5.isImm0_508s4());
+    }
+    if (!TryTransform)
+      return;
+  } else if (!isThumbOne())
+    return;
+
+  if (!(Mnemonic == "add" || Mnemonic == "sub" || Mnemonic == "and" ||
+        Mnemonic == "eor" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
+        Mnemonic == "asr" || Mnemonic == "adc" || Mnemonic == "sbc" ||
+        Mnemonic == "ror" || Mnemonic == "orr" || Mnemonic == "bic"))
+    return;
+
+  // If first 2 operands of a 3 operand instruction are the same
+  // then transform to 2 operand version of the same instruction
+  // e.g. 'adds r0, r0, #1' transforms to 'adds r0, #1'
+  bool Transform = Op3Reg == Op4Reg;
+
+  // For communtative operations, we might be able to transform if we swap
+  // Op4 and Op5.  The 'ADD Rdm, SP, Rdm' form is already handled specially
+  // as tADDrsp.
+  const ARMOperand *LastOp = &Op5;
+  bool Swap = false;
+  if (!Transform && Op5.isReg() && Op3Reg == Op5.getReg() &&
+      ((Mnemonic == "add" && Op4Reg != ARM::SP) ||
+       Mnemonic == "and" || Mnemonic == "eor" ||
+       Mnemonic == "adc" || Mnemonic == "orr")) {
+    Swap = true;
+    LastOp = &Op4;
+    Transform = true;
+  }
+
+  // If both registers are the same then remove one of them from
+  // the operand list, with certain exceptions.
+  if (Transform) {
+    // Don't transform 'adds Rd, Rd, Rm' or 'sub{s} Rd, Rd, Rm' because the
+    // 2 operand forms don't exist.
+    if (((Mnemonic == "add" && CarrySetting) || Mnemonic == "sub") &&
+        LastOp->isReg())
+      Transform = false;
+
+    // Don't transform 'add/sub{s} Rd, Rd, #imm' if the immediate fits into
+    // 3-bits because the ARMARM says not to.
+    if ((Mnemonic == "add" || Mnemonic == "sub") && LastOp->isImm0_7())
+      Transform = false;
+  }
+
+  if (Transform) {
+    if (Swap)
+      std::swap(Op4, Op5);
+    Operands.erase(Operands.begin() + 3);
+  }
 }
 
 bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
@@ -5598,9 +5605,11 @@ bool ARMAsmParser::shouldOmitPredicateOperand(StringRef Mnemonic,
   // VRINT{Z, R, X} have a predicate operand in VFP, but not in NEON
   unsigned RegIdx = 3;
   if ((Mnemonic == "vrintz" || Mnemonic == "vrintx" || Mnemonic == "vrintr") &&
-      static_cast<ARMOperand &>(*Operands[2]).getToken() == ".f32") {
+      (static_cast<ARMOperand &>(*Operands[2]).getToken() == ".f32" ||
+       static_cast<ARMOperand &>(*Operands[2]).getToken() == ".f16")) {
     if (static_cast<ARMOperand &>(*Operands[3]).isToken() &&
-        static_cast<ARMOperand &>(*Operands[3]).getToken() == ".f32")
+        (static_cast<ARMOperand &>(*Operands[3]).getToken() == ".f32" ||
+         static_cast<ARMOperand &>(*Operands[3]).getToken() == ".f16"))
       RegIdx = 4;
 
     if (static_cast<ARMOperand &>(*Operands[RegIdx]).isReg() &&
@@ -5771,7 +5780,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // Add the processor imod operand, if necessary.
   if (ProcessorIMod) {
     Operands.push_back(ARMOperand::CreateImm(
-          MCConstantExpr::Create(ProcessorIMod, getContext()),
+          MCConstantExpr::create(ProcessorIMod, getContext()),
                                  NameLoc, NameLoc));
   } else if (Mnemonic == "cps" && isMClass()) {
     return Error(NameLoc, "instruction 'cps' requires effect for M-class");
@@ -5843,11 +5852,13 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                    "VFP/Neon double precision register expected");
   }
 
+  tryConvertingToTwoOperandForm(Mnemonic, CarrySetting, Operands);
+
   // Some instructions, mostly Thumb, have forms for the same mnemonic that
   // do and don't have a cc_out optional-def operand. With some spot-checks
   // of the operand list, we can figure out which variant we're trying to
   // parse and adjust accordingly before actually matching. We shouldn't ever
-  // try to remove a cc_out operand that was explicitly set on the the
+  // try to remove a cc_out operand that was explicitly set on the
   // mnemonic, of course (CarrySetting == true). Reason number #317 the
   // table driven matcher doesn't fit well with the ARM instruction set.
   if (!CarrySetting && shouldOmitCCOutOperand(Mnemonic, Operands))
@@ -5906,48 +5917,6 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     }
   }
 
-  // If first 2 operands of a 3 operand instruction are the same
-  // then transform to 2 operand version of the same instruction
-  // e.g. 'adds r0, r0, #1' transforms to 'adds r0, #1'
-  // FIXME: We would really like to be able to tablegen'erate this.
-  if (isThumbOne() && Operands.size() == 6 &&
-       (Mnemonic == "add" || Mnemonic == "sub" || Mnemonic == "and" ||
-        Mnemonic == "eor" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
-        Mnemonic == "asr" || Mnemonic == "adc" || Mnemonic == "sbc" ||
-        Mnemonic == "ror" || Mnemonic == "orr" || Mnemonic == "bic")) {
-      ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
-      ARMOperand &Op4 = static_cast<ARMOperand &>(*Operands[4]);
-      ARMOperand &Op5 = static_cast<ARMOperand &>(*Operands[5]);
-
-      // If both registers are the same then remove one of them from
-      // the operand list.
-      if (Op3.isReg() && Op4.isReg() && Op3.getReg() == Op4.getReg()) {
-          // If 3rd operand (variable Op5) is a register and the instruction is adds/sub
-          // then do not transform as the backend already handles this instruction
-          // correctly.
-          if (!Op5.isReg() || !((Mnemonic == "add" && CarrySetting) || Mnemonic == "sub")) {
-              Operands.erase(Operands.begin() + 3);
-              if (Mnemonic == "add" && !CarrySetting) {
-                  // Special case for 'add' (not 'adds') instruction must
-                  // remove the CCOut operand as well.
-                  Operands.erase(Operands.begin() + 1);
-              }
-          }
-      }
-  }
-
-  // If instruction is 'add' and first two register operands
-  // use SP register, then remove one of the SP registers from
-  // the instruction.
-  // FIXME: We would really like to be able to tablegen'erate this.
-  if (isThumbOne() && Operands.size() == 5 && Mnemonic == "add" && !CarrySetting) {
-      ARMOperand &Op2 = static_cast<ARMOperand &>(*Operands[2]);
-      ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
-      if (Op2.isReg() && Op3.isReg() && Op2.getReg() == ARM::SP && Op3.getReg() == ARM::SP) {
-          Operands.erase(Operands.begin() + 2);
-      }
-  }
-
   // GNU Assembler extension (compatibility)
   if ((Mnemonic == "ldrd" || Mnemonic == "strd")) {
     ARMOperand &Op2 = static_cast<ARMOperand &>(*Operands[2]);
@@ -5990,8 +5959,9 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 // return 'true' if register list contains non-low GPR registers,
 // 'false' otherwise. If Reg is in the register list or is HiReg, set
 // 'containsReg' to true.
-static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
-                                 unsigned HiReg, bool &containsReg) {
+static bool checkLowRegisterList(const MCInst &Inst, unsigned OpNo,
+                                 unsigned Reg, unsigned HiReg,
+                                 bool &containsReg) {
   containsReg = false;
   for (unsigned i = OpNo; i < Inst.getNumOperands(); ++i) {
     unsigned OpReg = Inst.getOperand(i).getReg();
@@ -6006,8 +5976,8 @@ static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
 
 // Check if the specified regisgter is in the register list of the inst,
 // starting at the indicated operand number.
-static bool listContainsReg(MCInst &Inst, unsigned OpNo, unsigned Reg) {
-  for (unsigned i = OpNo; i < Inst.getNumOperands(); ++i) {
+static bool listContainsReg(const MCInst &Inst, unsigned OpNo, unsigned Reg) {
+  for (unsigned i = OpNo, e = Inst.getNumOperands(); i < e; ++i) {
     unsigned OpReg = Inst.getOperand(i).getReg();
     if (OpReg == Reg)
       return true;
@@ -6025,7 +5995,7 @@ static bool instIsBreakpoint(const MCInst &Inst) {
 
 }
 
-bool ARMAsmParser::validatetLDMRegList(MCInst Inst,
+bool ARMAsmParser::validatetLDMRegList(const MCInst &Inst,
                                        const OperandVector &Operands,
                                        unsigned ListNo, bool IsARPop) {
   const ARMOperand &Op = static_cast<const ARMOperand &>(*Operands[ListNo]);
@@ -6048,7 +6018,7 @@ bool ARMAsmParser::validatetLDMRegList(MCInst Inst,
   return false;
 }
 
-bool ARMAsmParser::validatetSTMRegList(MCInst Inst,
+bool ARMAsmParser::validatetSTMRegList(const MCInst &Inst,
                                        const OperandVector &Operands,
                                        unsigned ListNo) {
   const ARMOperand &Op = static_cast<const ARMOperand &>(*Operands[ListNo]);
@@ -6153,6 +6123,14 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
     if (Rt2 == Rt)
       return Error(Operands[3]->getStartLoc(),
                    "destination operands can't be identical");
+    return false;
+  }
+  case ARM::t2BXJ: {
+    const unsigned RmReg = Inst.getOperand(0).getReg();
+    // Rm = SP is no longer unpredictable in v8-A
+    if (RmReg == ARM::SP && !hasV8Ops())
+      return Error(Operands[2]->getStartLoc(),
+                   "r13 (SP) is an unpredictable operand to BXJ");
     return false;
   }
   case ARM::STRD: {
@@ -6703,8 +6681,8 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(1));
     TmpInst.addOperand(Inst.getOperand(1));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    TmpInst.addOperand(MCOperand::CreateImm(0));
+    TmpInst.addOperand(MCOperand::createReg(0));
+    TmpInst.addOperand(MCOperand::createImm(0));
     TmpInst.addOperand(Inst.getOperand(2));
     TmpInst.addOperand(Inst.getOperand(3));
     Inst = TmpInst;
@@ -6721,8 +6699,8 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(1));
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(1));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    TmpInst.addOperand(MCOperand::CreateImm(0));
+    TmpInst.addOperand(MCOperand::createReg(0));
+    TmpInst.addOperand(MCOperand::createImm(0));
     TmpInst.addOperand(Inst.getOperand(2));
     TmpInst.addOperand(Inst.getOperand(3));
     Inst = TmpInst;
@@ -6741,24 +6719,24 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
       // Immediate (mod_imm) will be in its encoded form, we must unencode it
       // before passing it to the ADR instruction.
       unsigned Enc = Inst.getOperand(2).getImm();
-      TmpInst.addOperand(MCOperand::CreateImm(
+      TmpInst.addOperand(MCOperand::createImm(
         ARM_AM::rotr32(Enc & 0xFF, (Enc & 0xF00) >> 7)));
     } else {
       // Turn PC-relative expression into absolute expression.
       // Reading PC provides the start of the current instruction + 8 and
       // the transform to adr is biased by that.
-      MCSymbol *Dot = getContext().CreateTempSymbol();
+      MCSymbol *Dot = getContext().createTempSymbol();
       Out.EmitLabel(Dot);
       const MCExpr *OpExpr = Inst.getOperand(2).getExpr();
-      const MCExpr *InstPC = MCSymbolRefExpr::Create(Dot,
+      const MCExpr *InstPC = MCSymbolRefExpr::create(Dot,
                                                      MCSymbolRefExpr::VK_None,
                                                      getContext());
-      const MCExpr *Const8 = MCConstantExpr::Create(8, getContext());
-      const MCExpr *ReadPC = MCBinaryExpr::CreateAdd(InstPC, Const8,
+      const MCExpr *Const8 = MCConstantExpr::create(8, getContext());
+      const MCExpr *ReadPC = MCBinaryExpr::createAdd(InstPC, Const8,
                                                      getContext());
-      const MCExpr *FixupAddr = MCBinaryExpr::CreateAdd(ReadPC, OpExpr,
+      const MCExpr *FixupAddr = MCBinaryExpr::createAdd(ReadPC, OpExpr,
                                                         getContext());
-      TmpInst.addOperand(MCOperand::CreateExpr(FixupAddr));
+      TmpInst.addOperand(MCOperand::createExpr(FixupAddr));
     }
     TmpInst.addOperand(Inst.getOperand(3));
     TmpInst.addOperand(Inst.getOperand(4));
@@ -6824,7 +6802,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(4)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(5)); // CondCode
@@ -6848,9 +6826,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(4)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(5)); // CondCode
@@ -6874,11 +6852,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(4)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(5)); // CondCode
@@ -6898,7 +6876,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -6920,9 +6898,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -6944,11 +6922,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -6970,13 +6948,13 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7016,7 +6994,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7038,9 +7016,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7062,11 +7040,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7108,14 +7086,14 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(4)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(5)); // CondCode
@@ -7135,18 +7113,18 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(4)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(5)); // CondCode
@@ -7166,22 +7144,22 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(4)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(5)); // CondCode
@@ -7202,7 +7180,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7222,14 +7200,14 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7249,18 +7227,18 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7280,22 +7258,22 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7334,12 +7312,12 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7359,16 +7337,16 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7388,20 +7366,20 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
@@ -7421,9 +7399,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
@@ -7443,14 +7421,14 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     Inst = TmpInst;
@@ -7467,9 +7445,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
@@ -7492,9 +7470,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
@@ -7514,14 +7492,14 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     Inst = TmpInst;
@@ -7538,9 +7516,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
@@ -7563,11 +7541,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
@@ -7587,16 +7565,16 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     Inst = TmpInst;
@@ -7613,11 +7591,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
@@ -7640,11 +7618,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
@@ -7664,16 +7642,16 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     Inst = TmpInst;
@@ -7690,11 +7668,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     unsigned Spacing;
     TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
@@ -7719,9 +7697,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
@@ -7741,11 +7719,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
@@ -7767,9 +7745,9 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
     TmpInst.addOperand(Inst.getOperand(3)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
     TmpInst.addOperand(Inst.getOperand(5));
@@ -7790,11 +7768,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
@@ -7814,13 +7792,13 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
-    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(MCOperand::createReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
@@ -7842,11 +7820,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
     TmpInst.addOperand(Inst.getOperand(3)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 2));
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+    TmpInst.addOperand(MCOperand::createReg(Inst.getOperand(0).getReg() +
                                             Spacing * 3));
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
     TmpInst.addOperand(Inst.getOperand(5));
@@ -7910,14 +7888,14 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.setOpcode(newOpc);
     TmpInst.addOperand(Inst.getOperand(0)); // Rd
     if (isNarrow)
-      TmpInst.addOperand(MCOperand::CreateReg(
+      TmpInst.addOperand(MCOperand::createReg(
           Inst.getOpcode() == ARM::t2MOVSsr ? ARM::CPSR : 0));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // Rm
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
     TmpInst.addOperand(Inst.getOperand(5));
     if (!isNarrow)
-      TmpInst.addOperand(MCOperand::CreateReg(
+      TmpInst.addOperand(MCOperand::createReg(
           Inst.getOpcode() == ARM::t2MOVSsr ? ARM::CPSR : 0));
     Inst = TmpInst;
     return true;
@@ -7947,15 +7925,15 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.setOpcode(newOpc);
     TmpInst.addOperand(Inst.getOperand(0)); // Rd
     if (isNarrow)
-      TmpInst.addOperand(MCOperand::CreateReg(
+      TmpInst.addOperand(MCOperand::createReg(
           Inst.getOpcode() == ARM::t2MOVSsi ? ARM::CPSR : 0));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     if (newOpc != ARM::t2RRX)
-      TmpInst.addOperand(MCOperand::CreateImm(Amount));
+      TmpInst.addOperand(MCOperand::createImm(Amount));
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     if (!isNarrow)
-      TmpInst.addOperand(MCOperand::CreateReg(
+      TmpInst.addOperand(MCOperand::createReg(
           Inst.getOpcode() == ARM::t2MOVSsi ? ARM::CPSR : 0));
     Inst = TmpInst;
     return true;
@@ -7979,7 +7957,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(0)); // Rd
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     TmpInst.addOperand(Inst.getOperand(2)); // Rm
-    TmpInst.addOperand(MCOperand::CreateImm(Shifter)); // Shift value and ty
+    TmpInst.addOperand(MCOperand::createImm(Shifter)); // Shift value and ty
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     TmpInst.addOperand(Inst.getOperand(5)); // cc_out
@@ -8010,7 +7988,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(0)); // Rd
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     if (Opc == ARM::MOVsi)
-      TmpInst.addOperand(MCOperand::CreateImm(Shifter)); // Shift value and ty
+      TmpInst.addOperand(MCOperand::createImm(Shifter)); // Shift value and ty
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     TmpInst.addOperand(Inst.getOperand(5)); // cc_out
@@ -8023,7 +8001,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.setOpcode(ARM::MOVsi);
     TmpInst.addOperand(Inst.getOperand(0)); // Rd
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
-    TmpInst.addOperand(MCOperand::CreateImm(Shifter)); // Shift value and ty
+    TmpInst.addOperand(MCOperand::createImm(Shifter)); // Shift value and ty
     TmpInst.addOperand(Inst.getOperand(2)); // CondCode
     TmpInst.addOperand(Inst.getOperand(3));
     TmpInst.addOperand(Inst.getOperand(4)); // cc_out
@@ -8040,7 +8018,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(4)); // Rt
     TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
-    TmpInst.addOperand(MCOperand::CreateImm(4));
+    TmpInst.addOperand(MCOperand::createImm(4));
     TmpInst.addOperand(Inst.getOperand(2)); // CondCode
     TmpInst.addOperand(Inst.getOperand(3));
     Inst = TmpInst;
@@ -8056,7 +8034,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(4)); // Rt
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
-    TmpInst.addOperand(MCOperand::CreateImm(-4));
+    TmpInst.addOperand(MCOperand::createImm(-4));
     TmpInst.addOperand(Inst.getOperand(2)); // CondCode
     TmpInst.addOperand(Inst.getOperand(3));
     Inst = TmpInst;
@@ -8072,8 +8050,8 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
       TmpInst.addOperand(Inst.getOperand(4)); // Rt
       TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
       TmpInst.addOperand(Inst.getOperand(1)); // Rn
-      TmpInst.addOperand(MCOperand::CreateReg(0));  // am2offset
-      TmpInst.addOperand(MCOperand::CreateImm(4));
+      TmpInst.addOperand(MCOperand::createReg(0));  // am2offset
+      TmpInst.addOperand(MCOperand::createImm(4));
       TmpInst.addOperand(Inst.getOperand(2)); // CondCode
       TmpInst.addOperand(Inst.getOperand(3));
       Inst = TmpInst;
@@ -8090,7 +8068,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
       TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
       TmpInst.addOperand(Inst.getOperand(4)); // Rt
       TmpInst.addOperand(Inst.getOperand(1)); // addrmode_imm12
-      TmpInst.addOperand(MCOperand::CreateImm(-4));
+      TmpInst.addOperand(MCOperand::createImm(-4));
       TmpInst.addOperand(Inst.getOperand(2)); // CondCode
       TmpInst.addOperand(Inst.getOperand(3));
       Inst = TmpInst;
@@ -8103,7 +8081,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
         ARM_AM::getT2SOImmVal(Inst.getOperand(2).getImm()) == -1)
       break;
     Inst.setOpcode(ARM::t2ADDri);
-    Inst.addOperand(MCOperand::CreateReg(0)); // cc_out
+    Inst.addOperand(MCOperand::createReg(0)); // cc_out
     break;
   case ARM::t2SUBri12:
     // If the immediate fits for encoding T3 (t2SUBri) and the generic "sub"
@@ -8112,7 +8090,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
         ARM_AM::getT2SOImmVal(Inst.getOperand(2).getImm()) == -1)
       break;
     Inst.setOpcode(ARM::t2SUBri);
-    Inst.addOperand(MCOperand::CreateReg(0)); // cc_out
+    Inst.addOperand(MCOperand::createReg(0)); // cc_out
     break;
   case ARM::tADDi8:
     // If the immediate is in the range 0-7, we want tADDi3 iff Rd was
@@ -8164,8 +8142,16 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     // If the destination and first source operand are the same, and
     // there's no setting of the flags, use encoding T2 instead of T3.
     // Note that this is only for ADD, not SUB. This mirrors the system
-    // 'as' behaviour. Make sure the wide encoding wasn't explicit.
-    if (Inst.getOperand(0).getReg() != Inst.getOperand(1).getReg() ||
+    // 'as' behaviour.  Also take advantage of ADD being commutative.
+    // Make sure the wide encoding wasn't explicit.
+    bool Swap = false;
+    auto DestReg = Inst.getOperand(0).getReg();
+    bool Transform = DestReg == Inst.getOperand(1).getReg();
+    if (!Transform && DestReg == Inst.getOperand(2).getReg()) {
+      Transform = true;
+      Swap = true;
+    }
+    if (!Transform ||
         Inst.getOperand(5).getReg() != 0 ||
         (static_cast<ARMOperand &>(*Operands[3]).isToken() &&
          static_cast<ARMOperand &>(*Operands[3]).getToken() == ".w"))
@@ -8174,7 +8160,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.setOpcode(ARM::tADDhirr);
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(0));
-    TmpInst.addOperand(Inst.getOperand(2));
+    TmpInst.addOperand(Inst.getOperand(Swap ? 1 : 2));
     TmpInst.addOperand(Inst.getOperand(3));
     TmpInst.addOperand(Inst.getOperand(4));
     Inst = TmpInst;
@@ -8185,7 +8171,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     // same, we need to use the 32-bit encoding if it's available.
     if (Inst.getOperand(0).getReg() != Inst.getOperand(2).getReg()) {
       Inst.setOpcode(ARM::t2ADDrr);
-      Inst.addOperand(MCOperand::CreateReg(0)); // cc_out
+      Inst.addOperand(MCOperand::createReg(0)); // cc_out
       return true;
     }
     break;
@@ -8238,7 +8224,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
       // the writeback tied operand.
       if (hasWritebackToken)
         Inst.insert(Inst.begin(),
-                    MCOperand::CreateReg(Inst.getOperand(0).getReg()));
+                    MCOperand::createReg(Inst.getOperand(0).getReg()));
       return true;
     }
     break;
@@ -8267,8 +8253,8 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     assert (isThumbTwo());
     Inst.setOpcode(ARM::t2LDMIA_UPD);
     // Add the base register and writeback operands.
-    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
-    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
+    Inst.insert(Inst.begin(), MCOperand::createReg(ARM::SP));
+    Inst.insert(Inst.begin(), MCOperand::createReg(ARM::SP));
     return true;
   }
   case ARM::tPUSH: {
@@ -8278,8 +8264,8 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     assert (isThumbTwo());
     Inst.setOpcode(ARM::t2STMDB_UPD);
     // Add the base register and writeback operands.
-    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
-    Inst.insert(Inst.begin(), MCOperand::CreateReg(ARM::SP));
+    Inst.insert(Inst.begin(), MCOperand::createReg(ARM::SP));
+    Inst.insert(Inst.begin(), MCOperand::createReg(ARM::SP));
     return true;
   }
   case ARM::t2MOVi: {
@@ -8549,18 +8535,29 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
     if (isThumbTwo() && Inst.getOperand(OpNo).getReg() == ARM::CPSR &&
         inITBlock())
       return Match_RequiresNotITBlock;
+  } else if (isThumbOne()) {
+    // Some high-register supporting Thumb1 encodings only allow both registers
+    // to be from r0-r7 when in Thumb2.
+    if (Opc == ARM::tADDhirr && !hasV6MOps() &&
+        isARMLowRegister(Inst.getOperand(1).getReg()) &&
+        isARMLowRegister(Inst.getOperand(2).getReg()))
+      return Match_RequiresThumb2;
+    // Others only require ARMv6 or later.
+    else if (Opc == ARM::tMOVr && !hasV6Ops() &&
+             isARMLowRegister(Inst.getOperand(0).getReg()) &&
+             isARMLowRegister(Inst.getOperand(1).getReg()))
+      return Match_RequiresV6;
   }
-  // Some high-register supporting Thumb1 encodings only allow both registers
-  // to be from r0-r7 when in Thumb2.
-  else if (Opc == ARM::tADDhirr && isThumbOne() && !hasV6MOps() &&
-           isARMLowRegister(Inst.getOperand(1).getReg()) &&
-           isARMLowRegister(Inst.getOperand(2).getReg()))
-    return Match_RequiresThumb2;
-  // Others only require ARMv6 or later.
-  else if (Opc == ARM::tMOVr && isThumbOne() && !hasV6Ops() &&
-           isARMLowRegister(Inst.getOperand(0).getReg()) &&
-           isARMLowRegister(Inst.getOperand(1).getReg()))
-    return Match_RequiresV6;
+
+  for (unsigned I = 0; I < MCID.NumOperands; ++I)
+    if (MCID.OpInfo[I].RegClass == ARM::rGPRRegClassID) {
+      // rGPRRegClass excludes PC, and also excluded SP before ARMv8
+      if ((Inst.getOperand(I).getReg() == ARM::SP) && !hasV8Ops())
+        return Match_RequiresV8;
+      else if (Inst.getOperand(I).getReg() == ARM::PC)
+        return Match_InvalidOperand;
+    }
+
   return Match_Success;
 }
 
@@ -8619,7 +8616,7 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       return false;
 
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst, STI);
+    Out.EmitInstruction(Inst, getSTI());
     return false;
   case Match_MissingFeature: {
     assert(ErrorInfo && "Unknown missing feature!");
@@ -8659,6 +8656,8 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(IDLoc, "instruction variant requires ARMv6 or later");
   case Match_RequiresThumb2:
     return Error(IDLoc, "instruction variant requires Thumb2");
+  case Match_RequiresV8:
+    return Error(IDLoc, "instruction variant requires ARMv8 or later");
   case Match_ImmRange0_15: {
     SMLoc ErrorLoc = ((ARMOperand &)*Operands[ErrorInfo]).getStartLoc();
     if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
@@ -8807,7 +8806,7 @@ bool ARMAsmParser::parseLiteralValues(unsigned Size, SMLoc L) {
         return false;
       }
 
-      getParser().getStreamer().EmitValue(Value, Size);
+      getParser().getStreamer().EmitValue(Value, Size, L);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
@@ -8894,7 +8893,7 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
       }
 
       MCSymbol *Func =
-          getParser().getContext().GetOrCreateSymbol(Tok.getIdentifier());
+          getParser().getContext().getOrCreateSymbol(Tok.getIdentifier());
       getParser().getStreamer().EmitThumbFunc(Func);
       Parser.Lex(); // Consume the identifier token.
       return false;
@@ -9010,7 +9009,7 @@ bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
 
   Parser.Lex(); // Consume the EndOfStatement
 
-  if (!RegisterReqs.insert(std::make_pair(Name, Reg)).second) {
+  if (RegisterReqs.insert(std::make_pair(Name, Reg)).first->second != Reg) {
     Error(SRegLoc, "redefinition of '" + Name + "' does not match original.");
     return false;
   }
@@ -9037,18 +9036,17 @@ bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
 bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
   StringRef Arch = getParser().parseStringToEndOfStatement().trim();
 
-  unsigned ID = StringSwitch<unsigned>(Arch)
-#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
-    .Case(NAME, ARM::ID)
-#define ARM_ARCH_ALIAS(NAME, ID) \
-    .Case(NAME, ARM::ID)
-#include "MCTargetDesc/ARMArchName.def"
-    .Default(ARM::INVALID_ARCH);
+  unsigned ID = ARM::parseArch(Arch);
 
-  if (ID == ARM::INVALID_ARCH) {
+  if (ID == ARM::AK_INVALID) {
     Error(L, "Unknown arch name");
     return false;
   }
+
+  Triple T;
+  MCSubtargetInfo &STI = copySTI();
+  STI.setDefaultFeatures("", ("+" + ARM::getArchName(ID)).str());
+  setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   getTargetStreamer().emitArch(ID);
   return false;
@@ -9172,100 +9170,36 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
   StringRef CPU = getParser().parseStringToEndOfStatement().trim();
   getTargetStreamer().emitTextAttribute(ARMBuildAttrs::CPU_name, CPU);
 
-  if (!STI.isCPUStringValid(CPU)) {
+  // FIXME: This is using table-gen data, but should be moved to
+  // ARMTargetParser once that is table-gen'd.
+  if (!getSTI().isCPUStringValid(CPU)) {
     Error(L, "Unknown CPU name");
     return false;
   }
 
-  // FIXME: This switches the CPU features globally, therefore it might
-  // happen that code you would not expect to assemble will. For details
-  // see: http://llvm.org/bugs/show_bug.cgi?id=20757
-  STI.InitMCProcessorInfo(CPU, "");
-  STI.InitCPUSchedModel(CPU);
-  unsigned FB = ComputeAvailableFeatures(STI.getFeatureBits());
-  setAvailableFeatures(FB);
+  MCSubtargetInfo &STI = copySTI();
+  STI.setDefaultFeatures(CPU, "");
+  setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   return false;
 }
-
-// FIXME: This is duplicated in getARMFPUFeatures() in
-// tools/clang/lib/Driver/Tools.cpp
-static const struct {
-  const unsigned ID;
-  const uint64_t Enabled;
-  const uint64_t Disabled;
-} FPUs[] = {
-    {/* ID */ ARM::VFP,
-     /* Enabled */ ARM::FeatureVFP2,
-     /* Disabled */ ARM::FeatureNEON},
-    {/* ID */ ARM::VFPV2,
-     /* Enabled */ ARM::FeatureVFP2,
-     /* Disabled */ ARM::FeatureNEON},
-    {/* ID */ ARM::VFPV3,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3,
-     /* Disabled */ ARM::FeatureNEON | ARM::FeatureD16},
-    {/* ID */ ARM::VFPV3_D16,
-     /* Enable */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureD16,
-     /* Disabled */ ARM::FeatureNEON},
-    {/* ID */ ARM::VFPV4,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureVFP4,
-     /* Disabled */ ARM::FeatureNEON | ARM::FeatureD16},
-    {/* ID */ ARM::VFPV4_D16,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureVFP4 |
-         ARM::FeatureD16,
-     /* Disabled */ ARM::FeatureNEON},
-    {/* ID */ ARM::FPV5_D16,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureVFP4 |
-         ARM::FeatureFPARMv8 | ARM::FeatureD16,
-     /* Disabled */ ARM::FeatureNEON | ARM::FeatureCrypto},
-    {/* ID */ ARM::FP_ARMV8,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureVFP4 |
-         ARM::FeatureFPARMv8,
-     /* Disabled */ ARM::FeatureNEON | ARM::FeatureCrypto | ARM::FeatureD16},
-    {/* ID */ ARM::NEON,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureNEON,
-     /* Disabled */ ARM::FeatureD16},
-    {/* ID */ ARM::NEON_VFPV4,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureVFP4 |
-         ARM::FeatureNEON,
-     /* Disabled */ ARM::FeatureD16},
-    {/* ID */ ARM::NEON_FP_ARMV8,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureVFP4 |
-         ARM::FeatureFPARMv8 | ARM::FeatureNEON,
-     /* Disabled */ ARM::FeatureCrypto | ARM::FeatureD16},
-    {/* ID */ ARM::CRYPTO_NEON_FP_ARMV8,
-     /* Enabled */ ARM::FeatureVFP2 | ARM::FeatureVFP3 | ARM::FeatureVFP4 |
-         ARM::FeatureFPARMv8 | ARM::FeatureNEON | ARM::FeatureCrypto,
-     /* Disabled */ ARM::FeatureD16},
-    {ARM::SOFTVFP, 0, 0},
-};
-
 /// parseDirectiveFPU
 ///  ::= .fpu str
 bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
+  SMLoc FPUNameLoc = getTok().getLoc();
   StringRef FPU = getParser().parseStringToEndOfStatement().trim();
 
-  unsigned ID = StringSwitch<unsigned>(FPU)
-#define ARM_FPU_NAME(NAME, ID) .Case(NAME, ARM::ID)
-#include "ARMFPUName.def"
-    .Default(ARM::INVALID_FPU);
-
-  if (ID == ARM::INVALID_FPU) {
-    Error(L, "Unknown FPU name");
+  unsigned ID = ARM::parseFPU(FPU);
+  std::vector<const char *> Features;
+  if (!ARM::getFPUFeatures(ID, Features)) {
+    Error(FPUNameLoc, "Unknown FPU name");
     return false;
   }
 
-  for (const auto &Entry : FPUs) {
-    if (Entry.ID != ID)
-      continue;
-
-    // Need to toggle features that should be on but are off and that
-    // should off but are on.
-    uint64_t Toggle = (Entry.Enabled & ~STI.getFeatureBits()) |
-                      (Entry.Disabled & STI.getFeatureBits());
-    setAvailableFeatures(ComputeAvailableFeatures(STI.ToggleFeature(Toggle)));
-    break;
-  }
+  MCSubtargetInfo &STI = copySTI();
+  for (auto Feature : Features)
+    STI.ApplyFeatureFlag(Feature);
+  setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   getTargetStreamer().emitFPU(ID);
   return false;
@@ -9369,7 +9303,7 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
   StringRef Name(Parser.getTok().getIdentifier());
   Parser.Lex();
 
-  MCSymbol *PR = getParser().getContext().GetOrCreateSymbol(Name);
+  MCSymbol *PR = getParser().getContext().getOrCreateSymbol(Name);
   getTargetStreamer().emitPersonality(PR);
   return false;
 }
@@ -9810,7 +9744,7 @@ bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
   }
 
   const MCSymbolRefExpr *SRE =
-    MCSymbolRefExpr::Create(Parser.getTok().getIdentifier(),
+    MCSymbolRefExpr::create(Parser.getTok().getIdentifier(),
                             MCSymbolRefExpr::VK_ARM_TLSDESCSEQ, getContext());
   Lex();
 
@@ -9902,17 +9836,9 @@ bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
   SMLoc ArchLoc = Parser.getTok().getLoc();
   getLexer().Lex();
 
-  unsigned ID = StringSwitch<unsigned>(Arch)
-#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
-    .Case(NAME, ARM::ID)
-#define ARM_ARCH_ALIAS(NAME, ID) \
-    .Case(NAME, ARM::ID)
-#include "MCTargetDesc/ARMArchName.def"
-#undef ARM_ARCH_NAME
-#undef ARM_ARCH_ALIAS
-    .Default(ARM::INVALID_ARCH);
+  unsigned ID = ARM::parseArch(Arch);
 
-  if (ID == ARM::INVALID_ARCH) {
+  if (ID == ARM::AK_INVALID) {
     Error(ArchLoc, "unknown architecture '" + Arch + "'");
     Parser.eatToEndOfStatement();
     return false;
@@ -9964,22 +9890,13 @@ bool ARMAsmParser::parseDirectiveThumbSet(SMLoc L) {
   }
   Lex();
 
+  MCSymbol *Sym;
   const MCExpr *Value;
-  if (Parser.parseExpression(Value)) {
-    TokError("missing expression");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
+  if (MCParserUtils::parseAssignmentExpression(Name, /* allow_redef */ true,
+                                               Parser, Sym, Value))
+    return true;
 
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    TokError("unexpected token");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-  Lex();
-
-  MCSymbol *Alias = getContext().GetOrCreateSymbol(Name);
-  getTargetStreamer().emitThumbSet(Alias, Value);
+  getTargetStreamer().emitThumbSet(Sym, Value);
   return false;
 }
 
@@ -9996,33 +9913,32 @@ extern "C" void LLVMInitializeARMAsmParser() {
 #define GET_MATCHER_IMPLEMENTATION
 #include "ARMGenAsmMatcher.inc"
 
+// FIXME: This structure should be moved inside ARMTargetParser
+// when we start to table-generate them, and we can use the ARM
+// flags below, that were generated by table-gen.
 static const struct {
-  const char *Name;
-  const unsigned ArchCheck;
-  const uint64_t Features;
+  const unsigned Kind;
+  const uint64_t ArchCheck;
+  const FeatureBitset Features;
 } Extensions[] = {
-  { "crc", Feature_HasV8, ARM::FeatureCRC },
-  { "crypto",  Feature_HasV8,
-    ARM::FeatureCrypto | ARM::FeatureNEON | ARM::FeatureFPARMv8 },
-  { "fp", Feature_HasV8, ARM::FeatureFPARMv8 },
-  { "idiv", Feature_HasV7 | Feature_IsNotMClass,
-    ARM::FeatureHWDiv | ARM::FeatureHWDivARM },
-  // FIXME: iWMMXT not supported
-  { "iwmmxt", Feature_None, 0 },
-  // FIXME: iWMMXT2 not supported
-  { "iwmmxt2", Feature_None, 0 },
-  // FIXME: Maverick not supported
-  { "maverick", Feature_None, 0 },
-  { "mp", Feature_HasV7 | Feature_IsNotMClass, ARM::FeatureMP },
-  // FIXME: ARMv6-m OS Extensions feature not checked
-  { "os", Feature_None, 0 },
-  // FIXME: Also available in ARMv6-K
-  { "sec", Feature_HasV7, ARM::FeatureTrustZone },
-  { "simd", Feature_HasV8, ARM::FeatureNEON | ARM::FeatureFPARMv8 },
+  { ARM::AEK_CRC, Feature_HasV8, {ARM::FeatureCRC} },
+  { ARM::AEK_CRYPTO,  Feature_HasV8,
+    {ARM::FeatureCrypto, ARM::FeatureNEON, ARM::FeatureFPARMv8} },
+  { ARM::AEK_FP, Feature_HasV8, {ARM::FeatureFPARMv8} },
+  { (ARM::AEK_HWDIV | ARM::AEK_HWDIVARM), Feature_HasV7 | Feature_IsNotMClass,
+    {ARM::FeatureHWDiv, ARM::FeatureHWDivARM} },
+  { ARM::AEK_MP, Feature_HasV7 | Feature_IsNotMClass, {ARM::FeatureMP} },
+  { ARM::AEK_SIMD, Feature_HasV8, {ARM::FeatureNEON, ARM::FeatureFPARMv8} },
+  { ARM::AEK_SEC, Feature_HasV6K, {ARM::FeatureTrustZone} },
   // FIXME: Only available in A-class, isel not predicated
-  { "virt", Feature_HasV7, ARM::FeatureVirtualization },
-  // FIXME: xscale not supported
-  { "xscale", Feature_None, 0 },
+  { ARM::AEK_VIRT, Feature_HasV7, {ARM::FeatureVirtualization} },
+  { ARM::AEK_FP16, Feature_HasV8_2a, {ARM::FeatureFPARMv8, ARM::FeatureFullFP16} },
+  // FIXME: Unsupported extensions.
+  { ARM::AEK_OS, Feature_None, {} },
+  { ARM::AEK_IWMMXT, Feature_None, {} },
+  { ARM::AEK_IWMMXT2, Feature_None, {} },
+  { ARM::AEK_MAVERICK, Feature_None, {} },
+  { ARM::AEK_XSCALE, Feature_None, {} },
 };
 
 /// parseDirectiveArchExtension
@@ -10045,12 +9961,15 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
     EnableFeature = false;
     Name = Name.substr(2);
   }
+  unsigned FeatureKind = ARM::parseArchExt(Name);
+  if (FeatureKind == ARM::AEK_INVALID)
+    Error(ExtLoc, "unknown architectural extension: " + Name);
 
   for (const auto &Extension : Extensions) {
-    if (Extension.Name != Name)
+    if (Extension.Kind != FeatureKind)
       continue;
 
-    if (!Extension.Features)
+    if (Extension.Features.none())
       report_fatal_error("unsupported architectural extension: " + Name);
 
     if ((getAvailableFeatures() & Extension.ArchCheck) != Extension.ArchCheck) {
@@ -10059,9 +9978,11 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
       return false;
     }
 
-    uint64_t ToggleFeatures = EnableFeature
-                                  ? (~STI.getFeatureBits() & Extension.Features)
-                                  : ( STI.getFeatureBits() & Extension.Features);
+    MCSubtargetInfo &STI = copySTI();
+    FeatureBitset ToggleFeatures = EnableFeature
+      ? (~STI.getFeatureBits() & Extension.Features)
+      : ( STI.getFeatureBits() & Extension.Features);
+
     uint64_t Features =
         ComputeAvailableFeatures(STI.ToggleFeature(ToggleFeatures));
     setAvailableFeatures(Features);
@@ -10093,11 +10014,15 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
     if (Op.isImm()) {
       const MCExpr *SOExpr = Op.getImm();
       int64_t Value;
-      if (!SOExpr->EvaluateAsAbsolute(Value))
+      if (!SOExpr->evaluateAsAbsolute(Value))
         return Match_Success;
       assert((Value >= INT32_MIN && Value <= UINT32_MAX) &&
              "expression value must be representable in 32 bits");
     }
+    break;
+  case MCK_rGPR:
+    if (hasV8Ops() && Op.isReg() && Op.getReg() == ARM::SP)
+      return Match_Success;
     break;
   case MCK_GPRPair:
     if (Op.isReg() &&

@@ -11,6 +11,7 @@
 #define LLVM_TOOLS_LLVM_READOBJ_LLVM_READOBJ_H
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include <string>
 
 namespace llvm {
@@ -19,7 +20,8 @@ namespace llvm {
   }
 
   // Various helper functions.
-  bool error(std::error_code ec);
+  LLVM_ATTRIBUTE_NORETURN void reportError(Twine Msg);
+  void error(std::error_code ec);
   bool relocAddressLess(object::RelocationRef A,
                         object::RelocationRef B);
 } // namespace llvm
@@ -36,7 +38,8 @@ namespace opts {
   extern llvm::cl::opt<bool> DynamicSymbols;
   extern llvm::cl::opt<bool> UnwindInfo;
   extern llvm::cl::opt<bool> ExpandRelocs;
-  extern llvm::cl::opt<bool> CodeViewLineTables;
+  extern llvm::cl::opt<bool> CodeView;
+  extern llvm::cl::opt<bool> CodeViewSubsectionBytes;
   extern llvm::cl::opt<bool> ARMAttributes;
   extern llvm::cl::opt<bool> MipsPLTGOT;
 } // namespace opts

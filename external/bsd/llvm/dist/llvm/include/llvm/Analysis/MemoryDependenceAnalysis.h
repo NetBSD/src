@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/PredIteratorCache.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 
@@ -27,9 +28,7 @@ namespace llvm {
   class FunctionPass;
   class Instruction;
   class CallSite;
-  class AliasAnalysis;
   class AssumptionCache;
-  class DataLayout;
   class MemoryDependenceAnalysis;
   class PredIteratorCache;
   class DominatorTree;
@@ -97,6 +96,7 @@ namespace llvm {
     typedef PointerIntPair<Instruction*, 2, DepType> PairTy;
     PairTy Value;
     explicit MemDepResult(PairTy V) : Value(V) {}
+
   public:
     MemDepResult() : Value(nullptr, Invalid) {}
 
@@ -164,6 +164,7 @@ namespace llvm {
     bool operator!=(const MemDepResult &M) const { return Value != M.Value; }
     bool operator<(const MemDepResult &M) const { return Value < M.Value; }
     bool operator>(const MemDepResult &M) const { return Value > M.Value; }
+
   private:
     friend class MemoryDependenceAnalysis;
     /// Dirty - Entries with this marker occur in a LocalDeps map or
@@ -190,6 +191,7 @@ namespace llvm {
   class NonLocalDepEntry {
     BasicBlock *BB;
     MemDepResult Result;
+
   public:
     NonLocalDepEntry(BasicBlock *bb, MemDepResult result)
       : BB(bb), Result(result) {}
@@ -215,6 +217,7 @@ namespace llvm {
   class NonLocalDepResult {
     NonLocalDepEntry Entry;
     Value *Address;
+
   public:
     NonLocalDepResult(BasicBlock *bb, MemDepResult result, Value *address)
       : Entry(bb, result), Address(address) {}
@@ -261,6 +264,7 @@ namespace llvm {
 
   public:
     typedef std::vector<NonLocalDepEntry> NonLocalDepInfo;
+
   private:
     /// ValueIsLoadPair - This is a pair<Value*, bool> where the bool is true if
     /// the dependence is a read only dependence, false if read/write.
@@ -287,7 +291,7 @@ namespace llvm {
       /// conflicting tags.
       AAMDNodes AATags;
 
-      NonLocalPointerInfo() : Size(AliasAnalysis::UnknownSize) {}
+      NonLocalPointerInfo() : Size(MemoryLocation::UnknownSize) {}
     };
 
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
@@ -301,7 +305,6 @@ namespace llvm {
     typedef DenseMap<Instruction*,
                      SmallPtrSet<ValueIsLoadPair, 4> > ReverseNonLocalPtrDepTy;
     ReverseNonLocalPtrDepTy ReverseNonLocalPtrDeps;
-
 
     /// PerInstNLInfo - This is the instruction we keep for each cached access
     /// that we have for an instruction.  The pointer is an owning pointer and
@@ -324,14 +327,14 @@ namespace llvm {
 
     /// Current AA implementation, just a cache.
     AliasAnalysis *AA;
-    const DataLayout *DL;
     DominatorTree *DT;
     AssumptionCache *AC;
-    std::unique_ptr<PredIteratorCache> PredCache;
+    const TargetLibraryInfo *TLI;
+    PredIteratorCache PredCache;
 
   public:
     MemoryDependenceAnalysis();
-    ~MemoryDependenceAnalysis();
+    ~MemoryDependenceAnalysis() override;
     static char ID;
 
     /// Pass Implementation stuff.  This doesn't do any analysis eagerly.
@@ -364,14 +367,13 @@ namespace llvm {
     /// that.
     const NonLocalDepInfo &getNonLocalCallDependency(CallSite QueryCS);
 
-
     /// getNonLocalPointerDependency - Perform a full dependency query for an
     /// access to the QueryInst's specified memory location, returning the set
     /// of instructions that either define or clobber the value.
     ///
     /// Warning: For a volatile query instruction, the dependencies will be
     /// accurate, and thus usable for reordering, but it is never legal to
-    /// remove the query instruction.  
+    /// remove the query instruction.
     ///
     /// This method assumes the pointer has a "NonLocal" dependency within
     /// QueryInst's parent basic block.
@@ -395,21 +397,35 @@ namespace llvm {
     /// critical edges.
     void invalidateCachedPredecessors();
 
-    /// getPointerDependencyFrom - Return the instruction on which a memory
-    /// location depends.  If isLoad is true, this routine ignores may-aliases
-    /// with read-only operations.  If isLoad is false, this routine ignores
-    /// may-aliases with reads from read-only locations. If possible, pass
-    /// the query instruction as well; this function may take advantage of 
-    /// the metadata annotated to the query instruction to refine the result.
+    /// \brief Return the instruction on which a memory location depends.
+    /// If isLoad is true, this routine ignores may-aliases with read-only
+    /// operations.  If isLoad is false, this routine ignores may-aliases
+    /// with reads from read-only locations. If possible, pass the query
+    /// instruction as well; this function may take advantage of the metadata
+    /// annotated to the query instruction to refine the result.
     ///
     /// Note that this is an uncached query, and thus may be inefficient.
     ///
-    MemDepResult getPointerDependencyFrom(const AliasAnalysis::Location &Loc,
+    MemDepResult getPointerDependencyFrom(const MemoryLocation &Loc,
                                           bool isLoad,
                                           BasicBlock::iterator ScanIt,
                                           BasicBlock *BB,
                                           Instruction *QueryInst = nullptr);
 
+    MemDepResult getSimplePointerDependencyFrom(const MemoryLocation &MemLoc,
+                                                bool isLoad,
+                                                BasicBlock::iterator ScanIt,
+                                                BasicBlock *BB,
+                                                Instruction *QueryInst);
+
+    /// This analysis looks for other loads and stores with invariant.group
+    /// metadata and the same pointer operand. Returns Unknown if it does not
+    /// find anything, and Def if it can be assumed that 2 instructions load or
+    /// store the same value.
+    /// FIXME: This analysis works only on single block because of restrictions
+    /// at the call site.
+    MemDepResult getInvariantGroupPointerDependency(LoadInst *LI,
+                                                    BasicBlock *BB);
 
     /// getLoadLoadClobberFullWidthSize - This is a little bit of analysis that
     /// looks at a memory location for a load (specified by MemLocBase, Offs,
@@ -421,22 +437,22 @@ namespace llvm {
     static unsigned getLoadLoadClobberFullWidthSize(const Value *MemLocBase,
                                                     int64_t MemLocOffs,
                                                     unsigned MemLocSize,
-                                                    const LoadInst *LI,
-                                                    const DataLayout &DL);
+                                                    const LoadInst *LI);
 
   private:
     MemDepResult getCallSiteDependencyFrom(CallSite C, bool isReadOnlyCall,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
-    bool getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
-                                     const AliasAnalysis::Location &Loc,
-                                     bool isLoad, BasicBlock *BB,
+    bool getNonLocalPointerDepFromBB(Instruction *QueryInst,
+                                     const PHITransAddr &Pointer,
+                                     const MemoryLocation &Loc, bool isLoad,
+                                     BasicBlock *BB,
                                      SmallVectorImpl<NonLocalDepResult> &Result,
-                                     DenseMap<BasicBlock*, Value*> &Visited,
+                                     DenseMap<BasicBlock *, Value *> &Visited,
                                      bool SkipFirstBlock = false);
-    MemDepResult GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
-                                         bool isLoad, BasicBlock *BB,
-                                         NonLocalDepInfo *Cache,
+    MemDepResult GetNonLocalInfoForBlock(Instruction *QueryInst,
+                                         const MemoryLocation &Loc, bool isLoad,
+                                         BasicBlock *BB, NonLocalDepInfo *Cache,
                                          unsigned NumSortedEntries);
 
     void RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P);
@@ -444,7 +460,6 @@ namespace llvm {
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
-
   };
 
 } // End llvm namespace

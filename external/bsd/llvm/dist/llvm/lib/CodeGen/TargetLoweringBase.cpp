@@ -38,6 +38,11 @@
 #include <cctype>
 using namespace llvm;
 
+static cl::opt<bool> JumpIsExpensiveOverride(
+    "jump-is-expensive", cl::init(false),
+    cl::desc("Do not create extra branches to split comparison logic."),
+    cl::Hidden);
+
 /// InitLibcallNames - Set default libcall names.
 ///
 static void InitLibcallNames(const char **Names, const Triple &TT) {
@@ -242,13 +247,9 @@ static void InitLibcallNames(const char **Names, const Triple &TT) {
   Names[RTLIB::FPROUND_F80_F64] = "__truncxfdf2";
   Names[RTLIB::FPROUND_F128_F64] = "__trunctfdf2";
   Names[RTLIB::FPROUND_PPCF128_F64] = "__trunctfdf2";
-  Names[RTLIB::FPTOSINT_F32_I8] = "__fixsfqi";
-  Names[RTLIB::FPTOSINT_F32_I16] = "__fixsfhi";
   Names[RTLIB::FPTOSINT_F32_I32] = "__fixsfsi";
   Names[RTLIB::FPTOSINT_F32_I64] = "__fixsfdi";
   Names[RTLIB::FPTOSINT_F32_I128] = "__fixsfti";
-  Names[RTLIB::FPTOSINT_F64_I8] = "__fixdfqi";
-  Names[RTLIB::FPTOSINT_F64_I16] = "__fixdfhi";
   Names[RTLIB::FPTOSINT_F64_I32] = "__fixdfsi";
   Names[RTLIB::FPTOSINT_F64_I64] = "__fixdfdi";
   Names[RTLIB::FPTOSINT_F64_I128] = "__fixdfti";
@@ -261,13 +262,9 @@ static void InitLibcallNames(const char **Names, const Triple &TT) {
   Names[RTLIB::FPTOSINT_PPCF128_I32] = "__fixtfsi";
   Names[RTLIB::FPTOSINT_PPCF128_I64] = "__fixtfdi";
   Names[RTLIB::FPTOSINT_PPCF128_I128] = "__fixtfti";
-  Names[RTLIB::FPTOUINT_F32_I8] = "__fixunssfqi";
-  Names[RTLIB::FPTOUINT_F32_I16] = "__fixunssfhi";
   Names[RTLIB::FPTOUINT_F32_I32] = "__fixunssfsi";
   Names[RTLIB::FPTOUINT_F32_I64] = "__fixunssfdi";
   Names[RTLIB::FPTOUINT_F32_I128] = "__fixunssfti";
-  Names[RTLIB::FPTOUINT_F64_I8] = "__fixunsdfqi";
-  Names[RTLIB::FPTOUINT_F64_I16] = "__fixunsdfhi";
   Names[RTLIB::FPTOUINT_F64_I32] = "__fixunsdfsi";
   Names[RTLIB::FPTOUINT_F64_I64] = "__fixunsdfdi";
   Names[RTLIB::FPTOUINT_F64_I128] = "__fixunsdfti";
@@ -420,6 +417,14 @@ static void InitLibcallNames(const char **Names, const Triple &TT) {
     // These are generally not available.
     Names[RTLIB::STACKPROTECTOR_CHECK_FAIL] = nullptr;
   }
+
+  // For f16/f32 conversions, Darwin uses the standard naming scheme, instead
+  // of the gnueabi-style __gnu_*_ieee.
+  // FIXME: What about other targets?
+  if (TT.isOSDarwin()) {
+    Names[RTLIB::FPEXT_F16_F32] = "__extendhfsf2";
+    Names[RTLIB::FPROUND_F32_F16] = "__truncsfhf2";
+  }
 }
 
 /// InitLibcallCallingConvs - Set default libcall CallingConvs.
@@ -488,10 +493,6 @@ RTLIB::Libcall RTLIB::getFPROUND(EVT OpVT, EVT RetVT) {
 /// UNKNOWN_LIBCALL if there is none.
 RTLIB::Libcall RTLIB::getFPTOSINT(EVT OpVT, EVT RetVT) {
   if (OpVT == MVT::f32) {
-    if (RetVT == MVT::i8)
-      return FPTOSINT_F32_I8;
-    if (RetVT == MVT::i16)
-      return FPTOSINT_F32_I16;
     if (RetVT == MVT::i32)
       return FPTOSINT_F32_I32;
     if (RetVT == MVT::i64)
@@ -499,10 +500,6 @@ RTLIB::Libcall RTLIB::getFPTOSINT(EVT OpVT, EVT RetVT) {
     if (RetVT == MVT::i128)
       return FPTOSINT_F32_I128;
   } else if (OpVT == MVT::f64) {
-    if (RetVT == MVT::i8)
-      return FPTOSINT_F64_I8;
-    if (RetVT == MVT::i16)
-      return FPTOSINT_F64_I16;
     if (RetVT == MVT::i32)
       return FPTOSINT_F64_I32;
     if (RetVT == MVT::i64)
@@ -538,10 +535,6 @@ RTLIB::Libcall RTLIB::getFPTOSINT(EVT OpVT, EVT RetVT) {
 /// UNKNOWN_LIBCALL if there is none.
 RTLIB::Libcall RTLIB::getFPTOUINT(EVT OpVT, EVT RetVT) {
   if (OpVT == MVT::f32) {
-    if (RetVT == MVT::i8)
-      return FPTOUINT_F32_I8;
-    if (RetVT == MVT::i16)
-      return FPTOUINT_F32_I16;
     if (RetVT == MVT::i32)
       return FPTOUINT_F32_I32;
     if (RetVT == MVT::i64)
@@ -549,10 +542,6 @@ RTLIB::Libcall RTLIB::getFPTOUINT(EVT OpVT, EVT RetVT) {
     if (RetVT == MVT::i128)
       return FPTOUINT_F32_I128;
   } else if (OpVT == MVT::f64) {
-    if (RetVT == MVT::i8)
-      return FPTOUINT_F64_I8;
-    if (RetVT == MVT::i16)
-      return FPTOUINT_F64_I16;
     if (RetVT == MVT::i32)
       return FPTOUINT_F64_I32;
     if (RetVT == MVT::i64)
@@ -664,6 +653,44 @@ RTLIB::Libcall RTLIB::getUINTTOFP(EVT OpVT, EVT RetVT) {
   return UNKNOWN_LIBCALL;
 }
 
+RTLIB::Libcall RTLIB::getATOMIC(unsigned Opc, MVT VT) {
+#define OP_TO_LIBCALL(Name, Enum)                                              \
+  case Name:                                                                   \
+    switch (VT.SimpleTy) {                                                     \
+    default:                                                                   \
+      return UNKNOWN_LIBCALL;                                                  \
+    case MVT::i8:                                                              \
+      return Enum##_1;                                                         \
+    case MVT::i16:                                                             \
+      return Enum##_2;                                                         \
+    case MVT::i32:                                                             \
+      return Enum##_4;                                                         \
+    case MVT::i64:                                                             \
+      return Enum##_8;                                                         \
+    case MVT::i128:                                                            \
+      return Enum##_16;                                                        \
+    }
+
+  switch (Opc) {
+    OP_TO_LIBCALL(ISD::ATOMIC_SWAP, SYNC_LOCK_TEST_AND_SET)
+    OP_TO_LIBCALL(ISD::ATOMIC_CMP_SWAP, SYNC_VAL_COMPARE_AND_SWAP)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_ADD, SYNC_FETCH_AND_ADD)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_SUB, SYNC_FETCH_AND_SUB)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_AND, SYNC_FETCH_AND_AND)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_OR, SYNC_FETCH_AND_OR)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_XOR, SYNC_FETCH_AND_XOR)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_NAND, SYNC_FETCH_AND_NAND)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_MAX, SYNC_FETCH_AND_MAX)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_UMAX, SYNC_FETCH_AND_UMAX)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_MIN, SYNC_FETCH_AND_MIN)
+    OP_TO_LIBCALL(ISD::ATOMIC_LOAD_UMIN, SYNC_FETCH_AND_UMIN)
+  }
+
+#undef OP_TO_LIBCALL
+
+  return UNKNOWN_LIBCALL;
+}
+
 /// InitCmpLibcallCCs - Set default comparison libcall CC.
 ///
 static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
@@ -695,12 +722,10 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
 }
 
 /// NOTE: The TargetMachine owns TLOF.
-TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm)
-    : TM(tm), DL(TM.getSubtargetImpl()->getDataLayout()) {
+TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm) : TM(tm) {
   initActions();
 
   // Perform these initializations only once.
-  IsLittleEndian = DL->isLittleEndian();
   MaxStoresPerMemset = MaxStoresPerMemcpy = MaxStoresPerMemmove = 8;
   MaxStoresPerMemsetOptSize = MaxStoresPerMemcpyOptSize
     = MaxStoresPerMemmoveOptSize = 4;
@@ -709,17 +734,13 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm)
   SelectIsExpensive = false;
   HasMultipleConditionRegisters = false;
   HasExtractBitsInsn = false;
-  IntDivIsCheap = false;
   FsqrtIsCheap = false;
-  Pow2SDivIsCheap = false;
-  JumpIsExpensive = false;
+  JumpIsExpensive = JumpIsExpensiveOverride;
   PredictableSelectIsExpensive = false;
   MaskAndBranchFoldingIsLegal = false;
   EnableExtLdPromotion = false;
   HasFloatingPointExceptions = true;
   StackPointerRegisterToSaveRestore = 0;
-  ExceptionPointerRegister = 0;
-  ExceptionSelectorRegister = 0;
   BooleanContents = UndefinedBooleanContent;
   BooleanFloatContents = UndefinedBooleanContent;
   BooleanVectorContents = UndefinedBooleanContent;
@@ -729,11 +750,12 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm)
   MinFunctionAlignment = 0;
   PrefFunctionAlignment = 0;
   PrefLoopAlignment = 0;
+  GatherAllAliasesMaxDepth = 6;
   MinStackArgumentAlignment = 1;
   InsertFencesForAtomic = false;
   MinimumJumpTableEntries = 4;
 
-  InitLibcallNames(LibcallRoutineNames, Triple(TM.getTargetTriple()));
+  InitLibcallNames(LibcallRoutineNames, TM.getTargetTriple());
   InitCmpLibcallCCs(CmpLibcallCCs);
   InitLibcallCallingConvs(LibcallCallingConvs);
 }
@@ -765,7 +787,24 @@ void TargetLoweringBase::initActions() {
     setOperationAction(ISD::CONCAT_VECTORS, VT, Expand);
     setOperationAction(ISD::FMINNUM, VT, Expand);
     setOperationAction(ISD::FMAXNUM, VT, Expand);
+    setOperationAction(ISD::FMINNAN, VT, Expand);
+    setOperationAction(ISD::FMAXNAN, VT, Expand);
+    setOperationAction(ISD::FMAD, VT, Expand);
+    setOperationAction(ISD::SMIN, VT, Expand);
+    setOperationAction(ISD::SMAX, VT, Expand);
+    setOperationAction(ISD::UMIN, VT, Expand);
+    setOperationAction(ISD::UMAX, VT, Expand);
 
+    // Overflow operations default to expand
+    setOperationAction(ISD::SADDO, VT, Expand);
+    setOperationAction(ISD::SSUBO, VT, Expand);
+    setOperationAction(ISD::UADDO, VT, Expand);
+    setOperationAction(ISD::USUBO, VT, Expand);
+    setOperationAction(ISD::SMULO, VT, Expand);
+    setOperationAction(ISD::UMULO, VT, Expand);
+
+    setOperationAction(ISD::BITREVERSE, VT, Expand);
+    
     // These library functions default to expand.
     setOperationAction(ISD::FROUND, VT, Expand);
 
@@ -776,10 +815,16 @@ void TargetLoweringBase::initActions() {
       setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, VT, Expand);
       setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG, VT, Expand);
     }
+
+    // For most targets @llvm.get.dynamic.area.offest just returns 0.
+    setOperationAction(ISD::GET_DYNAMIC_AREA_OFFSET, VT, Expand);
   }
 
   // Most targets ignore the @llvm.prefetch intrinsic.
   setOperationAction(ISD::PREFETCH, MVT::Other, Expand);
+
+  // Most targets also ignore the @llvm.readcyclecounter intrinsic.
+  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Expand);
 
   // ConstantFP nodes default to expand.  Targets can either change this to
   // Legal, in which case all fp constants are legal, or use isFPImmLegal()
@@ -791,58 +836,21 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::ConstantFP, MVT::f128, Expand);
 
   // These library functions default to expand.
-  setOperationAction(ISD::FLOG ,  MVT::f16, Expand);
-  setOperationAction(ISD::FLOG2,  MVT::f16, Expand);
-  setOperationAction(ISD::FLOG10, MVT::f16, Expand);
-  setOperationAction(ISD::FEXP ,  MVT::f16, Expand);
-  setOperationAction(ISD::FEXP2,  MVT::f16, Expand);
-  setOperationAction(ISD::FFLOOR, MVT::f16, Expand);
-  setOperationAction(ISD::FMINNUM, MVT::f16, Expand);
-  setOperationAction(ISD::FMAXNUM, MVT::f16, Expand);
-  setOperationAction(ISD::FNEARBYINT, MVT::f16, Expand);
-  setOperationAction(ISD::FCEIL,  MVT::f16, Expand);
-  setOperationAction(ISD::FRINT,  MVT::f16, Expand);
-  setOperationAction(ISD::FTRUNC, MVT::f16, Expand);
-  setOperationAction(ISD::FROUND, MVT::f16, Expand);
-  setOperationAction(ISD::FLOG ,  MVT::f32, Expand);
-  setOperationAction(ISD::FLOG2,  MVT::f32, Expand);
-  setOperationAction(ISD::FLOG10, MVT::f32, Expand);
-  setOperationAction(ISD::FEXP ,  MVT::f32, Expand);
-  setOperationAction(ISD::FEXP2,  MVT::f32, Expand);
-  setOperationAction(ISD::FFLOOR, MVT::f32, Expand);
-  setOperationAction(ISD::FMINNUM, MVT::f32, Expand);
-  setOperationAction(ISD::FMAXNUM, MVT::f32, Expand);
-  setOperationAction(ISD::FNEARBYINT, MVT::f32, Expand);
-  setOperationAction(ISD::FCEIL,  MVT::f32, Expand);
-  setOperationAction(ISD::FRINT,  MVT::f32, Expand);
-  setOperationAction(ISD::FTRUNC, MVT::f32, Expand);
-  setOperationAction(ISD::FROUND, MVT::f32, Expand);
-  setOperationAction(ISD::FLOG ,  MVT::f64, Expand);
-  setOperationAction(ISD::FLOG2,  MVT::f64, Expand);
-  setOperationAction(ISD::FLOG10, MVT::f64, Expand);
-  setOperationAction(ISD::FEXP ,  MVT::f64, Expand);
-  setOperationAction(ISD::FEXP2,  MVT::f64, Expand);
-  setOperationAction(ISD::FFLOOR, MVT::f64, Expand);
-  setOperationAction(ISD::FMINNUM, MVT::f64, Expand);
-  setOperationAction(ISD::FMAXNUM, MVT::f64, Expand);
-  setOperationAction(ISD::FNEARBYINT, MVT::f64, Expand);
-  setOperationAction(ISD::FCEIL,  MVT::f64, Expand);
-  setOperationAction(ISD::FRINT,  MVT::f64, Expand);
-  setOperationAction(ISD::FTRUNC, MVT::f64, Expand);
-  setOperationAction(ISD::FROUND, MVT::f64, Expand);
-  setOperationAction(ISD::FLOG ,  MVT::f128, Expand);
-  setOperationAction(ISD::FLOG2,  MVT::f128, Expand);
-  setOperationAction(ISD::FLOG10, MVT::f128, Expand);
-  setOperationAction(ISD::FEXP ,  MVT::f128, Expand);
-  setOperationAction(ISD::FEXP2,  MVT::f128, Expand);
-  setOperationAction(ISD::FFLOOR, MVT::f128, Expand);
-  setOperationAction(ISD::FMINNUM, MVT::f128, Expand);
-  setOperationAction(ISD::FMAXNUM, MVT::f128, Expand);
-  setOperationAction(ISD::FNEARBYINT, MVT::f128, Expand);
-  setOperationAction(ISD::FCEIL,  MVT::f128, Expand);
-  setOperationAction(ISD::FRINT,  MVT::f128, Expand);
-  setOperationAction(ISD::FTRUNC, MVT::f128, Expand);
-  setOperationAction(ISD::FROUND, MVT::f128, Expand);
+  for (MVT VT : {MVT::f32, MVT::f64, MVT::f128}) {
+    setOperationAction(ISD::FLOG ,      VT, Expand);
+    setOperationAction(ISD::FLOG2,      VT, Expand);
+    setOperationAction(ISD::FLOG10,     VT, Expand);
+    setOperationAction(ISD::FEXP ,      VT, Expand);
+    setOperationAction(ISD::FEXP2,      VT, Expand);
+    setOperationAction(ISD::FFLOOR,     VT, Expand);
+    setOperationAction(ISD::FMINNUM,    VT, Expand);
+    setOperationAction(ISD::FMAXNUM,    VT, Expand);
+    setOperationAction(ISD::FNEARBYINT, VT, Expand);
+    setOperationAction(ISD::FCEIL,      VT, Expand);
+    setOperationAction(ISD::FRINT,      VT, Expand);
+    setOperationAction(ISD::FTRUNC,     VT, Expand);
+    setOperationAction(ISD::FROUND,     VT, Expand);
+  }
 
   // Default ISD::TRAP to expand (which turns it into abort).
   setOperationAction(ISD::TRAP, MVT::Other, Expand);
@@ -853,28 +861,17 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Expand);
 }
 
-MVT TargetLoweringBase::getPointerTy(uint32_t AS) const {
-  return MVT::getIntegerVT(getPointerSizeInBits(AS));
+MVT TargetLoweringBase::getScalarShiftAmountTy(const DataLayout &DL,
+                                               EVT) const {
+  return MVT::getIntegerVT(8 * DL.getPointerSize(0));
 }
 
-unsigned TargetLoweringBase::getPointerSizeInBits(uint32_t AS) const {
-  return DL->getPointerSizeInBits(AS);
-}
-
-unsigned TargetLoweringBase::getPointerTypeSizeInBits(Type *Ty) const {
-  assert(Ty->isPointerTy());
-  return getPointerSizeInBits(Ty->getPointerAddressSpace());
-}
-
-MVT TargetLoweringBase::getScalarShiftAmountTy(EVT LHSTy) const {
-  return MVT::getIntegerVT(8*DL->getPointerSize(0));
-}
-
-EVT TargetLoweringBase::getShiftAmountTy(EVT LHSTy) const {
+EVT TargetLoweringBase::getShiftAmountTy(EVT LHSTy,
+                                         const DataLayout &DL) const {
   assert(LHSTy.isInteger() && "Shift amount is not an integer type!");
   if (LHSTy.isVector())
     return LHSTy;
-  return getScalarShiftAmountTy(LHSTy);
+  return getScalarShiftAmountTy(DL, LHSTy);
 }
 
 /// canOpTrap - Returns true if the operation can trap for the value type.
@@ -894,6 +891,144 @@ bool TargetLoweringBase::canOpTrap(unsigned Op, EVT VT) const {
   }
 }
 
+void TargetLoweringBase::setJumpIsExpensive(bool isExpensive) {
+  // If the command-line option was specified, ignore this request.
+  if (!JumpIsExpensiveOverride.getNumOccurrences())
+    JumpIsExpensive = isExpensive;
+}
+
+TargetLoweringBase::LegalizeKind
+TargetLoweringBase::getTypeConversion(LLVMContext &Context, EVT VT) const {
+  // If this is a simple type, use the ComputeRegisterProp mechanism.
+  if (VT.isSimple()) {
+    MVT SVT = VT.getSimpleVT();
+    assert((unsigned)SVT.SimpleTy < array_lengthof(TransformToType));
+    MVT NVT = TransformToType[SVT.SimpleTy];
+    LegalizeTypeAction LA = ValueTypeActions.getTypeAction(SVT);
+
+    assert((LA == TypeLegal || LA == TypeSoftenFloat ||
+            ValueTypeActions.getTypeAction(NVT) != TypePromoteInteger) &&
+           "Promote may not follow Expand or Promote");
+
+    if (LA == TypeSplitVector)
+      return LegalizeKind(LA,
+                          EVT::getVectorVT(Context, SVT.getVectorElementType(),
+                                           SVT.getVectorNumElements() / 2));
+    if (LA == TypeScalarizeVector)
+      return LegalizeKind(LA, SVT.getVectorElementType());
+    return LegalizeKind(LA, NVT);
+  }
+
+  // Handle Extended Scalar Types.
+  if (!VT.isVector()) {
+    assert(VT.isInteger() && "Float types must be simple");
+    unsigned BitSize = VT.getSizeInBits();
+    // First promote to a power-of-two size, then expand if necessary.
+    if (BitSize < 8 || !isPowerOf2_32(BitSize)) {
+      EVT NVT = VT.getRoundIntegerType(Context);
+      assert(NVT != VT && "Unable to round integer VT");
+      LegalizeKind NextStep = getTypeConversion(Context, NVT);
+      // Avoid multi-step promotion.
+      if (NextStep.first == TypePromoteInteger)
+        return NextStep;
+      // Return rounded integer type.
+      return LegalizeKind(TypePromoteInteger, NVT);
+    }
+
+    return LegalizeKind(TypeExpandInteger,
+                        EVT::getIntegerVT(Context, VT.getSizeInBits() / 2));
+  }
+
+  // Handle vector types.
+  unsigned NumElts = VT.getVectorNumElements();
+  EVT EltVT = VT.getVectorElementType();
+
+  // Vectors with only one element are always scalarized.
+  if (NumElts == 1)
+    return LegalizeKind(TypeScalarizeVector, EltVT);
+
+  // Try to widen vector elements until the element type is a power of two and
+  // promote it to a legal type later on, for example:
+  // <3 x i8> -> <4 x i8> -> <4 x i32>
+  if (EltVT.isInteger()) {
+    // Vectors with a number of elements that is not a power of two are always
+    // widened, for example <3 x i8> -> <4 x i8>.
+    if (!VT.isPow2VectorType()) {
+      NumElts = (unsigned)NextPowerOf2(NumElts);
+      EVT NVT = EVT::getVectorVT(Context, EltVT, NumElts);
+      return LegalizeKind(TypeWidenVector, NVT);
+    }
+
+    // Examine the element type.
+    LegalizeKind LK = getTypeConversion(Context, EltVT);
+
+    // If type is to be expanded, split the vector.
+    //  <4 x i140> -> <2 x i140>
+    if (LK.first == TypeExpandInteger)
+      return LegalizeKind(TypeSplitVector,
+                          EVT::getVectorVT(Context, EltVT, NumElts / 2));
+
+    // Promote the integer element types until a legal vector type is found
+    // or until the element integer type is too big. If a legal type was not
+    // found, fallback to the usual mechanism of widening/splitting the
+    // vector.
+    EVT OldEltVT = EltVT;
+    while (1) {
+      // Increase the bitwidth of the element to the next pow-of-two
+      // (which is greater than 8 bits).
+      EltVT = EVT::getIntegerVT(Context, 1 + EltVT.getSizeInBits())
+                  .getRoundIntegerType(Context);
+
+      // Stop trying when getting a non-simple element type.
+      // Note that vector elements may be greater than legal vector element
+      // types. Example: X86 XMM registers hold 64bit element on 32bit
+      // systems.
+      if (!EltVT.isSimple())
+        break;
+
+      // Build a new vector type and check if it is legal.
+      MVT NVT = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
+      // Found a legal promoted vector type.
+      if (NVT != MVT() && ValueTypeActions.getTypeAction(NVT) == TypeLegal)
+        return LegalizeKind(TypePromoteInteger,
+                            EVT::getVectorVT(Context, EltVT, NumElts));
+    }
+
+    // Reset the type to the unexpanded type if we did not find a legal vector
+    // type with a promoted vector element type.
+    EltVT = OldEltVT;
+  }
+
+  // Try to widen the vector until a legal type is found.
+  // If there is no wider legal type, split the vector.
+  while (1) {
+    // Round up to the next power of 2.
+    NumElts = (unsigned)NextPowerOf2(NumElts);
+
+    // If there is no simple vector type with this many elements then there
+    // cannot be a larger legal vector type.  Note that this assumes that
+    // there are no skipped intermediate vector types in the simple types.
+    if (!EltVT.isSimple())
+      break;
+    MVT LargerVector = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
+    if (LargerVector == MVT())
+      break;
+
+    // If this type is legal then widen the vector.
+    if (ValueTypeActions.getTypeAction(LargerVector) == TypeLegal)
+      return LegalizeKind(TypeWidenVector, LargerVector);
+  }
+
+  // Widen odd vectors to next power of two.
+  if (!VT.isPow2VectorType()) {
+    EVT NVT = VT.getPow2VectorType(Context);
+    return LegalizeKind(TypeWidenVector, NVT);
+  }
+
+  // Vectors with illegal element types are expanded.
+  EVT NVT = EVT::getVectorVT(Context, EltVT, VT.getVectorNumElements() / 2);
+  return LegalizeKind(TypeSplitVector, NVT);
+}
 
 static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
                                           unsigned &NumIntermediates,
@@ -959,6 +1094,19 @@ MachineBasicBlock*
 TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
                                    MachineBasicBlock *MBB) const {
   MachineFunction &MF = *MI->getParent()->getParent();
+  MachineFrameInfo &MFI = *MF.getFrameInfo();
+
+  // We're handling multiple types of operands here:
+  // PATCHPOINT MetaArgs - live-in, read only, direct
+  // STATEPOINT Deopt Spill - live-through, read only, indirect
+  // STATEPOINT Deopt Alloca - live-through, read only, direct
+  // (We're currently conservative and mark the deopt slots read/write in
+  // practice.) 
+  // STATEPOINT GC Spill - live-through, read/write, indirect
+  // STATEPOINT GC Alloca - live-through, read/write, direct
+  // The live-in vs live-through is handled already (the live through ones are
+  // all stack slots), but we need to handle the different type of stackmap
+  // operands and memory effects here.
 
   // MI changes inside this loop as we grow operands.
   for(unsigned OperIdx = 0; OperIdx != MI->getNumOperands(); ++OperIdx) {
@@ -974,10 +1122,24 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
     // Copy operands before the frame-index.
     for (unsigned i = 0; i < OperIdx; ++i)
       MIB.addOperand(MI->getOperand(i));
-    // Add frame index operands: direct-mem-ref tag, #FI, offset.
-    MIB.addImm(StackMaps::DirectMemRefOp);
-    MIB.addOperand(MI->getOperand(OperIdx));
-    MIB.addImm(0);
+    // Add frame index operands recognized by stackmaps.cpp
+    if (MFI.isStatepointSpillSlotObjectIndex(FI)) {
+      // indirect-mem-ref tag, size, #FI, offset.
+      // Used for spills inserted by StatepointLowering.  This codepath is not
+      // used for patchpoints/stackmaps at all, for these spilling is done via
+      // foldMemoryOperand callback only.
+      assert(MI->getOpcode() == TargetOpcode::STATEPOINT && "sanity");
+      MIB.addImm(StackMaps::IndirectMemRefOp);
+      MIB.addImm(MFI.getObjectSize(FI));
+      MIB.addOperand(MI->getOperand(OperIdx));
+      MIB.addImm(0);
+    } else {
+      // direct-mem-ref tag, #FI, offset.
+      // Used by patchpoint, and direct alloca arguments to statepoints
+      MIB.addImm(StackMaps::DirectMemRefOp);
+      MIB.addOperand(MI->getOperand(OperIdx));
+      MIB.addImm(0);
+    }
     // Copy the operands after the frame index.
     for (unsigned i = OperIdx + 1; i != MI->getNumOperands(); ++i)
       MIB.addOperand(MI->getOperand(i));
@@ -987,7 +1149,6 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
     assert(MIB->mayLoad() && "Folded a stackmap use to a non-load!");
 
     // Add a new memory operand for this FI.
-    const MachineFrameInfo &MFI = *MF.getFrameInfo();
     assert(MFI.getObjectOffset(FI) != -1);
 
     unsigned Flags = MachineMemOperand::MOLoad;
@@ -996,9 +1157,8 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
       Flags |= MachineMemOperand::MOVolatile;
     }
     MachineMemOperand *MMO = MF.getMachineMemOperand(
-        MachinePointerInfo::getFixedStack(FI), Flags,
-        TM.getSubtargetImpl()->getDataLayout()->getPointerSize(),
-        MFI.getObjectAlignment(FI));
+        MachinePointerInfo::getFixedStack(MF, FI), Flags,
+        MF.getDataLayout().getPointerSize(), MFI.getObjectAlignment(FI));
     MIB->addMemOperand(MF, MMO);
 
     // Replace the instruction and update the operand index.
@@ -1012,10 +1172,13 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
 
 /// findRepresentativeClass - Return the largest legal super-reg register class
 /// of the register class for the specified type and its associated "cost".
-std::pair<const TargetRegisterClass*, uint8_t>
-TargetLoweringBase::findRepresentativeClass(MVT VT) const {
-  const TargetRegisterInfo *TRI =
-      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
+// This function is in TargetLowering because it uses RegClassForVT which would
+// need to be moved to TargetRegisterInfo and would necessitate moving
+// isTypeLegal over as well - a massive change that would just require
+// TargetLowering having a TargetRegisterInfo class member that it would use.
+std::pair<const TargetRegisterClass *, uint8_t>
+TargetLoweringBase::findRepresentativeClass(const TargetRegisterInfo *TRI,
+                                            MVT VT) const {
   const TargetRegisterClass *RC = RegClassForVT[VT.SimpleTy];
   if (!RC)
     return std::make_pair(RC, 0);
@@ -1041,7 +1204,8 @@ TargetLoweringBase::findRepresentativeClass(MVT VT) const {
 
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
-void TargetLoweringBase::computeRegisterProperties() {
+void TargetLoweringBase::computeRegisterProperties(
+    const TargetRegisterInfo *TRI) {
   static_assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE,
                 "Too many value types for ValueTypeActions to hold!");
 
@@ -1110,27 +1274,23 @@ void TargetLoweringBase::computeRegisterProperties() {
     ValueTypeActions.setTypeAction(MVT::f64, TypeSoftenFloat);
   }
 
-  // Decide how to handle f32. If the target does not have native support for
-  // f32, promote it to f64 if it is legal. Otherwise, expand it to i32.
+  // Decide how to handle f32. If the target does not have native f32 support,
+  // expand it to i32 and we will be generating soft float library calls.
   if (!isTypeLegal(MVT::f32)) {
-    if (isTypeLegal(MVT::f64)) {
-      NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::f64];
-      RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::f64];
-      TransformToType[MVT::f32] = MVT::f64;
-      ValueTypeActions.setTypeAction(MVT::f32, TypePromoteInteger);
-    } else {
-      NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
-      RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::i32];
-      TransformToType[MVT::f32] = MVT::i32;
-      ValueTypeActions.setTypeAction(MVT::f32, TypeSoftenFloat);
-    }
+    NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
+    RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::i32];
+    TransformToType[MVT::f32] = MVT::i32;
+    ValueTypeActions.setTypeAction(MVT::f32, TypeSoftenFloat);
   }
 
+  // Decide how to handle f16. If the target does not have native f16 support,
+  // promote it to f32, because there are no f16 library calls (except for
+  // conversions).
   if (!isTypeLegal(MVT::f16)) {
-    NumRegistersForVT[MVT::f16] = NumRegistersForVT[MVT::i16];
-    RegisterTypeForVT[MVT::f16] = RegisterTypeForVT[MVT::i16];
-    TransformToType[MVT::f16] = MVT::i16;
-    ValueTypeActions.setTypeAction(MVT::f16, TypeSoftenFloat);
+    NumRegistersForVT[MVT::f16] = NumRegistersForVT[MVT::f32];
+    RegisterTypeForVT[MVT::f16] = RegisterTypeForVT[MVT::f32];
+    TransformToType[MVT::f16] = MVT::f32;
+    ValueTypeActions.setTypeAction(MVT::f16, TypePromoteFloat);
   }
 
   // Loop over all of the vector value types to see which need transformations.
@@ -1223,15 +1383,16 @@ void TargetLoweringBase::computeRegisterProperties() {
   for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i) {
     const TargetRegisterClass* RRC;
     uint8_t Cost;
-    std::tie(RRC, Cost) = findRepresentativeClass((MVT::SimpleValueType)i);
+    std::tie(RRC, Cost) = findRepresentativeClass(TRI, (MVT::SimpleValueType)i);
     RepRegClassForVT[i] = RRC;
     RepRegClassCostForVT[i] = Cost;
   }
 }
 
-EVT TargetLoweringBase::getSetCCResultType(LLVMContext &, EVT VT) const {
+EVT TargetLoweringBase::getSetCCResultType(const DataLayout &DL, LLVMContext &,
+                                           EVT VT) const {
   assert(!VT.isVector() && "No default SetCC type for vectors!");
-  return getPointerTy(0).SimpleTy;
+  return getPointerTy(DL).SimpleTy;
 }
 
 MVT::SimpleValueType TargetLoweringBase::getCmpLibcallReturnType() const {
@@ -1316,11 +1477,11 @@ unsigned TargetLoweringBase::getVectorTypeBreakdown(LLVMContext &Context, EVT VT
 /// type of the given function.  This does not require a DAG or a return value,
 /// and is suitable for use before any DAGs for the function are constructed.
 /// TODO: Move this out of TargetLowering.cpp.
-void llvm::GetReturnInfo(Type* ReturnType, AttributeSet attr,
+void llvm::GetReturnInfo(Type *ReturnType, AttributeSet attr,
                          SmallVectorImpl<ISD::OutputArg> &Outs,
-                         const TargetLowering &TLI) {
+                         const TargetLowering &TLI, const DataLayout &DL) {
   SmallVector<EVT, 4> ValueVTs;
-  ComputeValueVTs(TLI, ReturnType, ValueVTs);
+  ComputeValueVTs(TLI, DL, ReturnType, ValueVTs);
   unsigned NumValues = ValueVTs.size();
   if (NumValues == 0) return;
 
@@ -1365,9 +1526,33 @@ void llvm::GetReturnInfo(Type* ReturnType, AttributeSet attr,
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
 /// function arguments in the caller parameter area.  This is the actual
 /// alignment, not its logarithm.
-unsigned TargetLoweringBase::getByValTypeAlignment(Type *Ty) const {
-  return DL->getABITypeAlignment(Ty);
+unsigned TargetLoweringBase::getByValTypeAlignment(Type *Ty,
+                                                   const DataLayout &DL) const {
+  return DL.getABITypeAlignment(Ty);
 }
+
+bool TargetLoweringBase::allowsMemoryAccess(LLVMContext &Context,
+                                            const DataLayout &DL, EVT VT,
+                                            unsigned AddrSpace,
+                                            unsigned Alignment,
+                                            bool *Fast) const {
+  // Check if the specified alignment is sufficient based on the data layout.
+  // TODO: While using the data layout works in practice, a better solution
+  // would be to implement this check directly (make this a virtual function).
+  // For example, the ABI alignment may change based on software platform while
+  // this function should only be affected by hardware implementation.
+  Type *Ty = VT.getTypeForEVT(Context);
+  if (Alignment >= DL.getABITypeAlignment(Ty)) {
+    // Assume that an access that meets the ABI-specified alignment is fast.
+    if (Fast != nullptr)
+      *Fast = true;
+    return true;
+  }
+  
+  // This is a misaligned access.
+  return allowsMisalignedMemoryAccesses(VT, AddrSpace, Alignment, Fast);
+}
+
 
 //===----------------------------------------------------------------------===//
 //  TargetTransformInfo Helpers
@@ -1387,6 +1572,11 @@ int TargetLoweringBase::InstructionOpcodeToISD(unsigned Opcode) const {
   case Invoke:         return 0;
   case Resume:         return 0;
   case Unreachable:    return 0;
+  case CleanupRet:     return 0;
+  case CatchRet:       return 0;
+  case CatchPad:       return 0;
+  case CatchSwitch:    return 0;
+  case CleanupPad:     return 0;
   case Add:            return ISD::ADD;
   case FAdd:           return ISD::FADD;
   case Sub:            return ISD::SUB;
@@ -1444,12 +1634,13 @@ int TargetLoweringBase::InstructionOpcodeToISD(unsigned Opcode) const {
   llvm_unreachable("Unknown instruction type encountered!");
 }
 
-std::pair<unsigned, MVT>
-TargetLoweringBase::getTypeLegalizationCost(Type *Ty) const {
+std::pair<int, MVT>
+TargetLoweringBase::getTypeLegalizationCost(const DataLayout &DL,
+                                            Type *Ty) const {
   LLVMContext &C = Ty->getContext();
-  EVT MTy = getValueType(Ty);
+  EVT MTy = getValueType(DL, Ty);
 
-  unsigned Cost = 1;
+  int Cost = 1;
   // We keep legalizing the type until we find a legal kind. We assume that
   // the only operation that costs anything is the split. After splitting
   // we need to handle two types.
@@ -1462,9 +1653,26 @@ TargetLoweringBase::getTypeLegalizationCost(Type *Ty) const {
     if (LK.first == TypeSplitVector || LK.first == TypeExpandInteger)
       Cost *= 2;
 
+    // Do not loop with f128 type.
+    if (MTy == LK.second)
+      return std::make_pair(Cost, MTy.getSimpleVT());
+
     // Keep legalizing the type.
     MTy = LK.second;
   }
+}
+
+Value *TargetLoweringBase::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
+  if (!TM.getTargetTriple().isAndroid())
+    return nullptr;
+
+  // Android provides a libc function to retrieve the address of the current
+  // thread's unsafe stack pointer.
+  Module *M = IRB.GetInsertBlock()->getParent()->getParent();
+  Type *StackPtrTy = Type::getInt8PtrTy(M->getContext());
+  Value *Fn = M->getOrInsertFunction("__safestack_pointer_address",
+                                     StackPtrTy->getPointerTo(0), nullptr);
+  return IRB.CreateCall(Fn);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1473,8 +1681,9 @@ TargetLoweringBase::getTypeLegalizationCost(Type *Ty) const {
 
 /// isLegalAddressingMode - Return true if the addressing mode represented
 /// by AM is legal for this target, for a load/store of the specified type.
-bool TargetLoweringBase::isLegalAddressingMode(const AddrMode &AM,
-                                           Type *Ty) const {
+bool TargetLoweringBase::isLegalAddressingMode(const DataLayout &DL,
+                                               const AddrMode &AM, Type *Ty,
+                                               unsigned AS) const {
   // The default implementation of this implements a conservative RISCy, r+r and
   // r+i addr mode.
 

@@ -3,10 +3,15 @@
 ; FIXME: We should remove the need for -enable-mips-tail-calls
 ; RUN: llc -march=mips   -mcpu=mips32   -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips   -mcpu=mips32r2 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
+; RUN: llc -march=mips   -mcpu=mips32r3 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
+; RUN: llc -march=mips   -mcpu=mips32r5 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips   -mcpu=mips32r6 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
+; RUN: llc -march=mips   -mcpu=mips32r6 -mattr=+fp64,+nooddspreg -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips64 -mcpu=mips4    -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 ; RUN: llc -march=mips64 -mcpu=mips64   -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 ; RUN: llc -march=mips64 -mcpu=mips64r2 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
+; RUN: llc -march=mips64 -mcpu=mips64r3 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
+; RUN: llc -march=mips64 -mcpu=mips64r5 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 ; RUN: llc -march=mips64 -mcpu=mips64r6 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 
 declare void @extern_void_void()
@@ -164,3 +169,31 @@ define float @tail_indirect_call_float_void(float ()* %addr) {
   %1 = tail call float %addr()
   ret float %1
 }
+
+; Check that passing undef as a double value doesn't cause machine code errors
+; for FP64.
+declare hidden void @undef_double(i32 %this, double %volume) unnamed_addr align 2
+
+define hidden void @thunk_undef_double(i32 %this, double %volume) unnamed_addr align 2 {
+; ALL-LABEL: thunk_undef_double:
+; O32: # implicit-def: %A2
+; O32: # implicit-def: %A3
+; ALL: jr $25
+  tail call void @undef_double(i32 undef, double undef) #8
+  ret void
+}
+
+; Check that immediate addresses do not use jal.
+define i32 @jal_only_allows_symbols() {
+; ALL-LABEL: jal_only_allows_symbols:
+
+; ALL-NOT:       {{jal }}
+; ALL:           addiu $[[TGT:[0-9]+]], $zero, 1234
+; ALL-NOT:       {{jal }}
+; ALL:           jalr $[[TGT]]
+; ALL-NOT:       {{jal }}
+
+  call void () inttoptr (i32 1234 to void ()*)()
+  ret i32 0
+}
+
