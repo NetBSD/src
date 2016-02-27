@@ -38,7 +38,7 @@
 
 #include "fp_extend.h"
 
-static inline dst_t __extendXfYf2__(src_t a) {
+static __inline dst_t __extendXfYf2__(src_t a) {
     // Various constants whose values follow from the type parameters.
     // Any reasonable optimizer will fold and propagate all of these.
     const int srcBits = sizeof(src_t)*CHAR_BIT;
@@ -66,7 +66,9 @@ static inline dst_t __extendXfYf2__(src_t a) {
     const src_rep_t sign = aRep & srcSignMask;
     dst_rep_t absResult;
 
-    if (aAbs - srcMinNormal < srcInfinity - srcMinNormal) {
+    // If sizeof(src_rep_t) < sizeof(int), the subtraction result is promoted
+    // to (signed) int.  To avoid that, explicitly cast to src_rep_t.
+    if ((src_rep_t)(aAbs - srcMinNormal) < srcInfinity - srcMinNormal) {
         // a is a normal number.
         // Extend to the destination type by shifting the significand and
         // exponent into the proper position and rebiasing the exponent.

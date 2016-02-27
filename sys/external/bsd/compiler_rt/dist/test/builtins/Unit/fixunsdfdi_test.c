@@ -24,7 +24,7 @@
 
 // seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-du_int __fixunsdfdi(double a);
+COMPILER_RT_ABI du_int __fixunsdfdi(double a);
 
 int test__fixunsdfdi(double a, du_int expected)
 {
@@ -93,6 +93,9 @@ int main()
     if (test__fixunsdfdi(0x1.FFFFFFFFFFFFFp+62, 0x7FFFFFFFFFFFFC00LL))
         return 1;
     if (test__fixunsdfdi(0x1.FFFFFFFFFFFFEp+62, 0x7FFFFFFFFFFFF800LL))
+        return 1;
+
+    if (test__fixunsdfdi(0x1.p+64, 0xFFFFFFFFFFFFFFFFLL))
         return 1;
 
 #if !TARGET_LIBGCC

@@ -18,7 +18,7 @@
 #include "fp_test.h"
 
 // Returns: a * b
-long double __multf3(long double a, long double b);
+COMPILER_RT_ABI long double __multf3(long double a, long double b);
 
 int test__multf3(long double a, long double b,
                  uint64_t expectedHi, uint64_t expectedLo)
@@ -82,7 +82,7 @@ int main()
         return 1;
     // underflow
     if (test__multf3(0x1.23456734245345p-10000L,
-                     0x1.edcba524498724p-6383L,
+                     0x1.edcba524498724p-6497L,
                      UINT64_C(0x0),
                      UINT64_C(0x0)))
         return 1;

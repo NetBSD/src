@@ -19,7 +19,7 @@
 // Effects: if rem != 0, *rem = a % b
 // Returns: a / b
 
-tu_int __udivmodti4(tu_int a, tu_int b, tu_int* rem);
+COMPILER_RT_ABI tu_int __udivmodti4(tu_int a, tu_int b, tu_int* rem);
 
 int test__udivmodti4(tu_int a, tu_int b, tu_int expected_q, tu_int expected_r)
 {
