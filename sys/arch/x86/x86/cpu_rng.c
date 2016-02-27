@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.2 2016/02/27 00:43:55 tls Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.3 2016/02/27 00:54:59 tls Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,6 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * The VIA RNG code in this file is inspired by Jason Wright and
+ * Theo de Raadt's OpenBSD version but has been rewritten in light of
+ * comments from Henric Jungheim on the tech@openbsd.org mailing list.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
@@ -42,7 +48,8 @@
 static enum {
 	CPU_RNG_NONE = 0,
 	CPU_RNG_RDRAND,
-	CPU_RNG_RDSEED } cpu_rng_mode __read_mostly = CPU_RNG_NONE;
+	CPU_RNG_RDSEED,
+	CPU_RNG_VIA } cpu_rng_mode __read_mostly = CPU_RNG_NONE;
 
 bool
 cpu_rng_init(void)
@@ -55,6 +62,10 @@ cpu_rng_init(void)
 	} else if (cpu_feature[1] & CPUID2_RDRAND) {
 		cpu_rng_mode = CPU_RNG_RDRAND;
 		aprint_normal("cpu_rng: RDRAND\n");
+		return true;
+	} else if (cpu_feature[4] & CPUID_VIA_HAS_RNG) {
+		cpu_rng_mode = CPU_RNG_VIA;
+		aprint_normal("cpu_rng: VIA\n");
 		return true;
 	}
 	return false;
@@ -121,6 +132,49 @@ exhausted:
 	return cpu_rng_rdrand(out);
 }
 
+static size_t
+cpu_rng_via(cpu_rng_t *out)
+{
+	uint32_t creg0, rndsts;
+
+	/*
+	 * Sadly, we have to monkey with the coprocessor enable and fault
+	 * registers, which are really for the FPU, in order to read
+	 * from the RNG.
+	 *
+	 * Don't remove CR0_TS from the call below -- comments in the Linux
+	 * driver indicate that the xstorerng instruction can generate
+	 * spurious DNA faults though no FPU or SIMD state is changed
+	 * even if such a fault is generated.
+	 *
+	 * XXX can this really happen if we don't use "rep xstorrng"?
+	 *
+	 */
+	kpreempt_disable();
+	x86_disable_intr();
+	creg0 = rcr0();
+	lcr0(creg0 & ~(CR0_EM|CR0_TS)); /* Permit access to SIMD/FPU path */
+	/*
+	 * The VIA RNG has an output queue of 8-byte values.  Read one.
+	 * This is atomic, so if the FPU were already enabled, we could skip
+	 * all the preemption and interrupt frobbing.  If we had bread,
+	 * we could have a ham sandwich, if we had any ham.
+	 */
+	__asm __volatile("xstorerng"
+	    : "=a" (rndsts), "+D" (out) : "d" (0) : "memory");
+	/* Put CR0 back how it was */
+	lcr0(creg0);
+	x86_enable_intr();
+	kpreempt_enable();
+
+	/*
+	 * The Cryptography Research paper on the VIA RNG estimates
+	 * 0.75 bits of entropy per output bit and advises users to
+	 * be "even more conservative".
+	 */
+	return rndsts & 0xf ? 0 : sizeof(cpu_rng_t) * NBBY / 2;
+}
+
 size_t
 cpu_rng(cpu_rng_t *out)
 {
@@ -131,6 +185,8 @@ cpu_rng(cpu_rng_t *out)
 		return cpu_rng_rdseed(out);
 	case CPU_RNG_RDRAND:
 		return cpu_rng_rdrand(out);
+	case CPU_RNG_VIA:
+		return cpu_rng_via(out);
 	default:
 		panic("cpu_rng: unknown mode %d", (int)cpu_rng_mode);
 	}
