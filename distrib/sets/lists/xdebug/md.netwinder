@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.2 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: md.netwinder,v 1.2.4.1 2016/02/27 21:17:08 martin Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg
@@ -43,6 +43,10 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-	xorg,debug
