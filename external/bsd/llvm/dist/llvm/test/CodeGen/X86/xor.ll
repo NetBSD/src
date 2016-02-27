@@ -1,6 +1,6 @@
-; RUN: llc < %s -mcpu=corei7 -march=x86 -mattr=+sse2  | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -mcpu=corei7 -mtriple=x86_64-linux | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -mcpu=corei7 -mtriple=x86_64-win32 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=i686-unknown -mattr=+sse2 | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+sse2 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+sse2 | FileCheck %s -check-prefix=X64
 
 ; Though it is undefined, we want xor undef,undef to produce zero.
 define <4 x i32> @test1() nounwind {
@@ -180,4 +180,35 @@ define i32 @PR17487(i1 %tobool) {
 ; X64: andn
 ; X32-LABEL: PR17487:
 ; X32: andn
+}
+
+define i32 @test11(i32 %b) {
+  %shl = shl i32 1, %b
+  %neg = xor i32 %shl, -1
+  ret i32 %neg
+; X64-LABEL: test11:
+; X64: movl    $-2, %[[REG:.*]]
+; X64: roll    %{{.*}}, %[[REG]]
+; X32-LABEL: test11:
+; X32: movl    $-2, %[[REG:.*]]
+; X32: roll    %{{.*}}, %[[REG]]
+}
+
+%struct.ref_s = type { %union.v, i16, i16 }
+%union.v = type { i64 }
+
+define %struct.ref_s* @test12(%struct.ref_s* %op, i64 %osbot, i64 %intval) {
+  %neg = shl i64 %intval, 32
+  %sext = xor i64 %neg, -4294967296
+  %idx.ext = ashr exact i64 %sext, 32
+  %add.ptr = getelementptr inbounds %struct.ref_s, %struct.ref_s* %op, i64 %idx.ext
+  ret %struct.ref_s* %add.ptr
+; X64-LABEL: test12:
+; X64: shlq	$32, %[[REG:.*]]
+; X64-NOT: not
+; X64: sarq	$28, %[[REG]]
+; X32-LABEL: test12:
+; X32: leal
+; X32-NOT: not
+; X32: shll	$2, %eax
 }

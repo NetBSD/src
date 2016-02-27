@@ -9,7 +9,7 @@ entry:
   %shr2 = lshr i32 %mul, 5
   ret i32 %shr2
 
-; CHECK-LABEL @foo
+; CHECK-LABEL: @foo
 ; CHECK-NOT: rldicl 3, {{[0-9]+}}, 0, 32
 ; CHECK: blr
 }
@@ -23,7 +23,7 @@ entry:
   %or = or i32 %shr, %shl
   ret i32 %or
 
-; CHECK-LABEL @test6
+; CHECK-LABEL: @test6
 ; CHECK-NOT: rldicl 3, {{[0-9]+}}, 0, 32
 ; CHECK: blr
 }
@@ -34,7 +34,7 @@ entry:
   %cond = select i1 %cmp, i32 %a, i32 %b
   ret i32 %cond
 
-; CHECK-LABEL @min
+; CHECK-LABEL: @min
 ; CHECK-NOT: rldicl 3, {{[0-9]+}}, 0, 32
 ; CHECK: blr
 }
@@ -45,7 +45,7 @@ declare i32 @llvm.bswap.i32(i32) #0
 ; Function Attrs: nounwind readonly
 define zeroext i32 @bs32(i32* nocapture readonly %x) #1 {
 entry:
-  %0 = load i32* %x, align 4
+  %0 = load i32, i32* %x, align 4
   %1 = tail call i32 @llvm.bswap.i32(i32 %0)
   ret i32 %1
 
@@ -57,7 +57,7 @@ entry:
 ; Function Attrs: nounwind readonly
 define zeroext i16 @bs16(i16* nocapture readonly %x) #1 {
 entry:
-  %0 = load i16* %x, align 2
+  %0 = load i16, i16* %x, align 2
   %1 = tail call i16 @llvm.bswap.i16(i16 %0)
   ret i16 %1
 

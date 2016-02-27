@@ -231,13 +231,9 @@ namespace RTLIB {
     FPROUND_F80_F64,
     FPROUND_F128_F64,
     FPROUND_PPCF128_F64,
-    FPTOSINT_F32_I8,
-    FPTOSINT_F32_I16,
     FPTOSINT_F32_I32,
     FPTOSINT_F32_I64,
     FPTOSINT_F32_I128,
-    FPTOSINT_F64_I8,
-    FPTOSINT_F64_I16,
     FPTOSINT_F64_I32,
     FPTOSINT_F64_I64,
     FPTOSINT_F64_I128,
@@ -250,13 +246,9 @@ namespace RTLIB {
     FPTOSINT_PPCF128_I32,
     FPTOSINT_PPCF128_I64,
     FPTOSINT_PPCF128_I128,
-    FPTOUINT_F32_I8,
-    FPTOUINT_F32_I16,
     FPTOUINT_F32_I32,
     FPTOUINT_F32_I64,
     FPTOUINT_F32_I128,
-    FPTOUINT_F64_I8,
-    FPTOUINT_F64_I16,
     FPTOUINT_F64_I32,
     FPTOUINT_F64_I64,
     FPTOUINT_F64_I128,
@@ -425,6 +417,10 @@ namespace RTLIB {
   /// getUINTTOFP - Return the UINTTOFP_*_* value for the given types, or
   /// UNKNOWN_LIBCALL if there is none.
   Libcall getUINTTOFP(EVT OpVT, EVT RetVT);
+
+  /// Return the SYNC_FETCH_AND_* value for the given opcode and type, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getATOMIC(unsigned Opc, MVT VT);
 }
 }
 

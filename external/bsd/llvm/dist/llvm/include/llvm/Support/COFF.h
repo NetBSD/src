@@ -88,6 +88,7 @@ namespace COFF {
     IMAGE_FILE_MACHINE_AMD64     = 0x8664,
     IMAGE_FILE_MACHINE_ARM       = 0x1C0,
     IMAGE_FILE_MACHINE_ARMNT     = 0x1C4,
+    IMAGE_FILE_MACHINE_ARM64     = 0xAA64,
     IMAGE_FILE_MACHINE_EBC       = 0xEBC,
     IMAGE_FILE_MACHINE_I386      = 0x14C,
     IMAGE_FILE_MACHINE_IA64      = 0x200,
@@ -153,16 +154,6 @@ namespace COFF {
     uint16_t Type;
     uint8_t  StorageClass;
     uint8_t  NumberOfAuxSymbols;
-  };
-
-  enum SymbolFlags {
-    SF_TypeMask = 0x0000FFFF,
-    SF_TypeShift = 0,
-
-    SF_ClassMask = 0x00FF0000,
-    SF_ClassShift = 16,
-
-    SF_WeakExternal = 0x01000000
   };
 
   enum SymbolSectionNumber : int32_t {
@@ -257,6 +248,7 @@ namespace COFF {
   enum SectionCharacteristics : uint32_t {
     SC_Invalid = 0xffffffff,
 
+    IMAGE_SCN_TYPE_NOLOAD            = 0x00000002,
     IMAGE_SCN_TYPE_NO_PAD            = 0x00000008,
     IMAGE_SCN_CNT_CODE               = 0x00000020,
     IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040,
@@ -664,16 +656,26 @@ namespace COFF {
     }
   };
 
-  enum CodeViewLineTableIdentifiers {
-    DEBUG_SECTION_MAGIC           = 0x4,
-    DEBUG_SYMBOL_SUBSECTION       = 0xF1,
-    DEBUG_LINE_TABLE_SUBSECTION   = 0xF2,
+  enum CodeViewLine : unsigned {
+    CVL_LineNumberStartBits = 24,
+    CVL_LineNumberEndDeltaBits = 7,
+    CVL_LineNumberEndDeltaMask = (1U << CVL_LineNumberEndDeltaBits) - 1,
+    CVL_MaxLineNumber = (1U << CVL_LineNumberStartBits) - 1,
+    CVL_IsStatement = 1U << 31,
+    CVL_MaxColumnNumber = UINT16_MAX,
+  };
+
+  enum CodeViewIdentifiers {
+    DEBUG_LINE_TABLES_HAVE_COLUMN_RECORDS = 0x1,
+    DEBUG_SECTION_MAGIC = 0x4,
+    DEBUG_SYMBOL_SUBSECTION = 0xF1,
+    DEBUG_LINE_TABLE_SUBSECTION = 0xF2,
     DEBUG_STRING_TABLE_SUBSECTION = 0xF3,
-    DEBUG_INDEX_SUBSECTION        = 0xF4,
+    DEBUG_INDEX_SUBSECTION = 0xF4,
 
     // Symbol subsections are split into records of different types.
     DEBUG_SYMBOL_TYPE_PROC_START = 0x1147,
-    DEBUG_SYMBOL_TYPE_PROC_END   = 0x114F
+    DEBUG_SYMBOL_TYPE_PROC_END = 0x114F
   };
 
   inline bool isReservedSectionNumber(int32_t SectionNumber) {

@@ -12,7 +12,7 @@
 #
 # RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips32r6 2> %t0 | FileCheck %s
 # RUN: FileCheck %s -check-prefix=WARNING < %t0
-
+a:
         .set noat
         # FIXME: Add the instructions carried forward from older ISA's
         and     $2,4             # CHECK: andi $2, $2, 4      # encoding: [0x30,0x42,0x00,0x04]
@@ -64,7 +64,7 @@
         bovc     $0, $0, 4       # CHECK: bovc $zero, $zero, 4 # encoding: [0x20,0x00,0x00,0x01]
         bovc     $2, $0, 4       # CHECK: bovc $2, $zero, 4    # encoding: [0x20,0x40,0x00,0x01]
         bovc     $4, $2, 4       # CHECK: bovc $4, $2, 4       # encoding: [0x20,0x82,0x00,0x01]
-        cache      1, 8($5)         # CHECK: cache 1, 8($5)         # encoding: [0x7c,0xa1,0x04,0x25]
+        cache      1, 8($5)         # CHECK: cache 1, 8($5)          # encoding: [0x7c,0xa1,0x04,0x25]
         cmp.af.s   $f2,$f3,$f4      # CHECK: cmp.af.s $f2, $f3, $f4  # encoding: [0x46,0x84,0x18,0x80]
         cmp.af.d   $f2,$f3,$f4      # CHECK: cmp.af.d $f2, $f3, $f4  # encoding: [0x46,0xa4,0x18,0x80]
         cmp.un.s   $f2,$f3,$f4      # CHECK: cmp.un.s $f2, $f3, $f4  # encoding: [0x46,0x84,0x18,0x81]
@@ -103,13 +103,21 @@
         divu    $2,$3,$4         # CHECK: divu $2, $3, $4  # encoding: [0x00,0x64,0x10,0x9b]
         ei      $14              # CHECK: ei  $14          # encoding: [0x41,0x6e,0x60,0x20]
         ei                       # CHECK: ei               # encoding: [0x41,0x60,0x60,0x20]
+        eret
+        eretnc                   # CHECK: eretnc           # encoding: [0x42,0x00,0x00,0x58]
         jialc   $5, 256          # CHECK: jialc $5, 256    # encoding: [0xf8,0x05,0x01,0x00]
         jic     $5, 256          # CHECK: jic $5, 256      # encoding: [0xd8,0x05,0x01,0x00]
-        lsa     $2, $3, $4, 3    # CHECK: lsa  $2, $3, $4, 3 # encoding: [0x00,0x64,0x10,0xc5]
+        lsa     $2, $3, $4, 3    # CHECK: lsa  $2, $3, $4, 3 # encoding: [0x00,0x64,0x10,0x85]
         lwpc    $2,268           # CHECK: lwpc $2, 268     # encoding: [0xec,0x48,0x00,0x43]
         lwupc   $2,268           # CHECK: lwupc $2, 268    # encoding: [0xec,0x50,0x00,0x43]
+        mfc0    $8,$15,1         # CHECK: mfc0 $8, $15, 1  # encoding: [0x40,0x08,0x78,0x01]
         mod     $2,$3,$4         # CHECK: mod $2, $3, $4   # encoding: [0x00,0x64,0x10,0xda]
         modu    $2,$3,$4         # CHECK: modu $2, $3, $4  # encoding: [0x00,0x64,0x10,0xdb]
+        move    $a0,$a3          # CHECK: move $4, $7      # encoding: [0x00,0xe0,0x20,0x25]
+        move    $s5,$a0          # CHECK: move $21, $4     # encoding: [0x00,0x80,0xa8,0x25]
+        move    $s8,$a0          # CHECK: move $fp, $4     # encoding: [0x00,0x80,0xf0,0x25]
+        move    $25,$a2          # CHECK: move $25, $6     # encoding: [0x00,0xc0,0xc8,0x25]
+        mtc0    $9,$15,1         # CHECK: mtc0 $9, $15, 1  # encoding: [0x40,0x89,0x78,0x01]
         mul     $2,$3,$4         # CHECK: mul $2, $3, $4   # encoding: [0x00,0x64,0x10,0x98]
         muh     $2,$3,$4         # CHECK: muh $2, $3, $4   # encoding: [0x00,0x64,0x10,0xd8]
         mulu    $2,$3,$4         # CHECK: mulu $2, $3, $4  # encoding: [0x00,0x64,0x10,0x99]
@@ -146,6 +154,12 @@
         rint.d $f2, $f4          # CHECK: rint.d $f2, $f4        # encoding: [0x46,0x20,0x20,0x9a]
         class.s $f2, $f4         # CHECK: class.s $f2, $f4       # encoding: [0x46,0x00,0x20,0x9b]
         class.d $f2, $f4         # CHECK: class.d $f2, $f4       # encoding: [0x46,0x20,0x20,0x9b]
+        j       1f               # CHECK: j $tmp0                # encoding: [0b000010AA,A,A,A]
+                                 # CHECK:                        #   fixup A - offset: 0, value: ($tmp0), kind: fixup_Mips_26
+        j       a                # CHECK: j a                    # encoding: [0b000010AA,A,A,A]
+                                 # CHECK:                        #   fixup A - offset: 0, value: a, kind: fixup_Mips_26
+        j       1328             # CHECK: j 1328                 # encoding: [0x08,0x00,0x01,0x4c]
+        jal       21100                # CHECK: jal 21100     # encoding: [0x0c,0x00,0x14,0x9b]
         jr.hb   $4               # CHECK: jr.hb $4               # encoding: [0x00,0x80,0x04,0x09]
         jalr.hb $4               # CHECK: jalr.hb $4             # encoding: [0x00,0x80,0xfc,0x09]
         jalr.hb $4, $5           # CHECK: jalr.hb $4, $5         # encoding: [0x00,0xa0,0x24,0x09]
@@ -175,3 +189,6 @@
         tltu    $16,$29,1016     # CHECK: tltu $16, $sp, 1016    # encoding: [0x02,0x1d,0xfe,0x33]
         tne     $6,$17           # CHECK: tne $6, $17            # encoding: [0x00,0xd1,0x00,0x36]
         tne     $7,$8,885        # CHECK: tne $7, $8, 885        # encoding: [0x00,0xe8,0xdd,0x76]
+        xor     $2, 4            # CHECK: xori $2, $2, 4         # encoding: [0x38,0x42,0x00,0x04]
+
+1:

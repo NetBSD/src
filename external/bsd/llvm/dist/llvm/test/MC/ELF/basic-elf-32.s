@@ -45,7 +45,7 @@ main:                                   # @main
 // CHECK:     Name: .rel.text
 
 // CHECK: Relocations [
-// CHECK:   Section (2) .rel.text {
+// CHECK:   Section {{.*}} .rel.text {
 // CHECK:     0x6  R_386_32   .L.str1
 // CHECK:     0xB  R_386_PC32 puts
 // CHECK:     0x12 R_386_32   .L.str2
@@ -54,20 +54,6 @@ main:                                   # @main
 // CHECK: ]
 
 // CHECK: Symbols [
-// CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
-
-// CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
-
-// CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
 
 // CHECK:   Symbol {
 // CHECK:     Name: main

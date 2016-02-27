@@ -24,11 +24,10 @@ cond_next:
 
 define i32 @t2(i32 %a, i32 %b) nounwind {
 entry:
-; Do not if-convert when branches go to the different loops.
 ; CHECK-LABEL: t2:
-; CHECK-NOT: ite gt
-; CHECK-NOT: subgt
-; CHECK-NOT: suble
+; CHECK: ite gt
+; CHECK: subgt
+; CHECK: suble
 	%tmp1434 = icmp eq i32 %a, %b		; <i1> [#uses=1]
 	br i1 %tmp1434, label %bb17, label %bb.outer
 
@@ -65,7 +64,7 @@ bb17:		; preds = %cond_false, %cond_true, %entry
 
 define void @foo(i32 %a) nounwind {
 entry:
-	%tmp = load i32** @x		; <i32*> [#uses=1]
+	%tmp = load i32*, i32** @x		; <i32*> [#uses=1]
 	store i32 %a, i32* %tmp
 	ret void
 }
@@ -73,9 +72,10 @@ entry:
 define void @t3(i32 %a, i32 %b) nounwind {
 entry:
 ; CHECK-LABEL: t3:
-; CHECK: itt ge
-; CHECK: movge r0, r1
-; CHECK: blge  {{_?}}foo
+; CHECK: it lt
+; CHECK-NEXT: bxlt lr
+; CHECK: mov r0, r1
+; CHECK: bl  {{_?}}foo
 	%tmp1 = icmp sgt i32 %a, 10		; <i1> [#uses=1]
 	br i1 %tmp1, label %cond_true, label %UnifiedReturnBlock
 

@@ -156,7 +156,7 @@ define void @test9(i32* byval %a) {
 
 declare void @ctor(%struct.X*)
 define void @test10(%struct.X* noalias sret %agg.result, i1 zeroext %b) {
-; CHECK-LABEL @test10
+; CHECK-LABEL: @test10
 entry:
   %x = alloca %struct.X, align 8
   br i1 %b, label %if.then, label %if.end
@@ -183,8 +183,18 @@ define void @test11() {
   %a = alloca i8*
   %b = alloca i8
   call void @test11_helper1(i8** %a, i8* %b)  ; a = &b
-  %c = load i8** %a
+  %c = load i8*, i8** %a
   call void @test11_helper2(i8* %c)
 ; CHECK: call void @test11_helper2
   ret void
+}
+
+; PR25928
+define void @test12() {
+entry:
+; CHECK-LABEL: @test12
+; CHECK: {{^ *}} call void undef(i8* undef) [ "foo"(i8* %e) ]
+  %e = alloca i8
+  call void undef(i8* undef) [ "foo"(i8* %e) ]
+  unreachable
 }

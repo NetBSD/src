@@ -15,7 +15,7 @@
 
 define void @llvm_mips_copy_s_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_copy_s_b_ARG1
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_copy_s_b_ARG1
   %1 = tail call i32 @llvm.mips.copy.s.b(<16 x i8> %0, i32 1)
   store i32 %1, i32* @llvm_mips_copy_s_b_RES
   ret void
@@ -38,7 +38,7 @@ declare i32 @llvm.mips.copy.s.b(<16 x i8>, i32) nounwind
 
 define void @llvm_mips_copy_s_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_copy_s_h_ARG1
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_copy_s_h_ARG1
   %1 = tail call i32 @llvm.mips.copy.s.h(<8 x i16> %0, i32 1)
   store i32 %1, i32* @llvm_mips_copy_s_h_RES
   ret void
@@ -61,7 +61,7 @@ declare i32 @llvm.mips.copy.s.h(<8 x i16>, i32) nounwind
 
 define void @llvm_mips_copy_s_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_copy_s_w_ARG1
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_copy_s_w_ARG1
   %1 = tail call i32 @llvm.mips.copy.s.w(<4 x i32> %0, i32 1)
   store i32 %1, i32* @llvm_mips_copy_s_w_RES
   ret void
@@ -84,7 +84,7 @@ declare i32 @llvm.mips.copy.s.w(<4 x i32>, i32) nounwind
 
 define void @llvm_mips_copy_s_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_copy_s_d_ARG1
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_copy_s_d_ARG1
   %1 = tail call i64 @llvm.mips.copy.s.d(<2 x i64> %0, i32 1)
   store i64 %1, i64* @llvm_mips_copy_s_d_RES
   ret void
@@ -112,7 +112,7 @@ declare i64 @llvm.mips.copy.s.d(<2 x i64>, i32) nounwind
 
 define void @llvm_mips_copy_u_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_copy_u_b_ARG1
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_copy_u_b_ARG1
   %1 = tail call i32 @llvm.mips.copy.u.b(<16 x i8> %0, i32 1)
   store i32 %1, i32* @llvm_mips_copy_u_b_RES
   ret void
@@ -135,7 +135,7 @@ declare i32 @llvm.mips.copy.u.b(<16 x i8>, i32) nounwind
 
 define void @llvm_mips_copy_u_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_copy_u_h_ARG1
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_copy_u_h_ARG1
   %1 = tail call i32 @llvm.mips.copy.u.h(<8 x i16> %0, i32 1)
   store i32 %1, i32* @llvm_mips_copy_u_h_RES
   ret void
@@ -158,7 +158,7 @@ declare i32 @llvm.mips.copy.u.h(<8 x i16>, i32) nounwind
 
 define void @llvm_mips_copy_u_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_copy_u_w_ARG1
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_copy_u_w_ARG1
   %1 = tail call i32 @llvm.mips.copy.u.w(<4 x i32> %0, i32 1)
   store i32 %1, i32* @llvm_mips_copy_u_w_RES
   ret void
@@ -170,7 +170,8 @@ declare i32 @llvm.mips.copy.u.w(<4 x i32>, i32) nounwind
 ; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_u_w_ARG1)
 ; MIPS64-DAG: ld [[R1:\$[0-9]+]], %got_disp(llvm_mips_copy_u_w_ARG1)
 ; MIPS-ANY-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
-; MIPS-ANY-DAG: copy_u.w [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: copy_s.w [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS64-DAG: copy_u.w [[RD:\$[0-9]+]], [[WS]][1]
 ; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_w_RES)
 ; MIPS64-DAG: ld [[RES:\$[0-9]+]], %got_disp(llvm_mips_copy_u_w_RES)
 ; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
@@ -181,7 +182,7 @@ declare i32 @llvm.mips.copy.u.w(<4 x i32>, i32) nounwind
 
 define void @llvm_mips_copy_u_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_copy_u_d_ARG1
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_copy_u_d_ARG1
   %1 = tail call i64 @llvm.mips.copy.u.d(<2 x i64> %0, i32 1)
   store i64 %1, i64* @llvm_mips_copy_u_d_RES
   ret void
@@ -196,7 +197,7 @@ declare i64 @llvm.mips.copy.u.d(<2 x i64>, i32) nounwind
 ; MIPS64-DAG: ld.d [[WS:\$w[0-9]+]], 0([[R1]])
 ; MIPS32-DAG: copy_s.w [[RD1:\$[0-9]+]], [[WS]][2]
 ; MIPS32-DAG: copy_s.w [[RD2:\$[0-9]+]], [[WS]][3]
-; MIPS64-DAG: copy_u.d [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS64-DAG: copy_s.d [[RD:\$[0-9]+]], [[WS]][1]
 ; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_d_RES)
 ; MIPS64-DAG: ld [[RES:\$[0-9]+]], %got_disp(llvm_mips_copy_u_d_RES)
 ; MIPS32-DAG: sw [[RD1]], 0([[RES]])

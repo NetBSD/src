@@ -141,8 +141,8 @@ private:
   /// that are "live". These nodes must be scheduled before any other nodes that
   /// modifies the registers can be scheduled.
   unsigned NumLiveRegs;
-  std::vector<SUnit*> LiveRegDefs;
-  std::vector<SUnit*> LiveRegGens;
+  std::unique_ptr<SUnit*[]> LiveRegDefs;
+  std::unique_ptr<SUnit*[]> LiveRegGens;
 
   // Collect interferences between physical register use/defs.
   // Each interference is an SUnit and set of physical registers.
@@ -173,7 +173,7 @@ public:
       HazardRec = STI.getInstrInfo()->CreateTargetHazardRecognizer(&STI, this);
   }
 
-  ~ScheduleDAGRRList() {
+  ~ScheduleDAGRRList() override {
     delete HazardRec;
     delete AvailableQueue;
   }
@@ -328,8 +328,8 @@ void ScheduleDAGRRList::Schedule() {
   NumLiveRegs = 0;
   // Allocate slots for each physical register, plus one for a special register
   // to track the virtual resource of a calling sequence.
-  LiveRegDefs.resize(TRI->getNumRegs() + 1, nullptr);
-  LiveRegGens.resize(TRI->getNumRegs() + 1, nullptr);
+  LiveRegDefs.reset(new SUnit*[TRI->getNumRegs() + 1]());
+  LiveRegGens.reset(new SUnit*[TRI->getNumRegs() + 1]());
   CallSeqEndForStart.clear();
   assert(Interferences.empty() && LRegsMap.empty() && "stale Interferences");
 
@@ -415,8 +415,8 @@ static bool IsChainDependent(SDNode *Outer, SDNode *Inner,
     // to get to the CALLSEQ_BEGIN, but we need to find the path with the
     // most nesting in order to ensure that we find the corresponding match.
     if (N->getOpcode() == ISD::TokenFactor) {
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        if (IsChainDependent(N->getOperand(i).getNode(), Inner, NestLevel, TII))
+      for (const SDValue &Op : N->op_values())
+        if (IsChainDependent(Op.getNode(), Inner, NestLevel, TII))
           return true;
       return false;
     }
@@ -433,9 +433,9 @@ static bool IsChainDependent(SDNode *Outer, SDNode *Inner,
       }
     }
     // Otherwise, find the chain and continue climbing.
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (N->getOperand(i).getValueType() == MVT::Other) {
-        N = N->getOperand(i).getNode();
+    for (const SDValue &Op : N->op_values())
+      if (Op.getValueType() == MVT::Other) {
+        N = Op.getNode();
         goto found_chain_operand;
       }
     return false;
@@ -464,10 +464,10 @@ FindCallSeqStart(SDNode *N, unsigned &NestLevel, unsigned &MaxNest,
     if (N->getOpcode() == ISD::TokenFactor) {
       SDNode *Best = nullptr;
       unsigned BestMaxNest = MaxNest;
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+      for (const SDValue &Op : N->op_values()) {
         unsigned MyNestLevel = NestLevel;
         unsigned MyMaxNest = MaxNest;
-        if (SDNode *New = FindCallSeqStart(N->getOperand(i).getNode(),
+        if (SDNode *New = FindCallSeqStart(Op.getNode(),
                                            MyNestLevel, MyMaxNest, TII))
           if (!Best || (MyMaxNest > BestMaxNest)) {
             Best = New;
@@ -493,9 +493,9 @@ FindCallSeqStart(SDNode *N, unsigned &NestLevel, unsigned &MaxNest,
       }
     }
     // Otherwise, find the chain and continue climbing.
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (N->getOperand(i).getValueType() == MVT::Other) {
-        N = N->getOperand(i).getNode();
+    for (const SDValue &Op : N->op_values())
+      if (Op.getValueType() == MVT::Other) {
+        N = Op.getNode();
         goto found_chain_operand;
       }
     return nullptr;
@@ -848,17 +848,26 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
       }
     }
 
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    if (I->isAssignedRegDep()) {
-      if (!LiveRegDefs[I->getReg()])
+  for (auto &Succ : SU->Succs) {
+    if (Succ.isAssignedRegDep()) {
+      auto Reg = Succ.getReg();
+      if (!LiveRegDefs[Reg])
         ++NumLiveRegs;
       // This becomes the nearest def. Note that an earlier def may still be
       // pending if this is a two-address node.
-      LiveRegDefs[I->getReg()] = SU;
-      if (LiveRegGens[I->getReg()] == nullptr ||
-          I->getSUnit()->getHeight() < LiveRegGens[I->getReg()]->getHeight())
-        LiveRegGens[I->getReg()] = I->getSUnit();
+      LiveRegDefs[Reg] = SU;
+
+      // Update LiveRegGen only if was empty before this unscheduling.
+      // This is to avoid incorrect updating LiveRegGen set in previous run.
+      if (!LiveRegGens[Reg]) {
+        // Find the successor with the lowest height.
+        LiveRegGens[Reg] = Succ.getSUnit();
+        for (auto &Succ2 : SU->Succs) {
+          if (Succ2.isAssignedRegDep() && Succ2.getReg() == Reg &&
+              Succ2.getSUnit()->getHeight() < LiveRegGens[Reg]->getHeight())
+            LiveRegGens[Reg] = Succ2.getSUnit();
+        }
+      }
     }
   }
   if (SU->getHeight() < MinAvailableCycle)
@@ -951,8 +960,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     else if (VT == MVT::Other)
       TryUnfold = true;
   }
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    const SDValue &Op = N->getOperand(i);
+  for (const SDValue &Op : N->op_values()) {
     MVT VT = Op.getNode()->getSimpleValueType(Op.getResNo());
     if (VT == MVT::Glue)
       return nullptr;
@@ -1198,7 +1206,7 @@ static MVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
     const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
     assert(MCID.ImplicitDefs && "Physical reg def must be in implicit def list!");
     NumRes = MCID.getNumDefs();
-    for (const uint16_t *ImpDef = MCID.getImplicitDefs(); *ImpDef; ++ImpDef) {
+    for (const MCPhysReg *ImpDef = MCID.getImplicitDefs(); *ImpDef; ++ImpDef) {
       if (Reg == *ImpDef)
         break;
       ++NumRes;
@@ -1210,7 +1218,7 @@ static MVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
 /// CheckForLiveRegDef - Return true and update live register vector if the
 /// specified register def of the specified SUnit clobbers any "live" registers.
 static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
-                               std::vector<SUnit*> &LiveRegDefs,
+                               SUnit **LiveRegDefs,
                                SmallSet<unsigned, 4> &RegAdded,
                                SmallVectorImpl<unsigned> &LRegs,
                                const TargetRegisterInfo *TRI) {
@@ -1232,7 +1240,7 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
 /// CheckForLiveRegDefMasked - Check for any live physregs that are clobbered
 /// by RegMask, and add them to LRegs.
 static void CheckForLiveRegDefMasked(SUnit *SU, const uint32_t *RegMask,
-                                     std::vector<SUnit*> &LiveRegDefs,
+                                     ArrayRef<SUnit*> LiveRegDefs,
                                      SmallSet<unsigned, 4> &RegAdded,
                                      SmallVectorImpl<unsigned> &LRegs) {
   // Look at all live registers. Skip Reg0 and the special CallResource.
@@ -1247,10 +1255,9 @@ static void CheckForLiveRegDefMasked(SUnit *SU, const uint32_t *RegMask,
 
 /// getNodeRegMask - Returns the register mask attached to an SDNode, if any.
 static const uint32_t *getNodeRegMask(const SDNode *N) {
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    if (const RegisterMaskSDNode *Op =
-        dyn_cast<RegisterMaskSDNode>(N->getOperand(i).getNode()))
-      return Op->getRegMask();
+  for (const SDValue &Op : N->op_values())
+    if (const auto *RegOp = dyn_cast<RegisterMaskSDNode>(Op.getNode()))
+      return RegOp->getRegMask();
   return nullptr;
 }
 
@@ -1271,7 +1278,7 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVectorImpl<unsigned> &LRegs) {
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isAssignedRegDep() && LiveRegDefs[I->getReg()] != SU)
-      CheckForLiveRegDef(I->getSUnit(), I->getReg(), LiveRegDefs,
+      CheckForLiveRegDef(I->getSUnit(), I->getReg(), LiveRegDefs.get(),
                          RegAdded, LRegs, TRI);
   }
 
@@ -1295,7 +1302,7 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVectorImpl<unsigned> &LRegs) {
           for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
             if (TargetRegisterInfo::isPhysicalRegister(Reg))
-              CheckForLiveRegDef(SU, Reg, LiveRegDefs, RegAdded, LRegs, TRI);
+              CheckForLiveRegDef(SU, Reg, LiveRegDefs.get(), RegAdded, LRegs, TRI);
           }
         } else
           i += NumVals;
@@ -1321,13 +1328,15 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVectorImpl<unsigned> &LRegs) {
       }
     }
     if (const uint32_t *RegMask = getNodeRegMask(Node))
-      CheckForLiveRegDefMasked(SU, RegMask, LiveRegDefs, RegAdded, LRegs);
+      CheckForLiveRegDefMasked(SU, RegMask,
+                               makeArrayRef(LiveRegDefs.get(), TRI->getNumRegs()),
+                               RegAdded, LRegs);
 
     const MCInstrDesc &MCID = TII->get(Node->getMachineOpcode());
     if (!MCID.ImplicitDefs)
       continue;
-    for (const uint16_t *Reg = MCID.getImplicitDefs(); *Reg; ++Reg)
-      CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
+    for (const MCPhysReg *Reg = MCID.getImplicitDefs(); *Reg; ++Reg)
+      CheckForLiveRegDef(SU, *Reg, LiveRegDefs.get(), RegAdded, LRegs, TRI);
   }
 
   return !LRegs.empty();
@@ -2711,7 +2720,7 @@ static bool canClobberReachingPhysRegUse(const SUnit *DepSU, const SUnit *SU,
                                          ScheduleDAGRRList *scheduleDAG,
                                          const TargetInstrInfo *TII,
                                          const TargetRegisterInfo *TRI) {
-  const uint16_t *ImpDefs
+  const MCPhysReg *ImpDefs
     = TII->get(SU->getNode()->getMachineOpcode()).getImplicitDefs();
   const uint32_t *RegMask = getNodeRegMask(SU->getNode());
   if(!ImpDefs && !RegMask)
@@ -2730,7 +2739,7 @@ static bool canClobberReachingPhysRegUse(const SUnit *DepSU, const SUnit *SU,
         return true;
 
       if (ImpDefs)
-        for (const uint16_t *ImpDef = ImpDefs; *ImpDef; ++ImpDef)
+        for (const MCPhysReg *ImpDef = ImpDefs; *ImpDef; ++ImpDef)
           // Return true if SU clobbers this physical register use and the
           // definition of the register reaches from DepSU. IsReachable queries
           // a topological forward sort of the DAG (following the successors).
@@ -2749,13 +2758,13 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
                                   const TargetRegisterInfo *TRI) {
   SDNode *N = SuccSU->getNode();
   unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
-  const uint16_t *ImpDefs = TII->get(N->getMachineOpcode()).getImplicitDefs();
+  const MCPhysReg *ImpDefs = TII->get(N->getMachineOpcode()).getImplicitDefs();
   assert(ImpDefs && "Caller should check hasPhysRegDefs");
   for (const SDNode *SUNode = SU->getNode(); SUNode;
        SUNode = SUNode->getGluedNode()) {
     if (!SUNode->isMachineOpcode())
       continue;
-    const uint16_t *SUImpDefs =
+    const MCPhysReg *SUImpDefs =
       TII->get(SUNode->getMachineOpcode()).getImplicitDefs();
     const uint32_t *SURegMask = getNodeRegMask(SUNode);
     if (!SUImpDefs && !SURegMask)

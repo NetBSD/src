@@ -190,11 +190,11 @@ define void @test14(i16 %conv10) {
   %tmp = alloca <4 x i16>, align 8
   %vecinit6 = insertelement <4 x i16> undef, i16 23, i32 3
   store <4 x i16> %vecinit6, <4 x i16>* undef
-  %tmp1 = load <4 x i16>* undef
+  %tmp1 = load <4 x i16>, <4 x i16>* undef
   %vecinit11 = insertelement <4 x i16> undef, i16 %conv10, i32 3
   %div = udiv <4 x i16> %tmp1, %vecinit11
   store <4 x i16> %div, <4 x i16>* %tmp
-  %tmp4 = load <4 x i16>* %tmp
+  %tmp4 = load <4 x i16>, <4 x i16>* %tmp
   %tmp5 = shufflevector <4 x i16> %tmp4, <4 x i16> undef, <2 x i32> <i32 2, i32 0>
   %cmp = icmp ule <2 x i16> %tmp5, undef
   %sext = sext <2 x i1> %cmp to <2 x i16>
@@ -310,16 +310,16 @@ define <4 x i32> @shuffle_17addnuw(<4 x i32> %v1, <4 x i32> %v2) nounwind uwtabl
   ret <4 x i32> %r
 }
 
-define <4 x float> @shuffle_17fsub(<4 x float> %v1, <4 x float> %v2) nounwind uwtable {
-; CHECK-LABEL: @shuffle_17fsub(
-; CHECK-NOT: shufflevector
-; CHECK: fsub <4 x float> %v1, %v2
-; CHECK: shufflevector
+define <4 x float> @shuffle_17fsub_fast(<4 x float> %v1, <4 x float> %v2) nounwind uwtable {
+; CHECK-LABEL: @shuffle_17fsub_fast(
+; CHECK-NEXT: [[VAR1:%[a-zA-Z0-9.]+]] = fsub fast <4 x float> %v1, %v2
+; CHECK-NEXT: shufflevector <4 x float> [[VAR1]], <4 x float> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 0>
+; CHECK-NEXT: ret <4 x float>
   %t1 = shufflevector <4 x float> %v1, <4 x float> zeroinitializer,
                       <4 x i32> <i32 1, i32 2, i32 3, i32 0>
   %t2 = shufflevector <4 x float> %v2, <4 x float> zeroinitializer,
                       <4 x i32> <i32 1, i32 2, i32 3, i32 0>
-  %r = fsub <4 x float> %t1, %t2
+  %r = fsub fast <4 x float> %t1, %t2
   ret <4 x float> %r
 }
 
@@ -406,6 +406,21 @@ define i32 @pr19737(<4 x i32> %in0) {
   ret i32 %rv
 }
 
+; In PR20059 ( http://llvm.org/pr20059 ), shufflevector operations are reordered/removed
+; for an srem operation. This is not a valid optimization because it may cause a trap
+; on div-by-zero.
+
+define <4 x i32> @pr20059(<4 x i32> %p1, <4 x i32> %p2) {
+; CHECK-LABEL: @pr20059(
+; CHECK-NEXT: %splat1 = shufflevector <4 x i32> %p1, <4 x i32> undef, <4 x i32> zeroinitializer
+; CHECK-NEXT: %splat2 = shufflevector <4 x i32> %p2, <4 x i32> undef, <4 x i32> zeroinitializer
+; CHECK-NEXT: %retval = srem <4 x i32> %splat1, %splat2
+  %splat1 = shufflevector <4 x i32> %p1, <4 x i32> undef, <4 x i32> zeroinitializer
+  %splat2 = shufflevector <4 x i32> %p2, <4 x i32> undef, <4 x i32> zeroinitializer
+  %retval = srem <4 x i32> %splat1, %splat2
+  ret <4 x i32> %retval
+}
+
 define <4 x i32> @pr20114(<4 x i32> %__mask) {
 ; CHECK-LABEL: @pr20114
 ; CHECK: shufflevector
@@ -413,4 +428,12 @@ define <4 x i32> @pr20114(<4 x i32> %__mask) {
   %mask01.i = shufflevector <4 x i32> %__mask, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
   %masked_new.i.i.i = and <4 x i32> bitcast (<2 x i64> <i64 ptrtoint (<4 x i32> (<4 x i32>)* @pr20114 to i64), i64 ptrtoint (<4 x i32> (<4 x i32>)* @pr20114 to i64)> to <4 x i32>), %mask01.i
   ret <4 x i32> %masked_new.i.i.i
+}
+
+define <2 x i32*> @pr23113(<4 x i32*> %A) {
+; CHECK-LABEL: @pr23113
+; CHECK: %[[V:.*]] = shufflevector <4 x i32*> %A, <4 x i32*> undef, <2 x i32> <i32 0, i32 1>
+; CHECK-NEXT: ret <2 x i32*> %[[V]]
+  %1 = shufflevector <4 x i32*> %A, <4 x i32*> undef, <2 x i32> <i32 0, i32 1>
+  ret <2 x i32*> %1
 }

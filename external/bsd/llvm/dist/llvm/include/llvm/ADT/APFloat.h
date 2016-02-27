@@ -142,6 +142,9 @@ public:
   /// @}
 
   static unsigned int semanticsPrecision(const fltSemantics &);
+  static ExponentType semanticsMinExponent(const fltSemantics &);
+  static ExponentType semanticsMaxExponent(const fltSemantics &);
+  static unsigned int semanticsSizeInBits(const fltSemantics &);
 
   /// IEEE-754R 5.11: Floating Point Comparison Relations.
   enum cmpResult {
@@ -276,17 +279,15 @@ public:
   /// \param isIEEE   - If 128 bit number, select between PPC and IEEE
   static APFloat getAllOnesValue(unsigned BitWidth, bool isIEEE = false);
 
+  /// Returns the size of the floating point number (in bits) in the given
+  /// semantics.
+  static unsigned getSizeInBits(const fltSemantics &Sem);
+
   /// @}
 
   /// Used to insert APFloat objects, or objects that contain APFloat objects,
   /// into FoldingSets.
   void Profile(FoldingSetNodeID &NID) const;
-
-  /// \brief Used by the Bitcode serializer to emit APInts to Bitcode.
-  void Emit(Serializer &S) const;
-
-  /// \brief Used by the Bitcode deserializer to deserialize APInts.
-  static APFloat ReadVal(Deserializer &D);
 
   /// \name Arithmetic
   /// @{
@@ -298,7 +299,7 @@ public:
   /// IEEE remainder.
   opStatus remainder(const APFloat &);
   /// C fmod, or llvm frem.
-  opStatus mod(const APFloat &, roundingMode);
+  opStatus mod(const APFloat &);
   opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
   opStatus roundToIntegral(roundingMode);
   /// IEEE-754R 5.3.1: nextUp/nextDown.
@@ -349,7 +350,7 @@ public:
   /// copied from some other APFloat.
   static APFloat copySign(APFloat Value, const APFloat &Sign) {
     Value.copySign(Sign);
-    return std::move(Value);
+    return Value;
   }
 
   /// @}
@@ -376,7 +377,7 @@ public:
   /// The definition of equality is not straightforward for floating point, so
   /// we won't use operator==.  Use one of the following, or write whatever it
   /// is you really mean.
-  bool operator==(const APFloat &) const LLVM_DELETED_FUNCTION;
+  bool operator==(const APFloat &) const = delete;
 
   /// IEEE comparison with another floating point number (NaNs compare
   /// unordered, 0==-0).
@@ -447,6 +448,9 @@ public:
   /// Returns true if and only if the number has the largest possible finite
   /// magnitude in the current semantics.
   bool isLargest() const;
+  
+  /// Returns true if and only if the number is an exact integer.
+  bool isInteger() const;
 
   /// @}
 

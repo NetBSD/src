@@ -89,14 +89,13 @@ declare void @_Z5printddddd(double, double, double, double, double)
 
 define void @_Z4testiiiiiddddd(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e,
                                double %m, double %n, double %p,
-                               double %q, double %r) {
+                               double %q, double %r) personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @_Z5printiiiii(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e)
           to label %try.cont unwind label %lpad
 
 lpad:
   %0 = landingpad { i8*, i32 }
-          personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
           catch i8* null
   %1 = extractvalue { i8*, i32 } %0, 0
   %2 = tail call i8* @__cxa_begin_catch(i8* %1)
@@ -113,7 +112,6 @@ try.cont:
 
 lpad1:
   %3 = landingpad { i8*, i32 }
-          personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
           cleanup
   invoke void @__cxa_end_catch()
           to label %eh.resume unwind label %terminate.lpad
@@ -123,7 +121,6 @@ eh.resume:
 
 terminate.lpad:
   %4 = landingpad { i8*, i32 }
-          personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
           catch i8* null
   %5 = extractvalue { i8*, i32 } %4, 0
   tail call void @__clang_call_terminate(i8* %5)
@@ -146,8 +143,8 @@ declare void @_ZSt9terminatev()
 ; CHECK-FP:   push   {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK-FP:   .setfp r11, sp, #28
 ; CHECK-FP:   add    r11, sp, #28
-; CHECK-FP:   .pad   #28
-; CHECK-FP:   sub    sp, sp, #28
+; CHECK-FP:   .pad   #44
+; CHECK-FP:   sub    sp, sp, #44
 ; CHECK-FP:   .personality __gxx_personality_v0
 ; CHECK-FP:   .handlerdata
 ; CHECK-FP:   .fnend
@@ -156,8 +153,8 @@ declare void @_ZSt9terminatev()
 ; CHECK-FP-ELIM:   .fnstart
 ; CHECK-FP-ELIM:   .save {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK-FP-ELIM:   push  {r4, r5, r6, r7, r8, r9, r10, r11, lr}
-; CHECK-FP-ELIM:   .pad  #28
-; CHECK-FP-ELIM:   sub   sp, sp, #28
+; CHECK-FP-ELIM:   .pad  #36
+; CHECK-FP-ELIM:   sub   sp, sp, #36
 ; CHECK-FP-ELIM:   .personality __gxx_personality_v0
 ; CHECK-FP-ELIM:   .handlerdata
 ; CHECK-FP-ELIM:   .fnend
@@ -205,7 +202,7 @@ declare void @_ZSt9terminatev()
 ; DWARF-FP:    .cfi_offset r4, -36
 ; DWARF-FP:    add r11, sp, #28
 ; DWARF-FP:    .cfi_def_cfa r11, 8
-; DWARF-FP:    sub sp, sp, #28
+; DWARF-FP:    sub sp, sp, #44
 ; DWARF-FP:    sub sp, r11, #28
 ; DWARF-FP:    pop {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; DWARF-FP:    mov pc, lr
@@ -226,9 +223,9 @@ declare void @_ZSt9terminatev()
 ; DWARF-FP-ELIM:    .cfi_offset r6, -28
 ; DWARF-FP-ELIM:    .cfi_offset r5, -32
 ; DWARF-FP-ELIM:    .cfi_offset r4, -36
-; DWARF-FP-ELIM:    sub sp, sp, #28
-; DWARF-FP-ELIM:    .cfi_def_cfa_offset 64
-; DWARF-FP-ELIM:    add sp, sp, #28
+; DWARF-FP-ELIM:    sub sp, sp, #36
+; DWARF-FP-ELIM:    .cfi_def_cfa_offset 72
+; DWARF-FP-ELIM:    add sp, sp, #36
 ; DWARF-FP-ELIM:    pop {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; DWARF-FP-ELIM:    mov pc, lr
 ; DWARF-FP-ELIM:    .cfi_endproc

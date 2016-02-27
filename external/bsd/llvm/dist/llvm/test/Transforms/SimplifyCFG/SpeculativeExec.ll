@@ -28,33 +28,17 @@ bb3:		; preds = %bb2, %entry
 	ret i32 %tmp5
 }
 
-declare i8 @llvm.cttz.i8(i8, i1)
-
-define i8 @test2(i8 %a) {
-; CHECK-LABEL: @test2(
-  br i1 undef, label %bb_true, label %bb_false
-bb_true:
-  %b = tail call i8 @llvm.cttz.i8(i8 %a, i1 false)
-  br label %join
-bb_false:
-  br label %join
-join:
-  %c = phi i8 [%b, %bb_true], [%a, %bb_false]
-; CHECK: select
-  ret i8 %c
-}
-
 define i8* @test4(i1* %dummy, i8* %a, i8* %b) {
 ; Test that we don't speculate an arbitrarily large number of unfolded constant
 ; expressions.
 ; CHECK-LABEL: @test4(
 
 entry:
-  %cond1 = load volatile i1* %dummy
+  %cond1 = load volatile i1, i1* %dummy
   br i1 %cond1, label %if, label %end
 
 if:
-  %cond2 = load volatile i1* %dummy
+  %cond2 = load volatile i1, i1* %dummy
   br i1 %cond2, label %then, label %end
 
 then:
@@ -84,4 +68,30 @@ end:
 ; CHECK: phi i8*
 
   ret i8* %x10
+}
+
+define i32* @test5(i32 %a, i32 %b, i32 %c, i32* dereferenceable(10) %ptr1,
+                  i32* dereferenceable(10) %ptr2, i32** dereferenceable(10) %ptr3) nounwind {
+; CHECK-LABEL: @test5(
+entry:
+        %tmp1 = icmp eq i32 %b, 0
+        br i1 %tmp1, label %bb1, label %bb3
+
+bb1:            ; preds = %entry
+	%tmp2 = icmp sgt i32 %c, 1
+	br i1 %tmp2, label %bb2, label %bb3
+; CHECK: bb1:
+; CHECK-NEXT: icmp sgt i32 %c, 1
+; CHECK-NEXT: load i32*, i32** %ptr3
+; CHECK-NOT: dereferenceable
+; CHECK-NEXT: select i1 %tmp2, i32* %tmp3, i32* %ptr2
+; CHECK-NEXT: ret i32* %tmp3.ptr2
+
+bb2:		; preds = bb1
+        %tmp3 = load i32*, i32** %ptr3, !dereferenceable !{i64 10}
+	br label %bb3
+
+bb3:		; preds = %bb2, %entry
+	%tmp4 = phi i32* [ %ptr1, %entry ], [ %ptr2, %bb1 ], [ %tmp3, %bb2 ]
+	ret i32* %tmp4
 }

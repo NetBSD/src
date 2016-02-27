@@ -38,6 +38,9 @@
   swm32   $16, $19, 8($4)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: consecutive register numbers expected
   swm32   $16-$25, 8($4)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register operand
   lwm32 $16, $17, $18, $19, $20, $21, $22, $23, $24, 8($4) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register operand
+  addiupc $7, 16777216  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  addiupc $6, -16777220 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  addiupc $3, 3         # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
   lbu16 $9, 8($16) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   lhu16 $9, 4($16) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   lw16  $9, 8($17) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
@@ -62,7 +65,29 @@
   sb16  $7, 4($9)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   sh16  $7, 8($9)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   sw16  $7, 4($10)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-  cache 256, 8($5)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
-  pref 256, 8($5)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  cache -1, 8($5)  # CHECK: :[[@LINE]]:9: error: expected 5-bit unsigned immediate
+  cache 32, 8($5)  # CHECK: :[[@LINE]]:9: error: expected 5-bit unsigned immediate
+  pref -1, 8($5)   # CHECK: :[[@LINE]]:8: error: expected 5-bit unsigned immediate
+  pref 32, 8($5)   # CHECK: :[[@LINE]]:8: error: expected 5-bit unsigned immediate
   beqz16 $9, 20 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   bnez16 $9, 20 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  movep   $5, $21, $2, $3 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  movep   $8, $6, $2, $3  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  movep   $5, $6, $5, $3  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  movep   $5, $6, $2, $9  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  break 1024        # CHECK: :[[@LINE]]:9: error: expected 10-bit unsigned immediate
+  break 1024, 5     # CHECK: :[[@LINE]]:9: error: expected 10-bit unsigned immediate
+  break 7, 1024     # CHECK: :[[@LINE]]:12: error: expected 10-bit unsigned immediate
+  break 1024, 1024  # CHECK: :[[@LINE]]:9: error: expected 10-bit unsigned immediate
+  wait 1024         # CHECK: :[[@LINE]]:8: error: expected 10-bit unsigned immediate
+  prefx -1, $8($5)  # CHECK: :[[@LINE]]:9: error: expected 5-bit unsigned immediate
+  prefx 32, $8($5)  # CHECK: :[[@LINE]]:9: error: expected 5-bit unsigned immediate
+  jraddiusp 1       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 2       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 3       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 10      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 18      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 31      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 33      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 125     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4
+  jraddiusp 132     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 7-bit unsigned immediate and multiple of 4

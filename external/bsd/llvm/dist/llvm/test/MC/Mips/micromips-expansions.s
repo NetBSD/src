@@ -5,7 +5,7 @@
 #------------------------------------------------------------------------------
 # Load immediate instructions
 #------------------------------------------------------------------------------
-# CHECK: ori   $5, $zero, 123        # encoding: [0xa0,0x50,0x7b,0x00]
+# CHECK: addiu $5, $zero, 123        # encoding: [0xa0,0x30,0x7b,0x00]
 # CHECK: addiu $6, $zero, -2345      # encoding: [0xc0,0x30,0xd7,0xf6]
 # CHECK: lui   $7, 1                 # encoding: [0xa7,0x41,0x01,0x00]
 # CHECK: ori   $7, $7, 2             # encoding: [0xe7,0x50,0x02,0x00]

@@ -21,7 +21,7 @@ namespace {
 class ValueHandle : public testing::Test {
 protected:
   Constant *ConstantV;
-  std::auto_ptr<BitCastInst> BitcastV;
+  std::unique_ptr<BitCastInst> BitcastV;
 
   ValueHandle() :
     ConstantV(ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 0)),
@@ -29,7 +29,7 @@ protected:
   }
 };
 
-class ConcreteCallbackVH : public CallbackVH {
+class ConcreteCallbackVH final : public CallbackVH {
 public:
   ConcreteCallbackVH(Value *V) : CallbackVH(V) {}
 };
@@ -235,7 +235,7 @@ TEST_F(ValueHandle, CallbackVH_Comparisons) {
 }
 
 TEST_F(ValueHandle, CallbackVH_CallbackOnDeletion) {
-  class RecordingVH : public CallbackVH {
+  class RecordingVH final : public CallbackVH {
   public:
     int DeletedCalls;
     int AURWCalls;
@@ -244,8 +244,11 @@ TEST_F(ValueHandle, CallbackVH_CallbackOnDeletion) {
     RecordingVH(Value *V) : CallbackVH(V), DeletedCalls(0), AURWCalls(0) {}
 
   private:
-    virtual void deleted() { DeletedCalls++; CallbackVH::deleted(); }
-    virtual void allUsesReplacedWith(Value *) { AURWCalls++; }
+    void deleted() override {
+      DeletedCalls++;
+      CallbackVH::deleted();
+    }
+    void allUsesReplacedWith(Value *) override { AURWCalls++; }
   };
 
   RecordingVH RVH;
@@ -258,7 +261,7 @@ TEST_F(ValueHandle, CallbackVH_CallbackOnDeletion) {
 }
 
 TEST_F(ValueHandle, CallbackVH_CallbackOnRAUW) {
-  class RecordingVH : public CallbackVH {
+  class RecordingVH final : public CallbackVH {
   public:
     int DeletedCalls;
     Value *AURWArgument;
@@ -268,8 +271,11 @@ TEST_F(ValueHandle, CallbackVH_CallbackOnRAUW) {
       : CallbackVH(V), DeletedCalls(0), AURWArgument(nullptr) {}
 
   private:
-    virtual void deleted() { DeletedCalls++; CallbackVH::deleted(); }
-    virtual void allUsesReplacedWith(Value *new_value) {
+    void deleted() override {
+      DeletedCalls++;
+      CallbackVH::deleted();
+    }
+    void allUsesReplacedWith(Value *new_value) override {
       EXPECT_EQ(nullptr, AURWArgument);
       AURWArgument = new_value;
     }
@@ -285,7 +291,7 @@ TEST_F(ValueHandle, CallbackVH_CallbackOnRAUW) {
 }
 
 TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
-  class RecoveringVH : public CallbackVH {
+  class RecoveringVH final : public CallbackVH {
   public:
     int DeletedCalls;
     Value *AURWArgument;
@@ -298,11 +304,11 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
         Context(&getGlobalContext()) {}
 
   private:
-    virtual void deleted() {
+    void deleted() override {
       getValPtr()->replaceAllUsesWith(Constant::getNullValue(Type::getInt32Ty(getGlobalContext())));
       setValPtr(nullptr);
     }
-    virtual void allUsesReplacedWith(Value *new_value) {
+    void allUsesReplacedWith(Value *new_value) override {
       ASSERT_TRUE(nullptr != getValPtr());
       EXPECT_EQ(1U, getValPtr()->getNumUses());
       EXPECT_EQ(nullptr, AURWArgument);
@@ -314,7 +320,7 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
   // a CallbackVH to remove the uses before the check for no uses.
   RecoveringVH RVH;
   RVH = BitcastV.get();
-  std::auto_ptr<BinaryOperator> BitcastUser(
+  std::unique_ptr<BinaryOperator> BitcastUser(
     BinaryOperator::CreateAdd(RVH, 
                               Constant::getNullValue(Type::getInt32Ty(getGlobalContext()))));
   EXPECT_EQ(BitcastV.get(), BitcastUser->getOperand(0));
@@ -333,7 +339,7 @@ TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
   // arrangement of other VHs so that the bad behavior would be
   // triggered in whichever order callbacks run.
 
-  class DestroyingVH : public CallbackVH {
+  class DestroyingVH final : public CallbackVH {
   public:
     std::unique_ptr<WeakVH> ToClear[2];
     DestroyingVH(Value *V) {
@@ -341,12 +347,12 @@ TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
       setValPtr(V);
       ToClear[1].reset(new WeakVH(V));
     }
-    virtual void deleted() {
+    void deleted() override {
       ToClear[0].reset();
       ToClear[1].reset();
       CallbackVH::deleted();
     }
-    virtual void allUsesReplacedWith(Value *) {
+    void allUsesReplacedWith(Value *) override {
       ToClear[0].reset();
       ToClear[1].reset();
     }
@@ -378,7 +384,7 @@ TEST_F(ValueHandle, AssertingVHCheckedLast) {
   // Value deletion, the CallbackVH should get a chance to do so
   // before the AssertingVHs assert.
 
-  class ClearingVH : public CallbackVH {
+  class ClearingVH final : public CallbackVH {
   public:
     AssertingVH<Value> *ToClear[2];
     ClearingVH(Value *V,
@@ -388,7 +394,7 @@ TEST_F(ValueHandle, AssertingVHCheckedLast) {
       ToClear[1] = &A1;
     }
 
-    virtual void deleted() {
+    void deleted() override {
       *ToClear[0] = nullptr;
       *ToClear[1] = nullptr;
       CallbackVH::deleted();

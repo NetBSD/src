@@ -50,6 +50,20 @@ def Std2MicroMips : InstrMapping {
   let ValueCols = [["se"], ["micromips"]];
 }
 
+class StdMMR6Rel;
+
+def Std2MicroMipsR6 : InstrMapping {
+  let FilterClass = "StdMMR6Rel";
+  // Instructions with the same BaseOpcode and isNVStore values form a row.
+  let RowFields = ["BaseOpcode"];
+  // Instructions with the same predicate sense form a column.
+  let ColFields = ["Arch"];
+  // The key column is the unpredicated instructions.
+  let KeyCol = ["se"];
+  // Value columns are PredSense=true and PredSense=false
+  let ValueCols = [["se"], ["micromipsr6"]];
+}
+
 class StdArch {
   string Arch = "se";
 }
@@ -118,7 +132,7 @@ class PseudoSE<dag outs, dag ins, list<dag> pattern,
 // These are aliases that require C++ handling to convert to the target
 // instruction, while InstAliases can be handled directly by tblgen.
 class MipsAsmPseudoInst<dag outs, dag ins, string asmstr>:
-  MipsInst<outs, ins, asmstr, [], IIPseudo, Pseudo> {
+  MipsInst<outs, ins, asmstr, [], IIPseudo, Pseudo>, PredicateControl {
   let isPseudo = 1;
   let Pattern = [];
 }
@@ -212,6 +226,18 @@ class MFC3OP_FM<bits<6> op, bits<5> mfmt>
   let Inst{2-0}   = sel;
 }
 
+class MFC2OP_FM<bits<6> op, bits<5> mfmt> : StdArch {
+  bits<5>  rt;
+  bits<16> imm16;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = mfmt;
+  let Inst{20-16} = rt;
+  let Inst{15-0}  = imm16;
+}
+
 class ADD_FM<bits<6> op, bits<6> funct> : StdArch {
   bits<5> rd;
   bits<5> rs;
@@ -294,6 +320,19 @@ class BGEZ_FM<bits<6> op, bits<5> funct> : StdArch {
   let Inst{31-26} = op;
   let Inst{25-21} = rs;
   let Inst{20-16} = funct;
+  let Inst{15-0}  = offset;
+}
+
+class BBIT_FM<bits<6> op> : StdArch {
+  bits<5>  rs;
+  bits<5>  p;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = p;
   let Inst{15-0}  = offset;
 }
 
@@ -605,15 +644,15 @@ class BRK_FM<bits<6> funct> : StdArch
 //  Exception return format <Cop0|1|0|funct>
 //===----------------------------------------------------------------------===//
 
-class ER_FM<bits<6> funct> : StdArch
+class ER_FM<bits<6> funct, bit LLBit> : StdArch
 {
   bits<32> Inst;
   let Inst{31-26} = 0x10;
   let Inst{25}    = 1;
-  let Inst{24-6}  = 0;
+  let Inst{24-7}  = 0;
+  let Inst{6} = LLBit;
   let Inst{5-0}   = funct;
 }
-
 
 //===----------------------------------------------------------------------===//
 //  Enable/disable interrupt instruction format <Cop0|MFMC0|rt|12|0|sc|0|0>

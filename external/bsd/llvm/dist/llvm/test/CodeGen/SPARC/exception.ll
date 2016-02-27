@@ -71,7 +71,7 @@
 ; V9PIC: .L_ZTIi.DW.stub:
 ; V9PIC-NEXT:   .xword _ZTIi
 
-define i32 @main(i32 %argc, i8** nocapture readnone %argv) unnamed_addr #0 {
+define i32 @main(i32 %argc, i8** nocapture readnone %argv) unnamed_addr #0 personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0 {
 entry:
   %0 = icmp eq i32 %argc, 2
   %1 = tail call i8* @__cxa_allocate_exception(i32 4) #1
@@ -102,7 +102,7 @@ entry:
   ret i32 %6
 
 "8":                                              ; preds = %"4", %"3"
-  %exc = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0
+  %exc = landingpad { i8*, i32 }
           catch %struct.__fundamental_type_info_pseudo* @_ZTIi
           catch %struct.__fundamental_type_info_pseudo* @_ZTIf
   %exc_ptr12 = extractvalue { i8*, i32 } %exc, 0
@@ -121,13 +121,13 @@ entry:
 
 "11":                                             ; preds = %"8"
   %10 = tail call i8* @__cxa_begin_catch(i8* %exc_ptr12) #1
-  %11 = tail call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @.cst, i32 0, i32 0))
+  %11 = tail call i32 @puts(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.cst, i32 0, i32 0))
   tail call void @__cxa_end_catch() #1
   br label %"5"
 
 "13":                                             ; preds = %8
   %12 = tail call i8* @__cxa_begin_catch(i8* %exc_ptr12) #1
-  %13 = tail call i32 @puts(i8* getelementptr inbounds ([14 x i8]* @.cst1, i32 0, i32 0))
+  %13 = tail call i32 @puts(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.cst1, i32 0, i32 0))
   tail call void @__cxa_end_catch() #1
   br label %"5"
 }

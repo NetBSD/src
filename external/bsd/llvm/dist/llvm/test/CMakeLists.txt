@@ -1,3 +1,7 @@
+if(LLVM_BUILD_EXAMPLES)
+  set(ENABLE_EXAMPLES 1)
+endif()
+
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
@@ -15,11 +19,12 @@ endif()
 # Set the depends list as a variable so that it can grow conditionally.
 # NOTE: Sync the substitutions in test/lit.cfg when adding to this list.
 set(LLVM_TEST_DEPENDS
-          llvm-config
-          UnitTests
           BugpointPasses
+          FileCheck
           LLVMHello
+          UnitTests
           bugpoint
+          count
           llc
           lli
           lli-child-target
@@ -27,34 +32,38 @@ set(LLVM_TEST_DEPENDS
           llvm-as
           llvm-bcanalyzer
           llvm-c-test
+          llvm-config
           llvm-cov
+          llvm-cxxdump
           llvm-diff
           llvm-dis
           llvm-dsymutil
           llvm-dwarfdump
+          llvm-dwp
           llvm-extract
+          llvm-lib
           llvm-link
           llvm-lto
           llvm-mc
           llvm-mcmarkup
           llvm-nm
           llvm-objdump
+          llvm-pdbdump
           llvm-profdata
           llvm-ranlib
           llvm-readobj
           llvm-rtdyld
           llvm-size
+          llvm-split
           llvm-symbolizer
           llvm-tblgen
-          llvm-vtabledump
-          macho-dump
-          opt
-          FileCheck
-          count
           not
-          yaml2obj
           obj2yaml
+          opt
+          sancov
           verify-uselistorder
+          yaml-bench
+          yaml2obj
         )
 
 # If Intel JIT events are supported, depend on a tool that tests the listener.
@@ -68,6 +77,10 @@ endif()
 
 if(TARGET llvm-go)
   set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} llvm-go)
+endif()
+
+if(APPLE)
+  set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS} LTO)
 endif()
 
 if(TARGET ocaml_llvm)
@@ -89,6 +102,16 @@ if(TARGET ocaml_llvm)
         )
 endif()
 
+if(LLVM_BUILD_EXAMPLES)
+  list(APPEND LLVM_TEST_DEPENDS
+    Kaleidoscope-Ch3
+    Kaleidoscope-Ch4
+    Kaleidoscope-Ch5
+    Kaleidoscope-Ch6
+    Kaleidoscope-Ch7
+    )
+endif()
+
 add_lit_testsuite(check-llvm "Running the LLVM regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
   PARAMS llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
@@ -96,6 +119,12 @@ add_lit_testsuite(check-llvm "Running the LLVM regression tests"
   DEPENDS ${LLVM_TEST_DEPENDS}
   )
 set_target_properties(check-llvm PROPERTIES FOLDER "Tests")
+
+add_lit_testsuites(LLVM ${CMAKE_CURRENT_SOURCE_DIR}
+  PARAMS llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+         llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+  DEPENDS ${LLVM_TEST_DEPENDS}
+  )
 
 # Setup a legacy alias for 'check-llvm'. This will likely change to be an
 # alias for 'check-all' at some point in the future.

@@ -183,10 +183,10 @@ struct MultiArgConstructor {
   explicit MultiArgConstructor(int x, bool positive)
     : x(x), y(positive ? x : -x) {}
 
-  MultiArgConstructor(const MultiArgConstructor &) LLVM_DELETED_FUNCTION;
-  MultiArgConstructor(MultiArgConstructor &&) LLVM_DELETED_FUNCTION;
-  MultiArgConstructor &operator=(const MultiArgConstructor &) LLVM_DELETED_FUNCTION;
-  MultiArgConstructor &operator=(MultiArgConstructor &&) LLVM_DELETED_FUNCTION;
+  MultiArgConstructor(const MultiArgConstructor &) = delete;
+  MultiArgConstructor(MultiArgConstructor &&) = delete;
+  MultiArgConstructor &operator=(const MultiArgConstructor &) = delete;
+  MultiArgConstructor &operator=(MultiArgConstructor &&) = delete;
 
   static unsigned Destructions;
   ~MultiArgConstructor() {
@@ -340,7 +340,7 @@ struct Immovable {
   }
 private:
   // This should disable all move/copy operations.
-  Immovable(Immovable&& other) LLVM_DELETED_FUNCTION;
+  Immovable(Immovable&& other) = delete;
 };
 
 unsigned Immovable::Constructions = 0;
@@ -376,6 +376,19 @@ TEST_F(OptionalTest, MoveGetValueOr) {
 }
 
 #endif // LLVM_HAS_RVALUE_REFERENCE_THIS
+
+TEST_F(OptionalTest, NoneComparison) {
+  Optional<int> o;
+  EXPECT_EQ(o, None);
+  EXPECT_EQ(None, o);
+  EXPECT_FALSE(o != None);
+  EXPECT_FALSE(None != o);
+  o = 3;
+  EXPECT_FALSE(o == None);
+  EXPECT_FALSE(None == o);
+  EXPECT_TRUE(o != None);
+  EXPECT_TRUE(None != o);
+}
 
 } // end anonymous namespace
 

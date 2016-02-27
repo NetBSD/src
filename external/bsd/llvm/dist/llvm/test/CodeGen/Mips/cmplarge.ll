@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel -mcpu=mips16 -relocation-model=pic < %s | FileCheck %s -check-prefix=cmp16
+; RUN: llc -march=mipsel -mattr=mips16 -relocation-model=pic < %s | FileCheck %s -check-prefix=cmp16
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32-S64"
 target triple = "mipsel--linux-gnu"
@@ -9,8 +9,8 @@ target triple = "mipsel--linux-gnu"
 
 define void @getSubImagesLuma(%struct.StorablePicture* nocapture %s) #0 {
 entry:
-  %size_y = getelementptr inbounds %struct.StorablePicture* %s, i32 0, i32 1
-  %0 = load i32* %size_y, align 4
+  %size_y = getelementptr inbounds %struct.StorablePicture, %struct.StorablePicture* %s, i32 0, i32 1
+  %0 = load i32, i32* %size_y, align 4
   %sub = add nsw i32 %0, -1
   %add5 = add nsw i32 %0, 20
   %cmp6 = icmp sgt i32 %add5, -20
@@ -20,7 +20,7 @@ for.body:                                         ; preds = %entry, %for.body
   %j.07 = phi i32 [ %inc, %for.body ], [ -20, %entry ]
   %call = tail call i32 bitcast (i32 (...)* @iClip3 to i32 (i32, i32, i32)*)(i32 0, i32 %sub, i32 %j.07) #2
   %inc = add nsw i32 %j.07, 1
-  %1 = load i32* %size_y, align 4
+  %1 = load i32, i32* %size_y, align 4
   %add = add nsw i32 %1, 20
   %cmp = icmp slt i32 %inc, %add
   br i1 %cmp, label %for.body, label %for.end

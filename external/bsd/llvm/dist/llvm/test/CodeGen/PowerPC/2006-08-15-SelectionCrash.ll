@@ -1,11 +1,12 @@
 ; RUN: llc < %s
+; REQUIRES: default_triple
 
 	%struct..0anon = type { i32 }
 	%struct.rtx_def = type { i16, i8, i8, [1 x %struct..0anon] }
 
 define fastcc void @immed_double_const(i32 %i0, i32 %i1) {
 entry:
-	%tmp1 = load i32* null		; <i32> [#uses=1]
+	%tmp1 = load i32, i32* null		; <i32> [#uses=1]
 	switch i32 %tmp1, label %bb103 [
 		 i32 1, label %bb
 		 i32 3, label %bb

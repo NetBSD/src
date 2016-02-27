@@ -20,13 +20,13 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
 #include <vector>
 
 namespace llvm {
 
-class AliasAnalysis;
 class LoadInst;
 class StoreInst;
 class VAArgInst;
@@ -42,13 +42,14 @@ class AliasSet : public ilist_node<AliasSet> {
     AliasSet *AS;
     uint64_t Size;
     AAMDNodes AAInfo;
+
   public:
     PointerRec(Value *V)
       : Val(V), PrevInList(nullptr), NextInList(nullptr), AS(nullptr), Size(0),
         AAInfo(DenseMapInfo<AAMDNodes>::getEmptyKey()) {}
 
     Value *getValue() const { return Val; }
-    
+
     PointerRec *getNext() const { return NextInList; }
     bool hasAliasSet() const { return AS != nullptr; }
 
@@ -117,24 +118,30 @@ class AliasSet : public ilist_node<AliasSet> {
   // AliasSets forwarding to it.
   unsigned RefCount : 28;
 
-  /// AccessType - Keep track of whether this alias set merely refers to the
-  /// locations of memory, whether it modifies the memory, or whether it does
-  /// both.  The lattice goes from "NoModRef" to either Refs or Mods, then to
-  /// ModRef as necessary.
+  /// The kinds of access this alias set models.
   ///
-  enum AccessType {
-    NoModRef = 0, Refs = 1,         // Ref = bit 1
-    Mods     = 2, ModRef = 3        // Mod = bit 2
+  /// We keep track of whether this alias set merely refers to the locations of
+  /// memory (and not any particular access), whether it modifies or references
+  /// the memory, or whether it does both. The lattice goes from "NoAccess" to
+  /// either RefAccess or ModAccess, then to ModRefAccess as necessary.
+  enum AccessLattice {
+    NoAccess = 0,
+    RefAccess = 1,
+    ModAccess = 2,
+    ModRefAccess = RefAccess | ModAccess
   };
-  unsigned AccessTy : 2;
+  unsigned Access : 2;
 
-  /// AliasType - Keep track the relationships between the pointers in the set.
-  /// Lattice goes from MustAlias to MayAlias.
+  /// The kind of alias relationship between pointers of the set.
   ///
-  enum AliasType {
-    MustAlias = 0, MayAlias = 1
+  /// These represent conservatively correct alias results between any members
+  /// of the set. We represent these independently of the values of alias
+  /// results in order to pack it into a single bit. Lattice goes from
+  /// MustAlias to MayAlias.
+  enum AliasLattice {
+    SetMustAlias = 0, SetMayAlias = 1
   };
-  unsigned AliasTy : 1;
+  unsigned Alias : 1;
 
   // Volatile - True if this alias set contains volatile loads or stores.
   bool Volatile : 1;
@@ -150,13 +157,13 @@ class AliasSet : public ilist_node<AliasSet> {
     assert(i < UnknownInsts.size());
     return UnknownInsts[i];
   }
-  
+
 public:
   /// Accessors...
-  bool isRef() const { return AccessTy & Refs; }
-  bool isMod() const { return AccessTy & Mods; }
-  bool isMustAlias() const { return AliasTy == MustAlias; }
-  bool isMayAlias()  const { return AliasTy == MayAlias; }
+  bool isRef() const { return Access & RefAccess; }
+  bool isMod() const { return Access & ModAccess; }
+  bool isMustAlias() const { return Alias == SetMustAlias; }
+  bool isMayAlias()  const { return Alias == SetMayAlias; }
 
   // isVolatile - Return true if this alias set contains volatile loads or
   // stores.
@@ -184,6 +191,7 @@ public:
   class iterator : public std::iterator<std::forward_iterator_tag,
                                         PointerRec, ptrdiff_t> {
     PointerRec *CurNode;
+
   public:
     explicit iterator(PointerRec *CN = nullptr) : CurNode(CN) {}
 
@@ -191,11 +199,6 @@ public:
       return CurNode == x.CurNode;
     }
     bool operator!=(const iterator& x) const { return !operator==(x); }
-
-    const iterator &operator=(const iterator &I) {
-      CurNode = I.CurNode;
-      return *this;
-    }
 
     value_type &operator*() const {
       assert(CurNode && "Dereferencing AliasSet.end()!");
@@ -223,11 +226,11 @@ private:
   friend struct ilist_sentinel_traits<AliasSet>;
   AliasSet()
     : PtrList(nullptr), PtrListEnd(&PtrList), Forward(nullptr), RefCount(0),
-      AccessTy(NoModRef), AliasTy(MustAlias), Volatile(false) {
+      Access(NoAccess), Alias(SetMustAlias), Volatile(false) {
   }
 
-  AliasSet(const AliasSet &AS) LLVM_DELETED_FUNCTION;
-  void operator=(const AliasSet &AS) LLVM_DELETED_FUNCTION;
+  AliasSet(const AliasSet &AS) = delete;
+  void operator=(const AliasSet &AS) = delete;
 
   PointerRec *getSomePointer() const {
     return PtrList;
@@ -273,7 +276,7 @@ public:
   ///
   bool aliasesPointer(const Value *Ptr, uint64_t Size, const AAMDNodes &AAInfo,
                       AliasAnalysis &AA) const;
-  bool aliasesUnknownInst(Instruction *Inst, AliasAnalysis &AA) const;
+  bool aliasesUnknownInst(const Instruction *Inst, AliasAnalysis &AA) const;
 };
 
 inline raw_ostream& operator<<(raw_ostream &OS, const AliasSet &AS) {
@@ -281,14 +284,14 @@ inline raw_ostream& operator<<(raw_ostream &OS, const AliasSet &AS) {
   return OS;
 }
 
-
 class AliasSetTracker {
   /// CallbackVH - A CallbackVH to arrange for AliasSetTracker to be
   /// notified whenever a Value is deleted.
-  class ASTCallbackVH : public CallbackVH {
+  class ASTCallbackVH final : public CallbackVH {
     AliasSetTracker *AST;
     void deleted() override;
     void allUsesReplacedWith(Value *) override;
+
   public:
     ASTCallbackVH(Value *V, AliasSetTracker *AST = nullptr);
     ASTCallbackVH &operator=(Value *V);
@@ -346,7 +349,7 @@ public:
   bool remove(Instruction *I);
   void remove(AliasSet &AS);
   bool removeUnknown(Instruction *I);
-  
+
   void clear();
 
   /// getAliasSets - Return the alias sets that are active.
@@ -363,7 +366,7 @@ public:
 
   /// getAliasSetForPointerIfExists - Return the alias set containing the
   /// location specified if one exists, otherwise return null.
-  AliasSet *getAliasSetForPointerIfExists(Value *P, uint64_t Size,
+  AliasSet *getAliasSetForPointerIfExists(const Value *P, uint64_t Size,
                                           const AAMDNodes &AAInfo) {
     return findAliasSetForPointer(P, Size, AAInfo);
   }
@@ -371,11 +374,12 @@ public:
   /// containsPointer - Return true if the specified location is represented by
   /// this alias set, false otherwise.  This does not modify the AST object or
   /// alias sets.
-  bool containsPointer(Value *P, uint64_t Size, const AAMDNodes &AAInfo) const;
+  bool containsPointer(const Value *P, uint64_t Size,
+                       const AAMDNodes &AAInfo) const;
 
   /// Return true if the specified instruction "may" (or must) alias one of the
   /// members in any of the sets.
-  bool containsUnknown(Instruction *I) const;
+  bool containsUnknown(const Instruction *I) const;
 
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.
@@ -395,7 +399,6 @@ public:
   /// request.
   ///
   void copyValue(Value *From, Value *To);
-
 
   typedef ilist<AliasSet>::iterator iterator;
   typedef ilist<AliasSet>::const_iterator const_iterator;
@@ -423,11 +426,11 @@ private:
   }
 
   AliasSet &addPointer(Value *P, uint64_t Size, const AAMDNodes &AAInfo,
-                       AliasSet::AccessType E,
+                       AliasSet::AccessLattice E,
                        bool &NewSet) {
     NewSet = false;
     AliasSet &AS = getAliasSetForPointer(P, Size, AAInfo, &NewSet);
-    AS.AccessTy |= E;
+    AS.Access |= E;
     return AS;
   }
   AliasSet *findAliasSetForPointer(const Value *Ptr, uint64_t Size,

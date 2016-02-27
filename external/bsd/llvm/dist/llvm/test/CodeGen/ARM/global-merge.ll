@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin -global-merge-on-const=true | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -arm-global-merge -global-merge-group-by-use=false -global-merge-on-const=true | FileCheck %s
 ; Test the ARMGlobalMerge pass.  Use -march=thumb because it has a small
 ; value for the maximum offset (127).
 
@@ -15,13 +15,13 @@
 ; CHECK: ZTIi
 @_ZTIi = internal global i8* null
 
-define i32 @_Z9exceptioni(i32 %arg) {
+define i32 @_Z9exceptioni(i32 %arg) personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 bb:
   %tmp = invoke i32 @_Z14throwSomethingi(i32 %arg)
           to label %bb9 unwind label %bb1
 
 bb1:                                              ; preds = %bb
-  %tmp2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %tmp2 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %tmp3 = extractvalue { i8*, i32 } %tmp2, 1
   %tmp4 = tail call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*))
@@ -59,16 +59,16 @@ declare void @__cxa_end_catch()
 ; Make sure that the complete variable fits within the range of the maximum
 ; offset.  Having the starting offset in range is not sufficient.
 ; When this works properly, @g3 is placed in a separate chunk of merged globals.
-; CHECK: _MergedGlobals1:
+; CHECK: _MergedGlobals.1:
 @g3 = internal global [30 x i32] [ i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10 ], align 4
 
 ; Global variables that can be placed in BSS should be kept together in a
 ; separate pool of merged globals.
-; CHECK: _MergedGlobals2
+; CHECK: _MergedGlobals.2
 @g4 = internal global i32 0
 @g5 = internal global i32 0
 
 ; Global variables that are constant can be merged together
-; CHECK: _MergedGlobals3
+; CHECK: _MergedGlobals.3
 @g6 = internal constant [12 x i32] zeroinitializer, align 4
 @g7 = internal constant [12 x i32] zeroinitializer, align 4

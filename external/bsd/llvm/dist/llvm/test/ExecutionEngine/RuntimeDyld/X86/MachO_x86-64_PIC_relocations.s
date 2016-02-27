@@ -1,5 +1,5 @@
 # RUN: llvm-mc -triple=x86_64-apple-macosx10.9 -relocation-model=pic -filetype=obj -o %T/test_x86-64.o %s
-# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%s %/T/test_x86-64.o
+# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -dummy-extern ds1=0xfffffffffffffffe -dummy-extern ds2=0xffffffffffffffff -verify -check=%s %/T/test_x86-64.o
 
         .section	__TEXT,__text,regular,pure_instructions
 	.globl	foo
@@ -45,5 +45,34 @@ eh_frame_test:
 	.align	2
 x:
         .long   5
+
+# Test dummy-extern relocation.
+# rtdyld-check: *{8}z1 = ds1
+z1:
+        .quad   ds1
+
+# Test external-symbol relocation bypass: symbols with addr 0xffffffffffffffff
+# don't have their relocations applied.
+# rtdyld-check: *{8}z2 = 0
+z2:
+        .quad   ds2
+
+# Test absolute symbols.
+# rtdyld-check: abssym = 0xdeadbeef
+        .globl  abssym
+abssym = 0xdeadbeef
+
+	# Test subtractor relocations.
+# rtdyld-check: *{8}z3 = z4 - z5 + 4
+z3:
+        .quad  z4 - z5 + 4
+
+        .section        __DATA,_tmp1
+z4:
+        .byte 1
+
+        .section        __DATA,_tmp2
+z5:
+        .byte 1
 
 .subsections_via_symbols

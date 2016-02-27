@@ -21,7 +21,8 @@ add_llvm_library(LLVMTransformUtils
   LoopSimplify.cpp
   LoopUnroll.cpp
   LoopUnrollRuntime.cpp
-  LowerExpectIntrinsic.cpp
+  LoopUtils.cpp
+  LoopVersioning.cpp
   LowerInvoke.cpp
   LowerSwitch.cpp
   Mem2Reg.cpp
@@ -33,10 +34,15 @@ add_llvm_library(LLVMTransformUtils
   SimplifyIndVar.cpp
   SimplifyInstructions.cpp
   SimplifyLibCalls.cpp
+  SplitModule.cpp
   SymbolRewriter.cpp
   UnifyFunctionExitNodes.cpp
   Utils.cpp
   ValueMapper.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Transforms
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Transforms/Utils
   )
 
 add_dependencies(LLVMTransformUtils intrinsics_gen)

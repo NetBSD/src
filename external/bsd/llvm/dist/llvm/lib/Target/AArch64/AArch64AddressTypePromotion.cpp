@@ -41,6 +41,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -55,6 +56,8 @@ EnableMerge("aarch64-type-promotion-merge", cl::Hidden,
             cl::desc("Enable merging of redundant sexts when one is dominating"
                      " the other."),
             cl::init(true));
+
+#define AARCH64_TYPE_PROMO_NAME "AArch64 Address Type Promotion"
 
 //===----------------------------------------------------------------------===//
 //                       AArch64AddressTypePromotion
@@ -75,7 +78,7 @@ public:
   }
 
   const char *getPassName() const override {
-    return "AArch64 Address Type Promotion";
+    return AARCH64_TYPE_PROMO_NAME;
   }
 
   /// Iterate over the functions and promote the computation of interesting
@@ -142,10 +145,10 @@ private:
 char AArch64AddressTypePromotion::ID = 0;
 
 INITIALIZE_PASS_BEGIN(AArch64AddressTypePromotion, "aarch64-type-promotion",
-                      "AArch64 Type Promotion Pass", false, false)
+                      AARCH64_TYPE_PROMO_NAME, false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(AArch64AddressTypePromotion, "aarch64-type-promotion",
-                    "AArch64 Type Promotion Pass", false, false)
+                    AARCH64_TYPE_PROMO_NAME, false, false)
 
 FunctionPass *llvm::createAArch64AddressTypePromotionPass() {
   return new AArch64AddressTypePromotion();

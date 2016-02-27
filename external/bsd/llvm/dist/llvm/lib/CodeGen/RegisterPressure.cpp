@@ -59,12 +59,12 @@ void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   dbgs() << "Max Pressure: ";
   dumpRegSetPressure(MaxSetPressure, TRI);
   dbgs() << "Live In: ";
-  for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
-    dbgs() << PrintReg(LiveInRegs[i], TRI) << " ";
+  for (unsigned Reg : LiveInRegs)
+    dbgs() << PrintVRegOrUnit(Reg, TRI) << " ";
   dbgs() << '\n';
   dbgs() << "Live Out: ";
-  for (unsigned i = 0, e = LiveOutRegs.size(); i < e; ++i)
-    dbgs() << PrintReg(LiveOutRegs[i], TRI) << " ";
+  for (unsigned Reg : LiveOutRegs)
+    dbgs() << PrintVRegOrUnit(Reg, TRI) << " ";
   dbgs() << '\n';
 }
 
@@ -77,25 +77,36 @@ void RegPressureTracker::dump() const {
   P.dump(TRI);
 }
 
+void PressureDiff::dump(const TargetRegisterInfo &TRI) const {
+  const char *sep = "";
+  for (const PressureChange &Change : *this) {
+    if (!Change.isValid())
+      break;
+    dbgs() << sep << TRI.getRegPressureSetName(Change.getPSet())
+           << " " << Change.getUnitInc();
+    sep = "    ";
+  }
+  dbgs() << '\n';
+}
+
 /// Increase the current pressure as impacted by these registers and bump
 /// the high water mark if needed.
 void RegPressureTracker::increaseRegPressure(ArrayRef<unsigned> RegUnits) {
-  for (unsigned i = 0, e = RegUnits.size(); i != e; ++i) {
-    PSetIterator PSetI = MRI->getPressureSets(RegUnits[i]);
+  for (unsigned RegUnit : RegUnits) {
+    PSetIterator PSetI = MRI->getPressureSets(RegUnit);
     unsigned Weight = PSetI.getWeight();
     for (; PSetI.isValid(); ++PSetI) {
       CurrSetPressure[*PSetI] += Weight;
-      if (CurrSetPressure[*PSetI] > P.MaxSetPressure[*PSetI]) {
-        P.MaxSetPressure[*PSetI] = CurrSetPressure[*PSetI];
-      }
+      P.MaxSetPressure[*PSetI] =
+          std::max(P.MaxSetPressure[*PSetI], CurrSetPressure[*PSetI]);
     }
   }
 }
 
 /// Simply decrease the current pressure as impacted by these registers.
 void RegPressureTracker::decreaseRegPressure(ArrayRef<unsigned> RegUnits) {
-  for (unsigned I = 0, E = RegUnits.size(); I != E; ++I)
-    decreaseSetPressure(CurrSetPressure, MRI->getPressureSets(RegUnits[I]));
+  for (unsigned RegUnit : RegUnits)
+    decreaseSetPressure(CurrSetPressure, MRI->getPressureSets(RegUnit));
 }
 
 /// Clear the result so it can be used for another round of pressure tracking.
@@ -147,10 +158,22 @@ void RegionPressure::openBottom(MachineBasicBlock::const_iterator PrevBottom) {
   LiveInRegs.clear();
 }
 
-const LiveRange *RegPressureTracker::getLiveRange(unsigned Reg) const {
+void LiveRegSet::init(const MachineRegisterInfo &MRI) {
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+  unsigned NumRegUnits = TRI.getNumRegs();
+  unsigned NumVirtRegs = MRI.getNumVirtRegs();
+  Regs.setUniverse(NumRegUnits + NumVirtRegs);
+  this->NumRegUnits = NumRegUnits;
+}
+
+void LiveRegSet::clear() {
+  Regs.clear();
+}
+
+static const LiveRange *getLiveRange(const LiveIntervals &LIS, unsigned Reg) {
   if (TargetRegisterInfo::isVirtualRegister(Reg))
-    return &LIS->getInterval(Reg);
-  return LIS->getCachedRegUnit(Reg);
+    return &LIS.getInterval(Reg);
+  return LIS.getCachedRegUnit(Reg);
 }
 
 void RegPressureTracker::reset() {
@@ -166,8 +189,7 @@ void RegPressureTracker::reset() {
   else
     static_cast<RegionPressure&>(P).reset();
 
-  LiveRegs.PhysRegs.clear();
-  LiveRegs.VirtRegs.clear();
+  LiveRegs.clear();
   UntiedDefs.clear();
 }
 
@@ -200,8 +222,7 @@ void RegPressureTracker::init(const MachineFunction *mf,
 
   P.MaxSetPressure = CurrSetPressure;
 
-  LiveRegs.PhysRegs.setUniverse(TRI->getNumRegs());
-  LiveRegs.VirtRegs.setUniverse(MRI->getNumVirtRegs());
+  LiveRegs.init(*MRI);
   if (TrackUntiedDefs)
     UntiedDefs.setUniverse(MRI->getNumVirtRegs());
 }
@@ -240,14 +261,8 @@ void RegPressureTracker::closeTop() {
     static_cast<RegionPressure&>(P).TopPos = CurrPos;
 
   assert(P.LiveInRegs.empty() && "inconsistent max pressure result");
-  P.LiveInRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
-  P.LiveInRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
-  for (SparseSet<unsigned>::const_iterator I =
-         LiveRegs.VirtRegs.begin(), E = LiveRegs.VirtRegs.end(); I != E; ++I)
-    P.LiveInRegs.push_back(*I);
-  std::sort(P.LiveInRegs.begin(), P.LiveInRegs.end());
-  P.LiveInRegs.erase(std::unique(P.LiveInRegs.begin(), P.LiveInRegs.end()),
-                     P.LiveInRegs.end());
+  P.LiveInRegs.reserve(LiveRegs.size());
+  LiveRegs.appendTo(P.LiveInRegs);
 }
 
 /// Set the boundary for the bottom of the region and summarize live outs.
@@ -258,21 +273,14 @@ void RegPressureTracker::closeBottom() {
     static_cast<RegionPressure&>(P).BottomPos = CurrPos;
 
   assert(P.LiveOutRegs.empty() && "inconsistent max pressure result");
-  P.LiveOutRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
-  P.LiveOutRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
-  for (SparseSet<unsigned>::const_iterator I =
-         LiveRegs.VirtRegs.begin(), E = LiveRegs.VirtRegs.end(); I != E; ++I)
-    P.LiveOutRegs.push_back(*I);
-  std::sort(P.LiveOutRegs.begin(), P.LiveOutRegs.end());
-  P.LiveOutRegs.erase(std::unique(P.LiveOutRegs.begin(), P.LiveOutRegs.end()),
-                      P.LiveOutRegs.end());
+  P.LiveOutRegs.reserve(LiveRegs.size());
+  LiveRegs.appendTo(P.LiveOutRegs);
 }
 
 /// Finalize the region boundaries and record live ins and live outs.
 void RegPressureTracker::closeRegion() {
   if (!isTopClosed() && !isBottomClosed()) {
-    assert(LiveRegs.PhysRegs.empty() && LiveRegs.VirtRegs.empty() &&
-           "no region boundary");
+    assert(LiveRegs.size() == 0 && "no region boundary");
     return;
   }
   if (!isBottomClosed())
@@ -289,8 +297,7 @@ void RegPressureTracker::closeRegion() {
 void RegPressureTracker::initLiveThru(const RegPressureTracker &RPTracker) {
   LiveThruPressure.assign(TRI->getNumRegPressureSets(), 0);
   assert(isBottomClosed() && "need bottom-up tracking to intialize.");
-  for (unsigned i = 0, e = P.LiveOutRegs.size(); i < e; ++i) {
-    unsigned Reg = P.LiveOutRegs[i];
+  for (unsigned Reg : P.LiveOutRegs) {
     if (TargetRegisterInfo::isVirtualRegister(Reg)
         && !RPTracker.hasUntiedDef(Reg)) {
       increaseSetPressure(LiveThruPressure, MRI->getPressureSets(Reg));
@@ -304,68 +311,97 @@ static bool containsReg(ArrayRef<unsigned> RegUnits, unsigned RegUnit) {
   return std::find(RegUnits.begin(), RegUnits.end(), RegUnit) != RegUnits.end();
 }
 
+namespace {
+
 /// Collect this instruction's unique uses and defs into SmallVectors for
 /// processing defs and uses in order.
 ///
 /// FIXME: always ignore tied opers
-class RegisterOperands {
-  const TargetRegisterInfo *TRI;
-  const MachineRegisterInfo *MRI;
+class RegisterOperandsCollector {
+  RegisterOperands &RegOpers;
+  const TargetRegisterInfo &TRI;
+  const MachineRegisterInfo &MRI;
   bool IgnoreDead;
 
-public:
-  SmallVector<unsigned, 8> Uses;
-  SmallVector<unsigned, 8> Defs;
-  SmallVector<unsigned, 8> DeadDefs;
+  RegisterOperandsCollector(RegisterOperands &RegOpers,
+                            const TargetRegisterInfo &TRI,
+                            const MachineRegisterInfo &MRI,
+                            bool IgnoreDead)
+    : RegOpers(RegOpers), TRI(TRI), MRI(MRI), IgnoreDead(IgnoreDead) {}
 
-  RegisterOperands(const TargetRegisterInfo *tri,
-                   const MachineRegisterInfo *mri, bool ID = false):
-    TRI(tri), MRI(mri), IgnoreDead(ID) {}
+  void collectInstr(const MachineInstr &MI) const {
+    for (ConstMIBundleOperands OperI(&MI); OperI.isValid(); ++OperI)
+      collectOperand(*OperI);
 
-  /// Push this operand's register onto the correct vector.
-  void collect(const MachineOperand &MO) {
+    // Remove redundant physreg dead defs.
+    SmallVectorImpl<unsigned>::iterator I =
+      std::remove_if(RegOpers.DeadDefs.begin(), RegOpers.DeadDefs.end(),
+                     std::bind1st(std::ptr_fun(containsReg), RegOpers.Defs));
+    RegOpers.DeadDefs.erase(I, RegOpers.DeadDefs.end());
+  }
+
+  /// Push this operand's register onto the correct vectors.
+  void collectOperand(const MachineOperand &MO) const {
     if (!MO.isReg() || !MO.getReg())
       return;
+    unsigned Reg = MO.getReg();
     if (MO.readsReg())
-      pushRegUnits(MO.getReg(), Uses);
+      pushRegUnits(Reg, RegOpers.Uses);
     if (MO.isDef()) {
       if (MO.isDead()) {
         if (!IgnoreDead)
-          pushRegUnits(MO.getReg(), DeadDefs);
-      }
-      else
-        pushRegUnits(MO.getReg(), Defs);
+          pushRegUnits(Reg, RegOpers.DeadDefs);
+      } else
+        pushRegUnits(Reg, RegOpers.Defs);
     }
   }
 
-protected:
-  void pushRegUnits(unsigned Reg, SmallVectorImpl<unsigned> &RegUnits) {
+  void pushRegUnits(unsigned Reg, SmallVectorImpl<unsigned> &RegUnits) const {
     if (TargetRegisterInfo::isVirtualRegister(Reg)) {
       if (containsReg(RegUnits, Reg))
         return;
       RegUnits.push_back(Reg);
-    }
-    else if (MRI->isAllocatable(Reg)) {
-      for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
+    } else if (MRI.isAllocatable(Reg)) {
+      for (MCRegUnitIterator Units(Reg, &TRI); Units.isValid(); ++Units) {
         if (containsReg(RegUnits, *Units))
           continue;
         RegUnits.push_back(*Units);
       }
     }
   }
+
+  friend class llvm::RegisterOperands;
 };
 
-/// Collect physical and virtual register operands.
-static void collectOperands(const MachineInstr *MI,
-                            RegisterOperands &RegOpers) {
-  for (ConstMIBundleOperands OperI(MI); OperI.isValid(); ++OperI)
-    RegOpers.collect(*OperI);
+} // namespace
 
-  // Remove redundant physreg dead defs.
-  SmallVectorImpl<unsigned>::iterator I =
-    std::remove_if(RegOpers.DeadDefs.begin(), RegOpers.DeadDefs.end(),
-                   std::bind1st(std::ptr_fun(containsReg), RegOpers.Defs));
-  RegOpers.DeadDefs.erase(I, RegOpers.DeadDefs.end());
+void RegisterOperands::collect(const MachineInstr &MI,
+                               const TargetRegisterInfo &TRI,
+                               const MachineRegisterInfo &MRI,
+                               bool IgnoreDead) {
+  RegisterOperandsCollector Collector(*this, TRI, MRI, IgnoreDead);
+  Collector.collectInstr(MI);
+}
+
+void RegisterOperands::detectDeadDefs(const MachineInstr &MI,
+                                      const LiveIntervals &LIS) {
+  SlotIndex SlotIdx = LIS.getInstructionIndex(&MI);
+  for (SmallVectorImpl<unsigned>::iterator RI = Defs.begin();
+       RI != Defs.end(); /*empty*/) {
+    unsigned Reg = *RI;
+    const LiveRange *LR = getLiveRange(LIS, Reg);
+    if (LR != nullptr) {
+      LiveQueryResult LRQ = LR->Query(SlotIdx);
+      if (LRQ.isDeadDef()) {
+        // LiveIntervals knows this is a dead even though it's MachineOperand is
+        // not flagged as such.
+        DeadDefs.push_back(Reg);
+        RI = Defs.erase(RI);
+        continue;
+      }
+    }
+    ++RI;
+  }
 }
 
 /// Initialize an array of N PressureDiffs.
@@ -380,6 +416,18 @@ void PressureDiffs::init(unsigned N) {
   PDiffArray = reinterpret_cast<PressureDiff*>(calloc(N, sizeof(PressureDiff)));
 }
 
+void PressureDiffs::addInstruction(unsigned Idx,
+                                   const RegisterOperands &RegOpers,
+                                   const MachineRegisterInfo &MRI) {
+  PressureDiff &PDiff = (*this)[Idx];
+  assert(!PDiff.begin()->isValid() && "stale PDiff");
+  for (unsigned Reg : RegOpers.Defs)
+    PDiff.addPressureChange(Reg, true, &MRI);
+
+  for (unsigned Reg : RegOpers.Uses)
+    PDiff.addPressureChange(Reg, false, &MRI);
+}
+
 /// Add a change in pressure to the pressure diff of a given instruction.
 void PressureDiff::addPressureChange(unsigned RegUnit, bool IsDec,
                                      const MachineRegisterInfo *MRI) {
@@ -387,7 +435,7 @@ void PressureDiff::addPressureChange(unsigned RegUnit, bool IsDec,
   int Weight = IsDec ? -PSetI.getWeight() : PSetI.getWeight();
   for (; PSetI.isValid(); ++PSetI) {
     // Find an existing entry in the pressure diff for this PSet.
-    PressureDiff::iterator I = begin(), E = end();
+    PressureDiff::iterator I = nonconst_begin(), E = nonconst_end();
     for (; I != E && I->isValid(); ++I) {
       if (I->getPSet() >= *PSetI)
         break;
@@ -399,30 +447,28 @@ void PressureDiff::addPressureChange(unsigned RegUnit, bool IsDec,
     if (!I->isValid() || I->getPSet() != *PSetI) {
       PressureChange PTmp = PressureChange(*PSetI);
       for (PressureDiff::iterator J = I; J != E && PTmp.isValid(); ++J)
-        std::swap(*J,PTmp);
+        std::swap(*J, PTmp);
     }
     // Update the units for this pressure set.
-    I->setUnitInc(I->getUnitInc() + Weight);
+    unsigned NewUnitInc = I->getUnitInc() + Weight;
+    if (NewUnitInc != 0) {
+      I->setUnitInc(NewUnitInc);
+    } else {
+      // Remove entry
+      PressureDiff::iterator J;
+      for (J = std::next(I); J != E && J->isValid(); ++J, ++I)
+        *I = *J;
+      if (J != E)
+        *I = *J;
+    }
   }
-}
-
-/// Record the pressure difference induced by the given operand list.
-static void collectPDiff(PressureDiff &PDiff, RegisterOperands &RegOpers,
-                         const MachineRegisterInfo *MRI) {
-  assert(!PDiff.begin()->isValid() && "stale PDiff");
-
-  for (unsigned i = 0, e = RegOpers.Defs.size(); i != e; ++i)
-    PDiff.addPressureChange(RegOpers.Defs[i], true, MRI);
-
-  for (unsigned i = 0, e = RegOpers.Uses.size(); i != e; ++i)
-    PDiff.addPressureChange(RegOpers.Uses[i], false, MRI);
 }
 
 /// Force liveness of registers.
 void RegPressureTracker::addLiveRegs(ArrayRef<unsigned> Regs) {
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    if (LiveRegs.insert(Regs[i]))
-      increaseRegPressure(Regs[i]);
+  for (unsigned Reg : Regs) {
+    if (LiveRegs.insert(Reg))
+      increaseRegPressure(Reg);
   }
 }
 
@@ -453,42 +499,9 @@ void RegPressureTracker::discoverLiveOut(unsigned Reg) {
 /// registers that are both defined and used by the instruction.  If a pressure
 /// difference pointer is provided record the changes is pressure caused by this
 /// instruction independent of liveness.
-bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
-                                PressureDiff *PDiff) {
-  // Check for the top of the analyzable region.
-  if (CurrPos == MBB->begin()) {
-    closeRegion();
-    return false;
-  }
-  if (!isBottomClosed())
-    closeBottom();
-
-  // Open the top of the region using block iterators.
-  if (!RequireIntervals && isTopClosed())
-    static_cast<RegionPressure&>(P).openTop(CurrPos);
-
-  // Find the previous instruction.
-  do
-    --CurrPos;
-  while (CurrPos != MBB->begin() && CurrPos->isDebugValue());
-
-  if (CurrPos->isDebugValue()) {
-    closeRegion();
-    return false;
-  }
-  SlotIndex SlotIdx;
-  if (RequireIntervals)
-    SlotIdx = LIS->getInstructionIndex(CurrPos).getRegSlot();
-
-  // Open the top of the region using slot indexes.
-  if (RequireIntervals && isTopClosed())
-    static_cast<IntervalPressure&>(P).openTop(SlotIdx);
-
-  RegisterOperands RegOpers(TRI, MRI);
-  collectOperands(CurrPos, RegOpers);
-
-  if (PDiff)
-    collectPDiff(*PDiff, RegOpers, MRI);
+void RegPressureTracker::recede(const RegisterOperands &RegOpers,
+                                SmallVectorImpl<unsigned> *LiveUses) {
+  assert(!CurrPos->isDebugValue());
 
   // Boost pressure for all dead defs together.
   increaseRegPressure(RegOpers.DeadDefs);
@@ -496,37 +509,23 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
 
   // Kill liveness at live defs.
   // TODO: consider earlyclobbers?
-  for (unsigned i = 0, e = RegOpers.Defs.size(); i < e; ++i) {
-    unsigned Reg = RegOpers.Defs[i];
-    bool DeadDef = false;
-    if (RequireIntervals) {
-      const LiveRange *LR = getLiveRange(Reg);
-      if (LR) {
-        LiveQueryResult LRQ = LR->Query(SlotIdx);
-        DeadDef = LRQ.isDeadDef();
-      }
-    }
-    if (DeadDef) {
-      // LiveIntervals knows this is a dead even though it's MachineOperand is
-      // not flagged as such. Since this register will not be recorded as
-      // live-out, increase its PDiff value to avoid underflowing pressure.
-      if (PDiff)
-        PDiff->addPressureChange(Reg, false, MRI);
-    } else {
-      if (LiveRegs.erase(Reg))
-        decreaseRegPressure(Reg);
-      else
-        discoverLiveOut(Reg);
-    }
+  for (unsigned Reg : RegOpers.Defs) {
+    if (LiveRegs.erase(Reg))
+      decreaseRegPressure(Reg);
+    else
+      discoverLiveOut(Reg);
   }
 
+  SlotIndex SlotIdx;
+  if (RequireIntervals)
+    SlotIdx = LIS->getInstructionIndex(CurrPos).getRegSlot();
+
   // Generate liveness for uses.
-  for (unsigned i = 0, e = RegOpers.Uses.size(); i < e; ++i) {
-    unsigned Reg = RegOpers.Uses[i];
+  for (unsigned Reg : RegOpers.Uses) {
     if (!LiveRegs.contains(Reg)) {
       // Adjust liveouts if LiveIntervals are available.
       if (RequireIntervals) {
-        const LiveRange *LR = getLiveRange(Reg);
+        const LiveRange *LR = getLiveRange(*LIS, Reg);
         if (LR) {
           LiveQueryResult LRQ = LR->Query(SlotIdx);
           if (!LRQ.isKill() && !LRQ.valueDefined())
@@ -540,24 +539,53 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
     }
   }
   if (TrackUntiedDefs) {
-    for (unsigned i = 0, e = RegOpers.Defs.size(); i < e; ++i) {
-      unsigned Reg = RegOpers.Defs[i];
+    for (unsigned Reg : RegOpers.Defs) {
       if (TargetRegisterInfo::isVirtualRegister(Reg) && !LiveRegs.contains(Reg))
         UntiedDefs.insert(Reg);
     }
   }
-  return true;
+}
+
+void RegPressureTracker::recedeSkipDebugValues() {
+  assert(CurrPos != MBB->begin());
+  if (!isBottomClosed())
+    closeBottom();
+
+  // Open the top of the region using block iterators.
+  if (!RequireIntervals && isTopClosed())
+    static_cast<RegionPressure&>(P).openTop(CurrPos);
+
+  // Find the previous instruction.
+  do
+    --CurrPos;
+  while (CurrPos != MBB->begin() && CurrPos->isDebugValue());
+
+  SlotIndex SlotIdx;
+  if (RequireIntervals)
+    SlotIdx = LIS->getInstructionIndex(CurrPos).getRegSlot();
+
+  // Open the top of the region using slot indexes.
+  if (RequireIntervals && isTopClosed())
+    static_cast<IntervalPressure&>(P).openTop(SlotIdx);
+}
+
+void RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses) {
+  recedeSkipDebugValues();
+
+  const MachineInstr &MI = *CurrPos;
+  RegisterOperands RegOpers;
+  RegOpers.collect(MI, *TRI, *MRI);
+  if (RequireIntervals)
+    RegOpers.detectDeadDefs(MI, *LIS);
+
+  recede(RegOpers, LiveUses);
 }
 
 /// Advance across the current instruction.
-bool RegPressureTracker::advance() {
+void RegPressureTracker::advance() {
   assert(!TrackUntiedDefs && "unsupported mode");
 
-  // Check for the bottom of the analyzable region.
-  if (CurrPos == MBB->end()) {
-    closeRegion();
-    return false;
-  }
+  assert(CurrPos != MBB->end());
   if (!isTopClosed())
     closeTop();
 
@@ -573,11 +601,10 @@ bool RegPressureTracker::advance() {
       static_cast<RegionPressure&>(P).openBottom(CurrPos);
   }
 
-  RegisterOperands RegOpers(TRI, MRI);
-  collectOperands(CurrPos, RegOpers);
+  RegisterOperands RegOpers;
+  RegOpers.collect(*CurrPos, *TRI, *MRI);
 
-  for (unsigned i = 0, e = RegOpers.Uses.size(); i < e; ++i) {
-    unsigned Reg = RegOpers.Uses[i];
+  for (unsigned Reg : RegOpers.Uses) {
     // Discover live-ins.
     bool isLive = LiveRegs.contains(Reg);
     if (!isLive)
@@ -585,24 +612,21 @@ bool RegPressureTracker::advance() {
     // Kill liveness at last uses.
     bool lastUse = false;
     if (RequireIntervals) {
-      const LiveRange *LR = getLiveRange(Reg);
+      const LiveRange *LR = getLiveRange(*LIS, Reg);
       lastUse = LR && LR->Query(SlotIdx).isKill();
-    }
-    else {
+    } else {
       // Allocatable physregs are always single-use before register rewriting.
       lastUse = !TargetRegisterInfo::isVirtualRegister(Reg);
     }
     if (lastUse && isLive) {
       LiveRegs.erase(Reg);
       decreaseRegPressure(Reg);
-    }
-    else if (!lastUse && !isLive)
+    } else if (!lastUse && !isLive)
       increaseRegPressure(Reg);
   }
 
   // Generate liveness for defs.
-  for (unsigned i = 0, e = RegOpers.Defs.size(); i < e; ++i) {
-    unsigned Reg = RegOpers.Defs[i];
+  for (unsigned Reg : RegOpers.Defs) {
     if (LiveRegs.insert(Reg))
       increaseRegPressure(Reg);
   }
@@ -615,7 +639,6 @@ bool RegPressureTracker::advance() {
   do
     ++CurrPos;
   while (CurrPos != MBB->end() && CurrPos->isDebugValue());
-  return true;
 }
 
 /// Find the max change in excess pressure across all sets.
@@ -641,8 +664,7 @@ static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
         PDiff = 0;            // Under the limit
       else
         PDiff = PNew - Limit; // Just exceeded limit.
-    }
-    else if (Limit > PNew)
+    } else if (Limit > PNew)
       PDiff = Limit - POld;   // Just obeyed limit.
 
     if (PDiff) {
@@ -707,34 +729,19 @@ void RegPressureTracker::bumpUpwardPressure(const MachineInstr *MI) {
   assert(!MI->isDebugValue() && "Expect a nondebug instruction.");
 
   // Account for register pressure similar to RegPressureTracker::recede().
-  RegisterOperands RegOpers(TRI, MRI, /*IgnoreDead=*/true);
-  collectOperands(MI, RegOpers);
-
-  // Boost max pressure for all dead defs together.
-  // Since CurrSetPressure and MaxSetPressure
-  increaseRegPressure(RegOpers.DeadDefs);
-  decreaseRegPressure(RegOpers.DeadDefs);
+  RegisterOperands RegOpers;
+  RegOpers.collect(*MI, *TRI, *MRI, /*IgnoreDead=*/true);
+  assert(RegOpers.DeadDefs.size() == 0);
+  if (RequireIntervals)
+    RegOpers.detectDeadDefs(*MI, *LIS);
 
   // Kill liveness at live defs.
-  for (unsigned i = 0, e = RegOpers.Defs.size(); i < e; ++i) {
-    unsigned Reg = RegOpers.Defs[i];
-    bool DeadDef = false;
-    if (RequireIntervals) {
-      const LiveRange *LR = getLiveRange(Reg);
-      if (LR) {
-        SlotIndex SlotIdx = LIS->getInstructionIndex(MI);
-        LiveQueryResult LRQ = LR->Query(SlotIdx);
-        DeadDef = LRQ.isDeadDef();
-      }
-    }
-    if (!DeadDef) {
-      if (!containsReg(RegOpers.Uses, Reg))
-        decreaseRegPressure(Reg);
-    }
+  for (unsigned Reg : RegOpers.Defs) {
+    if (!containsReg(RegOpers.Uses, Reg))
+      decreaseRegPressure(Reg);
   }
   // Generate liveness for uses.
-  for (unsigned i = 0, e = RegOpers.Uses.size(); i < e; ++i) {
-    unsigned Reg = RegOpers.Uses[i];
+  for (unsigned Reg : RegOpers.Uses) {
     if (!LiveRegs.contains(Reg))
       increaseRegPressure(Reg);
   }
@@ -748,9 +755,11 @@ void RegPressureTracker::bumpUpwardPressure(const MachineInstr *MI) {
 ///
 /// This assumes that the current LiveOut set is sufficient.
 ///
-/// FIXME: This is expensive for an on-the-fly query. We need to cache the
-/// result per-SUnit with enough information to adjust for the current
-/// scheduling position. But this works as a proof of concept.
+/// This is expensive for an on-the-fly query because it calls
+/// bumpUpwardPressure to recompute the pressure sets based on current
+/// liveness. This mainly exists to verify correctness, e.g. with
+/// -verify-misched. getUpwardPressureDelta is the fast version of this query
+/// that uses the per-SUnit cache of the PressureDiff.
 void RegPressureTracker::
 getMaxUpwardPressureDelta(const MachineInstr *MI, PressureDiff *PDiff,
                           RegPressureDelta &Delta,
@@ -783,6 +792,8 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, PressureDiff *PDiff,
   RegPressureDelta Delta2;
   getUpwardPressureDelta(MI, *PDiff, Delta2, CriticalPSets, MaxPressureLimit);
   if (Delta != Delta2) {
+    dbgs() << "PDiff: ";
+    PDiff->dump(*TRI);
     dbgs() << "DELTA: " << *MI;
     if (Delta.Excess.isValid())
       dbgs() << "Excess1 " << TRI->getRegPressureSetName(Delta.Excess.getPSet())
@@ -807,10 +818,8 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, PressureDiff *PDiff,
 #endif
 }
 
-/// This is a prototype of the fast version of querying register pressure that
-/// does not directly depend on current liveness. It's still slow because we
-/// recompute pressure change on-the-fly. This implementation only exists to
-/// prove correctness.
+/// This is the fast version of querying register pressure that does not
+/// directly depend on current liveness.
 ///
 /// @param Delta captures information needed for heuristics.
 ///
@@ -839,7 +848,8 @@ getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff,
     unsigned MNew = MOld;
     // Ignore DeadDefs here because they aren't captured by PressureChange.
     unsigned PNew = POld + PDiffI->getUnitInc();
-    assert((PDiffI->getUnitInc() >= 0) == (PNew >= POld) && "PSet overflow");
+    assert((PDiffI->getUnitInc() >= 0) == (PNew >= POld)
+           && "PSet overflow/underflow");
     if (PNew > MOld)
       MNew = PNew;
     // Check if current pressure has exceeded the limit.
@@ -878,19 +888,13 @@ getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff,
 }
 
 /// Helper to find a vreg use between two indices [PriorUseIdx, NextUseIdx).
-static bool findUseBetween(unsigned Reg,
-                           SlotIndex PriorUseIdx, SlotIndex NextUseIdx,
-                           const MachineRegisterInfo *MRI,
+static bool findUseBetween(unsigned Reg, SlotIndex PriorUseIdx,
+                           SlotIndex NextUseIdx, const MachineRegisterInfo &MRI,
                            const LiveIntervals *LIS) {
-  for (MachineRegisterInfo::use_instr_nodbg_iterator
-       UI = MRI->use_instr_nodbg_begin(Reg),
-       UE = MRI->use_instr_nodbg_end(); UI != UE; ++UI) {
-      const MachineInstr* MI = &*UI;
-      if (MI->isDebugValue())
-        continue;
-      SlotIndex InstSlot = LIS->getInstructionIndex(MI).getRegSlot();
-      if (InstSlot >= PriorUseIdx && InstSlot < NextUseIdx)
-        return true;
+  for (const MachineInstr &MI : MRI.use_nodbg_instructions(Reg)) {
+    SlotIndex InstSlot = LIS->getInstructionIndex(&MI).getRegSlot();
+    if (InstSlot >= PriorUseIdx && InstSlot < NextUseIdx)
+      return true;
   }
   return false;
 }
@@ -905,8 +909,8 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
   assert(!MI->isDebugValue() && "Expect a nondebug instruction.");
 
   // Account for register pressure similar to RegPressureTracker::recede().
-  RegisterOperands RegOpers(TRI, MRI);
-  collectOperands(MI, RegOpers);
+  RegisterOperands RegOpers;
+  RegOpers.collect(*MI, *TRI, *MRI);
 
   // Kill liveness at last uses. Assume allocatable physregs are single-use
   // rather than checking LiveIntervals.
@@ -914,21 +918,18 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
   if (RequireIntervals)
     SlotIdx = LIS->getInstructionIndex(MI).getRegSlot();
 
-  for (unsigned i = 0, e = RegOpers.Uses.size(); i < e; ++i) {
-    unsigned Reg = RegOpers.Uses[i];
+  for (unsigned Reg : RegOpers.Uses) {
     if (RequireIntervals) {
       // FIXME: allow the caller to pass in the list of vreg uses that remain
       // to be bottom-scheduled to avoid searching uses at each query.
       SlotIndex CurrIdx = getCurrSlot();
-      const LiveRange *LR = getLiveRange(Reg);
+      const LiveRange *LR = getLiveRange(*LIS, Reg);
       if (LR) {
         LiveQueryResult LRQ = LR->Query(SlotIdx);
-        if (LRQ.isKill() && !findUseBetween(Reg, CurrIdx, SlotIdx, MRI, LIS)) {
+        if (LRQ.isKill() && !findUseBetween(Reg, CurrIdx, SlotIdx, *MRI, LIS))
           decreaseRegPressure(Reg);
-        }
       }
-    }
-    else if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
+    } else if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
       // Allocatable physregs are always single-use before register rewriting.
       decreaseRegPressure(Reg);
     }
@@ -948,6 +949,11 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
 /// register units of that pressure set introduced by this instruction.
 ///
 /// This assumes that the current LiveIn set is sufficient.
+///
+/// This is expensive for an on-the-fly query because it calls
+/// bumpDownwardPressure to recompute the pressure sets based on current
+/// liveness. We don't yet have a fast version of downward pressure tracking
+/// analogous to getUpwardPressureDelta.
 void RegPressureTracker::
 getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
                             ArrayRef<PressureChange> CriticalPSets,

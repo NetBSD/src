@@ -1,26 +1,29 @@
 ; RUN: opt < %s -argpromotion -S | FileCheck %s
-; CHECK: call void @test(i32 %
-; CHECK: void (i32)* @test, {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [test]
 
 declare void @sink(i32)
 
-define internal void @test(i32** %X) {
-  %1 = load i32** %X, align 8
-  %2 = load i32* %1, align 8
+; CHECK: define internal void @test({{.*}} !dbg [[SP:![0-9]+]]
+define internal void @test(i32** %X) !dbg !2 {
+  %1 = load i32*, i32** %X, align 8
+  %2 = load i32, i32* %1, align 8
   call void @sink(i32 %2)
   ret void
 }
 
 define void @caller(i32** %Y) {
+; CHECK: call void @test(i32 %
   call void @test(i32** %Y)
   ret void
 }
 
+; CHECK: [[SP]] = distinct !DISubprogram(name: "test",
+
 !llvm.module.flags = !{!0}
 !llvm.dbg.cu = !{!3}
 
-!0 = !{i32 2, !"Debug Info Version", i32 2}
-!1 = !MDLocation(line: 8, scope: !2)
-!2 = !{!"0x2e\00test\00test\00\003\001\001\000\006\00256\000\003", null, null, null, null, void (i32**)* @test, null, null, null} ; [ DW_TAG_subprogram ]
-!3 = !{!"0x11\004\00clang version 3.5.0 \000\00\000\00\002", null, null, null, !4, null, null} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/scratch/pr20038/reduce/<stdin>] [DW_LANG_C_plus_plus]
+!0 = !{i32 2, !"Debug Info Version", i32 3}
+!1 = !DILocation(line: 8, scope: !2)
+!2 = distinct !DISubprogram(name: "test", line: 3, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, scope: null)
+!3 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 2, file: !5, subprograms: !4)
 !4 = !{!2}
+!5 = !DIFile(filename: "test.c", directory: "")

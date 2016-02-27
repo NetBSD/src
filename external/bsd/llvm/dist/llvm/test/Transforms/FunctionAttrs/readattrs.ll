@@ -5,7 +5,7 @@ declare void @test1_1(i8* %x1_1, i8* readonly %y1_1, ...)
 
 ; CHECK: define void @test1_2(i8* %x1_2, i8* readonly %y1_2, i8* %z1_2)
 define void @test1_2(i8* %x1_2, i8* %y1_2, i8* %z1_2) {
-  call void (i8*, i8*, ...)* @test1_1(i8* %x1_2, i8* %y1_2, i8* %z1_2)
+  call void (i8*, i8*, ...) @test1_1(i8* %x1_2, i8* %y1_2, i8* %z1_2)
   store i32 0, i32* @x
   ret void
 }
@@ -64,4 +64,42 @@ entry:
   %call = call i32* @test8_1(i32* %p)
   store i32 10, i32* %call, align 4
   ret void
+}
+
+; CHECK: declare void @llvm.masked.scatter
+declare void @llvm.masked.scatter.v4i32(<4 x i32>%val, <4 x i32*>, i32, <4 x i1>)
+
+; CHECK-NOT: readnone
+; CHECK-NOT: readonly
+; CHECK: define void @test9
+define void @test9(<4 x i32*> %ptrs, <4 x i32>%val) {
+  call void @llvm.masked.scatter.v4i32(<4 x i32>%val, <4 x i32*> %ptrs, i32 4, <4 x i1><i1 true, i1 false, i1 true, i1 false>)
+  ret void
+}
+
+; CHECK: declare <4 x i32> @llvm.masked.gather
+declare <4 x i32> @llvm.masked.gather.v4i32(<4 x i32*>, i32, <4 x i1>, <4 x i32>)
+; CHECK: readonly
+; CHECK: define <4 x i32> @test10
+define <4 x i32> @test10(<4 x i32*> %ptrs) {
+  %res = call <4 x i32> @llvm.masked.gather.v4i32(<4 x i32*> %ptrs, i32 4, <4 x i1><i1 true, i1 false, i1 true, i1 false>, <4 x i32>undef)
+  ret <4 x i32> %res
+}
+
+; CHECK: declare <4 x i32> @test11_1
+declare <4 x i32> @test11_1(<4 x i32*>) argmemonly nounwind readonly
+; CHECK: readonly
+; CHECK-NOT: readnone
+; CHECK: define <4 x i32> @test11_2
+define <4 x i32> @test11_2(<4 x i32*> %ptrs) {
+  %res = call <4 x i32> @test11_1(<4 x i32*> %ptrs)
+  ret <4 x i32> %res
+}
+
+declare <4 x i32> @test12_1(<4 x i32*>) argmemonly nounwind
+; CHECK-NOT: readnone
+; CHECK: define <4 x i32> @test12_2
+define <4 x i32> @test12_2(<4 x i32*> %ptrs) {
+  %res = call <4 x i32> @test12_1(<4 x i32*> %ptrs)
+  ret <4 x i32> %res
 }

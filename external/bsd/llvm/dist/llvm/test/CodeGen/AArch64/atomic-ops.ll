@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK-REG
+; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK
+; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK-REG
 
 
 ; Point of CHECK-REG is to make sure UNPREDICTABLE instructions aren't created
@@ -893,6 +893,8 @@ define i8 @test_atomic_cmpxchg_i8(i8 %wanted, i8 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stxrb [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
 
 ; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
@@ -916,6 +918,8 @@ define i16 @test_atomic_cmpxchg_i16(i16 %wanted, i16 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stlxrh [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
 
 ; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
@@ -927,21 +931,21 @@ define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
    %pair = cmpxchg i32* @var32, i32 %wanted, i32 %new release monotonic
    %old = extractvalue { i32, i1 } %pair, 0
 
+; CHECK: mov {{[xw]}}[[WANTED:[0-9]+]], {{[xw]}}0
+
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var32
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var32
 
 ; CHECK: [[STARTAGAIN:.LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldxr w[[OLD:[0-9]+]], [x[[ADDR]]]
-  ; w0 below is a reasonable guess but could change: it certainly comes into the
-  ;  function there.
-; CHECK-NEXT: cmp w[[OLD]], w0
+; CHECK-NEXT: cmp w[[OLD]], w[[WANTED]]
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stlxr [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
-
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i32 %old
 }
 
@@ -963,6 +967,8 @@ define void @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {
   ; As above, w1 is a reasonable guess.
 ; CHECK: stxr [[STATUS:w[0-9]+]], x1, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
 
 ; CHECK: str x[[OLD]],
@@ -972,7 +978,7 @@ define void @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {
 
 define i8 @test_atomic_load_monotonic_i8() nounwind {
 ; CHECK-LABEL: test_atomic_load_monotonic_i8:
-  %val = load atomic i8* @var8 monotonic, align 1
+  %val = load atomic i8, i8* @var8 monotonic, align 1
 ; CHECK-NOT: dmb
 ; CHECK: adrp x[[HIADDR:[0-9]+]], var8
 ; CHECK: ldrb w0, [x[[HIADDR]], {{#?}}:lo12:var8]
@@ -986,7 +992,7 @@ define i8 @test_atomic_load_monotonic_regoff_i8(i64 %base, i64 %off) nounwind {
   %addr_int = add i64 %base, %off
   %addr = inttoptr i64 %addr_int to i8*
 
-  %val = load atomic i8* %addr monotonic, align 1
+  %val = load atomic i8, i8* %addr monotonic, align 1
 ; CHECK-NOT: dmb
 ; CHECK: ldrb w0, [x0, x1]
 ; CHECK-NOT: dmb
@@ -996,7 +1002,7 @@ define i8 @test_atomic_load_monotonic_regoff_i8(i64 %base, i64 %off) nounwind {
 
 define i8 @test_atomic_load_acquire_i8() nounwind {
 ; CHECK-LABEL: test_atomic_load_acquire_i8:
-  %val = load atomic i8* @var8 acquire, align 1
+  %val = load atomic i8, i8* @var8 acquire, align 1
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var8
 ; CHECK-NOT: dmb
@@ -1009,7 +1015,7 @@ define i8 @test_atomic_load_acquire_i8() nounwind {
 
 define i8 @test_atomic_load_seq_cst_i8() nounwind {
 ; CHECK-LABEL: test_atomic_load_seq_cst_i8:
-  %val = load atomic i8* @var8 seq_cst, align 1
+  %val = load atomic i8, i8* @var8 seq_cst, align 1
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[HIADDR:x[0-9]+]], var8
 ; CHECK-NOT: dmb
@@ -1022,7 +1028,7 @@ define i8 @test_atomic_load_seq_cst_i8() nounwind {
 
 define i16 @test_atomic_load_monotonic_i16() nounwind {
 ; CHECK-LABEL: test_atomic_load_monotonic_i16:
-  %val = load atomic i16* @var16 monotonic, align 2
+  %val = load atomic i16, i16* @var16 monotonic, align 2
 ; CHECK-NOT: dmb
 ; CHECK: adrp x[[HIADDR:[0-9]+]], var16
 ; CHECK-NOT: dmb
@@ -1037,7 +1043,7 @@ define i32 @test_atomic_load_monotonic_regoff_i32(i64 %base, i64 %off) nounwind 
   %addr_int = add i64 %base, %off
   %addr = inttoptr i64 %addr_int to i32*
 
-  %val = load atomic i32* %addr monotonic, align 4
+  %val = load atomic i32, i32* %addr monotonic, align 4
 ; CHECK-NOT: dmb
 ; CHECK: ldr w0, [x0, x1]
 ; CHECK-NOT: dmb
@@ -1047,7 +1053,7 @@ define i32 @test_atomic_load_monotonic_regoff_i32(i64 %base, i64 %off) nounwind 
 
 define i64 @test_atomic_load_seq_cst_i64() nounwind {
 ; CHECK-LABEL: test_atomic_load_seq_cst_i64:
-  %val = load atomic i64* @var64 seq_cst, align 8
+  %val = load atomic i64, i64* @var64 seq_cst, align 8
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[HIADDR:x[0-9]+]], var64
 ; CHECK-NOT: dmb

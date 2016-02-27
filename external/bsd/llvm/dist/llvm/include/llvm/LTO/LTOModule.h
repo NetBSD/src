@@ -47,12 +47,11 @@ private:
 
   std::unique_ptr<LLVMContext> OwnedContext;
 
+  std::string LinkerOpts;
+
   std::unique_ptr<object::IRObjectFile> IRFile;
   std::unique_ptr<TargetMachine> _target;
-  StringSet<>                             _linkeropt_strings;
-  std::vector<const char *>               _deplibs;
-  std::vector<const char *>               _linkeropts;
-  std::vector<NameAndAttributes>          _symbols;
+  std::vector<NameAndAttributes> _symbols;
 
   // _defines and _undefines only needed to disambiguate tentative definitions
   StringSet<>                             _defines;
@@ -75,6 +74,11 @@ public:
   static bool isBitcodeForTarget(MemoryBuffer *memBuffer,
                                  StringRef triplePrefix);
 
+  /// Returns a string representing the producer identification stored in the
+  /// bitcode, or "" if the bitcode does not contains any.
+  ///
+  static std::string getProducerString(MemoryBuffer *Buffer);
+
   /// Create a MemoryBuffer from a memory range with an optional name.
   static std::unique_ptr<MemoryBuffer>
   makeBuffer(const void *mem, size_t length, StringRef name = "");
@@ -87,25 +91,24 @@ public:
   /// InitializeAllTargetMCs();
   /// InitializeAllAsmPrinters();
   /// InitializeAllAsmParsers();
-  static LTOModule *createFromFile(const char *path, TargetOptions options,
-                                   std::string &errMsg);
-  static LTOModule *createFromOpenFile(int fd, const char *path, size_t size,
-                                       TargetOptions options,
-                                       std::string &errMsg);
-  static LTOModule *createFromOpenFileSlice(int fd, const char *path,
-                                            size_t map_size, off_t offset,
-                                            TargetOptions options,
-                                            std::string &errMsg);
-  static LTOModule *createFromBuffer(const void *mem, size_t length,
-                                     TargetOptions options, std::string &errMsg,
-                                     StringRef path = "");
+  static ErrorOr<std::unique_ptr<LTOModule>>
+  createFromFile(LLVMContext &Context, const char *path, TargetOptions options);
+  static ErrorOr<std::unique_ptr<LTOModule>>
+  createFromOpenFile(LLVMContext &Context, int fd, const char *path,
+                     size_t size, TargetOptions options);
+  static ErrorOr<std::unique_ptr<LTOModule>>
+  createFromOpenFileSlice(LLVMContext &Context, int fd, const char *path,
+                          size_t map_size, off_t offset, TargetOptions options);
+  static ErrorOr<std::unique_ptr<LTOModule>>
+  createFromBuffer(LLVMContext &Context, const void *mem, size_t length,
+                   TargetOptions options, StringRef path = "");
 
-  static LTOModule *createInLocalContext(const void *mem, size_t length,
-                                         TargetOptions options,
-                                         std::string &errMsg, StringRef path);
-  static LTOModule *createInContext(const void *mem, size_t length,
-                                    TargetOptions options, std::string &errMsg,
-                                    StringRef path, LLVMContext *Context);
+  static ErrorOr<std::unique_ptr<LTOModule>>
+  createInLocalContext(const void *mem, size_t length, TargetOptions options,
+                       StringRef path);
+  static ErrorOr<std::unique_ptr<LTOModule>>
+  createInContext(const void *mem, size_t length, TargetOptions options,
+                  StringRef path, LLVMContext *Context);
 
   const Module &getModule() const {
     return const_cast<LTOModule*>(this)->getModule();
@@ -113,6 +116,8 @@ public:
   Module &getModule() {
     return IRFile->getModule();
   }
+
+  std::unique_ptr<Module> takeModule() { return IRFile->takeModule(); }
 
   /// Return the Module's target triple.
   const std::string &getTargetTriple() {
@@ -143,28 +148,14 @@ public:
     return nullptr;
   }
 
-  /// Get the number of dependent libraries
-  uint32_t getDependentLibraryCount() {
-    return _deplibs.size();
-  }
-
-  /// Get the dependent library at the specified index.
-  const char *getDependentLibrary(uint32_t index) {
-    if (index < _deplibs.size())
-      return _deplibs[index];
+  const GlobalValue *getSymbolGV(uint32_t index) {
+    if (index < _symbols.size())
+      return _symbols[index].symbol;
     return nullptr;
   }
 
-  /// Get the number of linker options
-  uint32_t getLinkerOptCount() {
-    return _linkeropts.size();
-  }
-
-  /// Get the linker option at the specified index.
-  const char *getLinkerOpt(uint32_t index) {
-    if (index < _linkeropts.size())
-      return _linkeropts[index];
-    return nullptr;
+  const char *getLinkerOpts() {
+    return LinkerOpts.c_str();
   }
 
   const std::vector<const char*> &getAsmUndefinedRefs() {
@@ -178,7 +169,7 @@ private:
 
   /// Parse the symbols from the module and model-level ASM and add them to
   /// either the defined or undefined lists.
-  bool parseSymbols(std::string &errMsg);
+  void parseSymbols();
 
   /// Add a symbol which isn't defined just yet to a list to be resolved later.
   void addPotentialUndefinedSymbol(const object::BasicSymbolRef &Sym,
@@ -215,8 +206,9 @@ private:
   bool objcClassNameFromExpression(const Constant *c, std::string &name);
 
   /// Create an LTOModule (private version).
-  static LTOModule *makeLTOModule(MemoryBufferRef Buffer, TargetOptions options,
-                                  std::string &errMsg, LLVMContext *Context);
+  static ErrorOr<std::unique_ptr<LTOModule>>
+  makeLTOModule(MemoryBufferRef Buffer, TargetOptions options,
+                LLVMContext *Context);
 };
 }
 #endif

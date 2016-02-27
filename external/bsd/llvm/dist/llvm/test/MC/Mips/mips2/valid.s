@@ -1,7 +1,7 @@
 # Instructions that are valid
 #
 # RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips2 | FileCheck %s
-
+a:
         .set noat
         abs.d     $f7,$f25             # CHECK: encoding:
         abs.s     $f9,$f16
@@ -57,6 +57,12 @@
         ehb                            # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
         floor.w.d $f14,$f11
         floor.w.s $f8,$f9
+        j         1f                   # CHECK: j $tmp0 # encoding: [0b000010AA,A,A,A]
+                                       # CHECK:         #   fixup A - offset: 0, value: ($tmp0), kind: fixup_Mips_26
+        j         a                    # CHECK: j a     # encoding: [0b000010AA,A,A,A]
+                                       # CHECK:         #   fixup A - offset: 0, value: a, kind: fixup_Mips_26
+        j         1328                 # CHECK: j 1328  # encoding: [0x08,0x00,0x01,0x4c]
+        jal       21100                # CHECK: jal 21100     # encoding: [0x0c,0x00,0x14,0x9b]
         lb        $24,-14515($10)
         lbu       $8,30195($v1)
         ldc1      $f11,16391($s0)
@@ -79,8 +85,8 @@
         mflo      $s1
         mov.d     $f20,$f14
         mov.s     $f2,$f27
-        move      $s8,$a0
-        move      $25,$a2
+        move      $s8,$a0              # CHECK: move $fp, $4             # encoding: [0x00,0x80,0xf0,0x25]
+        move      $25,$a2              # CHECK: move $25, $6             # encoding: [0x00,0xc0,0xc8,0x25]
         mtc1      $s8,$f9
         mthi      $s1
         mtlo      $sp
@@ -165,3 +171,6 @@
         trunc.w.d $f22,$f15
         trunc.w.s $f28,$f30
         xor       $s2,$a0,$s8
+        xor       $2, 4                # CHECK: xori $2, $2, 4         # encoding: [0x38,0x42,0x00,0x04]
+
+1:

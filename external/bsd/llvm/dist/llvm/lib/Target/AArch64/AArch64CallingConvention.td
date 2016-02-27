@@ -16,7 +16,7 @@ class CCIfAlign<string Align, CCAction A> :
   CCIf<!strconcat("ArgFlags.getOrigAlign() == ", Align), A>;
 /// CCIfBigEndian - Match only if we're in big endian mode.
 class CCIfBigEndian<CCAction A> :
-  CCIf<"State.getMachineFunction().getSubtarget().getDataLayout()->isBigEndian()", A>;
+  CCIf<"State.getMachineFunction().getDataLayout().isBigEndian()", A>;
 
 //===----------------------------------------------------------------------===//
 // ARM AAPCS64 Calling Convention
@@ -39,6 +39,11 @@ def CC_AArch64_AAPCS : CallingConv<[
   // Put ByVal arguments directly on the stack. Minimum size and alignment of a
   // slot is 64-bit.
   CCIfByVal<CCPassByVal<8, 8>>,
+
+  // The 'nest' parameter, if any, is passed in X18.
+  // Darwin uses X18 as the platform register and hence 'nest' isn't currently
+  // supported there.
+  CCIfNest<CCAssignToReg<[X18]>>,
 
   CCIfConsecutiveRegs<CCCustom<"CC_AArch64_Custom_Block">>,
 
@@ -273,6 +278,23 @@ def CSR_AArch64_TLS_Darwin
     : CalleeSavedRegs<(add (sub (sequence "X%u", 1, 28), X16, X17),
                            FP,
                            (sequence "Q%u", 0, 31))>;
+
+// We can only handle a register pair with adjacent registers, the register pair
+// should belong to the same class as well. Since the access function on the
+// fast path calls a function that follows CSR_AArch64_TLS_Darwin,
+// CSR_AArch64_CXX_TLS_Darwin should be a subset of CSR_AArch64_TLS_Darwin.
+def CSR_AArch64_CXX_TLS_Darwin
+    : CalleeSavedRegs<(add CSR_AArch64_AAPCS,
+                           (sub (sequence "X%u", 1, 28), X15, X16, X17, X18),
+                           (sequence "D%u", 0, 31))>;
+
+// CSRs that are handled by prologue, epilogue.
+def CSR_AArch64_CXX_TLS_Darwin_PE
+    : CalleeSavedRegs<(add LR, FP)>;
+
+// CSRs that are handled explicitly via copies.
+def CSR_AArch64_CXX_TLS_Darwin_ViaCopy
+    : CalleeSavedRegs<(sub CSR_AArch64_CXX_TLS_Darwin, LR, FP)>;
 
 // The ELF stub used for TLS-descriptor access saves every feasible
 // register. Only X0 and LR are clobbered.

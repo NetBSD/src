@@ -69,7 +69,7 @@ public:
     unsigned NumFixedArgs;
     CallingConv::ID CallConv;
     const Value *Callee;
-    const char *SymName;
+    MCSymbol *Symbol;
     ArgListTy Args;
     ImmutableCallSite *CS;
     MachineInstr *Call;
@@ -88,7 +88,7 @@ public:
         : RetTy(nullptr), RetSExt(false), RetZExt(false), IsVarArg(false),
           IsInReg(false), DoesNotReturn(false), IsReturnValueUsed(true),
           IsTailCall(false), NumFixedArgs(-1), CallConv(CallingConv::C),
-          Callee(nullptr), SymName(nullptr), CS(nullptr), Call(nullptr),
+          Callee(nullptr), Symbol(nullptr), CS(nullptr), Call(nullptr),
           ResultReg(0), NumResultRegs(0), IsPatchPoint(false) {}
 
     CallLoweringInfo &setCallee(Type *ResultTy, FunctionType *FuncTy,
@@ -114,12 +114,12 @@ public:
     }
 
     CallLoweringInfo &setCallee(Type *ResultTy, FunctionType *FuncTy,
-                                const char *Target, ArgListTy &&ArgsList,
+                                MCSymbol *Target, ArgListTy &&ArgsList,
                                 ImmutableCallSite &Call,
                                 unsigned FixedArgs = ~0U) {
       RetTy = ResultTy;
       Callee = Call.getCalledValue();
-      SymName = Target;
+      Symbol = Target;
 
       IsInReg = Call.paramHasAttr(0, Attribute::InReg);
       DoesNotReturn = Call.doesNotReturn();
@@ -148,11 +148,16 @@ public:
       return *this;
     }
 
-    CallLoweringInfo &setCallee(CallingConv::ID CC, Type *ResultTy,
+    CallLoweringInfo &setCallee(const DataLayout &DL, MCContext &Ctx,
+                                CallingConv::ID CC, Type *ResultTy,
                                 const char *Target, ArgListTy &&ArgsList,
+                                unsigned FixedArgs = ~0U);
+
+    CallLoweringInfo &setCallee(CallingConv::ID CC, Type *ResultTy,
+                                MCSymbol *Target, ArgListTy &&ArgsList,
                                 unsigned FixedArgs = ~0U) {
       RetTy = ResultTy;
-      SymName = Target;
+      Symbol = Target;
       CallConv = CC;
       Args = std::move(ArgsList);
       NumFixedArgs = (FixedArgs == ~0U) ? Args.size() : FixedArgs;
@@ -414,11 +419,11 @@ protected:
                             const TargetRegisterClass *RC, unsigned Op0,
                             bool Op0IsKill, uint64_t Imm1, uint64_t Imm2);
 
-  /// \brief Emit a MachineInstr with two register operands and a result
+  /// \brief Emit a MachineInstr with a floating point immediate, and a result
   /// register in the given register class.
-  unsigned fastEmitInst_rf(unsigned MachineInstOpcode,
-                           const TargetRegisterClass *RC, unsigned Op0,
-                           bool Op0IsKill, const ConstantFP *FPImm);
+  unsigned fastEmitInst_f(unsigned MachineInstOpcode,
+                          const TargetRegisterClass *RC,
+                          const ConstantFP *FPImm);
 
   /// \brief Emit a MachineInstr with two register operands, an immediate, and a
   /// result register in the given register class.
@@ -427,22 +432,10 @@ protected:
                             bool Op0IsKill, unsigned Op1, bool Op1IsKill,
                             uint64_t Imm);
 
-  /// \brief Emit a MachineInstr with two register operands, two immediates
-  /// operands, and a result register in the given register class.
-  unsigned fastEmitInst_rrii(unsigned MachineInstOpcode,
-                             const TargetRegisterClass *RC, unsigned Op0,
-                             bool Op0IsKill, unsigned Op1, bool Op1IsKill,
-                             uint64_t Imm1, uint64_t Imm2);
-
   /// \brief Emit a MachineInstr with a single immediate operand, and a result
   /// register in the given register class.
   unsigned fastEmitInst_i(unsigned MachineInstrOpcode,
                           const TargetRegisterClass *RC, uint64_t Imm);
-
-  /// \brief Emit a MachineInstr with a two immediate operands.
-  unsigned fastEmitInst_ii(unsigned MachineInstrOpcode,
-                           const TargetRegisterClass *RC, uint64_t Imm1,
-                           uint64_t Imm2);
 
   /// \brief Emit a MachineInstr for an extract_subreg from a specified index of
   /// a superregister to a specified type.
@@ -456,6 +449,11 @@ protected:
   /// \brief Emit an unconditional branch to the given block, unless it is the
   /// immediate (fall-through) successor, and update the CFG.
   void fastEmitBranch(MachineBasicBlock *MBB, DebugLoc DL);
+
+  /// Emit an unconditional branch to \p FalseMBB, obtains the branch weight
+  /// and adds TrueMBB and FalseMBB to the successor list.
+  void finishCondBranch(const BasicBlock *BranchBB, MachineBasicBlock *TrueMBB,
+                        MachineBasicBlock *FalseMBB);
 
   /// \brief Update the value map to include the new mapping for this
   /// instruction, or insert an extra copy to get the result in a previous
@@ -504,7 +502,9 @@ protected:
 
   CmpInst::Predicate optimizeCmpPredicate(const CmpInst *CI) const;
 
-  bool lowerCallTo(const CallInst *CI, const char *SymName, unsigned NumArgs);
+  bool lowerCallTo(const CallInst *CI, MCSymbol *Symbol, unsigned NumArgs);
+  bool lowerCallTo(const CallInst *CI, const char *SymbolName,
+                   unsigned NumArgs);
   bool lowerCallTo(CallLoweringInfo &CLI);
 
   bool isCommutativeIntrinsic(IntrinsicInst const *II) {
@@ -558,6 +558,9 @@ private:
   /// to the beginning of the block. It helps to avoid spilling cached variables
   /// across heavy instructions like calls.
   void flushLocalValueMap();
+
+  /// \brief Removes dead local value instructions after SavedLastLocalvalue.
+  void removeDeadLocalValueCode(MachineInstr *SavedLastLocalValue);
 
   /// \brief Insertion point before trying to select the current instruction.
   MachineBasicBlock::iterator SavedInsertPt;

@@ -3,6 +3,7 @@ RUN: obj2yaml %p/Inputs/trivial-object-test.coff-x86-64 | FileCheck %s --check-p
 RUN: obj2yaml %p/Inputs/trivial-object-test.elf-mipsel | FileCheck %s --check-prefix ELF-MIPSEL
 RUN: obj2yaml %p/Inputs/trivial-object-test.elf-mips64el | FileCheck %s --check-prefix ELF-MIPS64EL
 RUN: obj2yaml %p/Inputs/trivial-object-test.elf-x86-64 | FileCheck %s --check-prefix ELF-X86-64
+RUN: obj2yaml %p/Inputs/trivial-object-test.elf-avr | FileCheck %s --check-prefix ELF-AVR
 RUN: obj2yaml %p/Inputs/unwind-section.elf-x86-64 \
 RUN:   | FileCheck %s --check-prefix ELF-X86-64-UNWIND
 
@@ -210,27 +211,21 @@ ELF-MIPSEL-NEXT:     Relocations:
 ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000000
 ELF-MIPSEL-NEXT:         Symbol:          _gp_disp
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_HI16
-ELF-MIPSEL-NEXT:         Addend:          0
 ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000004
 ELF-MIPSEL-NEXT:         Symbol:          _gp_disp
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_LO16
-ELF-MIPSEL-NEXT:         Addend:          0
 ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000018
 ELF-MIPSEL-NEXT:         Symbol:          '$.str'
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_GOT16
-ELF-MIPSEL-NEXT:         Addend:          0
 ELF-MIPSEL-NEXT:       - Offset:          0x000000000000001C
 ELF-MIPSEL-NEXT:         Symbol:          '$.str'
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_LO16
-ELF-MIPSEL-NEXT:         Addend:          0
 ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000020
 ELF-MIPSEL-NEXT:         Symbol:          puts
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_CALL16
-ELF-MIPSEL-NEXT:         Addend:          0
 ELF-MIPSEL-NEXT:       - Offset:          0x000000000000002C
 ELF-MIPSEL-NEXT:         Symbol:          SomeOtherFunction
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_CALL16
-ELF-MIPSEL-NEXT:         Addend:          0
 ELF-MIPSEL-NEXT:   - Name:            .data
 ELF-MIPSEL-NEXT:     Type:            SHT_PROGBITS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
@@ -240,7 +235,7 @@ ELF-MIPSEL-NEXT:   - Name:            .bss
 ELF-MIPSEL-NEXT:     Type:            SHT_NOBITS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000004
-ELF-MIPSEL-NEXT:     Content:         48656C6C
+ELF-MIPSEL-NEXT:     Size:            0x0000000000000004
 ELF-MIPSEL-NEXT:   - Name:            .mdebug.abi32
 ELF-MIPSEL-NEXT:     Type:            SHT_PROGBITS
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000001
@@ -259,7 +254,12 @@ ELF-MIPSEL-NEXT:   - Name:            .MIPS.abiflags
 ELF-MIPSEL-NEXT:     Type:            SHT_MIPS_ABIFLAGS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_ALLOC ]
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000008
-ELF-MIPSEL-NEXT:     Content:         '000020010101000100000000000000000100000000000000'
+ELF-MIPSEL-NEXT:     ISA:             MIPS32
+ELF-MIPSEL-NEXT:     ISARevision:     0x01
+ELF-MIPSEL-NEXT:     FpABI:           FP_DOUBLE
+ELF-MIPSEL-NEXT:     GPRSize:         REG_32
+ELF-MIPSEL-NEXT:     CPR1Size:        REG_32
+ELF-MIPSEL-NEXT:     Flags1:          [ ODDSPREG ]
 ELF-MIPSEL-NEXT: Symbols:
 ELF-MIPSEL-NEXT:   Local:
 ELF-MIPSEL-NEXT:     - Name:            trivial.ll
@@ -268,26 +268,19 @@ ELF-MIPSEL-NEXT:     - Name:            '$.str'
 ELF-MIPSEL-NEXT:       Type:            STT_OBJECT
 ELF-MIPSEL-NEXT:       Section:         .rodata.str1.1
 ELF-MIPSEL-NEXT:       Size:            0x000000000000000D
-ELF-MIPSEL-NEXT:     - Name:            .text
-ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:     - Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .text
-ELF-MIPSEL-NEXT:     - Name:            .data
-ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:     - Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .data
-ELF-MIPSEL-NEXT:     - Name:            .bss
-ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:     - Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .bss
-ELF-MIPSEL-NEXT:     - Name:            .mdebug.abi32
-ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:     - Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .mdebug.abi32
-ELF-MIPSEL-NEXT:     - Name:            .rodata.str1.1
-ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:     - Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .rodata.str1.1
-ELF-MIPSEL-NEXT:     - Name:            .reginfo
-ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:     - Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .reginfo
-ELF-MIPSEL-NEXT:     - Name:            .MIPS.abiflags
-ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:     - Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .MIPS.abiflags
 ELF-MIPSEL-NEXT:   Global:
 ELF-MIPSEL-NEXT:     - Name:            main
@@ -328,12 +321,10 @@ ELF-MIPS64EL-NEXT:     Relocations:
 ELF-MIPS64EL-NEXT:       - Offset:          0
 ELF-MIPS64EL-NEXT:         Symbol:          zed
 ELF-MIPS64EL-NEXT:         Type:            R_MIPS_64
-ELF-MIPS64EL-NEXT:         Addend:          0
 ELF-MIPS64EL-NEXT:   - Name:            .bss
 ELF-MIPS64EL-NEXT:     Type:            SHT_NOBITS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000010
-ELF-MIPS64EL-NEXT:     Content:         ''
 ELF-MIPS64EL-NEXT:   - Name:            .MIPS.options
 ELF-MIPS64EL-NEXT:     Type:            SHT_MIPS_OPTIONS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_ALLOC ]
@@ -345,22 +336,17 @@ ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000004
 ELF-MIPS64EL-NEXT:     Content:         ''
 ELF-MIPS64EL-NEXT: Symbols:
 ELF-MIPS64EL-NEXT:   Local:
-ELF-MIPS64EL-NEXT:     - Name:            .text
-ELF-MIPS64EL-NEXT:       Type:            STT_SECTION
+ELF-MIPS64EL-NEXT:     - Type:            STT_SECTION
 ELF-MIPS64EL-NEXT:       Section:         .text
-ELF-MIPS64EL-NEXT:     - Name:            .data
-ELF-MIPS64EL-NEXT:       Type:            STT_SECTION
+ELF-MIPS64EL-NEXT:     - Type:            STT_SECTION
 ELF-MIPS64EL-NEXT:       Section:         .data
-ELF-MIPS64EL-NEXT:     - Name:            .bss
-ELF-MIPS64EL-NEXT:       Type:            STT_SECTION
+ELF-MIPS64EL-NEXT:     - Type:            STT_SECTION
 ELF-MIPS64EL-NEXT:       Section:         .bss
 ELF-MIPS64EL-NEXT:     - Name:            bar
 ELF-MIPS64EL-NEXT:       Section:         .data
-ELF-MIPS64EL-NEXT:     - Name:            .MIPS.options
-ELF-MIPS64EL-NEXT:       Type:            STT_SECTION
+ELF-MIPS64EL-NEXT:     - Type:            STT_SECTION
 ELF-MIPS64EL-NEXT:       Section:         .MIPS.options
-ELF-MIPS64EL-NEXT:     - Name:            .pdr
-ELF-MIPS64EL-NEXT:       Type:            STT_SECTION
+ELF-MIPS64EL-NEXT:     - Type:            STT_SECTION
 ELF-MIPS64EL-NEXT:       Section:         .pdr
 ELF-MIPS64EL-NEXT:   Global:
 ELF-MIPS64EL-NEXT:     - Name:            zed
@@ -396,9 +382,8 @@ ELF-X86-64-NEXT:     AddressAlign:    0x0000000000000008
 ELF-X86-64-NEXT:     Info:            .text
 ELF-X86-64-NEXT:     Relocations:
 ELF-X86-64-NEXT:       - Offset:          0x000000000000000D
-ELF-X86-64-NEXT:         Symbol:          .rodata.str1.1
+ELF-X86-64-NEXT:         Symbol:          ''
 ELF-X86-64-NEXT:         Type:            R_X86_64_32S
-ELF-X86-64-NEXT:         Addend:          0
 ELF-X86-64-NEXT:       - Offset:          0x0000000000000012
 ELF-X86-64-NEXT:         Symbol:          puts
 ELF-X86-64-NEXT:         Type:            R_X86_64_PC32
@@ -411,14 +396,11 @@ ELF-X86-64-NEXT: Symbols:
 ELF-X86-64-NEXT:   Local:
 ELF-X86-64-NEXT:     - Name:            trivial-object-test.s
 ELF-X86-64-NEXT:       Type:            STT_FILE
-ELF-X86-64-NEXT:     - Name:            .text
-ELF-X86-64-NEXT:       Type:            STT_SECTION
+ELF-X86-64-NEXT:     - Type:            STT_SECTION
 ELF-X86-64-NEXT:       Section:         .text
-ELF-X86-64-NEXT:     - Name:            .rodata.str1.1
-ELF-X86-64-NEXT:       Type:            STT_SECTION
+ELF-X86-64-NEXT:     - Type:            STT_SECTION
 ELF-X86-64-NEXT:       Section:         .rodata.str1.1
-ELF-X86-64-NEXT:     - Name:            .note.GNU-stack
-ELF-X86-64-NEXT:       Type:            STT_SECTION
+ELF-X86-64-NEXT:     - Type:            STT_SECTION
 ELF-X86-64-NEXT:       Section:         .note.GNU-stack
 ELF-X86-64-NEXT:   Global:
 ELF-X86-64-NEXT:     - Name:            main
@@ -428,8 +410,72 @@ ELF-X86-64-NEXT:       Size:            0x0000000000000026
 ELF-X86-64-NEXT:     - Name:            SomeOtherFunction
 ELF-X86-64-NEXT:     - Name:            puts
 
+
+ELF-AVR:      FileHeader:      
+ELF-AVR-NEXT:   Class:           ELFCLASS32
+ELF-AVR-NEXT:   Data:            ELFDATA2LSB
+ELF-AVR-NEXT:   Type:            ET_EXEC
+ELF-AVR-NEXT:   Machine:         EM_AVR
+ELF-AVR-NEXT:   Flags:           [ EF_AVR_ARCH_AVR2 ]
+ELF-AVR-NEXT: Sections:        
+ELF-AVR-NEXT:   - Name:            .text
+ELF-AVR-NEXT:     Type:            SHT_PROGBITS
+ELF-AVR-NEXT:     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+ELF-AVR-NEXT:     AddressAlign:    0x0000000000000002
+ELF-AVR-NEXT:     Content:         C20E0895
+ELF-AVR-NEXT:   - Name:            .data
+ELF-AVR-NEXT:     Type:            SHT_PROGBITS
+ELF-AVR-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
+ELF-AVR-NEXT:     Address:         0x0000000000800060
+ELF-AVR-NEXT:     AddressAlign:    0x0000000000000001
+ELF-AVR-NEXT:     Content:         ''
+ELF-AVR-NEXT: Symbols:         
+ELF-AVR-NEXT:   Local:           
+ELF-AVR-NEXT:     - Type:            STT_SECTION
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:     - Type:            STT_SECTION
+ELF-AVR-NEXT:       Section:         .data
+ELF-AVR-NEXT:       Value:           0x0000000000800060
+ELF-AVR-NEXT:     - Name:            a.o
+ELF-AVR-NEXT:       Type:            STT_FILE
+ELF-AVR-NEXT:     - Name:            main
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:   Global:          
+ELF-AVR-NEXT:     - Name:            __trampolines_start
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:     - Name:            _etext
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:       Value:           0x0000000000000004
+ELF-AVR-NEXT:     - Name:            __data_load_end
+ELF-AVR-NEXT:       Value:           0x0000000000000004
+ELF-AVR-NEXT:     - Name:            __trampolines_end
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:     - Name:            __data_load_start
+ELF-AVR-NEXT:       Value:           0x0000000000000004
+ELF-AVR-NEXT:     - Name:            __dtors_end
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:     - Name:            __eeprom_end
+ELF-AVR-NEXT:       Section:         .data
+ELF-AVR-NEXT:       Value:           0x0000000000810000
+ELF-AVR-NEXT:     - Name:            __ctors_start
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:     - Name:            __dtors_start
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:     - Name:            __ctors_end
+ELF-AVR-NEXT:       Section:         .text
+ELF-AVR-NEXT:     - Name:            _edata
+ELF-AVR-NEXT:       Section:         .data
+ELF-AVR-NEXT:       Value:           0x0000000000800060
+ELF-AVR-NEXT:     - Name:            _end
+ELF-AVR-NEXT:       Section:         .data
+ELF-AVR-NEXT:       Value:           0x0000000000800060
+
+
 ELF-X86-64-UNWIND:      - Name:            .eh_frame
 ELF-X86-64-UNWIND-NEXT:   Type:            SHT_X86_64_UNWIND
 ELF-X86-64-UNWIND-NEXT:   Flags:           [ SHF_ALLOC ]
 ELF-X86-64-UNWIND-NEXT:   AddressAlign:    0x0000000000000001
 ELF-X86-64-UNWIND-NEXT:   Content:         ''
+
+RUN: not obj2yaml %t.blah 2>&1 | FileCheck --check-prefix=ENOENT %s
+ENOENT: Error: '{{[Nn]}}o such file or directory'

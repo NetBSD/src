@@ -9,6 +9,7 @@
 
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Operator.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -400,6 +401,13 @@ TEST_F(ConstantRangeTest, Multiply) {
   EXPECT_EQ(ConstantRange(APInt(4, 1), APInt(4, 6)).multiply(
                 ConstantRange(APInt(4, 6), APInt(4, 2))),
             ConstantRange(4, /*isFullSet=*/true));
+
+  EXPECT_EQ(ConstantRange(APInt(8, 254), APInt(8, 0)).multiply(
+              ConstantRange(APInt(8, 252), APInt(8, 4))),
+            ConstantRange(APInt(8, 250), APInt(8, 9)));
+  EXPECT_EQ(ConstantRange(APInt(8, 254), APInt(8, 255)).multiply(
+              ConstantRange(APInt(8, 2), APInt(8, 4))),
+            ConstantRange(APInt(8, 250), APInt(8, 253)));
 }
 
 TEST_F(ConstantRangeTest, UMax) {
@@ -502,11 +510,114 @@ TEST_F(ConstantRangeTest, Lshr) {
   EXPECT_EQ(Wrap.lshr(Wrap), Full);
 }
 
-TEST(ConstantRange, MakeICmpRegion) {
+TEST(ConstantRange, MakeAllowedICmpRegion) {
   // PR8250
   ConstantRange SMax = ConstantRange(APInt::getSignedMaxValue(32));
-  EXPECT_TRUE(ConstantRange::makeICmpRegion(ICmpInst::ICMP_SGT,
-                                            SMax).isEmptySet());
+  EXPECT_TRUE(ConstantRange::makeAllowedICmpRegion(ICmpInst::ICMP_SGT, SMax)
+                  .isEmptySet());
+}
+
+TEST(ConstantRange, MakeSatisfyingICmpRegion) {
+  ConstantRange LowHalf(APInt(8, 0), APInt(8, 128));
+  ConstantRange HighHalf(APInt(8, 128), APInt(8, 0));
+  ConstantRange EmptySet(8, /* isFullSet = */ false);
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_NE, LowHalf),
+            HighHalf);
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_NE, HighHalf),
+      LowHalf);
+
+  EXPECT_TRUE(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_EQ,
+                                                      HighHalf).isEmptySet());
+
+  ConstantRange UnsignedSample(APInt(8, 5), APInt(8, 200));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_ULT,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 0), APInt(8, 5)));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_ULE,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 0), APInt(8, 6)));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_UGT,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 200), APInt(8, 0)));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_UGE,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 199), APInt(8, 0)));
+
+  ConstantRange SignedSample(APInt(8, -5), APInt(8, 5));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SLT, SignedSample),
+      ConstantRange(APInt(8, -128), APInt(8, -5)));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SLE, SignedSample),
+      ConstantRange(APInt(8, -128), APInt(8, -4)));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SGT, SignedSample),
+      ConstantRange(APInt(8, 5), APInt(8, -128)));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SGE, SignedSample),
+      ConstantRange(APInt(8, 4), APInt(8, -128)));
+}
+
+TEST(ConstantRange, MakeOverflowingRegion) {
+  const int IntMin4Bits = 8;
+  const int IntMax4Bits = 7;
+  typedef OverflowingBinaryOperator OBO;
+
+  for (int Const : {0, -1, -2, 1, 2, IntMin4Bits, IntMax4Bits}) {
+    APInt C(4, Const, true /* = isSigned */);
+
+    auto NUWRegion =
+      ConstantRange::makeNoWrapRegion(Instruction::Add, C, OBO::NoUnsignedWrap);
+
+    EXPECT_FALSE(NUWRegion.isEmptySet());
+
+    auto NSWRegion =
+      ConstantRange::makeNoWrapRegion(Instruction::Add, C, OBO::NoSignedWrap);
+
+    EXPECT_FALSE(NSWRegion.isEmptySet());
+
+    auto NoWrapRegion = ConstantRange::makeNoWrapRegion(
+        Instruction::Add, C, OBO::NoSignedWrap | OBO::NoUnsignedWrap);
+
+    EXPECT_FALSE(NoWrapRegion.isEmptySet());
+    EXPECT_TRUE(NUWRegion.intersectWith(NSWRegion).contains(NoWrapRegion));
+
+    for (APInt I = NUWRegion.getLower(), E = NUWRegion.getUpper(); I != E;
+         ++I) {
+      bool Overflow = false;
+      I.uadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+    }
+
+    for (APInt I = NSWRegion.getLower(), E = NSWRegion.getUpper(); I != E;
+         ++I) {
+      bool Overflow = false;
+      I.sadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+    }
+
+    for (APInt I = NoWrapRegion.getLower(), E = NoWrapRegion.getUpper(); I != E;
+         ++I) {
+      bool Overflow = false;
+
+      I.sadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+
+      I.uadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+    }
+  }
 }
 
 }  // anonymous namespace

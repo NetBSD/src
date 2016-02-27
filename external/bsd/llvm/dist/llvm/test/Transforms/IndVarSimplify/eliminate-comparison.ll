@@ -16,7 +16,7 @@ entry:
   br i1 %cmp9, label %pre, label %return
 
 pre:
-  %t3 = load i32* %p
+  %t3 = load i32, i32* %p
   %tobool.not = icmp ne i32 %t3, 0
   br label %loop
 
@@ -27,7 +27,7 @@ loop:
   br i1 %cond, label %if.then, label %for.inc
 
 if.then:
-  %arrayidx = getelementptr [0 x double]* @X, i64 0, i64 %i
+  %arrayidx = getelementptr [0 x double], [0 x double]* @X, i64 0, i64 %i
   store double 3.200000e+00, double* %arrayidx
   br label %for.inc
 
@@ -50,22 +50,22 @@ entry:
   br label %bb18
 
 bb13:
-  %tmp66 = load i64** %tmp65, align 4
-  %tmp68 = getelementptr inbounds i64* %tmp66, i32 %i
-  %tmp69 = load i64* %tmp68, align 4
-  %tmp74 = load i64** %tmp73, align 4
-  %tmp76 = getelementptr inbounds i64* %tmp74, i32 %i
-  %tmp77 = load i64* %tmp76, align 4
+  %tmp66 = load i64*, i64** %tmp65, align 4
+  %tmp68 = getelementptr inbounds i64, i64* %tmp66, i32 %i
+  %tmp69 = load i64, i64* %tmp68, align 4
+  %tmp74 = load i64*, i64** %tmp73, align 4
+  %tmp76 = getelementptr inbounds i64, i64* %tmp74, i32 %i
+  %tmp77 = load i64, i64* %tmp76, align 4
   %tmp78 = icmp ugt i64 %tmp69, %tmp77
   br i1 %tmp78, label %bb20.loopexit, label %bb15
 
 bb15:
-  %tmp83 = load i64** %tmp82, align 4
-  %tmp85 = getelementptr inbounds i64* %tmp83, i32 %i
-  %tmp86 = load i64* %tmp85, align 4
-  %tmp91 = load i64** %tmp90, align 4
-  %tmp93 = getelementptr inbounds i64* %tmp91, i32 %i
-  %tmp94 = load i64* %tmp93, align 4
+  %tmp83 = load i64*, i64** %tmp82, align 4
+  %tmp85 = getelementptr inbounds i64, i64* %tmp83, i32 %i
+  %tmp86 = load i64, i64* %tmp85, align 4
+  %tmp91 = load i64*, i64** %tmp90, align 4
+  %tmp93 = getelementptr inbounds i64, i64* %tmp91, i32 %i
+  %tmp94 = load i64, i64* %tmp93, align 4
   %tmp95 = icmp ult i64 %tmp86, %tmp94
   br i1 %tmp95, label %bb20.loopexit, label %bb17
 
@@ -209,3 +209,351 @@ assert77:                                         ; preds = %noassert68
 unrolledend:                                      ; preds = %forcond38
   ret i32 0
 }
+
+declare void @side_effect()
+
+define void @func_13(i32* %len.ptr) {
+; CHECK-LABEL: @func_13(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.sub.1 = add i32 %len, -1
+  %len.is.zero = icmp eq i32 %len, 0
+  br i1 %len.is.zero, label %leave, label %loop
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.cmp = icmp ult i32 %iv, %len
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp ult i32 %iv, %len.sub.1
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_14(i32* %len.ptr) {
+; CHECK-LABEL: @func_14(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.sub.1 = add i32 %len, -1
+  %len.is.zero = icmp eq i32 %len, 0
+  %len.is.int_min = icmp eq i32 %len, 2147483648
+  %no.entry = or i1 %len.is.zero, %len.is.int_min
+  br i1 %no.entry, label %leave, label %loop
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.cmp = icmp slt i32 %iv, %len
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv, %len.sub.1
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_15(i32* %len.ptr) {
+; CHECK-LABEL: @func_15(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.add.1 = add i32 %len, 1
+  %len.add.1.is.zero = icmp eq i32 %len.add.1, 0
+  br i1 %len.add.1.is.zero, label %leave, label %loop
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.cmp = icmp ult i32 %iv, %len.add.1
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp ult i32 %iv, %len
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_16(i32* %len.ptr) {
+; CHECK-LABEL: @func_16(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.add.5 = add i32 %len, 5
+  %entry.cond.0 = icmp slt i32 %len, 2147483643
+  %entry.cond.1 = icmp slt i32 4, %len.add.5
+  %entry.cond = and i1 %entry.cond.0, %entry.cond.1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.add.4 = add i32 %iv, 4
+  %iv.cmp = icmp slt i32 %iv.add.4, %len.add.5
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv, %len
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_17(i32* %len.ptr) {
+; CHECK-LABEL: @func_17(
+ entry:
+  %len = load i32, i32* %len.ptr
+  %len.add.5 = add i32 %len, -5
+  %entry.cond.0 = icmp slt i32 %len, 2147483653 ;; 2147483653 == INT_MIN - (-5)
+  %entry.cond.1 = icmp slt i32 -6, %len.add.5
+  %entry.cond = and i1 %entry.cond.0, %entry.cond.1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv.2 = phi i32 [ 0, %entry ], [ %iv.2.inc, %be ]
+  %iv = phi i32 [ -6, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.2.inc = add i32 %iv.2, 1
+  %iv.cmp = icmp slt i32 %iv, %len.add.5
+
+; Deduces {-5,+,1} s< (-5 + %len) from {0,+,1} < %len
+; since %len s< INT_MIN - (-5) from the entry condition
+
+; CHECK: br i1 true, label %be, label %leave
+  br i1 %iv.cmp, label %be, label %leave
+
+ be:
+; CHECK: be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.2, %len
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define i1 @func_18(i16* %tmp20, i32* %len.addr) {
+; CHECK-LABEL: @func_18(
+entry:
+  %len = load i32, i32* %len.addr, !range !0
+  %tmp18 = icmp eq i32 %len, 0
+  br i1 %tmp18, label %bb2, label %bb0.preheader
+
+bb0.preheader:
+  br label %bb0
+
+bb0:
+; CHECK: bb0:
+  %var_0.in = phi i32 [ %var_0, %bb1 ], [ %len, %bb0.preheader ]
+  %var_1 = phi i32 [ %tmp30, %bb1 ], [ 0, %bb0.preheader ]
+  %var_0 = add nsw i32 %var_0.in, -1
+  %tmp23 = icmp ult i32 %var_1, %len
+; CHECK: br i1 true, label %stay, label %bb2.loopexit
+  br i1 %tmp23, label %stay, label %bb2
+
+stay:
+; CHECK: stay:
+  %tmp25 = getelementptr inbounds i16, i16* %tmp20, i32 %var_1
+  %tmp26 = load i16, i16* %tmp25
+  %tmp29 = icmp eq i16 %tmp26, 0
+  br i1 %tmp29, label %bb1, label %bb2
+
+bb1:
+  %tmp30 = add i32 %var_1, 1
+  %tmp31 = icmp eq i32 %var_0, 0
+  br i1 %tmp31, label %bb3, label %bb0
+
+bb2:
+  ret i1 false
+
+bb3:
+  ret i1 true
+}
+
+define void @func_19(i32* %length.ptr) {
+; CHECK-LABEL: @func_19(
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %length.is.nonzero = icmp ne i32 %length, 0
+  br i1 %length.is.nonzero, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp ult i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %length
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_20(i32* %length.ptr) {
+; Like @func_19, but %length is no longer provably positive, so
+; %range.check cannot be proved to be always true.
+
+; CHECK-LABEL: @func_20(
+ entry:
+  %length = load i32, i32* %length.ptr
+  %length.is.nonzero = icmp ne i32 %length, 0
+  br i1 %length.is.nonzero, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp ult i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 %range.check, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %length
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_21(i32* %length.ptr) {
+; CHECK-LABEL: @func_21(
+
+; This checks that the backedge condition, (I + 1) < Length - 1 implies
+; (I + 1) < Length
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %lim = sub i32 %length, 1
+  %entry.cond = icmp sgt i32 %length, 1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp slt i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %lim
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_22(i32* %length.ptr) {
+; CHECK-LABEL: @func_22(
+
+; This checks that the backedge condition, (I + 1) < Length - 1 implies
+; (I + 1) < Length
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %lim = sub i32 %length, 1
+  %entry.cond = icmp sgt i32 %length, 1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp sle i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp sle i32 %iv.inc, %lim
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_23(i32* %length.ptr) {
+; CHECK-LABEL: @func_23(
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %entry.cond = icmp ult i32 4, %length
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 4, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp slt i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %length
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_24(i32* %init.ptr) {
+; CHECK-LABEL: @func_24(
+ entry:
+  %init = load i32, i32* %init.ptr, !range !0
+  %entry.cond = icmp ugt i32 %init, 4
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ %init, %entry ], [ %iv.dec, %be ]
+  %iv.dec = add i32 %iv, -1
+  %range.check = icmp sgt i32 %iv, 4
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp sgt i32 %iv.dec, 4
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+
+!0 = !{i32 0, i32 2147483647}

@@ -34,6 +34,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/IR/Constants.h"
@@ -64,7 +65,7 @@ int main() {
   Function *Add1F =
     cast<Function>(M->getOrInsertFunction("add1", Type::getInt32Ty(Context),
                                           Type::getInt32Ty(Context),
-                                          (Type *)0));
+                                          nullptr));
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
@@ -79,7 +80,7 @@ int main() {
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
-  Argument *ArgX = Add1F->arg_begin();  // Get the arg
+  Argument *ArgX = &*Add1F->arg_begin();          // Get the arg
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the add instruction, inserting it into the end of BB.
@@ -90,12 +91,11 @@ int main() {
 
   // Now, function add1 is ready.
 
-
   // Now we're going to create function `foo', which returns an int and takes no
   // arguments.
   Function *FooF =
     cast<Function>(M->getOrInsertFunction("foo", Type::getInt32Ty(Context),
-                                          (Type *)0));
+                                          nullptr));
 
   // Add a basic block to the FooF function.
   BB = BasicBlock::Create(Context, "EntryBlock", FooF);

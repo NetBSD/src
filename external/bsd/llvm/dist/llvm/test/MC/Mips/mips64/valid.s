@@ -1,7 +1,7 @@
 # Instructions that are valid
 #
 # RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64 | FileCheck %s
-
+a:
         .set noat
         abs.d     $f7,$f25             # CHECK: encoding:
         abs.s     $f9,$f16
@@ -40,7 +40,7 @@
         bltzall   $6,488               # CHECK: bltzall $6, 488      # encoding: [0x04,0xd2,0x00,0x7a]
         bltzl     $s1,-9964            # CHECK: bltzl $17, -9964     # encoding: [0x06,0x22,0xf6,0x45]
         bnel      $gp,$s4,5107         # CHECK: bnel $gp, $20, 5107  # encoding: [0x57,0x94,0x04,0xfc]
-        cache     1, 8($5)             # CHECK: cache 1, 8($5)   # encoding: [0xbc,0xa1,0x00,0x08]
+        cache     1, 8($5)             # CHECK: cache 1, 8($5)       # encoding: [0xbc,0xa1,0x00,0x08]
         c.ngl.d   $f29,$f29
         c.ngle.d  $f0,$f16
         c.sf.d    $f30,$f0
@@ -82,10 +82,15 @@
         div.d     $f29,$f20,$f27
         div.s     $f4,$f5,$f15
         divu      $zero,$25,$15
+        dmfc0     $10, $16, 2          # CHECK: dmfc0 $10, $16, 2           # encoding: [0x40,0x2a,0x80,0x02]
         dmfc1     $12,$f13
+        dmtc0     $4, $10, 0           # CHECK: dmtc0 $4, $10, 0            # encoding: [0x40,0xa4,0x50,0x00]
         dmtc1     $s0,$f14
         dmult     $s7,$9
         dmultu    $a1,$a2
+        dneg      $2                   # CHECK: dneg $2, $2                 # encoding: [0x00,0x02,0x10,0x2e]
+        dneg      $2,$3                # CHECK: dneg $2, $3                 # encoding: [0x00,0x03,0x10,0x2e]
+        dnegu     $2,$3                # CHECK: dnegu $2, $3                # encoding: [0x00,0x03,0x10,0x2f]
         dsll      $zero,18             # CHECK: dsll $zero, $zero, 18       # encoding: [0x00,0x00,0x04,0xb8]
         dsll      $zero,$s4,18         # CHECK: dsll $zero, $20, 18         # encoding: [0x00,0x14,0x04,0xb8]
         dsll      $zero,$s4,$12        # CHECK: dsllv $zero, $20, $12       # encoding: [0x01,0x94,0x00,0x14]
@@ -118,6 +123,12 @@
         floor.l.s $f12,$f5
         floor.w.d $f14,$f11
         floor.w.s $f8,$f9
+        j         1f                   # CHECK: j $tmp0 # encoding: [0b000010AA,A,A,A]
+                                       # CHECK:         #   fixup A - offset: 0, value: ($tmp0), kind: fixup_Mips_26
+        j         a                    # CHECK: j a     # encoding: [0b000010AA,A,A,A]
+                                       # CHECK:         #   fixup A - offset: 0, value: a, kind: fixup_Mips_26
+        j         1328                 # CHECK: j 1328  # encoding: [0x08,0x00,0x01,0x4c]
+        jal       21100                # CHECK: jal 21100     # encoding: [0x0c,0x00,0x14,0x9b]
         lb        $24,-14515($10)
         lbu       $8,30195($v1)
         ld        $sp,-28645($s1)
@@ -146,17 +157,17 @@
         maddu     $24,$s2
         madd.d    $f18, $f22, $f26, $f20  # encoding: [0x4e,0xd4,0xd4,0xa1]
         madd.s    $f2, $f30, $f18, $f24   # encoding: [0x4f,0xd8,0x90,0xa0]
-        mfc0      $a2,$14,1
+        mfc0      $8,$15,1             # CHECK: mfc0 $8, $15, 1        # encoding: [0x40,0x08,0x78,0x01]
         mfc1      $a3,$f27
         mfhi      $s3
         mfhi      $sp
         mflo      $s1
         mov.d     $f20,$f14
         mov.s     $f2,$f27
-        move      $a0,$a3
-        move      $s5,$a0
-        move      $s8,$a0
-        move      $25,$a2
+        move      $a0,$a3              # CHECK: move $4, $7              # encoding: [0x00,0xe0,0x20,0x25]
+        move      $s5,$a0              # CHECK: move $21, $4             # encoding: [0x00,0x80,0xa8,0x25]
+        move      $s8,$a0              # CHECK: move $fp, $4             # encoding: [0x00,0x80,0xf0,0x25]
+        move      $25,$a2              # CHECK: move $25, $6             # encoding: [0x00,0xc0,0xc8,0x25]
         movf      $gp,$8,$fcc7
         movf.d    $f6,$f11,$fcc5
         movf.s    $f23,$f5,$fcc6
@@ -173,7 +184,7 @@
         msubu     $15,$a1
         msub.d    $f10, $f2, $f30, $f18   # encoding: [0x4c,0x52,0xf2,0xa9]
         msub.s    $f12, $f18, $f10, $f16  # encoding: [0x4e,0x50,0x53,0x28]
-        mtc0      $9,$29,3
+        mtc0      $9,$15,1                # CHECK: mtc0 $9, $15, 1     # encoding: [0x40,0x89,0x78,0x01]
         mtc1      $s8,$f9
         mthi      $s1
         mtlo      $sp
@@ -276,3 +287,6 @@
         trunc.w.d $f22,$f15
         trunc.w.s $f28,$f30
         xor       $s2,$a0,$s8
+        xor       $2, 4                # CHECK: xori $2, $2, 4         # encoding: [0x38,0x42,0x00,0x04]
+
+1:

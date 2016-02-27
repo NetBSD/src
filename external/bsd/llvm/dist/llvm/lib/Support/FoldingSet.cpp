@@ -51,8 +51,8 @@ bool FoldingSetNodeIDRef::operator<(FoldingSetNodeIDRef RHS) const {
 ///
 void FoldingSetNodeID::AddPointer(const void *Ptr) {
   // Note: this adds pointers to the hash using sizes and endianness that
-  // depend on the host.  It doesn't matter however, because hashing on
-  // pointer values in inherently unstable.  Nothing  should depend on the 
+  // depend on the host. It doesn't matter, however, because hashing on
+  // pointer values is inherently unstable. Nothing should depend on the
   // ordering of nodes in the folding set.
   Bits.append(reinterpret_cast<unsigned *>(&Ptr),
               reinterpret_cast<unsigned *>(&Ptr+1));
@@ -101,6 +101,8 @@ void FoldingSetNodeID::AddString(StringRef String) {
     // Otherwise do it the hard way.
     // To be compatible with above bulk transfer, we need to take endianness
     // into account.
+    static_assert(sys::IsBigEndianHost || sys::IsLittleEndianHost,
+                  "Unexpected host endianness");
     if (sys::IsBigEndianHost) {
       for (Pos += 4; Pos <= Size; Pos += 4) {
         unsigned V = ((unsigned char)String[Pos - 4] << 24) |
@@ -109,8 +111,7 @@ void FoldingSetNodeID::AddString(StringRef String) {
                       (unsigned char)String[Pos - 1];
         Bits.push_back(V);
       }
-    } else {
-      assert(sys::IsLittleEndianHost && "Unexpected host endianness");
+    } else {  // Little-endian host
       for (Pos += 4; Pos <= Size; Pos += 4) {
         unsigned V = ((unsigned char)String[Pos - 1] << 24) |
                      ((unsigned char)String[Pos - 2] << 16) |
@@ -222,6 +223,8 @@ static void **AllocateBuckets(unsigned NumBuckets) {
 //===----------------------------------------------------------------------===//
 // FoldingSetImpl Implementation
 
+void FoldingSetImpl::anchor() {}
+
 FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) {
   assert(5 < Log2InitSize && Log2InitSize < 32 &&
          "Initial hash table size out of range");
@@ -229,9 +232,29 @@ FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) {
   Buckets = AllocateBuckets(NumBuckets);
   NumNodes = 0;
 }
+
+FoldingSetImpl::FoldingSetImpl(FoldingSetImpl &&Arg)
+    : Buckets(Arg.Buckets), NumBuckets(Arg.NumBuckets), NumNodes(Arg.NumNodes) {
+  Arg.Buckets = nullptr;
+  Arg.NumBuckets = 0;
+  Arg.NumNodes = 0;
+}
+
+FoldingSetImpl &FoldingSetImpl::operator=(FoldingSetImpl &&RHS) {
+  free(Buckets); // This may be null if the set is in a moved-from state.
+  Buckets = RHS.Buckets;
+  NumBuckets = RHS.NumBuckets;
+  NumNodes = RHS.NumNodes;
+  RHS.Buckets = nullptr;
+  RHS.NumBuckets = 0;
+  RHS.NumNodes = 0;
+  return *this;
+}
+
 FoldingSetImpl::~FoldingSetImpl() {
   free(Buckets);
 }
+
 void FoldingSetImpl::clear() {
   // Set all but the last bucket to null pointers.
   memset(Buckets, 0, NumBuckets*sizeof(void*));

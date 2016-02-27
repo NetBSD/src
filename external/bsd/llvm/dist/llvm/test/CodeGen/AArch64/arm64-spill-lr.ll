@@ -1,9 +1,9 @@
 ; RUN: llc -mtriple=arm64-apple-ios < %s
 @bar = common global i32 0, align 4
 
-; Leaf function which uses all callee-saved registers and allocates >= 256 bytes on the stack
-; this will cause processFunctionBeforeCalleeSavedScan() to spill LR as an additional scratch
-; register.
+; Leaf function which uses all callee-saved registers and allocates >= 256 bytes
+; on the stack this will cause determineCalleeSaves() to spill LR as an
+; additional scratch register.
 ;
 ; This is a crash-only regression test for rdar://15124582.
 define i32 @foo(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %g, i32 %h) nounwind {
@@ -11,31 +11,31 @@ entry:
   %stack = alloca [128 x i32], align 4
   %0 = bitcast [128 x i32]* %stack to i8*
   %idxprom = sext i32 %a to i64
-  %arrayidx = getelementptr inbounds [128 x i32]* %stack, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [128 x i32], [128 x i32]* %stack, i64 0, i64 %idxprom
   store i32 %b, i32* %arrayidx, align 4
-  %1 = load volatile i32* @bar, align 4
-  %2 = load volatile i32* @bar, align 4
-  %3 = load volatile i32* @bar, align 4
-  %4 = load volatile i32* @bar, align 4
-  %5 = load volatile i32* @bar, align 4
-  %6 = load volatile i32* @bar, align 4
-  %7 = load volatile i32* @bar, align 4
-  %8 = load volatile i32* @bar, align 4
-  %9 = load volatile i32* @bar, align 4
-  %10 = load volatile i32* @bar, align 4
-  %11 = load volatile i32* @bar, align 4
-  %12 = load volatile i32* @bar, align 4
-  %13 = load volatile i32* @bar, align 4
-  %14 = load volatile i32* @bar, align 4
-  %15 = load volatile i32* @bar, align 4
-  %16 = load volatile i32* @bar, align 4
-  %17 = load volatile i32* @bar, align 4
-  %18 = load volatile i32* @bar, align 4
-  %19 = load volatile i32* @bar, align 4
-  %20 = load volatile i32* @bar, align 4
+  %1 = load volatile i32, i32* @bar, align 4
+  %2 = load volatile i32, i32* @bar, align 4
+  %3 = load volatile i32, i32* @bar, align 4
+  %4 = load volatile i32, i32* @bar, align 4
+  %5 = load volatile i32, i32* @bar, align 4
+  %6 = load volatile i32, i32* @bar, align 4
+  %7 = load volatile i32, i32* @bar, align 4
+  %8 = load volatile i32, i32* @bar, align 4
+  %9 = load volatile i32, i32* @bar, align 4
+  %10 = load volatile i32, i32* @bar, align 4
+  %11 = load volatile i32, i32* @bar, align 4
+  %12 = load volatile i32, i32* @bar, align 4
+  %13 = load volatile i32, i32* @bar, align 4
+  %14 = load volatile i32, i32* @bar, align 4
+  %15 = load volatile i32, i32* @bar, align 4
+  %16 = load volatile i32, i32* @bar, align 4
+  %17 = load volatile i32, i32* @bar, align 4
+  %18 = load volatile i32, i32* @bar, align 4
+  %19 = load volatile i32, i32* @bar, align 4
+  %20 = load volatile i32, i32* @bar, align 4
   %idxprom1 = sext i32 %c to i64
-  %arrayidx2 = getelementptr inbounds [128 x i32]* %stack, i64 0, i64 %idxprom1
-  %21 = load i32* %arrayidx2, align 4
+  %arrayidx2 = getelementptr inbounds [128 x i32], [128 x i32]* %stack, i64 0, i64 %idxprom1
+  %21 = load i32, i32* %arrayidx2, align 4
   %factor = mul i32 %h, -2
   %factor67 = mul i32 %g, -2
   %factor68 = mul i32 %f, -2

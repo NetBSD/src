@@ -3,8 +3,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* Exported configuration */
+#include "llvm/Config/llvm-config.h"
+
 /* Bug report URL. */
 #undef BUG_REPORT_URL
+
+/* Default OpenMP runtime used by -fopenmp. */
+#undef CLANG_DEFAULT_OPENMP_RUNTIME
 
 /* Define if we have libxml2 */
 #undef CLANG_HAVE_LIBXML
@@ -38,9 +44,6 @@
 
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE
-
-/* Define to 1 if you have the `ceilf' function. */
-#undef HAVE_CEILF
 
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
 #undef HAVE_CRASHREPORTERCLIENT_H
@@ -86,12 +89,6 @@
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
 
-/* Define to 1 if you have the `exp' function. */
-#undef HAVE_EXP
-
-/* Define to 1 if you have the `exp2' function. */
-#undef HAVE_EXP2
-
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -106,15 +103,6 @@
 
 /* Define to 1 if you have the <ffi.h> header file. */
 #undef HAVE_FFI_H
-
-/* Set to 1 if the finite function is found in <ieeefp.h> */
-#undef HAVE_FINITE_IN_IEEEFP_H
-
-/* Define to 1 if you have the `floorf' function. */
-#undef HAVE_FLOORF
-
-/* Define to 1 if you have the `fmodf' function. */
-#undef HAVE_FMODF
 
 /* Define to 1 if you have the `futimens' function. */
 #undef HAVE_FUTIMENS
@@ -146,26 +134,14 @@
 /* Define to 1 if you have the `isatty' function. */
 #undef HAVE_ISATTY
 
-/* Set to 1 if the isinf function is found in <cmath> */
-#undef HAVE_ISINF_IN_CMATH
-
-/* Set to 1 if the isinf function is found in <math.h> */
-#undef HAVE_ISINF_IN_MATH_H
-
-/* Set to 1 if the isnan function is found in <cmath> */
-#undef HAVE_ISNAN_IN_CMATH
-
-/* Set to 1 if the isnan function is found in <math.h> */
-#undef HAVE_ISNAN_IN_MATH_H
-
 /* Define if libedit is available on this platform. */
 #undef HAVE_LIBEDIT
 
-/* Define to 1 if you have the `imagehlp' library (-limagehlp). */
-#undef HAVE_LIBIMAGEHLP
-
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
+
+/* Define to 1 if you have the `ole32' library (-lole32). */
+#undef HAVE_LIBOLE32
 
 /* Define to 1 if you have the `psapi' library (-lpsapi). */
 #undef HAVE_LIBPSAPI
@@ -175,6 +151,9 @@
 
 /* Define to 1 if you have the `shell32' library (-lshell32). */
 #undef HAVE_LIBSHELL32
+
+/* Define to 1 if you have the `uuid' library (-luuid). */
+#undef HAVE_LIBUUID
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
@@ -188,15 +167,6 @@
 /* Define if you can use -Wl,-R. to pass -R. to the linker, in order to add
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
-
-/* Define to 1 if you have the `log' function. */
-#undef HAVE_LOG
-
-/* Define to 1 if you have the `log10' function. */
-#undef HAVE_LOG10
-
-/* Define to 1 if you have the `log2' function. */
-#undef HAVE_LOG2
 
 /* Define to 1 if you have the `longjmp' function. */
 #undef HAVE_LONGJMP
@@ -241,14 +211,8 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
-/* Define to 1 if you have the `nearbyintf' function. */
-#undef HAVE_NEARBYINTF
-
 /* Define to 1 if you have the `posix_spawn' function. */
 #undef HAVE_POSIX_SPAWN
-
-/* Define to 1 if you have the `powf' function. */
-#undef HAVE_POWF
 
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
@@ -268,20 +232,8 @@
 /* Have pthread_rwlock_init */
 #undef HAVE_PTHREAD_RWLOCK_INIT
 
-/* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
-#undef HAVE_RAND48
-
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
-
-/* Define to 1 if you have the `rintf' function. */
-#undef HAVE_RINTF
-
-/* Define to 1 if you have the `round' function. */
-#undef HAVE_ROUND
-
-/* Define to 1 if you have the `roundf' function. */
-#undef HAVE_ROUNDF
 
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
@@ -298,26 +250,14 @@
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
 
-/* Define to 1 if you have the `siglongjmp' function. */
-#undef HAVE_SIGLONGJMP
-
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
-
-/* Define to 1 if you have the `sigsetjmp' function. */
-#undef HAVE_SIGSETJMP
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
-
-/* Set to 1 if the std::isinf function is found in <cmath> */
-#undef HAVE_STD_ISINF_IN_CMATH
-
-/* Set to 1 if the std::isnan function is found in <cmath> */
-#undef HAVE_STD_ISNAN_IN_CMATH
 
 /* Define to 1 if you have the `strerror' function. */
 #undef HAVE_STRERROR
@@ -330,9 +270,6 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strtof' function. */
-#undef HAVE_STRTOF
 
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
@@ -375,9 +312,6 @@
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #undef HAVE_SYS_UIO_H
 
-/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
-#undef HAVE_SYS_WAIT_H
-
 /* Define if the setupterm() function is supported this platform. */
 #undef HAVE_TERMINFO
 
@@ -389,9 +323,6 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the <utime.h> header file. */
-#undef HAVE_UTIME_H
 
 /* Define to 1 if the system has the type `u_int64_t'. */
 #undef HAVE_U_INT64_T
@@ -479,6 +410,9 @@
 
 /* Installation directory for documentation */
 #undef LLVM_DOCSDIR
+
+/* Define to enable checks that alter the LLVM C++ ABI */
+#undef LLVM_ENABLE_ABI_BREAKING_CHECKS
 
 /* Define if threads enabled */
 #undef LLVM_ENABLE_THREADS

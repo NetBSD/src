@@ -65,3 +65,22 @@ define [3 x %struct] @undef-test3() {
 ; CHECK: ret [3 x %struct] [%struct undef, %struct { i32 0, [4 x i8] undef }, %struct undef]
 }
 
+define i32 @test-float-Nan() {
+  %A = bitcast i32 2139171423 to float
+  %B = insertvalue [1 x float] undef, float %A, 0
+  %C = extractvalue [1 x float] %B, 0
+  %D = bitcast float %C to i32
+  ret i32 %D
+; CHECK: @test-float-Nan
+; CHECK: ret i32 2139171423
+}
+
+define i16 @test-half-Nan() {
+  %A = bitcast i16 32256 to half
+  %B = insertvalue [1 x half] undef, half %A, 0
+  %C = extractvalue [1 x half] %B, 0
+  %D = bitcast half %C to i16
+  ret i16 %D
+; CHECK: @test-half-Nan
+; CHECK: ret i16 32256
+}

@@ -29,7 +29,7 @@
 
 namespace llvm {
 /// \brief Collects and handles line tables information in a CodeView format.
-class WinCodeViewLineTables : public AsmPrinterHandler {
+class LLVM_LIBRARY_VISIBILITY WinCodeViewLineTables : public AsmPrinterHandler {
   AsmPrinter *Asm;
   DebugLoc PrevInstLoc;
 
@@ -52,11 +52,13 @@ class WinCodeViewLineTables : public AsmPrinterHandler {
   struct InstrInfoTy {
     StringRef Filename;
     unsigned LineNumber;
+    unsigned ColumnNumber;
 
-    InstrInfoTy() : LineNumber(0) {}
+    InstrInfoTy() : LineNumber(0), ColumnNumber(0) {}
 
-    InstrInfoTy(StringRef Filename, unsigned LineNumber)
-        : Filename(Filename), LineNumber(LineNumber) {}
+    InstrInfoTy(StringRef Filename, unsigned LineNumber, unsigned ColumnNumber)
+        : Filename(Filename), LineNumber(LineNumber),
+          ColumnNumber(ColumnNumber) {}
   };
   DenseMap<MCSymbol *, InstrInfoTy> InstrInfo;
 
@@ -96,7 +98,7 @@ class WinCodeViewLineTables : public AsmPrinterHandler {
     }
   } FileNameRegistry;
 
-  typedef std::map<std::pair<StringRef, StringRef>, char *>
+  typedef std::map<std::pair<StringRef, StringRef>, std::string>
       DirAndFilenameToFilepathMapTy;
   DirAndFilenameToFilepathMapTy DirAndFilenameToFilepathMap;
   StringRef getFullFilepath(const MDNode *S);
@@ -113,14 +115,6 @@ class WinCodeViewLineTables : public AsmPrinterHandler {
 
 public:
   WinCodeViewLineTables(AsmPrinter *Asm);
-
-  ~WinCodeViewLineTables() {
-    for (DirAndFilenameToFilepathMapTy::iterator
-             I = DirAndFilenameToFilepathMap.begin(),
-             E = DirAndFilenameToFilepathMap.end();
-         I != E; ++I)
-      free(I->second);
-  }
 
   void setSymbolSize(const llvm::MCSymbol *, uint64_t) override {}
 

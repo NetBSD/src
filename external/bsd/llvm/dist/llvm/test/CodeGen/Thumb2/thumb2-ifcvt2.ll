@@ -8,14 +8,14 @@ entry:
 ; CHECK: it ne
 ; CHECK: cmpne
 ; CHECK: it hi
-; CHECK: pophi {r7, pc}
+; CHECK: bxhi lr
 	%tmp1 = icmp ult i32 %X, 4		; <i1> [#uses=1]
 	%tmp4 = icmp eq i32 %Y, 0		; <i1> [#uses=1]
 	%tmp7 = or i1 %tmp4, %tmp1		; <i1> [#uses=1]
 	br i1 %tmp7, label %cond_true, label %UnifiedReturnBlock
 
 cond_true:		; preds = %entry
-	%tmp10 = call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp10 = call i32 (...) @bar( )		; <i32> [#uses=0]
 	ret void
 
 UnifiedReturnBlock:		; preds = %entry
@@ -41,9 +41,9 @@ entry:
 	br label %tailrecurse
 
 tailrecurse:		; preds = %bb, %entry
-	%tmp6 = load %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
-	%tmp9 = load %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=2]
-	%tmp12 = load %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
+	%tmp6 = load %struct.quad_struct*, %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
+	%tmp9 = load %struct.quad_struct*, %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=2]
+	%tmp12 = load %struct.quad_struct*, %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
 	%tmp14 = icmp eq %struct.quad_struct* null, null		; <i1> [#uses=1]
 	%tmp17 = icmp eq %struct.quad_struct* %tmp6, null		; <i1> [#uses=1]
 	%tmp23 = icmp eq %struct.quad_struct* %tmp9, null		; <i1> [#uses=1]
@@ -69,7 +69,7 @@ define fastcc void @t1(%struct.SString* %word, i8 signext  %c) {
 entry:
 ; CHECK-LABEL: t1:
 ; CHECK: it ne
-; CHECK: popne {r7, pc}
+; CHECK: bxne lr
 	%tmp1 = icmp eq %struct.SString* %word, null		; <i1> [#uses=1]
 	br i1 %tmp1, label %cond_true, label %cond_false
 

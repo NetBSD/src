@@ -127,7 +127,7 @@ void SlotIndexes::renumberIndexes() {
 void SlotIndexes::renumberIndexes(IndexList::iterator curItr) {
   // Number indexes with half the default spacing so we can catch up quickly.
   const unsigned Space = SlotIndex::InstrDist/2;
-  assert((Space & 3) == 0 && "InstrDist must be a multiple of 2*NUM");
+  static_assert((Space & 3) == 0, "InstrDist must be a multiple of 2*NUM");
 
   IndexList::iterator startItr = std::prev(curItr);
   unsigned index = startItr->getIndex();
@@ -172,8 +172,8 @@ void SlotIndexes::repairIndexesInRange(MachineBasicBlock *MBB,
   // optionally includes an additional position prior to MBB->begin(), indicated
   // by the includeStart flag. This is done so that we can iterate MIs in a MBB
   // in parallel with SlotIndexes, but there should be a better way to do this.
-  IndexList::iterator ListB = startIdx.listEntry();
-  IndexList::iterator ListI = endIdx.listEntry();
+  IndexList::iterator ListB = startIdx.listEntry()->getIterator();
+  IndexList::iterator ListI = endIdx.listEntry()->getIterator();
   MachineBasicBlock::iterator MBBI = End;
   bool pastStart = false;
   while (ListI != ListB || MBBI != Begin || (includeStart && !pastStart)) {

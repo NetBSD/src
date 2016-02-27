@@ -13,6 +13,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
+#include <cmath>
 #include <ostream>
 #include <string>
 
@@ -1305,14 +1306,28 @@ TEST(APFloatTest, roundToIntegral) {
   EXPECT_EQ(-0.0, P.convertToDouble());
   P = APFloat::getNaN(APFloat::IEEEdouble);
   P.roundToIntegral(APFloat::rmTowardZero);
-  EXPECT_TRUE(IsNAN(P.convertToDouble()));
+  EXPECT_TRUE(std::isnan(P.convertToDouble()));
   P = APFloat::getInf(APFloat::IEEEdouble);
   P.roundToIntegral(APFloat::rmTowardZero);
-  EXPECT_TRUE(IsInf(P.convertToDouble()) && P.convertToDouble() > 0.0);
+  EXPECT_TRUE(std::isinf(P.convertToDouble()) && P.convertToDouble() > 0.0);
   P = APFloat::getInf(APFloat::IEEEdouble, true);
   P.roundToIntegral(APFloat::rmTowardZero);
-  EXPECT_TRUE(IsInf(P.convertToDouble()) && P.convertToDouble() < 0.0);
-
+  EXPECT_TRUE(std::isinf(P.convertToDouble()) && P.convertToDouble() < 0.0);
+}
+  
+TEST(APFloatTest, isInteger) {
+  APFloat T(-0.0);
+  EXPECT_TRUE(T.isInteger());
+  T = APFloat(3.14159);
+  EXPECT_FALSE(T.isInteger());
+  T = APFloat::getNaN(APFloat::IEEEdouble);
+  EXPECT_FALSE(T.isInteger());
+  T = APFloat::getInf(APFloat::IEEEdouble);
+  EXPECT_FALSE(T.isInteger());
+  T = APFloat::getInf(APFloat::IEEEdouble, true);
+  EXPECT_FALSE(T.isInteger());
+  T = APFloat::getLargest(APFloat::IEEEdouble);
+  EXPECT_TRUE(T.isInteger());
 }
 
 TEST(APFloatTest, getLargest) {

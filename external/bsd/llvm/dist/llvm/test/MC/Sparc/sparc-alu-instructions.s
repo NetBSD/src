@@ -76,8 +76,8 @@
         ! CHECK: mov 255, %g3     ! encoding: [0x86,0x10,0x20,0xff]
         mov 0xff, %g3
 
-        ! CHECK: restore              ! encoding: [0x81,0xe8,0x00,0x00]
-        restore %g0, %g0, %g0
+        ! CHECK: restore %g0, %g0, %g1           ! encoding: [0x83,0xe8,0x00,0x00]
+        restore %g0, %g0, %g1
 
         ! CHECK: addx %g2, %g1, %g3              ! encoding: [0x86,0x40,0x80,0x01]
         addx %g2, %g1, %g3
@@ -90,6 +90,12 @@
 
         ! CHECK:  smulcc %g2, %g1, %g3            ! encoding: [0x86,0xd8,0x80,0x01]
         smulcc %g2, %g1, %g3
+
+        ! CHECK:  mulscc %g2, %g1, %g3            ! encoding: [0x87,0x20,0x80,0x01]
+        mulscc %g2, %g1, %g3
+
+        ! CHECK:  mulscc %g2, 254, %g3            ! encoding: [0x87,0x20,0xa0,0xfe]
+        mulscc %g2, 254, %g3
 
         ! CHECK:  udivcc %g2, %g1, %g3            ! encoding: [0x86,0xf0,0x80,0x01]
         udivcc %g2, %g1, %g3

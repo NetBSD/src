@@ -349,6 +349,8 @@ Lforward:
     and r6, r7, r8, ror r2
     and r10, r1, r6, rrx
     and r2, r3, #0x7fffffff
+    and sp, sp, #0x7fffffff
+    and pc, pc, #0x7fffffff
 
     @ destination register is optional
     and r1, #0xf
@@ -397,6 +399,8 @@ Lforward:
 @ CHECK: and	r6, r7, r8, ror r2      @ encoding: [0x78,0x62,0x07,0xe0]
 @ CHECK: and	r10, r1, r6, rrx        @ encoding: [0x66,0xa0,0x01,0xe0]
 @ CHECK: bic	r2, r3, #-2147483648    @ encoding: [0x02,0x21,0xc3,0xe3]
+@ CHECK: bic	sp, sp, #-2147483648    @ encoding: [0x02,0xd1,0xcd,0xe3]
+@ CHECK: bic	pc, pc, #-2147483648    @ encoding: [0x02,0xf1,0xcf,0xe3]
 
 @ CHECK: and	r1, r1, #15             @ encoding: [0x0f,0x10,0x01,0xe2]
 @ CHECK: and	r1, r1, #15             @ encoding: [0x0f,0x10,0x01,0xe2]
@@ -502,6 +506,10 @@ Lforward:
         bic r6, r7, r8, asr r2
         bic r6, r7, r8, ror r2
         bic r10, r1, r6, rrx
+        bic r2, r3, #0x7fffffff
+        bic sp, sp, #0x7fffffff
+        bic pc, pc, #0x7fffffff
+
 
         @ destination register is optional
         bic r1, #0xf
@@ -548,6 +556,9 @@ Lforward:
 @ CHECK: bic	r6, r7, r8, asr r2      @ encoding: [0x58,0x62,0xc7,0xe1]
 @ CHECK: bic	r6, r7, r8, ror r2      @ encoding: [0x78,0x62,0xc7,0xe1]
 @ CHECK: bic	r10, r1, r6, rrx        @ encoding: [0x66,0xa0,0xc1,0xe1]
+@ CHECK: and  r2, r3, #-2147483648    @ encoding: [0x02,0x21,0x03,0xe2]
+@ CHECK: and  sp, sp, #-2147483648    @ encoding: [0x02,0xd1,0x0d,0xe2]
+@ CHECK: and  pc, pc, #-2147483648    @ encoding: [0x02,0xf1,0x0f,0xe2]
 
 
 @ CHECK: bic	r1, r1, #15             @ encoding: [0x0f,0x10,0xc1,0xe3]
@@ -1509,6 +1520,7 @@ Lforward:
         mvn r3, $7
         mvn r3, 7
         mvn r3, -7
+        mvn r7, #~0xffffff00
         mvn r4, #0xff0
         mvn r5, #0xff0000
 	mvn r7, #(0xff << 16)
@@ -1526,6 +1538,7 @@ Lforward:
 @ CHECK: mvn	r3, #7                  @ encoding: [0x07,0x30,0xe0,0xe3]
 @ CHECK: mvn	r3, #7                  @ encoding: [0x07,0x30,0xe0,0xe3]
 @ CHECK: mov	r3, #6                  @ encoding: [0x06,0x30,0xa0,0xe3]
+@ CHECK: mvn    r7, #255                @ encoding: [0xff,0x70,0xe0,0xe3]
 @ CHECK: mvn	r4, #4080               @ encoding: [0xff,0x4e,0xe0,0xe3]
 @ CHECK: mvn	r5, #16711680           @ encoding: [0xff,0x58,0xe0,0xe3]
 @ CHECK: mvn	r7, #16711680           @ encoding: [0xff,0x78,0xe0,0xe3]

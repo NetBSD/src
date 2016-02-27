@@ -1,4 +1,4 @@
-//===- llvm/Support/ErrorOr.h - Error Smart Pointer -----------------------===//
+//===- llvm/Support/ErrorOr.h - Error Smart Pointer -------------*- C++ -*-===//
 //
 //                             The LLVM Linker
 //
@@ -91,6 +91,7 @@ private:
   typedef typename std::remove_reference<T>::type &reference;
   typedef const typename std::remove_reference<T>::type &const_reference;
   typedef typename std::remove_reference<T>::type *pointer;
+  typedef const typename std::remove_reference<T>::type *const_pointer;
 
 public:
   template <class E>
@@ -168,7 +169,7 @@ public:
   }
 
   /// \brief Return false if there is an error.
-  LLVM_EXPLICIT operator bool() const {
+  explicit operator bool() const {
     return !HasError;
   }
 
@@ -183,9 +184,13 @@ public:
     return toPointer(getStorage());
   }
 
+  const_pointer operator->() const { return toPointer(getStorage()); }
+
   reference operator *() {
     return *getStorage();
   }
+
+  const_reference operator*() const { return *getStorage(); }
 
 private:
   template <class OtherT>
@@ -246,9 +251,13 @@ private:
     return Val;
   }
 
+  const_pointer toPointer(const_pointer Val) const { return Val; }
+
   pointer toPointer(wrap *Val) {
     return &Val->get();
   }
+
+  const_pointer toPointer(const wrap *Val) const { return &Val->get(); }
 
   storage_type *getStorage() {
     assert(!HasError && "Cannot get value when an error exists!");
@@ -281,8 +290,8 @@ template <class T, class E>
 typename std::enable_if<std::is_error_code_enum<E>::value ||
                             std::is_error_condition_enum<E>::value,
                         bool>::type
-operator==(ErrorOr<T> &Err, E Code) {
-  return std::error_code(Err) == Code;
+operator==(const ErrorOr<T> &Err, E Code) {
+  return Err.getError() == Code;
 }
 } // end namespace llvm
 

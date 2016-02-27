@@ -10,9 +10,12 @@ set(LLVM_LINK_COMPONENTS
   MC
   MCJIT
   Object
+  OrcJIT
   RuntimeDyld
   SelectionDAG
   Support
+  Target
+  TransformUtils
   native
   )
 
@@ -26,7 +29,7 @@ endif( LLVM_USE_OPROFILE )
 if( LLVM_USE_INTEL_JITEVENTS )
   set(LLVM_LINK_COMPONENTS
     ${LLVM_LINK_COMPONENTS}
-    DebugInfo
+    DebugInfoDWARF
     IntelJITEvents
     Object
     )
@@ -34,8 +37,6 @@ endif( LLVM_USE_INTEL_JITEVENTS )
 
 add_llvm_tool(lli
   lli.cpp
-  RemoteMemoryManager.cpp
-  RemoteTarget.cpp
-  RemoteTargetExternal.cpp
+  OrcLazyJIT.cpp
   )
-set_target_properties(lli PROPERTIES ENABLE_EXPORTS 1)
+export_executable_symbols(lli)

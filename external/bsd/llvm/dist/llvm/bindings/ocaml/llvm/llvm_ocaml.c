@@ -940,6 +940,17 @@ CAMLprim value llvm_set_linkage(value Linkage, LLVMValueRef Global) {
   return Val_unit;
 }
 
+/* llvalue -> bool */
+CAMLprim value llvm_unnamed_addr(LLVMValueRef Global) {
+  return Val_bool(LLVMHasUnnamedAddr(Global));
+}
+
+/* bool -> llvalue -> unit */
+CAMLprim value llvm_set_unnamed_addr(value UseUnnamedAddr, LLVMValueRef Global) {
+  LLVMSetUnnamedAddr(Global, Bool_val(UseUnnamedAddr));
+  return Val_unit;
+}
+
 /* llvalue -> string */
 CAMLprim value llvm_section(LLVMValueRef Global) {
   return caml_copy_string(LLVMGetSection(Global));
@@ -2187,6 +2198,15 @@ CAMLprim LLVMValueRef llvm_build_phi(value Incoming, value Name, value B) {
     LLVMAddIncoming(PhiNode, (LLVMValueRef*) &Field(Hd, 0),
                     (LLVMBasicBlockRef*) &Field(Hd, 1), 1);
   }
+
+  return PhiNode;
+}
+
+/* lltype -> string -> llbuilder -> value */
+CAMLprim LLVMValueRef llvm_build_empty_phi(LLVMTypeRef Type, value Name, value B) {
+  LLVMValueRef PhiNode;
+
+  return LLVMBuildPhi(Builder_val(B), Type, String_val(Name));
 
   return PhiNode;
 }

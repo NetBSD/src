@@ -32,6 +32,11 @@
 
 ; CHECK-DAG: @0 = external global i32
 @0 = external global i32
+
+define i32* @use0() {
+  ret i32* @0
+}
+
 ; CHECK-DAG: @Inte = global i32 1
 @Inte = global i32 1
 
@@ -43,7 +48,7 @@
 
 ; This should get renamed since there is a definition that is non-internal in
 ; the other module.
-; CHECK-DAG: @Intern2{{[0-9]+}} = internal constant i32 792
+; CHECK-DAG: @Intern2.{{[0-9]+}} = internal constant i32 792
 @Intern2 = internal constant i32 792
 
 @UseIntern2 = global i32* @Intern2
@@ -61,7 +66,7 @@
 @AConst = linkonce constant i32 123
 
 ; Renamed version of Intern1.
-; CHECK-DAG: @Intern1{{[0-9]+}} = internal constant i32 52
+; CHECK-DAG: @Intern1.{{[0-9]+}} = internal constant i32 52
 
 
 ; Globals linked from testlink2.
@@ -76,15 +81,15 @@ declare i32 @foo(i32)
 declare void @print(i32)
 
 define void @main() {
-  %v1 = load i32* @MyVar
+  %v1 = load i32, i32* @MyVar
   call void @print(i32 %v1)
-  %idx = getelementptr %intlist* @MyIntList, i64 0, i32 1
-  %v2 = load i32* %idx
+  %idx = getelementptr %intlist, %intlist* @MyIntList, i64 0, i32 1
+  %v2 = load i32, i32* %idx
   call void @print(i32 %v2)
   %1 = call i32 @foo(i32 5)
-  %v3 = load i32* @MyVar
+  %v3 = load i32, i32* @MyVar
   call void @print(i32 %v3)
-  %v4 = load i32* %idx
+  %v4 = load i32, i32* %idx
   call void @print(i32 %v4)
   ret void
 }
@@ -101,4 +106,6 @@ define void @testIntern() {
   ret void
 }
 
-declare void @VecSizeCrash(%VecSize)
+define void @VecSizeCrash(%VecSize) {
+  ret void
+}

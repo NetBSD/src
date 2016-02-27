@@ -17,11 +17,11 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetMachine.h"
+#include <functional>
 #include <string>
 
 namespace llvm {
 
-class FunctionPass;
 class MachineFunctionPass;
 class PassConfigImpl;
 class PassInfo;
@@ -101,7 +101,7 @@ public:
 
 private:
   PassManagerBase *PM;
-  AnalysisID StartAfter;
+  AnalysisID StartBefore, StartAfter;
   AnalysisID StopAfter;
   bool Started;
   bool Stopped;
@@ -125,7 +125,7 @@ public:
   // Dummy constructor.
   TargetPassConfig();
 
-  virtual ~TargetPassConfig();
+  ~TargetPassConfig() override;
 
   static char ID;
 
@@ -139,16 +139,24 @@ public:
 
   CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
 
-  /// setStartStopPasses - Set the StartAfter and StopAfter passes to allow
-  /// running only a portion of the normal code-gen pass sequence.  If the
-  /// Start pass ID is zero, then compilation will begin at the normal point;
-  /// otherwise, clear the Started flag to indicate that passes should not be
-  /// added until the starting pass is seen.  If the Stop pass ID is zero,
-  /// then compilation will continue to the end.
-  void setStartStopPasses(AnalysisID Start, AnalysisID Stop) {
-    StartAfter = Start;
-    StopAfter = Stop;
-    Started = (StartAfter == nullptr);
+  /// Set the StartAfter, StartBefore and StopAfter passes to allow running only
+  /// a portion of the normal code-gen pass sequence.
+  ///
+  /// If the StartAfter and StartBefore pass ID is zero, then compilation will
+  /// begin at the normal point; otherwise, clear the Started flag to indicate
+  /// that passes should not be added until the starting pass is seen.  If the
+  /// Stop pass ID is zero, then compilation will continue to the end.
+  ///
+  /// This function expects that at least one of the StartAfter or the
+  /// StartBefore pass IDs is null.
+  void setStartStopPasses(AnalysisID StartBefore, AnalysisID StartAfter,
+                          AnalysisID StopAfter) {
+    if (StartAfter)
+      assert(!StartBefore && "Start after and start before passes are given");
+    this->StartBefore = StartBefore;
+    this->StartAfter = StartAfter;
+    this->StopAfter = StopAfter;
+    Started = (StartAfter == nullptr) && (StartBefore == nullptr);
   }
 
   void setDisableVerify(bool Disable) { setOpt(DisableVerify, Disable); }
@@ -162,7 +170,8 @@ public:
   void substitutePass(AnalysisID StandardID, IdentifyingPassPtr TargetID);
 
   /// Insert InsertedPassID pass after TargetPassID pass.
-  void insertPass(AnalysisID TargetPassID, IdentifyingPassPtr InsertedPassID);
+  void insertPass(AnalysisID TargetPassID, IdentifyingPassPtr InsertedPassID,
+                  bool VerifyAfter = true, bool PrintAfter = true);
 
   /// Allow the target to enable a specific standard pass by default.
   void enablePass(AnalysisID PassID) { substitutePass(PassID, PassID); }
@@ -178,6 +187,9 @@ public:
 
   /// Return true if the optimized regalloc pipeline is enabled.
   bool getOptimizeRegAlloc() const;
+
+  /// Return true if shrink wrapping is enabled.
+  bool getEnableShrinkWrap() const;
 
   /// Return true if the default global register allocator is in use and
   /// has not be overriden on the command line with '-regalloc=...'
@@ -214,7 +226,7 @@ public:
   ///
   /// This can also be used to plug a new MachineSchedStrategy into an instance
   /// of the standard ScheduleDAGMI:
-  ///   return new ScheduleDAGMI(C, new MyStrategy(C))
+  ///   return new ScheduleDAGMI(C, make_unique<MyStrategy>(C), /*RemoveKillFlags=*/false)
   ///
   /// Return NULL to select the default (generic) machine scheduler.
   virtual ScheduleDAGInstrs *
@@ -354,13 +366,6 @@ protected:
 namespace llvm {
   FunctionPass *createAtomicExpandPass(const TargetMachine *TM);
 
-  /// \brief Create a basic TargetTransformInfo analysis pass.
-  ///
-  /// This pass implements the target transform info analysis using the target
-  /// independent information available to the LLVM code generator.
-  ImmutablePass *
-  createBasicTargetTransformInfoPass(const TargetMachine *TM);
-
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
   /// work well with unreachable basic blocks (what live ranges make sense for a
   /// block that cannot be reached?).  As such, a code generator should either
@@ -374,6 +379,10 @@ namespace llvm {
   MachineFunctionPass *
   createMachineFunctionPrinterPass(raw_ostream &OS,
                                    const std::string &Banner ="");
+
+  /// MIRPrinting pass - this pass prints out the LLVM IR into the given stream
+  /// using the MIR serialization format.
+  MachineFunctionPass *createPrintMIRPass(raw_ostream &OS);
 
   /// createCodeGenPreparePass - Transform the code to expose more pattern
   /// matching during instruction selection.
@@ -433,6 +442,10 @@ namespace llvm {
   /// basic blocks.
   extern char &SpillPlacementID;
 
+  /// ShrinkWrap pass. Look for the best place to insert save and restore
+  // instruction and update the MachineFunctionInfo with that information.
+  extern char &ShrinkWrapID;
+
   /// VirtRegRewriter pass. Rewrite virtual registers to physical registers as
   /// assigned in VirtRegMap.
   extern char &VirtRegRewriterID;
@@ -485,6 +498,10 @@ namespace llvm {
   /// MachineFunctionPrinterPass - This pass prints out MachineInstr's.
   extern char &MachineFunctionPrinterPassID;
 
+  /// MIRPrintingPass - this pass prints out the LLVM IR using the MIR
+  /// serialization format.
+  extern char &MIRPrintingPassID;
+
   /// TailDuplicate - Duplicate blocks with unconditional branches
   /// into tails of their predecessors.
   extern char &TailDuplicateID;
@@ -508,6 +525,8 @@ namespace llvm {
   /// IfConverter - This pass performs machine code if conversion.
   extern char &IfConverterID;
 
+  FunctionPass *createIfConverter(std::function<bool(const Function &)> Ftor);
+
   /// MachineBlockPlacement - This pass places basic blocks based on branch
   /// probabilities.
   extern char &MachineBlockPlacementID;
@@ -517,10 +536,14 @@ namespace llvm {
   /// information.
   extern char &MachineBlockPlacementStatsID;
 
-  /// GCLowering Pass - Performs target-independent LLVM IR transformations for
-  /// highly portable strategies.
-  ///
+  /// GCLowering Pass - Used by gc.root to perform its default lowering
+  /// operations.
   FunctionPass *createGCLoweringPass();
+
+  /// ShadowStackGCLowering - Implements the custom lowering mechanism
+  /// used by the shadow stack GC.  Only runs on functions which opt in to
+  /// the shadow stack collector.
+  FunctionPass *createShadowStackGCLoweringPass();
 
   /// GCMachineCodeAnalysis - Target-independent pass to mark safe points
   /// in machine code. Must be added very late during code generation, just
@@ -534,6 +557,10 @@ namespace llvm {
 
   /// MachineCSE - This pass performs global CSE on machine instructions.
   extern char &MachineCSEID;
+
+  /// ImplicitNullChecks - This pass folds null pointer checks into nearby
+  /// memory operations.
+  extern char &ImplicitNullChecksID;
 
   /// MachineLICM - This pass performs LICM on machine instructions.
   extern char &MachineLICMID;
@@ -556,6 +583,9 @@ namespace llvm {
   /// StackSlotColoring - This pass performs stack slot coloring.
   extern char &StackSlotColoringID;
 
+  /// \brief This pass lays out funclets contiguously.
+  extern char &FuncletLayoutID;
+
   /// createStackProtectorPass - This pass adds stack protectors to functions.
   ///
   FunctionPass *createStackProtectorPass(const TargetMachine *TM);
@@ -569,10 +599,14 @@ namespace llvm {
   /// adapted to code generation.  Required if using dwarf exception handling.
   FunctionPass *createDwarfEHPass(const TargetMachine *TM);
 
+  /// createWinEHPass - Prepares personality functions used by MSVC on Windows,
+  /// in addition to the Itanium LSDA based personalities.
+  FunctionPass *createWinEHPass(const TargetMachine *TM);
+
   /// createSjLjEHPreparePass - This pass adapts exception handling code to use
   /// the GCC-style builtin setjmp/longjmp (sjlj) to handling EH control flow.
   ///
-  FunctionPass *createSjLjEHPreparePass(const TargetMachine *TM);
+  FunctionPass *createSjLjEHPreparePass();
 
   /// LocalStackSlotAllocation - This pass assigns local frame indices to stack
   /// slots relative to one another and allocates base registers to access them
@@ -594,6 +628,9 @@ namespace llvm {
   /// UnpackMachineBundles - This pass unpack machine instruction bundles.
   extern char &UnpackMachineBundlesID;
 
+  FunctionPass *
+  createUnpackMachineBundles(std::function<bool(const Function &)> Ftor);
+
   /// FinalizeMachineBundles - This pass finalize machine instruction
   /// bundles (created earlier, e.g. during pre-RA scheduling).
   extern char &FinalizeMachineBundlesID;
@@ -603,21 +640,29 @@ namespace llvm {
   /// the intrinsic for later emission to the StackMap.
   extern char &StackMapLivenessID;
 
+  /// LiveDebugValues pass
+  extern char &LiveDebugValuesID;
+
   /// createJumpInstrTables - This pass creates jump-instruction tables.
   ModulePass *createJumpInstrTablesPass();
 
   /// createForwardControlFlowIntegrityPass - This pass adds control-flow
   /// integrity.
   ModulePass *createForwardControlFlowIntegrityPass();
+
+  /// InterleavedAccess Pass - This pass identifies and matches interleaved
+  /// memory accesses to target specific intrinsics.
+  ///
+  FunctionPass *createInterleavedAccessPass(const TargetMachine *TM);
 } // End llvm namespace
 
-/// This initializer registers TargetMachine constructor, so the pass being
-/// initialized can use target dependent interfaces. Please do not move this
-/// macro to be together with INITIALIZE_PASS, which is a complete target
-/// independent initializer, and we don't want to make libScalarOpts depend
-/// on libCodeGen.
-#define INITIALIZE_TM_PASS(passName, arg, name, cfg, analysis) \
-  static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
+/// Target machine pass initializer for passes with dependencies. Use with
+/// INITIALIZE_TM_PASS_END.
+#define INITIALIZE_TM_PASS_BEGIN INITIALIZE_PASS_BEGIN
+
+/// Target machine pass initializer for passes with dependencies. Use with
+/// INITIALIZE_TM_PASS_BEGIN.
+#define INITIALIZE_TM_PASS_END(passName, arg, name, cfg, analysis) \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis, \
       PassInfo::TargetMachineCtor_t(callTargetMachineCtor< passName >)); \
@@ -627,5 +672,14 @@ namespace llvm {
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
     CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce) \
   }
+
+/// This initializer registers TargetMachine constructor, so the pass being
+/// initialized can use target dependent interfaces. Please do not move this
+/// macro to be together with INITIALIZE_PASS, which is a complete target
+/// independent initializer, and we don't want to make libScalarOpts depend
+/// on libCodeGen.
+#define INITIALIZE_TM_PASS(passName, arg, name, cfg, analysis) \
+    INITIALIZE_TM_PASS_BEGIN(passName, arg, name, cfg, analysis) \
+    INITIALIZE_TM_PASS_END(passName, arg, name, cfg, analysis)
 
 #endif

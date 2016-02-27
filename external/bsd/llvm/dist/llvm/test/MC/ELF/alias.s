@@ -24,6 +24,15 @@ bar5 = bar4
 bar6 = bar5
 bar6:
 
+// Test that indirect local aliases do not appear as symbols.
+.data
+.Llocal:
+
+.text
+leaq .Llocal1(%rip), %rdi
+.Llocal1 = .Llocal2
+.Llocal2 = .Llocal
+
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name:  (0)
@@ -98,23 +107,9 @@ bar6:
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .text (0)
+// CHECK-NEXT:     Name: (0)
+// CHECK-NOT: Symbol {
 // CHECK:        }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .data (0)
-// CHECK:        }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .bss (0)
-// CHECK:        }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar3
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: bar2
 // CHECK-NEXT:     Value: 0x0
@@ -123,5 +118,14 @@ bar6:
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar3
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

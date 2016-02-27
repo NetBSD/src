@@ -52,14 +52,13 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   // Clear "do not change" set.
   KeepRegs.reset();
 
-  bool IsReturnBlock = (BBSize != 0 && BB->back().isReturn());
+  bool IsReturnBlock = BB->isReturnBlock();
 
   // Examine the live-in regs of all successors.
   for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
          SE = BB->succ_end(); SI != SE; ++SI)
-    for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-           E = (*SI)->livein_end(); I != E; ++I) {
-      for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
+    for (const auto &LI : (*SI)->liveins()) {
+      for (MCRegAliasIterator AI(LI.PhysReg, TRI, true); AI.isValid(); ++AI) {
         unsigned Reg = *AI;
         Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
         KillIndices[Reg] = BBSize;
@@ -71,7 +70,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   // all callee-saved registers. In non-return this is any
   // callee-saved register that is not saved in the prolog.
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  BitVector Pristine = MFI->getPristineRegs(BB);
+  BitVector Pristine = MFI->getPristineRegs(MF);
   for (const MCPhysReg *I = TRI->getCalleeSavedRegs(&MF); *I; ++I) {
     if (!IsReturnBlock && !Pristine.test(*I)) continue;
     for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {

@@ -6,7 +6,7 @@ mov .rodata, %rsi
 .section .rodata
 
 // CHECK:Relocations [
-// CHECK:  Section (2) .rela.text {
+// CHECK:  Section {{.*}} .rela.text {
 // CHECK:    Relocation {
 // CHECK:      Offset: 0x4
 // CHECK:      Type: R_X86_64_32S (11)
@@ -19,10 +19,6 @@ mov .rodata, %rsi
 // There is only one .rodata symbol
 
 // CHECK:Symbols [
-// CHECK-NOT:    Name: .rodata
-// CHECK:        Name: .rodata
-// CHECK-NEXT:   Value: 0x0
-// CHECK-NEXT:   Size: 0
-// CHECK-NEXT:   Binding: Local (0x0)
-// CHECK-NEXT:   Type: Section (0x3)
-// CHECK-NOT:    Name: .rodata
+// CHECK:   Type: Section (0x3)
+// CHECK:   Section: .rodata
+// CHECK-NOT:   Section: .rodata

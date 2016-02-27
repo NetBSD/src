@@ -2,11 +2,11 @@ set(LLVM_LINK_COMPONENTS
   Analysis
   AsmParser
   Core
-  IPA
   Support
   )
 
 set(IRSources
+  AsmWriterTest.cpp
   AttributesTest.cpp
   ConstantRangeTest.cpp
   ConstantsTest.cpp

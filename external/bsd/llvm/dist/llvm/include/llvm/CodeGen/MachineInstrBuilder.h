@@ -49,11 +49,10 @@ public:
   MachineInstrBuilder() : MF(nullptr), MI(nullptr) {}
 
   /// Create a MachineInstrBuilder for manipulating an existing instruction.
-  /// F must be the machine function  that was used to allocate I.
+  /// F must be the machine function that was used to allocate I.
   MachineInstrBuilder(MachineFunction &F, MachineInstr *I) : MF(&F), MI(I) {}
 
   /// Allow automatic conversion to the machine instruction we are working on.
-  ///
   operator MachineInstr*() const { return MI; }
   MachineInstr *operator->() const { return MI; }
   operator MachineBasicBlock::iterator() const { return MI; }
@@ -62,11 +61,9 @@ public:
   /// explicitly.
   MachineInstr *getInstr() const { return MI; }
 
-  /// addReg - Add a new virtual register operand...
-  ///
-  const
-  MachineInstrBuilder &addReg(unsigned RegNo, unsigned flags = 0,
-                              unsigned SubReg = 0) const {
+  /// Add a new virtual register operand.
+  const MachineInstrBuilder &addReg(unsigned RegNo, unsigned flags = 0,
+                                    unsigned SubReg = 0) const {
     assert((flags & 0x1) == 0 &&
            "Passing in 'true' to addReg is forbidden! Use enums instead.");
     MI->addOperand(*MF, MachineOperand::CreateReg(RegNo,
@@ -82,8 +79,7 @@ public:
     return *this;
   }
 
-  /// addImm - Add a new immediate operand.
-  ///
+  /// Add a new immediate operand.
   const MachineInstrBuilder &addImm(int64_t Val) const {
     MI->addOperand(*MF, MachineOperand::CreateImm(Val));
     return *this;
@@ -166,6 +162,11 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &setMemRefs(std::pair<MachineInstr::mmo_iterator,
+                                        unsigned> MemOperandsRef) const {
+    MI->setMemRefs(MemOperandsRef);
+    return *this;
+  }
 
   const MachineInstrBuilder &addOperand(const MachineOperand &MO) const {
     MI->addOperand(*MF, MO);
@@ -174,8 +175,9 @@ public:
 
   const MachineInstrBuilder &addMetadata(const MDNode *MD) const {
     MI->addOperand(*MF, MachineOperand::CreateMetadata(MD));
-    assert((MI->isDebugValue() ? MI->getDebugVariable().Verify() : true) &&
-           "first MDNode argument of a DBG_VALUE not a DIVariable");
+    assert((MI->isDebugValue() ? static_cast<bool>(MI->getDebugVariable())
+                               : true) &&
+           "first MDNode argument of a DBG_VALUE not a variable");
     return *this;
   }
 
@@ -184,8 +186,9 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addSym(MCSymbol *Sym) const {
-    MI->addOperand(*MF, MachineOperand::CreateMCSymbol(Sym));
+  const MachineInstrBuilder &addSym(MCSymbol *Sym,
+                                    unsigned char TargetFlags = 0) const {
+    MI->addOperand(*MF, MachineOperand::CreateMCSymbol(Sym, TargetFlags));
     return *this;
   }
 
@@ -202,44 +205,44 @@ public:
   // Add a displacement from an existing MachineOperand with an added offset.
   const MachineInstrBuilder &addDisp(const MachineOperand &Disp, int64_t off,
                                      unsigned char TargetFlags = 0) const {
+    // If caller specifies new TargetFlags then use it, otherwise the
+    // default behavior is to copy the target flags from the existing
+    // MachineOperand. This means if the caller wants to clear the
+    // target flags it needs to do so explicitly.
+    if (0 == TargetFlags)
+      TargetFlags = Disp.getTargetFlags();
+
     switch (Disp.getType()) {
       default:
         llvm_unreachable("Unhandled operand type in addDisp()");
       case MachineOperand::MO_Immediate:
         return addImm(Disp.getImm() + off);
-      case MachineOperand::MO_GlobalAddress: {
-        // If caller specifies new TargetFlags then use it, otherwise the
-        // default behavior is to copy the target flags from the existing
-        // MachineOperand. This means if the caller wants to clear the
-        // target flags it needs to do so explicitly.
-        if (TargetFlags)
-          return addGlobalAddress(Disp.getGlobal(), Disp.getOffset() + off,
-                                  TargetFlags);
+      case MachineOperand::MO_ConstantPoolIndex:
+        return addConstantPoolIndex(Disp.getIndex(), Disp.getOffset() + off,
+                                    TargetFlags);
+      case MachineOperand::MO_GlobalAddress:
         return addGlobalAddress(Disp.getGlobal(), Disp.getOffset() + off,
-                                Disp.getTargetFlags());
-      }
+                                TargetFlags);
     }
   }
 
   /// Copy all the implicit operands from OtherMI onto this one.
-  const MachineInstrBuilder &copyImplicitOps(const MachineInstr *OtherMI) {
+  const MachineInstrBuilder &
+  copyImplicitOps(const MachineInstr *OtherMI) const {
     MI->copyImplicitOps(*MF, OtherMI);
     return *this;
   }
 };
 
-/// BuildMI - Builder interface.  Specify how to create the initial instruction
-/// itself.
-///
+/// Builder interface. Specify how to create the initial instruction itself.
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
   return MachineInstrBuilder(MF, MF.CreateMachineInstr(MCID, DL));
 }
 
-/// BuildMI - This version of the builder sets up the first operand as a
+/// This version of the builder sets up the first operand as a
 /// destination virtual register.
-///
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID,
@@ -248,10 +251,9 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
            .addReg(DestReg, RegState::Define);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction before the given position in the given MachineBasicBlock, and
-/// sets up the first operand as a destination virtual register.
-///
+/// This version of the builder inserts the newly-built instruction before
+/// the given position in the given MachineBasicBlock, and sets up the first
+/// operand as a destination virtual register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    DebugLoc DL,
@@ -280,7 +282,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    const MCInstrDesc &MCID,
                                    unsigned DestReg) {
   if (I->isInsideBundle()) {
-    MachineBasicBlock::instr_iterator MII = I;
+    MachineBasicBlock::instr_iterator MII(I);
     return BuildMI(BB, MII, DL, MCID, DestReg);
   }
 
@@ -288,10 +290,9 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   return BuildMI(BB, MII, DL, MCID, DestReg);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction before the given position in the given MachineBasicBlock, and
-/// does NOT take a destination register.
-///
+/// This version of the builder inserts the newly-built instruction before the
+/// given position in the given MachineBasicBlock, and does NOT take a
+/// destination register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    DebugLoc DL,
@@ -317,7 +318,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
   if (I->isInsideBundle()) {
-    MachineBasicBlock::instr_iterator MII = I;
+    MachineBasicBlock::instr_iterator MII(I);
     return BuildMI(BB, MII, DL, MCID);
   }
 
@@ -325,20 +326,17 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   return BuildMI(BB, MII, DL, MCID);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction at the end of the given MachineBasicBlock, and does NOT take a
-/// destination register.
-///
+/// This version of the builder inserts the newly-built instruction at the end
+/// of the given MachineBasicBlock, and does NOT take a destination register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
   return BuildMI(*BB, BB->end(), DL, MCID);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction at the end of the given MachineBasicBlock, and sets up the first
-/// operand as a destination virtual register.
-///
+/// This version of the builder inserts the newly-built instruction at the
+/// end of the given MachineBasicBlock, and sets up the first operand as a
+/// destination virtual register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID,
@@ -346,17 +344,18 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
   return BuildMI(*BB, BB->end(), DL, MCID, DestReg);
 }
 
-/// BuildMI - This version of the builder builds a DBG_VALUE intrinsic
+/// This version of the builder builds a DBG_VALUE intrinsic
 /// for either a value in a register or a register-indirect+offset
 /// address.  The convention is that a DBG_VALUE is indirect iff the
 /// second operand is an immediate.
-///
 inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(DIVariable(Variable).Verify() && "not a DIVariable");
-  assert(DIExpression(Expr).Verify() && "not a DIExpression");
+  assert(isa<DILocalVariable>(Variable) && "not a variable");
+  assert(cast<DIExpression>(Expr)->isValid() && "not an expression");
+  assert(cast<DILocalVariable>(Variable)->isValidLocationForIntrinsic(DL) &&
+         "Expected inlined-at fields to agree");
   if (IsIndirect)
     return BuildMI(MF, DL, MCID)
         .addReg(Reg, RegState::Debug)
@@ -373,17 +372,16 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
   }
 }
 
-/// BuildMI - This version of the builder builds a DBG_VALUE intrinsic
+/// This version of the builder builds a DBG_VALUE intrinsic
 /// for either a value in a register or a register-indirect+offset
 /// address and inserts it at position I.
-///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I, DebugLoc DL,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(DIVariable(Variable).Verify() && "not a DIVariable");
-  assert(DIExpression(Expr).Verify() && "not a DIExpression");
+  assert(isa<DILocalVariable>(Variable) && "not a variable");
+  assert(cast<DIExpression>(Expr)->isValid() && "not an expression");
   MachineFunction &MF = *BB.getParent();
   MachineInstr *MI =
       BuildMI(MF, DL, MCID, IsIndirect, Reg, Offset, Variable, Expr);
@@ -472,7 +470,7 @@ public:
     if (I == Begin) {
       if (!empty())
         MI->bundleWithSucc();
-      Begin = MI;
+      Begin = MI->getIterator();
       return *this;
     }
     if (I == End) {

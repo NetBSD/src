@@ -16,8 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64.h"
-#include "AArch64InstrInfo.h"
-#include "AArch64Subtarget.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -26,6 +24,8 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
 
@@ -48,7 +48,7 @@ static bool isFirstInstructionInSequence(MachineInstr *MI) {
   case AArch64::PRFUMi:
     return true;
   default:
-    return (MI->mayLoad() || MI->mayStore());
+    return MI->mayLoadOrStore();
   }
 }
 
@@ -79,7 +79,7 @@ static bool isSecondInstructionInSequence(MachineInstr *MI) {
 
 namespace {
 class AArch64A53Fix835769 : public MachineFunctionPass {
-  const AArch64InstrInfo *TII;
+  const TargetInstrInfo *TII;
 
 public:
   static char ID;
@@ -107,17 +107,13 @@ char AArch64A53Fix835769::ID = 0;
 
 bool
 AArch64A53Fix835769::runOnMachineFunction(MachineFunction &F) {
-  const TargetMachine &TM = F.getTarget();
-
-  bool Changed = false;
   DEBUG(dbgs() << "***** AArch64A53Fix835769 *****\n");
-
-  TII = TM.getSubtarget<AArch64Subtarget>().getInstrInfo();
+  bool Changed = false;
+  TII = F.getSubtarget().getInstrInfo();
 
   for (auto &MBB : F) {
     Changed |= runOnBasicBlock(MBB);
   }
-
   return Changed;
 }
 
@@ -126,7 +122,7 @@ AArch64A53Fix835769::runOnMachineFunction(MachineFunction &F) {
 static MachineBasicBlock *getBBFallenThrough(MachineBasicBlock *MBB,
                                              const TargetInstrInfo *TII) {
   // Get the previous machine basic block in the function.
-  MachineFunction::iterator MBBI = *MBB;
+  MachineFunction::iterator MBBI(MBB);
 
   // Can't go off top of function.
   if (MBBI == MBB->getParent()->begin())
@@ -135,7 +131,7 @@ static MachineBasicBlock *getBBFallenThrough(MachineBasicBlock *MBB,
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 2> Cond;
 
-  MachineBasicBlock *PrevBB = std::prev(MBBI);
+  MachineBasicBlock *PrevBB = &*std::prev(MBBI);
   for (MachineBasicBlock *S : MBB->predecessors())
     if (S == PrevBB && !TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond) &&
         !TBB && !FBB)
@@ -155,10 +151,9 @@ static MachineInstr *getLastNonPseudo(MachineBasicBlock &MBB,
   // If there is no non-pseudo in the current block, loop back around and try
   // the previous block (if there is one).
   while ((FMBB = getBBFallenThrough(FMBB, TII))) {
-    for (auto I = FMBB->rbegin(), E = FMBB->rend(); I != E; ++I) {
-      if (!I->isPseudo())
-        return &*I;
-    }
+    for (MachineInstr &I : make_range(FMBB->rbegin(), FMBB->rend()))
+      if (!I.isPseudo())
+        return &I;
   }
 
   // There was no previous non-pseudo in the fallen through blocks
@@ -221,8 +216,8 @@ AArch64A53Fix835769::runOnBasicBlock(MachineBasicBlock &MBB) {
     ++Idx;
   }
 
-  DEBUG(dbgs() << "Scan complete, "<< Sequences.size()
-               << " occurences of pattern found.\n");
+  DEBUG(dbgs() << "Scan complete, " << Sequences.size()
+               << " occurrences of pattern found.\n");
 
   // Then update the basic block, inserting nops between the detected sequences.
   for (auto &MI : Sequences) {

@@ -6,9 +6,10 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
 LEVEL = ../..
-LIBRARYNAME = LLVMDebugInfo
-BUILD_ARCHIVE := 1
+
+include $(LEVEL)/Makefile.config
+
+PARALLEL_DIRS := CodeView DWARF PDB Symbolize
 
 include $(LEVEL)/Makefile.common

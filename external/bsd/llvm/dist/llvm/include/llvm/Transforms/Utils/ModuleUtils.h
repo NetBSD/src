@@ -14,12 +14,20 @@
 #ifndef LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
 #define LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
+#include <utility> // for std::pair
+
 namespace llvm {
 
 class Module;
 class Function;
 class GlobalValue;
 class GlobalVariable;
+class Constant;
+class StringRef;
+class Value;
+class Type;
 template <class PtrType> class SmallPtrSetImpl;
 
 /// Append F to the list of global ctors of module M with the given Priority.
@@ -36,6 +44,21 @@ void appendToGlobalDtors(Module &M, Function *F, int Priority);
 GlobalVariable *collectUsedGlobalVariables(Module &M,
                                            SmallPtrSetImpl<GlobalValue *> &Set,
                                            bool CompilerUsed);
+
+// Validate the result of Module::getOrInsertFunction called for an interface
+// function of given sanitizer. If the instrumented module defines a function
+// with the same name, their prototypes must match, otherwise
+// getOrInsertFunction returns a bitcast.
+Function *checkSanitizerInterfaceFunction(Constant *FuncOrBitcast);
+
+/// \brief Creates sanitizer constructor function, and calls sanitizer's init
+/// function from it.
+/// \return Returns pair of pointers to constructor, and init functions
+/// respectively.
+std::pair<Function *, Function *> createSanitizerCtorAndInitFunctions(
+    Module &M, StringRef CtorName, StringRef InitName,
+    ArrayRef<Type *> InitArgTypes, ArrayRef<Value *> InitArgs,
+    StringRef VersionCheckName = StringRef());
 } // End llvm namespace
 
 #endif //  LLVM_TRANSFORMS_UTILS_MODULEUTILS_H

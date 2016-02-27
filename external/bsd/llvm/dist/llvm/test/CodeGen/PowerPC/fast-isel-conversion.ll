@@ -1,17 +1,17 @@
 ; FIXME: FastISel currently returns false if it hits code that uses VSX
-; registers and with -fast-isel-abort turned on the test case will then fail.
+; registers and with -fast-isel-abort=1 turned on the test case will then fail.
 ; When fastisel better supports VSX fix up this test case.
 ;
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 -mattr=-vsx | FileCheck %s --check-prefix=ELF64
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=powerpc64le-unknown-linux-gnu -mcpu=pwr8 -mattr=-vsx | FileCheck %s --check-prefix=ELF64LE
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 -mattr=-vsx | FileCheck %s --check-prefix=ELF64
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=powerpc64le-unknown-linux-gnu -mcpu=pwr8 -mattr=-vsx | FileCheck %s --check-prefix=ELF64LE
 ; RUN: llc < %s -O0 -verify-machineinstrs -mtriple=powerpc64-unknown-linux-gnu -mcpu=970 -mattr=-vsx | FileCheck %s --check-prefix=PPC970
 
-;; Tests for 970 don't use -fast-isel-abort because we intentionally punt
+;; Tests for 970 don't use -fast-isel-abort=1 because we intentionally punt
 ;; to SelectionDAG in some cases.
 
 ; Test sitofp
 
-define void @sitofp_single_i64(i64 %a, float %b) nounwind ssp {
+define void @sitofp_single_i64(i64 %a, float %b) nounwind {
 entry:
 ; ELF64: sitofp_single_i64
 ; ELF64LE: sitofp_single_i64
@@ -32,7 +32,7 @@ entry:
   ret void
 }
 
-define void @sitofp_single_i32(i32 %a, float %b) nounwind ssp {
+define void @sitofp_single_i32(i32 %a, float %b) nounwind {
 entry:
 ; ELF64: sitofp_single_i32
 ; ELF64LE: sitofp_single_i32
@@ -57,7 +57,7 @@ entry:
   ret void
 }
 
-define void @sitofp_single_i16(i16 %a, float %b) nounwind ssp {
+define void @sitofp_single_i16(i16 %a, float %b) nounwind {
 entry:
 ; ELF64: sitofp_single_i16
 ; ELF64LE: sitofp_single_i16
@@ -81,7 +81,7 @@ entry:
   ret void
 }
 
-define void @sitofp_single_i8(i8 %a) nounwind ssp {
+define void @sitofp_single_i8(i8 %a) nounwind {
 entry:
 ; ELF64: sitofp_single_i8
 ; ELF64LE: sitofp_single_i8
@@ -105,7 +105,7 @@ entry:
   ret void
 }
 
-define void @sitofp_double_i32(i32 %a, double %b) nounwind ssp {
+define void @sitofp_double_i32(i32 %a, double %b) nounwind {
 entry:
 ; ELF64: sitofp_double_i32
 ; ELF64LE: sitofp_double_i32
@@ -129,7 +129,7 @@ entry:
   ret void
 }
 
-define void @sitofp_double_i64(i64 %a, double %b) nounwind ssp {
+define void @sitofp_double_i64(i64 %a, double %b) nounwind {
 entry:
 ; ELF64: sitofp_double_i64
 ; ELF64LE: sitofp_double_i64
@@ -149,7 +149,7 @@ entry:
   ret void
 }
 
-define void @sitofp_double_i16(i16 %a, double %b) nounwind ssp {
+define void @sitofp_double_i16(i16 %a, double %b) nounwind {
 entry:
 ; ELF64: sitofp_double_i16
 ; ELF64LE: sitofp_double_i16
@@ -172,7 +172,7 @@ entry:
   ret void
 }
 
-define void @sitofp_double_i8(i8 %a, double %b) nounwind ssp {
+define void @sitofp_double_i8(i8 %a, double %b) nounwind {
 entry:
 ; ELF64: sitofp_double_i8
 ; ELF64LE: sitofp_double_i8
@@ -197,7 +197,7 @@ entry:
 
 ; Test uitofp
 
-define void @uitofp_single_i64(i64 %a, float %b) nounwind ssp {
+define void @uitofp_single_i64(i64 %a, float %b) nounwind {
 entry:
 ; ELF64: uitofp_single_i64
 ; ELF64LE: uitofp_single_i64
@@ -215,7 +215,7 @@ entry:
   ret void
 }
 
-define void @uitofp_single_i32(i32 %a, float %b) nounwind ssp {
+define void @uitofp_single_i32(i32 %a, float %b) nounwind {
 entry:
 ; ELF64: uitofp_single_i32
 ; ELF64LE: uitofp_single_i32
@@ -238,7 +238,7 @@ entry:
   ret void
 }
 
-define void @uitofp_single_i16(i16 %a, float %b) nounwind ssp {
+define void @uitofp_single_i16(i16 %a, float %b) nounwind {
 entry:
 ; ELF64: uitofp_single_i16
 ; ELF64LE: uitofp_single_i16
@@ -253,7 +253,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidus
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 16, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 16
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid
@@ -262,7 +262,7 @@ entry:
   ret void
 }
 
-define void @uitofp_single_i8(i8 %a) nounwind ssp {
+define void @uitofp_single_i8(i8 %a) nounwind {
 entry:
 ; ELF64: uitofp_single_i8
 ; ELF64LE: uitofp_single_i8
@@ -277,7 +277,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidus
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 24, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 24
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid
@@ -286,7 +286,7 @@ entry:
   ret void
 }
 
-define void @uitofp_double_i64(i64 %a, double %b) nounwind ssp {
+define void @uitofp_double_i64(i64 %a, double %b) nounwind {
 entry:
 ; ELF64: uitofp_double_i64
 ; ELF64LE: uitofp_double_i64
@@ -304,7 +304,7 @@ entry:
   ret void
 }
 
-define void @uitofp_double_i32(i32 %a, double %b) nounwind ssp {
+define void @uitofp_double_i32(i32 %a, double %b) nounwind {
 entry:
 ; ELF64: uitofp_double_i32
 ; ELF64LE: uitofp_double_i32
@@ -327,7 +327,7 @@ entry:
   ret void
 }
 
-define void @uitofp_double_i16(i16 %a, double %b) nounwind ssp {
+define void @uitofp_double_i16(i16 %a, double %b) nounwind {
 entry:
 ; ELF64: uitofp_double_i16
 ; ELF64LE: uitofp_double_i16
@@ -342,7 +342,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidu
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 16, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 16
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid
@@ -350,7 +350,7 @@ entry:
   ret void
 }
 
-define void @uitofp_double_i8(i8 %a, double %b) nounwind ssp {
+define void @uitofp_double_i8(i8 %a, double %b) nounwind {
 entry:
 ; ELF64: uitofp_double_i8
 ; ELF64LE: uitofp_double_i8
@@ -365,7 +365,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidu
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 24, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 24
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid
@@ -375,7 +375,7 @@ entry:
 
 ; Test fptosi
 
-define void @fptosi_float_i32(float %a) nounwind ssp {
+define void @fptosi_float_i32(float %a) nounwind {
 entry:
 ; ELF64: fptosi_float_i32
 ; ELF64LE: fptosi_float_i32
@@ -395,7 +395,7 @@ entry:
   ret void
 }
 
-define void @fptosi_float_i64(float %a) nounwind ssp {
+define void @fptosi_float_i64(float %a) nounwind {
 entry:
 ; ELF64: fptosi_float_i64
 ; ELF64LE: fptosi_float_i64
@@ -415,7 +415,7 @@ entry:
   ret void
 }
 
-define void @fptosi_double_i32(double %a) nounwind ssp {
+define void @fptosi_double_i32(double %a) nounwind {
 entry:
 ; ELF64: fptosi_double_i32
 ; ELF64LE: fptosi_double_i32
@@ -435,7 +435,7 @@ entry:
   ret void
 }
 
-define void @fptosi_double_i64(double %a) nounwind ssp {
+define void @fptosi_double_i64(double %a) nounwind {
 entry:
 ; ELF64: fptosi_double_i64
 ; ELF64LE: fptosi_double_i64
@@ -457,7 +457,7 @@ entry:
 
 ; Test fptoui
 
-define void @fptoui_float_i32(float %a) nounwind ssp {
+define void @fptoui_float_i32(float %a) nounwind {
 entry:
 ; ELF64: fptoui_float_i32
 ; ELF64LE: fptoui_float_i32
@@ -477,7 +477,7 @@ entry:
   ret void
 }
 
-define void @fptoui_float_i64(float %a) nounwind ssp {
+define void @fptoui_float_i64(float %a) nounwind {
 entry:
 ; ELF64: fptoui_float_i64
 ; ELF64LE: fptoui_float_i64
@@ -495,7 +495,7 @@ entry:
   ret void
 }
 
-define void @fptoui_double_i32(double %a) nounwind ssp {
+define void @fptoui_double_i32(double %a) nounwind {
 entry:
 ; ELF64: fptoui_double_i32
 ; ELF64LE: fptoui_double_i32
@@ -515,7 +515,7 @@ entry:
   ret void
 }
 
-define void @fptoui_double_i64(double %a) nounwind ssp {
+define void @fptoui_double_i64(double %a) nounwind {
 entry:
 ; ELF64: fptoui_double_i64
 ; ELF64LE: fptoui_double_i64

@@ -32,6 +32,12 @@ def sub_odd64  : SubRegIndex<64, 64>;
 // Ri - 32-bit integer registers
 class Ri<bits<16> Enc, string n> : SparcReg<Enc, n>;
 
+// Rdi - pairs of 32-bit integer registers
+class Rdi<bits<16> Enc, string n, list<Register> subregs> : SparcReg<Enc, n> {
+  let SubRegs = subregs;
+  let SubRegIndices = [sub_even, sub_odd];
+  let CoveredBySubRegs = 1;
+}
 // Rf - 32-bit floating-point registers
 class Rf<bits<16> Enc, string n> : SparcReg<Enc, n>;
 
@@ -54,8 +60,63 @@ def ICC : SparcCtrlReg<0, "ICC">; // This represents icc and xcc in 64-bit code.
 foreach I = 0-3 in
   def FCC#I : SparcCtrlReg<I, "FCC"#I>;
 
+def FSR : SparcCtrlReg<0, "FSR">; // Floating-point state register.
+
 // Y register
 def Y : SparcCtrlReg<0, "Y">, DwarfRegNum<[64]>;
+// Ancillary state registers (implementation defined)
+def ASR1 : SparcCtrlReg<1, "ASR1">;
+def ASR2 : SparcCtrlReg<2, "ASR2">;
+def ASR3 : SparcCtrlReg<3, "ASR3">;
+def ASR4 : SparcCtrlReg<4, "ASR4">;
+def ASR5 : SparcCtrlReg<5, "ASR5">;
+def ASR6 : SparcCtrlReg<6, "ASR6">;
+def ASR7 : SparcCtrlReg<7, "ASR7">;
+def ASR8 : SparcCtrlReg<8, "ASR8">;
+def ASR9 : SparcCtrlReg<9, "ASR9">;
+def ASR10 : SparcCtrlReg<10, "ASR10">;
+def ASR11 : SparcCtrlReg<11, "ASR11">;
+def ASR12 : SparcCtrlReg<12, "ASR12">;
+def ASR13 : SparcCtrlReg<13, "ASR13">;
+def ASR14 : SparcCtrlReg<14, "ASR14">;
+def ASR15 : SparcCtrlReg<15, "ASR15">;
+def ASR16 : SparcCtrlReg<16, "ASR16">;
+def ASR17 : SparcCtrlReg<17, "ASR17">;
+def ASR18 : SparcCtrlReg<18, "ASR18">;
+def ASR19 : SparcCtrlReg<19, "ASR19">;
+def ASR20 : SparcCtrlReg<20, "ASR20">;
+def ASR21 : SparcCtrlReg<21, "ASR21">;
+def ASR22 : SparcCtrlReg<22, "ASR22">;
+def ASR23 : SparcCtrlReg<23, "ASR23">;
+def ASR24 : SparcCtrlReg<24, "ASR24">;
+def ASR25 : SparcCtrlReg<25, "ASR25">;
+def ASR26 : SparcCtrlReg<26, "ASR26">;
+def ASR27 : SparcCtrlReg<27, "ASR27">;
+def ASR28 : SparcCtrlReg<28, "ASR28">;
+def ASR29 : SparcCtrlReg<29, "ASR29">;
+def ASR30 : SparcCtrlReg<30, "ASR30">;
+def ASR31 : SparcCtrlReg<31, "ASR31">;
+
+// Note that PSR, WIM, and TBR don't exist on the SparcV9, only the V8.
+def PSR : SparcCtrlReg<0, "PSR">;
+def WIM : SparcCtrlReg<0, "WIM">;
+def TBR : SparcCtrlReg<0, "TBR">;
+
+def TPC : SparcCtrlReg<0, "TPC">;
+def TNPC : SparcCtrlReg<1, "TNPC">;
+def TSTATE : SparcCtrlReg<2, "TSTATE">;
+def TT : SparcCtrlReg<3, "TT">;
+def TICK : SparcCtrlReg<4, "TICK">;
+def TBA : SparcCtrlReg<5, "TBA">;
+def PSTATE : SparcCtrlReg<6, "PSTATE">;
+def TL : SparcCtrlReg<7, "TL">;
+def PIL : SparcCtrlReg<8, "PIL">;
+def CWP : SparcCtrlReg<9, "CWP">;
+def CANSAVE : SparcCtrlReg<10, "CANSAVE">;
+def CANRESTORE : SparcCtrlReg<11, "CANRESTORE">;
+def CLEANWIN : SparcCtrlReg<12, "CLEANWIN">;
+def OTHERWIN : SparcCtrlReg<13, "OTHERWIN">;
+def WSTATE : SparcCtrlReg<14, "WSTATE">;
 
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
@@ -180,6 +241,24 @@ def Q13 : Rq<21, "F52", [D26, D27]>;
 def Q14 : Rq<25, "F56", [D28, D29]>;
 def Q15 : Rq<29, "F60", [D30, D31]>;
 
+// Aliases of the integer registers used for LDD/STD double-word operations
+def G0_G1 : Rdi<0, "G0", [G0, G1]>;
+def G2_G3 : Rdi<2, "G2", [G2, G3]>;
+def G4_G5 : Rdi<4, "G4", [G4, G5]>;
+def G6_G7 : Rdi<6, "G6", [G6, G7]>;
+def O0_O1 : Rdi<8, "O0", [O0, O1]>;
+def O2_O3 : Rdi<10, "O2", [O2, O3]>;
+def O4_O5 : Rdi<12, "O4", [O4, O5]>;
+def O6_O7 : Rdi<14, "O6", [O6, O7]>;
+def L0_L1 : Rdi<16, "L0", [L0, L1]>;
+def L2_L3 : Rdi<18, "L2", [L2, L3]>;
+def L4_L5 : Rdi<20, "L4", [L4, L5]>;
+def L6_L7 : Rdi<22, "L6", [L6, L7]>;
+def I0_I1 : Rdi<24, "I0", [I0, I1]>;
+def I2_I3 : Rdi<26, "I2", [I2, I3]>;
+def I4_I5 : Rdi<28, "I4", [I4, I5]>;
+def I6_I7 : Rdi<30, "I6", [I6, I7]>;
+
 // Register classes.
 //
 // FIXME: the register order should be defined in terms of the preferred
@@ -193,6 +272,13 @@ def IntRegs : RegisterClass<"SP", [i32, i64], 32,
                                  (sequence "G%u", 0, 7),
                                  (sequence "L%u", 0, 7),
                                  (sequence "O%u", 0, 7))>;
+
+// Should be in the same order as IntRegs.
+def IntPair : RegisterClass<"SP", [v2i32], 64,
+    (add I0_I1, I2_I3, I4_I5, I6_I7,
+         G0_G1, G2_G3, G4_G5, G6_G7,
+         L0_L1, L2_L3, L4_L5, L6_L7,
+         O0_O1, O2_O3, O4_O5, O6_O7)>;
 
 // Register class for 64-bit mode, with a 64-bit spill slot size.
 // These are the same as the 32-bit registers, so TableGen will consider this
@@ -209,3 +295,14 @@ def QFPRegs : RegisterClass<"SP", [f128], 128, (sequence "Q%u", 0, 15)>;
 
 // Floating point control register classes.
 def FCCRegs : RegisterClass<"SP", [i1], 1, (sequence "FCC%u", 0, 3)>;
+
+// Ancillary state registers
+def ASRRegs : RegisterClass<"SP", [i32], 32,
+                            (add Y, (sequence "ASR%u", 1, 31))> {
+  let isAllocatable = 0;
+}
+
+// Privileged Registers
+def PRRegs : RegisterClass<"SP", [i64], 64,
+    (add TPC, TNPC, TSTATE, TT, TICK, TBA, PSTATE, TL, PIL, CWP,
+         CANSAVE, CANRESTORE, CLEANWIN, OTHERWIN, WSTATE)>;

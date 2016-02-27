@@ -58,6 +58,11 @@ LLVM_OBJ_ROOT   := $(call realpath, @abs_top_builddir@)
 PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)
 PROJ_SRC_DIR    := $(LLVM_SRC_ROOT)$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR))
 
+# See: http://lists.llvm.org/pipermail/llvm-commits/Week-of-Mon-20150323/268067.html
+ifeq ($(LLVM_SRC_ROOT), $(LLVM_OBJ_ROOT))
+  $(error In-source builds are not allowed. Please configure from a separate build directory!)
+endif
+
 ifneq ($(CLANG_SRC_ROOT),)
   CLANG_SRC_ROOT:= $(call realpath, $(CLANG_SRC_ROOT))
   PROJ_SRC_DIR  := $(patsubst $(LLVM_SRC_ROOT)/tools/clang%,$(CLANG_SRC_ROOT)%,$(PROJ_SRC_DIR))
@@ -293,6 +298,11 @@ ENABLE_TERMINFO = @ENABLE_TERMINFO@
 #ENABLE_EXPENSIVE_CHECKS = 0
 @ENABLE_EXPENSIVE_CHECKS@
 
+# --enable-abi-breaking-checks : decide whether we should compile in asserts and
+# checks that make the build ABI incompatible with an llvm built without these
+# checks enabled.
+ENABLE_ABI_BREAKING_CHECKS = @ENABLE_ABI_BREAKING_CHECKS@
+
 # When DEBUG_RUNTIME is enabled, the runtime libraries will retain debug
 # symbols.
 #DEBUG_RUNTIME = 1
@@ -386,8 +396,8 @@ endif
 BINUTILS_INCDIR := @BINUTILS_INCDIR@
 
 # Optional flags supported by the compiler
-# -Wno-missing-field-initializers
-NO_MISSING_FIELD_INITIALIZERS = @NO_MISSING_FIELD_INITIALIZERS@
+# -Wmissing-field-initializers
+MISSING_FIELD_INITIALIZERS = @MISSING_FIELD_INITIALIZERS@
 # -Wno-variadic-macros
 NO_VARIADIC_MACROS = @NO_VARIADIC_MACROS@
 # -Wcovered-switch-default

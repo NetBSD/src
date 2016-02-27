@@ -25,7 +25,7 @@ It is useful to point out ahead of time that this tutorial is really
 about teaching compiler techniques and LLVM specifically, *not* about
 teaching modern and sane software engineering principles. In practice,
 this means that we'll take a number of shortcuts to simplify the
-exposition. For example, the code leaks memory, uses global variables
+exposition. For example, the code uses global variables
 all over the place, doesn't use nice design patterns like
 `visitors <http://en.wikipedia.org/wiki/Visitor_pattern>`_, etc... but
 it is very simple. If you dig in and use the code as a basis for future
@@ -73,14 +73,21 @@ in the various pieces. The structure of the tutorial is:
    about this is how easy and trivial it is to construct SSA form in
    LLVM: no, LLVM does *not* require your front-end to construct SSA
    form!
--  `Chapter #8 <LangImpl8.html>`_: Conclusion and other useful LLVM
+-  `Chapter #8 <LangImpl8.html>`_: Extending the Language: Debug
+   Information - Having built a decent little programming language with
+   control flow, functions and mutable variables, we consider what it
+   takes to add debug information to standalone executables. This debug
+   information will allow you to set breakpoints in Kaleidoscope
+   functions, print out argument variables, and call functions - all
+   from within the debugger!
+-  `Chapter #9 <LangImpl8.html>`_: Conclusion and other useful LLVM
    tidbits - This chapter wraps up the series by talking about
    potential ways to extend the language, but also includes a bunch of
    pointers to info about "special topics" like adding garbage
    collection support, exceptions, debugging, support for "spaghetti
    stacks", and a bunch of other tips and tricks.
 
-By the end of the tutorial, we'll have written a bit less than 700 lines
+By the end of the tutorial, we'll have written a bit less than 1000 lines
 of non-comment, non-blank, lines of code. With this small amount of
 code, we'll have built up a very reasonable compiler for a non-trivial
 language including a hand-written lexer, parser, AST, as well as code
@@ -139,7 +146,7 @@ useful for mutually recursive functions). For example:
 
 A more interesting example is included in Chapter 6 where we write a
 little Kaleidoscope application that `displays a Mandelbrot
-Set <LangImpl6.html#example>`_ at various levels of magnification.
+Set <LangImpl6.html#kicking-the-tires>`_ at various levels of magnification.
 
 Lets dive into the implementation of this language!
 
@@ -162,14 +169,16 @@ numeric value of a number). First, we define the possibilities:
       tok_eof = -1,
 
       // commands
-      tok_def = -2, tok_extern = -3,
+      tok_def = -2,
+      tok_extern = -3,
 
       // primary
-      tok_identifier = -4, tok_number = -5,
+      tok_identifier = -4,
+      tok_number = -5,
     };
 
-    static std::string IdentifierStr;  // Filled in if tok_identifier
-    static double NumVal;              // Filled in if tok_number
+    static std::string IdentifierStr; // Filled in if tok_identifier
+    static double NumVal;             // Filled in if tok_number
 
 Each token returned by our lexer will either be one of the Token enum
 values or it will be an 'unknown' character like '+', which is returned
@@ -210,8 +219,10 @@ loop:
         while (isalnum((LastChar = getchar())))
           IdentifierStr += LastChar;
 
-        if (IdentifierStr == "def") return tok_def;
-        if (IdentifierStr == "extern") return tok_extern;
+        if (IdentifierStr == "def")
+          return tok_def;
+        if (IdentifierStr == "extern")
+          return tok_extern;
         return tok_identifier;
       }
 
@@ -243,7 +254,8 @@ extend it :). Next we handle comments:
 
       if (LastChar == '#') {
         // Comment until end of line.
-        do LastChar = getchar();
+        do
+          LastChar = getchar();
         while (LastChar != EOF && LastChar != '\n' && LastChar != '\r');
 
         if (LastChar != EOF)
@@ -268,7 +280,7 @@ file. These are handled with this code:
     }
 
 With this, we have the complete lexer for the basic Kaleidoscope
-language (the `full code listing <LangImpl2.html#code>`_ for the Lexer
+language (the `full code listing <LangImpl2.html#full-code-listing>`_ for the Lexer
 is available in the `next chapter <LangImpl2.html>`_ of the tutorial).
 Next we'll `build a simple parser that uses this to build an Abstract
 Syntax Tree <LangImpl2.html>`_. When we have that, we'll include a

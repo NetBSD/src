@@ -182,7 +182,7 @@ define i1 @test19(i32 %A) {
         %D = or i1 %B, %C
         ret i1 %D
 ; CHECK-LABEL: @test19(
-; CHECK: and i32
+; CHECK: or i32
 ; CHECK: icmp eq 
 ; CHECK: ret i1
 }
@@ -394,7 +394,7 @@ define i32 @test37(i32* %xp, i32 %y) {
 ; CHECK: select i1 %tobool, i32 -1, i32 %x
   %tobool = icmp ne i32 %y, 0
   %sext = sext i1 %tobool to i32
-  %x = load i32* %xp
+  %x = load i32, i32* %xp
   %or = or i32 %sext, %x
   ret i32 %or
 }
@@ -404,7 +404,7 @@ define i32 @test38(i32* %xp, i32 %y) {
 ; CHECK: select i1 %tobool, i32 -1, i32 %x
   %tobool = icmp ne i32 %y, 0
   %sext = sext i1 %tobool to i32
-  %x = load i32* %xp
+  %x = load i32, i32* %xp
   %or = or i32 %x, %sext
   ret i32 %or
 }

@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=aarch64-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK
-; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-ARM64 %s
+; RUN: llc -mtriple=aarch64-linux-gnu -disable-post-ra -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK
+; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-ARM64 %s
 
 declare void @use_addr(i8*)
 
@@ -51,7 +51,7 @@ define i64 @test_alloca_with_local(i64 %n) {
   call void @use_addr_loc(i8* %buf, i64* %loc)
 ; CHECK: bl use_addr
 
-  %val = load i64* %loc
+  %val = load i64, i64* %loc
 
 ; CHECK: ldur x0, [x29, #-[[LOC_FROM_FP]]]
 

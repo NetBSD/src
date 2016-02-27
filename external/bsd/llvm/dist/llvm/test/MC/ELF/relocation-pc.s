@@ -2,31 +2,26 @@
 
 // Test that we produce the correct relocation.
 
-	loope	0                 # R_X86_64_PC8
-	jmp	-256              # R_X86_64_PC32
+        loope   0                 # R_X86_64_PC8
+        jmp     -256              # R_X86_64_PC32
+        .word 0x42 - .            # R_X86_64_PC16
 
 // CHECK:        Section {
-// CHECK:          Index: 1
-// CHECK-NEXT:     Name: .text
-// CHECK:          Relocations [
-// CHECK-NEXT:     ]
-// CHECK-NEXT:   }
-
-// CHECK:        Section {
-// CHECK:          Index: 2
-// CHECK-NEXT:     Name: .rela.text
+// CHECK:          Index:
+// CHECK:          Name: .rela.text
 // CHECK-NEXT:     Type: SHT_RELA
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x2E8
-// CHECK-NEXT:     Size: 48
-// CHECK-NEXT:     Link: 6
-// CHECK-NEXT:     Info: 1
+// CHECK-NEXT:     Offset:
+// CHECK-NEXT:     Size:
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info:
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
 // CHECK-NEXT:     Relocations [
 // CHECK-NEXT:       0x1 R_X86_64_PC8 - 0xFFFFFFFFFFFFFFFF
 // CHECK-NEXT:       0x3 R_X86_64_PC32 - 0xFFFFFFFFFFFFFEFC
+// CHECK-NEXT:       0x7 R_X86_64_PC16 - 0x42
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }

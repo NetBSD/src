@@ -59,14 +59,14 @@ public:
 
 void Delinearization::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<LoopInfo>();
-  AU.addRequired<ScalarEvolution>();
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.addRequired<ScalarEvolutionWrapperPass>();
 }
 
 bool Delinearization::runOnFunction(Function &F) {
   this->F = &F;
-  SE = &getAnalysis<ScalarEvolution>();
-  LI = &getAnalysis<LoopInfo>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   return false;
 }
 
@@ -102,20 +102,14 @@ void Delinearization::print(raw_ostream &O, const Module *) const {
       if (!BasePointer)
         break;
       AccessFn = SE->getMinusSCEV(AccessFn, BasePointer);
-      const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(AccessFn);
-
-      // Do not try to delinearize memory accesses that are not AddRecs.
-      if (!AR)
-        break;
-
 
       O << "\n";
       O << "Inst:" << *Inst << "\n";
       O << "In Loop with Header: " << L->getHeader()->getName() << "\n";
-      O << "AddRec: " << *AR << "\n";
+      O << "AccessFunction: " << *AccessFn << "\n";
 
       SmallVector<const SCEV *, 3> Subscripts, Sizes;
-      AR->delinearize(*SE, Subscripts, Sizes, SE->getElementSize(Inst));
+      SE->delinearize(AccessFn, Subscripts, Sizes, SE->getElementSize(Inst));
       if (Subscripts.size() == 0 || Sizes.size() == 0 ||
           Subscripts.size() != Sizes.size()) {
         O << "failed to delinearize\n";
@@ -141,7 +135,7 @@ char Delinearization::ID = 0;
 static const char delinearization_name[] = "Delinearization";
 INITIALIZE_PASS_BEGIN(Delinearization, DL_NAME, delinearization_name, true,
                       true)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(Delinearization, DL_NAME, delinearization_name, true, true)
 
 FunctionPass *llvm::createDelinearizationPass() { return new Delinearization; }

@@ -52,14 +52,17 @@ namespace llvm {
     /* Number of bits in the significand.  This includes the integer
        bit.  */
     unsigned int precision;
+
+    /* Number of bits actually used in the semantics. */
+    unsigned int sizeInBits;
   };
 
-  const fltSemantics APFloat::IEEEhalf = { 15, -14, 11 };
-  const fltSemantics APFloat::IEEEsingle = { 127, -126, 24 };
-  const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53 };
-  const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113 };
-  const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64 };
-  const fltSemantics APFloat::Bogus = { 0, 0, 0 };
+  const fltSemantics APFloat::IEEEhalf = { 15, -14, 11, 16 };
+  const fltSemantics APFloat::IEEEsingle = { 127, -126, 24, 32 };
+  const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53, 64 };
+  const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113, 128 };
+  const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64, 80 };
+  const fltSemantics APFloat::Bogus = { 0, 0, 0, 0 };
 
   /* The PowerPC format consists of two doubles.  It does not map cleanly
      onto the usual format above.  It is approximated using twice the
@@ -72,7 +75,7 @@ namespace llvm {
      to represent all possible values held by a PPC double-double number,
      for example: (long double) 1.0 + (long double) 0x1p-106
      Should this be replaced by a full emulation of PPC double-double?  */
-  const fltSemantics APFloat::PPCDoubleDouble = { 1023, -1022 + 53, 53 + 53 };
+  const fltSemantics APFloat::PPCDoubleDouble = { 1023, -1022 + 53, 53 + 53, 128 };
 
   /* A tight upper bound on number of parts required to hold the value
      pow(5, power) is
@@ -765,6 +768,15 @@ APFloat::isLargest() const {
 }
 
 bool
+APFloat::isInteger() const {
+  // This could be made more efficient; I'm going for obviously correct.
+  if (!isFinite()) return false;
+  APFloat truncated = *this;
+  truncated.roundToIntegral(rmTowardZero);
+  return compare(truncated) == cmpEqual;
+}
+
+bool
 APFloat::bitwiseIsEqual(const APFloat &rhs) const {
   if (this == &rhs)
     return true;
@@ -774,18 +786,12 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
     return false;
   if (category==fcZero || category==fcInfinity)
     return true;
-  else if (isFiniteNonZero() && exponent!=rhs.exponent)
+
+  if (isFiniteNonZero() && exponent != rhs.exponent)
     return false;
-  else {
-    int i= partCount();
-    const integerPart* p=significandParts();
-    const integerPart* q=rhs.significandParts();
-    for (; i>0; i--, p++, q++) {
-      if (*p != *q)
-        return false;
-    }
-    return true;
-  }
+
+  return std::equal(significandParts(), significandParts() + partCount(),
+                    rhs.significandParts());
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value) {
@@ -843,6 +849,21 @@ unsigned int
 APFloat::semanticsPrecision(const fltSemantics &semantics)
 {
   return semantics.precision;
+}
+APFloat::ExponentType
+APFloat::semanticsMaxExponent(const fltSemantics &semantics)
+{
+  return semantics.maxExponent;
+}
+APFloat::ExponentType
+APFloat::semanticsMinExponent(const fltSemantics &semantics)
+{
+  return semantics.minExponent;
+}
+unsigned int
+APFloat::semanticsSizeInBits(const fltSemantics &semantics)
+{
+  return semantics.sizeInBits;
 }
 
 const integerPart *
@@ -1248,10 +1269,10 @@ APFloat::roundAwayFromZero(roundingMode rounding_mode,
     return false;
 
   case rmTowardPositive:
-    return sign == false;
+    return !sign;
 
   case rmTowardNegative:
-    return sign == true;
+    return sign;
   }
   llvm_unreachable("Invalid rounding mode found");
 }
@@ -1430,7 +1451,7 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
 
   /* Determine if the operation on the absolute values is effectively
      an addition or subtraction.  */
-  subtract ^= (sign ^ rhs.sign) ? true : false;
+  subtract ^= static_cast<bool>(sign ^ rhs.sign);
 
   /* Are we bigger exponent-wise than the RHS?  */
   bits = exponent - rhs.exponent;
@@ -1759,7 +1780,7 @@ APFloat::remainder(const APFloat &rhs)
 /* Normalized llvm frem (C fmod).
    This is not currently correct in all cases.  */
 APFloat::opStatus
-APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
+APFloat::mod(const APFloat &rhs)
 {
   opStatus fs;
   fs = modSpecials(rhs);
@@ -1784,10 +1805,10 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
                                           rmNearestTiesToEven);
     assert(fs==opOK);   // should always work
 
-    fs = V.multiply(rhs, rounding_mode);
+    fs = V.multiply(rhs, rmNearestTiesToEven);
     assert(fs==opOK || fs==opInexact);   // should not overflow or underflow
 
-    fs = subtract(V, rounding_mode);
+    fs = subtract(V, rmNearestTiesToEven);
     assert(fs==opOK || fs==opInexact);   // likewise
 
     if (isZero())
@@ -2416,7 +2437,7 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
                                       roundingMode rounding_mode)
 {
   unsigned int parts, pow5PartCount;
-  fltSemantics calcSemantics = { 32767, -32767, 0 };
+  fltSemantics calcSemantics = { 32767, -32767, 0, 0 };
   integerPart pow5Parts[maxPowerOfFiveParts];
   bool isNearest;
 
@@ -3368,6 +3389,10 @@ APFloat::getAllOnesValue(unsigned BitWidth, bool isIEEE)
   }
 }
 
+unsigned APFloat::getSizeInBits(const fltSemantics &Sem) {
+  return Sem.sizeInBits;
+}
+
 /// Make this number the largest magnitude normal number in the given
 /// semantics.
 void APFloat::makeLargest(bool Negative) {
@@ -3920,7 +3945,7 @@ APFloat::makeZero(bool Negative) {
 
 APFloat llvm::scalbn(APFloat X, int Exp) {
   if (X.isInfinity() || X.isZero() || X.isNaN())
-    return std::move(X);
+    return X;
 
   auto MaxExp = X.getSemantics().maxExponent;
   auto MinExp = X.getSemantics().minExponent;
@@ -3932,5 +3957,5 @@ APFloat llvm::scalbn(APFloat X, int Exp) {
     return APFloat::getZero(X.getSemantics(), X.isNegative());
 
   X.exponent += Exp;
-  return std::move(X);
+  return X;
 }

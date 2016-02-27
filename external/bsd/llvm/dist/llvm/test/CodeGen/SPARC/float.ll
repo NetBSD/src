@@ -53,20 +53,18 @@ declare double @get_double()
 declare double @llvm.fabs.f64(double) nounwind readonly
 
 ; V8-LABEL:    test_v9_floatreg:
-; V8:          fsubd {{.+}}, {{.+}}, {{.+}}
-; V8:          faddd {{.+}}, {{.+}}, [[R:%f(((1|2)?(0|2|4|6|8))|30)]]
+; V8:          fsubd {{.+}}, {{.+}}, [[R:%f(((1|2)?(0|2|4|6|8))|30)]]
 ; V8:          std [[R]], [%{{.+}}]
 ; V8:          ldd [%{{.+}}], %f0
+; V8:          faddd {{.+}}, {{.+}}, {{.+}}
 
 ; V9-LABEL:    test_v9_floatreg:
 ; V9:          fsubd {{.+}}, {{.+}}, {{.+}}
-; V9:          faddd {{.+}}, {{.+}}, [[R:%f((3(2|4|6|8))|((4|5)(0|2|4|6|8))|(60|62))]]
-; V9:          fmovd [[R]], %f0
+; V9:          faddd {{.+}}, {{.+}}, %f0
 
 ; SPARC64-LABEL:    test_v9_floatreg:
 ; SPARC64:          fsubd {{.+}}, {{.+}}, {{.+}}
-; SPARC64:          faddd {{.+}}, {{.+}}, [[R:%f((3(2|4|6|8))|((4|5)(0|2|4|6|8))|(60|62))]]
-; SPARC64:          fmovd [[R]], %f0
+; SPARC64:          faddd {{.+}}, {{.+}}, %f0
 
 define double @test_v9_floatreg() {
 entry:
@@ -154,11 +152,11 @@ entry:
 ; SPARC64:          fitod
 ; SPARC64:          fdtoi
 
-define void @test_itod_dtoi(i32 %a, i32* %ptr0, double* %ptr1) {
+define void @test_itod_dtoi(i32 %a, double %b, i32* %ptr0, double* %ptr1) {
 entry:
   %0 = sitofp i32 %a to double
   store double %0, double* %ptr1, align 8
-  %1 = fptosi double %0 to i32
+  %1 = fptosi double %b to i32
   store i32 %1, i32* %ptr0, align 8
   ret void
 }

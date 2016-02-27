@@ -26,7 +26,15 @@ class PreservedAnalyses;
 /// \brief Create and return a pass that writes the module to the specified
 /// ostream. Note that this pass is designed for use with the legacy pass
 /// manager.
-ModulePass *createBitcodeWriterPass(raw_ostream &Str);
+///
+/// If \c ShouldPreserveUseListOrder, encode use-list order so it can be
+/// reproduced when deserialized.
+///
+/// If \c EmitFunctionSummary, emit the function summary index (currently
+/// for use in ThinLTO optimization).
+ModulePass *createBitcodeWriterPass(raw_ostream &Str,
+                                    bool ShouldPreserveUseListOrder = false,
+                                    bool EmitFunctionSummary = false);
 
 /// \brief Pass for writing a module of IR out to a bitcode file.
 ///
@@ -34,10 +42,22 @@ ModulePass *createBitcodeWriterPass(raw_ostream &Str);
 /// a pass for the legacy pass manager, use the function above.
 class BitcodeWriterPass {
   raw_ostream &OS;
+  bool ShouldPreserveUseListOrder;
+  bool EmitFunctionSummary;
 
 public:
   /// \brief Construct a bitcode writer pass around a particular output stream.
-  explicit BitcodeWriterPass(raw_ostream &OS) : OS(OS) {}
+  ///
+  /// If \c ShouldPreserveUseListOrder, encode use-list order so it can be
+  /// reproduced when deserialized.
+  ///
+  /// If \c EmitFunctionSummary, emit the function summary index (currently
+  /// for use in ThinLTO optimization).
+  explicit BitcodeWriterPass(raw_ostream &OS,
+                             bool ShouldPreserveUseListOrder = false,
+                             bool EmitFunctionSummary = false)
+      : OS(OS), ShouldPreserveUseListOrder(ShouldPreserveUseListOrder),
+        EmitFunctionSummary(EmitFunctionSummary) {}
 
   /// \brief Run the bitcode writer pass, and output the module to the selected
   /// output stream.

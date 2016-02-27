@@ -6,8 +6,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK-LABEL: @multi_int_induction(
 ; CHECK: vector.body:
 ; CHECK:  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-; CHECK:  %normalized.idx = sub i64 %index, 0
-; CHECK:  %[[VAR:.*]] = trunc i64 %normalized.idx to i32
+; CHECK:  %[[VAR:.*]] = trunc i64 %index to i32
 ; CHECK:  %offset.idx = add i32 190, %[[VAR]]
 define void @multi_int_induction(i32* %A, i32 %N) {
 for.body.lr.ph:
@@ -16,7 +15,7 @@ for.body.lr.ph:
 for.body:
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %for.body ]
   %count.09 = phi i32 [ 190, %for.body.lr.ph ], [ %inc, %for.body ]
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %count.09, i32* %arrayidx2, align 4
   %inc = add nsw i32 %count.09, 1
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -51,11 +50,11 @@ entry:
 for.body:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %for.body ]
   %ind.sum = add i64 %iv, %offset
-  %arr.idx = getelementptr inbounds float* %a, i64 %ind.sum
-  %l1 = load float* %arr.idx, align 4
+  %arr.idx = getelementptr inbounds float, float* %a, i64 %ind.sum
+  %l1 = load float, float* %arr.idx, align 4
   %ind.sum2 = add i64 %iv, %offset2
-  %arr.idx2 = getelementptr inbounds float* %a, i64 %ind.sum2
-  %l2 = load float* %arr.idx2, align 4
+  %arr.idx2 = getelementptr inbounds float, float* %a, i64 %ind.sum2
+  %l2 = load float, float* %arr.idx2, align 4
   %m = fmul fast float %b, %l2
   %ad = fadd fast float %l1, %m
   store float %ad, float* %arr.idx, align 4
@@ -113,12 +112,11 @@ define i32 @i16_loop() nounwind readnone ssp uwtable {
 ; condition and branch directly to the scalar loop.
 
 ; CHECK-LABEL: max_i32_backedgetaken
-; CHECK:  %backedge.overflow = icmp eq i32 -1, -1
-; CHECK:  br i1 %backedge.overflow, label %scalar.ph, label %overflow.checked
+; CHECK:  br i1 true, label %scalar.ph, label %min.iters.checked
 
 ; CHECK: scalar.ph:
-; CHECK:  %bc.resume.val = phi i32 [ %resume.val, %middle.block ], [ 0, %0 ]
-; CHECK:  %bc.merge.rdx = phi i32 [ 1, %0 ], [ %5, %middle.block ]
+; CHECK:  %bc.resume.val = phi i32 [ 0, %middle.block ], [ 0, %0 ]
+; CHECK:  %bc.merge.rdx = phi i32 [ 1, %0 ], [ 1, %min.iters.checked ], [ %5, %middle.block ]
 
 define i32 @max_i32_backedgetaken() nounwind readnone ssp uwtable {
 
@@ -142,20 +140,19 @@ define i32 @max_i32_backedgetaken() nounwind readnone ssp uwtable {
 ; CHECK-LABEL: testoverflowcheck
 ; CHECK: entry
 ; CHECK: %[[LOAD:.*]] = load i8
-; CHECK: %[[VAL:.*]] =  zext i8 %[[LOAD]] to i32
 ; CHECK: br
 
 ; CHECK: scalar.ph
-; CHECK: phi i32 [ %{{.*}}, %middle.block ], [ %[[VAL]], %entry ]
+; CHECK: phi i8 [ %{{.*}}, %middle.block ], [ %[[LOAD]], %entry ]
 
 @e = global i8 1, align 1
 @d = common global i32 0, align 4
 @c = common global i32 0, align 4
 define i32 @testoverflowcheck() {
 entry:
-  %.pr.i = load i8* @e, align 1
-  %0 = load i32* @d, align 4
-  %c.promoted.i = load i32* @c, align 4
+  %.pr.i = load i8, i8* @e, align 1
+  %0 = load i32, i32* @d, align 4
+  %c.promoted.i = load i32, i32* @c, align 4
   br label %cond.end.i
 
 cond.end.i:
