@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.234 2016/01/31 18:41:36 christos Exp $
+# $NetBSD: md.amd64,v 1.235 2016/02/27 14:27:01 mlelstv Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -12,6 +12,7 @@
 ./usr/include/amd64/byte_swap.h			comp-c-include
 ./usr/include/amd64/cdefs.h			comp-c-include
 ./usr/include/amd64/cpu.h			comp-c-include
+./usr/include/amd64/cpu_rng.h			comp-c-include
 ./usr/include/amd64/cpufunc.h			comp-c-obsolete		obsolete
 ./usr/include/amd64/disklabel.h			comp-c-include
 ./usr/include/amd64/elf_machdep.h		comp-c-include
@@ -253,6 +254,7 @@
 ./usr/include/i386/byte_swap.h			comp-c-include
 ./usr/include/i386/cdefs.h			comp-c-include
 ./usr/include/i386/cpu.h			comp-c-include
+./usr/include/i386/cpu_rng.h			comp-c-include
 ./usr/include/i386/cpufunc.h			comp-c-obsolete		obsolete
 ./usr/include/i386/cputypes.h			comp-c-include
 ./usr/include/i386/disklabel.h			comp-c-include
@@ -384,6 +386,7 @@
 ./usr/include/x86/cacheinfo.h			comp-c-include
 ./usr/include/x86/cpu.h				comp-c-include
 ./usr/include/x86/cpu_extended_state.h		comp-c-include
+./usr/include/x86/cpu_rng.h			comp-c-include
 ./usr/include/x86/cpu_ucode.h			comp-c-include
 ./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
