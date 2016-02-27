@@ -1,6 +1,13 @@
 #! /bin/sh
 
-test -t 1 && test "$#" -eq 0 && exec > nodenames.h
+if [ -z "$1" ]; then
+	echo "Usage: $0 nodes.h" 1>&2
+	exit 1
+fi
+
+NODES=$1
+
+test -t 1 && exec > nodenames.h
 
 echo "#ifdef DEBUG"
 echo '
@@ -10,7 +17,7 @@ echo '
  */
 '
 
-MAX=$(awk < nodes.h '
+MAX=$(awk < "$NODES" '
 	/#define/ {
 		if ($3 > MAX) MAX = $3
 	}
@@ -18,9 +25,10 @@ MAX=$(awk < nodes.h '
 ')
 
 echo
+echo '#ifdef DEFINE_NODENAMES'
 echo "STATIC const char * const NodeNames[${MAX} + 1] = {"
 
-grep '^#define' nodes.h | sort -k2n | while read define name number opt_comment
+grep '^#define' "$NODES" | sort -k2n | while read define name number opt_comment
 do
 	: ${next:=0}
 	while [ "$number" -gt "$next" ]
@@ -33,6 +41,9 @@ do
 done
 
 echo "};"
+echo '#else'
+echo "extern const char * const NodeNames[${MAX} + 1];"
+echo '#endif'
 echo
 echo '#define NODETYPENAME(type) \'
 echo '	((unsigned)(type) <= '"${MAX}"' ? NodeNames[(type)] : "??OOR??")'
