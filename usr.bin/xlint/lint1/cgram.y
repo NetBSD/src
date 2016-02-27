@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.75 2016/01/02 17:44:33 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.76 2016/02/27 21:37:14 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.75 2016/01/02 17:44:33 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.76 2016/02/27 21:37:14 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -206,6 +206,8 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_TUINION
 %token <y_type>		T_AT_TUNION
 %token <y_type>		T_AT_UNUSED
+%token <y_type>		T_AT_WEAK
+%token <y_type>		T_AT_VISIBILITY
 %token <y_type>		T_AT_FORMAT
 %token <y_type>		T_AT_FORMAT_PRINTF
 %token <y_type>		T_AT_FORMAT_SCANF
@@ -511,6 +513,8 @@ type_attribute_spec:
 	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
 	    constant T_COMMA constant T_RPARN
 	| T_AT_UNUSED
+	| T_AT_WEAK
+	| T_AT_VISIBILITY T_LPARN constant T_RPARN
 	| T_QUAL {
 		if ($1 != CONST)	
 			yyerror("Bad attribute");
