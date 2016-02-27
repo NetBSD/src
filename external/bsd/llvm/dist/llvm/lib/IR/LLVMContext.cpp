@@ -88,11 +88,55 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
          "mem_parallel_loop_access kind id drifted");
   (void)MemParallelLoopAccessID;
 
-
   // Create the 'nonnull' metadata kind.
   unsigned NonNullID = getMDKindID("nonnull");
   assert(NonNullID == MD_nonnull && "nonnull kind id drifted");
   (void)NonNullID;
+  
+  // Create the 'dereferenceable' metadata kind.
+  unsigned DereferenceableID = getMDKindID("dereferenceable");
+  assert(DereferenceableID == MD_dereferenceable && 
+         "dereferenceable kind id drifted");
+  (void)DereferenceableID;
+  
+  // Create the 'dereferenceable_or_null' metadata kind.
+  unsigned DereferenceableOrNullID = getMDKindID("dereferenceable_or_null");
+  assert(DereferenceableOrNullID == MD_dereferenceable_or_null && 
+         "dereferenceable_or_null kind id drifted");
+  (void)DereferenceableOrNullID;
+
+  // Create the 'make.implicit' metadata kind.
+  unsigned MakeImplicitID = getMDKindID("make.implicit");
+  assert(MakeImplicitID == MD_make_implicit &&
+         "make.implicit kind id drifted");
+  (void)MakeImplicitID;
+
+  // Create the 'unpredictable' metadata kind.
+  unsigned UnpredictableID = getMDKindID("unpredictable");
+  assert(UnpredictableID == MD_unpredictable &&
+         "unpredictable kind id drifted");
+  (void)UnpredictableID;
+
+  // Create the 'invariant.group' metadata kind.
+  unsigned InvariantGroupId = getMDKindID("invariant.group");
+  assert(InvariantGroupId == MD_invariant_group &&
+         "invariant.group kind id drifted");
+  (void)InvariantGroupId;
+
+  // Create the 'align' metadata kind.
+  unsigned AlignID = getMDKindID("align");
+  assert(AlignID == MD_align && "align kind id drifted");
+  (void)AlignID;
+
+  auto *DeoptEntry = pImpl->getOrInsertBundleTag("deopt");
+  assert(DeoptEntry->second == LLVMContext::OB_deopt &&
+         "deopt operand bundle id drifted!");
+  (void)DeoptEntry;
+
+  auto *FuncletEntry = pImpl->getOrInsertBundleTag("funclet");
+  assert(FuncletEntry->second == LLVMContext::OB_funclet &&
+         "funclet operand bundle id drifted!");
+  (void)FuncletEntry;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
@@ -182,10 +226,29 @@ static bool isDiagnosticEnabled(const DiagnosticInfo &DI) {
     if (!cast<DiagnosticInfoOptimizationRemarkAnalysis>(DI).isEnabled())
       return false;
     break;
+  case llvm::DK_OptimizationRemarkAnalysisFPCommute:
+    if (!cast<DiagnosticInfoOptimizationRemarkAnalysisFPCommute>(DI)
+             .isEnabled())
+      return false;
+    break;
   default:
     break;
   }
   return true;
+}
+
+static const char *getDiagnosticMessagePrefix(DiagnosticSeverity Severity) {
+  switch (Severity) {
+  case DS_Error:
+    return "error";
+  case DS_Warning:
+    return "warning";
+  case DS_Remark:
+    return "remark";
+  case DS_Note:
+    return "note";
+  }
+  llvm_unreachable("Unknown DiagnosticSeverity");
 }
 
 void LLVMContext::diagnose(const DiagnosticInfo &DI) {
@@ -200,25 +263,12 @@ void LLVMContext::diagnose(const DiagnosticInfo &DI) {
     return;
 
   // Otherwise, print the message with a prefix based on the severity.
-  std::string MsgStorage;
-  raw_string_ostream Stream(MsgStorage);
-  DiagnosticPrinterRawOStream DP(Stream);
+  DiagnosticPrinterRawOStream DP(errs());
+  errs() << getDiagnosticMessagePrefix(DI.getSeverity()) << ": ";
   DI.print(DP);
-  Stream.flush();
-  switch (DI.getSeverity()) {
-  case DS_Error:
-    errs() << "error: " << MsgStorage << "\n";
+  errs() << "\n";
+  if (DI.getSeverity() == DS_Error)
     exit(1);
-  case DS_Warning:
-    errs() << "warning: " << MsgStorage << "\n";
-    break;
-  case DS_Remark:
-    errs() << "remark: " << MsgStorage << "\n";
-    break;
-  case DS_Note:
-    errs() << "note: " << MsgStorage << "\n";
-    break;
-  }
 }
 
 void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
@@ -229,23 +279,44 @@ void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
 // Metadata Kind Uniquing
 //===----------------------------------------------------------------------===//
 
-/// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+/// Return a unique non-zero ID for the specified metadata kind.
 unsigned LLVMContext::getMDKindID(StringRef Name) const {
-  assert(!std::isdigit(Name.front()) &&
-         "Named metadata may not start with a digit");
-
   // If this is new, assign it its ID.
-  return pImpl->CustomMDKindNames.insert(std::make_pair(
-                                             Name,
-                                             pImpl->CustomMDKindNames.size()))
+  return pImpl->CustomMDKindNames.insert(
+                                     std::make_pair(
+                                         Name, pImpl->CustomMDKindNames.size()))
       .first->second;
 }
 
-/// getHandlerNames - Populate client supplied smallvector using custome
+/// getHandlerNames - Populate client-supplied smallvector using custom
 /// metadata name and ID.
 void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
   Names.resize(pImpl->CustomMDKindNames.size());
   for (StringMap<unsigned>::const_iterator I = pImpl->CustomMDKindNames.begin(),
        E = pImpl->CustomMDKindNames.end(); I != E; ++I)
     Names[I->second] = I->first();
+}
+
+void LLVMContext::getOperandBundleTags(SmallVectorImpl<StringRef> &Tags) const {
+  pImpl->getOperandBundleTags(Tags);
+}
+
+uint32_t LLVMContext::getOperandBundleTagID(StringRef Tag) const {
+  return pImpl->getOperandBundleTagID(Tag);
+}
+
+void LLVMContext::setGC(const Function &Fn, std::string GCName) {
+  auto It = pImpl->GCNames.find(&Fn);
+
+  if (It == pImpl->GCNames.end()) {
+    pImpl->GCNames.insert(std::make_pair(&Fn, std::move(GCName)));
+    return;
+  }
+  It->second = std::move(GCName);
+}
+const std::string &LLVMContext::getGC(const Function &Fn) {
+  return pImpl->GCNames[&Fn];
+}
+void LLVMContext::deleteGC(const Function &Fn) {
+  pImpl->GCNames.erase(&Fn);
 }

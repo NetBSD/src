@@ -29,14 +29,13 @@ namespace llvm {
 
 class Module;
 class Constant;
-template<typename ValueSubClass, typename ItemParentClass>
-  class SymbolTableListTraits;
+template <typename ValueSubClass> class SymbolTableListTraits;
 
 class GlobalVariable : public GlobalObject, public ilist_node<GlobalVariable> {
-  friend class SymbolTableListTraits<GlobalVariable, Module>;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  void operator=(const GlobalVariable &) LLVM_DELETED_FUNCTION;
-  GlobalVariable(const GlobalVariable &) LLVM_DELETED_FUNCTION;
+  friend class SymbolTableListTraits<GlobalVariable>;
+  void *operator new(size_t, unsigned) = delete;
+  void operator=(const GlobalVariable &) = delete;
+  GlobalVariable(const GlobalVariable &) = delete;
 
   void setParent(Module *parent);
 
@@ -45,7 +44,6 @@ class GlobalVariable : public GlobalObject, public ilist_node<GlobalVariable> {
                                                // can change from its initial
                                                // value before global
                                                // initializers are run?
-
 public:
   // allocate space for exactly one operand
   void *operator new(size_t s) {
@@ -66,8 +64,9 @@ public:
                  ThreadLocalMode = NotThreadLocal, unsigned AddressSpace = 0,
                  bool isExternallyInitialized = false);
 
-  ~GlobalVariable() {
-    NumOperands = 1; // FIXME: needed by operator delete
+  ~GlobalVariable() override {
+    // FIXME: needed by operator delete
+    setGlobalVariableNumOperands(1);
   }
 
   /// Provide fast operand accessors
@@ -106,18 +105,13 @@ public:
   /// hasUniqueInitializer - Whether the global variable has an initializer, and
   /// any changes made to the initializer will turn up in the final executable.
   inline bool hasUniqueInitializer() const {
-    return hasInitializer() &&
-      // It's not safe to modify initializers of global variables with weak
-      // linkage, because the linker might choose to discard the initializer and
-      // use the initializer from another instance of the global variable
-      // instead. It is wrong to modify the initializer of a global variable
-      // with *_odr linkage because then different instances of the global may
-      // have different initializers, breaking the One Definition Rule.
-      !isWeakForLinker() &&
-      // It is not safe to modify initializers of global variables with the
-      // external_initializer marker since the value may be changed at runtime
-      // before C++ initializers are evaluated.
-      !isExternallyInitialized();
+    return
+        // We need to be sure this is the definition that will actually be used
+        isStrongDefinitionForLinker() &&
+        // It is not safe to modify initializers of global variables with the
+        // external_initializer marker since the value may be changed at runtime
+        // before C++ initializers are evaluated.
+        !isExternallyInitialized();
   }
 
   /// getInitializer - Return the initializer for this global variable.  It is
@@ -164,10 +158,6 @@ public:
   /// and deletes it.
   ///
   void eraseFromParent() override;
-
-  /// Override Constant's implementation of this method so we can
-  /// replace constant initializers.
-  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {

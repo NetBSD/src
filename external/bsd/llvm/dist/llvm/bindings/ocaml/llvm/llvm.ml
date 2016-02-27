@@ -579,6 +579,8 @@ external global_parent : llvalue -> llmodule = "LLVMGetGlobalParent"
 external is_declaration : llvalue -> bool = "llvm_is_declaration"
 external linkage : llvalue -> Linkage.t = "llvm_linkage"
 external set_linkage : Linkage.t -> llvalue -> unit = "llvm_set_linkage"
+external unnamed_addr : llvalue -> bool = "llvm_unnamed_addr"
+external set_unnamed_addr : bool -> llvalue -> unit = "llvm_set_unnamed_addr"
 external section : llvalue -> string = "llvm_section"
 external set_section : string -> llvalue -> unit = "llvm_set_section"
 external visibility : llvalue -> Visibility.t = "llvm_visibility"
@@ -1300,6 +1302,8 @@ external build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
 (*--... Miscellaneous instructions .........................................--*)
 external build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
                      llvalue = "llvm_build_phi"
+external build_empty_phi : lltype -> string -> llbuilder -> llvalue
+                         = "llvm_build_empty_phi"
 external build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue
                     = "llvm_build_call"
 external build_select : llvalue -> llvalue -> llvalue -> string -> llbuilder ->

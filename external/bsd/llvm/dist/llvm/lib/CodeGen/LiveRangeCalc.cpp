@@ -43,17 +43,14 @@ void LiveRangeCalc::reset(const MachineFunction *mf,
 static void createDeadDef(SlotIndexes &Indexes, VNInfo::Allocator &Alloc,
                           LiveRange &LR, const MachineOperand &MO) {
     const MachineInstr *MI = MO.getParent();
-    SlotIndex DefIdx;
-    if (MI->isPHI())
-      DefIdx = Indexes.getMBBStartIdx(MI->getParent());
-    else
-      DefIdx = Indexes.getInstructionIndex(MI).getRegSlot(MO.isEarlyClobber());
+    SlotIndex DefIdx =
+        Indexes.getInstructionIndex(MI).getRegSlot(MO.isEarlyClobber());
 
     // Create the def in LR. This may find an existing def.
     LR.createDeadDef(DefIdx, Alloc);
 }
 
-void LiveRangeCalc::calculate(LiveInterval &LI) {
+void LiveRangeCalc::calculate(LiveInterval &LI, bool TrackSubRegs) {
   assert(MRI && Indexes && "call reset() first");
 
   // Step 1: Create minimal live segments for every definition of Reg.
@@ -66,24 +63,24 @@ void LiveRangeCalc::calculate(LiveInterval &LI) {
       continue;
 
     unsigned SubReg = MO.getSubReg();
-    if (LI.hasSubRanges() || (SubReg != 0 && MRI->tracksSubRegLiveness())) {
-      unsigned Mask = SubReg != 0 ? TRI.getSubRegIndexLaneMask(SubReg)
-                                  : MRI->getMaxLaneMaskForVReg(Reg);
+    if (LI.hasSubRanges() || (SubReg != 0 && TrackSubRegs)) {
+      LaneBitmask Mask = SubReg != 0 ? TRI.getSubRegIndexLaneMask(SubReg)
+                                     : MRI->getMaxLaneMaskForVReg(Reg);
 
       // If this is the first time we see a subregister def, initialize
       // subranges by creating a copy of the main range.
       if (!LI.hasSubRanges() && !LI.empty()) {
-        unsigned ClassMask = MRI->getMaxLaneMaskForVReg(Reg);
+        LaneBitmask ClassMask = MRI->getMaxLaneMaskForVReg(Reg);
         LI.createSubRangeFrom(*Alloc, ClassMask, LI);
       }
 
       for (LiveInterval::SubRange &S : LI.subranges()) {
         // A Mask for subregs common to the existing subrange and current def.
-        unsigned Common = S.LaneMask & Mask;
+        LaneBitmask Common = S.LaneMask & Mask;
         if (Common == 0)
           continue;
         // A Mask for subregs covered by the subrange but not the current def.
-        unsigned LRest = S.LaneMask & ~Mask;
+        LaneBitmask LRest = S.LaneMask & ~Mask;
         LiveInterval::SubRange *CommonRange;
         if (LRest != 0) {
           // Split current subrange into Common and LRest ranges.
@@ -141,7 +138,8 @@ void LiveRangeCalc::createDeadDefs(LiveRange &LR, unsigned Reg) {
 }
 
 
-void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg, unsigned Mask) {
+void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg,
+                                 LaneBitmask Mask) {
   // Visit all operands that read Reg. This may include partial defs.
   const TargetRegisterInfo &TRI = *MRI->getTargetRegisterInfo();
   for (MachineOperand &MO : MRI->reg_nodbg_operands(Reg)) {
@@ -160,7 +158,7 @@ void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg, unsigned Mask) {
       continue;
     unsigned SubReg = MO.getSubReg();
     if (SubReg != 0) {
-      unsigned SubRegMask = TRI.getSubRegIndexLaneMask(SubReg);
+      LaneBitmask SubRegMask = TRI.getSubRegIndexLaneMask(SubReg);
       // Ignore uses not covering the current subrange.
       if ((SubRegMask & Mask) == 0)
         continue;
@@ -222,23 +220,23 @@ void LiveRangeCalc::updateFromLiveIns() {
 }
 
 
-void LiveRangeCalc::extend(LiveRange &LR, SlotIndex Kill, unsigned PhysReg) {
-  assert(Kill.isValid() && "Invalid SlotIndex");
+void LiveRangeCalc::extend(LiveRange &LR, SlotIndex Use, unsigned PhysReg) {
+  assert(Use.isValid() && "Invalid SlotIndex");
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
 
-  MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(Kill.getPrevSlot());
-  assert(KillMBB && "No MBB at Kill");
+  MachineBasicBlock *UseMBB = Indexes->getMBBFromIndex(Use.getPrevSlot());
+  assert(UseMBB && "No MBB at Use");
 
   // Is there a def in the same MBB we can extend?
-  if (LR.extendInBlock(Indexes->getMBBStartIdx(KillMBB), Kill))
+  if (LR.extendInBlock(Indexes->getMBBStartIdx(UseMBB), Use))
     return;
 
-  // Find the single reaching def, or determine if Kill is jointly dominated by
+  // Find the single reaching def, or determine if Use is jointly dominated by
   // multiple values, and we may need to create even more phi-defs to preserve
   // VNInfo SSA form.  Perform a search for all predecessor blocks where we
   // know the dominating VNInfo.
-  if (findReachingDefs(LR, *KillMBB, Kill, PhysReg))
+  if (findReachingDefs(LR, *UseMBB, Use, PhysReg))
     return;
 
   // When there were multiple different values, we may need new PHIs.
@@ -257,12 +255,12 @@ void LiveRangeCalc::calculateValues() {
 }
 
 
-bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
-                                     SlotIndex Kill, unsigned PhysReg) {
-  unsigned KillMBBNum = KillMBB.getNumber();
+bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
+                                     SlotIndex Use, unsigned PhysReg) {
+  unsigned UseMBBNum = UseMBB.getNumber();
 
   // Block numbers where LR should be live-in.
-  SmallVector<unsigned, 16> WorkList(1, KillMBBNum);
+  SmallVector<unsigned, 16> WorkList(1, UseMBBNum);
 
   // Remember if we have seen more than one value.
   bool UniqueVNI = true;
@@ -275,13 +273,19 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
 #ifndef NDEBUG
     if (MBB->pred_empty()) {
       MBB->getParent()->verify();
+      errs() << "Use of " << PrintReg(PhysReg)
+             << " does not have a corresponding definition on every path:\n";
+      const MachineInstr *MI = Indexes->getInstructionFromIndex(Use);
+      if (MI != nullptr)
+        errs() << Use << " " << *MI;
       llvm_unreachable("Use not jointly dominated by defs.");
     }
 
     if (TargetRegisterInfo::isPhysicalRegister(PhysReg) &&
         !MBB->isLiveIn(PhysReg)) {
       MBB->getParent()->verify();
-      errs() << "The register needs to be live in to BB#" << MBB->getNumber()
+      errs() << "The register " << PrintReg(PhysReg)
+             << " needs to be live in to BB#" << MBB->getNumber()
              << ", but is missing from the live-in list.\n";
       llvm_unreachable("Invalid global physical register");
     }
@@ -316,11 +320,11 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        }
 
        // No, we need a live-in value for Pred as well
-       if (Pred != &KillMBB)
+       if (Pred != &UseMBB)
           WorkList.push_back(Pred->getNumber());
        else
-          // Loopback to KillMBB, so value is really live through.
-         Kill = SlotIndex();
+          // Loopback to UseMBB, so value is really live through.
+         Use = SlotIndex();
     }
   }
 
@@ -338,9 +342,9 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
          E = WorkList.end(); I != E; ++I) {
        SlotIndex Start, End;
        std::tie(Start, End) = Indexes->getMBBRange(*I);
-       // Trim the live range in KillMBB.
-       if (*I == KillMBBNum && Kill.isValid())
-         End = Kill;
+       // Trim the live range in UseMBB.
+       if (*I == UseMBBNum && Use.isValid())
+         End = Use;
        else
          Map[MF->getBlockNumbered(*I)] = LiveOutPair(TheVNI, nullptr);
        Updater.add(Start, End, TheVNI);
@@ -355,8 +359,8 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        I = WorkList.begin(), E = WorkList.end(); I != E; ++I) {
     MachineBasicBlock *MBB = MF->getBlockNumbered(*I);
     addLiveInBlock(LR, DomTree->getNode(MBB));
-    if (MBB == &KillMBB)
-      LiveIn.back().Kill = Kill;
+    if (MBB == &UseMBB)
+      LiveIn.back().Kill = Use;
   }
 
   return false;

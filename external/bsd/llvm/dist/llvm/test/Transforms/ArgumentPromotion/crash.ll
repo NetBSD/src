@@ -1,7 +1,7 @@
 ; RUN: opt -inline -argpromotion < %s
 ; rdar://7879828
 
-define void @foo() {
+define void @foo() personality i32 (...)* @__gxx_personality_v0 {
   invoke void @foo2()
           to label %if.end432 unwind label %for.end520 
 
@@ -9,7 +9,7 @@ if.end432:
   unreachable
 
 for.end520: 
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
            cleanup
   unreachable
 }
@@ -50,10 +50,10 @@ init:
 
 define internal i32 @"clay_assign(Chain, Chain)"(%0* %c, %0* %d) {
 init:
-  %0 = getelementptr %0* %d, i32 0, i32 0
-  %1 = load %0** %0
-  %2 = getelementptr %0* %c, i32 0, i32 0
-  %3 = load %0** %2
+  %0 = getelementptr %0, %0* %d, i32 0, i32 0
+  %1 = load %0*, %0** %0
+  %2 = getelementptr %0, %0* %c, i32 0, i32 0
+  %3 = load %0*, %0** %2
   %4 = call i32 @"clay_assign(Chain, Chain)"(%0* %3, %0* %1)
   ret i32 0
 }

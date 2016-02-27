@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx"
 
 ; CHECK-LABEL: test1:
 ; %arg lives in xmm0 and it shouldn't be redefined until it is used in the FMA.
-; CHECK-NOT {{.*}}, %xmm0
+; CHECK-NOT: {{.*}}, %xmm0
 ; %addr lives in rdi.
 ; %addr2 lives in rsi.
 ; CHECK: vmovss (%rsi), [[ADDR2:%xmm[0-9]+]]
@@ -18,8 +18,8 @@ entry:
 
 loop:
   %sum0 = phi float [ %fma, %loop ], [ %arg, %entry ]
-  %addrVal = load float* %addr, align 4
-  %addr2Val = load float* %addr2, align 4
+  %addrVal = load float, float* %addr, align 4
+  %addr2Val = load float, float* %addr2, align 4
   %fmul = fmul float %addrVal, %addr2Val
   %fma = fadd float %sum0, %fmul
   br i1 true, label %exit, label %loop

@@ -14,19 +14,27 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LivePhysRegs.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 
 /// \brief Remove all registers from the set that get clobbered by the register
 /// mask.
-void LivePhysRegs::removeRegsInMask(const MachineOperand &MO) {
+/// The clobbers set will be the list of live registers clobbered
+/// by the regmask.
+void LivePhysRegs::removeRegsInMask(const MachineOperand &MO,
+        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> *Clobbers) {
   SparseSet<unsigned>::iterator LRI = LiveRegs.begin();
   while (LRI != LiveRegs.end()) {
-    if (MO.clobbersPhysReg(*LRI))
+    if (MO.clobbersPhysReg(*LRI)) {
+      if (Clobbers)
+        Clobbers->push_back(std::make_pair(*LRI, &MO));
       LRI = LiveRegs.erase(LRI);
-    else
+    } else
       ++LRI;
   }
 }
@@ -44,7 +52,7 @@ void LivePhysRegs::stepBackward(const MachineInstr &MI) {
         continue;
       removeReg(Reg);
     } else if (O->isRegMask())
-      removeRegsInMask(*O);
+      removeRegsInMask(*O, nullptr);
   }
 
   // Add uses to the set.
@@ -60,10 +68,10 @@ void LivePhysRegs::stepBackward(const MachineInstr &MI) {
 
 /// Simulates liveness when stepping forward over an instruction(bundle): Remove
 /// killed-uses, add defs. This is the not recommended way, because it depends
-/// on accurate kill flags. If possible use stepBackwards() instead of this
+/// on accurate kill flags. If possible use stepBackward() instead of this
 /// function.
-void LivePhysRegs::stepForward(const MachineInstr &MI) {
-  SmallVector<unsigned, 4> Defs;
+void LivePhysRegs::stepForward(const MachineInstr &MI,
+        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> &Clobbers) {
   // Remove killed registers from the set.
   for (ConstMIBundleOperands O(&MI); O.isValid(); ++O) {
     if (O->isReg()) {
@@ -71,8 +79,9 @@ void LivePhysRegs::stepForward(const MachineInstr &MI) {
       if (Reg == 0)
         continue;
       if (O->isDef()) {
-        if (!O->isDead())
-          Defs.push_back(Reg);
+        // Note, dead defs are still recorded.  The caller should decide how to
+        // handle them.
+        Clobbers.push_back(std::make_pair(Reg, &*O));
       } else {
         if (!O->isKill())
           continue;
@@ -80,12 +89,16 @@ void LivePhysRegs::stepForward(const MachineInstr &MI) {
         removeReg(Reg);
       }
     } else if (O->isRegMask())
-      removeRegsInMask(*O);
+      removeRegsInMask(*O, &Clobbers);
   }
 
   // Add defs to the set.
-  for (unsigned i = 0, e = Defs.size(); i != e; ++i)
-    addReg(Defs[i]);
+  for (auto Reg : Clobbers) {
+    // Skip dead defs.  They shouldn't be added to the set.
+    if (Reg.second->isReg() && Reg.second->isDead())
+      continue;
+    addReg(Reg.first);
+  }
 }
 
 /// Prin the currently live registers to OS.
@@ -111,4 +124,51 @@ void LivePhysRegs::dump() const {
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   dbgs() << "  " << *this;
 #endif
+}
+
+/// Add live-in registers of basic block \p MBB to \p LiveRegs.
+static void addLiveIns(LivePhysRegs &LiveRegs, const MachineBasicBlock &MBB) {
+  for (const auto &LI : MBB.liveins())
+    LiveRegs.addReg(LI.PhysReg);
+}
+
+/// Add pristine registers to the given \p LiveRegs. This function removes
+/// actually saved callee save registers when \p InPrologueEpilogue is false.
+static void addPristines(LivePhysRegs &LiveRegs, const MachineFunction &MF,
+                         const TargetRegisterInfo &TRI) {
+  const MachineFrameInfo &MFI = *MF.getFrameInfo();
+  if (!MFI.isCalleeSavedInfoValid())
+    return;
+
+  for (const MCPhysReg *CSR = TRI.getCalleeSavedRegs(&MF); CSR && *CSR; ++CSR)
+    LiveRegs.addReg(*CSR);
+  for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo())
+    LiveRegs.removeReg(Info.getReg());
+}
+
+void LivePhysRegs::addLiveOuts(const MachineBasicBlock *MBB,
+                               bool AddPristinesAndCSRs) {
+  if (AddPristinesAndCSRs) {
+    const MachineFunction &MF = *MBB->getParent();
+    addPristines(*this, MF, *TRI);
+    if (!MBB->isReturnBlock()) {
+      // The return block has no successors whose live-ins we could merge
+      // below. So instead we add the callee saved registers manually.
+      for (const MCPhysReg *I = TRI->getCalleeSavedRegs(&MF); *I; ++I)
+        addReg(*I);
+    }
+  }
+
+  // To get the live-outs we simply merge the live-ins of all successors.
+  for (const MachineBasicBlock *Succ : MBB->successors())
+    ::addLiveIns(*this, *Succ);
+}
+
+void LivePhysRegs::addLiveIns(const MachineBasicBlock *MBB,
+                              bool AddPristines) {
+  if (AddPristines) {
+    const MachineFunction &MF = *MBB->getParent();
+    addPristines(*this, MF, *TRI);
+  }
+  ::addLiveIns(*this, *MBB);
 }

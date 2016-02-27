@@ -12,8 +12,14 @@
 ; CHECK: @d = internal unnamed_addr constant [4 x i8] c"foo\00", align 1
 ; CHECK: @e = linkonce_odr global i32 0
 
+; CHECK: define internal fastcc void @used_internal() unnamed_addr {
+define internal void @used_internal() {
+  ret void
+}
+
 define i32 @get_e() {
-       %t = load i32* @e
+       call void @used_internal()
+       %t = load i32, i32* @e
        ret i32 %t
 }
 
@@ -24,10 +30,10 @@ define void @set_e(i32 %x) {
 
 define i1 @bah(i64 %i) nounwind readonly optsize ssp {
 entry:
-  %arrayidx4 = getelementptr inbounds [4 x i8]* @d, i64 0, i64 %i
-  %tmp5 = load i8* %arrayidx4, align 1
+  %arrayidx4 = getelementptr inbounds [4 x i8], [4 x i8]* @d, i64 0, i64 %i
+  %tmp5 = load i8, i8* %arrayidx4, align 1
   %array0 = bitcast [4 x i8]* @d to i8*
-  %tmp6 = load i8* %array0, align 1
+  %tmp6 = load i8, i8* %array0, align 1
   %cmp = icmp eq i8 %tmp5, %tmp6
   ret i1 %cmp
 }
@@ -63,6 +69,6 @@ return:
 
 define i32 @zed() {
 entry:
-  %tmp1 = load i32* @c, align 4
+  %tmp1 = load i32, i32* @c, align 4
   ret i32 %tmp1
 }

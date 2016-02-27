@@ -8,13 +8,13 @@
 // FIXME2: We need a debug_line dumper so that we can test the actual contents.
 
 // CHECK:        Section {
-// CHECK:          Index: 4
-// CHECK-NEXT:     Name: .debug_line
+// CHECK:          Index:
+// CHECK:          Name: .debug_line
 // CHECK-NEXT:     Type: SHT_PROGBITS
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x44
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 61
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0

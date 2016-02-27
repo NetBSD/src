@@ -9,7 +9,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 @.str32190 = external constant [92 x i8], align 1		; <[92 x i8]*> [#uses=1]
 @.str41 = external constant [25 x i8], align 1		; <[25 x i8]*> [#uses=1]
 
-define void @_ZN8EtherBus10initializeEv() {
+define void @_ZN8EtherBus10initializeEv() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	br i1 undef, label %_ZN7cObjectnwEj.exit, label %bb.i
 
@@ -17,7 +17,7 @@ bb.i:		; preds = %entry
 	br label %_ZN7cObjectnwEj.exit
 
 _ZN7cObjectnwEj.exit:		; preds = %bb.i, %entry
-	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([12 x i8]* @.str21179, i32 0, i32 0))
+	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([12 x i8], [12 x i8]* @.str21179, i32 0, i32 0))
 			to label %bb1 unwind label %lpad
 
 bb1:		; preds = %_ZN7cObjectnwEj.exit
@@ -39,7 +39,7 @@ bb2:		; preds = %_ZNK5cGate4sizeEv.exit122
 	unreachable
 
 bb8:		; preds = %_ZNK5cGate4sizeEv.exit122
-	%tmp = invoke i8* @_ZN7cModule3parEPKc(i8* undef, i8* getelementptr ([10 x i8]* @.str25183, i32 0, i32 0))
+	%tmp = invoke i8* @_ZN7cModule3parEPKc(i8* undef, i8* getelementptr ([10 x i8], [10 x i8]* @.str25183, i32 0, i32 0))
 			to label %invcont9 unwind label %lpad119		; <i8*> [#uses=1]
 
 invcont9:		; preds = %bb8
@@ -54,7 +54,7 @@ invcont11:		; preds = %invcont10
 	br i1 undef, label %bb12, label %bb18
 
 bb12:		; preds = %invcont11
-	invoke void (i8*, i8*, ...)* @_ZN6cEnvir6printfEPKcz(i8* null, i8* getelementptr ([3 x i8]* @.str12, i32 0, i32 0), i32 undef)
+	invoke void (i8*, i8*, ...) @_ZN6cEnvir6printfEPKcz(i8* null, i8* getelementptr ([3 x i8], [3 x i8]* @.str12, i32 0, i32 0), i32 undef)
 			to label %bb.i.i159 unwind label %lpad119
 
 bb.i.i159:		; preds = %bb12
@@ -77,7 +77,7 @@ invcont35:		; preds = %bb34
 	br i1 undef, label %bb49, label %bb61
 
 bb49:		; preds = %invcont35
-	invoke void (i8*, i8*, ...)* @_ZNK13cSimpleModule5errorEPKcz(i8* undef, i8* getelementptr ([92 x i8]* @.str32190, i32 0, i32 0))
+	invoke void (i8*, i8*, ...) @_ZNK13cSimpleModule5errorEPKcz(i8* undef, i8* getelementptr ([92 x i8], [92 x i8]* @.str32190, i32 0, i32 0))
 			to label %bb51 unwind label %lpad119
 
 bb51:		; preds = %bb49
@@ -87,7 +87,7 @@ bb61:		; preds = %invcont35
 	br label %bb106
 
 .noexc:		; preds = %bb106
-	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([25 x i8]* @.str41, i32 0, i32 0))
+	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([25 x i8], [25 x i8]* @.str41, i32 0, i32 0))
 			to label %bb102 unwind label %lpad123
 
 bb102:		; preds = %.noexc
@@ -99,7 +99,7 @@ invcont103:		; preds = %bb102
 			to label %invcont104 unwind label %lpad119
 
 invcont104:		; preds = %invcont103
-	%tmp3 = invoke i32 @_ZN13cSimpleModule11sendDelayedEP8cMessagedPKci(i8* undef, i8* undef, double 0.000000e+00, i8* getelementptr ([4 x i8]* @.str17175, i32 0, i32 0), i32 undef)
+	%tmp3 = invoke i32 @_ZN13cSimpleModule11sendDelayedEP8cMessagedPKci(i8* undef, i8* undef, double 0.000000e+00, i8* getelementptr ([4 x i8], [4 x i8]* @.str17175, i32 0, i32 0), i32 undef)
 			to label %invcont105 unwind label %lpad119		; <i32> [#uses=0]
 
 invcont105:		; preds = %invcont104
@@ -110,17 +110,17 @@ bb106:		; preds = %invcont105, %bb61
 			to label %.noexc unwind label %lpad119		; <i8*> [#uses=1]
 
 lpad:		; preds = %_ZN7cObjectnwEj.exit
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
 	br label %Unwind
 
 lpad119:		; preds = %bb106, %invcont104, %invcont103, %bb102, %bb49, %bb34, %bb12, %invcont10, %invcont9, %bb8
-        %exn119 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn119 = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad123:		; preds = %.noexc
-        %exn123 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn123 = landingpad {i8*, i32}
                  cleanup
 	%tmp5 = icmp eq i8* %tmp4, null		; <i1> [#uses=1]
 	br i1 %tmp5, label %Unwind, label %bb.i2
