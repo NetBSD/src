@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.51 2016/02/27 15:47:18 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.52 2016/02/27 15:48:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.51 2016/02/27 15:47:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.52 2016/02/27 15:48:36 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -795,7 +795,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 	sitd->xfer = NULL;
 
 #ifdef DIAGNOSTIC
-	sitd->isdone = false;
+	sitd->isdone = true;
 #endif
 
 	return sitd;
