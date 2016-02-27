@@ -2,5 +2,6 @@
 .PATH.S: ${.PARSEDIR}
 MODES_SRCS = ghash-sparcv9.o
 MODESCPPFLAGS = -DGHASH_ASM
+AFLAGS.ghash-sparcv9.S+= -Wa,-Av9
 .endif
 .include "../../modes.inc"
