@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2015/01/29 20:41:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/02/27 21:47:33 joerg Exp $
 
 LIB=	LLVMInstrumentation
 
@@ -13,6 +13,8 @@ SRCS+=	AddressSanitizer.cpp \
 	InstrProfiling.cpp \
 	Instrumentation.cpp \
 	MemorySanitizer.cpp \
+	PGOInstrumentation.cpp \
+	SafeStack.cpp \
 	SanitizerCoverage.cpp \
 	ThreadSanitizer.cpp
 
