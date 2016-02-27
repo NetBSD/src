@@ -12,7 +12,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN7trivial3barEv()
 // CHECK: alloca %"struct.trivial::A"
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN7trivial3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN7trivial3fooENS_1AE(i8*)
 
@@ -33,7 +33,7 @@ void bar() {
 // CHECK-LABEL: define void @_ZN12default_ctor3barEv()
 // CHECK: alloca %"struct.default_ctor::A"
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN12default_ctor3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN12default_ctor3fooENS_1AE(i8*)
 
@@ -76,7 +76,7 @@ void bar() {
 // FIXME: The copy ctor is deleted.
 // CHECK-DISABLED-LABEL: define void @_ZN11all_deleted3barEv()
 // CHECK-DISABLED: call void @_Z{{.*}}C1Ev(
-// CHECK-DISABLED-NOT call
+// CHECK-DISABLED-NOT: call
 // CHECK-DISABLED: call void @_ZN11all_deleted3fooENS_1AE(%"struct.all_deleted::A"* %{{.*}})
 // CHECK-DISABLED-LABEL: declare void @_ZN11all_deleted3fooENS_1AE(%"struct.all_deleted::A"*)
 
@@ -96,7 +96,7 @@ void bar() {
 // FIXME: The copy and move ctors are implicitly deleted.
 // CHECK-DISABLED-LABEL: define void @_ZN18implicitly_deleted3barEv()
 // CHECK-DISABLED: call void @_Z{{.*}}C1Ev(
-// CHECK-DISABLED-NOT call
+// CHECK-DISABLED-NOT: call
 // CHECK-DISABLED: call void @_ZN18implicitly_deleted3fooENS_1AE(%"struct.implicitly_deleted::A"* %{{.*}})
 // CHECK-DISABLED-LABEL: declare void @_ZN18implicitly_deleted3fooENS_1AE(%"struct.implicitly_deleted::A"*)
 
@@ -116,7 +116,7 @@ void bar() {
 // FIXME: The copy constructor is implicitly deleted.
 // CHECK-DISABLED-LABEL: define void @_ZN11one_deleted3barEv()
 // CHECK-DISABLED: call void @_Z{{.*}}C1Ev(
-// CHECK-DISABLED-NOT call
+// CHECK-DISABLED-NOT: call
 // CHECK-DISABLED: call void @_ZN11one_deleted3fooENS_1AE(%"struct.one_deleted::A"* %{{.*}})
 // CHECK-DISABLED-LABEL: declare void @_ZN11one_deleted3fooENS_1AE(%"struct.one_deleted::A"*)
 
@@ -136,7 +136,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN14copy_defaulted3barEv()
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN14copy_defaulted3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN14copy_defaulted3fooENS_1AE(i8*)
 
@@ -156,7 +156,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN14move_defaulted3barEv()
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN14move_defaulted3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN14move_defaulted3fooENS_1AE(i8*)
 
@@ -175,7 +175,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN17trivial_defaulted3barEv()
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN17trivial_defaulted3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN17trivial_defaulted3fooENS_1AE(i8*)
 

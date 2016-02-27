@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -std=c++98 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
-// RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
-// RUN: %clang_cc1 -std=c++14 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
-// RUN: %clang_cc1 -std=c++1z %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
+// RUN: %clang_cc1 -triple %itanium_abi_triple -std=c++98 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
+// RUN: %clang_cc1 -triple %itanium_abi_triple -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
+// RUN: %clang_cc1 -triple %itanium_abi_triple -std=c++14 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
+// RUN: %clang_cc1 -triple %itanium_abi_triple -std=c++1z %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
 namespace dr300 { // dr300: yes
   template<typename R, typename A> void f(R (&)(A)) {}
@@ -110,18 +110,6 @@ namespace dr305 { // dr305: no
     x->~X<char>(); // expected-error {{no member named}}
   }
 
-  // FIXME: This appears to be valid (but allowing the nested types might be a
-  // defect).
-  template<typename> struct Nested {
-    template<typename> struct Nested {};
-  };
-  void testNested(Nested<int> n) { n.~Nested<int>(); } // expected-error {{no member named}}
-#if __cplusplus < 201103L
-  // expected-error@-2 {{ambiguous}}
-  // expected-note@-6 {{here}}
-  // expected-note@-6 {{here}}
-#endif
-
 #if __cplusplus >= 201103L
   struct Y {
     template<typename T> using T1 = Y;
@@ -170,9 +158,9 @@ namespace dr308 { // dr308: yes
   void f() {
     try {
       throw D();
-    } catch (const A&) {
+    } catch (const A&) { // expected-note {{for type 'const dr308::A &'}}
       // unreachable
-    } catch (const B&) {
+    } catch (const B&) { // expected-warning {{exception of type 'const dr308::B &' will be caught by earlier handler}}
       // get here instead
     }
   }
