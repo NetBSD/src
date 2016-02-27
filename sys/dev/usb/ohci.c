@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.52 2016/02/27 15:48:36 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.53 2016/02/27 15:54:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.52 2016/02/27 15:48:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.53 2016/02/27 15:54:30 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3612,11 +3612,12 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_ed_t *sed = opipe->sed;
-	ohci_soft_itd_t *sitd, *nsitd;
+	ohci_soft_itd_t *sitd, *nsitd, *tail;
 	ohci_physaddr_t buf, offs, noffs, bp0;
 	int i, ncur, nframes;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
+	DPRINTFN(5, "xfer=%p", xfer, 0, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
 
@@ -3683,13 +3684,16 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 		sitd->itd.itd_offset[ncur] = HTOO16(OHCI_ITD_MK_OFFS(offs));
 		offs = noffs;
 	}
-	nsitd = ox->ox_sitds[j++];
-	KASSERT(nsitd != NULL);
 	KASSERT(j <= ox->ox_nsitd);
 
-	memset(&nsitd->itd, 0, sizeof(nsitd->itd));
-	nsitd->nextitd = NULL;
-	nsitd->xfer = NULL;
+	/* point at sentinel */
+	tail = opipe->tail.itd;
+	memset(&tail->itd, 0, sizeof(tail->itd));
+	tail->nextitd = NULL;
+ 	tail->xfer = NULL;
+	usb_syncmem(&tail->dma, tail->offs, sizeof(tail->itd),
+	    BUS_DMASYNC_PREWRITE);
+
 	/* Fixup last used ITD */
 	sitd->itd.itd_flags = HTOO32(
 		OHCI_ITD_NOCC |
@@ -3697,9 +3701,9 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 		OHCI_ITD_SET_DI(0) |
 		OHCI_ITD_SET_FC(ncur));
 	sitd->itd.itd_bp0 = HTOO32(bp0);
-	sitd->itd.itd_nextitd = HTOO32(nsitd->physaddr);
+	sitd->itd.itd_nextitd = HTOO32(tail->physaddr);
 	sitd->itd.itd_be = HTOO32(bp0 + offs - 1);
-	sitd->nextitd = nsitd;
+	sitd->nextitd = tail;
 	sitd->xfer = xfer;
 	sitd->flags = OHCI_CALL_DONE;
 #ifdef DIAGNOSTIC
@@ -3727,8 +3731,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	sed->ed.ed_tailp = HTOO32(nsitd->physaddr);
-	opipe->tail.itd = nsitd;
+	sed->ed.ed_tailp = HTOO32(tail->physaddr);
 	sed->ed.ed_flags &= HTOO32(~OHCI_ED_SKIP);
 	usb_syncmem(&sed->dma, sed->offs + offsetof(ohci_ed_t, ed_flags),
 	    sizeof(sed->ed.ed_flags),
