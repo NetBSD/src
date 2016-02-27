@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.29 2016/02/27 18:34:12 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.30 2016/02/27 23:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.29 2016/02/27 18:34:12 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.30 2016/02/27 23:50:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,10 @@ __RCSID("$NetBSD: show.c,v 1.29 2016/02/27 18:34:12 christos Exp $");
 #include "mystring.h"
 #include "show.h"
 #include "options.h"
+#ifndef SMALL
+#define DEFINE_NODENAMES
+#include "nodenames.h"
+#endif
 
 
 FILE *tracefile;
