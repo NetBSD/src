@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.86 2016/01/24 18:21:50 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.87 2016/02/27 00:09:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,6 +112,8 @@ typedef __register_t	register_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
+#define	__HAVE_CPU_RNG
+
 #if defined(_KERNEL)
 /*
  * Processors < i586 do not have cmpxchg8b, and we compile for i486

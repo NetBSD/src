@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.50 2016/01/23 22:31:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.51 2016/02/27 00:09:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,6 +94,7 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__HAVE_TLS_VARIANT_II
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_INTR_CONTROL
+#define	__HAVE_CPU_RNG
 
 #ifdef _KERNEL_OPT
 #define	__HAVE_RAS
