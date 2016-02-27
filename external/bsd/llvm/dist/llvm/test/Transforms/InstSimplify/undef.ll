@@ -150,7 +150,7 @@ define i64 @test17(i64 %a) {
 ; @test18
 ; CHECK: ret i64 undef
 define i64 @test18(i64 %a) {
-  %r = call i64 (i64)* undef(i64 %a)
+  %r = call i64 (i64) undef(i64 %a)
   ret i64 %r
 }
 
@@ -263,5 +263,19 @@ define i32 @test33(i32 %a) {
 ; CHECK: ret i32 undef
 define i32 @test34(i32 %a) {
   %b = lshr i32 undef, 0
+  ret i32 %b
+}
+
+; CHECK-LABEL: @test35
+; CHECK: ret i32 undef
+define i32 @test35(<4 x i32> %V) {
+  %b = extractelement <4 x i32> %V, i32 4
+  ret i32 %b
+}
+
+; CHECK-LABEL: @test36
+; CHECK: ret i32 undef
+define i32 @test36(i32 %V) {
+  %b = extractelement <4 x i32> undef, i32 %V
   ret i32 %b
 }

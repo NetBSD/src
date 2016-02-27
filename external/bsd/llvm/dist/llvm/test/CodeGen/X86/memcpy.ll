@@ -2,6 +2,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=DARWIN
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+declare void @llvm.memcpy.p256i8.p256i8.i64(i8 addrspace(256)* nocapture, i8 addrspace(256)* nocapture, i64, i32, i1) nounwind
 
 
 ; Variable memcpy's should lower to calls.
@@ -59,6 +60,26 @@ entry:
 ; DARWIN: movq
 }
 
+define void @test3_minsize(i8* nocapture %A, i8* nocapture %B) nounwind minsize noredzone {
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
+  ret void
+; LINUX-LABEL: test3_minsize:
+; LINUX: memcpy
+
+; DARWIN-LABEL: test3_minsize:
+; DARWIN: memcpy
+}
+
+define void @test3_minsize_optsize(i8* nocapture %A, i8* nocapture %B) nounwind optsize minsize noredzone {
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
+  ret void
+; LINUX-LABEL: test3_minsize_optsize:
+; LINUX: memcpy
+
+; DARWIN-LABEL: test3_minsize_optsize:
+; DARWIN: memcpy
+}
+
 ; Large constant memcpy's should be inlined when not optimizing for size.
 define void @test4(i8* nocapture %A, i8* nocapture %B) nounwind noredzone {
 entry:
@@ -84,7 +105,7 @@ entry:
 
 define void @test5(i8* nocapture %C) nounwind uwtable ssp {
 entry:
-  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([30 x i8]* @.str, i64 0, i64 0), i64 16, i32 1, i1 false)
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([30 x i8], [30 x i8]* @.str, i64 0, i64 0), i64 16, i32 1, i1 false)
   ret void
 
 ; DARWIN-LABEL: test5:
@@ -101,7 +122,7 @@ entry:
 ; DARWIN: test6
 ; DARWIN: movw $0, 8
 ; DARWIN: movq $120, 0
-  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* null, i8* getelementptr inbounds ([2 x i8]* @.str2, i64 0, i64 0), i64 10, i32 1, i1 false)
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* null, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str2, i64 0, i64 0), i64 10, i32 1, i1 false)
   ret void
 }
 
@@ -117,4 +138,16 @@ define void @PR15348(i8* %a, i8* %b) {
 ; LINUX: movq
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 17, i32 0, i1 false)
   ret void
+}
+
+; Memcpys from / to address space 256 should be lowered to appropriate loads /
+; stores if small enough.
+define void @addrspace256(i8 addrspace(256)* %a, i8 addrspace(256)* %b) nounwind {
+  tail call void @llvm.memcpy.p256i8.p256i8.i64(i8 addrspace(256)* %a, i8 addrspace(256)* %b, i64 16, i32 8, i1 false)
+  ret void
+; LINUX-LABEL: addrspace256:
+; LINUX: movq %gs:
+; LINUX: movq %gs:
+; LINUX: movq {{.*}}, %gs:
+; LINUX: movq {{.*}}, %gs:
 }

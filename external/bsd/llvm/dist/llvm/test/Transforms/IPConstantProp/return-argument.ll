@@ -4,7 +4,7 @@
 
 ;; This function returns its second argument on all return statements
 define internal i32* @incdec(i1 %C, i32* %V) {
-        %X = load i32* %V
+        %X = load i32, i32* %V
         br i1 %C, label %T, label %F
 
 T:              ; preds = %0
@@ -27,7 +27,7 @@ define internal { i32, i32 } @foo(i32 %A, i32 %B) {
         ret { i32, i32 } %Z
 }
 
-define void @caller(i1 %C) {
+define void @caller(i1 %C) personality i32 (...)* @__gxx_personality_v0 {
         %Q = alloca i32
         ;; Call incdec to see if %W is properly replaced by %Q
         %W = call i32* @incdec(i1 %C, i32* %Q )             ; <i32> [#uses=1]
@@ -46,7 +46,7 @@ OK:
         br label %RET
 
 LPAD:
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
         br label %RET
 

@@ -3,14 +3,15 @@
 ; CHECK: it	ne
 ; CHECK-NEXT: cmpne
 ; CHECK-NEXT: bne [[JUMPTARGET:.LBB[0-9]+_[0-9]+]]
-; CHECK: cmp
-; CHECK-NEXT: beq
+; CHECK: cbz
 ; CHECK-NEXT: %if.else163
 ; CHECK-NEXT: mov.w
 ; CHECK-NEXT: b
+; CHECK: [[JUMPTARGET]]:{{.*}}%if.else173
+; CHECK-NEXT: mov.w
+; CHECK-NEXT: bx lr
 ; CHECK-NEXT: %if.else145
 ; CHECK-NEXT: mov.w
-; CHECK: [[JUMPTARGET]]:{{.*}}%if.else173
 
 %struct.hc = type { i32, i32, i32, i32 }
 

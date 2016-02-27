@@ -1,6 +1,6 @@
 ; RUN: llc -mtriple=i386-unknown-freebsd -mcpu=core2 -stack-alignment=4 -relocation-model=pic < %s | FileCheck %s -check-prefix=UNALIGNED
 ; RUN: llc -mtriple=i386-unknown-freebsd -mcpu=core2 -stack-alignment=16 -relocation-model=pic < %s | FileCheck %s -check-prefix=ALIGNED
-; RUN: llc -mtriple=i386-unknown-freebsd -mcpu=core2 -stack-alignment=4 -force-align-stack -relocation-model=pic < %s | FileCheck %s -check-prefix=FORCEALIGNED
+; RUN: llc -mtriple=i386-unknown-freebsd -mcpu=core2 -stack-alignment=4 -stackrealign -relocation-model=pic < %s | FileCheck %s -check-prefix=FORCEALIGNED
 
 @arr = internal unnamed_addr global [32 x i32] zeroinitializer, align 16
 
@@ -11,9 +11,9 @@ vector.ph:
 
 vector.body:
   %index = phi i32 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %0 = getelementptr inbounds [32 x i32]* @arr, i32 0, i32 %index
+  %0 = getelementptr inbounds [32 x i32], [32 x i32]* @arr, i32 0, i32 %index
   %1 = bitcast i32* %0 to <4 x i32>*
-  %wide.load = load <4 x i32>* %1, align 16
+  %wide.load = load <4 x i32>, <4 x i32>* %1, align 16
   %2 = add nsw <4 x i32> %wide.load, <i32 10, i32 10, i32 10, i32 10>
   %3 = xor <4 x i32> %2, <i32 123345, i32 123345, i32 123345, i32 123345>
   %4 = add nsw <4 x i32> %3, <i32 112, i32 112, i32 112, i32 112>

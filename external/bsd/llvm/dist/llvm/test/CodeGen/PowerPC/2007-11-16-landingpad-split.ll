@@ -19,7 +19,7 @@ target triple = "powerpc64-apple-darwin8"
 ; CHECK: .cfi_endproc
 
 
-define void @Bork(i64 %range.0.0, i64 %range.0.1, i64 %size) {
+define void @Bork(i64 %range.0.0, i64 %range.0.1, i64 %size) personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	%effectiveRange = alloca %struct.Range, align 8		; <%struct.Range*> [#uses=2]
 	%tmp4 = call i8* @llvm.stacksave()		; <i8*> [#uses=1]
@@ -29,17 +29,17 @@ entry:
 			to label %bb30.preheader unwind label %unwind
 
 bb30.preheader:		; preds = %entry
-	%tmp26 = getelementptr %struct.Range* %effectiveRange, i64 0, i32 1		; <i64*> [#uses=1]
+	%tmp26 = getelementptr %struct.Range, %struct.Range* %effectiveRange, i64 0, i32 1		; <i64*> [#uses=1]
 	br label %bb30
 
 unwind:		; preds = %cond_true, %entry
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  catch i8* null
 	call void @llvm.stackrestore(i8* %tmp4)
         resume { i8*, i32 } %exn
 
 invcont23:		; preds = %cond_true
-	%tmp27 = load i64* %tmp26, align 8		; <i64> [#uses=1]
+	%tmp27 = load i64, i64* %tmp26, align 8		; <i64> [#uses=1]
 	%tmp28 = sub i64 %range_addr.1.0, %tmp27		; <i64> [#uses=1]
 	br label %bb30
 

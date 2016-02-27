@@ -14,9 +14,10 @@ grown our little Kaleidoscope language from being a useless toy, to
 being a semi-interesting (but probably still useless) toy. :)
 
 It is interesting to see how far we've come, and how little code it has
-taken. We built the entire lexer, parser, AST, code generator, and an
-interactive run-loop (with a JIT!) by-hand in under 700 lines of
-(non-comment/non-blank) code.
+taken. We built the entire lexer, parser, AST, code generator, an
+interactive run-loop (with a JIT!), and emitted debug information in
+standalone executables - all in under 1000 lines of (non-comment/non-blank)
+code.
 
 Our little language supports a couple of interesting features: it
 supports user defined binary and unary operators, it uses JIT
@@ -48,7 +49,7 @@ For example, try adding:
    extending the type system in all sorts of interesting ways. Simple
    arrays are very easy and are quite useful for many different
    applications. Adding them is mostly an exercise in learning how the
-   LLVM `getelementptr <../LangRef.html#i_getelementptr>`_ instruction
+   LLVM `getelementptr <../LangRef.html#getelementptr-instruction>`_ instruction
    works: it is so nifty/unconventional, it `has its own
    FAQ <../GetElementPtr.html>`_! If you add support for recursive types
    (e.g. linked lists), make sure to read the `section in the LLVM
@@ -68,12 +69,6 @@ For example, try adding:
    collection, note that LLVM fully supports `Accurate Garbage
    Collection <../GarbageCollection.html>`_ including algorithms that
    move objects and need to scan/update the stack.
--  **debugger support** - LLVM supports generation of `DWARF Debug
-   info <../SourceLevelDebugging.html>`_ which is understood by common
-   debuggers like GDB. Adding support for debug info is fairly
-   straightforward. The best way to understand it is to compile some
-   C/C++ code with "``clang -g -O0``" and taking a look at what it
-   produces.
 -  **exception handling support** - LLVM supports generation of `zero
    cost exceptions <../ExceptionHandling.html>`_ which interoperate with
    code compiled in other languages. You could also generate code by
@@ -95,8 +90,8 @@ For example, try adding:
 Have fun - try doing something crazy and unusual. Building a language
 like everyone else always has, is much less fun than trying something a
 little crazy or off the wall and seeing how it turns out. If you get
-stuck or want to talk about it, feel free to email the `llvmdev mailing
-list <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_: it has lots
+stuck or want to talk about it, feel free to email the `llvm-dev mailing
+list <http://lists.llvm.org/mailman/listinfo/llvm-dev>`_: it has lots
 of people who are interested in languages and are often willing to help
 out.
 
@@ -174,8 +169,8 @@ It is certainly possible to implement a safe language in LLVM, but LLVM
 IR does not itself guarantee safety. The LLVM IR allows unsafe pointer
 casts, use after free bugs, buffer over-runs, and a variety of other
 problems. Safety needs to be implemented as a layer on top of LLVM and,
-conveniently, several groups have investigated this. Ask on the `llvmdev
-mailing list <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_ if
+conveniently, several groups have investigated this. Ask on the `llvm-dev
+mailing list <http://lists.llvm.org/mailman/listinfo/llvm-dev>`_ if
 you are interested in more details.
 
 Language-Specific Optimizations
@@ -225,7 +220,7 @@ safe to optimize that into "return 0;" because C specifies what the
 In addition to simple library knowledge, it is possible to embed a
 variety of other language-specific information into the LLVM IR. If you
 have a specific need and run into a wall, please bring the topic up on
-the llvmdev list. At the very worst, you can always treat LLVM as if it
+the llvm-dev list. At the very worst, you can always treat LLVM as if it
 were a "dumb code generator" and implement the high-level optimizations
 you desire in your front-end, on the language-specific AST.
 

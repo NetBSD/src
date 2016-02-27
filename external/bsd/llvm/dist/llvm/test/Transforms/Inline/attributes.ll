@@ -110,3 +110,137 @@ define i32 @test_sanitize_thread(i32 %arg) sanitize_thread {
 ; CHECK-NEXT: @noattr_callee
 ; CHECK-NEXT: ret i32
 }
+
+; Check that a function doesn't get inlined if target-cpu strings don't match
+; exactly.
+define i32 @test_target_cpu_callee0(i32 %i) "target-cpu"="corei7" {
+  ret i32 %i
+}
+
+define i32 @test_target_cpu0(i32 %i) "target-cpu"="corei7" {
+  %1 = call i32 @test_target_cpu_callee0(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_cpu0(
+; CHECK-NOT: @test_target_cpu_callee0
+}
+
+define i32 @test_target_cpu_callee1(i32 %i) "target-cpu"="x86-64" {
+  ret i32 %i
+}
+
+define i32 @test_target_cpu1(i32 %i) "target-cpu"="corei7" {
+  %1 = call i32 @test_target_cpu_callee1(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_cpu1(
+; CHECK-NEXT: @test_target_cpu_callee1
+; CHECK-NEXT: ret i32
+}
+
+; Check that a function doesn't get inlined if target-features strings don't
+; match exactly.
+define i32 @test_target_features_callee0(i32 %i)  "target-features"="+sse4.2" {
+  ret i32 %i
+}
+
+define i32 @test_target_features0(i32 %i) "target-features"="+sse4.2" {
+  %1 = call i32 @test_target_features_callee0(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_features0(
+; CHECK-NOT: @test_target_features_callee0
+}
+
+define i32 @test_target_features_callee1(i32 %i) "target-features"="+avx2" {
+  ret i32 %i
+}
+
+define i32 @test_target_features1(i32 %i) "target-features"="+sse4.2" {
+  %1 = call i32 @test_target_features_callee1(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_features1(
+; CHECK-NEXT: @test_target_features_callee1
+; CHECK-NEXT: ret i32
+}
+
+define i32 @less-precise-fpmad_callee0(i32 %i) "less-precise-fpmad"="false" {
+  ret i32 %i
+; CHECK: @less-precise-fpmad_callee0(i32 %i) [[FPMAD_FALSE:#[0-9]+]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @less-precise-fpmad_callee1(i32 %i) "less-precise-fpmad"="true" {
+  ret i32 %i
+; CHECK: @less-precise-fpmad_callee1(i32 %i) [[FPMAD_TRUE:#[0-9]+]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_less-precise-fpmad0(i32 %i) "less-precise-fpmad"="false" {
+  %1 = call i32 @less-precise-fpmad_callee0(i32 %i)
+  ret i32 %1
+; CHECK: @test_less-precise-fpmad0(i32 %i) [[FPMAD_FALSE]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_less-precise-fpmad1(i32 %i) "less-precise-fpmad"="false" {
+  %1 = call i32 @less-precise-fpmad_callee1(i32 %i)
+  ret i32 %1
+; CHECK: @test_less-precise-fpmad1(i32 %i) [[FPMAD_FALSE]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_less-precise-fpmad2(i32 %i) "less-precise-fpmad"="true" {
+  %1 = call i32 @less-precise-fpmad_callee0(i32 %i)
+  ret i32 %1
+; CHECK: @test_less-precise-fpmad2(i32 %i) [[FPMAD_FALSE]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_less-precise-fpmad3(i32 %i) "less-precise-fpmad"="true" {
+  %1 = call i32 @less-precise-fpmad_callee1(i32 %i)
+  ret i32 %1
+; CHECK: @test_less-precise-fpmad3(i32 %i) [[FPMAD_TRUE]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @no-implicit-float_callee0(i32 %i) {
+  ret i32 %i
+; CHECK: @no-implicit-float_callee0(i32 %i) {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @no-implicit-float_callee1(i32 %i) noimplicitfloat {
+  ret i32 %i
+; CHECK: @no-implicit-float_callee1(i32 %i) [[NOIMPLICITFLOAT:#[0-9]+]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_no-implicit-float0(i32 %i) {
+  %1 = call i32 @no-implicit-float_callee0(i32 %i)
+  ret i32 %1
+; CHECK: @test_no-implicit-float0(i32 %i) {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_no-implicit-float1(i32 %i) {
+  %1 = call i32 @no-implicit-float_callee1(i32 %i)
+  ret i32 %1
+; CHECK: @test_no-implicit-float1(i32 %i) [[NOIMPLICITFLOAT]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_no-implicit-float2(i32 %i) noimplicitfloat {
+  %1 = call i32 @no-implicit-float_callee0(i32 %i)
+  ret i32 %1
+; CHECK: @test_no-implicit-float2(i32 %i) [[NOIMPLICITFLOAT]] {
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test_no-implicit-float3(i32 %i) noimplicitfloat {
+  %1 = call i32 @no-implicit-float_callee1(i32 %i)
+  ret i32 %1
+; CHECK: @test_no-implicit-float3(i32 %i) [[NOIMPLICITFLOAT]] {
+; CHECK-NEXT: ret i32
+}
+
+; CHECK: attributes [[FPMAD_FALSE]] = { "less-precise-fpmad"="false" }
+; CHECK: attributes [[FPMAD_TRUE]] = { "less-precise-fpmad"="true" }
+; CHECK: attributes [[NOIMPLICITFLOAT]] = { noimplicitfloat }

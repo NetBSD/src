@@ -75,19 +75,19 @@
 // Add/sub (immediate)
 //------------------------------------------------------------------------------
 
-// Out of range immediates: < 0 or more than 12 bits
-        add w4, w5, #-1
+// Out of range immediates: more than 12 bits
+        add w4, w5, #-4096
         add w5, w6, #0x1000
-        add w4, w5, #-1, lsl #12
+        add w4, w5, #-4096, lsl #12
         add w5, w6, #0x1000, lsl #12
 // CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
-// CHECK-ERROR-NEXT:         add w4, w5, #-1
+// CHECK-ERROR-NEXT:         add w4, w5, #-4096
 // CHECK-ERROR-NEXT:                     ^
 // CHECK-ERROR-AARCH64-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-AARCH64-NEXT:         add w5, w6, #0x1000
 // CHECK-ERROR-AARCH64-NEXT:                     ^
 // CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
-// CHECK-ERROR-NEXT:         add w4, w5, #-1, lsl #12
+// CHECK-ERROR-NEXT:         add w4, w5, #-4096, lsl #12
 // CHECK-ERROR-NEXT:                     ^
 // CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w5, w6, #0x1000, lsl #12
@@ -1088,6 +1088,23 @@
 // CHECK-ERROR-NEXT:         ubfx w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                  ^
 
+        bfc wsp, #3, #6
+        bfc w4, #2, #31
+        bfc sp, #0, #1
+        bfc x6, #0, #0
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:        bfc wsp, #3, #6
+// CHECK-ERROR-NEXT:            ^
+// CHECK-ERROR-NEXT: error: requested insert overflows register
+// CHECK-ERROR-NEXT:         bfc w4, #2, #31
+// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:         bfc sp, #0, #1
+// CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
+// CHECK-ERROR-NEXT:         bfc x6, #0, #0
+// CHECK-ERROR-NEXT:                     ^
+
 //------------------------------------------------------------------------------
 // Compare & branch (immediate)
 //------------------------------------------------------------------------------
@@ -1586,7 +1603,7 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         fcsel q3, q20, q9, pl
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: instruction requires: fullfp16
 // CHECK-ERROR-NEXT:         fcsel h9, h10, h11, mi
 // CHECK-ERROR-NEXT:               ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1635,7 +1652,7 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         fmadd b3, b4, b5, b6
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: instruction requires: fullfp16
 // CHECK-ERROR-NEXT:         fmsub h1, h2, h3, h4
 // CHECK-ERROR-NEXT:               ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -3477,6 +3494,7 @@
         msr ID_MMFR1_EL1, x12
         msr ID_MMFR2_EL1, x12
         msr ID_MMFR3_EL1, x12
+        msr ID_MMFR4_EL1, x12
         msr ID_ISAR0_EL1, x12
         msr ID_ISAR1_EL1, x12
         msr ID_ISAR2_EL1, x12
@@ -3568,6 +3586,9 @@
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_MMFR3_EL1, x12
+// CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
+// CHECK-ERROR-NEXT:         msr ID_MMFR4_EL1, x12
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR0_EL1, x12

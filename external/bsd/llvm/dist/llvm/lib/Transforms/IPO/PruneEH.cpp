@@ -18,14 +18,18 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
+#include "llvm/Analysis/EHPersonalities.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -95,42 +99,54 @@ bool PruneEH::runOnSCC(CallGraphSCC &SCC) {
     } else {
       bool CheckUnwind = !SCCMightUnwind && !F->doesNotThrow();
       bool CheckReturn = !SCCMightReturn && !F->doesNotReturn();
+      // Determine if we should scan for InlineAsm in a naked function as it
+      // is the only way to return without a ReturnInst.  Only do this for
+      // no-inline functions as functions which may be inlined cannot
+      // meaningfully return via assembly.
+      bool CheckReturnViaAsm = CheckReturn &&
+                               F->hasFnAttribute(Attribute::Naked) &&
+                               F->hasFnAttribute(Attribute::NoInline);
 
       if (!CheckUnwind && !CheckReturn)
         continue;
 
-      // Check to see if this function performs an unwind or calls an
-      // unwinding function.
-      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-        if (CheckUnwind && isa<ResumeInst>(BB->getTerminator())) {
-          // Uses unwind / resume!
+      for (const BasicBlock &BB : *F) {
+        const TerminatorInst *TI = BB.getTerminator();
+        if (CheckUnwind && TI->mayThrow()) {
           SCCMightUnwind = true;
-        } else if (CheckReturn && isa<ReturnInst>(BB->getTerminator())) {
+        } else if (CheckReturn && isa<ReturnInst>(TI)) {
           SCCMightReturn = true;
         }
 
-        // Invoke instructions don't allow unwinding to continue, so we are
-        // only interested in call instructions.
-        if (CheckUnwind && !SCCMightUnwind)
-          for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-            if (CallInst *CI = dyn_cast<CallInst>(I)) {
-              if (CI->doesNotThrow()) {
-                // This call cannot throw.
-              } else if (Function *Callee = CI->getCalledFunction()) {
+        for (const Instruction &I : BB) {
+          if ((!CheckUnwind || SCCMightUnwind) &&
+              (!CheckReturnViaAsm || SCCMightReturn))
+            break;
+
+          // Check to see if this function performs an unwind or calls an
+          // unwinding function.
+          if (CheckUnwind && !SCCMightUnwind && I.mayThrow()) {
+            bool InstMightUnwind = true;
+            if (const auto *CI = dyn_cast<CallInst>(&I)) {
+              if (Function *Callee = CI->getCalledFunction()) {
                 CallGraphNode *CalleeNode = CG[Callee];
-                // If the callee is outside our current SCC then we may
-                // throw because it might.
-                if (!SCCNodes.count(CalleeNode)) {
-                  SCCMightUnwind = true;
-                  break;
-                }
-              } else {
-                // Indirect call, it might throw.
-                SCCMightUnwind = true;
-                break;
+                // If the callee is outside our current SCC then we may throw
+                // because it might.  If it is inside, do nothing.
+                if (SCCNodes.count(CalleeNode) > 0)
+                  InstMightUnwind = false;
               }
             }
-        if (SCCMightUnwind && SCCMightReturn) break;
+            SCCMightUnwind |= InstMightUnwind;
+          }
+          if (CheckReturnViaAsm && !SCCMightReturn)
+            if (auto ICS = ImmutableCallSite(&I))
+              if (const auto *IA = dyn_cast<InlineAsm>(ICS.getCalledValue()))
+                if (IA->hasSideEffects())
+                  SCCMightReturn = true;
+        }
+
+        if (SCCMightUnwind && SCCMightReturn)
+          break;
       }
     }
   }
@@ -138,21 +154,16 @@ bool PruneEH::runOnSCC(CallGraphSCC &SCC) {
   // If the SCC doesn't unwind or doesn't throw, note this fact.
   if (!SCCMightUnwind || !SCCMightReturn)
     for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-      AttrBuilder NewAttributes;
-
-      if (!SCCMightUnwind)
-        NewAttributes.addAttribute(Attribute::NoUnwind);
-      if (!SCCMightReturn)
-        NewAttributes.addAttribute(Attribute::NoReturn);
-
       Function *F = (*I)->getFunction();
-      const AttributeSet &PAL = F->getAttributes().getFnAttributes();
-      const AttributeSet &NPAL = AttributeSet::get(
-          F->getContext(), AttributeSet::FunctionIndex, NewAttributes);
 
-      if (PAL != NPAL) {
+      if (!SCCMightUnwind && !F->hasFnAttribute(Attribute::NoUnwind)) {
+        F->addFnAttr(Attribute::NoUnwind);
         MadeChange = true;
-        F->addAttributes(AttributeSet::FunctionIndex, NPAL);
+      }
+
+      if (!SCCMightReturn && !F->hasFnAttribute(Attribute::NoReturn)) {
+        F->addFnAttr(Attribute::NoReturn);
+        MadeChange = true;
       }
     }
 
@@ -175,29 +186,9 @@ bool PruneEH::SimplifyFunction(Function *F) {
   bool MadeChange = false;
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (II->doesNotThrow()) {
-        SmallVector<Value*, 8> Args(II->op_begin(), II->op_end() - 3);
-        // Insert a call instruction before the invoke.
-        CallInst *Call = CallInst::Create(II->getCalledValue(), Args, "", II);
-        Call->takeName(II);
-        Call->setCallingConv(II->getCallingConv());
-        Call->setAttributes(II->getAttributes());
-        Call->setDebugLoc(II->getDebugLoc());
-
-        // Anything that used the value produced by the invoke instruction
-        // now uses the value produced by the call instruction.  Note that we
-        // do this even for void functions and calls with no uses so that the
-        // callgraph edge is updated.
-        II->replaceAllUsesWith(Call);
+      if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(F)) {
         BasicBlock *UnwindBlock = II->getUnwindDest();
-        UnwindBlock->removePredecessor(II->getParent());
-
-        // Insert a branch to the normal destination right before the
-        // invoke.
-        BranchInst::Create(II->getNormalDest(), II);
-
-        // Finally, delete the invoke instruction!
-        BB->getInstList().pop_back();
+        removeUnwindEdge(&*BB);
 
         // If the unwind block is now dead, nuke it.
         if (pred_empty(UnwindBlock))
@@ -218,7 +209,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
 
           // Remove the uncond branch and add an unreachable.
           BB->getInstList().pop_back();
-          new UnreachableInst(BB->getContext(), BB);
+          new UnreachableInst(BB->getContext(), &*BB);
 
           DeleteBasicBlock(New);  // Delete the new BB.
           MadeChange = true;
@@ -237,23 +228,39 @@ void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
   assert(pred_empty(BB) && "BB is not dead!");
   CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
 
+  Instruction *TokenInst = nullptr;
+
   CallGraphNode *CGN = CG[BB->getParent()];
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; ) {
     --I;
-    if (CallInst *CI = dyn_cast<CallInst>(I)) {
-      if (!isa<IntrinsicInst>(I))
-        CGN->removeCallEdgeFor(CI);
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-      CGN->removeCallEdgeFor(II);
+
+    if (I->getType()->isTokenTy()) {
+      TokenInst = &*I;
+      break;
+    }
+
+    if (auto CS = CallSite (&*I)) {
+      const Function *Callee = CS.getCalledFunction();
+      if (!Callee || !Intrinsic::isLeaf(Callee->getIntrinsicID()))
+        CGN->removeCallEdgeFor(CS);
+      else if (!Callee->isIntrinsic())
+        CGN->removeCallEdgeFor(CS);
+    }
+
     if (!I->use_empty())
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
   }
 
-  // Get the list of successors of this block.
-  std::vector<BasicBlock*> Succs(succ_begin(BB), succ_end(BB));
+  if (TokenInst) {
+    if (!isa<TerminatorInst>(TokenInst))
+      changeToUnreachable(TokenInst->getNextNode(), /*UseLLVMTrap=*/false);
+  } else {
+    // Get the list of successors of this block.
+    std::vector<BasicBlock *> Succs(succ_begin(BB), succ_end(BB));
 
-  for (unsigned i = 0, e = Succs.size(); i != e; ++i)
-    Succs[i]->removePredecessor(BB);
+    for (unsigned i = 0, e = Succs.size(); i != e; ++i)
+      Succs[i]->removePredecessor(BB);
 
-  BB->eraseFromParent();
+    BB->eraseFromParent();
+  }
 }

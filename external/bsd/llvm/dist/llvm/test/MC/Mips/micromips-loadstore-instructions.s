@@ -19,6 +19,7 @@
 # CHECK-EL: sh     $2, 8($4)                  # encoding: [0x44,0x38,0x08,0x00]
 # CHECK-EL: sw     $5, 4($6)                  # encoding: [0xa6,0xf8,0x04,0x00]
 # CHECK-EL: sw     $5, 123($sp)               # encoding: [0xbd,0xf8,0x7b,0x00]
+# CHECK-EL: sw     $3, 32($gp)                # encoding: [0x7c,0xf8,0x20,0x00]
 # CHECK-EL: ll     $2, 8($4)                  # encoding: [0x44,0x60,0x08,0x30]
 # CHECK-EL: sc     $2, 8($4)                  # encoding: [0x44,0x60,0x08,0xb0]
 # CHECK-EL: lwu    $2, 8($4)                  # encoding: [0x44,0x60,0x08,0xe0]
@@ -33,8 +34,24 @@
 # CHECK-EL: swm32  $16, $17, $18, $19, 8($4)  # encoding: [0x84,0x20,0x08,0xd0]
 # CHECK-EL: lwm16  $16, $17, $ra, 8($sp)      # encoding: [0x12,0x45]
 # CHECK-EL: swm16  $16, $17, $ra, 8($sp)      # encoding: [0x52,0x45]
+# CHECK-EL: lwm16  $16, $17, $ra, 8($sp)      # encoding: [0x12,0x45]
+# CHECK-EL: lwm32  $16, $17, $ra, 64($sp)     # encoding: [0x5d,0x22,0x40,0x50]
+# CHECK-EL: lwm32  $16, $17, $ra, 8($4)       # encoding: [0x44,0x22,0x08,0x50]
+# CHECK-EL: lwm32  $16, $17, 8($sp)           # encoding: [0x5d,0x20,0x08,0x50]
+# CHECK-EL: swm16  $16, $17, $ra, 8($sp)      # encoding: [0x52,0x45]
+# CHECK-EL: swm32  $16, $17, $ra, 64($sp)     # encoding: [0x5d,0x22,0x40,0xd0]
+# CHECK-EL: swm32  $16, $17, $ra, 8($4)       # encoding: [0x44,0x22,0x08,0xd0]
+# CHECK-EL: swm32  $16, $17, 8($sp)           # encoding: [0x5d,0x20,0x08,0xd0]
 # CHECK-EL: swp    $16, 8($4)                 # encoding: [0x04,0x22,0x08,0x90]
 # CHECK-EL: lwp    $16, 8($4)                 # encoding: [0x04,0x22,0x08,0x10]
+# CHECK-EL: lhue   $4, 8($2)                  # encoding: [0x82,0x60,0x08,0x62]
+# CHECK-EL: lbe    $4, 8($2)                  # encoding: [0x82,0x60,0x08,0x68]
+# CHECK-EL: lbue   $4, 8($2)                  # encoding: [0x82,0x60,0x08,0x60]
+# CHECK-EL: lhe    $4, 8($2)                  # encoding: [0x82,0x60,0x08,0x6a]
+# CHECK-EL: lwe    $4, 8($2)                  # encoding: [0x82,0x60,0x08,0x6e]
+# CHECK-EL: sbe    $5, 8($4)                  # encoding: [0xa4,0x60,0x08,0xa8]
+# CHECK-EL: she    $5, 8($4)                  # encoding: [0xa4,0x60,0x08,0xaa]
+# CHECK-EL: swe    $5, 8($4)                  # encoding: [0xa4,0x60,0x08,0xae]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -48,6 +65,7 @@
 # CHECK-EB: sh     $2, 8($4)                 # encoding: [0x38,0x44,0x00,0x08]
 # CHECK-EB: sw     $5, 4($6)                 # encoding: [0xf8,0xa6,0x00,0x04]
 # CHECK-EB: sw     $5, 123($sp)              # encoding: [0xf8,0xbd,0x00,0x7b]
+# CHECK-EB: sw     $3, 32($gp)               # encoding: [0xf8,0x7c,0x00,0x20]
 # CHECK-EB: ll     $2, 8($4)                 # encoding: [0x60,0x44,0x30,0x08]
 # CHECK-EB: sc     $2, 8($4)                 # encoding: [0x60,0x44,0xb0,0x08]
 # CHECK-EB: lwu    $2, 8($4)                 # encoding: [0x60,0x44,0xe0,0x08]
@@ -62,8 +80,24 @@
 # CHECK-EB: swm32  $16, $17, $18, $19, 8($4) # encoding: [0x20,0x84,0xd0,0x08]
 # CHECK-EB: lwm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x12]
 # CHECK-EB: swm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x52]
+# CHECK-EB: lwm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x12]
+# CHECK-EB: lwm32  $16, $17, $ra, 64($sp)    # encoding: [0x22,0x5d,0x50,0x40]
+# CHECK-EB: lwm32  $16, $17, $ra, 8($4)      # encoding: [0x22,0x44,0x50,0x08]
+# CHECK-EB: lwm32  $16, $17, 8($sp)          # encoding: [0x20,0x5d,0x50,0x08]
+# CHECK-EB: swm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x52]
+# CHECK-EB: swm32  $16, $17, $ra, 64($sp)    # encoding: [0x22,0x5d,0xd0,0x40]
+# CHECK-EB: swm32  $16, $17, $ra, 8($4)      # encoding: [0x22,0x44,0xd0,0x08]
+# CHECK-EB: swm32  $16, $17, 8($sp)          # encoding: [0x20,0x5d,0xd0,0x08]
 # CHECK-EB: swp    $16, 8($4)                # encoding: [0x22,0x04,0x90,0x08]
 # CHECK-EB: lwp    $16, 8($4)                # encoding: [0x22,0x04,0x10,0x08]
+# CHECK-EB: lhue   $4, 8($2)                 # encoding: [0x60,0x82,0x62,0x08]
+# CHECK-EB: lbe    $4, 8($2)                 # encoding: [0x60,0x82,0x68,0x08]
+# CHECK-EB: lbue   $4, 8($2)                 # encoding: [0x60,0x82,0x60,0x08]
+# CHECK-EB: lhe    $4, 8($2)                 # encoding: [0x60,0x82,0x6a,0x08]
+# CHECK-EB: lwe    $4, 8($2)                 # encoding: [0x60,0x82,0x6e,0x08]
+# CHECK-EB: sbe    $5, 8($4)                 # encoding: [0x60,0xa4,0xa8,0x08]
+# CHECK-EB: she    $5, 8($4)                 # encoding: [0x60,0xa4,0xaa,0x08]
+# CHECK-EB: swe    $5, 8($4)                 # encoding: [0x60,0xa4,0xae,0x08]
      lb     $5, 8($4)
      lbu    $6, 8($4)
      lh     $2, 8($4)
@@ -74,6 +108,7 @@
      sh     $2, 8($4)
      sw     $5, 4($6)
      sw     $5, 123($sp)
+     sw     $3, 32($gp)
      ll     $2, 8($4)
      sc     $2, 8($4)
      lwu    $2, 8($4)
@@ -88,5 +123,21 @@
      swm32  $16 - $19, 8($4)
      lwm16  $16, $17, $ra, 8($sp)
      swm16  $16, $17, $ra, 8($sp)
+     lwm    $16, $17, $ra, 8($sp)
+     lwm    $16, $17, $ra, 64($sp)
+     lwm    $16, $17, $ra, 8($4)
+     lwm    $16, $17, 8($sp)
+     swm    $16, $17, $ra, 8($sp)
+     swm    $16, $17, $ra, 64($sp)
+     swm    $16, $17, $ra, 8($4)
+     swm    $16, $17, 8($sp)
      swp    $16, 8($4)
      lwp    $16, 8($4)
+     lhue   $4, 8($2)
+     lbe    $4, 8($2)
+     lbue   $4, 8($2)
+     lhe    $4, 8($2)
+     lwe    $4, 8($2)
+     sbe    $5, 8($4)
+     she    $5, 8($4)
+     swe    $5, 8($4)

@@ -60,7 +60,7 @@ entry:
 
 define i32 @Func_3gt(i32 %Enum_Par_Val, i32 %pv2) nounwind readnone {
 entry:
-; CHECK: mux
+; CHECK-NOT: mux
   %cmp = icmp sgt i32 %Enum_Par_Val, %pv2
   %selv = zext i1 %cmp to i32
   ret i32 %selv
