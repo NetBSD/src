@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.51 2016/02/27 16:18:47 christos Exp $ */
+/*      $NetBSD: meta.c,v 1.52 2016/02/27 16:20:06 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -683,9 +683,9 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
 
     if (job != NULL) {
 	pbm = &job->bm;
-    } else {
 	if (!gn)
 	    gn = job->node;
+    } else {
 	pbm = &Mybm;
     }
     if (pbm->mfp != NULL) {
