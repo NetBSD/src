@@ -1,4 +1,4 @@
-$NetBSD: TODO.clang,v 1.17 2015/05/14 19:27:23 joerg Exp $
+$NetBSD: TODO.clang,v 1.18 2016/02/27 18:50:39 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
@@ -11,3 +11,6 @@ g++ otherwise crashes on trivial input.
 
 src/external/mit/xorg/lib/pixman uses -fno-integrated-as on ARM for the
 macro (ab)use.
+
+src/tests/lib/libc/sync disables tests for atomics shorter than 32bit on
+SPARC64 due to missing codegen support.
