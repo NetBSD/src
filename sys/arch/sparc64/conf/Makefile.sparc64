@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.80 2015/08/31 08:00:44 martin Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.81 2016/02/27 19:26:14 joerg Exp $
 
 #=========================================================================
 #
@@ -56,6 +56,7 @@ CPPFLAGS+=	-Dsparc64 -D__sparc64__
 .if ${LP64} == "yes"
 # 64-bit kernels
 CPPFLAGS+=	-D_LP64 -Wa,-Av9a
+CPPFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
 AFLAGS+=	-Wa,-Av9a
 .if defined(PROF)
 # Profiling is only supported in the medium low memory model.
@@ -69,9 +70,11 @@ CFLAGS+=	${${ACTIVE_CC} == "clang":? -mcmodel=small :}
 .else
 # 32-bit kernels
 CPPFLAGS+=	-m32 -Wa,-Av8plusa -mcpu=ultrasparc
+CPPFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
 AFLAGS+=	-Wa,-Av8plusa
+AFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
 .endif
-CFLAGS+=	-mno-fpu
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mno-fpu :}
 AFLAGS+=	-x assembler-with-cpp
 
 ##
