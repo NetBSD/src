@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -O3 -triple=x86_64-unknown-unknown -target-feature +sha -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-unknown-unknown -target-feature +sha -emit-llvm -o - | FileCheck %s
 
 // Don't include mm_malloc.h, it's system specific.
 #define __MM_MALLOC_H
@@ -7,7 +7,7 @@
 
 __m128i test_sha1rnds4(__m128i a, __m128i b) {
   // CHECK: call <4 x i32> @llvm.x86.sha1rnds4
-  return _mm_sha1rnds4_epu32(a, b, 8);
+  return _mm_sha1rnds4_epu32(a, b, 3);
 }
 __m128i test_sha1nexte(__m128i a, __m128i b) {
   // CHECK: call <4 x i32> @llvm.x86.sha1nexte

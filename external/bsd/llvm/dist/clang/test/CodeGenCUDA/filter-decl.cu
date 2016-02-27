@@ -3,12 +3,18 @@
 
 #include "Inputs/cuda.h"
 
-// CHECK-HOST-NOT: constantdata = global
-// CHECK-DEVICE: constantdata = global
+// This has to be at the top of the file as that's where file-scope
+// asm ends up.
+// CHECK-HOST: module asm "file scope asm is host only"
+// CHECK-DEVICE-NOT: module asm "file scope asm is host only"
+__asm__("file scope asm is host only");
+
+// CHECK-HOST-NOT: constantdata = externally_initialized global
+// CHECK-DEVICE: constantdata = externally_initialized global
 __constant__ char constantdata[256];
 
-// CHECK-HOST-NOT: devicedata = global
-// CHECK-DEVICE: devicedata = global
+// CHECK-HOST-NOT: devicedata = externally_initialized global
+// CHECK-DEVICE: devicedata = externally_initialized global
 __device__ char devicedata[256];
 
 // CHECK-HOST-NOT: shareddata = global

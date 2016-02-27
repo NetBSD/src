@@ -156,10 +156,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 bool USRGenerator::EmitDeclName(const NamedDecl *D) {
-  Out.flush();
   const unsigned startSize = Buf.size();
   D->printName(Out);
-  Out.flush();
   const unsigned endSize = Buf.size();
   return startSize == endSize;
 }
@@ -462,7 +460,6 @@ void USRGenerator::VisitTagDecl(const TagDecl *D) {
   }
   
   Out << '@';
-  Out.flush();
   assert(Buf.size() > 0);
   const unsigned off = Buf.size() - 1;
 
@@ -613,8 +610,18 @@ void USRGenerator::VisitType(QualType T) {
         case BuiltinType::OCLImage1dBuffer:
         case BuiltinType::OCLImage2d:
         case BuiltinType::OCLImage2dArray:
+        case BuiltinType::OCLImage2dDepth:
+        case BuiltinType::OCLImage2dArrayDepth:
+        case BuiltinType::OCLImage2dMSAA:
+        case BuiltinType::OCLImage2dArrayMSAA:
+        case BuiltinType::OCLImage2dMSAADepth:
+        case BuiltinType::OCLImage2dArrayMSAADepth:
         case BuiltinType::OCLImage3d:
         case BuiltinType::OCLEvent:
+        case BuiltinType::OCLClkEvent:
+        case BuiltinType::OCLQueue:
+        case BuiltinType::OCLNDRange:
+        case BuiltinType::OCLReserveID:
         case BuiltinType::OCLSampler:
           IgnoreResults = true;
           return;
@@ -847,7 +854,7 @@ bool clang::index::generateUSRForDecl(const Decl *D,
   return UG.ignoreResults();
 }
 
-bool clang::index::generateUSRForMacro(const MacroDefinition *MD,
+bool clang::index::generateUSRForMacro(const MacroDefinitionRecord *MD,
                                        const SourceManager &SM,
                                        SmallVectorImpl<char> &Buf) {
   // Don't generate USRs for things with invalid locations.

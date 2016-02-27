@@ -37,6 +37,15 @@ namespace {
 
     void Print(AccessSpecifier AS);
 
+    /// Print an Objective-C method type in parentheses.
+    ///
+    /// \param Quals The Objective-C declaration qualifiers.
+    /// \param T The type to print.
+    void PrintObjCMethodType(ASTContext &Ctx, Decl::ObjCDeclQualifier Quals, 
+                             QualType T);
+
+    void PrintObjCTypeParams(ObjCTypeParamList *Params);
+
   public:
     DeclPrinter(raw_ostream &Out, const PrintingPolicy &Policy,
                 unsigned Indentation = 0, bool PrintInstantiation = false)
@@ -87,6 +96,7 @@ namespace {
     void PrintTemplateParameters(const TemplateParameterList *Params,
                                  const TemplateArgumentList *Args = nullptr);
     void prettyPrintAttributes(Decl *D);
+    void prettyPrintPragmas(Decl *D);
     void printDeclType(QualType T, StringRef DeclName, bool Pack = false);
   };
 }
@@ -188,12 +198,40 @@ raw_ostream& DeclPrinter::Indent(unsigned Indentation) {
 void DeclPrinter::prettyPrintAttributes(Decl *D) {
   if (Policy.PolishForDeclaration)
     return;
-  
+
   if (D->hasAttrs()) {
     AttrVec &Attrs = D->getAttrs();
-    for (AttrVec::const_iterator i=Attrs.begin(), e=Attrs.end(); i!=e; ++i) {
-      Attr *A = *i;
-      A->printPretty(Out, Policy);
+    for (auto *A : Attrs) {
+      switch (A->getKind()) {
+#define ATTR(X)
+#define PRAGMA_SPELLING_ATTR(X) case attr::X:
+#include "clang/Basic/AttrList.inc"
+        break;
+      default:
+        A->printPretty(Out, Policy);
+        break;
+      }
+    }
+  }
+}
+
+void DeclPrinter::prettyPrintPragmas(Decl *D) {
+  if (Policy.PolishForDeclaration)
+    return;
+
+  if (D->hasAttrs()) {
+    AttrVec &Attrs = D->getAttrs();
+    for (auto *A : Attrs) {
+      switch (A->getKind()) {
+#define ATTR(X)
+#define PRAGMA_SPELLING_ATTR(X) case attr::X:
+#include "clang/Basic/AttrList.inc"
+        A->printPretty(Out, Policy);
+        Indent();
+        break;
+      default:
+        break;
+      }
     }
   }
 }
@@ -399,6 +437,10 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 }
 
 void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
+  if (!D->getDescribedFunctionTemplate() &&
+      !D->isFunctionTemplateSpecialization())
+    prettyPrintPragmas(D);
+
   CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
   CXXConversionDecl *ConversionDecl = dyn_cast<CXXConversionDecl>(D);
   if (!Policy.SuppressSpecifiers) {
@@ -407,7 +449,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     case SC_Extern: Out << "extern "; break;
     case SC_Static: Out << "static "; break;
     case SC_PrivateExtern: Out << "__private_extern__ "; break;
-    case SC_Auto: case SC_Register: case SC_OpenCLWorkGroupLocal:
+    case SC_Auto: case SC_Register:
       llvm_unreachable("invalid for functions");
     }
 
@@ -634,6 +676,7 @@ void DeclPrinter::VisitFriendDecl(FriendDecl *D) {
 }
 
 void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
+  // FIXME: add printing of pragma attributes if required.
   if (!Policy.SuppressSpecifiers && D->isMutable())
     Out << "mutable ";
   if (!Policy.SuppressSpecifiers && D->isModulePrivate())
@@ -663,6 +706,7 @@ void DeclPrinter::VisitLabelDecl(LabelDecl *D) {
 }
 
 void DeclPrinter::VisitVarDecl(VarDecl *D) {
+  prettyPrintPragmas(D);
   if (!Policy.SuppressSpecifiers) {
     StorageClass SC = D->getStorageClass();
     if (SC != SC_None)
@@ -733,8 +777,10 @@ void DeclPrinter::VisitImportDecl(ImportDecl *D) {
 void DeclPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
   Out << "static_assert(";
   D->getAssertExpr()->printPretty(Out, nullptr, Policy, Indentation);
-  Out << ", ";
-  D->getMessage()->printPretty(Out, nullptr, Policy, Indentation);
+  if (StringLiteral *SL = D->getMessage()) {
+    Out << ", ";
+    SL->printPretty(Out, nullptr, Policy, Indentation);
+  }
   Out << ")";
 }
 
@@ -768,6 +814,7 @@ void DeclPrinter::VisitEmptyDecl(EmptyDecl *D) {
 }
 
 void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  // FIXME: add printing of pragma attributes if required.
   if (!Policy.SuppressSpecifiers && D->isModulePrivate())
     Out << "__module_private__ ";
   Out << D->getKindName();
@@ -903,11 +950,13 @@ void DeclPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   if (PrintInstantiation) {
     TemplateParameterList *Params = D->getTemplateParameters();
     for (auto *I : D->specializations()) {
+      prettyPrintPragmas(I);
       PrintTemplateParameters(Params, I->getTemplateSpecializationArgs());
       Visit(I);
     }
   }
 
+  prettyPrintPragmas(D->getTemplatedDecl());
   return VisitRedeclarableTemplateDecl(D);
 }
 
@@ -928,24 +977,83 @@ void DeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 // Objective-C declarations
 //----------------------------------------------------------------------------
 
+void DeclPrinter::PrintObjCMethodType(ASTContext &Ctx, 
+                                      Decl::ObjCDeclQualifier Quals, 
+                                      QualType T) {
+  Out << '(';
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_In)
+    Out << "in ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Inout)
+    Out << "inout ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Out)
+    Out << "out ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Bycopy)
+    Out << "bycopy ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Byref)
+    Out << "byref ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Oneway)
+    Out << "oneway ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_CSNullability) {
+    if (auto nullability = AttributedType::stripOuterNullability(T))
+      Out << getNullabilitySpelling(*nullability, true) << ' ';
+  }
+  
+  Out << Ctx.getUnqualifiedObjCPointerType(T).getAsString(Policy);
+  Out << ')';
+}
+
+void DeclPrinter::PrintObjCTypeParams(ObjCTypeParamList *Params) {
+  Out << "<";
+  unsigned First = true;
+  for (auto *Param : *Params) {
+    if (First) {
+      First = false;
+    } else {
+      Out << ", ";
+    }
+
+    switch (Param->getVariance()) {
+    case ObjCTypeParamVariance::Invariant:
+      break;
+
+    case ObjCTypeParamVariance::Covariant:
+      Out << "__covariant ";
+      break;
+
+    case ObjCTypeParamVariance::Contravariant:
+      Out << "__contravariant ";
+      break;
+    }
+
+    Out << Param->getDeclName().getAsString();
+
+    if (Param->hasExplicitBound()) {
+      Out << " : " << Param->getUnderlyingType().getAsString(Policy);
+    }
+  }
+  Out << ">";
+}
+
 void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (OMD->isInstanceMethod())
     Out << "- ";
   else
     Out << "+ ";
-  if (!OMD->getReturnType().isNull())
-    Out << '(' << OMD->getASTContext()
-                      .getUnqualifiedObjCPointerType(OMD->getReturnType())
-                      .getAsString(Policy) << ")";
+  if (!OMD->getReturnType().isNull()) {
+    PrintObjCMethodType(OMD->getASTContext(), OMD->getObjCDeclQualifier(),
+                        OMD->getReturnType());
+  }
 
   std::string name = OMD->getSelector().getAsString();
   std::string::size_type pos, lastPos = 0;
   for (const auto *PI : OMD->params()) {
     // FIXME: selector is missing here!
     pos = name.find_first_of(':', lastPos);
-    Out << " " << name.substr(lastPos, pos - lastPos);
-    Out << ":(" << PI->getASTContext().getUnqualifiedObjCPointerType(PI->getType()).
-                      getAsString(Policy) << ')' << *PI;
+    Out << " " << name.substr(lastPos, pos - lastPos) << ':';
+    PrintObjCMethodType(OMD->getASTContext(), 
+                        PI->getObjCDeclQualifier(),
+                        PI->getType());
+    Out << *PI;
     lastPos = pos + 1;
   }
 
@@ -1001,14 +1109,24 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   ObjCInterfaceDecl *SID = OID->getSuperClass();
 
   if (!OID->isThisDeclarationADefinition()) {
-    Out << "@class " << I << ";";
+    Out << "@class " << I;
+
+    if (auto TypeParams = OID->getTypeParamListAsWritten()) {
+      PrintObjCTypeParams(TypeParams);
+    }
+
+    Out << ";";
     return;
   }
   bool eolnOut = false;
+  Out << "@interface " << I;
+
+  if (auto TypeParams = OID->getTypeParamListAsWritten()) {
+    PrintObjCTypeParams(TypeParams);
+  }
+  
   if (SID)
-    Out << "@interface " << I << " : " << *SID;
-  else
-    Out << "@interface " << I;
+    Out << " : " << QualType(OID->getSuperClassType(), 0).getAsString(Policy);
 
   // Protocols?
   const ObjCList<ObjCProtocolDecl> &Protocols = OID->getReferencedProtocols();
@@ -1071,7 +1189,11 @@ void DeclPrinter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
 }
 
 void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
-  Out << "@interface " << *PID->getClassInterface() << '(' << *PID << ")\n";
+  Out << "@interface " << *PID->getClassInterface();
+  if (auto TypeParams = PID->getTypeParamList()) {
+    PrintObjCTypeParams(TypeParams);
+  }
+  Out << "(" << *PID << ")\n";
   if (PID->ivar_size() > 0) {
     Out << "{\n";
     Indentation += Policy.Indentation;
@@ -1100,6 +1222,8 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     Out << "@required\n";
   else if (PDecl->getPropertyImplementation() == ObjCPropertyDecl::Optional)
     Out << "@optional\n";
+
+  QualType T = PDecl->getType();
 
   Out << "@property";
   if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
@@ -1159,10 +1283,25 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
       first = false;
     }
     
+    if (PDecl->getPropertyAttributes() &
+        ObjCPropertyDecl::OBJC_PR_nullability) {
+      if (auto nullability = AttributedType::stripOuterNullability(T)) {
+        if (*nullability == NullabilityKind::Unspecified &&
+            (PDecl->getPropertyAttributes() &
+               ObjCPropertyDecl::OBJC_PR_null_resettable)) {
+          Out << (first ? ' ' : ',') << "null_resettable";
+        } else {
+          Out << (first ? ' ' : ',')
+              << getNullabilitySpelling(*nullability, true);
+        }
+        first = false;
+      }
+    }
+
     (void) first; // Silence dead store warning due to idiomatic code.
     Out << " )";
   }
-  Out << ' ' << PDecl->getASTContext().getUnqualifiedObjCPointerType(PDecl->getType()).
+  Out << ' ' << PDecl->getASTContext().getUnqualifiedObjCPointerType(T).
                   getAsString(Policy) << ' ' << *PDecl;
   if (Policy.PolishForDeclaration)
     Out << ';';
@@ -1198,7 +1337,7 @@ void DeclPrinter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   if (!D->isAccessDeclaration())
     Out << "using ";
   D->getQualifier()->print(Out, Policy);
-  Out << D->getName();
+  Out << D->getDeclName();
 }
 
 void DeclPrinter::VisitUsingShadowDecl(UsingShadowDecl *D) {

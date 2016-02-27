@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 %s -std=c++11 -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 %s -std=c++11 -triple=x86_64-apple-darwin10 -fvisibility hidden -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-HIDDEN
+// For clang, "internal" is just an alias for "hidden". We could use it for some
+// optimization purposes on 32-bit x86, but it's not worth it.
+// RUN: %clang_cc1 %s -std=c++11 -triple=x86_64-apple-darwin10 -fvisibility internal -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-HIDDEN
 
 #define HIDDEN __attribute__((visibility("hidden")))
 #define PROTECTED __attribute__((visibility("protected")))
@@ -135,17 +138,22 @@ namespace test27 {
   // CHECK-HIDDEN: _ZTVN6test271CIiE1DE = unnamed_addr constant
 }
 
-// CHECK: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr global
-// CHECK: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr global i64
-// CHECK-HIDDEN: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr hidden global
-// CHECK-HIDDEN: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr hidden global i64
-// CHECK: @_ZZN6test681fC1EvE4test = linkonce_odr global
-// CHECK: @_ZGVZN6test681fC1EvE4test = linkonce_odr global
-// CHECK-HIDDEN: @_ZZN6test681fC1EvE4test = linkonce_odr hidden global
-// CHECK-HIDDEN: @_ZGVZN6test681fC1EvE4test = linkonce_odr hidden global
+// CHECK: @_ZTVN5Test63fooE = linkonce_odr hidden unnamed_addr constant
+
 // CHECK-HIDDEN: @_ZTVN6Test161AIcEE = external unnamed_addr constant
 // CHECK-HIDDEN: @_ZTTN6Test161AIcEE = external unnamed_addr constant
-// CHECK: @_ZTVN5Test63fooE = linkonce_odr hidden unnamed_addr constant 
+
+// CHECK: @_ZZN6test681fC1EvE4test = linkonce_odr global
+// CHECK-HIDDEN: @_ZZN6test681fC1EvE4test = linkonce_odr hidden global
+
+// CHECK: @_ZGVZN6test681fC1EvE4test = linkonce_odr global
+// CHECK-HIDDEN: @_ZGVZN6test681fC1EvE4test = linkonce_odr hidden global
+
+// CHECK: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr global
+// CHECK-HIDDEN: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr hidden global
+
+// CHECK: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr global i64
+// CHECK-HIDDEN: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr hidden global i64
 
 namespace Test1 {
   // CHECK-LABEL: define hidden void @_ZN5Test11fEv
@@ -235,7 +243,7 @@ namespace Test7 {
   class B : public A {};
   B b; // top of file
 
-  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5Test74ArefILZNS_1aEEE3fooEv()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5Test74ArefIL_ZNS_1aEEE3fooEv()
   void test() {
     Aref<a>::foo();
   }

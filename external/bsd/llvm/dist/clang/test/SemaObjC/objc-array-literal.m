@@ -9,6 +9,18 @@ typedef unsigned long NSUInteger;
 typedef unsigned int NSUInteger;
 #endif
 
+void checkNSArrayUnavailableDiagnostic() {
+  id obj;
+  id arr = @[obj]; // expected-error {{definition of class NSArray must be available to use Objective-C array literals}}
+}
+
+@class NSArray; // expected-note {{forward declaration of class here}}
+
+void checkNSArrayFDDiagnostic() {
+  id obj;
+  id arr = @[obj]; // expected-error {{definition of class NSArray must be available to use Objective-C array literals}}
+}
+
 @class NSString;
 
 extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));

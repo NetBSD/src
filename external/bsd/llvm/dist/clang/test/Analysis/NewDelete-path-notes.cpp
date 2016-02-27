@@ -259,9 +259,12 @@ void test(Odd *odd) {
 // CHECK-NEXT:    <key>description</key><string>Attempt to free released memory</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Double free</string>
+// CHECK-NEXT:    <key>check_name</key><string>cplusplus.NewDelete</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>bd8e324d09c70b9e2be6f824a4942e5a</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>8</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>8</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>13</integer>
@@ -474,9 +477,12 @@ void test(Odd *odd) {
 // CHECK-NEXT:    <key>description</key><string>Attempt to free released memory</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Double free</string>
+// CHECK-NEXT:    <key>check_name</key><string>cplusplus.NewDelete</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>8bf1a5b9fdae9d86780aa6c4cdce2605</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>3</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>3</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>26</integer>

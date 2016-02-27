@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-compatibility
+// RUN: %clang_cc1 %s -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-compatibility -triple i686-pc-win32
 
 enum ENUM1; // expected-warning {{forward references to 'enum' types are a Microsoft extension}}
 enum ENUM1 var1 = 3;
@@ -21,3 +21,5 @@ struct __declspec(aligned) S2 {}; /* expected-warning {{__declspec attribute 'al
 struct __declspec(appdomain) S3 {}; /* expected-warning {{__declspec attribute 'appdomain' is not supported}} */
 
 __declspec(__noreturn__) void f7(void); /* expected-warning {{__declspec attribute '__noreturn__' is not supported}} */
+
+size_t x;

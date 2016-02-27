@@ -1,10 +1,10 @@
-// RUN: %clang_cc1  -fcxx-exceptions -fexceptions -emit-llvm -g -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
+// RUN: %clang_cc1  -fcxx-exceptions -fexceptions -emit-llvm -debug-info-kind=limited -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
 // The landing pad should have the line number of the closing brace of the function.
 // rdar://problem/13888152
 // CHECK: ret i32
 // CHECK: landingpad {{.*}}
 // CHECK-NEXT: !dbg ![[LPAD:[0-9]+]]
-// CHECK: ![[LPAD]] = !MDLocation(line: 24, scope: !{{.*}})
+// CHECK: ![[LPAD]] = !DILocation(line: 24, scope: !{{.*}})
 
 # 1 "/usr/include/c++/4.2.1/vector" 1 3
 typedef long unsigned int __darwin_size_t;
