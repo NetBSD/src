@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.61 2016/02/16 21:17:27 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.62 2016/02/27 16:07:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.61 2016/02/16 21:17:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.62 2016/02/27 16:07:01 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3035,6 +3035,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 {
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
+	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	struct isoc *isoc = &upipe->isoc;
 	uhci_soft_td_t *std;
 	uint32_t buf, len, status, offs;
@@ -3067,7 +3068,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 	}
 
 	xfer->ux_status = USBD_IN_PROGRESS;
-	UHCI_XFER2UXFER(xfer)->ux_curframe = next;
+	ux->ux_curframe = next;
 
 	buf = DMAADDR(&xfer->ux_dmabuf, 0);
 	offs = 0;
