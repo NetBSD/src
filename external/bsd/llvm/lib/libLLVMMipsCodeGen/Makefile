@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2015/01/29 20:41:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.26 2016/02/27 21:47:34 joerg Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -37,9 +37,7 @@ SRCS+=	Mips16ISelDAGToDAG.cpp \
 	MipsSERegisterInfo.cpp \
 	MipsSubtarget.cpp \
 	MipsTargetMachine.cpp \
-	MipsTargetObjectFile.cpp \
-	MipsSelectionDAGInfo.cpp
-
+	MipsTargetObjectFile.cpp
 
 TABLEGEN_SRC=		Mips.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/Mips

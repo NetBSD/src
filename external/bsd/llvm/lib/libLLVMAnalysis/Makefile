@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2015/01/29 20:41:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2016/02/27 21:47:32 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -7,9 +7,7 @@ LIB=	LLVMAnalysis
 .PATH: ${LLVM_SRCDIR}/lib/Analysis
 
 SRCS+=	AliasAnalysis.cpp \
-	AliasAnalysisCounter.cpp \
 	AliasAnalysisEvaluator.cpp \
-	AliasDebugger.cpp \
 	AliasSetTracker.cpp \
 	Analysis.cpp \
 	AssumptionCache.cpp \
@@ -21,34 +19,45 @@ SRCS+=	AliasAnalysis.cpp \
 	CFGPrinter.cpp \
 	CFLAliasAnalysis.cpp \
 	CGSCCPassManager.cpp \
+	CallGraphSCCPass.cpp \
+	CallGraph.cpp \
+	CallPrinter.cpp \
 	CaptureTracking.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
 	CostModel.cpp \
 	Delinearization.cpp \
+	DemandedBits.cpp \
 	DependenceAnalysis.cpp \
+	DivergenceAnalysis.cpp \
 	DomPrinter.cpp \
 	DominanceFrontier.cpp \
-	FunctionTargetTransformInfo.cpp \
+	EHPersonalities.cpp \
+	GlobalsModRef.cpp \
 	IVUsers.cpp \
+	InlineCost.cpp \
 	InstCount.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
-	JumpInstrTableInfo.cpp \
+	IteratedDominanceFrontier.cpp \
 	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
-	LibCallAliasAnalysis.cpp \
-	LibCallSemantics.cpp \
 	Lint.cpp \
 	Loads.cpp \
+	LoopAccessAnalysis.cpp \
 	LoopInfo.cpp \
 	LoopPass.cpp \
 	MemDepPrinter.cpp \
+	MemDerefPrinter.cpp \
 	MemoryBuiltins.cpp \
 	MemoryDependenceAnalysis.cpp \
+	MemoryLocation.cpp \
 	ModuleDebugInfoPrinter.cpp \
-	NoAliasAnalysis.cpp \
+	ObjCARCAliasAnalysis.cpp \
+	ObjCARCAnalysisUtils.cpp \
+	ObjCARCInstKind.cpp \
+	OrderedBasicBlock.cpp \
 	PHITransAddr.cpp \
 	PostDominators.cpp \
 	PtrUseVisitor.cpp \
@@ -61,10 +70,12 @@ SRCS+=	AliasAnalysis.cpp \
 	ScalarEvolutionNormalization.cpp \
 	ScopedNoAliasAA.cpp \
 	SparsePropagation.cpp \
+	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
-	ValueTracking.cpp
+	ValueTracking.cpp \
+	VectorUtils.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

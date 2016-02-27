@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2015/01/29 20:41:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/02/27 21:47:35 joerg Exp $
 
 LIB=	clangFrontend
 
@@ -30,9 +30,11 @@ SRCS+=	ASTConsumers.cpp \
 	LogDiagnosticPrinter.cpp \
 	ModuleDependencyCollector.cpp \
 	MultiplexConsumer.cpp \
+	PCHContainerOperations.cpp \
 	PrintPreprocessedOutput.cpp \
 	SerializedDiagnosticPrinter.cpp \
 	SerializedDiagnosticReader.cpp \
+	TestModuleFileExtension.cpp \
 	TextDiagnostic.cpp \
 	TextDiagnosticBuffer.cpp \
 	TextDiagnosticPrinter.cpp \
