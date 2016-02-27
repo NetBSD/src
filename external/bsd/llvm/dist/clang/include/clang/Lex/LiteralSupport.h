@@ -57,13 +57,13 @@ public:
   NumericLiteralParser(StringRef TokSpelling,
                        SourceLocation TokLoc,
                        Preprocessor &PP);
-  bool hadError;
-  bool isUnsigned;
-  bool isLong;        // This is *not* set for long long.
-  bool isLongLong;
-  bool isFloat;       // 1.0f
-  bool isImaginary;   // 1.0i
-  uint8_t MicrosoftInteger;  // Microsoft suffix extension i8, i16, i32, or i64.
+  bool hadError : 1;
+  bool isUnsigned : 1;
+  bool isLong : 1;          // This is *not* set for long long.
+  bool isLongLong : 1;
+  bool isFloat : 1;         // 1.0f
+  bool isImaginary : 1;     // 1.0i
+  uint8_t MicrosoftInteger; // Microsoft suffix extension i8, i16, i32, or i64.
 
   bool isIntegerLiteral() const {
     return !saw_period && !saw_exponent;
@@ -166,6 +166,7 @@ public:
   bool hadError() const { return HadError; }
   bool isAscii() const { return Kind == tok::char_constant; }
   bool isWide() const { return Kind == tok::wide_char_constant; }
+  bool isUTF8() const { return Kind == tok::utf8_char_constant; }
   bool isUTF16() const { return Kind == tok::utf16_char_constant; }
   bool isUTF32() const { return Kind == tok::utf32_char_constant; }
   bool isMultiChar() const { return IsMultiChar; }

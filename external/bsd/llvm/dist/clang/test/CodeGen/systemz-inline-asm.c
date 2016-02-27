@@ -6,31 +6,31 @@ unsigned long gl;
 void test_store_m(unsigned int i) {
   asm("st %1, %0" : "=m" (gi) : "r" (i));
 // CHECK-LABEL: define void @test_store_m(i32 zeroext %i)
-// CHECK: call void asm "st $1, $0", "=*m,r"(i32* @gi, i32 %i)
+// CHECK: call void asm "st $1, $0", "=*m,r"(i32* nonnull @gi, i32 %i)
 }
 
 void test_store_Q(unsigned int i) {
   asm("st %1, %0" : "=Q" (gi) : "r" (i));
 // CHECK-LABEL: define void @test_store_Q(i32 zeroext %i)
-// CHECK: call void asm "st $1, $0", "=*Q,r"(i32* @gi, i32 %i)
+// CHECK: call void asm "st $1, $0", "=*Q,r"(i32* nonnull @gi, i32 %i)
 }
 
 void test_store_R(unsigned int i) {
   asm("st %1, %0" : "=R" (gi) : "r" (i));
 // CHECK-LABEL: define void @test_store_R(i32 zeroext %i)
-// CHECK: call void asm "st $1, $0", "=*R,r"(i32* @gi, i32 %i)
+// CHECK: call void asm "st $1, $0", "=*R,r"(i32* nonnull @gi, i32 %i)
 }
 
 void test_store_S(unsigned int i) {
   asm("st %1, %0" : "=S" (gi) : "r" (i));
 // CHECK-LABEL: define void @test_store_S(i32 zeroext %i)
-// CHECK: call void asm "st $1, $0", "=*S,r"(i32* @gi, i32 %i)
+// CHECK: call void asm "st $1, $0", "=*S,r"(i32* nonnull @gi, i32 %i)
 }
 
 void test_store_T(unsigned int i) {
   asm("st %1, %0" : "=T" (gi) : "r" (i));
 // CHECK-LABEL: define void @test_store_T(i32 zeroext %i)
-// CHECK: call void asm "st $1, $0", "=*T,r"(i32* @gi, i32 %i)
+// CHECK: call void asm "st $1, $0", "=*T,r"(i32* nonnull @gi, i32 %i)
 }
 
 int test_load_m() {
@@ -38,7 +38,7 @@ int test_load_m() {
   asm("l %0, %1" : "=r" (i) : "m" (gi));
   return i;
 // CHECK-LABEL: define signext i32 @test_load_m()
-// CHECK: call i32 asm "l $0, $1", "=r,*m"(i32* @gi)
+// CHECK: call i32 asm "l $0, $1", "=r,*m"(i32* nonnull @gi)
 }
 
 int test_load_Q() {
@@ -46,7 +46,7 @@ int test_load_Q() {
   asm("l %0, %1" : "=r" (i) : "Q" (gi));
   return i;
 // CHECK-LABEL: define signext i32 @test_load_Q()
-// CHECK: call i32 asm "l $0, $1", "=r,*Q"(i32* @gi)
+// CHECK: call i32 asm "l $0, $1", "=r,*Q"(i32* nonnull @gi)
 }
 
 int test_load_R() {
@@ -54,7 +54,7 @@ int test_load_R() {
   asm("l %0, %1" : "=r" (i) : "R" (gi));
   return i;
 // CHECK-LABEL: define signext i32 @test_load_R()
-// CHECK: call i32 asm "l $0, $1", "=r,*R"(i32* @gi)
+// CHECK: call i32 asm "l $0, $1", "=r,*R"(i32* nonnull @gi)
 }
 
 int test_load_S() {
@@ -62,7 +62,7 @@ int test_load_S() {
   asm("l %0, %1" : "=r" (i) : "S" (gi));
   return i;
 // CHECK-LABEL: define signext i32 @test_load_S()
-// CHECK: call i32 asm "l $0, $1", "=r,*S"(i32* @gi)
+// CHECK: call i32 asm "l $0, $1", "=r,*S"(i32* nonnull @gi)
 }
 
 int test_load_T() {
@@ -70,7 +70,7 @@ int test_load_T() {
   asm("l %0, %1" : "=r" (i) : "T" (gi));
   return i;
 // CHECK-LABEL: define signext i32 @test_load_T()
-// CHECK: call i32 asm "l $0, $1", "=r,*T"(i32* @gi)
+// CHECK: call i32 asm "l $0, $1", "=r,*T"(i32* nonnull @gi)
 }
 
 void test_mI(unsigned char *c) {
@@ -124,8 +124,8 @@ long double test_f128(long double f, long double g) {
   asm("axbr %0, %2" : "=f" (f) : "0" (f), "f" (g));
   return f;
 // CHECK: define void @test_f128(fp128* noalias nocapture sret [[DEST:%.*]], fp128* nocapture readonly, fp128* nocapture readonly)
-// CHECK: %f = load fp128* %0
-// CHECK: %g = load fp128* %1
+// CHECK: %f = load fp128, fp128* %0
+// CHECK: %g = load fp128, fp128* %1
 // CHECK: [[RESULT:%.*]] = tail call fp128 asm "axbr $0, $2", "=f,0,f"(fp128 %f, fp128 %g)
 // CHECK: store fp128 [[RESULT]], fp128* [[DEST]]
 }

@@ -94,12 +94,12 @@ namespace test4 {
     throw 0;
   }
   // CHECK-LABEL:    define void @_ZN5test41AC2Ev(
-  // CHECK:      [[THIS:%.*]] = load [[A:%.*]]** {{%.*}}
+  // CHECK:      [[THIS:%.*]] = load [[A:%.*]]*, [[A:%.*]]** {{%.*}}
   //   Construct single.
-  // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[A]]* [[THIS]], i32 0, i32 0
+  // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[A]], [[A]]* [[THIS]], i32 0, i32 0
   // CHECK-NEXT: store i8* null, i8** [[SINGLE]], align 8
   //   Construct array.
-  // CHECK-NEXT: [[ARRAY:%.*]] = getelementptr inbounds [[A]]* [[THIS]], i32 0, i32 1
+  // CHECK-NEXT: [[ARRAY:%.*]] = getelementptr inbounds [[A]], [[A]]* [[THIS]], i32 0, i32 1
   // CHECK-NEXT: [[T0:%.*]] = bitcast [2 x [3 x i8*]]* [[ARRAY]] to i8*
   // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 48, i32 8, i1 false)
   //   throw 0;
@@ -107,11 +107,11 @@ namespace test4 {
   //   Landing pad from throw site:
   // CHECK:      landingpad
   //     - First, destroy all of array.
-  // CHECK:      [[ARRAYBEGIN:%.*]] = getelementptr inbounds [2 x [3 x i8*]]* [[ARRAY]], i32 0, i32 0, i32 0
-  // CHECK-NEXT: [[ARRAYEND:%.*]] = getelementptr inbounds i8** [[ARRAYBEGIN]], i64 6
+  // CHECK:      [[ARRAYBEGIN:%.*]] = getelementptr inbounds [2 x [3 x i8*]], [2 x [3 x i8*]]* [[ARRAY]], i32 0, i32 0, i32 0
+  // CHECK-NEXT: [[ARRAYEND:%.*]] = getelementptr inbounds i8*, i8** [[ARRAYBEGIN]], i64 6
   // CHECK-NEXT: br label
   // CHECK:      [[AFTER:%.*]] = phi i8** [ [[ARRAYEND]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
-  // CHECK-NEXT: [[ELT]] = getelementptr inbounds i8** [[AFTER]], i64 -1
+  // CHECK-NEXT: [[ELT]] = getelementptr inbounds i8*, i8** [[AFTER]], i64 -1
   // CHECK-NEXT: call void @objc_storeStrong(i8** [[ELT]], i8* null) [[NUW]]
   // CHECK-NEXT: [[DONE:%.*]] = icmp eq i8** [[ELT]], [[ARRAYBEGIN]]
   // CHECK-NEXT: br i1 [[DONE]],
@@ -120,5 +120,38 @@ namespace test4 {
   // CHECK:      br label
   // CHECK:      resume
 }
+
+// rdar://21397946
+__attribute__((ns_returns_retained)) id test5_helper(unsigned);
+void test5(void) {
+  id array[][2] = {
+    test5_helper(0),
+    test5_helper(1),
+    test5_helper(2),
+    test5_helper(3)
+  };
+}
+// CHECK-LABEL: define void @_Z5test5v()
+// CHECK:       [[ARRAY:%.*]] = alloca [2 x [2 x i8*]], align
+// CHECK:       [[A0:%.*]] = getelementptr inbounds [2 x [2 x i8*]], [2 x [2 x i8*]]* [[ARRAY]], i64 0, i64 0
+// CHECK-NEXT:  store [2 x i8*]* [[A0]],
+// CHECK-NEXT:  [[A00:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[A0]], i64 0, i64 0
+// CHECK-NEXT:  store i8** [[A00]],
+// CHECK-NEXT:  [[T0:%.*]] = invoke i8* @_Z12test5_helperj(i32 0)
+// CHECK:       store i8* [[T0]], i8** [[A00]], align
+// CHECK-NEXT:  [[A01:%.*]] = getelementptr inbounds i8*, i8** [[A00]], i64 1
+// CHECK-NEXT:  store i8** [[A01]],
+// CHECK-NEXT:  [[T0:%.*]] = invoke i8* @_Z12test5_helperj(i32 1)
+// CHECK:       store i8* [[T0]], i8** [[A01]], align
+// CHECK-NEXT:  [[A1:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[A0]], i64 1
+// CHECK-NEXT:  store [2 x i8*]* [[A1]],
+// CHECK-NEXT:  [[A10:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[A1]], i64 0, i64 0
+// CHECK-NEXT:  store i8** [[A10]],
+// CHECK-NEXT:  [[T0:%.*]] = invoke i8* @_Z12test5_helperj(i32 2)
+// CHECK:       store i8* [[T0]], i8** [[A10]], align
+// CHECK-NEXT:  [[A11:%.*]] = getelementptr inbounds i8*, i8** [[A10]], i64 1
+// CHECK-NEXT:  store i8** [[A11]],
+// CHECK-NEXT:  [[T0:%.*]] = invoke i8* @_Z12test5_helperj(i32 3)
+// CHECK:       store i8* [[T0]], i8** [[A11]], align
 
 // CHECK: attributes [[NUW]] = { nounwind }

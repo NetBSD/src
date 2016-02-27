@@ -28,12 +28,12 @@ void check_array_cookies_simple() {
 // 46 = 42 + size of cookie (4)
 // CHECK: [[COOKIE:%.*]] = bitcast i8* [[ALLOCATED]] to i32*
 // CHECK: store i32 42, i32* [[COOKIE]]
-// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8* [[ALLOCATED]], i64 4
+// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8, i8* [[ALLOCATED]], i32 4
 // CHECK: bitcast i8* [[ARRAY]] to [[CLASS:%.*]]*
 
   delete [] array;
 // CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast [[CLASS]]* {{%.*}} to i8*
-// CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i64 -4
+// CHECK: getelementptr inbounds i8, i8* [[ARRAY_AS_CHAR]], i32 -4
 }
 
 struct __attribute__((aligned(8))) ClassWithAlignment {
@@ -50,12 +50,22 @@ void check_array_cookies_aligned() {
 //   344 = 42*8 + size of cookie (8, due to alignment)
 // CHECK: [[COOKIE:%.*]] = bitcast i8* [[ALLOCATED]] to i32*
 // CHECK: store i32 42, i32* [[COOKIE]]
-// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8* [[ALLOCATED]], i64 8
+// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8, i8* [[ALLOCATED]], i32 8
 // CHECK: bitcast i8* [[ARRAY]] to [[CLASS:%.*]]*
 
   delete [] array;
 // CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast [[CLASS]]*
-// CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i64 -8
+// CHECK: getelementptr inbounds i8, i8* [[ARRAY_AS_CHAR]], i32 -8
+}
+
+namespace PR23990 {
+struct S {
+  char x[42];
+  void operator delete[](void *p, __SIZE_TYPE__);
+  // CHECK-LABEL: define void @"\01?delete_s@PR23990@@YAXPAUS@1@@Z"(
+  // CHECK: call void @"\01??_VS@PR23990@@SAXPAXI@Z"(i8* {{.*}}, i32 42)
+};
+void delete_s(S *s) { delete[] s; }
 }
 
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }

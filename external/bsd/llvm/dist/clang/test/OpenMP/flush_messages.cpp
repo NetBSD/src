@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -ferror-limit 100 %s
+// RUN: %clang_cc1 -verify -fopenmp -ferror-limit 100 %s
 
 struct S1 { // expected-note 2 {{declared here}}
   int a;
@@ -31,7 +31,7 @@ T tmain(T argc) {
 #pragma omp flush // expected-error {{'#pragma omp flush' cannot be an immediate substatement}}
     switch (argc)
     case 1:
-#pragma omp flush // expected-error {{'#pragma omp flush' cannot be an immediate substatement}}
+#pragma omp flush
   switch (argc)
   case 1: {
 #pragma omp flush
@@ -39,7 +39,7 @@ T tmain(T argc) {
   switch (argc) {
 #pragma omp flush
   case 1:
-#pragma omp flush // expected-error {{'#pragma omp flush' cannot be an immediate substatement}}
+#pragma omp flush
     break;
   default: {
 #pragma omp flush
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 #pragma omp flush // expected-error {{'#pragma omp flush' cannot be an immediate substatement}}
     switch (argc)
     case 1:
-#pragma omp flush // expected-error {{'#pragma omp flush' cannot be an immediate substatement}}
+#pragma omp flush
   switch (argc)
   case 1: {
 #pragma omp flush
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
   switch (argc) {
 #pragma omp flush
   case 1:
-#pragma omp flush // expected-error {{'#pragma omp flush' cannot be an immediate substatement}}
+#pragma omp flush
     break;
   default: {
 #pragma omp flush

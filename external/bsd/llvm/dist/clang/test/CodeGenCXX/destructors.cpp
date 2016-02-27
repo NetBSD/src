@@ -151,7 +151,7 @@ namespace test1 {
 
   struct S : A { ~S(); int x; };
   S::~S() {}
-  // CHECK4: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
+  // CHECK4: @_ZN5test11SD2Ev = alias {{.*}}, bitcast {{.*}} @_ZN5test11AD2Ev
 
   struct T : A { ~T(); B x; };
   T::~T() {} // CHECK4-LABEL: define void @_ZN5test11TD2Ev(%"struct.test1::T"* %this) unnamed_addr
@@ -185,52 +185,53 @@ namespace test3 {
     new D; // Force emission of D's vtable
   }
 
-  // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::(anonymous namespace)::D"* %this) unnamed_addr
-  // CHECK4: invoke void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-  // CHECK4: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
-  // CHECK4: ret void
-  // CHECK4: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
-  // CHECK4-NEXT: cleanup
-  // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
-  // CHECK4: resume { i8*, i32 }
-
-  // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD1Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
-  // CHECK4: call void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
-  // CHECK4: ret void
-
-  // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
-  // CHECK4: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
-  // CHECK4: ret void
-
-  // CHECK4-LABEL: declare void @_ZN5test31BD2Ev(
-  // CHECK4-LABEL: declare void @_ZN5test31AD2Ev(
-
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK4: invoke void @_ZN5test31BD2Ev(
   // CHECK4: call void @_ZN5test31AD2Ev(
   // CHECK4: ret void
 
+  // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::(anonymous namespace)::D"* %this) unnamed_addr
+  // CHECK4-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK4: invoke void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+  // CHECK4: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
+  // CHECK4: ret void
+  // CHECK4: landingpad { i8*, i32 }
+  // CHECK4-NEXT: cleanup
+  // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
+  // CHECK4: resume { i8*, i32 }
+
+  // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD1Ev(
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
+  // CHECK4: call void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
+  // CHECK4: ret void
+
+  // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
+  // CHECK4: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
+  // CHECK4: ret void
 
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
+  // CHECK4-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   // CHECK4: invoke void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK4: ret void
-  // CHECK4: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK4: landingpad { i8*, i32 }
   // CHECK4-NEXT: cleanup
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK4: resume { i8*, i32 }
 
   // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK4: ret void
 
   // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD0Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11CD0Ev(
   // CHECK4: ret void
+
+  // CHECK4-LABEL: declare void @_ZN5test31BD2Ev(
+  // CHECK4-LABEL: declare void @_ZN5test31AD2Ev(
 
   // CHECK4: attributes [[NUW]] = {{[{].*}} nounwind {{.*[}]}}
 }
@@ -255,12 +256,12 @@ namespace test4 {
   // CHECK5:      [[X:%.*]] = alloca i32
   // CHECK5-NEXT: [[A:%.*]] = alloca
   // CHECK5:      br label
-  // CHECK5:      [[TMP:%.*]] = load i32* [[X]]
+  // CHECK5:      [[TMP:%.*]] = load i32, i32* [[X]]
   // CHECK5-NEXT: [[CMP:%.*]] = icmp ne i32 [[TMP]], 0
   // CHECK5-NEXT: br i1
   // CHECK5:      call void @_ZN5test41AD1Ev(
   // CHECK5:      br label
-  // CHECK5:      [[TMP:%.*]] = load i32* [[X]]
+  // CHECK5:      [[TMP:%.*]] = load i32, i32* [[X]]
   // CHECK5:      [[TMP2:%.*]] = add nsw i32 [[TMP]], -1
   // CHECK5:      store i32 [[TMP2]], i32* [[X]]
   // CHECK5:      br label
@@ -280,20 +281,23 @@ namespace test5 {
   // CHECK5:      [[ELEMS:%.*]] = alloca [5 x [[A:%.*]]], align
   // CHECK5-NEXT: [[EXN:%.*]] = alloca i8*
   // CHECK5-NEXT: [[SEL:%.*]] = alloca i32
-  // CHECK5-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [5 x [[A]]]* [[ELEMS]], i32 0, i32 0
-  // CHECK5-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 5
+  // CHECK5-NEXT: [[PELEMS:%.*]] = bitcast [5 x [[A]]]* [[ELEMS]] to i8*
+  // CHECK5-NEXT: call void @llvm.lifetime.start(i64 5, i8* [[PELEMS]])
+  // CHECK5-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [5 x [[A]]], [5 x [[A]]]* [[ELEMS]], i32 0, i32 0
+  // CHECK5-NEXT: [[END:%.*]] = getelementptr inbounds [[A]], [[A]]* [[BEGIN]], i64 5
   // CHECK5-NEXT: br label
   // CHECK5:      [[POST:%.*]] = phi [[A]]* [ [[END]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
-  // CHECK5-NEXT: [[ELT]] = getelementptr inbounds [[A]]* [[POST]], i64 -1
+  // CHECK5-NEXT: [[ELT]] = getelementptr inbounds [[A]], [[A]]* [[POST]], i64 -1
   // CHECK5-NEXT: invoke void @_ZN5test51AD1Ev([[A]]* [[ELT]])
   // CHECK5:      [[T0:%.*]] = icmp eq [[A]]* [[ELT]], [[BEGIN]]
   // CHECK5-NEXT: br i1 [[T0]],
-  // CHECK5:      ret void
+  // CHECK5:      call void @llvm.lifetime.end
+  // CHECK5-NEXT: ret void
   // lpad
   // CHECK5:      [[EMPTY:%.*]] = icmp eq [[A]]* [[BEGIN]], [[ELT]]
   // CHECK5-NEXT: br i1 [[EMPTY]]
   // CHECK5:      [[AFTER:%.*]] = phi [[A]]* [ [[ELT]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
-  // CHECK5-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]]* [[AFTER]], i64 -1
+  // CHECK5-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]], [[A]]* [[AFTER]], i64 -1
   // CHECK5-NEXT: invoke void @_ZN5test51AD1Ev([[A]]* [[CUR]])
   // CHECK5:      [[DONE:%.*]] = icmp eq [[A]]* [[CUR]], [[BEGIN]]
   // CHECK5-NEXT: br i1 [[DONE]],

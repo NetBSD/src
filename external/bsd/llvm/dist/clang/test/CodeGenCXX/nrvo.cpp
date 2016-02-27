@@ -44,6 +44,7 @@ X test1(bool B) {
 
 // CHECK-LABEL: define void @_Z5test2b
 // CHECK-EH-LABEL: define void @_Z5test2b
+// CHECK-EH-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 X test2(bool B) {
   // No NRVO.
 
@@ -54,16 +55,22 @@ X test2(bool B) {
   return x;
 
   // CHECK: call {{.*}} @_ZN1XC1Ev
+  // CHECK-NEXT: {{.*}} getelementptr inbounds %class.X, %class.X* %y, i32 0, i32 0
+  // CHECK-NEXT: call void @llvm.lifetime.start
   // CHECK-NEXT: call {{.*}} @_ZN1XC1Ev
   // CHECK: call {{.*}} @_ZN1XC1ERKS_
   // CHECK: call {{.*}} @_ZN1XC1ERKS_
   // CHECK: call {{.*}} @_ZN1XD1Ev
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK: call {{.*}} @_ZN1XD1Ev
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK: ret void
 
   // The block ordering in the -fexceptions IR is unfortunate.
 
-  // CHECK-EH:      call {{.*}} @_ZN1XC1Ev
+  // CHECK-EH:      call void @llvm.lifetime.start
+  // CHECK-EH-NEXT: call {{.*}} @_ZN1XC1Ev
+  // CHECK-EH:      call void @llvm.lifetime.start
   // CHECK-EH-NEXT: invoke {{.*}} @_ZN1XC1Ev
   // -> %invoke.cont, %lpad
 
@@ -76,7 +83,7 @@ X test2(bool B) {
   // -> %cleanup, %lpad1
 
   // %lpad: landing pad for ctor of 'y', dtor of 'y'
-  // CHECK-EH:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-EH:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 }
   // CHECK-EH-NEXT:   cleanup
   // CHECK-EH-NEXT: extractvalue { i8*, i32 } [[CAUGHTVAL]], 0
   // CHECK-EH-NEXT: extractvalue { i8*, i32 } [[CAUGHTVAL]], 1
@@ -96,7 +103,9 @@ X test2(bool B) {
   // -> %invoke.cont11, %lpad
 
   // %invoke.cont11: normal cleanup for 'x'
-  // CHECK-EH:      call {{.*}} @_ZN1XD1Ev
+  // CHECK-EH:      call void @llvm.lifetime.end
+  // CHECK-EH-NEXT: call {{.*}} @_ZN1XD1Ev
+  // CHECK-EH-NEXT: call void @llvm.lifetime.end
   // CHECK-EH-NEXT: ret void
 
   // %eh.cleanup:  EH cleanup for 'x'
@@ -108,7 +117,7 @@ X test2(bool B) {
   // CHECK-EH:      resume { i8*, i32 }
 
   // %terminate.lpad: terminate landing pad.
-  // CHECK-EH:      [[T0:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-EH:      [[T0:%.*]] = landingpad { i8*, i32 }
   // CHECK-EH-NEXT:   catch i8* null
   // CHECK-EH-NEXT: [[T1:%.*]] = extractvalue { i8*, i32 } [[T0]], 0
   // CHECK-EH-NEXT: call void @__clang_call_terminate(i8* [[T1]]) [[NR_NUW:#[0-9]+]]
@@ -168,9 +177,12 @@ X test6() {
   X a __attribute__((aligned(8)));
   return a;
   // CHECK:      [[A:%.*]] = alloca [[X:%.*]], align 8
-  // CHECK-NEXT: call {{.*}} @_ZN1XC1Ev([[X]]* [[A]])
-  // CHECK-NEXT: call {{.*}} @_ZN1XC1ERKS_([[X]]* {{%.*}}, [[X]]* dereferenceable({{[0-9]+}}) [[A]])
-  // CHECK-NEXT: call {{.*}} @_ZN1XD1Ev([[X]]* [[A]])
+  // CHECK-NEXT: [[PTR:%.*]] = getelementptr inbounds %class.X, %class.X* [[A]], i32 0, i32 0
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 1, i8* [[PTR]])
+  // CHECK-NEXT: call {{.*}} @_ZN1XC1Ev([[X]]* nonnull [[A]])
+  // CHECK-NEXT: call {{.*}} @_ZN1XC1ERKS_([[X]]* {{%.*}}, [[X]]* nonnull dereferenceable({{[0-9]+}}) [[A]])
+  // CHECK-NEXT: call {{.*}} @_ZN1XD1Ev([[X]]* nonnull [[A]])
+  // CHECK-NEXT: call void @llvm.lifetime.end(i64 1, i8* [[PTR]])
   // CHECK-NEXT: ret void
 }
 
