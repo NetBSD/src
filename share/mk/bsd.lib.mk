@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.365 2016/02/27 20:36:17 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.366 2016/02/27 23:51:34 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -42,11 +42,11 @@ realinstall:	checkver libinstall
 # XXX: This is needed for programs that link with .a libraries
 # Perhaps a more correct solution is to always generate _pic.a
 # files or always have a shared library.
-# Disabled since it breaks profiling.
-#.if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
-#CFLAGS+=        ${PIE_CFLAGS}
-#AFLAGS+=        ${PIE_AFLAGS}
-#.endif
+# XXX: This breaks profiling (__mcount relocation is wrong)
+.if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
+CFLAGS+=        ${PIE_CFLAGS}
+AFLAGS+=        ${PIE_AFLAGS}
+.endif
 
 ##### Libraries that this may depend upon.
 .if defined(LIBDPLIBS) && ${MKPIC} != "no"				# {
