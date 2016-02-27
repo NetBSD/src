@@ -39,8 +39,7 @@ namespace ARMCP {
   enum ARMCPModifier {
     no_modifier,
     TLSGD,
-    GOT,
-    GOTOFF,
+    GOT_PREL,
     GOTTPOFF,
     TPOFF
   };
@@ -86,7 +85,7 @@ protected:
   }
 
 public:
-  virtual ~ARMConstantPoolValue();
+  ~ARMConstantPoolValue() override;
 
   ARMCP::ARMCPModifier getModifier() const { return Modifier; }
   const char *getModifierText() const;
@@ -102,8 +101,6 @@ public:
   bool isBlockAddress() const { return Kind == ARMCP::CPBlockAddress; }
   bool isLSDA() const { return Kind == ARMCP::CPLSDA; }
   bool isMachineBasicBlock() const{ return Kind == ARMCP::CPMachineBasicBlock; }
-
-  unsigned getRelocationInfo() const override { return 2; }
 
   int getExistingMachineCPValue(MachineConstantPool *CP,
                                 unsigned Alignment) override;

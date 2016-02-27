@@ -7,7 +7,7 @@ define void @jscall_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
 ; CHECK-LABEL: jscall_patchpoint_codegen:
 ; CHECK:       Ltmp
-; CHECK:       str x{{.+}}, [sp]
+; CHECK:       str x{{.+}}, [sp, #-16]!
 ; CHECK-NEXT:  mov  x0, x{{.+}}
 ; CHECK:       Ltmp
 ; CHECK-NEXT:  movz  x16, #0xffff, lsl #32
@@ -16,16 +16,16 @@ entry:
 ; CHECK-NEXT:  blr x16
 ; FAST-LABEL:  jscall_patchpoint_codegen:
 ; FAST:        Ltmp
-; FAST:        str x{{.+}}, [sp]
+; FAST:        str x{{.+}}, [sp, #-16]!
 ; FAST:        Ltmp
 ; FAST-NEXT:   movz  x16, #0xffff, lsl #32
 ; FAST-NEXT:   movk  x16, #0xdead, lsl #16
 ; FAST-NEXT:   movk  x16, #0xbeef
 ; FAST-NEXT:   blr x16
   %resolveCall2 = inttoptr i64 281474417671919 to i8*
-  %result = tail call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 20, i8* %resolveCall2, i32 2, i64 %p4, i64 %p2)
+  %result = tail call webkit_jscc i64 (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.i64(i64 5, i32 20, i8* %resolveCall2, i32 2, i64 %p4, i64 %p2)
   %resolveCall3 = inttoptr i64 244837814038255 to i8*
-  tail call webkit_jscc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 6, i32 20, i8* %resolveCall3, i32 2, i64 %p4, i64 %result)
+  tail call webkit_jscc void (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.void(i64 6, i32 20, i8* %resolveCall3, i32 2, i64 %p4, i64 %result)
   ret void
 }
 
@@ -50,7 +50,7 @@ entry:
 ; FAST:        orr [[REG1:x[0-9]+]], xzr, #0x2
 ; FAST-NEXT:   orr [[REG2:w[0-9]+]], wzr, #0x4
 ; FAST-NEXT:   orr [[REG3:x[0-9]+]], xzr, #0x6
-; FAST-NEXT:   str [[REG1]], [sp]
+; FAST-NEXT:   str [[REG1]], [sp, #-32]!
 ; FAST-NEXT:   str [[REG2]], [sp, #16]
 ; FAST-NEXT:   str [[REG3]], [sp, #24]
 ; FAST:        Ltmp
@@ -59,7 +59,7 @@ entry:
 ; FAST-NEXT:   movk  x16, #0xbeef
 ; FAST-NEXT:   blr x16
   %call = inttoptr i64 281474417671919 to i8*
-  %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 6, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6)
+  %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 6, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6)
   ret i64 %result
 }
 
@@ -90,7 +90,7 @@ entry:
 ; FAST-NEXT:   orr [[REG3:x[0-9]+]], xzr, #0x6
 ; FAST-NEXT:   orr [[REG4:w[0-9]+]], wzr, #0x8
 ; FAST-NEXT:   movz [[REG5:x[0-9]+]], #0xa
-; FAST-NEXT:   str [[REG1]], [sp]
+; FAST-NEXT:   str [[REG1]], [sp, #-64]!
 ; FAST-NEXT:   str [[REG2]], [sp, #16]
 ; FAST-NEXT:   str [[REG3]], [sp, #24]
 ; FAST-NEXT:   str [[REG4]], [sp, #36]
@@ -101,7 +101,7 @@ entry:
 ; FAST-NEXT:   movk  x16, #0xbeef
 ; FAST-NEXT:   blr x16
   %call = inttoptr i64 281474417671919 to i8*
-  %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 10, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6, i32 undef, i32 8, i32 undef, i64 10)
+  %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 10, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6, i32 undef, i32 8, i32 undef, i64 10)
   ret i64 %result
 }
 

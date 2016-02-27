@@ -63,9 +63,11 @@ private:
   std::vector<const Metadata *> MDs;
   SmallVector<const LocalAsMetadata *, 8> FunctionLocalMDs;
   typedef DenseMap<const Metadata *, unsigned> MetadataMapType;
-  MetadataMapType MDValueMap;
+  MetadataMapType MetadataMap;
   bool HasMDString;
-  bool HasMDLocation;
+  bool HasDILocation;
+  bool HasGenericDINode;
+  bool ShouldPreserveUseListOrder;
 
   typedef DenseMap<AttributeSet, unsigned> AttributeGroupMapType;
   AttributeGroupMapType AttributeGroupMap;
@@ -91,17 +93,17 @@ private:
   /// before incorporation.
   unsigned NumModuleValues;
 
-  /// When a function is incorporated, this is the size of the MDValues list
+  /// When a function is incorporated, this is the size of the Metadatas list
   /// before incorporation.
   unsigned NumModuleMDs;
 
   unsigned FirstFuncConstantID;
   unsigned FirstInstID;
 
-  ValueEnumerator(const ValueEnumerator &) LLVM_DELETED_FUNCTION;
-  void operator=(const ValueEnumerator &) LLVM_DELETED_FUNCTION;
+  ValueEnumerator(const ValueEnumerator &) = delete;
+  void operator=(const ValueEnumerator &) = delete;
 public:
-  ValueEnumerator(const Module &M);
+  ValueEnumerator(const Module &M, bool ShouldPreserveUseListOrder);
 
   void dump() const;
   void print(raw_ostream &OS, const ValueMapType &Map, const char *Name) const;
@@ -109,10 +111,21 @@ public:
              const char *Name) const;
 
   unsigned getValueID(const Value *V) const;
-  unsigned getMetadataID(const Metadata *V) const;
+  unsigned getMetadataID(const Metadata *MD) const {
+    auto ID = getMetadataOrNullID(MD);
+    assert(ID != 0 && "Metadata not in slotcalculator!");
+    return ID - 1;
+  }
+  unsigned getMetadataOrNullID(const Metadata *MD) const {
+    return MetadataMap.lookup(MD);
+  }
+  unsigned numMDs() const { return MDs.size(); }
 
   bool hasMDString() const { return HasMDString; }
-  bool hasMDLocation() const { return HasMDLocation; }
+  bool hasDILocation() const { return HasDILocation; }
+  bool hasGenericDINode() const { return HasGenericDINode; }
+
+  bool shouldPreserveUseListOrder() const { return ShouldPreserveUseListOrder; }
 
   unsigned getTypeID(Type *T) const {
     TypeMapType::const_iterator I = TypeMap.find(T);
@@ -173,6 +186,7 @@ public:
   ///
   void incorporateFunction(const Function &F);
   void purgeFunction();
+  uint64_t computeBitsRequiredForTypeIndicies() const;
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);

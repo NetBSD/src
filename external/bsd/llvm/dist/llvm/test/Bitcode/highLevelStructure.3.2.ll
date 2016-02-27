@@ -5,7 +5,7 @@
 ; older bitcode files.
 
 ; Data Layout Test
-; CHECK: target datalayout = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-f80:32-n8:16:32-S32"
+; CHECK: target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64-v96:128:128-v128:128:128-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-a0:0:64-f80:32:32-n8:16:32-S32"
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64-v96:128:128-v128:128:128-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-a0:0:64-f80:32:32-n8:16:32-S32"
 
 ; Module-Level Inline Assembly Test
@@ -19,16 +19,16 @@ module asm "some assembly"
 ; Aliases Test
 ; CHECK: @glob1 = global i32 1
 @glob1 = global i32 1
-; CHECK: @aliased1 = alias i32* @glob1
-@aliased1 = alias i32* @glob1
-; CHECK-NEXT: @aliased2 = internal alias i32* @glob1
-@aliased2 = internal alias i32* @glob1
-; CHECK-NEXT: @aliased3 = alias i32* @glob1
-@aliased3 = external alias i32* @glob1
-; CHECK-NEXT: @aliased4 = weak alias i32* @glob1
-@aliased4 = weak alias i32* @glob1
-; CHECK-NEXT: @aliased5 = weak_odr alias i32* @glob1
-@aliased5 = weak_odr alias i32* @glob1
+; CHECK: @aliased1 = alias i32, i32* @glob1
+@aliased1 = alias i32, i32* @glob1
+; CHECK-NEXT: @aliased2 = internal alias i32, i32* @glob1
+@aliased2 = internal alias i32, i32* @glob1
+; CHECK-NEXT: @aliased3 = alias i32, i32* @glob1
+@aliased3 = external alias i32, i32* @glob1
+; CHECK-NEXT: @aliased4 = weak alias i32, i32* @glob1
+@aliased4 = weak alias i32, i32* @glob1
+; CHECK-NEXT: @aliased5 = weak_odr alias i32, i32* @glob1
+@aliased5 = weak_odr alias i32, i32* @glob1
 
 ;Parameter Attribute Test
 ; CHECK: declare void @ParamAttr1(i8 zeroext)

@@ -15,11 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = IPA
-
 [component_0]
 type = Library
 name = Analysis
 parent = Libraries
-required_libraries = Core Support Target
+required_libraries = Core Support

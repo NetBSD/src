@@ -1,4 +1,4 @@
-; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=16
+; RUN: llc  -march=mipsel -mattr=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=16
 
 @i = global i32 5, align 4
 @j = global i32 10, align 4
@@ -8,8 +8,8 @@
 
 define void @test() nounwind {
 entry:
-  %0 = load i32* @i, align 4
-  %1 = load i32* @j, align 4
+  %0 = load i32, i32* @i, align 4
+  %1 = load i32, i32* @j, align 4
   %cmp = icmp slt i32 %0, %1
   br i1 %cmp, label %if.then, label %if.end
 
@@ -22,7 +22,7 @@ if.then:                                          ; preds = %entry
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry
-  %2 = load i32* @k, align 4
+  %2 = load i32, i32* @k, align 4
   %cmp1 = icmp slt i32 %0, %2
   br i1 %cmp1, label %if.then2, label %if.end3
 

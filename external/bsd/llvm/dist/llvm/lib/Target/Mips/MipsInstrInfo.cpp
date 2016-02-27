@@ -60,8 +60,8 @@ MachineMemOperand *MipsInstrInfo::GetMemOperand(MachineBasicBlock &MBB, int FI,
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
 
-  return MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FI), Flag,
-                                 MFI.getObjectSize(FI), Align);
+  return MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(MF, FI),
+                                 Flag, MFI.getObjectSize(FI), Align);
 }
 
 //===----------------------------------------------------------------------===//
@@ -96,8 +96,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
 void
 MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                           DebugLoc DL,
-                           const SmallVectorImpl<MachineOperand> &Cond) const {
+                           DebugLoc DL, ArrayRef<MachineOperand> Cond) const {
   unsigned Opc = Cond[0].getImm();
   const MCInstrDesc &MCID = get(Opc);
   MachineInstrBuilder MIB = BuildMI(&MBB, DL, MCID);
@@ -115,7 +114,7 @@ MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
 unsigned MipsInstrInfo::InsertBranch(
     MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
-    const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const {
+    ArrayRef<MachineOperand> Cond, DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
 
