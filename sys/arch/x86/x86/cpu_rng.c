@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.1 2016/02/27 00:09:45 tls Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.2 2016/02/27 00:43:55 tls Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -42,13 +42,83 @@
 static enum {
 	CPU_RNG_NONE = 0,
 	CPU_RNG_RDRAND,
-	CPU_RNG_RDSEED,
-	CPU_RNG_VIA } cpu_rng_mode __read_mostly = CPU_RNG_NONE;
+	CPU_RNG_RDSEED } cpu_rng_mode __read_mostly = CPU_RNG_NONE;
 
 bool
 cpu_rng_init(void)
 {
+
+	if (cpu_feature[5] & CPUID_SEF_RDSEED) {
+		cpu_rng_mode = CPU_RNG_RDSEED;
+		aprint_normal("cpu_rng: RDSEED\n");
+		return true;
+	} else if (cpu_feature[1] & CPUID2_RDRAND) {
+		cpu_rng_mode = CPU_RNG_RDRAND;
+		aprint_normal("cpu_rng: RDRAND\n");
+		return true;
+	}
 	return false;
+}
+
+static inline size_t
+cpu_rng_rdrand(cpu_rng_t *out)
+{
+	uint8_t rndsts;
+
+#ifdef __i386__
+	uint32_t lo, hi;
+
+	__asm __volatile("rdrand %0; setc %1" : "=r"(lo), "=qm"(rndsts));
+	if (rndsts != 1)
+		return 0;
+	__asm __volatile("rdrand %0; setc %1" : "=r"(hi), "=qm"(rndsts));
+
+	*out = (uint64_t)lo | ((uint64_t)hi << 32);
+	explicit_memset(&lo, 0, sizeof(lo));
+	explicit_memset(&hi, 0, sizeof(hi));
+	if (rndsts != 1)
+		return sizeof(lo) * NBBY;
+#else
+	__asm __volatile("rdrand %0; setc %1" : "=r"(*out), "=qm"(rndsts));
+	if (rndsts != 1)
+		return 0;
+#endif
+	return sizeof(*out) * NBBY;
+}
+
+static inline size_t
+cpu_rng_rdseed(cpu_rng_t *out)
+{
+	uint8_t rndsts;
+
+#ifdef __i386__
+	uint32_t lo, hi;
+	
+	__asm __volatile("rdseed %0; setc %1" : "=r"(lo), "=qm"(rndsts));
+        if (rndsts != 1)
+		goto exhausted;
+	__asm __volatile("rdseed %0; setc %1" : "=r"(hi), "=qm"(rndsts));
+	if (rndsts != 1)
+		goto exhausted;
+
+	*out = (uint64_t)lo | ((uint64_t)hi << 32);
+	explicit_memset(&lo, 0, sizeof(lo));
+	explicit_memset(&hi, 0, sizeof(hi));
+#else
+	__asm __volatile("rdseed %0; setc %1" : "=r"(*out), "=qm"(rndsts));
+#endif
+	if (rndsts != 1)
+		goto exhausted;
+
+	return sizeof(*out) * NBBY;
+
+	/*
+	 * Userspace could have exhausted RDSEED, but the
+	 * CPU-internal generator feeding RDRAND is guaranteed
+	 * to be seeded even in this case.
+	 */
+exhausted:
+	return cpu_rng_rdrand(out);
 }
 
 size_t
@@ -56,10 +126,11 @@ cpu_rng(cpu_rng_t *out)
 {
 	switch (cpu_rng_mode) {
 	case CPU_RNG_NONE:
-	case CPU_RNG_RDSEED:
-	case CPU_RNG_RDRAND:
-	case CPU_RNG_VIA:
 		return 0;
+	case CPU_RNG_RDSEED:
+		return cpu_rng_rdseed(out);
+	case CPU_RNG_RDRAND:
+		return cpu_rng_rdrand(out);
 	default:
 		panic("cpu_rng: unknown mode %d", (int)cpu_rng_mode);
 	}
