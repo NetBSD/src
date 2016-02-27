@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 class X{
 public:
@@ -87,7 +89,7 @@ namespace test5 {
   }
 
   void test2(A &x) {
-    x->A::foo<int>(); // expected-error {{'test5::A' is not a pointer; maybe you meant to use '.'?}}
+    x->A::foo<int>(); // expected-error {{'test5::A' is not a pointer; did you mean to use '.'?}}
   }
 }
 
@@ -116,8 +118,10 @@ namespace rdar8231724 {
   void f(Y *y) {
     y->N::X1<int>; // expected-error{{'rdar8231724::N::X1' is not a member of class 'rdar8231724::Y'}}
     y->Z<int>::n; // expected-error{{'rdar8231724::Z<int>::n' is not a member of class 'rdar8231724::Y'}}
-    y->template Z<int>::n; // expected-error{{'rdar8231724::Z<int>::n' is not a member of class 'rdar8231724::Y'}} \
-    // expected-warning{{'template' keyword outside of a template}}
+    y->template Z<int>::n; // expected-error{{'rdar8231724::Z<int>::n' is not a member of class 'rdar8231724::Y'}}
+#if __cplusplus <= 199711L // C++03 or earlier modes
+    // expected-warning@-2{{'template' keyword outside of a template}}
+#endif
   }
 }
 
@@ -181,7 +185,7 @@ namespace PR15045 {
 
   int f() {
     Cl0 c;
-    return c->a;  // expected-error {{member reference type 'PR15045::Cl0' is not a pointer; maybe you meant to use '.'?}}
+    return c->a;  // expected-error {{member reference type 'PR15045::Cl0' is not a pointer; did you mean to use '.'?}}
   }
 
   struct bar {
@@ -202,7 +206,7 @@ namespace PR15045 {
     foo f;
 
     // Show that recovery has happened by also triggering typo correction
-    e->Func();  // expected-error {{member reference type 'PR15045::bar' is not a pointer; maybe you meant to use '.'?}} \
+    e->Func();  // expected-error {{member reference type 'PR15045::bar' is not a pointer; did you mean to use '.'?}} \
                 // expected-error {{no member named 'Func' in 'PR15045::bar'; did you mean 'func'?}}
 
     // Make sure a fixit isn't given in the case that the '->' isn't actually
@@ -221,6 +225,6 @@ namespace pr16676 {
   int f(S* s) {
     T t;
     return t.get_s  // expected-error {{reference to non-static member function must be called; did you mean to call it with no arguments?}}
-        .i;  // expected-error {{member reference type 'pr16676::S *' is a pointer; maybe you meant to use '->'}}
+        .i;  // expected-error {{member reference type 'pr16676::S *' is a pointer; did you mean to use '->'}}
   }
 }

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -debug-info-kind=limited -S -emit-llvm %s -o - | FileCheck %s
 
 void func(char c, char* d)
 {
@@ -13,4 +13,4 @@ void func(char c, char* d)
 }
 
 // CHECK: ret void, !dbg [[LINE:.*]]
-// CHECK: [[LINE]] = !MDLocation(line: 6,
+// CHECK: [[LINE]] = !DILocation(line: 6,

@@ -50,7 +50,7 @@ bool ParseDiagnosticArgs(DiagnosticOptions &Opts, llvm::opt::ArgList &Args,
                          DiagnosticsEngine *Diags = nullptr);
 
 class CompilerInvocationBase : public RefCountedBase<CompilerInvocation> {
-  void operator=(const CompilerInvocationBase &) LLVM_DELETED_FUNCTION;
+  void operator=(const CompilerInvocationBase &) = delete;
 
 public:
   /// Options controlling the language variant.
@@ -72,7 +72,7 @@ public:
   ~CompilerInvocationBase();
 
   CompilerInvocationBase(const CompilerInvocationBase &X);
-  
+
   LangOptions *getLangOpts() { return LangOpts.get(); }
   const LangOptions *getLangOpts() const { return LangOpts.get(); }
 

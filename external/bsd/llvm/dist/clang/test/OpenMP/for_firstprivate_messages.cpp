@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp=libiomp5 %s
+// RUN: %clang_cc1 -verify -fopenmp %s
 
 void foo() {
 }
@@ -26,8 +26,8 @@ class S3 {
   S3 &operator=(const S3 &s3);
 
 public:
-  S3() : a(0) {} // expected-note {{candidate constructor not viable: requires 0 arguments, but 1 was provided}}
-  S3(S3 &s3) : a(s3.a) {} // expected-note {{candidate constructor not viable: 1st argument ('const S3') would lose const qualifier}}
+  S3() : a(0) {} // expected-note 2 {{candidate constructor not viable: requires 0 arguments, but 1 was provided}}
+  S3(S3 &s3) : a(s3.a) {} // expected-note 2 {{candidate constructor not viable: 1st argument ('const S3') would lose const qualifier}}
 };
 const S3 c;
 const S3 ca[5];
@@ -65,7 +65,7 @@ int foomain(int argc, char **argv) {
   I e(4);
   C g(5);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel
 #pragma omp for firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (int k = 0; k < argc; ++k)
@@ -115,14 +115,10 @@ int foomain(int argc, char **argv) {
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel
-#pragma omp for linear(i) // expected-error {{unexpected OpenMP clause 'linear' in directive '#pragma omp for'}}
-  for (int k = 0; k < argc; ++k)
-    ++k;
-#pragma omp parallel
   {
     int v = 0;
     int i;                      // expected-note {{variable with automatic storage duration is predetermined as private; perhaps you forget to enclose 'omp for' directive into a parallel or another task region?}}
-#pragma omp for firstprivate(i) // expected-error {{private variable cannot be firstprivate}}
+#pragma omp for firstprivate(i) // expected-error {{firstprivate variable must be shared}}
     for (int k = 0; k < argc; ++k) {
       i = k;
       v += i;
@@ -130,7 +126,7 @@ int foomain(int argc, char **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp for firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp for firstprivate(j)
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel
@@ -152,6 +148,21 @@ int foomain(int argc, char **argv) {
   return 0;
 }
 
+void bar(S4 a[2]) {
+#pragma omp parallel
+#pragma omp for firstprivate(a)
+  for (int i = 0; i < 2; ++i)
+    foo();
+}
+
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;
   const int da[5] = {0};
@@ -160,7 +171,7 @@ int main(int argc, char **argv) {
   S3 m;
   S6 n(2);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel
 #pragma omp for firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (i = 0; i < argc; ++i)
@@ -194,7 +205,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for firstprivate(a, b, c, d, f) // expected-error {{firstprivate variable with incomplete type 'S1'}} expected-error {{no matching constructor for initialization of 'const S3'}}
+#pragma omp for firstprivate(a, b, c, d, f) // expected-error {{firstprivate variable with incomplete type 'S1'}} expected-error {{no matching constructor for initialization of 'S3'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
@@ -210,7 +221,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for firstprivate(ca) // OK
+#pragma omp for firstprivate(ca) // expected-error {{no matching constructor for initialization of 'S3'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
@@ -259,7 +270,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp for firstprivate(j)
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
@@ -274,7 +285,7 @@ int main(int argc, char **argv) {
   {
     int v = 0;
     int i;                      // expected-note {{variable with automatic storage duration is predetermined as private; perhaps you forget to enclose 'omp for' directive into a parallel or another task region?}}
-#pragma omp for firstprivate(i) // expected-error {{private variable cannot be firstprivate}}
+#pragma omp for firstprivate(i) // expected-error {{firstprivate variable must be shared}}
     for (int k = 0; k < argc; ++k) {
       i = k;
       v += i;
@@ -288,6 +299,14 @@ int main(int argc, char **argv) {
 #pragma omp for firstprivate(i)       // expected-error {{firstprivate variable must be shared}}
   for (i = 0; i < argc; ++i)
     foo();
+#pragma omp parallel
+#pragma omp for firstprivate(B::x) // expected-error {{threadprivate or thread local variable cannot be firstprivate}}
+  for (i = 0; i < argc; ++i)
+    foo();
+  static int si;
+#pragma omp for firstprivate(si) // OK
+  for (i = 0; i < argc; ++i)
+    si = i + 1;
 
   return foomain<S4, S5>(argc, argv); // expected-note {{in instantiation of function template specialization 'foomain<S4, S5>' requested here}}
 }

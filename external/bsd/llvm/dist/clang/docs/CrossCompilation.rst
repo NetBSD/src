@@ -92,7 +92,7 @@ will be assumed, which sets the defaults for the specified architecture.
 The system name is generally the OS (linux, darwin), but could be special
 like the bare-metal "none".
 
-When a parameter is not important, they can be omitted, or you can
+When a parameter is not important, it can be omitted, or you can
 choose ``unknown`` and the defaults will be used. If you choose a parameter
 that Clang doesn't know, like ``blerg``, it'll ignore and assume
 ``unknown``, which is not always desired, so be careful.
@@ -110,7 +110,7 @@ will be chosen, so you'll almost always have to change it via flags.
 
 Typical flags include:
  * ``-mcpu=<cpu-name>``, like x86-64, swift, cortex-a15
- * ``-fpu=<fpu-name>``, like SSE3, NEON, controlling the FP unit available
+ * ``-mfpu=<fpu-name>``, like SSE3, NEON, controlling the FP unit available
  * ``-mfloat-abi=<fabi>``, like soft, hard, controlling which registers
    to use for floating-point
 

@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++11-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 -Wno-c++11-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 struct A {};
 struct B {};
@@ -109,8 +111,10 @@ S<1> s;
 
 namespace foo {}
 void test_paren_suffix() {
-  foo::bar({5, 6});  // expected-error-re {{no member named 'bar' in namespace 'foo'{{$}}}} \
-                     // expected-error {{expected expression}}
+  foo::bar({5, 6});  // expected-error-re {{no member named 'bar' in namespace 'foo'{{$}}}}
+#if __cplusplus <= 199711L
+  // expected-error@-2 {{expected expression}}
+#endif
 }
 
 const int kNum = 10;  // expected-note {{'kNum' declared here}}
@@ -158,6 +162,16 @@ a = b ? : 0;  // expected-error {{C++ requires a type specifier for all declarat
               // expected-error-re {{use of undeclared identifier 'b'{{$}}}}
 }
 
+extern long clock (void);
+struct Pointer {
+  void set_xpos(int);
+  void set_ypos(int);
+};
+void MovePointer(Pointer &Click, int x, int y) {  // expected-note 2 {{'Click' declared here}}
+  click.set_xpos(x);  // expected-error {{use of undeclared identifier 'click'; did you mean 'Click'?}}
+  click.set_ypos(x);  // expected-error {{use of undeclared identifier 'click'; did you mean 'Click'?}}
+}
+
 namespace PR22250 {
 // expected-error@+4 {{use of undeclared identifier 'size_t'; did you mean 'sizeof'?}}
 // expected-error-re@+3 {{use of undeclared identifier 'y'{{$}}}}
@@ -183,3 +197,19 @@ void f() {
   TimeTicks::now();  // expected-error {{no member named 'now' in 'PR22297::TimeTicks'; did you mean 'Now'?}}
 }
 }
+
+namespace PR23005 {
+void f() { int a = Unknown::b(c); }  // expected-error {{use of undeclared identifier 'Unknown'}}
+// expected-error@-1 {{use of undeclared identifier 'c'}}
+}
+
+namespace PR23350 {
+int z = 1 ? N : ;  // expected-error {{expected expression}}
+// expected-error-re@-1 {{use of undeclared identifier 'N'{{$}}}}
+}
+
+// PR 23285. This test must be at the end of the file to avoid additional,
+// unwanted diagnostics.
+// expected-error-re@+2 {{use of undeclared identifier 'uintmax_t'{{$}}}}
+// expected-error@+1 {{expected ';' after top level declarator}}
+unsigned int a = 0(uintmax_t

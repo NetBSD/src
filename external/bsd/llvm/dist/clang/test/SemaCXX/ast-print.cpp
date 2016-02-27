@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ast-print %s -std=gnu++11 | FileCheck %s
+// RUN: %clang_cc1 -triple %ms_abi_triple -ast-print %s -std=gnu++11 | FileCheck %s
 
 // CHECK: r;
 // CHECK-NEXT: (r->method());
@@ -53,7 +53,7 @@ void test6() {
     test6fn((int&)y);
 }
 
-// CHECK: S s( 1, 2 );
+// CHECK: S s(1, 2);
 
 template <class S> void test7()
 {
@@ -66,7 +66,7 @@ template <class S> void test7()
 template <typename T> void test8(T t) { t.~T(); }
 
 
-// CHECK:      enum E {
+// CHECK:      enum E
 // CHECK-NEXT:  A,
 // CHECK-NEXT:  B,
 // CHECK-NEXT:  C
@@ -212,4 +212,18 @@ void test(int i) {
 namespace {
 // CHECK: struct {{\[\[gnu::visibility\(\"hidden\"\)\]\]}} S;
 struct [[gnu::visibility("hidden")]] S;
+}
+
+// CHECK: struct CXXFunctionalCastExprPrint fce = CXXFunctionalCastExprPrint{};
+struct CXXFunctionalCastExprPrint {} fce = CXXFunctionalCastExprPrint{};
+
+// CHECK: struct CXXTemporaryObjectExprPrint toe = CXXTemporaryObjectExprPrint{};
+struct CXXTemporaryObjectExprPrint { CXXTemporaryObjectExprPrint(); } toe = CXXTemporaryObjectExprPrint{};
+
+namespace PR24872 {
+// CHECK: template <typename T> struct Foo : T {
+// CHECK: using T::operator-;
+template <typename T> struct Foo : T {
+  using T::operator-;
+};
 }

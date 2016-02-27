@@ -63,7 +63,7 @@ struct TestVFO {
       clang_VirtualFileOverlay_writeToBuffer(VFO, 0, &BufPtr, &BufSize);
       std::string BufStr(BufPtr, BufSize);
       EXPECT_STREQ(Contents, BufStr.c_str());
-      free(BufPtr);
+      clang_free(BufPtr);
     }
     clang_VirtualFileOverlay_dispose(VFO);
   }
@@ -345,7 +345,7 @@ TEST(libclang, ModuleMapDescriptor) {
   clang_ModuleMapDescriptor_writeToBuffer(MMD, 0, &BufPtr, &BufSize);
   std::string BufStr(BufPtr, BufSize);
   EXPECT_STREQ(Contents, BufStr.c_str());
-  free(BufPtr);
+  clang_free(BufPtr);
   clang_ModuleMapDescriptor_dispose(MMD);
 }
 
@@ -357,7 +357,7 @@ public:
   CXTranslationUnit ClangTU;
   unsigned TUFlags;
 
-  void SetUp() {
+  void SetUp() override {
     llvm::SmallString<256> Dir;
     ASSERT_FALSE(llvm::sys::fs::createUniqueDirectory("libclang-test", Dir));
     TestDir = Dir.str();
@@ -365,7 +365,7 @@ public:
               clang_defaultEditingTranslationUnitOptions();
     Index = clang_createIndex(0, 0);
   }
-  void TearDown() {
+  void TearDown() override {
     clang_disposeTranslationUnit(ClangTU);
     clang_disposeIndex(Index);
     for (const std::string &Path : Files)
@@ -379,8 +379,10 @@ public:
       Filename = Path.str();
       Files.insert(Filename);
     }
+    llvm::sys::fs::create_directories(llvm::sys::path::parent_path(Filename));
     std::ofstream OS(Filename);
     OS << Contents;
+    assert(OS.good());
   }
   void DisplayDiagnostics() {
     unsigned NumDiagnostics = clang_getNumDiagnostics(ClangTU);
@@ -464,4 +466,31 @@ TEST_F(LibclangReparseTest, ReparseWithModule) {
   // Reparse after fix.
   ASSERT_TRUE(ReparseTU(0, nullptr /* No unsaved files. */));
   EXPECT_EQ(0U, clang_getNumDiagnostics(ClangTU));
+}
+
+TEST_F(LibclangReparseTest, clang_parseTranslationUnit2FullArgv) {
+  // Provide a fake GCC 99.9.9 standard library that always overrides any local
+  // GCC installation.
+  std::string EmptyFiles[] = {"lib/gcc/arm-linux-gnueabi/99.9.9/crtbegin.o",
+                              "include/arm-linux-gnueabi/.keep",
+                              "include/c++/99.9.9/vector"};
+
+  for (auto &Name : EmptyFiles)
+    WriteFile(Name, "\n");
+
+  std::string Filename = "test.cc";
+  WriteFile(Filename, "#include <vector>\n");
+
+  std::string Clang = "bin/clang";
+  WriteFile(Clang, "");
+
+  const char *Argv[] = {Clang.c_str(), "-target", "arm-linux-gnueabi",
+                        "--gcc-toolchain="};
+
+  EXPECT_EQ(CXError_Success,
+            clang_parseTranslationUnit2FullArgv(Index, Filename.c_str(), Argv,
+                                                sizeof(Argv) / sizeof(Argv[0]),
+                                                nullptr, 0, TUFlags, &ClangTU));
+  EXPECT_EQ(0U, clang_getNumDiagnostics(ClangTU));
+  DisplayDiagnostics();
 }

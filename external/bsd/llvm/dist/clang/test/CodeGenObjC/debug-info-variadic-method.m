@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -o - -emit-llvm -g %s | FileCheck %s
+// RUN: %clang_cc1 -o - -emit-llvm -debug-info-kind=limited %s | FileCheck %s
 
 // This test verifies that variadic ObjC methods get the
 // DW_TAG_unspecified_parameter marker.
@@ -10,7 +10,7 @@
 @implementation Foo
 - (void) Bar: (int) n, ...
 {
-  // CHECK: ![[NUM:[^,]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
-  // CHECK: ![[NUM]] = {{!{null, ![^,]*, ![^,]*, ![^,]*, null}}}    
+  // CHECK: !DISubroutineType(types: ![[NUM:[0-9]+]])
+  // CHECK: ![[NUM]] = {{!{null, ![^,]*, ![^,]*, ![^,]*, null}}}
 }
 @end

@@ -218,6 +218,7 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS,
   // Fixed enum types are complete, but they aren't valid as scopes
   // until we see a definition, so awkwardly pull out this special
   // case.
+  // FIXME: The definition might not be visible; complain if it is not.
   const EnumType *enumType = dyn_cast_or_null<EnumType>(tagType);
   if (!enumType || enumType->getDecl()->isCompleteDefinition())
     return false;
@@ -282,12 +283,18 @@ bool Sema::ActOnSuperScopeSpecifier(SourceLocation SuperLoc,
 
 /// \brief Determines whether the given declaration is an valid acceptable
 /// result for name lookup of a nested-name-specifier.
-bool Sema::isAcceptableNestedNameSpecifier(const NamedDecl *SD) {
+/// \param SD Declaration checked for nested-name-specifier.
+/// \param IsExtension If not null and the declaration is accepted as an
+/// extension, the pointed variable is assigned true.
+bool Sema::isAcceptableNestedNameSpecifier(const NamedDecl *SD,
+                                           bool *IsExtension) {
   if (!SD)
     return false;
 
+  SD = SD->getUnderlyingDecl();
+
   // Namespace and namespace aliases are fine.
-  if (isa<NamespaceDecl>(SD) || isa<NamespaceAliasDecl>(SD))
+  if (isa<NamespaceDecl>(SD))
     return true;
 
   if (!isa<TypeDecl>(SD))
@@ -298,14 +305,23 @@ bool Sema::isAcceptableNestedNameSpecifier(const NamedDecl *SD) {
   QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
   if (T->isDependentType())
     return true;
-  else if (const TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
-    if (TD->getUnderlyingType()->isRecordType() ||
-        (Context.getLangOpts().CPlusPlus11 &&
-         TD->getUnderlyingType()->isEnumeralType()))
+  if (const TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
+    if (TD->getUnderlyingType()->isRecordType())
       return true;
-  } else if (isa<RecordDecl>(SD) ||
-             (Context.getLangOpts().CPlusPlus11 && isa<EnumDecl>(SD)))
+    if (TD->getUnderlyingType()->isEnumeralType()) {
+      if (Context.getLangOpts().CPlusPlus11)
+        return true;
+      if (IsExtension)
+        *IsExtension = true;
+    }
+  } else if (isa<RecordDecl>(SD)) {
     return true;
+  } else if (isa<EnumDecl>(SD)) {
+    if (Context.getLangOpts().CPlusPlus11)
+      return true;
+    if (IsExtension)
+      *IsExtension = true;
+  }
 
   return false;
 }
@@ -382,10 +398,7 @@ bool Sema::isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
   }
   Found.suppressDiagnostics();
   
-  if (NamedDecl *ND = Found.getAsSingle<NamedDecl>())
-    return isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND);
-  
-  return false;
+  return Found.getAsSingle<NamespaceDecl>();
 }
 
 namespace {
@@ -519,6 +532,9 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     LookupName(Found, S);
   }
 
+  if (Found.isAmbiguous())
+    return true;
+
   // If we performed lookup into a dependent context and did not find anything,
   // that's fine: just build a dependent nested-name-specifier.
   if (Found.empty() && isDependent &&
@@ -537,8 +553,6 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     return false;
   }
 
-  // FIXME: Deal with ambiguities cleanly.
-
   if (Found.empty() && !ErrorRecoveryLookup) {
     // If identifier is not found as class-name-or-namespace-name, but is found
     // as other entity, don't look for typos.
@@ -548,6 +562,8 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     else if (S && !isDependent)
       LookupName(R, S);
     if (!R.empty()) {
+      // Don't diagnose problems with this speculative lookup.
+      R.suppressDiagnostics();
       // The identifier is found in ordinary lookup. If correction to colon is
       // allowed, suggest replacement to ':'.
       if (IsCorrectedToColon) {
@@ -590,7 +606,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
         diagnoseTypo(Corrected, PDiag(diag::err_undeclared_var_use_suggest)
                                   << Name);
 
-      if (NamedDecl *ND = Corrected.getCorrectionDecl())
+      if (NamedDecl *ND = Corrected.getFoundDecl())
         Found.addDecl(ND);
       Found.setLookupName(Corrected.getCorrection());
     } else {
@@ -598,8 +614,15 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     }
   }
 
-  NamedDecl *SD = Found.getAsSingle<NamedDecl>();
-  if (isAcceptableNestedNameSpecifier(SD)) {
+  NamedDecl *SD =
+      Found.isSingleResult() ? Found.getRepresentativeDecl() : nullptr;
+  bool IsExtension = false;
+  bool AcceptSpec = isAcceptableNestedNameSpecifier(SD, &IsExtension);
+  if (!AcceptSpec && IsExtension) {
+    AcceptSpec = true;
+    Diag(IdentifierLoc, diag::ext_nested_name_spec_is_enum);
+  }
+  if (AcceptSpec) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope &&
         !getLangOpts().CPlusPlus11) {
       // C++03 [basic.lookup.classref]p4:
@@ -664,7 +687,8 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       return false;
     }
 
-    QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
+    QualType T =
+        Context.getTypeDeclType(cast<TypeDecl>(SD->getUnderlyingDecl()));
     TypeLocBuilder TLB;
     if (isa<InjectedClassNameType>(T)) {
       InjectedClassNameTypeLoc InjectedTL

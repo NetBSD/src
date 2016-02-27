@@ -79,7 +79,7 @@ void TestInt(void) __attribute__((constructor(123)));
 // CHECK:      FunctionDecl{{.*}}TestInt
 // CHECK-NEXT:   ConstructorAttr{{.*}} 123
 
-int TestString __attribute__((alias("alias1")));
+static int TestString __attribute__((alias("alias1")));
 // CHECK:      VarDecl{{.*}}TestString
 // CHECK-NEXT:   AliasAttr{{.*}} "alias1"
 
@@ -150,3 +150,7 @@ void f() {
   // CHECK: DeprecatedAttr
 }
 }
+
+struct __attribute__((objc_bridge_related(NSParagraphStyle,,))) TestBridgedRef;
+// CHECK: CXXRecordDecl{{.*}} struct TestBridgedRef
+// CHECK-NEXT: ObjCBridgeRelatedAttr{{.*}} NSParagraphStyle

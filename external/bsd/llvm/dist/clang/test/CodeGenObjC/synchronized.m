@@ -32,14 +32,14 @@ void foo(id a) {
   // CHECK:      call i32 @_setjmp
   @synchronized(a) {
     // This is unreachable, but the optimizers can't know that.
-    // CHECK: call void asm sideeffect "", "=*m,=*m,=*m"(i8** [[A]], i8** [[SYNC]]
+    // CHECK: call void asm sideeffect "", "=*m,=*m,=*m"(i8** nonnull [[A]], i8** nonnull [[SYNC]]
     // CHECK: call i32 @objc_sync_exit
     // CHECK: call i8* @objc_exception_extract
     // CHECK: call void @objc_exception_throw
     // CHECK: unreachable
 
     // CHECK:      call void @objc_exception_try_exit
-    // CHECK:      [[T:%.*]] = load i8** [[SYNC]]
+    // CHECK:      [[T:%.*]] = load i8*, i8** [[SYNC]]
     // CHECK-NEXT: call i32 @objc_sync_exit
     // CHECK: ret void
     return;
@@ -59,7 +59,7 @@ int f0(id a) {
   @synchronized((x++, a)) {    
   }
 
-  // CHECK: [[T:%.*]] = load i32* [[X]]
+  // CHECK: [[T:%.*]] = load i32, i32* [[X]]
   // CHECK: ret i32 [[T]]
   return x;
 }

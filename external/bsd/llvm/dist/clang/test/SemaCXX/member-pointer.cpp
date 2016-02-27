@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 struct A {};
 enum B { Dummy };
@@ -12,8 +14,13 @@ class H : A {}; // expected-note 2{{implicitly declared private here}}
 int A::*pdi1;
 int (::A::*pdi2);
 int (A::*pfi)(int);
+void (*A::*ppfie)() throw(); // expected-error {{exception specifications are not allowed beyond a single level of indirection}}
 
-int B::*pbi; // expected-error {{'B' is not a class, namespace, or scoped enumeration}}
+int B::*pbi;
+#if __cplusplus <= 199711L // C++03 or earlier modes
+// expected-warning@-2 {{use of enumeration in a nested name specifier is a C++11 extension}}
+#endif
+// expected-error@-4 {{'pbi' does not point into a class}}
 int C::*pci; // expected-error {{'pci' does not point into a class}}
 void A::*pdv; // expected-error {{'pdv' declared as a member pointer to void}}
 int& A::*pdr; // expected-error {{'pdr' declared as a member pointer to a reference}}

@@ -2,6 +2,7 @@ clang_CXCursorSet_contains
 clang_CXCursorSet_insert
 clang_CXIndex_getGlobalOptions
 clang_CXIndex_setGlobalOptions
+clang_CXXField_isMutable
 clang_CXXMethod_isConst
 clang_CXXMethod_isPureVirtual
 clang_CXXMethod_isStatic
@@ -14,6 +15,7 @@ clang_Cursor_getTemplateArgumentValue
 clang_Cursor_getTemplateArgumentUnsignedValue
 clang_Cursor_getBriefCommentText
 clang_Cursor_getCommentRange
+clang_Cursor_getCXXManglings
 clang_Cursor_getMangling
 clang_Cursor_getParsedComment
 clang_Cursor_getRawCommentText
@@ -21,9 +23,11 @@ clang_Cursor_getNumArguments
 clang_Cursor_getObjCDeclQualifiers
 clang_Cursor_getObjCPropertyAttributes
 clang_Cursor_getObjCSelectorIndex
+clang_Cursor_getOffsetOfField
 clang_Cursor_getSpellingNameRange
 clang_Cursor_getTranslationUnit
 clang_Cursor_getReceiverType
+clang_Cursor_isAnonymous
 clang_Cursor_isBitField
 clang_Cursor_isDynamicCall
 clang_Cursor_isNull
@@ -77,6 +81,7 @@ clang_Type_getOffsetOf
 clang_Type_getNumTemplateArguments
 clang_Type_getTemplateArgumentAsType
 clang_Type_getCXXRefQualifier
+clang_Type_visitFields
 clang_VerbatimBlockLineComment_getText
 clang_VerbatimLineComment_getText
 clang_HTMLTagComment_getAsString
@@ -116,6 +121,7 @@ clang_disposeOverriddenCursors
 clang_disposeCXPlatformAvailability
 clang_disposeSourceRangeList
 clang_disposeString
+clang_disposeStringSet
 clang_disposeTokens
 clang_disposeTranslationUnit
 clang_enableStackTraces
@@ -129,6 +135,7 @@ clang_findIncludesInFileWithBlock
 clang_findReferencesInFile
 clang_findReferencesInFileWithBlock
 clang_formatDiagnostic
+clang_free
 clang_getArgType
 clang_getArrayElementType
 clang_getArraySize
@@ -169,6 +176,7 @@ clang_getCursorSemanticParent
 clang_getCursorSpelling
 clang_getCursorType
 clang_getCursorUSR
+clang_getCursorVisibility
 clang_getDeclObjCTypeEncoding
 clang_getDefinitionSpellingAndExtent
 clang_getDiagnostic
@@ -242,6 +250,7 @@ clang_hashCursor
 clang_indexLoc_getCXSourceLocation
 clang_indexLoc_getFileLocation
 clang_indexSourceFile
+clang_indexSourceFileFullArgv
 clang_indexTranslationUnit
 clang_index_getCXXClassDeclInfo
 clang_index_getClientContainer
@@ -277,6 +286,7 @@ clang_Location_isInSystemHeader
 clang_Location_isFromMainFile
 clang_parseTranslationUnit
 clang_parseTranslationUnit2
+clang_parseTranslationUnit2FullArgv
 clang_remap_dispose
 clang_remap_getFilenames
 clang_remap_getNumFiles
@@ -293,6 +303,9 @@ clang_CompileCommands_dispose
 clang_CompileCommands_getSize
 clang_CompileCommands_getCommand
 clang_CompileCommand_getDirectory
+clang_CompileCommand_getFilename
+clang_CompileCommand_getMappedSourceContent
+clang_CompileCommand_getMappedSourcePath
 clang_CompileCommand_getNumArgs
 clang_CompileCommand_getArg
 clang_visitChildren

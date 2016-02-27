@@ -127,9 +127,10 @@ int f11(long X) {
   return A[X];
 
 // CHECK: [[Xaddr:%[^ ]+]] = alloca i64, align 8
-// CHECK: load {{.*}}* [[Xaddr]]
-// CHECK-NEXT: getelementptr inbounds [100 x i32]* %A, i32 0, 
-// CHECK-NEXT: load i32*
+// CHECK: [[A:%.*]] = alloca [100 x i32], align
+// CHECK: [[X:%.*]] = load {{.*}}, {{.*}}* [[Xaddr]]
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [100 x i32], [100 x i32]* [[A]], i64 0, i64 [[X]]
+// CHECK-NEXT: load i32, i32* [[T0]], align 4
 }
 
 int f12() {
@@ -184,3 +185,14 @@ void f17() {
   extfunc(x);
 // CHECK: add nsw i128 %{{.}}, -1
 }
+
+// PR23597: We should evaluate union cast operands even if the cast is unused.
+typedef union u {
+    int i;
+} strct;
+int returns_int(void);
+void f18() {
+  (strct)returns_int();
+}
+// CHECK-LABEL: define void @f18()
+// CHECK: call i32 @returns_int()

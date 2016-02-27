@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fopenmp=libiomp5 -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fopenmp -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s
 
 class S {
   int a;
@@ -10,8 +10,13 @@ public:
 };
 
 static int sii;
-#pragma omp threadprivate(sii) // expected-note {{defined as threadprivate or thread local}}
+// expected-note@+1 {{defined as threadprivate or thread local}}
+#pragma omp threadprivate(sii)
 static int globalii;
+
+// Currently, we cannot use "0" for global register variables.
+// register int reg0 __asm__("0");
+int reg0;
 
 int test_iteration_spaces() {
   const int N = 100;
@@ -19,6 +24,7 @@ int test_iteration_spaces() {
   int ii, jj, kk;
   float fii;
   double dii;
+  register int reg; // expected-warning {{'register' storage class specifier is deprecated}}
 #pragma omp parallel
 #pragma omp for
   for (int i = 0; i < 10; i += 1) {
@@ -63,37 +69,37 @@ int test_iteration_spaces() {
     c[(int)fi] = a[(int)fi] + b[(int)fi];
   }
 #pragma omp parallel
-// expected-error@+2 {{variable must be of integer or random access iterator type}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (int &ref = ii; ref < 10; ref++) {
   }
 #pragma omp parallel
-// expected-error@+2 {{initialization clause of OpenMP for loop must be of the form 'var = init' or 'T var = init'}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (int i; i < 10; i++)
     c[i] = a[i];
 
 #pragma omp parallel
-// expected-error@+2 {{initialization clause of OpenMP for loop must be of the form 'var = init' or 'T var = init'}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (int i = 0, j = 0; i < 10; ++i)
     c[i] = a[i];
 
 #pragma omp parallel
-// expected-error@+2 {{initialization clause of OpenMP for loop must be of the form 'var = init' or 'T var = init'}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (; ii < 10; ++ii)
     c[ii] = a[ii];
 
 #pragma omp parallel
 // expected-warning@+3 {{expression result unused}}
-// expected-error@+2 {{initialization clause of OpenMP for loop must be of the form 'var = init' or 'T var = init'}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (ii + 1; ii < 10; ++ii)
     c[ii] = a[ii];
 
 #pragma omp parallel
-// expected-error@+2 {{initialization clause of OpenMP for loop must be of the form 'var = init' or 'T var = init'}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (c[ii] = 0; ii < 10; ++ii)
     c[ii] = a[ii];
@@ -286,7 +292,6 @@ int test_iteration_spaces() {
     c[ii] = a[ii];
 
 #pragma omp parallel
-// expected-error@+3 {{unexpected OpenMP clause 'linear' in directive '#pragma omp for'}}
 // expected-note@+2  {{defined as linear}}
 // expected-error@+2 {{loop iteration variable in the associated loop of 'omp for' directive may not be linear, predetermined as private}}
 #pragma omp for linear(ii)
@@ -313,7 +318,20 @@ int test_iteration_spaces() {
 
 #pragma omp parallel
   {
-// expected-error@+2 {{loop iteration variable in the associated loop of 'omp for' directive may not be a variable with global storage without being explicitly marked as private}}
+#pragma omp for
+    for (reg0 = 0; reg0 < 10; reg0 += 1)
+      c[reg0] = a[reg0];
+  }
+
+#pragma omp parallel
+  {
+#pragma omp for
+    for (reg = 0; reg < 10; reg += 1)
+      c[reg] = a[reg];
+  }
+
+#pragma omp parallel
+  {
 #pragma omp for
     for (globalii = 0; globalii < 10; globalii += 1)
       c[globalii] = a[globalii];
@@ -321,7 +339,6 @@ int test_iteration_spaces() {
 
 #pragma omp parallel
   {
-// expected-error@+3 {{loop iteration variable in the associated loop of 'omp for' directive may not be a variable with global storage without being explicitly marked as private}}
 #pragma omp for collapse(2)
     for (ii = 0; ii < 10; ii += 1)
     for (globalii = 0; globalii < 10; globalii += 1)
@@ -409,12 +426,12 @@ public:
   typedef int difference_type;
   typedef std::random_access_iterator_tag iterator_category;
 };
-// expected-note@+2 {{candidate function not viable: no known conversion from 'const Iter0' to 'GoodIter' for 2nd argument}}
+// expected-note@+2 {{candidate function not viable: no known conversion from 'Iter0' to 'GoodIter' for 2nd argument}}
 // expected-note@+1 2 {{candidate function not viable: no known conversion from 'Iter1' to 'GoodIter' for 1st argument}}
 int operator-(GoodIter a, GoodIter b) { return 0; }
 // expected-note@+1 3 {{candidate function not viable: requires single argument 'a', but 2 arguments were provided}}
 GoodIter operator-(GoodIter a) { return a; }
-// expected-note@+2 {{candidate function not viable: no known conversion from 'const Iter0' to 'int' for 2nd argument}}
+// expected-note@+2 {{candidate function not viable: no known conversion from 'Iter0' to 'int' for 2nd argument}}
 // expected-note@+1 2 {{candidate function not viable: no known conversion from 'Iter1' to 'GoodIter' for 1st argument}}
 GoodIter operator-(GoodIter a, int v) { return GoodIter(); }
 // expected-note@+1 2 {{candidate function not viable: no known conversion from 'Iter0' to 'GoodIter' for 1st argument}}
@@ -433,7 +450,7 @@ int test_with_random_access_iterator() {
   for (GoodIter I = begin; I < end; ++I)
     ++I;
 #pragma omp parallel
-// expected-error@+2 {{variable must be of integer or random access iterator type}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (GoodIter &I = begin; I < end; ++I)
     ++I;
@@ -465,14 +482,14 @@ int test_with_random_access_iterator() {
 #pragma omp for
   for (begin = GoodIter(0); begin < end; ++begin)
     ++begin;
-// expected-error@+4 {{invalid operands to binary expression ('GoodIter' and 'const Iter0')}}
+// expected-error@+4 {{invalid operands to binary expression ('GoodIter' and 'Iter0')}}
 // expected-error@+3 {{could not calculate number of iterations calling 'operator-' with upper and lower loop bounds}}
 #pragma omp parallel
 #pragma omp for
   for (begin = begin0; begin < end; ++begin)
     ++begin;
 #pragma omp parallel
-// expected-error@+2 {{initialization clause of OpenMP for loop must be of the form 'var = init' or 'T var = init'}}
+// expected-error@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}
 #pragma omp for
   for (++begin; begin < end; ++begin)
     ++begin;
@@ -548,7 +565,7 @@ int test_with_random_access_iterator() {
   for (Iter1 I = begin1; I >= end1; ++I)
     ++I;
 #pragma omp parallel
-// expected-error@+5 {{invalid operands to binary expression ('Iter1' and 'Iter1')}}
+// expected-error@+5 {{invalid operands to binary expression ('Iter1' and 'float')}}
 // expected-error@+4 {{could not calculate number of iterations calling 'operator-' with upper and lower loop bounds}}
 // Initializer is constructor with all default params.
 // expected-warning@+2 {{initialization clause of OpenMP for loop is not in canonical form ('var = init' or 'T var = init')}}

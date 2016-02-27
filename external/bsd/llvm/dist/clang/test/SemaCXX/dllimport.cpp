@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c++11 -Wunsupported-dll-base-class-template -DMS %s
-// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c++1y -Wunsupported-dll-base-class-template -DMS %s
-// RUN: %clang_cc1 -triple i686-mingw32   -fsyntax-only -verify -std=c++1y -Wunsupported-dll-base-class-template -DGNU %s
-// RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify -std=c++11 -Wunsupported-dll-base-class-template -DGNU %s
+// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -fms-extensions -verify -std=c++11 -Wunsupported-dll-base-class-template -DMS %s
+// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -fms-extensions -verify -std=c++1y -Wunsupported-dll-base-class-template -DMS %s
+// RUN: %clang_cc1 -triple i686-mingw32   -fsyntax-only -fms-extensions -verify -std=c++1y -Wunsupported-dll-base-class-template -DGNU %s
+// RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -fms-extensions -verify -std=c++11 -Wunsupported-dll-base-class-template -DGNU %s
 
 // Helper structs to make templates more expressive.
 struct ImplicitInst_Imported {};
@@ -93,15 +93,21 @@ __declspec(dllimport) auto InternalAutoTypeGlobal = Internal(); // expected-erro
 
 // Thread local variables are invalid.
 __declspec(dllimport) __thread int ThreadLocalGlobal; // expected-error{{'ThreadLocalGlobal' cannot be thread local when declared 'dllimport'}}
+// This doesn't work on MinGW, because there, dllimport on the inline function is ignored.
+#ifndef GNU
+inline void __declspec(dllimport) ImportedInlineWithThreadLocal() {
+  static __thread int OK; // no-error
+}
+#endif
 
 // Import in local scope.
-__declspec(dllimport) float LocalRedecl1; // expected-note{{previous definition is here}}
-__declspec(dllimport) float LocalRedecl2; // expected-note{{previous definition is here}}
-__declspec(dllimport) float LocalRedecl3; // expected-note{{previous definition is here}}
+__declspec(dllimport) float LocalRedecl1; // expected-note{{previous declaration is here}}
+__declspec(dllimport) float LocalRedecl2; // expected-note{{previous declaration is here}}
+__declspec(dllimport) float LocalRedecl3; // expected-note{{previous declaration is here}}
 void functionScope() {
-  __declspec(dllimport) int LocalRedecl1; // expected-error{{redefinition of 'LocalRedecl1' with a different type: 'int' vs 'float'}}
-  int *__attribute__((dllimport)) LocalRedecl2; // expected-error{{redefinition of 'LocalRedecl2' with a different type: 'int *' vs 'float'}}
-  int LocalRedecl3 __attribute__((dllimport)); // expected-error{{redefinition of 'LocalRedecl3' with a different type: 'int' vs 'float'}}
+  __declspec(dllimport) int LocalRedecl1; // expected-error{{redeclaration of 'LocalRedecl1' with a different type: 'int' vs 'float'}}
+  int *__attribute__((dllimport)) LocalRedecl2; // expected-error{{redeclaration of 'LocalRedecl2' with a different type: 'int *' vs 'float'}}
+  int LocalRedecl3 __attribute__((dllimport)); // expected-error{{redeclaration of 'LocalRedecl3' with a different type: 'int' vs 'float'}}
 
   __declspec(dllimport)        int LocalVarDecl;
   __declspec(dllimport)        int LocalVarDef = 1; // expected-error{{definition of dllimport data}}
@@ -1274,21 +1280,17 @@ class __declspec(dllimport) DerivedFromImportedTemplate : public ImportedClassTe
 // ExportedClassTemplate is explicitly exported.
 class __declspec(dllimport) DerivedFromExportedTemplate : public ExportedClassTemplate<int> {};
 
-#ifdef MS
-// expected-note@+4{{class template 'ClassTemplate<double>' was instantiated here}}
-// expected-warning@+4{{propagating dll attribute to already instantiated base class template without dll attribute is not supported}}
-// expected-note@+3{{attribute is here}}
-#endif
 class DerivedFromTemplateD : public ClassTemplate<double> {};
+// Base class previously implicitly instantiated without attribute; it will get propagated.
 class __declspec(dllimport) DerivedFromTemplateD2 : public ClassTemplate<double> {};
 
-#ifdef MS
-// expected-note@+4{{class template 'ClassTemplate<bool>' was instantiated here}}
-// expected-warning@+4{{propagating dll attribute to already instantiated base class template with different dll attribute is not supported}}
-// expected-note@+3{{attribute is here}}
-#endif
-class __declspec(dllexport) DerivedFromTemplateB : public ClassTemplate<bool> {};
-class __declspec(dllimport) DerivedFromTemplateB2 : public ClassTemplate<bool> {};
+// Base class has explicit instantiation declaration; the attribute will get propagated.
+extern template class ClassTemplate<float>;
+class __declspec(dllimport) DerivedFromTemplateF : public ClassTemplate<float> {};
+
+class __declspec(dllimport) DerivedFromTemplateB : public ClassTemplate<bool> {};
+// The second derived class doesn't change anything, the attribute that was propagated first wins.
+class __declspec(dllexport) DerivedFromTemplateB2 : public ClassTemplate<bool> {};
 
 template <typename T> struct ExplicitlySpecializedTemplate { void func() {} };
 #ifdef MS
@@ -1333,3 +1335,18 @@ struct __declspec(dllimport) DerivedFromExplicitlyExportInstantiatedTemplate : p
 
 // Base class already instantiated with import attribute.
 struct __declspec(dllimport) DerivedFromExplicitlyImportInstantiatedTemplate : public ExplicitlyImportInstantiatedTemplate<int> {};
+
+template <typename T> struct ExplicitInstantiationDeclTemplateBase { void func() {} };
+extern template struct ExplicitInstantiationDeclTemplateBase<int>;
+struct __declspec(dllimport) DerivedFromExplicitInstantiationDeclTemplateBase : public ExplicitInstantiationDeclTemplateBase<int> {};
+
+//===----------------------------------------------------------------------===//
+// Lambdas
+//===----------------------------------------------------------------------===//
+// The MS ABI doesn't provide a stable mangling for lambdas, so they can't be imported or exported.
+#ifdef MS
+// expected-error@+4{{lambda cannot be declared 'dllimport'}}
+#else
+// expected-warning@+2{{'dllimport' attribute ignored on inline function}}
+#endif
+auto Lambda = []() __declspec(dllimport) -> bool { return true; };

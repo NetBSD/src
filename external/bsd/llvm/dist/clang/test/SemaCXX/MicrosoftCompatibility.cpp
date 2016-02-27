@@ -1,9 +1,26 @@
-// RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -std=c++11 -Wmicrosoft -verify -fms-compatibility -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -std=c++11 -Wmicrosoft -verify -fms-compatibility -fexceptions -fcxx-exceptions -fms-compatibility-version=19.00
+// RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -std=c++11 -Wmicrosoft -verify -fms-compatibility -fexceptions -fcxx-exceptions -fms-compatibility-version=18.00
 
-
+#if defined(_HAS_CHAR16_T_LANGUAGE_SUPPORT) && _HAS_CHAR16_T_LANGUAGE_SUPPORT
+char16_t x;
+char32_t y;
+#else
 typedef unsigned short char16_t;
 typedef unsigned int char32_t;
-struct _Atomic {};
+#endif
+
+_Atomic(int) z;
+template <typename T>
+struct _Atomic {
+  _Atomic() {}
+  ~_Atomic() {}
+};
+template <typename T>
+struct atomic : _Atomic<T> {
+  typedef _Atomic<T> TheBase;
+  TheBase field;
+};
+_Atomic(int) alpha;
 
 typename decltype(3) a; // expected-warning {{expected a qualified name after 'typename'}}
 

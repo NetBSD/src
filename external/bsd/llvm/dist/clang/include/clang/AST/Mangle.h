@@ -132,6 +132,12 @@ public:
   virtual void mangleDynamicAtExitDestructor(const VarDecl *D,
                                              raw_ostream &) = 0;
 
+  virtual void mangleSEHFilterExpression(const NamedDecl *EnclosingDecl,
+                                         raw_ostream &Out) = 0;
+
+  virtual void mangleSEHFinallyBlock(const NamedDecl *EnclosingDecl,
+                                     raw_ostream &Out) = 0;
+
   /// Generates a unique string for an externally visible type for use with TBAA
   /// or type uniquing.
   /// TODO: Extend this to internal types by generating names that are unique
@@ -188,8 +194,27 @@ public:
                                 ArrayRef<const CXXRecordDecl *> BasePath,
                                 raw_ostream &Out) = 0;
 
+  virtual void mangleThreadSafeStaticGuardVariable(const VarDecl *VD,
+                                                   unsigned GuardNum,
+                                                   raw_ostream &Out) = 0;
+
   virtual void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
                                         raw_ostream &) = 0;
+
+  virtual void mangleCXXVirtualDisplacementMap(const CXXRecordDecl *SrcRD,
+                                               const CXXRecordDecl *DstRD,
+                                               raw_ostream &Out) = 0;
+
+  virtual void mangleCXXThrowInfo(QualType T, bool IsConst, bool IsVolatile,
+                                  uint32_t NumEntries, raw_ostream &Out) = 0;
+
+  virtual void mangleCXXCatchableTypeArray(QualType T, uint32_t NumEntries,
+                                           raw_ostream &Out) = 0;
+
+  virtual void mangleCXXCatchableType(QualType T, const CXXConstructorDecl *CD,
+                                      CXXCtorType CT, uint32_t Size,
+                                      uint32_t NVOffset, int32_t VBPtrOffset,
+                                      uint32_t VBIndex, raw_ostream &Out) = 0;
 
   virtual void mangleCXXRTTIBaseClassDescriptor(
       const CXXRecordDecl *Derived, uint32_t NVOffset, int32_t VBPtrOffset,

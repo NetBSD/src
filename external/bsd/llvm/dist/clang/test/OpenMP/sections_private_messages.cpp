@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp=libiomp5 %s
+// RUN: %clang_cc1 -verify -fopenmp %s
 
 void foo() {
 }
@@ -47,7 +47,7 @@ int foomain(I argc, C **argv) {
   I e(4);
   I g(5);
   int i;
-  int &j = i;                // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp sections private // expected-error {{expected '(' after 'private'}}
   {
     foo();
@@ -112,7 +112,7 @@ int foomain(I argc, C **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp sections private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+#pragma omp sections private(j)
   {
     foo();
   }
@@ -123,11 +123,19 @@ int foomain(I argc, C **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
   int i;
-  int &j = i;                // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp sections private // expected-error {{expected '(' after 'private'}}
   {
     foo();
@@ -172,7 +180,7 @@ int main(int argc, char **argv) {
   {
     foo();
   }
-#pragma omp sections private(h) // expected-error {{threadprivate or thread local variable cannot be private}}
+#pragma omp sections private(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be private}}
   {
     foo();
   }
@@ -190,11 +198,16 @@ int main(int argc, char **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp sections private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+#pragma omp sections private(j)
   {
     foo();
   }
 #pragma omp sections private(i)
+  {
+    foo();
+  }
+  static int m;
+#pragma omp sections private(m)
   {
     foo();
   }

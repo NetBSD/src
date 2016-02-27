@@ -366,9 +366,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>b41b510812f2a0d8735c67dfff6a9a5c</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_working</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>54</integer>
@@ -528,9 +531,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;date&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>61d185b2522d15fb327f6784e0217adf</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_cf_leak</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>96</integer>
@@ -586,9 +592,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;x&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>63df5972efc8a7acccdbd2aca10c9e9e</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar9424882</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>119</integer>
@@ -644,9 +653,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj1&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>125290ceaf2b55f5778c262d87b2b6d5</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>139</integer>
@@ -702,9 +714,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj4&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>54627578ee3b8520400ae899bc32b3d6</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>6</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>6</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>144</integer>
@@ -760,9 +775,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj5&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>27c31d7f5825a1613c0206b5be082800</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>7</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>7</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>145</integer>
@@ -818,9 +836,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj6&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>a59b85c1e38300cb17eaeedcf193f94b</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>8</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>8</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>146</integer>
@@ -995,9 +1016,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;obj5&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>5baa7d5f38420d0a035aa61607675f3e</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>7</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>7</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>146</integer>
@@ -1123,9 +1147,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;obj6&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>4665e04694fd55e7c4ed7a67860b3b74</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>8</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>8</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>147</integer>
@@ -1181,9 +1208,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf1&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>70a67cc8fefa3ad133a35c3ffb579b9e</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>150</integer>
@@ -1239,9 +1269,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf2&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>afc41cacb8f32bfbe4a4152f20cec5bc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>151</integer>
@@ -1297,9 +1330,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf3&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>e512cd0ada59beca5acfa53e2a632670</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>3</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>3</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>152</integer>
@@ -1355,9 +1391,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf4&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>a43ae78dcef14395931eeb452f81819f</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>4</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>4</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>153</integer>
@@ -1498,9 +1537,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;date&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>798e65f80df0526369f9bb240e3d91fd</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_objc_unretainedObject</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>166</integer>
@@ -1796,9 +1838,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>e1fbcc142b678b3c2c43737ee35b64d9</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_objc_arrays</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>24</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>24</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>202</integer>
@@ -1965,9 +2010,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;o&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>e300a279615a384d2b310329651d3978</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar11059275_positive</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>216</integer>
@@ -2079,9 +2127,12 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>37efdaee587b783c6d49a228ff5ba49f</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar14061675</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>4</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>4</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>230</integer>

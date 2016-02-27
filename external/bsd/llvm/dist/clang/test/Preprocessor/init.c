@@ -2,7 +2,7 @@
 //
 // ASM:#define __ASSEMBLER__ 1
 //
-// 
+//
 // RUN: %clang_cc1 -fblocks -E -dM < /dev/null | FileCheck -check-prefix BLOCKS %s
 //
 // BLOCKS:#define __BLOCKS__ 1
@@ -144,12 +144,14 @@
 //
 // MSEXT-CXX:#define _NATIVE_WCHAR_T_DEFINED 1
 // MSEXT-CXX:#define _WCHAR_T_DEFINED 1
+// MSEXT-CXX:#define __BOOL_DEFINED 1
 //
 //
 // RUN: %clang_cc1 -x c++ -fno-wchar -fms-extensions -triple i686-pc-win32 -E -dM < /dev/null | FileCheck -check-prefix MSEXT-CXX-NOWCHAR %s
 //
 // MSEXT-CXX-NOWCHAR-NOT:#define _NATIVE_WCHAR_T_DEFINED 1
 // MSEXT-CXX-NOWCHAR-NOT:#define _WCHAR_T_DEFINED 1
+// MSEXT-CXX-NOWCHAR:#define __BOOL_DEFINED 1
 //
 // 
 // RUN: %clang_cc1 -x objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
@@ -241,6 +243,7 @@
 // AARCH64:#define __ARM_ARCH 8
 // AARCH64:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-NOT:#define __ARM_BIG_ENDIAN 1
+// AARCH64:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AARCH64:#define __CHAR16_TYPE__ unsigned short
 // AARCH64:#define __CHAR32_TYPE__ unsigned int
@@ -258,7 +261,7 @@
 // AARCH64:#define __DBL_MIN_10_EXP__ (-307)
 // AARCH64:#define __DBL_MIN_EXP__ (-1021)
 // AARCH64:#define __DBL_MIN__ 2.2250738585072014e-308
-// AARCH64:#define __DECIMAL_DIG__ 36
+// AARCH64:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // AARCH64:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // AARCH64:#define __FLT_DIG__ 6
 // AARCH64:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -431,6 +434,7 @@
 // AARCH64-BE:#define __ARM_ARCH 8
 // AARCH64-BE:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-BE:#define __ARM_BIG_ENDIAN 1
+// AARCH64-BE:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64-BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // AARCH64-BE:#define __CHAR16_TYPE__ unsigned short
 // AARCH64-BE:#define __CHAR32_TYPE__ unsigned int
@@ -448,7 +452,7 @@
 // AARCH64-BE:#define __DBL_MIN_10_EXP__ (-307)
 // AARCH64-BE:#define __DBL_MIN_EXP__ (-1021)
 // AARCH64-BE:#define __DBL_MIN__ 2.2250738585072014e-308
-// AARCH64-BE:#define __DECIMAL_DIG__ 36
+// AARCH64-BE:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // AARCH64-BE:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // AARCH64-BE:#define __FLT_DIG__ 6
 // AARCH64-BE:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -621,6 +625,7 @@
 // AARCH64-NETBSD:#define __ARM_ARCH 8
 // AARCH64-NETBSD:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-NETBSD-NOT:#define __ARM_BIG_ENDIAN 1
+// AARCH64-NETBSD:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AARCH64-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // AARCH64-NETBSD:#define __CHAR32_TYPE__ unsigned int
@@ -638,7 +643,7 @@
 // AARCH64-NETBSD:#define __DBL_MIN_10_EXP__ (-307)
 // AARCH64-NETBSD:#define __DBL_MIN_EXP__ (-1021)
 // AARCH64-NETBSD:#define __DBL_MIN__ 2.2250738585072014e-308
-// AARCH64-NETBSD:#define __DECIMAL_DIG__ 36
+// AARCH64-NETBSD:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // AARCH64-NETBSD:#define __ELF__ 1
 // AARCH64-NETBSD:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // AARCH64-NETBSD:#define __FLT_DIG__ 6
@@ -812,6 +817,7 @@
 // AARCH64-FREEBSD:#define __ARM_ARCH 8
 // AARCH64-FREEBSD:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-FREEBSD-NOT:#define __ARM_BIG_ENDIAN 1
+// AARCH64-FREEBSD:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64-FREEBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AARCH64-FREEBSD:#define __CHAR16_TYPE__ unsigned short
 // AARCH64-FREEBSD:#define __CHAR32_TYPE__ unsigned int
@@ -829,7 +835,7 @@
 // AARCH64-FREEBSD:#define __DBL_MIN_10_EXP__ (-307)
 // AARCH64-FREEBSD:#define __DBL_MIN_EXP__ (-1021)
 // AARCH64-FREEBSD:#define __DBL_MIN__ 2.2250738585072014e-308
-// AARCH64-FREEBSD:#define __DECIMAL_DIG__ 36
+// AARCH64-FREEBSD:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // AARCH64-FREEBSD:#define __ELF__ 1
 // AARCH64-FREEBSD:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // AARCH64-FREEBSD:#define __FLT_DIG__ 6
@@ -995,14 +1001,206 @@
 // AARCH64-FREEBSD:#define __WINT_WIDTH__ 32
 // AARCH64-FREEBSD:#define __aarch64__ 1
 
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=aarch64-apple-ios7.0 < /dev/null | FileCheck -check-prefix AARCH64-DARWIN %s
+//
+// AARCH64-DARWIN: #define _LP64 1
+// AARCH64-NOT: #define __AARCH64EB__ 1
+// AARCH64-DARWIN: #define __AARCH64EL__ 1
+// AARCH64-NOT: #define __AARCH_BIG_ENDIAN 1
+// AARCH64-DARWIN: #define __ARM_64BIT_STATE 1
+// AARCH64-DARWIN: #define __ARM_ARCH 8
+// AARCH64-DARWIN: #define __ARM_ARCH_ISA_A64 1
+// AARCH64-NOT: #define __ARM_BIG_ENDIAN 1
+// AARCH64-DARWIN: #define __BIGGEST_ALIGNMENT__ 8
+// AARCH64-DARWIN: #define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+// AARCH64-DARWIN: #define __CHAR16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __CHAR32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __CHAR_BIT__ 8
+// AARCH64-DARWIN: #define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// AARCH64-DARWIN: #define __DBL_DIG__ 15
+// AARCH64-DARWIN: #define __DBL_EPSILON__ 2.2204460492503131e-16
+// AARCH64-DARWIN: #define __DBL_HAS_DENORM__ 1
+// AARCH64-DARWIN: #define __DBL_HAS_INFINITY__ 1
+// AARCH64-DARWIN: #define __DBL_HAS_QUIET_NAN__ 1
+// AARCH64-DARWIN: #define __DBL_MANT_DIG__ 53
+// AARCH64-DARWIN: #define __DBL_MAX_10_EXP__ 308
+// AARCH64-DARWIN: #define __DBL_MAX_EXP__ 1024
+// AARCH64-DARWIN: #define __DBL_MAX__ 1.7976931348623157e+308
+// AARCH64-DARWIN: #define __DBL_MIN_10_EXP__ (-307)
+// AARCH64-DARWIN: #define __DBL_MIN_EXP__ (-1021)
+// AARCH64-DARWIN: #define __DBL_MIN__ 2.2250738585072014e-308
+// AARCH64-DARWIN: #define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
+// AARCH64-DARWIN: #define __FLT_DENORM_MIN__ 1.40129846e-45F
+// AARCH64-DARWIN: #define __FLT_DIG__ 6
+// AARCH64-DARWIN: #define __FLT_EPSILON__ 1.19209290e-7F
+// AARCH64-DARWIN: #define __FLT_EVAL_METHOD__ 0
+// AARCH64-DARWIN: #define __FLT_HAS_DENORM__ 1
+// AARCH64-DARWIN: #define __FLT_HAS_INFINITY__ 1
+// AARCH64-DARWIN: #define __FLT_HAS_QUIET_NAN__ 1
+// AARCH64-DARWIN: #define __FLT_MANT_DIG__ 24
+// AARCH64-DARWIN: #define __FLT_MAX_10_EXP__ 38
+// AARCH64-DARWIN: #define __FLT_MAX_EXP__ 128
+// AARCH64-DARWIN: #define __FLT_MAX__ 3.40282347e+38F
+// AARCH64-DARWIN: #define __FLT_MIN_10_EXP__ (-37)
+// AARCH64-DARWIN: #define __FLT_MIN_EXP__ (-125)
+// AARCH64-DARWIN: #define __FLT_MIN__ 1.17549435e-38F
+// AARCH64-DARWIN: #define __FLT_RADIX__ 2
+// AARCH64-DARWIN: #define __INT16_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __INT16_FMTd__ "hd"
+// AARCH64-DARWIN: #define __INT16_FMTi__ "hi"
+// AARCH64-DARWIN: #define __INT16_MAX__ 32767
+// AARCH64-DARWIN: #define __INT16_TYPE__ short
+// AARCH64-DARWIN: #define __INT32_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __INT32_FMTd__ "d"
+// AARCH64-DARWIN: #define __INT32_FMTi__ "i"
+// AARCH64-DARWIN: #define __INT32_MAX__ 2147483647
+// AARCH64-DARWIN: #define __INT32_TYPE__ int
+// AARCH64-DARWIN: #define __INT64_C_SUFFIX__ L
+// AARCH64-DARWIN: #define __INT64_FMTd__ "lld"
+// AARCH64-DARWIN: #define __INT64_FMTi__ "lli"
+// AARCH64-DARWIN: #define __INT64_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INT64_TYPE__ long long int
+// AARCH64-DARWIN: #define __INT8_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __INT8_FMTd__ "hhd"
+// AARCH64-DARWIN: #define __INT8_FMTi__ "hhi"
+// AARCH64-DARWIN: #define __INT8_MAX__ 127
+// AARCH64-DARWIN: #define __INT8_TYPE__ signed char
+// AARCH64-DARWIN: #define __INTMAX_C_SUFFIX__ L
+// AARCH64-DARWIN: #define __INTMAX_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INTMAX_FMTi__ "li"
+// AARCH64-DARWIN: #define __INTMAX_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INTMAX_TYPE__ long int
+// AARCH64-DARWIN: #define __INTMAX_WIDTH__ 64
+// AARCH64-DARWIN: #define __INTPTR_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INTPTR_FMTi__ "li"
+// AARCH64-DARWIN: #define __INTPTR_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INTPTR_TYPE__ long int
+// AARCH64-DARWIN: #define __INTPTR_WIDTH__ 64
+// AARCH64-DARWIN: #define __INT_FAST16_FMTd__ "hd"
+// AARCH64-DARWIN: #define __INT_FAST16_FMTi__ "hi"
+// AARCH64-DARWIN: #define __INT_FAST16_MAX__ 32767
+// AARCH64-DARWIN: #define __INT_FAST16_TYPE__ short
+// AARCH64-DARWIN: #define __INT_FAST32_FMTd__ "d"
+// AARCH64-DARWIN: #define __INT_FAST32_FMTi__ "i"
+// AARCH64-DARWIN: #define __INT_FAST32_MAX__ 2147483647
+// AARCH64-DARWIN: #define __INT_FAST32_TYPE__ int
+// AARCH64-DARWIN: #define __INT_FAST64_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INT_FAST64_FMTi__ "li"
+// AARCH64-DARWIN: #define __INT_FAST64_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INT_FAST64_TYPE__ long int
+// AARCH64-DARWIN: #define __INT_FAST8_FMTd__ "hhd"
+// AARCH64-DARWIN: #define __INT_FAST8_FMTi__ "hhi"
+// AARCH64-DARWIN: #define __INT_FAST8_MAX__ 127
+// AARCH64-DARWIN: #define __INT_FAST8_TYPE__ signed char
+// AARCH64-DARWIN: #define __INT_LEAST16_FMTd__ "hd"
+// AARCH64-DARWIN: #define __INT_LEAST16_FMTi__ "hi"
+// AARCH64-DARWIN: #define __INT_LEAST16_MAX__ 32767
+// AARCH64-DARWIN: #define __INT_LEAST16_TYPE__ short
+// AARCH64-DARWIN: #define __INT_LEAST32_FMTd__ "d"
+// AARCH64-DARWIN: #define __INT_LEAST32_FMTi__ "i"
+// AARCH64-DARWIN: #define __INT_LEAST32_MAX__ 2147483647
+// AARCH64-DARWIN: #define __INT_LEAST32_TYPE__ int
+// AARCH64-DARWIN: #define __INT_LEAST64_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INT_LEAST64_FMTi__ "li"
+// AARCH64-DARWIN: #define __INT_LEAST64_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INT_LEAST64_TYPE__ long int
+// AARCH64-DARWIN: #define __INT_LEAST8_FMTd__ "hhd"
+// AARCH64-DARWIN: #define __INT_LEAST8_FMTi__ "hhi"
+// AARCH64-DARWIN: #define __INT_LEAST8_MAX__ 127
+// AARCH64-DARWIN: #define __INT_LEAST8_TYPE__ signed char
+// AARCH64-DARWIN: #define __INT_MAX__ 2147483647
+// AARCH64-DARWIN: #define __LDBL_DENORM_MIN__ 4.9406564584124654e-324L
+// AARCH64-DARWIN: #define __LDBL_DIG__ 15
+// AARCH64-DARWIN: #define __LDBL_EPSILON__ 2.2204460492503131e-16L
+// AARCH64-DARWIN: #define __LDBL_HAS_DENORM__ 1
+// AARCH64-DARWIN: #define __LDBL_HAS_INFINITY__ 1
+// AARCH64-DARWIN: #define __LDBL_HAS_QUIET_NAN__ 1
+// AARCH64-DARWIN: #define __LDBL_MANT_DIG__ 53
+// AARCH64-DARWIN: #define __LDBL_MAX_10_EXP__ 308
+// AARCH64-DARWIN: #define __LDBL_MAX_EXP__ 1024
+// AARCH64-DARWIN: #define __LDBL_MAX__ 1.7976931348623157e+308L
+// AARCH64-DARWIN: #define __LDBL_MIN_10_EXP__ (-307)
+// AARCH64-DARWIN: #define __LDBL_MIN_EXP__ (-1021)
+// AARCH64-DARWIN: #define __LDBL_MIN__ 2.2250738585072014e-308L
+// AARCH64-DARWIN: #define __LONG_LONG_MAX__ 9223372036854775807LL
+// AARCH64-DARWIN: #define __LONG_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __LP64__ 1
+// AARCH64-DARWIN: #define __POINTER_WIDTH__ 64
+// AARCH64-DARWIN: #define __PTRDIFF_TYPE__ long int
+// AARCH64-DARWIN: #define __PTRDIFF_WIDTH__ 64
+// AARCH64-DARWIN: #define __SCHAR_MAX__ 127
+// AARCH64-DARWIN: #define __SHRT_MAX__ 32767
+// AARCH64-DARWIN: #define __SIG_ATOMIC_MAX__ 2147483647
+// AARCH64-DARWIN: #define __SIG_ATOMIC_WIDTH__ 32
+// AARCH64-DARWIN: #define __SIZEOF_DOUBLE__ 8
+// AARCH64-DARWIN: #define __SIZEOF_FLOAT__ 4
+// AARCH64-DARWIN: #define __SIZEOF_INT128__ 16
+// AARCH64-DARWIN: #define __SIZEOF_INT__ 4
+// AARCH64-DARWIN: #define __SIZEOF_LONG_DOUBLE__ 8
+// AARCH64-DARWIN: #define __SIZEOF_LONG_LONG__ 8
+// AARCH64-DARWIN: #define __SIZEOF_LONG__ 8
+// AARCH64-DARWIN: #define __SIZEOF_POINTER__ 8
+// AARCH64-DARWIN: #define __SIZEOF_PTRDIFF_T__ 8
+// AARCH64-DARWIN: #define __SIZEOF_SHORT__ 2
+// AARCH64-DARWIN: #define __SIZEOF_SIZE_T__ 8
+// AARCH64-DARWIN: #define __SIZEOF_WCHAR_T__ 4
+// AARCH64-DARWIN: #define __SIZEOF_WINT_T__ 4
+// AARCH64-DARWIN: #define __SIZE_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __SIZE_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __SIZE_WIDTH__ 64
+// AARCH64-DARWIN: #define __UINT16_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __UINT16_MAX__ 65535
+// AARCH64-DARWIN: #define __UINT16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __UINT32_C_SUFFIX__ U
+// AARCH64-DARWIN: #define __UINT32_MAX__ 4294967295U
+// AARCH64-DARWIN: #define __UINT32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __UINT64_C_SUFFIX__ UL
+// AARCH64-DARWIN: #define __UINT64_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINT64_TYPE__ long long unsigned int
+// AARCH64-DARWIN: #define __UINT8_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __UINT8_MAX__ 255
+// AARCH64-DARWIN: #define __UINT8_TYPE__ unsigned char
+// AARCH64-DARWIN: #define __UINTMAX_C_SUFFIX__ UL
+// AARCH64-DARWIN: #define __UINTMAX_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINTMAX_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINTMAX_WIDTH__ 64
+// AARCH64-DARWIN: #define __UINTPTR_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINTPTR_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINTPTR_WIDTH__ 64
+// AARCH64-DARWIN: #define __UINT_FAST16_MAX__ 65535
+// AARCH64-DARWIN: #define __UINT_FAST16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __UINT_FAST32_MAX__ 4294967295U
+// AARCH64-DARWIN: #define __UINT_FAST32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __UINT_FAST64_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINT_FAST64_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINT_FAST8_MAX__ 255
+// AARCH64-DARWIN: #define __UINT_FAST8_TYPE__ unsigned char
+// AARCH64-DARWIN: #define __UINT_LEAST16_MAX__ 65535
+// AARCH64-DARWIN: #define __UINT_LEAST16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __UINT_LEAST32_MAX__ 4294967295U
+// AARCH64-DARWIN: #define __UINT_LEAST32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __UINT_LEAST64_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINT_LEAST64_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINT_LEAST8_MAX__ 255
+// AARCH64-DARWIN: #define __UINT_LEAST8_TYPE__ unsigned char
+// AARCH64-DARWIN: #define __USER_LABEL_PREFIX__ _
+// AARCH64-DARWIN: #define __WCHAR_MAX__ 2147483647
+// AARCH64-DARWIN: #define __WCHAR_TYPE__ int
+// AARCH64-DARWIN-NOT: #define __WCHAR_UNSIGNED__
+// AARCH64-DARWIN: #define __WCHAR_WIDTH__ 32
+// AARCH64-DARWIN: #define __WINT_TYPE__ int
+// AARCH64-DARWIN: #define __WINT_WIDTH__ 32
+// AARCH64-DARWIN: #define __aarch64__ 1
+
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm-none-none < /dev/null | FileCheck -check-prefix ARM %s
 //
 // ARM-NOT:#define _LP64
 // ARM:#define __APCS_32__ 1
 // ARM-NOT:#define __ARMEB__ 1
 // ARM:#define __ARMEL__ 1
-// ARM:#define __ARM_ARCH_6J__ 1
+// ARM:#define __ARM_ARCH_4T__ 1
 // ARM-NOT:#define __ARM_BIG_ENDIAN 1
+// ARM:#define __BIGGEST_ALIGNMENT__ 8
 // ARM:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARM:#define __CHAR16_TYPE__ unsigned short
 // ARM:#define __CHAR32_TYPE__ unsigned int
@@ -1020,7 +1218,7 @@
 // ARM:#define __DBL_MIN_10_EXP__ (-307)
 // ARM:#define __DBL_MIN_EXP__ (-1021)
 // ARM:#define __DBL_MIN__ 2.2250738585072014e-308
-// ARM:#define __DECIMAL_DIG__ 17
+// ARM:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // ARM:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // ARM:#define __FLT_DIG__ 6
 // ARM:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -1140,7 +1338,6 @@
 // ARM:#define __SIZE_MAX__ 4294967295U
 // ARM:#define __SIZE_TYPE__ unsigned int
 // ARM:#define __SIZE_WIDTH__ 32
-// ARM:#define __THUMB_INTERWORK__ 1
 // ARM:#define __UINT16_C_SUFFIX__ {{$}}
 // ARM:#define __UINT16_MAX__ 65535
 // ARM:#define __UINT16_TYPE__ unsigned short
@@ -1191,8 +1388,9 @@
 // ARM-BE:#define __APCS_32__ 1
 // ARM-BE:#define __ARMEB__ 1
 // ARM-BE-NOT:#define __ARMEL__ 1
-// ARM-BE:#define __ARM_ARCH_6J__ 1
+// ARM-BE:#define __ARM_ARCH_4T__ 1
 // ARM-BE:#define __ARM_BIG_ENDIAN 1
+// ARM-BE:#define __BIGGEST_ALIGNMENT__ 8
 // ARM-BE:#define __BIG_ENDIAN__ 1
 // ARM-BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // ARM-BE:#define __CHAR16_TYPE__ unsigned short
@@ -1211,7 +1409,7 @@
 // ARM-BE:#define __DBL_MIN_10_EXP__ (-307)
 // ARM-BE:#define __DBL_MIN_EXP__ (-1021)
 // ARM-BE:#define __DBL_MIN__ 2.2250738585072014e-308
-// ARM-BE:#define __DECIMAL_DIG__ 17
+// ARM-BE:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // ARM-BE:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // ARM-BE:#define __FLT_DIG__ 6
 // ARM-BE:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -1330,7 +1528,6 @@
 // ARM-BE:#define __SIZE_MAX__ 4294967295U
 // ARM-BE:#define __SIZE_TYPE__ unsigned int
 // ARM-BE:#define __SIZE_WIDTH__ 32
-// ARM-BE:#define __THUMB_INTERWORK__ 1
 // ARM-BE:#define __UINT16_C_SUFFIX__ {{$}}
 // ARM-BE:#define __UINT16_MAX__ 65535
 // ARM-BE:#define __UINT16_TYPE__ unsigned short
@@ -1381,12 +1578,13 @@
 // ARMEABISOFTFP:#define __APCS_32__ 1
 // ARMEABISOFTFP-NOT:#define __ARMEB__ 1
 // ARMEABISOFTFP:#define __ARMEL__ 1
-// ARMEABISOFTFP:#define __ARM_ARCH 6
-// ARMEABISOFTFP:#define __ARM_ARCH_6J__ 1
+// ARMEABISOFTFP:#define __ARM_ARCH 4
+// ARMEABISOFTFP:#define __ARM_ARCH_4T__ 1
 // ARMEABISOFTFP-NOT:#define __ARM_BIG_ENDIAN 1
 // ARMEABISOFTFP:#define __ARM_EABI__ 1
 // ARMEABISOFTFP:#define __ARM_PCS 1
 // ARMEABISOFTFP-NOT:#define __ARM_PCS_VFP 1
+// ARMEABISOFTFP:#define __BIGGEST_ALIGNMENT__ 8
 // ARMEABISOFTFP:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARMEABISOFTFP:#define __CHAR16_TYPE__ unsigned short
 // ARMEABISOFTFP:#define __CHAR32_TYPE__ unsigned int
@@ -1404,7 +1602,7 @@
 // ARMEABISOFTFP:#define __DBL_MIN_10_EXP__ (-307)
 // ARMEABISOFTFP:#define __DBL_MIN_EXP__ (-1021)
 // ARMEABISOFTFP:#define __DBL_MIN__ 2.2250738585072014e-308
-// ARMEABISOFTFP:#define __DECIMAL_DIG__ 17
+// ARMEABISOFTFP:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // ARMEABISOFTFP:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // ARMEABISOFTFP:#define __FLT_DIG__ 6
 // ARMEABISOFTFP:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -1525,7 +1723,6 @@
 // ARMEABISOFTFP:#define __SIZE_TYPE__ unsigned int
 // ARMEABISOFTFP:#define __SIZE_WIDTH__ 32
 // ARMEABISOFTFP:#define __SOFTFP__ 1
-// ARMEABISOFTFP:#define __THUMB_INTERWORK__ 1
 // ARMEABISOFTFP:#define __UINT16_C_SUFFIX__ {{$}}
 // ARMEABISOFTFP:#define __UINT16_MAX__ 65535
 // ARMEABISOFTFP:#define __UINT16_TYPE__ unsigned short
@@ -1576,12 +1773,13 @@
 // ARMEABIHARDFP:#define __APCS_32__ 1
 // ARMEABIHARDFP-NOT:#define __ARMEB__ 1
 // ARMEABIHARDFP:#define __ARMEL__ 1
-// ARMEABIHARDFP:#define __ARM_ARCH 6
-// ARMEABIHARDFP:#define __ARM_ARCH_6J__ 1
+// ARMEABIHARDFP:#define __ARM_ARCH 4
+// ARMEABIHARDFP:#define __ARM_ARCH_4T__ 1
 // ARMEABIHARDFP-NOT:#define __ARM_BIG_ENDIAN 1
 // ARMEABIHARDFP:#define __ARM_EABI__ 1
 // ARMEABIHARDFP:#define __ARM_PCS 1
 // ARMEABIHARDFP:#define __ARM_PCS_VFP 1
+// ARMEABIHARDFP:#define __BIGGEST_ALIGNMENT__ 8
 // ARMEABIHARDFP:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARMEABIHARDFP:#define __CHAR16_TYPE__ unsigned short
 // ARMEABIHARDFP:#define __CHAR32_TYPE__ unsigned int
@@ -1599,7 +1797,7 @@
 // ARMEABIHARDFP:#define __DBL_MIN_10_EXP__ (-307)
 // ARMEABIHARDFP:#define __DBL_MIN_EXP__ (-1021)
 // ARMEABIHARDFP:#define __DBL_MIN__ 2.2250738585072014e-308
-// ARMEABIHARDFP:#define __DECIMAL_DIG__ 17
+// ARMEABIHARDFP:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // ARMEABIHARDFP:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // ARMEABIHARDFP:#define __FLT_DIG__ 6
 // ARMEABIHARDFP:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -1720,7 +1918,6 @@
 // ARMEABIHARDFP:#define __SIZE_TYPE__ unsigned int
 // ARMEABIHARDFP:#define __SIZE_WIDTH__ 32
 // ARMEABIHARDFP-NOT:#define __SOFTFP__ 1
-// ARMEABIHARDFP:#define __THUMB_INTERWORK__ 1
 // ARMEABIHARDFP:#define __UINT16_C_SUFFIX__ {{$}}
 // ARMEABIHARDFP:#define __UINT16_MAX__ 65535
 // ARMEABIHARDFP:#define __UINT16_TYPE__ unsigned short
@@ -1771,10 +1968,11 @@
 // ARM-NETBSD:#define __APCS_32__ 1
 // ARM-NETBSD-NOT:#define __ARMEB__ 1
 // ARM-NETBSD:#define __ARMEL__ 1
-// ARM-NETBSD:#define __ARM_ARCH_6J__ 1
+// ARM-NETBSD:#define __ARM_ARCH_4T__ 1
 // ARM-NETBSD:#define __ARM_DWARF_EH__ 1
 // ARM-NETBSD:#define __ARM_EABI__ 1
 // ARM-NETBSD-NOT:#define __ARM_BIG_ENDIAN 1
+// ARM-NETBSD:#define __BIGGEST_ALIGNMENT__ 8
 // ARM-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARM-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // ARM-NETBSD:#define __CHAR32_TYPE__ unsigned int
@@ -1792,7 +1990,7 @@
 // ARM-NETBSD:#define __DBL_MIN_10_EXP__ (-307)
 // ARM-NETBSD:#define __DBL_MIN_EXP__ (-1021)
 // ARM-NETBSD:#define __DBL_MIN__ 2.2250738585072014e-308
-// ARM-NETBSD:#define __DECIMAL_DIG__ 17
+// ARM-NETBSD:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // ARM-NETBSD:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // ARM-NETBSD:#define __FLT_DIG__ 6
 // ARM-NETBSD:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -1912,7 +2110,6 @@
 // ARM-NETBSD:#define __SIZE_MAX__ 4294967295U
 // ARM-NETBSD:#define __SIZE_TYPE__ long unsigned int
 // ARM-NETBSD:#define __SIZE_WIDTH__ 32
-// ARM-NETBSD:#define __THUMB_INTERWORK__ 1
 // ARM-NETBSD:#define __UINT16_C_SUFFIX__ {{$}}
 // ARM-NETBSD:#define __UINT16_MAX__ 65535
 // ARM-NETBSD:#define __UINT16_TYPE__ unsigned short
@@ -1964,6 +2161,13 @@
 // RUN: %clang -target thumbv7-apple-darwin-eabi -arch armv7 -x c -E -dM %s -o - | FileCheck --check-prefix=ARM-DARWIN-NO-EABI %s
 // ARM-DARWIN-NO-EABI-NOT: #define __ARM_EABI__ 1
 // ARM-DARWIN-EABI: #define __ARM_EABI__ 1
+
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=armv7-bitrig-gnueabihf < /dev/null | FileCheck -check-prefix ARM-BITRIG %s
+// ARM-BITRIG:#define __ARM_DWARF_EH__ 1
+// ARM-BITRIG:#define __SIZEOF_SIZE_T__ 4
+// ARM-BITRIG:#define __SIZE_MAX__ 4294967295U
+// ARM-BITRIG:#define __SIZE_TYPE__ long unsigned int
+// ARM-BITRIG:#define __SIZE_WIDTH__ 32
 
 // Check that -mhwdiv works properly for targets which don't have the hwdiv feature enabled by default.
 
@@ -2021,6 +2225,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-none-none < /dev/null | FileCheck -check-prefix I386 %s
 //
 // I386-NOT:#define _LP64
+// I386:#define __BIGGEST_ALIGNMENT__ 16
 // I386:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386:#define __CHAR16_TYPE__ unsigned short
 // I386:#define __CHAR32_TYPE__ unsigned int
@@ -2038,7 +2243,7 @@
 // I386:#define __DBL_MIN_10_EXP__ (-307)
 // I386:#define __DBL_MIN_EXP__ (-1021)
 // I386:#define __DBL_MIN__ 2.2250738585072014e-308
-// I386:#define __DECIMAL_DIG__ 21
+// I386:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // I386:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // I386:#define __FLT_DIG__ 6
 // I386:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -2207,6 +2412,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-pc-linux-gnu -target-cpu pentium4 < /dev/null | FileCheck -check-prefix I386-LINUX %s
 //
 // I386-LINUX-NOT:#define _LP64
+// I386-LINUX:#define __BIGGEST_ALIGNMENT__ 16
 // I386-LINUX:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386-LINUX:#define __CHAR16_TYPE__ unsigned short
 // I386-LINUX:#define __CHAR32_TYPE__ unsigned int
@@ -2224,7 +2430,7 @@
 // I386-LINUX:#define __DBL_MIN_10_EXP__ (-307)
 // I386-LINUX:#define __DBL_MIN_EXP__ (-1021)
 // I386-LINUX:#define __DBL_MIN__ 2.2250738585072014e-308
-// I386-LINUX:#define __DECIMAL_DIG__ 21
+// I386-LINUX:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // I386-LINUX:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // I386-LINUX:#define __FLT_DIG__ 6
 // I386-LINUX:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -2393,6 +2599,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd < /dev/null | FileCheck -check-prefix I386-NETBSD %s
 //
 // I386-NETBSD-NOT:#define _LP64
+// I386-NETBSD:#define __BIGGEST_ALIGNMENT__ 16
 // I386-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // I386-NETBSD:#define __CHAR32_TYPE__ unsigned int
@@ -2410,7 +2617,7 @@
 // I386-NETBSD:#define __DBL_MIN_10_EXP__ (-307)
 // I386-NETBSD:#define __DBL_MIN_EXP__ (-1021)
 // I386-NETBSD:#define __DBL_MIN__ 2.2250738585072014e-308
-// I386-NETBSD:#define __DECIMAL_DIG__ 21
+// I386-NETBSD:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // I386-NETBSD:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // I386-NETBSD:#define __FLT_DIG__ 6
 // I386-NETBSD:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -2583,6 +2790,12 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd6 -target-feature +sse2 < /dev/null | FileCheck -check-prefix I386-NETBSD6-SSE %s
 // I386-NETBSD6-SSE:#define __FLT_EVAL_METHOD__ 1
 
+// RUN: %clang_cc1 -E -dM -triple=i686-pc-mingw32 < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -fms-extensions -triple=i686-pc-mingw32 < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -triple=i686-unknown-cygwin < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -fms-extensions -triple=i686-unknown-cygwin < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// I386-DECLSPEC: #define __declspec
+
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none < /dev/null | FileCheck -check-prefix MIPS32BE %s
 //
@@ -2597,6 +2810,7 @@
 // MIPS32BE:#define _MIPS_SZINT 32
 // MIPS32BE:#define _MIPS_SZLONG 32
 // MIPS32BE:#define _MIPS_SZPTR 32
+// MIPS32BE:#define __BIGGEST_ALIGNMENT__ 8
 // MIPS32BE:#define __BIG_ENDIAN__ 1
 // MIPS32BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS32BE:#define __CHAR16_TYPE__ unsigned short
@@ -2616,7 +2830,7 @@
 // MIPS32BE:#define __DBL_MIN_10_EXP__ (-307)
 // MIPS32BE:#define __DBL_MIN_EXP__ (-1021)
 // MIPS32BE:#define __DBL_MIN__ 2.2250738585072014e-308
-// MIPS32BE:#define __DECIMAL_DIG__ 17
+// MIPS32BE:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // MIPS32BE:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // MIPS32BE:#define __FLT_DIG__ 6
 // MIPS32BE:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -2805,6 +3019,7 @@
 // MIPS32EL:#define _MIPS_SZINT 32
 // MIPS32EL:#define _MIPS_SZLONG 32
 // MIPS32EL:#define _MIPS_SZPTR 32
+// MIPS32EL:#define __BIGGEST_ALIGNMENT__ 8
 // MIPS32EL:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MIPS32EL:#define __CHAR16_TYPE__ unsigned short
 // MIPS32EL:#define __CHAR32_TYPE__ unsigned int
@@ -2823,7 +3038,7 @@
 // MIPS32EL:#define __DBL_MIN_10_EXP__ (-307)
 // MIPS32EL:#define __DBL_MIN_EXP__ (-1021)
 // MIPS32EL:#define __DBL_MIN__ 2.2250738585072014e-308
-// MIPS32EL:#define __DECIMAL_DIG__ 17
+// MIPS32EL:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // MIPS32EL:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // MIPS32EL:#define __FLT_DIG__ 6
 // MIPS32EL:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -3038,7 +3253,7 @@
 // MIPSN32BE: #define __DBL_MIN_10_EXP__ (-307)
 // MIPSN32BE: #define __DBL_MIN_EXP__ (-1021)
 // MIPSN32BE: #define __DBL_MIN__ 2.2250738585072014e-308
-// MIPSN32BE: #define __DECIMAL_DIG__ 36
+// MIPSN32BE: #define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // MIPSN32BE: #define __FINITE_MATH_ONLY__ 0
 // MIPSN32BE: #define __FLT_DENORM_MIN__ 1.40129846e-45F
 // MIPSN32BE: #define __FLT_DIG__ 6
@@ -3344,7 +3559,7 @@
 // MIPSN32EL: #define __DBL_MIN_10_EXP__ (-307)
 // MIPSN32EL: #define __DBL_MIN_EXP__ (-1021)
 // MIPSN32EL: #define __DBL_MIN__ 2.2250738585072014e-308
-// MIPSN32EL: #define __DECIMAL_DIG__ 36
+// MIPSN32EL: #define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // MIPSN32EL: #define __FINITE_MATH_ONLY__ 0
 // MIPSN32EL: #define __FLT_DENORM_MIN__ 1.40129846e-45F
 // MIPSN32EL: #define __FLT_DIG__ 6
@@ -3624,6 +3839,7 @@
 // MIPS64BE:#define _MIPS_SZINT 32
 // MIPS64BE:#define _MIPS_SZLONG 64
 // MIPS64BE:#define _MIPS_SZPTR 64
+// MIPS64BE:#define __BIGGEST_ALIGNMENT__ 16
 // MIPS64BE:#define __BIG_ENDIAN__ 1
 // MIPS64BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS64BE:#define __CHAR16_TYPE__ unsigned short
@@ -3643,7 +3859,7 @@
 // MIPS64BE:#define __DBL_MIN_10_EXP__ (-307)
 // MIPS64BE:#define __DBL_MIN_EXP__ (-1021)
 // MIPS64BE:#define __DBL_MIN__ 2.2250738585072014e-308
-// MIPS64BE:#define __DECIMAL_DIG__ 36
+// MIPS64BE:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // MIPS64BE:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // MIPS64BE:#define __FLT_DIG__ 6
 // MIPS64BE:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -3832,6 +4048,7 @@
 // MIPS64EL:#define _MIPS_SZINT 32
 // MIPS64EL:#define _MIPS_SZLONG 64
 // MIPS64EL:#define _MIPS_SZPTR 64
+// MIPS64EL:#define __BIGGEST_ALIGNMENT__ 16
 // MIPS64EL:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MIPS64EL:#define __CHAR16_TYPE__ unsigned short
 // MIPS64EL:#define __CHAR32_TYPE__ unsigned int
@@ -3850,7 +4067,7 @@
 // MIPS64EL:#define __DBL_MIN_10_EXP__ (-307)
 // MIPS64EL:#define __DBL_MIN_EXP__ (-1021)
 // MIPS64EL:#define __DBL_MIN__ 2.2250738585072014e-308
-// MIPS64EL:#define __DECIMAL_DIG__ 36
+// MIPS64EL:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // MIPS64EL:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // MIPS64EL:#define __FLT_DIG__ 6
 // MIPS64EL:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -4057,6 +4274,24 @@
 // MIPS-ARCH-32R2:#define __mips_isa_rev 2
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none \
+// RUN:            -target-cpu mips32r3 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-32R3 %s
+//
+// MIPS-ARCH-32R3:#define _MIPS_ARCH "mips32r3"
+// MIPS-ARCH-32R3:#define _MIPS_ARCH_MIPS32R3 1
+// MIPS-ARCH-32R3:#define _MIPS_ISA _MIPS_ISA_MIPS32
+// MIPS-ARCH-32R3:#define __mips_isa_rev 3
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none \
+// RUN:            -target-cpu mips32r5 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-32R5 %s
+//
+// MIPS-ARCH-32R5:#define _MIPS_ARCH "mips32r5"
+// MIPS-ARCH-32R5:#define _MIPS_ARCH_MIPS32R5 1
+// MIPS-ARCH-32R5:#define _MIPS_ISA _MIPS_ISA_MIPS32
+// MIPS-ARCH-32R5:#define __mips_isa_rev 5
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none \
 // RUN:            -target-cpu mips32r6 < /dev/null \
 // RUN:   | FileCheck -check-prefix MIPS-ARCH-32R6 %s
 //
@@ -4091,6 +4326,24 @@
 // MIPS-ARCH-64R2:#define _MIPS_ARCH_MIPS64R2 1
 // MIPS-ARCH-64R2:#define _MIPS_ISA _MIPS_ISA_MIPS64
 // MIPS-ARCH-64R2:#define __mips_isa_rev 2
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips64-none-none \
+// RUN:            -target-cpu mips64r3 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-64R3 %s
+//
+// MIPS-ARCH-64R3:#define _MIPS_ARCH "mips64r3"
+// MIPS-ARCH-64R3:#define _MIPS_ARCH_MIPS64R3 1
+// MIPS-ARCH-64R3:#define _MIPS_ISA _MIPS_ISA_MIPS64
+// MIPS-ARCH-64R3:#define __mips_isa_rev 3
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips64-none-none \
+// RUN:            -target-cpu mips64r5 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-64R5 %s
+//
+// MIPS-ARCH-64R5:#define _MIPS_ARCH "mips64r5"
+// MIPS-ARCH-64R5:#define _MIPS_ARCH_MIPS64R5 1
+// MIPS-ARCH-64R5:#define _MIPS_ISA _MIPS_ISA_MIPS64
+// MIPS-ARCH-64R5:#define __mips_isa_rev 5
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips64-none-none \
 // RUN:            -target-cpu mips64r6 < /dev/null \
@@ -4166,10 +4419,15 @@
 // RUN:   | FileCheck -check-prefix MIPS-MSA %s
 // MIPS-MSA:#define __mips_msa 1
 //
-// RUN: %clang_cc1 -target-feature +nan2008 \
+// RUN: %clang_cc1 -target-cpu mips32r3 -target-feature +nan2008 \
 // RUN:   -E -dM -triple=mips-none-none < /dev/null \
 // RUN:   | FileCheck -check-prefix MIPS-NAN2008 %s
 // MIPS-NAN2008:#define __mips_nan2008 1
+//
+// RUN: %clang_cc1 -target-cpu mips32r3 -target-feature -nan2008 \
+// RUN:   -E -dM -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix NOMIPS-NAN2008 %s
+// NOMIPS-NAN2008-NOT:#define __mips_nan2008 1
 //
 // RUN: %clang_cc1 -target-feature -fp64 \
 // RUN:   -E -dM -triple=mips-none-none < /dev/null \
@@ -4215,6 +4473,7 @@
 //
 // MSP430:#define MSP430 1
 // MSP430-NOT:#define _LP64
+// MSP430:#define __BIGGEST_ALIGNMENT__ 2
 // MSP430:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MSP430:#define __CHAR16_TYPE__ unsigned short
 // MSP430:#define __CHAR32_TYPE__ unsigned int
@@ -4232,7 +4491,7 @@
 // MSP430:#define __DBL_MIN_10_EXP__ (-307)
 // MSP430:#define __DBL_MIN_EXP__ (-1021)
 // MSP430:#define __DBL_MIN__ 2.2250738585072014e-308
-// MSP430:#define __DECIMAL_DIG__ 17
+// MSP430:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // MSP430:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // MSP430:#define __FLT_DIG__ 6
 // MSP430:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -4398,6 +4657,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=nvptx-none-none < /dev/null | FileCheck -check-prefix NVPTX32 %s
 //
 // NVPTX32-NOT:#define _LP64
+// NVPTX32:#define __BIGGEST_ALIGNMENT__ 8
 // NVPTX32:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // NVPTX32:#define __CHAR16_TYPE__ unsigned short
 // NVPTX32:#define __CHAR32_TYPE__ unsigned int
@@ -4416,7 +4676,7 @@
 // NVPTX32:#define __DBL_MIN_10_EXP__ (-307)
 // NVPTX32:#define __DBL_MIN_EXP__ (-1021)
 // NVPTX32:#define __DBL_MIN__ 2.2250738585072014e-308
-// NVPTX32:#define __DECIMAL_DIG__ 17
+// NVPTX32:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // NVPTX32:#define __FINITE_MATH_ONLY__ 0
 // NVPTX32:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // NVPTX32:#define __FLT_DIG__ 6
@@ -4472,10 +4732,10 @@
 // NVPTX32:#define __INT_FAST32_FMTi__ "i"
 // NVPTX32:#define __INT_FAST32_MAX__ 2147483647
 // NVPTX32:#define __INT_FAST32_TYPE__ int
-// NVPTX32:#define __INT_FAST64_FMTd__ "ld"
-// NVPTX32:#define __INT_FAST64_FMTi__ "li"
+// NVPTX32:#define __INT_FAST64_FMTd__ "lld"
+// NVPTX32:#define __INT_FAST64_FMTi__ "lli"
 // NVPTX32:#define __INT_FAST64_MAX__ 9223372036854775807L
-// NVPTX32:#define __INT_FAST64_TYPE__ long int
+// NVPTX32:#define __INT_FAST64_TYPE__ long long int
 // NVPTX32:#define __INT_FAST8_FMTd__ "hhd"
 // NVPTX32:#define __INT_FAST8_FMTi__ "hhi"
 // NVPTX32:#define __INT_FAST8_MAX__ 127
@@ -4488,10 +4748,10 @@
 // NVPTX32:#define __INT_LEAST32_FMTi__ "i"
 // NVPTX32:#define __INT_LEAST32_MAX__ 2147483647
 // NVPTX32:#define __INT_LEAST32_TYPE__ int
-// NVPTX32:#define __INT_LEAST64_FMTd__ "ld"
-// NVPTX32:#define __INT_LEAST64_FMTi__ "li"
+// NVPTX32:#define __INT_LEAST64_FMTd__ "lld"
+// NVPTX32:#define __INT_LEAST64_FMTi__ "lli"
 // NVPTX32:#define __INT_LEAST64_MAX__ 9223372036854775807L
-// NVPTX32:#define __INT_LEAST64_TYPE__ long int
+// NVPTX32:#define __INT_LEAST64_TYPE__ long long int
 // NVPTX32:#define __INT_LEAST8_FMTd__ "hhd"
 // NVPTX32:#define __INT_LEAST8_FMTi__ "hhi"
 // NVPTX32:#define __INT_LEAST8_MAX__ 127
@@ -4512,12 +4772,12 @@
 // NVPTX32:#define __LDBL_MIN__ 2.2250738585072014e-308L
 // NVPTX32:#define __LITTLE_ENDIAN__ 1
 // NVPTX32:#define __LONG_LONG_MAX__ 9223372036854775807LL
-// NVPTX32:#define __LONG_MAX__ 9223372036854775807L
+// NVPTX32:#define __LONG_MAX__ 2147483647L
 // NVPTX32-NOT:#define __LP64__
 // NVPTX32:#define __NVPTX__ 1
 // NVPTX32:#define __POINTER_WIDTH__ 32
 // NVPTX32:#define __PRAGMA_REDEFINE_EXTNAME 1
-// NVPTX32:#define __PTRDIFF_TYPE__ unsigned int
+// NVPTX32:#define __PTRDIFF_TYPE__ int
 // NVPTX32:#define __PTRDIFF_WIDTH__ 32
 // NVPTX32:#define __PTX__ 1
 // NVPTX32:#define __SCHAR_MAX__ 127
@@ -4529,7 +4789,7 @@
 // NVPTX32:#define __SIZEOF_INT__ 4
 // NVPTX32:#define __SIZEOF_LONG_DOUBLE__ 8
 // NVPTX32:#define __SIZEOF_LONG_LONG__ 8
-// NVPTX32:#define __SIZEOF_LONG__ 8
+// NVPTX32:#define __SIZEOF_LONG__ 4
 // NVPTX32:#define __SIZEOF_POINTER__ 4
 // NVPTX32:#define __SIZEOF_PTRDIFF_T__ 4
 // NVPTX32:#define __SIZEOF_SHORT__ 2
@@ -4563,7 +4823,7 @@
 // NVPTX32:#define __UINT_FAST32_MAX__ 4294967295U
 // NVPTX32:#define __UINT_FAST32_TYPE__ unsigned int
 // NVPTX32:#define __UINT_FAST64_MAX__ 18446744073709551615UL
-// NVPTX32:#define __UINT_FAST64_TYPE__ long unsigned int
+// NVPTX32:#define __UINT_FAST64_TYPE__ long long unsigned int
 // NVPTX32:#define __UINT_FAST8_MAX__ 255
 // NVPTX32:#define __UINT_FAST8_TYPE__ unsigned char
 // NVPTX32:#define __UINT_LEAST16_MAX__ 65535
@@ -4571,7 +4831,7 @@
 // NVPTX32:#define __UINT_LEAST32_MAX__ 4294967295U
 // NVPTX32:#define __UINT_LEAST32_TYPE__ unsigned int
 // NVPTX32:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
-// NVPTX32:#define __UINT_LEAST64_TYPE__ long unsigned int
+// NVPTX32:#define __UINT_LEAST64_TYPE__ long long unsigned int
 // NVPTX32:#define __UINT_LEAST8_MAX__ 255
 // NVPTX32:#define __UINT_LEAST8_TYPE__ unsigned char
 // NVPTX32:#define __USER_LABEL_PREFIX__ _
@@ -4584,6 +4844,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=nvptx64-none-none < /dev/null | FileCheck -check-prefix NVPTX64 %s
 //
 // NVPTX64:#define _LP64 1
+// NVPTX64:#define __BIGGEST_ALIGNMENT__ 8
 // NVPTX64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // NVPTX64:#define __CHAR16_TYPE__ unsigned short
 // NVPTX64:#define __CHAR32_TYPE__ unsigned int
@@ -4602,7 +4863,7 @@
 // NVPTX64:#define __DBL_MIN_10_EXP__ (-307)
 // NVPTX64:#define __DBL_MIN_EXP__ (-1021)
 // NVPTX64:#define __DBL_MIN__ 2.2250738585072014e-308
-// NVPTX64:#define __DECIMAL_DIG__ 17
+// NVPTX64:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // NVPTX64:#define __FINITE_MATH_ONLY__ 0
 // NVPTX64:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // NVPTX64:#define __FLT_DIG__ 6
@@ -4645,10 +4906,10 @@
 // NVPTX64:#define __INTMAX_MAX__ 9223372036854775807LL
 // NVPTX64:#define __INTMAX_TYPE__ long long int
 // NVPTX64:#define __INTMAX_WIDTH__ 64
-// NVPTX64:#define __INTPTR_FMTd__ "lld"
-// NVPTX64:#define __INTPTR_FMTi__ "lli"
-// NVPTX64:#define __INTPTR_MAX__ 9223372036854775807LL
-// NVPTX64:#define __INTPTR_TYPE__ long long int
+// NVPTX64:#define __INTPTR_FMTd__ "ld"
+// NVPTX64:#define __INTPTR_FMTi__ "li"
+// NVPTX64:#define __INTPTR_MAX__ 9223372036854775807L
+// NVPTX64:#define __INTPTR_TYPE__ long int
 // NVPTX64:#define __INTPTR_WIDTH__ 64
 // NVPTX64:#define __INT_FAST16_FMTd__ "hd"
 // NVPTX64:#define __INT_FAST16_FMTi__ "hi"
@@ -4703,7 +4964,7 @@
 // NVPTX64:#define __NVPTX__ 1
 // NVPTX64:#define __POINTER_WIDTH__ 64
 // NVPTX64:#define __PRAGMA_REDEFINE_EXTNAME 1
-// NVPTX64:#define __PTRDIFF_TYPE__ long long unsigned int
+// NVPTX64:#define __PTRDIFF_TYPE__ long int
 // NVPTX64:#define __PTRDIFF_WIDTH__ 64
 // NVPTX64:#define __PTX__ 1
 // NVPTX64:#define __SCHAR_MAX__ 127
@@ -4723,7 +4984,7 @@
 // NVPTX64:#define __SIZEOF_WCHAR_T__ 4
 // NVPTX64:#define __SIZEOF_WINT_T__ 4
 // NVPTX64:#define __SIZE_MAX__ 18446744073709551615UL
-// NVPTX64:#define __SIZE_TYPE__ long long unsigned int
+// NVPTX64:#define __SIZE_TYPE__ long unsigned int
 // NVPTX64:#define __SIZE_WIDTH__ 64
 // NVPTX64:#define __UINT16_C_SUFFIX__ {{$}}
 // NVPTX64:#define __UINT16_MAX__ 65535
@@ -4741,8 +5002,8 @@
 // NVPTX64:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // NVPTX64:#define __UINTMAX_TYPE__ long long unsigned int
 // NVPTX64:#define __UINTMAX_WIDTH__ 64
-// NVPTX64:#define __UINTPTR_MAX__ 18446744073709551615ULL
-// NVPTX64:#define __UINTPTR_TYPE__ long long unsigned int
+// NVPTX64:#define __UINTPTR_MAX__ 18446744073709551615UL
+// NVPTX64:#define __UINTPTR_TYPE__ long unsigned int
 // NVPTX64:#define __UINTPTR_WIDTH__ 64
 // NVPTX64:#define __UINT_FAST16_MAX__ 65535
 // NVPTX64:#define __UINT_FAST16_TYPE__ unsigned short
@@ -4775,6 +5036,7 @@
 // PPC603E:#define _ARCH_PPCGR 1
 // PPC603E:#define _BIG_ENDIAN 1
 // PPC603E-NOT:#define _LP64
+// PPC603E:#define __BIGGEST_ALIGNMENT__ 8
 // PPC603E:#define __BIG_ENDIAN__ 1
 // PPC603E:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC603E:#define __CHAR16_TYPE__ unsigned short
@@ -4793,7 +5055,7 @@
 // PPC603E:#define __DBL_MIN_10_EXP__ (-307)
 // PPC603E:#define __DBL_MIN_EXP__ (-1021)
 // PPC603E:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC603E:#define __DECIMAL_DIG__ 33
+// PPC603E:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // PPC603E:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC603E:#define __FLT_DIG__ 6
 // PPC603E:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -4972,6 +5234,7 @@
 // PPC64:#define _ARCH_PWR7 1
 // PPC64:#define _BIG_ENDIAN 1
 // PPC64:#define _LP64 1
+// PPC64:#define __BIGGEST_ALIGNMENT__ 8
 // PPC64:#define __BIG_ENDIAN__ 1
 // PPC64:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC64:#define __CHAR16_TYPE__ unsigned short
@@ -4991,7 +5254,7 @@
 // PPC64:#define __DBL_MIN_10_EXP__ (-307)
 // PPC64:#define __DBL_MIN_EXP__ (-1021)
 // PPC64:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC64:#define __DECIMAL_DIG__ 33
+// PPC64:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // PPC64:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC64:#define __FLT_DIG__ 6
 // PPC64:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -5174,6 +5437,7 @@
 // PPC64LE:#define _CALL_ELF 2
 // PPC64LE:#define _LITTLE_ENDIAN 1
 // PPC64LE:#define _LP64 1
+// PPC64LE:#define __BIGGEST_ALIGNMENT__ 8
 // PPC64LE:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // PPC64LE:#define __CHAR16_TYPE__ unsigned short
 // PPC64LE:#define __CHAR32_TYPE__ unsigned int
@@ -5192,7 +5456,7 @@
 // PPC64LE:#define __DBL_MIN_10_EXP__ (-307)
 // PPC64LE:#define __DBL_MIN_EXP__ (-1021)
 // PPC64LE:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC64LE:#define __DECIMAL_DIG__ 33
+// PPC64LE:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // PPC64LE:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC64LE:#define __FLT_DIG__ 6
 // PPC64LE:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -5555,6 +5819,7 @@
 // PPC64-LINUX:#define _ARCH_PPC64 1
 // PPC64-LINUX:#define _BIG_ENDIAN 1
 // PPC64-LINUX:#define _LP64 1
+// PPC64-LINUX:#define __BIGGEST_ALIGNMENT__ 8
 // PPC64-LINUX:#define __BIG_ENDIAN__ 1
 // PPC64-LINUX:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC64-LINUX:#define __CHAR16_TYPE__ unsigned short
@@ -5574,7 +5839,7 @@
 // PPC64-LINUX:#define __DBL_MIN_10_EXP__ (-307)
 // PPC64-LINUX:#define __DBL_MIN_EXP__ (-1021)
 // PPC64-LINUX:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC64-LINUX:#define __DECIMAL_DIG__ 33
+// PPC64-LINUX:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // PPC64-LINUX:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC64-LINUX:#define __FLT_DIG__ 6
 // PPC64-LINUX:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -5747,6 +6012,7 @@
 
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv1 < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv1-qpx < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv2 < /dev/null | FileCheck -check-prefix PPC64-ELFv2 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu < /dev/null | FileCheck -check-prefix PPC64-ELFv2 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu -target-abi elfv1 < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
@@ -5759,6 +6025,7 @@
 // PPC:#define _ARCH_PPC 1
 // PPC:#define _BIG_ENDIAN 1
 // PPC-NOT:#define _LP64
+// PPC:#define __BIGGEST_ALIGNMENT__ 8
 // PPC:#define __BIG_ENDIAN__ 1
 // PPC:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC:#define __CHAR16_TYPE__ unsigned short
@@ -5778,7 +6045,7 @@
 // PPC:#define __DBL_MIN_10_EXP__ (-307)
 // PPC:#define __DBL_MIN_EXP__ (-1021)
 // PPC:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC:#define __DECIMAL_DIG__ 33
+// PPC:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // PPC:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC:#define __FLT_DIG__ 6
 // PPC:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -5949,6 +6216,7 @@
 // PPC-LINUX:#define _ARCH_PPC 1
 // PPC-LINUX:#define _BIG_ENDIAN 1
 // PPC-LINUX-NOT:#define _LP64
+// PPC-LINUX:#define __BIGGEST_ALIGNMENT__ 8
 // PPC-LINUX:#define __BIG_ENDIAN__ 1
 // PPC-LINUX:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC-LINUX:#define __CHAR16_TYPE__ unsigned short
@@ -5968,7 +6236,7 @@
 // PPC-LINUX:#define __DBL_MIN_10_EXP__ (-307)
 // PPC-LINUX:#define __DBL_MIN_EXP__ (-1021)
 // PPC-LINUX:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC-LINUX:#define __DECIMAL_DIG__ 33
+// PPC-LINUX:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // PPC-LINUX:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC-LINUX:#define __FLT_DIG__ 6
 // PPC-LINUX:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -6140,6 +6408,7 @@
 //
 // PPC-DARWIN:#define _ARCH_PPC 1
 // PPC-DARWIN:#define _BIG_ENDIAN 1
+// PPC-DARWIN:#define __BIGGEST_ALIGNMENT__ 16
 // PPC-DARWIN:#define __BIG_ENDIAN__ 1
 // PPC-DARWIN:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC-DARWIN:#define __CHAR16_TYPE__ unsigned short
@@ -6158,7 +6427,7 @@
 // PPC-DARWIN:#define __DBL_MIN_10_EXP__ (-307)
 // PPC-DARWIN:#define __DBL_MIN_EXP__ (-1021)
 // PPC-DARWIN:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC-DARWIN:#define __DECIMAL_DIG__ 33
+// PPC-DARWIN:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // PPC-DARWIN:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC-DARWIN:#define __FLT_DIG__ 6
 // PPC-DARWIN:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -6331,8 +6600,19 @@
 // PPC-DARWIN:#define __powerpc__ 1
 // PPC-DARWIN:#define __ppc__ 1
 //
+// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=amdgcn < /dev/null | FileCheck -check-prefix AMDGCN --check-prefix AMDGPU %s
+// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=r600 -target-cpu caicos < /dev/null | FileCheck --check-prefix AMDGPU %s
+//
+// AMDGPU:#define cl_khr_byte_addressable_store 1
+// AMDGCN:#define cl_khr_fp64 1
+// AMDGPU:#define cl_khr_global_int32_base_atomics 1
+// AMDGPU:#define cl_khr_global_int32_extended_atomics 1
+// AMDGPU:#define cl_khr_local_int32_base_atomics 1
+// AMDGPU:#define cl_khr_local_int32_extended_atomics 1
+
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=s390x-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix S390X %s
 //
+// S390X:#define __BIGGEST_ALIGNMENT__ 8
 // S390X:#define __CHAR16_TYPE__ unsigned short
 // S390X:#define __CHAR32_TYPE__ unsigned int
 // S390X:#define __CHAR_BIT__ 8
@@ -6350,7 +6630,7 @@
 // S390X:#define __DBL_MIN_10_EXP__ (-307)
 // S390X:#define __DBL_MIN_EXP__ (-1021)
 // S390X:#define __DBL_MIN__ 2.2250738585072014e-308
-// S390X:#define __DECIMAL_DIG__ 36
+// S390X:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // S390X:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // S390X:#define __FLT_DIG__ 6
 // S390X:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -6376,21 +6656,21 @@
 // S390X:#define __INT32_FMTi__ "i"
 // S390X:#define __INT32_MAX__ 2147483647
 // S390X:#define __INT32_TYPE__ int
-// S390X:#define __INT64_C_SUFFIX__ LL
-// S390X:#define __INT64_FMTd__ "lld"
-// S390X:#define __INT64_FMTi__ "lli"
-// S390X:#define __INT64_MAX__ 9223372036854775807LL
-// S390X:#define __INT64_TYPE__ long long int
+// S390X:#define __INT64_C_SUFFIX__ L
+// S390X:#define __INT64_FMTd__ "ld"
+// S390X:#define __INT64_FMTi__ "li"
+// S390X:#define __INT64_MAX__ 9223372036854775807L
+// S390X:#define __INT64_TYPE__ long int
 // S390X:#define __INT8_C_SUFFIX__ {{$}}
 // S390X:#define __INT8_FMTd__ "hhd"
 // S390X:#define __INT8_FMTi__ "hhi"
 // S390X:#define __INT8_MAX__ 127
 // S390X:#define __INT8_TYPE__ signed char
-// S390X:#define __INTMAX_C_SUFFIX__ LL
-// S390X:#define __INTMAX_FMTd__ "lld"
-// S390X:#define __INTMAX_FMTi__ "lli"
-// S390X:#define __INTMAX_MAX__ 9223372036854775807LL
-// S390X:#define __INTMAX_TYPE__ long long int
+// S390X:#define __INTMAX_C_SUFFIX__ L
+// S390X:#define __INTMAX_FMTd__ "ld"
+// S390X:#define __INTMAX_FMTi__ "li"
+// S390X:#define __INTMAX_MAX__ 9223372036854775807L
+// S390X:#define __INTMAX_TYPE__ long int
 // S390X:#define __INTMAX_WIDTH__ 64
 // S390X:#define __INTPTR_FMTd__ "ld"
 // S390X:#define __INTPTR_FMTi__ "li"
@@ -6473,15 +6753,15 @@
 // S390X:#define __UINT32_C_SUFFIX__ U
 // S390X:#define __UINT32_MAX__ 4294967295U
 // S390X:#define __UINT32_TYPE__ unsigned int
-// S390X:#define __UINT64_C_SUFFIX__ ULL
-// S390X:#define __UINT64_MAX__ 18446744073709551615ULL
-// S390X:#define __UINT64_TYPE__ long long unsigned int
+// S390X:#define __UINT64_C_SUFFIX__ UL
+// S390X:#define __UINT64_MAX__ 18446744073709551615UL
+// S390X:#define __UINT64_TYPE__ long unsigned int
 // S390X:#define __UINT8_C_SUFFIX__ {{$}}
 // S390X:#define __UINT8_MAX__ 255
 // S390X:#define __UINT8_TYPE__ unsigned char
-// S390X:#define __UINTMAX_C_SUFFIX__ ULL
-// S390X:#define __UINTMAX_MAX__ 18446744073709551615ULL
-// S390X:#define __UINTMAX_TYPE__ long long unsigned int
+// S390X:#define __UINTMAX_C_SUFFIX__ UL
+// S390X:#define __UINTMAX_MAX__ 18446744073709551615UL
+// S390X:#define __UINTMAX_TYPE__ long unsigned int
 // S390X:#define __UINTMAX_WIDTH__ 64
 // S390X:#define __UINTPTR_MAX__ 18446744073709551615UL
 // S390X:#define __UINTPTR_TYPE__ long unsigned int
@@ -6514,6 +6794,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-none < /dev/null | FileCheck -check-prefix SPARC %s
 //
 // SPARC-NOT:#define _LP64
+// SPARC:#define __BIGGEST_ALIGNMENT__ 8
 // SPARC:#define __BIG_ENDIAN__ 1
 // SPARC:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // SPARC:#define __CHAR16_TYPE__ unsigned short
@@ -6532,7 +6813,7 @@
 // SPARC:#define __DBL_MIN_10_EXP__ (-307)
 // SPARC:#define __DBL_MIN_EXP__ (-1021)
 // SPARC:#define __DBL_MIN__ 2.2250738585072014e-308
-// SPARC:#define __DECIMAL_DIG__ 17
+// SPARC:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // SPARC:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // SPARC:#define __FLT_DIG__ 6
 // SPARC:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -6574,10 +6855,10 @@
 // SPARC:#define __INTMAX_MAX__ 9223372036854775807LL
 // SPARC:#define __INTMAX_TYPE__ long long int
 // SPARC:#define __INTMAX_WIDTH__ 64
-// SPARC:#define __INTPTR_FMTd__ "ld"
-// SPARC:#define __INTPTR_FMTi__ "li"
-// SPARC:#define __INTPTR_MAX__ 2147483647L
-// SPARC:#define __INTPTR_TYPE__ long int
+// SPARC:#define __INTPTR_FMTd__ "d"
+// SPARC:#define __INTPTR_FMTi__ "i"
+// SPARC:#define __INTPTR_MAX__ 2147483647
+// SPARC:#define __INTPTR_TYPE__ int
 // SPARC:#define __INTPTR_WIDTH__ 32
 // SPARC:#define __INT_FAST16_FMTd__ "hd"
 // SPARC:#define __INT_FAST16_FMTi__ "hi"
@@ -6629,7 +6910,7 @@
 // SPARC:#define __LONG_MAX__ 2147483647L
 // SPARC-NOT:#define __LP64__
 // SPARC:#define __POINTER_WIDTH__ 32
-// SPARC:#define __PTRDIFF_TYPE__ long int
+// SPARC:#define __PTRDIFF_TYPE__ int
 // SPARC:#define __PTRDIFF_WIDTH__ 32
 // SPARC:#define __REGISTER_PREFIX__
 // SPARC:#define __SCHAR_MAX__ 127
@@ -6649,7 +6930,7 @@
 // SPARC:#define __SIZEOF_WCHAR_T__ 4
 // SPARC:#define __SIZEOF_WINT_T__ 4
 // SPARC:#define __SIZE_MAX__ 4294967295U
-// SPARC:#define __SIZE_TYPE__ long unsigned int
+// SPARC:#define __SIZE_TYPE__ unsigned int
 // SPARC:#define __SIZE_WIDTH__ 32
 // SPARC:#define __UINT16_C_SUFFIX__ {{$}}
 // SPARC:#define __UINT16_MAX__ 65535
@@ -6668,7 +6949,7 @@
 // SPARC:#define __UINTMAX_TYPE__ long long unsigned int
 // SPARC:#define __UINTMAX_WIDTH__ 64
 // SPARC:#define __UINTPTR_MAX__ 4294967295U
-// SPARC:#define __UINTPTR_TYPE__ long unsigned int
+// SPARC:#define __UINTPTR_TYPE__ unsigned int
 // SPARC:#define __UINTPTR_WIDTH__ 32
 // SPARC:#define __UINT_FAST16_MAX__ 65535
 // SPARC:#define __UINT_FAST16_TYPE__ unsigned short
@@ -6698,9 +6979,20 @@
 // SPARC:#define __sparcv8 1
 // SPARC:#define sparc 1
 // 
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-netbsd < /dev/null | FileCheck -check-prefix SPARC-NETOPENBSD %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-openbsd < /dev/null | FileCheck -check-prefix SPARC-NETOPENBSD %s
+// SPARC-NETOPENBSD:#define __INTPTR_FMTd__ "ld"
+// SPARC-NETOPENBSD:#define __INTPTR_FMTi__ "li"
+// SPARC-NETOPENBSD:#define __INTPTR_MAX__ 2147483647L
+// SPARC-NETOPENBSD:#define __INTPTR_TYPE__ long int
+// SPARC-NETOPENBSD:#define __PTRDIFF_TYPE__ long int
+// SPARC-NETOPENBSD:#define __SIZE_TYPE__ long unsigned int
+// SPARC-NETOPENBSD:#define __UINTPTR_TYPE__ long unsigned int
+
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=tce-none-none < /dev/null | FileCheck -check-prefix TCE %s
 //
 // TCE-NOT:#define _LP64
+// TCE:#define __BIGGEST_ALIGNMENT__ 4
 // TCE:#define __BIG_ENDIAN__ 1
 // TCE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // TCE:#define __CHAR16_TYPE__ unsigned short
@@ -6719,7 +7011,7 @@
 // TCE:#define __DBL_MIN_10_EXP__ (-37)
 // TCE:#define __DBL_MIN_EXP__ (-125)
 // TCE:#define __DBL_MIN__ 1.17549435e-38
-// TCE:#define __DECIMAL_DIG__ -1
+// TCE:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // TCE:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // TCE:#define __FLT_DIG__ 6
 // TCE:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -6868,6 +7160,7 @@
 //
 // X86_64:#define _LP64 1
 // X86_64-NOT:#define _LP32 1
+// X86_64:#define __BIGGEST_ALIGNMENT__ 16
 // X86_64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64:#define __CHAR16_TYPE__ unsigned short
 // X86_64:#define __CHAR32_TYPE__ unsigned int
@@ -6885,7 +7178,7 @@
 // X86_64:#define __DBL_MIN_10_EXP__ (-307)
 // X86_64:#define __DBL_MIN_EXP__ (-1021)
 // X86_64:#define __DBL_MIN__ 2.2250738585072014e-308
-// X86_64:#define __DECIMAL_DIG__ 21
+// X86_64:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // X86_64:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // X86_64:#define __FLT_DIG__ 6
 // X86_64:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -7069,6 +7362,7 @@
 //
 // X32:#define _ILP32 1
 // X32-NOT:#define _LP64 1
+// X32:#define __BIGGEST_ALIGNMENT__ 16
 // X32:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X32:#define __CHAR16_TYPE__ unsigned short
 // X32:#define __CHAR32_TYPE__ unsigned int
@@ -7086,7 +7380,7 @@
 // X32:#define __DBL_MIN_10_EXP__ (-307)
 // X32:#define __DBL_MIN_EXP__ (-1021)
 // X32:#define __DBL_MIN__ 2.2250738585072014e-308
-// X32:#define __DECIMAL_DIG__ 21
+// X32:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // X32:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // X32:#define __FLT_DIG__ 6
 // X32:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -7259,9 +7553,315 @@
 // X32:#define __x86_64 1
 // X32:#define __x86_64__ 1
 //
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-unknown-cloudabi < /dev/null | FileCheck -check-prefix X86_64-CLOUDABI %s
+//
+// X86_64-CLOUDABI:#define _LP64 1
+// X86_64-CLOUDABI:#define __ATOMIC_ACQUIRE 2
+// X86_64-CLOUDABI:#define __ATOMIC_ACQ_REL 4
+// X86_64-CLOUDABI:#define __ATOMIC_CONSUME 1
+// X86_64-CLOUDABI:#define __ATOMIC_RELAXED 0
+// X86_64-CLOUDABI:#define __ATOMIC_RELEASE 3
+// X86_64-CLOUDABI:#define __ATOMIC_SEQ_CST 5
+// X86_64-CLOUDABI:#define __BIGGEST_ALIGNMENT__ 16
+// X86_64-CLOUDABI:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+// X86_64-CLOUDABI:#define __CHAR16_TYPE__ unsigned short
+// X86_64-CLOUDABI:#define __CHAR32_TYPE__ unsigned int
+// X86_64-CLOUDABI:#define __CHAR_BIT__ 8
+// X86_64-CLOUDABI:#define __CONSTANT_CFSTRINGS__ 1
+// X86_64-CLOUDABI:#define __CloudABI__ 1
+// X86_64-CLOUDABI:#define __DBL_DECIMAL_DIG__ 17
+// X86_64-CLOUDABI:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// X86_64-CLOUDABI:#define __DBL_DIG__ 15
+// X86_64-CLOUDABI:#define __DBL_EPSILON__ 2.2204460492503131e-16
+// X86_64-CLOUDABI:#define __DBL_HAS_DENORM__ 1
+// X86_64-CLOUDABI:#define __DBL_HAS_INFINITY__ 1
+// X86_64-CLOUDABI:#define __DBL_HAS_QUIET_NAN__ 1
+// X86_64-CLOUDABI:#define __DBL_MANT_DIG__ 53
+// X86_64-CLOUDABI:#define __DBL_MAX_10_EXP__ 308
+// X86_64-CLOUDABI:#define __DBL_MAX_EXP__ 1024
+// X86_64-CLOUDABI:#define __DBL_MAX__ 1.7976931348623157e+308
+// X86_64-CLOUDABI:#define __DBL_MIN_10_EXP__ (-307)
+// X86_64-CLOUDABI:#define __DBL_MIN_EXP__ (-1021)
+// X86_64-CLOUDABI:#define __DBL_MIN__ 2.2250738585072014e-308
+// X86_64-CLOUDABI:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
+// X86_64-CLOUDABI:#define __ELF__ 1
+// X86_64-CLOUDABI:#define __FINITE_MATH_ONLY__ 0
+// X86_64-CLOUDABI:#define __FLT_DECIMAL_DIG__ 9
+// X86_64-CLOUDABI:#define __FLT_DENORM_MIN__ 1.40129846e-45F
+// X86_64-CLOUDABI:#define __FLT_DIG__ 6
+// X86_64-CLOUDABI:#define __FLT_EPSILON__ 1.19209290e-7F
+// X86_64-CLOUDABI:#define __FLT_EVAL_METHOD__ 0
+// X86_64-CLOUDABI:#define __FLT_HAS_DENORM__ 1
+// X86_64-CLOUDABI:#define __FLT_HAS_INFINITY__ 1
+// X86_64-CLOUDABI:#define __FLT_HAS_QUIET_NAN__ 1
+// X86_64-CLOUDABI:#define __FLT_MANT_DIG__ 24
+// X86_64-CLOUDABI:#define __FLT_MAX_10_EXP__ 38
+// X86_64-CLOUDABI:#define __FLT_MAX_EXP__ 128
+// X86_64-CLOUDABI:#define __FLT_MAX__ 3.40282347e+38F
+// X86_64-CLOUDABI:#define __FLT_MIN_10_EXP__ (-37)
+// X86_64-CLOUDABI:#define __FLT_MIN_EXP__ (-125)
+// X86_64-CLOUDABI:#define __FLT_MIN__ 1.17549435e-38F
+// X86_64-CLOUDABI:#define __FLT_RADIX__ 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_BOOL_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_CHAR16_T_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_CHAR32_T_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_CHAR_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_INT_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_LLONG_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_LONG_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_POINTER_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_SHORT_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_TEST_AND_SET_TRUEVAL 1
+// X86_64-CLOUDABI:#define __GCC_ATOMIC_WCHAR_T_LOCK_FREE 2
+// X86_64-CLOUDABI:#define __GNUC_MINOR__ 2
+// X86_64-CLOUDABI:#define __GNUC_PATCHLEVEL__ 1
+// X86_64-CLOUDABI:#define __GNUC_STDC_INLINE__ 1
+// X86_64-CLOUDABI:#define __GNUC__ 4
+// X86_64-CLOUDABI:#define __GXX_ABI_VERSION 1002
+// X86_64-CLOUDABI:#define __GXX_RTTI 1
+// X86_64-CLOUDABI:#define __INT16_C_SUFFIX__ 
+// X86_64-CLOUDABI:#define __INT16_FMTd__ "hd"
+// X86_64-CLOUDABI:#define __INT16_FMTi__ "hi"
+// X86_64-CLOUDABI:#define __INT16_MAX__ 32767
+// X86_64-CLOUDABI:#define __INT16_TYPE__ short
+// X86_64-CLOUDABI:#define __INT32_C_SUFFIX__ 
+// X86_64-CLOUDABI:#define __INT32_FMTd__ "d"
+// X86_64-CLOUDABI:#define __INT32_FMTi__ "i"
+// X86_64-CLOUDABI:#define __INT32_MAX__ 2147483647
+// X86_64-CLOUDABI:#define __INT32_TYPE__ int
+// X86_64-CLOUDABI:#define __INT64_C_SUFFIX__ L
+// X86_64-CLOUDABI:#define __INT64_FMTd__ "ld"
+// X86_64-CLOUDABI:#define __INT64_FMTi__ "li"
+// X86_64-CLOUDABI:#define __INT64_MAX__ 9223372036854775807L
+// X86_64-CLOUDABI:#define __INT64_TYPE__ long int
+// X86_64-CLOUDABI:#define __INT8_C_SUFFIX__ 
+// X86_64-CLOUDABI:#define __INT8_FMTd__ "hhd"
+// X86_64-CLOUDABI:#define __INT8_FMTi__ "hhi"
+// X86_64-CLOUDABI:#define __INT8_MAX__ 127
+// X86_64-CLOUDABI:#define __INT8_TYPE__ signed char
+// X86_64-CLOUDABI:#define __INTMAX_C_SUFFIX__ L
+// X86_64-CLOUDABI:#define __INTMAX_FMTd__ "ld"
+// X86_64-CLOUDABI:#define __INTMAX_FMTi__ "li"
+// X86_64-CLOUDABI:#define __INTMAX_MAX__ 9223372036854775807L
+// X86_64-CLOUDABI:#define __INTMAX_TYPE__ long int
+// X86_64-CLOUDABI:#define __INTMAX_WIDTH__ 64
+// X86_64-CLOUDABI:#define __INTPTR_FMTd__ "ld"
+// X86_64-CLOUDABI:#define __INTPTR_FMTi__ "li"
+// X86_64-CLOUDABI:#define __INTPTR_MAX__ 9223372036854775807L
+// X86_64-CLOUDABI:#define __INTPTR_TYPE__ long int
+// X86_64-CLOUDABI:#define __INTPTR_WIDTH__ 64
+// X86_64-CLOUDABI:#define __INT_FAST16_FMTd__ "hd"
+// X86_64-CLOUDABI:#define __INT_FAST16_FMTi__ "hi"
+// X86_64-CLOUDABI:#define __INT_FAST16_MAX__ 32767
+// X86_64-CLOUDABI:#define __INT_FAST16_TYPE__ short
+// X86_64-CLOUDABI:#define __INT_FAST32_FMTd__ "d"
+// X86_64-CLOUDABI:#define __INT_FAST32_FMTi__ "i"
+// X86_64-CLOUDABI:#define __INT_FAST32_MAX__ 2147483647
+// X86_64-CLOUDABI:#define __INT_FAST32_TYPE__ int
+// X86_64-CLOUDABI:#define __INT_FAST64_FMTd__ "ld"
+// X86_64-CLOUDABI:#define __INT_FAST64_FMTi__ "li"
+// X86_64-CLOUDABI:#define __INT_FAST64_MAX__ 9223372036854775807L
+// X86_64-CLOUDABI:#define __INT_FAST64_TYPE__ long int
+// X86_64-CLOUDABI:#define __INT_FAST8_FMTd__ "hhd"
+// X86_64-CLOUDABI:#define __INT_FAST8_FMTi__ "hhi"
+// X86_64-CLOUDABI:#define __INT_FAST8_MAX__ 127
+// X86_64-CLOUDABI:#define __INT_FAST8_TYPE__ signed char
+// X86_64-CLOUDABI:#define __INT_LEAST16_FMTd__ "hd"
+// X86_64-CLOUDABI:#define __INT_LEAST16_FMTi__ "hi"
+// X86_64-CLOUDABI:#define __INT_LEAST16_MAX__ 32767
+// X86_64-CLOUDABI:#define __INT_LEAST16_TYPE__ short
+// X86_64-CLOUDABI:#define __INT_LEAST32_FMTd__ "d"
+// X86_64-CLOUDABI:#define __INT_LEAST32_FMTi__ "i"
+// X86_64-CLOUDABI:#define __INT_LEAST32_MAX__ 2147483647
+// X86_64-CLOUDABI:#define __INT_LEAST32_TYPE__ int
+// X86_64-CLOUDABI:#define __INT_LEAST64_FMTd__ "ld"
+// X86_64-CLOUDABI:#define __INT_LEAST64_FMTi__ "li"
+// X86_64-CLOUDABI:#define __INT_LEAST64_MAX__ 9223372036854775807L
+// X86_64-CLOUDABI:#define __INT_LEAST64_TYPE__ long int
+// X86_64-CLOUDABI:#define __INT_LEAST8_FMTd__ "hhd"
+// X86_64-CLOUDABI:#define __INT_LEAST8_FMTi__ "hhi"
+// X86_64-CLOUDABI:#define __INT_LEAST8_MAX__ 127
+// X86_64-CLOUDABI:#define __INT_LEAST8_TYPE__ signed char
+// X86_64-CLOUDABI:#define __INT_MAX__ 2147483647
+// X86_64-CLOUDABI:#define __LDBL_DECIMAL_DIG__ 21
+// X86_64-CLOUDABI:#define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
+// X86_64-CLOUDABI:#define __LDBL_DIG__ 18
+// X86_64-CLOUDABI:#define __LDBL_EPSILON__ 1.08420217248550443401e-19L
+// X86_64-CLOUDABI:#define __LDBL_HAS_DENORM__ 1
+// X86_64-CLOUDABI:#define __LDBL_HAS_INFINITY__ 1
+// X86_64-CLOUDABI:#define __LDBL_HAS_QUIET_NAN__ 1
+// X86_64-CLOUDABI:#define __LDBL_MANT_DIG__ 64
+// X86_64-CLOUDABI:#define __LDBL_MAX_10_EXP__ 4932
+// X86_64-CLOUDABI:#define __LDBL_MAX_EXP__ 16384
+// X86_64-CLOUDABI:#define __LDBL_MAX__ 1.18973149535723176502e+4932L
+// X86_64-CLOUDABI:#define __LDBL_MIN_10_EXP__ (-4931)
+// X86_64-CLOUDABI:#define __LDBL_MIN_EXP__ (-16381)
+// X86_64-CLOUDABI:#define __LDBL_MIN__ 3.36210314311209350626e-4932L
+// X86_64-CLOUDABI:#define __LITTLE_ENDIAN__ 1
+// X86_64-CLOUDABI:#define __LONG_LONG_MAX__ 9223372036854775807LL
+// X86_64-CLOUDABI:#define __LONG_MAX__ 9223372036854775807L
+// X86_64-CLOUDABI:#define __LP64__ 1
+// X86_64-CLOUDABI:#define __MMX__ 1
+// X86_64-CLOUDABI:#define __NO_INLINE__ 1
+// X86_64-CLOUDABI:#define __NO_MATH_INLINES 1
+// X86_64-CLOUDABI:#define __ORDER_BIG_ENDIAN__ 4321
+// X86_64-CLOUDABI:#define __ORDER_LITTLE_ENDIAN__ 1234
+// X86_64-CLOUDABI:#define __ORDER_PDP_ENDIAN__ 3412
+// X86_64-CLOUDABI:#define __POINTER_WIDTH__ 64
+// X86_64-CLOUDABI:#define __PRAGMA_REDEFINE_EXTNAME 1
+// X86_64-CLOUDABI:#define __PTRDIFF_FMTd__ "ld"
+// X86_64-CLOUDABI:#define __PTRDIFF_FMTi__ "li"
+// X86_64-CLOUDABI:#define __PTRDIFF_MAX__ 9223372036854775807L
+// X86_64-CLOUDABI:#define __PTRDIFF_TYPE__ long int
+// X86_64-CLOUDABI:#define __PTRDIFF_WIDTH__ 64
+// X86_64-CLOUDABI:#define __REGISTER_PREFIX__ 
+// X86_64-CLOUDABI:#define __SCHAR_MAX__ 127
+// X86_64-CLOUDABI:#define __SHRT_MAX__ 32767
+// X86_64-CLOUDABI:#define __SIG_ATOMIC_MAX__ 2147483647
+// X86_64-CLOUDABI:#define __SIG_ATOMIC_WIDTH__ 32
+// X86_64-CLOUDABI:#define __SIZEOF_DOUBLE__ 8
+// X86_64-CLOUDABI:#define __SIZEOF_FLOAT__ 4
+// X86_64-CLOUDABI:#define __SIZEOF_INT128__ 16
+// X86_64-CLOUDABI:#define __SIZEOF_INT__ 4
+// X86_64-CLOUDABI:#define __SIZEOF_LONG_DOUBLE__ 16
+// X86_64-CLOUDABI:#define __SIZEOF_LONG_LONG__ 8
+// X86_64-CLOUDABI:#define __SIZEOF_LONG__ 8
+// X86_64-CLOUDABI:#define __SIZEOF_POINTER__ 8
+// X86_64-CLOUDABI:#define __SIZEOF_PTRDIFF_T__ 8
+// X86_64-CLOUDABI:#define __SIZEOF_SHORT__ 2
+// X86_64-CLOUDABI:#define __SIZEOF_SIZE_T__ 8
+// X86_64-CLOUDABI:#define __SIZEOF_WCHAR_T__ 4
+// X86_64-CLOUDABI:#define __SIZEOF_WINT_T__ 4
+// X86_64-CLOUDABI:#define __SIZE_FMTX__ "lX"
+// X86_64-CLOUDABI:#define __SIZE_FMTo__ "lo"
+// X86_64-CLOUDABI:#define __SIZE_FMTu__ "lu"
+// X86_64-CLOUDABI:#define __SIZE_FMTx__ "lx"
+// X86_64-CLOUDABI:#define __SIZE_MAX__ 18446744073709551615UL
+// X86_64-CLOUDABI:#define __SIZE_TYPE__ long unsigned int
+// X86_64-CLOUDABI:#define __SIZE_WIDTH__ 64
+// X86_64-CLOUDABI:#define __SSE2_MATH__ 1
+// X86_64-CLOUDABI:#define __SSE2__ 1
+// X86_64-CLOUDABI:#define __SSE_MATH__ 1
+// X86_64-CLOUDABI:#define __SSE__ 1
+// X86_64-CLOUDABI:#define __STDC_HOSTED__ 0
+// X86_64-CLOUDABI:#define __STDC_ISO_10646__ 201206L
+// X86_64-CLOUDABI:#define __STDC_UTF_16__ 1
+// X86_64-CLOUDABI:#define __STDC_UTF_32__ 1
+// X86_64-CLOUDABI:#define __STDC_VERSION__ 201112L
+// X86_64-CLOUDABI:#define __STDC__ 1
+// X86_64-CLOUDABI:#define __UINT16_C_SUFFIX__ 
+// X86_64-CLOUDABI:#define __UINT16_FMTX__ "hX"
+// X86_64-CLOUDABI:#define __UINT16_FMTo__ "ho"
+// X86_64-CLOUDABI:#define __UINT16_FMTu__ "hu"
+// X86_64-CLOUDABI:#define __UINT16_FMTx__ "hx"
+// X86_64-CLOUDABI:#define __UINT16_MAX__ 65535
+// X86_64-CLOUDABI:#define __UINT16_TYPE__ unsigned short
+// X86_64-CLOUDABI:#define __UINT32_C_SUFFIX__ U
+// X86_64-CLOUDABI:#define __UINT32_FMTX__ "X"
+// X86_64-CLOUDABI:#define __UINT32_FMTo__ "o"
+// X86_64-CLOUDABI:#define __UINT32_FMTu__ "u"
+// X86_64-CLOUDABI:#define __UINT32_FMTx__ "x"
+// X86_64-CLOUDABI:#define __UINT32_MAX__ 4294967295U
+// X86_64-CLOUDABI:#define __UINT32_TYPE__ unsigned int
+// X86_64-CLOUDABI:#define __UINT64_C_SUFFIX__ UL
+// X86_64-CLOUDABI:#define __UINT64_FMTX__ "lX"
+// X86_64-CLOUDABI:#define __UINT64_FMTo__ "lo"
+// X86_64-CLOUDABI:#define __UINT64_FMTu__ "lu"
+// X86_64-CLOUDABI:#define __UINT64_FMTx__ "lx"
+// X86_64-CLOUDABI:#define __UINT64_MAX__ 18446744073709551615UL
+// X86_64-CLOUDABI:#define __UINT64_TYPE__ long unsigned int
+// X86_64-CLOUDABI:#define __UINT8_C_SUFFIX__ 
+// X86_64-CLOUDABI:#define __UINT8_FMTX__ "hhX"
+// X86_64-CLOUDABI:#define __UINT8_FMTo__ "hho"
+// X86_64-CLOUDABI:#define __UINT8_FMTu__ "hhu"
+// X86_64-CLOUDABI:#define __UINT8_FMTx__ "hhx"
+// X86_64-CLOUDABI:#define __UINT8_MAX__ 255
+// X86_64-CLOUDABI:#define __UINT8_TYPE__ unsigned char
+// X86_64-CLOUDABI:#define __UINTMAX_C_SUFFIX__ UL
+// X86_64-CLOUDABI:#define __UINTMAX_FMTX__ "lX"
+// X86_64-CLOUDABI:#define __UINTMAX_FMTo__ "lo"
+// X86_64-CLOUDABI:#define __UINTMAX_FMTu__ "lu"
+// X86_64-CLOUDABI:#define __UINTMAX_FMTx__ "lx"
+// X86_64-CLOUDABI:#define __UINTMAX_MAX__ 18446744073709551615UL
+// X86_64-CLOUDABI:#define __UINTMAX_TYPE__ long unsigned int
+// X86_64-CLOUDABI:#define __UINTMAX_WIDTH__ 64
+// X86_64-CLOUDABI:#define __UINTPTR_FMTX__ "lX"
+// X86_64-CLOUDABI:#define __UINTPTR_FMTo__ "lo"
+// X86_64-CLOUDABI:#define __UINTPTR_FMTu__ "lu"
+// X86_64-CLOUDABI:#define __UINTPTR_FMTx__ "lx"
+// X86_64-CLOUDABI:#define __UINTPTR_MAX__ 18446744073709551615UL
+// X86_64-CLOUDABI:#define __UINTPTR_TYPE__ long unsigned int
+// X86_64-CLOUDABI:#define __UINTPTR_WIDTH__ 64
+// X86_64-CLOUDABI:#define __UINT_FAST16_FMTX__ "hX"
+// X86_64-CLOUDABI:#define __UINT_FAST16_FMTo__ "ho"
+// X86_64-CLOUDABI:#define __UINT_FAST16_FMTu__ "hu"
+// X86_64-CLOUDABI:#define __UINT_FAST16_FMTx__ "hx"
+// X86_64-CLOUDABI:#define __UINT_FAST16_MAX__ 65535
+// X86_64-CLOUDABI:#define __UINT_FAST16_TYPE__ unsigned short
+// X86_64-CLOUDABI:#define __UINT_FAST32_FMTX__ "X"
+// X86_64-CLOUDABI:#define __UINT_FAST32_FMTo__ "o"
+// X86_64-CLOUDABI:#define __UINT_FAST32_FMTu__ "u"
+// X86_64-CLOUDABI:#define __UINT_FAST32_FMTx__ "x"
+// X86_64-CLOUDABI:#define __UINT_FAST32_MAX__ 4294967295U
+// X86_64-CLOUDABI:#define __UINT_FAST32_TYPE__ unsigned int
+// X86_64-CLOUDABI:#define __UINT_FAST64_FMTX__ "lX"
+// X86_64-CLOUDABI:#define __UINT_FAST64_FMTo__ "lo"
+// X86_64-CLOUDABI:#define __UINT_FAST64_FMTu__ "lu"
+// X86_64-CLOUDABI:#define __UINT_FAST64_FMTx__ "lx"
+// X86_64-CLOUDABI:#define __UINT_FAST64_MAX__ 18446744073709551615UL
+// X86_64-CLOUDABI:#define __UINT_FAST64_TYPE__ long unsigned int
+// X86_64-CLOUDABI:#define __UINT_FAST8_FMTX__ "hhX"
+// X86_64-CLOUDABI:#define __UINT_FAST8_FMTo__ "hho"
+// X86_64-CLOUDABI:#define __UINT_FAST8_FMTu__ "hhu"
+// X86_64-CLOUDABI:#define __UINT_FAST8_FMTx__ "hhx"
+// X86_64-CLOUDABI:#define __UINT_FAST8_MAX__ 255
+// X86_64-CLOUDABI:#define __UINT_FAST8_TYPE__ unsigned char
+// X86_64-CLOUDABI:#define __UINT_LEAST16_FMTX__ "hX"
+// X86_64-CLOUDABI:#define __UINT_LEAST16_FMTo__ "ho"
+// X86_64-CLOUDABI:#define __UINT_LEAST16_FMTu__ "hu"
+// X86_64-CLOUDABI:#define __UINT_LEAST16_FMTx__ "hx"
+// X86_64-CLOUDABI:#define __UINT_LEAST16_MAX__ 65535
+// X86_64-CLOUDABI:#define __UINT_LEAST16_TYPE__ unsigned short
+// X86_64-CLOUDABI:#define __UINT_LEAST32_FMTX__ "X"
+// X86_64-CLOUDABI:#define __UINT_LEAST32_FMTo__ "o"
+// X86_64-CLOUDABI:#define __UINT_LEAST32_FMTu__ "u"
+// X86_64-CLOUDABI:#define __UINT_LEAST32_FMTx__ "x"
+// X86_64-CLOUDABI:#define __UINT_LEAST32_MAX__ 4294967295U
+// X86_64-CLOUDABI:#define __UINT_LEAST32_TYPE__ unsigned int
+// X86_64-CLOUDABI:#define __UINT_LEAST64_FMTX__ "lX"
+// X86_64-CLOUDABI:#define __UINT_LEAST64_FMTo__ "lo"
+// X86_64-CLOUDABI:#define __UINT_LEAST64_FMTu__ "lu"
+// X86_64-CLOUDABI:#define __UINT_LEAST64_FMTx__ "lx"
+// X86_64-CLOUDABI:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
+// X86_64-CLOUDABI:#define __UINT_LEAST64_TYPE__ long unsigned int
+// X86_64-CLOUDABI:#define __UINT_LEAST8_FMTX__ "hhX"
+// X86_64-CLOUDABI:#define __UINT_LEAST8_FMTo__ "hho"
+// X86_64-CLOUDABI:#define __UINT_LEAST8_FMTu__ "hhu"
+// X86_64-CLOUDABI:#define __UINT_LEAST8_FMTx__ "hhx"
+// X86_64-CLOUDABI:#define __UINT_LEAST8_MAX__ 255
+// X86_64-CLOUDABI:#define __UINT_LEAST8_TYPE__ unsigned char
+// X86_64-CLOUDABI:#define __USER_LABEL_PREFIX__ 
+// X86_64-CLOUDABI:#define __VERSION__ "4.2.1 Compatible
+// X86_64-CLOUDABI:#define __WCHAR_MAX__ 2147483647
+// X86_64-CLOUDABI:#define __WCHAR_TYPE__ int
+// X86_64-CLOUDABI:#define __WCHAR_WIDTH__ 32
+// X86_64-CLOUDABI:#define __WINT_TYPE__ int
+// X86_64-CLOUDABI:#define __WINT_WIDTH__ 32
+// X86_64-CLOUDABI:#define __amd64 1
+// X86_64-CLOUDABI:#define __amd64__ 1
+// X86_64-CLOUDABI:#define __clang__ 1
+// X86_64-CLOUDABI:#define __clang_major__ 
+// X86_64-CLOUDABI:#define __clang_minor__ 
+// X86_64-CLOUDABI:#define __clang_patchlevel__ 
+// X86_64-CLOUDABI:#define __clang_version__ 
+// X86_64-CLOUDABI:#define __llvm__ 1
+// X86_64-CLOUDABI:#define __x86_64 1
+// X86_64-CLOUDABI:#define __x86_64__ 1
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-pc-linux-gnu < /dev/null | FileCheck -check-prefix X86_64-LINUX %s
 //
 // X86_64-LINUX:#define _LP64 1
+// X86_64-LINUX:#define __BIGGEST_ALIGNMENT__ 16
 // X86_64-LINUX:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64-LINUX:#define __CHAR16_TYPE__ unsigned short
 // X86_64-LINUX:#define __CHAR32_TYPE__ unsigned int
@@ -7279,7 +7879,7 @@
 // X86_64-LINUX:#define __DBL_MIN_10_EXP__ (-307)
 // X86_64-LINUX:#define __DBL_MIN_EXP__ (-1021)
 // X86_64-LINUX:#define __DBL_MIN__ 2.2250738585072014e-308
-// X86_64-LINUX:#define __DECIMAL_DIG__ 21
+// X86_64-LINUX:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // X86_64-LINUX:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // X86_64-LINUX:#define __FLT_DIG__ 6
 // X86_64-LINUX:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -7453,13 +8053,17 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-unknown-freebsd9.1 < /dev/null | FileCheck -check-prefix X86_64-FREEBSD %s
 //
+// X86_64-FREEBSD:#define __DBL_DECIMAL_DIG__ 17
+// X86_64-FREEBSD:#define __FLT_DECIMAL_DIG__ 9
 // X86_64-FREEBSD:#define __FreeBSD__ 9
 // X86_64-FREEBSD:#define __FreeBSD_cc_version 900001
+// X86_64-FREEBSD:#define __LDBL_DECIMAL_DIG__ 21
 // X86_64-FREEBSD:#define __STDC_MB_MIGHT_NEQ_WC__ 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-netbsd < /dev/null | FileCheck -check-prefix X86_64-NETBSD %s
 //
 // X86_64-NETBSD:#define _LP64 1
+// X86_64-NETBSD:#define __BIGGEST_ALIGNMENT__ 16
 // X86_64-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // X86_64-NETBSD:#define __CHAR32_TYPE__ unsigned int
@@ -7477,7 +8081,7 @@
 // X86_64-NETBSD:#define __DBL_MIN_10_EXP__ (-307)
 // X86_64-NETBSD:#define __DBL_MIN_EXP__ (-1021)
 // X86_64-NETBSD:#define __DBL_MIN__ 2.2250738585072014e-308
-// X86_64-NETBSD:#define __DECIMAL_DIG__ 21
+// X86_64-NETBSD:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
 // X86_64-NETBSD:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // X86_64-NETBSD:#define __FLT_DIG__ 6
 // X86_64-NETBSD:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -7649,6 +8253,123 @@
 // X86_64-NETBSD:#define __x86_64 1
 // X86_64-NETBSD:#define __x86_64__ 1
 //
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-scei-ps4 < /dev/null | FileCheck -check-prefix PS4 %s
+//
+// PS4:#define _LP64 1
+// PS4:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+// PS4:#define __CHAR16_TYPE__ unsigned short
+// PS4:#define __CHAR32_TYPE__ unsigned int
+// PS4:#define __CHAR_BIT__ 8
+// PS4:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// PS4:#define __DBL_DIG__ 15
+// PS4:#define __DBL_EPSILON__ 2.2204460492503131e-16
+// PS4:#define __DBL_HAS_DENORM__ 1
+// PS4:#define __DBL_HAS_INFINITY__ 1
+// PS4:#define __DBL_HAS_QUIET_NAN__ 1
+// PS4:#define __DBL_MANT_DIG__ 53
+// PS4:#define __DBL_MAX_10_EXP__ 308
+// PS4:#define __DBL_MAX_EXP__ 1024
+// PS4:#define __DBL_MAX__ 1.7976931348623157e+308
+// PS4:#define __DBL_MIN_10_EXP__ (-307)
+// PS4:#define __DBL_MIN_EXP__ (-1021)
+// PS4:#define __DBL_MIN__ 2.2250738585072014e-308
+// PS4:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__
+// PS4:#define __ELF__ 1
+// PS4:#define __FLT_DENORM_MIN__ 1.40129846e-45F
+// PS4:#define __FLT_DIG__ 6
+// PS4:#define __FLT_EPSILON__ 1.19209290e-7F
+// PS4:#define __FLT_EVAL_METHOD__ 0
+// PS4:#define __FLT_HAS_DENORM__ 1
+// PS4:#define __FLT_HAS_INFINITY__ 1
+// PS4:#define __FLT_HAS_QUIET_NAN__ 1
+// PS4:#define __FLT_MANT_DIG__ 24
+// PS4:#define __FLT_MAX_10_EXP__ 38
+// PS4:#define __FLT_MAX_EXP__ 128
+// PS4:#define __FLT_MAX__ 3.40282347e+38F
+// PS4:#define __FLT_MIN_10_EXP__ (-37)
+// PS4:#define __FLT_MIN_EXP__ (-125)
+// PS4:#define __FLT_MIN__ 1.17549435e-38F
+// PS4:#define __FLT_RADIX__ 2
+// PS4:#define __FreeBSD__ 9
+// PS4:#define __FreeBSD_cc_version 900001
+// PS4:#define __INT16_TYPE__ short
+// PS4:#define __INT32_TYPE__ int
+// PS4:#define __INT64_C_SUFFIX__ L
+// PS4:#define __INT64_TYPE__ long int
+// PS4:#define __INT8_TYPE__ signed char
+// PS4:#define __INTMAX_MAX__ 9223372036854775807L
+// PS4:#define __INTMAX_TYPE__ long int
+// PS4:#define __INTMAX_WIDTH__ 64
+// PS4:#define __INTPTR_TYPE__ long int
+// PS4:#define __INTPTR_WIDTH__ 64
+// PS4:#define __INT_MAX__ 2147483647
+// PS4:#define __KPRINTF_ATTRIBUTE__ 1
+// PS4:#define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
+// PS4:#define __LDBL_DIG__ 18
+// PS4:#define __LDBL_EPSILON__ 1.08420217248550443401e-19L
+// PS4:#define __LDBL_HAS_DENORM__ 1
+// PS4:#define __LDBL_HAS_INFINITY__ 1
+// PS4:#define __LDBL_HAS_QUIET_NAN__ 1
+// PS4:#define __LDBL_MANT_DIG__ 64
+// PS4:#define __LDBL_MAX_10_EXP__ 4932
+// PS4:#define __LDBL_MAX_EXP__ 16384
+// PS4:#define __LDBL_MAX__ 1.18973149535723176502e+4932L
+// PS4:#define __LDBL_MIN_10_EXP__ (-4931)
+// PS4:#define __LDBL_MIN_EXP__ (-16381)
+// PS4:#define __LDBL_MIN__ 3.36210314311209350626e-4932L
+// PS4:#define __LITTLE_ENDIAN__ 1
+// PS4:#define __LONG_LONG_MAX__ 9223372036854775807LL
+// PS4:#define __LONG_MAX__ 9223372036854775807L
+// PS4:#define __LP64__ 1
+// PS4:#define __MMX__ 1
+// PS4:#define __NO_MATH_INLINES 1
+// PS4:#define __POINTER_WIDTH__ 64
+// PS4:#define __PS4__ 1
+// PS4:#define __PTRDIFF_MAX__ 9223372036854775807L
+// PS4:#define __PTRDIFF_TYPE__ long int
+// PS4:#define __PTRDIFF_WIDTH__ 64
+// PS4:#define __REGISTER_PREFIX__ 
+// PS4:#define __SCHAR_MAX__ 127
+// PS4:#define __SHRT_MAX__ 32767
+// PS4:#define __SIG_ATOMIC_MAX__ 2147483647
+// PS4:#define __SIG_ATOMIC_WIDTH__ 32
+// PS4:#define __SIZEOF_DOUBLE__ 8
+// PS4:#define __SIZEOF_FLOAT__ 4
+// PS4:#define __SIZEOF_INT__ 4
+// PS4:#define __SIZEOF_LONG_DOUBLE__ 16
+// PS4:#define __SIZEOF_LONG_LONG__ 8
+// PS4:#define __SIZEOF_LONG__ 8
+// PS4:#define __SIZEOF_POINTER__ 8
+// PS4:#define __SIZEOF_PTRDIFF_T__ 8
+// PS4:#define __SIZEOF_SHORT__ 2
+// PS4:#define __SIZEOF_SIZE_T__ 8
+// PS4:#define __SIZEOF_WCHAR_T__ 2
+// PS4:#define __SIZEOF_WINT_T__ 4
+// PS4:#define __SIZE_TYPE__ long unsigned int
+// PS4:#define __SIZE_WIDTH__ 64
+// PS4:#define __SSE2_MATH__ 1
+// PS4:#define __SSE2__ 1
+// PS4:#define __SSE_MATH__ 1
+// PS4:#define __SSE__ 1
+// PS4:#define __UINTMAX_TYPE__ long unsigned int
+// PS4:#define __USER_LABEL_PREFIX__
+// PS4:#define __WCHAR_MAX__ 65535
+// PS4:#define __WCHAR_TYPE__ unsigned short
+// PS4:#define __WCHAR_UNSIGNED__ 1
+// PS4:#define __WCHAR_WIDTH__ 16
+// PS4:#define __WINT_TYPE__ int
+// PS4:#define __WINT_WIDTH__ 32
+// PS4:#define __amd64 1
+// PS4:#define __amd64__ 1
+// PS4:#define __unix 1
+// PS4:#define __unix__ 1
+// PS4:#define __x86_64 1
+// PS4:#define __x86_64__ 1
+//
+// RUN: %clang_cc1 -E -dM -triple=x86_64-pc-mingw32 < /dev/null | FileCheck -check-prefix X86-64-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -fms-extensions -triple=x86_64-unknown-mingw32 < /dev/null | FileCheck -check-prefix X86-64-DECLSPEC %s
+// X86-64-DECLSPEC: #define __declspec
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-none < /dev/null | FileCheck -check-prefix SPARCV9 %s
 // SPARCV9:#define __INT64_TYPE__ long int
 // SPARCV9:#define __INTMAX_C_SUFFIX__ L
@@ -7693,3 +8414,635 @@
 // XCORE:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // XCORE:#define __LITTLE_ENDIAN__ 1
 // XCORE:#define __XS1B__ 1
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=wasm32-unknown-unknown \
+// RUN:   < /dev/null \
+// RUN:   | FileCheck -check-prefix=WEBASSEMBLY32 %s
+//
+// WEBASSEMBLY32:#define _ILP32 1{{$}}
+// WEBASSEMBLY32-NOT:#define _LP64
+// WEBASSEMBLY32-NEXT:#define __ATOMIC_ACQUIRE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __ATOMIC_ACQ_REL 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __ATOMIC_CONSUME 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __ATOMIC_RELAXED 0{{$}}
+// WEBASSEMBLY32-NEXT:#define __ATOMIC_RELEASE 3{{$}}
+// WEBASSEMBLY32-NEXT:#define __ATOMIC_SEQ_CST 5{{$}}
+// WEBASSEMBLY32-NEXT:#define __BIGGEST_ALIGNMENT__ 16{{$}}
+// WEBASSEMBLY32-NEXT:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__{{$}}
+// WEBASSEMBLY32-NEXT:#define __CHAR16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY32-NEXT:#define __CHAR32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __CHAR_BIT__ 8{{$}}
+// WEBASSEMBLY32-NOT:#define __CHAR_UNSIGNED__
+// WEBASSEMBLY32-NEXT:#define __CONSTANT_CFSTRINGS__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_DECIMAL_DIG__ 17{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_DIG__ 15{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_EPSILON__ 2.2204460492503131e-16{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_HAS_DENORM__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_HAS_INFINITY__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_HAS_QUIET_NAN__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_MANT_DIG__ 53{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_MAX_10_EXP__ 308{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_MAX_EXP__ 1024{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_MAX__ 1.7976931348623157e+308{{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_MIN_10_EXP__ (-307){{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_MIN_EXP__ (-1021){{$}}
+// WEBASSEMBLY32-NEXT:#define __DBL_MIN__ 2.2250738585072014e-308{{$}}
+// WEBASSEMBLY32-NEXT:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__{{$}}
+// WEBASSEMBLY32-NOT:#define __ELF__
+// WEBASSEMBLY32-NEXT:#define __FINITE_MATH_ONLY__ 0{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_DECIMAL_DIG__ 9{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_DENORM_MIN__ 1.40129846e-45F{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_DIG__ 6{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_EPSILON__ 1.19209290e-7F{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_EVAL_METHOD__ 0{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_HAS_DENORM__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_HAS_INFINITY__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_HAS_QUIET_NAN__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_MANT_DIG__ 24{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_MAX_10_EXP__ 38{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_MAX_EXP__ 128{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_MAX__ 3.40282347e+38F{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_MIN_10_EXP__ (-37){{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_MIN_EXP__ (-125){{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_MIN__ 1.17549435e-38F{{$}}
+// WEBASSEMBLY32-NEXT:#define __FLT_RADIX__ 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_BOOL_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_CHAR16_T_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_CHAR32_T_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_CHAR_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_INT_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_LLONG_LOCK_FREE 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_LONG_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_POINTER_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_SHORT_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_TEST_AND_SET_TRUEVAL 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __GCC_ATOMIC_WCHAR_T_LOCK_FREE 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __GNUC_MINOR__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __GNUC_PATCHLEVEL__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __GNUC_STDC_INLINE__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __GNUC__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __GXX_ABI_VERSION 1002{{$}}
+// WEBASSEMBLY32-NEXT:#define __GXX_RTTI 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __ILP32__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT16_C_SUFFIX__ {{$}}
+// WEBASSEMBLY32-NEXT:#define __INT16_FMTd__ "hd"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT16_FMTi__ "hi"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT16_MAX__ 32767{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT16_TYPE__ short{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT32_C_SUFFIX__ {{$}}
+// WEBASSEMBLY32-NEXT:#define __INT32_FMTd__ "d"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT32_FMTi__ "i"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT32_MAX__ 2147483647{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT32_TYPE__ int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT64_C_SUFFIX__ LL{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT64_FMTd__ "lld"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT64_FMTi__ "lli"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT64_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT64_TYPE__ long long int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT8_C_SUFFIX__ {{$}}
+// WEBASSEMBLY32-NEXT:#define __INT8_FMTd__ "hhd"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT8_FMTi__ "hhi"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT8_MAX__ 127{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT8_TYPE__ signed char{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTMAX_C_SUFFIX__ LL{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTMAX_FMTd__ "lld"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTMAX_FMTi__ "lli"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTMAX_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTMAX_TYPE__ long long int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTMAX_WIDTH__ 64{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTPTR_FMTd__ "ld"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTPTR_FMTi__ "li"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTPTR_MAX__ 2147483647L{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTPTR_TYPE__ long int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INTPTR_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST16_FMTd__ "hd"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST16_FMTi__ "hi"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST16_MAX__ 32767{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST16_TYPE__ short{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST32_FMTd__ "d"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST32_FMTi__ "i"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST32_MAX__ 2147483647{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST32_TYPE__ int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST64_FMTd__ "lld"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST64_FMTi__ "lli"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST64_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST64_TYPE__ long long int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST8_FMTd__ "hhd"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST8_FMTi__ "hhi"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST8_MAX__ 127{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_FAST8_TYPE__ signed char{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST16_FMTd__ "hd"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST16_FMTi__ "hi"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST16_MAX__ 32767{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST16_TYPE__ short{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST32_FMTd__ "d"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST32_FMTi__ "i"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST32_MAX__ 2147483647{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST32_TYPE__ int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST64_FMTd__ "lld"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST64_FMTi__ "lli"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST64_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST64_TYPE__ long long int{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST8_FMTd__ "hhd"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST8_FMTi__ "hhi"{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST8_MAX__ 127{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_LEAST8_TYPE__ signed char{{$}}
+// WEBASSEMBLY32-NEXT:#define __INT_MAX__ 2147483647{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_DECIMAL_DIG__ 36{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_DENORM_MIN__ 6.47517511943802511092443895822764655e-4966L{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_DIG__ 33{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_EPSILON__ 1.92592994438723585305597794258492732e-34L{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_HAS_DENORM__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_HAS_INFINITY__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_HAS_QUIET_NAN__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_MANT_DIG__ 113{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_MAX_10_EXP__ 4932{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_MAX_EXP__ 16384{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_MAX__ 1.18973149535723176508575932662800702e+4932L{{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_MIN_10_EXP__ (-4931){{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_MIN_EXP__ (-16381){{$}}
+// WEBASSEMBLY32-NEXT:#define __LDBL_MIN__ 3.36210314311209350626267781732175260e-4932L{{$}}
+// WEBASSEMBLY32-NEXT:#define __LITTLE_ENDIAN__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __LONG_LONG_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY32-NEXT:#define __LONG_MAX__ 2147483647L{{$}}
+// WEBASSEMBLY32-NOT:#define __LP64__
+// WEBASSEMBLY32-NEXT:#define __NO_INLINE__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __ORDER_BIG_ENDIAN__ 4321{{$}}
+// WEBASSEMBLY32-NEXT:#define __ORDER_LITTLE_ENDIAN__ 1234{{$}}
+// WEBASSEMBLY32-NEXT:#define __ORDER_PDP_ENDIAN__ 3412{{$}}
+// WEBASSEMBLY32-NEXT:#define __POINTER_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NEXT:#define __PRAGMA_REDEFINE_EXTNAME 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __PTRDIFF_FMTd__ "ld"{{$}}
+// WEBASSEMBLY32-NEXT:#define __PTRDIFF_FMTi__ "li"{{$}}
+// WEBASSEMBLY32-NEXT:#define __PTRDIFF_MAX__ 2147483647L{{$}}
+// WEBASSEMBLY32-NEXT:#define __PTRDIFF_TYPE__ long int{{$}}
+// WEBASSEMBLY32-NEXT:#define __PTRDIFF_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NOT:#define __REGISTER_PREFIX__
+// WEBASSEMBLY32-NEXT:#define __SCHAR_MAX__ 127{{$}}
+// WEBASSEMBLY32-NEXT:#define __SHRT_MAX__ 32767{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIG_ATOMIC_MAX__ 2147483647L{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIG_ATOMIC_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_DOUBLE__ 8{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_FLOAT__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_INT128__ 16{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_INT__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_LONG_DOUBLE__ 16{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_LONG_LONG__ 8{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_LONG__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_POINTER__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_PTRDIFF_T__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_SHORT__ 2{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_SIZE_T__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_WCHAR_T__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZEOF_WINT_T__ 4{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZE_FMTX__ "lX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZE_FMTo__ "lo"{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZE_FMTu__ "lu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZE_FMTx__ "lx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZE_MAX__ 4294967295UL{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZE_TYPE__ long unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __SIZE_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NEXT:#define __STDC_HOSTED__ 0{{$}}
+// WEBASSEMBLY32-NOT:#define __STDC_MB_MIGHT_NEQ_WC__
+// WEBASSEMBLY32-NOT:#define __STDC_NO_ATOMICS__
+// WEBASSEMBLY32-NOT:#define __STDC_NO_COMPLEX__
+// WEBASSEMBLY32-NOT:#define __STDC_NO_VLA__
+// WEBASSEMBLY32-NOT:#define __STDC_NO_THREADS__
+// WEBASSEMBLY32-NEXT:#define __STDC_UTF_16__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __STDC_UTF_32__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __STDC_VERSION__ 201112L{{$}}
+// WEBASSEMBLY32-NEXT:#define __STDC__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT16_C_SUFFIX__ {{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT16_FMTX__ "hX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT16_FMTo__ "ho"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT16_FMTu__ "hu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT16_FMTx__ "hx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT16_MAX__ 65535{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT32_C_SUFFIX__ U{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT32_FMTX__ "X"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT32_FMTo__ "o"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT32_FMTu__ "u"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT32_FMTx__ "x"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT32_MAX__ 4294967295U{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT64_C_SUFFIX__ ULL{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT64_FMTX__ "llX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT64_FMTo__ "llo"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT64_FMTu__ "llu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT64_FMTx__ "llx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT64_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT64_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT8_C_SUFFIX__ {{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT8_FMTX__ "hhX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT8_FMTo__ "hho"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT8_FMTu__ "hhu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT8_FMTx__ "hhx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT8_MAX__ 255{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT8_TYPE__ unsigned char{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_C_SUFFIX__ ULL{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_FMTX__ "llX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_FMTo__ "llo"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_FMTu__ "llu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_FMTx__ "llx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTMAX_WIDTH__ 64{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTPTR_FMTX__ "lX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTPTR_FMTo__ "lo"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTPTR_FMTu__ "lu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTPTR_FMTx__ "lx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTPTR_MAX__ 4294967295UL{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTPTR_TYPE__ long unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINTPTR_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST16_FMTX__ "hX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST16_FMTo__ "ho"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST16_FMTu__ "hu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST16_FMTx__ "hx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST16_MAX__ 65535{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST32_FMTX__ "X"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST32_FMTo__ "o"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST32_FMTu__ "u"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST32_FMTx__ "x"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST32_MAX__ 4294967295U{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST64_FMTX__ "llX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST64_FMTo__ "llo"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST64_FMTu__ "llu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST64_FMTx__ "llx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST64_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST64_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST8_FMTX__ "hhX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST8_FMTo__ "hho"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST8_FMTu__ "hhu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST8_FMTx__ "hhx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST8_MAX__ 255{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_FAST8_TYPE__ unsigned char{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST16_FMTX__ "hX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST16_FMTo__ "ho"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST16_FMTu__ "hu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST16_FMTx__ "hx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST16_MAX__ 65535{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST32_FMTX__ "X"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST32_FMTo__ "o"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST32_FMTu__ "u"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST32_FMTx__ "x"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST32_MAX__ 4294967295U{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST64_FMTX__ "llX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST64_FMTo__ "llo"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST64_FMTu__ "llu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST64_FMTx__ "llx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST64_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST8_FMTX__ "hhX"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST8_FMTo__ "hho"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST8_FMTu__ "hhu"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST8_FMTx__ "hhx"{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST8_MAX__ 255{{$}}
+// WEBASSEMBLY32-NEXT:#define __UINT_LEAST8_TYPE__ unsigned char{{$}}
+// WEBASSEMBLY32-NEXT:#define __USER_LABEL_PREFIX__ {{$}}
+// WEBASSEMBLY32-NEXT:#define __VERSION__ "{{.*}}"{{$}}
+// WEBASSEMBLY32-NEXT:#define __WCHAR_MAX__ 2147483647{{$}}
+// WEBASSEMBLY32-NEXT:#define __WCHAR_TYPE__ int{{$}}
+// WEBASSEMBLY32-NOT:#define __WCHAR_UNSIGNED__
+// WEBASSEMBLY32-NEXT:#define __WCHAR_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NEXT:#define __WINT_TYPE__ int{{$}}
+// WEBASSEMBLY32-NOT:#define __WINT_UNSIGNED__
+// WEBASSEMBLY32-NEXT:#define __WINT_WIDTH__ 32{{$}}
+// WEBASSEMBLY32-NEXT:#define __clang__ 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __clang_major__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __clang_minor__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __clang_patchlevel__ {{.}}
+// WEBASSEMBLY32-NEXT:#define __clang_version__ "{{.*}}"{{$}}
+// WEBASSEMBLY32-NEXT:#define __llvm__ 1{{$}}
+// WEBASSEMBLY32-NOT:#define __wasm_simd128__
+// WEBASSEMBLY32-NOT:#define __wasm_simd256__
+// WEBASSEMBLY32-NOT:#define __wasm_simd512__
+// WEBASSEMBLY32-NOT:#define __unix
+// WEBASSEMBLY32-NOT:#define __unix__
+// WEBASSEMBLY32-NEXT:#define __wasm 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __wasm32 1{{$}}
+// WEBASSEMBLY32-NEXT:#define __wasm32__ 1{{$}}
+// WEBASSEMBLY32-NOT:#define __wasm64
+// WEBASSEMBLY32-NOT:#define __wasm64__
+// WEBASSEMBLY32-NEXT:#define __wasm__ 1{{$}}
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=wasm64-unknown-unknown \
+// RUN:   < /dev/null \
+// RUN:   | FileCheck -check-prefix=WEBASSEMBLY64 %s
+//
+// WEBASSEMBLY64-NOT:#define _ILP32
+// WEBASSEMBLY64:#define _LP64 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __ATOMIC_ACQUIRE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __ATOMIC_ACQ_REL 4{{$}}
+// WEBASSEMBLY64-NEXT:#define __ATOMIC_CONSUME 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __ATOMIC_RELAXED 0{{$}}
+// WEBASSEMBLY64-NEXT:#define __ATOMIC_RELEASE 3{{$}}
+// WEBASSEMBLY64-NEXT:#define __ATOMIC_SEQ_CST 5{{$}}
+// WEBASSEMBLY64-NEXT:#define __BIGGEST_ALIGNMENT__ 16{{$}}
+// WEBASSEMBLY64-NEXT:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__{{$}}
+// WEBASSEMBLY64-NEXT:#define __CHAR16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY64-NEXT:#define __CHAR32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __CHAR_BIT__ 8{{$}}
+// WEBASSEMBLY64-NOT:#define __CHAR_UNSIGNED__
+// WEBASSEMBLY64-NEXT:#define __CONSTANT_CFSTRINGS__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_DECIMAL_DIG__ 17{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_DIG__ 15{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_EPSILON__ 2.2204460492503131e-16{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_HAS_DENORM__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_HAS_INFINITY__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_HAS_QUIET_NAN__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_MANT_DIG__ 53{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_MAX_10_EXP__ 308{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_MAX_EXP__ 1024{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_MAX__ 1.7976931348623157e+308{{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_MIN_10_EXP__ (-307){{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_MIN_EXP__ (-1021){{$}}
+// WEBASSEMBLY64-NEXT:#define __DBL_MIN__ 2.2250738585072014e-308{{$}}
+// WEBASSEMBLY64-NEXT:#define __DECIMAL_DIG__ __LDBL_DECIMAL_DIG__{{$}}
+// WEBASSEMBLY64-NOT:#define __ELF__
+// WEBASSEMBLY64-NEXT:#define __FINITE_MATH_ONLY__ 0{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_DECIMAL_DIG__ 9{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_DENORM_MIN__ 1.40129846e-45F{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_DIG__ 6{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_EPSILON__ 1.19209290e-7F{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_EVAL_METHOD__ 0{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_HAS_DENORM__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_HAS_INFINITY__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_HAS_QUIET_NAN__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_MANT_DIG__ 24{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_MAX_10_EXP__ 38{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_MAX_EXP__ 128{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_MAX__ 3.40282347e+38F{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_MIN_10_EXP__ (-37){{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_MIN_EXP__ (-125){{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_MIN__ 1.17549435e-38F{{$}}
+// WEBASSEMBLY64-NEXT:#define __FLT_RADIX__ 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_BOOL_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_CHAR16_T_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_CHAR32_T_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_CHAR_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_INT_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_LLONG_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_LONG_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_POINTER_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_SHORT_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_TEST_AND_SET_TRUEVAL 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __GCC_ATOMIC_WCHAR_T_LOCK_FREE 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __GNUC_MINOR__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __GNUC_PATCHLEVEL__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __GNUC_STDC_INLINE__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __GNUC__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __GXX_ABI_VERSION 1002{{$}}
+// WEBASSEMBLY64-NEXT:#define __GXX_RTTI 1{{$}}
+// WEBASSEMBLY64-NOT:#define __ILP32__
+// WEBASSEMBLY64-NEXT:#define __INT16_C_SUFFIX__ {{$}}
+// WEBASSEMBLY64-NEXT:#define __INT16_FMTd__ "hd"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT16_FMTi__ "hi"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT16_MAX__ 32767{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT16_TYPE__ short{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT32_C_SUFFIX__ {{$}}
+// WEBASSEMBLY64-NEXT:#define __INT32_FMTd__ "d"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT32_FMTi__ "i"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT32_MAX__ 2147483647{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT32_TYPE__ int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT64_C_SUFFIX__ LL{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT64_FMTd__ "lld"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT64_FMTi__ "lli"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT64_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT64_TYPE__ long long int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT8_C_SUFFIX__ {{$}}
+// WEBASSEMBLY64-NEXT:#define __INT8_FMTd__ "hhd"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT8_FMTi__ "hhi"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT8_MAX__ 127{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT8_TYPE__ signed char{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTMAX_C_SUFFIX__ LL{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTMAX_FMTd__ "lld"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTMAX_FMTi__ "lli"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTMAX_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTMAX_TYPE__ long long int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTMAX_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTPTR_FMTd__ "ld"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTPTR_FMTi__ "li"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTPTR_MAX__ 9223372036854775807L{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTPTR_TYPE__ long int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INTPTR_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST16_FMTd__ "hd"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST16_FMTi__ "hi"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST16_MAX__ 32767{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST16_TYPE__ short{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST32_FMTd__ "d"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST32_FMTi__ "i"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST32_MAX__ 2147483647{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST32_TYPE__ int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST64_FMTd__ "lld"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST64_FMTi__ "lli"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST64_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST64_TYPE__ long long int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST8_FMTd__ "hhd"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST8_FMTi__ "hhi"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST8_MAX__ 127{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_FAST8_TYPE__ signed char{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST16_FMTd__ "hd"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST16_FMTi__ "hi"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST16_MAX__ 32767{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST16_TYPE__ short{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST32_FMTd__ "d"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST32_FMTi__ "i"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST32_MAX__ 2147483647{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST32_TYPE__ int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST64_FMTd__ "lld"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST64_FMTi__ "lli"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST64_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST64_TYPE__ long long int{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST8_FMTd__ "hhd"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST8_FMTi__ "hhi"{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST8_MAX__ 127{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_LEAST8_TYPE__ signed char{{$}}
+// WEBASSEMBLY64-NEXT:#define __INT_MAX__ 2147483647{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_DECIMAL_DIG__ 36{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_DENORM_MIN__ 6.47517511943802511092443895822764655e-4966L{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_DIG__ 33{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_EPSILON__ 1.92592994438723585305597794258492732e-34L{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_HAS_DENORM__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_HAS_INFINITY__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_HAS_QUIET_NAN__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_MANT_DIG__ 113{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_MAX_10_EXP__ 4932{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_MAX_EXP__ 16384{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_MAX__ 1.18973149535723176508575932662800702e+4932L{{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_MIN_10_EXP__ (-4931){{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_MIN_EXP__ (-16381){{$}}
+// WEBASSEMBLY64-NEXT:#define __LDBL_MIN__ 3.36210314311209350626267781732175260e-4932L{{$}}
+// WEBASSEMBLY64-NEXT:#define __LITTLE_ENDIAN__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __LONG_LONG_MAX__ 9223372036854775807LL{{$}}
+// WEBASSEMBLY64-NEXT:#define __LONG_MAX__ 9223372036854775807L{{$}}
+// WEBASSEMBLY64-NEXT:#define __LP64__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __NO_INLINE__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __ORDER_BIG_ENDIAN__ 4321{{$}}
+// WEBASSEMBLY64-NEXT:#define __ORDER_LITTLE_ENDIAN__ 1234{{$}}
+// WEBASSEMBLY64-NEXT:#define __ORDER_PDP_ENDIAN__ 3412{{$}}
+// WEBASSEMBLY64-NEXT:#define __POINTER_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NEXT:#define __PRAGMA_REDEFINE_EXTNAME 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __PTRDIFF_FMTd__ "ld"{{$}}
+// WEBASSEMBLY64-NEXT:#define __PTRDIFF_FMTi__ "li"{{$}}
+// WEBASSEMBLY64-NEXT:#define __PTRDIFF_MAX__ 9223372036854775807L{{$}}
+// WEBASSEMBLY64-NEXT:#define __PTRDIFF_TYPE__ long int{{$}}
+// WEBASSEMBLY64-NEXT:#define __PTRDIFF_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NOT:#define __REGISTER_PREFIX__
+// WEBASSEMBLY64-NEXT:#define __SCHAR_MAX__ 127{{$}}
+// WEBASSEMBLY64-NEXT:#define __SHRT_MAX__ 32767{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIG_ATOMIC_MAX__ 9223372036854775807L{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIG_ATOMIC_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_DOUBLE__ 8{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_FLOAT__ 4{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_INT128__ 16{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_INT__ 4{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_LONG_DOUBLE__ 16{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_LONG_LONG__ 8{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_LONG__ 8{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_POINTER__ 8{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_PTRDIFF_T__ 8{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_SHORT__ 2{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_SIZE_T__ 8{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_WCHAR_T__ 4{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZEOF_WINT_T__ 4{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZE_FMTX__ "lX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZE_FMTo__ "lo"{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZE_FMTu__ "lu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZE_FMTx__ "lx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZE_MAX__ 18446744073709551615UL{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZE_TYPE__ long unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __SIZE_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NEXT:#define __STDC_HOSTED__ 0{{$}}
+// WEBASSEMBLY64-NOT:#define __STDC_MB_MIGHT_NEQ_WC__
+// WEBASSEMBLY64-NOT:#define __STDC_NO_ATOMICS__
+// WEBASSEMBLY64-NOT:#define __STDC_NO_COMPLEX__
+// WEBASSEMBLY64-NOT:#define __STDC_NO_VLA__
+// WEBASSEMBLY64-NOT:#define __STDC_NO_THREADS__
+// WEBASSEMBLY64-NEXT:#define __STDC_UTF_16__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __STDC_UTF_32__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __STDC_VERSION__ 201112L{{$}}
+// WEBASSEMBLY64-NEXT:#define __STDC__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT16_C_SUFFIX__ {{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT16_FMTX__ "hX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT16_FMTo__ "ho"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT16_FMTu__ "hu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT16_FMTx__ "hx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT16_MAX__ 65535{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT32_C_SUFFIX__ U{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT32_FMTX__ "X"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT32_FMTo__ "o"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT32_FMTu__ "u"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT32_FMTx__ "x"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT32_MAX__ 4294967295U{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT64_C_SUFFIX__ ULL{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT64_FMTX__ "llX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT64_FMTo__ "llo"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT64_FMTu__ "llu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT64_FMTx__ "llx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT64_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT64_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT8_C_SUFFIX__ {{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT8_FMTX__ "hhX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT8_FMTo__ "hho"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT8_FMTu__ "hhu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT8_FMTx__ "hhx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT8_MAX__ 255{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT8_TYPE__ unsigned char{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_C_SUFFIX__ ULL{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_FMTX__ "llX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_FMTo__ "llo"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_FMTu__ "llu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_FMTx__ "llx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTMAX_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTPTR_FMTX__ "lX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTPTR_FMTo__ "lo"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTPTR_FMTu__ "lu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTPTR_FMTx__ "lx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTPTR_MAX__ 18446744073709551615UL{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTPTR_TYPE__ long unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINTPTR_WIDTH__ 64{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST16_FMTX__ "hX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST16_FMTo__ "ho"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST16_FMTu__ "hu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST16_FMTx__ "hx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST16_MAX__ 65535{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST32_FMTX__ "X"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST32_FMTo__ "o"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST32_FMTu__ "u"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST32_FMTx__ "x"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST32_MAX__ 4294967295U{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST64_FMTX__ "llX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST64_FMTo__ "llo"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST64_FMTu__ "llu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST64_FMTx__ "llx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST64_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST64_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST8_FMTX__ "hhX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST8_FMTo__ "hho"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST8_FMTu__ "hhu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST8_FMTx__ "hhx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST8_MAX__ 255{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_FAST8_TYPE__ unsigned char{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST16_FMTX__ "hX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST16_FMTo__ "ho"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST16_FMTu__ "hu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST16_FMTx__ "hx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST16_MAX__ 65535{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST16_TYPE__ unsigned short{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST32_FMTX__ "X"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST32_FMTo__ "o"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST32_FMTu__ "u"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST32_FMTx__ "x"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST32_MAX__ 4294967295U{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST32_TYPE__ unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST64_FMTX__ "llX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST64_FMTo__ "llo"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST64_FMTu__ "llu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST64_FMTx__ "llx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST64_TYPE__ long long unsigned int{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST8_FMTX__ "hhX"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST8_FMTo__ "hho"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST8_FMTu__ "hhu"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST8_FMTx__ "hhx"{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST8_MAX__ 255{{$}}
+// WEBASSEMBLY64-NEXT:#define __UINT_LEAST8_TYPE__ unsigned char{{$}}
+// WEBASSEMBLY64-NEXT:#define __USER_LABEL_PREFIX__ {{$}}
+// WEBASSEMBLY64-NEXT:#define __VERSION__ "{{.*}}"{{$}}
+// WEBASSEMBLY64-NEXT:#define __WCHAR_MAX__ 2147483647{{$}}
+// WEBASSEMBLY64-NEXT:#define __WCHAR_TYPE__ int{{$}}
+// WEBASSEMBLY64-NOT:#define __WCHAR_UNSIGNED__
+// WEBASSEMBLY64-NEXT:#define __WCHAR_WIDTH__ 32{{$}}
+// WEBASSEMBLY64-NEXT:#define __WINT_TYPE__ int{{$}}
+// WEBASSEMBLY64-NOT:#define __WINT_UNSIGNED__
+// WEBASSEMBLY64-NEXT:#define __WINT_WIDTH__ 32{{$}}
+// WEBASSEMBLY64-NEXT:#define __clang__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __clang_major__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __clang_minor__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __clang_patchlevel__ {{.}}
+// WEBASSEMBLY64-NEXT:#define __clang_version__ "{{.*}}"{{$}}
+// WEBASSEMBLY64-NEXT:#define __llvm__ 1{{$}}
+// WEBASSEMBLY64-NOT:#define __wasm_simd128__
+// WEBASSEMBLY64-NOT:#define __wasm_simd256__
+// WEBASSEMBLY64-NOT:#define __wasm_simd512__
+// WEBASSEMBLY64-NOT:#define __unix
+// WEBASSEMBLY64-NOT:#define __unix__
+// WEBASSEMBLY64-NEXT:#define __wasm 1{{$}}
+// WEBASSEMBLY64-NOT:#define __wasm32
+// WEBASSEMBLY64-NOT:#define __wasm32__
+// WEBASSEMBLY64-NEXT:#define __wasm64 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __wasm64__ 1{{$}}
+// WEBASSEMBLY64-NEXT:#define __wasm__ 1{{$}}

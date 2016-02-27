@@ -12,6 +12,50 @@
 // RUN: not %clang -target mips64-linux-gnu -faltivec -fsyntax-only %s 2>&1 | FileCheck %s
 // RUN: not %clang -target sparc-unknown-solaris -faltivec -fsyntax-only %s 2>&1 | FileCheck %s
 
+// check -msoft-float option for ppc32
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -msoft-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SOFTFLOAT %s
+// CHECK-SOFTFLOAT: "-target-feature" "+soft-float"
+
+// check -mfloat-abi=soft option for ppc32
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -mfloat-abi=soft -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-FLOATABISOFT %s
+// CHECK-FLOATABISOFT: "-target-feature" "+soft-float"
+
+// check -mhard-float option for ppc32
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -mhard-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-HARDFLOAT %s
+// CHECK-HARDFLOAT-NOT: "-target-feature" "+soft-float"
+
+// check -mfloat-abi=hard option for ppc32
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -mfloat-abi=hard -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-FLOATABIHARD %s
+// CHECK-FLOATABIHARD-NOT: "-target-feature" "+soft-float"
+
+// check combine -mhard-float -msoft-float option for ppc32
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -mhard-float -msoft-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-HARDSOFT %s
+// CHECK-HARDSOFT: "-target-feature" "+soft-float"
+
+// check combine -msoft-float -mhard-float option for ppc32
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -msoft-float -mhard-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SOFTHARD %s
+// CHECK-SOFTHARD-NOT: "-target-feature" "+soft-float"
+
+// check -mfloat-abi=x option
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -mfloat-abi=x -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-ERRMSG %s
+// CHECK-ERRMSG: error: invalid float ABI '-mfloat-abi=x'
+
+// check -msoft-float option for ppc64
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -msoft-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SOFTFLOAT64 %s
+// CHECK-SOFTFLOAT64: error: invalid float ABI 'soft float is not supported for ppc64'
+
+// check -mfloat-abi=soft option for ppc64
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mfloat-abi=soft -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-FLOATABISOFT64 %s
+// CHECK-FLOATABISOFT64: error: invalid float ABI 'soft float is not supported for ppc64'
+
+// check -msoft-float option for ppc64
+// RUN: %clang -target powerpc64le-unknown-linux-gnu %s -msoft-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SOFTFLOAT64le %s
+// CHECK-SOFTFLOAT64le: error: invalid float ABI 'soft float is not supported for ppc64'
+
+// check -mfloat-abi=soft option for ppc64
+// RUN: %clang -target powerpc64le-unknown-linux-gnu %s -mfloat-abi=soft -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-FLOATABISOFT64le %s
+// CHECK-FLOATABISOFT64le: error: invalid float ABI 'soft float is not supported for ppc64'
+
 // CHECK: invalid argument '-faltivec' only allowed with 'ppc/ppc64/ppc64le'
 
 // Check that -fno-altivec and -mno-altivec correctly disable the altivec
@@ -77,6 +121,12 @@
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-mfcrf -mmfcrf -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-MFCRF %s
 // CHECK-MFCRF: "-target-feature" "+mfocrf"
 
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-isel -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-NOISEL %s
+// CHECK-NOISEL: "-target-feature" "-isel"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-isel -misel -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-ISEL %s
+// CHECK-ISEL: "-target-feature" "+isel"
+
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-popcntd -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-NOPOPCNTD %s
 // CHECK-NOPOPCNTD: "-target-feature" "-popcntd"
 
@@ -113,6 +163,12 @@
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-crbits -mcrbits -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-CRBITS %s
 // CHECK-CRBITS: "-target-feature" "+crbits"
 
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-invariant-function-descriptors -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-NOINVFUNCDESC %s
+// CHECK-NOINVFUNCDESC: "-target-feature" "-invariant-function-descriptors"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-invariant-function-descriptors -minvariant-function-descriptors -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-INVFUNCDESC %s
+// CHECK-INVFUNCDESC: "-target-feature" "+invariant-function-descriptors"
+
 // Assembler features
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -### -o %t.o -no-integrated-as 2>&1 | FileCheck -check-prefix=CHECK_BE_AS_ARGS %s
 // CHECK_BE_AS_ARGS: "-mppc64"
@@ -130,4 +186,8 @@
 // RUN: %clang -target powerpc64le-unknown-linux-gnu %s -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_LE_LD_ARGS %s
 // CHECK_LE_LD_ARGS: "elf64lppc"
 
-
+// OpenMP features
+// RUN: %clang -target powerpc-unknown-linux-gnu %s -### -fopenmp=libomp -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_OPENMP_TLS %s
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -### -fopenmp=libomp -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_OPENMP_TLS %s
+// RUN: %clang -target powerpc64le-unknown-linux-gnu %s -### -fopenmp=libomp -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_OPENMP_TLS %s
+// CHECK_OPENMP_TLS-NOT: "-fnoopenmp-use-tls"

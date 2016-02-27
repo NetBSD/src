@@ -185,7 +185,7 @@ void TokenLexer::ExpandFunctionArguments() {
     if (i != 0 && !Tokens[i-1].is(tok::hashhash) && CurTok.hasLeadingSpace())
       NextTokGetsSpace = true;
 
-    if (CurTok.is(tok::hash) || CurTok.is(tok::hashat)) {
+    if (CurTok.isOneOf(tok::hash, tok::hashat)) {
       int ArgNo = Macro->getArgumentNum(Tokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
 
@@ -521,6 +521,13 @@ bool TokenLexer::Lex(Token &Tok) {
 /// are more ## after it, chomp them iteratively.  Return the result as Tok.
 /// If this returns true, the caller should immediately return the token.
 bool TokenLexer::PasteTokens(Token &Tok) {
+  // MSVC: If previous token was pasted, this must be a recovery from an invalid
+  // paste operation. Ignore spaces before this token to mimic MSVC output.
+  // Required for generating valid UUID strings in some MS headers.
+  if (PP.getLangOpts().MicrosoftExt && (CurToken >= 2) &&
+      Tokens[CurToken - 2].is(tok::hashhash))
+    Tok.clearFlag(Token::LeadingSpace);
+  
   SmallString<128> Buffer;
   const char *ResultTokStrPtr = nullptr;
   SourceLocation StartLoc = Tok.getLocation();
@@ -617,27 +624,28 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       // error.  This occurs with "x ## +"  and other stuff.  Return with Tok
       // unmodified and with RHS as the next token to lex.
       if (isInvalid) {
+        // Explicitly convert the token location to have proper expansion
+        // information so that the user knows where it came from.
+        SourceManager &SM = PP.getSourceManager();
+        SourceLocation Loc =
+          SM.createExpansionLoc(PasteOpLoc, ExpandLocStart, ExpandLocEnd, 2);
+
         // Test for the Microsoft extension of /##/ turning into // here on the
         // error path.
         if (PP.getLangOpts().MicrosoftExt && Tok.is(tok::slash) &&
             RHS.is(tok::slash)) {
-          HandleMicrosoftCommentPaste(Tok);
+          HandleMicrosoftCommentPaste(Tok, Loc);
           return true;
         }
 
         // Do not emit the error when preprocessing assembler code.
         if (!PP.getLangOpts().AsmPreprocessor) {
-          // Explicitly convert the token location to have proper expansion
-          // information so that the user knows where it came from.
-          SourceManager &SM = PP.getSourceManager();
-          SourceLocation Loc =
-            SM.createExpansionLoc(PasteOpLoc, ExpandLocStart, ExpandLocEnd, 2);
           // If we're in microsoft extensions mode, downgrade this from a hard
           // error to an extension that defaults to an error.  This allows
           // disabling it.
           PP.Diag(Loc, PP.getLangOpts().MicrosoftExt ? diag::ext_pp_bad_paste_ms
                                                      : diag::err_pp_bad_paste)
-              << Buffer.str();
+              << Buffer;
         }
 
         // An error has occurred so exit loop.
@@ -712,7 +720,9 @@ bool TokenLexer::isParsingPreprocessorDirective() const {
 /// macro, other active macros, and anything left on the current physical
 /// source line of the expanded buffer.  Handle this by returning the
 /// first token on the next line.
-void TokenLexer::HandleMicrosoftCommentPaste(Token &Tok) {
+void TokenLexer::HandleMicrosoftCommentPaste(Token &Tok, SourceLocation OpLoc) {
+  PP.Diag(OpLoc, diag::ext_comment_paste_microsoft);
+
   // We 'comment out' the rest of this macro by just ignoring the rest of the
   // tokens that have not been lexed yet, if any.
 

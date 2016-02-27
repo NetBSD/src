@@ -63,11 +63,21 @@ TEST_F(FormatTestProto, FormatsMessages) {
                "}");
 }
 
+TEST_F(FormatTestProto, KeywordsInOtherLanguages) {
+  verifyFormat("optional string operator = 1;");
+}
+
 TEST_F(FormatTestProto, FormatsEnums) {
   verifyFormat("enum Type {\n"
                "  UNKNOWN = 0;\n"
                "  TYPE_A = 1;\n"
                "  TYPE_B = 2;\n"
+               "};");
+  verifyFormat("enum Type {\n"
+               "  UNKNOWN = 0 [(some_options) = {\n"
+               "    a: aa,\n"
+               "    b: bb\n"
+               "  }];\n"
                "};");
 }
 
@@ -78,9 +88,10 @@ TEST_F(FormatTestProto, UnderstandsReturns) {
 TEST_F(FormatTestProto, MessageFieldAttributes) {
   verifyFormat("optional string test = 1 [default = \"test\"];");
   verifyFormat("optional bool a = 1 [default = true, deprecated = true];");
-  verifyFormat("optional LongMessageType long_proto_field = 1\n"
-               "    [default = REALLY_REALLY_LONG_CONSTANT_VALUE,\n"
-               "     deprecated = true];");
+  verifyFormat("optional LongMessageType long_proto_field = 1 [\n"
+               "  default = REALLY_REALLY_LONG_CONSTANT_VALUE,\n"
+               "  deprecated = true\n"
+               "];");
   verifyFormat("optional LongMessageType long_proto_field = 1\n"
                "    [default = REALLY_REALLY_LONG_CONSTANT_VALUE];");
   verifyFormat("repeated double value = 1\n"
@@ -93,11 +104,42 @@ TEST_F(FormatTestProto, MessageFieldAttributes) {
                "  aaaaaaaaaaaaaaaa: AAAAAAAAAA\n"
                "  bbbbbbbbbbbbbbbb: BBBBBBBBBB\n"
                "}];");
+  verifyFormat("repeated double value = 1 [\n"
+               "  (aaaaaaa.aaaaaaaaa) = {\n"
+               "    aaaaaaaaaaaaaaaa: AAAAAAAAAA\n"
+               "    bbbbbbbbbbbbbbbb: BBBBBBBBBB\n"
+               "  },\n"
+               "  (bbbbbbb.bbbbbbbbb) = {\n"
+               "    aaaaaaaaaaaaaaaa: AAAAAAAAAA\n"
+               "    bbbbbbbbbbbbbbbb: BBBBBBBBBB\n"
+               "  }\n"
+               "];");
+  verifyFormat("repeated double value = 1 [(aaaaaaa.aaaaaaaaa) = {\n"
+               "  type: \"AAAAAAAAAA\"\n"
+               "  is: \"AAAAAAAAAA\"\n"
+               "  or: \"BBBBBBBBBB\"\n"
+               "}];");
   verifyFormat("repeated double value = 1 [(aaaaaaa.aaaaaaaaa) = {\n"
                "  aaaaaaaaaaaaaaaa: AAAAAAAAAA,\n"
                "  bbbbbbb: BBBB,\n"
                "  bbbb: BBB\n"
                "}];");
+  verifyFormat("optional AAA aaa = 1 [\n"
+               "  foo = {\n"
+               "    key: 'a'  //\n"
+               "  },\n"
+               "  bar = {\n"
+               "    key: 'a'  //\n"
+               "  }\n"
+               "];");
+}
+
+TEST_F(FormatTestProto, DoesntWrapFileOptions) {
+  EXPECT_EQ(
+      "option java_package = "
+      "\"some.really.long.package.that.exceeds.the.column.limit\";",
+      format("option    java_package   =    "
+             "\"some.really.long.package.that.exceeds.the.column.limit\";"));
 }
 
 TEST_F(FormatTestProto, FormatsOptions) {
@@ -107,7 +149,6 @@ TEST_F(FormatTestProto, FormatsOptions) {
                "  field_c: \"OK\"\n"
                "  msg_field: {field_d: 123}\n"
                "};");
-
   verifyFormat("option (MyProto.options) = {\n"
                "  field_a: OK\n"
                "  field_b: \"OK\"\n"
@@ -117,17 +158,21 @@ TEST_F(FormatTestProto, FormatsOptions) {
                "    field_e: OK\n"
                "  }\n"
                "};");
-
   verifyFormat("option (MyProto.options) = {\n"
                "  field_a: OK  // Comment\n"
                "  field_b: \"OK\"\n"
                "  field_c: \"OK\"\n"
                "  msg_field: {field_d: 123}\n"
                "};");
-
   verifyFormat("option (MyProto.options) = {\n"
                "  field_c: \"OK\"\n"
                "  msg_field{field_d: 123}\n"
+               "};");
+
+  // Support syntax with <> instead of {}.
+  verifyFormat("option (MyProto.options) = {\n"
+               "  field_c: \"OK\",\n"
+               "  msg_field: <field_d: 123>\n"
                "};");
 }
 
@@ -137,6 +182,11 @@ TEST_F(FormatTestProto, FormatsService) {
                "    option foo = true;\n"
                "  }\n"
                "};");
+}
+
+TEST_F(FormatTestProto, ExtendingMessage) {
+  verifyFormat("extend .foo.Bar {\n"
+               "}");
 }
 
 } // end namespace tooling

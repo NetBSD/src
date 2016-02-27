@@ -21,7 +21,7 @@ class C {
 
     [foo(bar)] () {};
     [foo = bar] () {};
-    [foo{bar}] () {}; // expected-error {{<initializer_list>}} expected-warning {{will change meaning}}
+    [foo{bar}] () {};
     [foo = {bar}] () {}; // expected-error {{<initializer_list>}}
 
     [foo(bar) baz] () {}; // expected-error {{called object type 'int' is not a function}}
@@ -41,3 +41,16 @@ class C {
 
 };
 
+struct Func {
+  template <typename F>
+  Func(F&&);
+};
+
+int getInt();
+
+void test() {
+  [val = getInt()]() { };
+  Func{
+    [val = getInt()]() { }
+  };
+}

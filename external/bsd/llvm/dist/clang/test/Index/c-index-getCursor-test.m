@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fblocks -emit-pch -x objective-c %s -detailed-preprocessing-record -o %t.ast
+// RUN: c-index-test -write-pch %t.ast -arch x86_64 -mmacosx-version-min=10.6 -fblocks -x objective-c %s
 // RUN: c-index-test -test-file-scan %t.ast %s > %t 2>&1 && FileCheck --input-file=%t %s
 @interface Foo 
 {
@@ -166,3 +166,4 @@ void f() {
 // CHECK: [57:1 - 57:10] FunctionDecl=f:57:6 (Definition)
 // CHECK: [58:4 - 58:8] VarDecl=my_var:58:8 (Definition)
 // CHECK: [58:8 - 58:15] macro expansion=CONCAT:55:9
+// REQUIRES: x86-registered-target

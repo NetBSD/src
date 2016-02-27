@@ -23,7 +23,7 @@ namespace {
 
 class MockSema : public Parser::Sema {
 public:
-  virtual ~MockSema() {}
+  ~MockSema() override {}
 
   uint64_t expectMatcher(StringRef MatcherName) {
     // Optimizations on the matcher framework make simple matchers like
@@ -42,17 +42,18 @@ public:
     Errors.push_back(Error.toStringFull());
   }
 
-  llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName) {
+  llvm::Optional<MatcherCtor>
+  lookupMatcherCtor(StringRef MatcherName) override {
     const ExpectedMatchersTy::value_type *Matcher =
         &*ExpectedMatchers.find(MatcherName);
     return reinterpret_cast<MatcherCtor>(Matcher);
   }
 
   VariantMatcher actOnMatcherExpression(MatcherCtor Ctor,
-                                        const SourceRange &NameRange,
+                                        SourceRange NameRange,
                                         StringRef BindID,
                                         ArrayRef<ParserValue> Args,
-                                        Diagnostics *Error) {
+                                        Diagnostics *Error) override {
     const ExpectedMatchersTy::value_type *Matcher =
         reinterpret_cast<const ExpectedMatchersTy::value_type *>(Ctor);
     MatcherInfo ToStore = { Matcher->first, NameRange, Args, BindID };
@@ -101,7 +102,7 @@ TEST(ParserTest, ParseString) {
   EXPECT_EQ("1:1: Error parsing string token: <\"Baz>", Sema.Errors[2]);
 }
 
-bool matchesRange(const SourceRange &Range, unsigned StartLine,
+bool matchesRange(SourceRange Range, unsigned StartLine,
                   unsigned EndLine, unsigned StartColumn, unsigned EndColumn) {
   EXPECT_EQ(StartLine, Range.Start.Line);
   EXPECT_EQ(EndLine, Range.End.Line);
@@ -161,7 +162,7 @@ using ast_matchers::internal::Matcher;
 
 Parser::NamedValueMap getTestNamedValues() {
   Parser::NamedValueMap Values;
-  Values["nameX"] = std::string("x");
+  Values["nameX"] = llvm::StringRef("x");
   Values["hasParamA"] =
       VariantMatcher::SingleMatcher(hasParameter(0, hasName("a")));
   return Values;
@@ -300,12 +301,12 @@ TEST(ParserTest, CompletionNamedValues) {
   EXPECT_EQ("String nameX", Comps[0].MatcherDecl);
 
   // Can complete if there are names in the expression.
-  Code = "methodDecl(hasName(nameX), ";
+  Code = "cxxMethodDecl(hasName(nameX), ";
   Comps = Parser::completeExpression(Code, Code.size(), nullptr, &NamedValues);
   EXPECT_LT(0u, Comps.size());
 
   // Can complete names and registry together.
-  Code = "methodDecl(hasP";
+  Code = "cxxMethodDecl(hasP";
   Comps = Parser::completeExpression(Code, Code.size(), nullptr, &NamedValues);
   ASSERT_EQ(3u, Comps.size());
   EXPECT_EQ("aramA", Comps[0].TypedText);
@@ -317,8 +318,10 @@ TEST(ParserTest, CompletionNamedValues) {
       Comps[1].MatcherDecl);
 
   EXPECT_EQ("arent(", Comps[2].TypedText);
-  EXPECT_EQ("Matcher<Decl> hasParent(Matcher<Decl|Stmt>)",
-            Comps[2].MatcherDecl);
+  EXPECT_EQ(
+      "Matcher<Decl> "
+      "hasParent(Matcher<TemplateArgument|NestedNameSpecifierLoc|Decl|...>)",
+      Comps[2].MatcherDecl);
 }
 
 }  // end anonymous namespace

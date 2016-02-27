@@ -51,6 +51,11 @@ if (CLANG_ENABLE_ARCMT)
   list(APPEND LIBS clangARCMigrate)
 endif ()
 
+find_library(DL_LIBRARY_PATH dl)
+if (DL_LIBRARY_PATH)
+  list(APPEND LIBS dl)
+endif()
+
 option(LIBCLANG_BUILD_STATIC
   "Build libclang as a static library (in addition to a shared one)" OFF)
 
@@ -86,6 +91,7 @@ add_clang_library(libclang ${ENABLE_SHARED} ${ENABLE_STATIC}
   ${LIBS}
 
   LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
   Core
   Support
   )
@@ -96,21 +102,16 @@ if(ENABLE_SHARED)
       PROPERTIES
       VERSION ${LIBCLANG_LIBRARY_VERSION}
       DEFINE_SYMBOL _CINDEX_LIB_)
+  elseif(APPLE)
+    set(LIBCLANG_LINK_FLAGS " -Wl,-compatibility_version -Wl,1")
+    set(LIBCLANG_LINK_FLAGS "${LIBCLANG_LINK_FLAGS} -Wl,-current_version -Wl,${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}")
+
+    set_property(TARGET libclang APPEND_STRING PROPERTY
+                 LINK_FLAGS ${LIBCLANG_LINK_FLAGS})
   else()
     set_target_properties(libclang
       PROPERTIES
       VERSION ${LIBCLANG_LIBRARY_VERSION}
       DEFINE_SYMBOL _CINDEX_LIB_)
-  endif()
-
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(LIBCLANG_LINK_FLAGS " -Wl,-compatibility_version -Wl,1")
-    if (DEFINED ${LLVM_SUBMIT_VERSION})
-      set(LIBCLANG_LINK_FLAGS
-        "${LIBCLANG_LINK_FLAGS} -Wl,-current_version -Wl,${LLVM_SUBMIT_VERSION}.${LLVM_SUBMIT_SUBVERSION}")
-    endif()
-
-    set_property(TARGET libclang APPEND_STRING PROPERTY
-                 LINK_FLAGS ${LIBCLANG_LINK_FLAGS})
   endif()
 endif()

@@ -1,8 +1,6 @@
 // RUN: %clang_cc1 %s -emit-llvm -o %t.ll -triple=x86_64-apple-darwin10
 // RUN: FileCheck %s < %t.ll
 // RUN: FileCheck -check-prefix=CHECK-GLOBAL %s < %t.ll
-// RUN: %clang_cc1 %s -emit-llvm -o %t-opt.ll -triple=x86_64-apple-darwin10 -O3
-// RUN: FileCheck --check-prefix=CHECK-O3 %s < %t-opt.ll
 
 struct A { int a; int b; };
 struct B { int b; };
@@ -75,14 +73,14 @@ void f() {
   // CHECK:      store i64 -1, i64* @_ZN5Casts2paE
   pa = 0;
 
-  // CHECK-NEXT: [[TMP:%.*]] = load i64* @_ZN5Casts2paE, align 8
+  // CHECK-NEXT: [[TMP:%.*]] = load i64, i64* @_ZN5Casts2paE, align 8
   // CHECK-NEXT: [[ADJ:%.*]] = add nsw i64 [[TMP]], 4
   // CHECK-NEXT: [[ISNULL:%.*]] = icmp eq i64 [[TMP]], -1
   // CHECK-NEXT: [[RES:%.*]] = select i1 [[ISNULL]], i64 [[TMP]], i64 [[ADJ]]
   // CHECK-NEXT: store i64 [[RES]], i64* @_ZN5Casts2pcE
   pc = pa;
 
-  // CHECK-NEXT: [[TMP:%.*]] = load i64* @_ZN5Casts2pcE, align 8
+  // CHECK-NEXT: [[TMP:%.*]] = load i64, i64* @_ZN5Casts2pcE, align 8
   // CHECK-NEXT: [[ADJ:%.*]] = sub nsw i64 [[TMP]], 4
   // CHECK-NEXT: [[ISNULL:%.*]] = icmp eq i64 [[TMP]], -1
   // CHECK-NEXT: [[RES:%.*]] = select i1 [[ISNULL]], i64 [[TMP]], i64 [[ADJ]]
@@ -131,40 +129,6 @@ A::A() : a() {}
 
 }
 
-namespace PR7139 {
-
-struct pair {
-  int first;
-  int second;
-};
-
-typedef int pair::*ptr_to_member_type;
-
-struct ptr_to_member_struct { 
-  ptr_to_member_type data;
-  int i;
-};
-
-struct A {
-  ptr_to_member_struct a;
-
-  A() : a() {}
-};
-
-// CHECK-O3: define zeroext i1 @_ZN6PR71395checkEv() [[NUW:#[0-9]+]]
-bool check() {
-  // CHECK-O3: ret i1 true
-  return A().a.data == 0;
-}
-
-// CHECK-O3: define zeroext i1 @_ZN6PR71396check2Ev() [[NUW]]
-bool check2() {
-  // CHECK-O3: ret i1 true
-  return ptr_to_member_type() == 0;
-}
-
-}
-
 namespace VirtualBases {
 
 struct A {
@@ -205,7 +169,7 @@ namespace BoolPtrToMember {
   // CHECK-LABEL: define dereferenceable({{[0-9]+}}) i8* @_ZN15BoolPtrToMember1fERNS_1XEMS0_b
   bool &f(X &x, bool X::*member) {
     // CHECK: {{bitcast.* to i8\*}}
-    // CHECK-NEXT: getelementptr inbounds i8*
+    // CHECK-NEXT: getelementptr inbounds i8, i8*
     // CHECK-NEXT: ret i8*
     return x.*member;
   }
@@ -277,4 +241,20 @@ U u;
 // CHECK-GLOBAL: @_ZN7PR212821uE = global %"union.PR21282::U" { i64 -1, [8 x i8] zeroinitializer }, align 8
 }
 
-// CHECK-O3: attributes [[NUW]] = { nounwind readnone{{.*}} }
+namespace FlexibleArrayMember {
+struct S {
+  int S::*x[];
+};
+S s;
+// CHECK-GLOBAL: @_ZN19FlexibleArrayMember1sE = global %"struct.FlexibleArrayMember::S" zeroinitializer, align 8
+}
+
+namespace IndirectPDM {
+union U {
+  union {
+    int U::*m;
+  };
+};
+U u;
+// CHECK-GLOBAL: @_ZN11IndirectPDM1uE = global %"union.IndirectPDM::U" { %union.anon { i64 -1 } }, align 8
+}

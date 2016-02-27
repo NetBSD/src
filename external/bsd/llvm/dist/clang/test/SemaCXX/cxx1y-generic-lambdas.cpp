@@ -859,7 +859,7 @@ namespace ns1 {
 struct X1 {  
   struct X2 {
     enum { E = [](auto i) { return i; }(3) }; //expected-error{{inside of a constant expression}}\
-                                          //expected-error{{not an integral constant}}\
+                                          //expected-error{{constant}}\
                                           //expected-note{{non-literal type}}
     int L = ([] (int i) { return i; })(2);
     void foo(int i = ([] (int i) { return i; })(2)) { }
@@ -899,8 +899,10 @@ struct X1 {
     int L2 = ([](auto i) { return i; })(2);
     void fooG(T i = ([] (auto i) { return i; })(2)) { }
     int BG : ([](auto i) { return i; })(3); //expected-error{{not an integral constant}}\
-                                            //expected-note{{non-literal type}}
-    int arrG[([](auto i) { return i; })(3)]; //expected-error{{must have a constant size}}
+                                            //expected-note{{non-literal type}}\
+                                            //expected-error{{inside of a constant expression}}
+    int arrG[([](auto i) { return i; })(3)]; //expected-error{{must have a constant size}} \
+                                             //expected-error{{inside of a constant expression}}
     int (*fpG)(T) = [](auto i) { return i; };
     void fooptrG(T (*fp)(char) = [](auto c) { return 0; }) { }
     template<class U = char> int fooG2(T (*fp)(U) = [](auto a) { return 0; }) { return 0; }
@@ -930,4 +932,57 @@ namespace PR22117 {
       return 0;
     };
   }(0)(0);
+}
+
+namespace PR23716 {
+template<typename T>
+auto f(T x) {
+  auto g = [](auto&&... args) {
+    auto h = [args...]() -> int {
+      return 0;
+    };
+    return h;
+  };
+  return g;
+}
+
+auto x = f(0)();
+}
+
+namespace PR13987 {
+class Enclosing {
+  void Method(char c = []()->char {
+    int d = [](auto x)->int {
+        struct LocalClass {
+          int Method() { return 0; }
+        };
+      return 0;
+    }(0);
+    return d; }()
+  );
+};
+
+class Enclosing2 {
+  void Method(char c = [](auto x)->char {
+    int d = []()->int {
+        struct LocalClass {
+          int Method() { return 0; }
+        };
+      return 0;
+    }();
+    return d; }(0)
+  );
+};
+
+class Enclosing3 {
+  void Method(char c = [](auto x)->char {
+    int d = [](auto y)->int {
+        struct LocalClass {
+          int Method() { return 0; }
+        };
+      return 0;
+    }(0);
+    return d; }(0)
+  );
+};
 }

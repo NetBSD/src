@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm -debug-info-kind=limited %s -o - | FileCheck %s
 // rdar://problem/9468526
 //
 // Setting a breakpoint on a property should create breakpoints in
@@ -18,10 +18,10 @@
 // CHECK-NOT: ret
 // CHECK: load {{.*}}, !dbg ![[DBG2:[0-9]+]]
 //
-// CHECK: [ DW_TAG_subprogram ] [line [[@LINE+4]]] [local] [def] [-[I p1]]
-// CHECK: [ DW_TAG_subprogram ] [line [[@LINE+3]]] [local] [def] [-[I setP1:]]
-// CHECK: ![[DBG1]] = !MDLocation(line: [[@LINE+2]],
-// CHECK: ![[DBG2]] = !MDLocation(line: [[@LINE+1]],
+// CHECK: !DISubprogram(name: "-[I p1]",{{.*}} line: [[@LINE+4]],{{.*}} isLocal: true, isDefinition: true
+// CHECK: !DISubprogram(name: "-[I setP1:]",{{.*}} line: [[@LINE+3]],{{.*}} isLocal: true, isDefinition: true
+// CHECK: ![[DBG1]] = !DILocation(line: [[@LINE+2]],
+// CHECK: ![[DBG2]] = !DILocation(line: [[@LINE+1]],
 @property int p1;
 @end
 

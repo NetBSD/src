@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -ferror-limit 100 %s
+// RUN: %clang_cc1 -verify -fopenmp -ferror-limit 100 %s
 
 template <class T>
 T tmain(T argc) {
@@ -27,7 +27,7 @@ T tmain(T argc) {
 #pragma omp taskyield // expected-error {{'#pragma omp taskyield' cannot be an immediate substatement}}
     switch (argc)
     case 1:
-#pragma omp taskyield // expected-error {{'#pragma omp taskyield' cannot be an immediate substatement}}
+#pragma omp taskyield
   switch (argc)
   case 1: {
 #pragma omp taskyield
@@ -35,7 +35,7 @@ T tmain(T argc) {
   switch (argc) {
 #pragma omp taskyield
   case 1:
-#pragma omp taskyield // expected-error {{'#pragma omp taskyield' cannot be an immediate substatement}}
+#pragma omp taskyield
     break;
   default: {
 #pragma omp taskyield
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 #pragma omp taskyield // expected-error {{'#pragma omp taskyield' cannot be an immediate substatement}}
     switch (argc)
     case 1:
-#pragma omp taskyield // expected-error {{'#pragma omp taskyield' cannot be an immediate substatement}}
+#pragma omp taskyield
   switch (argc)
   case 1: {
 #pragma omp taskyield
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   switch (argc) {
 #pragma omp taskyield
   case 1:
-#pragma omp taskyield // expected-error {{'#pragma omp taskyield' cannot be an immediate substatement}}
+#pragma omp taskyield
     break;
   default: {
 #pragma omp taskyield

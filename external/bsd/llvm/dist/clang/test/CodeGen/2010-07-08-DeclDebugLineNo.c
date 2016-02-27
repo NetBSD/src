@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited %s -o - | FileCheck %s
 // Insure that dbg.declare lines for locals refer to correct line number records.
 // Radar 8152866.
 void foo() {
@@ -6,5 +6,5 @@ void foo() {
   int p = 0;    // line #5: CHECK: {{call.*llvm.dbg.declare.*%p.*\!dbg }}[[variable_p:![0-9]+]]
 }
 // Now match the line number records:
-// CHECK: {{^}}[[variable_l]] = !MDLocation(line: 5,
-// CHECK: {{^}}[[variable_p]] = !MDLocation(line: 6,
+// CHECK: {{^}}[[variable_l]] = !DILocation(line: 5,
+// CHECK: {{^}}[[variable_p]] = !DILocation(line: 6,

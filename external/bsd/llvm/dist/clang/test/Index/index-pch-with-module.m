@@ -18,8 +18,8 @@ int glob;
 
 // CHECK-NOT: [indexDeclaration]
 // CHECK:      [importedASTFile]: {{.*}}.h.pch
-// CHECK-NEXT: [enteredMainFile]: {{.*[/\\]}}index-pch-with-module.m
 // CHECK-NEXT: [startedTranslationUnit]
+// CHECK-NEXT: [enteredMainFile]: {{.*[/\\]}}index-pch-with-module.m
 // CHECK-NEXT: [indexDeclaration]: kind: variable | name: glob | {{.*}} | loc: 10:5
 // CHECK-NOT: [indexDeclaration]
 
@@ -27,5 +27,5 @@ int glob;
 
 // CHECK-PCH: [enteredMainFile]: {{.*[/\\]}}index-pch-with-module.m
 // CHECK-PCH: [startedTranslationUnit]
-// CHECK-PCH: [importedASTFile]: {{.*}}.cache{{[/\\]}}DependsOnModule.pcm | loc: 5:2 | name: "DependsOnModule" | isImplicit: 1
+// CHECK-PCH: [importedASTFile]: {{.*}}.cache{{[/\\]}}DependsOnModule.pcm | loc: 5:1 | name: "DependsOnModule" | isImplicit: 1
 // CHECK-PCH: [indexDeclaration]: kind: variable | name: pch_glob | {{.*}} | loc: 6:12

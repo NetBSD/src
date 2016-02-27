@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -w -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -w -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
 # 1 "foo.m" 1
 # 1 "foo.m" 2
 # 1 "./foo.h" 1
@@ -30,5 +30,8 @@ int main(int argc, char *argv[]) {
   }
 }
 
-// CHECK: ![[FILE:.*]] = {{.*}}[ DW_TAG_file_type ] [{{.*}}/foo.h]
-// CHECK: ![[FILE]], {{.*}} ; [ DW_TAG_subprogram ] [line 8] [local] [def] [-[Foo dict]]
+// CHECK: ![[FILE:.*]] = !DIFile(filename: "{{[^"]+}}foo.h"
+// CHECK: !DISubprogram(name: "-[Foo setDict:]"
+// CHECK-SAME:          file: ![[FILE]],
+// CHECK-SAME:          line: 8,
+// CHECK-SAME:          isLocal: true, isDefinition: true

@@ -17,7 +17,8 @@ only, at a minimal performance cost.
 Current status
 ==============
 
-LeakSanitizer is experimental and supported only on x86\_64 Linux.
+LeakSanitizer is turned on by default, but it is only supported on x86\_64
+Linux.
 
 The combined mode has been tested on fairly large software projects. The
 stand-alone mode has received much less testing.
@@ -27,6 +28,4 @@ There are plans to support LeakSanitizer in :doc:`MemorySanitizer` builds.
 More Information
 ================
 
-`https://code.google.com/p/address-sanitizer/wiki/LeakSanitizer
-<https://code.google.com/p/address-sanitizer/wiki/LeakSanitizer>`_
-
+`<https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer>`_

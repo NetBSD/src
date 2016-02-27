@@ -74,10 +74,10 @@ int InitList(int i = {}) { // expected-warning {{generalized initializer lists a
   InitListCtor ilc = { true, false }; // expected-warning {{initialization of initializer_list object is incompatible with C++98}}
   const int &r = { 0 }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
   struct { int a; const int &r; } rr = { 0, {0} }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
-  return { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
+  return { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}} expected-warning {{scalar}}
 }
 struct DelayedDefaultArgumentParseInitList {
-  void f(int i = {1}) { // expected-warning {{generalized initializer lists are incompatible with C++98}}
+  void f(int i = {1}) { // expected-warning {{generalized initializer lists are incompatible with C++98}} expected-warning {{scalar}}
   }
 };
 
@@ -100,6 +100,9 @@ struct RefQualifier {
 };
 
 auto f() -> int; // expected-warning {{trailing return types are incompatible with C++98}}
+#ifdef CXX14COMPAT
+auto ff() { return 5; } // expected-warning {{'auto' type specifier is incompatible with C++98}}
+#endif
 
 void RangeFor() {
   int xs[] = {1, 2, 3};

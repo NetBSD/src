@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -ferror-limit 100 %s
+// RUN: %clang_cc1 -verify -fopenmp -ferror-limit 100 %s
 
 void foo() {
 }
@@ -41,13 +41,21 @@ public:
 int threadvar;
 #pragma omp threadprivate(threadvar) // expected-note {{defined as threadprivate or thread local}}
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5; // expected-note {{constant variable is predetermined as shared}}
   const int da[5] = { 0 }; // expected-note {{constant variable is predetermined as shared}}
   S4 e(4);
   S5 g[] = {5, 6};
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
   #pragma omp parallel private // expected-error {{expected '(' after 'private'}}
   #pragma omp parallel private ( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp parallel private () // expected-error {{expected expression}}
@@ -63,19 +71,22 @@ int main(int argc, char **argv) {
   #pragma omp parallel private(da) // expected-error {{shared variable cannot be private}}
   #pragma omp parallel private(S2::S2s) // expected-error {{shared variable cannot be private}}
   #pragma omp parallel private(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
-  #pragma omp parallel private(threadvar) // expected-error {{threadprivate or thread local variable cannot be private}}
+  #pragma omp parallel private(threadvar, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be private}}
   #pragma omp parallel shared(i), private(i) // expected-error {{shared variable cannot be private}} expected-note {{defined as shared}}
   foo();
   #pragma omp parallel firstprivate(i) private(i) // expected-error {{firstprivate variable cannot be private}} expected-note {{defined as firstprivate}}
   foo();
   #pragma omp parallel private(i)
-  #pragma omp parallel private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type 'int &'}}
+  #pragma omp parallel private(j)
   foo();
   #pragma omp parallel firstprivate(i)
   for (int k = 0; k < 10; ++k) {
     #pragma omp parallel private(i)
     foo();
   }
+  static int m;
+  #pragma omp parallel private(m) // OK
+  foo();
 
   return 0;
 }
