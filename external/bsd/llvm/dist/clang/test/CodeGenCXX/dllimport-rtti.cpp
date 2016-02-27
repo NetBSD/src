@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i686-windows-msvc -emit-llvm -std=c++1y -O1 -disable-llvm-optzns -o - %s | FileCheck %s --check-prefix=MSVC
-// RUN: %clang_cc1 -triple i686-windows-gnu  -emit-llvm -std=c++1y -O1 -disable-llvm-optzns -o - %s | FileCheck %s --check-prefix=GNU
+// RUN: %clang_cc1 -triple i686-windows-msvc -emit-llvm -std=c++1y -fms-extensions -O1 -disable-llvm-optzns -o - %s | FileCheck %s --check-prefix=MSVC
+// RUN: %clang_cc1 -triple i686-windows-gnu  -emit-llvm -std=c++1y -fms-extensions -O1 -disable-llvm-optzns -o - %s | FileCheck %s --check-prefix=GNU
 
 struct __declspec(dllimport) S {
   virtual void f() {}
@@ -15,3 +15,18 @@ struct __declspec(dllimport) S {
 
 struct U : S {
 } u;
+
+struct __declspec(dllimport) V {
+  virtual void f();
+} v;
+// GNU-DAG: @_ZTV1V = available_externally dllimport
+// GNU-DAG: @_ZTS1V = linkonce_odr
+// GNU-DAG: @_ZTI1V = linkonce_odr
+
+struct W {
+  __declspec(dllimport) virtual void f();
+  virtual void g();
+} w;
+// GNU-DAG: @_ZTV1W = linkonce_odr
+// GNU-DAG: @_ZTS1W = linkonce_odr
+// GNU-DAG: @_ZTI1W = linkonce_odr

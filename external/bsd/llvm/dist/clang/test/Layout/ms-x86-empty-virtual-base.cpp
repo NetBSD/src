@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts -fsyntax-only %s 2>/dev/null \
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fms-extensions -fdump-record-layouts -fsyntax-only %s 2>/dev/null \
 // RUN:            | FileCheck %s
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fdump-record-layouts -fsyntax-only %s 2>/dev/null \
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fms-extensions -fdump-record-layouts -fsyntax-only %s 2>/dev/null \
 // RUN:            | FileCheck %s -check-prefix CHECK-X64
 
 extern "C" int printf(const char *fmt, ...);
@@ -53,8 +53,6 @@ struct B : virtual B0 {
 // CHECK-NEXT:    0 | struct B
 // CHECK-NEXT:    0 |   (B vbtable pointer)
 // CHECK-NEXT:    8 |   struct B0 b0 (empty)
-// CHECK-NEXT:      |   [sizeof=8, align=8
-// CHECK-NEXT:      |    nvsize=0, nvalign=8]
 // CHECK:        16 |   int a
 // CHECK-NEXT:   24 |   struct B0 (virtual base) (empty)
 // CHECK-NEXT:      | [sizeof=24, align=8
@@ -63,8 +61,6 @@ struct B : virtual B0 {
 // CHECK-X64-NEXT:    0 | struct B
 // CHECK-X64-NEXT:    0 |   (B vbtable pointer)
 // CHECK-X64-NEXT:    8 |   struct B0 b0 (empty)
-// CHECK-X64-NEXT:      |   [sizeof=8, align=8
-// CHECK-X64-NEXT:      |    nvsize=0, nvalign=8]
 // CHECK-X64:        16 |   int a
 // CHECK-X64-NEXT:   24 |   struct B0 (virtual base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=24, align=8

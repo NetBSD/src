@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.core -analyzer-checker=deadcode.DeadStores,osx.cocoa.RetainCount -fblocks -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core -analyzer-checker=deadcode.DeadStores,osx.cocoa.RetainCount -fblocks -verify -Wno-objc-root-class %s
 // expected-no-diagnostics
 
 typedef signed char BOOL;
@@ -28,7 +28,7 @@ extern NSString *NSAlignmentBinding;
 // This test case was reported as a false positive due to a bug in the
 // LiveVariables <-> deadcode.DeadStores interplay.  We should not flag a warning
 // here.  The test case was reported in:
-//  http://lists.cs.uiuc.edu/pipermail/cfe-dev/2008-July/002157.html
+//  http://lists.llvm.org/pipermail/cfe-dev/2008-July/002157.html
 void DeadStoreTest(NSObject *anObject) {
   NSArray *keys;
   if ((keys = [anObject exposedBindings]) &&   // no-warning

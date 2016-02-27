@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -debug-info-kind=limited -S -emit-llvm %s -o - | FileCheck %s
 
 class A { int a; };
 class B {
@@ -19,4 +19,4 @@ void foo() {
   }
 }
 // Check there is a line number entry for line 19 where b1 is destructed.
-// CHECK: !MDLocation(line: 19,
+// CHECK: !DILocation(line: 19,
