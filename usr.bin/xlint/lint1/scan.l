@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.64 2015/11/13 19:13:50 christos Exp $ */
+/* $NetBSD: scan.l,v 1.65 2016/02/27 21:37:14 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.64 2015/11/13 19:13:50 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.65 2016/02/27 21:37:14 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -294,6 +294,12 @@ static	struct	kwtab {
 	{ "volatile",	T_QUAL,		0,	0,	VOLATILE, 1, 0, 0, 0 },
 	{ "__volatile__", T_QUAL,	0,	0,	VOLATILE, 0, 0, 0, 0 },
 	{ "__volatile",	T_QUAL,		0,	0,	VOLATILE, 0, 0, 0, 0 },
+	{ "visibility", T_AT_VISIBILITY,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__visibility",T_AT_VISIBILITY,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__visibility__",T_AT_VISIBILITY,0,	0,	0,	  0, 0, 1, 1 },
+	{ "weak",	T_AT_WEAK,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__weak",	T_AT_WEAK,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__weak__",	T_AT_WEAK,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "while",	T_WHILE,	0,	0,	0,	  0, 0, 0, 0 },
 	{ NULL,		0,		0,	0,	0,	  0, 0, 0, 0 }
 };
