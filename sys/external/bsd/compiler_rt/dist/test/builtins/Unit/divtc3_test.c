@@ -11,16 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if _ARCH_PPC
+#include <stdio.h>
 
 #include "int_lib.h"
 #include <math.h>
 #include <complex.h>
-#include <stdio.h>
 
 // Returns: the quotient of (a + ib) / (c + id)
 
-long double _Complex 
+COMPILER_RT_ABI long double _Complex
 __divtc3(long double __a, long double __b, long double __c, long double __d);
 
 enum {zero, non_zero, inf, NaN, non_zero_nan};
@@ -103,7 +102,7 @@ int test__divtc3(long double a, long double b, long double c, long double d)
             {
             long double _Complex z = (a * c + b * d) / (c * c + d * d)
                                    + (b * c - a * d) / (c * c + d * d) * _Complex_I;
-            if (cabs((r - z)/r) > 1.e-6)
+            if (cabsl((r - z)/r) > 1.e-6)
                 return 1;
             }
             break;
@@ -357,11 +356,8 @@ long double x[][2] =
 
 };
 
-#endif
-
 int main()
 {
-#if _ARCH_PPC
     const unsigned N = sizeof(x) / sizeof(x[0]);
     unsigned i, j;
     for (i = 0; i < N; ++i)
@@ -372,11 +368,7 @@ int main()
                 return 1;
         }
     }
-	
-//	printf("No errors found.\n");
 
-#else
-    printf("skipped\n");
-#endif
+//	printf("No errors found.\n");
     return 0;
 }
