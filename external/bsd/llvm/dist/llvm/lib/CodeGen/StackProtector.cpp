@@ -88,10 +88,9 @@ bool StackProtector::runOnFunction(Function &Fn) {
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  TLI = TM->getSubtargetImpl()->getTargetLowering();
+  TLI = TM->getSubtargetImpl(Fn)->getTargetLowering();
 
-  Attribute Attr = Fn.getAttributes().getAttribute(
-      AttributeSet::FunctionIndex, "stack-protector-buffer-size");
+  Attribute Attr = Fn.getFnAttribute("stack-protector-buffer-size");
   if (Attr.isStringAttribute() &&
       Attr.getValueAsString().getAsInteger(10, SSPBufferSize))
       return false; // Invalid integer string
@@ -123,7 +122,7 @@ bool StackProtector::ContainsProtectableArray(Type *Ty, bool &IsLarge,
 
     // If an array has more than SSPBufferSize bytes of allocated space, then we
     // emit stack protectors.
-    if (SSPBufferSize <= TLI->getDataLayout()->getTypeAllocSize(AT)) {
+    if (SSPBufferSize <= M->getDataLayout().getTypeAllocSize(AT)) {
       IsLarge = true;
       return true;
     }
@@ -201,15 +200,12 @@ bool StackProtector::HasAddressTaken(const Instruction *AI) {
 bool StackProtector::RequiresStackProtector() {
   bool Strong = false;
   bool NeedsProtector = false;
-  if (F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                      Attribute::StackProtectReq)) {
+  if (F->hasFnAttribute(Attribute::StackProtectReq)) {
     NeedsProtector = true;
     Strong = true; // Use the same heuristic as strong to determine SSPLayout
-  } else if (F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                             Attribute::StackProtectStrong))
+  } else if (F->hasFnAttribute(Attribute::StackProtectStrong))
     Strong = true;
-  else if (!F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                            Attribute::StackProtect))
+  else if (!F->hasFnAttribute(Attribute::StackProtect))
     return false;
 
   for (const BasicBlock &BB : *F) {
@@ -357,8 +353,8 @@ static bool CreatePrologue(Function *F, Module *M, ReturnInst *RI,
   IRBuilder<> B(&F->getEntryBlock().front());
   AI = B.CreateAlloca(PtrTy, nullptr, "StackGuardSlot");
   LoadInst *LI = B.CreateLoad(StackGuardVar, "StackGuard");
-  B.CreateCall2(Intrinsic::getDeclaration(M, Intrinsic::stackprotector), LI,
-                AI);
+  B.CreateCall(Intrinsic::getDeclaration(M, Intrinsic::stackprotector),
+               {LI, AI});
 
   return SupportsSelectionDAGSP;
 }
@@ -377,7 +373,7 @@ bool StackProtector::InsertStackProtectors() {
   Value *StackGuardVar = nullptr; // The stack guard variable.
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E;) {
-    BasicBlock *BB = I++;
+    BasicBlock *BB = &*I++;
     ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
     if (!RI)
       continue;
@@ -437,7 +433,7 @@ bool StackProtector::InsertStackProtectors() {
       BasicBlock *FailBB = CreateFailBB();
 
       // Split the basic block before the return instruction.
-      BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
+      BasicBlock *NewBB = BB->splitBasicBlock(RI->getIterator(), "SP_return");
 
       // Update the dominator tree if we need to.
       if (DT && DT->isReachableFromEntry(BB)) {
@@ -457,22 +453,20 @@ bool StackProtector::InsertStackProtectors() {
       LoadInst *LI1 = B.CreateLoad(StackGuardVar);
       LoadInst *LI2 = B.CreateLoad(AI);
       Value *Cmp = B.CreateICmpEQ(LI1, LI2);
-      unsigned SuccessWeight =
-          BranchProbabilityInfo::getBranchWeightStackProtector(true);
-      unsigned FailureWeight =
-          BranchProbabilityInfo::getBranchWeightStackProtector(false);
+      auto SuccessProb =
+          BranchProbabilityInfo::getBranchProbStackProtector(true);
+      auto FailureProb =
+          BranchProbabilityInfo::getBranchProbStackProtector(false);
       MDNode *Weights = MDBuilder(F->getContext())
-                            .createBranchWeights(SuccessWeight, FailureWeight);
+                            .createBranchWeights(SuccessProb.getNumerator(),
+                                                 FailureProb.getNumerator());
       B.CreateCondBr(Cmp, NewBB, FailBB, Weights);
     }
   }
 
   // Return if we didn't modify any basic blocks. i.e., there are no return
   // statements in the function.
-  if (!HasPrologue)
-    return false;
-
-  return true;
+  return HasPrologue;
 }
 
 /// CreateFailBB - Create a basic block to jump to when the stack protector
@@ -492,7 +486,7 @@ BasicBlock *StackProtector::CreateFailBB() {
     Constant *StackChkFail =
         M->getOrInsertFunction("__stack_chk_fail", Type::getVoidTy(Context),
                                nullptr);
-    B.CreateCall(StackChkFail);
+    B.CreateCall(StackChkFail, {});
   }
   B.CreateUnreachable();
   return FailBB;

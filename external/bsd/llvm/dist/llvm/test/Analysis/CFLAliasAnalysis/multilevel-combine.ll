@@ -8,7 +8,7 @@
 ; }
 ;
 
-; RUN: opt < %s -cfl-aa -aa-eval -print-may-aliases -disable-output 2>&1 | FileCheck %s
+; RUN: opt < %s -disable-basicaa -cfl-aa -aa-eval -print-may-aliases -disable-output 2>&1 | FileCheck %s
 
 %T = type { i32, [10 x i8] }
 
@@ -25,7 +25,7 @@ define void @test(i1 %C) {
 
   store %T* %MS, %T** %M
 
-  %AP = load %T** %M ; PartialAlias with %A, %B
+  %AP = load %T*, %T** %M ; PartialAlias with %A, %B
 
   ret void
 }

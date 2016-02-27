@@ -10,12 +10,11 @@ entry:
 }
 
 ; CHECK-LABEL: @test1
-; CHECK: mflr 0
+; CHECK: mflr {{[0-9]+}}
 ; CHECK: std 0, 16(1)
-; FIXME: These next two lines don't both need to load the same value.
-; CHECK-DAG: ld 3, 16(1)
-; CHECK-DAG: ld 0, 16(1)
-; CHECK: mtlr 0
+; CHECK-DAG: ld 3, 64(1)
+; CHECK-DAG: ld [[SR:[0-9]+]], 16(1)
+; CHECK: mtlr [[SR]]
 ; CHECK: blr
 
 ; Function Attrs: nounwind readnone

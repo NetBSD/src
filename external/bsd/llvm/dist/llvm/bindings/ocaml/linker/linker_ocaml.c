@@ -23,12 +23,10 @@
 
 void llvm_raise(value Prototype, char *Message);
 
-/* llmodule -> llmodule -> Mode.t -> unit */
-CAMLprim value llvm_link_modules(LLVMModuleRef Dst, LLVMModuleRef Src, value Mode) {
-  char* Message;
-
-  if (LLVMLinkModules(Dst, Src, Int_val(Mode), &Message))
-    llvm_raise(*caml_named_value("Llvm_linker.Error"), Message);
+/* llmodule -> llmodule -> unit */
+CAMLprim value llvm_link_modules(LLVMModuleRef Dst, LLVMModuleRef Src) {
+  if (LLVMLinkModules2(Dst, Src))
+    llvm_raise(*caml_named_value("Llvm_linker.Error"), "Linking failed");
 
   return Val_unit;
 }

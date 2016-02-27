@@ -34,14 +34,17 @@ struct HexNumber {
   // unsigned type. The overloads are here so that every type that is implicitly
   // convertible to an integer (including enums and endian helpers) can be used
   // without requiring type traits or call-site changes.
-  HexNumber(int8_t   Value) : Value(static_cast<uint8_t >(Value)) { }
-  HexNumber(int16_t  Value) : Value(static_cast<uint16_t>(Value)) { }
-  HexNumber(int32_t  Value) : Value(static_cast<uint32_t>(Value)) { }
-  HexNumber(int64_t  Value) : Value(static_cast<uint64_t>(Value)) { }
-  HexNumber(uint8_t  Value) : Value(Value) { }
-  HexNumber(uint16_t Value) : Value(Value) { }
-  HexNumber(uint32_t Value) : Value(Value) { }
-  HexNumber(uint64_t Value) : Value(Value) { }
+  HexNumber(char             Value) : Value(static_cast<unsigned char>(Value)) { }
+  HexNumber(signed char      Value) : Value(static_cast<unsigned char>(Value)) { }
+  HexNumber(signed short     Value) : Value(static_cast<unsigned short>(Value)) { }
+  HexNumber(signed int       Value) : Value(static_cast<unsigned int>(Value)) { }
+  HexNumber(signed long      Value) : Value(static_cast<unsigned long>(Value)) { }
+  HexNumber(signed long long Value) : Value(static_cast<unsigned long long>(Value)) { }
+  HexNumber(unsigned char      Value) : Value(Value) { }
+  HexNumber(unsigned short     Value) : Value(Value) { }
+  HexNumber(unsigned int       Value) : Value(Value) { }
+  HexNumber(unsigned long      Value) : Value(Value) { }
+  HexNumber(unsigned long long Value) : Value(Value) { }
   uint64_t Value;
 };
 
@@ -96,9 +99,10 @@ public:
     }
   }
 
-  template<typename T, typename TFlag>
-  void printFlags(StringRef Label, T Value, ArrayRef<EnumEntry<TFlag> > Flags,
-                  TFlag EnumMask = TFlag(0)) {
+  template <typename T, typename TFlag>
+  void printFlags(StringRef Label, T Value, ArrayRef<EnumEntry<TFlag>> Flags,
+                  TFlag EnumMask1 = {}, TFlag EnumMask2 = {},
+                  TFlag EnumMask3 = {}) {
     typedef EnumEntry<TFlag> FlagEntry;
     typedef SmallVector<FlagEntry, 10> FlagVector;
     FlagVector SetFlags;
@@ -107,6 +111,13 @@ public:
       if (Flag.Value == 0)
         continue;
 
+      TFlag EnumMask{};
+      if (Flag.Value & EnumMask1)
+        EnumMask = EnumMask1;
+      else if (Flag.Value & EnumMask2)
+        EnumMask = EnumMask2;
+      else if (Flag.Value & EnumMask3)
+        EnumMask = EnumMask3;
       bool IsEnum = (Flag.Value & EnumMask) != 0;
       if ((!IsEnum && (Value & Flag.Value) == Flag.Value) ||
           (IsEnum  && (Value & EnumMask) == Flag.Value)) {
@@ -173,14 +184,27 @@ public:
     startLine() << Label << ": " << (Value ? "Yes" : "No") << '\n';
   }
 
-  template <typename T_>
-  void printList(StringRef Label, const SmallVectorImpl<T_> &List) {
+  template <typename T>
+  void printList(StringRef Label, const T &List) {
     startLine() << Label << ": [";
     bool Comma = false;
     for (const auto &Item : List) {
       if (Comma)
         OS << ", ";
       OS << Item;
+      Comma = true;
+    }
+    OS << "]\n";
+  }
+
+  template <typename T>
+  void printHexList(StringRef Label, const T &List) {
+    startLine() << Label << ": [";
+    bool Comma = false;
+    for (const auto &Item : List) {
+      if (Comma)
+        OS << ", ";
+      OS << hex(Item);
       Comma = true;
     }
     OS << "]\n";

@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-hsdr < %s | FileCheck %s
 ; CHECK: r{{[0-9]}}:{{[0-9]}} = combine({{r[0-9]|#0}}, r{{[0-9]}})
 ; CHECK: r{{[0-9]}}:{{[0-9]}} |= asl(r{{[0-9]}}:{{[0-9]}}, #32)
 
@@ -8,7 +8,7 @@
 
 define void @foo() nounwind {
 entry:
-  %0 = load i64* bitcast (%struct.small* @s1 to i64*), align 1
+  %0 = load i64, i64* bitcast (%struct.small* @s1 to i64*), align 1
   call void @bar(i64 %0)
   ret void
 }

@@ -14,9 +14,19 @@ declare void @Z_fatal(i8*) noreturn nounwind
 
 declare noalias i8* @calloc(i32, i32) nounwind
 
+; Jump tables are not anchored next to the TBB/TBH any more. Make sure the
+; correct address is still calculated (i.e. via a PC-relative symbol *at* the
+; TBB/TBH).
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
 ; CHECK-LABEL: main:
-; CHECK: tbb
+; CHECK-NOT: adr {{r[0-9]+}}, LJTI
+; CHECK: [[PCREL_ANCHOR:LCPI[0-9]+_[0-9]+]]:
+; CHECK-NEXT:     tbb [pc, {{r[0-9]+}}]
+
+; CHECK: LJTI0_0:
+; CHECK-NEXT: .data_region jt8
+; CHECK-NEXT: .byte (LBB{{[0-9]+_[0-9]+}}-([[PCREL_ANCHOR]]+4))/2
+
 entry:
 	br label %bb42.i
 
@@ -45,7 +55,7 @@ bb33.i:		; preds = %bb42.i
 	unreachable
 
 bb34.i:		; preds = %bb42.i
-	%3 = load i32* @_C_nextcmd, align 4		; <i32> [#uses=1]
+	%3 = load i32, i32* @_C_nextcmd, align 4		; <i32> [#uses=1]
 	%4 = add i32 %3, 1		; <i32> [#uses=1]
 	store i32 %4, i32* @_C_nextcmd, align 4
 	%5 = call  noalias i8* @calloc(i32 22, i32 1) nounwind		; <i8*> [#uses=0]
@@ -60,7 +70,7 @@ bb37.i:		; preds = %bb42.i
 	unreachable
 
 bb39.i:		; preds = %bb42.i
-	call  void @Z_fatal(i8* getelementptr ([28 x i8]* @.str31, i32 0, i32 0)) nounwind
+	call  void @Z_fatal(i8* getelementptr ([28 x i8], [28 x i8]* @.str31, i32 0, i32 0)) nounwind
 	unreachable
 
 bb40.i:		; preds = %bb42.i, %bb5.i, %bb1.i2

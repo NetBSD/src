@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel -mcpu=mips16 -relocation-model=static < %s | FileCheck %s -check-prefix=16
+; RUN: llc -march=mipsel -mattr=mips16 -relocation-model=static < %s | FileCheck %s -check-prefix=16
 
 @i = global i32 6, align 4
 @j = global i32 12, align 4
@@ -8,16 +8,16 @@
 
 define void @foo() nounwind {
 entry:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   %add = add nsw i32 %0, 5
   store i32 %add, i32* @i, align 4
-  %1 = load i32* @j, align 4
+  %1 = load i32, i32* @j, align 4
   %sub = sub nsw i32 %1, 5
   store i32 %sub, i32* @j, align 4
-  %2 = load i32* @k, align 4
+  %2 = load i32, i32* @k, align 4
   %add1 = add nsw i32 %2, 10000
   store i32 %add1, i32* @k, align 4
-  %3 = load i32* @l, align 4
+  %3 = load i32, i32* @l, align 4
   %sub2 = sub nsw i32 %3, 10000
   store i32 %sub2, i32* @l, align 4
 ; 16: 	addiu	${{[0-9]+}}, 5	# 16 bit inst
