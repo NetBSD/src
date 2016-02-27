@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.59 2015/08/24 14:04:25 uebayasi Exp $
+#	$NetBSD: Makefile.powerpc,v 1.60 2016/02/27 21:48:34 joerg Exp $
 #
 # Makefile for NetBSD
 #
@@ -48,8 +48,8 @@ DEFCOPTS=	-O2
 CFLAGS+=	-fstack-protector
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -misel :}
 .endif
-CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none -msoft-float :}
-CFLAGS+=	${${ACTIVE_CC} == "clang":? -mllvm -disable-ppc-float-in-variadic=true :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none :}
+CFLAGS+=	-msoft-float
 CFLAGS+=	${CCPUOPTS}
 AFLAGS+=	${AOPTS} -D_NOREGNAMES
 
