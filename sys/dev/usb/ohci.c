@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.50 2016/02/27 15:44:05 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.51 2016/02/27 15:47:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.50 2016/02/27 15:44:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.51 2016/02/27 15:47:18 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2956,7 +2956,6 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	usb_syncmem(&tail->dma, tail->offs, sizeof(tail->td),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-
 #ifdef OHCI_DEBUG
 	USBHIST_LOGN(ohcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 	if (ohcidebug >= 5) {
@@ -3715,7 +3714,6 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 
 	/* XXX pretend we did it all */
 	xfer->ux_actlen = offs;
-
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 #ifdef OHCI_DEBUG
