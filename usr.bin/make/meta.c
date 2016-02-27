@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.50 2016/02/27 16:17:26 christos Exp $ */
+/*      $NetBSD: meta.c,v 1.51 2016/02/27 16:18:47 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -602,6 +602,7 @@ meta_mode_init(const char *make_mode)
     if (cp) {
 	str2Lst_Append(metaBailiwick, cp, NULL);
     }
+    free(cp);
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
@@ -614,6 +615,7 @@ meta_mode_init(const char *make_mode)
     if (cp) {
 	str2Lst_Append(metaIgnorePaths, cp, NULL);
     }
+    free(cp);
 }
 
 /*
