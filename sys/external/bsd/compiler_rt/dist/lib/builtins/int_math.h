@@ -54,6 +54,8 @@
       __typeof((x)) x_ = (x); \
       !crt_isinf(x_) && !crt_isnan(x_); \
     }))
+#elif defined(__lint__)
+#  define crt_isfinite(x) 0
 #else
 #  error "Do not know how to check for infinity"
 #endif /* __has_builtin(__builtin_isfinite) */
