@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.100 2016/02/27 16:23:22 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.101 2016/02/27 16:28:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.100 2016/02/27 16:23:22 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.101 2016/02/27 16:28:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ list(int nlflag, int erflag)
 			} else if (n2->type == NREDIR) {
 				n2->type = NBACKGND;
 			} else {
-				n3 = (union node *)stalloc(sizeof (struct nredir));
+				n3 = stalloc(sizeof(struct nredir));
 				n3->type = NBACKGND;
 				n3->nredir.n = n2;
 				n3->nredir.redirect = NULL;
@@ -180,7 +180,7 @@ list(int nlflag, int erflag)
 			n1 = n2;
 		}
 		else {
-			n3 = (union node *)stalloc(sizeof (struct nbinary));
+			n3 = stalloc(sizeof(struct nbinary));
 			n3->type = NSEMI;
 			n3->nbinary.ch1 = n1;
 			n3->nbinary.ch2 = n2;
@@ -238,7 +238,7 @@ andor(void)
 			return n1;
 		}
 		n2 = pipeline();
-		n3 = (union node *)stalloc(sizeof (struct nbinary));
+		n3 = stalloc(sizeof(struct nbinary));
 		n3->type = t;
 		n3->nbinary.ch1 = n1;
 		n3->nbinary.ch2 = n2;
@@ -266,15 +266,15 @@ pipeline(void)
 	tokpushback++;
 	n1 = command();
 	if (readtoken() == TPIPE) {
-		pipenode = (union node *)stalloc(sizeof (struct npipe));
+		pipenode = stalloc(sizeof(struct npipe));
 		pipenode->type = NPIPE;
 		pipenode->npipe.backgnd = 0;
-		lp = (struct nodelist *)stalloc(sizeof (struct nodelist));
+		lp = stalloc(sizeof(struct nodelist));
 		pipenode->npipe.cmdlist = lp;
 		lp->n = n1;
 		do {
 			prev = lp;
-			lp = (struct nodelist *)stalloc(sizeof (struct nodelist));
+			lp = stalloc(sizeof(struct nodelist));
 			lp->n = command();
 			prev->next = lp;
 		} while (readtoken() == TPIPE);
@@ -284,7 +284,7 @@ pipeline(void)
 	tokpushback++;
 	if (negate) {
 		TRACE(("negate pipeline\n"));
-		n2 = (union node *)stalloc(sizeof (struct nnot));
+		n2 = stalloc(sizeof(struct nnot));
 		n2->type = NNOT;
 		n2->nnot.com = n1;
 		return n2;
@@ -326,7 +326,7 @@ command(void)
 
 	switch (readtoken()) {
 	case TIF:
-		n1 = (union node *)stalloc(sizeof (struct nif));
+		n1 = stalloc(sizeof(struct nif));
 		n1->type = NIF;
 		n1->nif.test = list(0, 0);
 		if (readtoken() != TTHEN)
@@ -334,7 +334,7 @@ command(void)
 		n1->nif.ifpart = list(0, 0);
 		n2 = n1;
 		while (readtoken() == TELIF) {
-			n2->nif.elsepart = (union node *)stalloc(sizeof (struct nif));
+			n2->nif.elsepart = stalloc(sizeof(struct nif));
 			n2 = n2->nif.elsepart;
 			n2->type = NIF;
 			n2->nif.test = list(0, 0);
@@ -355,7 +355,7 @@ command(void)
 	case TWHILE:
 	case TUNTIL: {
 		int got;
-		n1 = (union node *)stalloc(sizeof (struct nbinary));
+		n1 = stalloc(sizeof(struct nbinary));
 		n1->type = (lasttoken == TWHILE)? NWHILE : NUNTIL;
 		n1->nbinary.ch1 = list(0, 0);
 		if ((got=readtoken()) != TDO) {
@@ -371,13 +371,13 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 	case TFOR:
 		if (readtoken() != TWORD || quoteflag || ! goodname(wordtext))
 			synerror("Bad for loop variable");
-		n1 = (union node *)stalloc(sizeof (struct nfor));
+		n1 = stalloc(sizeof(struct nfor));
 		n1->type = NFOR;
 		n1->nfor.var = wordtext;
 		if (readtoken() == TWORD && ! quoteflag && equal(wordtext, "in")) {
 			app = &ap;
 			while (readtoken() == TWORD) {
-				n2 = (union node *)stalloc(sizeof (struct narg));
+				n2 = stalloc(sizeof(struct narg));
 				n2->type = NARG;
 				n2->narg.text = wordtext;
 				n2->narg.backquote = backquotelist;
@@ -392,7 +392,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			static char argvars[5] = {
 			    CTLVAR, VSNORMAL|VSQUOTE, '@', '=', '\0'
 			};
-			n2 = (union node *)stalloc(sizeof (struct narg));
+			n2 = stalloc(sizeof(struct narg));
 			n2->type = NARG;
 			n2->narg.text = argvars;
 			n2->narg.backquote = NULL;
@@ -418,11 +418,11 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		checkkwd = 1;
 		break;
 	case TCASE:
-		n1 = (union node *)stalloc(sizeof (struct ncase));
+		n1 = stalloc(sizeof(struct ncase));
 		n1->type = NCASE;
 		if (readtoken() != TWORD)
 			synexpect(TWORD);
-		n1->ncase.expr = n2 = (union node *)stalloc(sizeof (struct narg));
+		n1->ncase.expr = n2 = stalloc(sizeof(struct narg));
 		n2->type = NARG;
 		n2->narg.text = wordtext;
 		n2->narg.backquote = backquotelist;
@@ -444,13 +444,13 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		 * case option.
 		 */
 		while (lasttoken != TESAC) {
-			*cpp = cp = (union node *)stalloc(sizeof (struct nclist));
+			*cpp = cp = stalloc(sizeof(struct nclist));
 			if (lasttoken == TLP)
 				readtoken();
 			cp->type = NCLIST;
 			app = &cp->nclist.pattern;
 			for (;;) {
-				*app = ap = (union node *)stalloc(sizeof (struct narg));
+				*app = ap = stalloc(sizeof(struct narg));
 				ap->type = NARG;
 				ap->narg.text = wordtext;
 				ap->narg.backquote = backquotelist;
@@ -484,7 +484,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		checkkwd = 1;
 		break;
 	case TLP:
-		n1 = (union node *)stalloc(sizeof (struct nredir));
+		n1 = stalloc(sizeof(struct nredir));
 		n1->type = NSUBSHELL;
 		n1->nredir.n = list(0, 0);
 		n1->nredir.redirect = NULL;
@@ -536,7 +536,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 	*rpp = NULL;
 	if (redir) {
 		if (n1->type != NSUBSHELL) {
-			n2 = (union node *)stalloc(sizeof (struct nredir));
+			n2 = stalloc(sizeof(struct nredir));
 			n2->type = NREDIR;
 			n2->nredir.n = n1;
 			n1 = n2;
@@ -547,7 +547,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 checkneg:
 	if (negate) {
 		TRACE(("negate command\n"));
-		n2 = (union node *)stalloc(sizeof (struct nnot));
+		n2 = stalloc(sizeof(struct nnot));
 		n2->type = NNOT;
 		n2->nnot.com = n1;
 		return n2;
@@ -587,7 +587,7 @@ simplecmd(union node **rpp, union node *redir)
 
 	for (;;) {
 		if (readtoken() == TWORD) {
-			n = (union node *)stalloc(sizeof (struct narg));
+			n = stalloc(sizeof(struct narg));
 			n->type = NARG;
 			n->narg.text = wordtext;
 			n->narg.backquote = backquotelist;
@@ -617,7 +617,7 @@ simplecmd(union node **rpp, union node *redir)
 	}
 	*app = NULL;
 	*rpp = NULL;
-	n = (union node *)stalloc(sizeof (struct ncmd));
+	n = stalloc(sizeof(struct ncmd));
 	n->type = NCMD;
 	n->ncmd.backgnd = 0;
 	n->ncmd.args = args;
@@ -626,7 +626,7 @@ simplecmd(union node **rpp, union node *redir)
 checkneg:
 	if (negate) {
 		TRACE(("negate simplecmd\n"));
-		n2 = (union node *)stalloc(sizeof (struct nnot));
+		n2 = stalloc(sizeof(struct nnot));
 		n2->type = NNOT;
 		n2->nnot.com = n;
 		return n2;
@@ -640,7 +640,7 @@ makename(void)
 {
 	union node *n;
 
-	n = (union node *)stalloc(sizeof (struct narg));
+	n = stalloc(sizeof(struct narg));
 	n->type = NARG;
 	n->narg.next = NULL;
 	n->narg.text = wordtext;
@@ -730,7 +730,7 @@ parseheredoc(void)
 			continue;
 		readtoken1(c, here->here->type == NHERE? SQSYNTAX : DQSYNTAX,
 		    here->eofmark, here->striptabs);
-		n = (union node *)stalloc(sizeof (struct narg));
+		n = stalloc(sizeof(struct narg));
 		n->narg.type = NARG;
 		n->narg.next = NULL;
 		n->narg.text = wordtext;
@@ -1357,7 +1357,7 @@ parseredir: {
 	union node *np;
 	strlcpy(fd, out, sizeof(fd));
 
-	np = (union node *)stalloc(sizeof (struct nfile));
+	np = stalloc(sizeof(struct nfile));
 	if (c == '>') {
 		np->nfile.fd = 1;
 		c = pgetc();
@@ -1376,11 +1376,11 @@ parseredir: {
 		switch (c = pgetc()) {
 		case '<':
 			if (sizeof (struct nfile) != sizeof (struct nhere)) {
-				np = (union node *)stalloc(sizeof (struct nhere));
+				np = stalloc(sizeof(struct nhere));
 				np->nfile.fd = 0;
 			}
 			np->type = NHERE;
-			heredoc = (struct heredoc *)stalloc(sizeof (struct heredoc));
+			heredoc = stalloc(sizeof(struct heredoc));
 			heredoc->here = np;
 			if ((c = pgetc()) == '-') {
 				heredoc->striptabs = 1;
@@ -1643,7 +1643,7 @@ done:
 	nlpp = &bqlist;
 	while (*nlpp)
 		nlpp = &(*nlpp)->next;
-	*nlpp = (struct nodelist *)stalloc(sizeof (struct nodelist));
+	*nlpp = stalloc(sizeof(struct nodelist));
 	(*nlpp)->next = NULL;
 	parsebackquote = oldstyle;
 
