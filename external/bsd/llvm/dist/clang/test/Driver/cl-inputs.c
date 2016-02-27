@@ -1,6 +1,3 @@
-// Don't attempt slash switches on msys bash.
-// REQUIRES: shell-preserves-root
-
 // Note: %s must be preceded by --, otherwise it may be interpreted as a
 // command-line option, e.g. on Mac where %s is commonly under /Users.
 
@@ -34,12 +31,13 @@
 // WARN: note: The last /TC or /TP option takes precedence over earlier instances
 // WARN-NOT: note
 
-// RUN: env LIB=%S/Inputs/cl-libs %clang_cl /c /TP cl-test.lib -### 2>&1 | FileCheck -check-prefix=TPlib %s
+// MSYS2_ARG_CONV_EXCL tells MSYS2 to skip conversion of the specified argument.
+// RUN: env LIB=%S/Inputs/cl-libs MSYS2_ARG_CONV_EXCL="/TP;/c" %clang_cl /c /TP cl-test.lib -### 2>&1 | FileCheck -check-prefix=TPlib %s
 // TPlib: warning: cl-test.lib: 'linker' input unused
 // TPlib: warning: argument unused during compilation: '/TP'
 // TPlib-NOT: cl-test.lib
 
-// RUN: env LIB=%S/Inputs/cl-libs %clang_cl /c /TC cl-test.lib -### 2>&1 | FileCheck -check-prefix=TClib %s
+// RUN: env LIB=%S/Inputs/cl-libs MSYS2_ARG_CONV_EXCL="/TC;/c" %clang_cl /c /TC cl-test.lib -### 2>&1 | FileCheck -check-prefix=TClib %s
 // TClib: warning: cl-test.lib: 'linker' input unused
 // TClib: warning: argument unused during compilation: '/TC'
 // TClib-NOT: cl-test.lib
@@ -58,5 +56,10 @@
 // LIBINPUT2: error: no such file or directory: 'cl-test2.lib'
 // LIBINPUT2: link.exe"
 // LIBINPUT2-NOT: "cl-test2.lib"
+
+// RUN: %clang_cl -### -- %s /nonexisting.lib 2>&1 | FileCheck -check-prefix=LIBINPUT3 %s
+// LIBINPUT3: error: no such file or directory: '/nonexisting.lib'
+// LIBINPUT3: link.exe"
+// LIBINPUT3-NOT: "/nonexisting.lib"
 
 void f();

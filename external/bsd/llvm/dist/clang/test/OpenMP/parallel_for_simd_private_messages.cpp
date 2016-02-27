@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp=libiomp5 %s
+// RUN: %clang_cc1 -verify -fopenmp %s
 
 void foo() {
 }
@@ -47,7 +47,7 @@ int foomain(I argc, C **argv) {
   I e(4);
   I g(5);
   int i;
-  int &j = i;           // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel for simd private // expected-error {{expected '(' after 'private'}}
   for (int k = 0; k < argc; ++k)
     ++k;
@@ -99,7 +99,7 @@ int foomain(I argc, C **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp parallel for simd private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+#pragma omp parallel for simd private(j)
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel for simd private(i)
@@ -108,11 +108,19 @@ int foomain(I argc, C **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
   int i;
-  int &j = i;           // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel for simd private // expected-error {{expected '(' after 'private'}}
   for (int k = 0; k < argc; ++k)
     ++k;
@@ -146,7 +154,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for simd private(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   for (int k = 0; k < argc; ++k)
     ++k;
-#pragma omp parallel for simd private(h) // expected-error {{threadprivate or thread local variable cannot be private}}
+#pragma omp parallel for simd private(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be private}}
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel for simd nowait // expected-error {{unexpected OpenMP clause 'nowait' in directive '#pragma omp parallel for simd'}}
@@ -161,12 +169,16 @@ int main(int argc, char **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp parallel for simd private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+#pragma omp parallel for simd private(j)
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel for simd private(i)
   for (int k = 0; k < argc; ++k)
     ++k;
+  static int m;
+#pragma omp parallel for simd private(m) // OK
+  for (int k = 0; k < argc; ++k)
+    m = k + 3;
 
   return 0;
 }

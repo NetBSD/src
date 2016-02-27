@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -fsanitize-recover=alignment,null,object-size,shift,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-COMMON --check-prefix=CHECK-UBSAN
-// RUN: %clang_cc1 -fsanitize-undefined-trap-on-error -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -fsanitize-recover=alignment,null,object-size,shift,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-COMMON --check-prefix=CHECK-TRAP
+// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift-base,shift-exponent,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -fsanitize-recover=alignment,null,object-size,shift-base,shift-exponent,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | opt -instnamer -S | FileCheck %s --check-prefix=CHECK-COMMON --check-prefix=CHECK-UBSAN
+// RUN: %clang_cc1 -fsanitize-trap=alignment,null,object-size,shift-base,shift-exponent,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -fsanitize-recover=alignment,null,object-size,shift-base,shift-exponent,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -fsanitize=alignment,null,object-size,shift-base,shift-exponent,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -fsanitize-recover=alignment,null,object-size,shift-base,shift-exponent,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | opt -instnamer -S | FileCheck %s --check-prefix=CHECK-COMMON --check-prefix=CHECK-TRAP
 // RUN: %clang_cc1 -fsanitize=null -fsanitize-recover=null -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-NULL
 // RUN: %clang_cc1 -fsanitize=signed-integer-overflow -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-OVERFLOW
 
@@ -18,6 +18,17 @@
 // CHECK-UBSAN: @[[LINE_700:.*]] = {{.*}}, i32 700, i32 14 {{.*}} @[[STRUCT_S]], i64 4, i8 3 }
 // CHECK-UBSAN: @[[LINE_800:.*]] = {{.*}}, i32 800, i32 12 {{.*}} @{{.*}} }
 // CHECK-UBSAN: @[[LINE_900:.*]] = {{.*}}, i32 900, i32 11 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1000:.*]] = {{.*}}, i32 1000, i32 10 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[FP16:.*]] = private unnamed_addr constant { i16, i16, [9 x i8] } { i16 1, i16 16, [9 x i8] c"'__fp16'\00" }
+// CHECK-UBSAN: @[[LINE_1100:.*]] = {{.*}}, i32 1100, i32 8 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1200:.*]] = {{.*}}, i32 1200, i32 10 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1300:.*]] = {{.*}}, i32 1300, i32 10 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1400:.*]] = {{.*}}, i32 1400, i32 10 {{.*}} @{{.*}} }
+// Make sure we check the fp16 type_mismatch data so we can easily match the signed char float_cast_overflow
+// CHECK-UBSAN: @[[LINE_1500:.*]] = {{.*}}, i32 1500, i32 10 {{.*}} @[[FP16]], {{.*}} }
+// CHECK-UBSAN: @[[SCHAR:.*]] = private unnamed_addr constant { i16, i16, [14 x i8] } { i16 0, i16 7, [14 x i8] c"'signed char'\00" }
+// CHECK-UBSAN: @[[LINE_1500:.*]] = {{.*}}, i32 1500, i32 10 {{.*}} @[[FP16]], {{.*}} }
+// CHECK-UBSAN: @[[LINE_1600:.*]] = {{.*}}, i32 1600, i32 10 {{.*}} @{{.*}} }
 
 // CHECK-NULL: @[[LINE_100:.*]] = private unnamed_addr global {{.*}}, i32 100, i32 5 {{.*}}
 
@@ -83,15 +94,19 @@ int addr_space(int __attribute__((address_space(256))) *a) {
 
 // CHECK-COMMON-LABEL: @lsh_overflow
 int lsh_overflow(int a, int b) {
-  // CHECK-COMMON:      %[[INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
-  // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]], label %[[CHECKBB:.*]], label %[[CONTBB:.*]]
+  // CHECK-COMMON:      %[[RHS_INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
+  // CHECK-COMMON-NEXT: br i1 %[[RHS_INBOUNDS]], label %[[CHECK_BB:.*]], label %[[CONT_BB:.*]],
 
-  // CHECK-COMMON:      %[[SHIFTED_OUT_WIDTH:.*]] = sub nuw nsw i32 31, %[[RHS]]
+  // CHECK-COMMON:      [[CHECK_BB]]:
+  // CHECK-COMMON-NEXT: %[[SHIFTED_OUT_WIDTH:.*]] = sub nuw nsw i32 31, %[[RHS]]
   // CHECK-COMMON-NEXT: %[[SHIFTED_OUT:.*]] = lshr i32 %[[LHS:.*]], %[[SHIFTED_OUT_WIDTH]]
   // CHECK-COMMON-NEXT: %[[NO_OVERFLOW:.*]] = icmp eq i32 %[[SHIFTED_OUT]], 0
-  // CHECK-COMMON-NEXT: br label %[[CONTBB]]
+  // CHECK-COMMON-NEXT: br label %[[CONT_BB]]
 
-  // CHECK-COMMON:      %[[VALID:.*]] = phi i1 [ %[[INBOUNDS]], {{.*}} ], [ %[[NO_OVERFLOW]], %[[CHECKBB]] ]
+  // CHECK-COMMON:      [[CONT_BB]]:
+  // CHECK-COMMON-NEXT: %[[VALID_BASE:.*]] = phi i1 [ true, {{.*}} ], [ %[[NO_OVERFLOW]], %[[CHECK_BB]] ]
+  // CHECK-COMMON-NEXT: %[[VALID:.*]] = and i1 %[[RHS_INBOUNDS]], %[[VALID_BASE]]
+
   // CHECK-UBSAN: br i1 %[[VALID]], {{.*}} !prof ![[WEIGHT_MD]]
   // CHECK-TRAP:  br i1 %[[VALID]]
 
@@ -122,7 +137,7 @@ int rsh_inbounds(int a, int b) {
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 
-  // CHECK-COMMON:      %[[RET:.*]] = ashr i32 %[[LHS]], %[[RHS]]
+  // CHECK-COMMON:      %[[RET:.*]] = ashr i32 {{.*}}, %[[RHS]]
   // CHECK-COMMON-NEXT: ret i32 %[[RET]]
 #line 400
   return a >> b;
@@ -204,10 +219,11 @@ float int_float_overflow(unsigned __int128 n) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = icmp ule i128 %{{.*}}, -20282409603651670423947251286016
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1000]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1000
   return n;
 }
 
@@ -218,10 +234,11 @@ void int_fp16_overflow(int n, __fp16 *p) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1100]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1100
   *p = n;
 }
 
@@ -234,10 +251,11 @@ int float_int_overflow(float f) {
 
   // CHECK-UBSAN: %[[CAST:.*]] = bitcast float %[[F]] to i32
   // CHECK-UBSAN: %[[ARG:.*]] = zext i32 %[[CAST]] to i64
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow({{.*}}, i64 %[[ARG]]
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1200]] to i8*), i64 %[[ARG]]
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1200
   return f;
 }
 
@@ -250,12 +268,13 @@ int long_double_int_overflow(long double ld) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: store x86_fp80 %[[F]], x86_fp80* %[[ALLOCA:.*]], !nosanitize
+  // CHECK-UBSAN: store x86_fp80 %[[F]], x86_fp80* %[[ALLOCA:.*]], align 16, !nosanitize
   // CHECK-UBSAN: %[[ARG:.*]] = ptrtoint x86_fp80* %[[ALLOCA]] to i64
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow({{.*}}, i64 %[[ARG]]
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1300]] to i8*), i64 %[[ARG]]
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1300
   return ld;
 }
 
@@ -266,10 +285,11 @@ unsigned float_uint_overflow(float f) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1400]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1400
   return f;
 }
 
@@ -280,10 +300,11 @@ signed char fp16_char_overflow(__fp16 *p) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1500]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1500
   return *p;
 }
 
@@ -296,10 +317,11 @@ float float_float_overflow(double f) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = xor i1 %[[OUTOFBOUNDS]], true
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1600]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1600
   return f;
 }
 
@@ -366,6 +388,34 @@ void call_decl_nonnull(int *a) {
   decl_nonnull(a);
 }
 
+extern void *memcpy (void *, const void *, unsigned) __attribute__((nonnull(1, 2)));
+
+// CHECK-COMMON-LABEL: @call_memcpy_nonnull
+void call_memcpy_nonnull(void *p, void *q, int sz) {
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+  memcpy(p, q, sz);
+}
+
+extern void *memmove (void *, const void *, unsigned) __attribute__((nonnull(1, 2)));
+
+// CHECK-COMMON-LABEL: @call_memmove_nonnull
+void call_memmove_nonnull(void *p, void *q, int sz) {
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+  memmove(p, q, sz);
+}
+
 // CHECK-COMMON-LABEL: @call_nonnull_variadic
 __attribute__((nonnull)) void nonnull_variadic(int a, ...);
 void call_nonnull_variadic(int a, int *b) {
@@ -375,7 +425,7 @@ void call_nonnull_variadic(int a, int *b) {
   // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
   // CHECK-UBSAN-NOT: __ubsan_handle_nonnull_arg
 
-  // CHECK-COMMON: call void (i32, ...)* @nonnull_variadic
+  // CHECK-COMMON: call void (i32, ...) @nonnull_variadic
   nonnull_variadic(a, b);
 }
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x c++ -std=c++11 -verify -fopenmp=libiomp5 %s
+// RUN: %clang_cc1 -x c++ -std=c++11 -verify -fopenmp %s
 
 struct B {
   static int ib[20]; // expected-note 0 {{'B::ib' declared here}}
@@ -50,7 +50,7 @@ template<int L, class T, class N> T test_template(T* arr, N num) {
   T sum = (T)0;
   T ind2 = - num * L;
   // Negative number is passed as L.
-  // expected-error@+1 {{argument to 'aligned' clause must be a positive integer value}}
+  // expected-error@+1 {{argument to 'aligned' clause must be a strictly positive integer value}}
   #pragma omp for simd aligned(arr:L)
   for (i = 0; i < num; ++i) {
     T cur = arr[(int)ind2];
@@ -65,7 +65,7 @@ template<int L, class T, class N> T test_template(T* arr, N num) {
 
 template<int LEN> int test_warn() {
   int *ind2 = 0;
-  // expected-error@+1 {{argument to 'aligned' clause must be a positive integer value}}
+  // expected-error@+1 {{argument to 'aligned' clause must be a strictly positive integer value}}
   #pragma omp for simd aligned(ind2:LEN)
   for (int i = 0; i < 100; i++) {
     ind2 += LEN;

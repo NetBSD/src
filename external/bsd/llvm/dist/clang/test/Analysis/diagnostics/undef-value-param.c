@@ -435,9 +435,12 @@ double testPassingParentRegionStruct(int x) {
 // CHECK-NEXT:    <key>description</key><string>The left operand of &apos;+&apos; is a garbage value</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Result of operation is garbage or undefined</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.UndefinedBinaryOperatorResult</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>ae5e3bd03d6d97614947942dae18e1da</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>use</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>7</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>7</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>26</integer>
@@ -752,9 +755,12 @@ double testPassingParentRegionStruct(int x) {
 // CHECK-NEXT:    <key>description</key><string>The right operand of &apos;*&apos; is a garbage value</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Result of operation is garbage or undefined</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.UndefinedBinaryOperatorResult</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>96cf3258da3df14d13cd5c2236c9cb27</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testPassingParentRegionArray</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>4</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>4</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>42</integer>
@@ -1166,9 +1172,12 @@ double testPassingParentRegionStruct(int x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;f1&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>299055864402de225b0ab4f2ecd8e76c</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testPassingParentRegionStruct</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>5</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>5</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>62</integer>

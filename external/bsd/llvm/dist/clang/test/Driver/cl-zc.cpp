@@ -1,6 +1,3 @@
-// Don't attempt slash switches on msys bash.
-// REQUIRES: shell-preserves-root
-
 // Note: %s must be preceded by --, otherwise it may be interpreted as a
 // command-line option, e.g. on Mac where %s is commonly under /Users.
 
@@ -14,6 +11,12 @@
 
 // RUN: %clang_cl /c -### /Zc:trigraphs- -- %s 2>&1 | FileCheck -check-prefix=TRIGRAPHS-OFF %s
 // TRIGRAPHS-OFF: "-fno-trigraphs"
+
+// RUN: %clang_cl /c -### /Zc:sizedDealloc -- %s 2>&1 | FileCheck -check-prefix=SIZED-DEALLOC-ON %s
+// SIZED-DEALLOC-ON: "-fsized-deallocation"
+
+// RUN: %clang_cl /c -### /Zc:sizedDealloc- -- %s 2>&1 | FileCheck -check-prefix=SIZED-DEALLOC-OFF %s
+// SIZED-DEALLOC-OFF-NOT: "-fsized-deallocation"
 
 // RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=STRICTSTRINGS-DEFAULT %s
 // STRICTSTRINGS-DEFAULT-NOT: -Werror=c++11-compat-deprecated-writable-strings
