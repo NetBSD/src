@@ -9,6 +9,10 @@
 // SSE4: #define __SSE__ 1
 // SSE4: #define __SSSE3__ 1
 
+// RUN: %clang -target i386-unknown-unknown -march=core2 -msse4.1 -mno-sse4 -x c -E -dM -o - %s | FileCheck --check-prefix=NOSSE4 %s
+
+// NOSSE4-NOT: #define __SSE4_1__ 1
+
 // RUN: %clang -target i386-unknown-unknown -march=core2 -msse4 -mno-sse2 -x c -E -dM -o - %s | FileCheck --check-prefix=SSE %s
 
 // SSE-NOT: #define __SSE2_MATH__ 1
@@ -289,3 +293,26 @@
 
 // RDSEED: #define __RDSEED__ 1
 
+// RUN: %clang -target i386-unknown-unknown -march=atom -mxsave -x c -E -dM -o - %s | FileCheck --check-prefix=XSAVE %s
+
+// XSAVE: #define __XSAVE__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mxsaveopt -x c -E -dM -o - %s | FileCheck --check-prefix=XSAVEOPT %s
+
+// XSAVEOPT: #define __XSAVEOPT__ 1
+// XSAVEOPT: #define __XSAVE__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mxsavec -x c -E -dM -o - %s | FileCheck --check-prefix=XSAVEC %s
+
+// XSAVEC: #define __XSAVEC__ 1
+// XSAVEC: #define __XSAVE__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mxsaves -x c -E -dM -o - %s | FileCheck --check-prefix=XSAVES %s
+
+// XSAVES: #define __XSAVES__ 1
+// XSAVES: #define __XSAVE__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mxsaveopt -mno-xsave -x c -E -dM -o - %s | FileCheck --check-prefix=NOXSAVE %s
+
+// NOXSAVE-NOT: #define __XSAVEOPT__ 1
+// NOXSAVE-NOT: #define __XSAVE__ 1

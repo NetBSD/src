@@ -89,40 +89,49 @@ protected:
 public:
   /// \brief What kind of scope we are describing.
   ///
-  ScopeKind Kind;
+  ScopeKind Kind : 3;
 
   /// \brief Whether this function contains a VLA, \@try, try, C++
   /// initializer, or anything else that can't be jumped past.
-  bool HasBranchProtectedScope;
+  bool HasBranchProtectedScope : 1;
 
   /// \brief Whether this function contains any switches or direct gotos.
-  bool HasBranchIntoScope;
+  bool HasBranchIntoScope : 1;
 
   /// \brief Whether this function contains any indirect gotos.
-  bool HasIndirectGoto;
+  bool HasIndirectGoto : 1;
 
   /// \brief Whether a statement was dropped because it was invalid.
-  bool HasDroppedStmt;
+  bool HasDroppedStmt : 1;
 
   /// A flag that is set when parsing a method that must call super's
   /// implementation, such as \c -dealloc, \c -finalize, or any method marked
   /// with \c __attribute__((objc_requires_super)).
-  bool ObjCShouldCallSuper;
+  bool ObjCShouldCallSuper : 1;
 
   /// True when this is a method marked as a designated initializer.
-  bool ObjCIsDesignatedInit;
+  bool ObjCIsDesignatedInit : 1;
   /// This starts true for a method marked as designated initializer and will
   /// be set to false if there is an invocation to a designated initializer of
   /// the super class.
-  bool ObjCWarnForNoDesignatedInitChain;
+  bool ObjCWarnForNoDesignatedInitChain : 1;
 
   /// True when this is an initializer method not marked as a designated
   /// initializer within a class that has at least one initializer marked as a
   /// designated initializer.
-  bool ObjCIsSecondaryInit;
+  bool ObjCIsSecondaryInit : 1;
   /// This starts true for a secondary initializer method and will be set to
   /// false if there is an invocation of an initializer on 'self'.
-  bool ObjCWarnForNoInitDelegation;
+  bool ObjCWarnForNoInitDelegation : 1;
+
+  /// First 'return' statement in the current function.
+  SourceLocation FirstReturnLoc;
+
+  /// First C++ 'try' statement in the current function.
+  SourceLocation FirstCXXTryLoc;
+
+  /// First SEH '__try' statement in the current function.
+  SourceLocation FirstSEHTryLoc;
 
   /// \brief Used to determine if errors occurred in this function or block.
   DiagnosticErrorTrap ErrorTrap;
@@ -136,6 +145,14 @@ public:
   /// optimization, or if we need to infer a return type.
   SmallVector<ReturnStmt*, 4> Returns;
 
+  /// \brief The promise object for this coroutine, if any.
+  VarDecl *CoroutinePromise;
+
+  /// \brief The list of coroutine control flow constructs (co_await, co_yield,
+  /// co_return) that occur within the function or block. Empty if and only if
+  /// this function or block is not (yet known to be) a coroutine.
+  SmallVector<Stmt*, 4> CoroutineStmts;
+
   /// \brief The stack of currently active compound stamement scopes in the
   /// function.
   SmallVector<CompoundScopeInfo, 4> CompoundScopes;
@@ -147,7 +164,7 @@ public:
   
   /// \brief A list of parameters which have the nonnull attribute and are
   /// modified in the function.
-  llvm::SmallPtrSet<const ParmVarDecl*, 8>  ModifiedNonNullParams;
+  llvm::SmallPtrSet<const ParmVarDecl*, 8> ModifiedNonNullParams;
 
 public:
   /// Represents a simple identification of a weak object.
@@ -285,6 +302,9 @@ private:
   /// Part of the implementation of -Wrepeated-use-of-weak.
   WeakObjectUseMap WeakObjectUses;
 
+protected:
+  FunctionScopeInfo(const FunctionScopeInfo&) = default;
+
 public:
   /// Record that a weak object was accessed.
   ///
@@ -321,6 +341,16 @@ public:
     HasDroppedStmt = true;
   }
 
+  void setHasCXXTry(SourceLocation TryLoc) {
+    setHasBranchProtectedScope();
+    FirstCXXTryLoc = TryLoc;
+  }
+
+  void setHasSEHTry(SourceLocation TryLoc) {
+    setHasBranchProtectedScope();
+    FirstSEHTryLoc = TryLoc;
+  }
+
   bool NeedsScopeChecking() const {
     return !HasDroppedStmt &&
         (HasIndirectGoto ||
@@ -348,6 +378,9 @@ public:
 };
 
 class CapturingScopeInfo : public FunctionScopeInfo {
+protected:
+  CapturingScopeInfo(const CapturingScopeInfo&) = default;
+
 public:
   enum ImplicitCaptureStyle {
     ImpCap_None, ImpCap_LambdaByval, ImpCap_LambdaByref, ImpCap_Block,
@@ -533,7 +566,7 @@ public:
 };
 
 /// \brief Retains information about a block that is currently being parsed.
-class BlockScopeInfo : public CapturingScopeInfo {
+class BlockScopeInfo final : public CapturingScopeInfo {
 public:
   BlockDecl *TheDecl;
   
@@ -552,7 +585,7 @@ public:
     Kind = SK_Block;
   }
 
-  virtual ~BlockScopeInfo();
+  ~BlockScopeInfo() override;
 
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Block; 
@@ -560,7 +593,7 @@ public:
 };
 
 /// \brief Retains information about a captured region.
-class CapturedRegionScopeInfo: public CapturingScopeInfo {
+class CapturedRegionScopeInfo final : public CapturingScopeInfo {
 public:
   /// \brief The CapturedDecl for this statement.
   CapturedDecl *TheCapturedDecl;
@@ -583,7 +616,7 @@ public:
     Kind = SK_CapturedRegion;
   }
 
-  virtual ~CapturedRegionScopeInfo();
+  ~CapturedRegionScopeInfo() override;
 
   /// \brief A descriptive name for the kind of captured region this is.
   StringRef getRegionName() const {
@@ -601,7 +634,7 @@ public:
   }
 };
 
-class LambdaScopeInfo : public CapturingScopeInfo {
+class LambdaScopeInfo final : public CapturingScopeInfo {
 public:
   /// \brief The class that describes the lambda.
   CXXRecordDecl *Lambda;
@@ -632,13 +665,6 @@ public:
   /// \brief Whether the lambda contains an unexpanded parameter pack.
   bool ContainsUnexpandedParameterPack;
 
-  /// \brief Variables used to index into by-copy array captures.
-  SmallVector<VarDecl *, 4> ArrayIndexVars;
-
-  /// \brief Offsets into the ArrayIndexVars array at which each capture starts
-  /// its list of array index variables.
-  SmallVector<unsigned, 4> ArrayIndexStarts;
-  
   /// \brief If this is a generic lambda, use this as the depth of 
   /// each 'auto' parameter, during initial AST construction.
   unsigned AutoTemplateParameterDepth;
@@ -682,13 +708,11 @@ public:
   LambdaScopeInfo(DiagnosticsEngine &Diag)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(nullptr),
       CallOperator(nullptr), NumExplicitCaptures(0), Mutable(false),
-      ExprNeedsCleanups(false), ContainsUnexpandedParameterPack(false),
-      AutoTemplateParameterDepth(0), GLTemplateParameterList(nullptr)
-  {
+      ExplicitParams(false), ExprNeedsCleanups(false),
+      ContainsUnexpandedParameterPack(false), AutoTemplateParameterDepth(0),
+      GLTemplateParameterList(nullptr) {
     Kind = SK_Lambda;
   }
-
-  virtual ~LambdaScopeInfo();
 
   /// \brief Note when all explicit captures have been added.
   void finishedExplicitCaptures() {
@@ -826,9 +850,6 @@ CapturingScopeInfo::addThisCapture(bool isNested, SourceLocation Loc,
   Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, CaptureType,
                              Cpy));
   CXXThisCaptureIndex = Captures.size();
-
-  if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(this))
-    LSI->ArrayIndexStarts.push_back(LSI->ArrayIndexVars.size());
 }
 
 } // end namespace sema

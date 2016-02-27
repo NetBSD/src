@@ -76,7 +76,9 @@ static unsigned getDefaultParsingOptions() {
     options |= CXTranslationUnit_SkipFunctionBodies;
   if (getenv("CINDEXTEST_COMPLETION_BRIEF_COMMENTS"))
     options |= CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
-  
+  if (getenv("CINDEXTEST_CREATE_PREAMBLE_ON_FIRST_PARSE"))
+    options |= CXTranslationUnit_CreatePreambleOnFirstParse;
+
   return options;
 }
 
@@ -254,6 +256,17 @@ static int parse_remapped_files_with_try(int try_idx,
       &unsaved_files_try_idx, &num_unsaved_files_try_idx);
   if (ret)
     return ret;
+
+  if (num_unsaved_files_no_try_idx == 0) {
+    *unsaved_files = unsaved_files_try_idx;
+    *num_unsaved_files = num_unsaved_files_try_idx;
+    return 0;
+  }
+  if (num_unsaved_files_try_idx == 0) {
+    *unsaved_files = unsaved_files_no_try_idx;
+    *num_unsaved_files = num_unsaved_files_no_try_idx;
+    return 0;
+  }
 
   *num_unsaved_files = num_unsaved_files_no_try_idx + num_unsaved_files_try_idx;
   *unsaved_files
@@ -756,6 +769,8 @@ static void PrintCursor(CXCursor Cursor, const char *CommentSchemaFile) {
     clang_disposeString(DeprecatedMessage);
     clang_disposeString(UnavailableMessage);
     
+    if (clang_CXXField_isMutable(Cursor))
+      printf(" (mutable)");
     if (clang_CXXMethod_isStatic(Cursor))
       printf(" (static)");
     if (clang_CXXMethod_isVirtual(Cursor))
@@ -1235,6 +1250,32 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
 }
 
 /******************************************************************************/
+/* Visibility testing.                                                        */
+/******************************************************************************/
+
+static enum CXChildVisitResult PrintVisibility(CXCursor cursor, CXCursor p,
+                                               CXClientData d) {
+  const char *visibility = 0;
+
+  if (clang_isInvalid(clang_getCursorKind(cursor)))
+    return CXChildVisit_Recurse;
+
+  switch (clang_getCursorVisibility(cursor)) {
+    case CXVisibility_Invalid: break;
+    case CXVisibility_Hidden: visibility = "Hidden"; break;
+    case CXVisibility_Protected: visibility = "Protected"; break;
+    case CXVisibility_Default: visibility = "Default"; break;
+  }
+
+  if (visibility) {
+    PrintCursor(cursor, NULL);
+    printf("visibility=%s\n", visibility);
+  }
+
+  return CXChildVisit_Recurse;
+}
+
+/******************************************************************************/
 /* Typekind testing.                                                          */
 /******************************************************************************/
 
@@ -1248,6 +1289,12 @@ static void PrintTypeAndTypeKind(CXType T, const char *Format) {
          clang_getCString(TypeKindSpelling));
   clang_disposeString(TypeSpelling);
   clang_disposeString(TypeKindSpelling);
+}
+
+static enum CXVisitorResult FieldVisitor(CXCursor C,
+                                         CXClientData client_data) {
+    (*(int *) client_data)+=1;
+    return CXVisit_Continue;
 }
 
 static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
@@ -1320,6 +1367,22 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
         PrintTypeAndTypeKind(PT, " [pointeetype=%s] [pointeekind=%s]");
       }
     }
+    /* Print the number of fields if they exist. */
+    {
+      int numFields = 0;
+      if (clang_Type_visitFields(T, FieldVisitor, &numFields)){
+        if (numFields != 0) {
+          printf(" [nbFields=%d]", numFields);
+        }
+        /* Print if it is an anonymous record. */
+        {
+          unsigned isAnon = clang_Cursor_isAnonymous(cursor);
+          if (isAnon != 0) {
+            printf(" [isAnon=%d]", isAnon);
+          }
+        }
+      }
+    }
 
     printf("\n");
   }
@@ -1353,28 +1416,29 @@ static enum CXChildVisitResult PrintTypeSize(CXCursor cursor, CXCursor p,
   {
     CXString FieldSpelling = clang_getCursorSpelling(cursor);
     const char *FieldName = clang_getCString(FieldSpelling);
-    /* recurse to get the root anonymous record parent */
-    CXCursor Parent, Root;
+    /* recurse to get the first parent record that is not anonymous. */
+    CXCursor Parent, Record;
+    unsigned RecordIsAnonymous = 0;
     if (clang_getCursorKind(cursor) == CXCursor_FieldDecl) {
-      CXString RootParentSpelling;
-      const char *RootParentName = 0;
-      Parent = p;
+      Record = Parent = p;
       do {
-        if (RootParentName != 0)
-          clang_disposeString(RootParentSpelling);
-
-        Root = Parent;
-        RootParentSpelling = clang_getCursorSpelling(Root);
-        RootParentName = clang_getCString(RootParentSpelling);
-        Parent = clang_getCursorSemanticParent(Root);
-      } while (clang_getCursorType(Parent).kind == CXType_Record &&
-               !strcmp(RootParentName, ""));
-      clang_disposeString(RootParentSpelling);
-      /* if RootParentName is "", record is anonymous. */
+        Record = Parent;
+        Parent = clang_getCursorSemanticParent(Record);
+        RecordIsAnonymous = clang_Cursor_isAnonymous(Record);
+        /* Recurse as long as the parent is a CXType_Record and the Record
+           is anonymous */
+      } while ( clang_getCursorType(Parent).kind == CXType_Record &&
+                RecordIsAnonymous > 0);
       {
-        long long Offset = clang_Type_getOffsetOf(clang_getCursorType(Root),
+        long long Offset = clang_Type_getOffsetOf(clang_getCursorType(Record),
                                                   FieldName);
-        printf(" [offsetof=%lld]", Offset);
+        long long Offset2 = clang_Cursor_getOffsetOfField(cursor);
+        if (Offset == Offset2){
+            printf(" [offsetof=%lld]", Offset);
+        } else {
+            /* Offsets will be different in anonymous records. */
+            printf(" [offsetof=%lld/%lld]", Offset, Offset2);
+        }
       }
     }
     clang_disposeString(FieldSpelling);
@@ -1396,11 +1460,32 @@ static enum CXChildVisitResult PrintTypeSize(CXCursor cursor, CXCursor p,
 static enum CXChildVisitResult PrintMangledName(CXCursor cursor, CXCursor p,
                                                 CXClientData d) {
   CXString MangledName;
+  if (clang_isUnexposed(clang_getCursorKind(cursor)))
+    return CXChildVisit_Recurse;
   PrintCursor(cursor, NULL);
   MangledName = clang_Cursor_getMangling(cursor);
   printf(" [mangled=%s]\n", clang_getCString(MangledName));
   clang_disposeString(MangledName);
   return CXChildVisit_Continue;
+}
+
+static enum CXChildVisitResult PrintManglings(CXCursor cursor, CXCursor p,
+                                              CXClientData d) {
+  unsigned I, E;
+  CXStringSet *Manglings = NULL;
+  if (clang_isUnexposed(clang_getCursorKind(cursor)))
+    return CXChildVisit_Recurse;
+  if (!clang_isDeclaration(clang_getCursorKind(cursor)))
+    return CXChildVisit_Recurse;
+  if (clang_getCursorKind(cursor) == CXCursor_ParmDecl)
+    return CXChildVisit_Continue;
+  PrintCursor(cursor, NULL);
+  Manglings = clang_Cursor_getCXXManglings(cursor);
+  for (I = 0, E = Manglings->Count; I < E; ++I)
+    printf(" [mangled=%s]", clang_getCString(Manglings->Strings[I]));
+  clang_disposeStringSet(Manglings);
+  printf("\n");
+  return CXChildVisit_Recurse;
 }
 
 /******************************************************************************/
@@ -1417,6 +1502,22 @@ static enum CXChildVisitResult PrintBitWidth(CXCursor cursor, CXCursor p,
   if (Bitwidth >= 0) {
     PrintCursor(cursor, NULL);
     printf(" bitwidth=%d\n", Bitwidth);
+  }
+
+  return CXChildVisit_Recurse;
+}
+
+/******************************************************************************/
+/* Type declaration testing                                                   */
+/******************************************************************************/
+
+static enum CXChildVisitResult PrintTypeDeclaration(CXCursor cursor, CXCursor p,
+                                             CXClientData d) {
+  CXCursor typeDeclaration = clang_getTypeDeclaration(clang_getCursorType(cursor));
+
+  if (clang_isDeclaration(typeDeclaration.kind)) {
+    PrintCursor(cursor, NULL);
+    PrintTypeAndTypeKind(clang_getCursorType(typeDeclaration), " [typedeclaration=%s] [typekind=%s]\n");
   }
 
   return CXChildVisit_Recurse;
@@ -1508,6 +1609,8 @@ int perform_test_load_source(int argc, const char **argv,
   int num_unsaved_files = 0;
   enum CXErrorCode Err;
   int result;
+  unsigned Repeats = 0;
+  unsigned I;
 
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           (!strcmp(filter, "local") || 
@@ -1524,6 +1627,9 @@ int perform_test_load_source(int argc, const char **argv,
     return -1;
   }
 
+  if (getenv("CINDEXTEST_EDITING"))
+    Repeats = 5;
+
   Err = clang_parseTranslationUnit2(Idx, 0,
                                     argv + num_unsaved_files,
                                     argc - num_unsaved_files,
@@ -1535,6 +1641,22 @@ int perform_test_load_source(int argc, const char **argv,
     free_remapped_files(unsaved_files, num_unsaved_files);
     clang_disposeIndex(Idx);
     return 1;
+  }
+
+  for (I = 0; I != Repeats; ++I) {
+    if (checkForErrors(TU) != 0)
+      return -1;
+
+    if (Repeats > 1) {
+      Err = clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files,
+                                         clang_defaultReparseOptions(TU));
+      if (Err != CXError_Success) {
+        describeLibclangFailure(Err);
+        free_remapped_files(unsaved_files, num_unsaved_files);
+        clang_disposeIndex(Idx);
+        return 1;
+      }
+    }
   }
 
   result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV,
@@ -2078,7 +2200,7 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
                                      clang_defaultReparseOptions(TU));
 
   if (Err != CXError_Success) {
-    fprintf(stderr, "Unable to reparse translation init!\n");
+    fprintf(stderr, "Unable to reparse translation unit!\n");
     describeLibclangFailure(Err);
     clang_disposeTranslationUnit(TU);
     return 1;
@@ -4027,9 +4149,11 @@ static void print_usage(void) {
     "       c-index-test -test-inclusion-stack-tu <AST file>\n");
   fprintf(stderr,
     "       c-index-test -test-print-linkage-source {<args>}*\n"
+    "       c-index-test -test-print-visibility {<args>}*\n"
     "       c-index-test -test-print-type {<args>}*\n"
     "       c-index-test -test-print-type-size {<args>}*\n"
     "       c-index-test -test-print-bitwidth {<args>}*\n"
+    "       c-index-test -test-print-type-declaration {<args>}*\n"
     "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
     "       c-index-test -print-usr-file <file>\n"
     "       c-index-test -write-pch <file> <compiler arguments>\n");
@@ -4114,17 +4238,25 @@ int cindextest_main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-print-linkage-source") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all", PrintLinkage,
                                     NULL);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-visibility") == 0)
+    return perform_test_load_source(argc - 2, argv + 2, "all", PrintVisibility,
+                                    NULL);
   else if (argc > 2 && strcmp(argv[1], "-test-print-type") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintType, 0);
   else if (argc > 2 && strcmp(argv[1], "-test-print-type-size") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintTypeSize, 0);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-type-declaration") == 0)
+    return perform_test_load_source(argc - 2, argv + 2, "all",
+                                    PrintTypeDeclaration, 0);
   else if (argc > 2 && strcmp(argv[1], "-test-print-bitwidth") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintBitWidth, 0);
   else if (argc > 2 && strcmp(argv[1], "-test-print-mangle") == 0)
     return perform_test_load_tu(argv[2], "all", NULL, PrintMangledName, NULL);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-manglings") == 0)
+    return perform_test_load_tu(argv[2], "all", NULL, PrintManglings, NULL);
   else if (argc > 1 && strcmp(argv[1], "-print-usr") == 0) {
     if (argc > 2)
       return print_usrs(argv + 2, argv + argc);

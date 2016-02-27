@@ -157,7 +157,7 @@ namespace UndefinedBehavior {
   constexpr int shl_unsigned_negative = unsigned(-3) << 1; // ok
   constexpr int shl_unsigned_into_sign = 1u << 31; // ok
   constexpr int shl_unsigned_overflow = 1024u << 31; // ok
-  constexpr int shl_signed_negative = (-3) << 1; // expected-error {{constant expression}} expected-note {{left shift of negative value -3}}
+  constexpr int shl_signed_negative = (-3) << 1; // expected-warning {{shifting a negative signed value is undefined}} // expected-error {{constant expression}} expected-note {{left shift of negative value -3}}
   constexpr int shl_signed_ok = 1 << 30; // ok
   constexpr int shl_signed_into_sign = 1 << 31; // ok (DR1457)
   constexpr int shl_signed_into_sign_2 = 0x7fffffff << 1; // ok (DR1457)
@@ -601,11 +601,11 @@ namespace rdar13090123 {
   typedef __INTPTR_TYPE__ intptr_t;
 
   constexpr intptr_t f(intptr_t x) {
-    return (((x) >> 21) * 8); // expected-note{{subexpression not valid in a constant expression}}
+    return (((x) >> 21) * 8);
   }
 
   extern "C" int foo;
 
   constexpr intptr_t i = f((intptr_t)&foo - 10); // expected-error{{constexpr variable 'i' must be initialized by a constant expression}} \
-  // expected-note{{in call to 'f((char*)&foo + -10)'}}
+  // expected-note{{reinterpret_cast}}
 }

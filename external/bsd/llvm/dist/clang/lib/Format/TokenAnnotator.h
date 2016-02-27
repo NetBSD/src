@@ -42,8 +42,8 @@ public:
       : First(Line.Tokens.front().Tok), Level(Line.Level),
         InPPDirective(Line.InPPDirective),
         MustBeDeclaration(Line.MustBeDeclaration), MightBeFunctionDecl(false),
-        Affected(false), LeadingEmptyLinesAffected(false),
-        ChildrenAffected(false) {
+        IsMultiVariableDeclStmt(false), Affected(false),
+        LeadingEmptyLinesAffected(false), ChildrenAffected(false) {
     assert(!Line.Tokens.empty());
 
     // Calculate Next and Previous for all tokens. Note that we must overwrite
@@ -59,11 +59,8 @@ public:
       I->Tok->Previous = Current;
       Current = Current->Next;
       Current->Children.clear();
-      for (SmallVectorImpl<UnwrappedLine>::const_iterator
-               I = Node.Children.begin(),
-               E = Node.Children.end();
-           I != E; ++I) {
-        Children.push_back(new AnnotatedLine(*I));
+      for (const auto &Child : Node.Children) {
+        Children.push_back(new AnnotatedLine(Child));
         Current->Children.push_back(Children.back());
       }
     }
@@ -75,6 +72,27 @@ public:
     for (unsigned i = 0, e = Children.size(); i != e; ++i) {
       delete Children[i];
     }
+    FormatToken *Current = First;
+    while (Current) {
+      Current->Children.clear();
+      Current->Role.reset();
+      Current = Current->Next;
+    }
+  }
+
+  /// \c true if this line starts with the given tokens in order, ignoring
+  /// comments.
+  template <typename... Ts> bool startsWith(Ts... Tokens) const {
+    return startsWith(First, Tokens...);
+  }
+
+  /// \c true if this line looks like a function definition instead of a
+  /// function declaration. Asserts MightBeFunctionDecl.
+  bool mightBeFunctionDefinition() const {
+    assert(MightBeFunctionDecl);
+    // FIXME: Line.Last points to other characters than tok::semi
+    // and tok::lbrace.
+    return !Last->isOneOf(tok::semi, tok::comment);
   }
 
   FormatToken *First;
@@ -87,6 +105,7 @@ public:
   bool InPPDirective;
   bool MustBeDeclaration;
   bool MightBeFunctionDecl;
+  bool IsMultiVariableDeclStmt;
 
   /// \c True if this line should be formatted, i.e. intersects directly or
   /// indirectly with one of the input ranges.
@@ -101,8 +120,20 @@ public:
 
 private:
   // Disallow copying.
-  AnnotatedLine(const AnnotatedLine &) LLVM_DELETED_FUNCTION;
-  void operator=(const AnnotatedLine &) LLVM_DELETED_FUNCTION;
+  AnnotatedLine(const AnnotatedLine &) = delete;
+  void operator=(const AnnotatedLine &) = delete;
+
+  template <typename A, typename... Ts>
+  bool startsWith(FormatToken *Tok, A K1) const {
+    while (Tok && Tok->is(tok::comment))
+      Tok = Tok->Next;
+    return Tok && Tok->is(K1);
+  }
+
+  template <typename A, typename... Ts>
+  bool startsWith(FormatToken *Tok, A K1, Ts... Tokens) const {
+    return startsWith(Tok, K1) && startsWith(Tok->Next, Tokens...);
+  }
 };
 
 /// \brief Determines extra information about the tokens comprising an
@@ -133,6 +164,8 @@ private:
   bool mustBreakBefore(const AnnotatedLine &Line, const FormatToken &Right);
 
   bool canBreakBefore(const AnnotatedLine &Line, const FormatToken &Right);
+
+  bool mustBreakForReturnType(const AnnotatedLine &Line) const;
 
   void printDebugInfo(const AnnotatedLine &Line);
 

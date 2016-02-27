@@ -1,9 +1,9 @@
 // RUN: rm -rf %t
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups | FileCheck %s --check-prefix=CHECK-GLOBAL
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump | FileCheck %s --check-prefix=CHECK-DUMP
-// RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
-// RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11 -DEARLY_IMPORT
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fimplicit-module-maps -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups | FileCheck %s --check-prefix=CHECK-GLOBAL
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fimplicit-module-maps -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fimplicit-module-maps -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-filter SomeTemplate | FileCheck %s --check-prefix=CHECK-DUMP
+// RUN: %clang_cc1 -x objective-c++ -fmodules -fimplicit-module-maps -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
+// RUN: %clang_cc1 -x objective-c++ -fmodules -fimplicit-module-maps -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11 -DEARLY_IMPORT
 
 #ifdef EARLY_IMPORT
 #include "cxx-templates-textual.h"
@@ -28,14 +28,8 @@ void g() {
   f<double>(1.0);
   f<int>();
   f(); // expected-error {{no matching function}}
-#ifdef EARLY_IMPORT
-  // FIXME: The textual inclusion above shouldn't affect this!
   // expected-note@Inputs/cxx-templates-a.h:3 {{couldn't infer template argument}}
   // expected-note@Inputs/cxx-templates-a.h:4 {{requires 1 argument}}
-#else
-  // expected-note@Inputs/cxx-templates-b.h:3 {{couldn't infer template argument}}
-  // expected-note@Inputs/cxx-templates-b.h:4 {{requires single argument}}
-#endif
 
   N::f(0);
   N::f<double>(1.0);
@@ -111,8 +105,8 @@ void g() {
 
   TemplateInstantiationVisibility<char[1]> tiv1;
   TemplateInstantiationVisibility<char[2]> tiv2;
-  TemplateInstantiationVisibility<char[3]> tiv3; // expected-error {{must be imported from module 'cxx_templates_b_impl'}}
-  // expected-note@cxx-templates-b-impl.h:10 {{previous definition is here}}
+  TemplateInstantiationVisibility<char[3]> tiv3; // expected-error 2{{must be imported from module 'cxx_templates_b_impl'}}
+  // expected-note@cxx-templates-b-impl.h:10 2{{previous definition is here}}
   TemplateInstantiationVisibility<char[4]> tiv4;
 
   int &p = WithPartialSpecializationUse().f();
@@ -131,8 +125,6 @@ void g() {
 static_assert(Outer<int>::Inner<int>::f() == 1, "");
 static_assert(Outer<int>::Inner<int>::g() == 2, "");
 
-#ifndef EARLY_IMPORT
-// FIXME: The textual inclusion above shouldn't cause this to fail!
 static_assert(MergeTemplateDefinitions<int>::f() == 1, "");
 static_assert(MergeTemplateDefinitions<int>::g() == 2, "");
 
@@ -146,7 +138,6 @@ MergeSpecializations<int[]>::partially_specialized_in_c spec_in_c_1;
 MergeSpecializations<char>::explicitly_specialized_in_a spec_in_a_2;
 MergeSpecializations<double>::explicitly_specialized_in_b spec_in_b_2;
 MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
-#endif
 
 MergeAnonUnionMember<> maum_main;
 typedef DontWalkPreviousDeclAfterMerging<int> dwpdam_typedef_2;
@@ -188,18 +179,22 @@ namespace Std {
 
 // CHECK-GLOBAL:      DeclarationName 'f'
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
+// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
+// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: `-FunctionTemplate {{.*}} 'f'
 
 // CHECK-NAMESPACE-N:      DeclarationName 'f'
 // CHECK-NAMESPACE-N-NEXT: |-FunctionTemplate {{.*}} 'f'
+// CHECK-NAMESPACE-N-NEXT: |-FunctionTemplate {{.*}} 'f'
+// CHECK-NAMESPACE-N-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-NAMESPACE-N-NEXT: `-FunctionTemplate {{.*}} 'f'
 
 // CHECK-DUMP:      ClassTemplateDecl {{.*}} <{{.*[/\\]}}cxx-templates-common.h:1:1, {{.*}}>  col:{{.*}} in cxx_templates_common SomeTemplate
-// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev [[CHAR2:[^ ]*]] {{.*}} SomeTemplate
-// CHECK-DUMP-NEXT:     TemplateArgument type 'char [2]'
-// CHECK-DUMP:        ClassTemplateSpecializationDecl [[CHAR2]] {{.*}} SomeTemplate definition
-// CHECK-DUMP-NEXT:     TemplateArgument type 'char [2]'
-// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev [[CHAR1:[^ ]*]] {{.*}} SomeTemplate
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev {{.*}} SomeTemplate
 // CHECK-DUMP-NEXT:     TemplateArgument type 'char [1]'
-// CHECK-DUMP:        ClassTemplateSpecializationDecl [[CHAR1]] {{.*}} SomeTemplate definition
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} SomeTemplate definition
 // CHECK-DUMP-NEXT:     TemplateArgument type 'char [1]'
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev {{.*}} SomeTemplate
+// CHECK-DUMP-NEXT:     TemplateArgument type 'char [2]'
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} SomeTemplate definition
+// CHECK-DUMP-NEXT:     TemplateArgument type 'char [2]'
