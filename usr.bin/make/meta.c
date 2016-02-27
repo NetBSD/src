@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.47 2016/02/18 20:33:40 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.48 2016/02/27 00:13:21 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -6,7 +6,7 @@
  * --sjg
  */
 /*
- * Copyright (c) 2009-2010, Juniper Networks, Inc.
+ * Copyright (c) 2009-2016, Juniper Networks, Inc.
  * Portions Copyright (c) 2009, John Birrell.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -471,9 +471,6 @@ meta_create(BuildMon *pbm, GNode *gn)
     }
 
     fflush(stdout);
-
-    if (strcmp(cp, makeDependfile) == 0)
-	goto out;
 
     if (!writeMeta)
 	/* Don't create meta data. */
