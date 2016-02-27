@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 2015/01/29 20:41:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.1 2016/02/27 21:47:33 joerg Exp $
 
-LIB=	LLVMDebugInfo
+LIB=	LLVMDebugInfoDWARF
 
 .include <bsd.init.mk>
 
-.PATH: ${LLVM_SRCDIR}/lib/DebugInfo
+.PATH: ${LLVM_SRCDIR}/lib/DebugInfo/DWARF
 
-SRCS+=	DIContext.cpp \
-	DWARFAbbreviationDeclaration.cpp \
+SRCS+=	DWARFAbbreviationDeclaration.cpp \
 	DWARFAcceleratorTable.cpp \
 	DWARFCompileUnit.cpp \
 	DWARFContext.cpp \
@@ -18,10 +17,12 @@ SRCS+=	DIContext.cpp \
 	DWARFDebugInfoEntry.cpp \
 	DWARFDebugLine.cpp \
 	DWARFDebugLoc.cpp \
+	DWARFDebugMacro.cpp \
 	DWARFDebugRangeList.cpp \
 	DWARFFormValue.cpp \
 	DWARFTypeUnit.cpp \
 	DWARFUnit.cpp \
+	DWARFUnitIndex.cpp \
 	SyntaxHighlighting.cpp
 
 .if defined(HOSTLIB)

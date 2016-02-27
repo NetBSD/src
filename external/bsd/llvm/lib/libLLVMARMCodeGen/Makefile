@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2015/01/29 20:41:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/02/27 21:47:32 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -30,12 +30,11 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMTargetTransformInfo.cpp \
 	A15SDOptimizer.cpp \
 	MLxExpansionPass.cpp \
+	ThumbRegisterInfo.cpp \
 	Thumb1InstrInfo.cpp \
 	Thumb1FrameLowering.cpp \
-	Thumb1RegisterInfo.cpp \
 	Thumb2ITBlockPass.cpp \
 	Thumb2InstrInfo.cpp \
-	Thumb2RegisterInfo.cpp \
 	Thumb2SizeReduction.cpp
 
 TABLEGEN_SRC=		ARM.td

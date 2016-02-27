@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/10/28 17:07:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2016/02/27 21:47:35 joerg Exp $
 
 LIB=	LLVMipo
 
@@ -9,22 +9,29 @@ LIB=	LLVMipo
 SRCS+=	ArgumentPromotion.cpp \
 	BarrierNoopPass.cpp \
 	ConstantMerge.cpp \
+	CrossDSOCFI.cpp \
 	DeadArgumentElimination.cpp \
+	ElimAvailExtern.cpp \
 	ExtractGV.cpp \
+	ForceFunctionAttrs.cpp \
 	FunctionAttrs.cpp \
+	FunctionImport.cpp \
 	GlobalDCE.cpp \
 	GlobalOpt.cpp \
 	IPConstantPropagation.cpp \
 	IPO.cpp \
+	InferFunctionAttrs.cpp \
 	InlineAlways.cpp \
 	InlineSimple.cpp \
 	Inliner.cpp \
 	Internalize.cpp \
 	LoopExtractor.cpp \
+	LowerBitSets.cpp \
 	MergeFunctions.cpp \
 	PartialInlining.cpp \
 	PassManagerBuilder.cpp \
 	PruneEH.cpp \
+	SampleProfile.cpp \
 	StripDeadPrototypes.cpp \
 	StripSymbols.cpp
 
