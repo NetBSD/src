@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.113 2016/02/24 14:57:12 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.114 2016/02/27 18:34:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.113 2016/02/24 14:57:12 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.114 2016/02/27 18:34:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: eval.c,v 1.113 2016/02/24 14:57:12 christos Exp $");
 #include "mystring.h"
 #include "main.h"
 #ifndef SMALL
+#include "nodenames.h"
 #include "myhistedit.h"
 #endif
 
@@ -220,6 +221,7 @@ evalstring(char *s, int flag)
 	setinputstring(s, 1);
 
 	while ((n = parsecmd(0)) != NEOF) {
+		TRACE(("evalstring: "); showtree(n));
 		if (nflag == 0)
 			evaltree(n, flag);
 		popstackmark(&smark);
@@ -249,8 +251,13 @@ evaltree(union node *n, int flags)
 #ifndef SMALL
 	displayhist = 1;	/* show history substitutions done with fc */
 #endif
+#ifdef NODETYPENAME
+	TRACE(("pid %d, evaltree(%p: %s(%d), %d) called\n",
+	    getpid(), n, NODETYPENAME(n->type), n->type, flags));
+#else
 	TRACE(("pid %d, evaltree(%p: %d, %d) called\n",
 	    getpid(), n, n->type, flags));
+#endif
 	switch (n->type) {
 	case NSEMI:
 		evaltree(n->nbinary.ch1, flags & EV_TESTED);
@@ -341,6 +348,16 @@ evalloop(union node *n, int flags)
 
 	loopnest++;
 	status = 0;
+
+#ifdef NODETYPENAME
+	TRACE(("evalloop %s: ", NODETYPENAME(n->type)));
+#else
+	TRACE(("evalloop %s: ", n->type == NWHILE ? "while" : "until"));
+#endif
+	TRACE((""); showtree(n->nbinary.ch1));
+	TRACE(("evalloop    do: "); showtree(n->nbinary.ch2));
+	TRACE(("evalloop  done\n"));
+
 	for (;;) {
 		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (evalskip) {
