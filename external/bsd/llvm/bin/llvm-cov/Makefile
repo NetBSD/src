@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/01/29 20:41:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2016/02/27 21:47:31 joerg Exp $
 
 PROG_CXX=	llvm-cov
 NOMAN=		yes
@@ -12,7 +12,6 @@ SRCS=	gcov.cpp \
 	CodeCoverage.cpp \
 	CoverageFilters.cpp \
 	CoverageReport.cpp \
-	CoverageSummary.cpp \
 	CoverageSummaryInfo.cpp \
 	SourceCoverageView.cpp \
 	TestingSupport.cpp
@@ -20,6 +19,9 @@ SRCS=	gcov.cpp \
 LLVM_LIBS+= \
 	ProfileData \
 	Object \
+	MCParser \
+	MC \
+	BitReader \
 	IR \
 	Support
 
