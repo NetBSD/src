@@ -24,7 +24,7 @@
 
 // seee eeee emmm mmmm mmmm mmmm mmmm mmmm
 
-du_int __fixunssfdi(float a);
+COMPILER_RT_ABI du_int __fixunssfdi(float a);
 
 int test__fixunssfdi(float a, du_int expected)
 {
@@ -78,6 +78,8 @@ int main()
     if (test__fixunssfdi(0x1.FFFFFEp+63F, 0xFFFFFF0000000000LL))
         return 1;
     if (test__fixunssfdi(0x1.000000p+63F, 0x8000000000000000LL))
+        return 1;
+    if (test__fixunssfdi(0x1.000000p+64F, 0xFFFFFFFFFFFFFFFFLL))
         return 1;
     if (test__fixunssfdi(0x1.FFFFFEp+62F, 0x7FFFFF8000000000LL))
         return 1;
