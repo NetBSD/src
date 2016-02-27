@@ -18,6 +18,10 @@
 #define COMPILER_RT_ALIGNAS(x) __attribute__((aligned(x)))
 #define COMPILER_RT_VISIBILITY __attribute__((visibility("hidden")))
 #define COMPILER_RT_WEAK __attribute__((weak))
+#elif defined(__lint__)
+#define COMPILER_RT_ALIGNAS(x)
+#define COMPILER_RT_VISIBILITY
+#define COMPILER_RT_WEAK
 #endif
 
 #define COMPILER_RT_SECTION(Sect) __attribute__((section(Sect)))
