@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.49 2016/02/25 12:52:09 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.50 2016/02/27 15:44:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.49 2016/02/25 12:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.50 2016/02/27 15:44:05 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1706,7 +1706,8 @@ ohci_device_intr_done(struct usbd_xfer *xfer)
 		ox->ox_stds[0] = data;
 		ohci_reset_std_chain(sc, xfer, len, isread, data, &last);
 
-		tail = opipe->tail.td;	/* point at sentinel */
+		/* point at sentinel */
+		tail = opipe->tail.td;
 		memset(&tail->td, 0, sizeof(tail->td));
 		tail->nexttd = NULL;
 		tail->xfer = NULL;
@@ -2866,8 +2867,9 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	ox->ox_setup = setup;
 
 	stat = ox->ox_stat;
-	tail = opipe->tail.td;	/* point at sentinel */
 
+	/* point at sentinel */
+	tail = opipe->tail.td;
 	sed = opipe->sed;
 
 	KASSERTMSG(OHCI_ED_GET_FA(O32TOH(sed->ed.ed_flags)) == dev->ud_addr,
@@ -3136,7 +3138,8 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	ox->ox_stds[0] = data;
 	ohci_reset_std_chain(sc, xfer, len, isread, data, &last);
 
-	tail = opipe->tail.td;	/* point at sentinel */
+	/* point at sentinel */
+	tail = opipe->tail.td;
 	memset(&tail->td, 0, sizeof(tail->td));
 	tail->nexttd = NULL;
 	tail->xfer = NULL;
@@ -3333,7 +3336,8 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	ox->ox_stds[0] = data;
 	ohci_reset_std_chain(sc, xfer, len, isread, data, &last);
 
-	tail = opipe->tail.td;	/* point at sentinel */
+	/* point at sentinel */
+	tail = opipe->tail.td;
 	memset(&tail->td, 0, sizeof(tail->td));
 	tail->nexttd = NULL;
 	tail->xfer = NULL;
