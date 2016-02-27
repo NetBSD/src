@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.82 2016/02/27 00:09:45 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.83 2016/02/27 14:30:33 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.82 2016/02/27 00:09:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.83 2016/02/27 14:30:33 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.82 2016/02/27 00:09:45 tls Exp $");
 #include <compat/sys/rnd.h>
 #endif
 
-#if defined(__HAVE_CPU_RNG)
+#if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
 #include <machine/cpu_rng.h>
 #endif
 
@@ -405,7 +405,7 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 	return ret;
 }
 
-#if defined(__HAVE_CPU_RNG)
+#if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
 static struct {
 	kmutex_t	lock;	/* unfortunately, must protect krndsource */
 	krndsource_t	source;
@@ -588,7 +588,7 @@ rnd_init(void)
 	/*
 	 * Attach CPU RNG if available.
 	 */
-#if defined(__HAVE_CPU_RNG)
+#if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
 	if (cpu_rng_init()) {
 		/* IPL_VM because taken while rnd_global.lock is held.  */
 		mutex_init(&rnd_cpu.lock, MUTEX_DEFAULT, IPL_VM);
