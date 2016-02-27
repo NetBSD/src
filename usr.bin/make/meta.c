@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.49 2016/02/27 16:14:23 christos Exp $ */
+/*      $NetBSD: meta.c,v 1.50 2016/02/27 16:17:26 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1368,7 +1368,6 @@ meta_oodate(GNode *gn, Boolean oodate)
 		fprintf(debug_file, "%s: missing files: %s...\n",
 			fname, (char *)Lst_Datum(Lst_First(missingFiles)));
 	    oodate = TRUE;
-	    Lst_Destroy(missingFiles, (FreeProc *)free);
 	}
     } else {
 	if ((gn->type & OP_META)) {
@@ -1377,6 +1376,9 @@ meta_oodate(GNode *gn, Boolean oodate)
 	    oodate = TRUE;
 	}
     }
+
+    Lst_Destroy(missingFiles, (FreeProc *)free);
+
     if (oodate && needOODATE) {
 	/*
 	 * Target uses .OODATE which is empty; or we wouldn't be here.
