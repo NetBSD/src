@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/03/25 09:52:55 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.7 2016/02/28 19:10:10 christos Exp $
 #
 #
 
@@ -6,6 +6,7 @@
 
 .if (defined(MKDTRACE) && ${MKDTRACE} != "no")
 SUBDIR+=	libdtrace
+SUBDIR+=	drti
 .endif
 .if ${MKDTRACE:Uno} != "no" || ${MKCTF:Uno} != "no"
 SUBDIR+=	libctf
