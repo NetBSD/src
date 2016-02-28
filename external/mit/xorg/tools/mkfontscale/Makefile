@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/07/23 08:03:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2016/02/28 22:12:26 riastradh Exp $
 
 NOMAN=		1
 
@@ -86,6 +86,11 @@ HOST_CPPFLAGS=	-DFONTENC_NO_LIBFONT -DXFREE86_FT2 -DFONTENC_NO_LIBFONT \
 		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\" \
 		-DPACKAGE_STRING=\"NetBSD\ tools\ version\"
 HOST_CPPFLAGS+=	-DFT_CONFIG_OPTION_DISABLE_BZIP2
+
+# If you make mkfontscale multithreaded, remove this and fix the
+# fontconfig atomic ops.
+HOST_CPPFLAGS+=	-DFC_NO_MT=1
+
 HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2
 
