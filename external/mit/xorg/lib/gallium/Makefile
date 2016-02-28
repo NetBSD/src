@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2016/02/26 18:29:55 riastradh Exp $
+# $NetBSD: Makefile,v 1.14 2016/02/28 22:55:21 joerg Exp $
 
 # Link the gallium mega driver.
 
@@ -594,7 +594,8 @@ CWARNFLAGS.clang+=	-Wno-error=constant-conversion \
 			-Wno-error=switch \
 			-Wno-error=absolute-value \
 			-Wno-error=tautological-compare \
-			-Wno-error=static-in-inline
+			-Wno-error=static-in-inline \
+			-Wno-error=logical-not-parentheses
 
 .include <bsd.x11.mk>
 LIBDIR=		${X11USRLIBDIR}/modules/dri
