@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.101 2016/02/27 16:28:50 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.102 2016/02/28 23:12:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.101 2016/02/27 16:28:50 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.102 2016/02/28 23:12:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,8 @@ STATIC void synexpect(int) __dead;
 STATIC void synerror(const char *) __dead;
 STATIC void setprompt(int);
 
+
+static const char EOFhere[] = "EOF reading here (<<) document";
 
 /*
  * Read and parse a command.  Returns NEOF on end of file.  (NULL is a
@@ -720,14 +722,17 @@ parseheredoc(void)
 
 	while (heredoclist) {
 		int c;
+
 		here = heredoclist;
 		heredoclist = here->next;
 		if (needprompt) {
 			setprompt(2);
 			needprompt = 0;
 		}
-		if ((c = pgetc()) == PEOF)
-			continue;
+		if ((c = pgetc()) == PEOF) {
+			synerror(EOFhere);
+			/* NOTREACHED */
+		}
 		readtoken1(c, here->here->type == NHERE? SQSYNTAX : DQSYNTAX,
 		    here->eofmark, here->striptabs);
 		n = stalloc(sizeof(struct narg));
@@ -913,7 +918,7 @@ breakloop:
 
 /*
  * We used to remember only the current syntax, variable nesting level,
- * double quote state for each var nexting level, and arith nesting
+ * double quote state for each var nesting level, and arith nesting
  * level (unrelated to var nesting) and one prev syntax when in arith
  * syntax.  This worked for simple cases, but can't handle arith inside
  * var expansion inside arith inside var with some quoted and some not.
@@ -924,7 +929,7 @@ breakloop:
  * Every time something changes, which will eventually end and should
  * revert to the previous state, we push this stack, and then pop it
  * again later (that is every ${} with an operator (to parse the word
- * or pattern that follows) ${x} and $x are too * simple to need it)
+ * or pattern that follows) ${x} and $x are too simple to need it)
  * $(( )) $( ) and "...".   Always.   Really, always!
  *
  * The stack is implemented as one static (on the C stack) base block
@@ -1321,6 +1326,8 @@ endword:
 
 checkend: {
 	if (eofmark) {
+		if (c == PEOF)
+			synerror(EOFhere);
 		if (striptabs) {
 			while (c == '\t')
 				c = pgetc();
@@ -1339,7 +1346,8 @@ checkend: {
 				} else {
 					pushstring(line, strlen(line), NULL);
 				}
-			}
+			} else
+				synerror(EOFhere);
 		}
 	}
 	goto checkend_return;

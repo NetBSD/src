@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.33 2010/08/30 06:27:14 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.34 2016/02/28 23:12:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.33 2010/08/30 06:27:14 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.34 2016/02/28 23:12:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -524,7 +524,7 @@ xwrite(int fd, char *buf, int nbytes)
 
 	n = nbytes;
 	ntry = 0;
-	for (;;) {
+	while (n > 0) {
 		i = write(fd, buf, n);
 		if (i > 0) {
 			if ((n -= i) <= 0)
@@ -538,6 +538,7 @@ xwrite(int fd, char *buf, int nbytes)
 			return -1;
 		}
 	}
+	return nbytes;
 }
 
 

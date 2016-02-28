@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.30 2016/02/27 23:50:13 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.31 2016/02/28 23:12:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.30 2016/02/27 23:50:13 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.31 2016/02/28 23:12:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ binop:
 		break;
 	case NCMD:
 		len += shcmd(n, fp);
-		if (nl)
+		if (nl && len > 0)
 			len = 0, putc('\n', fp);
 		break;
 	case NPIPE:
@@ -185,6 +185,8 @@ shcmd(union node *cmd, FILE *fp)
 			case NFROM:	s = "<";  dftfd = 0; len += 1; break;
 			case NFROMFD:	s = "<&"; dftfd = 0; len += 2; break;
 			case NFROMTO:	s = "<>"; dftfd = 0; len += 2; break;
+			case NXHERE:	/* FALLTHROUGH */ 
+			case NHERE:	s = "<<"; dftfd = 0; len += 2; break;
 			default:   s = "*error*"; dftfd = 0; len += 7; break;
 		}
 		if (np->nfile.fd != dftfd)
@@ -192,6 +194,14 @@ shcmd(union node *cmd, FILE *fp)
 		fputs(s, fp);
 		if (np->nfile.type == NTOFD || np->nfile.type == NFROMFD) {
 			len += fprintf(fp, "%d", np->ndup.dupfd);
+		} else
+		    if (np->nfile.type == NHERE || np->nfile.type == NXHERE) {
+			if (np->nfile.type == NHERE)
+				fputc('\\', fp);
+			fputs("!!!\n", fp);
+			fputs(np->nhere.doc->narg.text, fp);
+			fputs("!!!", fp);
+			len = 3;
 		} else {
 			len += sharg(np->nfile.fname, fp);
 		}
