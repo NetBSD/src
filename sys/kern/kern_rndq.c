@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.85 2016/02/28 20:24:23 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.86 2016/02/28 20:36:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.85 2016/02/28 20:24:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.86 2016/02/28 20:36:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -414,29 +414,27 @@ static struct {
 	kmutex_t	lock;	/* unfortunately, must protect krndsource */
 	krndsource_t	source;
 } rnd_cpu __cacheline_aligned;
-	
+
 static void
 rnd_cpu_get(size_t bytes, void *priv)
 {
 	krndsource_t *cpusrcp = priv;
+	cpu_rng_t buf[2 * RND_ENTROPY_THRESHOLD / sizeof(cpu_rng_t)];
+	cpu_rng_t *bufp;
+	size_t cnt = __arraycount(buf);
+	size_t entropy = 0;
+
 	KASSERT(cpusrcp == &rnd_cpu.source);
 
-        if (RND_ENABLED(cpusrcp)) {
-		cpu_rng_t buf[2 * RND_ENTROPY_THRESHOLD / sizeof(cpu_rng_t)];
-		cpu_rng_t *bufp;
-		size_t cnt = __arraycount(buf);
-		size_t entropy = 0;
-
-		for (bufp = buf; bufp < buf + cnt; bufp++) {
-			entropy += cpu_rng(bufp);
-		}
-		if (__predict_true(entropy)) {
-			mutex_spin_enter(&rnd_cpu.lock);
-			rnd_add_data_sync(cpusrcp, buf, sizeof(buf), entropy);
-			explicit_memset(buf, 0, sizeof(buf));
-			mutex_spin_exit(&rnd_cpu.lock);
-		}
-        }
+	for (bufp = buf; bufp < buf + cnt; bufp++) {
+		entropy += cpu_rng(bufp);
+	}
+	if (__predict_true(entropy)) {
+		mutex_spin_enter(&rnd_cpu.lock);
+		rnd_add_data_sync(cpusrcp, buf, sizeof(buf), entropy);
+		explicit_memset(buf, 0, sizeof(buf));
+		mutex_spin_exit(&rnd_cpu.lock);
+	}
 }
 
 #endif
