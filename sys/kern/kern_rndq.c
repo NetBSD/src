@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.86 2016/02/28 20:36:08 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.87 2016/02/28 20:37:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.86 2016/02/28 20:36:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.87 2016/02/28 20:37:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -466,11 +466,10 @@ rnd_skew_get(size_t bytes, void *priv)
 	krndsource_t *skewsrcp = priv;
 
 	KASSERT(skewsrcp == &rnd_skew.source);
-	if (RND_ENABLED(skewsrcp)) {
-		/* Measure 100 times */
-		rnd_skew.iter = 100;
-		callout_schedule(&rnd_skew.callout, 1);
-	}
+
+	/* Measure 100 times */
+	rnd_skew.iter = 100;
+	callout_schedule(&rnd_skew.callout, 1);
 }
 
 static void
