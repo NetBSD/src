@@ -29,9 +29,12 @@
 #include <dlfcn.h>
 #include <link.h>
 #include <sys/dtrace.h>
+#include <sys/ioctl.h>
 
 #include <stdarg.h>
+#define dprintf __hide_dprintf
 #include <stdio.h>
+#undef dprintf
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
