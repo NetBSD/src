@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.63 2016/02/28 09:16:20 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.64 2016/02/28 16:18:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.63 2016/02/28 09:16:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.64 2016/02/28 16:18:15 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3051,7 +3051,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 
 	if (xfer->ux_status == USBD_IN_PROGRESS) {
 		/* This request has already been entered into the frame list */
-		printf("uhci_device_isoc_enter: xfer=%p in frame list\n", xfer);
+		printf("%s: xfer=%p in frame list\n", __func__, xfer);
 		/* XXX */
 	}
 
