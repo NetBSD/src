@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.3 2016/02/27 00:54:59 tls Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.4 2016/02/28 20:51:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -49,7 +49,8 @@ static enum {
 	CPU_RNG_NONE = 0,
 	CPU_RNG_RDRAND,
 	CPU_RNG_RDSEED,
-	CPU_RNG_VIA } cpu_rng_mode __read_mostly = CPU_RNG_NONE;
+	CPU_RNG_VIA
+} cpu_rng_mode __read_mostly = CPU_RNG_NONE;
 
 bool
 cpu_rng_init(void)
@@ -104,7 +105,7 @@ cpu_rng_rdseed(cpu_rng_t *out)
 
 #ifdef __i386__
 	uint32_t lo, hi;
-	
+
 	__asm __volatile("rdseed %0; setc %1" : "=r"(lo), "=qm"(rndsts));
         if (rndsts != 1)
 		goto exhausted;
@@ -178,6 +179,7 @@ cpu_rng_via(cpu_rng_t *out)
 size_t
 cpu_rng(cpu_rng_t *out)
 {
+
 	switch (cpu_rng_mode) {
 	case CPU_RNG_NONE:
 		return 0;
