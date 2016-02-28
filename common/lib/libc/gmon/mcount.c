@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.12 2016/01/11 01:57:12 christos Exp $	*/
+/*	$NetBSD: mcount.c,v 1.13 2016/02/28 02:56:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.12 2016/01/11 01:57:12 christos Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.13 2016/02/28 02:56:39 christos Exp $");
 #endif
 #endif
 
@@ -145,12 +145,17 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 
 #if defined(_REENTRANT) && !defined(_KERNEL)
 	if (__isthreaded) {
+		/* prevent re-entry via thr_getspecific */
+		if (_gmonparam.state != GMON_PROF_ON)
+			return;
+		_gmonparam.state = GMON_PROF_BUSY;
 		p = thr_getspecific(_gmonkey);
 		if (p == NULL) {
 			/* Prevent recursive calls while allocating */
 			thr_setspecific(_gmonkey, &_gmondummy);
 			p = _m_gmon_alloc();
 		}
+		_gmonparam.state = GMON_PROF_ON;
 	} else
 #endif
 		p = &_gmonparam;
