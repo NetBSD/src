@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.83 2016/02/27 14:30:33 mlelstv Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.84 2016/02/28 20:20:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.83 2016/02/27 14:30:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.84 2016/02/28 20:20:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -260,6 +260,10 @@ rnd_getmore(size_t byteswanted)
 
 	mutex_spin_enter(&rnd_global.lock);
 	LIST_FOREACH_SAFE(rs, &rnd_global.sources, list, next) {
+		/* Skip if the source is disabled.  */
+		if (!RND_ENABLED(rs))
+			continue;
+
 		/* Skip if there's no callback.  */
 		if (!ISSET(rs->flags, RND_FLAG_HASCB))
 			continue;
