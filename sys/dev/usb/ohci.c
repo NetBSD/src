@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.53 2016/02/27 15:54:30 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.54 2016/02/28 09:16:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.53 2016/02/27 15:54:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.54 2016/02/28 09:16:20 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1679,10 +1679,7 @@ ohci_device_ctrl_done(struct usbd_xfer *xfer)
 void
 ohci_device_intr_done(struct usbd_xfer *xfer)
 {
-	struct ohci_xfer *ox = OHCI_XFER2OXFER(xfer);
-	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
-	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
-	ohci_soft_ed_t *sed = opipe->sed;
+	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
 	int isread =
 	    (UE_GET_DIR(xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN);
 
@@ -1693,47 +1690,6 @@ ohci_device_intr_done(struct usbd_xfer *xfer)
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	if (xfer->ux_pipe->up_repeat) {
-	    	ohci_soft_td_t *data, *last, *tail;
-		int len = xfer->ux_length;
-
-		/*
-		 * Use the pipe "tail" TD as our first and loan our first TD
-		 * to the next transfer.
-		 */
-		data = opipe->tail.td;
-		opipe->tail.td = ox->ox_stds[0];
-		ox->ox_stds[0] = data;
-		ohci_reset_std_chain(sc, xfer, len, isread, data, &last);
-
-		/* point at sentinel */
-		tail = opipe->tail.td;
-		memset(&tail->td, 0, sizeof(tail->td));
-		tail->nexttd = NULL;
-		tail->xfer = NULL;
-		usb_syncmem(&tail->dma, tail->offs, sizeof(tail->td),
-		    BUS_DMASYNC_PREWRITE);
-
-		/* We want interrupt at the end of the transfer. */
-		last->td.td_flags &= HTOO32(~OHCI_TD_INTR_MASK);
-		last->td.td_flags |= HTOO32(OHCI_TD_SET_DI(1));
-
-		last->td.td_nexttd = HTOO32(tail->physaddr);
-		last->nexttd = tail;
-		last->flags |= OHCI_CALL_DONE;
-		usb_syncmem(&last->dma, last->offs, sizeof(last->td),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-		xfer->ux_hcpriv = data;
-		xfer->ux_actlen = 0;
-
-		/* Insert ED in schedule */
-		sed->ed.ed_tailp = HTOO32(tail->physaddr);
-		usb_syncmem(&sed->dma,
-		    sed->offs + offsetof(ohci_ed_t, ed_tailp),
-		    sizeof(sed->ed.ed_tailp),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-	}
 }
 
 void
@@ -1803,6 +1759,12 @@ ohci_rhsc(ohci_softc_t *sc, struct usbd_xfer *xfer)
 void
 ohci_root_intr_done(struct usbd_xfer *xfer)
 {
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	KASSERT(sc->sc_intrxfer == xfer);
+	sc->sc_intrxfer = NULL;
 }
 
 /*

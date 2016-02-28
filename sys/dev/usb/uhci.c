@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.62 2016/02/27 16:07:01 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.63 2016/02/28 09:16:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.62 2016/02/27 16:07:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.63 2016/02/28 09:16:20 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3399,7 +3399,6 @@ void
 uhci_device_intr_done(struct usbd_xfer *xfer)
 {
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	uhci_soft_qh_t *sqh;
 	int i, npoll;
@@ -3419,49 +3418,10 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 		    sizeof(sqh->qh.qh_elink),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
-
-	if (xfer->ux_pipe->up_repeat) {
-		uhci_soft_td_t *data, *dataend;
-		int endpt = upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
-		int isread = UE_GET_DIR(endpt) == UE_DIR_IN;
-
-		KASSERT(ux->ux_isdone);
-#ifdef DIAGNOSTIC
-		ux->ux_isdone = false;
-#endif
-		DPRINTFN(5, "re-queueing", 0, 0, 0, 0);
-
-		data = ux->ux_stdstart;
-		uhci_reset_std_chain(sc, xfer, xfer->ux_length, isread,
-		    &upipe->nexttoggle, &dataend);
-		dataend->td.td_status |= htole32(UHCI_TD_IOC);
-		usb_syncmem(&dataend->dma,
-		    dataend->offs + offsetof(uhci_td_t, td_status),
-		    sizeof(dataend->td.td_status),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-#ifdef UHCI_DEBUG
-		if (uhcidebug >= 10) {
-			DPRINTF("--- dump start ---", 0, 0, 0, 0);
-			uhci_dump_tds(data);
-			uhci_dump_qh(upipe->intr.qhs[0]);
-			DPRINTF("--- dump end ---", 0, 0, 0, 0);
-		}
-#endif
-
-		ux->ux_stdend = dataend;
-		for (i = 0; i < npoll; i++) {
-			sqh = upipe->intr.qhs[i];
-			sqh->elink = data;
-			sqh->qh.qh_elink = htole32(data->physaddr | UHCI_PTR_TD);
-			usb_syncmem(&sqh->dma,
-			    sqh->offs + offsetof(uhci_qh_t, qh_elink),
-			    sizeof(sqh->qh.qh_elink),
-			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-		}
-		xfer->ux_status = USBD_IN_PROGRESS;
-		uhci_add_intr_list(sc, ux);
-	}
+	const int endpt = upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
+	const bool isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 }
 
 /* Deallocate request data structures */
