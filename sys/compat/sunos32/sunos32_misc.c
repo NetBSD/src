@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.76 2015/10/23 19:40:11 maxv Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.77 2016/02/28 23:24:35 khorben Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.76 2015/10/23 19:40:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.77 2016/02/28 23:24:35 khorben Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -758,7 +758,7 @@ sunos32_sys_mmap(struct lwp *l, const struct sunos32_sys_mmap_args *uap, registe
 
 	error = sys_mmap(l, &ua, retval);
 	if ((u_long)*retval > (u_long)UINT_MAX) {
-		printf("sunos32_mmap: retval out of range: 0x%lx",
+		printf("sunos32_mmap: retval out of range: 0x%lx\n",
 		       (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
