@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.54 2016/02/28 09:16:20 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.55 2016/02/28 11:51:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.54 2016/02/28 09:16:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.55 2016/02/28 11:51:24 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3764,6 +3764,7 @@ ohci_device_isoc_abort(struct usbd_xfer *xfer)
 	KASSERT(sitd);
 
 	for (; sitd->xfer == xfer; sitd = sitd->nextitd) {
+		ohci_hash_rem_itd(sc, sitd);
 #ifdef DIAGNOSTIC
 		DPRINTFN(1, "abort sets done sitd=%p", sitd, 0, 0, 0);
 		sitd->isdone = true;
