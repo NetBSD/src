@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.64 2016/02/28 16:18:15 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.65 2016/02/28 16:23:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.64 2016/02/28 16:18:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.65 2016/02/28 16:23:57 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -413,7 +413,7 @@ uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
 		    sizeof(pqh->qh.qh_hlink),
 		    BUS_DMASYNC_POSTWRITE);
 		if (le32toh(pqh->qh.qh_hlink) & UHCI_PTR_T) {
-			printf("uhci_find_prev_qh: QH not found\n");
+			printf("%s: QH not found\n", __func__);
 			return NULL;
 		}
 #endif
@@ -1905,7 +1905,7 @@ uhci_free_std_locked(uhci_softc_t *sc, uhci_soft_td_t *std)
 
 #ifdef DIAGNOSTIC
 	if (le32toh(std->td.td_token) == TD_IS_FREE) {
-		printf("uhci_free_std: freeing free TD %p\n", std);
+		printf("%s: freeing free TD %p\n", __func__, std);
 		return;
 	}
 	std->td.td_token = htole32(TD_IS_FREE);
@@ -2037,7 +2037,7 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int alen,
 	len = alen;
 	maxp = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
 	if (maxp == 0) {
-		printf("uhci_alloc_std_chain: maxp=0\n");
+		printf("%s: maxp=0\n", __func__);
 		return USBD_INVAL;
 	}
 	size_t ntd = (len + maxp - 1) / maxp;
@@ -2116,7 +2116,7 @@ uhci_free_stds(uhci_softc_t *sc, struct uhci_xfer *ux)
 		uhci_soft_td_t *std = ux->ux_stds[i];
 #ifdef DIAGNOSTIC
 		if (le32toh(std->td.td_token) == TD_IS_FREE) {
-			printf("uhci_free_std: freeing free TD %p\n", std);
+			printf("%s: freeing free TD %p\n", __func__, std);
 			return;
 		}
 		std->td.td_token = htole32(TD_IS_FREE);
@@ -2443,7 +2443,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		DPRINTFN(2, "already aborting", 0, 0, 0, 0);
 #ifdef DIAGNOSTIC
 		if (status == USBD_TIMEOUT)
-			printf("uhci_abort_xfer: TIMEOUT while aborting\n");
+			printf("%s: TIMEOUT while aborting\n", __func__);
 #endif
 		/* Override the status which might be USBD_TIMEOUT. */
 		xfer->ux_status = status;
@@ -3057,7 +3057,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 
 #ifdef DIAGNOSTIC
 	if (isoc->inuse >= UHCI_VFRAMELIST_COUNT)
-		printf("uhci_device_isoc_enter: overflow!\n");
+		printf("%s: overflow!\n", __func__);
 #endif
 
 	next = isoc->next;
@@ -3130,7 +3130,7 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->ux_status != USBD_IN_PROGRESS)
-		printf("uhci_device_isoc_start: not in progress %p\n", xfer);
+		printf("%s: not in progress %p\n", __func__, xfer);
 #endif
 
 	/* Find the last TD */
@@ -3260,7 +3260,7 @@ uhci_device_isoc_close(struct usbd_pipe *pipe)
 			;
 		if (vstd == NULL) {
 			/*panic*/
-			printf("uhci_device_isoc_close: %p not found\n", std);
+			printf("%s: %p not found\n", __func__, std);
 			mutex_exit(&sc->sc_lock);
 			return;
 		}
@@ -3366,7 +3366,7 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 
 #ifdef DIAGNOSTIC
 	if (ux->ux_stdend == NULL) {
-		printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
+		printf("%s: xfer=%p stdend==NULL\n", __func__, xfer);
 #ifdef UHCI_DEBUG
 		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		uhci_dump_ii(ux);
@@ -3559,7 +3559,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(2, "pipe=%p", upipe, 0, 0, 0);
 	if (ival == 0) {
-		printf("uhci_device_setintr: 0 interval\n");
+		printf("%s: 0 interval\n", __func__);
 		return USBD_INVAL;
 	}
 
