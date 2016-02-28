@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.90 2016/02/27 17:03:58 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.91 2016/02/28 09:16:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.90 2016/02/27 17:03:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.91 2016/02/28 09:16:20 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -838,11 +838,6 @@ ehci_softintr(void *v)
 	 * the _SAFE version of TAILQ_FOREACH.
 	 */
 	TAILQ_FOREACH_SAFE(ex, &cq, ex_next, nextex) {
-		/*
-		 * XXX transfer_complete memcpys out transfer data (for in
-		 * endpoints) during this call, before methods->done is called.
-		 * A dma sync required beforehand.
-		 */
 		usb_transfer_complete(&ex->ex_xfer);
 	}
 
@@ -4248,11 +4243,9 @@ ehci_device_intr_close(struct usbd_pipe *pipe)
 Static void
 ehci_device_intr_done(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
+	ehci_softc_t *sc __diagused = EHCI_XFER2SC(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
-	ehci_soft_qh_t *sqh;
-	int len, isread, endpt;
+	int isread, endpt;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -4261,43 +4254,10 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
-	if (xfer->ux_pipe->up_repeat) {
-
-		KASSERT(exfer->ex_isdone);
-#ifdef DIAGNOSTIC
-		exfer->ex_isdone = false;
-#endif
-
-		len = xfer->ux_length;
-		endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
-		isread = UE_GET_DIR(endpt) == UE_DIR_IN;
-		usb_syncmem(&xfer->ux_dmabuf, 0, len,
-		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-		sqh = epipe->sqh;
-
-		ehci_soft_qtd_t *end;
-		ehci_reset_sqtd_chain(sc, xfer, len, isread,
-		    &epipe->nexttoggle, &end);
-		end->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
-		usb_syncmem(&end->dma, end->offs, sizeof(end->qtd),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-		exfer->ex_sqtdend = end;
-
-		/* also does usb_syncmem(sqh) */
-		ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
-		if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
-			callout_reset(&xfer->ux_callout,
-			    mstohz(xfer->ux_timeout), ehci_timeout, xfer);
-		}
-		ehci_add_intr_list(sc, exfer);
-		xfer->ux_status = USBD_IN_PROGRESS;
-	} else {
-		endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
-		isread = UE_GET_DIR(endpt) == UE_DIR_IN;
-		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	}
+	endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 }
 
 /************************/

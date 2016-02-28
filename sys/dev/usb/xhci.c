@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.52 2016/02/13 09:33:12 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.53 2016/02/28 09:16:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.52 2016/02/13 09:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.53 2016/02/28 09:16:20 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3264,7 +3264,13 @@ static void
 xhci_device_ctrl_done(struct usbd_xfer *xfer)
 {
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	usb_device_request_t *req = &xfer->ux_request;
+	int len = UGETW(req->wLength);
+	int rd = req->bmRequestType & UT_READ;
 
+	if (len)
+		usb_syncmem(&xfer->ux_dmabuf, 0, len,
+		    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 }
 
 static void
@@ -3512,9 +3518,6 @@ xhci_device_intr_done(struct usbd_xfer *xfer)
 	printf("\n");
 #endif
 
-	if (xfer->ux_pipe->up_repeat) {
-		xfer->ux_status = xhci_device_intr_start(xfer);
-	}
 }
 
 static void

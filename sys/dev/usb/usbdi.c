@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.42 2016/02/07 15:50:43 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.43 2016/02/28 09:16:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.42 2016/02/07 15:50:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.43 2016/02/28 09:16:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -893,10 +893,11 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	struct usbd_pipe *pipe = xfer->ux_pipe;
  	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	int sync = xfer->ux_flags & USBD_SYNCHRONOUS;
-	int erred = xfer->ux_status == USBD_CANCELLED ||
+	int erred =
+	    xfer->ux_status == USBD_CANCELLED ||
 	    xfer->ux_status == USBD_TIMEOUT;
 	int polling = bus->ub_usepolling;
-	int repeat;
+	int repeat = pipe->up_repeat;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -907,20 +908,9 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	KASSERT(xfer->ux_state == XFER_ONQU);
 	KASSERT(pipe != NULL);
 
-	repeat = pipe->up_repeat;
 	/* XXXX */
 	if (polling)
 		pipe->up_running = 0;
-
-	if (xfer->ux_length != 0 && xfer->ux_buffer != xfer->ux_buf) {
-		KDASSERTMSG(xfer->ux_actlen <= xfer->ux_length,
-		    "actlen %d length %d",xfer->ux_actlen, xfer->ux_length);
-
-		/* Only if IN transfer */
-		if (usbd_xfer_isread(xfer)) {
-			memcpy(xfer->ux_buffer, xfer->ux_buf, xfer->ux_actlen);
-		}
-	}
 
 	if (!repeat) {
 		/* Remove request from queue. */
@@ -952,44 +942,37 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		xfer->ux_status = USBD_SHORT_XFER;
 	}
 
-	if (repeat) {
-		USBHIST_LOG(usbdebug, "xfer %p doing callback %p status %x",
-		    xfer, xfer->ux_callback, xfer->ux_status, 0);
-		if (xfer->ux_callback) {
-			if (!polling)
-				mutex_exit(pipe->up_dev->ud_bus->ub_lock);
+	USBHIST_LOG(usbdebug, "xfer %p doing done %p", xfer,
+	    pipe->up_methods->upm_done, 0, 0);
+	pipe->up_methods->upm_done(xfer);
 
-			if (!(pipe->up_flags & USBD_MPSAFE))
-				KERNEL_LOCK(1, curlwp);
-			xfer->ux_callback(xfer, xfer->ux_priv, xfer->ux_status);
-			USBHIST_LOG(usbdebug, "xfer %p doing done %p", xfer,
-			    pipe->up_methods->upm_done, 0, 0);
-			if (!(pipe->up_flags & USBD_MPSAFE))
-				KERNEL_UNLOCK_ONE(curlwp);
+	if (xfer->ux_length != 0 && xfer->ux_buffer != xfer->ux_buf) {
+		KDASSERTMSG(xfer->ux_actlen <= xfer->ux_length,
+		    "actlen %d length %d",xfer->ux_actlen, xfer->ux_length);
 
-			if (!polling)
-				mutex_enter(pipe->up_dev->ud_bus->ub_lock);
+		/* Only if IN transfer */
+		if (usbd_xfer_isread(xfer)) {
+			memcpy(xfer->ux_buffer, xfer->ux_buf, xfer->ux_actlen);
 		}
-		pipe->up_methods->upm_done(xfer);
-	} else {
-		USBHIST_LOG(usbdebug, "xfer %p doing done %p", xfer,
-		    pipe->up_methods->upm_done, 0, 0);
-		pipe->up_methods->upm_done(xfer);
-		USBHIST_LOG(usbdebug, "xfer %p doing callback %p status %x",
-		    xfer, xfer->ux_callback, xfer->ux_status, 0);
-		if (xfer->ux_callback) {
-			if (!polling)
-				mutex_exit(pipe->up_dev->ud_bus->ub_lock);
+	}
 
-			if (!(pipe->up_flags & USBD_MPSAFE))
-				KERNEL_LOCK(1, curlwp);
-			xfer->ux_callback(xfer, xfer->ux_priv, xfer->ux_status);
-			if (!(pipe->up_flags & USBD_MPSAFE))
-				KERNEL_UNLOCK_ONE(curlwp);
+	USBHIST_LOG(usbdebug, "xfer %p doing callback %p status %d",
+	    xfer, xfer->ux_callback, xfer->ux_status, 0);
 
-			if (!polling)
-				mutex_enter(pipe->up_dev->ud_bus->ub_lock);
-		}
+	if (xfer->ux_callback) {
+		if (!polling)
+			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
+
+		if (!(pipe->up_flags & USBD_MPSAFE))
+			KERNEL_LOCK(1, curlwp);
+
+		xfer->ux_callback(xfer, xfer->ux_priv, xfer->ux_status);
+
+		if (!(pipe->up_flags & USBD_MPSAFE))
+			KERNEL_UNLOCK_ONE(curlwp);
+
+		if (!polling)
+			mutex_enter(pipe->up_dev->ud_bus->ub_lock);
 	}
 
 	if (sync && !polling) {
@@ -997,13 +980,16 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		cv_broadcast(&xfer->ux_cv);
 	}
 
-	if (!repeat) {
+	if (repeat) {
+		xfer->ux_actlen = 0;
+		xfer->ux_status = USBD_NOT_STARTED;
+	} else {
 		/* XXX should we stop the queue on all errors? */
 		if (erred && pipe->up_iface != NULL)	/* not control pipe */
 			pipe->up_running = 0;
-		else
-			usbd_start_next(pipe);
 	}
+	if (pipe->up_running)
+		usbd_start_next(pipe);
 }
 
 /* Called with USB lock held. */
