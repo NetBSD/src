@@ -20,6 +20,10 @@ NO_SMALL_DATA=yes
 
 case "$target" in
   sparc64-*-netbsd*)
-    LIB_PATH='=/usr/lib/sparc'
+    case "$EMULATION_NAME" in
+      *32*)
+	LIB_PATH='=/usr/lib/sparc'
+	;;
+    esac
     ;;
 esac
