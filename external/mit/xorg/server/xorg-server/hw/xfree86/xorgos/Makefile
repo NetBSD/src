@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2015/11/04 17:06:23 phx Exp $
+#	$NetBSD: Makefile,v 1.41 2016/02/28 15:15:42 joerg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -167,6 +167,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 .if ${X11DRI} != "no"
 CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
+
+CWARNFLAGS.clang+=	-Wno-error=empty-body
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
