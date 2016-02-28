@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.84 2016/02/28 20:20:17 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.85 2016/02/28 20:24:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.84 2016/02/28 20:20:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.85 2016/02/28 20:24:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -424,7 +424,7 @@ rnd_cpu_get(size_t bytes, void *priv)
         if (RND_ENABLED(cpusrcp)) {
 		cpu_rng_t buf[2 * RND_ENTROPY_THRESHOLD / sizeof(cpu_rng_t)];
 		cpu_rng_t *bufp;
-		size_t cnt = howmany(sizeof(buf), sizeof(cpu_rng_t));
+		size_t cnt = __arraycount(buf);
 		size_t entropy = 0;
 
 		for (bufp = buf; bufp < buf + cnt; bufp++) {
