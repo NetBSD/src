@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.11 2016/02/25 03:23:15 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.12 2016/02/29 09:35:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,6 +46,7 @@ atf_test_case command cleanup
 atf_test_case garp cleanup
 atf_test_case cache_overwriting cleanup
 atf_test_case pubproxy_arp cleanup
+atf_test_case link_activation cleanup
 
 cache_expiration_5s_head()
 {
@@ -80,6 +81,12 @@ cache_overwriting_head()
 pubproxy_arp_head()
 {
 	atf_set "descr" "Tests for Proxy ARP"
+	atf_set "require.progs" "rump_server"
+}
+
+link_activation_head()
+{
+	atf_set "descr" "Tests for activating a new MAC address"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -408,6 +415,44 @@ pubproxy_arp_body()
 	return 0
 }
 
+link_activation_body()
+{
+	local arp_keep=5
+	local bonus=2
+
+	atf_check -s exit:0 ${inetserver} $SOCKSRC
+	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	setup_dst_server
+	setup_src_server $arp_keep
+
+	# flush old packets
+	extract_new_packets > ./out
+
+	export RUMP_SERVER=$SOCKSRC
+
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 link \
+	    b2:a1:00:00:00:01
+
+	atf_check -s exit:0 sleep 1
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
+
+	pkt=$(make_pkt_str_arpreq $IP4SRC $IP4SRC)
+	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 link \
+	    b2:a1:00:00:00:02 active
+
+	atf_check -s exit:0 sleep 1
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
+
+	pkt=$(make_pkt_str_arpreq $IP4SRC $IP4SRC)
+	atf_check -s exit:0 -x \
+	    "cat ./out |grep '$pkt' |grep -q 'b2:a1:00:00:00:02'"
+}
+
 cleanup()
 {
 	env RUMP_SERVER=$SOCKSRC rump.halt
@@ -476,6 +521,12 @@ pubproxy_arp_cleanup()
 	cleanup
 }
 
+link_activation_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case cache_expiration_5s
@@ -484,4 +535,5 @@ atf_init_test_cases()
 	atf_add_test_case garp
 	atf_add_test_case cache_overwriting
 	atf_add_test_case pubproxy_arp
+	atf_add_test_case link_activation
 }

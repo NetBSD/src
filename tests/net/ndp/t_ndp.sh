@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.8 2015/11/18 04:13:01 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.9 2016/02/29 09:35:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,7 @@ atf_test_case cache_expiration cleanup
 atf_test_case command cleanup
 atf_test_case cache_overwriting cleanup
 atf_test_case neighborgcthresh cleanup
+atf_test_case link_activation cleanup
 
 cache_expiration_head()
 {
@@ -63,6 +64,12 @@ cache_overwriting_head()
 neighborgcthresh_head()
 {
 	atf_set "descr" "Tests for GC of neighbor caches"
+	atf_set "require.progs" "rump_server"
+}
+
+link_activation_head()
+{
+	atf_set "descr" "Tests for activating a new MAC address"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -303,6 +310,73 @@ neighborgcthresh_body()
 	return 0
 }
 
+make_pkt_str_na()
+{
+	local ip=$1
+	local mac=$2
+	local pkt=
+	pkt="$mac > 33:33:00:00:00:01, ethertype IPv6 (0x86dd), length 86:"
+	pkt="$pkt $ip > ff02::1: ICMP6, neighbor advertisement"
+	echo $pkt
+}
+
+extract_new_packets()
+{
+	local old=./old
+
+	if [ ! -f $old ]; then
+		old=/dev/null
+	fi
+
+	shmif_dumpbus -p - bus1 2>/dev/null| \
+	    tcpdump -n -e -r - 2>/dev/null > ./new
+	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
+	mv -f ./new ./old
+	cat ./diff
+}
+
+link_activation_body()
+{
+	local linklocal=
+
+	atf_check -s exit:0 ${inetserver} $SOCKSRC
+	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	setup_dst_server
+	setup_src_server
+
+	# flush old packets
+	extract_new_packets > ./out
+
+	export RUMP_SERVER=$SOCKSRC
+
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 link \
+	    b2:a1:00:00:00:01
+
+	atf_check -s exit:0 sleep 1
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
+
+	linklocal=$(rump.ifconfig shmif0 |awk '/fe80/ {print $2;}' |awk -F % '{print $1;}')
+	$DEBUG && echo $linklocal
+
+	pkt=$(make_pkt_str_na $linklocal b2:a1:00:00:00:01)
+	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 link \
+	    b2:a1:00:00:00:02 active
+
+	atf_check -s exit:0 sleep 1
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
+
+	linklocal=$(rump.ifconfig shmif0 |awk '/fe80/ {print $2;}' |awk -F % '{print $1;}')
+	$DEBUG && echo $linklocal
+
+	pkt=$(make_pkt_str_na $linklocal b2:a1:00:00:00:02)
+	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+}
+
 cleanup()
 {
 	env RUMP_SERVER=$SOCKSRC rump.halt
@@ -360,10 +434,17 @@ neighborgcthresh_cleanup()
 	cleanup
 }
 
+link_activation_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case cache_expiration
 	atf_add_test_case command
 	atf_add_test_case cache_overwriting
 	atf_add_test_case neighborgcthresh
+	atf_add_test_case link_activation
 }
