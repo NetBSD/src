@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.6 2015/11/20 05:05:40 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.7 2016/02/29 08:13:41 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -247,6 +247,12 @@ parameters_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::2 delete
 	atf_check -s exit:0 -o not-match:'fc00::1' rump.ifconfig shmif0 inet6
 	atf_check -s exit:0 -o not-match:'fc00::2' rump.ifconfig shmif0 inet6
+	# can delete inactive link
+	atf_check -s exit:0 rump.ifconfig shmif0 link b2:a0:75:00:00:02
+	atf_check -s exit:0 rump.ifconfig shmif0 link b2:a0:75:00:00:02 delete
+	# cannot delete active link
+	atf_check -s not-exit:0 -e match:'SIOCDLIFADDR: Device busy' \
+	    rump.ifconfig shmif0 link b2:a0:75:00:00:01 delete
 
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 192.168.0.1/24
 
