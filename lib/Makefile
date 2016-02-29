@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.239 2016/01/26 17:47:35 christos Exp $
+#	$NetBSD: Makefile,v 1.240 2016/02/29 20:59:35 riastradh Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -103,7 +103,7 @@ SUBDIR+=	.WAIT
 SUBDIR+=	../external/bsd/librtld_db/lib		# depends on libutil
 .endif
 
-.if ${MKDTRACE} != "no" || ${MKCTF} != "no"
+.if ${MKCTF} != "no"
 SUBDIR+=        ../external/cddl/osnet/lib/libctf
 .endif
 
