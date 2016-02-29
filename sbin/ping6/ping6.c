@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.91 2015/11/04 08:07:54 ozaki-r Exp $	*/
+/*	$NetBSD: ping6.c,v 1.92 2016/02/29 16:25:06 riastradh Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.91 2015/11/04 08:07:54 ozaki-r Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.92 2016/02/29 16:25:06 riastradh Exp $");
 #endif
 #endif
 
@@ -282,7 +282,11 @@ static int	 pr_bitrange(u_int32_t, int, int);
 static void	 pr_retip(struct ip6_hdr *, u_char *);
 static void	 summary(void);
 static void	 tvsub(struct timeval *, struct timeval *);
+#ifdef IPSEC
+#ifdef IPSEC_POLICY_IPSEC
 static int	 setpolicy(int, char *);
+#endif	/* IPSEC_POLICY_IPSEC */
+#endif	/* IPSEC */
 static char	*nigroup(char *);
 static double	timespec_to_sec(const struct timespec *tp);
 static double	diffsec(struct timespec *, struct timespec *);
