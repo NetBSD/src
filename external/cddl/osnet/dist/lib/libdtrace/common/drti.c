@@ -67,7 +67,7 @@ static int gen;			/* DOF helper generation */
 extern dof_hdr_t __SUNW_dof;	/* DOF defined in the .SUNW_dof section */
 static boolean_t dof_init_debug = B_FALSE;	/* From DTRACE_DOF_INIT_DEBUG */
 
-static void
+static void __printflike(2,3)
 dprintf(int debug, const char *fmt, ...)
 {
 	va_list ap;
