@@ -98,6 +98,8 @@ static int
 zfs_range_lock_hold(rl_t *rl)
 {
 
+	KASSERT(rl->r_zp != NULL);
+	KASSERT(0 < rl->r_refcnt);
 	KASSERT(mutex_owned(&rl->r_zp->z_range_lock));
 
 	if (rl->r_refcnt >= ULONG_MAX)
@@ -111,8 +113,9 @@ static void
 zfs_range_lock_rele(rl_t *rl)
 {
 
+	KASSERT(rl->r_zp != NULL);
+	KASSERT(0 < rl->r_refcnt);
 	KASSERT(mutex_owned(&rl->r_zp->z_range_lock));
-	KASSERT(rl->r_refcnt > 0);
 
 	if (--rl->r_refcnt == 0) {
 		cv_destroy(&rl->r_wr_cv);
@@ -184,10 +187,12 @@ zfs_range_lock_writer(znode_t *zp, rl_t *new)
 			goto wait; /* already locked at same offset */
 
 		rl = (rl_t *)avl_nearest(tree, where, AVL_AFTER);
+		KASSERT(0 < rl->r_refcnt);
 		if (rl && (rl->r_off < new->r_off + new->r_len))
 			goto wait;
 
 		rl = (rl_t *)avl_nearest(tree, where, AVL_BEFORE);
+		KASSERT(0 < rl->r_refcnt);
 		if (rl && rl->r_off + rl->r_len > new->r_off)
 			goto wait;
 
@@ -345,6 +350,7 @@ zfs_range_add_reader(avl_tree_t *tree, rl_t *new, rl_t *prev, avl_index_t where)
 		return;
 	}
 
+	KASSERT(0 < next->r_refcnt);
 	if (off < next->r_off) {
 		/* Add a proxy for initial range before the overlap */
 		zfs_range_new_proxy(tree, off, next->r_off - off, zp);
@@ -369,17 +375,20 @@ zfs_range_add_reader(avl_tree_t *tree, rl_t *new, rl_t *prev, avl_index_t where)
 		if (off + len == next->r_off + next->r_len) {
 			/* exact overlap with end */
 			next = zfs_range_proxify(tree, next);
+			KASSERT(0 < next->r_refcnt);
 			next->r_cnt++;
 			return;
 		}
 		if (off + len < next->r_off + next->r_len) {
 			/* new range ends in the middle of this block */
 			next = zfs_range_split(tree, next, off + len);
+			KASSERT(0 < next->r_refcnt);
 			next->r_cnt++;
 			return;
 		}
 		ASSERT3U(off + len, >, next->r_off + next->r_len);
 		next = zfs_range_proxify(tree, next);
+		KASSERT(0 < next->r_refcnt);
 		next->r_cnt++;
 	}
 
