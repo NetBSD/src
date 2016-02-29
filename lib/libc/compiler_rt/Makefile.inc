@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.28 2016/02/27 19:08:23 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.29 2016/02/29 14:57:07 adam Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -216,7 +216,9 @@ GENERIC_SRCS+= \
 	InstrProfilingValue.c \
 	InstrProfilingWriter.c
 
+.if ${MKPROFILE} != "no"
 POBJS+= InstrProfilingRuntime.po
+.endif
 
 .if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
 GENERIC_SRCS+= \
