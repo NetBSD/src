@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.18 2016/01/07 11:32:21 roy Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.19 2016/02/29 16:23:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.18 2016/01/07 11:32:21 roy Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.19 2016/02/29 16:23:25 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -231,7 +231,7 @@ in_addr_flags(struct ifaddrs *ifa, int flags)
 	struct ifreq ifr;
 
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
+	estrlcpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
 	ifr.ifr_addr = *ifa->ifa_addr;
 	if ((s = getsock(AF_INET)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
