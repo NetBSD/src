@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.264 2016/01/25 09:24:29 martin Exp $
+$NetBSD: UPDATING,v 1.265 2016/02/29 22:49:11 aymeric Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,14 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20160229:
+	NetBSD's regexp implementation is now part of libnbcompat.
+	Nblex, nbm4, nbpax, nbsed use it and they may crash on
+	non-NetBSD hosts if linked with stale object files produced
+	while they included a non-NetBSD regex.h.
+	In any case, you should "make cleandir" at least these tools
+	before updating your toolchain.
 
 20160125:
 	Dtrace has been enabled by default on some architectures.
