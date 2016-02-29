@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.114 2016/02/27 18:34:12 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.115 2016/02/29 23:51:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.114 2016/02/27 18:34:12 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.115 2016/02/29 23:51:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,37 +243,38 @@ evaltree(union node *n, int flags)
 	bool do_etest;
 
 	do_etest = false;
-	if (n == NULL) {
-		TRACE(("evaltree(NULL) called\n"));
-		exitstatus = 0;
+	if (n == NULL || nflag) {
+		TRACE(("evaltree(%s) called\n", n == NULL ? "NULL" : "-n"));
+		if (nflag == 0)
+			exitstatus = 0;
 		goto out;
 	}
 #ifndef SMALL
 	displayhist = 1;	/* show history substitutions done with fc */
 #endif
 #ifdef NODETYPENAME
-	TRACE(("pid %d, evaltree(%p: %s(%d), %d) called\n",
+	TRACE(("pid %d, evaltree(%p: %s(%d), %#x) called\n",
 	    getpid(), n, NODETYPENAME(n->type), n->type, flags));
 #else
-	TRACE(("pid %d, evaltree(%p: %d, %d) called\n",
+	TRACE(("pid %d, evaltree(%p: %d, %#x) called\n",
 	    getpid(), n, n->type, flags));
 #endif
 	switch (n->type) {
 	case NSEMI:
 		evaltree(n->nbinary.ch1, flags & EV_TESTED);
-		if (evalskip)
+		if (nflag || evalskip)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NAND:
 		evaltree(n->nbinary.ch1, EV_TESTED);
-		if (evalskip || exitstatus != 0)
+		if (nflag || evalskip || exitstatus != 0)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NOR:
 		evaltree(n->nbinary.ch1, EV_TESTED);
-		if (evalskip || exitstatus == 0)
+		if (nflag || evalskip || exitstatus == 0)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
 		break;
@@ -292,7 +293,7 @@ evaltree(union node *n, int flags)
 		break;
 	case NIF: {
 		evaltree(n->nif.test, EV_TESTED);
-		if (evalskip)
+		if (nflag || evalskip)
 			goto out;
 		if (exitstatus == 0)
 			evaltree(n->nif.ifpart, flags);
@@ -329,7 +330,11 @@ evaltree(union node *n, int flags)
 		do_etest = !(flags & EV_TESTED);
 		break;
 	default:
+#ifdef NODETYPENAME
+		out1fmt("Node type = %d(%s)\n", n->type, NODETYPENAME(n->type));
+#else
 		out1fmt("Node type = %d\n", n->type);
+#endif
 		flushout(&output);
 		break;
 	}
@@ -360,6 +365,8 @@ evalloop(union node *n, int flags)
 
 	for (;;) {
 		evaltree(n->nbinary.ch1, EV_TESTED);
+		if (nflag)
+			break;
 		if (evalskip) {
 skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 				evalskip = SKIPNONE;
@@ -394,7 +401,9 @@ evalfor(union node *n, int flags)
 	union node *argp;
 	struct strlist *sp;
 	struct stackmark smark;
-	int status = 0;
+	int status;
+
+	status = nflag ? exitstatus : 0;
 
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
@@ -410,6 +419,8 @@ evalfor(union node *n, int flags)
 		setvar(n->nfor.var, sp->text, 0);
 		evaltree(n->nfor.body, flags & EV_TESTED);
 		status = exitstatus;
+		if (nflag)
+			break;
 		if (evalskip) {
 			if (evalskip == SKIPCONT && --skipcount <= 0) {
 				evalskip = SKIPNONE;
@@ -577,7 +588,8 @@ evalpipe(union node *n)
 	if (n->npipe.backgnd == 0) {
 		exitstatus = waitforjob(jp);
 		TRACE(("evalpipe:  job done exit status %d\n", exitstatus));
-	}
+	} else
+		exitstatus = 0;
 	INTON;
 }
 
@@ -602,7 +614,7 @@ evalbackcmd(union node *n, struct backcmd *result)
 	result->buf = NULL;
 	result->nleft = 0;
 	result->jp = NULL;
-	if (n == NULL) {
+	if (nflag || n == NULL) {
 		goto out;
 	}
 #ifdef notyet
