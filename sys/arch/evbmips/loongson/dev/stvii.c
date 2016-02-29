@@ -1,4 +1,4 @@
-/*	$NetBSD: stvii.c,v 1.4 2013/02/28 13:21:15 macallan Exp $	*/
+/*	$NetBSD: stvii.c,v 1.5 2016/02/29 18:24:31 christos Exp $	*/
 
 /*-
  * Copyright (C) 2011 Michael Lorenz.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.4 2013/02/28 13:21:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.5 2016/02/29 18:24:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,10 +303,10 @@ stvii_worker(void *cookie)
 			nctrl = sc->sc_control & ~(STC_TRICKLE | STC_CHARGE_ENABLE);
 			bl = stvii_battery_level(sc);
 			sc->sc_bat_level = bl;
-			if (charging & (bl > BAT_FULL)) {
+			if (charging && (bl > BAT_FULL)) {
 				/* stop charging, we're full */
 				charging = 0;
-			} else if (!charging & (bl < BAT_LOW)) {
+			} else if (!charging && (bl < BAT_LOW)) {
 				charging = 1;
 			}
 			if (st & STS_AC_AVAILABLE) {
