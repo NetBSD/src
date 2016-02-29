@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.82 2015/09/20 00:30:04 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.83 2016/02/29 18:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.82 2015/09/20 00:30:04 mrg Exp $");
+__RCSID("$NetBSD: if.c,v 1.83 2016/02/29 18:21:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ static void
 intpr_header(void)
 {
 
-	if (!sflag & !pflag) {
+	if (!sflag && !pflag) {
 		if (bflag) {
 			printf("%-5.5s %-5.5s %-13.13s %-17.17s "
 			       "%10.10s %10.10s",
