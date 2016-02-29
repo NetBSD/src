@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.72 2016/02/26 07:35:17 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.73 2016/02/29 01:29:15 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.72 2016/02/26 07:35:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.73 2016/02/29 01:29:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -398,7 +398,7 @@ in6_gif_detach(struct gif_softc *sc)
 void *
 in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 {
-	struct gif_softc *sc = (struct gif_softc *)eparg;
+	struct gif_softc *sc = eparg;
 	struct ip6ctlparam *ip6cp = NULL;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *dst6;
