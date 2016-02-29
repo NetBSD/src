@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.31 2016/02/28 23:12:23 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.32 2016/02/29 23:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.31 2016/02/28 23:12:23 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.32 2016/02/29 23:52:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ FILE *tracefile;
 #ifdef DEBUG
 static int shtree(union node *, int, int, char *, FILE*);
 static int shcmd(union node *, FILE *);
+static int shsubsh(union node *, FILE *);
+static int shredir(union node *, FILE *, int);
 static int sharg(union node *, FILE *);
 static int indent(int, char *, FILE *);
 static void trstring(char *);
@@ -142,6 +144,11 @@ binop:
 		if (nl || len >= 60)
 			len = 0, fputc('\n', fp);
 		break;
+	case NSUBSHELL:
+		len += shsubsh(n, fp);
+		if (nl && len > 0)
+			len = 0, putc('\n', fp);
+		break;
 	default:
 #ifdef NODETYPENAME
 		len += fprintf(fp, "<node type %d [%s]>", n->type,
@@ -174,6 +181,31 @@ shcmd(union node *cmd, FILE *fp)
 		len += sharg(np, fp);
 		first = 0;
 	}
+	return len + shredir(cmd, fp, first);
+}
+
+static int
+shsubsh(union node *cmd, FILE *fp)
+{
+	int len = 6;
+
+	fputs(" ( ", fp);
+	len += shtree(cmd->nredir.n, -1, 0, NULL, fp);
+	fputs(" ) ", fp);
+	len += shredir(cmd, fp, 1);
+
+	return len;
+}
+
+static int
+shredir(union node *cmd, FILE *fp, int first)
+{
+	union node *np;
+	const char *s;
+	int dftfd;
+	int len = 0;
+	char buf[106];
+
 	for (np = cmd->ncmd.redirect ; np ; np = np->nfile.next) {
 		if (! first)
 			len++, fputc(' ', fp);
@@ -199,7 +231,14 @@ shcmd(union node *cmd, FILE *fp)
 			if (np->nfile.type == NHERE)
 				fputc('\\', fp);
 			fputs("!!!\n", fp);
-			fputs(np->nhere.doc->narg.text, fp);
+			s = np->nhere.doc->narg.text;
+			if (strlen(s) > 100) {
+				memmove(buf, s, 100);
+				buf[100] = '\0';
+				strcat(buf, " ...");
+				s = buf;
+			}
+			fputs(s, fp);
 			fputs("!!!", fp);
 			len = 3;
 		} else {
