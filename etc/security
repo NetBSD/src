@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.120 2015/04/20 22:46:35 pgoyette Exp $
+#	$NetBSD: security,v 1.121 2016/02/29 16:16:42 riastradh Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -952,9 +952,18 @@ if checkyesno check_disklabels; then
 		done
 	fi
 
+		# if raidctl is available, generate raidctls for:	raid
+	if [ -x /sbin/raidctl ]; then
+		disks=$(iostat -x | awk 'NR > 1 && $1 ~ /^raid/ { print $1; }')
+		for i in $disks; do
+			/sbin/raidctl -G $i > "$work_dir/raidconf.$i" \
+				2>/dev/null
+		done
+	fi
+
 		# append list of new disklabels, fdisks and wedges
 	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* $work_dir/wedges.* \
-	    2>/dev/null |
+	    $work_dir/raidconf.* 2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' >> $LABELS
 	CHANGELIST="$LABELS $CHANGELIST"
 fi
