@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.19 2015/12/11 10:05:17 wiz Exp $
+.\"	$NetBSD: kmem.9,v 1.20 2016/02/29 00:34:17 chs Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 10, 2015
+.Dd February 28, 2016
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -77,15 +77,9 @@ Either of the following:
 .It Dv KM_SLEEP
 If the allocation cannot be satisfied immediately, sleep until enough
 memory is available.
-Note that this does not mean that if
+If
 .Dv KM_SLEEP
 is specified, then the allocation cannot fail.
-Under resource stress conditions, the allocation can fail and the
-function will return
-.Dv NULL .
-One such scenario is when the allocation size is larger than it can ever
-be allocated; another is when the system memory resources are exhausted
-to even allocate pools of pages.
 .It Dv KM_NOSLEEP
 Don't sleep.
 Immediately return
@@ -143,9 +137,6 @@ It must be the one returned by
 .Fn kmem_alloc
 or
 .Fn kmem_zalloc .
-One such scenario is when the allocation size is larger than it can ever
-be allocated; another is when the system memory resources are exhausted
-to even allocate pools of pages.
 .It Fa size
 The size of the memory being freed, in bytes.
 It must be the same as the
@@ -184,10 +175,6 @@ caller.
 It should be noted that
 .Fn kmem_free
 may also block.
-.Pp
-Always check the return value of the allocators, even when
-.Dv KM_SLEEP
-is specified to avoid kernel crashes during resource stress conditions.
 .Pp
 For some locks this is permissible or even unavoidable.
 For others, particularly locks that may be taken from soft interrupt context,

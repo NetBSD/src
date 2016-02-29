@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.61 2015/07/27 09:24:28 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.62 2016/02/29 00:34:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.61 2015/07/27 09:24:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.62 2016/02/29 00:34:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -383,9 +383,13 @@ kmem_intr_free(void *p, size_t requested_size)
 void *
 kmem_alloc(size_t size, km_flag_t kmflags)
 {
+	void *v;
+
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
 	    "kmem(9) should not be used from the interrupt context");
-	return kmem_intr_alloc(size, kmflags);
+	v = kmem_intr_alloc(size, kmflags);
+	KASSERT(v || (kmflags & KM_NOSLEEP) != 0);
+	return v;
 }
 
 /*
@@ -396,9 +400,13 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 void *
 kmem_zalloc(size_t size, km_flag_t kmflags)
 {
+	void *v;
+
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
 	    "kmem(9) should not be used from the interrupt context");
-	return kmem_intr_zalloc(size, kmflags);
+	v = kmem_intr_zalloc(size, kmflags);
+	KASSERT(v || (kmflags & KM_NOSLEEP) != 0);
+	return v;
 }
 
 /*
