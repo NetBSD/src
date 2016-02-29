@@ -53,7 +53,8 @@ uu_open_tmp(const char *dir, uint_t uflags)
 		return (-1);
 
 	for (;;) {
-		(void) snprintf(fname, PATH_MAX, "%s/uu%lld", dir, gethrtime());
+		(void) snprintf(fname, PATH_MAX, "%s/uu%lld", dir,
+		    (long long)gethrtime());
 
 		f = open(fname, O_CREAT | O_EXCL | O_RDWR, 0600);
 
