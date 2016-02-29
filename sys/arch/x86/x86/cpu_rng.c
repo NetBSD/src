@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.4 2016/02/28 20:51:03 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.5 2016/02/29 00:17:54 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ cpu_rng_init(void)
 	return false;
 }
 
-static inline size_t
+static size_t
 cpu_rng_rdrand(cpu_rng_t *out)
 {
 	uint8_t rndsts;
@@ -98,7 +98,7 @@ cpu_rng_rdrand(cpu_rng_t *out)
 	return sizeof(*out) * NBBY;
 }
 
-static inline size_t
+static size_t
 cpu_rng_rdseed(cpu_rng_t *out)
 {
 	uint8_t rndsts;
