@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.87 2016/02/28 20:37:16 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.88 2016/02/29 01:57:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.87 2016/02/28 20:37:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.88 2016/02/29 01:57:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -463,7 +463,7 @@ rnd_skew_enable(krndsource_t *rs, bool enabled)
 static void
 rnd_skew_get(size_t bytes, void *priv)
 {
-	krndsource_t *skewsrcp = priv;
+	krndsource_t *skewsrcp __diagused = priv;
 
 	KASSERT(skewsrcp == &rnd_skew.source);
 
