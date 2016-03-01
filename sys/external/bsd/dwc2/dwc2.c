@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.18 2016/02/28 09:16:20 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.19 2016/03/01 14:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.18 2016/02/28 09:16:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.19 2016/03/01 14:38:47 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -89,7 +89,7 @@ Static struct usbd_xfer *
 Static void		dwc2_freex(struct usbd_bus *, struct usbd_xfer *);
 Static void		dwc2_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		dwc2_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
-    void *, int);
+			    void *, int);
 
 Static usbd_status	dwc2_root_intr_transfer(struct usbd_xfer *);
 Static usbd_status	dwc2_root_intr_start(struct usbd_xfer *);
@@ -134,7 +134,6 @@ Static void		dwc2_rhc(void *);
 
 Static void		dwc2_timeout(void *);
 Static void		dwc2_timeout_task(void *);
-
 
 
 static inline void
@@ -446,7 +445,8 @@ dwc2_open(struct usbd_pipe *pipe)
 		return USBD_INVAL;
 	}
 
-	dpipe->priv = NULL;	/* QH */
+	/* QH */
+	dpipe->priv = NULL;
 
 	return USBD_NORMAL_COMPLETION;
 }
