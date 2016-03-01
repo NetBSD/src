@@ -1,4 +1,4 @@
-# $NetBSD: t_exit.sh,v 1.4 2016/02/24 14:42:06 christos Exp $
+# $NetBSD: t_exit.sh,v 1.5 2016/03/01 12:39:35 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,9 +34,9 @@ background_head() {
 			"a command in the background (PR bin/46327)"
 }
 background_body() {
-	atf_check -o match:0 -e empty "${TEST_SH}" -c 'true; true & echo $?'
+	atf_check -o match:0 -e empty ${TEST_SH} -c 'true; true & echo $?'
 	# atf_expect_fail "PR bin/46327" (now fixed?)
-	atf_check -o match:0 -e empty "${TEST_SH}" -c 'false; true & echo $?'
+	atf_check -o match:0 -e empty ${TEST_SH} -c 'false; true & echo $?'
 }
 
 atf_test_case function
@@ -46,7 +46,7 @@ function_head() {
 }
 function_body() {
 	atf_check -s exit:0 -o match:STATUS=1-0 -e empty \
-		"${TEST_SH}" -c '
+		${TEST_SH} -c '
 			crud() {
 				test yes = no
 
@@ -66,7 +66,7 @@ readout_head() {
 }
 readout_body() {
 	atf_check -s exit:0 -o match:0 -e empty \
-		"${TEST_SH}" -c 'true && ! true | false; echo $?'
+		${TEST_SH} -c 'true && ! true | false; echo $?'
 }
 
 atf_test_case trap_subshell
@@ -87,7 +87,7 @@ trap_zero__implicit_exit_head() {
 trap_zero__implicit_exit_body() {
 	# PR bin/6764: sh works but ksh does not
 	echo '( trap "echo exiting" 0 )' >helper.sh
-	atf_check -s exit:0 -o match:exiting -e empty "${TEST_SH}" helper.sh
+	atf_check -s exit:0 -o match:exiting -e empty ${TEST_SH} helper.sh
 	# test ksh by setting TEST_SH to /bin/ksh and run the entire set...
 	# atf_check -s exit:0 -o match:exiting -e empty /bin/ksh helper.sh
 }
@@ -100,7 +100,7 @@ trap_zero__explicit_exit_head() {
 trap_zero__explicit_exit_body() {
 	echo '( trap "echo exiting" 0; exit; echo NO_NO_NO )' >helper.sh
 	atf_check -s exit:0 -o match:exiting -o not-match:NO_NO -e empty \
-		"${TEST_SH}" helper.sh
+		${TEST_SH} helper.sh
 	# test ksh by setting TEST_SH to /bin/ksh and run the entire set...
 	# atf_check -s exit:0 -o match:exiting -e empty /bin/ksh helper.sh
 }
@@ -115,7 +115,7 @@ trap_zero__explicit_return_body() {
 	echo '( trap "echo exiting" 0; return; echo NO_NO_NO )' >helper.sh
 	atf_expect_fail "return from a sub-shell not defined and does not work"
 	atf_check -s exit:0 -o match:exiting -o not-match:NO_NO -e empty \
-		"${TEST_SH}" helper.sh
+		${TEST_SH} helper.sh
 	# test ksh by setting TEST_SH to /bin/ksh and run the entire set...
 	# atf_check -s exit:0 -o match:exiting -e empty /bin/ksh helper.sh
 }
@@ -129,7 +129,7 @@ simple_exit_body() {
 	for N in 0 1 2 3 4 5 6 42 99 101 125 126 127 128 129 200 254 255
 	do
 		atf_check -s exit:$N -o empty -e empty \
-			"${TEST_SH}" -c "exit $N; echo FOO; echo BAR >&2"
+			${TEST_SH} -c "exit $N; echo FOO; echo BAR >&2"
 	done
 }
 
@@ -142,7 +142,7 @@ subshell_exit_body() {
 	for N in 0 1 2 3 4 5 6 42 99 101 125 126 127 128 129 200 254 255
 	do
 		atf_check -s exit:0 -o empty -e empty \
-			"${TEST_SH}" -c "(exit $N); test \$? -eq $N"
+			${TEST_SH} -c "(exit $N); test \$? -eq $N"
 	done
 }
 
@@ -153,10 +153,10 @@ subshell_background_head() {
 }
 subshell_background_body() {
 	atf_check -o match:0 -e empty \
-		"${TEST_SH}" -c 'true; (false || true) & echo $?'
+		${TEST_SH} -c 'true; (false || true) & echo $?'
 	# atf_expect_fail "PR bin/46327" (now fixed?)
 	atf_check -o match:0 -e empty \
-		"${TEST_SH}" -c 'false; (false || true) & echo $?'
+		${TEST_SH} -c 'false; (false || true) & echo $?'
 }
 
 atf_init_test_cases() {
