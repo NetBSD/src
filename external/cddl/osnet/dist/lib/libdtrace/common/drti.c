@@ -149,7 +149,7 @@ dtrace_dof_init(void)
 	elf = (void *)lmp->l_addr;
 
 	dh.dofhp_dof = (uintptr_t)dof;
-	dh.dofhp_addr = elf->e_type == ET_DYN ? (uintptr_t) lmp->l_addr : 0;
+	dh.dofhp_addr = elf && elf->e_type == ET_DYN ? (uintptr_t) lmp->l_addr : 0;
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 	dh.dofhp_pid = getpid();
 #endif
