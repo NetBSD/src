@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.904 2016/02/28 20:47:01 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.905 2016/03/01 10:29:40 uwe Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -128,7 +128,8 @@ USE_SSP?=	yes
 .endif
 
 .if ${MACHINE} == "amd64" || \
-    ${MACHINE} == "i386"
+    ${MACHINE} == "i386" || \
+    ${MACHINE_CPU} == "sh3"
 HAVE_GDB?=	710
 .else
 HAVE_GDB?=	79
@@ -144,6 +145,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
     ${MACHINE} == "evbarm" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "hppa" || \
+    ${MACHINE_CPU} == "sh3" || \
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
     ${MACHINE_ARCH} == "powerpc"
