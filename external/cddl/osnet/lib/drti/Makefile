@@ -2,6 +2,10 @@
 .include	<bsd.init.mk>
 .include	"../../Makefile.inc"
 
+#.if ${MKPIC} == "yes"
+#CFLAGS+=-fPIC
+#.endif
+
 .PATH:		${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common
 
 SRCS=		drti.c
