@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.19 2016/03/01 14:38:47 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.20 2016/03/01 14:45:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.19 2016/03/01 14:38:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.20 2016/03/01 14:45:10 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1053,10 +1053,12 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	if (!dwc2_urb)
 		    return USBD_NOMEM;
 
+	KASSERT(dwc2_urb->packet_count == xfer->ux_nframes);
 	memset(dwc2_urb, 0, sizeof(*dwc2_urb) +
 	    sizeof(dwc2_urb->iso_descs[0]) * dwc2_urb->packet_count);
 
 	dwc2_urb->priv = xfer;
+	dwc2_urb->packet_count = xfer->ux_nframes;
 
 	dwc2_hcd_urb_set_pipeinfo(hsotg, dwc2_urb, addr, epnum, xfertype, dir,
 				  mps);
