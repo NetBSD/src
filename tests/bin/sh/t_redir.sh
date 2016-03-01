@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.2 2016/02/23 14:21:37 christos Exp $
+# $NetBSD: t_redir.sh,v 1.3 2016/03/01 12:39:35 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,12 +43,13 @@ redir_here_doc_head() {
 	                "input redirections"
 }
 redir_here_doc_body() {
-	atf_check -s exit:0 -o match:'hello\\n' -e empty \
-		"${TEST_SH}" -ec '{
-					echo "cat <<EOF"
-					echo '"'"'"hello\n"'"'"'
-					echo "EOF"
-				} | '"'${TEST_SH}'"' -e'
+
+	cat <<- 'DONE' |
+		cat <<EOF
+			printf '%s\n' 'hello\n'
+		EOF
+	DONE
+	atf_check -s exit:0 -o match:'hello\\n' -e empty ${TEST_SH} 
 }
 
 atf_init_test_cases() {
