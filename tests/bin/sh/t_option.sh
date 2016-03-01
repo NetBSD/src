@@ -1,4 +1,4 @@
-# $NetBSD: t_option.sh,v 1.1 2016/02/23 16:20:42 christos Exp $
+# $NetBSD: t_option.sh,v 1.2 2016/03/01 12:39:35 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,7 +52,7 @@ test_option_on_off()
 		test "${#opt}" -gt 1 &&
   CLEAR='xx="$-" && xx=$(echo "$xx" | tr -d cs) && test -n "$xx" && set +"$xx";'
 
-		atf_check -s exit:0 -o empty -e empty "${TEST_SH}" -c \
+		atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 			"opt=${opt}"'
 			x() {
 				echo "ERROR: Unable to $1 option $2" >&2
@@ -101,7 +101,7 @@ test_optional_on_off()
 	for opt
 	do
 		test "${opt}" = n && continue
-		"${TEST_SH}" -c "set -${opt}" 2>/dev/null  &&
+		${TEST_SH} -c "set -${opt}" 2>/dev/null  &&
 			OPTS="${OPTS} ${opt}" || RET=1
 	done
 
@@ -122,11 +122,11 @@ set_a_body() {
 	test_option_on_off a
 
 	# without -a, new variables should not be exported (so grep "fails")
-	atf_check -s exit:1 -o empty -e empty "${TEST_SH}" -ce \
+	atf_check -s exit:1 -o empty -e empty ${TEST_SH} -ce \
 		'unset VAR; set +a; VAR=value; env | grep "^VAR="'
 
 	# with -a, they should be
-	atf_check -s exit:0 -o match:VAR=value -e empty "${TEST_SH}" -ce \
+	atf_check -s exit:0 -o match:VAR=value -e empty ${TEST_SH} -ce \
 		'unset VAR; set -a; VAR=value; env | grep "^VAR="'
 }
 
@@ -150,7 +150,7 @@ set_C_body() {
 	echo Precious_Content > Important_File
 
 	# Check that we can redirect onto file when -C is not set
-	atf_check -s exit:0 -o empty -e empty "${TEST_SH}" -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'
 		D=$(ls -l Junk_File) || exit 1
 		set +C
@@ -160,7 +160,7 @@ set_C_body() {
 		'
 
 	# Check that we cannot redirect onto file when -C is set
-	atf_check -s exit:0 -o empty -e not-empty "${TEST_SH}" -c \
+	atf_check -s exit:0 -o empty -e not-empty ${TEST_SH} -c \
 		'
 		D=$(ls -l Important_File) || exit 1
 		set -C
@@ -170,7 +170,7 @@ set_C_body() {
 		'
 
 	# Check that we can append to file, even when -C is set
-	atf_check -s exit:0 -o empty -e empty "${TEST_SH}" -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'
 		D=$(ls -l Junk_File) || exit 1
 		set -C
@@ -180,7 +180,7 @@ set_C_body() {
 		'
 
 	# Check that we abort on attempt to redirect onto file when -Ce is set
-	atf_check -s not-exit:0 -o empty -e not-empty "${TEST_SH}" -c \
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
 		'
 		set -Ce
 		echo "Fail to Overwrite it now" > Important_File
@@ -188,7 +188,7 @@ set_C_body() {
 		'
 
 	# Last check that we can override -C for when we really need to
-	atf_check -s exit:0 -o empty -e empty "${TEST_SH}" -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'
 		D=$(ls -l Junk_File) || exit 1
 		set -C
@@ -208,17 +208,17 @@ set_e_body() {
 
 	# Check that -e does nothing if no commands fail
 	atf_check -s exit:0 -o match:I_am_OK -e empty \
-	    "${TEST_SH}" -c \
+	    ${TEST_SH} -c \
 		'false; printf "%s" I_am; set -e; true; printf "%s\n" _OK'
 
 	# and that it (silently, but with exit status) aborts if cmd fails
 	atf_check -s not-exit:0 -o match:I_am -o not-match:Broken -e empty \
-	    "${TEST_SH}" -c \
+	    ${TEST_SH} -c \
 		'false; printf "%s" I_am; set -e; false; printf "%s\n" _Broken'
 
 	# same, except -e this time is on from the beginning
 	atf_check -s not-exit:0 -o match:I_am -o not-match:Broken -e empty \
-	    "${TEST_SH}" -ec 'printf "%s" I_am; false; printf "%s\n" _Broken'
+	    ${TEST_SH} -ec 'printf "%s" I_am; false; printf "%s\n" _Broken'
 
 	# More checking of -e in other places, there is lots to deal with.
 }
@@ -247,12 +247,12 @@ set_f_body() {
 		echo "$f" > "$f"
 	done
 
-	atf_check -s exit:0 -o empty -e empty "${TEST_SH}" -ec \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -ec \
 	    'X=$(echo b*); Y=$(echo b*); test "${X}" != "a*";
 		test "${X}" = "${Y}"'
 
 	# now test expansion is different when -f is set
-	atf_check -s exit:0 -o empty -e empty "${TEST_SH}" -ec \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -ec \
 	   'X=$(echo b*); Y=$(set -f; echo b*); test "${X}" != "${Y}"'
 }
 
@@ -268,18 +268,84 @@ set_n_body() {
 
 	# nothing should be executed, hence no output...
 	atf_check -s exit:0 -o empty -e empty \
-		"${TEST_SH}" -enc 'echo ABANDON HOPE; echo ALL YE; echo ...'
+		${TEST_SH} -enc 'echo ABANDON HOPE; echo ALL YE; echo ...'
 
 	# this is true even when the "commands" do not exist
 	atf_check -s exit:0 -o empty -e empty \
-		"${TEST_SH}" -enc 'ERR; FAIL; ABANDON HOPE'
+		${TEST_SH} -enc 'ERR; FAIL; ABANDON HOPE'
 
-	# but if there is a syntax error, it should be detected
+	# but if there is a syntax error, it should be detected (w or w/o -e)
 	atf_check -s not-exit:0 -o empty -e not-empty \
-		"${TEST_SH}" -enc 'echo JUMP; for frogs swim; echo in puddles'
+		${TEST_SH} -enc 'echo JUMP; for frogs swim; echo in puddles'
+	atf_check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -nc 'echo ABANDON HOPE; echo "ALL YE; echo ...'
+	atf_check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -enc 'echo ABANDON HOPE;; echo ALL YE; echo ...'
+	atf_check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -nc 'do YOU ABANDON HOPE; for all eternity?'
 
-	# eventually add tests that enable -n during the script
-	# but the standard NetBSD sh doesn't handle that properly yet, so ...
+	# now test enabling -n in the middle of a script
+	# note that once turned on, it cannot be turned off again.
+	#
+	# omit more complex cases, as those can send some shells
+	# into infinite loops, and believe it or not, that might be OK!
+
+	atf_check -s exit:0 -o match:first -o not-match:second -e empty \
+		${TEST_SH} -c 'echo first; set -n; echo second'
+	atf_check -s exit:0 -o match:first -o not-match:third -e empty \
+	    ${TEST_SH} -c 'echo first; set -n; echo second; set +n; echo third'
+	atf_check -s exit:0 -o inline:'a\nb\n' -e empty \
+	    ${TEST_SH} -c 'for x in a b c d
+			   do
+				case "$x" in
+				     a);; b);; c) set -n;; d);;
+				esac
+				printf "%s\n" "$x"
+			   done'
+
+	# This last one is a bit more complex to explain, so I will not try
+
+	# First, we need to know what signal number is used for SIGUSR1 on
+	# the local (testing) system (signal number is $(( $XIT - 128 )) )
+
+	# this will take slightly over 1 second elapsed time (the sleep 1)
+	# The "10" for the first sleep just needs to be something big enough
+	# that the rest of the commands have time to complete, even on
+	# very slow testing systems.  10 should be enough.  Otherwise irrelevant
+
+	# The shell will usually blather to stderr about the sleep 10 being
+	# killed, but it affects nothing, so just allow it to cry.
+
+	(sleep 10 & sleep 1; kill -USR1 $!; wait $!)
+	XIT="$?"
+
+	# The exit value should be an integer > 128 and < 256 (often 158)
+	# If it is not just skip the test
+
+	# If we do run the test, it should take (slightly over) either 1 or 2
+	# seconds to complete, depending upon the shell being tested.
+
+	case "${XIT}" in
+	( 129 | 1[3-9][0-9] | 2[0-4][0-9] | 25[0-5] )
+
+		# The script below should exit with the same code - no output
+
+		# Or that is the result that seems best explanable.
+		# "set -n" in uses like this is not exactly well defined...
+
+		# This script comes from a member of the austin group
+		# (they author changes to the posix shell spec - and more.)
+		# The author is also an (occasional?) NetBSD user.
+		atf_check -s exit:${XIT} -o empty -e empty ${TEST_SH} -c '
+			trap "set -n" USR1
+			{ sleep 1; kill -USR1 $$; sleep 1; } &
+			false
+			wait && echo t || echo f
+			wait
+			echo foo
+		'
+		;;
+	esac
 }
 
 atf_test_case set_u
@@ -291,46 +357,46 @@ set_u_body() {
 	test_option_on_off u
 
 	# first make sure it is OK to unset an unset variable
-	atf_check -s exit:0 -o match:OK -e empty "${TEST_SH}" -ce \
+	atf_check -s exit:0 -o match:OK -e empty ${TEST_SH} -ce \
 		'unset _UNSET_VARIABLE_; echo OK'
 	# even if -u is set
-	atf_check -s exit:0 -o match:OK -e empty "${TEST_SH}" -cue \
+	atf_check -s exit:0 -o match:OK -e empty ${TEST_SH} -cue \
 		'unset _UNSET_VARIABLE_; echo OK'
 
 	# and that without -u accessing an unset variable is harmless
-	atf_check -s exit:0 -o match:OK -e empty "${TEST_SH}" -ce \
+	atf_check -s exit:0 -o match:OK -e empty ${TEST_SH} -ce \
 		'unset X; echo ${X}; echo OK'
 	# and that the unset variable test expansion works properly
-	atf_check -s exit:0 -o match:OKOK -e empty "${TEST_SH}" -ce \
+	atf_check -s exit:0 -o match:OKOK -e empty ${TEST_SH} -ce \
 		'unset X; printf "%s" ${X-OK}; echo OK'
 
 	# Next test that with -u set, the shell aborts on access to unset var
 	# do not use -e, want to make sure it is -u that causes abort
-	atf_check -s not-exit:0 -o not-match:ERR -e not-empty "${TEST_SH}" -c \
+	atf_check -s not-exit:0 -o not-match:ERR -e not-empty ${TEST_SH} -c \
 		'unset X; set -u; echo ${X}; echo ERR'
 	# quoting should make no difference...
-	atf_check -s not-exit:0 -o not-match:ERR -e not-empty "${TEST_SH}" -c \
+	atf_check -s not-exit:0 -o not-match:ERR -e not-empty ${TEST_SH} -c \
 		'unset X; set -u; echo "${X}"; echo ERR'
 
 	# Now a bunch of accesses to unset vars, with -u, in ways that are OK
-	atf_check -s exit:0 -o match:OK -e empty "${TEST_SH}" -ce \
+	atf_check -s exit:0 -o match:OK -e empty ${TEST_SH} -ce \
 		'unset X; set -u; echo ${X-GOOD}; echo OK'
-	atf_check -s exit:0 -o match:OK -e empty "${TEST_SH}" -ce \
+	atf_check -s exit:0 -o match:OK -e empty ${TEST_SH} -ce \
 		'unset X; set -u; echo ${X-OK}'
 	atf_check -s exit:0 -o not-match:ERR -o match:OK -e empty \
-		"${TEST_SH}" -ce 'unset X; set -u; echo ${X+ERR}; echo OK'
+		${TEST_SH} -ce 'unset X; set -u; echo ${X+ERR}; echo OK'
 
 	# and some more ways that are not OK
-	atf_check -s not-exit:0 -o not-match:ERR -e not-empty "${TEST_SH}" -c \
+	atf_check -s not-exit:0 -o not-match:ERR -e not-empty ${TEST_SH} -c \
 		'unset X; set -u; echo ${X#foo}; echo ERR'
-	atf_check -s not-exit:0 -o not-match:ERR -e not-empty "${TEST_SH}" -c \
+	atf_check -s not-exit:0 -o not-match:ERR -e not-empty ${TEST_SH} -c \
 		'unset X; set -u; echo ${X%%bar}; echo ERR'
 
 	# lastly, just while we are checking unset vars, test aborts w/o -u
-	atf_check -s not-exit:0 -o not-match:ERR -e not-empty "${TEST_SH}" -c \
+	atf_check -s not-exit:0 -o not-match:ERR -e not-empty ${TEST_SH} -c \
 		'unset X; echo ${X?}; echo ERR'
 	atf_check -s not-exit:0 -o not-match:ERR -e match:X_NOT_SET \
-		"${TEST_SH}" -c 'unset X; echo ${X?X_NOT_SET}; echo ERR'
+		${TEST_SH} -c 'unset X; echo ${X?X_NOT_SET}; echo ERR'
 }
 
 atf_test_case set_v
@@ -345,13 +411,13 @@ set_v_body() {
 	atf_check -s exit:0 \
 			-o match:OKOK -o not-match:echo -o not-match:printf \
 			-e empty \
-		"${TEST_SH}" -ec 'printf "%s" OK; set -v; echo OK; exit 0'
+		${TEST_SH} -ec 'printf "%s" OK; set -v; echo OK; exit 0'
 
 	# but that it does when there are multiple lines
 	atf_check -s exit:0 \
 			-o match:OKOK -o not-match:echo -o not-match:printf \
 			-e match:printf -e match:OK -e match:echo \
-		"${TEST_SH}" -ec '{
+		${TEST_SH} -ec '{
 					echo "set -v"
 					echo "printf %s OK"
 					echo "echo OK"
@@ -362,7 +428,7 @@ set_v_body() {
 	atf_check -s exit:0 \
 			-o match:OKOK -o not-match:echo -o not-match:printf \
 			-e match:printf -e match:OK -e not-match:echo \
-		"${TEST_SH}" -ec '{
+		${TEST_SH} -ec '{
 					echo "set -v"
 					echo "printf %s OK"
 					echo "set +v"
@@ -376,7 +442,7 @@ set_v_body() {
 			-o not-match:for -o not-match:do -o not-match:done \
 			-e match:printf -e match:111 -e not-match:111222 \
 			-e match:for -e match:do -e match:done \
-		"${TEST_SH}" -ec '{
+		${TEST_SH} -ec '{
 					echo "set -v"
 					echo "for i in 111 222 333"
 					echo "do"
@@ -398,19 +464,19 @@ set_x_body() {
 	atf_check -s exit:0 \
 			-o match:OKOK -o not-match:echo -o not-match:printf \
 			-e not-match:printf -e match:OK -e match:echo \
-		"${TEST_SH}" -ec 'printf "%s" OK; set -x; echo OK; exit 0'
+		${TEST_SH} -ec 'printf "%s" OK; set -x; echo OK; exit 0'
 
 	# and that it stops again afer -x is disabled
 	atf_check -s exit:0 \
 			-o match:OKOK -o not-match:echo -o not-match:printf \
 			-e match:printf -e match:OK -e not-match:echo \
-	    "${TEST_SH}" -ec 'set -x; printf "%s" OK; set +x; echo OK; exit 0'
+	    ${TEST_SH} -ec 'set -x; printf "%s" OK; set +x; echo OK; exit 0'
 
 	# also check that PS4 is output correctly
 	atf_check -s exit:0 \
 			-o match:OK -o not-match:echo \
 			-e match:OK -e match:Run:echo \
-		"${TEST_SH}" -ec 'PS4=Run:; set -x; echo OK; exit 0'
+		${TEST_SH} -ec 'PS4=Run:; set -x; echo OK; exit 0'
 
 	return 0
 
@@ -423,7 +489,7 @@ set_x_body() {
 			-o not-match:for \
 			-e match:printf -e match:111 -e not-match:111222 \
 			-e not-match:for -e not-match:do -e not-match:done \
-		"${TEST_SH}" -ec \
+		${TEST_SH} -ec \
 	   'set -x; for i in 111 222 333; do printf "%s" $i; done; echo; exit 0'
 }
 
@@ -489,11 +555,11 @@ restore_local_opts_body() {
 	FN="test-funcs.$$"
 	opt_test_setup "${FN}" || atf_skip "Cannot setup test environment"
 
-	"${TEST_SH}" -ec ". './${FN}'; local_opt_check" 2>/dev/null ||
+	${TEST_SH} -ec ". './${FN}'; local_opt_check" 2>/dev/null ||
 		atf_skip "sh extension 'local -' not supported by ${TEST_SH}"
 
 	atf_check -s exit:0 -o match:OKOK -o not-match:ERR -e empty \
-		"${TEST_SH}" -ec ". './${FN}'; local_test"
+		${TEST_SH} -ec ". './${FN}'; local_test"
 }
 
 atf_test_case vi_emacs_VE_toggle
@@ -506,7 +572,7 @@ vi_emacs_VE_toggle_body() {
 	test_optional_on_off V E ||
 	  atf_skip "One or both V & E opts unsupported by ${TEST_SH}"
 
-	atf_check -s exit:0 -o empty -e empty "${TEST_SH}" -c '
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
 		q() {
 			eval "case \"$-\" in
 			(*${2}*)	return 1;;
@@ -535,7 +601,7 @@ xx_bogus_body() {
 	# Biggest problem here is picking a "nonsense option" that is
 	# not implemented by any shell, anywhere.  Hopefully this will do.
 	atf_check -s not-exit:0 -o empty -e not-empty \
-		"${TEST_SH}" -c 'set -% ; echo ERR'
+		${TEST_SH} -c 'set -% ; echo ERR'
 }
 
 atf_test_case Option_switching
@@ -580,7 +646,7 @@ atf_init_test_cases() {
 	# no tests for	-m (no idea how to do that one)
 	#		-I (no easy way to generate the EOF it ignores)
 	#		-i (not sure how to test that one at the minute)
-	#		-p (because we aren't going to run tests setiud)
+	#		-p (because we aren't going to run tests setuid)
 	#		-V/-E (too much effort, and a real test would be huge)
 	#		-c (because almost all the other tests test it anyway)
 	#		-q (because, for now, I am lazy)
