@@ -3,7 +3,7 @@
 .include	"../../Makefile.inc"
 
 #.if ${MKPIC} == "yes"
-#CFLAGS+=-fPIC
+CFLAGS+=-fPIC
 #.endif
 
 .PATH:		${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common
