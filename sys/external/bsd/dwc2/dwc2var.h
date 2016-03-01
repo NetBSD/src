@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.8 2016/02/26 07:36:02 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.9 2016/03/01 15:19:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@ struct dwc2_xfer {
 	struct usb_task	abort_task;
 
 	struct dwc2_hcd_urb *urb;
-	int packet_count;
 
 	TAILQ_ENTRY(dwc2_xfer) xnext;		/* list of complete xfers */
 };
