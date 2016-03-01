@@ -1,4 +1,4 @@
-# $NetBSD: t_here.sh,v 1.2 2016/02/29 23:52:53 christos Exp $
+# $NetBSD: t_here.sh,v 1.3 2016/03/01 12:39:35 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,6 @@ check()
 	# some of the tests expect us to expand $nl internally...
 	CMD="nl='${nl}'; $1"
 
-echo "${CMD}" >/tmp/CMD
 	rm -f trace.*
 	result="$( ${TEST_SH} -c "${CMD}" 2>"${TEMP_FILE}" )"
 	STATUS=$?
@@ -193,11 +192,11 @@ EOF
 
 }
 
-atf_test_case viscious
-viscious_head() {
+atf_test_case vicious
+vicious_head() {
 	atf_set "descr" "Tests for obscure and obnoxious uses of here docs"
 }
-viscious_body() {
+vicious_body() {
 
 	cat <<- \END_SCRIPT > script
 		cat <<ONE && cat \
@@ -215,7 +214,7 @@ viscious_body() {
 	# will not check what it produces.   The eventual result
 	# seems unlikely to be what we currently output, which
 	# is:
-	#	:echo line 1
+	#	A:echo line 1
 	#	B:echo line 2)" && prefix DASH_CODE <<DASH_CODE
 	#	B:echo line 3
 	#	line 4
@@ -257,5 +256,5 @@ atf_init_test_cases() {
 	atf_add_test_case do_simple
 	atf_add_test_case incomplete
 	atf_add_test_case multiple	# multiple << operators on one cmd
-	atf_add_test_case viscious	# evil test from the austin-l list...
+	atf_add_test_case vicious	# evil test from the austin-l list...
 }
