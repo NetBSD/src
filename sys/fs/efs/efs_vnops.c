@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.33 2014/08/07 08:24:23 hannken Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.34 2016/03/02 19:27:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.33 2014/08/07 08:24:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.34 2016/03/02 19:27:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -622,7 +622,7 @@ efs_bmap(void *v)
 		}
 	}
 
-	KASSERT(!found || (found && ret == 0));
+	KASSERT(!found || ret == 0);
 
 	if (!found) {
 		EFS_DPRINTF(("efs_bmap: ap->a_bn not in extents\n"));
