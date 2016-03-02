@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.763 2016/02/21 04:16:16 christos Exp $
+# $NetBSD: shl.mi,v 1.764 2016/03/02 01:53:21 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -23,8 +23,8 @@
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so				base-crypto-shlib	dynamicroot
-./lib/libcrypto.so.8				base-crypto-shlib	dynamicroot
-./lib/libcrypto.so.8.4				base-crypto-shlib	dynamicroot
+./lib/libcrypto.so.11				base-crypto-shlib	dynamicroot
+./lib/libcrypto.so.11.0				base-crypto-shlib	dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot
@@ -220,15 +220,15 @@
 ./usr/lib/libcrypt.so.1				base-sys-shlib		compatfile
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libcrypto.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libcrypto.so.8			base-crypto-shlib	compatfile,crypto
-./usr/lib/libcrypto.so.8.4			base-crypto-shlib	compatfile,crypto
+./usr/lib/libcrypto.so.11			base-crypto-shlib	compatfile,crypto
+./usr/lib/libcrypto.so.11.0			base-crypto-shlib	compatfile,crypto
 ./usr/lib/libcrypto_idea.so.7			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so.7.0			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_rc5.so			base-crypto-shlib	compatfile,crypto,crypto_rc5
-./usr/lib/libcrypto_rc5.so.7			base-crypto-shlib	compatfile,crypto,crypto_rc5
-./usr/lib/libcrypto_rc5.so.7.0			base-crypto-shlib	compatfile,crypto,crypto_rc5
+./usr/lib/libcrypto_rc5.so.11			base-crypto-shlib	compatfile,crypto,crypto_rc5
+./usr/lib/libcrypto_rc5.so.11.0			base-crypto-shlib	compatfile,crypto,crypto_rc5
 ./usr/lib/libctf.so				base-sys-shlib		compatfile,ctf
 ./usr/lib/libctf.so.3				base-sys-shlib		compatfile,ctf
 ./usr/lib/libctf.so.3.0				base-sys-shlib		compatfile,ctf
@@ -236,8 +236,8 @@
 ./usr/lib/libcurses.so.7			base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7.0			base-sys-shlib		compatfile
 ./usr/lib/libdes.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libdes.so.8				base-crypto-shlib	compatfile,crypto
-./usr/lib/libdes.so.8.2				base-crypto-shlib	compatfile,crypto
+./usr/lib/libdes.so.11				base-crypto-shlib	compatfile,crypto
+./usr/lib/libdes.so.11.0				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libdevmapper.so			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		compatfile,lvm
@@ -763,8 +763,8 @@
 ./usr/lib/libssh.so.27				base-secsh-shlib	compatfile,crypto
 ./usr/lib/libssh.so.27.0			base-secsh-shlib	compatfile,crypto
 ./usr/lib/libssl.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libssl.so.10				base-crypto-shlib	compatfile,crypto
-./usr/lib/libssl.so.10.5			base-crypto-shlib	compatfile,crypto
+./usr/lib/libssl.so.11				base-crypto-shlib	compatfile,crypto
+./usr/lib/libssl.so.11.0			base-crypto-shlib	compatfile,crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.3			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
