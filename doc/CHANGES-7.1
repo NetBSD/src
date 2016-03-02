@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.59 2016/02/27 21:37:10 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.60 2016/03/02 07:06:10 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2092,7 +2092,7 @@ sys/dev/pci/if_wmvar.h				1.22-1.23, 1.25-1.30 via patch
 	  bug). This workaround is required if the NVM image version
 	  < 3.25.
 	- Fix a bug that wm_detach() didn't unmap the FHASH's area. Now
-	  "drvct -d wm0" -> "drvctl -r pci0" works on ICH* and PCH*.
+	  "drvctl -d wm0" -> "drvctl -r pci0" works on ICH* and PCH*.
 	- Add workaround for 82574 Errata 25 and 82583 Errata 12
 	  "Dropped RX packets" and for 82573 (unknown). Set
 	  GCR_L1_ACT_WITHOUT_L0S_RX bit. The NVM Image version 2.1.4 and
@@ -2102,7 +2102,7 @@ sys/dev/pci/if_wmvar.h				1.22-1.23, 1.25-1.30 via patch
 	- Disable LPLU (Low Power Link Up) on D0 state on 82574, 82583
 	  and ICH* too.
 	- Call wm_get_hw_control() correctly. This change fixes a bug
-	  that some AMT based systems doesn't linkup at 1000BaseT. The
+	  that some AMT based systems don't linkup at 1000BaseT. The
 	  problem was observed on HP Compaq dc7700. A lot of fixes have
 	  been done for wm(4) and igphy(4), so now PR#44893 should be
 	  fixed.
