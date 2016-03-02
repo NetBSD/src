@@ -27,7 +27,7 @@
  *	i4b daemon - logging routines
  *	-----------------------------
  *
- *	$Id: log.c,v 1.8 2011/08/31 16:24:59 plunky Exp $ 
+ *	$Id: log.c,v 1.9 2016/03/02 19:03:31 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -162,7 +162,7 @@ logit(int what, const char *fmt, ...)
 	/* put log on screen ? */
 
 	if ((do_fullscreen && curses_ready) &&
-	   ((!debug_noscreen) || (debug_noscreen && (what != LL_DBG))))
+	   (!debug_noscreen || what != LL_DBG))
 	{
 		wprintw(lower_w, "%s %s %-.*s\n", dp, logtab[what].text,
 
