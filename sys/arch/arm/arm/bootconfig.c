@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.8 2015/01/06 00:43:21 jmcneill Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.9 2016/03/02 19:25:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.8 2015/01/06 00:43:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.9 2016/03/02 19:25:32 christos Exp $");
 
 #include <sys/systm.h>
 
@@ -89,8 +89,7 @@ get_bootconf_option(char *opts, const char *opt, int type, void *result)
 			++ptr;
 
 		if (*ptr == '=' ||
-		    (*ptr != '=' &&
-		     ((type & BOOTOPT_TYPE_MASK) == BOOTOPT_TYPE_BOOLEAN))) {
+		    (type & BOOTOPT_TYPE_MASK) == BOOTOPT_TYPE_BOOLEAN) {
 			/* compare the option */
 			if (strncmp(optstart, opt, (ptr - optstart)) == 0) {
 				/* found */
