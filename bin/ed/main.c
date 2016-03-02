@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2014/03/31 12:55:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2016/03/02 19:11:28 christos Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2014/03/31 12:55:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2016/03/02 19:11:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,11 +223,14 @@ top:
 		}
 		isglobal = 0;
 		if ((status = extract_addr_range()) >= 0 &&
-		    (status = exec_command()) >= 0)
-			if (!status || (status &&
-			    (status = display_lines(current_addr, current_addr,
-			        status)) >= 0))
+		    (status = exec_command()) >= 0) {
+			if (status == 0)
 				continue;
+			status = display_lines(current_addr, current_addr,
+			    status);
+			if (status >= 0)
+				continue;
+		}
 		switch (status) {
 		case EOF:
 			quit(0);
