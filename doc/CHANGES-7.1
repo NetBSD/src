@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.60 2016/03/02 07:06:10 msaitoh Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.61 2016/03/03 15:43:57 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2214,4 +2214,40 @@ distrib/sets/lists/xdebug/md.netwinder		1.4
 distrib/sets/lists/xdebug/md.newsmips		1.4
 distrib/sets/lists/xdebug/md.prep		1.4
 	Fix debug set lists.
+
+bin/cp/utils.c					1.43-1.44
+bin/mv/mv.c					1.44
+lib/librumphijack/hijack.c			1.112-1.115
+sbin/restore/dirs.c				1.51
+sbin/restore/tape.c				1.68
+usr.bin/touch/touch.c				1.33
+
+	Don't truncate at sub-microsecond while preserving timestamps.
+	Fix the name of failed function in warning message.
+
+	Hijack utimensat(2) so that t_vfs test passes after cp(1)/mv(1) are
+	changed to use the system call.
+
+	Also hijack futimens(2) so that t_sh test passes.
+
+	Define a generic ATCALL() and use it to implement utimensat()
+
+	Make ATCALL() behave for absolute paths too.
+	[nakayama, ticket #1096]
+
+sys/kern/kern_ksyms.c				1.82
+sys/kern/kern_module.c				1.107-1.110
+
+	Add some additional status messages for kern.module.verbose=TRUE
+
+	In module_do_load(), consolidate checking for a pre-existing module,
+	and return a single error value EEXIST.  When making a recursive
+	call (to load required modules), treat a pre-existing module as
+	success.
+	[pgoyette, ticket #1108]
+
+sys/kern/kern_time.c				1.184
+
+	Don't leak garabage from the kernel stack on sleep(0) and equivalents.
+	[uwe, ticket #1128]
 
