@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.14 2014/07/13 16:23:55 pgoyette Exp $	*/
+/*	$NetBSD: tetris.h,v 1.15 2016/03/03 21:38:55 nat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ extern cell	board[B_SIZE];	/* 1 => occupied, 0 => empty */
 #define	MINCOLS	40
 
 extern int	Rows, Cols;	/* current screen size */
+extern int	Offset;		/* vert. offset to center board */
 
 /*
  * Translations from board coordinates to display coordinates.
