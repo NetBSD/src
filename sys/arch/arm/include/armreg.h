@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.109 2015/10/15 07:14:56 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.110 2016/03/03 17:01:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -226,12 +226,20 @@
 #define CPU_ID_CORTEXA15R2	0x412fc0f0
 #define CPU_ID_CORTEXA15R3	0x413fc0f0
 #define CPU_ID_CORTEXA17R1	0x411fc0e0
-#define CPU_ID_CORTEX_P(n)	((n & 0xff0ff000) == 0x410fc000)
+#define CPU_ID_CORTEXA53R0	0x410fd030
+#define CPU_ID_CORTEXA57R0	0x410fd070
+#define CPU_ID_CORTEXA57R1	0x411fd070
+#define CPU_ID_CORTEXA72R0	0x410fd080
+
+#define CPU_ID_CORTEX_P(n)	((n & 0xff0fe000) == 0x410fc000)
 #define CPU_ID_CORTEX_A5_P(n)	((n & 0xff0ff0f0) == 0x410fc050)
 #define CPU_ID_CORTEX_A7_P(n)	((n & 0xff0ff0f0) == 0x410fc070)
 #define CPU_ID_CORTEX_A8_P(n)	((n & 0xff0ff0f0) == 0x410fc080)
 #define CPU_ID_CORTEX_A9_P(n)	((n & 0xff0ff0f0) == 0x410fc090)
 #define CPU_ID_CORTEX_A15_P(n)	((n & 0xff0ff0f0) == 0x410fc0f0)
+#define CPU_ID_CORTEX_A53_P(n)	((n & 0xff0ff0f0) == 0x410fd030)
+#define CPU_ID_CORTEX_A57_P(n)	((n & 0xff0ff0f0) == 0x410fd070)
+#define CPU_ID_CORTEX_A72_P(n)	((n & 0xff0ff0f0) == 0x410fd080)
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
