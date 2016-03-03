@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.31 2015/11/06 19:53:37 christos Exp $	*/
+/*	$NetBSD: tetris.c,v 1.32 2016/03/03 21:38:55 nat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 cell	board[B_SIZE];		/* 1 => occupied, 0 => empty */
 
 int	Rows, Cols;		/* current screen size */
+int	Offset;			/* used to center board & shapes */
 
 static const struct shape *curshape;
 const struct shape *nextshape;
