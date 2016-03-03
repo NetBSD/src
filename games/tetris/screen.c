@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.31 2015/11/06 19:53:37 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.32 2016/03/03 21:38:55 nat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -197,6 +197,7 @@ scr_set(void)
 		    MINCOLS, MINROWS);
 		stop("");	/* stop() supplies \n */
 	}
+	Offset = (Rows - D_LAST + D_FIRST - 2) / 2;
 	if (tcgetattr(0, &oldtt) < 0)
 		stop("tcgetattr() fails");
 	newtt = oldtt;
@@ -360,7 +361,7 @@ scr_update(void)
 					putpad(exit_standout_mode);
 					cur_so = 0;
 				}
-				moveto(RTOD(j), CTOD(i));
+				moveto(RTOD(j + Offset), CTOD(i));
 			}
 			if (enter_standout_mode) {
 				if (so != cur_so) {
