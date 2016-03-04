@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.7 2016/02/25 17:09:39 joerg Exp $ */
+/*	$NetBSD: mgx.c,v 1.8 2016/03/04 22:08:09 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.7 2016/02/25 17:09:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.8 2016/03/04 22:08:09 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.7 2016/02/25 17:09:39 joerg Exp $");
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/kmem.h>
+#include <sys/kauth.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
@@ -65,7 +66,7 @@ struct mgx_softc {
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_blith;
 	bus_space_handle_t sc_vgah;
-	bus_addr_t	sc_paddr;
+	bus_addr_t	sc_paddr, sc_rpaddr;
 	void		*sc_fbaddr;
 	uint8_t		*sc_cursor;
 	int		sc_width;
@@ -159,6 +160,14 @@ mgx_read_1(struct mgx_softc *sc, uint32_t reg)
 	return bus_space_read_1(sc->sc_tag, sc->sc_blith, reg ^ 3);
 }
 
+#if 0
+static inline uint32_t
+mgx_read_4(struct mgx_softc *sc, uint32_t reg)
+{
+	return bus_space_read_4(sc->sc_tag, sc->sc_blith, reg);
+}
+#endif
+
 static inline void
 mgx_write_2(struct mgx_softc *sc, uint32_t reg, uint16_t val)
 {
@@ -202,6 +211,8 @@ mgx_attach(device_t parent, device_t self, void *args)
 
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot,
 	    sa->sa_reg[8].oa_base);
+	sc->sc_rpaddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot,
+	    sa->sa_reg[5].oa_base + MGX_REG_ATREG_OFFSET);
 
 	/* read geometry information from the device tree */
 	sc->sc_width = prom_getpropint(sa->sa_node, "width", 1152);
@@ -311,17 +322,14 @@ mgx_attach(device_t parent, device_t self, void *args)
 	config_found(self, &aa, wsemuldisplaydevprint);
 
 #if 0
-	uint32_t *fb = sc->sc_fbaddr;
-	int i, j;
-	for (i = 0; i < 256; i += 16) {
-		printf("%04x:", i);
-		for (j = 0; j < 16; j += 4) {
-			printf(" %08x", fb[(i + j) >> 2]);
-		}
-		printf("\n");
+	{
+		uint32_t ap;
+		/* reads 0xfd210000 */
+		mgx_write_4(sc, ATR_APERTURE, 0x00000000); 
+		ap = mgx_read_4(sc, ATR_APERTURE);
+		printf("aperture: %08x\n", ap);
 	}
 #endif
-
 }
 
 static void
@@ -659,6 +667,10 @@ mgx_putchar(void *cookie, int row, int col, u_int c, long attr)
 		mgx_wait_engine(sc);
 		sc->sc_putchar(cookie, row, col, c, attr & ~1);
 		if (rv == GC_ADD) {
+			/*
+			 * try to make sure the glyph made it all the way to
+			 * video memory before trying to blit it into the cache
+			 */ 
 			junk = *(uint32_t *)sc->sc_fbaddr;
 			__USE(junk);
 			glyphcache_add(&sc->sc_gc, c, x, y);
@@ -922,7 +934,7 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_GET_FBINFO:
 			{
 				struct wsdisplayio_fbinfo *fbi = data;
-				
+	
 				fbi->fbi_fbsize = sc->sc_fbsize - 1024;
 				fbi->fbi_width = sc->sc_width;
 				fbi->fbi_height = sc->sc_height;
@@ -955,6 +967,23 @@ mgx_mmap(void *v, void *vs, off_t offset, int prot)
 		    offset, prot, BUS_SPACE_MAP_LINEAR);
 	}
 
+	/*
+	 * Blitter registers at 0x80000000, only in mapped mode.
+	 * Restrict to root, even though I'm fairly sure the DMA engine lives
+	 * elsewhere ( and isn't documented anyway )
+	 */
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
+		aprint_normal("%s: mmap() rejected.\n",
+		    device_xname(sc->sc_dev));
+		return -1;
+	}
+	if ((sc->sc_mode == WSDISPLAYIO_MODE_MAPPED) &&
+	    (offset >= 0x80000000) && (offset < 0x80001000)) {
+		return bus_space_mmap(sc->sc_tag, sc->sc_rpaddr,
+		    offset, prot, BUS_SPACE_MAP_LINEAR);
+	}
 	return -1;
 }
 
