@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.23 2016/03/04 02:46:19 dholland Exp $	*/
+/*	$NetBSD: display.c,v 1.24 2016/03/04 02:54:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.23 2016/03/04 02:46:19 dholland Exp $");
+__RCSID("$NetBSD: display.c,v 1.24 2016/03/04 02:54:38 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,7 +254,7 @@ get(void)
 		 * and no other files are available, zero-pad the rest of the
 		 * block and set the end flag.
 		 */
-		if (!length || (ateof && !next(NULL))) {
+		if (!length || (ateof && !next())) {
 			if (need == blocksize)
 				return(NULL);
 			if (!need && vflag != ALL &&
@@ -297,16 +297,18 @@ get(void)
 	}
 }
 
+void
+stashargv(char **argv)
+{
+	_argv = argv;
+}
+
 int
-next(char **argv)
+next(void)
 {
 	static int done;
 	int statok;
 
-	if (argv) {
-		_argv = argv;
-		return(1);
-	}
 	for (;;) {
 		if (*_argv) {
 			if (!(freopen(*_argv, "r", stdin))) {
