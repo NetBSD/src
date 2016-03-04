@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.18 2012/07/06 09:06:43 wiz Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.19 2016/03/04 02:54:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.18 2012/07/06 09:06:43 wiz Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.19 2016/03/04 02:54:38 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	for (tfs = fshead; tfs; tfs = tfs->nextfs)
 		rewrite(tfs);
 
-	(void)next(argv);
+	stashargv(argv);
 	display();
 	exit(exitval);
 }
