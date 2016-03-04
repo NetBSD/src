@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.56 2016/01/08 21:24:58 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.57 2016/03/04 19:09:25 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -7114,4 +7114,10 @@ sys/arch/xen/xen/xennetback_xenbus.c		1.54 via patch
 	twice (during which time the frontend can alter the contents)
 	possibly leading to arbitrary code execution in backend.
 	[bouyer, ticket #1358]
+
+
+external/bsd/ntp/dist/sntp/libevent/include/event2/event-config.h	(patch)
+	Auto-adjust configuration to 32bit/64bit systems.
+	[christos, ticket #1371]
+
 
