@@ -438,25 +438,29 @@
 #define EVENT__SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
+#ifdef _LP64
 #define EVENT__SIZEOF_LONG 8
+#else
+#define EVENT__SIZEOF_LONG 4
+#endif
 
 /* The size of `long long', as computed by sizeof. */
-#define EVENT__SIZEOF_LONG_LONG 8
+#define EVENT__SIZEOF_LONG_LONG EVENT__SIZEOF_LONG
 
 /* The size of `off_t', as computed by sizeof. */
-#define EVENT__SIZEOF_OFF_T 8
+#define EVENT__SIZEOF_OFF_T EVENT__SIZEOF_LONG
 
 /* The size of `pthread_t', as computed by sizeof. */
-#define EVENT__SIZEOF_PTHREAD_T 8
+#define EVENT__SIZEOF_PTHREAD_T EVENT__SIZEOF_LONG
 
 /* The size of `short', as computed by sizeof. */
 #define EVENT__SIZEOF_SHORT 2
 
 /* The size of `size_t', as computed by sizeof. */
-#define EVENT__SIZEOF_SIZE_T 8
+#define EVENT__SIZEOF_SIZE_T EVENT__SIZEOF_LONG
 
 /* The size of `void *', as computed by sizeof. */
-#define EVENT__SIZEOF_VOID_P 8
+#define EVENT__SIZEOF_VOID_P EVENT__SIZEOF_LONG
 
 /* Define to 1 if you have the ANSI C header files. */
 #define EVENT__STDC_HEADERS 1
