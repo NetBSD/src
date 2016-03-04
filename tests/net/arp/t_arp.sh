@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.12 2016/02/29 09:35:16 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.13 2016/03/04 04:18:44 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,16 +26,15 @@
 #
 
 inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+inetserver="$inetserver -lrumpdev -lrumpnet_tap"
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCKSRC=unix://commsock1
 SOCKDST=unix://commsock2
 IP4SRC=10.0.1.1
 IP4DST=10.0.1.2
-IP4DST_PUB=10.0.1.3
-MACDST_PUB=b2:a1:00:00:00:01
-IP4DST_PUBPROXY=10.0.1.4
-MACDST_PUBPROXY=b2:a1:00:00:00:02
+IP4DST_PROXYARP1=10.0.1.3
+IP4DST_PROXYARP2=10.0.1.4
 
 DEBUG=false
 TIMEOUT=1
@@ -45,7 +44,8 @@ atf_test_case cache_expiration_10s cleanup
 atf_test_case command cleanup
 atf_test_case garp cleanup
 atf_test_case cache_overwriting cleanup
-atf_test_case pubproxy_arp cleanup
+atf_test_case proxy_arp_pub cleanup
+atf_test_case proxy_arp_pubproxy cleanup
 atf_test_case link_activation cleanup
 
 cache_expiration_5s_head()
@@ -78,9 +78,15 @@ cache_overwriting_head()
 	atf_set "require.progs" "rump_server"
 }
 
-pubproxy_arp_head()
+proxy_arp_pub_head()
 {
-	atf_set "descr" "Tests for Proxy ARP"
+	atf_set "descr" "Tests for Proxy ARP (pub)"
+	atf_set "require.progs" "rump_server"
+}
+
+proxy_arp_pubproxy_head()
+{
+	atf_set "descr" "Tests for Proxy ARP (pub proxy)"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -360,9 +366,12 @@ check_entry_flags()
 	    "rump.netstat -rn -f inet | grep ^'$ip'"
 }
 
-pubproxy_arp_body()
+
+test_proxy_arp()
 {
 	local arp_keep=5
+	local opts= title= flags=
+	local type=$1
 
 	atf_check -s exit:0 ${inetserver} $SOCKSRC
 	atf_check -s exit:0 ${inetserver} $SOCKDST
@@ -371,48 +380,116 @@ pubproxy_arp_body()
 	setup_src_server $arp_keep
 
 	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.forwarding=1
+	macaddr_dst=$(rump.ifconfig shmif0 |awk '/address/ {print $2;}')
 
-	atf_check -s exit:0 -o ignore rump.arp -s $IP4DST_PUB \
-	    $MACDST_PUB pub
-	atf_check -s exit:0 -o match:'permanent published' \
-	    rump.arp -n $IP4DST_PUB
-	check_entry_flags $IP4DST_PUB ULSp
+	if [ "$type" = "pub" ]; then
+		opts="pub"
+		title="permanent published"
+		flags="ULSp"
+	else
+		opts="pub proxy"
+		title='permanent published \(proxy only\)'
+		flags="UHLSp"
+	fi
 
-	$DEBUG && rump.arp -n -a
-	$DEBUG && rump.netstat -nr -f inet
+	#
+	# Test#1: First setup an endpoint then create proxy arp entry
+	#
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 rump.ifconfig tap1 create
+	atf_check -s exit:0 rump.ifconfig tap1 $IP4DST_PROXYARP1/24 up
+	atf_check -s exit:0 rump.ifconfig -w 10
 
-	atf_check -s exit:0 -o ignore rump.arp -s $IP4DST_PUBPROXY \
-	    $MACDST_PUBPROXY pub proxy
-	atf_check -s exit:0 -o match:'permanent published \(proxy only\)' \
-	    rump.arp -n $IP4DST_PUBPROXY
-	check_entry_flags $IP4DST_PUBPROXY UHLSp
-
-	$DEBUG && rump.arp -n -a
-	$DEBUG && rump.netstat -nr -f inet
-
+	# Try to ping (should fail w/o proxy arp)
 	export RUMP_SERVER=$SOCKSRC
-
 	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping -n -w 1 -c 1 $IP4DST_PUB
+	    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
 
-	atf_check -s exit:0 sleep 1
+	# Flushing
+	extract_new_packets > ./out
+
+	# Set up proxy ARP entry
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore \
+	    rump.arp -s $IP4DST_PROXYARP1 $macaddr_dst $opts
+	atf_check -s exit:0 -o match:"$title" rump.arp -n $IP4DST_PROXYARP1
+	if [ "$type" = "pub" ]; then
+		# XXX local? Is it correct?
+		check_entry_flags $IP4DST_PROXYARP1 ${flags}l
+	else
+		check_entry_flags $IP4DST_PROXYARP1 $flags
+	fi
+
+	# Try to ping
+	export RUMP_SERVER=$SOCKSRC
+	if [ "$type" = "pub" ]; then
+		# XXX fails
+		atf_check -s not-exit:0 -o ignore -e ignore \
+		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
+	else
+		atf_check -s exit:0 -o ignore \
+		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
+	fi
+
 	extract_new_packets > ./out
 	$DEBUG && cat ./out
 
-	pkt=$(make_pkt_str_arprep $IP4DST_PUB $MACDST_PUB)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	pkt=$(make_pkt_str_arprep $IP4DST_PROXYARP1 $macaddr_dst)
+	if [ "$type" = "pub" ]; then
+		atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	else
+		atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	fi
 
+	#
+	# Test#2: Create proxy arp entry then set up an endpoint
+	#
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore \
+	    rump.arp -s $IP4DST_PROXYARP2 $macaddr_dst $opts
+	atf_check -s exit:0 -o match:"$title" rump.arp -n $IP4DST_PROXYARP2
+	check_entry_flags $IP4DST_PROXYARP2 $flags
+
+	# Try to ping (should fail because no endpoint exists)
+	export RUMP_SERVER=$SOCKSRC
 	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping -n -w 1 -c 1 $IP4DST_PUBPROXY
+	    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
 
-	atf_check -s exit:0 sleep 1
 	extract_new_packets > ./out
 	$DEBUG && cat ./out
 
-	pkt=$(make_pkt_str_arprep $IP4DST_PUBPROXY $MACDST_PUBPROXY)
+	# ARP reply should be sent
+	pkt=$(make_pkt_str_arprep $IP4DST_PROXYARP2 $macaddr_dst)
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
 
-	return 0
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 rump.ifconfig tap2 create
+	atf_check -s exit:0 rump.ifconfig tap2 $IP4DST_PROXYARP2/24 up
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	# Try to ping
+	export RUMP_SERVER=$SOCKSRC
+	if [ "$type" = "pub" ]; then
+		atf_check -s exit:0 -o ignore \
+		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
+	else
+		# XXX fails
+		atf_check -s not-exit:0 -o ignore -e ignore \
+		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
+	fi
+}
+
+proxy_arp_pub_body()
+{
+
+	test_proxy_arp pub
+}
+
+proxy_arp_pubproxy_body()
+{
+
+	test_proxy_arp pubproxy
 }
 
 link_activation_body()
@@ -515,7 +592,13 @@ cache_overwriting_cleanup()
 	cleanup
 }
 
-pubproxy_arp_cleanup()
+proxy_arp_pub_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
+proxy_arp_pubproxy_cleanup()
 {
 	$DEBUG && dump
 	cleanup
@@ -534,6 +617,7 @@ atf_init_test_cases()
 	atf_add_test_case command
 	atf_add_test_case garp
 	atf_add_test_case cache_overwriting
-	atf_add_test_case pubproxy_arp
+	atf_add_test_case proxy_arp_pub
+	atf_add_test_case proxy_arp_pubproxy
 	atf_add_test_case link_activation
 }
