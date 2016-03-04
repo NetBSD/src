@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.22 2013/10/18 20:19:03 christos Exp $	*/
+/*	$NetBSD: display.c,v 1.23 2016/03/04 02:46:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.22 2013/10/18 20:19:03 christos Exp $");
+__RCSID("$NetBSD: display.c,v 1.23 2016/03/04 02:46:19 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ enum _vflag vflag = FIRST;
 static off_t address;			/* address/offset in stream */
 static off_t eaddress;			/* end address */
 
+static u_char *get(void);
 static inline void print(PR *, u_char *);
 
 void
@@ -229,7 +230,7 @@ bpad(PR *pr)
 
 static char **_argv;
 
-u_char *
+static u_char *
 get(void)
 {
 	static int ateof = 1;
