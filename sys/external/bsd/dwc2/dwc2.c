@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.22 2016/03/05 08:11:07 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.23 2016/03/05 13:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.22 2016/03/05 08:11:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.23 2016/03/05 13:03:00 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1033,7 +1033,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		/* Copy request packet to our DMA buffer */
 		memcpy(KERNADDR(&dpipe->req_dma, 0), req, sizeof(*req));
 		usb_syncmem(&dpipe->req_dma, 0, sizeof(*req),
-			    BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREWRITE);
 		len = UGETW(req->wLength);
 		if ((req->bmRequestType & UT_READ) == UT_READ) {
 			dir = UE_DIR_IN;
@@ -1054,7 +1054,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 
 	dwc2_urb = dxfer->urb;
 	if (!dwc2_urb)
-		    return USBD_NOMEM;
+		return USBD_NOMEM;
 
 	KASSERT(dwc2_urb->packet_count == xfer->ux_nframes);
 	memset(dwc2_urb, 0, sizeof(*dwc2_urb) +
@@ -1064,7 +1064,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	dwc2_urb->packet_count = xfer->ux_nframes;
 
 	dwc2_hcd_urb_set_pipeinfo(hsotg, dwc2_urb, addr, epnum, xfertype, dir,
-				  mps);
+	    mps);
 
 	if (xfertype == UE_CONTROL) {
 		dwc2_urb->setup_usbdma = &dpipe->req_dma;
