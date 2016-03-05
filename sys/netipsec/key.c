@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.93 2016/03/05 20:12:23 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.94 2016/03/05 20:13:40 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.93 2016/03/05 20:12:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.94 2016/03/05 20:13:40 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4191,6 +4191,19 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 }
 #endif /*INET6*/
 
+static in_port_t
+key_getport(const void *v)
+{
+	const struct sockaddr *sa = v;
+	switch (sa->sa_family) {
+	case AF_INET:
+		return ((const struct sockaddr_in *)v)->sin_port;
+	case AF_INET6:
+		return ((const struct sockaddr_in6 *)v)->sin6_port;
+	default:
+		return 0;
+	}
+}
 /*
  * compare two secasindex structure.
  * flag can specify to compare 2 saidxes.
@@ -4210,6 +4223,7 @@ key_cmpsaidx(
 	int flag)
 {
 	int chkport = 0;
+	const struct sockaddr *sa0src, *sa0dst, *sa1src, *sa1dst;
 
 	/* sanity */
 	if (saidx0 == NULL && saidx1 == NULL)
@@ -4248,29 +4262,28 @@ key_cmpsaidx(
 				return 0;
 		}
 
-	/*
-	 * If NAT-T is enabled, check ports for tunnel mode.
-	 * Don't do it for transport mode, as there is no
-	 * port information available in the SP.
-         * Also don't check ports if they are set to zero
-	 * in the SPD: This means we have a non-generated
-	 * SPD which can't know UDP ports.
-	 */
-	if (saidx1->mode == IPSEC_MODE_TUNNEL &&
-	    ((((const struct sockaddr *)(&saidx1->src))->sa_family == AF_INET &&
-	      ((const struct sockaddr *)(&saidx1->dst))->sa_family == AF_INET &&
-	      ((const struct sockaddr_in *)(&saidx1->src))->sin_port &&
-	      ((const struct sockaddr_in *)(&saidx1->dst))->sin_port) ||
-             (((const struct sockaddr *)(&saidx1->src))->sa_family == AF_INET6 &&
-	      ((const struct sockaddr *)(&saidx1->dst))->sa_family == AF_INET6 &&
-	      ((const struct sockaddr_in6 *)(&saidx1->src))->sin6_port &&
-	      ((const struct sockaddr_in6 *)(&saidx1->dst))->sin6_port)))
-		chkport = 1;
 
-		if (key_sockaddrcmp(&saidx0->src.sa, &saidx1->src.sa, chkport) != 0) {
+		sa0src = &saidx0->src.sa;
+		sa0dst = &saidx0->dst.sa;
+		sa1src = &saidx1->src.sa;
+		sa1dst = &saidx1->dst.sa;
+		/*
+		 * If NAT-T is enabled, check ports for tunnel mode.
+		 * Don't do it for transport mode, as there is no
+		 * port information available in the SP.
+		 * Also don't check ports if they are set to zero
+		 * in the SPD: This means we have a non-generated
+		 * SPD which can't know UDP ports.
+		 */
+		if (saidx1->mode == IPSEC_MODE_TUNNEL) {
+			chkport = key_getport(sa0src) && key_getport(sa0dst) &&
+			    key_getport(sa1src) && key_getport(sa1dst);
+		}
+
+		if (key_sockaddrcmp(sa0src, sa1src, chkport) != 0) {
 			return 0;
 		}
-		if (key_sockaddrcmp(&saidx0->dst.sa, &saidx1->dst.sa, chkport) != 0) {
+		if (key_sockaddrcmp(sa0dst, &sa1dst, chkport) != 0) {
 			return 0;
 		}
 	}
