@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.5 2013/08/11 06:31:00 dholland Exp $ */
+/* $NetBSD: audiodev.c,v 1.6 2016/03/05 22:10:39 mrg Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -89,8 +89,11 @@ audiodev_getinfo(struct audiodev *adev)
 		adev->defaultdev = true;
 
 	adev->fd = open(adev->path, O_RDWR);
-	if (adev->fd == -1)
-		return -1;
+	if (adev->fd == -1) {
+		adev->fd = open(adev->path, O_WRONLY);
+		if (adev->fd == -1)
+			return -1;
+	}
 	if (ioctl(adev->fd, AUDIO_GETDEV, &adev->audio_device) == -1) {
 		close(adev->fd);
 		return -1;
