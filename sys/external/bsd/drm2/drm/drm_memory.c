@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.8 2015/10/17 15:13:39 jmcneill Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.9 2016/03/05 06:48:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.8 2015/10/17 15:13:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.9 2016/03/05 06:48:31 mlelstv Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 #define HAS_AGP_I810	1
@@ -39,7 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.8 2015/10/17 15:13:39 jmcneill Exp 
 #endif
 
 #ifdef _KERNEL_OPT
-# if HAS_AGP_I810 > 0
+# include "agp.h"
+# if NAGP == 0
+#  define NAGP_I810	0
+# elif HAS_AGP_I810 > 0
 #  include "agp_i810.h"
 # else
 #  define NAGP_I810	0
