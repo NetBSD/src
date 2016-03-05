@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2014/11/22 11:10:22 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2016/03/05 07:33:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2014/11/22 11:10:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2016/03/05 07:33:58 mlelstv Exp $");
 
 #include "opt_md.h"
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2014/11/22 11:10:22 mlelstv Exp $"
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
@@ -95,10 +95,14 @@ get_device(char *name, device_t *dvp, int *partp)
 
 /* Set the rootdev variable from the root specifier in the boot args */
 
+static char *bootspec_buf = NULL;
+static size_t bootspec_buflen = 0;
+
 static void
 set_root_device(void)
 {
-	char *ptr, *end;
+	char *ptr, *end, *buf;
+	size_t len;
 
 	if (boot_args == NULL)
 		return;
@@ -112,12 +116,26 @@ set_root_device(void)
 	/* NUL-terminate string, get_bootconf_option doesn't */
 	for (end=ptr; *end != '\0'; ++end) {
 		if (*end == ' ' || *end == '\t') {
-			*end = '\0';
 			break;
 		}
 	}
 
-	bootspec = ptr;
+	if (end == ptr)
+		return;
+
+	len = end - ptr;
+
+	buf = kmem_alloc(len + 1, KM_SLEEP);
+	memcpy(buf, ptr, len);
+	buf[len] = '\0';
+
+	if (bootspec_buf != NULL)
+		kmem_free(bootspec_buf, bootspec_buflen + 1);
+
+	bootspec_buf = buf;
+	bootspec_buflen = len;
+
+	bootspec = bootspec_buf;
 }
 #endif
 
