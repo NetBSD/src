@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.21 2016/03/04 15:30:17 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.22 2016/03/05 08:11:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.21 2016/03/04 15:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.22 2016/03/05 08:11:07 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1129,7 +1129,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	xfer->ux_actlen = 0;
 
 	KASSERT(xfertype != UE_ISOCHRONOUS ||
-	    xfer->ux_nframes < dwc2_urb->packet_count);
+	    xfer->ux_nframes <= dwc2_urb->packet_count);
 	KASSERTMSG(xfer->ux_nframes == 0 || xfertype == UE_ISOCHRONOUS,
 	    "nframes %d xfertype %d\n", xfer->ux_nframes, xfertype);
 
