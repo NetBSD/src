@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.91 2014/06/16 03:34:45 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.92 2016/03/05 20:11:09 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91 2014/06/16 03:34:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.92 2016/03/05 20:11:09 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1100,9 +1100,6 @@ key_allocsa(
 
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u\n", __func__, where, tag));
-
 	/*
 	 * XXX IPCOMP case
 	 * We use cpi to define spi here. In the case where cpi <=
@@ -1121,6 +1118,10 @@ key_allocsa(
 			must_check_alg = 1;
 		}
 	}
+	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+		printf("DP %s from %s:%u check_spi=%d, check_alg=%d\n",
+		    __func__, where, tag, must_check_spi, must_check_alg));
+
 
 	/*
 	 * searching SAD.
@@ -1141,19 +1142,38 @@ key_allocsa(
 		for (stateidx = 0; stateidx < arraysize; stateidx++) {
 			state = saorder_state_valid[stateidx];
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				KEYDEBUG(KEYDEBUG_MATCH,
+				    printf("try match spi %#x, %#x\n",
+						ntohl(spi), ntohl(sav->spi)));
 				/* sanity check */
 				KEY_CHKSASTATE(sav->state, state, "key_allocsav");
 				/* do not return entries w/ unusable state */
 				if (sav->state != SADB_SASTATE_MATURE &&
-				    sav->state != SADB_SASTATE_DYING)
+				    sav->state != SADB_SASTATE_DYING) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("bad state %d\n",
+						sav->state));
 					continue;
-				if (proto != sav->sah->saidx.proto)
+				}
+				if (proto != sav->sah->saidx.proto) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("proto fail %d != %d\n",
+						proto, sav->sah->saidx.proto));
 					continue;
-				if (must_check_spi && spi != sav->spi)
+				}
+				if (must_check_spi && spi != sav->spi) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("spi fail %#x != %#x\n",
+						ntohl(spi), ntohl(sav->spi)));
 					continue;
+				}
 				/* XXX only on the ipcomp case */
-				if (must_check_alg && algo != sav->alg_comp)
+				if (must_check_alg && algo != sav->alg_comp) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("algo fail %d != %d\n",
+						algo, sav->alg_comp));
 					continue;
+				}
 
 #if 0	/* don't check src */
 	/* Fix port in src->sa */
@@ -4404,19 +4424,43 @@ key_sockaddrcmp(
 #undef satosin6
 #endif
 #define satosin6(s) ((const struct sockaddr_in6 *)s)
-	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len)
+	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len) {
+		KEYDEBUG(KEYDEBUG_MATCH,
+		    printf("fam/len fail %d != %d || %d != %d\n",
+			sa1->sa_family, sa2->sa_family, sa1->sa_len,
+			sa2->sa_len));
 		return 1;
+	}
 
 	switch (sa1->sa_family) {
 	case AF_INET:
-		if (sa1->sa_len != sizeof(struct sockaddr_in))
-			return 1;
-		if (satosin(sa1)->sin_addr.s_addr !=
-		    satosin(sa2)->sin_addr.s_addr) {
+		if (sa1->sa_len != sizeof(struct sockaddr_in)) {
+			KEYDEBUG(KEYDEBUG_MATCH,
+			    printf("len fail %d != %zu\n",
+				sa1->sa_len, sizeof(struct sockaddr_in)));
 			return 1;
 		}
-		if (port && satosin(sa1)->sin_port != satosin(sa2)->sin_port)
+		if (satosin(sa1)->sin_addr.s_addr !=
+		    satosin(sa2)->sin_addr.s_addr) {
+			KEYDEBUG(KEYDEBUG_MATCH,
+			    printf("addr fail %#x != %#x\n",
+				satosin(sa1)->sin_addr.s_addr,
+				satosin(sa2)->sin_addr.s_addr));
 			return 1;
+		}
+		if (port && satosin(sa1)->sin_port != satosin(sa2)->sin_port) {
+			KEYDEBUG(KEYDEBUG_MATCH,
+			    printf("port fail %d != %d\n",
+				satosin(sa1)->sin_port,
+				satosin(sa2)->sin_port));
+			return 1;
+		}
+		KEYDEBUG(KEYDEBUG_MATCH,
+		    printf("addr success %#x[%d] == %#x[%d]\n",
+			satosin(sa1)->sin_addr.s_addr,
+			satosin(sa1)->sin_port,
+			satosin(sa2)->sin_addr.s_addr,
+			satosin(sa2)->sin_port));
 		break;
 	case AF_INET6:
 		if (sa1->sa_len != sizeof(struct sockaddr_in6))

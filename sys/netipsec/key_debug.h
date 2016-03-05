@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.h,v 1.6 2011/02/21 22:21:40 drochner Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.7 2016/03/05 20:11:09 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.h,v 1.10 2001/08/05 08:37:52 itojun Exp $	*/
 
@@ -39,6 +39,7 @@
 #define KEYDEBUG_STAMP		0x00000001 /* path */
 #define KEYDEBUG_DATA		0x00000002 /* data */
 #define KEYDEBUG_DUMP		0x00000004 /* dump */
+#define KEYDEBUG_MATCH		0x00000008 /* match */
 
 #define KEYDEBUG_KEY		0x00000010 /* key processing */
 #define KEYDEBUG_ALG		0x00000020 /* ciph & auth algorithm */
