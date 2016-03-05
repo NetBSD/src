@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.92 2016/03/05 20:11:09 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.93 2016/03/05 20:12:23 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.92 2016/03/05 20:11:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.93 2016/03/05 20:12:23 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -5659,11 +5659,14 @@ key_getmsgbuf_x1(struct mbuf *m, const struct sadb_msghdr *mhp)
 		panic("key_getmsgbuf_x1: NULL pointer is passed");
 
 	/* create new sadb_msg to reply. */
-	n = key_gather_mbuf(m, mhp, 1, 9, SADB_EXT_RESERVED,
+	n = key_gather_mbuf(m, mhp, 1, 15, SADB_EXT_RESERVED,
 	    SADB_EXT_SA, SADB_X_EXT_SA2,
 	    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST,
 	    SADB_EXT_LIFETIME_HARD, SADB_EXT_LIFETIME_SOFT,
-	    SADB_EXT_IDENTITY_SRC, SADB_EXT_IDENTITY_DST);
+	    SADB_EXT_IDENTITY_SRC, SADB_EXT_IDENTITY_DST,
+	    SADB_X_EXT_NAT_T_TYPE, SADB_X_EXT_NAT_T_SPORT,
+	    SADB_X_EXT_NAT_T_DPORT, SADB_X_EXT_NAT_T_OAI,
+	    SADB_X_EXT_NAT_T_OAR, SADB_X_EXT_NAT_T_FRAG);
 	if (!n)
 		return NULL;
 
