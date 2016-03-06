@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.62 2016/03/06 18:47:39 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.63 2016/03/06 18:53:50 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2368,4 +2368,12 @@ bin/cp/cp.c					1.59
 	The '-i' flag should work regardless of whether the standard input is
 	a terminal.
 	[uwe, ticket #1131]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.67
+
+	In xennet_xenbus_detach(), remove the event handler early (just after
+	xennet_stop()) so that we don't get events while slepping (e.g.
+	in softint_disestablish()) when some structures have already been
+	freed.
+	[bouyer, ticket #1125]
 
