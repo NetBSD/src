@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.70 2016/01/07 11:51:07 roy Exp $
+# $NetBSD: network,v 1.71 2016/03/06 18:50:06 christos Exp $
 #
 
 # PROVIDE: network
@@ -61,7 +61,7 @@ network_start_hostname()
 	# otherwise use /etc/myname
 	#
 	if [ -z "$hostname" ] && [ -f /etc/myname ]; then
-		hostname=$(cat /etc/myname)
+		hostname=$(kat /etc/myname)
 	fi
 	if [ -n "$hostname" ]; then
 		echo "Hostname: $hostname"
@@ -85,7 +85,7 @@ network_start_domainname()
 	# for NIS/YP domain name
 	#
 	if [ -z "$domainname" ] && [ -f /etc/defaultdomain ]; then
-		domainname=$(cat /etc/defaultdomain)
+		domainname=$(kat /etc/defaultdomain)
 	fi
 	if [ -n "$domainname" ]; then
 		echo "NIS domainname: $domainname"
@@ -403,7 +403,7 @@ network_start_defaultroute()
 	# /etc/hosts.
 	#
 	if [ -z "$defaultroute" ] && [ -f /etc/mygate ]; then
-		defaultroute=$(cat /etc/mygate)
+		defaultroute=$(kat /etc/mygate)
 	fi
 	if [ -n "$defaultroute" ]; then
 		/sbin/route add default $defaultroute
@@ -418,7 +418,7 @@ network_start_defaultroute6()
 	# address if it is not using an stf* interface.
 	#
 	if [ -z "$defaultroute6" ] && [ -f /etc/mygate6 ]; then
-		defaultroute6=$(cat /etc/mygate6)
+		defaultroute6=$(kat /etc/mygate6)
 	fi
 	if [ -n "$defaultroute6" ]; then
 		if [ "$ip6mode" = "autohost" ]; then
