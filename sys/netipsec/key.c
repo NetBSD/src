@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.95 2016/03/05 20:26:07 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.96 2016/03/06 04:19:51 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.95 2016/03/05 20:26:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.96 2016/03/06 04:19:51 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -112,6 +112,10 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.95 2016/03/05 20:26:07 christos Exp $");
 
 #define FULLMASK	0xff
 #define	_BITS(bytes)	((bytes) << 3)
+
+#define PORT_NONE	0
+#define PORT_LOOSE	1
+#define PORT_STRICT	2
 
 percpu_t *pfkeystat_percpu;
 
@@ -676,7 +680,7 @@ key_allocsp2(u_int32_t spi,
 		/* NB: spi's must exist and match */
 		if (!sp->req || !sp->req->sav || sp->req->sav->spi != spi)
 			continue;
-		if (key_sockaddrcmp(&sp->spidx.dst.sa, &dst->sa, 1) == 0)
+		if (key_sockaddrcmp(&sp->spidx.dst.sa, &dst->sa, PORT_STRICT) == 0)
 			goto found;
 	}
 	sp = NULL;
@@ -748,13 +752,13 @@ key_gettunnel(const struct sockaddr *osrc,
 				if (!key_cmpspidx_withmask(&sp->spidx, &spidx))
 					continue;
 			} else {
-				if (key_sockaddrcmp(&r1->saidx.src.sa, isrc, 0) ||
-				    key_sockaddrcmp(&r1->saidx.dst.sa, idst, 0))
+				if (key_sockaddrcmp(&r1->saidx.src.sa, isrc, PORT_NONE) ||
+				    key_sockaddrcmp(&r1->saidx.dst.sa, idst, PORT_NONE))
 					continue;
 			}
 
-			if (key_sockaddrcmp(&r2->saidx.src.sa, osrc, 0) ||
-			    key_sockaddrcmp(&r2->saidx.dst.sa, odst, 0))
+			if (key_sockaddrcmp(&r2->saidx.src.sa, osrc, PORT_NONE) ||
+			    key_sockaddrcmp(&r2->saidx.dst.sa, odst, PORT_NONE))
 				continue;
 
 			goto found;
@@ -1086,9 +1090,8 @@ key_allocsa(
 	struct secasvar *sav;
 	u_int stateidx, state;
 	const u_int *saorder_state_valid;
-	int arraysize;
+	int arraysize, chkport;
 	int s;
-	int chkport = 0;
 
 	int must_check_spi = 1;
 	int must_check_alg = 0;
@@ -1096,7 +1099,9 @@ key_allocsa(
 	u_int8_t algo = 0;
 
 	if ((sport != 0) && (dport != 0))
-		chkport = 1;
+		chkport = PORT_STRICT;
+	else
+		chkport = PORT_NONE;
 
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
 
@@ -1179,7 +1184,7 @@ key_allocsa(
 	/* Fix port in src->sa */
 
 				/* check src address */
-				if (key_sockaddrcmp(&src->sa, &sav->sah->saidx.src.sa, 0) != 0)
+				if (key_sockaddrcmp(&src->sa, &sav->sah->saidx.src.sa, PORT_NONE) != 0)
 					continue;
 #endif
 				/* fix port of dst address XXX*/
@@ -4191,19 +4196,6 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 }
 #endif /*INET6*/
 
-static in_port_t
-key_getport(const void *v)
-{
-	const struct sockaddr *sa = v;
-	switch (sa->sa_family) {
-	case AF_INET:
-		return ((const struct sockaddr_in *)v)->sin_port;
-	case AF_INET6:
-		return ((const struct sockaddr_in6 *)v)->sin6_port;
-	default:
-		return 0;
-	}
-}
 /*
  * compare two secasindex structure.
  * flag can specify to compare 2 saidxes.
@@ -4222,7 +4214,7 @@ key_cmpsaidx(
 	const struct secasindex *saidx1,
 	int flag)
 {
-	int chkport = 0;
+	int chkport;
 	const struct sockaddr *sa0src, *sa0dst, *sa1src, *sa1dst;
 
 	/* sanity */
@@ -4275,10 +4267,10 @@ key_cmpsaidx(
 		 * in the SPD: This means we have a non-generated
 		 * SPD which can't know UDP ports.
 		 */
-		if (saidx1->mode == IPSEC_MODE_TUNNEL) {
-			chkport = key_getport(sa0src) && key_getport(sa0dst) &&
-			    key_getport(sa1src) && key_getport(sa1dst);
-		}
+		if (saidx1->mode == IPSEC_MODE_TUNNEL)
+			chkport = PORT_LOOSE;
+		else
+			chkport = PORT_NONE;
 
 		if (key_sockaddrcmp(sa0src, sa1src, chkport) != 0) {
 			return 0;
@@ -4317,8 +4309,8 @@ key_cmpspidx_exactly(
 	 || spidx0->ul_proto != spidx1->ul_proto)
 		return 0;
 
-	return key_sockaddrcmp(&spidx0->src.sa, &spidx1->src.sa, 1) == 0 &&
-	       key_sockaddrcmp(&spidx0->dst.sa, &spidx1->dst.sa, 1) == 0;
+	return key_sockaddrcmp(&spidx0->src.sa, &spidx1->src.sa, PORT_STRICT) == 0 &&
+	       key_sockaddrcmp(&spidx0->dst.sa, &spidx1->dst.sa, PORT_STRICT) == 0;
 }
 
 /*
@@ -4424,19 +4416,38 @@ key_cmpspidx_withmask(
 
 /* returns 0 on match */
 static int
+key_portcomp(in_port_t port1, in_port_t port2, int howport)
+{
+	switch (howport) {
+	case PORT_NONE:
+		return 0;
+	case PORT_LOOSE:
+		if (port1 == 0 || port2 == 0)
+			return 0;
+		/*FALLTHROUGH*/
+	case PORT_STRICT:
+		if (port1 != port2) {
+			KEYDEBUG(KEYDEBUG_MATCH,
+			    printf("port fail %d != %d\n", port1, port2));
+			return 1;
+		}
+		return 0;
+	default:
+		KASSERT(0);
+		return 1;
+	}
+}
+
+/* returns 0 on match */
+static int
 key_sockaddrcmp(
 	const struct sockaddr *sa1,
 	const struct sockaddr *sa2,
-	int port)
+	int howport)
 {
-#ifdef satosin
-#undef satosin
-#endif
-#define satosin(s) ((const struct sockaddr_in *)s)
-#ifdef satosin6
-#undef satosin6
-#endif
-#define satosin6(s) ((const struct sockaddr_in6 *)s)
+	const struct sockaddr_in *sin1, *sin2;
+	const struct sockaddr_in6 *sin61, *sin62;
+
 	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len) {
 		KEYDEBUG(KEYDEBUG_MATCH,
 		    printf("fam/len fail %d != %d || %d != %d\n",
@@ -4453,41 +4464,38 @@ key_sockaddrcmp(
 				sa1->sa_len, sizeof(struct sockaddr_in)));
 			return 1;
 		}
-		if (satosin(sa1)->sin_addr.s_addr !=
-		    satosin(sa2)->sin_addr.s_addr) {
+		sin1 = (const struct sockaddr_in *)sa1;
+		sin2 = (const struct sockaddr_in *)sa2;
+		if (sin1->sin_addr.s_addr != sin2->sin_addr.s_addr) {
 			KEYDEBUG(KEYDEBUG_MATCH,
 			    printf("addr fail %#x != %#x\n",
-				satosin(sa1)->sin_addr.s_addr,
-				satosin(sa2)->sin_addr.s_addr));
+				sin1->sin_addr.s_addr,
+				sin2->sin_addr.s_addr));
 			return 1;
 		}
-		if (port && satosin(sa1)->sin_port != satosin(sa2)->sin_port) {
-			KEYDEBUG(KEYDEBUG_MATCH,
-			    printf("port fail %d != %d\n",
-				satosin(sa1)->sin_port,
-				satosin(sa2)->sin_port));
+		if (key_portcomp(sin1->sin_port, sin2->sin_port, howport)) {
 			return 1;
 		}
 		KEYDEBUG(KEYDEBUG_MATCH,
 		    printf("addr success %#x[%d] == %#x[%d]\n",
-			satosin(sa1)->sin_addr.s_addr,
-			satosin(sa1)->sin_port,
-			satosin(sa2)->sin_addr.s_addr,
-			satosin(sa2)->sin_port));
+			sin1->sin_addr.s_addr,
+			sin1->sin_port,
+			sin2->sin_addr.s_addr,
+			sin2->sin_port));
 		break;
 	case AF_INET6:
+		sin61 = (const struct sockaddr_in6 *)sa1;
+		sin62 = (const struct sockaddr_in6 *)sa2;
 		if (sa1->sa_len != sizeof(struct sockaddr_in6))
 			return 1;	/*EINVAL*/
-		if (satosin6(sa1)->sin6_scope_id !=
-		    satosin6(sa2)->sin6_scope_id) {
+
+		if (sin61->sin6_scope_id != sin62->sin6_scope_id) {
 			return 1;
 		}
-		if (!IN6_ARE_ADDR_EQUAL(&satosin6(sa1)->sin6_addr,
-		    &satosin6(sa2)->sin6_addr)) {
+		if (!IN6_ARE_ADDR_EQUAL(&sin61->sin6_addr, &sin62->sin6_addr)) {
 			return 1;
 		}
-		if (port &&
-		    satosin6(sa1)->sin6_port != satosin6(sa2)->sin6_port) {
+		if (key_portcomp(sin61->sin6_port, sin62->sin6_port, howport)) {
 			return 1;
 		}
 		break;
@@ -4498,8 +4506,6 @@ key_sockaddrcmp(
 	}
 
 	return 0;
-#undef satosin
-#undef satosin6
 }
 
 /*
