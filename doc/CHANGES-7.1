@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.61 2016/03/03 15:43:57 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.62 2016/03/06 18:47:39 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2250,4 +2250,122 @@ sys/kern/kern_time.c				1.184
 
 	Don't leak garabage from the kernel stack on sleep(0) and equivalents.
 	[uwe, ticket #1128]
+
+sys/kern/subr_pool.c				1.206
+
+	fix: "vmstat -C" CpuLayer shows only the last cpu values.
+	[knakahara, ticket #1103]
+
+sys/arch/x86/include/cacheinfo.h		1.20-1.21
+sys/arch/x86/include/specialreg.h		1.83-1.86
+usr.sbin/cpuctl/arch/i386.c			1.67-1.70
+
+	Changes for x86's cpuctl(8):
+	- Add some TLB information (index 0x6a-0x6d).
+	- Add Hardware-Controlled Performance States (HWP) bits, FPU Data
+	  Pointer Updated Only bit and CLFLUSHOPT bit.
+	- Add some AMD's bit definitions from "BIOS and Kernel Developer(BKDG)
+	  for AMD Family 15h Models 60h-6Fh Processors".
+	- Add Xeon E5-4600 v3,
+	- Add Xeon E3-1200 v4 and v5.
+	- Add 6th gen Core, Xeon E3-1500 v5 and Xeon D-1500.
+	- Change CPU family 0x1c from "Atom Family" to "45nm Atom Family"
+	[msaitoh, ticket #1117]
+
+sys/arch/x86/include/cpu.h			1.67
+sys/arch/x86/include/cpuvar.h			1.47
+sys/arch/x86/x86/cpu.c				1.117
+sys/arch/x86/x86/identcpu.c			1.49
+
+	Retrieve cpuid7 (Structured Extended Features) into ci_feat_val.
+	[msaitoh, ticket #1118]
+
+sys/arch/x86/x86/procfs_machdep.c		1.7-1.11
+
+	x86's /proc/cpuinfo fixes:
+	- Always output 2 digits for the cpu frequency decimal part.
+	- Update x86's feature bits in /proc/cpuinfo (PR#49246).
+	- Fix a bug that /proc/cpuinfo's CPU model was incorrect on many newer
+	  CPUs and CPU family was incorrect on some AMD CPUs.
+	- Add comment. Fix comment.
+	[msaitoh, ticket #1119]
+
+lib/libm/src/e_hypotf.c				1.10
+
+	Fix incorrect magic numbers in scaling.  From FreeBSD commit 23397, by
+	way of Rin Okuyama.  Fixes PR lib/50698.
+	[gson, ticket #1120]
+
+lib/libc/time/localtime.c			1.101
+
+	PR/50133: Martin Husemann: Can't cache $TZ.
+	[christos, ticket #1121]
+
+external/bsd/blacklist/lib/Makefile		1.4-1.5
+external/bsd/blacklist/lib/bl.c			1.27
+lib/Makefile					1.237
+
+	Move blacklistd later now that it depends on libpthread (From Rin
+	Okuyama),
+	Add a mutex to prevent races during initialization code from
+	multiple threads.
+	[christos, ticket #1123]
+
+sys/dev/usb/ugen.c				1.127-1.130
+
+	Remove always true conditional.
+	Only clear the endpoint information in ugen_set_interface only
+	if setting the new altno suceeds.
+	[skrll, ticket #1124]
+
+libexec/ld.elf_so/headers.c                    	 up to 1.59
+libexec/ld.elf_so/map_object.c                 	 up to 1.53
+libexec/ld.elf_so/paths.c                      	 up to 1.42
+libexec/ld.elf_so/reloc.c                      	 up to 1.107
+libexec/ld.elf_so/rtld.c                       	 up to 1.177
+libexec/ld.elf_so/rtld.h                       	 up to 1.124
+libexec/ld.elf_so/arch/alpha/alpha_reloc.c     	 up to 1.41
+libexec/ld.elf_so/arch/arm/mdreloc.c           	 up to 1.38
+libexec/ld.elf_so/arch/hppa/hppa_reloc.c       	 up to 1.43
+libexec/ld.elf_so/arch/i386/mdreloc.c          	 up to 1.37
+libexec/ld.elf_so/arch/m68k/mdreloc.c          	 up to 1.30
+libexec/ld.elf_so/arch/mips/mips_reloc.c       	 up to 1.65
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c     	 up to 1.53
+libexec/ld.elf_so/arch/sh3/mdreloc.c           	 up to 1.31
+libexec/ld.elf_so/arch/sparc/mdreloc.c         	 up to 1.48
+libexec/ld.elf_so/arch/sparc64/mdreloc.c       	 up to 1.57
+libexec/ld.elf_so/arch/vax/mdreloc.c           	 up to 1.30
+libexec/ld.elf_so/arch/x86_64/mdreloc.c        	 up to 1.41
+
+	Replace casts in the inline version of _rtld_call_function_void of
+	_rtld_call_function_addr with ifdef on RTLD_LOADER.
+	Introduce a cast to fix the build for Elf32 on _LP64.
+	Add basic support for indirect functions. It allows providing a public
+	function symbol with an implementation choosen at run time.
+	Refactor calls to functions by address in ld.elf_so to create temporary
+	function descriptors on the stack, if the address is not leaked outside.
+	Fix membars around rtld internal mutex.
+	lib/49813: Release mutex on error.
+	HPPA hack for a problem where gdb doesn't see _rtld_debug_state when
+	it's a single bv,n %r0(%rp) instruction.
+	Avoid use after free, reported by the coverity scanner.
+	[christos, ticket #1126]
+
+bin/mv/mv.c					1.45
+
+	add SIGINFO for mv(1), largely based upon the support in cp(1).
+	[mrg, ticket #1129]
+
+bin/cp/utils.c					1.45
+
+	For display in the (post) SIGINFO handler use off_t not size_t for
+	file sizes.  fixes incorrect reporting errors on 32 bit platforms
+	with >4GB file sizes.
+	[mrg, ticket #1130]
+
+bin/cp/cp.c					1.59
+
+	The '-i' flag should work regardless of whether the standard input is
+	a terminal.
+	[uwe, ticket #1131]
 
