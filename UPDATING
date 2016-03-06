@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.265 2016/02/29 22:49:11 aymeric Exp $
+$NetBSD: UPDATING,v 1.266 2016/03/06 10:26:57 aymeric Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,7 +19,7 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
-20160229:
+20160306:
 	NetBSD's regexp implementation is now part of libnbcompat.
 	Nblex, nbm4, nbpax, nbsed use it and they may crash on
 	non-NetBSD hosts if linked with stale object files produced
