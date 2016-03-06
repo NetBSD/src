@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.97 2015/10/31 12:31:37 phx Exp $
+# $NetBSD: rc.subr,v 1.98 2016/03/06 18:49:42 christos Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1344,6 +1344,20 @@ printf()
 	*'\n')	: ;;
 	*)	_flush_rc_output ;;
 	esac
+}
+
+kat() {
+	local i
+	local v
+	for i; do
+		while read -r v; do
+			v="${v%%#*}"
+			if [ -z "$v" ]; then
+				continue
+			fi
+			echo "$v"
+		done < "$i"
+	done
 }
 
 _rc_subr_loaded=:
