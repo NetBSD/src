@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.15 2011/07/10 05:07:48 tsutsui Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.16 2016/03/06 15:44:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -478,6 +478,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 		fprintf(stderr, "translate_syms: newstrings: %s\n", strerror(errno));
 		exit(1);
 	}
+	free(oldstrings);
 }
 
 void
