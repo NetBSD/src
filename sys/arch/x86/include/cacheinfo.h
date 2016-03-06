@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.18.2.1 2014/12/12 16:44:35 martin Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.18.2.2 2016/03/06 17:49:55 martin Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -234,6 +234,10 @@ __CI_TBL(CAI_DTLB,     0x5c, 0xff, 64,        4 * 1024, "4K/4M: 128 entries"),\
 __CI_TBL(CAI_DTLB,     0x5d, 0xff, 64,        4 * 1024, "4K/4M: 256 entries"),\
 __CI_TBL(CAI_ITLB,     0x61, 0xff, 48,        4 * 1024, NULL), \
 __CI_TBL(CAI_L1_1GBDTLB,0x63,   4,  4,1024*1024 * 1024, NULL), \
+__CI_TBL(CAI_ITLB,     0x6a,    8, 64,        4 * 1024, NULL), \
+__CI_TBL(CAI_DTLB,     0x6b,    8,256,        4 * 1024, NULL), \
+__CI_TBL(CAI_L2_DTLB2, 0x6c,    8,128,               0, "2M/4M: 128 entries"),\
+__CI_TBL(CAI_L1_1GBDTLB,0x6d,0xff, 16,1024*1024 * 1024, NULL), \
 __CI_TBL(CAI_ITLB2,    0x76, 0xff,  8, 4 * 1024 * 1024, "2M/4M: 8 entries"), \
 __CI_TBL(CAI_DTLB,     0xa0, 0xff, 32,        4 * 1024, NULL), \
 __CI_TBL(CAI_ITLB,     0xb0,    4,128,        4 * 1024, NULL), \
