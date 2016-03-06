@@ -1611,10 +1611,6 @@ case "${targ}" in
     targ_selvecs="sparc_elf32_vec sparc_aout_linux_vec sparc_aout_sunos_be_vec"
     want64=true
     ;;
-  sparc64-*-netbsd*)
-    targ_defvec=bfd_elf64_sparc_vec
-    targ_selvecs="bfd_elf32_sparc_vec sparcnetbsd_vec sunos_big_vec"
-    ;;
   sparc64-*-elf* | sparc64-*-rtems* )
     targ_defvec=sparc_elf64_vec
     targ_selvecs=sparc_elf32_vec
