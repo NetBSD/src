@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.8 2012/03/15 02:02:23 joerg Exp $	*/
+/*	$NetBSD: bthset.c,v 1.9 2016/03/06 21:12:07 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: bthset.c,v 1.8 2012/03/15 02:02:23 joerg Exp $");
+__RCSID("$NetBSD: bthset.c,v 1.9 2016/03/06 21:12:07 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -140,8 +140,8 @@ static uint8_t hset_data[] = {
 	0x77, 0x61, 0x79
 };
 
-static sdp_data_t hset_record =	{ hset_data + 0, hset_data + 91 };
-static sdp_data_t hset_channel =	{ hset_data + 36, hset_data + 37 };
+static sdp_data_t hset_record = { hset_data + 0, hset_data + 89 };
+static sdp_data_t hset_channel = { hset_data + 34, hset_data + 36 };
 
 int
 main(int ac, char *av[])
