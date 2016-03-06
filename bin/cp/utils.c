@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.42.4.1 2016/03/03 14:30:52 martin Exp $ */
+/* $NetBSD: utils.c,v 1.42.4.2 2016/03/06 18:41:53 martin Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.42.4.1 2016/03/03 14:30:52 martin Exp $");
+__RCSID("$NetBSD: utils.c,v 1.42.4.2 2016/03/06 18:41:53 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,17 +77,18 @@ set_utimes(const char *file, struct stat *fs)
 struct finfo {
 	const char *from;
 	const char *to;
-	size_t size;
+	off_t size;
 };
 
 static void
-progress(const struct finfo *fi, size_t written)
+progress(const struct finfo *fi, off_t written)
 {
 	int pcent = (int)((100.0 * written) / fi->size);
 
 	pinfo = 0;
-	(void)fprintf(stderr, "%s => %s %zu/%zu bytes %d%% written\n",
-	    fi->from, fi->to, written, fi->size, pcent);
+	(void)fprintf(stderr, "%s => %s %llu/%llu bytes %d%% written\n",
+	    fi->from, fi->to, (unsigned long long)written,
+	    (unsigned long long)fi->size, pcent);
 }
 
 int
@@ -97,7 +98,7 @@ copy_file(FTSENT *entp, int dne)
 	struct stat to_stat, *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, tolnk, wcount;
 	char *p;
-	size_t ptotal = 0;
+	off_t ptotal = 0;
 	
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
@@ -184,7 +185,7 @@ copy_file(FTSENT *entp, int dne)
 
 		fi.from = entp->fts_path;
 		fi.to = to.p_path;
-		fi.size = (size_t)fs->st_size;
+		fi.size = fs->st_size;
 
 		/*
 		 * Mmap and write if less than 8M (the limit is so
