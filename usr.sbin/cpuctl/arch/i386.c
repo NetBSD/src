@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.58.2.4 2015/05/09 08:35:10 snj Exp $	*/
+/*	$NetBSD: i386.c,v 1.58.2.5 2016/03/06 17:49:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.58.2.4 2015/05/09 08:35:10 snj Exp $");
+__RCSID("$NetBSD: i386.c,v 1.58.2.5 2016/03/06 17:49:56 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -333,7 +333,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 					 "Core 2 Quad 8xxx and 9xxx",
 				[0x1a] = "Core i7, Xeon 34xx, 35xx and 55xx "
 					 "(Nehalem)",
-				[0x1c] = "Atom Family",
+				[0x1c] = "45nm Atom Family",
 				[0x1d] = "XeonMP 74xx (Nehalem)",
 				[0x1e] = "Core i7 and i5",
 				[0x1f] = "Core i7 and i5",
@@ -354,26 +354,26 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 					 "Ivy Bridge",
 				[0x3c] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
-				[0x3d] = "Core M-5xxx, Future 5th gen Core (Broadwell)",
+				[0x3d] = "Core M-5xxx, 5th gen Core (Broadwell)",
 				[0x3e] = "Xeon E5/E7 v2 (Ivy Bridge-E), "
 					 "Core i7-49xx Extreme",
-				[0x3f] = "Xeon E5-2600/1600 v3 (Haswell-E), "
+				[0x3f] = "Xeon E5-4600/2600/1600 v3, Xeon E7 v3 (Haswell-E), "
 					 "Core i7-59xx Extreme",
 				[0x45] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
 				[0x46] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
-				[0x47] = "5th gen Core (Broadwell)",
+				[0x47] = "5th gen Core, Xeon E3-1200 v4 (Broadwell)",
 				[0x4a] = "Atom Z3400",
 				[0x4c] = "Atom X[57]-Z8000 (Airmont)",
 				[0x4d] = "Atom C2000",
-				[0x4e] = "Next gen Core (Sky Lake)",
+				[0x4e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 				[0x4f] = "Future gen Xeon (Broadwell)",
-				[0x56] = "Next gen Xeon D (Broadwell)",
+				[0x56] = "Xeon D-1500 (Broadwell)",
 				[0x57] = "Next gen Xeon Phi",
 				[0x5a] = "Atom E3500",
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
-				[0x5e] = "Next gen Core (Sky Lake)",
+				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
