@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.15 2016/02/06 10:40:58 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.16 2016/03/06 07:33:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -52,8 +52,13 @@
 #include "nbtool_config.h"
 #endif
 
+#ifndef _KERNEL
+#include <assert.h>
+#define KASSERT(x)     assert(x)
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.15 2016/02/06 10:40:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.16 2016/03/06 07:33:25 mlelstv Exp $");
 
 /*
  * System include files.
@@ -685,8 +690,8 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
 	len = utf8 ? ucs2utf8str(wn, WIN_CHARS, buf, sizeof(buf))
 	    : ucs2char8str(wn, WIN_CHARS, buf, sizeof(buf));
 
-	if ((size_t)len > sizeof(dp->d_name) - 1)
-		return -1;
+	KASSERT(len >= 0);
+	KASSERT((size_t)len <= MIN(sizeof(buf), sizeof(dp->d_name)-1));
 
 	/*
 	 * Prepend name segment to directory entry
@@ -702,6 +707,9 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
 	*namlen += len;
 	if (*namlen > sizeof(dp->d_name) - 1)
 		*namlen = sizeof(dp->d_name) - 1;
+
+	KASSERT(*namlen >= len);
+
 	memmove(&dp->d_name[len], &dp->d_name[0], *namlen - len);
 	memcpy(dp->d_name, buf, len);
 
