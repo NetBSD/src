@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.52.4.1 2016/03/06 18:17:55 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.52.4.1 2016/03/06 18:17:55 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -442,10 +442,10 @@ _rtld_obj_free(Obj_Entry *obj)
 	}
 	if (!obj->phdr_loaded)
 		xfree((void *)(uintptr_t)obj->phdr);
-	xfree(obj);
 #ifdef COMBRELOC
 	_rtld_combreloc_reset(obj);
 #endif
+	xfree(obj);
 }
 
 Obj_Entry *

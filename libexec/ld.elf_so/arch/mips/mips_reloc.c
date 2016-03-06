@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.62 2011/03/25 18:07:05 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.62.22.1 2016/03/06 18:17:55 martin Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.62 2011/03/25 18:07:05 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.62.22.1 2016/03/06 18:17:55 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -445,7 +445,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			rdbg(("TPREL %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[r_symndx].st_name,
-			    obj->path, (void *)*where, defobj->path));
+			    obj->path, where, defobj->path));
 			break;
 		}
 
@@ -487,7 +487,13 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, Elf_Word sym, Elf_Addr *tp)
 	if (__predict_false(def == &_rtld_sym_zero))
 		return 0;
 
-	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		new_value = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	}
 	rdbg(("bind now/fixup in %s --> new=%p",
 	    defobj->strtab + def->st_name, (void *)new_value));
 	got[obj->local_gotno + sym - obj->gotsym] = new_value;
