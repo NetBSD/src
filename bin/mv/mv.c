@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.43.22.1 2016/03/04 21:25:36 martin Exp $ */
+/* $NetBSD: mv.c,v 1.43.22.2 2016/03/06 18:40:09 martin Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.43.22.1 2016/03/04 21:25:36 martin Exp $");
+__RCSID("$NetBSD: mv.c,v 1.43.22.2 2016/03/06 18:40:09 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,11 +67,19 @@ __RCSID("$NetBSD: mv.c,v 1.43.22.1 2016/03/04 21:25:36 martin Exp $");
 
 static int fflg, iflg, vflg;
 static int stdin_ok;
+static sig_atomic_t pinfo;
 
 static int	copy(char *, char *);
 static int	do_move(char *, char *);
 static int	fastcopy(char *, char *, struct stat *);
 __dead static void	usage(void);
+
+static void
+progress(int sig __unused)
+{
+
+	pinfo++;
+}
 
 int
 main(int argc, char *argv[])
@@ -108,6 +116,8 @@ main(int argc, char *argv[])
 		usage();
 
 	stdin_ok = isatty(STDIN_FILENO);
+
+	(void)signal(SIGINFO, progress);
 
 	/*
 	 * If the stat on the target fails or the target isn't a directory,
@@ -262,7 +272,9 @@ fastcopy(char *from, char *to, struct stat *sbp)
 #endif
 	static blksize_t blen;
 	static char *bp;
-	int nread, from_fd, to_fd;
+	int from_fd, to_fd;
+	ssize_t nread;
+	off_t total = 0;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
 		warn("%s", from);
@@ -281,11 +293,21 @@ fastcopy(char *from, char *to, struct stat *sbp)
 		(void)close(to_fd);
 		return (1);
 	}
-	while ((nread = read(from_fd, bp, blen)) > 0)
+	while ((nread = read(from_fd, bp, blen)) > 0) {
 		if (write(to_fd, bp, nread) != nread) {
 			warn("%s", to);
 			goto err;
 		}
+		total += nread;
+		if (pinfo) {
+			int pcent = (int)((100.0 * total) / sbp->st_size);
+
+			pinfo = 0;
+			(void)fprintf(stderr, "%s => %s %llu/%llu bytes %d%% "
+			    "written\n", from, to, (unsigned long long)total,
+			    (unsigned long long)sbp->st_size, pcent);
+		}
+	}
 	if (nread < 0) {
 		warn("%s", from);
 err:		if (unlink(to))
