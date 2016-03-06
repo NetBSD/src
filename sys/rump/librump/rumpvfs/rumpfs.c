@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.138 2016/02/02 13:02:34 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.139 2016/03/06 19:47:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.138 2016/02/02 13:02:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.139 2016/03/06 19:47:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -933,8 +933,8 @@ rump_vop_setattr(void *v)
 			return ENOSPC;
 
 		copylen = MIN(rn->rn_dlen, newlen);
-		memset(newdata, 0, newlen);
 		memcpy(newdata, rn->rn_data, copylen);
+		memset(newdata + copylen, 0, newlen - copylen);
 
 		if ((rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
 			rump_hyperfree(rn->rn_data, rn->rn_dlen);
