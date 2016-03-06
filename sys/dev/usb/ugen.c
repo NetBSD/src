@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.124 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: ugen.c,v 1.124.2.1 2016/03/06 18:08:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.124 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.124.2.1 2016/03/06 18:08:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -267,6 +267,19 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
+Static void
+ugen_clear_endpoints(struct ugen_softc *sc)
+{
+
+	/* Clear out the old info, but leave the selinfo and cv initialised. */
+	for (int i = 0; i < USB_MAX_ENDPOINTS; i++) {
+		for (int dir = OUT; dir <= IN; dir++) {
+			struct ugen_endpoint *sce = &sc->sc_endpoints[i][dir];
+			memset(sce, 0, UGEN_ENDPOINT_NONZERO_CRUFT);
+		}
+	}
+}
+
 Static int
 ugen_set_config(struct ugen_softc *sc, int configno)
 {
@@ -278,7 +291,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	u_int8_t niface, nendpt;
 	int ifaceno, endptno, endpt;
 	usbd_status err;
-	int dir, i;
+	int dir;
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    device_xname(sc->sc_dev), configno, sc));
@@ -307,13 +320,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	if (err)
 		return (err);
 
-	/* Clear out the old info, but leave the selinfo and cv initialised. */
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
-		for (dir = OUT; dir <= IN; dir++) {
-			sce = &sc->sc_endpoints[i][dir];
-			memset(sce, 0, UGEN_ENDPOINT_NONZERO_CRUFT);
-		}
-	}
+	ugen_clear_endpoints(sc);
 
 	for (ifaceno = 0; ifaceno < niface; ifaceno++) {
 		DPRINTFN(1,("ugen_set_config: ifaceno %d\n", ifaceno));
@@ -378,7 +385,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	for (dir = OUT; dir <= IN; dir++) {
 		if (flag & (dir == OUT ? FWRITE : FREAD)) {
 			sce = &sc->sc_endpoints[endpt][dir];
-			if (sce == 0 || sce->edesc == 0)
+			if (sce->edesc == NULL)
 				return (ENXIO);
 		}
 	}
@@ -532,7 +539,7 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 		if (!(flag & (dir == OUT ? FWRITE : FREAD)))
 			continue;
 		sce = &sc->sc_endpoints[endpt][dir];
-		if (sce == NULL || sce->pipeh == NULL)
+		if (sce->pipeh == NULL)
 			continue;
 		DPRINTFN(5, ("ugenclose: endpt=%d dir=%d sce=%p\n",
 			     endpt, dir, sce));
@@ -1032,7 +1039,7 @@ ugen_detach(device_t self, int flags)
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
 			sce = &sc->sc_endpoints[i][dir];
-			if (sce && sce->pipeh)
+			if (sce->pipeh)
 				usbd_abort_pipe(sce->pipeh);
 		}
 	}
@@ -1333,16 +1340,6 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	err = usbd_endpoint_count(iface, &nendpt);
 	if (err)
 		return (err);
-	/* XXX should only do this after setting new altno has succeeded */
-	for (endptno = 0; endptno < nendpt; endptno++) {
-		ed = usbd_interface2endpoint_descriptor(iface,endptno);
-		endpt = ed->bEndpointAddress;
-		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
-		sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][dir];
-		sce->sc = 0;
-		sce->edesc = 0;
-		sce->iface = 0;
-	}
 
 	/* change setting */
 	err = usbd_set_interface(iface, altno);
@@ -1352,6 +1349,9 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	err = usbd_endpoint_count(iface, &nendpt);
 	if (err)
 		return (err);
+
+	ugen_clear_endpoints(sc);
+
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		KASSERT(ed != NULL);
