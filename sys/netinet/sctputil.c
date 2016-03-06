@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.2 2016/02/15 19:00:42 rtr Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.3 2016/03/06 19:46:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.2 2016/02/15 19:00:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.3 2016/03/06 19:46:05 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -844,9 +844,10 @@ sctp_expand_mapping_array(struct sctp_association *asoc)
 {
 	/* mapping array needs to grow */
 	u_int8_t *new_array;
-	uint16_t new_size;
+	uint16_t new_size, old_size;
 
-	new_size = asoc->mapping_array_size + SCTP_MAPPING_ARRAY_INCR;
+	old_size = asoc->mapping_array_size;
+	new_size = old_size + SCTP_MAPPING_ARRAY_INCR;
 	new_array = malloc(new_size, M_PCB, M_NOWAIT);
 	if (new_array == NULL) {
 		/* can't get more, forget it */
@@ -854,8 +855,8 @@ sctp_expand_mapping_array(struct sctp_association *asoc)
 		       new_size);
 		return (-1);
 	}
-	memset(new_array, 0, new_size);
-	memcpy(new_array, asoc->mapping_array, asoc->mapping_array_size);
+	memcpy(new_array, asoc->mapping_array, old_size);
+	memset(new_array + old_size, 0, SCTP_MAPPING_ARRAY_INCR);
 	free(asoc->mapping_array, M_PCB);
 	asoc->mapping_array = new_array;
 	asoc->mapping_array_size = new_size;
