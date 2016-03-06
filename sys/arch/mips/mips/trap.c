@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.238 2015/06/11 15:50:17 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.239 2016/03/06 21:03:01 tnn Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.238 2015/06/11 15:50:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.239 2016/03/06 21:03:01 tnn Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -167,7 +167,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	KSI_INIT_TRAP(&ksi);
 
 	curcpu()->ci_data.cpu_ntrap++;
-	if (status & MIPS3_SR_NMI) {
+	if (CPUISMIPS3 && (status & MIPS3_SR_NMI)) {
 		type = T_NMI;
 	} else {
 		type = TRAPTYPE(cause);
