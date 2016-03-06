@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.215.2.2 2015/04/30 06:07:34 riz Exp $
+#	$NetBSD: Makefile,v 1.215.2.3 2016/03/06 18:05:09 martin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -51,7 +51,6 @@ SUBDIR+=	../external/apache2/mDNSResponder/lib
 .endif
 
 SUBDIR+=	../external/bsd/am-utils/lib
-SUBDIR+=	../external/bsd/blacklist/lib
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
@@ -96,6 +95,7 @@ SUBDIR+=	../crypto/external/bsd/netpgp/libmj
 SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify # depends on libz
 .endif
 
+SUBDIR+=	../external/bsd/blacklist/lib		# depends on libpthread
 SUBDIR+=	../external/bsd/elftoolchain/lib/libdwarf # depends on libelf
 SUBDIR+=	../external/mit/lua/lib # depends on libm
 SUBDIR+=	libcurses	# depends on libterminfo
