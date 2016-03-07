@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.64 2016/03/07 08:20:07 msaitoh Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.65 2016/03/07 09:04:58 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2380,6 +2380,6 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.67
 
 sys/sys/exec_elf.h				1.143
 
-	Add definition of EM_IAMCU. This change fixes build break caused by
-	ticket 1126.
+	Add definition of STT_GNU_IFUNC. This change fixes build break caused
+	by ticket 1126.
 	[htodd, ticket #1132]
