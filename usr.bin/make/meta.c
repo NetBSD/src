@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.52 2016/02/27 16:20:06 christos Exp $ */
+/*      $NetBSD: meta.c,v 1.53 2016/03/07 21:45:43 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -55,7 +55,9 @@
 
 static BuildMon Mybm;			/* for compat */
 static Lst metaBailiwick;		/* our scope of control */
+static char *metaBailiwickStr;		/* string storage for the list */
 static Lst metaIgnorePaths;		/* paths we deliberately ignore */
+static char *metaIgnorePathsStr;	/* string storage for the list */
 
 #ifndef MAKE_META_IGNORE_PATHS
 #define MAKE_META_IGNORE_PATHS ".MAKE.META.IGNORE_PATHS"
@@ -597,25 +599,23 @@ meta_mode_init(const char *make_mode)
      * We consider ourselves master of all within ${.MAKE.META.BAILIWICK}
      */
     metaBailiwick = Lst_Init(FALSE);
-    cp = Var_Subst(NULL, "${.MAKE.META.BAILIWICK:O:u:tA}", VAR_GLOBAL,
-		   VARF_WANTRES);
-    if (cp) {
-	str2Lst_Append(metaBailiwick, cp, NULL);
+    metaBailiwickStr = Var_Subst(NULL, "${.MAKE.META.BAILIWICK:O:u:tA}",
+	VAR_GLOBAL, VARF_WANTRES);
+    if (metaBailiwickStr) {
+	str2Lst_Append(metaBailiwick, metaBailiwickStr, NULL);
     }
-    free(cp);
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
     metaIgnorePaths = Lst_Init(FALSE);
     Var_Append(MAKE_META_IGNORE_PATHS,
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
-    cp = Var_Subst(NULL,
+    metaIgnorePathsStr = Var_Subst(NULL,
 		   "${" MAKE_META_IGNORE_PATHS ":O:u:tA}", VAR_GLOBAL,
 		   VARF_WANTRES);
-    if (cp) {
-	str2Lst_Append(metaIgnorePaths, cp, NULL);
+    if (metaIgnorePathsStr) {
+	str2Lst_Append(metaIgnorePaths, metaIgnorePathsStr, NULL);
     }
-    free(cp);
 }
 
 /*
@@ -773,6 +773,15 @@ meta_job_finish(Job *job)
 	pbm->mfp = NULL;
 	pbm->meta_fname[0] = '\0';
     }
+}
+
+void
+meta_finish(void)
+{
+    Lst_Destroy(metaBailiwick, NULL);
+    free(metaBailiwickStr);
+    Lst_Destroy(metaIgnorePaths, NULL);
+    free(metaIgnorePathsStr);
 }
 
 /*
