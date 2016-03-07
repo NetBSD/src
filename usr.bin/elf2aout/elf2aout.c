@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.17 2016/03/06 16:13:21 christos Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.18 2016/03/07 08:59:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -370,7 +370,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 	memset(outbuf, 0, sizeof outbuf);
 
 	/* Find number of symbols to process... */
-	remaining = symsize / (ssize_t)sizeof(Elf32_Sym);
+	remaining = symsize / (off_t)sizeof(Elf32_Sym);
 
 	/* Suck in the old string table... */
 	oldstrings = saveRead(in, stroff, (size_t)strsize, "string table");
@@ -478,7 +478,9 @@ copy(int out, int in, off_t offset, off_t size)
 	/* Go to the start of the ELF symbol table... */
 	if (lseek(in, offset, SEEK_SET) < 0)
 		err(EXIT_FAILURE, "%s: lseek failed", __func__);
-	remaining = size;
+	if (size > SSIZE_MAX)
+		err(EXIT_FAILURE, "%s: can not copy this much", __func__);
+	remaining = (ssize_t)size;
 	while (remaining) {
 		cur = remaining;
 		if (cur > (int)sizeof ibuf)
