@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.241 2016/02/19 00:11:45 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.242 2016/03/07 21:45:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.241 2016/02/19 00:11:45 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.242 2016/03/07 21:45:43 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.241 2016/02/19 00:11:45 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.242 2016/03/07 21:45:43 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1381,6 +1381,9 @@ main(int argc, char **argv)
 	if (enterFlag)
 		printf("%s: Leaving directory `%s'\n", progname, curdir);
 
+#ifdef USE_META
+	meta_finish();
+#endif
 	Suff_End();
         Targ_End();
 	Arch_End();
