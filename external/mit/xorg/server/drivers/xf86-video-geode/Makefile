@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/07/20 06:34:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2016/03/07 14:35:21 joerg Exp $
 
 DRIVER=		xf86-video-geode
 DRIVER_NAME=	geode_drv
@@ -43,6 +43,8 @@ CPPFLAGS+=	-Doff64_t=off_t -Dlseek64=lseek
 COPTS.gx_randr.c+=	-Wno-error	# XXX
 COPTS.lx_memory.c+=	-Wno-error	# XXX
 COPTS.panel.c+=		-Wno-error	# XXX -- huh? don't get this one
+
+CWARNFLAGS.clang+=	-Wno-empty-body
 
 .include "../Makefile.xf86-driver"
 
