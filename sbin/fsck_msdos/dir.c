@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.27 2015/01/02 06:21:28 mlelstv Exp $	*/
+/*	$NetBSD: dir.c,v 1.28 2016/03/07 14:47:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.27 2015/01/02 06:21:28 mlelstv Exp $");
+__RCSID("$NetBSD: dir.c,v 1.28 2016/03/07 14:47:25 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -929,6 +929,7 @@ int
 reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 {
 	struct dosDirEntry d;
+	int len;
 	u_char *p;
 
 	if (!ask(1, "Reconnect"))
@@ -980,14 +981,15 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 	boot->NumFiles++;
 	/* Ensure uniqueness of entry here!				XXX */
 	memset(&d, 0, sizeof d);
-	(void)snprintf(d.name, sizeof(d.name), "%u", head);
+	/* worst case -1 = 4294967295, 10 digits */
+	len = snprintf(d.name, sizeof(d.name), "%u", head);
 	d.flags = 0;
 	d.head = head;
 	d.size = fat[head].length * boot->ClusterSize;
 
-	memset(p, 0, 32);
-	memset(p, ' ', 11);
-	memcpy(p, d.name, strlen(d.name));
+	memcpy(p, d.name, len);
+	memset(p + len, ' ', 11 - len);
+	memset(p + 11, 0, 32 - 11);
 	p[26] = (u_char)d.head;
 	p[27] = (u_char)(d.head >> 8);
 	if (boot->ClustMask == CLUST32_MASK) {
