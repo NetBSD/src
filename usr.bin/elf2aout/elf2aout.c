@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.18 2016/03/07 08:59:00 martin Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.19 2016/03/07 22:16:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -370,7 +370,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 	memset(outbuf, 0, sizeof outbuf);
 
 	/* Find number of symbols to process... */
-	remaining = symsize / (off_t)sizeof(Elf32_Sym);
+	remaining = (ssize_t)(symsize / (off_t)sizeof(Elf32_Sym));
 
 	/* Suck in the old string table... */
 	oldstrings = saveRead(in, stroff, (size_t)strsize, "string table");
