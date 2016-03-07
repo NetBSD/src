@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.205 2016/02/20 01:19:03 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.206 2016/03/07 20:20:35 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.205 2016/02/20 01:19:03 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.206 2016/03/07 20:20:35 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.205 2016/02/20 01:19:03 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.206 2016/03/07 20:20:35 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3006,6 +3006,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 			    parsestate.varSpace = 0; /* no separator */
 			    cp = tstr + 2;
 			} else if (tstr[2] == '\\') {
+			    const char *xp = &tstr[3];
+			    int base = 8; /* assume octal */
+
 			    switch (tstr[3]) {
 			    case 'n':
 				parsestate.varSpace = '\n';
@@ -3015,12 +3018,20 @@ ApplyModifiers(char *nstr, const char *tstr,
 				parsestate.varSpace = '\t';
 				cp = tstr + 4;
 				break;
+			    case 'x':
+				base = 16;
+				xp++;
+				goto get_numeric;
+			    case '0':
+				base = 0;
+				goto get_numeric;
 			    default:
 				if (isdigit((unsigned char)tstr[3])) {
 				    char *ep;
 
+				get_numeric:
 				    parsestate.varSpace =
-					strtoul(&tstr[3], &ep, 0);
+					strtoul(xp, &ep, base);
 				    if (*ep != ':' && *ep != endc)
 					goto bad_modifier;
 				    cp = ep;
