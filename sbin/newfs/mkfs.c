@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.125 2015/06/16 23:18:55 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.126 2016/03/07 15:09:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.125 2015/06/16 23:18:55 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.126 2016/03/07 15:09:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -734,7 +734,7 @@ mkfs(const char *fsys, int fi, int fo,
 	/*
 	 * Write out the super-block and zeros until the first cg info
 	 */
-	i = cgsblock(&sblock, 0) * sblock.fs_fsize - sblock.fs_sblockloc,
+	i = cgsblock(&sblock, 0) * sblock.fs_fsize - sblock.fs_sblockloc;
 	memset(iobuf, 0, i);
 	memcpy(iobuf, &sblock, sizeof sblock);
 	if (needswap)
