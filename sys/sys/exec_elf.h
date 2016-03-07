@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.141.2.1 2015/11/08 00:57:09 riz Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.141.2.2 2016/03/07 08:08:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -515,6 +515,7 @@ typedef struct {
 #define STT_NUM			7
 
 #define STT_LOOS		10	/* Operating system specific range */
+#define STT_GNU_IFUNC		10	/* GNU extension: indirect function */
 #define STT_HIOS		12
 #define STT_LOPROC		13	/* Processor-specific range */
 #define STT_HIPROC		15
