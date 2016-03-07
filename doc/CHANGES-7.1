@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.63 2016/03/06 18:53:50 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.64 2016/03/07 08:20:07 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2276,6 +2276,7 @@ sys/arch/x86/include/cpu.h			1.67
 sys/arch/x86/include/cpuvar.h			1.47
 sys/arch/x86/x86/cpu.c				1.117
 sys/arch/x86/x86/identcpu.c			1.49
+sys/arch/xen/x86/cpu.c				1.102-1.103
 
 	Retrieve cpuid7 (Structured Extended Features) into ci_feat_val.
 	[msaitoh, ticket #1118]
@@ -2377,3 +2378,8 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.67
 	freed.
 	[bouyer, ticket #1125]
 
+sys/sys/exec_elf.h				1.143
+
+	Add definition of EM_IAMCU. This change fixes build break caused by
+	ticket 1126.
+	[htodd, ticket #1132]
