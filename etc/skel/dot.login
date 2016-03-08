@@ -1,4 +1,4 @@
-#	$NetBSD: dot.login,v 1.3 2003/04/24 01:02:26 perry Exp $
+#	$NetBSD: dot.login,v 1.4 2016/03/08 09:51:15 mlelstv Exp $
 #
 # This is the default .login file.
 # Users are expected to edit it to meet their own needs.
@@ -13,9 +13,6 @@ if ( ! $?SHELL ) then
   setenv SHELL /bin/csh
 endif
 
-set noglob
-eval `tset -s -m 'network:?xterm'`
-unset noglob
 stty status '^T' crt -tostop
 
 if ( -x /usr/games/fortune ) /usr/games/fortune
