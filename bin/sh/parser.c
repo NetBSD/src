@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.103 2016/03/08 14:10:04 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.104 2016/03/08 14:11:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.103 2016/03/08 14:10:04 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.104 2016/03/08 14:11:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1091,8 +1091,8 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	int len;
 	char line[EOFMARKLEN + 1];
 	struct nodelist *bqlist;
-	int quotef;
-	int oldstyle;
+	volatile int quotef;
+	volatile int oldstyle;
 	VSS static_stack;
 	VSS *stack = &static_stack;
 	VVSS *vstack = stack;
