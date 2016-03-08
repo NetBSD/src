@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.45 2016/03/08 14:32:34 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.46 2016/03/08 18:16:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.45 2016/03/08 14:32:34 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.46 2016/03/08 18:16:11 christos Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -199,7 +200,7 @@ initvar(void)
 	 * PPID is readonly
 	 */
 	snprintf(buf, sizeof(buf), "%d", (int)getppid());
-	setvar("PPID", buf, VEXPORT|VREADONLY);
+	setvar("PPID", buf, VREADONLY);
 }
 
 void
