@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.16 2015/05/17 05:34:53 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.17 2016/03/08 08:01:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.16 2015/05/17 05:34:53 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.17 2016/03/08 08:01:23 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -268,7 +268,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 					break;
 				}
 			}
-	
+
 			uvm_page_physload(start, segend, start, segend,
 			    vm_freelist);
 			start = segend;
@@ -280,7 +280,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	printf("pmap ");
 #endif
 	pmap_bootstrap(kvm_base, kvm_base + kvm_size);
-   
+
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
@@ -332,8 +332,10 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	splhigh();
 
 #ifdef CPU_CORTEX
+#if 0
 	KASSERTMSG(armreg_auxctl_read() & CORTEXA9_AUXCTL_SMP, "auxctl %#x",
 	    armreg_auxctl_read());
+#endif
 #endif
 
 #ifdef VERBOSE_INIT_ARM
@@ -390,7 +392,7 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	if (CPU_ID_CORTEX_P(ci->ci_arm_cpuid)) {
 		/*
 		 * Start and reset the PMC Cycle Counter.
-		 */   
+		 */
 		armreg_pmcr_write(ARM11_PMCCTL_E|ARM11_PMCCTL_P|ARM11_PMCCTL_C);
 		armreg_pmcntenset_write(CORTEX_CNTENS_C);
 	}
