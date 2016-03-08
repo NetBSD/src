@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.66 2016/03/07 14:39:55 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.67 2016/03/08 09:54:26 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -2383,3 +2383,15 @@ sys/sys/exec_elf.h				1.143
 	Add definition of STT_GNU_IFUNC. This change fixes build break caused
 	by ticket 1126.
 	[htodd, ticket #1132]
+
+sys/dev/usb/uhub.c				1.130
+
+	Use the port status straight after the reset and not after the
+	usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET)
+	[skrll, ticket #1134]
+
+sys/dev/usb/if_smsc.c				1.26
+
+	PR/50904: Fix variable assignment inside if-clause.
+	[skrll, ticket #1135]
+
