@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.22 2016/01/29 15:18:08 christos Exp $ */
+/* $NetBSD: global_locale.c,v 1.23 2016/03/08 04:00:11 christos Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.22 2016/01/29 15:18:08 christos Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.23 2016/03/08 04:00:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -143,7 +143,7 @@ __dso_hidden const struct _locale_cache_t _C_cache = {
     .numeric_name = _lc_C_locale_name,
 };
 
-/* __dso_protected */ struct _locale _lc_global_locale = {
+__dso_protected struct _locale _lc_global_locale = {
     .cache = &_C_cache,
     .query = { _C_LOCALE },
     .part_name = {
@@ -171,7 +171,7 @@ __dso_hidden const struct _locale_cache_t _C_cache = {
     },
 };
 
-/* __dso_protected */ const struct _locale _lc_C_locale = {
+__dso_protected const struct _locale _lc_C_locale = {
     .cache = &_C_cache,
     .query = { _C_LOCALE },
     .part_name = {
