@@ -1,4 +1,4 @@
-# $NetBSD: t_option.sh,v 1.2 2016/03/01 12:39:35 christos Exp $
+# $NetBSD: t_option.sh,v 1.3 2016/03/08 14:19:28 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -414,42 +414,45 @@ set_v_body() {
 		${TEST_SH} -ec 'printf "%s" OK; set -v; echo OK; exit 0'
 
 	# but that it does when there are multiple lines
+	cat <<- 'EOF' |
+		set -v
+		printf %s OK
+		echo OK
+		exit 0
+	EOF
 	atf_check -s exit:0 \
 			-o match:OKOK -o not-match:echo -o not-match:printf \
 			-e match:printf -e match:OK -e match:echo \
-		${TEST_SH} -ec '{
-					echo "set -v"
-					echo "printf %s OK"
-					echo "echo OK"
-					echo "exit 0"
-				} | '"'${TEST_SH}'"' -e'
+			-e not-match:set ${TEST_SH}
 
 	# and that it can be disabled again
+	cat <<- 'EOF' |
+		set -v
+		printf %s OK
+		set +v
+		echo OK
+		exit 0
+	EOF
 	atf_check -s exit:0 \
 			-o match:OKOK -o not-match:echo -o not-match:printf \
 			-e match:printf -e match:OK -e not-match:echo \
-		${TEST_SH} -ec '{
-					echo "set -v"
-					echo "printf %s OK"
-					echo "set +v"
-					echo "echo OK"
-					echo "exit 0"
-				} | '"'${TEST_SH}'"' -e'
+				${TEST_SH}
 
 	# and lastly, that shell keywords do get output when "read"
+	cat <<- 'EOF' |
+		set -v
+		for i in 111 222 333
+		do
+			printf %s $i
+		done
+		exit 0
+	EOF
 	atf_check -s exit:0 \
 			-o match:111222333 -o not-match:printf \
 			-o not-match:for -o not-match:do -o not-match:done \
 			-e match:printf -e match:111 -e not-match:111222 \
 			-e match:for -e match:do -e match:done \
-		${TEST_SH} -ec '{
-					echo "set -v"
-					echo "for i in 111 222 333"
-					echo "do"
-					echo "printf %s \$i"
-					echo "done"
-					echo "exit 0"
-				} | '"'${TEST_SH}'"' -e'
+				${TEST_SH}
 }
 
 atf_test_case set_x
@@ -600,6 +603,9 @@ xx_bogus_head() {
 xx_bogus_body() {
 	# Biggest problem here is picking a "nonsense option" that is
 	# not implemented by any shell, anywhere.  Hopefully this will do.
+
+	# 'set' is a special builtin, so a conforming shell should exit
+	# on an arg error, and the ERR should not be printed.
 	atf_check -s not-exit:0 -o empty -e not-empty \
 		${TEST_SH} -c 'set -% ; echo ERR'
 }
