@@ -42532,6 +42532,9 @@ ix86_memmodel_check (unsigned HOST_WIDE_INT val)
 #if TARGET_MACHO
 #undef TARGET_BINDS_LOCAL_P
 #define TARGET_BINDS_LOCAL_P darwin_binds_local_p
+#else
+#undef TARGET_BINDS_LOCAL_P
+#define TARGET_BINDS_LOCAL_P default_binds_local_p_2
 #endif
 #if TARGET_DLLIMPORT_DECL_ATTRIBUTES
 #undef TARGET_BINDS_LOCAL_P
