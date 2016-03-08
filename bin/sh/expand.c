@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.95 2016/02/27 16:28:50 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.96 2016/03/08 14:09:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.95 2016/02/27 16:28:50 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.96 2016/03/08 14:09:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,8 @@ argstr(char *p, int flag)
 			return;
 		case CTLQUOTEMARK:
 			/* "$@" syntax adherence hack */
-			if (p[0] == CTLVAR && p[2] == '@' && p[3] == '=')
+			if (p[0] == CTLVAR && p[1] & VSQUOTE &&
+			    p[2] == '@' && p[3] == '=')
 				break;
 			if ((flag & EXP_FULL) != 0)
 				STPUTC(c, expdest);
@@ -330,7 +331,7 @@ removerecordregions(int endoff)
 		}
 		return;
 	}
-	
+
 	ifslastp = &ifsfirst;
 	while (ifslastp->next && ifslastp->next->begoff < endoff)
 		ifslastp=ifslastp->next;
@@ -745,8 +746,9 @@ again: /* jump here after setting a variable with ${var=text} */
 			 * 'apply_ifs = 0' apparently breaks ${1+"$@"}..
 			 * ${x-'a b' c} should generate 2 args.
 			 */
+			if (*p != CTLENDVAR)
 			/* We should have marked stuff already */
-			apply_ifs = 0;
+				apply_ifs = 0;
 		}
 		break;
 
