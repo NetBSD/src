@@ -1,8 +1,8 @@
-# $NetBSD: shl.mi,v 1.71.2.12 2015/07/22 16:51:59 snj Exp $
+# $NetBSD: shl.mi,v 1.71.2.12.2.1 2016/03/08 13:48:44 martin Exp $
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libc.so.12.193.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/lib/libcrypto.so.8.4.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libcrypto.so.8.5.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 		comp-sys-debug	debug,obsolete
 ./usr/libdata/debug/lib/libedit.so.3.1.debug		comp-sys-debug	debug
@@ -67,7 +67,7 @@
 ./usr/libdata/debug/usr/lib/libc.so.12.193.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libcrypto.so.8.4.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libcrypto.so.8.5.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug
@@ -251,7 +251,7 @@
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug
-./usr/libdata/debug/usr/lib/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssl.so.10.6.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,libstdcxx
