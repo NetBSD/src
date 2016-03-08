@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.23 2010/01/27 12:20:25 spz Exp $	*/
+/*	$NetBSD: rcache.c,v 1.23.8.1 2016/03/08 10:03:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.23 2010/01/27 12:20:25 spz Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.23.8.1 2016/03/08 10:03:57 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,6 +98,19 @@ initcache(int cachesize, int readblksize)
 {
 	size_t len;
 	size_t sharedSize;
+
+	if (readblksize == -1) { /* use kern.maxphys */
+		int kern_maxphys;
+		int mib[2] = { CTL_KERN, KERN_MAXPHYS };
+
+		len = sizeof(kern_maxphys);
+		if (sysctl(mib, 2, &kern_maxphys, &len, NULL, 0) < 0) {
+			msg("sysctl(kern.maxphys) failed: %s\n",
+			    strerror(errno));
+			return;
+		}
+		readblksize = kern_maxphys;
+	}
 
 	/* Convert read block size in terms of filesystem block size */
 	nblksread = howmany(readblksize, ufsib->ufs_bsize);
