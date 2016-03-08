@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.46 2016/03/08 18:16:11 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.47 2016/03/08 23:24:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,11 +37,10 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.46 2016/03/08 18:16:11 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.47 2016/03/08 23:24:51 christos Exp $");
 #endif
 #endif /* not lint */
 
-#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -148,10 +147,13 @@ STATIC struct var *find_var(const char *, struct var ***, int *);
  */
 
 #ifdef mkinit
+INCLUDE <stdio.h>
+INCLUDE <unistd.h>
 INCLUDE "var.h"
 MKINIT char **environ;
 INIT {
 	char **envp;
+	char buf[64];
 
 	initvar();
 	for (envp = environ ; *envp ; envp++) {
@@ -159,6 +161,14 @@ INIT {
 			setvareq(*envp, VEXPORT|VTEXTFIXED);
 		}
 	}
+
+
+	/*
+	 * PPID is readonly
+	 *	set after processing environ to override anything there
+	 */
+	snprintf(buf, sizeof(buf), "%d", (int)getppid());
+	setvar("PPID", buf, VREADONLY);
 }
 #endif
 
@@ -174,7 +184,6 @@ initvar(void)
 	const struct varinit *ip;
 	struct var *vp;
 	struct var **vpp;
-	char buf[64];
 
 	for (ip = varinit ; (vp = ip->var) != NULL ; ip++) {
 		if (find_var(ip->text, &vpp, &vp->name_len) != NULL)
@@ -195,12 +204,6 @@ initvar(void)
 		vps1.text = NULL;
 		choose_ps1();
 	}
-
-	/*
-	 * PPID is readonly
-	 */
-	snprintf(buf, sizeof(buf), "%d", (int)getppid());
-	setvar("PPID", buf, VREADONLY);
 }
 
 void
