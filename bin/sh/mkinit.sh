@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mkinit.sh,v 1.5 2008/10/23 20:21:57 apb Exp $
+#	$NetBSD: mkinit.sh,v 1.6 2016/03/08 23:23:31 christos Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,7 +55,7 @@ for src in $srcs; do
 			IFS=' 	'
 			set -- $line
 			# ignore duplicates
-			[ "${includes}" != "${includes%* $2 }" ] && continue
+			[ "${includes}" != "${includes%* $2 *}" ] && continue
 			includes="$includes$2 "
 			continue
 			;;
