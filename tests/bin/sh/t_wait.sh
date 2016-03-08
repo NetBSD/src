@@ -1,4 +1,4 @@
-# $NetBSD: t_wait.sh,v 1.5 2016/02/24 14:42:50 christos Exp $
+# $NetBSD: t_wait.sh,v 1.6 2016/03/08 14:24:06 christos Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -84,14 +84,13 @@ EOF
 	pid=$!
 	sleep 1
 
-	# XXX: built-in kill does not work?
-	/bin/kill -HUP $pid
+	kill -HUP $pid
 	wait
 
 	output="$(cat $z | tr '\n' ' ')"
 	rm -f $s $z
 	if [ "$output" != "SIGHUP 129 3 127 " ]; then
-		atf_fail "${output} != 'SIGHUP 129 '"
+		atf_fail "${output} != 'SIGHUP 129 3 127 '"
 	fi
 }
 
