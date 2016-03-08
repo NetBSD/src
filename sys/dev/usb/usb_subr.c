@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.24 2016/02/06 08:06:17 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.25 2016/03/08 21:16:27 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.24 2016/02/06 08:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.25 2016/03/08 21:16:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -960,7 +960,7 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		uiaa.uiaa_ifaceno = ifaces[i]->ui_idesc->bInterfaceNumber;
 
 		DPRINTF("searching for interface %d...", i, 0, 0, 0);
-		DPRINTF("class %x subclass %x proto %x ifaceno %d\n",
+		DPRINTF("class %x subclass %x proto %x ifaceno %d",
 		    uiaa.uiaa_class, uiaa.uiaa_subclass, uiaa.uiaa_proto,
 		    uiaa.uiaa_ifaceno);
 		ilocs[USBIFIFCF_INTERFACE] = uiaa.uiaa_ifaceno;
