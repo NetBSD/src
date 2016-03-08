@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.184 2016/03/03 01:39:17 uwe Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.185 2016/03/08 05:02:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.184 2016/03/03 01:39:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.185 2016/03/08 05:02:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1200,7 +1200,6 @@ timers_alloc(struct proc *p)
 	LIST_INIT(&pts->pts_prof);
 	for (i = 0; i < TIMER_MAX; i++)
 		pts->pts_timers[i] = NULL;
-	pts->pts_fired = 0;
 	mutex_spin_enter(&timer_lock);
 	if (p->p_timers == NULL) {
 		p->p_timers = pts;
