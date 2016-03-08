@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.63.2.8 2015/07/22 16:51:59 snj Exp $
+# $NetBSD: md.amd64,v 1.63.2.9 2016/03/08 13:38:22 martin Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -208,7 +208,7 @@
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libcrypto.so.8.4.debug	comp-compat-shlib	crypto,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libcrypto.so.8.5.debug	comp-compat-shlib	crypto,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypto_rc5.so.7.0.debug	comp-compat-shlib	crypto,crypto_rc5,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcurses.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdes.so.8.2.debug	comp-compat-shlib	compat,pic,debug
@@ -319,7 +319,7 @@
 ./usr/libdata/debug/usr/lib/i386/libsqlite3.so.1.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libssh.so.24.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libssl.so.10.5.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssl.so.10.6.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.3.debug	comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx

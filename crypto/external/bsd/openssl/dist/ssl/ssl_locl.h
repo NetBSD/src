@@ -1154,7 +1154,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
                                           unsigned char *limit);
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data,
-                                 unsigned char *d, int n, int *al);
+                                 unsigned char *limit, int *al);
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
                                  unsigned char *d, int n, int *al);
 int ssl_prepare_clienthello_tlsext(SSL *s);
@@ -1218,7 +1218,7 @@ int tls1_cbc_remove_padding(const SSL *s,
                             SSL3_RECORD *rec,
                             unsigned block_size, unsigned mac_size);
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
+int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                             unsigned char *md_out,
                             size_t *md_out_size,
                             const unsigned char header[13],
