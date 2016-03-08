@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.3 2014/09/27 15:21:40 tsutsui Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.4 2016/03/08 20:16:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -99,7 +99,7 @@ isofncmp(const u_char *fn, size_t fnlen, const u_char *isofn, size_t isolen,
 	const u_char *isoend = isofn + isolen;
 
 #ifdef DEBUG
-	printf("fn = %s, fnlen = %d, isofn = %s, isolen = %d\n",
+	printf("fn = %s, fnlen = %zu, isofn = %s, isolen = %zu\n",
 	    fn, fnlen, isofn, isolen);
 #endif
 
@@ -119,7 +119,7 @@ isofncmp(const u_char *fn, size_t fnlen, const u_char *isofn, size_t isolen,
 				break;
 			}
 			fn++;
-			for (i = 0; --fnlen >= 0; i = i * 10 + *fn++ - '0') {
+			for (i = 0; fnlen-- > 0; i = i * 10 + *fn++ - '0') {
 				if (*fn < '0' || *fn > '9') {
 					return -1;
 				}
