@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.44 2016/02/24 14:38:40 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.45 2016/03/08 14:08:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.44 2016/02/24 14:38:40 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.45 2016/03/08 14:08:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,6 +335,8 @@ shiftcmd(int argc, char **argv)
 	int n;
 	char **ap1, **ap2;
 
+	if (argc > 2)
+		error("Usage: shift [n]");
 	n = 1;
 	if (argc > 1)
 		n = number(argv[1]);
@@ -347,7 +349,8 @@ shiftcmd(int argc, char **argv)
 			ckfree(*ap1);
 	}
 	ap2 = shellparam.p;
-	while ((*ap2++ = *ap1++) != NULL);
+	while ((*ap2++ = *ap1++) != NULL)
+		continue;
 	shellparam.optnext = NULL;
 	INTON;
 	return 0;
