@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2010/03/11 01:32:59 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.66.8.1 2016/03/08 10:03:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 2010/03/11 01:32:59 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.66.8.1 2016/03/08 10:03:57 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: main.c,v 1.66 2010/03/11 01:32:59 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/sysctl.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -81,7 +82,7 @@ long	dev_bsize = 1;		/* recalculated below */
 long	blocksperfile;		/* output blocks per file */
 const char *host;		/* remote host (if any) */
 int	readcache = -1;		/* read cache size (in readblksize blks) */
-int	readblksize = 32 * 1024; /* read block size */
+int	readblksize = -1;	/* read block size */
 char    default_time_string[] = "%T %Z"; /* default timestamp string */
 char    *time_string = default_time_string; /* timestamp string */
 
