@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.102 2016/02/28 23:12:23 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.103 2016/03/08 14:10:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.102 2016/02/28 23:12:23 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.103 2016/03/08 14:10:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -971,7 +971,8 @@ struct tokenstate {
 #define	QS	0x10
 
 #define	LEVELS_PER_BLOCK	8
-#define	VSS			volatile struct statestack
+#define	VSS			struct statestack
+#define	VVSS			volatile VSS
 
 struct statestack {
 	VSS *prev;		/* previous block in list */
@@ -979,13 +980,13 @@ struct statestack {
 	struct tokenstate tokenstate[LEVELS_PER_BLOCK];
 };
 
-static inline volatile struct tokenstate *
+static inline struct tokenstate *
 currentstate(VSS *stack)
 {
 	return &stack->tokenstate[stack->cur];
 }
 
-static inline volatile struct tokenstate *
+static inline struct tokenstate *
 prevstate(VSS *stack)
 {
 	if (stack->cur != 0)
@@ -998,7 +999,7 @@ prevstate(VSS *stack)
 static inline VSS *
 bump_state_level(VSS *stack)
 {
-	volatile struct tokenstate *os, *ts;
+	struct tokenstate *os, *ts;
 
 	os = currentstate(stack);
 
@@ -1079,21 +1080,22 @@ cleanup_state_stack(VSS *stack)
 #define	varnest		(currentstate(stack)->ts_varnest)
 #define	arinest		(currentstate(stack)->ts_arinest)
 #define	quoted		(currentstate(stack)->ts_quoted)
-#define	TS_PUSH()	(stack = bump_state_level(stack))
-#define	TS_POP()	(stack = drop_state_level(stack))
+#define	TS_PUSH()	(vstack = stack = bump_state_level(stack))
+#define	TS_POP()	(vstack = stack = drop_state_level(stack))
 
 STATIC int
 readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 {
 	int c = firstc;
-	char * volatile out;
+	char * out;
 	int len;
 	char line[EOFMARKLEN + 1];
 	struct nodelist *bqlist;
-	volatile int quotef;
-	volatile int oldstyle;
+	int quotef;
+	int oldstyle;
 	VSS static_stack;
 	VSS *stack = &static_stack;
+	VVSS *vstack = stack;
 
 	stack->prev = NULL;
 	stack->cur = 0;
@@ -1556,7 +1558,7 @@ parsebackq: {
 	struct nodelist **nlpp;
 	int savepbq;
 	union node *n;
-	char *volatile str = NULL;
+	char *str = NULL;
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = NULL;
 	int savelen;
@@ -1566,7 +1568,7 @@ parsebackq: {
 	if (setjmp(jmploc.loc)) {
 		if (str)
 			ckfree(str);
-		cleanup_state_stack(stack);
+		cleanup_state_stack(__UNVOLATILE(vstack));
 		parsebackquote = 0;
 		handler = savehandler;
 		longjmp(handler->loc, 1);
