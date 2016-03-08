@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.124 2013/09/15 15:33:47 martin Exp $	*/
+/*	$NetBSD: uhub.c,v 1.124.4.1 2016/03/08 09:49:00 snj Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.124 2013/09/15 15:33:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.124.4.1 2016/03/08 09:49:00 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,6 +513,7 @@ uhub_explore(usbd_device_handle dev)
 			    "port %d reset failed\n", port);
 			continue;
 		}
+#if 0
 		/* Get port status again, it might have changed during reset */
 		err = usbd_get_port_status(dev, port, &up->status);
 		if (err) {
@@ -520,6 +521,7 @@ uhub_explore(usbd_device_handle dev)
 				 "error=%s\n", usbd_errstr(err)));
 			continue;
 		}
+#endif
 		status = UGETW(up->status.wPortStatus);
 		change = UGETW(up->status.wPortChange);
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
