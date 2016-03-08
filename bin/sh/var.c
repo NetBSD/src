@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.44 2015/05/26 21:35:15 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.45 2016/03/08 14:32:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.44 2015/05/26 21:35:15 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.45 2016/03/08 14:32:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,6 @@ struct var vpath;
 struct var vps1;
 struct var vps2;
 struct var vps4;
-struct var vvers;
 struct var voptind;
 
 const struct varinit varinit[] = {
@@ -174,6 +173,7 @@ initvar(void)
 	const struct varinit *ip;
 	struct var *vp;
 	struct var **vpp;
+	char buf[64];
 
 	for (ip = varinit ; (vp = ip->var) != NULL ; ip++) {
 		if (find_var(ip->text, &vpp, &vp->name_len) != NULL)
@@ -194,6 +194,12 @@ initvar(void)
 		vps1.text = NULL;
 		choose_ps1();
 	}
+
+	/*
+	 * PPID is readonly
+	 */
+	snprintf(buf, sizeof(buf), "%d", (int)getppid());
+	setvar("PPID", buf, VEXPORT|VREADONLY);
 }
 
 void
