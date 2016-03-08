@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2.2.7 2015/07/22 16:51:59 snj Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.8 2016/03/08 13:38:22 martin Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -70,7 +70,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libc.so.12.193.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libcrypto.so.8.4.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/eabi/libcrypto.so.8.5.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
@@ -167,7 +167,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/eabi/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/eabi/libssl.so.10.6.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx
@@ -222,7 +222,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libc.so.12.193.1.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 #./usr/libdata/debug/usr/lib/eabihf/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libcrypto.so.8.4.debug	comp-crypto-debug	crypto,debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libcrypto.so.8.5.debug	comp-crypto-debug	crypto,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
@@ -319,7 +319,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libssl.so.10.6.debug		comp-crypto-debug	crypto,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 #./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
 #./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx
@@ -375,7 +375,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libc.so.12.193.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libcrypt.so.1.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.4.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.5.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcurses.so.7.0.debug		comp-sys-debug	debug,compat
@@ -472,7 +472,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libssh.so.24.0.debug		comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libssl.so.10.6.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug		comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug		comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.1.debug		comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx
