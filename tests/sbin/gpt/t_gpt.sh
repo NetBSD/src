@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.14 2015/12/27 06:53:48 pgoyette Exp $
+# $NetBSD: t_gpt.sh,v 1.15 2016/03/08 08:04:48 joerg Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -274,6 +274,7 @@ label_2part_body() {
 atf_test_case bootable_2part
 bootable_2part_head() {
 	atf_set "descr" "Make partition 2 bootable in a 2 partition disk"
+	atf_set "require.files" "$bootblk"
 }
 
 bootable_2part_body() {
