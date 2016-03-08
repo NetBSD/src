@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.18.2.8 2015/07/22 16:51:59 snj Exp $
+# $NetBSD: ad.powerpc,v 1.18.2.8.2.1 2016/03/08 13:48:44 martin Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
@@ -161,7 +161,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libc.so.12.193.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libcom_err.so.7.0.debug	comp-compat-shlib	compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libcrypt.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libcrypto.so.8.4.debug		comp-compat-shlib	compat,arch64,debug,pic,crypto
+./usr/libdata/debug/usr/lib/powerpc/libcrypto.so.8.5.debug		comp-compat-shlib	compat,arch64,debug,pic,crypto
 ./usr/libdata/debug/usr/lib/powerpc/libcrypto_rc5.so.7.0.debug		comp-compat-shlib	compat,arch64,debug,pic,crypto,crypto_rc5
 ./usr/libdata/debug/usr/lib/powerpc/libcurses.so.7.0.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libdes.so.8.2.debug			comp-compat-shlib	compat,arch64,debug,pic,crypto
@@ -252,7 +252,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libsl.so.5.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libsqlite3.so.1.2.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libssh.so.24.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libssl.so.10.5.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libssl.so.10.6.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,arch64,debug,pic,libstdcxx
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,arch64,debug,pic,libstdcxx
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.3.debug		comp-compat-shlib	gcc=48,compat,arch64,debug,pic,libstdcxx
