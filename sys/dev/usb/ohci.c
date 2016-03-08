@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.55 2016/02/28 11:51:24 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.56 2016/03/08 21:40:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.55 2016/02/28 11:51:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.56 2016/03/08 21:40:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2581,7 +2581,7 @@ ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		if (len != 4) {
 			return -1;
-			}
+		}
 		v = OREAD4(sc, OHCI_RH_PORT_STATUS(index));
 		DPRINTFN(8, "port status=0x%04x", v, 0, 0, 0);
 		USETW(ps.wPortStatus, v);
