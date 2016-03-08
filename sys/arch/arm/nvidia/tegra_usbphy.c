@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_usbphy.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_usbphy.c,v 1.6 2016/03/08 07:49:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.6 2016/03/08 07:49:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -192,7 +192,6 @@ tegra_usbphy_parse_properties(struct tegra_usbphy_softc *sc)
 static void
 tegra_usbphy_utmip_init(struct tegra_usbphy_softc *sc)
 {
-	static u_int init_count = 0;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int retry;
@@ -230,7 +229,7 @@ tegra_usbphy_utmip_init(struct tegra_usbphy_softc *sc)
 		      TEGRA_EHCI_UTMIP_XCVR_CFG1_TERM_RANGE_ADJ),
 	    TEGRA_EHCI_UTMIP_XCVR_CFG1_TERM_RANGE_ADJ);
 
-	if (atomic_inc_uint_nv(&init_count) == 1) {
+	if (of_getprop_bool(sc->sc_phandle, "nvidia,has-utmi-pad-registers")) {
 		tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG0_REG,
 		    TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL_MSB |
 		    __SHIFTIN(sc->sc_hsdiscon_level,
