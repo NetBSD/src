@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.239 2016/03/04 19:06:32 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.240 2016/03/08 10:07:25 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -12753,7 +12753,25 @@ sys/arch/xen/xen/xennetback_xenbus.c		1.54 via patch
 	possibly leading to arbitrary code execution in backend.
 	[bouyer, ticket #1358]
 
-external/bsd/ntp/dist/sntp/libevent/include/event2/event-config.h	(patch)
+external/bsd/ntp/dist/sntp/libevent/include/event2/event-config.h patch
+
 	Auto-adjust configuration to 32bit/64bit systems.
 	[christos, ticket #1371]
+
+sbin/dump/dump.8				1.67 via patch
+sbin/dump/main.c				1.72
+sbin/dump/rcache.c				1.25
+
+	Default the read block size (-k default value) to kern.maxphys
+	(usually 64k these days). This gives a noticable performance
+	boost on large filesystems.
+	[bouyer, ticket #1331]
+
+sbin/dump/main.c				1.73
+sbin/dump/tape.c				1.54
+
+	Consistently use iswap64() and 64bit intermediate variable, as
+	well as 64bit formats for c_tapea. Fixes tape useage report
+	for large filesystems.
+	[bouyer, ticket #1332]
 
