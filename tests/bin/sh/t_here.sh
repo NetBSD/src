@@ -1,4 +1,4 @@
-# $NetBSD: t_here.sh,v 1.3 2016/03/01 12:39:35 christos Exp $
+# $NetBSD: t_here.sh,v 1.4 2016/03/08 14:21:02 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,12 +42,6 @@ check()
 	rm -f trace.*
 	result="$( ${TEST_SH} -c "${CMD}" 2>"${TEMP_FILE}" )"
 	STATUS=$?
-
-	if [ -s "${O_FILE}" ]; then
-		echo >&2 "unexpected shell output noise on stdout"
-		cat "${O_FILE}" >&2
-		fail=true
-	fi
 
 	if [ "${STATUS}" -ne "$3" ]; then
 		echo >&2 "expected exit code $3, got ${STATUS}"
