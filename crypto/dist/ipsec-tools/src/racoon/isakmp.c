@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.74 2012/01/01 15:57:31 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.75 2016/03/09 22:27:17 christos Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -890,6 +890,10 @@ ph1_main(iph1, msg)
 				/* XXX Don't process INITIAL_CONTACT */
 				iph1->rmconf->ini_contact = 0;
 				break;
+			case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
+				if (iph1->rmconf->mode_cfg)
+					error = isakmp_cfg_getconfig(iph1);
+				break;
 			default:
 				break;
 			}
@@ -944,6 +948,10 @@ ph1_main(iph1, msg)
 				script_hook(iph1, SCRIPT_PHASE1_UP);
 				break;
 			}
+		}
+		if ((iph1->rmconf->mode_cfg) &&
+		    !(iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH)) {
+			error = isakmp_cfg_getconfig(iph1);
 		}
 	}
 
