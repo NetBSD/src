@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.10 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.11 2016/03/09 19:47:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -34,10 +34,6 @@
 
 #ifndef FORMI_INTERNALS_H
 #define FORMI_INTERNALS_H 1
-
-#ifdef DEBUG
-extern FILE *dbg;
-#endif
 
 /* direction definitions for _formi_pos_new_field */
 #define _FORMI_BACKWARD 1
@@ -141,11 +137,9 @@ int
 _formi_sync_buffer(FIELD *field);
 
 #ifdef DEBUG
-int
-_formi_create_dbg_file(void);
+void _formi_dbg_printf(const char *, ...) __printflike(1, 2);
+#else
+#define _formi_dbg_printf(a,...)
 #endif /* DEBUG */
 	
 #endif
-
-
-
