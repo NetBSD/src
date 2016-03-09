@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.28 2009/04/12 06:18:54 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.29 2016/03/09 16:12:14 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.28 2009/04/12 06:18:54 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.29 2016/03/09 16:12:14 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,6 +358,8 @@ find_idle_and_ttywrite(WHERE *w)
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_DEV, w->tty);
 	if (stat(tbuf, &sb) < 0) {
 		warn("%s", tbuf);
+		w->idletime = 0;
+		w->writable = 0;
 		return;
 	}
 	w->idletime = now < sb.st_atime ? 0 : now - sb.st_atime;
