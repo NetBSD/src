@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.25 2013/04/12 10:03:45 tteras Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.26 2016/03/09 22:27:17 christos Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -457,6 +457,7 @@ isakmp_cfg_reply(iph1, attrpl)
 		case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
 		case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_I: 
 		case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I: 
+		case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 			script_hook(iph1, SCRIPT_PHASE1_UP);
 			break;
 		default:
@@ -639,6 +640,7 @@ isakmp_cfg_request(iph1, attrpl)
 		case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
 		case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_R: 
 		case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R: 
+		case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 			script_hook(iph1, SCRIPT_PHASE1_UP);
 			break;
 		default:
