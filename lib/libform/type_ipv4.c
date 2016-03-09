@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv4.c,v 1.10 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: type_ipv4.c,v 1.11 2016/03/09 19:47:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_ipv4.c,v 1.10 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: type_ipv4.c,v 1.11 2016/03/09 19:47:13 christos Exp $");
 
 #include <string.h>
 #include <stdlib.h>
@@ -72,7 +72,7 @@ ipv4_check_field(FIELD *field, char *args)
 		return FALSE;
 
 #ifdef DEBUG
-	fprintf(dbg, "ipv4_check_field: enter with args of %s\n", keeper);
+	_formi_dbg_printf("%s: enter with args of %s\n", __func__, keeper);
 #endif
 	style = FORMI_DOTTED_QUAD;
 	buf = keeper;
@@ -168,8 +168,8 @@ ipv4_check_field(FIELD *field, char *args)
 		set_field_buffer(field, 1, buf1);
 
 #ifdef DEBUG
-	fprintf(dbg, "ipv4_check_field: buf0 set to %s\n", buf);
-	fprintf(dbg, "ipv4_check_field: buf1 set to %s\n", buf1);
+	_formi_dbg_printf("%s: buf0 set to %s\n", __func__, buf);
+	_formi_dbg_printf("%s: buf1 set to %s\n", __func__, buf1);
 #endif
 	free(buf);
 	free(buf1);

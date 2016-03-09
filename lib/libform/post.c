@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.9 2003/03/09 00:57:19 lukem Exp $	*/
+/*	$NetBSD: post.c,v 1.10 2016/03/09 19:47:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: post.c,v 1.9 2003/03/09 00:57:19 lukem Exp $");
+__RCSID("$NetBSD: post.c,v 1.10 2016/03/09 19:47:13 christos Exp $");
 
 #include "form.h"
 #include "internals.h"
@@ -63,11 +63,6 @@ post_form(FORM *form)
 		return E_NO_ROOM;
 	}
 
-#ifdef DEBUG
-	if (_formi_create_dbg_file() != E_OK)
-		return E_SYSTEM_ERROR;
-#endif
-	
 	form->in_init = 1;
 	if (form->form_init != NULL)
 		form->form_init(form);

@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.11 2010/05/13 17:52:12 tnozaki Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.12 2016/03/09 19:47:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_enum.c,v 1.11 2010/05/13 17:52:12 tnozaki Exp $");
+__RCSID("$NetBSD: type_enum.c,v 1.12 2016/03/09 19:47:13 christos Exp $");
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -87,39 +87,28 @@ create_enum_args(va_list *args)
 	enum_args *new;
 	char **choices;
 
-	new = (enum_args *) malloc(sizeof(enum_args));
+	new = malloc(sizeof(*new));
+	if (new == NULL)
+		return NULL;
 
-	if (new != NULL) {
-		new->choices = va_arg(*args, char **);
-		new->ignore_case = (va_arg(*args, int)) ? TRUE : FALSE;
-		new->exact = (va_arg(*args, int)) ? TRUE : FALSE;
+	new->choices = va_arg(*args, char **);
+	new->ignore_case = (va_arg(*args, int)) ? TRUE : FALSE;
+	new->exact = (va_arg(*args, int)) ? TRUE : FALSE;
 
-#ifdef DEBUG
-		if (_formi_create_dbg_file() != E_OK)
-			return NULL;
-		fprintf(dbg,
-			"create_enum_args: ignore_case %d, no_blanks %d\n",
-			new->ignore_case, new->exact);
-#endif
-		
-		  /* count the choices we have */
-		choices = new->choices;
-		new->num_choices = 0;
-		while (*choices != NULL) {
-#ifdef DEBUG
-			fprintf(dbg, "create_enum_args: choice[%d] = \'%s\'\n",
-				new->num_choices,
-				new->choices[new->num_choices]);
-#endif
-			new->num_choices++;
-			choices++;
-		}
-#ifdef DEBUG
-		fprintf(dbg, "create_enum_args: have %d choices\n",
-			new->num_choices);
-#endif
-		
+	_formi_dbg_printf("%s: ignore_case %d, no_blanks %d\n", __func__,
+	    new->ignore_case, new->exact);
+	
+	  /* count the choices we have */
+	choices = new->choices;
+	new->num_choices = 0;
+	while (*choices != NULL) {
+		_formi_dbg_printf("%s: choice[%u] = \'%s\'\n", __func__,
+		    new->num_choices, new->choices[new->num_choices]);
+		new->num_choices++;
+		choices++;
 	}
+	_formi_dbg_printf("%s: have %u choices\n", __func__,
+	    new->num_choices);
 
 	return (void *) new;
 }
@@ -171,9 +160,7 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 	else
 		blen = 0;
 
-#ifdef DEBUG
-	fprintf(dbg, "match_enum: start %d, blen %d\n", start, blen);
-#endif
+	_formi_dbg_printf("%s: start %u, blen %u\n", __func__, start, blen);
 	for (i = 0; i < num_choices; i++) {
 		enum_start = _formi_skip_blanks(choices[i], 0);
 		enum_end = trim_blanks(choices[i]);
@@ -184,12 +171,10 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 		else
 			elen = 0;
 		
-#ifdef DEBUG
-		fprintf(dbg, "match_enum: checking choice \'%s\'\n",
+		_formi_dbg_printf("%s: checking choice \'%s\'\n", __func__,
 			choices[i]);
-		fprintf(dbg, "match_enum: enum_start %d, elen %d\n",
+		_formi_dbg_printf("%s: enum_start %u, elen %u\n", __func__,
 			enum_start, elen);
-#endif
 		
 		  /* don't bother if we are after an exact match
 		   * and the test length is not equal to the enum
@@ -217,10 +202,8 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 					     (size_t) blen) == 0) ?
 				TRUE : FALSE;
 
-#ifdef DEBUG
-		fprintf(dbg, "match_enum: curmatch is %s\n",
+		_formi_dbg_printf("%s: curmatch is %s\n", __func__,
 			(cur_match == TRUE)? "TRUE" : "FALSE");
-#endif
 		
 		if (cur_match == TRUE) {
 			*match_num = i;
@@ -229,9 +212,7 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 
 	}
 
-#ifdef DEBUG
-	fprintf(dbg, "match_enum: no match found\n");
-#endif
+	_formi_dbg_printf("%s: no match found\n", __func__);
 	return FALSE;
 }
 
@@ -251,12 +232,10 @@ enum_check_field(FIELD *field, char *args)
 	
 	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
 		       ta->exact, args, &match_num) == TRUE) {
-#ifdef DEBUG
-		fprintf(dbg, "enum_check_field: We matched, match_num %d\n",
-			match_num);
-		fprintf(dbg, "enum_check_field: buffer is \'%s\'\n",
-			ta->choices[match_num]);
-#endif
+		_formi_dbg_printf("%s: We matched, match_num %u\n", __func__,
+		    match_num);
+		_formi_dbg_printf("%s: buffer is \'%s\'\n", __func__,
+		    ta->choices[match_num]);
 		set_field_buffer(field, 0, ta->choices[match_num]);
 		return TRUE;
 	}
@@ -278,31 +257,23 @@ next_enum(FIELD *field, char *args)
 	
 	ta = (enum_args *) (void *) field->args;
 
-#ifdef DEBUG
-	fprintf(dbg, "next_enum: attempt to match \'%s\'\n", args);
-#endif
+	_formi_dbg_printf("%s: attempt to match \'%s\'\n", __func__, args);
 
 	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
 		       ta->exact, args, &cur_choice) == FALSE) {
-#ifdef DEBUG
-		fprintf(dbg, "next_enum: match failed\n");
-#endif
+		_formi_dbg_printf("%s: match failed\n", __func__);
 		return FALSE;
 	}
 	
-#ifdef DEBUG
-	fprintf(dbg, "next_enum: cur_choice is %d\n", cur_choice);
-#endif
+	_formi_dbg_printf("%s: cur_choice is %u\n", __func__, cur_choice);
 	
 	cur_choice++;
 	
 	if (cur_choice >= ta->num_choices)
 		cur_choice = 0;
 
-#ifdef DEBUG
-	fprintf(dbg, "next_enum: cur_choice is %d on exit\n",
-		cur_choice);
-#endif
+	_formi_dbg_printf("%s: cur_choice is %u on exit\n", __func__,
+	    cur_choice);
 	
 	set_field_buffer(field, 0, ta->choices[cur_choice]);
 	return TRUE;
@@ -322,29 +293,22 @@ prev_enum(FIELD *field, char *args)
 	
 	ta = (enum_args *) (void *) field->args;
 	
-#ifdef DEBUG
-	fprintf(dbg, "prev_enum: attempt to match \'%s\'\n", args);
-#endif
+	_formi_dbg_printf("%s: attempt to match \'%s\'\n", __func__, args);
 
 	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
 		       ta->exact, args, &cur_choice) == FALSE) {
-#ifdef DEBUG
-		fprintf(dbg, "prev_enum: match failed\n");
-#endif
+		_formi_dbg_printf("%s: match failed\n", __func__);
 		return FALSE;
 	}
 
-#ifdef DEBUG
-	fprintf(dbg, "prev_enum: cur_choice is %d\n", cur_choice);
-#endif
+	_formi_dbg_printf("%s: cur_choice is %u\n", __func__, cur_choice);
 	if (cur_choice == 0)
 		cur_choice = ta->num_choices - 1;
 	else
 		cur_choice--;
 	
-#ifdef DEBUG
-	fprintf(dbg, "prev_enum: cur_choice is %d on exit\n", cur_choice);
-#endif
+	_formi_dbg_printf("%s: cur_choice is %u on exit\n",
+	    __func__, cur_choice);
 
 	set_field_buffer(field, 0, ta->choices[cur_choice]);
 	return TRUE;
