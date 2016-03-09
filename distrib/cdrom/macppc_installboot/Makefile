@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.9 2012/12/02 12:55:27 apb Exp $
+#	$NetBSD: Makefile,v 1.10 2016/03/09 15:44:49 christos Exp $
 
+NOMAN=	# defined
+
+.include <bsd.init.mk>
 HOSTPROG=	macppc_installboot
 SRCS=		installboot.c cd9660.c cd9660_util.c
-NOMAN=	# defined
+
+.PATH.c: ${NETBSDSRCDIR}/sys/fs/cd9660
 
 HOST_CPPFLAGS+=	-I. -I${.CURDIR}
 #HOST_CPPFLAGS+=	-DDEBUG

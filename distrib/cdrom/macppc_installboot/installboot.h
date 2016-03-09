@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.3 2009/03/25 15:26:49 tsutsui Exp $	*/
+/*	$NetBSD: installboot.h,v 1.4 2016/03/09 15:44:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -135,8 +135,7 @@ struct bbinfo_params {
 int		cd9660_match(ib_params *);
 int		cd9660_findstage2(ib_params *, uint32_t *, ib_block *);
 
-int	isofncmp(const u_char *, size_t, const u_char *, size_t, int);
-void	isofntrans(u_char *, int, u_char *, u_short *, int, int, int, int);
-
+int isofncmp(const u_char *, size_t, const u_char *, size_t, int);
+void isofntrans(const u_char *, int, u_char *, u_short *, int, int, int, int);
 
 #endif	/* _INSTALLBOOT_H */
