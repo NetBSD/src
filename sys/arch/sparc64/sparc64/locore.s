@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.389 2016/03/03 20:45:45 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.390 2016/03/09 12:20:20 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4123,7 +4123,11 @@ rft_kernel:
 	rdpr	%cwp, %g1
 	dec	%g1
 	wrpr	%g1, %cwp
+#ifdef _LP64
 	FILL	ldxa, %sp+BIAS, 8, %asi
+#else
+	FILL	lda, %sp, 4, %asi
+#endif
 	restored
 	inc	%g1
 	wrpr	%g1, %cwp
