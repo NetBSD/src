@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.56 2016/03/08 21:40:22 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.57 2016/03/09 08:00:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.56 2016/03/08 21:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.57 2016/03/09 08:00:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1483,6 +1483,7 @@ ohci_softintr(void *v)
 			DPRINTFN(5, "add ITD %p", sitd, 0, 0, 0);
 			continue;
 		}
+		DPRINTFN(10, "addr %p not found", done, 0, 0, 0);
 		device_printf(sc->sc_dev, "WARNING: addr 0x%08lx not found\n",
 		    (u_long)done);
 		break;
