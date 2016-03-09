@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.9 2015/05/30 00:56:42 jmcneill Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.10 2016/03/09 20:06:31 christos Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.9 2015/05/30 00:56:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.10 2016/03/09 20:06:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2020,7 +2020,7 @@ ar5008_calib_iq(struct athn_softc *sc)
 		if (cal->pwr_meas_q == 0)
 			continue;
 
-		if ((iq_corr_neg = cal->iq_corr_meas < 0))
+		if ((iq_corr_neg = cal->iq_corr_meas) < 0)
 			cal->iq_corr_meas = -cal->iq_corr_meas;
 
 		i_coff_denom =
