@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.27 2014/03/18 18:20:35 riastradh Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.28 2016/03/09 15:58:25 christos Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1803,7 +1803,7 @@ xauth_rmconf_dup(xauth_rmconf)
 		new = racoon_malloc(sizeof(*new));
 		if (new == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
-			    "xauth_rmconf_dup: malloc failed\n");
+			    "%s: malloc failed\n", __func__);
 			return NULL;
 		}
 
@@ -1813,21 +1813,25 @@ xauth_rmconf_dup(xauth_rmconf)
 			new->login = vdup(xauth_rmconf->login);
 			if (new->login == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL, 
-				    "xauth_rmconf_dup: malloc failed (login)\n");
-				return NULL;
+				    "%s: malloc failed (login)\n", __func__);
+				goto out;
 			}
 		}
 		if (xauth_rmconf->pass != NULL) {
 			new->pass = vdup(xauth_rmconf->pass);
 			if (new->pass == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL, 
-				    "xauth_rmconf_dup: malloc failed (password)\n");
-				return NULL;
+				    "%s: malloc failed (password)\n", __func__);
+				goto out;
 			}
 		}
 
 		return new;
 	}
 
+	return NULL;
+out:
+	vfree(new->login);
+	racoon_free(new);
 	return NULL;
 }
