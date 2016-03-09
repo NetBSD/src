@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.9 2016/02/24 13:31:54 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.10 2016/03/09 20:02:33 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.9 2016/02/24 13:31:54 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.10 2016/03/09 20:02:33 christos Exp $");
 
 #include <sys/ioctl.h>
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: infocmp.c,v 1.9 2016/02/24 13:31:54 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 #include <unistd.h>
+#include <util.h>
 
 #define SW 8
 
@@ -180,7 +181,7 @@ print_ent(const TIENT *ents, size_t nents)
 				l = strlen(ents[i].id) + 3;
 			break;
 		default:
-			errx(1, "invalid type");
+			errx(EXIT_FAILURE, "invalid type");
 		}
 		if (col != SW) {
 			if (col + l > cols) {
@@ -431,9 +432,7 @@ load_term(const char *name)
 {
 	TERMINAL *t;
 
-	t = calloc(1, sizeof(*t));
-	if (t == NULL)
-		err(1, "calloc");
+	t = ecalloc(1, sizeof(*t));
 	if (name == NULL)
 		name = getenv("TERM");
 	if (name == NULL)
@@ -442,9 +441,9 @@ load_term(const char *name)
 		return t;
 
 	if (_ti_database == NULL)
-		errx(1, "no terminal definition found in internal database");
+		errx(EXIT_FAILURE, "no terminal definition found in internal database");
 	else
-		errx(1, "no terminal definition found in %s.db", _ti_database);
+		errx(EXIT_FAILURE, "no terminal definition found in %s.db", _ti_database);
 }
 
 static void
@@ -507,15 +506,13 @@ use_terms(TERMINAL *term, size_t nuse, char **uterms)
 	TERMUSERDEF *ud, *tud;
 	size_t i, j, agree, absent, data;
 
-	terms = malloc(sizeof(**terms) * nuse);
-	if (terms == NULL)
-		err(1, "malloc");
+	terms = ecalloc(nuse, sizeof(**terms));
 	for (i = 0; i < nuse; i++) {
 		if (strcmp(term->name, *uterms) == 0)
-			errx(1, "cannot use same terminal");
+			errx(EXIT_FAILURE, "cannot use same terminal");
 		for (j = 0; j < i; j++)
 			if (strcmp(terms[j]->name, *uterms) == 0)
-				errx(1, "cannot use same terminal");
+				errx(EXIT_FAILURE, "cannot use same terminal");
 		terms[i] = load_term(*uterms++);
 	}
 
@@ -628,10 +625,8 @@ use_terms(TERMINAL *term, size_t nuse, char **uterms)
 			ud = find_userdef(term, terms[i]->_userdefs[j].id);
 			if (ud != NULL)
 				continue; /* We have handled this */
-			term->_userdefs = realloc(term->_userdefs,
+			term->_userdefs = erealloc(term->_userdefs,
 			    sizeof(*term->_userdefs) * (term->_nuserdefs + 1));
-			if (term->_userdefs == NULL)
-				err(1, "malloc");
 			tud = &term->_userdefs[term->_nuserdefs++];
 			tud->id = terms[i]->_userdefs[j].id;
 			tud->type = terms[i]->_userdefs[j].flag;
