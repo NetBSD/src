@@ -1,7 +1,7 @@
-/*	$NetBSD: query.c,v 1.20 2015/12/17 04:00:41 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.21 2016/03/10 04:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -3255,7 +3255,8 @@ query_addbestns(ns_client_t *client) {
 		goto cleanup;
 
 	/*
-	 * If the answer is secure only add NS records if they are secure		 * when the client may be looking for AD in the response.
+	 * If the answer is secure only add NS records if they are secure
+	 * when the client may be looking for AD in the response.
 	 */
 	if (SECURE(client) && (WANTDNSSEC(client) || WANTAD(client)) &&
 	    ((rdataset->trust != dns_trust_secure) ||
