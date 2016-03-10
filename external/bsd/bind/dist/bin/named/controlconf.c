@@ -1,7 +1,7 @@
-/*	$NetBSD: controlconf.c,v 1.10 2014/12/10 04:37:51 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.11 2016/03/10 04:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -404,7 +404,7 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 	 * Limit exposure to replay attacks.
 	 */
 	_ctrl = isccc_alist_lookup(request, "_ctrl");
-	if (_ctrl == NULL) {
+	if (!isccc_alist_alistp(_ctrl)) {
 		log_invalid(&conn->ccmsg, ISC_R_FAILURE);
 		goto cleanup_request;
 	}
