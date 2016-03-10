@@ -51,12 +51,18 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
+
+BIND 9.10.3-P4
+
+	BIND 9.10.3-P4 is a security release addressing the flaws
+	described in CVE-2016-1285, CVE-2016-1286 and CVE-2016-2088.
+
 BIND 9.10.3-P3
 
-      BIND 9.10.3-P3 is a security release addressing the flaws
-      described in CVE-2015-8704 and CVE-2015-8705. It also fixes a
-      serious regression in authoritative server selection that was
-      introduced in BIND 9.10.3.
+	BIND 9.10.3-P3 is a security release addressing the flaws
+	described in CVE-2015-8704 and CVE-2015-8705. It also fixes
+	a serious regression in authoritative server selection that
+	was introduced in BIND 9.10.3.
 
 BIND 9.10.3-P2
 

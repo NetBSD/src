@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.14 2015/12/17 04:00:41 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.15 2016/03/10 04:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -124,7 +124,10 @@
  */
 #endif
 
-#define SIT_SIZE 24U /* 8 + 4 + 4 + 8 */
+#define COOKIE_SIZE 24U /* 8 + 4 + 4 + 8 */
+
+#define WANTNSID(x) (((x)->attributes & NS_CLIENTATTR_WANTNSID) != 0)
+#define WANTEXPIRE(x) (((x)->attributes & NS_CLIENTATTR_WANTEXPIRE) != 0)
 
 /*% nameserver client manager structure */
 struct ns_clientmgr {
@@ -1399,7 +1402,7 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 {
 	char nsid[BUFSIZ], *nsidp;
 #ifdef ISC_PLATFORM_USESIT
-	unsigned char sit[SIT_SIZE];
+	unsigned char sit[COOKIE_SIZE];
 #endif
 	isc_result_t result;
 	dns_view_t *view;
@@ -1424,7 +1427,7 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 	flags = client->extflags & DNS_MESSAGEEXTFLAG_REPLYPRESERVE;
 
 	/* Set EDNS options if applicable */
-	if ((client->attributes & NS_CLIENTATTR_WANTNSID) != 0 &&
+	if (WANTNSID(client) &&
 	    (ns_g_server->server_id != NULL ||
 	     ns_g_server->server_usehostname)) {
 		if (ns_g_server->server_usehostname) {
@@ -1457,7 +1460,7 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 
 		INSIST(count < DNS_EDNSOPTIONS);
 		ednsopts[count].code = DNS_OPT_COOKIE;
-		ednsopts[count].length = SIT_SIZE;
+		ednsopts[count].length = COOKIE_SIZE;
 		ednsopts[count].value = sit;
 		count++;
 	}
@@ -1665,19 +1668,26 @@ compute_sit(ns_client_t *client, isc_uint32_t when, isc_uint32_t nonce,
 
 static void
 process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
-	unsigned char dbuf[SIT_SIZE];
+	unsigned char dbuf[COOKIE_SIZE];
 	unsigned char *old;
 	isc_stdtime_t now;
 	isc_uint32_t when;
 	isc_uint32_t nonce;
 	isc_buffer_t db;
 
+	/*
+	 * If we have already seen a ECS option skip this ECS option.
+	 */
+	if ((client->attributes & NS_CLIENTATTR_WANTSIT) != 0) {
+		isc_buffer_forward(buf, optlen);
+		return;
+	}
 	client->attributes |= NS_CLIENTATTR_WANTSIT;
 
 	isc_stats_increment(ns_g_server->nsstats,
 			    dns_nsstatscounter_sitopt);
 
-	if (optlen != SIT_SIZE) {
+	if (optlen != COOKIE_SIZE) {
 		/*
 		 * Not our token.
 		 */
@@ -1721,14 +1731,13 @@ process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	isc_buffer_init(&db, dbuf, sizeof(dbuf));
 	compute_sit(client, when, nonce, &db);
 
-	if (!isc_safe_memequal(old, dbuf, SIT_SIZE)) {
+	if (!isc_safe_memequal(old, dbuf, COOKIE_SIZE)) {
 		isc_stats_increment(ns_g_server->nsstats,
 				    dns_nsstatscounter_sitnomatch);
 		return;
 	}
 	isc_stats_increment(ns_g_server->nsstats,
 			    dns_nsstatscounter_sitmatch);
-
 	client->attributes |= NS_CLIENTATTR_HAVESIT;
 }
 #endif
@@ -1787,7 +1796,9 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 			optlen = isc_buffer_getuint16(&optbuf);
 			switch (optcode) {
 			case DNS_OPT_NSID:
-				isc_stats_increment(ns_g_server->nsstats,
+				if (!WANTNSID(client))
+					isc_stats_increment(
+						    ns_g_server->nsstats,
 						    dns_nsstatscounter_nsidopt);
 				client->attributes |= NS_CLIENTATTR_WANTNSID;
 				isc_buffer_forward(&optbuf, optlen);
@@ -1798,7 +1809,9 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 				break;
 #endif
 			case DNS_OPT_EXPIRE:
-				isc_stats_increment(ns_g_server->nsstats,
+				if (!WANTEXPIRE(client))
+					isc_stats_increment(
+						  ns_g_server->nsstats,
 						  dns_nsstatscounter_expireopt);
 				client->attributes |= NS_CLIENTATTR_WANTEXPIRE;
 				isc_buffer_forward(&optbuf, optlen);
