@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- - Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,10 @@
     <title>Introduction</title>
     <para>
       This document summarizes changes since BIND 9.10.3:
+    </para>
+    <para>
+      BIND 9.10.3-P4 addresses the security issues described in
+      CVE-2016-1285, CVE-2016-1286 and CVE-2016-2088.
     </para>
     <para>
       BIND 9.10.3-P3 addresses the security issues described in
@@ -52,9 +56,23 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  Specific APL data could trigger an INSIST.  This flaw
-	  was discovered by Brian Mitchell and is disclosed in
-	  CVE-2015-8704. [RT #41396]
+	  Duplicate EDNS COOKIE options in a response could trigger
+	  an assertion failure. This flaw is disclosed in CVE-2016-2088.
+	  [RT #41809]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  The resolver could abort with an assertion failure due to
+	  improper DNAME handling when parsing fetch reply
+	  messages. This flaw is disclosed in CVE-2016-1286. [RT #41753]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Malformed control messages can trigger assertions in named
+	  and rndc. This flaw is disclosed in CVE-2016-1285. [RT
+	  #41666]
 	</para>
       </listitem>
       <listitem>
@@ -62,14 +80,26 @@
 	  Certain errors that could be encountered when printing out
 	  or logging an OPT record containing a CLIENT-SUBNET option
 	  could be mishandled, resulting in an assertion failure.
-	  This flaw was discovered by Brian Mitchell and is disclosed
-	  in CVE-2015-8705. [RT #41397]
+	  This flaw is disclosed in CVE-2015-8705. [RT #41397]
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  Named is potentially vulnerable to the OpenSSL vulnerabilty
+	  Specific APL data could trigger an INSIST.  This flaw
+	  is disclosed in CVE-2015-8704. [RT #41396]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Named is potentially vulnerable to the OpenSSL vulnerability
 	  described in CVE-2015-3193.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Incorrect reference counting could result in an INSIST
+	  failure if a socket error occurred while performing a
+	  lookup.  This flaw is disclosed in CVE-2015-8461. [RT#40945]
 	</para>
       </listitem>
       <listitem>
@@ -79,13 +109,6 @@
 	  triggering a REQUIRE failure when those records
 	  were subsequently cached.  This flaw is disclosed
 	  in CVE-2015-8000. [RT #40987]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Incorrect reference counting could result in an INSIST
-	  failure if a socket error occurred while performing a
-	  lookup.  This flaw is disclosed in CVE-2015-8461. [RT#40945]
 	</para>
       </listitem>
     </itemizedlist>
