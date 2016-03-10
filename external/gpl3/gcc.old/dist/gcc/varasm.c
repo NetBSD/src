@@ -6659,6 +6659,17 @@ default_binds_local_p_3 (const_tree exp, bool shlib, bool weak_dominate,
       else if (vnode && resolution_local_p (vnode->symbol.resolution))
 	resolved_locally = true;
     }
+  else if (TREE_CODE (exp) == FUNCTION_DECL && TREE_PUBLIC (exp))
+    {
+      struct cgraph_node *cnode = cgraph_get_node (exp);
+      if (cnode && cnode->symbol.in_other_partition)
+	defined_locally = true;
+      if (cnode && resolution_to_local_definition_p (cnode->symbol.resolution))
+	defined_locally = resolved_locally = true;
+      else if (cnode && resolution_local_p (cnode->symbol.resolution))
+	resolved_locally = true;
+    }
+
   if (defined_locally && weak_dominate && !shlib)
     resolved_locally = true;
 
