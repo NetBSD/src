@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.30 2016/02/27 19:25:08 joerg Exp $
+#	$NetBSD: Makefile.buildboot,v 1.31 2016/03/10 09:00:24 martin Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -12,6 +12,8 @@ COMMONSOURCE=	srt0.S promdev.c dvma.c promlib.c isfloppy.c
 SRCS=		${COMMONSOURCE} ${PROGSOURCE}
 NOMAN=		# defined
 BINMODE=	444
+
+.include <bsd.own.mk>
 
 #
 # The relocation address for `boot' must leave enough free memory below
