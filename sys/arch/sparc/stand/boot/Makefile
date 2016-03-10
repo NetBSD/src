@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2011/08/28 08:03:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.39 2016/03/10 20:23:35 martin Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -38,7 +38,7 @@ vers.c: version
 
 .for RELOC in ${RELOCS}
 boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -o ${.TARGET}.tmp ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
+	${LD} -S -o ${.TARGET}.tmp ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${.TARGET}.tmp
 	${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
@@ -55,7 +55,7 @@ boot.net: boot.${RELOC_DEFAULT}
 	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
 
 bootjs.net: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext 300000 ${OBJS} \
+	${LD} -S -o ${.TARGET} ${LINKFLAGS} -Ttext 300000 ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${.TARGET}
 CLEANFILES+=	bootjs.net.map
