@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.49 2014/09/24 18:16:36 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.50 2016/03/10 18:53:48 leot Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -83,6 +83,7 @@ char	*strdup(const char *);
     defined(_NETBSD_SOURCE)
 char	*stpcpy(char * __restrict, const char * __restrict);
 char	*stpncpy(char * __restrict, const char * __restrict, size_t);
+char	*strndup(const char *, size_t);
 size_t	strnlen(const char *, size_t);
 #ifndef __STRSIGNAL_DECLARED
 #define __STRSIGNAL_DECLARED
@@ -101,7 +102,6 @@ size_t	 strlcat(char *, const char *, size_t);
 size_t	 strlcpy(char *, const char *, size_t);
 char	*strsep(char **, const char *);
 char	*stresep(char **, const char *, int);
-char	*strndup(const char *, size_t);
 char	*strnstr(const char *, const char *, size_t);
 void	*memrchr(const void *, int, size_t);
 void	*explicit_memset(void *, int, size_t);
