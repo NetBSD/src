@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2139 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2140 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -253,3 +253,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	mv(1): Add SIGINFO support. [mrg 20160228]
 	openssl: Import openssl 1.0.1s - disable weak (export) ciphers and SSLv2
 		[christos 20160301]
+	bind: Import version 9.10.3-P4. [christos 20160309]
