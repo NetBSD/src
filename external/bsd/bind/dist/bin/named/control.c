@@ -1,7 +1,7 @@
-/*	$NetBSD: control.c,v 1.9 2015/12/17 04:00:41 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.10 2016/03/10 04:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -71,7 +71,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 #endif
 
 	data = isccc_alist_lookup(message, "_data");
-	if (data == NULL) {
+	if (!isccc_alist_alistp(data)) {
 		/*
 		 * No data section.
 		 */
