@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.1.1.18 2016/01/20 01:52:16 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.1.1.19 2016/03/10 03:22:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -3375,7 +3375,7 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 				ADD_STRING(target, "; CLIENT-SUBNET");
 				isc_buffer_init(&ecsbuf,
 						isc_buffer_current(&optbuf),
-					        optlen);
+						optlen);
 				isc_buffer_add(&ecsbuf, optlen);
 				result = render_ecs(&ecsbuf, target);
 				if (result == ISC_R_NOSPACE)
