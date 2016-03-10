@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.11 2016/02/27 19:26:14 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2016/03/10 09:00:24 martin Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
 __INCLUDED_STAND_MAKEFILE_INC=
+
+.include <bsd.own.mk>
 
 BINDIR=		/usr/mdec
 
