@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.2 2016/03/08 14:26:54 christos Exp $
+# $NetBSD: t_fsplit.sh,v 1.3 2016/03/10 22:30:57 christos Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,9 @@
 # So: sh -c 'set ${x-a b c}; echo $#' should give 3.
 # and: sh -c 'set -- ${x-}' echo $#' shold give 0
 #
+
+# the implementation of "sh" to test
+: ${TEST_SH:="/bin/sh"}
 
 nl='
 '
