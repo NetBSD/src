@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.h,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/*	$NetBSD: channels.h,v 1.8.4.2 2016/03/11 12:22:42 martin Exp $	*/
 /* $OpenBSD: channels.h,v 1.116 2015/01/19 20:07:45 markus Exp $ */
 
 /*
@@ -287,6 +287,7 @@ int	 permitopen_port(const char *);
 
 /* x11 forwarding */
 
+void	 channel_set_x11_refuse_time(u_int);
 int	 x11_connect_display(void);
 int	 x11_create_display_inet(int, int, int, u_int *, int **);
 int      x11_input_open(int, u_int32_t, void *);

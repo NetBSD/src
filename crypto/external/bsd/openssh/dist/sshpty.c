@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.c,v 1.2.26.1 2015/04/30 06:07:31 riz Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.2.26.2 2016/03/11 12:22:42 martin Exp $	*/
 /* $OpenBSD: sshpty.c,v 1.29 2014/09/03 18:55:07 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshpty.c,v 1.2.26.1 2015/04/30 06:07:31 riz Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.2.26.2 2016/03/11 12:22:42 martin Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -145,7 +145,7 @@ pty_setowner(struct passwd *pw, const char *tty)
 	/* Determine the group to make the owner of the tty. */
 	grp = getgrnam("tty");
 	gid = (grp != NULL) ? grp->gr_gid : pw->pw_gid;
-	mode = (grp != NULL) ? 0622 : 0600;
+	mode = (grp != NULL) ? 0620 : 0600;
 
 	/*
 	 * Change owner and mode of the tty as required.
