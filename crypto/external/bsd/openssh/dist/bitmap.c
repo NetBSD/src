@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.c,v 1.2 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: bitmap.c,v 1.3 2016/03/11 01:55:00 christos Exp $	*/
 /*
  * Copyright (c) 2015 Damien Miller <djm@mindrot.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: bitmap.c,v 1.2 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: bitmap.c,v 1.3 2016/03/11 01:55:00 christos Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -54,7 +54,7 @@ void
 bitmap_free(struct bitmap *b)
 {
 	if (b != NULL && b->d != NULL) {
-		memset(b->d, 0, b->len);
+		explicit_bzero(b->d, b->len);
 		free(b->d);
 	}
 	free(b);
