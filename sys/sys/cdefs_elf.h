@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.49 2015/05/08 13:58:53 christos Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.50 2016/03/11 00:44:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -173,9 +173,10 @@
 #define	__link_set_start(set)	(__start_link_set_##set)
 #define	__link_set_end(set)	(__stop_link_set_##set)
 
+/* XXX: we want end to be __weak, but this is broken */
 #define	__link_set_decl(set, ptype)					\
 	extern ptype * const __link_set_start(set)[] __dso_hidden;	\
-	extern ptype * const __link_set_end(set)[] __weak __dso_hidden
+	extern ptype * const __link_set_end(set)[] __dso_hidden
 
 #define	__link_set_count(set)						\
 	(__link_set_end(set) - __link_set_start(set))
