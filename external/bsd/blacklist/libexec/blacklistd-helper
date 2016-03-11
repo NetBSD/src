@@ -69,8 +69,10 @@ flush)
 	case "$pf" in 
 	npf)
 		/sbin/npfctl rule "$2" flush
+		;;
 	pf)
 		/sbin/pfctl -a "$2" -t "port$6" -T flush
+		;;
 	esac
 	;;
 *)
