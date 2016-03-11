@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.22 2011/08/12 05:21:50 tteras Exp $	*/
+/*	$NetBSD: privsep.c,v 1.23 2016/03/11 18:28:43 christos Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -1261,7 +1261,7 @@ privsep_setsockopt(s, level, optname, optval, optlen)
 	struct sockopt_args sockopt_args;
 	int err, saved_errno = 0;
 
-	if ((err = setsockopt(s, level, optname, optval, optlen) == 0) || 
+	if ((err = setsockopt(s, level, optname, optval, optlen)) == 0 || 
 	    (saved_errno = errno) != EACCES ||
 	    geteuid() == 0) {
 		if (saved_errno)
