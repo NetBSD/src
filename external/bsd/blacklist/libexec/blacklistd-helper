@@ -9,30 +9,65 @@
 # $6 port
 # $7 id
 
+if [ -f /etc/pf.conf ]; then
+	pf="pf"
+elif [ -f /etc/npf.conf ]; then
+	pf="npf"
+else
+	echo "$0: Unsupported packet filter" 1>&2
+	exit 1
+fi
+
+if [ -n "$3" ]; then
+	proto="proto $3"
+fi
+
+if [ -n "$6" ]; then
+	port="port $6"
+fi
+
+addr=$4
+mask=$5
+case "$4" in
+::ffff:*.*.*.*)
+	if [ "$5" = 128 ]; then
+		mask=32
+		addr=${4#::ffff:}
+	fi;;
+esac
+
 case "$1" in
 add)
-	if [ -n "$3" ]; then
-		proto="proto $3"
-	fi
-	if [ -n "$6" ]; then
-		port="port $6"
-	fi
-	addr=$4
-	mask=$5
-	case "$4" in
-	::ffff:*.*.*.*)
-		if [ "$5" = 128 ]; then
-			mask=32
-			addr=${4#::ffff:}
-		fi;;
+	case "$pf" in
+	pf)
+		# insert $ip/$mask into per-protocol anchored table
+		/sbin/pfctl -a "$2" -t "port$6" -T add "$addr/$mask"
+		echo "block in quick $proto from <port$6> to any $port" | \
+		    /sbin/pfctl -a "$2" -f -
+		;;
+	npf)
+		/sbin/npfctl rule $2 add block in final $proto from \
+		    $addr/$mask to any $port
+		;;
 	esac
-	exec /sbin/npfctl rule $2 add block in final $proto from $addr/$mask to any $port
 	;;
 rem)
-	exec /sbin/npfctl rule $2 rem-id $7
+	case "$pf" in
+	pf)
+		/sbin/pfctl -a "$2" -t "port$6" -T delete "$addr/$mask"
+		;;
+	npf)
+		/sbin/npfctl rule "$2" rem-id "$7"
+		;;
+	esac
 	;;
 flush)
-	exec /sbin/npfctl rule $2 flush
+	case "$pf" in 
+	pf)
+		/sbin/pfctl -a "$2" -t "port$6" -T flush
+	npf)
+		/sbin/npfctl rule "$2" flush
+	esac
 	;;
 *)
 	echo "$0: Unknown command '$1'" 1>&2
