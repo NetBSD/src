@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.8,v 1.14 2015/06/04 16:11:48 wiz Exp $
+.\" $NetBSD: blacklistd.8,v 1.15 2016/03/11 17:16:40 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@ If no such file is specified, then it only listens to the socket path
 specified by
 .Ar sockspath
 or if that is not specified to
-.Pa /var/run/blsock .
+.Pa /var/run/blacklistd.sock .
 Each notification contains an (action, port, protocol, address, owner) tuple
 that identifies the remote connection and the action.
 This tuple is consulted against entries in
@@ -206,7 +206,7 @@ Shell script invoked to interface with the packet filter.
 Configuration file.
 .It Pa /var/db/blacklistd.db
 Database of current connection entries.
-.It Pa /var/run/blsock
+.It Pa /var/run/blacklistd.sock
 Socket to receive connection notifications.
 .El
 .Sh SEE ALSO
