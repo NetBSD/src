@@ -1,4 +1,4 @@
-/*	$NetBSD: file2swp.c,v 1.6 2009/03/18 10:22:26 cegger Exp $	*/
+/*	$NetBSD: file2swp.c,v 1.7 2016/03/11 18:29:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "cread.h"
 
 char		*Infile = "minifs.gz";
-const char	version[] = "$Revision: 1.6 $";
+const char	version[] = "$Revision: 1.7 $";
 
 extern const char	*program_name;
 
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 	  case 'y':
 	  case 'Y':
 		currblk = start;
-		while(c = read(fd, buf, sizeof(buf)) > 0) {
+		while((c = read(fd, buf, sizeof(buf)) > 0) {
 		    if (disk_write(dd, currblk, 1, buf) < 0) {
 			eprintf("Error writing to swap partition\n");
 			xexit(1);
