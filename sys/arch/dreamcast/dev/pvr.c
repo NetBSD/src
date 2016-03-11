@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.35 2014/03/26 16:08:45 christos Exp $	*/
+/*	$NetBSD: pvr.c,v 1.36 2016/03/11 13:16:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.35 2014/03/26 16:08:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.36 2016/03/11 13:16:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ pvr_attach(device_t parent, device_t self, void *aux)
 		sc->sc_nscreens = 1;
 	} else {
 		sc->sc_dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF,
-		    M_WAITOK);
+		    M_WAITOK | M_ZERO);
 		pvr_getdevconfig(sc->sc_dc);
 	}
 	printf(": %d x %d, %dbpp, %s, %s\n", sc->sc_dc->dc_wid,
