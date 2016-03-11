@@ -26,6 +26,7 @@
 #ifndef SSHKEY_H
 #define SSHKEY_H
 
+#include "includes.h"
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
