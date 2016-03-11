@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.8 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.9 2016/03/11 18:34:15 christos Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.8 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.9 2016/03/11 18:34:15 christos Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -634,7 +634,7 @@ cmalo_media_change(struct ifnet *ifp)
 {
 	int error;
 
-	if ((error = ieee80211_media_change(ifp) != ENETRESET))
+	if ((error = ieee80211_media_change(ifp))_ != ENETRESET)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
