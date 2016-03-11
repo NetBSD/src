@@ -1,9 +1,10 @@
-/*	$NetBSD: auth-krb5.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: auth-krb5.c,v 1.20 2013/07/20 01:55:13 djm Exp $ */
+/*	$NetBSD: auth-krb5.c,v 1.8 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: auth-krb5.c,v 1.21 2016/01/27 06:44:58 djm Exp $ */
+
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
  *
- * $FreeBSD: src/crypto/openssh/auth-krb5.c,v 1.6 2001/02/13 16:58:04 assar Exp $
+ * From: FreeBSD: src/crypto/openssh/auth-krb5.c,v 1.6 2001/02/13 16:58:04 assar
  */
 /*
  * Copyright (c) 2002 Daniel Kouril.  All rights reserved.
@@ -30,7 +31,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-krb5.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: auth-krb5.c,v 1.8 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>

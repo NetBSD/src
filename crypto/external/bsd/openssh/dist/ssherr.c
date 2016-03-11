@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssherr.c,v 1.4 2015/02/16 22:13:32 djm Exp $	*/
+/*	$OpenBSD: ssherr.c,v 1.5 2015/09/13 14:39:16 tim Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssherr.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: ssherr.c,v 1.4 2016/03/11 01:55:00 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -107,7 +107,7 @@ ssh_err(int n)
 	case SSH_ERR_NEED_REKEY:
 		return "rekeying not supported by peer";
 	case SSH_ERR_PASSPHRASE_TOO_SHORT:
-		return "passphrase is too short (minimum four characters)";
+		return "passphrase is too short (minimum five characters)";
 	case SSH_ERR_FILE_CHANGED:
 		return "file changed while reading";
 	case SSH_ERR_KEY_UNKNOWN_CIPHER:

@@ -1,5 +1,6 @@
-/*	$NetBSD: xmalloc.c,v 1.6 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: xmalloc.c,v 1.32 2015/04/24 01:36:01 deraadt Exp $ */
+/*	$NetBSD: xmalloc.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: xmalloc.c,v 1.33 2016/02/15 09:47:49 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.6 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -25,6 +26,16 @@ __RCSID("$NetBSD: xmalloc.c,v 1.6 2015/07/03 01:00:00 christos Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
+
+void
+ssh_malloc_init(void)
+{
+#ifndef __NetBSD__
+	extern char *malloc_options;
+
+	malloc_options = "S";
+#endif
+}
 
 void *
 xmalloc(size_t size)
