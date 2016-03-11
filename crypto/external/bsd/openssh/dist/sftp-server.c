@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.107 2015/08/20 22:32:42 deraadt Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.109 2016/02/15 09:47:49 dtucker Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -1483,6 +1483,7 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 	extern char *optarg;
 	extern char *__progname;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	log_init(__progname, log_level, log_facility, log_stderr);
 
 	pw = pwcopy(user_pw);
@@ -1584,9 +1585,8 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 	if ((oqueue = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
 
-	set_size = howmany(max + 1, NFDBITS) * sizeof(fd_mask);
-	rset = xmalloc(set_size);
-	wset = xmalloc(set_size);
+	rset = xcalloc(howmany(max + 1, NFDBITS), sizeof(fd_mask));
+	wset = xcalloc(howmany(max + 1, NFDBITS), sizeof(fd_mask));
 
 	if (homedir != NULL) {
 		if (chdir(homedir) != 0) {
@@ -1595,6 +1595,7 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 		}
 	}
 
+	set_size = howmany(max + 1, NFDBITS) * sizeof(fd_mask);
 	for (;;) {
 		memset(rset, 0, set_size);
 		memset(wset, 0, set_size);
