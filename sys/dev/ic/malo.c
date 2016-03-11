@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.4 2016/03/11 18:33:18 christos Exp $ */
+/*	$NetBSD: malo.c,v 1.5 2016/03/11 22:39:01 macallan Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.4 2016/03/11 18:33:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.5 2016/03/11 22:39:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -622,7 +622,7 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 			goto fail;
 		}
 
-		desc->status = htole16(1);
+		desc->status = 1;
 		desc->physdata = htole32(data->map->dm_segs->ds_addr);
 		desc->physnext = htole32(ring->physaddr +
 		    (i + 1) % count * sizeof(struct malo_rx_desc));
