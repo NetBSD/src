@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.3 2012/08/05 09:16:54 degroote Exp $ */
+/*	$NetBSD: malo.c,v 1.4 2016/03/11 18:33:18 christos Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.3 2012/08/05 09:16:54 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.4 2016/03/11 18:33:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1623,7 +1623,7 @@ malo_get_firmware(struct malo_softc *sc, const char *name,
 
 
 	/* load firmware image from disk */
-	if ((error = firmware_open("malo", name, &fw) != 0)) {
+	if ((error = firmware_open("malo", name, &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		return error;
 	}
