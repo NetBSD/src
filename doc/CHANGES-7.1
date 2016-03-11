@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.69 2016/03/08 21:32:49 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.70 2016/03/11 12:26:30 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -3003,4 +3003,15 @@ doc/3RDPARTY						 patch
 	This includes "DROWN". Backward binary compatibility has been
 	preserved, but no SSLv2 code is available.
 	[spz, ticket #1127]
+
+crypto/external/bsd/openssh/dist/channels.c		(patch)
+crypto/external/bsd/openssh/dist/channels.h		(patch)
+crypto/external/bsd/openssh/dist/clientloop.c		(patch)
+crypto/external/bsd/openssh/dist/sshpty.c		(patch)
+
+	OpenSSH:
+	- Refuse ForwardX11Trusted=no connections attempted after
+	  ForwardX11Timeout expires.  (CVE-2015-5352)
+	- Fix TTY permissions to not be world-writable.  (CVE-2015-6565)
+	[snj, ticket #1138]
 
