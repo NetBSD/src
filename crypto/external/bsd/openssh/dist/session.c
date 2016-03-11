@@ -1,5 +1,6 @@
-/*	$NetBSD: session.c,v 1.17 2016/02/04 15:04:11 seanb Exp $	*/
-/* $OpenBSD: session.c,v 1.278 2015/04/24 01:36:00 deraadt Exp $ */
+/*	$NetBSD: session.c,v 1.18 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.280 2016/02/16 03:37:48 djm Exp $ */
+
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.17 2016/02/04 15:04:11 seanb Exp $");
+__RCSID("$NetBSD: session.c,v 1.18 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -147,6 +148,7 @@ login_cap_t *lc;
 #endif
 
 static int is_child = 0;
+static int in_chroot = 0;
 
 /* Name and directory of socket for authentication agent forwarding. */
 static char *auth_sock_name = NULL;
@@ -768,8 +770,8 @@ int
 do_exec(Session *s, const char *command)
 {
 	int ret;
-	const char *forced = NULL;
-	char session_type[1024], *tty = NULL;
+	const char *forced = NULL, *tty = NULL;
+	char session_type[1024];
 
 	if (options.adm_forced_command) {
 		original_command = command;
@@ -804,13 +806,14 @@ do_exec(Session *s, const char *command)
 			tty += 5;
 	}
 
-	verbose("Starting session: %s%s%s for %s from %.200s port %d",
+	verbose("Starting session: %s%s%s for %s from %.200s port %d id %d",
 	    session_type,
 	    tty == NULL ? "" : " on ",
 	    tty == NULL ? "" : tty,
 	    s->pw->pw_name,
 	    get_remote_ipaddr(),
-	    get_remote_port());
+	    get_remote_port(),
+	    s->self);
 
 #ifdef GSSAPI
 	if (options.gss_authentication) {
@@ -1459,7 +1462,7 @@ do_setusercontext(struct passwd *pw)
 		}
 # endif /* USE_PAM */
 #endif
-		if (options.chroot_directory != NULL &&
+		if (!in_chroot && options.chroot_directory != NULL &&
 		    strcasecmp(options.chroot_directory, "none") != 0) {
                         tmp = tilde_expand_filename(options.chroot_directory,
 			    pw->pw_uid);
@@ -1471,6 +1474,7 @@ do_setusercontext(struct passwd *pw)
 			/* Make sure we don't attempt to chroot again */
 			free(options.chroot_directory);
 			options.chroot_directory = NULL;
+			in_chroot = 1;
 		}
 
 #ifdef HAVE_LOGIN_CAP
@@ -1680,11 +1684,11 @@ do_child(Session *s, const char *command)
 	if (chdir(pw->pw_dir) < 0) {
 		/* Suppress missing homedir warning for chroot case */
 		r = login_getcapbool(lc, "requirehome", 0);
-		if (r || options.chroot_directory == NULL ||
-		    strcasecmp(options.chroot_directory, "none") == 0)
+		if (r || !in_chroot) {
 			fprintf(stderr, "Could not chdir to home "
 			    "directory %s: %s\n", pw->pw_dir,
 			    strerror(errno));
+		}
 		if (r)
 			exit(1);
 	}
@@ -2392,7 +2396,12 @@ session_close(Session *s)
 {
 	u_int i;
 
-	debug("session_close: session %d pid %ld", s->self, (long)s->pid);
+	verbose("Close session: user %s from %.200s port %d id %d",
+	    s->pw->pw_name,
+	    get_remote_ipaddr(),
+	    get_remote_port(),
+	    s->self);
+
 	if (s->ttyfd != -1)
 		session_pty_cleanup(s);
 	free(s->term);

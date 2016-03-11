@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.14 2016/01/14 22:30:04 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.110 2015/07/10 06:21:53 markus Exp $ */
+/*	$NetBSD: readconf.h,v 1.15 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.113 2016/01/14 16:17:40 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -110,6 +110,13 @@ typedef struct {
 	int    identity_file_userprovided[SSH_MAX_IDENTITY_FILES];
 	struct sshkey *identity_keys[SSH_MAX_IDENTITY_FILES];
 
+	int	num_certificate_files; /* Number of extra certificates for ssh. */
+	char	*certificate_files[SSH_MAX_CERTIFICATE_FILES];
+	int	certificate_file_userprovided[SSH_MAX_CERTIFICATE_FILES];
+	struct sshkey *certificates[SSH_MAX_CERTIFICATE_FILES];
+
+	int	add_keys_to_agent;
+
 	/* Local TCP/IP forward requests. */
 	int     num_local_forwards;
 	struct Forward *local_forwards;
@@ -210,5 +217,6 @@ void	 dump_client_config(Options *o, const char *host);
 void	 add_local_forward(Options *, const struct Forward *);
 void	 add_remote_forward(Options *, const struct Forward *);
 void	 add_identity_file(Options *, const char *, const char *, int);
+void	 add_certificate_file(Options *, const char *, int);
 
 #endif				/* READCONF_H */
