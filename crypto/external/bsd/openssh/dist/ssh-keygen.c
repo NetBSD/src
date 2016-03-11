@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.20 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.21 2016/03/11 13:15:02 christos Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.288 2016/02/15 09:47:49 dtucker Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.20 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.21 2016/03/11 13:15:02 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -821,7 +821,7 @@ try_read_key(char **cpp)
 	return NULL;
 }
 
-static __dead void
+static void
 fingerprint_one_key(const struct sshkey *public, const char *comment)
 {
 	char *fp = NULL, *ra = NULL;
@@ -866,7 +866,7 @@ fingerprint_private(const char *path)
 	free(comment);
 }
 
-static void
+__dead static void
 do_fingerprint(struct passwd *pw)
 {
 	FILE *f;
@@ -1902,7 +1902,7 @@ print_cert(struct sshkey *key)
 	}
 }
 
-static void
+__dead static void
 do_show_cert(struct passwd *pw)
 {
 	struct sshkey *key = NULL;
