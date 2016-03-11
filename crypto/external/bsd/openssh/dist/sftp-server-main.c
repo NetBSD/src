@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp-server-main.c,v 1.4 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sftp-server-main.c,v 1.4 2009/02/21 19:32:04 tobias Exp $ */
+/*	$NetBSD: sftp-server-main.c,v 1.5 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: sftp-server-main.c,v 1.5 2016/02/15 09:47:49 dtucker Exp $ */
+
 /*
  * Copyright (c) 2008 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server-main.c,v 1.4 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sftp-server-main.c,v 1.5 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -28,6 +29,7 @@ __RCSID("$NetBSD: sftp-server-main.c,v 1.4 2015/04/03 23:58:19 christos Exp $");
 #include "log.h"
 #include "sftp.h"
 #include "misc.h"
+#include "xmalloc.h"
 
 void
 cleanup_exit(int i)
@@ -40,6 +42,7 @@ main(int argc, char **argv)
 {
 	struct passwd *user_pw;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 

@@ -1,5 +1,6 @@
-/*	$NetBSD: kexgexs.c,v 1.9 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.25 2015/04/13 02:04:08 djm Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.10 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.26 2015/12/04 16:41:28 markus Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.9 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.10 2016/03/11 01:55:00 christos Exp $");
 #include <sys/param.h>	/* MIN MAX */
 
 #include <stdio.h>
@@ -218,8 +219,8 @@ input_kex_dh_gex_init(int type, u_int32_t seq, void *ctxt)
 	}
 
 	/* sign H */
-	if ((r = kex->sign(server_host_private, server_host_public,
-	    &signature, &slen, hash, hashlen, ssh->compat)) < 0)
+	if ((r = kex->sign(server_host_private, server_host_public, &signature,
+	     &slen, hash, hashlen, kex->hostkey_alg, ssh->compat)) < 0)
 		goto out;
 
 	/* destroy_sensitive_data(); */

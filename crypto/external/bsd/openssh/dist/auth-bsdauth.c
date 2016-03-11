@@ -1,5 +1,6 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.4 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: auth-bsdauth.c,v 1.13 2014/06/24 01:13:21 djm Exp $ */
+/*	$NetBSD: auth-bsdauth.c,v 1.5 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: auth-bsdauth.c,v 1.14 2015/10/20 23:24:25 mmcc Exp $ */
+
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-bsdauth.c,v 1.4 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: auth-bsdauth.c,v 1.5 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -102,7 +103,7 @@ bsdauth_respond(void *ctx, u_int numresponses, char **responses)
 	if (!authctxt->valid)
 		return -1;
 
-	if (authctxt->as == 0)
+	if (authctxt->as == NULL)
 		error("bsdauth_respond: no bsd auth session");
 
 	if (numresponses != 1)

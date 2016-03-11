@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.6 2015/08/13 10:33:21 christos Exp $	*/
-/* $OpenBSD: ssh.h,v 1.81 2015/08/04 05:23:06 djm Exp $ */
+/*	$NetBSD: ssh.h,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: ssh.h,v 1.83 2015/12/11 03:19:09 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -20,6 +20,12 @@
 #define SSH_DEFAULT_PORT	22
 
 /*
+ * Maximum number of certificate files that can be specified
+ * in configuration files or on the command line.
+ */
+#define SSH_MAX_CERTIFICATE_FILES	100
+
+/*
  * Maximum number of RSA authentication identity files that can be specified
  * in configuration files or on the command line.
  */
@@ -30,7 +36,7 @@
  * Current value permits 16kbit RSA and RSA1 keys and 8kbit DSA keys, with
  * some room for options and comments.
  */
-#define SSH_MAX_PUBKEY_BYTES		8192
+#define SSH_MAX_PUBKEY_BYTES		16384
 
 /*
  * Major protocol version.  Different version indicates major incompatibility

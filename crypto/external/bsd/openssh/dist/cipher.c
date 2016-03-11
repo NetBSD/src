@@ -1,5 +1,6 @@
-/*	$NetBSD: cipher.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: cipher.c,v 1.100 2015/01/14 10:29:45 djm Exp $ */
+/*	$NetBSD: cipher.c,v 1.8 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: cipher.c,v 1.101 2015/12/10 17:08:40 mmcc Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.8 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -357,8 +358,7 @@ cipher_init(struct sshcipher_ctx *cc, const struct sshcipher *cipher,
 	if (cipher->discard_len > 0) {
 		if ((junk = malloc(cipher->discard_len)) == NULL ||
 		    (discard = malloc(cipher->discard_len)) == NULL) {
-			if (junk != NULL)
-				free(junk);
+			free(junk);
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto bad;
 		}

@@ -1,5 +1,6 @@
-/*	$NetBSD: mux.c,v 1.14 2016/01/19 17:10:55 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.54 2015/08/19 23:18:26 djm Exp $ */
+/*	$NetBSD: mux.c,v 1.15 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.58 2016/01/13 23:04:47 djm Exp $ */
+
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -32,7 +33,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.14 2016/01/19 17:10:55 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.15 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -1730,7 +1731,7 @@ mux_client_forward(int fd, int cancel_flag, u_int ftype, struct Forward *fwd)
 		    fwd->connect_host ? fwd->connect_host : "",
 		    fwd->connect_port);
 		if (muxclient_command == SSHMUX_COMMAND_FORWARD)
-			fprintf(stdout, "%u\n", fwd->allocated_port);
+			fprintf(stdout, "%i\n", fwd->allocated_port);
 		break;
 	case MUX_S_PERMISSION_DENIED:
 		e = buffer_get_string(&m, NULL);
@@ -1875,6 +1876,11 @@ mux_client_request_session(int fd)
 	}
 	muxclient_request_id++;
 
+#ifdef __OpenBSD__
+	if (pledge("stdio proc tty", NULL) == -1)
+		fatal("%s pledge(): %s", __func__, strerror(errno));
+#endif
+
 	signal(SIGHUP, control_client_sighandler);
 	signal(SIGINT, control_client_sighandler);
 	signal(SIGTERM, control_client_sighandler);
@@ -1981,6 +1987,11 @@ mux_client_request_stdio_fwd(int fd)
 	if (mm_send_fd(fd, STDIN_FILENO) == -1 ||
 	    mm_send_fd(fd, STDOUT_FILENO) == -1)
 		fatal("%s: send fds failed", __func__);
+
+#ifdef __OpenBSD__
+	if (pledge("stdio proc tty", NULL) == -1)
+		fatal("%s pledge(): %s", __func__, strerror(errno));
+#endif
 
 	debug3("%s: stdio forward request sent", __func__);
 
@@ -2154,7 +2165,7 @@ muxclient(const char *path)
 	case SSHMUX_COMMAND_ALIVE_CHECK:
 		if ((pid = mux_client_request_alive(sock)) == 0)
 			fatal("%s: master alive check failed", __func__);
-		fprintf(stderr, "Master running (pid=%d)\r\n", pid);
+		fprintf(stderr, "Master running (pid=%u)\r\n", pid);
 		exit(0);
 	case SSHMUX_COMMAND_TERMINATE:
 		mux_client_request_terminate(sock);

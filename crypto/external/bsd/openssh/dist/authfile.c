@@ -1,5 +1,6 @@
-/*	$NetBSD: authfile.c,v 1.12 2015/08/13 10:33:21 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.116 2015/07/09 09:49:46 markus Exp $ */
+/*	$NetBSD: authfile.c,v 1.13 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.120 2015/12/11 04:21:11 mmcc Exp $ */
+
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.12 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.13 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -240,8 +241,7 @@ sshkey_load_private_type_fd(int fd, int type, const char *passphrase,
 	/* success */
 	r = 0;
  out:
-	if (buffer != NULL)
-		sshbuf_free(buffer);
+	sshbuf_free(buffer);
 	return r;
 }
 
@@ -269,14 +269,13 @@ sshkey_load_private(const char *filename, const char *passphrase,
 		goto out;
 	}
 	if ((r = sshkey_load_file(fd, buffer)) != 0 ||
-	    (r = sshkey_parse_private_fileblob(buffer, passphrase, filename,
-	    keyp, commentp)) != 0)
+	    (r = sshkey_parse_private_fileblob(buffer, passphrase, keyp,
+	    commentp)) != 0)
 		goto out;
 	r = 0;
  out:
 	close(fd);
-	if (buffer != NULL)
-		sshbuf_free(buffer);
+	sshbuf_free(buffer);
 	return r;
 }
 
@@ -423,10 +422,8 @@ sshkey_load_cert(const char *filename, struct sshkey **keyp)
 	r = 0;
 
  out:
-	if (file != NULL)
-		free(file);
-	if (pub != NULL)
-		sshkey_free(pub);
+	free(file);
+	sshkey_free(pub);
 	return r;
 }
 
@@ -471,10 +468,8 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
 	*keyp = key;
 	key = NULL;
  out:
-	if (key != NULL)
-		sshkey_free(key);
-	if (cert != NULL)
-		sshkey_free(cert);
+	sshkey_free(key);
+	sshkey_free(cert);
 	return r;
 }
 
@@ -535,8 +530,7 @@ sshkey_in_file(struct sshkey *key, const char *filename, int strict_type,
 	}
 	r = SSH_ERR_KEY_NOT_FOUND;
  out:
-	if (pub != NULL)
-		sshkey_free(pub);
+	sshkey_free(pub);
 	fclose(f);
 	return r;
 }

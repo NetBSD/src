@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.9 2015/08/21 08:20:59 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.11 2015/08/20 22:32:42 deraadt Exp $ */
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.10 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.12 2016/02/15 09:47:49 dtucker Exp $ */
+
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.9 2015/08/21 08:20:59 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.10 2016/03/11 01:55:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -276,6 +277,7 @@ main(int argc, char **argv)
 	char buf[4*4096];
 	extern char *__progname;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&pkcs11_keylist);
 	pkcs11_init(0);
 
