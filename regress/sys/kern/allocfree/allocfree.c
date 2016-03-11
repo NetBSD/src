@@ -1,4 +1,4 @@
-/*	$NetBSD: allocfree.c,v 1.1 2008/12/20 22:29:05 ad Exp $	*/
+/*	$NetBSD: allocfree.c,v 1.2 2016/03/11 18:26:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: allocfree.c,v 1.1 2008/12/20 22:29:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: allocfree.c,v 1.2 2016/03/11 18:26:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -241,7 +241,7 @@ run0(void)
 	int i;
 
 	for (i = 1; i <= ncpu; i++) {
-		printf("%d\t%d", sz, i);
+		printf("%zu\t%d", sz, i);
 		run1(i);
 	}
 }
