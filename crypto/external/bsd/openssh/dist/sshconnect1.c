@@ -1,5 +1,6 @@
-/*	$NetBSD: sshconnect1.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sshconnect1.c,v 1.77 2015/01/14 20:05:27 djm Exp $ */
+/*	$NetBSD: sshconnect1.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: sshconnect1.c,v 1.78 2015/11/15 22:26:49 jcs Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect1.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -354,7 +355,7 @@ try_rsa_authentication(int idx)
 {
 	BIGNUM *challenge;
 	Key *public, *private;
-	char buf[300], *passphrase, *comment, *authfile;
+	char buf[300], *passphrase = NULL, *comment, *authfile;
 	int i, perm_ok = 1, type, quit;
 
 	public = options.identity_keys[idx];
@@ -416,13 +417,20 @@ try_rsa_authentication(int idx)
 				debug2("no passphrase given, try next key");
 				quit = 1;
 			}
-			explicit_bzero(passphrase, strlen(passphrase));
-			free(passphrase);
 			if (private != NULL || quit)
 				break;
 			debug2("bad passphrase given, try again...");
 		}
 	}
+
+	if (private != NULL)
+		maybe_add_key_to_agent(authfile, private, comment, passphrase);
+
+	if (passphrase != NULL) {
+		explicit_bzero(passphrase, strlen(passphrase));
+		free(passphrase);
+	}
+
 	/* We no longer need the comment. */
 	free(comment);
 

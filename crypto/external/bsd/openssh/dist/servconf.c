@@ -1,6 +1,6 @@
-/*	$NetBSD: servconf.c,v 1.19 2015/08/13 10:33:21 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.20 2016/03/11 01:55:00 christos Exp $	*/
 
-/* $OpenBSD: servconf.c,v 1.280 2015/08/06 14:53:21 deraadt Exp $ */
+/* $OpenBSD: servconf.c,v 1.285 2016/02/17 05:29:04 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.19 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.20 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -220,6 +220,20 @@ option_clear_or_none(const char *o)
 	return o == NULL || strcasecmp(o, "none") == 0;
 }
 
+static void
+assemble_algorithms(ServerOptions *o)
+{
+	if (kex_assemble_names(KEX_SERVER_ENCRYPT, &o->ciphers) != 0 ||
+	    kex_assemble_names(KEX_SERVER_MAC, &o->macs) != 0 ||
+	    kex_assemble_names(KEX_SERVER_KEX, &o->kex_algorithms) != 0 ||
+	    kex_assemble_names(KEX_DEFAULT_PK_ALG,
+	    &o->hostkeyalgorithms) != 0 ||
+	    kex_assemble_names(KEX_DEFAULT_PK_ALG,
+	    &o->hostbased_key_types) != 0 ||
+	    kex_assemble_names(KEX_DEFAULT_PK_ALG, &o->pubkey_key_types) != 0)
+		fatal("kex_assemble_names failed");
+}
+
 void
 fill_default_server_options(ServerOptions *options)
 {
@@ -306,8 +320,6 @@ fill_default_server_options(ServerOptions *options)
 		options->hostbased_authentication = 0;
 	if (options->hostbased_uses_name_from_packet_only == -1)
 		options->hostbased_uses_name_from_packet_only = 0;
-	if (options->hostkeyalgorithms == NULL)
-		options->hostkeyalgorithms = xstrdup(KEX_DEFAULT_PK_ALG);
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
@@ -463,18 +475,11 @@ fill_default_server_options(ServerOptions *options)
 	if (options->fingerprint_hash == -1)
 		options->fingerprint_hash = SSH_FP_HASH_DEFAULT;
 
-	if (kex_assemble_names(KEX_SERVER_ENCRYPT, &options->ciphers) != 0 ||
-	    kex_assemble_names(KEX_SERVER_MAC, &options->macs) != 0 ||
-	    kex_assemble_names(KEX_SERVER_KEX, &options->kex_algorithms) != 0 ||
-	    kex_assemble_names(KEX_DEFAULT_PK_ALG,
-	    &options->hostbased_key_types) != 0 ||
-	    kex_assemble_names(KEX_DEFAULT_PK_ALG,
-	    &options->pubkey_key_types) != 0)
-		fatal("%s: kex_assemble_names failed", __func__);
+	assemble_algorithms(options);
 
-	/* Turn privilege separation on by default */
+	/* Turn privilege separation and sandboxing on by default */
 	if (use_privsep == -1)
-		use_privsep = PRIVSEP_NOSANDBOX;
+		use_privsep = PRIVSEP_ON;
 
 #define CLEAR_ON_NONE(v) \
 	do { \
@@ -489,6 +494,8 @@ fill_default_server_options(ServerOptions *options)
 	CLEAR_ON_NONE(options->trusted_user_ca_keys);
 	CLEAR_ON_NONE(options->revoked_keys_file);
 	CLEAR_ON_NONE(options->authorized_principals_file);
+	CLEAR_ON_NONE(options->adm_forced_command);
+	CLEAR_ON_NONE(options->chroot_directory);
 	for (i = 0; i < options->num_host_key_files; i++)
 		CLEAR_ON_NONE(options->host_key_files[i]);
 	for (i = 0; i < options->num_host_cert_files; i++)
@@ -1484,16 +1491,12 @@ process_server_config_line(ServerOptions *options, char *line,
 			if (scan_scaled(arg, &val64) == -1)
 				fatal("%.200s line %d: Bad number '%s': %s",
 				    filename, linenum, arg, strerror(errno));
-			/* check for too-large or too-small limits */
-			if (val64 > UINT_MAX)
-				fatal("%.200s line %d: RekeyLimit too large",
-				    filename, linenum);
 			if (val64 != 0 && val64 < 16)
 				fatal("%.200s line %d: RekeyLimit too small",
 				    filename, linenum);
 		}
 		if (*activep && options->rekey_limit == -1)
-			options->rekey_limit = (u_int32_t)val64;
+			options->rekey_limit = val64;
 		if (cp != NULL) { /* optional rekey interval present */
 			if (strcmp(cp, "none") == 0) {
 				(void)strdelim(&cp);	/* discard */
@@ -2299,6 +2302,9 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 	/* See comment in servconf.h */
 	COPY_MATCH_STRING_OPTS();
 
+	/* Arguments that accept '+...' need to be expanded */
+	assemble_algorithms(dst);
+
 	/*
 	 * The only things that should be below this point are string options
 	 * which are only used after authentication.
@@ -2306,8 +2312,17 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 	if (preauth)
 		return;
 
+	/* These options may be "none" to clear a global setting */
 	M_CP_STROPT(adm_forced_command);
+	if (option_clear_or_none(dst->adm_forced_command)) {
+		free(dst->adm_forced_command);
+		dst->adm_forced_command = NULL;
+	}
 	M_CP_STROPT(chroot_directory);
+	if (option_clear_or_none(dst->chroot_directory)) {
+		free(dst->chroot_directory);
+		dst->chroot_directory = NULL;
+	}
 }
 
 #undef M_CP_INTOPT
@@ -2618,7 +2633,7 @@ dump_config(ServerOptions *o)
 	printf("ipqos %s ", iptos2str(o->ip_qos_interactive));
 	printf("%s\n", iptos2str(o->ip_qos_bulk));
 
-	printf("rekeylimit %lld %d\n", (long long)o->rekey_limit,
+	printf("rekeylimit %llu %d\n", (unsigned long long)o->rekey_limit,
 	    o->rekey_interval);
 
 	channel_print_adm_permitted_opens();
