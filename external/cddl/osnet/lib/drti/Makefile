@@ -1,4 +1,4 @@
-# $FreeBSD: src/cddl/lib/drti/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+# $NetBSD: Makefile,v 1.5 2016/03/11 05:02:32 joerg Exp $
 .include	<bsd.init.mk>
 .include	"../../Makefile.inc"
 
