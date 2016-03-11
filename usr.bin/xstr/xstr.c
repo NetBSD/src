@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.25 2011/09/16 15:39:31 joerg Exp $	*/
+/*	$NetBSD: xstr.c,v 1.26 2016/03/11 18:39:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.25 2011/09/16 15:39:31 joerg Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.26 2016/03/11 18:39:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -390,7 +390,7 @@ fgetNUL(char *obuf, int rmdr, FILE *file)
 
 	c = 0;	/* XXXGCC -Wuninitialized */
 
-	while (--rmdr > 0 && (c = xgetc(file) != 0 && c != EOF))
+	while (--rmdr > 0 && (c = xgetc(file)) != 0 && c != EOF)
 		*buf++ = c;
 	*buf++ = 0;
 	return (feof(file) || ferror(file)) ? 0 : 1;
