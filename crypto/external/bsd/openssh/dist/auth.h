@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.11 2015/07/03 00:59:59 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.84 2015/05/08 06:41:56 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.12 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.86 2015/12/04 16:41:28 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -188,8 +188,6 @@ int	auth2_challenge(Authctxt *, char *);
 void	auth2_challenge_stop(Authctxt *);
 int	bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	bsdauth_respond(void *, u_int, char **);
-int	skey_query(void *, char **, char **, u_int *, char ***, u_int **);
-int	skey_respond(void *, u_int, char **);
 
 int	allowed_user(struct passwd *);
 struct passwd * getpwnamallow(const char *user);
@@ -216,7 +214,7 @@ Key	*get_hostkey_private_by_type(int, int, struct ssh *);
 int	 get_hostkey_index(Key *, int, struct ssh *);
 int	 ssh1_session_key(BIGNUM *);
 int	 sshd_hostkey_sign(Key *, Key *, u_char **, size_t *,
-	     const u_char *, size_t, u_int);
+	     const u_char *, size_t, const char *, u_int);
 
 /* debug messages during authentication */
 void	 auth_debug_add(const char *fmt,...) __attribute__((format(printf, 1, 2)));

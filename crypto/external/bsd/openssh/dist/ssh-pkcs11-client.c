@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.5 2014/06/24 01:13:21 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.6 2015/12/11 00:20:04 mmcc Exp $ */
+
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -170,7 +171,7 @@ pkcs11_start_helper(void)
 		close(pair[0]);
 		close(pair[1]);
 		execlp(_PATH_SSH_PKCS11_HELPER, _PATH_SSH_PKCS11_HELPER,
-		    (char *) 0);
+		    (char *)NULL);
 		fprintf(stderr, "exec: %s: %s\n", _PATH_SSH_PKCS11_HELPER,
 		    strerror(errno));
 		_exit(1);

@@ -1,5 +1,6 @@
-/*	$NetBSD: sshlogin.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.31 2015/01/20 23:14:00 deraadt Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.32 2015/12/26 20:51:35 guenther Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -108,7 +109,7 @@ get_last_login_time(uid_t uid, const char *logname,
 	if (fd < 0)
 		return 0;
 
-	pos = (long) uid * sizeof(ll);
+	pos = (off_t)uid * sizeof(ll);
 	r = lseek(fd, pos, SEEK_SET);
 	if (r == -1) {
 		error("%s: lseek: %s", __func__, strerror(errno));
@@ -216,7 +217,7 @@ record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
 		strncpy(ll.ll_host, host, sizeof(ll.ll_host));
 		fd = open(_PATH_LASTLOG, O_RDWR);
 		if (fd >= 0) {
-			lseek(fd, (off_t) ((long) uid * sizeof(ll)), SEEK_SET);
+			lseek(fd, (off_t)uid * sizeof(ll), SEEK_SET);
 			if (write(fd, &ll, sizeof(ll)) != sizeof(ll))
 				logit("Could not write %.100s: %.100s", _PATH_LASTLOG, strerror(errno));
 			close(fd);

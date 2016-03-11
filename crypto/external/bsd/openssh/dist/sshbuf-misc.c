@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-misc.c,v 1.4 2015/03/24 20:03:44 markus Exp $	*/
+/*	$OpenBSD: sshbuf-misc.c,v 1.5 2015/10/05 17:11:21 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-misc.c,v 1.4 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: sshbuf-misc.c,v 1.5 2016/03/11 01:55:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -101,7 +101,7 @@ sshbuf_dtob64(struct sshbuf *buf)
 	if (SIZE_MAX / 2 <= len || (ret = malloc(plen)) == NULL)
 		return NULL;
 	if ((r = b64_ntop(p, len, ret, plen)) == -1) {
-		bzero(ret, plen);
+		explicit_bzero(ret, plen);
 		free(ret);
 		return NULL;
 	}
@@ -120,16 +120,16 @@ sshbuf_b64tod(struct sshbuf *buf, const char *b64)
 	if ((p = malloc(plen)) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
 	if ((nlen = b64_pton(b64, p, plen)) < 0) {
-		bzero(p, plen);
+		explicit_bzero(p, plen);
 		free(p);
 		return SSH_ERR_INVALID_FORMAT;
 	}
 	if ((r = sshbuf_put(buf, p, nlen)) < 0) {
-		bzero(p, plen);
+		explicit_bzero(p, plen);
 		free(p);
 		return r;
 	}
-	bzero(p, plen);
+	explicit_bzero(p, plen);
 	free(p);
 	return 0;
 }

@@ -1,5 +1,6 @@
-/*	$NetBSD: misc.c,v 1.11 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.97 2015/04/24 01:36:00 deraadt Exp $ */
+/*	$NetBSD: misc.c,v 1.12 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.101 2016/01/20 09:22:39 dtucker Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,10 +27,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.11 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2016/03/11 01:55:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/un.h>
 
 #include <net/if.h>
@@ -596,6 +598,8 @@ percent_expand(const char *string, ...)
 		/* %% case */
 		if (*string == '%')
 			goto append;
+		if (*string == '\0')
+			fatal("%s: invalid format", __func__);
 		for (j = 0; j < num_keys; j++) {
 			if (strchr(keys[j].key, *string) != NULL) {
 				i = strlcat(buf, keys[j].repl, sizeof(buf));
@@ -640,35 +644,38 @@ int
 tun_open(int tun, int mode)
 {
 	struct ifreq ifr;
-	int fd = -1, sock, flag;
-	const char *tunbase = mode == SSH_TUNMODE_ETHERNET ? "tap" : "tun";
+	char name[100];
+	int fd = -1, sock;
+	const char *tunbase = "tun";
+
+	if (mode == SSH_TUNMODE_ETHERNET)
+		tunbase = "tap";
 
 	/* Open the tunnel device */
 	if (tun <= SSH_TUNID_MAX) {
-		snprintf(ifr.ifr_name, sizeof(ifr.ifr_name),
-		    "/dev/%s%d", tunbase, tun);
-		fd = open(ifr.ifr_name, O_RDWR);
+		snprintf(name, sizeof(name), "/dev/%s%d", tunbase, tun);
+		fd = open(name, O_RDWR);
 	} else if (tun == SSH_TUNID_ANY) {
 		for (tun = 100; tun >= 0; tun--) {
-			snprintf(ifr.ifr_name, sizeof(ifr.ifr_name),
-			    "/dev/%s%d", tunbase, tun);
-			if ((fd = open(ifr.ifr_name, O_RDWR)) >= 0)
+			snprintf(name, sizeof(name), "/dev/%s%d",
+			    tunbase, tun);
+			if ((fd = open(name, O_RDWR)) >= 0)
 				break;
 		}
 	} else {
 		debug("%s: invalid tunnel %u", __func__, tun);
-		return (-1);
+		return -1;
 	}
 
 	if (fd < 0) {
-		debug("%s: %s open failed: %s", __func__, ifr.ifr_name,
-		    strerror(errno));
-		return (-1);
+		debug("%s: %s open: %s", __func__, name, strerror(errno));
+		return -1;
 	}
 
 
+#ifdef TUNSIFHEAD
 	/* Turn on tunnel headers */
-	flag = 1;
+	int flag = 1;
 	if (mode != SSH_TUNMODE_ETHERNET &&
 	    ioctl(fd, TUNSIFHEAD, &flag) == -1) {
 		debug("%s: ioctl(%d, TUNSIFHEAD, 1): %s", __func__, fd,
@@ -676,34 +683,31 @@ tun_open(int tun, int mode)
 		close(fd);
 		return -1;
 	}
+#endif
 
 	debug("%s: %s mode %d fd %d", __func__, ifr.ifr_name, mode, fd);
-	/* Set the tunnel device operation mode */
+	/* Bring interface up if it is not already */
 	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s%d", tunbase, tun);
 	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
 		goto failed;
 
-	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1)
+	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1) {
+		debug("%s: get interface %s flags: %s", __func__,
+		    ifr.ifr_name, strerror(errno));
 		goto failed;
+	}
 
-#if 0
-	/* Set interface mode */
-	ifr.ifr_flags &= ~IFF_UP;
-	if (mode == SSH_TUNMODE_ETHERNET)
-		ifr.ifr_flags |= IFF_LINK0;
-	else
-		ifr.ifr_flags &= ~IFF_LINK0;
-	if (ioctl(sock, SIOCSIFFLAGS, &ifr) == -1)
-		goto failed;
-#endif
-
-	/* Bring interface up */
-	ifr.ifr_flags |= IFF_UP;
-	if (ioctl(sock, SIOCSIFFLAGS, &ifr) == -1)
-		goto failed;
+	if (!(ifr.ifr_flags & IFF_UP)) {
+		ifr.ifr_flags |= IFF_UP;
+		if (ioctl(sock, SIOCSIFFLAGS, &ifr) == -1) {
+			debug("%s: activate interface %s: %s", __func__,
+			    ifr.ifr_name, strerror(errno));
+			goto failed;
+		}
+	}
 
 	close(sock);
-	return (fd);
+	return fd;
 
  failed:
 	if (fd >= 0)
@@ -712,7 +716,7 @@ tun_open(int tun, int mode)
 		close(sock);
 	debug("%s: failed to set %s mode %d: %s", __func__, ifr.ifr_name,
 	    mode, strerror(errno));
-	return (-1);
+	return -1;
 }
 
 void

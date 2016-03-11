@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.14 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.101 2015/04/10 00:08:55 djm Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.15 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.105 2016/02/15 09:47:49 dtucker Exp $ */
+
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,7 +10,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.14 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.15 2016/03/11 01:55:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,6 +60,7 @@ int ssh_port = SSH_DEFAULT_PORT;
 #define KT_ECDSA	8
 #define KT_ED25519	16
 
+int get_cert = 0;
 int get_keytypes = KT_RSA|KT_ECDSA|KT_ED25519;
 
 int hash_hosts = 0;		/* Hash hostname on output */
@@ -254,11 +256,32 @@ keygrab_ssh2(con *c)
 	int r;
 
 	enable_compat20();
-	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] =
-	    c->c_keytype == KT_DSA ?  "ssh-dss" :
-	    (c->c_keytype == KT_RSA ? "ssh-rsa" :
-	    (c->c_keytype == KT_ED25519 ? "ssh-ed25519" :
-	    "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521"));
+	switch (c->c_keytype) {
+	case KT_DSA:
+		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+		    "ssh-dss-cert-v01@openssh.com" : "ssh-dss";
+		break;
+	case KT_RSA:
+		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+		    "ssh-rsa-cert-v01@openssh.com" : "ssh-rsa";
+		break;
+	case KT_ED25519:
+		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+		    "ssh-ed25519-cert-v01@openssh.com" : "ssh-ed25519";
+		break;
+	case KT_ECDSA:
+		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+		    "ecdsa-sha2-nistp256-cert-v01@openssh.com,"
+		    "ecdsa-sha2-nistp384-cert-v01@openssh.com,"
+		    "ecdsa-sha2-nistp521-cert-v01@openssh.com" :
+		    "ecdsa-sha2-nistp256,"
+		    "ecdsa-sha2-nistp384,"
+		    "ecdsa-sha2-nistp521";
+		break;
+	default:
+		fatal("unknown key type %d", c->c_keytype);
+		break;
+	}
 	if ((r = kex_setup(c->c_ssh, myproposal)) != 0) {
 		free(c->c_ssh);
 		fprintf(stderr, "kex_setup: %s\n", ssh_err(r));
@@ -281,25 +304,37 @@ keygrab_ssh2(con *c)
 }
 
 static void
-keyprint(con *c, struct sshkey *key)
+keyprint_one(char *host, struct sshkey *key)
 {
-	char *host = c->c_output_name ? c->c_output_name : c->c_name;
-	int r;
-	char *hostport = NULL;
+	char *hostport;
 
-	if (!key)
-		return;
 	if (hash_hosts && (host = host_hash(host, NULL, 0)) == NULL)
 		fatal("host_hash failed");
 
 	hostport = put_host_port(host, ssh_port);
-	fprintf(stdout, "%s ", hostport);
-
-	if ((r = sshkey_write(key, stdout)) != 0)
-		fprintf(stderr, "key_write failed: %s", ssh_err(r));
-
+	if (!get_cert)
+		fprintf(stdout, "%s ", hostport);
+	sshkey_write(key, stdout);
 	fputs("\n", stdout);
 	free(hostport);
+}
+
+static void
+keyprint(con *c, struct sshkey *key)
+{
+	char *hosts = c->c_output_name ? c->c_output_name : c->c_name;
+	char *host, *ohosts;
+
+	if (key == NULL)
+		return;
+	if (get_cert || (!hash_hosts && ssh_port == SSH_DEFAULT_PORT)) {
+		keyprint_one(hosts, key);
+		return;
+	}
+	ohosts = hosts = xstrdup(hosts);
+	while ((host = strsep(&hosts, ",")) != NULL)
+		keyprint_one(host, key);
+	free(ohosts);
 }
 
 static int
@@ -358,6 +393,7 @@ conalloc(char *iname, char *oname, int keytype)
 	if (fdcon[s].c_status)
 		fatal("conalloc: attempt to reuse fdno %d", s);
 
+	debug3("%s: oname %s kt %d", __func__, oname, keytype);
 	fdcon[s].c_fd = s;
 	fdcon[s].c_status = CS_CON;
 	fdcon[s].c_namebase = namebase;
@@ -628,7 +664,7 @@ __dead static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-46Hv] [-f file] [-p port] [-T timeout] [-t type]\n"
+	    "usage: %s [-46cHv] [-f file] [-p port] [-T timeout] [-t type]\n"
 	    "\t\t   [host | addrlist namelist] ...\n",
 	    __progname);
 	exit(1);
@@ -646,6 +682,7 @@ main(int argc, char **argv)
 	extern int optind;
 	extern char *optarg;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&tq);
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
@@ -654,10 +691,13 @@ main(int argc, char **argv)
 	if (argc <= 1)
 		usage();
 
-	while ((opt = getopt(argc, argv, "Hv46p:T:t:f:")) != -1) {
+	while ((opt = getopt(argc, argv, "cHv46p:T:t:f:")) != -1) {
 		switch (opt) {
 		case 'H':
 			hash_hosts = 1;
+			break;
+		case 'c':
+			get_cert = 1;
 			break;
 		case 'p':
 			ssh_port = a2port(optarg);

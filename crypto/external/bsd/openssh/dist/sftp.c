@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp.c,v 1.17 2015/12/16 13:23:38 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.171 2015/08/20 22:32:42 deraadt Exp $ */
+/*	$NetBSD: sftp.c,v 1.18 2016/03/11 01:55:00 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.172 2016/02/15 09:47:49 dtucker Exp $ */
+
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.17 2015/12/16 13:23:38 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.18 2016/03/11 01:55:00 christos Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -2235,6 +2236,7 @@ main(int argc, char **argv)
 	size_t num_requests = DEFAULT_NUM_REQUESTS;
 	long long limit_kbps = 0;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 	setlocale(LC_CTYPE, "");
