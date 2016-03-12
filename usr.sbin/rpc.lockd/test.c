@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.5 2016/03/12 02:01:23 dholland Exp $	*/
+/*	$NetBSD: test.c,v 1.6 2016/03/12 02:02:00 dholland Exp $	*/
 
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +11,7 @@
 static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";
 static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: test.c,v 1.5 2016/03/12 02:01:23 dholland Exp $");
+__RCSID("$NetBSD: test.c,v 1.6 2016/03/12 02:02:00 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -324,7 +324,7 @@ nlm_free_all_3(nlm_notify *argp, CLIENT *clnt)
 }
 
 
-int 
+int
 main(int argc, char **argv)
 {
 	CLIENT *cli;
