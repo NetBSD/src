@@ -1,4 +1,4 @@
-.\"	$NetBSD: apply.1,v 1.13 2016/03/12 22:07:48 dholland Exp $
+.\"	$NetBSD: apply.1,v 1.14 2016/03/12 22:17:23 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,3 +149,13 @@ A simple rule of thumb is to enclose the entire
 in single quotes
 .Pq ''
 so that the current shell does not interpret any of it.
+.Sh BUGS
+There is no easy way to produce the literal string
+.Dq %1
+in
+.Ar command .
+.Pp
+.Nm
+unconditionally inserts "exec" at the beginning of each copy of
+.Ar command
+so compound commands may not behave as intended.
