@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.3 2015/12/15 01:33:08 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.4 2016/03/12 06:15:31 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ BUS2=bus2
 BUSSRC=bus_src
 BUSDST=bus_dst
 
-DEBUG=false
+DEBUG=true
 TIMEOUT=3
 
 atf_test_case linklocal cleanup
@@ -185,6 +185,8 @@ cleanup_bus()
 	atf_check -s exit:0 rump.ifconfig shmif1 -linkstr
 	unset RUMP_SERVER
 
+	$DEBUG && dump_bus
+
 	atf_check -s exit:0 rm ${BUSSRC}
 	atf_check -s exit:0 rm ${BUSDST}
 	atf_check -s exit:0 rm ${BUS1}
@@ -212,6 +214,15 @@ cleanup_rump_servers()
 	env RUMP_SERVER=${SOCKSRC} rump.halt
 	env RUMP_SERVER=${SOCKDST} rump.halt
 	env RUMP_SERVER=${SOCKFWD} rump.halt
+}
+
+dump_bus()
+{
+
+	shmif_dumpbus -p - ${BUSSRC} 2>/dev/null| tcpdump -n -e -r -
+	shmif_dumpbus -p - ${BUSDST} 2>/dev/null| tcpdump -n -e -r -
+	shmif_dumpbus -p - ${BUS1} 2>/dev/null| tcpdump -n -e -r -
+	shmif_dumpbus -p - ${BUS2} 2>/dev/null| tcpdump -n -e -r -
 }
 
 linklocal_head()
@@ -311,6 +322,7 @@ linklocal_body()
 linklocal_cleanup()
 {
 
+	$DEBUG && dump_bus
 	cleanup_rump_servers
 }
 
