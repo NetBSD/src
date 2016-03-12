@@ -1,8 +1,9 @@
-/*	$NetBSD: test.c,v 1.6 2016/03/12 02:02:00 dholland Exp $	*/
+/*	$NetBSD: test.c,v 1.7 2016/03/12 02:06:32 dholland Exp $	*/
 
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/cdefs.h>
+#include <err.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/nlm_prot.h>
 
@@ -11,7 +12,7 @@
 static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";
 static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: test.c,v 1.6 2016/03/12 02:02:00 dholland Exp $");
+__RCSID("$NetBSD: test.c,v 1.7 2016/03/12 02:06:32 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -333,6 +334,10 @@ main(int argc, char **argv)
 	nlm_lockargs arg;
 	struct timeval tim;
 
+	if (argc != 2) {
+		errx(1, "usage: %s host", argv[0]);
+	}
+
 	printf("Creating client for host %s\n", argv[1]);
 	cli = clnt_create(argv[1], NLM_PROG, NLM_VERS, "udp");
 	if (!cli) {
@@ -340,12 +345,13 @@ main(int argc, char **argv)
 		/* NOTREACHED */
 	}
 	clnt_control(cli, CLGET_TIMEOUT, (void *)&tim);
-	printf("Default timeout was %d.%d\n", tim.tv_sec, tim.tv_usec);
+	printf("Default timeout was %lld.%d\n",
+		(long long)tim.tv_sec, tim.tv_usec);
 	tim.tv_usec = -1;
 	tim.tv_sec = -1;
 	clnt_control(cli, CLSET_TIMEOUT, (void *)&tim);
 	clnt_control(cli, CLGET_TIMEOUT, (void *)&tim);
-	printf("timeout now %d.%d\n", tim.tv_sec, tim.tv_usec);
+	printf("timeout now %lld.%u\n", (long long)tim.tv_sec, tim.tv_usec);
 
 
 	arg.cookie.n_len = 4;
@@ -373,9 +379,11 @@ main(int argc, char **argv)
 	else
 		printf("Fail\n");
 #else
+	(void)res_block;
+
 	if (out = nlm_lock_msg_1(&arg, cli)) {
 		printf("Success!\n");
-		printf("out->stat = %d", out->stat);
+		printf("out->stat = %d", out->stat.stat);
 	} else {
 		printf("Fail\n");
 	}
