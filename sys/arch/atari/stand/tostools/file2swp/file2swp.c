@@ -1,4 +1,4 @@
-/*	$NetBSD: file2swp.c,v 1.8 2016/03/12 02:15:50 dholland Exp $	*/
+/*	$NetBSD: file2swp.c,v 1.9 2016/03/12 02:17:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "cread.h"
 
 char		*Infile = "minifs.gz";
-const char	version[] = "$Revision: 1.8 $";
+const char	version[] = "$Revision: 1.9 $";
 
 extern const char	*program_name;
 
@@ -76,12 +76,12 @@ main(int argc, char **argv)
 	extern char	*optarg;
 
 	disk_t		*dd;
-	int		rv, c, i, fd;
+	int		rv, c, fd;
 	u_int32_t	currblk;
 	u_int32_t	start, end;
 	char		buf[AHDI_BSIZE];
 
-	i = rv = 0;
+	rv = 0;
 	init_toslib(*argv);
 
 	while ((c = getopt(argc, argv, "Vf:ho:w")) != -1) {
