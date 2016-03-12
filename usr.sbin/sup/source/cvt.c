@@ -1,4 +1,4 @@
-/*	$NetBSD: cvt.c,v 1.3 2002/07/10 18:53:57 wiz Exp $	*/
+/*	$NetBSD: cvt.c,v 1.4 2016/03/12 02:27:31 dholland Exp $	*/
 
 /*
  * Quick hack to convert old binary sup when.collection files into 
@@ -45,6 +45,7 @@ main(int argc, char **argv)
 
 	if (fprintf(fp, "%ld\n", b) < 0) {
 		perror("fprintf");
+		fclose(fp);
 		return 1;
 	}
 	if (fclose(fp) != 0) {
