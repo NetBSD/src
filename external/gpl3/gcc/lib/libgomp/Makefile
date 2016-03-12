@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/06/04 19:07:22 tron Exp $
+#	$NetBSD: Makefile,v 1.14 2016/03/12 23:07:05 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -53,6 +53,7 @@ CFLAGS+=-pthread
 CWARNFLAGS.clang+=	-Wno-conversion
 
 # libgomp is 1.0 is in GCC 4.5, and 1.1 in 4.8 since it added more symbols
+# XXXGCC5
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	1
 
@@ -64,7 +65,7 @@ FILES=		libgomp.spec
 FILESDIR=	${LIBDIR}
 
 INCS=		omp.h
-INCSDIR=	/usr/include/gcc-4.8
+INCSDIR=	/usr/include/gcc-5
 .endif
 
 .else			# } else {
