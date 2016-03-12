@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.31 2013/03/08 20:56:44 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.32 2016/03/12 02:26:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -213,7 +213,7 @@ parserelease(TREELIST ** tlp, char *relname, char *args)
 	int opno;
 	char *nextrel;
 
-	tl = (TREELIST *) malloc(sizeof(TREELIST));
+	tl = malloc(sizeof(TREELIST));
 	if ((*tlp = tl) == NULL)
 		goaway("Couldn't allocate TREELIST");
 	tl->TLnext = NULL;
