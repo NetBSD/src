@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.366 2016/02/27 23:51:34 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.367 2016/03/12 23:08:58 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -188,7 +188,7 @@ FFLAGS+=	${FOPTS}
 .if defined(CTFCONVERT)
 .if defined(CFLAGS) && !empty(CFLAGS:M*-g*)
 CTFFLAGS+=	-g
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+.if defined(HAVE_GCC)
 #CFLAGS+=	-gdwarf-2
 .endif
 .endif
