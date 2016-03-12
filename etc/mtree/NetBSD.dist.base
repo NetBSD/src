@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.152 2016/02/27 21:47:30 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.153 2016/03/12 23:07:05 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -183,6 +183,7 @@
 ./usr/include/g++/tr1_impl
 ./usr/include/g++/tr2
 ./usr/include/gcc-4.8
+./usr/include/gcc-5
 ./usr/include/gssapi
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
