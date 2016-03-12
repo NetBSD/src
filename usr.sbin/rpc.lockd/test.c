@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.7 2016/03/12 02:06:32 dholland Exp $	*/
+/*	$NetBSD: test.c,v 1.8 2016/03/12 02:07:44 dholland Exp $	*/
 
 #include <sys/cdefs.h>
 #include <stdio.h>
@@ -12,7 +12,7 @@
 static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";
 static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: test.c,v 1.7 2016/03/12 02:06:32 dholland Exp $");
+__RCSID("$NetBSD: test.c,v 1.8 2016/03/12 02:07:44 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -381,7 +381,8 @@ main(int argc, char **argv)
 #else
 	(void)res_block;
 
-	if (out = nlm_lock_msg_1(&arg, cli)) {
+	out = nlm_lock_msg_1(&arg, cli);
+	if (out != NULL) {
 		printf("Success!\n");
 		printf("out->stat = %d", out->stat.stat);
 	} else {
