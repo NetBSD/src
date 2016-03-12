@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.34 2016/02/28 23:12:23 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.35 2016/03/12 14:59:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.34 2016/02/28 23:12:23 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.35 2016/03/12 14:59:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,29 +146,58 @@ out2shstr(const char *p)
 }
 
 
+static const char norm_chars [] = \
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-=_.'";
+
+static int
+inquote(const char *p)
+{
+	size_t l = strspn(p, norm_chars);
+	char *s = strchr(p, '\'');
+
+	return s == NULL ? p[l] != '\0' : s - p > (off_t)l;
+}
+
+
 void
 outshstr(const char *p, struct output *file)
 {
-	static const char norm_chars [] \
-		= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-=";
+	/*
+	 * ' is in this list, not because it does not require quoting
+	 * (which applies to all the others) but because '' quoting cannot
+	 * be used to quote it.
+	 */
 	int need_q = p[0] == 0 || p[strspn(p, norm_chars)] != 0;
+	int inq;
 	char c;
 
-	if (need_q)
-		outc('\'', file);
+	/*
+	 * Don't emit ' unless something needs quoting before closing '
+	 */
+	if (need_q) {
+		if ((inq = inquote(p)) != 0)
+				outc('\'', file);
+	} else
+		inq = 0;
 
-	while (c = *p++, c != 0){
-		if (c != '\''){
+	while ((c = *p++) != '\0') {
+		if (c != '\'') {
 			outc(c, file);
-		}else{
-			outc('\'', file);
-			outc('\\', file);
-			outc(c, file);
-			outc('\'', file);
+			continue;
 		}
+
+		if (inq)
+			outc('\'', file);	/* inq = 0, implicit */
+		outc('\\', file);
+		outc(c, file);
+		if (need_q && *p != '\0') {
+			if ((inq = inquote(p)) != 0)
+				outc('\'', file);
+		} else
+			inq = 0;
 	}
 
-	if (need_q)
+	if (inq)
 		outc('\'', file);
 
 	if (file == out2)
