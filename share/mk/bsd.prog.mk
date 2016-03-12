@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.296 2016/02/21 03:34:27 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.297 2016/03/12 23:08:58 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -65,7 +65,7 @@ MKDEP_SUFFIXES?=	.o .ln .d
 .if (${MKCTF:Uno} != "no") && (${CFLAGS:M-g} != "")
 CTFFLAGS+= -g
 CTFMFLAGS+= -g
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+.if defined(HAVE_GCC)
 #CFLAGS+=-gdwarf-2
 .endif
 .endif
