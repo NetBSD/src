@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.18 2016/03/12 21:20:17 dholland Exp $	*/
+/*	$NetBSD: apply.c,v 1.19 2016/03/12 22:28:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.18 2016/03/12 21:20:17 dholland Exp $");
+__RCSID("$NetBSD: apply.c,v 1.19 2016/03/12 22:28:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ shell_system(const char *command)
 	case 0:
 		/* child */
 		(void)sigsetmask(omask);
-		(void)execl(shell, name, "-c", command, NULL);
+		(void)execl(shell, name, "-c", command, (char *)NULL);
 		warn("%s", shell);
 		_exit(1);
 		/*NOTREACHED*/
