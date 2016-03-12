@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.65 2015/07/06 10:07:12 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.66 2016/03/12 08:45:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.65 2015/07/06 10:07:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.66 2016/03/12 08:45:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -93,6 +93,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	uint64_t memlimit;
 	ino_t nodes;
 	int error;
+	bool set_memlimit;
+	bool set_nodes;
 
 	if (args == NULL)
 		return EINVAL;
@@ -137,26 +139,33 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* Get the memory usage limit for this file-system. */
 	if (args->ta_size_max < PAGE_SIZE) {
 		memlimit = UINT64_MAX;
+		set_memlimit = false;
 	} else {
 		memlimit = args->ta_size_max;
+		set_memlimit = true;
 	}
 	KASSERT(memlimit > 0);
 
 	if (args->ta_nodes_max <= 3) {
 		nodes = 3 + (memlimit / 1024);
+		set_nodes = false;
 	} else {
 		nodes = args->ta_nodes_max;
+		set_nodes = true;
 	}
 	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
 
 	if (mp->mnt_flag & MNT_UPDATE) {
 		tmp = VFS_TO_TMPFS(mp);
-		if (nodes < tmp->tm_nodes_cnt)
+		if (set_nodes && nodes < tmp->tm_nodes_cnt)
 			return EBUSY;
-		if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
-			return error;
-		tmp->tm_nodes_max = nodes;
+		if (set_memlimit) {
+			if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
+				return error;
+		}
+		if (set_nodes)
+			tmp->tm_nodes_max = nodes;
 		root = tmp->tm_root;
 		root->tn_uid = args->ta_root_uid;
 		root->tn_gid = args->ta_root_gid;
