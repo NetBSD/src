@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.126 2016/03/12 11:45:59 martin Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.127 2016/03/12 12:21:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.126 2016/03/12 11:45:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.127 2016/03/12 12:21:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -567,7 +567,7 @@ tmpfs_write(void *v)
 	const int ioflag = ap->a_ioflag;
 	tmpfs_node_t *node;
 	struct uvm_object *uobj;
-	off_t oldsize __diagused;
+	off_t oldsize;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(vp));
