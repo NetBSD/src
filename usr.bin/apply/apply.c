@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.17 2008/03/08 03:35:53 christos Exp $	*/
+/*	$NetBSD: apply.c,v 1.18 2016/03/12 21:20:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.17 2008/03/08 03:35:53 christos Exp $");
+__RCSID("$NetBSD: apply.c,v 1.18 2016/03/12 21:20:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: apply.c,v 1.17 2008/03/08 03:35:53 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static void	usage(void) __dead;
-static int	shell_system(const char *);
+static __dead void usage(void);
+static int shell_system(const char *);
 
 int
 main(int argc, char *argv[])
@@ -64,15 +64,17 @@ main(int argc, char *argv[])
 
 	(void)setprogname(argv[0]);	/* for portability */
 
+	/* Option defaults */
 	debug = 0;
-	magic = '%';		/* Default magic char is `%'. */
+	magic = '%';
 	nargs = -1;
+
 	while ((ch = getopt(argc, argv, "a:d0123456789")) != -1) {
 		switch (ch) {
 		case 'a':
 			if (optarg[1] != '\0')
 				errx(EXIT_FAILURE,
-				    "illegal magic character specification.");
+				    "Illegal magic character specification.");
 			magic = optarg[0];
 			break;
 		case 'd':
@@ -82,7 +84,7 @@ main(int argc, char *argv[])
 		case '5': case '6': case '7': case '8': case '9':
 			if (nargs != -1)
 				errx(EXIT_FAILURE,
-				    "only one -# argument may be specified.");
+				    "Only one -# argument may be specified.");
 			nargs = optopt - '0';
 			break;
 		default:
@@ -96,18 +98,20 @@ main(int argc, char *argv[])
 		usage();
 
 	/*
-	 * The command to run is argv[0], and the args are argv[1..].
+	 * The command to run is now argv[0], and the args are argv[1+].
 	 * Look for %digit references in the command, remembering the
 	 * largest one.
 	 */
-	for (n = 0, p = argv[0]; *p != '\0'; ++p) {
-		if (p[0] == magic && isdigit((unsigned char)p[1]) &&
-		    p[1] != '0') {
+	n = 0;
+	for (p = argv[0]; p[0] != '\0'; ++p) {
+		if (p[0] == magic && p[1] != '\0' &&
+		    isdigit((unsigned char)p[1]) && p[1] != '0') {
 			++p;
 			if (p[0] - '0' > n)
 				n = p[0] - '0';
 		}
 	}
+
 	/*
 	 * If there were any %digit references, then use those, otherwise
 	 * build a new command string with sufficient %digit references at
@@ -188,7 +192,7 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		errx(EXIT_FAILURE,
-		    "expecting additional argument%s after \"%s\"",
+		    "Expecting additional argument%s after \"%s\"",
 		    (nargs - argc) ? "s" : "", argv[argc - 1]);
 	return rval;
 }
@@ -215,21 +219,27 @@ shell_system(const char *command)
 		else
 			++name;
 	}
-	if (!command)		/* just checking... */
+
+	if (!command) {
+		/* just checking... */
 		return(1);
+	}
 
 	omask = sigblock(sigmask(SIGCHLD));
 	switch (pid = vfork()) {
-	case -1:			/* error */
+	case -1:
+		/* error */
 		err(EXIT_FAILURE, "vfork");
 		/*NOTREACHED*/
-	case 0:				/* child */
+	case 0:
+		/* child */
 		(void)sigsetmask(omask);
 		(void)execl(shell, name, "-c", command, NULL);
 		warn("%s", shell);
 		_exit(1);
 		/*NOTREACHED*/
-	default:			/* parent */
+	default:
+		/* parent */
 		intsave = signal(SIGINT, SIG_IGN);
 		quitsave = signal(SIGQUIT, SIG_IGN);
 		pid = waitpid(pid, &status, 0);
@@ -241,8 +251,7 @@ shell_system(const char *command)
 	/*NOTREACHED*/
 }
 
-__dead
-static void
+static __dead void
 usage(void)
 {
 
