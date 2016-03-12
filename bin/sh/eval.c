@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.116 2016/03/12 14:59:26 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.117 2016/03/12 21:35:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.116 2016/03/12 14:59:26 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.117 2016/03/12 21:35:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1118,7 +1118,8 @@ normal_fork:
 #ifdef DEBUG
 		trputs("normal command:  ");  trargs(argv);
 #endif
-		redirect(cmd->ncmd.redirect, vforked ? REDIR_VFORK : 0);
+		redirect(cmd->ncmd.redirect, 
+		    (vforked ? REDIR_VFORK : 0) | REDIR_KEEP);
 		if (!vforked)
 			for (sp = varlist.list ; sp ; sp = sp->next)
 				setvareq(sp->text, VEXPORT|VSTACK);
