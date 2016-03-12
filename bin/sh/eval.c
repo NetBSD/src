@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.115 2016/02/29 23:51:36 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.116 2016/03/12 14:59:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.115 2016/02/29 23:51:36 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.116 2016/03/12 14:59:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: eval.c,v 1.115 2016/02/29 23:51:36 christos Exp $");
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <limits.h>
 #include <unistd.h>
@@ -807,9 +808,25 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		char sep = 0;
 		out2str(ps4val());
 		for (sp = varlist.list ; sp ; sp = sp->next) {
+			char *p;
+
 			if (sep != 0)
 				outc(sep, &errout);
-			out2shstr(sp->text);
+
+			/*
+			 * The "var=" part should not be quoted, regardless
+			 * of the value, or it would not represent an
+			 * assignment, but rather a command
+			 */
+			p = strchr(sp->text, '=');
+			if (p != NULL) {
+				*p = '\0';	/*XXX*/
+				out2shstr(sp->text);
+				out2c('=');
+				*p++ = '=';	/*XXX*/
+			} else
+				p = sp->text;
+			out2shstr(p);
 			sep = ' ';
 		}
 		for (sp = arglist.list ; sp ; sp = sp->next) {
