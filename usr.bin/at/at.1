@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.25 2011/04/28 13:54:13 wiz Exp $
+.\" $NetBSD: at.1,v 1.26 2016/03/12 22:37:32 dholland Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd March 10, 2008
@@ -164,7 +164,9 @@ is executed from a
 shell, the owner of the login shell will receive the mail.
 .Pp
 The superuser may use these commands in any case.
-For other users, permission to use at is determined by the files
+For other users, permission to use
+.Nm at
+is determined by the files
 .Pa /var/at/at.allow
 and
 .Pa /var/at/at.deny .
@@ -178,7 +180,7 @@ If
 .Pa /var/at/at.allow
 does not exist,
 .Pa /var/at/at.deny
-is checked, every username not mentioned in it is then allowed
+is checked; every username not mentioned in it is then allowed
 to use
 .Nm .
 .Pp
