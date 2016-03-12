@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.15 2014/11/18 08:58:08 martin Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.16 2016/03/12 11:55:14 martin Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ ATF_TC_BODY(fpsetmask_basic, tc)
 	for (i = 0; i < __arraycount(lst); i++) {
 		fpsetmask(msk | lst[i]);
 		ATF_CHECK((fpgetmask() & lst[i]) != 0);
-		fpsetmask(msk & lst[i]);
+		fpsetmask(msk & ~lst[i]);
 		ATF_CHECK((fpgetmask() & lst[i]) == 0);
 	}
 
