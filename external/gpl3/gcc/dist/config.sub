@@ -947,6 +947,9 @@ case $basic_machine in
 		basic_machine=hppa1.1-oki
 		os=-proelf
 		;;
+	openrisc | openrisc-*)
+		basic_machine=or32-unknown
+		;;
 	or1k | or1k-*)
 		basic_machine=or1k-unknown
 		;;
