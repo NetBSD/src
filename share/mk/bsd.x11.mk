@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.117 2015/07/23 08:03:26 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.118 2016/03/13 17:56:56 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -10,7 +10,7 @@ COPTS+=			-fno-strict-aliasing
 
 .include <bsd.sys.mk>
 
-.if defined(USE_SSP) && (${USE_SSP} != "no")
+.if !defined(NOSSP) && (${USE_SSP:Uno} != "no")
 CPPFLAGS+=		-DNO_ALLOCA
 .endif
 
