@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2016/03/08 14:26:34 christos Exp $
+# $NetBSD: Makefile,v 1.8 2016/03/13 18:55:12 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,6 +14,7 @@ TESTS_SH+=	t_fsplit
 TESTS_SH+=	t_here
 TESTS_SH+=	t_option
 TESTS_SH+=	t_redir
+TESTS_SH+=	t_redircloexec
 TESTS_SH+=	t_set_e
 TESTS_SH+=	t_ulimit
 TESTS_SH+=	t_varquote
