@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.254 2016/03/12 23:08:58 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.255 2016/03/13 17:56:56 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -114,7 +114,7 @@ _NOWERROR=	${defined(NOGCCERROR) || (${ACTIVE_CC} == "clang" && defined(NOCLANGE
 CFLAGS+=	${${_NOWERROR} == "no" :?-Werror:} ${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
+.if !defined(NOSSP) && (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
