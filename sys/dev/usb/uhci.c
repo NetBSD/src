@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.65 2016/02/28 16:23:57 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.66 2016/03/13 08:09:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.65 2016/02/28 16:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.66 2016/03/13 08:09:00 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1576,6 +1576,8 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 	}
 #endif
 	KASSERT(!ux->ux_isdone);
+	KASSERTMSG(!ux->ux_isdone, "xfer %p type %d status %d", xfer,
+	    ux->ux_type, xfer->ux_status);
 	ux->ux_isdone = true;
 #endif
 
