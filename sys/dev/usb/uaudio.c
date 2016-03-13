@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.12 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.13 2016/03/13 07:11:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.12 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.13 2016/03/13 07:11:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2974,7 +2974,7 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 	 * Transfer data from channel buffer to upper layer buffer, taking
 	 * care of wrapping the upper layer buffer.
 	 */
-	for(i = 0; i < UAUDIO_NFRAMES; i++) {
+	for (i = 0; i < UAUDIO_NFRAMES; i++) {
 		frsize = cb->sizes[i];
 		n = min(frsize, ch->end - ch->cur);
 		memcpy(ch->cur, cb->buffer + cb->offsets[i], n);
