@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2015/04/08 13:16:37 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2016/03/13 01:06:51 mrg Exp $
 
 SOFTFLOAT_BITS?=64
 .PATH:		${ARCHDIR}/softfloat \
@@ -31,11 +31,8 @@ SRCS+=		${SRCS.softfloat}
 
 # XXX
 .if defined(HAVE_GCC)
-. if (${LIBC_MACHINE_CPU} == "arm") && (${HAVE_GCC} == "45")
 # See doc/HACKS for more information.
-COPTS.softfloat.c+=	-Wno-enum-compare
-COPTS.softfloat.c+=	${${ACTIVE_CXX} == "gcc":? -fno-tree-vrp :}
-.elif (${LIBC_MACHINE_CPU} == "mips" || \
+. if (${LIBC_MACHINE_CPU} == "mips" || \
      ${LIBC_MACHINE_CPU} == "sh3")
 COPTS.softfloat.c+=	-Wno-enum-compare
 . endif

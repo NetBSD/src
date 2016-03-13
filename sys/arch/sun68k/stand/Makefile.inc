@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2014/07/26 17:24:04 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2016/03/13 01:06:51 mrg Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -22,7 +22,7 @@ RELOC?= 240000
 DEFS?= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+.if defined(HAVE_GCC)
 # gcc 4.8 convers -mc68000 to -mcpu=68000 and that breaks gas
 # which works for -march=68010 but breaks for -mcpu=68010
 CPUFLAGS= -march=68010

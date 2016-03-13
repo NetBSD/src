@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 2016/02/15 13:25:12 martin Exp $
+#	$NetBSD: Makefile,v 1.77 2016/03/13 01:06:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -83,7 +83,7 @@ BUILD_MAKE=${TOOL_GMAKE}
 
 MKNATIVE_CONFIG_TARGET_LIBS=
 
-.if ${HAVE_GCC} == 5
+.if ${HAVE_GCC} >= 50
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgcc
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
 MKNATIVE_TARGET=	gcc5
