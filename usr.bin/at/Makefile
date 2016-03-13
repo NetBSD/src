@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2009/04/14 22:15:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2016/03/13 00:32:09 dholland Exp $
 
 USE_FORT?=	yes	# setuid
 
 PROG=		at
-SRCS=		at.c panic.c parsetime.c perm.c stime.c
+SRCS=		at.c panic.c parsetime.c perm.c privs.c stime.c
 LINKS=		${BINDIR}/at ${BINDIR}/atq \
 		${BINDIR}/at ${BINDIR}/atrm \
 		${BINDIR}/at ${BINDIR}/batch
