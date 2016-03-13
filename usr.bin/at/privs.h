@@ -1,4 +1,4 @@
-/*	$NetBSD: privs.h,v 1.9 2016/03/13 00:32:09 dholland Exp $	*/
+/*	$NetBSD: privs.h,v 1.10 2016/03/13 00:33:12 dholland Exp $	*/
 
 /*
  *  privs.h - header for privileged operations
@@ -29,6 +29,11 @@
 
 #ifndef _PRIVS_H_
 #define _PRIVS_H_
+
+/*
+ * Used by: usr.bin/at
+ * Used by: libexec/atrun
+ */
 
 /*
  * Relinquish privileges temporarily for a setuid or setgid program
