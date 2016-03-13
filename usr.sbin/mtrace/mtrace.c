@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.40 2014/02/27 17:43:35 joerg Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.41 2016/03/13 19:47:59 christos Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.40 2014/02/27 17:43:35 joerg Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.41 2016/03/13 19:47:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1094,7 +1094,7 @@ print_stats(struct resp_buf *basep, struct resp_buf *prev, struct resp_buf *new)
     }
 
     while (TRUE) {
-	if ((n->tr_inaddr != b->tr_inaddr) || (n->tr_inaddr != b->tr_inaddr))
+	if ((n->tr_inaddr != b->tr_inaddr) || (p->tr_inaddr != b->tr_inaddr))
 	  return 1;		/* Route changed */
 
 	if ((n->tr_inaddr != n->tr_outaddr))
