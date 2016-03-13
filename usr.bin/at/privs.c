@@ -1,7 +1,7 @@
-/*	$NetBSD: privs.h,v 1.9 2016/03/13 00:32:09 dholland Exp $	*/
+/*	$NetBSD: privs.c,v 1.1 2016/03/13 00:32:09 dholland Exp $	*/
 
 /*
- *  privs.h - header for privileged operations
+ *  privs.c - privileged operations
  *  Copyright (C) 1993  Thomas Koenig
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,9 @@
  * From: OpenBSD: privs.h,v 1.4 1997/03/01 23:40:12 millert Exp
  */
 
-#ifndef _PRIVS_H_
-#define _PRIVS_H_
+#include <unistd.h>
+
+#include "privs.h"
 
 /*
  * Relinquish privileges temporarily for a setuid or setgid program
@@ -56,16 +57,43 @@
  * to the real userid before calling any of them.
  */
 
-extern uid_t real_uid, effective_uid;
-extern gid_t real_gid, effective_gid;
+uid_t real_uid, effective_uid;
+gid_t real_gid, effective_gid;
 
-void privs_relinquish(void);
-void privs_relinquish_root(uid_t ruid, gid_t rgid);
+void
+privs_enter(void)
+{
+	if (seteuid(effective_uid) == -1)
+		privs_fail("Cannot get user privs");
+	if (setegid(effective_gid) == -1)
+		privs_fail("Cannot get group privs");
+}
 
-void privs_enter(void);
-void privs_exit(void);
+void
+privs_exit(void)
+{
+	if (setegid(real_gid) == -1)
+		privs_fail("Cannot relinguish group privs");
+	if (seteuid(real_uid) == -1)
+		privs_fail("Cannot relinguish user privs");
+}
 
-/* caller provides this */
-__dead void privs_fail(const char *msg);
+void
+privs_relinquish(void)
+{
+	real_uid = getuid();
+	effective_uid = geteuid();
+	real_gid = getgid();
+	effective_gid = getegid();
+	privs_exit();
+}
 
-#endif /* _PRIV_H_ */
+void
+privs_relinquish_root(uid_t ruid, gid_t rgid)
+{
+	real_uid = ruid;
+	real_gid = rgid;
+	effective_uid = geteuid();
+	effective_gid = getegid();
+	privs_exit();
+}
