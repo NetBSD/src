@@ -1,4 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.16 2013/08/21 06:15:41 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2016/03/13 17:48:53 christos Exp $
+
+NOSSP=
+NOFORTIFY=
+NOPIE=
+NODEBUG=
 
 .include <bsd.klinks.mk>
 
