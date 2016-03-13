@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkzone.c,v 1.6 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.6.6.1 2016/03/13 08:00:25 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,7 @@
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/string.h>
 #include <isc/task.h>

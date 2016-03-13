@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_test.c,v 1.1.1.3.4.2 2015/07/17 04:31:34 snj Exp $	*/
+/*	$NetBSD: hash_test.c,v 1.1.1.3.4.2.2.1 2016/03/13 08:00:37 martin Exp $	*/
 
 /*
  * Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -33,6 +33,7 @@
 #include <isc/md5.h>
 #include <isc/sha1.h>
 #include <isc/util.h>
+#include <isc/print.h>
 #include <isc/string.h>
 
 /*
@@ -42,7 +43,7 @@
 unsigned char digest[ISC_SHA512_DIGESTLENGTH];
 unsigned char buffer[1024];
 const char *s;
-char str[2 * ISC_SHA512_DIGESTLENGTH + 1];
+char str[2 * ISC_SHA512_DIGESTLENGTH + 3];
 unsigned char key[20];
 
 isc_result_t

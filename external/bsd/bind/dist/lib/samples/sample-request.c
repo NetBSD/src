@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-request.c,v 1.1.1.2.2.1 2015/07/17 04:31:35 snj Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.1.1.2.2.1.2.1 2016/03/13 08:00:38 martin Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,7 @@
 #include <isc/commandline.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/sockaddr.h>
 #include <isc/util.h>
 

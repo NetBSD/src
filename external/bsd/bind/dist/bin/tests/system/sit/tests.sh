@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,9 +23,15 @@ status=0
 n=0
 
 getsit() {
-	awk '$2 == "SIT:" {
+	awk '$2 == "COOKIE:" {
 		print $3;
 	}' < $1
+}
+
+fullsit() {
+	awk 'BEGIN { n = 0 }
+	     // { v[n++] = length(); }
+	     END { print (v[1] == v[2]); }'
 }
 
 havetc() {
@@ -45,7 +51,7 @@ n=`expr $n + 1`
 echo "I:checking SIT token returned to empty SIT option ($n)"
 ret=0
 $DIG +qr +sit version.bind txt ch @10.53.0.1 -p 5300 > dig.out.test$n
-grep SIT: dig.out.test$n > /dev/null || ret=1
+grep COOKIE: dig.out.test$n > /dev/null || ret=1
 grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -63,7 +69,7 @@ echo "I:checking response size without valid SIT ($n)"
 ret=0
 $DIG +sit large.example txt @10.53.0.1 -p 5300 +ignore > dig.out.test$n
 havetc dig.out.test$n || ret=1
-grep "; SIT:.*(good)" dig.out.test$n > /dev/null || ret=1
+grep "; COOKIE:.*(good)" dig.out.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -74,7 +80,7 @@ $DIG +sit large.example txt @10.53.0.1 -p 5300 > dig.out.test$n.l
 sit=`getsit dig.out.test$n.l`
 $DIG +qr +sit=$sit large.example txt @10.53.0.1 -p 5300 +ignore > dig.out.test$n
 havetc dig.out.test$n && ret=1
-grep "; SIT:.*(good)" dig.out.test$n > /dev/null || ret=1
+grep "; COOKIE:.*(good)" dig.out.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -83,7 +89,18 @@ echo "I:checking response size with SIT recursive ($n)"
 ret=0
 $DIG +qr +sit=$sit large.xxx txt @10.53.0.1 -p 5300 +ignore > dig.out.test$n
 havetc dig.out.test$n && ret=1
-grep "; SIT:.*(good)" dig.out.test$n > /dev/null || ret=1
+grep "; COOKIE:.*(good)" dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking SIT is learnt for TCP retry ($n)"
+ret=0
+$DIG +qr +sit large.example txt @10.53.0.1 -p 5300 > dig.out.test$n
+linecount=`getsit dig.out.test$n | wc -l`
+if [ $linecount != 3 ]; then ret=1; fi
+checkfull=`getsit dig.out.test$n | fullsit`
+if [ $checkfull != 1 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

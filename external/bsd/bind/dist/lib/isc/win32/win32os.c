@@ -1,4 +1,4 @@
-/*	$NetBSD: win32os.c,v 1.4.4.1 2015/07/17 04:31:35 snj Exp $	*/
+/*	$NetBSD: win32os.c,v 1.4.4.1.2.1 2016/03/13 08:00:38 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #else
 #include <stdio.h>
 #endif
+#include <isc/print.h>
 
 int
 isc_win32os_versioncheck(unsigned int major, unsigned int minor,

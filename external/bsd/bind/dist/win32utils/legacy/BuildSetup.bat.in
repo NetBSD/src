@@ -46,6 +46,7 @@ copy ..\..\HISTORY ..\..\Build\Release
 copy ..\readme1st.txt ..\..\Build\Release
 copy ..\index.html ..\..\Build\Release
 copy ..\..\doc\arm\*.html ..\..\Build\Release
+copy ..\..\doc\arm\notes.pdf ..\..\Build\Release
 copy ..\..\doc\arm\Bv9ARM.pdf ..\..\Build\Release
 copy ..\..\CHANGES ..\..\Build\Release
 if Exist ..\CHANGES.SE copy ..\CHANGES.SE ..\Build\Release
