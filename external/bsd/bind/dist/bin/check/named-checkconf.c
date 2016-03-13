@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkconf.c,v 1.9.2.1 2015/07/17 04:31:20 snj Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.9.2.2 2016/03/13 08:06:02 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,6 +33,7 @@
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>

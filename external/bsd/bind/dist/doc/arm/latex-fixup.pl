@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,7 @@ while (<>) {
 
     # Add any further tweaking here.
     # https://en.wikibooks.org/wiki/LaTeX/Special_Characters
-    s/&#50102;/{\\"o}/;  # omlaut o &#xc3b6; or &#50102;
+    s/&#50102;/{\\"o}/;  # umlaut o &#xc3b6; or &#50102;
 
     # Write out whatever we have now.
     print;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.c,v 1.7.2.1 2015/07/17 04:31:33 snj Exp $	*/
+/*	$NetBSD: rootns.c,v 1.7.2.2 2016/03/13 08:06:13 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -72,8 +72,8 @@ static char root_ns[] =
 "F.ROOT-SERVERS.NET.     3600000 IN      A       192.5.5.241\n"
 "F.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2F::F\n"
 "G.ROOT-SERVERS.NET.     3600000 IN      A       192.112.36.4\n"
-"H.ROOT-SERVERS.NET.     3600000 IN      A       128.63.2.53\n"
-"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::803F:235\n"
+"H.ROOT-SERVERS.NET.     3600000 IN      A       198.97.190.53\n"
+"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::53\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7fe::53\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"

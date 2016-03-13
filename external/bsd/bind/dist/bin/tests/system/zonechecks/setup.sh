@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@ test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 $SHELL ../genzone.sh 1 > ns1/master.db
 $SHELL ../genzone.sh 1 > ns1/duplicate.db
+cp bigserial.db ns1/
 cd ns1
 touch master.db.signed
 echo '$INCLUDE "master.db.signed"' >> master.db

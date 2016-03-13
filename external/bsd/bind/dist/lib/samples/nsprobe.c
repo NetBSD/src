@@ -1,4 +1,4 @@
-/*	$NetBSD: nsprobe.c,v 1.1.1.2.2.1 2015/07/17 04:31:35 snj Exp $	*/
+/*	$NetBSD: nsprobe.c,v 1.1.1.2.2.2 2016/03/13 08:06:16 martin Exp $	*/
 
 /*
  * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -37,6 +37,7 @@
 #include <isc/commandline.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>

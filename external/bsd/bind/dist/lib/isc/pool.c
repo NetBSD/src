@@ -1,7 +1,7 @@
-/*	$NetBSD: pool.c,v 1.1.1.1 2013/07/27 15:23:18 christos Exp $	*/
+/*	$NetBSD: pool.c,v 1.1.1.1.6.1 2016/03/13 08:06:14 martin Exp $	*/
 
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -72,7 +72,7 @@ alloc_pool(isc_mem_t *mctx, unsigned int count, isc_pool_t **poolp) {
 
 isc_result_t
 isc_pool_create(isc_mem_t *mctx, unsigned int count,
-		   isc_pooldeallocator_t free,
+		   isc_pooldeallocator_t release,
 		   isc_poolinitializer_t init, void *initarg,
 		   isc_pool_t **poolp)
 {
@@ -87,7 +87,7 @@ isc_pool_create(isc_mem_t *mctx, unsigned int count,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	pool->free = free;
+	pool->free = release;
 	pool->init = init;
 	pool->initarg = initarg;
 

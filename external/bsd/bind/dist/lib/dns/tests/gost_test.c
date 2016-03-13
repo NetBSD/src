@@ -1,4 +1,4 @@
-/*	$NetBSD: gost_test.c,v 1.1.1.2.2.2 2015/07/17 04:31:34 snj Exp $	*/
+/*	$NetBSD: gost_test.c,v 1.1.1.2.2.3 2016/03/13 08:06:14 martin Exp $	*/
 
 /*
  * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <isc/util.h>
+#include <isc/print.h>
 #include <isc/string.h>
 
 #include "dnstest.h"
@@ -38,6 +39,7 @@
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
+#include <openssl/bn.h>
 #endif
 
 #ifdef HAVE_PKCS11_GOST

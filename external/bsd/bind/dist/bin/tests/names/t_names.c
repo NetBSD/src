@@ -1,7 +1,7 @@
-/*	$NetBSD: t_names.c,v 1.8 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: t_names.c,v 1.8.4.1 2016/03/13 08:06:04 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 
 #include <isc/buffer.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/string.h>
 
 #include <dns/compress.h>

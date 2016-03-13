@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.6.2.1 2015/07/17 04:31:21 snj Exp $	*/
+/*	$NetBSD: os.c,v 1.6.2.2 2016/03/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: os.c,v 1.39 2012/02/06 23:46:44 tbox Exp  */
 
 #include <config.h>
 #include <stdarg.h>

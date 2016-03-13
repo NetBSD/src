@@ -91,7 +91,8 @@ sockaddr_test@EXEEXT@: sockaddr_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			sockaddr_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
 
-print_test@EXEEXT@: print_test.@O@ ${ISCDEPLIBS} ${top_srcdir}/lib/isc/print.c
+print_test.@O@:	${top_srcdir}/lib/isc/print.c
+print_test@EXEEXT@: print_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			print_test.@O@ ${ISCLIBS} ${LIBS}
 

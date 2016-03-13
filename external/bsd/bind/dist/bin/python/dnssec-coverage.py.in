@@ -1,6 +1,6 @@
 #!@PYTHON@
 ############################################################################
-# Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -326,7 +326,7 @@ def vspace():
     if _firstline:
         _firstline = False
     else:
-        print
+        print('')
 
 ############################################################################
 # vreset:
@@ -673,7 +673,7 @@ def parse_args():
     parser.add_argument('-d', dest='keyttl', type=str,
                         help='the DNSKEY TTL', metavar='time')
     parser.add_argument('-r', dest='resign', default='1944000', 
-                        type=int, help='the RRSIG refresh interval '
+                        type=str, help='the RRSIG refresh interval '
                                        'in seconds [default: 22.5 days]',
                         metavar='time')
     parser.add_argument('-c', dest='compilezone',
