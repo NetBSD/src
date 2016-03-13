@@ -1,4 +1,4 @@
-/*	$NetBSD: _elftc.h,v 1.4 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: _elftc.h,v 1.5 2016/03/13 03:47:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joseph Koshy
@@ -372,6 +372,7 @@ extern const char *__progname;
 #endif	/* ELFTC_GETPROGNAME */
 
 
+#ifndef HAVE_NBTOOL_CONFIG_H
 /**
  ** Per-OS configuration.
  **/
@@ -462,11 +463,7 @@ extern const char *__progname;
 
 #define	ELFTC_HAVE_MMAP				1
 #define	ELFTC_HAVE_STRMODE			1
-#if __NetBSD_Version__ <= 599002100
-/* from src/doc/CHANGES: flex(1): Import flex-2.5.35 [christos 20091025] */
-/* and 5.99.21 was from Wed Oct 21 21:28:36 2009 UTC */
-#  define ELFTC_BROKEN_YY_NO_INPUT		1
-#endif
+
 #endif	/* __NetBSD __ */
 
 
@@ -486,5 +483,19 @@ extern const char *__progname;
 #define	roundup2	roundup
 
 #endif	/* __OpenBSD__ */
+
+#else /* Crosscompiling for NetBSD tools */
+
+#include <sys/param.h>
+#include <sys/endian.h>
+
+#define	ELFTC_BYTE_ORDER			_BYTE_ORDER
+#define	ELFTC_BYTE_ORDER_LITTLE_ENDIAN		_LITTLE_ENDIAN
+#define	ELFTC_BYTE_ORDER_BIG_ENDIAN		_BIG_ENDIAN
+
+#define	ELFTC_HAVE_MMAP				1
+#define	ELFTC_HAVE_STRMODE			1
+
+#endif /* NBTOOL_CONFIG_H */
 
 #endif	/* _ELFTC_H */
