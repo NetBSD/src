@@ -1,7 +1,7 @@
-/*	$NetBSD: regex_test.c,v 1.1.1.1 2013/07/27 15:23:20 christos Exp $	*/
+/*	$NetBSD: regex_test.c,v 1.1.1.1.6.1 2016/03/13 08:06:15 martin Exp $	*/
 
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@
 #endif
 
 #include <isc/regex.h>
+#include <isc/print.h>
 #include <isc/util.h>
 
 ATF_TC(regex_validate);

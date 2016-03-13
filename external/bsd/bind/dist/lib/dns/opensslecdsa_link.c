@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.6.2.2 2015/09/09 08:10:03 martin Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.6.2.3 2016/03/13 08:06:13 martin Exp $	*/
 
 /*
- * Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

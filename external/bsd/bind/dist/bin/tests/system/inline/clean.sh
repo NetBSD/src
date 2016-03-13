@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -88,3 +88,4 @@ rm -f ns3/test-?.bk.signed.jnl
 rm -f import.key Kimport*
 rm -f checkgost checkdsa checkecdsa
 rm -f ns3/a-file
+rm -f dig.out.*

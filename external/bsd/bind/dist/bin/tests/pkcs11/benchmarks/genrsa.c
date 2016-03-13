@@ -1,7 +1,7 @@
-/*	$NetBSD: genrsa.c,v 1.1.1.2 2014/07/08 04:46:08 spz Exp $	*/
+/*	$NetBSD: genrsa.c,v 1.1.1.2.2.1 2016/03/13 08:06:05 martin Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +55,7 @@
 #include <unistd.h>
 
 #include <isc/commandline.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/types.h>
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -51,21 +51,21 @@ MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
-pkcs11-list@EXEEXT@: @srcdir@/pkcs11-list.@O@ ${DEPLIBS}
+pkcs11-list@EXEEXT@: pkcs11-list.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
-		-o $@ @srcdir@/pkcs11-list.@O@ ${LIBS}
+		-o $@ pkcs11-list.@O@ ${LIBS}
 
-pkcs11-destroy@EXEEXT@: @srcdir@/pkcs11-destroy.@O@ ${DEPLIBS}
+pkcs11-destroy@EXEEXT@: pkcs11-destroy.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
-		-o $@ @srcdir@/pkcs11-destroy.@O@ ${LIBS}
+		-o $@ pkcs11-destroy.@O@ ${LIBS}
 
-pkcs11-keygen@EXEEXT@: @srcdir@/pkcs11-keygen.@O@ ${DEPLIBS}
+pkcs11-keygen@EXEEXT@: pkcs11-keygen.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
-		-o $@ @srcdir@/pkcs11-keygen.@O@ ${LIBS}
+		-o $@ pkcs11-keygen.@O@ ${LIBS}
 
-pkcs11-tokens@EXEEXT@: @srcdir@/pkcs11-tokens.@O@ ${DEPLIBS}
+pkcs11-tokens@EXEEXT@: pkcs11-tokens.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
-		-o $@ @srcdir@/pkcs11-tokens.@O@ ${LIBS}
+		-o $@ pkcs11-tokens.@O@ ${LIBS}
 
 doc man:: ${MANOBJS}
 

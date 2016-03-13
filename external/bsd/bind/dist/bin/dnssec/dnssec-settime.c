@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.10.2.2 2015/07/17 04:31:20 snj Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.10.2.3 2016/03/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -117,8 +117,8 @@ printtime(dst_key_t *key, int type, const char *tag, isc_boolean_t epoch,
 	} else if (epoch) {
 		fprintf(stream, "%d\n", (int) when);
 	} else {
-		time_t time = when;
-		output = ctime(&time);
+		time_t timet = when;
+		output = ctime(&timet);
 		fprintf(stream, "%s", output);
 	}
 }
@@ -411,7 +411,6 @@ main(int argc, char **argv) {
 					"inactive.\n", program);
 
 		changed = setpub = setact = ISC_TRUE;
-		dst_key_free(&prevkey);
 	} else {
 		if (prepub < 0)
 			prepub = 0;
@@ -602,6 +601,8 @@ main(int argc, char **argv) {
 		printf("%s\n", newname);
 	}
 
+	if (prevkey != NULL)
+		dst_key_free(&prevkey);
 	dst_key_free(&key);
 	dst_lib_destroy();
 	isc_hash_destroy();

@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-update.c,v 1.1.1.2.2.1 2015/07/17 04:31:35 snj Exp $	*/
+/*	$NetBSD: sample-update.c,v 1.1.1.2.2.2 2016/03/13 08:06:16 martin Exp $	*/
 
 /*
- * Copyright (C) 2009, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,7 @@
 #include <isc/lib.h>
 #include <isc/mem.h>
 #include <isc/parseint.h>
+#include <isc/print.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -687,11 +688,8 @@ make_prereq(isc_mem_t *mctx, char *cmdline, isc_boolean_t ispositive,
 			rdatalist->rdclass = dns_rdataclass_any;
 	} else
 		rdatalist->rdclass = dns_rdataclass_none;
-	rdatalist->covers = 0;
-	rdatalist->ttl = 0;
 	rdata->rdclass = rdatalist->rdclass;
 	rdata->type = rdatatype;
-	ISC_LIST_INIT(rdatalist->rdata);
 	ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
 	ISC_LIST_APPEND(usedrdatalists, rdatalist, link);
 

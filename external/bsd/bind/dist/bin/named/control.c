@@ -1,7 +1,7 @@
-/*	$NetBSD: control.c,v 1.7.4.1 2014/12/22 03:28:33 msaitoh Exp $	*/
+/*	$NetBSD: control.c,v 1.7.4.2 2016/03/13 08:06:03 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -71,7 +71,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 #endif
 
 	data = isccc_alist_lookup(message, "_data");
-	if (data == NULL) {
+	if (!isccc_alist_alistp(data)) {
 		/*
 		 * No data section.
 		 */
@@ -103,7 +103,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	if (command_compare(command, NS_COMMAND_RELOAD)) {
 		result = ns_server_reloadcommand(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_RECONFIG)) {
-		result = ns_server_reconfigcommand(ns_g_server, command);
+		result = ns_server_reconfigcommand(ns_g_server);
 	} else if (command_compare(command, NS_COMMAND_REFRESH)) {
 		result = ns_server_refreshcommand(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_RETRANSFER)) {

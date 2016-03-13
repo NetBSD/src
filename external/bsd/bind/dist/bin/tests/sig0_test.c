@@ -1,4 +1,4 @@
-/*	$NetBSD: sig0_test.c,v 1.6.4.1 2015/07/17 04:31:21 snj Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.6.4.2 2016/03/13 08:06:04 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,7 @@
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/net.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/socket.h>
