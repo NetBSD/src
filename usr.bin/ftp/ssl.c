@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.2.14.1 2015/11/05 05:26:38 riz Exp $	*/
+/*	$NetBSD: ssl.c,v 1.2.14.2 2016/03/13 11:49:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.2.14.1 2015/11/05 05:26:38 riz Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.2.14.2 2016/03/13 11:49:14 martin Exp $");
 #endif
 
 #include <time.h>
@@ -570,7 +570,7 @@ fetch_start_ssl(int sock, const char *servername)
 		return NULL;
 	}
 	SSL_set_fd(ssl, sock);
-	if (!SSL_set_tlsext_host_name(ssl, servername)) {
+	if (!SSL_set_tlsext_host_name(ssl, __UNCONST(servername))) {
 		fprintf(ttyout, "SSL hostname setting failed\n");
 		SSL_CTX_free(ctx);
 		return NULL;
