@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.258 2015/11/30 13:27:09 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.259 2016/03/13 07:01:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.258 2015/11/30 13:27:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.259 2016/03/13 07:01:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,7 @@ ohci_alloc_std(ohci_softc_t *sc)
 			  OHCI_TD_ALIGN, &dma);
 		if (err)
 			return (NULL);
-		for(i = 0; i < OHCI_STD_CHUNK; i++) {
+		for (i = 0; i < OHCI_STD_CHUNK; i++) {
 			offs = i * OHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
 			std->physaddr = DMAADDR(&dma, offs);
@@ -585,7 +585,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 			  OHCI_ITD_ALIGN, &dma);
 		if (err)
 			return (NULL);
-		for(i = 0; i < OHCI_SITD_CHUNK; i++) {
+		for (i = 0; i < OHCI_SITD_CHUNK; i++) {
 			offs = i * OHCI_SITD_SIZE;
 			sitd = KERNADDR(&dma, offs);
 			sitd->physaddr = DMAADDR(&dma, offs);
