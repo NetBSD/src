@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.5 2016/03/13 05:46:20 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.6 2016/03/13 17:26:05 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -297,6 +297,7 @@ linklocal_body()
 	$DEBUG && rump.ifconfig shmif0
 	$DEBUG && dump
 
+	export RUMP_SERVER=${SOCKSRC}
 	atf_check -s exit:0 -o match:"0.0% packet loss" \
 	    rump.ping6 -c 1 -X $TIMEOUT -n -S ${src_if0_lladdr}%shmif0 ${IP6FWD0}
 	unset RUMP_SERVER
