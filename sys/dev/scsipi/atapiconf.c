@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.87 2014/03/05 08:45:13 skrll Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.88 2016/03/13 09:01:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.87 2014/03/05 08:45:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.88 2016/03/13 09:01:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ atapi_probe_device(struct atapibus_softc *sc, int target,
 		    atapibusprint);
 	} else {
 		atapibusprint(sa, device_xname(sc->sc_dev));
-		printf(" not configured\n");
+		aprint_normal(" not configured\n");
 		free(periph, M_DEVBUF);
 		return NULL;
 	}
