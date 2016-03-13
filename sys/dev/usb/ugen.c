@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.131 2016/02/22 08:06:47 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.132 2016/03/13 07:01:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.131 2016/02/22 08:06:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.132 2016/03/13 07:01:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -469,7 +469,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				sce->ibuf = NULL;
 				return (EIO);
 			}
-			for(i = 0; i < UGEN_NISOREQS; ++i) {
+			for (i = 0; i < UGEN_NISOREQS; ++i) {
 				sce->isoreqs[i].sce = sce;
 				xfer = usbd_alloc_xfer(sc->sc_udev);
 				if (xfer == 0)
@@ -482,7 +482,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 					goto bad;
 				}
 				sce->isoreqs[i].dmabuf = tbuf;
-				for(j = 0; j < UGEN_NISORFRMS; ++j)
+				for (j = 0; j < UGEN_NISORFRMS; ++j)
 					sce->isoreqs[i].sizes[j] = isize;
 				usbd_setup_isoc_xfer
 					(xfer, sce->pipeh, &sce->isoreqs[i],

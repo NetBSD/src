@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.131 2016/02/16 07:51:13 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.132 2016/03/13 07:01:43 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.131 2016/02/16 07:51:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.132 2016/03/13 07:01:43 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -654,7 +654,7 @@ uhub_detach(device_t self, int flags)
 	KERNEL_LOCK(1, curlwp);
 
 	nports = hub->hubdesc.bNbrPorts;
-	for(port = 0; port < nports; port++) {
+	for (port = 0; port < nports; port++) {
 		rup = &hub->ports[port];
 		if (rup->device == NULL)
 			continue;
