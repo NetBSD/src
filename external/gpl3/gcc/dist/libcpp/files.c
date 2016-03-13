@@ -28,7 +28,6 @@ along with this program; see the file COPYING3.  If not see
 #include "obstack.h"
 #include "hashtab.h"
 #include "md5.h"
-#include "../gcc/defaults.h"
 #include <dirent.h>
 
 /* Variable length record files on VMS will have a stat size that includes
