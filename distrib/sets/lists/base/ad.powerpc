@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.17.2.8.2.1 2016/03/08 13:48:44 martin Exp $
+# $NetBSD: ad.powerpc,v 1.17.2.8.2.2 2016/03/13 08:00:40 martin Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -75,7 +75,7 @@
 ./usr/lib/powerpc/libbfd.so.13			base-compat-shlib	compat,arch64,pic,binutils
 ./usr/lib/powerpc/libbfd.so.13.0		base-compat-shlib	compat,arch64,pic,binutils
 ./usr/lib/powerpc/libbind9.so.8			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libbind9.so.8.2		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libbind9.so.8.4		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libblacklist.so.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libblacklist.so.0.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbluetooth.so.4		base-compat-shlib	compat,arch64,pic
@@ -105,7 +105,7 @@
 ./usr/lib/powerpc/libdm.so.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libdm.so.0.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libdns.so.8			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libdns.so.8.2			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libdns.so.8.4			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libdns_sd.so.0		base-compat-shlib	compat,arch64,pic,mdns
 ./usr/lib/powerpc/libdns_sd.so.0.0		base-compat-shlib	compat,arch64,pic,mdns
 ./usr/lib/powerpc/libdwarf.so.1			base-compat-shlib	compat,arch64,pic
@@ -151,13 +151,13 @@
 ./usr/lib/powerpc/libipsec.so.3			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libipsec.so.3.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libirs.so.8			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libirs.so.8.2			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libirs.so.8.4			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libisc.so.8			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libisc.so.8.2			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libisc.so.8.4			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libisccc.so.8			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libisccc.so.8.2		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libisccc.so.8.4		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libisccfg.so.8		base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libisccfg.so.8.2		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libisccfg.so.8.4		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libiscsi.so.2			base-compat-shlib	compat,arch64,pic,iscsi
 ./usr/lib/powerpc/libiscsi.so.2.0		base-compat-shlib	compat,arch64,pic,iscsi
 ./usr/lib/powerpc/libisns.so.0			base-compat-shlib	compat,arch64,pic
@@ -187,7 +187,7 @@
 ./usr/lib/powerpc/liblutok.so.2			base-compat-shlib	compat,arch64,pic,kyua
 ./usr/lib/powerpc/liblutok.so.2.0		base-compat-shlib	compat,arch64,pic,kyua
 ./usr/lib/powerpc/liblwres.so.8			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/liblwres.so.8.2		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/liblwres.so.8.4		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblzf.so.1			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblzf.so.1.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblzma.so.1			base-compat-shlib	compat,arch64,pic

@@ -35,6 +35,7 @@ dns_aclenv_init
 dns_adb_agesrtt
 dns_adb_adjustsrtt
 dns_adb_attach
+dns_adb_beginudpfetch
 dns_adb_cancelfind
 dns_adb_changeflags
 dns_adb_create
@@ -45,6 +46,7 @@ dns_adb_detach
 dns_adb_dump
 dns_adb_dumpfind
 dns_adb_ednsto
+dns_adb_endudpfetch
 dns_adb_findaddrinfo
 dns_adb_flush
 dns_adb_flushname
@@ -60,9 +62,11 @@ dns_adb_probesize2
 dns_adb_setadbsize
 dns_adb_setudpsize
 dns_adb_setsit
+dns_adb_setquota
 dns_adb_shutdown
 dns_adb_timeout
 dns_adb_whenshutdown
+dns_adbentry_overquota
 dns_byaddr_cancel
 dns_byaddr_create
 dns_byaddr_createptrname
@@ -462,6 +466,7 @@ dns_message_reply
 dns_message_reset
 dns_message_resetsig
 dns_message_sectiontotext
+dns_message_setclass
 dns_message_setopt
 dns_message_setquerytsig
 dns_message_setsig0key
@@ -502,6 +507,7 @@ dns_name_init
 dns_name_internalwildcard
 dns_name_invalidate
 dns_name_isabsolute
+dns_name_isdnssd
 dns_name_ishostname
 dns_name_ismailbox
 dns_name_issubdomain
@@ -774,6 +780,7 @@ dns_resolver_dispatchmgr
 dns_resolver_dispatchv4
 dns_resolver_dispatchv6
 dns_resolver_ds_digest_supported
+dns_resolver_dumpfetches
 dns_resolver_flushbadcache
 dns_resolver_flushbadnames
 dns_resolver_freeze
@@ -786,6 +793,7 @@ dns_resolver_getmustbesecure
 dns_resolver_getoptions
 dns_resolver_getquerydscp4
 dns_resolver_getquerydscp6
+dns_resolver_getquotaresponse
 dns_resolver_gettimeout
 dns_resolver_getudpsize
 dns_resolver_getzeronosoattl
@@ -797,12 +805,14 @@ dns_resolver_reset_algorithms
 dns_resolver_reset_ds_digests
 dns_resolver_resetmustbesecure
 dns_resolver_setclientsperquery
+dns_resolver_setfetchesperzone
 dns_resolver_setlamettl
 dns_resolver_setmustbesecure
 dns_resolver_setmaxdepth
 dns_resolver_setmaxqueries
 dns_resolver_setquerydscp4
 dns_resolver_setquerydscp6
+dns_resolver_setquotaresponse
 dns_resolver_settimeout
 dns_resolver_setudpsize
 dns_resolver_setzeronosoattl
@@ -923,6 +933,7 @@ dns_tsigrcode_totext
 dns_ttl_fromtext
 dns_ttl_totext
 dns_update_signatures
+dns_update_signaturesinc
 dns_update_soaserial
 dns_validator_cancel
 dns_validator_create
@@ -995,6 +1006,7 @@ dns_xfrin_shutdown
 dns_zone_addnsec3chain
 dns_zone_asyncload
 dns_zone_attach
+dns_zone_cdscheck
 dns_zone_checknames
 dns_zone_clearforwardacl
 dns_zone_clearnotifyacl
@@ -1063,6 +1075,7 @@ dns_zone_getrequeststats
 dns_zone_getserial
 dns_zone_getserial2
 dns_zone_getserialupdatemethod
+dns_zone_getsignatures
 dns_zone_getsigresigninginterval
 dns_zone_getsigvalidityinterval
 dns_zone_getssutable
@@ -1096,6 +1109,7 @@ dns_zone_mkey_hour
 dns_zone_mkey_day
 dns_zone_mkey_month
 dns_zone_name
+dns_zone_nameonly
 dns_zone_next
 dns_zone_notify
 dns_zone_notifyreceive

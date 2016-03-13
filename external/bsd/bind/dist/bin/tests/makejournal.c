@@ -1,7 +1,7 @@
-/*	$NetBSD: makejournal.c,v 1.2 2014/07/08 05:43:38 spz Exp $	*/
+/*	$NetBSD: makejournal.c,v 1.2.6.1 2016/03/13 08:00:26 martin Exp $	*/
 
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@
 #include <dns/journal.h>
 #include <dns/log.h>
 #include <dns/name.h>
+#include <isc/print.h>
 #include <dns/result.h>
 #include <dns/types.h>
 

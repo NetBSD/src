@@ -1,7 +1,7 @@
-/*	$NetBSD: ncache.c,v 1.7.4.2 2015/09/09 08:10:03 martin Exp $	*/
+/*	$NetBSD: ncache.c,v 1.7.4.2.2.1 2016/03/13 08:00:35 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -153,12 +153,10 @@ addoptout(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	/*
 	 * Initialize the list.
 	 */
+	dns_rdatalist_init(&ncrdatalist);
 	ncrdatalist.rdclass = dns_db_class(cache);
-	ncrdatalist.type = 0;
 	ncrdatalist.covers = covers;
 	ncrdatalist.ttl = maxttl;
-	ISC_LIST_INIT(ncrdatalist.rdata);
-	ISC_LINK_INIT(&ncrdatalist, link);
 
 	/*
 	 * Build an ncache rdatas into buffer.

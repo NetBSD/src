@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.10.2.2 2015/07/17 04:31:33 snj Exp $	*/
+/*	$NetBSD: check.c,v 1.10.2.2.2.1 2016/03/13 08:00:34 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -3149,6 +3149,7 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 		dns_rdataclass_t vclass = dns_rdataclass_in;
 		const char *key = cfg_obj_asstring(vname);
 		isc_symvalue_t symvalue;
+		unsigned int symtype;
 
 		tresult = ISC_R_SUCCESS;
 		if (cfg_obj_isstring(vclassobj)) {
@@ -3162,16 +3163,17 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 					    "view '%s': invalid class %s",
 					    cfg_obj_asstring(vname), r.base);
 		}
+		symtype = vclass + 1;
 		if (tresult == ISC_R_SUCCESS && symtab != NULL) {
 			symvalue.as_cpointer = view;
-			tresult = isc_symtab_define(symtab, key, vclass,
+			tresult = isc_symtab_define(symtab, key, symtype,
 						    symvalue,
 						    isc_symexists_reject);
 			if (tresult == ISC_R_EXISTS) {
 				const char *file;
 				unsigned int line;
 				RUNTIME_CHECK(isc_symtab_lookup(symtab, key,
-					   vclass, &symvalue) == ISC_R_SUCCESS);
+					 symtype, &symvalue) == ISC_R_SUCCESS);
 				file = cfg_obj_file(symvalue.as_cpointer);
 				line = cfg_obj_line(symvalue.as_cpointer);
 				cfg_obj_log(view, logctx, ISC_LOG_ERROR,

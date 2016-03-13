@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@ while true; do
         exit 1
     fi
 
-    if grep "example.nil/IN.*Transfer completed" ns2/named.run > /dev/null
+    if grep "example.nil/IN.*Transfer status" ns2/named.run > /dev/null
     then
         break
     else

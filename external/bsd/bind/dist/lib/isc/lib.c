@@ -1,7 +1,7 @@
-/*	$NetBSD: lib.c,v 1.6 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: lib.c,v 1.6.4.1 2016/03/13 08:00:37 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,7 @@
 #include <isc/mem.h>
 #include <isc/msgs.h>
 #include <isc/once.h>
+#include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: gxbn_test.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: gxbn_test.c,v 1.5.6.1 2016/03/13 08:00:26 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include <isc/net.h>
+#include <isc/print.h>
 
 #include <lwres/netdb.h>
 

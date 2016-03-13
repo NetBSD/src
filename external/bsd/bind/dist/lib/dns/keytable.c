@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.c,v 1.8.2.1 2015/07/17 04:31:33 snj Exp $	*/
+/*	$NetBSD: keytable.c,v 1.8.2.1.2.1 2016/03/13 08:00:35 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <config.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/rwlock.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>

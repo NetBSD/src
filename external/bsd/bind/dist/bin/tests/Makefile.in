@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,7 @@ SUBDIRS =	atomic db dst master mem hashes names net rbt resolver \
 # makejournal is needed by system tests
 
 # Alphabetically
-TARGETS =	cfg_test@EXEEXT@ makejournal@EXEEXT@
+TARGETS =	cfg_test@EXEEXT@ makejournal@EXEEXT@ wire_test@EXEEXT@
 
 # All the other tests are optional and not built by default.
 
@@ -94,7 +94,7 @@ XTARGETS =	adb_test@EXEEXT@ \
 		zone_test@EXEEXT@
 
 # Alphabetically
-SRCS =		cfg_test.c makejournal.c ${XSRCS}
+SRCS =		cfg_test.c makejournal.c wire_test.c ${XSRCS}
 
 XSRCS =		adb_test.c \
 		byaddr_test.c \
@@ -119,7 +119,6 @@ XSRCS =		adb_test.c \
 		mempool_test.c \
 		name_test.c \
 		nsecify.c \
-		printmsg.c \
 		ratelimiter_test.c \
 		rbt_test.c \
 		rdata_test.c \
@@ -248,8 +247,8 @@ rwlock_test@EXEEXT@: rwlock_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ rwlock_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-wire_test@EXEEXT@: wire_test.@O@ printmsg.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ wire_test.@O@ printmsg.@O@ \
+wire_test@EXEEXT@: wire_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ wire_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 master_test@EXEEXT@: master_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}

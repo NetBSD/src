@@ -1,7 +1,7 @@
-/*	$NetBSD: byname_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.6.6.1 2016/03/13 08:00:26 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,6 +34,7 @@
 #include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/netaddr.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>

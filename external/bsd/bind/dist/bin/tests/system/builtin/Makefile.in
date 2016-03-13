@@ -1,4 +1,4 @@
-# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,7 @@ CDEFINES =
 CWARNINGS =
 
 DNSLIBS =
-ISCLIBS =
+ISCLIBS = ../../../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
 
 DNSDEPLIBS =
 ISCDEPLIBS =
@@ -48,8 +48,8 @@ OBJS =		gethostname.@O@
 
 all: gethostname@EXEEXT@
 
-gethostname@EXEEXT@: ${OBJS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} ${LIBS}
+gethostname@EXEEXT@: ${OBJS} ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} ${LIBS} ${ISCLIBS}
 
 clean distclean::
 	rm -f ${TARGETS}
