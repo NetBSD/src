@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.266 2015/08/19 06:23:35 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.267 2016/03/13 07:01:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.266 2015/08/19 06:23:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.267 2016/03/13 07:01:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,7 @@ uhci_init(uhci_softc_t *sc)
 	 * queue heads and the interrupt queue heads at the control
 	 * queue head and point the physical frame list to the virtual.
 	 */
-	for(i = 0; i < UHCI_VFRAMELIST_COUNT; i++) {
+	for (i = 0; i < UHCI_VFRAMELIST_COUNT; i++) {
 		std = uhci_alloc_std(sc);
 		sqh = uhci_alloc_sqh(sc);
 		if (std == NULL || sqh == NULL)
@@ -618,9 +618,9 @@ uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 		stds = kmem_alloc(sizeof(uhci_soft_td_t *) * n, KM_SLEEP);
 		if (!stds)
 			return USBD_NOMEM;
-		for(i = 0; i < n; i++)
+		for (i = 0; i < n; i++)
 			stds[i] = uhci_alloc_std(sc);
-		for(i = 0; i < n; i++)
+		for (i = 0; i < n; i++)
 			if (stds[i] != NULL)
 				uhci_free_std(sc, stds[i]);
 		kmem_free(stds, sizeof(uhci_soft_td_t *) * n);
@@ -899,7 +899,7 @@ uhci_dump_tds(uhci_soft_td_t *std)
 	uhci_soft_td_t *td;
 	int stop;
 
-	for(td = std; td != NULL; td = td->link.std) {
+	for (td = std; td != NULL; td = td->link.std) {
 		uhci_dump_td(td);
 
 		/* Check whether the link pointer in this TD marks
@@ -1783,7 +1783,7 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
 	else
 		cmd &= ~UHCI_CMD_RS;
 	UHCICMD(sc, cmd);
-	for(n = 0; n < 10; n++) {
+	for (n = 0; n < 10; n++) {
 		running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
 		/* return when we've entered the state we want */
 		if (run == running) {
@@ -1871,7 +1871,7 @@ uhci_alloc_sqh(uhci_softc_t *sc)
 			  UHCI_QH_ALIGN, &dma);
 		if (err)
 			return (0);
-		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
+		for (i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
 			sqh->physaddr = DMAADDR(&dma, offs);
@@ -2478,7 +2478,7 @@ uhci_device_intr_close(usbd_pipe_handle pipe)
 	 */
 	usb_delay_ms_locked(&sc->sc_bus, 2, &sc->sc_lock);
 
-	for(i = 0; i < npoll; i++)
+	for (i = 0; i < npoll; i++)
 		uhci_free_sqh(sc, upipe->u.intr.qhs[i]);
 	kmem_free(upipe->u.intr.qhs, npoll * sizeof(uhci_soft_qh_t *));
 
@@ -3042,7 +3042,7 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	npoll = upipe->u.intr.npoll;
-	for(i = 0; i < npoll; i++) {
+	for (i = 0; i < npoll; i++) {
 		sqh = upipe->u.intr.qhs[i];
 		sqh->elink = NULL;
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
@@ -3277,7 +3277,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	DPRINTFN(1, ("uhci_device_setintr: bw=%d offs=%d\n", bestbw, bestoffs));
 
 	mutex_enter(&sc->sc_lock);
-	for(i = 0; i < npoll; i++) {
+	for (i = 0; i < npoll; i++) {
 		upipe->u.intr.qhs[i] = sqh = uhci_alloc_sqh(sc);
 		sqh->elink = NULL;
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
@@ -3290,7 +3290,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 #undef MOD
 
 	/* Enter QHs into the controller data structures. */
-	for(i = 0; i < npoll; i++)
+	for (i = 0; i < npoll; i++)
 		uhci_add_intr(sc, upipe->u.intr.qhs[i]);
 	mutex_exit(&sc->sc_lock);
 
