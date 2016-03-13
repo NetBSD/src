@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.352 2016/02/21 03:34:27 christos Exp $
+#	$NetBSD: bsd.README,v 1.353 2016/03/13 17:56:56 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -487,6 +487,9 @@ USE_SSP		If "no", disables GCC stack protection code, which
 		of about 5%.
 		Default: "no", unless "USE_FORT" is set to "yes"
 
+NOSSP		Don't compile with stack protector during build.
+		It is set internally for standalone programs.
+
 USE_FORT 	If "yes" turns on substitute wrappers for commonly used
 		functions that do not do bounds checking regularly, but
 		they could in some cases by using the gcc
@@ -494,6 +497,9 @@ USE_FORT 	If "yes" turns on substitute wrappers for commonly used
 		size where it is known and detect buffer overflows.
 		These substitute functions are in /usr/include/ssp.
 		Default: depends on the part of the source tree
+
+NOFORT		Don't compile with substitute wrappers during build.
+		It is set internally for standalone programs.
 
 USE_YP		If "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.
