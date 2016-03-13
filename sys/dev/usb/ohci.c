@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.57 2016/03/09 08:00:22 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.58 2016/03/13 07:11:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.57 2016/03/09 08:00:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.58 2016/03/13 07:11:01 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -477,7 +477,7 @@ ohci_alloc_std(ohci_softc_t *sc)
 			return NULL;
 
 		mutex_enter(&sc->sc_lock);
-		for(i = 0; i < OHCI_STD_CHUNK; i++) {
+		for (i = 0; i < OHCI_STD_CHUNK; i++) {
 			offs = i * OHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
 			std->physaddr = DMAADDR(&dma, offs);
@@ -775,7 +775,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 		if (err)
 			return NULL;
 		mutex_enter(&sc->sc_lock);
-		for(i = 0; i < OHCI_SITD_CHUNK; i++) {
+		for (i = 0; i < OHCI_SITD_CHUNK; i++) {
 			offs = i * OHCI_SITD_SIZE;
 			sitd = KERNADDR(&dma, offs);
 			sitd->physaddr = DMAADDR(&dma, offs);
