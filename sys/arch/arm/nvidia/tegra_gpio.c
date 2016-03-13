@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.6 2015/12/22 22:19:07 jmcneill Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.7 2016/03/13 17:38:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.6 2015/12/22 22:19:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.7 2016/03/13 17:38:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -303,7 +303,7 @@ tegra_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 	if ((cnf & __BIT(pin)) == 0)
 		GPIO_WRITE(&gbank, GPIO_CNF_REG, cnf | __BIT(pin));
 
-	gpin = kmem_alloc(sizeof(*gpin), KM_SLEEP);
+	gpin = kmem_zalloc(sizeof(*gpin), KM_SLEEP);
 	gpin->pin_bank = gbank;
 	gpin->pin_no = pin;
 	gpin->pin_flags = flags;
