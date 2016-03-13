@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.71 2016/03/13 08:07:53 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.72 2016/03/13 12:16:40 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -3584,4 +3584,45 @@ external/bsd/bind/lib/liblwres/shlib_version    up to 1.16
 
 	Update BIND to 9.10.3-P4.
 	[snj, ticket #1140]
+
+usr.bin/ftp/cmds.c				1.136-1.137
+usr.bin/ftp/fetch.c				1.208-1.221
+usr.bin/ftp/ftp.c				1.165-1.166
+usr.bin/ftp/ftp_var.h				1.84
+usr.bin/ftp/ssl.c				1.5
+
+	Workaround const issues of SSL_set_tlsext_host_name.
+	Use the proper format "[IPv6 address]:port" when reporting connection
+	attempts to IPv6 endpoints.
+	Fix build without IPv6 support.
+	Various code refactorings, separate no_proxy handling.
+	Factor the proxy handling code out.
+	CONNECT method support.
+	Fix downloads of local files using file:// URLs.
+	Fix an array overrun.
+	[nonakap, ticket #1133]
+
+sys/netipsec/key.c				1.92-1.97
+sys/netipsec/key_debug.h			1.7
+
+	Add more debugging, no functional change.
+	Gather more information from mbuf.
+	Fix port matching; we need to ignore ports when they are 0 not only in
+	the second saidx but the first one too. Fixes NAT-T issue with NetBSD
+	being the host behind NAT.
+	Simplify the port comparison code further.
+	[christos, ticket #1136]
+
+usr.bin/finger/util.c				1.29
+
+	In find_idle_and_ttywrite(), initialize idletime and writable to 0
+	when stat() fails.  this prevents a coredump later in stimeprint()
+	due to gmtime() returning NULL for an uninitialized idletime.
+	[chs, ticket #1137]
+
+external/mit/lua/dist/src/lvm.c			1.8
+
+	No floating point in the kernel, also make sure we always return an
+	int.
+	[roy, ticket #1139]
 
