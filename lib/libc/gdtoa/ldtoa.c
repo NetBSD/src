@@ -1,4 +1,4 @@
-/*	$NetBSD: ldtoa.c,v 1.4 2007/02/23 17:45:59 christos Exp $	*/
+/*	$NetBSD: ldtoa.c,v 1.5 2016/03/13 19:44:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_ldtoa.c,v 1.2 2004/01/18 07:53:49 das Exp $");
 #else
-__RCSID("$NetBSD: ldtoa.c,v 1.4 2007/02/23 17:45:59 christos Exp $");
+__RCSID("$NetBSD: ldtoa.c,v 1.5 2016/03/13 19:44:58 christos Exp $");
 #endif
 
 #include <float.h>
@@ -87,9 +87,7 @@ ldtoa(long double *ld, int mode, int ndigits, int *decpt, int *sign, char **rve)
 		break;
 	case FP_SUBNORMAL:
 		kind = STRTOG_Denormal;
-#ifdef	LDBL_IMPLICIT_NBIT
 		be++;
-#endif
 		break;
 	case FP_INFINITE:
 		kind = STRTOG_Infinite;
