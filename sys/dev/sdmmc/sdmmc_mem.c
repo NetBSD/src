@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.50 2015/12/22 09:56:06 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.51 2016/03/13 09:12:16 tsutsui Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.50 2015/12/22 09:56:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.51 2016/03/13 09:12:16 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -198,15 +198,14 @@ mmc_mode:
 		goto out;
 	}
 
-	/* Tell the card(s) to enter the idle state (again). */
-	sdmmc_go_idle_state(sc);
-
 	DPRINTF(("%s: host_ocr 0x%08x\n", SDMMCDEVNAME(sc), host_ocr));
 	DPRINTF(("%s: card_ocr 0x%08x\n", SDMMCDEVNAME(sc), card_ocr));
 
 	host_ocr &= card_ocr; /* only allow the common voltages */
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
+			/* Tell the card(s) to enter the idle state (again). */
+			sdmmc_go_idle_state(sc);
 			/* Check SD Ver.2 */
 			error = sdmmc_mem_send_if_cond(sc, 0x1aa, &card_ocr);
 			if (error == 0 && card_ocr == 0x1aa)
