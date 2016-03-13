@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.117 2016/03/12 21:35:13 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.118 2016/03/13 15:57:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.117 2016/03/12 21:35:13 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.118 2016/03/13 15:57:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,7 +281,7 @@ evaltree(union node *n, int flags)
 		break;
 	case NREDIR:
 		expredir(n->nredir.redirect);
-		redirect(n->nredir.redirect, REDIR_PUSH);
+		redirect(n->nredir.redirect, REDIR_PUSH | REDIR_KEEP);
 		evaltree(n->nredir.n, flags);
 		popredir();
 		break;
