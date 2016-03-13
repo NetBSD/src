@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.41 2016/03/13 00:52:05 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.42 2016/03/13 01:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.41 2016/03/13 00:52:05 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.42 2016/03/13 01:22:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ openredirect(union node *redir, char memory[10], int flags)
 	int fd = redir->nfile.fd;
 	char *fname;
 	int f;
-	int eflags;
+	int eflags, cloexec;
 
 	/*
 	 * We suppress interrupts so that we won't leave open file
@@ -243,10 +243,11 @@ openredirect(union node *redir, char memory[10], int flags)
 		abort();
 	}
 
+	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0;
 	if (f != fd) {
-		copyfd(f, fd, 1, fd > 2 && (flags & REDIR_KEEP) == 0);
+		copyfd(f, fd, 1, cloexec);
 		close(f);
-	} else if (f > 2 && (flags & REDIR_KEEP) == 0)
+	} else if (cloexec)
 		(void)fcntl(f, F_SETFD, FD_CLOEXEC);
 
 	INTON;
