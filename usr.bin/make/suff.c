@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.78 2016/02/18 18:29:14 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.79 2016/03/14 07:42:15 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.78 2016/02/18 18:29:14 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.79 2016/03/14 07:42:15 matthias Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.78 2016/02/18 18:29:14 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.79 2016/03/14 07:42:15 matthias Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1955,6 +1955,11 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     Var_Set(MEMBER, name, gn, 0);
     Var_Set(ARCHIVE, gn->name, gn, 0);
 
+    /*
+     * Set $@ for compatibility with other makes
+     */
+    Var_Set(TARGET, gn->name, gn, 0);
+    
     if (ms != NULL) {
 	/*
 	 * Member has a known suffix, so look for a transformation rule from
