@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.13 2014/09/28 14:38:29 macallan Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.14 2016/03/14 07:43:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -186,6 +186,7 @@ struct vcprop_tag_clockrate {
 	struct vcprop_tag tag;
 	uint32_t id;
 	uint32_t rate;
+	uint32_t noturbo;
 };
 
 #define VCPROP_VOLTAGE_CORE	1
