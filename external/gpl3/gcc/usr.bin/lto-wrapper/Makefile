@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2015/01/07 02:02:44 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2016/03/15 19:13:22 mrg Exp $
 
 NOMAN=1
 PROG=		lto-wrapper
-SRCS=		lto-wrapper.c
+SRCS=		lto-wrapper.c \
+		collect-utils.c
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
@@ -12,7 +13,6 @@ CPPFLAGS+=	-DPREFIX=\"/usr\"
 
 DPADD+=                 ${LIBIBERTYOBJ}/libiberty.a
 LDADD+=                 ${LIBIBERTYOBJ}/libiberty.a
-
 
 # VER_CPPFLAGS from Makefile.inc
 
