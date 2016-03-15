@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.42 2015/08/13 11:21:18 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.43 2016/03/15 15:16:01 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.42 2015/08/13 11:21:18 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.43 2016/03/15 15:16:01 christos Exp $");
 #endif /* !defined lint */
 
 /*
@@ -254,11 +254,14 @@ enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 # define timezone_t char **
 #endif
 
+#if !HAVE_POSIX_DECLS
 extern char **	environ;
 extern int	getopt(int argc, char * const argv[],
 			const char * options);
 extern char *	optarg;
 extern int	optind;
+extern char *	tzname[];
+#endif
 
 /* The minimum and maximum finite time values.  */
 enum { atime_shift = CHAR_BIT * sizeof (time_t) - 2 };
