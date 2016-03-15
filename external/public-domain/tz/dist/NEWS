@@ -1,5 +1,164 @@
 News for the tz database
 
+Release 2016b - 2016-03-12 17:30:14 -0800
+
+  Changes affecting future time stamps
+
+    New zones Europe/Astrakhan and Europe/Ulyanovsk for Astrakhan and
+    Ulyanovsk Oblasts, Russia, both of which will switch from +03 to +04 on
+    2016-03-27 at 02:00 local time.  They need distinct zones since their
+    post-1970 histories disagree.  New zone Asia/Barnaul for Altai Krai and
+    Altai Republic, Russia, which will switch from +06 to +07 on the same date
+    and local time.  The Astrakhan change is already official; the others have
+    passed the first reading in the State Duma and are extremely likely.
+    Also, Asia/Sakhalin moves from +10 to +11 on 2016-03-27 at 02:00.
+    (Thanks to Alexander Krivenyshev for the heads-up, and to Matt Johnson
+    and Stepan Golosunov for followup.)
+
+    As a trial of a new system that needs less information to be made up,
+    the new zones use numeric time zone abbreviations like "+04"
+    instead of invented abbreviations like "ASTT".
+
+    Haiti will not observe DST in 2016.  (Thanks to Jean Antoine via
+    Steffen Thorsen.)
+
+    Palestine's spring-forward transition on 2016-03-26 is at 01:00, not 00:00.
+    (Thanks to Hannah Kreitem.) Guess future transitions will be March's last
+    Saturday at 01:00, not March's last Friday at 24:00.
+
+  Changes affecting past time stamps
+
+    Europe/Chisinau observed DST during 1990, and switched from +04 to
+    +03 at 1990-05-06 02:00, instead of switching from +03 to +02.
+    (Thanks to Stepan Golosunov.)
+
+    1991 abbreviations in Europe/Samara should be SAMT/SAMST, not
+    KUYT/KUYST.  (Thanks to Stepan Golosunov.)
+
+  Changes to code
+
+    tzselect's diagnostics and checking, and checktab.awk's checking,
+    have been improved.  (Thanks to J William Piggott.)
+
+    tzcode now builds under MinGW.  (Thanks to Ian Abbott and Esben Haabendal.)
+
+    tzselect now tests Julian-date TZ settings more accurately.
+    (Thanks to J William Piggott.)
+
+  Changes to commentary
+
+    Comments in zone tables have been improved.  (Thanks to J William Piggott.)
+
+    tzselect again limits its menu comments so that menus fit on a
+    24x80 alphanumeric display.
+
+    A new web page tz-how-to.html.  (Thanks to Bill Seymour.)
+
+    In the Theory file, the description of possible time zone abbreviations in
+    tzdata has been cleaned up, as the old description was unclear and
+    inconsistent.  (Thanks to Alain Mouette for reporting the problem.)
+
+
+Release 2016a - 2016-01-26 23:28:02 -0800
+
+  Changes affecting future time stamps
+
+    America/Cayman will not observe daylight saving this year after all.
+    Revert our guess that it would.  (Thanks to Matt Johnson.)
+
+    Asia/Chita switches from +0800 to +0900 on 2016-03-27 at 02:00.
+    (Thanks to Alexander Krivenyshev.)
+
+    Asia/Tehran now has DST predictions for the year 2038 and later,
+    to be March 21 00:00 to September 21 00:00.  This is likely better
+    than predicting no DST, albeit off by a day every now and then.
+
+  Changes affecting past and future time stamps
+
+    America/Metlakatla switched from PST all year to AKST/AKDT on
+    2015-11-01 at 02:00.  (Thanks to Steffen Thorsen.)
+
+    America/Santa_Isabel has been removed, and replaced with a
+    backward compatibility link to America/Tijuana.  Its contents were
+    apparently based on a misreading of Mexican legislation.
+
+  Changes affecting past time stamps
+
+    Asia/Karachi's two transition times in 2002 were off by a minute.
+    (Thanks to Matt Johnson.)
+
+  Changes affecting build procedure
+
+    An installer can now combine leap seconds with use of the backzone file,
+    e.g., with 'make PACKRATDATA=backzone REDO=posix_right zones'.
+    The old 'make posix_packrat' rule is now marked as obsolescent.
+    (Thanks to Ian Abbott for an initial implementation.)
+
+  Changes affecting documentation and commentary
+
+    A new file LICENSE makes it easier to see that the code and data
+    are mostly public-domain.  (Thanks to James Knight.)  The three
+    non-public-domain files now use the current (3-clause) BSD license
+    instead of older versions of that license.
+
+    tz-link.htm mentions the BDE library (thanks to Andrew Paprocki),
+    CCTZ (thanks to Tim Parenti), TimeJones.com, and has a new section
+    on editing tz source files (with a mention of Sublime zoneinfo,
+    thanks to Gilmore Davidson).
+
+    The Theory and asia files now mention the 2015 book "The Global
+    Transformation of Time, 1870-1950", and cite a couple of reviews.
+
+    The America/Chicago entry now documents the informal use of US
+    central time in Fort Pierre, South Dakota.  (Thanks to Rick
+    McDermid, Matt Johnson, and Steve Jones.)
+
+
+Release 2015g - 2015-10-01 00:39:51 -0700
+
+  Changes affecting future time stamps
+
+    Turkey's 2015 fall-back transition is scheduled for Nov. 8, not Oct. 25.
+    (Thanks to Fatih.)
+
+    Norfolk moves from +1130 to +1100 on 2015-10-04 at 02:00 local time.
+    (Thanks to Alexander Krivenyshev.)
+
+    Fiji's 2016 fall-back transition is scheduled for January 17, not 24.
+    (Thanks to Ken Rylander.)
+
+    Fort Nelson, British Columbia will not fall back on 2015-11-01.  It has
+    effectively been on MST (-0700) since it advanced its clocks on 2015-03-08.
+    New zone America/Fort_Nelson.  (Thanks to Matt Johnson.)
+
+  Changes affecting past time stamps
+
+    Norfolk observed DST from 1974-10-27 02:00 to 1975-03-02 02:00.
+
+  Changes affecting code
+
+    localtime no longer mishandles America/Anchorage after 2037.
+    (Thanks to Bradley White for reporting the bug.)
+
+    On hosts with signed 32-bit time_t, localtime no longer mishandles
+    Pacific/Fiji after 2038-01-16 14:00 UTC.
+
+    The localtime module allows the variables 'timezone', 'daylight',
+    and 'altzone' to be in common storage shared with other modules,
+    and declares them in case the system <time.h> does not.
+    (Problems reported by Kees Dekker.)
+
+    On platforms with tm_zone, strftime.c now assumes it is not NULL.
+    This simplifies the code and is consistent with zdump.c.
+    (Problem reported by Christos Zoulas.)
+
+  Changes affecting documentation
+
+   The tzfile man page now documents that transition times denote the
+   starts (not the ends) of the corresponding time periods.
+   (Ambiguity reported by Bill Seymour.)
+
+
 Release 2015f - 2015-08-10 18:06:56 -0700
 
   Changes affecting future time stamps
