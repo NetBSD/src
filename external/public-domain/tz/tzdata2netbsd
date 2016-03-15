@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.7 2015/08/11 18:10:13 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.8 2016/03/15 17:33:14 christos Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -13,8 +13,8 @@
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2015e
-NEWVER=2015f
+OLDVER=2015f
+NEWVER=2016b
 
 # Uppercase variants of OLDVER and NEWVER
 OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
