@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.56 2015/10/09 17:21:45 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.57 2016/03/15 15:16:01 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.56 2015/10/09 17:21:45 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.57 2016/03/15 15:16:01 christos Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -31,6 +31,13 @@ typedef int_fast64_t	zic_t;
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
 #define ZIC_MAX_ABBR_LEN_WO_WARN	6
 #endif /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
+
+#ifdef HAVE_DIRECT_H
+# include <direct.h>
+# include <io.h>
+# undef mkdir
+# define mkdir(name, mode) _mkdir(name)
+#endif
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -97,21 +104,23 @@ struct zone {
 	zic_t		z_untiltime;
 };
 
+#if !HAVE_POSIX_DECLS
 extern int	getopt(int argc, char * const argv[],
 			const char * options);
 extern int	link(const char * fromname, const char * toname);
 extern char *	optarg;
 extern int	optind;
+#endif
 
 #if ! HAVE_LINK
-# define link(from, to) (-1)
+# define link(from, to) (errno = ENOTSUP, -1)
 #endif
 #if ! HAVE_SYMLINK
-# define symlink(from, to) (-1)
+# define symlink(from, to) (errno = ENOTSUP, -1)
 #endif
 
 static void	addtt(zic_t starttime, int type);
-static int	addtype(zic_t, char * const, bool, bool, bool);
+static int	addtype(zic_t, char const *, bool, bool, bool);
 static void	leapadd(zic_t, bool, int, int);
 static void	adjleap(void);
 static void	associate(void);
@@ -125,15 +134,14 @@ static void	inlink(char ** fields, int nfields);
 static void	inrule(char ** fields, int nfields);
 static bool	inzcont(char ** fields, int nfields);
 static bool	inzone(char ** fields, int nfields);
-static bool	inzsub(char ** fields, int nfields, int iscont);
+static bool	inzsub(char **, int, int);
 static int	itsdir(const char * name);
 static bool	is_alpha(char a);
 static char	lowerit(char);
-static bool	mkdirs(char * filename);
+static bool	mkdirs(char *);
 static void	newabbr(const char * abbr);
 static zic_t	oadd(zic_t t1, zic_t t2);
 static void	outzone(const struct zone * zp, int ntzones);
-static int	rcomp(const void * leftp, const void * rightp);
 static zic_t	rpytime(const struct rule * rp, zic_t wantedy);
 static void	rulesub(struct rule * rp,
 			const char * loyearp, const char * hiyearp,
@@ -141,8 +149,6 @@ static void	rulesub(struct rule * rp,
 			const char * dayp, const char * timep);
 static zic_t	tadd(zic_t t1, zic_t t2);
 static bool	yearistype(int year, const char * type);
-static int	atcomp(const void *avp, const void *bvp);
-static void	updateminmax(zic_t x);
 
 /* Bound on length of what %z can expand to.  */
 enum { PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1 };
@@ -525,31 +531,31 @@ static const char *	leapsec;
 static const char *	yitcommand;
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
 	int	i;
 	int	j;
 	int	c;
 
 #ifdef S_IWGRP
-	(void) umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
+	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
 #endif
-#if HAVE_GETTEXT - 0
-	(void) setlocale(LC_MESSAGES, "");
+#if HAVE_GETTEXT
+	setlocale(LC_MESSAGES, "");
 #ifdef TZ_DOMAINDIR
-	(void) bindtextdomain(TZ_DOMAIN, TZ_DOMAINDIR);
+	bindtextdomain(TZ_DOMAIN, TZ_DOMAINDIR);
 #endif /* defined TEXTDOMAINDIR */
-	(void) textdomain(TZ_DOMAIN);
+	textdomain(TZ_DOMAIN);
 #endif /* HAVE_GETTEXT */
 	progname = argv[0];
 	if (TYPE_BIT(zic_t) < 64) {
-		(void) fprintf(stderr, "%s: %s\n", progname,
+		fprintf(stderr, "%s: %s\n", progname,
 			_("wild compilation-time specification of zic_t"));
 		return EXIT_FAILURE;
 	}
 	for (i = 1; i < argc; ++i)
 		if (strcmp(argv[i], "--version") == 0) {
-			(void) printf("zic %s%s\n", PKGVERSION, TZVERSION);
+			printf("zic %s%s\n", PKGVERSION, TZVERSION);
 			close_file(stdout, NULL);
 			return EXIT_SUCCESS;
 		} else if (strcmp(argv[i], "--help") == 0) {
@@ -771,41 +777,47 @@ dolink(char const *fromfield, char const *tofield)
 			progname, fromname, e);
 		exit(EXIT_FAILURE);
 	}
-	if (itsdir(toname) <= 0)
-		remove(toname);
 	if (link(fromname, toname) != 0) {
-		int	result;
+	  int link_errno = errno;
+	  bool retry_if_link_supported = false;
 
-		if (! mkdirs(toname))
-			exit(EXIT_FAILURE);
+	  if (link_errno == ENOENT || link_errno == ENOTSUP) {
+	    if (! mkdirs(toname))
+	      exit(EXIT_FAILURE);
+	    retry_if_link_supported = true;
+	  }
+	  if ((link_errno == EEXIST || link_errno == ENOTSUP)
+	      && itsdir(toname) == 0
+	      && (remove(toname) == 0 || errno == ENOENT))
+	    retry_if_link_supported = true;
+	  if (retry_if_link_supported && link_errno != ENOTSUP)
+	    link_errno = link(fromname, toname) == 0 ? 0 : errno;
+	  if (link_errno != 0) {
+	    const char *s = fromfield;
+	    const char *t;
+	    char *p;
+	    size_t dotdots = 0;
+	    char *symlinkcontents;
+	    int symlink_result;
 
-		result = link(fromname, toname);
-		if (result != 0) {
-				const char *s = fromfield;
-				const char *t;
-				char *p;
-				size_t dotdots = 0;
-				char * symlinkcontents = NULL;
+	    do
+	      t = s;
+	    while ((s = strchr(s, '/'))
+		   && strncmp(fromfield, tofield, ++s - fromfield) == 0);
 
-				do
-					 t = s;
-				while ((s = strchr(s, '/'))
-				       && ! strncmp (fromfield, tofield,
-						     ++s - fromfield));
-
-				for (s = tofield + (t - fromfield); *s; s++)
-					dotdots += *s == '/';
-				symlinkcontents
-				    = zic_malloc(3 * dotdots + strlen(t) + 1);
-				for (p = symlinkcontents; dotdots-- != 0; p += 3)
-					memcpy(p, "../", 3);
-				strcpy(p, t);
-				result = symlink(symlinkcontents, toname);
-				if (result == 0)
-					warning(_("hard link failed, symbolic link used"));
-				free(symlinkcontents);
-		}
-		if (result != 0) {
+	    for (s = tofield + (t - fromfield); *s; s++)
+	      dotdots += *s == '/';
+	    symlinkcontents = zic_malloc(3 * dotdots + strlen(t) + 1);
+	    for (p = symlinkcontents; dotdots-- != 0; p += 3)
+	      memcpy(p, "../", 3);
+	    strcpy(p, t);
+	    symlink_result = symlink(symlinkcontents, toname);
+	    free(symlinkcontents);
+	    if (symlink_result == 0) {
+	      if (link_errno != ENOTSUP)
+		warning(_("symbolic link used because hard link failed: %s"),
+			strerror (link_errno));
+	    } else {
 			FILE *fp, *tp;
 			int c;
 			fp = fopen(fromname, "rb");
@@ -828,8 +840,11 @@ dolink(char const *fromfield, char const *tofield)
 				putc(c, tp);
 			close_file(fp, fromname);
 			close_file(tp, toname);
-			warning(_("link failed, copy used"));
-		}
+			if (link_errno != ENOTSUP)
+			  warning(_("copy used because hard link failed: %s"),
+				  strerror (link_errno));
+	    }
+	  }
 	}
 	free(fromname);
 	free(toname);
@@ -876,18 +891,17 @@ itsdir(char const *name)
 {
 	struct stat st;
 	int res = stat(name, &st);
-	if (res != 0)
-		return res;
 #ifdef S_ISDIR
-	return S_ISDIR(st.st_mode) != 0;
-#else
-	{
-		char *nameslashdot = relname(name, ".");
-		res = stat(nameslashdot, &st);
-		free(nameslashdot);
-		return res == 0;
-	}
+	if (res == 0)
+		return S_ISDIR(st.st_mode) != 0;
 #endif
+	if (res == 0 || errno == EOVERFLOW) {
+		char *nameslashdot = relname(name, ".");
+		bool dir = stat(nameslashdot, &st) == 0 || errno == EOVERFLOW;
+		free(nameslashdot);
+		return dir;
+	}
+	return -1;
 }
 
 /*
@@ -914,7 +928,7 @@ associate(void)
 	int		i, j;
 
 	if (nrules != 0) {
-		(void) qsort(rules, (size_t)nrules, sizeof *rules, rcomp);
+		qsort(rules, (size_t)nrules, sizeof *rules, rcomp);
 		for (i = 0; i < nrules - 1; ++i) {
 			if (strcmp(rules[i].r_name,
 				rules[i + 1].r_name) != 0)
@@ -1184,7 +1198,7 @@ inzcont(char **fields, int nfields)
 }
 
 static bool
-inzsub(char **const fields, const int nfields, const int iscont)
+inzsub(char **fields, int nfields, const int iscont)
 {
 	char *		cp;
 	char *		cp1;
@@ -1377,7 +1391,7 @@ inleap(char **fields, int nfields)
 }
 
 static void
-inlink(char **const fields, const int nfields)
+inlink(char **fields, int nfields)
 {
 	struct link	l;
 
@@ -1574,7 +1588,7 @@ puttzcode(const zic_t val, FILE *const fp)
 	char	buf[4];
 
 	convert(val, buf);
-	(void) fwrite(buf, sizeof buf, (size_t) 1, fp);
+	fwrite(buf, sizeof buf, (size_t) 1, fp);
 }
 
 static void
@@ -1583,7 +1597,7 @@ puttzcode64(const zic_t val, FILE *const fp)
 	char	buf[8];
 
 	convert64(val, buf);
-	(void) fwrite(buf, sizeof buf, (size_t) 1, fp);
+	fwrite(buf, sizeof buf, (size_t) 1, fp);
 }
 
 static int
@@ -1620,8 +1634,7 @@ writezone(const char *const name, const char *const string, char version)
 	** Sort.
 	*/
 	if (timecnt > 1)
-		(void) qsort(attypes, (size_t) timecnt, sizeof *attypes,
-		    atcomp);
+		qsort(attypes, (size_t) timecnt, sizeof *attypes, atcomp);
 	/*
 	** Optimize.
 	*/
@@ -1699,10 +1712,10 @@ writezone(const char *const name, const char *const string, char version)
 	/*
 	** Remove old file, if any, to snap links.
 	*/
-	if (itsdir(fullname) <= 0 && remove(fullname) != 0 && errno != ENOENT) {
+	if (itsdir(fullname) == 0 && remove(fullname) != 0 && errno != ENOENT) {
 		const char *e = strerror(errno);
 
-		(void) fprintf(stderr, _("%s: Can't remove %s: %s\n"),
+		fprintf(stderr, _("%s: Can't remove %s: %s\n"),
 			progname, fullname, e);
 		exit(EXIT_FAILURE);
 	}
@@ -1712,7 +1725,7 @@ writezone(const char *const name, const char *const string, char version)
 		if ((fp = fopen(fullname, "wb")) == NULL) {
 			const char *e = strerror(errno);
 
-			(void) fprintf(stderr, _("%s: Can't create %s: %s\n"),
+			fprintf(stderr, _("%s: Can't create %s: %s\n"),
 				progname, fullname, e);
 			exit(EXIT_FAILURE);
 		}
@@ -1828,16 +1841,15 @@ writezone(const char *const name, const char *const string, char version)
 				if (strcmp(&thischars[j], thisabbr) == 0)
 					break;
 			if (j == thischarcnt) {
-				(void) strcpy(&thischars[(int) thischarcnt],
+				strcpy(&thischars[(int) thischarcnt],
 					thisabbr);
 				thischarcnt += strlen(thisabbr) + 1;
 			}
 			indmap[abbrinds[i]] = j;
 		}
-#define DO(field)	(void) fwrite(tzh.field, \
-				sizeof tzh.field, (size_t) 1, fp)
+#define DO(field)	fwrite(tzh.field, sizeof tzh.field, (size_t) 1, fp)
 		tzh = tzh0;
-		(void) strncpy(tzh.tzh_magic, TZ_MAGIC, sizeof tzh.tzh_magic);
+		strncpy(tzh.tzh_magic, TZ_MAGIC, sizeof tzh.tzh_magic);
 		tzh.tzh_version[0] = version;
 		convert(thistypecnt, tzh.tzh_ttisgmtcnt);
 		convert(thistypecnt, tzh.tzh_ttisstdcnt);
@@ -1868,16 +1880,16 @@ writezone(const char *const name, const char *const string, char version)
 			unsigned char	uc;
 
 			uc = typemap[types[i]];
-			(void) fwrite(&uc, sizeof uc, (size_t) 1, fp);
+			fwrite(&uc, sizeof uc, (size_t) 1, fp);
 		}
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i]) {
 				puttzcode(gmtoffs[i], fp);
-				(void) putc(isdsts[i], fp);
-				(void) putc((unsigned char) indmap[abbrinds[i]], fp);
+				putc(isdsts[i], fp);
+				putc((unsigned char) indmap[abbrinds[i]], fp);
 			}
 		if (thischarcnt != 0)
-			(void) fwrite(thischars, sizeof thischars[0],
+			fwrite(thischars, sizeof thischars[0],
 				(size_t) thischarcnt, fp);
 		for (i = thisleapi; i < thisleaplim; ++i) {
 			zic_t	todo;
@@ -1906,12 +1918,12 @@ writezone(const char *const name, const char *const string, char version)
 		}
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i])
-				(void) putc(ttisstds[i], fp);
+				putc(ttisstds[i], fp);
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i])
-				(void) putc(ttisgmts[i], fp);
+				putc(ttisgmts[i], fp);
 	}
-	(void) fprintf(fp, "\n%s\n", string);
+	fprintf(fp, "\n%s\n", string);
 	close_file(fp, fullname);
 	free(ats);
 	free(fullname);
@@ -1966,14 +1978,14 @@ doabbr(char *abbr, int abbrlen, struct zone const *zp, const char *letters,
 	if (slashp == NULL) {
 		char letterbuf[PERCENT_Z_LEN_BOUND + 1];
 		if (zp->z_format_specifier == 'z')
-			letters = abbroffset(letterbuf, -zp->z_gmtoff + stdoff);
+			letters = abbroffset(letterbuf, zp->z_gmtoff + stdoff);
 		else if (!letters)
 			letters = "%s";
-		(void) snprintf(abbr, abbrlen, format, letters);
+		snprintf(abbr, abbrlen, format, letters);
 	} else if (stdoff != 0) {
-		(void) strlcpy(abbr, slashp + 1, abbrlen);
+		strlcpy(abbr, slashp + 1, abbrlen);
 	} else {
-		(void) memcpy(abbr, format, slashp - format);
+		memcpy(abbr, format, slashp - format);
 		abbr[slashp - format] = '\0';
 	}
 	len = strlen(abbr);
@@ -2502,7 +2514,7 @@ outzone(const struct zone *zpfirst, int zonecount)
 				zp->z_format != NULL &&
 				strchr(zp->z_format, '%') == NULL &&
 				strchr(zp->z_format, '/') == NULL)
-					(void)strncpy(startbuf, zp->z_format,
+					strncpy(startbuf, zp->z_format,
 					    max_abbr_len + 1 - 1);
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
@@ -2594,7 +2606,7 @@ addtt(zic_t starttime, int type)
 }
 
 static int
-addtype(zic_t gmtoff, char *const abbr, bool isdst, bool ttisstd, bool ttisgmt)
+addtype(zic_t gmtoff, char const *abbr, bool isdst, bool ttisstd, bool ttisgmt)
 {
 	int	i, j;
 
@@ -2690,7 +2702,7 @@ yearistype(int year, const char *type)
 	if (type == NULL || *type == '\0')
 		return true;
 	buf = zic_realloc(buf, 132 + strlen(yitcommand) + strlen(type));
-	(void)sprintf(buf, "%s %d %s", yitcommand, year, type); /* XXX: sprintf is safe */
+	sprintf(buf, "%s %d %s", yitcommand, year, type); /* XXX: sprintf is safe */
 	result = system(buf);
 	if (WIFEXITED(result)) switch (WEXITSTATUS(result)) {
 		case 0:
@@ -2699,7 +2711,7 @@ yearistype(int year, const char *type)
 			return false;
 	}
 	error(_("Wild result from command execution"));
-	(void) fprintf(stderr, _("%s: command was '%s', result was %d\n"),
+	fprintf(stderr, _("%s: command was '%s', result was %d\n"),
 		progname, buf, result);
 	for ( ; ; )
 		exit(EXIT_FAILURE);
@@ -2992,7 +3004,7 @@ mp = _("time zone abbreviation differs from POSIX standard");
 		error(_("too many, or too long, time zone abbreviations"));
 		exit(EXIT_FAILURE);
 	}
-	(void)strncpy(&chars[charcnt], string, sizeof(chars) - charcnt - 1);
+	strncpy(&chars[charcnt], string, sizeof(chars) - charcnt - 1);
 	charcnt += i;
 }
 
