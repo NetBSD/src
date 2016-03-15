@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2015/12/24 00:36:43 wiz Exp $
+# $NetBSD: Makefile,v 1.3 2016/03/15 03:17:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -33,7 +33,7 @@ CPPFLAGS+=	-I${OSNET}/sys \
 CPPFLAGS+=	-DNO_CTF
 .endif
 
-.if defined(NOCPLUSPLUS)
+.if defined(NOCPLUSPLUS) || ${MKCXX} == "no"
 CPPFLAGS+=	-DNO_CXA_DEMANGLE
 .else
 LIBISCXX=	yes
