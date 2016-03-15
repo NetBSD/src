@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1122 2016/03/12 23:07:05 mrg Exp $
+# $NetBSD: mi,v 1.1123 2016/03/15 18:40:50 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -77,6 +77,7 @@
 ./dev/log					base-sys-root
 ./etc						base-sys-root
 ./etc/X11					base-x11-root
+./etc/X11/ctwm					base-x11-root
 ./etc/X11/fs					base-x11-root
 ./etc/X11/lbxproxy				base-x11-root
 ./etc/X11/proxymngr				base-x11-root
@@ -84,7 +85,6 @@
 ./etc/X11/rstart/commands			base-x11-root
 ./etc/X11/rstart/commands/x11r6			base-x11-root
 ./etc/X11/rstart/contexts			base-x11-root
-./etc/X11/ctwm					base-x11-root
 ./etc/X11/twm					base-x11-root
 ./etc/X11/xdm					base-x11-root
 ./etc/X11/xinit					base-x11-root
@@ -1831,13 +1831,13 @@
 ./usr/sbin/rpc.yppasswdd			base-nis-bin		yp
 ./usr/sbin/rpcbind				base-rpcbind-bin
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
-./usr/sbin/rump.rtadvd				base-router-bin		use_inet6,rump
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-obsolete		obsolete
 ./usr/sbin/rump.arp				base-netutil-bin	rump
-./usr/sbin/rump.ndp				base-netutil-bin	inet6,rump
 ./usr/sbin/rump.envstat				base-sysutil-bin	rump
+./usr/sbin/rump.ndp				base-netutil-bin	inet6,rump
 ./usr/sbin/rump.powerd				base-sysutil-bin	rump
+./usr/sbin/rump.rtadvd				base-router-bin		use_inet6,rump
 ./usr/sbin/rump.traceroute			base-netutil-bin	rump
 ./usr/sbin/rump_cd9660				base-puffs-bin	rump
 ./usr/sbin/rump_efs				base-puffs-bin	rump
@@ -5300,6 +5300,7 @@
 ./usr/share/zoneinfo/America/Eirunepe		base-sys-share		share
 ./usr/share/zoneinfo/America/El_Salvador	base-sys-share		share
 ./usr/share/zoneinfo/America/Ensenada		base-sys-share		share
+./usr/share/zoneinfo/America/Fort_Nelson	base-sys-share		share
 ./usr/share/zoneinfo/America/Fort_Wayne		base-sys-share		share
 ./usr/share/zoneinfo/America/Fortaleza		base-sys-share		share
 ./usr/share/zoneinfo/America/Glace_Bay		base-sys-share		share
@@ -5440,6 +5441,7 @@
 ./usr/share/zoneinfo/Asia/Bahrain		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Baku			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Bangkok		base-sys-share		share
+./usr/share/zoneinfo/Asia/Barnaul		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Beirut		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Bishkek		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Brunei		base-sys-share		share
@@ -5628,6 +5630,7 @@
 ./usr/share/zoneinfo/Europe			base-sys-share
 ./usr/share/zoneinfo/Europe/Amsterdam		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Andorra		base-sys-share		share
+./usr/share/zoneinfo/Europe/Astrakhan		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Athens		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Belfast		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Belgrade		base-sys-share		share
@@ -5676,6 +5679,7 @@
 ./usr/share/zoneinfo/Europe/Tallinn		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Tirane		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Tiraspol		base-sys-share		share
+./usr/share/zoneinfo/Europe/Ulyanovsk		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Uzhgorod		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vaduz		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vatican		base-sys-share		share
