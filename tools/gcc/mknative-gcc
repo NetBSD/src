@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.83 2016/03/15 03:22:06 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.84 2016/03/15 06:10:13 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -121,7 +121,10 @@ get_libgcov () {
 
 	{
 		getvars $_mf \
-			LIBGCOV
+			LIBGCOV_MERGE \
+			LIBGCOV_PROFILER \
+			LIBGCOV_INTERFACE \
+			LIBGCOV_DRIVER
 	} | write_mk $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH/defs.mk
 
 	write_c $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH/gcov-iov.h \
@@ -247,7 +250,9 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/src/c++11/Makefile \
 			libc__11convenience_la_SOURCES | sed 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++98/Makefile \
-			libc__98convenience_la_SOURCES | sed 's/^G_libc__98convenience_la_SOURCES=/G_CPP98_SOURCES=/'
+			GLIBCXX_ABI_FLAGS libc__98convenience_la_SOURCES | \
+			sed -e 's/^G_libc__98convenience_la_SOURCES=/G_CPP98_SOURCES=/' \
+			    -e 's/locale_init.cc//' -e 's/localename.cc//'
 		getvars $_PLATFORM/libstdc++-v3/Makefile ATOMICITY_SRCDIR \
 			BASIC_FILE_CC CLOCALE_CC CCODECVT_CC CCOLLATE_CC \
 			CCTYPE_CC  CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC \
