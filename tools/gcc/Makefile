@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2016/03/13 01:06:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.78 2016/03/15 21:38:32 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -46,6 +46,10 @@ COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 
 .if ${HAVE_GCC} == 48
 COMMON_CONFIGURE_ARGS+= --enable-libstdcxx-time=rt --enable-lto
+.endif
+
+.if ${HAVE_GCC} == 53
+COMMON_CONFIGURE_ARGS+= --enable-libstdcxx-time=rt
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
@@ -178,6 +182,10 @@ NATIVE_CONFIGURE_ARGS+=	--enable-initfini-array
 NATIVE_CONFIGURE_ARGS+= --disable-shared
 .endif
 
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+EXTRA_GCC_TARGETS=	i386-builtin-types.inc
+.endif
+
 NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \
@@ -211,6 +219,9 @@ MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h unwind.h); \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so)
+.if !empty(${EXTRA_GCC_TARGETS})
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e ${EXTRA_GCC_TARGETS})
+.endif
 .for _lib in ${MKNATIVE_CONFIG_TARGET_LIBS}
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} \
