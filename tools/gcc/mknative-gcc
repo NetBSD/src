@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.84 2016/03/15 06:10:13 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.85 2016/03/15 21:38:32 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -248,11 +248,13 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
 			libstdc___la_SOURCES | sed 's/^G_libstdc___la_SOURCES=/G_SRC_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++11/Makefile \
-			libc__11convenience_la_SOURCES | sed 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/'
+			libc__11convenience_la_SOURCES | \
+			sed -e 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/' \
+			    -e 's/codecvt.cc/c11-codecvt.cc/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++98/Makefile \
 			GLIBCXX_ABI_FLAGS libc__98convenience_la_SOURCES | \
 			sed -e 's/^G_libc__98convenience_la_SOURCES=/G_CPP98_SOURCES=/' \
-			    -e 's/locale_init.cc//' -e 's/localename.cc//'
+			    -e 's/codecvt.cc/c98-codecvt.cc/'
 		getvars $_PLATFORM/libstdc++-v3/Makefile ATOMICITY_SRCDIR \
 			BASIC_FILE_CC CLOCALE_CC CCODECVT_CC CCOLLATE_CC \
 			CCTYPE_CC  CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC \
@@ -279,7 +281,7 @@ get_libstdcxx_v3 () {
 get_gcc_bootstrap () {
 	_subdir="$1"
 	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
-	for f in auto-host tm config insn-modes; do
+	for f in auto-host tm config; do
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
 }
@@ -312,6 +314,7 @@ get_gcc () {
 			GCC_OBJS GCOV_OBJS GXX_OBJS GTM_H PROTO_OBJS ${_extravars1} \
 			INCLUDES md_file OBJC_OBJS OBJS out_file version \
 			BUILD_PREFIX RTL_H RTL_BASE_H TREE_H ${_hconfig_h} BASIC_BLOCK_H GCC_H \
+			GGC_H \
 			GTFILES_SRCDIR GTFILES_FILES_FILES GTFILES_FILES_LANGS \
 			GTFILES GTFILES_LANG_DIR_NAMES NOEXCEPTION_FLAGS \
 			NATIVE_SYSTEM_HEADER_DIR \
@@ -391,6 +394,10 @@ __EOF__
 	# special platforms
 	if [ "${MACHINE_ARCH}" = "sh3el" -o "${MACHINE_ARCH}" = "sh3eb" ]; then
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/sysroot-suffix.h <$_TMPDIR/gcc/sysroot-suffix.h
+	fi
+
+	if [ "${MACHINE_ARCH}" = "i386" -o "${MACHINE_ARCH}" = "x86_64" ]; then
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/i386-builtin-types.inc <$_TMPDIR/gcc/i386-builtin-types.inc
 	fi
 }
 
