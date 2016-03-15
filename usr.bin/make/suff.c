@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.80 2016/03/15 06:25:14 matthias Exp $	*/
+/*	$NetBSD: suff.c,v 1.81 2016/03/15 18:30:14 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.80 2016/03/15 06:25:14 matthias Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.81 2016/03/15 18:30:14 matthias Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.80 2016/03/15 06:25:14 matthias Exp $");
+__RCSID("$NetBSD: suff.c,v 1.81 2016/03/15 18:30:14 matthias Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2016,9 +2016,10 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
 
     /*
      * Flag the member as such so we remember to look in the archive for
-     * its modification time.
+     * its modification time. The OP_JOIN | OP_MADE is needed because this
+     * target should never get made.
      */
-    mem->type |= OP_MEMBER;
+    mem->type |= OP_MEMBER | OP_JOIN | OP_MADE;
 }
 
 /*-
