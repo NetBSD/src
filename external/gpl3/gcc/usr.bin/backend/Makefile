@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2016/01/09 02:05:00 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2016/03/15 21:41:36 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -17,6 +17,10 @@ CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\" \
 			-DNATIVE_SYSTEM_HEADER_DIR=\"${G_NATIVE_SYSTEM_HEADER_DIR}\"
 
 HOSTPROG_CXX=	1
+
+# XXX ${G_OBJS:.o=.c} is invalid in GCC 5.3, but work around for now
+BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/wide-int-print.cc wide-int-print.c
+BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/wide-int.cc wide-int.c
 
 .include <bsd.lib.mk>
 
@@ -38,14 +42,12 @@ CLEANFILES+=	gengenrtl genrtl.h \
 		genflags genflags.h \
 		gencheck tree-check.h \
 		insn-preds.c genpreds tm-preds.h tm_p.h cs-tm_p.h \
-		genmodes insn-modes.c insn-modes.h min-insn-modes.c \
-		auto-host.h build-print-rtl.c \
-		build-rtl.c build-errors.c build-varray.c \
-		build-bitmap.c build-ggc-none.c \
+		auto-host.h \
 		gt-*.h *.o *.lo \
 		cs-config.h \
 		gcov-iov gcov-iov.h \
-		gtype-go.h gtype.state
+		gtype-go.h gtype.state \
+		pass-instances.def
 
 # XXX
 COPTS.varasm.c=			-Wno-error
@@ -87,7 +89,7 @@ gtyp-input.list.tmp: ${GCCARCH}/gtyp-input.list
 CLEANFILES+=	gtyp-input.list.tmp
 
 # XXX
-CLEANFILES+=	gtype-lto.h gtype-objcp.h tm-constrs.h
+CLEANFILES+=	gtype-lto.h gtype-objcp.h tm-constrs.h gtype-jit.h
 
 gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype gtyp-input.list.tmp
@@ -107,6 +109,13 @@ gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo version.lo: ${HH
 gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo build-errors.lo version.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+
+# XXX fix this by properly marking all the files that should
+# XXX be built with -DGENERATOR_FILE
+COPTS.gengtype-lex.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype-parse.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype-state.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
 
 gtyp-gen.h: Makefile
 	${_MKTARGET_CREATE}
@@ -140,6 +149,21 @@ genmodes.lo: ${HH_NORTL}
 genmodes: genmodes.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+
+CLEANFILES+=	genmodes insn-modes.c insn-modes.h min-insn-modes.c
+
+gimple-match.c: genmatch
+	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.c.tmp
+	mv gimple-match.c.tmp gimple-match.c
+generic-match.c: genmatch
+	./genmatch --generic ${GNUHOSTDIST}/gcc/match.pd > generic-match.c.tmp
+	mv generic-match.c.tmp generic-match.c
+genmatch.lo: ${HH_NORTL} ${G_GGC_H}
+genmatch: genmatch.lo build-errors.lo build-vec.lo build-hash-table.lo
+	${_MKTARGET_LINK}
+	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBCPP} ${HOSTLIBIBERTY}
+
+CLEANFILES+=	genmatch gimple-match.c generic-match.c
 
 gcov-iov.h: gcov-iov
 	${_MKTARGET_CREATE}
@@ -176,12 +200,17 @@ auto-build.h: gmp.h Makefile
 		gcc_cv_ld=${LD} \
 		gcc_cv_as=${AS} \
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
-			--enable-lto \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \
 		mv auto-host.h ../auto-build.h) && \
 	rm -rf .ab
+
+pass-instances.def: passes.def gen-pass-instances.awk
+	${_MKTARGET_CREATE}
+	${TOOL_AWK} -f ${GNUHOSTDIST}/gcc/gen-pass-instances.awk \
+	  ${GNUHOSTDIST}/gcc/passes.def > pass-instances.def
+CLEANFILES+=	pass-instances.def
 
 #
 # These are copies of files we build for the build host that are used
@@ -189,12 +218,13 @@ auto-build.h: gmp.h Makefile
 #
 
 build-rtl.c: rtl.c \
-  ${G_RTL_H} real.h ${G_GCC_H} errors.h gtype-desc.h
+  ${G_RTL_H} real.h ${G_GCC_H} ${G_GGC_H} errors.h
 	${_MKTARGET_CREATE}
 	rm -f build-rtl.c
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/rtl.c >${.TARGET}
 build-rtl.lo: ${HH}
+CLEANFILES+=	build-rtl.c
 
 build-print-rtl.c: print-rtl.c \
   ${G_RTL_BASE_H} ${G_GTM_H} hard-reg-set.h
@@ -203,23 +233,25 @@ build-print-rtl.c: print-rtl.c \
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/print-rtl.c >${.TARGET}
 build-print-rtl.lo: ${HH}
-build/print-rtl.o: print-rtl.c $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
+build-print-rtl.o: print-rtl.c $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
   $(GTM_H) $(RTL_BASE_H)
-
+CLEANFILES+=	build-print-rtl.c
 
 build-bitmap.c: bitmap.c \
-  ${G_RTL_H} flags.h ${G_BASIC_BLOCK_H} ${REGS_H} ${G_GCC_H} gtype-desc.h
+  ${G_RTL_H} flags.h ${G_BASIC_BLOCK_H} ${REGS_H} ${G_GCC_H} ${G_GGC_H}
 	${_MKTARGET_CREATE}
 	rm -f build-bitmap.c
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/bitmap.c >${.TARGET}
 build-bitmap.lo: ${HH}
+CLEANFILES+=	build-bitmap.c
 
 build-errors.c: errors.c errors.h
 	${_MKTARGET_CREATE}
 	rm -f build-errors.c
 	cat ${GNUHOSTDIST}/gcc/errors.c >${.TARGET}
 build-errors.lo: ${HH_NORTL}
+CLEANFILES+=	build-errors.c
 
 build-varray.c: varray.c \
   ${G_RTL_H} ${G_GCC_H} ${TREE_H} bitmap.h errors.h
@@ -228,6 +260,7 @@ build-varray.c: varray.c \
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/varray.c >${.TARGET}
 build-varray.lo: ${HH} gtype-desc.h
+CLEANFILES+=	build-varray.c
 
 build-ggc-none.c: ggc-none.c \
   ${G_GCC_H} gtype-desc.h
@@ -236,6 +269,21 @@ build-ggc-none.c: ggc-none.c \
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/ggc-none.c >${.TARGET}
 build-ggc-none.lo: ${HH}
+CLEANFILES+=	build-ggc-none.c
+
+build-hash-table.c: hash-table.c hash-table.h ${G_GGC_H}
+	${_MKTARGET_CREATE}
+	rm -f build-hash-table.c
+	cat ${GNUHOSTDIST}/gcc/hash-table.c >${.TARGET}
+build-hash-table.lo: ${HH_NORTL}
+CLEANFILES+=	build-hash-table.c
+
+build-vec.c: vec.c vec.h ${G_GGC_H}
+	${_MKTARGET_CREATE}
+	rm -f build-vec.c
+	cat ${GNUHOSTDIST}/gcc/vec.c >${.TARGET}
+build-vec.lo: ${HH_NORTL}
+CLEANFILES+=	build-vec.c
 
 #
 # The normal insn-foo generators
@@ -374,6 +422,7 @@ data-streamer.o data-streamer-out.o coverage.o gcov-dump.o gcov-io.o gcov-iov.o 
 gcov-io.h: gcov-iov.h
 df-scan.d df-scan.o: target-hooks-def.h
 read-md.d read-md.o read-md.lo: auto-build.h
+cgraphunit.d cgraphunit.o: pass-instances.def
 
 # XXX make all hooks generated for now.
 final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-hooks-def.h
