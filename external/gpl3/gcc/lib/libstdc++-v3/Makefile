@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2016/03/15 06:13:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2016/03/15 21:42:59 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -91,6 +91,13 @@ BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/${G_CMONEY_CC} monetary_members_cow.cc \
 	${GLIBCXX_SRCDIR}/${G_CNUMERIC_CC} numeric_members_cow.cc
 
+# XXX both c++98 and c++11 have codecvt.cc files.
+BUILDSYMLINKS+=	\
+	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
+BUILDSYMLINKS+=	\
+	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
+SRCS+=	c98-codecvt.cc c11-codecvt.cc
+
 .if ${HAVE_LIBGCC_EH} == "no"
 G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
 .endif
@@ -108,7 +115,7 @@ DPSRCS+=       ${_dst}
 .for _s in ${SRCS:M*.cc}
 COPTS.${_s}+= -std=gnu++11
 .endfor
-.for _s in ${G_CPP98_SOURCES:M*.cc}
+.for _s in ${G_CPP98_SOURCES:Nlocalename.cc:Nlocale_init.cc:M*.cc}
 COPTS.${_s}+= -std=gnu++98
 .endfor
 
