@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.101 2016/02/20 20:11:37 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.102 2016/03/15 15:16:01 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.101 2016/02/20 20:11:37 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.102 2016/03/15 15:16:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -177,18 +177,6 @@ static timezone_t gmtptr;
 static char		lcl_TZname[TZ_STRLEN_MAX + 1];
 static int		lcl_is_set;
 
-#if !defined(__LIBC12_SOURCE__)
-
-__aconst char *		tzname[2] = {
-	(__aconst char *)__UNCONST(wildabbr),
-	(__aconst char *)__UNCONST(wildabbr)
-};
-
-#else
-
-extern __aconst char *	tzname[2];
-
-#endif
 
 #ifdef _REENTRANT
 static rwlock_t lcl_lock = RWLOCK_INITIALIZER;
@@ -204,15 +192,30 @@ static rwlock_t lcl_lock = RWLOCK_INITIALIZER;
 
 static struct tm	tm;
 
-#ifdef USG_COMPAT
-#if !defined(__LIBC12_SOURCE__)
+#if !HAVE_POSIX_DECLS || defined(__NetBSD__)
+# if !defined(__LIBC12_SOURCE__)
+
+__aconst char *		tzname[2] = {
+	(__aconst char *)__UNCONST(wildabbr),
+	(__aconst char *)__UNCONST(wildabbr)
+};
+
+# else
+
+extern __aconst char *	tzname[2];
+
+# endif /* __LIBC12_SOURCE__ */
+
+# ifdef USG_COMPAT
+#  if !defined(__LIBC12_SOURCE__)
 long 			timezone = 0;
 int			daylight = 0;
 #else
 extern int		daylight;
 extern long		timezone __RENAME(__timezone13);
-#endif
-#endif /* defined USG_COMPAT */
+#  endif /* __LIBC12_SOURCE__ */
+# endif /* defined USG_COMPAT */
+#endif /* !HAVE_POSIX_DECLS */
 
 #ifdef ALTZONE
 long			altzone = 0;
