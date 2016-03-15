@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2015/01/29 21:12:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2016/03/15 06:13:47 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -28,7 +28,7 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .include "${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	7
-SHLIB_MINOR=	3
+SHLIB_MINOR=	4
 
 SUBDIR=		include
 
@@ -60,23 +60,6 @@ COPTS.hashtable_c++0x.cc=  -fimplicit-templates
 COPTS.bitmap_allocator.cc = -fimplicit-templates
 CPPFLAGS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
 
-# XXX also need this for some PCHs.
-CPPFLAGS.atomic.cc = -std=gnu++0x
-CPPFLAGS.compatibility-c++0x.cc = -std=gnu++0x
-CPPFLAGS.functexcept.cc = -std=gnu++0x
-CPPFLAGS.hash_c++0x.cc = -std=gnu++0x
-CPPFLAGS.hashtable_c++0x.cc = -std=gnu++0x
-CPPFLAGS.limits.cc = -std=gnu++0x
-CPPFLAGS.system_error.cc = -std=gnu++0x
-CPPFLAGS.fstream-inst.cc = -std=gnu++0x
-CPPFLAGS.string-inst.cc = -std=gnu++0x
-CPPFLAGS.wstring-inst.cc = -std=gnu++0x
-CPPFLAGS.mutex.cc = -std=gnu++0x
-CPPFLAGS.condition_variable.cc = -std=gnu++0x
-CPPFLAGS.chrono.cc = -std=gnu++0x
-CPPFLAGS.thread.cc = -std=gnu++0x
-CPPFLAGS.future.cc = -std=gnu++0x
-
 CPPFLAGS.cp-demangle.cc += -DIN_GLIBCPP_V3
 CPPFLAGS.concept-inst.cc += -D_GLIBCXX_CONCEPT_CHECKS
 CPPFLAGS.parallel_list.cc += -D_GLIBCXX_PARALLEL
@@ -102,7 +85,11 @@ BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/${G_CLOCALE_CC} c++locale.cc \
 	${GLIBCXX_SRCDIR}/${G_BASIC_FILE_CC} basic_file.cc \
 	${DIST}/libiberty/cp-demangle.c cp-demangle.c \
-	${DIST}/libiberty/cp-demangle.h cp-demangle.h
+	${DIST}/libiberty/cp-demangle.h cp-demangle.h \
+	${GLIBCXX_SRCDIR}/${G_CCOLLATE_CC} collate_members_cow.cc \
+	${GLIBCXX_SRCDIR}/${G_CMESSAGES_CC} messages_members_cow.cc \
+	${GLIBCXX_SRCDIR}/${G_CMONEY_CC} monetary_members_cow.cc \
+	${GLIBCXX_SRCDIR}/${G_CNUMERIC_CC} numeric_members_cow.cc
 
 .if ${HAVE_LIBGCC_EH} == "no"
 G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
@@ -117,12 +104,19 @@ DPSRCS+=       ${_dst}
 .endif
 .endif
 
-.for f in compatibility-c++0x compatibility-atomic-c++0x \
-          compatibility-thread-c++0x compatibility-chrono chrono \
-	  condition_variable debug functexcept functional future \
-	  hash_c++0x hashtable_c++0x limits mutex placeholders \
-	  random regex shared_ptr system_error thread
-COPTS.${f}.cc+= -std=gnu++11
+# XXX Make this either/or,  not one, and maybe another
+.for _s in ${SRCS:M*.cc}
+COPTS.${_s}+= -std=gnu++11
+.endfor
+.for _s in ${G_CPP98_SOURCES:M*.cc}
+COPTS.${_s}+= -std=gnu++98
+.endfor
+
+.for f in collate_members_cow \
+	  messages_members_cow \
+          monetary_members_cow \
+	  numeric_members_cow
+COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 .endfor
 
 .include <bsd.lib.mk>
