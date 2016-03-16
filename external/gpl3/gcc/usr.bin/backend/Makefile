@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2016/03/16 05:33:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2016/03/16 10:56:20 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -139,9 +139,14 @@ gtyp-gen.h: Makefile
 insn-modes.c: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes >${.TARGET}
-insn-modes.h: genmodes
+insn-modes.h-test: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -h >${.TARGET}
+	# Ensure that the checked in version matches
+	if ! cmp ${.TARGET} ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/insn-modes.h; then
+		echo "Checked in insn-modes.h does not match; rerun mknative-gcc." 1>&2
+		false
+	fi
 min-insn-modes.c: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -m >${.TARGET}
@@ -150,7 +155,7 @@ genmodes: genmodes.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-CLEANFILES+=	genmodes insn-modes.c insn-modes.h min-insn-modes.c
+CLEANFILES+=	genmodes insn-modes.c insn-modes.h-test min-insn-modes.c
 
 gimple-match.c: genmatch
 	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.c.tmp
