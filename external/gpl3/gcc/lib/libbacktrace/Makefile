@@ -1,4 +1,4 @@
-#	$NetBSD
+#	$NetBSD: Makefile,v 1.3 2016/03/16 05:42:07 mrg Exp $
 
 LIBISPRIVATE=   yes
 
