@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.22 2016/03/16 21:07:59 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.23 2016/03/16 21:41:25 christos Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.288 2016/02/15 09:47:49 dtucker Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.22 2016/03/16 21:07:59 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.23 2016/03/16 21:41:25 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -1906,7 +1906,6 @@ __dead static void
 do_show_cert(struct passwd *pw)
 {
 	struct sshkey *key = NULL;
-	struct stat st;
 	int r, is_stdin = 0, ok = 0;
 	FILE *f;
 	char *cp, line[SSH_MAX_PUBKEY_BYTES];
