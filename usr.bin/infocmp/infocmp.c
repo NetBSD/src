@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.10 2016/03/09 20:02:33 christos Exp $ */
+/* $NetBSD: infocmp.c,v 1.11 2016/03/16 21:01:28 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.10 2016/03/09 20:02:33 christos Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.11 2016/03/16 21:01:28 christos Exp $");
 
 #include <sys/ioctl.h>
 
@@ -506,7 +506,7 @@ use_terms(TERMINAL *term, size_t nuse, char **uterms)
 	TERMUSERDEF *ud, *tud;
 	size_t i, j, agree, absent, data;
 
-	terms = ecalloc(nuse, sizeof(**terms));
+	terms = ecalloc(nuse, sizeof(*terms));
 	for (i = 0; i < nuse; i++) {
 		if (strcmp(term->name, *uterms) == 0)
 			errx(EXIT_FAILURE, "cannot use same terminal");
