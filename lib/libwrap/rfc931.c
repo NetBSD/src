@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc931.c,v 1.10 2012/03/22 22:59:43 joerg Exp $	*/
+/*	$NetBSD: rfc931.c,v 1.11 2016/03/16 21:38:22 christos Exp $	*/
 
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #else
-__RCSID("$NetBSD: rfc931.c,v 1.10 2012/03/22 22:59:43 joerg Exp $");
+__RCSID("$NetBSD: rfc931.c,v 1.11 2016/03/16 21:38:22 christos Exp $");
 #endif
 #endif
 
@@ -87,7 +87,7 @@ rfc931(struct sockaddr *rmt_sin, struct sockaddr *our_sin, char *dest)
     char    user[256];			/* XXX */
     char    buffer[512];		/* XXX */
     char   *cp;
-    char   *result = unknown;
+    static char   *result = unknown;
     FILE   *fp;
     volatile int salen;
     u_short * volatile rmt_portp;
@@ -95,7 +95,7 @@ rfc931(struct sockaddr *rmt_sin, struct sockaddr *our_sin, char *dest)
 
     /* address family must be the same */
     if (rmt_sin->sa_family != our_sin->sa_family) {
-	strlcpy(dest, result, STRING_LENGTH);
+	strlcpy(dest, unknown, STRING_LENGTH);
 	return;
     }
     switch (rmt_sin->sa_family) {
@@ -110,7 +110,7 @@ rfc931(struct sockaddr *rmt_sin, struct sockaddr *our_sin, char *dest)
 	break;
 #endif
     default:
-	strlcpy(dest, result, STRING_LENGTH);
+	strlcpy(dest, unknown, STRING_LENGTH);
 	return;
     }
     switch (our_sin->sa_family) {
@@ -123,14 +123,9 @@ rfc931(struct sockaddr *rmt_sin, struct sockaddr *our_sin, char *dest)
 	break;
 #endif
     default:
-	strlcpy(dest, result, STRING_LENGTH);
+	strlcpy(dest, unknown, STRING_LENGTH);
 	return;
     }
-
-#ifdef __GNUC__
-    (void)&result; /* Avoid longjmp clobbering */
-    (void)&fp;	/* XXX gcc */
-#endif
 
     /*
      * Use one unbuffered stdio stream for writing to and for reading from
