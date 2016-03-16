@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.242 2016/03/07 21:45:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.243 2016/03/16 16:04:44 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.242 2016/03/07 21:45:43 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.243 2016/03/16 16:04:44 matthias Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.242 2016/03/07 21:45:43 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.243 2016/03/16 16:04:44 matthias Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1117,14 +1117,6 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Be compatible if user did not specify -j and did not explicitly
-	 * turned compatibility on
-	 */
-	if (!compatMake && !forceJobs) {
-		compatMake = TRUE;
-	}
-	
-	/*
 	 * Initialize archive, target and suffix modules in preparation for
 	 * parsing the makefile(s)
 	 */
@@ -1239,6 +1231,35 @@ main(int argc, char **argv)
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	free(p1);
+
+	if (Var_Exists(".MAKE.JOBS", VAR_GLOBAL)) {
+	    char *value;
+	    int n;
+
+	    value = Var_Subst(NULL, "${.MAKE.JOBS}", VAR_GLOBAL, VARF_WANTRES);
+	    n = strtol(value, NULL, 0);
+	    if (n < 1) {
+		(void)fprintf(stderr, "%s: illegal value for .MAKE.JOBS -- must be positive integer!\n",
+		    progname);
+		exit(1);
+	    }
+	    if (n != maxJobs) {
+		Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, value, VAR_GLOBAL);
+	    }
+	    maxJobs = n;
+	    maxJobTokens = maxJobs;
+	    forceJobs = TRUE;
+	    free(value);
+	}
+
+	/*
+	 * Be compatible if user did not specify -j and did not explicitly
+	 * turned compatibility on
+	 */
+	if (!compatMake && !forceJobs) {
+	    compatMake = TRUE;
+	}
 
 	if (!compatMake)
 	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
