@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.118 2016/03/13 15:57:30 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.119 2016/03/16 21:20:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.118 2016/03/13 15:57:30 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.119 2016/03/16 21:20:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -487,7 +487,7 @@ evalsubshell(union node *n, int flags)
 		INTON;
 		if (backgnd)
 			flags &=~ EV_TESTED;
-		redirect(n->nredir.redirect, 0);
+		redirect(n->nredir.redirect, REDIR_KEEP);
 		/* never returns */
 		evaltree(n->nredir.n, flags | EV_EXIT);
 	}
