@@ -92,10 +92,5 @@ along with GCC; see the file COPYING3.  If not see
 #define USE_LD_AS_NEEDED 1
 #endif
 
-#define MFLIB_SPEC " %{fmudflap: -export-dynamic -lmudflap \
- %{static:%(link_gcc_c_sequence) -lmudflap}} \
- %{fmudflapth: -export-dynamic -lmudflapth -lpthread \
- %{static:%(link_gcc_c_sequence) -lmudflapth}} "
-
 #undef TARGET_UNWIND_TABLES_DEFAULT
 #define TARGET_UNWIND_TABLES_DEFAULT true
