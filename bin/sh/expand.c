@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.96 2016/03/08 14:09:07 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.97 2016/03/16 15:44:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.96 2016/03/08 14:09:07 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.97 2016/03/16 15:44:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ STATIC void
 argstr(char *p, int flag)
 {
 	char c;
-	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
+	int quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);	/* do CTLESC */
 	int firsteq = 1;
 	const char *ifs = NULL;
 	int ifs_split = EXP_IFS_SPLIT;
@@ -641,7 +641,7 @@ evalvar(char *p, int flag)
 	int startloc;
 	int varlen;
 	int apply_ifs;
-	int quotes = flag & (EXP_FULL | EXP_CASE);
+	int quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);
 
 	varflags = (unsigned char)*p++;
 	subtype = varflags & VSTYPE;
