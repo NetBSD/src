@@ -47,6 +47,8 @@ OMIT_TRAILING_EMPTY_LINES = '/^$$/H; /^$$/d; x; s/\n//p; s/\n*//; x'
 CONVERT_QUOTES = "s/\`\([^']*\)'/'\1'/g"
 
 $(srcdir)/INSTALL: $(top_srcdir)/doc/install.texi
+        @echo "NOT REBUILDING $@"
+NetBSD_DISABLED_INSTALL:
 	echo @firstparagraphindent insert				\
 	  | cat - $(top_srcdir)/doc/install.texi > tmp.texi
 	$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS)		\

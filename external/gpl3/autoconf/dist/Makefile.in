@@ -789,6 +789,8 @@ uninstall-am: uninstall-pkgdataDATA
 
 
 @MAKE_CASE_SENSITIVE_TRUE@$(srcdir)/INSTALL: $(top_srcdir)/doc/install.texi
+@MAKE_CASE_SENSITIVE_TRUE@	@echo "NOT REBUILDING $@"
+@MAKE_CASE_SENSITIVE_TRUE@NetBSD_DISABLED_INSTALL:
 @MAKE_CASE_SENSITIVE_TRUE@	echo @firstparagraphindent insert				\
 @MAKE_CASE_SENSITIVE_TRUE@	  | cat - $(top_srcdir)/doc/install.texi > tmp.texi
 @MAKE_CASE_SENSITIVE_TRUE@	$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS)		\
