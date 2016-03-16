@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.14 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: kex.c,v 1.15 2016/03/16 21:06:06 christos Exp $	*/
 /* $OpenBSD: kex.c,v 1.117 2016/02/08 10:57:07 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.14 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.15 2016/03/16 21:06:06 christos Exp $");
 #include <sys/param.h>	/* MAX roundup */
 
 #include <signal.h>
@@ -364,6 +364,10 @@ kex_input_ext_info(int type, u_int32_t seq, void *ctxt)
 	ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, &kex_protocol_error);
 	if ((r = sshpkt_get_u32(ssh, &ninfo)) != 0)
 		return r;
+	if (ninfo > 1024) {
+		fatal("%s: too many %u fields", __func__, ninfo);
+		return SSH_ERR_INTERNAL_ERROR;
+	}
 	for (i = 0; i < ninfo; i++) {
 		if ((r = sshpkt_get_cstring(ssh, &name, NULL)) != 0)
 			return r;
