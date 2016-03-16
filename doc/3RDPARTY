@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1316 2016/03/16 20:17:42 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1317 2016/03/16 23:52:53 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -528,6 +528,7 @@ Location:	external/gpl2/groff
 Notes:
 Use groff2netbsd from external/gpl2/groff/groff2netbsd to prepare the
 distribution for import.
+Update MDATE in src/external/gpl2/groff/Makefile.inc.
 
 Package:	heimdal
 Version:	1.5.3
