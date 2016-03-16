@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.21 2016/03/11 13:15:02 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.22 2016/03/16 21:07:59 christos Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.288 2016/02/15 09:47:49 dtucker Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.21 2016/03/11 13:15:02 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.22 2016/03/16 21:07:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -1915,8 +1915,6 @@ do_show_cert(struct passwd *pw)
 
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
-	if (strcmp(identity_file, "-") != 0 && stat(identity_file, &st) < 0)
-		fatal("%s: %s: %s", __progname, identity_file, strerror(errno));
 
 	path = identity_file;
 	if (strcmp(path, "-") == 0) {
