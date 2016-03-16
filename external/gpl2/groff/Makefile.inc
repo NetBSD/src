@@ -1,9 +1,14 @@
-# $NetBSD: Makefile.inc,v 1.2 2016/01/14 02:30:18 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2016/03/16 23:52:04 wiz Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
 BINDIR?=	/usr/bin
 ECHO=		echo
+# date of groff tarball; embedded as last-change date into man pages
+# we can not use mdate.sh since after checkout from some of the used
+# version control systems, it might be today's date and MKREPRO won't
+# work.
+MDATE=		September 4, 2005
 
 # Define `page' to be letter if your PostScript printer uses 8.5x11
 # paper (USA) and define it to be A4, if it uses A4 paper (rest of the
@@ -137,7 +142,7 @@ revision != ${TOOL_SED} -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISI
 	-e "s;@TMAC_MDIR@;$(tmacdir)/mm;g" \
 	-e "s;@BROKEN_SPOOLER_FLAGS@;$(BROKEN_SPOOLER_FLAGS);g" \
 	-e "s;@VERSION@;$(version)$(revision);g" \
-	-e "s;@MDATE@;`${HOST_SH} ${GROFF_DIST}/mdate.sh $<`;g" \
+	-e "s;@MDATE@;${MDATE};g" \
 	-e "s;@g@;$(g);g" \
 	-e "s;@G@;`echo $(g) | LC_ALL=C tr [a-z] [A-Z]`;g" \
 	$< >$@
