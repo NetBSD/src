@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.85 2016/03/15 21:38:32 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.86 2016/03/16 11:16:05 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -284,6 +284,11 @@ get_gcc_bootstrap () {
 	for f in auto-host tm config; do
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
+	# XXXGCC5 don't really want to copy insn-modes as we build
+	# it but libgcc needs to too early yet
+	for f in insn-modes; do
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
+	done
 }
 
 get_gcc () {
@@ -424,6 +429,7 @@ gcc*)
 	get_libgcc gcc
 	get_libgcov gcc $_PLATFORM/libgcc/Makefile
 	get_crtstuff crtstuff
+	get_gcc_bootstrap gcc
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3 gcc
