@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.14 2016/03/09 22:27:17 christos Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.15 2016/03/16 21:09:39 christos Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -171,7 +171,7 @@ ident_i1send(iph1, msg)
 		else
 			plist = isakmp_plist_append(plist,
 			    vid_xauth, ISAKMP_NPTYPE_VID);
-
+		/*FALLTHROUGH*/
 	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 		if ((vid_unity = set_vendorid(VENDORID_UNITY)) == NULL)
 			plog(LLV_ERROR, LOCATION, NULL,
