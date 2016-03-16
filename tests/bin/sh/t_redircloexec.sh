@@ -1,4 +1,4 @@
-# $NetBSD: t_redircloexec.sh,v 1.1 2016/03/13 18:55:12 christos Exp $
+# $NetBSD: t_redircloexec.sh,v 1.2 2016/03/16 21:13:51 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,25 +31,21 @@
 : ${TEST_SH:="/bin/sh"}
 
 mkhelper() {
-	local name="$1"
-	local fd="$2"
+	name=$1
+	fd=$2
 	shift 2
-	(echo "#!${TEST_SH}"; echo "$@") > ./"$name"1
-	(echo "#!${TEST_SH}"; echo "echo $name"2 ">&$fd") > ./"$name"2
-	chmod +x ./"$name"1 ./"$name"2
+
+	echo "$@" > ./"${name}1"
+	echo "echo ${name}2" ">&${fd}" > ./"${name}2"
 }
 
 runhelper() {
-	local name="$1"
-	shift
-
-	"./$name"1
+	${TEST_SH} "./${1}1"
 }
 
 cleanhelper() {
-	local name="$1"
-	shift
-	rm -f ./"$name"1 ./"$name"2
+	# not really needed, atf cleans up...
+	rm -f ./"${1}1" ./"${1}2" out
 }
 
 atf_test_case exec_redir_closed
@@ -57,11 +53,32 @@ exec_redir_closed_head() {
 	atf_set "descr" "Tests that redirections created by exec are closed on exec"
 }
 exec_redir_closed_body() {
-	mkhelper exec 6 "exec 6> out; echo exec1 >&6; ./exec2; exec 6>&-"
-	atf_check -s exit:0 \
-		-o empty \
-		-e match:"./exec2: 6: Bad file descriptor" \
-		./exec1
+
+	mkhelper exec 6 \
+		"exec 6> out; echo exec1 >&6; ${TEST_SH} exec2; exec 6>&-"
+
+	atf_check -s exit:0 -o empty -e not-empty ${TEST_SH} ./exec1
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -e ./exec1
+
+	mkhelper exec 9 \
+		"exec 9> out; echo exec1 >&9; ${TEST_SH} exec2"
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} ./exec1
+
+	mkhelper exec 8 \
+		"exec 8> out; printf OK; echo exec1 >&8;" \
+		"printf OK; ${TEST_SH} exec2; printf ERR"
+
+	atf_check -s not-exit:0 -o match:OKOK -o not-match:ERR -e not-empty \
+		${TEST_SH} -e ./exec1
+
+	mkhelper exec 7 \
+		"exec 7> out; printf OK; echo exec1 >&7;" \
+		"printf OK; ${TEST_SH} exec2 || printf ERR"
+
+	atf_check -s exit:0 -o match:OKOKERR -e not-empty \
+		${TEST_SH} ./exec1
+
 	cleanhelper exec
 }
 
@@ -70,11 +87,11 @@ loop_redir_open_head() {
 	atf_set "descr" "Tests that redirections in loops don't close on exec"
 }
 loop_redir_open_body() {
-	mkhelper for 3 "for x in x; do ./for2; done 3>out"
+	mkhelper for 3 "for x in x; do ${TEST_SH} ./for2; done 3>out"
 	atf_check -s exit:0 \
 		-o empty \
 		-e empty \
-		./for1
+		${TEST_SH} ./for1
 	cleanhelper for
 }
 
@@ -83,11 +100,11 @@ compound_redir_open_head() {
 	atf_set "descr" "Tests that redirections in compound statements don't close on exec"
 }
 compound_redir_open_body() {
-	mkhelper comp 3 "{ ./comp2; } 3>out"
+	mkhelper comp 3 "{ ${TEST_SH} ./comp2; } 3>out"
 	atf_check -s exit:0 \
 		-o empty \
 		-e empty \
-		./comp1
+		${TEST_SH} ./comp1
 	cleanhelper comp
 }
 
@@ -96,12 +113,25 @@ simple_redir_open_head() {
 	atf_set "descr" "Tests that redirections in simple commands don't close on exec"
 }
 simple_redir_open_body() {
-	mkhelper simp 6 "./simp2 6>out"
+	mkhelper simp 4 "${TEST_SH} ./simp2 4>out"
 	atf_check -s exit:0 \
 		-o empty \
 		-e empty \
-		./simp1
+		${TEST_SH} ./simp1
 	cleanhelper simp
+}
+
+atf_test_case subshell_redir_open
+subshell_redir_open_head() {
+	atf_set "descr" "Tests that redirections on subshells don't close on exec"
+}
+subshell_redir_open_body() {
+	mkhelper comp 5 "( ${TEST_SH} ./comp2; ${TEST_SH} ./comp2 ) 5>out"
+	atf_check -s exit:0 \
+		-o empty \
+		-e empty \
+		${TEST_SH} ./comp1
+	cleanhelper comp
 }
 
 atf_init_test_cases() {
@@ -109,4 +139,5 @@ atf_init_test_cases() {
 	atf_add_test_case loop_redir_open
 	atf_add_test_case compound_redir_open
 	atf_add_test_case simple_redir_open
+	atf_add_test_case subshell_redir_open
 }
