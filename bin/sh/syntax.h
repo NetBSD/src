@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.4 2016/03/16 15:48:01 christos Exp $	*/
+/*	$NetBSD: syntax.h,v 1.5 2016/03/16 17:01:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@
 
 /* These defines assume that the digits are contiguous (which is guaranteed) */
 #define	is_digit(c)	((unsigned)((c) - '0') <= 9)
-#define sh_ctype(c)	(is_type+SYNBASE)[(unsigned char)c]
+#define sh_ctype(c)	(is_type+SYNBASE)[(int)c]
 #define	is_alpha(c)	(sh_ctype(c) & (ISUPPER|ISLOWER))
 #define	is_name(c)	(sh_ctype(c) & (ISUPPER|ISLOWER|ISUNDER))
 #define	is_in_name(c)	(sh_ctype(c) & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))
