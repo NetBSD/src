@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.126 2016/03/02 01:53:22 christos Exp $
+# $NetBSD: shl.mi,v 1.127 2016/03/16 05:32:10 mrg Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.200.debug			comp-sys-debug	debug,dynamicroot
@@ -54,7 +54,7 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libamu.so.5.0.debug			comp-amd-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libasan.so.0.0.debug		comp-krb5-debug	debug,compatfile,gcc
+./usr/libdata/debug/usr/lib/libasan.so.0.0.debug		comp-krb5-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug		comp-atf-debug	debug,compatfile,atf,obsolete
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug		comp-atf-debug	debug,compatfile,atf
@@ -97,7 +97,8 @@
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug		comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libgomp.so.1.1.debug		comp-sys-debug	debug,compatfile,gcc
+./usr/libdata/debug/usr/lib/libgomp.so.1.1.debug		comp-sys-debug	debug,compatfile,gcc=48
+./usr/libdata/debug/usr/lib/libgomp.so.1.2.debug		comp-sys-debug	debug,compatfile,gcc=53
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libheimbase.so.1.0.debug		comp-krb5-debug	debug,compatfile,kerberos
@@ -259,7 +260,8 @@
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssh.so.27.0.debug		comp-secsh-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libssl.so.11.0.debug		comp-crypto-debug	debug,compatfile,crypto
-./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc,cxx,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc=48,cxx,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.4.debug		comp-sys-debug	debug,compatfile,gcc=53,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug			comp-sys-debug	debug,compatfile
