@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.16 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.17 2016/03/16 21:00:37 christos Exp $	*/
 /* $OpenBSD: sshconnect.c,v 1.271 2016/01/14 22:56:56 markus Exp $ */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.16 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.17 2016/03/16 21:00:37 christos Exp $");
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1552,4 +1552,6 @@ maybe_add_key_to_agent(char *authfile, Key *private, char *comment,
 		debug("identity added to agent: %s", authfile);
 	else
 		debug("could not add identity to agent: %s (%d)", authfile, r);
+
+	close(auth_sock);
 }
