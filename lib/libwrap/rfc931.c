@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc931.c,v 1.11 2016/03/16 21:38:22 christos Exp $	*/
+/*	$NetBSD: rfc931.c,v 1.12 2016/03/16 22:32:32 christos Exp $	*/
 
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #else
-__RCSID("$NetBSD: rfc931.c,v 1.11 2016/03/16 21:38:22 christos Exp $");
+__RCSID("$NetBSD: rfc931.c,v 1.12 2016/03/16 22:32:32 christos Exp $");
 #endif
 #endif
 
@@ -87,7 +87,7 @@ rfc931(struct sockaddr *rmt_sin, struct sockaddr *our_sin, char *dest)
     char    user[256];			/* XXX */
     char    buffer[512];		/* XXX */
     char   *cp;
-    static char   *result = unknown;
+    char   * volatile result = unknown;
     FILE   *fp;
     volatile int salen;
     u_short * volatile rmt_portp;
