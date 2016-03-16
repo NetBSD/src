@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2015/01/29 20:46:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.32 2016/03/16 23:01:33 christos Exp $
 
 WARNS=3
 CWARNFLAGS.clang+=	-Wno-error=cast-qual
@@ -22,7 +22,6 @@ USETBL=
 
 # Environment for scripts executed during build.
 SCRIPT_ENV= \
-	AWK=${TOOL_AWK:Q} \
 	SED=${TOOL_SED:Q}
 
 CLEANFILES+=	siglist.out siglist.out.tmp
