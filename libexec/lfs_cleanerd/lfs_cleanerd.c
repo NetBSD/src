@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.56 2016/02/19 03:54:37 riastradh Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.57 2016/03/16 18:58:34 mrg Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1453,10 +1453,11 @@ lfs_cleaner_main(int argc, char **argv)
 	char *cp, *pidname;
 #endif
 
-#if defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ == 8 && \
+#if defined(__GNUC__) && \
+    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)) && \
     defined(__OPTIMIZE_SIZE__)
 	/*
-	 * XXX: Work around apparent bug with gcc 4.8 and -Os: it
+	 * XXX: Work around apparent bug with GCC >= 4.8 and -Os: it
 	 * claims that ci.clean is uninitialized in clean_fs (at one
 	 * of the several uses of it, which is neither the first nor
 	 * last use) -- this doesn't happen with plain -O2.
