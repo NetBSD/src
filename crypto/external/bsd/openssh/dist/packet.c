@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.23 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.24 2016/03/16 20:55:54 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.229 2016/02/17 22:20:14 djm Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.23 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.24 2016/03/16 20:55:54 christos Exp $");
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -1387,7 +1387,7 @@ int
 ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 {
 	struct session_state *state = ssh->state;
-	int len, r, ms_remain;
+	int len, r, ms_remain = 0;
 	fd_set *setp;
 	char buf[8192];
 	struct timeval timeout, start, *timeoutp = NULL;
