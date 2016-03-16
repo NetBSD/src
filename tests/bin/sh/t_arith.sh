@@ -1,4 +1,4 @@
-# $NetBSD: t_arith.sh,v 1.1 2016/03/16 15:49:19 christos Exp $
+# $NetBSD: t_arith.sh,v 1.2 2016/03/16 17:39:12 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,10 +28,10 @@
 : ${TEST_SH:="/bin/sh"}
 
 # Requirement is to support at least "signed long" whatever that means
-# (number of bits in "long" is not specified - but should be at lease 32).
+# (number of bits in "long" is not specified - but should be at least 32).
 
 # These tests use -o inline:"..." rather than -o match:'...' as we have
-# only digits to examine, and it is good to be sure that 1 + 2 really gives 2
+# only digits to examine, and it is good to be sure that 1 + 1 really gives 2
 # and that 42 or 123 don't look like success because there is a 2 in them.
 
 ARITH_BITS='?'
@@ -64,7 +64,6 @@ discover_range()
 	if ! ${TEST_SH} -c ': $(( 0xC0000000 ))' 2>/dev/null
 	then
 		# proobably shell detected overflow and complained
-		# (if it does not support hex, we will discover that later)
 		ARITH_BITS=32
 		return
 	fi
@@ -170,31 +169,6 @@ constants_body()
 	# 	${TEST_SH} -c 'echo $(( UNDEFINED_VAR ))'
 }
 
-atf_test_case constants_binary
-constants_binary_head()
-{
-        atf_set "descr" "Optional tests that binary constants work as expected"
-}
-constants_binary_body()
-{
-	if ! ${TEST_SH} -c '[ $(( 0b0101 )) = 5 ]' 2>/dev/null
-	then
-		atf_skip "Binary constants (0b0101) not implemented"
-	fi
-
-	atf_check -s exit:0 -o inline:'0\n' -e empty ${TEST_SH} -c \
-		'echo $((0b0))'
-	atf_check -s exit:0 -o inline:'1\n' -e empty ${TEST_SH} -c \
-		'echo $((0b01))'
-	atf_check -s exit:0 -o inline:'3\n' -e empty ${TEST_SH} -c \
-		'echo $((0b11))'
-	atf_check -s exit:0 -o inline:'7\n' -e empty ${TEST_SH} -c \
-		'echo $((0b111))'
-	atf_check -s exit:0 -o inline:'1398101\n' -e empty ${TEST_SH} -c \
-		'echo $(( 0b101010101010101010101 ))'
-	atf_check -s exit:0 -o inline:'119097103\n' -e empty ${TEST_SH} -c \
-		'echo $(( 0b111000110010100011100001111 ))'
-}
 
 atf_test_case do_unary_plus
 do_unary_plus_head()
@@ -453,7 +427,7 @@ elementary_rem_body()
 atf_test_case elementary_shl
 elementary_shl_head()
 {
-        atf_set "descr" "Tests that simple modulus works as expected"
+        atf_set "descr" "Tests that simple shift left works as expected"
 }
 elementary_shl_body()
 {
@@ -487,7 +461,7 @@ elementary_shl_body()
 atf_test_case elementary_shr
 elementary_shr_head()
 {
-        atf_set "descr" "Tests that simple modulus works as expected"
+        atf_set "descr" "Tests that simple shift right works as expected"
 }
 elementary_shr_body()
 {
@@ -798,7 +772,7 @@ fiddle_bits_xor_body()
 atf_test_case logical_and
 logical_and_head()
 {
-	atf_set "descr" "Test bitwise and operations in arithmetic expressions"
+	atf_set "descr" "Test logical and operations in arithmetic expressions"
 }
 logical_and_body()
 {
@@ -822,7 +796,7 @@ logical_and_body()
 atf_test_case logical_or
 logical_or_head()
 {
-	atf_set "descr" "Test bitwise or operations in arithmetic expressions"
+	atf_set "descr" "Test logical or operations in arithmetic expressions"
 }
 logical_or_body()
 {
@@ -1021,7 +995,6 @@ atf_init_test_cases() {
 	# odd names are to get atf's sort order semi-rational
 
 	atf_add_test_case constants
-	atf_add_test_case constants_binary
 	atf_add_test_case do_unary_plus
 	atf_add_test_case do_unary_minus
 	atf_add_test_case do_unary_not
