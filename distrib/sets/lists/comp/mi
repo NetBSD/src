@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2020 2016/02/27 21:47:36 joerg Exp $
+#	$NetBSD: mi,v 1.2021 2016/03/16 05:32:09 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -927,6 +927,29 @@
 ./usr/include/g++/bitdo1.h			comp-obsolete		obsolete
 ./usr/include/g++/bitdo2.h			comp-obsolete		obsolete
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
+./usr/include/g++/bits/allocated_ptr.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/atomic_futex.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/c++14_warning.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/enable_special_members.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/locale_conv.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/parse_numbers.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/predefined_ops.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/quoted_string.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex.tcc		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex_automaton.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex_automaton.tcc		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex_compiler.tcc		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex_executor.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex_executor.tcc		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex_scanner.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/regex_scanner.tcc		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/bits/shared_ptr_atomic.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/codecvt		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/debug/safe_container.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/ext/aligned_buffer.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/profile/ordered_base.h		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/shared_mutex		comp-cxx-include	gcc=53,cxx,libstdcxx
+./usr/include/g++/tr2/dynamic_bitset.tcc		comp-cxx-include	gcc=53,cxx,libstdcxx
 ./usr/include/g++/bits/algorithmfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1012,12 +1035,12 @@
 ./usr/include/g++/bits/regex.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex_compiler.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex_constants.h	comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_cursor.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/regex_cursor.h		comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/bits/regex_error.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_grep_matcher.h	comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_grep_matcher.tcc	comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_nfa.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_nfa.tcc		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/regex_grep_matcher.h	comp-cxx-include	gcc=48,cxx,libstdcxx
+./usr/include/g++/bits/regex_grep_matcher.tcc	comp-cxx-include	gcc=48,cxx,libstdcxx
+./usr/include/g++/bits/regex_nfa.h		comp-cxx-include	gcc=48,cxx,libstdcxx
+./usr/include/g++/bits/regex_nfa.tcc		comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/bits/shared_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/shared_ptr_base.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/slice_array.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1951,8 +1974,10 @@
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.5/mf-runtime.h		comp-gcc-include	obsolete
 ./usr/include/gcc-4.5/omp.h			comp-gcc-include	obsolete
-./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	gcc
-./usr/include/gcc-4.8/omp.h			comp-gcc-include	gcc
+./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	gcc=48
+./usr/include/gcc-4.8/omp.h			comp-gcc-include	gcc=48
+./usr/include/gcc-5/omp.h			comp-gcc-include	gcc=53
+./usr/include/gcc-5/openacc.h			comp-gcc-include	gcc=53
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
@@ -3120,8 +3145,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib		compatfile
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
-./usr/lib/libasan.a				comp-c-lib		compatfile,gcc
-./usr/lib/libasan_p.a				comp-c-proflib		compatfile,gcc,profile
+./usr/lib/libasan.a				comp-c-lib		compatfile,gcc=48
+./usr/lib/libasan_p.a				comp-c-proflib		compatfile,gcc=48,profile
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
@@ -3297,10 +3322,10 @@
 ./usr/lib/libmpfr.a				-unknown-		obsolete
 ./usr/lib/libmpfr.a				comp-c-lib		obsolete
 ./usr/lib/libmpfr_p.a				comp-c-proflib		obsolete
-./usr/lib/libmudflap.a				comp-c-lib		compatfile,gcc
-./usr/lib/libmudflap_p.a			comp-c-proflib		compatfile,gcc,profile
-./usr/lib/libmudflapth.a			comp-c-lib		compatfile,gcc
-./usr/lib/libmudflapth_p.a			comp-c-proflib		compatfile,gcc,profile
+./usr/lib/libmudflap.a				comp-c-lib		compatfile,gcc=48
+./usr/lib/libmudflap_p.a			comp-c-proflib		compatfile,gcc=48,profile
+./usr/lib/libmudflapth.a			comp-c-lib		compatfile,gcc=48
+./usr/lib/libmudflapth_p.a			comp-c-proflib		compatfile,gcc=48,profile
 ./usr/lib/libnetpgp.a				comp-c-lib		compatfile,crypto
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		compatfile,crypto,profile
 ./usr/lib/libnetpgpverify.a			comp-c-lib		compatfile,crypto
