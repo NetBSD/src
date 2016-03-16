@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/06/01 19:51:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/03/16 05:44:16 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -114,6 +114,10 @@ CLEANFILES+=	options.h optionlist
 .include <bsd.lib.mk>
 
 .PATH: ${DIST}/libobjc ${DIST}/libobjc/objc ${DIST}/libobjc/objc-private
+
+# XXX insn-modes.h
+BINBACKENDOBJ!=	cd ${.CURDIR}/../../usr.bin/backend && ${PRINTOBJDIR}
+CPPFLAGS+=	-I${BINBACKENDOBJ}
 
 .else
 .include <bsd.prog.mk>	# do nothing

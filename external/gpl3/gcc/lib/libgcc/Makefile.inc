@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2015/04/15 19:13:46 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2016/03/16 05:44:16 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -193,3 +193,7 @@ DPSRCS+=	${_dst}
 
 EXTRA_FAKEHEADERS=	options.h libgcc_tm.h
 .include "../../Makefile.hacks"
+
+# XXX insn-modes.h
+BINBACKENDOBJ!=	cd ${.CURDIR}/../../../usr.bin/backend && ${PRINTOBJDIR}
+CPPFLAGS+=	-I${BINBACKENDOBJ}
