@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith_lex.l,v 1.17 2016/03/16 15:41:55 christos Exp $	*/
+/*	$NetBSD: arith_lex.l,v 1.18 2016/03/16 15:42:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arith_lex.l	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith_lex.l,v 1.17 2016/03/16 15:41:55 christos Exp $");
+__RCSID("$NetBSD: arith_lex.l,v 1.18 2016/03/16 15:42:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,8 @@ extern const char *arith_buf, *arith_startbuf;
 "-"	{ return(ARITH_SUB); }
 "~"	{ return(ARITH_BNOT); }
 "!"	{ return(ARITH_NOT); }
+"?"	{ return(ARITH_QM); }
+":"	{ return(ARITH_COLON); }
 .	{ error("arith: syntax error: \"%s\"", arith_startbuf); }
 %%
 
