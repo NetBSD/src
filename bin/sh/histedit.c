@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.47 2014/06/18 18:17:30 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.48 2016/03/16 22:36:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.47 2014/06/18 18:17:30 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.48 2016/03/16 22:36:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,22 +224,21 @@ inputrc(int argc, char **argv)
  *  the Korn shell fc command.  Oh well...
  */
 int
-histcmd(int argc, char **argv)
+histcmd(volatile int argc, char ** volatile argv)
 {
 	int ch;
 	const char * volatile editor = NULL;
 	HistEvent he;
-	int lflg = 0;
-	volatile int nflg = 0, rflg = 0, sflg = 0;
+	volatile int lflg = 0, nflg = 0, rflg = 0, sflg = 0;
 	int i, retval;
 	const char *firststr, *laststr;
 	int first, last, direction;
-	char *pat = NULL, *repl;	/* ksh "fc old=new" crap */
+	char * volatile pat = NULL, * volatile repl;	/* ksh "fc old=new" crap */
 	static int active = 0;
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler;
 	char editfile[MAXPATHLEN + 1];
-	FILE *efp;
+	FILE * volatile efp;
 #ifdef __GNUC__
 	repl = NULL;	/* XXX gcc4 */
 	efp = NULL;	/* XXX gcc4 */
