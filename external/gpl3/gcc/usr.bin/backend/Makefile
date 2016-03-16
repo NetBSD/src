@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2016/03/15 21:41:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2016/03/16 05:33:50 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -197,8 +197,8 @@ auto-build.h: gmp.h Makefile
 		CC=${ORIGHOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
 		MAKE=${MAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
-		gcc_cv_ld=${LD} \
-		gcc_cv_as=${AS} \
+		gcc_cv_ld=${LD:Q} \
+		gcc_cv_as=${AS:Q} \
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
