@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.45 2016/03/17 00:54:53 christos Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.46 2016/03/17 01:41:54 christos Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.45 2016/03/17 00:54:53 christos Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.46 2016/03/17 01:41:54 christos Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -1274,7 +1274,7 @@ loadinodes(void)
 			} else {
 				if (needswap) {
 					ffs_dinode1_swap(&(dp1[i]), &(dp1[i]));
-					for (j = 0; j < UFS_NIADDR; j++)
+					for (j = 0; j < UFS_NDADDR; j++)
 						dp1[i].di_db[j] =
 						    bswap32(dp1[i].di_db[j]);
 					for (j = 0; j < UFS_NIADDR; j++)
