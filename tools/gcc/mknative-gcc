@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.86 2016/03/16 11:16:05 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.87 2016/03/17 23:41:21 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -35,19 +35,6 @@ sanitise_includes () {
 		-e "s,-I$_SRC/external/lgpl3/gmp/lib/libgmp/arch/[a-z_0-9-]*,,g" \
 		-e "s,-I$_TOOLDIR/include,,g" \
 		-e "s,-I/usr/include/[^ 	]*,,"
-}
-
-##### lib/crtstuff #####
-
-get_crtstuff () {
-	_subdir="$1"
-	mkdir -p $_OUTDIR/lib/$_subdir/arch
-
-	getvars gcc/Makefile \
-		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS CRTSTUFF_T_CFLAGS_S \
-		tm_defines xm_file xm_defines \
-		| sanitise_includes \
-		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH.mk
 }
 
 ##### lib/libg2c #####
@@ -414,7 +401,6 @@ case "$1" in
 libgcc*-bootstrap)
 	get_libgcc gcc
 	get_libgcov gcc $_PLATFORM/libgcc/Makefile
-	get_crtstuff crtstuff
 	get_gcc_bootstrap gcc
 	exit 0
 	;;
@@ -428,7 +414,6 @@ gcc*)
 	get_gcc gcc
 	get_libgcc gcc
 	get_libgcov gcc $_PLATFORM/libgcc/Makefile
-	get_crtstuff crtstuff
 	get_gcc_bootstrap gcc
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
