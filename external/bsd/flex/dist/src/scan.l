@@ -1,3 +1,5 @@
+/*	$NetBSD: scan.l,v 1.4 2016/03/17 15:23:21 nakayama Exp $	*/
+
 /* scan.l - scanner for flex input -*-C-*- */
 
 %{
@@ -31,8 +33,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: scan.l,v 1.4 2016/03/17 15:23:21 nakayama Exp $");
+
 #include "parse.h"
 extern bool tablesverify, tablesext;
 extern int trlcontxt; /* Set in  parse.y for each rule. */
@@ -68,7 +71,7 @@ extern const char *escaped_qstart, *escaped_qend;
 #define RETURNNAME \
 	if(yyleng < MAXLINE) \
          { \
-	strcpy( nmstr, yytext ); \
+	strlcpy( nmstr, yytext, sizeof(nmstr) ); \
 	 } \
 	else \
 	 { \
@@ -81,9 +84,9 @@ extern const char *escaped_qstart, *escaped_qend;
 	for ( i = strlen( str ) - 1; i >= start; --i ) \
 		unput((str)[i])
 
-#define CHECK_REJECT(str) \
+#define CHECK_RE_JECT(str) \
 	if ( all_upper( str ) ) \
-		reject = true;
+		reject = true
 
 #define CHECK_YYMORE(str) \
 	if ( all_lower( str ) ) \
@@ -185,7 +188,7 @@ M4QEND      "]]"
 	^{NAME}		{
 			if(yyleng < MAXLINE)
         		 {
-			strcpy( nmstr, yytext );
+			strlcpy( nmstr, yytext, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -293,7 +296,7 @@ M4QEND      "]]"
 	{NOT_WS}[^\r\n]*	{
  		        if(yyleng < MAXLINE)
  		         {
-			strcpy( (char *) nmdef, yytext );
+			strlcpy( (char *) nmdef, yytext, sizeof(nmdef) );
  		         }
  		        else
  		         {
@@ -436,7 +439,7 @@ M4QEND      "]]"
 	\"[^"\n]*\"	{
 			if(yyleng-1 < MAXLINE)
         		 {
-			strcpy( nmstr, yytext + 1 );
+			strlcpy( nmstr, yytext + 1, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -611,7 +614,7 @@ M4QEND      "]]"
 
 			if(yyleng < MAXLINE)
         		 {
-			strcpy( nmstr, yytext );
+			strlcpy( nmstr, yytext, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -669,7 +672,7 @@ M4QEND      "]]"
 
  			if(yyleng-1 < MAXLINE)
          		 {
-			strcpy( nmstr, yytext + 1 );
+			strlcpy( nmstr, yytext + 1, sizeof(nmstr) );
  			 }
  			else
  			 {
@@ -875,7 +878,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 	<CODEBLOCK,ACTION>{
 		"reject"	{
 			ACTION_ECHO;
-			CHECK_REJECT(yytext);
+			CHECK_RE_JECT(yytext);
 			}
 		"yymore"	{
 			ACTION_ECHO;
