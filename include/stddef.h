@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.17 2013/12/12 17:53:03 matt Exp $	*/
+/*	$NetBSD: stddef.h,v 1.18 2016/03/17 00:03:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,5 +66,11 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #define	offsetof(type, member) __offsetof__((reinterpret_cast<size_t> \
     (&reinterpret_cast<const volatile char &>(static_cast<type *>(0)->member))))
 #endif  
+
+typedef union {
+	char *_c;
+	long double _ld;
+	long long int _ll;
+} max_align_t;
  
 #endif /* _STDDEF_H_ */
