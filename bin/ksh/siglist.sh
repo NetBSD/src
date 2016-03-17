@@ -1,14 +1,46 @@
 #!/bin/sh
-#	$NetBSD: siglist.sh,v 1.10 2016/03/16 23:01:33 christos Exp $
+#	$NetBSD: siglist.sh,v 1.11 2016/03/17 13:54:31 christos Exp $
 #
 # Script to generate a sorted, complete list of signals, suitable
 # for inclusion in trap.c as array initializer.
 #
 
+set -e
+
+: ${AWK:=awk}
 : ${SED:=sed}
 
-# The trap here to make up for a bug in bash (1.14.3(1)) that calls the trap
+in=tmpi$$.c
+out=tmpo$$.c
+ecode=1
+trapsigs='0 1 2 13 15'
+trap 'rm -f $in $out; trap 0; exit $ecode' $trapsigs
 
-${SED} -e '/^[	 ]*#/d' -e 's/^[	 ]*\([^ 	][^ 	]*\)[	 ][	 ]*\(.*[^ 	]\)[ 	]*$/#ifdef SIG\1\
-	{ .signal = SIG\1 , .name = "\1", .mess = "\2" },\
-#endif/'
+CPP="${1-cc -E}"
+
+# The trap here to make up for a bug in bash (1.14.3(1)) that calls the trap
+(trap $trapsigs;
+ echo '#include "sh.h"';
+ echo '	{ QwErTy SIGNALS , "DUMMY" , "hook for number of signals" },';
+ ${SED} -e '/^[	 ]*#/d' -e 's/^[	 ]*\([^ 	][^ 	]*\)[	 ][	 ]*\(.*[^ 	]\)[ 	]*$/#ifdef SIG\1\
+	{ QwErTy .signal = SIG\1 , .name = "\1", .mess = "\2" },\
+#endif/') > $in
+# work around for gcc 5
+$CPP $in | grep -v '^#' | tr -d '\n' | sed 's/},/},\
+/g' > $out
+${SED} -n 's/{ QwErTy/{/p' < $out | ${AWK} '{print NR, $0}' | sort -k 5n -k 1n |
+    ${SED} 's/^[0-9]* //' |
+    ${AWK} 'BEGIN { last=0; nsigs=0; }
+	{
+	    if ($4 ~ /^[0-9][0-9]*$/ && $5 == ",") {
+		n = $4;
+		if (n > 0 && n != last) {
+		    while (++last < n) {
+			printf "\t{ .signal = %d , .name = NULL, .mess = `Signal %d` } ,\n", last, last;
+		    }
+		    print;
+		}
+	    }
+	}' |
+    tr '`' '"' | grep -v '"DUMMY"'
+ecode=0
