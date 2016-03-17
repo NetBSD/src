@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.174 2015/12/29 16:57:35 christos Exp $
+#  $NetBSD: Makefile,v 1.175 2016/03/17 00:00:44 nros Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -339,7 +339,8 @@ MLINKS+=log.3 logf.3 \
 	log.3 log2.3 \
 	log.3 log2f.3
 MLINKS+=pow.3 powf.3
-MLINKS+=fabs.3 fabsf.3
+MLINKS+=fabs.3 fabsf.3 \
+	fabs.3 fabsl.3
 MLINKS+=finite.3 finitef.3
 MLINKS+=fmod.3 fmodf.3 \
 	fmod.3 fmodl.3

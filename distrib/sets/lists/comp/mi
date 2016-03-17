@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2021 2016/03/16 05:32:09 mrg Exp $
+#	$NetBSD: mi,v 1.2022 2016/03/17 00:00:44 nros Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6195,6 +6195,7 @@
 ./usr/share/man/cat3/extattr_string_to_namespace.0	comp-c-catman		.cat
 ./usr/share/man/cat3/fabs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fabsf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fabsl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fast_divide32.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fast_divide32_prepare.0	comp-c-catman		.cat
 ./usr/share/man/cat3/fast_remainder32.0		comp-c-catman		.cat
@@ -13196,6 +13197,7 @@
 ./usr/share/man/html3/extattr_string_to_namespace.html	comp-c-htmlman		html
 ./usr/share/man/html3/fabs.html			comp-c-htmlman		html
 ./usr/share/man/html3/fabsf.html		comp-c-htmlman		html
+./usr/share/man/html3/fabsl.html		comp-c-htmlman		html
 ./usr/share/man/html3/fast_divide32.html		comp-c-htmlman		html
 ./usr/share/man/html3/fast_divide32_prepare.html	comp-c-htmlman		html
 ./usr/share/man/html3/fast_remainder32.html		comp-c-htmlman		html
@@ -20106,6 +20108,7 @@
 ./usr/share/man/man3/extattr_string_to_namespace.3	comp-c-man		.man
 ./usr/share/man/man3/fabs.3			comp-c-man		.man
 ./usr/share/man/man3/fabsf.3			comp-c-man		.man
+./usr/share/man/man3/fabsl.3			comp-c-man		.man
 ./usr/share/man/man3/fast_divide32.3		comp-c-man		.man
 ./usr/share/man/man3/fast_divide32_prepare.3	comp-c-man		.man
 ./usr/share/man/man3/fast_remainder32.3		comp-c-man		.man
