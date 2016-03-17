@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.60 2015/10/03 08:29:21 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.61 2016/03/17 18:56:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -163,7 +163,9 @@ extern time_t write_time;
 int
 setup(const char *dev)
 {
+#ifndef VERBOSE_BLOCKMAP
 	long bmapsize;
+#endif
 	struct stat statb;
 	int doskipclean;
 	u_int64_t maxfilesize;
@@ -444,7 +446,6 @@ setup(const char *dev)
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
 	blockmap = ecalloc(bmapsize, sizeof(char));
 #else
-	bmapsize = maxfsblock * sizeof(ino_t);
 	blockmap = ecalloc(maxfsblock, sizeof(ino_t));
 #endif
 	statemap = ecalloc(maxino, sizeof(char));
