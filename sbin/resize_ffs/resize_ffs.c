@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.44 2015/04/06 22:44:04 jmcneill Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.45 2016/03/17 00:54:53 christos Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.44 2015/04/06 22:44:04 jmcneill Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.45 2016/03/17 00:54:53 christos Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -1262,18 +1262,24 @@ loadinodes(void)
 			if (is_ufs2) {
 				if (needswap) {
 					ffs_dinode2_swap(&(dp2[i]), &(dp2[i]));
-					for (j = 0; j < UFS_NDADDR + UFS_NIADDR; j++)
+					for (j = 0; j < UFS_NDADDR; j++)
 						dp2[i].di_db[j] =
 						    bswap32(dp2[i].di_db[j]);
+					for (j = 0; j < UFS_NIADDR; j++)
+						dp2[i].di_ib[j] =
+						    bswap32(dp2[i].di_ib[j]);
 				}
 				memcpy(&inodes[ino].dp2, &dp2[i],
 				    sizeof(inodes[ino].dp2));
 			} else {
 				if (needswap) {
 					ffs_dinode1_swap(&(dp1[i]), &(dp1[i]));
-					for (j = 0; j < UFS_NDADDR + UFS_NIADDR; j++)
+					for (j = 0; j < UFS_NIADDR; j++)
 						dp1[i].di_db[j] =
 						    bswap32(dp1[i].di_db[j]);
+					for (j = 0; j < UFS_NIADDR; j++)
+						dp1[i].di_ib[j] =
+						    bswap32(dp1[i].di_ib[j]);
 				}
 				memcpy(&inodes[ino].dp1, &dp1[i],
 				    sizeof(inodes[ino].dp1));
@@ -1555,11 +1561,10 @@ inomove_init(void)
 static void
 flush_inodes(void)
 {
-	int i, j, k, na, ni, m;
+	int i, j, k, ni, m;
 	struct ufs1_dinode *dp1 = NULL;
 	struct ufs2_dinode *dp2 = NULL;
 
-	na = UFS_NDADDR + UFS_NIADDR;
 	ni = newsb->fs_ipg * newsb->fs_ncg;
 	m = FFS_INOPB(newsb) - 1;
 	for (i = 0; i < ni; i++) {
@@ -1575,33 +1580,39 @@ flush_inodes(void)
 		dp1 = (struct ufs1_dinode *)ibuf;
 
 	for (i = 0; i < ni; i += m) {
-		if (iflags[i] & IF_BDIRTY) {
-			if (is_ufs2)
-				for (j = 0; j < m; j++) {
-					dp2[j] = inodes[i + j].dp2;
-					if (needswap) {
-						for (k = 0; k < na; k++)
-							dp2[j].di_db[k]=
-							    bswap32(dp2[j].di_db[k]);
-						ffs_dinode2_swap(&dp2[j],
-						    &dp2[j]);
-					}
+		if ((iflags[i] & IF_BDIRTY) == 0)
+			continue;
+		if (is_ufs2)
+			for (j = 0; j < m; j++) {
+				dp2[j] = inodes[i + j].dp2;
+				if (needswap) {
+					for (k = 0; k < UFS_NDADDR; k++)
+						dp2[j].di_db[k] =
+						    bswap32(dp2[j].di_db[k]);
+					for (k = 0; k < UFS_NIADDR; k++)
+						dp2[j].di_ib[k] =
+						    bswap32(dp2[j].di_ib[k]);
+					ffs_dinode2_swap(&dp2[j],
+					    &dp2[j]);
 				}
-			else
-				for (j = 0; j < m; j++) {
-					dp1[j] = inodes[i + j].dp1;
-					if (needswap) {
-						for (k = 0; k < na; k++)
-							dp1[j].di_db[k]=
-							    bswap32(dp1[j].di_db[k]);
-						ffs_dinode1_swap(&dp1[j],
-						    &dp1[j]);
-					}
+			}
+		else
+			for (j = 0; j < m; j++) {
+				dp1[j] = inodes[i + j].dp1;
+				if (needswap) {
+					for (k = 0; k < UFS_NDADDR; k++)
+						dp1[j].di_db[k]=
+						    bswap32(dp1[j].di_db[k]);
+					for (k = 0; k < UFS_NIADDR; k++)
+						dp1[j].di_ib[k]=
+						    bswap32(dp1[j].di_ib[k]);
+					ffs_dinode1_swap(&dp1[j],
+					    &dp1[j]);
 				}
+			}
 
-			writeat(FFS_FSBTODB(newsb, ino_to_fsba(newsb, i)),
-			    ibuf, newsb->fs_bsize);
-		}
+		writeat(FFS_FSBTODB(newsb, ino_to_fsba(newsb, i)),
+		    ibuf, newsb->fs_bsize);
 	}
 }
 /*
