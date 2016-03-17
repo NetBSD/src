@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.20 2007/10/24 13:42:10 reed Exp $
+.\"	$NetBSD: strtod.3,v 1.21 2016/03/17 03:26:15 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -151,7 +151,8 @@ If no conversion is performed, zero is returned and the value of
 is stored in the location referenced by
 .Fa endptr .
 .Pp
-If the correct value would cause overflow, plus or minus
+If the correct value is too large in magnitude to be represented, plus
+or minus
 .Dv HUGE_VAL ,
 .Dv HUGE_VALF ,
 or
@@ -160,15 +161,15 @@ is returned (according to the return type and sign of the value), and
 .Dv ERANGE
 is stored in
 .Va errno .
-If the correct value would cause underflow, zero is
-returned and
+If the correct value is nonzero but too small in magnitude to be
+represented as nonzero, zero is returned and
 .Dv ERANGE
 is stored in
 .Va errno .
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ERANGE
-Overflow or underflow occurred.
+The value is too large or small in magnitude to be represented.
 .El
 .Sh SEE ALSO
 .Xr atof 3 ,
