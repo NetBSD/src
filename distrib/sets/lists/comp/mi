@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2022 2016/03/17 00:00:44 nros Exp $
+#	$NetBSD: mi,v 1.2023 2016/03/17 18:29:58 nros Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7532,6 +7532,8 @@
 ./usr/share/man/cat3/ldap_value_free.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap_value_free_len.0	comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldexp.0			comp-c-catman		.cat
+./usr/share/man/cat3/ldexpf.0			comp-c-catman		.cat
+./usr/share/man/cat3/ldexpl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ldiv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/leaveok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lfind.0			comp-c-catman		.cat
@@ -14511,6 +14513,8 @@
 ./usr/share/man/html3/ldap_value_free.html	comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap_value_free_len.html	comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldexp.html		comp-c-htmlman		html
+./usr/share/man/html3/ldexpf.html		comp-c-htmlman		html
+./usr/share/man/html3/ldexpl.html		comp-c-htmlman		html
 ./usr/share/man/html3/ldiv.html			comp-c-htmlman		html
 ./usr/share/man/html3/leaveok.html		comp-c-htmlman		html
 ./usr/share/man/html3/lfind.html		comp-c-htmlman		html
@@ -21445,6 +21449,8 @@
 ./usr/share/man/man3/ldap_value_free.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap_value_free_len.3	comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldexp.3			comp-c-man		.man
+./usr/share/man/man3/ldexpf.3			comp-c-man		.man
+./usr/share/man/man3/ldexpl.3			comp-c-man		.man
 ./usr/share/man/man3/ldiv.3			comp-c-man		.man
 ./usr/share/man/man3/leaveok.3			comp-c-man		.man
 ./usr/share/man/man3/lfind.3			comp-c-man		.man
