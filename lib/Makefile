@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.240 2016/02/29 20:59:35 riastradh Exp $
+#	$NetBSD: Makefile,v 1.241 2016/03/17 00:09:47 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -80,8 +80,10 @@ SUBDIR+=	../external/gpl2/libmalloc
 .if (${MKGCC} != "no")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
+. if ${HAVE_GCC} == 48
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libmudflap
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libmudflapth
+. endif
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
 # We don't build compat versions of these.
@@ -171,8 +173,10 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 SUBDIR+=	.WAIT
 
 SANITIZER_DIR=../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libasan
+.if !defined(HAVE_GCC) || ${HAVE_GCC} != 53
 .if exists(${SANITIZER_DIR})
 SUBDIR+=	${SANITIZER_DIR}
+.endif
 .endif
 
 SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
