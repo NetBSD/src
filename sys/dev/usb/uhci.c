@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.66 2016/03/13 08:09:00 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.67 2016/03/17 07:59:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.66 2016/03/13 08:09:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.67 2016/03/17 07:59:45 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3062,6 +3062,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 		printf("%s: overflow!\n", __func__);
 #endif
 
+	mutex_enter(&sc->sc_lock);
 	next = isoc->next;
 	if (next == -1) {
 		/* Not in use yet, schedule it a few frames ahead. */
@@ -3078,7 +3079,6 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 				     UHCI_TD_ACTIVE |
 				     UHCI_TD_IOS);
 	nframes = xfer->ux_nframes;
-	mutex_enter(&sc->sc_lock);
 	for (i = 0; i < nframes; i++) {
 		std = isoc->stds[next];
 		if (++next >= UHCI_VFRAMELIST_COUNT)
