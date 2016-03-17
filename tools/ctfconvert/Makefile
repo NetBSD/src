@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/03/09 17:12:03 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2016/03/17 18:43:29 christos Exp $
 
 NOMAN=	# defined
 
@@ -50,8 +50,11 @@ CTFOBJ!=	cd ${.CURDIR}/../libctf && ${PRINTOBJDIR}
 DWARFOBJ!=	cd ${.CURDIR}/../libdwarf && ${PRINTOBJDIR}
 ELFOBJ!=	cd ${.CURDIR}/../libelf && ${PRINTOBJDIR}
 LDADD+=		-L${CTFOBJ} -lctf
+DPADD+=		${CTFOBJ}/libctf.a
 LDADD+=		-L${DWARFOBJ} -ldwarf
+DPADD+=		${DWARFOBJ}/libdwarf.a
 LDADD+=		-L${ELFOBJ} -lelf
+DPADD+=		${ELFOBJ}/libelf.a
 
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/common
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/cvt
