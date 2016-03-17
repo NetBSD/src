@@ -1,0 +1,65 @@
+$NetBSD: README.gcc53,v 1.1 2016/03/17 21:46:08 mrg Exp $
+
+lib:
+	libasan is disabled currently (haven't tried yet)
+
+new stuff:
+	cc1objcplus
+	collect2 -- need to re-introduce?
+	libcc1
+	libcilkrts
+	libmpx
+	liboffloadmic
+	libquadmath
+	libvtv
+	libitm
+
+other changes to look at:
+
+Index: gcc/targhooks.c
+	vs new binutils
+
++           doc/gcov-tool.1
+
+
+arch/feature list.  anything not here has been switched already:
+
+architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
+------------	-----	-------	------	----------	------------	----	---
+alpha
+arm		y	?	y	y
+armeb		y	?	y	y
+earm		y	?	y	y
+earmeb		y	?	y	y
+earmhf		y	?	y	y
+earmhfeb	y	?	y	y
+earmv4		y	?	y	y
+earmv4eb	y	?	y	y
+earmv6		y	?	y	 
+earmv6eb	y	?	y	 
+earmv6hf	y	?	y	 
+earmv6hfeb	y	?	y	 
+earmv7		y	?	y	 
+earmv7eb	y	?	y	 
+earmv7hf	y	?	y	 
+earmv7hfeb	y	?	y	 
+hppa
+i386		y	y	y	y		y		y	
+m68000
+m68k
+mips64eb
+mips64el
+mipseb
+mipsel
+powerpc
+sh3eb
+sh3el
+sparc		y	y	y	y		y		y[1]
+sparc64		y	y	y	builds		y		n[2]
+vax
+x86_64		y	y	y	y		y		y
+
+
+[1] - world built without -fno-delete-null-pointer-checks does not have a
+      working sshd
+[2] - -O2 and -Os kernels hang, -O1 SIR reset
