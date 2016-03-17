@@ -19,7 +19,6 @@
 
 #define YYPURE 0
 
-#line 37 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 /*  Copyright (c) 1990 The Regents of the University of California. */
 /*  All rights reserved. */
 
@@ -51,7 +50,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: initparse.c,v 1.1 2016/01/09 17:39:52 christos Exp $");
+__RCSID("$NetBSD: initparse.c,v 1.2 2016/03/17 15:28:00 nakayama Exp $");
 
 #include "tables.h"
 
@@ -101,7 +100,6 @@ int previous_continued_action;	/* whether the previous rule's action was '|' */
  */
 #define YYSTYPE int
 
-#line 105 "parse.c"
 
 #if ! defined(YYSTYPE) && ! defined(YYSTYPE_IS_DECLARED)
 /* Default: YYSTYPE is the semantic value type. */
@@ -606,7 +604,6 @@ typedef struct {
 } YYSTACKDATA;
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
-#line 951 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 
 
 /* build_eof_action - build the "<<EOF>>" action for the active start
@@ -750,7 +747,6 @@ const char *msg;
 	{
 		(void)msg;
 	}
-#line 754 "parse.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -953,7 +949,6 @@ yyreduce:
     switch (yyn)
     {
 case 1:
-#line 122 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ /* add default rule */
 			int def_rule;
 
@@ -982,7 +977,6 @@ case 1:
 			}
 break;
 case 2:
-#line 151 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ /* initialize for processing rules */
 
 			/* Create default DFA start condition. */
@@ -990,11 +984,9 @@ case 2:
 			}
 break;
 case 6:
-#line 162 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ synerr( _("unknown error processing section 1") ); }
 break;
 case 7:
-#line 166 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			check_options();
 			scon_stk = allocate_integer_array( lastsc + 1 );
@@ -1002,62 +994,48 @@ case 7:
 			}
 break;
 case 8:
-#line 174 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ xcluflg = false; }
 break;
 case 9:
-#line 177 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ xcluflg = true; }
 break;
 case 10:
-#line 181 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ scinstal( nmstr, xcluflg ); }
 break;
 case 11:
-#line 184 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ scinstal( nmstr, xcluflg ); }
 break;
 case 12:
-#line 187 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ synerr( _("bad start condition list") ); }
 break;
 case 16:
-#line 198 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			outfilename = copy_string( nmstr );
 			did_outfilename = 1;
 			}
 break;
 case 17:
-#line 203 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ extra_type = copy_string( nmstr ); }
 break;
 case 18:
-#line 205 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ prefix = copy_string( nmstr ); }
 break;
 case 19:
-#line 207 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyclass = copy_string( nmstr ); }
 break;
 case 20:
-#line 209 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ headerfilename = copy_string( nmstr ); }
 break;
 case 21:
-#line 211 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ tablesext = true; tablesfilename = copy_string( nmstr ); }
 break;
 case 22:
-#line 215 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ scon_stk_ptr = yystack.l_mark[-3]; }
 break;
 case 23:
-#line 217 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ scon_stk_ptr = yystack.l_mark[-3]; }
 break;
 case 25:
-#line 222 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			/* Initialize for a parse of one rule. */
 			trlcontxt = variable_trail_rule = varlength = false;
@@ -1070,7 +1048,6 @@ case 25:
 			}
 break;
 case 26:
-#line 235 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			pat = yystack.l_mark[0];
 			finish_rule( pat, variable_trail_rule,
@@ -1107,7 +1084,6 @@ case 26:
 			}
 break;
 case 27:
-#line 271 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			pat = yystack.l_mark[0];
 			finish_rule( pat, variable_trail_rule,
@@ -1132,7 +1108,6 @@ case 27:
 			}
 break;
 case 28:
-#line 295 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			if ( scon_stk_ptr > 0 )
 				build_eof_action();
@@ -1156,19 +1131,15 @@ case 28:
 			}
 break;
 case 29:
-#line 318 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ synerr( _("unrecognized rule") ); }
 break;
 case 30:
-#line 322 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = scon_stk_ptr; }
 break;
 case 31:
-#line 326 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = yystack.l_mark[-2]; }
 break;
 case 32:
-#line 329 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			yyval = scon_stk_ptr;
 
@@ -1186,15 +1157,12 @@ case 32:
 			}
 break;
 case 33:
-#line 346 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = scon_stk_ptr; }
 break;
 case 36:
-#line 354 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ synerr( _("bad start condition list") ); }
 break;
 case 37:
-#line 358 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			if ( (scnum = sclookup( nmstr )) == 0 )
 				format_pinpoint_message(
@@ -1217,7 +1185,6 @@ case 37:
 			}
 break;
 case 38:
-#line 381 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			if ( transchar[lastst[yystack.l_mark[0]]] != SYM_EPSILON )
 				/* Provide final transition \now/ so it
@@ -1274,11 +1241,9 @@ case 38:
 			}
 break;
 case 39:
-#line 437 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ synerr( _("trailing context used twice") ); }
 break;
 case 40:
-#line 440 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			headcnt = 0;
 			trailcnt = 1;
@@ -1322,7 +1287,6 @@ case 40:
 			}
 break;
 case 41:
-#line 483 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			yyval = yystack.l_mark[0];
 
@@ -1339,18 +1303,15 @@ case 41:
 			}
 break;
 case 42:
-#line 501 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 			yyval = mkor( yystack.l_mark[-2], yystack.l_mark[0] );
 			}
 break;
 case 43:
-#line 507 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = yystack.l_mark[0]; }
 break;
 case 44:
-#line 512 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			/* This rule is written separately so the
 			 * reduction will occur before the trailing
@@ -1377,7 +1338,6 @@ case 44:
 			}
 break;
 case 45:
-#line 539 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			/* This is where concatenation of adjacent patterns
 			 * gets done.
@@ -1386,11 +1346,9 @@ case 45:
 			}
 break;
 case 46:
-#line 547 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = yystack.l_mark[0]; }
 break;
 case 47:
-#line 550 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 
@@ -1419,7 +1377,6 @@ case 47:
 			}
 break;
 case 48:
-#line 578 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 
@@ -1434,7 +1391,6 @@ case 48:
 			}
 break;
 case 49:
-#line 592 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			/* The series could be something like "(foo)",
 			 * in which case we have no idea what its length
@@ -1455,7 +1411,6 @@ case 49:
 			}
 break;
 case 50:
-#line 614 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 
@@ -1463,21 +1418,18 @@ case 50:
 			}
 break;
 case 51:
-#line 621 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 			yyval = mkposcl( yystack.l_mark[-1] );
 			}
 break;
 case 52:
-#line 627 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 			yyval = mkopt( yystack.l_mark[-1] );
 			}
 break;
 case 53:
-#line 633 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 
@@ -1506,7 +1458,6 @@ case 53:
 			}
 break;
 case 54:
-#line 661 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			varlength = true;
 
@@ -1521,7 +1472,6 @@ case 54:
 			}
 break;
 case 55:
-#line 675 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			/* The singleton could be something like "(foo)",
 			 * in which case we have no idea what its length
@@ -1541,7 +1491,6 @@ case 55:
 			}
 break;
 case 56:
-#line 694 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			if ( ! madeany )
 				{
@@ -1576,7 +1525,6 @@ case 56:
 			}
 break;
 case 57:
-#line 728 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 				/* Sort characters for fast searching.
 				 */
@@ -1595,7 +1543,6 @@ case 57:
 			}
 break;
 case 58:
-#line 746 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			++rulelen;
 
@@ -1606,15 +1553,12 @@ case 58:
 			}
 break;
 case 59:
-#line 756 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = yystack.l_mark[-1]; }
 break;
 case 60:
-#line 759 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = yystack.l_mark[-1]; }
 break;
 case 61:
-#line 762 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			++rulelen;
 
@@ -1629,26 +1573,21 @@ case 61:
 			}
 break;
 case 62:
-#line 776 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = ccl_set_diff  (yystack.l_mark[-2], yystack.l_mark[0]); }
 break;
 case 63:
-#line 777 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = ccl_set_union (yystack.l_mark[-2], yystack.l_mark[0]); }
 break;
 case 65:
-#line 783 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = yystack.l_mark[-1]; }
 break;
 case 66:
-#line 786 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			cclnegate( yystack.l_mark[-1] );
 			yyval = yystack.l_mark[-1];
 			}
 break;
 case 67:
-#line 793 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 
 			if (sf_case_ins())
@@ -1709,7 +1648,6 @@ case 67:
 			}
 break;
 case 68:
-#line 853 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			ccladd( yystack.l_mark[-1], yystack.l_mark[0] );
 			cclsorted = cclsorted && (yystack.l_mark[0] > lastchar);
@@ -1728,7 +1666,6 @@ case 68:
 			}
 break;
 case 69:
-#line 871 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			/* Too hard to properly maintain cclsorted. */
 			cclsorted = false;
@@ -1736,7 +1673,6 @@ case 69:
 			}
 break;
 case 70:
-#line 878 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			cclsorted = true;
 			lastchar = 0;
@@ -1744,31 +1680,24 @@ case 70:
 			}
 break;
 case 71:
-#line 886 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(isalnum); }
 break;
 case 72:
-#line 887 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(isalpha); }
 break;
 case 73:
-#line 888 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(IS_BLANK); }
 break;
 case 74:
-#line 889 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(iscntrl); }
 break;
 case 75:
-#line 890 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(isdigit); }
 break;
 case 76:
-#line 891 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(isgraph); }
 break;
 case 77:
-#line 892 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ 
                           CCL_EXPR(islower);
                           if (sf_case_ins())
@@ -1776,23 +1705,18 @@ case 77:
                         }
 break;
 case 78:
-#line 897 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(isprint); }
 break;
 case 79:
-#line 898 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(ispunct); }
 break;
 case 80:
-#line 899 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(isspace); }
 break;
 case 81:
-#line 900 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_EXPR(isxdigit); }
 break;
 case 82:
-#line 901 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
                     CCL_EXPR(isupper);
                     if (sf_case_ins())
@@ -1800,47 +1724,36 @@ case 82:
 				}
 break;
 case 83:
-#line 907 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(isalnum); }
 break;
 case 84:
-#line 908 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(isalpha); }
 break;
 case 85:
-#line 909 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(IS_BLANK); }
 break;
 case 86:
-#line 910 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(iscntrl); }
 break;
 case 87:
-#line 911 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(isdigit); }
 break;
 case 88:
-#line 912 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(isgraph); }
 break;
 case 89:
-#line 913 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(isprint); }
 break;
 case 90:
-#line 914 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(ispunct); }
 break;
 case 91:
-#line 915 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(isspace); }
 break;
 case 92:
-#line 916 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ CCL_NEG_EXPR(isxdigit); }
 break;
 case 93:
-#line 917 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ 
 				if ( sf_case_ins() )
 					lwarn(_("[:^lower:] is ambiguous in case insensitive scanner"));
@@ -1849,7 +1762,6 @@ case 93:
 				}
 break;
 case 94:
-#line 923 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 				if ( sf_case_ins() )
 					lwarn(_("[:^upper:] ambiguous in case insensitive scanner"));
@@ -1858,7 +1770,6 @@ case 94:
 				}
 break;
 case 95:
-#line 932 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{
 			if ( yystack.l_mark[0] == nlch )
 				rule_has_nl[num_rules] = true;
@@ -1874,10 +1785,8 @@ case 95:
 			}
 break;
 case 96:
-#line 947 "/p/netbsd/cvsroot/src/external/bsd/flex/dist/src/parse.y"
 	{ yyval = mkstate( SYM_EPSILON ); }
 break;
-#line 1881 "parse.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
