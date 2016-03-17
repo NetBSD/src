@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.23 2016/03/05 13:03:00 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.24 2016/03/17 09:04:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.23 2016/03/05 13:03:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.24 2016/03/17 09:04:53 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -104,7 +104,6 @@ Static void		dwc2_device_ctrl_close(struct usbd_pipe *);
 Static void		dwc2_device_ctrl_done(struct usbd_xfer *);
 
 Static usbd_status	dwc2_device_bulk_transfer(struct usbd_xfer *);
-Static usbd_status	dwc2_device_bulk_start(struct usbd_xfer *);
 Static void		dwc2_device_bulk_abort(struct usbd_xfer *);
 Static void		dwc2_device_bulk_close(struct usbd_pipe *);
 Static void		dwc2_device_bulk_done(struct usbd_xfer *);
@@ -116,7 +115,6 @@ Static void		dwc2_device_intr_close(struct usbd_pipe *);
 Static void		dwc2_device_intr_done(struct usbd_xfer *);
 
 Static usbd_status	dwc2_device_isoc_transfer(struct usbd_xfer *);
-Static usbd_status	dwc2_device_isoc_start(struct usbd_xfer *);
 Static void		dwc2_device_isoc_abort(struct usbd_xfer *);
 Static void		dwc2_device_isoc_close(struct usbd_pipe *);
 Static void		dwc2_device_isoc_done(struct usbd_xfer *);
@@ -187,7 +185,6 @@ Static const struct usbd_pipe_methods dwc2_device_intr_methods = {
 
 Static const struct usbd_pipe_methods dwc2_device_bulk_methods = {
 	.upm_transfer =	dwc2_device_bulk_transfer,
-	.upm_start =	dwc2_device_bulk_start,
 	.upm_abort =	dwc2_device_bulk_abort,
 	.upm_close =	dwc2_device_bulk_close,
 	.upm_cleartoggle =	dwc2_device_clear_toggle,
@@ -196,7 +193,6 @@ Static const struct usbd_pipe_methods dwc2_device_bulk_methods = {
 
 Static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
 	.upm_transfer =	dwc2_device_isoc_transfer,
-	.upm_start =	dwc2_device_isoc_start,
 	.upm_abort =	dwc2_device_isoc_abort,
 	.upm_close =	dwc2_device_isoc_close,
 	.upm_cleartoggle =	dwc2_noop,
@@ -435,9 +431,11 @@ dwc2_open(struct usbd_pipe *pipe)
 		pipe->up_methods = &dwc2_device_intr_methods;
 		break;
 	case UE_ISOCHRONOUS:
+		pipe->up_serialise = false;
 		pipe->up_methods = &dwc2_device_isoc_methods;
 		break;
 	case UE_BULK:
+		pipe->up_serialise = false;
 		pipe->up_methods = &dwc2_device_bulk_methods;
 		break;
 	default:
@@ -790,22 +788,9 @@ dwc2_device_bulk_transfer(struct usbd_xfer *xfer)
 	/* Insert last in queue. */
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
-	/* Pipe isn't running, start first */
-	return dwc2_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
-}
+	KASSERT(err == USBD_NORMAL_COMPLETION);
 
-Static usbd_status
-dwc2_device_bulk_start(struct usbd_xfer *xfer)
-{
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-	usbd_status err;
-
-	DPRINTF("xfer=%p\n", xfer);
-	mutex_enter(&sc->sc_lock);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
@@ -929,23 +914,9 @@ dwc2_device_isoc_transfer(struct usbd_xfer *xfer)
 	/* Insert last in queue. */
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
-	/* Pipe isn't running, start first */
-	return dwc2_device_isoc_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
-}
+	KASSERT(err == USBD_NORMAL_COMPLETION);
 
-usbd_status
-dwc2_device_isoc_start(struct usbd_xfer *xfer)
-{
-	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
-	struct usbd_device *dev = dpipe->pipe.up_dev;
-	struct dwc2_softc *sc = dev->ud_bus->ub_hcpriv;
-	usbd_status err;
-
-	mutex_enter(&sc->sc_lock);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);

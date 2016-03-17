@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.91 2016/02/28 09:16:20 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.92 2016/03/17 09:04:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.91 2016/02/28 09:16:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.92 2016/03/17 09:04:53 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -209,7 +209,6 @@ Static void		ehci_device_intr_done(struct usbd_xfer *);
 Static int		ehci_device_isoc_init(struct usbd_xfer *);
 Static void		ehci_device_isoc_fini(struct usbd_xfer *);
 Static usbd_status	ehci_device_isoc_transfer(struct usbd_xfer *);
-Static usbd_status	ehci_device_isoc_start(struct usbd_xfer *);
 Static void		ehci_device_isoc_abort(struct usbd_xfer *);
 Static void		ehci_device_isoc_close(struct usbd_pipe *);
 Static void		ehci_device_isoc_done(struct usbd_xfer *);
@@ -217,7 +216,6 @@ Static void		ehci_device_isoc_done(struct usbd_xfer *);
 Static int		ehci_device_fs_isoc_init(struct usbd_xfer *);
 Static void		ehci_device_fs_isoc_fini(struct usbd_xfer *);
 Static usbd_status	ehci_device_fs_isoc_transfer(struct usbd_xfer *);
-Static usbd_status	ehci_device_fs_isoc_start(struct usbd_xfer *);
 Static void		ehci_device_fs_isoc_abort(struct usbd_xfer *);
 Static void		ehci_device_fs_isoc_close(struct usbd_pipe *);
 Static void		ehci_device_fs_isoc_done(struct usbd_xfer *);
@@ -366,7 +364,6 @@ Static const struct usbd_pipe_methods ehci_device_isoc_methods = {
 	.upm_init =	ehci_device_isoc_init,
 	.upm_fini =	ehci_device_isoc_fini,
 	.upm_transfer =	ehci_device_isoc_transfer,
-	.upm_start =	ehci_device_isoc_start,
 	.upm_abort =	ehci_device_isoc_abort,
 	.upm_close =	ehci_device_isoc_close,
 	.upm_cleartoggle =	ehci_noop,
@@ -377,7 +374,6 @@ Static const struct usbd_pipe_methods ehci_device_fs_isoc_methods = {
 	.upm_init =	ehci_device_fs_isoc_init,
 	.upm_fini =	ehci_device_fs_isoc_fini,
 	.upm_transfer =	ehci_device_fs_isoc_transfer,
-	.upm_start =	ehci_device_fs_isoc_start,
 	.upm_abort =	ehci_device_fs_isoc_abort,
 	.upm_close =	ehci_device_fs_isoc_close,
 	.upm_cleartoggle = ehci_noop,
@@ -2066,6 +2062,7 @@ ehci_open(struct usbd_pipe *pipe)
 			goto bad;
 		break;
 	case UE_ISOCHRONOUS:
+		pipe->up_serialise = false;
 		if (speed == EHCI_QH_SPEED_HIGH)
 			pipe->up_methods = &ehci_device_isoc_methods;
 		else
@@ -4368,22 +4365,14 @@ Static usbd_status
 ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 {
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status err;
+	usbd_status __diagused err;
 
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 
-	if (err && err != USBD_IN_PROGRESS)
-		return err;
+	KASSERT(err == USBD_NORMAL_COMPLETION);
 
-	return ehci_device_fs_isoc_start(xfer);
-}
-
-Static usbd_status
-ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
-{
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);;
 	struct usbd_device *dev = xfer->ux_pipe->up_dev;;
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
@@ -4399,16 +4388,6 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 	sitd = NULL;
 	total_length = 0;
 
-	/*
-	 * To allow continuous transfers, above we start all transfers
-	 * immediately. However, we're still going to get usbd_start_next call
-	 * this when another xfer completes. So, check if this is already
-	 * in progress or not
-	 */
-
- 	if (exfer->ex_isrunning) {
-		return USBD_IN_PROGRESS;
-	}
 
 	USBHIST_LOG(ehcidebug, "xfer %p len %d flags %d",
 	    xfer, xfer->ux_length, xfer->ux_flags, 0);
@@ -4604,8 +4583,6 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 	epipe->isoc.cur_xfers++;
 	epipe->isoc.next_frame = frindex;
 
-	exfer->ex_isrunning = true;
-
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
@@ -4646,10 +4623,7 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	epipe->isoc.cur_xfers--;
-	if (exfer->ex_isrunning) {
-		ehci_remove_sitd_chain(sc, exfer->ex_itdstart);
-		exfer->ex_isrunning = false;
-	}
+	ehci_remove_sitd_chain(sc, exfer->ex_itdstart);
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -4681,7 +4655,6 @@ ehci_device_isoc_init(struct usbd_xfer *xfer)
 	KASSERT(exfer->ex_isdone);
 
 	exfer->ex_type = EX_ISOC;
-	exfer->ex_isrunning = false;
 
 	/*
 	 * Step 1: Allocate and initialize itds, how many do we need?
@@ -4770,22 +4743,15 @@ Static usbd_status
 ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 {
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status err;
+	usbd_status __diagused err;
 
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
-	if (err && err != USBD_IN_PROGRESS)
-		return err;
 
-	return ehci_device_isoc_start(xfer);
-}
+	KASSERT(err == USBD_NORMAL_COMPLETION);
 
-Static usbd_status
-ehci_device_isoc_start(struct usbd_xfer *xfer)
-{
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	ehci_soft_itd_t *itd, *prev;
 	usb_dma_t *dma_buf;
@@ -4800,17 +4766,6 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	itd = NULL;
 	trans_count = 0;
 	total_length = 0;
-
-	/*
-	 * To allow continuous transfers, above we start all transfers
-	 * immediately. However, we're still going to get usbd_start_next call
-	 * this when another xfer completes. So, check if this is already
-	 * in progress or not
-	 */
-
-	if (exfer->ex_isrunning) {
-		return USBD_IN_PROGRESS;
-	}
 
 	USBHIST_LOG(ehcidebug, "xfer %p flags %d", xfer, xfer->ux_flags, 0, 0);
 
@@ -5027,8 +4982,6 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	epipe->isoc.cur_xfers++;
 	epipe->isoc.next_frame = frindex;
 
-	exfer->ex_isrunning = true;
-
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
@@ -5069,10 +5022,7 @@ ehci_device_isoc_done(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	epipe->isoc.cur_xfers--;
-	if (exfer->ex_isrunning) {
-		ehci_remove_itd_chain(sc, exfer->ex_sitdstart);
-		exfer->ex_isrunning = false;
-	}
+	ehci_remove_itd_chain(sc, exfer->ex_sitdstart);
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 }

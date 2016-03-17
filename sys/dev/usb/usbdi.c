@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.43 2016/02/28 09:16:20 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.44 2016/03/17 09:04:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.43 2016/02/28 09:16:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.44 2016/03/17 09:04:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,7 +331,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 		 */
 		usbd_lock_pipe(pipe);
 		SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
-		usbd_start_next(pipe);
+		if (pipe->up_serialise)
+			usbd_start_next(pipe);
 		usbd_unlock_pipe(pipe);
 	}
 
@@ -988,7 +989,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		if (erred && pipe->up_iface != NULL)	/* not control pipe */
 			pipe->up_running = 0;
 	}
-	if (pipe->up_running)
+	if (pipe->up_running && pipe->up_serialise)
 		usbd_start_next(pipe);
 }
 
@@ -1011,7 +1012,7 @@ usb_insert_transfer(struct usbd_xfer *xfer)
 	xfer->ux_state = XFER_ONQU;
 #endif
 	SIMPLEQ_INSERT_TAIL(&pipe->up_queue, xfer, ux_next);
-	if (pipe->up_running)
+	if (pipe->up_running && pipe->up_serialise)
 		err = USBD_IN_PROGRESS;
 	else {
 		pipe->up_running = 1;
@@ -1033,6 +1034,7 @@ usbd_start_next(struct usbd_pipe *pipe)
 	KASSERT(pipe != NULL);
 	KASSERT(pipe->up_methods != NULL);
 	KASSERT(pipe->up_methods->upm_start != NULL);
+	KASSERT(pipe->up_serialise == true);
 
 	int polling = pipe->up_dev->ud_bus->ub_usepolling;
 	KASSERT(polling || mutex_owned(pipe->up_dev->ud_bus->ub_lock));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.58 2016/03/13 07:11:01 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.59 2016/03/17 09:04:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.58 2016/03/13 07:11:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.59 2016/03/17 09:04:53 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.58 2016/03/13 07:11:01 skrll Exp $"
 #ifndef OHCI_DEBUG
 #define ohcidebug 0
 #else
-static int ohcidebug = 0;
+static int ohcidebug = 10;
 
 SYSCTL_SETUP(sysctl_hw_ohci_setup, "sysctl hw.ohci setup")
 {
@@ -205,7 +205,6 @@ Static void		ohci_device_intr_done(struct usbd_xfer *);
 Static int		ohci_device_isoc_init(struct usbd_xfer *);
 Static void		ohci_device_isoc_fini(struct usbd_xfer *);
 Static usbd_status	ohci_device_isoc_transfer(struct usbd_xfer *);
-Static usbd_status	ohci_device_isoc_start(struct usbd_xfer *);
 Static void		ohci_device_isoc_abort(struct usbd_xfer *);
 Static void		ohci_device_isoc_close(struct usbd_pipe *);
 Static void		ohci_device_isoc_done(struct usbd_xfer *);
@@ -337,7 +336,6 @@ Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
 	.upm_init =	ohci_device_isoc_init,
 	.upm_fini =	ohci_device_isoc_fini,
 	.upm_transfer =	ohci_device_isoc_transfer,
-	.upm_start =	ohci_device_isoc_start,
 	.upm_abort =	ohci_device_isoc_abort,
 	.upm_close =	ohci_device_isoc_close,
 	.upm_cleartoggle =	ohci_noop,
@@ -2218,6 +2216,7 @@ ohci_open(struct usbd_pipe *pipe)
 				goto bad;
 			break;
 		case UE_ISOCHRONOUS:
+			pipe->up_serialise = false;
 			pipe->up_methods = &ohci_device_isoc_methods;
 			return ohci_setup_isoc(pipe);
 		case UE_BULK:
@@ -3541,7 +3540,7 @@ usbd_status
 ohci_device_isoc_transfer(struct usbd_xfer *xfer)
 {
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
-	usbd_status err;
+	usbd_status __diagused err;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
@@ -3552,20 +3551,13 @@ ohci_device_isoc_transfer(struct usbd_xfer *xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 
-	/* bail out on error, */
-	if (err && err != USBD_IN_PROGRESS)
-		return err;
-
-	/* XXX should check inuse here */
+	KASSERT(err == USBD_NORMAL_COMPLETION);
 
 	/* insert into schedule, */
 	ohci_device_isoc_enter(xfer);
 
 	/* and start if the pipe wasn't running */
-	if (!err)
-		ohci_device_isoc_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
-
-	return err;
+	return USBD_IN_PROGRESS;
 }
 
 void
@@ -3700,34 +3692,6 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	    sizeof(sed->ed.ed_flags),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	mutex_exit(&sc->sc_lock);
-}
-
-usbd_status
-ohci_device_isoc_start(struct usbd_xfer *xfer)
-{
-	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
-
-	OHCIHIST_FUNC(); OHCIHIST_CALLED();
-	DPRINTFN(5, "xfer=%p", xfer, 0, 0, 0);
-
-	mutex_enter(&sc->sc_lock);
-
-	if (sc->sc_dying) {
-		mutex_exit(&sc->sc_lock);
-		return USBD_IOERROR;
-	}
-
-
-#ifdef DIAGNOSTIC
-	if (xfer->ux_status != USBD_IN_PROGRESS)
-		printf("ohci_device_isoc_start: not in progress %p\n", xfer);
-#endif
-
-	/* XXX anything to do? */
-
-	mutex_exit(&sc->sc_lock);
-
-	return USBD_IN_PROGRESS;
 }
 
 void

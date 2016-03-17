@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.22 2016/01/10 16:49:29 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.23 2016/03/17 09:04:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,14 +103,10 @@ struct ehci_xfer {
 		EX_ISOC,
 		EX_FS_ISOC
 	} ex_type;
-	union {
-		/* ctrl/bulk/intr */
-		struct {
-			ehci_soft_qtd_t **ex_sqtds;
-			size_t ex_nsqtd;
-		};
-		/* isoc */
-		bool ex_isrunning;
+	/* ctrl/bulk/intr */
+	struct {
+		ehci_soft_qtd_t **ex_sqtds;
+		size_t ex_nsqtd;
 	};
 	union {
 		/* ctrl */

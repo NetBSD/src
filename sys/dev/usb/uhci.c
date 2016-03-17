@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.67 2016/03/17 07:59:45 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.68 2016/03/17 09:04:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.67 2016/03/17 07:59:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.68 2016/03/17 09:04:53 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -205,7 +205,6 @@ Static void		uhci_add_loop(uhci_softc_t *);
 Static void		uhci_rem_loop(uhci_softc_t *);
 
 Static usbd_status	uhci_setup_isoc(struct usbd_pipe *);
-Static void		uhci_device_isoc_enter(struct usbd_xfer *);
 
 Static struct usbd_xfer *
 			uhci_allocx(struct usbd_bus *, unsigned int);
@@ -379,7 +378,6 @@ const struct usbd_pipe_methods uhci_device_isoc_methods = {
 	.upm_init =	uhci_device_isoc_init,
 	.upm_fini =	uhci_device_isoc_fini,
 	.upm_transfer =	uhci_device_isoc_transfer,
-	.upm_start =	uhci_device_isoc_start,
 	.upm_abort =	uhci_device_isoc_abort,
 	.upm_close =	uhci_device_isoc_close,
 	.upm_cleartoggle =	uhci_noop,
@@ -3006,7 +3004,7 @@ usbd_status
 uhci_device_isoc_transfer(struct usbd_xfer *xfer)
 {
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	usbd_status err;
+	usbd_status err __diagused;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(5, "xfer=%p", xfer, 0, 0, 0);
@@ -3016,40 +3014,23 @@ uhci_device_isoc_transfer(struct usbd_xfer *xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 
-	/* bail out on error, */
-	if (err && err != USBD_IN_PROGRESS)
-		return err;
-
-	/* XXX should check inuse here */
+	KASSERT(err == USBD_NORMAL_COMPLETION);
 
 	/* insert into schedule, */
-	uhci_device_isoc_enter(xfer);
 
-	/* and start if the pipe wasn't running */
-	if (!err)
-		uhci_device_isoc_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
-
-	return err;
-}
-
-void
-uhci_device_isoc_enter(struct usbd_xfer *xfer)
-{
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	struct isoc *isoc = &upipe->isoc;
-	uhci_soft_td_t *std;
+	uhci_soft_td_t *std = NULL;
 	uint32_t buf, len, status, offs;
 	int i, next, nframes;
 	int rd = UE_GET_DIR(upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN;
 
-	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(5, "used=%d next=%d xfer=%p nframes=%d",
 	    isoc->inuse, isoc->next, xfer, xfer->ux_nframes);
 
 	if (sc->sc_dying)
-		return;
+		return USBD_IOERROR;
 
 	if (xfer->ux_status == USBD_IN_PROGRESS) {
 		/* This request has already been entered into the frame list */
@@ -3061,6 +3042,8 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 	if (isoc->inuse >= UHCI_VFRAMELIST_COUNT)
 		printf("%s: overflow!\n", __func__);
 #endif
+
+	KASSERT(xfer->ux_nframes != 0);
 
 	mutex_enter(&sc->sc_lock);
 	next = isoc->next;
@@ -3108,44 +3091,9 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 	isoc->next = next;
 	isoc->inuse += xfer->ux_nframes;
 
-	mutex_exit(&sc->sc_lock);
-}
-
-usbd_status
-uhci_device_isoc_start(struct usbd_xfer *xfer)
-{
-	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
-	uhci_soft_td_t *end;
-	int i;
-
-	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(5, "xfer=%p", xfer, 0, 0, 0);
-
-	mutex_enter(&sc->sc_lock);
-
-	if (sc->sc_dying) {
-		mutex_exit(&sc->sc_lock);
-		return USBD_IOERROR;
-	}
-
-#ifdef DIAGNOSTIC
-	if (xfer->ux_status != USBD_IN_PROGRESS)
-		printf("%s: not in progress %p\n", __func__, xfer);
-#endif
-
-	/* Find the last TD */
-	i = UHCI_XFER2UXFER(xfer)->ux_curframe + xfer->ux_nframes;
-	if (i >= UHCI_VFRAMELIST_COUNT)
-		i -= UHCI_VFRAMELIST_COUNT;
-	end = upipe->isoc.stds[i];
-
-	KASSERT(end != NULL);
-
 	/* Set up interrupt info. */
-	ux->ux_stdstart = end;
-	ux->ux_stdend = end;
+	ux->ux_stdstart = std;
+	ux->ux_stdend = std;
 
 	KASSERT(ux->ux_isdone);
 #ifdef DIAGNOSTIC
@@ -3681,6 +3629,7 @@ uhci_open(struct usbd_pipe *pipe)
 				ival = ed->bInterval;
 			return uhci_device_setintr(sc, upipe, ival);
 		case UE_ISOCHRONOUS:
+			pipe->up_serialise = false;
 			pipe->up_methods = &uhci_device_isoc_methods;
 			return uhci_setup_isoc(pipe);
 		case UE_BULK:
