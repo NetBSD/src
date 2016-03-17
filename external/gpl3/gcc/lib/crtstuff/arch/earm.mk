@@ -2,7 +2,7 @@
 # Generated from: NetBSD: mknative-gcc,v 1.86 2016/03/16 11:16:05 mrg Exp 
 # Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp 
 #
-G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber -I${GNUHOSTDIST}/gcc/../libbacktrace 
+G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber -I${GNUHOSTDIST}/gcc/../libbacktrace 
 G_CRTSTUFF_CFLAGS=
 G_CRTSTUFF_T_CFLAGS=
 G_CRTSTUFF_T_CFLAGS_S=
