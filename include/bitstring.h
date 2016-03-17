@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.12 2015/11/20 20:37:08 christos Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.13 2016/03/17 00:15:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,7 +81,8 @@ typedef	unsigned char bitstr_t;
 
 				/* set bit N of bitstring name */
 #define	bit_set(name, bit) \
-	/*LINTED bitwise on signed*/((name)[_bit_byte(bit)] |= _bit_mask(bit))
+	/*LINTED bitwise on signed*/ \
+	((name)[_bit_byte(bit)] = _bit_mask(bit) | (name)[bit_byte(bit))
 
 				/* clear bit N of bitstring name */
 #define	bit_clear(name, bit) \
