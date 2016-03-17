@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2016/03/15 21:42:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2016/03/17 00:55:54 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -53,8 +53,10 @@ COPTS.fstream-inst.cc = -Wno-stack-protector
 COPTS.locale-inst.cc = -Wno-stack-protector
 COPTS.misc-inst.cc = -Wno-stack-protector
 COPTS.ostream-inst.cc = -Wno-stack-protector
+COPTS.functexcept.cc = -Wno-stack-protector
 COPTS.valarray-inst.cc = -Wno-stack-protector
 COPTS.wlocale-inst.cc = -Wno-stack-protector
+COPTS.snprintf_lite.cc = -Wno-stack-protector
 COPTS.concept-inst.cc=	-fimplicit-templates
 COPTS.hashtable_c++0x.cc=  -fimplicit-templates
 COPTS.bitmap_allocator.cc = -fimplicit-templates
