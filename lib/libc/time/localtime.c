@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.102 2016/03/15 15:16:01 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.103 2016/03/18 12:41:25 ginsbach Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.102 2016/03/15 15:16:01 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.103 2016/03/18 12:41:25 ginsbach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -282,7 +282,7 @@ const char *
 tzgetname(const timezone_t sp, int isdst)
 {
 	int i;
-	for (i = 0; i < sp->timecnt; ++i) {
+	for (i = 0; i < sp->typecnt; ++i) {
 		const struct ttinfo *const ttisp = &sp->ttis[sp->types[i]];
 
 		if (ttisp->tt_isdst == isdst)
@@ -297,7 +297,7 @@ tzgetgmtoff(const timezone_t sp, int isdst)
 {
 	int i;
 	long l = -1;
-	for (i = 0; i < sp->timecnt; ++i) {
+	for (i = 0; i < sp->typecnt; ++i) {
 		const struct ttinfo *const ttisp = &sp->ttis[sp->types[i]];
 
 		if (ttisp->tt_isdst == isdst) {
