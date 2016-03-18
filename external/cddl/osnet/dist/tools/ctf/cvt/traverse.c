@@ -124,6 +124,7 @@ static tdtrav_cb_f tdnops[] = {
 	NULL,			/* function */
 	NULL,			/* struct */
 	NULL,			/* union */
+	NULL,			/* class */
 	NULL,			/* enum */
 	NULL,			/* forward */
 	NULL,			/* typedef */
@@ -142,6 +143,7 @@ static int (*tddescenders[])(tdesc_t *, tdtrav_data_t *) = {
 	tdtrav_func,		/* function */
 	tdtrav_su,		/* struct */
 	tdtrav_su,		/* union */
+	tdtrav_su,		/* class */
 	NULL,			/* enum */
 	NULL,			/* forward */
 	tdtrav_plain,		/* typedef */
