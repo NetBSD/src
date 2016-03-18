@@ -548,6 +548,7 @@ static tdtrav_cb_f map_pre[] = {
 	map_td_tree_pre,	/* function */
 	map_td_tree_pre,	/* struct */
 	map_td_tree_pre,	/* union */
+	map_td_tree_pre,	/* class */
 	map_td_tree_pre,	/* enum */
 	map_td_tree_pre,	/* forward */
 	map_td_tree_pre,	/* typedef */
@@ -566,6 +567,7 @@ static tdtrav_cb_f map_post[] = {
 	map_td_tree_post,	/* function */
 	map_td_tree_post,	/* struct */
 	map_td_tree_post,	/* union */
+	map_td_tree_post,	/* class */
 	map_td_tree_post,	/* enum */
 	map_td_tree_post,	/* forward */
 	map_td_tree_post,	/* typedef */
@@ -584,6 +586,7 @@ static tdtrav_cb_f map_self_post[] = {
 	map_td_tree_self_post,	/* function */
 	map_td_tree_self_post,	/* struct */
 	map_td_tree_self_post,	/* union */
+	map_td_tree_self_post,	/* class */
 	map_td_tree_self_post,	/* enum */
 	map_td_tree_self_post,	/* forward */
 	map_td_tree_self_post,	/* typedef */
@@ -901,6 +904,7 @@ static tdtrav_cb_f fwd_redir_cbs[] = {
 	NULL,			/* function */
 	NULL,			/* struct */
 	NULL,			/* union */
+	NULL,			/* class */
 	NULL,			/* enum */
 	fwd_redir,		/* forward */
 	NULL,			/* typedef */
@@ -1143,6 +1147,7 @@ tdesc_ops_t tdesc_ops[] = {
 	{ "function", 		equiv_function,		conjure_function },
 	{ "struct",		equiv_su,		conjure_su },
 	{ "union",		equiv_su,		conjure_su },
+	{ "class",		equiv_su,		conjure_su },
 	{ "enum",		equiv_enum,		conjure_enum },
 	{ "forward",		NULL,			conjure_forward },
 	{ "typedef",		equiv_plain,		conjure_plain },
