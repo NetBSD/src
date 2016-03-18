@@ -543,6 +543,7 @@ static tdtrav_cb_f map_pre[] = {
 	NULL,
 	map_td_tree_pre,	/* intrinsic */
 	map_td_tree_pre,	/* pointer */
+	map_td_tree_pre,	/* reference */
 	map_td_tree_pre,	/* array */
 	map_td_tree_pre,	/* function */
 	map_td_tree_pre,	/* struct */
@@ -560,6 +561,7 @@ static tdtrav_cb_f map_post[] = {
 	NULL,
 	map_td_tree_post,	/* intrinsic */
 	map_td_tree_post,	/* pointer */
+	map_td_tree_post,	/* reference */
 	map_td_tree_post,	/* array */
 	map_td_tree_post,	/* function */
 	map_td_tree_post,	/* struct */
@@ -577,6 +579,7 @@ static tdtrav_cb_f map_self_post[] = {
 	NULL,
 	map_td_tree_self_post,	/* intrinsic */
 	map_td_tree_self_post,	/* pointer */
+	map_td_tree_self_post,	/* reference */
 	map_td_tree_self_post,	/* array */
 	map_td_tree_self_post,	/* function */
 	map_td_tree_self_post,	/* struct */
@@ -893,6 +896,7 @@ static tdtrav_cb_f fwd_redir_cbs[] = {
 	NULL,
 	NULL,			/* intrinsic */
 	NULL,			/* pointer */
+	NULL,			/* reference */
 	NULL,			/* array */
 	NULL,			/* function */
 	NULL,			/* struct */
@@ -1134,6 +1138,7 @@ tdesc_ops_t tdesc_ops[] = {
 	{ "ERROR! BAD tdesc TYPE", NULL, NULL },
 	{ "intrinsic",		equiv_intrinsic,	conjure_intrinsic },
 	{ "pointer", 		equiv_plain,		conjure_plain },
+	{ "reference", 		equiv_plain,		conjure_plain },
 	{ "array", 		equiv_array,		conjure_array },
 	{ "function", 		equiv_function,		conjure_function },
 	{ "struct",		equiv_su,		conjure_su },
