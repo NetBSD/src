@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.57 2016/03/16 18:58:34 mrg Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.58 2016/03/18 10:10:21 mrg Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1284,8 +1284,23 @@ needs_cleaning(struct clfs *fs, CLEANERINFO64 *cip)
 	double loadavg;
 
 	/* If this fs is "on hold", don't clean it. */
-	if (fs->clfs_onhold)
+	if (fs->clfs_onhold) {
+#if defined(__GNUC__) && \
+    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)) && \
+    defined(__OPTIMIZE_SIZE__)
+	/*
+	 * XXX: Work around apparent bug with GCC >= 4.8 and -Os: it
+	 * claims that ci.clean is uninitialized in clean_fs (at one
+	 * of the several uses of it, which is neither the first nor
+	 * last use) -- this doesn't happen with plain -O2.
+	 *
+	 * Hopefully in the future further rearrangements will allow
+	 * removing this hack.
+	 */
+		cip->clean = 0;
+#endif
 		return 0;
+	}
 
 	/*
 	 * Read the cleanerinfo block from the Ifile.  We don't want
@@ -1451,21 +1466,6 @@ lfs_cleaner_main(int argc, char **argv)
 	CLEANERINFO64 ci;
 #ifndef USE_CLIENT_SERVER
 	char *cp, *pidname;
-#endif
-
-#if defined(__GNUC__) && \
-    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)) && \
-    defined(__OPTIMIZE_SIZE__)
-	/*
-	 * XXX: Work around apparent bug with GCC >= 4.8 and -Os: it
-	 * claims that ci.clean is uninitialized in clean_fs (at one
-	 * of the several uses of it, which is neither the first nor
-	 * last use) -- this doesn't happen with plain -O2.
-	 *
-	 * Hopefully in the future further rearrangements will allow
-	 * removing this hack.
-	 */
-	ci.clean = 0;
 #endif
 
 	/*
