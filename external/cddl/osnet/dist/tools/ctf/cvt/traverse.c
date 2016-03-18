@@ -119,6 +119,7 @@ static tdtrav_cb_f tdnops[] = {
 	NULL,
 	NULL,			/* intrinsic */
 	NULL,			/* pointer */
+	NULL,			/* reference */
 	NULL,			/* array */
 	NULL,			/* function */
 	NULL,			/* struct */
@@ -136,6 +137,7 @@ static int (*tddescenders[])(tdesc_t *, tdtrav_data_t *) = {
 	NULL,
 	NULL,			/* intrinsic */
 	tdtrav_plain,		/* pointer */
+	tdtrav_plain,		/* reference */
 	tdtrav_array,		/* array */
 	tdtrav_func,		/* function */
 	tdtrav_su,		/* struct */
