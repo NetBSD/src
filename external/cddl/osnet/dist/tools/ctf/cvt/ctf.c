@@ -361,6 +361,7 @@ write_type(void *arg1, void *arg2)
 		break;
 
 	case POINTER:
+	case REFERENCE:	/* XXX: */
 		ctt.ctt_info = CTF_TYPE_INFO(CTF_K_POINTER, isroot, 0);
 		ctt.ctt_type = tp->t_tdesc->t_id;
 		write_unsized_type_rec(b, &ctt);
