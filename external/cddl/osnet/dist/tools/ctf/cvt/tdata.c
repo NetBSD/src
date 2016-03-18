@@ -236,19 +236,20 @@ free_elist(tdesc_t *tdp)
 
 static void (*free_cbs[])(tdesc_t *) = {
 	NULL,
-	free_intr,
-	NULL,
-	free_ardef,
-	NULL,
-	free_mlist,
-	free_mlist,
-	free_elist,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	free_intr,	/* intrinsic */
+	NULL,		/* pointer */
+	NULL,		/* reference */
+	free_ardef,	/* array */
+	NULL,		/* function */
+	free_mlist,	/* struct */
+	free_mlist,	/* union */
+	free_elist,	/* enum */
+	NULL,		/* forward */
+	NULL,		/* typedef */
+	NULL,		/* typedef_unres */
+	NULL,		/* volatile */
+	NULL,		/* const */
+	NULL		/* restric */
 };
 
 /*ARGSUSED1*/
