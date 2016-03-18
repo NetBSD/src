@@ -800,7 +800,7 @@ die_array_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 	if (tdp->t_flags & TDESC_F_RESOLVED)
 		return (1);
 
-	debug(3, "trying to resolve array %#x (cont %#x/%zu)\n", tdp->t_id,
+	debug(3, "trying to resolve array %#x (cont %#x/%d)\n", tdp->t_id,
 	    tdp->t_ardef->ad_contents->t_id,
 	    tdp->t_ardef->ad_contents->t_size);
 
