@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/03/15 19:13:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2016/03/18 17:52:30 christos Exp $
 
 NOMAN=1
 PROG=		lto-wrapper
@@ -10,6 +10,9 @@ CPPFLAGS+=	-DPREFIX=\"/usr\"
 .include "../Makefile.backtrace"
 .include "../Makefile.common-target"
 .include "../Makefile.libcpp"
+
+COPTS.lto-wrapper.c=	-Wno-stack-protector
+
 
 DPADD+=                 ${LIBIBERTYOBJ}/libiberty.a
 LDADD+=                 ${LIBIBERTYOBJ}/libiberty.a

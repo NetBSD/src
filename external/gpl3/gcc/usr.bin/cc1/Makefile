@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/05/31 22:55:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/03/18 17:52:30 christos Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -36,6 +36,7 @@ COPTS.c-ada-spec.c=	-Wno-stack-protector
 COPTS.c-aux-info.c=	-Wno-stack-protector
 COPTS.c-common.c=	-Wno-stack-protector
 COPTS.c-cppbuiltin.c=	-Wno-stack-protector
+COPTS.c-decl.c=		-Wno-stack-protector
 COPTS.c-format.c=	-Wno-stack-protector
 COPTS.c-format.h=	-Wno-stack-protector
 COPTS.c-lex.c=		-Wno-stack-protector
