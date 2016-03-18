@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.104 2016/03/08 14:11:56 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.105 2016/03/18 18:07:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.104 2016/03/08 14:11:56 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.105 2016/03/18 18:07:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1094,8 +1094,8 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	volatile int quotef;
 	volatile int oldstyle;
 	VSS static_stack;
-	VSS *stack = &static_stack;
-	VVSS *vstack = stack;
+	VSS * volatile stack = &static_stack;
+	VVSS * volatile vstack = stack;
 
 	stack->prev = NULL;
 	stack->cur = 0;
@@ -1558,7 +1558,7 @@ parsebackq: {
 	struct nodelist **nlpp;
 	int savepbq;
 	union node *n;
-	char *str = NULL;
+	char * volatile str = NULL;
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = NULL;
 	int savelen;
