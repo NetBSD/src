@@ -433,6 +433,7 @@ static tdtrav_cb_f build_hashes_cbs[] = {
 	NULL,
 	build_hashes,	/* intrinsic */
 	build_hashes,	/* pointer */
+	build_hashes,	/* reference */
 	build_hashes,	/* array */
 	build_hashes,	/* function */
 	build_hashes,	/* struct */
