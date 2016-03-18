@@ -243,6 +243,7 @@ static void (*free_cbs[])(tdesc_t *) = {
 	NULL,		/* function */
 	free_mlist,	/* struct */
 	free_mlist,	/* union */
+	free_mlist,	/* class */
 	free_elist,	/* enum */
 	NULL,		/* forward */
 	NULL,		/* typedef */
@@ -439,6 +440,7 @@ static tdtrav_cb_f build_hashes_cbs[] = {
 	build_hashes,	/* function */
 	build_hashes,	/* struct */
 	build_hashes,	/* union */
+	build_hashes,	/* class */
 	build_hashes,	/* enum */
 	build_hashes,	/* forward */
 	build_hashes,	/* typedef */
