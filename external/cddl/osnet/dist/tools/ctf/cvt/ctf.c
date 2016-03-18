@@ -383,6 +383,7 @@ write_type(void *arg1, void *arg2)
 
 	case STRUCT:
 	case UNION:
+	case CLASS:
 		for (i = 0, mp = tp->t_members; mp != NULL; mp = mp->ml_next)
 			i++; /* count up struct or union members */
 
