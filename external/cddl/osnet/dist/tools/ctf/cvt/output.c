@@ -109,6 +109,7 @@ static tdtrav_cb_f burst_types_cbs[] = {
 	save_type_by_id,	/* function */
 	save_type_by_id,	/* struct */
 	save_type_by_id,	/* union */
+	save_type_by_id,	/* class */
 	save_type_by_id,	/* enum */
 	save_type_by_id,	/* forward */
 	save_type_by_id,	/* typedef */

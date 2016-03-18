@@ -186,6 +186,7 @@ tdesc_size(tdesc_t *tdp)
 		case FUNCTION:
 		case STRUCT:
 		case UNION:
+		case CLASS:
 		case ENUM:
 			return (tdp->t_size);
 
@@ -223,6 +224,7 @@ tdesc_bitsize(tdesc_t *tdp)
 		case FUNCTION:
 		case STRUCT:
 		case UNION:
+		case CLASS:
 		case ENUM:
 		case POINTER:
 		case REFERENCE:
@@ -1162,6 +1164,12 @@ die_union_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp)
 	die_sou_create(dw, die, off, tdp, UNION, "union");
 }
 
+static void
+die_class_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp)
+{
+	die_sou_create(dw, die, off, tdp, CLASS, "class");
+}
+
 /*ARGSUSED1*/
 static int
 die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
@@ -1196,7 +1204,8 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 			if (mt->t_type == ARRAY && mt->t_ardef->ad_nelems == 0)
 				continue;
 			if ((mt->t_flags & TDESC_F_RESOLVED) != 0 &&
-			    (mt->t_type == STRUCT || mt->t_type == UNION))
+			    (mt->t_type == STRUCT || mt->t_type == UNION ||
+			     mt->t_type == CLASS))
 				continue;
 
 			if (mt->t_type == STRUCT && 
@@ -1819,6 +1828,7 @@ static const die_creator_t die_creators[] = {
 	{ DW_TAG_subroutine_type,	0,		die_funcptr_create },
 	{ DW_TAG_typedef,		0,		die_typedef_create },
 	{ DW_TAG_union_type,		0,		die_union_create },
+	{ DW_TAG_class_type,		0,		die_class_create },
 	{ DW_TAG_base_type,		0,		die_base_create },
 	{ DW_TAG_const_type,		0,		die_const_create },
 	{ DW_TAG_subprogram,		DW_F_NOTDP,	die_function_create },
@@ -1895,6 +1905,7 @@ static tdtrav_cb_f die_resolvers[] = {
 	NULL,			/* function */
 	die_sou_resolve,	/* struct */
 	die_sou_resolve,	/* union */
+	die_sou_resolve,	/* class */
 	die_enum_resolve,	/* enum */
 	die_fwd_resolve,	/* forward */
 	NULL,			/* typedef */
@@ -1913,6 +1924,7 @@ static tdtrav_cb_f die_fail_reporters[] = {
 	NULL,			/* function */
 	die_sou_failed,		/* struct */
 	die_sou_failed,		/* union */
+	die_sou_failed,		/* class */
 	NULL,			/* enum */
 	NULL,			/* forward */
 	NULL,			/* typedef */

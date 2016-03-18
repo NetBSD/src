@@ -142,6 +142,7 @@ typedef enum stabtype {
 	FUNCTION,
 	STRUCT,
 	UNION,
+	CLASS,
 	ENUM,
 	FORWARD,
 	TYPEDEF,
