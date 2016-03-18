@@ -137,6 +137,7 @@ typedef enum stabtype {
 	STABTYPE_FIRST, /* do not use */
 	INTRINSIC,
 	POINTER,
+	REFERENCE,
 	ARRAY,
 	FUNCTION,
 	STRUCT,
