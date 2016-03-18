@@ -104,6 +104,7 @@ static tdtrav_cb_f burst_types_cbs[] = {
 	NULL,
 	save_type_by_id,	/* intrinsic */
 	save_type_by_id,	/* pointer */
+	save_type_by_id,	/* reference */
 	save_type_by_id,	/* array */
 	save_type_by_id,	/* function */
 	save_type_by_id,	/* struct */
