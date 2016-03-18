@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.146 2016/03/16 05:32:10 mrg Exp $
+# $NetBSD: mi,v 1.147 2016/03/18 18:24:25 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -103,8 +103,8 @@
 ./usr/lib/libmagic_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libmenu_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libmj_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libmudflap_g.a			comp-c-debuglib		debuglib,compatfile,gcc
-./usr/lib/libmudflapth_g.a			comp-c-debuglib		debuglib,compatfile,gcc
+./usr/lib/libmudflap_g.a			comp-c-debuglib		debuglib,compatfile,gcc=48
+./usr/lib/libmudflapth_g.a			comp-c-debuglib		debuglib,compatfile,gcc=48
 ./usr/lib/libnetpgp_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnpf_g.a				comp-c-debuglib		debuglib,compatfile
