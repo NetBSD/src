@@ -249,7 +249,7 @@ static void (*free_cbs[])(tdesc_t *) = {
 	NULL,		/* typedef_unres */
 	NULL,		/* volatile */
 	NULL,		/* const */
-	NULL		/* restric */
+	NULL		/* restrict */
 };
 
 /*ARGSUSED1*/
