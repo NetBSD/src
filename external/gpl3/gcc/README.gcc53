@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.2 2016/03/17 23:44:12 mrg Exp $
+$NetBSD: README.gcc53,v 1.3 2016/03/18 07:30:47 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -26,14 +26,14 @@ arch/feature list.  anything not here has been switched already:
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 ------------	-----	-------	------	----------	------------	----	---
-alpha
+alpha		y	?	?	y
 arm		y	?	y	y
 armeb		y	?	y	y
 earm		y	?	y	y
 earmeb		y	?	y	y
 earmhf		y	?	y	y
 earmhfeb	y	?	y	y
-earmv4		y	?	y	y
+earmv4		y	?	y	y		y[3,4]		y
 earmv4eb	y	?	y	y
 earmv6		y	?	y	y
 earmv6eb	y	?	y	y
@@ -44,22 +44,24 @@ earmv7eb	y	?	y	y
 earmv7hf	y	?	y	y
 earmv7hfeb	y	?	y	y
 hppa
-i386		y	y	y	y		y		y	
+i386		y	y	y	y		y[4]		y	
 m68000
 m68k
-mips64eb
-mips64el
 mipseb
 mipsel
-powerpc
+mips64eb
+mips64el
+powerpc		y	?	?	y		x
 sh3eb
 sh3el
-sparc		y	y	y	y		y		y[1]
-sparc64		y	y	y	builds		y		n[2]
+sparc		y	y	y	y		y[4]		y[1]
+sparc64		y	y	y	builds		y[4]		n[2]
 vax
-x86_64		y	y	y	y		y		y
+x86_64		y	y	y	y		y[4]		y
 
 
 [1] - world built without -fno-delete-null-pointer-checks does not have a
       working sshd
 [2] - -O2 and -Os kernels hang, -O1 SIR reset
+[3] - MKCOMPAT=no enabled currently
+[4] - really, this is 'distribution sets' and a kernel
