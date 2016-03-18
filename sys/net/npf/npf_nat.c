@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.39 2014/12/30 19:11:44 christos Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.40 2016/03/18 10:09:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.39 2014/12/30 19:11:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.40 2016/03/18 10:09:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -657,10 +657,12 @@ npf_nat_algo(npf_cache_t *npc, const npf_natpolicy_t *np, bool forw)
 	int error;
 
 	switch (np->n_algo) {
+#ifdef INET6
 	case NPF_ALGO_NPT66:
 		error = npf_npt66_rwr(npc, which, &np->n_taddr,
 		    np->n_tmask, np->n_npt66_adj);
 		break;
+#endif
 	default:
 		error = npf_napt_rwr(npc, which, &np->n_taddr, np->n_tport);
 		break;
