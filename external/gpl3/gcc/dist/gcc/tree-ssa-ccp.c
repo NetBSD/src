@@ -2851,7 +2851,8 @@ make_pass_fold_builtins (gcc::context *ctxt)
  */
 
 #if defined(__alpha__) || defined(__amd64__) || defined(__sparc64__)	\
-     ||	(defined(__arm__) && defined(__ARM_EABI)) || defined(__powerpc__) \
+     ||	(defined(__arm__) && defined(__ARM_EABI__)) \
+     || defined(__powerpc__) \
      || ((defined(__mips__) || defined(__riscv__)) && defined(_LP64))
 #define	JEMALLOC_TINY_MIN_2POW	3
 #endif
@@ -2872,10 +2873,13 @@ make_pass_fold_builtins (gcc::context *ctxt)
 #define	TARGET_64BIT	0
 #endif
 
+/* ARM has a non-constant MALLOC_ABI_ALIGNMENT since GCC 5.  */
+#if !defined(__arm__)
 #ifdef __CTASSERT
 __CTASSERT((8<<JEMALLOC_TINY_MIN_2POW) == MALLOC_ABI_ALIGNMENT);
 #else
 #error compiling on an older NetBSD version?
+#endif
 #endif
 
 #endif
