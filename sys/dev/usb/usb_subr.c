@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.25 2016/03/08 21:16:27 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.26 2016/03/19 07:12:21 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.25 2016/03/08 21:16:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.26 2016/03/19 07:12:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -789,6 +789,7 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	p->up_intrxfer = NULL;
 	p->up_running = 0;
 	p->up_aborting = 0;
+	p->up_serialise = true;
 	p->up_repeat = 0;
 	p->up_interval = ival;
 	p->up_flags = flags;
@@ -800,6 +801,9 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 		kmem_intr_free(p, dev->ud_bus->ub_pipesize);
 		return err;
 	}
+
+	KASSERT(p->up_methods->upm_start || p->up_serialise == false);
+
 	usb_init_task(&p->up_async_task, usbd_clear_endpoint_stall_task, p,
 	    USB_TASKQ_MPSAFE);
 	DPRINTFN(1, "pipe=%p", p, 0, 0, 0);
