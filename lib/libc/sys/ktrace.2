@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.2,v 1.19 2016/03/19 17:05:36 dholland Exp $
+.\"	$NetBSD: ktrace.2,v 1.20 2016/03/19 17:15:13 dholland Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,36 +104,40 @@ The generic header is:
 struct ktr_header {
 	int	ktr_len;		/* length of buf */
 	short	ktr_type;		/* trace record type */
+	short	ktr_version;		/* trace record version */
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
-	struct	timeval ktr_time;	/* timestamp */
-	caddr_t	ktr_buf;
+	struct	timespec ktr_time;	/* timestamp */
+	lwpid_t	ktr_lid;
 };
 .Ed
 .Pp
 The
 .Nm ktr_len
-field specifies the length of the
-.Nm ktr_type
-data that follows this header.
+field specifies the length of the data that follows this header.
 The
-.Nm ktr_pid
+.Nm ktr_type
+and
+.Nm ktr_version
+fields (whose ordering in the structure depends on byte order)
+specify the format of this data.
+The
+.Nm ktr_pid ,
+.Nm ktr_lid ,
 and
 .Nm ktr_comm
 fields specify the process and command generating the record.
 The
 .Nm ktr_time
-field gives the time (with microsecond resolution)
+field gives the time (with nanosecond resolution)
 that the record was generated.
-The
-.Nm ktr_buf
-is an internal kernel pointer and is not useful.
 .Pp
 The generic header is followed by
 .Nm ktr_len
 bytes of a
 .Nm ktr_type
-record.
+record of version
+.Nm ktr_version .
 The type specific records are defined in the
 .Pa \*[Lt]sys/ktrace.h\*[Gt]
 include file.
