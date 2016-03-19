@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.4 2016/03/18 10:14:39 mrg Exp $
+$NetBSD: README.gcc53,v 1.5 2016/03/19 20:53:46 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -26,14 +26,14 @@ arch/feature list.  anything not here has been switched already:
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 ------------	-----	-------	------	----------	------------	----	---
-alpha		y	?	?	y
+alpha		y	y	y	y		y		y	?[10]
 arm		y	?	y	y
 armeb		y	?	y	y
 earm		y	?	y	y
 earmeb		y	?	y	y
 earmhf		y	?	y	y
 earmhfeb	y	?	y	y
-earmv4		y	?	y	y		y[3,4]		y
+earmv4		y	y	y	y		y[3,4]		y
 earmv4eb	y	?	y	y
 earmv6		y	?	y	y
 earmv6eb	y	?	y	y
@@ -51,13 +51,13 @@ mipseb		y	?	n[5]
 mipsel		y	?	n[5]
 mips64eb	y	?	n[5]
 mips64el	y	?	n[5]
-powerpc		y	?	?	y		y[4]		y[1?]	
+powerpc		y	y	y	y		y[4]		y[1?]	
 sh3eb		y	?	y	y
 sh3el		y	?	y	y
 sparc		y	y	y	y		y[4]		y[1]
-sparc64		y	y	y	builds		y[4]		n[1?,2]
+sparc64		y	y	y	y		y[4]		n[1?,2]	y[9]
 vax		n[7]
-x86_64		y	y	y	y		y[4]		y
+x86_64		y	y	y	y		y		y
 
 
 [1] - world built without -fno-delete-null-pointer-checks does not have a
@@ -72,3 +72,6 @@ x86_64		y	y	y	y		y[4]		y
 [6] - libc fenv.c fails to build
 [7] - GCC fails to build
 [8] - GCC fails with eg: error: stack protector not protecting local variables: variable length buffer [-Werror=stack-protector]
+[9] - with a 4.8 base.tgz and 5.3 everythingelse.tgz, about 60 additional failures out of ~3800
+[10] - atf-run crashed kernel about 85% mark with GCC 4.8 kernel, but the
+       to then results were mostly ok
