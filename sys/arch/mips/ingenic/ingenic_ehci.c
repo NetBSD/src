@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_ehci.c,v 1.3.2.3 2016/03/19 11:30:02 skrll Exp $ */
+/*	$NetBSD: ingenic_ehci.c,v 1.3.2.4 2016/03/19 16:08:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.3.2.3 2016/03/19 11:30:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.3.2.4 2016/03/19 16:08:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,10 +160,10 @@ ingenic_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	sc->iot = aa->aa_bst;
-	sc->sc_bus.dmatag = aa->aa_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = aa->aa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_size = 0x1000;
-	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.ub_revision = USBREV_2_0;
 
 	if (aa->aa_addr == 0)
 		aa->aa_addr = JZ_EHCI_BASE;
