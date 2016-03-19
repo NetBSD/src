@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2015/08/08 06:36:25 maxv Exp $
+# $NetBSD: GENERIC,v 1.48 2016/03/19 23:21:03 gdt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.47 $"
+#ident          "GENERIC-$Revision: 1.48 $"
 
 maxusers	16		# estimated number of users
 
@@ -374,7 +374,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

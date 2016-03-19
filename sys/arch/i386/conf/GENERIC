@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1132 2016/03/05 17:08:48 riastradh Exp $
+# $NetBSD: GENERIC,v 1.1133 2016/03/19 23:21:02 gdt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1132 $"
+#ident 		"GENERIC-$Revision: 1.1133 $"
 
 maxusers	64		# estimated number of users
 
@@ -1321,7 +1321,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
