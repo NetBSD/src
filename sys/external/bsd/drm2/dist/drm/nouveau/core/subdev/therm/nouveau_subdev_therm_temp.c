@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_therm_temp.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_therm_temp.c,v 1.1.1.1.8.1 2016/03/19 11:30:30 skrll Exp $	*/
 
 /*
  * Copyright 2012 The Nouveau community
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_therm_temp.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_therm_temp.c,v 1.1.1.1.8.1 2016/03/19 11:30:30 skrll Exp $");
 
 #include "priv.h"
 
@@ -104,7 +104,7 @@ void nouveau_therm_sensor_event(struct nouveau_therm *therm,
 	};
 	int temperature = therm->temp_get(therm);
 
-	if (thrs < 0 || thrs > 3)
+	if ((unsigned)thrs >= __arraycount(thresolds))
 		return;
 
 	if (dir == NOUVEAU_THERM_THRS_FALLING)

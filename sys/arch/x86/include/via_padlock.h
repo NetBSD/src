@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.7.26.1 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.7.26.2 2016/03/19 11:30:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -59,11 +59,6 @@ struct via_padlock_softc {
 	uint8_t	op_iv[16];	/* 128 bit aligned */
 	void		*op_buf;
 
-	int			sc_rnd_hz;
-	struct callout		sc_rnd_co;
-	krndsource_t	sc_rnd_source;
-	bool			sc_rnd_attached;
-
 	/* normal softc stuff */
 	int32_t		sc_cid;
 	bool		sc_cid_attached;
@@ -73,8 +68,6 @@ struct via_padlock_softc {
 
 #define VIAC3_SESSION(sid)	((sid) & 0x0fffffff)
 #define VIAC3_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x0fffffff))
-
-#define VIAC3_RNG_BUFSIZ	16
 
 #endif /* _KERNEL */
 

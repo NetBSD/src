@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1121.2.5 2015/12/27 12:09:48 skrll Exp $
+#	$NetBSD: files,v 1.1121.2.6 2016/03/19 11:30:08 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -1145,6 +1145,9 @@ file	dev/ic/apple_smc_temp.c		applesmctemp
 define drm {}
 include "external/bsd/drm/conf/files.drm"
 include "dev/drm/files.drm"
+
+# Linux API support
+include "external/bsd/common/conf/files.linux"
 
 # DRM/KMS - Newer direct rendering manager with kernel mode-switching
 include "external/bsd/drm2/drm/files.drmkms"

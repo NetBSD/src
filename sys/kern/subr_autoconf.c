@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.233.2.3 2015/12/27 12:10:05 skrll Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.233.2.4 2016/03/19 11:30:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.3 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.4 2016/03/19 11:30:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1880,7 +1880,7 @@ config_detach_all(int how)
 	device_t curdev;
 	bool progress = false;
 
-	if ((how & RB_NOSYNC) != 0)
+	if ((how & (RB_NOSYNC|RB_DUMP)) != 0)
 		return false;
 
 	for (curdev = shutdown_first(&s); curdev != NULL;
@@ -2649,6 +2649,8 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 	old_handlers = dev->dv_activity_handlers;
 	old_size = dev->dv_activity_count;
 
+	KASSERT(old_size == 0 || old_handlers != NULL);
+
 	for (i = 0; i < old_size; ++i) {
 		KASSERT(old_handlers[i] != handler);
 		if (old_handlers[i] == NULL) {
@@ -2660,17 +2662,18 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 	new_size = old_size + 4;
 	new_handlers = kmem_alloc(sizeof(void *[new_size]), KM_SLEEP);
 
-	memcpy(new_handlers, old_handlers, sizeof(void *[old_size]));
+	for (i = 0; i < old_size; ++i)
+		new_handlers[i] = old_handlers[i];
 	new_handlers[old_size] = handler;
-	memset(new_handlers + old_size + 1, 0,
-	    sizeof(int [new_size - (old_size+1)]));
+	for (i = old_size+1; i < new_size; ++i)
+		new_handlers[i] = NULL;
 
 	s = splhigh();
 	dev->dv_activity_count = new_size;
 	dev->dv_activity_handlers = new_handlers;
 	splx(s);
 
-	if (old_handlers != NULL)
+	if (old_size > 0)
 		kmem_free(old_handlers, sizeof(void * [old_size]));
 
 	return true;

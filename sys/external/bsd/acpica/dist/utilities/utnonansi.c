@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -332,8 +332,8 @@ AcpiUtStrtoul64 (
 
         /* Divide the digit into the correct position */
 
-        (void) AcpiUtShortDivide ((Dividend - (UINT64) ThisDigit),
-                    Base, &Quotient, NULL);
+        (void) AcpiUtShortDivide (
+            (Dividend - (UINT64) ThisDigit), Base, &Quotient, NULL);
 
         if (ReturnValue > Quotient)
         {

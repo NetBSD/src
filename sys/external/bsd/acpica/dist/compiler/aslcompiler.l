@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -156,6 +156,9 @@ NamePathTail                [.]{NameSeg}
 "^="                        { count (3); return (PARSEOP_EXP_XOR_EQ); }
 "|="                        { count (3); return (PARSEOP_EXP_OR_EQ); }
 
+"["                         { count (3); return(PARSEOP_EXP_INDEX_LEFT); }
+"]"                         { count (0); return(PARSEOP_EXP_INDEX_RIGHT); }
+
 
     /*
      * Begin standard ASL grammar
@@ -207,7 +210,7 @@ NamePathTail                [.]{NameSeg}
 "Debug"                     { count (1); return (PARSEOP_DEBUG); }
 "Decrement"                 { count (3); return (PARSEOP_DECREMENT); }
 "Default"                   { count (3); return (PARSEOP_DEFAULT); }
-"DefinitionBlock"           { count (1); return (PARSEOP_DEFINITIONBLOCK); }
+"DefinitionBlock"           { count (1); return (PARSEOP_DEFINITION_BLOCK); }
 "DeRefOf"                   { count (3); return (PARSEOP_DEREFOF); }
 "Device"                    { count (2); return (PARSEOP_DEVICE); }
 "Divide"                    { count (3); return (PARSEOP_DIVIDE); }

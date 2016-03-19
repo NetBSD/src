@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.buildboot,v 1.1 2014/02/24 07:23:43 skrll Exp $
+#	$NetBSD: Makefile.buildboot,v 1.1.12.1 2016/03/19 11:30:00 skrll Exp $
 
+NODEBUG=yes
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
 #DEBUGFLAGS=-DDEBUG

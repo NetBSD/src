@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.4.2.1 2015/06/06 14:40:29 skrll Exp $	*/
+/*	$NetBSD: cons.c,v 1.4.2.2 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.4.2.1 2015/06/06 14:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.4.2.2 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.4.2.1 2015/06/06 14:40:29 skrll Exp $");
 #include <sys/stat.h>
 #include <sys/termios.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 static int rumpcons_write(struct file *, off_t *, struct uio *,
 			  kauth_cred_t, int);

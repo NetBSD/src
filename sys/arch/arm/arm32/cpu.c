@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.106.2.4 2015/12/27 12:09:30 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.106.2.5 2016/03/19 11:29:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106.2.4 2015/12/27 12:09:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106.2.5 2016/03/19 11:29:55 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ cpu_attach(device_t dv, cpuid_t id)
 
 		/* Get the CPU ID from coprocessor 15 */
 
-		ci->ci_arm_cpuid = cpu_id();
+		ci->ci_arm_cpuid = cpu_idnum();
 		ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
 		ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 	} else {
@@ -513,6 +513,14 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA17R1,	CPU_CLASS_CORTEX,	"Cortex-A17 r1",
 	  pN_steppings, "7A" },
+	{ CPU_ID_CORTEXA53R0,	CPU_CLASS_CORTEX,	"Cortex-A53 r0",
+	  pN_steppings, "8A" },
+	{ CPU_ID_CORTEXA57R0,	CPU_CLASS_CORTEX,	"Cortex-A57 r0",
+	  pN_steppings, "8A" },
+	{ CPU_ID_CORTEXA57R1,	CPU_CLASS_CORTEX,	"Cortex-A57 r1",
+	  pN_steppings, "8A" },
+	{ CPU_ID_CORTEXA72R0,	CPU_CLASS_CORTEX,	"Cortex-A72 r0",
+	  pN_steppings, "8A" },
 
 	{ CPU_ID_MV88SV581X_V6, CPU_CLASS_PJ4B,      "Sheeva 88SV581x",
 	  generic_steppings },

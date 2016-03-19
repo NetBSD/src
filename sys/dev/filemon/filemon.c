@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.8.4.3 2015/12/27 12:09:49 skrll Exp $ */
+/*      $NetBSD: filemon.c,v 1.8.4.4 2016/03/19 11:30:09 skrll Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.8.4.3 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.8.4.4 2016/03/19 11:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -115,7 +115,7 @@ filemon_output(struct filemon * filemon, char *msg, size_t len)
 		cp = strchr(msg, '\n');
 		if (cp && cp - msg <= 16)
 			x = (cp - msg) - 2;
-		log(logLevel, "filemont_output:('%.*s%s'", x,
+		log(logLevel, "filemon_output:('%.*s%s'", x,
 		    (x < 16) ? "..." : "", msg);
 	}
 #endif
@@ -142,6 +142,7 @@ filemon_printf(struct filemon *filemon, const char *fmt, ...)
 static void
 filemon_comment(struct filemon * filemon)
 {
+
 	filemon_printf(filemon, "# filemon version %d\n# Target pid %d\nV %d\n",
 	   FILEMON_VERSION, curproc->p_pid, FILEMON_VERSION);
 }
@@ -153,13 +154,14 @@ filemon_pid_check(struct proc * p)
 	struct filemon *filemon;
 	struct proc * lp;
 
+	KASSERT(p != NULL);
 	if (!TAILQ_EMPTY(&filemons_inuse)) {
+		/*
+		 * make sure p cannot exit
+		 * until we have moved on to p_pptr
+		 */
+		rw_enter(&p->p_reflock, RW_READER);
 		while (p) {
-			/*
-			 * make sure p cannot exit
-			 * until we have moved on to p_pptr
-			 */
-			rw_enter(&p->p_reflock, RW_READER);
 			TAILQ_FOREACH(filemon, &filemons_inuse, fm_link) {
 				if (p->p_pid == filemon->fm_pid) {
 					rw_exit(&p->p_reflock);
@@ -168,6 +170,10 @@ filemon_pid_check(struct proc * p)
 			}
 			lp = p;
 			p = p->p_pptr;
+
+			/* lock parent before releasing child */
+			if (p != NULL)
+				rw_enter(&p->p_reflock, RW_READER);
 			rw_exit(&lp->p_reflock);
 		}
 	}
@@ -221,7 +227,6 @@ filemon_open(dev_t dev, int oflags __unused, int mode __unused,
 
 	filemon = kmem_alloc(sizeof(struct filemon), KM_SLEEP);
 	rw_init(&filemon->fm_mtx);
-	filemon->fm_fd = -1;
 	filemon->fm_fp = NULL;
 	filemon->fm_pid = curproc->p_pid;
 
@@ -264,7 +269,7 @@ filemon_close(struct file * fp)
 	 */
 	rw_enter(&filemon->fm_mtx, RW_WRITER);
 	if (filemon->fm_fp) {
-		fd_putfile(filemon->fm_fd);	/* release our reference */
+		closef(filemon->fm_fp);	/* release our reference */
 		filemon->fm_fp = NULL;
 	}
 	rw_exit(&filemon->fm_mtx);
@@ -278,6 +283,7 @@ static int
 filemon_ioctl(struct file * fp, u_long cmd, void *data)
 {
 	int error = 0;
+	int fd;
 	struct filemon *filemon;
 	struct proc *tp;
 
@@ -300,11 +306,11 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 
 		/* First, release any current output file descriptor */
 		if (filemon->fm_fp)
-			fd_putfile(filemon->fm_fd);
+			closef(filemon->fm_fp);
 
 		/* Now set up the new one */
-		filemon->fm_fd = *((int *) data);
-		if ((filemon->fm_fp = fd_getfile(filemon->fm_fd)) == NULL) {
+		fd = *((int *) data);
+		if ((filemon->fm_fp = fd_getfile2(curproc, fd)) == NULL) {
 			error = EBADF;
 			break;
 		}
@@ -316,10 +322,10 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		/* Set the monitored process ID - if allowed. */
 		mutex_enter(proc_lock);
 		tp = proc_find(*((pid_t *) data));
-		mutex_exit(proc_lock);
 		if (tp == NULL ||
 		    tp->p_emul != &emul_netbsd) {
 			error = ESRCH;
+			mutex_exit(proc_lock);
 			break;
 		}
 
@@ -329,6 +335,7 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		if (!error) {
 			filemon->fm_pid = tp->p_pid;
 		}
+		mutex_exit(proc_lock);
 		break;
 
 	default:
@@ -391,8 +398,10 @@ static int
 filemon_modcmd(modcmd_t cmd, void *data)
 {
 	int error = 0;
+#ifdef _MODULE
 	int bmajor = -1;
 	int cmajor = -1;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -401,15 +410,19 @@ filemon_modcmd(modcmd_t cmd, void *data)
 #endif
 
 		error = filemon_load(data);
+#ifdef _MODULE
 		if (!error)
 			error = devsw_attach("filemon", NULL, &bmajor,
 			    &filemon_cdevsw, &cmajor);
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
 		error = filemon_unload();
+#ifdef _MODULE
 		if (!error)
 			error = devsw_detach(NULL, &filemon_cdevsw);
+#endif
 		break;
 
 	case MODULE_CMD_STAT:

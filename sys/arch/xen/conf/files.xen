@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.134.2.2 2015/12/27 12:09:45 skrll Exp $
+#	$NetBSD: files.xen,v 1.134.2.3 2016/03/19 11:30:07 skrll Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -105,6 +105,8 @@ file	arch/x86/isa/rtc.c		dom0ops
 file	arch/xen/xen/evtchn.c
 
 file	arch/xen/xen/xengnt.c
+
+file	arch/x86/x86/cpu_rng.c
 
 file	dev/cons.c
 

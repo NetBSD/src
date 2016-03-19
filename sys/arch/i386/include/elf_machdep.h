@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2009/05/30 05:56:52 skrll Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.40.1 2016/03/19 11:30:00 skrll Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -26,6 +26,7 @@
 #define	R_386_RELATIVE	8
 #define	R_386_GOTOFF	9
 #define	R_386_GOTPC	10
+#define	R_386_32PLT	11
 
 /* TLS relocations */
 #define	R_386_TLS_TPOFF	14
@@ -56,8 +57,15 @@
 #define	R_386_TLS_DTPMOD32	35
 #define	R_386_TLS_DTPOFF32	36
 #define	R_386_TLS_TPOFF32	37
+
+#define R_386_SIZE32		38
+
+/* More TLS relocations */
 #define	R_386_TLS_GOTDESC	39
 #define	R_386_TLS_DESC_CALL	40
 #define	R_386_TLS_DESC		41
+
+#define R_386_IRELATIVE		42
+#define R_386_GOT32X		43
 
 #define	R_TYPE(name)	__CONCAT(R_386_,name)

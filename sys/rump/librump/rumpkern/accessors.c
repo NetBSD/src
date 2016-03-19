@@ -1,4 +1,4 @@
-/*	$NetBSD: accessors.c,v 1.1.12.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: accessors.c,v 1.1.12.2 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -32,14 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accessors.c,v 1.1.12.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accessors.c,v 1.1.12.2 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/uio.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 struct uio *
 rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)

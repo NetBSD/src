@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.12.30.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.12.30.2 2016/03/19 11:30:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12.30.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12.30.2 2016/03/19 11:30:31 skrll Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -81,6 +81,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 		if (strchr(name,  '/') != NULL) {
 			nochroot = false;
 			snprintf(path, MAXPATHLEN, "%s", name);
+			module_print("Loading module from %s", path);
 			error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
 		} else
 			error = ENOENT;
@@ -90,6 +91,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 			nochroot = true;
 			snprintf(path, MAXPATHLEN, "%s/%s/%s.kmod",
 			    module_base, name, name);
+			module_print("Loading module from %s", path);
 			error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
 		} else
 			error = ENOENT;
@@ -177,6 +179,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 		error = ENOMEM;
 		goto out1;
 	}
+	module_print("Loading plist from %s", proppath);
 	
 	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0), pb);
 

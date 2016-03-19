@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.63.4.1 2015/09/22 12:06:06 skrll Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.63.4.2 2016/03/19 11:30:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.63.4.1 2015/09/22 12:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.63.4.2 2016/03/19 11:30:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -93,6 +93,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	uint64_t memlimit;
 	ino_t nodes;
 	int error;
+	bool set_memlimit;
+	bool set_nodes;
 
 	if (args == NULL)
 		return EINVAL;
@@ -137,26 +139,33 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* Get the memory usage limit for this file-system. */
 	if (args->ta_size_max < PAGE_SIZE) {
 		memlimit = UINT64_MAX;
+		set_memlimit = false;
 	} else {
 		memlimit = args->ta_size_max;
+		set_memlimit = true;
 	}
 	KASSERT(memlimit > 0);
 
 	if (args->ta_nodes_max <= 3) {
 		nodes = 3 + (memlimit / 1024);
+		set_nodes = false;
 	} else {
 		nodes = args->ta_nodes_max;
+		set_nodes = true;
 	}
 	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
 
 	if (mp->mnt_flag & MNT_UPDATE) {
 		tmp = VFS_TO_TMPFS(mp);
-		if (nodes < tmp->tm_nodes_cnt)
+		if (set_nodes && nodes < tmp->tm_nodes_cnt)
 			return EBUSY;
-		if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
-			return error;
-		tmp->tm_nodes_max = nodes;
+		if (set_memlimit) {
+			if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
+				return error;
+		}
+		if (set_nodes)
+			tmp->tm_nodes_max = nodes;
 		root = tmp->tm_root;
 		root->tn_uid = args->ta_root_uid;
 		root->tn_gid = args->ta_root_gid;
@@ -201,7 +210,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
 	mp->mnt_fs_bshift = PAGE_SHIFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,

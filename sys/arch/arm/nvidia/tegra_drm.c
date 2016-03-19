@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.5.2.2 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.5.2.3 2016/03/19 11:29:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.5.2.2 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.5.2.3 2016/03/19 11:29:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -350,6 +350,8 @@ tegra_drm_dumb_map_offset(struct drm_file *file_priv,
 		error = drm_gem_create_mmap_offset(&obj->base);
 		if (error)
 			goto done;
+	} else {
+		error = 0;
 	}
 
 	*offset = drm_vma_node_offset_addr(&obj->base.vma_node);

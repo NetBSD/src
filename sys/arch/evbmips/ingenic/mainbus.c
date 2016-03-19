@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $ */
+/*	$NetBSD: mainbus.c,v 1.1.2.2 2016/03/19 11:29:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,9 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.2.2 2016/03/19 11:29:59 skrll Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +60,9 @@ struct mainbusdev {
 
 struct mainbusdev mainbusdevs[] = {
 	{ "cpu",	},
-	{ "com",	},
+#ifdef MULTIPROCESSOR
+	{ "cpu",	},
+#endif
 	{ "apbus",	},
 	{ NULL,		}
 };

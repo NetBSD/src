@@ -1,4 +1,4 @@
-/* $NetBSD: filemon.h,v 1.5.6.2 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: filemon.h,v 1.5.6.3 2016/03/19 11:30:09 skrll Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -41,7 +41,6 @@ struct filemon {
 	char fm_fname1[MAXPATHLEN];/* Temporary filename buffer. */
 	char fm_fname2[MAXPATHLEN];/* Temporary filename buffer. */
 	char fm_msgbufr[32 + 2 * MAXPATHLEN];	/* Output message buffer. */
-	int fm_fd;			/* Output fd */
 	struct file *fm_fp;	/* Output file pointer. */
 	krwlock_t fm_mtx;		/* Lock mutex for this filemon. */
 	TAILQ_ENTRY(filemon) fm_link;	/* Link into the in-use list. */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.3.2.2 2015/12/27 12:10:03 skrll Exp $
+#	$NetBSD: files.nouveau,v 1.3.2.3 2016/03/19 11:30:30 skrll Exp $
 
 define	nouveaufbbus	{ }
 device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
@@ -19,9 +19,8 @@ makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core/include"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/nouveau"
 
-# XXX DEBUG ALL THE BUGS!
-makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG=1000"
-makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG_DEFAULT=6"
+makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG=5"
+makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG_DEFAULT=3"
 
 # XXX If you find a way to apply the warning flags to all Nouveau
 # sources, please apply it here and remove this stupidly gigantic list!
@@ -129,7 +128,7 @@ makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nv98.c"+="-Wno-missing-field-i
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nvc0.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nve0.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nv50_fence.c"+="-Wno-shadow"
-makeoptions	nouveau	"CWARNFLAGS.nouveau_nv50_display.c"+="-Wno-unused-but-set-variable"
+makeoptions 	nouveau	"CWARNFLAGS.nouveau_nv50_display.c"+="${${ACTIVE_CC} == gcc:? -Wno-unused-but-set-variable :}"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_base.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_nv50.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_nvc0.c"+="-Wno-missing-field-initializers"

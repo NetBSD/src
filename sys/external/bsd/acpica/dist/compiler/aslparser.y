@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -122,6 +122,8 @@ m4_include(asltypes.y)
 /* Production rules */
 
 m4_include(aslrules.y)
+m4_include(aslcstyle.y)
+m4_include(aslresources.y)
 %%
 
 /*! [End] no source code translation !*/

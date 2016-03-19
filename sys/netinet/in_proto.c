@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.110.4.4 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.110.4.5 2016/03/19 11:30:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.4 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.5 2016/03/19 11:30:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -199,7 +199,6 @@ PR_WRAP_CTLINPUT(esp4_ctlinput)
 const struct protosw inetsw[] = {
 {	.pr_domain = &inetdomain,
 	.pr_init = ip_init,
-	.pr_output = ip_output,
 	.pr_fasttimo = ip_fasttimo,
 	.pr_slowtimo = ip_slowtimo,
 	.pr_drain = ip_drainstub,
@@ -276,7 +275,6 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_RAW,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_PURGEIF,
 	.pr_input = rip_input,
-	.pr_output = rip_output,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -286,7 +284,6 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_ICMP,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = icmp_input,
-	.pr_output = rip_output,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -326,7 +323,6 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_IPV4,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = encap4_input,
-	.pr_output = rip_output,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -338,7 +334,6 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_IPV6,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = encap4_input,
-	.pr_output = rip_output,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -351,7 +346,6 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_ETHERIP,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = ip_etherip_input,
-	.pr_output = rip_output,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -363,7 +357,6 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_CARP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = carp_proto_input,
-	.pr_output = rip_output,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
 	.pr_init = carp_init,
@@ -375,7 +368,6 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_PFSYNC,
 	.pr_flags	 = PR_ATOMIC|PR_ADDR,
 	.pr_input	 = pfsync_input,
-	.pr_output	 = rip_output,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs	 = &rip_usrreqs,
 },
@@ -384,8 +376,7 @@ const struct protosw inetsw[] = {
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_IGMP,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = igmp_input,
-	.pr_output = rip_output,
+	.pr_input = igmp_input, 
 	.pr_ctloutput = rip_ctloutput,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -398,8 +389,7 @@ const struct protosw inetsw[] = {
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_PIM,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = pim_input,
-	.pr_output = rip_output,
+	.pr_input = pim_input, 
 	.pr_ctloutput = rip_ctloutput,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -409,8 +399,7 @@ const struct protosw inetsw[] = {
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = rip_input,
-	.pr_output = rip_output,
+	.pr_input = rip_input, 
 	.pr_ctloutput = rip_ctloutput,
 	.pr_ctlinput = rip_ctlinput,
 	.pr_usrreqs = &rip_usrreqs,

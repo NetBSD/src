@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.3.38.2 2015/12/27 12:10:08 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.3.38.3 2016/03/19 11:30:33 skrll Exp $
 #
 
 RUMPTOP=	${.CURDIR}/../../..
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpdev
 
 RUMPDEVLIBDIR:= ${.PARSEDIR}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_generic_pmap.c,v 1.2.12.2 2015/06/06 14:40:29 skrll Exp $	*/
+/*	$NetBSD: rump_generic_pmap.c,v 1.2.12.3 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_generic_pmap.c,v 1.2.12.2 2015/06/06 14:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_generic_pmap.c,v 1.2.12.3 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 /*
  * This is the MI pmap implementation for rump kernels.  It's used only by

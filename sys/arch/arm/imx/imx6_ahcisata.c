@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.2 2014/10/06 10:27:13 ryo Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.2.2.1 2016/03/19 11:29:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.2 2014/10/06 10:27:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.2.2.1 2016/03/19 11:29:56 skrll Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -259,7 +259,7 @@ static int
 ixm6_ahcisata_init(struct imx_ahci_softc *sc)
 {
 	uint32_t v;
-	int timeout;
+	int timeout, pllstat;
 
 	/* AHCISATA clock enable */
 	v = imx6_ccm_read(CCM_CCGR5);
@@ -308,13 +308,13 @@ ixm6_ahcisata_init(struct imx_ahci_softc *sc)
 
 	for (timeout = 50; timeout > 0; --timeout) {
 		delay(100);
-		v = imx6_ahcisata_phy_read(sc, SATA_PHY_LANE0_OUT_STAT);
-		if (v < 0) {
+		pllstat = imx6_ahcisata_phy_read(sc, SATA_PHY_LANE0_OUT_STAT);
+		if (pllstat < 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "cannot read LANE0 status\n");
 			break;
 		}
-		if (v & SATA_PHY_LANE0_OUT_STAT_RX_PLL_STATE)
+		if (pllstat & SATA_PHY_LANE0_OUT_STAT_RX_PLL_STATE)
 			break;
 	}
 	if (timeout <= 0)

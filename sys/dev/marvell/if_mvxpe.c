@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.2.2.2 2015/06/06 14:40:08 skrll Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.2.2.3 2016/03/19 11:30:10 skrll Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.2.2.2 2015/06/06 14:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.2.2.3 2016/03/19 11:30:10 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -189,67 +189,71 @@ STATIC struct mvxpe_mib_def {
 	int reg64;
 	const char *sysctl_name;
 	const char *desc;
+	int ext;
+#define MVXPE_MIBEXT_IF_OERRORS	1
+#define MVXPE_MIBEXT_IF_IERRORS	2
+#define MVXPE_MIBEXT_IF_COLLISIONS	3
 } mvxpe_mib_list[] = {
 	{MVXPE_MIB_RX_GOOD_OCT, 1,	"rx_good_oct",
-	    "Good Octets Rx"},
+	    "Good Octets Rx", 0},
 	{MVXPE_MIB_RX_BAD_OCT, 0,	"rx_bad_oct",
-	    "Bad  Octets Rx"},
-	{MVXPE_MIB_RX_MAC_TRNS_ERR, 0,	"rx_mac_err",
-	    "MAC Transmit Error"},
+	    "Bad  Octets Rx", 0},
+	{MVXPE_MIB_TX_MAC_TRNS_ERR, 0,	"tx_mac_err",
+	    "MAC Transmit Error", MVXPE_MIBEXT_IF_OERRORS},
 	{MVXPE_MIB_RX_GOOD_FRAME, 0,	"rx_good_frame",
-	    "Good Frames Rx"},
+	    "Good Frames Rx", 0},
 	{MVXPE_MIB_RX_BAD_FRAME, 0,	"rx_bad_frame",
-	    "Bad Frames Rx"},
+	    "Bad Frames Rx", 0},
 	{MVXPE_MIB_RX_BCAST_FRAME, 0,	"rx_bcast_frame",
-	    "Broadcast Frames Rx"},
+	    "Broadcast Frames Rx", 0},
 	{MVXPE_MIB_RX_MCAST_FRAME, 0,	"rx_mcast_frame",
-	    "Multicast Frames Rx"},
+	    "Multicast Frames Rx", 0},
 	{MVXPE_MIB_RX_FRAME64_OCT, 0,	"rx_frame_1_64",
-	    "Frame Size    1 -   64"},
+	    "Frame Size    1 -   64", 0},
 	{MVXPE_MIB_RX_FRAME127_OCT, 0,	"rx_frame_65_127",
-	    "Frame Size   65 -  127"},
+	    "Frame Size   65 -  127", 0},
 	{MVXPE_MIB_RX_FRAME255_OCT, 0,	"rx_frame_128_255",
-	    "Frame Size  128 -  255"},
+	    "Frame Size  128 -  255", 0},
 	{MVXPE_MIB_RX_FRAME511_OCT, 0,	"rx_frame_256_511",
 	    "Frame Size  256 -  511"},
 	{MVXPE_MIB_RX_FRAME1023_OCT, 0,	"rx_frame_512_1023",
-	    "Frame Size  512 - 1023"},
+	    "Frame Size  512 - 1023", 0},
 	{MVXPE_MIB_RX_FRAMEMAX_OCT, 0,	"rx_fame_1024_max",
-	    "Frame Size 1024 -  Max"},
+	    "Frame Size 1024 -  Max", 0},
 	{MVXPE_MIB_TX_GOOD_OCT, 1,	"tx_good_oct",
-	    "Good Octets Tx"},
+	    "Good Octets Tx", 0},
 	{MVXPE_MIB_TX_GOOD_FRAME, 0,	"tx_good_frame",
-	    "Good Frames Tx"},
+	    "Good Frames Tx", 0},
 	{MVXPE_MIB_TX_EXCES_COL, 0,	"tx_exces_collision",
-	    "Excessive Collision"},
+	    "Excessive Collision", MVXPE_MIBEXT_IF_OERRORS},
 	{MVXPE_MIB_TX_MCAST_FRAME, 0,	"tx_mcast_frame",
 	    "Multicast Frames Tx"},
 	{MVXPE_MIB_TX_BCAST_FRAME, 0,	"tx_bcast_frame",
 	    "Broadcast Frames Tx"},
 	{MVXPE_MIB_TX_MAC_CTL_ERR, 0,	"tx_mac_err",
-	    "Unknown MAC Control"},
+	    "Unknown MAC Control", 0},
 	{MVXPE_MIB_FC_SENT, 0,		"fc_tx",
-	    "Flow Control Tx"},
+	    "Flow Control Tx", 0},
 	{MVXPE_MIB_FC_GOOD, 0,		"fc_rx_good",
-	    "Good Flow Control Rx"},
+	    "Good Flow Control Rx", 0},
 	{MVXPE_MIB_FC_BAD, 0,		"fc_rx_bad",
-	    "Bad Flow Control Rx"},
+	    "Bad Flow Control Rx", 0},
 	{MVXPE_MIB_PKT_UNDERSIZE, 0,	"pkt_undersize",
-	    "Undersized Packets Rx"},
+	    "Undersized Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_PKT_FRAGMENT, 0,	"pkt_fragment",
-	    "Fragmented Packets Rx"},
+	    "Fragmented Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_PKT_OVERSIZE, 0,	"pkt_oversize",
-	    "Oversized Packets Rx"},
+	    "Oversized Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_PKT_JABBER, 0,	"pkt_jabber",
-	    "Jabber Packets Rx"},
+	    "Jabber Packets Rx", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_MAC_RX_ERR, 0,	"mac_rx_err",
-	    "MAC Rx Errors"},
+	    "MAC Rx Errors", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_MAC_CRC_ERR, 0,	"mac_crc_err",
-	    "MAC CRC Errors"},
+	    "MAC CRC Errors", MVXPE_MIBEXT_IF_IERRORS},
 	{MVXPE_MIB_MAC_COL, 0,		"mac_collision",
-	    "MAC Collision"},
+	    "MAC Collision", MVXPE_MIBEXT_IF_COLLISIONS},
 	{MVXPE_MIB_MAC_LATE_COL, 0,	"mac_late_collision",
-	    "MAC Late Collision"},
+	    "MAC Late Collision", MVXPE_MIBEXT_IF_OERRORS},
 };
 
 /*
@@ -850,7 +854,6 @@ mvxpe_initreg(struct ifnet *ifp)
 			aprint_error_ifnet(ifp,
 			    "initialization failed: cannot initialize queue\n");
 			mvxpe_rx_unlockq(sc, q);
-			mvxpe_tx_unlockq(sc, q);
 			return ENOBUFS;
 		}
 		mvxpe_rx_unlockq(sc, q);
@@ -859,7 +862,6 @@ mvxpe_initreg(struct ifnet *ifp)
 		if (mvxpe_tx_queue_init(ifp, q) != 0) {
 			aprint_error_ifnet(ifp,
 			    "initialization failed: cannot initialize queue\n");
-			mvxpe_rx_unlockq(sc, q);
 			mvxpe_tx_unlockq(sc, q);
 			return ENOBUFS;
 		}
@@ -921,6 +923,13 @@ mvxpe_initreg(struct ifnet *ifp)
 	/* Port MAC Control set 3 is used for IPG tune */
 
 	/* Port MAC Control set 4 is not used */
+
+	/* Port Configuration */
+	/* Use queue 0 only */
+	reg = MVXPE_READ(sc, MVXPE_PXC);
+	reg &= ~(MVXPE_PXC_RXQ_MASK | MVXPE_PXC_RXQARP_MASK |
+	    MVXPE_PXC_TCPQ_MASK | MVXPE_PXC_UDPQ_MASK | MVXPE_PXC_BPDUQ_MASK);
+	MVXPE_WRITE(sc, MVXPE_PXC, reg);
 
 	/* Port Configuration Extended: enable Tx CRC generation */
 	reg = MVXPE_READ(sc, MVXPE_PXCX);
@@ -1279,11 +1288,6 @@ mvxpe_rx_queue_enable(struct ifnet *ifp, int q)
 	reg  = MVXPE_PRXITTH_RITT(rx->rx_queue_th_time);
 	MVXPE_WRITE(sc, MVXPE_PRXITTH(q), reg);
 
-	/* Unmask RXTX Intr. */
-	reg = MVXPE_READ(sc, MVXPE_PRXTXIM);
-	reg |= MVXPE_PRXTXI_RREQ(q); /* Rx resource error */
-	MVXPE_WRITE(sc, MVXPE_PRXTXIM, reg);
-
 	/* Unmask RXTX_TH Intr. */
 	reg = MVXPE_READ(sc, MVXPE_PRXTXTIM);
 	reg |= MVXPE_PRXTXTI_RBICTAPQ(q); /* Rx Buffer Interrupt Coalese */
@@ -1385,15 +1389,19 @@ mvxpe_enable_intr(struct mvxpe_softc *sc)
 	reg |= MVXPE_PMI_RXCRCERROR;
 	reg |= MVXPE_PMI_RXLARGEPACKET;
 	reg |= MVXPE_PMI_TXUNDRN;
+#if 0
+	/*
+	 * The device may raise false interrupts for SERDES even if the device
+	 * is not configured to use SERDES connection.
+	 */
 	reg |= MVXPE_PMI_PRBSERROR;
 	reg |= MVXPE_PMI_SRSE;
+#else
+	reg &= ~MVXPE_PMI_PRBSERROR;
+	reg &= ~MVXPE_PMI_SRSE;
+#endif
 	reg |= MVXPE_PMI_TREQ_MASK;
 	MVXPE_WRITE(sc, MVXPE_PMIM, reg);
-
-	/* Enable RXTX Intr. (via RXTX_TH Summary bit) */
-	reg  = MVXPE_READ(sc, MVXPE_PRXTXIM);
-	reg |= MVXPE_PRXTXI_RREQ_MASK; /* Rx resource error */
-	MVXPE_WRITE(sc, MVXPE_PRXTXIM, reg);
 
 	/* Enable Summary Bit to check all interrupt cause. */
 	reg  = MVXPE_READ(sc, MVXPE_PRXTXTIM);
@@ -1421,8 +1429,10 @@ mvxpe_rxtxth_intr(void *arg)
 
 	mvxpe_sc_lock(sc);
 	ic = MVXPE_READ(sc, MVXPE_PRXTXTIC);
-	if (ic == 0)
+	if (ic == 0) {
+		mvxpe_sc_unlock(sc);
 		return 0;
+	}
 	MVXPE_WRITE(sc, MVXPE_PRXTXTIC, ~ic);
 	datum = datum ^ ic;
 
@@ -1441,8 +1451,10 @@ mvxpe_rxtxth_intr(void *arg)
 		DPRINTIFNET(ifp, 2, "PTXTXTIC: +PRXTXICSUMMARY\n");
 		mvxpe_rxtx_intr(sc);
 	}
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if (!(ifp->if_flags & IFF_RUNNING)) {
+		mvxpe_sc_unlock(sc);
 		return 1;
+	}
 
 	/* RxTxTH interrupt */
 	queues = MVXPE_PRXTXTI_GET_RBICTAPQ(ic);
@@ -1689,6 +1701,7 @@ mvxpe_start(struct ifnet *ifp)
 		    sc->sc_tx_ring[q].tx_queue_len);
 		DPRINTIFNET(ifp, 1, "a packet is added to tx ring\n");
 		sc->sc_tx_pending++;
+		ifp->if_opackets++;
 		ifp->if_timer = 1;
 		sc->sc_wdogsoft = 1;
 		bpf_mtap(ifp, m);
@@ -2128,7 +2141,7 @@ mvxpe_tx_queue(struct mvxpe_softc *sc, struct mbuf *m, int q)
 	MVXPE_TX_MBUF(sc, q, tx->tx_cpu) = m;
 	bus_dmamap_sync(sc->sc_dmat,
 	    MVXPE_TX_MAP(sc, q, tx->tx_cpu), 0, m->m_pkthdr.len,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* load to tx descriptors */
 	start = tx->tx_cpu;
@@ -2316,12 +2329,16 @@ mvxpe_tx_queue_complete(struct mvxpe_softc *sc, int q)
 			switch (t->flags & MVXPE_TX_F_EC_MASK) {
 			case MVXPE_TX_F_EC_LC:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_lc);
+				break;
 			case MVXPE_TX_F_EC_UR:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_ur);
+				break;
 			case MVXPE_TX_F_EC_RL:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_rl);
+				break;
 			default:
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_txd_oth);
+				break;
 			}
 			error = 1;
 		}
@@ -2448,7 +2465,7 @@ mvxpe_rx_queue(struct mvxpe_softc *sc, int q, int npkt)
 		mvxpe_rx_set_csumflag(ifp, r, m);
 		ifp->if_ipackets++;
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		chunk = NULL; /* the BM chunk goes to networking stack now */
 rx_done:
 		if (chunk) {
@@ -2615,8 +2632,9 @@ mvxpe_rx_set_csumflag(struct ifnet *ifp,
 
 	/* L3 */
 	if (r->status & MVXPE_RX_L3_IP) {
-		csum_flags |= M_CSUM_IPv4;
-		if ((r->status & MVXPE_RX_IP_HEADER_OK) == 0) {
+		csum_flags |= M_CSUM_IPv4 & ifp->if_csum_flags_rx;
+		if ((r->status & MVXPE_RX_IP_HEADER_OK) == 0 &&
+		    (csum_flags & M_CSUM_IPv4) != 0) {
 			csum_flags |= M_CSUM_IPv4_BAD;
 			goto finish;
 		}
@@ -2633,26 +2651,25 @@ mvxpe_rx_set_csumflag(struct ifnet *ifp,
 	switch (r->status & MVXPE_RX_L4_MASK) {
 	case MVXPE_RX_L4_TCP:
 		if (r->status & MVXPE_RX_L3_IP)
-			csum_flags |= M_CSUM_TCPv4;
+			csum_flags |= M_CSUM_TCPv4 & ifp->if_csum_flags_rx;
 		else
-			csum_flags |= M_CSUM_TCPv6;
-		if ((r->status & MVXPE_RX_L4_CHECKSUM_OK) == 0)
-			csum_flags |= M_CSUM_TCP_UDP_BAD;
+			csum_flags |= M_CSUM_TCPv6 & ifp->if_csum_flags_rx;
 		break;
 	case MVXPE_RX_L4_UDP:
 		if (r->status & MVXPE_RX_L3_IP)
-			csum_flags |= M_CSUM_UDPv4;
+			csum_flags |= M_CSUM_UDPv4 & ifp->if_csum_flags_rx;
 		else
-			csum_flags |= M_CSUM_UDPv6;
-		if ((r->status & MVXPE_RX_L4_CHECKSUM_OK) == 0)
-			csum_flags |= M_CSUM_TCP_UDP_BAD;
+			csum_flags |= M_CSUM_UDPv6 & ifp->if_csum_flags_rx;
 		break;
 	case MVXPE_RX_L4_OTH:
 	default:
 		break;
 	}
+	if ((r->status & MVXPE_RX_L4_CHECKSUM_OK) == 0 && (csum_flags &
+	    (M_CSUM_TCPv4 | M_CSUM_TCPv6 | M_CSUM_UDPv4 | M_CSUM_UDPv6)) != 0)
+		csum_flags |= M_CSUM_TCP_UDP_BAD;
 finish:
-	m0->m_pkthdr.csum_flags |= (csum_flags & ifp->if_csum_flags_rx);
+	m0->m_pkthdr.csum_flags = csum_flags;
 }
 
 /*
@@ -2707,11 +2724,11 @@ mvxpe_filter_setup(struct mvxpe_softc *sc)
 		if (memcmp(enm->enm_addrlo, special, 5) == 0) {
 			i = enm->enm_addrlo[5];
 			dfsmt[i>>2] |=
-			    MVXPE_DF(i&3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+			    MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 		} else {
 			i = mvxpe_crc8(enm->enm_addrlo, ETHER_ADDR_LEN);
 			dfomt[i>>2] |=
-			    MVXPE_DF(i&3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+			    MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 		}
 
 		ETHER_NEXT_MULTI(step, enm);
@@ -2722,10 +2739,10 @@ allmulti:
 	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
 		for (i = 0; i < MVXPE_NDFSMT; i++) {
 			dfsmt[i] = dfomt[i] = 
-			    MVXPE_DF(0, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS) |
-			    MVXPE_DF(1, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS) |
-			    MVXPE_DF(2, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS) |
-			    MVXPE_DF(3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+			    MVXPE_DF(0, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(1, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(2, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 		}
 	}
 
@@ -2742,8 +2759,20 @@ set:
 	MVXPE_WRITE(sc, MVXPE_PXC, pxc);
 
 	/* Set Destination Address Filter Unicast Table */
-	i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
-	dfut[i>>2] = MVXPE_DF(i&3, MVXPE_DF_QUEUE_ALL | MVXPE_DF_PASS);
+	if (ifp->if_flags & IFF_PROMISC) {
+		/* pass all unicast addresses */
+		for (i = 0; i < MVXPE_NDFUT; i++) {
+			dfut[i] =
+			    MVXPE_DF(0, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(1, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(2, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
+			    MVXPE_DF(3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
+		}
+	}
+	else {
+		i = sc->sc_enaddr[5] & 0xf;             /* last nibble */
+		dfut[i>>2] = MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
+	}
 	MVXPE_WRITE_REGION(sc, MVXPE_DFUT(0), dfut, MVXPE_NDFUT);
 
 	/* Set Destination Address Filter Multicast Tables */
@@ -3048,7 +3077,7 @@ sysctl_mvxpe_init(struct mvxpe_softc *sc)
 	/* hw.mvxpe.debug */
 	if (sysctl_createv(&sc->sc_mvxpe_clog, 0, NULL, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
-	    SYSCTL_DESCR("mvgbe device driver debug control"),
+	    SYSCTL_DESCR("mvxpe device driver debug control"),
 	    NULL, 0, &mvxpe_debug, 0,
 	    CTL_HW, mvxpe_root_num, CTL_CREATE, CTL_EOL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "couldn't create sysctl node\n");
@@ -3091,10 +3120,10 @@ sysctl_mvxpe_init(struct mvxpe_softc *sc)
 #ifdef SYSCTL_INCLUDE_DESCR
 #define MVXPE_SYSCTL_DESCR(num) "configuration parameters for queue " # num
 		static const char *sysctl_queue_descrs[] = {
-			MVXPE_SYSCTL_DESC(0), MVXPE_SYSCTL_DESC(1),
-			MVXPE_SYSCTL_DESC(2), MVXPE_SYSCTL_DESC(3),
-			MVXPE_SYSCTL_DESC(4), MVXPE_SYSCTL_DESC(5),
-			MVXPE_SYSCTL_DESC(6), MVXPE_SYSCTL_DESC(7),
+			MVXPE_SYSCTL_DESCR(0), MVXPE_SYSCTL_DESCR(1),
+			MVXPE_SYSCTL_DESCR(2), MVXPE_SYSCTL_DESCR(3),
+			MVXPE_SYSCTL_DESCR(4), MVXPE_SYSCTL_DESCR(5),
+			MVXPE_SYSCTL_DESCR(6), MVXPE_SYSCTL_DESCR(7),
 		};
 #undef MVXPE_SYSCTL_DESCR
 #endif /* SYSCTL_INCLUDE_DESCR */
@@ -3171,7 +3200,7 @@ sysctl_mvxpe_init(struct mvxpe_softc *sc)
 	/* hw.mvxpe.mvxpe[unit].clear_mib */
 	if (sysctl_createv(&sc->sc_mvxpe_clog, 0, NULL, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "clear_mib",
-	    SYSCTL_DESCR("mvgbe device driver debug control"),
+	    SYSCTL_DESCR("mvxpe device driver debug control"),
 	    sysctl_clear_mib, 0, (void *)sc, 0,
 	    CTL_HW, mvxpe_root_num, mvxpe_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
@@ -3202,6 +3231,7 @@ mvxpe_clear_mib(struct mvxpe_softc *sc)
 STATIC void
 mvxpe_update_mib(struct mvxpe_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 
 	KASSERT_SC_MTX(sc);
@@ -3209,6 +3239,7 @@ mvxpe_update_mib(struct mvxpe_softc *sc)
 	for (i = 0; i < __arraycount(mvxpe_mib_list); i++) {
 		uint32_t val_hi;
 		uint32_t val_lo;
+		uint64_t val;
 
 		if (mvxpe_mib_list[i].reg64) {
 			/* XXX: implement bus_space_read_8() */
@@ -3224,8 +3255,23 @@ mvxpe_update_mib(struct mvxpe_softc *sc)
 		if ((val_lo | val_hi) == 0)
 			continue;
 
-		sc->sc_sysctl_mib[i].counter +=
-	       	    ((uint64_t)val_hi << 32) | (uint64_t)val_lo;
+		val = ((uint64_t)val_hi << 32) | (uint64_t)val_lo;
+		sc->sc_sysctl_mib[i].counter += val;
+
+		switch (mvxpe_mib_list[i].ext) {
+		case MVXPE_MIBEXT_IF_OERRORS:
+			ifp->if_oerrors += val;
+			break;
+		case MVXPE_MIBEXT_IF_IERRORS:
+			ifp->if_ierrors += val;
+			break;
+		case MVXPE_MIBEXT_IF_COLLISIONS:
+			ifp->if_collisions += val;
+			break;
+		default:
+			break;
+		}
+
 	}
 }
 

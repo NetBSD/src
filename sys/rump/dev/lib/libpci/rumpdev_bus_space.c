@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_space.c,v 1.3.2.2 2015/09/22 12:06:13 skrll Exp $	*/
+/*	$NetBSD: rumpdev_bus_space.c,v 1.3.2.3 2016/03/19 11:30:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -271,6 +271,9 @@ void
 bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_size_t size)
 {
+
+	if (bst == 0)
+		return;
 
 	panic("%s: unimplemented", __func__);
 }

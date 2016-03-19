@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.13 2008/11/25 18:28:05 pooka Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.13.44.1 2016/03/19 11:30:33 skrll Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -39,6 +39,26 @@
 #include <net/radix.h>
 #endif
 
+struct encapsw {
+	union {
+		struct encapsw4 {
+			void	(*pr_input)	/* input to protocol (from below) */
+				(struct mbuf *, int, int);
+			void	*(*pr_ctlinput)		/* control input (from below) */
+				(int, const struct sockaddr *, void *, void *);
+		} _encapsw4;
+		struct encapsw6 {
+			int	(*pr_input)	/* input to protocol (from below) */
+				(struct mbuf **, int *, int);
+			void	*(*pr_ctlinput)		/* control input (from below) */
+				(int, const struct sockaddr *, void *, void *);
+		} _encapsw6;
+	} encapsw46;
+};
+
+#define encapsw4 encapsw46._encapsw4
+#define encapsw6 encapsw46._encapsw6
+
 struct encaptab {
 	struct radix_node nodes[2];
 	LIST_ENTRY(encaptab) chain;
@@ -51,7 +71,7 @@ struct encaptab {
 	struct sockaddr *dst;		/* remote addr */
 	struct sockaddr *dstmask;
 	int (*func) (struct mbuf *, int, int, void *);
-	const struct protosw *psw;	/* only pr_input will be used */
+	const struct encapsw *esw;
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
 };
 
@@ -78,13 +98,24 @@ void	encap4_input(struct mbuf *, ...);
 int	encap6_input(struct mbuf **, int *, int);
 const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
-	const struct sockaddr *, const struct protosw *, void *);
+	const struct sockaddr *, const struct encapsw *, void *);
 const struct encaptab *encap_attach_func(int, int,
 	int (*)(struct mbuf *, int, int, void *),
-	const struct protosw *, void *);
+	const struct encapsw *, void *);
 void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
 void	*encap_getarg(struct mbuf *);
+
+#define	ENCAP_PR_WRAP_CTLINPUT(name)				\
+static void *							\
+name##_wrapper(int a, const struct sockaddr *b, void *c, void *d) \
+{								\
+	void *rv;						\
+	KERNEL_LOCK(1, NULL);					\
+	rv = name(a, b, c, d);					\
+	KERNEL_UNLOCK_ONE(NULL);				\
+	return rv;						\
+}
 #endif
 
 #endif /* !_NETINET_IP_ENCAP_H_ */

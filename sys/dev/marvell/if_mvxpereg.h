@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.2.2.2 2015/06/06 14:40:08 skrll Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.2.2.3 2016/03/19 11:30:10 skrll Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -244,7 +244,7 @@
 /* Rx */
 #define MVXPE_MIB_RX_GOOD_OCT		0x00 /* 64bit */
 #define MVXPE_MIB_RX_BAD_OCT		0x08
-#define MVXPE_MIB_RX_MAC_TRNS_ERR	0x0c
+#define MVXPE_MIB_TX_MAC_TRNS_ERR	0x0c
 #define MVXPE_MIB_RX_GOOD_FRAME		0x10
 #define MVXPE_MIB_RX_BAD_FRAME		0x14
 #define MVXPE_MIB_RX_BCAST_FRAME	0x18
@@ -608,7 +608,7 @@
 /* Port MAC Control 0 (MVXPE_PMACC0) */
 #define MVXPE_PMACC0_PORTEN		(1 << 0)
 #define MVXPE_PMACC0_PORTTYPE		(1 << 1)
-#define MVXPE_PMACC0_FRAMESIZELIMIT(x)	((((x) >> 1) & 0x7ffc) << 2)
+#define MVXPE_PMACC0_FRAMESIZELIMIT(x)	((((x) >> 1) & 0x1fff) << 2)
 #define MVXPE_PMACC0_MUSTSET		(1 << 15)
 
 /* Port MAC Control 1 (MVXPE_PMACC1) */

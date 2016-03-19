@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2013/05/02 04:22:45 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.3.12.1 2016/03/19 11:30:07 skrll Exp $
 
 BINDIR=		/usr/mdec
 KLINK_MACHINE=	zaurus

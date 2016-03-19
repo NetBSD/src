@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.47.4.1 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: lance.c,v 1.47.4.2 2016/03/19 11:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.47.4.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.47.4.2 2016/03/19 11:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,7 +479,7 @@ lance_read(struct lance_softc *sc, int boff, int len)
 	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 #undef	ifp

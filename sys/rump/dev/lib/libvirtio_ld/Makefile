@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2015/12/27 12:10:12 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2016/03/19 11:30:35 skrll Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -21,8 +21,6 @@ SRCS+=	ld_virtio.c
 # dependencies of virtio_ld should prevent anyone from want to
 # provide ld via this component ...
 SRCS+=	ld.c
-
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs
    
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>

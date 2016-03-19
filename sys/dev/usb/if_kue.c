@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.8 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.9 2016/03/19 11:30:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.8 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.9 2016/03/19 11:30:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -722,7 +722,7 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->kue_dev),
 		    __func__, m->m_len));
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 
 	splx(s);
 

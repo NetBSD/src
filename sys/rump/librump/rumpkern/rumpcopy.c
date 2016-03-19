@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.18.6.2 2015/06/06 14:40:29 skrll Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.18.6.3 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.18.6.2 2015/06/06 14:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.18.6.3 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)

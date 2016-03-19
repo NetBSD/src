@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.150.2.4 2015/12/27 12:10:16 skrll Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.150.2.5 2016/03/19 11:30:37 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -169,8 +169,7 @@ SRCS+=		subr_lockdebug.c
 SRCS+=		kern_ktrace.c
 .endif
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpdev
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 
 #

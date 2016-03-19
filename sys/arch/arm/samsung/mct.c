@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.5.2.1 2015/12/27 12:09:32 skrll Exp $	*/
+/*	$NetBSD: mct.c,v 1.5.2.2 2016/03/19 11:29:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.5.2.1 2015/12/27 12:09:32 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.5.2.2 2016/03/19 11:29:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.5.2.1 2015/12/27 12:09:32 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/kmem.h>
 
 #include <prop/proplib.h>
 
@@ -71,7 +72,6 @@ static struct timecounter mct_timecounter = {
 	.tc_next = NULL,
 };
 #endif
-
 
 static inline uint32_t
 mct_read_global(struct mct_softc *sc, bus_size_t o)
@@ -129,7 +129,6 @@ mct_write_global(struct mct_softc *sc, bus_size_t o, uint32_t v)
 	panic("MCT hangs after writing %#x at %#x", v, (uint32_t) o);
 }
 
-
 static int
 mct_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -145,8 +144,6 @@ static void
 mct_attach(device_t parent, device_t self, void *aux)
 {
 	struct mct_softc * const sc = &mct_sc;
-//	prop_dictionary_t dict = device_properties(self);
-//	char freqbuf[sizeof("XXX SHz")];
 	struct fdt_attach_args * const faa = aux;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -160,8 +157,6 @@ mct_attach(device_t parent, device_t self, void *aux)
 	self->dv_private = sc;
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	/* MJF: Need to get irq from the dtd */
-//	sc->sc_irq = exyo->exyo_loc.loc_intr;
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
@@ -171,18 +166,15 @@ mct_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": Exynos SoC multi core timer (64 bits)\n");
+	aprint_normal(": Exynos SoC multi core timer (64 bits) - NOT IMPLEMENTED\n");
 
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 		device_xname(self), "missing interrupts");
 
-	sc->sc_global_ih = intr_establish(sc->sc_irq, IPL_CLOCK, IST_EDGE,
-		clockhandler, NULL);
-	if (sc->sc_global_ih == NULL)
-		panic("%s: unable to register timer interrupt", __func__);
-	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n", sc->sc_irq);
+	for (int i = 0; i < 12; i++)
+		fdtbus_intr_establish(faa->faa_phandle, i, 0, 0,
+				      clockhandler, 0);
 }
-
 
 static inline uint64_t
 mct_gettime(struct mct_softc *sc)
@@ -222,7 +214,6 @@ clockhandler(void *arg)
 	/* handled */
 	return 1;
 }
-
 
 void
 mct_init_cpu_clock(struct cpu_info *ci)

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,8 +76,9 @@ AbDisplayUsage (
 
     ACPI_USAGE_HEADER ("acpibin [options]");
 
-    ACPI_OPTION ("-c <File1><File2>",       "Compare two binary AML files");
-    ACPI_OPTION ("-d <In><Out>",            "Dump AML binary to text file");
+    ACPI_OPTION ("-c <File1> <File2>",      "Compare two binary AML files");
+    ACPI_OPTION ("-d <In> <Out>",           "Dump AML binary to text file");
+    ACPI_OPTION ("-e <Sig> <In> <Out>",     "Extract binary AML table from acpidump file");
     ACPI_OPTION ("-h <File>",               "Display table header for binary AML file");
     ACPI_OPTION ("-s <File>",               "Update checksum for binary AML file");
     ACPI_OPTION ("-t",                      "Terse mode");

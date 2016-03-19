@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.11.2.3 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.11.2.4 2016/03/19 11:30:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.3 2015/12/27 12:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.4 2016/03/19 11:30:10 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -430,7 +430,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		C_L1(txhdr_dmamaps[i], rx_hdrs[i],
 		    sizeof(struct virtio_net_hdr), 1,
 		    WRITE, "tx header");
-		C(tx_dmamaps[i], NULL, ETHER_MAX_LEN, 256 /* XXX */, 0,
+		C(tx_dmamaps[i], NULL, ETHER_MAX_LEN, 16 /* XXX */, 0,
 		  "tx payload");
 	}
 
@@ -1038,7 +1038,7 @@ vioif_rx_deq_locked(struct vioif_softc *sc)
 		bpf_mtap(ifp, m);
 
 		VIOIF_RX_UNLOCK(sc);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		VIOIF_RX_LOCK(sc);
 
 		if (sc->sc_stopping)

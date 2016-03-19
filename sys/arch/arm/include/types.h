@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.29.2.1 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.29.2.2 2016/03/19 11:29:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,8 +44,7 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
 } label_t;
 #endif
          
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
@@ -56,7 +55,6 @@ typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif
 
 typedef int		register_t, register32_t;
 #define	PRIxREGISTER	"x"
@@ -65,6 +63,7 @@ typedef unsigned long	pmc_evid_t;
 #define PMC_INVALID_EVID	(-1)
 typedef unsigned long	pmc_ctr_t;
 typedef unsigned short	tlb_asid_t;
+#endif
 
 /*
  * This should have always been an 8-bit type, but since it's been exposed
@@ -75,6 +74,7 @@ typedef unsigned char	__cpu_simple_lock_nv_t;
 #else
 typedef	int		__cpu_simple_lock_nv_t;
 #endif /* _KERNEL */
+typedef	int		__register_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

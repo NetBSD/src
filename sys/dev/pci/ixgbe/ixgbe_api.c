@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_api.c,v 1.2.4.3 2015/09/22 12:05:59 skrll Exp $*/
+/*$NetBSD: ixgbe_api.c,v 1.2.4.4 2016/03/19 11:30:18 skrll Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -1006,14 +1006,14 @@ s32 ixgbe_fc_enable(struct ixgbe_hw *hw)
  * ixgbe_set_fw_drv_ver - Try to send the driver version number FW
  * @hw: pointer to hardware structure
  * @maj: driver major number to be sent to firmware
- * @min: driver minor number to be sent to firmware
+ * @minr: driver minor number to be sent to firmware
  * @build: driver build number to be sent to firmware
  * @ver: driver version number to be sent to firmware
  **/
-s32 ixgbe_set_fw_drv_ver(struct ixgbe_hw *hw, u8 maj, u8 min, u8 build,
+s32 ixgbe_set_fw_drv_ver(struct ixgbe_hw *hw, u8 maj, u8 minr, u8 build,
 			 u8 ver)
 {
-	return ixgbe_call_func(hw, hw->mac.ops.set_fw_drv_ver, (hw, maj, min,
+	return ixgbe_call_func(hw, hw->mac.ops.set_fw_drv_ver, (hw, maj, minr,
 			       build, ver), IXGBE_NOT_IMPLEMENTED);
 }
 

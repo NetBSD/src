@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.7.2.3 2015/12/27 12:09:57 skrll Exp $	*/
+/*	$NetBSD: virtio.c,v 1.7.2.4 2016/03/19 11:30:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7.2.3 2015/12/27 12:09:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7.2.4 2016/03/19 11:30:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -942,7 +942,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_CONFIG_QUEUE_ADDRESS, 0);
 
-	kmem_free(vq->vq_entries, vq->vq_bytesize);
+	kmem_free(vq->vq_entries, sizeof(*vq->vq_entries) * vq->vq_num);
 	bus_dmamap_unload(sc->sc_dmat, vq->vq_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, vq->vq_vaddr, vq->vq_bytesize);

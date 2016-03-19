@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.3.2.2 2015/09/22 12:06:15 skrll Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.3.2.3 2016/03/19 11:30:36 skrll Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -26,3 +26,6 @@
 
 #undef PIPE_SOCKETPAIR /* would need uipc_usrreq.c */
 #define PIPE_NODIRECT
+
+#define WSEMUL_NO_DUMB
+#define WSEMUL_VT100

@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.676.2.4 2015/12/27 12:09:59 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.676.2.5 2016/03/19 11:30:19 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.684.2.3 2015/09/21 14:35:02 skrll Exp
+ *	NetBSD: usbdevs,v 1.684.2.4 2015/12/27 12:09:59 skrll Exp
  */
 
 /*
@@ -882,7 +882,13 @@
 #define	USB_PRODUCT_APPLE_IPAD_MINI	0x12ab		/* Apple iPad Mini */
 #define	USB_PRODUCT_APPLE_ETHERNET	0x1402		/* Apple USB to Ethernet */
 #define	USB_PRODUCT_APPLE_BLUETOOTH2	0x8205		/* Bluetooth */
-#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_C	0x821f		/* Bluetooth USB Host Controller */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_1	0x8213		/* Bluetooth USB Host Controller MacBookPro 7,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_2	0x8215		/* Bluetooth USB Host Controller iMac 11,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_3	0x821a		/* Bluetooth USB Host Controller MacBookPro 8,2 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_4	0x821b		/* Bluetooth USB Host Controller MacBookAir 3,1 3,2 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_5	0x821f		/* Bluetooth USB Host Controller MacBookAir 4,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_6	0x8281		/* Bluetooth USB Host Controller MacMini 5,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_7	0x828f		/* Bluetooth USB Host Controller MacBookAir 6,1 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH	0x8300		/* Bluetooth */
 
 /* ArkMicroChips products */
@@ -1322,6 +1328,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_LD220	0x0100		/* Samsung LD220 */
 #define	USB_PRODUCT_DISPLAYLINK_LD190	0x0102		/* Samsung LD190 */
 #define	USB_PRODUCT_DISPLAYLINK_U70	0x0103		/* Samsung U70 */
+#define	USB_PRODUCT_DISPLAYLINK_POLARIS2	0x0117		/* Polaris2 USB dock */
 #define	USB_PRODUCT_DISPLAYLINK_VCUD60	0x0136		/* Rextron DVI */
 #define	USB_PRODUCT_DISPLAYLINK_CONV	0x0138		/* StarTech CONV-USB2DVI */
 #define	USB_PRODUCT_DISPLAYLINK_DLDVI	0x0141		/* DisplayLink DVI */
@@ -1343,6 +1350,8 @@
 #define	USB_PRODUCT_DISPLAYLINK_LUM70	0x02a9		/* Lilliput UM-70 */
 #define	USB_PRODUCT_DISPLAYLINK_LCD8000UD_DVI	0x02b8		/* LCD-8000UD-DVI */
 #define	USB_PRODUCT_DISPLAYLINK_LDEWX015U	0x02e3		/* Logitec LDE-WX015U */
+#define	USB_PRODUCT_DISPLAYLINK_MIMO	0x0335		/* DisplayLink MIMO */
+#define	USB_PRODUCT_DISPLAYLINK_PLUGABLE	0x0377		/* Plugable docking station */
 #define	USB_PRODUCT_DISPLAYLINK_LT1421WIDE	0x03e0		/* Lenovo ThinkVision LT1421 Wide */
 #define	USB_PRODUCT_DISPLAYLINK_SD_U2VDH	0x046d		/* AREA SD-U2VDH */
 #define	USB_PRODUCT_DISPLAYLINK_UM7X0	0x401a		/* nanovision MiMo */
@@ -2219,6 +2228,8 @@
 #define	USB_PRODUCT_MICROSOFT_XBOX_360_WIRELESS_RECEIVER	0x0291		/* Xbox 360 Wireless Receiver */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR10	0x071d		/* 2.4GHz Transceiver V1.0 */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR20	0x071f		/* 2.4GHz Transceiver V2.0 */
+#define	USB_PRODUCT_MICROSOFT_CM6000	0x077d		/* Comfort Mouse 6000 */
+
 
 /* Microtech products */
 #define	USB_PRODUCT_MICROTECH_SCSIDB25	0x0004		/* USB-SCSI-DB25 */
@@ -2338,6 +2349,7 @@
 #define	USB_PRODUCT_NETCHIP_TURBOCONNECT	0x1080		/* Turbo-Connect */
 #define	USB_PRODUCT_NETCHIP_CLIK40	0xa140		/* Clik! 40 */
 #define	USB_PRODUCT_NETCHIP_ETHERNETGADGET	0xa4a2		/* Linux Ethernet/RNDIS gadget on pxa210/25x/26x */
+#define	USB_PRODUCT_NETCHIP_NET2270	0xa612		/* USB-IDE Bridge */
 
 /* Netgear products */
 #define	USB_PRODUCT_NETGEAR_EA101	0x1001		/* Ethernet adapter */
@@ -2668,6 +2680,8 @@
 
 /* Qualcomm products */
 #define	USB_PRODUCT_QUALCOMM_CDMA_MSM	0x6000		/* CDMA Technologies MSM phone */
+#define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L05A_MODEM	0x6124		/* NTT DOCOMO L-05A */
+#define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L05A_STORAGE	0x613a		/* NTT DOCOMO L-05A */
 #define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_MODEM	0x618f		/* NTT DOCOMO L-02C */
 #define	USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE	0x61dd		/* NTT DOCOMO L-02C */
 #define	USB_PRODUCT_QUALCOMM_MSM_HSDPA	0x6613		/* HSDPA MSM */

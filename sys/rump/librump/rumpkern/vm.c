@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.159.4.3 2015/12/27 12:10:16 skrll Exp $	*/
+/*	$NetBSD: vm.c,v 1.159.4.4 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.3 2015/12/27 12:10:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.4 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.3 2015/12/27 12:10:16 skrll Exp $");
 
 #include <machine/pmap.h>
 
-#include <rump/rumpuser.h>
-
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -64,8 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.3 2015/12/27 12:10:16 skrll Exp $");
 #include <uvm/uvm_readahead.h>
 #include <uvm/uvm_device.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
+
+#include <rump/rumpuser.h>
 
 kmutex_t uvm_pageqlock; /* non-free page lock */
 kmutex_t uvm_fpageqlock; /* free page lock, non-gpl license */

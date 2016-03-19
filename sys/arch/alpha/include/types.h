@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.49.24.2 2015/09/22 12:05:35 skrll Exp $ */
+/* $NetBSD: types.h,v 1.49.24.3 2016/03/19 11:29:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,9 +44,13 @@ typedef struct label_t {
 } label_t;
 #endif
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
-typedef unsigned long	paddr_t;
+typedef	int		__cpu_simple_lock_nv_t;
+typedef long int	__register_t;
+typedef unsigned long	__paddr_t;	/* XXX: For bus_user.h */
+
+
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
+typedef __paddr_t	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
@@ -56,14 +60,10 @@ typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif
 
-typedef long int	register_t;
-#if defined(_NETBSD_SOURCE)
+typedef __register_t	register_t;
 #define	PRIxREGISTER	"lx"
 #endif
-
-typedef	int		__cpu_simple_lock_nv_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

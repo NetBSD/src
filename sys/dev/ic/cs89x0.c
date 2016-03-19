@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.34.4.1 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.34.4.2 2016/03/19 11:30:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.34.4.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.34.4.2 2016/03/19 11:30:09 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1665,7 +1665,7 @@ cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.146.2.2 2015/12/27 12:10:18 skrll Exp $	*/
+/*	$NetBSD: exec.h,v 1.146.2.3 2016/03/19 11:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -124,6 +124,7 @@ struct ps_strings32 {
 };
 #endif
 
+#ifdef _KERNEL
 /*
  * the following structures allow execve() to put together processes
  * in a more extensible and cleaner way.
@@ -245,7 +246,6 @@ struct exec_vmcmd {
 #define	VMCMD_STACK	0x0008	/* entry is for a stack */
 };
 
-#ifdef _KERNEL
 /*
  * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.

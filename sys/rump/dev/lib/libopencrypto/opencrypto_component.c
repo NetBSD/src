@@ -1,4 +1,4 @@
-/*	$NetBSD: opencrypto_component.c,v 1.1.12.2 2015/09/22 12:06:13 skrll Exp $ */
+/*	$NetBSD: opencrypto_component.c,v 1.1.12.3 2016/03/19 11:30:34 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.2 2015/09/22 12:06:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.3 2016/03/19 11:30:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -34,9 +34,9 @@ __KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.2 2015/09/22 12:06:1
 #include <sys/stat.h>
 #include <sys/module.h>
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
+#include <rump-sys/vfs.h>
 
 #include "ioconf.h"
 
