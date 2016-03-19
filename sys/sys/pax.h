@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.16 2015/09/26 16:12:24 maxv Exp $ */
+/* $NetBSD: pax.h,v 1.17 2016/03/19 18:56:37 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -48,6 +48,9 @@ struct vmspace;
 #define	PAX_ASLR_DELTA_EXEC_LEN	12
 #endif
 #endif /* PAX_ASLR */
+#ifdef PAX_ASLR_DEBUG
+extern int pax_aslr_debug;
+#endif
 
 void pax_init(void);
 void pax_setup_elf_flags(struct exec_package *, uint32_t);
