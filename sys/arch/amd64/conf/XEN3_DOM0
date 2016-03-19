@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.116 2015/11/10 13:01:41 tnn Exp $
+# $NetBSD: XEN3_DOM0,v 1.117 2016/03/19 23:21:02 gdt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -661,7 +661,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

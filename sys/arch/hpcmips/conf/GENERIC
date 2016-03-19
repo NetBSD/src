@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.229 2014/11/16 16:01:41 manu Exp $
+# $NetBSD: GENERIC,v 1.230 2016/03/19 23:21:02 gdt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.229 $"
+#ident 		"GENERIC-$Revision: 1.230 $"
 
 maxusers	16
 
@@ -640,7 +640,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
