@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.39.4.1 2015/06/06 14:40:09 skrll Exp $	 */
+/* $NetBSD: if_bce.c,v 1.39.4.2 2016/03/19 11:30:10 skrll Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.39.4.1 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.39.4.2 2016/03/19 11:30:10 skrll Exp $");
 
 #include "vlan.h"
 
@@ -815,7 +815,7 @@ bce_rxintr(struct bce_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input) (ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		/* re-check current in case it changed */
 		curr = (bus_space_read_4(sc->bce_btag, sc->bce_bhandle,

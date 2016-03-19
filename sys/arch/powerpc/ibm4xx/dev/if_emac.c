@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.43 2014/10/16 19:11:38 snj Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.43.2.1 2016/03/19 11:30:04 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.43 2014/10/16 19:11:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.43.2.1 2016/03/19 11:30:04 skrll Exp $");
 
 #include "opt_emac.h"
 
@@ -1676,7 +1676,7 @@ emac_rxeob_intr(void *arg)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

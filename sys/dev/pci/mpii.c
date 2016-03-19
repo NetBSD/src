@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.5.6.1 2015/04/06 15:18:10 skrll Exp $ */
+/* $NetBSD: mpii.c,v 1.5.6.2 2016/03/19 11:30:11 skrll Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.5.6.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.5.6.2 2016/03/19 11:30:11 skrll Exp $");
 
 #include "bio.h"
 
@@ -4901,8 +4901,6 @@ mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	    vpg, pagelen) != 0) {
 		rv = EINVAL;
 		goto done;
-		free(vpg, M_TEMP);
-		return (EINVAL);
 	}
 
 	enabled = ((le16toh(vpg->volume_settings) &

@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.11.2.2 2015/12/27 12:09:32 skrll Exp $	*/
+/*	$NetBSD: exynos_gpio.c,v 1.11.2.3 2016/03/19 11:29:57 skrll Exp $	*/
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.11.2.2 2015/12/27 12:09:32 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.11.2.3 2016/03/19 11:29:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,16 +53,6 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.11.2.2 2015/12/27 12:09:32 skrll E
 
 #include <dev/fdt/fdtvar.h>
 
-struct exynos_gpio_pin_cfg {
-	uint32_t cfg;
-	uint32_t pud;
-	uint32_t drv;
-	uint32_t conpwd;
-	uint32_t pudpwd;
-};
-
-struct exynos_gpio_softc;
-
 struct exynos_gpio_bank {
 	const char		bank_name[6];
 	device_t		bank_dev;
@@ -78,12 +68,6 @@ struct exynos_gpio_bank {
 	bus_space_handle_t	bank_bsh;
 	struct exynos_gpio_pin_cfg bank_cfg;
 	struct exynos_gpio_bank * bank_next;
-};
-
-struct exynos_gpio_softc {
-	device_t		sc_dev;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
 };
 
 struct exynos_gpio_pin {
@@ -144,7 +128,7 @@ static struct exynos_gpio_bank exynos5_banks[] = {
 	GPIO_GRP(5, MUXD, 0x00E0, gpb4, 2),
 	GPIO_GRP(5, MUXD, 0x0100, gph0, 4),
 
-	GPIO_GRP(5, MUXE, 0x0000, gpz0, 7),
+	GPIO_GRP(5, MUXE, 0x0000, gpz, 7),
 
 };
 
@@ -159,8 +143,6 @@ static void exynos_gpio_fdt_release(device_t, void *);
 
 static int exynos_gpio_fdt_read(device_t, void *, bool);
 static void exynos_gpio_fdt_write(device_t, void *, int, bool);
-static struct exynos_gpio_bank *
-exynos_gpio_pin_lookup(const char *pinname, int *ppin);
 static int exynos_gpio_cfprint(void *, const char *);
 
 struct fdtbus_gpio_controller_func exynos_gpio_funcs = {
@@ -280,7 +262,27 @@ exynos_gpio_pin_ctl(void *cookie, int pin, int flags)
 	exynos_gpio_update_cfg_regs(bank, &ncfg);
 }
 
-void
+void exynos_gpio_pin_ctl_read(const struct exynos_gpio_bank *bank,
+			      struct exynos_gpio_pin_cfg *cfg)
+{
+	cfg->cfg = GPIO_READ(bank, EXYNOS_GPIO_CON);
+	cfg->pud = GPIO_READ(bank, EXYNOS_GPIO_PUD);
+	cfg->drv = GPIO_READ(bank, EXYNOS_GPIO_DRV);
+	cfg->conpwd = GPIO_READ(bank, EXYNOS_GPIO_CONPWD);
+	cfg->pudpwd = GPIO_READ(bank, EXYNOS_GPIO_PUDPWD);
+}
+
+void exynos_gpio_pin_ctl_write(const struct exynos_gpio_bank *bank,
+			       const struct exynos_gpio_pin_cfg *cfg)
+{
+		GPIO_WRITE(bank, EXYNOS_GPIO_CON, cfg->cfg);
+		GPIO_WRITE(bank, EXYNOS_GPIO_PUD, cfg->pud);
+		GPIO_WRITE(bank, EXYNOS_GPIO_DRV, cfg->drv);
+		GPIO_WRITE(bank, EXYNOS_GPIO_CONPWD, cfg->conpwd);
+		GPIO_WRITE(bank, EXYNOS_GPIO_PUDPWD, cfg->pudpwd);
+}
+
+struct exynos_gpio_softc *
 exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 			const struct fdt_attach_args *faa, int node)
 {
@@ -291,13 +293,18 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	char result[64];
 
 	OF_getprop(node, "name", result, sizeof(result));
-	bank = exynos_gpio_pin_lookup(result, 0);
-	KASSERT(bank);
+	bank = exynos_gpio_bank_lookup(result);
+	if (bank == NULL) {
+		aprint_error_dev(parent->sc_dev, "no bank found for %s\n",
+		    result);
+		return NULL;
+	}
 	
 	sc->sc_dev = parent->sc_dev;
 	sc->sc_bst = &armv7_generic_bs_tag;
 	sc->sc_bsh = parent->sc_bsh;
-	
+	sc->sc_bank = bank;
+
 	gc_tag = &bank->bank_gc;
 	gc_tag->gp_cookie = bank;
 	gc_tag->gp_pin_read  = exynos_gpio_pin_read;
@@ -322,39 +329,25 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	bank->bank_cfg.conpwd = GPIO_READ(bank, EXYNOS_GPIO_CONPWD);
 	bank->bank_cfg.pudpwd = GPIO_READ(bank, EXYNOS_GPIO_PUDPWD);
 
-	fdtbus_register_gpio_controller(bank->bank_dev, faa->faa_phandle,
+	fdtbus_register_gpio_controller(bank->bank_dev, node,
 					&exynos_gpio_funcs);
+	return sc;
 }
 
 /*
- * pinmame = gpLD[-N]
- *     L = 'a' - 'z' -+
- *     D = '0' - '9' -+ ===== bank name
- *     N = '0' - '7'    ===== pin number
+ * This function is a bit funky.  Given a string that may look like
+ * 'gpAN' or 'gpAN-P' it is meant to find a match to the part before
+ * the '-', or the four character string if the dash is not present.
  */
-
-static struct exynos_gpio_bank *
-exynos_gpio_pin_lookup(const char *pinname, int *ppin)
+struct exynos_gpio_bank *
+exynos_gpio_bank_lookup(const char *name)
 {
-	char bankname[5];
-	int pin = 0;
-	int n;
 	struct exynos_gpio_bank *bank;
 
-	memset(bankname, 0, sizeof(bankname));
-	for (n = 0; n < 4; n++)
-		bankname[n] = pinname[n];
-	bankname[n] = 0;
-	if (ppin && pinname[4] == '-') {
-		pin = pinname[5] - '0';	  /* skip the '-' */
-		if (pin < 0 || pin > 8)
-			return NULL;
-	}
-	for (n = 0; n < __arraycount(exynos5_banks); n++) {
+	for (u_int n = 0; n < __arraycount(exynos5_banks); n++) {
 		bank = &exynos_gpio_banks[n];
-		if (strcmp(bank->bank_name, bankname) == 0) {
-			if (ppin)
-				*ppin = pin;
+		if (!strncmp(bank->bank_name, name,
+			     strlen(bank->bank_name))) {
 			return bank;
 		}
 	}
@@ -362,17 +355,40 @@ exynos_gpio_pin_lookup(const char *pinname, int *ppin)
 	return NULL;
 }
 
+#if notyet
+static int
+exynos_gpio_pin_lookup(const char *name)
+{
+	char *p;
+
+	p = strchr(name, '-');
+	if (p == NULL || p[1] < '0' || p[1] > '9')
+		return -1;
+
+	return p[1] - '0';
+}
+#endif
+
 static void *
 exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 {
-	/* MJF:  This is wrong.  data is a u_int but I need a name */
-//	const u_int *gpio = data;
-	const char *pinname = data;
-	const struct exynos_gpio_bank *bank;
+	const u_int *cells = data;
+	struct exynos_gpio_bank *bank = NULL;
 	struct exynos_gpio_pin *gpin;
-	int pin;
+	int n;
 
-	bank = exynos_gpio_pin_lookup(pinname, &pin);
+	if (len != 12)
+		return NULL;
+
+	const int pin = be32toh(cells[1]) & 0x0f;
+	const int actlo = be32toh(cells[2]) & 0x01;
+
+	for (n = 0; n < __arraycount(exynos5_banks); n++) {
+		if (exynos_gpio_banks[n].bank_dev == dev) {
+			bank = &exynos_gpio_banks[n];
+			break;
+		}
+	}
 	if (bank == NULL)
 		return NULL;
 
@@ -381,9 +397,9 @@ exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 	gpin->pin_bank = bank;
 	gpin->pin_no = pin;
 	gpin->pin_flags = flags;
-	gpin->pin_actlo = 0;
+	gpin->pin_actlo = actlo;
 
-	exynos_gpio_pin_ctl(&gpin->pin_bank, gpin->pin_no, gpin->pin_flags);
+	exynos_gpio_pin_ctl(bank, gpin->pin_no, gpin->pin_flags);
 
 	return gpin;
 }

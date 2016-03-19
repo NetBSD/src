@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.24 2016/03/17 09:04:53 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.25 2016/03/19 11:30:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.24 2016/03/17 09:04:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.25 2016/03/19 11:30:30 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1186,45 +1186,6 @@ fail:
 
 }
 
-#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
-void
-dwc2_worker(struct work *wk, void *priv)
-{
-	struct dwc2_softc *sc = priv;
-	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
-
-Debugger();
-#if 0
-	struct usbd_xfer *xfer = dwork->xfer;
-	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);
-
-	dwc2_hcd_endpoint_disable(sc->dwc_dev.hcd, dpipe->priv, 250);
-	dwc_free(NULL, dpipe->urb);
-#endif
-
-	mutex_enter(&sc->sc_lock);
-	if (wk == &hsotg->wf_otg) {
-		dwc2_conn_id_status_change(wk);
-	} else if (wk == &hsotg->start_work.work) {
-		dwc2_hcd_start_func(wk);
-	} else if (wk == &hsotg->reset_work.work) {
-		dwc2_hcd_reset_func(wk);
-	} else {
-#if 0
-		KASSERT(dwork->xfer != NULL);
-		KASSERT(dxfer->queued == true);
-
-		if (!(xfer->ux_hcflags & UXFER_ABORTING)) {
-			dwc2_start_standard_chain(xfer);
-		}
-		dxfer->queued = false;
-		cv_broadcast(&xfer->ux_hccv);
-#endif
-	}
-	mutex_exit(&sc->sc_lock);
-}
-#endif
-
 int dwc2_intr(void *p)
 {
 	struct dwc2_softc *sc = p;
@@ -1416,7 +1377,7 @@ dwc2_init(struct dwc2_softc *sc)
 		retval = dwc2_hcd_init(hsotg);
 		if (retval) {
 			if (hsotg->gadget_enabled)
-				s3c_hsotg_remove(hsotg);
+				dwc2_hsotg_remove(hsotg);
 			goto fail2;
 		}
 	    hsotg->hcd_enabled = 1;
@@ -1453,15 +1414,6 @@ static const char * const intnames[32] = {
 /***********************************************************************/
 
 #endif
-
-
-void
-dw_callout(void *arg)
-{
-	struct delayed_work *dw = arg;
-
-	workqueue_enqueue(dw->dw_wq, &dw->work, NULL);
-}
 
 void dwc2_host_hub_info(struct dwc2_hsotg *hsotg, void *context, int *hub_addr,
 			int *hub_port)
@@ -1519,17 +1471,10 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	ed = xfer->ux_pipe->up_endpoint->ue_edesc;
 	xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 
-	xfer->ux_actlen = dwc2_hcd_urb_get_actual_length(qtd->urb);
+	struct dwc2_hcd_urb *urb = qtd->urb;
+	xfer->ux_actlen = dwc2_hcd_urb_get_actual_length(urb);
 
 	DPRINTFN(3, "xfer=%p actlen=%d\n", xfer, xfer->ux_actlen);
-
-	if (xfertype == UE_ISOCHRONOUS && dbg_perio()) {
-		int i;
-
-		for (i = 0; i < xfer->ux_nframes; i++)
-			dev_vdbg(hsotg->dev, " ISO Desc %d status %d\n",
-				 i, qtd->urb->iso_descs[i].status);
-	}
 
 	if (xfertype == UE_ISOCHRONOUS) {
 		int i;
@@ -1538,9 +1483,17 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		for (i = 0; i < xfer->ux_nframes; ++i) {
 			xfer->ux_frlengths[i] =
 				dwc2_hcd_urb_get_iso_desc_actual_length(
-						qtd->urb, i);
+						urb, i);
 			xfer->ux_actlen += xfer->ux_frlengths[i];
 		}
+	}
+
+	if (xfertype == UE_ISOCHRONOUS && dbg_perio()) {
+		int i;
+
+		for (i = 0; i < xfer->ux_nframes; i++)
+			dev_vdbg(hsotg->dev, " ISO Desc %d status %d\n",
+				 i, urb->iso_descs[i].status);
 	}
 
 	if (!status) {
@@ -1569,6 +1522,7 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		xfer->ux_status = USBD_IOERROR;
 		break;
 	default:
+		xfer->ux_status = USBD_IOERROR;
 		printf("%s: unknown error status %d\n", __func__, status);
 	}
 
@@ -1614,6 +1568,13 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 	dev_dbg(hsotg->dev, "DWC OTG HCD START\n");
 
 	mutex_spin_enter(&hsotg->lock);
+
+	hsotg->lx_state = DWC2_L0;
+
+	if (dwc2_is_device_mode(hsotg)) {
+		mutex_spin_exit(&hsotg->lock);
+		return 0;	/* why 0 ?? */
+	}
 
 	dwc2_hcd_reinit(hsotg);
 

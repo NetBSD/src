@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_component.c,v 1.1 2014/03/13 01:54:59 pooka Exp $	*/
+/*	$NetBSD: umass_component.c,v 1.1.12.1 2016/03/19 11:30:35 skrll Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -8,8 +8,7 @@
 
 #include "ioconf.c"
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
+#include <rump-sys/kern.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {

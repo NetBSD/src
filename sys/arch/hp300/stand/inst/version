@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.12 2014/04/26 07:53:41 tsutsui Exp $
+$NetBSD: version,v 1.12.4.1 2016/03/19 11:29:59 skrll Exp $
 
 1.1:	Initial version
 1.2:	Added support for HP-IB cartridge tapes
@@ -12,3 +12,4 @@ $NetBSD: version,v 1.12 2014/04/26 07:53:41 tsutsui Exp $
 1.10:	Pull OpenBSD's ite driver reorganization.
 1.11:	Add support for framebuffers on HP362 and HP382.
 1.12:	Add and fix support for HP425e mcclock, sti framebuffer, apci and dnkbd.
+1.13:	Disable slow gunzip CRC32 calculation.

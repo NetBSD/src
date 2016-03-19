@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.2 2016/03/19 11:30:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.

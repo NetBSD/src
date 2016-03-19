@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -326,7 +326,7 @@ AcpiTbSelectAddress (
  *
  * FUNCTION:    AcpiTbParseFadt
  *
- * PARAMETERS:  TableIndex          - Index for the FADT
+ * PARAMETERS:  None
  *
  * RETURN:      None
  *
@@ -337,7 +337,7 @@ AcpiTbSelectAddress (
 
 void
 AcpiTbParseFadt (
-    UINT32                  TableIndex)
+    void)
 {
     UINT32                  Length;
     ACPI_TABLE_HEADER       *Table;
@@ -350,10 +350,10 @@ AcpiTbParseFadt (
      * Get a local copy of the FADT and convert it to a common format
      * Map entire FADT, assumed to be smaller than one page.
      */
-    Length = AcpiGbl_RootTableList.Tables[TableIndex].Length;
+    Length = AcpiGbl_RootTableList.Tables[AcpiGbl_FadtIndex].Length;
 
     Table = AcpiOsMapMemory (
-                AcpiGbl_RootTableList.Tables[TableIndex].Address, Length);
+        AcpiGbl_RootTableList.Tables[AcpiGbl_FadtIndex].Address, Length);
     if (!Table)
     {
         return;
@@ -376,7 +376,7 @@ AcpiTbParseFadt (
     /* Obtain the DSDT and FACS tables via their addresses within the FADT */
 
     AcpiTbInstallFixedTable ((ACPI_PHYSICAL_ADDRESS) AcpiGbl_FADT.XDsdt,
-        ACPI_SIG_DSDT, ACPI_TABLE_INDEX_DSDT);
+        ACPI_SIG_DSDT, &AcpiGbl_DsdtIndex);
 
     /* If Hardware Reduced flag is set, there is no FACS */
 
@@ -385,12 +385,12 @@ AcpiTbParseFadt (
         if (AcpiGbl_FADT.Facs)
         {
             AcpiTbInstallFixedTable ((ACPI_PHYSICAL_ADDRESS) AcpiGbl_FADT.Facs,
-                ACPI_SIG_FACS, ACPI_TABLE_INDEX_FACS);
+                ACPI_SIG_FACS, &AcpiGbl_FacsIndex);
         }
         if (AcpiGbl_FADT.XFacs)
         {
             AcpiTbInstallFixedTable ((ACPI_PHYSICAL_ADDRESS) AcpiGbl_FADT.XFacs,
-                ACPI_SIG_FACS, ACPI_TABLE_INDEX_X_FACS);
+                ACPI_SIG_FACS, &AcpiGbl_XFacsIndex);
         }
     }
 }

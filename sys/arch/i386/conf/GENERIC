@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1118.2.5 2015/12/27 12:09:36 skrll Exp $
+# $NetBSD: GENERIC,v 1.1118.2.6 2016/03/19 11:30:00 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1118.2.5 $"
+#ident 		"GENERIC-$Revision: 1.1118.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -122,7 +122,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
-#options 	KDTRACE_HOOKS	# kernel DTrace hooks
+options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -653,6 +653,10 @@ iic*	at alipm?
 # Intel ICH SMBus controller
 ichsmb* at pci? dev ? function ?
 iic*	at ichsmb?
+
+# Intel S1200,C2000 (non-pch) SMBus controller
+ismt* at pci? dev ? function ?
+iic*	at ismt?
 
 # NVIDIA nForce2/3/4 SMBus controller
 nfsmbc* at pci? dev ? function ?

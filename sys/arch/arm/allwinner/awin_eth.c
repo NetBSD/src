@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.7.2.2 2015/06/06 14:39:54 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.7.2.3 2016/03/19 11:29:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -422,7 +422,7 @@ awin_eth_if_input(struct awin_eth_softc *sc, struct mbuf *m)
 {
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 static void

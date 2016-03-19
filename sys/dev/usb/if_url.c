@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.4.8 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.9 2016/03/19 11:30:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.8 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.9 2016/03/19 11:30:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1052,7 +1052,7 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	DPRINTF(("%s: %s: deliver %d\n", device_xname(sc->sc_dev),
 		 __func__, m->m_len));
-	(*(ifp)->if_input)((ifp), (m));
+	if_percpuq_enqueue((ifp)->if_percpuq, (m));
 
  done1:
 	splx(s);

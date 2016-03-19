@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.43.24.1 2015/04/06 15:18:01 skrll Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.43.24.2 2016/03/19 11:30:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.43.24.1 2015/04/06 15:18:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.43.24.2 2016/03/19 11:30:04 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1022,7 +1022,7 @@ sq_rxintr(struct sq_softc *sc)
 		    device_xname(sc->sc_dev), i, framelen));
 
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 

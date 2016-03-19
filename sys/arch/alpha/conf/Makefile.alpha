@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.83 2013/03/10 07:18:20 christos Exp $
+#	$NetBSD: Makefile.alpha,v 1.83.14.1 2016/03/19 11:29:54 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -67,7 +67,7 @@ lock_stubs.o: assym.h
 ## (5) link settings
 ##
 LINKFORMAT=	-N
-TEXTADDR?=	fffffc0000430000
+TEXTADDR?=	fffffc0000a00000
 ENTRYPOINT=	__transfer
 EXTRA_LINKFLAGS=	-G 4
 STRIPFLAGS=	-g -X

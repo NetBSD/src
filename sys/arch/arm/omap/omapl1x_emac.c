@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.1.12.1 2015/09/22 12:05:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.1.12.2 2016/03/19 11:29:56 skrll Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -658,7 +658,7 @@ emac_rx_desc_process (struct emac_softc *sc, struct emac_channel *chan)
 	ifp->if_ipackets++;
 
 	bpf_mtap(ifp, mb);
-	(*ifp->if_input)(ifp, mb);
+	if_percpuq_enqueue(ifp->if_percpuq, mb);
 
 	entry->m = NULL;
 

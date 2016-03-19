@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.13 2016/01/05 06:09:26 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.14 2016/03/19 11:30:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.13 2016/01/05 06:09:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.14 2016/03/19 11:30:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -388,7 +388,8 @@ usb_dmaaddr(usb_dma_t *dma, unsigned int offset)
 
 	offset += dma->udma_offs;
 
-	KASSERT(offset < dma->udma_block->size);
+	KASSERTMSG(offset < dma->udma_block->size, "offset %d vs %zu", offset,
+	    dma->udma_block->size);
 
 	if (dma->udma_block->nsegs == 1) {
 		KASSERT(dma->udma_block->map->dm_segs[0].ds_len > offset);

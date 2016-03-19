@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.78.2.3 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: ld.c,v 1.78.2.4 2016/03/19 11:30:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78.2.3 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78.2.4 2016/03/19 11:30:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,10 +353,6 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 	sc = device_lookup_private(&ld_cd, unit);
 	dksc = &sc->sc_dksc;
 
-	error = disk_ioctl(&dksc->sc_dkdev, dev, cmd, addr, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
-
 	error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
@@ -395,7 +391,7 @@ ldstrategy(struct buf *bp)
 	sc = device_lookup_private(&ld_cd, unit);
 	dksc = &sc->sc_dksc;
 
-	return dk_strategy(dksc, bp);
+	dk_strategy(dksc, bp);
 }
 
 static int

@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.7.2.2 2015/09/22 12:06:01 skrll Exp $
+# $NetBSD: files.acpica,v 1.7.2.3 2016/03/19 11:30:21 skrll Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -14,7 +14,6 @@ file	debugger/dbcmds.c		acpica & acpi_debug & ddb
 file	debugger/dbconvert.c		acpica & acpi_debug & ddb
 file	debugger/dbdisply.c		acpica & acpi_debug & ddb
 file	debugger/dbexec.c		acpica & acpi_debug & ddb
-file	debugger/dbfileio.c		acpica & acpi_debug & ddb
 file	debugger/dbhistry.c		acpica & acpi_debug & ddb
 file	debugger/dbinput.c		acpica & acpi_debug & ddb
 file	debugger/dbmethod.c		acpica & acpi_debug & ddb
@@ -96,6 +95,7 @@ file	executer/exstore.c		acpica
 file	executer/exstoren.c		acpica
 file	executer/exstorob.c		acpica
 file	executer/exsystem.c		acpica
+file	executer/extrace.c		acpica
 file	executer/exutils.c		acpica
 
 # hardware/
@@ -151,7 +151,7 @@ file	parser/psxface.c		acpica
 file	resources/rsaddr.c		acpica
 file	resources/rscalc.c		acpica
 file	resources/rscreate.c		acpica
-file	resources/rsdump.c		acpica
+file	resources/rsdump.c		acpica & acpi_debug & ddb
 file	resources/rsdumpinfo.c		acpica & acpi_debug & ddb
 file	resources/rsinfo.c		acpica
 file	resources/rsio.c		acpica

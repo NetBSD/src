@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.6.1 2015/12/27 12:10:15 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.6.2 2016/03/19 11:30:36 skrll Exp $
 #
 
 S!=             cd ${.PARSEDIR}/../../../../;pwd
@@ -7,10 +7,6 @@ S!=             cd ${.PARSEDIR}/../../../../;pwd
 
 LIB=	rumpfs_zfs
 COMMENT=ZFS
-
-# RUMP stuff
-CPPFLAGS+=      -I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs\
-		-I${RUMPTOP}/librump/rumpdev
 
 SRCS+=	zfs_component.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.184.4.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.184.4.2 2016/03/19 11:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.184.4.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.184.4.2 2016/03/19 11:30:09 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1397,7 +1397,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		}
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

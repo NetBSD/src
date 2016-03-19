@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.17.6.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.17.6.2 2016/03/19 11:30:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17.6.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17.6.2 2016/03/19 11:30:03 skrll Exp $");
 
 #include "debug_playstation2.h"
 
@@ -410,7 +410,7 @@ smap_rxeof(void *arg)
 		if (m != NULL) {
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 	}
 	sc->rx_done_index = i;

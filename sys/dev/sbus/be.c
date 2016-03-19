@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.80.10.1 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: be.c,v 1.80.10.2 2016/03/19 11:30:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80.10.1 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80.10.2 2016/03/19 11:30:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -574,7 +574,7 @@ be_read(struct be_softc *sc, int idx, int len)
 	 */
 	bpf_mtap(ifp, m);
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*

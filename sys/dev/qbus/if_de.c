@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.29 2010/04/05 07:21:47 joerg Exp $	*/
+/*	$NetBSD: if_de.c,v 1.29.36.1 2016/03/19 11:30:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.29 2010/04/05 07:21:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.29.36.1 2016/03/19 11:30:18 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -557,7 +557,7 @@ derecv(struct de_softc *sc)
 		}
 		bpf_mtap(ifp, m);
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		/* hang the receive buffer again */
 next:		rp->r_lenerr = 0;

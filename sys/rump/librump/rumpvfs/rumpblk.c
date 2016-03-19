@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.58.2.3 2015/12/27 12:10:16 skrll Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.58.2.4 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58.2.3 2015/12/27 12:10:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58.2.4 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58.2.3 2015/12/27 12:10:16 skrll Exp $
 #include <sys/stat.h>
 #include <sys/cprng.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump/rumpuser.h>
 
 #if 0
 #define DPRINTF(x) printf x

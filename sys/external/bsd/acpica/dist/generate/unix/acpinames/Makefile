@@ -34,11 +34,13 @@ HEADERS = \
     $(wildcard $(ACPINAMES)/*.h)
 
 OBJECTS = \
+	$(OBJDIR)/acfileio.o\
 	$(OBJDIR)/anmain.o\
 	$(OBJDIR)/anstubs.o\
 	$(OBJDIR)/antables.o\
 	$(OBJDIR)/cmfsize.o\
 	$(OBJDIR)/dsfield.o\
+	$(OBJDIR)/dsinit.o\
 	$(OBJDIR)/dsmthdat.o\
 	$(OBJDIR)/dsobject.o\
 	$(OBJDIR)/dsutils.o\
@@ -50,6 +52,7 @@ OBJECTS = \
 	$(OBJDIR)/exdump.o\
 	$(OBJDIR)/exmutex.o\
 	$(OBJDIR)/exnames.o\
+	$(OBJDIR)/exprep.o\
 	$(OBJDIR)/exresnte.o\
 	$(OBJDIR)/exresolv.o\
 	$(OBJDIR)/exsystem.o\
@@ -101,7 +104,6 @@ OBJECTS = \
 	$(OBJDIR)/uterror.o\
 	$(OBJDIR)/uteval.o\
 	$(OBJDIR)/utexcep.o\
-	$(OBJDIR)/utfileio.o\
 	$(OBJDIR)/utglobal.o\
 	$(OBJDIR)/uthex.o\
 	$(OBJDIR)/utids.o\

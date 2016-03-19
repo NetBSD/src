@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.7.10.1 2015/12/27 12:09:32 skrll Exp $
+#	$NetBSD: files.exynos,v 1.7.10.2 2016/03/19 11:29:57 skrll Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -58,6 +58,11 @@ device	chipid : fdtbus
 attach	chipid at fdt with exynos_chipid
 file	arch/arm/samsung/exynos_chipid.c	exynos_chipid
 
+# SYSMMU
+device	sysmmu : fdtbus
+attach	sysmmu at fdt with exynos_sysmmu
+file	arch/arm/samsung/exynos_sysmmu.c	exynos_sysmmu
+
 # real time clock
 device  exyortc : ftdbus
 attach  exyortc at fdt with exynos_rtc
@@ -87,12 +92,28 @@ attach  exyopctl at fdt with exynos_pinctrl
 file	arch/arm/samsung/exynos_pinctrl.c	exynos_pinctrl needs-flag
 file	arch/arm/samsung/exynos_gpio.c		exynos_pinctrl needs-flag
 
-# USB2 Host Controller (EHCI/OHCI)
-device	exyousb { } : fdtbus
-attach	exyousb at fdt with exyo_usb
-attach	ohci at exyousb with ohci_exyousb
-attach	ehci at exyousb with ehci_exyousb
-file	arch/arm/samsung/exynos_usb.c		exyo_usb
+# USB2 phy
+device  exyousbphy
+attach  exyousbphy at fdt with exynos_usbphy
+file    arch/arm/samsung/exynos_usbphy.c	exynos_usbphy
+
+# USB2 Host Controller (OHCI)
+attach	ohci at fdt with exynos_ohci
+file	arch/arm/samsung/exynos_ohci.c		exynos_ohci
+
+#USB 2 Host Controller (EHCI)
+attach	ehci at fdt with exynos_ehci
+file	arch/arm/samsung/exynos_ehci.c		exynos_ehci
+
+# USB3 Host Controller (xHCI)
+device	exyousb : fdtbus
+attach	exyousb at fdt with exynos_usb
+attach  xhci at fdt
+file	arch/arm/samsung/exynos_usb3.c		exynos_usb
+
+# SD/MMC Host Controller
+attach	dwcmmc at fdt with exynos_dwcmmc
+file	arch/arm/samsung/exynos_dwcmmc.c	exynos_dwcmmc
 
 # I2C support, bitbanging through GPIO
 device	exyoi2c: i2cbus, i2c_bitbang

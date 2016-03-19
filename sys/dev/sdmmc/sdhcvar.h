@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.15.2.3 2015/12/27 12:09:58 skrll Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.15.2.4 2016/03/19 11:30:19 skrll Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_USE_ADMA2	0x00100000
 #define	SDHC_FLAG_POLL_CARD_DET	0x00200000 /* polling card detect */
 #define	SDHC_FLAG_SLOW_SDR50  	0x00400000 /* reduce SDR50 speed */
+#define	SDHC_FLAG_USDHC		0x00800000 /* Freescale uSDHC */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */

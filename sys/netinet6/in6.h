@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.79.2.4 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: in6.h,v 1.79.2.5 2016/03/19 11:30:33 skrll Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -768,6 +768,7 @@ typedef	_BSD_SIZE_T_		size_t;
 __BEGIN_DECLS
 struct cmsghdr;
 
+void	in6_in_2_v4mapin6(const struct in_addr *, struct in6_addr *);
 void	in6_sin6_2_sin(struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin_2_v4mapsin6(const struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin6_2_sin_in_sock(struct sockaddr *);

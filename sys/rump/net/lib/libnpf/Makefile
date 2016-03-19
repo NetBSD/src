@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.4.2 2015/12/27 12:10:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.14.4.3 2016/03/19 11:30:38 skrll Exp $
 #
 # Public Domain.
 #
@@ -30,7 +30,6 @@ SRCS+=	npf_component.c
 .if ${RUMP_NPF_TESTING:Uyes} == "yes"
 CPPFLAGS+=	-D_NPF_TESTING
 .endif
-CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

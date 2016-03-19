@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.108.2.1 2015/09/22 12:05:52 skrll Exp $	*/
+/*	$NetBSD: iommu.c,v 1.108.2.2 2016/03/19 11:30:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.108.2.1 2015/09/22 12:05:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.108.2.2 2016/03/19 11:30:05 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -746,14 +746,8 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	bus_size_t sgsize = map->_dm_dvmasize;
 
 	/* Flush the iommu */
-#ifdef DEBUG
-	if (!map->_dm_dvmastart) {
-		printf("iommu_dvmamap_unload: No dvmastart is zero\n");
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
+	if (!map->_dm_dvmastart)
+		panic("%s: error dvmastart is zero!\n", __func__);
 	iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
 
 	/* Flush the caches */

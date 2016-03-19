@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.214.2.2 2015/12/27 12:10:18 skrll Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.214.2.3 2016/03/19 11:30:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1148,20 +1148,33 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oname, l, node
 
 #ifdef RUMP_USE_CTOR
+#include <sys/kernel.h>
+
 struct sysctl_setup_chain {
 	void (*ssc_func)(struct sysctllog **);
 	LIST_ENTRY(sysctl_setup_chain) ssc_entries;
 };
 LIST_HEAD(sysctl_boot_chain, sysctl_setup_chain);
 #define _SYSCTL_REGISTER(name)						\
+static struct sysctl_setup_chain __CONCAT(ssc,name) = {			\
+	.ssc_func = name,						\
+};									\
 static void sysctlctor_##name(void) __attribute__((constructor));	\
 static void sysctlctor_##name(void)					\
 {									\
-        static struct sysctl_setup_chain ssc = {			\
-		.ssc_func = name,					\
-        };								\
-        extern struct sysctl_boot_chain sysctl_boot_chain;		\
-        LIST_INSERT_HEAD(&sysctl_boot_chain, &ssc, ssc_entries);	\
+	struct sysctl_setup_chain *ssc = &__CONCAT(ssc,name);		\
+	extern struct sysctl_boot_chain sysctl_boot_chain;		\
+	if (cold) {							\
+		LIST_INSERT_HEAD(&sysctl_boot_chain, ssc, ssc_entries);	\
+	}								\
+}									\
+static void sysctldtor_##name(void) __attribute__((destructor));	\
+static void sysctldtor_##name(void)					\
+{									\
+	struct sysctl_setup_chain *ssc = &__CONCAT(ssc,name);		\
+	if (cold) {							\
+		LIST_REMOVE(ssc, ssc_entries);				\
+	}								\
 }
 
 #else /* RUMP_USE_CTOR */

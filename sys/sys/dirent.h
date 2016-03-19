@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.28.30.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: dirent.h,v 1.28.30.2 2016/03/19 11:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,6 +34,7 @@
 #ifndef _SYS_DIRENT_H_
 #define _SYS_DIRENT_H_
 
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.76 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: ite.c,v 1.76.4.1 2016/03/19 11:29:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.76 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.76.4.1 2016/03/19 11:29:57 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -801,7 +801,7 @@ ite_cnfilter(u_int c, enum caller caller)
 	/* handle dead keys */
 	if (key->mode & KBD_MODE_DEAD) {
 		/* if entered twice, send accent itself */
-		if (last_dead == key->mode & KBD_MODE_ACCMASK)
+		if (last_dead == (key->mode & KBD_MODE_ACCMASK))
 			last_dead = 0;
 		else {
 			last_dead = key->mode & KBD_MODE_ACCMASK;

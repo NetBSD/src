@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.142.4.1 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: i82557.c,v 1.142.4.2 2016/03/19 11:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.142.4.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.142.4.2 2016/03/19 11:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1458,7 +1458,7 @@ fxp_rxintr(struct fxp_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }
 

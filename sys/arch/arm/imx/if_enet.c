@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.1.2.2 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.1.2.3 2016/03/19 11:29:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.2 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.3 2016/03/19 11:29:56 skrll Exp $");
 
 #include "imxocotp.h"
 #include "imxccm.h"
@@ -755,7 +755,7 @@ enet_rx_intr(void *arg)
 				/* Pass this up to any BPF listeners */
 				bpf_mtap(ifp, m0);
 
-				(*ifp->if_input)(ifp, m0);
+				if_percpuq_enqueue(ifp->if_percpuq, m0);
 			}
 
 			m0 = NULL;

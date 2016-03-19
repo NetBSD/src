@@ -1,19 +1,19 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.16 2014/04/25 17:50:28 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.16.4.1 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.13 2014/04/25 13:10:42 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.14 2016/01/26 23:22:22 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.10 2016/01/26 23:21:18 pooka Exp 
  */
 
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
+#include <rump-sys/kern.h>
+#include <rump-sys/kern_if.h>
+
 #include <rump/rump.h>
 #include <rump/rumpkern_if_pub.h>
-
-#include "rump_private.h"
-#include "rumpkern_if_priv.h"
 
 void __dead rump_kern_unavailable(void);
 void __dead

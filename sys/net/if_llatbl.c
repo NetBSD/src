@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.4.2.3 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.4.2.4 2016/03/19 11:30:32 skrll Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -383,16 +383,7 @@ lltable_purge_entries(struct lltable *llt)
 		if (lle->la_rt != NULL) {
 			struct rtentry *rt = lle->la_rt;
 			lle->la_rt = NULL;
-#ifdef GATEWAY
-			/* XXX cannot call rtfree with holding mutex(IPL_NET) */
-			LLE_ADDREF(lle);
-			LLE_WUNLOCK(lle);
-#endif
 			rtfree(rt);
-#ifdef GATEWAY
-			LLE_WLOCK(lle);
-			LLE_REMREF(lle);
-#endif
 		}
 #endif
 		llentry_free(lle);

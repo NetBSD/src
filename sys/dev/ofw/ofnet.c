@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.53 2012/10/27 17:18:28 chs Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.53.14.1 2016/03/19 11:30:10 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.53 2012/10/27 17:18:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.53.14.1 2016/03/19 11:30:10 skrll Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -263,7 +263,7 @@ ofnet_read(struct ofnet_softc *of)
 
 		bpf_mtap(ifp, m);
 		ifp->if_ipackets++;
-		(*ifp->if_input)(ifp, head);
+		if_percpuq_enqueue(ifp->if_percpuq, head);
 	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.69.4.1 2015/12/27 12:10:16 skrll Exp $	*/
+/*	$NetBSD: locks.c,v 1.69.4.2 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.69.4.1 2015/12/27 12:10:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.69.4.2 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 #ifdef LOCKDEBUG
 const int rump_lockdebug = 1;

@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.6.6.2 2015/09/22 12:06:12 skrll Exp $
+	$NetBSD: README.compileopts,v 1.6.6.3 2016/03/19 11:30:33 skrll Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -78,22 +78,6 @@ defval:	all
 effect:	Builds NetBSD COMPAT_nn code for each of the elements in the list.
 	This option is useful only when building rump kernels for
 	NetBSD userspace, and an empty value may be supplied elsewhere.
-
-
-================================================================================
-
-Rumpuser options:
-
-    RUMPUSER_THREADS
-
-values: pthread/none/fiber or <undefined>
-defval: <undefined>
-effect: Define the way threading is implemented in the rumpuser hypercall
-	implmentation.
-	<undefined> - use default implementation (currently "pthread")
-	pthread     - use pthreads to implement threading
-	none        - do not support kernel threads at all
-	fiber       - user a fiber interface, cooperatively scheduled contexts
 
 
 ================================================================================

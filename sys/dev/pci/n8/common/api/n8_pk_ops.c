@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_pk_ops.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_pk_ops.c,v 1.1.62.1 2016/03/19 11:30:18 skrll Exp $";
 /*****************************************************************************/
 /** @file n8_pk_ops.c
  *  @brief Implementation of PKP Base Operations
@@ -100,7 +100,7 @@ static void stripLeadingZeros(const N8_SizedBuffer_t *in_p,
    out_p->value_p = in_p->value_p;
 
    i = 0;
-   while ((in_p->value_p[i] == 0x0) && (i < in_p->lengthBytes))
+   while (i < in_p->lengthBytes && in_p->value_p[i] == 0x0)
    {
       i++;
    }

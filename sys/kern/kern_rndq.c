@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.28.2.3 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.28.2.4 2016/03/19 11:30:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.28.2.3 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.28.2.4 2016/03/19 11:30:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.28.2.3 2015/09/22 12:06:07 skrll Exp
 
 #ifdef COMPAT_50
 #include <compat/sys/rnd.h>
+#endif
+
+#if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
+#include <machine/cpu_rng.h>
 #endif
 
 #if defined(__HAVE_CPU_COUNTER)
@@ -156,13 +160,13 @@ static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
 static	      void	rnd_process_events(void);
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
-					uint32_t, uint32_t, uint32_t);
+					uint32_t, uint32_t, uint32_t, bool);
 static inline void	rnd_schedule_process(void);
 
 int			rnd_ready = 0;
 int			rnd_initial_entropy = 0;
 
-static int		rnd_printing = 0;
+static volatile unsigned	rnd_printing = 0;
 
 #ifdef DIAGNOSTIC
 static int		rnd_tested = 0;
@@ -177,27 +181,12 @@ rnd_printf(const char *fmt, ...)
 {
 	va_list ap;
 
-	membar_consumer();
-	if (rnd_printing) {
+	if (atomic_cas_uint(&rnd_printing, 0, 1) != 0)
 		return;
-	}
-	rnd_printing = 1;
-	membar_producer();
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
 	rnd_printing = 0;
-}
-
-void
-rnd_init_softint(void)
-{
-
-	rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-	    rnd_intr, NULL);
-	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
-	    rnd_wake, NULL);
-	rnd_schedule_process();
 }
 
 /*
@@ -271,6 +260,10 @@ rnd_getmore(size_t byteswanted)
 
 	mutex_spin_enter(&rnd_global.lock);
 	LIST_FOREACH_SAFE(rs, &rnd_global.sources, list, next) {
+		/* Skip if the source is disabled.  */
+		if (!RND_ENABLED(rs))
+			continue;
+
 		/* Skip if there's no callback.  */
 		if (!ISSET(rs->flags, RND_FLAG_HASCB))
 			continue;
@@ -299,6 +292,18 @@ rnd_getmore(size_t byteswanted)
 		    rs->name, byteswanted);
 	}
 	mutex_spin_exit(&rnd_global.lock);
+
+	/*
+	 * Check whether we got entropy samples to process.  In that
+	 * case, we may need to distribute entropy to waiters.  Do
+	 * that, if we can do it asynchronously.
+	 *
+	 * - Conditionally because we don't want a softint loop.
+	 * - Asynchronously because if we did it synchronously, we may
+	 *   end up with lock recursion on rndsinks_lock.
+	 */
+	if (!SIMPLEQ_EMPTY(&rnd_samples.q) && rnd_process != NULL)
+		rnd_schedule_process();
 }
 
 /*
@@ -404,11 +409,41 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 	return ret;
 }
 
+#if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
+static struct {
+	kmutex_t	lock;	/* unfortunately, must protect krndsource */
+	krndsource_t	source;
+} rnd_cpu __cacheline_aligned;
+
+static void
+rnd_cpu_get(size_t bytes, void *priv)
+{
+	krndsource_t *cpusrcp = priv;
+	cpu_rng_t buf[2 * RND_ENTROPY_THRESHOLD / sizeof(cpu_rng_t)];
+	cpu_rng_t *bufp;
+	size_t cnt = __arraycount(buf);
+	size_t entropy = 0;
+
+	KASSERT(cpusrcp == &rnd_cpu.source);
+
+	for (bufp = buf; bufp < buf + cnt; bufp++) {
+		entropy += cpu_rng(bufp);
+	}
+	if (__predict_true(entropy)) {
+		mutex_spin_enter(&rnd_cpu.lock);
+		rnd_add_data_sync(cpusrcp, buf, sizeof(buf), entropy);
+		explicit_memset(buf, 0, sizeof(buf));
+		mutex_spin_exit(&rnd_cpu.lock);
+	}
+}
+
+#endif
+
 #if defined(__HAVE_CPU_COUNTER)
 static struct {
 	kmutex_t	lock;
+	int		iter;
 	struct callout	callout;
-	struct callout	stop_callout;
 	krndsource_t	source;
 } rnd_skew __cacheline_aligned;
 
@@ -426,30 +461,20 @@ rnd_skew_enable(krndsource_t *rs, bool enabled)
 }
 
 static void
-rnd_skew_stop_intr(void *arg)
-{
-
-	callout_stop(&rnd_skew.callout);
-}
-
-static void
 rnd_skew_get(size_t bytes, void *priv)
 {
-	krndsource_t *skewsrcp = priv;
+	krndsource_t *skewsrcp __diagused = priv;
 
 	KASSERT(skewsrcp == &rnd_skew.source);
-	if (RND_ENABLED(skewsrcp)) {
-		/* Measure for 30s */
-		callout_schedule(&rnd_skew.stop_callout, hz * 30);
-		callout_schedule(&rnd_skew.callout, 1);
-	}
+
+	/* Measure 100 times */
+	rnd_skew.iter = 100;
+	callout_schedule(&rnd_skew.callout, 1);
 }
 
 static void
 rnd_skew_intr(void *arg)
 {
-	static int flipflop;
-
 	/*
 	 * Even on systems with seemingly stable clocks, the
 	 * delta-time entropy estimator seems to think we get 1 bit here
@@ -457,19 +482,31 @@ rnd_skew_intr(void *arg)
 	 *
 	 */
 	mutex_spin_enter(&rnd_skew.lock);
-	flipflop = !flipflop;
 
 	if (RND_ENABLED(&rnd_skew.source)) {
-		if (flipflop) {
+		int next_ticks = 1;
+		if (rnd_skew.iter & 1) {
 			rnd_add_uint32(&rnd_skew.source, rnd_counter());
-			callout_schedule(&rnd_skew.callout, hz / 10);
-		} else {
-			callout_schedule(&rnd_skew.callout, 1);
+			next_ticks = hz / 10;
+		}
+		if (--rnd_skew.iter > 0) {
+			callout_schedule(&rnd_skew.callout, next_ticks);
 		}
 	}
 	mutex_spin_exit(&rnd_skew.lock);
 }
 #endif
+
+void
+rnd_init_softint(void)
+{
+
+	rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
+	    rnd_intr, NULL);
+	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
+	    rnd_wake, NULL);
+	rnd_schedule_process();
+}
 
 /*
  * Entropy was just added to the pool.  If we crossed the threshold for
@@ -550,6 +587,21 @@ rnd_init(void)
 	}
 
 	/*
+	 * Attach CPU RNG if available.
+	 */
+#if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
+	if (cpu_rng_init()) {
+		/* IPL_VM because taken while rnd_global.lock is held.  */
+		mutex_init(&rnd_cpu.lock, MUTEX_DEFAULT, IPL_VM);
+		rndsource_setcb(&rnd_cpu.source, rnd_cpu_get, &rnd_cpu.source);
+		rnd_attach_source(&rnd_cpu.source, "cpurng",
+		    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|
+		    RND_FLAG_HASCB|RND_FLAG_HASENABLE);
+		rnd_cpu_get(RND_ENTROPY_THRESHOLD, &rnd_cpu.source);
+	}
+#endif
+
+	/*
 	 * If we have a cycle counter, take its error with respect
 	 * to the callout mechanism as a source of entropy, ala
 	 * TrueRand.
@@ -559,14 +611,13 @@ rnd_init(void)
 	/* IPL_VM because taken while rnd_global.lock is held.  */
 	mutex_init(&rnd_skew.lock, MUTEX_DEFAULT, IPL_VM);
 	callout_init(&rnd_skew.callout, CALLOUT_MPSAFE);
-	callout_init(&rnd_skew.stop_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&rnd_skew.callout, rnd_skew_intr, NULL);
-	callout_setfunc(&rnd_skew.stop_callout, rnd_skew_stop_intr, NULL);
 	rndsource_setcb(&rnd_skew.source, rnd_skew_get, &rnd_skew.source);
 	rndsource_setenable(&rnd_skew.source, rnd_skew_enable);
 	rnd_attach_source(&rnd_skew.source, "callout", RND_TYPE_SKEW,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_ESTIMATE_VALUE|
 	    RND_FLAG_HASCB|RND_FLAG_HASENABLE);
+	rnd_skew.iter = 100;
 	rnd_skew_intr(NULL);
 #endif
 
@@ -581,7 +632,7 @@ rnd_init(void)
 		mutex_spin_exit(&rnd_global.lock);
 		rnd_printf("rnd: seeded with %d bits\n",
 		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
-		memset(boot_rsp, 0, sizeof(*boot_rsp));
+		explicit_memset(boot_rsp, 0, sizeof(*boot_rsp));
 	}
 	rnd_attach_source(&rnd_printf_source, "printf", RND_TYPE_UNKNOWN,
 			  RND_FLAG_NO_ESTIMATE);
@@ -630,7 +681,7 @@ static void
 rnd_sample_free(rnd_sample_t *c)
 {
 
-	memset(c, 0, sizeof(*c));
+	explicit_memset(c, 0, sizeof(*c));
 	pool_cache_put(rnd_mempc, c);
 }
 
@@ -798,7 +849,7 @@ _rnd_add_uint32(krndsource_t *rs, uint32_t val)
 	 */
 	entropy = rnd_estimate(rs, ts, val);
 
-	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts);
+	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts, true);
 }
 
 void
@@ -822,7 +873,7 @@ _rnd_add_uint64(krndsource_t *rs, uint64_t val)
 	 */
 	entropy = rnd_estimate(rs, ts, (uint32_t)(val & (uint64_t)0xffffffff));
 
-	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts);
+	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts, true);
 }
 
 void
@@ -840,13 +891,22 @@ rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 		rndpool_add_data(&rnd_global.pool, data, len, entropy);
 		mutex_spin_exit(&rnd_global.lock);
 	} else {
-		rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
+		rnd_add_data_ts(rs, data, len, entropy, rnd_counter(), true);
 	}
+}
+
+void
+rnd_add_data_sync(krndsource_t *rs, const void *data, uint32_t len,
+    uint32_t entropy)
+{
+
+	KASSERT(rs != NULL);
+	rnd_add_data_ts(rs, data, len, entropy, rnd_counter(), false);
 }
 
 static void
 rnd_add_data_ts(krndsource_t *rs, const void *const data, uint32_t len,
-    uint32_t entropy, uint32_t ts)
+    uint32_t entropy, uint32_t ts, bool schedule)
 {
 	rnd_sample_t *state = NULL;
 	const uint8_t *p = data;
@@ -951,8 +1011,9 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, uint32_t len,
 	}
 	mutex_spin_exit(&rnd_samples.lock);
 
-	/* Cause processing of queued samples */
-	rnd_schedule_process();
+	/* Cause processing of queued samples, if caller wants it.  */
+	if (schedule)
+		rnd_schedule_process();
 }
 
 static int
@@ -1005,7 +1066,7 @@ rnd_hwrng_test(rnd_sample_t *sample)
 			return 1;
 		}
 		source->test_cnt = -1;
-		memset(source->test, 0, sizeof(*source->test));
+		explicit_memset(source->test, 0, sizeof(*source->test));
 	}
 	return 0;
 }
@@ -1114,15 +1175,10 @@ skip:		SIMPLEQ_INSERT_TAIL(&df_samples, sample, next);
 
 	/*
 	 * If we filled the pool past the threshold, wake anyone
-	 * waiting for entropy.  Otherwise, ask all the entropy sources
-	 * for more.
+	 * waiting for entropy.
 	 */
 	if (pool_entropy > RND_ENTROPY_THRESHOLD * 8) {
 		wake++;
-	} else {
-		rnd_getmore(howmany((RND_POOLBITS - pool_entropy), NBBY));
-		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
-		    (int)(howmany((RND_POOLBITS - pool_entropy), NBBY)));
 	}
 
 	/* Now we hold no locks: clean up. */
@@ -1157,7 +1213,6 @@ static uint32_t
 rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 {
 	static int timed_in;
-	int entropy_count;
 	uint32_t retval;
 
 	mutex_spin_enter(&rnd_global.lock);
@@ -1180,7 +1235,8 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 
 #ifdef DIAGNOSTIC
 	while (!rnd_tested) {
-		entropy_count = rndpool_get_entropy_count(&rnd_global.pool);
+		int entropy_count =
+		    rndpool_get_entropy_count(&rnd_global.pool);
 		rnd_printf_verbose("rnd: starting statistical RNG test,"
 		    " entropy = %d.\n",
 		    entropy_count);
@@ -1210,25 +1266,18 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 			    "STATISTICAL TEST!\n");
 			continue;
 		}
-		memset(&rnd_rt, 0, sizeof(rnd_rt));
+		explicit_memset(&rnd_rt, 0, sizeof(rnd_rt));
 		rndpool_add_data(&rnd_global.pool, rnd_testbits,
 		    sizeof(rnd_testbits), entropy_count);
-		memset(rnd_testbits, 0, sizeof(rnd_testbits));
+		explicit_memset(rnd_testbits, 0, sizeof(rnd_testbits));
 		rnd_printf_verbose("rnd: statistical RNG test done,"
 		    " entropy = %d.\n",
 		    rndpool_get_entropy_count(&rnd_global.pool));
 		rnd_tested++;
 	}
 #endif
-	entropy_count = rndpool_get_entropy_count(&rnd_global.pool);
 	retval = rndpool_extract_data(&rnd_global.pool, p, len, flags);
 	mutex_spin_exit(&rnd_global.lock);
-
-	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * NBBY) {
-		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
-		    (int)(howmany((RND_POOLBITS - entropy_count), NBBY)));
-		rnd_getmore(howmany((RND_POOLBITS - entropy_count), NBBY));
-	}
 
 	return retval;
 }
@@ -1328,7 +1377,7 @@ rnd_seed(void *base, size_t len)
 		rndpool_add_data(&rnd_global.pool, boot_rsp->data,
 		    sizeof(boot_rsp->data),
 		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
-		memset(boot_rsp, 0, sizeof(*boot_rsp));
+		explicit_memset(boot_rsp, 0, sizeof(*boot_rsp));
 		mutex_spin_exit(&rnd_global.lock);
 	} else {
 		rnd_printf_verbose("rnd: not ready, deferring seed feed.\n");

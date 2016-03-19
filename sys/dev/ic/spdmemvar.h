@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.4.6.2 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.4.6.3 2016/03/19 11:30:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -891,7 +891,7 @@ struct spdmem {
 #define SPDMEM_TYPE_MAXLEN 40
 
 struct spdmem_softc {
-	uint8_t		(*sc_read)(struct spdmem_softc *, uint16_t);
+	int		(*sc_read)(struct spdmem_softc *, uint16_t, uint8_t *);
 	struct spdmem	sc_spd_data;
 	struct sysctllog *sc_sysctl_log;
 	char		sc_type[SPDMEM_TYPE_MAXLEN];

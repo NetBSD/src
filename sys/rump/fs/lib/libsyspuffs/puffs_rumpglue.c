@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.13.12.1 2015/06/06 14:40:27 skrll Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.13.12.2 2016/03/19 11:30:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.13.12.1 2015/06/06 14:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.13.12.2 2016/03/19 11:30:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,10 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.13.12.1 2015/06/06 14:40:27 skr
 #include <dev/putter/putter.h>
 #include <dev/putter/putter_sys.h>
 
+#include <rump-sys/vfs.h>
+
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
-
-#include "rump_vfs_private.h"
 
 void putterattach(void); /* XXX: from autoconf */
 dev_type_open(puttercdopen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.165.2.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.165.2.2 2016/03/19 11:30:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.2 2016/03/19 11:30:31 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -782,6 +782,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 				if (!mutex_tryenter(parent->p_lock)) {
 					mutex_exit(t->p_lock);
 					mutex_enter(parent->p_lock);
+					mutex_enter(t->p_lock);
 				}
 			} else if (parent->p_lock > t->p_lock) {
 				mutex_enter(parent->p_lock);

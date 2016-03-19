@@ -12,6 +12,7 @@ struct nouveau_fifo_chan {
 #ifdef __NetBSD__
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+	bool mapped;
 #else
 	void __iomem *user;
 #endif

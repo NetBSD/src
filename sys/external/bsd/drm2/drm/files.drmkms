@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.9.2.2 2015/09/22 12:06:05 skrll Exp $
+#	$NetBSD: files.drmkms,v 1.9.2.3 2016/03/19 11:30:30 skrll Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -8,7 +8,7 @@ include "external/bsd/drm2/linux/files.drmkms_linux"
 # ARM SoC graphics drivers.
 define	drmkms_i2c: drmkms_linux
 
-define	drmkms: drmkms_linux, drmkms_i2c
+define	drmkms: drmkms_linux, drmkms_i2c, linux
 
 defflag		opt_drmkms.h	DRMKMS_DEBUG
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"

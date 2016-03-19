@@ -1,19 +1,19 @@
-/*	$NetBSD: rumpnet_if_wrappers.c,v 1.5 2013/07/03 19:22:21 pooka Exp $	*/
+/*	$NetBSD: rumpnet_if_wrappers.c,v 1.5.8.1 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpnet.ifspec,v 1.3 2013/07/03 19:21:11 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.6 2013/02/14 10:54:54 pooka Exp 
+ * from: NetBSD: rumpnet.ifspec,v 1.4 2016/01/26 23:22:22 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.10 2016/01/26 23:21:18 pooka Exp 
  */
 
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
+#include <rump-sys/kern.h>
+#include <rump-sys/net_if.h>
+
 #include <rump/rump.h>
 #include <rump/rumpnet_if_pub.h>
-
-#include "rump_private.h"
-#include "rumpnet_if_priv.h"
 
 void __dead rump_net_unavailable(void);
 void __dead

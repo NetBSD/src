@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.40.6.1 2015/09/22 12:05:58 skrll Exp $ */
+/*      $NetBSD: sgec.c,v 1.40.6.2 2016/03/19 11:30:09 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.40.6.1 2015/09/22 12:05:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.40.6.2 2016/03/19 11:30:09 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -466,7 +466,7 @@ sgec_intr(struct ze_softc *sc)
 				m->m_pkthdr.len = m->m_len =
 				    len - ETHER_CRC_LEN;
 				bpf_mtap(ifp, m);
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.52.4.2 2015/09/22 12:05:58 skrll Exp $ */
+/* $NetBSD: seeq8005.c,v 1.52.4.3 2016/03/19 11:30:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.52.4.2 2015/09/22 12:05:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.52.4.3 2016/03/19 11:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1252,7 +1252,7 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 	 */
 	bpf_mtap(ifp, m);
 
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.16 2014/09/05 05:42:50 matt Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.16.2.1 2016/03/19 11:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
 
 #include <sys/mutex.h>
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <miscfs/specfs/specdev.h>
+#endif
 
 /* This header file describes the api and data structures for
  * write ahead physical block logging (WAPBL) support.

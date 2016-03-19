@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.2.2.3 2015/06/06 14:40:28 skrll Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.2.2.4 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.2.2.3 2015/06/06 14:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.2.2.4 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.2.2.3 2015/06/06 14:40:28 skrll Exp $
 #define _RUMP_SYSPROXY
 #include <rump/rumpuser.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 int
 rump_init_server(const char *url)

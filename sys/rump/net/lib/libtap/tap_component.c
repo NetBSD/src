@@ -1,4 +1,4 @@
-/*	$NetBSD: tap_component.c,v 1.1.2.3 2015/09/22 12:06:16 skrll Exp $	*/
+/*	$NetBSD: tap_component.c,v 1.1.2.4 2016/03/19 11:30:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Wei Liu.  All Rights Reserved.
@@ -26,15 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.3 2015/09/22 12:06:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.4 2016/03/19 11:30:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 #include "ioconf.h"
 

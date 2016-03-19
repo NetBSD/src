@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.160.2.4 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.160.2.5 2016/03/19 11:30:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.160.2.4 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.160.2.5 2016/03/19 11:30:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -270,7 +270,6 @@ const struct protosw arpsw[] = {
 	  .pr_protocol = 0,
 	  .pr_flags = 0,
 	  .pr_input = 0,
-	  .pr_output = 0,
 	  .pr_ctlinput = 0,
 	  .pr_ctloutput = 0,
 	  .pr_usrreqs = 0,
@@ -715,7 +714,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		if (la->la_flags & LLE_LINKED) {
 			size_t pkts_dropped;
 
-			LLE_REMREF(la);
 			pkts_dropped = llentry_free(la);
 			ARP_STATADD(ARP_STAT_DFRDROPPED, pkts_dropped);
 		} else {
@@ -1973,7 +1971,7 @@ out:
  * Send a RARP request for the ip address of the specified interface.
  * The request should be RFC 903-compliant.
  */
-void
+static void
 revarprequest(struct ifnet *ifp)
 {
 	struct sockaddr sa;

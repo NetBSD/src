@@ -1,4 +1,4 @@
-/*	$NetBSD: nbpiic.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $ */
+/*	$NetBSD: nbpiic.c,v 1.1.30.1 2016/03/19 11:29:59 skrll Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.1.30.1 2016/03/19 11:29:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -130,6 +130,7 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = nbpiic_exec;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
 	config_found_ia(self, "i2cbus", &iba, iicbus_print);

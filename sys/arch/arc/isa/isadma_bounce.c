@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.13.30.1 2015/09/22 12:05:36 skrll Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.13.30.2 2016/03/19 11:29:55 skrll Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.13.30.1 2015/09/22 12:05:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.13.30.2 2016/03/19 11:29:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * and we can bounce, we will.
 	 */
 	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
-	if (error == 0 ||
-	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
+	if (error == 0 || (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0)
 		return error;
 
 	/*
@@ -321,8 +320,7 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	 * and we can bounce, we will.
 	 */
 	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
-	if (error == 0 ||
-	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
+	if (error == 0 || (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0)
 		return error;
 
 	/*

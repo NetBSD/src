@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.4.2.2 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: fdtvar.h,v 1.4.2.3 2016/03/19 11:30:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,10 +52,10 @@ struct fdt_attach_args {
 #define FDT_INTR_MPSAFE	__BIT(0)
 
 struct fdtbus_interrupt_controller_func {
-	void *	(*establish)(device_t, int, u_int, int, int,
+	void *	(*establish)(device_t, u_int *, int, int,
 			     int (*)(void *), void *);
 	void	(*disestablish)(device_t, void *);
-	bool	(*intrstr)(device_t, int, u_int, char *, size_t);
+	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 };
 
 struct fdtbus_i2c_controller_func {
@@ -74,6 +74,17 @@ struct fdtbus_gpio_controller_func {
 	void	(*release)(device_t, void *);
 	int	(*read)(device_t, void *, bool);
 	void	(*write)(device_t, void *, int, bool);
+};
+
+struct fdtbus_pinctrl_controller;
+
+struct fdtbus_pinctrl_pin {
+	struct fdtbus_pinctrl_controller *pp_pc;
+	void *pp_priv;
+};
+
+struct fdtbus_pinctrl_controller_func {
+	int (*set_config)(void *);
 };
 
 struct fdtbus_regulator_controller;
@@ -112,6 +123,8 @@ int		fdtbus_register_i2c_controller(device_t, int,
 		    const struct fdtbus_i2c_controller_func *);
 int		fdtbus_register_gpio_controller(device_t, int,
 		    const struct fdtbus_gpio_controller_func *);
+int		fdtbus_register_pinctrl_config(void *, int,
+		    const struct fdtbus_pinctrl_controller_func *);
 int		fdtbus_register_regulator_controller(device_t, int,
 		    const struct fdtbus_regulator_controller_func *);
 int		fdtbus_register_clock_controller(device_t, int,
@@ -133,6 +146,8 @@ int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
 int		fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *, int);
+int		fdtbus_pinctrl_set_config_index(int, u_int);
+int		fdtbus_pinctrl_set_config(int, const char *);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
 void		fdtbus_regulator_release(struct fdtbus_regulator *);
 int		fdtbus_regulator_enable(struct fdtbus_regulator *);

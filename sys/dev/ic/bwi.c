@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.24.6.2 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: bwi.c,v 1.24.6.3 2016/03/19 11:30:09 skrll Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.6.2 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.6.3 2016/03/19 11:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -3782,7 +3782,7 @@ bwi_set_gains(struct bwi_mac *mac, const struct bwi_gains *gains)
 		bwi_tbl_write_2(mac, tbl_gain_ofs2 + i, tbl_gain);
 	}
 
-	if (gains == NULL || (gains != NULL && gains->phy_gain != -1)) {
+	if (gains == NULL || gains->phy_gain != -1) {
 		uint16_t phy_gain1, phy_gain2;
 
 		if (gains != NULL) {

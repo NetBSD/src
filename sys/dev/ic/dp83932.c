@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.36 2013/10/25 21:29:28 martin Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.36.6.1 2016/03/19 11:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36 2013/10/25 21:29:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36.6.1 2016/03/19 11:30:09 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -843,7 +843,7 @@ sonic_rxintr(struct sonic_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

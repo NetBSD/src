@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.6.4.1 2015/06/06 14:39:57 skrll Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.6.4.2 2016/03/19 11:29:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.6.4.1 2015/06/06 14:39:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.6.4.2 2016/03/19 11:29:57 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -768,7 +768,7 @@ enic_rint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 		bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 
 	/* Need to refill now */
 	enic_refill(sc);

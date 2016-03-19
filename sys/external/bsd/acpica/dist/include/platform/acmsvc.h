@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,13 @@
 #define __ACMSVC_H__
 
 /* Note: do not include any C library headers here */
+
+/*
+ * Note: MSVC project files should define ACPI_DEBUGGER and ACPI_DISASSEMBLER
+ * as appropriate to enable editor functions like "Find all references".
+ * The editor isn't smart enough to dig through the include files to find
+ * out if these are actually defined.
+ */
 
 /*
  * Map low I/O functions for MS. This allows us to disable MS language

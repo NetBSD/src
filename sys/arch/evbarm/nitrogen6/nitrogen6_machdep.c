@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.1.2.2 2015/09/22 12:05:40 skrll Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.1.2.3 2016/03/19 11:29:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.1.2.2 2015/09/22 12:05:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.1.2.3 2016/03/19 11:29:58 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -95,10 +95,7 @@ u_int uboot_args[4] = { 0 };
 #endif
 
 void nitrogen6_setup_iomux(void);
-
-static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
-static const int comcnspeed = CONSPEED;
-static const int comcnmode = CONMODE | CLOCAL;
+void nitrogen6_device_register(device_t, void *);
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -247,7 +244,7 @@ initarm(void *arg)
 	    mapallmem_p);
 
 	/* we've a specific device_register routine */
-	evbarm_device_register = imx6_device_register;
+	evbarm_device_register = nitrogen6_device_register;
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 	/*
@@ -302,7 +299,7 @@ consinit(void)
 		paddr_t consaddr;
 
 		consaddr = CONADDR;
-		imxuart_cons_attach(&imx_bs_tag, consaddr, consrate, consmode);
+		imxuart_cons_attach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
 		return;
 	}
 # endif /* (NIMXUART > 0) && defined(IMXUARTCONSOLE) */

@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_i2c.c,v 1.6.2.2 2015/04/06 15:17:53 skrll Exp $ */
+/* $NetBSD: rockchip_i2c.c,v 1.6.2.3 2016/03/19 11:29:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_rkiic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.6.2.2 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.6.2.3 2016/03/19 11:29:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -142,9 +142,9 @@ rkiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_release_bus = rkiic_release_bus;
 	sc->sc_ic.ic_exec = rkiic_exec;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_ic;
-	sc->sc_i2cdev = config_found_ia(self, "i2cbus",
-	    &iba, iicbus_print);
+	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
 static int

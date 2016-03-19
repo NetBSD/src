@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.312.2.3 2015/09/22 12:06:15 skrll Exp $	*/
+/*	$NetBSD: rump.c,v 1.312.2.4 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.3 2015/09/22 12:06:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.4 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -74,6 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.3 2015/09/22 12:06:15 skrll Exp $")
 #include <sys/rnd.h>
 #include <sys/ktrace.h>
 
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
+#include <rump-sys/net.h>
+#include <rump-sys/vfs.h>
+
 #include <rump/rumpuser.h>
 
 #include <secmodel/suser/suser.h>
@@ -82,11 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.3 2015/09/22 12:06:15 skrll Exp $")
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_readahead.h>
-
-#include "rump_private.h"
-#include "rump_net_private.h"
-#include "rump_vfs_private.h"
-#include "rump_dev_private.h"
 
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
@@ -106,7 +106,8 @@ int rump_threads = 1;
 static void rump_component_addlocal(void);
 static struct lwp *bootlwp;
 
-static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
+/* 16k should be enough for std rump needs */
+static  char rump_msgbuf[16*1024] __aligned(256);
 
 bool rump_ttycomponent = false;
 
@@ -246,7 +247,7 @@ rump_init(void)
 	/* init minimal lwp/cpu context */
 	rump_lwproc_init();
 	l = &lwp0;
-	l->l_cpu = l->l_target_cpu = rump_cpu;
+	l->l_cpu = l->l_target_cpu = &rump_bootcpu;
 	rump_lwproc_curlwp_set(l);
 
 	/* retrieve env vars which affect the early stage of bootstrap */
@@ -314,7 +315,8 @@ rump_init(void)
 	{
 		struct sysctl_setup_chain *ssc;
 
-		LIST_FOREACH(ssc, &sysctl_boot_chain, ssc_entries) {
+		while ((ssc = LIST_FIRST(&sysctl_boot_chain)) != NULL) {
+			LIST_REMOVE(ssc, ssc_entries);
 			ssc->ssc_func(NULL);
 		}
 	}
@@ -544,6 +546,10 @@ rump_component_load(const struct rump_component *rc_const)
 {
 	struct rump_component *rc, *rc_iter;
 
+	/* time for rump component loading and unloading has passed */
+	if (!cold)
+		return;
+
 	/*
 	 * XXX: this is ok since the "const" was removed from the
 	 * definition of RUMP_COMPONENT().
@@ -563,6 +569,20 @@ rump_component_load(const struct rump_component *rc_const)
 	LIST_INSERT_HEAD(&rchead, rc, rc_entries);
 	KASSERT(rc->rc_type < RUMP_COMPONENT_MAX);
 	compcounter[rc->rc_type]++;
+}
+
+void
+rump_component_unload(struct rump_component *rc)
+{
+
+	/*
+	 * Checking for cold is enough because rump_init() both
+	 * flips it and handles component loading.
+	 */
+	if (!cold)
+		return;
+
+	LIST_REMOVE(rc, rc_entries);
 }
 
 int

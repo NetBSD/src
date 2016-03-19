@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.11.6.4 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.11.6.5 2016/03/19 11:30:10 skrll Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1418,7 +1418,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 #ifdef ALC_CHECKSUM
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 				IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
+				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
 
 #if NVLAN > 0
@@ -2389,13 +2389,6 @@ alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd, bool init)
 	    sc->alc_cdata.alc_rx_sparemap, m, BUS_DMA_NOWAIT);
 
 	if (error != 0) {
-		if (!error) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->alc_cdata.alc_rx_sparemap);
-			error = EFBIG;
-			printf("%s: too many segments?!\n",
-			    device_xname(sc->sc_dev));
-		}
 		m_freem(m);
 
 		if (init)
@@ -2596,7 +2589,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 			bpf_mtap(ifp, m);
 
 			/* Pass it on. */
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 	}
 	/* Reset mbuf chains. */

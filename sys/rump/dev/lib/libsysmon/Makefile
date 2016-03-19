@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.6.2 2015/12/27 12:10:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.6.3 2016/03/19 11:30:35 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/sysmon
@@ -13,8 +13,6 @@ SRCS=	sysmon_taskq.c sysmon_power.c sysmon_envsys.c sysmon_envsys_events.c \
 	swsensor.c swwdog.c
 
 SRCS+=	sysmon_component.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

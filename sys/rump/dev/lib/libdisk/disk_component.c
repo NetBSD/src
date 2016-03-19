@@ -1,4 +1,4 @@
-/*	$NetBSD: disk_component.c,v 1.1.2.2 2015/06/06 14:40:26 skrll Exp $	*/
+/*	$NetBSD: disk_component.c,v 1.1.2.3 2016/03/19 11:30:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,15 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disk_component.c,v 1.1.2.2 2015/06/06 14:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disk_component.c,v 1.1.2.3 2016/03/19 11:30:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
+#include <rump-sys/kern.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {

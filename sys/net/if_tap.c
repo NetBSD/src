@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.80.2.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.80.2.3 2016/03/19 11:30:32 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.2 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.3 2016/03/19 11:30:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1061,7 +1061,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 
 	bpf_mtap(ifp, m);
 	s = splnet();
-	(*ifp->if_input)(ifp, m);
+	if_input(ifp, m);
 	splx(s);
 
 	return (0);

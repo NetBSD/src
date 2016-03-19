@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_at_virtio.c,v 1.1.2.1 2015/06/06 14:40:27 skrll Exp $	*/
+/*	$NetBSD: ld_at_virtio.c,v 1.1.2.2 2016/03/19 11:30:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.1.2.1 2015/06/06 14:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.1.2.2 2016/03/19 11:30:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -35,8 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.1.2.1 2015/06/06 14:40:27 skrll E
 #include <sys/stat.h>
 #include <sys/disklabel.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 #include "ioconf.c"
 

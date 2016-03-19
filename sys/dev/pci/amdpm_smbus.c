@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.20.10.1 2015/06/06 14:40:09 skrll Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.20.10.2 2016/03/19 11:30:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.20.10.1 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.20.10.2 2016/03/19 11:30:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = amdpm_smbus_exec;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void)config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.6.3 2015/12/27 12:10:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.8.6.4 2016/03/19 11:30:35 skrll Exp $
 #
 
 LIB=	rumpdev_ugenhc
@@ -9,8 +9,6 @@ IOCONF= UGENHC.ioconf
 RUMP_COMPONENT=ioconf
 
 SRCS=	ugenhc.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
 RUMPCOMP_USER_SRCS=	ugenhc_user.c
 .else

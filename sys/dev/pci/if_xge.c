@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.19.6.1 2015/06/06 14:40:09 skrll Exp $ */
+/*      $NetBSD: if_xge.c,v 1.19.6.2 2016/03/19 11:30:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19.6.1 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19.6.2 2016/03/19 11:30:11 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -808,7 +808,7 @@ xge_intr(void *pv)
 
 		bpf_mtap(ifp, m);
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		if (++sc->sc_nextrx == NRXREAL)
 			sc->sc_nextrx = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.277.4.4 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277.4.5 2016/03/19 11:30:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.4 2015/12/27 12:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.5 2016/03/19 11:30:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4574,7 +4574,7 @@ bge_rxeof(struct bge_softc *sc)
 			VLAN_INPUT_TAG(ifp, m, cur_rx->bge_vlan_tag, continue);
 		}
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	sc->bge_rx_saved_considx = rx_cons;

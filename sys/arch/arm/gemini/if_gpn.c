@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $ */
+/* $NetBSD: if_gpn.c,v 1.4.30.1 2016/03/19 11:29:56 skrll Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.4.30.1 2016/03/19 11:29:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -307,7 +307,7 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 		printf("%s: rx len=%d crc=%#x\n", ifp->if_xname,
 		    m->m_pkthdr.len, m_crc32_le(m));
 #endif
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 out:

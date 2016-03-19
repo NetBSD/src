@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.12 2014/10/14 19:50:57 christos Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.12.2.1 2016/03/19 11:30:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.12 2014/10/14 19:50:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.12.2.1 2016/03/19 11:30:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1885,7 +1885,7 @@ ranger(uint8_t *a, size_t l, void (*pr)(const char *, ...) __printflike(1, 2))
 		(*pr)("[");
 
 	for (size_t i = 0; i < l; i++) {
-		for (b = e = a[i]; i < l && a[i + 1] == e + 1; i++, e++)
+		for (b = e = a[i]; i + 1 < l && a[i + 1] == e + 1; i++, e++)
 			continue;
 		(*pr)("%"PRIu8, b);
 		if (b != e)
@@ -1895,7 +1895,7 @@ ranger(uint8_t *a, size_t l, void (*pr)(const char *, ...) __printflike(1, 2))
 	}
 
 	if (l > 1)
-		printf("]");
+		(*pr)("]");
 }
 
 static void

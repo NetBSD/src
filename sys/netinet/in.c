@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.148.2.4 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.148.2.5 2016/03/19 11:30:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.4 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.5 2016/03/19 11:30:33 skrll Exp $");
 
 #include "arp.h"
 
@@ -1620,7 +1620,7 @@ in_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 	}
 
 	/* cancel timer */
-	if (callout_stop(&lle->lle_timer))
+	if (callout_halt(&lle->lle_timer, &lle->lle_lock))
 		LLE_REMREF(lle);
 
 	/* Drop hold queue */

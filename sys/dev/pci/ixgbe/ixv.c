@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.2.6.3 2015/09/22 12:05:59 skrll Exp $*/
+/*$NetBSD: ixv.c,v 1.2.6.4 2016/03/19 11:30:18 skrll Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -3372,7 +3372,7 @@ ixv_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 	s = splnet();
 	/* Pass this up to any BPF listeners. */
 	bpf_mtap(ifp, m);
-        (*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 	splx(s);
 
 	IXV_RX_LOCK(rxr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.33.12.1 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: timevar.h,v 1.33.12.2 2016/03/19 11:30:39 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -92,7 +92,9 @@ struct 	ptimer {
 #define pt_list	pt_data.pt_nonreal.pt_list
 #define pt_active	pt_data.pt_nonreal.pt_active
 
-#define	TIMER_MAX	32	/* See ptimers->pts_fired if you enlarge this */
+#define	TIMER_MIN	4	/* [0..3] are reserved for setitimer(2) */
+				/* REAL=0,VIRTUAL=1,PROF=2,MONOTONIC=3 */
+#define	TIMER_MAX	36	/* 32 is minimum user timers per POSIX */
 #define	TIMERS_ALL	0
 #define	TIMERS_POSIX	1
 
@@ -102,7 +104,6 @@ struct	ptimers {
 	struct ptlist pts_virtual;
 	struct ptlist pts_prof;
 	struct ptimer *pts_timers[TIMER_MAX];
-	int pts_fired;
 };
 
 /*

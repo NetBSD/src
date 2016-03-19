@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.43.2.2 2015/06/06 14:40:08 skrll Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.43.2.3 2016/03/19 11:30:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43.2.2 2015/06/06 14:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43.2.3 2016/03/19 11:30:10 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -955,7 +955,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (eh->ether_dhost[0] & 1) != 0 ||
 		    memcmp(eh->ether_dhost, CLLADDR(ifp->if_sadl),
 							ETHER_ADDR_LEN) == 0) {
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 			m = NULL;
 			GE_DPRINTF(sc, (">"));
 		} else {

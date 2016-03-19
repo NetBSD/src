@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_perfmon_base.c,v 1.2 2014/08/23 08:03:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_perfmon_base.c,v 1.2.2.1 2016/03/19 11:30:29 skrll Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_perfmon_base.c,v 1.2 2014/08/23 08:03:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_perfmon_base.c,v 1.2.2.1 2016/03/19 11:30:29 skrll Exp $");
 
 #include <core/option.h>
 #include <core/class.h>
@@ -171,8 +171,12 @@ nouveau_perfctr_sample(struct nouveau_object *object, u32 mthd,
 	struct nouveau_perfdom *dom;
 	struct nv_perfctr_sample *args = data;
 
+#if 1
+	CTASSERT(sizeof(*args) == 0);
+#else
 	if (size < sizeof(*args))
 		return -EINVAL;
+#endif
 	ppm->sequence++;
 
 	list_for_each_entry(dom, &ppm->domains, head) {

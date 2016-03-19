@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1205.2.4 2015/12/27 12:09:50 skrll Exp $
+$NetBSD: pcidevs,v 1.1205.2.5 2016/03/19 11:30:11 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3010,6 +3010,7 @@ product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
 product INTEL I218_V3		0x15a3	I218-V Ethernet Connection
 product INTEL I219_LM2		0x15b7	I219-LM Ethernet Connection
 product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
+product INTEL I219_LM3		0x15b9	I219-LM Ethernet Connection
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
 product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
@@ -3506,8 +3507,8 @@ product INTEL 82801H_SATA_RAID	0x2822	82801H RAID SATA Controller
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller w/ 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
 product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
-product INTEL 82801HBM_SATA_1	0x2829  82801HBM SATA Controller
-product INTEL 82801HBM_SATA_2	0x282a	82081HBM SATA Controller
+product INTEL 82801HBM_SATA_AHCI 0x2829  82801HBM AHCI SATA Controller
+product INTEL 82801HBM_SATA_RAID 0x282a	82801HBM SATA RAID Controller
 product INTEL 82801H_USB_1	0x2830	82801H USB UHCI Controller
 product INTEL 82801H_USB_2	0x2831	82801H USB UHCI Controller
 product INTEL 82801H_USB_3	0x2832	82801H USB UHCI Controller
@@ -5132,6 +5133,22 @@ product NVIDIA	MCP79_AHCI_11	0x0abe	nForce MCP79 AHCI Controller
 product NVIDIA	MCP79_AHCI_12	0x0abf	nForce MCP79 AHCI Controller
 product NVIDIA	GEFORCE_210_HDA	0x0be3	GeForce 210 High Definition Audio Controller
 product NVIDIA	GF_GT640M	0x0fd2	GeForce GT 640M
+product NVIDIA	GT520		0x1040	GeForce GT 520
+product NVIDIA	GEFORCE_510	0x1042	GeForce 510
+product NVIDIA	GEFORCE_605	0x1048	GeForce 605
+product NVIDIA	GT620		0x1049	GeForce GT 620
+product NVIDIA	GT610		0x104a	GeForce GT 610
+product NVIDIA	GT520M		0x1050	GeForce GT 520M
+product NVIDIA	GT520MX		0x1051	GeForce GT 520MX
+product NVIDIA	GT520M2		0x1052	GeForce GT 520M
+product NVIDIA	GEFORCE_410M	0x1054	GeForce 410M
+product NVIDIA	GEFORCE_410M2	0x1055	GeForce 410M
+product NVIDIA	NVS_4200M	0x1056	GeForce NVS 4200M
+product NVIDIA	NVS_4200M2	0x1057	GeForce NVS 4200M
+product NVIDIA	GEFORCE_610M	0x1058	GeForce 610M
+product NVIDIA	GEFORCE_610M2	0x1059	GeForce 610M
+product NVIDIA	GEFORCE_610M3	0x1059	GeForce 610M
+product NVIDIA	GT610M		0x105A	GeForce GT 610M
 product NVIDIA	GF116		0x1244	GeForce GTX 550 Ti
 
 /* Nvidia & SGS-Thomson Microelectronics */

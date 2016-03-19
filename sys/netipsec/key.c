@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.91 2014/06/16 03:34:45 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.91.4.1 2016/03/19 11:30:33 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91 2014/06/16 03:34:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91.4.1 2016/03/19 11:30:33 skrll Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -112,6 +112,10 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91 2014/06/16 03:34:45 christos Exp $");
 
 #define FULLMASK	0xff
 #define	_BITS(bytes)	((bytes) << 3)
+
+#define PORT_NONE	0
+#define PORT_LOOSE	1
+#define PORT_STRICT	2
 
 percpu_t *pfkeystat_percpu;
 
@@ -676,7 +680,7 @@ key_allocsp2(u_int32_t spi,
 		/* NB: spi's must exist and match */
 		if (!sp->req || !sp->req->sav || sp->req->sav->spi != spi)
 			continue;
-		if (key_sockaddrcmp(&sp->spidx.dst.sa, &dst->sa, 1) == 0)
+		if (key_sockaddrcmp(&sp->spidx.dst.sa, &dst->sa, PORT_STRICT) == 0)
 			goto found;
 	}
 	sp = NULL;
@@ -748,13 +752,13 @@ key_gettunnel(const struct sockaddr *osrc,
 				if (!key_cmpspidx_withmask(&sp->spidx, &spidx))
 					continue;
 			} else {
-				if (key_sockaddrcmp(&r1->saidx.src.sa, isrc, 0) ||
-				    key_sockaddrcmp(&r1->saidx.dst.sa, idst, 0))
+				if (key_sockaddrcmp(&r1->saidx.src.sa, isrc, PORT_NONE) ||
+				    key_sockaddrcmp(&r1->saidx.dst.sa, idst, PORT_NONE))
 					continue;
 			}
 
-			if (key_sockaddrcmp(&r2->saidx.src.sa, osrc, 0) ||
-			    key_sockaddrcmp(&r2->saidx.dst.sa, odst, 0))
+			if (key_sockaddrcmp(&r2->saidx.src.sa, osrc, PORT_NONE) ||
+			    key_sockaddrcmp(&r2->saidx.dst.sa, odst, PORT_NONE))
 				continue;
 
 			goto found;
@@ -1086,9 +1090,8 @@ key_allocsa(
 	struct secasvar *sav;
 	u_int stateidx, state;
 	const u_int *saorder_state_valid;
-	int arraysize;
+	int arraysize, chkport;
 	int s;
-	int chkport = 0;
 
 	int must_check_spi = 1;
 	int must_check_alg = 0;
@@ -1096,12 +1099,11 @@ key_allocsa(
 	u_int8_t algo = 0;
 
 	if ((sport != 0) && (dport != 0))
-		chkport = 1;
+		chkport = PORT_STRICT;
+	else
+		chkport = PORT_NONE;
 
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
-
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	/*
 	 * XXX IPCOMP case
@@ -1121,6 +1123,10 @@ key_allocsa(
 			must_check_alg = 1;
 		}
 	}
+	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+		printf("DP %s from %s:%u check_spi=%d, check_alg=%d\n",
+		    __func__, where, tag, must_check_spi, must_check_alg));
+
 
 	/*
 	 * searching SAD.
@@ -1141,25 +1147,44 @@ key_allocsa(
 		for (stateidx = 0; stateidx < arraysize; stateidx++) {
 			state = saorder_state_valid[stateidx];
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				KEYDEBUG(KEYDEBUG_MATCH,
+				    printf("try match spi %#x, %#x\n",
+						ntohl(spi), ntohl(sav->spi)));
 				/* sanity check */
 				KEY_CHKSASTATE(sav->state, state, "key_allocsav");
 				/* do not return entries w/ unusable state */
 				if (sav->state != SADB_SASTATE_MATURE &&
-				    sav->state != SADB_SASTATE_DYING)
+				    sav->state != SADB_SASTATE_DYING) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("bad state %d\n",
+						sav->state));
 					continue;
-				if (proto != sav->sah->saidx.proto)
+				}
+				if (proto != sav->sah->saidx.proto) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("proto fail %d != %d\n",
+						proto, sav->sah->saidx.proto));
 					continue;
-				if (must_check_spi && spi != sav->spi)
+				}
+				if (must_check_spi && spi != sav->spi) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("spi fail %#x != %#x\n",
+						ntohl(spi), ntohl(sav->spi)));
 					continue;
+				}
 				/* XXX only on the ipcomp case */
-				if (must_check_alg && algo != sav->alg_comp)
+				if (must_check_alg && algo != sav->alg_comp) {
+					KEYDEBUG(KEYDEBUG_MATCH,
+					    printf("algo fail %d != %d\n",
+						algo, sav->alg_comp));
 					continue;
+				}
 
 #if 0	/* don't check src */
 	/* Fix port in src->sa */
 
 				/* check src address */
-				if (key_sockaddrcmp(&src->sa, &sav->sah->saidx.src.sa, 0) != 0)
+				if (key_sockaddrcmp(&src->sa, &sav->sah->saidx.src.sa, PORT_NONE) != 0)
 					continue;
 #endif
 				/* fix port of dst address XXX*/
@@ -4189,7 +4214,8 @@ key_cmpsaidx(
 	const struct secasindex *saidx1,
 	int flag)
 {
-	int chkport = 0;
+	int chkport;
+	const struct sockaddr *sa0src, *sa0dst, *sa1src, *sa1dst;
 
 	/* sanity */
 	if (saidx0 == NULL && saidx1 == NULL)
@@ -4228,29 +4254,28 @@ key_cmpsaidx(
 				return 0;
 		}
 
-	/*
-	 * If NAT-T is enabled, check ports for tunnel mode.
-	 * Don't do it for transport mode, as there is no
-	 * port information available in the SP.
-         * Also don't check ports if they are set to zero
-	 * in the SPD: This means we have a non-generated
-	 * SPD which can't know UDP ports.
-	 */
-	if (saidx1->mode == IPSEC_MODE_TUNNEL &&
-	    ((((const struct sockaddr *)(&saidx1->src))->sa_family == AF_INET &&
-	      ((const struct sockaddr *)(&saidx1->dst))->sa_family == AF_INET &&
-	      ((const struct sockaddr_in *)(&saidx1->src))->sin_port &&
-	      ((const struct sockaddr_in *)(&saidx1->dst))->sin_port) ||
-             (((const struct sockaddr *)(&saidx1->src))->sa_family == AF_INET6 &&
-	      ((const struct sockaddr *)(&saidx1->dst))->sa_family == AF_INET6 &&
-	      ((const struct sockaddr_in6 *)(&saidx1->src))->sin6_port &&
-	      ((const struct sockaddr_in6 *)(&saidx1->dst))->sin6_port)))
-		chkport = 1;
 
-		if (key_sockaddrcmp(&saidx0->src.sa, &saidx1->src.sa, chkport) != 0) {
+		sa0src = &saidx0->src.sa;
+		sa0dst = &saidx0->dst.sa;
+		sa1src = &saidx1->src.sa;
+		sa1dst = &saidx1->dst.sa;
+		/*
+		 * If NAT-T is enabled, check ports for tunnel mode.
+		 * Don't do it for transport mode, as there is no
+		 * port information available in the SP.
+		 * Also don't check ports if they are set to zero
+		 * in the SPD: This means we have a non-generated
+		 * SPD which can't know UDP ports.
+		 */
+		if (saidx1->mode == IPSEC_MODE_TUNNEL)
+			chkport = PORT_LOOSE;
+		else
+			chkport = PORT_NONE;
+
+		if (key_sockaddrcmp(sa0src, sa1src, chkport) != 0) {
 			return 0;
 		}
-		if (key_sockaddrcmp(&saidx0->dst.sa, &saidx1->dst.sa, chkport) != 0) {
+		if (key_sockaddrcmp(sa0dst, sa1dst, chkport) != 0) {
 			return 0;
 		}
 	}
@@ -4284,8 +4309,8 @@ key_cmpspidx_exactly(
 	 || spidx0->ul_proto != spidx1->ul_proto)
 		return 0;
 
-	return key_sockaddrcmp(&spidx0->src.sa, &spidx1->src.sa, 1) == 0 &&
-	       key_sockaddrcmp(&spidx0->dst.sa, &spidx1->dst.sa, 1) == 0;
+	return key_sockaddrcmp(&spidx0->src.sa, &spidx1->src.sa, PORT_STRICT) == 0 &&
+	       key_sockaddrcmp(&spidx0->dst.sa, &spidx1->dst.sa, PORT_STRICT) == 0;
 }
 
 /*
@@ -4391,46 +4416,86 @@ key_cmpspidx_withmask(
 
 /* returns 0 on match */
 static int
+key_portcomp(in_port_t port1, in_port_t port2, int howport)
+{
+	switch (howport) {
+	case PORT_NONE:
+		return 0;
+	case PORT_LOOSE:
+		if (port1 == 0 || port2 == 0)
+			return 0;
+		/*FALLTHROUGH*/
+	case PORT_STRICT:
+		if (port1 != port2) {
+			KEYDEBUG(KEYDEBUG_MATCH,
+			    printf("port fail %d != %d\n", port1, port2));
+			return 1;
+		}
+		return 0;
+	default:
+		KASSERT(0);
+		return 1;
+	}
+}
+
+/* returns 0 on match */
+static int
 key_sockaddrcmp(
 	const struct sockaddr *sa1,
 	const struct sockaddr *sa2,
-	int port)
+	int howport)
 {
-#ifdef satosin
-#undef satosin
-#endif
-#define satosin(s) ((const struct sockaddr_in *)s)
-#ifdef satosin6
-#undef satosin6
-#endif
-#define satosin6(s) ((const struct sockaddr_in6 *)s)
-	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len)
+	const struct sockaddr_in *sin1, *sin2;
+	const struct sockaddr_in6 *sin61, *sin62;
+
+	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len) {
+		KEYDEBUG(KEYDEBUG_MATCH,
+		    printf("fam/len fail %d != %d || %d != %d\n",
+			sa1->sa_family, sa2->sa_family, sa1->sa_len,
+			sa2->sa_len));
 		return 1;
+	}
 
 	switch (sa1->sa_family) {
 	case AF_INET:
-		if (sa1->sa_len != sizeof(struct sockaddr_in))
-			return 1;
-		if (satosin(sa1)->sin_addr.s_addr !=
-		    satosin(sa2)->sin_addr.s_addr) {
+		if (sa1->sa_len != sizeof(struct sockaddr_in)) {
+			KEYDEBUG(KEYDEBUG_MATCH,
+			    printf("len fail %d != %zu\n",
+				sa1->sa_len, sizeof(struct sockaddr_in)));
 			return 1;
 		}
-		if (port && satosin(sa1)->sin_port != satosin(sa2)->sin_port)
+		sin1 = (const struct sockaddr_in *)sa1;
+		sin2 = (const struct sockaddr_in *)sa2;
+		if (sin1->sin_addr.s_addr != sin2->sin_addr.s_addr) {
+			KEYDEBUG(KEYDEBUG_MATCH,
+			    printf("addr fail %#x != %#x\n",
+				sin1->sin_addr.s_addr,
+				sin2->sin_addr.s_addr));
 			return 1;
+		}
+		if (key_portcomp(sin1->sin_port, sin2->sin_port, howport)) {
+			return 1;
+		}
+		KEYDEBUG(KEYDEBUG_MATCH,
+		    printf("addr success %#x[%d] == %#x[%d]\n",
+			sin1->sin_addr.s_addr,
+			sin1->sin_port,
+			sin2->sin_addr.s_addr,
+			sin2->sin_port));
 		break;
 	case AF_INET6:
+		sin61 = (const struct sockaddr_in6 *)sa1;
+		sin62 = (const struct sockaddr_in6 *)sa2;
 		if (sa1->sa_len != sizeof(struct sockaddr_in6))
 			return 1;	/*EINVAL*/
-		if (satosin6(sa1)->sin6_scope_id !=
-		    satosin6(sa2)->sin6_scope_id) {
+
+		if (sin61->sin6_scope_id != sin62->sin6_scope_id) {
 			return 1;
 		}
-		if (!IN6_ARE_ADDR_EQUAL(&satosin6(sa1)->sin6_addr,
-		    &satosin6(sa2)->sin6_addr)) {
+		if (!IN6_ARE_ADDR_EQUAL(&sin61->sin6_addr, &sin62->sin6_addr)) {
 			return 1;
 		}
-		if (port &&
-		    satosin6(sa1)->sin6_port != satosin6(sa2)->sin6_port) {
+		if (key_portcomp(sin61->sin6_port, sin62->sin6_port, howport)) {
 			return 1;
 		}
 		break;
@@ -4441,8 +4506,6 @@ key_sockaddrcmp(
 	}
 
 	return 0;
-#undef satosin
-#undef satosin6
 }
 
 /*
@@ -5615,11 +5678,14 @@ key_getmsgbuf_x1(struct mbuf *m, const struct sadb_msghdr *mhp)
 		panic("key_getmsgbuf_x1: NULL pointer is passed");
 
 	/* create new sadb_msg to reply. */
-	n = key_gather_mbuf(m, mhp, 1, 9, SADB_EXT_RESERVED,
+	n = key_gather_mbuf(m, mhp, 1, 15, SADB_EXT_RESERVED,
 	    SADB_EXT_SA, SADB_X_EXT_SA2,
 	    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST,
 	    SADB_EXT_LIFETIME_HARD, SADB_EXT_LIFETIME_SOFT,
-	    SADB_EXT_IDENTITY_SRC, SADB_EXT_IDENTITY_DST);
+	    SADB_EXT_IDENTITY_SRC, SADB_EXT_IDENTITY_DST,
+	    SADB_X_EXT_NAT_T_TYPE, SADB_X_EXT_NAT_T_SPORT,
+	    SADB_X_EXT_NAT_T_DPORT, SADB_X_EXT_NAT_T_OAI,
+	    SADB_X_EXT_NAT_T_OAR, SADB_X_EXT_NAT_T_FRAG);
 	if (!n)
 		return NULL;
 
@@ -7267,6 +7333,7 @@ key_parse(struct mbuf *m, struct socket *so)
 {
 	struct sadb_msg *msg;
 	struct sadb_msghdr mh;
+	u_int orglen;
 	int error;
 	int target;
 
@@ -7286,10 +7353,11 @@ key_parse(struct mbuf *m, struct socket *so)
 			return ENOBUFS;
 	}
 	msg = mtod(m, struct sadb_msg *);
+	orglen = PFKEY_UNUNIT64(msg->sadb_msg_len);
 	target = KEY_SENDUP_ONE;
 
 	if ((m->m_flags & M_PKTHDR) == 0 ||
-	    m->m_pkthdr.len != m->m_pkthdr.len) {
+	    m->m_pkthdr.len != orglen) {
 		ipseclog((LOG_DEBUG, "key_parse: invalid message length.\n"));
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVLEN);
 		error = EINVAL;

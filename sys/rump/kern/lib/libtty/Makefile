@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.6.3 2015/12/27 12:10:16 skrll Exp $
+#	$NetBSD: Makefile,v 1.3.6.4 2016/03/19 11:30:37 skrll Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../kern					\
@@ -17,8 +17,6 @@ SRCS+=	tty_60.c
 .endif
 
 SRCS+=	tty_component.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

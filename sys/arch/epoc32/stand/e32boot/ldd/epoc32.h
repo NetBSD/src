@@ -1,4 +1,4 @@
-/*	$NetBSD: epoc32.h,v 1.1 2013/04/28 12:11:27 kiyohara Exp $	*/
+/*	$NetBSD: epoc32.h,v 1.1.16.1 2016/03/19 11:29:58 skrll Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -30,6 +30,7 @@
 class EPOC32 {
 private:
 	CPU *cpu;
+	EPOC32(const EPOC32 &);
 
 public:
 	EPOC32(void);

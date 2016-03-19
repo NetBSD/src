@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.3.2.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.3.2.3 2016/03/19 11:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/null.h>
 #include <sys/rndio.h>		/* RND_TYPE_*, RND_FLAG_* */
 #include <sys/rngtest.h>
+#include <sys/queue.h>
 
 typedef struct rnd_delta_estimator {
 	uint64_t	x;
@@ -86,6 +88,8 @@ rndsource_setenable(struct krndsource *const rs, void *const cb)
 void		_rnd_add_uint32(krndsource_t *, uint32_t);
 void		_rnd_add_uint64(krndsource_t *, uint64_t);
 void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
+		    uint32_t);
+void		rnd_add_data_sync(krndsource_t *, const void *, uint32_t,
 		    uint32_t);
 void		rnd_attach_source(krndsource_t *, const char *,
 		    uint32_t, uint32_t);

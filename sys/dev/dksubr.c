@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.54.2.4 2015/12/27 12:09:48 skrll Exp $ */
+/* $NetBSD: dksubr.c,v 1.54.2.5 2016/03/19 11:30:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.4 2015/12/27 12:09:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.5 2016/03/19 11:30:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,6 +451,7 @@ dk_drain(struct dk_softc *dksc)
 
 	mutex_enter(&dksc->sc_iolock);
 	bp = dksc->sc_deferred;
+	dksc->sc_deferred = NULL;
 	if (bp != NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;

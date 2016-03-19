@@ -1,8 +1,15 @@
-# $NetBSD: Makefile,v 1.5.2.1 2015/04/06 15:18:21 skrll Exp $
+# $NetBSD: Makefile,v 1.5.2.2 2016/03/19 11:30:32 skrll Exp $
+
+#
+# At some point this needs to turn into linux.kmod and a proper home for it
+# found.  For now pickup the linux_work.c from the (increasingly poorly
+# named) common area.
+#
 
 .include "../Makefile.inc"
 
 .PATH: ${S}/external/bsd/drm2/linux
+.PATH: ${S}/external/bsd/common/linux
 
 CPPFLAGS+=	-I${S}/external/bsd/common/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/include

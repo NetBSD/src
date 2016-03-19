@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2014/02/24 07:23:43 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2016/03/19 11:30:00 skrll Exp $
 
+NODEBUG=yes
 PROG=	xxboot
 NOMAN=	# defined
 SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S

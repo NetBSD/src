@@ -1,4 +1,4 @@
-/*	$NetBSD: gif_component.c,v 1.1.2.2 2015/12/27 12:10:17 skrll Exp $	*/
+/*	$NetBSD: gif_component.c,v 1.1.2.3 2016/03/19 11:30:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gif_component.c,v 1.1.2.2 2015/12/27 12:10:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gif_component.c,v 1.1.2.3 2016/03/19 11:30:38 skrll Exp $");
 
 #include <sys/param.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
 
 int gifattach(int);
 

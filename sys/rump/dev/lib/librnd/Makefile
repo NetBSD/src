@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.6.3 2015/12/27 12:10:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.7.6.4 2016/03/19 11:30:35 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
@@ -10,8 +10,6 @@ IOCONF=	RND.ioconf
 SRCS=	rndpseudo.c
 
 SRCS+=	rnd_component.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

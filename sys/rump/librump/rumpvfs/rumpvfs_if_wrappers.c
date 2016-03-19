@@ -1,19 +1,19 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.12.4.1 2015/06/06 14:40:29 skrll Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.12.4.2 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.10 2015/04/23 10:50:29 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.11 2016/01/26 23:22:22 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.10 2016/01/26 23:21:18 pooka Exp 
  */
 
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs_if.h>
+
 #include <rump/rump.h>
 #include <rump/rumpvfs_if_pub.h>
-
-#include "rump_private.h"
-#include "rumpvfs_if_priv.h"
 
 void __dead rump_vfs_unavailable(void);
 void __dead

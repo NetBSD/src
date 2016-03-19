@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.53.4.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.53.4.2 2016/03/19 11:30:03 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.53.4.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.53.4.2 2016/03/19 11:30:03 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -328,7 +328,7 @@ mb8795_rint(struct mb8795_softc *sc)
 			ifp->if_ipackets++;
 
 			/* Pass the packet up. */
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 
 			s = spldma();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.h,v 1.2 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: in_proto.h,v 1.2.140.1 2016/03/19 11:30:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

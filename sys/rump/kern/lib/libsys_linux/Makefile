@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.6.3 2015/12/27 12:10:16 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.6.4 2016/03/19 11:30:36 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../compat/linux/common
@@ -16,7 +16,6 @@ SRCS+=	linux_rump.c
 SRCS+=	sys_linux_component.c
 
 # XXX
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern
 CPPFLAGS+= -DINET6
 
 SYS_P=rump_linux_sys

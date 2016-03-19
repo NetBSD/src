@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.3.4.3 2015/12/27 12:10:03 skrll Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.3.4.4 2016/03/19 11:30:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.3.4.3 2015/12/27 12:10:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.3.4.4 2016/03/19 11:30:30 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -208,15 +208,17 @@ out0:	pmf_device_deregister(self);
 static bool
 nouveau_pci_suspend(device_t self, const pmf_qual_t *qual __unused)
 {
+	struct nouveau_pci_softc *const sc = device_private(self);
 
-	return nouveau_pmops_suspend(self) == 0;
+	return nouveau_pmops_suspend(sc->sc_drm_dev) == 0;
 }
 
 static bool
 nouveau_pci_resume(device_t self, const pmf_qual_t *qual)
 {
+	struct nouveau_pci_softc *const sc = device_private(self);
 
-	return nouveau_pmops_resume(self) == 0;
+	return nouveau_pmops_resume(sc->sc_drm_dev) == 0;
 }
 
 static void

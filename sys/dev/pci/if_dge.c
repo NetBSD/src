@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.38.4.2 2015/06/06 14:40:09 skrll Exp $ */
+/*	$NetBSD: if_dge.c,v 1.38.4.3 2016/03/19 11:30:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.38.4.2 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.38.4.3 2016/03/19 11:30:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1761,7 +1761,7 @@ dge_rxintr(struct dge_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

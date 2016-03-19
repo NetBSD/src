@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.10.42.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.10.42.2 2016/03/19 11:30:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -181,9 +181,6 @@ do {									\
 
 void	lockstat_event(uintptr_t, uintptr_t, u_int, u_int, uint64_t);
 
-extern volatile u_int	lockstat_enabled;
-extern volatile u_int	lockstat_dev_enabled;
-
 #else
 
 #define	LOCKSTAT_FLAG(name)					/* nothing */
@@ -216,9 +213,14 @@ void		lockstat_probe_stub(uint32_t, uintptr_t, uintptr_t,
 #define KDTRACE_LOCKSTAT_ENABLED 0
 #endif
 
+#if defined(_KERNEL) && NLOCKSTAT > 0
+extern volatile u_int	lockstat_enabled;
+extern volatile u_int	lockstat_dev_enabled;
+
 #define LOCKSTAT_ENABLED_UPDATE() do { \
 	lockstat_enabled = lockstat_dev_enabled | KDTRACE_LOCKSTAT_ENABLED; \
 	membar_producer(); \
     } while (/*CONSTCOND*/0)
+#endif
 
 #endif	/* _SYS_LOCKSTAT_H_ */

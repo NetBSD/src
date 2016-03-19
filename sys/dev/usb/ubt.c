@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.8 2015/12/28 10:15:09 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.9 2016/03/19 11:30:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.8 2015/12/28 10:15:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.9 2016/03/19 11:30:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -297,39 +297,167 @@ static int ubt_sysctl_config(SYSCTLFN_PROTO);
 static void ubt_abortdealloc(struct ubt_softc *);
 
 /*
- * To match or ignore forcibly, add
- *
- *	{ { VendorID, ProductID } , UMATCH_VENDOR_PRODUCT|UMATCH_NONE }
- *
- * to the ubt_dev list.
+ * To match or ignore, add details to the ubt_dev list.
+ * Use value of -1 to indicate a wildcard
+ * To override another entry, add details earlier
  */
 const struct ubt_devno {
-	struct usb_devno	devno;
+	int			vendor;
+	int			product;
+	int			class;
+	int			subclass;
+	int			proto;
 	int			match;
 } ubt_dev[] = {
-	{ { USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
-	  UMATCH_NONE },
-	{ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH_HOST_C },
-	  UMATCH_VENDOR_PRODUCT },
+	{   /* ignore Broadcom 2033 without firmware */
+	    USB_VENDOR_BROADCOM,
+	    USB_PRODUCT_BROADCOM_BCM2033NF,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_NONE
+	},
+	{   /* Apple Bluetooth Host Controller MacbookPro 7,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_1,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller iMac 11,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_2,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookPro 8,2 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_3,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookAir 3,1 3,2*/
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_4,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookAir 4,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_5,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacMini 5,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_6,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookAir 6,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_7,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Broadcom chips with PatchRAM support */
+	    USB_VENDOR_BROADCOM,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_FOXCONN,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_LITEON,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_BELKIN,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_TOSHIBA,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_ASUSTEK,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Generic Bluetooth SIG compliant devices */
+	    -1,
+	    -1,
+	    UDCLASS_WIRELESS,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO
+	},
 };
-#define ubt_lookup(vendor, product) \
-	((const struct ubt_devno *)usb_lookup(ubt_dev, vendor, product))
 
 int
 ubt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
-	const struct ubt_devno *dev;
+	size_t i;
 
 	DPRINTFN(50, "ubt_match\n");
 
-	if ((dev = ubt_lookup(uaa->uaa_vendor, uaa->uaa_product)) != NULL)
-		return dev->match;
+	for (i = 0; i < __arraycount(ubt_dev); i++) {
+		if (ubt_dev[i].vendor != -1 
+		    && ubt_dev[i].vendor != (int)uaa->uaa_vendor)
+			continue;
+		if (ubt_dev[i].product != -1 
+		    && ubt_dev[i].product != (int)uaa->uaa_product)
+			continue;
+		if (ubt_dev[i].class != -1 
+		    && ubt_dev[i].class != uaa->uaa_class)
+			continue;
+		if (ubt_dev[i].subclass != -1 
+		    && ubt_dev[i].subclass != uaa->uaa_subclass)
+			continue;
+		if (ubt_dev[i].proto != -1 
+		    && ubt_dev[i].proto != uaa->uaa_proto)
+			continue;
 
-	if (uaa->uaa_class == UDCLASS_WIRELESS
-	    && uaa->uaa_subclass == UDSUBCLASS_RF
-	    && uaa->uaa_proto == UDPROTO_BLUETOOTH)
-		return UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO;
+		return ubt_dev[i].match;
+	}
 
 	return UMATCH_NONE;
 }
