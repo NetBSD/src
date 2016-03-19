@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.66.4.3 2015/12/27 12:10:06 skrll Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.66.4.4 2016/03/19 11:30:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.3 2015/12/27 12:10:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.4 2016/03/19 11:30:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -622,7 +622,7 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		    ifp->if_xname, arc_ipmtu, ARC_PHDS_MAXMTU);
 
 	ifp->if_output = arc_output;
-	ifp->if_input = arc_input;
+	ifp->_if_input = arc_input;
 	ac = (struct arccom *)ifp;
 	ac->ac_seqid = (time_second) & 0xFFFF; /* try to make seqid unique */
 	if (lla == 0) {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.83.2.2 2015/12/27 12:09:44 skrll Exp $
+#	$NetBSD: files.x86,v 1.83.2.3 2016/03/19 11:30:07 skrll Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -27,6 +27,7 @@ define  ipmibus {}
 device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+file	arch/x86/x86/cpu_rng.c		cpu
 
 device	acpicpu: acpi
 attach	acpicpu at cpufeaturebus
@@ -73,6 +74,7 @@ file	arch/x86/x86/core_machdep.c	coredump
 file	arch/x86/x86/cpu_topology.c	machdep
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
+file	arch/x86/x86/efi.c		machdep
 file	arch/x86/x86/errata.c		machdep
 file	arch/x86/x86/genfb_machdep.c	machdep
 file	arch/x86/x86/identcpu.c		machdep

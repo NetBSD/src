@@ -1,7 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.112.2.3 2015/12/27 12:09:28 skrll Exp $
-=======
-# $NetBSD: XEN3_DOM0,v 1.112.2.3 2015/12/27 12:09:28 skrll Exp $
->>>>>>> 1.116
+# $NetBSD: XEN3_DOM0,v 1.112.2.4 2016/03/19 11:29:54 skrll Exp $
 
 include 	"arch/amd64/conf/std.xen"
 

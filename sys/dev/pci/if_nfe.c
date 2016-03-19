@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.59 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.59.6.1 2016/03/19 11:30:10 skrll Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.59 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.59.6.1 2016/03/19 11:30:10 skrll Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -946,7 +946,7 @@ mbufcopied:
 		}
 		bpf_mtap(ifp, m);
 		ifp->if_ipackets++;
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 skip1:
 		/* update mapping address in h/w descriptor */

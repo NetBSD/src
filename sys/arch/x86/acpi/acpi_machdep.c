@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.8.4.1 2015/12/27 12:09:44 skrll Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.8.4.2 2016/03/19 11:30:06 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.1 2015/12/27 12:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.2 2016/03/19 11:30:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.1 2015/12/27 12:09:44 skrll E
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 #include <machine/pic.h>
+
+#include <x86/efi.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -87,8 +89,18 @@ acpi_md_OsGetRootPointer(void)
 	ACPI_PHYSICAL_ADDRESS PhysicalAddress;
 	ACPI_STATUS Status;
 
-	Status = AcpiFindRootPointer(&PhysicalAddress);
+#ifndef XEN
+	/* If EFI is available, attempt to use it to locate the ACPI table. */
+	if (efi_probe()) {
+		PhysicalAddress = efi_getcfgtblpa(&EFI_UUID_ACPI20);
+		if (!PhysicalAddress)
+			PhysicalAddress = efi_getcfgtblpa(&EFI_UUID_ACPI10);
+		if (PhysicalAddress)
+			return PhysicalAddress;
+	}
 
+#endif
+	Status = AcpiFindRootPointer(&PhysicalAddress);
 	if (ACPI_FAILURE(Status))
 		PhysicalAddress = 0;
 

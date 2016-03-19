@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.205.2.4 2015/12/27 12:10:06 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.205.2.5 2016/03/19 11:30:32 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.4 2015/12/27 12:10:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.5 2016/03/19 11:30:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.4 2015/12/27 12:10:06 skrll
 #include <sys/device.h>
 #include <sys/rnd.h>
 #include <sys/rndsource.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -539,6 +540,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	struct llc *l;
 #endif
 
+	KASSERT(!cpu_intr_p());
+
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
@@ -932,7 +935,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
-	ifp->if_input = ether_input;
+	ifp->_if_input = ether_input;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 

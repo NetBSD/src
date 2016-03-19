@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.6.3 2015/12/27 12:10:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.6.4 2016/03/19 11:30:35 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/raidframe
@@ -30,8 +30,6 @@ SRCS+=	raidframe_component.c
 .if !empty(RUMP_NBCOMPAT:M50)
 SRCS+=	rf_compat50.c
 .endif
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

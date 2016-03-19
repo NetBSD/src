@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.13.2.4 2015/12/28 09:20:24 skrll Exp $	*/
+/*	$NetBSD: exynos_usb3.c,v 1.1.2.2 2016/03/19 11:29:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.13.2.4 2015/12/28 09:20:24 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb3.c,v 1.1.2.2 2016/03/19 11:29:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,16 +53,6 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.13.2.4 2015/12/28 09:20:24 skrll Ex
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#if NOHCI > 0
-#include <dev/usb/ohcireg.h>
-#include <dev/usb/ohcivar.h>
-#endif
-
-#if NEHCI > 0
-#include <dev/usb/ehcireg.h>
-#include <dev/usb/ehcivar.h>
-#endif
-
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 
@@ -76,12 +66,6 @@ struct exynos_usb_softc {
 	bus_space_tag_t  sc_bst;
 
 	bus_space_handle_t sc_bsh;
-	bus_space_handle_t sc_ehci_bsh;
-	bus_space_handle_t sc_ohci_bsh;
-	bus_space_handle_t sc_usb2phy_bsh;
-
-	device_t	 sc_ohci_dev;
-	device_t	 sc_ehci_dev;
 
 	int		 sc_irq;
 	void		*sc_intrh;
@@ -100,7 +84,7 @@ struct exynos_usb_attach_args {
 static int	exynos_usb_match(device_t, cfdata_t, void *);
 static void	exynos_usb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(exyo_usb, 0,
+CFATTACH_DECL_NEW(exynos_usb, 0,
     exynos_usb_match, exynos_usb_attach, NULL, NULL);
 
 
@@ -128,7 +112,6 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* copy our device handle */
 	sc->sc_self = self;
 //	sc->sc_irq  = loc->loc_intr;
 
@@ -192,132 +175,6 @@ exynos_usb_intr(void *arg)
 #endif
 
 	return ret;
-}
-#endif
-
-#if NOHCI > 0
-static int	exynos_ohci_match(device_t, cfdata_t, void *);
-static void	exynos_ohci_attach(device_t, device_t, void *);
-
-CFATTACH_DECL_NEW(ohci_exyousb, sizeof(struct ohci_softc),
-    exynos_ohci_match, exynos_ohci_attach, NULL, NULL);
-
-
-static int
-exynos_ohci_match(device_t parent, cfdata_t cf, void *aux)
-{
-	const char * const compatible[] = { "samsung,exynos5-ohci",
-					    NULL };
-	struct fdt_attach_args * const faa = aux;
-	return of_match_compatible(faa->faa_phandle, compatible);
-}
-
-
-static void
-exynos_ohci_attach(device_t parent, device_t self, void *aux)
-{
-	struct exynos_usb_softc *usbsc = &exynos_usb_sc;
-	struct ohci_softc *sc = device_private(self);
-	struct fdt_attach_args * const faa = aux;
-	bus_space_handle_t bsh;
-	bus_addr_t addr;
-	bus_size_t size;
-	int error;
-
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-
-	sc->sc_dev = self;
-	sc->iot = usbsc->sc_bst;
-//	sc->ioh = usbsc->sc_ohci_bsh;
-	sc->sc_size = size;
-	sc->sc_bus.ub_dmatag = usbsc->sc_dmat;
-	sc->sc_bus.ub_hcpriv = sc;
-
-	error = bus_space_map(sc->iot, addr, size, 0, &bsh);
-	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-			     (uint64_t)addr, error);
-		return;
-	}
-
-	aprint_naive(": OHCI USB controller\n");
-	aprint_normal(": OHCI USB controller NOT IMPLEMENTED\n");
-
-	/* attach */
-	int err = ohci_init(sc);
-	if (err) {
-		aprint_error_dev(self, "init failed, error = %d\n", err);
-		/* disable : TBD */
-		return;
-	}
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
-	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n",
-		usbsc->sc_irq);
-}
-#endif
-
-
-#if NEHCI > 0
-static int	exynos_ehci_match(device_t, cfdata_t, void *);
-static void	exynos_ehci_attach(device_t, device_t, void *);
-
-CFATTACH_DECL_NEW(ehci_exyousb, sizeof(struct ehci_softc),
-    exynos_ehci_match, exynos_ehci_attach, NULL, NULL);
-
-
-static int
-exynos_ehci_match(device_t parent, cfdata_t cf, void *aux)
-{
-	const char * const compatible[] = { "samsung,exynos5-ehci",
-					    NULL };
-	struct fdt_attach_args * const faa = aux;
-	return of_match_compatible(faa->faa_phandle, compatible);
-}
-
-
-static void
-exynos_ehci_attach(device_t parent, device_t self, void *aux)
-{
-	struct exynos_usb_softc *usbsc = &exynos_usb_sc;
-	struct ehci_softc *sc = device_private(self);
-	struct fdt_attach_args * const faa = aux;
-	bus_addr_t addr;
-	bus_size_t size;
-
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-
-	sc->sc_dev = self;
-	sc->iot = usbsc->sc_bst;
-	sc->ioh = usbsc->sc_ehci_bsh;
-	sc->sc_size = size;
-	sc->sc_bus.ub_dmatag = usbsc->sc_dmat;
-	sc->sc_bus.ub_hcpriv = sc;
-	sc->sc_bus.ub_revision = USBREV_2_0;
-	sc->sc_ncomp = 0;
-	if (usbsc->sc_ohci_dev != NULL)
-		sc->sc_comps[sc->sc_ncomp++] = usbsc->sc_ohci_dev;
-
-	strlcpy(sc->sc_vendor, "exynos", sizeof(sc->sc_vendor));
-
-	aprint_naive(": EHCI USB controller\n");
-	aprint_normal(": EHCI USB controller NOT IMPLEMENTED\n");
-
-	/* attach */
-	int err = ehci_init(sc);
-	if (err) {
-		aprint_error_dev(self, "init failed, error = %d\n", err);
-		/* disable : TBD */
-		return;
-	}
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
-	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n",
-		usbsc->sc_irq);
 }
 #endif
 

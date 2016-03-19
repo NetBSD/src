@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -453,7 +453,7 @@ MpEmitDeviceTree (
     /* Walk the namespace from the root */
 
     (void) AcpiNsWalkNamespace (ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
-            ACPI_UINT32_MAX, FALSE, MpEmitOneDevice, NULL, NULL, NULL);
+        ACPI_UINT32_MAX, FALSE, MpEmitOneDevice, NULL, NULL, NULL);
 }
 
 

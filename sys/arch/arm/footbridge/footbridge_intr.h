@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.16 2014/02/04 18:51:16 matt Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.16.6.1 2016/03/19 11:29:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,14 @@
 #ifndef _FOOTBRIDGE_INTR_H_
 #define _FOOTBRIDGE_INTR_H_
 
+#ifndef _LOCORE
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+#include <arm/mutex.h>
+#endif
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 
@@ -159,10 +167,6 @@ void	splx(int);
 #define	spl0()		(void)_spllower(IPL_NONE)
 #define	spllowersoftclock() (void)_spllower(IPL_SOFTCLOCK)
 
-typedef uint8_t ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)

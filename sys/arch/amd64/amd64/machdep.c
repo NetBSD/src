@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.4.3 2015/12/27 12:09:28 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.4.4 2016/03/19 11:29:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.3 2015/12/27 12:09:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.4 2016/03/19 11:29:54 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2073,9 +2073,11 @@ valid_user_selector(struct lwp *l, uint64_t seg)
 		if (off > (len - 8))
 			return EINVAL;
 	} else {
-		if (seg != GUDATA_SEL || seg != GUDATA32_SEL)
-			return EINVAL;
-		__builtin_unreachable();
+		CTASSERT(GUDATA_SEL & SEL_LDT);
+		KASSERT(seg != GUDATA_SEL);
+		CTASSERT(GUDATA32_SEL & SEL_LDT);
+		KASSERT(seg != GUDATA32_SEL);
+		return EINVAL;
 	}
 
 	sdp = (struct mem_segment_descriptor *)(dt + off);

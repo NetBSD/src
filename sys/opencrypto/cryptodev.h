@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.25.30.1 2015/12/27 12:10:08 skrll Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.25.30.2 2016/03/19 11:30:33 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -87,6 +87,7 @@
 
 #include <sys/ioccom.h>
 #include <sys/condvar.h>
+#include <sys/time.h>
 
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL	4

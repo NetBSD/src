@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.17.4.2 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.17.4.3 2016/03/19 11:30:09 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.17.4.2 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.17.4.3 2016/03/19 11:30:09 skrll Exp $");
 
 /*
  * The LAN9118 Family
@@ -1002,7 +1002,7 @@ dropit:
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }
 

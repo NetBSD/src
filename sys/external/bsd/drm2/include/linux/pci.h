@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.11.2.3 2015/12/27 12:10:03 skrll Exp $	*/
+/*	$NetBSD: pci.h,v 1.11.2.4 2016/03/19 11:30:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -491,6 +491,7 @@ pci_map_rom_md(struct pci_dev *pdev)
 	pdev->pd_rom_bst = pdev->pd_pa.pa_memt;
 	pdev->pd_rom_bsh = rom_bsh;
 	pdev->pd_rom_size = rom_size;
+	pdev->pd_kludges |= NBPCI_KLUDGE_MAP_ROM;
 
 	return 0;
 #else
@@ -507,9 +508,8 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 	if (pci_mapreg_map(&pdev->pd_pa, PCI_MAPREG_ROM, PCI_MAPREG_TYPE_ROM,
 		(BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR),
 		&pdev->pd_rom_bst, &pdev->pd_rom_bsh, NULL, &pdev->pd_rom_size)
-	    != 0 &&
-	    pci_map_rom_md(pdev) != 0)
-		return NULL;
+	    != 0)
+		goto fail_mi;
 	pdev->pd_kludges |= NBPCI_KLUDGE_MAP_ROM;
 
 	/* XXX This type is obviously wrong in general...  */
@@ -517,14 +517,31 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 		pdev->pd_rom_size, PCI_ROM_CODE_TYPE_X86,
 		&pdev->pd_rom_found_bsh, &pdev->pd_rom_found_size)) {
 		pci_unmap_rom(pdev, NULL);
-		return NULL;
+		goto fail_mi;
+	}
+	goto success;
+
+fail_mi:
+	if (pci_map_rom_md(pdev) != 0)
+		goto fail_md;
+
+	/* XXX This type is obviously wrong in general...  */
+	if (pci_find_rom(&pdev->pd_pa, pdev->pd_rom_bst, pdev->pd_rom_bsh,
+		pdev->pd_rom_size, PCI_ROM_CODE_TYPE_X86,
+		&pdev->pd_rom_found_bsh, &pdev->pd_rom_found_size)) {
+		pci_unmap_rom(pdev, NULL);
+		goto fail_md;
 	}
 
+success:
 	KASSERT(pdev->pd_rom_found_size <= SIZE_T_MAX);
 	*sizep = pdev->pd_rom_found_size;
 	pdev->pd_rom_vaddr = bus_space_vaddr(pdev->pd_rom_bst,
 	    pdev->pd_rom_found_bsh);
 	return pdev->pd_rom_vaddr;
+
+fail_md:
+	return NULL;
 }
 
 static inline void __pci_rom_iomem *

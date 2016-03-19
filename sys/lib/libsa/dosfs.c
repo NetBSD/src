@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.20 2014/03/20 03:13:18 christos Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.20.6.1 2016/03/19 11:30:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -566,7 +566,8 @@ lookup(DOS_FS *fs, u_int clus, const char *name, const struct direntry **dep)
 						}
 					} else if (!(dir[ent].de.deAttributes &
 						     ATTR_VOLUME)) {
-						if ((ok = xdn == 1)) {
+						ok = xdn == 1;
+						if (ok) {
 							for (x = 0, i = 0;
 							     i < 11; i++)
 								x = ((((x & 1) << 7) | (x >> 1)) +

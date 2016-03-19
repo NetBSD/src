@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.93.6.2 2015/09/22 12:05:59 skrll Exp $ */
+/* $NetBSD: if_ti.c,v 1.93.6.3 2016/03/19 11:30:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.93.6.2 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.93.6.3 2016/03/19 11:30:10 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -2030,7 +2030,7 @@ ti_rxeof(struct ti_softc *sc)
 			    continue);
 		}
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Only necessary on the Tigon 1. */

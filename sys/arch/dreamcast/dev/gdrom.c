@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.40.4.1 2015/06/06 14:39:57 skrll Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.40.4.2 2016/03/19 11:29:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.40.4.1 2015/06/06 14:39:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.40.4.2 2016/03/19 11:29:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ struct gd_toc {
 #define TOC_CTRL(n)	(((n) & 0xf0) >> 4)
 #define TOC_TRACK(n)	(((n) & 0x0000ff00) >> 8)
 
-#define GDROM(o)	(*(volatile uint8_t *)(0xa05f7000 + (o)))
+#define GDROM(o)	(*(volatile uint8_t *)(0xa05f7000U + (o)))
 
 #define GDSTATSTAT(n)	((n) & 0xf)
 #define GDSTATDISK(n)	(((n) >> 4) & 0xf)

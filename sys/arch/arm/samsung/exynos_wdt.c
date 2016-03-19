@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.5.2.1 2015/12/27 12:09:32 skrll Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.5.2.2 2016/03/19 11:29:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.5.2.1 2015/12/27 12:09:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.5.2.2 2016/03/19 11:29:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,7 +90,7 @@ exynos_wdt_wdog_write(struct exynos_wdt_softc *sc, bus_size_t o, uint32_t v)
 static int
 exynos_wdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,s3c2410-wdt", NULL };
+	const char * const compatible[] = { "samsung,exynos5420-wdt", NULL };
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);

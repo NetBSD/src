@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.35.16.4 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: hid.c,v 1.35.16.5 2016/03/19 11:30:19 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.16.4 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.16.5 2016/03/19 11:30:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,17 +173,19 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			dval = 0;
 			break;
 		case 1:
-			dval = /*(int8_t)*/ *data++;
+			dval = (int8_t)*data++;
 			break;
 		case 2:
 			dval = *data++;
 			dval |= *data++ << 8;
+			dval = (int16_t)dval;
 			break;
 		case 4:
 			dval = *data++;
 			dval |= *data++ << 8;
 			dval |= *data++ << 16;
 			dval |= *data++ << 24;
+			dval = (int32_t)dval;
 			break;
 		default:
 			printf("BAD LENGTH %d\n", bSize);
@@ -222,7 +224,8 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 					}
 					goto top;
 				} else {
-					c->usage = c->_usage_page; /* XXX */
+					if (s->minset)
+						c->usage = c->usage_minimum;
 					*h = *c;
 					h->next = NULL;
 					c->loc.pos +=
@@ -297,6 +300,8 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				break;
 			case 11: /* Pop */
 				hi = c->next;
+				if (hi == NULL)
+					break;
 				oldpos = c->loc.pos;
 				*c = *hi;
 				c->loc.pos = oldpos;
@@ -422,7 +427,8 @@ hid_locate(const void *desc, int size, uint32_t u, uint8_t id, enum hid_kind k,
 		}
 	}
 	hid_end_parse(d);
-	loc->size = 0;
+	if (loc != NULL)
+		loc->size = 0;
 	return 0;
 }
 
@@ -436,9 +442,9 @@ hid_get_data(const u_char *buf, const struct hid_location *loc)
 		return 0;
 
 	data = hid_get_udata(buf, loc);
-	if (data < (1 << (hsize - 1)))
+	if (data < (1UL << (hsize - 1)) || hsize == sizeof(data) * NBBY)
 		return data;
-	return data - (1 << hsize);
+	return data - (1UL << hsize);
 }
 
 u_long
@@ -457,10 +463,11 @@ hid_get_udata(const u_char *buf, const struct hid_location *loc)
 	num = (hpos + hsize + 7) / 8 - off;
 
 	for (i = 0; i < num; i++)
-		data |= buf[off + i] << (i * 8);
+		data |= (unsigned long)buf[off + i] << (i * 8);
 
 	data >>= hpos % 8;
-	data &= (1 << hsize) - 1;
+	if (hsize < sizeof(data) * NBBY)
+		data &= (1UL << hsize) - 1;
 
 	DPRINTFN(10,("hid_get_udata: loc %d/%d = %lu\n", hpos, hsize, data));
 	return data;

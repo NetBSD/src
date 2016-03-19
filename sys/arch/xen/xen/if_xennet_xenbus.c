@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.63.4.2 2015/12/27 12:09:45 skrll Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.63.4.3 2016/03/19 11:30:07 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.4.2 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.4.3 2016/03/19 11:30:07 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -422,6 +422,7 @@ xennet_xenbus_detach(device_t self, int flags)
 	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
 	s0 = splnet();
 	xennet_stop(ifp, 1);
+	event_remove_handler(sc->sc_evtchn, &xennet_handler, sc);
 	/* wait for pending TX to complete, and collect pending RX packets */
 	xennet_handler(sc);
 	while (sc->sc_tx_ring.sring->rsp_prod != sc->sc_tx_ring.rsp_cons) {
@@ -457,7 +458,6 @@ xennet_xenbus_detach(device_t self, int flags)
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_rx_ring.sring, PAGE_SIZE,
 	    UVM_KMF_WIRED);
 	softint_disestablish(sc->sc_softintr);
-	event_remove_handler(sc->sc_evtchn, &xennet_handler, sc);
 	splx(s0);
 
 	pmf_device_deregister(self);
@@ -1107,7 +1107,7 @@ again:
 		ifp->if_ipackets++;
 
 		/* Pass the packet up. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	xen_rmb();
 	sc->sc_rx_ring.rsp_cons = i;

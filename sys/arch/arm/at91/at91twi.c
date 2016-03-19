@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.6 2012/10/27 17:17:36 chs Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.6 2012/10/27 17:17:36 chs Exp $	*/
+/*	$Id: at91twi.c,v 1.6.14.1 2016/03/19 11:29:55 skrll Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.6.14.1 2016/03/19 11:29:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.6 2012/10/27 17:17:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.6.14.1 2016/03/19 11:29:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,6 +134,7 @@ found_ckdiv:
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = at91twi_i2c_exec;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }

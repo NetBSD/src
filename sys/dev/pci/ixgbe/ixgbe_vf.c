@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_vf.c,v 1.1.30.3 2015/09/22 12:05:59 skrll Exp $*/
+/*$NetBSD: ixgbe_vf.c,v 1.1.30.4 2016/03/19 11:30:18 skrll Exp $*/
 
 
 #include "ixgbe_api.h"
@@ -384,7 +384,7 @@ s32 ixgbe_set_vfta_vf(struct ixgbe_hw *hw, u32 vlan, u32 vind, bool vlan_on)
 	msgbuf[0] = IXGBE_VF_SET_VLAN;
 	msgbuf[1] = vlan;
 	/* Setting the 8 bit field MSG INFO to TRUE indicates "add" */
-	msgbuf[0] |= vlan_on << IXGBE_VT_MSGINFO_SHIFT;
+	msgbuf[0] |= (u32)vlan_on << IXGBE_VT_MSGINFO_SHIFT;
 
 	ret_val = mbx->ops.write_posted(hw, msgbuf, 2, 0);
 	if (!ret_val)

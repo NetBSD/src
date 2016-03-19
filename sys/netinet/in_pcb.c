@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.155.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.155.2.4 2016/03/19 11:30:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.4 2016/03/19 11:30:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -347,10 +347,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 			return (EACCES);
 
 #ifdef INET6
-		memset(&mapped, 0, sizeof(mapped));
-		mapped.s6_addr16[5] = 0xffff;
-		memcpy(&mapped.s6_addr32[3], &sin->sin_addr,
-		    sizeof(mapped.s6_addr32[3]));
+		in6_in_2_v4mapin6(&sin->sin_addr, &mapped);
 		t6 = in6_pcblookup_port(table, &mapped, sin->sin_port, wild, &vestige);
 		if (t6 && (reuseport & t6->in6p_socket->so_options) == 0)
 			return (EADDRINUSE);

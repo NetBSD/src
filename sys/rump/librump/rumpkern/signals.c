@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.13.6.2 2015/06/06 14:40:29 skrll Exp $	*/
+/*	$NetBSD: signals.c,v 1.13.6.3 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.13.6.2 2015/06/06 14:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.13.6.3 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -34,11 +34,10 @@ __KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.13.6.2 2015/06/06 14:40:29 skrll Exp $
 #include <sys/proc.h>
 #include <sys/signal.h>
 
+#include <rump-sys/kern.h>
+
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
-
-#include "rump_private.h"
-#include "rumpkern_if_priv.h"
 
 const struct filterops sig_filtops = {
 	.f_attach = (void *)eopnotsupp,

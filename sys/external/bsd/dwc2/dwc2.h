@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.3.2.2 2015/09/22 12:06:06 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.3.2.3 2016/03/19 11:30:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/workqueue.h>
 
 #include <linux/list.h>
+#include <linux/workqueue.h>
 
 #include "opt_usb.h"
 // #define VERBOSE_DEBUG
@@ -260,10 +261,13 @@ ndelay(unsigned long nsecs)
 }
 
 static inline void
-msleep(unsigned int msecs)
+msleep(unsigned int msec)
 {
-
-	kpause("mdelay", false, mstohz(msecs), NULL);
+	if (cold ||
+	    ((hz < 1000) && (msec < (1000/hz))))
+		udelay(msec * 1000);
+	else
+		(void)kpause("mdelay", false, mstohz(msec), NULL);
 }
 
 #define	EREMOTEIO	EIO
@@ -273,27 +277,5 @@ msleep(unsigned int msecs)
 #define NS_TO_US(ns)	((ns + 500L) / 1000L)
 
 #define USB_RESUME_TIMEOUT	40 /* ms */
-
-void dw_callout(void *);
-void dwc2_worker(struct work *, void *);
-
-struct delayed_work {
-	struct work work;
-	struct callout dw_timer;
-
-	struct workqueue *dw_wq;
-};
-
-static inline void
-INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work *))
-{
-	callout_init(&dw->dw_timer, CALLOUT_MPSAFE);
-}
-
-static inline void
-queue_delayed_work(struct workqueue *wq, struct delayed_work *dw, int j)
-{
-	callout_reset(&dw->dw_timer, j, dw_callout, dw);
-}
 
 #endif

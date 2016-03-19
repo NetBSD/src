@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,6 @@
 #include "amlcode.h"
 #include "acinterp.h"
 
-
-#ifdef ACPI_DISASSEMBLER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dmbuffer")
@@ -256,7 +254,8 @@ AcpiDmByteList (
     {
     case ACPI_DASM_RESOURCE:
 
-        AcpiDmResourceTemplate (Info, Op->Common.Parent, ByteData, ByteCount);
+        AcpiDmResourceTemplate (
+            Info, Op->Common.Parent, ByteData, ByteCount);
         break;
 
     case ACPI_DASM_STRING:
@@ -753,13 +752,17 @@ AcpiDmPldBuffer (
     AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "PLD_Lid", PldInfo->Lid);
     AcpiOsPrintf (ACPI_PLD_OUTPUTSTR, "PLD_Panel",
         AcpiDmFindNameByIndex(PldInfo->Panel, DmPanelList));
+
     AcpiOsPrintf (ACPI_PLD_OUTPUTSTR, "PLD_VerticalPosition",
         AcpiDmFindNameByIndex(PldInfo->VerticalPosition, DmVerticalPositionList));
+
     AcpiOsPrintf (ACPI_PLD_OUTPUTSTR, "PLD_HorizontalPosition",
         AcpiDmFindNameByIndex(PldInfo->HorizontalPosition, DmHorizontalPositionList));
+
     AcpiOsPrintf (ACPI_PLD_OUTPUTSTR, "PLD_Shape",
         AcpiDmFindNameByIndex(PldInfo->Shape, DmShapeList));
     AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "PLD_GroupOrientation", PldInfo->GroupOrientation);
+
     AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "PLD_GroupToken", PldInfo->GroupToken);
     AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "PLD_GroupPosition", PldInfo->GroupPosition);
     AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "PLD_Bay", PldInfo->Bay);
@@ -773,21 +776,18 @@ AcpiDmPldBuffer (
     AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "PLD_Reference", PldInfo->Reference);
     AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "PLD_Rotation", PldInfo->Rotation);
 
-    if (ByteCount < ACPI_PLD_REV1_BUFFER_SIZE)
-    {
-        AcpiOsPrintf (ACPI_PLD_OUTPUT08P, "PLD_Order", PldInfo->Order);
-    }
-    else
+    if (ByteCount >= ACPI_PLD_REV2_BUFFER_SIZE)
     {
         AcpiOsPrintf (ACPI_PLD_OUTPUT08, "PLD_Order", PldInfo->Order);
-    }
 
-    /* Fifth 32-bit dword */
+        /* Fifth 32-bit dword */
 
-    if (ByteCount >= ACPI_PLD_REV1_BUFFER_SIZE)
-    {
-        AcpiOsPrintf (ACPI_PLD_OUTPUT16, "PLD_VerticalOffset", PldInfo->VerticalOffset);
+        AcpiOsPrintf (ACPI_PLD_OUTPUT16,  "PLD_VerticalOffset", PldInfo->VerticalOffset);
         AcpiOsPrintf (ACPI_PLD_OUTPUT16P, "PLD_HorizontalOffset", PldInfo->HorizontalOffset);
+    }
+    else /* Rev 1 buffer */
+    {
+        AcpiOsPrintf (ACPI_PLD_OUTPUT08P, "PLD_Order", PldInfo->Order);
     }
 
     ACPI_FREE (PldInfo);
@@ -1030,5 +1030,3 @@ AcpiDmDecompressEisaId (
         AcpiOsPrintf (" /* %s */", Info->Description);
     }
 }
-
-#endif

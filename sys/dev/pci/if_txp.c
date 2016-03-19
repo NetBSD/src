@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.41 2014/06/16 16:48:16 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.41.4.1 2016/03/19 11:30:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.41 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.41.4.1 2016/03/19 11:30:10 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -751,7 +751,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 			    continue);
 		}
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 next:
 		bus_dmamap_sync(sc->sc_dmat, dma->dma_map,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.28.2.2 2015/12/27 12:09:46 skrll Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.28.2.3 2016/03/19 11:30:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.28.2.2 2015/12/27 12:09:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.28.2.3 2016/03/19 11:30:08 skrll Exp $");
+
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -293,7 +294,7 @@ compat_50_sys_setitimer(struct lwp *l,
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp &&
-	    (error = copyin(itvp, &aitv50, sizeof(aitv50)) != 0))
+	    (error = copyin(itvp, &aitv50, sizeof(aitv50))) != 0)
 		return (error);
 	itimerval50_to_itimerval(&aitv50, &aitv);
 	if (SCARG(uap, oitv) != NULL) {

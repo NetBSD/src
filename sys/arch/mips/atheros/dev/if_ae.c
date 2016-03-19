@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.25.4.1 2015/09/22 12:05:46 skrll Exp $ */
+/* $Id: if_ae.c,v 1.25.4.2 2016/03/19 11:30:02 skrll Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.25.4.1 2015/09/22 12:05:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.25.4.2 2016/03/19 11:30:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1139,7 +1139,7 @@ ae_rxintr(struct ae_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

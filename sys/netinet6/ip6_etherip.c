@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.15.30.1 2015/09/22 12:06:11 skrll Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.15.30.2 2016/03/19 11:30:33 skrll Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.15.30.1 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.15.30.2 2016/03/19 11:30:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -264,7 +264,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 	ifp->if_ipackets++;
 
 	s = splnet();
-	(ifp->if_input)(ifp, m);
+	if_input(ifp, m);
 	splx(s);
 
 	return IPPROTO_DONE;

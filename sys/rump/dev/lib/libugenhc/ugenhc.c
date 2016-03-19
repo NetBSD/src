@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.12 2015/10/22 11:15:42 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.13 2016/03/19 11:30:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.12 2015/10/22 11:15:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.13 2016/03/19 11:30:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.12 2015/10/22 11:15:42 skrll Exp $
 
 #include <rump/rumpuser.h>
 
-#include "ugenhc_user.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
+#include "ugenhc_user.h"
 
 #define UGEN_NEPTS 16
 #define UGEN_EPT_CTRL 0 /* ugenx.00 is the control endpoint */

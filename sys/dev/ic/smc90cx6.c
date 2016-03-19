@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.64.14.1 2015/12/27 12:09:49 skrll Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.64.14.2 2016/03/19 11:30:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.64.14.1 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.64.14.2 2016/03/19 11:30:09 skrll Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -598,7 +598,7 @@ bah_srint(void *vsc)
 
 	bpf_mtap(ifp, head);
 
-	(*sc->sc_arccom.ac_if.if_input)(&sc->sc_arccom.ac_if, head);
+	if_percpuq_enqueue((&sc->sc_arccom.ac_if)->if_percpuq, head);
 
 	head = NULL;
 	ifp->if_ipackets++;

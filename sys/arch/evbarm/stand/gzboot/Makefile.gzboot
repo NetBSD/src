@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.gzboot,v 1.30.6.1 2015/09/22 12:05:40 skrll Exp $
+#	$NetBSD: Makefile.gzboot,v 1.30.6.2 2016/03/19 11:29:58 skrll Exp $
 
 NOMAN=  # defined
 
-.include <bsd.obj.mk>		# Pull in OBJDIR name rules.
+.include <bsd.init.mk>		# Pull in OBJDIR name rules.
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
@@ -87,7 +87,7 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
-LDFLAGS= -M -T ${LDSCRIPT} --fix-v4bx
+DIRECT_LDFLAGS= -M -T ${LDSCRIPT} --fix-v4bx
 
 LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
@@ -114,5 +114,5 @@ FILES=	${PROGSYM}
 
 ${PROGSYM}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
-	${LD} -o ${.TARGET} ${LDFLAGS} ${STARTFILE} \
+	${LD} -o ${.TARGET} ${DIRECT_LDFLAGS} ${STARTFILE} \
 	    ${OBJS} ${LIBLIST} > ${BASE}.list

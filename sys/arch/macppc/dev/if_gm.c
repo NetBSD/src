@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.44.4.1 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.44.4.2 2016/03/19 11:30:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.44.4.1 2015/06/06 14:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.44.4.2 2016/03/19 11:30:02 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -382,7 +382,7 @@ gmac_rint(struct gmac_softc *sc)
 		 * If so, hand off the raw packet to BPF.
 		 */
 		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		ifp->if_ipackets++;
 
 next:

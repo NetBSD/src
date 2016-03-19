@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -431,13 +431,13 @@ AcpiEvaluateObject (
                 /* Get the size of the returned object */
 
                 Status = AcpiUtGetObjectSize (Info->ReturnObject,
-                            &BufferSpaceNeeded);
+                    &BufferSpaceNeeded);
                 if (ACPI_SUCCESS (Status))
                 {
                     /* Validate/Allocate/Clear caller buffer */
 
                     Status = AcpiUtInitializeBuffer (ReturnBuffer,
-                                BufferSpaceNeeded);
+                        BufferSpaceNeeded);
                     if (ACPI_FAILURE (Status))
                     {
                         /*
@@ -453,8 +453,8 @@ AcpiEvaluateObject (
                     {
                         /* We have enough space for the object, build it */
 
-                        Status = AcpiUtCopyIobjectToEobject (Info->ReturnObject,
-                                    ReturnBuffer);
+                        Status = AcpiUtCopyIobjectToEobject (
+                            Info->ReturnObject, ReturnBuffer);
                     }
                 }
             }
@@ -667,8 +667,8 @@ AcpiWalkNamespace (
     }
 
     Status = AcpiNsWalkNamespace (Type, StartObject, MaxDepth,
-                ACPI_NS_WALK_UNLOCK, DescendingCallback,
-                AscendingCallback, Context, ReturnValue);
+        ACPI_NS_WALK_UNLOCK, DescendingCallback,
+        AscendingCallback, Context, ReturnValue);
 
 UnlockAndExit2:
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
@@ -819,8 +819,8 @@ AcpiNsGetDeviceCallback (
 
     /* We have a valid device, invoke the user function */
 
-    Status = Info->UserFunction (ObjHandle, NestingLevel, Info->Context,
-                ReturnValue);
+    Status = Info->UserFunction (ObjHandle, NestingLevel,
+        Info->Context, ReturnValue);
     return (Status);
 }
 
@@ -875,8 +875,8 @@ AcpiGetDevices (
      * We're going to call their callback from OUR callback, so we need
      * to know what it is, and their context parameter.
      */
-    Info.Hid          = HID;
-    Info.Context      = Context;
+    Info.Hid = HID;
+    Info.Context = Context;
     Info.UserFunction = UserFunction;
 
     /*
@@ -892,8 +892,8 @@ AcpiGetDevices (
     }
 
     Status = AcpiNsWalkNamespace (ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
-                ACPI_UINT32_MAX, ACPI_NS_WALK_UNLOCK,
-                AcpiNsGetDeviceCallback, NULL, &Info, ReturnValue);
+        ACPI_UINT32_MAX, ACPI_NS_WALK_UNLOCK,
+        AcpiNsGetDeviceCallback, NULL, &Info, ReturnValue);
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
     return_ACPI_STATUS (Status);

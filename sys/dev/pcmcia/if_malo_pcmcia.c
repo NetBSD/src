@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.7 2014/05/12 02:26:19 christos Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.7.4.1 2016/03/19 11:30:18 skrll Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.7 2014/05/12 02:26:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.7.4.1 2016/03/19 11:30:18 skrll Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -634,7 +634,7 @@ cmalo_media_change(struct ifnet *ifp)
 {
 	int error;
 
-	if ((error = ieee80211_media_change(ifp) != ENETRESET))
+	if ((error = ieee80211_media_change(ifp)) != ENETRESET)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
@@ -1013,7 +1013,7 @@ cmalo_rx(struct malo_softc *sc)
 
 	/* push the frame up to the network stack if not in monitor mode */
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		ifp->if_ipackets++;
 	}
 }

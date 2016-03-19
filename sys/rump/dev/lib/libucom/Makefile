@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.36.1 2015/12/27 12:10:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.36.2 2016/03/19 11:30:35 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb ${.CURDIR}/../../../../kern
@@ -11,8 +11,6 @@ IOCONF= UCOM.ioconf
 SRCS=	ucom.c uplcom.c u3g.c
 
 SRCS+=	ucom_at_usb.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

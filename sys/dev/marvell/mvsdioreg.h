@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsdioreg.h,v 1.1 2010/09/23 12:36:01 kiyohara Exp $	*/
+/*	$NetBSD: mvsdioreg.h,v 1.1.42.1 2016/03/19 11:30:10 skrll Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,9 @@
 
 #define MVSDIO_SIZE	0x10000
 
+#ifndef MVSDIO_MAX_CLOCK
 #define MVSDIO_MAX_CLOCK	(50 * 1000)	/* 50,000 kHz */
+#endif  /* MVSDIO_MAX_CLOCK */
 
 #define MVSDIO_DMABA16LSB	0x0000	/* DMA Buffer Address 16 LSB */
 #define MVSDIO_DMABA16MSB	0x0004	/* DMA Buffer Address 16 MSB */

@@ -1,4 +1,4 @@
-/* $NetBSD: amigatypes.h,v 1.7 2008/04/28 20:23:13 martin Exp $ */
+/* $NetBSD: amigatypes.h,v 1.7.64.1 2016/03/19 11:29:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct Library {
 struct MemHead {
 	struct MemHead *next;
 	u_int8_t Dmy1[  9-  4];
-	u_int8_t Pri;
+	int8_t Pri;
 	u_int8_t Dmy2[ 14- 10];
 	u_int16_t Attribs;
 	u_int32_t First, Lower, Upper, Free;

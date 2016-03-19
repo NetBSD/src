@@ -287,7 +287,7 @@ int init_memory(void)
                     base += Ours->Control & RAMST_SIZE;
 
                 if (addr != base) {
-                    printf("remapping %x+%x to %x\n", addr, size, base);
+                    printf("remapping %x+%zx to %x\n", addr, size, base);
                     Ram->BaseAddressAndTag = base;
                 }
                 base += size;

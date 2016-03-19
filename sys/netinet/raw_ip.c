@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.146.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.146.2.4 2016/03/19 11:30:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.146.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.146.2.4 2016/03/19 11:30:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -311,17 +311,11 @@ rip_ctlinput(int cmd, const struct sockaddr *sa, void *v)
  * Tack on options user may have setup with control call.
  */
 int
-rip_output(struct mbuf *m, ...)
+rip_output(struct mbuf *m, struct inpcb *inp)
 {
-	struct inpcb *inp;
 	struct ip *ip;
 	struct mbuf *opts;
 	int flags;
-	va_list ap;
-
-	va_start(ap, m);
-	inp = va_arg(ap, struct inpcb *);
-	va_end(ap);
 
 	flags =
 	    (inp->inp_socket->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST

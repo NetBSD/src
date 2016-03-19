@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.26.4.2 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.26.4.3 2016/03/19 11:30:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.26.4.2 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.26.4.3 2016/03/19 11:30:10 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1213,7 +1213,7 @@ jme_intr_rx(jme_softc_t *sc) {
 			VLAN_INPUT_TAG(ifp, mhead,
 			    (flags & JME_RD_VLAN_MASK), continue);
 		}
-		(*ifp->if_input)(ifp, mhead);
+		if_percpuq_enqueue(ifp->if_percpuq, mhead);
 	}
 	if (ipackets)
 		rnd_add_uint32(&sc->rnd_source, ipackets);

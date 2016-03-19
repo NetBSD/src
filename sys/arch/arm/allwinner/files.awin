@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.26.2.4 2015/12/27 12:09:29 skrll Exp $
+#	$NetBSD: files.awin,v 1.26.2.5 2016/03/19 11:29:55 skrll Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -143,6 +143,11 @@ file	arch/arm/allwinner/awin_ac.c		awin_ac
 device	awinhdmi: edid, videomode
 attach	awinhdmi at awinio with awin_hdmi
 file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
+
+# A20 TV Encoder / VGA output
+device	awintve: edid, videomode
+attach	awintve at awinio with awin_tve
+file	arch/arm/allwinner/awin_tve.c		awin_tve
 
 # A20/A31 HDMI audio (HDMIAUDIO)
 device	awinhdmiaudio: audiobus, auconv, mulaw, aurateconv, auvolconv

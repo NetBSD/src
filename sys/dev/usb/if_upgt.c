@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.9 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.10 2016/03/19 11:30:19 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.9 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.10 2016/03/19 11:30:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1317,7 +1317,7 @@ upgt_media_change(struct ifnet *ifp)
 
 	DPRINTF(1, "%s: %s\n", device_xname(sc->sc_dev), __func__);
 
-	if ((error = ieee80211_media_change(ifp) != ENETRESET))
+	if ((error = ieee80211_media_change(ifp)) != ENETRESET)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==

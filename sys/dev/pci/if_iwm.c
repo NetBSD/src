@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.29.2.5 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.29.2.6 2016/03/19 11:30:10 skrll Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.5 2015/12/27 12:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.6 2016/03/19 11:30:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -6832,6 +6832,8 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, ic->ic_myaddr);	/* XXX */
 #endif
 	if_register(ifp);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
 
 	callout_init(&sc->sc_calib_to, 0);
 	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);

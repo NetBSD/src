@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2015/09/22 12:06:09 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2016/03/19 11:30:32 skrll Exp $
 
 .include "../../Makefile.inc"
 
@@ -10,7 +10,16 @@ SRCS=		lockstat.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
 CPPFLAGS+=	-DKDTRACE_HOOKS
-.if (!empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*))
+
+.if !empty(MACHINE_ARCH:Mearmv*)
+ARMV:= ${MACHINE_ARCH:S/earmv//:S/eb//:S/hf//}
+.elif !empty(MACHINE_ARCH:Marmv*)
+ARMV:= ${MACHINE_ARCH:S/armv//:S/eb//:S/hf//}
+.else
+ARMV:= 0
+.endif
+
+.if ${ARMV} > 4
 CPPFLAGS+=	-D__HAVE_CPU_COUNTER
 .endif
 

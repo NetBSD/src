@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ixgbe.c,v 1.14.4.3 2015/09/22 12:05:59 skrll Exp $*/
+/*$NetBSD: ixgbe.c,v 1.14.4.4 2016/03/19 11:30:18 skrll Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1650,7 +1650,12 @@ ixgbe_legacy_irq(void *arg)
 	}
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+#ifdef __NetBSD__
+		/* Don't run ixgbe_rxeof in interrupt context */
+		more = true;
+#else
 		more = ixgbe_rxeof(que);
+#endif
 
 		IXGBE_TX_LOCK(txr);
 		ixgbe_txeof(txr);
@@ -1712,7 +1717,12 @@ ixgbe_msix_que(void *arg)
 	ixgbe_disable_queue(adapter, que->msix);
 	++que->irqs;
 
+#ifdef __NetBSD__
+	/* Don't run ixgbe_rxeof in interrupt context */
+	more = true;
+#else
 	more = ixgbe_rxeof(que);
+#endif
 
 	IXGBE_TX_LOCK(txr);
 	ixgbe_txeof(txr);
@@ -2962,8 +2972,9 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	IFQ_SET_READY(&ifp->if_snd);
 #endif
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixgbe_ifflags_cb);
 
 	adapter->max_frame_size =
@@ -4812,7 +4823,7 @@ ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype
 	s = splnet();
 	/* Pass this up to any BPF listeners. */
 	bpf_mtap(ifp, m);
-	(*ifp->if_input)(ifp, m);
+	if_input(ifp, m);
 	splx(s);
 
 	IXGBE_RX_LOCK(rxr);

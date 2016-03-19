@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.88.4.3 2015/12/27 12:10:06 skrll Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.88.4.4 2016/03/19 11:30:32 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.3 2015/12/27 12:10:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.4 2016/03/19 11:30:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -597,7 +597,7 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_dlt = DLT_FDDI;
 	ifp->if_mtu = FDDIMTU;
 	ifp->if_output = fddi_output;
-	ifp->if_input = fddi_input;
+	ifp->_if_input = fddi_input;
 	ifp->if_baudrate = IF_Mbps(100);
 #ifdef IFF_NOTRAILERS
 	ifp->if_flags |= IFF_NOTRAILERS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.179.10.2 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.179.10.3 2016/03/19 11:30:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.10.2 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.10.3 2016/03/19 11:30:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -331,8 +331,14 @@ nanosleep1(struct lwp *l, clockid_t clock_id, int flags, struct timespec *rqt,
 	struct timespec rmtstart;
 	int error, timo;
 
-	if ((error = ts2timo(clock_id, flags, rqt, &timo, &rmtstart)) != 0)
-		return error == ETIMEDOUT ? 0 : error;
+	if ((error = ts2timo(clock_id, flags, rqt, &timo, &rmtstart)) != 0) {
+		if (error == ETIMEDOUT) {
+			error = 0;
+			if (rmt != NULL)
+				rmt->tv_sec = rmt->tv_nsec = 0;
+		}
+		return error;
+	}
 
 	/*
 	 * Avoid inadvertently sleeping forever
@@ -512,7 +518,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
  *
  * All timers are kept in an array pointed to by p_timers, which is
  * allocated on demand - many processes don't use timers at all. The
- * first three elements in this array are reserved for the BSD timers:
+ * first four elements in this array are reserved for the BSD timers:
  * element 0 is ITIMER_REAL, element 1 is ITIMER_VIRTUAL, element
  * 2 is ITIMER_PROF, and element 3 is ITIMER_MONOTONIC. The rest may be
  * allocated by the timer_create() syscall.
@@ -578,7 +584,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 
 	/* Find a free timer slot, skipping those reserved for setitimer(). */
 	mutex_spin_enter(&timer_lock);
-	for (timerid = 3; timerid < TIMER_MAX; timerid++)
+	for (timerid = TIMER_MIN; timerid < TIMER_MAX; timerid++)
 		if (pts->pts_timers[timerid] == NULL)
 			break;
 	if (timerid == TIMER_MAX) {
@@ -1194,7 +1200,6 @@ timers_alloc(struct proc *p)
 	LIST_INIT(&pts->pts_prof);
 	for (i = 0; i < TIMER_MAX; i++)
 		pts->pts_timers[i] = NULL;
-	pts->pts_fired = 0;
 	mutex_spin_enter(&timer_lock);
 	if (p->p_timers == NULL) {
 		p->p_timers = pts;
@@ -1258,7 +1263,7 @@ timers_free(struct proc *p, int which)
 			    &ptn->pt_time.it_value);
 			LIST_INSERT_HEAD(&pts->pts_prof, ptn, pt_list);
 		}
-		i = 3;
+		i = TIMER_MIN;
 	}
 	for ( ; i < TIMER_MAX; i++) {
 		if (pts->pts_timers[i] != NULL) {
@@ -1267,7 +1272,7 @@ timers_free(struct proc *p, int which)
 		}
 	}
 	if (pts->pts_timers[0] == NULL && pts->pts_timers[1] == NULL &&
-	    pts->pts_timers[2] == NULL) {
+	    pts->pts_timers[2] == NULL && pts->pts_timers[3] == NULL) {
 		p->p_timers = NULL;
 		mutex_spin_exit(&timer_lock);
 		pool_put(&ptimers_pool, pts);

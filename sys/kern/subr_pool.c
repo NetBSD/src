@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.203.4.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.203.4.2 2016/03/19 11:30:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.203.4.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.203.4.2 2016/03/19 11:30:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2949,8 +2949,8 @@ pool_sysctl(SYSCTLFN_ARGS)
 				cc = pc->pc_cpus[i];
 				if (cc == NULL)
 					continue;
-				data.pr_cache_nmiss_pcpu = cc->cc_misses;
-				data.pr_cache_nhit_pcpu = cc->cc_hits;
+				data.pr_cache_nmiss_pcpu += cc->cc_misses;
+				data.pr_cache_nhit_pcpu += cc->cc_hits;
 			}
 		} else {
 			data.pr_cache_meta_size = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.67 2014/08/11 03:43:25 jnemeth Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.67.4.1 2016/03/19 11:30:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67 2014/08/11 03:43:25 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.1 2016/03/19 11:30:07 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -127,6 +127,34 @@ lookup_bootinfo(int type)
 	return found ? bic : NULL;
 }
 
+#ifdef notyet
+/*
+ * List the available bootinfo entries.
+ */
+static const char *btinfo_str[] = {
+	BTINFO_STR
+};
+
+void
+aprint_bootinfo(void)
+{
+	int i;
+	struct btinfo_common *bic;
+
+	aprint_normal("bootinfo:");
+	bic = (struct btinfo_common *)(bootinfo.bi_data);
+	for (i = 0; i < bootinfo.bi_nentries; i++) {
+		if (bic->type >= 0 && bic->type < __arraycount(btinfo_str))
+			aprint_normal(" %s", btinfo_str[bic->type]);
+		else
+			aprint_normal(" %d", bic->type);
+		bic = (struct btinfo_common *)
+		    ((uint8_t *)bic + bic->len);
+	}
+	aprint_normal("\n");
+}
+#endif
+
 /*
  * mm_md_physacc: check if given pa is accessible.
  */
@@ -183,7 +211,7 @@ module_init_md(void)
 	for (; bi < bimax; bi++) {
 		switch (bi->type) {
 		case BI_MODULE_ELF:
-			aprint_debug("Prep module path=%s len=%d pa=%x\n", 
+			aprint_debug("Prep module path=%s len=%d pa=%x\n",
 			    bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
 			module_prime(bi->path,
@@ -192,7 +220,7 @@ module_init_md(void)
 			break;
 		case BI_MODULE_IMAGE:
 #ifdef SPLASHSCREEN
-			aprint_debug("Splash image path=%s len=%d pa=%x\n", 
+			aprint_debug("Splash image path=%s len=%d pa=%x\n",
 			    bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
 			splash_setimage(
@@ -215,7 +243,7 @@ module_init_md(void)
 			md_root_setconf((void *)((uintptr_t)bi->base + KERNBASE),
 			    bi->len);
 #endif
-			break;		
+			break;	
 		default:
 			aprint_debug("Skipping non-ELF module\n");
 			break;
@@ -444,7 +472,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 
 #ifdef i386
 #ifdef PAE
-#define TOPLIMIT	0x1000000000ULL	/* 64GB */
+#define TOPLIMIT	0x1000000000ULL /* 64GB */
 #else
 #define TOPLIMIT	0x100000000ULL	/* 4GB */
 #endif
@@ -524,7 +552,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 		return seg_cluster_cnt;
 	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
 		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
-#endif  
+#endif
 
 	seg_start = round_page(seg_start);
 	seg_end = trunc_page(seg_end);
@@ -546,7 +574,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 			new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
 		}
 	}
-#endif  
+#endif
 
 	cluster->size = seg_end - seg_start;
 
@@ -606,12 +634,12 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 
 		/*
 		 *   Avoid Compatibility Holes.
-		 * XXX  Holes within memory space that allow access
+		 * XXX Holes within memory space that allow access
 		 * XXX to be directed to the PC-compatible frame buffer
 		 * XXX (0xa0000-0xbffff), to adapter ROM space
 		 * XXX (0xc0000-0xdffff), and to system BIOS space
 		 * XXX (0xe0000-0xfffff).
-		 * XXX  Some laptop(for example,Toshiba Satellite2550X)
+		 * XXX Some laptop(for example,Toshiba Satellite2550X)
 		 * XXX report this area and occurred problems,
 		 * XXX so we avoid this area.
 		 */
@@ -643,7 +671,7 @@ initx86_fake_memmap(struct extent *iomem_ex)
 
 	/*
 	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map.  This is done before the addresses are
+	 * extent map. This is done before the addresses are
 	 * page rounded just to make sure we get them all.
 	 */
 	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
@@ -667,7 +695,7 @@ initx86_fake_memmap(struct extent *iomem_ex)
 		    "IOMEM EXTENT MAP!\n");
 	}
 
-#if NISADMA > 0 
+#if NISADMA > 0
 	/*
 	 * Some motherboards/BIOSes remap the 384K of RAM that would
 	 * normally be covered by the ISA hole to the end of memory
@@ -712,20 +740,20 @@ static struct {
 } x86_freelists[VM_NFREELIST] = {
 	{ VM_FREELIST_DEFAULT, 0 },
 #ifdef VM_FREELIST_FIRST1T
-	/* 40-bit addresses needed for modern graphics.  */
+	/* 40-bit addresses needed for modern graphics. */
 	{ VM_FREELIST_FIRST1T,	1ULL * 1024 * 1024 * 1024 * 1024 },
 #endif
 #ifdef VM_FREELIST_FIRST64G
-	/* 36-bit addresses needed for oldish graphics.  */
-	{ VM_FREELIST_FIRST64G,	64ULL * 1024 * 1024 * 1024 },
+	/* 36-bit addresses needed for oldish graphics. */
+	{ VM_FREELIST_FIRST64G, 64ULL * 1024 * 1024 * 1024 },
 #endif
 #ifdef VM_FREELIST_FIRST4G
-	/* 32-bit addresses needed for PCI 32-bit DMA and old graphics.  */
-	{ VM_FREELIST_FIRST4G,	4ULL * 1024 * 1024 * 1024 },
+	/* 32-bit addresses needed for PCI 32-bit DMA and old graphics. */
+	{ VM_FREELIST_FIRST4G,  4ULL * 1024 * 1024 * 1024 },
 #endif
-	/* 30-bit addresses needed for ancient graphics.  */
+	/* 30-bit addresses needed for ancient graphics. */
 	{ VM_FREELIST_FIRST1G,	1ULL * 1024 * 1024 * 1024 },
-	/* 24-bit addresses needed for ISA DMA.  */
+	/* 24-bit addresses needed for ISA DMA. */
 	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
 
@@ -935,13 +963,13 @@ x86_reset(void)
 	 */
 	outb(0xcf9, 0x2);
 	outb(0xcf9, 0x6);
-	DELAY(500000);  /* wait 0.5 sec to see if that did it */
+	DELAY(500000);	/* wait 0.5 sec to see if that did it */
 
 	/*
 	 * Attempt to force a reset via the Fast A20 and Init register
-	 * at I/O port 0x92.  Bit 1 serves as an alternate A20 gate.
-	 * Bit 0 asserts INIT# when set to 1.  We are careful to only
-	 * preserve bit 1 while setting bit 0.  We also must clear bit
+	 * at I/O port 0x92. Bit 1 serves as an alternate A20 gate.
+	 * Bit 0 asserts INIT# when set to 1. We are careful to only
+	 * preserve bit 1 while setting bit 0. We also must clear bit
 	 * 0 before setting it if it isn't already clear.
 	 */
 	b = inb(0x92);
@@ -949,7 +977,7 @@ x86_reset(void)
 		if ((b & 0x1) != 0)
 			outb(0x92, b & 0xfe);
 		outb(0x92, b | 0x1);
-		DELAY(500000);  /* wait 0.5 sec to see if that did it */
+		DELAY(500000);	/* wait 0.5 sec to see if that did it */
 	}
 }
 
@@ -1000,9 +1028,9 @@ x86_startup(void)
 #endif /* !defined(XEN) */
 }
 
-/*  
+/* 
  * machine dependent system variables.
- */ 
+ */
 static int
 sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 {
@@ -1022,18 +1050,18 @@ sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 static int
 sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 {
-        struct sysctlnode node;
+	struct sysctlnode node;
 	extern struct bi_devmatch *x86_alldisks;
 	extern int x86_ndisks;
 
 	if (x86_alldisks == NULL)
 		return EOPNOTSUPP;
 
-        node = *rnode;
-        node.sysctl_data = x86_alldisks;
-        node.sysctl_size = sizeof(struct disklist) +
+	node = *rnode;
+	node.sysctl_data = x86_alldisks;
+	node.sysctl_size = sizeof(struct disklist) +
 	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
-        return sysctl_lookup(SYSCTLFN_CALL(&node));
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
 static void
@@ -1073,8 +1101,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL, 
-	    	       CTLFLAG_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "cpu_brand", NULL,
 		       NULL, 0, cpu_brand_string, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);

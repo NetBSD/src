@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.10.4.1 2015/09/22 12:06:15 skrll Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.10.4.2 2016/03/19 11:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.10.4.1 2015/09/22 12:06:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.10.4.2 2016/03/19 11:30:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.10.4.1 2015/09/22 12:06:15 skrll Exp 
 #include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 
-#include "rump_vfs_private.h"
+#include <rump-sys/vfs.h>
 
 /* realqvik(tm) "devfs" */
 static int

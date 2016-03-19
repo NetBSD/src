@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,8 @@ Usage (
     printf ("\nGeneral:\n");
     ACPI_OPTION ("-@ <file>",       "Specify command file");
     ACPI_OPTION ("-I <dir>",        "Specify additional include directory");
-    ACPI_OPTION ("-T <sig>|ALL|*",  "Create table template file for ACPI <Sig>");
+    ACPI_OPTION ("-T <sig list>|ALL",   "Create ACPI table template/example files");
+    ACPI_OPTION ("-T <count>",      "Emit DSDT and <count> SSDTs to same file");
     ACPI_OPTION ("-p <prefix>",     "Specify path/filename prefix for all output files");
     ACPI_OPTION ("-v",              "Display compiler version");
     ACPI_OPTION ("-vo",             "Enable optimization comments");
@@ -160,6 +161,7 @@ Usage (
     ACPI_OPTION ("-of",             "Disable constant folding");
     ACPI_OPTION ("-oi",             "Disable integer optimization to Zero/One/Ones");
     ACPI_OPTION ("-on",             "Disable named reference string optimization");
+    ACPI_OPTION ("-ot",             "Disable typechecking");
     ACPI_OPTION ("-cr",             "Disable Resource Descriptor error checking");
     ACPI_OPTION ("-in",             "Ignore NoOp operators");
     ACPI_OPTION ("-r <revision>",   "Override table header Revision (1-255)");
@@ -192,6 +194,7 @@ Usage (
     ACPI_OPTION ("-e  <f1 f2 ...>", "Include ACPI table(s) for external symbol resolution");
     ACPI_OPTION ("-fe <file>",      "Specify external symbol declaration file");
     ACPI_OPTION ("-in",             "Ignore NoOp opcodes");
+    ACPI_OPTION ("-l",              "Disassemble to mixed ASL and AML code");
     ACPI_OPTION ("-vt",             "Dump binary table data in hex format within output file");
 
     printf ("\nDebug Options:\n");
@@ -202,7 +205,7 @@ Usage (
     ACPI_OPTION ("-f",              "Ignore errors, force creation of AML output file(s)");
     ACPI_OPTION ("-m <size>",       "Set internal line buffer size (in Kbytes)");
     ACPI_OPTION ("-n",              "Parse only, no output generation");
-    ACPI_OPTION ("-ot",             "Display compile times and statistics");
+    ACPI_OPTION ("-oc",             "Display compile times and statistics");
     ACPI_OPTION ("-x <level>",      "Set debug level for trace output");
     ACPI_OPTION ("-z",              "Do not insert new compiler ID for DataTables");
 }
@@ -297,6 +300,8 @@ AslInitialize (
 {
     UINT32                  i;
 
+
+    AcpiGbl_DmOpt_Verbose = FALSE;
 
     for (i = 0; i < ASL_NUM_FILES; i++)
     {

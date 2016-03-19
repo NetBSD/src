@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.372.2.3 2015/12/27 12:09:50 skrll Exp $
+#	$NetBSD: files.pci,v 1.372.2.4 2016/03/19 11:30:10 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1177,3 +1177,8 @@ file	dev/pci/rtsx_pci.c	rtsx_pci
 
 # PCI graphics devices with DRM/KMS
 include "external/bsd/drm2/pci/files.drmkms_pci"
+
+# Intel S1200,C2000 (non-pch) SMBus controller
+device	ismt: i2cbus
+attach	ismt at pci
+file	dev/pci/ismt.c		ismt

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.5.2.1 2015/09/22 12:06:13 skrll Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.5.2.2 2016/03/19 11:30:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.5.2.1 2015/09/22 12:06:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.5.2.2 2016/03/19 11:30:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.5.2.1 2015/09/22 12:06:13 skrll
 
 #include "ioconf.c"
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 #include "pci_user.h"
 
