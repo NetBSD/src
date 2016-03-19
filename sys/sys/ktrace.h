@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.62 2016/01/23 21:19:24 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.63 2016/03/19 17:04:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,6 +36,9 @@
 
 #include <sys/mutex.h>
 #include <sys/lwp.h>
+#include <sys/signal.h>
+#include <sys/time.h>
+#include <sys/uio.h>
 
 /*
  * operations to ktrace system call  (KTROP(op))
