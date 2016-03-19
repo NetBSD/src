@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_ehci.c,v 1.1.2.2 2016/03/19 11:29:57 skrll Exp $	*/
+/*	$NetBSD: exynos_ehci.c,v 1.1.2.3 2016/03/19 14:16:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_ehci.c,v 1.1.2.2 2016/03/19 11:29:57 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_ehci.c,v 1.1.2.3 2016/03/19 14:16:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +95,9 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->iot = faa->faa_bst;
 	sc->sc_size = size;
-	sc->sc_bus.dmatag = faa->faa_dmat;
-	sc->sc_bus.hci_private = sc;
-	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.ub_dmatag = faa->faa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
+	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_ncomp = 0;
 	strlcpy(sc->sc_vendor, "exynos", sizeof(sc->sc_vendor));
 
