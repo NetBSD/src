@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.320 2014/11/16 16:01:41 manu Exp $
+# $NetBSD: GENERIC,v 1.321 2016/03/19 23:21:03 gdt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.320 $"
+#ident 		"GENERIC-$Revision: 1.321 $"
 
 maxusers	32
 
@@ -526,7 +526,7 @@ udav*	at uhub? port ?		# Davicom DM9601 based adapters
 ukyopon* at uhub? port ?				# Kyocera AIR-EDGE PHONE
 ucom*	at ukyopon? portno ?
 
-uscanner* at uhub? port ?				# USB scanners
+#uscanner* at uhub? port ?				# USB scanners
 uyap* at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 

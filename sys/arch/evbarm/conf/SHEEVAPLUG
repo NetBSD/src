@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.47 2015/09/26 11:16:12 maxv Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.48 2016/03/19 23:21:02 gdt Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -373,7 +373,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

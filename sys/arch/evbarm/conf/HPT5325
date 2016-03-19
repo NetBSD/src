@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.25 2015/08/08 06:36:25 maxv Exp $
+#	$NetBSD: HPT5325,v 1.26 2016/03/19 23:21:02 gdt Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -372,7 +372,7 @@ ucom*	at uvisor?
 #ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

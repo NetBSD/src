@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.97 2015/09/26 11:16:12 maxv Exp $
+#	$NetBSD: XEN3_DOM0,v 1.98 2016/03/19 23:21:02 gdt Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -638,7 +638,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

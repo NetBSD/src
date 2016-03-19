@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.426 2016/03/16 16:13:16 christos Exp $
+# $NetBSD: GENERIC,v 1.427 2016/03/19 23:21:02 gdt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.426 $"
+#ident 		"GENERIC-$Revision: 1.427 $"
 
 maxusers	64		# estimated number of users
 
@@ -1005,7 +1005,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB 802.11 adapters
 athn*	at uhub? port ?		# Atheros AR9002U
