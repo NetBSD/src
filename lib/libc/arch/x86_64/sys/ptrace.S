@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.6 2014/11/24 15:33:18 christos Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.7 2016/03/19 21:27:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.6 2014/11/24 15:33:18 christos Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.7 2016/03/19 21:27:38 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -46,19 +46,21 @@
 ENTRY(ptrace)
 	/*
 	 * The following code calls __errno() to set it to 0 before
-	 * calling ptrace(2). The libc version of __errno() does not use
-	 * any registers, but the libpthread version clobbers %rcx
-	 * before we get a chance to store it in %r10. So we save it
-	 * in %r10 and restore it.
+	 * calling ptrace(2). Preserve and restore all the parameters
 	 */
-	movq	%rcx, %r10
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rdx
+	pushq	%rcx
 #ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__errno))
 #else
 	call	_C_LABEL(__errno)
 #endif /* __PIC__ */
-	movl	$0,(%rax)
-	movq	%r10, %rcx
+	popq	%rcx
+	popq	%rdx
+	popq	%rsi
+	popq	%rdi
 	SYSTRAP(ptrace)
 	jc	err
 	ret
