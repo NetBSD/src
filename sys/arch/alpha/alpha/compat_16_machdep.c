@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.19 2014/05/16 19:18:21 matt Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.20 2016/03/19 20:57:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.19 2014/05/16 19:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2016/03/19 20:57:48 mrg Exp $");
 
 
 #ifdef DEBUG
@@ -113,7 +113,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
-	fp = getframe(l, sig, &onstack), frame;
+	fp = getframe(l, sig, &onstack);
 	fp--;
 
 #ifdef DEBUG
