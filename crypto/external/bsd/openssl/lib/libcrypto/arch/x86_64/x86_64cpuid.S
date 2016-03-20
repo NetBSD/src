@@ -5,7 +5,7 @@
 	call	PIC_PLT(OPENSSL_cpuid_setup)
 
 .hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,8,4
+.comm	OPENSSL_ia32cap_P,16,4
 
 .text	
 
@@ -40,6 +40,7 @@ OPENSSL_ia32_cpuid:
 	movq	%rbx,%r8
 
 	xorl	%eax,%eax
+	movl	%eax,8(%rdi)
 	cpuid
 	movl	%eax,%r11d
 
@@ -107,6 +108,14 @@ OPENSSL_ia32_cpuid:
 	shrl	$14,%r10d
 	andl	$4095,%r10d
 
+	cmpl	$7,%r11d
+	jb	.Lnocacheinfo
+
+	movl	$7,%eax
+	xorl	%ecx,%ecx
+	cpuid
+	movl	%ebx,8(%rdi)
+
 .Lnocacheinfo:
 	movl	$1,%eax
 	cpuid
@@ -146,6 +155,7 @@ OPENSSL_ia32_cpuid:
 .Lclear_avx:
 	movl	$4026525695,%eax
 	andl	%eax,%r9d
+	andl	$4294967263,8(%rdi)
 .Ldone:
 	shlq	$32,%r9
 	movl	%r10d,%eax
@@ -219,6 +229,85 @@ OPENSSL_wipe_cpu:
 	leaq	8(%rsp),%rax
 	.byte	0xf3,0xc3
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
+.globl	OPENSSL_instrument_bus
+.type	OPENSSL_instrument_bus,@function
+.align	16
+OPENSSL_instrument_bus:
+	movq	%rdi,%r10
+	movq	%rsi,%rcx
+	movq	%rsi,%r11
+
+	rdtsc
+	movl	%eax,%r8d
+	movl	$0,%r9d
+	clflush	(%r10)
+.byte	0xf0		
+	addl	%r9d,(%r10)
+	jmp	.Loop
+.align	16
+.Loop:	rdtsc
+	movl	%eax,%edx
+	subl	%r8d,%eax
+	movl	%edx,%r8d
+	movl	%eax,%r9d
+	clflush	(%r10)
+.byte	0xf0		
+	addl	%eax,(%r10)
+	leaq	4(%r10),%r10
+	subq	$1,%rcx
+	jnz	.Loop
+
+	movq	%r11,%rax
+	.byte	0xf3,0xc3
+.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
+
+.globl	OPENSSL_instrument_bus2
+.type	OPENSSL_instrument_bus2,@function
+.align	16
+OPENSSL_instrument_bus2:
+	movq	%rdi,%r10
+	movq	%rsi,%rcx
+	movq	%rdx,%r11
+	movq	%rcx,8(%rsp)
+
+	rdtsc
+	movl	%eax,%r8d
+	movl	$0,%r9d
+
+	clflush	(%r10)
+.byte	0xf0		
+	addl	%r9d,(%r10)
+
+	rdtsc
+	movl	%eax,%edx
+	subl	%r8d,%eax
+	movl	%edx,%r8d
+	movl	%eax,%r9d
+.Loop2:
+	clflush	(%r10)
+.byte	0xf0		
+	addl	%eax,(%r10)
+
+	subq	$1,%r11
+	jz	.Ldone2
+
+	rdtsc
+	movl	%eax,%edx
+	subl	%r8d,%eax
+	movl	%edx,%r8d
+	cmpl	%r9d,%eax
+	movl	%eax,%r9d
+	movl	$0,%edx
+	setne	%dl
+	subq	%rdx,%rcx
+	leaq	(%r10,%rdx,4),%r10
+	jnz	.Loop2
+
+.Ldone2:
+	movq	8(%rsp),%rax
+	subq	%rcx,%rax
+	.byte	0xf3,0xc3
+.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 .globl	OPENSSL_ia32_rdrand
 .type	OPENSSL_ia32_rdrand,@function
 .align	16
@@ -233,3 +322,18 @@ OPENSSL_ia32_rdrand:
 	cmoveq	%rcx,%rax
 	.byte	0xf3,0xc3
 .size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdrand
+
+.globl	OPENSSL_ia32_rdseed
+.type	OPENSSL_ia32_rdseed,@function
+.align	16
+OPENSSL_ia32_rdseed:
+	movl	$8,%ecx
+.Loop_rdseed:
+	rdseed	%rax
+	jc	.Lbreak_rdseed
+	loop	.Loop_rdseed
+.Lbreak_rdseed:
+	cmpq	$0,%rax
+	cmoveq	%rcx,%rax
+	.byte	0xf3,0xc3
+.size	OPENSSL_ia32_rdseed,.-OPENSSL_ia32_rdseed
