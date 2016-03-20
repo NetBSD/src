@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.5 2016/03/19 20:53:46 mrg Exp $
+$NetBSD: README.gcc53,v 1.6 2016/03/20 21:27:27 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -26,7 +26,7 @@ arch/feature list.  anything not here has been switched already:
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 ------------	-----	-------	------	----------	------------	----	---
-alpha		y	y	y	y		y		y	?[10]
+alpha		y	y	y	y		y		y[6]	?[10]
 arm		y	?	y	y
 armeb		y	?	y	y
 earm		y	?	y	y
@@ -43,7 +43,7 @@ earmv7		y	?	y	y
 earmv7eb	y	?	y	y
 earmv7hf	y	?	y	y
 earmv7hfeb	y	?	y	y
-hppa		y	?	y	n[6]
+hppa		y	?	y	y
 i386		y	y	y	y		y[4]		y	
 m68000		y	?	y	n[8]
 m68k		y	?	y	n[8]
@@ -69,7 +69,7 @@ x86_64		y	y	y	y		y		y
 [4] - really, this is 'distribution sets' and a kernel
 [5] - libgcc fails to build, multiply defined symbols.  probably some libgcc
       makefile change needing re-doing.
-[6] - libc fenv.c fails to build
+[6] - sshd is broken, regardless of compiler options
 [7] - GCC fails to build
 [8] - GCC fails with eg: error: stack protector not protecting local variables: variable length buffer [-Werror=stack-protector]
 [9] - with a 4.8 base.tgz and 5.3 everythingelse.tgz, about 60 additional failures out of ~3800
