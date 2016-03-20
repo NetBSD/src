@@ -1,4 +1,4 @@
-/* $NetBSD: emdtvvar.h,v 1.3.32.1 2015/03/19 17:26:42 skrll Exp $ */
+/* $NetBSD: emdtvvar.h,v 1.3.32.2 2016/03/20 08:21:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,7 +55,7 @@ struct emdtv_softc;
 
 struct emdtv_isoc_xfer {
 	struct emdtv_softc	*ix_sc;
-	struct usbd_xfer *	ix_xfer;
+	struct usbd_xfer	*ix_xfer;
 	uint8_t			*ix_buf;
 	uint16_t		ix_frlengths[EMDTV_NFRAMES];
 	struct emdtv_isoc_xfer	*ix_altix;
