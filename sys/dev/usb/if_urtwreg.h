@@ -260,14 +260,14 @@
 
 struct urtw_tx_data {
 	struct urtw_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct ieee80211_node	*ni;
 };
 
 struct urtw_rx_data {
 	struct urtw_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 };

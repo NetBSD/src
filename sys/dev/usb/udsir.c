@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.7 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.8 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.7 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.8 2016/03/20 08:42:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,8 +67,8 @@ int	udsirdebug = 0;
 
 struct udsir_softc {
 	device_t		sc_dev;
-	struct usbd_device *	sc_udev;
-	struct usbd_interface *	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	uint8_t			*sc_ur_buf; /* Unencapsulated frame */
 	u_int			sc_ur_framelen;
@@ -77,8 +77,8 @@ struct udsir_softc {
 	int			sc_rd_maxpsz;
 	size_t			sc_rd_index;
 	int			sc_rd_addr;
-	struct usbd_pipe *	sc_rd_pipe;
-	struct usbd_xfer *	sc_rd_xfer;
+	struct usbd_pipe	*sc_rd_pipe;
+	struct usbd_xfer	*sc_rd_xfer;
 	u_int			sc_rd_count;
 	int			sc_rd_readinprogress;
 	int			sc_rd_expectdataticks;
@@ -91,8 +91,8 @@ struct udsir_softc {
 	int			sc_wr_maxpsz;
 	int			sc_wr_addr;
 	int			sc_wr_stalewrite;
-	struct usbd_xfer *	sc_wr_xfer;
-	struct usbd_pipe *	sc_wr_pipe;
+	struct usbd_xfer	*sc_wr_xfer;
+	struct usbd_pipe	*sc_wr_pipe;
 	struct selinfo		sc_wr_sel;
 
 	enum {

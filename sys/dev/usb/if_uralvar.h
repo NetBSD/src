@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.11.38.1 2015/03/19 17:26:43 skrll Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.11.38.2 2016/03/20 08:42:19 skrll Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -57,7 +57,7 @@ struct ural_softc;
 
 struct ural_tx_data {
 	struct ural_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 	struct ieee80211_node	*ni;
@@ -65,7 +65,7 @@ struct ural_tx_data {
 
 struct ural_rx_data {
 	struct ural_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 };

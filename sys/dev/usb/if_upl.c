@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.10 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.11 2016/03/20 08:42:19 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.10 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.11 2016/03/20 08:42:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,7 +113,7 @@ struct upl_softc;
 
 struct upl_chain {
 	struct upl_softc	*upl_sc;
-	struct usbd_xfer *	upl_xfer;
+	struct usbd_xfer	*upl_xfer;
 	char			*upl_buf;
 	struct mbuf		*upl_mbuf;
 	int			upl_idx;

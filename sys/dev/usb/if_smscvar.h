@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.3.4.2 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.3.4.3 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -36,7 +36,7 @@
 
 struct smsc_chain {
 	struct smsc_softc	*sc_sc;
-	struct usbd_xfer *	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
 	int			 sc_accum;

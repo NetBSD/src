@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.7.16.3 2015/09/29 11:38:28 skrll Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.7.16.4 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1110,14 +1110,14 @@ struct zyd_mac_pair {
 
 struct zyd_tx_data {
 	struct zyd_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct ieee80211_node	*ni;
 };
 
 struct zyd_rx_data {
 	struct zyd_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	const uint8_t		*buf;
 };
 

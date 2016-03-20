@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndisreg.h,v 1.1.32.1 2015/03/19 17:26:43 skrll Exp $ */
+/*	$NetBSD: if_urndisreg.h,v 1.1.32.2 2016/03/20 08:42:19 skrll Exp $ */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
 /*
@@ -26,7 +26,7 @@
 
 struct urndis_chain {
 	struct urndis_softc	*sc_softc;
-	struct usbd_xfer *	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
 	int			 sc_idx;

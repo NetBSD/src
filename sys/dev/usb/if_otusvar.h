@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.7.12.3 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.7.12.4 2016/03/20 08:42:19 skrll Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ struct otus_tx_radiotap_header {
 struct otus_softc;
 
 struct otus_tx_cmd {
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	void			*odata;
 	uint16_t		token;
@@ -120,13 +120,13 @@ struct otus_tx_cmd {
 
 struct otus_rx_data {
 	struct otus_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct otus_tx_data {
 	struct otus_softc		*sc;
-	struct usbd_xfer *		xfer;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(otus_tx_data)	next;
 };
