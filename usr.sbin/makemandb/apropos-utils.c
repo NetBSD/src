@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.19 2015/12/03 21:01:50 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.20 2016/03/20 17:31:09 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.19 2015/12/03 21:01:50 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.20 2016/03/20 17:31:09 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -559,9 +559,7 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		"%s"
 		"%s",
 		snippet_args[0], snippet_args[1], snippet_args[2],
-		wild,
-		section_clause ? section_clause : "",
-		snippet_args[0], snippet_args[1], snippet_args[2],
+		wild, wild,
 		section_clause ? section_clause : "",
 		limit_clause ? limit_clause : "");
 		free(wild);
