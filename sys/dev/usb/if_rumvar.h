@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.9.34.1 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.9.34.2 2016/03/20 08:42:19 skrll Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ struct rum_softc;
 
 struct rum_tx_data {
 	struct rum_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 	struct ieee80211_node	*ni;
@@ -65,7 +65,7 @@ struct rum_tx_data {
 
 struct rum_rx_data {
 	struct rum_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 };

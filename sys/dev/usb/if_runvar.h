@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.1.20.2 2015/09/29 11:38:28 skrll Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.1.20.3 2016/03/20 08:42:19 skrll Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -78,14 +78,14 @@ struct run_softc;
 
 struct run_tx_data {
 	struct run_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	uint8_t			qid;
 };
 
 struct run_rx_data {
 	struct run_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 

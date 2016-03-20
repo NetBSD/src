@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.11 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.12 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.11 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.12 2016/03/20 08:42:19 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -93,25 +93,25 @@ int	usscannerdebug = 0;
 
 struct usscanner_softc {
  	device_t		sc_dev;
-	struct usbd_device *	sc_udev;
-	struct usbd_interface *	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	int			sc_in_addr;
-	struct usbd_pipe *	sc_in_pipe;
+	struct usbd_pipe	*sc_in_pipe;
 
 	int			sc_intr_addr;
-	struct usbd_pipe *	sc_intr_pipe;
-	struct usbd_xfer *	sc_intr_xfer;
+	struct usbd_pipe	*sc_intr_pipe;
+	struct usbd_xfer	*sc_intr_xfer;
 	u_char			sc_status;
 
 	int			sc_out_addr;
-	struct usbd_pipe *	sc_out_pipe;
+	struct usbd_pipe	*sc_out_pipe;
 
-	struct usbd_xfer *	sc_cmd_xfer;
+	struct usbd_xfer	*sc_cmd_xfer;
 	void			*sc_cmd_buffer;
-	struct usbd_xfer *	sc_datain_xfer;
+	struct usbd_xfer	*sc_datain_xfer;
 	void			*sc_datain_buffer;
-	struct usbd_xfer *	sc_dataout_xfer;
+	struct usbd_xfer	*sc_dataout_xfer;
 	void			*sc_dataout_buffer;
 
 	int			sc_state;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.16.6.2 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.16.6.3 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -220,7 +220,7 @@ struct axe_softc;
 
 struct axe_chain {
 	struct axe_softc	*axe_sc;
-	struct usbd_xfer *	axe_xfer;
+	struct usbd_xfer	*axe_xfer;
 	uint8_t			*axe_buf;
 	int			axe_accum;
 	int			axe_idx;

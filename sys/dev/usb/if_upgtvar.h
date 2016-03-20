@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgtvar.h,v 1.1.44.1 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: if_upgtvar.h,v 1.1.44.2 2016/03/20 08:42:19 skrll Exp $	*/
 /*	$OpenBSD: if_upgtvar.h,v 1.15 2009/08/10 20:02:19 deraadt Exp $ */
 
 /*
@@ -77,7 +77,7 @@ struct upgt_tx_radiotap_header {
  */
 struct upgt_data {
 	struct upgt_softc		*sc;
-	struct usbd_xfer *		 xfer;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	struct ieee80211_node		*ni;
 	struct mbuf			*m;

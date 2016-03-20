@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.9 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.10 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.9 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.10 2016/03/20 08:42:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,21 +204,21 @@ static const struct uscan_info uscanner_devs[] = {
 
 struct uscanner_softc {
 	device_t		sc_dev;		/* base device */
-	struct usbd_device *	sc_udev;
-	struct usbd_interface *	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	u_int			sc_dev_flags;
 
-	struct usbd_pipe *	sc_bulkin_pipe;
+	struct usbd_pipe	*sc_bulkin_pipe;
 	int			sc_bulkin;
-	struct usbd_xfer *	sc_bulkin_xfer;
+	struct usbd_xfer	*sc_bulkin_xfer;
 	void 			*sc_bulkin_buffer;
 	int			sc_bulkin_bufferlen;
 	int			sc_bulkin_datalen;
 
-	struct usbd_pipe *	sc_bulkout_pipe;
+	struct usbd_pipe	*sc_bulkout_pipe;
 	int			sc_bulkout;
-	struct usbd_xfer *	sc_bulkout_xfer;
+	struct usbd_xfer	*sc_bulkout_xfer;
 	void 			*sc_bulkout_buffer;
 	int			sc_bulkout_bufferlen;
 	int			sc_bulkout_datalen;

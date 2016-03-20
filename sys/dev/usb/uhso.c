@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.6 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.7 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.6 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.7 2016/03/20 08:42:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -292,24 +292,24 @@ struct uhso_port {
 	usbd_callback		hp_read_cb;	/* read callback */
 	uhso_callback		hp_control;	/* set control lines */
 
-	struct usbd_interface *	hp_ifh;		/* interface handle */
+	struct usbd_interface  *hp_ifh;		/* interface handle */
 	unsigned int		hp_index;	/* usb request index */
 
 	int			hp_iaddr;	/* interrupt endpoint */
-	struct usbd_pipe *	hp_ipipe;	/* interrupt pipe */
+	struct usbd_pipe       *hp_ipipe;	/* interrupt pipe */
 	void		       *hp_ibuf;	/* interrupt buffer */
 	size_t			hp_isize;	/* allocated size */
 
 	int			hp_raddr;	/* bulk in endpoint */
-	struct usbd_pipe *	hp_rpipe;	/* bulk in pipe */
-	struct usbd_xfer *	hp_rxfer;	/* input xfer */
+	struct usbd_pipe       *hp_rpipe;	/* bulk in pipe */
+	struct usbd_xfer       *hp_rxfer;	/* input xfer */
 	void		       *hp_rbuf;	/* input buffer */
 	size_t			hp_rlen;	/* fill length */
 	size_t			hp_rsize;	/* allocated size */
 
 	int			hp_waddr;	/* bulk out endpoint */
-	struct usbd_pipe *	hp_wpipe;	/* bulk out pipe */
-	struct usbd_xfer *	hp_wxfer;	/* output xfer */
+	struct usbd_pipe       *hp_wpipe;	/* bulk out pipe */
+	struct usbd_xfer       *hp_wxfer;	/* output xfer */
 	void		       *hp_wbuf;	/* output buffer */
 	size_t			hp_wlen;	/* fill length */
 	size_t			hp_wsize;	/* allocated size */
@@ -324,7 +324,7 @@ struct uhso_port {
 
 struct uhso_softc {
 	device_t		sc_dev;		/* self */
-	struct usbd_device *	sc_udev;
+	struct usbd_device     *sc_udev;
 	int			sc_refcnt;
 	struct uhso_port       *sc_port[UHSO_PORT_MAX];
 };

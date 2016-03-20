@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.h,v 1.1.44.1 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: udl.h,v 1.1.44.2 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -68,7 +68,7 @@
 struct udl_cmdq {
 	TAILQ_ENTRY(udl_cmdq)	 cq_chain;
 	struct udl_softc	*cq_sc;
-	struct usbd_xfer *	 cq_xfer;
+	struct usbd_xfer	*cq_xfer;
 	uint8_t			*cq_buf;
 };
 

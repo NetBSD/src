@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.9.16.3 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.9.16.4 2016/03/20 08:42:19 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -134,7 +134,7 @@ typedef	uWord url_rxhdr_t;	/* Recive Header */
 
 struct url_chain {
 	struct url_softc	*url_sc;
-	struct usbd_xfer *	url_xfer;
+	struct usbd_xfer	*url_xfer;
 	char			*url_buf;
 	struct mbuf		*url_mbuf;
 	int			url_idx;

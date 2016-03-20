@@ -1,4 +1,4 @@
-/*	$NetBSD: uirdavar.h,v 1.5.38.3 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uirdavar.h,v 1.5.38.4 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -118,14 +118,14 @@ typedef struct {
 
 struct uirda_softc {
  	device_t		sc_dev;
-	struct usbd_device *	sc_udev;
-	struct usbd_interface *	sc_iface;
+	struct usbd_device 	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	kmutex_t		sc_rd_buf_lk;
 	uint8_t			*sc_rd_buf;
 	int			sc_rd_addr;
-	struct usbd_pipe *	sc_rd_pipe;
-	struct usbd_xfer *	sc_rd_xfer;
+	struct usbd_pipe	*sc_rd_pipe;
+	struct usbd_xfer	*sc_rd_xfer;
 	struct selinfo		sc_rd_sel;
 	u_int			sc_rd_count;
 	u_char			sc_rd_err;
@@ -133,8 +133,8 @@ struct uirda_softc {
 	kmutex_t		sc_wr_buf_lk;
 	uint8_t			*sc_wr_buf;
 	int			sc_wr_addr;
-	struct usbd_xfer *	sc_wr_xfer;
-	struct usbd_pipe *	sc_wr_pipe;
+	struct usbd_xfer	*sc_wr_xfer;
+	struct usbd_pipe	*sc_wr_pipe;
 	int			sc_wr_hdr;
 	struct selinfo		sc_wr_sel;
 
