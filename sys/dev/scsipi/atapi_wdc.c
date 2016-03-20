@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.120 2016/03/20 09:47:58 tsutsui Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.121 2016/03/20 10:29:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.120 2016/03/20 09:47:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.121 2016/03/20 10:29:12 tsutsui Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -930,7 +930,7 @@ again:
 	end_piobm_datain:
 #endif
 		if (xfer->c_lenoff > 0)
-			wdcbit_bucket(chp, len - xfer->c_bcount);
+			wdcbit_bucket(chp, xfer->c_lenoff);
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
