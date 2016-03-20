@@ -11,7 +11,7 @@ G_LIB1ASMSRC=pa/milli64.S
 G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
 G_LIB2FUNCS_ST=_eprintf __gcc_bcmp
 G_LIB2FUNCS_EXTRA=
-G_LIBGCC2_CFLAGS=-O2  -g -O2 -DIN_GCC  -DCROSS_DIRECTORY_STRUCTURE  -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include   -fPIC -DELF=1 -DLINUX=1 -g -DIN_LIBGCC2 -fbuilding-libgcc -fno-stack-protector 
+G_LIBGCC2_CFLAGS=-O2  -DIN_GCC    -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include   -fPIC -DELF=1 -DLINUX=1 -g -DIN_LIBGCC2 -fbuilding-libgcc -fno-stack-protector 
 G_SHLIB_MKMAP=${GNUHOSTDIST}/libgcc/mkmap-symver.awk
 G_SHLIB_MKMAP_OPTS=
 G_SHLIB_MAPFILES=libgcc-std.ver
