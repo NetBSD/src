@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/06/23 18:37:45 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2016/03/20 21:14:21 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -11,7 +11,8 @@ GNUHOSTDIST=	${DIST}
 BUILDINCS=	basic_file.h c++allocator.h c++io.h c++locale.h
 BUILDINCS+=	messages_members.h time_members.h opt_random.h gthr-default.h
 
-INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_host_headers}
+# XXXGCC5 bootstrap
+INCS=		${G_bits_headers:Nbits/regex_cursor.h:Nbits/regex_grep_matcher.h:Nbits/regex_grep_matcher.tcc:Nbits/regex_nfa.h:Nbits/regex_nfa.tcc} ${G_c_base_headers_extra} ${G_host_headers}
 INCS+=		gthr.h gthr-single.h gthr-posix.h
 INCS+=		${BUILDINCS}
 
