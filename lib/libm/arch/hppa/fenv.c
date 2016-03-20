@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.2 2015/01/13 11:16:06 martin Exp $	*/
+/*	$NetBSD: fenv.c,v 1.3 2016/03/20 14:22:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -24,7 +24,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2015/01/13 11:16:06 martin Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3 2016/03/20 14:22:46 skrll Exp $");
 
 #include <assert.h>
 #include <fenv.h>
@@ -47,7 +47,7 @@ readfpsr(void)
 {
 	uint32_t rv;
 
-	__asm__	__volatile__ ("fstws	%%fr0, %0" : "=m"(rv));
+	__asm__	__volatile__ ("fstw	%%fr0, 0(%1)" : "=m" (rv) : "r"(&rv));
 	return rv;
 }
 
@@ -55,7 +55,7 @@ readfpsr(void)
 static inline void
 writefpsr(uint32_t val)
 {
-	__asm__	__volatile__("fldws	%0,%%fr0" : : "m"(val));
+	__asm__	__volatile__("fldw	0(%1),%%fr0" : : "m" (val), "r"(&val));
 }
 
 /*
