@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.18 2016/03/17 00:03:38 mrg Exp $	*/
+/*	$NetBSD: stddef.h,v 1.19 2016/03/20 14:11:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,10 +67,13 @@ typedef	_BSD_WCHAR_T_	wchar_t;
     (&reinterpret_cast<const volatile char &>(static_cast<type *>(0)->member))))
 #endif  
 
+#if (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) \
+  || (defined(__cplusplus) && __cplusplus >= 201103L)
 typedef union {
-	char *_c;
+	void *_v;
 	long double _ld;
 	long long int _ll;
 } max_align_t;
+#endif
  
 #endif /* _STDDEF_H_ */
