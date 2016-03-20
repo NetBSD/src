@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.13.6.6 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.13.6.7 2016/03/20 09:15:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.6 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.7 2016/03/20 09:15:07 skrll Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -188,7 +188,7 @@ Static void	uchcom_intr(struct usbd_xfer *, void *,
 			    usbd_status);
 
 static int	set_config(struct uchcom_softc *);
-static int	find_ifaces(struct uchcom_softc *, struct usbd_interface * *);
+static int	find_ifaces(struct uchcom_softc *, struct usbd_interface **);
 static int	find_endpoints(struct uchcom_softc *,
 			       struct uchcom_endpoints *);
 static void	close_intr_pipe(struct uchcom_softc *);
@@ -369,7 +369,7 @@ set_config(struct uchcom_softc *sc)
 }
 
 static int
-find_ifaces(struct uchcom_softc *sc, struct usbd_interface * *riface)
+find_ifaces(struct uchcom_softc *sc, struct usbd_interface **riface)
 {
 	usbd_status err;
 
