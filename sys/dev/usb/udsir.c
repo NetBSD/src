@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.8 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.9 2016/03/20 09:15:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.8 2016/03/20 08:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.9 2016/03/20 09:15:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,7 @@ udsir_attach(device_t parent, device_t self, void *aux)
 	struct udsir_softc *sc = device_private(self);
 	struct usbif_attach_arg *uiaa = aux;
 	struct usbd_device *dev = uiaa->uiaa_device;
-	struct usbd_interface * iface = uiaa->uiaa_iface;
+	struct usbd_interface *iface = uiaa->uiaa_iface;
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	uint8_t epcount;

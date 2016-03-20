@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.10.14.5 2015/12/28 09:26:33 skrll Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.10.14.6 2016/03/20 09:15:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.5 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.6 2016/03/20 09:15:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ emdtv_dtv_isoc(struct usbd_xfer *xfer, void * priv,
 	struct emdtv_isoc_xfer *ix = priv;
 	struct emdtv_softc *sc = ix->ix_sc;
 	struct dtv_payload payload;
-	struct usbd_pipe * isoc = sc->sc_isoc_pipe;
+	struct usbd_pipe *isoc = sc->sc_isoc_pipe;
 	uint32_t len;
 	uint8_t *buf;
 	int i;
