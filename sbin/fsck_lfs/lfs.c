@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.70 2016/02/19 03:53:46 riastradh Exp $ */
+/* $NetBSD: lfs.c,v 1.71 2016/03/20 04:24:46 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -288,7 +288,7 @@ ulfs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap,
 			break;
 
 		lbc -= lognindir;
-		blockcnt = (int64_t) 1 << lbc;
+		/*blockcnt = (int64_t) 1 << lbc;*/
 		off = (bn >> lbc) & (lfs_sb_getnindir(fs) - 1);
 
 		++numlevels;
