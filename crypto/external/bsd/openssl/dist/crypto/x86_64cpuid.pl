@@ -24,7 +24,7 @@ print<<___;
 	call	OPENSSL_cpuid_setup
 
 .hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,8,4
+.comm	OPENSSL_ia32cap_P,16,4
 
 .text
 
@@ -53,12 +53,13 @@ OPENSSL_rdtsc:
 .size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
 
 .globl	OPENSSL_ia32_cpuid
-.type	OPENSSL_ia32_cpuid,\@abi-omnipotent
+.type	OPENSSL_ia32_cpuid,\@function,1
 .align	16
 OPENSSL_ia32_cpuid:
 	mov	%rbx,%r8		# save %rbx
 
 	xor	%eax,%eax
+	mov	%eax,8(%rdi)		# clear 3rd word
 	cpuid
 	mov	%eax,%r11d		# max value for standard query level
 
@@ -126,6 +127,14 @@ OPENSSL_ia32_cpuid:
 	shr	\$14,%r10d
 	and	\$0xfff,%r10d		# number of cores -1 per L1D
 
+	cmp	\$7,%r11d
+	jb	.Lnocacheinfo
+
+	mov	\$7,%eax
+	xor	%ecx,%ecx
+	cpuid
+	mov	%ebx,8(%rdi)
+
 .Lnocacheinfo:
 	mov	\$1,%eax
 	cpuid
@@ -165,6 +174,7 @@ OPENSSL_ia32_cpuid:
 .Lclear_avx:
 	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
 	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
+	andl	\$0xffffffdf,8(%rdi)	# cleax AVX2, ~(1<<5)
 .Ldone:
 	shl	\$32,%r9
 	mov	%r10d,%eax
@@ -263,6 +273,96 @@ OPENSSL_wipe_cpu:
 	ret
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 ___
+{
+my $out="%r10";
+my $cnt="%rcx";
+my $max="%r11";
+my $lasttick="%r8d";
+my $lastdiff="%r9d";
+my $redzone=win64?8:-8;
+
+print<<___;
+.globl	OPENSSL_instrument_bus
+.type	OPENSSL_instrument_bus,\@abi-omnipotent
+.align	16
+OPENSSL_instrument_bus:
+	mov	$arg1,$out	# tribute to Win64
+	mov	$arg2,$cnt
+	mov	$arg2,$max
+
+	rdtsc			# collect 1st tick
+	mov	%eax,$lasttick	# lasttick = tick
+	mov	\$0,$lastdiff	# lastdiff = 0
+	clflush	($out)
+	.byte	0xf0		# lock
+	add	$lastdiff,($out)
+	jmp	.Loop
+.align	16
+.Loop:	rdtsc
+	mov	%eax,%edx
+	sub	$lasttick,%eax
+	mov	%edx,$lasttick
+	mov	%eax,$lastdiff
+	clflush	($out)
+	.byte	0xf0		# lock
+	add	%eax,($out)
+	lea	4($out),$out
+	sub	\$1,$cnt
+	jnz	.Loop
+
+	mov	$max,%rax
+	ret
+.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
+
+.globl	OPENSSL_instrument_bus2
+.type	OPENSSL_instrument_bus2,\@abi-omnipotent
+.align	16
+OPENSSL_instrument_bus2:
+	mov	$arg1,$out	# tribute to Win64
+	mov	$arg2,$cnt
+	mov	$arg3,$max
+	mov	$cnt,$redzone(%rsp)
+
+	rdtsc			# collect 1st tick
+	mov	%eax,$lasttick	# lasttick = tick
+	mov	\$0,$lastdiff	# lastdiff = 0
+
+	clflush	($out)
+	.byte	0xf0		# lock
+	add	$lastdiff,($out)
+
+	rdtsc			# collect 1st diff
+	mov	%eax,%edx
+	sub	$lasttick,%eax	# diff
+	mov	%edx,$lasttick	# lasttick = tick
+	mov	%eax,$lastdiff	# lastdiff = diff
+.Loop2:
+	clflush	($out)
+	.byte	0xf0		# lock
+	add	%eax,($out)	# accumulate diff
+
+	sub	\$1,$max
+	jz	.Ldone2
+
+	rdtsc
+	mov	%eax,%edx
+	sub	$lasttick,%eax	# diff
+	mov	%edx,$lasttick	# lasttick = tick
+	cmp	$lastdiff,%eax
+	mov	%eax,$lastdiff	# lastdiff = diff
+	mov	\$0,%edx
+	setne	%dl
+	sub	%rdx,$cnt	# conditional --$cnt
+	lea	($out,%rdx,4),$out	# conditional ++$out
+	jnz	.Loop2
+
+.Ldone2:
+	mov	$redzone(%rsp),%rax
+	sub	$cnt,%rax
+	ret
+.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
+___
+}
 
 print<<___;
 .globl	OPENSSL_ia32_rdrand
@@ -279,6 +379,21 @@ OPENSSL_ia32_rdrand:
 	cmove	%rcx,%rax
 	ret
 .size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdrand
+
+.globl	OPENSSL_ia32_rdseed
+.type	OPENSSL_ia32_rdseed,\@abi-omnipotent
+.align	16
+OPENSSL_ia32_rdseed:
+	mov	\$8,%ecx
+.Loop_rdseed:
+	rdseed	%rax
+	jc	.Lbreak_rdseed
+	loop	.Loop_rdseed
+.Lbreak_rdseed:
+	cmp	\$0,%rax
+	cmove	%rcx,%rax
+	ret
+.size	OPENSSL_ia32_rdseed,.-OPENSSL_ia32_rdseed
 ___
 
 close STDOUT;	# flush
