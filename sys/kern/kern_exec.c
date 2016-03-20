@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.423 2015/11/30 22:47:19 pgoyette Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.424 2016/03/20 14:58:10 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.423 2015/11/30 22:47:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.424 2016/03/20 14:58:10 khorben Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1160,7 +1160,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	vm->vm_minsaddr = (void *)epp->ep_minsaddr;
 
 #ifdef PAX_ASLR
-	pax_aslr_init_vm(l, vm);
+	pax_aslr_init_vm(l, vm, epp);
 #endif /* PAX_ASLR */
 
 	/* Now map address space. */
