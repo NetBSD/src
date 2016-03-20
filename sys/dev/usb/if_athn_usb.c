@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.8 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.9 2016/03/20 09:15:07 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.8 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.9 2016/03/20 09:15:07 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -562,9 +562,9 @@ athn_usb_open_pipes(struct athn_usb_softc *usc)
 }
 
 static inline void
-athn_usb_kill_pipe(struct usbd_pipe * *pipeptr)
+athn_usb_kill_pipe(struct usbd_pipe **pipeptr)
 {
-	struct usbd_pipe * pipe;
+	struct usbd_pipe *pipe;
 
 	CTASSERT(sizeof(pipe) == sizeof(void *));
 	pipe = atomic_swap_ptr(pipeptr, NULL);

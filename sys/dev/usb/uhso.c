@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.7 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.8 2016/03/20 09:15:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.7 2016/03/20 08:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.8 2016/03/20 09:15:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -453,7 +453,7 @@ uhso_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhso_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_interface * ifh;
+	struct usbd_interface *ifh;
 	char *devinfop;
 	uint8_t count, i, spec;
 	usbd_status status;
@@ -581,8 +581,8 @@ uhso_switch_mode(struct usbd_device *udev)
 {
 	umass_bbb_cbw_t	cmd;
 	usb_endpoint_descriptor_t *ed;
-	struct usbd_interface * ifh;
-	struct usbd_pipe * pipe;
+	struct usbd_interface *ifh;
+	struct usbd_pipe *pipe;
 	struct usbd_xfer *xfer;
 	usbd_status status;
 
@@ -682,7 +682,7 @@ uhso_get_iface_spec(struct usb_attach_arg *uaa, uint8_t ifnum, uint8_t *spec)
 }
 
 Static usb_endpoint_descriptor_t *
-uhso_get_endpoint(struct usbd_interface * ifh, int type, int dir)
+uhso_get_endpoint(struct usbd_interface *ifh, int type, int dir)
 {
 	usb_endpoint_descriptor_t *ed;
 	uint8_t count, i;
@@ -719,12 +719,12 @@ Static const int uhso_mux_port[] = {
 };
 
 Static void
-uhso_mux_attach(struct uhso_softc *sc, struct usbd_interface * ifh, int index)
+uhso_mux_attach(struct uhso_softc *sc, struct usbd_interface *ifh, int index)
 {
 	usbd_desc_iter_t iter;
 	const usb_descriptor_t *desc;
 	usb_endpoint_descriptor_t *ed;
-	struct usbd_pipe * pipe;
+	struct usbd_pipe *pipe;
 	struct uhso_port *hp;
 	uint8_t *buf;
 	size_t size;
@@ -1030,7 +1030,7 @@ uhso_mux_intr(struct usbd_xfer *xfer, void * p, usbd_status status)
  */
 
 Static void
-uhso_bulk_attach(struct uhso_softc *sc, struct usbd_interface * ifh, int index)
+uhso_bulk_attach(struct uhso_softc *sc, struct usbd_interface *ifh, int index)
 {
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_descriptor_t *id;
@@ -1890,7 +1890,7 @@ uhso_tty_control(struct uhso_port *hp, u_long cmd, int bits)
  */
 
 Static void
-uhso_ifnet_attach(struct uhso_softc *sc, struct usbd_interface * ifh, int index)
+uhso_ifnet_attach(struct uhso_softc *sc, struct usbd_interface *ifh, int index)
 {
 	usb_endpoint_descriptor_t *ed;
 	struct uhso_port *hp;
