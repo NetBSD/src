@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.9 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.10 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.9 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.10 2016/03/20 08:42:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,7 +160,7 @@ SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 
 struct ubt_isoc_xfer {
 	struct ubt_softc	*softc;
-	struct usbd_xfer *	 xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	uint16_t		 size[UBT_NFRAMES];
 	int			 busy;
@@ -168,7 +168,7 @@ struct ubt_isoc_xfer {
 
 struct ubt_softc {
 	device_t		 sc_dev;
-	struct usbd_device *	 sc_udev;
+	struct usbd_device	*sc_udev;
 	int			 sc_refcnt;
 	int			 sc_dying;
 	int			 sc_enabled;
@@ -177,47 +177,47 @@ struct ubt_softc {
 	struct usbd_interface *	 sc_iface0;
 
 	/* Commands (control) */
-	struct usbd_xfer *	 sc_cmd_xfer;
+	struct usbd_xfer	*sc_cmd_xfer;
 	uint8_t			*sc_cmd_buf;
 	int			 sc_cmd_busy;	/* write active */
 	MBUFQ_HEAD()		 sc_cmd_queue;	/* output queue */
 
 	/* Events (interrupt) */
 	int			 sc_evt_addr;	/* endpoint address */
-	struct usbd_pipe *	 sc_evt_pipe;
+	struct usbd_pipe	*sc_evt_pipe;
 	uint8_t			*sc_evt_buf;
 
 	/* ACL data (in) */
 	int			 sc_aclrd_addr;	/* endpoint address */
-	struct usbd_pipe *	 sc_aclrd_pipe;	/* read pipe */
-	struct usbd_xfer *	 sc_aclrd_xfer;	/* read xfer */
+	struct usbd_pipe	*sc_aclrd_pipe;	/* read pipe */
+	struct usbd_xfer	*sc_aclrd_xfer;	/* read xfer */
 	uint8_t			*sc_aclrd_buf;	/* read buffer */
 	int			 sc_aclrd_busy;	/* reading */
 
 	/* ACL data (out) */
 	int			 sc_aclwr_addr;	/* endpoint address */
-	struct usbd_pipe *	 sc_aclwr_pipe;	/* write pipe */
-	struct usbd_xfer *	 sc_aclwr_xfer;	/* write xfer */
+	struct usbd_pipe	*sc_aclwr_pipe;	/* write pipe */
+	struct usbd_xfer	*sc_aclwr_xfer;	/* write xfer */
 	uint8_t			*sc_aclwr_buf;	/* write buffer */
 	int			 sc_aclwr_busy;	/* write active */
 	MBUFQ_HEAD()		 sc_aclwr_queue;/* output queue */
 
 	/* ISOC interface */
-	struct usbd_interface *	 sc_iface1;	/* ISOC interface */
+	struct usbd_interface	*sc_iface1;	/* ISOC interface */
 	struct sysctllog	*sc_log;	/* sysctl log */
 	int			 sc_config;	/* current config no */
 	int			 sc_alt_config;	/* no of alternates */
 
 	/* SCO data (in) */
 	int			 sc_scord_addr;	/* endpoint address */
-	struct usbd_pipe *	 sc_scord_pipe;	/* read pipe */
+	struct usbd_pipe	*sc_scord_pipe;	/* read pipe */
 	int			 sc_scord_size;	/* frame length */
 	struct ubt_isoc_xfer	 sc_scord[UBT_NXFERS];
 	struct mbuf		*sc_scord_mbuf;	/* current packet */
 
 	/* SCO data (out) */
 	int			 sc_scowr_addr;	/* endpoint address */
-	struct usbd_pipe *	 sc_scowr_pipe;	/* write pipe */
+	struct usbd_pipe	*sc_scowr_pipe;	/* write pipe */
 	int			 sc_scowr_size;	/* frame length */
 	struct ubt_isoc_xfer	 sc_scowr[UBT_NXFERS];
 	struct mbuf		*sc_scowr_mbuf;	/* current packet */

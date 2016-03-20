@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.35.6.3 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.35.6.4 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -225,7 +225,7 @@ struct umass_softc {
 
 #define XFER_NR			10	/* maximum number */
 
-	struct usbd_xfer *	transfer_xfer[XFER_NR]; /* for ctrl xfers */
+	struct usbd_xfer	*transfer_xfer[XFER_NR]; /* for ctrl xfers */
 
 	void			*datain_buffer;
 	void			*dataout_buffer;

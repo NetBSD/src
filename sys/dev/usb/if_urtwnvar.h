@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.8.4.2 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.8.4.3 2016/03/20 08:42:19 skrll Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -67,14 +67,14 @@ struct urtwn_softc;
 
 struct urtwn_rx_data {
 	struct urtwn_softc	*sc;
-	struct usbd_xfer *	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct urtwn_tx_data {
 	struct urtwn_softc		*sc;
 	size_t				pidx;
-	struct usbd_xfer *		xfer;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(urtwn_tx_data)	next;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.10 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.11 2016/03/20 08:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.10 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.11 2016/03/20 08:42:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ Static struct ustir_speedrec const ustir_speeds[USTIR_NSPEEDS] = {
 
 struct ustir_softc {
 	device_t		sc_dev;
-	struct usbd_device *	sc_udev;
-	struct usbd_interface *	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	uint8_t			*sc_ur_buf; /* Unencapsulated frame */
 	u_int			sc_ur_framelen;
@@ -99,8 +99,8 @@ struct ustir_softc {
 	uint8_t			*sc_rd_buf; /* Raw incoming data stream */
 	size_t			sc_rd_index;
 	int			sc_rd_addr;
-	struct usbd_pipe *	sc_rd_pipe;
-	struct usbd_xfer *	sc_rd_xfer;
+	struct usbd_pipe	*sc_rd_pipe;
+	struct usbd_xfer	*sc_rd_xfer;
 	u_int			sc_rd_count;
 	int			sc_rd_readinprogress;
 	u_int			sc_rd_expectdataticks;
@@ -112,8 +112,8 @@ struct ustir_softc {
 	uint8_t			*sc_wr_buf;
 	int			sc_wr_addr;
 	int			sc_wr_stalewrite;
-	struct usbd_xfer *	sc_wr_xfer;
-	struct usbd_pipe *	sc_wr_pipe;
+	struct usbd_xfer	*sc_wr_xfer;
+	struct usbd_pipe	*sc_wr_pipe;
 	struct selinfo		sc_wr_sel;
 
 	enum {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.18.24.3 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.18.24.4 2016/03/20 08:42:19 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -150,7 +150,7 @@ struct cue_softc;
 
 struct cue_chain {
 	struct cue_softc	*cue_sc;
-	struct usbd_xfer *	cue_xfer;
+	struct usbd_xfer	*cue_xfer;
 	char			*cue_buf;
 	struct mbuf		*cue_mbuf;
 	int			cue_idx;
