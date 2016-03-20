@@ -1298,7 +1298,7 @@ _ssse3_shortcut:
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
-	leaq	-64(%rsp),%rsp
+	leaq	-72(%rsp),%rsp
 	movq	%rdi,%r8
 	movq	%rsi,%r9
 	movq	%rdx,%r10
@@ -2470,7 +2470,7 @@ _ssse3_shortcut:
 	movl	%ecx,8(%r8)
 	movl	%edx,12(%r8)
 	movl	%ebp,16(%r8)
-	leaq	64(%rsp),%rsi
+	leaq	72(%rsp),%rsi
 	movq	0(%rsi),%r12
 	movq	8(%rsi),%rbp
 	movq	16(%rsi),%rbx
@@ -2485,7 +2485,7 @@ _avx_shortcut:
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
-	leaq	-64(%rsp),%rsp
+	leaq	-72(%rsp),%rsp
 	movq	%rdi,%r8
 	movq	%rsi,%r9
 	movq	%rdx,%r10
@@ -3621,7 +3621,7 @@ _avx_shortcut:
 	movl	%ecx,8(%r8)
 	movl	%edx,12(%r8)
 	movl	%ebp,16(%r8)
-	leaq	64(%rsp),%rsi
+	leaq	72(%rsp),%rsi
 	movq	0(%rsi),%r12
 	movq	8(%rsi),%rbp
 	movq	16(%rsi),%rbx
