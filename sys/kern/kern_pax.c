@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.34 2016/03/19 18:56:37 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.35 2016/03/20 14:58:10 khorben Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.34 2016/03/19 18:56:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.35 2016/03/20 14:58:10 khorben Exp $");
 
 #include "opt_pax.h"
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.34 2016/03/19 18:56:37 christos Exp $
 
 #ifdef PAX_ASLR
 #include <sys/mman.h>
+#include <compat/netbsd32/netbsd32.h>
 
 int pax_aslr_enabled = 1;
 int pax_aslr_global = PAX_ASLR;
@@ -399,13 +400,18 @@ pax_aslr_active(struct lwp *l)
 }
 
 void
-pax_aslr_init_vm(struct lwp *l, struct vmspace *vm)
+pax_aslr_init_vm(struct lwp *l, struct vmspace *vm, struct exec_package *ep)
 {
 	if (!pax_aslr_active(l))
 		return;
 
-	vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(cprng_fast32(),
-	    PAX_ASLR_DELTA_MMAP_LSB, PAX_ASLR_DELTA_MMAP_LEN);
+	if (ep->ep_flags & EXEC_32)
+		vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(cprng_fast32(),
+		    PAX_ASLR_DELTA_MMAP_LSB,
+		    (sizeof(netbsd32_pointer_t) * NBBY) / 2);
+	else
+		vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(cprng_fast32(),
+		    PAX_ASLR_DELTA_MMAP_LSB, PAX_ASLR_DELTA_MMAP_LEN);
 	PAX_DPRINTF("delta_mmap=%#jx", vm->vm_aslr_delta_mmap);
 }
 

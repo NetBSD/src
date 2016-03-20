@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.17 2016/03/19 18:56:37 christos Exp $ */
+/* $NetBSD: pax.h,v 1.18 2016/03/20 14:58:11 khorben Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -62,7 +62,7 @@ int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
 bool pax_aslr_epp_active(struct exec_package *);
 bool pax_aslr_active(struct lwp *);
-void pax_aslr_init_vm(struct lwp *, struct vmspace *);
+void pax_aslr_init_vm(struct lwp *, struct vmspace *, struct exec_package *);
 void pax_aslr_stack(struct exec_package *, u_long *);
 void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
 
