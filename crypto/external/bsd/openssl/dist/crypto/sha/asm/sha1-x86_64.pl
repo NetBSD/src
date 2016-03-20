@@ -308,7 +308,7 @@ _ssse3_shortcut:
 	push	%rbx
 	push	%rbp
 	push	%r12
-	lea	`-64-($win64?5*16:0)`(%rsp),%rsp
+	lea	`-64-($win64?5*16:8)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,64+0(%rsp)
@@ -698,7 +698,7 @@ $code.=<<___ if ($win64);
 	movaps	64+64(%rsp),%xmm10
 ___
 $code.=<<___;
-	lea	`64+($win64?5*16:0)`(%rsp),%rsi
+	lea	`64+($win64?5*16:8)`(%rsp),%rsi
 	mov	0(%rsi),%r12
 	mov	8(%rsi),%rbp
 	mov	16(%rsi),%rbx
@@ -728,7 +728,7 @@ _avx_shortcut:
 	push	%rbx
 	push	%rbp
 	push	%r12
-	lea	`-64-($win64?5*16:0)`(%rsp),%rsp
+	lea	`-64-($win64?5*16:8)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,64+0(%rsp)
@@ -1056,7 +1056,7 @@ $code.=<<___ if ($win64);
 	movaps	64+64(%rsp),%xmm10
 ___
 $code.=<<___;
-	lea	`64+($win64?5*16:0)`(%rsp),%rsi
+	lea	`64+($win64?5*16:8)`(%rsp),%rsi
 	mov	0(%rsi),%r12
 	mov	8(%rsi),%rbp
 	mov	16(%rsi),%rbx
