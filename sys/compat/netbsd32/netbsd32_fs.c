@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.73 2015/10/23 19:40:10 maxv Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.74 2016/03/21 22:42:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.73 2015/10/23 19:40:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.74 2016/03/21 22:42:56 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1236,7 +1236,7 @@ netbsd32_utimensat(struct lwp *l, const struct netbsd32_utimensat_args *uap,
 		syscallarg(netbsd32_timespecp_t) tptr;
 		syscallarg(int) flag;
 	} */
-	struct timespec ts[2], *tsp;
+	struct timespec ts[2], *tsp = NULL /* XXXgcc */;
 	int follow;
 	int error;
 
@@ -1334,7 +1334,7 @@ netbsd32_futimens(struct lwp *l, const struct netbsd32_futimens_args *uap,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_timespecp_t) tptr;
 	} */
-	struct timespec ts[2], *tsp;
+	struct timespec ts[2], *tsp = NULL /* XXXgcc */;
 	file_t *fp;
 	int error;
 
