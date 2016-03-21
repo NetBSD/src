@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2015/07/20 04:10:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2016/03/21 05:23:39 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ INCS=	freetype.h ftadvanc.h ftbbox.h ftbdf.h ftbitmap.h ftbzip2.h ftcache.h \
 	ftglyph.h ftgxval.h ftgzip.h ftimage.h ftincrem.h ftlcdfil.h ftlist.h \
 	ftlzw.h ftmac.h ftmm.h ftmodapi.h ftmoderr.h ftotval.h ftoutln.h \
 	ftpfr.h ftrender.h ftsizes.h ftsnames.h ftstroke.h ftsynth.h \
-	ftsystem.h fttrigon.h fttypes.h ftwinfnt.h \
+	ftsystem.h fttrigon.h ftttdrv.h fttypes.h ftwinfnt.h \
 	t1tables.h ttnameid.h tttables.h tttags.h ttunpat.h \
 	ftautoh.h ftcffdrv.h ft2build.h
 
