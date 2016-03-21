@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.106 2016/03/20 22:56:39 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.107 2016/03/21 02:37:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.106 2016/03/20 22:56:39 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.107 2016/03/21 02:37:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1089,13 +1089,13 @@ cleanup_state_stack(VSS *stack)
  * characters on the top of the stack which must be preserved.
  */
 static char *
-parsebackq(VSS *const stack, const char *in,
+parsebackq(VSS *const stack, char * const in,
     struct nodelist **const pbqlist, const int oldstyle)
 {
 	struct nodelist **nlpp;
 	int savepbq;
 	union node *n;
-	const char *out;
+	char *out;
 	char *str = NULL;
 	char *pout;
 	char *volatile sstr = str;
