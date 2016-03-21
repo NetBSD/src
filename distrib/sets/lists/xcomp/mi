@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.175 2015/10/13 03:32:28 mrg Exp $
+#	 $NetBSD: mi,v 1.176 2016/03/21 05:23:39 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5783,6 +5783,7 @@
 ./usr/X11R7/include/freetype2/ftsystem.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftfntfmt.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/fttrigon.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/ftttdrv.h			-unknown-	xorg
 ./usr/X11R7/include/freetype2/fttypes.h			-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftwinfnt.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftxf86.h			-unknown-	obsolete
