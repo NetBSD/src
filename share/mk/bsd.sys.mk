@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.255 2016/03/13 17:56:56 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.256 2016/03/22 08:17:27 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -120,16 +120,19 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
 COPTS+=	-fstack-protector -Wstack-protector 
 
-# gcc 4.8 on m68k erroneously does not protect functions with
+# GCC 4.8 on m68k erroneously does not protect functions with
 # variables needing special alignement, see
 #	http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59674
 # (the underlying issue for sh and vax may be different, needs more
 # investigation, symptoms are similar but for different sources)
-.if "${ACTIVE_CC}" == "gcc" && "${HAVE_GCC}" == "48" && \
-	( ${MACHINE_CPU} == "sh3" || \
-	  ${MACHINE_ARCH} == "vax" || \
-	  ${MACHINE_CPU} == "m68k" || \
-	  ${MACHINE_CPU} == "or1k" )
+# also true for GCC 5.3
+.if "${ACTIVE_CC}" == "gcc" && \
+     ( ${HAVE_GCC} == "48" || \
+       ${HAVE_GCC} == "53" ) && \
+     ( ${MACHINE_CPU} == "sh3" || \
+       ${MACHINE_ARCH} == "vax" || \
+       ${MACHINE_CPU} == "m68k" || \
+       ${MACHINE_CPU} == "or1k" )
 COPTS+=	-Wno-error=stack-protector 
 .endif
 
