@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.160 2016/03/22 17:03:02 dholland Exp $
+$NetBSD: acronyms.comp,v 1.161 2016/03/22 17:41:26 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -526,6 +526,7 @@ HP	Hewlett-Packard
 HPC	high performance computing
 HPET	high precision event timer
 HSM	hardware security module
+HSM	hierarchical storage management 
 HT	hyper-threading
 HTC	hardware thermal control
 HTCC	high temperature co-fired ceramic
