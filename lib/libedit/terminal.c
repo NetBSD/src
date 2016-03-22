@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.23 2016/03/02 19:24:20 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.24 2016/03/22 01:38:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.23 2016/03/02 19:24:20 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.24 2016/03/22 01:38:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -378,7 +378,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
          */
 	tlen = 0;
 	for (tmp = tlist; tmp < &tlist[T_str]; tmp++)
-		if (*tmp != NULL && *tmp != *str) {
+		if (*tmp != NULL && **tmp != '\0' && *tmp != *str) {
 			char *ptr;
 
 			for (ptr = *tmp; *ptr != '\0'; termbuf[tlen++] = *ptr++)
