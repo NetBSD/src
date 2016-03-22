@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.159 2016/02/26 08:20:27 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.160 2016/03/22 17:03:02 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -263,6 +263,7 @@ DAB	digital audio broadcasting
 DAC	digital [to] analog converter
 DAC	discretionary access control
 DAD	duplicate address detection
+DANE	DNS-based Authentication of Named Entities
 DAO	disk at once
 DAP	Directory Access Protocol
 DAT	digital audio tape
@@ -326,6 +327,7 @@ DMT	discrete multitone modulation
 DNARD	Digital network appliance reference design
 DND	drag and drop
 DNS	Domain Name System
+DNSSEC	DNS Security Extensions
 DOE	distributed object environment
 DOF	data over fibre
 DOM	document object model
@@ -359,6 +361,7 @@ DTD	document type definition
 DTE	data terminal equipment
 DTE	dumb terminal emulator
 DTL	diode-transistor logic
+DTLS	datagram transport layer security
 DTS	digital thermal sensor
 DUT	device under test
 DVB	digital video broadcasting
@@ -522,6 +525,7 @@ HOOD	hierarchical object oriented design
 HP	Hewlett-Packard
 HPC	high performance computing
 HPET	high precision event timer
+HSM	hardware security module
 HT	hyper-threading
 HTC	hardware thermal control
 HTCC	high temperature co-fired ceramic
