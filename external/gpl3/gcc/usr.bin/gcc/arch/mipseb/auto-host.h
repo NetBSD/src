@@ -157,7 +157,7 @@
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #ifndef USED_FOR_TARGET
-/* #undef ENABLE_NLS */
+#define ENABLE_NLS 1
 #endif
 
 
@@ -882,7 +882,7 @@
 /* Define to 1 if we found a declaration for 'madvise', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_MADVISE 1
+#define HAVE_DECL_MADVISE 0
 #endif
 
 
@@ -1039,7 +1039,7 @@
 
 /* Define to 1 if you have the <ext/hash_map> header file. */
 #ifndef USED_FOR_TARGET
-#define HAVE_EXT_HASH_MAP 1
+/* #undef HAVE_EXT_HASH_MAP */
 #endif
 
 
@@ -1284,7 +1284,7 @@
 
 /* Define if you have the iconv() function. */
 #ifndef USED_FOR_TARGET
-#define HAVE_ICONV 1
+/* #undef HAVE_ICONV */
 #endif
 
 
@@ -1670,7 +1670,7 @@
 
 
 /* Define if your target C library provides sys/sdt.h */
-/* #undef HAVE_SYS_SDT_H */
+#define HAVE_SYS_SDT_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #ifndef USED_FOR_TARGET
@@ -1716,7 +1716,7 @@
 
 /* Define to 1 if you have the <tr1/unordered_map> header file. */
 #ifndef USED_FOR_TARGET
-#define HAVE_TR1_UNORDERED_MAP 1
+/* #undef HAVE_TR1_UNORDERED_MAP */
 #endif
 
 
@@ -1813,13 +1813,13 @@
 
 /* Define as const if the declaration of iconv() needs const. */
 #ifndef USED_FOR_TARGET
-#define ICONV_CONST const
+/* #undef ICONV_CONST */
 #endif
 
 
 /* Define if int64_t uses long as underlying type. */
 #ifndef USED_FOR_TARGET
-#define INT64_T_IS_LONG 1
+/* #undef INT64_T_IS_LONG */
 #endif
 
 
@@ -1941,7 +1941,7 @@
 
 /* The size of `long', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_LONG 8
+#define SIZEOF_LONG 4
 #endif
 
 
@@ -1959,7 +1959,7 @@
 
 /* The size of `void *', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_VOID_P 8
+#define SIZEOF_VOID_P 4
 #endif
 
 
@@ -2080,7 +2080,7 @@
 # endif
 #else
 # ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
+#  define WORDS_BIGENDIAN 1
 # endif
 #endif
 
