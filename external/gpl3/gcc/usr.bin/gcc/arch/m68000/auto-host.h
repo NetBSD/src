@@ -157,7 +157,7 @@
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #ifndef USED_FOR_TARGET
-/* #undef ENABLE_NLS */
+#define ENABLE_NLS 1
 #endif
 
 
@@ -169,7 +169,7 @@
 
 /* Define to enable plugin support. */
 #ifndef USED_FOR_TARGET
-#define ENABLE_PLUGIN 1
+/* #undef ENABLE_PLUGIN */
 #endif
 
 
@@ -607,7 +607,7 @@
 
 /* Define if your assembler and linker support thread-local storage. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_AS_TLS */
+#define HAVE_AS_TLS 1
 #endif
 
 
@@ -1670,7 +1670,7 @@
 
 
 /* Define if your target C library provides sys/sdt.h */
-/* #undef HAVE_SYS_SDT_H */
+#define HAVE_SYS_SDT_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #ifndef USED_FOR_TARGET
@@ -1819,7 +1819,7 @@
 
 /* Define if int64_t uses long as underlying type. */
 #ifndef USED_FOR_TARGET
-#define INT64_T_IS_LONG 1
+/* #undef INT64_T_IS_LONG */
 #endif
 
 
@@ -1941,7 +1941,7 @@
 
 /* The size of `long', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_LONG 8
+#define SIZEOF_LONG 4
 #endif
 
 
@@ -1959,7 +1959,7 @@
 
 /* The size of `void *', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_VOID_P 8
+#define SIZEOF_VOID_P 4
 #endif
 
 
@@ -2080,7 +2080,7 @@
 # endif
 #else
 # ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
+#  define WORDS_BIGENDIAN 1
 # endif
 #endif
 
