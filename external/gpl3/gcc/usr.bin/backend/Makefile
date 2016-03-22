@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2016/03/16 10:56:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2016/03/22 05:08:38 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -18,9 +18,17 @@ CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\" \
 
 HOSTPROG_CXX=	1
 
+.include <bsd.own.mk>
+
 # XXX ${G_OBJS:.o=.c} is invalid in GCC 5.3, but work around for now
 BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/wide-int-print.cc wide-int-print.c
 BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/wide-int.cc wide-int.c
+
+.if ${MACHINE_CPU} == "sh3"
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh-mem.cc sh-mem.c
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh_treg_combine.cc sh_treg_combine.c
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh_optimize_sett_clrt.cc sh_optimize_sett_clrt.c
+.endif
 
 .include <bsd.lib.mk>
 

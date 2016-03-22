@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/03/18 17:52:30 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2016/03/22 05:08:38 mrg Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -46,6 +46,10 @@ COPTS.c-pragma.c=	-Wno-stack-protector
 COPTS.c-typeck.c=	-Wno-stack-protector
 
 CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
+
+.if ${MACHINE_CPU} == "sh3"
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh-c.cc sh-c.c
+.endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}
