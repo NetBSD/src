@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.60 2014/01/16 01:15:34 christos Exp $
+# $NetBSD: Makefile.booters,v 1.61 2016/03/22 08:25:22 mrg Exp $
 
 NOMAN=		# defined
 
@@ -121,7 +121,6 @@ ${PROG}: ${OBJS} ${LIBS}
 	@echo -n "Creating ECOFF binary... "
 	@mv ${PROG} ${PROG}.elf
 	@${ELF2ECOFF} ${PROG}.elf ${PROG}
-	@echo done.
 .endif
 
 .include <bsd.klinks.mk>
