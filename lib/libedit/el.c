@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.83 2016/02/24 17:13:22 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.84 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.83 2016/02/24 17:13:22 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.84 2016/03/23 22:27:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -47,13 +47,11 @@ __RCSID("$NetBSD: el.c,v 1.83 2016/02/24 17:13:22 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <ctype.h>
+#include <langinfo.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIDECHAR
-#include <locale.h>
-#include <langinfo.h>
-#endif
 
 #include "el.h"
 #include "parse.h"
@@ -146,12 +144,10 @@ el_end(EditLine *el)
 	sig_end(el);
 
 	el_free(el->el_prog);
-#ifdef WIDECHAR
 	el_free(el->el_scratch.cbuff);
 	el_free(el->el_scratch.wbuff);
 	el_free(el->el_lgcyconv.cbuff);
 	el_free(el->el_lgcyconv.wbuff);
-#endif
 	el_free(el);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.23 2016/02/28 23:02:24 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.24 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.23 2016/02/28 23:02:24 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.24 2016/03/23 22:27:48 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -42,7 +42,6 @@ __RCSID("$NetBSD: chartype.c,v 1.23 2016/02/28 23:02:24 christos Exp $");
 
 #define CT_BUFSIZ ((size_t)1024)
 
-#ifdef WIDECHAR
 protected int
 ct_conv_cbuff_resize(ct_buffer_t *conv, size_t csize)
 {
@@ -217,20 +216,6 @@ ct_mbrtowc(wchar_t *wc, const char *s, size_t n)
 	return mbrtowc(wc, s, n, &mbs);
 }
 
-#else
-
-size_t
-ct_mbrtowc(wchar_t *wc, const char *s, size_t n)
-	if (s == NULL)
-		return 0;
-	if (n == 0)
-		return (size_t)-2;
-	if (wc != NULL)
-		*wc = *s;
-	return *s != '\0';
-}
-#endif
-
 protected const Char *
 ct_visual_string(const Char *s)
 {
@@ -292,7 +277,6 @@ ct_visual_width(Char c)
 		return 1; /* Hmm, this really need to be handled outside! */
 	case CHTYPE_NL:
 		return 0; /* Should this be 1 instead? */
-#ifdef WIDECHAR
 	case CHTYPE_PRINT:
 		return wcwidth(c);
 	case CHTYPE_NONPRINT:
@@ -300,12 +284,6 @@ ct_visual_width(Char c)
 			return 8; /* \U+12345 */
 		else
 			return 7; /* \U+1234 */
-#else
-	case CHTYPE_PRINT:
-		return 1;
-	case CHTYPE_NONPRINT:
-		return 4; /* \123 */
-#endif
 	default:
 		return 0; /* should not happen */
 	}
@@ -338,7 +316,6 @@ ct_visual_char(Char *dst, size_t len, Char c)
 		 * so this is right */
 		if ((ssize_t)len < ct_visual_width(c))
 			return -1;   /* insufficient space */
-#ifdef WIDECHAR
 		*dst++ = '\\';
 		*dst++ = 'U';
 		*dst++ = '+';
@@ -350,13 +327,6 @@ ct_visual_char(Char *dst, size_t len, Char c)
 		*dst++ = tohexdigit(((unsigned int) c >>  4) & 0xf);
 		*dst   = tohexdigit(((unsigned int) c      ) & 0xf);
 		return c > 0xffff ? 8 : 7;
-#else
-		*dst++ = '\\';
-#define tooctaldigit(v) (Char)((v) + '0')
-		*dst++ = tooctaldigit(((unsigned int) c >> 6) & 0x7);
-		*dst++ = tooctaldigit(((unsigned int) c >> 3) & 0x7);
-		*dst++ = tooctaldigit(((unsigned int) c     ) & 0x7);
-#endif
 		/*FALLTHROUGH*/
 	/* these two should be handled outside this function */
 	default:            /* we should never hit the default */
