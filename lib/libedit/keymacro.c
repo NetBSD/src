@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.14 2016/02/24 14:25:38 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.15 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.14 2016/02/24 14:25:38 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.15 2016/03/23 22:27:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -218,10 +218,8 @@ keymacro_add(EditLine *el, const Char *key, keymacro_value_t *val, int ntype)
 protected void
 keymacro_clear(EditLine *el, el_action_t *map, const Char *in)
 {
-#ifdef WIDECHAR
         if (*in > N_KEYS) /* can't be in the map */
                 return;
-#endif
 	if ((map[(unsigned char)*in] == ED_SEQUENCE_LEAD_IN) &&
 	    ((map == el->el_map.key &&
 	    el->el_map.alt[(unsigned char)*in] != ED_SEQUENCE_LEAD_IN) ||
