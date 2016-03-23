@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2015/07/10 14:20:28 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2016/03/23 09:00:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -85,5 +85,10 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd -I.
 
 .PATH: ${DIST}
 YHEADER=1
+
+# XXXGCC5
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 53 && ${ACTIVE_CC} == "gcc"
+COPTS.ntp_control.c+=  -Wno-error=maybe-uninitialized
+.endif
 
 .include <bsd.prog.mk>
