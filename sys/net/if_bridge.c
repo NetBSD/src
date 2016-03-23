@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.109 2016/03/23 04:56:21 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.110 2016/03/23 05:44:01 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.109 2016/03/23 04:56:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.110 2016/03/23 05:44:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2234,10 +2234,10 @@ bridge_rtdaddr(struct bridge_softc *sc, const uint8_t *addr)
 static void
 bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)
 {
-	struct bridge_rtnode *brt, *nbrt;
+	struct bridge_rtnode *brt;
 
 	BRIDGE_RT_LOCK(sc);
-	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list, nbrt) {
+	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list) {
 		if (brt->brt_ifp == ifp)
 			break;
 	}
