@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.14 2016/03/23 22:04:18 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.15 2016/03/23 22:11:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.14 2016/03/23 22:04:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.15 2016/03/23 22:11:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -177,12 +177,8 @@ struct chan {
 };
 
 /*
- * XXX Locking notes:
- *
- *    The MI USB audio subsystem is not MP-SAFE.  Our strategy here
- *    is to ensure we have the kernel lock held when calling into
- *    usbd, and, generally, to have dropped the sc_intr_lock during
- *    these sections as well since the usb code will sleep.
+ *    The MI USB audio subsystem is now MP-SAFE and expects sc_intr_lock to be
+ *    held on entry the callbacks passed to uaudio_trigger_{in,out}put
  */
 struct uaudio_softc {
 	device_t	sc_dev;		/* base device */
@@ -431,7 +427,7 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = uiaa->uiaa_device;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 
 	strlcpy(sc->sc_adev.name, "USB audio", sizeof(sc->sc_adev.name));
 	strlcpy(sc->sc_adev.version, "", sizeof(sc->sc_adev.version));
@@ -2237,14 +2233,14 @@ uaudio_halt_out_dma(void *addr)
 
 	DPRINTF("%s", "enter\n");
 
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 	if (sc->sc_playchan.pipe != NULL) {
 		uaudio_chan_abort(sc, &sc->sc_playchan);
 		uaudio_chan_free_buffers(sc, &sc->sc_playchan);
 		uaudio_chan_close(sc, &sc->sc_playchan);
 		sc->sc_playchan.intr = NULL;
 	}
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -2256,14 +2252,14 @@ uaudio_halt_in_dma(void *addr)
 
 	DPRINTF("%s", "enter\n");
 
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 	if (sc->sc_recchan.pipe != NULL) {
 		uaudio_chan_abort(sc, &sc->sc_recchan);
 		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
 		uaudio_chan_close(sc, &sc->sc_recchan);
 		sc->sc_recchan.intr = NULL;
 	}
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -2605,17 +2601,17 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction);
 
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
-		mutex_spin_enter(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
-		mutex_spin_enter(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
@@ -2628,7 +2624,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		uaudio_chan_rtransfer(ch);
 	}
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -2655,17 +2651,17 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction);
 
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
-		mutex_spin_enter(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
-		mutex_spin_enter(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
@@ -2674,7 +2670,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX */
 		uaudio_chan_ptransfer(ch);
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -2798,7 +2794,6 @@ uaudio_chan_free_buffers(struct uaudio_softc *sc, struct chan *ch)
 		usbd_destroy_xfer(ch->chanbufs[i].xfer);
 }
 
-/* Called with USB lock held. */
 Static void
 uaudio_chan_ptransfer(struct chan *ch)
 {
@@ -2887,20 +2882,19 @@ uaudio_chan_pintr(struct usbd_xfer *xfer, void *priv,
 #endif
 
 	ch->transferred += cb->size;
-	mutex_spin_enter(&ch->sc->sc_intr_lock);
+	mutex_enter(&ch->sc->sc_intr_lock);
 	/* Call back to upper layer */
 	while (ch->transferred >= ch->blksize) {
 		ch->transferred -= ch->blksize;
 		DPRINTFN(5, "call %p(%p)\n", ch->intr, ch->arg);
 		ch->intr(ch->arg);
 	}
-	mutex_spin_exit(&ch->sc->sc_intr_lock);
+	mutex_exit(&ch->sc->sc_intr_lock);
 
 	/* start next transfer */
 	uaudio_chan_ptransfer(ch);
 }
 
-/* Called with USB lock held. */
 Static void
 uaudio_chan_rtransfer(struct chan *ch)
 {
@@ -2990,13 +2984,13 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 
 	/* Call back to upper layer */
 	ch->transferred += count;
-	mutex_spin_enter(&ch->sc->sc_intr_lock);
+	mutex_enter(&ch->sc->sc_intr_lock);
 	while (ch->transferred >= ch->blksize) {
 		ch->transferred -= ch->blksize;
 		DPRINTFN(5, "call %p(%p)\n", ch->intr, ch->arg);
 		ch->intr(ch->arg);
 	}
-	mutex_spin_exit(&ch->sc->sc_intr_lock);
+	mutex_exit(&ch->sc->sc_intr_lock);
 
 	/* start next transfer */
 	uaudio_chan_rtransfer(ch);
