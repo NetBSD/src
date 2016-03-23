@@ -1922,10 +1922,10 @@ obj_elf_type (int ignore ATTRIBUTE_UNUSED)
 	   || strcmp (type_name, "10") == 0
 	   || strcmp (type_name, "STT_GNU_IFUNC") == 0)
     {
+#if 0
       const struct elf_backend_data *bed;
 
       bed = get_elf_backend_data (stdoutput);
-#if 0
       if (!(bed->elf_osabi == ELFOSABI_GNU
 	    || bed->elf_osabi == ELFOSABI_FREEBSD
 	    /* GNU is still using the default value 0.  */
