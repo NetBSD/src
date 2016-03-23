@@ -11,6 +11,10 @@
  */
 
 #include "includes.h"
+#ifdef CONFIG_MATCH_IFACE
+#include <net/if.h>
+#include <fnmatch.h>
+#endif /* CONFIG_MATCH_IFACE */
 
 #include "common.h"
 #include "crypto/random.h"
@@ -4291,6 +4295,74 @@ static void wpa_supplicant_deinit_iface(struct wpa_supplicant *wpa_s,
 }
 
 
+#ifdef CONFIG_MATCH_IFACE
+
+/**
+ * wpa_supplicant_match_iface - Match an interface description to a name
+ * @global: Pointer to global data from wpa_supplicant_init()
+ * @ifname: Name of the interface to match
+ * Returns: Pointer to the created interface description or %NULL on failure
+ */
+struct wpa_interface * wpa_supplicant_match_iface(struct wpa_global *global,
+						  const char *ifname)
+{
+	int i;
+	struct wpa_interface *iface, *miface;
+
+	for (i = 0; i < global->params.match_iface_count; i++) {
+		miface = &global->params.match_ifaces[i];
+		if (!miface->ifname ||
+		    fnmatch(miface->ifname, ifname, 0) == 0) {
+			iface = os_zalloc(sizeof(*iface));
+			if (!iface)
+				return NULL;
+			*iface = *miface;
+			iface->ifname = ifname;
+			return iface;
+		}
+	}
+
+	return NULL;
+}
+
+
+/**
+ * wpa_supplicant_match_existing - Match existing interfaces
+ * @global: Pointer to global data from wpa_supplicant_init()
+ * Returns: 0 on success, -1 on failure
+ */
+static int wpa_supplicant_match_existing(struct wpa_global *global)
+{
+	struct if_nameindex *ifi, *ifp;
+	struct wpa_supplicant *wpa_s;
+	struct wpa_interface *iface;
+
+	ifp = if_nameindex();
+	if (!ifp) {
+		wpa_printf(MSG_ERROR, "if_nameindex: %s", strerror(errno));
+		return -1;
+	}
+
+	for (ifi = ifp; ifi->if_name; ifi++) {
+		wpa_s = wpa_supplicant_get_iface(global, ifi->if_name);
+		if (wpa_s)
+			continue;
+		iface = wpa_supplicant_match_iface(global, ifi->if_name);
+		if (iface) {
+			wpa_s = wpa_supplicant_add_iface(global, iface, NULL);
+			os_free(iface);
+			if (wpa_s)
+				wpa_s->matched = 1;
+		}
+	}
+
+	if_freenameindex(ifp);
+	return 0;
+}
+
+#endif /* CONFIG_MATCH_IFACE */
+
+
 /**
  * wpa_supplicant_add_iface - Add a new network interface
  * @global: Pointer to global data from wpa_supplicant_init()
@@ -4563,6 +4635,18 @@ struct wpa_global * wpa_supplicant_init(struct wpa_params *params)
 	if (params->override_ctrl_interface)
 		global->params.override_ctrl_interface =
 			os_strdup(params->override_ctrl_interface);
+#ifdef CONFIG_MATCH_IFACE
+	global->params.match_iface_count = params->match_iface_count;
+	if (params->match_iface_count) {
+		global->params.match_ifaces =
+			os_calloc(params->match_iface_count,
+				  sizeof(struct wpa_interface));
+		os_memcpy(global->params.match_ifaces,
+			  params->match_ifaces,
+			  params->match_iface_count *
+			  sizeof(struct wpa_interface));
+	}
+#endif /* CONFIG_MATCH_IFACE */
 	wpa_debug_level = global->params.wpa_debug_level =
 		params->wpa_debug_level;
 	wpa_debug_show_keys = global->params.wpa_debug_show_keys =
@@ -4634,6 +4718,11 @@ int wpa_supplicant_run(struct wpa_global *global)
 	    eloop_sock_requeue()))
 		return -1;
 
+#ifdef CONFIG_MATCH_IFACE
+	if (wpa_supplicant_match_existing(global))
+		return -1;
+#endif
+
 	if (global->params.wait_for_monitor) {
 		for (wpa_s = global->ifaces; wpa_s; wpa_s = wpa_s->next)
 			if (wpa_s->ctrl_iface)
@@ -4700,6 +4789,9 @@ void wpa_supplicant_deinit(struct wpa_global *global)
 	os_free(global->params.ctrl_interface_group);
 	os_free(global->params.override_driver);
 	os_free(global->params.override_ctrl_interface);
+#ifdef CONFIG_MATCH_IFACE
+	os_free(global->params.match_ifaces);
+#endif /* CONFIG_MATCH_IFACE */
 
 	os_free(global->p2p_disallow_freq.range);
 	os_free(global->p2p_go_avoid_freq.range);
