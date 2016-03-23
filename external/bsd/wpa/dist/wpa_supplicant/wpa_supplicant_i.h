@@ -227,6 +227,18 @@ struct wpa_params {
 	 * its internal entropy store over restarts.
 	 */
 	char *entropy_file;
+
+#ifdef CONFIG_MATCH_IFACE
+	/**
+	 * match_ifaces - Interface descriptions to match
+	 */
+	struct wpa_interface *match_ifaces;
+
+	/**
+	 * match_iface_count - Number of defined matching interfaces
+	 */
+	int match_iface_count;
+#endif /* CONFIG_MATCH_IFACE */
 };
 
 struct p2p_srv_bonjour {
@@ -430,6 +442,9 @@ struct wpa_supplicant {
 	unsigned char own_addr[ETH_ALEN];
 	unsigned char perm_addr[ETH_ALEN];
 	char ifname[100];
+#ifdef CONFIG_MATCH_IFACE
+	int matched;
+#endif /* CONFIG_MATCH_IFACE */
 #ifdef CONFIG_CTRL_IFACE_DBUS
 	char *dbus_path;
 #endif /* CONFIG_CTRL_IFACE_DBUS */
@@ -1034,6 +1049,8 @@ void free_hw_features(struct wpa_supplicant *wpa_s);
 
 void wpa_show_license(void);
 
+struct wpa_interface * wpa_supplicant_match_iface(struct wpa_global *global,
+						  const char *ifname);
 struct wpa_supplicant * wpa_supplicant_add_iface(struct wpa_global *global,
 						 struct wpa_interface *iface,
 						 struct wpa_supplicant *parent);
