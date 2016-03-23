@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.15 2013/04/20 07:32:45 isaki Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.16 2016/03/23 05:25:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.15 2013/04/20 07:32:45 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.16 2016/03/23 05:25:51 mrg Exp $");
 
 #include "fpu_emulate.h"
 
@@ -334,6 +334,9 @@ fpu_sin(struct fpemu *fe)
 	if (ISZERO(&fe->fe_f2))
 		return &fe->fe_f2;
 
+#if defined(__GNUC__) && (__GNUC__ >= 5) && defined(__OPTIMIZE__)
+	x.fp_sign = 0;
+#endif
 	CPYFPN(&x, &fe->fe_f2);
 
 	/* x = abs(input) */
