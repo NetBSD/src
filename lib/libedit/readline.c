@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.126 2016/02/24 17:13:22 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.127 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.126 2016/02/24 17:13:22 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.127 2016/03/23 22:27:48 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1805,9 +1805,7 @@ _rl_completion_append_character_function(const char *dummy
 int
 rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 {
-#ifdef WIDECHAR
 	static ct_buffer_t wbreak_conv, sprefix_conv;
-#endif
 	char *breakchars;
 
 	if (h == NULL || e == NULL)

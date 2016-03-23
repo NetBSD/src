@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.56 2016/03/02 19:24:20 christos Exp $
+#	$NetBSD: Makefile,v 1.57 2016/03/23 22:27:48 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
-WIDECHAR ?= yes
 WARNS?=	5
 LIB=	edit
 
@@ -36,11 +35,8 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 # For protection
 SRCS=	editline.c readline.c tokenizer.c history.c
 
-.if ${WIDECHAR} == "yes"
 SRCS += tokenizern.c historyn.c
 CLEANFILES+=tokenizern.c.tmp tokenizern.c historyn.c.tmp historyn.c
-CPPFLAGS+=-DWIDECHAR
-.endif
 
 LIBEDITDIR?=${.CURDIR}
 

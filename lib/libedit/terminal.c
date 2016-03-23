@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.24 2016/03/22 01:38:17 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.25 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.24 2016/03/22 01:38:17 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.25 2016/03/23 22:27:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -516,13 +516,11 @@ terminal_move_to_line(EditLine *el, int where)
 			    el->el_display[el->el_cursor.v][0] != '\0') {
                                 size_t h = (size_t)
 				    (el->el_terminal.t_size.h - 1);
-#ifdef WIDECHAR
                                 for (; h > 0 &&
                                          el->el_display[el->el_cursor.v][h] ==
                                                  MB_FILL_CHAR;
                                          h--)
                                                 continue;
-#endif
 				/* move without newline */
 				terminal_move_to_char(el, (int)h);
 				terminal_overwrite(el, &el->el_display
@@ -596,11 +594,9 @@ mc_again:
 				if (EL_CAN_TAB) {
 					if ((el->el_cursor.h & 0370) !=
 					    (where & ~0x7)
-#ifdef WIDECHAR
 					    && (el->el_display[
 					    el->el_cursor.v][where & 0370] !=
 					    MB_FILL_CHAR)
-#endif
 					    ) {
 						/* if not within tab stop */
 						for (i =
@@ -688,11 +684,9 @@ terminal_overwrite(EditLine *el, const Char *cp, size_t n)
 				if ((c = el->el_display[el->el_cursor.v]
 				    [el->el_cursor.h]) != '\0') {
 					terminal_overwrite(el, &c, (size_t)1);
-#ifdef WIDECHAR
 					while (el->el_display[el->el_cursor.v]
 					    [el->el_cursor.h] == MB_FILL_CHAR)
 						el->el_cursor.h++;
-#endif
 				} else {
 					terminal__putc(el, ' ');
 					el->el_cursor.h = 1;
