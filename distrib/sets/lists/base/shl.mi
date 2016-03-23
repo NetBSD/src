@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.765 2016/03/16 05:32:09 mrg Exp $
+# $NetBSD: shl.mi,v 1.766 2016/03/23 06:44:09 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -292,7 +292,9 @@
 ./usr/lib/libgomp.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgomp.so.1				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgomp.so.1.1			base-sys-shlib		compatfile,gcc=48
-./usr/lib/libgomp.so.1.2			base-sys-shlib		compatfile,gcc=53
+./usr/lib/libgomp.so.1.2			base-sys-shlib		compatfile,gcc=53,!machine_arch=mips64eb,!machine_arch=mips64el
+./usr/lib/libgomp.so.1.2			base-sys-shlib		gcc=53,machine_arch=mips64eb
+./usr/lib/libgomp.so.1.2			base-sys-shlib		gcc=53,machine_arch=mips64el
 ./usr/lib/libgssapi.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libgssapi.so.10			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libgssapi.so.10.0			base-krb5-shlib		compatfile,kerberos
