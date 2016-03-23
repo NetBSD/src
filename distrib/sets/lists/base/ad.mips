@@ -1,6 +1,8 @@
-# $NetBSD: ad.mips,v 1.70 2015/06/22 06:02:01 matt Exp $
+# $NetBSD: ad.mips,v 1.71 2016/03/23 06:44:09 mrg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic,arch64
 ./libexec/ld.elf_so-o32				base-compat-shlib	compat,pic,arch64
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic,arch64
 ./usr/libexec/ld.elf_so-o32			base-sysutil-bin	compat,pic,arch64
 ./usr/lkm/ldscript				base-obsolete		obsolete
+./usr/lib/o32/libgomp.so.1.1			base-compat-shlib	compat,pic,arch64,gcc=48
+./usr/lib/o32/libgomp.so.1.2			base-compat-shlib	compat,pic,arch64,gcc=53
