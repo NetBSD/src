@@ -274,6 +274,10 @@ CFLAGS += -DCONFIG_IBSS_RSN
 OBJS += ibss_rsn.o
 endif
 
+ifdef CONFIG_MATCH_IFACE
+CFLAGS += -DCONFIG_MATCH_IFACE
+endif
+
 ifdef CONFIG_P2P
 OBJS += p2p_supplicant.o
 OBJS += ../src/p2p/p2p.o
