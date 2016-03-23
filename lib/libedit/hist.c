@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.24 2016/02/16 22:53:14 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.25 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.24 2016/02/16 22:53:14 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.25 2016/03/23 22:27:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -212,7 +212,6 @@ hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 	return 1;
 }
 
-#ifdef WIDECHAR
 protected wchar_t *
 hist_convert(EditLine *el, int fn, void *arg)
 {
@@ -222,4 +221,3 @@ hist_convert(EditLine *el, int fn, void *arg)
 	return ct_decode_string((const char *)(const void *)ev.str,
 	    &el->el_scratch);
 }
-#endif
