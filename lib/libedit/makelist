@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.24 2016/02/17 19:47:49 christos Exp $
+#	$NetBSD: makelist,v 1.25 2016/03/23 22:27:48 christos Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,6 @@ case $FLAG in
 -n)
     cat << _EOF
 #include "config.h"
-#undef WIDECHAR
 #define NARROWCHAR
 #include "${FILES}"
 _EOF

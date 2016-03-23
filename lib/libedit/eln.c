@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.28 2016/02/28 23:02:24 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.29 2016/03/23 22:27:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.28 2016/02/28 23:02:24 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.29 2016/03/23 22:27:48 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -58,7 +58,6 @@ el_getc(EditLine *el, char *cp)
 }
 
 
-#ifdef WIDECHAR
 public void
 el_push(EditLine *el, const char *str)
 {
@@ -389,4 +388,3 @@ el_insertstr(EditLine *el, const char *str)
 {
 	return el_winsertstr(el, ct_decode_string(str, &el->el_lgcyconv));
 }
-#endif /* WIDECHAR */
