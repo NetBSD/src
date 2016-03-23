@@ -45,8 +45,18 @@ along with GCC; see the file COPYING3.  If not see
    count pushed by the CALLS and before the start of the saved registers.  */
 #define INCOMING_FRAME_SP_OFFSET 0
 
-/* We use R2-R3 (call-clobbered) registers for exceptions.  */
-#define EH_RETURN_DATA_REGNO(N) ((N) < 2 ? (N) + 2 : INVALID_REGNUM)
+/* Offset from the frame pointer register value to the top of the stack.  */
+#define FRAME_POINTER_CFA_OFFSET(FNDECL) 0
+
+/* We use R2-R5 (call-clobbered) registers for exceptions.  */
+#define EH_RETURN_DATA_REGNO(N) ((N) < 4 ? (N) + 2 : INVALID_REGNUM)
+
+/* Place the top of the stack for the DWARF2 EH stackadj value.  */
+#define EH_RETURN_STACKADJ_RTX						\
+  gen_rtx_MEM (SImode,							\
+	       plus_constant (Pmode,					\
+			      gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),\
+			      -4))
 
 /* Simple store the return handler into the call frame.  */
 #define EH_RETURN_HANDLER_RTX						\
@@ -55,6 +65,10 @@ along with GCC; see the file COPYING3.  If not see
 			      gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),\
 			      16))
 
+
+/* Reserve the top of the stack for exception handler stackadj value.  */
+#undef STARTING_FRAME_OFFSET
+#define STARTING_FRAME_OFFSET -4
 
 /* The VAX wants no space between the case instruction and the jump table.  */
 #undef  ASM_OUTPUT_BEFORE_CASE_LABEL

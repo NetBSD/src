@@ -18,11 +18,6 @@
 ;; <http://www.gnu.org/licenses/>.
 
 
-;; Note that operand 1 is total size of args, in bytes,
-;; and what the call insn wants is the number of words.
-;; It is used in the call instruction as a byte, but in the addl2 as
-;; a word.  Since the only time we actually use it in the call instruction
-;; is when it is a constant, SImode (for addl2) is the proper mode.
 ;;- Instruction patterns.  When multiple patterns apply,
 ;;- the first one in the file is chosen.
 ;;-
@@ -1314,11 +1309,6 @@
   ""
   "decl %0\;jgequ %l1")
 
-;; Note that operand 1 is total size of args, in bytes,
-;; and what the call insn wants is the number of words.
-;; It is used in the call instruction as a byte, but in the addl2 as
-;; a word.  Since the only time we actually use it in the call instruction
-;; is when it is a constant, SImode (for addl2) is the proper mode.
 (define_expand "call_pop"
   [(parallel [(call (match_operand:QI 0 "memory_operand" "")
 		    (match_operand:SI 1 "const_int_operand" ""))
@@ -1327,17 +1317,24 @@
 			    (match_operand:SI 3 "immediate_operand" "")))])]
   ""
 {
-  gcc_assert (INTVAL (operands[1]) <= 255 * 4);
-  operands[1] = GEN_INT ((INTVAL (operands[1]) + 3) / 4);
+  gcc_assert (INTVAL (operands[3]) <= 255 * 4 && INTVAL (operands[3]) % 4 == 0);
+
+  /* Operand 1 is the number of bytes to be popped by DW_CFA_GNU_args_size
+     during EH unwinding.  We must include the argument count pushed by
+     the calls instruction.  */
+  operands[1] = GEN_INT (INTVAL (operands[3]) + 4);
 })
 
 (define_insn "*call_pop"
   [(call (match_operand:QI 0 "memory_operand" "m")
 	 (match_operand:SI 1 "const_int_operand" "n"))
    (set (reg:SI VAX_SP_REGNUM) (plus:SI (reg:SI VAX_SP_REGNUM)
-			     (match_operand:SI 2 "immediate_operand" "i")))]
+					(match_operand:SI 2 "immediate_operand" "i")))]
   ""
-  "calls %1,%0")
+{
+  operands[1] = GEN_INT ((INTVAL (operands[1]) - 4) / 4);
+  return "calls %1,%0";
+})
 
 (define_expand "call_value_pop"
   [(parallel [(set (match_operand 0 "" "")
@@ -1348,8 +1345,12 @@
 			    (match_operand:SI 4 "immediate_operand" "")))])]
   ""
 {
-  gcc_assert (INTVAL (operands[2]) <= 255 * 4);
-  operands[2] = GEN_INT ((INTVAL (operands[2]) + 3) / 4);
+  gcc_assert (INTVAL (operands[4]) <= 255 * 4 && INTVAL (operands[4]) % 4 == 0);
+
+  /* Operand 2 is the number of bytes to be popped by DW_CFA_GNU_args_size
+     during EH unwinding.  We must include the argument count pushed by
+     the calls instruction.  */
+  operands[2] = GEN_INT (INTVAL (operands[4]) + 4);
 })
 
 (define_insn "*call_value_pop"
@@ -1359,20 +1360,47 @@
    (set (reg:SI VAX_SP_REGNUM) (plus:SI (reg:SI VAX_SP_REGNUM)
 					(match_operand:SI 3 "immediate_operand" "i")))]
   ""
-  "calls %2,%1")
+  "*
+{
+  operands[2] = GEN_INT ((INTVAL (operands[2]) - 4) / 4);
+  return \"calls %2,%1\";
+}")
 
-;; Define another set of these for the case of functions with no operands.
-;; These will allow the optimizers to do a slightly better job.
-(define_insn "call"
-  [(call (match_operand:QI 0 "memory_operand" "m")
-	 (const_int 0))]
+(define_expand "call"
+  [(call (match_operand:QI 0 "memory_operand" "")
+      (match_operand:SI 1 "const_int_operand" ""))]
+  ""
+  "
+{
+  /* Operand 1 is the number of bytes to be popped by DW_CFA_GNU_args_size
+     during EH unwinding.  We must include the argument count pushed by
+     the calls instruction.  */
+  operands[1] = GEN_INT (INTVAL (operands[1]) + 4);
+}")
+
+(define_insn "*call"
+   [(call (match_operand:QI 0 "memory_operand" "m")
+	  (match_operand:SI 1 "const_int_operand" ""))]
   ""
   "calls $0,%0")
 
-(define_insn "call_value"
+(define_expand "call_value"
+  [(set (match_operand 0 "" "")
+      (call (match_operand:QI 1 "memory_operand" "")
+	    (match_operand:SI 2 "const_int_operand" "")))]
+  ""
+  "
+{
+  /* Operand 2 is the number of bytes to be popped by DW_CFA_GNU_args_size
+     during EH unwinding.  We must include the argument count pushed by
+     the calls instruction.  */
+  operands[2] = GEN_INT (INTVAL (operands[2]) + 4);
+}")
+
+(define_insn "*call_value"
   [(set (match_operand 0 "" "")
 	(call (match_operand:QI 1 "memory_operand" "m")
-	      (const_int 0)))]
+	      (match_operand:SI 2 "const_int_operand" "")))]
   ""
   "calls $0,%1")
 
