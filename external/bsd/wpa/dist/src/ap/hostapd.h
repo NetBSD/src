@@ -464,4 +464,7 @@ const struct hostapd_eap_user *
 hostapd_get_eap_user(struct hostapd_data *hapd, const u8 *identity,
 		     size_t identity_len, int phase2);
 
+struct hostapd_data * hostapd_get_iface(struct hapd_interfaces *interfaces,
+					const char *ifname);
+
 #endif /* HOSTAPD_H */

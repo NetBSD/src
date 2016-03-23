@@ -29,6 +29,8 @@ struct wpa_priv_interface {
 	char *sock_name;
 	int fd;
 
+	void *ctx;
+
 	struct wpa_driver_ops *driver;
 	void *drv_priv;
 	struct sockaddr_un drv_addr;
@@ -37,6 +39,10 @@ struct wpa_priv_interface {
 	/* TODO: add support for multiple l2 connections */
 	struct l2_packet_data *l2;
 	struct sockaddr_un l2_addr;
+};
+
+struct wpa_priv_global {
+	struct wpa_priv_interface *interfaces;
 };
 
 
@@ -58,10 +64,25 @@ static void wpa_priv_cmd_register(struct wpa_priv_interface *iface,
 		iface->l2 = NULL;
 	}
 
-	if (iface->driver->init == NULL)
+	if (iface->driver->init2) {
+		if (iface->driver->global_init) {
+			iface->drv_global_priv =
+				iface->driver->global_init(iface->ctx);
+			if (!iface->drv_global_priv) {
+				wpa_printf(MSG_INFO,
+					   "Failed to initialize driver global context");
+				return;
+			}
+		} else {
+			iface->drv_global_priv = NULL;
+		}
+		iface->drv_priv = iface->driver->init2(iface, iface->ifname,
+						       iface->drv_global_priv);
+	} else if (iface->driver->init) {
+		iface->drv_priv = iface->driver->init(iface, iface->ifname);
+	} else {
 		return;
-
-	iface->drv_priv = iface->driver->init(iface, iface->ifname);
+	}
 	if (iface->drv_priv == NULL) {
 		wpa_printf(MSG_DEBUG, "Failed to initialize driver wrapper");
 		return;
@@ -555,7 +576,7 @@ static void wpa_priv_interface_deinit(struct wpa_priv_interface *iface)
 
 
 static struct wpa_priv_interface *
-wpa_priv_interface_init(const char *dir, const char *params)
+wpa_priv_interface_init(void *ctx, const char *dir, const char *params)
 {
 	struct wpa_priv_interface *iface;
 	char *pos;
@@ -571,6 +592,7 @@ wpa_priv_interface_init(const char *dir, const char *params)
 	if (iface == NULL)
 		return NULL;
 	iface->fd = -1;
+	iface->ctx = ctx;
 
 	len = pos - params;
 	iface->driver_name = dup_binstr(params, len);
@@ -882,6 +904,37 @@ void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
 }
 
 
+void wpa_supplicant_event_global(void *ctx, enum wpa_event_type event,
+				 union wpa_event_data *data)
+{
+	struct wpa_priv_global *global = ctx;
+	struct wpa_priv_interface *iface;
+
+	if (event != EVENT_INTERFACE_STATUS)
+		return;
+
+	for (iface = global->interfaces; iface; iface = iface->next) {
+		if (os_strcmp(iface->ifname, data->interface_status.ifname) ==
+		    0)
+			break;
+	}
+	if (iface && iface->driver->get_ifindex) {
+		unsigned int ifindex;
+
+		ifindex = iface->driver->get_ifindex(iface->drv_priv);
+		if (ifindex != data->interface_status.ifindex) {
+			wpa_printf(MSG_DEBUG,
+				   "%s: interface status ifindex %d mismatch (%d)",
+				   iface->ifname, ifindex,
+				   data->interface_status.ifindex);
+			return;
+		}
+	}
+	if (iface)
+		wpa_supplicant_event(iface, event, data);
+}
+
+
 void wpa_supplicant_rx_eapol(void *ctx, const u8 *src_addr,
 			     const u8 *buf, size_t len)
 {
@@ -956,12 +1009,16 @@ int main(int argc, char *argv[])
 	char *pid_file = NULL;
 	int daemonize = 0;
 	char *ctrl_dir = "/var/run/wpa_priv";
-	struct wpa_priv_interface *interfaces = NULL, *iface;
+	struct wpa_priv_global global;
+	struct wpa_priv_interface *iface;
 
 	if (os_program_init())
 		return -1;
 
 	wpa_priv_fd_workaround();
+
+	os_memset(&global, 0, sizeof(global));
+	global.interfaces = NULL;
 
 	for (;;) {
 		c = getopt(argc, argv, "Bc:dP:");
@@ -1000,11 +1057,11 @@ int main(int argc, char *argv[])
 
 	for (i = optind; i < argc; i++) {
 		wpa_printf(MSG_DEBUG, "Adding driver:interface %s", argv[i]);
-		iface = wpa_priv_interface_init(ctrl_dir, argv[i]);
+		iface = wpa_priv_interface_init(&global, ctrl_dir, argv[i]);
 		if (iface == NULL)
 			goto out;
-		iface->next = interfaces;
-		interfaces = iface;
+		iface->next = global.interfaces;
+		global.interfaces = iface;
 	}
 
 	if (daemonize && os_daemonize(pid_file))
@@ -1016,7 +1073,7 @@ int main(int argc, char *argv[])
 	ret = 0;
 
 out:
-	iface = interfaces;
+	iface = global.interfaces;
 	while (iface) {
 		struct wpa_priv_interface *prev = iface;
 		iface = iface->next;
