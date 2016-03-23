@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.15 2016/03/23 22:11:20 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.16 2016/03/23 22:18:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.15 2016/03/23 22:11:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.16 2016/03/23 22:18:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2668,7 +2668,8 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	ch->intr = intr;
 	ch->arg = arg;
 
-	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX */
+	/* XXX -1 shouldn't be needed */
+	for (i = 0; i < UAUDIO_NCHANBUFS - 1; i++)
 		uaudio_chan_ptransfer(ch);
 	mutex_enter(&sc->sc_intr_lock);
 
