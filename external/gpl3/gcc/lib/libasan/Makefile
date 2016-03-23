@@ -7,7 +7,6 @@ ASAN=${GCCDIST}/libsanitizer
 .PATH: ${ASAN}/asan ${ASAN}/interception ${ASAN}/sanitizer_common
 
 ASAN_SRCS= \
-	asan_allocator.cc \
 	asan_allocator2.cc \
 	asan_interceptors.cc \
 	asan_posix.cc \
@@ -15,7 +14,6 @@ ASAN_SRCS= \
 	asan_rtl.cc \
 	asan_stats.cc \
 	asan_globals.cc \
-	asan_thread_registry.cc \
 	asan_fake_stack.cc \
 	asan_linux.cc \
 	asan_report.cc \
@@ -42,7 +40,6 @@ SANITIZER_SRCS= \
 	sanitizer_stackdepot.cc \
 	sanitizer_stacktrace.cc \
 	sanitizer_symbolizer.cc \
-	sanitizer_symbolizer_linux.cc \
 	sanitizer_win.cc
 
 # The linux build does this to avoid preinit sections on shared libraries
