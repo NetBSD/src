@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/26 19:38:09 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2016/03/23 05:24:54 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -60,6 +60,13 @@ INFOFLAGS=	-I${DIST}/bfd/doc
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
 targets.o targets.pico: targmatch.h Makefile
+
+# XXXGCC5
+.include <bsd.own.mk>
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 53 && ${ACTIVE_CC} == "gcc"
+COPTS.elf64-alpha.c+=  -Wno-error=switch-bool
+.endif
+
 .else
 .include <bsd.prog.mk> # do nothing
 .endif
