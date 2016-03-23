@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/08/31 10:42:18 he Exp $
+#	$NetBSD: Makefile,v 1.12 2016/03/23 05:24:11 mrg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,7 @@ LISTS=		${.CURDIR}/list64
 .endif
 
 IMAGE=		diskimage
-IMAGESIZE=	4000k
+IMAGESIZE=	4500k
 MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	be
 
