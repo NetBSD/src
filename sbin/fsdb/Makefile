@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2015/04/15 19:13:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.38 2016/03/23 21:43:33 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -37,6 +37,10 @@ COPTS.${f}.c+=	-Wno-pointer-sign
 
 .if ${MACHINE_ARCH} == "m68000"
 COPTS.pass1.c+=	-fno-tree-fre -fno-tree-lrs
+.endif
+
+.if ${MACHINE_ARCH} == "vax"
+COPTS.pass1.c+=	-O0
 .endif
 
 .include <bsd.prog.mk>
