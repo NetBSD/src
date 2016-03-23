@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2016/01/07 22:07:18 roy Exp $
+# $NetBSD: Makefile,v 1.29 2016/03/23 08:39:01 mrg Exp $
 #
 
 PROG=		dhcpcd
@@ -71,5 +71,10 @@ ${f}:	${f}.in
 	    -e 's:@SERVICESTATUS@::g' \
 	    ${DIST}/${f}.in > $@
 .endfor
+
+# XXXGCC5
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 53 && ${ACTIVE_CC} == "gcc"
+COPTS.if-bsd.c+=  -Wno-error=sign-conversion
+.endif
 
 .include <bsd.prog.mk>
