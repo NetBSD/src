@@ -195,7 +195,8 @@ vax_expand_prologue (void)
 
   offset = 20;
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-    if (df_regs_ever_live_p (regno) && !call_used_regs[regno])
+    if ((df_regs_ever_live_p (regno) && !call_used_regs[regno])
+	|| (crtl->calls_eh_return && regno >= 2 && regno < 4))
       {
         mask |= 1 << regno;
         offset += 4;

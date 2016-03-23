@@ -169,11 +169,11 @@ along with GCC; see the file COPYING3.  If not see
 /* Base register for access to local variables of the function.  */
 #define FRAME_POINTER_REGNUM VAX_FP_REGNUM
 
-/* Offset from the frame pointer register value to the top of stack.  */
-#define FRAME_POINTER_CFA_OFFSET(FNDECL) 0
-
 /* Base register for access to arguments of the function.  */
 #define ARG_POINTER_REGNUM VAX_AP_REGNUM
+
+/* Offset from the argument pointer register value to the CFA.  */
+#define ARG_POINTER_CFA_OFFSET(FNDECL) 0
 
 /* Register in which static-chain is passed to a function.  */
 #define STATIC_CHAIN_REGNUM 0

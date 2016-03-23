@@ -2288,7 +2288,8 @@ expand_eh_return (void)
 #endif
     {
 #ifdef EH_RETURN_HANDLER_RTX
-      emit_move_insn (EH_RETURN_HANDLER_RTX, crtl->eh.ehr_handler);
+      rtx insn = emit_move_insn (EH_RETURN_HANDLER_RTX, crtl->eh.ehr_handler);
+      RTX_FRAME_RELATED_P (insn) = 1;
 #else
       error ("__builtin_eh_return not supported on this target");
 #endif
