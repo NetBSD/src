@@ -226,7 +226,13 @@ vax_expand_prologue (void)
   insn = emit_insn (gen_blockage ());
   RTX_FRAME_RELATED_P (insn) = 1;
 
+#ifdef notyet
+  /*
+   * We can't do this, the dwarf code asserts and we don't have yet a 
+   * way to get to the psw
+   */
   vax_add_reg_cfa_offset (insn, 4, gen_rtx_REG (Pmode, PSW_REGNUM));
+#endif
   vax_add_reg_cfa_offset (insn, 8, arg_pointer_rtx);
   vax_add_reg_cfa_offset (insn, 12, frame_pointer_rtx);
   vax_add_reg_cfa_offset (insn, 16, pc_rtx);
