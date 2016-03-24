@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.11 2016/03/24 21:20:31 mrg Exp $
+$NetBSD: README.gcc53,v 1.12 2016/03/24 21:26:45 skrll Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -112,3 +112,4 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
        - evbmips gxemul MALTA (FAIL - not gcc problem)
        - pmax gxemul (OK)
        - i386/amd64 (OK)
+       - hppa (OK)
