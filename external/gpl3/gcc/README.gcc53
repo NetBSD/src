@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.9 2016/03/23 18:45:41 mrg Exp $
+$NetBSD: README.gcc53,v 1.10 2016/03/24 21:10:21 skrll Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -53,7 +53,7 @@ earmv7		y	?	y	y		y[3]
 earmv7eb	y	?	y	y		y[3]
 earmv7hf	y	?	y	y		y[3]
 earmv7hfeb	y	?	y	y		y[3]
-hppa		y	?	y	y		y
+hppa		y	y	y	y		y		y[6]	y
 i386		y	y	y	y		y		y	
 m68000		y	?	y	y		y
 m68k		y	?	y	y		y[13]
