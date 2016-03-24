@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.31 2016/01/28 03:32:29 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.32 2016/03/24 17:28:03 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,13 +17,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.31 2016/01/28 03:32:29 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.32 2016/03/24 17:28:03 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
 #include <dirent.h>
 #include <err.h>
 #include <archive.h>
@@ -39,7 +38,6 @@ __RCSID("$NetBSD: makemandb.c,v 1.31 2016/01/28 03:32:29 christos Exp $");
 #include "dist/man.h"
 #include "dist/mandoc.h"
 #include "dist/mdoc.h"
-#include "sqlite3.h"
 
 #define BUFLEN 1024
 #define MDOC 0	//If the page is of mdoc(7) type
@@ -1013,7 +1011,9 @@ pmdoc_Nm(const struct mdoc_node *n, mandb_rec *rec)
 
 	for (n = n->child; n; n = n->next) {
 		if (n->type == MDOC_TEXT) {
-			concat(&rec->name, n->string);
+			char *escaped_name = parse_escape(n->string);
+			concat(&rec->name, escaped_name);
+			free(escaped_name);
 		}
 	}
 }
@@ -1045,8 +1045,7 @@ pmdoc_Nd(const struct mdoc_node *n, mandb_rec *rec)
 			concat(&rec->name_desc, buf);
 			free(buf);
 		} else {
-			nd_text = estrdup(n->string);
-			replace_hyph(nd_text);
+			nd_text = parse_escape(n->string);
 			concat(&rec->name_desc, nd_text);
 			free(nd_text);
 		}
@@ -1329,7 +1328,7 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 	};
 	const struct man_node *head;
 	char *name_desc;
-	int sz;
+	size_t sz;
 	size_t i;
 
 	if ((head = n->parent->head) == NULL || (head = head->child) == NULL ||
