@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.153 2015/12/22 01:59:21 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.154 2016/03/24 06:18:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.153 2015/12/22 01:59:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.154 2016/03/24 06:18:27 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -996,7 +996,7 @@ rt_maskedcopy(const struct sockaddr *src, struct sockaddr *dst,
  * Inform the routing socket of a route change.
  */
 void
-rt_newmsg(int cmd, struct rtentry *rt)
+rt_newmsg(const int cmd, const struct rtentry *rt)
 {
 	struct rt_addrinfo info;
 
