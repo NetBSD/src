@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2016/03/22 05:08:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2016/03/24 00:02:52 christos Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -49,6 +49,17 @@ CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
 
 .if ${MACHINE_CPU} == "sh3"
 BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh-c.cc sh-c.c
+.endif
+
+.if ${MACHINE_CPU} == "vax"
+COPTS.c-decl.c+=-O0
+COPTS.c-typeck.c+=-O0
+COPTS.c-array-notation.c+=-O0
+COPTS.c-common.c+=-O0
+COPTS.c-ada-spec.c+=-O0
+COPTS.cilk.c+=-O0
+COPTS.c-ubsan.c+=-O0
+COPTS.cc1-checksum.c+=-O0
 .endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
