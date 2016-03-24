@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.20 2016/03/20 17:31:09 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.21 2016/03/24 16:07:13 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.20 2016/03/20 17:31:09 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.21 2016/03/24 16:07:13 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -625,6 +625,73 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 	return *(args->errmsg) == NULL ? 0 : -1;
 }
 
+static char *
+get_escaped_html_string(const char *src, size_t *slen)
+{
+	static const char trouble[] = "<>\"&\002\003";
+	/*
+	 * First scan the src to find out the number of occurrences
+	 * of {'>', '<' '"', '&'}.  Then allocate a new buffer with
+	 * sufficient space to be able to store the quoted versions
+	 * of the special characters {&gt;, &lt;, &quot;, &amp;}.
+	 * Copy over the characters from the original src into
+	 * this buffer while replacing the special characters with
+	 * their quoted versions.
+	 */
+	char *dst, *ddst;
+	size_t count;
+	const char *ssrc;
+
+	for (count = 0, ssrc = src; *src; count++) {
+		size_t sz = strcspn(src, trouble);
+		src += sz + 1;
+	}
+
+
+#define append(a)	do {						\
+				memcpy(dst, (a), sizeof(a) - 1);	\
+				dst += sizeof(a) - 1; 			\
+			} while (/*CONSTCOND*/0)
+
+	ddst = dst = emalloc(*slen + count * 5 + 1);
+	for (src = ssrc; *src; src++) {
+		switch (*src) {
+		case '<':
+			append("&lt;");
+			break;
+		case '>':
+			append("&gt;");
+			break;
+		case '\"':
+			append("&quot;");
+			break;
+		case '&':
+			/*
+			 * Don't perform the quoting if this & is part of
+			 * an mdoc escape sequence, e.g. \&
+			 */
+			if (src != ssrc && src[-1] != '\\')
+				append("&amp;");
+			else
+				append("&");
+			break;
+		case '\002':
+			append("<b>");
+			break;
+		case '\003':
+			append("</b>");
+			break;
+		default:
+			*dst++ = *src;
+			break;
+		}
+	}
+	*dst = '\0';
+	*slen = dst - ddst;
+	return ddst;
+}
+
+
 /*
  * callback_html --
  *  Callback function for run_query_html. It builds the html output and then
@@ -632,80 +699,21 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
  */
 static int
 callback_html(void *data, const char *section, const char *name,
-	const char *name_desc, const char *snippet, size_t snippet_length)
+    const char *name_desc, const char *snippet, size_t snippet_length)
 {
-	const char *temp = snippet;
-	int i = 0;
-	size_t sz = 0;
-	int count = 0;
-	struct orig_callback_data *orig_data = (struct orig_callback_data *) data;
-	int (*callback) (void *, const char *, const char *, const char *,
-		const char *, size_t) = orig_data->callback;
+	struct orig_callback_data *orig_data = data;
+	int (*callback)(void *, const char *, const char *, const char *,
+	    const char *, size_t) = orig_data->callback;
+	size_t length = snippet_length;
+	size_t name_description_length = strlen(name_desc);
+	char *qsnippet = get_escaped_html_string(snippet, &length);
+	char *qname_description = get_escaped_html_string(name_desc,
+	    &name_description_length);
 
-	/* First scan the snippet to find out the number of occurrences of {'>', '<'
-	 * '"', '&'}.
-	 * Then allocate a new buffer with sufficient space to be able to store the
-	 * quoted versions of the special characters {&gt;, &lt;, &quot;, &amp;}.
-	 * Copy over the characters from the original snippet to this buffer while
-	 * replacing the special characters with their quoted versions.
-	 */
-
-	while (*temp) {
-		sz = strcspn(temp, "<>\"&\002\003");
-		temp += sz + 1;
-		count++;
-	}
-	size_t qsnippet_length = snippet_length + count * 5;
-	char *qsnippet = emalloc(qsnippet_length + 1);
-	sz = 0;
-	while (*snippet) {
-		sz = strcspn(snippet, "<>\"&\002\003");
-		if (sz) {
-			memcpy(&qsnippet[i], snippet, sz);
-			snippet += sz;
-			i += sz;
-		}
-
-		switch (*snippet++) {
-		case '<':
-			memcpy(&qsnippet[i], "&lt;", 4);
-			i += 4;
-			break;
-		case '>':
-			memcpy(&qsnippet[i], "&gt;", 4);
-			i += 4;
-			break;
-		case '\"':
-			memcpy(&qsnippet[i], "&quot;", 6);
-			i += 6;
-			break;
-		case '&':
-			/* Don't perform the quoting if this & is part of an mdoc escape
-			 * sequence, e.g. \&
-			 */
-			if (i && *(snippet - 2) != '\\') {
-				memcpy(&qsnippet[i], "&amp;", 5);
-				i += 5;
-			} else {
-				qsnippet[i++] = '&';
-			}
-			break;
-		case '\002':
-			memcpy(&qsnippet[i], "<b>", 3);
-			i += 3;
-			break;
-		case '\003':
-			memcpy(&qsnippet[i], "</b>", 4);
-			i += 4;
-			break;
-		default:
-			break;
-		}
-	}
-	qsnippet[i] = 0;
-	(*callback)(orig_data->data, section, name, name_desc,
-		(const char *)qsnippet,	strlen(qsnippet));
+	(*callback)(orig_data->data, section, name, qname_description,
+	    qsnippet, length);
 	free(qsnippet);
+	free(qname_description);
 	return 0;
 }
 
