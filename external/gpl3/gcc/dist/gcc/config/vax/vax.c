@@ -160,6 +160,8 @@ vax_option_override (void)
   if (TARGET_G_FLOAT)
     REAL_MODE_FORMAT (DFmode) = &vax_g_format;
 
+  flag_dwarf2_cfi_asm = 0;
+
 #ifdef SUBTARGET_OVERRIDE_OPTIONS
   SUBTARGET_OVERRIDE_OPTIONS;
 #endif
