@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2016/03/22 05:08:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2016/03/24 00:02:52 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -454,8 +454,53 @@ i386.d i386.o: tm-constrs.h
 
 .if ${GCC_MACHINE_ARCH} == "vax"
 CPPFLAGS+=-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
-COPTS.expmed.c=-O0
-COPTS.recog.c=-O0
+COPTS.builtins.c+=-O0
+COPTS.convert.c+=-O0
+COPTS.dwarf2out.c+=-O0
+COPTS.expmed.c+=-O0
+COPTS.expr.c+=-O0
+COPTS.fixed-value.c+=-O0
+COPTS.fold-const.c+=-O0
+COPTS.gimple-fold.c+=-O0
+COPTS.gimple-ssa-strength-reduction.c+=-O0
+COPTS.gimple.c+=-O0
+COPTS.internal-fn.c+=-O0
+COPTS.lto-streamer-out.c+=-O0
+COPTS.omp-low.c+=-O0
+COPTS.predict.c+=-O0
+COPTS.recog.c+=-O0
+COPTS.sanopt.c+=-O0
+COPTS.stmt.c+=-O0
+COPTS.stor-layout.c+=-O0
+COPTS.targhooks.c+=-O0
+COPTS.tree-affine.c+=-O0
+COPTS.tree-cfg.c+=-O0
+COPTS.tree-eh.c+=-O0
+COPTS.tree-object-size.c+=-O0
+COPTS.tree-predcom.c+=-O0
+COPTS.tree-pretty-print.c+=-O0
+COPTS.tree-ssa-alias.c+=-O0
+COPTS.tree-ssa-ccp.c+=-O0
+COPTS.tree-ssa-forwprop.c+=-O0
+COPTS.tree-ssa-loop-ivopts.c+=-O0
+COPTS.tree-ssa-loop-manip.c+=-O0
+COPTS.tree-ssa-loop-niter.c+=-O0
+COPTS.tree-ssa-math-opts.c+=-O0
+COPTS.tree-ssa-pre.c+=-O0
+COPTS.tree-ssa-reassoc.c+=-O0
+COPTS.tree-ssa-uninit.c+=-O0
+COPTS.tree-switch-conversion.c+=-O0
+COPTS.tree-vect-data-refs.c+=-O0
+COPTS.tree-vect-loop-manip.c+=-O0
+COPTS.tree-vect-patterns.c+=-O0
+COPTS.tree-vect-stmts.c+=-O0
+COPTS.tree-vrp.c+=-O0
+COPTS.tree.c+=-O0
+COPTS.ubsan.c+=-O0
+COPTS.varasm.c+=-O0
+COPTS.wide-int.c+=-O0
+.else
+COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif
 
 CFLAGS+=	-Wno-stack-protector
@@ -465,7 +510,6 @@ CFLAGS+=	-Wno-stack-protector
 COPTS.tree-loop-distribution.c=	-O2
 .endif
 
-COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config
