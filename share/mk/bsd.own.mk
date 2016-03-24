@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.907 2016/03/13 17:56:56 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.908 2016/03/24 00:04:05 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -62,10 +62,12 @@ MKGCC?=		no
 .if ${MKGCC:Uyes} != "no"
 
 .if ${MACHINE} == "playstation2" || ${MACHINE_CPU} == "aarch64"
-HAVE_GCC?=    0
+HAVE_GCC?=	0
+.elif ${MACHINE_ARCH} == "vax"
+HAVE_GCC?=	53
 .else
 # Otherwise, default to GCC4.8
-HAVE_GCC?=    48
+HAVE_GCC?=	48
 .endif
 
 #
