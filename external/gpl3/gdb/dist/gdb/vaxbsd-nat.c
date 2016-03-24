@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#define _KERNTYPES
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -63,7 +64,7 @@ vaxbsd_collect_gregset (const struct regcache *regcache,
     }
 }
 
-void
+static void
 supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 {
   if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
@@ -71,7 +72,7 @@ supply_gregset (struct regcache *regcache, const gregset_t *gregs)
     perror_with_name (_("Couldn't write registers"));
 }
 
-void
+static void
 fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 {
   if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
