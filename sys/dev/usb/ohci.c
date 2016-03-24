@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.59 2016/03/17 09:04:53 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.60 2016/03/24 15:30:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.59 2016/03/17 09:04:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.60 2016/03/24 15:30:17 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3728,6 +3728,8 @@ ohci_device_isoc_abort(struct usbd_xfer *xfer)
 	sitd = xfer->ux_hcpriv;
 	KASSERT(sitd);
 
+	usb_delay_ms_locked(&sc->sc_bus, OHCI_ITD_NOFFSET, &sc->sc_lock);
+
 	for (; sitd->xfer == xfer; sitd = sitd->nextitd) {
 		ohci_hash_rem_itd(sc, sitd);
 #ifdef DIAGNOSTIC
@@ -3735,8 +3737,6 @@ ohci_device_isoc_abort(struct usbd_xfer *xfer)
 		sitd->isdone = true;
 #endif
 	}
-
-	usb_delay_ms_locked(&sc->sc_bus, OHCI_ITD_NOFFSET, &sc->sc_lock);
 
 	/* Run callback. */
 	usb_transfer_complete(xfer);
