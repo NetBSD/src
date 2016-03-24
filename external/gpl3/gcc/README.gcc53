@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.10 2016/03/24 21:10:21 skrll Exp $
+$NetBSD: README.gcc53,v 1.11 2016/03/24 21:20:31 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -43,7 +43,7 @@ earm		y	?	y	y		y[3,13]
 earmeb		y	?	y	y		y[3,13]
 earmhf		y	?	y	y		y[3]
 earmhfeb	y	?	y	y		y[3]
-earmv4		y	y	y	y		y[3]		y
+earmv4		y	y	y	y		y[3]		y	y[4]
 earmv4eb	y	?	y	y		y[3]
 earmv6		y	?	y	y		y[3]
 earmv6eb	y	?	y	y		y[3]
@@ -58,14 +58,14 @@ i386		y	y	y	y		y		y
 m68000		y	?	y	y		y
 m68k		y	?	y	y		y[13]
 mipseb		y	?	y	y		y
-mipsel		y	?	y	y		y
+mipsel		y	y	y	y		y		y
 mips64eb	y	?	n	y		n[8]
 mips64el	y	?	n	y		y[8]
 powerpc		y	y	y	y		y		y[6]	
 sh3eb		y	?	y	y		y[5]
 sh3el		y	?	y	y		y
-sparc		y	y	y	y		y		y[1]
-sparc64		y	y	y	y		y		n[6,2]	y[9]
+sparc		y	y	y	y		y		y
+sparc64		y	y	y	y		y		y[6,2]	y
 vax		n[7]
 x86_64		y	y	y	y		y		y	y
 --
@@ -78,13 +78,12 @@ powerpc64
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 
-[1] - world built without -fno-delete-null-pointer-checks does not have a
-      working sshd
+[1] - 
 [2] - -O2 and -Os kernels hang, -O1 SIR reset
 	-- may be a SMP issue; ultra10 works, ultra45 SMP does not
 		-- try sb2000 (particularly with UP kernel.  u45 UP is shitty.)
 [3] - MKCOMPAT=no enabled currently, infact OABI seems to be broken.  the docs say it was only deprecated, but the options make broken crap.
-[4]
+[4] - bin/expr/t_expr:overflow fails on shark, only new failure.  fails on other ports too.
 [5] - sh3eb tries to use sh specific atomic config which doesn't work, has hand edited mknative output
 [6] - sshd is broken, regardless of compiler options
 	-- libldap.so.4.3 is broken on sparc64; replacing just this fixes sshd.
@@ -92,7 +91,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 	-- it is not binutils 2.23 vs 2.26
 [7] - GCC fails to build
 [8] - sgimips64 release build fails, mdsetimage'd gz'd kernels don't get built?
-[9] - with a 4.8 base.tgz and 5.3 everythingelse.tgz, about 60 additional failures out of ~3800
+[9] - 
 [10] - fails to build tools with:
 	/usr/src8/tools/gcc/../../external/gpl3/gcc/dist/gcc/config/riscv/riscv.h:1087:9: error: attempt to use poisoned "MOVE_BY_PIECES_P"
 	 #define MOVE_BY_PIECES_P(SIZE, ALIGN)    \
@@ -104,3 +103,12 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
        - earm : shark evbarm*
        - mipsel: sgimips
        - mips64el: sgimips[fail] evbmips
+[14] - machines tested:
+       - sparc ss20 (OK)
+       - sparc64 ultra45 (FAIL), ultra10 (OK)
+       - powerpc pegasosII (OK)
+       - alpha UP1000 (OK)
+       - arm shark (OK)
+       - evbmips gxemul MALTA (FAIL - not gcc problem)
+       - pmax gxemul (OK)
+       - i386/amd64 (OK)
