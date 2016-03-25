@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.19.66.4 2015/11/07 08:10:40 skrll Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.19.66.5 2016/03/25 17:44:00 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -43,17 +43,17 @@
 #define  PCI_USBREV_1_1		0x11
 
 #define PCI_LEGSUP		0xc0	/* Legacy Support register */
-#define  PCI_LEGSUP_A20PTS	0x8000	/* End of A20GATE passthru status */
-#define  PCI_LEGSUP_USBPIRQDEN	0x2000	/* USB PIRQ D Enable */
-#define  PCI_LEGSUP_USBIRQS	0x1000	/* USB IRQ status */
-#define  PCI_LEGSUP_TBY64W	0x0800	/* Trap by 64h write status */
-#define  PCI_LEGSUP_TBY64R	0x0400	/* Trap by 64h read status */
-#define  PCI_LEGSUP_TBY60W	0x0200	/* Trap by 60h write status */
-#define  PCI_LEGSUP_TBY60R	0x0100	/* Trap by 60h read status */
-#define  PCI_LEGSUP_SMIEPTE	0x0080	/* SMI at end of passthru enable */
-#define  PCI_LEGSUP_PSS		0x0040	/* Passthru status */
-#define  PCI_LEGSUP_A20PTEN	0x0020	/* A20GATE passthru enable */
-#define  PCI_LEGSUP_USBSMIEN	0x0010	/* Enable SMI# generation */
+#define  PCI_LEGSUP_A20PTS	__BIT(15)	/* End of A20GATE passthru status */
+#define  PCI_LEGSUP_USBPIRQDEN	__BIT(13)	/* USB PIRQ D Enable */
+#define  PCI_LEGSUP_USBIRQS	__BIT(12)	/* USB IRQ status */
+#define  PCI_LEGSUP_TBY64W	__BIT(11)	/* Trap by 64h write status */
+#define  PCI_LEGSUP_TBY64R	__BIT(10)	/* Trap by 64h read status */
+#define  PCI_LEGSUP_TBY60W	__BIT(9)	/* Trap by 60h write status */
+#define  PCI_LEGSUP_TBY60R	__BIT(8)	/* Trap by 60h read status */
+#define  PCI_LEGSUP_SMIEPTE	__BIT(7)	/* SMI at end of passthru enable */
+#define  PCI_LEGSUP_PSS		__BIT(6)	/* Passthru status */
+#define  PCI_LEGSUP_A20PTEN	__BIT(5)	/* A20GATE passthru enable */
+#define  PCI_LEGSUP_USBSMIEN	__BIT(4)	/* Enable SMI# generation */
 
 #define PCI_CBIO		0x20	/* configuration base IO */
 
@@ -62,53 +62,53 @@
 /*** UHCI registers ***/
 
 #define UHCI_CMD		0x00
-#define  UHCI_CMD_RS		0x0001
-#define  UHCI_CMD_HCRESET	0x0002
-#define  UHCI_CMD_GRESET	0x0004
-#define  UHCI_CMD_EGSM		0x0008
-#define  UHCI_CMD_FGR		0x0010
-#define  UHCI_CMD_SWDBG		0x0020
-#define  UHCI_CMD_CF		0x0040
-#define  UHCI_CMD_MAXP		0x0080
+#define  UHCI_CMD_RS		__BIT(0)
+#define  UHCI_CMD_HCRESET	__BIT(1)
+#define  UHCI_CMD_GRESET	__BIT(2)
+#define  UHCI_CMD_EGSM		__BIT(3)
+#define  UHCI_CMD_FGR		__BIT(4)
+#define  UHCI_CMD_SWDBG		__BIT(5)
+#define  UHCI_CMD_CF		__BIT(6)
+#define  UHCI_CMD_MAXP		__BIT(7)
 
 #define UHCI_STS		0x02
-#define  UHCI_STS_USBINT	0x0001
-#define  UHCI_STS_USBEI		0x0002
-#define  UHCI_STS_RD		0x0004
-#define  UHCI_STS_HSE		0x0008
-#define  UHCI_STS_HCPE		0x0010
-#define  UHCI_STS_HCH		0x0020
-#define  UHCI_STS_ALLINTRS	0x003f
+#define  UHCI_STS_USBINT	__BIT(0)
+#define  UHCI_STS_USBEI		__BIT(1)
+#define  UHCI_STS_RD		__BIT(2)
+#define  UHCI_STS_HSE		__BIT(3)
+#define  UHCI_STS_HCPE		__BIT(4)
+#define  UHCI_STS_HCH		__BIT(5)
+#define  UHCI_STS_ALLINTRS	__BITS(5,0)
 
 #define UHCI_INTR		0x04
-#define  UHCI_INTR_TOCRCIE	0x0001
-#define  UHCI_INTR_RIE		0x0002
-#define  UHCI_INTR_IOCE		0x0004
-#define  UHCI_INTR_SPIE		0x0008
+#define  UHCI_INTR_TOCRCIE	__BIT(0)
+#define  UHCI_INTR_RIE		__BIT(1)
+#define  UHCI_INTR_IOCE		__BIT(2)
+#define  UHCI_INTR_SPIE		__BIT(2)
 
 #define UHCI_FRNUM		0x06
-#define  UHCI_FRNUM_MASK	0x03ff
+#define  UHCI_FRNUM_MASK	__BITS(9,0)
 
 
 #define UHCI_FLBASEADDR		0x08
 
 #define UHCI_SOF		0x0c
-#define  UHCI_SOF_MASK		0x7f
+#define  UHCI_SOF_MASK		__BITS(6,0)
 
-#define UHCI_PORTSC1      	0x010
-#define UHCI_PORTSC2      	0x012
-#define UHCI_PORTSC_CCS		0x0001
-#define UHCI_PORTSC_CSC		0x0002
-#define UHCI_PORTSC_PE		0x0004
-#define UHCI_PORTSC_POEDC	0x0008
-#define UHCI_PORTSC_LS		0x0030
-#define UHCI_PORTSC_LS_SHIFT	4
-#define UHCI_PORTSC_RD		0x0040
-#define UHCI_PORTSC_LSDA	0x0100
-#define UHCI_PORTSC_PR		0x0200
-#define UHCI_PORTSC_OCI		0x0400
-#define UHCI_PORTSC_OCIC	0x0800
-#define UHCI_PORTSC_SUSP	0x1000
+#define UHCI_PORTSC1		0x010
+#define UHCI_PORTSC2		0x012
+#define UHCI_PORTSC_CCS		__BIT(0)
+#define UHCI_PORTSC_CSC		__BIT(1)
+#define UHCI_PORTSC_PE		__BIT(2)
+#define UHCI_PORTSC_POEDC	__BIT(3)
+#define UHCI_PORTSC_LS_MASK	__BITS(5,4)
+#define UHCI_PORTSC_GET_LS(p)	__SHIFTOUT((p), UHCI_PORTSC_LS_MASK)
+#define UHCI_PORTSC_RD		__BIT(6)
+#define UHCI_PORTSC_LSDA	__BIT(8)
+#define UHCI_PORTSC_PR		__BIT(9)
+#define UHCI_PORTSC_OCI		__BIT(10)
+#define UHCI_PORTSC_OCIC	__BIT(11)
+#define UHCI_PORTSC_SUSP	__BIT(12)
 
 #define URWMASK(x) \
   ((x) & (UHCI_PORTSC_SUSP | UHCI_PORTSC_PR | UHCI_PORTSC_RD | UHCI_PORTSC_PE))
@@ -120,10 +120,10 @@
 #define UHCI_QH_ALIGN		16
 
 typedef uint32_t uhci_physaddr_t;
-#define UHCI_PTR_T		0x00000001
+#define UHCI_PTR_T		__BIT(0)
 #define UHCI_PTR_TD		0x00000000
-#define UHCI_PTR_QH		0x00000002
-#define UHCI_PTR_VF		0x00000004
+#define UHCI_PTR_QH		__BIT(1)
+#define UHCI_PTR_VF		__BIT(2)
 
 /*
  * Wait this long after a QH has been removed.  This gives that HC a
