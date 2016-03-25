@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.15 2015/10/22 11:15:42 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.16 2016/03/25 08:32:43 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.15 2015/10/22 11:15:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.16 2016/03/25 08:32:43 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -2627,8 +2627,8 @@ slhci_do_abort(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
  * Will cancel the xfer correctly even when not on a list.
  */
 static usbd_status
-slhci_halt(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
-    *xfer)
+slhci_halt(struct slhci_softc *sc, struct slhci_pipe *spipe,
+    struct usbd_xfer *xfer)
 {
 	struct slhci_transfers *t;
 
@@ -3095,8 +3095,8 @@ slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 }
 
 static usbd_status
-slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
-    *xfer)
+slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe,
+    struct usbd_xfer *xfer)
 {
 	struct slhci_transfers *t;
 
