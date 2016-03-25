@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_supplicant.8,v 1.7 2016/03/23 10:14:07 roy Exp $
+.\" $NetBSD: wpa_supplicant.8,v 1.8 2016/03/25 07:48:16 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -50,8 +50,8 @@
 .Op Fl o Ar override-driver
 .Op Fl P Ar pidfile
 .Op Fl p Ar parameters
-.Op Fl N Fl i Ar ifname Fl c Ar config-file ...
 .Op Fl M Oo Fl i Ar ifname Oc Fl c Ar config-file ...
+.Op Fl N Fl i Ar ifname Fl c Ar config-file ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -142,7 +142,7 @@ Include key information in debugging output.
 Display the license for this program on the terminal and exit.
 .It Fl M Oo Fl i Ar matchifname Oc Fl c Ar config-file ...
 Matches the interface name using
-.Xr fnmatch(3) ,
+.Xr fnmatch 3 ,
 or all interfaces if
 .Fl i
 is not specified.
