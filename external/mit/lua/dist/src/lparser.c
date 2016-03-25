@@ -1,4 +1,4 @@
-/*	$NetBSD: lparser.c,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: lparser.c,v 1.5 2016/03/25 08:15:20 mbalmer Exp $	*/
 
 /*
 ** Id: lparser.c,v 2.149 2015/11/02 16:09:30 roberto Exp 
@@ -1240,7 +1240,7 @@ static void labelstat (LexState *ls, TString *label, int line) {
   checkrepeated(fs, ll, label);  /* check for repeated labels */
   checknext(ls, TK_DBCOLON);  /* skip double colon */
   /* create new entry for this label */
-  l = newlabelentry(ls, ll, label, line, fs->pc);
+  l = newlabelentry(ls, ll, label, line, luaK_getlabel(fs));
   skipnoopstat(ls);  /* skip other no-op statements */
   if (block_follow(ls, 0)) {  /* label is last no-op statement in the block? */
     /* assume that locals are already out of scope */
