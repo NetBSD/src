@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.44 2016/03/17 09:04:53 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.45 2016/03/25 08:32:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.44 2016/03/17 09:04:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.45 2016/03/25 08:32:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1002,8 +1002,8 @@ usb_insert_transfer(struct usbd_xfer *xfer)
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-	USBHIST_LOG(usbdebug, "pipe = %p running = %d timeout = %d",
-	    pipe, pipe->up_running, xfer->ux_timeout, 0);
+	USBHIST_LOG(usbdebug, "xfer = %p pipe = %p running = %d timeout = %d",
+	    xfer, pipe, pipe->up_running, xfer->ux_timeout);
 
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
 	KASSERT(xfer->ux_state == XFER_BUSY);
