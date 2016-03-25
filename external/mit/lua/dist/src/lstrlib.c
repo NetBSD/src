@@ -1,4 +1,4 @@
-/*	$NetBSD: lstrlib.c,v 1.11 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.12 2016/03/25 08:15:20 mbalmer Exp $	*/
 
 /*
 ** Id: lstrlib.c,v 1.239 2015/11/25 16:28:17 roberto Exp 
@@ -692,6 +692,7 @@ typedef struct GMatchState {
 static int gmatch_aux (lua_State *L) {
   GMatchState *gm = (GMatchState *)lua_touserdata(L, lua_upvalueindex(3));
   const char *src;
+  gm->ms.L = L;
   for (src = gm->src; src <= gm->ms.src_end; src++) {
     const char *e;
     reprepstate(&gm->ms);
