@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.68 2016/03/17 09:04:53 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.69 2016/03/25 17:44:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.68 2016/03/17 09:04:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.69 2016/03/25 17:44:00 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3866,8 +3866,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		if (len > 0) {
 			*(uint8_t *)buf =
-				(UREAD2(sc, port) & UHCI_PORTSC_LS) >>
-				UHCI_PORTSC_LS_SHIFT;
+			    UHCI_PORTSC_GET_LS(UREAD2(sc, port));
 			totlen = 1;
 		}
 		break;
