@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2016/03/16 05:47:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.80 2016/03/26 09:02:56 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
 			--enable-__cxa_atexit \
+			--enable-libstdcxx-time=rt \
 			--enable-libstdcxx-threads
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
@@ -45,11 +46,12 @@ COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 .endif
 
 .if ${HAVE_GCC} == 48
-COMMON_CONFIGURE_ARGS+= --enable-libstdcxx-time=rt --enable-lto
+COMMON_CONFIGURE_ARGS+= --enable-lto
 .endif
 
 .if ${HAVE_GCC} == 53
-COMMON_CONFIGURE_ARGS+= --enable-libstdcxx-time=rt
+# Turn on colour output only if GCC_COLORS env is set
+COMMON_CONFIGURE_ARGS+= --with-diagnostics-color=auto-if-env
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
