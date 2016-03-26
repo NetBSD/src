@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.12 2016/03/26 11:39:56 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.13 2016/03/26 11:42:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -86,8 +86,10 @@
 #define  EHCI_HCS_N_PORTS(x)	((x) & 0xf) /* # of ports */
 
 #define EHCI_HCCPARAMS		0x08	/* RO Capability parameters */
-#define  EHCI_HCC_EECP(x)	(((x) >> 8) & 0xff) /* extended ports caps */
-#define  EHCI_HCC_IST(x)	(((x) >> 4) & 0xf) /* isoc sched threshold */
+#define  EHCI_HCC_EECP(x)		(((x) >> 8) & 0xff) /* extended ports caps */
+#define  EHCI_HCC_IST_FULLFRAME		__BIT(7)
+#define  EHCI_HCC_IST_THRESHOLD_MASK	__BITS(6,4)	/* isoc sched threshold */
+#define  EHCI_HCC_GET_IST_THRESHOLD(x)	__SHIFTOUT((x), EHCI_HCC_IST_THRESHOLD_MASK)
 #define  EHCI_HCC_ASPC(x)	((x) & 0x4) /* async sched park cap */
 #define  EHCI_HCC_PFLF(x)	((x) & 0x2) /* prog frame list flag */
 #define  EHCI_HCC_64BIT(x)	((x) & 0x1) /* 64 bit address cap */
