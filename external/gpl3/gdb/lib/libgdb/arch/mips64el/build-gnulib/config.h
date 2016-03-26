@@ -1155,7 +1155,7 @@
 #define MALLOC_0_IS_NONNULL 1
 
 /* Define to a substitute value for mmap()'s MAP_ANONYMOUS flag. */
-#define MAP_ANONYMOUS MAP_ANON
+/* #undef MAP_ANONYMOUS */
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
