@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.910 2016/03/24 09:15:38 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.911 2016/03/26 10:35:14 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -44,9 +44,9 @@ NEED_OWN_INSTALL_TARGET?=	yes
 # If some future port is not supported by the in-tree toolchain, this should
 # be set to "yes" for that port only.
 #
-.if ${MACHINE} == "playstation2"
-TOOLCHAIN_MISSING?=	yes
-.endif
+# .if ${MACHINE} == "playstation2"
+# TOOLCHAIN_MISSING?=	yes
+# .endif
 
 TOOLCHAIN_MISSING?=	no
 
@@ -61,9 +61,9 @@ MKGCC?=		no
 #
 .if ${MKGCC:Uyes} != "no"
 
-.if ${MACHINE} == "playstation2" || ${MACHINE_CPU} == "aarch64"
+.if ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
-.elif ${MACHINE_ARCH} == "vax"
+.elif ${MACHINE_ARCH} == "vax" || ${MACHINE} == "playstation2"
 HAVE_GCC?=	53
 .else
 # Otherwise, default to GCC4.8
@@ -131,6 +131,7 @@ USE_SSP?=	yes
 
 .if ${MACHINE} == "amd64" || \
     ${MACHINE} == "i386" || \
+    ${MACHINE} == "playstation2" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "vax" || \
     ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
@@ -149,6 +150,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
     ${MACHINE} == "evbarm" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "hppa" || \
+    ${MACHINE} == "playstation2" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
