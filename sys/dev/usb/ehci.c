@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.93 2016/03/20 08:06:15 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.94 2016/03/26 11:40:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.93 2016/03/20 08:06:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.94 2016/03/26 11:40:59 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -456,9 +456,10 @@ ehci_init(ehci_softc_t *sc)
 		aprint_normal("\n");
 	}
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
+	sc->sc_hasppc = EHCI_HCS_PPC(sparams);
+
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
 	DPRINTF("cparams=%#x", cparams, 0, 0, 0);
-	sc->sc_hasppc = EHCI_HCS_PPC(sparams);
 
 	if (EHCI_HCC_64BIT(cparams)) {
 		/* MUST clear segment register if 64 bit capable. */
