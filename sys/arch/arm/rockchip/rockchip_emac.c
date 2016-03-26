@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.13 2016/02/09 08:32:08 ozaki-r Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.14 2016/03/26 17:04:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.13 2016/02/09 08:32:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.14 2016/03/26 17:04:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -521,7 +521,6 @@ rkemac_init(struct ifnet *ifp)
 	EMAC_WRITE(sc, EMAC_RXRINGPTR_REG, sc->sc_rxq.r_physaddr);
 	EMAC_WRITE(sc, EMAC_TXRINGPTR_REG, sc->sc_txq.t_physaddr);
 
-	control &= ~EMAC_CONTROL_RXBDTLEN;
 	control = EMAC_READ(sc, EMAC_CONTROL_REG);
 	if (ifp->if_flags & IFF_PROMISC) {
 		control |= EMAC_CONTROL_PROM;
@@ -534,6 +533,7 @@ rkemac_init(struct ifnet *ifp)
 		control |= EMAC_CONTROL_DISBC;
 	}
 
+	control &= ~EMAC_CONTROL_RXBDTLEN;
 	control |= __SHIFTIN(RKEMAC_RX_RING_COUNT, EMAC_CONTROL_RXBDTLEN);
 	control &= ~EMAC_CONTROL_TXBDTLEN;
 	control |= __SHIFTIN(RKEMAC_TX_RING_COUNT, EMAC_CONTROL_TXBDTLEN);
