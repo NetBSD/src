@@ -661,10 +661,10 @@
 #define HAVE_RAW_DECL_MKNODAT 1
 
 /* Define to 1 if mkostemp is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_MKOSTEMP */
+#define HAVE_RAW_DECL_MKOSTEMP 1
 
 /* Define to 1 if mkostemps is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_MKOSTEMPS */
+#define HAVE_RAW_DECL_MKOSTEMPS 1
 
 /* Define to 1 if mkstemp is declared even after undefining macros. */
 #define HAVE_RAW_DECL_MKSTEMP 1
@@ -1155,7 +1155,7 @@
 #define MALLOC_0_IS_NONNULL 1
 
 /* Define to a substitute value for mmap()'s MAP_ANONYMOUS flag. */
-#define MAP_ANONYMOUS MAP_ANON
+/* #undef MAP_ANONYMOUS */
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
