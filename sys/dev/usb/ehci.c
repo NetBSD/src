@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.94 2016/03/26 11:40:59 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.95 2016/03/26 11:42:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.94 2016/03/26 11:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.95 2016/03/26 11:42:44 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -464,6 +464,12 @@ ehci_init(ehci_softc_t *sc)
 	if (EHCI_HCC_64BIT(cparams)) {
 		/* MUST clear segment register if 64 bit capable. */
 		EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
+	}
+
+	if (cparams & EHCI_HCC_IST_FULLFRAME) {
+		sc->sc_istthreshold = 0;
+	} else {
+		sc->sc_istthreshold = EHCI_HCC_GET_IST_THRESHOLD(cparams);
 	}
 
 	sc->sc_bus.ub_revision = USBREV_2_0;
