@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.29 2016/02/29 14:57:07 adam Exp $
+# $NetBSD: Makefile.inc,v 1.30 2016/03/26 07:31:11 martin Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -270,4 +270,7 @@ COPTS.${src}+=	-Wno-missing-prototypes \
 		-Wno-cast-qual
 .    endif
 .  endif
+.if ${MKSOFTFLOAT:Uno} != "no"
+COPTS.${src}+=	-D__SOFT_FP__
+.endif
 .endfor
