@@ -36,7 +36,7 @@
 #define DEFAULT_BFD_ARCH bfd_mips_arch
 
 /* Define to BFD's default target vector. */
-#define DEFAULT_BFD_VEC mips_elf32_trad_be_vec
+#define DEFAULT_BFD_VEC mips_elf32_ntrad_be_vec
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -219,7 +219,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if your system has the kinfo_getvmmap function. */
-/* #undef HAVE_KINFO_GETVMMAP */
+#define HAVE_KINFO_GETVMMAP 1
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #define HAVE_LANGINFO_CODESET 1
