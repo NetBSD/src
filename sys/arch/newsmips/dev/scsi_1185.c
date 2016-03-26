@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.21 2014/03/24 20:05:20 christos Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.22 2016/03/26 17:14:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.21 2014/03/24 20:05:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.22 2016/03/26 17:14:38 martin Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -1720,12 +1720,11 @@ void
 adjust_transfer(struct sc_softc *sc, struct sc_chan_stat *cs)
 {
 	struct sc_scb *scb = cs->scb;
-	u_int remain_cnt;
+	u_int remain_cnt = 0;
 	u_int offset, sent_byte;
 
 	if (sc->pad_start) {
 		sc->pad_start = 0;
-		remain_cnt = 0;
 	} else {
 # if defined(__mips__) && defined(CPU_SINGLE)
 		remain_cnt = GET_CNT();
