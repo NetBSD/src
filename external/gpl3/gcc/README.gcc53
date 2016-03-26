@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.13 2016/03/24 21:46:28 christos Exp $
+$NetBSD: README.gcc53,v 1.14 2016/03/26 09:01:20 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -64,7 +64,7 @@ mips64el	y	?	n	y		y[8]
 powerpc		y	y	y	y		y		y[6]	
 sh3eb		y	?	y	y		y[5]
 sh3el		y	?	y	y		y
-sparc		y	y	y	y		y		y
+sparc		y	y	y	y		y		y[6]
 sparc64		y	y	y	y		y		y[6,2]	y
 vax		y	y	y	y		y		y[15]	n
 x86_64		y	y	y	y		y		y	y
