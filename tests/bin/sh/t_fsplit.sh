@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.3 2016/03/10 22:30:57 christos Exp $
+# $NetBSD: t_fsplit.sh,v 1.4 2016/03/27 14:50:01 christos Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -294,6 +294,11 @@ dollar_at_body() {
 		'zaz zbz zcz'
 	check 'set " a b " c; for i in "$@";    do echo "z${i}z"; done' \
 		'z a b z zcz'
+
+	check 'set a b c;     for i in "$@$@";  do echo "z${i}z"; done' \
+		'zaz zbz zcaz zbz zcz'
+	check 'set a b c;     for i in "$@""$@";do echo "z${i}z"; done' \
+		'zaz zbz zcaz zbz zcz'
 }
 
 atf_test_case ifs
