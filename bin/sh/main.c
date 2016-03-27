@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2016/03/01 21:10:40 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2016/03/27 14:34:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.62 2016/03/01 21:10:40 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.63 2016/03/27 14:34:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,11 +150,7 @@ main(int argc, char **argv)
 				exitshell(exitstatus);
 		}
 		reset();
-		if (exception == EXINT
-#if ATTY
-		 && (! attyset() || equal(termval(), "emacs"))
-#endif
-		 ) {
+		if (exception == EXINT) {
 			out2c('\n');
 			flushout(&errout);
 		}

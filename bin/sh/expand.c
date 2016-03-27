@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.97 2016/03/16 15:44:35 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.98 2016/03/27 14:34:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.97 2016/03/16 15:44:35 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.98 2016/03/27 14:34:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ argstr(char *p, int flag)
 	int ifs_split = EXP_IFS_SPLIT;
 
 	if (flag & EXP_IFS_SPLIT)
-		ifs = ifsset() ? ifsval() : " \t\n";
+		ifs = ifsval();
 
 	if (*p == '~' && (flag & (EXP_TILDE | EXP_VARTILDE)))
 		p = exptilde(p, flag);
@@ -705,7 +705,6 @@ again: /* jump here after setting a variable with ${var=text} */
 						STPUTC(CTLESC, expdest);
 					STPUTC(*val++, expdest);
 				}
-
 			}
 		}
 	}
@@ -924,10 +923,7 @@ numvar:
 		}
 		/* fall through */
 	case '*':
-		if (ifsset() != 0)
-			sep = ifsval()[0];
-		else
-			sep = ' ';
+		sep = ifsval()[0];
 		for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 			STRTODEST(p);
 			if (*ap && sep)
@@ -1011,7 +1007,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 		return;
 	}
 
-	ifs = ifsset() ? ifsval() : " \t\n";
+	ifs = ifsval();
 
 	for (ifsp = &ifsfirst; ifsp != NULL; ifsp = ifsp->next) {
 		p = string + ifsp->begoff;

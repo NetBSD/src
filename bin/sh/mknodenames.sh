@@ -7,7 +7,7 @@ fi
 
 NODES=$1
 
-test -t 1 && exec > nodenames.h
+test -t 1 && -z "$2" && exec > nodenames.h
 
 echo "#ifdef DEBUG"
 echo '
