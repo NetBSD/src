@@ -66,10 +66,6 @@ along with GCC; see the file COPYING3.  If not see
     fprintf (FILE, "\tcall __mcount\n");				\
 }
 
-/* Preserve i386 psABI  */
-#undef PREFERRED_STACK_BOUNDARY_DEFAULT
-#define PREFERRED_STACK_BOUNDARY_DEFAULT MIN_STACK_BOUNDARY
-
 #define HAVE_ENABLE_EXECUTE_STACK
 
 #define IX86_MAYBE_NO_LIBGCC_TFMODE
