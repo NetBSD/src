@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.47 2016/03/08 23:24:51 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.48 2016/03/27 14:34:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.47 2016/03/08 23:24:51 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.48 2016/03/27 14:34:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,9 +87,6 @@ struct varinit {
 
 struct localvar *localvars;
 
-#if ATTY
-struct var vatty;
-#endif
 #ifndef SMALL
 struct var vhistsize;
 struct var vterm;
@@ -103,11 +100,9 @@ struct var vps2;
 struct var vps4;
 struct var voptind;
 
+char ifs_default[] = " \t\n";
+
 const struct varinit varinit[] = {
-#if ATTY
-	{ &vatty,	VSTRFIXED|VTEXTFIXED|VUNSET,	"ATTY=",
-	  NULL },
-#endif
 #ifndef SMALL
 	{ &vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE=",
 	  sethistsize },
@@ -162,13 +157,14 @@ INIT {
 		}
 	}
 
-
 	/*
 	 * PPID is readonly
 	 *	set after processing environ to override anything there
+	 * Always default IFS, ignore any value from environment.
 	 */
 	snprintf(buf, sizeof(buf), "%d", (int)getppid());
 	setvar("PPID", buf, VREADONLY);
+	setvar("IFS", ifs_default, VTEXTFIXED);
 }
 #endif
 
