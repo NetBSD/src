@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.26 2015/05/26 21:35:15 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.27 2016/03/27 14:34:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,10 +70,8 @@ struct localvar {
 
 extern struct localvar *localvars;
 
-#if ATTY
-extern struct var vatty;
-#endif
 extern struct var vifs;
+extern char ifs_default[];
 extern struct var vmail;
 extern struct var vmpath;
 extern struct var vpath;
@@ -92,8 +90,8 @@ extern struct var vhistsize;
  * for unset variables.
  */
 
-#define ifsval()	(vifs.text + 4)
 #define ifsset()	((vifs.flags & VUNSET) == 0)
+#define ifsval()	(ifsset() ? (vifs.text + 4) : ifs_default)
 #define mailval()	(vmail.text + 5)
 #define mpathval()	(vmpath.text + 9)
 #define pathval()	(vpath.text + 5)
@@ -106,9 +104,6 @@ extern struct var vhistsize;
 #define termval()	(vterm.text + 5)
 #endif
 
-#if ATTY
-#define attyset()	((vatty.flags & VUNSET) == 0)
-#endif
 #define mpathset()	((vmpath.flags & VUNSET) == 0)
 
 void initvar(void);
