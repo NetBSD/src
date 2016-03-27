@@ -1,4 +1,4 @@
-# $NetBSD: t_cmdsub.sh,v 1.1 2016/03/20 22:57:04 christos Exp $
+# $NetBSD: t_cmdsub.sh,v 1.2 2016/03/27 14:53:17 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -181,6 +181,9 @@ f_redirect_in_cmdsub_head() {
 	atf_set "descr" "Checks that redirects work in command substitutions"
 }
 f_redirect_in_cmdsub_body() {
+	atf_require_prog cat
+	atf_require_prog rm
+
 	rm -f file 2>/dev/null || :
 	atf_check -s exit:0 -o match:'_aa_' -e empty \
 	    ${TEST_SH} -c 'echo _$( echo a$( echo b > file )a)_'
@@ -199,6 +202,9 @@ g_redirect_in_backticks_head() {
 	atf_set "descr" "Checks that redirects work in old style cmd sub"
 }
 g_redirect_in_backticks_body() {
+	atf_require_prog cat
+	atf_require_prog rm
+
 	rm -f file 2>/dev/null || :
 	atf_check -s exit:0 -o match:'_aa_' -e empty \
 	    ${TEST_SH} -c 'echo _` echo a\` echo b > file \`a`_'
@@ -371,6 +377,8 @@ p_cmdsub_in_heredoc_head() {
 	atf_set "descr" "Checks that cmdsubs work inside a here document"
 }
 p_cmdsub_in_heredoc_body() {
+	atf_require_prog cat
+
 	atf_check -s exit:0 -o inline:'line 1+1\nline 2\nline 3\n' -e empty \
 	    ${TEST_SH} -c \
 		'cat <<- EOF
@@ -384,6 +392,8 @@ q_backticks_in_heredoc_head() {
 	atf_set "descr" "Checks that old style cmdsubs work in here docs"
 }
 q_backticks_in_heredoc_body() {
+	atf_require_prog cat
+
 	atf_check -s exit:0 -o inline:'Mary had a\nlittle\nlamb\n' -e empty \
 	    ${TEST_SH} -c \
 		'cat <<- EOF
@@ -397,6 +407,8 @@ r_heredoc_in_cmdsub_head() {
 	atf_set "descr" "Checks that here docs work inside cmd subs"
 }
 r_heredoc_in_cmdsub_body() {
+	atf_require_prog cat
+
 	atf_check -s exit:0 -o inline:'Mary had a\nlittle\nlamb\n' -e empty \
 	    ${TEST_SH} -c 'echo "$( cat <<- \EOF
 				Mary had a
@@ -422,8 +434,6 @@ r_heredoc_in_cmdsub_body() {
 			EOF
 			)"'
 
-	# not all shells permit this syntax ...
-	# But I see nothing in the standard to prohibit it.
 	atf_check -s exit:0 -o inline:'Line 1\nLine 2\n' -e empty \
 	    ${TEST_SH} -c 'echo "$( cat <<- "EOF" )"
 				Line 1
@@ -437,6 +447,8 @@ s_heredoc_in_backticks_head() {
 	atf_set "descr" "Checks that here docs work inside old style cmd subs"
 }
 s_heredoc_in_backticks_body() {
+	atf_require_prog cat
+
 	atf_check -s exit:0 -o inline:'Mary had a little lamb\n' -e empty \
 	    ${TEST_SH} -c 'echo ` cat <<- \EOF
 				Mary had a
@@ -458,6 +470,26 @@ t_nested_cmdsubs_in_heredoc_head() {
 	atf_set "descr" "Checks nested command substitutions in here docs"
 }
 t_nested_cmdsubs_in_heredoc_body() {
+	atf_require_prog cat
+	atf_require_prog rm
+
+	rm -f * 2>/dev/null || :
+	echo "Hello" > File
+
+	atf_check -s exit:0 -o inline:'Hello U\nHelp me!\n' -e empty \
+	    ${TEST_SH} -c 'cat <<- EOF
+		$(cat File) U
+		$( V=$(cat File); echo "${V%lo}p" ) me!
+		EOF'
+
+	rm -f * 2>/dev/null || :
+	echo V>V ; echo A>A; echo R>R
+	echo Value>VAR
+
+	atf_check -s exit:0 -o inline:'$2.50\n' -e empty \
+	    ${TEST_SH} -c 'cat <<- EOF
+	$(Value='\''$2.50'\'';eval echo $(eval $(cat V)$(cat A)$(cat R)=\'\''\$$(cat $(cat V)$(cat A)$(cat R))\'\''; eval echo \$$(set -- *;echo ${3}${1}${2})))
+		EOF'
 }
 
 atf_test_case u_nested_backticks_in_heredoc
@@ -465,6 +497,26 @@ u_nested_backticks_in_heredoc_head() {
 	atf_set "descr" "Checks nested old style cmd subs in here docs"
 }
 u_nested_backticks_in_heredoc_body() {
+	atf_require_prog cat
+	atf_require_prog rm
+
+	rm -f * 2>/dev/null || :
+	echo "Hello" > File
+
+	atf_check -s exit:0 -o inline:'Hello U\nHelp me!\n' -e empty \
+	    ${TEST_SH} -c 'cat <<- EOF
+		`cat File` U
+		`V=\`cat File\`; echo "${V%lo}p" ` me!
+		EOF'
+
+	rm -f * 2>/dev/null || :
+	echo V>V ; echo A>A; echo R>R
+	echo Value>VAR
+
+	atf_check -s exit:0 -o inline:'$5.20\n' -e empty \
+	    ${TEST_SH} -c 'cat <<- EOF
+	`Value='\''$5.20'\'';eval echo \`eval \\\`cat V\\\`\\\`cat A\\\`\\\`cat R\\\`=\\\'\''\\\$\\\`cat \\\\\\\`cat V\\\\\\\`\\\\\\\`cat A\\\\\\\`\\\\\\\`cat R\\\\\\\`\\\`\\\'\''; eval echo \\\$\\\`set -- *;echo \\\\\${3}\\\\\${1}\\\\\${2}\\\`\``
+		EOF'
 }
 
 atf_test_case z_absurd_heredoc_cmdsub_combos
@@ -472,6 +524,48 @@ z_absurd_heredoc_cmdsub_combos_head() {
 	atf_set "descr" "perverse and unusual cmd substitutions & more"
 }
 z_absurd_heredoc_cmdsub_combos_body() {
+
+	echo "Help!" > help
+
+	# This version works in NetBSD (& FreeBSD)'s sh (and most others)
+	atf_check -s exit:0 -o inline:'Help!\nMe 2\n' -e empty ${TEST_SH} -c '
+			cat <<- EOF
+				$(
+					cat <<- STOP
+						$(
+							cat `echo help`
+						)
+					STOP
+				)
+				$(
+					cat <<- END 4<<-TRASH
+						Me $(( 1 + 1 ))
+					END
+					This is unused noise!
+					TRASH
+				)
+			EOF
+		'
+
+	# atf_expect_fail "PR bin/50993 - heredoc parsing done incorrectly"
+	atf_check -s exit:0 -o inline:'Help!\nMe 2\n' -e empty ${TEST_SH} -c '
+			cat <<- EOF
+				$(
+					cat << STOP
+						$(
+							cat `echo help`
+						)
+					STOP
+				)
+				$(
+					cat <<- END 4<<TRASH
+						Me $(( 1 + 1 ))
+					END
+					This is unused noise!
+					TRASH
+				)
+			EOF
+		'
 }
 
 atf_init_test_cases() {
