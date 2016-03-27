@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.107 2016/03/21 02:37:26 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.108 2016/03/27 14:34:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.107 2016/03/21 02:37:26 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.108 2016/03/27 14:34:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,12 +117,13 @@ STATIC int readtoken(void);
 STATIC int xxreadtoken(void);
 STATIC int readtoken1(int, char const *, char *, int);
 STATIC int noexpand(char *);
-STATIC void synexpect(int) __dead;
+STATIC void synexpect(int, const char *) __dead;
 STATIC void synerror(const char *) __dead;
 STATIC void setprompt(int);
 
 
 static const char EOFhere[] = "EOF reading here (<<) document";
+
 
 /*
  * Read and parse a command.  Returns NEOF on end of file.  (NULL is a
@@ -156,7 +157,7 @@ list(int nlflag, int erflag)
 {
 	union node *n1, *n2, *n3;
 	int tok;
-	TRACE(("list: entered\n"));
+	TRACE(("list(%d,%d): entered\n", nlflag, erflag));
 
 	checkkwd = 2;
 	if (nlflag == 0 && tokendlist[peektoken()])
@@ -192,7 +193,7 @@ list(int nlflag, int erflag)
 		case TBACKGND:
 		case TSEMI:
 			tok = readtoken();
-			/* fall through */
+			/* FALLTHROUGH */
 		case TNL:
 			if (tok == TNL) {
 				parseheredoc();
@@ -209,18 +210,16 @@ list(int nlflag, int erflag)
 			if (heredoclist)
 				parseheredoc();
 			else
-				pungetc();		/* push back EOF on input */
+				pungetc();	/* push back EOF on input */
 			return n1;
 		default:
 			if (nlflag || erflag)
-				synexpect(-1);
+				synexpect(-1, 0);
 			tokpushback++;
 			return n1;
 		}
 	}
 }
-
-
 
 STATIC union node *
 andor(void)
@@ -247,8 +246,6 @@ andor(void)
 		n1 = n3;
 	}
 }
-
-
 
 STATIC union node *
 pipeline(void)
@@ -332,7 +329,7 @@ command(void)
 		n1->type = NIF;
 		n1->nif.test = list(0, 0);
 		if (readtoken() != TTHEN)
-			synexpect(TTHEN);
+			synexpect(TTHEN, 0);
 		n1->nif.ifpart = list(0, 0);
 		n2 = n1;
 		while (readtoken() == TELIF) {
@@ -341,7 +338,7 @@ command(void)
 			n2->type = NIF;
 			n2->nif.test = list(0, 0);
 			if (readtoken() != TTHEN)
-				synexpect(TTHEN);
+				synexpect(TTHEN, 0);
 			n2->nif.ifpart = list(0, 0);
 		}
 		if (lasttoken == TELSE)
@@ -351,7 +348,7 @@ command(void)
 			tokpushback++;
 		}
 		if (readtoken() != TFI)
-			synexpect(TFI);
+			synexpect(TFI, 0);
 		checkkwd = 1;
 		break;
 	case TWHILE:
@@ -362,11 +359,11 @@ command(void)
 		n1->nbinary.ch1 = list(0, 0);
 		if ((got=readtoken()) != TDO) {
 TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
-			synexpect(TDO);
+			synexpect(TDO, 0);
 		}
 		n1->nbinary.ch2 = list(0, 0);
 		if (readtoken() != TDONE)
-			synexpect(TDONE);
+			synexpect(TDONE, 0);
 		checkkwd = 1;
 		break;
 	}
@@ -389,7 +386,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			*app = NULL;
 			n1->nfor.args = ap;
 			if (lasttoken != TNL && lasttoken != TSEMI)
-				synexpect(-1);
+				synexpect(-1, 0);
 		} else {
 			static char argvars[5] = {
 			    CTLVAR, VSNORMAL|VSQUOTE, '@', '=', '\0'
@@ -413,17 +410,17 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		else if (t == TBEGIN)
 			t = TEND;
 		else
-			synexpect(-1);
+			synexpect(-1, 0);
 		n1->nfor.body = list(0, 0);
 		if (readtoken() != t)
-			synexpect(t);
+			synexpect(t, 0);
 		checkkwd = 1;
 		break;
 	case TCASE:
 		n1 = stalloc(sizeof(struct ncase));
 		n1->type = NCASE;
 		if (readtoken() != TWORD)
-			synexpect(TWORD);
+			synexpect(TWORD, 0);
 		n1->ncase.expr = n2 = stalloc(sizeof(struct narg));
 		n2->type = NARG;
 		n2->narg.text = wordtext;
@@ -431,7 +428,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		n2->narg.next = NULL;
 		while (readtoken() == TNL);
 		if (lasttoken != TWORD || ! equal(wordtext, "in"))
-			synerror("expecting \"in\"");
+			synexpect(-1, "in");
 		cpp = &n1->ncase.cases;
 		noalias = 1;
 		checkkwd = 2, readtoken();
@@ -464,7 +461,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			ap->narg.next = NULL;
 			noalias = 0;
 			if (lasttoken != TRP) {
-				synexpect(TRP);
+				synexpect(TRP, 0);
 			}
 			cp->nclist.body = list(0, 0);
 
@@ -472,7 +469,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			if ((t = readtoken()) != TESAC) {
 				if (t != TENDCASE) {
 					noalias = 0;
-					synexpect(TENDCASE);
+					synexpect(TENDCASE, 0);
 				} else {
 					noalias = 1;
 					checkkwd = 2;
@@ -491,13 +488,13 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		n1->nredir.n = list(0, 0);
 		n1->nredir.redirect = NULL;
 		if (readtoken() != TRP)
-			synexpect(TRP);
+			synexpect(TRP, 0);
 		checkkwd = 1;
 		break;
 	case TBEGIN:
 		n1 = list(0, 0);
 		if (readtoken() != TEND)
-			synexpect(TEND);
+			synexpect(TEND, 0);
 		checkkwd = 1;
 		break;
 	/* Handle an empty command like other simple commands.  */
@@ -507,7 +504,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		 * should certainly be disallowed in the case of `if ;'.
 		 */
 		if (!redir)
-			synexpect(-1);
+			synexpect(-1, 0);
 	case TAND:
 	case TOR:
 	case TNL:
@@ -524,7 +521,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		}
 		/* FALLTHROUGH */
 	default:
-		synexpect(-1);
+		synexpect(-1, 0);
 		/* NOTREACHED */
 	}
 
@@ -603,7 +600,7 @@ simplecmd(union node **rpp, union node *redir)
 					    && rpp == orig_rpp) {
 			/* We have a function */
 			if (readtoken() != TRP)
-				synexpect(TRP);
+				synexpect(TRP, 0);
 			funclinno = plinno;
 			rmescapes(n->narg.text);
 			if (!goodname(n->narg.text))
@@ -677,7 +674,7 @@ parsefname(void)
 	union node *n = redirnode;
 
 	if (readtoken() != TWORD)
-		synexpect(-1);
+		synexpect(-1, 0);
 	if (n->type == NHERE) {
 		struct heredoc *here = heredoc;
 		struct heredoc *p;
@@ -852,28 +849,14 @@ xxreadtoken(void)
 				continue;
 			pungetc();
 			continue;
-		case '\\':
-			switch (pgetc()) {
-			case '\n':
-				startlinno = ++plinno;
-				if (doprompt)
-					setprompt(2);
-				else
-					setprompt(0);
-				continue;
-			case PEOF:
-				RETURN(TEOF);
-			default:
-				pungetc();
-				break;
-			}
-			goto breakloop;
+
 		case '\n':
 			plinno++;
 			needprompt = doprompt;
 			RETURN(TNL);
 		case PEOF:
 			RETURN(TEOF);
+
 		case '&':
 			if (pgetc() == '&')
 				RETURN(TAND);
@@ -893,12 +876,27 @@ xxreadtoken(void)
 			RETURN(TLP);
 		case ')':
 			RETURN(TRP);
+
+		case '\\':
+			switch (pgetc()) {
+			case '\n':
+				startlinno = ++plinno;
+				if (doprompt)
+					setprompt(2);
+				else
+					setprompt(0);
+				continue;
+			case PEOF:
+				RETURN(TEOF);
+			default:
+				pungetc();
+				break;
+			}
+			/* FALLTHROUGH */
 		default:
-			goto breakloop;
+			return readtoken1(c, BASESYNTAX, NULL, 0);
 		}
 	}
-breakloop:
-	return readtoken1(c, BASESYNTAX, NULL, 0);
 #undef RETURN
 }
 
@@ -1209,7 +1207,7 @@ done:
 	else {
 		if (readtoken() != TRP) {
 			cleanup_state_stack(stack);
-			synexpect(TRP);
+			synexpect(TRP, 0);
 		}
 	}
 
@@ -1263,9 +1261,8 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	startlinno = plinno;
 	varnest = 0;
 	quoted = 0;
-	if (syntax == DQSYNTAX) {
+	if (syntax == DQSYNTAX)
 		SETDBLQUOTE();
-	}
 	quotef = 0;
 	bqlist = NULL;
 	arinest = 0;
@@ -1273,16 +1270,6 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 
 	STARTSTACKSTR(out);
 	loop: {	/* for each line, until end of word */
-#if ATTY
-		if (c == '\034' && doprompt
-		 && attyset() && ! equal(termval(), "emacs")) {
-			attyline();
-			if (syntax == BASESYNTAX)
-				return readtoken();
-			c = pgetc();
-			goto loop;
-		}
-#endif
 		CHECKEND();	/* set c to PEOF if at end of here document */
 		for (;;) {	/* until end of line or end of word */
 			CHECKSTRSPACE(4, out);	/* permit 4 calls to USTPUTC */
@@ -1779,7 +1766,7 @@ noexpand(char *text)
 
 int
 goodname(char *name)
-	{
+{
 	char *p;
 
 	p = name;
@@ -1800,16 +1787,28 @@ goodname(char *name)
  */
 
 STATIC void
-synexpect(int token)
+synexpect(int token, const char *text)
 {
 	char msg[64];
+	char *p;
 
-	if (token >= 0) {
-		fmtstr(msg, 64, "%s unexpected (expecting %s)",
-			tokname[lasttoken], tokname[token]);
-	} else {
-		fmtstr(msg, 64, "%s unexpected", tokname[lasttoken]);
-	}
+	if (lasttoken == TWORD) {
+		size_t len = strlen(wordtext);
+
+		if (len <= 13)
+			fmtstr(msg, 34, "Word \"%.13s\" unexpected", wordtext);
+		else
+			fmtstr(msg, 34,
+			    "Word \"%.10s...\" unexpected", wordtext);
+	} else
+		fmtstr(msg, 34, "%s unexpected", tokname[lasttoken]);
+
+	p = strchr(msg, '\0');
+	if (text)
+		fmtstr(p, 30, " (expecting \"%.10s\")", text);
+	else if (token >= 0)
+		fmtstr(p, 30, " (expecting %s)",  tokname[token]);
+
 	synerror(msg);
 	/* NOTREACHED */
 }
@@ -1818,12 +1817,7 @@ synexpect(int token)
 STATIC void
 synerror(const char *msg)
 {
-	if (commandname)
-		outfmt(&errout, "%s: %d: ", commandname, startlinno);
-	else
-		outfmt(&errout, "%s: ", getprogname());
-	outfmt(&errout, "Syntax error: %s\n", msg);
-	error(NULL);
+	error("%d: Syntax error: %s\n", startlinno, msg);
 	/* NOTREACHED */
 }
 
@@ -1844,7 +1838,7 @@ setprompt(int which)
  */
 const char *
 getprompt(void *unused)
-	{
+{
 	switch (whichprompt) {
 	case 0:
 		return "";
@@ -1856,4 +1850,3 @@ getprompt(void *unused)
 		return "<internal prompt error>";
 	}
 }
-
