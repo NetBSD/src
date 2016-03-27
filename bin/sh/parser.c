@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.111 2016/03/27 14:39:33 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.112 2016/03/27 14:40:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.111 2016/03/27 14:39:33 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.112 2016/03/27 14:40:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1179,7 +1179,6 @@ cleanup_state_stack(VSS *stack)
 	}
 }
 
-#define	PARSEREDIR()	{goto parseredir; parseredir_return:;}
 #define	PARSESUB()	{goto parsesub; parsesub_return:;}
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
 
@@ -1370,6 +1369,94 @@ done:
 	return out;
 }
 
+/*
+ * Parse a redirection operator.  The parameter "out" points to a string
+ * specifying the fd to be redirected.  It is guaranteed to be either ""
+ * or a numeric string (for now anyway).  The parameter "c" contains the
+ * first character of the redirection operator.
+ *
+ * Note the string "out" is on the stack, which we are about to clobber,
+ * so process it first...
+ */
+
+static void
+parseredir(const char *out,  int c)
+{
+	union node *np;
+	int fd;
+
+	fd = (*out == '\0') ? -1 : atoi(out);
+
+	np = stalloc(sizeof(struct nfile));
+	if (c == '>') {
+		if (fd < 0)
+			fd = 1;
+		c = pgetc();
+		if (c == '>')
+			np->type = NAPPEND;
+		else if (c == '|')
+			np->type = NCLOBBER;
+		else if (c == '&')
+			np->type = NTOFD;
+		else {
+			np->type = NTO;
+			pungetc();
+		}
+	} else {	/* c == '<' */
+		if (fd < 0)
+			fd = 0;
+		switch (c = pgetc()) {
+		case '<':
+			if (sizeof (struct nfile) != sizeof (struct nhere)) {
+				np = stalloc(sizeof(struct nhere));
+				np->nfile.fd = 0;
+			}
+			np->type = NHERE;
+			heredoc = stalloc(sizeof(struct heredoc));
+			heredoc->here = np;
+			if ((c = pgetc()) == '-') {
+				heredoc->striptabs = 1;
+			} else {
+				heredoc->striptabs = 0;
+				pungetc();
+			}
+			break;
+
+		case '&':
+			np->type = NFROMFD;
+			break;
+
+		case '>':
+			np->type = NFROMTO;
+			break;
+
+		default:
+			np->type = NFROM;
+			pungetc();
+			break;
+		}
+	}
+	np->nfile.fd = fd;
+
+	redirnode = np;		/* this is the "value" of TRENODE */
+}
+
+
+/*
+ * The lowest level basic tokenizer.
+ *
+ * The next input byte (character) is in firstc, syn says which
+ * syntax tables we are to use (basic, single or double quoted, or arith)
+ * and magicq (used with sqsyntax and dqsyntax only) indicates that the
+ * quote character itself is not special (used parsing here docs and similar)
+ *
+ * The result is the type of the next token (its value, when there is one,
+ * is saved in the relevant global var - must fix that someday!) which is
+ * also saved for re-reading ("lasttoken").
+ *
+ * Overall, this routine does far more parsing than it is supposed to.
+ * That will also need fixing, someday...
+ */
 STATIC int
 readtoken1(int firstc, char const *syn, int magicq)
 {
@@ -1573,7 +1660,7 @@ endword:
 		if ((c == '<' || c == '>')
 		 && quotef == 0
 		 && (*out == '\0' || is_number(out))) {
-			PARSEREDIR();
+			parseredir(out, c);
 			cleanup_state_stack(stack);
 			return lasttoken = TREDIR;
 		} else {
@@ -1587,71 +1674,6 @@ endword:
 	cleanup_state_stack(stack);
 	return lasttoken = TWORD;
 /* end of readtoken routine */
-
-
-/*
- * Parse a redirection operator.  The variable "out" points to a string
- * specifying the fd to be redirected.  The variable "c" contains the
- * first character of the redirection operator.
- */
-
-parseredir: {
-	char fd[64];
-	union node *np;
-	strlcpy(fd, out, sizeof(fd));
-
-	np = stalloc(sizeof(struct nfile));
-	if (c == '>') {
-		np->nfile.fd = 1;
-		c = pgetc();
-		if (c == '>')
-			np->type = NAPPEND;
-		else if (c == '|')
-			np->type = NCLOBBER;
-		else if (c == '&')
-			np->type = NTOFD;
-		else {
-			np->type = NTO;
-			pungetc();
-		}
-	} else {	/* c == '<' */
-		np->nfile.fd = 0;
-		switch (c = pgetc()) {
-		case '<':
-			if (sizeof (struct nfile) != sizeof (struct nhere)) {
-				np = stalloc(sizeof(struct nhere));
-				np->nfile.fd = 0;
-			}
-			np->type = NHERE;
-			heredoc = stalloc(sizeof(struct heredoc));
-			heredoc->here = np;
-			if ((c = pgetc()) == '-') {
-				heredoc->striptabs = 1;
-			} else {
-				heredoc->striptabs = 0;
-				pungetc();
-			}
-			break;
-
-		case '&':
-			np->type = NFROMFD;
-			break;
-
-		case '>':
-			np->type = NFROMTO;
-			break;
-
-		default:
-			np->type = NFROM;
-			pungetc();
-			break;
-		}
-	}
-	if (*fd != '\0')
-		np->nfile.fd = number(fd);
-	redirnode = np;
-	goto parseredir_return;
-}
 
 
 /*
