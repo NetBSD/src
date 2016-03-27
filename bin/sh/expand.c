@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.98 2016/03/27 14:34:46 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.99 2016/03/27 14:39:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.98 2016/03/27 14:34:46 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.99 2016/03/27 14:39:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,12 @@ STATIC char *cvtnum(int, char *);
 void
 expandhere(union node *arg, int fd)
 {
+	/*
+	 * First, parse the content of the here doc (to internal form)
+	 * It was initially saved as (almost) unmodified text.
+	 */
+	parse_heredoc(arg);
+
 	herefd = fd;
 	expandarg(arg, NULL, 0);
 	xwrite(fd, stackblock(), expdest - stackblock());
