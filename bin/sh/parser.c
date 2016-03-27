@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.110 2016/03/27 14:36:29 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.111 2016/03/27 14:39:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.110 2016/03/27 14:36:29 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.111 2016/03/27 14:39:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,6 @@ __RCSID("$NetBSD: parser.c,v 1.110 2016/03/27 14:36:29 christos Exp $");
 /*
  * Shell command parser.
  */
-
-#define EOFMARKLEN 79
 
 /* values returned by readtoken */
 #include "token.h"
@@ -111,11 +109,12 @@ STATIC union node *command(void);
 STATIC union node *simplecmd(union node **, union node *);
 STATIC union node *makename(void);
 STATIC void parsefname(void);
-STATIC void parseheredoc(void);
+STATIC void slurp_heredoc(char *const, int, int);
+STATIC void readheredocs(void);
 STATIC int peektoken(void);
 STATIC int readtoken(void);
 STATIC int xxreadtoken(void);
-STATIC int readtoken1(int, char const *, char *, int);
+STATIC int readtoken1(int, char const *, int);
 STATIC int noexpand(char *);
 STATIC void synexpect(int, const char *) __dead;
 STATIC void synerror(const char *) __dead;
@@ -196,7 +195,7 @@ list(int nlflag, int erflag)
 			/* FALLTHROUGH */
 		case TNL:
 			if (tok == TNL) {
-				parseheredoc();
+				readheredocs();
 				if (nlflag)
 					return n1;
 			} else {
@@ -208,7 +207,7 @@ list(int nlflag, int erflag)
 			break;
 		case TEOF:
 			if (heredoclist)
-				parseheredoc();
+				readheredocs();
 			else
 				pungetc();	/* push back EOF on input */
 			return n1;
@@ -671,7 +670,6 @@ parsefname(void)
 	if (n->type == NHERE) {
 		struct heredoc *here = heredoc;
 		struct heredoc *p;
-		int i;
 
 		if (quoteflag == 0)
 			n->type = NXHERE;
@@ -680,8 +678,21 @@ parsefname(void)
 			while (*wordtext == '\t')
 				wordtext++;
 		}
-		if (! noexpand(wordtext) || (i = strlen(wordtext)) == 0 || i > EOFMARKLEN)
+
+		/*
+		 * this test is not really necessary, we are not
+		 * required to expand wordtext, but there's no reason
+		 * it cannot be $$ or something like that - that would
+		 * not mean the pid, but literally two '$' characters.
+		 * There is no need for limits on what the word can be.
+		 * However, it needs to stay literal as entered, not
+		 * have $ converted to CTLVAR or something, which as
+		 * the parser is, at the minute, is impossible to prevent.
+		 * So, leave it like this until the rest of the parser is fixed.
+		 */
+		if (! noexpand(wordtext))
 			synerror("Illegal eof marker for << redirection");
+
 		rmescapes(wordtext);
 		here->eofmark = wordtext;
 		here->next = NULL;
@@ -699,32 +710,142 @@ parsefname(void)
 	}
 }
 
+/*
+ * Check to see whether we are at the end of the here document.  When this
+ * is called, c is set to the first character of the next input line.  If
+ * we are at the end of the here document, this routine sets the c to PEOF.
+ * The new value of c is returned.
+ */
+
+static int
+checkend(int c, char * const eofmark, const int striptabs)
+{
+	if (striptabs) {
+		while (c == '\t')
+			c = pgetc();
+	}
+	if (c == PEOF) {
+		if (*eofmark == '\0')
+			return (c);
+		synerror(EOFhere);
+	}
+	if (c == *eofmark) {
+		int c2;
+		char *q;
+
+		for (q = eofmark + 1; c2 = pgetc(), *q != '\0' && c2 == *q; q++)
+			;
+		if ((c2 == PEOF || c2 == '\n') && *q == '\0') {
+			c = PEOF;
+			if (c2 == '\n') {
+				plinno++;
+				needprompt = doprompt;
+			}
+		} else {
+			pungetc();
+			pushstring(eofmark + 1, q - (eofmark + 1), NULL);
+		}
+	} else if (c == '\n' && *eofmark == '\0') {
+		c = PEOF;
+		plinno++;
+		needprompt = doprompt;
+	}
+	return (c);
+}
+
 
 /*
  * Input any here documents.
  */
 
 STATIC void
-parseheredoc(void)
+slurp_heredoc(char *const eofmark, int striptabs, int sq)
+{
+	int c;
+	char *out;
+
+	c = pgetc();
+
+	/*
+	 * If we hit EOF on the input, and the eofmark is a null string ('')
+	 * we consider this empty line to be the eofmark, and exit without err.
+	 */
+	if (c == PEOF && *eofmark != '\0')
+		synerror(EOFhere);
+
+	STARTSTACKSTR(out);
+
+	while ((c = checkend(c, eofmark, striptabs)) != PEOF) {
+		do {
+			if (sq) {
+				/*
+				 * in single quoted mode (eofmark quoted)
+				 * all we look for is \n so we can check
+				 * for the epfmark - everything saved literally.
+				 */
+				STPUTC(c, out);
+				if (c == '\n')
+					break;
+				continue;
+			}
+			/*
+			 * In double quoted (non-quoted eofmark)
+			 * we must handle \ followed by \n here
+			 * otherwise we can mismatch the end mark.
+			 * All other uses of \ will be handled later
+			 * when the here doc is expanded.
+			 *
+			 * This also makes sure \\ followed by \n does
+			 * not suppress the newline (the \ quotes itself)
+			 */
+			if (c == '\\') {		/* A backslash */
+				c = pgetc();		/* followed by */
+				if (c == '\n')		/* a newline?  */
+					continue;	/* y:drop both */
+				STPUTC('\\', out);	/* else keep \ */
+			}
+			STPUTC(c, out);			/* keep the char */
+			if (c == '\n')			/* at end of line */
+				break;			/* look for eofmark */
+
+		} while ((c = pgetc()) != PEOF);
+
+		/*
+		 * If we have read a line, and reached EOF, without
+		 * finding the eofmark, whether the EOF comes before
+		 * or immediately after the \n, that is an error.
+		 */
+		if (c == PEOF || (c = pgetc()) == PEOF)
+			synerror(EOFhere);
+	}
+	STPUTC('\0', out);
+
+	c = out - stackblock();
+	out = stackblock();
+	grabstackblock(c);
+	wordtext = out;
+
+	TRACE(("Slurped a heredoc (to '%s')%s: len %d, \"%.16s\"...\n",
+		eofmark, striptabs ? " tab stripped" : "", c, wordtext));
+}
+
+STATIC void
+readheredocs(void)
 {
 	struct heredoc *here;
 	union node *n;
 
 	while (heredoclist) {
-		int c;
-
 		here = heredoclist;
 		heredoclist = here->next;
 		if (needprompt) {
 			setprompt(2);
 			needprompt = 0;
 		}
-		if ((c = pgetc()) == PEOF) {
-			synerror(EOFhere);
-			/* NOTREACHED */
-		}
-		readtoken1(c, here->here->type == NHERE? SQSYNTAX : DQSYNTAX,
-		    here->eofmark, here->striptabs);
+
+		slurp_heredoc(here->eofmark, here->striptabs,
+		    here->here->nhere.type == NHERE);
+
 		n = stalloc(sizeof(struct narg));
 		n->narg.type = NARG;
 		n->narg.next = NULL;
@@ -732,6 +853,25 @@ parseheredoc(void)
 		n->narg.backquote = backquotelist;
 		here->here->nhere.doc = n;
 	}
+}
+
+void
+parse_heredoc(union node *n)
+{
+	if (n->narg.type != NARG)
+		abort();
+
+	if (n->narg.text[0] == '\0')		/* nothing to do */
+		return;
+
+	setinputstring(n->narg.text, 1);
+
+	readtoken1(pgetc(), DQSYNTAX, 1);
+
+	n->narg.text = wordtext;
+	n->narg.backquote = backquotelist;
+
+	popfile();
 }
 
 STATIC int
@@ -764,7 +904,7 @@ readtoken(void)
 		if (checkkwd == 2) {
 			checkkwd = 0;
 			while (t == TNL) {
-				parseheredoc();
+				readheredocs();
 				t = xxreadtoken();
 			}
 		} else
@@ -887,7 +1027,7 @@ xxreadtoken(void)
 			}
 			/* FALLTHROUGH */
 		default:
-			return readtoken1(c, BASESYNTAX, NULL, 0);
+			return readtoken1(c, BASESYNTAX, 0);
 		}
 	}
 #undef RETURN
@@ -1039,7 +1179,6 @@ cleanup_state_stack(VSS *stack)
 	}
 }
 
-#define	CHECKEND()	{goto checkend; checkend_return:;}
 #define	PARSEREDIR()	{goto parseredir; parseredir_return:;}
 #define	PARSESUB()	{goto parsesub; parsesub_return:;}
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
@@ -1232,12 +1371,11 @@ done:
 }
 
 STATIC int
-readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
+readtoken1(int firstc, char const *syn, int magicq)
 {
 	int c = firstc;
 	char * out;
 	int len;
-	char line[EOFMARKLEN + 1];
 	struct nodelist *bqlist;
 	int quotef;
 	VSS static_stack;
@@ -1260,7 +1398,6 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 
 	STARTSTACKSTR(out);
 	loop: {	/* for each line, until end of word */
-		CHECKEND();	/* set c to PEOF if at end of here document */
 		for (;;) {	/* until end of line or end of word */
 			CHECKSTRSPACE(4, out);	/* permit 4 calls to USTPUTC */
 			switch(syntax[c]) {
@@ -1279,7 +1416,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				USTPUTC(c, out);
 				break;
 			case CCTL:
-				if (eofmark == NULL || ISDBLQUOTE())
+				if (!magicq || ISDBLQUOTE())
 					USTPUTC(CTLESC, out);
 				USTPUTC(c, out);
 				break;
@@ -1301,11 +1438,11 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				quotef = 1;
 				if (ISDBLQUOTE() && c != '\\' &&
 				    c != '`' && c != '$' &&
-				    (c != '"' || eofmark != NULL))
+				    (c != '"' || magicq))
 					USTPUTC('\\', out);
 				if (SQSYNTAX[c] == CCTL)
 					USTPUTC(CTLESC, out);
-				else if (eofmark == NULL) {
+				else if (!magicq) {
 					USTPUTC(CTLQUOTEMARK, out);
 					USTPUTC(c, out);
 					if (varnest != 0)
@@ -1316,7 +1453,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				break;
 			case CSQUOTE:
 				if (syntax != SQSYNTAX) {
-					if (eofmark == NULL)
+					if (!magicq)
 						USTPUTC(CTLQUOTEMARK, out);
 					quotef = 1;
 					TS_PUSH();
@@ -1324,8 +1461,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					quoted = SQ;
 					break;
 				}
-				if (eofmark != NULL && arinest == 0 &&
-				    varnest == 0) {
+				if (magicq && arinest == 0 && varnest == 0) {
 					/* Ignore inside quoted here document */
 					USTPUTC(c, out);
 					break;
@@ -1336,8 +1472,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					USTPUTC(CTLQUOTEEND, out);
 				break;
 			case CDQUOTE:
-				if (eofmark != NULL && arinest == 0 &&
-				    varnest == 0) {
+				if (magicq && arinest == 0 && varnest == 0) {
 					/* Ignore inside here document */
 					USTPUTC(c, out);
 					break;
@@ -1354,7 +1489,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					}
 					break;
 				}
-				if (eofmark != NULL)
+				if (magicq)
 					break;
 				if (ISDBLQUOTE()) {
 					TS_POP();
@@ -1421,7 +1556,7 @@ endword:
 		cleanup_state_stack(stack);
 		synerror("Missing '))'");
 	}
-	if (syntax != BASESYNTAX && /* ! parsebackquote && */ eofmark == NULL) {
+	if (syntax != BASESYNTAX && /* ! parsebackquote && */ !magicq) {
 		cleanup_state_stack(stack);
 		synerror("Unterminated quoted string");
 	}
@@ -1434,8 +1569,8 @@ endword:
 	USTPUTC('\0', out);
 	len = out - stackblock();
 	out = stackblock();
-	if (eofmark == NULL) {
-		if ((c == '>' || c == '<')
+	if (!magicq) {
+		if ((c == '<' || c == '>')
 		 && quotef == 0
 		 && (*out == '\0' || is_number(out))) {
 			PARSEREDIR();
@@ -1452,43 +1587,6 @@ endword:
 	cleanup_state_stack(stack);
 	return lasttoken = TWORD;
 /* end of readtoken routine */
-
-
-
-/*
- * Check to see whether we are at the end of the here document.  When this
- * is called, c is set to the first character of the next input line.  If
- * we are at the end of the here document, this routine sets the c to PEOF.
- */
-
-checkend: {
-	if (eofmark) {
-		if (c == PEOF)
-			synerror(EOFhere);
-		if (striptabs) {
-			while (c == '\t')
-				c = pgetc();
-		}
-		if (c == *eofmark) {
-			if (pfgets(line, sizeof line) != NULL) {
-				char *p, *q;
-
-				p = line;
-				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++)
-					continue;
-				if ((*p == '\0' || *p == '\n') && *q == '\0') {
-					c = PEOF;
-					plinno++;
-					needprompt = doprompt;
-				} else {
-					pushstring(line, strlen(line), NULL);
-				}
-			} else
-				synerror(EOFhere);
-		}
-	}
-	goto checkend_return;
-}
 
 
 /*
