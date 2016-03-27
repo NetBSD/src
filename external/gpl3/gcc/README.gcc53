@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.14 2016/03/26 09:01:20 mrg Exp $
+$NetBSD: README.gcc53,v 1.15 2016/03/27 00:07:20 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -69,7 +69,7 @@ sparc64		y	y	y	y		y		y[6,2]	y
 vax		y	y	y	y		y		y[15]	n
 x86_64		y	y	y	y		y		y	y
 --
-or1k		n[11]
+or1k		n[10]
 riscv32		n[10]
 riscv64		n[10]
 ia64
@@ -85,19 +85,12 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [3] - MKCOMPAT=no enabled currently, infact OABI seems to be broken.  the docs say it was only deprecated, but the options make broken crap.
 [4] - bin/expr/t_expr:overflow fails on shark, only new failure.  fails on other ports too.
 [5] - sh3eb tries to use sh specific atomic config which doesn't work, has hand edited mknative output
-[6] - sshd is broken, regardless of compiler options
-	-- libldap.so.4.3 is broken on sparc64; replacing just this fixes sshd.
-	-- very very odd -- linking the GCC 5.3 created libldap *.pico flies with the GCC 4.8 compiler works
-	-- it is not binutils 2.23 vs 2.26
-[7] - GCC fails to build
+[6] - crtbeginS.o builds incorrectly with GCC 5.3 and -O2.  a hack for -O1 has been added.
+[7] - 
 [8] - sgimips64 release build fails, mdsetimage'd gz'd kernels don't get built?
 [9] - 
-[10] - fails to build tools with:
-	/usr/src8/tools/gcc/../../external/gpl3/gcc/dist/gcc/config/riscv/riscv.h:1087:9: error: attempt to use poisoned "MOVE_BY_PIECES_P"
-	 #define MOVE_BY_PIECES_P(SIZE, ALIGN)    \
-[11] - diagnostic.c fails to bulid -- perhaps some bad merge?
-	/usr/src8/tools/gcc/../../external/gpl3/gcc/dist/gcc/cp/error.c:3384:40: warning: too many arguments for format [-Wformat-extra-args]
-	....
+[10] - needs to be re-merged with GCC 5.3 versions of these not-merged-to-mainline-gcc ports.
+[11] - 
 [13] - builds tested:
        - m68k: mvm68k amiga atari
        - earm : shark evbarm*
@@ -105,7 +98,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
        - mips64el: sgimips[fail] evbmips
 [14] - machines tested:
        - sparc ss20 (OK)
-       - sparc64 ultra45 (FAIL), ultra10 (OK)
+       - sparc64 ultra45 (FAIL), ultra10 (OK), sb2000 (OK UP, FAIL SMP.)
        - powerpc pegasosII (OK)
        - alpha UP1000 (OK)
        - arm shark (OK)
