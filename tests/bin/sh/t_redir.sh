@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.4 2016/03/08 14:26:54 christos Exp $
+# $NetBSD: t_redir.sh,v 1.5 2016/03/27 14:49:07 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -122,9 +122,7 @@ do_input_redirections_body()
 
 
 	cat <<- 'EOF' |
-		i=0
-		while [ "$i" -lt 3 ]; do
-			i=$((i + 1))
+		for l in 1 2 3; do
 			read line < File
 			echo "$line"
 		done
@@ -134,9 +132,7 @@ do_input_redirections_body()
 		${TEST_SH}
 
 	cat <<- 'EOF' |
-		i=0
-		while [ "$i" -lt 3 ]; do
-			i=$((i + 1))
+		for l in 1 2 3; do
 			read line
 			echo "$line"
 		done <File
@@ -146,9 +142,7 @@ do_input_redirections_body()
 		${TEST_SH}
 
 	cat <<- 'EOF' |
-		i=0
-		while [ "$i" -lt 3 ]; do
-			i=$((i + 1))
+		for l in 1 2 3; do
 			read line < File
 			echo "$line"
 		done <File
@@ -179,12 +173,12 @@ do_input_redirections_body()
 		${TEST_SH}
 
 	cat <<- 'EOF' |
-		i=0
+		l=''
 		while read line < File
 		do
 			echo "$line"
-			i=$((i + 1))
-			[ ${i} -ge 3 ] && break
+			l="${l}x"
+			[ ${#l} -ge 3 ] && break
 		done
 		echo DONE
 	EOF
@@ -193,7 +187,6 @@ do_input_redirections_body()
 		${TEST_SH}
 
 	cat <<- 'EOF' |
-		i=0
 		while read line
 		do
 			echo "$line"
@@ -205,12 +198,12 @@ do_input_redirections_body()
 		${TEST_SH}
 
 	cat <<- 'EOF' |
-		i=0
+		l=''
 		while read line
 		do
 			echo "$line"
-			i=$((i + 1))
-			[ ${i} -ge 3 ] && break
+			l="${l}x"
+			[ ${#l} -ge 3 ] && break
 		done <File
 		echo DONE
 	EOF
@@ -218,13 +211,13 @@ do_input_redirections_body()
 		-o inline:'First Line\nSecond Line\nLine 3\nDONE\n' ${TEST_SH}
 
 	cat <<- 'EOF' |
-		i=0
+		l=''
 		while read line1 <File
 		do
 			read line2
 			echo "$line1":"$line2"
-			i=$((i + 1))
-			[ ${i} -ge 2 ] && break
+			l="${l}x"
+			[ ${#l} -ge 2 ] && break
 		done <File
 		echo DONE
 	EOF
@@ -243,7 +236,7 @@ do_output_redirections_body()
 nl='
 '
 	T=0
-	i() { T=$(($T + 1)); }
+	i() { T=$(expr "$T" + 1); }
 
 	rm -f Output 2>/dev/null || :
 	test -f Output && atf_fail "Unable to remove Output file"
