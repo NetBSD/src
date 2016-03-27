@@ -1,4 +1,4 @@
-# $NetBSD: t_varquote.sh,v 1.4 2016/03/12 14:58:03 christos Exp $
+# $NetBSD: t_varquote.sh,v 1.5 2016/03/27 14:50:01 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -125,7 +125,6 @@ default_assignment_with_arith_head() {
 default_assignment_with_arith_body() {
 	atf_check -s eq:0 -o empty -e empty ${TEST_SH} -c ': "${x=$((1))}"'
 	atf_check -s eq:0 -o match:1 -e empty ${TEST_SH} -c 'echo "${x=$((1))}"'
-
 }
 
 atf_init_test_cases() {
