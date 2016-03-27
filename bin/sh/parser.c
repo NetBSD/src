@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.109 2016/03/27 14:35:30 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.110 2016/03/27 14:36:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.109 2016/03/27 14:35:30 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.110 2016/03/27 14:36:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -560,7 +560,6 @@ STATIC union node *
 simplecmd(union node **rpp, union node *redir)
 {
 	union node *args, **app;
-	union node **orig_rpp = rpp;
 	union node *n = NULL, *n2;
 	int negate = 0;
 
@@ -571,12 +570,6 @@ simplecmd(union node **rpp, union node *redir)
 
 	args = NULL;
 	app = &args;
-	/*
-	 * We save the incoming value, because we need this for shell
-	 * functions.  There can not be a redirect or an argument between
-	 * the function name and the open parenthesis.
-	 */
-	orig_rpp = rpp;
 
 	while (readtoken() == TNOT) {
 		TRACE(("simplcmd: TNOT recognized\n"));
@@ -597,7 +590,7 @@ simplecmd(union node **rpp, union node *redir)
 			rpp = &n->nfile.next;
 			parsefname();	/* read name of redirection file */
 		} else if (lasttoken == TLP && app == &args->narg.next
-					    && rpp == orig_rpp) {
+					    && redir == 0) {
 			/* We have a function */
 			if (readtoken() != TRP)
 				synexpect(TRP, 0);
