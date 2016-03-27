@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.108 2016/03/27 14:34:46 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.109 2016/03/27 14:35:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.108 2016/03/27 14:34:46 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.109 2016/03/27 14:35:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1091,18 +1091,16 @@ parsebackq(VSS *const stack, char * const in,
     struct nodelist **const pbqlist, const int oldstyle)
 {
 	struct nodelist **nlpp;
-	int savepbq;
+	const int savepbq = parsebackquote;
 	union node *n;
 	char *out;
 	char *str = NULL;
-	char *pout;
 	char *volatile sstr = str;
 	struct jmploc jmploc;
 	struct jmploc *const savehandler = handler;
-	int savelen;
+	const int savelen = in - stackblock();
 	int saveprompt;
 
-	savepbq = parsebackquote;
 	if (setjmp(jmploc.loc)) {
 		if (sstr)
 			ckfree(__UNVOLATILE(sstr));
@@ -1112,9 +1110,7 @@ parsebackq(VSS *const stack, char * const in,
 		longjmp(handler->loc, 1);
 	}
 	INTOFF;
-	out = in;
 	sstr = str = NULL;
-	savelen = out - stackblock();
 	if (savelen > 0) {
 		sstr = str = ckmalloc(savelen);
 		memcpy(str, stackblock(), savelen);
@@ -1134,7 +1130,7 @@ parsebackq(VSS *const stack, char * const in,
 		 * need to bother the state stack.  That will be used
 		 * (as appropriate) when the processed string is re-read.
 		 */
-                STARTSTACKSTR(pout);
+                STARTSTACKSTR(out);
 		for (;;) {
 			if (needprompt) {
 				setprompt(2);
@@ -1161,7 +1157,7 @@ parsebackq(VSS *const stack, char * const in,
 				}
                                 if (pc != '\\' && pc != '`' && pc != '$'
                                     && (!ISDBLQUOTE() || pc != '"'))
-                                        STPUTC('\\', pout);
+                                        STPUTC('\\', out);
 				break;
 
 			case '\n':
@@ -1177,13 +1173,13 @@ parsebackq(VSS *const stack, char * const in,
 			default:
 				break;
 			}
-			STPUTC(pc, pout);
+			STPUTC(pc, out);
                 }
 done:
-                STPUTC('\0', pout);
-                psavelen = pout - stackblock();
+                STPUTC('\0', out);
+                psavelen = out - stackblock();
                 if (psavelen > 0) {
-			pstr = grabstackstr(pout);
+			pstr = grabstackstr(out);
 			setinputstring(pstr, 1);
                 }
         }
@@ -1220,12 +1216,13 @@ done:
                 popfile();
 		tokpushback = 0;
 	}
+
 	while (stackblocksize() <= savelen)
 		growstackblock();
-	STARTSTACKSTR(pout);
+	STARTSTACKSTR(out);
 	if (str) {
-		memcpy(pout, str, savelen);
-		STADJUST(savelen, pout);
+		memcpy(out, str, savelen);
+		STADJUST(savelen, out);
 		INTOFF;
 		ckfree(str);
 		sstr = str = NULL;
@@ -1234,11 +1231,11 @@ done:
 	parsebackquote = savepbq;
 	handler = savehandler;
 	if (arinest || ISDBLQUOTE())
-		USTPUTC(CTLBACKQ | CTLQUOTE, pout);
+		USTPUTC(CTLBACKQ | CTLQUOTE, out);
 	else
-		USTPUTC(CTLBACKQ, pout);
+		USTPUTC(CTLBACKQ, out);
 
-	return pout;
+	return out;
 }
 
 STATIC int
