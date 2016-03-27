@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2014/03/04 17:57:56 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2016/03/27 00:03:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,14 @@ OBJS+=		crtbegin.o crtend.o
 .if ${MKPIC} == "yes"
 OBJS+=		crtbeginS.o
 CFLAGS.crtbegin.c+= -fPIE
+# XXXGCC5 - GCC 5 miscompiles crtbeginS.c on many platforms.  on SPARC it
+# XXXGCC5   emits "clr %g1; call %g1", which is effectively jumping to zero.
+. if defined(HAVE_GCC) && ${HAVE_GCC} == 53 && \
+     ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "amd64"
+CFLAGS.crtbeginS.c+=	-O1
+. endif
 .endif
+
 .if ${MACHINE_ARCH} == "alpha"
 OBJS+=		crtfm.o
 .endif
@@ -55,7 +62,7 @@ crtbeginS.o: crtbegin.S
 .else
 crtbeginS.o: crtbegin.c crtbegin.h
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${PICFLAGS} -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
+	${COMPILE.c} ${CFLAGS.crtbeginS.c} ${PICFLAGS} -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.o ${.TARGET} 
 	rm -f ${.TARGET}.o
