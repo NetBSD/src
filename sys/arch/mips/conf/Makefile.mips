@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.63 2016/02/18 20:50:44 macallan Exp $
+#	$NetBSD: Makefile.mips,v 1.64 2016/03/28 08:10:57 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -47,6 +47,7 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 
+.if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC} == "48"
 # XXX
 # gcc does not pass floating point options to the assembler
 # by default, because it is afraid that the stricter tests
@@ -57,6 +58,7 @@ GP?=		${DEFGP}
 
 CFLAGS+=	-Wa,-msoft-float
 COPTS.mips_fpu.c+=	-Wa,-mhard-float
+.endif
 
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24
 .if defined(LP64) && ${LP64} == "yes"
