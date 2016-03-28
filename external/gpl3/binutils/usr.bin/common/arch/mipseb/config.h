@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
 /* config.h.  Generated from config.in by configure.  */
-/* config.in.  Generated from configure.ac by autoheader.  */
+/* config.in.  Generated from configure.in by autoheader.  */
 
 /* Check that config.h is #included before system headers
    (this works only for glibc, but that should be enough).  */
@@ -22,9 +22,6 @@
 
 /* Should ar and ranlib use -D behavior by default? */
 #define DEFAULT_AR_DETERMINISTIC 0
-
-/* Should strings use -a behavior by default? */
-#define DEFAULT_STRINGS_ALL 1
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -71,10 +68,6 @@
    */
 #define HAVE_DECL_STPCPY 1
 
-/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
-   don't. */
-#define HAVE_DECL_STRNLEN 1
-
 /* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
    */
 #define HAVE_DECL_STRSTR 1
@@ -112,9 +105,6 @@
 
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
-
-/* Define to 1 if the system has the type `long long'. */
-#define HAVE_LONG_LONG 1
 
 /* Define if mbstate_t exists in wchar.h. */
 #define HAVE_MBSTATE_T 1
@@ -182,8 +172,8 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
-/* Define to 1 if you have the <windows.h> header file. */
-/* #undef HAVE_WINDOWS_H */
+/* Define to 1 if you have the <zlib.h> header file. */
+#define HAVE_ZLIB_H 1
 
 /* Define as const if the declaration of iconv() needs const. */
 #define ICONV_CONST const
@@ -199,25 +189,19 @@
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "binutils"
+#define PACKAGE_NAME ""
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "binutils 2.26"
+#define PACKAGE_STRING ""
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "binutils"
+#define PACKAGE_TARNAME ""
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.26"
-
-/* The size of `long', as computed by sizeof. */
-#define SIZEOF_LONG 4
-
-/* The size of `long long', as computed by sizeof. */
-#define SIZEOF_LONG_LONG 8
+#define PACKAGE_VERSION ""
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -265,7 +249,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.26"
+#define VERSION "2.23.2"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
