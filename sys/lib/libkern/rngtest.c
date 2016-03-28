@@ -1,4 +1,4 @@
-/*	$NetBSD: rngtest.c,v 1.2 2011/11/25 12:45:00 joerg Exp $ */
+/*	$NetBSD: rngtest.c,v 1.3 2016/03/28 15:20:16 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ the GNU Public License.
 #include <lib/libkern/libkern.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rngtest.c,v 1.2 2011/11/25 12:45:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rngtest.c,v 1.3 2016/03/28 15:20:16 riastradh Exp $");
 
 #ifndef _KERNEL
 static inline int
@@ -263,13 +263,13 @@ rngtest(rngtest_t *const rc)
 		for (last = 0; last <= 1; ++last) {
 			if (rc->rt_runs[last][run] <= minrun[run]) {
 				printf("Kernel RNG \"%s\" runs test FAILURE: "
-				       "too few runs of %d %ds (%d < %d)\n",
+				       "too few runs of %d %ds (%d <= %d)\n",
 				       rc->rt_name, run, last,
 				       rc->rt_runs[last][run], minrun[run]);
 				++rc->rt_nerrs;
 			} else if (rc->rt_runs[last][run] >= maxrun[run]) {
 				printf("Kernel RNG \"%s\" runs test FAILURE: "
-				       "too many runs of %d %ds (%d > %d)\n",
+				       "too many runs of %d %ds (%d >= %d)\n",
 				       rc->rt_name, run, last,
 				       rc->rt_runs[last][run], maxrun[run]);
 				++rc->rt_nerrs;
