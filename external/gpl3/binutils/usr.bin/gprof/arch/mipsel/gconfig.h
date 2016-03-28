@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
 /* gconfig.h.  Generated from gconfig.in by configure.  */
-/* gconfig.in.  Generated from configure.ac by autoheader.  */
+/* gconfig.in.  Generated from configure.in by autoheader.  */
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -48,9 +48,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to 1 if you have the <windows.h> header file. */
-/* #undef HAVE_WINDOWS_H */
-
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #define LT_OBJDIR ".libs/"
@@ -62,19 +59,19 @@
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "gprof"
+#define PACKAGE_NAME ""
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gprof 2.26"
+#define PACKAGE_STRING ""
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "gprof"
+#define PACKAGE_TARNAME ""
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.26"
+#define PACKAGE_VERSION ""
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -102,7 +99,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.26"
+#define VERSION "2.23.2"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
