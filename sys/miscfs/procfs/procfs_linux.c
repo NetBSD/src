@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.71 2015/07/24 13:02:52 maxv Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.72 2016/03/28 17:23:47 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.71 2015/07/24 13:02:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.72 2016/03/28 17:23:47 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,10 +366,10 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 {
 	struct vmspace	*vm;
 	struct proc	*p = l->l_proc;
-	struct rusage	*ru = &p->p_stats->p_ru;
 	char		*bf;
 	int	 	 error;
 	int	 	 len;
+	struct kinfo_proc2 ki;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
@@ -379,17 +379,26 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 		goto out;
 	}
 
-	len = snprintf(bf, LBFSZ,
-	        "%lu %lu %lu %lu %lu %lu %lu\n",
-		(unsigned long)(vm->vm_tsize + vm->vm_dsize + vm->vm_ssize), /* size */
-		(unsigned long)(vm->vm_rssize),	/* resident */
-		(unsigned long)(ru->ru_ixrss),	/* shared */
-		(unsigned long)(vm->vm_tsize),	/* text size in pages */
-		(unsigned long)(vm->vm_dsize),	/* data size in pages */
-		(unsigned long)(vm->vm_ssize),	/* stack size in pages */
-		(unsigned long) 0);
+	mutex_enter(proc_lock);
+	mutex_enter(p->p_lock);
+
+	/* retrieve RSS size */
+	fill_kproc2(p, &ki, false);
+
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
 
 	uvmspace_free(vm);
+
+	len = snprintf(bf, LBFSZ,
+	        "%lu %lu %lu %lu %lu %lu %lu\n",
+		(unsigned long)(ki.p_vm_msize),	/* size */
+		(unsigned long)(ki.p_vm_rssize),/* resident */
+		(unsigned long)(ki.p_uru_ixrss),/* shared */
+		(unsigned long)(ki.p_vm_tsize),	/* text */
+		(unsigned long) 0,		/* library (unused) */
+		(unsigned long)(ki.p_vm_dsize + ki.p_vm_ssize),	/* data+stack */
+		(unsigned long) 0);		/* dirty */
 
 	if (len == 0)
 		goto out;
