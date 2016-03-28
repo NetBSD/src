@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.240 2016/03/13 10:07:22 mlelstv Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.241 2016/03/28 09:50:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.240 2016/03/13 10:07:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.241 2016/03/28 09:50:40 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -172,8 +172,6 @@ static void config_devdelete(device_t);
 static void config_devunlink(device_t, struct devicelist *);
 static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
-static void config_alldevs_unlock(int);
-static int config_alldevs_lock(void);
 static void config_alldevs_enter(struct alldevs_foray *);
 static void config_alldevs_exit(struct alldevs_foray *);
 static void config_add_attrib_dict(device_t);
@@ -1220,9 +1218,8 @@ config_makeroom(int n, struct cfdriver *cd)
 static void
 config_devlink(device_t dev)
 {
-	int s;
 
-	s = config_alldevs_lock();
+	mutex_enter(&alldevs_mtx);
 
 	KASSERT(device_cfdriver(dev)->cd_devs[dev->dv_unit] == dev);
 
@@ -1231,7 +1228,7 @@ config_devlink(device_t dev)
 	 * readers and writers are in the list.
 	 */
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);
-	config_alldevs_unlock(s);
+	mutex_exit(&alldevs_mtx);
 }
 
 static void
@@ -1715,7 +1712,7 @@ config_detach(device_t dev, int flags)
 #ifdef DIAGNOSTIC
 	device_t d;
 #endif
-	int rv = 0, s;
+	int rv = 0;
 
 #ifdef DIAGNOSTIC
 	cf = dev->dv_cfdata;
@@ -1730,9 +1727,9 @@ config_detach(device_t dev, int flags)
 	ca = dev->dv_cfattach;
 	KASSERT(ca != NULL);
 
-	s = config_alldevs_lock();
+	mutex_enter(&alldevs_mtx);
 	if (dev->dv_del_gen != 0) {
-		config_alldevs_unlock(s);
+		mutex_exit(&alldevs_mtx);
 #ifdef DIAGNOSTIC
 		printf("%s: %s is already detached\n", __func__,
 		    device_xname(dev));
@@ -1740,7 +1737,7 @@ config_detach(device_t dev, int flags)
 		return ENOENT;
 	}
 	alldevs_nwrite++;
-	config_alldevs_unlock(s);
+	mutex_exit(&alldevs_mtx);
 
 	if (!detachall &&
 	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
@@ -2204,33 +2201,19 @@ config_twiddle_fn(void *cookie)
 	mutex_exit(&config_misc_lock);
 }
 
-static int
-config_alldevs_lock(void)
-{
-	mutex_enter(&alldevs_mtx);
-	return 0;
-}
-
 static void
 config_alldevs_enter(struct alldevs_foray *af)
 {
 	TAILQ_INIT(&af->af_garbage);
-	af->af_s = config_alldevs_lock();
+	mutex_enter(&alldevs_mtx);
 	config_collect_garbage(&af->af_garbage);
 } 
 
 static void
 config_alldevs_exit(struct alldevs_foray *af)
 {
-	config_alldevs_unlock(af->af_s);
-	config_dump_garbage(&af->af_garbage);
-}
-
-/*ARGSUSED*/
-static void
-config_alldevs_unlock(int s)
-{
 	mutex_exit(&alldevs_mtx);
+	config_dump_garbage(&af->af_garbage);
 }
 
 /*
@@ -2242,15 +2225,13 @@ device_t
 device_lookup(cfdriver_t cd, int unit)
 {
 	device_t dv;
-	int s;
 
-	s = config_alldevs_lock();
-	KASSERT(mutex_owned(&alldevs_mtx));
+	mutex_enter(&alldevs_mtx);
 	if (unit < 0 || unit >= cd->cd_ndevs)
 		dv = NULL;
 	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
 		dv = NULL;
-	config_alldevs_unlock(s);
+	mutex_exit(&alldevs_mtx);
 
 	return dv;
 }
@@ -2789,11 +2770,10 @@ void
 deviter_init(deviter_t *di, deviter_flags_t flags)
 {
 	device_t dv;
-	int s;
 
 	memset(di, 0, sizeof(*di));
 
-	s = config_alldevs_lock();
+	mutex_enter(&alldevs_mtx);
 	if ((flags & DEVITER_F_SHUTDOWN) != 0)
 		flags |= DEVITER_F_RW;
 
@@ -2802,7 +2782,7 @@ deviter_init(deviter_t *di, deviter_flags_t flags)
 	else
 		alldevs_nread++;
 	di->di_gen = alldevs_gen++;
-	config_alldevs_unlock(s);
+	mutex_exit(&alldevs_mtx);
 
 	di->di_flags = flags;
 
@@ -2909,15 +2889,14 @@ void
 deviter_release(deviter_t *di)
 {
 	bool rw = (di->di_flags & DEVITER_F_RW) != 0;
-	int s;
 
-	s = config_alldevs_lock();
+	mutex_enter(&alldevs_mtx);
 	if (rw)
 		--alldevs_nwrite;
 	else
 		--alldevs_nread;
 	/* XXX wake a garbage-collection thread */
-	config_alldevs_unlock(s);
+	mutex_exit(&alldevs_mtx);
 }
 
 const char *
