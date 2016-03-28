@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.2 2016/03/28 01:53:07 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.3 2016/03/28 02:35:43 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -247,7 +247,7 @@ destination: 10.0.1.2
 	EOF
 	rump.route -n get $IP4SRC > ./output
 	$DEBUG && cat ./expect ./output
-	atf_check -s exit:0 diff -q ./expect ./output
+	atf_check -s exit:0 diff ./expect ./output
 
 	# Neighbor
 	cat >./expect <<-EOF
@@ -262,7 +262,7 @@ destination: 10.0.1.0
 	EOF
 	rump.route -n get $IP4SRCGW > ./output
 	$DEBUG && cat ./expect ./output
-	atf_check -s exit:0 diff -q ./expect ./output
+	atf_check -s exit:0 diff ./expect ./output
 
 	# Remote host
 	cat >./expect <<-EOF
@@ -278,7 +278,7 @@ destination: default
 	EOF
 	rump.route -n get $IP4DST > ./output
 	$DEBUG && cat ./expect ./output
-	atf_check -s exit:0 diff -q ./expect ./output
+	atf_check -s exit:0 diff ./expect ./output
 
 	# Create a ARP cache
 	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4SRCGW
@@ -296,7 +296,7 @@ destination: 10.0.1.1
 	$DEBUG && cat ./expect ./output
 	# Trim the last line including unfixed expire time
 	head -6 ./output > ./trimed
-	atf_check -s exit:0 diff -q ./expect ./trimed
+	atf_check -s exit:0 diff ./expect ./trimed
 }
 
 test_route_get6()
@@ -321,7 +321,7 @@ destination: fc00:0:0:1::2
 	EOF
 	rump.route -n get -inet6 $IP6SRC > ./output
 	$DEBUG && cat ./expect ./output
-	atf_check -s exit:0 diff -q ./expect ./output
+	atf_check -s exit:0 diff ./expect ./output
 
 	# Neighbor
 	cat >./expect <<-EOF
@@ -336,7 +336,7 @@ destination: fc00:0:0:1::
 	EOF
 	rump.route -n get -inet6 $IP6SRCGW > ./output
 	$DEBUG && cat ./expect ./output
-	atf_check -s exit:0 diff -q ./expect ./output
+	atf_check -s exit:0 diff ./expect ./output
 
 	# Remote host
 	cat >./expect <<-EOF
@@ -352,7 +352,7 @@ destination: ::
 	EOF
 	rump.route -n get -inet6 $IP6DST > ./output
 	$DEBUG && cat ./expect ./output
-	atf_check -s exit:0 diff -q ./expect ./output
+	atf_check -s exit:0 diff ./expect ./output
 
 	# Create a NDP cache
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $IP6SRCGW
@@ -370,7 +370,7 @@ destination: fc00:0:0:1::1
 	rump.route -n get -inet6 $IP6SRCGW > ./output
 	$DEBUG && cat ./expect ./output
 	# No need to trim, because a NDP cache doesn't set an expire time
-	atf_check -s exit:0 diff -q ./expect ./output
+	atf_check -s exit:0 diff ./expect ./output
 }
 
 command_get_body()
