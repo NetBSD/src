@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.478 2016/03/28 15:45:18 macallan Exp $	*/
+/*	$NetBSD: init_main.c,v 1.479 2016/03/28 16:45:44 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.478 2016/03/28 15:45:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.479 2016/03/28 16:45:44 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1035,7 +1035,7 @@ start_init(void *arg)
 		 * Move out the arg pointers.
 		 */
 		ucp = (void *)STACK_ALIGN(ucp, STACK_ALIGNBYTES);
-		uap = (char **)STACK_ALLOC(ucp, sizeof(args));
+		uap = (char **)STACK_ALLOC(ucp, sizeof(argv));
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;
 		SCARG(&args, envp) = NULL;
@@ -1044,7 +1044,7 @@ start_init(void *arg)
 		argv[0] = slash ? arg0 + (slash + 1 - path) : arg0;
 		argv[1] = arg1;
 		argv[2] = NULL;
-		if ((error = copyout(argv, uap, sizeof(args))) != 0)
+		if ((error = copyout(argv, uap, sizeof(argv))) != 0)
 			goto copyerr;
 
 		/*
