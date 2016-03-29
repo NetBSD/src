@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.64 2016/03/28 08:10:57 martin Exp $
+#	$NetBSD: Makefile.mips,v 1.65 2016/03/29 18:40:32 macallan Exp $
 
 # Makefile for NetBSD
 #
@@ -58,6 +58,9 @@ GP?=		${DEFGP}
 
 CFLAGS+=	-Wa,-msoft-float
 COPTS.mips_fpu.c+=	-Wa,-mhard-float
+.else
+COPTS.mips_fpu.c+=	-mhard-float -Wa,-mhard-float
+AFLAGS.fp.S+=		-Wa,-mhard-float
 .endif
 
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24
