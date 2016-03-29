@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.15 2016/03/27 00:07:20 mrg Exp $
+$NetBSD: README.gcc53,v 1.16 2016/03/29 09:20:28 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -6,11 +6,9 @@ lib:
 new stuff:
 	cc1objcplus
 	collect2 -- need to re-introduce?
-	libcc1
 	libcilkrts
 	libmpx
 	liboffloadmic
-	libquadmath
 	libvtv
 	libitm
 
@@ -54,13 +52,13 @@ earmv7eb	y	?	y	y		y[3]
 earmv7hf	y	?	y	y		y[3]
 earmv7hfeb	y	?	y	y		y[3]
 hppa		y	y	y	y		y		y[6]	y
-i386		y	y	y	y		y		y	
+i386		y	y	y	y		y		y	y
 m68000		y	?	y	y		y
 m68k		y	?	y	y		y[13]
-mipseb		y	?	y	y		y
+mipseb		y	y	y	y		y		y
 mipsel		y	y	y	y		y		y
-mips64eb	y	?	n	y		n[8]
-mips64el	y	?	n	y		y[8]
+mips64eb	y	y	y	y		y[8]		y
+mips64el	y	?	y	y		y
 powerpc		y	y	y	y		y		y[6]	
 sh3eb		y	?	y	y		y[5]
 sh3el		y	?	y	y		y
@@ -78,7 +76,6 @@ powerpc64
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 
-[1] - 
 [2] - -O2 and -Os kernels hang, -O1 SIR reset
 	-- may be a SMP issue; ultra10 works, ultra45 SMP does not
 		-- try sb2000 (particularly with UP kernel.  u45 UP is shitty.)
@@ -86,11 +83,8 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [4] - bin/expr/t_expr:overflow fails on shark, only new failure.  fails on other ports too.
 [5] - sh3eb tries to use sh specific atomic config which doesn't work, has hand edited mknative output
 [6] - crtbeginS.o builds incorrectly with GCC 5.3 and -O2.  a hack for -O1 has been added.
-[7] - 
 [8] - sgimips64 release build fails, mdsetimage'd gz'd kernels don't get built?
-[9] - 
 [10] - needs to be re-merged with GCC 5.3 versions of these not-merged-to-mainline-gcc ports.
-[11] - 
 [13] - builds tested:
        - m68k: mvm68k amiga atari
        - earm : shark evbarm*
@@ -104,6 +98,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
        - arm shark (OK)
        - evbmips gxemul MALTA (FAIL - not gcc problem)
        - pmax gxemul (OK)
+       - sgimips O2 (OK kernel -- but my O2 is not stable)
        - i386/amd64 (OK)
        - hppa (OK)
 [15] - vax
