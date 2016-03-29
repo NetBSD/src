@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.88 2015/04/26 15:15:20 mlelstv Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.89 2016/03/29 04:55:53 mlelstv Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.88 2015/04/26 15:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89 2016/03/29 04:55:53 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -724,6 +724,29 @@ raattach(device_t parent, device_t self, void *aux)
 }
 
 /*
+ * Initialize drive geometry data from disklabel
+ */
+static void
+ra_set_geometry(struct ra_softc *ra)
+{
+	struct	disklabel *dl;
+	struct	disk_geom *dg;
+
+	dl = ra->ra_disk.dk_label;
+	dg = &ra->ra_disk.dk_geom;
+
+	memset(dg, 0, sizeof(*dg));
+	dg->dg_secsize = dl->d_secsize;
+	dg->dg_nsectors = dl->d_nsectors;
+	dg->dg_ntracks = dl->d_ntracks;
+
+	dg->dg_ncylinders = dl->d_ncylinders;
+	dg->dg_secperunit = dl->d_secperunit;
+
+	disk_set_info(ra->ra_dev, &ra->ra_disk, NULL);
+}
+
+/*
  * (Try to) put the drive online. This is done the first time the
  * drive is opened, or if it har fallen offline.
  */
@@ -968,6 +991,7 @@ rronline(device_t usc, struct mscp *mp)
 		dl->d_rpm = 300;
 	}
 	rrmakelabel(dl, ra->ra_mediaid);
+	ra_set_geometry(ra);
 
 	return (MSCP_DONE);
 }
