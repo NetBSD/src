@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.13 2013/11/22 17:04:24 martin Exp $ */
+/* $NetBSD: softfloat.c,v 1.14 2016/03/29 18:42:29 martin Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.13 2013/11/22 17:04:24 martin Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.14 2016/03/29 18:42:29 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -661,7 +661,7 @@ static floatx80
 {
     int8 roundingMode;
     flag roundNearestEven, increment, isTiny;
-    int64 roundIncrement, roundMask, roundBits;
+    uint64 roundIncrement, roundMask, roundBits;
 
     roundingMode = float_rounding_mode;
     roundNearestEven = ( roundingMode == float_round_nearest_even );
@@ -3938,7 +3938,7 @@ according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 */
 floatx80 floatx80_rem( floatx80 a, floatx80 b )
 {
-    flag aSign, bSign, zSign;
+    flag aSign, zSign;
     int32 aExp, bExp, expDiff;
     bits64 aSig0, aSig1, bSig;
     bits64 q, term0, term1, alternateASig0, alternateASig1;
@@ -3949,7 +3949,7 @@ floatx80 floatx80_rem( floatx80 a, floatx80 b )
     aSign = extractFloatx80Sign( a );
     bSig = extractFloatx80Frac( b );
     bExp = extractFloatx80Exp( b );
-    bSign = extractFloatx80Sign( b );
+
     if ( aExp == 0x7FFF ) {
         if (    (bits64) ( aSig0<<1 )
              || ( ( bExp == 0x7FFF ) && (bits64) ( bSig<<1 ) ) ) {
