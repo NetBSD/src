@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.23 2016/02/16 08:02:49 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.24 2016/03/29 08:42:41 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.23 2016/02/16 08:02:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.24 2016/03/29 08:42:41 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -98,20 +98,20 @@ fail:
 #define UHUBHIST_CALLED(name) USBHIST_CALLED(uhubdebug)
 
 struct uhub_softc {
-	device_t		sc_dev;		/* base device */
-	struct usbd_device *	sc_hub;		/* USB device */
-	int			sc_proto;	/* device protocol */
-	struct usbd_pipe *	sc_ipipe;	/* interrupt pipe */
+	device_t		 sc_dev;	/* base device */
+	struct usbd_device	*sc_hub;	/* USB device */
+	int			 sc_proto;	/* device protocol */
+	struct usbd_pipe	*sc_ipipe;	/* interrupt pipe */
 
-	kmutex_t		sc_lock;
+	kmutex_t		 sc_lock;
 
 	uint8_t			*sc_statusbuf;
 	uint8_t			*sc_statuspend;
 	uint8_t			*sc_status;
-	size_t			sc_statuslen;
-	int			sc_explorepending;
+	size_t			 sc_statuslen;
+	int			 sc_explorepending;
 
-	u_char			sc_running;
+	u_char			 sc_running;
 };
 
 #define UHUB_IS_HIGH_SPEED(sc) \
