@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.101 2014/02/19 20:21:22 dsl Exp $	*/
+/*	$NetBSD: kvm.c,v 1.102 2016/03/29 06:51:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.101 2014/02/19 20:21:22 dsl Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.102 2016/03/29 06:51:40 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -515,9 +515,14 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 	 */
 	sz = Pread(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr), dump_off);
 	if (sz != sizeof(cpu_hdr)) {
-		_kvm_err(kd, 0, "read %zx bytes at offset %"PRIx64
-		    " for cpu_hdr instead of requested %zu",
-		    sz, dump_off, sizeof(cpu_hdr));
+		if (sz == -1)
+			_kvm_err(kd, 0, "read %zx bytes at offset %"PRIx64
+			    " for cpu_hdr failed: %s", sizeof(cpu_hdr),
+			    dump_off, strerror(errno));
+		else
+			_kvm_err(kd, 0, "read %zx bytes at offset %"PRIx64
+			    " for cpu_hdr instead of requested %zu",
+			    sz, dump_off, sizeof(cpu_hdr));
 		return (-1);
 	}
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
