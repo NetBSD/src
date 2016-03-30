@@ -1,0 +1,36 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_BLOB_CLOSE 3
+.Os
+.Sh NAME
+.Nm sqlite3_blob_close
+.Nd Close A BLOB Handle
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_blob_close
+.Fa "sqlite3_blob *"
+.Fc
+.Sh DESCRIPTION
+Closes an open BLOB handle.
+.Pp
+Closing a BLOB shall cause the current transaction to commit if there
+are no other BLOBs, no pending prepared statements, and the database
+connection is in autocommit mode.
+If any writes were made to the BLOB, they might be held in cache until
+the close operation if they will fit.
+.Pp
+Closing the BLOB often forces the changes out to disk and so if any
+I/O errors occur, they will likely occur at the time when the BLOB
+is closed.
+Any errors that occur during closing are reported as a non-zero return
+value.
+.Pp
+The BLOB is closed unconditionally.
+Even if this routine returns an error code, the BLOB is still closed.
+.Pp
+Calling this routine with a null pointer (such as would be returned
+by a failed call to sqlite3_blob_open()) is a harmless
+no-op.
+.Sh SEE ALSO
+.Xr sqlite3_get_autocommit 3 ,
+.Xr sqlite3_blob 3 ,
+.Xr sqlite3_blob_open 3
