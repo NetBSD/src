@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2015/11/07 20:45:03 szptvlfn Exp $
+#	$NetBSD: Makefile,v 1.35 2016/03/30 16:19:06 macallan Exp $
 
 NOLINT=	1	# defined
 
@@ -95,7 +95,7 @@ AFLAGS+=	${${ACTIVE_CC} == "clang" :? -fno-integrated-as :}
 SRCS+=		pixman-mmx.c
 CPPFLAGS+=	-DUSE_LOONGSON_MMI
 # SIMD instructions use floatpoint registers so we need to enable their use
-COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float
+COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float -Wa,-mhard-float
 .endif
 
 INCS=	pixman.h pixman-version.h
