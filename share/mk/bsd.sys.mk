@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.256 2016/03/22 08:17:27 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.257 2016/03/30 13:05:09 martin Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -178,9 +178,9 @@ AFLAGS+=	${CPUFLAGS}
 
 .if !defined(NOPIE) && (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 # Position Independent Executable flags
-PIE_CFLAGS?=        -fPIC
-PIE_LDFLAGS?=       -Wl,-pie ${${ACTIVE_CC} == "gcc":? -shared-libgcc :}
-PIE_AFLAGS?=	    -fPIC
+PIE_CFLAGS?=        -fPIE
+PIE_LDFLAGS?=       -pie ${${ACTIVE_CC} == "gcc":? -shared-libgcc :}
+PIE_AFLAGS?=	    -fPIE
 .endif
 
 ELF2ECOFF?=	elf2ecoff
