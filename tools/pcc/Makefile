@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/06/13 12:29:16 plunky Exp $
+# $NetBSD: Makefile,v 1.3 2016/03/30 23:36:45 riastradh Exp $
 
 GNUHOSTDIST=	${.CURDIR}/../../external/bsd/pcc/dist/pcc
 
@@ -8,6 +8,7 @@ CONFIGURE_ENV+= CC=${HOST_CC:Q} \
                 CXX=${HOST_CXX:Q}
 
 CONFIGURE_ARGS=		--target=${MACHINE_GNU_PLATFORM}
+CONFIGURE_ARGS+=	--disable-stripping
 CONFIGURE_ARGS+=	--enable-tls
 CONFIGURE_ARGS+=	--includedir=/usr/include
 CONFIGURE_ARGS+=	--with-incdir=/usr/include
