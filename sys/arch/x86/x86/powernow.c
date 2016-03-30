@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.8 2013/11/15 08:47:55 msaitoh Exp $ */
+/*	$NetBSD: powernow.c,v 1.9 2016/03/30 21:16:22 christos Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.8 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.9 2016/03/30 21:16:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -906,8 +906,10 @@ powernow_k8_setperf(device_t self, unsigned int freq)
 		COUNT_OFF_VST(sc->sc_state->vst);
 	}
 
+#if 0
 	if (cfid == fid || cvid == vid)
 		freq = sc->sc_state->state_table[i].freq;
+#endif
 
 	return 0;
 }
