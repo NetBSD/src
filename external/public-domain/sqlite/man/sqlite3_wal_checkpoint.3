@@ -1,0 +1,32 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_WAL_CHECKPOINT 3
+.Os
+.Sh NAME
+.Nm sqlite3_wal_checkpoint
+.Nd Checkpoint a database
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_wal_checkpoint
+.Fa "sqlite3 *db"
+.Fa "const char *zDb"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_wal_checkpoint(D,X) interface
+causes database named X on database connection D
+to be checkpointed.
+If X is NULL or an empty string, then a checkpoint is run on all databases
+of connection D.
+If the database connection D is not in  write-ahead log mode
+then this interface is a harmless no-op.
+.Pp
+The wal_checkpoint pragma can be used to invoke
+this interface from SQL.
+The sqlite3_wal_autocheckpoint() interface
+and the wal_autocheckpoint pragma can be used
+to cause this interface to be run whenever the WAL reaches a certain
+size threshold.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_wal_autocheckpoint 3 ,
+.Xr sqlite3_wal_checkpoint_v2 3

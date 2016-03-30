@@ -1,0 +1,36 @@
+.Dd $Mdocdate$
+.Dt SQLITE_MUTEX_FAST 3
+.Os
+.Sh NAME
+.Nm SQLITE_MUTEX_FAST ,
+.Nm SQLITE_MUTEX_RECURSIVE ,
+.Nm SQLITE_MUTEX_STATIC_MASTER ,
+.Nm SQLITE_MUTEX_STATIC_MEM ,
+.Nm SQLITE_MUTEX_STATIC_MEM2 ,
+.Nm SQLITE_MUTEX_STATIC_OPEN ,
+.Nm SQLITE_MUTEX_STATIC_PRNG ,
+.Nm SQLITE_MUTEX_STATIC_LRU ,
+.Nm SQLITE_MUTEX_STATIC_LRU2 ,
+.Nm SQLITE_MUTEX_STATIC_PMEM
+.Nd Mutex Types
+.Sh SYNOPSIS
+.Fd #define SQLITE_MUTEX_FAST
+.Fd #define SQLITE_MUTEX_RECURSIVE
+.Fd #define SQLITE_MUTEX_STATIC_MASTER
+.Fd #define SQLITE_MUTEX_STATIC_MEM
+.Fd #define SQLITE_MUTEX_STATIC_MEM2
+.Fd #define SQLITE_MUTEX_STATIC_OPEN
+.Fd #define SQLITE_MUTEX_STATIC_PRNG
+.Fd #define SQLITE_MUTEX_STATIC_LRU
+.Fd #define SQLITE_MUTEX_STATIC_LRU2
+.Fd #define SQLITE_MUTEX_STATIC_PMEM
+.Sh DESCRIPTION
+The sqlite3_mutex_alloc() interface takes a single
+argument which is one of these integer constants.
+.Pp
+The set of static mutexes may change from one SQLite release to the
+next.
+Applications that override the built-in mutex logic must be prepared
+to accommodate additional static mutexes.
+.Sh SEE ALSO
+.Xr sqlite3_mutex_alloc 3

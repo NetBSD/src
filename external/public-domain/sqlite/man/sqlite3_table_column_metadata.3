@@ -1,0 +1,79 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_TABLE_COLUMN_METADATA 3
+.Os
+.Sh NAME
+.Nm sqlite3_table_column_metadata
+.Nd Extract Metadata About A Column Of A Table
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_table_column_metadata
+.Fa "sqlite3 *db"
+.Fa "const char *zDbName"
+.Fa "const char *zTableName"
+.Fa "const char *zColumnName"
+.Fa "char const **pzDataType"
+.Fa "char const **pzCollSeq"
+.Fa "int *pNotNull"
+.Fa "int *pPrimaryKey"
+.Fa "int *pAutoinc               "
+.Fc
+.Sh DESCRIPTION
+This routine returns metadata about a specific column of a specific
+database table accessible using the database connection
+handle passed as the first function argument.
+.Pp
+The column is identified by the second, third and fourth parameters
+to this function.
+The second parameter is either the name of the database (i.e.
+"main", "temp", or an attached database) containing the specified table
+or NULL.
+If it is NULL, then all attached databases are searched for the table
+using the same algorithm used by the database engine to resolve unqualified
+table references.
+.Pp
+The third and fourth parameters to this function are the table and
+column name of the desired column, respectively.
+Neither of these parameters may be NULL.
+.Pp
+Metadata is returned by writing to the memory locations passed as the
+5th and subsequent parameters to this function.
+Any of these arguments may be NULL, in which case the corresponding
+element of metadata is omitted.
+.Bd -ragged
+<table border="1"> <tr><th> Parameter <th> Output<br>Type <th>  Description
+.Pp
+<tr><td> 5th <td> const char* <td> Data type <tr><td> 6th <td> const
+char* <td> Name of default collation sequence <tr><td> 7th <td> int
+<td> True if column has a NOT NULL constraint <tr><td> 8th <td> int
+<td> True if column is part of the PRIMARY KEY <tr><td> 9th <td> int
+<td> True if column is AUTOINCREMENT </table> 
+.Ed
+.Pp
+The memory pointed to by the character pointers returned for the declaration
+type and collation sequence is valid only until the next call to any
+SQLite API function.
+.Pp
+If the specified table is actually a view, an error code
+is returned.
+.Pp
+If the specified column is "rowid", "oid" or "_rowid_" and an INTEGER PRIMARY KEY
+column has been explicitly declared, then the output parameters are
+set for the explicitly declared column.
+If there is no explicitly declared INTEGER PRIMARY KEY
+column, then the output parameters are set as follows: 
+.Bd -literal
+data type: "INTEGER" collation sequence: "BINARY" not null: 0 primary
+key: 1 auto increment: 0 
+.Ed
+.Pp
+This function may load one or more schemas from database files.
+If an error occurs during this process, or if the requested table or
+column cannot be found, an error code is returned and an
+error message left in the database connection (to
+be retrieved using sqlite3_errmsg()).
+.Pp
+This API is only available if the library was compiled with the SQLITE_ENABLE_COLUMN_METADATA
+C-preprocessor symbol defined.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr SQLITE_OK 3

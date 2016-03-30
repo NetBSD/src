@@ -1,0 +1,76 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_INDEX_INFO 3
+.Os
+.Sh NAME
+.Nm sqlite3_index_info
+.Nd Virtual Table Indexing Information
+.Sh SYNOPSIS
+.Vt struct sqlite3_index_info ;
+.Sh DESCRIPTION
+The sqlite3_index_info structure and its substructures is used as part
+of the virtual table interface to pass information into
+and receive the reply from the xBestIndex method of a virtual table module.
+The fields under **Inputs** are the inputs to xBestIndex and are read-only.
+xBestIndex inserts its results into the **Outputs** fields.
+.Pp
+The aConstraint[] array records WHERE clause constraints of the form:
+.Bd -ragged
+column OP expr
+.Ed
+.Pp
+where OP is =, <, <=, >, or >=.
+The particular operator is stored in aConstraint[].op using one of
+the  SQLITE_INDEX_CONSTRAINT_ values.
+The index of the column is stored in aConstraint[].iColumn.
+aConstraint[].usable is TRUE if the expr on the right-hand side can
+be evaluated (and thus the constraint is usable) and false if it cannot.
+.Pp
+The optimizer automatically inverts terms of the form "expr OP column"
+and makes other simplifications to the WHERE clause in an attempt to
+get as many WHERE clause terms into the form shown above as possible.
+The aConstraint[] array only reports WHERE clause terms that are relevant
+to the particular virtual table being queried.
+.Pp
+Information about the ORDER BY clause is stored in aOrderBy[].
+Each term of aOrderBy records a column of the ORDER BY clause.
+.Pp
+The xBestIndex method must fill aConstraintUsage[] with information
+about what parameters to pass to xFilter.
+If argvIndex>0 then the right-hand side of the corresponding aConstraint[]
+is evaluated and becomes the argvIndex-th entry in argv.
+If aConstraintUsage[].omit is true, then the constraint is assumed
+to be fully handled by the virtual table and is not checked again by
+SQLite.
+.Pp
+The idxNum and idxPtr values are recorded and passed into the xFilter
+method.
+sqlite3_free() is used to free idxPtr if and only if
+needToFreeIdxPtr is true.
+.Pp
+The orderByConsumed means that output from xFilter/xNext
+will occur in the correct order to satisfy the ORDER BY clause so that
+no separate sorting step is required.
+.Pp
+The estimatedCost value is an estimate of the cost of a particular
+strategy.
+A cost of N indicates that the cost of the strategy is similar to a
+linear scan of an SQLite table with N rows.
+A cost of log(N) indicates that the expense of the operation is similar
+to that of a binary search on a unique indexed field of an SQLite table
+with N rows.
+.Pp
+The estimatedRows value is an estimate of the number of rows that will
+be returned by the strategy.
+.Pp
+IMPORTANT: The estimatedRows field was added to the sqlite3_index_info
+structure for SQLite version 3.8.2.
+If a virtual table extension is used with an SQLite version earlier
+than 3.8.2, the results of attempting to read or write the estimatedRows
+field are undefined (but are likely to included crashing the application).
+The estimatedRows field should therefore only be used if sqlite3_libversion_number()
+returns a value greater than or equal to 3008002.
+.Sh SEE ALSO
+.Xr sqlite3_malloc 3 ,
+.Xr sqlite3_version 3 ,
+.Xr SQLITE_INDEX_CONSTRAINT_EQ 3 ,
+.Xr sqlite3_module 3
