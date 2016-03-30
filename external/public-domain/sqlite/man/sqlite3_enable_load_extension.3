@@ -1,0 +1,25 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_ENABLE_LOAD_EXTENSION 3
+.Os
+.Sh NAME
+.Nm sqlite3_enable_load_extension
+.Nd Enable Or Disable Extension Loading
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_enable_load_extension
+.Fa "sqlite3 *db"
+.Fa "int onoff"
+.Fc
+.Sh DESCRIPTION
+So as not to open security holes in older applications that are unprepared
+to deal with extension loading, and as a means of
+disabling extension loading while evaluating user-entered
+SQL, the following API is provided to turn the sqlite3_load_extension()
+mechanism on and off.
+.Pp
+Extension loading is off by default.
+Call the sqlite3_enable_load_extension() routine with onoff==1 to turn
+extension loading on and call it with onoff==0 to turn it back off
+again.
+.Sh SEE ALSO
+.Xr sqlite3_load_extension 3
