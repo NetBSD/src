@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.30 2016/03/26 07:31:11 martin Exp $
+# $NetBSD: Makefile.inc,v 1.31 2016/03/30 07:25:33 martin Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -84,7 +84,6 @@ GENERIC_SRCS+= \
 	fixunssfsi.c \
 	fixunsxfdi.c \
 	fixunsxfsi.c \
-	fixxfdi.c \
 	floatdidf.c \
 	floatdisf.c \
 	floatdixf.c \
@@ -119,6 +118,12 @@ GENERIC_SRCS+= \
 	udivmodti4.c \
 	udivti3.c \
 	umodti3.c
+
+.if ${MACHINE_ARCH} != "m68k"
+GENERIC_SRCS+= \
+	fixxfdi.c
+.endif
+
 
 .if ${MACHINE_ARCH} != "aarch64"
 GENERIC_SRCS+= \
