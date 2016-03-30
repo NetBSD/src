@@ -1,0 +1,78 @@
+.Dd $Mdocdate$
+.Dt SQLITE_DBCONFIG_LOOKASIDE 3
+.Os
+.Sh NAME
+.Nm SQLITE_DBCONFIG_LOOKASIDE ,
+.Nm SQLITE_DBCONFIG_ENABLE_FKEY ,
+.Nm SQLITE_DBCONFIG_ENABLE_TRIGGER
+.Nd Database Connection Configuration Options
+.Sh SYNOPSIS
+.Fd #define SQLITE_DBCONFIG_LOOKASIDE
+.Fd #define SQLITE_DBCONFIG_ENABLE_FKEY
+.Fd #define SQLITE_DBCONFIG_ENABLE_TRIGGER
+.Sh DESCRIPTION
+These constants are the available integer configuration options that
+can be passed as the second argument to the sqlite3_db_config()
+interface.
+.Pp
+New configuration options may be added in future releases of SQLite.
+Existing configuration options might be discontinued.
+Applications should check the return code from sqlite3_db_config()
+to make sure that the call worked.
+The sqlite3_db_config() interface will return a
+non-zero error code if a discontinued or unsupported configuration
+option is invoked.
+.Bl -tag -width Ds
+.It SQLITE_DBCONFIG_LOOKASIDE
+This option takes three additional arguments that determine the lookaside memory allocator
+configuration for the database connection.
+The first argument (the third parameter to sqlite3_db_config()
+is a pointer to a memory buffer to use for lookaside memory.
+The first argument after the SQLITE_DBCONFIG_LOOKASIDE verb may be
+NULL in which case SQLite will allocate the lookaside buffer itself
+using sqlite3_malloc().
+The second argument is the size of each lookaside buffer slot.
+The third argument is the number of slots.
+The size of the buffer in the first argument must be greater than or
+equal to the product of the second and third arguments.
+The buffer must be aligned to an 8-byte boundary.
+If the second argument to SQLITE_DBCONFIG_LOOKASIDE is not a multiple
+of 8, it is internally rounded down to the next smaller multiple of
+8.
+The lookaside memory configuration for a database connection can only
+be changed when that connection is not currently using lookaside memory,
+or in other words when the "current value" returned by sqlite3_db_status(D,SQLITE_CONFIG_LOOKASIDE,...)
+is zero.
+Any attempt to change the lookaside memory configuration when lookaside
+memory is in use leaves the configuration unchanged and returns SQLITE_BUSY.
+.It SQLITE_DBCONFIG_ENABLE_FKEY
+This option is used to enable or disable the enforcement of foreign key constraints.
+There should be two additional arguments.
+The first argument is an integer which is 0 to disable FK enforcement,
+positive to enable FK enforcement or negative to leave FK enforcement
+unchanged.
+The second parameter is a pointer to an integer into which is written
+0 or 1 to indicate whether FK enforcement is off or on following this
+call.
+The second parameter may be a NULL pointer, in which case the FK enforcement
+setting is not reported back.
+.It SQLITE_DBCONFIG_ENABLE_TRIGGER
+This option is used to enable or disable  triggers.
+There should be two additional arguments.
+The first argument is an integer which is 0 to disable triggers, positive
+to enable triggers or negative to leave the setting unchanged.
+The second parameter is a pointer to an integer into which is written
+0 or 1 to indicate whether triggers are disabled or enabled following
+this call.
+The second parameter may be a NULL pointer, in which case the trigger
+setting is not reported back.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr sqlite3_db_config 3 ,
+.Xr sqlite3_db_status 3 ,
+.Xr sqlite3_malloc 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_CONFIG_SINGLETHREAD 3
