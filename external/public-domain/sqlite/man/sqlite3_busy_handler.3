@@ -1,0 +1,82 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_BUSY_HANDLER 3
+.Os
+.Sh NAME
+.Nm sqlite3_busy_handler
+.Nd Register A Callback To Handle SQLITE_BUSY Errors
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_busy_handler
+.Fa "sqlite3*"
+.Fa "int(*)(void*,int)"
+.Fa "void*"
+.Fc
+.Sh DESCRIPTION
+This routine sets a callback function that might be invoked whenever
+an attempt is made to open a database table that another thread or
+process has locked.
+.Pp
+If the busy callback is NULL, then SQLITE_BUSY or SQLITE_IOERR_BLOCKED
+is returned immediately upon encountering the lock.
+If the busy callback is not NULL, then the callback might be invoked
+with two arguments.
+.Pp
+The first argument to the busy handler is a copy of the void* pointer
+which is the third argument to sqlite3_busy_handler().
+The second argument to the busy handler callback is the number of times
+that the busy handler has been invoked for this locking event.
+If the busy callback returns 0, then no additional attempts are made
+to access the database and SQLITE_BUSY or SQLITE_IOERR_BLOCKED
+is returned.
+If the callback returns non-zero, then another attempt is made to open
+the database for reading and the cycle repeats.
+.Pp
+The presence of a busy handler does not guarantee that it will be invoked
+when there is lock contention.
+If SQLite determines that invoking the busy handler could result in
+a deadlock, it will go ahead and return SQLITE_BUSY or SQLITE_IOERR_BLOCKED
+instead of invoking the busy handler.
+Consider a scenario where one process is holding a read lock that it
+is trying to promote to a reserved lock and a second process is holding
+a reserved lock that it is trying to promote to an exclusive lock.
+The first process cannot proceed because it is blocked by the second
+and the second process cannot proceed because it is blocked by the
+first.
+If both processes invoke the busy handlers, neither will make any progress.
+Therefore, SQLite returns SQLITE_BUSY for the first process,
+hoping that this will induce the first process to release its read
+lock and allow the second process to proceed.
+.Pp
+The default busy callback is NULL.
+.Pp
+The SQLITE_BUSY error is converted to SQLITE_IOERR_BLOCKED
+when SQLite is in the middle of a large transaction where all the changes
+will not fit into the in-memory cache.
+SQLite will already hold a RESERVED lock on the database file, but
+it needs to promote this lock to EXCLUSIVE so that it can spill cache
+pages into the database file without harm to concurrent readers.
+If it is unable to promote the lock, then the in-memory cache will
+be left in an inconsistent state and so the error code is promoted
+from the relatively benign SQLITE_BUSY to the more severe
+SQLITE_IOERR_BLOCKED.
+This error code promotion forces an automatic rollback of the changes.
+See the <a href="/cvstrac/wiki?p=CorruptionFollowingBusyError"> CorruptionFollowingBusyError</a>
+wiki page for a discussion of why this is important.
+.Pp
+There can only be a single busy handler defined for each database connection.
+Setting a new busy handler clears any previously set handler.
+Note that calling sqlite3_busy_timeout() will
+also set or clear the busy handler.
+.Pp
+The busy callback should not take any actions which modify the database
+connection that invoked the busy handler.
+Any such actions result in undefined behavior.
+.Pp
+A busy handler must not close the database connection or prepared statement
+that invoked the busy handler.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_busy_timeout 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_IOERR_READ 3

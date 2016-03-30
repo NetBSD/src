@@ -1,0 +1,38 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_STMT 3
+.Os
+.Sh NAME
+.Nm sqlite3_stmt
+.Nd SQL Statement Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_stmt sqlite3_stmt;
+.Sh DESCRIPTION
+An instance of this object represents a single SQL statement.
+This object is variously known as a "prepared statement" or a "compiled
+SQL statement" or simply as a "statement".
+.Pp
+The life of a statement object goes something like this: 
+.Bl -enum
+.It
+Create the object using sqlite3_prepare_v2() or
+a related function.
+.It
+Bind values to host parameters using the sqlite3_bind_*()
+interfaces.
+.It
+Run the SQL by calling sqlite3_step() one or more times.
+.It
+Reset the statement using sqlite3_reset() then go back
+to step 2.
+Do this zero or more times.
+.It
+Destroy the object using sqlite3_finalize().
+.El
+.Pp
+Refer to documentation on individual methods above for additional information.
+.Sh SEE ALSO
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_reset 3 ,
+.Xr sqlite3_step 3

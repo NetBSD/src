@@ -1,0 +1,39 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_TOTAL_CHANGES 3
+.Os
+.Sh NAME
+.Nm sqlite3_total_changes
+.Nd Total Number Of Rows Modified
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_total_changes
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+This function returns the number of row changes caused by INSERT,
+UPDATE or DELETE statements since the database connection
+was opened.
+The count returned by sqlite3_total_changes() includes all changes
+from all  trigger contexts and changes made by foreign key actions.
+However, the count does not include changes used to implement REPLACE
+constraints, do rollbacks or ABORT processing, or DROP TABLE
+processing.
+The count does not include rows of views that fire an INSTEAD OF trigger,
+though if the INSTEAD OF trigger makes changes of its own, those changes
+are counted.
+The sqlite3_total_changes() function counts the changes as soon as
+the statement that makes them is completed (when the statement handle
+is passed to sqlite3_reset() or sqlite3_finalize()).
+.Pp
+See also the sqlite3_changes() interface, the count_changes pragma,
+and the total_changes() SQL function.
+.Pp
+If a separate thread makes changes on the same database connection
+while sqlite3_total_changes() is running then
+the value returned is unpredictable and not meaningful.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_changes 3 ,
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_reset 3 ,
+.Xr sqlite3_total_changes 3
