@@ -1,4 +1,4 @@
-# $NetBSD: t_wait.sh,v 1.7 2016/03/27 14:50:40 christos Exp $
+# $NetBSD: t_wait.sh,v 1.8 2016/03/31 16:22:54 christos Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -147,7 +147,7 @@ kill_body() {
 	atf_require_prog kill
 
 	s=killhelper.sh
-	z=/tmp/killhelper.$$ 
+	z=killhelper.$$ 
 	pid=
 
 	# waiting for a specific process that is not a child
