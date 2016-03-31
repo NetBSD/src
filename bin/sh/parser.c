@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.114 2016/03/31 16:12:52 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.115 2016/03/31 23:11:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.114 2016/03/31 16:12:52 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.115 2016/03/31 23:11:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ STATIC union node *command(void);
 STATIC union node *simplecmd(union node **, union node *);
 STATIC union node *makename(void);
 STATIC void parsefname(void);
-STATIC void slurp_heredoc(char *const, int, int);
+STATIC void slurp_heredoc(char *const, const int, const int);
 STATIC void readheredocs(void);
 STATIC int peektoken(void);
 STATIC int readtoken(void);
@@ -759,7 +759,7 @@ checkend(int c, char * const eofmark, const int striptabs)
  */
 
 STATIC void
-slurp_heredoc(char *const eofmark, int striptabs, int sq)
+slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 {
 	int c;
 	char *out;
@@ -852,26 +852,19 @@ readheredocs(void)
 		n->narg.text = wordtext;
 		n->narg.backquote = backquotelist;
 		here->here->nhere.doc = n;
+
+		if (here->here->nhere.type == NHERE)
+			continue;
+
+		/*
+		 * Now "parse" here docs that have unquoted eofmarkers.
+		 */
+		setinputstring(wordtext, 1);
+		readtoken1(pgetc(), DQSYNTAX, 1);
+		n->narg.text = wordtext;
+		n->narg.backquote = backquotelist;
+		popfile();
 	}
-}
-
-void
-parse_heredoc(union node *n)
-{
-	if (n->narg.type != NARG)
-		abort();
-
-	if (n->narg.text[0] == '\0')		/* nothing to do */
-		return;
-
-	setinputstring(n->narg.text, 1);
-
-	readtoken1(pgetc(), DQSYNTAX, 1);
-
-	n->narg.text = wordtext;
-	n->narg.backquote = backquotelist;
-
-	popfile();
 }
 
 STATIC int
