@@ -289,7 +289,7 @@
 #define DFLT_RLIMIT_MEMLOCK 32
 
 /* Default number of 4k pages for RLIMIT_STACK */
-#define DFLT_RLIMIT_STACK 50
+#define DFLT_RLIMIT_STACK 64
 
 /* Directory separator character, usually / or \\ */
 #define DIR_SEP '/'
