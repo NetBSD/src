@@ -1,4 +1,4 @@
-# $NetBSD: t_arith.sh,v 1.2 2016/03/16 17:39:12 christos Exp $
+# $NetBSD: t_arith.sh,v 1.3 2016/03/31 16:19:52 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -280,9 +280,9 @@ elementary_add_body()
 	atf_check -s exit:0 -o inline:'5555\n' -e empty ${TEST_SH} -c \
 		'echo $((+3333+2222))'
 	atf_check -s exit:0 -o inline:'7777\n' -e empty ${TEST_SH} -c \
-		'echo $((+3333++4444))'
+		'echo $((+3333 + +4444))'
 	atf_check -s exit:0 -o inline:'-7777\n' -e empty ${TEST_SH} -c \
-		'echo -$((+4125++3652))'
+		'echo -$((+4125+ +3652))'
 }
 
 atf_test_case elementary_sub
@@ -311,7 +311,7 @@ elementary_sub_body()
 	atf_check -s exit:0 -o inline:'-7694\n' -e empty ${TEST_SH} -c \
 		'echo $(( -2016-5678 ))'
 	atf_check -s exit:0 -o inline:'--1\n' -e empty ${TEST_SH} -c \
-		'echo -$(( -1018--1017 ))'
+		'echo -$(( -1018 - -1017 ))'
 }
 
 atf_test_case elementary_mul
