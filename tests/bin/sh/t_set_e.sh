@@ -1,4 +1,4 @@
-# $NetBSD: t_set_e.sh,v 1.3 2016/03/27 14:50:01 christos Exp $
+# $NetBSD: t_set_e.sh,v 1.4 2016/03/31 16:22:27 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,7 +63,7 @@ dcheck()
 # is thus important to test. (PR bin/29861)
 echeck()
 {
-	check1 'eval '"'($1)'" "$2" "eval '($1)'"
+	check1 'eval '"'( $1 )'" "$2" "eval '($1)'"
 }
 
 atf_test_case all
