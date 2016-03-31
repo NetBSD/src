@@ -1,4 +1,4 @@
-# $NetBSD: t_here.sh,v 1.5 2016/03/27 14:52:40 christos Exp $
+# $NetBSD: t_here.sh,v 1.6 2016/03/31 16:21:52 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,6 +88,11 @@ check()
 		fail=true
 	fi
 
+	if $fail
+	then
+		echo >&2 "[$TEST_NUM] Full command: <<${CMD}>>"
+	fi
+
 	$fail && test -n "$TEST_ID" && {
 		TEST_FAILURES="${TEST_FAILURES}${TEST_FAILURES:+
 }${TEST_ID}[$TEST_NUM]: test of '$1' failed";
@@ -171,55 +176,56 @@ end_markers_head() {
 end_markers_body() {
 
 	reset 'end_markers'
-	for end in EOF 1 \! '$$$' "string " a\\\  '&' '' ' ' '  ' --STRING-- . '~~~' \
+	for end in EOF 1 \! '$$$' "string " a\\\ a\\\ \   '&' '' ' ' '  ' \
+	    --STRING-- . '~~~' ')' '(' '#' '()' '(\)' '(\/)' '--' '\' '{' '}' \
 VERYVERYVERYVERYLONGLONGLONGin_fact_absurdly_LONG_LONG_HERE_DOCUMENT_TERMINATING_MARKER_THAT_goes_On_forever_and_ever_and_ever...
 	do
 		# check unquoted end markers
 		case "${end}" in
-		('' | *[' $&#*~']* ) ;;	# skip unquoted endmark test for these
+		('' | *[' ()\$&#*~']* ) ;;	# skip unquoted endmark test for these
 		(*)	check \
-	'x=$(cat << '"${end}${nl}text${nl}${end}${nl}"'); echo "$x"' 'text' 0
+	'x=$(cat << '"${end}${nl}text${nl}${end}${nl}"'); printf %s "$x"' 'text' 0
 			;;
 		esac
 
 		# and quoted end markers
 		check \
-	'x=$(cat <<'"'${end}'${nl}text${nl}${end}${nl}"'); echo "$x"' 'text' 0
+	'x=$(cat <<'"'${end}'${nl}text${nl}${end}${nl}"'); printf %s "$x"' 'text' 0
 
 		# and see what happens if we encounter "almost" an end marker
 		case "${#end}" in
 		(0|1)	;;		# too short to try truncation tests
 		(*)	check \
-   'x=$(cat <<'"'${end}'${nl}text${nl}${end%?}${nl}${end}${nl}"'); echo "$x"' \
+   'x=$(cat <<'"'${end}'${nl}text${nl}${end%?}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${end%?}" 0
 			check \
-   'x=$(cat <<'"'${end}'${nl}text${nl}${end#?}${nl}${end}${nl}"'); echo "$x"' \
+   'x=$(cat <<'"'${end}'${nl}text${nl}${end#?}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${end#?}" 0
 			check \
-   'x=$(cat <<'"'${end}'${nl}text${nl}${end%?}+${nl}${end}${nl}"');echo "$x"' \
+   'x=$(cat <<'"'${end}'${nl}text${nl}${end%?}+${nl}${end}${nl}"');printf %s "$x"' \
 				"text ${end%?}+" 0
 			;;
 		esac
 
 		# or something that is a little longer
 		check \
-   'x=$(cat <<'"'${end}'${nl}text${nl}${end}x${nl}${end}${nl}"'); echo "$x"' \
+   'x=$(cat <<'"'${end}'${nl}text${nl}${end}x${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${end}x" 0
 		check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}!${end}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}!${end}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text !${end}" 0
 
 		# or which does not begin at start of line
 		check \
-    'x=$(cat <<'"'${end}'${nl}text${nl} ${end}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl} ${end}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text  ${end}" 0
 		check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}	${end}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}	${end}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text 	${end}" 0
 
 		# or end at end of line
 		check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}${end} ${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}${end} ${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${end} " 0
 
 		# or something that is correct much of the way, but then...
@@ -227,26 +233,26 @@ VERYVERYVERYVERYLONGLONGLONGin_fact_absurdly_LONG_LONG_HERE_DOCUMENT_TERMINATING
 		case "${#end}" in
 		(0)	;;		# cannot test this one
 		(1)	check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}${end}${end}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}${end}${end}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${end}${end}" 0
 			;;
 		(2-7)	pfx="${end%?}"
 			check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}${end}${pfx}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}${end}${pfx}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${end}${pfx}" 0
 			check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}${pfx}${end}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}${pfx}${end}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${pfx}${end}" 0
 			;;
 		(*)	pfx=${end%??????}; sfx=${end#??????}
 			check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}${end}${sfx}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}${end}${sfx}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${end}${sfx}" 0
 			check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}${pfx}${end}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}${pfx}${end}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${pfx}${end}" 0
 			check \
-    'x=$(cat <<'"'${end}'${nl}text${nl}${pfx}${sfx}${nl}${end}${nl}"'); echo "$x"' \
+    'x=$(cat <<'"'${end}'${nl}text${nl}${pfx}${sfx}${nl}${end}${nl}"'); printf %s "$x"' \
 				"text ${pfx}${sfx}" 0
 			;;
 		esac
