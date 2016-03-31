@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.17 2015/12/20 19:45:29 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.18 2016/03/31 20:13:37 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.17 2015/12/20 19:45:29 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.18 2016/03/31 20:13:37 christos Exp $");
 
 #include <err.h>
-#include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +41,6 @@ __RCSID("$NetBSD: apropos.c,v 1.17 2015/12/20 19:45:29 christos Exp $");
 #include <util.h>
 
 #include "apropos-utils.h"
-#include "sqlite3.h"
 
 typedef struct apropos_flags {
 	int sec_nums[SECMAX];
