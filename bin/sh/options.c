@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.45 2016/03/08 14:08:39 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.46 2016/03/31 16:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.45 2016/03/08 14:08:39 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.46 2016/03/31 16:16:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,25 +224,40 @@ STATIC void
 minus_o(char *name, int val)
 {
 	size_t i;
+	const char *sep = ": ";
 
 	if (name == NULL) {
 		if (val) {
-			out1str("Current option settings\n");
+			out1str("Current option settings");
 			for (i = 0; i < NOPTS; i++) {
-				out1fmt("%-16s%s\n", optlist[i].name,
+				if (optlist[i].name == NULL)  {
+					out1fmt("%s%c%c", sep,
+					    "+-"[optlist[i].val],
+					    optlist[i].letter);
+					sep = ", ";
+				}
+			}
+			out1c('\n');
+			for (i = 0; i < NOPTS; i++) {
+				if (optlist[i].name)
+				    out1fmt("%-16s%s\n", optlist[i].name,
 					optlist[i].val ? "on" : "off");
 			}
 		} else {
 			out1str("set");
 			for (i = 0; i < NOPTS; i++) {
-				out1fmt(" %co %s",
+				if (optlist[i].name)
+				    out1fmt(" %co %s",
 					"+-"[optlist[i].val], optlist[i].name);
+				else
+				    out1fmt(" %c%c", "+-"[optlist[i].val],
+					optlist[i].letter);
 			}
-			out1str("\n");
+			out1c('\n');
 		}
 	} else {
 		for (i = 0; i < NOPTS; i++)
-			if (equal(name, optlist[i].name)) {
+			if (optlist[i].name && equal(name, optlist[i].name)) {
 				set_opt_val(i, val);
 				return;
 			}
@@ -366,7 +381,7 @@ int
 setcmd(int argc, char **argv)
 {
 	if (argc == 1)
-		return showvars(0, 0, 1);
+		return showvars(0, 0, 1, 0);
 	INTOFF;
 	options(0);
 	optschanged();

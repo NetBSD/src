@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.48 2016/03/27 14:34:46 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.49 2016/03/31 16:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.48 2016/03/27 14:34:46 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.49 2016/03/31 16:16:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ struct var vpath;
 struct var vps1;
 struct var vps2;
 struct var vps4;
+struct var vvers;
 struct var voptind;
 
 char ifs_default[] = " \t\n";
@@ -112,6 +113,8 @@ const struct varinit varinit[] = {
 	{ &vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL=",
 	  NULL },
 	{ &vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH=",
+	  NULL },
+	{ &vvers,	VSTRFIXED|VTEXTFIXED|VNOEXPORT, "NETBSD_SHELL=",
 	  NULL },
 	{ &vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=" _PATH_DEFPATH,
 	  changepath },
@@ -145,6 +148,7 @@ STATIC struct var *find_var(const char *, struct var ***, int *);
 INCLUDE <stdio.h>
 INCLUDE <unistd.h>
 INCLUDE "var.h"
+INCLUDE "version.h"
 MKINIT char **environ;
 INIT {
 	char **envp;
@@ -165,6 +169,7 @@ INIT {
 	snprintf(buf, sizeof(buf), "%d", (int)getppid());
 	setvar("PPID", buf, VREADONLY);
 	setvar("IFS", ifs_default, VTEXTFIXED);
+	setvar("NETBSD_SHELL", NETBSD_SHELL, VTEXTFIXED|VREADONLY|VNOEXPORT);
 }
 #endif
 
@@ -294,7 +299,7 @@ setvareq(char *s, int flags)
 	struct var *vp, **vpp;
 	int nlen;
 
-	if (aflag)
+	if (aflag && !(flags & VNOEXPORT))
 		flags |= VEXPORT;
 	vp = find_var(s, &vpp, &nlen);
 	if (vp != NULL) {
@@ -311,6 +316,8 @@ setvareq(char *s, int flags)
 			ckfree(vp->text);
 
 		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
+		if (flags & VNOEXPORT)
+			vp->flags &= ~VEXPORT;
 		vp->flags |= flags & ~VNOFUNC;
 		vp->text = s;
 
@@ -529,7 +536,7 @@ sort_var(const void *v_v1, const void *v_v2)
  */
 
 int
-showvars(const char *name, int flag, int show_value)
+showvars(const char *name, int flag, int show_value, const char *xtra)
 {
 	struct var **vpp;
 	struct var *vp;
@@ -565,6 +572,8 @@ showvars(const char *name, int flag, int show_value)
 		vp = *vpp;
 		if (name)
 			out1fmt("%s ", name);
+		if (xtra)
+			out1fmt("%s ", xtra);
 		for (p = vp->text ; *p != '=' ; p++)
 			out1c(*p);
 		if (!(vp->flags & VUNSET) && show_value) {
@@ -589,27 +598,68 @@ exportcmd(int argc, char **argv)
 	char *name;
 	const char *p;
 	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
-	int pflg;
+	int pflg = 0;
+	int nflg = 0;
+	int xflg = 0;
+	int res;
+	int c;
 
-	pflg = nextopt("p") == 'p' ? 3 : 0;
-	if (argc <= 1 || pflg) {
-		showvars( pflg ? argv[0] : 0, flag, pflg );
+
+	while ((c = nextopt("npx")) != '\0') {
+		switch (c) {
+		case 'p':
+			if (nflg)
+				return 1;
+			pflg = 3;
+			break;
+		case 'n':
+			if (pflg || xflg || flag == VREADONLY)
+				return 1;
+			nflg = 1;
+			break;
+		case 'x':
+			if (nflg || flag == VREADONLY)
+				return 1;
+			flag = VNOEXPORT;
+			xflg = 1;
+			break;
+		default:
+			return 1;
+		}
+	}
+
+	if (nflg && *argptr == NULL)
+		return 1;
+
+	if (pflg || *argptr == NULL) {
+		showvars( pflg ? argv[0] : 0, flag, pflg,
+		    pflg && xflg ? "-x" : NULL );
 		return 0;
 	}
 
+	res = 0;
 	while ((name = *argptr++) != NULL) {
 		if ((p = strchr(name, '=')) != NULL) {
 			p++;
 		} else {
 			vp = find_var(name, NULL, NULL);
 			if (vp != NULL) {
-				vp->flags |= flag;
+				if (nflg)
+					vp->flags &= ~flag;
+				else if (flag&VEXPORT && vp->flags&VNOEXPORT)
+					res = 1;
+				else {
+					vp->flags |= flag;
+					if (flag == VNOEXPORT)
+						vp->flags &= ~VEXPORT;
+				}
 				continue;
 			}
 		}
-		setvar(name, p, flag);
+		if (!nflg)
+			setvar(name, p, flag);
 	}
-	return 0;
+	return res;
 }
 
 
@@ -770,7 +820,7 @@ unsetvar(const char *s, int unexport)
 	if (vp == NULL)
 		return 0;
 
-	if (vp->flags & VREADONLY)
+	if (vp->flags & VREADONLY && !unexport)
 		return 1;
 
 	INTOFF;
