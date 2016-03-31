@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.6 2016/03/08 14:26:54 christos Exp $
+# $NetBSD: t_expand.sh,v 1.7 2016/03/31 16:21:10 christos Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -227,6 +227,145 @@ iteration_on_null_or_missing_parameter_body() {
 		'N=; set -- ${N:-}; for X; do echo "[$X]"; done'
 }
 
+nl='
+'
+reset()
+{
+	TEST_NUM=0
+	TEST_FAILURES=''
+	TEST_FAIL_COUNT=0
+	TEST_ID="$1"
+}
+
+check()
+{
+	fail=false
+	TEMP_FILE=$( mktemp OUT.XXXXXX )
+	TEST_NUM=$(( $TEST_NUM + 1 ))
+	MSG=
+
+	# our local shell (ATF_SHELL) better do quoting correctly...
+	# some of the tests expect us to expand $nl internally...
+	CMD="$1"
+
+	result="$( ${TEST_SH} -c "${CMD}" 2>"${TEMP_FILE}" )"
+	STATUS=$?
+
+	if [ "${STATUS}" -ne "$3" ]; then
+		MSG="${MSG}${MSG:+${nl}}[$TEST_NUM]"
+		MSG="${MSG} expected exit code $3, got ${STATUS}"
+
+		# don't actually fail just because of wrong exit code
+		# unless we either expected, or received "good"
+		case "$3/${STATUS}" in
+		(*/0|0/*) fail=true;;
+		esac
+	fi
+
+	if [ "$3" -eq 0 ]; then
+		if [ -s "${TEMP_FILE}" ]; then
+			MSG="${MSG}${MSG:+${nl}}[$TEST_NUM]"
+			MSG="${MSG} Messages produced on stderr unexpected..."
+			MSG="${MSG}${nl}$( cat "${TEMP_FILE}" )"
+			fail=true
+		fi
+	else
+		if ! [ -s "${TEMP_FILE}" ]; then
+			MSG="${MSG}${MSG:+${nl}}[$TEST_NUM]"
+			MSG="${MSG} Expected messages on stderr,"
+			MSG="${MSG} nothing produced"
+			fail=true
+		fi
+	fi
+	rm -f "${TEMP_FILE}"
+
+	# Remove newlines (use local shell for this)
+	oifs="$IFS"
+	IFS="$nl"
+	result="$(echo $result)"
+	IFS="$oifs"
+	if [ "$2" != "$result" ]
+	then
+		MSG="${MSG}${MSG:+${nl}}[$TEST_NUM]"
+		MSG="${MSG} Expected output '$2', received '$result'"
+		fail=true
+	fi
+
+	if $fail
+	then
+		MSG="${MSG}${MSG:+${nl}}[$TEST_NUM]"
+		MSG="${MSG} Full command: <<${CMD}>>"
+	fi
+
+	$fail && test -n "$TEST_ID" && {
+		TEST_FAILURES="${TEST_FAILURES}${TEST_FAILURES:+${nl}}"
+		TEST_FAILURES="${TEST_FAILURES}${TEST_ID}[$TEST_NUM]:"
+		TEST_FAILURES="${TEST_FAILURES} Test of '$1' failed.";
+		TEST_FAILURES="${TEST_FAILURES}${nl}${MSG}"
+		TEST_FAIL_COUNT=$(( $TEST_FAIL_COUNT + 1 ))
+		return 0
+	}
+	$fail && atf_fail "Test[$TEST_NUM] of '$1' failed${nl}${MSG}"
+	return 0
+}
+
+results()
+{
+	test -z "${TEST_ID}" && return 0
+	test -z "${TEST_FAILURES}" && return 0
+
+	echo >&2 "=========================================="
+	echo >&2 "While testing '${TEST_ID}'"
+	echo >&2 " - - - - - - - - - - - - - - - - -"
+	echo >&2 "${TEST_FAILURES}"
+	atf_fail \
+ "Test ${TEST_ID}: $TEST_FAIL_COUNT subtests (of $TEST_NUM) failed - see stderr"
+}
+
+atf_test_case shell_params
+shell_params_head() {
+	atf_set "descr" "Test correct operation of the numeric parameters"
+}
+shell_params_body() {
+	atf_require_prog mktemp
+
+	reset shell_params
+
+	check 'set -- a b c; echo "$#: $1 $2 $3"' '3: a b c' 0
+	check 'set -- a b c d e f g h i j k l m; echo "$#: ${1}0 ${10} $10"' \
+		'13: a0 j a0' 0
+	check 'x="$0"; set -- a b; y="$0";
+	      [ "x${x}y" = "x${y}y" ] && echo OK || echo x="$x" y="$y"' \
+		'OK' 0
+	check "${TEST_SH} -c 'echo 0=\$0 1=\$1 2=\$2' a b c" '0=a 1=b 2=c' 0
+
+	echo 'echo 0="$0" 1="$1" 2="$2"' > helper.sh
+	check '${TEST_SH} helper.sh a b c' '0=helper.sh 1=a 2=b' 0
+
+	check 'set -- a bb ccc dddd eeeee ffffff ggggggg hhhhhhhh \
+		iiiiiiiii jjjjjjjjjj kkkkkkkkkkk
+	       echo "${#}: ${#1} ${#2} ${#3} ${#4} ... ${#9} ${#10} ${#11}"' \
+		 '11: 1 2 3 4 ... 9 10 11' 0
+
+	check 'set -- a b c; echo "$#: ${1-A} ${2-B} ${3-C} ${4-D} ${5-E}"' \
+		'3: a b c D E' 0
+	check 'set -- a "" c "" e
+	       echo "$#: ${1:-A} ${2:-B} ${3:-C} ${4:-D} ${5:-E}"' \
+		'5: a B c D e' 0
+	check 'set -- a "" c "" e
+	       echo "$#: ${1:+A} ${2:+B} ${3:+C} ${4:+D} ${5:+E}"' \
+		'5: A  C  E' 0
+	check 'set -- "abab*cbb"
+	       echo "${1} ${1#a} ${1%b} ${1##ab} ${1%%b} ${1#*\*} ${1%\**}"' \
+	       'abab*cbb bab*cbb abab*cb ab*cbb abab*cb cbb abab' 0
+	check 'set -- "abab?cbb"
+    echo "${1}:${1#*a}+${1%b*}-${1##*a}_${1%%b*}%${1#[ab]}=${1%?*}/${1%\?*}"' \
+	       'abab?cbb:bab?cbb+abab?cb-b?cbb_a%bab?cbb=abab?cb/abab' 0
+	check 'set -- a "" c "" e; echo "${2:=b}"' '' 1
+
+	results
+}
+
 atf_init_test_cases() {
 	atf_add_test_case dollar_at
 	atf_add_test_case dollar_at_with_text
@@ -237,4 +376,5 @@ atf_init_test_cases() {
 	atf_add_test_case iteration_on_quoted_null_parameter
 	atf_add_test_case iteration_on_null_or_null_parameter
 	atf_add_test_case iteration_on_null_or_missing_parameter
+	atf_add_test_case shell_params
 }
