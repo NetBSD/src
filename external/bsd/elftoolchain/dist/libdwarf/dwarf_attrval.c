@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_attrval.c,v 1.7 2016/03/18 14:58:18 christos Exp $	*/
+/*	$NetBSD: dwarf_attrval.c,v 1.8 2016/03/31 15:53:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_attrval.c,v 1.7 2016/03/18 14:58:18 christos Exp $");
+__RCSID("$NetBSD: dwarf_attrval.c,v 1.8 2016/03/31 15:53:33 christos Exp $");
 ELFTC_VCSID("Id: dwarf_attrval.c 3159 2015-02-15 21:43:27Z emaste ");
 
 int
@@ -146,14 +146,11 @@ dwarf_indirect_find(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr,
     Dwarf_Unsigned val)
 {
 	Dwarf_Die die1;
-	Dwarf_Attribute at;
 
 	if ((die1 = _dwarf_die_find(die, val)) == NULL)
 		return NULL;
 
-	at = _dwarf_attr_find(die1, attr);
-	dwarf_dealloc(dbg, die1, DW_DLA_DIE);
-	return at;
+	return _dwarf_attr_find(die1, attr);
 }
 
 int
@@ -213,9 +210,13 @@ dwarf_attrval_unsigned(Dwarf_Die die, Dwarf_Half attr, Dwarf_Unsigned *valp, Dwa
 		*valp = at->u[0].u64;
 		break;
 	default:
+		if (at->at_die != die)
+			dwarf_dealloc(dbg, at->at_die, DW_DLA_DIE);
 		DWARF_SET_ERROR(dbg, err, DW_DLE_ATTR_FORM_BAD);
 		return (DW_DLV_ERROR);
 	}
 
+	if (at->at_die != die)
+		dwarf_dealloc(dbg, at->at_die, DW_DLA_DIE);
 	return (DW_DLV_OK);
 }
