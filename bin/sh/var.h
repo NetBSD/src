@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.27 2016/03/27 14:34:46 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.28 2016/03/31 16:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,14 +39,15 @@
  */
 
 /* flags */
-#define VEXPORT		0x01	/* variable is exported */
-#define VREADONLY	0x02	/* variable cannot be modified */
-#define VSTRFIXED	0x04	/* variable struct is statically allocated */
-#define VTEXTFIXED	0x08	/* text is statically allocated */
-#define VSTACK		0x10	/* text is allocated on the stack */
-#define VUNSET		0x20	/* the variable is not set */
-#define VNOFUNC		0x40	/* don't call the callback function */
-#define VNOSET		0x80	/* do not set variable - just readonly test */
+#define VEXPORT		0x0001	/* variable is exported */
+#define VREADONLY	0x0002	/* variable cannot be modified */
+#define VSTRFIXED	0x0004	/* variable struct is statically allocated */
+#define VTEXTFIXED	0x0008	/* text is statically allocated */
+#define VSTACK		0x0010	/* text is allocated on the stack */
+#define VUNSET		0x0020	/* the variable is not set */
+#define VNOFUNC		0x0040	/* don't call the callback function */
+#define VNOSET		0x0080	/* do not set variable - just readonly test */
+#define VNOEXPORT	0x0100	/* variable may not be exported */
 
 
 struct var {
@@ -115,7 +116,7 @@ char *lookupvar(const char *);
 char *bltinlookup(const char *, int);
 char **environment(void);
 void shprocvar(void);
-int showvars(const char *, int, int);
+int showvars(const char *, int, int, const char *);
 void mklocal(const char *, int);
 void listmklocal(struct strlist *, int);
 void poplocalvars(void);
