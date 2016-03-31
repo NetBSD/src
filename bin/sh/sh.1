@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.119 2016/02/24 15:28:36 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.120 2016/03/31 16:18:22 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd January 5, 2015
+.Dd March 31, 2016
 .Dt SH 1
 .ds flags abCEeFfhnuvxIimpqV
 .Os
@@ -330,9 +330,11 @@ in which case altering the
 flag has no effect.
 .It Fl h Em trackall
 Bind commands in functions to file system paths when the function is defined.
+.\" They can seek me here (that dreaded filesystem)
 When off,
 the file system is searched for commands each time the function is invoked.
 (Not implemented.)
+.\" then can seek me there (the filesystem, once again)
 .It Fl p Em nopriv
 Do not attempt to reset effective uid if it does not match uid.
 This is not set by default to help avoid incorrect usage by setuid
@@ -352,6 +354,22 @@ in the
 .Sx Built-ins
 section.)
 (Not implemented.)
+.It "\ \ " Em posix
+Enables closer adherence to the shell standard.
+This option will default set at shell startup if the
+environment variable
+.Ev POSIXLY_CORRECT
+is present.
+That can be overridden by the
+.Fl o
+option on the command line.
+Currently this option controls whether (!posix) or not (posix)
+the file given by the
+.Ev ENV
+variable is read at startup by a non-interactive shell.
+Consequently, while it can be manipulated by the
+.Ic set
+command, doing so has no current purpose.
 .It "\ \ " Em tabcomplete
 Enables filename completion in the command line editor.
 Typing a tab character will extend the current input word to match a
@@ -528,7 +546,9 @@ The following redirection is often called a
 .Li delimiter
 .El
 .Pp
-All the text on successive lines up to the delimiter, or to an EOF, is
+All the text on successive lines up to the delimiter,
+which must appear on a line by itself, with nothing other
+than an immediately following newline, is
 saved away and made available to the command on standard input, or file
 descriptor n if it is specified.
 If the delimiter as specified on the initial line is
@@ -538,10 +558,15 @@ expansion as described in the
 .Sx Word Expansions
 section below.
 If the operator is
-.Dq \*[Lt]\*[Lt]-
+.Dq \*[Lt]\*[Lt]\(mi
 instead of
 .Dq \*[Lt]\*[Lt] ,
-then leading tabs in the here-doc-text are stripped.
+then leading tabs in all lines in the here-doc-text, including before the
+end delimiter, are stripped.
+If the delimiter is not quoted, lines in here-doc-text that end with
+an unquoted \e are joined to the following line, the \e and following
+newline are simply removed while reading the here-doc, which thus guarantees
+that neither of those lines can be the end delimiter.
 .Ss Search and Execution
 There are three types of commands: shell functions, built-in commands, and
 normal programs -- and the command is searched for (by name) in that order.
@@ -564,6 +589,7 @@ new process.
 Otherwise, if the command name doesn't match a function or built-in, the
 command is searched for as a normal program in the file system (as
 described in the next section).
+.\" But the damned elusive filesystem shall never be defeated!
 When a normal program is executed, the shell runs the program,
 passing the arguments and the environment to the program.
 If the program is not a normal executable file (i.e., if it does
@@ -697,13 +723,18 @@ The format for running a command in background is:
 If the shell is not interactive, the standard input of an asynchronous
 command is set to
 .Pa /dev/null .
+The process identifier of the most recent command started in the
+background can be obtained from the value of the special parameter
+.Dq \&!
+(see
+.Sx Special Parameters ) .
 .Ss Lists -- Generally Speaking
 A list is a sequence of zero or more commands separated by newlines,
 semicolons, or ampersands, and optionally terminated by one of these three
 characters.
 The commands in a list are executed in the order they are written.
 If command is followed by an ampersand, the shell starts the
-command and immediately proceed onto the next command; otherwise it waits
+command and immediately proceeds to the next command; otherwise it waits
 for the command to terminate before proceeding to the next one.
 .Ss Short-Circuit List Operators
 .Dq \*[Am]\*[Am]
@@ -760,17 +791,19 @@ repeat until the exit status of the first list is zero.
 .Pp
 The syntax of the for command is
 .Bd -literal -offset indent
-for variable in word ...
+for variable [ in word ... ]
 do   list
 done
 .Ed
 .Pp
-The words are expanded, and then the list is executed repeatedly with the
+The words are expanded, or "$@" if no words are given,
+and then the list is executed repeatedly with the
 variable set to each word in turn.
 do and done may be replaced with
 .Dq {
 and
-.Dq } .
+.Dq } ,
+but doing so is non-standard and not recommended.
 .Pp
 The syntax of the break and continue command is
 .Bd -literal -offset indent
@@ -821,7 +854,7 @@ so that it is recognized as a reserved word and not as another command argument.
 .Ss Functions
 The syntax of a function definition is
 .Pp
-.Dl name ( ) command
+.Dl name ( ) command [ redirect... ]
 .Pp
 A function definition is an executable statement; when executed it
 installs a function named name and returns an exit status of zero.
@@ -829,6 +862,43 @@ The command is normally a list enclosed between
 .Dq {
 and
 .Dq } .
+The standard syntax also allows the command to be any of the other
+compound commands, or a sub-shell, all of which are supported.
+As an extension, this shell also allows a simple command to be
+used, though users should be aware this is non-standard syntax.
+This means that
+.Dl l() ls "$@"
+works to make
+.Dq l
+an alternative name for the
+.Ic ls
+command.
+.Pp
+If the optional redirect, (see
+.Sx Redirections ) ,
+which may be of any of the normal forms,
+is given, it is applied each time the
+function is called.
+This means that a simple
+.Dq "Hello World
+function might be written (in the extended syntax) as:
+.Dl hello() cat <<EOF
+.Dl Hello World!
+.Dl EOF
+To be correctly standards conforming this should be re-written as:
+.Dl hello() { cat; } <<EOF
+.Dl Hello World!
+.Dl EOF
+Note the distinction between those forms, and
+.Dl hello() { cat <<EOF
+.Dl Hello World!
+.Dl EOF
+.Dl \&}
+which reads and processes the
+.Ic "here document
+each time the shell executes the function, and which applies
+that input only to the cat command, not to any other commands
+that might appear in the function.
 .Pp
 Variables may be declared to be local to a function by using a local
 command.
@@ -836,17 +906,42 @@ This should appear as the first statement of a function, and the syntax is
 .Pp
 .Dl local [ variable | - ] ...
 .Pp
-.Dq Local
+.Dq Ic local
 is implemented as a built-in command.
 .Pp
-When a variable is made local, it inherits the initial value and exported
+When a variable is made local, it inherits the initial value and exported,
+unexportable,
 and read-only flags from the variable with the same name in the surrounding
 scope, if there is one.
 Otherwise, the variable is initially unset.
+Making a read-only variable local is possible, but pointless.
+If the
+.Ic readonly
+command is applied to a variable that has been declared local,
+the variable cannot be (further) modified within the function,
+or any other functions it calls, however when the function returns,
+the previous status (and value) of the variable is returned.
+.Pp
+Values may be given to local variables on the
+.Ic local
+command line in a similar fashion as used for
+.Ic export
+and
+.Ic readonly .
+.Pp
 The shell uses dynamic scoping, so that if you make the variable x local to
 function f, which then calls function g, references to the variable x made
 inside g will refer to the variable x declared inside f, not to the global
 variable named x.
+.Pp
+Note that the parameters $1, $2, ... (see
+.Sx Positional Parameters ) ,
+and $#, $* and $@ (see
+.Sx Special Parameters ) ,
+are always made local in all functions, and are reset inside the
+function to represent the options and arguments passed to the function.
+Note that $0 however retains the value it had outside the function,
+as do all the other special parameters.
 .Pp
 The only special parameter that can be made local is
 .Dq - .
@@ -856,12 +951,26 @@ local causes any shell options that are changed via the set command inside the
 function to be restored to their original values when the function
 returns.
 .Pp
+It is a syntax error to use
+.Ic local
+outside the scope of a function definition.
+When used inside a function, it exits with status 0.
+.Pp
 The syntax of the return command is
 .Pp
 .Dl return [ exitstatus ]
 .Pp
-It terminates the currently executing function.
+It terminates the currently executing function or
+.Dq \&.
+script.
 Return is implemented as a built-in command.
+The exit status of the function (or
+.Dl \&.
+command) is either that given on the
+.Ic return
+command line, or the value of the special parameter
+.Dq $?
+immediately before the return was executed.
 .Ss Variables and Parameters
 The shell maintains a set of parameters.
 A parameter denoted by a name is called a variable.
@@ -882,7 +991,21 @@ The shell sets these initially to the values of its command line arguments
 that follow the name of the shell script.
 The
 .Ic set
-built-in can also be used to set or reset them.
+built-in can also be used to set or reset them, and
+.Ic shift
+can be used to manipulate the list.
+.Pp
+To refer to the 10th (and later) positional parameters,
+the form ${n} must be used.
+Without the braces, a digit following
+.Dq $
+can only refer to one of the first 9 positional parameters,
+or the special parameter
+.Dq 0 .
+The word
+.Dq $10
+is treated identically to
+.Dq ${1}0 .
 .Ss Special Parameters
 A special parameter is a parameter denoted by one of the following special
 characters.
@@ -936,6 +1059,12 @@ A subshell retains the same value of $ as its parent.
 Expands to the process ID of the most recent background
 command executed from the current shell.
 For a pipeline, the process ID is that of the last command in the pipeline.
+If no background commands have yet been started by the shell, then
+.Dq \&!
+will be unset.
+Once set, the value of
+.Dq \&!
+will be retained until another background command is started.
 .It 0 (Zero.)
 Expands to the name of the shell or shell script.
 .El
@@ -1023,7 +1152,7 @@ If the
 is omitted in the following modifiers, then the expansion is applied only
 to unset parameters, not null ones.
 .Bl -tag -width aaparameterwordaaaaa
-.It ${parameter:-word}
+.It ${parameter:\(miword}
 Use Default Values.
 If parameter is unset or null, the expansion of word
 is substituted; otherwise, the value of parameter is substituted.
@@ -1140,24 +1269,52 @@ sign.
 .Ss White Space Splitting (Field Splitting)
 After parameter expansion, command substitution, and
 arithmetic expansion the shell scans the results of
-expansions and substitutions that did not occur in double quotes for
-field splitting and multiple fields can result.
+expansions and substitutions that did not occur in double quotes,
+and
+.Dq $@
+even if it did,
+for field splitting and multiple fields can result.
 .Pp
 The shell treats each character of the
 .Ev IFS
-as a delimiter and use the delimiters to split the results of parameter
+as a delimiter and uses the delimiters to split the results of parameter
 expansion and command substitution into fields.
 .Pp
 Non-whitespace characters in
 .Ev IFS
-are treated strictly as parameter terminators.
+are treated strictly as parameter separators.
 So adjacent non-whitespace
 .Ev IFS
 characters will produce empty parameters.
+On the other hand, any sequence of whitespace
+characters that occur in
+.Ev IFS
+(known as
+.Ev IFS
+whitespace)
+can occur, leading and trailing
+.Ev IFS
+whitespace, and
+.Ev IFS
+whitespace surrounding a non whitespace
+.Ev IFS
+delimiter, is removed.
+Any sequence of
+.Ev IFS
+whitespace characters without a non-whitespace
+.Ev IFS
+delimiter acts as a field separator.
 .Pp
 If
 .Ev IFS
-is unset it is assumed to contain space, tab, and newline.
+is unset it is assumed to contain space, tab, and newline,
+all of which are
+.Ev IFS
+whitespace characters.
+If
+.Ev IFS
+is set to a null string, there are no delimiters,
+and no field splitting occurs.
 .Ss Pathname Expansion (File Name Generation)
 Unless the
 .Fl f
@@ -1220,7 +1377,7 @@ For example,
 .Pq Dq [[:alpha:]]
 is a shell pattern that matches a single letter.
 A range of characters may be specified using a minus sign
-.Pq Dq - .
+.Pq Dq \(mi .
 The character class may be complemented
 by making an exclamation mark
 .Pq Dq \&!
@@ -1232,7 +1389,7 @@ in a character class, make it the first character listed (after the
 .Dq \&! ,
 if any).
 To include a
-.Dq - ,
+.Dq \(mi ,
 make it the first or last character listed.
 .Ss Built-ins
 This section lists the built-in commands which are built-in because they
@@ -1247,7 +1404,7 @@ etc).
 .Bl -tag -width 5n
 .It : [ Ar arg ... ]
 A null command that returns a 0 (true) exit value.
-Any arguments are ignored.
+Any arguments or redirects are evaluated, then ignored.
 .It \&. file
 The dot command reads and executes the commands from the specified
 .Ar file
@@ -1255,14 +1412,15 @@ in the current shell environment.
 The file does not need to be executable and is looked up from the directories
 listed in the
 .Ev PATH
-variable if it does not contain a directory separator
+variable if its name does not contain a directory separator
 .Pq Sq / .
 The return command can be used for a premature return from the sourced file.
 .Pp
-The POSIX standard is unclear on how loop control keywords (break
+The POSIX standard has been unclear on how loop control keywords (break
 and continue) behave across a dot command boundary.
 This implementation allows them to control loops surrounding the dot command,
 but obviously such behavior should not be relied on.
+It is now permitted by the standard, but not required.
 .It alias Op Ar name Ns Op Ar "=string ..."
 If
 .Ar name=string
@@ -1287,7 +1445,7 @@ jobs are given) in the background.
 Execute the specified command but ignore shell functions when searching
 for it.
 (This is useful when you
-have a shell function with the same name as a built-in command.)
+have a shell function with the same name as a command.)
 .Bl -tag -width 5n
 .It Fl p
 search for command using a
@@ -1397,20 +1555,56 @@ If
 .Ar exitstatus
 is given it is used as the exit status of the shell; otherwise the
 exit status of the preceding command is used.
-.It export Ar name ...
-.It export Fl p
-The specified names are exported so that they will appear in the
+.It export Oo Fl npx Oc Ar name ...
+.It export Fl p Oo Fl x Oc
+With no options,
+the specified names are exported so that they will appear in the
 environment of subsequent commands.
-The only way to un-export a variable is to unset it.
+With
+.Fl n
+the specified names are un-exported.
+Variables can also be un-exported using the unset builtin command.
+With
+.Fl x
+(exclude) the specified names are marked not to be exported,
+and any that had been exported, will be un-exported.
+Later attempts to export the variable will be refused.
+Note this does not prevent explicitly exporting a variable
+to a single command, script or function by preceding that
+command invocation by a variable assignment to that variable,
+provided the variable is not also readonly.
+That is
+.Dl	export -x FOO ; # FOO will now not be exported by default
+.Dl	FOO=some_value my_command
+still passes the value (FOO=some_value) to
+.Ic my_command
+through the environment.
+.Pp
 The shell allows the value of a variable to be set at the
 same time it is exported by writing
 .Pp
 .Dl export name=value
 .Pp
-With no arguments the export command lists the names of all exported variables.
+With no arguments the export command lists the names of all exported variables,
+or if
+.Fl x
+was given, all variables marked not for export.
 With the
 .Fl p
 option specified the output will be formatted suitably for non-interactive use.
+.Pp
+The
+.Ic export
+built-in exits with status 0,
+unless an invalid option, or option combination, is given,
+or unless an attempt is made to export a variable which has
+been marked as unavailable for export,
+in which cases it exits with status 1.
+.Pp
+Note that there is no restriction upon exporting,
+or un-exporting, readonly variables.
+The no-export flag can be reset by unsetting the variable
+and creating it again \(en provided it is not also readonly.
 .It fc Oo Fl e Ar editor Oc Oo Ar first Oo Ar last Oc Oc
 .It fc Fl l Oo Fl nr Oc Oo Ar first Oo Ar last Oc Oc
 .It fc Fl s Oo Ar old=new Oc Oo Ar first Oc
@@ -1760,23 +1954,25 @@ functions that assign values to variables whose names are passed as
 parameters.)
 .It shift Op Ar n
 Shift the positional parameters n times.
-A
+If n is omitted, 1 is assumed.
+Each
 .Ic shift
 sets the value of
 .Va $1
-to the value of
+to the previous value of
 .Va $2 ,
 the value of
 .Va $2
-to the value of
+to the previous value of
 .Va $3 ,
 and so on, decreasing
 the value of
 .Va $#
 by one.
-If there are zero positional parameters,
-.Ic shift
-does nothing.
+The shift count must be less than or equal to the number of
+positional parameters (
+.Dq $# )
+before the shift.
 .It trap Oo Fl l Oc
 .It trap Oo Ar action Oc Ar signal ...
 Cause the shell to parse and execute action when any of the specified
@@ -1830,7 +2026,9 @@ Ignore signals INT QUIT TSTP USR1
 .Pp
 .Dl trap date INT
 .Pp
-Print date upon receiving signal INT
+Run the
+.Dq date
+command (print the date) upon receiving signal INT
 .It type Op Ar name ...
 Interpret each name as a command and print the resolution of the command
 search.
@@ -1919,15 +2117,54 @@ is specified, the shell removes that alias.
 If
 .Fl a
 is specified, all aliases are removed.
-.It unset Ar name ...
-The specified variables and functions are unset and unexported.
-If a given name corresponds to both a variable and a function, both
-the variable and the function are unset.
+.It unset Oo Fl efv Oc Ar name ...
+If
+.Fl v
+is specified, the specified variables are unset and unexported.
+Readonly variables cannot be unset.
+If
+.Fl f
+is specified, the specified functions are undefined.
+If
+.Fl e
+is given, the specified variables are unexported, but otherwise unchanged.
+.Pp
+If no flags are provided
+.Fl v
+is assumed.
+If
+.Fl f
+is given with one (or both) of
+.Fl v
+or
+.Fl e ,
+then the named variables will be unset, or unexported, and functions
+of the same names will be undefined.
+It makes no sense to give both
+.Fl v
+and
+.Fl e
+as unsetting a variable unexports it as well.
+However doing so is not an error, the last specified is used.
+The exit status is 0, unless an attempt was made to unset
+a readonly variable, in which case the exit status is 1.
+It is not an error to unset (or undefine) a variable (or function)
+that is not currently set (or defined.)
 .It wait Op Ar job
 Wait for the specified job to complete and return the exit status of the
-last process in the job.
+last process in the job, or 127 if the job is not a current child of
+the shell.
 If the argument is omitted, wait for all jobs to
 complete and then return an exit status of zero.
+If the wait is interrupted by a signal,
+its exit status will be greater than 128.
+.Pp
+Once waited upon, by specific process number or job-id,
+or by a
+.Ic wait
+with no argumentss,
+knowledge of the child is removed from the system,
+and it cannot be waited upon again.
 .El
 .Ss Command Line Editing
 When
@@ -1984,6 +2221,12 @@ uses the
 library.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
+.It Ev CDPATH
+The search path used with the
+.Ic cd
+built-in.
+.It Ev HISTSIZE
+The number of lines in the history buffer for the shell.
 .It Ev HOME
 Set automatically by
 .Xr login 1
@@ -1992,22 +2235,23 @@ from the user's login directory in the password file
 This environment variable also functions as the default argument for the
 .Ic cd
 built-in.
-.It Ev PATH
-The default search path for executables.
+.It Ev IFS
+Input Field Separators.
+This is normally set to
+.Aq space ,
+.Aq tab ,
+and
+.Aq newline .
 See the
-.Sx Path Search
-section above.
-.It Ev CDPATH
-The search path used with the
-.Ic cd
-built-in.
-.It Ev LINENO
-The current line number in the script or function.
+.Sx White Space Splitting
+section for more details.
 .It Ev LANG
 The string used to specify localization information that allows users
 to work with different culture-specific and language conventions.
 See
 .Xr nls 7 .
+.It Ev LINENO
+The current line number in the script or function.
 .It Ev MAIL
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
@@ -2028,6 +2272,11 @@ This environment setting overrides the
 .Ev MAIL
 setting.
 There is a maximum of 10 mailboxes that can be monitored at once.
+.It Ev PATH
+The default search path for executables.
+See the
+.Sx Path Search
+section above.
 .It Ev PS1
 The primary prompt string, which defaults to
 .Dq $ \  ,
@@ -2040,22 +2289,22 @@ The secondary prompt string, which defaults to
 Output before each line when execution trace (set -x) is enabled,
 defaults to
 .Dq + \  .
-.It Ev IFS
-Input Field Separators.
-This is normally set to
-.Aq space ,
-.Aq tab ,
-and
-.Aq newline .
-See the
-.Sx White Space Splitting
-section for more details.
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
 children of the shell, and is used in the history editing modes.
-.It Ev HISTSIZE
-The number of lines in the history buffer for the shell.
+.\" This is explicitly last, not in sort order - please leave!
+.It Ev NETBSD_SHELL
+Unlike the variables mentioned above,
+this variable is somewhat strange,
+in that it cannot be set,
+inherited from the environment,
+modified, or exported from the shell.
+If set, it indicates that the shell is the
+.Ic sh
+defined by this manual page, and gives its version information.
+It behaves like any other variable that has the read-only
+and un-exportable attributes set.
 .El
 .Sh FILES
 .Bl -item
@@ -2105,3 +2354,5 @@ being displayed.
 The characters generated by filename completion should probably be quoted
 to ensure that the filename is still valid after the input line has been
 processed.
+.Pp
+Many, many, more.
