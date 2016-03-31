@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2016/03/27 14:34:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2016/03/31 16:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.63 2016/03/27 14:34:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.64 2016/03/31 16:16:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,6 @@ __RCSID("$NetBSD: main.c,v 1.63 2016/03/27 14:34:46 christos Exp $");
 
 int rootpid;
 int rootshell;
-int posix;
 #if PROFILE
 short profile_buf[16384];
 extern int etext();

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.24 2016/02/23 18:30:16 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.25 2016/03/31 16:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -105,9 +105,11 @@ DEF_OPT( "nopriv",	'p' )	/* preserve privs even if set{u,g}id */
 #define	pflag optlist[20].val
 DEF_OPT( "trackall",	'h' )	/* [U] locate cmds in funcs when defined */
 #define	hflag optlist[21].val
+DEF_OPT( "posix",	0  )	/* operate in posix mode */
+#define	posix optlist[22].val
 #ifdef DEBUG
 DEF_OPT( "debug",	0 )	/* enable debug prints */
-#define	debug optlist[22].val
+#define	debug optlist[23].val
 #endif
 
 #ifdef DEFINE_OPTIONS
