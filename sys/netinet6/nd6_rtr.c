@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.105 2015/11/25 06:21:26 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.106 2016/04/01 06:33:19 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.105 2015/11/25 06:21:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.106 2016/04/01 06:33:19 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1099,9 +1099,9 @@ prelist_update(struct nd_prefixctl *newprc,
 
 			if ((e = nd6_prefix_onlink(pr)) != 0) {
 				nd6log((LOG_ERR,
-				    "prelist_update: failed to make "
+				    "%s: failed to make "
 				    "the prefix %s/%d on-link on %s "
-				    "(errno=%d)\n",
+				    "(errno=%d)\n", __func__,
 				    ip6_sprintf(&pr->ndpr_prefix.sin6_addr),
 				    pr->ndpr_plen, if_name(pr->ndpr_ifp), e));
 				/* proceed anyway. XXX: is it correct? */
@@ -1125,9 +1125,9 @@ prelist_update(struct nd_prefixctl *newprc,
 
 		error = nd6_prelist_add(newprc, dr, &newpr);
 		if (error != 0 || newpr == NULL) {
-			nd6log((LOG_NOTICE, "prelist_update: "
-			    "nd6_prelist_add failed for %s/%d on %s "
-			    "errno=%d, returnpr=%p\n",
+			nd6log((LOG_NOTICE,
+			    "%s: nd6_prelist_add failed for %s/%d on %s "
+			    "errno=%d, returnpr=%p\n", __func__,
 			    ip6_sprintf(&newprc->ndprc_prefix.sin6_addr),
 			    newprc->ndprc_plen, if_name(newprc->ndprc_ifp),
 			    error, newpr));
@@ -1321,15 +1321,14 @@ prelist_update(struct nd_prefixctl *newprc,
 		ifidlen = in6_if2idlen(ifp);
 		if (ifidlen < 0) {
 			/* this should not happen, so we always log it. */
-			log(LOG_ERR, "prelist_update: IFID undefined (%s)\n",
-			    if_name(ifp));
+			log(LOG_ERR, "%s: IFID undefined (%s)\n",
+			    __func__, if_name(ifp));
 			goto end;
 		}
 		if (ifidlen + pr->ndpr_plen != 128) {
 			nd6log((LOG_INFO,
-			    "prelist_update: invalid prefixlen "
-			    "%d for %s, ignored\n",
-			    pr->ndpr_plen, if_name(ifp)));
+			    "%s: invalid prefixlen %d for %s, ignored\n",
+			    __func__, pr->ndpr_plen, if_name(ifp)));
 			goto end;
 		}
 
@@ -1355,9 +1354,9 @@ prelist_update(struct nd_prefixctl *newprc,
 			if (ip6_use_tempaddr) {
 				int e;
 				if ((e = in6_tmpifadd(ia6, 1, 1)) != 0) {
-					nd6log((LOG_NOTICE, "prelist_update: "
-					    "failed to create a temporary "
-					    "address, errno=%d\n",
+					nd6log((LOG_NOTICE,
+					    "%s: failed to create a temporary "
+					    "address, errno=%d\n", __func__,
 					    e));
 				}
 			}

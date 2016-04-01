@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.195 2016/02/15 14:59:03 rtr Exp $	*/
+/*	$NetBSD: in6.c,v 1.196 2016/04/01 06:25:51 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.195 2016/02/15 14:59:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.196 2016/04/01 06:25:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -844,13 +844,15 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0) {
 			/* XXX: noisy message */
-			nd6log((LOG_INFO, "in6_update_ifa: a destination can "
-			    "be specified for a p2p or a loopback IF only\n"));
+			nd6log((LOG_INFO, "%s: a destination can "
+			    "be specified for a p2p or a loopback IF only\n",
+			    __func__));
 			return EINVAL;
 		}
 		if (plen != 128) {
-			nd6log((LOG_INFO, "in6_update_ifa: prefixlen should "
-			    "be 128 when dstaddr is specified\n"));
+			nd6log((LOG_INFO, "%s: prefixlen should "
+			    "be 128 when dstaddr is specified\n",
+			    __func__));
 #ifdef FORCE_P2PPLEN
 			/*
 			 * To be compatible with old configurations,
@@ -879,7 +881,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * configuration mistake or a tool's bug.
 		 */
 		nd6log((LOG_INFO,
-		    "in6_update_ifa: valid lifetime is 0 for %s\n",
+		    "%s: valid lifetime is 0 for %s\n", __func__,
 		    ip6_sprintf(&ifra->ifra_addr.sin6_addr)));
 
 		if (ia == NULL)
@@ -947,9 +949,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 */
 		if (ia->ia_prefixmask.sin6_len &&
 		    in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL) != plen) {
-			nd6log((LOG_INFO, "in6_update_ifa: the prefix length of an"
+			nd6log((LOG_INFO, "%s: the prefix length of an"
 			    " existing (%s) address should not be changed\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			    __func__, ip6_sprintf(&ia->ia_addr.sin6_addr)));
 			error = EINVAL;
 			goto unlink;
 		}
@@ -965,8 +967,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia->ia_dstaddr.sin6_addr)) {
 		if ((ia->ia_flags & IFA_ROUTE) != 0 &&
 		    rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST) != 0) {
-			nd6log((LOG_ERR, "in6_update_ifa: failed to remove "
-			    "a route to the old destination: %s\n",
+			nd6log((LOG_ERR, "%s: failed to remove "
+			    "a route to the old destination: %s\n", __func__,
 			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
 			/* proceed anyway... */
 		} else
@@ -1048,8 +1050,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		llsol.s6_addr8[12] = 0xff;
 		if ((error = in6_setscope(&llsol, ifp, NULL)) != 0) {
 			/* XXX: should not happen */
-			log(LOG_ERR, "in6_update_ifa: "
-			    "in6_setscope failed\n");
+			log(LOG_ERR, "%s: in6_setscope failed\n", __func__);
 			goto cleanup;
 		}
 		dad_delay = 0;
@@ -1070,9 +1071,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		imm = in6_joingroup(ifp, &llsol, &error, dad_delay);
 		if (!imm) {
 			nd6log((LOG_ERR,
-			    "in6_update_ifa: addmulti "
-			    "failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(&llsol), if_name(ifp), error));
+			    "%s: addmulti failed for %s on %s (errno=%d)\n",
+			    __func__, ip6_sprintf(&llsol), if_name(ifp),
+			    error));
 			goto cleanup;
 		}
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
@@ -1135,9 +1136,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
 			nd6log((LOG_WARNING,
-			    "in6_update_ifa: addmulti failed for "
-			    "%s on %s (errno=%d)\n",
-			    ip6_sprintf(&mltaddr.sin6_addr),
+			    "%s: addmulti failed for %s on %s (errno=%d)\n",
+			    __func__, ip6_sprintf(&mltaddr.sin6_addr),
 			    if_name(ifp), error));
 			goto cleanup;
 		}
@@ -1159,9 +1159,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			;
 		else if ((imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error,
 		          dad_delay)) == NULL) { /* XXX jinmei */
-			nd6log((LOG_WARNING, "in6_update_ifa: "
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(&mltaddr.sin6_addr),
+			nd6log((LOG_WARNING,
+			    "%s: addmulti failed for %s on %s (errno=%d)\n",
+			    __func__, ip6_sprintf(&mltaddr.sin6_addr),
 			    if_name(ifp), error));
 			/* XXX not very fatal, go on... */
 		} else {
@@ -1219,9 +1219,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
-			nd6log((LOG_WARNING, "in6_update_ifa: "
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(&mltaddr.sin6_addr),
+			nd6log((LOG_WARNING,
+			    "%s: addmulti failed for %s on %s (errno=%d)\n",
+			    __func__, ip6_sprintf(&mltaddr.sin6_addr),
 			    if_name(ifp), error));
 			goto cleanup;
 		} else {
