@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.155 2016/04/01 02:00:14 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.156 2016/04/01 09:00:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.155 2016/04/01 02:00:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.156 2016/04/01 09:00:27 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1203,16 +1203,6 @@ rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
 LIST_HEAD(, rttimer_queue) rttimer_queue_head;
 static int rt_init_done = 0;
 
-#define RTTIMER_CALLOUT(r)	do {					\
-		if (r->rtt_func != NULL) {				\
-			(*r->rtt_func)(r->rtt_rt, r);			\
-		} else {						\
-			rtrequest((int) RTM_DELETE,			\
-				  rt_getkey(r->rtt_rt),			\
-				  0, 0, 0, 0);				\
-		}							\
-	} while (/*CONSTCOND*/0)
-
 /*
  * Some subtle order problems with domain initialization mean that
  * we cannot count on this being run from rt_init before various
@@ -1267,7 +1257,7 @@ rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 		if (destroy)
-			RTTIMER_CALLOUT(r);
+			(*r->rtt_func)(r->rtt_rt, r);
 		rtfree(r->rtt_rt);
 		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
@@ -1307,7 +1297,7 @@ rt_timer_remove_all(struct rtentry *rt, int destroy)
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
 		if (destroy)
-			RTTIMER_CALLOUT(r);
+			(*r->rtt_func)(r->rtt_rt, r);
 		if (r->rtt_queue->rtq_count > 0)
 			r->rtt_queue->rtq_count--;
 		else
@@ -1326,6 +1316,7 @@ rt_timer_add(struct rtentry *rt,
 	struct rttimer *r;
 	int s;
 
+	KASSERT(func != NULL);
 	/*
 	 * If there's already a timer with this action, destroy it before
 	 * we add a new one.
@@ -1378,7 +1369,7 @@ rt_timer_timer(void *arg)
 		    (r->rtt_time + rtq->rtq_timeout) < time_uptime) {
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
-			RTTIMER_CALLOUT(r);
+			(*r->rtt_func)(r->rtt_rt, r);
 			rtfree(r->rtt_rt);
 			pool_put(&rttimer_pool, r);
 			if (rtq->rtq_count > 0)
