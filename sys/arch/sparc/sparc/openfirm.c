@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.20 2015/03/27 06:10:25 nakayama Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.21 2016/04/01 20:21:45 palle Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.20 2015/03/27 06:10:25 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.21 2016/04/01 20:21:45 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,34 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.20 2015/03/27 06:10:25 nakayama Exp $
 #ifndef _KERNEL
 #include <sys/stdarg.h>
 #endif
+
+#ifdef SUN4V
+#ifdef __arch64__
+#define OFBOUNCE_MAXSIZE 1024
+/* 
+ * Sun4v OpenBoot is not always happy with 64-bit addresses - an example is the
+ * addr parameter in the OF_write() call which can be truncated to a 32-bit
+ * value.
+ * Avoid this behaviour by using a static buffer which is assumed to be mapped
+ * in on a 32-bit address.
+ * Use a mutex to protect access to the buffer from multiple threads.
+ * 
+ */
+kmutex_t ofcall_mtx;
+static char ofbounce[OFBOUNCE_MAXSIZE];
+#endif
+#endif
+
+void
+OF_init(void)
+{
+#ifdef SUN4V
+#ifdef __arch64__
+  KASSERT(((uint64_t)&ofbounce & 0xffffffffUL)==(uint64_t)&ofbounce);
+  mutex_init(&ofcall_mtx, MUTEX_DEFAULT, IPL_NONE);
+#endif	
+#endif
+}
 
 int
 OF_peer(int phandle)
@@ -512,6 +540,15 @@ OF_write(int handle, const void *addr, int len)
 	if (len > 1024) {
 		panic("OF_write(len = %d)\n", len);
 	}
+#ifdef SUN4V
+#if __arch64__
+	mutex_enter(&ofcall_mtx);
+	if (len > OFBOUNCE_MAXSIZE) 
+		panic("OF_write(len = %d) exceedes bounce buffer\n", len);
+	memcpy(ofbounce, addr, len);
+	addr = ofbounce;
+#endif	
+#endif
 	args.name = ADR2CELL("write");
 	args.nargs = 3;
 	args.nreturns = 1;
@@ -525,6 +562,11 @@ OF_write(int handle, const void *addr, int len)
 		l = args.actual;
 		act += l;
 	}
+#ifdef SUN4V
+#if __arch64__
+	mutex_exit(&ofcall_mtx);
+#endif
+#endif
 	return act;
 }
 
