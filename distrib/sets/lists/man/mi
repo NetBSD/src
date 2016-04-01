@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1520 2016/02/29 22:01:20 riastradh Exp $
+# $NetBSD: mi,v 1.1521 2016/04/01 12:37:48 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5104,6 +5104,7 @@
 ./usr/share/man/html5/lvm.conf.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html5/magic.html		man-util-htmlman	html
 ./usr/share/man/html5/mailer.conf.html		man-mailwrapper-htmlman	html
+./usr/share/man/html5/malloc.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/man.conf.html		man-man-htmlman		html
 ./usr/share/man/html5/map3270.html		man-obsolete		obsolete
 ./usr/share/man/html5/master.html		man-postfix-htmlman	postfix,html
@@ -8037,6 +8038,7 @@
 ./usr/share/man/man5/lvm.conf.5			man-lvm-man		lvm,.man
 ./usr/share/man/man5/magic.5			man-util-man		.man
 ./usr/share/man/man5/mailer.conf.5		man-mailwrapper-man	.man
+./usr/share/man/man5/malloc.conf.5		man-sys-man		.man
 ./usr/share/man/man5/man.conf.5			man-man-man		.man
 ./usr/share/man/man5/map3270.5			man-obsolete		obsolete
 ./usr/share/man/man5/master.5			man-postfix-man		postfix,.man
