@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.185 2016/02/04 02:48:37 riastradh Exp $	*/
+/*	$NetBSD: nd6.c,v 1.186 2016/04/01 05:11:38 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.185 2016/02/04 02:48:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.186 2016/04/01 05:11:38 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -123,10 +123,11 @@ static void nd6_slowtimo(void *);
 static int regen_tmpaddr(struct in6_ifaddr *);
 static void nd6_free(struct rtentry *, struct llentry *, int);
 static void nd6_llinfo_timer(void *);
+static void nd6_timer(void *);
 static void clear_llinfo_pqueue(struct llentry *);
 
-callout_t nd6_slowtimo_ch;
-callout_t nd6_timer_ch;
+static callout_t nd6_slowtimo_ch;
+static callout_t nd6_timer_ch;
 
 static int fill_drlist(void *, size_t *, size_t);
 static int fill_prlist(void *, size_t *, size_t);
@@ -136,17 +137,9 @@ MALLOC_DEFINE(M_IP6NDP, "NDP", "IPv6 Neighbour Discovery");
 void
 nd6_init(void)
 {
-	static int nd6_init_done = 0;
-
-	if (nd6_init_done) {
-		log(LOG_NOTICE, "nd6_init called more than once(ignored)\n");
-		return;
-	}
 
 	/* initialization of the default router list */
 	TAILQ_INIT(&nd_defrouter);
-
-	nd6_init_done = 1;
 
 	callout_init(&nd6_slowtimo_ch, CALLOUT_MPSAFE);
 	callout_init(&nd6_timer_ch, CALLOUT_MPSAFE);
@@ -154,6 +147,7 @@ nd6_init(void)
 	/* start timer */
 	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
 	    nd6_slowtimo, NULL);
+	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
 }
 
 struct nd_ifinfo *
@@ -592,7 +586,7 @@ out:
 /*
  * ND6 timer routine to expire default route list and prefix list
  */
-void
+static void
 nd6_timer(void *ignored_arg)
 {
 	struct nd_defrouter *next_dr, *dr;
