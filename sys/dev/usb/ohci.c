@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.65 2016/04/01 14:12:17 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.66 2016/04/01 14:13:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.65 2016/04/01 14:12:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.66 2016/04/01 14:13:29 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3112,7 +3112,6 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	/* We want interrupt at the end of the transfer. */
 	last->td.td_flags &= HTOO32(~OHCI_TD_INTR_MASK);
 	last->td.td_flags |= HTOO32(OHCI_TD_SET_DI(1));
-
 	last->td.td_nexttd = HTOO32(tail->physaddr);
 	last->nexttd = tail;
 	last->flags |= OHCI_CALL_DONE;
