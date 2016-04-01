@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.70 2016/04/01 05:11:38 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.71 2016/04/01 08:12:00 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -350,7 +350,8 @@ extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
 extern int nd6_debug;
 
-#define nd6log(x)	do { if (nd6_debug) log x; } while (/*CONSTCOND*/ 0)
+#define nd6log(level, fmt, args...) \
+	do { if (nd6_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
 
 /* nd6_rtr.c */
 extern int nd6_defifindex;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.113 2015/12/07 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.114 2016/04/01 08:12:00 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.113 2015/12/07 06:19:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.114 2016/04/01 08:12:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -123,10 +123,9 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		goto bad;
 
 	if (ip6->ip6_hlim != 255) {
-		nd6log((LOG_ERR,
-		    "nd6_ns_input: invalid hlim (%d) from %s to %s on %s\n",
+		nd6log(LOG_ERR, "invalid hlim (%d) from %s to %s on %s\n",
 		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp));
 		goto bad;
 	}
 
@@ -139,8 +138,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		    daddr6.s6_addr8[12] == 0xff) {
 			; /* good */
 		} else {
-			nd6log((LOG_INFO, "nd6_ns_input: bad DAD packet "
-			    "(wrong ip6 dst)\n"));
+			nd6log(LOG_INFO, "bad DAD packet (wrong ip6 dst)\n");
 			goto bad;
 		}
 	} else {
@@ -151,23 +149,21 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		sockaddr_in6_init(&ssin6, &saddr6, 0, 0, 0);
 		if (nd6_is_addr_neighbor(&ssin6, ifp) == 0) {
-			nd6log((LOG_INFO, "nd6_ns_input: "
-			    "NS packet from non-neighbor\n"));
+			nd6log(LOG_INFO, "NS packet from non-neighbor\n");
 			goto bad;
 		}
 	}
 
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
-		nd6log((LOG_INFO, "nd6_ns_input: bad NS target (multicast)\n"));
+		nd6log(LOG_INFO, "bad NS target (multicast)\n");
 		goto bad;
 	}
 
 	icmp6len -= sizeof(*nd_ns);
 	nd6_option_init(nd_ns + 1, icmp6len, &ndopts);
 	if (nd6_options(&ndopts) < 0) {
-		nd6log((LOG_INFO,
-		    "nd6_ns_input: invalid ND option, ignored\n"));
+		nd6log(LOG_INFO, "invalid ND option, ignored\n");
 		/* nd6_options have incremented stats */
 		goto freeit;
 	}
@@ -178,8 +174,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	}
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) && lladdr) {
-		nd6log((LOG_INFO, "nd6_ns_input: bad DAD packet "
-		    "(link-layer address option)\n"));
+		nd6log(LOG_INFO,
+		    "bad DAD packet (link-layer address option)\n");
 		goto bad;
 	}
 
@@ -261,15 +257,15 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log((LOG_INFO, "nd6_ns_input: lladdrlen mismatch for %s "
+		nd6log(LOG_INFO, "lladdrlen mismatch for %s "
 		    "(if %d, NS packet %d)\n",
-		    ip6_sprintf(&taddr6), ifp->if_addrlen, lladdrlen - 2));
+		    ip6_sprintf(&taddr6), ifp->if_addrlen, lladdrlen - 2);
 		goto bad;
 	}
 
 	if (IN6_ARE_ADDR_EQUAL(&myaddr6, &saddr6)) {
-		nd6log((LOG_INFO, "nd6_ns_input: duplicate IP6 address %s\n",
-		    ip6_sprintf(&saddr6)));
+		nd6log(LOG_INFO, "duplicate IP6 address %s\n",
+		    ip6_sprintf(&saddr6));
 		goto freeit;
 	}
 
@@ -331,9 +327,9 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	nd6log((LOG_ERR, "nd6_ns_input: src=%s\n", ip6_sprintf(&saddr6)));
-	nd6log((LOG_ERR, "nd6_ns_input: dst=%s\n", ip6_sprintf(&daddr6)));
-	nd6log((LOG_ERR, "nd6_ns_input: tgt=%s\n", ip6_sprintf(&taddr6)));
+	nd6log(LOG_ERR, "src=%s\n", ip6_sprintf(&saddr6));
+	nd6log(LOG_ERR, "dst=%s\n", ip6_sprintf(&daddr6));
+	nd6log(LOG_ERR, "tgt=%s\n", ip6_sprintf(&taddr6));
 	ICMP6_STATINC(ICMP6_STAT_BADNS);
 	m_freem(m);
 }
@@ -450,10 +446,9 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 			src = in6_selectsrc(&dst_sa, NULL,
 			    NULL, &ro, NULL, NULL, &error);
 			if (src == NULL) {
-				nd6log((LOG_DEBUG,
-				    "nd6_ns_output: source can't be "
+				nd6log(LOG_DEBUG, "source can't be "
 				    "determined: dst=%s, error=%d\n",
-				    ip6_sprintf(&dst_sa.sin6_addr), error));
+				    ip6_sprintf(&dst_sa.sin6_addr), error);
 				goto bad;
 			}
 		}
@@ -556,10 +551,10 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	int rt_announce;
 
 	if (ip6->ip6_hlim != 255) {
-		nd6log((LOG_ERR,
-		    "nd6_na_input: invalid hlim (%d) from %s to %s on %s\n",
+		nd6log(LOG_ERR,
+		    "invalid hlim (%d) from %s to %s on %s\n",
 		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp));
 		goto bad;
 	}
 
@@ -579,22 +574,19 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		return;		/* XXX: impossible */
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
-		nd6log((LOG_ERR,
-		    "nd6_na_input: invalid target address %s\n",
-		    ip6_sprintf(&taddr6)));
+		nd6log(LOG_ERR, "invalid target address %s\n",
+		    ip6_sprintf(&taddr6));
 		goto bad;
 	}
 	if (is_solicited && IN6_IS_ADDR_MULTICAST(&daddr6)) {
-		nd6log((LOG_ERR,
-		    "nd6_na_input: a solicited adv is multicasted\n"));
+		nd6log(LOG_ERR, "a solicited adv is multicasted\n");
 		goto bad;
 	}
 
 	icmp6len -= sizeof(*nd_na);
 	nd6_option_init(nd_na + 1, icmp6len, &ndopts);
 	if (nd6_options(&ndopts) < 0) {
-		nd6log((LOG_INFO,
-		    "nd6_na_input: invalid ND option, ignored\n"));
+		nd6log(LOG_INFO, "invalid ND option, ignored\n");
 		/* nd6_options have incremented stats */
 		goto freeit;
 	}
@@ -634,15 +626,14 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 */
 	sockaddr_in6_init(&ssin6, &saddr6, 0, 0, 0);
 	if (nd6_is_addr_neighbor(&ssin6, ifp) == 0) {
-		nd6log((LOG_INFO, "nd6_na_input: "
-		    "ND packet from non-neighbor\n"));
+		nd6log(LOG_INFO, "ND packet from non-neighbor\n");
 		goto bad;
 	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log((LOG_INFO, "nd6_na_input: lladdrlen mismatch for %s "
+		nd6log(LOG_INFO, "lladdrlen mismatch for %s "
 		    "(if %d, NA packet %d)\n", ip6_sprintf(&taddr6),
-		    ifp->if_addrlen, lladdrlen - 2));
+		    ifp->if_addrlen, lladdrlen - 2);
 		goto bad;
 	}
 
@@ -924,9 +915,9 @@ nd6_na_output(
 	 */
 	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL, &error);
 	if (src == NULL) {
-		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
+		nd6log(LOG_DEBUG, "source can't be "
 		    "determined: dst=%s, error=%d\n",
-		    ip6_sprintf(&satocsin6(dst)->sin6_addr), error));
+		    ip6_sprintf(&satocsin6(dst)->sin6_addr), error);
 		goto bad;
 	}
 	ip6->ip6_src = *src;
@@ -1113,8 +1104,8 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
-	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
-	    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+	nd6log(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
+	    ip6_sprintf(&ia->ia_addr.sin6_addr));
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -1195,8 +1186,8 @@ nd6_dad_timer(struct ifaddr *ifa)
 
 	/* timeouted with IFF_{RUNNING,UP} check */
 	if (dp->dad_ns_tcount > dad_maxtry) {
-		nd6log((LOG_INFO, "%s: could not run DAD, driver problem?\n",
-			if_name(ifa->ifa_ifp)));
+		nd6log(LOG_INFO, "%s: could not run DAD, driver problem?\n",
+			if_name(ifa->ifa_ifp));
 
 		TAILQ_REMOVE(&dadq, dp, dad_list);
 		free(dp, M_IP6NDP);
@@ -1247,10 +1238,10 @@ nd6_dad_timer(struct ifaddr *ifa)
 			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 
-			nd6log((LOG_DEBUG,
+			nd6log(LOG_DEBUG,
 			    "%s: DAD complete for %s - no duplicates found\n",
 			    if_name(ifa->ifa_ifp),
-			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 
 			TAILQ_REMOVE(&dadq, dp, dad_list);
 			free(dp, M_IP6NDP);
@@ -1380,10 +1371,9 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 
 	/* Quickhack - completely ignore DAD NS packets */
 	if (dad_ignore_ns) {
-		nd6log((LOG_INFO,
-		    "nd6_dad_ns_input: ignoring DAD NS packet for "
+		nd6log(LOG_INFO, "ignoring DAD NS packet for "
 		    "address %s(%s)\n", ip6_sprintf(taddr6),
-		    if_name(ifa->ifa_ifp)));
+		    if_name(ifa->ifa_ifp));
 		return;
 	}
 
