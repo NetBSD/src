@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.69 2015/12/07 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.70 2016/04/01 05:11:38 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -352,8 +352,6 @@ extern int nd6_debug;
 
 #define nd6log(x)	do { if (nd6_debug) log x; } while (/*CONSTCOND*/ 0)
 
-extern struct callout nd6_timer_ch;
-
 /* nd6_rtr.c */
 extern int nd6_defifindex;
 extern int ip6_desync_factor;	/* seconds */
@@ -402,7 +400,6 @@ struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *);
 void nd6_setmtu(struct ifnet *);
 void nd6_llinfo_settimer(struct llentry *, time_t);
 void nd6_llinfo_settimer_locked(struct llentry *, time_t);
-void nd6_timer(void *);
 void nd6_purge(struct ifnet *, struct in6_ifextra *);
 void nd6_nud_hint(struct rtentry *);
 int nd6_resolve(struct ifnet *, struct rtentry *,
