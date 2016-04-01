@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.113 2015/07/25 10:37:22 mlelstv Exp $	*/
+/*	$NetBSD: newfs.c,v 1.114 2016/04/01 05:23:56 ryo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.113 2015/07/25 10:37:22 mlelstv Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.114 2016/04/01 05:23:56 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -866,7 +866,7 @@ struct help_strings {
 	{ MFS_MOUNT,	"-g groupname\tgroup name of mount point" },
 	{ BOTH,		"-h avgfpdir\taverage files per directory" },
 	{ BOTH,		"-i density\tnumber of bytes per inode" },
-	{ BOTH,		"-m minfree\tminimum free space %%" },
+	{ BOTH,		"-m minfree\tminimum free space %" },
 	{ BOTH,		"-n inodes\tnumber of inodes (overrides -i density)" },
 	{ BOTH,		"-o optim\toptimization preference (`space' or `time')"
 			    },
