@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.186 2016/04/01 05:11:38 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.187 2016/04/01 08:12:00 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.186 2016/04/01 05:11:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.187 2016/04/01 08:12:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -338,9 +338,9 @@ nd6_options(union nd_opts *ndopts)
 		case ND_OPT_MTU:
 		case ND_OPT_REDIRECTED_HEADER:
 			if (ndopts->nd_opt_array[nd_opt->nd_opt_type]) {
-				nd6log((LOG_INFO,
+				nd6log(LOG_INFO,
 				    "duplicated ND6 option found (type=%d)\n",
-				    nd_opt->nd_opt_type));
+				    nd_opt->nd_opt_type);
 				/* XXX bark? */
 			} else {
 				ndopts->nd_opt_array[nd_opt->nd_opt_type]
@@ -360,16 +360,16 @@ nd6_options(union nd_opts *ndopts)
 			 * Unknown options must be silently ignored,
 			 * to accommodate future extension to the protocol.
 			 */
-			nd6log((LOG_DEBUG,
+			nd6log(LOG_DEBUG,
 			    "nd6_options: unsupported option %d - "
-			    "option ignored\n", nd_opt->nd_opt_type));
+			    "option ignored\n", nd_opt->nd_opt_type);
 		}
 
 skip1:
 		i++;
 		if (i > nd6_maxndopt) {
 			ICMP6_STATINC(ICMP6_STAT_ND_TOOMANYOPT);
-			nd6log((LOG_INFO, "too many loop in nd opt\n"));
+			nd6log(LOG_INFO, "too many loop in nd opt\n");
 			break;
 		}
 
@@ -988,10 +988,10 @@ nd6_lookup1(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
 	    (ifp && rt->rt_ifa->ifa_ifp != ifp)) {
 		if (create) {
-			nd6log((LOG_DEBUG,
+			nd6log(LOG_DEBUG,
 			    "nd6_lookup: failed to lookup %s (if = %s)\n",
 			    ip6_sprintf(addr6),
-			    ifp ? if_name(ifp) : "unspec"));
+			    ifp ? if_name(ifp) : "unspec");
 		}
 		rtfree(rt);
 		return NULL;
@@ -1563,9 +1563,9 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				if (in6_setscope(&llsol, ifp, NULL))
 					break;
 				if (!in6_addmulti(&llsol, ifp, &error, 0)) {
-					nd6log((LOG_ERR, "%s: failed to join "
+					nd6log(LOG_ERR, "%s: failed to join "
 					    "%s (errno=%d)\n", if_name(ifp),
-					    ip6_sprintf(&llsol), error));
+					    ip6_sprintf(&llsol), error);
 				}
 			}
 		}

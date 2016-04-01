@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.196 2016/04/01 06:25:51 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.197 2016/04/01 08:12:00 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.196 2016/04/01 06:25:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.197 2016/04/01 08:12:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -844,15 +844,13 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0) {
 			/* XXX: noisy message */
-			nd6log((LOG_INFO, "%s: a destination can "
-			    "be specified for a p2p or a loopback IF only\n",
-			    __func__));
+			nd6log(LOG_INFO, "a destination can "
+			    "be specified for a p2p or a loopback IF only\n");
 			return EINVAL;
 		}
 		if (plen != 128) {
-			nd6log((LOG_INFO, "%s: prefixlen should "
-			    "be 128 when dstaddr is specified\n",
-			    __func__));
+			nd6log(LOG_INFO, "prefixlen should "
+			    "be 128 when dstaddr is specified\n");
 #ifdef FORCE_P2PPLEN
 			/*
 			 * To be compatible with old configurations,
@@ -880,9 +878,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * the following log might be noisy, but this is a typical
 		 * configuration mistake or a tool's bug.
 		 */
-		nd6log((LOG_INFO,
-		    "%s: valid lifetime is 0 for %s\n", __func__,
-		    ip6_sprintf(&ifra->ifra_addr.sin6_addr)));
+		nd6log(LOG_INFO, "valid lifetime is 0 for %s\n",
+		    ip6_sprintf(&ifra->ifra_addr.sin6_addr));
 
 		if (ia == NULL)
 			return 0; /* there's nothing to do */
@@ -949,9 +946,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 */
 		if (ia->ia_prefixmask.sin6_len &&
 		    in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL) != plen) {
-			nd6log((LOG_INFO, "%s: the prefix length of an"
+			nd6log(LOG_INFO, "the prefix length of an"
 			    " existing (%s) address should not be changed\n",
-			    __func__, ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 			error = EINVAL;
 			goto unlink;
 		}
@@ -967,9 +964,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia->ia_dstaddr.sin6_addr)) {
 		if ((ia->ia_flags & IFA_ROUTE) != 0 &&
 		    rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST) != 0) {
-			nd6log((LOG_ERR, "%s: failed to remove "
-			    "a route to the old destination: %s\n", __func__,
-			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			nd6log(LOG_ERR, "failed to remove "
+			    "a route to the old destination: %s\n",
+			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 			/* proceed anyway... */
 		} else
 			ia->ia_flags &= ~IFA_ROUTE;
@@ -1070,10 +1067,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		/* join solicited multicast addr for new host id */
 		imm = in6_joingroup(ifp, &llsol, &error, dad_delay);
 		if (!imm) {
-			nd6log((LOG_ERR,
-			    "%s: addmulti failed for %s on %s (errno=%d)\n",
-			    __func__, ip6_sprintf(&llsol), if_name(ifp),
-			    error));
+			nd6log(LOG_ERR,
+			    "addmulti failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&llsol), if_name(ifp), error);
 			goto cleanup;
 		}
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
@@ -1135,10 +1131,10 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
-			nd6log((LOG_WARNING,
-			    "%s: addmulti failed for %s on %s (errno=%d)\n",
-			    __func__, ip6_sprintf(&mltaddr.sin6_addr),
-			    if_name(ifp), error));
+			nd6log(LOG_WARNING,
+			    "addmulti failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&mltaddr.sin6_addr),
+			    if_name(ifp), error);
 			goto cleanup;
 		}
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
@@ -1159,10 +1155,10 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			;
 		else if ((imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error,
 		          dad_delay)) == NULL) { /* XXX jinmei */
-			nd6log((LOG_WARNING,
-			    "%s: addmulti failed for %s on %s (errno=%d)\n",
-			    __func__, ip6_sprintf(&mltaddr.sin6_addr),
-			    if_name(ifp), error));
+			nd6log(LOG_WARNING,
+			    "addmulti failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&mltaddr.sin6_addr),
+			    if_name(ifp), error);
 			/* XXX not very fatal, go on... */
 		} else {
 			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
@@ -1219,10 +1215,10 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
-			nd6log((LOG_WARNING,
-			    "%s: addmulti failed for %s on %s (errno=%d)\n",
-			    __func__, ip6_sprintf(&mltaddr.sin6_addr),
-			    if_name(ifp), error));
+			nd6log(LOG_WARNING,
+			    "addmulti failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&mltaddr.sin6_addr),
+			    if_name(ifp), error);
 			goto cleanup;
 		} else {
 			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
@@ -1383,8 +1379,8 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * positive reference.
 	 */
 	if (oia->ia6_ndpr == NULL) {
-		nd6log((LOG_NOTICE, "in6_unlink_ifa: autoconf'ed address "
-		    "%p has no prefix\n", oia));
+		nd6log(LOG_NOTICE, "autoconf'ed address %p has no prefix\n",
+		    oia);
 	} else {
 		oia->ia6_ndpr->ndpr_refcnt--;
 		oia->ia6_ndpr = NULL;
@@ -2066,9 +2062,8 @@ in6_if_link_up(struct ifnet *ifp)
 			ia->ia6_flags &= ~IN6_IFF_DETACHED;
 			if (if_do_dad(ifp)) {
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
-				nd6log((LOG_ERR, "in6_if_up: "
-				    "%s marked tentative\n",
-				    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+				nd6log(LOG_ERR, "%s marked tentative\n",
+				    ip6_sprintf(&ia->ia_addr.sin6_addr));
 			} else if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0)
 				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		}
@@ -2138,9 +2133,8 @@ in6_if_link_down(struct ifnet *ifp)
 		 * are marked tentative and DAD commences.
 		 */
 		if (!(ia->ia6_flags & IN6_IFF_DETACHED)) {
-			nd6log((LOG_DEBUG, "in6_if_down: "
-			    "%s marked detached\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			nd6log(LOG_DEBUG, "%s marked detached\n",
+			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 			ia->ia6_flags |= IN6_IFF_DETACHED;
 			ia->ia6_flags &=
 			    ~(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED);
