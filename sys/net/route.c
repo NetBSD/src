@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.154 2016/03/24 06:18:27 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.155 2016/04/01 02:00:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.154 2016/03/24 06:18:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.155 2016/04/01 02:00:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -128,14 +128,14 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.154 2016/03/24 06:18:27 ozaki-r Exp $");
 #define	rtcache_debug() 0
 #endif /* RTFLUSH_DEBUG */
 
-struct	rtstat	rtstat;
+struct rtstat		rtstat;
 
-int	rttrash;		/* routes not in table but not freed */
+static int		rttrash;	/* routes not in table but not freed */
 
-struct pool rtentry_pool;
-struct pool rttimer_pool;
+static struct pool	rtentry_pool;
+static struct pool	rttimer_pool;
 
-struct callout rt_timer_ch; /* callout for rt_timer_timer() */
+static struct callout	rt_timer_ch; /* callout for rt_timer_timer() */
 
 #ifdef RTFLUSH_DEBUG
 static int _rtcache_debug = 0;
