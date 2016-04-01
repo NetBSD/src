@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.60 2016/03/24 15:30:17 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.61 2016/04/01 12:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.60 2016/03/24 15:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.61 2016/04/01 12:58:15 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -523,7 +523,6 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	ohci_soft_td_t *next, *cur;
 	ohci_physaddr_t dataphys, dataphysend;
-	uint32_t tdflags;
 	int len = alen;
 	int curlen;
 	usb_dma_t *dma = &xfer->ux_dmabuf;
@@ -554,7 +553,7 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 
 	dataphys = DMAADDR(dma, 0);
 	dataphysend = OHCI_PAGE(dataphys + len - 1);
-	tdflags = HTOO32(
+	const uint32_t tdflags = HTOO32(
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
@@ -650,7 +649,6 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 	struct ohci_xfer *ox = OHCI_XFER2OXFER(xfer);
 	ohci_soft_td_t *next, *cur;
 	ohci_physaddr_t dataphys, dataphysend;
-	uint32_t tdflags;
 	int len, curlen;
 	usb_dma_t *dma = &xfer->ux_dmabuf;
 	uint16_t flags = xfer->ux_flags;
@@ -676,7 +674,7 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 	dataphysend = OHCI_PAGE(dataphys + len - 1);
 	usb_syncmem(dma, 0, len,
 	    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-	tdflags = HTOO32(
+	const uint32_t tdflags = HTOO32(
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
