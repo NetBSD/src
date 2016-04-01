@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.64 2016/04/01 14:11:02 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.65 2016/04/01 14:12:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.64 2016/04/01 14:11:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.65 2016/04/01 14:12:17 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -577,7 +577,7 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 			KASSERT(curlen != 0);
 		}
 		DPRINTFN(4, "dataphys=0x%08x dataphysend=0x%08x "
-		    "len=%d curlen=%d",  dataphys, dataphysend, len, curlen);
+		    "len=%d curlen=%d", dataphys, dataphysend, len, curlen);
 		len -= curlen;
 
 		cur->td.td_flags = tdflags;
