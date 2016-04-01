@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.156 2016/04/01 09:00:27 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.157 2016/04/01 09:52:39 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.156 2016/04/01 09:00:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.157 2016/04/01 09:52:39 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -568,7 +568,6 @@ rtdeletemsg(struct rtentry *rt)
 {
 	int error;
 	struct rt_addrinfo info;
-	struct rtentry *retrt;
 
 	/*
 	 * Request the new route so that the entry is not actually
@@ -580,12 +579,10 @@ rtdeletemsg(struct rtentry *rt)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
-	error = rtrequest1(RTM_DELETE, &info, &retrt);
+	error = rtrequest1(RTM_DELETE, &info, NULL);
 
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, error);
 
-	if (error == 0)
-		rtfree(retrt);
 	return error;
 }
 
