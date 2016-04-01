@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.68 2016/04/01 14:20:05 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.69 2016/04/01 15:13:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.68 2016/04/01 14:20:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.69 2016/04/01 15:13:45 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -546,12 +546,8 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 
 	DPRINTFN(8, "xfer %p nstd %d mps %d", xfer, nstd, mps, 0);
 
-	/*
-	 * Assign next for the len == 0 case where we don't go through the
-	 * main loop.
-	 */
 	len = alen;
-	cur = next = ohci_alloc_std(sc);
+	cur = ohci_alloc_std(sc);
 	if (cur == NULL)
 		goto nomem;
 
@@ -561,24 +557,16 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
-	size_t curoffs = 0;
-	size_t j = 0;
-	for (; j < ox->ox_nstd && len != 0;) {
+	for (size_t j = 0;;) {
 		ox->ox_stds[j++] = cur;
 		next = ohci_alloc_std(sc);
 		if (next == NULL)
 			goto nomem;
-		curlen = 0;
-		dataphys = DMAADDR(dma, curoffs);
-		dataphysend = DMAADDR(dma, curoffs + len - 1);
 
-		ohci_physaddr_t sphyspg = OHCI_PAGE(dataphys);
-		ohci_physaddr_t ephyspg = OHCI_PAGE(dataphysend);
-		/*
-		 * The OHCI hardware can handle at most one page
-		 * crossing per TD
-		 */
-		if (sphyspg == ephyspg || sphyspg + 1 == ephyspg) {
+		/* The OHCI hardware can handle at most one page crossing. */
+		if (OHCI_PAGE(dataphys) == dataphysend ||
+		    OHCI_PAGE(dataphys) + OHCI_PAGE_SIZE == dataphysend) {
+			/* we can handle it in this TD */
 			curlen = len;
 		} else {
 			/* must use multiple TDs, fill as much as possible. */
@@ -586,8 +574,8 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 			    (dataphys & (OHCI_PAGE_SIZE - 1));
 			/* the length must be a multiple of the max size */
 			curlen -= curlen % mps;
+			KASSERT(curlen != 0);
 		}
-		KASSERT(curlen != 0);
 		DPRINTFN(4, "dataphys=0x%08x dataphysend=0x%08x "
 		    "len=%d curlen=%d", dataphys, dataphysend, len, curlen);
 		len -= curlen;
@@ -603,37 +591,31 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int alen, int rd)
 
 		DPRINTFN(10, "cbp=0x%08x be=0x%08x", dataphys,
 		    dataphys + curlen - 1, 0, 0);
-
-		curoffs += curlen;
-		len -= curlen;
-
-		if (len != 0)
-			cur = next;
-
+		if (len == 0)
+			break;
 		DPRINTFN(10, "extend chain", 0, 0, 0, 0);
+		dataphys += curlen;
+		cur = next;
 	}
-
-	/* Allocate a TD for a 0 length transfer at the end. */
-	if (!rd && (flags & USBD_FORCE_SHORT_XFER)) {
+	if (!rd && (flags & USBD_FORCE_SHORT_XFER) &&
+	    alen % mps == 0) {
 		/* Force a 0 length transfer at the end. */
 
-		KASSERT(j < ox->ox_nstd);
-		KASSERT(next != NULL);
 		cur = next;
-		ox->ox_stds[j++] = cur;
+		next = ohci_alloc_std(sc);
+		if (next == NULL)
+			goto nomem;
 
 		cur->td.td_flags = tdflags;
 		cur->td.td_cbp = 0; /* indicate 0 length packet */
-		cur->td.td_nexttd = 0;
+		cur->td.td_nexttd = HTOO32(next->physaddr);
 		cur->td.td_be = ~0;
-		cur->nexttd = NULL;
+		cur->nexttd = next;
 		cur->len = 0;
 		cur->flags = 0;
 		cur->xfer = xfer;
 
 		DPRINTFN(2, "add 0 xfer", 0, 0, 0, 0);
-	} else {
-		ohci_free_std(sc, next);
 	}
 
 	return USBD_NORMAL_COMPLETION;
@@ -685,38 +667,28 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 
 	int mps = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
 
-	/*
-	 * Assign next for the len == 0 case where we don't go through the
-	 * main loop.
-	 */
 	len = alen;
-	cur = next = sp;
+	cur = sp;
 
+	dataphys = DMAADDR(dma, 0);
+	dataphysend = OHCI_PAGE(dataphys + len - 1);
 	usb_syncmem(dma, 0, len,
 	    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	const uint32_t tdflags = HTOO32(
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
-	size_t curoffs = 0;
-	for (size_t j = 1; len != 0;) {
+	for (size_t j = 1;;) {
 		if (j == ox->ox_nstd)
 			next = NULL;
 		else
 			next = ox->ox_stds[j++];
 		KASSERT(next != cur);
 
-		curlen = 0;
-		dataphys = DMAADDR(dma, curoffs);
-		dataphysend = DMAADDR(dma, curoffs + len - 1);
-
-		ohci_physaddr_t sphyspg = OHCI_PAGE(dataphys);
-		ohci_physaddr_t ephyspg = OHCI_PAGE(dataphysend);
-		/*
-		 * The OHCI hardware can handle at most one page
-		 * crossing per TD
-		 */
-		if (sphyspg == ephyspg || sphyspg + 1 == ephyspg) {
+		/* The OHCI hardware can handle at most one page crossing. */
+		if (OHCI_PAGE(dataphys) == dataphysend ||
+		    OHCI_PAGE(dataphys) + OHCI_PAGE_SIZE == dataphysend) {
+			/* we can handle it in this TD */
 			curlen = len;
 		} else {
 			/* must use multiple TDs, fill as much as possible. */
@@ -724,8 +696,8 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 			    (dataphys & (OHCI_PAGE_SIZE - 1));
 			/* the length must be a multiple of the max size */
 			curlen -= curlen % mps;
+			KASSERT(curlen != 0);
 		}
-		KASSERT(curlen != 0);
 		DPRINTFN(4, "dataphys=0x%08x dataphysend=0x%08x "
 		    "len=%d curlen=%d", dataphys, dataphysend, len, curlen);
 		len -= curlen;
@@ -744,15 +716,12 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		DPRINTFN(10, "cbp=0x%08x be=0x%08x", dataphys,
 		    dataphys + curlen - 1, 0, 0);
-
-		curoffs += curlen;
-		len -= curlen;
-
-		if (len != 0) {
-			KASSERT(next != NULL);
-			DPRINTFN(10, "extend chain", 0, 0, 0, 0);
-			cur = next;
-		}
+		if (len == 0)
+			break;
+		KASSERT(next != NULL);
+		DPRINTFN(10, "extend chain", 0, 0, 0, 0);
+		dataphys += curlen;
+		cur = next;
 	}
 	cur->td.td_flags |=
 	    (xfer->ux_flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0);
@@ -767,7 +736,7 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 
 		cur->td.td_flags = tdflags;
 		cur->td.td_cbp = 0; /* indicate 0 length packet */
-		cur->td.td_nexttd = 0;
+		cur->td.td_nexttd = HTOO32(next->physaddr);
 		cur->td.td_be = ~0;
 		cur->nexttd = NULL;
 		cur->len = 0;
