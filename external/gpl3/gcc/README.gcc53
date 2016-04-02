@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.16 2016/03/29 09:20:28 mrg Exp $
+$NetBSD: README.gcc53,v 1.17 2016/04/02 08:54:47 mlelstv Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -54,7 +54,7 @@ earmv7hfeb	y	?	y	y		y[3]
 hppa		y	y	y	y		y		y[6]	y
 i386		y	y	y	y		y		y	y
 m68000		y	?	y	y		y
-m68k		y	?	y	y		y[13]
+m68k		y	y[16]	y	y		y[13]
 mipseb		y	y	y	y		y		y
 mipsel		y	y	y	y		y		y
 mips64eb	y	y	y	y		y[8]		y
@@ -105,3 +105,5 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 	- ssh is broken, was broken with 4.8
 	- there are too many -O0's we added because of mis-handled rtl
 	- the eh_frame stuff is probably busted, but it never worked?
+[16] - builds tested:
+	- m68k: amiga
