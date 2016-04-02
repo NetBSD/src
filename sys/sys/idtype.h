@@ -1,4 +1,4 @@
-/*	$NetBSD: idtype.h,v 1.1 2016/04/02 20:38:40 christos Exp $	*/
+/*	$NetBSD: idtype.h,v 1.2 2016/04/02 21:21:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -43,13 +43,13 @@
 #define	P_UID		6	/* A user identifier. */
 #define	P_GID		7	/* A group identifier. */
 #define	P_ALL		8	/* All processes. */
-#define	P_LWPID		10	/* An LWP identifier. */
-#define	P_TASKID	11	/* A task identifier. */
-#define	P_PROJID	12	/* A project identifier. */
-#define	P_POOLID	13	/* A pool identifier. */
-#define	P_ZONEID	14	/* A zone identifier. */
-#define	P_CTID		15	/* A (process) contract identifier. */
-#define	P_CPUID		16	/* CPU identifier. */
-#define	P_PSETID	17	/* Processor set identifier. */
+#define	P_LWPID		9	/* An LWP identifier. */
+#define	P_TASKID	10	/* A task identifier. */
+#define	P_PROJID	11	/* A project identifier. */
+#define	P_POOLID	12	/* A pool identifier. */
+#define	P_ZONEID	13	/* A zone identifier. */
+#define	P_CTID		14	/* A (process) contract identifier. */
+#define	P_CPUID		15	/* CPU identifier. */
+#define	P_PSETID	16	/* Processor set identifier. */
 
 #endif /* _SYS_IDTYPE_H_ */
