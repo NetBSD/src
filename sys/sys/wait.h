@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.26 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.27 2016/04/02 11:18:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -79,6 +79,7 @@
 #define WNOHANG		0x00000001	/* don't hang in wait */
 #define WUNTRACED	0x00000002	/* tell about stopped,
 					   untraced children */
+#define	WSTOPPED	WUNTRACED	/* SUS compatibility */
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	WALTSIG		0x00000004	/* wait for processes that exit
 					   with an alternate signal (i.e.
@@ -163,7 +164,6 @@ union wait {
 #define w_stopval	w_S.w_Stopval
 #define w_stopsig	w_S.w_Stopsig
 
-#define	WSTOPPED	_WSTOPPED
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #ifndef _KERNEL
