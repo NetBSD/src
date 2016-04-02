@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1521 2016/04/01 12:37:48 msaitoh Exp $
+# $NetBSD: mi,v 1.1522 2016/04/02 16:18:54 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2120,6 +2120,7 @@
 ./usr/share/man/cat5/magic.0			man-util-catman		.cat
 ./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman	.cat
 ./usr/share/man/cat5/man.conf.0			man-man-catman		.cat
+./usr/share/man/cat5/malloc.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/map3270.0			man-obsolete		obsolete
 ./usr/share/man/cat5/master.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman		.cat
