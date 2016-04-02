@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.281 2015/12/03 02:51:00 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.282 2016/04/02 21:01:32 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -979,3 +979,6 @@
 			    off_t len); }
 480	STD  RUMP	{ int|sys||fdiscard(int fd, int PAD, off_t pos, \
 			    off_t len); }
+481	STD 		{ int|sys||wait6(idtype_t idtype, id_t id, \
+			    int *status, int options, struct wrusage *wru, \
+			    siginfo_t *info); }
