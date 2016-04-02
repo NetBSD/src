@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.33 2012/06/09 02:31:15 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.34 2016/04/02 20:38:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,6 +74,13 @@ struct	rusage {
 	long	ru_nivcsw;		/* involuntary " */
 #define	ru_last		ru_nivcsw
 };
+
+#ifdef _NETBSD_SOURCE
+struct wrusage {  
+        struct rusage   wru_self;
+	struct rusage   wru_children;
+};  
+#endif
 
 /*
  * Resource limits
