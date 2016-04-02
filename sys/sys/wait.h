@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.28 2016/04/02 20:38:40 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.29 2016/04/02 21:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -35,6 +35,8 @@
 #define _SYS_WAIT_H_
 
 #include <sys/featuretest.h>
+#include <sys/types.h>
+#include <sys/sigtypes.h>
 #include <sys/siginfo.h>
 #include <sys/idtype.h>
 
