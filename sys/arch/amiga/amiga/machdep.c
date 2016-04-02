@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 2015/06/13 07:35:50 mlelstv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.246 2016/04/02 08:16:54 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2015/06/13 07:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2016/04/02 08:16:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1208,21 +1208,21 @@ int _spllkm6(void);
 int _spllkm7(void);
 
 #ifdef LEV6_DEFER
-int _spllkm6() {
+int _spllkm6(void) {
 	return spl4();
 };
 
-int _spllkm7() {
+int _spllkm7(void) {
 	return spl4();
 };
 
 #else
 
-int _spllkm6() {
+int _spllkm6(void) {
 	return spl6();
 };
 
-int _spllkm7() {
+int _spllkm7(void) {
 	return spl7();
 };
 
