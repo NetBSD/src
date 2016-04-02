@@ -1,4 +1,4 @@
-/*	$NetBSD: pset.h,v 1.4 2013/04/27 21:35:24 joerg Exp $	*/
+/*	$NetBSD: pset.h,v 1.5 2016/04/02 20:38:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,16 +32,12 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/types.h>
+#include <sys/idtype.h>
 
 /* Types of processor-sets */
 #define	PS_NONE			0
 #define	PS_MYID			-1
 #define	PS_QUERY		-2
-
-/* ID types for processor-set calls */
-#define	P_MYID			-1
-#define	P_PID			1
-#define	P_LWPID			2
 
 /* For compatibility only */
 typedef	cpuid_t		processorid_t;
