@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.5 2015/11/27 22:02:15 skrll Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.6 2016/04/02 08:48:35 skrll Exp $
 #
 #	VEXPRESS_A15 -- Versatile Express A15 kernel
 #
@@ -17,7 +17,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 options 	CPU_CORTEX
-options 	CPU_CORTEXA7
 options 	CPU_CORTEXA15
 #options 	MULTIPROCESSOR
 
