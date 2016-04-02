@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.27 2016/04/02 11:18:26 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.28 2016/04/02 20:38:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -35,6 +35,8 @@
 #define _SYS_WAIT_H_
 
 #include <sys/featuretest.h>
+#include <sys/siginfo.h>
+#include <sys/idtype.h>
 
 /*
  * This file holds definitions relevent to the wait4 system call
@@ -87,6 +89,11 @@
 #define	WALLSIG		0x00000008	/* wait for processes that exit
 					   with any signal, i.e. SIGCHLD
 					   and alternates */
+#define	WCONTINUED	0x00000010	/* Report a job control continued
+					   process. */
+#define	WEXITED		0x00000020	/* Wait for exited processes. */
+#define	WTRAPPED	0x00000040	/* Wait for a process to hit a trap or
+				 	   a breakpoint. */
 
 /*
  * These are the Linux names of some of the above flags, for compatibility
@@ -171,13 +178,16 @@ union wait {
 
 __BEGIN_DECLS
 struct rusage;	/* forward declaration */
+struct wrusage;
 
 pid_t	wait(int *);
 pid_t	waitpid(pid_t, int *, int);
+int	waitid(idtype_t, id_t, siginfo_t *, int); 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
 pid_t	wait3(int *, int, struct rusage *) __RENAME(__wait350);
 pid_t	wait4(pid_t, int *, int, struct rusage *) __RENAME(__wait450);
+pid_t	wait6(idtype_t, id_t, int *, int, struct wrusage *, siginfo_t *);
 #endif
 #endif
 __END_DECLS
