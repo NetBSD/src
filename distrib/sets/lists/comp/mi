@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2024 2016/03/30 21:36:48 christos Exp $
+#	$NetBSD: mi,v 1.2025 2016/04/02 20:46:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4283,6 +4283,8 @@
 ./usr/share/man/cat2/wait.0			comp-c-catman		.cat
 ./usr/share/man/cat2/wait3.0			comp-c-catman		.cat
 ./usr/share/man/cat2/wait4.0			comp-c-catman		.cat
+./usr/share/man/cat2/wait6.0			comp-c-catman		.cat
+./usr/share/man/cat2/waitid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/waitpid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/write.0			comp-c-catman		.cat
 ./usr/share/man/cat2/writev.0			comp-c-catman		.cat
@@ -11500,6 +11502,8 @@
 ./usr/share/man/html2/wait.html			comp-c-htmlman		html
 ./usr/share/man/html2/wait3.html		comp-c-htmlman		html
 ./usr/share/man/html2/wait4.html		comp-c-htmlman		html
+./usr/share/man/html2/wait6.html		comp-c-htmlman		html
+./usr/share/man/html2/waitid.html		comp-c-htmlman		html
 ./usr/share/man/html2/waitpid.html		comp-c-htmlman		html
 ./usr/share/man/html2/write.html		comp-c-htmlman		html
 ./usr/share/man/html2/writev.html		comp-c-htmlman		html
@@ -18510,6 +18514,8 @@
 ./usr/share/man/man2/wait.2			comp-c-man		.man
 ./usr/share/man/man2/wait3.2			comp-c-man		.man
 ./usr/share/man/man2/wait4.2			comp-c-man		.man
+./usr/share/man/man2/wait6.2			comp-c-man		.man
+./usr/share/man/man2/waitid.2			comp-c-man		.man
 ./usr/share/man/man2/waitpid.2			comp-c-man		.man
 ./usr/share/man/man2/write.2			comp-c-man		.man
 ./usr/share/man/man2/writev.2			comp-c-man		.man
