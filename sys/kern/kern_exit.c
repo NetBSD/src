@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.249 2016/04/02 20:38:40 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.250 2016/04/03 02:28:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.249 2016/04/02 20:38:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.250 2016/04/03 02:28:46 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -823,11 +823,11 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 			goto out;
 		break;
 	case P_UID:
-		if (kauth_cred_getuid(p->p_cred) != (uid_t)id)
+		if (kauth_cred_geteuid(p->p_cred) != (uid_t)id)
 			goto out;
 		break;
 	case P_GID:
-		if (kauth_cred_getgid(p->p_cred) != (gid_t)id)
+		if (kauth_cred_getegid(p->p_cred) != (gid_t)id)
 			goto out;
 		break;
 	case P_CID:
@@ -870,14 +870,9 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 		}
 
 		siginfo->si_pid = p->p_pid;
-		siginfo->si_uid = kauth_cred_getuid(p->p_cred);
-
-		/*
-		 * The si_addr field would be useful additional
-		 * detail, but apparently the PC value may be lost
-		 * when we reach this point.  bzero() above sets
-		 * siginfo->si_addr to NULL.
-		 */
+		siginfo->si_uid = kauth_cred_geteuid(p->p_cred);
+		siginfo->si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+		siginfo->si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
 	}
 
 	/*
@@ -980,18 +975,33 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 				}
 			}
 
-			if ((options & WTRAPPED) != 0 &&
-			    child->p_stat == SSTOP &&
-			    child->p_waited == 0 &&
-			    (child->p_slflag & PSL_TRACED ||
-			    options & WUNTRACED)) {
+			if ((options & WCONTINUED) != 0 &&
+			    child->p_xstat == SIGCONT) {
 				if ((options & WNOWAIT) == 0) {
 					child->p_waited = 1;
 					parent->p_nstopchild--;
 				}
 				if (si) {
 					si->si_status = child->p_xstat;
-					si->si_code = CLD_TRAPPED;
+					si->si_code = CLD_CONTINUED;
+				}
+				break;
+			}
+
+			if ((options & (WTRAPPED|WSTOPPED)) != 0 &&
+			    child->p_stat == SSTOP &&
+			    child->p_waited == 0 &&
+			    ((child->p_slflag & PSL_TRACED) ||
+			    options & (WUNTRACED|WSTOPPED))) {
+				if ((options & WNOWAIT) == 0) {
+					child->p_waited = 1;
+					parent->p_nstopchild--;
+				}
+				if (si) {
+					si->si_status = child->p_xstat;
+					si->si_code = 
+					    (child->p_slflag & PSL_TRACED) ?
+					    CLD_TRAPPED : CLD_STOPPED;
 				}
 				break;
 			}
