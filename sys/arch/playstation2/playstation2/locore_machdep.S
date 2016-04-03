@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.12 2015/03/22 20:32:08 martin Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.13 2016/04/03 09:06:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -158,16 +158,16 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 	sync.l
 	sync.p
 1:
-	# line +0
+	// line +0
 	cache	CACHEOP_R5900_IWBINV_D,  0(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IWBINV_D,  1(t0);sync.l;sync.p	# way 1
-	# line +1
+	// line +1
 	cache	CACHEOP_R5900_IWBINV_D, 64(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IWBINV_D, 65(t0);sync.l;sync.p	# way 1
-	# line +2
+	// line +2
 	cache	CACHEOP_R5900_IWBINV_D,128(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IWBINV_D,129(t0);sync.l;sync.p	# way 1
-	# line +3
+	// line +3
 	cache	CACHEOP_R5900_IWBINV_D,192(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IWBINV_D,193(t0);sync.l;sync.p	# way 1
 	addu	t0, t0, 256	
@@ -186,16 +186,16 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 1:
 	#	[12:6]	... line
 	#	[0]	... way
-	# line +0
+	// line +0
 	cache	CACHEOP_R5900_IINV_I,  0(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IINV_I,  1(t0);sync.l;sync.p	# way 1
-	# line +1	
+	// line +1	
 	cache	CACHEOP_R5900_IINV_I, 64(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IINV_I, 65(t0);sync.l;sync.p	# way 1
-	# line +2
+	// line +2
 	cache	CACHEOP_R5900_IINV_I,128(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IINV_I,129(t0);sync.l;sync.p	# way 1
-	# line +3	
+	// line +3	
 	cache	CACHEOP_R5900_IINV_I,192(t0);sync.l;sync.p	# way 0
 	cache	CACHEOP_R5900_IINV_I,193(t0);sync.l;sync.p	# way 1
 	addu	t0, t0, 256	
