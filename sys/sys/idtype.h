@@ -1,4 +1,4 @@
-/*	$NetBSD: idtype.h,v 1.2 2016/04/02 21:21:57 christos Exp $	*/
+/*	$NetBSD: idtype.h,v 1.3 2016/04/03 00:18:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  */
 #define	P_MYID		-1	/* Me/my process group */
 #define	P_PID		1	/* A process identifier. */
-#define	P_PPID		2	/* A parent process identifier.	*/
-#define	P_PGID		3	/* A process group identifier. */
-#define	P_SID		4	/* A session identifier. */
-#define	P_CID		5	/* A scheduling class identifier. */
-#define	P_UID		6	/* A user identifier. */
-#define	P_GID		7	/* A group identifier. */
-#define	P_ALL		8	/* All processes. */
-#define	P_LWPID		9	/* An LWP identifier. */
+#define	P_LWPID		2	/* An LWP identifier. */
+#define	P_PPID		3	/* A parent process identifier.	*/
+#define	P_PGID		4	/* A process group identifier. */
+#define	P_SID		5	/* A session identifier. */
+#define	P_CID		6	/* A scheduling class identifier. */
+#define	P_UID		7	/* A user identifier. */
+#define	P_GID		8	/* A group identifier. */
+#define	P_ALL		9	/* All processes. */
 #define	P_TASKID	10	/* A task identifier. */
 #define	P_PROJID	11	/* A project identifier. */
 #define	P_POOLID	12	/* A pool identifier. */
