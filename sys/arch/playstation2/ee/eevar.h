@@ -1,4 +1,4 @@
-/*	$NetBSD: eevar.h,v 1.4 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: eevar.h,v 1.5 2016/04/03 10:03:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
  */
 
 #define _PLAYSTATION2_BUS_SPACE_PRIVATE
+
 #include <machine/bus.h>
+#include <mips/cpuregs.h>
 
 #define _reg_read_1(a)		__read_1(a)
 #define _reg_read_2(a)		__read_2(a)
