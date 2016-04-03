@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.2 2016/04/03 09:57:40 mlelstv Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.1 2015/10/13 21:28:35 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.2 2016/04/03 09:57:40 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2116,7 +2116,7 @@ sctp_find_valid_localaddr(struct sctp_tcb *stcb)
 	struct ifnet *ifn;
 	struct ifaddr *ifa, *nifa;
 
-	TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
+	IFNET_FOREACH(ifn) {
 		if (stcb->asoc.loopback_scope == 0 && ifn->if_type == IFT_LOOP) {
 			/* Skip if loopback_scope not set */
 			continue;
@@ -2774,14 +2774,14 @@ sctp_check_address_list_all(struct sctp_tcb *stcb, struct mbuf *m, int offset,
 	struct ifaddr *ifa;
 
 	/* go through all our known interfaces */
-	TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
+	IFNET_FOREACH(ifn) {
 		if (loopback_scope == 0 && ifn->if_type == IFT_LOOP) {
 			/* skip loopback interface */
 			continue;
 		}
 
 		/* go through each interface address */
-		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifn) {
 			/* do i have it implicitly? */
 			if (sctp_cmpaddr(ifa->ifa_addr, init_addr)) {
 #ifdef SCTP_DEBUG
