@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.276 2016/04/03 01:01:46 christos Exp $ */
+/* $NetBSD: syscallargs.h,v 1.277 2016/04/03 01:22:39 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -14,6 +14,7 @@
 #include <sys/mount.h>
 #include <sys/sched.h>
 #endif
+#include <sys/idtype.h>
 #include <sys/socket.h>
 
 #define	SYS_MAXSYSARGS	8
