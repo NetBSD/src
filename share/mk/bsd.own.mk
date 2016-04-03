@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.916 2016/04/02 22:08:14 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.917 2016/04/03 06:13:28 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -67,8 +67,10 @@ MKGCC?=		no
 .if ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
 .elif \
+    ${MACHINE} == "amd64" || \
     ${MACHINE} == "alpha" || \
     ${MACHINE} == "hppa" || \
+    ${MACHINE} == "i386" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_GCC?=	53
