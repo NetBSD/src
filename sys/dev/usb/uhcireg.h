@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.19.66.5 2016/03/25 17:44:00 skrll Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.19.66.6 2016/04/03 08:08:27 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -84,7 +84,7 @@
 #define  UHCI_INTR_TOCRCIE	__BIT(0)
 #define  UHCI_INTR_RIE		__BIT(1)
 #define  UHCI_INTR_IOCE		__BIT(2)
-#define  UHCI_INTR_SPIE		__BIT(2)
+#define  UHCI_INTR_SPIE		__BIT(3)
 
 #define UHCI_FRNUM		0x06
 #define  UHCI_FRNUM_MASK	__BITS(9,0)
