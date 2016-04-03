@@ -1,4 +1,4 @@
-/*	$NetBSD: waitid.c,v 1.1 2016/04/03 00:19:42 christos Exp $	*/
+/*	$NetBSD: waitid.c,v 1.2 2016/04/03 01:49:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: waitid.c,v 1.1 2016/04/03 00:19:42 christos Exp $");
+__RCSID("$NetBSD: waitid.c,v 1.2 2016/04/03 01:49:51 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -41,10 +41,6 @@ __RCSID("$NetBSD: waitid.c,v 1.1 2016/04/03 00:19:42 christos Exp $");
 #include <signal.h>
 
 #ifdef __weak_alias
-__weak_alias(waitpid,_waitpid)
-#endif
-
-#ifdef __weak_alias
 __weak_alias(waitid,_waitid)
 #endif
 
@@ -52,15 +48,15 @@ int
 waitid(idtype_t idtype, id_t id, siginfo_t *info, int flags)
 {
 	int status;
-	pid_t rv;
 
-	rv = wait6(idtype, id, &status, flags, NULL, info);
-
-	if (rv < 0)
-		return rv;
-
-	if (rv == 0 && info != NULL)
-		memset(info, 0, sizeof(*info));
-
-	return 0;
+	switch (wait6(idtype, id, &status, flags, NULL, info)) {
+	case -1:
+		return -1;
+	case 0:
+		if (info != NULL)
+			memset(info, 0, sizeof(*info));
+		/*FALLTHROUGH*/
+	default:
+		return 0;
+	}
 }
