@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.10 2014/07/07 10:12:24 martin Exp $	*/
+/*	$NetBSD: emac3.c,v 1.11 2016/04/03 10:03:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.10 2014/07/07 10:12:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.11 2016/04/03 10:03:04 martin Exp $");
 
 #include "debug_playstation2.h"
 
@@ -309,7 +309,7 @@ emac3_config(const u_int8_t *eaddr)
  * PHY/MII
  */
 void
-emac3_phy_writereg(struct device *self, int phy, int reg, int data)
+emac3_phy_writereg(device_t self, int phy, int reg, int data)
 {
 
 	if (emac3_phy_ready() != 0)
@@ -325,7 +325,7 @@ emac3_phy_writereg(struct device *self, int phy, int reg, int data)
 }
 
 int
-emac3_phy_readreg(struct device *self, int phy, int reg)
+emac3_phy_readreg(device_t self, int phy, int reg)
 {
 
 	if (emac3_phy_ready() != 0)
@@ -342,10 +342,10 @@ emac3_phy_readreg(struct device *self, int phy, int reg)
 }
 
 void
-emac3_phy_statchg(struct device *dev)
+emac3_phy_statchg(struct ifnet *ifp)
 {
 #define EMAC3_FDX	(MR1_FDE | MR1_EIFC | MR1_APP)
-	struct emac3_softc *sc = (void *)dev;
+	struct emac3_softc *sc = ifp->if_softc;
 	int media;
 	u_int32_t r;
 	
