@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.228 2015/11/29 06:10:01 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.229 2016/04/03 00:19:42 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -132,8 +132,8 @@ ASM=	access.S acct.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl.S \
-	rasctl.S readlinkat.S reboot.S recvfrom.S recvmmsg.S recvmsg.S rename.S \
-		renameat.S revoke.S rmdir.S \
+	rasctl.S readlinkat.S reboot.S recvfrom.S recvmmsg.S recvmsg.S \
+		rename.S renameat.S revoke.S rmdir.S \
 	semconfig.S semget.S semop.S \
 		sendmmsg.S sendmsg.S sendto.S setegid.S seteuid.S \
 		setgid.S setgroups.S __setitimer50.S __setlogin.S setpgid.S \
@@ -173,7 +173,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S \
 	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
-	__wait450.S write.S writev.S
+	__wait450.S wait6.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 	issetugid.S posix_spawn.S sync.S __posix_fadvise50.S
@@ -373,6 +373,7 @@ MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
 MLINKS+=utimes.2 utimens.2 utimes.2 futimens.2 utimes.2 lutimens.2
 MLINKS+=utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
+MLINKS+=wait.2 wait6.2 wait.2 waitid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2
 MLINKS+=accept.2 paccept.2
