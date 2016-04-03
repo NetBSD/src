@@ -1,4 +1,4 @@
-/*	$NetBSD: idtype.h,v 1.3 2016/04/03 00:18:01 christos Exp $	*/
+/*	$NetBSD: idtype.h,v 1.4 2016/04/03 02:08:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -33,23 +33,27 @@
 
 /*
  * Using the solaris constants, some of them are not applicable to us
+ * Do not re-order the list, or add elements in the middle as this will
+ * break the ABI of the system calls using this.
  */
-#define	P_MYID		-1	/* Me/my process group */
-#define	P_PID		1	/* A process identifier. */
-#define	P_LWPID		2	/* An LWP identifier. */
-#define	P_PPID		3	/* A parent process identifier.	*/
-#define	P_PGID		4	/* A process group identifier. */
-#define	P_SID		5	/* A session identifier. */
-#define	P_CID		6	/* A scheduling class identifier. */
-#define	P_UID		7	/* A user identifier. */
-#define	P_GID		8	/* A group identifier. */
-#define	P_ALL		9	/* All processes. */
-#define	P_TASKID	10	/* A task identifier. */
-#define	P_PROJID	11	/* A project identifier. */
-#define	P_POOLID	12	/* A pool identifier. */
-#define	P_ZONEID	13	/* A zone identifier. */
-#define	P_CTID		14	/* A (process) contract identifier. */
-#define	P_CPUID		15	/* CPU identifier. */
-#define	P_PSETID	16	/* Processor set identifier. */
+typedef enum {
+	P_MYID = -1,	/* Me/my process group */
+	P_ALL,		/* All processes. */
+	P_PID,		/* A process identifier. */
+	P_LWPID,	/* An LWP identifier. */
+	P_PPID,		/* A parent process identifier.	*/
+	P_PGID,		/* A process group identifier. */
+	P_SID,		/* A session identifier. */
+	P_CID,		/* A scheduling class identifier. */
+	P_UID,		/* A user identifier. */
+	P_GID,		/* A group identifier. */
+	P_TASKID,	/* A task identifier. */
+	P_PROJID,	/* A project identifier. */
+	P_POOLID,	/* A pool identifier. */
+	P_ZONEID,	/* A zone identifier. */
+	P_CTID,		/* A (process) contract identifier. */
+	P_CPUID,	/* CPU identifier. */
+	P_PSETID	/* Processor set identifier. */
+} idtype_t;
 
 #endif /* _SYS_IDTYPE_H_ */
