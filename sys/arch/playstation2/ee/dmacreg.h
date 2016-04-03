@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacreg.h,v 1.4 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: dmacreg.h,v 1.5 2016/04/03 10:03:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <mips/cpuregs.h>
 
 typedef u_int64_t dmatag_t;
 
