@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.250 2016/04/03 02:28:46 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.251 2016/04/03 23:50:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.250 2016/04/03 02:28:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.251 2016/04/03 23:50:49 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -792,12 +792,22 @@ sys_wait6(struct lwp *l, const struct sys_wait6_args *uap, register_t *retval)
 }
 
 
+/*
+ * Find a process that matches the provided criteria, and fill siginfo
+ * and resources if found.
+ * Returns:
+ *	-1: 	Not found, abort early
+ *	 0:	Not matched
+ *	 1:	Matched, there might be more matches
+ *	 2:	This is the only match
+ */
 static int
 match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
     int options, struct wrusage *wrusage, siginfo_t *siginfo)
 {
 	struct rusage *rup;
 	struct proc *p = *q;
+	int rv = 1;
 
 	mutex_enter(p->p_lock);
 	switch (idtype) {
@@ -813,6 +823,7 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 			}
 			mutex_enter(p->p_lock);
 		}
+		rv++;
 		break;
 	case P_PGID:
 		if (p->p_pgid != (pid_t)id)
@@ -891,7 +902,7 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 	}
 
 	mutex_exit(p->p_lock);
-	return 1;
+	return rv;
 }
 
 /*
@@ -955,6 +966,10 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 			if (((options & WALLSIG) == 0) &&
 			    (options & WALTSIG ? child->p_exitsig == SIGCHLD
 						: P_EXITSIG(child) != SIGCHLD)){
+				if (rv == 2) {
+					child = NULL;
+					break;
+				}
 				continue;
 			}
 
@@ -1005,7 +1020,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 				}
 				break;
 			}
-			if (parent->p_nstopchild == 0) {
+			if (parent->p_nstopchild == 0 || rv == 2) {
 				child = NULL;
 				break;
 			}
