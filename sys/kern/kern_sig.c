@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.322 2016/04/04 20:47:57 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.323 2016/04/04 23:07:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.322 2016/04/04 20:47:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.323 2016/04/04 23:07:06 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1946,7 +1946,7 @@ killproc(struct proc *p, const char *why)
 void
 sigexit(struct lwp *l, int signo)
 {
-	int exitsig, error, docore, coreflag = 0;
+	int exitsig, error, docore;
 	struct proc *p;
 	struct lwp *t;
 
@@ -2017,8 +2017,7 @@ sigexit(struct lwp *l, int signo)
 
 	if (docore) {
 		mutex_exit(p->p_lock);
-		if ((error = (*coredump_vec)(l, NULL)) == 0)
-			coreflag = 1;
+		error = (*coredump_vec)(l, NULL);
 
 		if (kern_logsigexit) {
 			int uid = l->l_cred ?
@@ -2037,12 +2036,14 @@ sigexit(struct lwp *l, int signo)
 #endif /* PAX_SEGVGUARD */
 		/* Acquire the sched state mutex.  exit1() will release it. */
 		mutex_enter(p->p_lock);
+		if (error == 0)
+			p->p_sflag |= PS_COREDUMP;
 	}
 
 	/* No longer dumping core. */
 	p->p_sflag &= ~PS_WCORE;
 
-	exit1(l, 0, exitsig, coreflag);
+	exit1(l, 0, exitsig);
 	/* NOTREACHED */
 }
 

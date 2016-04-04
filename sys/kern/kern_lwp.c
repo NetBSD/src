@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.183 2016/04/04 20:47:57 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.184 2016/04/04 23:07:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.183 2016/04/04 20:47:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.184 2016/04/04 23:07:06 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1043,7 +1043,7 @@ lwp_exit(struct lwp *l)
 		KASSERT(current == true);
 		KASSERT(p != &proc0);
 		/* XXXSMP kernel_lock not held */
-		exit1(l, 0, 0, 0);
+		exit1(l, 0, 0);
 		/* NOTREACHED */
 	}
 	p->p_nzlwps++;

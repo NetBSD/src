@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.328 2016/04/04 20:47:57 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.329 2016/04/04 23:07:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -491,7 +491,7 @@ int	tsleep(wchan_t, pri_t, const char *, int);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
-void	exit1(struct lwp *, int, int, int) __dead;
+void	exit1(struct lwp *, int, int) __dead;
 int	kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval);
 int	do_sys_wait(int *, int *, int, struct rusage *);
 struct proc *proc_alloc(void);
