@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.17 2016/04/02 08:54:47 mlelstv Exp $
+$NetBSD: README.gcc53,v 1.18 2016/04/04 01:32:21 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -41,7 +41,7 @@ earm		y	?	y	y		y[3,13]
 earmeb		y	?	y	y		y[3,13]
 earmhf		y	?	y	y		y[3]
 earmhfeb	y	?	y	y		y[3]
-earmv4		y	y	y	y		y[3]		y	y[4]
+earmv4		y	y	y	y		y[3]		y	y
 earmv4eb	y	?	y	y		y[3]
 earmv6		y	?	y	y		y[3]
 earmv6eb	y	?	y	y		y[3]
@@ -80,7 +80,6 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 	-- may be a SMP issue; ultra10 works, ultra45 SMP does not
 		-- try sb2000 (particularly with UP kernel.  u45 UP is shitty.)
 [3] - MKCOMPAT=no enabled currently, infact OABI seems to be broken.  the docs say it was only deprecated, but the options make broken crap.
-[4] - bin/expr/t_expr:overflow fails on shark, only new failure.  fails on other ports too.
 [5] - sh3eb tries to use sh specific atomic config which doesn't work, has hand edited mknative output
 [6] - crtbeginS.o builds incorrectly with GCC 5.3 and -O2.  a hack for -O1 has been added.
 [8] - sgimips64 release build fails, mdsetimage'd gz'd kernels don't get built?
