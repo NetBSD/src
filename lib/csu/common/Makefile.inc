@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2016/03/29 21:23:05 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2016/04/04 18:29:07 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so -I${COMMON_DIR} -I.
 
 OBJS+=		crt0.o gcrt0.o crti.o crtn.o
 OBJS+=		crtbegin.o crtend.o
+OBJS+=		sysident.o
 
 .if ${MKPIC} == "yes"
 OBJS+=		crtbeginS.o
@@ -129,6 +130,7 @@ CLEANFILES+=	sysident_assym.h
 
 crti.o: crti.S sysident_assym.h sysident.S
 crtn.o: crtn.S
+sysident.o:	sysident.S sysident_assym.h
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
