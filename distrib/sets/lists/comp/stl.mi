@@ -1,6 +1,8 @@
-# $NetBSD: stl.mi,v 1.4 2016/02/28 19:18:41 christos Exp $
+# $NetBSD: stl.mi,v 1.5 2016/04/04 18:29:07 martin Exp $
 ./usr/lib/crtbegin.o				comp-c-lib	compatfile
 ./usr/lib/crtend.o				comp-c-lib	compatfile
 ./usr/lib/crti.o				comp-c-lib	compatfile
 ./usr/lib/crtn.o				comp-c-lib	compatfile
 ./usr/lib/dtrace/drti.o				comp-c-lib	dtrace
+./usr/lib/sysident.o				comp-c-lib	compatfile
+
