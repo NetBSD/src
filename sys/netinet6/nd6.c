@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.188 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.189 2016/04/04 12:05:40 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.188 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.189 2016/04/04 12:05:40 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -106,14 +106,6 @@ struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
-static const struct sockaddr_in6 all1_sa = {
-	  .sin6_family = AF_INET6
-	, .sin6_len = sizeof(struct sockaddr_in6)
-	, .sin6_addr = {.s6_addr = {0xff, 0xff, 0xff, 0xff,
-				    0xff, 0xff, 0xff, 0xff,
-				    0xff, 0xff, 0xff, 0xff,
-				    0xff, 0xff, 0xff, 0xff}}
-};
 
 static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 static void nd6_slowtimo(void *);
