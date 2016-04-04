@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.26 2016/04/04 07:37:07 ozaki-r Exp $
+.\"	$NetBSD: route.4,v 1.27 2016/04/04 13:29:12 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -349,6 +349,9 @@ Flags for IPv6 addresses:
 #define IN6_IFF_AUTOCONF	0x40	/* autoconfigurable address. */
 #define IN6_IFF_TEMPORARY	0x80	/* temporary (anonymous) address. */
 .Ed
+.Sh SEE ALSO
+.Xr socket 2 ,
+.Xr sysctl 3
 .Sh HISTORY
 Since
 .Nx 8.0 ,
@@ -364,6 +367,3 @@ and
 .Cm RTF_LLDATA
 appeared in
 .Nx 8.0 .
-.Sh SEE ALSO
-.Xr socket 2 ,
-.Xr sysctl 3
