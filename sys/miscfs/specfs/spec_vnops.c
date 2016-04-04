@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.161 2016/03/26 14:58:13 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.162 2016/04/04 08:03:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.161 2016/03/26 14:58:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162 2016/04/04 08:03:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1041,6 +1041,7 @@ spec_strategy(void *v)
 
 	mutex_enter(vp->v_interlock);
 	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode != NULL) {
+		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 		dev = vp->v_rdev;
 	}
 	mutex_exit(vp->v_interlock);
@@ -1050,8 +1051,6 @@ spec_strategy(void *v)
 		goto out;
 	}
 	bp->b_dev = dev;
-
-	KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 
 	if (!(bp->b_flags & B_READ)) {
 		error = fscow_run(bp, false);
