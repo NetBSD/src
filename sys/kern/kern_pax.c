@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.36 2016/03/20 16:39:36 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.37 2016/04/04 16:47:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.36 2016/03/20 16:39:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.37 2016/04/04 16:47:39 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -363,9 +363,19 @@ pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 		return;
 
 	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
+#ifdef DIAGNOSTIC
+		struct proc *p = l->l_proc;
+		printf("%s: %d.%d (%s): clearing execute bit\n", __func__,
+		    p->p_pid, l->l_lid, p->p_comm);
+#endif
 		*prot &= ~VM_PROT_EXECUTE;
 		*maxprot &= ~VM_PROT_EXECUTE;
 	} else {
+#ifdef DIAGNOSTIC
+		struct proc *p = l->l_proc;
+		printf("%s: %d.%d (%s): clearing write bit\n", __func__,
+		    p->p_pid, l->l_lid, p->p_comm);
+#endif
 		*prot &= ~VM_PROT_WRITE;
 		*maxprot &= ~VM_PROT_WRITE;
 	}
