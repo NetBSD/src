@@ -82,7 +82,7 @@ AC_ARG_ENABLE(secureplt,
   yes)  use_secureplt=true  ;;
   no)   use_secureplt=false ;;
   *)    AC_MSG_ERROR(bad value ${enableval} for secureplt option) ;;
-esac],[use_secureplt=true])dnl
+esac],[use_secureplt=false])dnl
 if test $use_secureplt = true; then
   AC_DEFINE(USE_SECUREPLT, 1,
     [Define if we should default to creating read-only plt entries])
