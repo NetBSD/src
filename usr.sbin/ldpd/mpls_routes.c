@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.23 2013/10/12 18:55:40 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.24 2016/04/04 07:37:08 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -625,7 +625,7 @@ check_route(struct rt_msg * rg, uint rlen)
 
 	if (rg->m_rtm.rtm_addrs & RTA_GATEWAY) {
 		GETNEXT(so_gate, so_dest);
-		if ((rg->m_rtm.rtm_flags & RTF_CLONING) == 0 &&
+		if ((rg->m_rtm.rtm_flags & RTF_CONNECTED) == 0 &&
 		    so_gate->sa.sa_family != AF_INET &&
 		    so_gate->sa.sa_family != AF_MPLS)
 			return LDP_E_OK;
@@ -651,7 +651,7 @@ check_route(struct rt_msg * rg, uint rlen)
 	so_pref->sin.sin_port = 0;
 	memset(&so_pref->sin.sin_zero, 0, sizeof(so_pref->sin.sin_zero));
 
-	if (rg->m_rtm.rtm_flags & RTF_CLONING)
+	if (rg->m_rtm.rtm_flags & RTF_CONNECTED)
 		so_gate = NULL;
 
 	switch (rg->m_rtm.rtm_type) {
@@ -853,8 +853,6 @@ bind_current_routes()
 		rlen = rtmes->rtm_msglen;
 		size_cp = sizeof(struct rt_msghdr);
 		so_gate = so_pref = NULL;
-		if (rtmes->rtm_flags & RTF_LLINFO)	/* No need for arps */
-			continue;
 		if (!(rtmes->rtm_addrs & RTA_DST)) {
 			debugp("No dst\n");
 			continue;
@@ -969,8 +967,6 @@ flush_mpls_routes()
 		rlen = rtm->rtm_msglen;
 		so_pref = NULL;
 		so_gate = NULL;
-		if (rtm->rtm_flags & RTF_LLINFO)	/* No need for arps */
-			continue;
 		if (!(rtm->rtm_addrs & RTA_DST)) {
 			debugp("No dst\n");
 			continue;

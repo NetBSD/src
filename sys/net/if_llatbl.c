@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.10 2016/02/16 01:31:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.11 2016/04/04 07:37:07 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -74,11 +74,62 @@ static void htable_link_entry(struct lltable *llt, struct llentry *lle);
 static int htable_foreach_lle(struct lltable *llt, llt_foreach_cb_t *f,
     void *farg);
 
+int
+lltable_dump_entry(struct lltable *llt, struct llentry *lle,
+    struct rt_walkarg *w, struct sockaddr *sa)
+{
+	struct ifnet *ifp = llt->llt_ifp;
+	int error = 0;
+	struct sockaddr_dl sdl;
+	int size;
+	struct rt_addrinfo info;
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = sa;
+	memset(&sdl, 0, sizeof(sdl));
+	sdl.sdl_family = AF_LINK;
+	sdl.sdl_len = sizeof(sdl);
+	sdl.sdl_index = ifp->if_index;
+	sdl.sdl_type = ifp->if_type;
+	if ((lle->la_flags & LLE_VALID) == LLE_VALID) {
+		sdl.sdl_alen = ifp->if_addrlen;
+		memcpy(LLADDR(&sdl), &lle->ll_addr, ifp->if_addrlen);
+	} else {
+		sdl.sdl_alen = 0;
+		memset(LLADDR(&sdl), 0, ifp->if_addrlen);
+	}
+	info.rti_info[RTAX_GATEWAY] = sstocsa(&sdl);
+	if (sa->sa_family == AF_INET && lle->la_flags & LLE_PUB) {
+		struct sockaddr_inarp *sin;
+		sin = (struct sockaddr_inarp *)sa;
+		sin->sin_other = SIN_PROXY;
+	}
+	if ((error = rt_msg3(RTM_GET, &info, 0, w, &size)))
+		return error;
+	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
+		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
+
+		/* Need to copy by myself */
+		rtm->rtm_rmx.rmx_expire =
+		    (lle->la_flags & LLE_STATIC) ? 0 : lle->la_expire;
+		rtm->rtm_flags |= RTF_HOST; /* For ndp */
+		rtm->rtm_flags |= (lle->la_flags & LLE_STATIC) ? RTF_STATIC : 0;
+		if (lle->la_flags & LLE_PUB)
+			rtm->rtm_flags |= RTF_ANNOUNCE;
+		if ((error = copyout(rtm, w->w_where, size)) != 0)
+			w->w_where = NULL;
+		else
+			w->w_where = (char *)w->w_where + size;
+	}
+
+	return error;
+}
+
 /*
  * Dump lle state for a specific address family.
  */
 static int
-lltable_dump_af(struct lltable *llt, struct sysctl_req *wr)
+lltable_dump_af(struct lltable *llt, struct rt_walkarg *w)
 {
 	int error;
 
@@ -90,7 +141,7 @@ lltable_dump_af(struct lltable *llt, struct sysctl_req *wr)
 
 	IF_AFDATA_RLOCK(llt->llt_ifp);
 	error = lltable_foreach_lle(llt,
-	    (llt_foreach_cb_t *)llt->llt_dump_entry, wr);
+	    (llt_foreach_cb_t *)llt->llt_dump_entry, w);
 	IF_AFDATA_RUNLOCK(llt->llt_ifp);
 
 	return (error);
@@ -100,7 +151,7 @@ lltable_dump_af(struct lltable *llt, struct sysctl_req *wr)
  * Dump arp state for a specific address family.
  */
 int
-lltable_sysctl_dumparp(int af, struct sysctl_req *wr)
+lltable_sysctl_dumparp(int af, struct rt_walkarg *w)
 {
 	struct lltable *llt;
 	int error = 0;
@@ -108,7 +159,7 @@ lltable_sysctl_dumparp(int af, struct sysctl_req *wr)
 	LLTABLE_RLOCK();
 	SLIST_FOREACH(llt, &lltables, llt_link) {
 		if (llt->llt_af == af) {
-			error = lltable_dump_af(llt, wr);
+			error = lltable_dump_af(llt, w);
 			if (error != 0)
 				goto done;
 		}
@@ -378,14 +429,6 @@ lltable_purge_entries(struct lltable *llt)
 	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next) {
 		if (callout_halt(&lle->la_timer, &lle->lle_lock))
 			LLE_REMREF(lle);
-#if defined(__NetBSD__)
-		/* XXX should have callback? */
-		if (lle->la_rt != NULL) {
-			struct rtentry *rt = lle->la_rt;
-			lle->la_rt = NULL;
-			rtfree(rt);
-		}
-#endif
 		llentry_free(lle);
 	}
 
@@ -543,7 +586,8 @@ lltable_get_af(const struct lltable *llt)
  * Called in route_output when rtm_flags contains RTF_LLDATA.
  */
 int
-lla_rt_output(struct rt_msghdr *rtm, struct rt_addrinfo *info)
+lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expire,
+    struct rt_addrinfo *info, int sdl_index)
 {
 	const struct sockaddr_dl *dl = satocsdl(info->rti_info[RTAX_GATEWAY]);
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
@@ -555,10 +599,13 @@ lla_rt_output(struct rt_msghdr *rtm, struct rt_addrinfo *info)
 
 	KASSERTMSG(dl != NULL && dl->sdl_family == AF_LINK, "invalid dl");
 
-	ifp = if_byindex(dl->sdl_index);
+	if (sdl_index != 0)
+		ifp = if_byindex(sdl_index);
+	else
+		ifp = if_byindex(dl->sdl_index);
 	if (ifp == NULL) {
 		log(LOG_INFO, "%s: invalid ifp (sdl_index %d)\n",
-		    __func__, dl->sdl_index);
+		    __func__, sdl_index != 0 ? sdl_index : dl->sdl_index);
 		return EINVAL;
 	}
 
@@ -574,10 +621,22 @@ lla_rt_output(struct rt_msghdr *rtm, struct rt_addrinfo *info)
 
 	error = 0;
 
-	switch (rtm->rtm_type) {
+	switch (rtm_type) {
 	case RTM_ADD:
 		/* Add static LLE */
 		IF_AFDATA_WLOCK(ifp);
+		lle = lla_lookup(llt, 0, dst);
+
+		/* Cannot overwrite an existing static entry */
+		if (lle != NULL &&
+		    (lle->la_flags & LLE_STATIC || lle->la_expire == 0)) {
+			LLE_RUNLOCK(lle);
+			IF_AFDATA_WUNLOCK(ifp);
+			return EEXIST;
+		}
+		if (lle != NULL)
+			LLE_RUNLOCK(lle);
+
 		lle = lla_create(llt, 0, dst);
 		if (lle == NULL) {
 			IF_AFDATA_WUNLOCK(ifp);
@@ -586,7 +645,7 @@ lla_rt_output(struct rt_msghdr *rtm, struct rt_addrinfo *info)
 
 
 		memcpy(&lle->ll_addr, CLLADDR(dl), ifp->if_addrlen);
-		if ((rtm->rtm_flags & RTF_ANNOUNCE))
+		if ((rtm_flags & RTF_ANNOUNCE))
 			lle->la_flags |= LLE_PUB;
 		lle->la_flags |= LLE_VALID;
 #ifdef INET6
@@ -600,11 +659,11 @@ lla_rt_output(struct rt_msghdr *rtm, struct rt_addrinfo *info)
 		 * NB: arp and ndp always set (RTF_STATIC | RTF_HOST)
 		 */
 
-		if (rtm->rtm_rmx.rmx_expire == 0) {
+		if (rtm_expire == 0) {
 			lle->la_flags |= LLE_STATIC;
 			lle->la_expire = 0;
 		} else
-			lle->la_expire = rtm->rtm_rmx.rmx_expire;
+			lle->la_expire = rtm_expire;
 		laflags = lle->la_flags;
 		LLE_WUNLOCK(lle);
 		IF_AFDATA_WUNLOCK(ifp);
