@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.7 2015/06/02 14:02:10 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.8 2016/04/04 15:52:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: support.c,v 1.7 2015/06/02 14:02:10 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.8 2016/04/04 15:52:56 christos Exp $");
 
 #include <time.h>
 #include <string.h>
@@ -133,7 +133,7 @@ fmtydhms(char *b, size_t l, time_t t)
 }
 
 ssize_t
-hexdump(char *buf, size_t len, const char *str, const void *b, size_t l)
+blhexdump(char *buf, size_t len, const char *str, const void *b, size_t l)
 {
 	size_t z, cz;
 	int r;
