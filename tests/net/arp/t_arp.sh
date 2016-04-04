@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.13 2016/03/04 04:18:44 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.14 2016/04/04 07:37:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -185,6 +185,9 @@ command_body()
 
 	export RUMP_SERVER=$SOCKSRC
 
+	# We can delete the entry for the interface's IP address
+	atf_check -s exit:0 -o ignore rump.arp -d $IP4SRC
+
 	# Add and delete a static entry
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10
@@ -325,9 +328,9 @@ cache_overwriting_body()
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o match:'b2:a0:20:00:00:10' rump.arp -n 10.0.1.10
 	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n 10.0.1.10
-	# Cannot overwrite a temp cache
-	atf_check -s not-exit:0 -e match:'File exists' \
-	    rump.arp -s 10.0.1.10 b2:a0:20:00:00:ff
+	# Can overwrite a temp cache
+	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:ff
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:ff' rump.arp -n 10.0.1.10
 	$DEBUG && rump.arp -n -a
 
 	return 0
@@ -339,6 +342,16 @@ make_pkt_str_arprep()
 	local mac=$2
 	pkt="ethertype ARP (0x0806), length 42: "
 	pkt="Reply $ip is-at $mac, length 28"
+	echo $pkt
+}
+
+make_pkt_str_garp()
+{
+	local ip=$1
+	local mac=$2
+	local pkt=
+	pkt="$mac > ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806),"
+	pkt="$pkt length 42: Request who-has $ip tell $ip, length 28"
 	echo $pkt
 }
 
@@ -356,16 +369,6 @@ extract_new_packets()
 	mv -f ./new ./old
 	cat ./diff
 }
-
-check_entry_flags()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local flags=$2
-
-	atf_check -s exit:0 -o match:" $flags " -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^'$ip'"
-}
-
 
 test_proxy_arp()
 {
@@ -386,11 +389,9 @@ test_proxy_arp()
 	if [ "$type" = "pub" ]; then
 		opts="pub"
 		title="permanent published"
-		flags="ULSp"
 	else
 		opts="pub proxy"
 		title='permanent published \(proxy only\)'
-		flags="UHLSp"
 	fi
 
 	#
@@ -414,12 +415,6 @@ test_proxy_arp()
 	atf_check -s exit:0 -o ignore \
 	    rump.arp -s $IP4DST_PROXYARP1 $macaddr_dst $opts
 	atf_check -s exit:0 -o match:"$title" rump.arp -n $IP4DST_PROXYARP1
-	if [ "$type" = "pub" ]; then
-		# XXX local? Is it correct?
-		check_entry_flags $IP4DST_PROXYARP1 ${flags}l
-	else
-		check_entry_flags $IP4DST_PROXYARP1 $flags
-	fi
 
 	# Try to ping
 	export RUMP_SERVER=$SOCKSRC
@@ -435,11 +430,13 @@ test_proxy_arp()
 	extract_new_packets > ./out
 	$DEBUG && cat ./out
 
-	pkt=$(make_pkt_str_arprep $IP4DST_PROXYARP1 $macaddr_dst)
+	pkt1=$(make_pkt_str_arprep $IP4DST_PROXYARP1 $macaddr_dst)
+	pkt2=$(make_pkt_str_garp $IP4DST_PROXYARP1 $macaddr_dst)
 	if [ "$type" = "pub" ]; then
-		atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+		atf_check -s not-exit:0 -x \
+		    "cat ./out |grep -q -e '$pkt1' -e '$pkt2'"
 	else
-		atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+		atf_check -s exit:0 -x "cat ./out |grep -q -e '$pkt1' -e '$pkt2'"
 	fi
 
 	#
@@ -449,7 +446,7 @@ test_proxy_arp()
 	atf_check -s exit:0 -o ignore \
 	    rump.arp -s $IP4DST_PROXYARP2 $macaddr_dst $opts
 	atf_check -s exit:0 -o match:"$title" rump.arp -n $IP4DST_PROXYARP2
-	check_entry_flags $IP4DST_PROXYARP2 $flags
+	$DEBUG && rump.netstat -nr -f inet
 
 	# Try to ping (should fail because no endpoint exists)
 	export RUMP_SERVER=$SOCKSRC
@@ -470,14 +467,7 @@ test_proxy_arp()
 
 	# Try to ping
 	export RUMP_SERVER=$SOCKSRC
-	if [ "$type" = "pub" ]; then
-		atf_check -s exit:0 -o ignore \
-		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
-	else
-		# XXX fails
-		atf_check -s not-exit:0 -o ignore -e ignore \
-		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
-	fi
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
 }
 
 proxy_arp_pub_body()

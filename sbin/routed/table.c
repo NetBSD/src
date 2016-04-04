@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.24 2009/10/26 02:53:15 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.25 2016/04/04 07:37:07 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.24 2009/10/26 02:53:15 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.25 2016/04/04 07:37:07 ozaki-r Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1106,12 +1106,6 @@ flush_kern(void)
 		    || INFO_DST(&info)->sa_family != AF_INET)
 			continue;
 
-		/* ignore ARP table entries on systems with a merged route
-		 * and ARP table.
-		 */
-		if (rtm->rtm_flags & RTF_LLINFO)
-			continue;
-
 		/* ignore cloned routes
 		 */
 #if defined(RTF_CLONED) && defined(__bsdi__)
@@ -1270,11 +1264,6 @@ read_rt(void)
 
 		if (IN_MULTICAST(ntohl(S_ADDR(INFO_DST(&info))))) {
 			trace_act("ignore multicast %s", str);
-			continue;
-		}
-
-		if (m.r.rtm.rtm_flags & RTF_LLINFO) {
-			trace_act("ignore ARP %s", str);
 			continue;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.107 2016/04/01 08:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.108 2016/04/04 07:37:07 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.107 2016/04/01 08:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.108 2016/04/04 07:37:07 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,17 +108,18 @@ int nd6_numroutes = 0;
 static inline bool
 nd6_is_llinfo_probreach(struct nd_defrouter *dr)
 {
-	struct rtentry *rt = NULL;
 	struct llentry *ln = NULL;
 
-	rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp);
-	if (rt == NULL)
-		return false;
-	ln = rt->rt_llinfo;
-	rtfree(rt);
-	if (ln == NULL || !ND6_IS_LLINFO_PROBREACH(ln))
+	ln = nd6_lookup(&dr->rtaddr, dr->ifp, false);
+	if (ln == NULL)
 		return false;
 
+	if (!ND6_IS_LLINFO_PROBREACH(ln)) {
+		LLE_RUNLOCK(ln);
+		return false;
+	}
+
+	LLE_RUNLOCK(ln);
 	return true;
 }
 
@@ -1656,12 +1657,12 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	rtflags = ifa->ifa_flags | RTF_UP;
 	if (nd6_need_cache(ifp)) {
 		/* explicitly set in case ifa_flags does not set the flag. */
-		rtflags |= RTF_CLONING;
+		rtflags |= RTF_CONNECTED;
 	} else {
 		/*
 		 * explicitly clear the cloning bit in case ifa_flags sets it.
 		 */
-		rtflags &= ~RTF_CLONING;
+		rtflags &= ~RTF_CONNECTED;
 	}
 	error = rtrequest_newmsg(RTM_ADD, (struct sockaddr *)&pr->ndpr_prefix,
 	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.197 2016/04/01 08:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.198 2016/04/04 07:37:07 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.197 2016/04/01 08:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.198 2016/04/04 07:37:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1121,8 +1121,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			    (struct sockaddr *)&mltmask;
 			info.rti_info[RTAX_IFA] =
 			    (struct sockaddr *)&ia->ia_addr;
-			/* XXX: we need RTF_CLONING to fake nd6_rtrequest */
-			info.rti_flags = RTF_UP | RTF_CLONING;
+			/* XXX: we need RTF_CONNECTED to fake nd6_rtrequest */
+			info.rti_flags = RTF_UP | RTF_CONNECTED;
 			error = rtrequest1(RTM_ADD, &info, NULL);
 			if (error)
 				goto cleanup;
@@ -1205,7 +1205,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			    (struct sockaddr *)&mltmask;
 			info.rti_info[RTAX_IFA] =
 			    (struct sockaddr *)&ia->ia_addr;
-			info.rti_flags = RTF_UP | RTF_CLONING;
+			info.rti_flags = RTF_UP | RTF_CONNECTED;
 			error = rtrequest1(RTM_ADD, &info, NULL);
 			if (error)
 				goto cleanup;
@@ -1224,6 +1224,11 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 		}
 	}
+
+	/* Add local address to lltable, if necessary (ex. on p2p link). */
+	error = nd6_add_ifa_lle(ia);
+	if (error != 0)
+		goto cleanup;
 
 	/*
 	 * Perform DAD, if needed.
@@ -2402,17 +2407,15 @@ in6_lltable_delete(struct lltable *llt, u_int flags,
 	if (lle == NULL)
 		return ENOENT;
 
-	if (!(lle->la_flags & LLE_IFADDR) || (flags & LLE_IFADDR)) {
-		LLE_WLOCK(lle);
-		lle->la_flags |= LLE_DELETED;
+	LLE_WLOCK(lle);
+	lle->la_flags |= LLE_DELETED;
 #ifdef DIAGNOSTIC
-		log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
+	log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
 #endif
-		if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
-			llentry_free(lle);
-		else
-			LLE_WUNLOCK(lle);
-	}
+	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
+		llentry_free(lle);
+	else
+		LLE_WUNLOCK(lle);
 
 	return 0;
 }
@@ -2453,7 +2456,7 @@ in6_lltable_create(struct lltable *llt, u_int flags,
 	lle->la_flags = flags;
 	if ((flags & LLE_IFADDR) == LLE_IFADDR) {
 		memcpy(&lle->ll_addr, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
-		lle->la_flags |= (LLE_VALID | LLE_STATIC);
+		lle->la_flags |= LLE_VALID;
 	}
 
 	lltable_link_entry(llt, lle);
@@ -2485,6 +2488,23 @@ in6_lltable_lookup(struct lltable *llt, u_int flags,
 	return lle;
 }
 
+static int
+in6_lltable_dump_entry(struct lltable *llt, struct llentry *lle,
+    struct rt_walkarg *w)
+{
+	struct sockaddr_in6 sin6;
+
+	LLTABLE_LOCK_ASSERT();
+
+	/* skip deleted entries */
+	if (lle->la_flags & LLE_DELETED)
+		return 0;
+
+	sockaddr_in6_init(&sin6, &lle->r_l3addr.addr6, 0, 0, 0);
+
+	return lltable_dump_entry(llt, lle, w, sin6tosa(&sin6));
+}
+
 static struct lltable *
 in6_lltattach(struct ifnet *ifp)
 {
@@ -2497,9 +2517,7 @@ in6_lltattach(struct ifnet *ifp)
 	llt->llt_lookup = in6_lltable_lookup;
 	llt->llt_create = in6_lltable_create;
 	llt->llt_delete = in6_lltable_delete;
-#if notyet
 	llt->llt_dump_entry = in6_lltable_dump_entry;
-#endif
 	llt->llt_hash = in6_lltable_hash;
 	llt->llt_fill_sa_entry = in6_lltable_fill_sa_entry;
 	llt->llt_free_entry = in6_lltable_free_entry;

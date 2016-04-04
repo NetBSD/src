@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.3 2016/03/28 02:35:43 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.4 2016/04/04 07:37:08 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -256,7 +256,7 @@ destination: 10.0.1.0
        mask: 255.255.255.0
  local addr: 10.0.1.2
   interface: shmif0
-      flags: <UP,DONE,CLONING>
+      flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
        0         0         0         0         0         0         0         0 
 	EOF
@@ -283,20 +283,20 @@ destination: default
 	# Create a ARP cache
 	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4SRCGW
 
-	# Neighbor with a cache (cloned route)
+	# Neighbor with a cache (no different from w/o cache)
 	cat >./expect <<-EOF
    route to: 10.0.1.1
-destination: 10.0.1.1
+destination: 10.0.1.0
+       mask: 255.255.255.0
  local addr: 10.0.1.2
   interface: shmif0
-      flags: <UP,HOST,DONE,LLINFO,CLONED>
+      flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
+       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get $IP4SRCGW > ./output
 	$DEBUG && cat ./expect ./output
-	# Trim the last line including unfixed expire time
-	head -6 ./output > ./trimed
-	atf_check -s exit:0 diff ./expect ./trimed
+	atf_check -s exit:0 diff ./expect ./output
 }
 
 test_route_get6()
@@ -330,7 +330,7 @@ destination: fc00:0:0:1::
        mask: ffff:ffff:ffff:ffff::
  local addr: fc00:0:0:1::2
   interface: shmif0
-      flags: <UP,DONE,CLONING>
+      flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
        0         0         0         0         0         0         0         0 
 	EOF
@@ -357,19 +357,19 @@ destination: ::
 	# Create a NDP cache
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $IP6SRCGW
 
-	# Neighbor with a cache (cloned route)
+	# Neighbor with a cache (no different from w/o cache)
 	cat >./expect <<-EOF
    route to: fc00:0:0:1::1
-destination: fc00:0:0:1::1
+destination: fc00:0:0:1::
+       mask: ffff:ffff:ffff:ffff::
  local addr: fc00:0:0:1::2
   interface: shmif0
-      flags: <UP,HOST,DONE,LLINFO,CLONED>
+      flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
        0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get -inet6 $IP6SRCGW > ./output
 	$DEBUG && cat ./expect ./output
-	# No need to trim, because a NDP cache doesn't set an expire time
 	atf_check -s exit:0 diff ./expect ./output
 }
 

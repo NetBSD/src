@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.4,v 1.10 2003/09/07 16:22:24 wiz Exp $
+.\"	$NetBSD: arp.4,v 1.11 2016/04/04 07:37:08 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)arp4.4	6.5 (Berkeley) 4/18/94
 .\"
-.Dd April 18, 1994
+.Dd March 30, 2016
 .Dt ARP 4
 .Os
 .Sh NAME
@@ -63,22 +63,10 @@ for a non-responding destination host, and
 .Er EHOSTUNREACH
 for a non-responding router.
 .Pp
-The ARP cache is stored in the system routing table as
-dynamically-created host routes.
-The route to a directly-attached Ethernet network is installed as a
-.Dq cloning
-route (one with the
-.Dv RTF_CLONING
-flag set),
-causing routes to individual hosts on that network to be created on
-demand.
-These routes time out periodically (normally 20 minutes after validated;
+Each ARP cache entry is stored in a network interface which a response
+of ARP comes in.
+ARP cache entires time out periodically (normally 20 minutes after validated;
 entries are not validated when not in use).
-An entry for a host which is not responding is a
-.Dq reject
-route (one with the
-.Dv RTF_REJECT
-flag set).
 .Pp
 ARP entries may be added, deleted or changed with the
 .Xr arp 8
@@ -103,6 +91,10 @@ mapping requests for its own Internet address with a different Ethernet
 address, generally indicating that two hosts are attempting to use the
 same Internet address.
 .El
+.Sh HISTORY
+Since
+.Nx 8.0 ,
+the ARP cache was not stored in the routing table.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr route 4 ,

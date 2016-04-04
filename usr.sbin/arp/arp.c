@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.54 2016/02/24 08:01:09 ozaki-r Exp $ */
+/*	$NetBSD: arp.c,v 1.55 2016/04/04 07:37:08 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.54 2016/02/24 08:01:09 ozaki-r Exp $");
+__RCSID("$NetBSD: arp.c,v 1.55 2016/04/04 07:37:08 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ static int
 set(int argc, char **argv)
 {
 	struct sockaddr_inarp *sina;
-	struct sockaddr_dl *sdl;
+	struct sockaddr_dl *sdl = NULL;
 	struct rt_msghdr *rtm;
 	char *host = argv[0], *eaddr;
 	struct sockaddr_inarp sin_m = blank_sin; /* struct copy */
@@ -309,8 +309,6 @@ set(int argc, char **argv)
 		}
 
 	}
-	if (memcmp(&sdl_m, &blank_sdl, sizeof(blank_sdl)))
-		goto out;
 tryagain:
 	rtm = rtmsg(s, RTM_GET, &sin_m, &sdl_m);
 	if (rtm == NULL) {
@@ -343,7 +341,6 @@ overwrite:
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
-out:
 	sin_m.sin_other = 0;
 	if (doing_proxy && export_only)
 		sin_m.sin_other = SIN_PROXY;
@@ -373,7 +370,7 @@ static int
 is_llinfo(const struct sockaddr_dl *sdl, int rtflags)
 {
 	if (sdl->sdl_family != AF_LINK ||
-	    (rtflags & (RTF_LLINFO|RTF_GATEWAY)) != RTF_LLINFO)
+	    (rtflags & (RTF_LLDATA|RTF_GATEWAY)) != RTF_LLDATA)
 		return 0;
 
 	switch (sdl->sdl_type) {
@@ -461,7 +458,7 @@ dump(uint32_t addr)
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
-	mib[5] = RTF_LLINFO;
+	mib[5] = 0;
 	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed == 0)
@@ -536,7 +533,7 @@ delete_all(void)
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
-	mib[5] = RTF_LLINFO;
+	mib[5] = 0;
 	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed == 0)
@@ -635,8 +632,11 @@ rtmsg(const int s, const int cmd, const struct sockaddr_inarp *sin,
 	cp = m_rtmsg.m_space;
 	errno = 0;
 
-	if (cmd == RTM_DELETE)
+	/* XXX depends on rtm is filled by RTM_GET */
+	if (cmd == RTM_DELETE) {
+		rtm->rtm_flags |= RTF_LLDATA;
 		goto doit;
+	}
 	(void)memset(&m_rtmsg, 0, sizeof(m_rtmsg));
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
@@ -649,16 +649,18 @@ rtmsg(const int s, const int cmd, const struct sockaddr_inarp *sin,
 		rtm->rtm_addrs |= RTA_GATEWAY;
 		rtm->rtm_rmx.rmx_expire = expire_time;
 		rtm->rtm_inits = RTV_EXPIRE;
-		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC);
+		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC | RTF_LLDATA);
 		if (doing_proxy) {
 			if (!export_only) {
 				rtm->rtm_addrs |= RTA_NETMASK;
 				rtm->rtm_flags &= ~RTF_HOST;
 			}
 		}
-		/* FALLTHROUGH */
-	case RTM_GET:
 		rtm->rtm_addrs |= RTA_DST;
+		break;
+	case RTM_GET:
+		rtm->rtm_flags |= RTF_LLDATA;
+		rtm->rtm_addrs |= RTA_DST | RTA_IFP;
 	}
 
 #define NEXTADDR(w, s) \

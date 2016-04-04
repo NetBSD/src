@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.181 2016/04/01 09:16:02 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.182 2016/04/04 07:37:07 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.181 2016/04/01 09:16:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.182 2016/04/04 07:37:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2454,35 +2454,30 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 
 	{
 		/* target lladdr option */
-		struct rtentry *rt_nexthop = NULL;
+		struct llentry *ln = NULL;
 		int len;
-		const struct sockaddr_dl *sdl;
 		struct nd_opt_hdr *nd_opt;
 		char *lladdr;
 
-		rt_nexthop = nd6_lookup(nexthop, 0, ifp);
-		if (!rt_nexthop)
+		ln = nd6_lookup(nexthop, ifp, false);
+		if (ln == NULL)
 			goto nolladdropt;
 		len = sizeof(*nd_opt) + ifp->if_addrlen;
 		len = (len + 7) & ~7;	/* round by 8 */
 		/* safety check */
 		if (len + (p - (u_char *)ip6) > maxlen) {
-			rtfree(rt_nexthop);
+			LLE_RUNLOCK(ln);
 			goto nolladdropt;
 		}
-		if (!(rt_nexthop->rt_flags & RTF_GATEWAY) &&
-		    (rt_nexthop->rt_flags & RTF_LLINFO) &&
-		    (rt_nexthop->rt_gateway->sa_family == AF_LINK) &&
-		    (sdl = satocsdl(rt_nexthop->rt_gateway)) &&
-		    sdl->sdl_alen) {
+		if (ln->la_flags & LLE_VALID) {
 			nd_opt = (struct nd_opt_hdr *)p;
 			nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 			nd_opt->nd_opt_len = len >> 3;
 			lladdr = (char *)(nd_opt + 1);
-			memcpy(lladdr, CLLADDR(sdl), ifp->if_addrlen);
+			memcpy(lladdr, &ln->ll_addr, ifp->if_addrlen);
 			p += len;
 		}
-		rtfree(rt_nexthop);
+		LLE_RUNLOCK(ln);
 	}
   nolladdropt:;
 

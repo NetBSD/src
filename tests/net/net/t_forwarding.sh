@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.11 2015/12/25 08:22:28 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.12 2016/04/04 07:37:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -342,15 +342,6 @@ test_ping_success()
 	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4DSTGW
 	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4SRC
 	$DEBUG && rump.ifconfig -v shmif0
-
-	# Check if nexthop lookup involving a rtentry creation
-	# on sending a packet works
-	export RUMP_SERVER=$SOCKSRC
-	$DEBUG && rump.netstat -nr
-	atf_check -s exit:0 -o ignore rump.route delete $IP4SRCGW
-	$DEBUG && rump.netstat -nr
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 2 $IP4DST
-	$DEBUG && rump.netstat -nr
 }
 
 test_ping_ttl()
@@ -423,15 +414,6 @@ test_ping6_success()
 	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6DSTGW
 	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6SRC
 	$DEBUG && rump.ifconfig -v shmif0
-
-	# Check if nexthop lookup involving a rtentry creation
-	# on sending a packet works
-	export RUMP_SERVER=$SOCKSRC
-	$DEBUG && rump.netstat -nr
-	atf_check -s exit:0 -o ignore rump.route delete -inet6 $IP6SRCGW
-	$DEBUG && rump.netstat -nr
-	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 2 -X $TIMEOUT $IP6DST
-	$DEBUG && rump.netstat -nr
 }
 
 test_hoplimit()

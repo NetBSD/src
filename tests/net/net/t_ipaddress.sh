@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.1 2015/10/07 05:24:41 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.2 2016/04/04 07:37:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -54,7 +54,6 @@ test_same_address()
 {
 	local ip=10.0.0.1
 	local net=10.0.0/24
-	local macaddr=
 
 	atf_check -s exit:0 ${SERVER} ${SOCK_LOCAL}
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -67,12 +66,10 @@ test_same_address()
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	macaddr=$(rump.ifconfig shmif0 |awk '/address/ {print $2}')
-
-	check_entry $ip UHLl
+	check_entry $ip UHl
 	check_entry $ip lo0
-	check_entry $ip $macaddr
-	check_entry $net UC
+	check_entry $ip 'link#2'
+	check_entry $net U
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 
@@ -90,10 +87,10 @@ test_same_address()
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry $ip UHLl
+	check_entry $ip UHl
 	check_entry $ip lo0
-	check_entry $ip $macaddr
-	check_entry $net UC
+	check_entry $ip 'link#2'
+	check_entry $net U
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 
@@ -110,7 +107,6 @@ test_same_address6()
 {
 	local ip=fc00::1
 	local net=fc00::/64
-	local macaddr=
 
 	atf_check -s exit:0 ${SERVER6} ${SOCK_LOCAL}
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -123,12 +119,10 @@ test_same_address6()
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	macaddr=$(rump.ifconfig shmif0 |awk '/address/ {print $2}')
-
-	check_entry $ip UHLl
+	check_entry $ip UHl
 	check_entry $ip lo0
-	check_entry $ip $macaddr
-	check_entry $net UC
+	check_entry $ip 'link#2'
+	check_entry $net U
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 
@@ -146,10 +140,10 @@ test_same_address6()
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry $ip UHLl
+	check_entry $ip UHl
 	check_entry $ip lo0
-	check_entry $ip $macaddr
-	check_entry $net UC
+	check_entry $ip 'link#2'
+	check_entry $net U
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 

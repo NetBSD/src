@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.114 2016/04/01 08:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.115 2016/04/04 07:37:07 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.114 2016/04/01 08:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.115 2016/04/04 07:37:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -543,9 +543,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	char *lladdr = NULL;
 	int lladdrlen = 0;
 	struct ifaddr *ifa;
-	struct llentry *ln;
-	struct rtentry *rt = NULL;
-	struct sockaddr_dl *sdl;
+	struct llentry *ln = NULL;
 	union nd_opts ndopts;
 	struct sockaddr_in6 ssin6;
 	int rt_announce;
@@ -641,10 +639,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 * If no neighbor cache entry is found, NA SHOULD silently be
 	 * discarded.
 	 */
-	rt = nd6_lookup(&taddr6, 0, ifp);
-	if ((rt == NULL) ||
-	   ((ln = rt->rt_llinfo) == NULL) ||
-	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
+	ln = nd6_lookup(&taddr6, ifp, true);
+	if (ln == NULL)
 		goto freeit;
 
 	rt_announce = 0;
@@ -659,8 +655,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		/*
 		 * Record link-layer address, and update the state.
 		 */
-		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lladdr,
-		    ifp->if_addrlen);
+		memcpy(&ln->ll_addr, lladdr, ifp->if_addrlen);
+		ln->la_flags |= LLE_VALID;
 		rt_announce = 1;
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
@@ -690,8 +686,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		if (lladdr == NULL)
 			llchange = 0;
 		else {
-			if (sdl->sdl_alen) {
-				if (memcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
+			if (ln->la_flags & LLE_VALID) {
+				if (memcmp(lladdr, &ln->ll_addr, ifp->if_addrlen))
 					llchange = rt_announce = 1;
 				else
 					llchange = 0;
@@ -735,8 +731,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * Update link-local address, if any.
 			 */
 			if (lladdr != NULL) {
-				(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len,
-				    lladdr, ifp->if_addrlen);
+				memcpy(&ln->ll_addr, lladdr, ifp->if_addrlen);
+				ln->la_flags |= LLE_VALID;
 			}
 
 			/*
@@ -770,7 +766,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			const struct in6_addr *in6;
 			int s;
 
-			in6 = &satocsin6(rt_getkey(rt))->sin6_addr;
+			in6 = &ln->r_l3addr.addr6;
 
 			/*
 			 * Lock to protect the default router list.
@@ -779,7 +775,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * context.  However, we keep it just for safety.
 			 */
 			s = splsoftnet();
-			dr = defrouter_lookup(in6, rt->rt_ifp);
+			dr = defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
 			if (dr)
 				defrtrlist_del(dr, NULL);
 			else if (!ip6_forwarding) {
@@ -790,25 +786,35 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				 * (e.g. redirect case). So we must
 				 * call rt6_flush explicitly.
 				 */
-				rt6_flush(&ip6->ip6_src, rt->rt_ifp);
+				rt6_flush(&ip6->ip6_src, ln->lle_tbl->llt_ifp);
 			}
 			splx(s);
 		}
 		ln->ln_router = is_router;
 	}
-	rt->rt_flags &= ~RTF_REJECT;
+        /*
+	 * XXX: does this matter?
+	 * rt->rt_flags &= ~RTF_REJECT;
+	 */
 	ln->ln_asked = 0;
-	nd6_llinfo_release_pkts(ln, ifp, rt);
+	nd6_llinfo_release_pkts(ln, ifp);
+	/* FIXME */
+#if 0
 	if (rt_announce) /* tell user process about any new lladdr */
 		rt_newmsg(RTM_CHANGE, rt);
+#endif
 
  freeit:
+	if (ln != NULL)
+		LLE_WUNLOCK(ln);
+
 	m_freem(m);
-	if (rt != NULL)
-		rtfree(rt);
 	return;
 
  bad:
+	if (ln != NULL)
+		LLE_WUNLOCK(ln);
+
 	ICMP6_STATINC(ICMP6_STAT_BADNA);
 	m_freem(m);
 }
