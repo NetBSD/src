@@ -352,7 +352,7 @@
 /* #undef USE_MMAP */
 
 /* Define if we should default to creating read-only plt entries */
-#define USE_SECUREPLT 1
+/* #undef USE_SECUREPLT */
 
 /* Define if we may generate symbols with ELF's STT_COMMON type */
 /* #undef USE_STT_COMMON */
