@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.13 2015/06/02 14:02:10 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.14 2016/04/04 15:52:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,9 +33,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.13 2015/06/02 14:02:10 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.14 2016/04/04 15:52:56 christos Exp $");
 
 #include <stdio.h>
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
+#endif
 #ifdef HAVE_UTIL_H
 #include <util.h>
 #endif
@@ -46,10 +49,12 @@ __RCSID("$NetBSD: run.c,v 1.13 2015/06/02 14:02:10 christos Exp $");
 #include <syslog.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <net/if.h>
 
 #include "run.h"
 #include "conf.h"
 #include "internal.h"
+#include "support.h"
 
 extern char **environ;
 

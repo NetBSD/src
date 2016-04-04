@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.h,v 1.13 2015/10/14 16:01:29 christos Exp $	*/
+/*	$NetBSD: internal.h,v 1.14 2016/04/04 15:52:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ extern struct ifaddrs *ifas;
 #define __syslog__ __printf__
 #endif
 
-void (*lfun)(int, const char *, ...)
+extern void (*lfun)(int, const char *, ...)
     __attribute__((__format__(__syslog__, 2, 3)));
 
 #endif /* _INTERNAL_H */
