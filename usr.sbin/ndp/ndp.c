@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.46 2015/12/14 18:24:06 christos Exp $	*/
+/*	$NetBSD: ndp.c,v 1.47 2016/04/04 07:37:08 ozaki-r Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -394,7 +394,6 @@ set(int argc, char **argv)
 	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(mysin->sin6_len) + (char *)(void *)mysin);
 	if (IN6_ARE_ADDR_EQUAL(&mysin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
-		    (rtm->rtm_flags & RTF_LLINFO) &&
 		    !(rtm->rtm_flags & RTF_GATEWAY)) {
 			switch (sdl->sdl_type) {
 			case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
@@ -478,7 +477,6 @@ delete(char *host)
 	    (char *)(void *)mysin);
 	if (IN6_ARE_ADDR_EQUAL(&mysin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
-		    (rtm->rtm_flags & RTF_LLINFO) &&
 		    !(rtm->rtm_flags & RTF_GATEWAY)) {
 			goto delete;
 		}
@@ -545,7 +543,7 @@ again:;
 	mib[2] = 0;
 	mib[3] = AF_INET6;
 	mib[4] = NET_RT_FLAGS;
-	mib[5] = RTF_LLINFO;
+	mib[5] = 0;
 	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "sysctl(PF_ROUTE estimate)");
 	if (needed > 0) {
@@ -602,15 +600,8 @@ again:;
 		    host_buf, sizeof(host_buf), NULL, 0,
 		    (nflag ? NI_NUMERICHOST : 0));
 		if (cflag) {
-#ifdef RTF_WASCLONED
-			if (rtm->rtm_flags & RTF_WASCLONED)
+			if ((rtm->rtm_flags & RTF_STATIC) == 0)
 				(void)delete(host_buf);
-#elif defined(RTF_CLONED)
-			if (rtm->rtm_flags & RTF_CLONED)
-				(void)delete(host_buf);
-#else
-			(void)delete(host_buf);
-#endif
 			continue;
 		}
 		(void)gettimeofday(&tim, 0);
@@ -806,8 +797,10 @@ rtmsg(int cmd)
 	register int l;
 
 	errno = 0;
-	if (cmd == RTM_DELETE)
+	if (cmd == RTM_DELETE) {
+		rtm->rtm_flags |= RTF_LLDATA;
 		goto doit;
+	}
 	(void)memset(&m_rtmsg, 0, sizeof(m_rtmsg));
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
@@ -822,16 +815,18 @@ rtmsg(int cmd)
 			rtm->rtm_rmx.rmx_expire = expire_time;
 			rtm->rtm_inits = RTV_EXPIRE;
 		}
-		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC);
+		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC | RTF_LLDATA);
 #ifdef notdef	/* we don't support ipv6addr/128 type proxying. */
 		if (rtm->rtm_flags & RTF_ANNOUNCE) {
 			rtm->rtm_flags &= ~RTF_HOST;
 			rtm->rtm_addrs |= RTA_NETMASK;
 		}
 #endif
-		/* FALLTHROUGH */
-	case RTM_GET:
 		rtm->rtm_addrs |= RTA_DST;
+		break;
+	case RTM_GET:
+		rtm->rtm_flags |= RTF_LLDATA;
+		rtm->rtm_addrs |= RTA_DST | RTA_IFP;
 	}
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \

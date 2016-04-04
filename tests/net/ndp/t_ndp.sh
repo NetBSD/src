@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.9 2016/02/29 09:35:16 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.10 2016/04/04 07:37:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -162,6 +162,9 @@ command_body()
 
 	export RUMP_SERVER=$SOCKSRC
 
+	# We can delete the entry for the interface's IP address
+	atf_check -s exit:0 -o match:"$IP6SRC" rump.ndp -d $IP6SRC
+
 	# Add and delete a static entry
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o ignore rump.ndp -s fc00::10 b2:a0:20:00:00:10
@@ -201,6 +204,7 @@ command_body()
 	# Flush all entries (-c)
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o ignore rump.ndp -c
+	atf_check -s not-exit:0 -o ignore -e ignore rump.ndp -n $IP6SRC
 	atf_check -s not-exit:0 -o ignore -e ignore rump.ndp -n $IP6DST
 	# Only the static caches are not deleted
 	atf_check -s exit:0 -o ignore -e ignore rump.ndp -n fc00::11

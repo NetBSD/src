@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.7 2016/02/29 08:13:41 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.8 2016/04/04 07:37:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -261,6 +261,8 @@ parameters_body()
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT -n 192.168.0.3
 	atf_check -s exit:0 -o not-match:'192.168.0.3' rump.arp -an
+	# The entry shouldn't appear in the routing table anymore
+	atf_check -s exit:0 -o not-match:'192.168.0.3' rump.netstat -nr
 
 	# netmask
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 172.16.0.1 netmask 255.255.255.0 alias
