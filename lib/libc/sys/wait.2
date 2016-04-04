@@ -1,4 +1,4 @@
-.\"	$NetBSD: wait.2,v 1.28 2016/04/03 00:19:42 christos Exp $
+.\"	$NetBSD: wait.2,v 1.29 2016/04/04 13:13:09 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -224,7 +224,7 @@ The separate
 and
 .Fa id
 arguments support many other types of
-identifers in addition to process IDs and process group IDs.
+identifiers in addition to process IDs and process group IDs.
 .Bl -bullet -offset indent
 .It
 If
@@ -309,7 +309,7 @@ argument specifies the set of child processes for which to wait.
 .It
 If
 .Fa wpid
-is -1, the call waits for any child process.
+is \-1, the call waits for any child process.
 .It
 If
 .Fa wpid
@@ -323,7 +323,7 @@ is greater than zero, the call waits for the process with process ID
 .It
 If
 .Fa wpid
-is less than -1, the call waits for any process whose process group ID
+is less than \-1, the call waits for any process whose process group ID
 equals the absolute value of
 .Fa wpid .
 .El
@@ -406,24 +406,30 @@ or
 must be specified.
 Otherwise there will be no events for the call to report.
 To avoid hanging indefinitely in such a case these functions
-return -1 with
+return \-1 with
 .Dv errno
 set to
 .Dv EINVAL .
 .Pp
 If
 .Fa rusage
-is non-NULL, a summary of the resources used by the terminated
+is
+.Pf non- Dv NULL ,
+a summary of the resources used by the terminated
 process and all its children is returned.
 .Pp
 If
 .Fa wrusage
-is non-NULL, separate summaries are returned for the resources used
+is
+.Pf non- Dv NULL ,
+separate summaries are returned for the resources used
 by the terminated process and the resources used by all its children.
 .Pp
 If
 .Fa infop
-is non-NULL, a
+is
+.Pf non- Dv NULL ,
+a
 .Dv siginfo_t
 structure is returned with the
 .Fa si_signo
@@ -612,9 +618,8 @@ must be checked against zero to determine if a process reported status.
 will fail and return immediately if:
 .Bl -tag -width Er
 .It Bq Er ECHILD
-The calling process has no existing unwaited-for child processes.
-.It Bq Er ECHILD
-No status from the terminated child process is available
+The calling process has no existing unwaited-for child processes; or
+no status from the terminated child process is available
 because the calling process has asked the system to discard
 such status by ignoring the signal
 .Dv SIGCHLD
@@ -662,7 +667,7 @@ functions conform to
 .St -p1003.1-90 ;
 the
 .Fn waitid
-function conforms to 
+function conforms to
 .St -p1003.1-2004 ;
 the
 .Fn wait3
