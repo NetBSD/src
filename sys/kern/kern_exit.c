@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.252 2016/04/04 20:47:57 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.253 2016/04/04 23:07:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.252 2016/04/04 20:47:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.253 2016/04/04 23:07:06 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -183,7 +183,7 @@ sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
 	}
 
 	/* exit1() will release the mutex. */
-	exit1(l, SCARG(uap, rval), 0, 0);
+	exit1(l, SCARG(uap, rval), 0);
 	/* NOTREACHED */
 	return (0);
 }
@@ -196,7 +196,7 @@ sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
  * Must be called with p->p_lock held.  Does not return.
  */
 void
-exit1(struct lwp *l, int exitcode, int signo, int coredump)
+exit1(struct lwp *l, int exitcode, int signo)
 {
 	struct proc	*p, *child, *next_child, *old_parent, *new_parent;
 	struct pgrp	*pgrp;
@@ -307,8 +307,6 @@ exit1(struct lwp *l, int exitcode, int signo, int coredump)
 
 	p->p_xexit = exitcode;
 	p->p_xsig = signo;
-	if (coredump)
-		p->p_sflag |= PS_COREDUMP;
 
 	/*
 	 * If emulation has process exit hook, call it now.
