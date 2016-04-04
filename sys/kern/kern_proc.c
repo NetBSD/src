@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.194 2015/09/24 14:33:01 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.195 2016/04/04 20:47:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.194 2015/09/24 14:33:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.195 2016/04/04 20:47:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2283,7 +2283,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_stat = p->p_stat; /* Will likely be overridden by LWP status */
 	ki->p_realstat = p->p_stat;
 	ki->p_nice = p->p_nice;
-	ki->p_xstat = p->p_xstat;
+	ki->p_xstat = P_WAITSTATUS(p);
 	ki->p_acflag = p->p_acflag;
 
 	strncpy(ki->p_comm, p->p_comm,

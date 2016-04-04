@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.38 2016/02/08 18:18:19 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.39 2016/04/04 20:47:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.38 2016/02/08 18:18:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.39 2016/04/04 20:47:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -211,7 +211,7 @@ lwproc_newproc(struct proc *parent, struct vmspace *vm, int flags)
 	p->p_mqueue_cnt = p->p_exitsig = 0;
 	p->p_flag = p->p_sflag = p->p_slflag = p->p_lflag = p->p_stflag = 0;
 	p->p_trace_enabled = 0;
-	p->p_xstat = p->p_acflag = 0;
+	p->p_xsig = p->p_xexit = p->p_acflag = 0;
 	p->p_stackbase = 0;
 
 	p->p_stats = pstatscopy(parent->p_stats);

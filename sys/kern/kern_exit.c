@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.251 2016/04/03 23:50:49 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.252 2016/04/04 20:47:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.251 2016/04/03 23:50:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.252 2016/04/04 20:47:57 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -138,14 +138,19 @@ exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 
 	KSI_INIT(ksi);
 	if ((ksi->ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
-		if (WIFSIGNALED(p->p_xstat)) {
-			if (WCOREDUMP(p->p_xstat))
+		if (p->p_xsig) {
+			if (p->p_sflag & PS_COREDUMP)
 				ksi->ksi_code = CLD_DUMPED;
 			else
 				ksi->ksi_code = CLD_KILLED;
+			ksi->ksi_status = p->p_xsig;
 		} else {
 			ksi->ksi_code = CLD_EXITED;
+			ksi->ksi_status = p->p_xexit;
 		}
+	} else {
+		ksi->ksi_code = SI_USER;
+		ksi->ksi_status = p->p_xsig;
 	}
 	/*
 	 * We fill those in, even for non-SIGCHLD.
@@ -153,7 +158,6 @@ exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 	 */
 	ksi->ksi_pid = p->p_pid;
 	ksi->ksi_uid = kauth_cred_geteuid(p->p_cred);
-	ksi->ksi_status = p->p_xstat;
 	/* XXX: is this still valid? */
 	ksi->ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 	ksi->ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
@@ -179,7 +183,7 @@ sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
 	}
 
 	/* exit1() will release the mutex. */
-	exit1(l, W_EXITCODE(SCARG(uap, rval), 0));
+	exit1(l, SCARG(uap, rval), 0, 0);
 	/* NOTREACHED */
 	return (0);
 }
@@ -192,7 +196,7 @@ sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
  * Must be called with p->p_lock held.  Does not return.
  */
 void
-exit1(struct lwp *l, int rv)
+exit1(struct lwp *l, int exitcode, int signo, int coredump)
 {
 	struct proc	*p, *child, *next_child, *old_parent, *new_parent;
 	struct pgrp	*pgrp;
@@ -206,8 +210,7 @@ exit1(struct lwp *l, int rv)
 	KASSERT(p->p_vmspace != NULL);
 
 	if (__predict_false(p == initproc)) {
-		panic("init died (signal %d, exit %d)",
-		    WTERMSIG(rv), WEXITSTATUS(rv));
+		panic("init died (signal %d, exit %d)", signo, exitcode);
 	}
 
 	p->p_sflag |= PS_WEXIT;
@@ -269,7 +272,7 @@ exit1(struct lwp *l, int rv)
 	 */
 	rw_enter(&p->p_reflock, RW_WRITER);
 
-	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
+	DPRINTF(("%s: %d.%d exiting.\n", __func__, p->p_pid, l->l_lid));
 
 	timers_free(p, TIMERS_ALL);
 #if defined(__HAVE_RAS)
@@ -302,13 +305,17 @@ exit1(struct lwp *l, int rv)
 	}
 #endif
 
+	p->p_xexit = exitcode;
+	p->p_xsig = signo;
+	if (coredump)
+		p->p_sflag |= PS_COREDUMP;
+
 	/*
 	 * If emulation has process exit hook, call it now.
 	 * Set the exit status now so that the exit hook has
 	 * an opportunity to tweak it (COMPAT_LINUX requires
 	 * this for thread group emulation)
 	 */
-	p->p_xstat = rv;
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
 
@@ -423,8 +430,8 @@ exit1(struct lwp *l, int rv)
 	KNOTE(&p->p_klist, NOTE_EXIT);
 
 	SDT_PROBE(proc, kernel, , exit,
-		(WCOREDUMP(rv) ? CLD_DUMPED :
-		 (WIFSIGNALED(rv) ? CLD_KILLED : CLD_EXITED)),
+		((p->p_sflag & PS_COREDUMP) ? CLD_DUMPED :
+		 (p->p_xsig ? CLD_KILLED : CLD_EXITED)),
 		0,0,0,0);
 
 #if PERFCTRS
@@ -869,15 +876,15 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 		 *  This is still a rough estimate.  We will fix the
 		 *  cases TRAPPED, STOPPED, and CONTINUED later.
 		 */
-		if (WCOREDUMP(p->p_xstat)) {
+		if (p->p_sflag & PS_COREDUMP) {
 			siginfo->si_code = CLD_DUMPED;
-			siginfo->si_status = WTERMSIG(p->p_xstat);
-		} else if (WIFSIGNALED(p->p_xstat)) {
+			siginfo->si_status = p->p_xsig;
+		} else if (p->p_xsig) {
 			siginfo->si_code = CLD_KILLED;
-			siginfo->si_status = WTERMSIG(p->p_xstat);
+			siginfo->si_status = p->p_xsig;
 		} else {
 			siginfo->si_code = CLD_EXITED;
-			siginfo->si_status = WEXITSTATUS(p->p_xstat);
+			siginfo->si_status = p->p_xexit;
 		}
 
 		siginfo->si_pid = p->p_pid;
@@ -991,13 +998,13 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 			}
 
 			if ((options & WCONTINUED) != 0 &&
-			    child->p_xstat == SIGCONT) {
+			    child->p_xsig == SIGCONT) {
 				if ((options & WNOWAIT) == 0) {
 					child->p_waited = 1;
 					parent->p_nstopchild--;
 				}
 				if (si) {
-					si->si_status = child->p_xstat;
+					si->si_status = child->p_xsig;
 					si->si_code = CLD_CONTINUED;
 				}
 				break;
@@ -1013,7 +1020,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 					parent->p_nstopchild--;
 				}
 				if (si) {
-					si->si_status = child->p_xstat;
+					si->si_status = child->p_xsig;
 					si->si_code = 
 					    (child->p_slflag & PSL_TRACED) ?
 					    CLD_TRAPPED : CLD_STOPPED;
@@ -1030,7 +1037,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
 		    	if (child != NULL) {
-			    	*status_p = child->p_xstat;
+			    	*status_p = child->p_xsig;
 			}
 			*child_p = child;
 			return error;
@@ -1109,7 +1116,8 @@ proc_free(struct proc *p, struct wrusage *wru)
 		wru->wru_self = p->p_stats->p_ru;
 		wru->wru_children = p->p_stats->p_cru;
 	}
-	p->p_xstat = 0;
+	p->p_xsig = 0;
+	p->p_xexit = 0;
 
 	/*
 	 * At this point we are going to start freeing the final resources. 

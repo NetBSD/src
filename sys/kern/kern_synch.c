@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.309 2015/10/13 00:25:51 pgoyette Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.310 2016/04/04 20:47:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.309 2015/10/13 00:25:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.310 2016/04/04 20:47:57 christos Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -907,7 +907,7 @@ setrunnable(struct lwp *l)
 		 * If we're being traced (possibly because someone attached us
 		 * while we were stopped), check for a signal from the debugger.
 		 */
-		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xstat != 0)
+		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xsig != 0)
 			signotify(l);
 		p->p_nrlwps++;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.424 2016/03/20 14:58:10 khorben Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.425 2016/04/04 20:47:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.424 2016/03/20 14:58:10 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.425 2016/04/04 20:47:57 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1350,7 +1350,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	/* Acquire the sched-state mutex (exit1() will release it). */
 	if (!is_spawn) {
 		mutex_enter(p->p_lock);
-		exit1(l, W_EXITCODE(error, SIGABRT));
+		exit1(l, error, SIGABRT, 0);
 	}
 
 	return error;
@@ -2229,7 +2229,7 @@ spawn_return(void *arg)
 	 * A NetBSD specific workaround is POSIX_SPAWN_RETURNERROR as
 	 * flag bit in the attrp argument to posix_spawn(2), see above.
 	 */
-	exit1(l, W_EXITCODE(127, 0));
+	exit1(l, 127, 0, 0);
 }
 
 void
