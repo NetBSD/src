@@ -12147,7 +12147,7 @@ if test "${enable_secureplt+set}" = set; then :
   *)    as_fn_error "bad value ${enableval} for secureplt option" "$LINENO" 5 ;;
 esac
 else
-  use_secureplt=true
+  use_secureplt=false
 fi
 if test $use_secureplt = true; then
 
