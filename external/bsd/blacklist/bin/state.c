@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.17 2015/06/02 14:02:10 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.18 2016/04/04 15:52:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.17 2015/06/02 14:02:10 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.18 2016/04/04 15:52:56 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -103,7 +103,7 @@ static void
 dumpkey(const struct conf *k)
 {
 	char buf[10240];
-	hexdump(buf, sizeof(buf), __func__, k, sizeof(*k));
+	blhexdump(buf, sizeof(buf), __func__, k, sizeof(*k));
 	(*lfun)(LOG_DEBUG, "%s", buf);
 	(*lfun)(LOG_DEBUG, "%s: %s", __func__,
 	    conf_print(buf, sizeof(buf), "", "", k));
