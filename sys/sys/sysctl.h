@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.219 2016/01/18 23:27:49 pooka Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.220 2016/04/04 23:07:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #define	_SYS_SYSCTL_H_
 
 #include <sys/param.h> /* precautionary upon removal from ucred.h */
+#include <sys/wait.h>  /* WCOREFLAG */
 #include <sys/proc.h>  /* Needed for things like P_ZOMBIE() and LW_SINTR */
 #include <uvm/uvm_param.h>
 
