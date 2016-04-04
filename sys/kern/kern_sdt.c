@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sdt.c,v 1.2 2015/10/02 16:54:15 christos Exp $	*/
+/*	$NetBSD: kern_sdt.c,v 1.3 2016/04/04 03:53:25 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sdt.h>
+
+SDT_PROVIDER_DEFINE(sdt);
 
 void sdt_probe_stub(u_int32_t, uintptr_t, uintptr_t,
 	uintptr_t, uintptr_t, uintptr_t);
