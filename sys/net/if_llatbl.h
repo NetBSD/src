@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.8 2016/02/16 01:31:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.9 2016/04/04 07:37:07 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -44,6 +44,7 @@ struct ifnet;
 struct sysctl_req;
 struct rt_msghdr;
 struct rt_addrinfo;
+struct rt_walkarg;
 
 struct llentry;
 LIST_HEAD(llentries, llentry);
@@ -99,8 +100,6 @@ struct llentry {
 #define	ln_expire	la_expire
 #define	ln_asked	la_asked
 #define	ln_hold		la_hold
-	struct rtentry		*la_rt;
-#define	ln_rt		la_rt
 	void			*la_opaque;	/* For tokenring */
 #endif
 };
@@ -197,7 +196,7 @@ typedef	int (llt_delete_t)(struct lltable *, u_int flags,
 typedef void (llt_prefix_free_t)(struct lltable *,
     const struct sockaddr *prefix, const struct sockaddr *mask, u_int flags);
 typedef int (llt_dump_entry_t)(struct lltable *, struct llentry *,
-    struct sysctl_req *);
+    struct rt_walkarg *);
 typedef uint32_t (llt_hash_t)(const struct llentry *, uint32_t);
 typedef int (llt_match_prefix_t)(const struct sockaddr *,
     const struct sockaddr *, u_int, struct llentry *);
@@ -259,7 +258,9 @@ void		lltable_prefix_free(int, struct sockaddr *,
 		    struct sockaddr *, u_int);
 void		lltable_drain(int);
 void		lltable_purge_entries(struct lltable *);
-int		lltable_sysctl_dumparp(int, struct sysctl_req *);
+int		lltable_sysctl_dumparp(int, struct rt_walkarg *);
+int		lltable_dump_entry(struct lltable *, struct llentry *,
+		    struct rt_walkarg *, struct sockaddr *);
 
 size_t		llentry_free(struct llentry *);
 struct llentry  *llentry_alloc(struct ifnet *, struct lltable *,
@@ -309,6 +310,7 @@ lla_delete(struct lltable *llt, u_int flags, const struct sockaddr *l3addr)
 }
 
 
-int lla_rt_output(struct rt_msghdr *, struct rt_addrinfo *);
+int lla_rt_output(const u_char, const int, const time_t,
+    struct rt_addrinfo *info, int);
 
 #endif  /* _NET_IF_LLATBL_H_ */

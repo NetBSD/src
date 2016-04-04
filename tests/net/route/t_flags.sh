@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.3 2015/06/01 01:36:30 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.4 2016/04/04 07:37:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -138,22 +138,10 @@ test_connected()
 	export RUMP_SERVER=$SOCK_LOCAL
 
 	# Up, Host, LLINFO, local
-	check_entry_flags 10.0.0.2 UHLl
+	check_entry_flags 10.0.0.2 UHl
 
 	# Up, Cloning
 	check_entry_flags 10.0.0/24 UC
-}
-
-test_cloned()
-{
-
-	export RUMP_SERVER=$SOCK_LOCAL
-
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.0.1
-	$DEBUG && rump.netstat -rn -f inet
-
-	# Up, Host, LLINFO, cloned
-	check_entry_flags 10.0.0.1 UHLc
 }
 
 test_default_gateway()
@@ -188,31 +176,6 @@ test_static()
 	check_entry_flags 10.0.2/24 UGS
 }
 
-test_route_flush()
-{
-
-	export RUMP_SERVER=$SOCK_LOCAL
-
-	# Reusing other tests to create routes
-	test_cloned_route
-	test_default_gateway
-	test_static_route
-
-	atf_check -s exit:0 -o ignore rump.route flush
-	$DEBUG && rump.netstat -rn -f inet
-
-	# Should remain
-	check_entry_flags 127.0.0.1 UHl
-	check_entry_flags 10.0.0/24 UC
-
-	# Shouldn't remain
-	check_entry_fail default UGS
-	check_entry_fail 10.0.1.1 UGHS
-	check_entry_fail 10.0.2/24 UGS
-	# Should it remain?
-	check_entry_fail 10.0.0.2 UHLl
-}
-
 test_blackhole()
 {
 
@@ -232,7 +195,7 @@ test_blackhole()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Shouldn't be created
-	check_entry_fail 10.0.0.1 UHLc
+	check_entry_fail 10.0.0.1 UH
 }
 
 test_reject()
@@ -254,7 +217,7 @@ test_reject()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Shouldn't be created
-	check_entry_fail 10.0.0.1 UHLc
+	check_entry_fail 10.0.0.1 UH
 }
 
 test_icmp_redirect()
@@ -332,56 +295,6 @@ test_announce()
 	# TODO test its behavior
 }
 
-test_xresolve_rtm()
-{
-	local ip=$1
-	local rtm=$2
-	local pid=
-
-	rump.route -n monitor > ./mon.log &
-	pid=$!
-
-	# Give route monitor a chance to setup a routing socket
-	sleep 1
-
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $ip
-	$DEBUG && rump.netstat -rn -f inet
-
-	# Give route monitor a chance to output a routing message
-	sleep 1
-	cat ./mon.log
-
-	atf_check -s exit:0 grep -q $rtm ./mon.log
-
-	kill $pid
-}
-
-test_xresolve()
-{
-
-	export RUMP_SERVER=$SOCK_LOCAL
-
-	# For a normal route, a RTM_ADD message is emitted on a route cloning
-	test_xresolve_rtm 10.0.0.1 RTM_ADD
-	# Up, Host, LLINFO, cloned
-	check_entry_flags 10.0.0.1 UHLc
-
-	# Delete an existing route first
-	atf_check -s exit:0 -o ignore rump.route delete -net 10.0.0.0/24
-	# Create a connected route with XRESOLVE flag for the interface
-	atf_check -s exit:0 -o ignore rump.route add -net 10.0.0.0/24 10.0.0.2 \
-	    -interface -xresolve
-	$DEBUG && rump.netstat -rn -f inet
-
-	# Up, Cloning, Xresolve, Static
-	check_entry_flags 10.0.0/24 UCXS
-
-	# If XRESOLVE flag is set, a RTM_RESOLVE message is emitted
-	test_xresolve_rtm 10.0.0.1 RTM_RESOLVE
-	# Up, Host, Xresolve, LLINFO, cloned
-	check_entry_flags 10.0.0.1 UHXLc
-}
-
 cleanup()
 {
 	$DEBUG && /usr/bin/shmif_dumpbus -p - $BUS 2>/dev/null | \
@@ -416,12 +329,10 @@ atf_init_test_cases()
 
 	add_test lo              "Tests route flags: loop back interface"
 	add_test connected       "Tests route flags: connected route"
-	add_test cloned          "Tests route flags: cloned route"
 	add_test default_gateway "Tests route flags: default gateway"
 	add_test static          "Tests route flags: static route"
 	add_test blackhole       "Tests route flags: blackhole route"
 	add_test reject          "Tests route flags: reject route"
 	add_test icmp_redirect   "Tests route flags: icmp redirect"
 	add_test announce        "Tests route flags: announce flag"
-	add_test xresolve        "Tests route flags: xresolve flag"
 }
