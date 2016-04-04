@@ -162,7 +162,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Use AES for Source Identity Token generation */
-#define AES_SIT 1
+/* #undef AES_SIT */
 
 /* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
    */
