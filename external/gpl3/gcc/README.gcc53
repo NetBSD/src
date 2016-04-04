@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.18 2016/04/04 01:32:21 mrg Exp $
+$NetBSD: README.gcc53,v 1.19 2016/04/04 01:47:18 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -33,7 +33,6 @@ atf:		does atf run / compare well
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 ------------	-----	-------	------	----------	------------	----	---
-alpha		y	y	y	y		y		y[6]	y - 7 new failures out of ~4000
 arm		y	?	y	y		n[3]
 armeb		y	?	y	y		n[3]
 coldfire	y	N/A	y	y		?		N/A	N/A
@@ -51,21 +50,18 @@ earmv7		y	?	y	y		y[3]
 earmv7eb	y	?	y	y		y[3]
 earmv7hf	y	?	y	y		y[3]
 earmv7hfeb	y	?	y	y		y[3]
-hppa		y	y	y	y		y		y[6]	y
-i386		y	y	y	y		y		y	y
 m68000		y	?	y	y		y
 m68k		y	y[16]	y	y		y[13]
 mipseb		y	y	y	y		y		y
-mipsel		y	y	y	y		y		y
-mips64eb	y	y	y	y		y[8]		y
-mips64el	y	?	y	y		y
+mipsel		y	y	y	y		y		y	y
+mips64eb	y	y	y	y		y[8]		y	y
+mips64el	y	?	y	y		y		y	y
 powerpc		y	y	y	y		y		y[6]	
 sh3eb		y	?	y	y		y[5]
 sh3el		y	?	y	y		y
 sparc		y	y	y	y		y		y[6]
 sparc64		y	y	y	y		y		y[6,2]	y
 vax		y	y	y	y		y		y[15]	n
-x86_64		y	y	y	y		y		y	y
 --
 or1k		n[10]
 riscv32		n[10]
@@ -100,7 +96,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
        - sgimips O2 (OK kernel -- but my O2 is not stable)
        - i386/amd64 (OK)
        - hppa (OK)
-[15] - vax
+[15] - vax -- switched to GCC 5.3 already as it is less broken
 	- ssh is broken, was broken with 4.8
 	- there are too many -O0's we added because of mis-handled rtl
 	- the eh_frame stuff is probably busted, but it never worked?
