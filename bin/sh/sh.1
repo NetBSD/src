@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.120 2016/03/31 16:18:22 christos Exp $
+.\"	$NetBSD: sh.1,v 1.121 2016/04/04 13:05:56 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -880,7 +880,7 @@ which may be of any of the normal forms,
 is given, it is applied each time the
 function is called.
 This means that a simple
-.Dq "Hello World
+.Dq Hello World
 function might be written (in the extended syntax) as:
 .Dl hello() cat <<EOF
 .Dl Hello World!
@@ -895,7 +895,7 @@ Note the distinction between those forms, and
 .Dl EOF
 .Dl \&}
 which reads and processes the
-.Ic "here document
+.Ic here document
 each time the shell executes the function, and which applies
 that input only to the cat command, not to any other commands
 that might appear in the function.
