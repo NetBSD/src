@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.44 2016/03/13 08:02:22 martin Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.45 2016/04/04 10:04:34 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -2223,4 +2223,10 @@ external/bsd/bind/lib/liblwres/shlib_version    up to 1.16
 
 	Update BIND to 9.10.3-P4.
 	[snj, ticket #1140]
+
+external/bsd/bind/include/config.h		patch
+external/bsd/bind/include/isc/platform.h	patch
+
+	Disable SIT (Source Identity Token).
+	[spz, ticket #1151]
 
