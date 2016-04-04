@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.115 2016/03/31 23:11:05 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.116 2016/04/04 12:39:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.115 2016/03/31 23:11:05 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.116 2016/04/04 12:39:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ struct heredoc {
 	union node *here;		/* redirection node */
 	char *eofmark;		/* string indicating end of input */
 	int striptabs;		/* if set, strip leading tabs */
+	int startline;		/* line number where << seen */
 };
 
 
@@ -133,6 +134,7 @@ union node *
 parsecmd(int interact)
 {
 	int t;
+	union node *n;
 
 	tokpushback = 0;
 	doprompt = interact;
@@ -147,7 +149,11 @@ parsecmd(int interact)
 	if (t == TNL)
 		return NULL;
 	tokpushback++;
-	return list(1, 0);
+	n = list(1, 0);
+	if (heredoclist)
+		error("%d: Here document (<<%s) expected but not present",
+			heredoclist->startline, heredoclist->eofmark);
+	return n;
 }
 
 
@@ -206,10 +212,7 @@ list(int nlflag, int erflag)
 				return n1;
 			break;
 		case TEOF:
-			if (heredoclist)
-				readheredocs();
-			else
-				pungetc();	/* push back EOF on input */
+			pungetc();	/* push back EOF on input */
 			return n1;
 		default:
 			if (nlflag || erflag)
@@ -1407,6 +1410,7 @@ parseredir(const char *out,  int c)
 			np->type = NHERE;
 			heredoc = stalloc(sizeof(struct heredoc));
 			heredoc->here = np;
+			heredoc->startline = plinno;
 			if ((c = pgetc()) == '-') {
 				heredoc->striptabs = 1;
 			} else {
