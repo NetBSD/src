@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.24 2016/03/26 11:42:44 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.25 2016/04/04 07:43:12 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,9 +41,7 @@ typedef struct ehci_soft_qtd {
 	usb_dma_t dma;			/* qTD's DMA infos */
 	int offs;			/* qTD's offset in usb_dma_t */
 	struct usbd_xfer *xfer;		/* xfer back pointer */
-	size_t bufoff;			/* Offset into xfer buffer */
 	uint16_t len;
-	uint16_t tdlen;
 } ehci_soft_qtd_t;
 #define EHCI_SQTD_ALIGN	MAX(EHCI_QTD_ALIGN, CACHE_LINE_SIZE)
 #define EHCI_SQTD_SIZE ((sizeof(struct ehci_soft_qtd) + EHCI_SQTD_ALIGN - 1) & -EHCI_SQTD_ALIGN)
