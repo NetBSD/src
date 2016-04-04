@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.4,v 1.11 2016/04/04 07:37:08 ozaki-r Exp $
+.\"	$NetBSD: arp.4,v 1.12 2016/04/04 13:32:37 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,10 +91,6 @@ mapping requests for its own Internet address with a different Ethernet
 address, generally indicating that two hosts are attempting to use the
 same Internet address.
 .El
-.Sh HISTORY
-Since
-.Nx 8.0 ,
-the ARP cache was not stored in the routing table.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr route 4 ,
@@ -113,3 +109,7 @@ the ARP cache was not stored in the routing table.
 .%B "Trailer Encapsulations"
 .%T RFC 893
 .Re
+.Sh HISTORY
+Since
+.Nx 8.0 ,
+the ARP cache was not stored in the routing table.
