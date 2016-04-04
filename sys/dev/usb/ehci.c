@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.95 2016/03/26 11:42:44 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.96 2016/04/04 07:43:12 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.95 2016/03/26 11:42:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.96 2016/04/04 07:43:12 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -235,12 +235,13 @@ Static void		ehci_free_sqh(ehci_softc_t *, ehci_soft_qh_t *);
 
 Static ehci_soft_qtd_t *ehci_alloc_sqtd(ehci_softc_t *);
 Static void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
-Static usbd_status	ehci_alloc_sqtd_chain(ehci_softc_t *, struct usbd_xfer *,
-			    int, int, ehci_soft_qtd_t **, ehci_soft_qtd_t **);
+Static usbd_status	ehci_alloc_sqtd_chain(ehci_softc_t *,
+			    struct usbd_xfer *, int, int, ehci_soft_qtd_t **);
 Static void		ehci_free_sqtds(ehci_softc_t *, struct ehci_xfer *);
 
 Static void		ehci_reset_sqtd_chain(ehci_softc_t *, struct usbd_xfer *,
 			    int, int, int *, ehci_soft_qtd_t **);
+Static void		ehci_append_sqtd(ehci_soft_qtd_t *, ehci_soft_qtd_t *);
 
 Static ehci_soft_itd_t *ehci_alloc_itd(ehci_softc_t *);
 Static ehci_soft_sitd_t *
@@ -2823,130 +2824,38 @@ ehci_free_sqtd(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd)
 
 Static usbd_status
 ehci_alloc_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
-    int alen, int rd, ehci_soft_qtd_t **sp, ehci_soft_qtd_t **ep)
+    int alen, int rd, ehci_soft_qtd_t **sp)
 {
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
-	ehci_soft_qtd_t *next, *cur;
-	ehci_physaddr_t nextphys;
-	uint32_t qtdstatus;
-	int len, curlen, mps;
-	int i, tog;
-	int pages, pageoffs;
-	size_t curoffs;
-	vaddr_t va, va_offs;
-	usb_dma_t *dma = &xfer->ux_dmabuf;
 	uint16_t flags = xfer->ux_flags;
-	paddr_t a;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-	DPRINTF("start len=%d", alen, 0, 0, 0);
 
 	ASSERT_SLEEPABLE();
 	KASSERT(sp);
-	KASSERT(alen != 0 || (flags & USBD_FORCE_SHORT_XFER));
+	KASSERT(alen != 0 || (!rd && (flags & USBD_FORCE_SHORT_XFER)));
 
-	len = alen;
-	qtdstatus = EHCI_QTD_ACTIVE |
-	    EHCI_QTD_SET_PID(rd ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
-	    EHCI_QTD_SET_CERR(3)
-	    ;
-
-	size_t nsqtd = (flags & USBD_FORCE_SHORT_XFER) ? 1 : 0;
-	nsqtd += ((len + EHCI_QTD_MAXTRANSFER - 1) / EHCI_QTD_MAXTRANSFER);
+	size_t nsqtd = (!rd && (flags & USBD_FORCE_SHORT_XFER)) ? 1 : 0;
+	nsqtd += ((alen + EHCI_PAGE_SIZE - 1) / EHCI_PAGE_SIZE);
 	exfer->ex_sqtds = kmem_zalloc(sizeof(ehci_soft_qtd_t *) * nsqtd,
 	    KM_SLEEP);
 	exfer->ex_nsqtd = nsqtd;
 
-	mps = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
-	cur = ehci_alloc_sqtd(sc);
-	*sp = cur;
-	if (cur == NULL)
-		goto nomem;
+	DPRINTF("xfer %p len %d nsqtd %d flags %x", xfer, alen, nsqtd, flags);
 
-	curoffs = 0;
-	for (size_t j = 0;;) {
-		KASSERT(j < nsqtd);
+	for (size_t j = 0; j < exfer->ex_nsqtd;) {
+		ehci_soft_qtd_t *cur = ehci_alloc_sqtd(sc);
+		if (cur == NULL)
+			goto nomem;
 		exfer->ex_sqtds[j++] = cur;
 
-		/* The EHCI hardware can handle at most 5 pages. */
-		va = (vaddr_t)KERNADDR(dma, curoffs);
-		va_offs = EHCI_PAGE_OFFSET(va);
-		if (len - curoffs < EHCI_QTD_MAXTRANSFER - va_offs) {
-			/* we can handle it in this QTD */
-			curlen = len - curoffs;
-		} else {
-			/* must use multiple TDs, fill as much as possible. */
-			curlen = EHCI_QTD_MAXTRANSFER - va_offs;
-
-			/* the length must be a multiple of the max size */
-			curlen -= curlen % mps;
-			DPRINTF("multiple QTDs, curlen=%d", curlen, 0, 0, 0);
-			KASSERT(curlen != 0);
-		}
-		DPRINTF("len=%d curlen=%d curoffs=%zu", len, curlen, curoffs,
-		    0);
-
-		/*
-		 * Allocate another transfer if there's more data left,
-		 * or if force last short transfer flag is set and we're
-		 * allocating a multiple of the max packet size.
-		 */
-
-		if (curoffs + curlen != len ||
-		    ((curlen % mps) == 0 && !rd && curlen != 0 &&
-		     (flags & USBD_FORCE_SHORT_XFER))) {
-			next = ehci_alloc_sqtd(sc);
-			if (next == NULL)
-				goto nomem;
-			nextphys = htole32(next->physaddr);
-		} else {
-			next = NULL;
-			nextphys = EHCI_NULL;
-		}
-
-		/* Find number of pages we'll be using, insert dma addresses */
-		pages = EHCI_NPAGES(curlen);
-		KASSERT(pages <= EHCI_QTD_NBUFFERS);
-		pageoffs = EHCI_PAGE(curoffs);
-		for (i = 0; i < pages; i++) {
-			a = DMAADDR(dma, pageoffs + i * EHCI_PAGE_SIZE);
-			cur->qtd.qtd_buffer[i] = htole32(EHCI_PAGE(a));
-			/* Cast up to avoid compiler warnings */
-			cur->qtd.qtd_buffer_hi[i] = htole32((uint64_t)a >> 32);
-		}
-
-		/* First buffer pointer requires a page offset to start at */
-		cur->qtd.qtd_buffer[0] |= htole32(va_offs);
-		cur->qtd.qtd_next = cur->qtd.qtd_altnext = nextphys;
-		cur->qtd.qtd_status = htole32(qtdstatus);
-		cur->nextqtd = next;
 		cur->xfer = xfer;
-		cur->bufoff = curoffs;
-		cur->tdlen = curlen;
 		cur->len = 0;
 
-		DPRINTF("cbp=0x%08zx end=0x%08zx", curoffs, curoffs + curlen,
-		    0, 0);
-
-		/*
-		 * adjust the toggle based on the number of packets in this
-		 * qtd
-		 */
-		if (((curlen + mps - 1) / mps) & 1) {
-			tog ^= 1;
-			qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
-		}
-		if (next == NULL)
-			break;
-		DPRINTF("extend chain", 0, 0, 0, 0);
-		if (len)
-			curoffs += curlen;
-		cur = next;
 	}
-	if (ep)
-		*ep = cur;
 
-	DPRINTF("return sqtd=%p sqtdend=%p", *sp, cur, 0, 0);
+	*sp = exfer->ex_sqtds[0];
+	DPRINTF("return sqtd=%p", *sp, 0, 0, 0);
 
 	return USBD_NORMAL_COMPLETION;
 
@@ -2976,92 +2885,132 @@ ehci_free_sqtds(ehci_softc_t *sc, struct ehci_xfer *exfer)
 }
 
 Static void
+ehci_append_sqtd(ehci_soft_qtd_t *sqtd, ehci_soft_qtd_t *prev)
+{
+	if (prev) {
+		prev->nextqtd = sqtd;
+		prev->qtd.qtd_next = htole32(sqtd->physaddr);
+		prev->qtd.qtd_altnext = prev->qtd.qtd_next;
+		usb_syncmem(&prev->dma, prev->offs, sizeof(prev->qtd),
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	}
+}
+
+Static void
 ehci_reset_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
     int length, int isread, int *toggle, ehci_soft_qtd_t **lsqtd)
 {
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
+	usb_dma_t *dma = &xfer->ux_dmabuf;
+	uint16_t flags = xfer->ux_flags;
 	ehci_soft_qtd_t *sqtd, *prev;
 	int tog = *toggle;
 	int mps = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
 	int len = length;
-	size_t i;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-	DPRINTF("xfer=%p len %d isread %d toggle %d", xfer, len, isread,
-	    *toggle);
+	DPRINTF("xfer=%p len %d isread %d toggle %d", xfer, len, isread, tog);
 	DPRINTF("    VA %p", KERNADDR(&xfer->ux_dmabuf, 0), 0, 0, 0);
 
+	KASSERT(length != 0 || (!isread && (flags & USBD_FORCE_SHORT_XFER)));
+
+	const uint32_t qtdstatus = EHCI_QTD_ACTIVE |
+	    EHCI_QTD_SET_PID(isread ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
+	    EHCI_QTD_SET_CERR(3)
+	    ;
+
 	sqtd = prev = NULL;
-	for (i = 0; i < exfer->ex_nsqtd; i++, prev = sqtd) {
-		sqtd = exfer->ex_sqtds[i];
-		vaddr_t va = (vaddr_t)KERNADDR(&xfer->ux_dmabuf, sqtd->bufoff);
-		sqtd->len = sqtd->tdlen;
-		if (len < sqtd->len) {
-			sqtd->len = len;
+	size_t curoffs = 0;
+	size_t j = 0;
+	for (; len != 0 && j < exfer->ex_nsqtd; prev = sqtd) {
+		sqtd = exfer->ex_sqtds[j++];
+		DPRINTF("sqtd[%d]=%p prev %p", j, sqtd, prev, 0);
+
+		/*
+		 * The EHCI hardware can handle at most 5 pages and they do
+		 * not have to be contiguous
+		 */
+		vaddr_t va = (vaddr_t)KERNADDR(dma, curoffs);
+		vaddr_t va_offs = EHCI_PAGE_OFFSET(va);
+		size_t curlen = len;
+		if (curlen >= EHCI_QTD_MAXTRANSFER - va_offs) {
+			/* must use multiple TDs, fill as much as possible. */
+			curlen = EHCI_QTD_MAXTRANSFER - va_offs;
+
+			/* the length must be a multiple of the max size */
+			curlen -= curlen % mps;
 		}
+		KASSERT(curlen != 0);
+		DPRINTF("    len=%d curlen=%d curoffs=%zu", len, curlen,
+		    curoffs, 0);
 
-		DPRINTF("sqtd[%d]=%p prev %p len %d", i, sqtd, prev, sqtd->len);
-		DPRINTF("    va %p bufoff %d pa %p", va, sqtd->bufoff,
-		    DMAADDR(&xfer->ux_dmabuf, sqtd->bufoff), 0);
-
-		if (prev) {
-			prev->nextqtd = sqtd;
-			prev->qtd.qtd_next = htole32(sqtd->physaddr);
-			prev->qtd.qtd_altnext = prev->qtd.qtd_next;
-		}
-		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
-		    sizeof(sqtd->qtd.qtd_status),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_buffer),
-		    sizeof(sqtd->qtd.qtd_buffer[0]),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-
-		sqtd->qtd.qtd_buffer[0] &= ~htole32(EHCI_PAGE_MASK);
-		sqtd->qtd.qtd_buffer[0] |= htole32(EHCI_PAGE_OFFSET(va));
-		/* Reset ... */
-		sqtd->qtd.qtd_status &= ~htole32(
-		    EHCI_QTD_STATUS_MASK |
-		    EHCI_QTD_PID_MASK |
-		    EHCI_QTD_CERR_MASK |
-		    EHCI_QTD_C_PAGE_MASK |
-		    EHCI_QTD_BYTES_MASK |
-		    EHCI_QTD_TOGGLE_MASK);
-		sqtd->qtd.qtd_status |= htole32(
-		    EHCI_QTD_ACTIVE |
-		    EHCI_QTD_SET_PID(isread ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
-		    EHCI_QTD_SET_BYTES(sqtd->len) |
-		    EHCI_QTD_SET_CERR(3) |
+		/* Fill the qTD */
+		sqtd->qtd.qtd_next = sqtd->qtd.qtd_altnext = EHCI_NULL;
+		sqtd->qtd.qtd_status = htole32(
+		    qtdstatus |
+		    EHCI_QTD_SET_BYTES(curlen) |
 		    EHCI_QTD_SET_TOGGLE(tog));
 
-		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
-		    sizeof(sqtd->qtd.qtd_status),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_buffer),
-		    sizeof(sqtd->qtd.qtd_buffer[0]),
+		/* Find number of pages we'll be using, insert dma addresses */
+		size_t pages = EHCI_NPAGES(curlen);
+		KASSERT(pages <= EHCI_QTD_NBUFFERS);
+		size_t pageoffs = EHCI_PAGE(curoffs);
+		for (size_t i = 0; i < pages; i++) {
+			paddr_t a = DMAADDR(dma,
+			    pageoffs + i * EHCI_PAGE_SIZE);
+			sqtd->qtd.qtd_buffer[i] = htole32(EHCI_PAGE(a));
+			/* Cast up to avoid compiler warnings */
+			sqtd->qtd.qtd_buffer_hi[i] = htole32((uint64_t)a >> 32);
+			DPRINTF("      buffer[%d/%d] 0x%08x 0x%08x", i, pages,
+			    le32toh(sqtd->qtd.qtd_buffer_hi[i]),
+			    le32toh(sqtd->qtd.qtd_buffer[i]));
+		}
+		/* First buffer pointer requires a page offset to start at */
+		sqtd->qtd.qtd_buffer[0] |= htole32(va_offs);
+
+		usb_syncmem(&sqtd->dma, sqtd->offs, sizeof(sqtd->qtd),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-		if (((sqtd->len + mps - 1) / mps) & 1) {
+		sqtd->len = curlen;
+
+		DPRINTF("    va %p pa %p len %d", va,
+		    DMAADDR(&xfer->ux_dmabuf, curoffs), curlen, 0);
+
+		ehci_append_sqtd(sqtd, prev);
+
+		if (((curlen + mps - 1) / mps) & 1) {
 			tog ^= 1;
 		}
 
-		len -= sqtd->len;
-		if (len == 0)
-			break;
+		curoffs += curlen;
+		len -= curlen;
 	}
-	KASSERTMSG(len == 0, "xfer %p olen %d len %d mps %d ex_nsqtd %zu i %zu",
-	    xfer, length, len, mps, exfer->ex_nsqtd, i);
+	KASSERTMSG(len == 0, "xfer %p olen %d len %d mps %d ex_nsqtd %zu j %zu",
+	    xfer, length, len, mps, exfer->ex_nsqtd, j);
 
-	if (i < exfer->ex_nsqtd) {
-		/*
-		 * The full allocation chain wasn't used, so we need to
-		 * terminate it.
-		 */
+	if (!isread &&
+	    (flags & USBD_FORCE_SHORT_XFER) &&
+	    length % mps == 0) {
+		/* Force a 0 length transfer at the end. */
+
+		KASSERTMSG(j < exfer->ex_nsqtd, "j=%zu nsqtd=%zu", j,
+		    exfer->ex_nsqtd);
+		prev = sqtd;
+		sqtd = exfer->ex_sqtds[j++];
+		memset(&sqtd->qtd, 0, sizeof(sqtd->qtd));
 		sqtd->qtd.qtd_next = sqtd->qtd.qtd_altnext = EHCI_NULL;
+		sqtd->qtd.qtd_status = htole32(
+		    qtdstatus |
+		    EHCI_QTD_SET_BYTES(0) |
+		    EHCI_QTD_SET_TOGGLE(tog));
+
+		usb_syncmem(&sqtd->dma, sqtd->offs, sizeof(sqtd->qtd),
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+		ehci_append_sqtd(sqtd, prev);
+		tog ^= 1;
 	}
+
 	*lsqtd = sqtd;
 	*toggle = tog;
 }
@@ -3531,9 +3480,8 @@ ehci_device_ctrl_init(struct usbd_xfer *xfer)
 	next = status;
 	/* Set up data transaction */
 	if (len != 0) {
-		ehci_soft_qtd_t *end;
 		err = ehci_alloc_sqtd_chain(sc, xfer, len, isread,
-		    &exfer->ex_data, &end);
+		    &exfer->ex_data);
 		if (err)
 			goto bad3;
 		next = exfer->ex_data;
@@ -3550,7 +3498,7 @@ ehci_device_ctrl_init(struct usbd_xfer *xfer)
 	setup->qtd.qtd_next = setup->qtd.qtd_altnext = htole32(next->physaddr);
 	setup->nextqtd = next;
 	setup->xfer = xfer;
-	setup->tdlen = setup->len = sizeof(*req);
+	setup->len = sizeof(*req);
 
 	status->qtd.qtd_status = htole32(
 	    EHCI_QTD_SET_PID(isread ? EHCI_QTD_PID_OUT : EHCI_QTD_PID_IN) |
@@ -3562,7 +3510,7 @@ ehci_device_ctrl_init(struct usbd_xfer *xfer)
 	status->qtd.qtd_next = status->qtd.qtd_altnext = EHCI_NULL;
 	status->nextqtd = NULL;
 	status->xfer = xfer;
-	status->tdlen = status->len = 0;
+	status->len = 0;
 
 	return 0;
 bad3:
@@ -3848,7 +3796,7 @@ ehci_device_bulk_init(struct usbd_xfer *xfer)
 	exfer->ex_type = EX_BULK;
 	exfer->ex_nsqtd = 0;
 	err = ehci_alloc_sqtd_chain(sc, xfer, len, isread,
-	    &exfer->ex_sqtdstart, &exfer->ex_sqtdend);
+	    &exfer->ex_sqtdstart);
 
 	return err;
 }
@@ -4063,7 +4011,7 @@ ehci_device_intr_init(struct usbd_xfer *xfer)
 	exfer->ex_type = EX_INTR;
 	exfer->ex_nsqtd = 0;
 	err = ehci_alloc_sqtd_chain(sc, xfer, len, isread,
-	    &exfer->ex_sqtdstart, &exfer->ex_sqtdend);
+	    &exfer->ex_sqtdstart);
 
 	return err;
 }
@@ -4134,6 +4082,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 
 	/* Take lock to protect nexttoggle */
 	mutex_enter(&sc->sc_lock);
+
 	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle, &end);
 
 	end->qtd.qtd_status |= htole32(EHCI_QTD_IOC);

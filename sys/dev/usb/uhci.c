@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.69 2016/03/25 17:44:00 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.70 2016/04/04 07:43:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.69 2016/03/25 17:44:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.70 2016/04/04 07:43:12 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -179,7 +179,7 @@ Static void		uhci_exit_ctl_q(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_free_std_chain(uhci_softc_t *, uhci_soft_td_t *,
 			    uhci_soft_td_t *);
 Static usbd_status	uhci_alloc_std_chain(uhci_softc_t *, struct usbd_xfer *,
-			    int, int, uhci_soft_td_t **, uhci_soft_td_t **);
+			    int, int, uhci_soft_td_t **);
 Static void		uhci_free_stds(uhci_softc_t *, struct uhci_xfer *);
 
 Static void		uhci_reset_std_chain(uhci_softc_t *, struct usbd_xfer *,
@@ -2011,95 +2011,53 @@ uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 }
 
 usbd_status
-uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int alen,
-    int rd, uhci_soft_td_t **sp, uhci_soft_td_t **ep)
+uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
+    int rd, uhci_soft_td_t **sp)
 {
-	uhci_soft_td_t *p, *lastp;
-	uhci_physaddr_t lastlink;
-	int i, l, maxp;
-	int len;
-	uint32_t status;
 	struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
-	int addr = xfer->ux_pipe->up_dev->ud_addr;
-	int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
-	usb_dma_t *dma = &xfer->ux_dmabuf;
 	uint16_t flags = xfer->ux_flags;
+	uhci_soft_td_t *p;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
 	DPRINTFN(8, "xfer=%p pipe=%p", xfer, xfer->ux_pipe, 0, 0);
-	DPRINTFN(8, "addr=%d endpt=%d len=%d speed=%d",
-	    addr, UE_GET_ADDR(endpt), alen, xfer->ux_pipe->up_dev->ud_speed);
 
 	ASSERT_SLEEPABLE();
 	KASSERT(sp);
 
-	len = alen;
-	maxp = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
+	int maxp = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
 	if (maxp == 0) {
 		printf("%s: maxp=0\n", __func__);
 		return USBD_INVAL;
 	}
 	size_t ntd = (len + maxp - 1) / maxp;
-	if ((flags & USBD_FORCE_SHORT_XFER) && len % maxp == 0)
+	if (!rd && (flags & USBD_FORCE_SHORT_XFER)) {
 		ntd++;
+	}
 	DPRINTFN(10, "maxp=%d ntd=%d", maxp, ntd, 0, 0);
 
 	uxfer->ux_stds = NULL;
 	uxfer->ux_nstd = ntd;
+	p = NULL;
 	if (ntd == 0) {
 		*sp = NULL;
-		if (ep)
-			*ep = NULL;
 		DPRINTF("ntd=0", 0, 0, 0, 0);
 		return USBD_NORMAL_COMPLETION;
 	}
 	uxfer->ux_stds = kmem_alloc(sizeof(uhci_soft_td_t *) * ntd,
 	    KM_SLEEP);
 
-	lastp = NULL;
 	ntd--;
-	status = UHCI_TD_ZERO_ACTLEN(UHCI_TD_SET_ERRCNT(3) | UHCI_TD_ACTIVE);
-	if (xfer->ux_pipe->up_dev->ud_speed == USB_SPEED_LOW)
-		status |= UHCI_TD_LS;
-	if (flags & USBD_SHORT_XFER_OK)
-		status |= UHCI_TD_SPD;
-	for (i = ntd; i >= 0; i--) {
+	for (int i = ntd; i >= 0; i--) {
 		p = uhci_alloc_std(sc);
 		if (p == NULL) {
-			uhci_free_std_chain(sc, lastp, NULL);
+			uhci_free_stds(sc, uxfer);
 			return USBD_NOMEM;
 		}
 		uxfer->ux_stds[i] = p;
-		if (i == ntd) {
-			/* last TD */
-			l = len % maxp;
-			if (l == 0 && !(flags & USBD_FORCE_SHORT_XFER))
-				l = maxp;
-			if (ep)
-				*ep = p;
-			lastlink = UHCI_PTR_T;
-		} else {
-			l = maxp;
-			lastlink = p->physaddr;
-		}
-		p->link.std = lastp;
-		p->td.td_link = htole32(lastlink | UHCI_PTR_VF | UHCI_PTR_TD);
-		p->td.td_status = htole32(status);
-		p->td.td_token = htole32(
-		    (rd ? UHCI_TD_PID_IN : UHCI_TD_PID_OUT) |
-		    UHCI_TD_SET_MAXLEN(l) |
-		    UHCI_TD_SET_ENDPT(UE_GET_ADDR(endpt)) |
-		    UHCI_TD_SET_DEVADDR(addr)
-		    );
-		p->td.td_buffer = htole32(DMAADDR(dma, i * maxp));
-		DPRINTF("std %p link 0x%08x status 0x%08x token 0x%08x",
-		    p, le32toh(p->td.td_link), le32toh(p->td.td_status),
-		    le32toh(p->td.td_token));
-
-		lastp = p;
 	}
-	*sp = lastp;
+
+	*sp = uxfer->ux_stds[0];
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -2147,10 +2105,13 @@ uhci_reset_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer,
 	DPRINTFN(8, "xfer=%p len %d isread %d toggle %d", xfer,
 	    len, isread, *toggle);
 
-	KASSERT(len != 0 || (flags & USBD_FORCE_SHORT_XFER));
+	KASSERT(len != 0 || (!isread && (flags & USBD_FORCE_SHORT_XFER)));
 
 	maxp = UGETW(pipe->up_endpoint->ue_edesc->wMaxPacketSize);
 	KASSERT(maxp != 0);
+
+	int addr = xfer->ux_pipe->up_dev->ud_addr;
+	int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
 
 	status = UHCI_TD_ZERO_ACTLEN(UHCI_TD_SET_ERRCNT(3) | UHCI_TD_ACTIVE);
 	if (pipe->up_dev->ud_speed == USB_SPEED_LOW)
@@ -2159,15 +2120,12 @@ uhci_reset_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer,
 		status |= UHCI_TD_SPD;
 	usb_syncmem(dma, 0, len,
 	    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-
 	std = prev = NULL;
-	for (i = 0; i < uxfer->ux_nstd; i++, prev = std) {
+	for (i = 0; len != 0 && i < uxfer->ux_nstd; i++, prev = std) {
 		int l = len;
 		std = uxfer->ux_stds[i];
 		if (l > maxp)
 			l = maxp;
-		if (l == 0 && !(flags & USBD_FORCE_SHORT_XFER))
-			break;
 
 		if (prev) {
 			prev->link.std = std;
@@ -2178,53 +2136,62 @@ uhci_reset_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer,
 			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		}
 
-		int addr __diagused = xfer->ux_pipe->up_dev->ud_addr;
-		int endpt __diagused = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
-		KASSERTMSG(UHCI_TD_GET_ENDPT(le32toh(std->td.td_token)) == UE_GET_ADDR(endpt),
-		   "%" __PRIuBIT " vs %d (0x%08x) in %p",
-		   UHCI_TD_GET_ENDPT(le32toh(std->td.td_token)),
-		   UE_GET_ADDR(endpt), le32toh(std->td.td_token), std);
-		KASSERTMSG(UHCI_TD_GET_DEVADDR(le32toh(std->td.td_token)) == addr,
-		    "%" __PRIuBIT " vs %d (0x%08x) in %p",
-		    UHCI_TD_GET_DEVADDR(le32toh(std->td.td_token)), addr,
-		    le32toh(std->td.td_token), std);
-
 		usb_syncmem(&std->dma, std->offs, sizeof(std->td),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
+		std->td.td_link = htole32(UHCI_PTR_T | UHCI_PTR_VF | UHCI_PTR_TD);
 		std->td.td_status = htole32(status);
-		std->td.td_token &= ~htole32(
-		    UHCI_TD_PID_MASK |
-		    UHCI_TD_DT_MASK |
-		    UHCI_TD_MAXLEN_MASK
-		    );
-		std->td.td_token |= htole32(
+		std->td.td_token = htole32(
+		    UHCI_TD_SET_ENDPT(UE_GET_ADDR(endpt)) |
+		    UHCI_TD_SET_DEVADDR(addr) |
 		    UHCI_TD_SET_PID(isread ? UHCI_TD_PID_IN : UHCI_TD_PID_OUT) |
 		    UHCI_TD_SET_DT(tog) |
 		    UHCI_TD_SET_MAXLEN(l)
 		    );
-		std->td.td_link &= ~htole32(UHCI_PTR_T);
+		std->td.td_buffer = htole32(DMAADDR(dma, i * maxp));
+
+		std->link.std = NULL;
 
 		usb_syncmem(&std->dma, std->offs, sizeof(std->td),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		tog ^= 1;
 
 		len -= l;
-		if (len == 0)
-			break;
 	}
 	KASSERTMSG(len == 0, "xfer %p alen %d len %d mps %d ux_nqtd %zu i %zu",
 	    xfer, length, len, maxp, uxfer->ux_nstd, i);
 
-	if (i < uxfer->ux_nstd) {
-		/*
-		 * The full allocation chain wasn't used, so we need to
-		 * terminate it.
-		 */
-		std->link.std = NULL;
-		std->td.td_link = htole32(UHCI_PTR_T);
+	if (!isread &&
+	    (flags & USBD_FORCE_SHORT_XFER) &&
+	    length % maxp == 0) {
+		/* Force a 0 length transfer at the end. */
+		KASSERTMSG(i < uxfer->ux_nstd, "i=%zu nstd=%zu", i,
+		    uxfer->ux_nstd);
+		std = uxfer->ux_stds[i++];
+
+		std->td.td_link = htole32(UHCI_PTR_T | UHCI_PTR_VF | UHCI_PTR_TD);
+		std->td.td_status = htole32(status);
+		std->td.td_token = htole32(
+		    UHCI_TD_SET_ENDPT(UE_GET_ADDR(endpt)) |
+		    UHCI_TD_SET_DEVADDR(addr) |
+		    UHCI_TD_SET_PID(UHCI_TD_PID_OUT) |
+		    UHCI_TD_SET_DT(tog) |
+		    UHCI_TD_SET_MAXLEN(0)
+		    );
+		std->td.td_buffer = 0;
 		usb_syncmem(&std->dma, std->offs, sizeof(std->td),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+		std->link.std = NULL;
+		if (prev) {
+			prev->link.std = std;
+			prev->td.td_link = htole32(
+			    std->physaddr | UHCI_PTR_VF | UHCI_PTR_TD
+			    );
+			usb_syncmem(&prev->dma, prev->offs, sizeof(prev->td),
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+		}
+		tog ^= 1;
 	}
 	*lstd = std;
 	*toggle = tog;
@@ -2263,8 +2230,7 @@ uhci_device_bulk_init(struct usbd_xfer *xfer)
 	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 
 	uxfer->ux_type = UX_BULK;
-	err = uhci_alloc_std_chain(sc, xfer, len, isread, &uxfer->ux_stdstart,
-	    &uxfer->ux_stdend);
+	err = uhci_alloc_std_chain(sc, xfer, len, isread, &uxfer->ux_stdstart);
 	if (err)
 		return err;
 
@@ -2525,68 +2491,30 @@ uhci_device_ctrl_init(struct usbd_xfer *xfer)
 	usb_device_request_t *req = &xfer->ux_request;
 	struct usbd_device *dev = upipe->pipe.up_dev;
 	uhci_softc_t *sc = dev->ud_bus->ub_hcpriv;
-	int addr = dev->ud_addr;
 	int endpt = upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
-	uhci_soft_td_t *setup, *data, *stat, *next, *dataend;
+	uhci_soft_td_t *data;
 	int len;
-	uint32_t ls;
 	usbd_status err;
 	int isread;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(3, "len=%d, addr=%d, endpt=%d", xfer->ux_bufsize,
-	    dev->ud_addr, endpt, 0);
+	DPRINTFN(3, "xfer=%p len=%d, addr=%d, endpt=%d", xfer, xfer->ux_bufsize,
+	    dev->ud_addr, endpt);
 
-	ls = dev->ud_speed == USB_SPEED_LOW ? UHCI_TD_LS : 0;
 	isread = req->bmRequestType & UT_READ;
 	len = xfer->ux_bufsize;
 
 	uxfer->ux_type = UX_CTRL;
-	setup = upipe->ctrl.setup;
-	stat = upipe->ctrl.stat;
-
 	/* Set up data transaction */
 	if (len != 0) {
-		err = uhci_alloc_std_chain(sc, xfer, len, isread, &data,
-		    &dataend);
+		err = uhci_alloc_std_chain(sc, xfer, len, isread, &data);
 		if (err)
 			return err;
-		next = data;
-		dataend->link.std = stat;
-		dataend->td.td_link = htole32(stat->physaddr | UHCI_PTR_TD);
-	} else {
-		next = stat;
 	}
-
-	setup->link.std = next;
-	setup->td.td_link = htole32(next->physaddr | UHCI_PTR_TD);
-	setup->td.td_status = htole32(UHCI_TD_SET_ERRCNT(3) | ls |
-		UHCI_TD_ACTIVE);
-	setup->td.td_token = htole32(UHCI_TD_SETUP(sizeof(*req), endpt, addr));
-	setup->td.td_buffer = htole32(DMAADDR(&upipe->ctrl.reqdma, 0));
-
-	stat->link.std = NULL;
-	stat->td.td_link = htole32(UHCI_PTR_T);
-	stat->td.td_status = htole32(UHCI_TD_SET_ERRCNT(3) | ls |
-		UHCI_TD_ACTIVE | UHCI_TD_IOC);
-	stat->td.td_token =
-		htole32(isread ? UHCI_TD_OUT(0, endpt, addr, 1) :
-				 UHCI_TD_IN (0, endpt, addr, 1));
-	stat->td.td_buffer = htole32(0);
-
-	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
-#ifdef UHCI_DEBUG
-	if (uhcidebug >= 10) {
-		DPRINTFN(10, "before transfer", 0, 0, 0, 0);
-		uhci_dump_tds(setup);
-	}
-#endif
-	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
-
 	/* Set up interrupt info. */
-	uxfer->ux_setup = setup;
+	uxfer->ux_setup = upipe->ctrl.setup;
+	uxfer->ux_stat = upipe->ctrl.stat;
 	uxfer->ux_data = data;
-	uxfer->ux_stat = stat;
 
 	return 0;
 }
@@ -2637,7 +2565,6 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 	uhci_soft_td_t *setup, *stat, *next, *dataend;
 	uhci_soft_qh_t *sqh;
 	int len;
-	uint32_t ls;
 	int isread;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
@@ -2654,7 +2581,6 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 	DPRINTFN(3, "len=%d, addr=%d, endpt=%d",
 	    UGETW(req->wLength), dev->ud_addr, endpt, 0);
 
-	ls = dev->ud_speed == USB_SPEED_LOW ? UHCI_TD_LS : 0;
 	isread = req->bmRequestType & UT_READ;
 	len = UGETW(req->wLength);
 
@@ -2683,22 +2609,23 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 		next = stat;
 	}
 
+	const uint32_t status = UHCI_TD_ZERO_ACTLEN(
+	    UHCI_TD_SET_ERRCNT(3) |
+	    UHCI_TD_ACTIVE |
+	    (dev->ud_speed == USB_SPEED_LOW ? UHCI_TD_LS : 0)
+	    );
 	setup->link.std = next;
 	setup->td.td_link = htole32(next->physaddr | UHCI_PTR_TD);
-	setup->td.td_status |= htole32(
-	    UHCI_TD_SET_ERRCNT(3) |
-	    ls |
-	    UHCI_TD_ACTIVE
-	    );
-	setup->td.td_token &= ~htole32(UHCI_TD_MAXLEN_MASK);
-	setup->td.td_token |= htole32(UHCI_TD_SET_MAXLEN(sizeof(*req)));
+	setup->td.td_status = htole32(status);
+	setup->td.td_token = htole32(UHCI_TD_SETUP(sizeof(*req), endpt, addr));
+	setup->td.td_buffer = htole32(DMAADDR(&upipe->ctrl.reqdma, 0));
+
 	usb_syncmem(&setup->dma, setup->offs, sizeof(setup->td),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	stat->link.std = NULL;
 	stat->td.td_link = htole32(UHCI_PTR_T);
-	stat->td.td_status = htole32(UHCI_TD_SET_ERRCNT(3) | ls |
-		UHCI_TD_ACTIVE | UHCI_TD_IOC);
+	stat->td.td_status = htole32(status | UHCI_TD_IOC);
 	stat->td.td_token =
 		htole32(isread ? UHCI_TD_OUT(0, endpt, addr, 1) :
 				 UHCI_TD_IN (0, endpt, addr, 1));
@@ -2795,8 +2722,7 @@ uhci_device_intr_init(struct usbd_xfer *xfer)
 
 	ux->ux_type = UX_INTR;
 	ux->ux_nstd = 0;
-	err = uhci_alloc_std_chain(sc, xfer, len, isread,
-	    &ux->ux_stdstart, &ux->ux_stdend);
+	err = uhci_alloc_std_chain(sc, xfer, len, isread, &ux->ux_stdstart);
 
 	return err;
 }
