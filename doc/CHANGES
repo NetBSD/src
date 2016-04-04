@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2147 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2148 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -264,3 +264,16 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	wpa_supplicant(8): Added interface matching rules [roy 20160323]
 	lua: Applied second and third patch from http://lua.org/bugs.html
 		[mbalmer 20160325]
+	network: Drop the concept of cloning/cloned routes [ozaki-r 20160404]
+	network: Remove RTF_CLONING, RTF_XRESOLVE, RTF_LLINFO, RTF_CLONED and
+		RTM_RESOLVE [ozaki-r 20160404]
+	network: Add RTF_CONNECTED as a substitute of RTF_CLONING
+		[ozaki-r 20160404]
+	route(8): Remove -xresolve, -[no]cloned and -llinfo options and add
+		[no]connected option (same as -[no]cloning) [ozaki-r 20160404]
+	route(8): Remove 'c' and 'L' flags and 'C' is now for connected routes
+		[ozaki-r 20160404]
+	netstat(1): Remove 'c' and 'L' flags and 'C' is now for connected routes
+		[ozaki-r 20160404]
+	route(8): route show doesn't contain nexthop caches [ozaki-r 20160404]
+	netstat(1): netstat -r doesn't contain nexthop caches [ozaki-r 20160404]
