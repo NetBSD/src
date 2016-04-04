@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.157 2016/04/01 08:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.158 2016/04/04 07:37:07 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.157 2016/04/01 08:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.158 2016/04/04 07:37:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -476,7 +476,6 @@ ip6_input(struct mbuf *m)
 	 */
 	if (rt != NULL &&
 	    (rt->rt_flags & (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
-	    !(rt->rt_flags & RTF_CLONED) &&
 #if 0
 	    /*
 	     * The check below is redundant since the comparison of

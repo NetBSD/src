@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.327 2016/03/23 07:05:28 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.328 2016/04/04 07:37:07 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.327 2016/03/23 07:05:28 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.328 2016/04/04 07:37:07 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1883,7 +1883,6 @@ p2p_rtrequest(int req, struct rtentry *rt,
 			break;
 
 		rt->rt_ifp = lo0ifp;
-		rt->rt_flags &= ~RTF_LLINFO;
 
 		/*
 		 * Make sure to set rt->rt_ifa to the interface
@@ -1894,7 +1893,6 @@ p2p_rtrequest(int req, struct rtentry *rt,
 			rt_replace_ifa(rt, ifa);
 		break;
 	case RTM_DELETE:
-	case RTM_RESOLVE:
 	default:
 		break;
 	}
