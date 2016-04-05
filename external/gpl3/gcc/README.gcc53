@@ -1,4 +1,4 @@
-$NetBSD: README.gcc53,v 1.19 2016/04/04 01:47:18 mrg Exp $
+$NetBSD: README.gcc53,v 1.20 2016/04/05 00:43:48 mrg Exp $
 
 lib:
 	libasan is disabled currently (haven't tried yet)
@@ -75,7 +75,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [2] - -O2 and -Os kernels hang, -O1 SIR reset
 	-- may be a SMP issue; ultra10 works, ultra45 SMP does not
 		-- try sb2000 (particularly with UP kernel.  u45 UP is shitty.)
-[3] - MKCOMPAT=no enabled currently, infact OABI seems to be broken.  the docs say it was only deprecated, but the options make broken crap.
+[3] - MKCOMPAT=no enabled currently, infact OABI seems to be broken.  the docs say it was only deprecated, but the options make broken stuff.
 [5] - sh3eb tries to use sh specific atomic config which doesn't work, has hand edited mknative output
 [6] - crtbeginS.o builds incorrectly with GCC 5.3 and -O2.  a hack for -O1 has been added.
 [8] - sgimips64 release build fails, mdsetimage'd gz'd kernels don't get built?
@@ -83,22 +83,26 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [13] - builds tested:
        - m68k: mvm68k amiga atari
        - earm : shark evbarm*
-       - mipsel: sgimips
-       - mips64el: sgimips[fail] evbmips
+       - mipseb: sgimips evbmips
+       - mipsel: evbmips
+       - mips64eb: sgimips[fail] evbmips
+       - mips64el: evbmips
 [14] - machines tested:
        - sparc ss20 (OK)
        - sparc64 ultra45 (FAIL), ultra10 (OK), sb2000 (OK UP, FAIL SMP.)
        - powerpc pegasosII (OK)
        - alpha UP1000 (OK)
        - arm shark (OK)
-       - evbmips gxemul MALTA (FAIL - not gcc problem)
+       - evbmips gxemul MALTA
+		- had to implement some MIPS32 in gxemul to make this work
        - pmax gxemul (OK)
        - sgimips O2 (OK kernel -- but my O2 is not stable)
        - i386/amd64 (OK)
        - hppa (OK)
+       - amiga (OK)
 [15] - vax -- switched to GCC 5.3 already as it is less broken
 	- ssh is broken, was broken with 4.8
 	- there are too many -O0's we added because of mis-handled rtl
 	- the eh_frame stuff is probably busted, but it never worked?
-[16] - builds tested:
+[16] - kernels tested:
 	- m68k: amiga
