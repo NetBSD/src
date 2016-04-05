@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.4.2.4 2015/08/31 08:33:03 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.4.2.5 2016/04/05 15:36:48 skrll Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.4 2015/08/31 08:33:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.5 2016/04/05 15:36:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ struct xhci_pci_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void			*sc_ih;
+	pci_intr_handle_t	*sc_pihp;
 };
 
 static int
@@ -142,7 +143,6 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	const pci_chipset_tag_t pc = pa->pa_pc;
 	const pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
-	pci_intr_handle_t ih;
 	pcireg_t csr, memtype;
 	int err;
 	uint32_t hccparams;
@@ -198,17 +198,15 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(self, "couldn't map interrupt\n");
+	/* Allocate and establish the interrupt. */
+	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
+		aprint_error_dev(self, "can't allocate handler\n");
 		goto fail;
 	}
-
-	/*
-	 * Allocate IRQ
-	 */
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, xhci_intr, sc);
+	intrstr = pci_intr_string(pc, psc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	psc->sc_ih = pci_intr_establish(pc, psc->sc_pihp[0], IPL_USB,
+	    xhci_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -251,7 +249,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 
 fail:
 	if (psc->sc_ih) {
-		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
 		psc->sc_ih = NULL;
 	}
 	if (sc->sc_ios) {
@@ -285,7 +283,7 @@ xhci_pci_detach(device_t self, int flags)
 	}
 
 	if (psc->sc_ih != NULL) {
-		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
 		psc->sc_ih = NULL;
 	}
 	if (sc->sc_ios) {
