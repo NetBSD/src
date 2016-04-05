@@ -3,6 +3,7 @@ MACHINE=
 NOP=0
 
 SCRIPT_NAME=elf
+ELFSIZE=64
 OUTPUT_FORMAT="elf64-littleaarch64"
 BIG_OUTPUT_FORMAT="elf64-bigaarch64"
 LITTLE_OUTPUT_FORMAT="elf64-littleaarch64"
