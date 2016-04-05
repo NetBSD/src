@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.178 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.179 2016/04/05 10:03:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.178 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.179 2016/04/05 10:03:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -423,6 +423,7 @@ COMPATNAME(route_purgeif)(struct socket *so, struct ifnet *ifp)
 	return EOPNOTSUPP;
 }
 
+#ifdef INET
 static int
 route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 {
@@ -441,6 +442,7 @@ route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 
 	return 0;
 }
+#endif /* INET */
 
 static void
 route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
@@ -563,6 +565,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		if (info.rti_info[RTAX_GATEWAY] == NULL) {
 			senderr(EINVAL);
 		}
+#ifdef INET
 		/* support for new ARP code with keeping backcompat */
 		if (info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) {
 			int sdl_index =
@@ -600,6 +603,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			break;
 		}
 	fallback:
+#endif /* INET */
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			rt_setmetrics(rtm->rtm_inits, rtm, saved_nrt);
@@ -608,6 +612,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		break;
 
 	case RTM_DELETE:
+#ifdef INET
 		/* support for new ARP code */
 		if (info.rti_info[RTAX_GATEWAY] &&
 		    (info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) &&
@@ -616,6 +621,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			    rtm->rtm_rmx.rmx_expire, &info, 0);
 			break;
 		}
+#endif /* INET */
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			rt = saved_nrt;
@@ -1545,6 +1551,7 @@ again:
 
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
+#ifdef INET
 		/*
 		 * take care of llinfo entries, the caller must
 		 * specify an AF
@@ -1557,6 +1564,7 @@ again:
 				error = EINVAL;
 			break;
 		}
+#endif /* INET */
 
 		for (i = 1; i <= AF_MAX; i++)
 			if ((af == 0 || af == i) &&
