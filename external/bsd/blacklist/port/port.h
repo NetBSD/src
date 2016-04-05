@@ -78,7 +78,9 @@ int clock_gettime(int, struct timespec *);
 #define CLOCK_REALTIME 0
 #endif
 
+#if !defined(__FreeBSD__)
 #define _PATH_BLCONF "conf"
 #define _PATH_BLCONTROL "control"
 #define _PATH_BLSOCK "blacklistd.sock"
 #define _PATH_BLSTATE "blacklistd.db"
+#endif
