@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.254 2016/04/05 13:01:46 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.255 2016/04/05 14:07:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.254 2016/04/05 13:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.255 2016/04/05 14:07:31 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -119,7 +119,7 @@ int debug_exit = 0;
 #endif
 
 static int find_stopped_child(struct proc *, idtype_t, id_t, int,
-    struct proc **, int *, struct wrusage *, siginfo_t *);
+    struct proc **, struct wrusage *, siginfo_t *);
 static void proc_free(struct proc *, struct wrusage *);
 
 /*
@@ -665,7 +665,7 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 		memset(si, 0, sizeof(*si));
 
 	mutex_enter(proc_lock);
-	error = find_stopped_child(curproc, idtype, id, options, &child, status,
+	error = find_stopped_child(curproc, idtype, id, options, &child,
 	    wru, si);
 	if (child == NULL) {
 		mutex_exit(proc_lock);
@@ -675,6 +675,8 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 	*pid = child->p_pid;
 
 	if (child->p_stat == SZOMB) {
+		/* Child is exiting */
+		*status = P_WAITSTATUS(child);
 		/* proc_free() will release the proc_lock. */
 		if (options & WNOWAIT) {
 			mutex_exit(proc_lock);
@@ -683,8 +685,8 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 		}
 	} else {
 		/* Child state must have been SSTOP. */
+		*status = W_STOPCODE(child->p_xsig);
 		mutex_exit(proc_lock);
-		*status = W_STOPCODE(*status);
 	}
 	return 0;
 }
@@ -918,7 +920,7 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
  */
 static int
 find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
-    struct proc **child_p, int *status_p, struct wrusage *wru, siginfo_t *si)
+    struct proc **child_p, struct wrusage *wru, siginfo_t *si)
 {
 	struct proc *child, *dead;
 	int error;
@@ -1034,9 +1036,6 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
-		    	if (child != NULL) {
-			    	*status_p = P_WAITSTATUS(child);
-			}
 			*child_p = child;
 			return error;
 		}
