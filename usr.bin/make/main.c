@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.243 2016/03/16 16:04:44 matthias Exp $	*/
+/*	$NetBSD: main.c,v 1.244 2016/04/05 04:25:43 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.243 2016/03/16 16:04:44 matthias Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.244 2016/04/05 04:25:43 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.243 2016/03/16 16:04:44 matthias Exp $");
+__RCSID("$NetBSD: main.c,v 1.244 2016/04/05 04:25:43 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1232,7 +1232,8 @@ main(int argc, char **argv)
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	free(p1);
 
-	if (Var_Exists(".MAKE.JOBS", VAR_GLOBAL)) {
+	if (!forceJobs && !compatMake &&
+	    Var_Exists(".MAKE.JOBS", VAR_GLOBAL)) {
 	    char *value;
 	    int n;
 
