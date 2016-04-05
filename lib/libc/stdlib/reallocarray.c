@@ -1,4 +1,4 @@
-/*	$NetBSD: reallocarray.c,v 1.5 2015/07/26 02:22:33 kamil Exp $	*/
+/*	$NetBSD: reallocarray.c,v 1.6 2016/04/05 15:01:26 roy Exp $	*/
 /*	$OpenBSD: reallocarray.c,v 1.1 2014/05/08 21:43:49 deraadt Exp $	*/
 
 /*-
@@ -31,22 +31,29 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarray.c,v 1.5 2015/07/26 02:22:33 kamil Exp $");
+__RCSID("$NetBSD: reallocarray.c,v 1.6 2016/04/05 15:01:26 roy Exp $");
 
 #define _OPENBSD_SOURCE
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
+#define SQRT_SIZE_MAX (((size_t)1) << (sizeof(size_t) * CHAR_BIT / 2))
 void *
 reallocarray(void *optr, size_t nmemb, size_t size)
 {
-	if (nmemb == 0 || size == 0)
-		return realloc(optr, 0);
 
-	int e = reallocarr(&optr, nmemb, size);
-
-	if (e == 0)
-		return optr;
-	errno = e;
-	return NULL;
+	/*
+	 * Try to avoid division here.
+	 *
+	 * It isn't possible to overflow during multiplication if neither
+	 * operand uses any of the most significant half of the bits.
+	 */
+	if (__predict_false((nmemb | size) >= SQRT_SIZE_MAX &&
+			    nmemb > SIZE_MAX / size))
+	{
+		errno = EOVERFLOW;
+		return NULL;
+	}
+	return realloc(optr, nmemb * size);
 }
