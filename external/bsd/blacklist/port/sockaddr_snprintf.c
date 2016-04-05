@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.9 2015/01/23 03:29:18 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.10 2016/04/05 12:28:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.9 2015/01/23 03:29:18 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.10 2016/04/05 12:28:57 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,9 @@ __RCSID("$NetBSD: sockaddr_snprintf.c,v 1.9 2015/01/23 03:29:18 christos Exp $")
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
+#endif
 #ifdef HAVE_UTIL_H
 #include <util.h>
 #endif
