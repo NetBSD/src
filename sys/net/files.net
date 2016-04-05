@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.8 2015/11/26 01:41:20 ozaki-r Exp $
+#	$NetBSD: files.net,v 1.9 2016/04/05 22:51:01 pgoyette Exp $
 
 # XXX CLEANUP
 define	net
@@ -49,7 +49,7 @@ file	net/route.c			net
 file	net/rtbl.c			net
 file	net/rtsock.c			net
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | opencrypto | vnd_compression | kdtrace_hooks
+file	net/zlib.c			(ppp & ppp_deflate) | swcrypto | vnd_compression | kdtrace_hooks
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
