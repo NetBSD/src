@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.324 2016/04/06 00:48:30 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.325 2016/04/06 03:11:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.324 2016/04/06 00:48:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.325 2016/04/06 03:11:31 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -896,7 +896,10 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, mask);
 		mutex_exit(p->p_lock);
-		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler, mask, ksi);
+		if (ktrpoint(KTR_PSIG)) {
+			ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
+			    mask, ksi);
+		}
 	} else {
 		/* XXX for core dump/debugger */
 		p->p_sigctx.ps_lwp = l->l_lid;
