@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.11 2013/12/31 12:58:02 mlelstv Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.12 2016/04/06 18:08:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.11 2013/12/31 12:58:02 mlelstv Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.12 2016/04/06 18:08:16 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -159,10 +159,17 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 		break;
 	case AF_LINK:
 		sdl = ((const struct sockaddr_dl *)(const void *)sa);
-		(void)strlcpy(addr = abuf, link_ntoa(sdl), sizeof(abuf));
-		if ((w = strchr(addr, ':')) != 0) {
-			*w++ = '\0';
-			addr = w;
+		addr = abuf;
+		if (sdl->sdl_slen == 0 && sdl->sdl_nlen == 0
+		    && sdl->sdl_alen == 0) {
+			(void)snprintf(abuf, sizeof(abuf), "link#%hu",
+			    sdl->sdl_index);
+		} else {
+			(void)strlcpy(abuf, link_ntoa(sdl), sizeof(abuf));
+			if ((w = strchr(addr, ':')) != 0) {
+			    *w++ = '\0';
+			    addr = w;
+			}
 		}
 		break;
 	default:
