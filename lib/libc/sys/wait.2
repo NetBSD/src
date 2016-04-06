@@ -1,4 +1,4 @@
-.\"	$NetBSD: wait.2,v 1.30 2016/04/06 03:50:03 christos Exp $
+.\"	$NetBSD: wait.2,v 1.31 2016/04/06 04:09:10 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -435,12 +435,7 @@ structure is returned with the
 .Fa si_signo
 field set to
 .Dv SIGCHLD
-for
-.Fn waitid
-as required by POSIX and to the delivering signal
-for
-.Fn wait6 .
-The
+and the
 .Fa si_pid
 field set to the process ID of the process reporting status.
 For the exited process, the
