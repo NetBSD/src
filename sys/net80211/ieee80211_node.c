@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.69 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.70 2016/04/06 14:42:16 roy Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.69 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.70 2016/04/06 14:42:16 roy Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.69 2015/08/24 22:21:26 pooka Ex
 static struct ieee80211_node *node_alloc(struct ieee80211_node_table *);
 static void node_cleanup(struct ieee80211_node *);
 static void node_free(struct ieee80211_node *);
-static u_int8_t node_getrssi(const struct ieee80211_node *);
+static int8_t node_getrssi(const struct ieee80211_node *);
 
 static void ieee80211_setup_node(struct ieee80211_node_table *,
 		struct ieee80211_node *, const u_int8_t *);
@@ -589,7 +589,7 @@ ieee80211_node_compare(struct ieee80211com *ic,
 		       const struct ieee80211_node *b)
 {
 	u_int8_t maxa, maxb;
-	u_int8_t rssia, rssib;
+	int8_t rssia, rssib;
 	int weight;
 
 	/* privacy support preferred */
@@ -1001,7 +1001,7 @@ node_free(struct ieee80211_node *ni)
 	free(ni, M_80211_NODE);
 }
 
-static u_int8_t
+static int8_t
 node_getrssi(const struct ieee80211_node *ni)
 {
 	return ni->ni_rssi;
@@ -2347,12 +2347,12 @@ done:
 		ieee80211_free_node(ni);
 }
 
-u_int8_t
+int8_t
 ieee80211_getrssi(struct ieee80211com *ic)
 {
 #define	NZ(x)	((x) == 0 ? 1 : (x))
 	struct ieee80211_node_table *nt = &ic->ic_sta;
-	u_int32_t rssi_samples, rssi_total;
+	int32_t rssi_samples, rssi_total;
 	struct ieee80211_node *ni;
 
 	rssi_total = 0;

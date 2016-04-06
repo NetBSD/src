@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.25 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.26 2016/04/06 14:42:16 roy Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -120,7 +120,7 @@ struct ieee80211_node {
 
 	/* hardware */
 	u_int32_t		ni_rstamp;	/* recv timestamp */
-	u_int8_t		ni_rssi;	/* recv ssi */
+	int8_t			ni_rssi;	/* recv ssi */
 
 	/* header */
 	u_int8_t		ni_macaddr[IEEE80211_ADDR_LEN];
@@ -286,7 +286,7 @@ struct ieee80211_node *ieee80211_fakeup_adhoc_node(
 		struct ieee80211_node_table *, const u_int8_t macaddr[]);
 void	ieee80211_node_join(struct ieee80211com *, struct ieee80211_node *,int);
 void	ieee80211_node_leave(struct ieee80211com *, struct ieee80211_node *);
-u_int8_t ieee80211_getrssi(struct ieee80211com *ic);
+int8_t	ieee80211_getrssi(struct ieee80211com *ic);
 
 /*
  * Parameters supplied when adding/updating an entry in a

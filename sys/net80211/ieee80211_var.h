@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.28 2010/01/17 19:45:07 pooka Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.29 2016/04/06 14:42:16 roy Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -156,7 +156,7 @@ struct ieee80211com {
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211_node_table*);
 	void			(*ic_node_free)(struct ieee80211_node *);
 	void			(*ic_node_cleanup)(struct ieee80211_node *);
-	u_int8_t		(*ic_node_getrssi)(const struct ieee80211_node*);
+	int8_t			(*ic_node_getrssi)(const struct ieee80211_node*);
 	u_int16_t		ic_lintval;	/* listen interval */
 	u_int16_t		ic_bintval;	/* beacon interval */
 	u_int16_t		ic_holdover;	/* PM hold over duration */
