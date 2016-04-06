@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.1.36.1 2015/12/27 12:10:05 skrll Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.1.36.2 2016/04/06 22:00:03 skrll Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.1.36.1 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.1.36.2 2016/04/06 22:00:03 skrll Exp $");
 
 #include "opt_kernhist.h"
 #include "opt_ddb.h"
@@ -77,9 +77,11 @@ int kernhist_print_enabled = 1;
  * prototypes
  */
 
-void kernhist_dump(struct kern_history *);
+void kernhist_dump(struct kern_history *,
+    void (*)(const char *, ...) __printflike(1, 2));
 void kernhist_dumpmask(u_int32_t);
-static void kernhist_dump_histories(struct kern_history *[]);
+static void kernhist_dump_histories(struct kern_history *[],
+    void (*)(const char *, ...) __printflike(1, 2));
 
 
 /*
@@ -88,14 +90,14 @@ static void kernhist_dump_histories(struct kern_history *[]);
  * expects the system to be quiesced, no locking
  */
 void
-kernhist_dump(struct kern_history *l)
+kernhist_dump(struct kern_history *l, void (*pr)(const char *, ...))
 {
 	int lcv;
 
 	lcv = l->f;
 	do {
 		if (l->e[lcv].fmt)
-			kernhist_entry_print(&l->e[lcv]);
+			kernhist_entry_print(&l->e[lcv], pr);
 		lcv = (lcv + 1) % l->n;
 	} while (lcv != l->f);
 }
@@ -104,7 +106,7 @@ kernhist_dump(struct kern_history *l)
  * print a merged list of kern_history structures
  */
 static void
-kernhist_dump_histories(struct kern_history *hists[])
+kernhist_dump_histories(struct kern_history *hists[], void (*pr)(const char *, ...))
 {
 	struct timeval  tv;
 	int	cur[MAXHISTS];
@@ -160,7 +162,7 @@ restart:
 			break;
 
 		/* print and move to the next entry */
-		kernhist_entry_print(&hists[hi]->e[cur[hi]]);
+		kernhist_entry_print(&hists[hi]->e[cur[hi]], pr);
 		cur[hi] = (cur[hi] + 1) % (hists[hi]->n);
 		if (cur[hi] == hists[hi]->f)
 			cur[hi] = -1;
@@ -205,16 +207,44 @@ kernhist_dumpmask(u_int32_t bitmask)	/* XXX only support 32 hists */
 
 	hists[i] = NULL;
 
-	kernhist_dump_histories(hists);
+	kernhist_dump_histories(hists, printf);
 }
 
 /*
  * kernhist_print: ddb hook to print kern history
  */
 void
-kernhist_print(void (*pr)(const char *, ...))
+kernhist_print(void *addr, void (*pr)(const char *, ...) __printflike(1,2))
 {
-	kernhist_dump(LIST_FIRST(&kern_histories));
+	struct kern_history *h;
+
+	LIST_FOREACH(h, &kern_histories, list) {
+		if (h == addr)
+			break;
+	}
+
+	if (h == NULL) {
+		struct kern_history *hists[MAXHISTS + 1];
+		int i = 0;
+#ifdef UVMHIST
+		hists[i++] = &maphist;
+		hists[i++] = &pdhist;
+		hists[i++] = &ubchist;
+		hists[i++] = &loanhist;
+#endif
+#ifdef USB_DEBUG
+		hists[i++] = &usbhist;
+#endif
+
+#ifdef SYSCALL_DEBUG
+		hists[i++] = &scdebughist;
+#endif
+		hists[i] = NULL;
+
+		kernhist_dump_histories(hists, pr);
+	} else {
+		kernhist_dump(h, pr);
+	}
 }
 
 #endif
