@@ -1,4 +1,4 @@
-.\"	$NetBSD: funopen.3,v 1.23 2015/09/06 01:36:21 dholland Exp $
+.\"	$NetBSD: funopen.3,v 1.24 2016/04/06 03:38:31 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,9 +79,9 @@ close the new stream.
 The
 .Fn funopen2
 function provides sightly different read and write signatures, which match
-better the corresponding system calls, plus the ability to augment the
-streams default flushing function.
-If a flushing function is provided, then it is called after all data has
+the corresponding system calls better, plus the ability to augment the
+stream's default flushing function.
+If a flushing function is provided, it is called after all data has
 been written to the stream.
 .Pp
 In general, omitting a function means that any attempt to perform the
