@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.29 2016/04/02 21:09:43 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.30 2016/04/06 03:51:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -57,7 +57,9 @@
 
 #define	_WSTATUS(x)	(_W_INT(x) & 0177)
 #define	_WSTOPPED	0177		/* _WSTATUS if process is stopped */
+#define _WCONTINUED	0xffffU
 #define WIFSTOPPED(x)	(_WSTATUS(x) == _WSTOPPED)
+#define WIFCONTINUED(x)	(_W_INT(x) == _WCONTINUED)
 #define WSTOPSIG(x)	((int)(((unsigned int)_W_INT(x)) >> 8) & 0xff)
 #define WIFSIGNALED(x)	(_WSTATUS(x) != _WSTOPPED && _WSTATUS(x) != 0)
 #define WTERMSIG(x)	(_WSTATUS(x))
@@ -69,6 +71,7 @@
 
 #define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
 #define	W_STOPCODE(sig)		((sig) << 8 | _WSTOPPED)
+#define	W_CONTCODE()		(_WCONTINUED)
 #endif
 
 /*

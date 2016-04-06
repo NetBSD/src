@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.255 2016/04/05 14:07:31 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.256 2016/04/06 03:51:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.255 2016/04/05 14:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.256 2016/04/06 03:51:26 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -685,7 +685,8 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 		}
 	} else {
 		/* Child state must have been SSTOP. */
-		*status = W_STOPCODE(child->p_xsig);
+		*status = child->p_xsig == SIGCONT ? W_CONTCODE() :
+		    W_STOPCODE(child->p_xsig);
 		mutex_exit(proc_lock);
 	}
 	return 0;
@@ -1032,7 +1033,6 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 				break;
 			}
 		}
-		/* XXX: WCONTINUED? */
 
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
