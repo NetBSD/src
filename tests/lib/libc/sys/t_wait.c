@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.2 2016/04/06 00:52:45 christos Exp $ */
+/* $NetBSD: t_wait.c,v 1.3 2016/04/06 03:52:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.2 2016/04/06 00:52:45 christos Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.3 2016/04/06 03:52:27 christos Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -214,7 +214,7 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 
 		ATF_REQUIRE(kill(pid, SIGCONT) == 0);
 		ATF_REQUIRE(!wait6(P_PID, pid, &st, WCONTINUED, &wru, &si)); 
-		ATF_REQUIRE(WIFSTOPPED(st) && WSTOPSIG(st) == SIGCONT);
+		ATF_REQUIRE(WIFCONTINUED(st));
 		ATF_REQUIRE(si.si_status == SIGCONT);
 		ATF_REQUIRE(si.si_pid == pid);
 		ATF_REQUIRE(si.si_uid == getuid());
