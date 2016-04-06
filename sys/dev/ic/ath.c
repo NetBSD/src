@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.117 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: ath.c,v 1.118 2016/04/06 15:10:35 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.117 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.118 2016/04/06 15:10:35 roy Exp $");
 #endif
 
 /*
@@ -158,7 +158,7 @@ static int	ath_desc_alloc(struct ath_softc *);
 static void	ath_desc_free(struct ath_softc *);
 static struct ieee80211_node *ath_node_alloc(struct ieee80211_node_table *);
 static void	ath_node_free(struct ieee80211_node *);
-static u_int8_t	ath_node_getrssi(const struct ieee80211_node *);
+static int8_t	ath_node_getrssi(const struct ieee80211_node *);
 static int	ath_rxbuf_init(struct ath_softc *, struct ath_buf *);
 static void	ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 			struct ieee80211_node *ni,
@@ -2797,7 +2797,7 @@ ath_node_free(struct ieee80211_node *ni)
 	sc->sc_node_free(ni);
 }
 
-static u_int8_t
+static int8_t
 ath_node_getrssi(const struct ieee80211_node *ni)
 {
 #define	HAL_EP_RND(x, mul) \
