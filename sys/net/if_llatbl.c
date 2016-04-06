@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.11 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.12 2016/04/06 07:59:26 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -79,25 +79,20 @@ lltable_dump_entry(struct lltable *llt, struct llentry *lle,
     struct rt_walkarg *w, struct sockaddr *sa)
 {
 	struct ifnet *ifp = llt->llt_ifp;
-	int error = 0;
+	int error;
+	void *a;
 	struct sockaddr_dl sdl;
 	int size;
 	struct rt_addrinfo info;
 
 	memset(&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = sa;
-	memset(&sdl, 0, sizeof(sdl));
-	sdl.sdl_family = AF_LINK;
-	sdl.sdl_len = sizeof(sdl);
-	sdl.sdl_index = ifp->if_index;
-	sdl.sdl_type = ifp->if_type;
-	if ((lle->la_flags & LLE_VALID) == LLE_VALID) {
-		sdl.sdl_alen = ifp->if_addrlen;
-		memcpy(LLADDR(&sdl), &lle->ll_addr, ifp->if_addrlen);
-	} else {
-		sdl.sdl_alen = 0;
-		memset(LLADDR(&sdl), 0, ifp->if_addrlen);
-	}
+
+	a = (lle->la_flags & LLE_VALID) == LLE_VALID ? &lle->ll_addr : NULL;
+	if (sockaddr_dl_init(&sdl, sizeof(sdl), ifp->if_index, ifp->if_type,
+	    NULL, 0, a, ifp->if_addrlen) == NULL)
+		return EINVAL;
+
 	info.rti_info[RTAX_GATEWAY] = sstocsa(&sdl);
 	if (sa->sa_family == AF_INET && lle->la_flags & LLE_PUB) {
 		struct sockaddr_inarp *sin;
@@ -643,7 +638,7 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 			return (ENOMEM);
 		}
 
-
+		KASSERT(ifp->if_addrlen <= sizeof(lle->ll_addr));
 		memcpy(&lle->ll_addr, CLLADDR(dl), ifp->if_addrlen);
 		if ((rtm_flags & RTF_ANNOUNCE))
 			lle->la_flags |= LLE_PUB;
