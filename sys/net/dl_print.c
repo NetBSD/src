@@ -1,4 +1,4 @@
-/*	$NetBSD: dl_print.c,v 1.2 2014/12/02 19:34:33 christos Exp $	*/
+/*	$NetBSD: dl_print.c,v 1.3 2016/04/06 18:04:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,10 +29,10 @@
 #include <sys/types.h>
 
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.2 2014/12/02 19:34:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.3 2016/04/06 18:04:58 christos Exp $");
 #include <sys/systm.h>
 #else
-__RCSID("$NetBSD: dl_print.c,v 1.2 2014/12/02 19:34:33 christos Exp $");
+__RCSID("$NetBSD: dl_print.c,v 1.3 2016/04/06 18:04:58 christos Exp $");
 #include <stdio.h>
 static const uint8_t hexdigits[] = "0123456789abcdef";
 #endif
@@ -82,6 +82,9 @@ sdl_print(char *buf, size_t len, const void *v)
 {
 	const struct sockaddr_dl *sdl = v;
 	char abuf[LINK_ADDRSTRLEN];
+
+	if (sdl->sdl_slen == 0 && sdl->sdl_nlen == 0 && sdl->sdl_alen == 0)
+		return snprintf(buf, len, "link#%hu", sdl->sdl_index);
 
 	dl_print(abuf, sizeof(abuf), &sdl->sdl_addr);
 	return snprintf(buf, len, "[%s]:%hu", abuf, sdl->sdl_index);
