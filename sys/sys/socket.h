@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.118 2015/10/13 21:28:34 rjs Exp $	*/
+/*	$NetBSD: socket.h,v 1.119 2016/04/06 19:45:46 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -335,6 +335,11 @@ struct sockaddr_storage {
 
 #if defined(_NETBSD_SOURCE)
 
+#ifndef pid_t
+typedef __pid_t		pid_t;		/* process id */
+#define pid_t		__pid_t
+#endif
+
 #ifndef	gid_t
 typedef	__gid_t		gid_t;		/* group id */
 #define	gid_t		__gid_t
@@ -349,6 +354,7 @@ typedef	__uid_t		uid_t;		/* user id */
  * Socket credentials.
  */
 struct sockcred {
+	pid_t	sc_pid;			/* process id */
 	uid_t	sc_uid;			/* real user id */
 	uid_t	sc_euid;		/* effective user id */
 	gid_t	sc_gid;			/* real group id */
@@ -595,9 +601,10 @@ struct cmsghdr {
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
 #if defined(_NETBSD_SOURCE)
-/* 			0x02		   timestamp (struct timeval50) */
-#define	SCM_CREDS	0x04		/* credentials (struct sockcred) */
+/*			0x02		   timestamp (struct timeval50) */
+/*			0x04		   credentials (struct sockcred70) */
 #define	SCM_TIMESTAMP	0x08		/* timestamp (struct timeval) */
+#define	SCM_CREDS	0x10		/* credentials (struct sockcred) */
 #endif
 
 /*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.24 2011/05/29 08:46:42 wiz Exp $
+.\"	$NetBSD: unix.4,v 1.25 2016/04/06 19:45:46 roy Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unix.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd May 29, 2011
+.Dd March 31, 2016
 .Dt UNIX 4
 .Os
 .Sh NAME
@@ -198,6 +198,7 @@ length sockcred structure, defined in
 as follows:
 .Bd -literal
 struct sockcred {
+	pid_t	sc_pid;			/* process id */
 	uid_t	sc_uid;			/* real user id */
 	uid_t	sc_euid;		/* effective user id */
 	gid_t	sc_gid;			/* real group id */
@@ -289,3 +290,8 @@ macro, the following definition is recommended:
 .%A Chris Torek
 .Re
 .Pq see Pa /usr/share/doc/psd/21.ipc
+.Sh HISTORY
+The
+.Ar sc_pid
+field was introduced in
+.Nx 8.0 .
