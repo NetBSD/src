@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.1 2016/04/06 00:45:53 christos Exp $ */
+/* $NetBSD: t_wait.c,v 1.2 2016/04/06 00:52:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.1 2016/04/06 00:45:53 christos Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.2 2016/04/06 00:52:45 christos Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -92,7 +92,7 @@ ATF_TC_BODY(wait6_exited, tc)
 
 	switch (pid = fork()) {
 	case -1:
-		ATF_REQUIRE(pid == 0); 
+		ATF_REQUIRE(pid > 0); 
 	case 0:
 		exit(0x5a5a5a5a);
 		/*NOTREACHED*/
@@ -128,7 +128,7 @@ ATF_TC_BODY(wait6_terminated, tc)
 		sleep(100);
 		/*FALLTHROUGH*/
 	case -1:
-		ATF_REQUIRE(pid == 0); 
+		ATF_REQUIRE(pid > 0); 
 	default:
 		ATF_REQUIRE(kill(pid, SIGTERM) == 0);
 		ATF_REQUIRE(!wait6(P_PID, pid, &st, WEXITED, &wru, &si)); 
@@ -164,7 +164,7 @@ ATF_TC_BODY(wait6_coredumped, tc)
 		*(char *)8 = 0;
 		/*FALLTHROUGH*/
 	case -1:
-		ATF_REQUIRE(pid == 0); 
+		ATF_REQUIRE(pid > 0); 
 	default:
 		ATF_REQUIRE(!wait6(P_PID, pid, &st, WEXITED, &wru, &si)); 
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGSEGV
@@ -200,7 +200,7 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 		sleep(100);
 		/*FALLTHROUGH*/
 	case -1:
-		ATF_REQUIRE(pid == 0); 
+		ATF_REQUIRE(pid > 0); 
 	default:
 		ATF_REQUIRE(kill(pid, SIGSTOP) == 0);
 		ATF_REQUIRE(!wait6(P_PID, pid, &st, WSTOPPED, &wru, &si)); 
