@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.h,v 1.7 2009/10/19 23:19:39 rmind Exp $ */
+/* $NetBSD: ieee80211_rssadapt.h,v 1.8 2016/04/06 14:42:16 roy Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -79,7 +79,7 @@ struct ieee80211_rssdesc {
 	u_int			 id_len;	/* Tx packet length */
 	u_int			 id_rateidx;	/* index into ni->ni_rates */
 	struct ieee80211_node	*id_node;	/* destination STA MAC */
-	u_int8_t		 id_rssi;	/* destination STA avg RSS @
+	int8_t			 id_rssi;	/* destination STA avg RSS @
 						 * Tx time
 						 */
 };
