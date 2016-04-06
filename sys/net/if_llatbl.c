@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.12 2016/04/06 07:59:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.13 2016/04/06 08:45:46 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -111,6 +111,7 @@ lltable_dump_entry(struct lltable *llt, struct llentry *lle,
 		rtm->rtm_flags |= (lle->la_flags & LLE_STATIC) ? RTF_STATIC : 0;
 		if (lle->la_flags & LLE_PUB)
 			rtm->rtm_flags |= RTF_ANNOUNCE;
+		rtm->rtm_addrs = info.rti_addrs;
 		if ((error = copyout(rtm, w->w_where, size)) != 0)
 			w->w_where = NULL;
 		else
