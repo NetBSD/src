@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.179 2016/04/05 10:03:33 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.180 2016/04/06 17:34:33 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.179 2016/04/05 10:03:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.180 2016/04/06 17:34:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -568,13 +568,18 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 #ifdef INET
 		/* support for new ARP code with keeping backcompat */
 		if (info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) {
-			int sdl_index =
-			    satocsdl(info.rti_info[RTAX_GATEWAY])->sdl_index;
+			const struct sockaddr_dl *sdlp =
+			    satocsdl(info.rti_info[RTAX_GATEWAY]);
 
+			/* Allow routing requests by interface index */
+			if (sdlp->sdl_nlen == 0 && sdlp->sdl_alen == 0
+			    && sdlp->sdl_slen == 0)
+				goto fallback;
 			/*
 			 * Old arp binaries don't set the sdl_index
 			 * so we have to complement it.
 			 */
+			int sdl_index = sdlp->sdl_index;
 			if (sdl_index == 0) {
 				error = route_get_sdl_index(&info, &sdl_index);
 				if (error != 0)
