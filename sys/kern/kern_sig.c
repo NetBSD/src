@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.323 2016/04/04 23:07:06 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.324 2016/04/06 00:48:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.323 2016/04/04 23:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.324 2016/04/06 00:48:30 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1377,9 +1377,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 * signal itself (if waiting on event - process runs,
 			 * otherwise continues sleeping).
 			 */
-			if ((prop & SA_CONT) != 0 && action == SIG_DFL) {
-				KASSERT(signo != SIGKILL);
-				goto deliver;
+			if ((prop & SA_CONT) != 0) {
+				p->p_xsig = SIGCONT;
+				child_psignal(p, 0);
+				if (action == SIG_DFL) {
+					KASSERT(signo != SIGKILL);
+					goto deliver;
+				}
 			}
 		} else if ((prop & SA_STOP) != 0) {
 			/*
