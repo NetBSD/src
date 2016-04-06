@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.669 2016/03/20 22:57:49 christos Exp $
+# $NetBSD: mi,v 1.670 2016/04/06 00:47:15 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2717,6 +2717,7 @@
 ./usr/tests/lib/libc/sys/t_ucontext		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_umask		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_unlink		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_wait			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_write		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/t_atexit			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_cdb			tests-lib-tests		compattestfile,atf
