@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.13 2016/04/06 19:45:45 roy Exp $	*/
+/*	$NetBSD: socket.h,v 1.14 2016/04/07 17:48:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -36,6 +36,7 @@
 
 #ifdef _KERNEL_OPT
 
+#include "opt_compat_netbsd.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_ultrix.h"
