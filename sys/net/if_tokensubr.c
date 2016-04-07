@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.73 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.74 2016/04/07 03:22:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.73 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.74 2016/04/07 03:22:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -219,7 +219,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
  */
 		else {
 			struct llentry *la;
-			if (!arpresolve(ifp, rt, m, dst, edst))
+			if (!arpresolve(ifp, rt, m, dst, edst, sizeof(edst)))
 				return (0);	/* if not yet resolved */
 			la = rt->rt_llinfo;
 			KASSERT(la != NULL);

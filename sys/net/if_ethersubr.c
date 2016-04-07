@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.216 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.217 2016/04/07 03:22:15 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.216 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.217 2016/04/07 03:22:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,7 +243,8 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
-		else if ((error = arpresolve(ifp, rt, m, dst, edst)) != 0)
+		else if ((error = arpresolve(ifp, rt, m, dst, edst,
+		    sizeof(edst))) != 0)
 			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
