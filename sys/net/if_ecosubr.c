@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.44 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.45 2016/04/07 03:22:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.44 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.45 2016/04/07 03:22:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -198,7 +198,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
                 	memcpy(ehdr.eco_dhost, eco_broadcastaddr,
 			    ECO_ADDR_LEN);
 
-		else if (!arpresolve(ifp, rt, m, dst, ehdr.eco_dhost))
+		else if (!arpresolve(ifp, rt, m, dst, ehdr.eco_dhost,
+		    sizeof(ehdr.eco_dhost)))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
