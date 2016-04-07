@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.4 2014/01/22 06:15:31 riastradh Exp $	*/
+/*	$NetBSD: utils.c,v 1.5 2016/04/07 23:29:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: utils.c,v 1.4 2014/01/22 06:15:31 riastradh Exp $");
+__RCSID("$NetBSD: utils.c,v 1.5 2016/04/07 23:29:59 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -61,7 +61,7 @@ int	vsnprintf_ss(char *restrict, size_t, const char *restrict, va_list)
 ssize_t
 read_block(int fd, void *buffer, size_t n)
 {
-	char *p = buffer, *const end __unused = (p + n);
+	char *p = buffer, *const end __diagused = (p + n);
 	size_t total_read = 0;
 
 	while (n > 0) {
@@ -93,7 +93,7 @@ read_block(int fd, void *buffer, size_t n)
 ssize_t
 pread_block(int fd, void *buffer, size_t n, off_t fdpos)
 {
-	char *p = buffer, *const end __unused = (p + n);
+	char *p = buffer, *const end __diagused = (p + n);
 	size_t total_read = 0;
 
 	assert(0 <= fdpos);
