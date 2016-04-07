@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.180 2016/04/06 17:34:33 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.181 2016/04/07 21:41:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.180 2016/04/06 17:34:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.181 2016/04/07 21:41:02 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -448,15 +448,9 @@ static void
 route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
     struct sockaddr_dl *sdl, int *flags)
 {
-	struct llentry *la = NULL;
+	struct llentry *la;
 
 	KASSERT(ifp != NULL);
-
-	memset(sdl, 0, sizeof(*sdl));
-	sdl->sdl_family = AF_LINK;
-	sdl->sdl_len = sizeof(*sdl);
-	sdl->sdl_index = ifp->if_index;
-	sdl->sdl_type = ifp->if_type;
 
 	IF_AFDATA_RLOCK(ifp);
 	switch (dst->sa_family) {
@@ -467,19 +461,18 @@ route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
 		la = lla_lookup(LLTABLE6(ifp), 0, dst);
 		break;
 	default:
+		la = NULL;
 		KASSERTMSG(0, "Invalid AF=%d\n", dst->sa_family);
 		break;
 	}
 	IF_AFDATA_RUNLOCK(ifp);
 
-	if (LLE_IS_VALID(la) &&
-	    (la->la_flags & LLE_VALID) == LLE_VALID) {
-		sdl->sdl_alen = ifp->if_addrlen;
-		memcpy(LLADDR(sdl), &la->ll_addr, ifp->if_addrlen);
-	} else {
-		sdl->sdl_alen = 0;
-		memset(LLADDR(sdl), 0, ifp->if_addrlen);
-	}
+	void *a = (LLE_IS_VALID(la) && (la->la_flags & LLE_VALID) == LLE_VALID)
+	    ? &la->ll_addr : NULL;
+
+	a = sockaddr_dl_init(sdl, sizeof(*sdl), ifp->if_index, ifp->if_type,
+		NULL, 0, a, ifp->if_addrlen);
+	KASSERT(a != NULL);
 
 	if (la != NULL) {
 		*flags = la->la_flags;
@@ -1035,6 +1028,7 @@ COMPATNAME(rt_msg1)(int type, struct rt_addrinfo *rtinfo, void *data, int datale
 	rtm->rtm_msglen = len;
 	rtm->rtm_version = RTM_XVERSION;
 	rtm->rtm_type = type;
+printf("%s: type=%#x len=%d\n", __func__, type, len);
 	return m;
 out:
 	m_freem(m);
