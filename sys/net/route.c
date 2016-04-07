@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.158 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.159 2016/04/07 03:09:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.158 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.159 2016/04/07 03:09:56 christos Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -393,33 +393,32 @@ rtalloc1(const struct sockaddr *dst, int report)
 {
 	rtbl_t *rtbl;
 	struct rtentry *rt;
-	struct rtentry *newrt = NULL;
-	struct rt_addrinfo info;
-	int  s = splsoftnet(), err = 0, msgtype = RTM_MISS;
+	int s;
 
+	s = splsoftnet();
 	rtbl = rt_gettable(dst->sa_family);
-	if (rtbl == NULL) {
-		rtstat.rts_unreach++;
+	if (rtbl == NULL)
 		goto miss;
-	}
 
 	rt = rt_matchaddr(rtbl, dst);
-	if (rt == NULL) {
-		rtstat.rts_unreach++;
+	if (rt == NULL)
 		goto miss;
-	}
+
 	rt->rt_refcnt++;
 
-	newrt = rt;
+	splx(s);
+	return rt;
 miss:
+	rtstat.rts_unreach++;
 	if (report) {
+		struct rt_addrinfo info;
+
 		memset((void *)&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = dst;
-		rt_missmsg(msgtype, &info, 0, err);
+		rt_missmsg(RTM_MISS, &info, 0, 0);
 	}
-
 	splx(s);
-	return newrt;
+	return NULL;
 }
 
 #ifdef DEBUG
