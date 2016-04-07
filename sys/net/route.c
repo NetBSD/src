@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.159 2016/04/07 03:09:56 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.160 2016/04/07 04:04:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.159 2016/04/07 03:09:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.160 2016/04/07 04:04:47 christos Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -413,7 +413,7 @@ miss:
 	if (report) {
 		struct rt_addrinfo info;
 
-		memset((void *)&info, 0, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = dst;
 		rt_missmsg(RTM_MISS, &info, 0, 0);
 	}
