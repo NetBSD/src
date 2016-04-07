@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.73 2016/04/07 03:31:12 christos Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.74 2016/04/07 12:06:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.73 2016/04/07 03:31:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.74 2016/04/07 12:06:50 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -45,10 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.73 2016/04/07 03:31:12 christos Exp 
 #include <sys/mman.h>
 #include <sys/resourcevar.h>
 #include <sys/device.h>
-
-#if defined(PAX_ASLR) || defined(PAX_MPROTECT)
 #include <sys/pax.h>
-#endif /* PAX_ASLR || PAX_MPROTECT */
 
 #include <uvm/uvm_extern.h>
 
