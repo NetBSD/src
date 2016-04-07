@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.204 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.205 2016/04/07 03:22:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.204 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.205 2016/04/07 03:22:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -573,7 +573,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sockaddr_dl_measure(0, ifp->if_addrlen)) {
-			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
+			log(LOG_DEBUG, "%s: bad gateway value\n", __func__);
 			break;
 		}
 
@@ -693,7 +693,7 @@ arprequest(struct ifnet *ifp,
  */
 int
 arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
-    const struct sockaddr *dst, u_char *desten)
+    const struct sockaddr *dst, void *desten, size_t destlen)
 {
 	struct llentry *la;
 	const char *create_lookup;
@@ -708,6 +708,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 
 	if ((la->la_flags & LLE_VALID) &&
 	    ((la->la_flags & LLE_STATIC) || la->la_expire > time_uptime)) {
+		KASSERT(destlen >= ifp->if_addrlen);
 		memcpy(desten, &la->ll_addr, ifp->if_addrlen);
 		LLE_RUNLOCK(la);
 		return 0;
@@ -719,7 +720,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 #ifdef	DIAGNOSTIC
 	if (rt->rt_expire == 0) {
 		/* This should never happen. (Should it? -gwr) */
-		printf("arpresolve: unresolved and rt_expire == 0\n");
+		printf("%s: unresolved and rt_expire == 0\n", __func__);
 		/* Set expiration time to now (expired). */
 		rt->rt_expire = time_uptime;
 	}
@@ -767,6 +768,7 @@ notfound:
 	if ((la->la_flags & LLE_VALID) &&
 	    ((la->la_flags & LLE_STATIC) || la->la_expire > time_uptime))
 	{
+		KASSERT(destlen >= ifp->if_addrlen);
 		memcpy(desten, &la->ll_addr, ifp->if_addrlen);
 		renew = false;
 		/*
@@ -800,8 +802,8 @@ notfound:
 
 	if (la->la_flags & LLE_STATIC) {   /* should not happen! */
 		LLE_RUNLOCK(la);
-		log(LOG_DEBUG, "arpresolve: ouch, empty static llinfo for %s\n",
-		    inet_ntoa(satocsin(dst)->sin_addr));
+		log(LOG_DEBUG, "%s: ouch, empty static llinfo for %s\n",
+		    __func__, inet_ntoa(satocsin(dst)->sin_addr));
 		error = EINVAL;
 		goto bad;
 	}
@@ -1225,6 +1227,7 @@ in_arpinput(struct mbuf *m)
 	}
 #endif /* NTOKEN > 0 */
 
+	KASSERT(sizeof(la->ll_addr) >= ifp->if_addrlen);
 	(void)memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
 	la->la_flags |= LLE_VALID;
 	la->la_expire = time_uptime + arpt_keep;
@@ -1431,8 +1434,8 @@ arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 				 (struct sockaddr *)IA_SIN(ifa));
 		IF_AFDATA_WUNLOCK(ifp);
 		if (lle == NULL)
-			log(LOG_INFO, "arp_ifinit: cannot create arp "
-			    "entry for interface address\n");
+			log(LOG_INFO, "%s: cannot create arp entry for"
+			    " interface address\n", __func__);
 		else {
 			arp_init_llentry(ifp, lle);
 			LLE_RUNLOCK(lle);
@@ -1535,10 +1538,9 @@ arp_dad_start(struct ifaddr *ifa)
 	 */
 	if (!(ia->ia4_flags & IN_IFF_TENTATIVE)) {
 		log(LOG_DEBUG,
-			"arp_dad_start: called with non-tentative address "
-			"%s(%s)\n",
-			in_fmtaddr(ia->ia_addr.sin_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+		    "%s: called with non-tentative address %s(%s)\n", __func__,
+		    in_fmtaddr(ia->ia_addr.sin_addr),
+		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
 	if (!ip_dad_count) {
@@ -1561,10 +1563,9 @@ arp_dad_start(struct ifaddr *ifa)
 
 	dp = malloc(sizeof(*dp), M_IPARP, M_NOWAIT);
 	if (dp == NULL) {
-		log(LOG_ERR, "arp_dad_start: memory allocation failed for "
-			"%s(%s)\n",
-			in_fmtaddr(ia->ia_addr.sin_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+		log(LOG_ERR, "%s: memory allocation failed for %s(%s)\n",
+		    __func__, in_fmtaddr(ia->ia_addr.sin_addr),
+		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
 	memset(dp, 0, sizeof(*dp));
@@ -1623,33 +1624,32 @@ arp_dad_timer(struct ifaddr *ifa)
 
 	/* Sanity check */
 	if (ia == NULL) {
-		log(LOG_ERR, "arp_dad_timer: called with null parameter\n");
+		log(LOG_ERR, "%s: called with null parameter\n", __func__);
 		goto done;
 	}
 	dp = arp_dad_find(ifa);
 	if (dp == NULL) {
-		log(LOG_ERR, "arp_dad_timer: DAD structure not found\n");
+		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
 		goto done;
 	}
 	if (ia->ia4_flags & IN_IFF_DUPLICATED) {
-		log(LOG_ERR, "nd4_dad_timer: called with duplicate address "
-			"%s(%s)\n",
-			in_fmtaddr(ia->ia_addr.sin_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+		log(LOG_ERR, "%s: called with duplicate address %s(%s)\n",
+		    __func__, in_fmtaddr(ia->ia_addr.sin_addr),
+		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		goto done;
 	}
-	if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0 && dp->dad_arp_acount == 0){
-		log(LOG_ERR, "arp_dad_timer: called with non-tentative address "
-			"%s(%s)\n",
-			in_fmtaddr(ia->ia_addr.sin_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+	if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0 && dp->dad_arp_acount == 0)
+	{
+		log(LOG_ERR, "%s: called with non-tentative address %s(%s)\n",
+		    __func__, in_fmtaddr(ia->ia_addr.sin_addr),
+		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		goto done;
 	}
 
 	/* timeouted with IFF_{RUNNING,UP} check */
 	if (dp->dad_arp_tcount > dad_maxtry) {
 		arplog((LOG_INFO, "%s: could not run DAD, driver problem?\n",
-			if_name(ifa->ifa_ifp)));
+		    if_name(ifa->ifa_ifp)));
 
 		TAILQ_REMOVE(&dadq, dp, dad_list);
 		free(dp, M_IPARP);
@@ -1725,13 +1725,13 @@ arp_dad_duplicated(struct ifaddr *ifa)
 
 	dp = arp_dad_find(ifa);
 	if (dp == NULL) {
-		log(LOG_ERR, "arp_dad_duplicated: DAD structure not found\n");
+		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
 		return;
 	}
 
 	ifp = ifa->ifa_ifp;
-	log(LOG_ERR, "%s: DAD detected duplicate IPv4 address %s: "
-	    "ARP out=%d\n",
+	log(LOG_ERR,
+	    "%s: DAD detected duplicate IPv4 address %s: ARP out=%d\n",
 	    if_name(ifp), in_fmtaddr(ia->ia_addr.sin_addr),
 	    dp->dad_arp_ocount);
 
