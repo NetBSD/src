@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.21 2016/04/01 20:21:45 palle Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.22 2016/04/07 19:46:39 palle Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.21 2016/04/01 20:21:45 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.22 2016/04/07 19:46:39 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <machine/lock.h>
 #include <machine/psl.h>
 #include <machine/promlib.h>
 #include <lib/libkern/libkern.h>
@@ -56,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.21 2016/04/01 20:21:45 palle Exp $");
  * Use a mutex to protect access to the buffer from multiple threads.
  * 
  */
-kmutex_t ofcall_mtx;
+static __cpu_simple_lock_t ofcall_lock;
 static char ofbounce[OFBOUNCE_MAXSIZE];
 #endif
 #endif
@@ -67,7 +68,7 @@ OF_init(void)
 #ifdef SUN4V
 #ifdef __arch64__
   KASSERT(((uint64_t)&ofbounce & 0xffffffffUL)==(uint64_t)&ofbounce);
-  mutex_init(&ofcall_mtx, MUTEX_DEFAULT, IPL_NONE);
+  __cpu_simple_lock_init(&ofcall_lock);
 #endif	
 #endif
 }
@@ -542,7 +543,7 @@ OF_write(int handle, const void *addr, int len)
 	}
 #ifdef SUN4V
 #if __arch64__
-	mutex_enter(&ofcall_mtx);
+	__cpu_simple_lock(&ofcall_lock);
 	if (len > OFBOUNCE_MAXSIZE) 
 		panic("OF_write(len = %d) exceedes bounce buffer\n", len);
 	memcpy(ofbounce, addr, len);
@@ -564,7 +565,7 @@ OF_write(int handle, const void *addr, int len)
 	}
 #ifdef SUN4V
 #if __arch64__
-	mutex_exit(&ofcall_mtx);
+	__cpu_simple_unlock(&ofcall_lock);
 #endif
 #endif
 	return act;
