@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.154 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.155 2016/04/07 03:31:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.154 2015/11/26 13:15:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.155 2016/04/07 03:31:12 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -418,9 +418,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		pos = 0;
 	}
 
-#ifdef PAX_MPROTECT
-	pax_mprotect(l, &prot, &maxprot);
-#endif /* PAX_MPROTECT */
+	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
 
 #ifdef PAX_ASLR
 	pax_aslr_mmap(l, &addr, orig_addr, flags);
