@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.155 2016/04/07 03:31:12 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.156 2016/04/07 12:07:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.155 2016/04/07 03:31:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.156 2016/04/07 12:07:36 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -56,10 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.155 2016/04/07 03:31:12 christos Exp 
 #include <sys/filedesc.h>
 #include <sys/resourcevar.h>
 #include <sys/mman.h>
-
-#if defined(PAX_ASLR) || defined(PAX_MPROTECT)
 #include <sys/pax.h>
-#endif /* PAX_ASLR || PAX_MPROTECT */
 
 #include <sys/syscallargs.h>
 
