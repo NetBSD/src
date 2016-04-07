@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1318 2016/04/03 08:21:15 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.1319 2016/04/07 15:36:42 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -342,6 +342,9 @@ the source for details.
 Vendor tag:    LINUX
 Release tag:   linux-X-Y(-rcZ)-drm-bsd
 	(nouveau got reimported as linux-3-15-drm-bsd-reimport-nouveau)
+I neglected to add RCSIDs in the last import (except for nouveau, for
+which nouveau2netbsd adds them).  For the next import, remember to add
+them!
 
 Package:	gmake
 Version:	3.81
