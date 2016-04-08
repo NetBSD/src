@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.181 2016/04/07 21:41:02 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.182 2016/04/08 12:01:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.181 2016/04/07 21:41:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.182 2016/04/08 12:01:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -471,7 +471,7 @@ route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
 	    ? &la->ll_addr : NULL;
 
 	a = sockaddr_dl_init(sdl, sizeof(*sdl), ifp->if_index, ifp->if_type,
-		NULL, 0, a, ifp->if_addrlen);
+	    NULL, 0, a, ifp->if_addrlen);
 	KASSERT(a != NULL);
 
 	if (la != NULL) {
@@ -1028,7 +1028,6 @@ COMPATNAME(rt_msg1)(int type, struct rt_addrinfo *rtinfo, void *data, int datale
 	rtm->rtm_msglen = len;
 	rtm->rtm_version = RTM_XVERSION;
 	rtm->rtm_type = type;
-printf("%s: type=%#x len=%d\n", __func__, type, len);
 	return m;
 out:
 	m_freem(m);
