@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.22 2016/04/06 14:42:16 roy Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.23 2016/04/08 14:30:47 roy Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -356,7 +356,7 @@ struct ieee80211req_sta_info {
 	u_int16_t	isi_flags;		/* channel flags */
 	u_int16_t	isi_state;		/* state flags */
 	u_int8_t	isi_authmode;		/* authentication algorithm */
-	int8_t		isi_rssi;
+	u_int8_t	isi_rssi;
 	u_int8_t	isi_capinfo;		/* capabilities */
 	u_int8_t	isi_erp;		/* ERP element */
 	u_int8_t	isi_macaddr[IEEE80211_ADDR_LEN];
@@ -524,8 +524,8 @@ struct ieee80211req_scan_result {
 	u_int16_t	isr_len;		/* length (mult of 4) */
 	u_int16_t	isr_freq;		/* MHz */
 	u_int16_t	isr_flags;		/* channel flags */
-	int8_t		isr_noise;
-	int8_t		isr_rssi;
+	u_int8_t	isr_noise;
+	u_int8_t	isr_rssi;
 	u_int8_t	isr_intval;		/* beacon interval */
 	u_int8_t	isr_capinfo;		/* capabilities */
 	u_int8_t	isr_erp;		/* ERP element */
