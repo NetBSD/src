@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2016/01/23 21:22:48 christos Exp $
+# $NetBSD: Makefile,v 1.10 2016/04/08 21:53:10 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,11 @@ NOMAN=		# defined
 
 TESTSDIR=		${TESTSBASE}/include/sys
 
-TESTS_C=		t_bitops t_bootblock t_cdefs t_tree t_types
+TESTS_C+=		t_bitops
+TESTS_C+=		t_bootblock
+TESTS_C+=		t_cdefs
+TESTS_C+=		t_tree
+TESTS_C+=		t_types
 
 LDADD.t_bitops+=	-lm
 
