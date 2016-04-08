@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.670 2016/04/06 00:47:15 christos Exp $
+# $NetBSD: mi,v 1.671 2016/04/08 10:09:16 gson Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3523,6 +3523,10 @@
 ./usr/tests/usr.bin/find/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/find/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/find/t_find			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/gdb				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/gdb/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/gdb/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/gdb/t_regress		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
