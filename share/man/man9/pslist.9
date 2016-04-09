@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.3 2016/04/09 06:21:16 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.4 2016/04/09 13:34:33 uwe Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -161,13 +161,13 @@ object.
 Initialize the
 .Vt struct pslist_entry
 object
-.Fa element Ns Li -> Fa NAME .
+.Fa element Ns Li -> Ns Fa NAME .
 .\""""""""""""""""
 .It Fn PSLIST_ENTRY_DESTROY element
 Destroy the
 .Vt struct pslist_entry
 object
-.Fa element Ns Li -> Fa NAME .
+.Fa element Ns Li -> Ns Fa NAME .
 Either
 .Fa element
 must never have been inserted into a list, or it must have been
