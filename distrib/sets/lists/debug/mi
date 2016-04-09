@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 2016/04/06 00:47:15 christos Exp $
+# $NetBSD: mi,v 1.149 2016/04/09 09:58:11 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1626,6 +1626,7 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/include/machine/t_bswap.debug		tests-include-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/include/sys/t_pslist.debug		tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_cdefs.debug			tests-include-tests	debug,atf,compattestfile
