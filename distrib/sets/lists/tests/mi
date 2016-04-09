@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.671 2016/04/08 10:09:16 gson Exp $
+# $NetBSD: mi,v 1.672 2016/04/09 04:39:47 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1559,6 +1559,7 @@
 ./usr/tests/include/sys/t_bitops		tests-include-tests	compattestfile,atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	compattestfile,atf
 ./usr/tests/include/sys/t_cdefs			tests-include-tests	compattestfile,atf
+./usr/tests/include/sys/t_pslist		tests-include-tests	compattestfile,atf
 ./usr/tests/include/sys/t_socket		tests-include-tests	atf,rump
 ./usr/tests/include/sys/t_tree			tests-include-tests	compattestfile,atf
 ./usr/tests/include/sys/t_types			tests-include-tests	compattestfile,atf
