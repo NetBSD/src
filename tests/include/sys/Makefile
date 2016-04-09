@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2016/04/08 21:53:10 riastradh Exp $
+# $NetBSD: Makefile,v 1.11 2016/04/09 04:39:47 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -9,9 +9,11 @@ TESTSDIR=		${TESTSBASE}/include/sys
 TESTS_C+=		t_bitops
 TESTS_C+=		t_bootblock
 TESTS_C+=		t_cdefs
+TESTS_C+=		t_pslist
 TESTS_C+=		t_tree
 TESTS_C+=		t_types
 
+CPPFLAGS.t_pslist.c+=	-I${NETBSDSRCDIR}/sys
 LDADD.t_bitops+=	-lm
 
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
