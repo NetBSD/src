@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.87 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.88 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.87 2016/03/23 22:27:48 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.88 2016/04/09 18:43:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -308,9 +308,12 @@ read_char(EditLine *el, wchar_t *cp)
 	}
 
 	for (;;) {
+		mbstate_t mbs;
 
 		++cbp;
-		switch (ct_mbrtowc(cp, cbuf, cbp)) {
+		/* This only works because UTF8 is stateless. */
+		memset(&mbs, 0, sizeof(mbs));
+		switch (mbrtowc(cp, cbuf, cbp, &mbs)) {
 		case (size_t)-1:
 			if (cbp > 1) {
 				/*
@@ -575,7 +578,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 					break;
 			if (b->name)
 				(void) fprintf(el->el_errfile,
-				    "Executing " FSTR "\n", b->name);
+				    "Executing %ls\n", b->name);
 			else
 				(void) fprintf(el->el_errfile,
 				    "Error command = %d\n", cmdnum);
@@ -589,7 +592,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 		    el->el_chared.c_redo.pos < el->el_chared.c_redo.lim) {
 			if (cmdnum == VI_DELETE_PREV_CHAR &&
 			    el->el_chared.c_redo.pos != el->el_chared.c_redo.buf
-			    && Isprint(el->el_chared.c_redo.pos[-1]))
+			    && iswprint(el->el_chared.c_redo.pos[-1]))
 				el->el_chared.c_redo.pos--;
 			else
 				*el->el_chared.c_redo.pos++ = ch;
