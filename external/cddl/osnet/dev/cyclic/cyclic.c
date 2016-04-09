@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.4 2012/12/02 01:05:16 chs Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.5 2016/04/09 14:50:08 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1455,6 +1455,12 @@ cyclic_modcmd(modcmd_t cmd, void *data)
 	case MODULE_CMD_FINI:
 		cyclic_unload();
 		return 0;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		if (cyclic_id_head != NULL)
+			return EBUSY;
+		return 0;
+
 	default:
 		return ENOTTY;
 	}
