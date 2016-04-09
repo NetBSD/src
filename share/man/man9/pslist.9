@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.8 2016/04/09 17:34:57 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.9 2016/04/09 17:37:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,10 +91,12 @@ A linked list head must be initialized with
 or
 .Fn PSLIST_INIT
 before it may be used.
-When initialized, a list head is empty.
-A list head should be empty and destroyed with
+When initialized, a list head represents an empty list.
+A list should be empty and destroyed with
 .Fn PSLIST_DESTROY
-before its memory is reused.
+before the
+.Vt struct pslist_head
+object's memory is reused.
 .\"
 .Pp
 Each entry in a linked list is represented by a
@@ -137,12 +139,12 @@ Constant initializer for a
 object.
 .\""""""""""""""""
 .It Fn PSLIST_INIT head
-Initialize the list head
+Initialize the list headed by
 .Fa head
 to be empty.
 .\""""""""""""""""
 .It Fn PSLIST_DESTROY head
-Destroy the list head
+Destroy the list headed by
 .Fa head ,
 which must be empty.
 .Pp
