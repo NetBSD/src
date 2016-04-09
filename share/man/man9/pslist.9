@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.12 2016/04/09 18:10:41 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.13 2016/04/09 18:25:26 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,8 +38,8 @@
 .Sh SYNOPSIS
 .In sys/pslist.h
 .\" Exclusive operations
-.Vt struct pslist_head PSLIST_INITIALIZER ;
-.Vt struct pslist_entry PSLIST_ENTRY_INITIALIZER ;
+.Vt struct pslist_head head No = Dv PSLIST_INITIALIZER ;
+.Vt struct pslist_entry entry No = Dv PSLIST_ENTRY_INITIALIZER ;
 .Ft void
 .Fn PSLIST_INIT "struct pslist_head *head"
 .Ft void
