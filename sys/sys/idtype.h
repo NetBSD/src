@@ -1,4 +1,4 @@
-/*	$NetBSD: idtype.h,v 1.4 2016/04/03 02:08:42 christos Exp $	*/
+/*	$NetBSD: idtype.h,v 1.5 2016/04/09 17:02:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
 /*
  * Using the solaris constants, some of them are not applicable to us
  * Do not re-order the list, or add elements in the middle as this will
- * break the ABI of the system calls using this.
+ * break the ABI of the system calls using this.  We set a high private
+ * maximum so that new values can be added in the future without
+ * changing the width of the type.
  */
 typedef enum {
 	P_MYID = -1,	/* Me/my process group */
@@ -53,7 +55,8 @@ typedef enum {
 	P_ZONEID,	/* A zone identifier. */
 	P_CTID,		/* A (process) contract identifier. */
 	P_CPUID,	/* CPU identifier. */
-	P_PSETID	/* Processor set identifier. */
+	P_PSETID,	/* Processor set identifier. */
+	_P_MAXIDTYPE = 0x7fffffff
 } idtype_t;
 
 #endif /* _SYS_IDTYPE_H_ */
