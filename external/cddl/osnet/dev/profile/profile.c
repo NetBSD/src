@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.5 2016/04/04 05:15:07 riastradh Exp $	*/
+/*	$NetBSD: profile.c,v 1.6 2016/04/09 15:17:58 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -574,6 +574,11 @@ dtrace_profile_modcmd(modcmd_t cmd, void *data)
 
 	case MODULE_CMD_FINI:
 		profile_unload();
+		return 0;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		if (profile_total)
+			return EBUSY;
 		return 0;
 
 	default:
