@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.12 2012/01/07 19:48:19 christos Exp $	*/
+/*	$NetBSD: aio.h,v 1.13 2016/04/09 19:55:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -70,7 +70,7 @@ struct aiocb {
 
 /* Default limits of allowed AIO operations */
 #define AIO_LISTIO_MAX		512
-#define AIO_MAX			AIO_LISTIO_MAX * 16
+#define AIO_MAX			(AIO_LISTIO_MAX * 16)
 
 #include <sys/condvar.h>
 #include <sys/lwp.h>
