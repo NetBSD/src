@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.43 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.44 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.43 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.44 2016/04/09 18:43:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -970,7 +970,7 @@ map_init_nls(EditLine *el)
 	el_action_t *map = el->el_map.key;
 
 	for (i = 0200; i <= 0377; i++)
-		if (Isprint(i))
+		if (iswprint(i))
 			map[i] = ED_INSERT;
 }
 
@@ -1135,7 +1135,7 @@ map_print_key(EditLine *el, el_action_t *map, const Char *in)
 		for (bp = el->el_map.help; bp < ep; bp++)
 			if (bp->func == map[(unsigned char) *in]) {
 				(void) fprintf(el->el_outfile,
-				    "%s\t->\t" FSTR "\n", outbuf, bp->name);
+				    "%s\t->\t%ls\n", outbuf, bp->name);
 				return;
 			}
 	} else
@@ -1172,7 +1172,7 @@ map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 			if (first == last) {
 				(void) keymacro__decode_str(firstbuf, unparsbuf,
 				    sizeof(unparsbuf), STRQQ);
-				(void) fprintf(el->el_outfile, "%-15s->  " FSTR "\n",
+				(void) fprintf(el->el_outfile, "%-15s->  %ls\n",
 				    unparsbuf, bp->name);
 			} else {
 				(void) keymacro__decode_str(firstbuf, unparsbuf,
@@ -1180,7 +1180,7 @@ map_print_some_keys(EditLine *el, el_action_t *map, wint_t first, wint_t last)
 				(void) keymacro__decode_str(lastbuf, extrabuf,
 				    sizeof(extrabuf), STRQQ);
 				(void) fprintf(el->el_outfile,
-				    "%-4s to %-7s->  " FSTR "\n",
+				    "%-4s to %-7s->  %ls\n",
 				    unparsbuf, extrabuf, bp->name);
 			}
 			return;
@@ -1300,12 +1300,12 @@ map_bind(EditLine *el, int argc, const Char **argv)
 				ep = &el->el_map.help[el->el_map.nfunc];
 				for (bp = el->el_map.help; bp < ep; bp++)
 					(void) fprintf(el->el_outfile,
-					    "" FSTR "\n\t" FSTR "\n",
+					    "%ls\n\t%ls\n",
 					    bp->name, bp->description);
 				return 0;
 			default:
 				(void) fprintf(el->el_errfile,
-				    "" FSTR ": Invalid switch `%lc'.\n",
+				    "%ls: Invalid switch `%lc'.\n",
 				    argv[0], (wint_t)p[1]);
 			}
 		else
@@ -1319,7 +1319,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 		in = argv[argc++];
 	else if ((in = parse__string(inbuf, argv[argc++])) == NULL) {
 		(void) fprintf(el->el_errfile,
-		    "" FSTR ": Invalid \\ or ^ in instring.\n",
+		    "%ls: Invalid \\ or ^ in instring.\n",
 		    argv[0]);
 		return -1;
 	}
@@ -1355,7 +1355,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	case XK_EXE:
 		if ((out = parse__string(outbuf, argv[argc])) == NULL) {
 			(void) fprintf(el->el_errfile,
-			    "" FSTR ": Invalid \\ or ^ in outstring.\n", argv[0]);
+			    "%ls: Invalid \\ or ^ in outstring.\n", argv[0]);
 			return -1;
 		}
 		if (key)
@@ -1368,7 +1368,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	case XK_CMD:
 		if ((cmd = parse_cmd(el, argv[argc])) == -1) {
 			(void) fprintf(el->el_errfile,
-			    "" FSTR ": Invalid command `" FSTR "'.\n",
+			    "%ls: Invalid command `%ls'.\n",
 			    argv[0], argv[argc]);
 			return -1;
 		}

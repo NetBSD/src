@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.25 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.26 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.25 2016/03/23 22:27:48 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.26 2016/04/09 18:43:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -177,7 +177,7 @@ hist_command(EditLine *el, int argc, const Char **argv)
 	if (argc != 3)
 		return -1;
 
-	num = (int)Strtol(argv[2], NULL, 0);
+	num = (int)wcstol(argv[2], NULL, 0);
 
 	if (Strcmp(argv[1], STR("size")) == 0)
 		return FUNW(history)(el->el_history.ref, &ev, H_SETSIZE, num);

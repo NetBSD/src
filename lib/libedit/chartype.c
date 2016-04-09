@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.24 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.25 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.24 2016/03/23 22:27:48 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.25 2016/04/09 18:43:17 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -123,7 +123,7 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 	if (!s)
 		return NULL;
 
-	len = ct_mbstowcs(NULL, s, (size_t)0);
+	len = mbstowcs(NULL, s, (size_t)0);
 	if (len == (size_t)-1)
 		return NULL;
 
@@ -131,7 +131,7 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 		if (ct_conv_wbuff_resize(conv, len + CT_BUFSIZ) == -1)
 			return NULL;
 
-	ct_mbstowcs(conv->wbuff, s, conv->wsize);
+	mbstowcs(conv->wbuff, s, conv->wsize);
 	return conv->wbuff;
 }
 
@@ -198,22 +198,13 @@ ct_encode_char(char *dst, size_t len, Char c)
 	ssize_t l = 0;
 	if (len < ct_enc_width(c))
 		return -1;
-	l = ct_wctomb(dst, c);
+	l = wctomb(dst, c);
 
 	if (l < 0) {
-		ct_wctomb_reset;
+		wctomb(NULL, L'\0');
 		l = 0;
 	}
 	return l;
-}
-
-size_t
-ct_mbrtowc(wchar_t *wc, const char *s, size_t n)
-{
-	mbstate_t mbs;
-	/* This only works because UTF-8 is stateless */
-	memset(&mbs, 0, sizeof(mbs));
-	return mbrtowc(wc, s, n, &mbs);
 }
 
 protected const Char *
@@ -344,9 +335,9 @@ ct_chr_class(Char c)
 		return CHTYPE_TAB;
 	else if (c == '\n')
 		return CHTYPE_NL;
-	else if (IsASCII(c) && Iscntrl(c))
+	else if (c < 0x100 && iswcntrl(c))
 		return CHTYPE_ASCIICTL;
-	else if (Isprint(c))
+	else if (iswprint(c))
 		return CHTYPE_PRINT;
 	else
 		return CHTYPE_NONPRINT;

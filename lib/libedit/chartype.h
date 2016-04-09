@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.26 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.27 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -51,56 +51,19 @@
 #warning Build environment does not support non-BMP characters
 #endif
 
-#define ct_wctob             wctob
-#define ct_wctomb            wctomb
-#define ct_wctomb_reset      wctomb(0,0)
-#define ct_wcstombs          wcstombs
-#define ct_mbstowcs          mbstowcs
-
 #define Char			wchar_t
 #define FUN(prefix,rest)	prefix ## _w ## rest
 #define FUNW(type)		type ## _w
 #define TYPE(type)		type ## W
-#define FSTR			"%ls"
-#define FSTARSTR		"%.*ls"
 #define STR(x)			L ## x
-#define UC(c)			c
-#define Isalpha(x)  iswalpha(x)
-#define Isalnum(x)  iswalnum(x)
-#define Isgraph(x)  iswgraph(x)
-#define Isspace(x)  iswspace(x)
-#define Isdigit(x)  iswdigit(x)
-#define Iscntrl(x)  iswcntrl(x)
-#define Isprint(x)  iswprint(x)
-
-#define Isupper(x)  iswupper(x)
-#define Islower(x)  iswlower(x)
-#define Toupper(x)  towupper(x)
-#define Tolower(x)  towlower(x)
-
-#define IsASCII(x)  (x < 0x100)
 
 #define Strlen(x)       wcslen(x)
 #define Strchr(s,c)     wcschr(s,c)
-#define Strrchr(s,c)    wcsrchr(s,c)
-#define Strstr(s,v)     wcsstr(s,v)
 #define Strdup(x)       wcsdup(x)
-#define Strcpy(d,s)     wcscpy(d,s)
 #define Strncpy(d,s,n)  wcsncpy(d,s,n)
 #define Strncat(d,s,n)  wcsncat(d,s,n)
-
 #define Strcmp(s,v)     wcscmp(s,v)
 #define Strncmp(s,v,n)  wcsncmp(s,v,n)
-#define Strcspn(s,r)    wcscspn(s,r)
-
-#define Strtol(p,e,b)   wcstol(p,e,b)
-
-static inline int
-Width(wchar_t c)
-{
-	int w = wcwidth(c);
-	return w < 0 ? 0 : w;
-}
 
 #else /* NARROW */
 
@@ -150,8 +113,6 @@ protected int ct_conv_wbuff_resize(ct_buffer_t *, size_t);
 protected ssize_t ct_encode_char(char *, size_t, Char);
 protected size_t ct_enc_width(Char);
 
-#define ct_free_argv(s)	el_free(s)
-
 #else
 #define	ct_encode_string(s, b)	(s)
 #define ct_decode_string(s, b)	(s)
@@ -198,8 +159,5 @@ protected const Char *ct_visual_string(const Char *);
 /* classification of character c, as one of the above defines */
 protected int ct_chr_class(Char c);
 #endif
-
-size_t	ct_mbrtowc(wchar_t *, const char *, size_t);
-
 
 #endif /* _chartype_f */

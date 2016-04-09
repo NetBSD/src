@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.55 2016/03/02 19:24:20 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.56 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.55 2016/03/02 19:24:20 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.56 2016/04/09 18:43:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -103,7 +103,7 @@ cv_paste(EditLine *el, wint_t c)
 	if (k->buf == NULL || len == 0)
 		return CC_ERROR;
 #ifdef DEBUG_PASTE
-	(void) fprintf(el->el_errfile, "Paste: \"" FSTARSTR "\"\n", (int)len,
+	(void) fprintf(el->el_errfile, "Paste: \"%.*ls\"\n", (int)len,
 	    k->buf);
 #endif
 
@@ -261,10 +261,10 @@ vi_change_case(EditLine *el, wint_t c)
 	for (i = 0; i < el->el_state.argument; i++) {
 
 		c = *el->el_line.cursor;
-		if (Isupper(c))
-			*el->el_line.cursor = Tolower(c);
-		else if (Islower(c))
-			*el->el_line.cursor = Toupper(c);
+		if (iswupper(c))
+			*el->el_line.cursor = towlower(c);
+		else if (iswlower(c))
+			*el->el_line.cursor = towupper(c);
 
 		if (++el->el_line.cursor >= el->el_line.lastchar) {
 			el->el_line.cursor--;
@@ -816,7 +816,7 @@ vi_match(EditLine *el, wint_t c __attribute__((__unused__)))
 
 	*el->el_line.lastchar = '\0';		/* just in case */
 
-	i = Strcspn(el->el_line.cursor, match_chars);
+	i = wcscspn(el->el_line.cursor, match_chars);
 	o_ch = el->el_line.cursor[i];
 	if (o_ch == 0)
 		return CC_ERROR;
@@ -1026,7 +1026,7 @@ vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
 		goto error;
 	Strncpy(line, el->el_line.buffer, len);
 	line[len] = '\0';
-	ct_wcstombs(cp, line, TMP_BUFSIZ - 1);
+	wcstombs(cp, line, TMP_BUFSIZ - 1);
 	cp[TMP_BUFSIZ - 1] = '\0';
 	len = strlen(cp);
 	write(fd, cp, len);
@@ -1048,7 +1048,7 @@ vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
 		if (st > 0) {
 			cp[st] = '\0';
 			len = (size_t)(el->el_line.limit - el->el_line.buffer);
-			len = ct_mbstowcs(el->el_line.buffer, cp, len);
+			len = mbstowcs(el->el_line.buffer, cp, len);
 			if (len > 0 && el->el_line.buffer[len - 1] == '\n')
 				--len;
 		}
@@ -1094,12 +1094,12 @@ vi_history_word(EditLine *el, wint_t c __attribute__((__unused__)))
 
 	wep = wsp = 0;
 	do {
-		while (Isspace(*wp))
+		while (iswspace(*wp))
 			wp++;
 		if (*wp == 0)
 			break;
 		wsp = wp;
-		while (*wp && !Isspace(*wp))
+		while (*wp && !iswspace(*wp))
 			wp++;
 		wep = wp;
 	} while ((!el->el_state.doingarg || --el->el_state.argument > 0)
