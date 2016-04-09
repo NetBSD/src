@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2027 2016/04/09 04:39:46 riastradh Exp $
+#	$NetBSD: mi,v 1.2028 2016/04/09 06:21:16 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10688,6 +10688,15 @@
 ./usr/share/man/cat9/pserialize_read_exit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pslist.0			comp-sys-catman		.cat
+./usr/share/man/cat9/psref.0			comp-sys-catman		.cat
+./usr/share/man/cat9/psref_acquire.0		comp-sys-catman		.cat
+./usr/share/man/cat9/psref_class_create.0	comp-sys-catman		.cat
+./usr/share/man/cat9/psref_class_destroy.0	comp-sys-catman		.cat
+./usr/share/man/cat9/psref_copy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/psref_held.0		comp-sys-catman		.cat
+./usr/share/man/cat9/psref_release.0		comp-sys-catman		.cat
+./usr/share/man/cat9/psref_target_destroy.0	comp-sys-catman		.cat
+./usr/share/man/cat9/psref_target_init.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/ptoa.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putter.0			comp-sys-catman		.cat
@@ -17728,6 +17737,15 @@
 ./usr/share/man/html9/pserialize_read_exit.html comp-sys-htmlman	html
 ./usr/share/man/html9/psignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pslist.html		comp-sys-htmlman	html
+./usr/share/man/html9/psref.html		comp-sys-catman		html
+./usr/share/man/html9/psref_acquire.html	comp-sys-catman		html
+./usr/share/man/html9/psref_class_create.html	comp-sys-catman		html
+./usr/share/man/html9/psref_class_destroy.html	comp-sys-catman		html
+./usr/share/man/html9/psref_copy.html		comp-sys-catman		html
+./usr/share/man/html9/psref_held.html		comp-sys-catman		html
+./usr/share/man/html9/psref_release.html	comp-sys-catman		html
+./usr/share/man/html9/psref_target_destroy.html	comp-sys-catman		html
+./usr/share/man/html9/psref_target_init.html	comp-sys-catman		html
 ./usr/share/man/html9/ptoa.html			comp-sys-htmlman	html
 ./usr/share/man/html9/putiobuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/putter.html		comp-sys-htmlman	html
@@ -24950,6 +24968,15 @@
 ./usr/share/man/man9/pserialize_read_exit.9	comp-sys-man		.man
 ./usr/share/man/man9/psignal.9			comp-sys-man		.man
 ./usr/share/man/man9/pslist.9			comp-sys-man		.man
+./usr/share/man/man9/psref.9			comp-sys-man		.man
+./usr/share/man/man9/psref_acquire.9		comp-sys-man		.man
+./usr/share/man/man9/psref_class_create.9	comp-sys-man		.man
+./usr/share/man/man9/psref_class_destroy.9	comp-sys-man		.man
+./usr/share/man/man9/psref_copy.9		comp-sys-man		.man
+./usr/share/man/man9/psref_held.9		comp-sys-man		.man
+./usr/share/man/man9/psref_release.9		comp-sys-man		.man
+./usr/share/man/man9/psref_target_destroy.9	comp-sys-man		.man
+./usr/share/man/man9/psref_target_init.9	comp-sys-man		.man
 ./usr/share/man/man9/ptoa.9			comp-sys-man		.man
 ./usr/share/man/man9/putiobuf.9			comp-sys-man		.man
 ./usr/share/man/man9/putter.9			comp-sys-man		.man
