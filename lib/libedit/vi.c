@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.56 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.57 2016/04/09 18:47:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.56 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.57 2016/04/09 18:47:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1092,7 +1092,7 @@ vi_history_word(EditLine *el, wint_t c __attribute__((__unused__)))
 	if (wp == NULL)
 		return CC_ERROR;
 
-	wep = wsp = 0;
+	wep = wsp = NULL;
 	do {
 		while (iswspace(*wp))
 			wp++;
@@ -1105,7 +1105,7 @@ vi_history_word(EditLine *el, wint_t c __attribute__((__unused__)))
 	} while ((!el->el_state.doingarg || --el->el_state.argument > 0)
 	    && *wp != 0);
 
-	if (wsp == 0 || (el->el_state.doingarg && el->el_state.argument != 0))
+	if (wsp == NULL || (el->el_state.doingarg && el->el_state.argument != 0))
 		return CC_ERROR;
 
 	cv_undo(el);
