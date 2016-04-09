@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.6 2016/04/09 15:08:39 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.7 2016/04/09 15:09:42 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,7 +190,7 @@ but no parallel writers.
 .\""""""""""""""""
 .Bl -tag -width abcd
 .It Fn PSLIST_WRITER_INSERT_HEAD head element NAME
-Inserts the element
+Insert the element
 .Fa element
 at the beginning of the list headed by
 .Fa head ,
@@ -203,7 +203,7 @@ must be a
 object which has been initialized but not inserted.
 .\""""""""""""""""
 .It Fn PSLIST_WRITER_INSERT_BEFORE element new NAME
-Inserts the element
+Insert the element
 .Fa new
 into a list before the element
 .Fa element .
@@ -219,7 +219,7 @@ must be a
 .Vt struct pslist_entry
 .\""""""""""""""""
 .It Fn PSLIST_WRITER_INSERT_AFTER element new NAME
-Inserts the element
+Insert the element
 .Fa new
 into a list after the element
 .Fa element .
@@ -235,7 +235,7 @@ must be a
 .Vt struct pslist_entry
 .\""""""""""""""""
 .It Fn PSLIST_WRITER_REMOVE element NAME
-Removes the element
+Remove the element
 .Fa element
 from the list into which it has been inserted.
 .Pp
@@ -246,7 +246,7 @@ must be a
 object which has been inserted into a list.
 .\""""""""""""""""
 .It Fn PSLIST_WRITER_FIRST head type NAME
-Returns a pointer to the first element
+Return a pointer to the first element
 .Fa o
 of type
 .Fa type
@@ -259,7 +259,7 @@ or
 if the list is empty.
 .\""""""""""""""""
 .It Fn PSLIST_WRITER_NEXT element type NAME
-Returns a pointer to the next element
+Return a pointer to the next element
 .Fa o
 of type
 .Fa type
@@ -296,7 +296,7 @@ when the caller is in a passively serialized read section \(em see
 .Bl -tag -width abcd
 .\""""""""""""""""
 .It Fn PSLIST_READER_FIRST head type NAME
-Returns a pointer to the first element
+Return a pointer to the first element
 .Fa o
 of type
 .Fa type
@@ -309,7 +309,7 @@ or
 if the list is empty.
 .\""""""""""""""""
 .It Fn PSLIST_READER_NEXT element type NAME
-Returns a pointer to the next element
+Return a pointer to the next element
 .Fa o
 of type
 .Fa type
