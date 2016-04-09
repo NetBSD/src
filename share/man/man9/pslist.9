@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.4 2016/04/09 13:34:33 uwe Exp $
+.\"	$NetBSD: pslist.9,v 1.5 2016/04/09 13:38:20 uwe Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,7 +127,7 @@ before it may be reused.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh EXCLUSIVE OPERATIONS
 The following operations may be performed on list heads and entries
-when the caller has exclusive access to them -- no parallel writers or
+when the caller has exclusive access to them \(em no parallel writers or
 readers may have access to the same objects.
 .\""""""""""""""""
 .Bl -tag -width abcd
@@ -185,7 +185,7 @@ early; see
 The following operations may be performed on list heads and entries
 when the caller has exclusive
 .Em write
-access to them -- parallel readers for the same objects are allowed,
+access to them \(em parallel readers for the same objects are allowed,
 but no parallel writers.
 .\""""""""""""""""
 .Bl -tag -width abcd
@@ -291,7 +291,7 @@ The caller must not modify the list while iterating over it.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh READER OPERATIONS
 The following operations may be performed on list heads and entries
-when the caller is in a passively serialized read section -- see
+when the caller is in a passively serialized read section \(em see
 .Xr pserialize 9 .
 .Bl -tag -width abcd
 .\""""""""""""""""
