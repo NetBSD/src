@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.84 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.85 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.84 2016/03/23 22:27:48 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.85 2016/04/09 18:43:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -558,7 +558,7 @@ el_source(EditLine *el, const char *fname)
 		if (!dptr)
 			continue;
 		/* loop until first non-space char or EOL */
-		while (*dptr != '\0' && Isspace(*dptr))
+		while (*dptr != '\0' && iswspace(*dptr))
 			dptr++;
 		if (*dptr == '#')
 			continue;   /* ignore, this is a comment line */
@@ -626,7 +626,7 @@ el_editmode(EditLine *el, int argc, const Char **argv)
 		el->el_flags |= EDIT_DISABLED;
 	}
 	else {
-		(void) fprintf(el->el_errfile, "edit: Bad value `" FSTR "'.\n",
+		(void) fprintf(el->el_errfile, "edit: Bad value `%ls'.\n",
 		    how);
 		return -1;
 	}
