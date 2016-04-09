@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.1 2016/04/09 04:39:46 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.2 2016/04/09 05:16:23 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -375,7 +375,7 @@ Create and publish a frotz:
 
 	/* Publish it.  */
 	mutex_enter(\*[Am]frobbotzim.lock);
-	PSLIST_WRITER_INSERT_HEAD(\*[Am]frobbotzim.head, f, f_entry);
+	PSLIST_WRITER_INSERT_HEAD(\*[Am]frobbotzim.list, f, f_entry);
 	mutex_exit(\*[Am]frobbotzim.lock);
 .Ed
 .Pp
@@ -387,7 +387,7 @@ Look up a frotz and return its associated datum:
 	int s;
 
 	s = pserialize_read_enter();
-	PSLIST_READER_FOREACH(f, \*[Am]frobbotzim.head, struct frotz, f_entry) {
+	PSLIST_READER_FOREACH(f, \*[Am]frobbotzim.list, struct frotz, f_entry) {
 		if (f->f_key == key) {
 			*datump = f->f_datum;
 			error = 0;
