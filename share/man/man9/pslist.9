@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.7 2016/04/09 15:09:42 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.8 2016/04/09 17:34:57 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,12 +72,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-data structure is a linked list like the
-.Fn LIST_*
-operations in
-.Xr queue 3 ,
-augmented with memory barriers so that any number of readers can safely
-run in parallel with at most one writer, without needing any
+data structure is a linked list like
+.Nm list
+in
+.Xr queue 3 .
+It is augmented with memory barriers so that any number of readers can
+safely run in parallel with at most one writer, without needing any
 interprocessor synchronization such as locks or atomics on the reader
 side.
 .\"
