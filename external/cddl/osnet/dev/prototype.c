@@ -1,4 +1,4 @@
-/*	$NetBSD: prototype.c,v 1.3 2015/03/09 03:43:02 riastradh Exp $	*/
+/*	$NetBSD: prototype.c,v 1.4 2016/04/09 15:18:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: prototype.c,v 1.3 2015/03/09 03:43:02 riastradh Exp $");
+__RCSID("$NetBSD: prototype.c,v 1.4 2016/04/09 15:18:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,6 +168,10 @@ dtrace_prototype_modcmd(modcmd_t cmd, void *data)
 		return prototype_init();
 	case MODULE_CMD_FINI:
 		return prototype_fini();
+	case MODULE_CMD_AUTOUNLOAD:
+		if (prototype_users)
+			return EBUSY;
+		return 0;
 	default:
 		return ENOTTY;
 	}
