@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.29 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.30 2016/04/09 18:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.29 2016/03/23 22:27:48 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.30 2016/04/09 18:43:17 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -47,7 +47,7 @@ el_getc(EditLine *el, char *cp)
 	*cp = '\0';
 	if (num_read <= 0)
 		return num_read;
-	num_read = ct_wctob(wc);
+	num_read = wctob(wc);
 	if (num_read == EOF) {
 		errno = ERANGE;
 		return -1;
@@ -96,7 +96,7 @@ el_parse(EditLine *el, int argc, const char *argv[])
 	if (!wargv)
 		return -1;
 	ret = el_wparse(el, argc, wargv);
-	ct_free_argv(wargv);
+	el_free(wargv);
 
 	return ret;
 }
@@ -206,7 +206,7 @@ el_set(EditLine *el, int op, ...)
 		default:
 			ret = -1;
 		}
-		ct_free_argv(wargv);
+		el_free(wargv);
 		break;
 	}
 
@@ -228,7 +228,7 @@ el_set(EditLine *el, int op, ...)
 		/* XXX: The two strdup's leak */
 		ret = map_addfunc(el, Strdup(wargv[0]), Strdup(wargv[1]),
 		    func);
-		ct_free_argv(wargv);
+		el_free(wargv);
 		break;
 	}
 	case EL_HIST: {           /* hist_fun_t, const char * */
