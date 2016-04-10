@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.27 2016/04/10 15:42:43 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.28 2016/04/10 15:44:56 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.27 2016/04/10 15:42:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.28 2016/04/10 15:44:56 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -637,7 +637,6 @@ uhub_explore(struct usbd_device *dev)
 			usb_disconnect_port(up, sc->sc_dev, DETACH_FORCE);
 			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
-			continue;
 		}
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
 			/* Nothing connected, just ignore it. */
