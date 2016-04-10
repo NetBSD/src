@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.58 2016/04/10 15:47:58 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.59 2016/04/10 15:48:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.58 2016/04/10 15:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.59 2016/04/10 15:48:34 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1792,7 +1792,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	xr = &xs->xs_ep[dci].xe_tr;
 
 	/* sanity check */
-	KASSERTMSG(xs->xs_idx != 0 && xs->xs_idx < sc->sc_maxslots,
+	KASSERTMSG(xs->xs_idx != 0 && xs->xs_idx <= sc->sc_maxslots,
 	    "invalid xs_idx %u slot %u", xs->xs_idx, slot);
 
 	if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
