@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.26 2016/04/10 15:40:25 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.27 2016/04/10 15:42:43 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.26 2016/04/10 15:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.27 2016/04/10 15:42:43 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.26 2016/04/10 15:40:25 skrll Exp $"
 #ifndef UHUB_DEBUG
 #define uhubdebug 0
 #else
-static int uhubdebug = 10;
+static int uhubdebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_uhub_setup, "sysctl hw.uhub setup")
 {
