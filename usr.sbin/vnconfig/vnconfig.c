@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.42 2014/05/23 20:50:16 dholland Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.42.2.1 2016/04/10 09:43:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,13 +73,11 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/bitops.h>
 
 #include <dev/vndvar.h>
 
 #include <disktab.h>
 #include <err.h>
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -89,28 +87,36 @@
 #include <unistd.h>
 #include <util.h>
 #include <paths.h>
+#include <limits.h>
 
 #define VND_CONFIG	1
 #define VND_UNCONFIG	2
 #define VND_GET		3
 
+/* with -l we always print at least this many entries */
+#define	DUMMY_FREE	4
+
 static int	verbose = 0;
 static int	readonly = 0;
 static int	force = 0;
 static int	compressed = 0;
+static int	minimum = DUMMY_FREE;
 static char	*tabname;
 
-static void	show(int, int);
+static int	show(int, int, const char * const);
 static int	config(char *, char *, char *, int);
 static int	getgeom(struct vndgeom *, char *);
 __dead static void	usage(void);
+static void	show_unused(int);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, rv, action = VND_CONFIG;
+	char *end;
+	unsigned long cnt;
 
-	while ((ch = getopt(argc, argv, "Fcf:lrt:uvz")) != -1) {
+	while ((ch = getopt(argc, argv, "Fcf:lm:rt:uvz")) != -1) {
 		switch (ch) {
 		case 'F':
 			force = 1;
@@ -124,6 +130,12 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			action = VND_GET;
+			break;
+		case 'm':
+			cnt = strtoul(optarg, &end, 10);
+			if (cnt >= INT_MAX || end == optarg || *end != '\0')
+				usage();
+			minimum = (int)cnt;
 			break;
 		case 'r':
 			readonly = 1;
@@ -161,51 +173,58 @@ main(int argc, char *argv[])
 			usage();
 		rv = config(argv[0], NULL, NULL, action);
 	} else { /* VND_GET */
-		int n, v;
+		int n, vdisk;
 		const char *vn;
 		char path[64];
 
-		if (argc != 0 && argc != 1)
-			usage();
+		if (argc == 0) {
+			vn = "vnd0";
 
-		vn = argc ? argv[0] : "vnd0";
-
-		v = opendisk(vn, O_RDONLY, path, sizeof(path), 0);
-		if (v == -1)
-			err(1, "open: %s", vn);
-
-		if (argc)
-			show(v, -1);
-		else {
-			DIR *dirp;
-			struct dirent *dp;
-			__BITMAP_TYPE(, uint32_t, 65536) bm;
-
-			__BITMAP_ZERO(&bm);
-
-			if ((dirp = opendir(_PATH_DEV)) == NULL)
-				err(1, "opendir: %s", _PATH_DEV);
-
-			while ((dp = readdir(dirp)) != NULL) {
-				if (strncmp(dp->d_name, "rvnd", 4) != 0)
-					continue;
-				n = atoi(dp->d_name + 4);
-				if (__BITMAP_ISSET(n, &bm))
-					continue;
-				__BITMAP_SET(n, &bm);
-				show(v, n);
+			vdisk = opendisk(vn, O_RDONLY, path, sizeof(path), 0);
+			if (vdisk == -1) {
+				if (minimum == 0)
+					return 1;
+				err(1, "open: %s", vn);
 			}
 
-			closedir(dirp);
+			for (n = 0; show(vdisk, n, 0); n++)
+				continue;
+			while (n < minimum)
+				show_unused(n++);
+			close(vdisk);
+			return 0;
 		}
-		close(v);
+			
 		rv = 0;
+		while (--argc >= 0) {
+			vn = *argv++;
+
+			vdisk = opendisk(vn, O_RDONLY, path, sizeof(path), 0);
+			if (vdisk == -1) {
+				warn("open: %s", vn);
+				rv = 1;
+				continue;
+			}
+
+			if (!show(vdisk, -1, vn))
+				rv = 1;
+			close(vdisk);
+		}
 	}
 	return rv;
 }
 
 static void
-show(int v, int n)
+show_unused(int n)
+{
+	if (minimum == 0) 
+		return;
+
+	printf("vnd%d: not in use\n", n);
+}
+
+static int
+show(int v, int n, const char * const name)
 {
 	struct vnd_user vnu;
 	char *dev;
@@ -213,12 +232,18 @@ show(int v, int n)
 	int i, nmount;
 
 	vnu.vnu_unit = n;
-	if (ioctl(v, VNDIOCGET, &vnu) == -1)
-		err(1, "VNDIOCGET");
+	if (ioctl(v, VNDIOCGET, &vnu) == -1) {
+		if (errno != ENXIO) {
+			if (n != -1)
+				err(1, "VNDIOCGET");
+			warn("%s: VNDIOCGET", name);
+		}
+		return 0;
+	}
 
 	if (vnu.vnu_ino == 0) {
-		printf("vnd%d: not in use\n", vnu.vnu_unit);
-		return;
+		show_unused(vnu.vnu_unit);
+		return -1;
 	}
 
 	printf("vnd%d: ", vnu.vnu_unit);
@@ -251,6 +276,7 @@ show(int v, int n)
 		    (unsigned long long)minor(vnu.vnu_dev));
 
 	printf("inode %llu\n", (unsigned long long)vnu.vnu_ino);
+	return 1;
 }
 
 static int
@@ -399,9 +425,9 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig [-crvz] [-f disktab] [-t typename] vnode_disk"
-		" regular-file [geomspec]\n",
+	    "usage: vnconfig [-crvz] [-f dsktab] [-t type] vnode_disk"
+		" reg-file [geomspec]\n",
 	    "       vnconfig -u [-Fv] vnode_disk\n"
-	    "       vnconfig -l [vnode_disk]\n");
+	    "       vnconfig -l [-m num | vnode_disk...]\n");
 	exit(1);
 }

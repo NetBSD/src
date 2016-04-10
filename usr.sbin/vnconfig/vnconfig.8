@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.39.6.1 2015/11/08 02:05:25 riz Exp $
+.\"	$NetBSD: vnconfig.8,v 1.39.6.2 2016/04/10 09:43:37 martin Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,7 @@
 .Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm
+.\" Fcf:lm:rt:uvz
 .Op Fl crvz
 .Op Fl f Ar disktab
 .Op Fl t Ar typename
@@ -81,7 +82,8 @@
 .Ar vnode_disk
 .Nm
 .Fl l
-.Op Ar vnode_disk
+.Op Fl m Ar min
+.Op Ar vnode_disk ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -124,7 +126,7 @@ If geometry is not specified, the kernel will choose a default based on 1MB
 cylinders.
 .Ar secsize
 is the number of bytes per sector.
-It must be an even multiple of 512.
+It must be a power of two, and at least 512.
 .Ar nsectors
 is the number of sectors per track.
 .Ar ntracks
@@ -144,9 +146,28 @@ instead of in
 .Pa /etc/disktab .
 .It Fl l
 List the vnd devices and indicate which ones are in use.
-If a specific
-.Ar vnode_disk
-is given, then only that will be described.
+If one or more specific
+.Ar vnode_disks
+are given, then only those will be described.
+.It Fl m Ar min
+Together with
+.Fl l
+and if no specific devices are given,
+causes at least
+.Ar min
+devices to be listed.
+The default for
+.Ar min
+is 4,
+but all vnd devices up to (and sometimes just beyond)
+the highest numbered vnd device configured since
+the system last booted will be listed.
+If
+.Ar min
+is set to 0,
+then only vnd devices currently in use will be shown.
+.It Fl r
+Configure the device as read-only.
 .It Fl t Ar typename
 If configuring the device, look up
 .Ar typename
@@ -156,8 +177,6 @@ and use the geometry specified in the entry.
 This option and the
 .Ar geomspec
 argument are mutually exclusive.
-.It Fl r
-Configure the device as read-only.
 .It Fl u
 Unconfigures the device.
 .It Fl v
@@ -172,9 +191,25 @@ See the
 manpage on how to create such an image.
 .El
 .Pp
-If no action option is given,
+If no action option
+.Op Fl clu
+is given,
 .Fl c
 is assumed.
+.Sh EXIT STATUS
+.Nm
+will exit with status 0 if the operation requested
+completed successfully,
+or 1 otherwise.
+Unsuccessful completion can be caused by unknown or
+incorrectly used options;
+attempting to configure a vnd that is already configured;
+or unconfigure one that is not, or without
+.Fl F ,
+one which is still in use;
+or if devices are specified that do not exist or are not
+.Xr vnd 4
+devices, giving an improper geometry, etc.
 .Sh FILES
 .Bl -tag -width /etc/disktab -compact
 .It Pa /dev/rvnd??
@@ -190,6 +225,10 @@ Configures the vnode disk
 .Pa vnd0 .
 Please note that use of the second form of the command is discouraged because
 it requires knowledge of the raw partition which varies between architectures.
+For the first form, be aware that there must not be a file
+.Ar vnd0
+in the current directory, or it will be assumed to be the vnd device to
+be configured (which will usually fail.)
 .Pp
 .Dl vndconfig vnd0 /tmp/floppy.img 512/18/2/80
 .Pp
@@ -212,6 +251,22 @@ entry in
 Unconfigures the
 .Pa vnd0
 device.
+.Pp
+To obtain status on all vnd devices listed in /dev
+(assuming a system where the
+.Sq d
+partition is the whole device (RAW_PART)), use:
+.Pp
+.Dl vndconfig -l /dev/vnd*d
+.Pp
+Using
+.Dl vndconfig -m0 -l /dev/vnd*d
+will omit those devices that are not in use, whereas
+.Dl vnconfig -l
+will list all devices known to the kernel (at least 4
+without
+.Fl m )
+regardless of what might appear in /dev (or elsewhere.)
 .Sh SEE ALSO
 .Xr vndcompress 1 ,
 .Xr opendisk 3 ,
@@ -229,4 +284,5 @@ It was renamed to
 in
 .Nx 7.0
 for consistency with other similar commands.
-(The original name was also retained for backwards compatability.)
+(The original name was also retained as an alternative
+for backwards compatibility.)
