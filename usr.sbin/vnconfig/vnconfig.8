@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.41 2016/04/10 09:04:09 martin Exp $
+.\"	$NetBSD: vnconfig.8,v 1.42 2016/04/10 09:49:14 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -196,6 +196,12 @@ If no action option
 is given,
 .Fl c
 is assumed.
+.Sh FILES
+.Bl -tag -width /etc/disktab -compact
+.It Pa /dev/rvnd??
+.It Pa /dev/vnd??
+.It Pa /etc/disktab
+.El
 .Sh EXIT STATUS
 .Nm
 will exit with status 0 if the operation requested
@@ -210,12 +216,6 @@ one which is still in use;
 or if devices are specified that do not exist or are not
 .Xr vnd 4
 devices, giving an improper geometry, etc.
-.Sh FILES
-.Bl -tag -width /etc/disktab -compact
-.It Pa /dev/rvnd??
-.It Pa /dev/vnd??
-.It Pa /etc/disktab
-.El
 .Sh EXAMPLES
 .Dl vndconfig vnd0 /tmp/diskimage
 or
@@ -252,10 +252,13 @@ Unconfigures the
 .Pa vnd0
 device.
 .Pp
-To obtain status on all vnd devices listed in /dev
+To obtain status on all vnd devices listed in
+.Pa /dev
 (assuming a system where the
 .Sq d
-partition is the whole device (RAW_PART)), use:
+partition is the whole device
+.Pq Dv RAW_PART ) ,
+use:
 .Pp
 .Dl vndconfig -l /dev/vnd*d
 .Pp
@@ -266,7 +269,9 @@ will omit those devices that are not in use, whereas
 will list all devices known to the kernel (at least 4
 without
 .Fl m )
-regardless of what might appear in /dev (or elsewhere.)
+regardless of what might appear in
+.Pa /dev
+(or elsewhere.)
 .Sh SEE ALSO
 .Xr vndcompress 1 ,
 .Xr opendisk 3 ,
