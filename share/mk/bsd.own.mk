@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.918 2016/04/04 07:02:31 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.919 2016/04/10 15:32:27 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1048,6 +1048,10 @@ MKZFS?=		yes
 MKDTRACE?=	yes
 MKCTF?=		yes
 .endif
+#
+# PIE is enabled on amd64 by default
+#
+MKPIE?=		yes
 #
 # MK* options which default to "yes".
 #
