@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.13 2016/01/07 20:09:43 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.14 2016/04/10 21:00:53 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -220,7 +220,7 @@ struct dhcp_state {
 	struct in_addr dst;
 	uint8_t added;
 
-	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE + (IF_SSIDSIZE * 4)];
+	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE + (IF_SSIDLEN * 4)];
 	struct timespec started;
 	unsigned char *clientid;
 	struct authstate auth;
