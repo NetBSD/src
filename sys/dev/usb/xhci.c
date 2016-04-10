@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.56 2016/04/10 15:32:26 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.57 2016/04/10 15:46:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.56 2016/04/10 15:32:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.57 2016/04/10 15:46:46 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1805,8 +1805,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		/* trb_0 range sanity check */
 		if (trb_0 < trbp ||
 		    (trb_0 - trbp) % sizeof(struct xhci_trb) != 0 ||
-		    (trb_0 - trbp) / sizeof(struct xhci_trb) >=
-		     xr->xr_ntrb) {
+		    (trb_0 - trbp) / sizeof(struct xhci_trb) >= xr->xr_ntrb) {
 			DPRINTFN(1, "invalid trb_0 0x%"PRIx64" trbp 0x%"PRIx64,
 			    trb_0, trbp, 0, 0);
 			return;
@@ -2287,7 +2286,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 			USETW(dev->ud_ep0desc.wMaxPacketSize,
 			    (1 << dd->bMaxPacketSize));
 		} else
-	 		USETW(dev->ud_ep0desc.wMaxPacketSize,
+			USETW(dev->ud_ep0desc.wMaxPacketSize,
 			    dd->bMaxPacketSize);
 		DPRINTFN(4, "bMaxPacketSize %u", dd->bMaxPacketSize, 0, 0, 0);
 		xhci_update_ep0_mps(sc, xs,
@@ -3486,8 +3485,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 static void
 xhci_device_intr_done(struct usbd_xfer *xfer)
 {
-	struct xhci_softc * const sc __diagused =
-		XHCI_XFER2SC(xfer);
+	struct xhci_softc * const sc __diagused = XHCI_XFER2SC(xfer);
 #ifdef USB_DEBUG
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
@@ -3516,8 +3514,7 @@ xhci_device_intr_done(struct usbd_xfer *xfer)
 static void
 xhci_device_intr_abort(struct usbd_xfer *xfer)
 {
-	struct xhci_softc * const sc __diagused =
-				    XHCI_XFER2SC(xfer);
+	struct xhci_softc * const sc __diagused = XHCI_XFER2SC(xfer);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
