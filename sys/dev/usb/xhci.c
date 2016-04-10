@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.60 2016/04/10 15:49:26 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.61 2016/04/10 15:50:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.60 2016/04/10 15:49:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.61 2016/04/10 15:50:24 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2699,7 +2699,7 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot, int route, int rhport)
 	uint32_t mps = UGETW(dev->ud_ep0desc.wMaxPacketSize);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %u speed %d rhport %d route %05x",
+	DPRINTFN(4, "slot %u speed %d route %05x rhport %d",
 	    slot, dev->ud_speed, route, rhport);
 
 	xs = &sc->sc_slots[slot];
