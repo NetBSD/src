@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.45 2016/04/04 10:04:34 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.46 2016/04/10 12:47:04 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -2229,4 +2229,14 @@ external/bsd/bind/include/isc/platform.h	patch
 
 	Disable SIT (Source Identity Token).
 	[spz, ticket #1151]
+
+usr.sbin/vnconfig/vnconfig.8			1.41
+usr.sbin/vnconfig/vnconfig.c			1.43-1.44
+
+	Since now the kernel returns ENXIO again for devices exceeding the
+	number of devices configured in the kernel, use that instead of
+	scanning /dev.
+	Cosmetic tweaks to vncfonfig -l output to restore compatibility
+	for old scripts trying to find free vnodes.
+	[christos, ticket #1076]
 
