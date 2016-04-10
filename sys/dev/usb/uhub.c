@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.24 2016/03/29 08:42:41 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.25 2016/04/10 15:39:28 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.24 2016/03/29 08:42:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.25 2016/04/10 15:39:28 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.24 2016/03/29 08:42:41 skrll Exp $"
 #ifndef UHUB_DEBUG
 #define uhubdebug 0
 #else
-static int uhubdebug = 0;
+static int uhubdebug = 10;
 
 SYSCTL_SETUP(sysctl_hw_uhub_setup, "sysctl hw.uhub setup")
 {
@@ -671,6 +671,10 @@ uhub_explore(struct usbd_device *dev)
 			continue;
 		}
 #endif
+		/*
+		 * Use the port status from the reset to check for the device
+		 * disappearing, the port enable status, and the port speed
+		 */
 		status = UGETW(up->up_status.wPortStatus);
 		change = UGETW(up->up_status.wPortChange);
 		DPRINTF("hub %d port %d after reset: s/c=%x/%x",
