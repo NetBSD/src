@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.18 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.19 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -92,28 +92,38 @@ int
 if_opensockets(struct dhcpcd_ctx *ctx)
 {
 
-	if ((ctx->link_fd = if_openlinksocket()) == -1)
+	if (if_opensockets_os(ctx) == -1)
 		return -1;
 
 	/* We use this socket for some operations without INET. */
-	ctx->pf_inet_fd = xsocket(PF_INET, SOCK_DGRAM, 0, O_CLOEXEC);
+	ctx->pf_inet_fd = xsocket(PF_INET, SOCK_DGRAM, 0, SOCK_CLOEXEC);
 	if (ctx->pf_inet_fd == -1)
 		return -1;
 
-#if defined(INET6) && defined(BSD)
-	ctx->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM, 0, O_CLOEXEC);
-	/* Don't return an error so we at least work on kernels witout INET6
-	 * even though we expect INET6 support.
-	 * We will fail noisily elsewhere anyway. */
-#endif
-
 #ifdef IFLR_ACTIVE
-	ctx->pf_link_fd = xsocket(PF_LINK, SOCK_DGRAM, 0, O_CLOEXEC);
+	ctx->pf_link_fd = xsocket(PF_LINK, SOCK_DGRAM, 0, SOCK_CLOEXEC);
 	if (ctx->pf_link_fd == -1)
 		return -1;
 #endif
 
 	return 0;
+}
+
+void
+if_closesockets(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->pf_inet_fd != -1)
+		close(ctx->pf_inet_fd);
+#ifdef IFLR_ACTIVE
+	if (ctx->pf_link_fd != -1)
+		close(ctx->pf_link_fd);
+#endif
+
+	if (ctx->priv) {
+		if_closesockets_os(ctx);
+		free(ctx->priv);
+	}
 }
 
 int
@@ -179,7 +189,7 @@ if_hasconf(struct dhcpcd_ctx *ctx, const char *ifname)
 	return 0;
 }
 
-static void if_learnaddrs1(struct dhcpcd_ctx *ctx, struct if_head *ifs,
+static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
     struct ifaddrs *ifaddrs)
 {
 	struct ifaddrs *ifa;
@@ -201,10 +211,8 @@ static void if_learnaddrs1(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			addr = (const struct sockaddr_in *)
-			    (void *)ifa->ifa_addr;
-			net = (const struct sockaddr_in *)
-			    (void *)ifa->ifa_netmask;
+			addr = (void *)ifa->ifa_addr;
+			net = (void *)ifa->ifa_netmask;
 			if (ifa->ifa_flags & IFF_POINTOPOINT)
 				dst = (const struct sockaddr_in *)
 				    (void *)ifa->ifa_dstaddr;
@@ -219,8 +227,8 @@ static void if_learnaddrs1(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 #ifdef INET6
 		case AF_INET6:
-			sin6 = (struct sockaddr_in6 *)(void *)ifa->ifa_addr;
-			net6 = (struct sockaddr_in6 *)(void *)ifa->ifa_netmask;
+			sin6 = (void *)ifa->ifa_addr;
+			net6 = (void *)ifa->ifa_netmask;
 #ifdef __KAME__
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				/* Remove the scope from the address */
@@ -294,7 +302,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (ifp)
 			continue;
 
-		active = 1;
+		active = IF_ACTIVE_USER;
 		if (argc > 0) {
 			for (i = 0; i < argc; i++) {
 #ifdef __linux__
@@ -311,7 +319,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 #endif
 			}
 			if (i == argc) {
-				active = 0;
+				active = IF_INACTIVE;
 				p =  ifa->ifa_name;
 #ifdef __linux__
 				strlcpy(ifn, ifa->ifa_name, sizeof(ifn));
@@ -334,12 +342,12 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			if (!fnmatch(ctx->ifdv[i], p, 0))
 				break;
 		if (i < ctx->ifdc)
-			active = 0;
+			active = IF_INACTIVE;
 		for (i = 0; i < ctx->ifac; i++)
 			if (!fnmatch(ctx->ifav[i], p, 0))
 				break;
 		if (ctx->ifac && i == ctx->ifac)
-			active = 0;
+			active = IF_INACTIVE;
 
 #ifdef PLUGIN_DEV
 		/* Ensure that the interface name has settled */
@@ -351,7 +359,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) {
 			if ((argc == 0 || argc == -1) &&
 			    ctx->ifac == 0 && !if_hasconf(ctx, p))
-				active = 0;
+				active = IF_INACTIVE;
 		}
 
 		if (if_vimaster(ctx, p) == 1) {
@@ -377,7 +385,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 
 		if (ifa->ifa_addr != NULL) {
 #ifdef AF_LINK
-			sdl = (const struct sockaddr_dl *)(void *)ifa->ifa_addr;
+			sdl = (const void *)ifa->ifa_addr;
 
 #ifdef IFLR_ACTIVE
 			/* We need to check for active address */
@@ -417,7 +425,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 					    " interface type and"
 					    " no config",
 					    ifp->name);
-					active = 0;
+					active = IF_INACTIVE;
 				}
 				/* FALLTHROUGH */
 #endif
@@ -445,7 +453,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 				if ((argc == 0 || argc == -1) &&
 				    ctx->ifac == 0 &&
 				    !if_hasconf(ctx, ifp->name))
-					active = 0;
+					active = IF_INACTIVE;
 				if (active)
 					logger(ifp->ctx, LOG_WARNING,
 					    "%s: unsupported"
@@ -461,7 +469,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 #endif
 			memcpy(ifp->hwaddr, CLLADDR(sdl), ifp->hwlen);
 #elif AF_PACKET
-			sll = (const struct sockaddr_ll *)(void *)ifa->ifa_addr;
+			sll = (const void *)ifa->ifa_addr;
 			ifp->index = (unsigned int)sll->sll_ifindex;
 			ifp->family = sll->sll_hatype;
 			ifp->hwlen = sll->sll_halen;
@@ -479,7 +487,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (ifp->family != ARPHRD_ETHER) {
 			if ((argc == 0 || argc == -1) &&
 			    ctx->ifac == 0 && !if_hasconf(ctx, ifp->name))
-				active = 0;
+				active = IF_INACTIVE;
 			switch (ifp->family) {
 			case ARPHRD_IEEE1394:
 			case ARPHRD_INFINIBAND:
@@ -530,6 +538,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
 		if (ioctl(ctx->pf_inet_fd, SIOCGIFPRIORITY, &ifr) == 0)
 			ifp->metric = (unsigned int)ifr.ifr_metric;
+		if_getssid(ifp);
 #else
 		/* We reserve the 100 range for virtual interfaces, if and when
 		 * we can work them out. */
@@ -544,7 +553,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		TAILQ_INSERT_TAIL(ifs, ifp, next);
 	}
 
-	if_learnaddrs1(ctx, ifs, ifaddrs);
+	if_learnaddrs(ctx, ifs, ifaddrs);
 	freeifaddrs(ifaddrs);
 
 	return ifs;
@@ -567,7 +576,7 @@ if_findindexname(struct if_head *ifaces, unsigned int idx, const char *name)
 		}
 	}
 
-	errno = ESRCH;
+	errno = ENXIO;
 	return NULL;
 }
 
@@ -609,9 +618,9 @@ if_cmp(const struct interface *si, const struct interface *ti)
 #endif
 
 	/* Check active first */
-	if (si->active && !ti->active)
+	if (si->active > ti->active)
 		return -1;
-	if (!si->active && ti->active)
+	if (si->active < ti->active)
 		return 1;
 
 	/* Check carrier status next */
@@ -679,25 +688,37 @@ if_sortinterfaces(struct dhcpcd_ctx *ctx)
 int
 xsocket(int domain, int type, int protocol, int flags)
 {
-#ifdef SOCK_CLOEXEC
-	if (flags & O_CLOEXEC)
-		type |= SOCK_CLOEXEC;
-	if (flags & O_NONBLOCK)
-		type |= SOCK_NONBLOCK;
+	int s;
+#if !defined(HAVE_SOCK_CLOEXEC) || !defined(HAVE_SOCK_NONBLOCK)
+	int xflags;
+#endif
 
-	return socket(domain, type, protocol);
-#else
-	int s, xflags;
+#ifdef HAVE_SOCK_CLOEXEC
+	if (flags & SOCK_CLOEXEC)
+		type |= SOCK_CLOEXEC;
+#endif
+#ifdef HAVE_SOCK_NONBLOCK
+	if (flags & SOCK_NONBLOCK)
+		type |= SOCK_NONBLOCK;
+#endif
 
 	if ((s = socket(domain, type, protocol)) == -1)
 		return -1;
-	if ((flags & O_CLOEXEC) && ((xflags = fcntl(s, F_GETFD, 0)) == -1 ||
+
+#ifndef HAVE_SOCK_CLOEXEC
+	if ((flags & SOCK_CLOEXEC) && ((xflags = fcntl(s, F_GETFD)) == -1 ||
 	    fcntl(s, F_SETFD, xflags | FD_CLOEXEC) == -1))
 		goto out;
-	if ((flags & O_NONBLOCK) && ((xflags = fcntl(s, F_GETFL, 0)) == -1 ||
+#endif
+#ifndef HAVE_SOCK_NONBLOCK
+	if ((flags & SOCK_NONBLOCK) && ((xflags = fcntl(s, F_GETFL)) == -1 ||
 	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
+#endif
+
 	return s;
+
+#if !defined(HAVE_SOCK_CLOEXEC) || !defined(HAVE_SOCK_NONBLOCK)
 out:
 	close(s);
 	return -1;
