@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.7 2015/10/22 11:15:42 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.8 2016/04/10 15:37:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -42,7 +42,7 @@ struct xhci_xfer {
 #define XHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define XHCI_PIPE2SC(pipe)	XHCI_BUS2SC((pipe)->up_dev->ud_bus)
 #define XHCI_XFER2SC(xfer)	XHCI_BUS2SC((xfer)->ux_bus)
-#define XHCI_XPIPE2SC(d)	XHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
+#define XHCI_XPIPE2SC(d)	XHCI_BUS2SC((d)->xp_pipe.up_dev->ud_bus)
 
 #define XHCI_XFER2XXFER(xfer)	((struct xhci_xfer *)(xfer))
 
