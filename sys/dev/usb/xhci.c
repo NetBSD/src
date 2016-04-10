@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.57 2016/04/10 15:46:46 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.58 2016/04/10 15:47:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.57 2016/04/10 15:46:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.58 2016/04/10 15:47:58 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1950,8 +1950,6 @@ xhci_handle_event(struct xhci_softc * const sc,
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	KASSERT(mutex_owned(&sc->sc_lock));
-
 	trb_0 = le64toh(trb->trb_0);
 	trb_2 = le32toh(trb->trb_2);
 	trb_3 = le32toh(trb->trb_3);
@@ -2000,6 +1998,8 @@ xhci_softintr(void *v)
 	int i, j, k;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	i = er->xr_ep;
 	j = er->xr_cs;
