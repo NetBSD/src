@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.40 2016/04/10 15:26:18 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.41 2016/04/10 15:41:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.40 2016/04/10 15:26:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.41 2016/04/10 15:41:05 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -137,8 +137,7 @@ int pax_aslr_debug;
 /* flag set means disable */
 int pax_aslr_flags;
 #define PAX_ASLR_STACK	1
-#define PAX_ASLR_EXEC	2
-#define PAX_ASLR_MMAP	4
+#define PAX_ASLR_MMAP	2
 #endif
 
 static int pax_segvguard_enabled = 1;
