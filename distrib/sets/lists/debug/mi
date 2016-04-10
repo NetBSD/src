@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.150 2016/04/10 21:40:05 kamil Exp $
+# $NetBSD: mi,v 1.151 2016/04/10 21:45:33 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -684,7 +684,7 @@
 ./usr/libdata/debug/usr/bin/pawd.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/bin/paxctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/pcc.debug		comp-c-debug		pcc,debug
-./usr/libdata/debug/usr/bin/pcpp.debug		comp-c-debug		pcc,debug
+./usr/libdata/debug/usr/bin/pcpp.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/pfbtops.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/pic.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/pigz.debug		comp-util-debug		debug
