@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.68 2015/09/24 14:39:37 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.69 2016/04/10 19:05:50 roy Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -103,6 +103,9 @@ time_t		parsedate(const char *, const time_t *, const int *)
     __RENAME(__parsedate50);
 #endif
 int		pidfile(const char *);
+pid_t		pidfile_lock(const char *);
+pid_t		pidfile_read(const char *);
+int		pidfile_clean(void);
 int		pidlock(const char *, int, pid_t *, const char *);
 int		pw_abort(void);
 #ifndef __LIBC12_SOURCE__
