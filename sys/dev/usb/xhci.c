@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.64 2016/04/10 21:30:41 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.65 2016/04/10 22:16:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.64 2016/04/10 21:30:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.65 2016/04/10 22:16:00 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -146,8 +146,6 @@ static usbd_status xhci_set_dequeue(struct usbd_pipe *);
 
 static usbd_status xhci_do_command(struct xhci_softc * const,
     struct xhci_trb * const, int);
-static usbd_status xhci_do_command1(struct xhci_softc * const,
-    struct xhci_trb * const, int, int);
 static usbd_status xhci_do_command_locked(struct xhci_softc * const,
     struct xhci_trb * const, int);
 static usbd_status xhci_init_slot(struct usbd_device *, uint32_t, uint32_t, int);
@@ -2475,8 +2473,8 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
  * trb_0 in CMD_COMPLETE TRB and sc->sc_command_addr are identical.
  */
 static usbd_status
-xhci_do_command1(struct xhci_softc * const sc, struct xhci_trb * const trb,
-    int timeout, int locked)
+xhci_do_command_locked(struct xhci_softc * const sc, struct xhci_trb * const trb,
+    int timeout)
 {
 	struct xhci_ring * const cr = &sc->sc_cr;
 	usbd_status err;
@@ -2486,9 +2484,7 @@ xhci_do_command1(struct xhci_softc * const sc, struct xhci_trb * const trb,
 	    trb->trb_0, trb->trb_2, trb->trb_3, 0);
 
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
-
-	if (!locked)
-		mutex_enter(&sc->sc_lock);
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	/* XXX KASSERT may fire when cv_timedwait unlocks sc_lock */
 	KASSERT(sc->sc_command_addr == 0);
@@ -2528,8 +2524,6 @@ xhci_do_command1(struct xhci_softc * const sc, struct xhci_trb * const trb,
 
 timedout:
 	sc->sc_command_addr = 0;
-	if (!locked)
-		mutex_exit(&sc->sc_lock);
 	return err;
 }
 
@@ -2537,19 +2531,12 @@ static usbd_status
 xhci_do_command(struct xhci_softc * const sc, struct xhci_trb * const trb,
     int timeout)
 {
-	return xhci_do_command1(sc, trb, timeout, 0);
-}
 
-/*
- * This allows xhci_do_command with already sc_lock held.
- * This is needed as USB stack calls close methods with sc_lock_held.
- * (see usbdivar.h)
- */
-static usbd_status
-xhci_do_command_locked(struct xhci_softc * const sc,
-    struct xhci_trb * const trb, int timeout)
-{
-	return xhci_do_command1(sc, trb, timeout, 1);
+	mutex_enter(&sc->sc_lock);
+	int ret = xhci_do_command_locked(sc, trb, timeout);
+	mutex_exit(&sc->sc_lock);
+
+	return ret;
 }
 
 static usbd_status
