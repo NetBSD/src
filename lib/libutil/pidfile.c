@@ -1,11 +1,11 @@
-/*	$NetBSD: pidfile.c,v 1.11 2015/01/22 19:04:28 christos Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.12 2016/04/10 19:05:50 roy Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe, Matthias Scheler and Julio Merino.
+ * by Jason R. Thorpe, Matthias Scheler, Julio Merino and Roy Marples.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,11 +31,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.11 2015/01/22 19:04:28 christos Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.12 2016/04/10 19:05:50 roy Exp $");
 #endif
 
 #include <sys/param.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
 #include <paths.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -45,131 +48,205 @@ __RCSID("$NetBSD: pidfile.c,v 1.11 2015/01/22 19:04:28 christos Exp $");
 #include <util.h>
 
 static pid_t pidfile_pid;
-static char *pidfile_path;
+static char pidfile_path[PATH_MAX];
+static int pidfile_fd = -1;
 
-/* Deletes an existent pidfile iff it was created by this process. */
+/* Closes pidfile resources.
+ *
+ * Returns 0 on success, otherwise -1. */
+static int
+pidfile_close(void)
+{
+	int error;
+
+	pidfile_pid = 0;
+	error = close(pidfile_fd);
+	pidfile_fd = -1;
+	pidfile_path[0] = '\0';
+	return error;
+}
+
+/* Truncate, close and unlink an existent pidfile,
+ * if and only if it was created by this process.
+ * The pidfile is truncated because we may have dropped permissions
+ * or entered a chroot and thus unable to unlink it.
+ *
+ * Returns 0 on truncation success, otherwise -1. */
+int
+pidfile_clean(void)
+{
+	int error;
+
+	if (pidfile_fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
+
+	if (pidfile_pid != getpid())
+		error = EPERM;
+	else if (ftruncate(pidfile_fd, 0) == -1)
+		error = errno;
+	else {
+		(void) unlink(pidfile_path);
+		error = 0;
+	}
+
+	(void) pidfile_close();
+
+	if (error != 0) {
+		errno = error;
+		return -1;
+	}
+	return 0;
+}
+
+/* atexit shim for pidfile_clean */
 static void
 pidfile_cleanup(void)
 {
 
-	if ((pidfile_path != NULL) && (pidfile_pid == getpid()))
-		(void) unlink(pidfile_path);
+	pidfile_clean();
 }
 
-/* Registers an atexit(3) handler to delete the pidfile we have generated.
- * We only register the handler when we create a pidfile, so we can assume
- * that the pidfile exists.
- *
- * Returns 0 on success or -1 if the handler could not be registered. */
-static int
-register_atexit_handler(void)
-{
-	static bool done = false;
-
-	if (!done) {
-		if (atexit(pidfile_cleanup) < 0)
-			return -1;
-		done = true;
-	}
-
-	return 0;
-}
-
-/* Given a new pidfile name in 'path', deletes any previously-created pidfile
- * if the previous file differs to the new one.
- *
- * If a previous file is deleted, returns 1, which means that a new pidfile
- * must be created.  Otherwise, this returns 0, which means that the existing
- * file does not need to be touched. */
-static int
-cleanup_old_pidfile(const char* path)
-{
-	if (pidfile_path != NULL) {
-		if (strcmp(pidfile_path, path) != 0) {
-			pidfile_cleanup();
-
-			free(pidfile_path);
-			pidfile_path = NULL;
-
-			return 1;
-		} else
-			return 0;
-	} else
-		return 1;
-}
-
-/* Constructs a name for a pidfile in the default location (/var/run).  If
- * 'bname' is NULL, uses the name of the current program for the name of
+/* Constructs a name for a pidfile in the default location (/var/run).
+ * If 'bname' is NULL, uses the name of the current program for the name of
  * the pidfile.
  *
- * Returns a pointer to a dynamically-allocatd string containing the absolute
- * path to the pidfile; NULL on failure. */
-static char *
-generate_varrun_path(const char *bname)
+ * Returns 0 on success, otherwise -1. */
+static int
+pidfile_varrun_path(char *path, size_t len, const char *bname)
 {
-	char *path;
 
 	if (bname == NULL)
 		bname = getprogname();
 
 	/* _PATH_VARRUN includes trailing / */
-	if (asprintf(&path, "%s%s.pid", _PATH_VARRUN, bname) == -1)
-		return NULL;
-	return path;
+	if ((size_t)snprintf(path, len, "%s%s.pid", _PATH_VARRUN, bname) >= len)
+	{
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+	return 0;
 }
 
-/* Creates a pidfile with the provided name.  The new pidfile is "registered"
- * in the global variables pidfile_path and pidfile_pid so that any further
- * call to pidfile(3) can check if we are recreating the same file or a new
- * one.
- *
- * Returns 0 on success or -1 if there is any error. */
-static int
-create_pidfile(const char* path)
+/* Returns the process ID inside path on success, otherwise -1.
+ * If no path is given, use the last pidfile path, othewise the default one. */
+pid_t
+pidfile_read(const char *path)
 {
-	FILE *f;
+	char dpath[PATH_MAX], buf[16], *eptr;
+	int fd, error;
+	ssize_t n;
+	pid_t pid;
 
-	if (register_atexit_handler() == -1)
+	if (path == NULL) {
+		if (pidfile_path[0] != '\0')
+			path = pidfile_path;
+		else if (pidfile_varrun_path(dpath, sizeof(dpath), NULL) == -1)
+			return -1;
+		else
+			path = dpath;
+	}
+
+	if ((fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK)) == -1)
+		return  -1;
+	n = read(fd, buf, sizeof(buf) - 1);
+	error = errno;
+	(void) close(fd);
+	if (n == -1) {
+		errno = error;
 		return -1;
-
-	if (cleanup_old_pidfile(path) == 0)
-		return 0;
-
-	pidfile_path = strdup(path);
-	if (pidfile_path == NULL)
+	}
+	buf[n] = '\0';
+	pid = (pid_t)strtoi(buf, &eptr, 10, 1, INT_MAX, &error);
+	if (error && !(error == ENOTSUP && *eptr == '\n')) {
+		errno = error;
 		return -1;
+	}
+	return pid;
+}
 
-	if ((f = fopen(path, "w")) == NULL) {
-		free(pidfile_path);
-		pidfile_path = NULL;
-		return -1;
+/* Locks the pidfile specified by path and writes the process pid to it.
+ * The new pidfile is "registered" in the global variables pidfile_fd,
+ * pidfile_path and pidfile_pid so that any further call to pidfile_lock(3)
+ * can check if we are recreating the same file or a new one.
+ *
+ * Returns 0 on success, otherwise the pid of the process who owns the
+ * lock if it can be read, otherwise -1. */
+pid_t
+pidfile_lock(const char *path)
+{
+	char dpath[PATH_MAX];
+	static bool registered_atexit = false;
+
+	/* Register for cleanup with atexit. */
+	if (!registered_atexit) {
+		if (atexit(pidfile_cleanup) == -1)
+			return -1;
+		registered_atexit = true;
+	}
+
+	if (path == NULL || strchr(path, '/') == NULL) {
+		if (pidfile_varrun_path(dpath, sizeof(dpath), NULL) == -1)
+			return -1;
+		path = dpath;
+	}
+
+	/* If path has changed (no good reason), clean up the old pidfile. */
+	if (strcmp(pidfile_path, path) != 0)
+		pidfile_cleanup();
+
+	if (pidfile_fd == -1) {
+		pidfile_fd = open(path,
+		    O_WRONLY | O_CREAT | O_CLOEXEC | O_NONBLOCK | O_EXLOCK,
+		    0644);
+		if (pidfile_fd == -1) {
+			pid_t pid;
+
+			if (errno == EAGAIN) {
+				/* The pidfile is locked, return the process ID
+				 * it contains.
+				 * If sucessful, set errno to EEXIST. */
+				if ((pid = pidfile_read(path)) != -1)
+					errno = EEXIST;
+			} else
+				pid = -1;
+
+			return pid;
+		}
+		strlcpy(pidfile_path, path, sizeof(pidfile_path));
 	}
 
 	pidfile_pid = getpid();
 
-	(void) fprintf(f, "%d\n", pidfile_pid);
-	(void) fclose(f);
+	/* Truncate the file, as we could be re-writing it.
+	 * Then write the process ID. */
+	if (ftruncate(pidfile_fd, 0) == -1 ||
+	    lseek(pidfile_fd, 0, SEEK_SET) == -1 ||
+	    dprintf(pidfile_fd, "%d\n", pidfile_pid) == -1)
+	{
+		int error = errno;
 
+		pidfile_cleanup();
+		errno = error;
+		return -1;
+	}
+
+	/* Hold the fd open to persist the lock. */
 	return 0;
 }
 
+/* The old function.
+ * Historical behaviour is that pidfile is not re-written
+ * if path has not changed.
+ *
+ * Returns 0 on success, otherwise -1.
+ * As such we have no way of knowing the process ID who owns the lock. */
 int
 pidfile(const char *path)
 {
+	pid_t pid;
 
-	if (path == NULL || strchr(path, '/') == NULL) {
-		char *default_path;
-
-		if ((default_path = generate_varrun_path(path)) == NULL)
-			return -1;
-
-		if (create_pidfile(default_path) == -1) {
-			free(default_path);
-			return -1;
-		}
-
-		free(default_path);
-		return 0;
-	} else
-		return create_pidfile(path);
+	pid = pidfile_lock(path);
+	return pid == 0 ? 0 : -1;
 }
