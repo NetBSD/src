@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.189 2016/04/04 12:05:40 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.190 2016/04/10 08:15:52 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.189 2016/04/04 12:05:40 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.190 2016/04/10 08:15:52 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1145,6 +1145,15 @@ nd6_free(struct llentry *ln, int gc)
 
 		if (ln->ln_router || dr) {
 			/*
+			 * We need to unlock to avoid a LOR with rt6_flush()
+			 * with the rnh and for the calls to
+			 * pfxlist_onlink_check() and defrouter_select() in the
+			 * block further down for calls into nd6_lookup().
+			 * We still hold a ref.
+			 */
+			LLE_WUNLOCK(ln);
+
+			/*
 			 * rt6_flush must be called whether or not the neighbor
 			 * is in the Default Router List.
 			 * See a corresponding comment in nd6_na_input().
@@ -1181,6 +1190,19 @@ nd6_free(struct llentry *ln, int gc)
 			 */
 			defrouter_select();
 		}
+
+#ifdef __FreeBSD__
+		/*
+		 * If this entry was added by an on-link redirect, remove the
+		 * corresponding host route.
+		 */
+		if (ln->la_flags & LLE_REDIRECT)
+			nd6_free_redirect(ln);
+#endif
+
+		if (ln->ln_router || dr)
+			LLE_WLOCK(ln);
+
 		splx(s);
 	}
 
