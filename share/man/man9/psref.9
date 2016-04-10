@@ -1,4 +1,4 @@
-.\"	$NetBSD: psref.9,v 1.1 2016/04/09 06:21:16 riastradh Exp $
+.\"	$NetBSD: psref.9,v 1.2 2016/04/10 18:27:56 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,7 +86,7 @@ read section blocks soft interrupts on the local CPU until it is
 complete.
 .It
 Reference counting requires interprocessor synchronization via
-.Xr atomic_ops 9
+.Xr atomic_ops 3
 or
 .Xr mutex 9 .
 However, with reference counting, a reference may be held for arbitrary
