@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.62 2016/04/10 15:51:32 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.63 2016/04/10 20:48:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.62 2016/04/10 15:51:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.63 2016/04/10 20:48:56 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -156,6 +156,7 @@ static usbd_status xhci_enable_slot(struct xhci_softc * const,
 static usbd_status xhci_disable_slot(struct xhci_softc * const, uint8_t);
 static usbd_status xhci_address_device(struct xhci_softc * const,
     uint64_t, uint8_t, bool);
+static void xhci_set_dcba(struct xhci_softc * const, uint64_t, int);
 static usbd_status xhci_update_ep0_mps(struct xhci_softc * const,
     struct xhci_slot * const, u_int);
 static usbd_status xhci_ring_init(struct xhci_softc * const,
@@ -2582,21 +2583,12 @@ xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 {
 	struct xhci_trb trb;
 	struct xhci_slot *xs;
+	usbd_status err;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
-
-	xs = &sc->sc_slots[slot];
-	if (xs->xs_idx != 0) {
-		for (int i = XHCI_DCI_SLOT + 1; i < 32; i++) {
-			xhci_ring_free(sc, &xs->xs_ep[i].xe_tr);
-			memset(&xs->xs_ep[i], 0, sizeof(xs->xs_ep[i]));
-		}
-		usb_freemem(&sc->sc_bus, &xs->xs_ic_dma);
-		usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
-	}
 
 	trb.trb_0 = 0;
 	trb.trb_2 = 0;
@@ -2604,7 +2596,23 @@ xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 		XHCI_TRB_3_SLOT_SET(slot) |
 		XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DISABLE_SLOT));
 
-	return xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
+	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
+
+	if (!err) {
+		xs = &sc->sc_slots[slot];
+		if (xs->xs_idx != 0) {
+			for (int i = XHCI_DCI_SLOT + 1; i < 32; i++) {
+				xhci_ring_free(sc, &xs->xs_ep[i].xe_tr);
+				memset(&xs->xs_ep[i], 0, sizeof(xs->xs_ep[i]));
+			}
+			usb_freemem(&sc->sc_bus, &xs->xs_ic_dma);
+			usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
+			xhci_set_dcba(sc, 0, slot);
+			memset(xs, 0, sizeof(*xs));
+		}
+	}
+
+	return err;
 }
 
 /*
