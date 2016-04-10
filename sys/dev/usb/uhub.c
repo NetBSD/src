@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.25 2016/04/10 15:39:28 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.26 2016/04/10 15:40:25 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.25 2016/04/10 15:39:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.26 2016/04/10 15:40:25 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -677,7 +677,7 @@ uhub_explore(struct usbd_device *dev)
 		 */
 		status = UGETW(up->up_status.wPortStatus);
 		change = UGETW(up->up_status.wPortChange);
-		DPRINTF("hub %d port %d after reset: s/c=%x/%x",
+		DPRINTF("uhub%d port %d after reset: s/c=%x/%x",
 		    device_unit(sc->sc_dev), port, status, change);
 
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
