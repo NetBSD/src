@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.13 2016/01/07 20:09:43 roy Exp $ */
+/* $NetBSD: if.h,v 1.14 2016/04/10 21:00:53 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -103,7 +103,9 @@ int if_init(struct interface *);
 int if_getssid(struct interface *);
 int if_vimaster(const struct dhcpcd_ctx *ctx, const char *);
 int if_opensockets(struct dhcpcd_ctx *);
-int if_openlinksocket(void);
+int if_opensockets_os(struct dhcpcd_ctx *);
+void if_closesockets(struct dhcpcd_ctx *);
+void if_closesockets_os(struct dhcpcd_ctx *);
 int if_managelink(struct dhcpcd_ctx *);
 
 /* dhcpcd uses the same routing flags as BSD.
@@ -114,6 +116,19 @@ int if_managelink(struct dhcpcd_ctx *);
 #define RTM_DELETE	0x2	/* Delete Route */
 #define RTM_CHANGE	0x3	/* Change Metrics or flags */
 #define RTM_GET		0x4	/* Report Metrics */
+#endif
+
+/* Define SOCK_CLOEXEC and SOCK_NONBLOCK for systems that lack it.
+ * xsocket() in if.c will map them to fctnl FD_CLOEXEC and O_NONBLOCK. */
+#ifdef SOCK_CLOEXEC
+# define HAVE_SOCK_CLOEXEC
+#else
+# define SOCK_CLOEXEC	0x10000000
+#endif
+#ifdef SOCK_NONBLOCK
+# define HAVE_SOCK_NONBLOCK
+#else
+# define SOCK_NONBLOCK	0x20000000
 #endif
 
 #ifdef INET

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.18 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.19 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -72,7 +72,7 @@ logger_open(struct dhcpcd_ctx *ctx)
 			warn("open: %s", ctx->logfile);
 #ifndef O_CLOEXEC
 		else {
-			if (fcntl(ctx->log_fd, F_GETFD, &f) == -1 ||
+			if ((f = fcntl(ctx->log_fd, F_GETFD)) == -1 ||
 			    fcntl(ctx->log_fd, F_SETFD, f | FD_CLOEXEC) == -1)
 				warn("fcntl: %s", ctx->logfile);
 		}
