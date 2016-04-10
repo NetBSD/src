@@ -199,7 +199,7 @@ struct dhcp6_state {
 	struct ipv6_addrhead addrs;
 	uint32_t lowpl;
 	/* The +3 is for the possible .pd extension for prefix delegation */
-	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE + (IF_SSIDSIZE * 4) +3];
+	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE + (IF_SSIDLEN * 4) +3];
 	const char *reason;
 
 	struct authstate auth;
@@ -238,7 +238,6 @@ const struct ipv6_addr *dhcp6_iffindaddr(const struct interface *ifp,
 struct ipv6_addr *dhcp6_findaddr(struct dhcpcd_ctx *, const struct in6_addr *,
     short);
 size_t dhcp6_find_delegates(struct interface *);
-int dhcp6_has_public_addr(const struct interface *);
 int dhcp6_start(struct interface *, enum DH6S);
 void dhcp6_reboot(struct interface *);
 void dhcp6_renew(struct interface *);

@@ -110,7 +110,7 @@
 #define DHCPCD_RTM_PPID			(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
 #define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)
-#define DHCPCD_IPV6RA_ACCEPT_NOPUBLIC	(1ULL << 56)
+// unassigned	(1ULL << 56)
 #define DHCPCD_BOOTP			(1ULL << 57)
 #define DHCPCD_INITIAL_DELAY		(1ULL << 58)
 #define DHCPCD_PRINT_PIDFILE		(1ULL << 59)
@@ -129,6 +129,7 @@ struct if_sla {
 	char ifname[IF_NAMESIZE];
 	uint32_t sla;
 	uint8_t prefix_len;
+	uint64_t suffix;
 	int8_t sla_set;
 };
 
@@ -175,6 +176,8 @@ struct if_options {
 	struct in_addr req_addr;
 	struct in_addr req_mask;
 	struct rt_head *routes;
+	struct in6_addr req_addr6;
+	uint8_t req_prefix_len;
 	unsigned int mtu;
 	char **config;
 
@@ -214,6 +217,7 @@ struct if_options {
 	struct auth auth;
 };
 
+struct if_options *default_config(struct dhcpcd_ctx *);
 struct if_options *read_config(struct dhcpcd_ctx *,
     const char *, const char *, const char *);
 int add_options(struct dhcpcd_ctx *, const char *,

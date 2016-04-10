@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -145,6 +145,23 @@ ipv4_iffindlladdr(struct interface *ifp)
 	return NULL;
 }
 
+static struct ipv4_addr *
+ipv4_iffindmaskaddr(struct interface *ifp, const struct in_addr *addr)
+{
+	struct ipv4_state *state;
+	struct ipv4_addr *ap;
+
+	state = IPV4_STATE(ifp);
+	if (state) {
+		TAILQ_FOREACH (ap, &state->addrs, next) {
+			if ((ap->addr.s_addr & ap->net.s_addr) ==
+			    (addr->s_addr & ap->net.s_addr))
+				return ap;
+		}
+	}
+	return NULL;
+}
+
 struct ipv4_addr *
 ipv4_findaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 {
@@ -153,6 +170,20 @@ ipv4_findaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		ap = ipv4_iffindaddr(ifp, addr, NULL);
+		if (ap)
+			return ap;
+	}
+	return NULL;
+}
+
+struct ipv4_addr *
+ipv4_findmaskaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
+{
+	struct interface *ifp;
+	struct ipv4_addr *ap;
+
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		ap = ipv4_iffindmaskaddr(ifp, addr);
 		if (ap)
 			return ap;
 	}
@@ -366,7 +397,7 @@ ipv4_findrt(struct dhcpcd_ctx *ctx, const struct rt *rt, int flags)
 	TAILQ_FOREACH(r, ctx->ipv4_kroutes, next) {
 		if (rt->dest.s_addr == r->dest.s_addr &&
 #ifdef HAVE_ROUTE_METRIC
-		    rt->iface == r->iface &&
+		    (rt->iface == NULL || rt->iface == r->iface) &&
 		    (!flags || rt->metric == r->metric) &&
 #else
 		    (!flags || rt->iface == r->iface) &&
@@ -391,7 +422,7 @@ ipv4_freerts(struct rt_head *routes)
 /* If something other than dhcpcd removes a route,
  * we need to remove it from our internal table. */
 int
-ipv4_handlert(struct dhcpcd_ctx *ctx, int cmd, struct rt *rt)
+ipv4_handlert(struct dhcpcd_ctx *ctx, int cmd, const struct rt *rt, int flags)
 {
 	struct rt *f;
 
@@ -422,7 +453,8 @@ ipv4_handlert(struct dhcpcd_ctx *ctx, int cmd, struct rt *rt)
 		}
 		break;
 	}
-	return 0;
+
+	return flags ? 0 : ipv4ll_handlert(ctx, cmd, rt);
 }
 
 #define n_route(a)	 nc_route(NULL, a)
@@ -838,15 +870,21 @@ ipv4_buildroutes(struct dhcpcd_ctx *ctx)
 		ipv4_freeroutes(dnr);
 	}
 
-	/* If we don't manage a default route, grab one without a
+	/* If there is no default route, grab one without a
 	 * gateway for any IPv4LL enabled interfaces. */
 	if (!has_default) {
-		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-			if ((rt = ipv4ll_default_route(ifp)) != NULL) {
-				if (ipv4_doroute(rt, nrs) == 1)
-					TAILQ_INSERT_TAIL(nrs, rt, next);
-				else
-					free(rt);
+		struct rt def;
+
+		memset(&def, 0, sizeof(def));
+		if (ipv4_findrt(ctx, &def, 0) == NULL) {
+			TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+				if ((rt = ipv4ll_default_route(ifp)) != NULL) {
+					if (ipv4_doroute(rt, nrs) == 1) {
+						TAILQ_INSERT_TAIL(nrs, rt, next);
+						break;
+					} else
+						free(rt);
+				}
 			}
 		}
 	}

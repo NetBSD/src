@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -114,13 +114,15 @@ int ipv4_preferanother(struct interface *);
 struct ipv4_addr *ipv4_addaddr(struct interface *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
 void ipv4_applyaddr(void *);
-int ipv4_handlert(struct dhcpcd_ctx *, int, struct rt *);
+int ipv4_handlert(struct dhcpcd_ctx *, int, const struct rt *, int);
 void ipv4_freerts(struct rt_head *);
 
 struct ipv4_addr *ipv4_iffindaddr(struct interface *,
     const struct in_addr *, const struct in_addr *);
 struct ipv4_addr *ipv4_iffindlladdr(struct interface *);
 struct ipv4_addr *ipv4_findaddr(struct dhcpcd_ctx *, const struct in_addr *);
+struct ipv4_addr *ipv4_findmaskaddr(struct dhcpcd_ctx *,
+    const struct in_addr *);
 int ipv4_srcaddr(const struct rt *, struct in_addr *);
 void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *,
@@ -138,7 +140,7 @@ void ipv4_ctxfree(struct dhcpcd_ctx *);
 #define ipv4_free(a) {}
 #define ipv4_ctxfree(a) {}
 #define ipv4_hasaddr(a) (0)
-#define ipv4_preferanother(a) (0)
+#define ipv4_preferanother(a) {}
 #endif
 
 #endif
