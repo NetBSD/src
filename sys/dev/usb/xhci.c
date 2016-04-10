@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.63 2016/04/10 20:48:56 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.64 2016/04/10 21:30:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.63 2016/04/10 20:48:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.64 2016/04/10 21:30:41 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -150,7 +150,7 @@ static usbd_status xhci_do_command1(struct xhci_softc * const,
     struct xhci_trb * const, int, int);
 static usbd_status xhci_do_command_locked(struct xhci_softc * const,
     struct xhci_trb * const, int);
-static usbd_status xhci_init_slot(struct usbd_device *, uint32_t, int, int);
+static usbd_status xhci_init_slot(struct usbd_device *, uint32_t, uint32_t, int);
 static usbd_status xhci_enable_slot(struct xhci_softc * const,
     uint8_t * const);
 static usbd_status xhci_disable_slot(struct xhci_softc * const, uint8_t);
@@ -2697,7 +2697,7 @@ xhci_set_dcba(struct xhci_softc * const sc, uint64_t dcba, int si)
  * and issue Set Address device command.
  */
 static usbd_status
-xhci_init_slot(struct usbd_device *dev, uint32_t slot, int route, int rhport)
+xhci_init_slot(struct usbd_device *dev, uint32_t slot, uint32_t route, int rhport)
 {
 	struct xhci_softc * const sc = XHCI_BUS2SC(dev->ud_bus);
 	struct xhci_slot *xs;
