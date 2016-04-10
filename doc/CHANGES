@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2148 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2149 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -277,3 +277,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[ozaki-r 20160404]
 	route(8): route show doesn't contain nexthop caches [ozaki-r 20160404]
 	netstat(1): netstat -r doesn't contain nexthop caches [ozaki-r 20160404]
+	libutil: added pidfile_lock, pidfile_read, pidfile_read [roy 20160410]
