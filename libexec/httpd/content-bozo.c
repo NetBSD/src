@@ -1,4 +1,4 @@
-/*	$NetBSD: content-bozo.c,v 1.10.2.2 2015/05/09 08:50:42 snj Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.10.2.3 2016/04/10 10:33:11 martin Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -258,7 +258,7 @@ bozo_get_content_map(bozohttpd_t *httpd, const char *name)
 		httpd->dynamic_content_map,
 		(httpd->dynamic_content_map_size + 1) * sizeof *map);
 	if (httpd->dynamic_content_map == NULL)
-		bozo_err(httpd, 1, "out of memory allocating content map");
+		bozoerr(httpd, 1, "out of memory allocating content map");
 	map = &httpd->dynamic_content_map[httpd->dynamic_content_map_size];
 	map->name = map->type = map->encoding = map->encoding11 =
 		map->cgihandler = NULL;
