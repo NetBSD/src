@@ -1,8 +1,8 @@
-/* $NetBSD: eloop.h,v 1.9 2015/05/16 23:31:32 roy Exp $ */
+/* $NetBSD: eloop.h,v 1.10 2016/04/10 21:00:53 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -31,43 +31,6 @@
 #define ELOOP_H
 
 #include <time.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#else
-/* Attempt to autodetect kqueue or epoll.
- * If we can't, the system has to support pselect, which is a POSIX call. */
-#if (defined(__unix__) || defined(unix)) && !defined(USG)
-#include <sys/param.h>
-#endif
-#if defined(BSD)
-/* Assume BSD has a working sys/queue.h and kqueue(2) interface */
-#define HAVE_SYS_QUEUE_H
-#define HAVE_KQUEUE
-#elif defined(__linux__)
-/* Assume Linux has a working epoll(3) interface */
-#define HAVE_EPOLL
-#endif
-#endif
-
-/* Our structures require TAILQ macros, which really every libc should
- * ship as they are useful beyond belief.
- * Sadly some libc's don't have sys/queue.h and some that do don't have
- * the TAILQ_FOREACH macro. For those that don't, the application using
- * this implementation will need to ship a working queue.h somewhere.
- * If we don't have sys/queue.h found in config.h, then
- * allow QUEUE_H to override loading queue.h in the current directory. */
-#ifndef TAILQ_FOREACH
-#ifdef HAVE_SYS_QUEUE_H
-#include <sys/queue.h>
-#elif defined(QUEUE_H)
-#define __QUEUE_HEADER(x) #x
-#define _QUEUE_HEADER(x) __QUEUE_HEADER(x)
-#include _QUEUE_HEADER(QUEUE_H)
-#else
-#include "queue.h"
-#endif
-#endif
 
 /* Some systems don't define timespec macros */
 #ifndef timespecclear
@@ -99,60 +62,21 @@
 
 /* eloop queues are really only for deleting timeouts registered
  * for a function or object.
- * The idea being that one interface as different timeouts for
+ * The idea being that one interface has different timeouts for
  * say DHCP and DHCPv6. */
 #ifndef ELOOP_QUEUE
   #define ELOOP_QUEUE 1
 #endif
 
-struct eloop_event {
-	TAILQ_ENTRY(eloop_event) next;
-	int fd;
-	void (*read_cb)(void *);
-	void *read_cb_arg;
-	void (*write_cb)(void *);
-	void *write_cb_arg;
-#if !defined(HAVE_KQUEUE) && !defined(HAVE_EPOLL)
-	struct pollfd *pollfd;
-#endif
-};
+/* Forward declare eloop - the content should be invisible to the outside */
+struct eloop;
 
-struct eloop_timeout {
-	TAILQ_ENTRY(eloop_timeout) next;
-	struct timespec when;
-	void (*callback)(void *);
-	void *arg;
-	int queue;
-};
-
-struct eloop {
-	size_t events_len;
-	TAILQ_HEAD (event_head, eloop_event) events;
-	struct event_head free_events;
-
-	TAILQ_HEAD (timeout_head, eloop_timeout) timeouts;
-	struct timeout_head free_timeouts;
-
-	void (*timeout0)(void *);
-	void *timeout0_arg;
-	const int *signals;
-	size_t signals_len;
-	void (*signal_cb)(int, void *);
-	void *signal_cb_ctx;
-
-#if defined(HAVE_KQUEUE) || defined(HAVE_EPOLL)
-	int poll_fd;
-#else
-	struct pollfd *fds;
-	size_t fds_len;
-#endif
-
-	int exitnow;
-	int exitcode;
-};
-
-int eloop_event_add(struct eloop *, int,
+int eloop_event_add_rw(struct eloop *, int,
     void (*)(void *), void *,
+    void (*)(void *), void *);
+int eloop_event_add(struct eloop *, int,
+    void (*)(void *), void *);
+int eloop_event_add_w(struct eloop *, int,
     void (*)(void *), void *);
 #define eloop_event_delete(eloop, fd) \
     eloop_event_delete_write((eloop), (fd), 0)
@@ -181,11 +105,7 @@ int eloop_signal_set_cb(struct eloop *, const int *, size_t,
 int eloop_signal_mask(struct eloop *, sigset_t *oldset);
 
 struct eloop * eloop_new(void);
-#if defined(HAVE_KQUEUE) || defined(HAVE_EPOLL)
 int eloop_requeue(struct eloop *);
-#else
-#define eloop_requeue(eloop) (0)
-#endif
 void eloop_free(struct eloop *);
 void eloop_exit(struct eloop *, int);
 int eloop_start(struct eloop *, sigset_t *);

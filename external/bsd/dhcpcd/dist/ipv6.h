@@ -1,8 +1,8 @@
-/* $NetBSD: ipv6.h,v 1.16 2016/01/07 20:09:43 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.17 2016/04/10 21:00:53 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -47,9 +47,6 @@
 
 #define ALLROUTERS "ff02::2"
 
-#define ROUNDUP8(a)  (1 + (((a) - 1) |  7))
-#define ROUNDUP16(a) (1 + (((a) - 1) | 16))
-
 #define EUI64_GBIT		0x01
 #define EUI64_UBIT		0x02
 #define EUI64_TO_IFID(in6)	do {(in6)->s6_addr[8] ^= EUI64_UBIT; } while (0)
@@ -71,6 +68,14 @@
 /* RFC7217 constants */
 #define IDGEN_RETRIES	3
 #define IDGEN_DELAY	1 /* second */
+
+#ifndef IN6_ARE_MASKED_ADDR_EQUAL
+#define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
+	(((d)->s6_addr32[0] ^ (a)->s6_addr32[0]) & (m)->s6_addr32[0]) == 0 && \
+	(((d)->s6_addr32[1] ^ (a)->s6_addr32[1]) & (m)->s6_addr32[1]) == 0 && \
+	(((d)->s6_addr32[2] ^ (a)->s6_addr32[2]) & (m)->s6_addr32[2]) == 0 && \
+	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
+#endif
 
 /*
  * BSD kernels don't inform userland of DAD results.
@@ -116,6 +121,25 @@
 #define IPV6_MANAGETEMPADDR
 #endif
 
+#ifdef __linux__
+   /* Match Linux defines to BSD */
+#  define IN6_IFF_TEMPORARY IFA_F_TEMPORARY
+#  ifdef IFA_F_OPTIMISTIC
+#    define IN6_IFF_TENTATIVE	(IFA_F_TENTATIVE | IFA_F_OPTIMISTIC)
+#  else
+#    define IN6_IFF_TENTATIVE   (IFA_F_TENTATIVE | 0x04)
+#  endif
+#  ifdef IF_F_DADFAILED
+#    define IN6_IFF_DUPLICATED	IFA_F_DADFAILED
+#  else
+#    define IN6_IFF_DUPLICATED	0x08
+#  endif
+#  define IN6_IFF_DETACHED	0
+#endif
+
+#define IN6_IFF_NOTUSEABLE \
+	(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED | IN6_IFF_DETACHED)
+
 struct ipv6_addr {
 	TAILQ_ENTRY(ipv6_addr) next;
 	struct interface *iface;
@@ -154,8 +178,9 @@ TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 #define IPV6_AF_DELEGATEDPFX	0x0100
 #define IPV6_AF_DELEGATEDZERO	0x0200
 #define IPV6_AF_REQUEST		0x0400
+#define IPV6_AF_STATIC		0x0800
 #ifdef IPV6_MANAGETEMPADDR
-#define IPV6_AF_TEMPORARY	0X0800
+#define IPV6_AF_TEMPORARY	0X1000
 #endif
 
 struct rt6 {
@@ -195,9 +220,11 @@ struct ipv6_state {
 	((struct ipv6_state *)(ifp)->if_data[IF_DATA_IPV6])
 #define IPV6_CSTATE(ifp)						       \
 	((const struct ipv6_state *)(ifp)->if_data[IF_DATA_IPV6])
+#define IPV6_STATE_RUNNING(ifp) ipv6_staticdadcompleted((ifp))
 
 /* dhcpcd requires CMSG_SPACE to evaluate to a compile time constant. */
-#ifdef __QNX__
+#if defined(__QNX) || \
+	(defined(__NetBSD_Version__) && __NetBSD_Version__ < 600000000)
 #undef CMSG_SPACE
 #endif
 
@@ -238,11 +265,10 @@ struct ipv6_ctx {
 };
 
 struct ipv6_ctx *ipv6_init(struct dhcpcd_ctx *);
-ssize_t ipv6_printaddr(char *, size_t, const uint8_t *, const char *);
 int ipv6_makestableprivate(struct in6_addr *addr,
     const struct in6_addr *prefix, int prefix_len,
     const struct interface *ifp, int *dad_counter);
-int ipv6_makeaddr(struct in6_addr *, const struct interface *,
+int ipv6_makeaddr(struct in6_addr *, struct interface *,
     const struct in6_addr *, int);
 int ipv6_makeprefix(struct in6_addr *, const struct in6_addr *, int);
 int ipv6_mask(struct in6_addr *, int);
@@ -258,15 +284,16 @@ void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
     const char *, const struct in6_addr *, uint8_t, int);
 int ipv6_handleifa_addrs(int, struct ipv6_addrhead *,
     const struct in6_addr *, int);
-int ipv6_publicaddr(const struct ipv6_addr *);
-const struct ipv6_addr *ipv6_iffindaddr(const struct interface *,
-    const struct in6_addr *);
+struct ipv6_addr *ipv6_iffindaddr(struct interface *,
+    const struct in6_addr *, int);
 int ipv6_hasaddr(const struct interface *);
 int ipv6_findaddrmatch(const struct ipv6_addr *, const struct in6_addr *,
     short);
 struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, short);
-#define ipv6_linklocal(ifp) ipv6_iffindaddr((ifp), NULL)
+struct ipv6_addr *ipv6_findmaskaddr(struct dhcpcd_ctx *,
+    const struct in6_addr *);
+#define ipv6_linklocal(ifp) ipv6_iffindaddr((ifp), NULL, IN6_IFF_NOTUSEABLE)
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);
 void ipv6_freeaddr(struct ipv6_addr *);
 void ipv6_freedrop(struct interface *, int);
@@ -286,14 +313,19 @@ void ipv6_addtempaddrs(struct interface *, const struct timespec *);
 #endif
 
 int ipv6_start(struct interface *);
+int ipv6_staticdadcompleted(const struct interface *);
+int ipv6_startstatic(struct interface *);
+ssize_t ipv6_env(char **, const char *, const struct interface *);
 void ipv6_ctxfree(struct dhcpcd_ctx *);
-int ipv6_handlert(struct dhcpcd_ctx *, int cmd, struct rt6 *);
+int ipv6_handlert(struct dhcpcd_ctx *, int cmd, const struct rt6 *);
 void ipv6_freerts(struct rt6_head *);
 void ipv6_buildroutes(struct dhcpcd_ctx *);
 
 #else
 #define ipv6_init(a) (NULL)
 #define ipv6_start(a) (-1)
+#define ipv6_startstatic(a)
+#define ipv6_staticdadcompleted(a) (0)
 #define ipv6_hasaddr(a) (0)
 #define ipv6_free_ll_callbacks(a) {}
 #define ipv6_free(a) {}

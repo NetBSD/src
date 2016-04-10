@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4ll.h,v 1.10 2015/08/21 10:39:00 roy Exp $ */
+/* $NetBSD: ipv4ll.h,v 1.11 2016/04/10 21:00:53 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,6 +30,7 @@
 #ifndef IPV4LL_H
 #define IPV4LL_H
 
+#ifdef INET
 #include "arp.h"
 
 extern const struct in_addr inaddr_llmask;
@@ -66,9 +67,19 @@ ssize_t ipv4ll_env(char **, const char *, const struct interface *);
 void ipv4ll_start(void *);
 void ipv4ll_claimed(void *);
 void ipv4ll_handle_failure(void *);
+#ifdef HAVE_ROUTE_METRIC
+int ipv4ll_handlert(struct dhcpcd_ctx *, int, const struct rt *);
+#else
+#define ipv4ll_handlert(a, b, c) (0)
+#endif
 
 #define ipv4ll_free(ifp) ipv4ll_freedrop((ifp), 0);
 #define ipv4ll_drop(ifp) ipv4ll_freedrop((ifp), 1);
 void ipv4ll_freedrop(struct interface *, int);
+#else
+#define IPV4LL_STATE_RUNNING(ifp) (0)
+#define ipv4ll_free(a) {}
+#define ipv4ll_drop(a) {}
+#endif
 
 #endif
