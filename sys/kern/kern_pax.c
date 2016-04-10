@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.39 2016/04/10 15:02:17 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.40 2016/04/10 15:26:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.39 2016/04/10 15:02:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.40 2016/04/10 15:26:18 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -103,7 +103,10 @@ int pax_aslr_global = PAX_ASLR;
 #define PAX_ASLR_DELTA_STACK_LSB	PGSHIFT
 #endif
 #ifndef PAX_ASLR_DELTA_STACK_LEN
-#define PAX_ASLR_DELTA_STACK_LEN 	12
+#define PAX_ASLR_DELTA_STACK_LEN 	PAX_ASLR_DELTA_MMAP_LEN
+#endif
+#ifndef PAX_ASLR_DELTA_STACK_LEN32
+#define PAX_ASLR_DELTA_STACK_LEN32 	PAX_ASLR_DELTA_MMAP_LEN32
 #endif
 
 static bool pax_aslr_elf_flags_active(uint32_t);
@@ -504,12 +507,14 @@ pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
 		return;
 #endif
 
-	u_long d = PAX_ASLR_DELTA(cprng_fast32(),
-	    PAX_ASLR_DELTA_STACK_LSB,
-	    PAX_ASLR_DELTA_STACK_LEN);
-	PAX_DPRINTF("stack %#jx delta=%#lx diff=%lx",
-	    (uintmax_t)epp->ep_minsaddr, d, epp->ep_minsaddr - d);
-	epp->ep_minsaddr -= d;
+	uint32_t len = (epp->ep_flags & EXEC_32) ?
+	    PAX_ASLR_DELTA_STACK_LEN32 : PAX_ASLR_DELTA_STACK_LEN;
+	u_long d = PAX_ASLR_DELTA(cprng_fast32(), PAX_ASLR_DELTA_STACK_LSB,
+	    len);
+ 	u_long newminsaddr = (u_long)STACK_ALLOC(epp->ep_minsaddr, d);
+	PAX_DPRINTF("old minsaddr=%#jx delta=%#lx new minsaddr=%#lx",
+	    (uintmax_t)epp->ep_minsaddr, d, newminsaddr);
+	epp->ep_minsaddr = (vaddr_t)newminsaddr;
 	*max_stack_size -= d;
 	if (epp->ep_ssize > *max_stack_size)
 		epp->ep_ssize = *max_stack_size;
