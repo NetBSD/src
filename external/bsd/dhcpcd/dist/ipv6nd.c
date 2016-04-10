@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.27 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.28 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -192,8 +192,9 @@ ipv6nd_open(struct dhcpcd_ctx *dctx)
 	ctx = dctx->ipv6;
 	if (ctx->nd_fd != -1)
 		return ctx->nd_fd;
-	ctx->nd_fd = xsocket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6,
-	    O_NONBLOCK|O_CLOEXEC);
+#define SOCK_FLAGS	SOCK_CLOEXEC | SOCK_NONBLOCK
+	ctx->nd_fd = xsocket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6, SOCK_FLAGS);
+#undef SOCK_FLAGS
 	if (ctx->nd_fd == -1)
 		return -1;
 
@@ -220,8 +221,7 @@ ipv6nd_open(struct dhcpcd_ctx *dctx)
 	    &filt, sizeof(filt)) == -1)
 		goto eexit;
 
-	eloop_event_add(dctx->eloop, ctx->nd_fd,
-	    ipv6nd_handledata, dctx, NULL, NULL);
+	eloop_event_add(dctx->eloop, ctx->nd_fd,  ipv6nd_handledata, dctx);
 	return ctx->nd_fd;
 
 eexit:
@@ -246,7 +246,7 @@ ipv6nd_makersprobe(struct interface *ifp)
 	state->rs = calloc(1, state->rslen);
 	if (state->rs == NULL)
 		return -1;
-	rs = (struct nd_router_solicit *)(void *)state->rs;
+	rs = (void *)state->rs;
 	rs->nd_rs_type = ND_ROUTER_SOLICIT;
 	rs->nd_rs_code = 0;
 	rs->nd_rs_cksum = 0;
@@ -554,7 +554,7 @@ ipv6nd_scriptrun(struct ra *rap)
 		{
 			hasaddress = 1;
 			if (!(ap->flags & IPV6_AF_DADCOMPLETED) &&
-			    ipv6_iffindaddr(ap->iface, &ap->addr))
+			    ipv6_iffindaddr(ap->iface, &ap->addr, IN6_IFF_TENTATIVE))
 				ap->flags |= IPV6_AF_DADCOMPLETED;
 			if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0) {
 				logger(ap->iface->ctx, LOG_DEBUG,
@@ -715,24 +715,6 @@ try_script:
 	}
 }
 
-static int
-ipv6nd_has_public_addr(const struct interface *ifp)
-{
-	const struct ra *rap;
-	const struct ipv6_addr *ia;
-
-	TAILQ_FOREACH(rap, ifp->ctx->ipv6->ra_routers, next) {
-		if (rap->iface == ifp) {
-			TAILQ_FOREACH(ia, &rap->addrs, next) {
-				if (ia->flags & IPV6_AF_AUTOCONF &&
-				    ipv6_publicaddr(ia))
-					return 1;
-			}
-		}
-	}
-	return 0;
-}
-
 static void
 ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
     struct icmp6_hdr *icp, size_t len, int hoplimit)
@@ -801,7 +783,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 		return;
 	}
 
-	if (ipv6_iffindaddr(ifp, &ctx->from.sin6_addr)) {
+	if (ipv6_iffindaddr(ifp, &ctx->from.sin6_addr, IN6_IFF_TENTATIVE)) {
 		logger(ifp->ctx, LOG_DEBUG,
 		    "%s: ignoring RA from ourself %s", ifp->name, ctx->sfrom);
 		return;
@@ -823,15 +805,10 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 		if (rap) {
 			free(rap->data);
 			rap->data_len = 0;
-			rap->no_public_warned = 0;
 		}
 		new_data = 1;
 	} else
 		new_data = 0;
-	if (new_data || ifp->options->options & DHCPCD_DEBUG)
-		logger(ifp->ctx, LOG_INFO, "%s: Router Advertisement from %s",
-		    ifp->name, ctx->sfrom);
-
 	if (rap == NULL) {
 		rap = calloc(1, sizeof(*rap));
 		if (rap == NULL) {
@@ -856,6 +833,14 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 		memcpy(rap->data, icp, len);
 		rap->data_len = len;
 	}
+
+	/* We could change the debug level based on new_data, but some
+	 * routers like to decrease the advertised valid and preferred times
+	 * in accordance with the own prefix times which would result in too
+	 * much needless log spam. */
+	logger(ifp->ctx, new_rap ? LOG_INFO : LOG_DEBUG,
+	    "%s: Router Advertisement from %s",
+	    ifp->name, ctx->sfrom);
 
 	clock_gettime(CLOCK_MONOTONIC, &rap->acquired);
 	rap->flags = nd_ra->nd_ra_flags_reserved;
@@ -927,7 +912,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 
 		switch (ndo->nd_opt_type) {
 		case ND_OPT_PREFIX_INFORMATION:
-			pi = (struct nd_opt_prefix_info *)(void *)ndo;
+			pi = (void *)ndo;
 			if (pi->nd_opt_pi_len != 4) {
 				logger(ifp->ctx, new_data ? LOG_ERR : LOG_DEBUG,
 				    "%s: invalid option len for prefix",
@@ -1010,7 +995,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 				 * temporary address also exists then
 				 * extend the existing one rather than
 				 * create a new one */
-				if (ipv6_iffindaddr(ifp, &ap->addr) &&
+				if (ipv6_iffindaddr(ifp, &ap->addr,
+				    IN6_IFF_NOTUSEABLE) &&
 				    ipv6_settemptime(ap, 0))
 					new_ap = 0;
 				else
@@ -1053,7 +1039,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 			break;
 
 		case ND_OPT_MTU:
-			mtu = (struct nd_opt_mtu *)(void *)p;
+			mtu = (void *)p;
 			mtuv = ntohl(mtu->nd_opt_mtu_mtu);
 			if (mtuv < IPV6_MMTU) {
 				logger(ifp->ctx, LOG_ERR, "%s: invalid MTU %d",
@@ -1064,7 +1050,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 			break;
 
 		case ND_OPT_RDNSS:
-			rdnss = (struct nd_opt_rdnss *)(void *)p;
+			rdnss = (void *)p;
 			if (rdnss->nd_opt_rdnss_lifetime &&
 			    rdnss->nd_opt_rdnss_len > 1)
 				rap->hasdns = 1;
@@ -1095,19 +1081,6 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 	if (new_rap)
 		add_router(ifp->ctx->ipv6, rap);
 
-	if (!ipv6nd_has_public_addr(rap->iface) &&
-	    !(rap->iface->options->options & DHCPCD_IPV6RA_ACCEPT_NOPUBLIC) &&
-	    (!(rap->flags & ND_RA_FLAG_MANAGED) ||
-	    !dhcp6_has_public_addr(rap->iface)))
-	{
-		logger(rap->iface->ctx,
-		    rap->no_public_warned ? LOG_DEBUG : LOG_WARNING,
-		    "%s: ignoring RA from %s"
-		    " (no public prefix, no managed address)",
-		    rap->iface->name, rap->sfrom);
-		rap->no_public_warned = 1;
-		goto handle_flag;
-	}
 	if (ifp->ctx->options & DHCPCD_TEST) {
 		script_runreason(ifp, "TEST");
 		goto handle_flag;
@@ -1153,34 +1126,6 @@ nodhcp6:
 
 	/* Expire should be called last as the rap object could be destroyed */
 	ipv6nd_expirera(ifp);
-}
-
-/* Run RA's we ignored becuase they had no public addresses
- * This should only be called when DHCPv6 applies a public address */
-void
-ipv6nd_runignoredra(struct interface *ifp)
-{
-	struct ra *rap;
-
-	TAILQ_FOREACH(rap, ifp->ctx->ipv6->ra_routers, next) {
-		if (rap->iface == ifp &&
-		    !rap->expired &&
-		    rap->no_public_warned)
-		{
-			rap->no_public_warned = 0;
-			logger(rap->iface->ctx, LOG_INFO,
-			    "%s: applying ignored RA from %s",
-			    rap->iface->name, rap->sfrom);
-			if (ifp->ctx->options & DHCPCD_TEST) {
-				script_runreason(ifp, "TEST");
-				continue;
-			}
-			if (ipv6nd_scriptrun(rap))
-				return;
-			eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
-			eloop_timeout_delete(ifp->ctx->eloop, NULL, rap);
-		}
-	}
 }
 
 int

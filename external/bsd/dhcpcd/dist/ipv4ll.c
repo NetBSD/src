@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.13 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.14 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -447,3 +447,29 @@ ipv4ll_freedrop(struct interface *ifp, int drop)
 		}
 	}
 }
+
+/* This may cause issues in BSD systems, where running as a single dhcpcd
+ * daemon would solve this issue easily. */
+#ifdef HAVE_ROUTE_METRIC
+int
+ipv4ll_handlert(struct dhcpcd_ctx *ctx, __unused int cmd, const struct rt *rt)
+{
+	struct interface *ifp;
+
+	/* Only interested in default route changes. */
+	if (rt->dest.s_addr != INADDR_ANY)
+		return 0;
+
+	/* If any interface is running IPv4LL, rebuild our routing table. */
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		if (IPV4LL_STATE_RUNNING(ifp))
+			break;
+	}
+	if (ifp != NULL) {
+		if_initrt(ifp);
+		ipv4_buildroutes(ctx);
+	}
+
+	return 0;
+}
+#endif

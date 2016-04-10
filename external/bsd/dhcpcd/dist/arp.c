@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.16 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.17 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -204,8 +204,7 @@ arp_open(struct interface *ifp)
 			    __func__, ifp->name);
 			return;
 		}
-		eloop_event_add(ifp->ctx->eloop, state->fd,
-		    arp_packet, ifp, NULL, NULL);
+		eloop_event_add(ifp->ctx->eloop, state->fd, arp_packet, ifp);
 	}
 }
 

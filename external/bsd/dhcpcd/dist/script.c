@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.24 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.25 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -243,7 +243,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #endif
 #ifdef INET6
 	const struct dhcp6_state *d6_state;
-	int dhcp6, ra;
+	int static6, dhcp6, ra;
 #endif
 
 #ifdef INET
@@ -252,7 +252,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	istate = IPV4LL_CSTATE(ifp);
 #endif
 #ifdef INET6
-	dhcp6 = ra = 0;
+	static6 = dhcp6 = ra = 0;
 	d6_state = D6_CSTATE(ifp);
 #endif
 	if (strcmp(reason, "TEST") == 0) {
@@ -271,6 +271,8 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #endif
 	}
 #ifdef INET6
+	else if (strcmp(reason, "STATIC6") == 0)
+		static6 = 1;
 	else if (reason[strlen(reason) - 1] == '6')
 		dhcp6 = 1;
 	else if (strcmp(reason, "ROUTERADVERT") == 0)
@@ -363,6 +365,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	    || (ipv4ll && IPV4LL_STATE_RUNNING(ifp))
 #endif
 #ifdef INET6
+	    || (static6 && IPV6_STATE_RUNNING(ifp))
 	    || (dhcp6 && d6_state && d6_state->new)
 	    || (ra && ipv6nd_hasra(ifp))
 #endif
@@ -495,6 +498,20 @@ dumplease:
 	}
 #endif
 #ifdef INET6
+	if (static6) {
+		n = ipv6_env(NULL, NULL, ifp);
+		if (n > 0) {
+			nenv = realloc(env, sizeof(char *) *
+			    (elen + (size_t)n + 1));
+			if (nenv == NULL)
+				goto eexit;
+			env = nenv;
+			n = ipv6_env(env + elen, "new", ifp);
+			if (n == -1)
+				goto eexit;
+			elen += (size_t)n;
+		}
+	}
 	if (dhcp6 && D6_STATE_RUNNING(ifp)) {
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->new, d6_state->new_len);
@@ -575,9 +592,9 @@ send_interface1(struct fd_list *fd, const struct interface *iface,
 	elen = (size_t)arraytostr((const char *const *)env, &s);
 	if ((ssize_t)elen == -1) {
 		free(s);
-		return -1;
-	}
-	retval = control_queue(fd, s, elen, 1);
+		retval = -1;
+	} else
+		retval = control_queue(fd, s, elen, 1);
 	ep = env;
 	while (*ep)
 		free(*ep++);
@@ -623,6 +640,10 @@ send_interface(struct fd_list *fd, const struct interface *ifp)
 #endif
 
 #ifdef INET6
+	if (IPV6_STATE_RUNNING(ifp)) {
+		if (send_interface1(fd, ifp, "STATIC6") == -1)
+			retval = -1;
+	}
 	if (RS_STATE_RUNNING(ifp)) {
 		if (send_interface1(fd, ifp, "ROUTERADVERT") == -1)
 			retval = -1;

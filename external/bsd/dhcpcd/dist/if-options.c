@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.30 2016/01/20 19:42:33 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.31 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -99,7 +99,6 @@
 #define O_IPV6RA_AUTOCONF	O_BASE + 38
 #define O_IPV6RA_NOAUTOCONF	O_BASE + 39
 #define O_REJECT		O_BASE + 40
-#define O_IPV6RA_ACCEPT_NOPUBLIC	O_BASE + 41
 #define O_BOOTP			O_BASE + 42
 #define O_DEFINEND		O_BASE + 43
 #define O_NODELAY		O_BASE + 44
@@ -169,7 +168,6 @@ const struct option cf_options[] = {
 	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6RA_FORK},
 	{"ipv6ra_own",      no_argument,       NULL, O_IPV6RA_OWN},
 	{"ipv6ra_own_default", no_argument,    NULL, O_IPV6RA_OWN_D},
-	{"ipv6ra_accept_nopublic", no_argument, NULL, O_IPV6RA_ACCEPT_NOPUBLIC},
 	{"ipv4",            no_argument,       NULL, O_IPV4},
 	{"noipv4",          no_argument,       NULL, O_NOIPV4},
 	{"ipv6",            no_argument,       NULL, O_IPV6},
@@ -1113,6 +1111,24 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				logger(ctx, LOG_ERR, "invalid MTU %s", p);
 				return -1;
 			}
+		} else if (strncmp(arg, "ip6_address=", strlen("ip6_address=")) == 0) {
+			np = strchr(p, '/');
+			if (np)
+				*np++ = '\0';
+			if (inet_pton(AF_INET6, p, &ifo->req_addr6) == 1) {
+				if (np) {
+					ifo->req_prefix_len = (uint8_t)strtou(np,
+					    NULL, 0, 0, 128, &e);
+					if (e) {
+						logger(ctx, LOG_ERR,
+						    "%s: failed to "
+						    "convert prefix len",
+						    ifname);
+						return -1;
+					}
+				} else
+					ifo->req_prefix_len = 128;
+			}
 		} else {
 			dl = 0;
 			if (ifo->config != NULL) {
@@ -1140,6 +1156,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			}
 			nconf = realloc(ifo->config, sizeof(char *) * (dl + 2));
 			if (nconf == NULL) {
+				free(p);
 				logger(ctx, LOG_ERR, "%s: %m", __func__);
 				return -1;
 			}
@@ -1274,9 +1291,6 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case O_IPV6RA_OWN_D:
 		ifo->options |= DHCPCD_IPV6RA_OWN_DEFAULT;
 		break;
-	case O_IPV6RA_ACCEPT_NOPUBLIC:
-		ifo->options |= DHCPCD_IPV6RA_ACCEPT_NOPUBLIC;
-		break;
 	case O_IPV6RA_AUTOCONF:
 		ifo->options |= DHCPCD_IPV6RA_AUTOCONF;
 		break;
@@ -1326,7 +1340,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ia = NULL;
 		for (sl = 0; sl < ifo->ia_len; sl++) {
 			if ((arg == NULL && !ifo->ia[sl].iaid_set) ||
-			    (ifo->ia[sl].iaid_set &&
+			    (arg != NULL && ifo->ia[sl].iaid_set &&
 			    ifo->ia[sl].iaid[0] == iaid[0] &&
 			    ifo->ia[sl].iaid[1] == iaid[1] &&
 			    ifo->ia[sl].iaid[2] == iaid[2] &&
@@ -1374,15 +1388,15 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 					memset(&ia->addr, 0, sizeof(ia->addr));
 				}
 				if (p && ia->ia_type == D6_OPTION_IA_PD) {
-					i = (int)strtoi(p, NULL, 0, 8, 120, &e);
+					ia->prefix_len = (uint8_t)strtou(p,
+					    NULL, 0, 8, 120, &e);
 					if (e) {
 						logger(ctx, LOG_ERR,
 						    "%s: failed to convert"
 						    " prefix len",
 						    p);
 						ia->prefix_len = 0;
-					} else
-						ia->prefix_len = (uint8_t)i;
+					}
 				}
 			}
 			ia->sla_max = 0;
@@ -1411,18 +1425,19 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			if (strlcpy(sla->ifname, p,
 			    sizeof(sla->ifname)) >= sizeof(sla->ifname))
 			{
-				logger(ctx, LOG_ERR, "%s: interface name too long",
-				    arg);
+				logger(ctx, LOG_ERR,
+				    "%s: interface name too long", arg);
 				goto err_sla;
 			}
+			sla->sla_set = 0;
+			sla->prefix_len = 0;
+			sla->suffix = 1;
 			p = np;
 			if (p) {
 				np = strchr(p, '/');
 				if (np)
 					*np++ = '\0';
-				if (*p == '\0')
-					sla->sla_set = 0;
-				else {
+				if (*p != '\0') {
 					sla->sla = (uint32_t)strtou(p, NULL,
 					    0, 0, UINT32_MAX, &e);
 					sla->sla_set = 1;
@@ -1433,20 +1448,40 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 						goto err_sla;
 					}
 				}
-				if (np) {
-					sla->prefix_len = (uint8_t)strtoi(np,
-					    NULL, 0, 0, 128, &e);
+				p = np;
+			}
+			if (p) {
+				np = strchr(p, '/');
+				if (np)
+					*np++ = '\0';
+				if (*p != '\0') {
+					sla->prefix_len = (uint8_t)strtou(p,
+				    NULL, 0, 0, 120, &e);
 					if (e) {
-						logger(ctx, LOG_ERR, "%s: failed to "
+						logger(ctx, LOG_ERR,
+						    "%s: failed to "
 						    "convert prefix len",
 						    ifname);
 						goto err_sla;
 					}
-				} else
-					sla->prefix_len = 0;
-			} else {
-				sla->sla_set = 0;
-				sla->prefix_len = 0;
+				}
+				p = np;
+			}
+			if (p) {
+				np = strchr(p, '/');
+				if (np)
+					*np = '\0';
+				if (*p != '\0') {
+					sla->suffix = (uint64_t)strtou(p, NULL,
+					    0, 0, UINT64_MAX, &e);
+					if (e) {
+						logger(ctx, LOG_ERR,
+						    "%s: failed to "
+						    "convert suffix",
+						    ifname);
+						goto err_sla;
+					}
+				}
 			}
 			/* Sanity check */
 			for (sl = 0; sl < ia->sla_len - 1; sl++) {
@@ -1468,7 +1503,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 					    sla->ifname);
 					goto err_sla;
 				}
-				if (slap->sla == 0 || sla->sla == 0) {
+				if (slap->sla_set &&
+				    (slap->sla == 0 || sla->sla == 0))
+				{
 					logger(ctx, LOG_ERR, "%s: cannot"
 					    " assign multiple prefixes"
 					    " with a SLA of 0",
@@ -2105,8 +2142,9 @@ static char *
 get_line(char ** __restrict buf, size_t * __restrict buflen,
     FILE * __restrict fp)
 {
-	char *p;
+	char *p, *c;
 	ssize_t bytes;
+	int quoted;
 
 	do {
 		bytes = getline(buf, buflen, fp);
@@ -2117,7 +2155,48 @@ get_line(char ** __restrict buf, size_t * __restrict buflen,
 	} while (*p == '\0' || *p == '\n' || *p == '#' || *p == ';');
 	if ((*buf)[--bytes] == '\n')
 		(*buf)[bytes] = '\0';
+
+	/* Strip embedded comments unless in a quoted string or escaped */
+	quoted = 0;
+	for (c = p; *c != '\0'; c++) {
+		if (*c == '\\') {
+			c++; /* escaped */
+			continue;
+		}
+		if (*c == '"')
+			quoted = !quoted;
+		else if (*c == '#' && !quoted) {
+			*c = '\0';
+			break;
+		}
+	}
 	return p;
+}
+
+struct if_options *
+default_config(struct dhcpcd_ctx *ctx)
+{
+	struct if_options *ifo;
+
+	/* Seed our default options */
+	if ((ifo = calloc(1, sizeof(*ifo))) == NULL) {
+		logger(ctx, LOG_ERR, "%s: %m", __func__);
+		return NULL;
+	}
+	ifo->options |= DHCPCD_IF_UP | DHCPCD_LINK | DHCPCD_INITIAL_DELAY;
+	ifo->timeout = DEFAULT_TIMEOUT;
+	ifo->reboot = DEFAULT_REBOOT;
+	ifo->metric = -1;
+	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
+	TAILQ_INIT(&ifo->auth.tokens);
+
+	/* Inherit some global defaults */
+	if (ctx->options & DHCPCD_PERSISTENT)
+		ifo->options |= DHCPCD_PERSISTENT;
+	if (ctx->options & DHCPCD_SLAACPRIVATE)
+		ifo->options |= DHCPCD_SLAACPRIVATE;
+
+	return ifo;
 }
 
 struct if_options *
@@ -2142,13 +2221,9 @@ read_config(struct dhcpcd_ctx *ctx,
 	struct dhcp_opt *ldop, *edop;
 
 	/* Seed our default options */
-	ifo = calloc(1, sizeof(*ifo));
-	if (ifo == NULL) {
-		logger(ctx, LOG_ERR, "%s: %m", __func__);
+	if ((ifo = default_config(ctx)) == NULL)
 		return NULL;
-	}
-	ifo->options |= DHCPCD_DAEMONISE | DHCPCD_LINK | DHCPCD_INITIAL_DELAY;
-	ifo->options |= DHCPCD_IF_UP;
+	ifo->options |= DHCPCD_DAEMONISE;
 #ifdef PLUGIN_DEV
 	ifo->options |= DHCPCD_DEV;
 #endif
@@ -2161,11 +2236,6 @@ read_config(struct dhcpcd_ctx *ctx,
 	ifo->options |= DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS;
 	ifo->options |= DHCPCD_DHCP6;
 #endif
-	ifo->timeout = DEFAULT_TIMEOUT;
-	ifo->reboot = DEFAULT_REBOOT;
-	ifo->metric = -1;
-	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
-	TAILQ_INIT(&ifo->auth.tokens);
 
 	vlen = dhcp_vendor((char *)ifo->vendorclassid + 1,
 	            sizeof(ifo->vendorclassid) - 1);

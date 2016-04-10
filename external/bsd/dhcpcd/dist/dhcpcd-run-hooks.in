@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.11 2015/08/21 10:39:00 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.12 2016/04/10 21:00:53 roy Exp $
 
 # dhcpcd client configuration script 
 
@@ -262,7 +262,8 @@ detect_init()
 	# Detect the running init system.
 	# As systemd and OpenRC can be installed on top of legacy init
 	# systems we try to detect them first.
-	_service_status=
+	local status="@STATUSARG@"
+	: ${status:=status}
 	if [ -x /bin/systemctl -a -S /run/systemd/private ]; then
 		_service_exists="/bin/systemctl --quiet is-enabled \$1.service"
 		_service_status="/bin/systemctl --quiet is-active \$1.service"
@@ -282,6 +283,9 @@ detect_init()
 	elif [ -x /sbin/service ]; then
 		_service_exists="/sbin/service \$1 >/dev/null 2>&1"
 		_service_cmd="/sbin/service \$1 \$2"
+	elif [ -x /usr/sbin/service ]; then
+		_service_exists="/usr/sbin/service \$1 $status >/dev/null 2>&1"
+		_service_cmd="/usr/sbin/service \$1 \$2"
 	elif [ -x /bin/sv ]; then
 		_service_exists="/bin/sv status \1 >/dev/null 2>&1"
 		_service_cmd="/bin/sv \$1 \$2"
@@ -291,19 +295,20 @@ detect_init()
 	elif [ -e /etc/slackware-version -a -d /etc/rc.d ]; then
 		_service_exists="[ -x /etc/rc.d/rc.\$1 ]"
 		_service_cmd="/etc/rc.d/rc.\$1 \$2"
-		_service_status="/etc/rc.d/rc.\$1 status 1>/dev/null 2>&1"
+		_service_status="/etc/rc.d/rc.\$1 status >/dev/null 2>&1"
 	else
 		for x in /etc/init.d/rc.d /etc/rc.d /etc/init.d; do
 			if [ -d $x ]; then
 				_service_exists="[ -x $x/\$1 ]"
 				_service_cmd="$x/\$1 \$2"
+				_service_status="$x/\$1 $status >/dev/null 2>&1"
 				break
 			fi
 		done
 		if [ -e /etc/arch-release ]; then
 			_service_status="[ -e /var/run/daemons/\$1 ]"
 		elif [ "$x" = "/etc/rc.d" -a -e /etc/rc.d/rc.subr ]; then
-			_service_status="$x/\$1 check 1>/dev/null 2>&1"
+			_service_status="$x/\$1 check >/dev/null 2>&1"
 		fi
 	fi
 

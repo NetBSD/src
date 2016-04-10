@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.10 2015/08/21 10:39:00 roy Exp $");
+ __RCSID("$NetBSD: control.c,v 1.11 2016/04/10 21:00:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -184,8 +184,7 @@ control_handle1(struct dhcpcd_ctx *ctx, int lfd, unsigned int fd_flags)
 		TAILQ_INIT(&l->queue);
 		TAILQ_INIT(&l->free_queue);
 		TAILQ_INSERT_TAIL(&ctx->control_fds, l, next);
-		eloop_event_add(ctx->eloop, l->fd,
-		    control_handle_data, l, NULL, NULL);
+		eloop_event_add(ctx->eloop, l->fd, control_handle_data, l);
 	} else
 		close(fd);
 }
@@ -211,8 +210,10 @@ make_sock(struct sockaddr_un *sa, const char *ifname, int unpriv)
 {
 	int fd;
 
-	if ((fd = xsocket(AF_UNIX, SOCK_STREAM, 0, O_NONBLOCK|O_CLOEXEC)) == -1)
+#define SOCK_FLAGS	SOCK_CLOEXEC | SOCK_NONBLOCK
+	if ((fd = xsocket(AF_UNIX, SOCK_STREAM, 0, SOCK_FLAGS)) == -1)
 		return -1;
+#undef SOCK_FLAGS
 	memset(sa, 0, sizeof(*sa));
 	sa->sun_family = AF_UNIX;
 	if (unpriv)
@@ -248,7 +249,7 @@ control_start1(struct dhcpcd_ctx *ctx, const char *ifname, mode_t fmode)
 		unlink(sa.sun_path);
 		return -1;
 	}
-	
+
 	if ((fmode & S_UNPRIV) != S_UNPRIV)
 		strlcpy(ctx->control_sock, sa.sun_path,
 		    sizeof(ctx->control_sock));
@@ -264,14 +265,13 @@ control_start(struct dhcpcd_ctx *ctx, const char *ifname)
 		return -1;
 
 	ctx->control_fd = fd;
-	eloop_event_add(ctx->eloop, fd, control_handle, ctx, NULL, NULL);
+	eloop_event_add(ctx->eloop, fd, control_handle, ctx);
 
 	if (ifname == NULL && (fd = control_start1(ctx, NULL, S_UNPRIV)) != -1){
 		/* We must be in master mode, so create an unpriviledged socket
 		 * to allow normal users to learn the status of dhcpcd. */
 		ctx->control_unpriv_fd = fd;
-		eloop_event_add(ctx->eloop, fd, control_handle_unpriv,
-		    ctx, NULL, NULL);
+		eloop_event_add(ctx->eloop, fd, control_handle_unpriv, ctx);
 	}
 	return ctx->control_fd;
 }
@@ -411,8 +411,7 @@ control_queue(struct fd_list *fd, char *data, size_t data_len, uint8_t fit)
 	d->data_len = data_len;
 	d->freeit = fit;
 	TAILQ_INSERT_TAIL(&fd->queue, d, next);
-	eloop_event_add(fd->ctx->eloop, fd->fd,
-	    NULL, NULL, control_writeone, fd);
+	eloop_event_add_w(fd->ctx->eloop, fd->fd, control_writeone, fd);
 	return 0;
 }
 

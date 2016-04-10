@@ -1,5 +1,5 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.24 2015/11/30 16:33:00 roy Exp $
-.\" Copyright (c) 2006-2015 Roy Marples
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.25 2016/04/10 21:00:53 roy Exp $
+.\" Copyright (c) 2006-2016 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 19, 2015
+.Dd March 30, 2016
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -40,8 +40,8 @@ can be used here.
 The first word on the line is the option and the rest of the line is the value.
 Leading and trailing whitespace for the option and value are trimmed.
 You can escape characters in the value using the \\ character.
-.Pp
-Blank lines and lines starting with # are ignored.
+Comments can be prefixed with the # character.
+String values should be quoted with the " character.
 .Pp
 Here's a list of available options:
 .Bl -tag -width indent
@@ -68,8 +68,13 @@ Example:
 .D1 interface bge0
 .D1 arping 192.168.0.1
 .Pp
-.D1 profile 192.168.0.1
+.D1 # My specific 192.168.0.1 network
+.D1 profile dd:ee:aa:dd:bb:ee
 .D1 static ip_address=192.168.0.10/24
+.Pp
+.D1 # A generic 192.168.0.1 network
+.D1 profile 192.168.0.1
+.D1 static ip_address=192.168.0.98/24
 .It Ic authprotocol Ar protocol Ar algorithm Ar rdm
 Authenticate DHCP messages.
 See the Supported Authentication Protocols section.
@@ -209,6 +214,43 @@ Enable DHCPv6 on the interface, on by default.
 Enable IPv4 on the interface, on by default.
 .It Ic ipv6
 Enable IPv6 on the interface, on by default.
+.It Ic request Op Ar address
+Request the
+.Ar address
+in the DHCP DISCOVER message.
+There is no guarantee this is the address the DHCP server will actually give.
+If no
+.Ar address
+is given then the first address currently assigned to the
+.Ar interface
+is used.
+.It Ic inform Op Ar address Ns Op Ar /cidr
+Behaves like
+.Ic request
+as above, but sends a DHCP INFORM instead of DISCOVER/REQUEST.
+This does not get a lease as such, just notifies the DHCP server of the
+.Ar address
+in use.
+You should also include the optional
+.Ar cidr
+network number in case the address is not already configured on the interface.
+.Nm dhcpcd
+remains running and pretends it has an infinite lease.
+.Nm dhcpcd
+will not de-configure the interface when it exits.
+If
+.Nm dhcpcd
+fails to contact a DHCP server then it returns a failure instead of falling
+back on IPv4LL.
+.It Ic inform6
+Performs a DHCPv6 Information Request.
+No address is requested or specified, but all other DHCPv6 options are allowed.
+This is normally performed automatically when the IPv6 Router Advertises
+that the client should perform this operation.
+This option is only needed when
+.Nm dhcpcd
+is not processing IPv6RA messages and the need for DHCPv6 Information Request
+exists.
 .It Ic persistent
 .Nm dhcpcd
 normally de-configures the interface and configuration when it exits.
@@ -253,7 +295,7 @@ Request a DHCPv6 Temporary Address for
 You can request more than one ia_ta by specifying a unique
 .Ar iaid
 for each one.
-.It Ic ia_pd Op Ar iaid Oo / Ar prefix / Ar prefix_len Oc Op Ar interface Op / Ar sla_id Op / Ar prefix_len
+.It Ic ia_pd Op Ar iaid Oo / Ar prefix / Ar prefix_len Oc Op Ar interface Op / Ar sla_id Op / Ar prefix_len Op / Ar suffix
 Request a DHCPv6 Delegated Prefix for
 .Ar iaid .
 This option must be used in an
@@ -274,7 +316,12 @@ Otherwise addresses are only assigned for each
 .Ar interface
 and
 .Ar sla_id .
-Each assigned address will have a suffix of 1.
+Each assigned address will have a
+.Ar suffix ,
+defaulting to 1.
+If the
+.Ar suffix
+is 0 then a slaac address is assigned.
 You cannot assign a prefix to the requesting interface unless the
 DHCPv6 server supports
 .Li RFC6603
@@ -369,12 +416,6 @@ Each time dhcpcd receives an IPv6 Router Adveristment, dhcpcd will manage
 the default route only.
 This allows dhcpcd to prefer an interface for outbound traffic based on metric
 and/or user selection rather than the kernel.
-.It Ic ipv6ra_accept_nopublic
-Some IPv6 routers advertise themselves as a default router without any
-public prefixes or managed addresses.
-Generally, this is incorrect behaviour and
-.Nm dhcpcd
-will ignore the advertisement unless this option is turned on.
 .It Ic ipv6rs
 Enables IPv6 Router Advertisment solicitation.
 This is on by default, but is documented here in the case where it is disabled
@@ -554,12 +595,25 @@ then
 .Nm dhcpcd
 will not attempt to obtain a lease and just use the value for the address with
 an infinite lease time.
+If you set
+.Ic ip6_address ,
+.Nm dhcpcd
+will continue auto-configuation as normal.
 .Pp
-Here is an example which configures a static address, routes and dns.
+Here is an example which configures two static addresss, an IPv4 router, DNS
+and disables IPv6 auto-configuration.
+You could also use the
+.Ic inform6
+command here if you wished to obtain more information via DHCPv6.
+For IPv4, you should use the
+.Ic inform Ar ipaddress
+option instead of setting a static address.
 .D1 interface eth0
+.D1 noipv6rs
 .D1 static ip_address=192.168.0.10/24
+.D1 static ip6_address=fd51:42f8:caae:d92e::ff/64
 .D1 static routers=192.168.0.1
-.D1 static domain_name_servers=192.168.0.1
+.D1 static domain_name_servers=192.168.0.1 fd51:42f8:caae:d92e::1
 .Pp
 Here is an example for PPP which gives the destination a default route.
 It uses the special destination keyword to insert the destination address

@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.15 2016/01/20 19:42:33 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.16 2016/04/10 21:00:53 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -43,9 +43,13 @@
 #include "if-options.h"
 
 #define HWADDR_LEN	20
-#define IF_SSIDSIZE	33
+#define IF_SSIDLEN	32
 #define PROFILE_LEN	64
 #define SECRET_LEN	64
+
+#define IF_INACTIVE	0
+#define IF_ACTIVE	1
+#define IF_ACTIVE_USER	2
 
 #define LINK_UP		1
 #define LINK_UNKNOWN	0
@@ -85,7 +89,7 @@ struct interface {
 	unsigned int metric;
 	int carrier;
 	int wireless;
-	uint8_t ssid[IF_SSIDSIZE];
+	uint8_t ssid[IF_SSIDLEN + 1]; /* NULL terminated */
 	unsigned int ssid_len;
 
 	char profile[PROFILE_LEN];
@@ -95,7 +99,6 @@ struct interface {
 TAILQ_HEAD(if_head, interface);
 
 struct dhcpcd_ctx {
-	int pid_fd;
 	char pidfile[sizeof(PIDFILE) + IF_NAMESIZE + 1];
 	const char *cffile;
 	unsigned long long options;
@@ -116,12 +119,10 @@ struct dhcpcd_ctx {
 	struct if_head *ifaces;
 
 	int pf_inet_fd;
-#if defined(INET6) && defined(BSD)
-	int pf_inet6_fd;
-#endif
 #ifdef IFLR_ACTIVE
 	int pf_link_fd;
 #endif
+	void *priv;
 	int link_fd;
 	int seq;	/* route message sequence no */
 	int sseq;	/* successful seq no sent */
@@ -204,6 +205,6 @@ void dhcpcd_dropinterface(struct interface *, const char *);
 int dhcpcd_selectprofile(struct interface *, const char *);
 
 void dhcpcd_startinterface(void *);
-void dhcpcd_activateinterface(struct interface *);
+void dhcpcd_activateinterface(struct interface *, unsigned long long);
 
 #endif
