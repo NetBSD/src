@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.61 2016/04/10 15:50:24 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.62 2016/04/10 15:51:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.61 2016/04/10 15:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.62 2016/04/10 15:51:32 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3016,7 +3016,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			xhci_op_write_4(sc, port, v | XHCI_PS_PRC);
 			break;
 		case UHF_PORT_U1_TIMEOUT:
-			if (XHCI_PS_SPEED_GET(v) != XHCI_PS_SPEED_SS) {
+			if (XHCI_PS_SPEED_GET(v) < XHCI_PS_SPEED_SS) {
 				return -1;
 			}
 			port = XHCI_PORTPMSC(index);
@@ -3026,7 +3026,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			xhci_op_write_4(sc, port, v);
 			break;
 		case UHF_PORT_U2_TIMEOUT:
-			if (XHCI_PS_SPEED_GET(v) != XHCI_PS_SPEED_SS) {
+			if (XHCI_PS_SPEED_GET(v) < XHCI_PS_SPEED_SS) {
 				return -1;
 			}
 			port = XHCI_PORTPMSC(index);
