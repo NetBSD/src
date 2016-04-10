@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.25.2.2 2015/05/09 08:50:42 snj Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.25.2.3 2016/04/10 10:33:11 martin Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -75,22 +75,23 @@ content_cgihandler(bozohttpd_t *httpd, bozo_httpreq_t *request,
 }
 
 static int
-parse_header(bozohttpd_t *httpd, const char *str, ssize_t len, char **hdr_str,
-		char **hdr_val)
+parse_header(bozo_httpreq_t *request, const char *str, ssize_t len,
+	     char **hdr_str, char **hdr_val)
 {
+	struct	bozohttpd_t *httpd = request->hr_httpd;
 	char	*name, *value;
 
 	/* if the string passed is zero-length bail out */
 	if (*str == '\0')
 		return -1;
 
-	value = bozostrdup(httpd, str);
+	value = bozostrdup(httpd, request, str);
 
 	/* locate the ':' separator in the header/value */
 	name = bozostrnsep(&value, ":", &len);
 
 	if (NULL == name || -1 == len) {
-		free(name);
+		free(value);
 		return -1;
 	}
 
@@ -127,7 +128,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 		(str = bozodgetln(httpd, in, &len, bozo_read)) != NULL) {
 		char	*hdr_name, *hdr_value;
 
-		if (parse_header(httpd, str, len, &hdr_name, &hdr_value))
+		if (parse_header(request, str, len, &hdr_name, &hdr_value))
 			break;
 
 		/*
@@ -194,7 +195,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 				rbytes -= wbytes;
 				bp += wbytes;
 			} else
-				bozo_err(httpd, 1,
+				bozoerr(httpd, 1,
 					"cgi output write failed: %s",
 					strerror(errno));
 		}		
@@ -214,7 +215,7 @@ append_index_html(bozohttpd_t *httpd, char **url)
 void
 bozo_cgi_setbin(bozohttpd_t *httpd, const char *path)
 {
-	httpd->cgibin = strdup(path);
+	httpd->cgibin = bozostrdup(httpd, NULL, path);
 	debug((httpd, DEBUG_OBESE, "cgibin (cgi-bin directory) is %s",
 		httpd->cgibin));
 }
@@ -247,8 +248,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	char	date[40];
 	bozoheaders_t *headp;
 	const char *type, *clen, *info, *cgihandler;
-	char	*query, *s, *t, *path, *env, *file, *url;
-	char	command[MAXPATHLEN];
+	char	*query, *s, *t, *path, *env, *command, *file, *url;
 	char	**envp, **curenvp, *argv[4];
 	char	*uri;
 	size_t	len;
@@ -260,31 +260,36 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (!httpd->cgibin && !httpd->process_cgi)
 		return 0;
 
+#ifndef NO_USER_SUPPORT
+	if (request->hr_user && !httpd->enable_cgi_users)
+		return 0;
+#endif /* !NO_USER_SUPPORT */
+
 	if (request->hr_oldfile && strcmp(request->hr_oldfile, "/") != 0)
 		uri = request->hr_oldfile;
 	else
 		uri = request->hr_file;
 
 	if (uri[0] == '/')
-		file = bozostrdup(httpd, uri);
+		file = bozostrdup(httpd, request, uri);
 	else
-		asprintf(&file, "/%s", uri);
-	if (file == NULL)
-		return 0;
+		bozoasprintf(httpd, &file, "/%s", uri);
 
 	if (request->hr_query && strlen(request->hr_query))
-		query = bozostrdup(httpd, request->hr_query);
+		query = bozostrdup(httpd, request, request->hr_query);
 	else
 		query = NULL;
 
-	asprintf(&url, "%s%s%s", file, query ? "?" : "", query ? query : "");
-	if (url == NULL)
-		goto out;
+	bozoasprintf(httpd, &url, "%s%s%s",
+		     file,
+		     query ? "?" : "",
+		     query ? query : "");
 	debug((httpd, DEBUG_NORMAL, "bozo_process_cgi: url `%s'", url));
 
 	path = NULL;
 	envp = NULL;
 	cgihandler = NULL;
+	command = NULL;
 	info = NULL;
 
 	len = strlen(url);
@@ -309,15 +314,14 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	ix = 0;
 	if (cgihandler) {
-		snprintf(command, sizeof(command), "%s", file + 1);
-		path = bozostrdup(httpd, cgihandler);
+		command = file + 1;
+		path = bozostrdup(httpd, request, cgihandler);
 		argv[ix++] = path;
 			/* argv[] = [ path, command, query, NULL ] */
 	} else {
-		snprintf(command, sizeof(command), "%s",
-		    file + CGIBIN_PREFIX_LEN + 1);
+		command = file + CGIBIN_PREFIX_LEN + 1;
 		if ((s = strchr(command, '/')) != NULL) {
-			info = bozostrdup(httpd, s);
+			info = bozostrdup(httpd, request, s);
 			*s = '\0';
 		}
 		path = bozomalloc(httpd,
@@ -414,21 +418,18 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_setenv(httpd, "REMOTE_ADDR", request->hr_remoteaddr,
 				curenvp++);
 	/*
-	 * XXX Apache does this when invoking content handlers, and PHP
-	 * XXX 5.3 requires it as a "security" measure.
+	 * Apache does this when invoking content handlers, and PHP
+	 * 5.3 requires it as a "security" measure.
 	 */
 	if (cgihandler)
 		bozo_setenv(httpd, "REDIRECT_STATUS", "200", curenvp++);
 	bozo_auth_cgi_setenv(request, &curenvp);
 
-	free(file);
-	free(url);
-
 	debug((httpd, DEBUG_FAT, "bozo_process_cgi: going exec %s, %s %s %s",
 	    path, argv[0], strornull(argv[1]), strornull(argv[2])));
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sv) == -1)
-		bozo_err(httpd, 1, "child socketpair failed: %s",
+		bozoerr(httpd, 1, "child socketpair failed: %s",
 				strerror(errno));
 
 	/*
@@ -439,7 +440,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	 */
 	switch (fork()) {
 	case -1: /* eep, failure */
-		bozo_err(httpd, 1, "child fork failed: %s", strerror(errno));
+		bozoerr(httpd, 1, "child fork failed: %s", strerror(errno));
 		/*NOTREACHED*/
 	case 0:
 		close(sv[0]);
@@ -451,11 +452,15 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_daemon_closefds(httpd);
 
 		if (-1 == execve(path, argv, envp))
-			bozo_err(httpd, 1, "child exec failed: %s: %s",
+			bozoerr(httpd, 1, "child exec failed: %s: %s",
 			      path, strerror(errno));
 		/* NOT REACHED */
-		bozo_err(httpd, 1, "child execve returned?!");
+		bozoerr(httpd, 1, "child execve returned?!");
 	}
+
+	free(query);
+	free(file);
+	free(url);
 
 	close(sv[1]);
 
@@ -463,7 +468,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	/* child: read from sv[0] (bozo_write()) write to stdout */
 	pid = fork();
 	if (pid == -1)
-		bozo_err(httpd, 1, "io child fork failed: %s", strerror(errno));
+		bozoerr(httpd, 1, "io child fork failed: %s", strerror(errno));
 	else if (pid == 0) {
 		/* child reader/writer */
 		close(STDIN_FILENO);
@@ -487,7 +492,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 				rbytes -= wbytes;
 				bp += wbytes;
 			} else
-				bozo_err(httpd, 1, "write failed: %s",
+				bozoerr(httpd, 1, "write failed: %s",
 					strerror(errno));
 		}		
 	}
@@ -504,7 +509,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 #ifndef NO_DYNAMIC_CONTENT
 /* cgi maps are simple ".postfix /path/to/prog" */
 void
-bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg, const char *cgihandler)
+bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg,
+                         const char *cgihandler)
 {
 	bozo_content_map_t *map;
 

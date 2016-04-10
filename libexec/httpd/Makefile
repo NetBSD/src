@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.1 2015/04/23 19:38:11 snj Exp $
+#	$NetBSD: Makefile,v 1.22.2.2 2016/04/10 10:33:11 martin Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -14,6 +14,10 @@
 #	NO_SSL_SUPPORT		/* don't support ssl (https) */
 #	DO_HTPASSWD		/* support .htpasswd files */
 #	NO_LUA_SUPPORT		/* don't support Lua for dynamic content */
+#
+# other system specific defines:
+#	HAVE_NBUTIL_H		/* netbsd compat is in <nbutil.h>
+#				(don't forget to also enable -lnbutil)
 #
 # these are usually set via the "COPTS" variable, or some other method
 # for setting CFLAGS relevant to your make, eg
@@ -32,6 +36,17 @@ LDADD=	-lcrypt -llua -lm
 DPADD=	${LIBCRYPT} ${LIBLUA} ${LIBM}
 
 WARNS?=	4
+
+.if defined(.OS.MAKE)
+OPSYS=	${.OS.MAKE}
+.else
+OPSYS:=	${:!uname -s!:S/-//g:S/\///g}
+.endif
+
+.if ${OPSYS} == "QNX"
+CPPFLAGS+=	-DHAVE_NBUTIL_H
+LDADD+=		-lnbutil
+.endif
 
 .include <bsd.own.mk>
 

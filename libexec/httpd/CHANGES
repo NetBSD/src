@@ -1,5 +1,15 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
+changes in bozohttpd 20151028:
+	o  add CGI support for ~user translation (-E switch)
+	o  add redirects to ~user translation
+	o  fix bugs around ~user translation
+	o  add schema detection for absolute redirects
+	o  fixed few memory leaks
+	o  bunch of minor tweaks
+	o  removed -r support
+	o  smarter redirects 
+
 changes in bozohttpd 20150320:
 	o  fix redirection handling
 	o  support transport stream (.ts) and video object (.vob) files
