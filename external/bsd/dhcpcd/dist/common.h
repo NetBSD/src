@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,9 @@
 #define STRINGIFY(a)		#a
 #define TOSTRING(a)		STRINGIFY(a)
 #define UNUSED(a)		(void)(a)
+
+#define ROUNDUP4(a)		(1 + (((a) - 1) |  3))
+#define ROUNDUP8(a)		(1 + (((a) - 1) |  7))
 
 #define USEC_PER_SEC		1000000L
 #define USEC_PER_NSEC		1000L
