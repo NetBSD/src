@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.98 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.99 2016/04/11 09:21:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -522,6 +522,7 @@ struct rtentry *
 	    const struct sockaddr *);
 struct rtentry *
 	rt_matchaddr(rtbl_t *, const struct sockaddr *);
+int	rt_refines(const struct sockaddr *, const struct sockaddr *);
 int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
 void	rtbl_init(void);
 
