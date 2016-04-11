@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidfile.3,v 1.14 2016/04/10 19:05:50 roy Exp $
+.\"	$NetBSD: pidfile.3,v 1.15 2016/04/11 08:49:57 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,7 @@ and return the process ID it contains.
 .Fn pidfile_clean
 will
 .Xr ftruncate 2 ,
-.Xr close 2
+.Xr close 2 ,
 and
 .Xr unlink 2
 the last opening pid file if, and only if, the current process wrote it.
@@ -109,15 +109,15 @@ This function should be called if the program needs to call
 .Fn pidfile
 and
 .Fn pidfile_clean
-returns 0 on success and -1 on failure.
+returns 0 on success and \-1 on failure.
 .Pp
 .Fn pidfile_lock
 returns 0 on success.
 Otherwise, the process ID who owns the lock is returned and if that
-cannot be derived then -1 is returned.
+cannot be derived then \-1 is returned.
 .Pp
 .Fn pidfile_read
-returns the process ID if known, otherwise -1.
+returns the process ID if known, otherwise \-1.
 .Sh ERRORS
 The
 .Fn pidfile
@@ -132,8 +132,8 @@ daemon is already running.
 Specified pidfile's name is too long.
 .El
 .Sh SEE ALSO
-.Xr atexit 3 ,
-.Xr flock 2
+.Xr flock 2 ,
+.Xr atexit 3
 .Sh HISTORY
 The
 .Fn pidfile
@@ -144,7 +144,7 @@ Support for creating pid files in any arbitrary path was added in
 .Pp
 The
 .Fn pidfile_lock ,
-.Fn pidfile_read
+.Fn pidfile_read ,
 and
 .Fn pidfile_clean
 function calls appeared in
@@ -160,11 +160,11 @@ However, programs that use the
 .Xr _exit 2
 function (for example, in signal handlers)
 will not trigger this behaviour and should call
-.Xr pidfile_clean.
+.Fn pidfile_clean .
 Like-wise, if the program creates a pid file before
 .Xr fork 2 Ns ing
 a child to take over, it should use the
 .Xr _exit 2
 function instead of returning or using the
-.Xr exit 2
+.Xr exit 3
 function to ensure the pid file is not cleaned.
