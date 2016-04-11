@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.53 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.54 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.53 2016/03/23 22:27:48 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.54 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,6 +54,38 @@ static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #include "histedit.h"
 #include "chartype.h"
+
+
+#ifdef NARROWCHAR
+
+#define	FUN(prefix, rest)	prefix ## _ ## rest
+#define	FUNW(type)		type
+#define	TYPE(type)		type
+#define	STR(x)			x
+
+#define	Strlen(s)		strlen(s)
+#define	Strdup(s)		strdup(s)
+#define	Strcmp(d, s)		strcmp(d, s)
+#define	Strncmp(d, s, n)	strncmp(d, s, n)
+#define	Strncpy(d, s, n)	strncpy(d, s, n)
+#define	Strncat(d, s, n)	strncat(d, s, n)
+
+#else
+
+#define	FUN(prefix, rest)	prefix ## _w ## rest
+#define	FUNW(type)		type ## _w
+#define	TYPE(type)		type ## W
+#define	STR(x)			L ## x
+
+#define	Strlen(s)		wcslen(s)
+#define	Strdup(s)		wcsdup(s)
+#define	Strcmp(d, s)		wcscmp(d, s)
+#define	Strncmp(d, s, n)	wcsncmp(d, s, n)
+#define	Strncpy(d, s, n)	wcsncpy(d, s, n)
+#define	Strncat(d, s, n)	wcsncat(d, s, n)
+
+#endif
+
 
 typedef int (*history_gfun_t)(void *, TYPE(HistEvent) *);
 typedef int (*history_efun_t)(void *, TYPE(HistEvent) *, const Char *);

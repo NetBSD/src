@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.30 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.31 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.30 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.31 2016/04/11 00:22:48 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -184,23 +184,23 @@ el_set(EditLine *el, int op, ...)
 		 */
 		switch (op) {
 		case EL_BIND:
-			wargv[0] = STR("bind");
+			wargv[0] = L"bind";
 			ret = map_bind(el, i, wargv);
 			break;
 		case EL_TELLTC:
-			wargv[0] = STR("telltc");
+			wargv[0] = L"telltc";
 			ret = terminal_telltc(el, i, wargv);
 			break;
 		case EL_SETTC:
-			wargv[0] = STR("settc");
+			wargv[0] = L"settc";
 			ret = terminal_settc(el, i, wargv);
 			break;
 		case EL_ECHOTC:
-			wargv[0] = STR("echotc");
+			wargv[0] = L"echotc";
 			ret = terminal_echotc(el, i, wargv);
 			break;
 		case EL_SETTY:
-			wargv[0] = STR("setty");
+			wargv[0] = L"setty";
 			ret = tty_stty(el, i, wargv);
 			break;
 		default:
@@ -226,7 +226,7 @@ el_set(EditLine *el, int op, ...)
 		    goto out;
 		}
 		/* XXX: The two strdup's leak */
-		ret = map_addfunc(el, Strdup(wargv[0]), Strdup(wargv[1]),
+		ret = map_addfunc(el, wcsdup(wargv[0]), wcsdup(wargv[1]),
 		    func);
 		el_free(wargv);
 		break;
