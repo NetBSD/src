@@ -173,7 +173,7 @@ like 'EST' to be compatible with human tradition and POSIX.
 Here are the general rules used for choosing time zone abbreviations,
 in decreasing order of importance:
 
-	Use abbreviations that consist of three or more ASCII letters.
+	Use three or more characters that are ASCII alphanumerics or '+' or '-'.
 		Previous editions of this database also used characters like
 		' ' and '?', but these characters have a special meaning to
 		the shell and cause commands like
@@ -181,19 +181,16 @@ in decreasing order of importance:
 		to have unexpected effects.
 		Previous editions of this rule required upper-case letters,
 		but the Congressman who introduced Chamorro Standard Time
-		preferred "ChST", so the rule has been relaxed.
-
-		This rule guarantees that all abbreviations could have
-		been specified by a POSIX TZ string.  POSIX
-		requires at least three characters for an
-		abbreviation.  POSIX through 2000 says that an abbreviation
-		cannot start with ':', and cannot contain ',', '-',
-		'+', NUL, or a digit.  POSIX from 2001 on changes this
-		rule to say that an abbreviation can contain only '-', '+',
+		preferred "ChST", so lower-case letters are now allowed.
+		Also, POSIX from 2001 on relaxed the rule to allow '-', '+',
 		and alphanumeric characters from the portable character set
-		in the current locale.  To be portable to both sets of
-		rules, an abbreviation must therefore use only ASCII
-		letters.
+		in the current locale.  In practice ASCII alphanumerics and
+		'+' and '-' are safe in all locales.
+
+		In other words, in the C locale the POSIX extended regular
+		expression [-+[:alnum:]]{3,} should match the abbreviation.
+		This guarantees that all abbreviations could have been
+		specified by a POSIX TZ string.
 
 	Use abbreviations that are in common use among English-speakers,
 		e.g. 'EST' for Eastern Standard Time in North America.
@@ -263,7 +260,15 @@ Errors in the tz database arise from many sources:
    be needed if the tz database's scope were extended to cover even
    just the known or guessed history of standard time; for example,
    the current single entry for France would need to split into dozens
-   of entries, perhaps hundreds.
+   of entries, perhaps hundreds.  And in most of the world even this
+   approach would be misleading due to widespread disagreement or
+   indifference about what times should be observed.  In her 2015 book
+   "The Global Transformation of Time, 1870-1950", Vanessa Ogle writes
+   "Outside of Europe and North America there was no system of time
+   zones at all, often not even a stable landscape of mean times,
+   prior to the middle decades of the twentieth century".  See:
+   Timothy Shenk, Booked: A Global History of Time. Dissent 2015-12-17
+   https://www.dissentmagazine.org/blog/booked-a-global-history-of-time-vanessa-ogle
 
  * Most of the pre-1970 data entries come from unreliable sources, often
    astrology books that lack citations and whose compilers evidently
