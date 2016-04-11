@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.71 2016/04/11 07:36:21 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.72 2016/04/11 08:02:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.71 2016/04/11 07:36:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.72 2016/04/11 08:02:25 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -176,8 +176,10 @@ Static void		uhci_enter_ctl_q(uhci_softc_t *, uhci_soft_qh_t *,
 Static void		uhci_exit_ctl_q(uhci_softc_t *, uhci_soft_qh_t *);
 #endif
 
+#if 0
 Static void		uhci_free_std_chain(uhci_softc_t *, uhci_soft_td_t *,
 			    uhci_soft_td_t *);
+#endif
 Static usbd_status	uhci_alloc_std_chain(uhci_softc_t *, struct usbd_xfer *,
 			    int, int, uhci_soft_td_t **);
 Static void		uhci_free_stds(uhci_softc_t *, struct uhci_xfer *);
@@ -240,7 +242,6 @@ Static void		uhci_device_bulk_done(struct usbd_xfer *);
 Static int		uhci_device_isoc_init(struct usbd_xfer *);
 Static void		uhci_device_isoc_fini(struct usbd_xfer *);
 Static usbd_status	uhci_device_isoc_transfer(struct usbd_xfer *);
-Static usbd_status	uhci_device_isoc_start(struct usbd_xfer *);
 Static void		uhci_device_isoc_abort(struct usbd_xfer *);
 Static void		uhci_device_isoc_close(struct usbd_pipe *);
 Static void		uhci_device_isoc_done(struct usbd_xfer *);
@@ -1972,6 +1973,7 @@ uhci_free_sqh(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	sc->sc_freeqhs = sqh;
 }
 
+#if 0
 void
 uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 		    uhci_soft_td_t *stdend)
@@ -2009,6 +2011,7 @@ uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 		uhci_free_std(sc, std);
 	}
 }
+#endif
 
 usbd_status
 uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
@@ -3334,7 +3337,6 @@ uhci_device_ctrl_done(struct usbd_xfer *xfer)
 void
 uhci_device_bulk_done(struct usbd_xfer *xfer)
 {
-	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	usb_endpoint_descriptor_t *ed = xfer->ux_pipe->up_endpoint->ue_edesc;
@@ -3342,8 +3344,7 @@ uhci_device_bulk_done(struct usbd_xfer *xfer)
 	int isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(5, "xfer=%p ux=%p sc=%p upipe=%p", xfer, ux, sc,
-	    upipe);
+	DPRINTFN(5, "xfer=%p sc=%p upipe=%p", xfer, sc, upipe, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
