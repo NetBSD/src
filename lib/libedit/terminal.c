@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.26 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.27 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.26 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.27 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1012,37 +1012,37 @@ terminal_init_arrow(EditLine *el)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
 
-	arrow[A_K_DN].name = STR("down");
+	arrow[A_K_DN].name = L"down";
 	arrow[A_K_DN].key = T_kd;
 	arrow[A_K_DN].fun.cmd = ED_NEXT_HISTORY;
 	arrow[A_K_DN].type = XK_CMD;
 
-	arrow[A_K_UP].name = STR("up");
+	arrow[A_K_UP].name = L"up";
 	arrow[A_K_UP].key = T_ku;
 	arrow[A_K_UP].fun.cmd = ED_PREV_HISTORY;
 	arrow[A_K_UP].type = XK_CMD;
 
-	arrow[A_K_LT].name = STR("left");
+	arrow[A_K_LT].name = L"left";
 	arrow[A_K_LT].key = T_kl;
 	arrow[A_K_LT].fun.cmd = ED_PREV_CHAR;
 	arrow[A_K_LT].type = XK_CMD;
 
-	arrow[A_K_RT].name = STR("right");
+	arrow[A_K_RT].name = L"right";
 	arrow[A_K_RT].key = T_kr;
 	arrow[A_K_RT].fun.cmd = ED_NEXT_CHAR;
 	arrow[A_K_RT].type = XK_CMD;
 
-	arrow[A_K_HO].name = STR("home");
+	arrow[A_K_HO].name = L"home";
 	arrow[A_K_HO].key = T_kh;
 	arrow[A_K_HO].fun.cmd = ED_MOVE_TO_BEG;
 	arrow[A_K_HO].type = XK_CMD;
 
-	arrow[A_K_EN].name = STR("end");
+	arrow[A_K_EN].name = L"end";
 	arrow[A_K_EN].key = T_at7;
 	arrow[A_K_EN].fun.cmd = ED_MOVE_TO_END;
 	arrow[A_K_EN].type = XK_CMD;
 
-	arrow[A_K_DE].name = STR("delete");
+	arrow[A_K_DE].name = L"delete";
 	arrow[A_K_DE].key = T_kD;
 	arrow[A_K_DE].fun.cmd = ED_DELETE_NEXT_CHAR;
 	arrow[A_K_DE].type = XK_CMD;
@@ -1110,7 +1110,7 @@ terminal_set_arrow(EditLine *el, const Char *name, keymacro_value_t *fun,
 	int i;
 
 	for (i = 0; i < A_K_NKEYS; i++)
-		if (Strcmp(name, arrow[i].name) == 0) {
+		if (wcscmp(name, arrow[i].name) == 0) {
 			arrow[i].fun = *fun;
 			arrow[i].type = type;
 			return 0;
@@ -1129,7 +1129,7 @@ terminal_clear_arrow(EditLine *el, const Char *name)
 	int i;
 
 	for (i = 0; i < A_K_NKEYS; i++)
-		if (Strcmp(name, arrow[i].name) == 0) {
+		if (wcscmp(name, arrow[i].name) == 0) {
 			arrow[i].type = XK_NOD;
 			return 0;
 		}
@@ -1147,7 +1147,7 @@ terminal_print_arrow(EditLine *el, const Char *name)
 	funckey_t *arrow = el->el_terminal.t_fkey;
 
 	for (i = 0; i < A_K_NKEYS; i++)
-		if (*name == '\0' || Strcmp(name, arrow[i].name) == 0)
+		if (*name == '\0' || wcscmp(name, arrow[i].name) == 0)
 			if (arrow[i].type != XK_NOD)
 				keymacro_kprint(el, arrow[i].name,
 				    &arrow[i].fun, arrow[i].type);
@@ -1501,28 +1501,28 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 	}
 	if (!*argv || *argv[0] == '\0')
 		return 0;
-	if (Strcmp(*argv, STR("tabs")) == 0) {
+	if (wcscmp(*argv, L"tabs") == 0) {
 		(void) fprintf(el->el_outfile, fmts, EL_CAN_TAB ? "yes" : "no");
 		return 0;
-	} else if (Strcmp(*argv, STR("meta")) == 0) {
+	} else if (wcscmp(*argv, L"meta") == 0) {
 		(void) fprintf(el->el_outfile, fmts, Val(T_km) ? "yes" : "no");
 		return 0;
-	} else if (Strcmp(*argv, STR("xn")) == 0) {
+	} else if (wcscmp(*argv, L"xn") == 0) {
 		(void) fprintf(el->el_outfile, fmts, EL_HAS_MAGIC_MARGINS ?
 		    "yes" : "no");
 		return 0;
-	} else if (Strcmp(*argv, STR("am")) == 0) {
+	} else if (wcscmp(*argv, L"am") == 0) {
 		(void) fprintf(el->el_outfile, fmts, EL_HAS_AUTO_MARGINS ?
 		    "yes" : "no");
 		return 0;
-	} else if (Strcmp(*argv, STR("baud")) == 0) {
+	} else if (wcscmp(*argv, L"baud") == 0) {
 		(void) fprintf(el->el_outfile, fmtd, (int)el->el_tty.t_speed);
 		return 0;
-	} else if (Strcmp(*argv, STR("rows")) == 0 ||
-                   Strcmp(*argv, STR("lines")) == 0) {
+	} else if (wcscmp(*argv, L"rows") == 0 ||
+                   wcscmp(*argv, L"lines") == 0) {
 		(void) fprintf(el->el_outfile, fmtd, Val(T_li));
 		return 0;
-	} else if (Strcmp(*argv, STR("cols")) == 0) {
+	} else if (wcscmp(*argv, L"cols") == 0) {
 		(void) fprintf(el->el_outfile, fmtd, Val(T_co));
 		return 0;
 	}
