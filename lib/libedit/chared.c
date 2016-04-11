@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.52 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.53 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.52 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.53 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: chared.c,v 1.52 2016/04/11 00:50:13 christos Exp $");
 #include "el.h"
 #include "common.h"
 
-private void ch__clearmacro (EditLine *);
+static void ch__clearmacro (EditLine *);
 
 /* value to leave unused in line buffer */
 #define	EL_LEAVE	2
@@ -489,7 +489,7 @@ ch_reset(EditLine *el, int mclear)
 		ch__clearmacro(el);
 }
 
-private void
+static void
 ch__clearmacro(EditLine *el)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
@@ -614,7 +614,7 @@ ch_end(EditLine *el)
 /* el_insertstr():
  *	Insert string at cursorI
  */
-public int
+int
 el_winsertstr(EditLine *el, const wchar_t *s)
 {
 	size_t len;
@@ -636,7 +636,7 @@ el_winsertstr(EditLine *el, const wchar_t *s)
 /* el_deletestr():
  *	Delete num characters before the cursor
  */
-public void
+void
 el_deletestr(EditLine *el, int n)
 {
 	if (n <= 0)
@@ -654,7 +654,7 @@ el_deletestr(EditLine *el, int n)
 /* el_cursor():
  *	Move the cursor to the left or the right of the current position
  */
-public int
+int
 el_cursor(EditLine *el, int n)
 {
 	if (n == 0)
