@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.25 2016/03/23 22:27:48 christos Exp $
+#	$NetBSD: makelist,v 1.26 2016/04/11 00:22:48 christos Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -114,16 +114,16 @@ _EOF
 		    fname = fname s;
 		}
 
-		printf("    { %-30.30s %-30.30s\n","STR(\"" fname "\"),", uname ",");
+		printf("    { %-30.30s %-30.30s\n","L\"" fname "\",", uname ",");
 		ok = 1;
 	    }
 	}
 	/^ \*/ {
 	    if (ok) {
-		printf("      STR(\"");
+		printf("      L\"");
 		for (i = 2; i < NF; i++)
 		    printf("%s ", $i);
-		printf("%s\") },\n", $i);
+		printf("%s\" },\n", $i);
 		ok = 0;
 	    }
 	}
