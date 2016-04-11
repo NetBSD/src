@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.61 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.62 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.61 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.62 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -896,7 +896,7 @@ tty_bind_char(EditLine *el, int force)
 
 	unsigned char *t_n = el->el_tty.t_c[ED_IO];
 	unsigned char *t_o = el->el_tty.t_ed.c_cc;
-	Char new[2], old[2];
+	wchar_t new[2], old[2];
 	const ttymap_t *tp;
 	el_action_t *map, *alt;
 	const el_action_t *dmap, *dalt;
@@ -913,8 +913,8 @@ tty_bind_char(EditLine *el, int force)
 	}
 
 	for (tp = tty_map; tp->nch != (wint_t)-1; tp++) {
-		new[0] = (Char)t_n[tp->nch];
-		old[0] = (Char)t_o[tp->och];
+		new[0] = (wchar_t)t_n[tp->nch];
+		old[0] = (wchar_t)t_o[tp->och];
 		if (new[0] == old[0] && !force)
 			continue;
 		/* Put the old default binding back, and set the new binding */
@@ -1148,12 +1148,13 @@ tty_noquotemode(EditLine *el)
  */
 protected int
 /*ARGSUSED*/
-tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
+tty_stty(EditLine *el, int argc __attribute__((__unused__)),
+    const wchar_t **argv)
 {
 	const ttymodes_t *m;
 	char x;
 	int aflag = 0;
-	const Char *s, *d;
+	const wchar_t *s, *d;
         char name[EL_BUFSIZ];
 	struct termios *tios = &el->el_tty.t_ex;
 	int z = EX_IO;
@@ -1237,7 +1238,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 		return 0;
 	}
 	while (argv && (s = *argv++)) {
-		const Char *p;
+		const wchar_t *p;
 		switch (*s) {
 		case '+':
 		case '-':
