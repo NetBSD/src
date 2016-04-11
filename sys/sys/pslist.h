@@ -1,4 +1,4 @@
-/*	$NetBSD: pslist.h,v 1.1 2016/04/09 04:39:46 riastradh Exp $	*/
+/*	$NetBSD: pslist.h,v 1.2 2016/04/11 03:46:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@ struct pslist_entry {
 #define	_PSLIST_ASSERT	assert
 #endif
 
+#define	_PSLIST_POISON	((void *)1ul)
+
 /*
  * Initialization.  Allowed only when the caller has exclusive access,
  * excluding writers and readers.
@@ -86,7 +88,13 @@ pslist_entry_destroy(struct pslist_entry *entry)
 {
 
 	_PSLIST_ASSERT(entry->ple_prevp == NULL);
-	entry->ple_next = NULL;
+
+	/*
+	 * Poison the next entry.  If we used NULL here, then readers
+	 * would think they were simply at the end of the list.
+	 * Instead, cause readers to crash.
+	 */
+	entry->ple_next = _PSLIST_POISON;
 }
 
 /*
@@ -123,6 +131,7 @@ pslist_writer_insert_before(struct pslist_entry *entry,
     struct pslist_entry *new)
 {
 
+	_PSLIST_ASSERT(entry->ple_next != _PSLIST_POISON);
 	_PSLIST_ASSERT(entry->ple_prevp != NULL);
 	_PSLIST_ASSERT(*entry->ple_prevp == entry);
 	_PSLIST_ASSERT(new->ple_next == NULL);
@@ -140,6 +149,7 @@ pslist_writer_insert_after(struct pslist_entry *entry,
     struct pslist_entry *new)
 {
 
+	_PSLIST_ASSERT(entry->ple_next != _PSLIST_POISON);
 	_PSLIST_ASSERT(entry->ple_prevp != NULL);
 	_PSLIST_ASSERT(*entry->ple_prevp == entry);
 	_PSLIST_ASSERT(new->ple_next == NULL);
@@ -157,13 +167,14 @@ static inline void
 pslist_writer_remove(struct pslist_entry *entry)
 {
 
+	_PSLIST_ASSERT(entry->ple_next != _PSLIST_POISON);
 	_PSLIST_ASSERT(entry->ple_prevp != NULL);
 	_PSLIST_ASSERT(*entry->ple_prevp == entry);
 
 	if (entry->ple_next != NULL)
 		entry->ple_next->ple_prevp = entry->ple_prevp;
 	*entry->ple_prevp = entry->ple_next;
-	entry->ple_prevp = NULL; /* poison */
+	entry->ple_prevp = NULL;
 }
 
 static inline struct pslist_entry *
@@ -177,6 +188,7 @@ static inline struct pslist_entry *
 pslist_writer_next(struct pslist_entry *entry)
 {
 
+	_PSLIST_ASSERT(entry->ple_next != _PSLIST_POISON);
 	return entry->ple_next;
 }
 
@@ -193,6 +205,7 @@ _pslist_writer_next_container(struct pslist_entry *entry, ptrdiff_t offset)
 {
 	struct pslist_entry *next = entry->ple_next;
 
+	_PSLIST_ASSERT(next != _PSLIST_POISON);
 	return (next == NULL ? NULL : (char *)next - offset);
 }
 
@@ -219,6 +232,7 @@ pslist_reader_next(struct pslist_entry *entry)
 {
 	struct pslist_entry *next = entry->ple_next;
 
+	_PSLIST_ASSERT(next != _PSLIST_POISON);
 	if (next != NULL)
 		membar_datadep_consumer();
 
@@ -242,6 +256,7 @@ _pslist_reader_next_container(struct pslist_entry *entry, ptrdiff_t offset)
 {
 	struct pslist_entry *next = entry->ple_next;
 
+	_PSLIST_ASSERT(next != _PSLIST_POISON);
 	if (next == NULL)
 		return NULL;
 	membar_datadep_consumer();
