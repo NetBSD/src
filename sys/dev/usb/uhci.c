@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.70 2016/04/04 07:43:12 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.71 2016/04/11 07:36:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.70 2016/04/04 07:43:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.71 2016/04/11 07:36:21 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2491,7 +2491,6 @@ uhci_device_ctrl_init(struct usbd_xfer *xfer)
 	usb_device_request_t *req = &xfer->ux_request;
 	struct usbd_device *dev = upipe->pipe.up_dev;
 	uhci_softc_t *sc = dev->ud_bus->ub_hcpriv;
-	int endpt = upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 	uhci_soft_td_t *data;
 	int len;
 	usbd_status err;
@@ -2499,7 +2498,7 @@ uhci_device_ctrl_init(struct usbd_xfer *xfer)
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(3, "xfer=%p len=%d, addr=%d, endpt=%d", xfer, xfer->ux_bufsize,
-	    dev->ud_addr, endpt);
+	    dev->ud_addr, upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress);
 
 	isread = req->bmRequestType & UT_READ;
 	len = xfer->ux_bufsize;
