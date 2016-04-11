@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.24 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,14 +56,6 @@
 #  define __BEGIN_DECLS
 #  define __END_DECLS
 # endif
-#endif
-
-#ifndef public
-# define public		/* Externally visible functions/variables */
-#endif
-
-#ifndef private
-# define private	static	/* Always hidden internals */
 #endif
 
 #ifndef protected
