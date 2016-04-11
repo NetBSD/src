@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.26 2016/02/15 01:11:41 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.27 2016/04/11 02:04:14 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,6 +79,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/pslist.h>
 
 /*
  * Commands used in the SIOCSDRVSPEC ioctl.  Note the lookup of the
@@ -248,7 +249,7 @@ struct bstp_tcn_unit {
  * Bridge interface list entry.
  */
 struct bridge_iflist {
-	LIST_ENTRY(bridge_iflist) bif_next;
+	struct pslist_entry	bif_next;
 	uint64_t		bif_designated_root;
 	uint64_t		bif_designated_bridge;
 	uint32_t		bif_path_cost;
@@ -311,7 +312,7 @@ struct bridge_softc {
 	uint32_t		sc_brttimeout;	/* rt timeout in seconds */
 	callout_t		sc_brcallout;	/* bridge callout */
 	callout_t		sc_bstpcallout;	/* STP callout */
-	LIST_HEAD(, bridge_iflist) sc_iflist;	/* member interface list */
+	struct pslist_head	sc_iflist;	/* member interface list */
 	kcondvar_t		sc_iflist_cv;
 	pserialize_t		sc_iflist_psz;
 	kmutex_t		*sc_iflist_lock;
