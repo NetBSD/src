@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.111 2016/03/28 04:38:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.112 2016/04/11 02:04:14 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.111 2016/03/28 04:38:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.112 2016/04/11 02:04:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -399,7 +399,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	callout_init(&sc->sc_brcallout, 0);
 	callout_init(&sc->sc_bstpcallout, 0);
 
-	LIST_INIT(&sc->sc_iflist);
+	PSLIST_INIT(&sc->sc_iflist);
 #ifdef BRIDGE_MPSAFE
 	sc->sc_iflist_psz = pserialize_create();
 	sc->sc_iflist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
@@ -447,8 +447,14 @@ bridge_clone_destroy(struct ifnet *ifp)
 	bridge_stop(ifp, 1);
 
 	BRIDGE_LOCK(sc);
-	while ((bif = LIST_FIRST(&sc->sc_iflist)) != NULL)
+	for (;;) {
+		bif = PSLIST_WRITER_FIRST(&sc->sc_iflist, struct bridge_iflist,
+		    bif_next);
+		if (bif == NULL)
+			break;
 		bridge_delete_member(sc, bif);
+	}
+	PSLIST_DESTROY(&sc->sc_iflist);
 	BRIDGE_UNLOCK(sc);
 
 	splx(s);
@@ -619,7 +625,8 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name)
 
 	BRIDGE_PSZ_RENTER(s);
 
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	    bif_next) {
 		ifp = bif->bif_ifp;
 		if (strcmp(ifp->if_xname, name) == 0)
 			break;
@@ -705,7 +712,8 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 	ifs->if_bridge = NULL;
 	ifs->if_bridgeif = NULL;
 
-	LIST_REMOVE(bif, bif_next);
+	PSLIST_WRITER_REMOVE(bif, bif_next);
+	PSLIST_ENTRY_DESTROY(bif, bif_next);
 
 	BRIDGE_PSZ_PERFORM(sc);
 
@@ -777,12 +785,13 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	bif->bif_path_cost = BSTP_DEFAULT_PATH_COST;
 	bif->bif_refs = 0;
 	bif->bif_waiting = false;
+	PSLIST_ENTRY_INIT(bif, bif_next);
 
 	BRIDGE_LOCK(sc);
 
 	ifs->if_bridge = sc;
 	ifs->if_bridgeif = bif;
-	LIST_INSERT_HEAD(&sc->sc_iflist, bif, bif_next);
+	PSLIST_WRITER_INSERT_HEAD(&sc->sc_iflist, bif, bif_next);
 	ifs->_if_input = bridge_input;
 
 	BRIDGE_UNLOCK(sc);
@@ -814,7 +823,8 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 	 * Don't use bridge_lookup_member. We want to get a member
 	 * with bif_refs == 0.
 	 */
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	    bif_next) {
 		ifs = bif->bif_ifp;
 		if (strcmp(ifs->if_xname, name) == 0)
 			break;
@@ -939,7 +949,8 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 retry:
 	BRIDGE_LOCK(sc);
 	count = 0;
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next)
+	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	    bif_next)
 		count++;
 	BRIDGE_UNLOCK(sc);
 
@@ -959,7 +970,8 @@ retry:
 	BRIDGE_LOCK(sc);
 
 	i = 0;
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next)
+	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	    bif_next)
 		i++;
 	if (i > count) {
 		/*
@@ -972,7 +984,8 @@ retry:
 	}
 
 	i = 0;
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	    bif_next) {
 		struct ifbreq *breq = &breqs[i++];
 		memset(breq, 0, sizeof(*breq));
 
@@ -1463,7 +1476,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 		int ss;
 
 		BRIDGE_PSZ_RENTER(ss);
-		LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+		PSLIST_READER_FOREACH(bif, &sc->sc_iflist,
+		    struct bridge_iflist, bif_next) {
 			bif = bridge_try_hold_bif(bif);
 			if (bif == NULL)
 				continue;
@@ -1489,7 +1503,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				}
 			}
 
-			if (LIST_NEXT(bif, bif_next) == NULL) {
+			if (PSLIST_READER_NEXT(bif, struct bridge_iflist,
+			    bif_next) == NULL) {
 				used = 1;
 				mc = m;
 			} else {
@@ -1787,7 +1802,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		int s;
 
 		BRIDGE_PSZ_RENTER(s);
-		LIST_FOREACH(_bif, &sc->sc_iflist, bif_next) {
+		PSLIST_READER_FOREACH(_bif, &sc->sc_iflist,
+		    struct bridge_iflist, bif_next) {
 			/* It is destined for us. */
 			if (bridge_ourether(_bif, eh, 0)) {
 				_bif = bridge_try_hold_bif(_bif);
@@ -1863,7 +1879,8 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 	bmcast = m->m_flags & (M_BCAST|M_MCAST);
 
 	BRIDGE_PSZ_RENTER(s);
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	    bif_next) {
 		bif = bridge_try_hold_bif(bif);
 		if (bif == NULL)
 			continue;
