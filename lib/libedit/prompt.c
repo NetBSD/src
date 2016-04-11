@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.24 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.24 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.25 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -47,13 +47,13 @@ __RCSID("$NetBSD: prompt.c,v 1.24 2016/04/11 00:50:13 christos Exp $");
 #include <stdio.h>
 #include "el.h"
 
-private wchar_t	*prompt_default(EditLine *);
-private wchar_t	*prompt_default_r(EditLine *);
+static wchar_t	*prompt_default(EditLine *);
+static wchar_t	*prompt_default_r(EditLine *);
 
 /* prompt_default():
  *	Just a default prompt, in case the user did not provide one
  */
-private wchar_t *
+static wchar_t *
 /*ARGSUSED*/
 prompt_default(EditLine *el __attribute__((__unused__)))
 {
@@ -66,7 +66,7 @@ prompt_default(EditLine *el __attribute__((__unused__)))
 /* prompt_default_r():
  *	Just a default rprompt, in case the user did not provide one
  */
-private wchar_t *
+static wchar_t *
 /*ARGSUSED*/
 prompt_default_r(EditLine *el __attribute__((__unused__)))
 {

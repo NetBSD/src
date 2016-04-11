@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.87 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.88 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.87 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.88 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -59,14 +59,14 @@ __RCSID("$NetBSD: el.c,v 1.87 2016/04/11 00:50:13 christos Exp $");
 /* el_init():
  *	Initialize editline and set default parameters.
  */
-public EditLine *
+EditLine *
 el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
     return el_init_fd(prog, fin, fout, ferr, fileno(fin), fileno(fout),
 	fileno(ferr));
 }
 
-public EditLine *
+EditLine *
 el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
     int fdin, int fdout, int fderr)
 {
@@ -123,7 +123,7 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
 /* el_end():
  *	Clean up.
  */
-public void
+void
 el_end(EditLine *el)
 {
 
@@ -155,7 +155,7 @@ el_end(EditLine *el)
 /* el_reset():
  *	Reset the tty and the parser
  */
-public void
+void
 el_reset(EditLine *el)
 {
 
@@ -167,7 +167,7 @@ el_reset(EditLine *el)
 /* el_set():
  *	set the editline parameters
  */
-public int
+int
 el_wset(EditLine *el, int op, ...)
 {
 	va_list ap;
@@ -380,7 +380,7 @@ el_wset(EditLine *el, int op, ...)
 /* el_get():
  *	retrieve the editline parameters
  */
-public int
+int
 el_wget(EditLine *el, int op, ...)
 {
 	va_list ap;
@@ -493,7 +493,7 @@ el_wget(EditLine *el, int op, ...)
 /* el_line():
  *	Return editing info
  */
-public const LineInfoW *
+const LineInfoW *
 el_wline(EditLine *el)
 {
 
@@ -504,7 +504,7 @@ el_wline(EditLine *el)
 /* el_source():
  *	Source a file
  */
-public int
+int
 el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
@@ -576,7 +576,7 @@ el_source(EditLine *el, const char *fname)
 /* el_resize():
  *	Called from program when terminal is resized
  */
-public void
+void
 el_resize(EditLine *el)
 {
 	int lins, cols;
@@ -597,7 +597,7 @@ el_resize(EditLine *el)
 /* el_beep():
  *	Called from the program to beep
  */
-public void
+void
 el_beep(EditLine *el)
 {
 

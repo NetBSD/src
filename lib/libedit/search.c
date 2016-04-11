@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.43 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.44 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.43 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.44 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -98,7 +98,7 @@ search_end(EditLine *el)
 /* regerror():
  *	Handle regular expression errors
  */
-public void
+void
 /*ARGSUSED*/
 regerror(const char *msg)
 {

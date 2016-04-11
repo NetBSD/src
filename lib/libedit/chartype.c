@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.27 2016/04/11 16:06:52 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.28 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.27 2016/04/11 16:06:52 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.28 2016/04/11 18:56:31 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -42,10 +42,10 @@ __RCSID("$NetBSD: chartype.c,v 1.27 2016/04/11 16:06:52 christos Exp $");
 
 #define CT_BUFSIZ ((size_t)1024)
 
-private int ct_conv_cbuff_resize(ct_buffer_t *, size_t);
-private int ct_conv_wbuff_resize(ct_buffer_t *, size_t);
+static int ct_conv_cbuff_resize(ct_buffer_t *, size_t);
+static int ct_conv_wbuff_resize(ct_buffer_t *, size_t);
 
-private int
+static int
 ct_conv_cbuff_resize(ct_buffer_t *conv, size_t csize)
 {
 	void *p;
@@ -66,7 +66,7 @@ ct_conv_cbuff_resize(ct_buffer_t *conv, size_t csize)
 	return 0;
 }
 
-private int
+static int
 ct_conv_wbuff_resize(ct_buffer_t *conv, size_t wsize)
 {
 	void *p;
@@ -88,7 +88,7 @@ ct_conv_wbuff_resize(ct_buffer_t *conv, size_t wsize)
 }
 
 
-public char *
+char *
 ct_encode_string(const wchar_t *s, ct_buffer_t *conv)
 {
 	char *dst;
@@ -118,7 +118,7 @@ ct_encode_string(const wchar_t *s, ct_buffer_t *conv)
 	return conv->cbuff;
 }
 
-public wchar_t *
+wchar_t *
 ct_decode_string(const char *s, ct_buffer_t *conv)
 {
 	size_t len;

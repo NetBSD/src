@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.26 2016/04/11 00:22:48 christos Exp $
+#	$NetBSD: makelist,v 1.27 2016/04/11 18:56:31 christos Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -94,7 +94,7 @@ _EOF
 	    printf("/* Automatically generated file, do not edit */\n");
 	    printf("#include \"config.h\"\n#include \"el.h\"\n");
 	    printf("#include \"help.h\"\n");
-	    printf("private const struct el_bindings_t el_func_help[] = {\n");
+	    printf("static const struct el_bindings_t el_func_help[] = {\n");
 	    low = "abcdefghijklmnopqrstuvwxyz_";
 	    high = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
 	    for (i = 1; i <= length(low); i++)
@@ -178,7 +178,7 @@ _EOF
 	    printf("#include \"common.h\"\n");
 	    printf("#include \"emacs.h\"\n");
 	    printf("#include \"vi.h\"\n");
-	    printf("private const el_func_t el_func[] = {");
+	    printf("static const el_func_t el_func[] = {");
 	    maxlen = 80;
 	    needn = 1;
 	    len = 0;

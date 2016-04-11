@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.18 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.19 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.18 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.19 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -81,18 +81,18 @@ struct keymacro_node_t {
 	struct keymacro_node_t *sibling;/* ptr to another key with same prefix*/
 };
 
-private int		 node_trav(EditLine *, keymacro_node_t *, wchar_t *,
+static int		 node_trav(EditLine *, keymacro_node_t *, wchar_t *,
     keymacro_value_t *);
-private int		 node__try(EditLine *, keymacro_node_t *,
+static int		 node__try(EditLine *, keymacro_node_t *,
     const wchar_t *, keymacro_value_t *, int);
-private keymacro_node_t	*node__get(wint_t);
-private void		 node__free(keymacro_node_t *);
-private void		 node__put(EditLine *, keymacro_node_t *);
-private int		 node__delete(EditLine *, keymacro_node_t **,
+static keymacro_node_t	*node__get(wint_t);
+static void		 node__free(keymacro_node_t *);
+static void		 node__put(EditLine *, keymacro_node_t *);
+static int		 node__delete(EditLine *, keymacro_node_t **,
     const wchar_t *);
-private int		 node_lookup(EditLine *, const wchar_t *,
+static int		 node_lookup(EditLine *, const wchar_t *,
     keymacro_node_t *, size_t);
-private int		 node_enum(EditLine *, keymacro_node_t *, size_t);
+static int		 node_enum(EditLine *, keymacro_node_t *, size_t);
 
 #define	KEY_BUFSIZ	EL_BUFSIZ
 
@@ -276,7 +276,7 @@ keymacro_print(EditLine *el, const wchar_t *key)
  *	recursively traverses node in tree until match or mismatch is
  *	found.  May read in more characters.
  */
-private int
+static int
 node_trav(EditLine *el, keymacro_node_t *ptr, wchar_t *ch,
     keymacro_value_t *val)
 {
@@ -314,7 +314,7 @@ node_trav(EditLine *el, keymacro_node_t *ptr, wchar_t *ch,
 /* node__try():
  *	Find a node that matches *str or allocate a new one
  */
-private int
+static int
 node__try(EditLine *el, keymacro_node_t *ptr, const wchar_t *str,
     keymacro_value_t *val, int ntype)
 {
@@ -377,7 +377,7 @@ node__try(EditLine *el, keymacro_node_t *ptr, const wchar_t *str,
 /* node__delete():
  *	Delete node that matches str
  */
-private int
+static int
 node__delete(EditLine *el, keymacro_node_t **inptr, const wchar_t *str)
 {
 	keymacro_node_t *ptr;
@@ -425,7 +425,7 @@ node__delete(EditLine *el, keymacro_node_t **inptr, const wchar_t *str)
 /* node__put():
  *	Puts a tree of nodes onto free list using free(3).
  */
-private void
+static void
 node__put(EditLine *el, keymacro_node_t *ptr)
 {
 	if (ptr == NULL)
@@ -457,7 +457,7 @@ node__put(EditLine *el, keymacro_node_t *ptr)
 /* node__get():
  *	Returns pointer to a keymacro_node_t for ch.
  */
-private keymacro_node_t *
+static keymacro_node_t *
 node__get(wint_t ch)
 {
 	keymacro_node_t *ptr;
@@ -473,7 +473,7 @@ node__get(wint_t ch)
 	return ptr;
 }
 
-private void
+static void
 node__free(keymacro_node_t *k)
 {
 	if (k == NULL)
@@ -487,7 +487,7 @@ node__free(keymacro_node_t *k)
  *	look for the str starting at node ptr.
  *	Print if last node
  */
-private int
+static int
 node_lookup(EditLine *el, const wchar_t *str, keymacro_node_t *ptr,
     size_t cnt)
 {
@@ -540,7 +540,7 @@ node_lookup(EditLine *el, const wchar_t *str, keymacro_node_t *ptr,
 /* node_enum():
  *	Traverse the node printing the characters it is bound in buffer
  */
-private int
+static int
 node_enum(EditLine *el, keymacro_node_t *ptr, size_t cnt)
 {
         ssize_t used;
