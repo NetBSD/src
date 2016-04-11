@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.160 2016/04/07 04:04:47 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.161 2016/04/11 08:26:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.160 2016/04/07 04:04:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.161 2016/04/11 08:26:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -796,7 +796,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if (info->rti_ifa == NULL && (error = rt_getifa(info)))
 			senderr(error);
 		ifa = info->rti_ifa;
-		/* Already at splsoftnet() so pool_get/pool_put are safe */
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
@@ -1196,7 +1195,6 @@ rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
 		if (destroy)
 			(*r->rtt_func)(r->rtt_rt, r);
 		rtfree(r->rtt_rt);
-		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 		if (rtq->rtq_count > 0)
 			rtq->rtq_count--;
@@ -1240,7 +1238,6 @@ rt_timer_remove_all(struct rtentry *rt, int destroy)
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
 		rtfree(r->rtt_rt);
-		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 	}
 }
@@ -1251,7 +1248,6 @@ rt_timer_add(struct rtentry *rt,
 	struct rttimer_queue *queue)
 {
 	struct rttimer *r;
-	int s;
 
 	KASSERT(func != NULL);
 	/*
@@ -1271,9 +1267,7 @@ rt_timer_add(struct rtentry *rt,
 			printf("rt_timer_add: rtq_count reached 0\n");
 		rtfree(r->rtt_rt);
 	} else {
-		s = splsoftnet();
 		r = pool_get(&rttimer_pool, PR_NOWAIT);
-		splx(s);
 		if (r == NULL)
 			return ENOBUFS;
 	}
