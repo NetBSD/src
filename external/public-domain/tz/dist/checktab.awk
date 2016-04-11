@@ -1,6 +1,6 @@
 # Check tz tables for consistency.
 
-# Contributed by Paul Eggert.
+# Contributed by Paul Eggert.  This file is in the public domain.
 
 BEGIN {
 	FS = "\t"
@@ -38,7 +38,7 @@ BEGIN {
 		}
 		cc0 = cc
 		if (name2cc[name]) {
-			printf "%s:%d: '%s' and '%s' have the sname name\n", \
+			printf "%s:%d: '%s' and '%s' have the same name\n", \
 				iso_table, iso_NR, name2cc[name], cc \
 				>>"/dev/stderr"
 			status = 1
@@ -112,6 +112,7 @@ BEGIN {
 	    printf "%s:%d: missing comment for %s\n", \
 	      zone_table, tz2NR[tz], comments_needed[tz] \
 	      >>"/dev/stderr"
+	    tz2comments[tz] = 1
 	    status = 1
 	  }
 	}
