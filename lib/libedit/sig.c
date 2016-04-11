@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.24 2016/02/16 19:08:41 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.24 2016/02/16 19:08:41 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.25 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,23 +52,23 @@ __RCSID("$NetBSD: sig.c,v 1.24 2016/02/16 19:08:41 christos Exp $");
 #include "el.h"
 #include "common.h"
 
-private EditLine *sel = NULL;
+static EditLine *sel = NULL;
 
-private const int sighdl[] = {
+static const int sighdl[] = {
 #define	_DO(a)	(a),
 	ALLSIGS
 #undef	_DO
 	- 1
 };
 
-private void sig_handler(int);
+static void sig_handler(int);
 
 /* sig_handler():
  *	This is the handler called for all signals
  *	XXX: we cannot pass any data so we just store the old editline
  *	state in a private variable
  */
-private void
+static void
 sig_handler(int signo)
 {
 	int i, save_errno;

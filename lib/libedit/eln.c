@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.32 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.33 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.32 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.33 2016/04/11 18:56:31 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: eln.c,v 1.32 2016/04/11 00:50:13 christos Exp $");
 
 #include "el.h"
 
-public int
+int
 el_getc(EditLine *el, char *cp)
 {
 	int num_read;
@@ -58,7 +58,7 @@ el_getc(EditLine *el, char *cp)
 }
 
 
-public void
+void
 el_push(EditLine *el, const char *str)
 {
 	/* Using multibyte->wide string decoding works fine under single-byte
@@ -67,7 +67,7 @@ el_push(EditLine *el, const char *str)
 }
 
 
-public const char *
+const char *
 el_gets(EditLine *el, int *nread)
 {
 	const wchar_t *tmp;
@@ -85,7 +85,7 @@ el_gets(EditLine *el, int *nread)
 }
 
 
-public int
+int
 el_parse(EditLine *el, int argc, const char *argv[])
 {
 	int ret;
@@ -102,7 +102,7 @@ el_parse(EditLine *el, int argc, const char *argv[])
 }
 
 
-public int
+int
 el_set(EditLine *el, int op, ...)
 {
 	va_list ap;
@@ -272,7 +272,7 @@ out:
 }
 
 
-public int
+int
 el_get(EditLine *el, int op, ...)
 {
 	va_list ap;
