@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.25 2013/06/22 06:23:28 uebayasi Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.26 2016/04/11 14:14:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -319,7 +319,7 @@ NENTRY(__cpu_simple_lock)
 	jmp	2b
 END(__cpu_simple_lock)
 
-ENTRY(__cpu_simple_unlock)
+NENTRY(__cpu_simple_unlock)
 	movb	$0, (%rdi)
 	ret
 END(__cpu_simple_unlock)
