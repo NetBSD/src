@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.19 2016/02/27 18:13:21 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.20 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -458,7 +458,7 @@ typedef unsigned char ttychar_t[NN_IO][C_NCC];
 
 protected int	tty_init(EditLine *);
 protected void	tty_end(EditLine *);
-protected int	tty_stty(EditLine *, int, const Char **);
+protected int	tty_stty(EditLine *, int, const wchar_t **);
 protected int	tty_rawmode(EditLine *);
 protected int	tty_cookedmode(EditLine *);
 protected int	tty_quotemode(EditLine *);

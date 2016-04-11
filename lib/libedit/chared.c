@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.51 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.52 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.51 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.52 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -84,7 +84,7 @@ cv_undo(EditLine *el)
  *	Save yank/delete data for paste
  */
 protected void
-cv_yank(EditLine *el, const Char *ptr, int size)
+cv_yank(EditLine *el, const wchar_t *ptr, int size)
 {
 	c_kill_t *k = &el->el_chared.c_kill;
 
@@ -99,7 +99,7 @@ cv_yank(EditLine *el, const Char *ptr, int size)
 protected void
 c_insert(EditLine *el, int num)
 {
-	Char *cp;
+	wchar_t *cp;
 
 	if (el->el_line.lastchar + num >= el->el_line.limit) {
 		if (!ch_enlargebufs(el, (size_t)num))
@@ -131,7 +131,7 @@ c_delafter(EditLine *el, int num)
 	}
 
 	if (num > 0) {
-		Char *cp;
+		wchar_t *cp;
 
 		for (cp = el->el_line.cursor; cp <= el->el_line.lastchar; cp++)
 			*cp = cp[num];
@@ -147,7 +147,7 @@ c_delafter(EditLine *el, int num)
 protected void
 c_delafter1(EditLine *el)
 {
-	Char *cp;
+	wchar_t *cp;
 
 	for (cp = el->el_line.cursor; cp <= el->el_line.lastchar; cp++)
 		*cp = cp[1];
@@ -172,7 +172,7 @@ c_delbefore(EditLine *el, int num)
 	}
 
 	if (num > 0) {
-		Char *cp;
+		wchar_t *cp;
 
 		for (cp = el->el_line.cursor - num;
 		    cp <= el->el_line.lastchar;
@@ -190,7 +190,7 @@ c_delbefore(EditLine *el, int num)
 protected void
 c_delbefore1(EditLine *el)
 {
-	Char *cp;
+	wchar_t *cp;
 
 	for (cp = el->el_line.cursor - 1; cp <= el->el_line.lastchar; cp++)
 		*cp = cp[1];
@@ -236,8 +236,8 @@ cv__isWord(wint_t p)
 /* c__prev_word():
  *	Find the previous word
  */
-protected Char *
-c__prev_word(Char *p, Char *low, int n, int (*wtest)(wint_t))
+protected wchar_t *
+c__prev_word(wchar_t *p, wchar_t *low, int n, int (*wtest)(wint_t))
 {
 	p--;
 
@@ -260,8 +260,8 @@ c__prev_word(Char *p, Char *low, int n, int (*wtest)(wint_t))
 /* c__next_word():
  *	Find the next word
  */
-protected Char *
-c__next_word(Char *p, Char *high, int n, int (*wtest)(wint_t))
+protected wchar_t *
+c__next_word(wchar_t *p, wchar_t *high, int n, int (*wtest)(wint_t))
 {
 	while (n--) {
 		while ((p < high) && !(*wtest)(*p))
@@ -278,8 +278,9 @@ c__next_word(Char *p, Char *high, int n, int (*wtest)(wint_t))
 /* cv_next_word():
  *	Find the next word vi style
  */
-protected Char *
-cv_next_word(EditLine *el, Char *p, Char *high, int n, int (*wtest)(wint_t))
+protected wchar_t *
+cv_next_word(EditLine *el, wchar_t *p, wchar_t *high, int n,
+    int (*wtest)(wint_t))
 {
 	int test;
 
@@ -307,8 +308,8 @@ cv_next_word(EditLine *el, Char *p, Char *high, int n, int (*wtest)(wint_t))
 /* cv_prev_word():
  *	Find the previous word vi style
  */
-protected Char *
-cv_prev_word(Char *p, Char *low, int n, int (*wtest)(wint_t))
+protected wchar_t *
+cv_prev_word(wchar_t *p, wchar_t *low, int n, int (*wtest)(wint_t))
 {
 	int test;
 
@@ -371,8 +372,8 @@ cv_delfini(EditLine *el)
 /* cv__endword():
  *	Go to the end of this word according to vi
  */
-protected Char *
-cv__endword(Char *p, Char *high, int n, int (*wtest)(wint_t))
+protected wchar_t *
+cv__endword(wchar_t *p, wchar_t *high, int n, int (*wtest)(wint_t))
 {
 	int test;
 
@@ -504,7 +505,7 @@ protected int
 ch_enlargebufs(EditLine *el, size_t addlen)
 {
 	size_t sz, newsz;
-	Char *newbuffer, *oldbuf, *oldkbuf;
+	wchar_t *newbuffer, *oldbuf, *oldkbuf;
 
 	sz = (size_t)(el->el_line.limit - el->el_line.buffer + EL_LEAVE);
 	newsz = sz * 2;
@@ -614,7 +615,7 @@ ch_end(EditLine *el)
  *	Insert string at cursorI
  */
 public int
-el_winsertstr(EditLine *el, const Char *s)
+el_winsertstr(EditLine *el, const wchar_t *s)
 {
 	size_t len;
 
@@ -673,11 +674,10 @@ out:
  *	Get a string
  */
 protected int
-c_gets(EditLine *el, Char *buf, const Char *prompt)
+c_gets(EditLine *el, wchar_t *buf, const wchar_t *prompt)
 {
-	wchar_t wch;
 	ssize_t len;
-	Char *cp = el->el_line.buffer, ch;
+	wchar_t *cp = el->el_line.buffer, ch;
 
 	if (prompt) {
 		len = (ssize_t)wcslen(prompt);
@@ -692,12 +692,11 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 		el->el_line.lastchar = cp + 1;
 		re_refresh(el);
 
-		if (el_wgetc(el, &wch) != 1) {
+		if (el_wgetc(el, &ch) != 1) {
 			ed_end_of_file(el, 0);
 			len = -1;
 			break;
 		}
-		ch = (Char)wch;
 
 		switch (ch) {
 
@@ -742,7 +741,7 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 protected int
 c_hpos(EditLine *el)
 {
-	Char *ptr;
+	wchar_t *ptr;
 
 	/*
 	 * Find how many characters till the beginning of this line.

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.36 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.37 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.36 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.37 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: parse.c,v 1.36 2016/04/11 00:22:48 christos Exp $");
 #include "parse.h"
 
 private const struct {
-	const Char *name;
-	int (*func)(EditLine *, int, const Char **);
+	const wchar_t *name;
+	int (*func)(EditLine *, int, const wchar_t **);
 } cmds[] = {
 	{ L"bind",		map_bind	},
 	{ L"echotc",		terminal_echotc	},
@@ -79,9 +79,9 @@ private const struct {
  *	Parse a line and dispatch it
  */
 protected int
-parse_line(EditLine *el, const Char *line)
+parse_line(EditLine *el, const wchar_t *line)
 {
-	const Char **argv;
+	const wchar_t **argv;
 	int argc;
 	TokenizerW *tok;
 
@@ -97,16 +97,16 @@ parse_line(EditLine *el, const Char *line)
  *	Command dispatcher
  */
 public int
-el_wparse(EditLine *el, int argc, const Char *argv[])
+el_wparse(EditLine *el, int argc, const wchar_t *argv[])
 {
-	const Char *ptr;
+	const wchar_t *ptr;
 	int i;
 
 	if (argc < 1)
 		return -1;
 	ptr = wcschr(argv[0], L':');
 	if (ptr != NULL) {
-		Char *tprog;
+		wchar_t *tprog;
 		size_t l;
 
 		if (ptr == argv[0])
@@ -139,9 +139,9 @@ el_wparse(EditLine *el, int argc, const Char *argv[])
  *	the appropriate character or -1 if the escape is not valid
  */
 protected int
-parse__escape(const Char **ptr)
+parse__escape(const wchar_t **ptr)
 {
-	const Char *p;
+	const wchar_t *p;
 	wint_t c;
 
 	p = *ptr;
@@ -179,8 +179,8 @@ parse__escape(const Char **ptr)
                 case 'U':               /* Unicode \U+xxxx or \U+xxxxx format */
                 {
                         int i;
-                        const Char hex[] = L"0123456789ABCDEF";
-                        const Char *h;
+                        const wchar_t hex[] = L"0123456789ABCDEF";
+                        const wchar_t *h;
                         ++p;
                         if (*p++ != '+')
                                 return -1;
@@ -238,10 +238,10 @@ parse__escape(const Char **ptr)
 /* parse__string():
  *	Parse the escapes from in and put the raw string out
  */
-protected Char *
-parse__string(Char *out, const Char *in)
+protected wchar_t *
+parse__string(wchar_t *out, const wchar_t *in)
 {
-	Char *rv = out;
+	wchar_t *rv = out;
 	int n;
 
 	for (;;)
@@ -254,7 +254,7 @@ parse__string(Char *out, const Char *in)
 		case '^':
 			if ((n = parse__escape(&in)) == -1)
 				return NULL;
-			*out++ = (Char)n;
+			*out++ = (wchar_t)n;
 			break;
 
 		case 'M':
@@ -277,7 +277,7 @@ parse__string(Char *out, const Char *in)
  *	or -1 if one is not found
  */
 protected int
-parse_cmd(EditLine *el, const Char *cmd)
+parse_cmd(EditLine *el, const wchar_t *cmd)
 {
 	el_bindings_t *b = el->el_map.help;
 	size_t i;

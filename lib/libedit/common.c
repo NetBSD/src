@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.42 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.43 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.42 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.43 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -91,14 +91,14 @@ ed_insert(EditLine *el, wint_t c)
 		    || el->el_line.cursor >= el->el_line.lastchar)
 			c_insert(el, 1);
 
-		*el->el_line.cursor++ = (Char)c;
+		*el->el_line.cursor++ = c;
 		re_fastaddc(el);		/* fast refresh for one char. */
 	} else {
 		if (el->el_state.inputmode != MODE_REPLACE_1)
 			c_insert(el, el->el_state.argument);
 
 		while (count-- && el->el_line.cursor < el->el_line.lastchar)
-			*el->el_line.cursor++ = (Char)c;
+			*el->el_line.cursor++ = c;
 		re_refresh(el);
 	}
 
@@ -117,7 +117,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_delete_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	Char *cp, *p, *kp;
+	wchar_t *cp, *p, *kp;
 
 	if (el->el_line.cursor == el->el_line.buffer)
 		return CC_ERROR;
@@ -192,7 +192,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_kill_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	Char *kp, *cp;
+	wchar_t *kp, *cp;
 
 	cp = el->el_line.cursor;
 	kp = el->el_chared.c_kill.buf;
@@ -270,7 +270,7 @@ ed_transpose_chars(EditLine *el, wint_t c)
 		/* must have at least two chars entered */
 		c = el->el_line.cursor[-2];
 		el->el_line.cursor[-2] = el->el_line.cursor[-1];
-		el->el_line.cursor[-1] = (Char)c;
+		el->el_line.cursor[-1] = c;
 		return CC_REFRESH;
 	} else
 		return CC_ERROR;
@@ -285,7 +285,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	Char *lim = el->el_line.lastchar;
+	wchar_t *lim = el->el_line.lastchar;
 
 	if (el->el_line.cursor >= lim ||
 	    (el->el_line.cursor == lim - 1 &&
@@ -708,7 +708,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	const Char *hp;
+	const wchar_t *hp;
 	int h;
 	int found = 0;
 
@@ -776,7 +776,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_search_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	const Char *hp;
+	const wchar_t *hp;
 	int h;
 	int found = 0;
 
@@ -830,7 +830,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_prev_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	Char *ptr;
+	wchar_t *ptr;
 	int nchars = c_hpos(el);
 
 	/*
@@ -873,7 +873,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_next_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	Char *ptr;
+	wchar_t *ptr;
 	int nchars = c_hpos(el);
 
 	/*
@@ -907,7 +907,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_command(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	Char tmpbuf[EL_BUFSIZ];
+	wchar_t tmpbuf[EL_BUFSIZ];
 	int tmplen;
 
 	tmplen = c_gets(el, tmpbuf, L"\n: ");

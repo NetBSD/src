@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.23 2016/02/16 15:53:48 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.24 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.23 2016/02/16 15:53:48 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.24 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -47,17 +47,17 @@ __RCSID("$NetBSD: prompt.c,v 1.23 2016/02/16 15:53:48 christos Exp $");
 #include <stdio.h>
 #include "el.h"
 
-private Char	*prompt_default(EditLine *);
-private Char	*prompt_default_r(EditLine *);
+private wchar_t	*prompt_default(EditLine *);
+private wchar_t	*prompt_default_r(EditLine *);
 
 /* prompt_default():
  *	Just a default prompt, in case the user did not provide one
  */
-private Char *
+private wchar_t *
 /*ARGSUSED*/
 prompt_default(EditLine *el __attribute__((__unused__)))
 {
-	static Char a[3] = {'?', ' ', '\0'};
+	static wchar_t a[3] = L"? ";
 
 	return a;
 }
@@ -66,11 +66,11 @@ prompt_default(EditLine *el __attribute__((__unused__)))
 /* prompt_default_r():
  *	Just a default rprompt, in case the user did not provide one
  */
-private Char *
+private wchar_t *
 /*ARGSUSED*/
 prompt_default_r(EditLine *el __attribute__((__unused__)))
 {
-	static Char a[1] = {'\0'};
+	static wchar_t a[1] = L"";
 
 	return a;
 }
@@ -83,7 +83,7 @@ protected void
 prompt_print(EditLine *el, int op)
 {
 	el_prompt_t *elp;
-	Char *p;
+	wchar_t *p;
 	int ignore = 0;
 
 	if (op == EL_PROMPT)
@@ -146,7 +146,7 @@ prompt_end(EditLine *el __attribute__((__unused__)))
  *	Install a prompt printing function
  */
 protected int
-prompt_set(EditLine *el, el_pfunc_t prf, Char c, int op, int wide)
+prompt_set(EditLine *el, el_pfunc_t prf, wchar_t c, int op, int wide)
 {
 	el_prompt_t *p;
 
@@ -178,7 +178,7 @@ prompt_set(EditLine *el, el_pfunc_t prf, Char c, int op, int wide)
  *	Retrieve the prompt printing function
  */
 protected int
-prompt_get(EditLine *el, el_pfunc_t *prf, Char *c, int op)
+prompt_get(EditLine *el, el_pfunc_t *prf, wchar_t *c, int op)
 {
 	el_prompt_t *p;
 

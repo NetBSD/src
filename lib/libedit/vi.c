@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.58 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.59 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.58 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.59 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -648,7 +648,7 @@ protected el_action_t
 /*ARGSUSED*/
 vi_kill_line_prev(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	Char *kp, *cp;
+	wchar_t *kp, *cp;
 
 	cp = el->el_line.buffer;
 	kp = el->el_chared.c_kill.buf;
@@ -809,10 +809,10 @@ protected el_action_t
 /*ARGSUSED*/
 vi_match(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	const Char match_chars[] = L"()[]{}";
-	Char *cp;
+	const wchar_t match_chars[] = L"()[]{}";
+	wchar_t *cp;
 	size_t delta, i, count;
-	Char o_ch, c_ch;
+	wchar_t o_ch, c_ch;
 
 	*el->el_line.lastchar = '\0';		/* just in case */
 
@@ -1006,7 +1006,7 @@ vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
 	char tempfile[] = "/tmp/histedit.XXXXXXXXXX";
 	char *cp = NULL;
 	size_t len;
-	Char *line = NULL;
+	wchar_t *line = NULL;
 
 	if (el->el_state.doingarg) {
 		if (vi_to_history_line(el, 0) == CC_ERROR)
@@ -1083,11 +1083,11 @@ protected el_action_t
 /*ARGSUSED*/
 vi_history_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	const Char *wp = HIST_FIRST(el);
-	const Char *wep, *wsp;
+	const wchar_t *wp = HIST_FIRST(el);
+	const wchar_t *wep, *wsp;
 	int len;
-	Char *cp;
-	const Char *lim;
+	wchar_t *cp;
+	const wchar_t *lim;
 
 	if (wp == NULL)
 		return CC_ERROR;

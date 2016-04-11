@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.86 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.87 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.86 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.87 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -205,7 +205,7 @@ el_wset(EditLine *el, int op, ...)
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
 		int c = va_arg(ap, int);
 
-		rv = prompt_set(el, p, (Char)c, op, 1);
+		rv = prompt_set(el, p, (wchar_t)c, op, 1);
 		break;
 	}
 
@@ -214,7 +214,7 @@ el_wset(EditLine *el, int op, ...)
 		break;
 
 	case EL_EDITOR:
-		rv = map_set_editor(el, va_arg(ap, Char *));
+		rv = map_set_editor(el, va_arg(ap, wchar_t *));
 		break;
 
 	case EL_SIGNAL:
@@ -230,11 +230,11 @@ el_wset(EditLine *el, int op, ...)
 	case EL_ECHOTC:
 	case EL_SETTY:
 	{
-		const Char *argv[20];
+		const wchar_t *argv[20];
 		int i;
 
 		for (i = 1; i < (int)__arraycount(argv); i++)
-			if ((argv[i] = va_arg(ap, Char *)) == NULL)
+			if ((argv[i] = va_arg(ap, wchar_t *)) == NULL)
 				break;
 
 		switch (op) {
@@ -273,8 +273,8 @@ el_wset(EditLine *el, int op, ...)
 
 	case EL_ADDFN:
 	{
-		Char *name = va_arg(ap, Char *);
-		Char *help = va_arg(ap, Char *);
+		wchar_t *name = va_arg(ap, wchar_t *);
+		wchar_t *help = va_arg(ap, wchar_t *);
 		el_func_t func = va_arg(ap, el_func_t);
 
 		rv = map_addfunc(el, name, help, func);
@@ -401,14 +401,14 @@ el_wget(EditLine *el, int op, ...)
 	case EL_PROMPT_ESC:
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t *p = va_arg(ap, el_pfunc_t *);
-		Char *c = va_arg(ap, Char *);
+		wchar_t *c = va_arg(ap, wchar_t *);
 
 		rv = prompt_get(el, p, c, op);
 		break;
 	}
 
 	case EL_EDITOR:
-		rv = map_get_editor(el, va_arg(ap, const Char **));
+		rv = map_get_editor(el, va_arg(ap, const wchar_t **));
 		break;
 
 	case EL_SIGNAL:
@@ -512,7 +512,7 @@ el_source(EditLine *el, const char *fname)
 	ssize_t slen;
 	char *ptr;
 	char *path = NULL;
-	const Char *dptr;
+	const wchar_t *dptr;
 	int error = 0;
 
 	fp = NULL;
@@ -610,9 +610,9 @@ el_beep(EditLine *el)
  */
 protected int
 /*ARGSUSED*/
-el_editmode(EditLine *el, int argc, const Char **argv)
+el_editmode(EditLine *el, int argc, const wchar_t **argv)
 {
-	const Char *how;
+	const wchar_t *how;
 
 	if (argv == NULL || argc != 2 || argv[1] == NULL)
 		return -1;
