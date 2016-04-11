@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.13 2016/04/09 18:25:26 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.14 2016/04/11 03:27:14 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,12 +175,6 @@ Either
 must never have been inserted into a list, or it must have been
 inserted and removed, and the caller must have waited for all parallel
 readers to finish reading it first.
-.Pp
-This has an effect only with the
-.Dv DIAGNOSTIC
-option, so it is not strictly necessary, but it can help to detect bugs
-early; see
-.Xr KASSERT 9 .
 .El
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh WRITER OPERATIONS
