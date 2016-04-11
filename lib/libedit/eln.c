@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.31 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.32 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.31 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.32 2016/04/11 00:50:13 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -365,7 +365,7 @@ el_line(EditLine *el)
 	const LineInfoW *winfo = el_wline(el);
 	LineInfo *info = &el->el_lgcylinfo;
 	size_t offset;
-	const Char *p;
+	const wchar_t *p;
 
 	info->buffer   = ct_encode_string(winfo->buffer, &el->el_lgcyconv);
 

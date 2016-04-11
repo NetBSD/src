@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.25 2016/04/11 00:22:48 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.26 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.25 2016/04/11 00:22:48 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.26 2016/04/11 00:50:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -68,12 +68,14 @@ typedef enum {
 #define	tok_realloc(a, b)	realloc(a, b)
 
 #ifdef NARROWCHAR
+#define	Char			char
 #define	FUN(prefix, rest)	prefix ## _ ## rest
 #define	TYPE(type)		type
 #define	STR(x)			x
 #define	Strchr(s, c)		strchr(s, c)
 #define	tok_strdup(s)		strdup(s)
 #else
+#define	Char			wchar_t
 #define	FUN(prefix, rest)	prefix ## _w ## rest
 #define	TYPE(type)		type ## W
 #define	STR(x)			L ## x
