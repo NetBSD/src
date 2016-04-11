@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.112 2016/04/11 02:04:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.113 2016/04/11 05:40:47 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.112 2016/04/11 02:04:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.113 2016/04/11 05:40:47 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -713,8 +713,6 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 	ifs->if_bridgeif = NULL;
 
 	PSLIST_WRITER_REMOVE(bif, bif_next);
-	PSLIST_ENTRY_DESTROY(bif, bif_next);
-
 	BRIDGE_PSZ_PERFORM(sc);
 
 #ifdef BRIDGE_MPSAFE
@@ -728,6 +726,7 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 #endif
 	BRIDGE_UNLOCK(sc);
 
+	PSLIST_ENTRY_DESTROY(bif, bif_next);
 	kmem_free(bif, sizeof(*bif));
 
 	BRIDGE_LOCK(sc);
@@ -949,7 +948,7 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 retry:
 	BRIDGE_LOCK(sc);
 	count = 0;
-	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
 	    bif_next)
 		count++;
 	BRIDGE_UNLOCK(sc);
@@ -970,7 +969,7 @@ retry:
 	BRIDGE_LOCK(sc);
 
 	i = 0;
-	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
 	    bif_next)
 		i++;
 	if (i > count) {
@@ -984,7 +983,7 @@ retry:
 	}
 
 	i = 0;
-	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
+	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
 	    bif_next) {
 		struct ifbreq *breq = &breqs[i++];
 		memset(breq, 0, sizeof(*breq));
