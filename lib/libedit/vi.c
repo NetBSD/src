@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.59 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.60 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.59 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.60 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -56,13 +56,13 @@ __RCSID("$NetBSD: vi.c,v 1.59 2016/04/11 00:50:13 christos Exp $");
 #include "emacs.h"
 #include "vi.h"
 
-private el_action_t	cv_action(EditLine *, wint_t);
-private el_action_t	cv_paste(EditLine *, wint_t);
+static el_action_t	cv_action(EditLine *, wint_t);
+static el_action_t	cv_paste(EditLine *, wint_t);
 
 /* cv_action():
  *	Handle vi actions.
  */
-private el_action_t
+static el_action_t
 cv_action(EditLine *el, wint_t c)
 {
 
@@ -94,7 +94,7 @@ cv_action(EditLine *el, wint_t c)
 /* cv_paste():
  *	Paste previous deletion before or after the cursor
  */
-private el_action_t
+static el_action_t
 cv_paste(EditLine *el, wint_t c)
 {
 	c_kill_t *k = &el->el_chared.c_kill;

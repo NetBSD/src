@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.90 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.91 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.90 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.91 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -57,10 +57,10 @@ __RCSID("$NetBSD: read.c,v 1.90 2016/04/11 00:50:13 christos Exp $");
 
 #define OKCMD	-1	/* must be -1! */
 
-private int	read__fixio(int, int);
-private int	read_char(EditLine *, wchar_t *);
-private int	read_getcmd(EditLine *, el_action_t *, wchar_t *);
-private void	read_pop(c_macro_t *);
+static int	read__fixio(int, int);
+static int	read_char(EditLine *, wchar_t *);
+static int	read_getcmd(EditLine *, el_action_t *, wchar_t *);
+static void	read_pop(c_macro_t *);
 
 /* read_init():
  *	Initialize the read stuff
@@ -103,7 +103,7 @@ el_read_getfn(EditLine *el)
 #endif
 
 #ifdef DEBUG_EDIT
-private void
+static void
 read_debug(EditLine *el)
 {
 
@@ -125,7 +125,7 @@ read_debug(EditLine *el)
  *	Try to recover from a read error
  */
 /* ARGSUSED */
-private int
+static int
 read__fixio(int fd __attribute__((__unused__)), int e)
 {
 
@@ -186,7 +186,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 /* el_push():
  *	Push a macro
  */
-public void
+void
 el_wpush(EditLine *el, const wchar_t *str)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
@@ -206,7 +206,7 @@ el_wpush(EditLine *el, const wchar_t *str)
  *	Get next command from the input stream, return OKCMD on success.
  *	Character values > 255 are not looked up in the map, but inserted.
  */
-private int
+static int
 read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 {
 	static const wchar_t meta = (wchar_t)0x80;
@@ -266,7 +266,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 /* read_char():
  *	Read a character from the tty.
  */
-private int
+static int
 read_char(EditLine *el, wchar_t *cp)
 {
 	ssize_t num_read;
@@ -350,7 +350,7 @@ read_char(EditLine *el, wchar_t *cp)
 /* read_pop():
  *	Pop a macro from the stack
  */
-private void
+static void
 read_pop(c_macro_t *ma)
 {
 	int i;
@@ -365,7 +365,7 @@ read_pop(c_macro_t *ma)
 /* el_wgetc():
  *	Read a wide character
  */
-public int
+int
 el_wgetc(EditLine *el, wchar_t *cp)
 {
 	int num_read;
@@ -439,7 +439,7 @@ read_finish(EditLine *el)
 		sig_clr(el);
 }
 
-public const wchar_t *
+const wchar_t *
 el_wgets(EditLine *el, int *nread)
 {
 	int retval;
