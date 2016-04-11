@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.29 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.30 2016/04/11 16:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,8 +28,6 @@
 
 #ifndef _h_chartype_f
 #define _h_chartype_f
-
-#ifndef NARROWCHAR
 
 /* Ideally we should also test the value of the define to see if it
  * supports non-BMP code points without requiring UTF-16, but nothing
@@ -61,11 +59,9 @@ typedef struct ct_buffer_t {
         size_t  wsize;
 } ct_buffer_t;
 
-#define ct_encode_string __ct_encode_string
 /* Encode a wide-character string and return the UTF-8 encoded result. */
 public char *ct_encode_string(const wchar_t *, ct_buffer_t *);
 
-#define ct_decode_string __ct_decode_string
 /* Decode a (multi)?byte string and return the wide-character string result. */
 public wchar_t *ct_decode_string(const char *, ct_buffer_t *);
 
@@ -73,21 +69,11 @@ public wchar_t *ct_decode_string(const char *, ct_buffer_t *);
  * The pointer returned must be free()d when done. */
 protected wchar_t **ct_decode_argv(int, const char *[],  ct_buffer_t *);
 
-/* Resizes the conversion buffer(s) if needed. */
-protected int ct_conv_cbuff_resize(ct_buffer_t *, size_t);
-protected int ct_conv_wbuff_resize(ct_buffer_t *, size_t);
-protected ssize_t ct_encode_char(char *, size_t, wchar_t);
-protected size_t ct_enc_width(wchar_t);
-
-#else
-#define	ct_encode_string(s, b)	(s)
-#define ct_decode_string(s, b)	(s)
-#endif
-
-#ifndef NARROWCHAR
 /* Encode a characted into the destination buffer, provided there is sufficent
  * buffer space available. Returns the number of bytes used up (zero if the
  * character cannot be encoded, -1 if there was not enough space available). */
+protected ssize_t ct_encode_char(char *, size_t, wchar_t);
+protected size_t ct_enc_width(wchar_t);
 
 /* The maximum buffer size to hold the most unwieldly visual representation,
  * in this case \U+nnnnn. */
@@ -124,6 +110,5 @@ protected const wchar_t *ct_visual_string(const wchar_t *);
 #define CHTYPE_NONPRINT     (-4)
 /* classification of character c, as one of the above defines */
 protected int ct_chr_class(wchar_t c);
-#endif
 
 #endif /* _chartype_f */

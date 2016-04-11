@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.26 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.27 2016/04/11 16:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.26 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.27 2016/04/11 16:06:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: tokenizer.c,v 1.26 2016/04/11 00:50:13 christos Exp $");
 #include <string.h>
 
 #include "histedit.h"
-#include "chartype.h"
 
 typedef enum {
 	Q_none, Q_single, Q_double, Q_one, Q_doubleone
