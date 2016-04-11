@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.46 2016/04/10 12:47:04 martin Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.47 2016/04/11 10:06:08 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -2239,4 +2239,35 @@ usr.sbin/vnconfig/vnconfig.c			1.43-1.44
 	Cosmetic tweaks to vncfonfig -l output to restore compatibility
 	for old scripts trying to find free vnodes.
 	[christos, ticket #1076]
+
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.2
+external/public-domain/tz/dist/LICENSE          up to 1.1.1.1
+external/public-domain/tz/dist/Makefile         up to 1.1.1.10
+external/public-domain/tz/dist/NEWS             up to 1.1.1.10
+external/public-domain/tz/dist/README           up to 1.1.1.3
+external/public-domain/tz/dist/Theory           up to 1.1.1.5
+external/public-domain/tz/dist/asia             up to 1.1.1.9
+external/public-domain/tz/dist/australasia      up to 1.1.1.6
+external/public-domain/tz/dist/backward         up to 1.1.1.5
+external/public-domain/tz/dist/backzone         up to 1.1.1.8
+external/public-domain/tz/dist/checklinks.awk   up to 1.1.1.2
+external/public-domain/tz/dist/checktab.awk     up to 1.1.1.8
+external/public-domain/tz/dist/europe           up to 1.1.1.10
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.3
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.5
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.6
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.5
+external/public-domain/tz/dist/northamerica     up to 1.1.1.10
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.6
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.8
+external/public-domain/tz/tzdata2netbsd         up to 1.8
+
+	Update tzdata to 2016b.
+	[christos, ticket #1143]
+
+etc/namedb/root.cache				1.20
+
+	Update root.cache to 2016/3/23 version, l.root-servers.net's
+	AAAA record has changed.
+	[taca, ticket #1150]
 
