@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.37 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.38 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.37 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.38 2016/04/11 18:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: parse.c,v 1.37 2016/04/11 00:50:13 christos Exp $");
 #include "el.h"
 #include "parse.h"
 
-private const struct {
+static const struct {
 	const wchar_t *name;
 	int (*func)(EditLine *, int, const wchar_t **);
 } cmds[] = {
@@ -96,7 +96,7 @@ parse_line(EditLine *el, const wchar_t *line)
 /* el_parse():
  *	Command dispatcher
  */
-public int
+int
 el_wparse(EditLine *el, int argc, const wchar_t *argv[])
 {
 	const wchar_t *ptr;
