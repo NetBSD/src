@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.3 2013/09/03 08:44:45 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.4 2016/04/11 15:30:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.3 2013/09/03 08:44:45 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.4 2016/04/11 15:30:18 christos Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: symtab.c,v 1.3 2013/09/03 08:44:45 christos Exp $");
 #ifndef ELF_ST_TYPE
 #define ELF_ST_TYPE(x)          (((unsigned int)x) & 0xf)
 #endif
-
 
 #include "symtab.h"
 
@@ -127,6 +126,13 @@ symtab_create(int fd, int bind, int type)
 			GElf_Sym sym;
                         gelf_getsym(edata, (int)i, &sym);
 
+#ifdef SYMTAB_DEBUG
+			fprintf(stderr, "%s: %s@%#jx=%d,%d\n", __func__,
+			    elf_strptr(elf, shdr.sh_link, sym.st_name),
+			    (uintmax_t)sym.st_value, ELF_ST_BIND(sym.st_info),
+			    ELF_ST_TYPE(sym.st_info));
+#endif
+			
 			if (bind != -1 &&
 			    (unsigned)bind != ELF_ST_BIND(sym.st_info))
 				continue;
@@ -170,8 +176,13 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 	size_t hi = ns;
 	size_t lo = 0;
 	size_t mid = ns / 2;
-	uintptr_t dd, sd, me = (uintptr_t)p;
+	uintptr_t dd, sd, me = (uintptr_t)p - (uintptr_t)dli->dli_fbase;
+	uintptr_t ad = (uintptr_t)dli->dli_saddr - (uintptr_t)dli->dli_fbase;
 
+#ifdef SYMTAB_DEBUG
+	fprintf(stderr, "%s: [fbase=%p, saddr=%p, me=%#jx]\n", __func__,
+	    dli->dli_fbase, dli->dli_saddr, (uintmax_t)me);
+#endif
 	for (;;) {
 		if (s[mid].st_value < me)
 			lo = mid;
@@ -185,11 +196,20 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 		}
 		mid = (hi + lo) / 2;
 	}
-	dd = me - (uintptr_t)dli->dli_saddr;
+	dd = me - ad;
 	sd = me - s[mid].st_value;
 	if (dd > sd) {
 		dli->dli_saddr = (void *)s[mid].st_value;
 		dli->dli_sname = s[mid].st_name;
+#ifdef SYMTAB_DEBUG
+		fprintf(stderr, "%s: %p -> [%p, %s]\n", __func__,
+		    p, dli->dli_saddr, dli->dli_sname);
+#endif
 	}
+#ifdef SYMTAB_DEBUG
+	else
+		fprintf(stderr, "%s: %p -> [%p, ***]\n", __func__,
+		    p, dli->dli_saddr);
+#endif
 	return 1;
 }
