@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.14 2016/04/11 03:27:14 riastradh Exp $
+.\"	$NetBSD: pslist.9,v 1.15 2016/04/11 13:45:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,11 +121,10 @@ finding it in the list, but allows extant parallel readers to continue
 reading the next entry.
 The caller must then wait, e.g. with
 .Xr pserialize_perform 9 ,
-for all extant parallel readers to finish, before freeing or reusing
-the list entry.
-A list entry should be destroyed with
+for all extant parallel readers to finish, before destroying the list
+entry with
 .Fn PSLIST_ENTRY_DESTROY
-before it may be reused.
+and then freeing or reusing its memory.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh EXCLUSIVE OPERATIONS
 The following operations may be performed on list heads and entries
