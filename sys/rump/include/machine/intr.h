@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2014/01/19 07:01:55 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2016/04/11 10:53:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -69,5 +69,7 @@ makeiplcookie(ipl_t ipl)
 #define IPL_VM 5
 #define IPL_SCHED 6
 #define IPL_HIGH 7
+
+#define	splraiseipl(COOKIE)	0
 
 #endif /* _SYS_RUMP_INTR_H_ */
