@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.328 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.329 2016/04/11 09:21:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.328 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.329 2016/04/11 09:21:18 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -127,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.328 2016/04/04 07:37:07 ozaki-r Exp $");
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <net/if_types.h>
-#include <net/radix.h>
 #include <net/route.h>
 #include <net/netisr.h>
 #include <sys/module.h>
@@ -1556,8 +1555,8 @@ ifa_ifwithnet(const struct sockaddr *addr)
 				}
 			}
 			if (ifa_maybe == NULL ||
-			    rn_refines((void *)ifa->ifa_netmask,
-			    (void *)ifa_maybe->ifa_netmask))
+			    rt_refines(ifa->ifa_netmask,
+			               ifa_maybe->ifa_netmask))
 				ifa_maybe = ifa;
 		}
 	}
