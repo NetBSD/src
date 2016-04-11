@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.38 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.39 2016/04/11 22:30:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.38 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.39 2016/04/11 22:30:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -69,9 +69,9 @@ static const struct {
 	{ L"edit",		el_editmode	},
 	{ L"history",		hist_command	},
 	{ L"telltc",		terminal_telltc	},
-	{ L"settc",	        terminal_settc	},
-	{ L"setty",	        tty_stty	},
-	{ NULL,		        NULL		}
+	{ L"settc",		terminal_settc	},
+	{ L"setty",		tty_stty	},
+	{ NULL,			NULL		}
 };
 
 
@@ -176,28 +176,28 @@ parse__escape(const wchar_t **ptr)
 		case 'e':
 			c = '\033';	/* Escape */
 			break;
-                case 'U':               /* Unicode \U+xxxx or \U+xxxxx format */
-                {
-                        int i;
-                        const wchar_t hex[] = L"0123456789ABCDEF";
-                        const wchar_t *h;
-                        ++p;
-                        if (*p++ != '+')
-                                return -1;
+		case 'U':		/* Unicode \U+xxxx or \U+xxxxx format */
+		{
+			int i;
+			const wchar_t hex[] = L"0123456789ABCDEF";
+			const wchar_t *h;
+			++p;
+			if (*p++ != '+')
+				return -1;
 			c = 0;
-                        for (i = 0; i < 5; ++i) {
-                                h = wcschr(hex, *p++);
-                                if (!h && i < 4)
-                                        return -1;
-                                else if (h)
-                                        c = (c << 4) | ((int)(h - hex));
-                                else
-                                        --p;
-                        }
-                        if (c > 0x10FFFF) /* outside valid character range */
-                                return -1;
-                        break;
-                }
+			for (i = 0; i < 5; ++i) {
+				h = wcschr(hex, *p++);
+				if (!h && i < 4)
+					return -1;
+				else if (h)
+					c = (c << 4) | ((int)(h - hex));
+				else
+					--p;
+			}
+			if (c > 0x10FFFF) /* outside valid character range */
+				return -1;
+			break;
+		}
 		case '0':
 		case '1':
 		case '2':
