@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.65 2016/04/10 22:16:00 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.66 2016/04/11 06:50:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.65 2016/04/10 22:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.66 2016/04/11 06:50:05 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2140,10 +2140,11 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	dev->ud_ep0desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->ud_ep0desc.bmAttributes = UE_CONTROL;
 	/* 4.3,  4.8.2.1 */
-	if (USB_IS_SS(speed)) {
-		USETW(dev->ud_ep0desc.wMaxPacketSize, USB_3_MAX_CTRL_PACKET);
-	} else
 	switch (speed) {
+	case USB_SPEED_SUPER:
+	case USB_SPEED_SUPER_PLUS:
+		USETW(dev->ud_ep0desc.wMaxPacketSize, USB_3_MAX_CTRL_PACKET);
+		break;
 	case USB_SPEED_FULL:
 		/* XXX using 64 as initial mps of ep0 in FS */
 	case USB_SPEED_HIGH:
