@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.115 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.116 2016/04/11 01:16:20 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.115 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.116 2016/04/11 01:16:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -547,6 +547,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	struct sockaddr_in6 ssin6;
 	int rt_announce;
+	bool checklink = false;
 
 	if (ip6->ip6_hlim != 255) {
 		nd6log(LOG_ERR,
@@ -675,7 +676,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * non-reachable to probably reachable, and might
 			 * affect the status of associated prefixes..
 			 */
-			pfxlist_onlink_check();
+			checklink = true;
 		}
 	} else {
 		int llchange;
@@ -807,6 +808,9 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
  freeit:
 	if (ln != NULL)
 		LLE_WUNLOCK(ln);
+
+	if (checklink)
+		pfxlist_onlink_check();
 
 	m_freem(m);
 	return;
