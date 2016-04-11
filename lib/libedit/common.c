@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.41 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.42 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.41 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.42 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -652,7 +652,7 @@ ed_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 
 	if (el->el_history.eventno == 0) {	/* save the current buffer
 						 * away */
-		(void) Strncpy(el->el_history.buf, el->el_line.buffer,
+		(void) wcsncpy(el->el_history.buf, el->el_line.buffer,
 		    EL_BUFSIZ);
 		el->el_history.last = el->el_history.buf +
 		    (el->el_line.lastchar - el->el_line.buffer);
@@ -724,7 +724,7 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 		return CC_ERROR;
 	}
 	if (el->el_history.eventno == 0) {
-		(void) Strncpy(el->el_history.buf, el->el_line.buffer,
+		(void) wcsncpy(el->el_history.buf, el->el_line.buffer,
 		    EL_BUFSIZ);
 		el->el_history.last = el->el_history.buf +
 		    (el->el_line.lastchar - el->el_line.buffer);
@@ -745,7 +745,7 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 #ifdef SDEBUG
 		(void) fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
 #endif
-		if ((Strncmp(hp, el->el_line.buffer, (size_t)
+		if ((wcsncmp(hp, el->el_line.buffer, (size_t)
 			    (el->el_line.lastchar - el->el_line.buffer)) ||
 			hp[el->el_line.lastchar - el->el_line.buffer]) &&
 		    c_hmatch(el, hp)) {
@@ -800,7 +800,7 @@ ed_search_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
 #ifdef SDEBUG
 		(void) fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
 #endif
-		if ((Strncmp(hp, el->el_line.buffer, (size_t)
+		if ((wcsncmp(hp, el->el_line.buffer, (size_t)
 			    (el->el_line.lastchar - el->el_line.buffer)) ||
 			hp[el->el_line.lastchar - el->el_line.buffer]) &&
 		    c_hmatch(el, hp))
@@ -910,7 +910,7 @@ ed_command(EditLine *el, wint_t c __attribute__((__unused__)))
 	Char tmpbuf[EL_BUFSIZ];
 	int tmplen;
 
-	tmplen = c_gets(el, tmpbuf, STR("\n: "));
+	tmplen = c_gets(el, tmpbuf, L"\n: ");
 	terminal__putc(el, '\n');
 
 	if (tmplen < 0 || (tmpbuf[tmplen] = 0, parse_line(el, tmpbuf)) == -1)

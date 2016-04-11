@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.88 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.89 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.88 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.89 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -187,13 +187,13 @@ read__fixio(int fd __attribute__((__unused__)), int e)
  *	Push a macro
  */
 public void
-FUN(el,push)(EditLine *el, const Char *str)
+el_wpush(EditLine *el, const Char *str)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 
 	if (str != NULL && ma->level + 1 < EL_MAXMACRO) {
 		ma->level++;
-		if ((ma->macro[ma->level] = Strdup(str)) != NULL)
+		if ((ma->macro[ma->level] = wcsdup(str)) != NULL)
 			return;
 		ma->level--;
 	}
@@ -245,7 +245,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 				cmd = val.cmd;
 				break;
 			case XK_STR:
-				FUN(el,push)(el, val.str);
+				el_wpush(el, val.str);
 				break;
 #ifdef notyet
 			case XK_EXE:
@@ -283,7 +283,7 @@ read_char(EditLine *el, wchar_t *cp)
 		int e = errno;
 		switch (el->el_signal->sig_no) {
 		case SIGCONT:
-			FUN(el,set)(el, EL_REFRESH);
+			el_wset(el, EL_REFRESH);
 			/*FALLTHROUGH*/
 		case SIGWINCH:
 			sig_set(el);
@@ -442,7 +442,7 @@ read_finish(EditLine *el)
 }
 
 public const Char *
-FUN(el,gets)(EditLine *el, int *nread)
+el_wgets(EditLine *el, int *nread)
 {
 	int retval;
 	el_action_t cmdnum = 0;
