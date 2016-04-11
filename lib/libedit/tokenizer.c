@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.24 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.25 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.24 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.25 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -66,8 +66,20 @@ typedef enum {
 #define	tok_malloc(a)		malloc(a)
 #define	tok_free(a)		free(a)
 #define	tok_realloc(a, b)	realloc(a, b)
-#define	tok_strdup(a)		Strdup(a)
 
+#ifdef NARROWCHAR
+#define	FUN(prefix, rest)	prefix ## _ ## rest
+#define	TYPE(type)		type
+#define	STR(x)			x
+#define	Strchr(s, c)		strchr(s, c)
+#define	tok_strdup(s)		strdup(s)
+#else
+#define	FUN(prefix, rest)	prefix ## _w ## rest
+#define	TYPE(type)		type ## W
+#define	STR(x)			L ## x
+#define	Strchr(s, c)		wcschr(s, c)
+#define	tok_strdup(s)		wcsdup(s)
+#endif
 
 struct TYPE(tokenizer) {
 	Char	*ifs;		/* In field separator			 */

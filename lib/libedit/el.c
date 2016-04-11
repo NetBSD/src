@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.85 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.86 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.85 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.86 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -85,7 +85,7 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
 	el->el_outfd = fdout;
 	el->el_errfd = fderr;
 
-	el->el_prog = Strdup(ct_decode_string(prog, &el->el_scratch));
+	el->el_prog = wcsdup(ct_decode_string(prog, &el->el_scratch));
 	if (el->el_prog == NULL) {
 		el_free(el);
 		return NULL;
@@ -168,7 +168,7 @@ el_reset(EditLine *el)
  *	set the editline parameters
  */
 public int
-FUN(el,set)(EditLine *el, int op, ...)
+el_wset(EditLine *el, int op, ...)
 {
 	va_list ap;
 	int rv = 0;
@@ -239,27 +239,27 @@ FUN(el,set)(EditLine *el, int op, ...)
 
 		switch (op) {
 		case EL_BIND:
-			argv[0] = STR("bind");
+			argv[0] = L"bind";
 			rv = map_bind(el, i, argv);
 			break;
 
 		case EL_TELLTC:
-			argv[0] = STR("telltc");
+			argv[0] = L"telltc";
 			rv = terminal_telltc(el, i, argv);
 			break;
 
 		case EL_SETTC:
-			argv[0] = STR("settc");
+			argv[0] = L"settc";
 			rv = terminal_settc(el, i, argv);
 			break;
 
 		case EL_ECHOTC:
-			argv[0] = STR("echotc");
+			argv[0] = L"echotc";
 			rv = terminal_echotc(el, i, argv);
 			break;
 
 		case EL_SETTY:
-			argv[0] = STR("setty");
+			argv[0] = L"setty";
 			rv = tty_stty(el, i, argv);
 			break;
 
@@ -381,7 +381,7 @@ FUN(el,set)(EditLine *el, int op, ...)
  *	retrieve the editline parameters
  */
 public int
-FUN(el,get)(EditLine *el, int op, ...)
+el_wget(EditLine *el, int op, ...)
 {
 	va_list ap;
 	int rv;
@@ -493,11 +493,11 @@ FUN(el,get)(EditLine *el, int op, ...)
 /* el_line():
  *	Return editing info
  */
-public const TYPE(LineInfo) *
-FUN(el,line)(EditLine *el)
+public const LineInfoW *
+el_wline(EditLine *el)
 {
 
-	return (const TYPE(LineInfo) *)(void *)&el->el_line;
+	return (const LineInfoW *)(void *)&el->el_line;
 }
 
 
@@ -618,10 +618,10 @@ el_editmode(EditLine *el, int argc, const Char **argv)
 		return -1;
 
 	how = argv[1];
-	if (Strcmp(how, STR("on")) == 0) {
+	if (wcscmp(how, L"on") == 0) {
 		el->el_flags &= ~EDIT_DISABLED;
 		tty_rawmode(el);
-	} else if (Strcmp(how, STR("off")) == 0) {
+	} else if (wcscmp(how, L"off") == 0) {
 		tty_cookedmode(el);
 		el->el_flags |= EDIT_DISABLED;
 	}
