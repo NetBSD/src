@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.55 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.56 2016/04/11 16:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.55 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.56 2016/04/11 16:06:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: history.c,v 1.55 2016/04/11 00:50:13 christos Exp $");
 static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #include "histedit.h"
-#include "chartype.h"
 
 
 #ifdef NARROWCHAR
@@ -70,8 +69,11 @@ static const char hist_cookie[] = "_HiStOrY_V2_\n";
 #define	Strncmp(d, s, n)	strncmp(d, s, n)
 #define	Strncpy(d, s, n)	strncpy(d, s, n)
 #define	Strncat(d, s, n)	strncat(d, s, n)
+#define	ct_decode_string(s, b)	(s)
+#define	ct_encode_string(s, b)	(s)
 
 #else
+#include "chartype.h"
 
 #define	Char			wchar_t
 #define	FUN(prefix, rest)	prefix ## _w ## rest
