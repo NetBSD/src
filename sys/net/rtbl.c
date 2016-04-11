@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.c,v 1.2 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: rtbl.c,v 1.3 2016/04/11 09:21:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008, 2011 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #endif /* _KERNEL && _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.2 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.3 2016/04/11 09:21:18 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -227,4 +227,11 @@ rt_assert_inactive(const struct rtentry *rt)
 {
 	if (rt->rt_nodes->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 		panic ("rtfree 2");
+}
+
+int
+rt_refines(const struct sockaddr *m_sa, const struct sockaddr *n_sa)
+{
+
+	return rn_refines(m_sa, n_sa);
 }
