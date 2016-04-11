@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.27 2016/04/11 02:04:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.28 2016/04/11 03:46:47 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,7 +79,6 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/pslist.h>
 
 /*
  * Commands used in the SIOCSDRVSPEC ioctl.  Note the lookup of the
@@ -215,6 +214,7 @@ struct ifbrparam {
 #endif /* _KERNEL_OPT */
 
 #include <sys/pserialize.h>
+#include <sys/pslist.h>
 #include <sys/workqueue.h>
 
 #include <net/pktqueue.h>
