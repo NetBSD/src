@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.19 2016/03/23 22:27:48 christos Exp $	*/
+/*	$NetBSD: hist.h,v 1.20 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #ifndef _h_el_hist
 #define	_h_el_hist
 
-typedef int (*hist_fun_t)(void *, TYPE(HistEvent) *, int, ...);
+typedef int (*hist_fun_t)(void *, HistEventW *, int, ...);
 
 typedef struct el_history_t {
 	Char		*buf;		/* The history buffer		*/
@@ -49,7 +49,7 @@ typedef struct el_history_t {
 	int		 eventno;	/* Event we are looking for	*/
 	void		*ref;		/* Argument for history fcns	*/
 	hist_fun_t	 fun;		/* Event access			*/
-	TYPE(HistEvent)	 ev;		/* Event cookie			*/
+	HistEventW	 ev;		/* Event cookie			*/
 } el_history_t;
 
 #define	HIST_FUN_INTERNAL(el, fn, arg)	\

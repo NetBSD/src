@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.44 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.45 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.44 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.45 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1087,11 +1087,11 @@ protected int
 map_set_editor(EditLine *el, Char *editor)
 {
 
-	if (Strcmp(editor, STR("emacs")) == 0) {
+	if (wcscmp(editor, L"emacs") == 0) {
 		map_init_emacs(el);
 		return 0;
 	}
-	if (Strcmp(editor, STR("vi")) == 0) {
+	if (wcscmp(editor, L"vi") == 0) {
 		map_init_vi(el);
 		return 0;
 	}
@@ -1110,10 +1110,10 @@ map_get_editor(EditLine *el, const Char **editor)
 		return -1;
 	switch (el->el_map.type) {
 	case MAP_EMACS:
-		*editor = STR("emacs");
+		*editor = L"emacs";
 		return 0;
 	case MAP_VI:
-		*editor = STR("vi");
+		*editor = L"vi";
 		return 0;
 	}
 	return -1;
@@ -1236,9 +1236,9 @@ map_print_all_keys(EditLine *el)
 	map_print_some_keys(el, el->el_map.alt, prev, i - 1);
 
 	(void) fprintf(el->el_outfile, "Multi-character bindings\n");
-	keymacro_print(el, STR(""));
+	keymacro_print(el, L"");
 	(void) fprintf(el->el_outfile, "Arrow key bindings\n");
-	terminal_print_arrow(el, STR(""));
+	terminal_print_arrow(el, L"");
 }
 
 

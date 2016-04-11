@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.50 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.51 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.50 2016/04/09 18:43:17 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.51 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -205,7 +205,7 @@ c_delbefore1(EditLine *el)
 protected int
 ce__isword(wint_t p)
 {
-	return iswalnum(p) || Strchr(STR("*?_-.[]~="), p) != NULL;
+	return iswalnum(p) || wcschr(L"*?_-.[]~=", p) != NULL;
 }
 
 
@@ -614,11 +614,11 @@ ch_end(EditLine *el)
  *	Insert string at cursorI
  */
 public int
-FUN(el,insertstr)(EditLine *el, const Char *s)
+el_winsertstr(EditLine *el, const Char *s)
 {
 	size_t len;
 
-	if (s == NULL || (len = Strlen(s)) == 0)
+	if (s == NULL || (len = wcslen(s)) == 0)
 		return -1;
 	if (el->el_line.lastchar + len >= el->el_line.limit) {
 		if (!ch_enlargebufs(el, len))
@@ -680,7 +680,7 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 	Char *cp = el->el_line.buffer, ch;
 
 	if (prompt) {
-		len = (ssize_t)Strlen(prompt);
+		len = (ssize_t)wcslen(prompt);
 		(void)memcpy(cp, prompt, (size_t)len * sizeof(*cp));
 		cp += len;
 	}

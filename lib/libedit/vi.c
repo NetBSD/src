@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.57 2016/04/09 18:47:05 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.58 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.57 2016/04/09 18:47:05 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.58 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -809,7 +809,7 @@ protected el_action_t
 /*ARGSUSED*/
 vi_match(EditLine *el, wint_t c __attribute__((__unused__)))
 {
-	const Char match_chars[] = STR("()[]{}");
+	const Char match_chars[] = L"()[]{}";
 	Char *cp;
 	size_t delta, i, count;
 	Char o_ch, c_ch;
@@ -820,7 +820,7 @@ vi_match(EditLine *el, wint_t c __attribute__((__unused__)))
 	o_ch = el->el_line.cursor[i];
 	if (o_ch == 0)
 		return CC_ERROR;
-	delta = (size_t)(Strchr(match_chars, o_ch) - match_chars);
+	delta = (size_t)(wcschr(match_chars, o_ch) - match_chars);
 	c_ch = match_chars[delta ^ 1];
 	count = 1;
 	delta = 1 - (delta & 1) * 2;
@@ -942,7 +942,7 @@ vi_alias(EditLine *el, wint_t c __attribute__((__unused__)))
 	alias_text = (*el->el_chared.c_aliasfun)(el->el_chared.c_aliasarg,
 	    alias_name);
 	if (alias_text != NULL)
-		FUN(el,push)(el, ct_decode_string(alias_text, &el->el_scratch));
+		el_wpush(el, ct_decode_string(alias_text, &el->el_scratch));
 	return CC_NORM;
 }
 
@@ -959,7 +959,7 @@ vi_to_history_line(EditLine *el, wint_t c __attribute__((__unused__)))
 
 
 	if (el->el_history.eventno == 0) {
-		 (void) Strncpy(el->el_history.buf, el->el_line.buffer,
+		 (void) wcsncpy(el->el_history.buf, el->el_line.buffer,
 		     EL_BUFSIZ);
 		 el->el_history.last = el->el_history.buf +
 			 (el->el_line.lastchar - el->el_line.buffer);
@@ -1024,7 +1024,7 @@ vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
 	line = el_malloc(len * sizeof(*line) + 1);
 	if (line == NULL)
 		goto error;
-	Strncpy(line, el->el_line.buffer, len);
+	wcsncpy(line, el->el_line.buffer, len);
 	line[len] = '\0';
 	wcstombs(cp, line, TMP_BUFSIZ - 1);
 	cp[TMP_BUFSIZ - 1] = '\0';
@@ -1147,7 +1147,7 @@ vi_redo(EditLine *el, wint_t c __attribute__((__unused__)))
 			/* sanity */
 			r->pos = r->lim - 1;
 		r->pos[0] = 0;
-		FUN(el,push)(el, r->buf);
+		el_wpush(el, r->buf);
 	}
 
 	el->el_state.thiscmd = r->cmd;

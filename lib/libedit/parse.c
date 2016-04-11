@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.35 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.36 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.35 2016/02/17 19:47:49 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.36 2016/04/11 00:22:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -64,13 +64,13 @@ private const struct {
 	const Char *name;
 	int (*func)(EditLine *, int, const Char **);
 } cmds[] = {
-	{ STR("bind"),		map_bind	},
-	{ STR("echotc"),	terminal_echotc	},
-	{ STR("edit"),		el_editmode	},
-	{ STR("history"),	hist_command	},
-	{ STR("telltc"),	terminal_telltc	},
-	{ STR("settc"),	        terminal_settc	},
-	{ STR("setty"),	        tty_stty	},
+	{ L"bind",		map_bind	},
+	{ L"echotc",		terminal_echotc	},
+	{ L"edit",		el_editmode	},
+	{ L"history",		hist_command	},
+	{ L"telltc",		terminal_telltc	},
+	{ L"settc",	        terminal_settc	},
+	{ L"setty",	        tty_stty	},
 	{ NULL,		        NULL		}
 };
 
@@ -83,12 +83,12 @@ parse_line(EditLine *el, const Char *line)
 {
 	const Char **argv;
 	int argc;
-	TYPE(Tokenizer) *tok;
+	TokenizerW *tok;
 
-	tok = FUN(tok,init)(NULL);
-	FUN(tok,str)(tok, line, &argc, &argv);
-	argc = FUN(el,parse)(el, argc, argv);
-	FUN(tok,end)(tok);
+	tok = tok_winit(NULL);
+	tok_wstr(tok, line, &argc, &argv);
+	argc = el_wparse(el, argc, argv);
+	tok_wend(tok);
 	return argc;
 }
 
@@ -97,14 +97,14 @@ parse_line(EditLine *el, const Char *line)
  *	Command dispatcher
  */
 public int
-FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
+el_wparse(EditLine *el, int argc, const Char *argv[])
 {
 	const Char *ptr;
 	int i;
 
 	if (argc < 1)
 		return -1;
-	ptr = Strchr(argv[0], ':');
+	ptr = wcschr(argv[0], L':');
 	if (ptr != NULL) {
 		Char *tprog;
 		size_t l;
@@ -115,7 +115,7 @@ FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
 		tprog = el_malloc((l + 1) * sizeof(*tprog));
 		if (tprog == NULL)
 			return 0;
-		(void) Strncpy(tprog, argv[0], l);
+		(void) wcsncpy(tprog, argv[0], l);
 		tprog[l] = '\0';
 		ptr++;
 		l = (size_t)el_match(el->el_prog, tprog);
@@ -126,7 +126,7 @@ FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
 		ptr = argv[0];
 
 	for (i = 0; cmds[i].name != NULL; i++)
-		if (Strcmp(cmds[i].name, ptr) == 0) {
+		if (wcscmp(cmds[i].name, ptr) == 0) {
 			i = (*cmds[i].func) (el, argc, argv);
 			return -i;
 		}
@@ -179,14 +179,14 @@ parse__escape(const Char **ptr)
                 case 'U':               /* Unicode \U+xxxx or \U+xxxxx format */
                 {
                         int i;
-                        const Char hex[] = STR("0123456789ABCDEF");
+                        const Char hex[] = L"0123456789ABCDEF";
                         const Char *h;
                         ++p;
                         if (*p++ != '+')
                                 return -1;
 			c = 0;
                         for (i = 0; i < 5; ++i) {
-                                h = Strchr(hex, *p++);
+                                h = wcschr(hex, *p++);
                                 if (!h && i < 4)
                                         return -1;
                                 else if (h)
@@ -283,7 +283,7 @@ parse_cmd(EditLine *el, const Char *cmd)
 	size_t i;
 
 	for (i = 0; i < el->el_map.nfunc; i++)
-		if (Strcmp(b[i].name, cmd) == 0)
+		if (wcscmp(b[i].name, cmd) == 0)
 			return b[i].func;
 	return -1;
 }

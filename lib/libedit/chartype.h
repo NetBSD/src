@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.27 2016/04/09 18:43:17 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.28 2016/04/11 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -52,35 +52,8 @@
 #endif
 
 #define Char			wchar_t
-#define FUN(prefix,rest)	prefix ## _w ## rest
-#define FUNW(type)		type ## _w
-#define TYPE(type)		type ## W
-#define STR(x)			L ## x
-
-#define Strlen(x)       wcslen(x)
-#define Strchr(s,c)     wcschr(s,c)
-#define Strdup(x)       wcsdup(x)
-#define Strncpy(d,s,n)  wcsncpy(d,s,n)
-#define Strncat(d,s,n)  wcsncat(d,s,n)
-#define Strcmp(s,v)     wcscmp(s,v)
-#define Strncmp(s,v,n)  wcsncmp(s,v,n)
-
 #else /* NARROW */
-
 #define Char			char
-#define FUN(prefix,rest)	prefix ## _ ## rest
-#define FUNW(type)		type
-#define TYPE(type)		type
-#define STR(x)			x
-
-#define Strlen(x)       strlen(x)
-#define Strchr(s,c)     strchr(s,c)
-#define Strdup(x)       strdup(x)
-#define Strncpy(d,s,n)  strncpy(d,s,n)
-#define Strncat(d,s,n)  strncat(d,s,n)
-
-#define Strcmp(s,v)     strcmp(s,v)
-#define Strncmp(s,v,n)  strncmp(s,v,n)
 #endif
 
 
