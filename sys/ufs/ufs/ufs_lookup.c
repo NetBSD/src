@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.139 2016/04/12 15:56:05 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.140 2016/04/12 16:12:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.139 2016/04/12 15:56:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.140 2016/04/12 16:12:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -384,14 +384,12 @@ ufs_lookup(void *v)
 		results->ulr_offset = 0;
 		numdirpasses = 1;
 	} else {
-		struct buf *vbp = bp;	// XXX: gcc
 		results->ulr_offset = results->ulr_diroff;
 		entryoffsetinblock = results->ulr_offset & bmask;
 		if (entryoffsetinblock != 0 &&
 		    (error = ufs_blkatoff(vdp, (off_t)results->ulr_offset,
-		    NULL, &vbp, false)))
+		    NULL, &bp, false)))
 			goto out;
-		bp = vbp;
 		numdirpasses = 2;
 		namecache_count_2passes();
 	}
