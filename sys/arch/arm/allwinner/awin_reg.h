@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.86 2016/01/11 17:09:25 macallan Exp $ */
+/* $NetBSD: awin_reg.h,v 1.87 2016/04/12 10:54:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -1410,7 +1410,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_PIO_PG_CSI1_FUNC		3
 #define AWIN_PIO_PG_UART4_PINS		0x00000c00 /* PG pins 11-10 */
 #define AWIN_PIO_PG_UART4_FUNC		4
-#define AWIN_PIO_PG_UART3_PINS		0x00000300 /* PG pins 9-8 */
+#define AWIN_PIO_PG_UART3_PINS		0x000000c0 /* PG pins 6-7 */
 #define AWIN_PIO_PG_UART3_FUNC		4
 #define AWIN_PIO_PG_SDC1_PINS		0x0000003f /* PG pins 5-0 */
 #define AWIN_PIO_PG_SDC1_FUNC		4
