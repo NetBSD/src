@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.h,v 1.4 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: keymacro.h,v 1.5 2016/04/12 00:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,6 @@ typedef struct el_keymacro_t {
 #define	XK_CMD	0
 #define	XK_STR	1
 #define	XK_NOD	2
-#define	XK_EXE	3
 
 protected int keymacro_init(EditLine *);
 protected void keymacro_end(EditLine *);
