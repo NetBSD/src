@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.257 2016/03/30 13:05:09 martin Exp $
+#	$NetBSD: bsd.sys.mk,v 1.258 2016/04/12 18:50:45 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -67,6 +67,9 @@ LDFLAGS+=	-Wl,--fatal-warnings
 . endif
 .endif
 .endif
+
+LDFLAGS+=	-Wl,--warn-shared-textrel
+
 .if ${WARNS} > 1
 CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
 .endif
