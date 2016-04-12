@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.136 2016/04/11 23:41:15 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.137 2016/04/12 00:36:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.136 2016/04/11 23:41:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.137 2016/04/12 00:36:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -344,12 +344,12 @@ searchloop:
 		 */
 		KASSERT(bp != NULL);
 		ep = (void *)((char *)bp->b_data + entryoffsetinblock);
-		if (ep->d_reclen == 0 ||
-		    (dirchk && ufs_dirbadentry(vdp, ep, entryoffsetinblock))) {
+		const char *msg;
+		if ((ep->d_reclen == 0 && (msg = "null entry")) || (dirchk &&
+		    (msg = ufs_dirbadentry(vdp, ep, entryoffsetinblock)))) {
 			int i;
 
-			ufs_dirbad(dp, results->ulr_offset, ep->d_reclen == 0 ? 
-			    "null entry" : "mangled entry");
+			ufs_dirbad(dp, results->ulr_offset, msg);
 			i = dirblksiz - (entryoffsetinblock & (dirblksiz - 1));
 			results->ulr_offset += i;
 			entryoffsetinblock += i;
@@ -659,14 +659,13 @@ out:
 void
 ufs_dirbad(struct inode *ip, doff_t offset, const char *how)
 {
-	struct mount *mp;
+	struct mount *mp = ITOV(ip)->v_mount;
+	void (*p)(const char  *, ...)  =
+	    (mp->mnt_flag & MNT_RDONLY) == 0 ? panic : printf;
 
-	mp = ITOV(ip)->v_mount;
-	printf("%s: bad dir ino %llu at offset %d: %s\n",
+	(*p)("%s: bad dir ino %llu at offset %d: %s\n",
 	    mp->mnt_stat.f_mntonname, (unsigned long long)ip->i_number,
 	    offset, how);
-	if ((mp->mnt_flag & MNT_RDONLY) == 0)
-		panic("bad dir");
 }
 
 /*
@@ -677,7 +676,7 @@ ufs_dirbad(struct inode *ip, doff_t offset, const char *how)
  *	name is not longer than FFS_MAXNAMLEN
  *	name must be as long as advertised, and null terminated
  */
-int
+const char *
 ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 {
 	const struct ufsmount *ump = VFSTOUFS(dp->v_mount);
@@ -707,26 +706,26 @@ ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 		    "flags=%#x, entryoffsetinblock=%d, dirblksiz=%d\n",
 		    __func__, str, reclen, namlen, dirsiz, reclen, maxsize,
 		    dp->v_mount->mnt_flag, entryoffsetinblock, dirblksiz);
-		goto bad;
+		return str;
 	}
 
 	if (ep->d_ino == 0)
-		return 0;
+		return NULL;
 
-	int i;
-	for (i = 0; i < namlen; i++)
+	for (int i = 0; i < namlen; i++)
 		if (ep->d_name[i] == '\0') {
-			printf("%s: NUL in name i=%d, namlen=%d\n", __func__,
-			    i, namlen);
-			goto bad;
+			str = "NUL in name";
+			printf("%s: %s i=%d, namlen=%d\n", __func__, str, i,
+			    namlen);
+			return str;
+		}
+
+	if (ep->d_name[namlen]) {
+		str = "missing NUL in name";
+		printf("%s: %s namlen=%d\n", __func__, str, namlen);
+		return str;
 	}
-	if (ep->d_name[i]) {
-		printf("%s: missing NUL in name namlen=%d\n", __func__, i);
-		goto bad;
-	}
-	return 0;
-bad:
-	return 1;
+	return NULL;
 }
 
 /*
