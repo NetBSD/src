@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1153 2016/02/24 22:04:15 skrll Exp $
+#	$NetBSD: files,v 1.1154 2016/04/12 11:51:08 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -106,6 +106,7 @@ defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES
 file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
+				PAX_MPROTECT_DEBUG
 				PAX_SEGVGUARD
  				PAX_ASLR
  				PAX_ASLR_DELTA_MMAP_LSB
