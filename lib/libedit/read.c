@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.92 2016/04/12 00:16:06 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.93 2016/04/12 11:15:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.92 2016/04/12 00:16:06 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.93 2016/04/12 11:15:46 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -474,7 +474,7 @@ el_wgets(EditLine *el, int *nread)
 
 #ifdef FIONREAD
 	if (el->el_tty.t_mode == EX_IO && el->el_chared.c_macro.level < 0) {
-		long chrs = 0;
+		int chrs = 0;
 
 		(void) ioctl(el->el_infd, FIONREAD, &chrs);
 		if (chrs == 0) {
