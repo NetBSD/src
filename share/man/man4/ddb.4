@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.159 2016/04/12 11:34:24 skrll Exp $
+.\"	$NetBSD: ddb.4,v 1.160 2016/04/12 23:07:25 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -747,8 +747,8 @@ at the address.
 This command is available only if a kernel is compiled with
 .Cd options KERNHIST
 or
-.Cd options USB_DEBUG (or related options)
-or
+.Cd options USB_DEBUG
+(or related options) or
 .Cd options UVMHIST .
 .It Ic show vnode Ns Oo Cm /f Oc Ar address
 Print the vnode at
