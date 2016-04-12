@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.158 2015/11/13 09:51:16 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.159 2016/04/12 11:34:24 skrll Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd November 13, 2015
+.Dd April 12, 2016
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -741,10 +741,13 @@ queue, the queue index will be prefixed with a
 .Sq \&! .
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
-.It Ic show kernhist
-Dumps the kernel histories.
+.It Ic show kernhist Oo Ar addr Oc
+Dumps all the kernel histories if no address is specified, or the history
+at the address.
 This command is available only if a kernel is compiled with
 .Cd options KERNHIST
+or
+.Cd options USB_DEBUG (or related options)
 or
 .Cd options UVMHIST .
 .It Ic show vnode Ns Oo Cm /f Oc Ar address
