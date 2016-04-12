@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2013/12/19 01:07:03 gdt Exp $
+#	$NetBSD: Makefile,v 1.25 2016/04/12 19:38:41 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -259,3 +259,7 @@ COPTS += -marm
 .endif
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare -Wno-parentheses
+
+.if !empty(CFLAGS:M-fPIE)
+M4FLAGS+=-DPIC
+.endif
