@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.107 2014/08/25 20:40:52 joerg Exp $	 */
+/*	$NetBSD: reloc.c,v 1.108 2016/04/12 19:10:48 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.107 2014/08/25 20:40:52 joerg Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.108 2016/04/12 19:10:48 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -170,12 +170,13 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		    (long)(obj->pltrelalim - obj->pltrela)));
 
 		if (obj->textrel) {
+			xwarnx("%s: text relocations", obj->path);
 			/*
 			 * There are relocations to the write-protected text
 			 * segment.
 			 */
 			if (mprotect(obj->mapbase, obj->textsize,
-				PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
+				PROT_READ | PROT_WRITE) == -1) {
 				_rtld_error("%s: Cannot write-enable text "
 				    "segment: %s", obj->path, xstrerror(errno));
 				return -1;
