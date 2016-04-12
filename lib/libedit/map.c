@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.47 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.48 2016/04/12 00:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.47 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.48 2016/04/12 00:16:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1275,11 +1275,6 @@ map_bind(EditLine *el, int argc, const wchar_t **argv)
 			case 's':
 				ntype = XK_STR;
 				break;
-#ifdef notyet
-			case 'c':
-				ntype = XK_EXE;
-				break;
-#endif
 			case 'k':
 				key = 1;
 				break;
@@ -1352,7 +1347,6 @@ map_bind(EditLine *el, int argc, const wchar_t **argv)
 
 	switch (ntype) {
 	case XK_STR:
-	case XK_EXE:
 		if ((out = parse__string(outbuf, argv[argc])) == NULL) {
 			(void) fprintf(el->el_errfile,
 			    "%ls: Invalid \\ or ^ in outstring.\n", argv[0]);
