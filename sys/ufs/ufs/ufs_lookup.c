@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.138 2016/04/12 14:40:16 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.139 2016/04/12 15:56:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.138 2016/04/12 14:40:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.139 2016/04/12 15:56:05 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -356,7 +356,7 @@ ufs_lookup(void *v)
 	 */
 	if (ufsdirhash_build(dp) == 0) {
 		/* Look for a free slot if needed. */
-		enduseful = slot_findfree(&slot, dp->i_size);
+		enduseful = slot_findfree(&slot, dp);
 		/* Look up the component. */
 		numdirpasses = 1;
 		entryoffsetinblock = 0; /* silence compiler warning */
@@ -366,6 +366,7 @@ ufs_lookup(void *v)
 		case 0:
 			ep = (void *)((char *)bp->b_data +
 			    (results->ulr_offset & bmask));
+			reclen = ufs_rw16(ep->d_reclen, needswap);
 			goto foundentry;
 		case ENOENT:
 			results->ulr_offset = roundup(dp->i_size, dirblksiz);
@@ -383,11 +384,14 @@ ufs_lookup(void *v)
 		results->ulr_offset = 0;
 		numdirpasses = 1;
 	} else {
+		struct buf *vbp = bp;	// XXX: gcc
 		results->ulr_offset = results->ulr_diroff;
-		if ((entryoffsetinblock = results->ulr_offset & bmask) &&
+		entryoffsetinblock = results->ulr_offset & bmask;
+		if (entryoffsetinblock != 0 &&
 		    (error = ufs_blkatoff(vdp, (off_t)results->ulr_offset,
-		    NULL, &bp, false)))
+		    NULL, &vbp, false)))
 			goto out;
+		bp = vbp;
 		numdirpasses = 2;
 		namecache_count_2passes();
 	}
@@ -707,7 +711,8 @@ ufs_dirbad(struct inode *ip, doff_t offset, const char *how)
  *	name must be as long as advertised, and null terminated
  */
 const char *
-ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
+ufs_dirbadentry(const struct vnode *dp, const struct direct *ep,
+    int entryoffsetinblock)
 {
 	const struct ufsmount *ump = VFSTOUFS(dp->v_mount);
 	const int needswap = UFS_MPNEEDSWAP(ump);
@@ -717,8 +722,12 @@ ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 	const uint16_t namlen = NAMLEN(fsfmt, needswap, ep);
 	const uint16_t reclen = ufs_rw16(ep->d_reclen, needswap);
 	const int dirsiz = (int)UFS_DIRSIZ(fsfmt, ep, needswap);
-
+	const char *name = ep->d_name;
 	const char *str;
+#ifdef DIAGNOSTIC
+	static char buf[512];
+#endif
+
 	if ((reclen & 0x3) != 0)
 		str = "not rounded";
 	else if (reclen > maxsize)
@@ -731,11 +740,14 @@ ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 		str = NULL;
 
 	if (str) {
-		printf("%s: Bad dir (%s), reclen=%#x, namlen=%d, "
-		    "dirsiz=%d <= reclen=%d <= maxsize=%d, "
+#ifdef DIAGNOSTIC
+		snprintf(buf, sizeof(buf), "Bad dir (%s), reclen=%#x, "
+		    "namlen=%d, dirsiz=%d <= reclen=%d <= maxsize=%d, "
 		    "flags=%#x, entryoffsetinblock=%d, dirblksiz=%d\n",
-		    __func__, str, reclen, namlen, dirsiz, reclen, maxsize,
+		    str, reclen, namlen, dirsiz, reclen, maxsize,
 		    dp->v_mount->mnt_flag, entryoffsetinblock, dirblksiz);
+		str = buf;
+#endif
 		return str;
 	}
 
@@ -743,16 +755,23 @@ ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 		return NULL;
 
 	for (int i = 0; i < namlen; i++)
-		if (ep->d_name[i] == '\0') {
+		if (name[i] == '\0') {
 			str = "NUL in name";
-			printf("%s: %s i=%d, namlen=%d\n", __func__, str, i,
-			    namlen);
+#ifdef DIAGNOSTIC
+			snprintf(buf, sizeof(buf), "%s [%s] i=%d, namlen=%d\n",
+			    str, name, i, namlen);
+			str = buf;
+#endif
 			return str;
 		}
 
-	if (ep->d_name[namlen]) {
+	if (name[namlen]) {
 		str = "missing NUL in name";
-		printf("%s: %s namlen=%d\n", __func__, str, namlen);
+#ifdef DIAGNOSTIC
+		snprintf(buf, sizeof(buf), "%s [%*.*s] namlen=%d\n", str, 
+		    namlen, namlen, name, namlen);
+		str = buf;
+#endif
 		return str;
 	}
 	return NULL;
@@ -915,7 +934,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	ep = (void *)dirbuf;
 	dsize = (ep->d_ino != 0) ? UFS_DIRSIZ(fsfmt, ep, needswap) : 0;
 	reclen = ufs_rw16(ep->d_reclen, needswap);
-	spacefree =  reclen - dsize;
+	spacefree = reclen - dsize;
 	for (loc = reclen; loc < ulr->ulr_count; ) {
 		nep = (void *)(dirbuf + loc);
 
