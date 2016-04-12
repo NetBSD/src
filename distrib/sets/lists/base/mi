@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.7 2015/05/07 03:48:27 snj Exp $
+# $NetBSD: mi,v 1.1087.2.7.2.1 2016/04/12 06:34:30 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5268,6 +5268,7 @@
 ./usr/share/zoneinfo/America/Eirunepe		base-sys-share		share
 ./usr/share/zoneinfo/America/El_Salvador	base-sys-share		share
 ./usr/share/zoneinfo/America/Ensenada		base-sys-share		share
+./usr/share/zoneinfo/America/Fort_Nelson	base-sys-share		share
 ./usr/share/zoneinfo/America/Fort_Wayne		base-sys-share		share
 ./usr/share/zoneinfo/America/Fortaleza		base-sys-share		share
 ./usr/share/zoneinfo/America/Glace_Bay		base-sys-share		share
@@ -5408,6 +5409,7 @@
 ./usr/share/zoneinfo/Asia/Bahrain		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Baku			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Bangkok		base-sys-share		share
+./usr/share/zoneinfo/Asia/Barnaul		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Beirut		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Bishkek		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Brunei		base-sys-share		share
@@ -5596,6 +5598,7 @@
 ./usr/share/zoneinfo/Europe			base-sys-share
 ./usr/share/zoneinfo/Europe/Amsterdam		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Andorra		base-sys-share		share
+./usr/share/zoneinfo/Europe/Astrakhan		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Athens		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Belfast		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Belgrade		base-sys-share		share
@@ -5644,6 +5647,7 @@
 ./usr/share/zoneinfo/Europe/Tallinn		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Tirane		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Tiraspol		base-sys-share		share
+./usr/share/zoneinfo/Europe/Ulyanovsk		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Uzhgorod		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vaduz		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vatican		base-sys-share		share
