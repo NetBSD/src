@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.13 2016/04/12 20:36:35 roy Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.14 2016/04/12 20:40:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.13 2016/04/12 20:36:35 roy Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.14 2016/04/12 20:40:43 roy Exp $");
 #endif
 
 #include <sys/param.h>
@@ -193,7 +193,7 @@ pidfile_lock(const char *path)
 
 	/* If path has changed (no good reason), clean up the old pidfile. */
 	if (pidfile_fd != -1 && strcmp(pidfile_path, path) != 0)
-		r = pidfile_clean();
+		pidfile_clean();
 
 	if (pidfile_fd == -1) {
 		pidfile_fd = open(path,
