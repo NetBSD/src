@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.12 2016/04/10 19:05:50 roy Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.13 2016/04/12 20:36:35 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.12 2016/04/10 19:05:50 roy Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.13 2016/04/12 20:36:35 roy Exp $");
 #endif
 
 #include <sys/param.h>
@@ -139,13 +139,12 @@ pidfile_read(const char *path)
 	ssize_t n;
 	pid_t pid;
 
-	if (path == NULL) {
-		if (pidfile_path[0] != '\0')
-			path = pidfile_path;
-		else if (pidfile_varrun_path(dpath, sizeof(dpath), NULL) == -1)
+	if (path == NULL && pidfile_path[0] != '\0')
+		path = pidfile_path;
+	if (path == NULL || strchr(path, '/') == NULL) {
+		if (pidfile_varrun_path(dpath, sizeof(dpath), path) == -1)
 			return -1;
-		else
-			path = dpath;
+		path = dpath;
 	}
 
 	if ((fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK)) == -1)
@@ -187,14 +186,14 @@ pidfile_lock(const char *path)
 	}
 
 	if (path == NULL || strchr(path, '/') == NULL) {
-		if (pidfile_varrun_path(dpath, sizeof(dpath), NULL) == -1)
+		if (pidfile_varrun_path(dpath, sizeof(dpath), path) == -1)
 			return -1;
 		path = dpath;
 	}
 
 	/* If path has changed (no good reason), clean up the old pidfile. */
-	if (strcmp(pidfile_path, path) != 0)
-		pidfile_cleanup();
+	if (pidfile_fd != -1 && strcmp(pidfile_path, path) != 0)
+		r = pidfile_clean();
 
 	if (pidfile_fd == -1) {
 		pidfile_fd = open(path,
