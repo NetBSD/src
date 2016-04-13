@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.91 2015/09/26 11:16:13 maxv Exp $
+#	$NetBSD: INSTALL,v 1.92 2016/04/13 17:32:27 macallan Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -40,14 +40,6 @@ options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 # Blink the power LED on some machines to indicate the system load.
 #options 	BLINK
 
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE		# fast rasterop console
-options 	FONT_GALLANT12x22	# the console font
-options 	FONT_BOLD8x16		# a somewhat smaller font
-#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
-
 # wscons stuff
 #options 	WSEMUL_SUN
 options 	WSEMUL_VT100
@@ -59,6 +51,8 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	FONT_GALLANT12x22	# the console font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
@@ -572,6 +566,9 @@ zx*		at sbus? slot ? offset ?
 
 # Fujitsu AG-10e accelerated graphics 8/24-bit board
 agten*	at sbus? slot ? offset ?
+
+## Southland Media Systems (now Quantum 3D) MGX
+mgx* 		at sbus? slot ? offset ?
 
 # generic framebuffer console
 genfb*	at sbus? slot ? offset ?
