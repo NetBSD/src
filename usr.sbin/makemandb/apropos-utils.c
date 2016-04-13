@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.22 2016/03/31 20:16:58 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.23 2016/04/13 01:37:50 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.22 2016/03/31 20:16:58 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.23 2016/04/13 01:37:50 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -300,7 +300,7 @@ get_dbpath(const char *manconf)
  *  	In normal cases the function should return a handle to the db.
  */
 sqlite3 *
-init_db(int db_flag, const char *manconf)
+init_db(mandb_access_mode db_flag, const char *manconf)
 {
 	sqlite3 *db = NULL;
 	sqlite3_stmt *stmt;
@@ -311,10 +311,10 @@ init_db(int db_flag, const char *manconf)
 	char *dbpath = get_dbpath(manconf);
 	if (dbpath == NULL)
 		errx(EXIT_FAILURE, "_mandb entry not found in man.conf");
-	/* Check if the database exists or not */
+
 	if (!(stat(dbpath, &sb) == 0 && S_ISREG(sb.st_mode))) {
-		/* Database does not exist, check if DB_CREATE was specified, and set
-		 * flag to create the database schema
+		/* Database does not exist, check if DB_CREATE was specified,
+		 * and set flag to create the database schema
 		 */
 		if (db_flag != (MANDB_CREATE)) {
 			warnx("Missing apropos database. "
@@ -322,16 +322,33 @@ init_db(int db_flag, const char *manconf)
 			return NULL;
 		}
 		create_db_flag = 1;
+	} else {
+		/*
+		 * Database exists. Check if we have the permissions
+		 * to read/write the files
+		 */
+		int access_mode = R_OK;
+		switch (access_mode) {
+		case MANDB_CREATE:
+		case MANDB_WRITE:
+			access_mode |= W_OK;
+			break;
+		default:
+			break;
+		}
+		if ((access(dbpath, access_mode)) != 0) {
+			warnx("Unable to access the database, please check"
+			    " permissions for `%s'", dbpath);
+			return NULL;
+		}
 	}
 
-	/* Now initialize the database connection */
 	sqlite3_initialize();
 	rc = sqlite3_open_v2(dbpath, &db, db_flag, NULL);
 
 	if (rc != SQLITE_OK) {
 		warnx("%s", sqlite3_errmsg(db));
-		sqlite3_shutdown();
-		return NULL;
+		goto error;
 	}
 
 	if (create_db_flag && create_db(db) < 0) {
@@ -379,8 +396,7 @@ init_db(int db_flag, const char *manconf)
 	return db;
 
 error:
-	sqlite3_close(db);
-	sqlite3_shutdown();
+	close_db(db);
 	return NULL;
 }
 
