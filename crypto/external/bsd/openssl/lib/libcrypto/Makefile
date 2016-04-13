@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/03/22 20:29:04 martin Exp $
+#	$NetBSD: Makefile,v 1.11 2016/04/13 21:33:52 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -118,3 +118,5 @@ PKGCONFIG=libcrypto
 .include "${.CURDIR}/../../pkgconfig.mk"
 
 .include <bsd.lib.mk>
+# RC5 warning
+LDFLAGS+=-Wl,--no-fatal-warnings
