@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.10 2016/04/13 01:37:50 christos Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.11 2016/04/13 11:48:29 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -36,7 +36,6 @@
 #include "sqlite3.h"
 
 #define MANCONF "/etc/man.conf"
-#define SECMAX 9
 
 /* Flags for opening the database */
 typedef enum mandb_access_mode {
@@ -74,7 +73,7 @@ enum man_sec {
 
 typedef struct query_args {
 	const char *search_str;		// user query
-	int *sec_nums;		// Section in which to do the search
+	char *sec_nums;		// Section in which to do the search
 	int nrec;			// number of records to fetch
 	int offset;		//From which position to start processing the records
 	int legacy;
