@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.33 2016/03/31 20:17:58 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.34 2016/04/13 01:32:00 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.33 2016/03/31 20:17:58 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.34 2016/04/13 01:32:00 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -429,6 +429,7 @@ main(int argc, char *argv[])
 	if (errmsg != NULL) {
 		warnx("%s", errmsg);
 		free(errmsg);
+		close_db(db);
 		exit(EXIT_FAILURE);
 	}
 
