@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2151 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2152 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -280,3 +280,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	libutil: added pidfile_lock, pidfile_read, pidfile_read [roy 20160410]
 	dhcpcd(8): Import dhcpcd-6.10.2 [roy 20160410]
 	openresolv(8): Import openresolv-3.8.0 [roy20160411]
+	ddb(4): rename show arptab to show routes [ozaki-r 20160413]
