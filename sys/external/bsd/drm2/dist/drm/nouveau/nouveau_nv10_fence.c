@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv10_fence.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv10_fence.c,v 1.3 2016/04/13 07:57:15 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv10_fence.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv10_fence.c,v 1.3 2016/04/13 07:57:15 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/class.h>
@@ -95,6 +95,7 @@ nv10_fence_destroy(struct nouveau_drm *drm)
 		nouveau_bo_unpin(priv->bo);
 	nouveau_bo_ref(NULL, &priv->bo);
 	drm->fence = NULL;
+	spin_lock_destroy(&priv->lock);
 	kfree(priv);
 }
 
