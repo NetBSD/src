@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.36 2016/04/13 01:41:18 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.37 2016/04/13 11:48:29 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.36 2016/04/13 01:41:18 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.37 2016/04/13 11:48:29 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -71,7 +71,7 @@ typedef struct mandb_rec {
 	secbuff exit_status; // EXIT STATUS
 	secbuff diagnostics; // DIAGNOSTICS
 	secbuff errors; // ERRORS
-	char section[2];
+	char *section;
 
 	int xr_found; // To track whether a .Xr was seen when parsing a section
 
@@ -774,7 +774,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	rc = sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
 	if (rc != SQLITE_OK) {
 		if (mflags.verbosity)
-		warnx("%s", sqlite3_errmsg(db));
+			warnx("%s", sqlite3_errmsg(db));
 		close_db(db);
 		errx(EXIT_FAILURE, "Could not query file cache");
 	}
@@ -809,7 +809,8 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			err_count++;
 			continue;
 		}
-		md5_status = check_md5(file, db, "mandb_meta", &md5sum, buf, buflen);
+		md5_status = check_md5(file, db, "mandb_meta", &md5sum, buf,
+		    buflen);
 		assert(md5sum != NULL);
 		if (md5_status == -1) {
 			if (mflags.verbosity)
@@ -870,12 +871,12 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 
 	if (mflags.verbosity == 2) {
 		printf("Total Number of new or updated pages encountered = %d\n"
-			"Total number of (hard or symbolic) links found = %d\n"
-			"Total number of pages that were successfully"
-			" indexed/updated = %d\n"
-			"Total number of pages that could not be indexed"
-			" due to errors = %d\n",
-			total_count - link_count, link_count, new_count, err_count);
+		    "Total number of (hard or symbolic) links found = %d\n"
+		    "Total number of pages that were successfully"
+		    " indexed/updated = %d\n"
+		    "Total number of pages that could not be indexed"
+		    " due to errors = %d\n",
+		    total_count - link_count, link_count, new_count, err_count);
 	}
 
 	if (mflags.recreate)
@@ -954,15 +955,15 @@ set_section(const struct mdoc *md, const struct man *m, mandb_rec *rec)
 	if (md) {
 		const struct mdoc_meta *md_meta = mdoc_meta(md);
 		if (md_meta->msec == NULL) {
-			rec->section[0] = '?';
+			easprintf(&rec->section, "%s", "?");
 		} else
-			rec->section[0] = md_meta->msec[0];
+			rec->section = estrdup(md_meta->msec);
 	} else if (m) {
 		const struct man_meta *m_meta = man_meta(m);
 		if (m_meta->msec == NULL)
-			rec->section[0] = '?';
+			easprintf(&rec->section, "%s", "?");
 		else
-			rec->section[0] = m_meta->msec[0];
+			rec->section = estrdup(m_meta->msec);
 	} else
 		return;
 
@@ -1583,7 +1584,7 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 		char *tmp;
 		rec->links = estrdup(rec->name);
 		free(rec->name);
-		int sz = strcspn(rec->links, " \0");
+		size_t sz = strcspn(rec->links, " \0");
 		rec->name = emalloc(sz + 1);
 		memcpy(rec->name, rec->links, sz);
 		if(rec->name[sz - 1] == ',')
@@ -1636,7 +1637,8 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 	}
 
 	idx = sqlite3_bind_parameter_index(stmt, ":lib");
-	rc = sqlite3_bind_text(stmt, idx, rec->lib.data, rec->lib.offset + 1, NULL);
+	rc = sqlite3_bind_text(stmt, idx, rec->lib.data,
+	    rec->lib.offset + 1, NULL);
 	if (rc != SQLITE_OK) {
 		sqlite3_finalize(stmt);
 		goto Out;
@@ -1651,7 +1653,8 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 	}
 
 	idx = sqlite3_bind_parameter_index(stmt, ":env");
-	rc = sqlite3_bind_text(stmt, idx, rec->env.data, rec->env.offset + 1, NULL);
+	rc = sqlite3_bind_text(stmt, idx, rec->env.data,
+	    rec->env.offset + 1, NULL);
 	if (rc != SQLITE_OK) {
 		sqlite3_finalize(stmt);
 		goto Out;
@@ -1989,6 +1992,9 @@ cleanup(mandb_rec *rec)
 
 	free(rec->md5_hash);
 	rec->md5_hash = NULL;
+
+	free(rec->section);
+	rec->section = NULL;
 }
 
 /*
