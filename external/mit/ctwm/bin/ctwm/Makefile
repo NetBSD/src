@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/11/10 23:57:00 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.4 2016/04/13 22:26:48 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ CTWMCONFIGDIR=		${X11ETCDIR}/ctwm
 CTWMDIR=		${X11SRCDIR}/external/mit/ctwm/dist
 XPMDIR=			${X11INCDIR}/X11/pixmaps/ctwm
 
-CPPFLAGS+=		-I. -I${CTWMDIR}/src \
+CPPFLAGS+=		-I. -I${CTWMDIR}/src -DHAVE_MKSTEMP \
 			-DNO_ALLOCA -DCSRG_BASED -DUSEM4 -DGNOME -DXPM
 
 CPPFLAGS+=		-DPIXMAP_DIRECTORY=\"${XPMDIR}\"
