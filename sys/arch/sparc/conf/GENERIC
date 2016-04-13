@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.249 2015/09/26 11:16:13 maxv Exp $
+# $NetBSD: GENERIC,v 1.250 2016/04/13 17:32:27 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.249 $"
+#ident 		"GENERIC-$Revision: 1.250 $"
 
 maxusers	32
 
@@ -43,13 +43,6 @@ options 	SUN4_MMU3L	# sun4/400 3-level MMU
 # Blink the power LED on some machines to indicate the system load.
 #options 	BLINK
 
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-## These is obsolete for wscons kernels
-#options 	RASTERCONSOLE		# fast rasterop console
-#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
-
 # wscons stuff
 #options 	WSEMUL_SUN
 options 	WSEMUL_VT100
@@ -65,7 +58,6 @@ options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 options 	WSDISPLAY_SCROLLSUPPORT
 
-# generic options vlid for both wscons and RASTERCONSOLE
 options 	FONT_GALLANT12x22	# the console font
 options 	FONT_BOLD8x16		# a somewhat smaller font
 
@@ -688,8 +680,10 @@ cgsix0		at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 tcx0		at sbus? slot ? offset ?
 
 ## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
-## runs monochrome only for now
 cgtwelve*	at sbus? slot ? offset ?
+# the driver can use the color framebuffer or the monochrome overlay
+# the latter is faster
+options 	CG12_COLOR
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
@@ -706,6 +700,9 @@ zx*		at sbus? slot ? offset ?
 
 # Fujitsu AG-10e accelerated graphics 8/24-bit board
 agten*	at sbus? slot ? offset ?
+
+## Southland Media Systems (now Quantum 3D) MGX
+mgx* 		at sbus? slot ? offset ?
 
 # generic framebuffer console
 genfb*	at sbus? slot ? offset ?
