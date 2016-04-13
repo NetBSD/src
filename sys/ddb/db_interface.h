@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.31 2013/01/06 03:34:52 christos Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.32 2016/04/13 00:47:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@ void		db_show_callout(db_expr_t, bool, db_expr_t, const char *);
 /* kern/subr_log.c */
 void		db_dmesg(db_expr_t, bool, db_expr_t, const char *);
 
-/* netinet/if_arp.c */
-void		db_show_arptab(db_expr_t, bool, db_expr_t, const char *);
+/* net/route.c */
+void		db_show_routes(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/vfs_aio.c */
 void		db_show_aio_jobs(db_expr_t, bool, db_expr_t, const char *);

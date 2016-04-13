@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.160 2016/04/12 23:07:25 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.161 2016/04/13 00:47:01 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd April 12, 2016
+.Dd April 13, 2016
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -602,11 +602,11 @@ LWP name and wait channel message.
 LWPs currently running on a CPU are marked with the '\&>' sign.
 This is the default.
 .El
-.It Ic show arptab
+.It Ic show routes
 Dump the entire
 .Dv AF_INET
 routing table.
-This command is available only on systems which support inet and ARP.
+This command is available only on systems which support inet.
 .It Ic show breaks
 Display all breakpoints.
 .It Ic show buf Ns Oo Cm /f Oc Ar address
