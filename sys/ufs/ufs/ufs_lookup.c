@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.140 2016/04/12 16:12:22 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.141 2016/04/13 00:09:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.140 2016/04/12 16:12:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.141 2016/04/13 00:09:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -107,6 +107,15 @@ struct slotinfo {
 				   the current DIRBLKSIZ block */
 	int needed;		/* size of the entry we're seeking */
 };
+
+static void
+calc_count(struct ufs_lookup_results *results, int dirblksiz, doff_t prevoff)
+{
+	if ((results->ulr_offset & (dirblksiz - 1)) == 0)
+		results->ulr_count = 0;
+	else
+		results->ulr_count = results->ulr_offset - prevoff;
+}
 
 static void
 slot_init(struct slotinfo *slot)
@@ -181,10 +190,7 @@ slot_estimate(const struct slotinfo *slot, int dirblksiz, int nameiop,
 		enduseful = results->ulr_offset;
 	} else if (nameiop == DELETE) {
 		results->ulr_offset = slot->offset;
-		if ((results->ulr_offset & (dirblksiz - 1)) == 0)
-			results->ulr_count = 0;
-		else
-			results->ulr_count = results->ulr_offset - prevoff;
+		calc_count(results, dirblksiz, prevoff);
 	} else {
 		results->ulr_offset = slot->offset;
 		results->ulr_count = slot->size;
@@ -197,6 +203,57 @@ slot_estimate(const struct slotinfo *slot, int dirblksiz, int nameiop,
 #endif
 	return EJUSTRETURN;
 }
+
+/*
+ * Check if we can delete inode tdp in directory vdp with inode ip and creds.
+ */
+static int
+ufs_can_delete(struct vnode *tdp, struct vnode *vdp, struct inode *ip,
+    kauth_cred_t cred)
+{
+	int error;
+	/*
+	 * Write access to directory required to delete files.
+	 */
+	error = VOP_ACCESS(vdp, VWRITE, cred);
+	if (error)
+		goto out;
+
+	if (!(ip->i_mode & ISVTX)) 
+		return 0;
+
+	/*
+	 * If directory is "sticky", then user must own
+	 * the directory, or the file in it, else she
+	 * may not delete it (unless she's root). This
+	 * implements append-only directories.
+	 */
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE, tdp, vdp,
+	    genfs_can_sticky(cred, ip->i_uid, VTOI(tdp)->i_uid));
+	if (error) {
+		error = EPERM;	// Why override?
+		goto out;
+	}
+	return 0;
+out:
+	vrele(tdp);
+	return error;
+}
+
+static int
+ufs_getino(struct vnode *vdp, struct inode *ip, ino_t foundino,
+    struct vnode **tdp, int same)
+{
+	if (ip->i_number == foundino) {
+		if (same)
+			return EISDIR;
+		vref(vdp);
+		*tdp = vdp;
+		return 0;
+	}
+	return vcache_get(vdp->v_mount, &foundino, sizeof(foundino), tdp);
+}
+
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -299,7 +356,7 @@ ufs_lookup(void *v)
 	 * we are looking for is known already.
 	 */
 	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
-			 cnp->cn_nameiop, cnp->cn_flags, &iswhiteout, vpp)) {
+	    cnp->cn_nameiop, cnp->cn_flags, &iswhiteout, vpp)) {
 		if (iswhiteout) {
 			cnp->cn_flags |= ISWHITEOUT;
 		}
@@ -464,8 +521,7 @@ searchloop:
 		 */
 		const uint16_t namlen = NAMLEN(fsfmt, needswap, ep);
 		if (namlen != cnp->cn_namelen ||
-		    memcmp(cnp->cn_nameptr, ep->d_name,
-		    (unsigned)namlen))
+		    memcmp(cnp->cn_nameptr, ep->d_name, (size_t)namlen))
 			goto next;
 
 #ifdef UFS_DIRHASH
@@ -597,45 +653,15 @@ found:
 		 * is a previous entry in this block) in results->ulr_count.
 		 * Save directory inode pointer in ndp->ni_dvp for dirremove().
 		 */
-		if ((results->ulr_offset & (dirblksiz - 1)) == 0)
-			results->ulr_count = 0;
-		else
-			results->ulr_count = results->ulr_offset - prevoff;
-		if (dp->i_number == foundino) {
-			vref(vdp);
-			tdp = vdp;
-		} else {
-			error = vcache_get(vdp->v_mount,
-			    &foundino, sizeof(foundino), &tdp);
-			if (error)
-				goto out;
-		}
-		/*
-		 * Write access to directory required to delete files.
-		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred);
-		if (error) {
-			vrele(tdp);
+		calc_count(results, dirblksiz, prevoff);
+
+		if ((error = ufs_getino(vdp, dp, foundino, &tdp, FALSE)) != 0)
 			goto out;
-		}
-		/*
-		 * If directory is "sticky", then user must own
-		 * the directory, or the file in it, else she
-		 * may not delete it (unless she's root). This
-		 * implements append-only directories.
-		 */
-		if (dp->i_mode & ISVTX) {
-			error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE,
-			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
-			    VTOI(tdp)->i_uid));
-			if (error) {
-				vrele(tdp);
-				error = EPERM;
-				goto out;
-			}
-		}
+
+		if ((error = ufs_can_delete(tdp, vdp, dp, cred)) != 0)
+			goto out;
+
 		*vpp = tdp;
-		error = 0;
 		goto out;
 	}
 
@@ -646,37 +672,22 @@ found:
 	 * regular file, or empty directory.
 	 */
 	if (nameiop == RENAME && (flags & ISLASTCN)) {
-		error = VOP_ACCESS(vdp, VWRITE, cred);
-		if (error)
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0)
 			goto out;
 		/*
 		 * Careful about locking second inode.
 		 * This can only occur if the target is ".".
 		 */
-		if (dp->i_number == foundino) {
-			error = EISDIR;
-			goto out;
-		}
-		error = vcache_get(vdp->v_mount,
-		    &foundino, sizeof(foundino), &tdp);
-		if (error)
+		if ((error = ufs_getino(vdp, dp, foundino, &tdp, TRUE)) != 0)
 			goto out;
 		*vpp = tdp;
-		error = 0;
 		goto out;
 	}
 
-	if (dp->i_number == foundino) {
-		vref(vdp);	/* we want ourself, ie "." */
-		*vpp = vdp;
-	} else {
-		error = vcache_get(vdp->v_mount,
-		    &foundino, sizeof(foundino), &tdp);
-		if (error)
-			goto out;
-		*vpp = tdp;
-	}
+	if ((error = ufs_getino(vdp, dp, foundino, &tdp, FALSE)) != 0)
+		goto out;
 
+	*vpp = tdp;
 	/*
 	 * Insert name into cache if appropriate.
 	 */
