@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.35 2016/04/13 01:40:09 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.36 2016/04/13 01:41:18 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.35 2016/04/13 01:40:09 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.36 2016/04/13 01:41:18 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -703,7 +703,7 @@ read_and_decompress(const char *file, void **bufp, size_t *len)
 	for (;;) {
 		r = archive_read_data(a, buf + off, *len - off);
 		if (r == ARCHIVE_OK) {
-			archive_read_close(a);
+			archive_read_finish(a);
 			*bufp = buf;
 			*len = off;
 			return 0;
@@ -719,7 +719,7 @@ read_and_decompress(const char *file, void **bufp, size_t *len)
 				if (mflags.verbosity)
 					warnx("File too large: %s", file);
 				free(buf);
-				archive_read_close(a);
+				archive_read_finish(a);
 				return -1;
 			}
 			buf = erealloc(buf, *len);
@@ -728,7 +728,7 @@ read_and_decompress(const char *file, void **bufp, size_t *len)
 
 archive_error:
 	warnx("Error while reading `%s': %s", file, archive_error_string(a));
-	archive_read_close(a);
+	archive_read_finish(a);
 	return -1;
 }
 
