@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.34 2016/04/13 01:32:00 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.35 2016/04/13 01:40:09 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.34 2016/04/13 01:32:00 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.35 2016/04/13 01:40:09 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -843,16 +843,24 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			 * This means is either a new file or an updated file.
 			 * We should go ahead with parsing.
 			 */
+			if (chdir(parent) == -1) {
+				if (mflags.verbosity)
+					warn("chdir failed for `%s', could "
+					    "not index `%s'", parent, file);
+				err_count++;
+				free(md5sum);
+				continue;
+			}
+
 			if (mflags.verbosity == 2)
 				printf("Parsing: %s\n", file);
 			rec->md5_hash = md5sum;
 			rec->file_path = estrdup(file);
 			// file_path is freed by insert_into_db itself.
-			chdir(parent);
 			begin_parse(file, mp, rec, buf, buflen);
 			if (insert_into_db(db, rec) < 0) {
 				if (mflags.verbosity)
-					warnx("Error in indexing %s", file);
+					warnx("Error in indexing `%s'", file);
 				err_count++;
 			} else {
 				new_count++;
