@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/07/20 23:50:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2016/04/13 21:54:25 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=	xman
 SRCS=	ScrollByL.c handler.c man.c buttons.c help.c \
 	search.c globals.c main.c misc.c tkfuncs.c vendor.c
 
-CPPFLAGS+=${X11FLAGS.VERSION}
+CPPFLAGS+=${X11FLAGS.VERSION} -DHAVE_MKSTEMP
 CPPFLAGS+=-DHELPFILE=\"${X11LIBDIR}/xman.help\"
 CPPFLAGS+=-DMANCONFIGSTYLE_OpenBSD -DMANCONF=\"/etc/man.conf\"
 
