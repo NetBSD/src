@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.9 2013/04/02 17:16:50 christos Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.10 2016/04/13 01:37:50 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -39,9 +39,12 @@
 #define SECMAX 9
 
 /* Flags for opening the database */
-#define MANDB_READONLY SQLITE_OPEN_READONLY
-#define MANDB_WRITE SQLITE_OPEN_READWRITE
-#define MANDB_CREATE SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
+typedef enum mandb_access_mode {
+	MANDB_READONLY = SQLITE_OPEN_READONLY,
+	MANDB_WRITE = SQLITE_OPEN_READWRITE,
+	MANDB_CREATE = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
+} mandb_access_mode;
+
 
 #define APROPOS_SCHEMA_VERSION 20120507
 
@@ -92,7 +95,7 @@ typedef enum query_format {
 char *lower(char *);
 void concat(char **, const char *);
 void concat2(char **, const char *, size_t);
-sqlite3 *init_db(int, const char *);
+sqlite3 *init_db(mandb_access_mode, const char *);
 void close_db(sqlite3 *);
 char *get_dbpath(const char *);
 int run_query(sqlite3 *, query_format, query_args *);
