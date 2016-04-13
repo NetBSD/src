@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.161 2016/04/11 08:26:33 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.162 2016/04/13 00:47:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.161 2016/04/11 08:26:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.162 2016/04/13 00:47:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -151,6 +151,12 @@ static void rt_maskedcopy(const struct sockaddr *,
 
 static void rtcache_clear(struct route *);
 static void rtcache_invalidate(struct dom_rtlist *);
+
+#ifdef DDB
+static void db_print_sa(const struct sockaddr *);
+static void db_print_ifa(struct ifaddr *);
+static int db_show_rtentry(struct rtentry *, void *);
+#endif
 
 #ifdef RTFLUSH_DEBUG
 static void sysctl_net_rtcache_setup(struct sysctllog **);
@@ -1493,3 +1499,94 @@ rt_gettag(struct rtentry *rt)
 {
 	return rt->rt_tag;
 }
+
+#ifdef DDB
+
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
+
+#define	rt_expire rt_rmx.rmx_expire
+
+static void
+db_print_sa(const struct sockaddr *sa)
+{
+	int len;
+	const u_char *p;
+
+	if (sa == NULL) {
+		db_printf("[NULL]");
+		return;
+	}
+
+	p = (const u_char *)sa;
+	len = sa->sa_len;
+	db_printf("[");
+	while (len > 0) {
+		db_printf("%d", *p);
+		p++; len--;
+		if (len) db_printf(",");
+	}
+	db_printf("]\n");
+}
+
+static void
+db_print_ifa(struct ifaddr *ifa)
+{
+	if (ifa == NULL)
+		return;
+	db_printf("  ifa_addr=");
+	db_print_sa(ifa->ifa_addr);
+	db_printf("  ifa_dsta=");
+	db_print_sa(ifa->ifa_dstaddr);
+	db_printf("  ifa_mask=");
+	db_print_sa(ifa->ifa_netmask);
+	db_printf("  flags=0x%x,refcnt=%d,metric=%d\n",
+			  ifa->ifa_flags,
+			  ifa->ifa_refcnt,
+			  ifa->ifa_metric);
+}
+
+/*
+ * Function to pass to rt_walktree().
+ * Return non-zero error to abort walk.
+ */
+static int
+db_show_rtentry(struct rtentry *rt, void *w)
+{
+	db_printf("rtentry=%p", rt);
+
+	db_printf(" flags=0x%x refcnt=%d use=%"PRId64" expire=%"PRId64"\n",
+			  rt->rt_flags, rt->rt_refcnt,
+			  rt->rt_use, (uint64_t)rt->rt_expire);
+
+	db_printf(" key="); db_print_sa(rt_getkey(rt));
+	db_printf(" mask="); db_print_sa(rt_mask(rt));
+	db_printf(" gw="); db_print_sa(rt->rt_gateway);
+
+	db_printf(" ifp=%p ", rt->rt_ifp);
+	if (rt->rt_ifp)
+		db_printf("(%s)", rt->rt_ifp->if_xname);
+	else
+		db_printf("(NULL)");
+
+	db_printf(" ifa=%p\n", rt->rt_ifa);
+	db_print_ifa(rt->rt_ifa);
+
+	db_printf(" gwroute=%p llinfo=%p\n",
+			  rt->rt_gwroute, rt->rt_llinfo);
+
+	return 0;
+}
+
+/*
+ * Function to print all the route trees.
+ * Use this from ddb:  "show routes"
+ */
+void
+db_show_routes(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+	rt_walktree(AF_INET, db_show_rtentry, NULL);
+}
+#endif
