@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.18 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.19 2016/04/14 16:42:09 christos Exp $	*/
 /* $OpenBSD: session.c,v 1.280 2016/02/16 03:37:48 djm Exp $ */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.18 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.19 2016/04/14 16:42:09 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1226,7 +1226,7 @@ do_setup_env(Session *s, const char *shell)
 	 * Pull in any environment variables that may have
 	 * been set by PAM.
 	 */
-	if (options.use_pam) {
+	if (options.use_pam && !options.use_login) {
 		char **p;
 
 		p = fetch_pam_child_environment();
