@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.142 2016/04/14 03:23:22 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.143 2016/04/14 03:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.142 2016/04/14 03:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.143 2016/04/14 03:25:28 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -769,7 +769,7 @@ ufs_dirbadentry(const struct vnode *dp, const struct direct *ep,
 		if (name[i] == '\0') {
 			str = "NUL in name";
 #ifdef DIAGNOSTIC
-			snprintf(buf, sizeof(buf), "%s [%s] i=%d, namlen=%d"
+			snprintf(buf, sizeof(buf), "%s [%s] i=%d, namlen=%d",
 			    str, name, i, namlen);
 			str = buf;
 #endif
