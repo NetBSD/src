@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.524 2015/08/13 13:21:04 leot Exp $
+.\"	$NetBSD: main,v 1.525 2016/04/14 21:16:18 salazar Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1314,6 +1314,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Alexander Nasonov Ta Mt alnsn@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
 .It Ta John Nemeth Ta Mt jnemeth@NetBSD.org
+.It Ta Lourival Pereira Vieira Neto Ta Mt lneto@NetBSD.org
 .It Ta NISHIMURA Takeshi Ta Mt nsmrtks@NetBSD.org
 .It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.org
 .It Ta NONAKA Kimihiro Ta Mt nonaka@NetBSD.org
