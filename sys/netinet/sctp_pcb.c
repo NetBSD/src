@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.2 2016/04/03 09:57:40 mlelstv Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.3 2016/04/14 18:36:56 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.2 2016/04/03 09:57:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.3 2016/04/14 18:36:56 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1312,7 +1312,6 @@ sctp_inpcb_alloc(struct socket *so)
 
 	error = 0;
 
-	printf("sctp_inpcb_alloc: starting\n");
         /* Hack alert:
 	 *
 	 * This code audits the entire INP list to see if
