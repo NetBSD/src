@@ -160,8 +160,13 @@ nouveau_dev(struct drm_device *dev)
 	return nv_device(nouveau_drm(dev)->device);
 }
 
+#ifdef __NetBSD__
+int nouveau_pmops_suspend(struct drm_device *);
+int nouveau_pmops_resume(struct drm_device *);
+#else
 int nouveau_pmops_suspend(struct device *);
 int nouveau_pmops_resume(struct device *);
+#endif
 
 #define NV_FATAL(cli, fmt, args...) nv_fatal((cli), fmt, ##args)
 #define NV_ERROR(cli, fmt, args...) nv_error((cli), fmt, ##args)
