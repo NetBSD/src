@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.78 2016/04/15 09:04:28 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.79 2016/04/15 19:07:25 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -3647,39 +3647,43 @@ usr.sbin/vnconfig/vnconfig.c			1.43-1.44
 	for old scripts trying to find free vnodes.
 	[christos, ticket #1076]
 
-libexec/httpd/CHANGES                          	 up to 1.21
-libexec/httpd/Makefile                         	 up to 1.26
-libexec/httpd/auth-bozo.c                      	 up to 1.18
-libexec/httpd/bozohttpd.8                      	 up to 1.58
-libexec/httpd/bozohttpd.c                      	 up to 1.79
-libexec/httpd/bozohttpd.h                      	 up to 1.44
-libexec/httpd/cgi-bozo.c                       	 up to 1.32
-libexec/httpd/content-bozo.c                   	 up to 1.13
-libexec/httpd/daemon-bozo.c                    	 up to 1.17
-libexec/httpd/dir-index-bozo.c                 	 up to 1.25
-libexec/httpd/lua-bozo.c                       	 up to 1.14
-libexec/httpd/main.c                           	 up to 1.13
-libexec/httpd/netbsd_queue.h                   	 up to 1.1
-libexec/httpd/printenv.lua                     	 up to 1.3
-libexec/httpd/ssl-bozo.c                       	 up to 1.22
-libexec/httpd/tilde-luzah-bozo.c               	 up to 1.14
-libexec/httpd/testsuite/Makefile               	 up to 1.5
-libexec/httpd/testsuite/test-bigfile           	 up to 1.2
+libexec/httpd/CHANGES				up to 1.22
+libexec/httpd/Makefile				up to 1.26
+libexec/httpd/auth-bozo.c			up to 1.18
+libexec/httpd/bozohttpd.8			up to 1.59
+libexec/httpd/bozohttpd.c			up to 1.80
+libexec/httpd/bozohttpd.h			up to 1.45
+libexec/httpd/cgi-bozo.c			up to 1.33
+libexec/httpd/content-bozo.c			up to 1.13
+libexec/httpd/daemon-bozo.c			up to 1.17
+libexec/httpd/dir-index-bozo.c			up to 1.25
+libexec/httpd/lua-bozo.c			up to 1.14
+libexec/httpd/lua/bozo.lua			up to 1.2
+libexec/httpd/lua/glue.c			up to 1.2
+libexec/httpd/main.c				up to 1.13
+libexec/httpd/printenv.lua			up to 1.3
+libexec/httpd/ssl-bozo.c			up to 1.22
+libexec/httpd/tilde-luzah-bozo.c		up to 1.14
+libexec/httpd/testsuite/Makefile		up to 1.5
+libexec/httpd/testsuite/test-bigfile		up to 1.2
 
-	Import bozohttpd 20151028:
-	o  add CGI support for ~user translation (-E switch)
-	o  add redirects to ~user translation
-	o  fix bugs around ~user translation
-	o  add schema detection for absolute redirects
-	o  fixed few memory leaks
-	o  bunch of minor tweaks
-	o  removed -r support
-	o  smarter redirects 
-	Changes in 20150320:
-	o  fix redirection handling
-	o  support transport stream (.ts) and video object (.vob) files
-	o  directory listings show correct file sizes for large files
-	[mspo, ticket #1141]
+	Update bozohttpd to 20160415.  Changes:
+	o add CGI support for ~user translation (-E switch)
+	o add redirects to ~user translation
+	o fix bugs around ~user translation
+	o add schema detection for absolute redirects
+	o fixed few memory leaks
+	o bunch of minor tweaks
+	o removed -r support
+	o smarter redirects
+	o fix redirection handling
+	o support transport stream (.ts) and video object (.vob) files
+	o directory listings show correct file sizes for large files
+	o add search-word support for CGI
+	o fix a security issue in CGI suffix handler support which
+	  would allow remote code execution, from shm@netbsd.org
+	o -C option supports now CGI scripts only
+	[mspo/mrg, ticket #1141]
 
 distrib/sets/lists/base/mi			1.1123 via patch
 external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.2
