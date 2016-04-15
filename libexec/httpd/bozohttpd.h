@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.20.6.1 2014/07/09 09:47:10 msaitoh Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.20.6.2 2016/04/15 19:38:13 snj Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,11 @@
 #endif
 #include <stdio.h>
 
+/* QNX provides a lot of NetBSD things in nbutil.h */
+#ifdef HAVE_NBUTIL_H
+#include <nbutil.h>
+#endif
+
 /* lots of "const" but gets free()'ed etc at times, sigh */
 
 /* headers */
@@ -49,6 +54,7 @@ typedef struct bozoheaders {
 	/*const*/ char *h_value;	/* this gets free()'ed etc at times */
 	SIMPLEQ_ENTRY(bozoheaders)	h_next;
 } bozoheaders_t;
+SIMPLEQ_HEAD(qheaders, bozoheaders);
 
 #ifndef NO_LUA_SUPPORT
 typedef struct lua_handler {
@@ -68,7 +74,6 @@ typedef struct lua_state_map {
 
 typedef struct bozo_content_map_t {
 	const char	*name;		/* postfix of file */
-	size_t	 	 namelen;	/* length of postfix */
 	const char	*type;		/* matching content-type */
 	const char	*encoding;	/* matching content-encoding */
 	const char	*encoding11;	/* matching content-encoding (HTTP/1.1) */
@@ -86,11 +91,9 @@ typedef struct bozo_consts_t {
 /* this structure encapsulates all the bozo flags and control vars */
 typedef struct bozohttpd_t {
 	char		*rootdir;	/* root directory */
-	char		*username;	/* username to switch to */
 	int		 numeric;	/* avoid gethostby*() */
 	char		*virtbase;	/* virtual directory base */
 	int		 unknown_slash;	/* unknown vhosts go to normal slashdir */
-	int		 untrustedref;	/* make sure referrer = me unless url = / */
 	int		 logstderr;	/* log to stderr (even if not tty) */
 	int		 background;	/* drop into daemon mode */
 	int		 foreground;	/* keep daemon mode in foreground */
@@ -105,6 +108,7 @@ typedef struct bozohttpd_t {
 	const char	*index_html;	/* our home page */
 	const char	*public_html;	/* ~user/public_html page */
 	int		 enable_users;	/* enable public_html */
+	int		 enable_cgi_users;	/* use the cgi handler */
 	int		*sock;		/* bound sockets */
 	int		 nsock;		/* number of above */
 	struct pollfd	*fds;		/* current poll fd set */
@@ -147,6 +151,9 @@ typedef struct bozo_httpreq_t {
 	char	*hr_query;
 	char	*hr_host;	/* HTTP/1.1 Host: or virtual hostname,
 				   possibly including a port number */
+#ifndef NO_USER_SUPPORT
+	char	*hr_user;	/* username if we hit userdir request */
+#endif /* !NO_USER_SUPPORT */
 	const char *hr_proto;
 	const char *hr_content_type;
 	const char *hr_content_length;
@@ -166,8 +173,9 @@ typedef struct bozo_httpreq_t {
 	/*const*/ char *hr_authuser;
 	/*const*/ char *hr_authpass;
 #endif
-	SIMPLEQ_HEAD(, bozoheaders)	hr_headers;
-	int	hr_nheaders;
+	struct qheaders		hr_headers;
+	struct qheaders		hr_replheaders;
+	int			hr_nheaders;
 } bozo_httpreq_t;
 
 /* helper to access the "active" host name from a httpd/request pair */
@@ -177,8 +185,8 @@ typedef struct bozo_httpreq_t {
 
 /* structure to hold string based (name, value) pairs with preferences */
 typedef struct bozoprefs_t {
-	unsigned	  size;		/* size of the two arrays */
-	unsigned	  c;		/* # of entries in arrays */
+	size_t		  size;		/* size of the two arrays */
+	size_t		  count;	/* # of entries in arrays */
 	char		**name;		/* names of each entry */
 	char		**value;	/* values for the name entries */
 } bozoprefs_t;
@@ -211,42 +219,52 @@ void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define	debug(x)
 #endif /* NO_DEBUG */
 
-void	bozo_warn(bozohttpd_t *, const char *, ...)
-		BOZO_PRINTFLIKE(2, 3);
-void	bozo_err(bozohttpd_t *, int, const char *, ...)
-		BOZO_PRINTFLIKE(3, 4)
-		BOZO_DEAD;
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
 char	*bozo_http_date(char *, size_t);
-void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *, const char *);
-char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url);
+void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
+			  const char *);
+char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute);
 char	*bozo_escape_html(bozohttpd_t *httpd, const char *url);
+int	bozo_decode_url_percent(bozo_httpreq_t *, char *);
 
-char	*bozodgetln(bozohttpd_t *, int, ssize_t *, ssize_t (*)(bozohttpd_t *, int, void *, size_t));
+/* these are similar to libc functions, no underscore here */
+void	bozowarn(bozohttpd_t *, const char *, ...)
+		BOZO_PRINTFLIKE(2, 3);
+void	bozoerr(bozohttpd_t *, int, const char *, ...)
+		BOZO_PRINTFLIKE(3, 4)
+		BOZO_DEAD;
+void	bozoasprintf(bozohttpd_t *, char **, const char *, ...)
+		BOZO_PRINTFLIKE(3, 4);
+char	*bozodgetln(bozohttpd_t *, int, ssize_t *, ssize_t (*)(bozohttpd_t *,
+		    int, void *, size_t));
 char	*bozostrnsep(char **, const char *, ssize_t *);
-
 void	*bozomalloc(bozohttpd_t *, size_t);
 void	*bozorealloc(bozohttpd_t *, void *, size_t);
-char	*bozostrdup(bozohttpd_t *, const char *);
+char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
+
+#define bozo_noop	do { /* nothing */ } while (/*CONSTCOND*/0)
 
 /* ssl-bozo.c */
 #ifdef NO_SSL_SUPPORT
-#define bozo_ssl_set_opts(w, x, y)	do { /* nothing */ } while (0)
-#define bozo_ssl_init(x)		do { /* nothing */ } while (0)
-#define bozo_ssl_accept(x)		do { /* nothing */ } while (0)
-#define bozo_ssl_destroy(x)		do { /* nothing */ } while (0)
+#define bozo_ssl_set_opts(w, x, y)	bozo_noop
+#define bozo_ssl_set_ciphers(w, x, y)	bozo_noop
+#define bozo_ssl_init(x)		bozo_noop
+#define bozo_ssl_accept(x)		(0)
+#define bozo_ssl_destroy(x)		bozo_noop
 #else
 void	bozo_ssl_set_opts(bozohttpd_t *, const char *, const char *);
+void	bozo_ssl_set_ciphers(bozohttpd_t *, const char *);
 void	bozo_ssl_init(bozohttpd_t *);
-void	bozo_ssl_accept(bozohttpd_t *);
+int	bozo_ssl_accept(bozohttpd_t *);
 void	bozo_ssl_destroy(bozohttpd_t *);
 #endif
 
 
 /* auth-bozo.c */
 #ifdef DO_HTPASSWD
+void	bozo_auth_init(bozo_httpreq_t *);
 int	bozo_auth_check(bozo_httpreq_t *, const char *);
 void	bozo_auth_cleanup(bozo_httpreq_t *);
 int	bozo_auth_check_headers(bozo_httpreq_t *, char *, char *, ssize_t);
@@ -255,12 +273,13 @@ void	bozo_auth_check_401(bozo_httpreq_t *, int);
 void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #else
+#define	bozo_auth_init(x)			bozo_noop
 #define	bozo_auth_check(x, y)			0
-#define	bozo_auth_cleanup(x)			do { /* nothing */ } while (0)
+#define	bozo_auth_cleanup(x)			bozo_noop
 #define	bozo_auth_check_headers(y, z, a, b)	0
 #define	bozo_auth_check_special_files(x, y)	0
-#define	bozo_auth_check_401(x, y)		do { /* nothing */ } while (0)
-#define	bozo_auth_cgi_setenv(x, y)		do { /* nothing */ } while (0)
+#define	bozo_auth_check_401(x, y)		bozo_noop
+#define	bozo_auth_cgi_setenv(x, y)		bozo_noop
 #define	bozo_auth_cgi_count(x)			0
 #endif /* DO_HTPASSWD */
 
@@ -287,9 +306,9 @@ int	bozo_process_lua(bozo_httpreq_t *);
 
 /* daemon-bozo.c */
 #ifdef NO_DAEMON_MODE
-#define bozo_daemon_init(x)				do { /* nothing */ } while (0)
+#define bozo_daemon_init(x)				bozo_noop
 #define bozo_daemon_fork(x)				0
-#define bozo_daemon_closefds(x)				do { /* nothing */ } while (0)
+#define bozo_daemon_closefds(x)				bozo_noop
 #else
 void	bozo_daemon_init(bozohttpd_t *);
 int	bozo_daemon_fork(bozohttpd_t *);
@@ -299,9 +318,11 @@ void	bozo_daemon_closefds(bozohttpd_t *);
 
 /* tilde-luzah-bozo.c */
 #ifdef NO_USER_SUPPORT
-#define bozo_user_transform(a, c)			0
+#define bozo_user_transform(x)				0
+#define bozo_user_free(x)					0
 #else
-int	bozo_user_transform(bozo_httpreq_t *, int *);
+int	bozo_user_transform(bozo_httpreq_t *);
+#define bozo_user_free(x)					free(x)
 #endif /* NO_USER_SUPPORT */
 
 
@@ -319,7 +340,8 @@ const char *bozo_content_encoding(bozo_httpreq_t *, const char *);
 bozo_content_map_t *bozo_match_content_map(bozohttpd_t *, const char *, int);
 bozo_content_map_t *bozo_get_content_map(bozohttpd_t *, const char *);
 #ifndef NO_DYNAMIC_CONTENT
-void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *, const char *, const char *);
+void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *,
+				  const char *, const char *);
 #endif
 
 /* I/O */
@@ -330,15 +352,19 @@ int bozo_flush(bozohttpd_t *, FILE *);
 
 /* misc */
 int bozo_init_httpd(bozohttpd_t *);
-int bozo_init_prefs(bozoprefs_t *);
+int bozo_init_prefs(bozohttpd_t *, bozoprefs_t *);
 int bozo_set_defaults(bozohttpd_t *, bozoprefs_t *);
 int bozo_setup(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 bozo_httpreq_t *bozo_read_request(bozohttpd_t *);
 void bozo_process_request(bozo_httpreq_t *);
 void bozo_clean_request(bozo_httpreq_t *);
+bozoheaders_t *addmerge_reqheader(bozo_httpreq_t *, const char *,
+				  const char *, ssize_t);
+bozoheaders_t *addmerge_replheader(bozo_httpreq_t *, const char *,
+				   const char *, ssize_t);
 
 /* variables */
-int bozo_set_pref(bozoprefs_t *, const char *, const char *);
+int bozo_set_pref(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 char *bozo_get_pref(bozoprefs_t *, const char *);
 
 #endif	/* BOZOHTTOPD_H_ */
