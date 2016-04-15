@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.126 2016/04/08 10:09:16 gson Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.127 2016/04/15 01:38:17 ozaki-r Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -324,6 +324,7 @@
 ./usr/tests/net/if_bridge
 ./usr/tests/net/if_gif
 ./usr/tests/net/if_loop
+./usr/tests/net/if_pppoe
 ./usr/tests/net/if_tap
 ./usr/tests/net/in_cksum
 ./usr/tests/net/mcast
