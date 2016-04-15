@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.16 2014/08/01 12:55:00 wiz Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.16.2.1 2016/04/15 07:47:29 snj Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.16 2014/08/01 12:55:00 wiz Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.16.2.1 2016/04/15 07:47:29 snj Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -891,6 +891,36 @@ run_query_pager(sqlite3 *db, query_args *args)
 	return run_query_internal(db, snippet_args, args);
 }
 
+struct nv {
+	char *s;
+	size_t l;
+};
+
+static int
+term_putc(int c, void *p)
+{
+	struct nv *nv = p;
+	nv->s[nv->l++] = c;
+	return 0;
+}
+
+static char *
+term_fix_seq(TERMINAL *ti, const char *seq)
+{
+	char *res = estrdup(seq);
+	struct nv nv;
+
+	if (ti == NULL)
+	    return res;
+
+	nv.s = res;
+	nv.l = 0;
+	ti_puts(ti, seq, 1, term_putc, &nv);
+	nv.s[nv.l] = '\0';
+
+	return res;
+}
+
 static void
 term_init(int fd, const char *sa[5])
 {
@@ -920,11 +950,12 @@ term_init(int fd, const char *sa[5])
 			smul = rmul = "";
 	}
 
-	sa[0] = estrdup(bold ? bold : smso);
-	sa[1] = estrdup(sgr0 ? sgr0 : rmso);
+	sa[0] = term_fix_seq(ti, bold ? bold : smso);
+	sa[1] = term_fix_seq(ti, sgr0 ? sgr0 : rmso);
 	sa[2] = estrdup("...");
-	sa[3] = estrdup(smul);
-	sa[4] = estrdup(rmul);
+	sa[3] = term_fix_seq(ti, smul);
+	sa[4] = term_fix_seq(ti, rmul);
+
 	if (ti)
 		del_curterm(ti);
 }
