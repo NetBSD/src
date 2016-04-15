@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.20.2.1 2014/07/09 09:42:39 msaitoh Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.20.2.2 2016/04/15 19:36:08 snj Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,22 +75,23 @@ content_cgihandler(bozohttpd_t *httpd, bozo_httpreq_t *request,
 }
 
 static int
-parse_header(bozohttpd_t *httpd, const char *str, ssize_t len, char **hdr_str,
-		char **hdr_val)
+parse_header(bozo_httpreq_t *request, const char *str, ssize_t len,
+	     char **hdr_str, char **hdr_val)
 {
+	struct	bozohttpd_t *httpd = request->hr_httpd;
 	char	*name, *value;
 
 	/* if the string passed is zero-length bail out */
 	if (*str == '\0')
 		return -1;
 
-	value = bozostrdup(httpd, str);
+	value = bozostrdup(httpd, request, str);
 
 	/* locate the ':' separator in the header/value */
 	name = bozostrnsep(&value, ":", &len);
 
 	if (NULL == name || -1 == len) {
-		free(name);
+		free(value);
 		return -1;
 	}
 
@@ -127,7 +128,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 		(str = bozodgetln(httpd, in, &len, bozo_read)) != NULL) {
 		char	*hdr_name, *hdr_value;
 
-		if (parse_header(httpd, str, len, &hdr_name, &hdr_value))
+		if (parse_header(request, str, len, &hdr_name, &hdr_value))
 			break;
 
 		/*
@@ -194,7 +195,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 				rbytes -= wbytes;
 				bp += wbytes;
 			} else
-				bozo_err(httpd, 1,
+				bozoerr(httpd, 1,
 					"cgi output write failed: %s",
 					strerror(errno));
 		}		
@@ -211,10 +212,140 @@ append_index_html(bozohttpd_t *httpd, char **url)
 		"append_index_html: url adjusted to `%s'", *url));
 }
 
+/* This function parse search-string according to section 4.4 of RFC3875 */
+static char **
+parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len)
+{
+	struct	bozohttpd_t *httpd = request->hr_httpd;
+	size_t i;
+	char *s, *str, **args;
+	
+	*args_len = 0;
+
+	/* URI MUST not contain any unencoded '=' - RFC3875, section 4.4 */
+	if (strchr(query, '=')) {
+		return NULL;
+	}
+
+	str = bozostrdup(httpd, request, query);
+
+	/*
+	 * there's no more arguments than '+' chars in the query string as it's
+	 * the separator
+	 */
+	*args_len = 1;
+	/* count '+' in str */
+	for (s = str; (s = strchr(s, '+')); (*args_len)++);
+	
+	args = bozomalloc(httpd, sizeof(*args) * (*args_len + 1));
+ 
+	args[0] = str;
+	args[*args_len] = NULL;
+	for (s = str, i = 0; (s = strchr(s, '+'));) {
+		*s = '\0';
+		s++;
+		args[i++] = s;
+	}
+
+	/*
+	 * check if search-strings are valid:
+	 *
+	 * RFC3875, section 4.4:
+	 *
+	 * search-string = search-word *( "+" search-word )
+	 * search-word   = 1*schar
+	 * schar		 = unreserved | escaped | xreserved
+	 * xreserved	 = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "," |
+	 *		   "$"
+	 * 
+	 * section 2.3:
+	 *
+	 * hex	      = digit | "A" | "B" | "C" | "D" | "E" | "F" | "a" |
+	 *		"b" | "c" | "d" | "e" | "f"
+	 * escaped    = "%" hex hex
+	 * unreserved = alpha | digit | mark
+	 * mark	      = "-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")"
+	 *
+	 * section 2.2:
+	 *
+	 * alpha	= lowalpha | hialpha
+	 * lowalpha	= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" |
+	 *		  "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" |
+	 *		  "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" |
+	 *		  "y" | "z"
+	 * hialpha	= "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" |
+	 *		  "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" |
+	 *		  "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" |
+	 *	          "Y" | "Z"  
+	 * digit        = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
+	 *		  "8" | "9"
+	 */
+#define	UNRESERVED_CHAR	"-_.!~*'()"
+#define	XRESERVED_CHAR	";/?:@&=,$"
+
+	for (i = 0; i < *args_len; i++) {
+		s = args[i];
+		/* search-word MUST have at least one schar */
+		if (*s == '\0')
+			goto parse_err;
+		while(*s) {
+			/* check if it's unreserved */
+			if (isalpha((int)*s) || isdigit((int)*s) ||
+			    strchr(UNRESERVED_CHAR, *s)) {
+				s++;
+				continue;
+			}
+
+			/* check if it's escaped */
+			if (*s == '%') {
+				if (s[1] == '\0' || s[2] == '\0')
+					goto parse_err;
+				if (!isxdigit((int)s[1]) ||
+				    !isxdigit((int)s[2]))
+					goto parse_err;
+				s += 3;
+				continue;
+			}
+
+			/* check if it's xreserved */
+
+			if (strchr(XRESERVED_CHAR, *s)) {
+				s++;
+				continue;
+			}
+
+			goto parse_err;
+		}
+	}
+
+	/* decode percent encoding */
+	for (i = 0; i < *args_len; i++) {
+		if (bozo_decode_url_percent(request, args[i]))
+			goto parse_err;
+	}
+
+	/* allocate each arg separately */
+	for (i = 0; i < *args_len; i++)
+		args[i] = bozostrdup(httpd, request, args[i]);
+	free(str);
+
+	return args;
+
+parse_err:
+
+	free (*args);
+	free (str);
+	*args = NULL;
+	*args_len = 0;
+
+	return 0;
+
+}
+
 void
 bozo_cgi_setbin(bozohttpd_t *httpd, const char *path)
 {
-	httpd->cgibin = strdup(path);
+	httpd->cgibin = bozostrdup(httpd, NULL, path);
 	debug((httpd, DEBUG_OBESE, "cgibin (cgi-bin directory) is %s",
 		httpd->cgibin));
 }
@@ -248,9 +379,9 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	bozoheaders_t *headp;
 	const char *type, *clen, *info, *cgihandler;
 	char	*query, *s, *t, *path, *env, *command, *file, *url;
-	char	**envp, **curenvp, *argv[4];
+	char	**envp, **curenvp, **argv, **search_string_argv = NULL;
 	char	*uri;
-	size_t	len;
+	size_t	i, len, search_string_argc = 0;
 	ssize_t rbytes;
 	pid_t	pid;
 	int	envpsize, ix, nph;
@@ -259,26 +390,30 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (!httpd->cgibin && !httpd->process_cgi)
 		return 0;
 
+#ifndef NO_USER_SUPPORT
+	if (request->hr_user && !httpd->enable_cgi_users)
+		return 0;
+#endif /* !NO_USER_SUPPORT */
+
 	if (request->hr_oldfile && strcmp(request->hr_oldfile, "/") != 0)
 		uri = request->hr_oldfile;
 	else
 		uri = request->hr_file;
 
 	if (uri[0] == '/')
-		file = bozostrdup(httpd, uri);
+		file = bozostrdup(httpd, request, uri);
 	else
-		asprintf(&file, "/%s", uri);
-	if (file == NULL)
-		return 0;
+		bozoasprintf(httpd, &file, "/%s", uri);
 
 	if (request->hr_query && strlen(request->hr_query))
-		query = bozostrdup(httpd, request->hr_query);
+		query = bozostrdup(httpd, request, request->hr_query);
 	else
 		query = NULL;
 
-	asprintf(&url, "%s%s%s", file, query ? "?" : "", query ? query : "");
-	if (url == NULL)
-		goto out;
+	bozoasprintf(httpd, &url, "%s%s%s",
+		     file,
+		     query ? "?" : "",
+		     query ? query : "");
 	debug((httpd, DEBUG_NORMAL, "bozo_process_cgi: url `%s'", url));
 
 	path = NULL;
@@ -307,16 +442,29 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	} else if (len - 1 == CGIBIN_PREFIX_LEN)	/* url is "/cgi-bin/" */
 		append_index_html(httpd, &file);
 
+	/* RFC3875  sect. 4.4. - search-string support */
+	if (query != NULL) {
+		search_string_argv = parse_search_string(request, query,
+		    &search_string_argc);
+	}
+
+	debug((httpd, DEBUG_NORMAL, "parse_search_string args no: %lu",
+	    search_string_argc));
+	for (i = 0; i < search_string_argc; i++) {
+		debug((httpd, DEBUG_FAT,
+		    "search_string[%lu]: `%s'", i, search_string_argv[i]));
+	}
+
+	argv = bozomalloc(httpd, sizeof(*argv) * (3 + search_string_argc));
+
 	ix = 0;
 	if (cgihandler) {
 		command = file + 1;
-		path = bozostrdup(httpd, cgihandler);
-		argv[ix++] = path;
-			/* argv[] = [ path, command, query, NULL ] */
+		path = bozostrdup(httpd, request, cgihandler);
 	} else {
 		command = file + CGIBIN_PREFIX_LEN + 1;
 		if ((s = strchr(command, '/')) != NULL) {
-			info = bozostrdup(httpd, s);
+			info = bozostrdup(httpd, request, s);
 			*s = '\0';
 		}
 		path = bozomalloc(httpd,
@@ -324,12 +472,15 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		strcpy(path, httpd->cgibin);
 		strcat(path, "/");
 		strcat(path, command);
-			/* argv[] = [ command, query, NULL ] */
 	}
-	argv[ix++] = command;
-	argv[ix++] = query;
-	argv[ix++] = NULL;
 
+	argv[ix++] = path;
+
+	/* copy search-string args */
+	for (i = 0; i < search_string_argc; i++)
+		argv[ix++] = search_string_argv[i];
+
+	argv[ix++] = NULL;
 	nph = strncmp(command, "nph-", 4) == 0;
 
 	type = request->hr_content_type;
@@ -395,8 +546,11 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	bozo_setenv(httpd, "REQUEST_URI", uri, curenvp++);
 	bozo_setenv(httpd, "DATE_GMT", bozo_http_date(date, sizeof(date)),
 			curenvp++);
+	/* RFC3875 section 4.1.7 says that QUERY_STRING MUST be defined. */ 
 	if (query && *query)
 		bozo_setenv(httpd, "QUERY_STRING", query, curenvp++);
+	else
+		bozo_setenv(httpd, "QUERY_STRING", "", curenvp++);
 	if (info && *info)
 		bozo_setenv(httpd, "PATH_INFO", info, curenvp++);
 	if (type && *type)
@@ -413,21 +567,23 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_setenv(httpd, "REMOTE_ADDR", request->hr_remoteaddr,
 				curenvp++);
 	/*
-	 * XXX Apache does this when invoking content handlers, and PHP
-	 * XXX 5.3 requires it as a "security" measure.
+	 * Apache does this when invoking content handlers, and PHP
+	 * 5.3 requires it as a "security" measure.
 	 */
 	if (cgihandler)
 		bozo_setenv(httpd, "REDIRECT_STATUS", "200", curenvp++);
 	bozo_auth_cgi_setenv(request, &curenvp);
 
-	free(file);
-	free(url);
+	debug((httpd, DEBUG_FAT, "bozo_process_cgi: going exec %s with args:",
+	    path));
 
-	debug((httpd, DEBUG_FAT, "bozo_process_cgi: going exec %s, %s %s %s",
-	    path, argv[0], strornull(argv[1]), strornull(argv[2])));
+	for (i = 0; argv[i] != NULL; i++) {
+		debug((httpd, DEBUG_FAT, "bozo_process_cgi: argv[%lu] = `%s'",
+		    i, argv[i]));
+	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sv) == -1)
-		bozo_err(httpd, 1, "child socketpair failed: %s",
+		bozoerr(httpd, 1, "child socketpair failed: %s",
 				strerror(errno));
 
 	/*
@@ -438,7 +594,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	 */
 	switch (fork()) {
 	case -1: /* eep, failure */
-		bozo_err(httpd, 1, "child fork failed: %s", strerror(errno));
+		bozoerr(httpd, 1, "child fork failed: %s", strerror(errno));
 		/*NOTREACHED*/
 	case 0:
 		close(sv[0]);
@@ -450,11 +606,18 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_daemon_closefds(httpd);
 
 		if (-1 == execve(path, argv, envp))
-			bozo_err(httpd, 1, "child exec failed: %s: %s",
+			bozoerr(httpd, 1, "child exec failed: %s: %s",
 			      path, strerror(errno));
 		/* NOT REACHED */
-		bozo_err(httpd, 1, "child execve returned?!");
+		bozoerr(httpd, 1, "child execve returned?!");
 	}
+
+	free(query);
+	free(file);
+	free(url);
+	for (i = 0; i < search_string_argc; i++)
+		free(search_string_argv[i]);
+	free(search_string_argv);
 
 	close(sv[1]);
 
@@ -462,7 +625,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	/* child: read from sv[0] (bozo_write()) write to stdout */
 	pid = fork();
 	if (pid == -1)
-		bozo_err(httpd, 1, "io child fork failed: %s", strerror(errno));
+		bozoerr(httpd, 1, "io child fork failed: %s", strerror(errno));
 	else if (pid == 0) {
 		/* child reader/writer */
 		close(STDIN_FILENO);
@@ -486,7 +649,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 				rbytes -= wbytes;
 				bp += wbytes;
 			} else
-				bozo_err(httpd, 1, "write failed: %s",
+				bozoerr(httpd, 1, "write failed: %s",
 					strerror(errno));
 		}		
 	}
@@ -494,6 +657,10 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	exit(0);
 
  out:
+
+	for (i = 0; i < search_string_argc; i++)
+		free(search_string_argv[i]);
+	free(search_string_argv);
 	free(query);
 	free(file);
 	free(url);
@@ -503,7 +670,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 #ifndef NO_DYNAMIC_CONTENT
 /* cgi maps are simple ".postfix /path/to/prog" */
 void
-bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg, const char *cgihandler)
+bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg,
+                         const char *cgihandler)
 {
 	bozo_content_map_t *map;
 
@@ -514,7 +682,6 @@ bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg, const char *cgihan
 
 	map = bozo_get_content_map(httpd, arg);
 	map->name = arg;
-	map->namelen = strlen(map->name);
 	map->type = map->encoding = map->encoding11 = NULL;
 	map->cgihandler = cgihandler;
 }

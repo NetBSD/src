@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.32.2.1 2014/07/09 09:42:39 msaitoh Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.32.2.2 2016/04/15 19:36:08 snj Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2014 Matthew R. Green
+.\" Copyright (c) 1997-2015 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,21 +26,22 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 9, 2014
-.Dt HTTPD 8
+.Dd December 12, 2015
+.Dt BOZOHTTPD 8
 .Os
 .Sh NAME
-.Nm httpd
+.Nm bozohttpd
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl CIMPSZciptvx
+.Op Fl EHVXefhnsu
 .Op Fl C Ar suffix cgihandler
 .Op Fl I Ar port
 .Op Fl L Ar prefix script
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
 .Op Fl S Ar server_software
+.Op Fl U Ar username
 .Op Fl Z Ar cert privkey
 .Op Fl c Ar cgibin
 .Op Fl i Ar address
@@ -48,6 +49,7 @@
 .Op Fl t Ar chrootdir
 .Op Fl v Ar virtualroot
 .Op Fl x Ar index
+.Op Fl z Ar ciphers
 .Ar slashdir
 .Op Ar myname
 .Sh DESCRIPTION
@@ -111,9 +113,11 @@ is a valid CGI program in the
 directory.
 In other words, all CGI URL's must begin with
 .Em \%/cgi-bin/ .
-Note that the CGI/1.1 interface is not available with
+Note that the CGI/1.1 interface is available with
 .Em ~user
-translation.
+translation using
+.Fl E
+switch.
 .It Fl e
 Causes
 .Nm
@@ -223,15 +227,6 @@ translations from
 .Dq public_html
 to
 .Ar pubdir .
-.It Fl r
-Forces pages besides the
-.Dq index.html
-(see the
-.Fl X
-option) page to require that the Referrer: header be present and
-refer to this web server, otherwise a redirect to the
-.Dq index.html
-page will be returned instead.
 .It Fl S Ar server_software
 Sets the internal server version to
 .Ar server_software .
@@ -270,6 +265,12 @@ into the directory
 (but see the
 .Fl p
 option above).
+.It Fl E
+Enables CGI/1.1 interface for
+.Em ~user
+translation.
+Note that enabling this support implies that users can run
+commands as web server user, this may have security implications.
 .It Fl V
 Sets the default virtual host directory to
 .Ar slashdir .
@@ -303,6 +304,9 @@ Changes the default file read for directories from
 .Dq index.html
 to
 .Ar index .
+.It Fl z Ar ciphers
+Sets the list of SSL ciphers (see
+.Xr SSL_CTX_set_cipher_list 3 ) .
 .It Fl Z Ar certificate_path privatekey_path
 Sets the path to the server certificate file and the private key file
 in pem format.
@@ -333,7 +337,8 @@ by default to process incoming TCP connections for HTTP requests
 option),
 .Nm
 has little internal networking knowledge.
-(Indeed, you can run it on the command line with little change of functionality.)
+(Indeed, you can run it on the command line with little change of
+functionality.)
 A typical
 .Xr inetd.conf 5
 entry would be:
@@ -425,7 +430,7 @@ It may require linking with the crypt library, using
 .Dq -lcrypt .
 .Ss SSL SUPPORT
 .Nm
-has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
+has support for TLSv1.1 and TLSv1.2 protocols that are included by
 default.
 It requires linking with the crypto and ssl library, using
 .Dq -lcrypto -lssl .
@@ -462,12 +467,23 @@ symbolic link is found,
 .Nm
 will perform a smart redirect to the target of this symlink.
 The target is assumed to live on the same server.
+If target starts with slash then absolute redirection is performed,
+otherwise it's handled as relative.
 If a
 .Pa .bzabsredirect
 symbolic link is found,
 .Nm
 will redirect to the absolute url pointed to by this symlink.
 This is useful to redirect to different servers.
+Two forms of redirection are supported - symbolic link without schema will use
+.Em http://
+as default i.e. link to
+.Em NetBSD.org
+will redirect to
+.Em http://NetBSD.org/
+Otherwise provided schema will be used i.e. symbolic link to
+.Em ftp://NetBSD.org/
+will redirect to provided the URL.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an
 .Xr inetd.conf 5
@@ -491,17 +507,14 @@ with PHP, one must use the
 option to specify a CGI handler for a particular file type.
 Typically this will be like:
 .Bd -literal
-httpd -C .php /usr/pkg/bin/php /var/www
+httpd -C .php /usr/pkg/bin/php-cgi /var/www
 .Ed
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
 .Xr inetd 8
 .Sh HISTORY
-The
 .Nm
-program is actually called
-.Dq bozohttpd .
-It was first written in perl, based on another perl http server
+was first written in perl, based on another perl http server
 called
 .Dq tinyhttpd .
 It was then rewritten from scratch in perl, and then once again in C.
@@ -513,7 +526,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20140201.
+version 20150501.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -546,8 +559,9 @@ provided cgi-bin support fixes, and more
 .It
 .An Alistair G. Crooks
 .Aq Mt agc@NetBSD.org
-cleaned up many internal interfaces, made bozohttpd linkable as a
-library and provided the Lua binding.
+cleaned up many internal interfaces, made
+.Nm
+linkable as a library and provided the Lua binding.
 .It
 .An DEGROOTE Arnaud
 .Aq Mt degroote@NetBSD.org
@@ -597,6 +611,13 @@ provided fixes for HTTP basic authorisation support
 .Aq Mt wiz@NetBSD.org
 provided many fixes and enhancements for the man page
 .It
+.An Mateusz Kocielski
+.Aq Mt shm@NetBSD.org
+fixed memory leaks, various issues with userdir support,
+information disclosure issues, added support for using CGI handlers
+with directory indexing, found several security issues and provided
+various other fixes.
+.It
 .An Arnaud Lacombe
 .Aq Mt alc@NetBSD.org
 provided some clean up for memory leaks
@@ -609,7 +630,7 @@ provided man page fixes
 .Aq Mt jmmv@NetBSD.org
 Added the
 .Fl P
-option.
+option (pidfile support) and provided some man page fixes.
 .It
 .An Luke Mewburn
 .Aq Mt lukem@NetBSD.org
@@ -662,9 +683,6 @@ provided http authorisation fixes
 provided chroot and change-to-user support, and other various fixes
 .It
 Coyote Point provided various CGI fixes.
-.It
-.An Julio Merino
-added pidfile support and provided some man page fixes.
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)
