@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.58 2015/12/27 10:21:35 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.59 2016/04/15 17:57:21 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -507,7 +507,7 @@ with PHP, one must use the
 option to specify a CGI handler for a particular file type.
 Typically this will be like:
 .Bd -literal
-httpd -C .php /usr/pkg/bin/php /var/www
+httpd -C .php /usr/pkg/bin/php-cgi /var/www
 .Ed
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
@@ -615,7 +615,8 @@ provided many fixes and enhancements for the man page
 .Aq Mt shm@NetBSD.org
 fixed memory leaks, various issues with userdir support,
 information disclosure issues, added support for using CGI handlers
-with directory indexing and provided various other fixes.
+with directory indexing, found several security issues and provided
+various other fixes.
 .It
 .An Arnaud Lacombe
 .Aq Mt alc@NetBSD.org

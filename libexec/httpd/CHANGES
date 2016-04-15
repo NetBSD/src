@@ -1,5 +1,11 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
+changes in bozohttpd 20160415:
+	o  add search-word support for CGI
+	o  fix a security issue in CGI suffix handler support which would
+	   allow remote code execution, from shm@netbsd.org
+	o  -C option supports now CGI scripts only
+
 changes in bozohttpd 20151028:
 	o  add CGI support for ~user translation (-E switch)
 	o  add redirects to ~user translation
