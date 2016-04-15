@@ -6,7 +6,7 @@ BIGFILETESTS=	partial4000 partial8000
 BOZOHTTPD?=	../bozohttpd
 BOZOHTTPD?=	../debug/bozohttpd-debug
 WGET?=		wget
-
+DATA?=		$(.CURDIR)/data 
 all:
 
 clean:
@@ -19,14 +19,14 @@ check: check-simple check-bigfile
 check-simple:
 .for a in $(SIMPLETESTS)
 	echo "Running test $a"
-	$(BOZOHTTPD) ./data < $(.CURDIR)/$a.in > tmp.$a.out || true
+	$(BOZOHTTPD) "$(DATA)" < $(.CURDIR)/$a.in > tmp.$a.out || true
 	$(.CURDIR)/html_cmp $(.CURDIR)/$a.out tmp.$a.out
 .endfor
 
 check-bigfile:
 .for a in $(BIGFILETESTS)
 	echo "Running test $a"
-	$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "./data"
+	$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "$(DATA)"
 .endfor
 
 .include <bsd.obj.mk>
