@@ -1,4 +1,4 @@
-.\"	$NetBSD: psref.9,v 1.2 2016/04/10 18:27:56 wiz Exp $
+.\"	$NetBSD: psref.9,v 1.3 2016/04/15 17:55:58 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,12 +64,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-abstraction allows CPUs to cheaply acquire references to a resource,
-called
-.Em passive references ,
-guaranteeing it will not be destroyed until all CPUs release their
-references to it, without using interprocessor synchronization on the
-reader side.
+abstraction allows CPUs to cheaply acquire and release
+.Em passive references
+to a resource, which guarantee the resource will not be destroyed
+until the reference is released.
+Acquiring and releasing passive references requires no interprocessor
+synchronization, except when the resource is pending destruction.
 .\"
 .Pp
 Passive references are an intermediate between
@@ -96,8 +96,8 @@ and may be held by a caller that sleeps.
 .\"
 .Pp
 Passive references share some properties of both: passive references
-require no interprocessor synchronization to acquire or release, and do
-not block soft interrupts, but can be held by a caller that sleeps.
+avoid interprocessor synchronization, and do not block soft interrupts,
+but can be held by a caller that sleeps.
 However, a caller holding a passive reference may not transfer it from
 one LWP to another, and the caller's LWP must be bound to a single CPU
 while it holds any passive references.
@@ -261,7 +261,7 @@ in the passive reference class
 .Fa class ,
 or false if not.
 .Pp
-This does not answer about other CPUs -- it does not tell you whether
+This does not answer about other CPUs \(em it does not tell you whether
 .Em any
 CPU holds a passive reference to
 .Fa target .
