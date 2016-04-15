@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.49 2016/04/15 19:00:14 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.50 2016/04/15 20:24:04 mrg Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -2310,3 +2310,7 @@ libexec/httpd/tilde-luzah-bozo.c                up to 1.14
 	o -C option supports now CGI scripts only
 	[mrg, ticket #1141]
 
+libexec/httpd/cgi-bozo.c                        1.34
+
+	Fix the build: use %zu instead of %lu for size_t.
+	[mrg, ticket #1141]
