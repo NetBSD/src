@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.33.2.3 2016/04/10 10:33:11 martin Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.33.2.4 2016/04/15 19:01:05 snj Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -54,6 +54,7 @@ typedef struct bozoheaders {
 	/*const*/ char *h_value;	/* this gets free()'ed etc at times */
 	SIMPLEQ_ENTRY(bozoheaders)	h_next;
 } bozoheaders_t;
+SIMPLEQ_HEAD(qheaders, bozoheaders);
 
 #ifndef NO_LUA_SUPPORT
 typedef struct lua_handler {
@@ -172,8 +173,9 @@ typedef struct bozo_httpreq_t {
 	/*const*/ char *hr_authuser;
 	/*const*/ char *hr_authpass;
 #endif
-	SIMPLEQ_HEAD(, bozoheaders)	hr_headers;
-	int	hr_nheaders;
+	struct qheaders		hr_headers;
+	struct qheaders		hr_replheaders;
+	int			hr_nheaders;
 } bozo_httpreq_t;
 
 /* helper to access the "active" host name from a httpd/request pair */
@@ -225,6 +227,7 @@ void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
 			  const char *);
 char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute);
 char	*bozo_escape_html(bozohttpd_t *httpd, const char *url);
+int	bozo_decode_url_percent(bozo_httpreq_t *, char *);
 
 /* these are similar to libc functions, no underscore here */
 void	bozowarn(bozohttpd_t *, const char *, ...)
@@ -355,6 +358,10 @@ int bozo_setup(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 bozo_httpreq_t *bozo_read_request(bozohttpd_t *);
 void bozo_process_request(bozo_httpreq_t *);
 void bozo_clean_request(bozo_httpreq_t *);
+bozoheaders_t *addmerge_reqheader(bozo_httpreq_t *, const char *,
+				  const char *, ssize_t);
+bozoheaders_t *addmerge_replheader(bozo_httpreq_t *, const char *,
+				   const char *, ssize_t);
 
 /* variables */
 int bozo_set_pref(bozohttpd_t *, bozoprefs_t *, const char *, const char *);

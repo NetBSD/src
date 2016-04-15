@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.56.2.5 2016/04/10 10:33:11 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.56.2.6 2016/04/15 19:01:05 snj Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20151231"
+#define SERVER_SOFTWARE		"bozohttpd/20160415"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -348,6 +348,15 @@ bozo_clean_request(bozo_httpreq_t *request)
 		ohdr = hdr;
 	}
 	free(ohdr);
+	ohdr = NULL;
+	for (hdr = SIMPLEQ_FIRST(&request->hr_replheaders); hdr;
+	    hdr = SIMPLEQ_NEXT(hdr, h_next)) {
+		free(hdr->h_value);
+		free(hdr->h_header);
+		free(ohdr);
+		ohdr = hdr;
+	}
+	free(ohdr);
 
 	free(request);
 }
@@ -363,20 +372,33 @@ alarmer(int sig)
 }
 
 /*
+ * a list of header quirks: currently, a list of headers that
+ * can't be folded into a single line.
+ */
+const char *header_quirks[] = { "WWW-Authenticate", NULL };
+
+/*
  * add or merge this header (val: str) into the requests list
  */
 static bozoheaders_t *
-addmerge_header(bozo_httpreq_t *request, char *val,
-		char *str, ssize_t len)
+addmerge_header(bozo_httpreq_t *request, struct qheaders *headers,
+		const char *val, const char *str, ssize_t len)
 {
 	struct	bozohttpd_t *httpd = request->hr_httpd;
-	struct	bozoheaders *hdr;
+	struct bozoheaders	 *hdr = NULL;
+	const char		**quirk;
 
 	USE_ARG(len);
-	/* do we exist already? */
-	SIMPLEQ_FOREACH(hdr, &request->hr_headers, h_next) {
-		if (strcasecmp(val, hdr->h_header) == 0)
+	for (quirk = header_quirks; *quirk; quirk++)
+		if (strcasecmp(*quirk, val) == 0)
 			break;
+
+	if (*quirk == NULL) {
+		/* do we exist already? */
+		SIMPLEQ_FOREACH(hdr, headers, h_next) {
+			if (strcasecmp(val, hdr->h_header) == 0)
+				break;
+		}
 	}
 
 	if (hdr) {
@@ -396,11 +418,28 @@ addmerge_header(bozo_httpreq_t *request, char *val,
 		else
 			hdr->h_value = bozostrdup(httpd, request, " ");
 
-		SIMPLEQ_INSERT_TAIL(&request->hr_headers, hdr, h_next);
+		SIMPLEQ_INSERT_TAIL(headers, hdr, h_next);
 		request->hr_nheaders++;
 	}
 
 	return hdr;
+}
+
+bozoheaders_t *
+addmerge_reqheader(bozo_httpreq_t *request, const char *val, const char *str,
+		   ssize_t len)
+{
+
+	return addmerge_header(request, &request->hr_headers, val, str, len);
+}
+
+bozoheaders_t *
+addmerge_replheader(bozo_httpreq_t *request, const char *val, const char *str,
+		    ssize_t len)
+{
+
+	return addmerge_header(request, &request->hr_replheaders,
+	    val, str, len);
 }
 
 /*
@@ -538,6 +577,7 @@ bozo_read_request(bozohttpd_t *httpd)
 	request->hr_virthostname = NULL;
 	request->hr_file = NULL;
 	request->hr_oldfile = NULL;
+	SIMPLEQ_INIT(&request->hr_replheaders);
 	bozo_auth_init(request);
 
 	slen = sizeof(ss);
@@ -673,7 +713,7 @@ bozo_read_request(bozohttpd_t *httpd)
 			if (bozo_auth_check_headers(request, val, str, len))
 				goto next_header;
 
-			hdr = addmerge_header(request, val, str, len);
+			hdr = addmerge_reqheader(request, val, str, len);
 
 			if (strcasecmp(hdr->h_header, "content-type") == 0)
 				request->hr_content_type = hdr->h_value;
@@ -1248,19 +1288,17 @@ check_bzredirect(bozo_httpreq_t *request)
 }
 
 /* this fixes the %HH hack that RFC2396 requires.  */
-static int
-fix_url_percent(bozo_httpreq_t *request)
+int
+bozo_decode_url_percent(bozo_httpreq_t *request, char *str)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
-	char	*s, *t, buf[3], *url;
+	char	*s, *t, buf[3];
 	char	*end;	/* if end is not-zero, we don't translate beyond that */
 
-	url = request->hr_file;
-
-	end = url + strlen(url);
+	end = str + strlen(str);
 
 	/* fast forward to the first % */
-	if ((s = strchr(url, '%')) == NULL)
+	if ((s = strchr(str, '%')) == NULL)
 		return 0;
 
 	t = s;
@@ -1312,7 +1350,7 @@ fix_url_percent(bozo_httpreq_t *request)
 	} while (*s);
 	*t = '\0';
 
-	debug((httpd, DEBUG_FAT, "fix_url_percent returns %s in url",
+	debug((httpd, DEBUG_FAT, "bozo_decode_url_percent returns `%s'",
 			request->hr_file));
 
 	return 0;
@@ -1343,7 +1381,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 	file = NULL;
 	*isindex = 0;
 	debug((httpd, DEBUG_FAT, "tf_req: file %s", request->hr_file));
-	if (fix_url_percent(request)) {
+	if (bozo_decode_url_percent(request, request->hr_file)) {
 		goto bad_done;
 	}
 	if (check_virtual(request)) {
@@ -1680,6 +1718,12 @@ bozo_print_header(bozo_httpreq_t *request,
 	bozohttpd_t *httpd = request->hr_httpd;
 	off_t len;
 	char	date[40];
+	bozoheaders_t *hdr;
+
+	SIMPLEQ_FOREACH(hdr, &request->hr_replheaders, h_next) {
+		bozo_printf(httpd, "%s: %s\r\n", hdr->h_header,
+				hdr->h_value);
+	}
 
 	bozo_printf(httpd, "Date: %s\r\n", bozo_http_date(date, sizeof(date)));
 	bozo_printf(httpd, "Server: %s\r\n", httpd->server_software);
@@ -1901,6 +1945,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	const char *proto = (request && request->hr_proto) ?
 				request->hr_proto : httpd->consts.http_11;
 	int	size;
+	bozoheaders_t *hdr;
 
 	debug((httpd, DEBUG_FAT, "bozo_http_error %d: %s", code, msg));
 	if (header == NULL || reason == NULL) {
@@ -1963,8 +2008,14 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		size = 0;
 
 	bozo_printf(httpd, "%s %s\r\n", proto, header);
-	if (request)
+
+	if (request) {
 		bozo_auth_check_401(request, code);
+		SIMPLEQ_FOREACH(hdr, &request->hr_replheaders, h_next) {
+			bozo_printf(httpd, "%s: %s\r\n", hdr->h_header,
+					hdr->h_value);
+		}
+	}
 
 	bozo_printf(httpd, "Content-Type: text/html\r\n");
 	bozo_printf(httpd, "Content-Length: %d\r\n", size);
