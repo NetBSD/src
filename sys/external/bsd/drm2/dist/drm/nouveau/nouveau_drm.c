@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.2.4.4 2016/02/11 22:52:58 snj Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.2.4.5 2016/04/15 08:46:42 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.2.4.4 2016/02/11 22:52:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.2.4.5 2016/04/15 08:46:42 snj Exp $");
 
 #include <linux/console.h>
 #include <linux/module.h>
@@ -612,12 +612,13 @@ fail_display:
 	return ret;
 }
 
-int nouveau_pmops_suspend(struct device *dev)
-{
 #ifdef __NetBSD__
-	struct drm_device *drm_dev = device_private(dev);
-	struct pci_dev *pdev __unused = drm_dev->pdev;
+int nouveau_pmops_suspend(struct drm_device *drm_dev)
 #else
+int nouveau_pmops_suspend(struct device *dev)
+#endif
+{
+#ifndef __NetBSD__
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
 #endif
@@ -674,12 +675,13 @@ nouveau_do_resume(struct drm_device *dev)
 	return 0;
 }
 
-int nouveau_pmops_resume(struct device *dev)
-{
 #ifdef __NetBSD__
-	struct drm_device *drm_dev = device_private(dev);
-	struct pci_dev *pdev __unused = drm_dev->pdev;
+int nouveau_pmops_resume(struct drm_device *drm_dev)
 #else
+int nouveau_pmops_resume(struct device *dev)
+#endif
+{
+#ifndef __NetBSD__
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
 #endif

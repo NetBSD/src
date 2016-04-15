@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $	*/
+/*	$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.4.2 2016/04/15 08:46:42 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_instmem_nv40.c,v 1.1.1.1.4.2 2016/04/15 08:46:42 snj Exp $");
 
 #include <engine/graph/nv40.h>
 
@@ -80,10 +80,12 @@ nv40_instmem_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 #ifdef __NetBSD__
 	priv->iomemt = nv_device_resource_tag(device, bar);
 	priv->iomemsz = nv_device_resource_len(device, bar);
-	if (bus_space_map(priv->iomemt, nv_device_resource_start(device, bar),
-		priv->iomemsz, 0, &priv->iomemh)) {
+	ret = bus_space_map(priv->iomemt,
+	    nv_device_resource_start(device, bar),
+	    priv->iomemsz, 0, &priv->iomemh);
+	if (ret) {
 		priv->iomemsz = 0;
-		nv_error(priv, "unable to map PRAMIN BAR\n");
+		nv_error(priv, "unable to map PRAMIN BAR: %d\n", ret);
 		return -EFAULT;
 	}
 #else
