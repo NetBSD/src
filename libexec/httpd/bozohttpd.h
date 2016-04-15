@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.44 2016/01/02 18:40:13 elric Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.45 2016/04/15 17:57:21 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -227,6 +227,7 @@ void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
 			  const char *);
 char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute);
 char	*bozo_escape_html(bozohttpd_t *httpd, const char *url);
+int	bozo_decode_url_percent(bozo_httpreq_t *, char *);
 
 /* these are similar to libc functions, no underscore here */
 void	bozowarn(bozohttpd_t *, const char *, ...)
