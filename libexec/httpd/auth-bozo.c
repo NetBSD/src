@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.10.2.1 2014/07/09 09:42:39 msaitoh Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.10.2.2 2016/04/15 19:36:08 snj Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -72,10 +72,10 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 		if (bozo_check_special_files(request, basename))
 			return 1;
 	}
-	request->hr_authrealm = bozostrdup(httpd, dir);
+	request->hr_authrealm = bozostrdup(httpd, request, dir);
 
-	if ((size_t)snprintf(authfile, sizeof(authfile), "%s/%s", dir, AUTH_FILE) >= 
-	  sizeof(authfile)) {
+	if ((size_t)snprintf(authfile, sizeof(authfile), "%s/%s", dir,
+			     AUTH_FILE) >= sizeof(authfile)) {
 		return bozo_http_error(httpd, 404, request,
 			"authfile path too long");
 	}
@@ -118,6 +118,13 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 }
 
 void
+bozo_auth_init(bozo_httpreq_t *request)
+{
+	request->hr_authuser = NULL;
+	request->hr_authpass = NULL;
+}
+
+void
 bozo_auth_cleanup(bozo_httpreq_t *request)
 {
 
@@ -129,7 +136,8 @@ bozo_auth_cleanup(bozo_httpreq_t *request)
 }
 
 int
-bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str, ssize_t len)
+bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
+			ssize_t len)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 
@@ -150,8 +158,10 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str, ssize_t l
 			return bozo_http_error(httpd, 400, request,
 			    "bad authorization field");
 		*pass++ = '\0';
-		request->hr_authuser = bozostrdup(httpd, authbuf);
-		request->hr_authpass = bozostrdup(httpd, pass);
+		free(request->hr_authuser);
+		free(request->hr_authpass);
+		request->hr_authuser = bozostrdup(httpd, request, authbuf);
+		request->hr_authpass = bozostrdup(httpd, request, pass);
 		debug((httpd, DEBUG_FAT,
 		    "decoded authorization `%s' as `%s':`%s'",
 		    str, request->hr_authuser, request->hr_authpass));
@@ -181,8 +191,8 @@ bozo_auth_check_401(bozo_httpreq_t *request, int code)
 	if (code == 401)
 		bozo_printf(httpd,
 			"WWW-Authenticate: Basic realm=\"%s\"\r\n",
-			(request && request->hr_authrealm) ?
-				request->hr_authrealm : "default realm");
+			request->hr_authrealm ?
+			request->hr_authrealm : "default realm");
 }
 
 #ifndef NO_CGIBIN_SUPPORT
@@ -229,6 +239,12 @@ base64_decode(const unsigned char *in, size_t ilen, unsigned char *out,
 	unsigned char *cp;
 	size_t	 i;
 
+	if (ilen == 0) {
+		if (olen)
+			*out = '\0';
+		return 0;
+	}
+
 	cp = out;
 	for (i = 0; i < ilen; i += 4) {
 		if (cp + 3 > out + olen)
@@ -250,7 +266,7 @@ base64_decode(const unsigned char *in, size_t ilen, unsigned char *out,
 			| decodetable[in[i + 3]];
 #undef IN_CHECK
 	}
-	while (in[i - 1] == '=')
+	while (i > 0 && in[i - 1] == '=')
 		cp--,i--;
 	return (cp - out);
 }
