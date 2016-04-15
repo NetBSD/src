@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.217 2016/04/07 03:22:15 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.218 2016/04/15 01:31:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.217 2016/04/07 03:22:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.218 2016/04/15 01:31:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -696,29 +696,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 #if NPPPOE > 0
 	case ETHERTYPE_PPPOEDISC:
+		pppoedisc_input(ifp, m);
+		return;
 	case ETHERTYPE_PPPOE:
-		if (m->m_flags & M_PROMISC) {
-			m_freem(m);
-			return;
-		}
-#ifndef PPPOE_SERVER
-		if (m->m_flags & (M_MCAST | M_BCAST)) {
-			m_freem(m);
-			return;
-		}
-#endif
-
-		if (etype == ETHERTYPE_PPPOEDISC)
-			inq = &ppoediscinq;
-		else
-			inq = &ppoeinq;
-		if (IF_QFULL(inq)) {
-			IF_DROP(inq);
-			m_freem(m);
-		} else {
-			IF_ENQUEUE(inq, m);
-			softint_schedule(pppoe_softintr);
-		}
+		pppoe_input(ifp, m);
 		return;
 #endif /* NPPPOE > 0 */
 	case ETHERTYPE_SLOWPROTOCOLS: {
