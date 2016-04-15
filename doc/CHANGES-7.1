@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.77 2016/04/12 06:36:33 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.78 2016/04/15 09:04:28 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -3712,4 +3712,70 @@ etc/namedb/root.cache				1.20
 	Update root.cache to 2016/3/23 version, l.root-servers.net's
 	AAAA record has changed.
 	[taca, ticket #1150]
+
+usr.sbin/makemandb/apropos-utils.c		1.18, 1.19
+
+	Don't bother formatting if ti == NULL
+	--
+	PR/50344: apropos shows formatting on console with vt100 term type.
+	Can't print terminfo sequences directly; need to process them with
+	ti_puts() to handle padding.
+	[christos, ticket #1142]
+
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.75
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c	1.26
+crypto/dist/ipsec-tools/src/racoon/isakmp_ident.c 1.14
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.c 1.28
+
+	racoon:
+	- Fix memory leak (PR 50918).
+	- Allow using IKE Mode Config in a plain "rsasig" (signed
+	  certificates only) configurations.
+	[phx, ticket #1145]
+
+sys/external/bsd/drm2/dist/drm/i915/intel_pm.c	1.9
+
+	Cast uint8_t to uint32_t before shifting left by 24.
+	Otherwise this is undefined behaviour unless int is 32-bit and
+	the uint8_t value happens to be <=127.
+	[riastradh, ticket #1156]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/core/nouveau_core_subdev.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/device/nouveau_engine_device_base.c 1.9, 1.10
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/core/namedb.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/bar/nouveau_subdev_bar_base.c 1.4, 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/instmem/nouveau_subdev_instmem_nv40.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c 1.8
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.h 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv10_fence.c 1.3
+sys/external/bsd/drm2/include/linux/delay.h	1.4
+sys/external/bsd/drm2/include/linux/spinlock.h	1.7
+sys/external/bsd/drm2/nouveau/files.nouveau	1.14
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.7
+
+	nouveau fixes:
+	- Set nouveau to a reasonable debug level matching default in
+	  Linux.
+	- Pass correct device pointer to suspend/resume ops.
+	- Fix bus_space_subregion error branch to return error, not
+	  success.
+	- Make bootstrap MMIO mapping size match Linux.
+	- Print error code for failure to map PRAMIN BAR.
+	- Fix display mode flag test in xf86-video-nouveau.
+	- Busy-wait, don't sleep, if cold to avoid crash during boot.
+	- Do the *intended* integer truncation to fix PR kern/50372.
+	- Explicitly destroy various locks so nouveau runs under
+	  LOCKDEBUG.
+	- Implement recursive-reader semantics for Linux spin rwlocks.
+	[riastradh, ticket #1157]
+
+xsrc/external/mit/MesaLib/dist/src/egl/main/eglglobals.c 1.2
+xsrc/external/mit/MesaLib/dist/src/glsl/glsl_parser_extras.cpp 1.2
+xsrc/external/mit/MesaLib/dist/src/mesa/main/context.c 1.5
+xsrc/external/mit/MesaLib/dist/src/mesa/main/extensions.c 1.2
+
+	Replace atexit() calls by destructor attributes - this shared
+	library is dlopen/dlclose'd !
+	[riastradh, ticket #1158]
 
