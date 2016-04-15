@@ -92,11 +92,13 @@ l_init_httpd(lua_State *L)
 static int
 l_init_prefs(lua_State *L)
 {
+	bozohttpd_t	*httpd;
 	bozoprefs_t	*prefs;
 
 	prefs = lua_newuserdata(L, sizeof(*prefs));
 	(void) memset(prefs, 0x0, sizeof(*prefs));
-	(void) bozo_init_prefs(prefs);
+	httpd = lua_touserdata(L, 1);
+	(void) bozo_init_prefs(httpd, prefs);
 	return 1;
 }
 

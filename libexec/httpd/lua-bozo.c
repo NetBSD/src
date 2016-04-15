@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.9.10.2 2014/07/09 09:47:10 msaitoh Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.9.10.3 2016/04/15 19:38:13 snj Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -123,7 +123,7 @@ lua_register_handler(lua_State *L)
 
 	handler = bozomalloc(httpd, sizeof(lua_handler_t));
 
-	handler->name = bozostrdup(httpd, lua_tostring(L, 1));
+	handler->name = bozostrdup(httpd, NULL, lua_tostring(L, 1));
 	handler->ref = luaL_ref(L, LUA_REGISTRYINDEX);
 	SIMPLEQ_INSERT_TAIL(&map->handlers, handler, h_next);
 	httpd->process_lua = 1;
@@ -184,28 +184,28 @@ bozo_add_lua_map(bozohttpd_t *httpd, const char *prefix, const char *script)
 	lua_state_map_t *map;
 
 	map = bozomalloc(httpd, sizeof(lua_state_map_t));
-	map->prefix = bozostrdup(httpd, prefix);
+	map->prefix = bozostrdup(httpd, NULL, prefix);
 	if (*script == '/')
-		map->script = bozostrdup(httpd, script);
+		map->script = bozostrdup(httpd, NULL, script);
 	else {
 		char cwd[MAXPATHLEN], *path;
 
 		getcwd(cwd, sizeof(cwd) - 1);
-		asprintf(&path, "%s/%s", cwd, script);
+		bozoasprintf(httpd, &path, "%s/%s", cwd, script);
 		map->script = path;
 	}
 	map->L = luaL_newstate();
 	if (map->L == NULL)
-		bozo_err(httpd, 1, "can't create Lua state");
+		bozoerr(httpd, 1, "can't create Lua state");
 	SIMPLEQ_INIT(&map->handlers);
 
 #if LUA_VERSION_NUM >= 502
 	luaL_openlibs(map->L);
-	lua_getglobal(L, "package");
-	lua_getfield(L, -1, "preload");
-	lua_pushcfunction(L, luaopen_httpd);
-	lua_setfield(L, -2, "httpd");
-	lua_pop(L, 2);
+	lua_getglobal(map->L, "package");
+	lua_getfield(map->L, -1, "preload");
+	lua_pushcfunction(map->L, luaopen_httpd);
+	lua_setfield(map->L, -2, "httpd");
+	lua_pop(map->L, 2);
 #else
 	lua_openlib(map->L, "", luaopen_base);
 	lua_openlib(map->L, LUA_LOADLIBNAME, luaopen_package);
@@ -225,10 +225,10 @@ bozo_add_lua_map(bozohttpd_t *httpd, const char *prefix, const char *script)
 	lua_settable(map->L, LUA_REGISTRYINDEX);
 
 	if (luaL_loadfile(map->L, script))
-		bozo_err(httpd, 1, "failed to load script %s: %s", script,
+		bozoerr(httpd, 1, "failed to load script %s: %s", script,
 		    lua_tostring(map->L, -1));
 	if (lua_pcall(map->L, 0, 0, 0))
-		bozo_err(httpd, 1, "failed to execute script %s: %s", script,
+		bozoerr(httpd, 1, "failed to execute script %s: %s", script,
 		    lua_tostring(map->L, -1));
 	SIMPLEQ_INSERT_TAIL(&httpd->lua_states, map, s_next);
 }
@@ -276,6 +276,7 @@ lua_url_decode(lua_State *L, char *s)
 			*q++ = *p;
 		}
 	}
+	*q = '\0';
 	lua_pushstring(L, val);
 	lua_setfield(L, -2, s);
 	free(val);
@@ -310,44 +311,41 @@ bozo_process_lua(bozo_httpreq_t *request)
 	if (!httpd->process_lua)
 		return 0;
 
+	info = NULL;
+	query = NULL;
+	prefix = NULL;
 	uri = request->hr_oldfile ? request->hr_oldfile : request->hr_file;
 
 	if (*uri == '/') {
-		file = bozostrdup(httpd, uri);
-		prefix = bozostrdup(httpd, &uri[1]);
+		file = bozostrdup(httpd, request, uri);
+		if (file == NULL)
+			goto out;
+		prefix = bozostrdup(httpd, request, &uri[1]);
 	} else {
-		prefix = bozostrdup(httpd, uri);
-		asprintf(&file, "/%s", uri);
+		if (asprintf(&file, "/%s", uri) < 0)
+			goto out;
+		prefix = bozostrdup(httpd, request, uri);
 	}
-	if (file == NULL) {
-		free(prefix);
-		return 0;
-	}
+	if (prefix == NULL)
+		goto out;
 
-	if (request->hr_query && strlen(request->hr_query))
-		query = bozostrdup(httpd, request->hr_query);
-	else
-		query = NULL;
+	if (request->hr_query && request->hr_query[0])
+		query = bozostrdup(httpd, request, request->hr_query);
 
 	p = strchr(prefix, '/');
-	if (p == NULL){
-		free(prefix);
-		return 0;
-	}
+	if (p == NULL)
+		goto out;
 	*p++ = '\0';
 	handler = p;
-	if (!*handler) {
-		free(prefix);
-		return 0;
-	}
+	if (!*handler)
+		goto out;
 	p = strchr(handler, '/');
 	if (p != NULL)
 		*p++ = '\0';
 
-	info = NULL;
 	command = file + 1;
 	if ((s = strchr(command, '/')) != NULL) {
-		info = bozostrdup(httpd, s);
+		info = bozostrdup(httpd, request, s);
 		*s = '\0';
 	}
 
