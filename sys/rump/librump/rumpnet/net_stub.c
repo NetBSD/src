@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.21 2014/12/02 14:34:19 ozaki-r Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.22 2016/04/15 01:35:26 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.21 2014/12/02 14:34:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.22 2016/04/15 01:35:26 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -59,6 +59,10 @@ __weak_alias(bridge_output,rumpnet_stub);
 __weak_alias(agr_input,rumpnet_stub);
 __weak_alias(ieee8023ad_lacp_input,rumpnet_stub);
 __weak_alias(ieee8023ad_marker_input,rumpnet_stub);
+
+/* pppoe */
+__weak_alias(pppoe_input,rumpnet_stub);
+__weak_alias(pppoedisc_input,rumpnet_stub);
 
 struct ifnet_head ifnet_list;
 

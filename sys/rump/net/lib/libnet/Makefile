@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2015/10/19 16:16:38 pooka Exp $
+#	$NetBSD: Makefile,v 1.28 2016/04/15 01:35:26 ozaki-r Exp $
 #
 
 
@@ -10,7 +10,8 @@ COMMENT=Network interface and routing support
 IOCONF=	NET.ioconf
 # iffy stuff
 SRCS=	if.c if_loop.c route.c rtsock.c raw_usrreq.c			\
-	raw_cb.c if_media.c link_proto.c net_stats.c if_ethersubr.c
+	raw_cb.c if_media.c link_proto.c net_stats.c if_ethersubr.c	\
+	if_spppsubr.c
 SRCS+=	if_43.c pfil.c
 SRCS+=	if_llatbl.c
 SRCS+=	net_component.c
