@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.25.2.4 2016/04/15 19:01:05 snj Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.25.2.5 2016/04/15 20:24:30 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -448,11 +448,11 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		    &search_string_argc);
 	}
 
-	debug((httpd, DEBUG_NORMAL, "parse_search_string args no: %lu",
+	debug((httpd, DEBUG_NORMAL, "parse_search_string args no: %zu",
 	    search_string_argc));
 	for (i = 0; i < search_string_argc; i++) {
 		debug((httpd, DEBUG_FAT,
-		    "search_string[%lu]: `%s'", i, search_string_argv[i]));
+		    "search_string[%zu]: `%s'", i, search_string_argv[i]));
 	}
 
 	argv = bozomalloc(httpd, sizeof(*argv) * (3 + search_string_argc));
@@ -578,7 +578,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	    path));
 
 	for (i = 0; argv[i] != NULL; i++) {
-		debug((httpd, DEBUG_FAT, "bozo_process_cgi: argv[%lu] = `%s'",
+		debug((httpd, DEBUG_FAT, "bozo_process_cgi: argv[%zu] = `%s'",
 		    i, argv[i]));
 	}
 
