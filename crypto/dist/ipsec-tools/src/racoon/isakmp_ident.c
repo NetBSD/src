@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.13 2009/09/18 10:31:11 tteras Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.13.28.1 2016/04/15 07:52:15 snj Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -172,6 +172,7 @@ ident_i1send(iph1, msg)
 			plist = isakmp_plist_append(plist,
 			    vid_xauth, ISAKMP_NPTYPE_VID);
 
+	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 		if ((vid_unity = set_vendorid(VENDORID_UNITY)) == NULL)
 			plog(LLV_ERROR, LOCATION, NULL,
 			     "Unity vendor ID generation failed\n");
