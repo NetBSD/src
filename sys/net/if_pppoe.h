@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.12 2015/09/06 06:01:01 dholland Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.13 2016/04/15 01:31:29 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,11 +66,8 @@ struct pppoeconnectionstate {
 
 #ifdef _KERNEL
 
-extern struct ifqueue ppoediscinq;
-extern struct ifqueue ppoeinq;
-
-extern void *pppoe_softintr;			/* softinterrupt cookie */
-
+void pppoe_input(struct ifnet *, struct mbuf *);
+void pppoedisc_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
 #endif /* !_NET_IF_PPPOE_H_ */
 
