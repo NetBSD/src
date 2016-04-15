@@ -4487,8 +4487,8 @@ static void intel_init_emon(struct drm_device *dev)
 	pxw[15] = 0;
 
 	for (i = 0; i < 4; i++) {
-		u32 val = (pxw[i*4] << 24) | (pxw[(i*4)+1] << 16) |
-			(pxw[(i*4)+2] << 8) | (pxw[(i*4)+3]);
+		u32 val = ((u32)pxw[i*4] << 24) | ((u32)pxw[(i*4)+1] << 16) |
+			((u32)pxw[(i*4)+2] << 8) | ((u32)pxw[(i*4)+3]);
 		I915_WRITE(PXW + (i * 4), val);
 	}
 
