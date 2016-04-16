@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.80 2016/04/15 20:24:30 mrg Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.81 2016/04/16 21:00:49 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -3653,7 +3653,7 @@ libexec/httpd/auth-bozo.c			up to 1.18
 libexec/httpd/bozohttpd.8			up to 1.59
 libexec/httpd/bozohttpd.c			up to 1.80
 libexec/httpd/bozohttpd.h			up to 1.45
-libexec/httpd/cgi-bozo.c			up to 1.33
+libexec/httpd/cgi-bozo.c			up to 1.34
 libexec/httpd/content-bozo.c			up to 1.13
 libexec/httpd/daemon-bozo.c			up to 1.17
 libexec/httpd/dir-index-bozo.c			up to 1.25
@@ -3783,7 +3783,3 @@ xsrc/external/mit/MesaLib/dist/src/mesa/main/extensions.c 1.2
 	library is dlopen/dlclose'd !
 	[riastradh, ticket #1158]
 
-libexec/httpd/cgi-bozo.c                        1.34
-
-	Fix the build: use %zu instead of %lu for size_t.
-	[mrg, ticket #1141]
