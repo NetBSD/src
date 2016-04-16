@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.70 2016/04/04 07:43:12 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.71 2016/04/16 15:39:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.70 2016/04/04 07:43:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.71 2016/04/16 15:39:36 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -554,6 +554,7 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int length, int r
 
  nomem:
 	ohci_free_stds(sc, ox);
+	kmem_free(ox->ox_stds, sizeof(ohci_soft_td_t *) * nstd);
 
 	return USBD_NOMEM;
 }

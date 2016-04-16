@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.98 2016/04/16 14:04:55 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.99 2016/04/16 15:39:36 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.98 2016/04/16 14:04:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.99 2016/04/16 15:39:36 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2861,6 +2861,7 @@ ehci_alloc_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 
  nomem:
 	ehci_free_sqtds(sc, exfer);
+	kmem_free(exfer->ex_sqtds, sizeof(ehci_soft_qtd_t *) * nsqtd);
 	DPRINTF("no memory", 0, 0, 0, 0);
 	return USBD_NOMEM;
 }
