@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.73 2016/04/16 15:39:36 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.74 2016/04/16 16:02:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.73 2016/04/16 15:39:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.74 2016/04/16 16:02:42 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -180,7 +180,7 @@ Static void		uhci_exit_ctl_q(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_free_std_chain(uhci_softc_t *, uhci_soft_td_t *,
 			    uhci_soft_td_t *);
 #endif
-Static usbd_status	uhci_alloc_std_chain(uhci_softc_t *, struct usbd_xfer *,
+Static int		uhci_alloc_std_chain(uhci_softc_t *, struct usbd_xfer *,
 			    int, int, uhci_soft_td_t **);
 Static void		uhci_free_stds(uhci_softc_t *, struct uhci_xfer *);
 
@@ -2013,7 +2013,7 @@ uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 }
 #endif
 
-usbd_status
+int
 uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
     int rd, uhci_soft_td_t **sp)
 {
@@ -2031,7 +2031,7 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
 	int maxp = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
 	if (maxp == 0) {
 		printf("%s: maxp=0\n", __func__);
-		return USBD_INVAL;
+		return EINVAL;
 	}
 	size_t ntd = (len + maxp - 1) / maxp;
 	if (!rd && (flags & USBD_FORCE_SHORT_XFER)) {
@@ -2045,7 +2045,7 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
 	if (ntd == 0) {
 		*sp = NULL;
 		DPRINTF("ntd=0", 0, 0, 0, 0);
-		return USBD_NORMAL_COMPLETION;
+		return 0;
 	}
 	uxfer->ux_stds = kmem_alloc(sizeof(uhci_soft_td_t *) * ntd,
 	    KM_SLEEP);
@@ -2057,14 +2057,14 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
 			uhci_free_stds(sc, uxfer);
 			kmem_free(uxfer->ux_stds,
 			    sizeof(uhci_soft_td_t *) * ntd);
-			return USBD_NOMEM;
+			return ENOMEM;
 		}
 		uxfer->ux_stds[i] = p;
 	}
 
 	*sp = uxfer->ux_stds[0];
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 Static void

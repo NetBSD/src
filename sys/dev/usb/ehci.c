@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.99 2016/04/16 15:39:36 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.100 2016/04/16 16:02:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.99 2016/04/16 15:39:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.100 2016/04/16 16:02:42 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -235,7 +235,7 @@ Static void		ehci_free_sqh(ehci_softc_t *, ehci_soft_qh_t *);
 
 Static ehci_soft_qtd_t *ehci_alloc_sqtd(ehci_softc_t *);
 Static void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
-Static usbd_status	ehci_alloc_sqtd_chain(ehci_softc_t *,
+Static int		ehci_alloc_sqtd_chain(ehci_softc_t *,
 			    struct usbd_xfer *, int, int, ehci_soft_qtd_t **);
 Static void		ehci_free_sqtds(ehci_softc_t *, struct ehci_xfer *);
 
@@ -2822,7 +2822,7 @@ ehci_free_sqtd(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd)
 	mutex_exit(&sc->sc_lock);
 }
 
-Static usbd_status
+Static int
 ehci_alloc_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
     int alen, int rd, ehci_soft_qtd_t **sp)
 {
@@ -2857,13 +2857,13 @@ ehci_alloc_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 	*sp = exfer->ex_sqtds[0];
 	DPRINTF("return sqtd=%p", *sp, 0, 0, 0);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 
  nomem:
 	ehci_free_sqtds(sc, exfer);
 	kmem_free(exfer->ex_sqtds, sizeof(ehci_soft_qtd_t *) * nsqtd);
 	DPRINTF("no memory", 0, 0, 0, 0);
-	return USBD_NOMEM;
+	return ENOMEM;
 }
 
 Static void
