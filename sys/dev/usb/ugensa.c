@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.31.6.6 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.31.6.7 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.6 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.7 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 	char *devinfop;
 	const char *devname = device_xname(self);
 	usbd_status err;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int i;
 
 	DPRINTFN(10,("\nugensa_attach: sc=%p\n", sc));
@@ -184,21 +184,21 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
-	uca.info = "Generic Serial Device";
-	uca.ibufsize = UGENSA_BUFSIZE;
-	uca.obufsize = UGENSA_BUFSIZE;
-	uca.ibufsizepad = UGENSA_BUFSIZE;
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = iface;
-	uca.methods = &ugensa_methods;
-	uca.arg = sc;
+	ucaa.ucaa_info = "Generic Serial Device";
+	ucaa.ucaa_ibufsize = UGENSA_BUFSIZE;
+	ucaa.ucaa_obufsize = UGENSA_BUFSIZE;
+	ucaa.ucaa_ibufsizepad = UGENSA_BUFSIZE;
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = iface;
+	ucaa.ucaa_methods = &ugensa_methods;
+	ucaa.ucaa_arg = sc;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		int addr, dir, attr;
 
@@ -214,30 +214,31 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
 		if (attr == UE_BULK) {
-			if (uca.bulkin == -1 && dir == UE_DIR_IN) {
+			if (ucaa.ucaa_bulkin == -1 && dir == UE_DIR_IN) {
 				DPRINTF(("%s: Bulk in %d\n", devname, i));
-				uca.bulkin = addr;
+				ucaa.ucaa_bulkin = addr;
 				continue;
 			}
-			if (uca.bulkout == -1 && dir == UE_DIR_OUT) {
+			if (ucaa.ucaa_bulkout == -1 && dir == UE_DIR_OUT) {
 				DPRINTF(("%s: Bulk out %d\n", devname, i));
-				uca.bulkout = addr;
+				ucaa.ucaa_bulkout = addr;
 				continue;
 			}
 		}
 		aprint_error_dev(self, "unexpected endpoint\n");
 	}
-	if (uca.bulkin == -1) {
+	if (ucaa.ucaa_bulkin == -1) {
 		aprint_error_dev(self, "Could not find data bulk in\n");
 		goto bad;
 	}
-	if (uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "Could not find data bulk out\n");
 		goto bad;
 	}
 
-	DPRINTF(("ugensa: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	DPRINTF(("ugensa: in=0x%x out=0x%x\n", ucaa.ucaa_bulkin,
+	    ucaa.ucaa_bulkout));
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	if (!pmf_device_register(self, NULL, NULL))

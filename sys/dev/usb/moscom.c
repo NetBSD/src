@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.8.14.6 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: moscom.c,v 1.8.14.7 2016/04/16 13:22:00 skrll Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.6 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.7 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 	struct moscom_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -213,7 +213,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	memset(&uca, 0, sizeof(uca));
+	memset(&ucaa, 0, sizeof(ucaa));
 	sc->sc_udev = uaa->uaa_device;
 
 	if (usbd_set_config_index(sc->sc_udev, MOSCOM_CONFIG_NO, 1) != 0) {
@@ -233,7 +233,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
@@ -245,32 +245,32 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-			uca.bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
 		else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-			uca.bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
 	}
 
-	if (uca.bulkin == -1 || uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkin == -1 || ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "missing endpoint\n");
 		sc->sc_dying = 1;
 		return;
 	}
 
-	uca.ibufsize = MOSCOMBUFSZ;
-	uca.obufsize = MOSCOMBUFSZ;
-	uca.ibufsizepad = MOSCOMBUFSZ;
-	uca.opkthdrlen = 0;
-	uca.device = sc->sc_udev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &moscom_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_ibufsize = MOSCOMBUFSZ;
+	ucaa.ucaa_obufsize = MOSCOMBUFSZ;
+	ucaa.ucaa_ibufsizepad = MOSCOMBUFSZ;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = sc->sc_udev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &moscom_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
 
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	return;

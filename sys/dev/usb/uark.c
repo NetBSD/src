@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.4 2015/09/28 16:24:19 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.5 2016/04/16 13:22:00 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ int             uark_activate(device_t, enum devact);
 extern struct cfdriver uark_cd;
 CFATTACH_DECL_NEW(uark, sizeof(struct uark_softc), uark_match, uark_attach, uark_detach, uark_activate);
 
-int 
+int
 uark_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -108,20 +108,20 @@ uark_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void 
+void
 uark_attach(device_t parent, device_t self, void *aux)
 {
 	struct uark_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
 	char *devinfop;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status error;
 	int i;
 
-	memset(&uca, 0, sizeof(uca));
+	memset(&ucaa, 0, sizeof(ucaa));
 	sc->sc_dev = self;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
@@ -149,7 +149,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
@@ -161,32 +161,32 @@ uark_attach(device_t parent, device_t self, void *aux)
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-			uca.bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
 		else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-			uca.bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
 	}
 
-	if (uca.bulkin == -1 || uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkin == -1 || ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "missing endpoint\n");
 		sc->sc_dying = 1;
 		return;
 	}
 
-	uca.ibufsize = UARKBUFSZ;
-	uca.obufsize = UARKBUFSZ;
-	uca.ibufsizepad = UARKBUFSZ;
-	uca.opkthdrlen = 0;
-	uca.device = sc->sc_udev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &uark_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_ibufsize = UARKBUFSZ;
+	ucaa.ucaa_obufsize = UARKBUFSZ;
+	ucaa.ucaa_ibufsizepad = UARKBUFSZ;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = sc->sc_udev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &uark_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
-	
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	return;
@@ -318,7 +318,7 @@ void
 uark_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uark_softc *sc = vsc;
-	
+
 	if (msr != NULL)
 		*msr = sc->sc_msr;
 	if (lsr != NULL)

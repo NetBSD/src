@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.8.2.5 2015/09/29 11:38:29 skrll Exp $ */
+/* $NetBSD: umcs.c,v 1.8.2.6 2016/04/16 13:22:00 skrll Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.5 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.6 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int error, i, intr_addr;
 	uint8_t data;
 
@@ -285,18 +285,18 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
 
-	memset(&uca, 0, sizeof(uca));
-	uca.ibufsize = 256;
-	uca.obufsize = 256;
-	uca.ibufsizepad = 256;
-	uca.opkthdrlen = 0;
-	uca.device = sc->sc_udev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &umcs7840_methods;
-	uca.arg = sc;
+	memset(&ucaa, 0, sizeof(ucaa));
+	ucaa.ucaa_ibufsize = 256;
+	ucaa.ucaa_obufsize = 256;
+	ucaa.ucaa_ibufsizepad = 256;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = sc->sc_udev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &umcs7840_methods;
+	ucaa.ucaa_arg = sc;
 
 	for (i = 0; i < sc->sc_numports; i++) {
-		uca.bulkin = uca.bulkout = -1;
+		ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 		/*
 		 * On four port cards, endpoints are 0/1 for first,
@@ -313,7 +313,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 			    "no bulk in endpoint found for %d\n", i);
 			return;
 		}
-		uca.bulkin = ed->bEndpointAddress;
+		ucaa.ucaa_bulkin = ed->bEndpointAddress;
 
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface,
 			phyport*2 + 1);
@@ -322,14 +322,14 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 			    "no bulk out endpoint found for %d\n", i);
 			return;
 		}
-		uca.bulkout = ed->bEndpointAddress;
-		uca.portno = i;
+		ucaa.ucaa_bulkout = ed->bEndpointAddress;
+		ucaa.ucaa_portno = i;
 		DPRINTF(("port %d physical port %d bulk-in %d bulk-out %d\n",
-		    i, phyport, uca.bulkin, uca.bulkout));
+		    i, phyport, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout));
 
 		sc->sc_ports[i].sc_port_phys = phyport;
 		sc->sc_ports[i].sc_port_ucom =
-		    config_found_sm_loc(self, "ucombus", NULL, &uca,
+		    config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 	}
 }

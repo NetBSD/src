@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.13.6.7 2016/03/20 09:15:07 skrll Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.13.6.8 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.7 2016/03/20 09:15:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.8 2016/04/16 13:22:00 skrll Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -243,7 +243,7 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	struct usbd_device *dev = uaa->uaa_device;
 	char *devinfop;
 	struct uchcom_endpoints endpoints;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -282,23 +282,23 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_size = endpoints.ep_intr_size;
 
 	/* setup ucom layer */
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.bulkin = endpoints.ep_bulkin;
-	uca.bulkout = endpoints.ep_bulkout;
-	uca.ibufsize = UCHCOMIBUFSIZE;
-	uca.obufsize = UCHCOMOBUFSIZE;
-	uca.ibufsizepad = UCHCOMIBUFSIZE;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &uchcom_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	ucaa.ucaa_bulkin = endpoints.ep_bulkin;
+	ucaa.ucaa_bulkout = endpoints.ep_bulkout;
+	ucaa.ucaa_ibufsize = UCHCOMIBUFSIZE;
+	ucaa.ucaa_obufsize = UCHCOMOBUFSIZE;
+	ucaa.ucaa_ibufsizepad = UCHCOMIBUFSIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &uchcom_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	return;
