@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/07/19 19:49:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2016/04/16 16:57:06 nakayama Exp $
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,7 @@ PROG=	smproxy
 SRCS=	smproxy.c save.c
 
 CPPFLAGS+=-DHAVE_MKSTEMP -DHAVE_ASPRINTF
-
-STRING!=	${PRINT_PACKAGE_STRING}
-CPPFLAGS+=	-DPACKAGE_STRING=\"${STRING}\"
+CPPFLAGS+=	-DPACKAGE_STRING="\"smproxy 1.0.6\""
 
 LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
