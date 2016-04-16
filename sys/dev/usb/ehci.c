@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.97 2016/04/16 14:01:43 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.98 2016/04/16 14:04:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.97 2016/04/16 14:01:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.98 2016/04/16 14:04:55 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -819,7 +819,8 @@ ehci_softintr(void *v)
 	/*
 	 * ehci_idone will remove transfer from sc->sc_intrhead if it's
 	 * complete and add to our cq list
-	 * */
+	 *
+	 */
 	TAILQ_FOREACH_SAFE(ex, &sc->sc_intrhead, ex_next, nextex) {
 		switch (ex->ex_type) {
 		case EX_CTRL:
