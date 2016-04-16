@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.26 2016/03/19 07:12:21 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.27 2016/04/16 15:11:45 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.26 2016/03/19 07:12:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.27 2016/04/16 15:11:45 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -793,6 +793,7 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	p->up_repeat = 0;
 	p->up_interval = ival;
 	p->up_flags = flags;
+	p->up_serialise = true;
 	SIMPLEQ_INIT(&p->up_queue);
 	err = dev->ud_bus->ub_methods->ubm_open(p);
 	if (err) {
