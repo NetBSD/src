@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.267 2016/04/03 06:16:02 mrg Exp $
+$NetBSD: UPDATING,v 1.268 2016/04/16 18:28:22 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,25 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20160410:
+
+	amd64 needs full "make cleandir" or deletion of objdir now that
+	PIE has been enabled for amd64.  PIE, or position-independent
+	executables, means all code, including executables and not just
+	shared libraries, is position-independent and hence able to be
+	relocated by ASLR, address space layout randomization.
+
+	The change was made in Makefile variables for compiler and
+	linker flags, for which make(1) does not record dependencies,
+	hence it is unable to detect that all .o files need rebuilding.
+
+	Partial rebuilds with some modified source files will likely
+	fail when linking executables, since the linker refuses to mix
+	position-independent code with position-dependent code in
+	position-independent executables:
+
+		.../x86_64--netbsd/bin/ld: foo.o: relocation R_X86_64_32 against `...' cannot be used when making a shared object; recompile with -fPIC
 
 20160401:
 	Ports switching to GCC 5.3 will need a full "make cleandir".
