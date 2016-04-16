@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.20.24.3 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.20.24.4 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -90,18 +90,18 @@ struct ucom_methods {
 #define	UMSR_DCTS	0x01	/* CTS has changed state */
 
 struct ucom_attach_args {
-	int portno;
-	int bulkin;
-	int bulkout;
-	u_int ibufsize;
-	u_int ibufsizepad;
-	u_int obufsize;
-	u_int opkthdrlen;
-	const char *info;	/* attach message */
-	struct usbd_device *device;
-	struct usbd_interface *iface;
-	const struct ucom_methods *methods;
-	void *arg;
+	int ucaa_portno;
+	int ucaa_bulkin;
+	int ucaa_bulkout;
+	u_int ucaa_ibufsize;
+	u_int ucaa_ibufsizepad;
+	u_int ucaa_obufsize;
+	u_int ucaa_opkthdrlen;
+	const char *ucaa_info;	/* attach message */
+	struct usbd_device *ucaa_device;
+	struct usbd_interface *ucaa_iface;
+	const struct ucom_methods *ucaa_methods;
+	void *ucaa_arg;
 };
 
 int ucomprint(void *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.30.16.6 2015/12/28 08:28:11 skrll Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.30.16.7 2016/04/16 13:22:00 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.6 2015/12/28 08:28:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.7 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	usbd_status err;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int i;
 
 	sc->sc_dev = self;
@@ -232,7 +232,7 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iface_number[0] = id->bInterfaceNumber;
 
 	/* initialize endpoints */
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface[0], i);
@@ -248,12 +248,12 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 			sc->sc_isize = UGETW(ed->wMaxPacketSize);
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkin = ed->bEndpointAddress;
-			uca.ibufsize = UGETW(ed->wMaxPacketSize);
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_ibufsize = UGETW(ed->wMaxPacketSize);
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkout = ed->bEndpointAddress;
-			uca.obufsize = UGETW(ed->wMaxPacketSize);
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_obufsize = UGETW(ed->wMaxPacketSize);
 		}
 	} /* end of Endpoint loop */
 
@@ -263,30 +263,30 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 		goto error;
 	}
 
-	if (uca.bulkin == -1) {
+	if (ucaa.ucaa_bulkin == -1) {
 		aprint_error_dev(self, "Could not find data bulk in\n");
 		sc->sc_dying = 1;
 		goto error;
 	}
 
-	if (uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "Could not find data bulk out\n");
 		sc->sc_dying = 1;
 		goto error;
 	}
 
-	uca.portno = 0;
+	ucaa.ucaa_portno = 0;
 	/* bulkin, bulkout set above */
-	uca.ibufsizepad = uca.ibufsize;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = sc->sc_iface[0];
-	uca.methods = &ubsa_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_ibufsizepad = ucaa.ucaa_ibufsize;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = sc->sc_iface[0];
+	ucaa.ucaa_methods = &ubsa_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 	DPRINTF(("ubsa: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
-    		i, uca.bulkin, uca.bulkout, sc->sc_intr_number));
-	sc->sc_subdevs[0] = config_found_sm_loc(self, "ucombus", NULL, &uca,
+    		i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
+	sc->sc_subdevs[0] = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 				    ucomprint, ucomsubmatch);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,

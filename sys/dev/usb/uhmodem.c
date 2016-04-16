@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.8 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.8 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	usbd_status err;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int i;
 	int j;
 	char comname[16];
@@ -283,7 +283,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ubsa.sc_iface_number[i] = id->bInterfaceNumber;
 
 		/* initialize endpoints */
-		uca.bulkin = uca.bulkout = -1;
+		ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 		for (j = 0; j < id->bNumEndpoints; j++) {
 			ed = usbd_interface2endpoint_descriptor(
@@ -301,10 +301,10 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 				sc->sc_ubsa.sc_isize = UGETW(ed->wMaxPacketSize);
 			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 			    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-				uca.bulkin = ed->bEndpointAddress;
+				ucaa.ucaa_bulkin = ed->bEndpointAddress;
 			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 			    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-				uca.bulkout = ed->bEndpointAddress;
+				ucaa.ucaa_bulkout = ed->bEndpointAddress;
 			}
 		} /* end of Endpoint loop */
 
@@ -318,14 +318,14 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 			} else
 				break;
 		}
-		if (uca.bulkin == -1) {
+		if (ucaa.ucaa_bulkin == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk in\n");
 			sc->sc_ubsa.sc_dying = 1;
 			goto error;
 		}
 
-		if (uca.bulkout == -1) {
+		if (ucaa.ucaa_bulkout == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk out\n");
 			sc->sc_ubsa.sc_dying = 1;
@@ -347,21 +347,22 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 			break;
 		}
 
-		uca.portno = i;
-		/* bulkin, bulkout set above */
-		uca.ibufsize = UHMODEMIBUFSIZE;
-		uca.obufsize = UHMODEMOBUFSIZE;
-		uca.ibufsizepad = UHMODEMIBUFSIZE;
-		uca.opkthdrlen = 0;
-		uca.device = dev;
-		uca.iface = sc->sc_ubsa.sc_iface[i];
-		uca.methods = &uhmodem_methods;
-		uca.arg = &sc->sc_ubsa;
-		uca.info = comname;
+		ucaa.ucaa_portno = i;
+		/* ucaa_bulkin, ucaa_bulkout set above */
+		ucaa.ucaa_ibufsize = UHMODEMIBUFSIZE;
+		ucaa.ucaa_obufsize = UHMODEMOBUFSIZE;
+		ucaa.ucaa_ibufsizepad = UHMODEMIBUFSIZE;
+		ucaa.ucaa_opkthdrlen = 0;
+		ucaa.ucaa_device = dev;
+		ucaa.ucaa_iface = sc->sc_ubsa.sc_iface[i];
+		ucaa.ucaa_methods = &uhmodem_methods;
+		ucaa.ucaa_arg = &sc->sc_ubsa;
+		ucaa.ucaa_info = comname;
 		DPRINTF(("uhmodem: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
-	    		i, uca.bulkin, uca.bulkout, sc->sc_ubsa.sc_intr_number));
+		    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
+		    sc->sc_ubsa.sc_intr_number));
 		sc->sc_ubsa.sc_subdevs[i] = config_found_sm_loc(self, "ucombus", NULL,
-				 &uca, ucomprint, ucomsubmatch);
+				 &ucaa, ucomprint, ucomsubmatch);
 
 		/* issue endpoint halt to each interface */
 		err = uhmodem_endpointhalt(&sc->sc_ubsa, i);

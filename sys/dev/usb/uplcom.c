@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.4.10 2015/12/27 12:09:59 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.11 2016/04/16 13:22:00 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.10 2015/12/27 12:09:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.11 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	const char *devname = device_xname(self);
 	usbd_status err;
 	int i;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 
 	sc->sc_dev = self;
 
@@ -244,7 +244,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("\n\nuplcom attach: sc=%p\n", sc));
 
 	/* initialize endpoints */
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
 
@@ -370,37 +370,37 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
 		}
 	}
 
-	if (uca.bulkin == -1) {
+	if (ucaa.ucaa_bulkin == -1) {
 		aprint_error_dev(self, "Could not find data bulk in\n");
 		sc->sc_dying = 1;
 		return;
 	}
 
-	if (uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "Could not find data bulk out\n");
 		sc->sc_dying = 1;
 		return;
 	}
 
 	sc->sc_dtr = sc->sc_rts = -1;
-	uca.portno = UCOM_UNK_PORTNO;
-	/* bulkin, bulkout set above */
-	uca.ibufsize = UPLCOMIBUFSIZE;
-	uca.obufsize = UPLCOMOBUFSIZE;
-	uca.ibufsizepad = UPLCOMIBUFSIZE;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &uplcom_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	/* ucaa_bulkin, ucaa_bulkout set above */
+	ucaa.ucaa_ibufsize = UPLCOMIBUFSIZE;
+	ucaa.ucaa_obufsize = UPLCOMOBUFSIZE;
+	ucaa.ucaa_ibufsizepad = UPLCOMIBUFSIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &uplcom_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 
 	err = uplcom_reset(sc);
 
@@ -414,8 +414,8 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 			   sc->sc_dev);
 
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
-			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+			ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	if (!pmf_device_register(self, NULL, NULL))
