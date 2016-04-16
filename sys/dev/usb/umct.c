@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.11 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.12 2016/04/16 13:30:35 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.11 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.12 2016/04/16 13:30:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 			   sc->sc_dev);
 
 	DPRINTF(("umct: in=0x%x out=0x%x intr=0x%x\n",
-			ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
+	    ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
