@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.268 2016/04/16 18:28:22 riastradh Exp $
+$NetBSD: UPDATING,v 1.269 2016/04/16 19:47:45 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -40,6 +40,8 @@ Recent changes:
 
 20160401:
 	Ports switching to GCC 5.3 will need a full "make cleandir".
+	Some people have found that cleandir is not sufficient, so if
+	in doubt delete the entire object directory tree for gcc.
 
 20160306:
 	NetBSD's regexp implementation is now part of libnbcompat.
