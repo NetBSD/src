@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.71 2016/04/16 15:39:36 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.72 2016/04/16 16:02:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.71 2016/04/16 15:39:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.72 2016/04/16 16:02:42 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -136,7 +136,7 @@ Static void		ohci_free_sitd(ohci_softc_t *,ohci_soft_itd_t *);
 Static void		ohci_free_sitd_locked(ohci_softc_t *,
 			    ohci_soft_itd_t *);
 
-Static usbd_status	ohci_alloc_std_chain(ohci_softc_t *, struct usbd_xfer *,
+Static int		ohci_alloc_std_chain(ohci_softc_t *, struct usbd_xfer *,
 			    int, int);
 Static void		ohci_free_stds(ohci_softc_t *, struct ohci_xfer *);
 
@@ -516,7 +516,7 @@ ohci_free_std(ohci_softc_t *sc, ohci_soft_td_t *std)
 	mutex_exit(&sc->sc_lock);
 }
 
-Static usbd_status
+Static int
 ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int length, int rd)
 {
 	struct ohci_xfer *ox = OHCI_XFER2OXFER(xfer);
@@ -550,13 +550,13 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int length, int r
 		cur->flags = 0;
 	}
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 
  nomem:
 	ohci_free_stds(sc, ox);
 	kmem_free(ox->ox_stds, sizeof(ohci_soft_td_t *) * nstd);
 
-	return USBD_NOMEM;
+	return ENOMEM;
 }
 
 Static void
