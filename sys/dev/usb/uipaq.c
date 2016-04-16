@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.19.14.6 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.19.14.7 2016/04/16 13:22:00 skrll Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.6 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.7 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 	const char *devname = device_xname(self);
 	int i;
 	usbd_status err;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 
 	DPRINTFN(10,("\nuipaq_attach: sc=%p\n", sc));
 
@@ -196,16 +196,16 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
-	uca.ibufsize = UIPAQIBUFSIZE;
-	uca.obufsize = UIPAQOBUFSIZE;
-	uca.ibufsizepad = UIPAQIBUFSIZE;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = iface;
-	uca.methods = &uipaq_methods;
-	uca.arg = sc;
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.info = "Generic";
+	ucaa.ucaa_ibufsize = UIPAQIBUFSIZE;
+	ucaa.ucaa_obufsize = UIPAQOBUFSIZE;
+	ucaa.ucaa_ibufsizepad = UIPAQIBUFSIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = iface;
+	ucaa.ucaa_methods = &uipaq_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	ucaa.ucaa_info = "Generic";
 
 /*	err = uipaq_init(sc);
 	if (err) {
@@ -217,7 +217,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
 
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i=0; i<id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
@@ -227,19 +227,19 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-			uca.bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-			uca.bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
 		}
 	}
-	if (uca.bulkin == -1 || uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkin == -1 || ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "no proper endpoints found (%d,%d) \n",
-		    uca.bulkin, uca.bulkout);
+		    ucaa.ucaa_bulkin, ucaa.ucaa_bulkout);
 		return;
 	}
 
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	return;

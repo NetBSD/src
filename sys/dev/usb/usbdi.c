@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.45 2016/03/25 08:32:57 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.46 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.45 2016/03/25 08:32:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.46 2016/04/16 13:22:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -540,7 +540,8 @@ usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
 	return 0;
 }
 
-void usbd_destroy_xfer(struct usbd_xfer *xfer)
+void
+usbd_destroy_xfer(struct usbd_xfer *xfer)
 {
 
 	if (xfer->ux_methods->upm_fini) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.12 2016/02/06 07:59:26 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.13 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.12 2016/02/06 07:59:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.13 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,29 +251,30 @@ void
 ucom_attach(device_t parent, device_t self, void *aux)
 {
 	struct ucom_softc *sc = device_private(self);
-	struct ucom_attach_args *uca = aux;
+	struct ucom_attach_args *ucaa = aux;
 	struct tty *tp;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	if (uca->info != NULL)
-		aprint_normal(": %s", uca->info);
+	if (ucaa->ucaa_info != NULL)
+		aprint_normal(": %s", ucaa->ucaa_info);
 	aprint_normal("\n");
 
-	prop_dictionary_set_int32(device_properties(self), "port", uca->portno);
+	prop_dictionary_set_int32(device_properties(self), "port",
+	    ucaa->ucaa_portno);
 
 	sc->sc_dev = self;
-	sc->sc_udev = uca->device;
-	sc->sc_iface = uca->iface;
-	sc->sc_bulkout_no = uca->bulkout;
-	sc->sc_bulkin_no = uca->bulkin;
-	sc->sc_ibufsize = uca->ibufsize;
-	sc->sc_ibufsizepad = uca->ibufsizepad;
-	sc->sc_obufsize = uca->obufsize;
-	sc->sc_opkthdrlen = uca->opkthdrlen;
-	sc->sc_methods = uca->methods;
-	sc->sc_parent = uca->arg;
-	sc->sc_portno = uca->portno;
+	sc->sc_udev = ucaa->ucaa_device;
+	sc->sc_iface = ucaa->ucaa_iface;
+	sc->sc_bulkout_no = ucaa->ucaa_bulkout;
+	sc->sc_bulkin_no = ucaa->ucaa_bulkin;
+	sc->sc_ibufsize = ucaa->ucaa_ibufsize;
+	sc->sc_ibufsizepad = ucaa->ucaa_ibufsizepad;
+	sc->sc_obufsize = ucaa->ucaa_obufsize;
+	sc->sc_opkthdrlen = ucaa->ucaa_opkthdrlen;
+	sc->sc_methods = ucaa->ucaa_methods;
+	sc->sc_parent = ucaa->ucaa_arg;
+	sc->sc_portno = ucaa->ucaa_portno;
 
 	sc->sc_lsr = 0;
 	sc->sc_msr = 0;
@@ -1493,12 +1494,12 @@ ucom_cleanup(struct ucom_softc *sc)
 int
 ucomprint(void *aux, const char *pnp)
 {
-	struct ucom_attach_args *uca = aux;
+	struct ucom_attach_args *ucaa = aux;
 
 	if (pnp)
 		aprint_normal("ucom at %s", pnp);
-	if (uca->portno != UCOM_UNK_PORTNO)
-		aprint_normal(" portno %d", uca->portno);
+	if (ucaa->ucaa_portno != UCOM_UNK_PORTNO)
+		aprint_normal(" portno %d", ucaa->ucaa_portno);
 	return UNCONF;
 }
 
@@ -1506,11 +1507,11 @@ int
 ucomsubmatch(device_t parent, cfdata_t cf,
 	     const int *ldesc, void *aux)
 {
-	struct ucom_attach_args *uca = aux;
+	struct ucom_attach_args *ucaa = aux;
 
-	if (uca->portno != UCOM_UNK_PORTNO &&
+	if (ucaa->ucaa_portno != UCOM_UNK_PORTNO &&
 	    cf->cf_loc[UCOMBUSCF_PORTNO] != UCOMBUSCF_PORTNO_DEFAULT &&
-	    cf->cf_loc[UCOMBUSCF_PORTNO] != uca->portno)
+	    cf->cf_loc[UCOMBUSCF_PORTNO] != ucaa->ucaa_portno)
 		return 0;
 	return config_match(parent, cf, aux);
 }

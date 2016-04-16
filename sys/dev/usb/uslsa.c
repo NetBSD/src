@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.19.6.3 2015/03/21 11:33:37 skrll Exp $ */
+/* $NetBSD: uslsa.c,v 1.19.6.4 2016/04/16 13:22:00 skrll Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.3 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.4 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 	const usb_interface_descriptor_t *id;
 	const usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int i;
 
 	sc = device_private(self);
@@ -191,21 +191,21 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ifnum = id->bInterfaceNumber;
 
-	uca.info = "Silicon Labs CP210x";
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.ibufsize = USLSA_BUFSIZE;
-	uca.obufsize = USLSA_BUFSIZE;
-	uca.ibufsizepad = USLSA_BUFSIZE;
-	uca.opkthdrlen = 0;
-	uca.device = sc->sc_udev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &uslsa_methods;
-	uca.arg = sc;
+	ucaa.ucaa_info = "Silicon Labs CP210x";
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	ucaa.ucaa_ibufsize = USLSA_BUFSIZE;
+	ucaa.ucaa_obufsize = USLSA_BUFSIZE;
+	ucaa.ucaa_ibufsizepad = USLSA_BUFSIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = sc->sc_udev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &uslsa_methods;
+	ucaa.ucaa_arg = sc;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	                   sc->sc_dev);
 
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		int addr, dir, attr;
 
@@ -220,22 +220,22 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
 		if (dir == UE_DIR_IN && attr == UE_BULK) {
-			uca.bulkin = addr;
+			ucaa.ucaa_bulkin = addr;
 		} else if (dir == UE_DIR_OUT && attr == UE_BULK) {
-			uca.bulkout = addr;
+			ucaa.ucaa_bulkout = addr;
 		} else {
 			aprint_error_dev(self, "unexpected endpoint\n");
 		}
 	}
 	aprint_debug_dev(sc->sc_dev, "EPs: in=%#x out=%#x\n",
-		uca.bulkin, uca.bulkout);
-	if ((uca.bulkin == -1) || (uca.bulkout == -1)) {
+		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout);
+	if ((ucaa.ucaa_bulkin == -1) || (ucaa.ucaa_bulkout == -1)) {
 		aprint_error_dev(self, "could not find endpoints\n");
 		sc->sc_dying = true;
 		return;
 	}
 
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 	                                    ucomprint, ucomsubmatch);
 
 	return;

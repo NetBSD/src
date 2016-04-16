@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.10 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.11 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.10 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.11 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,7 +728,7 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	usbd_status error;
 	int n, intr_address, intr_size;
 
@@ -748,17 +748,17 @@ u3g_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(iface);
 
-	uca.info = "3G Modem";
-	uca.ibufsize = U3G_BUFF_SIZE;
-	uca.obufsize = U3G_BUFF_SIZE;
-	uca.ibufsizepad = U3G_BUFF_SIZE;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = iface;
-	uca.methods = &u3g_methods;
-	uca.arg = sc;
-	uca.portno = -1;
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_info = "3G Modem";
+	ucaa.ucaa_ibufsize = U3G_BUFF_SIZE;
+	ucaa.ucaa_obufsize = U3G_BUFF_SIZE;
+	ucaa.ucaa_ibufsizepad = U3G_BUFF_SIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = iface;
+	ucaa.ucaa_methods = &u3g_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_portno = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 
 	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
@@ -781,29 +781,29 @@ u3g_attach(device_t parent, device_t self, void *aux)
 		} else
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
 		} else
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
 		}
-		if (uca.bulkin != -1 && uca.bulkout != -1) {
+		if (ucaa.ucaa_bulkin != -1 && ucaa.ucaa_bulkout != -1) {
 			struct u3g_com *com;
 			if (sc->sc_ncom == __arraycount(sc->sc_com)) {
 				aprint_error_dev(self, "Need to configure "
 				    "more than %zu ttys", sc->sc_ncom);
 				continue;
 			}
-			uca.portno = sc->sc_ncom++;
-			com = &sc->sc_com[uca.portno];
+			ucaa.ucaa_portno = sc->sc_ncom++;
+			com = &sc->sc_com[ucaa.ucaa_portno];
 			com->c_outpins = 0;
 			com->c_msr = UMSR_DSR | UMSR_CTS | UMSR_DCD;
 			com->c_open = false;
 			com->c_purging = false;
 			com->c_dev = config_found_sm_loc(self, "ucombus",
-				NULL, &uca, ucomprint, ucomsubmatch);
-			uca.bulkin = -1;
-			uca.bulkout = -1;
+				NULL, &ucaa, ucomprint, ucomsubmatch);
+			ucaa.ucaa_bulkin = -1;
+			ucaa.ucaa_bulkout = -1;
 		}
 	}
 

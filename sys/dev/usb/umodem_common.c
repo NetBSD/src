@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.22.38.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.22.38.6 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.6 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ Static void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
 
 int
 umodem_common_attach(device_t self, struct umodem_softc *sc,
-		     struct usbif_attach_arg *uiaa, struct ucom_attach_args *uca)
+    struct usbif_attach_arg *uiaa, struct ucom_attach_args *ucaa)
 {
 	struct usbd_device *dev = uiaa->uiaa_device;
 	usb_interface_descriptor_t *id;
@@ -161,7 +161,7 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 	 * Find the bulk endpoints.
 	 * Iterate over all endpoints in the data interface and take note.
 	 */
-	uca->bulkin = uca->bulkout = -1;
+	ucaa->ucaa_bulkin = ucaa->ucaa_bulkout = -1;
 
 	id = usbd_get_interface_descriptor(sc->sc_data_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -173,18 +173,18 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-			uca->bulkin = ed->bEndpointAddress;
+			ucaa->ucaa_bulkin = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 			   (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-			uca->bulkout = ed->bEndpointAddress;
+			ucaa->ucaa_bulkout = ed->bEndpointAddress;
 		}
 	}
 
-	if (uca->bulkin == -1) {
+	if (ucaa->ucaa_bulkin == -1) {
 		aprint_error_dev(self, "Could not find data bulk in\n");
 		goto bad;
 	}
-	if (uca->bulkout == -1) {
+	if (ucaa->ucaa_bulkout == -1) {
 		aprint_error_dev(self, "Could not find data bulk out\n");
 		goto bad;
 	}
@@ -234,20 +234,20 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 
 	sc->sc_dtr = -1;
 
-	/* bulkin, bulkout set above */
-	uca->ibufsize = UMODEMIBUFSIZE;
-	uca->obufsize = UMODEMOBUFSIZE;
-	uca->ibufsizepad = UMODEMIBUFSIZE;
-	uca->opkthdrlen = 0;
-	uca->device = sc->sc_udev;
-	uca->iface = sc->sc_data_iface;
-	uca->arg = sc;
+	/* ucaa_bulkin, ucaa_bulkout set above */
+	ucaa->ucaa_ibufsize = UMODEMIBUFSIZE;
+	ucaa->ucaa_obufsize = UMODEMOBUFSIZE;
+	ucaa->ucaa_ibufsizepad = UMODEMIBUFSIZE;
+	ucaa->ucaa_opkthdrlen = 0;
+	ucaa->ucaa_device = sc->sc_udev;
+	ucaa->ucaa_iface = sc->sc_data_iface;
+	ucaa->ucaa_arg = sc;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
 
 	DPRINTF(("umodem_common_attach: sc=%p\n", sc));
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, uca,
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, ucaa,
 					    ucomprint, ucomsubmatch);
 
 	return 0;

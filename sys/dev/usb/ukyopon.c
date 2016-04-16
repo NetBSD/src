@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.16.16.5 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.16.16.6 2016/04/16 13:22:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.5 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.6 2016/04/16 13:22:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,15 +122,15 @@ ukyopon_attach(device_t parent, device_t self, void *aux)
 {
 	struct ukyopon_softc *sc = device_private(self);
 	struct usbif_attach_arg *uiaa = aux;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 
-	uca.portno = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	ucaa.ucaa_portno = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 		UKYOPON_PORT_MODEM : UKYOPON_PORT_DATA;
-	uca.methods = &ukyopon_methods;
-	uca.info = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	ucaa.ucaa_methods = &ukyopon_methods;
+	ucaa.ucaa_info = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 	    "modem port" : "data transfer port";
 
-	if (umodem_common_attach(self, &sc->sc_umodem, uiaa, &uca))
+	if (umodem_common_attach(self, &sc->sc_umodem, uiaa, &ucaa))
 		return;
 	return;
 }
