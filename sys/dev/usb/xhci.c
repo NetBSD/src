@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.66 2016/04/11 06:50:05 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.67 2016/04/16 13:54:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.66 2016/04/11 06:50:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.67 2016/04/16 13:54:38 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3121,7 +3121,6 @@ xhci_root_intr_done(struct usbd_xfer *xfer)
 {
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	xfer->ux_hcpriv = NULL;
 }
 
 /* -------------- */
