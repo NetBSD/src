@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.96 2016/04/04 07:43:12 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.97 2016/04/16 14:01:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.96 2016/04/04 07:43:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.97 2016/04/16 14:01:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2705,7 +2705,6 @@ ehci_root_intr_close(struct usbd_pipe *pipe)
 Static void
 ehci_root_intr_done(struct usbd_xfer *xfer)
 {
-	xfer->ux_hcpriv = NULL;
 }
 
 /************************/
