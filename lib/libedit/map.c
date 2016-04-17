@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.48 2016/04/12 00:16:06 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.49 2016/04/17 18:39:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.48 2016/04/12 00:16:06 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.49 2016/04/17 18:39:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -65,7 +65,7 @@ static const el_action_t  el_map_emacs[] = {
 	/*   0 */	EM_SET_MARK,		/* ^@ */
 	/*   1 */	ED_MOVE_TO_BEG,		/* ^A */
 	/*   2 */	ED_PREV_CHAR,		/* ^B */
-	/*   3 */	ED_TTY_SIGINT,		/* ^C */
+	/*   3 */	ED_IGNORE,		/* ^C */
 	/*   4 */	EM_DELETE_OR_LIST,	/* ^D */
 	/*   5 */	ED_MOVE_TO_END,		/* ^E */
 	/*   6 */	ED_NEXT_CHAR,		/* ^F */
@@ -77,21 +77,21 @@ static const el_action_t  el_map_emacs[] = {
 	/*  12 */	ED_CLEAR_SCREEN,	/* ^L */
 	/*  13 */	ED_NEWLINE,		/* ^M */
 	/*  14 */	ED_NEXT_HISTORY,	/* ^N */
-	/*  15 */	ED_TTY_FLUSH_OUTPUT,	/* ^O */
+	/*  15 */	ED_IGNORE,		/* ^O */
 	/*  16 */	ED_PREV_HISTORY,	/* ^P */
-	/*  17 */	ED_TTY_START_OUTPUT,	/* ^Q */
+	/*  17 */	ED_IGNORE,		/* ^Q */
 	/*  18 */	ED_REDISPLAY,		/* ^R */
-	/*  19 */	ED_TTY_STOP_OUTPUT,	/* ^S */
+	/*  19 */	ED_IGNORE,		/* ^S */
 	/*  20 */	ED_TRANSPOSE_CHARS,	/* ^T */
 	/*  21 */	EM_KILL_LINE,		/* ^U */
 	/*  22 */	ED_QUOTED_INSERT,	/* ^V */
 	/*  23 */	EM_KILL_REGION,		/* ^W */
 	/*  24 */	ED_SEQUENCE_LEAD_IN,	/* ^X */
 	/*  25 */	EM_YANK,		/* ^Y */
-	/*  26 */	ED_TTY_SIGTSTP,		/* ^Z */
+	/*  26 */	ED_IGNORE,		/* ^Z */
 	/*  27 */	EM_META_NEXT,		/* ^[ */
-	/*  28 */	ED_TTY_SIGQUIT,		/* ^\ */
-	/*  29 */	ED_TTY_DSUSP,		/* ^] */
+	/*  28 */	ED_IGNORE,		/* ^\ */
+	/*  29 */	ED_IGNORE,		/* ^] */
 	/*  30 */	ED_UNASSIGNED,		/* ^^ */
 	/*  31 */	ED_UNASSIGNED,		/* ^_ */
 	/*  32 */	ED_INSERT,		/* SPACE */
@@ -347,9 +347,9 @@ static const el_action_t  el_map_vi_insert[] = {
 	/*  14 */	ED_INSERT,		/* ^N */
 	/*  15 */	ED_INSERT,		/* ^O */
 	/*  16 */	ED_INSERT,		/* ^P */
-	/*  17 */	ED_TTY_START_OUTPUT,	/* ^Q */
+	/*  17 */	ED_IGNORE,		/* ^Q */
 	/*  18 */	ED_INSERT,		/* ^R */
-	/*  19 */	ED_TTY_STOP_OUTPUT,	/* ^S */
+	/*  19 */	ED_IGNORE,		/* ^S */
 	/*  20 */	ED_INSERT,		/* ^T */
 	/*  21 */	VI_KILL_LINE_PREV,	/* ^U */
 	/*  22 */	ED_QUOTED_INSERT,	/* ^V */
@@ -359,7 +359,7 @@ static const el_action_t  el_map_vi_insert[] = {
 	/*  25 */	ED_INSERT,		/* ^Y */
 	/*  26 */	ED_INSERT,		/* ^Z */
 	/*  27 */	VI_COMMAND_MODE,	/* ^[ */  /* [ Esc ] key */
-	/*  28 */	ED_TTY_SIGQUIT,		/* ^\ */
+	/*  28 */	ED_IGNORE,		/* ^\ */
 	/*  29 */	ED_INSERT,		/* ^] */
 	/*  30 */	ED_INSERT,		/* ^^ */
 	/*  31 */	ED_INSERT,		/* ^_ */
@@ -373,7 +373,7 @@ static const el_action_t  el_map_vi_insert[] = {
 	/*   0 */	ED_UNASSIGNED,		/* ^@ */
 	/*   1 */	ED_MOVE_TO_BEG,		/* ^A */
 	/*   2 */	ED_PREV_CHAR,		/* ^B */
-	/*   3 */	ED_TTY_SIGINT,		/* ^C */
+	/*   3 */	ED_IGNORE,		/* ^C */
 	/*   4 */	VI_LIST_OR_EOF,		/* ^D */
 	/*   5 */	ED_MOVE_TO_END,		/* ^E */
 	/*   6 */	ED_NEXT_CHAR,		/* ^F */
@@ -385,20 +385,20 @@ static const el_action_t  el_map_vi_insert[] = {
 	/*  12 */	ED_CLEAR_SCREEN,	/* ^L */
 	/*  13 */	ED_NEWLINE,		/* ^M */
 	/*  14 */	ED_NEXT_HISTORY,	/* ^N */
-	/*  15 */	ED_TTY_FLUSH_OUTPUT,	/* ^O */
+	/*  15 */	ED_IGNORE,		/* ^O */
 	/*  16 */	ED_PREV_HISTORY,	/* ^P */
-	/*  17 */	ED_TTY_START_OUTPUT,	/* ^Q */
+	/*  17 */	ED_IGNORE,		/* ^Q */
 	/*  18 */	ED_REDISPLAY,		/* ^R */
-	/*  19 */	ED_TTY_STOP_OUTPUT,	/* ^S */
+	/*  19 */	ED_IGNORE,		/* ^S */
 	/*  20 */	ED_TRANSPOSE_CHARS,	/* ^T */
 	/*  21 */	VI_KILL_LINE_PREV,	/* ^U */
 	/*  22 */	ED_QUOTED_INSERT,	/* ^V */
 	/*  23 */	ED_DELETE_PREV_WORD,	/* ^W */
 	/*  24 */	ED_UNASSIGNED,		/* ^X */
-	/*  25 */	ED_TTY_DSUSP,		/* ^Y */
-	/*  26 */	ED_TTY_SIGTSTP,		/* ^Z */
+	/*  25 */	ED_IGNORE,		/* ^Y */
+	/*  26 */	ED_IGNORE,		/* ^Z */
 	/*  27 */	VI_COMMAND_MODE,	/* ^[ */
-	/*  28 */	ED_TTY_SIGQUIT,		/* ^\ */
+	/*  28 */	ED_IGNORE,		/* ^\ */
 	/*  29 */	ED_UNASSIGNED,		/* ^] */
 	/*  30 */	ED_UNASSIGNED,		/* ^^ */
 	/*  31 */	ED_UNASSIGNED,		/* ^_ */
@@ -633,7 +633,7 @@ static const el_action_t el_map_vi_command[] = {
 	/*   0 */	ED_UNASSIGNED,		/* ^@ */
 	/*   1 */	ED_MOVE_TO_BEG,		/* ^A */
 	/*   2 */	ED_UNASSIGNED,		/* ^B */
-	/*   3 */	ED_TTY_SIGINT,		/* ^C */
+	/*   3 */	ED_IGNORE,		/* ^C */
 	/*   4 */	ED_UNASSIGNED,		/* ^D */
 	/*   5 */	ED_MOVE_TO_END,		/* ^E */
 	/*   6 */	ED_UNASSIGNED,		/* ^F */
@@ -645,11 +645,11 @@ static const el_action_t el_map_vi_command[] = {
 	/*  12 */	ED_CLEAR_SCREEN,	/* ^L */
 	/*  13 */	ED_NEWLINE,		/* ^M */
 	/*  14 */	ED_NEXT_HISTORY,	/* ^N */
-	/*  15 */	ED_TTY_FLUSH_OUTPUT,	/* ^O */
+	/*  15 */	ED_IGNORE,		/* ^O */
 	/*  16 */	ED_PREV_HISTORY,	/* ^P */
-	/*  17 */	ED_TTY_START_OUTPUT,	/* ^Q */
+	/*  17 */	ED_IGNORE,		/* ^Q */
 	/*  18 */	ED_REDISPLAY,		/* ^R */
-	/*  19 */	ED_TTY_STOP_OUTPUT,	/* ^S */
+	/*  19 */	ED_IGNORE,		/* ^S */
 	/*  20 */	ED_UNASSIGNED,		/* ^T */
 	/*  21 */	VI_KILL_LINE_PREV,	/* ^U */
 	/*  22 */	ED_UNASSIGNED,		/* ^V */
@@ -658,7 +658,7 @@ static const el_action_t el_map_vi_command[] = {
 	/*  25 */	ED_UNASSIGNED,		/* ^Y */
 	/*  26 */	ED_UNASSIGNED,		/* ^Z */
 	/*  27 */	EM_META_NEXT,		/* ^[ */
-	/*  28 */	ED_TTY_SIGQUIT,		/* ^\ */
+	/*  28 */	ED_IGNORE,		/* ^\ */
 	/*  29 */	ED_UNASSIGNED,		/* ^] */
 	/*  30 */	ED_UNASSIGNED,		/* ^^ */
 	/*  31 */	ED_UNASSIGNED,		/* ^_ */
