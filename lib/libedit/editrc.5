@@ -1,4 +1,4 @@
-.\"	$NetBSD: editrc.5,v 1.29 2014/12/25 13:39:41 wiz Exp $
+.\"	$NetBSD: editrc.5,v 1.30 2016/04/17 18:39:14 christos Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -459,20 +459,8 @@ Adds to argument or enters a digit.
 Digit that starts argument.
 .It Ic ed-unassigned
 Indicates unbound character.
-.It Ic ed-tty-sigint
-Tty interrupt character.
-.It Ic ed-tty-dsusp
-Tty delayed suspend character.
-.It Ic ed-tty-flush-output
-Tty flush output characters.
-.It Ic ed-tty-sigquit
-Tty quit character.
-.It Ic ed-tty-sigtstp
-Tty suspend character.
-.It Ic ed-tty-stop-output
-Tty disallow output characters.
-.It Ic ed-tty-start-output
-Tty allow output characters.
+.It Ic ed-ignore
+Ignore this character.
 .It Ic ed-newline
 Execute command.
 .It Ic ed-delete-prev-char
