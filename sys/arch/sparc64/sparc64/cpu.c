@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.127 2015/09/06 23:48:39 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.128 2016/04/17 14:32:03 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.127 2015/09/06 23:48:39 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.128 2016/04/17 14:32:03 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -670,10 +670,6 @@ cpu_boot_secondary_processors(void)
 		return;
 	}
 
-	/* No MP for SUN4V yet */
-	if (CPU_ISSUN4V)
-		return;
-	
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_cpuid == cpu_myid())
 			continue;
