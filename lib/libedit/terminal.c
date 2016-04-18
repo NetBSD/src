@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.29 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.30 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.29 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.30 2016/04/18 17:01:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: terminal.c,v 1.29 2016/04/11 18:56:31 christos Exp $");
 #endif
 
 #include "el.h"
+#include "fcns.h"
 
 /*
  * IMPORTANT NOTE: these routines are allowed to look at the current screen
