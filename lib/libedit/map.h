@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.11 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: map.h,v 1.12 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,12 +40,13 @@
 #ifndef _h_el_map
 #define	_h_el_map
 
+typedef el_action_t (*el_func_t)(EditLine *, wint_t);
+
 typedef struct el_bindings_t {	/* for the "bind" shell command */
 	const wchar_t	*name;		/* function name for bind command */
 	int		 func;		/* function numeric value */
 	const wchar_t	*description;	/* description of function */
 } el_bindings_t;
-
 
 typedef struct el_map_t {
 	el_action_t	*alt;		/* The current alternate key map */
