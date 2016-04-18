@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.14 2016/04/04 07:37:08 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.15 2016/04/18 02:27:34 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,6 +47,7 @@ atf_test_case cache_overwriting cleanup
 atf_test_case proxy_arp_pub cleanup
 atf_test_case proxy_arp_pubproxy cleanup
 atf_test_case link_activation cleanup
+atf_test_case static_arp cleanup
 
 cache_expiration_5s_head()
 {
@@ -93,6 +94,13 @@ proxy_arp_pubproxy_head()
 link_activation_head()
 {
 	atf_set "descr" "Tests for activating a new MAC address"
+	atf_set "require.progs" "rump_server"
+}
+
+static_arp_head()
+{
+
+	atf_set "descr" "Tests for static ARP entries"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -520,6 +528,31 @@ link_activation_body()
 	    "cat ./out |grep '$pkt' |grep -q 'b2:a1:00:00:00:02'"
 }
 
+static_arp_body()
+{
+	local arp_keep=5
+	local macaddr_src=
+
+	atf_check -s exit:0 ${inetserver} $SOCKSRC
+	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	setup_dst_server
+	setup_src_server $arp_keep
+
+	export RUMP_SERVER=$SOCKSRC
+	macaddr_src=$(rump.ifconfig shmif0 |awk '/address/ {print $2;}')
+
+	# Set a (valid) static ARP entry for the src server
+	export RUMP_SERVER=$SOCKDST
+	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o ignore rump.arp -s $IP4SRC $macaddr_src
+	$DEBUG && rump.arp -n -a
+
+	# Test receiving an ARP request with the static ARP entry (as spa/sha)
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST
+}
+
 cleanup()
 {
 	env RUMP_SERVER=$SOCKSRC rump.halt
@@ -600,6 +633,12 @@ link_activation_cleanup()
 	cleanup
 }
 
+static_arp_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case cache_expiration_5s
@@ -610,4 +649,5 @@ atf_init_test_cases()
 	atf_add_test_case proxy_arp_pub
 	atf_add_test_case proxy_arp_pubproxy
 	atf_add_test_case link_activation
+	atf_add_test_case static_arp
 }
