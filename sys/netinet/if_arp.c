@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.206 2016/04/13 00:47:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.207 2016/04/18 02:24:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.206 2016/04/13 00:47:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.207 2016/04/18 02:24:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1223,10 +1223,11 @@ in_arpinput(struct mbuf *m)
 	KASSERT(sizeof(la->ll_addr) >= ifp->if_addrlen);
 	(void)memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
 	la->la_flags |= LLE_VALID;
-	la->la_expire = time_uptime + arpt_keep;
+	if ((la->la_flags & LLE_STATIC) == 0) {
+		la->la_expire = time_uptime + arpt_keep;
+		arp_settimer(la, arpt_keep);
+	}
 	la->la_asked = 0;
-	KASSERT((la->la_flags & LLE_STATIC) == 0);
-	arp_settimer(la, arpt_keep);
 	/* rt->rt_flags &= ~RTF_REJECT; */
 
 	if (la->la_hold != NULL) {
