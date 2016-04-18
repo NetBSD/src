@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.248 2016/01/20 22:12:22 riastradh Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.249 2016/04/18 01:28:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.248 2016/01/20 22:12:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.249 2016/04/18 01:28:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -202,50 +202,20 @@ klock_if_output(struct ifnet * const ifp, struct mbuf * const m,
  * calling ifp's output routine.
  */
 int
-ip_hresolv_output(struct ifnet * const ifp0, struct mbuf * const m,
-    const struct sockaddr * const dst, struct rtentry *rt00)
+ip_hresolv_output(struct ifnet * const ifp, struct mbuf * const m,
+    const struct sockaddr * const dst, struct rtentry *rt0)
 {
 	int error = 0;
-	struct ifnet *ifp = ifp0;
-	struct rtentry *rt, *rt0, *gwrt;
+	struct rtentry *rt = rt0, *gwrt;
 
 #define RTFREE_IF_NEEDED(_rt) \
-	if ((_rt) != NULL && (_rt) != rt00) \
+	if ((_rt) != NULL && (_rt) != rt0) \
 		rtfree((_rt));
 
-	rt0 = rt00;
-retry:
-	if (!ip_hresolv_needed(ifp)) {
-		rt = rt0;
+	if (!ip_hresolv_needed(ifp))
 		goto out;
-	}
 
-	if (rt0 == NULL) {
-		rt = NULL;
-		goto out;
-	}
-
-	rt = rt0;
-
-	/*
-	 * The following block is highly questionable.  How did we get here
-	 * with a !RTF_UP route?  Does rtalloc1() always return an RTF_UP
-	 * route?
-	 */
-	if ((rt->rt_flags & RTF_UP) == 0) {
-		rt = rtalloc1(dst, 1);
-		if (rt == NULL) {
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-		rt0 = rt;
-		if (rt->rt_ifp != ifp) {
-			ifp = rt->rt_ifp;
-			goto retry;
-		}
-	}
-
-	if ((rt->rt_flags & RTF_GATEWAY) == 0)
+	if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) == 0)
 		goto out;
 
 	gwrt = rt_get_gwroute(rt);
