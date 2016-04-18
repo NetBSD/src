@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.63 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.64 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.63 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.64 2016/04/18 17:01:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: tty.c,v 1.63 2016/04/11 18:56:31 christos Exp $");
 #include <unistd.h>	/* for isatty */
 
 #include "el.h"
+#include "fcns.h"
 #include "parse.h"
 
 typedef struct ttymodes_t {

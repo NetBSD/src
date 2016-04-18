@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.49 2016/04/17 18:39:14 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.50 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.49 2016/04/17 18:39:14 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.50 2016/04/18 17:01:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -49,6 +49,11 @@ __RCSID("$NetBSD: map.c,v 1.49 2016/04/17 18:39:14 christos Exp $");
 #include <string.h>
 
 #include "el.h"
+#include "common.h"
+#include "emacs.h"
+#include "vi.h"
+#include "fcns.h"
+#include "func.h"
 #include "help.h"
 #include "parse.h"
 
@@ -920,12 +925,12 @@ map_init(EditLine *el)
 	el->el_map.help = el_malloc(sizeof(*el->el_map.help) * EL_NUM_FCNS);
 	if (el->el_map.help == NULL)
 		return -1;
-	(void) memcpy(el->el_map.help, help__get(),
+	(void) memcpy(el->el_map.help, el_func_help,
 	    sizeof(*el->el_map.help) * EL_NUM_FCNS);
 	el->el_map.func = el_malloc(sizeof(*el->el_map.func) * EL_NUM_FCNS);
 	if (el->el_map.func == NULL)
 		return -1;
-	memcpy(el->el_map.func, func__get(), sizeof(*el->el_map.func)
+	memcpy(el->el_map.func, el_func, sizeof(*el->el_map.func)
 	    * EL_NUM_FCNS);
 	el->el_map.nfunc = EL_NUM_FCNS;
 
