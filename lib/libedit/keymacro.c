@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.20 2016/04/12 00:16:06 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.21 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.20 2016/04/12 00:16:06 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.21 2016/04/18 17:01:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: keymacro.c,v 1.20 2016/04/12 00:16:06 christos Exp $");
 #include <string.h>
 
 #include "el.h"
+#include "fcns.h"
 
 /*
  * The Nodes of the el->el_keymacro.map.  The el->el_keymacro.map is a
