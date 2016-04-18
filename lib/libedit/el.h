@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.36 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.37 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,7 +100,6 @@ typedef struct el_state_t {
 #include "chared.h"
 #include "search.h"
 #include "hist.h"
-#include "fcns.h"	/* el_func_t is needed for map.h */
 #include "map.h"
 #include "sig.h"
 #include "read.h"
