@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.65 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.66 2016/04/19 05:48:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.65 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.66 2016/04/19 05:48:10 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -764,10 +764,14 @@ shmif_rcv(void *arg)
 		}
 
 		if (passup) {
+			int bound = curlwp->l_pflag & LP_BOUND;
 			ifp->if_ipackets++;
 			KERNEL_LOCK(1, NULL);
+			/* Prevent LWP migrations between CPUs for psref(9) */
+			curlwp->l_pflag |= LP_BOUND;
 			bpf_mtap(ifp, m);
 			if_input(ifp, m);
+			curlwp->l_pflag ^= bound ^ LP_BOUND;
 			KERNEL_UNLOCK_ONE(NULL);
 			m = NULL;
 		}
