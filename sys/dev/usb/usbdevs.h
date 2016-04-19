@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.704 2016/02/17 00:48:57 riastradh Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.705 2016/04/19 15:51:21 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.712 2016/02/17 00:46:17 riastradh Exp
+ *	NetBSD: usbdevs,v 1.713 2016/04/19 15:50:24 nonaka Exp
  */
 
 /*
@@ -2156,6 +2156,7 @@
 #define	USB_PRODUCT_MELCO_WLIUCG301N	0x016f		/* WLI-UC-G301N */
 #define	USB_PRODUCT_MELCO_WLIUCGNM	0x01a2		/* WLI-UC-GNM */
 #define	USB_PRODUCT_MELCO_WLIUCGNM2T	0x01ee		/* WLI-UC-GNM2T */
+#define	USB_PRODUCT_MELCO_WIU2300D	0x0241		/* WI-U2-300D */
 
 /* Merlin products */
 #define	USB_PRODUCT_MERLIN_V620	0x1110		/* Merlin V620 */
