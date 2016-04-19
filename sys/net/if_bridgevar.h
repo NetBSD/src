@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.28 2016/04/11 03:46:47 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.29 2016/04/19 07:03:12 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -340,30 +340,13 @@ void	bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
 
-#ifdef NET_MPSAFE
-#define BRIDGE_MPSAFE	1
-#endif
+#define BRIDGE_LOCK(_sc)	mutex_enter((_sc)->sc_iflist_lock)
+#define BRIDGE_UNLOCK(_sc)	mutex_exit((_sc)->sc_iflist_lock)
+#define BRIDGE_LOCKED(_sc)	mutex_owned((_sc)->sc_iflist_lock)
 
-#define BRIDGE_LOCK(_sc)	if ((_sc)->sc_iflist_lock) \
-					mutex_enter((_sc)->sc_iflist_lock)
-#define BRIDGE_UNLOCK(_sc)	if ((_sc)->sc_iflist_lock) \
-					mutex_exit((_sc)->sc_iflist_lock)
-#define BRIDGE_LOCKED(_sc)	(!(_sc)->sc_iflist_lock || \
-				 mutex_owned((_sc)->sc_iflist_lock))
-
-#ifdef BRIDGE_MPSAFE
-/*
- * These macros can be used in both HW interrupt and softint contexts.
- */
 #define BRIDGE_PSZ_RENTER(__s)	do { __s = pserialize_read_enter(); } while (0)
 #define BRIDGE_PSZ_REXIT(__s)	do { pserialize_read_exit(__s); } while (0)
-#else /* BRIDGE_MPSAFE */
-#define BRIDGE_PSZ_RENTER(__s)	do { __s = 0; } while (0)
-#define BRIDGE_PSZ_REXIT(__s)	do { (void)__s; } while (0)
-#endif /* BRIDGE_MPSAFE */
-
-#define BRIDGE_PSZ_PERFORM(_sc)	if ((_sc)->sc_iflist_psz) \
-					pserialize_perform((_sc)->sc_iflist_psz);
+#define BRIDGE_PSZ_PERFORM(_sc)	pserialize_perform((_sc)->sc_iflist_psz)
 
 /*
  * Locking notes:
