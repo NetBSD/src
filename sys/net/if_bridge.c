@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.114 2016/04/19 07:03:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.115 2016/04/19 07:10:22 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.114 2016/04/19 07:03:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.115 2016/04/19 07:10:22 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -214,6 +214,8 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 				} while (0)
 #endif
 
+struct psref_class *bridge_psref_class __read_mostly;
+
 int	bridge_rtable_prune_period = BRIDGE_RTABLE_PRUNE_PERIOD;
 
 static struct pool bridge_rtnode_pool;
@@ -256,13 +258,18 @@ static void	bridge_rtnode_remove(struct bridge_softc *,
 static void	bridge_rtnode_destroy(struct bridge_rtnode *);
 
 static struct bridge_iflist *bridge_lookup_member(struct bridge_softc *,
-						  const char *name);
+						  const char *name,
+						  struct psref *);
 static struct bridge_iflist *bridge_lookup_member_if(struct bridge_softc *,
-						     struct ifnet *ifp);
-static void	bridge_release_member(struct bridge_softc *, struct bridge_iflist *);
+						     struct ifnet *ifp,
+						     struct psref *);
+static void	bridge_release_member(struct bridge_softc *, struct bridge_iflist *,
+                                      struct psref *);
 static void	bridge_delete_member(struct bridge_softc *,
 				     struct bridge_iflist *);
-static struct bridge_iflist *bridge_try_hold_bif(struct bridge_iflist *);
+static void	bridge_acquire_member(struct bridge_softc *sc,
+                                      struct bridge_iflist *,
+                                      struct psref *);
 
 static int	bridge_ioctl_add(struct bridge_softc *, void *);
 static int	bridge_ioctl_del(struct bridge_softc *, void *);
@@ -371,6 +378,8 @@ bridgeattach(int n)
 	pool_init(&bridge_rtnode_pool, sizeof(struct bridge_rtnode),
 	    0, 0, 0, "brtpl", NULL, IPL_NET);
 
+	bridge_psref_class = psref_class_create("bridge", IPL_SOFTNET);
+
 	if_clone_attach(&bridge_cloner);
 }
 
@@ -409,10 +418,9 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	callout_init(&sc->sc_brcallout, 0);
 	callout_init(&sc->sc_bstpcallout, 0);
 
-	PSLIST_INIT(&sc->sc_iflist);
-	sc->sc_iflist_psz = pserialize_create();
-	sc->sc_iflist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
-	cv_init(&sc->sc_iflist_cv, "if_bridge_cv");
+	mutex_init(&sc->sc_iflist_psref.bip_lock, MUTEX_DEFAULT, IPL_NONE);
+	PSLIST_INIT(&sc->sc_iflist_psref.bip_iflist);
+	sc->sc_iflist_psref.bip_psz = pserialize_create();
 
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
@@ -453,13 +461,13 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	BRIDGE_LOCK(sc);
 	for (;;) {
-		bif = PSLIST_WRITER_FIRST(&sc->sc_iflist, struct bridge_iflist,
+		bif = PSLIST_WRITER_FIRST(&sc->sc_iflist_psref.bip_iflist, struct bridge_iflist,
 		    bif_next);
 		if (bif == NULL)
 			break;
 		bridge_delete_member(sc, bif);
 	}
-	PSLIST_DESTROY(&sc->sc_iflist);
+	PSLIST_DESTROY(&sc->sc_iflist_psref.bip_iflist);
 	BRIDGE_UNLOCK(sc);
 
 	splx(s);
@@ -469,12 +477,8 @@ bridge_clone_destroy(struct ifnet *ifp)
 	/* Tear down the routing table. */
 	bridge_rtable_fini(sc);
 
-	cv_destroy(&sc->sc_iflist_cv);
-
-	if (sc->sc_iflist_psz)
-		pserialize_destroy(sc->sc_iflist_psz);
-	if (sc->sc_iflist_lock)
-		mutex_obj_free(sc->sc_iflist_lock);
+	pserialize_destroy(sc->sc_iflist_psref.bip_psz);
+	mutex_destroy(&sc->sc_iflist_psref.bip_lock);
 
 	workqueue_destroy(sc->sc_rtage_wq);
 
@@ -622,7 +626,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  *	Lookup a bridge member interface.
  */
 static struct bridge_iflist *
-bridge_lookup_member(struct bridge_softc *sc, const char *name)
+bridge_lookup_member(struct bridge_softc *sc, const char *name, struct psref *psref)
 {
 	struct bridge_iflist *bif;
 	struct ifnet *ifp;
@@ -630,13 +634,13 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name)
 
 	BRIDGE_PSZ_RENTER(s);
 
-	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
-	    bif_next) {
+	BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
 		ifp = bif->bif_ifp;
 		if (strcmp(ifp->if_xname, name) == 0)
 			break;
 	}
-	bif = bridge_try_hold_bif(bif);
+	if (bif != NULL)
+		bridge_acquire_member(sc, bif, psref);
 
 	BRIDGE_PSZ_REXIT(s);
 
@@ -649,7 +653,8 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name)
  *	Lookup a bridge member interface by ifnet*.
  */
 static struct bridge_iflist *
-bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp)
+bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp,
+    struct psref *psref)
 {
 	struct bridge_iflist *bif;
 	int s;
@@ -657,24 +662,22 @@ bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp)
 	BRIDGE_PSZ_RENTER(s);
 
 	bif = member_ifp->if_bridgeif;
-	bif = bridge_try_hold_bif(bif);
+	if (bif != NULL) {
+		psref_acquire(psref, &bif->bif_psref,
+		    bridge_psref_class);
+	}
 
 	BRIDGE_PSZ_REXIT(s);
 
 	return bif;
 }
 
-static struct bridge_iflist *
-bridge_try_hold_bif(struct bridge_iflist *bif)
+static void
+bridge_acquire_member(struct bridge_softc *sc, struct bridge_iflist *bif,
+    struct psref *psref)
 {
 
-	if (bif != NULL) {
-		if (bif->bif_waiting)
-			bif = NULL;
-		else
-			atomic_inc_32(&bif->bif_refs);
-	}
-	return bif;
+	psref_acquire(psref, &bif->bif_psref, bridge_psref_class);
 }
 
 /*
@@ -683,16 +686,11 @@ bridge_try_hold_bif(struct bridge_iflist *bif)
  *	Release the specified member interface.
  */
 static void
-bridge_release_member(struct bridge_softc *sc, struct bridge_iflist *bif)
+bridge_release_member(struct bridge_softc *sc, struct bridge_iflist *bif,
+    struct psref *psref)
 {
-	uint32_t refs;
 
-	refs = atomic_dec_uint_nv(&bif->bif_refs);
-	if (__predict_false(refs == 0 && bif->bif_waiting)) {
-		BRIDGE_LOCK(sc);
-		cv_broadcast(&sc->sc_iflist_cv);
-		BRIDGE_UNLOCK(sc);
-	}
+	psref_release(psref, &bif->bif_psref, bridge_psref_class);
 }
 
 /*
@@ -713,15 +711,9 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 
 	PSLIST_WRITER_REMOVE(bif, bif_next);
 	BRIDGE_PSZ_PERFORM(sc);
-
-	bif->bif_waiting = true;
-	membar_sync();
-	while (bif->bif_refs > 0) {
-		aprint_debug("%s: cv_wait on iflist\n", __func__);
-		cv_wait(&sc->sc_iflist_cv, sc->sc_iflist_lock);
-	}
-	bif->bif_waiting = false;
 	BRIDGE_UNLOCK(sc);
+
+	psref_target_destroy(&bif->bif_psref, bridge_psref_class);
 
 	PSLIST_ENTRY_DESTROY(bif, bif_next);
 	kmem_free(bif, sizeof(*bif));
@@ -779,15 +771,14 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	bif->bif_flags = IFBIF_LEARNING | IFBIF_DISCOVER;
 	bif->bif_priority = BSTP_DEFAULT_PORT_PRIORITY;
 	bif->bif_path_cost = BSTP_DEFAULT_PATH_COST;
-	bif->bif_refs = 0;
-	bif->bif_waiting = false;
 	PSLIST_ENTRY_INIT(bif, bif_next);
+	psref_target_init(&bif->bif_psref, bridge_psref_class);
 
 	BRIDGE_LOCK(sc);
 
 	ifs->if_bridge = sc;
 	ifs->if_bridgeif = bif;
-	PSLIST_WRITER_INSERT_HEAD(&sc->sc_iflist, bif, bif_next);
+	PSLIST_WRITER_INSERT_HEAD(&sc->sc_iflist_psref.bip_iflist, bif, bif_next);
 	ifs->_if_input = bridge_input;
 
 	BRIDGE_UNLOCK(sc);
@@ -819,8 +810,7 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 	 * Don't use bridge_lookup_member. We want to get a member
 	 * with bif_refs == 0.
 	 */
-	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
-	    bif_next) {
+	BRIDGE_IFLIST_WRITER_FOREACH(bif, sc) {
 		ifs = bif->bif_ifp;
 		if (strcmp(ifs->if_xname, name) == 0)
 			break;
@@ -864,8 +854,9 @@ bridge_ioctl_gifflags(struct bridge_softc *sc, void *arg)
 {
 	struct ifbreq *req = arg;
 	struct bridge_iflist *bif;
+	struct psref psref;
 
-	bif = bridge_lookup_member(sc, req->ifbr_ifsname);
+	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
 		return (ENOENT);
 
@@ -875,7 +866,7 @@ bridge_ioctl_gifflags(struct bridge_softc *sc, void *arg)
 	req->ifbr_path_cost = bif->bif_path_cost;
 	req->ifbr_portno = bif->bif_ifp->if_index & 0xff;
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	return (0);
 }
@@ -885,8 +876,9 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 {
 	struct ifbreq *req = arg;
 	struct bridge_iflist *bif;
+	struct psref psref;
 
-	bif = bridge_lookup_member(sc, req->ifbr_ifsname);
+	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
 		return (ENOENT);
 
@@ -898,14 +890,14 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 
 		default:
 			/* Nothing else can. */
-			bridge_release_member(sc, bif);
+			bridge_release_member(sc, bif, &psref);
 			return (EINVAL);
 		}
 	}
 
 	bif->bif_flags = req->ifbr_ifsflags;
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
@@ -945,8 +937,7 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 retry:
 	BRIDGE_LOCK(sc);
 	count = 0;
-	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
-	    bif_next)
+	BRIDGE_IFLIST_WRITER_FOREACH(bif, sc)
 		count++;
 	BRIDGE_UNLOCK(sc);
 
@@ -966,8 +957,7 @@ retry:
 	BRIDGE_LOCK(sc);
 
 	i = 0;
-	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
-	    bif_next)
+	BRIDGE_IFLIST_WRITER_FOREACH(bif, sc)
 		i++;
 	if (i > count) {
 		/*
@@ -980,8 +970,7 @@ retry:
 	}
 
 	i = 0;
-	PSLIST_WRITER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
-	    bif_next) {
+	BRIDGE_IFLIST_WRITER_FOREACH(bif, sc) {
 		struct ifbreq *breq = &breqs[i++];
 		memset(breq, 0, sizeof(*breq));
 
@@ -1055,15 +1044,16 @@ bridge_ioctl_saddr(struct bridge_softc *sc, void *arg)
 	struct ifbareq *req = arg;
 	struct bridge_iflist *bif;
 	int error;
+	struct psref psref;
 
-	bif = bridge_lookup_member(sc, req->ifba_ifsname);
+	bif = bridge_lookup_member(sc, req->ifba_ifsname, &psref);
 	if (bif == NULL)
 		return (ENOENT);
 
 	error = bridge_rtupdate(sc, req->ifba_dst, bif->bif_ifp, 1,
 	    req->ifba_flags);
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	return (error);
 }
@@ -1209,8 +1199,9 @@ bridge_ioctl_sifprio(struct bridge_softc *sc, void *arg)
 {
 	struct ifbreq *req = arg;
 	struct bridge_iflist *bif;
+	struct psref psref;
 
-	bif = bridge_lookup_member(sc, req->ifbr_ifsname);
+	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
 		return (ENOENT);
 
@@ -1219,7 +1210,7 @@ bridge_ioctl_sifprio(struct bridge_softc *sc, void *arg)
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	return (0);
 }
@@ -1267,8 +1258,9 @@ bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
 {
 	struct ifbreq *req = arg;
 	struct bridge_iflist *bif;
+	struct psref psref;
 
-	bif = bridge_lookup_member(sc, req->ifbr_ifsname);
+	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
 		return (ENOENT);
 
@@ -1277,7 +1269,7 @@ bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	return (0);
 }
@@ -1465,11 +1457,10 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 		int used = 0;
 
 		BRIDGE_PSZ_RENTER(s);
-		PSLIST_READER_FOREACH(bif, &sc->sc_iflist,
-		    struct bridge_iflist, bif_next) {
-			bif = bridge_try_hold_bif(bif);
-			if (bif == NULL)
-				continue;
+		BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
+			struct psref psref;
+
+			bridge_acquire_member(sc, bif, &psref);
 			BRIDGE_PSZ_REXIT(s);
 
 			dst_if = bif->bif_ifp;
@@ -1512,8 +1503,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 			splx(s);
 #endif
 next:
-			bridge_release_member(sc, bif);
 			BRIDGE_PSZ_RENTER(s);
+			bridge_release_member(sc, bif, &psref);
 		}
 		BRIDGE_PSZ_REXIT(s);
 
@@ -1568,6 +1559,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	struct bridge_iflist *bif;
 	struct ifnet *src_if, *dst_if;
 	struct ether_header *eh;
+	struct psref psref;
 	DECLARE_LOCK_VARIABLE;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
@@ -1581,7 +1573,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	/*
 	 * Look up the bridge_iflist.
 	 */
-	bif = bridge_lookup_member_if(sc, src_if);
+	bif = bridge_lookup_member_if(sc, src_if, &psref);
 	if (bif == NULL) {
 		/* Interface is not a bridge member (anymore?) */
 		m_freem(m);
@@ -1594,7 +1586,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		case BSTP_IFSTATE_LISTENING:
 		case BSTP_IFSTATE_DISABLED:
 			m_freem(m);
-			bridge_release_member(sc, bif);
+			bridge_release_member(sc, bif, &psref);
 			goto out;
 		}
 	}
@@ -1621,11 +1613,11 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	if ((bif->bif_flags & IFBIF_STP) != 0 &&
 	    bif->bif_state == BSTP_IFSTATE_LEARNING) {
 		m_freem(m);
-		bridge_release_member(sc, bif);
+		bridge_release_member(sc, bif, &psref);
 		goto out;
 	}
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	/*
 	 * At this point, the port either doesn't participate
@@ -1671,7 +1663,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		goto out;
 	}
 
-	bif = bridge_lookup_member_if(sc, dst_if);
+	bif = bridge_lookup_member_if(sc, dst_if, &psref);
 	if (bif == NULL) {
 		/* Not a member of the bridge (anymore?) */
 		m_freem(m);
@@ -1683,12 +1675,12 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		case BSTP_IFSTATE_DISABLED:
 		case BSTP_IFSTATE_BLOCKING:
 			m_freem(m);
-			bridge_release_member(sc, bif);
+			bridge_release_member(sc, bif, &psref);
 			goto out;
 		}
 	}
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	ACQUIRE_GLOBAL_LOCKS();
 	bridge_enqueue(sc, dst_if, m, 1);
@@ -1740,6 +1732,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_softc *sc = ifp->if_bridge;
 	struct bridge_iflist *bif;
 	struct ether_header *eh;
+	struct psref psref;
 	DECLARE_LOCK_VARIABLE;
 
 	KASSERT(!cpu_intr_p());
@@ -1752,7 +1745,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	bif = bridge_lookup_member_if(sc, ifp);
+	bif = bridge_lookup_member_if(sc, ifp, &psref);
 	if (bif == NULL) {
 		ACQUIRE_GLOBAL_LOCKS();
 		ether_input(ifp, m);
@@ -1779,13 +1772,13 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		struct bridge_iflist *_bif;
 		struct ifnet *_ifp = NULL;
 		int s;
+		struct psref _psref;
 
 		BRIDGE_PSZ_RENTER(s);
-		PSLIST_READER_FOREACH(_bif, &sc->sc_iflist,
-		    struct bridge_iflist, bif_next) {
+		BRIDGE_IFLIST_READER_FOREACH(_bif, sc) {
 			/* It is destined for us. */
 			if (bridge_ourether(_bif, eh, 0)) {
-				_bif = bridge_try_hold_bif(_bif);
+				bridge_acquire_member(sc, _bif, &_psref);
 				BRIDGE_PSZ_REXIT(s);
 				if (_bif == NULL)
 					goto out;
@@ -1793,7 +1786,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
 				_ifp = m->m_pkthdr.rcvif = _bif->bif_ifp;
-				bridge_release_member(sc, _bif);
+				bridge_release_member(sc, _bif, &_psref);
 				goto out;
 			}
 
@@ -1805,7 +1798,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 out:
 
 		if (_bif != NULL) {
-			bridge_release_member(sc, bif);
+			bridge_release_member(sc, bif, &psref);
 			if (_ifp != NULL) {
 				m->m_flags &= ~M_PROMISC;
 				ACQUIRE_GLOBAL_LOCKS();
@@ -1821,7 +1814,7 @@ out:
 	if (bif->bif_flags & IFBIF_STP &&
 	    memcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN) == 0) {
 		bstp_input(sc, bif, m);
-		bridge_release_member(sc, bif);
+		bridge_release_member(sc, bif, &psref);
 		return;
 	}
 
@@ -1830,14 +1823,14 @@ out:
 	 * we've done historically. This also prevents some obnoxious behaviour.
 	 */
 	if (bstp_state_before_learning(bif)) {
-		bridge_release_member(sc, bif);
+		bridge_release_member(sc, bif, &psref);
 		ACQUIRE_GLOBAL_LOCKS();
 		ether_input(ifp, m);
 		RELEASE_GLOBAL_LOCKS();
 		return;
 	}
 
-	bridge_release_member(sc, bif);
+	bridge_release_member(sc, bif, &psref);
 
 	bridge_forward(sc, m);
 }
@@ -1863,11 +1856,10 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 	bmcast = m->m_flags & (M_BCAST|M_MCAST);
 
 	BRIDGE_PSZ_RENTER(s);
-	PSLIST_READER_FOREACH(bif, &sc->sc_iflist, struct bridge_iflist,
-	    bif_next) {
-		bif = bridge_try_hold_bif(bif);
-		if (bif == NULL)
-			continue;
+	BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
+		struct psref psref;
+
+		bridge_acquire_member(sc, bif, &psref);
 		BRIDGE_PSZ_REXIT(s);
 
 		dst_if = bif->bif_ifp;
@@ -1912,8 +1904,8 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 			RELEASE_GLOBAL_LOCKS();
 		}
 next:
-		bridge_release_member(sc, bif);
 		BRIDGE_PSZ_RENTER(s);
+		bridge_release_member(sc, bif, &psref);
 	}
 	BRIDGE_PSZ_REXIT(s);
 
