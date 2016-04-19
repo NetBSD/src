@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.250 2016/04/19 09:29:54 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.251 2016/04/19 09:36:35 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.250 2016/04/19 09:29:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.251 2016/04/19 09:36:35 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -289,7 +289,7 @@ ip_hresolv_output(struct ifnet * const ifp, struct mbuf * const m,
 out:
 	error = ip_mark_mpls(ifp, m, rt0);
 	if (error != 0)
-		return error;
+		goto bad;
 
 	error = klock_if_output(ifp, m, dst, rt);
 	goto exit;
