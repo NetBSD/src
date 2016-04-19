@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2016/03/15 19:14:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2016/04/19 21:11:05 christos Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -99,5 +99,8 @@ CPPFLAGS+=	-DNO_SHARED_LIBGCC_MULTILIB
 .endif
 
 NOCLANGERROR=	# defined
+
+WARNS=1
+COPTS+=-Wno-narrowing -Wno-unused
 
 .endif
