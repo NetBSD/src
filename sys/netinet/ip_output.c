@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.249 2016/04/18 01:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.250 2016/04/19 09:29:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.249 2016/04/18 01:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.250 2016/04/19 09:29:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -195,6 +195,37 @@ klock_if_output(struct ifnet * const ifp, struct mbuf * const m,
 	return error;
 }
 
+static int
+ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m, struct rtentry *rt)
+{
+	int error = 0;
+#ifdef MPLS
+	union mpls_shim msh;
+
+	if (rt == NULL || rt_gettag(rt) == NULL ||
+	    rt_gettag(rt)->sa_family != AF_MPLS ||
+	    (m->m_flags & (M_MCAST | M_BCAST)) != 0 ||
+	    ifp->if_type != IFT_ETHER)
+		return 0;
+
+	msh.s_addr = MPLS_GETSADDR(rt);
+	if (msh.shim.label != MPLS_LABEL_IMPLNULL) {
+		struct m_tag *mtag;
+		/*
+		 * XXX tentative solution to tell ether_output
+		 * it's MPLS. Need some more efficient solution.
+		 */
+		mtag = m_tag_get(PACKET_TAG_MPLS,
+		    sizeof(int) /* dummy */,
+		    M_NOWAIT);
+		if (mtag == NULL)
+			return ENOMEM;
+		m_tag_prepend(m, mtag);
+	}
+#endif
+	return error;
+}
+
 /*
  * Send an IP packet to a host.
  *
@@ -256,30 +287,9 @@ ip_hresolv_output(struct ifnet * const ifp, struct mbuf * const m,
 	}
 
 out:
-#ifdef MPLS
-	if (rt0 != NULL && rt_gettag(rt0) != NULL &&
-	    rt_gettag(rt0)->sa_family == AF_MPLS &&
-	    (m->m_flags & (M_MCAST | M_BCAST)) == 0 &&
-	    ifp->if_type == IFT_ETHER) {
-		union mpls_shim msh;
-		msh.s_addr = MPLS_GETSADDR(rt0);
-		if (msh.shim.label != MPLS_LABEL_IMPLNULL) {
-			struct m_tag *mtag;
-			/*
-			 * XXX tentative solution to tell ether_output
-			 * it's MPLS. Need some more efficient solution.
-			 */
-			mtag = m_tag_get(PACKET_TAG_MPLS,
-			    sizeof(int) /* dummy */,
-			    M_NOWAIT);
-			if (mtag == NULL) {
-				error = ENOMEM;
-				goto bad;
-			}
-			m_tag_prepend(m, mtag);
-		}
-	}
-#endif
+	error = ip_mark_mpls(ifp, m, rt0);
+	if (error != 0)
+		return error;
 
 	error = klock_if_output(ifp, m, dst, rt);
 	goto exit;
