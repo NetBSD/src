@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.94 2016/04/18 17:01:19 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.95 2016/04/19 19:50:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.94 2016/04/18 17:01:19 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.95 2016/04/19 19:50:53 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -55,6 +55,11 @@ __RCSID("$NetBSD: read.c,v 1.94 2016/04/18 17:01:19 christos Exp $");
 
 #include "el.h"
 #include "fcns.h"
+#include "read.h"
+
+struct el_read_t {
+	el_rfunc_t	 read_char;	/* Function to read a character. */
+};
 
 static int	read__fixio(int, int);
 static int	read_char(EditLine *, wchar_t *);
@@ -67,8 +72,10 @@ static void	read_pop(c_macro_t *);
 protected int
 read_init(EditLine *el)
 {
+	if ((el->el_read = el_malloc(sizeof(*el->el_read))) == NULL)
+		return -1;
 	/* builtin read_char */
-	el->el_read.read_char = read_char;
+	el->el_read->read_char = read_char;
 	return 0;
 }
 
@@ -78,9 +85,9 @@ read_init(EditLine *el)
  *	If it is set to EL_BUILTIN_GETCFN, then reset to the builtin one.
  */
 protected int
-el_read_setfn(EditLine *el, el_rfunc_t rc)
+el_read_setfn(struct el_read_t *el_read, el_rfunc_t rc)
 {
-	el->el_read.read_char = (rc == EL_BUILTIN_GETCFN) ? read_char : rc;
+	el_read->read_char = (rc == EL_BUILTIN_GETCFN) ? read_char : rc;
 	return 0;
 }
 
@@ -90,10 +97,10 @@ el_read_setfn(EditLine *el, el_rfunc_t rc)
  *	if it is the default one
  */
 protected el_rfunc_t
-el_read_getfn(EditLine *el)
+el_read_getfn(struct el_read_t *el_read)
 {
-       return el->el_read.read_char == read_char ?
-	    EL_BUILTIN_GETCFN : el->el_read.read_char;
+       return el_read->read_char == read_char ?
+	    EL_BUILTIN_GETCFN : el_read->read_char;
 }
 
 
@@ -390,7 +397,7 @@ el_wgetc(EditLine *el, wchar_t *cp)
 #ifdef DEBUG_READ
 	(void) fprintf(el->el_errfile, "Reading a character\n");
 #endif /* DEBUG_READ */
-	num_read = (*el->el_read.read_char)(el, cp);
+	num_read = (*el->el_read->read_char)(el, cp);
 	if (num_read < 0)
 		el->el_errno = errno;
 #ifdef DEBUG_READ
@@ -448,7 +455,7 @@ el_wgets(EditLine *el, int *nread)
 		size_t idx;
 
 		cp = el->el_line.buffer;
-		while ((num = (*el->el_read.read_char)(el, &wc)) == 1) {
+		while ((num = (*el->el_read->read_char)(el, &wc)) == 1) {
 			*cp = wc;
 			/* make sure there is space for next character */
 			if (cp + 1 >= el->el_line.limit) {
@@ -501,7 +508,7 @@ el_wgets(EditLine *el, int *nread)
 
 		terminal__flush(el);
 
-		while ((num = (*el->el_read.read_char)(el, &wc)) == 1) {
+		while ((num = (*el->el_read->read_char)(el, &wc)) == 1) {
 			*cp = wc;
 			/* make sure there is space next character */
 			if (cp + 1 >= el->el_line.limit) {

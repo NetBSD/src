@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.88 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.89 2016/04/19 19:50:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.88 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.89 2016/04/19 19:50:53 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: el.c,v 1.88 2016/04/11 18:56:31 christos Exp $");
 
 #include "el.h"
 #include "parse.h"
+#include "read.h"
 
 /* el_init():
  *	Initialize editline and set default parameters.
@@ -114,8 +115,10 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
 	(void) hist_init(el);
 	(void) prompt_init(el);
 	(void) sig_init(el);
-	(void) read_init(el);
-
+	if (read_init(el) == -1) {
+		el_end(el);
+		return NULL;
+	}
 	return el;
 }
 
@@ -303,7 +306,7 @@ el_wset(EditLine *el, int op, ...)
 	case EL_GETCFN:
 	{
 		el_rfunc_t rc = va_arg(ap, el_rfunc_t);
-		rv = el_read_setfn(el, rc);
+		rv = el_read_setfn(el->el_read, rc);
 		break;
 	}
 
@@ -442,7 +445,7 @@ el_wget(EditLine *el, int op, ...)
 	}
 
 	case EL_GETCFN:
-		*va_arg(ap, el_rfunc_t *) = el_read_getfn(el);
+		*va_arg(ap, el_rfunc_t *) = el_read_getfn(el->el_read);
 		rv = 0;
 		break;
 
