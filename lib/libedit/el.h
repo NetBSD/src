@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.37 2016/04/18 17:01:19 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.38 2016/04/19 19:50:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -102,7 +102,8 @@ typedef struct el_state_t {
 #include "hist.h"
 #include "map.h"
 #include "sig.h"
-#include "read.h"
+
+struct el_read_t;
 
 struct editline {
 	wchar_t		 *el_prog;	/* the program name		*/
@@ -131,7 +132,7 @@ struct editline {
 	el_history_t	  el_history;	/* History stuff		*/
 	el_search_t	  el_search;	/* Search stuff			*/
 	el_signal_t	  el_signal;	/* Signal handling stuff	*/
-	el_read_t	  el_read;	/* Character reading stuff	*/
+	struct el_read_t *el_read;	/* Character reading stuff	*/
 	ct_buffer_t       el_scratch;   /* Scratch conversion buffer    */
 	ct_buffer_t       el_lgcyconv;  /* Buffer for legacy wrappers   */
 	LineInfo          el_lgcylinfo; /* Legacy LineInfo buffer       */
