@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.207 2016/04/18 02:24:42 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.208 2016/04/19 04:13:56 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.207 2016/04/18 02:24:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.208 2016/04/19 04:13:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -685,7 +685,7 @@ arprequest(struct ifnet *ifp,
  * Any other value indicates an error.
  */
 int
-arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
+arpresolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
     const struct sockaddr *dst, void *desten, size_t destlen)
 {
 	struct llentry *la;
@@ -706,18 +706,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		LLE_RUNLOCK(la);
 		return 0;
 	}
-
-	/*
-	 * Re-send the ARP request when appropriate.
-	 */
-#ifdef	DIAGNOSTIC
-	if (rt->rt_expire == 0) {
-		/* This should never happen. (Should it? -gwr) */
-		printf("%s: unresolved and rt_expire == 0\n", __func__);
-		/* Set expiration time to now (expired). */
-		rt->rt_expire = time_uptime;
-	}
-#endif
 
 notfound:
 #ifdef IFF_STATICARP /* FreeBSD */
@@ -859,17 +847,18 @@ notfound:
 			    &satocsin(dst)->sin_addr, enaddr);
 		} else {
 			struct sockaddr_in sin;
+			struct rtentry *_rt;
 
 			sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
 
 			/* XXX */
-			rt = rtalloc1((struct sockaddr *)&sin, 0);
-			if (rt == NULL)
+			_rt = rtalloc1((struct sockaddr *)&sin, 0);
+			if (_rt == NULL)
 				goto bad;
-			arprequest(ifp, &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
+			arprequest(ifp,
+			    &satocsin(_rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
-			rtfree(rt);
-			rt = NULL;
+			rtfree(_rt);
 		}
 		return error;
 	}
