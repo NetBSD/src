@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.28 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.29 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -136,7 +136,7 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 	ctx->priv = priv;
 
 #ifdef INET6
-	priv->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM, 0, SOCK_CLOEXEC);
+	priv->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 	/* Don't return an error so we at least work on kernels witout INET6
 	 * even though we expect INET6 support.
 	 * We will fail noisily elsewhere anyway. */
@@ -144,8 +144,9 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 	priv->pf_inet6_fd = -1;
 #endif
 
-	ctx->link_fd = xsocket(PF_ROUTE, SOCK_RAW, 0,
-	    SOCK_CLOEXEC | SOCK_NONBLOCK);
+#define SOCK_FLAGS	(SOCK_CLOEXEC | SOCK_NONBLOCK)
+	ctx->link_fd = xsocket(PF_ROUTE, SOCK_RAW | SOCK_FLAGS, 0);
+#undef SOCK_FLAGS
 	return ctx->link_fd == -1 ? -1 : 0;
 }
 
