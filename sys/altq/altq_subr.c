@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.29 2014/05/17 20:44:24 rmind Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.30 2016/04/20 08:58:48 knakahara Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.29 2014/05/17 20:44:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.30 2016/04/20 08:58:48 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -125,7 +125,7 @@ altq_lookup(char *name, int type)
 
 int
 altq_attach(struct ifaltq *ifq, int type, void *discipline,
-    int (*enqueue)(struct ifaltq *, struct mbuf *, struct altq_pktattr *),
+    int (*enqueue)(struct ifaltq *, struct mbuf *),
     struct mbuf *(*dequeue)(struct ifaltq *, int),
     int (*request)(struct ifaltq *, int, void *),
     void *clfier, void *(*classify)(void *, struct mbuf *, int))
