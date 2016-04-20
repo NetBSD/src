@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.28 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.29 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -193,7 +193,7 @@ ipv6nd_open(struct dhcpcd_ctx *dctx)
 	if (ctx->nd_fd != -1)
 		return ctx->nd_fd;
 #define SOCK_FLAGS	SOCK_CLOEXEC | SOCK_NONBLOCK
-	ctx->nd_fd = xsocket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6, SOCK_FLAGS);
+	ctx->nd_fd = xsocket(PF_INET6, SOCK_RAW | SOCK_FLAGS, IPPROTO_ICMPV6);
 #undef SOCK_FLAGS
 	if (ctx->nd_fd == -1)
 		return -1;
@@ -256,6 +256,15 @@ ipv6nd_makersprobe(struct interface *ifp)
 	nd->nd_opt_len = (uint8_t)((ROUNDUP8(ifp->hwlen + 2)) >> 3);
 	memcpy(nd + 1, ifp->hwaddr, ifp->hwlen);
 	return 0;
+}
+
+static void ipv6nd_dropdhcp6(struct interface *ifp)
+{
+	const struct dhcp6_state *d6;
+
+	/* Don't drop DHCP6 if the interface is delegated to. */
+	if ((d6 = D6_CSTATE(ifp)) != NULL && d6->state != DH6S_DELEGATED)
+		dhcp6_drop(ifp, "EXPIRE6");
 }
 
 static void
@@ -321,7 +330,7 @@ ipv6nd_sendrsprobe(void *arg)
 		logger(ifp->ctx, LOG_WARNING,
 		    "%s: no IPv6 Routers available", ifp->name);
 		ipv6nd_drop(ifp);
-		dhcp6_drop(ifp, "EXPIRE6");
+		ipv6nd_dropdhcp6(ifp);
 	}
 }
 
@@ -1386,7 +1395,7 @@ ipv6nd_expirera(void *arg)
 
 	/* No valid routers? Kill any DHCPv6. */
 	if (!validone)
-		dhcp6_drop(ifp, "EXPIRE6");
+		ipv6nd_dropdhcp6(ifp);
 }
 
 void
