@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.11 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: control.c,v 1.12 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -211,7 +211,7 @@ make_sock(struct sockaddr_un *sa, const char *ifname, int unpriv)
 	int fd;
 
 #define SOCK_FLAGS	SOCK_CLOEXEC | SOCK_NONBLOCK
-	if ((fd = xsocket(AF_UNIX, SOCK_STREAM, 0, SOCK_FLAGS)) == -1)
+	if ((fd = xsocket(AF_UNIX, SOCK_STREAM | SOCK_FLAGS, 0)) == -1)
 		return -1;
 #undef SOCK_FLAGS
 	memset(sa, 0, sizeof(*sa));
