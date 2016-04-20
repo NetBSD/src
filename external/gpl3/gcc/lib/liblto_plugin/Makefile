@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/01/07 02:06:23 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2016/04/20 17:18:52 christos Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -54,6 +54,7 @@ config.h: Makefile
 .include <bsd.lib.mk>
 
 .PATH:	${DIST}/lto-plugin ${DIST}/libiberty
+COPTS.lto-plugin.c+= -Wno-missing-prototypes
 
 .else
 .include <bsd.prog.mk> # do nothing

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/03/16 05:44:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/04/20 17:18:52 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -125,3 +125,5 @@ CPPFLAGS+=	-I${BINBACKENDOBJ}
 
 COPTS.archive.c+=	-Wno-error
 COPTS.sendmsg.c+=	-Wno-error
+COPTS.encoding.c+=	-Wno-pointer-arith	# sizeof(void)
+COPTS+=			-Wno-missing-prototypes
