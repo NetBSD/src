@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.199 2016/04/20 08:56:32 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.200 2016/04/20 08:58:48 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -761,13 +761,9 @@ struct if_addrprefreq {
 do {									\
 	struct altq_pktattr *_unused __unused = unused;			\
 	IFQ_LOCK((ifq));						\
-	if (ALTQ_IS_ENABLED((ifq))) {					\
-		struct altq_pktattr pattr;				\
-		pattr.pattr_class = (m)->m_pkthdr.pattr_class;		\
-		pattr.pattr_af = (m)->m_pkthdr.pattr_af;		\
-		pattr.pattr_hdr = (m)->m_pkthdr.pattr_hdr;		\
-		ALTQ_ENQUEUE((ifq), (m), &pattr, (err));		\
-	} else {							\
+	if (ALTQ_IS_ENABLED((ifq)))					\
+		ALTQ_ENQUEUE((ifq), (m), (err));			\
+	else {								\
 		if (IF_QFULL((ifq))) {					\
 			m_freem((m));					\
 			(err) = ENOBUFS;				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.21 2009/04/18 14:58:02 tsutsui Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.22 2016/04/20 08:58:48 knakahara Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.21 2009/04/18 14:58:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.22 2016/04/20 08:58:48 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -190,7 +190,7 @@ static struct redparams default_rio_params[RIO_NDROPPREC] = {
 /* internal function prototypes */
 static int dscp2index(u_int8_t);
 #ifdef ALTQ3_COMPAT
-static int rio_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static int rio_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf *rio_dequeue(struct ifaltq *, int);
 static int rio_request(struct ifaltq *, int, void *);
 static int rio_detach(rio_queue_t *);
@@ -763,12 +763,17 @@ rio_request(struct ifaltq *ifq, int req, void *arg)
  *		 ENOBUFS when drop occurs.
  */
 static int
-rio_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+rio_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
+	struct altq_pktattr pktattr;
 	rio_queue_t *rqp = (rio_queue_t *)ifq->altq_disc;
 	int error = 0;
 
-	if (rio_addq(rqp->rq_rio, rqp->rq_q, m, pktattr) == 0)
+	pktattr.pattr_class = m->m_pkthdr.pattr_class;
+	pktattr.pattr_af = m->m_pkthdr.pattr_af;
+	pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
+
+	if (rio_addq(rqp->rq_rio, rqp->rq_q, m, &pktattr) == 0)
 		ifq->ifq_len++;
 	else
 		error = ENOBUFS;

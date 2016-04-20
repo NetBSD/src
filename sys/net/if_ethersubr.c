@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.219 2016/04/20 08:56:32 knakahara Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.220 2016/04/20 08:58:48 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.219 2016/04/20 08:56:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.220 2016/04/20 08:58:48 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -418,7 +418,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	 * address family/header pointer in the pktattr.
 	 */
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		altq_etherclassify(&ifp->if_snd, m, NULL);
+		altq_etherclassify(&ifp->if_snd, m);
 #endif
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
@@ -435,8 +435,7 @@ bad:
  * classification engine understands link headers.
  */
 void
-altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
-    struct altq_pktattr *pktattr)
+altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 {
 	struct ether_header *eh;
 	uint16_t ether_type;

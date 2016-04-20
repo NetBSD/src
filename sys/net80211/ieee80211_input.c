@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.80 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.81 2016/04/20 08:58:48 knakahara Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.80 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.81 2016/04/20 08:58:48 knakahara Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -741,8 +741,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 			int len;
 #ifdef ALTQ
 			if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
-				altq_etherclassify(&ifp->if_snd, m1,
-				    &pktattr);
+				altq_etherclassify(&ifp->if_snd, m1);
 			}
 #endif
 			len = m1->m_pkthdr.len;
