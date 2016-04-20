@@ -1,4 +1,4 @@
-/* $NetBSD: arp.h,v 1.11 2015/07/09 10:15:34 roy Exp $ */
+/* $NetBSD: arp.h,v 1.12 2016/04/20 08:53:01 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -79,6 +79,7 @@ struct iarp_state {
 	((const struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
 
 #ifdef INET
+ssize_t arp_request(const struct interface *, in_addr_t, in_addr_t);
 void arp_report_conflicted(const struct arp_state *, const struct arp_msg *);
 void arp_announce(struct arp_state *);
 void arp_probe(struct arp_state *);

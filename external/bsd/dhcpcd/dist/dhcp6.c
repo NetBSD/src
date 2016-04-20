@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.19 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.20 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -440,7 +440,7 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 		else {
 			asla.prefix_len = (uint8_t)(prefix->prefix_len + bits);
 
-			/* Make a 64 prefix by default, as this maks SLAAC
+			/* Make a 64 prefix by default, as this makes SLAAC
 			 * possible.
 			 * Otherwise round up to the nearest 4 bits. */
 			if (asla.prefix_len <= 64)
@@ -458,7 +458,9 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 			    prefix->prefix_len);
 	}
 
-	if (ipv6_userprefix(&prefix->prefix, prefix->prefix_len,
+	if (sla->sla == 0) {
+		*addr = prefix->prefix;
+	} else if (ipv6_userprefix(&prefix->prefix, prefix->prefix_len,
 		sla->sla, addr, sla->prefix_len) == -1)
 	{
 		sa = inet_ntop(AF_INET6, &prefix->prefix,
@@ -2392,6 +2394,11 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 	a->prefix = addr;
 	a->prefix_len = (uint8_t)pfxlen;
 
+	/* If sla is zero and the prefix length hasn't changed,
+	 * don't install a blackhole route. */
+	if (sla->sla_set && sla->sla == 0 && prefix->prefix_len == pfxlen)
+		prefix->flags |= IPV6_AF_DELEGATEDZERO;
+
 	/* Add our suffix */
 	if (sla->suffix) {
 		a->addr = addr;
@@ -2515,9 +2522,6 @@ dhcp6_delegate_prefix(struct interface *ifp)
 				}
 				for (j = 0; j < ia->sla_len; j++) {
 					sla = &ia->sla[j];
-					if (sla->sla_set && sla->sla == 0)
-						ap->flags |=
-						    IPV6_AF_DELEGATEDZERO;
 					if (strcmp(ifd->name, sla->ifname))
 						continue;
 					if (ifd->carrier != LINK_UP) {
@@ -3139,7 +3143,7 @@ dhcp6_open(struct dhcpcd_ctx *dctx)
 
 	ctx = dctx->ipv6;
 #define SOCK_FLAGS	SOCK_CLOEXEC | SOCK_NONBLOCK
-	ctx->dhcp_fd = xsocket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP, SOCK_FLAGS);
+	ctx->dhcp_fd = xsocket(PF_INET6, SOCK_DGRAM | SOCK_FLAGS, IPPROTO_UDP);
 #undef SOCK_FLAGS
 	if (ctx->dhcp_fd == -1)
 		return -1;
