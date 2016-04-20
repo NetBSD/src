@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.97 2016/04/07 03:22:15 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.98 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.97 2016/04/07 03:22:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.98 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -195,7 +195,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	struct fddi_header *fh;
 	struct mbuf *mcopy = NULL;
 	struct ifnet *ifp = ifp0;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	MCLAIM(m, ifp->if_mowner);
 
@@ -224,7 +223,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 
@@ -400,7 +399,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	if (ifp != ifp0)
 		ifp0->if_obytes += m->m_pkthdr.len;
 #endif /* NCARP > 0 */
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m)

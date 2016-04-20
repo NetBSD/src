@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.83 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.84 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.83 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.84 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -241,14 +241,13 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 */
 	if ((ALTQ_IS_ENABLED(&ifp->if_snd) || TBR_IS_ENABLED(&ifp->if_snd)) &&
 	    ifp->if_start == lostart) {
-		struct altq_pktattr pktattr;
 		int error;
 
 		/*
 		 * If the queueing discipline needs packet classification,
 		 * do it before prepending the link headers.
 		 */
-		IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+		IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 		M_PREPEND(m, sizeof(uint32_t), M_DONTWAIT);
 		if (m == NULL)
@@ -256,7 +255,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		*(mtod(m, uint32_t *)) = dst->sa_family;
 
 		s = splnet();
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+		IFQ_ENQUEUE(&ifp->if_snd, m, error);
 		(*ifp->if_start)(ifp);
 		splx(s);
 		return (error);
