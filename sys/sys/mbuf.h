@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.159 2015/10/13 21:28:34 rjs Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.160 2016/04/20 08:50:43 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -932,6 +932,38 @@ m_length(const struct mbuf *m)
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
 		pktlen += m0->m_len;
 	return pktlen;
+}
+
+static __inline void
+m_hdr_init(struct mbuf *m, short type, struct mbuf *next, char *data, int len)
+{
+
+	KASSERT(m != NULL);
+
+	mowner_init(m, type);
+	m->m_ext_ref = m; /* default */
+	m->m_type = type;
+	m->m_len = len;
+	m->m_next = next;
+	m->m_nextpkt = NULL; /* default */
+	m->m_data = data;
+	m->m_flags = 0; /* default */
+}
+
+static __inline void
+m_pkthdr_init(struct mbuf *m)
+{
+
+	KASSERT(m != NULL);
+
+	m->m_data = m->m_pktdat;
+	m->m_flags = M_PKTHDR;
+
+	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.len = 0;
+	m->m_pkthdr.csum_flags = 0;
+	m->m_pkthdr.csum_data = 0;
+	SLIST_INIT(&m->m_pkthdr.tags);
 }
 
 void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)
