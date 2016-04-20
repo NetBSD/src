@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.81 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.82 2016/04/20 09:01:04 knakahara Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.81 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.82 2016/04/20 09:01:04 knakahara Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -698,7 +698,6 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 {
 	struct ether_header *eh = mtod(m, struct ether_header *);
 	struct ifnet *ifp = ic->ic_ifp;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int error;
 
 	/* perform as a bridge within the AP */
@@ -745,7 +744,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 			}
 #endif
 			len = m1->m_pkthdr.len;
-			IFQ_ENQUEUE(&ifp->if_snd, m1, &pktattr, error);
+			IFQ_ENQUEUE(&ifp->if_snd, m1, error);
 			if (error) {
 				ifp->if_omcasts++;
 				m = NULL;

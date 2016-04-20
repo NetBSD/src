@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.57 2016/02/09 08:32:11 ozaki-r Exp $ */
+/* $NetBSD: if_lmc.c,v 1.58 2016/04/20 09:01:03 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.57 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.58 2016/04/20 09:01:03 knakahara Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3375,7 +3375,7 @@ ifnet_output(struct ifnet *ifp, struct mbuf *m,
   /* Some BSD QUEUE routines are not interrupt-safe. */
   {
   DISABLE_INTR; /* noop in FreeBSD */
-  IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+  IFQ_ENQUEUE(&ifp->if_snd, m, error);
   ENABLE_INTR; /* noop in FreeBSD */
   }
 
