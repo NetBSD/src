@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2016/03/17 00:55:54 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2016/04/20 17:18:52 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -47,20 +47,20 @@ CONF=		${DIST}/libstdc++-v3/config
 GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 
 # Template instantiation bug workaround for -O<2/s
-COPTS.cp-demangle.c = -Wno-stack-protector
-COPTS.cp-demangle.c = -Wno-stack-protector
-COPTS.fstream-inst.cc = -Wno-stack-protector
-COPTS.locale-inst.cc = -Wno-stack-protector
-COPTS.misc-inst.cc = -Wno-stack-protector
-COPTS.ostream-inst.cc = -Wno-stack-protector
-COPTS.functexcept.cc = -Wno-stack-protector
-COPTS.valarray-inst.cc = -Wno-stack-protector
-COPTS.wlocale-inst.cc = -Wno-stack-protector
-COPTS.snprintf_lite.cc = -Wno-stack-protector
-COPTS.concept-inst.cc=	-fimplicit-templates
-COPTS.hashtable_c++0x.cc=  -fimplicit-templates
-COPTS.bitmap_allocator.cc = -fimplicit-templates
-CPPFLAGS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
+COPTS.cp-demangle.c += -Wno-stack-protector
+COPTS.cp-demangle.c += -Wno-stack-protector
+COPTS.fstream-inst.cc += -Wno-stack-protector
+COPTS.locale-inst.cc += -Wno-stack-protector
+COPTS.misc-inst.cc += -Wno-stack-protector
+COPTS.ostream-inst.cc += -Wno-stack-protector
+COPTS.functexcept.cc += -Wno-stack-protector
+COPTS.valarray-inst.cc += -Wno-stack-protector
+COPTS.wlocale-inst.cc += -Wno-stack-protector
+COPTS.snprintf_lite.cc += -Wno-stack-protector
+COPTS.concept-inst.cc += -fimplicit-templates
+COPTS.hashtable_c++0x.cc += -fimplicit-templates
+COPTS.bitmap_allocator.cc += -fimplicit-templates
+CPPFLAGS.strstream.cc += -I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
 
 CPPFLAGS.cp-demangle.cc += -DIN_GLIBCPP_V3
 CPPFLAGS.concept-inst.cc += -D_GLIBCXX_CONCEPT_CHECKS
@@ -120,6 +120,10 @@ COPTS.${_s}+= -std=gnu++11
 .for _s in ${G_CPP98_SOURCES:Nlocalename.cc:Nlocale_init.cc:M*.cc}
 COPTS.${_s}+= -std=gnu++98
 .endfor
+
+COPTS.del_ops.cc += -Wno-c++14-compat
+COPTS.del_opvs.cc += -Wno-c++14-compat
+COPTS.cp-demangle.c += -Wno-unused-function
 
 .for f in collate_members_cow \
 	  messages_members_cow \

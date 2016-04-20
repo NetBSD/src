@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2016/03/15 06:12:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2016/04/20 17:18:52 christos Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -86,6 +86,7 @@ libinstall::
 
 .include <bsd.lib.mk>
 
-COPTS+=	-Wno-stack-protector
+COPTS+=	-Wno-stack-protector -Wno-missing-prototypes
+COPTS.oacc-mem.c+= -Wno-pointer-arith
 
 .PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix
