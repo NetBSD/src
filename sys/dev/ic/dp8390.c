@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.83 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.84 2016/04/20 08:53:11 knakahara Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.83 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.84 2016/04/20 08:53:11 knakahara Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -1492,11 +1492,10 @@ dp8390_ipkdb_send(struct ipkdb_if *kip, uint8_t *buf, int l)
 	bus_space_handle_t regh = sc->sc_regh;
 	struct mbuf mb;
 
-	mb.m_next = NULL;
-	mb.m_pkthdr.len = mb.m_len = l;
-	mb.m_data = buf;
-	mb.m_flags = M_EXT | M_PKTHDR;
-	mb.m_type = MT_DATA;
+	mbuf_hdr_init(&mb, MT_DATA, NULL, buf, l);
+	mbuf_pkthdr_init(&mb);
+	mb.m_pkthdr.len = l;
+	mb.m_flags |= M_EXT;
 
 	l = sc->write_mbuf(sc, &mb,
 	    sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT));
