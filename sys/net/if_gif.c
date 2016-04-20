@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.106 2016/02/26 07:35:17 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.107 2016/04/20 09:01:04 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.106 2016/02/26 07:35:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.107 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -310,10 +310,9 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int error = 0;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int s;
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	if ((error = gif_check_nesting(ifp, m)) != 0) {
 		m_free(m);
@@ -344,7 +343,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	m->m_pkthdr.csum_data = 0;
 
 	s = splnet();
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error) {
 		splx(s);
 		goto end;

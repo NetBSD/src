@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.200 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.201 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -754,12 +754,8 @@ struct if_addrprefreq {
 
 #ifdef _KERNEL
 #ifdef ALTQ
-#define	ALTQ_DECL(x)		x
-#define ALTQ_COMMA		,
-
-#define IFQ_ENQUEUE(ifq, m, unused, err)				\
+#define IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
-	struct altq_pktattr *_unused __unused = unused;			\
 	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq)))					\
 		ALTQ_ENQUEUE((ifq), (m), (err));			\
@@ -816,9 +812,8 @@ do {									\
 	(ifq)->altq_flags |= ALTQF_READY;				\
 } while (/*CONSTCOND*/ 0)
 
-#define	IFQ_CLASSIFY(ifq, m, af, unused)				\
+#define	IFQ_CLASSIFY(ifq, m, af)					\
 do {									\
-	struct altq_pktattr *_unused __unused = unused;			\
 	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
@@ -830,10 +825,7 @@ do {									\
 	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
-#define	ALTQ_DECL(x)		/* nothing */
-#define ALTQ_COMMA
-
-#define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
+#define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	IFQ_LOCK((ifq));						\
 	if (IF_QFULL((ifq))) {						\
@@ -871,7 +863,7 @@ do {									\
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
 
-#define	IFQ_CLASSIFY(ifq, m, af, pattr) /* nothing */
+#define	IFQ_CLASSIFY(ifq, m, af) /* nothing */
 
 #endif /* ALTQ */
 
@@ -947,10 +939,8 @@ void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
 
-int	ifq_enqueue(struct ifnet *, struct mbuf * ALTQ_COMMA
-    ALTQ_DECL(struct altq_pktattr *));
-int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf * ALTQ_COMMA
-    ALTQ_DECL(struct altq_pktattr *));
+int	ifq_enqueue(struct ifnet *, struct mbuf *);
+int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
 
 int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);

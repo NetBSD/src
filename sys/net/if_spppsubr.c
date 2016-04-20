@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.135 2015/08/20 14:40:19 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.136 2016/04/20 09:01:04 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.135 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.136 2016/04/20 09:01:04 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -647,7 +647,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	struct ifqueue *ifq = NULL;		/* XXX */
 	int s, error = 0;
 	uint16_t protocol;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();
 
@@ -675,7 +674,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 #ifdef INET
 	if (dst->sa_family == AF_INET) {
@@ -824,7 +823,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	}
 
 
-	error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	error = ifq_enqueue2(ifp, ifq, m);
 
 	if (error == 0) {
 		/*
