@@ -174,5 +174,5 @@ int if_initrt6(struct interface *);
 #endif
 
 int if_machinearch(char *, size_t);
-int xsocket(int, int, int, int);
+int xsocket(int, int, int);
 #endif
