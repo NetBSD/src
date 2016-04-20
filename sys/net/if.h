@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.198 2016/02/19 20:05:43 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.199 2016/04/20 08:56:32 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -757,12 +757,17 @@ struct if_addrprefreq {
 #define	ALTQ_DECL(x)		x
 #define ALTQ_COMMA		,
 
-#define IFQ_ENQUEUE(ifq, m, pattr, err)					\
+#define IFQ_ENQUEUE(ifq, m, unused, err)				\
 do {									\
+	struct altq_pktattr *_unused __unused = unused;			\
 	IFQ_LOCK((ifq));						\
-	if (ALTQ_IS_ENABLED((ifq)))					\
-		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
-	else {								\
+	if (ALTQ_IS_ENABLED((ifq))) {					\
+		struct altq_pktattr pattr;				\
+		pattr.pattr_class = (m)->m_pkthdr.pattr_class;		\
+		pattr.pattr_af = (m)->m_pkthdr.pattr_af;		\
+		pattr.pattr_hdr = (m)->m_pkthdr.pattr_hdr;		\
+		ALTQ_ENQUEUE((ifq), (m), &pattr, (err));		\
+	} else {							\
 		if (IF_QFULL((ifq))) {					\
 			m_freem((m));					\
 			(err) = ENOBUFS;				\
@@ -815,15 +820,16 @@ do {									\
 	(ifq)->altq_flags |= ALTQF_READY;				\
 } while (/*CONSTCOND*/ 0)
 
-#define	IFQ_CLASSIFY(ifq, m, af, pattr)					\
+#define	IFQ_CLASSIFY(ifq, m, af, unused)				\
 do {									\
+	struct altq_pktattr *_unused __unused = unused;			\
 	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
-			(pattr)->pattr_class = (*(ifq)->altq_classify)	\
+			m->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
 				((ifq)->altq_clfier, (m), (af));	\
-		(pattr)->pattr_af = (af);				\
-		(pattr)->pattr_hdr = mtod((m), void *);		\
+		m->m_pkthdr.pattr_af = (af);				\
+		m->m_pkthdr.pattr_hdr = mtod((m), void *);		\
 	}								\
 	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
