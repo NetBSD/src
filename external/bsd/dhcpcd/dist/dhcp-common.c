@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.13 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.14 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -103,15 +103,17 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 	if (opt->type & ARRAY)
 		printf(" array");
 	if (opt->type & UINT8)
-		printf(" byte");
+		printf(" uint8");
+	else if (opt->type & INT8)
+		printf(" int8");
 	else if (opt->type & UINT16)
 		printf(" uint16");
-	else if (opt->type & SINT16)
-		printf(" sint16");
+	else if (opt->type & INT16)
+		printf(" int16");
 	else if (opt->type & UINT32)
 		printf(" uint32");
-	else if (opt->type & SINT32)
-		printf(" sint32");
+	else if (opt->type & INT32)
+		printf(" int32");
 	else if (opt->type & ADDRIPV4)
 		printf(" ipaddress");
 	else if (opt->type & ADDRIPV6)
@@ -208,6 +210,8 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 			continue;
 		match = 0;
 		for (i = 0, opt = odopts; i < odopts_len; i++, opt++) {
+			if (opt->var == NULL && opt->option == 0)
+				continue; /* buggy dhcpcd-definitions.conf */
 			if (strcmp(opt->var, token) == 0)
 				match = 1;
 			else {
@@ -590,11 +594,11 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 
 	if (opt->type & ADDRIPV6)
 		sz = ADDR6SZ;
-	else if (opt->type & (UINT32 | ADDRIPV4))
+	else if (opt->type & (INT32 | UINT32 | ADDRIPV4))
 		sz = sizeof(uint32_t);
-	else if (opt->type & UINT16)
+	else if (opt->type & (INT16 | UINT16))
 		sz = sizeof(uint16_t);
-	else if (opt->type & (UINT8 | BITFLAG))
+	else if (opt->type & (INT8 | UINT8 | BITFLAG))
 		sz = sizeof(uint8_t);
 	else if (opt->type & FLAG)
 		return 0;
@@ -733,16 +737,18 @@ print_option(char *s, size_t len, const struct dhcp_opt *opt,
 	if (!s) {
 		if (opt->type & UINT8)
 			l = 3;
+		else if (opt->type & INT8)
+			l = 4;
 		else if (opt->type & UINT16) {
 			l = 5;
 			dl /= 2;
-		} else if (opt->type & SINT16) {
+		} else if (opt->type & INT16) {
 			l = 6;
 			dl /= 2;
 		} else if (opt->type & UINT32) {
 			l = 10;
 			dl /= 4;
-		} else if (opt->type & SINT32) {
+		} else if (opt->type & INT32) {
 			l = 11;
 			dl /= 4;
 		} else if (opt->type & ADDRIPV4) {
@@ -779,12 +785,15 @@ print_option(char *s, size_t len, const struct dhcp_opt *opt,
 		if (opt->type & UINT8) {
 			sl = snprintf(s, len, "%u", *data);
 			data++;
+		} else if (opt->type & INT8) {
+			sl = snprintf(s, len, "%d", *data);
+			data++;
 		} else if (opt->type & UINT16) {
 			memcpy(&u16, data, sizeof(u16));
 			u16 = ntohs(u16);
 			sl = snprintf(s, len, "%u", u16);
 			data += sizeof(u16);
-		} else if (opt->type & SINT16) {
+		} else if (opt->type & INT16) {
 			memcpy(&u16, data, sizeof(u16));
 			s16 = (int16_t)ntohs(u16);
 			sl = snprintf(s, len, "%d", s16);
@@ -794,7 +803,7 @@ print_option(char *s, size_t len, const struct dhcp_opt *opt,
 			u32 = ntohl(u32);
 			sl = snprintf(s, len, "%u", u32);
 			data += sizeof(u32);
-		} else if (opt->type & SINT32) {
+		} else if (opt->type & INT32) {
 			memcpy(&u32, data, sizeof(u32));
 			s32 = (int32_t)ntohl(u32);
 			sl = snprintf(s, len, "%d", s32);
