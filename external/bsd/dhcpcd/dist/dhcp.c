@@ -1489,7 +1489,7 @@ dhcp_openudp(struct interface *ifp)
 	char *p;
 #endif
 
-	if ((s = xsocket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, SOCK_CLOEXEC)) == -1)
+	if ((s = xsocket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP)) == -1)
 		return -1;
 
 	n = 1;
