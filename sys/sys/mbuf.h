@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.160 2016/04/20 08:50:43 knakahara Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.161 2016/04/20 08:56:32 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 #include <sys/queue.h>
 #if defined(_KERNEL)
 #include <sys/percpu_types.h>
+#include <sys/socket.h>	/* for AF_UNSPEC */
 #endif /* defined(_KERNEL) */
 
 /* For offsetof() */
@@ -169,6 +170,9 @@ struct m_hdr {
  * be bit-wise inverted (the final step in the calculation of an IP
  * checksum) -- this is so we can accumulate the checksum for fragmented
  * packets during reassembly.
+ *
+ * Size ILP32: 36
+ *       LP64: 56
  */
 struct	pkthdr {
 	struct ifnet	*rcvif;			/* rcv interface */
@@ -177,6 +181,14 @@ struct	pkthdr {
 	int		csum_flags;		/* checksum flags */
 	uint32_t	csum_data;		/* checksum data */
 	u_int		segsz;			/* segment size */
+
+	/*
+	 * Following three fields are open-coded struct altq_pktattr
+	 * to rearrange struct pkthdr fields flexibly.
+	 */
+	void	*pattr_class;		/* ALTQ: sched class set by classifier */
+	void	*pattr_hdr;		/* ALTQ: saved header position in mbuf */
+	int	pattr_af;		/* ALTQ: address family */
 };
 
 /*
@@ -964,6 +976,10 @@ m_pkthdr_init(struct mbuf *m)
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
 	SLIST_INIT(&m->m_pkthdr.tags);
+
+	m->m_pkthdr.pattr_class = NULL;
+	m->m_pkthdr.pattr_af = AF_UNSPEC;
+	m->m_pkthdr.pattr_hdr = NULL;
 }
 
 void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)

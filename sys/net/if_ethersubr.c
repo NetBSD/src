@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.218 2016/04/15 01:31:29 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.219 2016/04/20 08:56:32 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.218 2016/04/15 01:31:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.219 2016/04/20 08:56:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -418,7 +418,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	 * address family/header pointer in the pktattr.
 	 */
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		altq_etherclassify(&ifp->if_snd, m, &pktattr);
+		altq_etherclassify(&ifp->if_snd, m, NULL);
 #endif
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
@@ -504,10 +504,10 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 	hdr = mtod(m, void *);
 
 	if (ALTQ_NEEDS_CLASSIFY(ifq))
-		pktattr->pattr_class =
+		m->m_pkthdr.pattr_class =
 		    (*ifq->altq_classify)(ifq->altq_clfier, m, af);
-	pktattr->pattr_af = af;
-	pktattr->pattr_hdr = hdr;
+	m->m_pkthdr.pattr_af = af;
+	m->m_pkthdr.pattr_hdr = hdr;
 
 	m->m_data -= hlen;
 	m->m_len += hlen;
@@ -515,9 +515,9 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 	return;
 
  bad:
-	pktattr->pattr_class = NULL;
-	pktattr->pattr_hdr = NULL;
-	pktattr->pattr_af = AF_UNSPEC;
+	m->m_pkthdr.pattr_class = NULL;
+	m->m_pkthdr.pattr_hdr = NULL;
+	m->m_pkthdr.pattr_af = AF_UNSPEC;
 }
 #endif /* ALTQ */
 
