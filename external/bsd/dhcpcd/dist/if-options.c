@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.31 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.32 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1447,6 +1447,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 						    ifname);
 						goto err_sla;
 					}
+					if (sla->sla == 0) {
+						logger(ctx, LOG_WARNING,
+						    "%s: sla of 0 is not "
+						    "RFC3633 (section 12.1) "
+						    "compliant",
+						    ifname);
+					}
 				}
 				p = np;
 			}
@@ -1686,14 +1693,18 @@ err_sla:
 			t |= UINT8;
 		else if (strcasecmp(arg, "bitflags") == 0)
 			t |= BITFLAG;
+		else if (strcasecmp(arg, "uint8") == 0)
+			t |= UINT8;
+		else if (strcasecmp(arg, "int8") == 0)
+			t |= INT8;
 		else if (strcasecmp(arg, "uint16") == 0)
 			t |= UINT16;
 		else if (strcasecmp(arg, "int16") == 0)
-			t |= SINT16;
+			t |= INT16;
 		else if (strcasecmp(arg, "uint32") == 0)
 			t |= UINT32;
 		else if (strcasecmp(arg, "int32") == 0)
-			t |= SINT32;
+			t |= INT32;
 		else if (strcasecmp(arg, "flag") == 0)
 			t |= FLAG;
 		else if (strcasecmp(arg, "raw") == 0)

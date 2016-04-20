@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.14 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.15 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -262,26 +262,38 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 	if (astate->failed.s_addr == state->addr.s_addr) {
 		struct timespec now, defend;
 
-		/* RFC 3927 Section 2.5 */
+		/* RFC 3927 Section 2.5 says a defence should
+		 * broadcast an ARP announcement.
+		 * Because the kernel will also unicast a reply to the
+		 * hardware address which requested the IP address
+		 * the other IPv4LL client will receieve two ARP
+		 * messages.
+		 * If another conflict happens within DEFEND_INTERVAL
+		 * then we must drop our address and negotiate a new one. */
 		defend.tv_sec = state->defend.tv_sec + DEFEND_INTERVAL;
 		defend.tv_nsec = state->defend.tv_nsec;
 		clock_gettime(CLOCK_MONOTONIC, &now);
-		if (timespeccmp(&defend, &now, >)) {
+		if (timespeccmp(&defend, &now, >))
 			logger(ifp->ctx, LOG_WARNING,
 			    "%s: IPv4LL %d second defence failed for %s",
 			    ifp->name, DEFEND_INTERVAL,
 			    inet_ntoa(state->addr));
-			ipv4_deladdr(ifp, &state->addr, &inaddr_llmask, 1);
-			state->down = 1;
-			script_runreason(ifp, "IPV4LL");
-			state->addr.s_addr = INADDR_ANY;
-		} else {
+		else if (arp_request(ifp,
+		    state->addr.s_addr, state->addr.s_addr) == -1)
+			logger(ifp->ctx, LOG_ERR,
+			    "%s: arp_request: %m", __func__);
+		else {
 			logger(ifp->ctx, LOG_DEBUG,
 			    "%s: defended IPv4LL address %s",
 			    ifp->name, inet_ntoa(state->addr));
 			state->defend = now;
 			return;
 		}
+
+		ipv4_deladdr(ifp, &state->addr, &inaddr_llmask, 1);
+		state->down = 1;
+		script_runreason(ifp, "IPV4LL");
+		state->addr.s_addr = INADDR_ANY;
 	}
 
 	arp_cancel(astate);

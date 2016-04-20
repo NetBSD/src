@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.12 2016/01/07 20:09:43 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.13 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * DO NOT EDIT!
@@ -126,6 +126,17 @@ const char * const dhcpcd_embedded_conf[] = {
 "embed byte rcode1",
 "embed byte rcode2",
 "embed optional domain fqdn",
+"define 83 embed isns",
+"embed byte reserved1",
+"embed bitflags=00000SAE functions",
+"embed byte reserved2",
+"embed bitflags=00fFsSCE dd",
+"embed byte reserved3",
+"embed bitflags=0000DMHE admin",
+"embed uint16 reserved4",
+"embed byte reserved5",
+"embed bitflags=0TXPAMSE server_security",
+"embed array ipaddress servers",
 "define 85 array ipaddress nds_servers",
 "define 86 raw nds_tree_name",
 "define 87 raw nds_context",

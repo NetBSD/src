@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd-embedded.h,v 1.9 2015/07/09 10:15:34 roy Exp $ */
+/* $NetBSD: dhcpcd-embedded.h,v 1.10 2016/04/20 08:53:01 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#define INITDEFINES	     122
+#define INITDEFINES	     123
 #define INITDEFINENDS	       6
 #define INITDEFINE6S	      68
 

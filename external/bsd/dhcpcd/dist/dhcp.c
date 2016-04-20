@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.38 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.39 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1492,7 +1492,7 @@ dhcp_openudp(struct interface *ifp)
 	char *p;
 #endif
 
-	if ((s = xsocket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, SOCK_CLOEXEC)) == -1)
+	if ((s = xsocket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP)) == -1)
 		return -1;
 
 	n = 1;

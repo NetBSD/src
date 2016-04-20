@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.19 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.20 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -96,12 +96,12 @@ if_opensockets(struct dhcpcd_ctx *ctx)
 		return -1;
 
 	/* We use this socket for some operations without INET. */
-	ctx->pf_inet_fd = xsocket(PF_INET, SOCK_DGRAM, 0, SOCK_CLOEXEC);
+	ctx->pf_inet_fd = xsocket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 	if (ctx->pf_inet_fd == -1)
 		return -1;
 
 #ifdef IFLR_ACTIVE
-	ctx->pf_link_fd = xsocket(PF_LINK, SOCK_DGRAM, 0, SOCK_CLOEXEC);
+	ctx->pf_link_fd = xsocket(PF_LINK, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 	if (ctx->pf_link_fd == -1)
 		return -1;
 #endif
@@ -686,32 +686,32 @@ if_sortinterfaces(struct dhcpcd_ctx *ctx)
 }
 
 int
-xsocket(int domain, int type, int protocol, int flags)
+xsocket(int domain, int type, int protocol)
 {
 	int s;
 #if !defined(HAVE_SOCK_CLOEXEC) || !defined(HAVE_SOCK_NONBLOCK)
-	int xflags;
+	int xflags, xtype = type;
 #endif
 
-#ifdef HAVE_SOCK_CLOEXEC
-	if (flags & SOCK_CLOEXEC)
-		type |= SOCK_CLOEXEC;
+#ifndef HAVE_SOCK_CLOEXEC
+	if (xtype & SOCK_CLOEXEC)
+		type &= ~SOCK_CLOEXEC;
 #endif
-#ifdef HAVE_SOCK_NONBLOCK
-	if (flags & SOCK_NONBLOCK)
-		type |= SOCK_NONBLOCK;
+#ifndef HAVE_SOCK_NONBLOCK
+	if (xtype & SOCK_NONBLOCK)
+		type &= ~SOCK_NONBLOCK;
 #endif
 
 	if ((s = socket(domain, type, protocol)) == -1)
 		return -1;
 
 #ifndef HAVE_SOCK_CLOEXEC
-	if ((flags & SOCK_CLOEXEC) && ((xflags = fcntl(s, F_GETFD)) == -1 ||
+	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(s, F_GETFD)) == -1 ||
 	    fcntl(s, F_SETFD, xflags | FD_CLOEXEC) == -1))
 		goto out;
 #endif
 #ifndef HAVE_SOCK_NONBLOCK
-	if ((flags & SOCK_NONBLOCK) && ((xflags = fcntl(s, F_GETFL)) == -1 ||
+	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(s, F_GETFL)) == -1 ||
 	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
 #endif

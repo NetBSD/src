@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.32 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.33 2016/04/20 08:53:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -348,24 +348,19 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 			dup2(fd, STDERR_FILENO);
 			close(fd);
 		}
-		break;
+		ctx->options |= DHCPCD_DAEMONISED;
+		return 0;
 	default:
 		/* Wait for child to detach */
 		close(sidpipe[1]);
 		if (read(sidpipe[0], &buf, 1) == -1)
 			logger(ctx, LOG_ERR, "failed to read child: %m");
 		close(sidpipe[0]);
-		break;
-	}
-	/* Done with the fd now */
-	if (pid != 0) {
 		logger(ctx, LOG_INFO, "forked to background, child pid %d", pid);
 		ctx->options |= DHCPCD_FORKED;
 		eloop_exit(ctx->eloop, EXIT_SUCCESS);
 		return pid;
 	}
-	ctx->options |= DHCPCD_DAEMONISED;
-	return pid;
 #endif
 }
 
@@ -1803,7 +1798,7 @@ printpidfile:
 			if (pid == -1)
 				logger(&ctx, LOG_ERR, "%s: pidfile_lock: %m",
 				    __func__);
-			else	
+			else
 				logger(&ctx, LOG_ERR, ""PACKAGE
 				    " already running on pid %d (%s)",
 				    pid, ctx.pidfile);

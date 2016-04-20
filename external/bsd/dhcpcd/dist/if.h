@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.14 2016/04/10 21:00:53 roy Exp $ */
+/* $NetBSD: if.h,v 1.15 2016/04/20 08:53:01 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -176,5 +176,5 @@ int if_initrt6(struct interface *);
 #endif
 
 int if_machinearch(char *, size_t);
-int xsocket(int, int, int, int);
+int xsocket(int, int, int);
 #endif
