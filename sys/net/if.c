@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.329 2016/04/11 09:21:18 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.330 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.329 2016/04/11 09:21:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.330 2016/04/20 09:01:04 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2671,15 +2671,14 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
  * not yet active.
  */
 int
-ifq_enqueue(struct ifnet *ifp, struct mbuf *m
-    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	int len = m->m_pkthdr.len;
 	int mflags = m->m_flags;
 	int s = splnet();
 	int error;
 
-	IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error != 0)
 		goto out;
 	ifp->if_obytes += len;
@@ -2696,8 +2695,7 @@ out:
  * Queue message on interface, possibly using a second fast queue
  */
 int
-ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
-    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m)
 {
 	int error = 0;
 
@@ -2714,7 +2712,7 @@ ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
 		} else
 			IF_ENQUEUE(ifq, m);
 	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+		IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error != 0) {
 		++ifp->if_oerrors;
 		return error;

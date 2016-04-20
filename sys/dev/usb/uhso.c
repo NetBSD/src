@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17 2014/11/15 19:18:19 christos Exp $	*/
+/*	$NetBSD: uhso.c,v 1.18 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17 2014/11/15 19:18:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.18 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2340,18 +2340,17 @@ Static int
 uhso_ifnet_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
-	ALTQ_DECL(struct altq_pktattr pktattr);
 	int error;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return EIO;
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-		error = ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+		error = ifq_enqueue(ifp, m);
 		break;
 #endif
 

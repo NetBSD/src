@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.116 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.117 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.116 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.117 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1346,7 +1346,6 @@ void
 bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
     int runfilt)
 {
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int len, error;
 	short mflags;
 
@@ -1382,7 +1381,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	len = m->m_pkthdr.len;
 	mflags = m->m_flags;
 
-	IFQ_ENQUEUE(&dst_ifp->if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(&dst_ifp->if_snd, m, error);
 
 	if (error) {
 		/* mbuf is already freed */

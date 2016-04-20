@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.74 2016/04/07 03:22:15 christos Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.75 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.74 2016/04/07 03:22:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.75 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -169,7 +169,6 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	struct token_rif bcastrif;
 	struct ifnet *ifp = ifp0;
 	size_t riflen = 0;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
@@ -197,7 +196,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 
@@ -370,7 +369,7 @@ send:
 	}
 #endif /* NCARP > 0 */
 
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 bad:
 	if (m)
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.220 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.221 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.220 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.221 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -197,7 +197,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
 	struct ifnet *ifp = ifp0;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 #ifdef INET
 	struct arphdr *ah;
 #endif /* INET */
@@ -420,7 +419,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
 		altq_etherclassify(&ifp->if_snd, m);
 #endif
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m)

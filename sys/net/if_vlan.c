@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.85 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.86 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.85 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.86 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -686,7 +686,6 @@ vlan_start(struct ifnet *ifp)
 	struct ethercom *ec = (void *) ifv->ifv_p;
 	struct mbuf *m;
 	int error;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 #ifndef NET_MPSAFE
 	KASSERT(KERNEL_LOCKED_P());
@@ -808,7 +807,7 @@ vlan_start(struct ifnet *ifp)
 		 * Send it, precisely as the parent's output routine
 		 * would have.  We are already running at splnet.
 		 */
-		IFQ_ENQUEUE(&p->if_snd, m, &pktattr, error);
+		IFQ_ENQUEUE(&p->if_snd, m, error);
 		if (error) {
 			/* mbuf is already freed */
 			ifp->if_oerrors++;

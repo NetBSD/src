@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.49 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.50 2016/04/20 09:01:04 knakahara Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.49 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.50 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -998,7 +998,6 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	int s, len, error;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	DPRINTFN(10,("%s: %s: enter\n",
 		     device_xname(((struct upl_softc *)ifp->if_softc)->sc_dev),
@@ -1008,7 +1007,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 * if the queueing discipline needs packet classification,
 	 * do it now.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	len = m->m_pkthdr.len;
 	s = splnet();
@@ -1016,7 +1015,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error) {
 		/* mbuf is already freed */
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.121 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.122 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.121 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.122 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -439,9 +439,8 @@ sloutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct ip *ip;
 	struct ifqueue *ifq = NULL;
 	int s, error;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	/*
 	 * `Cannot happen' (see slioctl).  Someday we will extend
@@ -492,8 +491,7 @@ sloutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	if ((ip->ip_tos & IPTOS_LOWDELAY) != 0)
 		ifq = &sc->sc_fastq;
 #endif
-	if ((error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA
-	    ALTQ_DECL(&pktattr))) != 0) {
+	if ((error = ifq_enqueue2(ifp, ifq, m)) != 0) {
 		splx(s);
 		return error;
 	}

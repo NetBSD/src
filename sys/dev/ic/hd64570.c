@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.47 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.48 2016/04/20 09:01:03 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.47 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.48 2016/04/20 09:01:03 knakahara Exp $");
 
 #include "opt_inet.h"
 
@@ -798,7 +798,6 @@ sca_output(
 	struct ifqueue *ifq = NULL;
 	int s, error, len;
 	short mflags;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	error = 0;
 
@@ -811,7 +810,7 @@ sca_output(
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	/*
 	 * determine address family, and priority for this packet
@@ -876,7 +875,7 @@ sca_output(
 		} else
 			IF_ENQUEUE(ifq, m);
 	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+		IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error != 0) {
 		splx(s);
 		ifp->if_oerrors++;

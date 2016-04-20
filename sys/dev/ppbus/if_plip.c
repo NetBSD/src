@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.25 2014/06/05 23:48:16 rmind Exp $ */
+/* $NetBSD: if_plip.c,v 1.26 2016/04/20 09:01:03 knakahara Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.25 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.26 2016/04/20 09:01:03 knakahara Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -704,7 +704,6 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct lp_softc * sc = ifp->if_softc;
 	device_t dev = sc->ppbus_dev.sc_dev;
 	device_t ppbus = device_parent(dev);
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int err;
 	int s;
 
@@ -731,7 +730,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto endoutput;
 	}
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, err);
 	if(err == 0) {
 		if((ifp->if_flags & IFF_OACTIVE) == 0)

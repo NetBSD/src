@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.123 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.124 2016/04/20 09:01:04 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.123 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.124 2016/04/20 09:01:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -503,7 +503,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	int		mlen;
 	uint32_t	*af;
 #endif
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();
 	mutex_enter(&tp->tun_lock);
@@ -520,7 +519,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * if the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family);
 
 	bpf_mtap_af(ifp, dst->sa_family, m0);
 
@@ -564,7 +563,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		}
 		/* FALLTHROUGH */
 	case AF_UNSPEC:
-		IFQ_ENQUEUE(&ifp->if_snd, m0, &pktattr, error);
+		IFQ_ENQUEUE(&ifp->if_snd, m0, error);
 		if (error) {
 			ifp->if_collisions++;
 			error = EAFNOSUPPORT;
