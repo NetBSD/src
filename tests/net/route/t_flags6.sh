@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.1 2016/04/21 05:10:15 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.2 2016/04/21 09:46:49 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -158,18 +158,21 @@ test_blackhole()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6_PEER
+
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore \
 	    rump.route delete -inet6 -net fc00::/64
 
+	# Gateway must be lo0
 	atf_check -s exit:0 -o ignore \
-	    rump.route add -inet6 -net fc00::/64 $IP6_PEER -blackhole
+	    rump.route add -inet6 -net fc00::/64 ::1 -blackhole
 	$DEBUG && rump.netstat -rn -f inet6
 
 	# Up, Gateway, Blackhole, Static
 	check_entry_flags fc00::/64 UGBS
 
-	atf_check -s not-exit:0 -o ignore -e match:'No route to host' \
+	atf_check -s not-exit:0 -o match:'100.0% packet loss' \
 	    rump.ping6 -n -X 1 -c 1 $IP6_PEER
 	$DEBUG && rump.netstat -rn -f inet6
 
