@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.208 2016/01/07 07:59:08 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.209 2016/04/21 15:42:56 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.208 2016/01/07 07:59:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.209 2016/04/21 15:42:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -861,8 +861,10 @@ usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
 	dlocs[USBDEVIFCF_CONFIGURATION] = -1;
 	dlocs[USBDEVIFCF_INTERFACE] = -1;
 
+	KERNEL_LOCK(1, NULL);
 	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 				 config_stdsubmatch);
+	KERNEL_UNLOCK_ONE(NULL);
 	if (dv) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL)
@@ -939,8 +941,10 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 			    loc != uiaa.ifaceno)
 				continue;
 		}
+		KERNEL_LOCK(1, NULL);
 		dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
 					 usbd_ifprint, config_stdsubmatch);
+		KERNEL_UNLOCK_ONE(NULL);
 		if (!dv)
 			continue;
 
