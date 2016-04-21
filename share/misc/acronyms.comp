@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.161 2016/03/22 17:41:26 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.162 2016/04/21 23:14:25 riastradh Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -750,6 +750,7 @@ ML	mailing list
 ML	markup language
 ML	maximum likelihood
 MLC	multi-level cell
+MLD	multicast listener discovery
 MLHP	micro loop heat pipe
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
