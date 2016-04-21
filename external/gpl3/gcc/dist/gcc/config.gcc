@@ -1060,7 +1060,7 @@ arm*-*-freebsd*)                # ARM FreeBSD EABI
 	;;
 arm*-*-netbsdelf*)
 	tmake_file="${tmake_file} arm/t-arm"
-	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h arm/aout.h arm/arm.h"
+	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	case ${target} in
 	arm*eb-*) tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1" ;;
@@ -1081,6 +1081,7 @@ arm*-*-netbsdelf*)
 	    tmake_file="$tmake_file arm/t-netbsd"
 	    ;;
 	esac
+	tm_file="${tm_file} arm/aout.h arm/arm.h"
 	case ${target} in
 	arm*-*-netbsdelf-*eabihf*)
 	    tm_defines="${tm_defines} TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD"
