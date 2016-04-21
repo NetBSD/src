@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.4 2016/04/04 07:37:08 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.5 2016/04/21 09:46:49 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -181,16 +181,20 @@ test_blackhole()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.0.1
+
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore rump.route delete -net 10.0.0.0/24
 
-	atf_check -s exit:0 -o ignore rump.route add -net 10.0.0.0/24 10.0.0.1 -blackhole
+	# Gateway must be lo0
+	atf_check -s exit:0 -o ignore \
+	    rump.route add -net 10.0.0.0/24 127.0.0.1 -blackhole
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Blackhole, Static
 	check_entry_flags 10.0.0/24 UGBS
 
-	atf_check -s not-exit:0 -o ignore -e match:'No route to host' \
+	atf_check -s not-exit:0 -o match:'100.0% packet loss' \
 	    rump.ping -n -w 1 -c 1 10.0.0.1
 	$DEBUG && rump.netstat -rn -f inet
 
