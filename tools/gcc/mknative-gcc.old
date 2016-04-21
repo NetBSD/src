@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc.old,v 1.2 2016/01/24 05:10:26 mrg Exp $
+#	$NetBSD: mknative-gcc.old,v 1.3 2016/04/21 07:22:15 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -24,9 +24,8 @@ fi
 
 . $_TOP/tools/gcc/mknative.common
 
-# default to GCC 4.1 for now
-_OUTDIR="$_TOP/gnu"
-_OUTDIRBASE="gnu"
+_OUTDIR="$_TOP/external/gpl3/gcc.old"
+_OUTDIRBASE="external/gpl3/gcc.old"
 
 sanitise_includes () {
 	sed \
@@ -381,7 +380,7 @@ __EOF__
 
 	# special transforms
 	for f in gtyp-input.list; do
-		sed -e 's/^.*external\/gpl3\/gcc\/dist/SRCDIR/' < $_TMPDIR/gcc/$f > $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f
+		sed -e 's/^.*external\/gpl3\/gcc\.old\/dist/SRCDIR/' < $_TMPDIR/gcc/$f > $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f
 	done
 
 	# special platforms
@@ -396,8 +395,6 @@ case "$1" in
 # .mk and .h files for libgcc bootstrap (from host build)
 
 libgcc*-bootstrap)
-	_OUTDIR="$_TOP/external/gpl3/gcc"
-	_OUTDIRBASE="external/gpl3/gcc"
 	get_libgcc gcc
 	get_libgcov gcc $_PLATFORM/libgcc/Makefile
 	get_crtstuff crtstuff
@@ -406,15 +403,11 @@ libgcc*-bootstrap)
 	;;
 
 libstdc++-bootstrap)
-	_OUTDIR="$_TOP/external/gpl3/gcc"
-	_OUTDIRBASE="external/gpl3/gcc"
 	get_libstdcxx_v3 libstdc++-v3 gcc
 	exit 0
 	;;
 
 gcc*)
-	_OUTDIR="$_TOP/external/gpl3/gcc"
-	_OUTDIRBASE="external/gpl3/gcc"
 	get_gcc gcc
 	get_libgcc gcc
 	get_libgcov gcc $_PLATFORM/libgcc/Makefile
