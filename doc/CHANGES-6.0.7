@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.62 2016/04/16 21:00:16 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.63 2016/04/21 15:27:09 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -7790,4 +7790,9 @@ libexec/httpd/tilde-luzah-bozo.c                up to 1.14
 	  would allow remote code execution, from shm@netbsd.org
 	o -C option supports now CGI scripts only
 	[mrg, ticket #1377]
+
+sys/compat/netbsd32/netbsd32_socket.c		1.42
+
+	Memory leak, triggerable from an unprivileged user.
+	[christos, ticket #1378]
 
