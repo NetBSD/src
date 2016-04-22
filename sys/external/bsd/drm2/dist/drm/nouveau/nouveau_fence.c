@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.3.2.1 2016/04/22 15:44:15 skrll Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.3.2.1 2016/04/22 15:44:15 skrll Exp $");
 
 #include <drm/drmP.h>
 
@@ -71,6 +71,7 @@ nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 		nouveau_fence_signal(fence);
 	}
 	spin_unlock(&fctx->lock);
+	spin_lock_destroy(&fctx->lock);
 }
 
 void

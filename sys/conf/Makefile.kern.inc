@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.183.2.3 2015/12/27 12:09:48 skrll Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.183.2.4 2016/04/22 15:44:12 skrll Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -52,7 +52,7 @@ _MKTARGET_CREATE?=	:
 ##
 # source tree is located via $S relative to the compilation directory
 .ifndef S
-S!=	cd ../../../..; pwd
+S!=	cd ../../../.. && pwd
 .endif
 
 ##
@@ -229,12 +229,12 @@ LINKFLAGS?=	${LINKFORMAT} ${LINKSCRIPT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 
 LINKFLAGS_DEBUG?=	-X
 
-SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c; \
-		${SIZE} $@; chmod 755 $@; \
+SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
+		${SIZE} $@ && chmod 755 $@ && \
 		${SYSTEM_CTFMERGE}
-SYSTEM_LD_TAIL_DEBUG?=; \
-		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+SYSTEM_LD_TAIL_DEBUG?=&& \
+		echo mv -f $@ $@.gdb && mv -f $@ $@.gdb && \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb && \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
@@ -254,9 +254,9 @@ SYSTEM_LD_HEAD+=	${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL_STAGE1=	${SYSTEM_LD_TAIL}
 SYSTEM_LD_TAIL_STAGE2=	${SYSTEM_LD_TAIL}
 .if defined(COPY_SYMTAB)
-SYSTEM_LD_TAIL_STAGE2+=	; echo ${DBSYM} $@; ${DBSYM} $@
+SYSTEM_LD_TAIL_STAGE2+=	&& echo ${DBSYM} $@ && ${DBSYM} $@
 .if !empty(DEBUG:M-g)
-SYSTEM_LD_TAIL_STAGE2+=	; echo ${DBSYM} $@.gdb; ${DBSYM} $@.gdb
+SYSTEM_LD_TAIL_STAGE2+=	&& echo ${DBSYM} $@.gdb && ${DBSYM} $@.gdb
 .endif
 .endif
 SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}

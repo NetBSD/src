@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.165.2.2 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.165.2.3 2016/04/22 15:44:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.2 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.3 2016/04/22 15:44:16 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -740,7 +740,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			 * signal, make all efforts to ensure that at
 			 * an LWP runs to see it.
 			 */
-			t->p_xstat = signo;
+			t->p_xsig = signo;
 			if (resume_all)
 				proc_unstop(t);
 			else
@@ -1146,7 +1146,7 @@ process_stoptrace(void)
 		return;
 	}
 
-	p->p_xstat = SIGTRAP;
+	p->p_xsig = SIGTRAP;
 	proc_stop(p, 1, SIGSTOP);
 	mutex_exit(proc_lock);
 

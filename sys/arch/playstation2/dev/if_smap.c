@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.17.6.2 2016/03/19 11:30:03 skrll Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.17.6.3 2016/04/22 15:44:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,21 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17.6.2 2016/03/19 11:30:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17.6.3 2016/04/22 15:44:11 skrll Exp $");
 
 #include "debug_playstation2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
+#include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
+#include <sys/rndsource.h>
 #include <sys/socket.h>
 
 #include <playstation2/ee/eevar.h>
-
-#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -53,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17.6.2 2016/03/19 11:30:03 skrll Exp $
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <netinet/in.h>
@@ -119,7 +117,7 @@ struct smap_softc {
 STATIC int smap_match(struct device *, struct cfdata *, void *);
 STATIC void smap_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(smap, sizeof (struct smap_softc),
+CFATTACH_DECL_NEW(smap, sizeof (struct smap_softc),
     smap_match, smap_attach, NULL, NULL);
 
 STATIC int smap_intr(void *);
@@ -260,7 +258,6 @@ int
 smap_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct smap_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
 	int error, s;
 
 	s = splnet();
@@ -409,7 +406,7 @@ smap_rxeof(void *arg)
 		
 		if (m != NULL) {
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp, m);
 			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 	}
@@ -509,7 +506,7 @@ smap_start(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		KDASSERT(m0 != NULL);
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 
 		p = (u_int8_t *)sc->tx_buf;
 		q = p + sz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.97.4.1 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.97.4.2 2016/04/22 15:44:17 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.1 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.2 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -730,7 +730,6 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct ifqueue *ifq;
 	int s, error;
 	u_char dl_addrbuf[STARMODE_ADDR_LEN+1];
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/*
 	 * Verify tty line is up and alive.
@@ -854,8 +853,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	splx(s);
 
 	s = splnet();
-	if ((error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA
-	    ALTQ_DECL(&pktattr))) != 0) {
+	if ((error = ifq_enqueue2(ifp, ifq, m)) != 0) {
 		splx(s);
 		return error;
 	}

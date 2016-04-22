@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.50 2014/06/07 10:30:13 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.50.4.1 2016/04/22 15:44:09 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -169,6 +169,7 @@
 #include <arm/arm32/machdep.h>
 #ifdef OVERO
 #include <arm/omap/omap2_gpmcreg.h>
+#include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_var.h>
@@ -334,6 +335,13 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		PTE_NOCACHE,
 	},
 #elif defined(OVERO)
+	{
+		OVERO_L4_CORE_VBASE,
+		_A(OMAP3530_L4_CORE_BASE),
+		_S(L1_S_SIZE),		/* No need 16MB.  Use only first 1MB */
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE
+	},
 	{
 		OVERO_L4_PERIPHERAL_VBASE,
 		_A(OMAP3530_L4_PERIPHERAL_BASE),
@@ -919,5 +927,29 @@ gumstix_device_register(device_t dev, void *aux)
 			printf("WARNING: unable to set power-mask for port3"
 			    " property for %s\n", device_xname(dev));
 		}
+	}
+	if (device_is_a(dev, "omapmputmr")) {
+#ifdef OVERO
+		struct obio_attach_args *obio = aux;
+		int en;
+
+		switch (obio->obio_addr) {
+		case 0x49032000:	/* GPTIMER2 */
+		case 0x49034000:	/* GPTIMER3 */
+		case 0x49036000:	/* GPTIMER4 */
+		case 0x49038000:	/* GPTIMER5 */
+		case 0x4903a000:	/* GPTIMER6 */
+		case 0x4903c000:	/* GPTIMER7 */
+		case 0x4903e000:	/* GPTIMER8 */
+		case 0x49040000:	/* GPTIMER9 */
+			/* Ensure enable PRCM.CM_[FI]CLKEN_PER[3:10]. */
+			en = 1 << (((obio->obio_addr >> 13) & 0x3f) - 0x16);
+			ioreg_write(OVERO_L4_CORE_VBASE + 0x5000,
+			    ioreg_read(OVERO_L4_CORE_VBASE + 0x5000) | en);
+			ioreg_write(OVERO_L4_CORE_VBASE + 0x5010,
+			    ioreg_read(OVERO_L4_CORE_VBASE + 0x5010) | en);
+			break;
+		}
+#endif
 	}
 }

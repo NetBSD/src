@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.362.2.4 2016/03/19 11:29:54 skrll Exp $
+# $NetBSD: GENERIC,v 1.362.2.5 2016/04/22 15:44:08 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.362.2.4 $"
+ident		"GENERIC-$Revision: 1.362.2.5 $"
 
 maxusers 32
 
@@ -641,7 +641,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.300.2.5 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.300.2.6 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.5 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.6 2016/04/22 15:44:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -127,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.5 2016/03/19 11:30:32 skrll Exp $");
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <net/if_types.h>
-#include <net/radix.h>
 #include <net/route.h>
 #include <net/netisr.h>
 #include <sys/module.h>
@@ -209,6 +208,11 @@ struct if_percpuq {
 };
 
 static struct mbuf *if_percpuq_dequeue(struct if_percpuq *);
+
+static void if_percpuq_drops(void *, void *, struct cpu_info *);
+static int sysctl_percpuq_drops_handler(SYSCTLFN_PROTO);
+static void sysctl_percpuq_setup(struct sysctllog **, const char *,
+    struct if_percpuq *);
 
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
@@ -718,6 +722,8 @@ if_percpuq_create(struct ifnet *ifp)
 	ipq->ipq_ifqs = percpu_alloc(sizeof(struct ifqueue));
 	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_init_ifq, NULL);
 
+	sysctl_percpuq_setup(&ifp->if_sysctl_log, ifp->if_xname, ipq);
+
 	return ipq;
 }
 
@@ -781,6 +787,100 @@ if_percpuq_enqueue(struct if_percpuq *ipq, struct mbuf *m)
 out:
 	splx(s);
 }
+
+static void
+if_percpuq_drops(void *p, void *arg, struct cpu_info *ci __unused)
+{
+	struct ifqueue *const ifq = p;
+	int *sum = arg;
+
+	*sum += ifq->ifq_drops;
+}
+
+static int
+sysctl_percpuq_drops_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct if_percpuq *ipq;
+	int sum = 0;
+	int error;
+
+	node = *rnode;
+	ipq = node.sysctl_data;
+
+	percpu_foreach(ipq->ipq_ifqs, if_percpuq_drops, &sum);
+
+	node.sysctl_data = &sum;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	return 0;
+}
+
+static void
+sysctl_percpuq_setup(struct sysctllog **clog, const char* ifname,
+    struct if_percpuq *ipq)
+{
+	const struct sysctlnode *cnode, *rnode;
+
+	if (sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "interfaces",
+		       SYSCTL_DESCR("Per-interface controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, ifname,
+		       SYSCTL_DESCR("Interface controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "rcvq",
+		       SYSCTL_DESCR("Interface input queue controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+#ifdef NOTYET
+	/* XXX Should show each per-CPU queue length? */
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "len",
+		       SYSCTL_DESCR("Current input queue length"),
+		       sysctl_percpuq_len, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxlen",
+		       SYSCTL_DESCR("Maximum allowed input queue length"),
+		       sysctl_percpuq_maxlen_handler, 0, (void *)ipq, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+#endif
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "drops",
+		       SYSCTL_DESCR("Total packets dropped due to full input queue"),
+		       sysctl_percpuq_drops_handler, 0, (void *)ipq, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	return;
+bad:
+	printf("%s: could not attach sysctl nodes\n", ifname);
+	return;
+}
+
 
 /*
  * The common interface input routine that is called by device drivers,
@@ -1455,8 +1555,8 @@ ifa_ifwithnet(const struct sockaddr *addr)
 				}
 			}
 			if (ifa_maybe == NULL ||
-			    rn_refines((void *)ifa->ifa_netmask,
-			    (void *)ifa_maybe->ifa_netmask))
+			    rt_refines(ifa->ifa_netmask,
+			               ifa_maybe->ifa_netmask))
 				ifa_maybe = ifa;
 		}
 	}
@@ -1782,7 +1882,6 @@ p2p_rtrequest(int req, struct rtentry *rt,
 			break;
 
 		rt->rt_ifp = lo0ifp;
-		rt->rt_flags &= ~RTF_LLINFO;
 
 		/*
 		 * Make sure to set rt->rt_ifa to the interface
@@ -1793,7 +1892,6 @@ p2p_rtrequest(int req, struct rtentry *rt,
 			rt_replace_ifa(rt, ifa);
 		break;
 	case RTM_DELETE:
-	case RTM_RESOLVE:
 	default:
 		break;
 	}
@@ -2573,15 +2671,14 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
  * not yet active.
  */
 int
-ifq_enqueue(struct ifnet *ifp, struct mbuf *m
-    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	int len = m->m_pkthdr.len;
 	int mflags = m->m_flags;
 	int s = splnet();
 	int error;
 
-	IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error != 0)
 		goto out;
 	ifp->if_obytes += len;
@@ -2598,8 +2695,7 @@ out:
  * Queue message on interface, possibly using a second fast queue
  */
 int
-ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
-    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m)
 {
 	int error = 0;
 
@@ -2616,7 +2712,7 @@ ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
 		} else
 			IF_ENQUEUE(ifq, m);
 	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+		IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error != 0) {
 		++ifp->if_oerrors;
 		return error;

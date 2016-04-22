@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.143.6.3 2016/04/06 22:00:02 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.143.6.4 2016/04/22 15:44:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143.6.3 2016/04/06 22:00:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143.6.4 2016/04/22 15:44:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143.6.3 2016/04/06 22:00:02 skrll E
 #include "opt_kernhist.h"
 #include "opt_ddbparam.h"
 #include "opt_multiprocessor.h"
-#include "arp.h"
 #endif
 
 #include <sys/param.h>
@@ -98,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143.6.3 2016/04/06 22:00:02 skrll E
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
+
+#include <net/route.h>
 
 /*
  * Results of command search.
@@ -229,8 +230,8 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("all",	NULL,
 	    CS_COMPAT, NULL,NULL,NULL) },
-#if defined(INET) && (NARP > 0)
-	{ DDB_ADD_CMD("arptab",	db_show_arptab,		0,NULL,NULL,NULL) },
+#if defined(INET)
+	{ DDB_ADD_CMD("routes",	db_show_routes,		0,NULL,NULL,NULL) },
 #endif
 #ifdef _KERNEL
 	{ DDB_ADD_CMD("breaks",	db_listbreak_cmd, 	0,

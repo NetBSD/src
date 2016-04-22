@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.148.2.5 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.148.2.6 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.5 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.6 2016/04/22 15:44:17 skrll Exp $");
 
 #include "arp.h"
 
@@ -1767,17 +1767,15 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 		return (ENOENT);
 	}
 
-	if (!(lle->la_flags & LLE_IFADDR) || (flags & LLE_IFADDR)) {
-		LLE_WLOCK(lle);
-		lle->la_flags |= LLE_DELETED;
+	LLE_WLOCK(lle);
+	lle->la_flags |= LLE_DELETED;
 #ifdef DIAGNOSTIC
-		log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
+	log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
 #endif
-		if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
-			llentry_free(lle);
-		else
-			LLE_WUNLOCK(lle);
-	}
+	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
+		llentry_free(lle);
+	else
+		LLE_WUNLOCK(lle);
 
 	return (0);
 }
@@ -1855,6 +1853,23 @@ in_lltable_lookup(struct lltable *llt, u_int flags, const struct sockaddr *l3add
 	return lle;
 }
 
+static int
+in_lltable_dump_entry(struct lltable *llt, struct llentry *lle,
+    struct rt_walkarg *w)
+{
+	struct sockaddr_in sin;
+
+	LLTABLE_LOCK_ASSERT();
+
+	/* skip deleted entries */
+	if (lle->la_flags & LLE_DELETED)
+		return 0;
+
+	sockaddr_in_init(&sin, &lle->r_l3addr.addr4, 0);
+
+	return lltable_dump_entry(llt, lle, w, sintosa(&sin));
+}
+
 #endif /* NARP > 0 */
 
 static void
@@ -1904,9 +1919,7 @@ in_lltattach(struct ifnet *ifp)
 	llt->llt_lookup = in_lltable_lookup;
 	llt->llt_create = in_lltable_create;
 	llt->llt_delete = in_lltable_delete;
-#if 0
 	llt->llt_dump_entry = in_lltable_dump_entry;
-#endif
 	llt->llt_hash = in_lltable_hash;
 	llt->llt_fill_sa_entry = in_lltable_fill_sa_entry;
 	llt->llt_free_entry = in_lltable_free_entry;

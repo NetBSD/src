@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.63.2.1 2015/09/22 12:05:43 skrll Exp $
+# $NetBSD: VR41XX,v 1.63.2.2 2016/04/22 15:44:09 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.63.2.1 $"
+#ident 		"GENERIC-$Revision: 1.63.2.2 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -501,7 +501,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.55.2.1 2015/12/27 12:09:43 skrll Exp $ */
+/*	$NetBSD: param.h,v 1.55.2.2 2016/04/22 15:44:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,6 +108,11 @@ extern int nbpg, pgofset, pgshift;
 #define	MAXPHYS		(64 * 1024)
 
 #ifdef __arch64__
+
+#ifdef SUN4V
+#define	MAXCPUS		256
+#endif
+
 /* We get stack overflows w/8K stacks in 64-bit mode */
 #define	SSIZE		2		/* initial stack size in pages */
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.179.2.1 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.179.2.2 2016/04/22 15:44:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.179.2.1 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.179.2.2 2016/04/22 15:44:16 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -509,7 +509,7 @@ lwp_unstop(struct lwp *l)
 	if (l->l_wchan == NULL) {
 		/* setrunnable() will release the lock. */
 		setrunnable(l);
-	} else if (p->p_xstat && (l->l_flag & LW_SINTR) != 0) {
+	} else if (p->p_xsig && (l->l_flag & LW_SINTR) != 0) {
 		/* setrunnable() so we can receive the signal */
 		setrunnable(l);
 	} else {
@@ -1043,7 +1043,7 @@ lwp_exit(struct lwp *l)
 		KASSERT(current == true);
 		KASSERT(p != &proc0);
 		/* XXXSMP kernel_lock not held */
-		exit1(l, 0);
+		exit1(l, 0, 0);
 		/* NOTREACHED */
 	}
 	p->p_nzlwps++;

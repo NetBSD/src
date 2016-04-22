@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.5 2012/01/11 16:08:57 macallan Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.5.24.1 2016/04/22 15:44:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.5 2012/01/11 16:08:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.5.24.1 2016/04/22 15:44:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,7 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 		cgtwelve_select_ovl(sc, CG12_SEL_OVL);
 		memset(sc->sc_fbaddr, 0, 0x20000);
 
-		/* and make sure we can write the 24bit fb */
+		/* and make sure we can write the 8bit fb */
 		cgtwelve_select_ovl(sc, CG12_SEL_8BIT);
 		break;
 	case 24:
