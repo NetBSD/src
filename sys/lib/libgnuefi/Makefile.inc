@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.12.1 2015/09/22 12:06:07 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.1.12.2 2016/04/22 15:44:16 skrll Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -56,7 +56,6 @@ ${GNUEFILIB}:		.NOTMAIN .MAKE __always_make_gnuefilib
 .else
 	@${GNUEFIMAKE} libgnuefi.o
 .endif
-	@echo done
 
 ${GNUEFILIB_PROF}:		.NOTMAIN .MAKE __always_make_gnuefilib
 	@echo making sure the profiled gnuefi library is up to date...
@@ -65,25 +64,21 @@ ${GNUEFILIB_PROF}:		.NOTMAIN .MAKE __always_make_gnuefilib
 .else
 	@${GNUEFIMAKE} libgnuefi.po
 .endif
-	@echo done
 
 clean:			.NOTMAIN cleangnuefilib
 cleangnuefilib:		.NOTMAIN
 	@echo cleaning the gnuefi library objects
 	@if [ -d "${GNUEFIDST}" ]; then ${GNUEFIMAKE} clean; fi
-	@echo done
 
 cleandir distclean:	.NOTMAIN cleandirgnuefilib
 cleandirgnuefilib:		.NOTMAIN
 	@echo cleandiring the gnuefi library objects
 	@if [ -d "${GNUEFIDST}" ]; then ${GNUEFIMAKE} cleandir; fi
-	@echo done
 
 dependall depend:	.NOTMAIN dependgnuefilib
 dependgnuefilib:		.NOTMAIN .MAKE __always_make_gnuefilib
 	@echo depending the gnuefi library objects
 	@${GNUEFIMAKE} depend
-	@echo done
 
 __always_make_gnuefilib:	.NOTMAIN
 	@mkdir -p ${GNUEFIDST}

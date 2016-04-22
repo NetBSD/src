@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.1.2.3 2016/04/22 15:44:17 skrll Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.1.2.3 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -546,7 +546,7 @@ sctp_choose_v4_boundspecific_inp(struct sctp_inpcb *inp,
 	ifn = rt->rt_ifp;
 	if (ifn) {
 		/* is a prefered one on the interface we route out? */
-		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifn) {
 			sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 			if (sin == NULL)
 				continue;
@@ -555,7 +555,7 @@ sctp_choose_v4_boundspecific_inp(struct sctp_inpcb *inp,
 			}
 		}
 		/* is an acceptable one on the interface we route out? */
-		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifn) {
 			sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 			if (sin == NULL)
 				continue;
@@ -648,7 +648,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 		 */
 		if (ifn) {
 			/* first try for an prefered address on the ep */
-			TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(ifa, ifn) {
 				if (sctp_is_addr_in_ep(inp, ifa)) {
 					sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 					if (sin == NULL)
@@ -662,7 +662,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 				}
 			}
 			/* next try for an acceptable address on the ep */
-			TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(ifa, ifn) {
 				if (sctp_is_addr_in_ep(inp, ifa)) {
 					sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 					if (sin == NULL)
@@ -762,7 +762,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 				continue;
 			/* first question, is laddr->ifa an address associated with the emit interface */
 			if (ifn) {
-				TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+				IFADDR_FOREACH(ifa, ifn) {
 					if (laddr->ifa == ifa) {
 						sin = (struct sockaddr_in *)laddr->ifa->ifa_addr;
 						return (sin->sin_addr);
@@ -786,7 +786,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 				continue;
 			/* first question, is laddr->ifa an address associated with the emit interface */
 			if (ifn) {
-				TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+				IFADDR_FOREACH(ifa, ifn) {
 					if (laddr->ifa == ifa) {
 						sin = (struct sockaddr_in *)laddr->ifa->ifa_addr;
 						return (sin->sin_addr);
@@ -836,7 +836,7 @@ sctp_select_v4_nth_prefered_addr_from_ifn_boundall (struct ifnet *ifn, struct sc
 	struct sockaddr_in *sin;
 	uint8_t sin_loop, sin_local;
 	int num_eligible_addr = 0;
-	TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifn) {
 		sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 		if (sin == NULL)
 			continue;
@@ -864,7 +864,7 @@ sctp_count_v4_num_prefered_boundall (struct ifnet *ifn, struct sctp_tcb *stcb, i
 	struct sockaddr_in *sin;
 	int num_eligible_addr = 0;
 
-	TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifn) {
 		sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, sin_loop, sin_local);
 		if (sin == NULL)
 			continue;
@@ -956,7 +956,7 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 	 *         and see if we can find an acceptable address.
 	 */
  bound_all_v4_plan_b:
-	TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifn) {
 		sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 		if (sin == NULL)
 			continue;
@@ -975,9 +975,9 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 	 *         address. If we reache here we are in trouble I think.
 	 */
  bound_all_v4_plan_c:
-	for (ifn = TAILQ_FIRST(&ifnet_list);
-	     ifn && (ifn != inp->next_ifn_touse);
-	     ifn=TAILQ_NEXT(ifn, if_list)) {
+	IFNET_FOREACH(ifn) {
+		if (ifn == inp->next_ifn_touse)
+			break;
 		if (loopscope == 0 && ifn->if_type == IFT_LOOP) {
 			/* wrong base scope */
 			continue;
@@ -1021,9 +1021,9 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 	 *         illicit an ABORT, falling through.
 	 */
 
-	for (ifn = TAILQ_FIRST(&ifnet_list);
-	     ifn && (ifn != inp->next_ifn_touse);
-	     ifn=TAILQ_NEXT(ifn, if_list)) {
+	IFNET_FOREACH(ifn) {
+		if (ifn == inp->next_ifn_touse)
+			break;
 		if (loopscope == 0 && ifn->if_type == IFT_LOOP) {
 			/* wrong base scope */
 			continue;
@@ -1032,7 +1032,7 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 			/* already looked at this guy */
 			continue;
 
-		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifn) {
 			sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 			if (sin == NULL)
 				continue;
@@ -1297,7 +1297,7 @@ sctp_choose_v6_boundspecific_stcb(struct sctp_inpcb *inp,
 		 * in our list, if so, we want that one.
 		 */
 		if (ifn) {
-			TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(ifa, ifn) {
 				if (sctp_is_addr_in_ep(inp, ifa)) {
 					sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 					if (sin6 == NULL)
@@ -1398,7 +1398,7 @@ sctp_choose_v6_boundspecific_stcb(struct sctp_inpcb *inp,
 				continue;
 			/* first question, is laddr->ifa an address associated with the emit interface */
 			if (ifn) {
-				TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+				IFADDR_FOREACH(ifa, ifn) {
 					if (laddr->ifa == ifa) {
 						sin6 = (struct sockaddr_in6 *)laddr->ifa->ifa_addr;
 						return (sin6);
@@ -1477,7 +1477,7 @@ sctp_choose_v6_boundspecific_inp(struct sctp_inpcb *inp,
 
 	ifn = rt->rt_ifp;
 	if (ifn) {
-		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifn) {
 			sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 			if (sin6 == NULL)
 				continue;
@@ -1547,7 +1547,7 @@ sctp_select_v6_nth_addr_from_ifn_boundall (struct ifnet *ifn, struct sctp_tcb *s
 	int sin_loop, sin_local;
 	int num_eligible_addr = 0;
 
-	TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifn) {
 		sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 		if (sin6 == NULL)
 			continue;
@@ -1595,7 +1595,7 @@ sctp_count_v6_num_eligible_boundall (struct ifnet *ifn, struct sctp_tcb *stcb,
 	int num_eligible_addr = 0;
 	int sin_loop, sin_local;
 
-	TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifn) {
 		sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 		if (sin6 == NULL)
 			continue;
@@ -1715,14 +1715,14 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 #endif
 	if (inp->next_ifn_touse == NULL) {
 		started_at_beginning=1;
-		inp->next_ifn_touse = TAILQ_FIRST(&ifnet_list);
+		inp->next_ifn_touse = IFNET_FIRST();
 #ifdef SCTP_DEBUG
 		if (sctp_debug_on & SCTP_DEBUG_OUTPUT1) {
 			printf("Start at first IFN:%p\n", inp->next_ifn_touse);
 		}
 #endif
 	} else {
-		inp->next_ifn_touse = TAILQ_NEXT(inp->next_ifn_touse, if_list);
+		inp->next_ifn_touse = IFNET_NEXT(inp->next_ifn_touse);
 #ifdef SCTP_DEBUG
 		if (sctp_debug_on & SCTP_DEBUG_OUTPUT1) {
 			printf("Resume at IFN:%p\n", inp->next_ifn_touse);
@@ -1735,11 +1735,10 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 			}
 #endif
 			started_at_beginning=1;
-			inp->next_ifn_touse = TAILQ_FIRST(&ifnet_list);
+			inp->next_ifn_touse = IFNET_FIRST();
 		}
 	}
-	for (ifn = inp->next_ifn_touse; ifn;
-	     ifn = TAILQ_NEXT(ifn, if_list)) {
+	IFNET_FOREACH(ifn) {
 		if (loopscope == 0 && ifn->if_type == IFT_LOOP) {
 			/* wrong base scope */
 			continue;
@@ -2714,7 +2713,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		int cnt;
 
 		cnt = cnt_inits_to;
- 		TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
+ 		IFNET_FOREACH(ifn) {
 			if ((stcb->asoc.loopback_scope == 0) &&
 			    (ifn->if_type == IFT_LOOP)) {
 				/*
@@ -2723,7 +2722,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 				 */
 				continue;
 			}
-			TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(ifa, ifn) {
 				if (sctp_is_address_in_scope(ifa,
 				    stcb->asoc.ipv4_addr_legal,
 				    stcb->asoc.ipv6_addr_legal,
@@ -2737,7 +2736,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 			}
 		}
 		if (cnt > 1) {
-			TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
+			IFNET_FOREACH(ifn) {
 				if ((stcb->asoc.loopback_scope == 0) &&
 				    (ifn->if_type == IFT_LOOP)) {
 					/*
@@ -2746,7 +2745,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 					 */
 					continue;
 				}
-				TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+				IFADDR_FOREACH(ifa, ifn) {
 					if (sctp_is_address_in_scope(ifa,
 					    stcb->asoc.ipv4_addr_legal,
 					    stcb->asoc.ipv6_addr_legal,
@@ -3659,7 +3658,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		struct ifaddr *ifa;
 		int cnt = cnt_inits_to;
 
-		TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
+		IFNET_FOREACH(ifn) {
 			if ((stc.loopback_scope == 0) &&
 			    (ifn->if_type == IFT_LOOP)) {
 				/*
@@ -3668,7 +3667,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 				 */
 				continue;
 			}
-			TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(ifa, ifn) {
 				if (sctp_is_address_in_scope(ifa,
 				    stc.ipv4_addr_legal, stc.ipv6_addr_legal,
 				    stc.loopback_scope, stc.ipv4_scope,
@@ -3679,7 +3678,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 			}
 		}
 		if (cnt > 1) {
-			TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
+			IFNET_FOREACH(ifn) {
 				if ((stc.loopback_scope == 0) &&
 				    (ifn->if_type == IFT_LOOP)) {
 					/*
@@ -3688,7 +3687,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 					 */
 					continue;
 				}
-				TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+				IFADDR_FOREACH(ifa, ifn) {
 					if (sctp_is_address_in_scope(ifa,
 					    stc.ipv4_addr_legal,
 					    stc.ipv6_addr_legal,

@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.1.2.3 2016/04/22 15:44:17 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.1.2.3 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1312,7 +1312,6 @@ sctp_inpcb_alloc(struct socket *so)
 
 	error = 0;
 
-	printf("sctp_inpcb_alloc: starting\n");
         /* Hack alert:
 	 *
 	 * This code audits the entire INP list to see if
@@ -2339,8 +2338,8 @@ sctp_is_address_on_local_host(struct sockaddr *addr)
 {
 	struct ifnet *ifn;
 	struct ifaddr *ifa;
-	TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
-		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+	IFNET_FOREACH(ifn) {
+		IFADDR_FOREACH(ifa, ifn) {
 			if (addr->sa_family == ifa->ifa_addr->sa_family) {
 				/* same family */
 				if (addr->sa_family == AF_INET) {

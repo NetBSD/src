@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155.2.1 2015/09/22 12:05:39 skrll Exp $
+# $NetBSD: GENERIC,v 1.155.2.2 2016/04/22 15:44:09 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -428,7 +428,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

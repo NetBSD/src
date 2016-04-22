@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.26 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.26.42.1 2016/04/22 15:44:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -35,6 +35,10 @@
 #define _SYS_WAIT_H_
 
 #include <sys/featuretest.h>
+#include <sys/types.h>
+#include <sys/sigtypes.h>
+#include <sys/siginfo.h>
+#include <sys/idtype.h>
 
 /*
  * This file holds definitions relevent to the wait4 system call
@@ -53,7 +57,9 @@
 
 #define	_WSTATUS(x)	(_W_INT(x) & 0177)
 #define	_WSTOPPED	0177		/* _WSTATUS if process is stopped */
+#define _WCONTINUED	0xffffU
 #define WIFSTOPPED(x)	(_WSTATUS(x) == _WSTOPPED)
+#define WIFCONTINUED(x)	(_W_INT(x) == _WCONTINUED)
 #define WSTOPSIG(x)	((int)(((unsigned int)_W_INT(x)) >> 8) & 0xff)
 #define WIFSIGNALED(x)	(_WSTATUS(x) != _WSTOPPED && _WSTATUS(x) != 0)
 #define WTERMSIG(x)	(_WSTATUS(x))
@@ -65,6 +71,7 @@
 
 #define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
 #define	W_STOPCODE(sig)		((sig) << 8 | _WSTOPPED)
+#define	W_CONTCODE()		(_WCONTINUED)
 #endif
 
 /*
@@ -79,6 +86,7 @@
 #define WNOHANG		0x00000001	/* don't hang in wait */
 #define WUNTRACED	0x00000002	/* tell about stopped,
 					   untraced children */
+#define	WSTOPPED	WUNTRACED	/* SUS compatibility */
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	WALTSIG		0x00000004	/* wait for processes that exit
 					   with an alternate signal (i.e.
@@ -86,6 +94,11 @@
 #define	WALLSIG		0x00000008	/* wait for processes that exit
 					   with any signal, i.e. SIGCHLD
 					   and alternates */
+#define	WCONTINUED	0x00000010	/* Report a job control continued
+					   process. */
+#define	WEXITED		0x00000020	/* Wait for exited processes. */
+#define	WTRAPPED	0x00000040	/* Wait for a process to hit a trap or
+				 	   a breakpoint. */
 
 /*
  * These are the Linux names of some of the above flags, for compatibility
@@ -163,7 +176,6 @@ union wait {
 #define w_stopval	w_S.w_Stopval
 #define w_stopsig	w_S.w_Stopsig
 
-#define	WSTOPPED	_WSTOPPED
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #ifndef _KERNEL
@@ -171,13 +183,16 @@ union wait {
 
 __BEGIN_DECLS
 struct rusage;	/* forward declaration */
+struct wrusage;
 
 pid_t	wait(int *);
 pid_t	waitpid(pid_t, int *, int);
+int	waitid(idtype_t, id_t, siginfo_t *, int); 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
 pid_t	wait3(int *, int, struct rusage *) __RENAME(__wait350);
 pid_t	wait4(pid_t, int *, int, struct rusage *) __RENAME(__wait450);
+pid_t	wait6(idtype_t, id_t, int *, int, struct wrusage *, siginfo_t *);
 #endif
 #endif
 __END_DECLS

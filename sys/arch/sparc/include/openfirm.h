@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.7.40.2 2015/12/27 12:09:43 skrll Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.7.40.3 2016/04/22 15:44:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,6 +61,7 @@ typedef uint32_t cell_t;
 #define HDQ2CELL_LO(x)	(cell_t)(x)
 #endif /* __sparc_v9__ */
 
+void	OF_init(void);
 int	OF_test(const char *);
 int	OF_test_method(int, const char *);
 void	OF_set_symbol_lookup(void (*)(void *), void (*)(void *));

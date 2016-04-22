@@ -94,6 +94,8 @@ static struct drm_driver driver = {
 	.ioctls = via_ioctls,
 #ifndef __NetBSD__
 	.fops = &via_driver_fops,
+#else
+	.mmap_object = drm_mmap_object,
 #endif
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,

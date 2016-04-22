@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_core_subdev.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_core_subdev.c,v 1.2.8.1 2016/04/22 15:44:15 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_core_subdev.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_core_subdev.c,v 1.2.8.1 2016/04/22 15:44:15 skrll Exp $");
 
 #include <core/object.h>
 #include <core/subdev.h>
@@ -79,6 +79,7 @@ nouveau_subdev_destroy(struct nouveau_subdev *subdev)
 {
 	int subidx = nv_hclass(subdev) & 0xff;
 	nv_device(subdev)->subdev[subidx] = NULL;
+	linux_mutex_destroy(&subdev->mutex);
 	nouveau_object_destroy(&subdev->base);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.h,v 1.6 2014/07/04 07:27:28 martin Exp $	*/
+/*	$NetBSD: interrupt.h,v 1.6.6.1 2016/04/22 15:44:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -25,6 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/evcnt.h>
 
 enum ipl_type {
 	IPL_INTC,

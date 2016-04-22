@@ -1,4 +1,4 @@
-#       $NetBSD: std.vexpress,v 1.2.2.2 2015/04/06 15:17:55 skrll Exp $
+#       $NetBSD: std.vexpress,v 1.2.2.3 2016/04/22 15:44:09 skrll Exp $
 #
 # standard NetBSD/evbarm for VEXPRESS options
 
@@ -7,8 +7,6 @@ include 	"arch/evbarm/conf/std.evbarm"
 
 # Pull in VEXPRESS config definitions
 include 	"arch/evbarm/conf/files.vexpress"
-
-makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
 
 # To support easy transit to ../arch/arm/arm32
 options 	MODULAR
@@ -26,6 +24,7 @@ makeoptions     KERNEL_BASE_PHYS="0x80000000"
 makeoptions     KERNEL_BASE_VIRT="0x80000000"
 makeoptions     BOARDTYPE="vexpress"
 makeoptions     BOARDMKFRAG="${THISARM}/conf/mk.vexpress"
+makeoptions     CPUFLAGS="-mcpu=cortex-a15 -mfpu=neon"
 
 options         ARM_INTR_IMPL="<arch/evbarm/vexpress/vexpress_intr.h>"
 options         ARM_GENERIC_TODR

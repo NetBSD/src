@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.2.2.4 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.2.2.5 2016/04/22 15:44:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.2.2.4 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.2.2.5 2016/04/22 15:44:09 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -48,8 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.2.2.4 2015/12/27 12:09:31 skrll Exp 
 #include <arm/nvidia/tegra_mcreg.h>
 #include <arm/nvidia/tegra_var.h>
 
+bus_space_handle_t tegra_host1x_bsh;
 bus_space_handle_t tegra_ppsb_bsh;
 bus_space_handle_t tegra_apb_bsh;
+bus_space_handle_t tegra_ahb_a2_bsh;
 
 struct arm32_bus_dma_tag tegra_dma_tag = {
 	_BUS_DMAMAP_FUNCS,
@@ -63,6 +65,10 @@ void
 tegra_bootstrap(void)
 {
 	if (bus_space_map(&armv7_generic_bs_tag,
+	    TEGRA_HOST1X_BASE, TEGRA_HOST1X_SIZE, 0,
+	    &tegra_host1x_bsh) != 0)
+		panic("couldn't map HOST1X");
+	if (bus_space_map(&armv7_generic_bs_tag,
 	    TEGRA_PPSB_BASE, TEGRA_PPSB_SIZE, 0,
 	    &tegra_ppsb_bsh) != 0)
 		panic("couldn't map PPSB");
@@ -70,6 +76,10 @@ tegra_bootstrap(void)
 	    TEGRA_APB_BASE, TEGRA_APB_SIZE, 0,
 	    &tegra_apb_bsh) != 0)
 		panic("couldn't map APB");
+	if (bus_space_map(&armv7_generic_bs_tag,
+	    TEGRA_AHB_A2_BASE, TEGRA_AHB_A2_SIZE, 0,
+	    &tegra_ahb_a2_bsh) != 0)
+		panic("couldn't map AHB A2");
 
 	tegra_mpinit();
 }

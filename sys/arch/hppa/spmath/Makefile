@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.142.1 2015/09/22 12:05:44 skrll Exp $
+#	$NetBSD: Makefile,v 1.3.142.2 2016/04/22 15:44:09 skrll Exp $
 
 #	$OpenBSD: Makefile,v 1.4 2000/01/11 21:32:57 mickey Exp $
 
@@ -27,10 +27,8 @@ ${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f ${LIB}.o
 	@${LD} -r -o ${LIB}.o `${LORDER} ${OBJS} | tsort`
-	@echo done
 
 ${LIB}.po:: ${POBJS:O}
 	@echo building profiled ${LIB} library
 	@rm -f ${LIB}.po
 	@${LD} -r -o ${LIB}.po `${LORDER} ${POBJS} | tsort`
-	@echo done

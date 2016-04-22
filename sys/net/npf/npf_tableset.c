@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.22 2014/08/11 01:54:12 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.22.4.1 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.22 2014/08/11 01:54:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.22.4.1 2016/04/22 15:44:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -453,7 +453,7 @@ table_cidr_check(const u_int aidx, const npf_addr_t *addr,
 	 * For IPv4 (aidx = 0) - 32 and for IPv6 (aidx = 1) - 128.
 	 * If it is a host - shall use NPF_NO_NETMASK.
 	 */
-	if (mask >= (aidx ? 128 : 32) && mask != NPF_NO_NETMASK) {
+	if (mask > (aidx ? 128 : 32) && mask != NPF_NO_NETMASK) {
 		return EINVAL;
 	}
 	return 0;

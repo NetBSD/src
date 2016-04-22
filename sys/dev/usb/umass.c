@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.11 2015/12/28 10:15:09 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.12 2016/04/22 15:44:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -60,10 +60,10 @@
 
 /*
  * Universal Serial Bus Mass Storage Class specs:
- * http://www.usb.org/developers/devclass_docs/usb_msc_overview_1.2.pdf
- * http://www.usb.org/developers/devclass_docs/usbmassbulk_10.pdf
- * http://www.usb.org/developers/devclass_docs/usb_msc_cbi_1.1.pdf
- * http://www.usb.org/developers/devclass_docs/usbmass-ufi10.pdf
+ * http://www.usb.org/developers/docs/devclass_docs/Mass_Storage_Specification_Overview_v1.4_2-19-2010.pdf
+ * http://www.usb.org/developers/docs/devclass_docs/usbmassbulk_10.pdf
+ * http://www.usb.org/developers/docs/devclass_docs/usb_msc_cbi_1.1.pdf
+ * http://www.usb.org/developers/docs/devclass_docs/usbmass-ufi10.pdf
  */
 
 /*
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.11 2015/12/28 10:15:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.12 2016/04/22 15:44:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

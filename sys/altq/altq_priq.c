@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.21.40.1 2016/03/19 11:29:53 skrll Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.21.40.2 2016/04/22 15:44:08 skrll Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.21.40.1 2016/03/19 11:29:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.21.40.2 2016/04/22 15:44:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -76,7 +76,7 @@ static void priq_purge(struct priq_if *);
 static struct priq_class *priq_class_create(struct priq_if *, int, int, int,
     int);
 static int priq_class_destroy(struct priq_class *);
-static int priq_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static int priq_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf *priq_dequeue(struct ifaltq *, int);
 
 static int priq_addq(struct priq_class *, struct mbuf *);
@@ -438,8 +438,9 @@ priq_class_destroy(struct priq_class *cl)
  * (*altq_enqueue) in struct ifaltq.
  */
 static int
-priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+priq_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
+	struct altq_pktattr pktattr;
 	struct priq_if	*pif = (struct priq_if *)ifq->altq_disc;
 	struct priq_class *cl;
 	struct m_tag *t;
@@ -457,8 +458,8 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 	if ((t = m_tag_find(m, PACKET_TAG_ALTQ_QID, NULL)) != NULL)
 		cl = clh_to_clp(pif, ((struct altq_tag *)(t+1))->qid);
 #ifdef ALTQ3_COMPAT
-	else if ((ifq->altq_flags & ALTQF_CLASSIFY) && pktattr != NULL)
-		cl = pktattr->pattr_class;
+	else if (ifq->altq_flags & ALTQF_CLASSIFY)
+		cl = m->m_pkthdr.pattr_class;
 #endif
 	if (cl == NULL) {
 		cl = pif->pif_default;
@@ -468,9 +469,13 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		}
 	}
 #ifdef ALTQ3_COMPAT
-	if (pktattr != NULL)
-		cl->cl_pktattr = pktattr;  /* save proto hdr used by ECN */
-	else
+	if (m->m_pkthdr.pattr_af != AF_UNSPEC) {
+		pktattr.pattr_class = m->m_pkthdr.pattr_class;
+		pktattr.pattr_af = m->m_pkthdr.pattr_af;
+		pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
+
+		cl->cl_pktattr = &pktattr;  /* save proto hdr used by ECN */
+	} else
 #endif
 		cl->cl_pktattr = NULL;
 	len = m_pktlen(m);

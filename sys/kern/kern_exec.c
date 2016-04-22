@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410.2.3 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410.2.4 2016/04/22 15:44:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.3 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.4 2016/04/22 15:44:16 skrll Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1160,7 +1160,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	vm->vm_minsaddr = (void *)epp->ep_minsaddr;
 
 #ifdef PAX_ASLR
-	pax_aslr_init_vm(l, vm);
+	pax_aslr_init_vm(l, vm, epp);
 #endif /* PAX_ASLR */
 
 	/* Now map address space. */
@@ -1350,7 +1350,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	/* Acquire the sched-state mutex (exit1() will release it). */
 	if (!is_spawn) {
 		mutex_enter(p->p_lock);
-		exit1(l, W_EXITCODE(error, SIGABRT));
+		exit1(l, error, SIGABRT);
 	}
 
 	return error;
@@ -2229,7 +2229,7 @@ spawn_return(void *arg)
 	 * A NetBSD specific workaround is POSIX_SPAWN_RETURNERROR as
 	 * flag bit in the attrp argument to posix_spawn(2), see above.
 	 */
-	exit1(l, W_EXITCODE(127, 0));
+	exit1(l, 127, 0);
 }
 
 void

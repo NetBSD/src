@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.7.2.3 2015/09/22 12:05:52 skrll Exp $ */
+ /* $NetBSD: TODO,v 1.7.2.4 2016/04/22 15:44:12 skrll Exp $ */
 
 Things to be done:
 
@@ -23,5 +23,7 @@ sun4v:
 - replace constructs line "wrpr %g0, PSTATE_INTR, %pstate" with ALTERNATE_GOBALS
 - sun4v tsb no need to lock... per cpu... anyway...
 - ci_tsb_desc->td_ctxidx: -1 or 1?
-- MP support - currently bypassed in cpu_boot_secondary_processors() for sun4v
+- MP support - currently bypassed in pmap_bootstrap() for sun4v
 - vpci.c/vpcivar.h: cleanup FIXMEs
+- "bad magic number in disk label" when booting from an .iso image
+- interrups not handled properly

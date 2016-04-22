@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.11.74.2 2015/12/27 12:10:18 skrll Exp $ */
+/* $NetBSD: pax.h,v 1.11.74.3 2016/04/22 15:44:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -48,10 +48,28 @@ struct vmspace;
 #define	PAX_ASLR_DELTA_EXEC_LEN	12
 #endif
 #endif /* PAX_ASLR */
+#ifdef PAX_ASLR_DEBUG
+extern int pax_aslr_debug;
+#endif
 
 void pax_init(void);
 void pax_setup_elf_flags(struct exec_package *, uint32_t);
-void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
+void pax_mprotect_adjust(
+#ifdef PAX_MPROTECT_DEBUG
+    const char *, size_t,
+#endif
+    struct lwp *, vm_prot_t *, vm_prot_t *);
+#ifndef PAX_MPROTECT
+# define PAX_MPROTECT_ADJUST(a, b, c)
+#else
+# ifdef PAX_MPROTECT_DEBUG
+#  define PAX_MPROTECT_ADJUST(a, b, c) \
+    pax_mprotect_adjust(__FILE__, __LINE__, (a), (b), (c))
+# else
+#  define PAX_MPROTECT_ADJUST(a, b, c) \
+    pax_mprotect_adjust((a), (b), (c))
+# endif
+#endif
 int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
 #define	PAX_ASLR_DELTA(delta, lsb, len)	\
@@ -59,7 +77,7 @@ int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
 bool pax_aslr_epp_active(struct exec_package *);
 bool pax_aslr_active(struct lwp *);
-void pax_aslr_init_vm(struct lwp *, struct vmspace *);
+void pax_aslr_init_vm(struct lwp *, struct vmspace *, struct exec_package *);
 void pax_aslr_stack(struct exec_package *, u_long *);
 void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.20.2.1 2015/06/06 14:39:54 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.20.2.2 2016/04/22 15:44:08 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20.2.1 2015/06/06 14:39:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20.2.2 2016/04/22 15:44:08 skrll Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -1316,6 +1316,12 @@ db_disasm(db_addr_t loc, bool altfmt)
 	    ip->i_extra == (const char *)db_Grp9) {
 		if (ip->i_extra == (const char *)db_Grp7 && regmodrm == 0xf8) {
 			i_name = "swapgs";
+			i_mode = 0;
+		} else if (ip->i_extra == (const char *)db_Grp7 && regmodrm == 0xcb) {
+			i_name = "stac";
+			i_mode = 0;
+		} else if (ip->i_extra == (const char *)db_Grp7 && regmodrm == 0xca) {
+			i_name = "clac";
 			i_mode = 0;
 		} else {
 			i_name = ((const char * const *)ip->i_extra)

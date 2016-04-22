@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.70 2014/03/24 19:31:40 christos Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.70.6.1 2016/04/22 15:44:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.70 2014/03/24 19:31:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.70.6.1 2016/04/22 15:44:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -289,7 +289,7 @@ dec_3maxplus_intr_establish(device_t dev, void *cookie, int level,
 static void
 dec_3maxplus_ioasic_intr(void)
 {
-	static bool warned = false;
+	static int warned = 0;
 	bool ifound;
 	uint32_t imsk, intr, can_serve, xxxintr;
 
@@ -309,10 +309,10 @@ dec_3maxplus_ioasic_intr(void)
 
 		if (warned && !(can_serve & KN03_INTR_PSWARN)) {
 			printf("%s\n", "Power supply ok now.");
-			warned = false;
+			warned = 0;
 		}
 		if ((can_serve & KN03_INTR_PSWARN) && (warned < 3)) {
-			warned = true;
+			warned++;
 			printf("%s\n", "Power supply overheating");
 		}
 

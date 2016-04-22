@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.44 2014/03/26 15:55:43 christos Exp $ */
+/*	$NetBSD: promlib.c,v 1.44.6.1 2016/04/22 15:44:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.44 2014/03/26 15:55:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.44.6.1 2016/04/22 15:44:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -1276,6 +1276,8 @@ prom_init_opf(void)
 	node = findchosen();
 	OF_getprop(node, "stdin", &promops.po_stdin, sizeof(int));
 	OF_getprop(node, "stdout", &promops.po_stdout, sizeof(int));
+
+	OF_init();
 }
 
 /*

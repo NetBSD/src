@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.88.4.4 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.88.4.5 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.4 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.5 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -195,7 +195,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	struct fddi_header *fh;
 	struct mbuf *mcopy = NULL;
 	struct ifnet *ifp = ifp0;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	MCLAIM(m, ifp->if_mowner);
 
@@ -224,7 +223,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 
@@ -235,7 +234,8 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr,
 			    (char *)edst);
-		} else if ((error = arpresolve(ifp, rt, m, dst, edst)) != 0)
+		} else if ((error = arpresolve(ifp, rt, m, dst, edst,
+		    sizeof(edst))) != 0)
 			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -399,7 +399,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	if (ifp != ifp0)
 		ifp0->if_obytes += m->m_pkthdr.len;
 #endif /* NCARP > 0 */
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m)
