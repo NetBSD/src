@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.204 2016/04/12 04:02:55 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.205 2016/04/22 05:34:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.204 2016/04/12 04:02:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.205 2016/04/22 05:34:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -492,14 +492,13 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 	state->rdonly = 0;
 	state->slashes = 0;
 
-#ifdef DIAGNOSTIC
-	if (!state->cnp->cn_cred)
-		panic("namei: bad cred/proc");
-	if (state->cnp->cn_nameiop & (~OPMASK))
-		panic("namei: nameiop contaminated with flags");
-	if (state->cnp->cn_flags & OPMASK)
-		panic("namei: flags contaminated with nameiops");
-#endif
+	KASSERTMSG((state->cnp->cn_cred != NULL), "namei: bad cred/proc");
+	KASSERTMSG(((state->cnp->cn_nameiop & (~OPMASK)) == 0),
+	    "namei: nameiop contaminated with flags: %08"PRIx32,
+	    state->cnp->cn_nameiop);
+	KASSERTMSG(((state->cnp->cn_flags & OPMASK) == 0),
+	    "name: flags contaminated with nameiops: %08"PRIx32,
+	    state->cnp->cn_flags);
 
 	/*
 	 * The buffer for name translation shall be the one inside the
@@ -994,10 +993,9 @@ unionlookup:
 	error = VOP_LOOKUP(searchdir, &foundobj, cnp);
 
 	if (error != 0) {
-#ifdef DIAGNOSTIC
-		if (foundobj != NULL)
-			panic("leaf `%s' should be empty", cnp->cn_nameptr);
-#endif /* DIAGNOSTIC */
+		KASSERTMSG((foundobj == NULL),
+		    "leaf `%s' should be empty but is %p",
+		    cnp->cn_nameptr, foundobj);
 #ifdef NAMEI_DIAGNOSTIC
 		printf("not found\n");
 #endif /* NAMEI_DIAGNOSTIC */
@@ -1787,21 +1785,19 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	*vpp = NULL;
 	error = VOP_LOOKUP(dvp, vpp, cnp);
 	if ((error) != 0) {
-#ifdef DIAGNOSTIC
-		if (*vpp != NULL)
-			panic("leaf `%s' should be empty", cnp->cn_nameptr);
-#endif
+		KASSERTMSG((*vpp == NULL),
+		    "leaf `%s' should be empty but is %p",
+		    cnp->cn_nameptr, *vpp);
 		if (error != EJUSTRETURN)
 			goto bad;
 	}
 
-#ifdef DIAGNOSTIC
 	/*
 	 * Check for symbolic link
 	 */
-	if (*vpp && (*vpp)->v_type == VLNK && (cnp->cn_flags & FOLLOW))
-		panic("relookup: symlink found");
-#endif
+	KASSERTMSG((*vpp == NULL || (*vpp)->v_type != VLNK ||
+		(cnp->cn_flags & FOLLOW) == 0),
+	    "relookup: symlink found");
 
 	/*
 	 * Check for read-only lookups.
