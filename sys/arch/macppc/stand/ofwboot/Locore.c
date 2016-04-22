@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.27 2016/03/13 08:57:10 tsutsui Exp $	*/
+/*	$NetBSD: Locore.c,v 1.28 2016/04/22 18:13:01 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -143,7 +143,13 @@ __asm(
 "				\n"
 "5:	cmpw	0,%r8,%r9	\n"
 "	bge	6f		\n"
-"	stw	%r0,0(%r8)	\n"
+        /*
+         * clear by bytes to avoid ppc601 alignment exceptions
+         */
+"       stb     %r0,0(%r8)      \n"
+"       stb     %r0,1(%r8)      \n"
+"       stb     %r0,2(%r8)      \n"
+"       stb     %r0,3(%r8)      \n"
 "	addi	%r8,%r8,4	\n"
 "	b	5b		\n"
 "				\n"

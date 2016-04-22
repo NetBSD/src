@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.65 2015/10/04 10:16:39 skrll Exp $
+#	$NetBSD: RPI,v 1.66 2016/04/22 18:13:01 christos Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -28,6 +28,10 @@ options 	PLCONSOLE
 options USB_DEBUG
 #options DWC2_DEBUG
 #options UHUB_DEBUG
+
+# DTrace
+options		INSECURE		# module loading
+options		DTRACE_HOOKS
 
 
 # Valid options for BOOT_ARGS:
