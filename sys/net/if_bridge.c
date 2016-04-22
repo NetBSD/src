@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.117 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.118 2016/04/22 00:25:42 roy Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.117 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.118 2016/04/22 00:25:42 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1453,7 +1453,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	if (dst_if == NULL) {
 		struct bridge_iflist *bif;
 		struct mbuf *mc;
-		int used = 0;
+		bool used = false;
 
 		BRIDGE_PSZ_RENTER(s);
 		BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
@@ -1484,7 +1484,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 
 			if (PSLIST_READER_NEXT(bif, struct bridge_iflist,
 			    bif_next) == NULL) {
-				used = 1;
+				used = true;
 				mc = m;
 			} else {
 				mc = m_copym(m, 0, M_COPYALL, M_NOWAIT);
@@ -1504,10 +1504,15 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 next:
 			BRIDGE_PSZ_RENTER(s);
 			bridge_release_member(sc, bif, &psref);
+
+			/* Guarantee we don't re-enter the loop as we already
+			 * decided we're at the end. */
+			if (used)
+				break;
 		}
 		BRIDGE_PSZ_REXIT(s);
 
-		if (used == 0)
+		if (!used)
 			m_freem(m);
 		return (0);
 	}
