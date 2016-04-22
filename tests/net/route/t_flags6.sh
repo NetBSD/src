@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.2 2016/04/21 09:46:49 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.3 2016/04/22 06:24:10 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -197,6 +197,26 @@ test_reject()
 	check_entry_flags fc00::/64 UGRS
 
 	atf_check -s not-exit:0 -o ignore -e match:'No route to host' \
+	    rump.ping6 -n -X 1 -c 1 $IP6_PEER
+	$DEBUG && rump.netstat -rn -f inet6
+
+	# Shouldn't be created
+	check_entry_fail $IP6_PEER UH
+
+	# Gateway is lo0
+
+	# Delete an existing route first
+	atf_check -s exit:0 -o ignore \
+	    rump.route delete -inet6 -net fc00::/64
+
+	atf_check -s exit:0 -o ignore \
+	    rump.route add -inet6 -net fc00::/64 ::1  -reject
+	$DEBUG && rump.netstat -rn -f inet6
+
+	# Up, Gateway, Reject, Static
+	check_entry_flags fc00::/64 UGRS
+
+	atf_check -s not-exit:0 -o ignore -e match:'Network is unreachable' \
 	    rump.ping6 -n -X 1 -c 1 $IP6_PEER
 	$DEBUG && rump.netstat -rn -f inet6
 
