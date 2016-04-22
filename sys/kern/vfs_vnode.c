@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.46 2015/11/12 11:35:42 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.47 2016/04/22 15:01:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.46 2015/11/12 11:35:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.47 2016/04/22 15:01:54 riastradh Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -229,10 +229,10 @@ vfs_vnode_sysinit(void)
 	cv_init(&vrele_cv, "vrele");
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, vdrain_thread,
 	    NULL, NULL, "vdrain");
-	KASSERT(error == 0);
+	KASSERTMSG((error == 0), "kthread_create(vdrain) failed: %d", error);
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, vrele_thread,
 	    NULL, &vrele_lwp, "vrele");
-	KASSERT(error == 0);
+	KASSERTMSG((error == 0), "kthread_create(vrele) failed: %d", error);
 }
 
 /*
@@ -579,7 +579,7 @@ vrelel(vnode_t *vp, int flags)
 			 */
 			mutex_exit(vp->v_interlock);
 			error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			KASSERT(error == 0);
+			KASSERTMSG((error == 0), "vn_lock failed: %d", error);
 			mutex_enter(vp->v_interlock);
 			defer = false;
 		} else {
@@ -916,7 +916,7 @@ vclean(vnode_t *vp)
 			WAPBL_DISCARD(wapbl_vptomp(vp));
 		error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
 	}
-	KASSERT(error == 0);
+	KASSERTMSG((error == 0), "vinvalbuf failed: %d", error);
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 	if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
 		 spec_node_revoke(vp);
