@@ -2813,7 +2813,13 @@ elf_m68k_check_relocs (bfd *abfd,
 		  && !(ELF32_R_TYPE (rel->r_info) == R_68K_PC8
 		       || ELF32_R_TYPE (rel->r_info) == R_68K_PC16
 		       || ELF32_R_TYPE (rel->r_info) == R_68K_PC32))
-		    info->flags |= DF_TEXTREL;
+		{
+		  if (info->warn_shared_textrel)
+		    (*_bfd_error_handler)
+		      (_("warning: dynamic relocation in readonly section `%s'"),
+		      h->root.root.string); 
+		  info->flags |= DF_TEXTREL;
+		}
 
 	      sreloc->size += sizeof (Elf32_External_Rela);
 
@@ -3431,6 +3437,10 @@ elf_m68k_discard_copies (struct elf_link_hash_entry *h,
 	       s = s->next)
 	    if ((s->section->flags & SEC_READONLY) != 0)
 	      {
+		if (info->warn_shared_textrel)
+		  (*_bfd_error_handler)
+		    (_("warning: dynamic relocation in readonly section `%s'"),
+		    h->root.root.string); 
 		info->flags |= DF_TEXTREL;
 		break;
 	      }
