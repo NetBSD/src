@@ -164,7 +164,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	lea	\addr-.-8,a0
 	jsr	pc@(a0)
 #else
-	jbsr	\addr@PLTPC
+	jbsr	\addr
 #endif
 	.endm
 
@@ -176,7 +176,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	lea	\addr-.-8,a0
 	jmp	pc@(a0)
 #else
-	bra	\addr@PLTPC
+	bra	\addr
 #endif
 	.endm
 
