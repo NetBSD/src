@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.319.6.1 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.319.6.2 2016/04/22 15:44:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.319.6.1 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.319.6.2 2016/04/22 15:44:16 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -896,7 +896,10 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, mask);
 		mutex_exit(p->p_lock);
-		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler, mask, ksi);
+		if (ktrpoint(KTR_PSIG)) {
+			ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
+			    mask, ksi);
+		}
 	} else {
 		/* XXX for core dump/debugger */
 		p->p_sigctx.ps_lwp = l->l_lid;
@@ -916,19 +919,19 @@ child_psignal(struct proc *p, int mask)
 {
 	ksiginfo_t ksi;
 	struct proc *q;
-	int xstat;
+	int xsig;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
-	xstat = p->p_xstat;
+	xsig = p->p_xsig;
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = SIGCHLD;
-	ksi.ksi_code = (xstat == SIGCONT ? CLD_CONTINUED : CLD_STOPPED);
+	ksi.ksi_code = (xsig == SIGCONT ? CLD_CONTINUED : CLD_STOPPED);
 	ksi.ksi_pid = p->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(p->p_cred);
-	ksi.ksi_status = xstat;
+	ksi.ksi_status = xsig;
 	ksi.ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 	ksi.ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
 
@@ -1377,9 +1380,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 * signal itself (if waiting on event - process runs,
 			 * otherwise continues sleeping).
 			 */
-			if ((prop & SA_CONT) != 0 && action == SIG_DFL) {
-				KASSERT(signo != SIGKILL);
-				goto deliver;
+			if ((prop & SA_CONT) != 0) {
+				p->p_xsig = SIGCONT;
+				child_psignal(p, 0);
+				if (action == SIG_DFL) {
+					KASSERT(signo != SIGKILL);
+					goto deliver;
+				}
 			}
 		} else if ((prop & SA_STOP) != 0) {
 			/*
@@ -1566,7 +1573,7 @@ sigchecktrace(void)
 	 * If we are no longer being traced, or the parent didn't
 	 * give us a signal, or we're stopping, look for more signals.
 	 */
-	if ((p->p_slflag & PSL_TRACED) == 0 || p->p_xstat == 0 ||
+	if ((p->p_slflag & PSL_TRACED) == 0 || p->p_xsig == 0 ||
 	    (p->p_sflag & PS_STOPPING) != 0)
 		return 0;
 
@@ -1574,8 +1581,8 @@ sigchecktrace(void)
 	 * If the new signal is being masked, look for other signals.
 	 * `p->p_sigctx.ps_siglist |= mask' is done in setrunnable().
 	 */
-	signo = p->p_xstat;
-	p->p_xstat = 0;
+	signo = p->p_xsig;
+	p->p_xsig = 0;
 	if (sigismember(&l->l_sigmask, signo)) {
 		signo = 0;
 	}
@@ -1685,7 +1692,7 @@ issignal(struct lwp *l)
 			 */
 			if (sp)
 				sigdelset(&sp->sp_set, signo);
-			p->p_xstat = signo;
+			p->p_xsig = signo;
 
 			/* Emulation-specific handling of signal trace */
 			if (p->p_emul->e_tracesig == NULL ||
@@ -1742,9 +1749,9 @@ issignal(struct lwp *l)
 				}
 				/* Take the signal. */
 				(void)sigget(sp, NULL, signo, NULL);
-				p->p_xstat = signo;
+				p->p_xsig = signo;
 				signo = 0;
-				sigswitch(true, PS_NOCLDSTOP, p->p_xstat);
+				sigswitch(true, PS_NOCLDSTOP, p->p_xsig);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -2017,8 +2024,7 @@ sigexit(struct lwp *l, int signo)
 
 	if (docore) {
 		mutex_exit(p->p_lock);
-		if ((error = (*coredump_vec)(l, NULL)) == 0)
-			exitsig |= WCOREFLAG;
+		error = (*coredump_vec)(l, NULL);
 
 		if (kern_logsigexit) {
 			int uid = l->l_cred ?
@@ -2037,12 +2043,14 @@ sigexit(struct lwp *l, int signo)
 #endif /* PAX_SEGVGUARD */
 		/* Acquire the sched state mutex.  exit1() will release it. */
 		mutex_enter(p->p_lock);
+		if (error == 0)
+			p->p_sflag |= PS_COREDUMP;
 	}
 
 	/* No longer dumping core. */
 	p->p_sflag &= ~PS_WCORE;
 
-	exit1(l, W_EXITCODE(0, exitsig));
+	exit1(l, 0, exitsig);
 	/* NOTREACHED */
 }
 
@@ -2183,7 +2191,7 @@ proc_unstop(struct proc *p)
 
 	p->p_stat = SACTIVE;
 	p->p_sflag &= ~PS_STOPPING;
-	sig = p->p_xstat;
+	sig = p->p_xsig;
 
 	if (!p->p_waited)
 		p->p_pptr->p_nstopchild--;

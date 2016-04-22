@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.117 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: ath.c,v 1.117.2.1 2016/04/22 15:44:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.117 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.117.2.1 2016/04/22 15:44:13 skrll Exp $");
 #endif
 
 /*

@@ -1,3 +1,3 @@
-/*	$NetBSD: pppoe.h,v 1.1.2.2 2015/09/22 12:06:15 skrll Exp $	*/
+/*	$NetBSD: pppoe.h,v 1.1.2.3 2016/04/22 15:44:18 skrll Exp $	*/
 
-/* dummy */
+#define NPPPOE 1

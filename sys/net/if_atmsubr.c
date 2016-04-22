@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.52.4.3 2016/03/19 11:30:32 skrll Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.52.4.4 2016/04/22 15:44:17 skrll Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.52.4.3 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.52.4.4 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -98,7 +98,6 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	struct mbuf *m = m0;
 	struct atmllc *atmllc;
 	uint32_t atm_flags;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -108,7 +107,7 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * do it before prepending link headers.
 	 */
 	IFQ_CLASSIFY(&ifp->if_snd, m,
-	    (dst != NULL ? dst->sa_family : AF_UNSPEC), &pktattr);
+	    (dst != NULL ? dst->sa_family : AF_UNSPEC));
 
 	/*
 	 * check for non-native ATM traffic   (dst != NULL)
@@ -179,7 +178,7 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		}
 	}
 
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m)

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.16.6.1 2016/03/19 11:29:54 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.16.6.2 2016/04/22 15:44:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,8 +83,9 @@ __asm(" .globl __mcount		\n"			\
 static inline void
 mcount_disable_intr(void)
 {
-	/* works because __cli is a macro */
-	__cli();
+	/* should be __cli() but this calls x86_lfence() which calls mcount */
+	curcpu()->ci_vcpu->evtchn_upcall_mask = 1;
+	__asm volatile("lfence" ::: "memory"); /* x86_lfence() */
 }
 
 static inline u_long
@@ -97,7 +98,8 @@ static inline void
 mcount_write_psl(u_long psl)
 {
 	curcpu()->ci_vcpu->evtchn_upcall_mask = psl;
-	x86_lfence();
+	/* can't call x86_lfence because it calls mcount() */
+	__asm volatile("lfence" ::: "memory"); /* x86_lfence() */
 	/* XXX can't call hypervisor_force_callback() because we're in mcount*/ 
 }
 

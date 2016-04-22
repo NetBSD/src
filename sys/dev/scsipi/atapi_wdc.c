@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.119 2012/07/31 15:59:57 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.119.16.1 2016/04/22 15:44:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.119 2012/07/31 15:59:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.119.16.1 2016/04/22 15:44:13 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -476,7 +476,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		 * disable interrupts, all commands here should be quick
 		 * enough to be able to poll, and we don't go here that often
 		 */
-		 bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
+		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
 		     WDCTL_4BIT | WDCTL_IDS);
 		if (wdc->select)
 			wdc->select(chp, xfer->c_drive);
@@ -873,7 +873,7 @@ again:
 		}
 #endif
 		wdc->dataout_pio(chp, drvp->drive_flags,
-	    	    (char *)xfer->c_databuf + xfer->c_skip, len);
+		    (char *)xfer->c_databuf + xfer->c_skip, len);
 
 #if NATA_PIOBM
 	end_piobm_dataout:
@@ -930,7 +930,7 @@ again:
 	end_piobm_datain:
 #endif
 		if (xfer->c_lenoff > 0)
-			wdcbit_bucket(chp, len - xfer->c_bcount);
+			wdcbit_bucket(chp, xfer->c_lenoff);
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;

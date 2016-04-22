@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.1 2015/12/27 12:09:36 skrll Exp $
+# $NetBSD: GENERIC,v 1.6.2.2 2016/04/22 15:44:09 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.6.2.1 $"
+#ident 		"GENERIC-$Revision: 1.6.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -680,7 +680,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.45 2014/09/05 05:36:49 matt Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.45.2.1 2016/04/22 15:44:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.45 2014/09/05 05:36:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.45.2.1 2016/04/22 15:44:19 skrll Exp $");
 
 #include "opt_pax.h"
 
@@ -56,10 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.45 2014/09/05 05:36:49 matt Exp $");
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#ifdef PAX_MPROTECT
 #include <sys/pax.h>
-#endif /* PAX_MPROTECT */
 
 #include <uvm/uvm.h>
 
@@ -103,9 +100,7 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 		vm_prot_t prot = UVM_PROT_READ | UVM_PROT_WRITE;
 		vm_prot_t maxprot = UVM_PROT_ALL;
 
-#ifdef PAX_MPROTECT
-		pax_mprotect(l, &prot, &maxprot);
-#endif /* PAX_MPROTECT */
+		PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
 
 		error = uvm_map(&vm->vm_map, &obreak, nbreak - obreak, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,

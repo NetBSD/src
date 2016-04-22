@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.41.2.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.41.2.3 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.41.2.2 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.41.2.3 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -178,7 +178,6 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	void *tha;
 	struct eco_arp *ecah;
 #endif
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -186,7 +185,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	hdrcmplt = 0;
 	retry_delay = hz / 16;
@@ -198,7 +197,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
                 	memcpy(ehdr.eco_dhost, eco_broadcastaddr,
 			    ECO_ADDR_LEN);
 
-		else if (!arpresolve(ifp, rt, m, dst, ehdr.eco_dhost))
+		else if (!arpresolve(ifp, rt, m, dst, ehdr.eco_dhost,
+		    sizeof(ehdr.eco_dhost)))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -293,7 +293,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	if (m == NULL)
 		return (0);
 
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m)
@@ -848,6 +848,6 @@ eco_retry(void *arg)
 	ifp = er->er_ifp;
 	m = er->er_packet;
 	LIST_REMOVE(er, er_link);
-	(void)ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(NULL));
+	(void)ifq_enqueue(ifp, m);
 	free(er, M_TEMP);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.2.2.4 2015/12/27 12:10:05 skrll Exp $
+#	$NetBSD: files.kern,v 1.2.2.5 2016/04/22 15:44:16 skrll Exp $
 
 #
 # kernel sources
@@ -125,6 +125,7 @@ file	kern/subr_pool.c		kern
 file	kern/subr_prf.c			kern
 file	kern/subr_prof.c		kern
 file	kern/subr_pserialize.c		kern
+file	kern/subr_psref.c		kern
 file	kern/subr_specificdata.c	kern
 file	kern/subr_tftproot.c		tftproot
 file	kern/subr_time.c		kern

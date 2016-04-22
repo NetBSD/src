@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.20 2014/03/20 20:51:54 christos Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.20.6.1 2016/04/22 15:44:08 skrll Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.20 2014/03/20 20:51:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.20.6.1 2016/04/22 15:44:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -69,8 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.20 2014/03/20 20:51:54 christos Exp $
 static int		wfq_setenable(struct wfq_interface *, int);
 static int		wfq_ifattach(struct wfq_interface *);
 static int		wfq_ifdetach(struct wfq_interface *);
-static int		wfq_ifenqueue(struct ifaltq *, struct mbuf *,
-				      struct altq_pktattr *);
+static int		wfq_ifenqueue(struct ifaltq *, struct mbuf *);
 static u_long		wfq_hash(struct flowinfo *, int);
 static inline u_long	wfq_hashbydstaddr(struct flowinfo *, int);
 static inline u_long	wfq_hashbysrcaddr(struct flowinfo *, int);
@@ -249,7 +248,7 @@ wfq_classify(void *clfier, struct mbuf *m, int af)
 }
 
 static int
-wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp, struct altq_pktattr *pktattr)
+wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp)
 {
 	wfq_state_t *wfqp;
 	wfq *queue;
@@ -259,7 +258,7 @@ wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp, struct altq_pktattr *pktattr)
 	mp->m_nextpkt = NULL;
 
 	/* grab a queue selected by classifier */
-	if (pktattr == NULL || (queue = pktattr->pattr_class) == NULL)
+	if ((queue = mp->m_pkthdr.pattr_class) == NULL)
 		queue = &wfqp->queue[0];
 
 	if (queue->tail == NULL)

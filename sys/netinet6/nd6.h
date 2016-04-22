@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.60.2.3 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: nd6.h,v 1.60.2.4 2016/04/22 15:44:18 skrll Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -350,9 +350,8 @@ extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
 extern int nd6_debug;
 
-#define nd6log(x)	do { if (nd6_debug) log x; } while (/*CONSTCOND*/ 0)
-
-extern struct callout nd6_timer_ch;
+#define nd6log(level, fmt, args...) \
+	do { if (nd6_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
 
 /* nd6_rtr.c */
 extern int nd6_defifindex;
@@ -398,11 +397,10 @@ int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);
 void nd6_option_init(void *, int, union nd_opts *);
 struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
-struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *);
+struct llentry *nd6_lookup(const struct in6_addr *, const struct ifnet *, bool);
+struct llentry *nd6_create(const struct in6_addr *, const struct ifnet *);
 void nd6_setmtu(struct ifnet *);
 void nd6_llinfo_settimer(struct llentry *, time_t);
-void nd6_llinfo_settimer_locked(struct llentry *, time_t);
-void nd6_timer(void *);
 void nd6_purge(struct ifnet *, struct in6_ifextra *);
 void nd6_nud_hint(struct rtentry *);
 int nd6_resolve(struct ifnet *, struct rtentry *,
@@ -417,8 +415,9 @@ int nd6_storelladdr(const struct ifnet *, const struct rtentry *, struct mbuf *,
 	const struct sockaddr *, uint8_t *, size_t);
 int nd6_sysctl(int, void *, size_t *, void *, size_t);
 int nd6_need_cache(struct ifnet *);
-void nd6_llinfo_release_pkts(struct llentry *, struct ifnet *,
-    struct rtentry *);
+void nd6_llinfo_release_pkts(struct llentry *, struct ifnet *);
+int nd6_add_ifa_lle(struct in6_ifaddr *);
+void nd6_rem_ifa_lle(struct in6_ifaddr *);
 
 /* nd6_nbr.c */
 void nd6_na_input(struct mbuf *, int, int);

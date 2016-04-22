@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.3.2.3 2016/03/19 11:30:36 skrll Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.3.2.4 2016/04/22 15:44:18 skrll Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -29,3 +29,5 @@
 
 #define WSEMUL_NO_DUMB
 #define WSEMUL_VT100
+
+#define PPPOE_SERVER

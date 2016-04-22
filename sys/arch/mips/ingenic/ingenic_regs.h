@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.1.2.4 2015/12/27 12:09:38 skrll Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.1.2.5 2016/04/22 15:44:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -162,9 +162,14 @@ MFC0(uint32_t r, uint32_t s)
 #define REIM_MIRQ1_M	0x00002	/* allow mailbox IRQ for core 1 */
 #define REIM_IRQ0_M	0x00100	/* allow peripheral IRQ for core 0 */
 #define REIM_IRQ1_M	0x00200	/* allow peripheral IRQ for core 1 */
-#define REIM_ENTRY_M	0xffff0000	/* reset exception entry if RPCn=1 */
+#define REIM_ENTRY_M	0xfffff000	/* reset exception entry if RPCn=1 */
 
 #define CP0_CORE_MBOX	20	/* select 0 for core 0, 1 for 1 */
+
+#define CP0_CORE0_MBOX	_(20), 0
+#define CP0_CORE1_MBOX	_(20), 1	
+
+
 
 /* power management */
 #define JZ_CPCCR	0x10000000	/* Clock Control Register */
@@ -172,7 +177,10 @@ MFC0(uint32_t r, uint32_t s)
 	#define JZ_PDIV_S	16		/* PCLK divider shift */
 	#define JZ_CDIV_M	0x0000000f	/* CPU clock divider mask */
 	#define JZ_CDIV_S	0		/* CPU clock divider shift */
-#define JZ_CPMPCR	0x00000014	/* MPLL */
+#define JZ_LPCR		0x10000004	/* Low Power Control Register */
+	#define JZ_PD_SCPU	0x80000000	/* power down 2nd CPU */
+	#define JZ_SCPUS	0x08000000	/* CPU is powered down */
+#define JZ_CPMPCR	0x10000014	/* MPLL */
 	#define JZ_PLLM_S	19		/* PLL multiplier shift */
 	#define JZ_PLLM_M	0xfff80000	/* PLL multiplier mask */
 	#define JZ_PLLN_S	13		/* PLL divider shift */
@@ -182,6 +190,7 @@ MFC0(uint32_t r, uint32_t s)
 	#define JZ_PLLON	0x00000010	/* PLL is on and stable */
 	#define JZ_PLLBP	0x00000002	/* PLL bypass */
 	#define JZ_PLLEN	0x00000001	/* PLL enable */
+#define JZ_CPVPCR	0x1000001c	/* VPLL */
 #define JZ_CLKGR0	0x10000020	/* CLocK Gating Registers */
 	#define CLK_NEMC	(1 << 0)
 	#define CLK_BCH		(1 << 1)

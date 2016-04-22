@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.34.2.1 2015/09/22 12:06:11 skrll Exp $       */
+/*      $NetBSD: if_atm.c,v 1.34.2.2 2016/04/22 15:44:17 skrll Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.34.2.1 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.34.2.2 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -92,10 +92,6 @@ atm_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 
 	switch (req) {
 
-	case RTM_RESOLVE: /* resolve: only happens when cloning */
-		printf("atm_rtrequest: RTM_RESOLVE request detected?\n");
-		break;
-
 	case RTM_ADD:
 
 		/*
@@ -120,10 +116,6 @@ atm_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			break;
 		}
 
-		if ((rt->rt_flags & RTF_CLONING) != 0) {
-			printf("atm_rtrequest: cloning route detected?\n");
-			break;
-		}
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sockaddr_dl_measure(namelen, addrlen)) {
 			log(LOG_DEBUG, "atm_rtrequest: bad gateway value\n");
@@ -151,7 +143,6 @@ atm_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		npcb->ipaddr.s_addr = sin->sin_addr.s_addr;
 		/* XXX: move npcb to llinfo when ATM ARP is ready */
 		rt->rt_llinfo = (void *) npcb;
-		rt->rt_flags |= RTF_LLINFO;
 #endif
 		/*
 		 * let the lower level know this circuit is active
@@ -173,7 +164,6 @@ failed:
 		if (npcb) {
 			npcb_free(npcb, NPCB_DESTROY);
 			rt->rt_llinfo = NULL;
-			rt->rt_flags &= ~RTF_LLINFO;
 		}
 #endif
 		rtrequest(RTM_DELETE, rt_getkey(rt), NULL,
@@ -182,18 +172,6 @@ failed:
 
 	case RTM_DELETE:
 
-#ifdef NATM
-		/*
-		 * tell native ATM we are done with this VC
-		 */
-
-		if (rt->rt_flags & RTF_LLINFO) {
-			npcb_free((struct natmpcb *)rt->rt_llinfo,
-								NPCB_DESTROY);
-			rt->rt_llinfo = NULL;
-			rt->rt_flags &= ~RTF_LLINFO;
-		}
-#endif
 		/*
 		 * tell the lower layer to disable this circuit
 		 */
@@ -239,7 +217,6 @@ atmresolve(struct rtentry *rt0, struct mbuf *m, const struct sockaddr *dst,
 		if (rt == NULL)
 			goto bad; /* failed */
 		if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
-		    (rt->rt_flags & RTF_LLINFO) == 0 ||
 		    /* XXX: are we using LLINFO? */
 		    rt->rt_gateway->sa_family != AF_LINK) {
 			rtfree(rt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.233.2.4 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.233.2.5 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.4 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.5 2016/04/22 15:44:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -195,6 +195,37 @@ klock_if_output(struct ifnet * const ifp, struct mbuf * const m,
 	return error;
 }
 
+static int
+ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m, struct rtentry *rt)
+{
+	int error = 0;
+#ifdef MPLS
+	union mpls_shim msh;
+
+	if (rt == NULL || rt_gettag(rt) == NULL ||
+	    rt_gettag(rt)->sa_family != AF_MPLS ||
+	    (m->m_flags & (M_MCAST | M_BCAST)) != 0 ||
+	    ifp->if_type != IFT_ETHER)
+		return 0;
+
+	msh.s_addr = MPLS_GETSADDR(rt);
+	if (msh.shim.label != MPLS_LABEL_IMPLNULL) {
+		struct m_tag *mtag;
+		/*
+		 * XXX tentative solution to tell ether_output
+		 * it's MPLS. Need some more efficient solution.
+		 */
+		mtag = m_tag_get(PACKET_TAG_MPLS,
+		    sizeof(int) /* dummy */,
+		    M_NOWAIT);
+		if (mtag == NULL)
+			return ENOMEM;
+		m_tag_prepend(m, mtag);
+	}
+#endif
+	return error;
+}
+
 /*
  * Send an IP packet to a host.
  *
@@ -202,50 +233,20 @@ klock_if_output(struct ifnet * const ifp, struct mbuf * const m,
  * calling ifp's output routine.
  */
 int
-ip_hresolv_output(struct ifnet * const ifp0, struct mbuf * const m,
-    const struct sockaddr * const dst, struct rtentry *rt00)
+ip_hresolv_output(struct ifnet * const ifp, struct mbuf * const m,
+    const struct sockaddr * const dst, struct rtentry *rt0)
 {
 	int error = 0;
-	struct ifnet *ifp = ifp0;
-	struct rtentry *rt, *rt0, *gwrt;
+	struct rtentry *rt = rt0, *gwrt;
 
 #define RTFREE_IF_NEEDED(_rt) \
-	if ((_rt) != NULL && (_rt) != rt00) \
+	if ((_rt) != NULL && (_rt) != rt0) \
 		rtfree((_rt));
 
-	rt0 = rt00;
-retry:
-	if (!ip_hresolv_needed(ifp)) {
-		rt = rt0;
+	if (!ip_hresolv_needed(ifp))
 		goto out;
-	}
 
-	if (rt0 == NULL) {
-		rt = NULL;
-		goto out;
-	}
-
-	rt = rt0;
-
-	/*
-	 * The following block is highly questionable.  How did we get here
-	 * with a !RTF_UP route?  Does rtalloc1() always return an RTF_UP
-	 * route?
-	 */
-	if ((rt->rt_flags & RTF_UP) == 0) {
-		rt = rtalloc1(dst, 1);
-		if (rt == NULL) {
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-		rt0 = rt;
-		if (rt->rt_ifp != ifp) {
-			ifp = rt->rt_ifp;
-			goto retry;
-		}
-	}
-
-	if ((rt->rt_flags & RTF_GATEWAY) == 0)
+	if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) == 0)
 		goto out;
 
 	gwrt = rt_get_gwroute(rt);
@@ -286,30 +287,9 @@ retry:
 	}
 
 out:
-#ifdef MPLS
-	if (rt0 != NULL && rt_gettag(rt0) != NULL &&
-	    rt_gettag(rt0)->sa_family == AF_MPLS &&
-	    (m->m_flags & (M_MCAST | M_BCAST)) == 0 &&
-	    ifp->if_type == IFT_ETHER) {
-		union mpls_shim msh;
-		msh.s_addr = MPLS_GETSADDR(rt0);
-		if (msh.shim.label != MPLS_LABEL_IMPLNULL) {
-			struct m_tag *mtag;
-			/*
-			 * XXX tentative solution to tell ether_output
-			 * it's MPLS. Need some more efficient solution.
-			 */
-			mtag = m_tag_get(PACKET_TAG_MPLS,
-			    sizeof(int) /* dummy */,
-			    M_NOWAIT);
-			if (mtag == NULL) {
-				error = ENOMEM;
-				goto bad;
-			}
-			m_tag_prepend(m, mtag);
-		}
-	}
-#endif
+	error = ip_mark_mpls(ifp, m, rt0);
+	if (error != 0)
+		goto bad;
 
 	error = klock_if_output(ifp, m, dst, rt);
 	goto exit;

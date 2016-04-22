@@ -1,4 +1,4 @@
-/*	$NetBSD: kern32.ldscript,v 1.10.36.1 2015/09/22 12:05:52 skrll Exp $	*/
+/*	$NetBSD: kern32.ldscript,v 1.10.36.2 2016/04/22 15:44:12 skrll Exp $	*/
 
 #undef sparc
 
@@ -42,7 +42,7 @@ SECTIONS
   }
   .data1   : { *(.data1) }
   . = ALIGN(64);	/* COHERENCY_UNIT */
-  .data.cacheline_aligned : { *(.data_cacheline_aligned) }
+  .data.cacheline_aligned : { *(.data.cacheline_aligned) }
   . = ALIGN(64);	/* COHERENCY_UNIT */
   .data.read_mostly : { *(.data.read_mostly) }
   . = ALIGN(64);	/* COHERENCY_UNIT */

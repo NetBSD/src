@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.146.4.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.146.4.3 2016/04/22 15:44:17 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.2 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.3 2016/04/22 15:44:17 skrll Exp $");
 
 #include "ppp.h"
 
@@ -851,7 +851,6 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	struct ifqueue *ifq;
 	enum NPmode mode;
 	int len;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	    if (sc->sc_devp == NULL || (ifp->if_flags & IFF_RUNNING) == 0
 		|| ((ifp->if_flags & IFF_UP) == 0 && dst->sa_family != AF_UNSPEC)) {
@@ -859,7 +858,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		    goto bad;
 	    }
 
-	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family);
 
 	/*
 	 * Compute PPP header.
@@ -991,8 +990,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		sc->sc_npqtail = &m0->m_nextpkt;
 	} else {
 		ifq = (m0->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
-		if ((error = ifq_enqueue2(&sc->sc_if, ifq, m0
-			    ALTQ_COMMA ALTQ_DECL(&pktattr))) != 0) {
+		if ((error = ifq_enqueue2(&sc->sc_if, ifq, m0)) != 0) {
 			splx(s);
 			sc->sc_if.if_oerrors++;
 			sc->sc_stats.ppp_oerrors++;
@@ -1045,8 +1043,7 @@ ppp_requeue(struct ppp_softc *sc)
 			*mpp = m->m_nextpkt;
 			m->m_nextpkt = NULL;
 			ifq = (m->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
-			if ((error = ifq_enqueue2(&sc->sc_if, ifq, m ALTQ_COMMA
-				    ALTQ_DECL(NULL))) != 0) {
+			if ((error = ifq_enqueue2(&sc->sc_if, ifq, m)) != 0) {
 				sc->sc_if.if_oerrors++;
 				sc->sc_stats.ppp_oerrors++;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_bar_base.c,v 1.2.2.2 2016/03/19 11:30:30 skrll Exp $	*/
+/*	$NetBSD: nouveau_subdev_bar_base.c,v 1.2.2.3 2016/04/22 15:44:15 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bar_base.c,v 1.2.2.2 2016/03/19 11:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bar_base.c,v 1.2.2.3 2016/04/22 15:44:15 skrll Exp $");
 
 #include <core/object.h>
 
@@ -65,13 +65,21 @@ nouveau_barobj_ctor(struct nouveau_object *parent,
 		return ret;
 
 #ifdef __NetBSD__
+    {
+	/* Yes, truncation is really intended here.  */
+	uint32_t offset = barobj->vma.offset & 0xffffffffUL;
+
+	KASSERTMSG(offset < bar->iomemsz,
+	    "bar object vma exceeds range: %"PRIx32" > %"PRIxMAX,
+	    offset, (uintmax_t)bar->iomemsz);
+
 	barobj->iomemt = bar->iomemt;
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_space_subregion(bar->iomemt, bar->iomemh,
-	    barobj->vma.offset, bar->iomemsz - barobj->vma.offset,
-	    &barobj->iomemh);
+	ret = -bus_space_subregion(bar->iomemt, bar->iomemh, offset,
+	    bar->iomemsz - offset, &barobj->iomemh);
 	if (ret)
 		return ret;
+    }
 #else
 	barobj->iomem = bar->iomem + (u32)barobj->vma.offset;
 #endif

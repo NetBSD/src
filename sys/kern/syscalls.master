@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.270.4.4 2015/12/27 12:10:05 skrll Exp $
+	$NetBSD: syscalls.master,v 1.270.4.5 2016/04/22 15:44:16 skrll Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -55,6 +55,7 @@
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/sched.h>
+#include <sys/idtype.h>
 #include <sys/syscallargs.h>
 
 %%
@@ -979,3 +980,6 @@
 			    off_t len); }
 480	STD  RUMP	{ int|sys||fdiscard(int fd, int PAD, off_t pos, \
 			    off_t len); }
+481	STD 		{ int|sys||wait6(idtype_t idtype, id_t id, \
+			    int *status, int options, struct wrusage *wru, \
+			    siginfo_t *info); }

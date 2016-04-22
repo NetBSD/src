@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.55.4.1 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: un.h,v 1.55.4.2 2016/04/22 15:44:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,9 +56,10 @@ struct	sockaddr_un {
  * Socket options for UNIX IPC domain.
  */
 #if defined(_NETBSD_SOURCE)
-#define	LOCAL_CREDS	0x0001		/* pass credentials to receiver */
+#define	LOCAL_OCREDS	0x0001		/* pass credentials to receiver */
 #define	LOCAL_CONNWAIT	0x0002		/* connects block until accepted */
 #define	LOCAL_PEEREID	0x0003		/* get peer identification */
+#define	LOCAL_CREDS	0x0004		/* pass credentials to receiver */
 #endif
 
 /*

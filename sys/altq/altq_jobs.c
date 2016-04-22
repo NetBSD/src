@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.7.2.1 2016/03/19 11:29:53 skrll Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.7.2.2 2016/04/22 15:44:08 skrll Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7.2.1 2016/03/19 11:29:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7.2.2 2016/04/22 15:44:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -103,7 +103,7 @@ static void jobs_purge(struct jobs_if *);
 static struct jobs_class *jobs_class_create(struct jobs_if *,
     int, int64_t, int64_t, int64_t, int64_t, int64_t, int);
 static int jobs_class_destroy(struct jobs_class *);
-static int jobs_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static int jobs_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf *jobs_dequeue(struct ifaltq *, int);
 
 static int jobs_addq(struct jobs_class *, struct mbuf *, struct jobs_if*);
@@ -490,7 +490,7 @@ jobs_class_destroy(struct jobs_class *cl)
  * (*altq_enqueue) in struct ifaltq.
  */
 static int
-jobs_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
 	struct jobs_if	*jif = (struct jobs_if *)ifq->altq_disc;
 	struct jobs_class *cl, *scan;
@@ -533,7 +533,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 	}
 
 	/* grab class set by classifier */
-	if (pktattr == NULL || (cl = pktattr->pattr_class) == NULL)
+	if ((cl = m->m_pkthdr.pattr_class) == NULL)
 		cl = jif->jif_default;
 
 	len = m_pktlen(m);

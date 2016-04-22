@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.36 2014/06/05 23:48:17 rmind Exp $
+ *	$Id: i4b_ipr.c,v 1.36.4.1 2016/04/22 15:44:18 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.36 2014/06/05 23:48:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.36.4.1 2016/04/22 15:44:18 skrll Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -421,7 +421,6 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	int s, rv;
 	struct ifqueue *ifq = NULL;
 	struct ip *ip;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();
 
@@ -515,7 +514,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 * else (i.e. ftp traffic) put it into the "normal" queue
 	 */
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	ip = mtod(m, struct ip *);		/* get ptr to ip header */
 
@@ -540,7 +539,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		}
 		IF_ENQUEUE(ifq, m);
 	} else {
-		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, &pktattr, rv);
+		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, rv);
 		if (rv != 0) {
 			sc->sc_if.if_oerrors++;
 			splx(s);

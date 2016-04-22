@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.292.2.5 2016/03/19 11:30:05 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.292.2.6 2016/04/22 15:44:12 skrll Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292.2.5 2016/03/19 11:30:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292.2.6 2016/04/22 15:44:12 skrll Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292.2.5 2016/03/19 11:30:05 skrll Exp $")
 #include <sys/cpu.h>
 
 #include <sys/exec_aout.h>	/* for MID_* */
+#include <sys/reboot.h>
 
 #include <uvm/uvm.h>
 
@@ -727,6 +728,10 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	int prom_memlist_size;
 
 	BDPRINTF(PDB_BOOT, ("Entered pmap_bootstrap.\n"));
+
+	/* XXX - incomplete spinup code for SUN4V */
+	if (CPU_ISSUN4V)
+		boothowto |= RB_MD1;
 
 	cache_setup_funcs();
 

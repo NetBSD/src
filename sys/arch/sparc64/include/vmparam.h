@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.34.4.1 2015/12/27 12:09:43 skrll Exp $ */
+/*	$NetBSD: vmparam.h,v 1.34.4.2 2016/04/22 15:44:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 /*
- * Machine dependent constants for Sun-4c SPARC
+ * Machine dependent constants for Sun 4U and 4V UltraSPARC
  */
 
 #ifndef VMPARAM_H

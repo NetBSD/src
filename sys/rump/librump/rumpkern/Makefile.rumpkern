@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.150.2.5 2016/03/19 11:30:37 skrll Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.150.2.6 2016/04/22 15:44:18 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -116,6 +116,7 @@ SRCS+=	init_sysctl_base.c	\
 	subr_pool.c		\
 	subr_prf.c		\
 	subr_pserialize.c	\
+	subr_psref.c		\
 	subr_specificdata.c	\
 	subr_time.c		\
 	subr_vmem.c		\

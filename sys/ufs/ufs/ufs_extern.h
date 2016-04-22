@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.77.2.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.77.2.2 2016/04/22 15:44:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -115,7 +115,7 @@ int	ufs_truncate(struct vnode *, uint64_t, kauth_cred_t);
 
 /* ufs_lookup.c */
 void	ufs_dirbad(struct inode *, doff_t, const char *);
-int	ufs_dirbadentry(struct vnode *, struct direct *, int);
+const char *ufs_dirbadentry(const struct vnode *, const struct direct *, int);
 void	ufs_makedirentry(struct inode *, struct componentname *,
 			 struct direct *);
 int	ufs_direnter(struct vnode *, const struct ufs_lookup_results *,
@@ -126,7 +126,7 @@ int	ufs_dirremove(struct vnode *, const struct ufs_lookup_results *,
 int	ufs_dirrewrite(struct inode *, off_t,
 		       struct inode *, ino_t, int, int, int);
 int	ufs_dirempty(struct inode *, ino_t, kauth_cred_t);
-int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
+int	ufs_blkatoff(struct vnode *, off_t, void *, struct buf **, bool);
 
 /* ufs_rename.c -- for lfs */
 bool	ufs_gro_directory_empty_p(struct mount *, kauth_cred_t,

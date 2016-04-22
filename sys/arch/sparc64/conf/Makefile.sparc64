@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.75.2.2 2016/03/19 11:30:05 skrll Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.75.2.3 2016/04/22 15:44:12 skrll Exp $
 
 #=========================================================================
 #
@@ -42,6 +42,8 @@ MACHINE_ARCH=sparc
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+USE_SSP?=	yes
 
 ##
 ## (1) port identification

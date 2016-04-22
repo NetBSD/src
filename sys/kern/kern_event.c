@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.82.2.3 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.82.2.4 2016/04/22 15:44:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.82.2.3 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.82.2.4 2016/04/22 15:44:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/wait.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -551,7 +552,7 @@ filt_proc(struct knote *kn, long hint)
 		struct proc *p = kn->kn_obj;
 
 		if (p != NULL)
-			kn->kn_data = p->p_xstat;
+			kn->kn_data = P_WAITSTATUS(p);
 		/*
 		 * Process is gone, so flag the event as finished.
 		 *

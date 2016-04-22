@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16.40.1 2015/09/22 12:05:45 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.16.40.2 2016/04/22 15:44:10 skrll Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -44,18 +44,15 @@ FPSPMAKE= \
 ${FPSP}:		.NOTMAIN __always_make_fpsp
 	@echo making sure the 68040 FPSP is up to date...
 	@${FPSPMAKE} fpsp.o
-	@echo done
 
 ${FPSPLIB_PROF}:	.NOTMAIN __always_make_fpsp
 	@echo making sure the profiled 68040 FPSP is up to date...
 	@${FPSPMAKE} fpsp.po
-	@echo done
 
 clean:			.NOTMAIN cleanfpsp
 cleanfpsp:		.NOTMAIN __always_make_fpsp
 	@echo cleaning the 68040 FPSP objects
 	@${FPSPMAKE} clean
-	@echo done
 
 cleandir distclean:	.NOTMAIN cleandirfpsp
 cleandirfpsp:	.NOTMAIN __always_make_fpsp
@@ -65,13 +62,11 @@ cleandirfpsp:	.NOTMAIN __always_make_fpsp
 # would tend to violate the principle of least surprise!
 	@echo cleandiring the 68040 FPSP objects
 	@${FPSPMAKE} clean
-	@echo done
 
 #depend:			.NOTMAIN dependfpsp
 #dependfpsp:		.NOTMAIN __always_make_fpsp
 #	@echo depending the 68040 FPSP objects
 #	@${FPSPMAKE} depend
-#	@echo done
 #
 
 __always_make_fpsp:	.NOTMAIN

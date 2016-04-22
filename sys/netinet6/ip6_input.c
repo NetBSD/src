@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.149.4.4 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.149.4.5 2016/04/22 15:44:18 skrll Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.4 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.5 2016/04/22 15:44:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -144,7 +144,7 @@ pfil_head_t *inet6_pfil_hook;
 
 percpu_t *ip6stat_percpu;
 
-static void ip6_init2(void *);
+static void ip6_init2(void);
 static void ip6intr(void *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
@@ -184,7 +184,7 @@ ip6_init(void)
 	frag6_init();
 	ip6_desync_factor = cprng_fast32() % MAX_TEMP_DESYNC_FACTOR;
 
-	ip6_init2(NULL);
+	ip6_init2();
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
@@ -196,12 +196,8 @@ ip6_init(void)
 }
 
 static void
-ip6_init2(void *dummy)
+ip6_init2(void)
 {
-
-	/* nd6_timer_init */
-	callout_init(&nd6_timer_ch, CALLOUT_MPSAFE);
-	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
 
 	/* timer for regeneranation of temporary addresses randomize ID */
 	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
@@ -480,7 +476,6 @@ ip6_input(struct mbuf *m)
 	 */
 	if (rt != NULL &&
 	    (rt->rt_flags & (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
-	    !(rt->rt_flags & RTF_CLONED) &&
 #if 0
 	    /*
 	     * The check below is redundant since the comparison of
@@ -504,10 +499,9 @@ ip6_input(struct mbuf *m)
 			goto hbhcheck;
 		} else {
 			/* address is not ready, so discard the packet. */
-			nd6log((LOG_INFO,
-			    "ip6_input: packet to an unready address %s->%s\n",
+			nd6log(LOG_INFO, "packet to an unready address %s->%s\n",
 			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst)));
+			    ip6_sprintf(&ip6->ip6_dst));
 
 			goto bad;
 		}

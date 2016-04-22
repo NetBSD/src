@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.59.2.3 2015/09/22 12:05:54 skrll Exp $ */
+/*	$NetBSD: ipmi.c,v 1.59.2.4 2016/04/22 15:44:12 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.59.2.3 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.59.2.4 2016/04/22 15:44:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -939,9 +939,10 @@ ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 
 	platform = pmf_get_platform("system-product");
 	if (platform != NULL &&
-	    strcmp(platform, "ProLiant MicroServer") == 0) {
+	    strcmp(platform, "ProLiant MicroServer") == 0 &&
+	    pipmi->smipmi_base_address != 0) {
                 ia->iaa_if_iospacing = 1;
-                ia->iaa_if_iobase = pipmi->smipmi_base_address - 7;
+                ia->iaa_if_iobase = pipmi->smipmi_base_address & ~0x7;
                 ia->iaa_if_iotype = 'i';
                 return;
         }

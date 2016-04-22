@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.47 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.47.40.1 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.47 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.47.40.1 2016/04/22 15:44:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ procfs_control(struct lwp *curl, struct lwp *l, int op, int sig, struct pfsnode 
 		/* Finally, deliver the requested signal (or none). */
 		lwp_lock(l);
 		if (l->l_stat == LSSTOP) {
-			p->p_xstat = sig;
+			p->p_xsig = sig;
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 		} else {

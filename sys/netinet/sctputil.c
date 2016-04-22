@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.1.2.3 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.1.2.4 2016/04/22 15:44:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.1.2.3 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.1.2.4 2016/04/22 15:44:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.1.2.3 2016/03/19 11:30:33 skrll Exp $
 
 #include <sys/callout.h>
 
-#include <net/radix.h>
 #include <net/route.h>
 
 #ifdef INET6
@@ -3610,9 +3609,9 @@ sctp_find_ifa_by_addr(struct sockaddr *sa)
 	struct ifaddr *ifa;
 
 	/* go through all our known interfaces */
-	TAILQ_FOREACH(ifn, &ifnet_list, if_list) {
+	IFNET_FOREACH(ifn) {
 		/* go through each interface addresses */
-		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifn) {
 			/* correct family? */
 			if (ifa->ifa_addr->sa_family != sa->sa_family)
 				continue;

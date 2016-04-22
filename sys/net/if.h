@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181.2.5 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.6 2016/04/22 15:44:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -754,14 +754,11 @@ struct if_addrprefreq {
 
 #ifdef _KERNEL
 #ifdef ALTQ
-#define	ALTQ_DECL(x)		x
-#define ALTQ_COMMA		,
-
-#define IFQ_ENQUEUE(ifq, m, pattr, err)					\
+#define IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq)))					\
-		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
+		ALTQ_ENQUEUE((ifq), (m), (err));			\
 	else {								\
 		if (IF_QFULL((ifq))) {					\
 			m_freem((m));					\
@@ -815,23 +812,20 @@ do {									\
 	(ifq)->altq_flags |= ALTQF_READY;				\
 } while (/*CONSTCOND*/ 0)
 
-#define	IFQ_CLASSIFY(ifq, m, af, pattr)					\
+#define	IFQ_CLASSIFY(ifq, m, af)					\
 do {									\
 	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
-			(pattr)->pattr_class = (*(ifq)->altq_classify)	\
+			m->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
 				((ifq)->altq_clfier, (m), (af));	\
-		(pattr)->pattr_af = (af);				\
-		(pattr)->pattr_hdr = mtod((m), void *);		\
+		m->m_pkthdr.pattr_af = (af);				\
+		m->m_pkthdr.pattr_hdr = mtod((m), void *);		\
 	}								\
 	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
-#define	ALTQ_DECL(x)		/* nothing */
-#define ALTQ_COMMA
-
-#define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
+#define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	IFQ_LOCK((ifq));						\
 	if (IF_QFULL((ifq))) {						\
@@ -869,7 +863,7 @@ do {									\
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
 
-#define	IFQ_CLASSIFY(ifq, m, af, pattr) /* nothing */
+#define	IFQ_CLASSIFY(ifq, m, af) /* nothing */
 
 #endif /* ALTQ */
 
@@ -945,10 +939,8 @@ void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
 
-int	ifq_enqueue(struct ifnet *, struct mbuf * ALTQ_COMMA
-    ALTQ_DECL(struct altq_pktattr *));
-int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf * ALTQ_COMMA
-    ALTQ_DECL(struct altq_pktattr *));
+int	ifq_enqueue(struct ifnet *, struct mbuf *);
+int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
 
 int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);
