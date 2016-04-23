@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.19 2011/12/23 00:51:50 jakllsch Exp $	*/
+/*	$NetBSD: uyap.c,v 1.20 2016/04/23 10:15:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.19 2011/12/23 00:51:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.20 2016/04/23 10:15:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ uyap_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	/* Match the boot device. */
-	if (uaa->vendor == USB_VENDOR_SILICONPORTALS &&
-	    uaa->product == USB_PRODUCT_SILICONPORTALS_YAPPH_NF)
+	if (uaa->uaa_vendor == USB_VENDOR_SILICONPORTALS &&
+	    uaa->uaa_product == USB_PRODUCT_SILICONPORTALS_YAPPH_NF)
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
@@ -78,7 +78,7 @@ uyap_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyap_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status err;
 	char *devinfop;
 
