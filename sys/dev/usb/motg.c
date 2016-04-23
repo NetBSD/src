@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.14 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.15 2016/04/23 18:54:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.14 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.15 2016/04/23 18:54:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_motg.h"
@@ -1407,7 +1407,7 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	KASSERT(ep->phase == DATA_IN || ep->phase != STATUS_IN);
+	KASSERT(ep->phase == DATA_IN || ep->phase == STATUS_IN);
 	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
