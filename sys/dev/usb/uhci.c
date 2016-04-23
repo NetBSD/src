@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.268 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.269 2016/04/23 13:14:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.268 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.269 2016/04/23 13:14:52 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2925,7 +2925,7 @@ uhci_device_isoc_init(struct usbd_xfer *xfer)
 Static void
 uhci_device_isoc_fini(struct usbd_xfer *xfer)
 {
-	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
+	struct uhci_xfer *ux __diagused = UHCI_XFER2UXFER(xfer);
 
 	KASSERT(ux->ux_type == UX_ISOC);
 }
@@ -3278,7 +3278,7 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 void
 uhci_device_intr_done(struct usbd_xfer *xfer)
 {
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
+	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	uhci_soft_qh_t *sqh;
 	int i, npoll;
