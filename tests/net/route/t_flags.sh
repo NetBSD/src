@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.6 2016/04/22 06:24:10 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.7 2016/04/23 08:54:20 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -223,7 +223,7 @@ test_reject()
 	# Shouldn't be created
 	check_entry_fail 10.0.0.1 UH
 
-	# Gateway is lo0
+	# Gateway is lo0 (RTF_GATEWAY)
 
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore rump.route delete -net 10.0.0.0/24
@@ -241,6 +241,22 @@ test_reject()
 
 	# Shouldn't be created
 	check_entry_fail 10.0.0.1 UH
+
+	# Gateway is lo0 (RTF_HOST)
+
+	# Delete an existing route first
+	atf_check -s exit:0 -o ignore rump.route delete -net 10.0.0.0/24
+
+	atf_check -s exit:0 -o ignore \
+	    rump.route add -host 10.0.0.1/24 127.0.0.1 -iface -reject
+	$DEBUG && rump.netstat -rn -f inet
+
+	# Up, Host, Reject, Static
+	check_entry_flags 10.0.0.1 UHRS
+
+	atf_check -s not-exit:0 -o ignore -e match:'No route to host' \
+	    rump.ping -n -w 1 -c 1 10.0.0.1
+	$DEBUG && rump.netstat -rn -f inet
 }
 
 test_icmp_redirect()
