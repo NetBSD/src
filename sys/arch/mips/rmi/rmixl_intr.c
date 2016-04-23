@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.9 2015/06/10 22:31:00 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.10 2016/04/23 10:15:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.9 2015/06/10 22:31:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.10 2016/04/23 10:15:30 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

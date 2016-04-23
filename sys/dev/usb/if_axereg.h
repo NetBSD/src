@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.17 2015/04/14 20:32:36 riastradh Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.18 2016/04/23 10:15:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -220,7 +220,7 @@ struct axe_softc;
 
 struct axe_chain {
 	struct axe_softc	*axe_sc;
-	usbd_xfer_handle	axe_xfer;
+	struct usbd_xfer	*axe_xfer;
 	uint8_t			*axe_buf;
 	int			axe_accum;
 	int			axe_idx;
@@ -245,15 +245,15 @@ struct axe_softc {
 	struct ethercom		axe_ec;
 	struct mii_data		axe_mii;
 	krndsource_t	rnd_source;
-	usbd_device_handle	axe_udev;
-	usbd_interface_handle	axe_iface;
+	struct usbd_device *	axe_udev;
+	struct usbd_interface *	axe_iface;
 
 	uint16_t		axe_vendor;
 	uint16_t		axe_product;
 	uint16_t		axe_flags;
 
 	int			axe_ed[AXE_ENDPT_MAX];
-	usbd_pipe_handle	axe_ep[AXE_ENDPT_MAX];
+	struct usbd_pipe *	axe_ep[AXE_ENDPT_MAX];
 	int			axe_if_flags;
 	struct axe_cdata	axe_cdata;
 	struct callout axe_stat_ch;

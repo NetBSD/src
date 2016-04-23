@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.40 2014/09/21 15:07:19 christos Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.41 2016/04/23 10:15:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.40 2014/09/21 15:07:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.41 2016/04/23 10:15:31 skrll Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -93,9 +93,9 @@ ohci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(ca->ca_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(ca->ca_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(ca->ca_class) == PCI_INTERFACE_OHCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -108,11 +108,10 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t csr;
 	char devinfo[256];
-	usbd_status r;
 	const char *devname = device_xname(self);
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
@@ -128,7 +127,7 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
-	sc->sc.sc_bus.dmatag = ca->ca_dmat;
+	sc->sc.sc_bus.ub_dmatag = ca->ca_dmat;
 
 	/* Enable the device. */
 	csr = Cardbus_conf_read(ct, ca->ca_tag,
@@ -152,9 +151,9 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 	    sc->sc.sc_id_vendor);
 
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		printf("%s: init failed, error=%d\n", devname, err);
 
 		/* Avoid spurious interrupts. */
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
@@ -184,7 +183,7 @@ ohci_cardbus_detach(device_t self, int flags)
 
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
-		return (rv);
+		return rv;
 	if (sc->sc_ih != NULL) {
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -197,5 +196,5 @@ ohci_cardbus_detach(device_t self, int flags)
 #if NEHCI_CARDBUS > 0
 	usb_cardbus_rem(&sc->sc_cardbus);
 #endif
-	return (0);
+	return 0;
 }

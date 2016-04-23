@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_dwctwo.c,v 1.5 2015/08/30 13:02:42 skrll Exp $	*/
+/*	$NetBSD: rockchip_dwctwo.c,v 1.6 2016/04/23 10:15:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.5 2015/08/30 13:02:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.6 2016/04/23 10:15:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ rkdwc2_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dwc2.sc_dev = self;
 
 	sc->sc_dwc2.sc_iot = obio->obio_bst;
-	sc->sc_dwc2.sc_bus.dmatag = obio->obio_dmat;
+	sc->sc_dwc2.sc_bus.ub_dmatag = obio->obio_dmat;
 	sc->sc_dwc2.sc_params = &rkdwc2_params;
 
 	bus_space_subregion(obio->obio_bst, obio->obio_bsh, obio->obio_offset,

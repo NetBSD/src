@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_ohci.c,v 1.3 2015/03/17 09:27:09 macallan Exp $ */
+/*	$NetBSD: ingenic_ohci.c,v 1.4 2016/04/23 10:15:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_ohci.c,v 1.3 2015/03/17 09:27:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_ohci.c,v 1.4 2016/04/23 10:15:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,13 +77,13 @@ ingenic_ohci_attach(device_t parent, device_t self, void *aux)
 	struct ohci_softc *sc = device_private(self);
 	struct apbus_attach_args *aa = aux;
 	void *ih;
-	int error, status;
+	int error;
 
 	sc->sc_dev = self;
 
 	sc->iot = aa->aa_bst;
-	sc->sc_bus.dmatag = aa->aa_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = aa->aa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_size = 0x1000;
 
 	if (aa->aa_addr == 0)
@@ -116,9 +116,9 @@ ingenic_ohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_id_vendor = USB_VENDOR_INGENIC;
 	strlcpy(sc->sc_vendor, "Ingenic", sizeof(sc->sc_vendor));
 
-	status = ohci_init(sc);
-	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", status);
+	error = ohci_init(sc);
+	if (error) {
+		aprint_error_dev(self, "init failed, error=%d\n", error);
 		goto fail;
 	}
 
