@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.62 2015/08/31 10:41:22 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.63 2016/04/23 10:15:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.62 2015/08/31 10:41:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.63 2016/04/23 10:15:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,14 +119,13 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	usbd_status r;
 	int ncomp;
 	struct usb_pci *up;
 	int quirk;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	pci_aprint_devinfo(pa, "USB controller");
 
@@ -144,7 +143,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
@@ -191,14 +190,14 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_USBREV_PRE_1_0:
 	case PCI_USBREV_1_0:
 	case PCI_USBREV_1_1:
-		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		sc->sc.sc_bus.ub_revision = USBREV_UNKNOWN;
 		aprint_verbose_dev(self, "pre-2.0 USB rev\n");
 		goto fail;
 	case PCI_USBREV_2_0:
-		sc->sc.sc_bus.usbrev = USBREV_2_0;
+		sc->sc.sc_bus.ub_revision = USBREV_2_0;
 		break;
 	default:
-		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		sc->sc.sc_bus.ub_revision = USBREV_UNKNOWN;
 		break;
 	}
 
@@ -239,9 +238,9 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 
 	ehci_get_ownership(&sc->sc, pc, tag);
 
-	r = ehci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail;
 	}
 
@@ -463,7 +462,7 @@ static int
 ehci_apply_amd_quirks(struct ehci_pci_softc *sc)
 {
 	pcireg_t value;
- 
+
 	aprint_normal_dev(sc->sc.sc_dev,
 	    "applying AMD SB600/SB700 USB freeze workaround\n");
 	value = pci_conf_read(sc->sc_pc, sc->sc_tag, EHCI_SBx00_WORKAROUND_REG);

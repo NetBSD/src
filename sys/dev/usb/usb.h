@@ -1,5 +1,4 @@
-/*	$NetBSD: usb.h,v 1.112 2015/03/26 08:08:27 skrll Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
+/*	$NetBSD: usb.h,v 1.113 2016/04/23 10:15:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,11 +40,6 @@
 #include <sys/ioctl.h>
 
 #if defined(_KERNEL)
-#include <sys/mallocvar.h>
-
-MALLOC_DECLARE(M_USB);
-MALLOC_DECLARE(M_USBDEV);
-MALLOC_DECLARE(M_USBHC);
 
 #include <sys/device.h>
 
@@ -75,31 +69,20 @@ MALLOC_DECLARE(M_USBHC);
  * and endian problem and should always be used to access non-byte
  * values.
  */
-typedef u_int8_t uByte;
-typedef u_int8_t uWord[2];
-typedef u_int8_t uDWord[4];
+typedef uint8_t uByte;
+typedef uint8_t uWord[2];
+typedef uint8_t uDWord[4];
 
-#define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
+#define USETW2(w,h,l) ((w)[0] = (uint8_t)(l), (w)[1] = (uint8_t)(h))
 
-#if 1
 #define UGETW(w) ((w)[0] | ((w)[1] << 8))
-#define USETW(w,v) ((w)[0] = (u_int8_t)(v), (w)[1] = (u_int8_t)((v) >> 8))
+#define USETW(w,v) ((w)[0] = (uint8_t)(v), (w)[1] = (uint8_t)((v) >> 8))
+#define USETWD(val) { (uint8_t)(val), (uint8_t)((val) >> 8) }
 #define UGETDW(w) ((w)[0] | ((w)[1] << 8) | ((w)[2] << 16) | ((w)[3] << 24))
-#define USETDW(w,v) ((w)[0] = (u_int8_t)(v), \
-		     (w)[1] = (u_int8_t)((v) >> 8), \
-		     (w)[2] = (u_int8_t)((v) >> 16), \
-		     (w)[3] = (u_int8_t)((v) >> 24))
-#else
-/*
- * On little-endian machines that can handle unaligned accesses
- * (e.g. i386) these macros can be replaced by the following.
- */
-#define UGETW(w) (*(u_int16_t *)(w))
-#define USETW(w,v) (*(u_int16_t *)(w) = (v))
-#define UGETDW(w) (*(u_int32_t *)(w))
-#define USETDW(w,v) (*(u_int32_t *)(w) = (v))
-#endif
-
+#define USETDW(w,v) ((w)[0] = (uint8_t)(v), \
+		     (w)[1] = (uint8_t)((v) >> 8), \
+		     (w)[2] = (uint8_t)((v) >> 16), \
+		     (w)[3] = (uint8_t)((v) >> 24))
 #define UPACKED __packed
 
 typedef struct {
@@ -411,15 +394,26 @@ typedef struct {
 } UPACKED usb_devcap_platform_descriptor_t;
 #define USB_DEVCAP_PLATFORM_DESCRIPTOR_SIZE 20
 
+/* usb 3.1 ch 9.6.2.5 */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDevCapabilityType;
 	uByte		bReserved;
 	uDWord		bmAttributes;
+#define	USB_DEVCAP_SSP_SSAC(x)			__SHIFTOUT(x, __BITS(4,0))
+#define	USB_DEVCAP_SSP_SSIC(x)			__SHIFTOUT(x, __BITS(8,5))
 	uWord		wFunctionalitySupport;
+#define	USB_DEVCAP_SSP_SSID(x)			__SHIFTOUT(x, __BITS(3,0))
+#define	USB_DEVCAP_SSP_MIN_RXLANE_COUNT(x)	__SHIFTOUT(x, __BITS(11,8))
+#define	USB_DEVCAP_SSP_MIN_TXLANE_COUNT(x)	__SHIFTOUT(x, __BITS(15,12))
 	uWord		wReserved;
 	uDWord		bmSublinkSpeedAttr[0];
+#define	USB_DEVCAP_SSP_SSID(x)			__SHIFTOUT(x, __BITS(3,0))
+#define	USB_DEVCAP_SSP_LSE(x)			__SHIFTOUT(x, __BITS(5,4))
+#define	USB_DEVCAP_SSP_ST(x)			__SHIFTOUT(x, __BITS(7,6))
+#define	USB_DEVCAP_SSP_LP(x)			__SHIFTOUT(x, __BITS(15,14))
+#define	USB_DEVCAP_SSP_LSM(x)			__SHIFTOUT(x, __BITS(31,16))
 } UPACKED usb_devcap_ssp_descriptor_t;
 #define USB_DEVCAP_SSP_DESCRIPTOR_SIZE 12 /* variable length */
 
@@ -440,6 +434,10 @@ typedef struct {
 #define UR_STOP_TT		0x0b
 #define UR_SET_HUB_DEPTH	0x0c
 #define UR_GET_PORT_ERR_COUNT	0x0d
+/* Port Status Type for GET_STATUS,  USB 3.1 10.16.2.6 and Table 10-12 */
+#define  UR_PST_PORT_STATUS	0
+#define  UR_PST_PD_STATUS	1
+#define  UR_PST_EXT_PORT_STATUS	2
 
 /*
  * Hub features from USB 2.0 spec, table 11-17 and updated by the
@@ -577,7 +575,9 @@ typedef struct {
 #define UPS_OVERCURRENT_INDICATOR	0x0008
 #define UPS_RESET			0x0010
 #define UPS_PORT_L1			0x0020
-#define UPS_PORT_LS_GET(x)		__SHIFTOUT(x, __BITS(8,5))
+#define UPS_PORT_LS_MASK		__BITS(8,5)
+#define UPS_PORT_LS_GET(x)		__SHIFTOUT(x, UPS_PORT_LS_MASK)
+#define UPS_PORT_LS_SET(x)		__SHIFTIN(x, UPS_PORT_LS_MASK)
 #define UPS_PORT_LS_U0			0x00
 #define UPS_PORT_LS_U1			0x01
 #define UPS_PORT_LS_U2			0x02
@@ -596,9 +596,9 @@ typedef struct {
 #define UPS_FULL_SPEED			0x0000	/* for completeness */
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
-#define UPS_SUPER_SPEED			0x0800
 #define UPS_PORT_TEST			0x0800
 #define UPS_PORT_INDICATOR		0x1000
+#define UPS_OTHER_SPEED			0x2000	/* currently NetBSD specific */
 	uWord		wPortChange;
 #define UPS_C_CONNECT_STATUS		0x0001
 #define UPS_C_PORT_ENABLED		0x0002
@@ -610,6 +610,14 @@ typedef struct {
 #define UPS_C_PORT_LINK_STATE		0x0040
 #define UPS_C_PORT_CONFIG_ERROR		0x0080
 } UPACKED usb_port_status_t;
+
+/* 10.16.2.6 */
+/* Valid when port status type is UR_PST_EXT_PORT_STATUS. */
+typedef struct {
+	uWord		wPortStatus;
+	uWord		wPortChange;
+	uDWord		dwExtPortStatus;
+} UPACKED usb_port_status_ext_t;
 
 /* Device class codes */
 #define UDCLASS_IN_INTERFACE	0x00
@@ -844,34 +852,36 @@ struct usb_ctl_report_desc {
 	u_char	ucrd_data[1024];	/* filled data size will vary */
 };
 
-typedef struct { u_int32_t cookie; } usb_event_cookie_t;
+typedef struct { uint32_t cookie; } usb_event_cookie_t;
 
 #define USB_MAX_DEVNAMES 4
 #define USB_MAX_DEVNAMELEN 16
 struct usb_device_info {
-	u_int8_t	udi_bus;
-	u_int8_t	udi_addr;	/* device address */
+	uint8_t		udi_bus;
+	uint8_t		udi_addr;	/* device address */
 	usb_event_cookie_t udi_cookie;
 	char		udi_product[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_vendor[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_release[8];
 	char		udi_serial[USB_MAX_ENCODED_STRING_LEN];
-	u_int16_t	udi_productNo;
-	u_int16_t	udi_vendorNo;
-	u_int16_t	udi_releaseNo;
-	u_int8_t	udi_class;
-	u_int8_t	udi_subclass;
-	u_int8_t	udi_protocol;
-	u_int8_t	udi_config;
-	u_int8_t	udi_speed;
+	uint16_t	udi_productNo;
+	uint16_t	udi_vendorNo;
+	uint16_t	udi_releaseNo;
+	uint8_t		udi_class;
+	uint8_t		udi_subclass;
+	uint8_t		udi_protocol;
+	uint8_t		udi_config;
+	uint8_t		udi_speed;
 #define USB_SPEED_LOW  1
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
 #define USB_SPEED_SUPER 4
+#define USB_SPEED_SUPER_PLUS 5
+#define USB_IS_SS(X) ((X) == USB_SPEED_SUPER || (X) == USB_SPEED_SUPER_PLUS)
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
-	u_int8_t	udi_ports[16];/* hub only: addresses of devices on ports */
+	uint8_t		udi_ports[16];/* hub only: addresses of devices on ports */
 #define USB_PORT_ENABLED 0xff
 #define USB_PORT_SUSPENDED 0xfe
 #define USB_PORT_POWERED 0xfd
@@ -880,24 +890,24 @@ struct usb_device_info {
 
 /* <=3.0 had this layout of the structure */
 struct usb_device_info_old {
-        u_int8_t        udi_bus;
-        u_int8_t        udi_addr;       /* device address */
-        usb_event_cookie_t udi_cookie;
-        char            udi_product[USB_MAX_STRING_LEN];
-        char            udi_vendor[USB_MAX_STRING_LEN];
-        char            udi_release[8];
-        u_int16_t       udi_productNo;
-        u_int16_t       udi_vendorNo;
-        u_int16_t       udi_releaseNo;
-        u_int8_t        udi_class;
-        u_int8_t        udi_subclass;
-        u_int8_t        udi_protocol;
-        u_int8_t        udi_config;
-        u_int8_t        udi_speed;
-        int             udi_power;      /* power consumption in mA, 0 if selfpowered */
-        int             udi_nports;
-        char            udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
-        u_int8_t        udi_ports[16];/* hub only: addresses of devices on ports */
+	uint8_t		udi_bus;
+	uint8_t		udi_addr;       /* device address */
+	usb_event_cookie_t udi_cookie;
+	char		udi_product[USB_MAX_STRING_LEN];
+	char		udi_vendor[USB_MAX_STRING_LEN];
+	char		udi_release[8];
+	uint16_t	udi_productNo;
+	uint16_t	udi_vendorNo;
+	uint16_t	udi_releaseNo;
+	uint8_t		udi_class;
+	uint8_t		udi_subclass;
+	uint8_t		udi_protocol;
+	uint8_t		udi_config;
+	uint8_t		udi_speed;
+	int		udi_power;      /* power consumption in mA, 0 if selfpowered */
+	int		udi_nports;
+	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
+	uint8_t		udi_ports[16];/* hub only: addresses of devices on ports */
 };
 
 struct usb_ctl_report {
