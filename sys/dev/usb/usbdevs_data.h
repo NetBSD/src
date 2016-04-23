@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.706 2016/04/19 15:51:21 nonaka Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.707 2016/04/23 10:15:32 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.713 2016/04/19 15:50:24 nonaka Exp
+ *	NetBSD: usbdevs,v 1.684.2.6 2016/04/22 13:43:55 skrll Exp
  */
 
 /*

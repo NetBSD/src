@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.10 2015/04/14 20:32:36 riastradh Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.11 2016/04/23 10:15:31 skrll Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -148,7 +148,7 @@
 
 struct udav_chain {
 	struct udav_softc	*udav_sc;
-	usbd_xfer_handle	udav_xfer;
+	struct usbd_xfer	*udav_xfer;
 	char			*udav_buf;
 	struct mbuf		*udav_mbuf;
 	int			udav_idx;
@@ -169,17 +169,17 @@ struct udav_cdata {
 
 struct udav_softc {
 	device_t		sc_dev;	/* base device */
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 
 	/* USB */
-	usbd_interface_handle	sc_ctl_iface;
+	struct usbd_interface *	sc_ctl_iface;
 	/* int			sc_ctl_iface_no; */
 	int			sc_bulkin_no; /* bulk in endpoint */
 	int			sc_bulkout_no; /* bulk out endpoint */
 	int			sc_intrin_no; /* intr in endpoint */
-	usbd_pipe_handle	sc_pipe_rx;
-	usbd_pipe_handle	sc_pipe_tx;
-	usbd_pipe_handle	sc_pipe_intr;
+	struct usbd_pipe *	sc_pipe_rx;
+	struct usbd_pipe *	sc_pipe_tx;
+	struct usbd_pipe *	sc_pipe_intr;
 	struct callout		sc_stat_ch;
 	u_int			sc_rx_errs;
 	/* u_int		sc_intr_errs; */
@@ -201,5 +201,5 @@ struct udav_softc {
 	struct usb_task		sc_tick_task;
 	struct usb_task		sc_stop_task;
 
-	u_int16_t		sc_flags;
+	uint16_t		sc_flags;
 };

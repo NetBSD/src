@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.9 2015/07/28 12:27:55 rjs Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.10 2016/04/23 10:15:32 skrll Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -

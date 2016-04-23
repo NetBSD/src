@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.19 2014/03/10 19:55:18 reinoud Exp $ */
+/* $NetBSD: uslsa.c,v 1.20 2016/04/23 10:15:32 skrll Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19 2014/03/10 19:55:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.20 2016/04/23 10:15:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ int uslsadebug = 0;
 struct uslsa_softc {
 	device_t		sc_dev;		/* base device */
 	device_t		sc_subdev;	/* ucom device */
-	usbd_device_handle	sc_udev;	/* usb device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device *	sc_udev;	/* usb device */
+	struct usbd_interface *	sc_iface;	/* interface */
 	uint8_t			sc_ifnum;	/* interface number */
 	bool			sc_dying;	/* disconnecting */
 };
@@ -108,14 +108,14 @@ static int uslsa_request_set(struct uslsa_softc *, uint8_t, uint16_t);
 static int uslsa_set_flow(struct uslsa_softc *, tcflag_t, tcflag_t);
 
 static const struct ucom_methods uslsa_methods = {
-	uslsa_get_status,
-	uslsa_set,
-	uslsa_param,
-	uslsa_ioctl,
-	uslsa_open,
-	uslsa_close,
-	NULL,
-	NULL,
+	.ucom_get_status = uslsa_get_status,
+	.ucom_set = uslsa_set,
+	.ucom_param = uslsa_param,
+	.ucom_ioctl = uslsa_ioctl,
+	.ucom_open = uslsa_open,
+	.ucom_close = uslsa_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 #define USLSA_CONFIG_INDEX	0
@@ -154,11 +154,9 @@ CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
 static int
 uslsa_match(device_t parent, cfdata_t match, void *aux)
 {
-	const struct usbif_attach_arg *uaa;
+	const struct usbif_attach_arg *uiaa = aux;
 
-	uaa = aux;
-
-	if (usb_lookup(uslsa_devs, uaa->vendor, uaa->product) != NULL) {
+	if (usb_lookup(uslsa_devs, uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL) {
 		return UMATCH_VENDOR_PRODUCT;
 	} else {
 		return UMATCH_NONE;
@@ -169,19 +167,18 @@ static void
 uslsa_attach(device_t parent, device_t self, void *aux)
 {
 	struct uslsa_softc *sc;
-	const struct usbif_attach_arg *uaa;
+	const struct usbif_attach_arg *uiaa = aux;
 	const usb_interface_descriptor_t *id;
 	const usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	int i;
 
 	sc = device_private(self);
-	uaa = aux;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
-	sc->sc_iface = uaa->iface;
+	sc->sc_udev = uiaa->uiaa_device;
+	sc->sc_iface = uiaa->uiaa_iface;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -194,21 +191,21 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ifnum = id->bInterfaceNumber;
 
-	uca.info = "Silicon Labs CP210x";
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.ibufsize = USLSA_BUFSIZE;
-	uca.obufsize = USLSA_BUFSIZE;
-	uca.ibufsizepad = USLSA_BUFSIZE;
-	uca.opkthdrlen = 0;
-	uca.device = sc->sc_udev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &uslsa_methods;
-	uca.arg = sc;
+	ucaa.ucaa_info = "Silicon Labs CP210x";
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	ucaa.ucaa_ibufsize = USLSA_BUFSIZE;
+	ucaa.ucaa_obufsize = USLSA_BUFSIZE;
+	ucaa.ucaa_ibufsizepad = USLSA_BUFSIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = sc->sc_udev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &uslsa_methods;
+	ucaa.ucaa_arg = sc;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	                   sc->sc_dev);
 
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		int addr, dir, attr;
 
@@ -223,22 +220,22 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
 		if (dir == UE_DIR_IN && attr == UE_BULK) {
-			uca.bulkin = addr;
+			ucaa.ucaa_bulkin = addr;
 		} else if (dir == UE_DIR_OUT && attr == UE_BULK) {
-			uca.bulkout = addr;
+			ucaa.ucaa_bulkout = addr;
 		} else {
 			aprint_error_dev(self, "unexpected endpoint\n");
 		}
 	}
 	aprint_debug_dev(sc->sc_dev, "EPs: in=%#x out=%#x\n",
-		uca.bulkin, uca.bulkout);
-	if ((uca.bulkin == -1) || (uca.bulkout == -1)) {
+		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout);
+	if ((ucaa.ucaa_bulkin == -1) || (ucaa.ucaa_bulkout == -1)) {
 		aprint_error_dev(self, "could not find endpoints\n");
 		sc->sc_dying = true;
 		return;
 	}
 
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 	                                    ucomprint, ucomsubmatch);
 
 	return;

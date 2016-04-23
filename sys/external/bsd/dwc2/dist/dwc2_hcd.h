@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.13 2016/02/24 22:17:54 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.14 2016/04/23 10:15:30 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -627,7 +627,7 @@ static inline u32 dwc2_hcd_urb_get_iso_desc_actual_length(
 }
 
 static inline int dwc2_hcd_is_bandwidth_allocated(struct dwc2_hsotg *hsotg,
-						  usbd_xfer_handle xfer)
+						  struct usbd_xfer *xfer)
 {
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
 	struct dwc2_qh *qh = dpipe->priv;

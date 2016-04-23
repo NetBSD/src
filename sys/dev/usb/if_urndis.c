@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.10 2016/02/09 08:32:12 ozaki-r Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.11 2016/04/23 10:15:31 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.10 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.11 2016/04/23 10:15:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ static void urndis_watchdog(struct ifnet *);
 #endif
 
 static void urndis_start(struct ifnet *);
-static void urndis_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void urndis_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void urndis_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void urndis_txeof(struct usbd_xfer *, void *, usbd_status);
 static int urndis_rx_list_init(struct urndis_softc *);
 static int urndis_tx_list_init(struct urndis_softc *);
 
@@ -729,7 +729,7 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 {
 	struct urndis_chain		*c;
 	usbd_status			 err;
-	struct urndis_packet_msg		*msg;
+	struct urndis_packet_msg	*msg;
 
 	c = &sc->sc_data.sc_tx_chain[idx];
 
@@ -754,9 +754,8 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 
 	c->sc_mbuf = m;
 
-	usbd_setup_xfer(c->sc_xfer, sc->sc_bulkout_pipe, c, c->sc_buf,
-	    le32toh(msg->rm_len), USBD_FORCE_SHORT_XFER | USBD_NO_COPY, 10000,
-	    urndis_txeof);
+	usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, le32toh(msg->rm_len),
+	    USBD_FORCE_SHORT_XFER, 10000, urndis_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->sc_xfer);
@@ -892,20 +891,20 @@ urndis_newbuf(struct urndis_softc *sc, struct urndis_chain *c)
 	if (m_new == NULL) {
 		printf("%s: no memory for rx list -- packet dropped!\n",
 		    DEVNAME(sc));
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
 		printf("%s: no memory for rx list -- packet dropped!\n",
 		    DEVNAME(sc));
 		m_freem(m_new);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 
 	m_adj(m_new, ETHER_ALIGN);
 	c->sc_mbuf = m_new;
-	return (0);
+	return 0;
 }
 
 static int
@@ -922,20 +921,18 @@ urndis_rx_list_init(struct urndis_softc *sc)
 		c->sc_idx = i;
 
 		if (urndis_newbuf(sc, c) == ENOBUFS)
-			return (ENOBUFS);
+			return ENOBUFS;
 
 		if (c->sc_xfer == NULL) {
-			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->sc_xfer == NULL)
-				return (ENOBUFS);
-			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    RNDIS_BUFSZ);
-			if (c->sc_buf == NULL)
-				return (ENOBUFS);
+			int err = usbd_create_xfer(sc->sc_bulkin_pipe,
+			    RNDIS_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->sc_xfer);
+			if (err)
+				return err;
+			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -952,16 +949,14 @@ urndis_tx_list_init(struct urndis_softc *sc)
 		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
-			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->sc_xfer == NULL)
-				return (ENOBUFS);
-			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    RNDIS_BUFSZ);
-			if (c->sc_buf == NULL)
-				return (ENOBUFS);
+			int err = usbd_create_xfer(sc->sc_bulkout_pipe,
+			    RNDIS_BUFSZ, USBD_FORCE_SHORT_XFER, 0, &c->sc_xfer);
+			if (err)
+				return err;
+			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}
-	return (0);
+	return 0;
 }
 
 static int
@@ -974,7 +969,7 @@ urndis_ioctl(struct ifnet *ifp, unsigned long command, void *data)
 	error = 0;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -1001,7 +996,7 @@ urndis_ioctl(struct ifnet *ifp, unsigned long command, void *data)
 		error = 0;
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 #if 0
@@ -1041,22 +1036,6 @@ urndis_init(struct ifnet *ifp)
 
 	s = splnet();
 
-	err = urndis_tx_list_init(sc);
-	if (err) {
-		printf("%s: tx list init failed\n",
-		    DEVNAME(sc));
-		splx(s);
-		return err;
-	}
-
-	err = urndis_rx_list_init(sc);
-	if (err) {
-		printf("%s: rx list init failed\n",
-		    DEVNAME(sc));
-		splx(s);
-		return err;
-	}
-
 	usberr = usbd_open_pipe(sc->sc_iface_data, sc->sc_bulkin_no,
 	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
 	if (usberr) {
@@ -1075,14 +1054,29 @@ urndis_init(struct ifnet *ifp)
 		return EIO;
 	}
 
+	err = urndis_tx_list_init(sc);
+	if (err) {
+		printf("%s: tx list init failed\n",
+		    DEVNAME(sc));
+		splx(s);
+		return err;
+	}
+
+	err = urndis_rx_list_init(sc);
+	if (err) {
+		printf("%s: rx list init failed\n",
+		    DEVNAME(sc));
+		splx(s);
+		return err;
+	}
+
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
 		struct urndis_chain *c;
 
 		c = &sc->sc_data.sc_rx_chain[i];
-		usbd_setup_xfer(c->sc_xfer, sc->sc_bulkin_pipe, c,
-		    c->sc_buf, RNDIS_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
-		    USBD_NO_TIMEOUT, urndis_rxeof);
+
+		usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, RNDIS_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urndis_rxeof);
 		usbd_transfer(c->sc_xfer);
 	}
 
@@ -1110,11 +1104,6 @@ urndis_stop(struct ifnet *ifp)
 		if (err)
 			printf("%s: abort rx pipe failed: %s\n",
 			    DEVNAME(sc), usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_bulkin_pipe);
-		if (err)
-			printf("%s: close rx pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-		sc->sc_bulkin_pipe = NULL;
 	}
 
 	if (sc->sc_bulkout_pipe != NULL) {
@@ -1122,11 +1111,6 @@ urndis_stop(struct ifnet *ifp)
 		if (err)
 			printf("%s: abort tx pipe failed: %s\n",
 			    DEVNAME(sc), usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_bulkout_pipe);
-		if (err)
-			printf("%s: close tx pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-		sc->sc_bulkout_pipe = NULL;
 	}
 
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
@@ -1135,7 +1119,7 @@ urndis_stop(struct ifnet *ifp)
 			sc->sc_data.sc_rx_chain[i].sc_mbuf = NULL;
 		}
 		if (sc->sc_data.sc_rx_chain[i].sc_xfer != NULL) {
-			usbd_free_xfer(sc->sc_data.sc_rx_chain[i].sc_xfer);
+			usbd_destroy_xfer(sc->sc_data.sc_rx_chain[i].sc_xfer);
 			sc->sc_data.sc_rx_chain[i].sc_xfer = NULL;
 		}
 	}
@@ -1146,9 +1130,26 @@ urndis_stop(struct ifnet *ifp)
 			sc->sc_data.sc_tx_chain[i].sc_mbuf = NULL;
 		}
 		if (sc->sc_data.sc_tx_chain[i].sc_xfer != NULL) {
-			usbd_free_xfer(sc->sc_data.sc_tx_chain[i].sc_xfer);
+			usbd_destroy_xfer(sc->sc_data.sc_tx_chain[i].sc_xfer);
 			sc->sc_data.sc_tx_chain[i].sc_xfer = NULL;
 		}
+	}
+
+	/* Close pipes. */
+	if (sc->sc_bulkin_pipe != NULL) {
+		err = usbd_close_pipe(sc->sc_bulkin_pipe);
+		if (err)
+			printf("%s: close rx pipe failed: %s\n",
+			    DEVNAME(sc), usbd_errstr(err));
+		sc->sc_bulkin_pipe = NULL;
+	}
+
+	if (sc->sc_bulkout_pipe != NULL) {
+		err = usbd_close_pipe(sc->sc_bulkout_pipe);
+		if (err)
+			printf("%s: close tx pipe failed: %s\n",
+			    DEVNAME(sc), usbd_errstr(err));
+		sc->sc_bulkout_pipe = NULL;
 	}
 }
 
@@ -1190,8 +1191,8 @@ urndis_start(struct ifnet *ifp)
 }
 
 static void
-urndis_rxeof(usbd_xfer_handle xfer,
-    usbd_private_handle priv,
+urndis_rxeof(struct usbd_xfer *xfer,
+    void *priv,
     usbd_status status)
 {
 	struct urndis_chain	*c;
@@ -1225,15 +1226,14 @@ urndis_rxeof(usbd_xfer_handle xfer,
 
 done:
 	/* Setup new transfer. */
-	usbd_setup_xfer(c->sc_xfer, sc->sc_bulkin_pipe, c, c->sc_buf,
-	    RNDIS_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
-	    urndis_rxeof);
+	usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, RNDIS_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urndis_rxeof);
 	usbd_transfer(c->sc_xfer);
 }
 
 static void
-urndis_txeof(usbd_xfer_handle xfer,
-    usbd_private_handle priv,
+urndis_txeof(struct usbd_xfer *xfer,
+    void *priv,
     usbd_status status)
 {
 	struct urndis_chain	*c;
@@ -1291,24 +1291,22 @@ urndis_txeof(usbd_xfer_handle xfer,
 static int
 urndis_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg		*uaa;
+	struct usbif_attach_arg		*uiaa = aux;
 	usb_interface_descriptor_t	*id;
 
-	uaa = aux;
+	if (!uiaa->uiaa_iface)
+		return UMATCH_NONE;
 
-	if (!uaa->iface)
-		return (UMATCH_NONE);
-
-	id = usbd_get_interface_descriptor(uaa->iface);
+	id = usbd_get_interface_descriptor(uiaa->uiaa_iface);
 	if (id == NULL)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	if (id->bInterfaceClass == UICLASS_WIRELESS &&
 	    id->bInterfaceSubClass == UISUBCLASS_RF &&
 	    id->bInterfaceProtocol == UIPROTO_RNDIS)
-		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 
-	return (usb_lookup(urndis_devs, uaa->vendor, uaa->product) != NULL) ?
+	return usb_lookup(urndis_devs, uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -1316,7 +1314,7 @@ static void
 urndis_attach(device_t parent, device_t self, void *aux)
 {
 	struct urndis_softc		*sc;
-	struct usbif_attach_arg		*uaa;
+	struct usbif_attach_arg		*uiaa;
 	struct ifnet			*ifp;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -1334,18 +1332,18 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	char				*devinfop;
 
 	sc = device_private(self);
-	uaa = aux;
+	uiaa = aux;
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uiaa->uiaa_device;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->sc_iface_ctl = uaa->iface;
+	sc->sc_iface_ctl = uiaa->uiaa_iface;
 	id = usbd_get_interface_descriptor(sc->sc_iface_ctl);
 	if_ctl = id->bInterfaceNumber;
 	sc->sc_ifaceno_ctl = if_ctl;
@@ -1373,14 +1371,14 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	} else {
 		DPRINTF(("urndis_attach: union interface: ctl %u, data %u\n",
 		    if_ctl, if_data));
-		for (i = 0; i < uaa->nifaces; i++) {
-			if (uaa->ifaces[i] != NULL) {
+		for (i = 0; i < uiaa->uiaa_nifaces; i++) {
+			if (uiaa->uiaa_ifaces[i] != NULL) {
 				id = usbd_get_interface_descriptor(
-				    uaa->ifaces[i]);
+				    uiaa->uiaa_ifaces[i]);
 				if (id != NULL && id->bInterfaceNumber ==
 				    if_data) {
-					sc->sc_iface_data = uaa->ifaces[i];
-					uaa->ifaces[i] = NULL;
+					sc->sc_iface_data = uiaa->uiaa_ifaces[i];
+					uiaa->uiaa_ifaces[i] = NULL;
 				}
 			}
 		}

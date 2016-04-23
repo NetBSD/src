@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.713 2016/04/19 15:50:24 nonaka Exp $
+$NetBSD: usbdevs,v 1.714 2016/04/23 10:15:32 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.

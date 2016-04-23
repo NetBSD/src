@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.7 2016/02/09 08:32:09 ozaki-r Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.8 2016/04/23 10:15:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.7 2016/02/09 08:32:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.8 2016/04/23 10:15:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

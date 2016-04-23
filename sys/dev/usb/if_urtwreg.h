@@ -260,14 +260,14 @@
 
 struct urtw_tx_data {
 	struct urtw_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct ieee80211_node	*ni;
 };
 
 struct urtw_rx_data {
 	struct urtw_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 };
@@ -330,8 +330,8 @@ struct urtw_softc {
 	bool				sc_dying;
 
 	struct usb_task			sc_task;
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device *		sc_udev;
+	struct usbd_interface *		sc_iface;
 
 	enum ieee80211_state		sc_state;
 	int				sc_arg;
@@ -358,17 +358,17 @@ struct urtw_softc {
 	uint8_t				sc_gpio_blinktime;
 	uint8_t				sc_gpio_blinkstate;
 	/* RX/TX */
-	usbd_pipe_handle		sc_rxpipe;
-	usbd_pipe_handle		sc_txpipe_low;
-	usbd_pipe_handle		sc_txpipe_normal;
+	struct usbd_pipe *		sc_rxpipe;
+	struct usbd_pipe *		sc_txpipe_low;
+	struct usbd_pipe *		sc_txpipe_normal;
 #define	URTW_PRIORITY_LOW		0
 #define	URTW_PRIORITY_NORMAL		1
+#define	URTW_PRIORITY_MAX		2
 #define	URTW_DATA_TIMEOUT		10000		/* 10 sec */
 	struct urtw_rx_data		sc_rx_data[URTW_RX_DATA_LIST_COUNT];
-	struct urtw_tx_data		sc_tx_data[URTW_TX_DATA_LIST_COUNT];
-	uint32_t			sc_tx_low_queued;
-	uint32_t			sc_tx_normal_queued;
-	uint32_t			sc_txidx;
+	struct urtw_tx_data		sc_tx_data[URTW_PRIORITY_MAX][URTW_TX_DATA_LIST_COUNT];
+	uint32_t			sc_tx_queued[URTW_PRIORITY_MAX];;
+	uint32_t			sc_txidx[URTW_PRIORITY_MAX];
 	uint8_t				sc_rts_retry;
 	uint8_t				sc_tx_retry;
 	uint8_t				sc_preamble_mode;

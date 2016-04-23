@@ -1,13 +1,11 @@
-/*	$NetBSD: usb_mem.h,v 1.31 2016/04/23 10:15:32 skrll Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
+/* $NetBSD: usbroothub.h,v 1.2 2016/04/23 10:15:32 skrll Exp $ */
 
-/*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,30 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-typedef struct usb_dma_block {
-	bus_dma_tag_t tag;
-	bus_dmamap_t map;
-	void *kaddr;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int nsegs_alloc;
-	size_t size;
-	size_t align;
-	int flags;
-#define USB_DMA_FULLBLOCK	0x0001
-	LIST_ENTRY(usb_dma_block) next;
-} usb_dma_block_t;
+int usb_makestrdesc(usb_string_descriptor_t *, int, const char *);
+int usb_makelangtbl(usb_string_descriptor_t *, int);
 
-#define USBMALLOC_MULTISEG	1
+struct usb_roothub_descriptors {
+	usb_config_descriptor_t urh_confd;
+	usb_interface_descriptor_t urh_ifcd;
+	usb_endpoint_descriptor_t urh_endpd;
+};
 
-usbd_status	usb_allocmem(struct usbd_bus *, size_t, size_t, usb_dma_t *);
-usbd_status	usb_allocmem_flags(struct usbd_bus *, size_t, size_t, usb_dma_t *,
-			int);
-void		usb_freemem(struct usbd_bus *, usb_dma_t *);
-void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int);
+#define	USBROOTHUB_INTR_ENDPT	1
 
-bus_addr_t	usb_dmaaddr(usb_dma_t *, unsigned int);
-
-#define DMAADDR(dma, o) usb_dmaaddr((dma), (o))
-#define KERNADDR(dma, o) \
-	((void *)((char *)(dma)->udma_block->kaddr + (dma)->udma_offs + (o)))
+extern const struct usbd_pipe_methods roothub_ctrl_methods;

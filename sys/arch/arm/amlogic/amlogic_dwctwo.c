@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_dwctwo.c,v 1.5 2015/08/30 13:02:42 skrll Exp $	*/
+/*	$NetBSD: amlogic_dwctwo.c,v 1.6 2016/04/23 10:15:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.5 2015/08/30 13:02:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.6 2016/04/23 10:15:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ amlogic_dwctwo_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dwc2.sc_iot = aio->aio_core_bst;
 	bus_space_subregion(aio->aio_core_bst, aio->aio_bsh,
             loc->loc_offset, loc->loc_size, &sc->sc_dwc2.sc_ioh);
-	sc->sc_dwc2.sc_bus.dmatag = aio->aio_dmat;
+	sc->sc_dwc2.sc_bus.ub_dmatag = aio->aio_dmat;
 	sc->sc_dwc2.sc_params = &amlogic_dwctwo_params;
 
 	aprint_naive("\n");

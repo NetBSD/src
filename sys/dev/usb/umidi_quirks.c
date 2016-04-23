@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.19 2014/12/21 23:00:35 mrg Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.20 2016/04/23 10:15:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.19 2014/12/21 23:00:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.20 2016/04/23 10:15:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -666,7 +665,7 @@ umidi_print_quirk(const struct umidi_quirk *q)
 }
 
 const void *
-umidi_get_quirk_data_from_type(const struct umidi_quirk *q, u_int32_t type)
+umidi_get_quirk_data_from_type(const struct umidi_quirk *q, uint32_t type)
 {
 	const struct umq_data *qd;
 	if (q) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.h,v 1.5 2015/09/06 06:01:01 dholland Exp $	*/
+/*	$NetBSD: ukyopon.h,v 1.6 2016/04/23 10:15:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.

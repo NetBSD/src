@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.7 2015/09/11 06:55:56 skrll Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.8 2016/04/23 10:15:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.7 2015/09/11 06:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.8 2016/04/23 10:15:30 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -106,9 +106,9 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc.iot = cna->cna_le_memt;	/* EHCI registers are little endian */
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.dmatag = cna->cna_dmat;
-	sc->sc.sc_bus.hci_private = sc;
-	sc->sc.sc_bus.usbrev = USBREV_2_0;
+	sc->sc.sc_bus.ub_dmatag = cna->cna_dmat;
+	sc->sc.sc_bus.ub_hcpriv = sc;
+	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 	sc->sc.sc_ncomp = 0;
 	sc->sc.sc_flags |= EHCIF_ETTF;
 	sc->sc.sc_vendor_init = pq3ehci_init;
@@ -154,7 +154,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
 	error = ehci_init(&sc->sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		goto fail;
 	}

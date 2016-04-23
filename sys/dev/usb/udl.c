@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.13 2016/01/19 03:44:41 msaitoh Exp $	*/
+/*	$NetBSD: udl.c,v 1.14 2016/04/23 10:15:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.13 2016/01/19 03:44:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.14 2016/04/23 10:15:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,8 +158,8 @@ static inline void	udl_draw_line_comp(struct udl_softc *, uint16_t *, int,
 
 static int		udl_cmd_send(struct udl_softc *);
 static void		udl_cmd_send_async(struct udl_softc *);
-static void		udl_cmd_send_async_cb(usbd_xfer_handle,
-			    usbd_private_handle, usbd_status);
+static void		udl_cmd_send_async_cb(struct usbd_xfer *,
+			    void *, usbd_status);
 
 static int		udl_ctrl_msg(struct udl_softc *, uint8_t, uint8_t,
 			    uint16_t, uint16_t, uint8_t *, uint16_t);
@@ -338,7 +338,7 @@ udl_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (usb_lookup(udl_devs, uaa->vendor, uaa->product) != NULL)
+	if (usb_lookup(udl_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -358,7 +358,7 @@ udl_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
@@ -478,7 +478,6 @@ udl_detach(device_t self, int flags)
 	 */
 	if (sc->sc_tx_pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_tx_pipeh);
-		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
 
 	/*
@@ -486,6 +485,10 @@ udl_detach(device_t self, int flags)
 	 */
 	udl_cmdq_flush(sc);
 	udl_cmdq_free(sc);
+
+	if (sc->sc_tx_pipeh != NULL) {
+		usbd_close_pipe(sc->sc_tx_pipeh);
+	}
 
 	cv_destroy(&sc->sc_cv);
 	mutex_destroy(&sc->sc_mtx);
@@ -838,20 +841,15 @@ udl_cmdq_alloc(struct udl_softc *sc)
 
 		cmdq->cq_sc = sc;
 
-		cmdq->cq_xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (cmdq->cq_xfer == NULL) {
+		int err = usbd_create_xfer(sc->sc_tx_pipeh,
+		    UDL_CMD_BUFFER_SIZE, 0, 0, &cmdq->cq_xfer);
+		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: can't allocate xfer handle!\n", __func__);
 			goto error;
 		}
 
-		cmdq->cq_buf =
-		    usbd_alloc_buffer(cmdq->cq_xfer, UDL_CMD_BUFFER_SIZE);
-		if (cmdq->cq_buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "%s: can't allocate xfer buffer!\n", __func__);
-			goto error;
-		}
+		cmdq->cq_buf = usbd_get_buffer(cmdq->cq_xfer);
 
 		TAILQ_INSERT_TAIL(&sc->sc_freecmd, cmdq, cq_chain);
 	}
@@ -873,7 +871,7 @@ udl_cmdq_free(struct udl_softc *sc)
 		cmdq = &sc->sc_cmdq[i];
 
 		if (cmdq->cq_xfer != NULL) {
-			usbd_free_xfer(cmdq->cq_xfer);
+			usbd_destroy_xfer(cmdq->cq_xfer);
 			cmdq->cq_xfer = NULL;
 			cmdq->cq_buf = NULL;
 		}
@@ -1433,8 +1431,8 @@ udl_cmd_send(struct udl_softc *sc)
 	len = UDL_CMD_BUFSIZE(sc);
 
 	/* do xfer */
-	error = usbd_bulk_transfer(cmdq->cq_xfer, sc->sc_tx_pipeh,
-	    USBD_NO_COPY, USBD_NO_TIMEOUT, cmdq->cq_buf, &len, "udlcmds");
+	error = usbd_bulk_transfer(cmdq->cq_xfer, sc->sc_tx_pipeh, 0,
+	    USBD_NO_TIMEOUT, cmdq->cq_buf, &len);
 
 	UDL_CMD_BUFINIT(sc);
 
@@ -1485,8 +1483,8 @@ udl_cmd_send_async(struct udl_softc *sc)
 
 	/* do xfer */
 	mutex_enter(&sc->sc_mtx);
-	usbd_setup_xfer(cmdq->cq_xfer, sc->sc_tx_pipeh, cmdq, cmdq->cq_buf,
-	    len, USBD_NO_COPY, USBD_NO_TIMEOUT, udl_cmd_send_async_cb);
+	usbd_setup_xfer(cmdq->cq_xfer, cmdq, cmdq->cq_buf,
+	    len, 0, USBD_NO_TIMEOUT, udl_cmd_send_async_cb);
 	error = usbd_transfer(cmdq->cq_xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
 		aprint_error_dev(sc->sc_dev, "%s: %s!\n", __func__,
@@ -1518,7 +1516,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 }
 
 static void
-udl_cmd_send_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+udl_cmd_send_async_cb(struct usbd_xfer *xfer, void * priv,
     usbd_status status)
 {
 	struct udl_cmdq *cmdq = priv;

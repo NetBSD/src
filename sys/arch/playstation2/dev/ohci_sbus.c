@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.11 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.12 2016/04/23 10:15:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.12 2016/04/23 10:15:30 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -110,26 +110,25 @@ int
 ohci_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 void
 ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ohci_sbus_softc *sc = device_private(self);
-	usbd_status result;
 
 	printf("\n");
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc.iot = bus_space_create(0, "OHCI I/O space", SBUS_OHCI_REGBASE,
 	    SBUS_OHCI_REGSIZE);
 	sc->sc.ioh = SBUS_OHCI_REGBASE;
 
 	ohci_bus_dma_tag._dmachip_cookie = sc;
-	sc->sc.sc_bus.dmatag = &ohci_bus_dma_tag;
+	sc->sc.sc_bus.ub_dmatag = &ohci_bus_dma_tag;
 
 	/* Disable interrupts, so we don't can any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
@@ -140,10 +139,10 @@ ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 	/* IOP/EE DMA relay segment list */
 	LIST_INIT(&sc->sc_dmaseg_head);
 
-	result = ohci_init(&sc->sc);
-	
-	if (result != USBD_NORMAL_COMPLETION) {
-		printf(": init failed. error=%d\n", result);
+	int err = ohci_init(&sc->sc);
+
+	if (err) {
+		printf(": init failed. error=%d\n", err);
 		return;
 	}
 
@@ -172,7 +171,7 @@ _ohci_sbus_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	KDASSERT(sc);
 	ds = malloc(sizeof(struct ohci_dma_segment), M_DEVBUF, M_NOWAIT);
 	if (ds == NULL)
-		return (1);
+		return 1;
 	/*
 	 * Allocate DMA Area (IOP DMA Area <-> SIF DMA <-> EE DMA Area)
 	 */
@@ -181,7 +180,7 @@ _ohci_sbus_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	if (error) {
 		free(ds, M_DEVBUF);
-		return (1);
+		return 1;
 	}
 
 	segs[0].ds_len	  = iopdma_seg->size;
@@ -192,7 +191,7 @@ _ohci_sbus_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	*rsegs = 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -231,11 +230,11 @@ _ohci_sbus_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t s
 
 			*kvap = (void *)ds->ds_iopdma_seg.ee_vaddr;
 
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 void

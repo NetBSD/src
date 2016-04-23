@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.20 2015/03/15 13:15:26 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.21 2016/04/23 10:15:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,8 +134,8 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
 	sc->sc_size = usbaa->usbaa_size;
-	sc->sc_bus.dmatag = usbaa->usbaa_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = usbaa->usbaa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	//sc->sc_id_vendor = PCI_VENDOR_ALLWINNER;
 	strlcpy(sc->sc_vendor, "Allwinner", sizeof(sc->sc_vendor));
@@ -144,7 +144,7 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": OHCI USB controller\n");
 
 	int error = ohci_init(sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		return;
 	}
@@ -165,7 +165,7 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_VM,
-	    IST_LEVEL, ohci_intr, sc);
+	    IST_LEVEL | IST_MPSAFE, ohci_intr, sc);
 	if (usbsc->usbsc_ohci_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
 		     irq);
@@ -220,9 +220,9 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
 	sc->sc_size = usbaa->usbaa_size;
-	sc->sc_bus.dmatag = usbaa->usbaa_dmat;
-	sc->sc_bus.hci_private = sc;
-	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.ub_dmatag = usbaa->usbaa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
+	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_ncomp = 0;
 	if (usbsc->usbsc_ohci_dev != NULL) {
 		sc->sc_comps[sc->sc_ncomp++] = usbsc->usbsc_ohci_dev;
@@ -235,7 +235,7 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": EHCI USB controller\n");
 
 	int error = ehci_init(sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		return;
 	}
@@ -255,7 +255,7 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_VM,
-	    IST_LEVEL, ehci_intr, sc);
+	    IST_LEVEL | IST_MPSAFE, ehci_intr, sc);
 	if (usbsc->usbsc_ehci_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
 		     irq);
@@ -408,7 +408,7 @@ awinusb_match(device_t parent, cfdata_t cf, void *aux)
 
 	KASSERT(loc->loc_port != AWINIOCF_PORT_DEFAULT);
 	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
-	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT 
+	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
 	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
 	KASSERT((awinusb_ports & __BIT(loc->loc_port)) == 0);
 

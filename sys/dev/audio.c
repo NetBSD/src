@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.266 2014/11/18 01:50:12 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.267 2016/04/23 10:15:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -99,9 +99,9 @@
  *   LONG TERM SLEEPS MUST NOT OCCUR WITH THIS LOCK HELD.
  *
  * - sc_intr_lock, provided by the underlying driver.  This may be either a
- *   spinlock (at IPL_SCHED or IPL_VM) or an adaptive lock (IPL_NONE),
- *   returned in the first parameter to hw_if->get_locks().  It is known as
- *   the "interrupt lock".
+ *   spinlock (at IPL_SCHED or IPL_VM) or an adaptive lock (IPL_NONE or
+ *   IPL_SOFT*), returned in the first parameter to hw_if->get_locks().  It
+ *   is known as the "interrupt lock".
  *
  *   It provides atomic access to the device's hardware state, and to audio
  *   channel data that may be accessed by the hardware driver's ISR.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.266 2014/11/18 01:50:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.267 2016/04/23 10:15:31 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.10 2015/09/10 06:32:47 skrll Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.11 2016/04/23 10:15:28 skrll Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.10 2015/09/10 06:32:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.11 2016/04/23 10:15:28 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -89,7 +89,6 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	ehci_softc_t *hsc = &sc->sc_hsc;
 	bus_space_tag_t iot;
 	uint16_t hcirev;
-	usbd_status r;
 	uint32_t id, hwhost, hwdevice;
 	const char *comma;
 
@@ -97,7 +96,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	iot = sc->sc_iot = sc->sc_hsc.iot = aa->aa_iot;
 	sc->sc_unit = aa->aa_unit;
 	sc->sc_usbc = usbc;
-	hsc->sc_bus.hci_private = sc;
+	hsc->sc_bus.ub_hcpriv = sc;
 	hsc->sc_flags |= EHCIF_ETTF;
 	hsc->sc_vendor_init = imxehci_init;
 
@@ -147,7 +146,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
-	sc->sc_hsc.sc_bus.dmatag = aa->aa_dmat;
+	sc->sc_hsc.sc_bus.ub_dmatag = aa->aa_dmat;
 
 	sc->sc_hsc.sc_offs = bus_space_read_1(iot, sc->sc_hsc.ioh,
 	    EHCI_CAPLENGTH);
@@ -155,7 +154,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	/* Platform dependent setup */
 	if (usbc->sc_init_md_hook)
 		usbc->sc_init_md_hook(sc);
-	
+
 	imxehci_reset(sc);
 	imxehci_select_interface(sc, sc->sc_iftype);
 
@@ -178,7 +177,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_iftype == IMXUSBC_IF_ULPI) {
 #if 0
-		if(hsc->sc_bus.usbrev == USBREV_2_0)
+		if(hsc->sc_bus.ub_revision == USBREV_2_0)
 			ulpi_write(hsc, ULPI_FUNCTION_CONTROL + ULPI_REG_CLEAR, (1 << 0));
 		else
 			ulpi_write(hsc, ULPI_FUNCTION_CONTROL + ULPI_REG_SET, (1 << 2));
@@ -203,9 +202,9 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	/* Figure out vendor for root hub descriptor. */
 	strlcpy(hsc->sc_vendor, "i.MX", sizeof(hsc->sc_vendor));
 
-	r = ehci_init(hsc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(hsc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 
