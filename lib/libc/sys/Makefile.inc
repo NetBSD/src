@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.229 2016/04/03 00:19:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.230 2016/04/23 23:11:31 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -8,7 +8,8 @@
 SRCS+=	cpuset.c
 # glue to offer userland wrappers for some syscalls
 SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
-	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c 
+	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
+	clock_getcpuclockid.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
@@ -32,7 +33,7 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 # with old syscall interfaces.
 GLUE+= fdiscard.c ftruncate.c lseek.c mmap.c \
 	pread.c preadv.c pwrite.c pwritev.c truncate.c ntp_adjtime.c \
-	mknodat.c
+	mknodat.c 
 GLUENOERR+= posix_fallocate.c
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
@@ -91,6 +92,7 @@ ASM_GLUE+= tmp___${glue:.c=}50.S
 ASM=	access.S acct.S \
 	bind.S \
 	chdir.S chflags.S chmod.S chown.S chroot.S clock_nanosleep.S \
+		clock_getcpuclockid2.S \
 		__clock_getres50.S __clock_gettime50.S \
 	dup.S dup2.S dup3.S \
 	extattrctl.S \
@@ -241,7 +243,8 @@ LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
-	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
+	chflags.2 chmod.2 chown.2 chroot.2 clock_getcpuclockid2.2 \
+	clock_settime.2 clone.2 close.2 \
 	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
 	fcntl.2 fdatasync.2 fdiscard.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
@@ -378,3 +381,4 @@ MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2
 MLINKS+=accept.2 paccept.2
 MLINKS+=nanosleep.2 clock_nanosleep.2
+MLINKS+=clock_getcpuclockid2.2 clock_getcpuclockid.2

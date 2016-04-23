@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.263 2016/04/03 00:19:42 christos Exp $
+#	$NetBSD: shlib_version,v 1.264 2016/04/23 23:11:31 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -44,4 +44,4 @@
 # - decide whether soft-float should support fenv.h, including thread-local contett
 # - stop all math functions from setting errno
 major=12
-minor=201
+minor=202
