@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usb.c,v 1.3 2015/09/10 04:00:32 hkenken Exp $	*/
+/*	$NetBSD: zynq_usb.c,v 1.4 2016/04/23 10:15:29 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.3 2015/09/10 04:00:32 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.4 2016/04/23 10:15:29 skrll Exp $");
 
 #include "opt_zynq.h"
 
@@ -71,7 +71,6 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	struct zynqehci_softc *sc = device_private(self);
 	ehci_softc_t *hsc = &sc->sc_hsc;
 	uint16_t hcirev;
-	usbd_status r;
 	uint32_t id, hwhost, hwdevice;
 	const char *comma;
 
@@ -80,8 +79,8 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	sc->sc_iftype = type;
 	sc->sc_role = role;
 
-	hsc->sc_bus.hci_private = sc;
-	hsc->sc_bus.usbrev = USBREV_2_0;
+	hsc->sc_bus.ub_hcpriv = sc;
+	hsc->sc_bus.ub_revision = USBREV_2_0;
 	hsc->sc_flags |= EHCIF_ETTF;
 	hsc->sc_vendor_init = zynqusb_init;
 
@@ -132,7 +131,7 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	}
 	aprint_normal("\n");
 
-	sc->sc_hsc.sc_bus.dmatag = dmat;
+	sc->sc_hsc.sc_bus.ub_dmatag = dmat;
 
 	sc->sc_hsc.sc_offs = bus_space_read_1(iot, sc->sc_hsc.ioh,
 	    EHCI_CAPLENGTH);
@@ -154,7 +153,7 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	}
 
 	if (sc->sc_iftype == ZYNQUSBC_IF_ULPI) {
-		if(hsc->sc_bus.usbrev == USBREV_2_0) {
+		if (hsc->sc_bus.ub_revision == USBREV_2_0) {
 			ulpi_write(sc, ULPI_FUNCTION_CONTROL + ULPI_REG_CLEAR,
 			    FUNCTION_CONTROL_XCVRSELECT);
 			ulpi_write(sc, ULPI_FUNCTION_CONTROL + ULPI_REG_SET,
@@ -181,9 +180,9 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	/* Figure out vendor for root hub descriptor. */
 	strlcpy(hsc->sc_vendor, "Xilinx", sizeof(hsc->sc_vendor));
 
-	r = ehci_init(hsc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(hsc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error = %d\n", err);
 		return;
 	}
 
