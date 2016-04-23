@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2030 2016/04/15 01:35:26 ozaki-r Exp $
+#	$NetBSD: mi,v 1.2031 2016/04/23 23:28:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4026,6 +4026,8 @@
 ./usr/share/man/cat2/chmod.0			comp-c-catman		.cat
 ./usr/share/man/cat2/chown.0			comp-c-catman		.cat
 ./usr/share/man/cat2/chroot.0			comp-c-catman		.cat
+./usr/share/man/cat2/clock_getcpuclockid.0	comp-c-catman		.cat
+./usr/share/man/cat2/clock_getcpuclockid2.0	comp-c-catman		.cat
 ./usr/share/man/cat2/clock_getres.0		comp-c-catman		.cat
 ./usr/share/man/cat2/clock_gettime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/clock_nanosleep.0		comp-c-catman		.cat
@@ -8351,6 +8353,7 @@
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getaffinity_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getattr_np.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_getcpuclockid.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getspecific.0	comp-c-catman		.cat
@@ -11289,6 +11292,8 @@
 ./usr/share/man/html2/chmod.html		comp-c-htmlman		html
 ./usr/share/man/html2/chown.html		comp-c-htmlman		html
 ./usr/share/man/html2/chroot.html		comp-c-htmlman		html
+./usr/share/man/html2/clock_getcpuclockid.html	comp-c-htmlman		html
+./usr/share/man/html2/clock_getcpuclockid2.html	comp-c-htmlman		html
 ./usr/share/man/html2/clock_getres.html		comp-c-htmlman		html
 ./usr/share/man/html2/clock_gettime.html	comp-c-htmlman		html
 ./usr/share/man/html2/clock_nanosleep.html	comp-c-htmlman		html
@@ -15500,6 +15505,7 @@
 ./usr/share/man/html3/pthread_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getaffinity_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getattr_np.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_getcpuclockid.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getname_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getschedparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getspecific.html	comp-c-htmlman		html
@@ -18319,6 +18325,8 @@
 ./usr/share/man/man2/chmod.2			comp-c-man		.man
 ./usr/share/man/man2/chown.2			comp-c-man		.man
 ./usr/share/man/man2/chroot.2			comp-c-man		.man
+./usr/share/man/man2/clock_getcpuclockid.2	comp-c-man		.man
+./usr/share/man/man2/clock_getcpuclockid2.2	comp-c-man		.man
 ./usr/share/man/man2/clock_getres.2		comp-c-man		.man
 ./usr/share/man/man2/clock_gettime.2		comp-c-man		.man
 ./usr/share/man/man2/clock_nanosleep.2		comp-c-man		.man
@@ -22642,6 +22650,7 @@
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_getaffinity_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getattr_np.3	comp-c-man		.man
+./usr/share/man/man3/pthread_getcpuclockid.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getspecific.3	comp-c-man		.man

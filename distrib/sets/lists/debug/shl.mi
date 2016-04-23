@@ -1,7 +1,7 @@
-# $NetBSD: shl.mi,v 1.131 2016/04/15 01:35:26 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.132 2016/04/23 23:28:13 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libc.so.12.201.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libc.so.12.202.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypto.so.11.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot
@@ -68,7 +68,7 @@
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug			comp-sys-debug	debug,compatfile,libcxx
-./usr/libdata/debug/usr/lib/libc.so.12.201.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libc.so.12.202.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcrypto.so.11.0.debug		comp-crypto-debug	debug,compatfile,crypto
@@ -157,7 +157,7 @@
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libproc.so.0.0.debug		comp-sys-debug	debug,dtrace
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libpthread.so.1.2.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libpthread.so.1.3.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug		comp-puffs-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libquota.so.1.0.debug		comp-sys-debug	debug,compatfile
