@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.769 2016/04/15 01:35:25 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.770 2016/04/23 23:28:13 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -18,7 +18,7 @@
 ./lib/libblacklist.so.0.0			base-sys-shlib		dynamicroot
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.201				base-sys-shlib		dynamicroot
+./lib/libc.so.12.202				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -211,7 +211,7 @@
 ./usr/lib/libc++.so.1.0				base-sys-shlib		compatfile,libcxx
 ./usr/lib/libc.so				base-sys-shlib		compatfile
 ./usr/lib/libc.so.12				base-sys-shlib		compatfile
-./usr/lib/libc.so.12.201			base-sys-shlib		compatfile
+./usr/lib/libc.so.12.202			base-sys-shlib		compatfile
 ./usr/lib/libcdk.so				base-obsolete		compatfile,obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libcom_err.so.7			base-krb5-shlib		compatfile,kerberos
@@ -447,7 +447,7 @@
 ./usr/lib/libprop.so.1.1			base-sys-shlib		compatfile
 ./usr/lib/libpthread.so				base-sys-shlib		compatfile
 ./usr/lib/libpthread.so.1			base-sys-shlib		compatfile
-./usr/lib/libpthread.so.1.2			base-sys-shlib		compatfile
+./usr/lib/libpthread.so.1.3			base-sys-shlib		compatfile
 ./usr/lib/libpthread_dbg.so			base-sys-shlib		compatfile
 ./usr/lib/libpthread_dbg.so.2			base-sys-shlib		compatfile
 ./usr/lib/libpthread_dbg.so.2.0			base-sys-shlib		compatfile
