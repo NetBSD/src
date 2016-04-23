@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.4 2016/04/23 08:54:20 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.5 2016/04/23 15:47:54 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -239,6 +239,8 @@ test_reject()
 	atf_check -s not-exit:0 -o ignore -e match:'No route to host' \
 	    rump.ping6 -n -X 1 -c 1 $IP6_PEER
 	$DEBUG && rump.netstat -rn -f inet6
+
+	return 0
 }
 
 test_announce()
