@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.19 2016/04/13 11:48:29 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.20 2016/04/23 14:15:36 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.19 2016/04/13 11:48:29 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.20 2016/04/23 14:15:36 christos Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -72,6 +72,7 @@ parseargs(int argc, char **argv, struct apropos_flags *aflags)
 {
 	int ch;
 	char sec[2] = {0, 0};
+
 	while ((ch = getopt(argc, argv, "123456789Cchiln:PprS:s:")) != -1) {
 		switch (ch) {
 		case '1':
