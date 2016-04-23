@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.15 2016/01/23 01:15:23 dholland Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.16 2016/04/23 10:15:32 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
 /*
