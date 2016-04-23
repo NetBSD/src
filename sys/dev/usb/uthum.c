@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10 2013/01/05 23:34:21 christos Exp $   */
+/*	$NetBSD: uthum.c,v 1.11 2016/04/23 10:15:32 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,13 +22,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10 2013/01/05 23:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.11 2016/04/23 10:15:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 
@@ -72,7 +71,7 @@ static uint8_t cmd_end[8] =
 
 struct uthum_softc {
 	struct uhidev		 sc_hdev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device *	 sc_udev;
 	u_char			 sc_dying;
 	uint16_t		 sc_flag;
 	int			 sc_sensortype;
@@ -118,20 +117,18 @@ CFATTACH_DECL_NEW(uthum, sizeof(struct uthum_softc), uthum_match, uthum_attach,
 int
 uthum_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
 
-	return (uthum_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uthum_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
 uthum_attach(device_t parent, device_t self, void *aux)
 {
 	struct uthum_softc *sc = device_private(self);
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	usbd_device_handle dev = uha->parent->sc_udev;
+	struct uhidev_attach_arg *uha = aux;
+	struct usbd_device *dev = uha->parent->sc_udev;
 	int size, repid;
 	void *desc;
 
@@ -230,7 +227,7 @@ uthum_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    sc->sc_hdev.sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -243,7 +240,7 @@ uthum_activate(device_t self, enum devact act)
 		sc->sc_dying = 1;
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 void
@@ -264,19 +261,19 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 		return 0;
 
 	/* issue query */
-	bzero(cmdbuf, sizeof(cmdbuf));
+	memset(cmdbuf, 0, sizeof(cmdbuf));
 	memcpy(cmdbuf, cmd_start, sizeof(cmd_start));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
 	    cmdbuf, sc->sc_olen))
 		return EIO;
 
-	bzero(cmdbuf, sizeof(cmdbuf));
+	memset(cmdbuf, 0, sizeof(cmdbuf));
 	cmdbuf[0] = target_cmd;
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
 	    cmdbuf, sc->sc_olen))
 		return EIO;
 
-	bzero(cmdbuf, sizeof(cmdbuf));
+	memset(cmdbuf, 0, sizeof(cmdbuf));
 	for (i = 0; i < 7; i++) {
 		if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
 		    cmdbuf, sc->sc_olen))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.30 2015/12/10 21:38:59 jakllsch Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.31 2016/04/23 10:15:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.30 2015/12/10 21:38:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.31 2016/04/23 10:15:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

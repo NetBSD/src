@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.4 2015/04/14 20:32:36 riastradh Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.5 2016/04/23 10:15:31 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -36,7 +36,7 @@
 
 struct smsc_chain {
 	struct smsc_softc	*sc_sc;
-	usbd_xfer_handle	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
 	int			 sc_accum;
@@ -54,7 +54,7 @@ struct smsc_cdata {
 
 struct smsc_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 	bool			sc_dying;
 
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
@@ -62,7 +62,7 @@ struct smsc_softc {
 	struct mii_data		sc_mii;
 	krndsource_t		sc_rnd_source;
 	int			sc_phyno;
-	usbd_interface_handle	sc_iface;
+	struct usbd_interface *	sc_iface;
 
 	/*
 	 * The following stores the settings in the mac control (MAC_CSR)
@@ -80,7 +80,7 @@ struct smsc_softc {
 	struct usb_task		sc_stop_task;
 
 	int			sc_ed[SMSC_ENDPT_MAX];
-	usbd_pipe_handle	sc_ep[SMSC_ENDPT_MAX];
+	struct usbd_pipe *	sc_ep[SMSC_ENDPT_MAX];
 
 	kmutex_t		sc_mii_lock;
 
