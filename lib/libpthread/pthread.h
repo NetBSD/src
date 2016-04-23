@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.35 2012/11/03 03:10:50 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.36 2016/04/23 23:12:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -137,6 +137,8 @@ int	pthread_suspend_np(pthread_t);
 int	pthread_resume_np(pthread_t);
 
 unsigned int	pthread_curcpu_np(void);
+
+int	pthread_getcpuclockid(pthread_t, clockid_t *);
 
 struct pthread_cleanup_store {
 	void	*pad[4];

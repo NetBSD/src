@@ -1,0 +1,121 @@
+.\"	$NetBSD: pthread_getcpuclockid.3,v 1.1 2016/04/23 23:12:19 christos Exp $
+.\"
+.\" Copyright (c) 2016 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 23, 2016
+.Dt clock_getcpuclockid2 2
+.Os
+.Sh NAME
+.Nm clock_getcpuclockid2
+.Nd retrieve the clock id of a process or lwp
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In time.h
+.Ft int
+.Fn clock_getcpuclockid2 "idtype_t idtype" "id_t id" "clockid_t *clock_id"
+.Ft int
+.Fn clock_getcpuclockid "pid_t pid" "clockid_t *clock_id"
+.Sh DESCRIPTION
+The
+.Fn cpu_getcpuclockid2
+function retrieves the
+.Fa clock_id
+for the specified
+.Fa id
+and
+.Fa idtype.
+Supported
+.Fa idtypes
+are:
+.Bl -tag -width P_LWPID
+.It Dv P_PID
+The specified process id or
+.Dv 0
+for the current process.
+.It Dv P_LWPID
+The specified LWP id or
+.Dv 0
+for the current LWP.
+.El
+.Pp
+The
+.Fn clock_getcpuclockid
+function is equivalent to calling
+.Fn clock_getcpuclockid2
+with
+.Fa idtype
+.Dv P_PID
+and
+.Fa id
+.Fa pid .
+.Pp
+The
+.Xr clock_gettime 2
+function can be used with the returned
+.Fa clock_id
+to retrieve process and LWP times.
+.Sh RETURN VALUES
+The
+.Fn clock_getcpuclockid
+and
+.Fn clock_getcpuclockid2
+functions succeed and return 0, placing the requested
+.Fa clock_id 
+in the argument.
+On error, the value \-1 is returned
+and the value of
+.Va errno
+is set to reflect what went wrong.
+.Sh ERRORS
+These functions fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+An unsuppored
+.Fa idtype
+was supplied.
+.El
+.Sh SEE ALSO
+.Xr clock_gettime 2
+.Sh STANDARDS
+The
+.Fn clock_getcpuclockid
+function conforms to
+.St -p1003.1-2001 .
+The
+.Fn clock_getcpuclockid2
+is a
+.Nx
+extension.
+.Sh HISTORY
+The
+.Fn clock_getcpuclockid
+and
+.Fn clock_getcpuclockid2
+functions appeared in
+.Nx 8 .
