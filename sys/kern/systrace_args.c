@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.18 2016/04/03 01:22:39 christos Exp $ */
+/* $NetBSD: systrace_args.c,v 1.19 2016/04/23 23:09:27 christos Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -3667,6 +3667,15 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[4] = (intptr_t) SCARG(p, wru); /* struct wrusage * */
 		uarg[5] = (intptr_t) SCARG(p, info); /* siginfo_t * */
 		*n_args = 6;
+		break;
+	}
+	/* sys_clock_getcpuclockid2 */
+	case 482: {
+		struct sys_clock_getcpuclockid2_args *p = params;
+		iarg[0] = SCARG(p, idtype); /* idtype_t */
+		iarg[1] = SCARG(p, id); /* id_t */
+		uarg[2] = (intptr_t) SCARG(p, clock_id); /* clockid_t * */
+		*n_args = 3;
 		break;
 	}
 	default:
@@ -9884,6 +9893,22 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys_clock_getcpuclockid2 */
+	case 482:
+		switch(ndx) {
+		case 0:
+			p = "idtype_t";
+			break;
+		case 1:
+			p = "id_t";
+			break;
+		case 2:
+			p = "clockid_t *";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -11963,6 +11988,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_wait6 */
 	case 481:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys_clock_getcpuclockid2 */
+	case 482:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
