@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.138 2016/04/24 16:59:15 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.139 2016/04/24 17:32:06 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.138 2016/04/24 16:59:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.139 2016/04/24 17:32:06 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5370,7 +5370,9 @@ sppp_cp_type_name(u_char type)
 static const char *
 sppp_auth_type_name(u_short proto, u_char type)
 {
-	static char buf[12];
+	static char buf[32];
+	const char *name;
+
 	switch (proto) {
 	case PPP_CHAP:
 		switch (type) {
@@ -5378,17 +5380,25 @@ sppp_auth_type_name(u_short proto, u_char type)
 		case CHAP_RESPONSE:	return "response";
 		case CHAP_SUCCESS:	return "success";
 		case CHAP_FAILURE:	return "failure";
+		default:		name = "chap"; break;
 		}
 		break;
+
 	case PPP_PAP:
 		switch (type) {
 		case PAP_REQ:		return "req";
 		case PAP_ACK:		return "ack";
 		case PAP_NAK:		return "nak";
+		default:		name = "pap";	break;
 		}
 		break;
+
+	default:
+		name = "bad";
+		break;
 	}
-	snprintf(buf, sizeof(buf), "0x%x", type);
+
+	snprintf(buf, sizeof(buf), "%s(%#x) %#x", name, proto, type);
 	return buf;
 }
 
