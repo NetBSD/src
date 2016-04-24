@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.24 2016/04/13 11:48:29 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.25 2016/04/24 18:11:43 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.24 2016/04/13 11:48:29 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.25 2016/04/24 18:11:43 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -336,7 +336,7 @@ init_db(mandb_access_mode db_flag, const char *manconf)
 		 * to read/write the files
 		 */
 		int access_mode = R_OK;
-		switch (access_mode) {
+		switch (db_flag) {
 		case MANDB_CREATE:
 		case MANDB_WRITE:
 			access_mode |= W_OK;
