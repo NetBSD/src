@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: eloop.c,v 1.12 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: eloop.c,v 1.13 2016/04/24 18:20:40 christos Exp $");
 
 /*
  * eloop - portable event based main loop.
@@ -620,6 +620,8 @@ eloop_open(struct eloop *eloop)
 	return eloop->poll_fd;
 #elif defined (HAVE_EPOLL)
 	return (eloop->poll_fd = epoll_create1(EPOLL_CLOEXEC));
+#else
+	return eloop->poll_fd = -1;
 #endif
 }
 #endif
@@ -790,7 +792,6 @@ eloop_new(void)
 		TAILQ_INIT(&eloop->free_timeouts);
 		eloop->exitcode = EXIT_FAILURE;
 #if defined(HAVE_KQUEUE) || defined(HAVE_EPOLL)
-		eloop->poll_fd = -1;
 		if (eloop_open(eloop) == -1) {
 			eloop_free(eloop);
 			return NULL;
