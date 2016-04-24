@@ -1,4 +1,4 @@
-.\"	$NetBSD: clock_getcpuclockid2.2,v 1.1 2016/04/23 23:11:31 christos Exp $
+.\"	$NetBSD: clock_getcpuclockid2.2,v 1.2 2016/04/24 08:59:30 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,11 +28,11 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 23, 2016
-.Dt clock_getcpuclockid2 2
+.Dt CLOCK_GETCPUCLOCKID2 2
 .Os
 .Sh NAME
 .Nm clock_getcpuclockid2
-.Nd retrieve the clock id of a process or lwp
+.Nd retrieve the clock id of a process or LWP
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -49,7 +49,7 @@ function retrieves the
 for the specified
 .Fa id
 and
-.Fa idtype.
+.Fa idtype .
 Supported
 .Fa idtypes
 are:
@@ -86,7 +86,7 @@ The
 and
 .Fn clock_getcpuclockid2
 functions succeed and return 0, placing the requested
-.Fa clock_id 
+.Fa clock_id
 in the argument.
 On error, the value \-1 is returned
 and the value of
@@ -96,7 +96,7 @@ is set to reflect what went wrong.
 These functions fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-An unsuppored
+An unsupported
 .Fa idtype
 was supplied.
 .El
