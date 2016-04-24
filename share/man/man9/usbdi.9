@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.31 2016/04/24 15:03:18 skrll Exp $
+.\"	$NetBSD: usbdi.9,v 1.32 2016/04/24 15:11:26 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -272,10 +272,10 @@ through
 .Fn usbd_set_config_index "struct usbd_device *dev" "int index" "int msg"
 .Ft usbd_status
 .Fn usbd_bulk_transfer "struct usbd_xfer *xfer" "struct usbd_pipe *pipe" \
- "uint16_t flags" "uint32_t timeout" "void *buf" "uint32_t *size" 
+ "uint16_t flags" "uint32_t timeout" "void *buf" "uint32_t *size"
 .Ft usbd_status
 .Fn usbd_intr_transfer "struct usbd_xfer *xfer" "struct usbd_pipe *pipe" \
- "uint16_t flags" "uint32_t timeout" "void *buf" "uint32_t *size" 
+ "uint16_t flags" "uint32_t timeout" "void *buf" "uint32_t *size"
 .Ft void
 .Fn usb_detach_waitold "device_t dv"
 .Ft void
