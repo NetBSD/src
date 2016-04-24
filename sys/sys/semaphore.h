@@ -1,4 +1,4 @@
-/* $NetBSD: semaphore.h,v 1.5 2016/04/24 19:48:29 dholland Exp $ */
+/* $NetBSD: semaphore.h,v 1.1 2016/04/24 19:48:29 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -29,30 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SEMAPHORE_H_
-#define _SEMAPHORE_H_
+/*
+ * This file is NOT a public interface. From userland you should
+ * include <semaphore.h>.
+ */
+
+#ifndef _SYS_SEMAPHORE_H_
+#define _SYS_SEMAPHORE_H_
 
 /* POSIX 1003.1b semaphores */
 
-struct _sem_st;
-typedef	struct _sem_st *sem_t;
+#define	SEM_VALUE_MAX	(~0U)
 
-#define	SEM_FAILED	((sem_t *)0)
-
-#include <sys/semaphore.h> /* some kernel-only bits */
-#include <sys/time.h>
-
-__BEGIN_DECLS
-int	 sem_close(sem_t *);
-int	 sem_destroy(sem_t *);
-int	 sem_getvalue(sem_t * __restrict, int * __restrict);
-int	 sem_init(sem_t *, int, unsigned int);
-int	 sem_post(sem_t *);
-int	 sem_timedwait(sem_t *, const struct timespec * __restrict);
-int	 sem_trywait(sem_t *);
-int	 sem_unlink(const char *);
-int	 sem_wait(sem_t *);
-sem_t	*sem_open(const char *, int, ...);
-__END_DECLS
-
-#endif /* !_SEMAPHORE_H_ */
+#endif /* !_SYS_SEMAPHORE_H_ */
