@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.39 2016/04/04 20:47:57 christos Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.40 2016/04/24 07:45:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.39 2016/04/04 20:47:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.40 2016/04/24 07:45:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -67,6 +67,33 @@ lwp_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+/*
+ * Look up a live LWP within the specified process.
+ * 
+ * Must be called with p->p_lock held.
+ */
+struct lwp *
+lwp_find(struct proc *p, lwpid_t id)
+{
+	struct lwp *l;
+
+	KASSERT(mutex_owned(p->p_lock));
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (l->l_lid == id)
+			break;
+	}
+
+	/*
+	 * No need to lock - all of these conditions will
+	 * be visible with the process level mutex held.
+	 */
+	if (l != NULL && (l->l_stat == LSIDL || l->l_stat == LSZOMB))
+		l = NULL;
+
+	return l;
 }
 
 void
