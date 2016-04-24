@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.14 2016/04/20 08:53:01 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.15 2016/04/24 18:16:05 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -210,7 +210,7 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 			continue;
 		match = 0;
 		for (i = 0, opt = odopts; i < odopts_len; i++, opt++) {
-			if (opt->var == NULL && opt->option == 0)
+			if (opt->var == NULL)
 				continue; /* buggy dhcpcd-definitions.conf */
 			if (strcmp(opt->var, token) == 0)
 				match = 1;
