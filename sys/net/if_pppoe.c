@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.105 2016/04/15 01:31:29 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.106 2016/04/24 16:59:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.105 2016/04/15 01:31:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.106 2016/04/24 16:59:15 christos Exp $");
 
 #include "pppoe.h"
 
@@ -485,10 +485,9 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 					n = m_pulldown(m, off + sizeof(*pt),
 					    len, &noff);
 					if (n) {
-						strncpy(error,
+						strlcpy(error,
 						    mtod(n, char*) + noff,
 						    len);
-						error[len] = '\0';
 					}
 					printf("%s: connected to %s\n",
 					    devname, error);
@@ -560,9 +559,8 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				n = m_pulldown(m, off + sizeof(*pt), len,
 				    &noff);
 				if (n && error) {
-					strncpy(error, 
+					strlcpy(error, 
 					    mtod(n, char *) + noff, len);
-					error[len] = '\0';
 				}
 			}
 			if (error) {
@@ -949,7 +947,8 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		struct pppoediscparms *parms = (struct pppoediscparms*)data;
 		memset(parms, 0, sizeof *parms);
 		if (sc->sc_eth_if)
-			strncpy(parms->ifname, sc->sc_eth_if->if_xname, IFNAMSIZ);
+			strlcpy(parms->ifname, sc->sc_eth_if->if_xname,
+			    sizeof(parms->ifname));
 		return 0;
 	}
 	break;
