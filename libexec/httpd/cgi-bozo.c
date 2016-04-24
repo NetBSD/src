@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.34 2016/04/15 20:00:13 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.35 2016/04/24 18:24:47 christos Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -333,12 +333,12 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 
 parse_err:
 
-	free (*args);
 	free (str);
-	*args = NULL;
+	free (*args);
+	free(args);
 	*args_len = 0;
 
-	return 0;
+	return NULL;
 
 }
 
