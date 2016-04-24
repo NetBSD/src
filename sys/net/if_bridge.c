@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.118 2016/04/22 00:25:42 roy Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.119 2016/04/24 18:08:40 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.118 2016/04/22 00:25:42 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.119 2016/04/24 18:08:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1784,8 +1784,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			if (bridge_ourether(_bif, eh, 0)) {
 				bridge_acquire_member(sc, _bif, &_psref);
 				BRIDGE_PSZ_REXIT(s);
-				if (_bif == NULL)
-					goto out;
 				if (_bif->bif_flags & IFBIF_LEARNING)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
