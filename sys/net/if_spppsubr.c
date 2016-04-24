@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.137 2016/04/23 12:15:38 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.138 2016/04/24 16:59:15 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.137 2016/04/23 12:15:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.138 2016/04/24 16:59:15 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5070,7 +5070,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 
 		cfg->myauthflags = sp->myauth.flags;
 		cfg->hisauthflags = sp->hisauth.flags;
-		strncpy(cfg->ifname, sp->pp_if.if_xname, IFNAMSIZ);
+		strlcpy(cfg->ifname, sp->pp_if.if_xname, sizeof(cfg->ifname));
 		cfg->hisauth = 0;
 		if (sp->hisauth.proto)
 		    cfg->hisauth = (sp->hisauth.proto == PPP_PAP) ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
