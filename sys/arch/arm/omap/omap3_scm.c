@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_scm.c,v 1.3 2016/04/25 13:07:03 kiyohara Exp $ */
+/* $NetBSD: omap3_scm.c,v 1.4 2016/04/25 13:14:37 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.3 2016/04/25 13:07:03 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.4 2016/04/25 13:14:37 kiyohara Exp $");
 
 #include "opt_omap.h"
 
@@ -253,4 +253,16 @@ omap3_scm_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = val * (1000000/10) + 273150000;
 		edata->state = ENVSYS_SVALID;
 	}
+}
+
+uint32_t
+omap_chipid(void)
+{
+	struct omap3_scm_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_xname("omapscm0");
+	KASSERT(dev != NULL);
+	sc = device_private(dev);
+	return sc->sc_cid;
 }
