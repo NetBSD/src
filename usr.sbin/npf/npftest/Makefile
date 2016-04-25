@@ -16,7 +16,7 @@ LIBNPFTEST!=	cd ${.CURDIR}/libnpftest && ${MAKE} -V .OBJDIR
 DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
-LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net
+LDADD+=		-lrump -lrumpvfs -lrumpuser -lrumpnet -lrumpnet_net
 LDADD+=		-lrumpdev_bpf
 
 .include <bsd.own.mk>
