@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.162 2016/04/13 00:47:01 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.163 2016/04/25 14:30:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.162 2016/04/13 00:47:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.163 2016/04/25 14:30:42 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -808,22 +808,22 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		memset(rt, 0, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
 		LIST_INIT(&rt->rt_timer);
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		if (rt_setkey(rt, dst, M_NOWAIT) == NULL ||
-		    rt_setgate(rt, gateway) != 0) {
-			pool_put(&rtentry_pool, rt);
-			senderr(ENOBUFS);
-		}
+
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (netmask) {
 			rt_maskedcopy(dst, (struct sockaddr *)&maskeddst,
 			    netmask);
 			rt_setkey(rt, (struct sockaddr *)&maskeddst, M_NOWAIT);
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		} else {
 			rt_setkey(rt, dst, M_NOWAIT);
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		}
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		if (rt_getkey(rt) == NULL ||
+		    rt_setgate(rt, gateway) != 0) {
+			pool_put(&rtentry_pool, rt);
+			senderr(ENOBUFS);
+		}
+
 		rt_set_ifa(rt, ifa);
 		if (info->rti_info[RTAX_TAG] != NULL)
 			rt_settag(rt, info->rti_info[RTAX_TAG]);
