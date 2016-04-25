@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.256 2016/04/06 03:51:26 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.257 2016/04/25 16:35:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.256 2016/04/06 03:51:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.257 2016/04/25 16:35:47 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -789,6 +789,18 @@ sys_wait6(struct lwp *l, const struct sys_wait6_args *uap, register_t *retval)
 	 */
 	error = do_sys_waitid(idtype, id, &pid, &status, SCARG(uap, options),
 	    wrup, sip);
+
+	retval[0] = pid; 	/* tell userland who it was */
+
+#if 0
+	/* 
+	 * should we copyout if there was no process, hence no useful data?
+	 * We don't for an old sytle wait4() (etc) but I believe
+	 * FreeBSD does for wait6(), so a tossup...  Go with FreeBSD for now.
+	 */
+	if (pid == 0)
+		return error;
+#endif
 
 	if (SCARG(uap, status) != NULL && error == 0)
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
