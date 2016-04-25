@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.184 2016/04/25 14:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.185 2016/04/25 15:43:49 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.184 2016/04/25 14:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.185 2016/04/25 15:43:49 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1151,6 +1151,7 @@ COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
 		return;
 	memset(&rtm, 0, sizeof(rtm));
+	rtm.rtm_pid = curproc->p_pid;
 	rtm.rtm_flags = RTF_DONE | flags;
 	rtm.rtm_errno = error;
 	m = COMPATNAME(rt_msg1)(type, &info, &rtm, sizeof(rtm));
@@ -1274,6 +1275,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			info.rti_info[RTAX_DST] = sa = rt_getkey(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			memset(&rtm, 0, sizeof(rtm));
+			rtm.rtm_pid = curproc->p_pid;
 			rtm.rtm_index = ifp->if_index;
 			rtm.rtm_flags |= rt->rt_flags;
 			rtm.rtm_errno = error;
