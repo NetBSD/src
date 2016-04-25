@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.48 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.49 2016/04/25 20:15:41 joerg Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.48 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.49 2016/04/25 20:15:41 joerg Exp $");
 
 #include "opt_slhci.h"
 
@@ -2937,17 +2937,6 @@ slhci_insert(struct slhci_softc *sc)
 /*
  * Data structures and routines to emulate the root hub.
  */
-
-static const usb_hub_descriptor_t slhci_hubd = {
-	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_HUB,
-	.bNbrPorts = 1,
-	.wHubCharacteristics = USETWD(UHD_PWR_INDIVIDUAL | UHD_OC_NONE),
-	.bPwrOn2PwrGood = 50,
-	.bHubContrCurrent = 0,
-	.DeviceRemovable = { 0x00 },
-	.PortPowerCtrlMask = { 0x00 }
-};
 
 static usbd_status
 slhci_clear_feature(struct slhci_softc *sc, unsigned int what)
