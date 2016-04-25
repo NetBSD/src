@@ -1,5 +1,5 @@
 /*	$KAME: sctp_peeloff.c,v 1.13 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_peeloff.c,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_peeloff.c,v 1.2 2016/04/25 21:21:02 rjs Exp $ */
 
 /*
  * Copyright (C) 2002, 2003 Cisco Systems Inc,
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_peeloff.c,v 1.1 2015/10/13 21:28:35 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_peeloff.c,v 1.2 2016/04/25 21:21:02 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -74,8 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_peeloff.c,v 1.1 2015/10/13 21:28:35 rjs Exp $")
 #include <netinet/sctputil.h>
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif /*IPSEC*/
 
 #ifdef SCTP_DEBUG
