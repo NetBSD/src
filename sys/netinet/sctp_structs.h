@@ -1,5 +1,5 @@
 /*	$KAME: sctp_structs.h,v 1.13 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_structs.h,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_structs.h,v 1.2 2016/04/25 21:21:02 rjs Exp $ */
 
 #ifndef __SCTP_STRUCTS_H__
 #define __SCTP_STRUCTS_H__
@@ -40,8 +40,8 @@
 #include <sys/callout.h>
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif
 
 #include <netinet/sctp_header.h>
