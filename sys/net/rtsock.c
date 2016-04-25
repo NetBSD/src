@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.183 2016/04/25 10:55:01 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.184 2016/04/25 14:38:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.183 2016/04/25 10:55:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.184 2016/04/25 14:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -745,8 +745,12 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 				if (error != 0)
 					senderr(error);
 			}
-			if (info.rti_info[RTAX_TAG])
-				rt_settag(rt, info.rti_info[RTAX_TAG]);
+			if (info.rti_info[RTAX_TAG]) {
+				const struct sockaddr *tag;
+				tag = rt_settag(rt, info.rti_info[RTAX_TAG]);
+				if (tag == NULL)
+					senderr(ENOBUFS);
+			}
 			/* new gateway could require new ifaddr, ifp;
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
