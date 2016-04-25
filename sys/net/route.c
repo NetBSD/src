@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.163 2016/04/25 14:30:42 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.164 2016/04/25 14:38:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.163 2016/04/25 14:30:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.164 2016/04/25 14:38:08 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -549,10 +549,12 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			 * Smash the current notion of the gateway to
 			 * this destination.  Should check about netmask!!!
 			 */
-			rt->rt_flags |= RTF_MODIFIED;
-			flags |= RTF_MODIFIED;
+			error = rt_setgate(rt, gateway);
+			if (error == 0) {
+				rt->rt_flags |= RTF_MODIFIED;
+				flags |= RTF_MODIFIED;
+			}
 			stat = &rtstat.rts_newgateway;
-			rt_setgate(rt, gateway);
 		}
 	} else
 		error = EHOSTUNREACH;
@@ -825,8 +827,12 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		}
 
 		rt_set_ifa(rt, ifa);
-		if (info->rti_info[RTAX_TAG] != NULL)
-			rt_settag(rt, info->rti_info[RTAX_TAG]);
+		if (info->rti_info[RTAX_TAG] != NULL) {
+			const struct sockaddr *tag;
+			tag = rt_settag(rt, info->rti_info[RTAX_TAG]);
+			if (tag == NULL)
+				senderr(ENOBUFS);
+		}
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (info->rti_info[RTAX_IFP] != NULL &&
 		    (ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP])) != NULL &&

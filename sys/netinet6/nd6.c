@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.191 2016/04/21 05:07:50 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.192 2016/04/25 14:38:08 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.191 2016/04/21 05:07:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.192 2016/04/25 14:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1389,6 +1389,12 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			rt_setgate(rt, &u.sa);
 			gate = rt->rt_gateway;
 			RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
+			if (gate == NULL) {
+				log(LOG_ERR,
+				    "%s: rt_setgate failed on %s\n", __func__,
+				    if_name(ifp));
+				break;
+			}
 
 			RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 			if ((rt->rt_flags & RTF_CONNECTED) != 0)

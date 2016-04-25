@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.208 2016/04/19 04:13:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.209 2016/04/25 14:38:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.208 2016/04/19 04:13:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.209 2016/04/25 14:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -506,6 +506,10 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		break;
 	case RTM_ADD:
 		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
+		if (gate == NULL) {
+			log(LOG_ERR, "%s: arp_setgate failed\n", __func__);
+			break;
+		}
 		if ((rt->rt_flags & RTF_CONNECTED) ||
 		    (rt->rt_flags & RTF_LOCAL)) {
 			/*
