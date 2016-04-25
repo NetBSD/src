@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.182 2016/04/08 12:01:22 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.183 2016/04/25 10:55:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.182 2016/04/08 12:01:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.183 2016/04/25 10:55:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -739,9 +739,12 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			 */
 			if ((error = rt_getifa(&info)) != 0)
 				senderr(error);
-			if (info.rti_info[RTAX_GATEWAY] &&
-			    rt_setgate(rt, info.rti_info[RTAX_GATEWAY]))
-				senderr(EDQUOT);
+			if (info.rti_info[RTAX_GATEWAY]) {
+				error = rt_setgate(rt,
+				    info.rti_info[RTAX_GATEWAY]);
+				if (error != 0)
+					senderr(error);
+			}
 			if (info.rti_info[RTAX_TAG])
 				rt_settag(rt, info.rti_info[RTAX_TAG]);
 			/* new gateway could require new ifaddr, ifp;
