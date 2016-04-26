@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.53 2016/04/26 09:08:55 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.54 2016/04/26 10:10:27 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.53 2016/04/26 09:08:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.54 2016/04/26 10:10:27 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1184,11 +1184,11 @@ slhci_attach(struct slhci_softc *sc)
 #endif
 
 	if (t->sltype == SLTYPE_SL811HS_R12)
-		rev = " (rev 1.2)";
+		rev = "(rev 1.2)";
 	else if (t->sltype == SLTYPE_SL811HS_R14)
-		rev = " (rev 1.4 or 1.5)";
+		rev = "(rev 1.4 or 1.5)";
 	else
-		rev = " (unknown revision)";
+		rev = "(unknown revision)";
 
 	aprint_normal("%s: ScanLogic SL811HS/T USB Host Controller %s\n",
 	    SC_NAME(sc), rev);
