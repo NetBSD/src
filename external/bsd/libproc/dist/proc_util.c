@@ -219,6 +219,7 @@ proc_getlwpstatus(struct proc_handle *phdl)
 
 	if (phdl == NULL)
 		return (NULL);
+	lwpinfo.pl_lwpid = 1;
 	if (ptrace(PT_LWPINFO, phdl->pid, (void *)&lwpinfo,
 	    sizeof(lwpinfo)) < 0)
 		return (NULL);
