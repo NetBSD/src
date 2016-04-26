@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.162 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.163 2016/04/26 12:58:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.162 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.163 2016/04/26 12:58:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -697,6 +697,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc->sc_dying)
 		return EIO;
 
+	int error = 0;
+	DPRINTF("cmd %#x", cmd, 0, 0, 0);
 	switch (cmd) {
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
@@ -714,17 +716,22 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		void *ptr = 0;
 		int addr = ur->ucr_addr;
 		usbd_status err;
-		int error = 0;
 
-		if (!(flag & FWRITE))
-			return EBADF;
+		if (!(flag & FWRITE)) {
+			error = EBADF;
+			goto fail;
+		}
 
-		DPRINTF("USB_REQUEST addr=%d len=%d\n", addr, len, 0, 0);
-		if (len < 0 || len > 32768)
-			return EINVAL;
+		DPRINTF("USB_REQUEST addr=%d len=%d", addr, len, 0, 0);
+		if (len < 0 || len > 32768) {
+			error = EINVAL;
+			goto fail;
+		}
 		if (addr < 0 || addr >= USB_MAX_DEVICES ||
-		    sc->sc_bus->ub_devices[addr] == NULL)
-			return EINVAL;
+		    sc->sc_bus->ub_devices[addr] == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
 		if (len != 0) {
 			iov.iov_base = (void *)ur->ucr_data;
 			iov.iov_len = len;
@@ -764,7 +771,6 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			len = UGETW(ur->ucr_request.wLength);
 			kmem_free(ptr, len);
 		}
-		return error;
 	}
 
 	case USB_DEVICEINFO:
@@ -773,10 +779,14 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		struct usb_device_info *di = (void *)data;
 		int addr = di->udi_addr;
 
-		if (addr < 0 || addr >= USB_MAX_DEVICES)
-			return EINVAL;
-		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL)
-			return ENXIO;
+		if (addr < 0 || addr >= USB_MAX_DEVICES) {
+			error = EINVAL;
+			goto fail;
+		}
+		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL) {
+			error = ENXIO;
+			goto fail;
+		}
 		usbd_fill_deviceinfo(dev, di, 1);
 		break;
 	}
@@ -788,10 +798,14 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		struct usb_device_info_old *di = (void *)data;
 		int addr = di->udi_addr;
 
-		if (addr < 1 || addr >= USB_MAX_DEVICES)
-			return EINVAL;
-		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL)
-			return ENXIO;
+		if (addr < 1 || addr >= USB_MAX_DEVICES) {
+			error = EINVAL;
+			goto fail;
+		}
+		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL) {
+			error = ENXIO;
+			goto fail;
+		}
 		usbd_fill_deviceinfo_old(dev, di, 1);
 		break;
 	}
@@ -802,9 +816,14 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	default:
-		return EINVAL;
+		error = EINVAL;
 	}
-	return 0;
+
+fail:
+
+	DPRINTF("... done (error = %d)", error, 0, 0, 0);
+
+	return error;
 }
 
 int
