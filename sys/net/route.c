@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.164 2016/04/25 14:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.165 2016/04/26 09:30:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.164 2016/04/25 14:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.165 2016/04/26 09:30:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1504,6 +1504,24 @@ struct sockaddr *
 rt_gettag(struct rtentry *rt)
 {
 	return rt->rt_tag;
+}
+
+int
+rt_check_reject_route(struct rtentry *rt, struct ifnet *ifp)
+{
+
+	if ((rt->rt_flags & RTF_REJECT) != 0) {
+		/* Mimic looutput */
+		if (ifp->if_flags & IFF_LOOPBACK)
+			return (rt->rt_flags & RTF_HOST) ?
+			    EHOSTUNREACH : ENETUNREACH;
+		else if (rt->rt_rmx.rmx_expire == 0 ||
+		    time_uptime < rt->rt_rmx.rmx_expire)
+			return (rt->rt_flags & RTF_GATEWAY) ?
+			    EHOSTUNREACH : EHOSTDOWN;
+	}
+
+	return 0;
 }
 
 #ifdef DDB
