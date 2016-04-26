@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.49 2016/04/25 20:15:41 joerg Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.50 2016/04/26 09:00:22 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.49 2016/04/25 20:15:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.50 2016/04/26 09:00:22 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1384,7 +1384,6 @@ void
 slhci_mem_use(struct usbd_bus *bus, int val)
 {
 	struct slhci_softc *sc = SLHCI_BUS2SC(bus);
-	int s;
 
 	mutex_enter(&sc->sc_intr_lock);
 	sc->sc_mem_use += val;
