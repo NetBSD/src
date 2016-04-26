@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.50 2016/04/26 09:00:22 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.51 2016/04/26 09:04:01 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.50 2016/04/26 09:00:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.51 2016/04/26 09:04:01 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -550,7 +550,7 @@ const int SLHCI_D_ROOT =	0x0800;
 const int SLHCI_D_SOF =		0x1000;
 const int SLHCI_D_NAK =		0x2000;
 
-int slhci_debug = 0x1cbc; /* 0xc8c; */ /* 0xffff; */ /* 0xd8c; */
+int slhcidebug = 0x1cbc; /* 0xc8c; */ /* 0xffff; */ /* 0xd8c; */
 struct slhci_softc *ssc;
 #ifdef USB_DEBUG
 int slhci_usbdebug = -1; /* value to set usbdebug on attach, -1 = leave alone */
@@ -589,7 +589,7 @@ KERNHIST_DECL(slhcihist);
 const unsigned int SLHCI_HISTMASK = KERNHIST_SLHCI;
 struct kern_history_ent slhci_he[SLHCI_NHIST];
 
-#define SLHCI_DEXEC(x, y) do { if ((slhci_debug & SLHCI_ ## x)) { y; } \
+#define SLHCI_DEXEC(x, y) do { if ((slhcidebug & SLHCI_ ## x)) { y; } \
 } while (/*CONSTCOND*/ 0)
 #define DDOLOG(f, a, b, c, d) do { const char *_kernhist_name = __func__; \
     u_long _kernhist_call = 0; KERNHIST_LOG(slhcihist, f, a, b, c, d);	     \
@@ -1730,8 +1730,8 @@ slhci_dointr(struct slhci_softc *sc)
 	r = slhci_read(sc, SL11_ISR);
 
 #ifdef SLHCI_DEBUG
-	if (slhci_debug & SLHCI_D_INTR && r & sc->sc_ier &&
-	    ((r & ~(SL11_ISR_SOF|SL11_ISR_DATA)) || slhci_debug &
+	if (slhcidebug & SLHCI_D_INTR && r & sc->sc_ier &&
+	    ((r & ~(SL11_ISR_SOF|SL11_ISR_DATA)) || slhcidebug &
 	    SLHCI_D_SOF)) {
 		uint8_t e, f;
 
@@ -1980,7 +1980,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 	}
 
 #ifdef SLHCI_DEBUG
-	if (slhci_debug & SLHCI_D_NAK || (status & SL11_EPSTAT_ERRBITS) !=
+	if (slhcidebug & SLHCI_D_NAK || (status & SL11_EPSTAT_ERRBITS) !=
 	    SL11_EPSTAT_NAK)
 		DLOGFLAG8(D_XFER, "STATUS=", status, "STALL", "NAK",
 		    "Overflow", "Setup", "Data Toggle", "Timeout", "Error",
