@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.920 2016/04/11 11:46:17 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.921 2016/04/26 05:18:22 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -72,6 +72,7 @@ HAVE_GCC?=	0
     ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "playstation2" || \
+    ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_GCC?=	53
 .else
