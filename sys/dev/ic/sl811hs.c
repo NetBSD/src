@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.51 2016/04/26 09:04:01 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.52 2016/04/26 09:07:10 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,11 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.51 2016/04/26 09:04:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.52 2016/04/26 09:07:10 skrll Exp $");
 
 #include "opt_slhci.h"
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
