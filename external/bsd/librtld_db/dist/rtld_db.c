@@ -30,7 +30,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/librtld_db/rtld_db.c 272488 2014-10-03 23:20:37Z markj $");
 #else
-__RCSID("$NetBSD: rtld_db.c,v 1.2 2015/09/24 14:15:58 christos Exp $");
+__RCSID("$NetBSD: rtld_db.c,v 1.3 2016/04/26 14:26:49 chs Exp $");
 #endif
 
 #include <sys/types.h>
@@ -240,17 +240,17 @@ rd_reset(rd_agent_t *rdap)
 {
 	GElf_Sym sym;
 
-	if (proc_name2sym(rdap->rda_php, "ld-elf.so.1", "r_debug_state",
-	    &sym, NULL) < 0)
-		return (RD_ERR);
-	DPRINTF("found r_debug_state at 0x%lx\n", (unsigned long)sym.st_value);
-	rdap->rda_preinit_addr = sym.st_value;
-	rdap->rda_dlactivity_addr = sym.st_value;
+	/*
+	 * preinit and dlactivity events are not supported yet.
+	 */
 
-	if (proc_name2sym(rdap->rda_php, "ld-elf.so.1", "_r_debug_postinit",
+	rdap->rda_preinit_addr = (uintptr_t)-1;
+	rdap->rda_dlactivity_addr = (uintptr_t)-1;
+
+	if (proc_name2sym(rdap->rda_php, "ld.elf_so", "_rtld_debug_state",
 	    &sym, NULL) < 0)
 		return (RD_ERR);
-	DPRINTF("found _r_debug_postinit at 0x%lx\n",
+	DPRINTF("found _rtld_debug_state at 0x%lx\n",
 	    (unsigned long)sym.st_value);
 	rdap->rda_postinit_addr = sym.st_value;
 
