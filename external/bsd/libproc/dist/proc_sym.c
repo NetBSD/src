@@ -32,7 +32,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_sym.c 279946 2015-03-13 04:26:48Z stas $");
 #else
-__RCSID("$NetBSD: proc_sym.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+__RCSID("$NetBSD: proc_sym.c,v 1.3 2016/04/26 14:28:39 chs Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,6 +57,8 @@ __RCSID("$NetBSD: proc_sym.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
 #include <util.h>
 
 #include "_libproc.h"
+
+#define DBG_PATH_FMT "/usr/libdata/debug/%s.debug"
 
 #ifdef NO_CTF
 typedef struct ctf_file ctf_file_t;
@@ -105,8 +107,7 @@ find_dbg_obj(const char *path)
 	int fd;
 	char dbg_path[PATH_MAX];
 
-	snprintf(dbg_path, sizeof(dbg_path),
-	    "/usr/lib/debug/%s.debug", path);
+	snprintf(dbg_path, sizeof(dbg_path), DBG_PATH_FMT, path);
 	fd = open(dbg_path, O_RDONLY);
 	if (fd >= 0)
 		return (fd);
@@ -364,9 +365,11 @@ proc_addr2sym(struct proc_handle *p, uintptr_t addr, char *name,
 	 * First look up the symbol in the dynsymtab, and fall back to the
 	 * symtab if the lookup fails.
 	 */
-	error = lookup_addr(e, dynsymscn, dynsymstridx, off, addr, &s, symcopy);
-	if (error == 0)
-		goto out;
+	if (dynsymscn) {
+		error = lookup_addr(e, dynsymscn, dynsymstridx, off, addr, &s, symcopy);
+		if (error == 0)
+			goto out;
+	}
 
 	error = lookup_addr(e, symtabscn, symtabstridx, off, addr, &s, symcopy);
 	if (error != 0)
@@ -508,9 +511,11 @@ proc_name2sym(struct proc_handle *p, const char *object, const char *symbol,
 	 * First look up the symbol in the dynsymtab, and fall back to the
 	 * symtab if the lookup fails.
 	 */
-	error = lookup_name(e, dynsymscn, dynsymstridx, symbol, symcopy, si);
-	if (error == 0)
-		goto out;
+	if (dynsymscn) {
+		error = lookup_name(e, dynsymscn, dynsymstridx, symbol, symcopy, si);
+		if (error == 0)
+			goto out;
+	}
 
 	error = lookup_name(e, symtabscn, symtabstridx, symbol, symcopy, si);
 	if (error == 0)
