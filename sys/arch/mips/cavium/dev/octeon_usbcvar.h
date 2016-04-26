@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_usbcvar.h,v 1.2 2016/04/26 09:22:36 skrll Exp $	*/
+/*	$NetBSD: octeon_usbcvar.h,v 1.3 2016/04/26 09:23:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -229,9 +229,6 @@ typedef struct octeon_usbc_softc {
 	device_ptr_t sc_child;			/* /dev/usb# device */
 #endif
 	char sc_dying;
-#ifdef __NetBSD__
-	struct usb_dma_reserve sc_dma_reserve;
-#endif
 
 	u_int8_t sc_port_speed;
 #ifndef USBC_HPRT_PRTSPD_HIGH
