@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.54 2016/04/26 10:10:27 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.55 2016/04/26 10:28:28 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.54 2016/04/26 10:10:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.55 2016/04/26 10:28:28 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -167,8 +167,6 @@ pnames(int ptype)
 	return names[ptype];
 }
 #endif
-
-#define SLHCI_XFER_TYPE(x) (((struct slhci_pipe *)((x)->pipe))->ptype)
 
 /*
  * Maximum allowable reserved bus time.  Since intr/isoc transfers have
@@ -296,6 +294,9 @@ struct slhci_pipe {
 #define SLHCI_XFER2SC(xfer)	SLHCI_BUS2SC((xfer)->ux_bus)
 
 #define SLHCI_PIPE2SPIPE(pipe)	((struct slhci_pipe *)(pipe))
+#define SLHCI_XFER2SPIPE(xfer)	SLHCI_PIPE2SPIPE((xfer)->ux_pipe)
+
+#define SLHCI_XFER_TYPE(x)	(SLHCI_XFER2SPIPE(xfer)->ptype)
 
 #ifdef SLHCI_PROFILE_TRANSFER
 #if defined(__mips__)
