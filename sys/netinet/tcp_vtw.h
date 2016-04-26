@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_vtw.h,v 1.6 2012/11/23 14:48:31 joerg Exp $	*/
+/*	$NetBSD: tcp_vtw.h,v 1.7 2016/04/26 08:44:45 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,7 +126,6 @@
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>

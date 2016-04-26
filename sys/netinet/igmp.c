@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.56 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: igmp.c,v 1.57 2016/04/26 08:44:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.56 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.57 2016/04/26 08:44:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.56 2015/08/24 22:21:26 pooka Exp $");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/net_stats.h>
 
 #include <netinet/in.h>

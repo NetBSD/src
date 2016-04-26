@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.9 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.10 2016/04/26 08:44:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.9 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.10 2016/04/26 08:44:44 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.9 2014/02/25 18:30:12 pooka Exp $");
 #include <sys/systm.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

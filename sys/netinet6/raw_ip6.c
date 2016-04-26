@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.141 2015/08/24 22:21:27 pooka Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.142 2016/04/26 08:44:45 ozaki-r Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.141 2015/08/24 22:21:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.142 2016/04/26 08:44:45 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.141 2015/08/24 22:21:27 pooka Exp $");
 #include <sys/kmem.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_types.h>
 #include <net/net_stats.h>
 

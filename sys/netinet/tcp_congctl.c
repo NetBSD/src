@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.20 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.21 2016/04/26 08:44:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.20 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.21 2016/04/26 08:44:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -158,7 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.20 2015/08/24 22:21:26 pooka Exp $
 #include <sys/mutex.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.59 2015/05/24 15:43:45 rtr Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.60 2016/04/26 08:44:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,6 +64,7 @@
 #define _NETINET_IN_PCB_H_
 
 #include <sys/queue.h>
+#include <net/route.h>
 #include <netinet/in_pcb_hdr.h>
 
 /*

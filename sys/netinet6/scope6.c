@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.11 2014/12/10 01:10:37 christos Exp $	*/
+/*	$NetBSD: scope6.c,v 1.12 2016/04/26 08:44:45 ozaki-r Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.11 2014/12/10 01:10:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.12 2016/04/26 08:44:45 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.11 2014/12/10 01:10:37 christos Exp $")
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
-#include <net/route.h>
 #include <net/if.h>
 
 #include <netinet/in.h>
