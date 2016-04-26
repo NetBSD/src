@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.119 2016/04/11 08:56:16 ozaki-r Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.120 2016/04/26 08:44:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.119 2016/04/11 08:56:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.120 2016/04/26 08:44:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.119 2016/04/11 08:56:16 ozaki-r Exp $
 #include <sys/mbuf.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
