@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.5 2016/04/11 08:56:16 ozaki-r Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.6 2016/04/26 11:02:57 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.5 2016/04/11 08:56:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.6 2016/04/26 11:02:57 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -87,8 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.5 2016/04/11 08:56:16 ozaki-r Exp $")
 #include <netinet/sctp_pcb.h>
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif /* IPSEC */
 
 #include <netinet/sctputil.h>
