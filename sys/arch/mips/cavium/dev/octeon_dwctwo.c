@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.6 2015/08/30 13:02:42 skrll Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.7 2016/04/26 09:24:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.6 2015/08/30 13:02:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.7 2016/04/26 09:24:57 skrll Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -173,7 +173,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dwc2_bust.bs_w_4 = octeon_dwc2_wr_4;
 
 	sc->sc_dwc2.sc_iot = &sc->sc_dwc2_bust;
-	sc->sc_dwc2.sc_bus.dmatag = aa->aa_dmat;
+	sc->sc_dwc2.sc_bus.ub_dmatag = aa->aa_dmat;
 	sc->sc_dwc2.sc_params = &octeon_dwc2_params;
 	sc->sc_dwc2.sc_set_dma_addr = octeon_dwc2_set_dma_addr;
 
