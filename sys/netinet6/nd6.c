@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.192 2016/04/25 14:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.193 2016/04/26 09:30:01 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.192 2016/04/25 14:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.193 2016/04/26 09:30:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2113,70 +2113,6 @@ nd6_slowtimo(void *ignored_arg)
 	mutex_exit(softnet_lock);
 }
 
-/*
- * Next hop determination.  This routine was derived from ip_output.c.
- */
-static int
-nd6_determine_nexthop(struct ifnet *ifp, const struct sockaddr_in6 *dst,
-    struct rtentry *rt0, struct rtentry **ret_rt, bool *sendpkt)
-{
-	struct rtentry *rt = rt0;
-	struct rtentry *gwrt = NULL;
-	struct sockaddr_in6 *gw6 = satosin6(rt->rt_gateway);
-
-	/*
-	 * We skip link-layer address resolution and NUD
-	 * if the gateway is not a neighbor from ND point
-	 * of view, regardless of the value of nd_ifinfo.flags.
-	 * The second condition is a bit tricky; we skip
-	 * if the gateway is our own address, which is
-	 * sometimes used to install a route to a p2p link.
-	 */
-	if (!nd6_is_addr_neighbor(gw6, ifp) ||
-	    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
-		/*
-		 * We allow this kind of tricky route only
-		 * when the outgoing interface is p2p.
-		 * XXX: we may need a more generic rule here.
-		 */
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
-			goto hostunreach;
-
-		*sendpkt = true;
-		return 0;
-	}
-
-	/* Try to use a cached nexthop route (gwroute) if exists */
-	gwrt = rt_get_gwroute(rt);
-	if (gwrt == NULL || (gwrt->rt_flags & RTF_UP) == 0) {
-		if (gwrt != NULL) {
-			rtfree(gwrt);
-		}
-		/* Look up a nexthop route */
-		gwrt = rtalloc1(rt->rt_gateway, 1);
-		rt_set_gwroute(rt, gwrt);
-		rt = gwrt;
-		if (rt == NULL)
-			goto hostunreach;
-		/* the "G" test below also prevents rt == rt0 */
-		if ((rt->rt_flags & RTF_GATEWAY) ||
-		    (rt->rt_ifp != ifp)) {
-			if (rt0->rt_gwroute != NULL)
-				rtfree(rt0->rt_gwroute);
-			rt0->rt_gwroute = NULL;
-			goto hostunreach;
-		}
-	}
-	*ret_rt = gwrt;
-	return 0;
-
-hostunreach:
-	if (gwrt != NULL)
-		rtfree(gwrt);
-
-	return EHOSTUNREACH;
-}
-
 int
 nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
     const struct sockaddr_in6 *dst, struct rtentry *rt)
@@ -2185,7 +2121,14 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	struct llentry *ln = NULL;
 	int error = 0;
 	bool created = false;
-	struct rtentry *nexthop = NULL;
+
+	if (rt != NULL) {
+		error = rt_check_reject_route(rt, ifp);
+		if (error != 0) {
+			m_freem(m);
+			return error;
+		}
+	}
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -2193,25 +2136,38 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	if (nd6_need_cache(ifp) == 0)
 		goto sendpkt;
 
+	if (rt != NULL && (rt->rt_flags & RTF_GATEWAY) != 0) {
+		struct sockaddr_in6 *gw6 = satosin6(rt->rt_gateway);
+
+		/* XXX remain the check to keep the original behavior. */
+		/*
+		 * We skip link-layer address resolution and NUD
+		 * if the gateway is not a neighbor from ND point
+		 * of view, regardless of the value of nd_ifinfo.flags.
+		 * The second condition is a bit tricky; we skip
+		 * if the gateway is our own address, which is
+		 * sometimes used to install a route to a p2p link.
+		 */
+		if (!nd6_is_addr_neighbor(gw6, ifp) ||
+		    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
+			/*
+			 * We allow this kind of tricky route only
+			 * when the outgoing interface is p2p.
+			 * XXX: we may need a more generic rule here.
+			 */
+			if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
+				senderr(EHOSTUNREACH);
+
+			goto sendpkt;
+		}
+	}
+
 	/*
 	 * Address resolution or Neighbor Unreachability Detection
 	 * for the next hop.
 	 * At this point, the destination of the packet must be a unicast
 	 * or an anycast address(i.e. not a multicast).
 	 */
-
-	if (rt != NULL && (rt->rt_flags & RTF_GATEWAY) != 0) {
-		bool sendpkt = false;
-
-		/* Still need a nexthop to reflect RTF_{REJECT,BLACKHOLE} */
-		error = nd6_determine_nexthop(ifp, dst, rt, &nexthop, &sendpkt);
-		if (error != 0)
-			senderr(error);
-		if (nexthop != NULL)
-			rt = nexthop;
-		if (sendpkt)
-			goto sendpkt;
-	}
 
 	/* Look up the neighbor cache for the nexthop */
 	ln = nd6_lookup(&dst->sin6_addr, ifp, true);
@@ -2346,9 +2302,6 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	if (m != NULL)
 		m_freem(m);
   exit:
-	if (nexthop != NULL)
-		rtfree(nexthop);
-
 	if (created)
 		nd6_gc_neighbors(LLTABLE6(ifp));
 
