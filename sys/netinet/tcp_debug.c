@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.29 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.30 2016/04/26 08:44:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.29 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.30 2016/04/26 08:44:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.29 2015/08/24 22:21:26 pooka Exp $")
 #include <sys/protosw.h>
 #include <sys/errno.h>
 
-#include <net/route.h>
 #include <net/if.h>
 
 #include <netinet/in.h>
