@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.165 2016/04/26 09:30:01 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.166 2016/04/26 09:31:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.165 2016/04/26 09:30:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.166 2016/04/26 09:31:18 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -773,10 +773,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			senderr(ESRCH);
 		if ((rt = rt_deladdr(rtbl, dst, netmask)) == NULL)
 			senderr(ESRCH);
-		if (rt->rt_gwroute) {
-			rtfree(rt->rt_gwroute);
-			rt->rt_gwroute = NULL;
-		}
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa)) {
 			if (ifa->ifa_flags & IFA_ROUTE &&
@@ -845,8 +841,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rc != 0) {
 			ifafree(ifa);
-			if (rt->rt_gwroute)
-				rtfree(rt->rt_gwroute);
 			rt_destroy(rt);
 			pool_put(&rtentry_pool, rt);
 			senderr(rc);
@@ -883,17 +877,10 @@ bad:
 int
 rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 {
-	KASSERT(rt != rt->rt_gwroute);
 
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
-	if (rt->rt_gwroute) {
-		rtfree(rt->rt_gwroute);
-		rt->rt_gwroute = NULL;
-	}
-	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 	if (rt->rt_gateway != NULL)
 		sockaddr_free(rt->rt_gateway);
 	KASSERT(rt->_rt_key != NULL);
@@ -904,9 +891,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
 	if (rt->rt_flags & RTF_GATEWAY) {
-		KASSERT(rt->_rt_key != NULL);
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		rt->rt_gwroute = rtalloc1(gate, 1);
+		struct rtentry *gwrt = rtalloc1(gate, 1);
 		/*
 		 * If we switched gateways, grab the MTU from the new
 		 * gateway route if the current MTU, if the current MTU is
@@ -914,13 +899,15 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 		 * Note that, if the MTU of gateway is 0, we will reset the
 		 * MTU of the route to run PMTUD again from scratch. XXX
 		 */
-		KASSERT(rt->_rt_key != NULL);
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		if (rt->rt_gwroute
-		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)
-		    && rt->rt_rmx.rmx_mtu
-		    && rt->rt_rmx.rmx_mtu > rt->rt_gwroute->rt_rmx.rmx_mtu) {
-			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
+		if (gwrt != NULL) {
+			KASSERT(gwrt->_rt_key != NULL);
+			RT_DPRINTF("gwrt->_rt_key = %p\n", gwrt->_rt_key);
+			if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
+			    rt->rt_rmx.rmx_mtu &&
+			    rt->rt_rmx.rmx_mtu > gwrt->rt_rmx.rmx_mtu) {
+				rt->rt_rmx.rmx_mtu = gwrt->rt_rmx.rmx_mtu;
+			}
+			rtfree(gwrt);
 		}
 	}
 	KASSERT(rt->_rt_key != NULL);
