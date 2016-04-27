@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.3 2016/04/06 03:52:27 christos Exp $ */
+/* $NetBSD: t_wait.c,v 1.4 2016/04/27 21:14:24 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.3 2016/04/06 03:52:27 christos Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.4 2016/04/27 21:14:24 christos Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -97,7 +97,7 @@ ATF_TC_BODY(wait6_exited, tc)
 		exit(0x5a5a5a5a);
 		/*NOTREACHED*/
 	default:
-		ATF_REQUIRE(!wait6(P_PID, pid, &st, WEXITED, &wru, &si)); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
 		ATF_REQUIRE(WIFEXITED(st) && WEXITSTATUS(st) == 0x5a);
 		ATF_REQUIRE(si.si_status = 0x5a5a5a5a);
 		ATF_REQUIRE(si.si_pid == pid);
@@ -131,7 +131,7 @@ ATF_TC_BODY(wait6_terminated, tc)
 		ATF_REQUIRE(pid > 0); 
 	default:
 		ATF_REQUIRE(kill(pid, SIGTERM) == 0);
-		ATF_REQUIRE(!wait6(P_PID, pid, &st, WEXITED, &wru, &si)); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGTERM);
 		ATF_REQUIRE(si.si_status == SIGTERM);
 		ATF_REQUIRE(si.si_pid == pid);
@@ -166,7 +166,7 @@ ATF_TC_BODY(wait6_coredumped, tc)
 	case -1:
 		ATF_REQUIRE(pid > 0); 
 	default:
-		ATF_REQUIRE(!wait6(P_PID, pid, &st, WEXITED, &wru, &si)); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGSEGV
 		    && WCOREDUMP(st));
 		ATF_REQUIRE(si.si_status == SIGSEGV);
@@ -194,16 +194,16 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 	pid_t pid;
 	static const struct rlimit rl = { 0, 0 };
 
+	ATF_REQUIRE(setrlimit(RLIMIT_CORE, &rl) == 0);
 	switch (pid = fork()) {
 	case 0:
-		ATF_REQUIRE(setrlimit(RLIMIT_CORE, &rl) == 0);
 		sleep(100);
 		/*FALLTHROUGH*/
 	case -1:
 		ATF_REQUIRE(pid > 0); 
 	default:
 		ATF_REQUIRE(kill(pid, SIGSTOP) == 0);
-		ATF_REQUIRE(!wait6(P_PID, pid, &st, WSTOPPED, &wru, &si)); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WSTOPPED, &wru, &si) == pid); 
 		ATF_REQUIRE(WIFSTOPPED(st) && WSTOPSIG(st) == SIGSTOP);
 		ATF_REQUIRE(si.si_status == SIGSTOP);
 		ATF_REQUIRE(si.si_pid == pid);
@@ -213,7 +213,7 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 		    (uintmax_t)si.si_utime);
 
 		ATF_REQUIRE(kill(pid, SIGCONT) == 0);
-		ATF_REQUIRE(!wait6(P_PID, pid, &st, WCONTINUED, &wru, &si)); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WCONTINUED, &wru, &si) == pid); 
 		ATF_REQUIRE(WIFCONTINUED(st));
 		ATF_REQUIRE(si.si_status == SIGCONT);
 		ATF_REQUIRE(si.si_pid == pid);
@@ -223,7 +223,7 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 		    (uintmax_t)si.si_utime);
 
 		ATF_REQUIRE(kill(pid, SIGQUIT) == 0);
-		ATF_REQUIRE(!wait6(P_PID, pid, &st, WEXITED, &wru, &si)); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGQUIT);
 		ATF_REQUIRE(si.si_status == SIGQUIT);
 		ATF_REQUIRE(si.si_pid == pid);
