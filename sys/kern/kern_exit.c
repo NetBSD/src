@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.257 2016/04/25 16:35:47 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.258 2016/04/27 21:15:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.257 2016/04/25 16:35:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.258 2016/04/27 21:15:40 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1011,8 +1011,10 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 			}
 
 			if ((options & WCONTINUED) != 0 &&
-			    child->p_xsig == SIGCONT) {
+			    child->p_xsig == SIGCONT &&
+			    (child->p_sflag & PS_CONTINUED)) {
 				if ((options & WNOWAIT) == 0) {
+					child->p_sflag &= ~PS_CONTINUED;
 					child->p_waited = 1;
 					parent->p_nstopchild--;
 				}
