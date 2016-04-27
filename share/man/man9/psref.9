@@ -1,4 +1,4 @@
-.\"	$NetBSD: psref.9,v 1.3 2016/04/15 17:55:58 riastradh Exp $
+.\"	$NetBSD: psref.9,v 1.4 2016/04/27 08:05:31 ozaki-r Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2016
+.Dd April 27, 2016
 .Dt PSREF 9
 .Os
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -324,7 +324,7 @@ use_frotz(int key, int op)
 	do_stuff_with_frotz(f, op);
 
 	/* Release passive reference, possibly waking destroy_frotz.  */
-	psref_release(&ref, &f->f_psref, &frobbotzim_prc);
+	psref_release(&ref, &f->f_psref, frobbotzim_prc);
 
 	return 0;
 }
@@ -341,7 +341,7 @@ lookup_frotz(int key, struct psref *ref)
 		/* f is stable until pserialize_read_exit.  */
 		if (f->f_key == key) {
 			/* Acquire a passive reference.  */
-			psref_acquire(ref, &f->f_target, &frobbotzim_prc);
+			psref_acquire(ref, &f->f_target, frobbotzim_prc);
 			/* f is now stable until psref_release.  */
 			break;
 		}
@@ -378,7 +378,7 @@ destroy_frotz(int key)
 
 	if (f != NULL) {
 		/* Wait for all readers to drain before freeing.  */
-		psref_target_destroy(&f->f_target, &frobbotzim_prc);
+		psref_target_destroy(&f->f_target, frobbotzim_prc);
 		PSLIST_ENTRY_DESTROY(&f->f_entry);
 		kmem_free(f, sizeof(*f));
 	}
