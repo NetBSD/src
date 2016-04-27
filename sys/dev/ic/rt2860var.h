@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860var.h,v 1.1 2016/04/26 21:17:20 christos Exp $	*/
+/*	$NetBSD: rt2860var.h,v 1.2 2016/04/27 19:49:26 christos Exp $	*/
 /*	$OpenBSD: rt2860var.h,v 1.23 2016/03/21 21:16:30 stsp Exp $	*/
 
 /*-
@@ -31,6 +31,8 @@
 #define RT2860_WCID_MAX		254
 #define RT2860_AID2WCID(aid)	((aid) & 0xff)
 
+#define IEEE80211_NO_HT
+
 struct rt2860_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
 	uint8_t		wr_flags;
@@ -62,8 +64,7 @@ struct rt2860_tx_radiotap_header {
 #define RT2860_TX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
 	 1 << IEEE80211_RADIOTAP_RATE |			\
-	 1 << IEEE80211_RADIOTAP_CHANNEL |		\
-	 1 << IEEE80211_RADIOTAP_HWQUEUE)
+	 1 << IEEE80211_RADIOTAP_CHANNEL)
 
 struct rt2860_tx_data {
 	struct rt2860_txwi		*txwi;
@@ -107,12 +108,11 @@ struct rt2860_node {
 };
 
 struct rt2860_softc {
-	struct device			sc_dev;
+	device_t			sc_dev;
 
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
-	struct ieee80211_amrr		amrr;
 
 	int				(*sc_enable)(struct rt2860_softc *);
 	void				(*sc_disable)(struct rt2860_softc *);
@@ -121,6 +121,9 @@ struct rt2860_softc {
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 
+	struct ethercom			sc_ec;
+#define sc_if  sc_ec.ec_if
+
 	uint16_t			(*sc_srom_read)(struct rt2860_softc *,
 					    uint16_t);
 
@@ -128,6 +131,8 @@ struct rt2860_softc {
 #define RT2860_ENABLED		(1 << 0)
 #define RT2860_ADVANCED_PS	(1 << 1)
 #define RT2860_PCIE		(1 << 2)
+
+	struct ieee80211_amrr		amrr;
 
 	uint32_t			sc_ic_flags;
 	int				fixed_ridx;
@@ -142,9 +147,10 @@ struct rt2860_softc {
 	struct rt2860_tx_data		data[RT2860_TX_POOL_COUNT];
 	bus_dmamap_t			txwi_map;
 	bus_dma_segment_t		txwi_seg;
-	caddr_t				txwi_vaddr;
+	void				*txwi_vaddr;
 
 	int				sc_tx_timer;
+	struct ieee80211_beacon_offsets	sc_bo;
 	int				mgtqid;
 	uint8_t				qfullmsk;
 
@@ -186,8 +192,7 @@ struct rt2860_softc {
 
 	struct ieee80211_amrr_node	amn[RT2860_WCID_MAX + 1];
 
-#if NBPFILTER > 0
-	caddr_t				sc_drvbpf;
+	struct bpf_if			*sc_drvbpf;
 	union {
 		struct rt2860_rx_radiotap_header th;
 		uint8_t pad[64];
@@ -201,7 +206,6 @@ struct rt2860_softc {
 	}				sc_txtapu;
 #define sc_txtap			sc_txtapu.th
 	int				sc_txtap_len;
-#endif
 };
 
 int	rt2860_attach(void *, int);
