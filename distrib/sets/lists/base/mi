@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1123 2016/03/15 18:40:50 christos Exp $
+# $NetBSD: mi,v 1.1124 2016/04/27 19:52:14 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -379,6 +379,7 @@
 ./libdata/firmware/ral/ral-rt2561		base-firmware-root
 ./libdata/firmware/ral/ral-rt2561s		base-firmware-root
 ./libdata/firmware/ral/ral-rt2661		base-firmware-root
+./libdata/firmware/ral/ral-rt2860		base-firmware-root
 ./libdata/firmware/rum				base-firmware-root
 ./libdata/firmware/rum/rum-license		base-firmware-root
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
