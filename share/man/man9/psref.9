@@ -1,4 +1,4 @@
-.\"	$NetBSD: psref.9,v 1.4 2016/04/27 08:05:31 ozaki-r Exp $
+.\"	$NetBSD: psref.9,v 1.5 2016/04/27 08:18:40 ozaki-r Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -302,7 +302,7 @@ publish_as_frotz(uint64_t key, ...)
 	f = kmem_alloc(sizeof(*f), KM_SLEEP);
 	f->f_key = key;
 	f->f_... = ...;
-	PSLIST_ENTRY_INIT(&f->f_entry);
+	PSLIST_ENTRY_INIT(f, f_entry);
 	psref_target_init(&f->f_target, frobbotzim_prc);
 
 	mutex_enter(&frobbotzim.lock);
@@ -379,7 +379,7 @@ destroy_frotz(int key)
 	if (f != NULL) {
 		/* Wait for all readers to drain before freeing.  */
 		psref_target_destroy(&f->f_target, frobbotzim_prc);
-		PSLIST_ENTRY_DESTROY(&f->f_entry);
+		PSLIST_ENTRY_DESTROY(f, f_entry);
 		kmem_free(f, sizeof(*f));
 	}
 }
