@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.11 2016/02/12 05:32:47 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.12 2016/04/27 08:45:22 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.11 2016/02/12 05:32:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.12 2016/04/27 08:45:22 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,12 +105,13 @@ static const char * const x86_features[][32] = {
 	"3dnowprefetch", "osvw", "ibs", "xop", "skinit", "wdt", NULL, "lwp",
 	"fma4", "tce", NULL, "nodeid_msr",
 	NULL, "tbm", "topoext", "perfctr_core",
-	"perfctr_nb", NULL, "bpext", NULL, "perfctr_l2", "mwaitx", NULL, NULL},
+	"perfctr_nb", NULL, "bpext", "ptsc",
+	"perfctr_l2", "mwaitx", NULL, NULL},
 
 	{ /* (7) Linux mapping */
-	"ida", "arat", "cpb", "ebp", NULL, "pln", "pts", "dtherm",
-	"hw_pstate", "proc_feedback", "hwp", "hwp_notify", "hwp_act_window",
-	"hwp_epp", "hwp_pkg_req", "intel_pt",
+	NULL, NULL, "cpb", "ebp", NULL, "pln", "pts", "dtherm",
+	"hw_pstate", "proc_feedback", NULL, NULL,
+	NULL, NULL, NULL, "intel_pt",
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
@@ -125,10 +126,10 @@ static const char * const x86_features[][32] = {
 	{ /* (9) Intel-defined: 00000007 ebx */
 	"fsgsbase", "tsc_adjust", NULL, "bmi1", "hle", "avx2", NULL, "smep",
 	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", NULL,
-	"avx512f", NULL, "rdseed", "adx",
+	"avx512f", "avx512dq", "rdseed", "adx",
 	"smap", NULL, "pcommit", "clflushopt",
 	"clwb", NULL, "avx512pf", "avx512er",
-	"avx512cd", "sha_ni", NULL, NULL},
+	"avx512cd", "sha_ni", "avx512bw", "avx512vl"},
 
 	{ /* (10) 0000000d eax */
 	"xsaveopt", "xsavec", "xgetbv1", "xsaves", NULL, NULL, NULL, NULL,
