@@ -1,9 +1,8 @@
-/*	$NetBSD: if_ral_pci.c,v 1.21 2014/03/29 19:28:25 christos Exp $	*/
-/*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
+/*	$NetBSD: if_ral_pci.c,v 1.22 2016/04/27 19:47:25 christos Exp $	*/
+/*	$OpenBSD: if_ral_pci.c,v 1.24 2015/11/24 17:11:39 mpi Exp $  */
 
 /*-
- * Copyright (c) 2005, 2006
- *	Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,10 +18,10 @@
  */
 
 /*
- * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
+ * PCI front-end for the Ralink RT2560/RT2561/RT2860/RT3090 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.21 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.22 2016/04/27 19:47:25 christos Exp $");
 
 
 #include <sys/param.h>
@@ -51,31 +50,56 @@ __KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.21 2014/03/29 19:28:25 christos Exp
 
 #include <dev/ic/rt2560var.h>
 #include <dev/ic/rt2661var.h>
+#include <dev/ic/rt2860var.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#define RAL_POWER_MANAGEMENT 0	/* Disabled for now */
+
 static struct ral_opns {
 	int	(*attach)(void *, int);
 	int	(*detach)(void *);
+#if RAL_POWER_MANAGEMENT
+	void	(*suspend)(void *);
+	void	(*wakeup)(void *);
+#endif
 	int	(*intr)(void *);
 
 }  ral_rt2560_opns = {
 	rt2560_attach,
 	rt2560_detach,
+#if RAL_POWER_MANAGEMENT
+	rt2560_suspend,
+	rt2560_wakeup,
+#endif
 	rt2560_intr
 
 }, ral_rt2661_opns = {
 	rt2661_attach,
 	rt2661_detach,
+#if RAL_POWER_MANAGEMENT
+	rt2661_suspend,
+	rt2661_wakeup,
+#endif
 	rt2661_intr
+
+}, ral_rt2860_opns = {
+	rt2860_attach,
+	rt2860_detach,
+#if RAL_POWER_MANAGEMENT
+	rt2860_suspend,
+	rt2860_wakeup,
+#endif
+	rt2860_intr
 };
 
 struct ral_pci_softc {
 	union {
 		struct rt2560_softc	sc_rt2560;
 		struct rt2661_softc	sc_rt2661;
+		struct rt2860_softc	sc_rt2860;
 	} u;
 #define sc_sc	u.sc_rt2560
 
@@ -92,9 +116,45 @@ struct ral_pci_softc {
 int	ral_pci_match(device_t, cfdata_t, void *);
 void	ral_pci_attach(device_t, device_t, void *);
 int	ral_pci_detach(device_t, int);
+#if RAL_POWER_MANAGEMENT
+int	ral_pci_activate(struct device *, devact_t);
+void	ral_pci_wakeup(struct ral_pci_softc *);
+#else
+#define ral_pci_activate NULL
+#endif
 
 CFATTACH_DECL_NEW(ral_pci, sizeof (struct ral_pci_softc),
-	ral_pci_match, ral_pci_attach, ral_pci_detach, NULL);
+	ral_pci_match, ral_pci_attach, ral_pci_detach, ral_pci_activate);
+
+static const struct ral_pci_matchid {
+	pci_vendor_id_t         ral_vendor;
+	pci_product_id_t        ral_product;
+} ral_pci_devices[] = {
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561 },
+ 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2860 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2890 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2760 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2790 },
+	{ PCI_VENDOR_AWT,    PCI_PRODUCT_AWT_RT2890 },
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_1 },
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_2 },
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_3 },
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_4 },
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_5 },
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_6 },
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_7 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3060 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3062 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3090 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3091 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3092 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3562 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3592 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3593 }
+};
 
 int
 ral_pci_match(device_t parent, cfdata_t cfdata,
@@ -102,16 +162,11 @@ ral_pci_match(device_t parent, cfdata_t cfdata,
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RALINK) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-			case PCI_PRODUCT_RALINK_RT2560:
-			case PCI_PRODUCT_RALINK_RT2561:
-			case PCI_PRODUCT_RALINK_RT2561S:
-			case PCI_PRODUCT_RALINK_RT2661:
-				return 1;
-			default:
-				return 0;
-		}
+	for (size_t i = 0; i < __arraycount(ral_pci_devices); i++) {
+		const struct ral_pci_matchid *ral = &ral_pci_devices[i];
+		if (PCI_VENDOR(pa->pa_id) == ral->ral_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == ral->ral_product)
+			return 1;
 	}
 
 	return 0;
@@ -126,14 +181,30 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	bus_addr_t base;
 	pci_intr_handle_t ih;
-	pcireg_t reg;
+	pcireg_t memtype, reg;
 	int error;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	pci_aprint_devinfo(pa, NULL);
 
-	psc->sc_opns = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RALINK_RT2560) ?
-	    &ral_rt2560_opns : &ral_rt2661_opns;
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RALINK) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_RALINK_RT2560:
+			psc->sc_opns = &ral_rt2560_opns;
+			break;
+		case PCI_PRODUCT_RALINK_RT2561:
+		case PCI_PRODUCT_RALINK_RT2561S:
+		case PCI_PRODUCT_RALINK_RT2661:
+			psc->sc_opns = &ral_rt2661_opns;
+			break;
+		default:
+			psc->sc_opns = &ral_rt2860_opns;
+			break;
+		}
+	} else {
+		/* all other vendors are RT2860 only */
+		psc->sc_opns = &ral_rt2860_opns;
+	}
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -145,9 +216,9 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/* map control/status registers */
-	error = pci_mapreg_map(pa, RAL_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
-	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_st, &sc->sc_sh, &base,
-	    &psc->sc_mapsize);
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, RAL_PCI_BAR0);
+	error = pci_mapreg_map(pa, RAL_PCI_BAR0, memtype, 0, &sc->sc_st,
+	    &sc->sc_sh, &base, &psc->sc_mapsize);
 
 	if (error != 0) {
 		aprint_error(": could not map memory space\n");
@@ -180,10 +251,48 @@ ral_pci_detach(device_t self, int flags)
 {
 	struct ral_pci_softc *psc = device_private(self);
 	struct rt2560_softc *sc = &psc->sc_sc;
+	int error;
 
-	(*psc->sc_opns->detach)(sc);
-	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+
+		error = (*psc->sc_opns->detach)(sc);
+		if (error != 0)
+			return error;
+	}
+
+	if (psc->sc_mapsize > 0)
+		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->sc_mapsize);
 
 	return 0;
 }
 
+#if RAL_POWER_MANAGEMENT
+int
+ral_pci_activate(struct device *self, devact_t act)
+{
+	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
+	struct rt2560_softc *sc = &psc->sc_sc;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		(*psc->sc_opns->suspend)(sc);
+		break;
+	case DVACT_WAKEUP:
+		ral_pci_wakeup(psc);
+		break;
+	}
+	return 0;
+}
+
+void
+ral_pci_wakeup(struct ral_pci_softc *psc)
+{
+	struct rt2560_softc *sc = &psc->sc_sc;
+	int s;
+
+	s = splnet();
+	(*psc->sc_opns->wakeup)(sc);
+	splx(s);
+}
+#endif
