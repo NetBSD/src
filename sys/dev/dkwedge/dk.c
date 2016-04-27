@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.88 2016/01/15 07:48:22 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.89 2016/04/27 02:19:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.88 2016/01/15 07:48:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.89 2016/04/27 02:19:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -759,6 +759,23 @@ dkwedge_find_by_wname(const char *wname)
 	}
 	rw_exit(&dkwedges_lock);
 	return dv;
+}
+
+device_t
+dkwedge_find_by_parent(const char *name, size_t *i)
+{
+	rw_enter(&dkwedges_lock, RW_WRITER);
+	for (; *i < (size_t)ndkwedges; (*i)++) {
+		struct dkwedge_softc *sc;
+		if ((sc = dkwedges[*i]) == NULL)
+			continue;
+		if (strcmp(sc->sc_parent->dk_name, name) != 0)
+			continue;
+		rw_exit(&dkwedges_lock);
+		return sc->sc_dev;
+	}
+	rw_exit(&dkwedges_lock);
+	return NULL;
 }
 
 void
