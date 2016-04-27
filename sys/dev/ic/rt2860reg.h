@@ -1,3 +1,4 @@
+/*	$NetBSD: rt2860reg.h,v 1.3 2016/04/27 19:49:26 christos Exp $	*/
 /*	$OpenBSD: rt2860reg.h,v 1.32 2014/05/24 10:10:17 stsp Exp $	*/
 
 /*-
