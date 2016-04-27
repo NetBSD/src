@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.344 2016/04/27 02:24:06 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.345 2016/04/27 02:47:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.344 2016/04/27 02:24:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345 2016/04/27 02:47:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -163,6 +163,8 @@ int     rf_kdebug_level = 0;
 
 #ifdef DEBUG_ROOT
 #define DPRINTF(a, ...) printf(a, __VA_ARGS__)
+#else
+#define DPRINTF(a, ...)
 #endif
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
