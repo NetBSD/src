@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1156 2016/04/26 10:38:42 skrll Exp $
+#	$NetBSD: files,v 1.1157 2016/04/27 19:46:11 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -661,10 +661,11 @@ file	dev/ic/rtw.c			rtw
 file	dev/ic/rtwphy.c			rtw
 file	dev/ic/rtwphyio.c		rtw
 
-# Ralink RT2500/RT2600 802.11
+# Ralink RT2500/RT2600/RT2860 802.11
 device	ral: arp, ether, ifnet, wlan, firmload
 file	dev/ic/rt2560.c			ral
 file	dev/ic/rt2661.c			ral
+file	dev/ic/rt2860.c			ral
 
 # Marvell Libertas Open
 device  malo: arp, ether, ifnet, wlan, firmload
