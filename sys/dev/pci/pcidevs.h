@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1241 2016/04/26 08:48:32 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1242 2016/04/27 19:48:11 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1248 2016/04/26 08:48:12 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1249 2016/04/27 19:47:40 christos Exp
  */
 
 /*
@@ -575,6 +575,7 @@
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor */
 #define	PCI_VENDOR_CHELSIO	0x1425		/* Chelsio Communications */
+#define	PCI_VENDOR_EDIMAX	0x1432		/* Edimax */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
 #define	PCI_VENDOR_SAMSUNGELEC3	0x144d		/* Samsung Electronics (3rd vendor ID) */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer */
@@ -638,7 +639,9 @@
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
+#define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
+#define	PCI_VENDOR_FUSIONIO	0x1aed		/* Fusion-io */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
 #define	PCI_VENDOR_REDHAT	0x1b36		/* Red Hat */
@@ -1637,6 +1640,9 @@
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* Basic Rate B1 ISDN Interface */
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
 
+/* AWT products */
+#define	PCI_PRODUCT_AWT_RT2890	0x1059		/* RT2890 */
+
 /* RMI products */
 #define	PCI_PRODUCT_RMI_XLR_PCIX	0x000b		/* XLR PCI-X bridge */
 #define	PCI_PRODUCT_RMI_XLS_PCIE	0xabcd		/* XLS PCIe-PCIe bridge */
@@ -2145,6 +2151,15 @@
 
 /* Dynalink products */
 #define	PCI_PRODUCT_DYNALINK_IS64PH	0x1702		/* IS64PH ISDN Adapter */
+
+/* Edimax products */
+#define	PCI_PRODUCT_EDIMAX_RT2860_1	0x7708		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_4	0x7727		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_2	0x7728		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_5	0x7738		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_6	0x7748		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_3	0x7758		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_7	0x7768		/* RT2860 */
 
 /* ELSA products */
 #define	PCI_PRODUCT_ELSA_QS1PCI	0x1000		/* QuickStep 1000 ISDN Card */
@@ -5462,8 +5477,21 @@
 #define	PCI_PRODUCT_RALINK_RT2561S	0x0301		/* RT2561S 802.11b/g */
 #define	PCI_PRODUCT_RALINK_RT2561	0x0302		/* RT2561 802.11b/g */
 #define	PCI_PRODUCT_RALINK_RT2661	0x0401		/* RT2661 802.11b/g/n */
+#define	PCI_PRODUCT_RALINK_RT2860	0x0601		/* RT2860 */
+#define	PCI_PRODUCT_RALINK_RT2890	0x0681		/* RT2890 */
+#define	PCI_PRODUCT_RALINK_RT2760	0x0701		/* RT2760 */
+#define	PCI_PRODUCT_RALINK_RT2790	0x0781		/* RT2790 */
+#define	PCI_PRODUCT_RALINK_RT3060	0x3060		/* RT3060 */
+#define	PCI_PRODUCT_RALINK_RT3062	0x3062		/* RT3062 */
 #define	PCI_PRODUCT_RALINK_RT3090	0x3090		/* RT3090 802.11b/g/n */
-
+#define	PCI_PRODUCT_RALINK_RT3091	0x3091		/* RT3091 */
+#define	PCI_PRODUCT_RALINK_RT3092	0x3092		/* RT3092 */
+#define	PCI_PRODUCT_RALINK_RT3298	0x3298		/* Bluetooth */
+#define	PCI_PRODUCT_RALINK_RT3562	0x3562		/* RT3562 */
+#define	PCI_PRODUCT_RALINK_RT3592	0x3592		/* RT3592 */
+#define	PCI_PRODUCT_RALINK_RT3593	0x3593		/* RT3593 */
+#define	PCI_PRODUCT_RALINK_RT5390	0x5390		/* RT5390 */
+	
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
 
