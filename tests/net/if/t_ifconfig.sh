@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.8 2016/04/04 07:37:08 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.9 2016/04/28 01:20:31 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -160,11 +160,15 @@ options_body()
 
 	# ifconfig -l [-bdsu]
 	#   -l shows only inteface names
-	atf_check -s exit:0 -o match:'lo0 shmif0' rump.ifconfig -l
+	atf_check -s exit:0 -o match:'lo0' rump.ifconfig -l
+	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -l
 	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -l -b
+	atf_check -s exit:0 -o not-match:'lo0' rump.ifconfig -l -b
 	atf_check -s exit:0 -o ignore rump.ifconfig -l -d
-	atf_check -s exit:0 -o match:'lo0 shmif0' rump.ifconfig -l -s
-	atf_check -s exit:0 -o match:'lo0 shmif0' rump.ifconfig -l -u
+	atf_check -s exit:0 -o match:'lo0' rump.ifconfig -l -s
+	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -l -s
+	atf_check -s exit:0 -o match:'lo0' rump.ifconfig -l -u
+	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -l -u
 
 	# ifconfig -s interface
 	#   -s interface exists with 0 / 1 if connected / disconnected
