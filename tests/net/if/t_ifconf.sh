@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconf.sh,v 1.1 2014/12/08 04:23:03 ozaki-r Exp $
+# $NetBSD: t_ifconf.sh,v 1.2 2016/04/28 01:57:45 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,8 +66,22 @@ basic_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 192.168.0.1/24
 	atf_check -s exit:0 -o match:'^5$' "$ifconf" total
 
-	# Get only first two entries (lo0's)
-	atf_check -s exit:0 -o not-match:'shmif' "$ifconf" list 2
+	# Vary the number of requesting interfaces
+	atf_check -s exit:0 -o match:1 -x "$ifconf list 1 | wc -l"
+	atf_check -s exit:0 -o match:2 -x "$ifconf list 2 | wc -l"
+	atf_check -s exit:0 -o match:3 -x "$ifconf list 3 | wc -l"
+	atf_check -s exit:0 -o match:4 -x "$ifconf list 4 | wc -l"
+	atf_check -s exit:0 -o match:5 -x "$ifconf list 5 | wc -l"
+	atf_check -s exit:0 -o match:5 -x "$ifconf list 6 | wc -l"
+
+	# Check if removing an interface is reflected
+	atf_check -s exit:0 rump.ifconfig shmif0 destroy
+	atf_check -s exit:0 -o match:'^3$' "$ifconf" total
+	atf_check -s exit:0 -o not-match:'shmif0' "$ifconf" list
+	atf_check -s exit:0 -o match:1 -x "$ifconf list 1 | wc -l"
+	atf_check -s exit:0 -o match:2 -x "$ifconf list 2 | wc -l"
+	atf_check -s exit:0 -o match:3 -x "$ifconf list 3 | wc -l"
+	atf_check -s exit:0 -o match:3 -x "$ifconf list 4 | wc -l"
 
 	unset LD_PRELOAD
 	unset RUMP_SERVER
