@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.63 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.64 2016/04/28 00:16:56 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.63 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.64 2016/04/28 00:16:56 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -2090,7 +2090,7 @@ carp_start(struct ifnet *ifp)
 
 int
 carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
 	KASSERT(KERNEL_LOCKED_P());

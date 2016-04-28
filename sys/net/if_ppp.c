@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.150 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.151 2016/04/28 00:16:56 ozaki-r Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.150 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.151 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #include "ppp.h"
 
@@ -839,7 +839,7 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 int
 pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rtp)
+    const struct rtentry *rtp)
 {
 	struct ppp_softc *sc = ifp->if_softc;
 	int protocol, address, control;
