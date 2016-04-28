@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.54 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.55 2016/04/28 01:37:17 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.54 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.55 2016/04/28 01:37:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -88,7 +88,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 {
 	uint16_t etype = 0;
 	struct mbuf *m;
-	int s, hdrlen, error = 0;
+	int hdrlen, error = 0;
 	struct mbuf *mcopy = NULL;
 	struct ieee1394_hwaddr *hwdst, baddr;
 	const struct ieee1394_hwaddr *myaddr;
@@ -218,26 +218,15 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	if (m0 == NULL)
 		senderr(ENOBUFS);
 
-	s = splnet();
-	ifp->if_obytes += m0->m_pkthdr.len;
-	if (m0->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	while ((m = m0) != NULL) {
 		m0 = m->m_nextpkt;
-		if (m == NULL) {
-			splx(s);
-			senderr(ENOBUFS);
-		}
-		IFQ_ENQUEUE(&ifp->if_snd, m, error);
+
+		error = (*ifp->if_transmit)(ifp, m);
 		if (error) {
 			/* mbuf is already freed */
-			splx(s);
 			goto bad;
 		}
 	}
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
 	return 0;
 
   bad:

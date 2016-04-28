@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.52 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.53 2016/04/28 01:37:17 knakahara Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.52 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.53 2016/04/28 01:37:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -987,7 +987,7 @@ Static int
 upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     const struct rtentry *rt0)
 {
-	int s, len, error;
+	int error;
 
 	DPRINTFN(10,("%s: %s: enter\n",
 		     device_xname(((struct upl_softc *)ifp->if_softc)->sc_dev),
@@ -999,24 +999,13 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 */
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
-	len = m->m_pkthdr.len;
-	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		return error;
-	}
-	ifp->if_obytes += len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
+	error = (*ifp->if_transmit)(ifp, m);
 
-	return 0;
+	return error;
 }
 
 Static void
