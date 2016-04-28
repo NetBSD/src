@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.72 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.73 2016/04/28 14:40:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.72 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.73 2016/04/28 14:40:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -102,7 +102,7 @@ uint8_t  arcbroadcastaddr = 0;
 #define senderr(e) { error = (e); goto bad;}
 
 static	int arc_output(struct ifnet *, struct mbuf *,
-	    const struct sockaddr *, struct rtentry *);
+	    const struct sockaddr *, const struct rtentry *);
 static	void arc_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -112,7 +112,7 @@ static	void arc_input(struct ifnet *, struct mbuf *);
  */
 static int
 arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct mbuf		*m, *m1, *mcopy;
 	struct arccom		*ac;
