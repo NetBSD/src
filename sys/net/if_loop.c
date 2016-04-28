@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.85 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.86 2016/04/28 01:37:17 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.85 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.86 2016/04/28 01:37:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -254,10 +254,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			return (ENOBUFS);
 		*(mtod(m, uint32_t *)) = dst->sa_family;
 
-		s = splnet();
-		IFQ_ENQUEUE(&ifp->if_snd, m, error);
-		(*ifp->if_start)(ifp);
-		splx(s);
+		error = ifp->if_transmit(ifp, m);
 		return (error);
 	}
 #endif /* ALTQ */
