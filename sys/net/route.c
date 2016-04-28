@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.166 2016/04/26 09:31:18 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.167 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.166 2016/04/26 09:31:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.167 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1488,13 +1488,13 @@ rt_settag(struct rtentry *rt, const struct sockaddr *tag)
 }
 
 struct sockaddr *
-rt_gettag(struct rtentry *rt)
+rt_gettag(const struct rtentry *rt)
 {
 	return rt->rt_tag;
 }
 
 int
-rt_check_reject_route(struct rtentry *rt, struct ifnet *ifp)
+rt_check_reject_route(const struct rtentry *rt, const struct ifnet *ifp)
 {
 
 	if ((rt->rt_flags & RTF_REJECT) != 0) {

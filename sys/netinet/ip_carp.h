@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.h,v 1.7 2014/07/31 00:58:02 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.h,v 1.8 2016/04/28 00:16:56 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.h,v 1.18 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
@@ -163,6 +163,6 @@ struct ifaddr	*carp_iamatch6(void *, struct in6_addr *);
 struct ifnet	*carp_ourether(void *, struct ether_header *, u_char, int);
 int		 carp_input(struct mbuf *, u_int8_t *, u_int8_t *, u_int16_t);
 int		 carp_output(struct ifnet *, struct mbuf *,
-		     const struct sockaddr *, struct rtentry *);
+		     const struct sockaddr *, const struct rtentry *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_CARP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.53 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.54 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.53 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.54 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -79,12 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.53 2016/04/20 09:01:04 knakaha
 #define	senderr(e)	do { error = (e); goto bad; } while(0/*CONSTCOND*/)
 
 static int  ieee1394_output(struct ifnet *, struct mbuf *,
-		const struct sockaddr *, struct rtentry *);
+		const struct sockaddr *, const struct rtentry *);
 static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *, uint16_t);
 
 static int
 ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	uint16_t etype = 0;
 	struct mbuf *m;

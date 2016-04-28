@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.107 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.108 2016/04/28 00:16:56 ozaki-r Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.107 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.108 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -306,7 +306,7 @@ gif_check_nesting(struct ifnet *ifp, struct mbuf *m)
 
 int
 gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int error = 0;
