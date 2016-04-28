@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.16 2016/04/28 00:33:54 christos Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.17 2016/04/28 00:35:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.16 2016/04/28 00:33:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.17 2016/04/28 00:35:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,8 +267,8 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		 */
 		if ((error = dkwedge_add(&dkw)) == EEXIST &&
 		    strcmp(dkw.dkw_wname, ent_guid_str) != 0) {
-			char orig[sizeof(dkw.dkw_name)];
-			strcpy(orig, dkw.dkw_name);
+			char orig[sizeof(dkw.dkw_wname)];
+			strcpy(orig, dkw.dkw_wname);
 			strcpy(dkw.dkw_wname, ent_guid_str);
 			error = dkwedge_add(&dkw);
 			if (!error)
