@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.100 2016/04/26 09:30:01 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.101 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -403,9 +403,9 @@ int	rt_setgate(struct rtentry *, const struct sockaddr *);
 const struct sockaddr *
 	rt_settag(struct rtentry *, const struct sockaddr *);
 struct sockaddr *
-	rt_gettag(struct rtentry *);
+	rt_gettag(const struct rtentry *);
 
-int	rt_check_reject_route(struct rtentry *, struct ifnet *);
+int	rt_check_reject_route(const struct rtentry *, const struct ifnet *);
 
 static inline void
 rt_assert_referenced(const struct rtentry *rt)
