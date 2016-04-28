@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.2 2016/04/27 19:49:26 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.3 2016/04/28 12:24:51 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.2 2016/04/27 19:49:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.3 2016/04/28 12:24:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -71,7 +71,7 @@ int rt2860_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
-static void	rt2860_attachhook(struct device *);
+static void	rt2860_attachhook(device_t);
 static int	rt2860_alloc_tx_ring(struct rt2860_softc *,
 		    struct rt2860_tx_ring *);
 static void	rt2860_reset_tx_ring(struct rt2860_softc *,
@@ -264,7 +264,7 @@ rt2860_attach(void *xsc, int id)
 	sc->mgtqid = (sc->mac_ver == 0x2860 && sc->mac_rev == 0x0100) ?
 	    WME_AC_VO : 5;
 
-	config_mountroot(xsc, rt2860_attachhook);
+	config_mountroot(sc->sc_dev, rt2860_attachhook);
 
 	return 0;
 
@@ -297,9 +297,9 @@ firmware_load(const char *dname, const char *iname, uint8_t **ucodep,
 }
 
 static void
-rt2860_attachhook(struct device *self)
+rt2860_attachhook(device_t self)
 {
-	struct rt2860_softc *sc = (struct rt2860_softc *)self;
+	struct rt2860_softc *sc = device_private(self);
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 	int i, error;
