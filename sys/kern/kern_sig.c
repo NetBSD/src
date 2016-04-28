@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.326 2016/04/27 21:15:40 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.327 2016/04/28 00:37:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.326 2016/04/27 21:15:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.327 2016/04/28 00:37:39 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1751,8 +1751,7 @@ issignal(struct lwp *l)
 				/* Take the signal. */
 				(void)sigget(sp, NULL, signo, NULL);
 				p->p_xsig = signo;
-				if (p->p_sflag & PS_CONTINUED)
-					p->p_sflag &= ~PS_CONTINUED;
+				p->p_sflag &= ~PS_CONTINUED;
 				signo = 0;
 				sigswitch(true, PS_NOCLDSTOP, p->p_xsig);
 			} else if (prop & SA_IGNORE) {
