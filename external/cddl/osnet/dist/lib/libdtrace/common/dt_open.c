@@ -1025,6 +1025,37 @@ dt_get_sysinfo(int cmd, char *buf, size_t len)
 }
 #endif
 
+#ifndef illumos
+# ifdef __FreeBSD__
+#  define DEFKERNEL	"kernel"
+#  define BOOTFILE	"kern.bootfile"
+# endif
+# ifdef __NetBSD__
+#  define DEFKERNEL	"netbsd"
+#  define BOOTFILE	"machdep.booted_kernel"
+# endif
+
+const char *
+dt_bootfile(char *bootfile, size_t len)
+{
+	char *p;
+	size_t olen = len;
+
+	/* This call shouldn't fail, but use a default just in case.*/
+	if (sysctlbyname(BOOTFILE, bootfile, &len, NULL, 0) != 0)
+		strlcpy(bootfile, DEFKERNEL, olen);
+
+	if ((p = strrchr(bootfile, '/')) != NULL)
+		p++;
+	else
+		p = bootfile;
+	return p;
+}
+
+# undef DEFKERNEL
+# undef BOOTFILE
+#endif
+
 static dtrace_hdl_t *
 dt_vopen(int version, int flags, int *errp,
     const dtrace_vector_t *vector, void *arg)
@@ -1309,37 +1340,25 @@ alloc:
 
 	/*
 	 * On FreeBSD the kernel module name can't be hard-coded. The
-	 * 'kern.bootfile' sysctl value tells us exactly which file is being
-	 * used as the kernel.
+	 * 'kern.bootfile' sysctl value tells us exactly which file is
+	 * being used as the kernel.
 	 */
 #ifndef illumos
+# ifdef __FreeBSD__
+#  define THREAD	"struct thread"
+#  define MUTEX		"struct mtx"
+#  define RWLOCK	"struct rwlock"
+# endif
+# ifdef __NetBSD__
+#  define THREAD	"struct lwp"
+#  define MUTEX		"struct kmutex"
+#  define RWLOCK	"struct krwlock"
+# endif
 	{
-	char bootfile[MAXPATHLEN];
-	char *p;
-	size_t len = sizeof(bootfile);
+	const char *p;
+	char kernname[512];
 
-#ifdef __FreeBSD__
-#define DEFKERNEL	"kernel"
-#define BOOTFILE	"kern.bootfile"
-#define THREAD		"struct thread"
-#define MUTEX		"struct mtx"
-#define RWLOCK		"struct rwlock"
-#endif
-#ifdef __NetBSD__
-#define DEFKERNEL	"netbsd"
-#define BOOTFILE	"machdep.booted_kernel"
-#define THREAD		"struct lwp"
-#define MUTEX		"struct kmutex"
-#define RWLOCK		"struct krwlock"
-#endif
-	/* This call shouldn't fail, but use a default just in case. */
-	if (sysctlbyname(BOOTFILE, bootfile, &len, NULL, 0) != 0)
-		strlcpy(bootfile, DEFKERNEL, sizeof(bootfile));
-
-	if ((p = strrchr(bootfile, '/')) != NULL)
-		p++;
-	else
-		p = bootfile;
+	p = dt_bootfile(kernname, sizeof(kernname));
 
 	/*
 	 * Format the global variables based on the kernel module name.
@@ -1349,8 +1368,11 @@ alloc:
 	snprintf(threadmtx_str, sizeof(threadmtx_str), "%s *(%s`%s *)",
 	    THREAD, p, MUTEX);
 	snprintf(rwlock_str, sizeof(rwlock_str), "int(%s`%s *)", p, RWLOCK);
-	snprintf(sxlock_str, sizeof(sxlock_str), "int(%s`struct sxlock *)",p);
+	snprintf(sxlock_str, sizeof(sxlock_str), "int(%s`struct sxlock *)", p);
 	}
+# undef THREAD
+# undef MUTEX
+# undef RWLOCK
 #endif
 
 	dtp->dt_macros = dt_idhash_create("macro", NULL, 0, UINT_MAX);
