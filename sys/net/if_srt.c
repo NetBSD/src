@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.20 2015/08/24 22:21:26 pooka Exp $ */
+/* $NetBSD: if_srt.c,v 1.21 2016/04/28 00:16:56 ozaki-r Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.20 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.21 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -181,7 +181,7 @@ srt_if_output(
 	struct ifnet *ifp,
 	struct mbuf *m,
 	const struct sockaddr *to,
-	struct rtentry *rtp)
+	const struct rtentry *rtp)
 {
 	struct srt_softc *sc;
 	struct srt_rt *r;

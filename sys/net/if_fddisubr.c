@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.98 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.99 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.98 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.99 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -176,7 +176,7 @@ extern u_char	aarp_org_code[ 3 ];
 #define	CFDDIADDR(ifp)		CLLADDR((ifp)->if_sadl)
 
 static	int fddi_output(struct ifnet *, struct mbuf *,
-	    const struct sockaddr *, struct rtentry *);
+	    const struct sockaddr *, const struct rtentry *);
 static	void fddi_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -186,7 +186,7 @@ static	void fddi_input(struct ifnet *, struct mbuf *);
  */
 static int
 fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	uint16_t etype;
 	int error = 0, hdrcmplt = 0;

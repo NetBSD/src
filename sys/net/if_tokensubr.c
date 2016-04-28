@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.75 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.76 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.75 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.76 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.75 2016/04/20 09:01:04 knakahara 
 #define RCF_SINGLEROUTE (2 << 8) | TOKEN_RCF_FRAME2 | TOKEN_RCF_BROADCAST_SINGLE
 
 static int	token_output(struct ifnet *, struct mbuf *,
-			     const struct sockaddr *, struct rtentry *);
+			     const struct sockaddr *, const struct rtentry *);
 static void	token_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -154,7 +154,7 @@ static void	token_input(struct ifnet *, struct mbuf *);
  */
 static int
 token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	uint16_t etype;
 	int error = 0;

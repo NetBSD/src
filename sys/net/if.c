@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.330 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.331 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.330 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.331 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -308,7 +308,7 @@ if_initname(struct ifnet *ifp, const char *name, int unit)
 
 int
 if_nulloutput(struct ifnet *ifp, struct mbuf *m,
-    const struct sockaddr *so, struct rtentry *rt)
+    const struct sockaddr *so, const struct rtentry *rt)
 {
 
 	return ENXIO;

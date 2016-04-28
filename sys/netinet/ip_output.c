@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.252 2016/04/26 09:30:01 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.253 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.252 2016/04/26 09:30:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.253 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -158,7 +158,8 @@ extern pfil_head_t *inet_pfil_hook;			/* XXX */
 int	ip_do_loopback_cksum = 0;
 
 static int
-ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m, struct rtentry *rt)
+ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m,
+    const struct rtentry *rt)
 {
 	int error = 0;
 #ifdef MPLS
@@ -193,7 +194,7 @@ ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m, struct rtentry *rt
  */
 int
 ip_if_output(struct ifnet * const ifp, struct mbuf * const m,
-    const struct sockaddr * const dst, struct rtentry *rt)
+    const struct sockaddr * const dst, const struct rtentry *rt)
 {
 	int error = 0;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.57 2016/04/20 09:01:04 knakahara Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.58 2016/04/28 00:16:56 ozaki-r Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.57 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.58 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.57 2016/04/20 09:01:04 knakahara Ex
 
 int
 atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	uint16_t etype = 0;			/* if using LLC/SNAP */
 	int error = 0, sz;

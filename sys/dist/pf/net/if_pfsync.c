@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.11 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.12 2016/04/28 00:16:56 ozaki-r Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.11 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.12 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -116,7 +116,7 @@ int	pfsync_alloc_scrub_memory(struct pfsync_state_peer *,
 int	pfsync_insert_net_state(struct pfsync_state *, u_int8_t);
 void	pfsync_update_net_tdb(struct pfsync_tdb *);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	    struct rtentry *);
+	    const struct rtentry *);
 int	pfsyncioctl(struct ifnet *, u_long, void*);
 void	pfsyncstart(struct ifnet *);
 
@@ -856,7 +856,7 @@ done:
 
 int
 pfsyncoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-	struct rtentry *rt)
+	const struct rtentry *rt)
 {
 	m_freem(m);
 	return (0);

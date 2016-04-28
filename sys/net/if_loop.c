@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.84 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.85 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.84 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.85 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -205,7 +205,7 @@ loop_clone_destroy(struct ifnet *ifp)
 
 int
 looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *ifq = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.102 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.103 2016/04/28 00:16:56 ozaki-r Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.102 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.103 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -332,7 +332,8 @@ static int	stripinput(int, struct tty *);
 static int	stripioctl(struct ifnet *, u_long, void *);
 static int	stripopen(dev_t, struct tty *);
 static int	stripoutput(struct ifnet *,
-		    struct mbuf *, const struct sockaddr *, struct rtentry *);
+		    struct mbuf *, const struct sockaddr *,
+		    const struct rtentry *);
 static int	stripstart(struct tty *);
 static int	striptioctl(struct tty *, u_long, void *, int, struct lwp *);
 
@@ -721,7 +722,7 @@ strip_send(struct strip_softc *sc, struct mbuf *m0)
  */
 int
 stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct strip_softc *sc = ifp->if_softc;
 	struct ip *ip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.48 2016/04/20 09:01:03 knakahara Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.49 2016/04/28 00:16:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.48 2016/04/20 09:01:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.49 2016/04/28 00:16:56 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -160,7 +160,7 @@ static	void sca_port_up(sca_port_t *);
 static	void sca_port_down(sca_port_t *);
 
 static	int sca_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
-			    struct rtentry *);
+			    const struct rtentry *);
 static	int sca_ioctl(struct ifnet *, u_long, void *);
 static	void sca_start(struct ifnet *);
 static	void sca_watchdog(struct ifnet *);
@@ -792,7 +792,7 @@ sca_output(
     struct ifnet *ifp,
     struct mbuf *m,
     const struct sockaddr *dst,
-    struct rtentry *rt0)
+    const struct rtentry *rt0)
 {
 	struct hdlc_header *hdlc;
 	struct ifqueue *ifq = NULL;
