@@ -1041,7 +1041,6 @@ dt_bootfile(char *bootfile, size_t len)
 	char *p;
 	size_t olen = len;
 
-	/* This call shouldn't fail, but use a default just in case.*/
 	if (sysctlbyname(BOOTFILE, bootfile, &len, NULL, 0) != 0)
 		strlcpy(bootfile, DEFKERNEL, olen);
 
