@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.202 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.203 2016/04/28 01:37:17 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -272,6 +272,8 @@ typedef struct ifnet {
 		    (struct ifnet *, struct mbuf *);
 	void	(*if_start)		/* initiate output routine */
 		    (struct ifnet *);
+	int	(*if_transmit)		/* output routine (direct) */
+		    (struct ifnet *, struct mbuf *);
 	int	(*if_ioctl)		/* ioctl routine */
 		    (struct ifnet *, u_long, void *);
 	int	(*if_init)		/* init routine */
@@ -939,6 +941,8 @@ void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
 
+int	if_transmit(struct ifnet *, struct mbuf *);
+
 int	ifq_enqueue(struct ifnet *, struct mbuf *);
 int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
 
@@ -956,6 +960,7 @@ int	if_nulloutput(struct ifnet *, struct mbuf *,
 	    const struct sockaddr *, const struct rtentry *);
 void	if_nullinput(struct ifnet *, struct mbuf *);
 void	if_nullstart(struct ifnet *);
+int	if_nulltransmit(struct ifnet *, struct mbuf *);
 int	if_nullioctl(struct ifnet *, u_long, void *);
 int	if_nullinit(struct ifnet *);
 void	if_nullstop(struct ifnet *, int);

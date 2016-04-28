@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.86 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.87 2016/04/28 01:37:17 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.86 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.87 2016/04/28 01:37:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -807,20 +807,16 @@ vlan_start(struct ifnet *ifp)
 		 * Send it, precisely as the parent's output routine
 		 * would have.  We are already running at splnet.
 		 */
-		IFQ_ENQUEUE(&p->if_snd, m, error);
-		if (error) {
-			/* mbuf is already freed */
-			ifp->if_oerrors++;
-			continue;
+		if ((p->if_flags & IFF_RUNNING) != 0) {
+			error = (*p->if_transmit)(p, m);
+			if (error) {
+				/* mbuf is already freed */
+				ifp->if_oerrors++;
+				continue;
+			}
 		}
 
 		ifp->if_opackets++;
-
-		p->if_obytes += m->m_pkthdr.len;
-		if (m->m_flags & M_MCAST)
-			p->if_omcasts++;
-		if ((p->if_flags & (IFF_RUNNING|IFF_OACTIVE)) == IFF_RUNNING)
-			(*p->if_start)(p);
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
