@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.53 2015/09/06 07:17:14 uebayasi Exp $
+#	$NetBSD: Makefile.amd64,v 1.54 2016/04/28 19:52:43 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -42,6 +42,11 @@ CFLAGS+=	-mno-red-zone -mno-mmx -mno-sse -mno-avx
 CFLAGS+=	-msoft-float
 # For gcc we might need this, but other compilers barf
 # CFLAGS+=	-mno-fp-ret-in-387
+
+# XXX triggers "bad dir" panics that aren't real.
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 53
+COPTS.ufs_lookup.c+=  -fno-tree-vrp
+.endif
 
 ##
 ## (3) libkern and compat
