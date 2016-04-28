@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.13 2012/10/27 17:18:00 chs Exp $ */
+/* $Id: pbms.c,v 1.14 2016/04/28 14:00:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -306,7 +306,7 @@ pbms_match(device_t parent, cfdata_t match, void *aux)
 	 * We just check if the vendor and product IDs have the magic numbers
 	 * we expect. 
 	 */
-	if (uha->uaa->proto == UIPROTO_MOUSE &&
+	if (uha->uiaa->uiaa_proto == UIPROTO_MOUSE &&
 	    (udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
 		vendor = UGETW(udd->idVendor);
 		product = UGETW(udd->idProduct);
