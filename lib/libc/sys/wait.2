@@ -1,4 +1,4 @@
-.\"	$NetBSD: wait.2,v 1.32 2016/04/06 08:18:35 wiz Exp $
+.\"	$NetBSD: wait.2,v 1.33 2016/04/28 16:07:26 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)wait.2	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 5, 2016
+.Dd April 28, 2016
 .Dt WAIT 2
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@
 .Ft pid_t
 .Fn wait4 "pid_t wpid" "int *status" "int options" "struct rusage *rusage"
 .Ft pid_t
-.Fn wait6 "idtype_t idtype" "id_t id" "int *status" "int options" "struct __wrusage *wrusage" "siginfo_t *infop"
+.Fn wait6 "idtype_t idtype" "id_t id" "int *status" "int options" "struct wrusage *wrusage" "siginfo_t *infop"
 .Sh DESCRIPTION
 The
 .Fn wait
@@ -108,47 +108,6 @@ equals the absolute value of
 The
 .Fa status
 parameter is defined below.
-.Pp
-The
-.Fa options
-parameter contains the bitwise OR of any of the following options:
-.Bl -tag -width WUNTRACED
-.It Dv WNOHANG
-This option is used to indicate that the call should not block if
-there are no processes that wish to report status.
-.It Dv WUNTRACED
-If this option is set, children of the current process that are stopped
-due to a
-.Dv SIGTTIN , SIGTTOU , SIGTSTP ,
-or
-.Dv SIGSTOP
-signal also have their status reported.
-.It Dv WALTSIG
-If this option is specified, the call will wait only for processes that
-are configured to post a signal other than
-.Dv SIGCHLD
-when they exit.
-If
-.Dv WALTSIG
-is not specified, the call will wait only for processes that
-are configured to post
-.Dv SIGCHLD .
-.It Dv __WCLONE
-This is an alias for
-.Dv WALTSIG .
-It is provided for compatibility with the Linux
-.Xr clone 2
-API.
-.It Dv WALLSIG
-If this option is specified, the call will wait for all children regardless
-of what exit signal they post.
-.It Dv __WALL
-This is an alias for
-.Dv WALLSIG .
-It is provided for compatibility with the Linux
-.Xr clone 2
-API .
-.El
 .Pp
 If
 .Fa rusage
@@ -336,20 +295,46 @@ The
 .Fa options
 argument contains the bitwise OR of any of the following options.
 .Bl -tag -width WCONTINUED
+.It Dv WALLSIG
+If this option is specified, the call will wait for all children regardless
+of what exit signal they post.
+.It Dv WALTSIG
+If this option is specified, the call will wait only for processes that
+are configured to post a signal other than
 .It Dv WCONTINUED
 Report the status of selected processes that
 have continued from a job control stop by receiving a
 .Dv SIGCONT
 signal.
+.It Dv WEXITED
+Report the status of selected processes which have terminated.
+This flag is implicitly set for the functions
+.Fn wait ,
+.Fn waitpid ,
+.Fn wait3 ,
+and
+.Fn wait4 .
+.br
+For the
+.Fn waitid
+and
+.Fn wait6
+functions, the flag has to be explicitly included in
+.Fa options
+if status reports from terminated processes are expected.
 .It Dv WNOHANG
 Do not block when
 there are no processes wishing to report status.
-.It Dv WUNTRACED
-Report the status of selected processes which are stopped due to a
-.Dv SIGTTIN , SIGTTOU , SIGTSTP ,
-or
-.Dv SIGSTOP
-signal.
+.It Dv WNOWAIT
+Keep the process whose status is returned in a waitable state.
+The process may be waited for again after this call completes.
+.Dv SIGCHLD
+when they exit.
+If
+.Dv WALTSIG
+is not specified, the call will wait only for processes that
+are configured to post
+.Dv SIGCHLD .
 .It Dv WSTOPPED
 An alias for
 .Dv WUNTRACED .
@@ -371,25 +356,24 @@ and
 functions, the flag has to be explicitly included in
 .Fa options
 if status reports from trapped processes are expected.
-.It Dv WEXITED
-Report the status of selected processes which have terminated.
-This flag is implicitly set for the functions
-.Fn wait ,
-.Fn waitpid ,
-.Fn wait3 ,
-and
-.Fn wait4 .
-.br
-For the
-.Fn waitid
-and
-.Fn wait6
-functions, the flag has to be explicitly included in
-.Fa options
-if status reports from terminated processes are expected.
-.It Dv WNOWAIT
-Keep the process whose status is returned in a waitable state.
-The process may be waited for again after this call completes.
+.It Dv WUNTRACED
+Report the status of selected processes which are stopped due to a
+.Dv SIGTTIN , SIGTTOU , SIGTSTP ,
+or
+.Dv SIGSTOP
+signal.
+.It Dv __WCLONE
+This is an alias for
+.Dv WALTSIG .
+It is provided for compatibility with the Linux
+.Xr clone 2
+API.
+.It Dv __WALL
+This is an alias for
+.Dv WALLSIG .
+It is provided for compatibility with the Linux
+.Xr clone 2
+API .
 .El
 .sp
 For the
