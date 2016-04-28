@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.15 2015/08/23 18:40:15 jakllsch Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.16 2016/04/28 00:33:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.15 2015/08/23 18:40:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.16 2016/04/28 00:33:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,13 +267,14 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		 */
 		if ((error = dkwedge_add(&dkw)) == EEXIST &&
 		    strcmp(dkw.dkw_wname, ent_guid_str) != 0) {
+			char orig[sizeof(dkw.dkw_name)];
+			strcpy(orig, dkw.dkw_name);
 			strcpy(dkw.dkw_wname, ent_guid_str);
 			error = dkwedge_add(&dkw);
 			if (!error)
 				aprint_error("%s: wedge named '%s' already "
 				    "existed, using '%s'\n", pdk->dk_name,
-				    dkw.dkw_wname, /* XXX Unicode */
-				    ent_guid_str);
+				    orig, ent_guid_str);
 		}
 		if (error == EEXIST)
 			aprint_error("%s: wedge named '%s' already exists, "
