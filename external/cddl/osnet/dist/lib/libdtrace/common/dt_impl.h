@@ -744,6 +744,10 @@ extern int _dtrace_argmax;		/* default maximum probe arguments */
 extern const char *_dtrace_libdir;	/* default library directory */
 extern const char *_dtrace_moddir;	/* default kernel module directory */
 
+#ifndef illumos
+extern const char *dt_bootfile(char *, size_t);
+#endif
+
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 extern int gmatch(const char *, const char *);
 extern int yylex(void);
