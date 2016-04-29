@@ -1,4 +1,4 @@
-.\"	$NetBSD: wait.2,v 1.34 2016/04/29 12:25:51 wiz Exp $
+.\"	$NetBSD: wait.2,v 1.35 2016/04/29 13:17:09 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -301,6 +301,13 @@ of what exit signal they post.
 .It Dv WALTSIG
 If this option is specified, the call will wait only for processes that
 are configured to post a signal other than
+.Dv SIGCHLD
+when they exit.
+If
+.Dv WALTSIG
+is not specified, the call will wait only for processes that
+are configured to post 
+.Dv SIGCHLD .
 .It Dv WCONTINUED
 Report the status of selected processes that
 have continued from a job control stop by receiving a
@@ -328,13 +335,6 @@ there are no processes wishing to report status.
 .It Dv WNOWAIT
 Keep the process whose status is returned in a waitable state.
 The process may be waited for again after this call completes.
-.Dv SIGCHLD
-when they exit.
-If
-.Dv WALTSIG
-is not specified, the call will wait only for processes that
-are configured to post
-.Dv SIGCHLD .
 .It Dv WSTOPPED
 An alias for
 .Dv WUNTRACED .
