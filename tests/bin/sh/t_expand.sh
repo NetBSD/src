@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.7 2016/03/31 16:21:10 christos Exp $
+# $NetBSD: t_expand.sh,v 1.8 2016/04/29 18:29:17 christos Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -340,7 +340,7 @@ shell_params_body() {
 	check "${TEST_SH} -c 'echo 0=\$0 1=\$1 2=\$2' a b c" '0=a 1=b 2=c' 0
 
 	echo 'echo 0="$0" 1="$1" 2="$2"' > helper.sh
-	check '${TEST_SH} helper.sh a b c' '0=helper.sh 1=a 2=b' 0
+	check "${TEST_SH} helper.sh a b c" '0=helper.sh 1=a 2=b' 0
 
 	check 'set -- a bb ccc dddd eeeee ffffff ggggggg hhhhhhhh \
 		iiiiiiiii jjjjjjjjjj kkkkkkkkkkk
