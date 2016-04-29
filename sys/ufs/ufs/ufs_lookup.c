@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.143 2016/04/14 03:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.144 2016/04/29 02:16:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.143 2016/04/14 03:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.144 2016/04/29 02:16:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -807,101 +807,84 @@ ufs_makedirentry(struct inode *ip, struct componentname *cnp,
 		newdirp->d_type = IFTODT(ip->i_mode);
 }
 
-/*
- * Write a directory entry after a call to namei, using the parameters
- * that ufs_lookup left in nameidata and in the ufs_lookup_results.
- *
- * DVP is the directory to be updated. It must be locked.
- * ULR is the ufs_lookup_results structure from the final lookup step.
- * TVP is not used. (XXX: why is it here? remove it)
- * DIRP is the new directory entry contents.
- * CNP is the componentname from the final lookup step.
- * NEWDIRBP is not used and (XXX) should be removed. The previous
- * comment here said it was used by the now-removed softupdates code.
- *
- * The link count of the target inode is *not* incremented; the
- * caller does that.
- *
- * If ulr->ulr_count is 0, ufs_lookup did not find space to insert the
- * directory entry. ulr_offset, which is the place to put the entry,
- * should be on a block boundary (and should be at the end of the
- * directory AFAIK) and a fresh block is allocated to put the new
- * directory entry in.
- *
- * If ulr->ulr_count is not zero, ufs_lookup found a slot to insert
- * the entry into. This slot ranges from ulr_offset to ulr_offset +
- * ulr_count. However, this slot may already be partially populated
- * requiring compaction. See notes below.
- *
- * Furthermore, if ulr_count is not zero and ulr_endoff is not the
- * same as i_size, the directory is truncated to size ulr_endoff.
- */
-int
-ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
+
+static int
+ufs_dirgrow(struct vnode *dvp, const struct ufs_lookup_results *ulr,
     struct vnode *tvp, struct direct *dirp,
     struct componentname *cnp, struct buf *newdirbp)
 {
-	kauth_cred_t cr;
-	int newentrysize;
-	struct inode *dp;
+	const kauth_cred_t cr = cnp->cn_cred;
+	const struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	const int dirblksiz = ump->um_dirblksiz;
+	const int fsfmt = FSFMT(dvp);
+	const u_int newentrysize = UFS_DIRSIZ(0, dirp, 0);
+	struct inode *dp = VTOI(dvp);
+	int error, ret, blkoff;
+	struct timespec ts;
+	struct buf *bp;
+
+	/*
+	 * If ulr_count is 0, then namei could find no
+	 * space in the directory. Here, ulr_offset will
+	 * be on a directory block boundary and we will write the
+	 * new entry into a fresh block.
+	 */
+	if (ulr->ulr_offset & (dirblksiz - 1))
+		panic("%s: newblk", __func__);
+	if ((error = UFS_BALLOC(dvp, (off_t)ulr->ulr_offset, dirblksiz,
+	    cr, B_CLRBUF | B_SYNC, &bp)) != 0) {
+		return error;
+	}
+
+	dp->i_size = ulr->ulr_offset + dirblksiz;
+	DIP_ASSIGN(dp, size, dp->i_size);
+	dp->i_flag |= IN_CHANGE | IN_UPDATE;
+	uvm_vnp_setsize(dvp, dp->i_size);
+	dirp->d_reclen = ufs_rw16(dirblksiz, needswap);
+	dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
+	if (fsfmt && ENDIANSWAP(needswap))
+		ufs_dirswap(dirp);
+	blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
+	memcpy((char *)bp->b_data + blkoff, dirp, newentrysize);
+#ifdef UFS_DIRHASH
+	if (dp->i_dirhash != NULL) {
+		ufsdirhash_newblk(dp, ulr->ulr_offset);
+		ufsdirhash_add(dp, dirp, ulr->ulr_offset);
+		ufsdirhash_checkblock(dp, (char *)bp->b_data + blkoff,
+		    ulr->ulr_offset);
+	}
+#endif
+	error = VOP_BWRITE(bp->b_vp, bp);
+	vfs_timestamp(&ts);
+	ret = UFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
+	if (error == 0)
+		return ret;
+	return error;
+}
+
+static int
+#if __GNUC_PREREQ__(5, 3)
+/* This gets miscompiled by gcc 5.3 */
+__attribute__((__optimize__("no-tree-vrp")))
+#endif
+ufs_dircompact(struct vnode *dvp, const struct ufs_lookup_results *ulr,
+    struct vnode *tvp, struct direct *dirp,
+    struct componentname *cnp, struct buf *newdirbp)
+{
+	const struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	const int fsfmt = FSFMT(dvp);
+	const u_int newentrysize = UFS_DIRSIZ(0, dirp, 0);
+	struct inode *dp = VTOI(dvp);
 	struct buf *bp;
 	u_int dsize;
 	struct direct *ep, *nep;
-	int error, ret, blkoff, loc, spacefree;
+	int error, loc, spacefree;
 	char *dirbuf;
-	struct timespec ts;
-	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
-	const int needswap = UFS_MPNEEDSWAP(ump);
-	int dirblksiz = ump->um_dirblksiz;
-	const int fsfmt = FSFMT(dvp);
 	uint16_t reclen;
 
 	UFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
-
-	error = 0;
-	cr = cnp->cn_cred;
-
-	dp = VTOI(dvp);
-	newentrysize = UFS_DIRSIZ(0, dirp, 0);
-
-	if (ulr->ulr_count == 0) {
-		/*
-		 * If ulr_count is 0, then namei could find no
-		 * space in the directory. Here, ulr_offset will
-		 * be on a directory block boundary and we will write the
-		 * new entry into a fresh block.
-		 */
-		if (ulr->ulr_offset & (dirblksiz - 1))
-			panic("ufs_direnter: newblk");
-		if ((error = UFS_BALLOC(dvp, (off_t)ulr->ulr_offset, dirblksiz,
-		    cr, B_CLRBUF | B_SYNC, &bp)) != 0) {
-			return (error);
-		}
-		dp->i_size = ulr->ulr_offset + dirblksiz;
-		DIP_ASSIGN(dp, size, dp->i_size);
-		dp->i_flag |= IN_CHANGE | IN_UPDATE;
-		uvm_vnp_setsize(dvp, dp->i_size);
-		dirp->d_reclen = ufs_rw16(dirblksiz, needswap);
-		dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
-		if (fsfmt && ENDIANSWAP(needswap))
-			ufs_dirswap(dirp);
-		blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
-		memcpy((char *)bp->b_data + blkoff, dirp, newentrysize);
-#ifdef UFS_DIRHASH
-		if (dp->i_dirhash != NULL) {
-			ufsdirhash_newblk(dp, ulr->ulr_offset);
-			ufsdirhash_add(dp, dirp, ulr->ulr_offset);
-			ufsdirhash_checkblock(dp, (char *)bp->b_data + blkoff,
-			    ulr->ulr_offset);
-		}
-#endif
-		error = VOP_BWRITE(bp->b_vp, bp);
-		vfs_timestamp(&ts);
-		ret = UFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
-		if (error == 0)
-			return (ret);
-		return (error);
-	}
 
 	/*
 	 * If ulr_count is non-zero, then namei found space for the new
@@ -921,8 +904,8 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	 */
 	if (ulr->ulr_offset + ulr->ulr_count > dp->i_size) {
 #ifdef DIAGNOSTIC
-		printf("ufs_direnter: reached 4.2-only block, "
-		       "not supposed to happen\n");
+		printf("%s: reached 4.2-only block, not supposed to happen\n",
+		    __func__);
 #endif
 		dp->i_size = ulr->ulr_offset + ulr->ulr_count;
 		DIP_ASSIGN(dp, size, dp->i_size);
@@ -933,9 +916,9 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	 * Get the block containing the space for the new directory entry.
 	 */
 	error = ufs_blkatoff(dvp, (off_t)ulr->ulr_offset, &dirbuf, &bp, true);
-	if (error) {
-		return (error);
-	}
+	if (error)
+		return error;
+
 	/*
 	 * Find space for the new entry. In the simple case, the entry at
 	 * offset base will have the space. If it does not, then namei
@@ -992,15 +975,16 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	    (ufs_rw32(ep->d_ino, needswap) == UFS_WINO &&
 	     memcmp(ep->d_name, dirp->d_name, dirp->d_namlen) == 0)) {
 		if (spacefree + dsize < newentrysize)
-			panic("ufs_direnter: compact1");
+			panic("%s: too big", __func__);
 		dirp->d_reclen = spacefree + dsize;
 	} else {
 		if (spacefree < newentrysize)
-			panic("ufs_direnter: compact2");
+			panic("%s: nospace", __func__);
 		dirp->d_reclen = spacefree;
 		ep->d_reclen = ufs_rw16(dsize, needswap);
 		ep = (void *)((char *)ep + dsize);
 	}
+
 	dirp->d_reclen = ufs_rw16(dirp->d_reclen, needswap);
 	dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
 	if (fsfmt && ENDIANSWAP(needswap))
@@ -1010,12 +994,14 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	    dirp->d_reclen == spacefree))
 		ufsdirhash_add(dp, dirp, ulr->ulr_offset + ((char *)ep - dirbuf));
 #endif
-	memcpy(ep, dirp, (u_int)newentrysize);
+	memcpy(ep, dirp, newentrysize);
 #ifdef UFS_DIRHASH
-	if (dp->i_dirhash != NULL)
+	if (dp->i_dirhash != NULL) {
+		const int dirblkmsk = ump->um_dirblksiz - 1;
 		ufsdirhash_checkblock(dp, dirbuf -
-		    (ulr->ulr_offset & (dirblksiz - 1)),
-		    ulr->ulr_offset & ~(dirblksiz - 1));
+		    (ulr->ulr_offset & dirblkmsk),
+		    ulr->ulr_offset & ~dirblkmsk);
+	}
 #endif
 	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -1027,6 +1013,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	 * lock on the newly entered node.
 	 */
 	if (error == 0 && ulr->ulr_endoff && ulr->ulr_endoff < dp->i_size) {
+		const kauth_cred_t cr = cnp->cn_cred;
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_dirtrunc(dp, ulr->ulr_endoff);
@@ -1034,7 +1021,47 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		(void) UFS_TRUNCATE(dvp, (off_t)ulr->ulr_endoff, IO_SYNC, cr);
 	}
 	UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
-	return (error);
+	return error;
+}
+
+/*
+ * Write a directory entry after a call to namei, using the parameters
+ * that ufs_lookup left in nameidata and in the ufs_lookup_results.
+ *
+ * DVP is the directory to be updated. It must be locked.
+ * ULR is the ufs_lookup_results structure from the final lookup step.
+ * TVP is not used. (XXX: why is it here? remove it)
+ * DIRP is the new directory entry contents.
+ * CNP is the componentname from the final lookup step.
+ * NEWDIRBP is not used and (XXX) should be removed. The previous
+ * comment here said it was used by the now-removed softupdates code.
+ *
+ * The link count of the target inode is *not* incremented; the
+ * caller does that.
+ *
+ * If ulr->ulr_count is 0, ufs_lookup did not find space to insert the
+ * directory entry. ulr_offset, which is the place to put the entry,
+ * should be on a block boundary (and should be at the end of the
+ * directory AFAIK) and a fresh block is allocated to put the new
+ * directory entry in.
+ *
+ * If ulr->ulr_count is not zero, ufs_lookup found a slot to insert
+ * the entry into. This slot ranges from ulr_offset to ulr_offset +
+ * ulr_count. However, this slot may already be partially populated
+ * requiring compaction. See notes below.
+ *
+ * Furthermore, if ulr_count is not zero and ulr_endoff is not the
+ * same as i_size, the directory is truncated to size ulr_endoff.
+ */
+int
+ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
+    struct vnode *tvp, struct direct *dirp,
+    struct componentname *cnp, struct buf *newdirbp)
+{
+	if (ulr->ulr_count == 0)
+		return ufs_dirgrow(dvp, ulr, tvp, dirp, cnp, newdirbp);
+	else
+		return ufs_dircompact(dvp, ulr, tvp, dirp, cnp, newdirbp);
 }
 
 /*
@@ -1074,7 +1101,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
  */
 int
 ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
-	      struct inode *ip, int flags, int isrmdir)
+    struct inode *ip, int flags, int isrmdir)
 {
 	struct inode *dp = VTOI(dvp);
 	struct direct *ep;
