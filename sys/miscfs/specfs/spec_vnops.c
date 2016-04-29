@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.145 2014/07/25 08:20:53 dholland Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.145.2.1 2016/04/29 19:07:21 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145 2014/07/25 08:20:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.2.1 2016/04/29 19:07:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1051,26 +1051,44 @@ spec_strategy(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
+	dev_t dev;
 	int error;
 
-	KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
+	dev = NODEV;
 
-	error = 0;
-	bp->b_dev = vp->v_rdev;
+	/*
+	 * Extract all the info we need from the vnode, taking care to
+	 * avoid a race with VOP_REVOKE().
+	 */
 
-	if (!(bp->b_flags & B_READ))
-		error = fscow_run(bp, false);
-
-	if (error) {
-		bp->b_error = error;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return (error);
+	mutex_enter(vp->v_interlock);
+	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode != NULL) {
+		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
+		dev = vp->v_rdev;
 	}
+	mutex_exit(vp->v_interlock);
 
+	if (dev == NODEV) {
+		error = ENXIO;
+		goto out;
+	}
+	bp->b_dev = dev;
+
+	if (!(bp->b_flags & B_READ)) {
+		error = fscow_run(bp, false);
+		if (error)
+			goto out;
+	}
 	bdev_strategy(bp);
 
-	return (0);
+	return 0;
+
+out:
+	bp->b_error = error;
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
+
+	return error;
 }
 
 int
