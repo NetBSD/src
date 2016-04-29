@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.13.2.1 2015/08/08 10:09:57 martin Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.13.2.2 2016/04/29 18:58:17 snj Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.13.2.1 2015/08/08 10:09:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.13.2.2 2016/04/29 18:58:17 snj Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -4032,13 +4032,8 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 		dport = htons(fin->fin_data[1]);
 		break;
 	case IPPROTO_ICMP :
-		if (flags & IPN_ICMPERR) {
-			sport = fin->fin_data[1];
-			dport = 0;
-		} else {
-			dport = fin->fin_data[1];
-			sport = 0;
-		}
+		sport = 0;
+		dport = fin->fin_data[1];
 		break;
 	default :
 		sport = 0;
@@ -4353,8 +4348,6 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 	u_int hv;
 
 	ifp = fin->fin_ifp;
-	sport = 0;
-	dport = 0;
 
 	switch (p)
 	{
@@ -4364,12 +4357,12 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 		dport = htons(fin->fin_data[1]);
 		break;
 	case IPPROTO_ICMP :
-		if (flags & IPN_ICMPERR)
-			sport = fin->fin_data[1];
-		else
-			dport = fin->fin_data[1];
+		sport = 0;
+		dport = fin->fin_data[1];
 		break;
 	default :
+		sport = 0;
+		dport = 0;
 		break;
 	}
 
