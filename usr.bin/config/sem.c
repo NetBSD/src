@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.73 2015/08/29 07:24:49 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.74 2016/04/29 18:18:22 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.73 2015/08/29 07:24:49 uebayasi Exp $");
+__RCSID("$NetBSD: sem.c,v 1.74 2016/04/29 18:18:22 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -925,6 +925,12 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	if (nv->nv_str == NULL || nv->nv_str == s_qmark)
 		/*
 		 * Wildcarded or unspecified; leave it as NODEV.
+		 */
+		return (0);
+
+	if (nv->nv_ptr != NULL && strcmp(nv->nv_ptr, "spec") == 0)
+		/*
+		 * spec string, interpreted by kernel
 		 */
 		return (0);
 

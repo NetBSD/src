@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.34 2015/09/01 13:42:48 uebayasi Exp $
+.\" $NetBSD: config.5,v 1.35 2016/04/29 18:18:22 mlelstv Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -662,6 +662,12 @@ and
 parameters can be wildcarded with
 .Dq \&?
 to let the kernel automatically discover those values.
+The
+.Ar device
+can also be specified as a quoted specification string.
+The kernel interprets this string like the console input
+when prompting for a root device. E.g. "wedge:NAME"
+specifies a named disk wedge.
 .Pp
 At least one
 .Ic config
