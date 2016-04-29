@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.144 2016/04/29 02:16:53 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.145 2016/04/29 02:38:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.144 2016/04/29 02:16:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.145 2016/04/29 02:38:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -865,7 +865,7 @@ ufs_dirgrow(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 
 static int
 #if __GNUC_PREREQ__(5, 3)
-/* This gets miscompiled by gcc 5.3 */
+/* This gets miscompiled by gcc 5.3 PR/51094 */
 __attribute__((__optimize__("no-tree-vrp")))
 #endif
 ufs_dircompact(struct vnode *dvp, const struct ufs_lookup_results *ulr,
