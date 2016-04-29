@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.205.4.3 2016/03/13 11:49:14 martin Exp $	*/
+/*	$NetBSD: fetch.c,v 1.205.4.4 2016/04/29 19:03:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.205.4.3 2016/03/13 11:49:14 martin Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.205.4.4 2016/04/29 19:03:44 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -847,8 +847,8 @@ print_connect(FETCH *fin, const struct urlinfo *ui)
 	} else
 		h = ui->host;
 
-	fetch_printf(fin, "CONNECT %s:%s HTTP/1.1\r\n", h, ui->port);
-	fetch_printf(fin, "Host: %s:%s\r\n", h, ui->port);
+	fetch_printf(fin, "CONNECT %s:%d HTTP/1.1\r\n", h, ui->portnum);
+	fetch_printf(fin, "Host: %s:%d\r\n", h, ui->portnum);
 }
 #endif
 
