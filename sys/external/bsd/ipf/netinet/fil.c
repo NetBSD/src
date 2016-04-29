@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.15.2.1 2015/04/10 20:26:46 snj Exp $	*/
+/*	$NetBSD: fil.c,v 1.15.2.2 2016/04/29 19:00:40 snj Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.15.2.1 2015/04/10 20:26:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.15.2.2 2016/04/29 19:00:40 snj Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -2916,7 +2916,9 @@ ipf_check(void *ctx, ip_t *ip, int hlen, void *ifp, int out,
 		LBUMPD(ipf_stats[out], fr_short);
 	}
 
+#if 0
 	READ_ENTER(&softc->ipf_mutex);
+#endif
 
 	if (!out) {
 		switch (fin->fin_v)
@@ -3048,8 +3050,9 @@ filterdone:
 		fr->fr_ref++;
 		MUTEX_EXIT(&fr->fr_lock);
 	}
-
+#if 0
 	RWLOCK_EXIT(&softc->ipf_mutex);
+#endif
 #endif
 
 	if ((pass & FR_RETMASK) != 0) {
@@ -3146,7 +3149,9 @@ filterdone:
 #endif
 	}
 #if !defined(FASTROUTE_RECURSION)
+#if 0
 	RWLOCK_EXIT(&softc->ipf_mutex);
+#endif
 #endif
 
 finished:
