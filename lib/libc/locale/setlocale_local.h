@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.16 2016/01/29 15:18:08 christos Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.17 2016/04/29 16:26:48 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -85,9 +85,6 @@ int _setlocale_cache(locale_t, struct _locale_cache_t *);
 __END_DECLS
 
 #ifdef _LIBC
-#if 0
-extern __dso_protected struct _locale	_lc_global_locale;
-#endif
 extern __dso_hidden const struct _locale_cache_t _C_cache;
 
 static __inline struct _locale *
