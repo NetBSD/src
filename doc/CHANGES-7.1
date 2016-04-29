@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.81 2016/04/16 21:00:49 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.82 2016/04/29 19:17:22 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -3782,4 +3782,42 @@ xsrc/external/mit/MesaLib/dist/src/mesa/main/extensions.c 1.2
 	Replace atexit() calls by destructor attributes - this shared
 	library is dlopen/dlclose'd !
 	[riastradh, ticket #1158]
+
+lib/libc/time/localtime.c			1.103 via patch
+
+	Use the correct upper bounds for the types array.  The correct
+	upper bound is typecnt not timecnt.  Now perpetual 'standard'
+	time zones will work correctly as they have a typecnt of 1
+	but a timecnt of 0.
+	[christos, ticket #1146]
+
+external/bsd/ipf/dist/man/ipf.5			1.5
+
+	Correct the example for the port range syntax.
+	[khorben, ticket #1147]
+
+sys/external/bsd/ipf/netinet/ip_nat.c		1.16
+
+	Fix matching of ICMP queries when NAT'd through IPF.  This
+	notably fixes MTU updates for hosts issueing ICMP queries
+	through a NAT performed by NetBSD with IPF.
+	[khorben, ticket #1148]
+
+sys/external/bsd/ipf/netinet/fil.c		1.17
+
+	Comment out the mutex calls that protect against concurrent
+	configuration changes and processing. This needs to be done
+	differently since you can't sleep during interrupt processing.
+	[christos, ticket #1152]
+
+usr.bin/ftp/fetch.c				1.223
+
+	Use the port number for CONNECT.  PR bin/51043.
+	[nonaka, ticket #1153]
+
+sys/miscfs/specfs/spec_vnops.c			1.161, 1.162
+
+	Avoid a race with spec_revoke when extracting v_rdev.  Fixes
+        PR kern/50467.
+	[hannken, ticket #1154]
 
