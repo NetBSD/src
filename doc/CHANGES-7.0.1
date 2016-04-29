@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.51 2016/04/16 21:01:15 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.52 2016/04/29 19:24:46 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -2309,4 +2309,15 @@ libexec/httpd/tilde-luzah-bozo.c                up to 1.14
 	  would allow remote code execution, from shm@netbsd.org
 	o -C option supports now CGI scripts only
 	[mrg, ticket #1141]
+
+external/bsd/ipf/dist/man/ipf.5			1.5
+
+	Correct the example for the port range syntax.
+	[khorben, ticket #1147]
+
+sys/miscfs/specfs/spec_vnops.c			1.161, 1.162
+
+	Avoid a race with spec_revoke when extracting v_rdev.  Fixes
+	PR kern/50467. 
+	[hannken, ticket #1154]
 
