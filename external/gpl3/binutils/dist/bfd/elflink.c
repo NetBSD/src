@@ -1252,7 +1252,6 @@ _bfd_elf_merge_symbol (bfd *abfd,
      definition from a dynamic object.  */
   if (newdyn
       && ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
-      && ELF_ST_VISIBILITY (h->other) != STV_PROTECTED
       && !bfd_is_und_section (sec))
     {
       *skip = TRUE;
@@ -1270,7 +1269,6 @@ _bfd_elf_merge_symbol (bfd *abfd,
     }
   else if (!newdyn
 	   && ELF_ST_VISIBILITY (sym->st_other) != STV_DEFAULT
-	   && ELF_ST_VISIBILITY (sym->st_other) != STV_PROTECTED
 	   && h->def_dynamic)
     {
       /* If the new symbol with non-default visibility comes from a
@@ -9337,11 +9335,10 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
       && h->def_dynamic)
     sym.st_size = 0;
 
-  /* If a non-weak symbol with non-public visibility is not defined
+  /* If a non-weak symbol with non-default visibility is not defined
      locally, it is a fatal error.  */
   if (!bfd_link_relocatable (flinfo->info)
       && ELF_ST_VISIBILITY (sym.st_other) != STV_DEFAULT
-      && ELF_ST_VISIBILITY (sym.st_other) != STV_PROTECTED
       && ELF_ST_BIND (sym.st_info) != STB_WEAK
       && h->root.type == bfd_link_hash_undefined
       && !h->def_regular)
