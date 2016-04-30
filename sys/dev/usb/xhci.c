@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.67 2016/04/16 13:54:38 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.68 2016/04/30 10:34:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.67 2016/04/16 13:54:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.68 2016/04/30 10:34:14 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3544,9 +3544,9 @@ xhci_timeout(void *addr)
 		return;
 	}
 
-	usb_init_task(&xx->xx_abort_task, xhci_timeout_task, addr,
+	usb_init_task(&xfer->ux_aborttask, xhci_timeout_task, addr,
 	    USB_TASKQ_MPSAFE);
-	usb_add_task(xx->xx_xfer.ux_pipe->up_dev, &xx->xx_abort_task,
+	usb_add_task(xx->xx_xfer.ux_pipe->up_dev, &xfer->ux_aborttask,
 	    USB_TASKQ_HC);
 }
 

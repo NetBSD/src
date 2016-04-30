@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.100 2016/04/16 16:02:42 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.101 2016/04/30 10:34:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.100 2016/04/16 16:02:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.101 2016/04/30 10:34:14 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3407,14 +3407,13 @@ Static void
 ehci_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct usbd_device *dev = pipe->up_dev;
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	DPRINTF("exfer %p", exfer, 0, 0, 0);
+	DPRINTF("xfer %p", xfer, 0, 0, 0);
 #ifdef EHCI_DEBUG
 	if (ehcidebug >= 2)
 		usbd_dump_pipe(pipe);
@@ -3428,9 +3427,9 @@ ehci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&exfer->ex_aborttask, ehci_timeout_task, xfer,
+	usb_init_task(&xfer->ux_aborttask, ehci_timeout_task, xfer,
 	    USB_TASKQ_MPSAFE);
-	usb_add_task(dev, &exfer->ex_aborttask, USB_TASKQ_HC);
+	usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
 }
 
 Static void

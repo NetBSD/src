@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.72 2016/04/16 16:02:42 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.73 2016/04/30 10:34:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.72 2016/04/16 16:02:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.73 2016/04/30 10:34:14 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1917,11 +1917,10 @@ void
 ohci_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	struct ohci_xfer *oxfer = OHCI_XFER2OXFER(xfer);
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
-	DPRINTF("oxfer=%p", oxfer, 0, 0, 0);
+	DPRINTF("xfer=%p", xfer, 0, 0, 0);
 
 	if (sc->sc_dying) {
 		mutex_enter(&sc->sc_lock);
@@ -1931,9 +1930,9 @@ ohci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr,
+	usb_init_task(&xfer->ux_aborttask, ohci_timeout_task, addr,
 	    USB_TASKQ_MPSAFE);
-	usb_add_task(xfer->ux_pipe->up_dev, &oxfer->abort_task,
+	usb_add_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
 	    USB_TASKQ_HC);
 }
 

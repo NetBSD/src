@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.10 2016/03/05 13:01:47 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.11 2016/04/30 10:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@ struct dwc2_qtd;
 
 struct dwc2_xfer {
 	struct usbd_xfer xfer;			/* Needs to be first */
-	struct usb_task abort_task;
 
 	struct dwc2_hcd_urb *urb;
 
