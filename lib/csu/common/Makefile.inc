@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2016/04/04 18:29:07 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2016/04/30 13:12:13 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,8 @@ CFLAGS.crtbegin.c+= -fPIE
 # XXXGCC5 - GCC 5 miscompiles crtbeginS.c on many platforms.  on SPARC it
 # XXXGCC5   emits "clr %g1; call %g1", which is effectively jumping to zero.
 . if defined(HAVE_GCC) && ${HAVE_GCC} == 53 && \
-     ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "amd64"
+     ${CSU_MACHINE_ARCH} != "i386" && ${CSU_MACHINE_ARCH} != "amd64" && \
+     ${CSU_MACHINE_ARCH} != "sparc64"
 CFLAGS.crt0-common.c+=	-O1
 CFLAGS.crtbeginS.c+=	-O1
 . endif
