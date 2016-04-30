@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.40 2016/04/30 15:02:53 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.41 2016/04/30 15:03:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,16 +27,14 @@
  */
 
 /*
- * USB rev 3.1 specification
- *  http://www.usb.org/developers/docs/usb_31_040315.zip
- * USB rev 2.0 specification
- *  http://www.usb.org/developers/docs/usb20_docs/usb_20_031815.zip
+ * USB rev 2.0 and rev 3.1 specification
+ *  http://www.usb.org/developers/docs/
  * xHCI rev 1.1 specification
- *  http://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf
+ *  http://www.intel.com/technology/usb/spec.htm
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.40 2016/04/30 15:02:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.41 2016/04/30 15:03:55 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1721,8 +1719,8 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	if (sc->sc_dying)
 		return;
 
+	/* xs is uninitialized before xhci_init_slot */
 	if (xs == NULL || xs->xs_idx == 0)
-		/* xs is uninitialized before xhci_init_slot */
 		return;
 
 	DPRINTFN(4, "pipe %p slot %u dci %u", pipe, xs->xs_idx, dci, 0);
@@ -2200,14 +2198,18 @@ xhci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 extern uint32_t usb_cookie_no;
 
 /*
- * Called if uhub_explore finds a new device (via usbd_new_device).
- * Allocate and construct dev structure of default endpoint (ep0).
+ * xHCI 4.3
+ * Called when uhub_explore finds a new device (via usbd_new_device).
+ * Port initialization and speed detection (4.3.1) are already done in uhub.c.
+ * This function does:
+ *   Allocate and construct dev structure of default endpoint (ep0).
+ *   Allocate and open pipe of ep0.
+ *   Enable slot and initialize slot context.
+ *   Set Address.
+ *   Read initial device descriptor.
  *   Determine initial MaxPacketSize (mps) by speed.
- *   Determine route string and roothub port for slot of dev.
- * Allocate pipe of ep0.
- * Enable and initialize slot and Set Address.
- * Read device descriptor.
- * Register this device.
+ *   Read full device descriptor.
+ *   Register this device.
  */
 static usbd_status
 xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
@@ -2402,7 +2404,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 #if 0
 		/* Re-establish the default pipe with the new MPS. */
-		/* In xhci this is done by xhci_update_ep0_mps. */
+		/* In xhci.c xhci_update_ep0_mps() does it instead. */
 		usbd_kill_pipe(dev->ud_pipe0);
 		err = usbd_setup_pipe(dev, 0, &dev->ud_ep0,
 		    USBD_DEFAULT_INTERVAL, &dev->ud_pipe0);
@@ -2709,7 +2711,9 @@ xhci_enable_slot(struct xhci_softc * const sc, uint8_t * const slotp)
 }
 
 /*
- * Deallocate DMA buffer and ring buffer, and disable_slot.
+ * xHCI 4.6.4
+ * Deallocate ring and device/input context DMA buffers, and disable_slot.
+ * All endpoints in the slot should be stopped.
  * Should be called with sc_lock held.
  */
 static usbd_status
@@ -2750,10 +2754,11 @@ xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 }
 
 /*
- * Change slot state.
- * bsr=0: ENABLED -> ADDRESSED
- * bsr=1: ENABLED -> DEFAULT
+ * Set address of device and transition slot state from ENABLED to ADDRESSED
+ * if Block Setaddress Request (BSR) is false.
+ * If BSR==true, transition slot state from ENABLED to DEFAULT.
  * see xHCI 1.1  4.5.3, 3.3.4
+ * Should be called without sc_lock held.
  */
 static usbd_status
 xhci_address_device(struct xhci_softc * const sc,
