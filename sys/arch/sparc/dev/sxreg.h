@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.11 2013/06/19 00:41:16 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.12 2016/04/30 05:22:19 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 /* write registers via pseudo instructions */
 #define SX_QUEUED_R0		0x00000300
 #define SX_QUEUED_R1		0x00000304	/* and so on until R127 */
-#define SX_QUEUED(r)		(0x300 + (r << 2))
+#define SX_QUEUED(r)		(0x300 + ((r) << 2))
 
 /* special purpose registers */
 #define R_ZERO	0
