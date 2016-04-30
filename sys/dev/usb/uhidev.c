@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.66 2016/04/27 19:35:17 jakllsch Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.67 2016/04/30 18:40:26 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.66 2016/04/27 19:35:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.67 2016/04/30 18:40:26 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -155,8 +155,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	(void)usbd_set_idle(iface, 0, 0);
 #if 0
 
-	qflags = usbd_get_quirks(sc->sc_udev)->uq_flags;
-	if ((qflags & UQ_NO_SET_PROTO) == 0 &&
+	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_SET_PROTO) == 0 &&
 	    id->bInterfaceSubClass != UISUBCLASS_BOOT)
 		(void)usbd_set_protocol(iface, 1);
 #endif
