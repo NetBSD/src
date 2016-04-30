@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.34 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.35 2016/04/30 14:46:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.34 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.35 2016/04/30 14:46:05 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3152,7 +3152,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
-	struct xhci_xfer * const xx = (void *)xfer;
+	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	usb_device_request_t * const req = &xfer->ux_request;
 	const int isread = usbd_xfer_isread(xfer);
 	const uint32_t len = UGETW(req->wLength);
@@ -3310,7 +3310,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
-	struct xhci_xfer * const xx = (void *)xfer;
+	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	const uint32_t len = xfer->ux_length;
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
 	uint64_t parameter;
@@ -3431,7 +3431,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
-	struct xhci_xfer * const xx = (void *)xfer;
+	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	const uint32_t len = xfer->ux_length;
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
 	uint64_t parameter;
