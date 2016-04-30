@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.37 2016/04/30 14:53:06 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.38 2016/04/30 14:56:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.37 2016/04/30 14:53:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.38 2016/04/30 14:56:20 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2603,7 +2603,7 @@ xhci_do_command(struct xhci_softc * const sc, struct xhci_trb * const trb,
 {
 
 	mutex_enter(&sc->sc_lock);
-	int ret = xhci_do_command_locked(sc, trb, timeout);
+	usbd_status ret = xhci_do_command_locked(sc, trb, timeout);
 	mutex_exit(&sc->sc_lock);
 
 	return ret;
