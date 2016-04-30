@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.35 2016/04/30 14:46:05 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.36 2016/04/30 14:51:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.35 2016/04/30 14:46:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.36 2016/04/30 14:51:04 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -840,7 +840,8 @@ xhci_init(struct xhci_softc *sc)
 		if (err)
 			return err;
 
-		sc->sc_spbuf_dma = kmem_zalloc(sizeof(*sc->sc_spbuf_dma) * sc->sc_maxspbuf, KM_SLEEP);
+		sc->sc_spbuf_dma = kmem_zalloc(sizeof(*sc->sc_spbuf_dma) *
+		    sc->sc_maxspbuf, KM_SLEEP);
 		uint64_t *spbufarray = KERNADDR(&sc->sc_spbufarray_dma, 0);
 		for (i = 0; i < sc->sc_maxspbuf; i++) {
 			usb_dma_t * const dma = &sc->sc_spbuf_dma[i];
