@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.67 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.68 2016/04/30 14:31:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.67 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.68 2016/04/30 14:31:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -336,7 +336,7 @@ usb_allocmem_flags(struct usbd_bus *bus, size_t size, size_t align, usb_dma_t *p
 	p->udma_block = f->ufd_block;
 	p->udma_offs = f->ufd_offs;
 #ifdef USB_FRAG_DMA_WORKAROUND
-	p->offs += USB_MEM_SMALL;
+	p->udma_offs += USB_MEM_SMALL;
 #endif
 	LIST_REMOVE(f, ufd_next);
 	mutex_exit(&usb_blk_lock);
@@ -373,7 +373,7 @@ usb_freemem(struct usbd_bus *bus, usb_dma_t *p)
 	f->ufd_block = p->udma_block;
 	f->ufd_offs = p->udma_offs;
 #ifdef USB_FRAG_DMA_WORKAROUND
-	f->offs -= USB_MEM_SMALL;
+	f->ufd_offs -= USB_MEM_SMALL;
 #endif
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, ufd_next);
 	mutex_exit(&usb_blk_lock);
