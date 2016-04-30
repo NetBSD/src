@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.25 2016/03/19 11:30:30 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.26 2016/04/30 10:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.25 2016/03/19 11:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.26 2016/04/30 10:34:14 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -365,9 +365,9 @@ dwc2_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&dxfer->abort_task, dwc2_timeout_task, addr,
+	usb_init_task(&xfer->ux_aborttask, dwc2_timeout_task, addr,
 	    USB_TASKQ_MPSAFE);
-	usb_add_task(dxfer->xfer.ux_pipe->up_dev, &dxfer->abort_task,
+	usb_add_task(dxfer->xfer.ux_pipe->up_dev, &xfer->ux_aborttask,
 	    USB_TASKQ_HC);
 }
 

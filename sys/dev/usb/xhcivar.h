@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.8 2016/04/10 15:37:33 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.9 2016/04/30 10:34:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -35,7 +35,6 @@
 
 struct xhci_xfer {
 	struct usbd_xfer xx_xfer;
-	struct usb_task xx_abort_task;
 	struct xhci_trb xx_trb[XHCI_XFER_NTRB];
 };
 

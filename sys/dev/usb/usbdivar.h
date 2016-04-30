@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.26 2016/03/29 08:42:41 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.27 2016/04/30 10:34:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -286,6 +286,7 @@ struct usbd_xfer {
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 	kcondvar_t		ux_hccv;	/* private use by the HC driver */
 
+	struct usb_task		ux_aborttask;
 	struct callout		ux_callout;
 };
 
