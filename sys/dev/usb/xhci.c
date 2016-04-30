@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.38 2016/04/30 14:56:20 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.39 2016/04/30 15:00:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.38 2016/04/30 14:56:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.39 2016/04/30 15:00:24 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -289,7 +289,6 @@ xhci_op_write_4(const struct xhci_softc * const sc, bus_size_t offset,
 	bus_space_write_4(sc->sc_iot, sc->sc_obh, offset, value);
 }
 
-#if 0 /* unused */
 static inline uint64_t
 xhci_op_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
@@ -309,7 +308,6 @@ xhci_op_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 
 	return value;
 }
-#endif /* unused */
 
 static inline void
 xhci_op_write_8(const struct xhci_softc * const sc, bus_size_t offset,
@@ -2536,6 +2534,46 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 }
 
 /*
+ * Stop execution commands, purge all commands on command ring, and
+ * rewind enqueue pointer.
+ */
+static void
+xhci_abort_command(struct xhci_softc *sc)
+{
+	struct xhci_ring * const cr = &sc->sc_cr;
+	uint64_t crcr;
+	int i;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	DPRINTFN(14, "command %#"PRIx64" timeout, aborting",
+	    sc->sc_command_addr, 0, 0, 0);
+
+	mutex_enter(&cr->xr_lock);
+
+	/* 4.6.1.2 Aborting a Command */
+	crcr = xhci_op_read_8(sc, XHCI_CRCR);
+	xhci_op_write_8(sc, XHCI_CRCR, crcr | XHCI_CRCR_LO_CA);
+
+	for (i = 0; i < 500; i++) {
+		crcr = xhci_op_read_8(sc, XHCI_CRCR);
+		if ((crcr & XHCI_CRCR_LO_CRR) == 0)
+			break;
+		usb_delay_ms(&sc->sc_bus, 1);
+	}
+	if ((crcr & XHCI_CRCR_LO_CRR) != 0) {
+		DPRINTFN(1, "Command Abort timeout", 0, 0, 0, 0);
+		/* reset HC here? */
+	}
+
+	/* reset command ring dequeue pointer */
+	cr->xr_ep = 0;
+	cr->xr_cs = 1;
+	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(cr, 0) | cr->xr_cs);
+
+	mutex_exit(&cr->xr_lock);
+}
+
+/*
  * Put a command on command ring, ring bell, set timer, and cv_timedwait.
  * Command completion is notified by cv_signal from xhci_handle_event
  * (called from interrupt from xHCI), or timed-out.
@@ -2568,6 +2606,7 @@ xhci_do_command_locked(struct xhci_softc * const sc, struct xhci_trb * const trb
 
 	if (cv_timedwait(&sc->sc_command_cv, &sc->sc_lock,
 	    MAX(1, mstohz(timeout))) == EWOULDBLOCK) {
+		xhci_abort_command(sc);
 		err = USBD_TIMEOUT;
 		goto timedout;
 	}
