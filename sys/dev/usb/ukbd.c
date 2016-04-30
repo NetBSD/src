@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.132 2016/04/27 19:35:17 jakllsch Exp $        */
+/*      $NetBSD: ukbd.c,v 1.133 2016/04/30 14:33:16 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.132 2016/04/27 19:35:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.133 2016/04/30 14:33:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -432,8 +432,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 		sc->sc_flags |= FLAG_APPLE_FIX_ISO;
 
 #ifdef GDIUM_KEYBOARD_HACK
-	if (uha->uaa->uaa_vendor == USB_VENDOR_CYPRESS &&
-	    uha->uaa->uaa_product == USB_PRODUCT_CYPRESS_LPRDK)
+	if (uha->uiaa->uiaa_vendor == USB_VENDOR_CYPRESS &&
+	    uha->uiaa->uiaa_product == USB_PRODUCT_CYPRESS_LPRDK)
 		sc->sc_flags = FLAG_GDIUM_FN;
 #endif
 
