@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.36 2016/04/30 14:51:04 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.37 2016/04/30 14:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.36 2016/04/30 14:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.37 2016/04/30 14:53:06 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -788,8 +788,10 @@ xhci_init(struct xhci_softc *sc)
 			break;
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
-	if (i >= 100)
+	if (i >= 100) {
+		aprint_error_dev(sc->sc_dev, "controller not ready timeout\n");
 		return EIO;
+	}
 
 	usbcmd = 0;
 	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
@@ -803,8 +805,10 @@ xhci_init(struct xhci_softc *sc)
 			break;
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
-	if (i >= 100)
+	if (i >= 100) {
+		aprint_error_dev(sc->sc_dev, "host controller reset timeout\n");
 		return EIO;
+	}
 
 	for (i = 0; i < 100; i++) {
 		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
@@ -812,8 +816,11 @@ xhci_init(struct xhci_softc *sc)
 			break;
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
-	if (i >= 100)
+	if (i >= 100) {
+		aprint_error_dev(sc->sc_dev,
+		    "controller not ready timeout after reset\n");
 		return EIO;
+	}
 
 	if (sc->sc_vendor_init)
 		sc->sc_vendor_init(sc);
@@ -821,8 +828,10 @@ xhci_init(struct xhci_softc *sc)
 	pagesize = xhci_op_read_4(sc, XHCI_PAGESIZE);
 	aprint_debug_dev(sc->sc_dev, "PAGESIZE 0x%08x\n", pagesize);
 	pagesize = ffs(pagesize);
-	if (pagesize == 0)
+	if (pagesize == 0) {
+		aprint_error_dev(sc->sc_dev, "pagesize is 0\n");
 		return EIO;
+	}
 	sc->sc_pgsz = 1 << (12 + (pagesize - 1));
 	aprint_debug_dev(sc->sc_dev, "sc_pgsz 0x%08x\n", (uint32_t)sc->sc_pgsz);
 	aprint_debug_dev(sc->sc_dev, "sc_maxslots 0x%08x\n",
@@ -830,6 +839,7 @@ xhci_init(struct xhci_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "sc_maxports %d\n", sc->sc_maxports);
 
 	usbd_status err;
+	int rv = 0;
 
 	sc->sc_maxspbuf = XHCI_HCS2_MAXSPBUF(hcs2);
 	aprint_debug_dev(sc->sc_dev, "sc_maxspbuf %d\n", sc->sc_maxspbuf);
@@ -837,8 +847,11 @@ xhci_init(struct xhci_softc *sc)
 		err = usb_allocmem(&sc->sc_bus,
 		    sizeof(uint64_t) * sc->sc_maxspbuf, sizeof(uint64_t),
 		    &sc->sc_spbufarray_dma);
-		if (err)
-			return err;
+		if (err) {
+			aprint_error_dev(sc->sc_dev,
+			    "spbufarray init fail, err %d\n", err);
+			return ENOMEM;
+		}
 
 		sc->sc_spbuf_dma = kmem_zalloc(sizeof(*sc->sc_spbuf_dma) *
 		    sc->sc_maxspbuf, KM_SLEEP);
@@ -848,8 +861,12 @@ xhci_init(struct xhci_softc *sc)
 			/* allocate contexts */
 			err = usb_allocmem(&sc->sc_bus, sc->sc_pgsz,
 			    sc->sc_pgsz, dma);
-			if (err)
-				return err;
+			if (err) {
+				aprint_error_dev(sc->sc_dev,
+				    "spbufarray_dma init fail, err %d\n", err);
+				rv = ENOMEM;
+				goto bad1;
+			}
 			spbufarray[i] = htole64(DMAADDR(dma, 0));
 			usb_syncmem(dma, 0, sc->sc_pgsz,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -867,15 +884,19 @@ xhci_init(struct xhci_softc *sc)
 	err = xhci_ring_init(sc, &sc->sc_cr, XHCI_COMMAND_RING_TRBS,
 	    XHCI_COMMAND_RING_SEGMENTS_ALIGN);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "command ring init fail\n");
-		return err;
+		aprint_error_dev(sc->sc_dev, "command ring init fail, err %d\n",
+		    err);
+		rv = ENOMEM;
+		goto bad1;
 	}
 
 	err = xhci_ring_init(sc, &sc->sc_er, XHCI_EVENT_RING_TRBS,
 	    XHCI_EVENT_RING_SEGMENTS_ALIGN);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "event ring init fail\n");
-		return err;
+		aprint_error_dev(sc->sc_dev, "event ring init fail, err %d\n",
+		    err);
+		rv = ENOMEM;
+		goto bad2;
 	}
 
 	usb_dma_t *dma;
@@ -885,23 +906,37 @@ xhci_init(struct xhci_softc *sc)
 	dma = &sc->sc_eventst_dma;
 	size = roundup2(XHCI_EVENT_RING_SEGMENTS * XHCI_ERSTE_SIZE,
 	    XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN);
-	KASSERT(size <= (512 * 1024));
+	KASSERTMSG(size <= (512 * 1024), "eventst size %zu too large", size);
 	align = XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN;
 	err = usb_allocmem(&sc->sc_bus, size, align, dma);
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "eventst init fail, err %d\n",
+		    err);
+		rv = ENOMEM;
+		goto bad3;
+	}
 
 	memset(KERNADDR(dma, 0), 0, size);
 	usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
-	aprint_debug_dev(sc->sc_dev, "eventst: %s %016jx %p %zx\n",
-	    usbd_errstr(err),
+	aprint_debug_dev(sc->sc_dev, "eventst: %016jx %p %zx\n",
 	    (uintmax_t)DMAADDR(&sc->sc_eventst_dma, 0),
 	    KERNADDR(&sc->sc_eventst_dma, 0),
 	    sc->sc_eventst_dma.udma_block->size);
 
 	dma = &sc->sc_dcbaa_dma;
 	size = (1 + sc->sc_maxslots) * sizeof(uint64_t);
-	KASSERT(size <= 2048);
+	KASSERTMSG(size <= 2048, "dcbaa size %zu too large", size);
 	align = XHCI_DEVICE_CONTEXT_BASE_ADDRESS_ARRAY_ALIGN;
 	err = usb_allocmem(&sc->sc_bus, size, align, dma);
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "dcbaa init fail, err %d\n", err);
+		rv = ENOMEM;
+		goto bad4;
+	}
+	aprint_debug_dev(sc->sc_dev, "dcbaa: %016jx %p %zx\n",
+	    (uintmax_t)DMAADDR(&sc->sc_dcbaa_dma, 0),
+	    KERNADDR(&sc->sc_dcbaa_dma, 0),
+	    sc->sc_dcbaa_dma.udma_block->size);
 
 	memset(KERNADDR(dma, 0), 0, size);
 	if (sc->sc_maxspbuf != 0) {
@@ -912,22 +947,28 @@ xhci_init(struct xhci_softc *sc)
 		    htole64(DMAADDR(&sc->sc_spbufarray_dma, 0));
 	}
 	usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
-	aprint_debug_dev(sc->sc_dev, "dcbaa: %s %016jx %p %zx\n",
-	    usbd_errstr(err),
-	    (uintmax_t)DMAADDR(&sc->sc_dcbaa_dma, 0),
-	    KERNADDR(&sc->sc_dcbaa_dma, 0),
-	    sc->sc_dcbaa_dma.udma_block->size);
 
 	sc->sc_slots = kmem_zalloc(sizeof(*sc->sc_slots) * sc->sc_maxslots,
 	    KM_SLEEP);
+	if (sc->sc_slots == NULL) {
+		aprint_error_dev(sc->sc_dev, "slots init fail, err %d\n", err);
+		rv = ENOMEM;
+		goto bad;
+	}
+
+	sc->sc_xferpool = pool_cache_init(sizeof(struct xhci_xfer), 0, 0, 0,
+	    "xhcixfer", NULL, IPL_USB, NULL, NULL, NULL);
+	if (sc->sc_xferpool == NULL) {
+		aprint_error_dev(sc->sc_dev, "pool_cache init fail, err %d\n",
+		    err);
+		rv = ENOMEM;
+		goto bad;
+	}
 
 	cv_init(&sc->sc_command_cv, "xhcicmd");
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_softwake_cv, "xhciab");
-
-	sc->sc_xferpool = pool_cache_init(sizeof(struct xhci_xfer), 0, 0, 0,
-	    "xhcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	/* Set up the bus struct. */
 	sc->sc_bus.ub_methods = &xhci_bus_methods;
@@ -967,7 +1008,34 @@ xhci_init(struct xhci_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "USBCMD %08"PRIx32"\n",
 	    xhci_op_read_4(sc, XHCI_USBCMD));
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
+
+ bad:
+	if (sc->sc_xferpool) {
+		pool_cache_destroy(sc->sc_xferpool);
+		sc->sc_xferpool = NULL;
+	}
+
+	if (sc->sc_slots) {
+		kmem_free(sc->sc_slots, sizeof(*sc->sc_slots) *
+		    sc->sc_maxslots);
+		sc->sc_slots = NULL;
+	}
+
+	usb_freemem(&sc->sc_bus, &sc->sc_dcbaa_dma);
+ bad4:
+	usb_freemem(&sc->sc_bus, &sc->sc_eventst_dma);
+ bad3:
+	xhci_ring_free(sc, &sc->sc_er);
+ bad2:
+	xhci_ring_free(sc, &sc->sc_cr);
+	i = sc->sc_maxspbuf;
+ bad1:
+	for (int j = 0; j < i; j++)
+		usb_freemem(&sc->sc_bus, &sc->sc_spbuf_dma[j]);
+	usb_freemem(&sc->sc_bus, &sc->sc_spbufarray_dma);
+
+	return rv;
 }
 
 int
