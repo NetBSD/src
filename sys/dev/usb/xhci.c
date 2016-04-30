@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.39 2016/04/30 15:00:24 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.40 2016/04/30 15:02:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.39 2016/04/30 15:00:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.40 2016/04/30 15:02:53 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -495,6 +495,22 @@ xhci_trb_put(struct xhci_trb * const trb, uint64_t parameter, uint32_t status,
 	trb->trb_3 = htole32(control);
 }
 
+static int
+xhci_trb_get_idx(struct xhci_ring *xr, uint64_t trb_0, int *idx)
+{
+	/* base address of TRBs */
+	bus_addr_t trbp = xhci_ring_trbp(xr, 0);
+
+	/* trb_0 range sanity check */
+	if (trb_0 == 0 || trb_0 < trbp ||
+	    (trb_0 - trbp) % sizeof(struct xhci_trb) != 0 ||
+	    (trb_0 - trbp) / sizeof(struct xhci_trb) >= xr->xr_ntrb) {
+		return 1;
+	}
+	*idx = (trb_0 - trbp) / sizeof(struct xhci_trb);
+	return 0;
+}
+
 /* --- */
 
 void
@@ -582,6 +598,59 @@ xhci_shutdown(device_t self, int flags)
 	return false;
 }
 
+static int
+xhci_hc_reset(struct xhci_softc * const sc)
+{
+	uint32_t usbcmd, usbsts;
+	int i;
+
+	/* Check controller not ready */
+	for (i = 0; i < 100; i++) {
+		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
+		if ((usbsts & XHCI_STS_CNR) == 0)
+			break;
+		usb_delay_ms(&sc->sc_bus, 1);
+	}
+	if (i >= 100) {
+		aprint_error_dev(sc->sc_dev, "controller not ready timeout\n");
+		return EIO;
+	}
+
+	/* Halt controller */
+	usbcmd = 0;
+	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
+	usb_delay_ms(&sc->sc_bus, 1);
+
+	/* Reset controller */
+	usbcmd = XHCI_CMD_HCRST;
+	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
+	for (i = 0; i < 100; i++) {
+		usbcmd = xhci_op_read_4(sc, XHCI_USBCMD);
+		if ((usbcmd & XHCI_CMD_HCRST) == 0)
+			break;
+		usb_delay_ms(&sc->sc_bus, 1);
+	}
+	if (i >= 100) {
+		aprint_error_dev(sc->sc_dev, "host controller reset timeout\n");
+		return EIO;
+	}
+
+	/* Check controller not ready */
+	for (i = 0; i < 100; i++) {
+		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
+		if ((usbsts & XHCI_STS_CNR) == 0)
+			break;
+		usb_delay_ms(&sc->sc_bus, 1);
+	}
+	if (i >= 100) {
+		aprint_error_dev(sc->sc_dev,
+		    "controller not ready timeout after reset\n");
+		return EIO;
+	}
+
+	return 0;
+}
+
 
 static void
 hexdump(const char *msg, const void *base, size_t len)
@@ -608,6 +677,75 @@ hexdump(const char *msg, const void *base, size_t len)
 			printf("\n");
 	}
 #endif
+}
+
+/* Process extended capabilities */
+static void
+xhci_ecp(struct xhci_softc *sc, uint32_t hcc)
+{
+	uint32_t ecp, ecr;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	ecp = XHCI_HCC_XECP(hcc) * 4;
+	while (ecp != 0) {
+		ecr = xhci_read_4(sc, ecp);
+		aprint_debug_dev(sc->sc_dev, "ECR %x: %08x\n", ecp, ecr);
+		switch (XHCI_XECP_ID(ecr)) {
+		case XHCI_ID_PROTOCOLS: {
+			uint32_t w4, w8, wc;
+			uint16_t w2;
+			w2 = (ecr >> 16) & 0xffff;
+			w4 = xhci_read_4(sc, ecp + 4);
+			w8 = xhci_read_4(sc, ecp + 8);
+			wc = xhci_read_4(sc, ecp + 0xc);
+			aprint_debug_dev(sc->sc_dev,
+			    " SP: %08x %08x %08x %08x\n", ecr, w4, w8, wc);
+			/* unused */
+			if (w4 == 0x20425355 && (w2 & 0xff00) == 0x0300) {
+				sc->sc_ss_port_start = (w8 >> 0) & 0xff;;
+				sc->sc_ss_port_count = (w8 >> 8) & 0xff;;
+			}
+			if (w4 == 0x20425355 && (w2 & 0xff00) == 0x0200) {
+				sc->sc_hs_port_start = (w8 >> 0) & 0xff;
+				sc->sc_hs_port_count = (w8 >> 8) & 0xff;
+			}
+			break;
+		}
+		case XHCI_ID_USB_LEGACY: {
+			uint8_t bios_sem;
+
+			/* Take host controller ownership from BIOS */
+			bios_sem = xhci_read_1(sc, ecp + XHCI_XECP_BIOS_SEM);
+			if (bios_sem) {
+				/* sets xHCI to be owned by OS */
+				xhci_write_1(sc, ecp + XHCI_XECP_OS_SEM, 1);
+				aprint_debug_dev(sc->sc_dev,
+				    "waiting for BIOS to give up control\n");
+				for (int i = 0; i < 5000; i++) {
+					bios_sem = xhci_read_1(sc, ecp +
+					    XHCI_XECP_BIOS_SEM);
+					if (bios_sem == 0)
+						break;
+					DELAY(1000);
+				}
+				if (bios_sem) {
+					aprint_error_dev(sc->sc_dev,
+					    "timed out waiting for BIOS\n");
+				}
+			}
+			break;
+		}
+		default:
+			break;
+		}
+		ecr = xhci_read_4(sc, ecp);
+		if (XHCI_XECP_NEXT(ecr) == 0) {
+			ecp = 0;
+		} else {
+			ecp += XHCI_XECP_NEXT(ecr) * 4;
+		}
+	}
 }
 
 #define XHCI_HCCPREV1_BITS	\
@@ -650,9 +788,8 @@ xhci_init(struct xhci_softc *sc)
 {
 	bus_size_t bsz;
 	uint32_t cap, hcs1, hcs2, hcs3, hcc, dboff, rtsoff;
-	uint32_t ecp, ecr;
-	uint32_t usbcmd, usbsts, pagesize, config;
-	int i;
+	uint32_t pagesize, config;
+	int i = 0;
 	uint16_t hciversion;
 	uint8_t caplength;
 
@@ -702,62 +839,8 @@ xhci_init(struct xhci_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "hcc=%s\n", sbuf);
 	aprint_debug_dev(sc->sc_dev, "xECP %x\n", XHCI_HCC_XECP(hcc) * 4);
 
-	ecp = XHCI_HCC_XECP(hcc) * 4;
-	while (ecp != 0) {
-		ecr = xhci_read_4(sc, ecp);
-		aprint_debug_dev(sc->sc_dev, "ECR %x: %08x\n", ecp, ecr);
-		switch (XHCI_XECP_ID(ecr)) {
-		case XHCI_ID_PROTOCOLS: {
-			uint32_t w0, w4, w8;
-			uint16_t w2;
-			w0 = xhci_read_4(sc, ecp + 0);
-			w2 = (w0 >> 16) & 0xffff;
-			w4 = xhci_read_4(sc, ecp + 4);
-			w8 = xhci_read_4(sc, ecp + 8);
-			aprint_debug_dev(sc->sc_dev, "SP: %08x %08x %08x\n",
-			    w0, w4, w8);
-			if (w4 == 0x20425355 && w2 == 0x0300) {
-				sc->sc_ss_port_start = (w8 >> 0) & 0xff;;
-				sc->sc_ss_port_count = (w8 >> 8) & 0xff;;
-			}
-			if (w4 == 0x20425355 && w2 == 0x0200) {
-				sc->sc_hs_port_start = (w8 >> 0) & 0xff;
-				sc->sc_hs_port_count = (w8 >> 8) & 0xff;
-			}
-			break;
-		}
-		case XHCI_ID_USB_LEGACY: {
-			uint8_t bios_sem;
-
-			/* Take host controller from BIOS */
-			bios_sem = xhci_read_1(sc, ecp + XHCI_XECP_BIOS_SEM);
-			if (bios_sem) {
-				/* sets xHCI to be owned by OS */
-				xhci_write_1(sc, ecp + XHCI_XECP_OS_SEM, 1);
-				aprint_debug(
-				    "waiting for BIOS to give up control\n");
-				for (i = 0; i < 5000; i++) {
-					bios_sem = xhci_read_1(sc, ecp +
-					    XHCI_XECP_BIOS_SEM);
-					if (bios_sem == 0)
-						break;
-					DELAY(1000);
-				}
-				if (bios_sem)
-					printf("timed out waiting for BIOS\n");
-			}
-			break;
-		}
-		default:
-			break;
-		}
-		ecr = xhci_read_4(sc, ecp);
-		if (XHCI_XECP_NEXT(ecr) == 0) {
-			ecp = 0;
-		} else {
-			ecp += XHCI_XECP_NEXT(ecr) * 4;
-		}
-	}
+	/* print PSI and take ownership from BIOS */
+	xhci_ecp(sc, hcc);
 
 	bsz = XHCI_PORTSC(sc->sc_maxports + 1);
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, caplength, bsz,
@@ -780,44 +863,10 @@ xhci_init(struct xhci_softc *sc)
 		return ENOMEM;
 	}
 
-	for (i = 0; i < 100; i++) {
-		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
-		if ((usbsts & XHCI_STS_CNR) == 0)
-			break;
-		usb_delay_ms(&sc->sc_bus, 1);
-	}
-	if (i >= 100) {
-		aprint_error_dev(sc->sc_dev, "controller not ready timeout\n");
-		return EIO;
-	}
-
-	usbcmd = 0;
-	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
-	usb_delay_ms(&sc->sc_bus, 1);
-
-	usbcmd = XHCI_CMD_HCRST;
-	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
-	for (i = 0; i < 100; i++) {
-		usbcmd = xhci_op_read_4(sc, XHCI_USBCMD);
-		if ((usbcmd & XHCI_CMD_HCRST) == 0)
-			break;
-		usb_delay_ms(&sc->sc_bus, 1);
-	}
-	if (i >= 100) {
-		aprint_error_dev(sc->sc_dev, "host controller reset timeout\n");
-		return EIO;
-	}
-
-	for (i = 0; i < 100; i++) {
-		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
-		if ((usbsts & XHCI_STS_CNR) == 0)
-			break;
-		usb_delay_ms(&sc->sc_bus, 1);
-	}
-	if (i >= 100) {
-		aprint_error_dev(sc->sc_dev,
-		    "controller not ready timeout after reset\n");
-		return EIO;
+	int rv;
+	rv = xhci_hc_reset(sc);
+	if (rv != 0) {
+		return rv;
 	}
 
 	if (sc->sc_vendor_init)
@@ -837,7 +886,6 @@ xhci_init(struct xhci_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "sc_maxports %d\n", sc->sc_maxports);
 
 	usbd_status err;
-	int rv = 0;
 
 	sc->sc_maxspbuf = XHCI_HCS2_MAXSPBUF(hcs2);
 	aprint_debug_dev(sc->sc_dev, "sc_maxspbuf %d\n", sc->sc_maxspbuf);
@@ -1861,22 +1909,12 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	KASSERTMSG(xs->xs_idx != 0 && xs->xs_idx <= sc->sc_maxslots,
 	    "invalid xs_idx %u slot %u", xs->xs_idx, slot);
 
+	int idx = 0;
 	if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
-		/*
-		 * When ED == 0, trb_0 is physical address of the TRB
-		 * that caused this event. (6.4.2.1)
-		 */
-		bus_addr_t trbp = xhci_ring_trbp(xr, 0);
-
-		/* trb_0 range sanity check */
-		if (trb_0 < trbp ||
-		    (trb_0 - trbp) % sizeof(struct xhci_trb) != 0 ||
-		    (trb_0 - trbp) / sizeof(struct xhci_trb) >= xr->xr_ntrb) {
-			DPRINTFN(1, "invalid trb_0 0x%"PRIx64" trbp 0x%"PRIx64,
-			    trb_0, trbp, 0, 0);
+		if (xhci_trb_get_idx(xr, trb_0, &idx)) {
+			DPRINTFN(0, "invalid trb_0 0x%"PRIx64, trb_0, 0, 0, 0);
 			return;
 		}
-		int idx = (trb_0 - trbp) / sizeof(struct xhci_trb);
 		xx = xr->xr_cookies[idx];
 
 		/*
