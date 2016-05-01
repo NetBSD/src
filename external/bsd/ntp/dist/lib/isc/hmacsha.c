@@ -1,4 +1,4 @@
-/*	$NetBSD: hmacsha.c,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: hmacsha.c,v 1.5 2016/05/01 23:32:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -540,7 +540,7 @@ isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
 	isc_hmacsha1_sign(ctx, newdigest, ISC_SHA1_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+	return (ISC_TF(isc_tsmemcmp(digest, newdigest, len) == 0));
 }
 
 /*
@@ -553,7 +553,7 @@ isc_hmacsha224_verify(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) 
 
 	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
 	isc_hmacsha224_sign(ctx, newdigest, ISC_SHA224_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+	return (ISC_TF(isc_tsmemcmp(digest, newdigest, len) == 0));
 }
 
 /*
@@ -566,7 +566,7 @@ isc_hmacsha256_verify(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) 
 
 	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
 	isc_hmacsha256_sign(ctx, newdigest, ISC_SHA256_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+	return (ISC_TF(isc_tsmemcmp(digest, newdigest, len) == 0));
 }
 
 /*
@@ -579,7 +579,7 @@ isc_hmacsha384_verify(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) 
 
 	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
 	isc_hmacsha384_sign(ctx, newdigest, ISC_SHA384_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+	return (ISC_TF(isc_tsmemcmp(digest, newdigest, len) == 0));
 }
 
 /*
@@ -592,5 +592,5 @@ isc_hmacsha512_verify(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) 
 
 	REQUIRE(len <= ISC_SHA512_DIGESTLENGTH);
 	isc_hmacsha512_sign(ctx, newdigest, ISC_SHA512_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+	return (ISC_TF(isc_tsmemcmp(digest, newdigest, len) == 0));
 }

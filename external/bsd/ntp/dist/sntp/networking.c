@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.13 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: networking.c,v 1.14 2016/05/01 23:32:01 christos Exp $	*/
 
 #include <config.h>
 #include "networking.h"
@@ -186,7 +186,7 @@ process_pkt (
 		** keyfile and compare those md5sums.
 		*/
 		mac_size = exten_len << 2;
-		if (!auth_md5((char *)rpkt, pkt_len - mac_size,
+		if (!auth_md5(rpkt, pkt_len - mac_size,
 			      mac_size - 4, pkt_key)) {
 			is_authentic = FALSE;
 			break;
