@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.11 2015/11/20 08:13:41 dholland Exp $
+$NetBSD: storage,v 1.12 2016/05/01 20:51:36 dholland Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -206,11 +206,9 @@ more drivers.
 ----------------
 
 nvme ("NVM Express") is a hardware interface standard for PCI-attached
-SSDs. NetBSD currently has no driver for these; unfortunately, while
-both FreeBSD and OpenBSD do neither of their drivers is likely
-directly suitable: the FreeBSD driver is severely overcomplicated and
-the OpenBSD driver won't be MPSAFE. (And there isn't much point in a
-non-MPSAFE nvme driver.)
+SSDs. NetBSD now has a driver for these; however, it was ported from
+OpenBSD and is not (yet) MPSAFE. This is, unfortunately, a fairly
+serious limitation given the point and nature of nvme devices.
 
 Relatedly, the I/O path needs to be restructured to avoid software
 bottlenecks on the way to an nvme device: they are fast enough that
@@ -218,8 +216,11 @@ things like disksort() do not make sense.
 
 Semi-relatedly, it is also time for scsipi to become MPSAFE.
 
- - As of November 2015 nobody is known to be working on this.
- - There is no clear timeframe or release target.
+ - As of May 2016 a port of OpenBSD's driver has been commited. This
+   will be in -8.
+ - However, the driver still needs to be made MPSAFE, and we still
+   need to attend to scsipi and various other I/O path bottlenecks.
+ - There is no clear timeframe or release target for these points.
  - Contact msaitoh or agc for further information.
 
 
@@ -313,7 +314,8 @@ or less work than doing an implementation.
 Note however that implementing ext3 has already defeated several
 people; this is a harder project than it looks.
 
- - As of November 2015 nobody is known to be working on this.
+ - As of May 2016 there is a GSoC project to implement read-only ext4
+   support, but (it not being summer yet) no particular progress.
  - There is no clear timeframe or release target.
  - Contact ?? for further information.
 
@@ -396,3 +398,5 @@ really be cleaned up. That or maybe it's time to remove Coda.
 
 Alistair Crooks, David Holland
 Fri Nov 20 02:17:53 EST 2015
+Sun May  1 16:50:42 EDT 2016 (some updates)
+
