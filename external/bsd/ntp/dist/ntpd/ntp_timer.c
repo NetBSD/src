@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.6 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.7 2016/05/01 23:32:01 christos Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -278,6 +278,12 @@ intres_timeout_req(
 	u_int	seconds		/* 0 cancels */
 	)
 {
+#if defined(HAVE_DROPROOT) && defined(NEED_EARLY_FORK)
+	if (droproot) {
+		worker_idle_timer = 0;
+		return;
+	}
+#endif
 	if (0 == seconds) {
 		worker_idle_timer = 0;
 		return;
@@ -551,14 +557,16 @@ check_leapsec(
 #ifdef LEAP_SMEAR
 	leap_smear.enabled = leap_smear_intv != 0;
 #endif
-	if (reset)	{
+	if (reset) {
 		lsprox = LSPROX_NOWARN;
 		leapsec_reset_frame();
 		memset(&lsdata, 0, sizeof(lsdata));
 	} else {
-	  int fired = leapsec_query(&lsdata, now, tpiv);
+	  int fired;
 
-	  DPRINTF(1, ("*** leapsec_query: fired %i, now %u (0x%08X), tai_diff %i, ddist %u\n",
+	  fired = leapsec_query(&lsdata, now, tpiv);
+
+	  DPRINTF(3, ("*** leapsec_query: fired %i, now %u (0x%08X), tai_diff %i, ddist %u\n",
 		  fired, now, now, lsdata.tai_diff, lsdata.ddist));
 
 #ifdef LEAP_SMEAR
@@ -574,8 +582,7 @@ check_leapsec(
 				DPRINTF(1, ("*** leapsec_query: setting leap_smear interval %li, begin %.0f, end %.0f\n",
 					leap_smear.interval, leap_smear.intv_start, leap_smear.intv_end));
 			}
-		}
-		else {
+		} else {
 			if (leap_smear.interval)
 				DPRINTF(1, ("*** leapsec_query: clearing leap_smear interval\n"));
 			leap_smear.interval = 0;
@@ -657,10 +664,10 @@ check_leapsec(
 		sys_tai = lsdata.tai_offs;
 	  } else {
 #ifdef AUTOKEY
-		update_autokey = (sys_tai != (u_int)lsdata.tai_offs);
+		  update_autokey = (sys_tai != (u_int)lsdata.tai_offs);
 #endif
-		lsprox  = lsdata.proximity;
-		sys_tai = lsdata.tai_offs;
+		  lsprox  = lsdata.proximity;
+		  sys_tai = lsdata.tai_offs;
 	  }
 	}
 

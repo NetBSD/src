@@ -1,4 +1,4 @@
-/*	$NetBSD: work_thread.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: work_thread.c,v 1.5 2016/05/01 23:32:00 christos Exp $	*/
 
 /*
  * work_thread.c - threads implementation for blocking worker child.
@@ -27,12 +27,37 @@
 
 #define CHILD_EXIT_REQ	((blocking_pipe_header *)(intptr_t)-1)
 #define CHILD_GONE_RESP	CHILD_EXIT_REQ
+/* Queue size increments:
+ * The request queue grows a bit faster than the response queue -- the
+ * deamon can push requests and pull results faster on avarage than the
+ * worker can process requests and push results...  If this really pays
+ * off is debatable.
+ */
 #define WORKITEMS_ALLOC_INC	16
 #define RESPONSES_ALLOC_INC	4
 
+/* Fiddle with min/max stack sizes. 64kB minimum seems to work, so we
+ * set the maximum to 256kB. If the minimum goes below the
+ * system-defined minimum stack size, we have to adjust accordingly.
+ */
 #ifndef THREAD_MINSTACKSIZE
-#define THREAD_MINSTACKSIZE	(64U * 1024)
+# define THREAD_MINSTACKSIZE	(64U * 1024)
 #endif
+#ifndef __sun
+#if defined(PTHREAD_STACK_MIN) && THREAD_MINSTACKSIZE < PTHREAD_STACK_MIN
+# undef THREAD_MINSTACKSIZE
+# define THREAD_MINSTACKSIZE PTHREAD_STACK_MIN
+#endif
+#endif
+
+#ifndef THREAD_MAXSTACKSIZE
+# define THREAD_MAXSTACKSIZE	(256U * 1024)
+#endif
+#if THREAD_MAXSTACKSIZE < THREAD_MINSTACKSIZE
+# undef  THREAD_MAXSTACKSIZE
+# define THREAD_MAXSTACKSIZE THREAD_MINSTACKSIZE
+#endif
+
 
 #ifdef SYS_WINNT
 
@@ -65,7 +90,27 @@ static	int	ensure_workresp_empty_slot(blocking_child *);
 static	int	queue_req_pointer(blocking_child *, blocking_pipe_header *);
 static	void	cleanup_after_child(blocking_child *);
 
+static sema_type worker_mmutex;
+static sem_ref   worker_memlock;
 
+/* --------------------------------------------------------------------
+ * locking the global worker state table (and other global stuff)
+ */
+void
+worker_global_lock(
+	int inOrOut)
+{
+	if (worker_memlock) {
+		if (inOrOut)
+			wait_for_sem(worker_memlock, NULL);
+		else
+			tickle_sem(worker_memlock);
+	}
+}
+
+/* --------------------------------------------------------------------
+ * implementation isolation wrapper
+ */
 void
 exit_worker(
 	int	exitcode
@@ -150,15 +195,19 @@ ensure_workitems_empty_slot(
 
 	size_t	new_alloc;
 	size_t  slots_used;
+	size_t	sidx;
 
 	slots_used = c->head_workitem - c->tail_workitem;
 	if (slots_used >= c->workitems_alloc) {
 		new_alloc  = c->workitems_alloc + WORKITEMS_ALLOC_INC;
 		c->workitems = erealloc(c->workitems, new_alloc * each);
+		for (sidx = c->workitems_alloc; sidx < new_alloc; ++sidx)
+		    c->workitems[sidx] = NULL;
 		c->tail_workitem   = 0;
 		c->head_workitem   = c->workitems_alloc;
 		c->workitems_alloc = new_alloc;
 	}
+	INSIST(NULL == c->workitems[c->head_workitem % c->workitems_alloc]);
 	return (0 == slots_used);
 }
 
@@ -182,15 +231,19 @@ ensure_workresp_empty_slot(
 
 	size_t	new_alloc;
 	size_t  slots_used;
+	size_t	sidx;
 
 	slots_used = c->head_response - c->tail_response;
 	if (slots_used >= c->responses_alloc) {
 		new_alloc  = c->responses_alloc + RESPONSES_ALLOC_INC;
 		c->responses = erealloc(c->responses, new_alloc * each);
+		for (sidx = c->responses_alloc; sidx < new_alloc; ++sidx)
+		    c->responses[sidx] = NULL;
 		c->tail_response   = 0;
 		c->head_response   = c->responses_alloc;
 		c->responses_alloc = new_alloc;
 	}
+	INSIST(NULL == c->responses[c->head_response % c->responses_alloc]);
 	return (0 == slots_used);
 }
 
@@ -480,11 +533,11 @@ start_blocking_thread_internal(
 # endif
 	pthread_attr_t	thr_attr;
 	int		rc;
-	int		saved_errno;
 	int		pipe_ends[2];	/* read then write */
 	int		is_pipe;
 	int		flags;
-	size_t		stacksize;
+	size_t		ostacksize;
+	size_t		nstacksize;
 	sigset_t	saved_sig_mask;
 
 	c->thread_ref = NULL;
@@ -524,21 +577,29 @@ start_blocking_thread_internal(
 	pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
 #if defined(HAVE_PTHREAD_ATTR_GETSTACKSIZE) && \
     defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
-	rc = pthread_attr_getstacksize(&thr_attr, &stacksize);
-	if (-1 == rc) {
+	rc = pthread_attr_getstacksize(&thr_attr, &ostacksize);
+	if (0 != rc) {
 		msyslog(LOG_ERR,
-			"start_blocking_thread: pthread_attr_getstacksize %m");
-	} else if (stacksize < THREAD_MINSTACKSIZE) {
-		rc = pthread_attr_setstacksize(&thr_attr,
-					       THREAD_MINSTACKSIZE);
-		if (-1 == rc)
+			"start_blocking_thread: pthread_attr_getstacksize() -> %s",
+			strerror(rc));
+	} else {
+		if (ostacksize < THREAD_MINSTACKSIZE)
+			nstacksize = THREAD_MINSTACKSIZE;
+		else if (ostacksize > THREAD_MAXSTACKSIZE)
+			nstacksize = THREAD_MAXSTACKSIZE;
+		else
+			nstacksize = ostacksize;
+		if (nstacksize != ostacksize)
+			rc = pthread_attr_setstacksize(&thr_attr, nstacksize);
+		if (0 != rc)
 			msyslog(LOG_ERR,
-				"start_blocking_thread: pthread_attr_setstacksize(0x%lx -> 0x%lx) %m",
-				(u_long)stacksize,
-				(u_long)THREAD_MINSTACKSIZE);
+				"start_blocking_thread: pthread_attr_setstacksize(0x%lx -> 0x%lx) -> %s",
+				(u_long)ostacksize, (u_long)nstacksize,
+				strerror(rc));
 	}
 #else
-	UNUSED_ARG(stacksize);
+	UNUSED_ARG(nstacksize);
+	UNUSED_ARG(ostacksize);
 #endif
 #if defined(PTHREAD_SCOPE_SYSTEM) && defined(NEED_PTHREAD_SCOPE_SYSTEM)
 	pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
@@ -547,12 +608,11 @@ start_blocking_thread_internal(
 	block_thread_signals(&saved_sig_mask);
 	rc = pthread_create(&c->thr_table[0], &thr_attr,
 			    &blocking_thread, c);
-	saved_errno = errno;
 	pthread_sigmask(SIG_SETMASK, &saved_sig_mask, NULL);
 	pthread_attr_destroy(&thr_attr);
 	if (0 != rc) {
-		errno = saved_errno;
-		msyslog(LOG_ERR, "pthread_create() blocking child: %m");
+		msyslog(LOG_ERR, "start_blocking_thread: pthread_create() -> %s",
+			strerror(rc));
 		exit(1);
 	}
 	c->thread_ref = &c->thr_table[0];
@@ -686,6 +746,9 @@ prepare_child_sems(
 	blocking_child *c
 	)
 {
+	if (NULL == worker_memlock)
+		worker_memlock = create_sema(&worker_mmutex, 1, 1);
+	
 	c->accesslock           = create_sema(&c->sem_table[0], 1, 1);
 	c->workitems_pending    = create_sema(&c->sem_table[1], 0, 0);
 	c->wake_scheduled_sleep = create_sema(&c->sem_table[2], 0, 1);

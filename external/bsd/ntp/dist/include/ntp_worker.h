@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_worker.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: ntp_worker.h,v 1.5 2016/05/01 23:32:00 christos Exp $	*/
 
 /*
  * ntp_worker.h
@@ -62,33 +62,35 @@ typedef sema_type	*sem_ref;
 #if defined(WORK_FORK)
 
 typedef struct blocking_child_tag {
-	int	reusable;
-	int	pid;
-	int	req_write_pipe;		/* parent */
-	int	resp_read_pipe;
-	void *	resp_read_ctx;
-	int	req_read_pipe;		/* child */
-	int	resp_write_pipe;
-	int	ispipe;
+	int		reusable;
+	int		pid;
+	int		req_write_pipe;		/* parent */
+	int		resp_read_pipe;
+	void *		resp_read_ctx;
+	int		req_read_pipe;		/* child */
+	int		resp_write_pipe;
+	int		ispipe;	
+	volatile u_int	resp_ready_seen;	/* signal/scan */
+	volatile u_int	resp_ready_done;	/* consumer/mainloop */
 } blocking_child;
 
 #elif defined(WORK_THREAD)
 
 typedef struct blocking_child_tag {
-/*
- * blocking workitems and blocking_responses are dynamically-sized
- * one-dimensional arrays of pointers to blocking worker requests and
- * responses.
- *
- * IMPORTANT: This structure is shared between threads, and all access
- * that is not atomic (especially queue operations) must hold the
- * 'accesslock' semaphore to avoid data races.
- *
- * The resource management (thread/semaphore creation/destruction)
- * functions and functions just testing a handle are safe because these
- * are only changed by the main thread when no worker is running on the
- * same data structure.
- */
+	/*
+	 * blocking workitems and blocking_responses are
+	 * dynamically-sized one-dimensional arrays of pointers to
+	 * blocking worker requests and responses.
+	 *
+	 * IMPORTANT: This structure is shared between threads, and all
+	 * access that is not atomic (especially queue operations) must
+	 * hold the 'accesslock' semaphore to avoid data races.
+	 *
+	 * The resource management (thread/semaphore
+	 * creation/destruction) functions and functions just testing a
+	 * handle are safe because these are only changed by the main
+	 * thread when no worker is running on the same data structure.
+	 */
 	int			reusable;
 	sem_ref			accesslock;	/* shared access lock */
 	thr_ref			thread_ref;	/* thread 'handle' */
@@ -122,11 +124,17 @@ typedef struct blocking_child_tag {
 #else
 	sem_ref			responses_pending;	/* signalling */
 #endif
+	volatile u_int		resp_ready_seen;	/* signal/scan */
+	volatile u_int		resp_ready_done;	/* consumer/mainloop */
 	sema_type		sem_table[4];
 	thread_type		thr_table[1];
 } blocking_child;
 
 #endif	/* WORK_THREAD */
+
+/* we need some global tag to indicate any blocking child may be ready: */
+extern volatile u_int		blocking_child_ready_seen;/* signal/scan */
+extern volatile u_int		blocking_child_ready_done;/* consumer/mainloop */
 
 extern	blocking_child **	blocking_children;
 extern	size_t			blocking_children_alloc;
@@ -141,6 +149,7 @@ extern	int	queue_blocking_response(blocking_child *,
 					blocking_pipe_header *, size_t,
 					const blocking_pipe_header *);
 extern	void	process_blocking_resp(blocking_child *);
+extern	void	harvest_blocking_responses(void);
 extern	int	send_blocking_req_internal(blocking_child *,
 					   blocking_pipe_header *,
 					   void *);
@@ -163,6 +172,8 @@ extern	void	close_all_beyond(int);
 extern	void	close_all_except(int);
 extern	void	kill_asyncio	(int);
 #endif
+
+extern void worker_global_lock(int inOrOut);
 
 # ifdef WORK_PIPE
 typedef	void	(*addremove_io_fd_func)(int, int, int);
