@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.14 2016/04/17 19:54:32 palle Exp $ */
+ /* $NetBSD: TODO,v 1.15 2016/05/01 19:41:01 palle Exp $ */
 
 Things to be done:
 
@@ -25,5 +25,4 @@ sun4v:
 - ci_tsb_desc->td_ctxidx: -1 or 1?
 - MP support - currently bypassed in pmap_bootstrap() for sun4v
 - vpci.c/vpcivar.h: cleanup FIXMEs
-- "bad magic number in disk label" when booting from an .iso image
 - interrups not handled properly
