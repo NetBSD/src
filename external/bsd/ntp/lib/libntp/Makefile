@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/12/23 20:26:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.18 2016/05/01 23:32:02 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -40,6 +40,7 @@ hextolfp.c \
 humandate.c \
 icom.c \
 iosignal.c \
+is_ip_address.c \
 lib_strbuf.c \
 machines.c \
 mktime.c \

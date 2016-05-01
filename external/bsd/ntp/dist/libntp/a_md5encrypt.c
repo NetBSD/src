@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.5 2016/05/01 23:32:00 christos Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -12,7 +12,7 @@
 #include "ntp_stdlib.h"
 #include "ntp.h"
 #include "ntp_md5.h"	/* provides OpenSSL digest API */
-
+#include "isc/string.h"
 /*
  * MD5authencrypt - generate message digest
  *
@@ -94,7 +94,7 @@ MD5authdecrypt(
 		    "MAC decrypt: MAC length error");
 		return (0);
 	}
-	return !memcmp(digest, (const char *)pkt + length + 4, len);
+	return !isc_tsmemcmp(digest, (const char *)pkt + length + 4, len);
 }
 
 /*

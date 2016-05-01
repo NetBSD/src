@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpsnmpd-opts.h,v 1.6 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: ntpsnmpd-opts.h,v 1.7 2016/05/01 23:32:01 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpsnmpd-opts.h)
  *
- *  It has been AutoGen-ed  January  5, 2016 at 11:50:31 AM by AutoGen 5.18.5
+ *  It has been AutoGen-ed  April 26, 2016 at 08:29:43 PM by AutoGen 5.18.5
  *  From the definitions    ntpsnmpd-opts.def
  *  and the template file   options
  *
@@ -20,7 +20,7 @@
  * The ntpsnmpd program is copyrighted and licensed
  * under the following terms:
  *
- *  Copyright (C) 1992-2015 The University of Delaware and Network Time Foundation, all rights reserved.
+ *  Copyright (C) 1992-2016 The University of Delaware and Network Time Foundation, all rights reserved.
  *  This is free software. It is licensed for use, modification and
  *  redistribution under the terms of the NTP License, copies of which
  *  can be seen at:
@@ -78,9 +78,9 @@ typedef enum {
 /** count of all options for ntpsnmpd */
 #define OPTION_CT    8
 /** ntpsnmpd version */
-#define NTPSNMPD_VERSION       "4.2.8p5"
+#define NTPSNMPD_VERSION       "4.2.8p7"
 /** Full ntpsnmpd version text */
-#define NTPSNMPD_FULL_VERSION  "ntpsnmpd 4.2.8p5"
+#define NTPSNMPD_FULL_VERSION  "ntpsnmpd 4.2.8p7"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED

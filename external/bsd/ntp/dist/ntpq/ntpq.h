@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.h,v 1.8 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: ntpq.h,v 1.9 2016/05/01 23:32:01 christos Exp $	*/
 
 /*
  * ntpq.h - definitions of interest to ntpq
@@ -14,6 +14,8 @@
 #include "ntp_assert.h"
 #include "ntp_control.h"
 #include "lib_strbuf.h"
+
+#include "ntpq-opts.h"
 
 /*
  * Maximum number of arguments
@@ -128,6 +130,7 @@ extern chost	chosts[];
 
 extern int	interactive;	/* are we prompting? */
 extern int	old_rv;		/* use old rv behavior? --old-rv */
+extern te_Refid	drefid;		/* How should we display a refid? */
 extern u_int	assoc_cache_slots;/* count of allocated array entries */
 extern u_int	numassoc;	/* number of cached associations */
 extern u_int	numhosts;

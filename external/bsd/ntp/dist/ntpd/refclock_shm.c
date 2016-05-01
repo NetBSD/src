@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.7 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.8 2016/05/01 23:32:01 christos Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory
@@ -602,7 +602,7 @@ shm_timer(
 		     cd.year, cd.month, cd.monthday,
 		     cd.hour, cd.minute, cd.second,
 		     (long)shm_stat.tvt.tv_nsec);
-	pp->lencode = ((size_t)c < sizeof(pp->a_lastcode)) ? c : 0;
+	pp->lencode = (c > 0 && (size_t)c < sizeof(pp->a_lastcode)) ? c : 0;
 
 	/* check 1: age control of local time stamp */
 	tt = shm_stat.tvc.tv_sec - shm_stat.tvr.tv_sec;

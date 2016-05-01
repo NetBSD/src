@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_types.h,v 1.5 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: ntp_types.h,v 1.6 2016/05/01 23:32:00 christos Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
@@ -36,6 +36,13 @@
 #ifndef FALSE
 # define	FALSE	0
 #endif
+
+#ifdef HAVE_STDBOOL_H
+# include <stdbool.h>
+#else
+typedef int bool;	/* Can't use enum TRUE/FALSE because of above */
+#endif
+
 
 /*
  * This is another naming conflict.
@@ -220,6 +227,7 @@ typedef uint16_t	associd_t; /* association ID */
 #define ASSOCID_MAX	USHRT_MAX
 typedef u_int32 keyid_t;	/* cryptographic key ID */
 #define KEYID_T_MAX	(0xffffffff)
+
 typedef u_int32 tstamp_t;	/* NTP seconds timestamp */
 
 /*

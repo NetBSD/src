@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.h,v 1.5 2016/05/01 23:32:00 christos Exp $	*/
 
 /*
  * ntp_refclock.h - definitions for reference clock support
@@ -107,7 +107,8 @@ struct refclockio {
 	int	active;		/* nonzero when in use */
 
 #ifdef HAVE_IO_COMPLETION_PORT
-	void *	device_context;	/* device-related data for i/o subsystem */
+	void *	ioreg_ctx;	/* IO registration context */
+	void *	device_ctx;	/* device-related data for i/o subsystem */
 #endif
 };
 

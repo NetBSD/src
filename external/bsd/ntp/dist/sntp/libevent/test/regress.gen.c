@@ -1,4 +1,3 @@
-/*	$NetBSD: regress.gen.c,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
 
 /*
  * Automatically generated from ../../../sntp/libevent/test/regress.rpc
@@ -1224,5 +1223,6 @@ evtag_marshal_run(struct evbuffer *evbuf, ev_uint32_t tag, const struct run *msg
   evtag_marshal_buffer(evbuf, tag, buf_);
    evbuffer_free(buf_);
 }
->>>>>>> 1.1.1.5
+/*	$NetBSD: regress.gen.c,v 1.5 2016/05/01 23:32:01 christos Exp $	*/
 
+ 

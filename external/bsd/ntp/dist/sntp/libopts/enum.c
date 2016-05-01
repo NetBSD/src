@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.7 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: enum.c,v 1.8 2016/05/01 23:32:01 christos Exp $	*/
 
 
 /**
@@ -195,8 +195,8 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
     uintptr_t   idx;
 
     if (IS_DEC_DIGIT_CHAR(*name)) {
-        char * pz = VOIDP(name);
-        unsigned long val = strtoul(pz, &pz, 0);
+        char * pz;
+        unsigned long val = strtoul(name, &pz, 0);
         if ((*pz == NUL) && (val < name_ct))
             return (uintptr_t)val;
         pz_enum_err_fmt = znum_too_large;
@@ -502,7 +502,7 @@ find_member_bit(tOptions * opts, tOptDesc * od, char const * pz, int len,
         if (shift_ct >= nm_ct)
             return 0UL;
 
-        return 1UL << shift_ct;
+        return (uintptr_t)1U << shift_ct;
     }
 }
 

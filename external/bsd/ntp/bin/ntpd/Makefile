@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2016/03/23 09:00:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2016/05/01 23:32:00 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -72,12 +72,13 @@ SRCS=	cmd_args.c				\
 	refclock_wwvb.c				\
 	refclock_zyfer.c
 
+.include "${.CURDIR}/../Makefile.inc"
+
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -liscntp -lm -lutil
 DPADD+=		${LIBPARSE}/libparse.a ${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LIBNTP}/libntp.a ${LIBM} ${LIBUTIL}
 
 COPTS.ntp_control.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-nonliteral :}
 
-.include "${.CURDIR}/../Makefile.inc"
 
 DIST=${IDIST}/ntpd
 

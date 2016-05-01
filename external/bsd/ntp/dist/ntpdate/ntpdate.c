@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.9 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.10 2016/05/01 23:32:01 christos Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -1249,7 +1249,6 @@ static int
 clock_adjust(void)
 {
 	register struct server *sp, *server;
-	s_fp absoffset;
 	int dostep;
 
 	for (sp = sys_servers; sp != NULL; sp = sp->next_server)
@@ -1272,10 +1271,15 @@ clock_adjust(void)
 	} else if (never_step) {
 		dostep = 0;
 	} else {
-		absoffset = server->soffset;
-		if (absoffset < 0)
-			absoffset = -absoffset;
-		dostep = (absoffset >= NTPDATE_THRESHOLD || absoffset < 0);
+		/* [Bug 3023] get absolute difference, avoiding signed
+		 * integer overflow like hell.
+		 */
+		u_fp absoffset;
+		if (server->soffset < 0)
+			absoffset = 1u + (u_fp)(-(server->soffset + 1));
+		else
+			absoffset = (u_fp)server->soffset;
+		dostep = (absoffset >= NTPDATE_THRESHOLD);
 	}
 
 	if (dostep) {
