@@ -1,4 +1,4 @@
-/*	$NetBSD: timevalops.c,v 1.1.1.5 2016/01/08 21:21:33 christos Exp $	*/
+/*	$NetBSD: timevalops.c,v 1.1.1.6 2016/05/01 15:55:51 christos Exp $	*/
 
 #include "config.h"
 
@@ -28,8 +28,6 @@ typedef struct {
 	long	usec;
 	u_int32	frac;
 } lfpfracdata ;
-
-typedef int bool;
 
 struct timeval timeval_init( time_t hi, long lo);
 const bool timeval_isValid(struct timeval V);

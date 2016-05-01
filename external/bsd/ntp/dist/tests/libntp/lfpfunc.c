@@ -1,4 +1,4 @@
-/*	$NetBSD: lfpfunc.c,v 1.1.1.5 2016/01/08 21:21:33 christos Exp $	*/
+/*	$NetBSD: lfpfunc.c,v 1.1.1.6 2016/05/01 15:55:43 christos Exp $	*/
 
 #include "config.h"
 
@@ -21,9 +21,6 @@
 	TEST_ASSERT_EQUAL_MESSAGE(a.l_i, b.l_i, "Field l_i");		\
 	TEST_ASSERT_EQUAL_UINT_MESSAGE(a.l_uf, b.l_uf, "Field l_uf");	\
 }
-
-
-typedef int bool; // typedef enum { FALSE, TRUE } boolean; -> can't use this because TRUE and FALSE are already defined
 
 
 typedef struct  {

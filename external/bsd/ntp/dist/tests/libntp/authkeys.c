@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.1.1.5 2016/01/08 21:21:33 christos Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.1.1.6 2016/05/01 15:55:45 christos Exp $	*/
 
 /* This file contains test for both libntp/authkeys.c and libntp/authusekey.c */
 
@@ -15,6 +15,7 @@
 # include "openssl/rand.h"
 # include "openssl/evp.h"
 #endif
+#include <limits.h>
 
 u_long current_time = 4;
 int counter = 0;
@@ -29,6 +30,7 @@ void test_HaveKeyCorrect(void);
 void test_HaveKeyIncorrect(void);
 void test_AddWithAuthUseKey(void);
 void test_EmptyKey(void);
+void test_auth_log2(void);
 
 
 void
@@ -72,7 +74,7 @@ AddTrustedKey(keyid_t keyno)
 	 * We need to add a MD5-key in addition to setting the
 	 * trust, because authhavekey() requires type != 0.
 	 */
-	MD5auth_setkey(keyno, KEYTYPE, NULL, 0);
+	MD5auth_setkey(keyno, KEYTYPE, NULL, 0, NULL);
 
 	authtrust(keyno, TRUE);
 
@@ -159,4 +161,40 @@ test_EmptyKey(void)
 	TEST_ASSERT_FALSE(authusekey(KEYNO, KEYTYPE, (const u_char*)KEY));
 
 	return;
+}
+
+/* test the implementation of 'auth_log2' -- use a local copy of the code */
+
+static u_short
+auth_log2(
+	size_t x)
+{
+	int	s;
+	int	r = 0;
+	size_t  m = ~(size_t)0;
+
+	for (s = sizeof(size_t) / 2 * CHAR_BIT; s != 0; s >>= 1) {
+		m <<= s;
+		if (x & m)
+			r += s;
+		else
+			x <<= s;
+	}
+	return (u_short)r;
+}
+
+void
+test_auth_log2(void)
+{
+	int	l2;
+	size_t	tv;
+	
+	TEST_ASSERT_EQUAL_INT(0, auth_log2(0));
+	TEST_ASSERT_EQUAL_INT(0, auth_log2(1));
+	for (l2 = 1; l2 < sizeof(size_t)*CHAR_BIT; ++l2) {
+		tv = (size_t)1 << l2;
+		TEST_ASSERT_EQUAL_INT(l2, auth_log2(   tv   ));
+		TEST_ASSERT_EQUAL_INT(l2, auth_log2( tv + 1 ));
+		TEST_ASSERT_EQUAL_INT(l2, auth_log2(2*tv - 1));
+	}
 }

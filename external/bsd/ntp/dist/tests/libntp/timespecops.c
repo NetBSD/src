@@ -1,4 +1,4 @@
-/*	$NetBSD: timespecops.c,v 1.1.1.5 2016/01/08 21:21:33 christos Exp $	*/
+/*	$NetBSD: timespecops.c,v 1.1.1.6 2016/05/01 15:55:47 christos Exp $	*/
 
 #include "config.h"
 
@@ -64,8 +64,6 @@ void test_FromLFPrelPos(void);
 void test_FromLFPrelNeg(void);
 void test_LFProundtrip(void);
 void test_ToString(void);
-
-typedef int bool;
 
 const bool	timespec_isValid(struct timespec V);
 struct timespec timespec_init(time_t hi, long lo);
