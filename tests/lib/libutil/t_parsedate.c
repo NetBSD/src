@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.19 2015/12/31 10:56:13 dholland Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.20 2016/05/01 16:39:47 gson Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.19 2015/12/31 10:56:13 dholland Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.20 2016/05/01 16:39:47 gson Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -260,134 +260,142 @@ ATF_TC_BODY(relative, tc)
 	ATF_CHECK(parsedate("next sunday", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("+2 years", NULL, NULL) != -1);
 
-	(void)time(&now);
+	/*
+	 * Test relative to a number of fixed dates.  Avoid the
+	 * edges of the time_t range to avert under- or overflow
+	 * of the relative date, and use a prime step for maximum
+	 * coverage of different times of day/week/month/year.
+	 * The step is currently large to limit the size of the
+	 * error log, but can be reduced as bugs are fixed.
+	 */
+	for (now = 0x00FFFFFF; now < 0xFF000000; now += 7424537) {
+		ATF_CHECK(localtime_r(&now, &tm) != NULL);
+		tm.tm_mday--;
+		/* "yesterday" leaves time untouched */
+		tm.tm_isdst = -1;
+		REL_CHECK("yesterday", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mday--;
-	/* "yesterday" leaves time untouched */
-	tm.tm_isdst = -1;
-	REL_CHECK("yesterday", now, tm);
+		ATF_CHECK(localtime_r(&now, &tm) != NULL);
+		tm.tm_mday++;
+		/* as does "tomorrow" */
+		tm.tm_isdst = -1;
+		REL_CHECK("tomorrow", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mday++;
-	/* as does "tomorrow" */
-	tm.tm_isdst = -1;
-	REL_CHECK("tomorrow", now, tm);
+		ATF_CHECK(localtime_r(&now, &tm) != NULL);
+		if (tm.tm_wday > 4)
+		       tm.tm_mday += 7;
+	       tm.tm_mday += 4 - tm.tm_wday;
+	       /* if a day name is mentioned, it means midnight (by default) */
+	       tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("this thursday", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	if (tm.tm_wday > 4)
-		tm.tm_mday += 7;
-	tm.tm_mday += 4 - tm.tm_wday;
-	/* if a day name is mentioned, it means midnight (by default) */
-	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
-	tm.tm_isdst = -1;
-	REL_CHECK("this thursday", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_mday += 14 - (tm.tm_wday ? tm.tm_wday : 7);
+	       tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("next sunday", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mday += 14 - (tm.tm_wday ? tm.tm_wday : 7);
-	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
-	tm.tm_isdst = -1;
-	REL_CHECK("next sunday", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       if (tm.tm_wday <= 5)
+		       tm.tm_mday -= 7;
+	       tm.tm_mday += 5 - tm.tm_wday;
+	       tm.tm_sec = tm.tm_min = 0;
+	       tm.tm_hour = 16;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("last friday 4 p.m.", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	if (tm.tm_wday <= 5)
-		tm.tm_mday -= 7;
-	tm.tm_mday += 5 - tm.tm_wday;
-	tm.tm_sec = tm.tm_min = 0;
-	tm.tm_hour = 16;
-	tm.tm_isdst = -1;
-	REL_CHECK("last friday 4 p.m.", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_mday += 14;
+	       if (tm.tm_wday > 3)
+		       tm.tm_mday += 7;
+	       tm.tm_mday += 3 - tm.tm_wday;
+	       tm.tm_sec = tm.tm_min = 0;
+	       tm.tm_hour = 3;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("we fortnight 3 a.m.", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mday += 14;
-	if (tm.tm_wday > 3)
-		tm.tm_mday += 7;
-	tm.tm_mday += 3 - tm.tm_wday;
-	tm.tm_sec = tm.tm_min = 0;
-	tm.tm_hour = 3;
-	tm.tm_isdst = -1;
-	REL_CHECK("we fortnight 3 a.m.", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_min -= 5;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("5 minutes ago", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_min -= 5;
-	tm.tm_isdst = -1;
-	REL_CHECK("5 minutes ago", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_hour++;
+	       tm.tm_min += 37;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("97 minutes", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_hour++;
-	tm.tm_min += 37;
-	tm.tm_isdst = -1;
-	REL_CHECK("97 minutes", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_mon++;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("month", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mon++;
-	tm.tm_isdst = -1;
-	REL_CHECK("month", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_mon += 2;		/* "next" means add 2 ... */
+	       tm.tm_isdst = -1;
+	       REL_CHECK("next month", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mon += 2;		/* "next" means add 2 ... */
-	tm.tm_isdst = -1;
-	REL_CHECK("next month", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_mon--;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("last month", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mon--;
-	tm.tm_isdst = -1;
-	REL_CHECK("last month", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_mon += 6;
+	       tm.tm_mday += 2;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("+6 months 2 days", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mon += 6;
-	tm.tm_mday += 2;
-	tm.tm_isdst = -1;
-	REL_CHECK("+6 months 2 days", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_mon -= 9;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("9 months ago", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mon -= 9;
-	tm.tm_isdst = -1;
-	REL_CHECK("9 months ago", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       if (tm.tm_wday <= 2)
+		       tm.tm_mday -= 7;
+	       tm.tm_mday += 2 - tm.tm_wday;
+	       tm.tm_isdst = -1;
+	       tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+	       REL_CHECK("1 week ago Tu", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	if (tm.tm_wday <= 2)
-		tm.tm_mday -= 7;
-	tm.tm_mday += 2 - tm.tm_wday;
-	tm.tm_isdst = -1;
-	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
-	REL_CHECK("1 week ago Tu", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_isdst = -1;
+	       tm.tm_mday++;
+	       tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+	       REL_CHECK("midnight tomorrow", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_isdst = -1;
-	tm.tm_mday++;
-	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
-	REL_CHECK("midnight tomorrow", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_isdst = -1;
+	       tm.tm_mday++;
+	       tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+	       REL_CHECK("tomorrow midnight", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_isdst = -1;
-	tm.tm_mday++;
-	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
-	REL_CHECK("tomorrow midnight", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       tm.tm_isdst = -1;
+	       tm.tm_mday++;
+	       tm.tm_hour = 12;
+	       tm.tm_min = tm.tm_sec = 0;
+	       REL_CHECK("noon tomorrow", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_isdst = -1;
-	tm.tm_mday++;
-	tm.tm_hour = 12;
-	tm.tm_min = tm.tm_sec = 0;
-	REL_CHECK("noon tomorrow", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       if (tm.tm_wday > 2)
+		       tm.tm_mday += 7;
+	       tm.tm_mday += 2 - tm.tm_wday;
+	       tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("midnight Tuesday", now, tm);
 
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	if (tm.tm_wday > 2)
-		tm.tm_mday += 7;
-	tm.tm_mday += 2 - tm.tm_wday;
-	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
-	tm.tm_isdst = -1;
-	REL_CHECK("midnight Tuesday", now, tm);
-
-	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	if (tm.tm_wday > 2 + 1)
-		tm.tm_mday += 7;
-	tm.tm_mday += 2 - tm.tm_wday;
-	tm.tm_mday++;	/* xxx midnight --> the next day */
-	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
-	tm.tm_isdst = -1;
-	REL_CHECK("Tuesday midnight", now, tm);
+	       ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	       if (tm.tm_wday > 2 + 1)
+		       tm.tm_mday += 7;
+	       tm.tm_mday += 2 - tm.tm_wday;
+	       tm.tm_mday++;	/* xxx midnight --> the next day */
+	       tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	       tm.tm_isdst = -1;
+	       REL_CHECK("Tuesday midnight", now, tm);
+       }
 }
 
 ATF_TC(atsecs);
