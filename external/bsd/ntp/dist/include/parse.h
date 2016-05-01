@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.h,v 1.5 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: parse.h,v 1.6 2016/05/01 23:32:00 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/include/parse.h,v 4.12 2007/01/14 08:36:03 kardel RELEASE_20070114_A
@@ -109,9 +109,9 @@ extern unsigned int splclock (void);
 /*
  * some constants useful for GPS time conversion
  */
-#define GPSORIGIN       2524953600UL                /* NTP origin - GPS origin in seconds */
-#define GPSWRAP         990U                        /* assume week count less than this in the previous epoch */
-#define GPSWEEKS        1024U                       /* number of weeks until the GPS epch rolls over */
+#define GPSORIGIN       2524953600UL         /* NTP origin - GPS origin in seconds */
+#define GPSWRAP         990                  /* assume week count less than this in the previous epoch */
+#define GPSWEEKS        1024                 /* number of weeks until the GPS epch rolls over */
 
 /*
  * state flags
