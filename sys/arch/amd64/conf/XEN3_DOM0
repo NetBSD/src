@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.117 2016/03/19 23:21:02 gdt Exp $
+# $NetBSD: XEN3_DOM0,v 1.118 2016/05/01 10:21:01 nonaka Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -528,6 +528,10 @@ ld*	at twa? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
+
+# NVM Express controllers and devices
+nvme*	at pci? dev ? function ?
+ld*	at nvme? nsid ?
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
