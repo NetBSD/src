@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.181 2015/02/28 21:44:33 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.182 2016/05/01 19:57:55 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181 2015/02/28 21:44:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2016/05/01 19:57:55 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -388,14 +388,14 @@ print_trapframe(struct trapframe64 *tf)
 	       tf, (u_long)tf->tf_tstate, (u_long)tf->tf_pc, (u_long)tf->tf_npc);
 	printf("fault: %p\ty: %x\t", 
 	       (void *)(u_long)tf->tf_fault, (int)tf->tf_y);
-	printf("pil: %d\toldpil: %d\ttt: %x\tGlobals:\n", 
+	printf("pil: %d\toldpil: %d\ttt: %x\nGlobals:\n", 
 	       (int)tf->tf_pil, (int)tf->tf_oldpil, (int)tf->tf_tt);
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
 	       (u_int)(tf->tf_global[0]>>32), (u_int)tf->tf_global[0],
 	       (u_int)(tf->tf_global[1]>>32), (u_int)tf->tf_global[1],
 	       (u_int)(tf->tf_global[2]>>32), (u_int)tf->tf_global[2],
 	       (u_int)(tf->tf_global[3]>>32), (u_int)tf->tf_global[3]);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\nouts:\n",
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\nOuts:\n",
 	       (u_int)(tf->tf_global[4]>>32), (u_int)tf->tf_global[4],
 	       (u_int)(tf->tf_global[5]>>32), (u_int)tf->tf_global[5],
 	       (u_int)(tf->tf_global[6]>>32), (u_int)tf->tf_global[6],
@@ -406,11 +406,31 @@ print_trapframe(struct trapframe64 *tf)
 	       (u_int)(tf->tf_out[1]>>32), (u_int)tf->tf_out[1],
 	       (u_int)(tf->tf_out[2]>>32), (u_int)tf->tf_out[2],
 	       (u_int)(tf->tf_out[3]>>32), (u_int)tf->tf_out[3]);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\nLocals:\n",
 	       (u_int)(tf->tf_out[4]>>32), (u_int)tf->tf_out[4],
 	       (u_int)(tf->tf_out[5]>>32), (u_int)tf->tf_out[5],
 	       (u_int)(tf->tf_out[6]>>32), (u_int)tf->tf_out[6],
 	       (u_int)(tf->tf_out[7]>>32), (u_int)tf->tf_out[7]);
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+	       (u_int)(tf->tf_local[0]>>32), (u_int)tf->tf_local[0],
+	       (u_int)(tf->tf_local[1]>>32), (u_int)tf->tf_local[1],
+	       (u_int)(tf->tf_local[2]>>32), (u_int)tf->tf_local[2],
+	       (u_int)(tf->tf_local[3]>>32), (u_int)tf->tf_local[3]);
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\nIns:\n",
+	       (u_int)(tf->tf_local[4]>>32), (u_int)tf->tf_local[4],
+	       (u_int)(tf->tf_local[5]>>32), (u_int)tf->tf_local[5],
+	       (u_int)(tf->tf_local[6]>>32), (u_int)tf->tf_local[6],
+	       (u_int)(tf->tf_local[7]>>32), (u_int)tf->tf_local[7]);
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+	       (u_int)(tf->tf_in[0]>>32), (u_int)tf->tf_in[0],
+	       (u_int)(tf->tf_in[1]>>32), (u_int)tf->tf_in[1],
+	       (u_int)(tf->tf_in[2]>>32), (u_int)tf->tf_in[2],
+	       (u_int)(tf->tf_in[3]>>32), (u_int)tf->tf_in[3]);
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+	       (u_int)(tf->tf_in[4]>>32), (u_int)tf->tf_in[4],
+	       (u_int)(tf->tf_in[5]>>32), (u_int)tf->tf_in[5],
+	       (u_int)(tf->tf_in[6]>>32), (u_int)tf->tf_in[6],
+	       (u_int)(tf->tf_in[7]>>32), (u_int)tf->tf_in[7]);
 #endif
 
 }
