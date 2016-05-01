@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.10 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.11 2016/05/01 23:32:01 christos Exp $	*/
 
 
 /* ntp_scanner.c
