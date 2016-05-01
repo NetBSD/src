@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.1.1.9 2016/01/08 21:21:32 christos Exp $	*/
+/*	$NetBSD: save.c,v 1.1.1.10 2016/05/01 15:57:23 christos Exp $	*/
 
 
 /*
@@ -455,7 +455,7 @@ prt_val_list(FILE * fp, char const * name, tArgList * al)
     if (al == NULL)
         return;
     opt_ct   = al->useCt;
-    opt_list = (void **)al->apzArgs;
+    opt_list = VOIDP(al->apzArgs);
 
     if (opt_ct <= 0) {
         fprintf(fp, OPEN_CLOSE_FMT, name);
@@ -490,7 +490,7 @@ prt_nested(FILE * fp, tOptDesc * p)
         return;
 
     opt_ct   = al->useCt;
-    opt_list = (void **)al->apzArgs;
+    opt_list = VOIDP(al->apzArgs);
 
     if (opt_ct <= 0)
         return;

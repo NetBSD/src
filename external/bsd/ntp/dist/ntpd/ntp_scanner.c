@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.1.1.9 2016/01/08 21:21:26 christos Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.1.1.10 2016/05/01 15:57:23 christos Exp $	*/
 
 
 /* ntp_scanner.c
@@ -671,7 +671,7 @@ int
 yylex(void)
 {
 	static follby	followedby = FOLLBY_TOKEN;
-	int		i;
+	size_t		i;
 	int		instring;
 	int		yylval_was_set;
 	int		converted;

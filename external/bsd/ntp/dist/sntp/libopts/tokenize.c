@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenize.c,v 1.1.1.9 2016/01/08 21:21:32 christos Exp $	*/
+/*	$NetBSD: tokenize.c,v 1.1.1.10 2016/05/01 15:57:23 christos Exp $	*/
 
 /** \file tokenize.c
  *
@@ -59,7 +59,7 @@ copy_cooked(ch_t ** ppDest, char const ** ppSrc)
         case NUL:   *ppSrc = NULL; return;
         case '"':   goto done;
         case '\\':
-            pSrc += ao_string_cook_escape_char((char *)pSrc, (char *)&ch, 0x7F);
+            pSrc += ao_string_cook_escape_char((const char *)pSrc, (char *)&ch, 0x7F);
             if (ch == 0x7F)
                 break;
             /* FALLTHROUGH */

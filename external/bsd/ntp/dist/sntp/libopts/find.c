@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.1.1.7 2016/01/08 21:21:32 christos Exp $	*/
+/*	$NetBSD: find.c,v 1.1.1.8 2016/05/01 15:57:23 christos Exp $	*/
 
 /**
  * @file check.c
@@ -82,7 +82,7 @@ parse_opt(char const ** nm_pp, char ** arg_pp, char * buf, size_t bufsz)
 
             buf[res] = NUL;
             *nm_pp   = buf;
-            *arg_pp  = (char *)p;
+            *arg_pp  = VOIDP(p);
             return res;
 
         default:
