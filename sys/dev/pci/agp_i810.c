@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.121 2015/10/21 15:37:35 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.122 2016/05/01 04:22:50 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.121 2015/10/21 15:37:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.122 2016/05/01 04:22:50 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,13 +68,14 @@ struct agp_softc *agp_i810_sc = NULL;
 #define READ4(off)	bus_space_read_4(isc->bst, isc->bsh, off)
 #define WRITE4(off,v)	bus_space_write_4(isc->bst, isc->bsh, off, v)
 
-#define CHIP_I810 0	/* i810/i815 */
-#define CHIP_I830 1	/* 830M/845G */
-#define CHIP_I855 2	/* 852GM/855GM/865G */
-#define CHIP_I915 3	/* 915G/915GM/945G/945GM/945GME */
-#define CHIP_I965 4	/* 965Q/965PM */
-#define CHIP_G33  5	/* G33/Q33/Q35 */
-#define CHIP_G4X  6	/* G45/Q45 */
+#define CHIP_I810	0	/* i810/i815 */
+#define CHIP_I830	1	/* 830M/845G */
+#define CHIP_I855	2	/* 852GM/855GM/865G */
+#define CHIP_I915	3	/* 915G/915GM/945G/945GM/945GME */
+#define CHIP_I965	4	/* 965Q/965PM */
+#define CHIP_G33	5	/* G33/Q33/Q35 */
+#define CHIP_G4X	6	/* G45/Q45 */
+#define CHIP_PINEVIEW	7	/* Pineview */
 
 /* XXX hack, see below */
 static bus_addr_t agp_i810_vga_regbase;
@@ -145,6 +146,7 @@ agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off,
 		/* 965+ can do 36-bit addressing, add in the extra bits. */
 		if (isc->chiptype == CHIP_I965 ||
 		    isc->chiptype == CHIP_G33 ||
+		    isc->chiptype == CHIP_PINEVIEW ||
 		    isc->chiptype == CHIP_G4X) {
 			if (((uintmax_t)addr >> 36) != 0)
 				return EINVAL;
@@ -216,6 +218,7 @@ agp_i810_chipset_flush(struct agp_i810_softc *isc)
 	case CHIP_I915:
 	case CHIP_I965:
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 	case CHIP_G4X:
 		bus_space_write_4(isc->flush_bst, isc->flush_bsh, 0, 1);
 		break;
@@ -365,8 +368,6 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 	case PCI_PRODUCT_INTEL_82945GME_IGD:
 	case PCI_PRODUCT_INTEL_E7221_IGD:
-	case PCI_PRODUCT_INTEL_PINEVIEW_IGD:
-	case PCI_PRODUCT_INTEL_PINEVIEW_M_IGD:
 		isc->chiptype = CHIP_I915;
 		aprint_normal(": i915-family chipset\n");
 		break;
@@ -392,6 +393,11 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		isc->chiptype = CHIP_G33;
 		aprint_normal(": G33-family chipset\n");
 		break;
+	case PCI_PRODUCT_INTEL_PINEVIEW_IGD:
+	case PCI_PRODUCT_INTEL_PINEVIEW_M_IGD:
+		isc->chiptype = CHIP_PINEVIEW;
+		aprint_normal(": Pineview chipset\n");
+		break;
 	case PCI_PRODUCT_INTEL_82GM45_IGD:
 	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
 	case PCI_PRODUCT_INTEL_82IGD_E_IGD:
@@ -411,6 +417,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	switch (isc->chiptype) {
 	case CHIP_I915:
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 		apbase = AGP_I915_GMADR;
 		mmadr_bar = AGP_I915_MMADR;
 		gtt_bar = AGP_I915_GTTADR;
@@ -475,8 +482,9 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case CHIP_I830:
 	case CHIP_I855:
 	case CHIP_I915:
-	case CHIP_G33:
 	case CHIP_I965:
+	case CHIP_G33:
+	case CHIP_PINEVIEW:
 	case CHIP_G4X:
 		isc->size = 512*1024;
 		break;
@@ -531,6 +539,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case CHIP_I915:
 	case CHIP_I965:
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 	case CHIP_G4X:
 		error = agp_i810_setup_chipset_flush_page(sc);
 		if (error) {
@@ -633,6 +642,7 @@ fail3:	switch (isc->chiptype) {
 	case CHIP_I915:
 	case CHIP_I965:
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 	case CHIP_G4X:
 		agp_i810_teardown_chipset_flush_page(sc);
 		break;
@@ -867,6 +877,7 @@ agp_i810_init(struct agp_softc *sc)
 		WRITE4(AGP_I810_PGTBL_CTL, isc->pgtblctl);
 	} else if (isc->chiptype == CHIP_I855 || isc->chiptype == CHIP_I915 ||
 		   isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G33 ||
+		   isc->chiptype == CHIP_PINEVIEW ||
 		   isc->chiptype == CHIP_G4X) {
 		pcireg_t reg;
 		u_int32_t gtt_size, stolen;	/* XXX kilobytes */
@@ -917,6 +928,18 @@ agp_i810_init(struct agp_softc *sc)
 				break;
 			case AGP_G33_PGTBL_SIZE_2M:
 				gtt_size = 2048;
+				break;
+			default:
+				aprint_error_dev(sc->as_dev,
+				    "bad PGTBL size\n");
+				error = ENXIO;
+				goto fail0;
+			}
+			break;
+		case CHIP_PINEVIEW:
+			switch (gcc1 & AGP_PINEVIEW_PGTBL_SIZE_MASK) {
+			case AGP_PINEVIEW_PGTBL_SIZE_1M:
+				gtt_size = 1024;
 				break;
 			default:
 				aprint_error_dev(sc->as_dev,
@@ -1013,6 +1036,7 @@ agp_i810_init(struct agp_softc *sc)
 			if (isc->chiptype != CHIP_I915 &&
 			    isc->chiptype != CHIP_I965 &&
 			    isc->chiptype != CHIP_G33 &&
+			    isc->chiptype != CHIP_PINEVIEW &&
 			    isc->chiptype != CHIP_G4X)
 				stolen = 0;
 			break;
@@ -1020,6 +1044,7 @@ agp_i810_init(struct agp_softc *sc)
 		case AGP_G33_GCC1_GMS_STOLEN_256M:
 			if (isc->chiptype != CHIP_I965 &&
 			    isc->chiptype != CHIP_G33 &&
+			    isc->chiptype != CHIP_PINEVIEW &&
 			    isc->chiptype != CHIP_G4X)
 				stolen = 0;
 			break;
@@ -1089,6 +1114,7 @@ agp_i810_detach(struct agp_softc *sc)
 	case CHIP_I915:
 	case CHIP_I965:
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 	case CHIP_G4X:
 		agp_i810_teardown_chipset_flush_page(sc);
 		break;
@@ -1147,6 +1173,7 @@ agp_i810_get_aperture(struct agp_softc *sc)
 		break;
 	case CHIP_I915:
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 	case CHIP_G4X:
 		size = sc->as_apsize;
 		break;
