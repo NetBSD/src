@@ -1,4 +1,4 @@
-/*	$NetBSD: t-ntp_signd.c,v 1.1.1.3 2016/01/08 21:21:33 christos Exp $	*/
+/*	$NetBSD: t-ntp_signd.c,v 1.1.1.4 2016/05/01 15:54:40 christos Exp $	*/
 
 #include "config.h"
 
@@ -141,6 +141,7 @@ test_send_packet(void)
 void
 test_recv_packet(void)
 {
+#if 0
 	int fd = ux_socket_connect("/socket");
 
 	TEST_ASSERT_TRUE(isGE(fd, 0));
@@ -154,6 +155,9 @@ test_recv_packet(void)
 	TEST_ASSERT_EQUAL(0,temp); //0 because nobody sent us anything (yet!)
 
 	(void)close(fd);
+#else
+	TEST_IGNORE_MESSAGE("test_recv_packet() needs work");
+#endif
 	return;
 }
 
