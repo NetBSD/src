@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/04/19 08:03:21 wiz Exp $
+# $NetBSD: Makefile,v 1.6 2016/05/01 20:25:37 joerg Exp $
 
 # Try to undo the doxygen lossage in the man pages.
 
@@ -41,7 +41,7 @@ MAN1=${SRCS1:S/^/ev/g}
 .for i in ${SRCS1}
 ev$i: $i
 	${TOOL_SED}  -e 's/"deprecated"/"evdeprecated"/g' \
-		-e 's/^deprecated/^evdeprecated/g' < ${.ALLSRC} > ${.TARGET}
+		-e 's/^deprecated/evdeprecated/g' < ${.ALLSRC} > ${.TARGET}
 .endfor
 
 MAN+= \
