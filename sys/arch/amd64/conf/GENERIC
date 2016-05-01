@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.431 2016/04/23 10:15:27 skrll Exp $
+# $NetBSD: GENERIC,v 1.432 2016/05/01 10:21:01 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.431 $"
+#ident 		"GENERIC-$Revision: 1.432 $"
 
 maxusers	64		# estimated number of users
 
@@ -701,6 +701,11 @@ cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+
+# NVM Express controllers and devices
+nvme*	at pci? dev ? function ?
+ld*	at nvme? nsid ?
 
 
 # Miscellaneous mass storage devices

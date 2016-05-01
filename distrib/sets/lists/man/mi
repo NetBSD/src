@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1523 2016/04/28 15:55:15 christos Exp $
+# $NetBSD: mi,v 1.1524 2016/05/01 10:21:01 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1468,6 +1468,7 @@
 ./usr/share/man/cat4/ntwo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ntwoc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/null.0			man-sys-catman		.cat
+./usr/share/man/cat4/nvme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nxt2k.0			man-sys-catman		.cat
 ./usr/share/man/cat4/oak.0			man-sys-catman		.cat
 ./usr/share/man/cat4/oboe.0			man-sys-catman		.cat
@@ -4500,6 +4501,7 @@
 ./usr/share/man/html4/ntwo.html			man-sys-htmlman		html
 ./usr/share/man/html4/ntwoc.html		man-sys-htmlman		html
 ./usr/share/man/html4/null.html			man-sys-htmlman		html
+./usr/share/man/html4/nvme.html			man-sys-htmlman		html
 ./usr/share/man/html4/nxt2k.html		man-sys-htmlman		html
 ./usr/share/man/html4/oak.html			man-sys-htmlman		html
 ./usr/share/man/html4/oboe.html			man-sys-htmlman		html
@@ -7390,6 +7392,7 @@
 ./usr/share/man/man4/ntwo.4			man-sys-man		.man
 ./usr/share/man/man4/ntwoc.4			man-sys-man		.man
 ./usr/share/man/man4/null.4			man-sys-man		.man
+./usr/share/man/man4/nvme.4			man-sys-man		.man
 ./usr/share/man/man4/nxt2k.4			man-sys-man		.man
 ./usr/share/man/man4/oak.4			man-sys-man		.man
 ./usr/share/man/man4/oboe.4			man-sys-man		.man

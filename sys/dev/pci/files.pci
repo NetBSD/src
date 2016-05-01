@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.380 2016/01/05 12:18:42 msaitoh Exp $
+#	$NetBSD: files.pci,v 1.381 2016/05/01 10:21:02 nonaka Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1174,6 +1174,10 @@ defflag	opt_gffb.h	GFFB_DEBUG
 # Realtek RTS5209/RTS5229 Card Reader driver
 attach	rtsx at pci with rtsx_pci
 file	dev/pci/rtsx_pci.c	rtsx_pci
+
+# NVM Express Controller
+attach	nvme at pci with nvme_pci
+file	dev/pci/nvme_pci.c	nvme_pci
 
 # PCI graphics devices with DRM/KMS
 include "external/bsd/drm2/pci/files.drmkms_pci"
