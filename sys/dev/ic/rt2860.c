@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.4 2016/04/29 02:27:06 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.5 2016/05/01 10:49:59 nonaka Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.4 2016/04/29 02:27:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.5 2016/05/01 10:49:59 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.4 2016/04/29 02:27:06 christos Exp $");
 
 #include <dev/pci/pcidevs.h>
 
-#define RAL_DEBUG
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2860_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rt2860_debug >= (n)) printf x; } while (0)
