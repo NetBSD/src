@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.49 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.50 2016/05/02 16:35:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.49 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.50 2016/05/02 16:35:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -563,7 +563,7 @@ re_update_line(EditLine *el, wchar_t *old, wchar_t *new, int i)
 	nls = ++n;
 
 	/*
-         * find same begining and same end
+         * find same beginning and same end
          */
 	osb = ols;
 	nsb = nls;
