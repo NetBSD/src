@@ -1,4 +1,4 @@
-.\" $NetBSD: boot26.8,v 1.6 2016/04/30 14:32:22 jakllsch Exp $
+.\" $NetBSD: boot26.8,v 1.7 2016/05/02 09:41:49 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Ben Harris
 .\" All rights reserved.
@@ -42,9 +42,10 @@ is a program that runs under
 .Tn RISC OS
 and launches the
 .Nx Ns /acorn26
-kernel.  It needs to be installed in a RISC OS
-filesystem and given file type FFA (Module).  The kernel it is to load
-also needs to be stored in a
+kernel.
+It needs to be installed in a RISC OS
+filesystem and given file type FFA (Module).
+The kernel it is to load also needs to be stored in a
 .Tn RISC OS
 filesystem.
 .Pp
@@ -56,7 +57,8 @@ variable in the booted kernel (see
 .It Fl a
 .Pq Dv RB_ASKNAME
 Cause the kernel to prompt the user for the name of the device containing the
-root filesystem.  This also causes
+root filesystem.
+This also causes
 .Nm
 to prompt for the name of the kernel to be loaded.
 .It Fl s
@@ -86,13 +88,13 @@ or from
 .Pa netbsd
 if
 .Ar file
-is not specified.  The file must be an ELF image, and may have been compressed
-using
+is not specified.
+The file must be an ELF image, and may have been compressed using
 .Xr gzip 1 .
 .Ss Use as a module
 .Nm
-is implemented as a RISC OS relocatable module.  It can be loaded into memory
-by running
+is implemented as a RISC OS relocatable module.
+It can be loaded into memory by running
 .Ql *RMLoad boot26 .
 After this,
 .Nx
@@ -113,10 +115,10 @@ the configured language using
 When it starts up,
 .Nm
 displays the current memory map.
-Each character in the map represents one page of (physical) RAM.  The
-ticks along the top are to stop you getting lost.  The characters in the
-map indicate what the memory's being used for (actually where it's
-logically mapped):
+Each character in the map represents one page of (physical) RAM.
+The ticks along the top are to stop you getting lost.
+The characters in the map indicate what the memory's being used for
+(actually where it's logically mapped):
 .Pp
 .Bd -literal -offset indent
 0 -\*[Gt] zero-page
@@ -138,7 +140,8 @@ half of the first line is potential screen memory, and hence not used by
 The next page is usually zero page under RISC OS, and is used for
 zero page under
 .Nx
-as well.  The next is usually the system heap under RISC OS,
+as well.
+The next is usually the system heap under RISC OS,
 and is used for process 0's kernel stack under
 .Nx .
 The next is used for the message buffer under
@@ -146,10 +149,10 @@ The next is used for the message buffer under
 Pages from there on are used to load
 the kernel, and must be free if
 .Nm
-is to do so successfully.  Future
-bootloaders should load the kernel into whatever pages are free, then kick
-out RISC OS and shuffle them into the right shape.  This is left as an
-exercise for the enthusiastic reader.
+is to do so successfully.
+Future bootloaders should load the kernel into whatever pages are
+free, then kick out RISC OS and shuffle them into the right shape.
+This is left as an exercise for the enthusiastic reader.
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /usr/mdec/boot26,ffa
