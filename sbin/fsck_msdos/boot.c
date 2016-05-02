@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.19 2015/01/02 06:21:28 mlelstv Exp $");
+__RCSID("$NetBSD: boot.c,v 1.20 2016/05/02 17:33:03 jakllsch Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -237,7 +237,7 @@ readboot(int dosfs, struct bootblock *boot)
 		break;
 	}
 
-	if (boot->NumFatEntries < boot->NumClusters) {
+	if (boot->NumFatEntries < boot->NumClusters - CLUST_FIRST) {
 		pfatal("FAT size too small, %u entries won't fit into %u sectors\n",
 		       boot->NumClusters, boot->FATsecs);
 		return FSFATAL;
