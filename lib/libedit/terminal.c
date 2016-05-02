@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.30 2016/04/18 17:01:19 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.31 2016/05/02 16:48:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.30 2016/04/18 17:01:19 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.31 2016/05/02 16:48:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1316,8 +1316,8 @@ terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
 		const char *ub;
 		if (*ts && **ts) {
 			ub = ct_encode_string(ct_visual_string(
-			    ct_decode_string(*ts, &el->el_scratch)),
-			    &el->el_scratch);
+			    ct_decode_string(*ts, &el->el_scratch),
+			    &el->el_visual), &el->el_scratch);
 		} else {
 			ub = "(empty)";
 		}

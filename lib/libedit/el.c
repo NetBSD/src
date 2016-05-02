@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.89 2016/04/19 19:50:53 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.90 2016/05/02 16:48:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.89 2016/04/19 19:50:53 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.90 2016/05/02 16:48:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -147,6 +147,8 @@ el_end(EditLine *el)
 	sig_end(el);
 
 	el_free(el->el_prog);
+	el_free(el->el_visual.cbuff);
+	el_free(el->el_visual.wbuff);
 	el_free(el->el_scratch.cbuff);
 	el_free(el->el_scratch.wbuff);
 	el_free(el->el_lgcyconv.cbuff);

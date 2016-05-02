@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.38 2016/04/19 19:50:53 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.39 2016/05/02 16:48:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -133,6 +133,7 @@ struct editline {
 	el_search_t	  el_search;	/* Search stuff			*/
 	el_signal_t	  el_signal;	/* Signal handling stuff	*/
 	struct el_read_t *el_read;	/* Character reading stuff	*/
+	ct_buffer_t       el_visual;    /* Buffer for displayable str	*/
 	ct_buffer_t       el_scratch;   /* Scratch conversion buffer    */
 	ct_buffer_t       el_lgcyconv;  /* Buffer for legacy wrappers   */
 	LineInfo          el_lgcylinfo; /* Legacy LineInfo buffer       */
