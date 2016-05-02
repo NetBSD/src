@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.32 2016/05/02 16:35:17 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.33 2016/05/02 16:48:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ protected ssize_t ct_visual_char(wchar_t *, size_t, wchar_t);
 
 /* Convert the given string into visual format, using the ct_visual_char()
  * function. Uses a static buffer, so not threadsafe. */
-protected const wchar_t *ct_visual_string(const wchar_t *);
+protected const wchar_t *ct_visual_string(const wchar_t *, ct_buffer_t *);
 
 
 /* printable character, use ct_visual_width() to find out display width */
