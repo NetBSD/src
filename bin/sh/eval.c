@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.119 2016/03/16 21:20:59 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.120 2016/05/02 01:46:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.119 2016/03/16 21:20:59 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.120 2016/05/02 01:46:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -508,6 +508,7 @@ expredir(union node *n)
 
 	for (redir = n ; redir ; redir = redir->nfile.next) {
 		struct arglist fn;
+
 		fn.lastp = &fn.list;
 		switch (redir->type) {
 		case NFROMTO:
@@ -566,18 +567,11 @@ evalpipe(union node *n)
 		}
 		if (forkshell(jp, lp->n, n->npipe.backgnd ? FORK_BG : FORK_FG) == 0) {
 			INTON;
-			if (prevfd > 0) {
-				close(0);
-				copyfd(prevfd, 0, 1, 0);
-				close(prevfd);
-			}
+			if (prevfd > 0)
+				movefd(prevfd, 0);
 			if (pip[1] >= 0) {
 				close(pip[0]);
-				if (pip[1] != 1) {
-					close(1);
-					copyfd(pip[1], 1, 1, 0);
-					close(pip[1]);
-				}
+				movefd(pip[1], 1);
 			}
 			evaltree(lp->n, EV_EXIT);
 		}
@@ -638,11 +632,7 @@ evalbackcmd(union node *n, struct backcmd *result)
 		if (forkshell(jp, n, FORK_NOJOB) == 0) {
 			FORCEINTON;
 			close(pip[0]);
-			if (pip[1] != 1) {
-				close(1);
-				copyfd(pip[1], 1, 1, 0);
-				close(pip[1]);
-			}
+			movefd(pip[1], 1);
 			eflag = 0;
 			evaltree(n, EV_EXIT);
 			/* NOTREACHED */
@@ -970,11 +960,7 @@ normal_fork:
 				FORCEINTON;
 			}
 			close(pip[0]);
-			if (pip[1] != 1) {
-				close(1);
-				copyfd(pip[1], 1, 1, 0);
-				close(pip[1]);
-			}
+			movefd(pip[1], 1);
 		}
 		flags |= EV_EXIT;
 	}
