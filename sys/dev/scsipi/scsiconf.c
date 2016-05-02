@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.273 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.274 2016/05/02 19:18:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.273 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.274 2016/05/02 19:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,9 +493,12 @@ scsibusprint(void *aux, const char *pnp)
 
 	dtype = scsipi_dtype(type);
 
-	scsipi_strvis(vendor, 33, inqbuf->vendor, 8);
-	scsipi_strvis(product, 65, inqbuf->product, 16);
-	scsipi_strvis(revision, 17, inqbuf->revision, 4);
+	strnvisx(vendor, sizeof(vendor), inqbuf->vendor, 8,
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(product, sizeof(product), inqbuf->product, 16,
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(revision, sizeof(revision), inqbuf->revision, 4,
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 	aprint_normal(" target %d lun %d: <%s, %s, %s> %s %s",
 	    target, lun, vendor, product, revision, dtype,

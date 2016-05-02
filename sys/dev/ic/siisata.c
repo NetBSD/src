@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.27 2013/08/08 17:38:56 bouyer Exp $ */
+/* $NetBSD: siisata.c,v 1.28 2016/05/02 19:18:29 christos Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.27 2013/08/08 17:38:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.28 2016/05/02 19:18:29 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1459,11 +1459,12 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		sa.sa_inqbuf.type = ATAPI_CFG_TYPE(id->atap_config);
 		sa.sa_inqbuf.removable = id->atap_config & ATAPI_CFG_REMOV ?
 		    T_REMOV : T_FIXED;
-		scsipi_strvis((u_char *)model, 40, id->atap_model, 40);
-		scsipi_strvis((u_char *)serial_number, 20,
-		    id->atap_serial, 20);
-		scsipi_strvis((u_char *)firmware_revision, 8,
-		    id->atap_revision, 8);
+		strnvisx(model, sizeof(model), id->atap_model, 40,
+		    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+		strnvisx(serial_number, sizeof(serial_number),
+		    id->atap_serial, 20, VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+		strnvisx(firmware_revision, sizeof(firmware_revision),
+		    id->atap_revision, 8, VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 		sa.sa_inqbuf.vendor = model;
 		sa.sa_inqbuf.product = serial_number;
 		sa.sa_inqbuf.revision = firmware_revision;
