@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.5 2016/03/27 14:49:07 christos Exp $
+# $NetBSD: t_redir.sh,v 1.6 2016/05/02 01:47:14 christos Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -333,7 +333,78 @@ fd_redirections_head()
 }
 fd_redirections_body()
 {
-	# Or it will one day...
+	atf_require_prog /bin/echo
+
+	cat <<- 'DONE' > helper.sh
+		f() {
+			/bin/echo nothing "$1" >& "$1"
+		}
+		for n
+		do
+			eval "f $n $n"'> file-$n'
+		done
+	DONE
+	cat <<- 'DONE' > reread.sh
+		f() {
+			(read -r var; echo "${var}") <&"$1"
+		}
+		for n
+		do
+			x=$( eval "f $n $n"'< file-$n' )
+			test "${x}" = "nothing $n" || echo "$n"
+		done
+	DONE
+
+	validate()
+	{
+	    for n
+	    do
+		test -e "file-$n" || atf_fail "file-$n not created"
+		C=$(cat file-"$n")
+		test "$C" = "nothing $n" ||
+			atf_fail "file-$n contains '$C' not 'nothing $n'"
+	    done
+	}
+
+	atf_check -s exit:0 -e empty -o empty \
+		${TEST_SH} helper.sh 1 2 3 4 5 6 7 8 9
+	validate 1 2 3 4 5 6 7 8 9
+	atf_check -s exit:0 -e empty -o empty \
+		${TEST_SH} reread.sh 3 4 5 6 7 8 9
+
+	L=$(ulimit -n)
+	if [ "$L" -ge 30 ]
+	then
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} helper.sh 10 15 19 20 25 29
+		validate 10 15 19 20 25 29
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} reread.sh 10 15 19 20 25 29
+	fi
+	if [ "$L" -ge 100 ]
+	then
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} helper.sh 32 33 49 50 51 63 64 65 77 88 99
+		validate 32 33 49 50 51 63 64 65 77 88 99
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} reread.sh 32 33 49 50 51 63 64 65 77 88 99
+	fi
+	if [ "$L" -ge 500 ]
+	then
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} helper.sh 100 101 199 200 222 333 444 499
+		validate 100 101 199 200 222 333 444 499
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} reread.sh 100 101 199 200 222 333 444 499
+	fi
+	if [ "$L" -gt 1005 ]
+	then
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} helper.sh 1000 1001 1002 1003 1004 1005
+		validate 1000 1001 1002 1003 1004 1005
+		atf_check -s exit:0 -e empty -o empty \
+			${TEST_SH} reread.sh 1000 1001 1002 1003 1004 1005
+	fi
 } 
 
 atf_test_case local_redirections
@@ -344,7 +415,61 @@ local_redirections_head()
 }
 local_redirections_body()
 {
-	# Or it will one day...
+	cat <<- 'DONE' > helper.sh
+		for f
+		do
+			eval "exec $f"'> file-$f'
+		done
+
+		for f
+		do
+			printf '%s\n' "Hello $f" >&"$f"
+		done
+
+		for f
+		do
+			eval "exec $f"'>&-'
+		done
+
+		for f
+		do
+			eval "exec $f"'< file-$f'
+		done
+
+		for f
+		do
+			exec <& "$f"
+			read -r var || echo >&2 "No data in file-$f"
+			read -r x && echo >&2 "Too much data in file-${f}: $x"
+			test "${var}" = "Hello $f" ||
+			    echo >&2 "file-$f contains '${var}' not 'Hello $f'"
+		done
+	DONE
+
+	atf_check -s exit:0 -o empty -e empty \
+		${TEST_SH} helper.sh 3 4 5 6 7 8 9
+
+	L=$(ulimit -n)
+	if [ "$L" -ge 30 ]
+	then
+		atf_check -s exit:0 -o empty -e empty \
+			${TEST_SH} helper.sh 10 11 13 15 16 19 20 28 29
+	fi
+	if [ "$L" -ge 100 ]
+	then
+		atf_check -s exit:0 -o empty -e empty \
+			${TEST_SH} helper.sh 30 31 32 63 64 65 77 88 99
+	fi
+	if [ "$L" -ge 500 ]
+	then
+		atf_check -s exit:0 -o empty -e empty \
+			${TEST_SH} helper.sh 100 101 111 199 200 201 222 333 499
+	fi
+	if [ "$L" -ge 1005 ]
+	then
+		atf_check -s exit:0 -o empty -e empty \
+			${TEST_SH} helper.sh 1000 1001 1002 1003 1004 1005
+	fi
 }
 
 atf_test_case redir_in_case
@@ -443,7 +568,138 @@ subshell_redirections_head()
 }
 subshell_redirections_body()
 {
-	# Or will, one day
+	atf_require_prog cat
+
+	LIM=$(ulimit -n)
+
+	cat <<- 'DONE' |
+		exec 6>output-file
+
+		( printf "hello\n" >&6 )
+
+		exec 8<output-file
+
+		( read hello <&8 ; test hello = "$hello" || echo >&2 Hello )
+
+		( printf "bye-bye\n" >&6 )
+
+		( exec 8<&- )
+		read bye <&8 || echo >&2 "Closed?"
+		echo Bye="$bye"
+	DONE
+	atf_check -s exit:0 -o match:Bye=bye-bye -e empty \
+		${TEST_SH}
+
+	cat <<- 'DONE' |
+		for arg in one-4 two-24 three-14
+		do
+			fd=${arg#*-}
+			file=${arg%-*}
+			eval "exec ${fd}>${file}"
+		done
+
+		for arg in one-5 two-7 three-19
+		do
+			fd=${arg#*-}
+			file=${arg%-*}
+			eval "exec ${fd}<${file}"
+		done
+
+		(
+			echo line-1 >&4
+			echo line-2 >&24
+			echo line-3 >&14
+			echo go
+		) | (
+			read go
+			read x <&5
+			read y <&7
+			read z <&19
+
+			printf "%s\n" "${x}" "${y}" "${z}"
+		)
+	DONE
+	atf_check -s exit:0 -o inline:'line-1\nline-2\nline-3\n' \
+		-e empty ${TEST_SH}
+
+	cat <<- 'DONE' |
+		for arg in one-4-5 two-6-7 three-8-9 four-11-10 five-3-12
+		do
+			ofd=${arg##*-}
+			file=${arg%-*}
+			ifd=${file#*-}
+			file=${file%-*}
+			eval "exec ${ofd}>${file}"
+			eval "exec ${ifd}<${file}"
+		done
+
+		( ( ( echo line-1 >& 13 ) 13>&12 ) 12>&5 ) >stdout 2>errout
+		( ( ( echo line-2 >& 4) 13>&12 ) 4>&7 ) >>stdout 2>>errout
+		( ( ( echo line-3 >& 6) 8>&1 6>&11 >&12) 11>&9 >&7 ) >>stdout
+
+		( ( ( cat <&13 >&12 ) 13<&8 12>&10 ) 10>&1 8<&6 ) 6<&4
+		( ( ( cat <&4 ) <&4 6<&8 8<&11  )
+			<&4 4<&6 6<&8 8<&11 ) <&4 4<&6 6<&8 8<&11 11<&3
+		( ( ( cat <&7 >&1 ) 7<&6 >&10 ) 10>&2 6<&8 ) 2>&1
+	DONE
+	atf_check -s exit:0 -o inline:'line-1\nline-2\nline-3\n' \
+		-e empty ${TEST_SH}
+}
+
+atf_test_case ulimit_redirection_interaction
+ulimit_redirection_interaction_head()
+{
+	atf_set "descr" "Tests interactions between redirect and ulimit -n "
+}
+ulimit_redirection_interaction_body()
+{
+	atf_require_prog ls
+
+	cat <<- 'DONE' > helper.sh
+		oLIM=$(ulimit -n)
+		HRD=$(ulimit -H -n)
+		test "${oLIM}" -lt "${HRD}"  && ulimit -n "${HRD}"
+		LIM=$(ulimit -n)
+
+		FDs=
+		LFD=-1
+		while [ ${LIM} -gt 16 ]
+		do
+			FD=$(( ${LIM} - 1 ))
+			if [ "${FD}" -eq "${LFD}" ]; then
+				echo >&2 "Infinite loop... (busted $(( )) ??)"
+				exit 1
+			fi
+			LFD="${FD}"
+
+			eval "exec ${FD}"'> /dev/null'
+			FDs="${FD}${FDs:+ }${FDs}"
+
+			(
+				FD=$(( ${LIM} + 1 ))
+				eval "exec ${FD}"'> /dev/null'
+				echo "Reached unreachable command"
+			) 2>/dev/null && echo >&2 "Opened beyond limit!"
+
+			(eval 'ls 2>&1 3>&1 4>&1 5>&1 '"${FD}"'>&1') >&"${FD}"
+
+			LIM=$(( ${LIM} / 2 ))
+			ulimit -S -n "${LIM}"
+		done
+
+		# Even though ulimit has been reduced, open fds should work
+		for FD in ${FDs}
+		do
+			echo ${FD} in ${FDs} >&"${FD}" || exit 1
+		done
+
+		ulimit -S -n "${oLIM}"
+
+		# maybe more later...
+
+	DONE
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} helper.sh
 }
 
 atf_init_test_cases() {
@@ -456,4 +712,5 @@ atf_init_test_cases() {
 	atf_add_test_case redir_here_doc
 	atf_add_test_case redir_in_case
 	atf_add_test_case subshell_redirections
+	atf_add_test_case ulimit_redirection_interaction
 }
