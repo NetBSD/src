@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.48 2016/03/27 14:34:46 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.49 2016/05/02 01:46:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.48 2016/03/27 14:34:46 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.49 2016/05/02 01:46:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -411,14 +411,13 @@ setinputfile(const char *fname, int push)
 			error("Cannot rewind the file %s", fname);
 	}
 
-	if (fd < 10) {
-		fd2 = copyfd(fd, 10, 0, 0);
-		close(fd);
-		if (fd2 < 0)
-			error("Out of file descriptors");
-		fd = fd2;
+	fd2 = to_upper_fd(fd);	/* closes fd, returns higher equiv */
+	if (fd2 == fd) {
+		(void) close(fd);
+		error("Out of file descriptors");
 	}
-	setinputfd(fd, push);
+
+	setinputfd(fd2, push);
 	INTON;
 }
 

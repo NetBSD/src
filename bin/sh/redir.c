@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.42 2016/03/13 01:22:42 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.43 2016/05/02 01:46:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.42 2016/03/13 01:22:42 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.43 2016/05/02 01:46:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,16 @@ __RCSID("$NetBSD: redir.c,v 1.42 2016/03/13 01:22:42 christos Exp $");
 
 
 MKINIT
+struct renamelist {
+	struct renamelist *next;
+	int orig;
+	int into;
+};
+
+MKINIT
 struct redirtab {
 	struct redirtab *next;
-	short renamed[10];
+	struct renamelist *renamed;
 };
 
 
@@ -88,12 +95,64 @@ MKINIT struct redirtab *redirlist;
  * We keep track of whether or not fd0 has been redirected.  This is for
  * background commands, where we want to redirect fd0 to /dev/null only
  * if it hasn't already been redirected.
-*/
-int fd0_redirected = 0;
+ */
+STATIC int fd0_redirected = 0;
 
+/*
+ * And also where to put internal use fds that should be out of the
+ * way of user defined fds (normally)
+ */
+STATIC int big_sh_fd = 0;
+
+STATIC const struct renamelist *is_renamed(const struct renamelist *, int);
+STATIC void fd_rename(struct redirtab *, int, int);
+STATIC void free_rl(struct redirtab *, int);
 STATIC void openredirect(union node *, char[10], int);
 STATIC int openhere(const union node *);
+STATIC void find_big_fd(void);
 
+STATIC const struct renamelist *
+is_renamed(const struct renamelist *rl, int fd)
+{
+	while (rl != NULL) {
+		if (rl->orig == fd)
+			return rl;
+		rl = rl->next;
+	}
+	return NULL;
+}
+
+STATIC void
+free_rl(struct redirtab *rt, int reset)
+{
+	struct renamelist *rl, *rn = rt->renamed;
+
+	while ((rl = rn) != NULL) {
+		rn = rl->next;
+		if (rl->orig == 0)
+			fd0_redirected--;
+		if (reset) {
+			if (rl->into < 0)
+				close(rl->orig);
+			else
+				movefd(rl->into, rl->orig);
+		}
+		ckfree(rl);
+	}
+	rt->renamed = NULL;
+}
+
+STATIC void
+fd_rename(struct redirtab *rt, int from, int to)
+{
+	struct renamelist *rl = ckmalloc(sizeof(struct renamelist));
+
+	rl->next = rt->renamed;
+	rt->renamed = rl;
+
+	rl->orig = from;
+	rl->into = to;
+}
 
 /*
  * Process a list of redirection commands.  If the REDIR_PUSH flag is set,
@@ -120,32 +179,45 @@ redirect(union node *redir, int flags)
 		 * flags & REDIR_PUSH is never true if REDIR_VFORK is set.
 		 */
 		sv = ckmalloc(sizeof (struct redirtab));
-		for (i = 0 ; i < 10 ; i++)
-			sv->renamed[i] = EMPTY;
+		sv->renamed = NULL;
 		sv->next = redirlist;
 		redirlist = sv;
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
 		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
-		    n->ndup.dupfd == fd)
-			continue; /* redirect from/to same file descriptor */
+		    n->ndup.dupfd == fd) {
+			/* redirect from/to same file descriptor */
+			fcntl(fd, F_SETFD, 0);	/* make sure it stays open */
+			continue;
+		}
 
-		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY) {
+		if ((flags & REDIR_PUSH) && !is_renamed(sv->renamed, fd)) {
 			INTOFF;
-			if ((i = fcntl(fd, F_DUPFD, 10)) == -1) {
+			if (big_sh_fd < 10)
+				find_big_fd();
+			if ((i = fcntl(fd, F_DUPFD, big_sh_fd)) == -1) {
 				switch (errno) {
 				case EBADF:
 					i = CLOSED;
 					break;
+				case EMFILE:
+				case EINVAL:
+					find_big_fd();
+					i = fcntl(fd, F_DUPFD, big_sh_fd);
+					if (i >= 0)
+						break;
+					/* FALLTHRU */
 				default:
-					INTON;
-					error("%d: %s", fd, strerror(errno));
+					i = errno;
+					INTON;    /* XXX not needed here ? */
+					error("%d: %s", fd, strerror(i));
 					/* NOTREACHED */
 				}
-			} else
+			}
+			if (i >= 0)
 				(void)fcntl(i, F_SETFD, FD_CLOEXEC);
-			sv->renamed[fd] = i;
+			fd_rename(sv, fd, i);
 			INTON;
 		} else {
 			close(fd);
@@ -176,7 +248,8 @@ openredirect(union node *redir, char memory[10], int flags)
 	 * an open of a device or a fifo can block indefinitely.
 	 */
 	INTOFF;
-	memory[fd] = 0;
+	if (fd < 10)
+		memory[fd] = 0;
 	switch (redir->nfile.type) {
 	case NFROM:
 		fname = redir->nfile.expfname;
@@ -227,7 +300,8 @@ openredirect(union node *redir, char memory[10], int flags)
 	case NTOFD:
 	case NFROMFD:
 		if (redir->ndup.dupfd >= 0) {	/* if not ">&-" */
-			if (memory[redir->ndup.dupfd])
+			if (fd < 10 && redir->ndup.dupfd < 10 &&
+			    memory[redir->ndup.dupfd])
 				memory[fd] = 1;
 			else
 				copyfd(redir->ndup.dupfd, fd, 1,
@@ -312,20 +386,9 @@ void
 popredir(void)
 {
 	struct redirtab *rp = redirlist;
-	int i;
 
-	for (i = 0 ; i < 10 ; i++) {
-		if (rp->renamed[i] != EMPTY) {
-                        if (i == 0)
-                                fd0_redirected--;
-			close(i);
-			if (rp->renamed[i] >= 0) {
-				copyfd(rp->renamed[i], i, 1, 0);
-				close(rp->renamed[i]);
-			}
-		}
-	}
 	INTOFF;
+	free_rl(rp, 1);
 	redirlist = rp->next;
 	ckfree(rp);
 	INTON;
@@ -352,7 +415,8 @@ SHELLPROC {
 
 /* Return true if fd 0 has already been redirected at least once.  */
 int
-fd0_redirected_p (void) {
+fd0_redirected_p(void)
+{
         return fd0_redirected != 0;
 }
 
@@ -364,16 +428,14 @@ void
 clearredir(int vforked)
 {
 	struct redirtab *rp;
-	int i;
+	struct renamelist *rl;
 
 	for (rp = redirlist ; rp ; rp = rp->next) {
-		for (i = 0 ; i < 10 ; i++) {
-			if (rp->renamed[i] >= 0) {
-				close(rp->renamed[i]);
-			}
-			if (!vforked)
-				rp->renamed[i] = EMPTY;
-		}
+		if (!vforked)
+			free_rl(rp, 0);
+		else for (rl = rp->renamed; rl; rl = rl->next)
+			if (rl->into >= 0)
+				close(rl->into);
 	}
 }
 
@@ -408,4 +470,61 @@ copyfd(int from, int to, int equal, int cloexec)
 			error("%d: %s", from, strerror(errno));
 	}
 	return newfd;
+}
+
+int
+movefd(int from, int to)
+{
+	if (from == to)
+		return to;
+
+	(void) close(to);
+	if (copyfd(from, to, 1, 0) != to)
+		error("Unable to make fd %d", to);
+	(void) close(from);
+
+	return to;
+}
+
+STATIC void
+find_big_fd(void)
+{
+	int i, fd;
+
+	for (i = (1 << 10); i >= 10; i >>= 1) {
+		if ((fd = fcntl(0, F_DUPFD, i - 1)) >= 0) {
+			close(fd);
+			break;
+		}
+	}
+
+	fd = (i / 5) * 4;
+	if ((i - fd) > 100)
+		fd = i - 100;
+	else if (fd < 10)
+		fd = 10;
+
+	big_sh_fd = fd;
+}
+
+int
+to_upper_fd(int fd)
+{
+	int i;
+
+	if (big_sh_fd < 10)
+		find_big_fd();
+	do {
+		i = fcntl(fd, F_DUPFD, big_sh_fd);
+		if (i >= 0) {
+			if (fd != i)
+				close(fd);
+			return i;
+		}
+		if (errno != EMFILE)
+			break;
+		find_big_fd();
+	} while (big_sh_fd > 10);
+
+	return fd;
 }
