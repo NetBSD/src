@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.28 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.29 2016/05/02 16:48:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.28 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.29 2016/05/02 16:48:34 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -211,51 +211,44 @@ ct_encode_char(char *dst, size_t len, wchar_t c)
 }
 
 protected const wchar_t *
-ct_visual_string(const wchar_t *s)
+ct_visual_string(const wchar_t *s, ct_buffer_t *conv)
 {
-	static wchar_t *buff = NULL;
-	static size_t buffsize = 0;
-	void *p;
 	wchar_t *dst;
-	ssize_t used = 0;
+	ssize_t used;
 
 	if (!s)
 		return NULL;
-	if (!buff) {
-	    buffsize = CT_BUFSIZ;
-	    buff = el_malloc(buffsize * sizeof(*buff));
-	}
-	dst = buff;
+
+	if (ct_conv_wbuff_resize(conv, CT_BUFSIZ) == -1)
+		return NULL;
+
+	used = 0;
+	dst = conv->wbuff;
 	while (*s) {
-		used = ct_visual_char(dst, buffsize - (size_t)(dst - buff), *s);
-		if (used == -1) { /* failed to encode, need more buffer space */
-			used = dst - buff;
-			buffsize += CT_BUFSIZ;
-			p = el_realloc(buff, buffsize * sizeof(*buff));
-			if (p == NULL)
-				goto out;
-			buff = p;
-			dst = buff + used;
-			/* don't increment s here - we want to retry it! */
+		used = ct_visual_char(dst,
+		    conv->wsize - (size_t)(dst - conv->wbuff), *s);
+		if (used != -1) {
+			++s;
+			dst += used;
+			continue;
 		}
-		else
-		    ++s;
-		dst += used;
+
+		/* failed to encode, need more buffer space */
+		used = dst - conv->wbuff;
+		if (ct_conv_wbuff_resize(conv, conv->wsize + CT_BUFSIZ) == -1)
+			return NULL;
+		dst = conv->wbuff + used;
 	}
-	if (dst >= (buff + buffsize)) { /* sigh */
-		buffsize += 1;
-		p = el_realloc(buff, buffsize * sizeof(*buff));
-		if (p == NULL)
-			goto out;
-		buff = p;
-		dst = buff + buffsize - 1;
+
+	if (dst >= (conv->wbuff + conv->wsize)) { /* sigh */
+		used = dst - conv->wbuff;
+		if (ct_conv_wbuff_resize(conv, conv->wsize + CT_BUFSIZ) == -1)
+			return NULL;
+		dst = conv->wbuff + used;
 	}
-	*dst = 0;
-	return buff;
-out:
-	el_free(buff);
-	buffsize = 0;
-	return NULL;
+
+	*dst = L'\0';
+	return conv->wbuff;
 }
 
 
