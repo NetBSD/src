@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.31 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.32 2016/05/02 16:35:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -69,13 +69,13 @@ wchar_t *ct_decode_string(const char *, ct_buffer_t *);
  * The pointer returned must be free()d when done. */
 protected wchar_t **ct_decode_argv(int, const char *[],  ct_buffer_t *);
 
-/* Encode a characted into the destination buffer, provided there is sufficent
+/* Encode a character into the destination buffer, provided there is sufficient
  * buffer space available. Returns the number of bytes used up (zero if the
  * character cannot be encoded, -1 if there was not enough space available). */
 protected ssize_t ct_encode_char(char *, size_t, wchar_t);
 protected size_t ct_enc_width(wchar_t);
 
-/* The maximum buffer size to hold the most unwieldly visual representation,
+/* The maximum buffer size to hold the most unwieldy visual representation,
  * in this case \U+nnnnn. */
 #define VISUAL_WIDTH_MAX ((size_t)8)
 
