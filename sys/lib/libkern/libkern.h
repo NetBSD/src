@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.121 2015/08/30 07:55:45 uebayasi Exp $	*/
+/*	$NetBSD: libkern.h,v 1.122 2016/05/02 19:18:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -464,6 +464,10 @@ unsigned int	popcount64(uint64_t) __constfunc;
 
 void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
+int	strnvisx(char *, size_t, const char *, size_t, int);
+#define VIS_OCTAL	0x01
+#define VIS_SAFE	0x20
+#define VIS_TRIM	0x40
 
 #ifdef notyet
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.38 2015/04/15 19:13:47 mrg Exp $
+#	$NetBSD: Makefile.libkern,v 1.39 2016/05/02 19:18:29 christos Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -74,6 +74,7 @@ SRCS+=	memset.c
 SRCS+=	popcount32.c popcount64.c
 SRCS+=	strtoul.c strtoll.c strtoull.c strtoimax.c strtoumax.c
 SRCS+=	strtoi.c strtou.c
+SRCS+=	strnvisx.c
 
 SRCS+=	scanc.c skpc.c
 SRCS+=	random.c
