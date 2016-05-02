@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.332 2016/04/28 01:37:17 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.333 2016/05/02 08:03:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.332 2016/04/28 01:37:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.333 2016/05/02 08:03:23 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -912,7 +912,7 @@ if_input(struct ifnet *ifp, struct mbuf *m)
  * See the above comment of if_initialize.
  *
  * Note that it implicitly enables if_percpuq to make drivers easy to
- * migrate softinet-based if_input without much changes. If you don't
+ * migrate softint-based if_input without much changes. If you don't
  * want to enable it, use if_initialize instead.
  */
 void
