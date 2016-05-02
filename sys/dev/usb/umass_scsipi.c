@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.50 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.51 2016/05/02 19:18:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.50 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.51 2016/05/02 19:18:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -555,9 +555,12 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 		return;
 	}
 
-	scsipi_strvis(vendor, 33, inqbuf.vendor, 8);
-	scsipi_strvis(product, 65, inqbuf.product, 16);
-	scsipi_strvis(revision, 17, inqbuf.revision, 4);
+	strnvisx(vendor, sizeof(vendor), inqbuf.vendor, 8,
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(product, sizeof(product), inqbuf.product, 16,
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(revision, sizeof(revision), inqbuf.revision, 4,
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 	sa.sa_periph = periph;
 	sa.sa_inqbuf.type = inqbuf.device;
