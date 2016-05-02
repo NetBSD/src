@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.75 2015/08/22 12:12:47 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.76 2016/05/02 01:46:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.75 2015/08/22 12:12:47 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.76 2016/05/02 01:46:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,15 +161,7 @@ setjobctl(int on)
 			if (i == 3)
 				goto out;
 		}
-		/* Move to a high fd */
-		for (i = 10; i > 2; i--) {
-			if ((err = fcntl(ttyfd, F_DUPFD, (1 << i) - 1)) != -1)
-				break;
-		}
-		if (err != -1) {
-			close(ttyfd);
-			ttyfd = err;
-		}
+		ttyfd = to_upper_fd(ttyfd);	/* Move to a high fd */
 #ifdef FIOCLEX
 		err = ioctl(ttyfd, FIOCLEX, 0);
 #elif FD_CLOEXEC
