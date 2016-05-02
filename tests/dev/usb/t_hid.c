@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hid.c,v 1.5 2016/01/09 14:31:19 jakllsch Exp $	*/
+/*	$NetBSD: t_hid.c,v 1.6 2016/05/02 17:24:06 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,13 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hid.c,v 1.5 2016/01/09 14:31:19 jakllsch Exp $");
+__RCSID("$NetBSD: t_hid.c,v 1.6 2016/05/02 17:24:06 jakllsch Exp $");
 
 #include <machine/types.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <atf-c.h>
+
+#include <rump/rump.h>
+
 #define hid_start_parse rumpns_hid_start_parse
 #define hid_end_parse rumpns_hid_end_parse
 #define hid_get_item rumpns_hid_get_item
@@ -103,6 +106,8 @@ ATF_TC_BODY(khid, tc)
 	struct hid_item hi;
 
 	uhidevdebug = 0;
+
+	rump_init();
 
 	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000003, 0, hid_input,
@@ -233,6 +238,8 @@ ATF_TC_BODY(khid_parse_just_pop, tc)
 {
 	struct hid_data *hdp;
 	struct hid_item hi;
+
+	rump_init();
 
 	hdp = hid_start_parse(just_pop_report_descriptor,
 	    sizeof just_pop_report_descriptor, hid_none);
