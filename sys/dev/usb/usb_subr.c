@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.210 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.211 2016/05/02 11:55:21 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.210 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.211 2016/05/02 11:55:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1708,9 +1708,6 @@ usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 	DPRINTFN(3, "up=%p dev=%p port=%d", up, dev, up->up_portno, 0);
 
 	if (dev == NULL) {
-#ifdef DIAGNOSTIC
-		printf("usb_disconnect_port: no device\n");
-#endif
 		return 0;
 	}
 
