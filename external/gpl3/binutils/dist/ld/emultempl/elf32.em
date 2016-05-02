@@ -1289,7 +1289,7 @@ fragment <<EOF
 	      if (IS_ABSOLUTE_PATH (tmpname))
 		tmpname = gld${EMULATION_NAME}_add_sysroot (tmpname);
 	      found = (rp->by == l->by
-		       && gld${EMULATION_NAME}_search_needed (rp->name,
+		       && gld${EMULATION_NAME}_search_needed (tmpname,
 							      &n,
 							      force, 1));
 	      if (tmpname != rp->name)
