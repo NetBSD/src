@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.32 2015/03/12 15:33:10 christos Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.33 2016/05/02 19:18:29 christos Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.32 2015/03/12 15:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.33 2016/05/02 19:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -635,15 +635,18 @@ arc_query_firmware(device_t self)
 	DNPRINTF(ARC_D_INIT, "%s: sata_ports: %d\n",
 	    device_xname(self), htole32(fwinfo.sata_ports));
 
-	scsipi_strvis(string, 81, fwinfo.vendor, sizeof(fwinfo.vendor));
+	strnvisx(string, sizeof(string), fwinfo.vendor, sizeof(fwinfo.vendor),
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	DNPRINTF(ARC_D_INIT, "%s: vendor: \"%s\"\n",
 	    device_xname(self), string);
 
-	scsipi_strvis(string, 17, fwinfo.model, sizeof(fwinfo.model));
+	strnvisx(string, sizeof(string), fwinfo.model, sizeof(fwinfo.model),
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	aprint_normal_dev(self, "Areca %s Host Adapter RAID controller\n",
 	    string);
 
-	scsipi_strvis(string, 33, fwinfo.fw_version, sizeof(fwinfo.fw_version));
+	strnvisx(string, sizeof(string), fwinfo.fw_version,
+	    sizeof(fwinfo.fw_version), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	DNPRINTF(ARC_D_INIT, "%s: version: \"%s\"\n",
 	    device_xname(self), string);
 
@@ -1328,8 +1331,8 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	bv->bv_nodisk = volinfo->member_disks;
 	bv->bv_stripe_size = volinfo->stripe_size / 2;
 	snprintf(bv->bv_dev, sizeof(bv->bv_dev), "sd%d", bv->bv_volid);
-	scsipi_strvis(bv->bv_vendor, sizeof(bv->bv_vendor), volinfo->set_name,
-	    sizeof(volinfo->set_name));
+	strnvisx(bv->bv_vendor, sizeof(bv->bv_vendor), volinfo->set_name,
+	    sizeof(volinfo->set_name), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 out:
 	kmem_free(volinfo, sizeof(*volinfo));
@@ -1417,10 +1420,12 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 	blocks += (uint64_t)htole32(diskinfo->capacity);
 	bd->bd_size = blocks * ARC_BLOCKSIZE; /* XXX */
 
-	scsipi_strvis(model, 81, diskinfo->model, sizeof(diskinfo->model));
-	scsipi_strvis(serial, 41, diskinfo->serial, sizeof(diskinfo->serial));
-	scsipi_strvis(rev, 17, diskinfo->firmware_rev,
-	    sizeof(diskinfo->firmware_rev));
+	strnvisx(model, sizeof(model), diskinfo->model,
+	    sizeof(diskinfo->model), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(serial, sizeof(serial), diskinfo->serial,
+	    sizeof(diskinfo->serial), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(rev, sizeof(rev), diskinfo->firmware_rev,
+	    sizeof(diskinfo->firmware_rev), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 	snprintf(bd->bd_vendor, sizeof(bd->bd_vendor), "%s %s", model, rev);
 	strlcpy(bd->bd_serial, serial, sizeof(bd->bd_serial));
