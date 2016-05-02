@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.7,v 1.1 2016/04/28 15:50:33 christos Exp $
+.\"	$NetBSD: editline.7,v 1.2 2016/05/02 09:39:24 wiz Exp $
 .\"	$OpenBSD: editline.7,v 1.1 2016/04/20 01:11:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd April 20 2016
+.Dd April 20, 2016
 .Dt EDITLINE 7
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@ discarded.
 For each character read, one editor command is executed.
 The mapping of input characters to editor commands depends on the
 editing mode.
-There are three editing modes:  vi insert mode, vi command mode,
+There are three editing modes: vi insert mode, vi command mode,
 and emacs mode.
 The default is vi insert mode.
 The program can switch the default to emacs mode by using the
