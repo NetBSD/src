@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.525 2016/04/14 21:16:18 salazar Exp $
+.\"	$NetBSD: main,v 1.526 2016/05/02 16:02:24 kre Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1171,6 +1171,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Jaime A Fournier Ta Mt ober@NetBSD.org
 .It Ta Stoned Elipot Ta Mt seb@NetBSD.org
 .It Ta Michael van Elst Ta Mt mlelstv@NetBSD.org
+.It Ta Robert Elz Ta Mt kre@netbsd.org
 .It Ta Enami Tsugutomo Ta Mt enami@NetBSD.org
 .It Ta Bernd Ernesti Ta Mt veego@NetBSD.org
 .It Ta Erik Fair Ta Mt fair@NetBSD.org
