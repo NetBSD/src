@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.29 2016/05/02 11:52:20 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.30 2016/05/02 13:10:15 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.29 2016/05/02 11:52:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.30 2016/05/02 13:10:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -799,7 +799,7 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	if (err) {
 		DPRINTF("endpoint=0x%x failed, error=%d",
 		    ep->ue_edesc->bEndpointAddress, err, 0, 0);
-		kmem_intr_free(p, dev->ud_bus->ub_pipesize);
+		kmem_free(p, dev->ud_bus->ub_pipesize);
 		return err;
 	}
 
