@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.1 2016/05/01 10:21:02 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.2 2016/05/02 19:18:29 christos Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.1 2016/05/01 10:21:02 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.2 2016/05/02 19:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ static void	nvme_ns_sync_fill(struct nvme_queue *, struct nvme_ccb *,
 		    void *);
 static void	nvme_ns_sync_done(struct nvme_queue *, struct nvme_ccb *,
 		    struct nvme_cqe *);
-
-static void	nvme_strvis(u_char *, int, const u_char *, int);
 
 #define nvme_read4(_s, _r) \
 	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
@@ -900,9 +898,12 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 
 	identify = NVME_DMA_KVA(mem);
 
-	nvme_strvis(sn, sizeof(sn), identify->sn, sizeof(identify->sn));
-	nvme_strvis(mn, sizeof(mn), identify->mn, sizeof(identify->mn));
-	nvme_strvis(fr, sizeof(fr), identify->fr, sizeof(identify->fr));
+	strnvisx(sn, sizeof(sn), (const char *)identify->sn,
+	    sizeof(identify->sn), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(mn, sizeof(mn), (const char *)identify->mn,
+	    sizeof(identify->mn), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(fr, sizeof(fr), (const char *)identify->fr,
+	    sizeof(identify->fr), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	aprint_normal_dev(sc->sc_dev, "%s, firmware %s, serial %s\n", mn, fr,
 	    sn);
 
@@ -1287,47 +1288,4 @@ nvme_dmamem_free(struct nvme_softc *sc, struct nvme_dmamem *ndm)
 	bus_dmamem_free(sc->sc_dmat, &ndm->ndm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
 	kmem_free(ndm, sizeof(*ndm));
-}
-
-/*
- * Copy of sys/dev/scsipi/scsipiconf.c:scsipi_strvis()
- */
-static void
-nvme_strvis(u_char *dst, int dlen, const u_char *src, int slen)
-{
-
-#define STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
-	/* Trim leading and trailing blanks and NULs. */
-	while (slen > 0 && STRVIS_ISWHITE(src[0]))
-		++src, --slen;
-	while (slen > 0 && STRVIS_ISWHITE(src[slen - 1]))
-		--slen;
-
-	while (slen > 0) {
-		if (*src < 0x20 || *src >= 0x80) {
-			/* non-printable characters */
-			dlen -= 4;
-			if (dlen < 1)
-				break;
-			*dst++ = '\\';
-			*dst++ = ((*src & 0300) >> 6) + '0';
-			*dst++ = ((*src & 0070) >> 3) + '0';
-			*dst++ = ((*src & 0007) >> 0) + '0';
-		} else if (*src == '\\') {
-			/* quote characters */
-			dlen -= 2;
-			if (dlen < 1)
-				break;
-			*dst++ = '\\';
-			*dst++ = '\\';
-		} else {
-			/* normal characters */
-			if (--dlen < 1)
-				break;
-			*dst++ = *src;
-		}
-		++src, --slen;
-	}
-
-	*dst++ = 0;
 }
