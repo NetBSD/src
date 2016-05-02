@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.5 2016/05/01 10:49:59 nonaka Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.6 2016/05/02 17:37:23 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.5 2016/05/01 10:49:59 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.6 2016/05/02 17:37:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -364,6 +364,7 @@ rt2860_attachhook(device_t self)
 	ifp->if_ioctl = rt2860_ioctl;
 	ifp->if_start = rt2860_start;
 	ifp->if_watchdog = rt2860_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	if_attach(ifp);
@@ -393,6 +394,14 @@ rt2860_attachhook(device_t self)
 	sc->sc_txtap_len = sizeof sc->sc_txtapu;
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2860_TX_RADIOTAP_PRESENT);
+
+	ieee80211_announce(ic);
+
+	if (pmf_device_register(sc->sc_dev, NULL, NULL))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 }
 
 int
@@ -401,6 +410,10 @@ rt2860_detach(void *xsc)
 	struct rt2860_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_if;
 	int qid;
+
+	pmf_device_deregister(sc->sc_dev);
+
+	rt2860_stop(ifp, 1);
 
 	ieee80211_ifdetach(&sc->sc_ic);	/* free all nodes */
 	if_detach(ifp);
