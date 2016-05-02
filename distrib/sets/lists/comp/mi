@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2032 2016/04/24 19:48:30 dholland Exp $
+#	$NetBSD: mi,v 1.2033 2016/05/02 12:59:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6012,6 +6012,7 @@
 ./usr/share/man/cat3/el_getc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_gets.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_init.0			comp-c-catman		.cat
+./usr/share/man/cat3/el_init_fd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/el_insertstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/el_line.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_parse.0			comp-c-catman		.cat
@@ -6020,6 +6021,15 @@
 ./usr/share/man/cat3/el_resize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/el_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_source.0		comp-c-catman		.cat
+./usr/share/man/cat3/el_wdeletestr.0		comp-c-catman		.cat
+./usr/share/man/cat3/el_wget.0			comp-c-catman		.cat
+./usr/share/man/cat3/el_wgetc.0			comp-c-catman		.cat
+./usr/share/man/cat3/el_wgets.0			comp-c-catman		.cat
+./usr/share/man/cat3/el_winsertstr.0		comp-c-catman		.cat
+./usr/share/man/cat3/el_wline.0			comp-c-catman		.cat
+./usr/share/man/cat3/el_wparse.0		comp-c-catman		.cat
+./usr/share/man/cat3/el_wpush.0			comp-c-catman		.cat
+./usr/share/man/cat3/el_wset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/elf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/elf32_checksum.0		comp-c-catman		.cat
 ./usr/share/man/cat3/elf32_fsize.0		comp-c-catman		.cat
@@ -6680,6 +6690,9 @@
 ./usr/share/man/cat3/history.0			comp-c-catman		.cat
 ./usr/share/man/cat3/history_end.0		comp-c-catman		.cat
 ./usr/share/man/cat3/history_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/history_w.0		comp-c-catman		.cat
+./usr/share/man/cat3/history_wend.0		comp-c-catman		.cat
+./usr/share/man/cat3/history_winit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hmac.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/hostalias.0		comp-c-catman		.cat
@@ -9270,6 +9283,11 @@
 ./usr/share/man/cat3/tok_line.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tok_reset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tok_str.0			comp-c-catman		.cat
+./usr/share/man/cat3/tok_wend.0			comp-c-catman		.cat
+./usr/share/man/cat3/tok_winit.0		comp-c-catman		.cat
+./usr/share/man/cat3/tok_wline.0		comp-c-catman		.cat
+./usr/share/man/cat3/tok_wreset.0		comp-c-catman		.cat
+./usr/share/man/cat3/tok_wstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tolower.0			comp-c-catman		.cat
 ./usr/share/man/cat3/top_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/top_row.0			comp-c-catman		.cat
@@ -9639,7 +9657,6 @@
 ./usr/share/man/cat9/PSLIST_ENTRY_DESTROY.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/PSLIST_ENTRY_INIT.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/PSLIST_ENTRY_INITIALIZER.0	comp-sys-catman		.cat
-./usr/share/man/cat9/PSLIST_INITIALIZER.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/PSLIST_INIT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/PSLIST_INITIALIZER.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/PSLIST_READER_FIRST.0	comp-sys-catman		.cat
@@ -13206,6 +13223,7 @@
 ./usr/share/man/html3/el_getc.html		comp-c-htmlman		html
 ./usr/share/man/html3/el_gets.html		comp-c-htmlman		html
 ./usr/share/man/html3/el_init.html		comp-c-htmlman		html
+./usr/share/man/html3/el_init_fd.html		comp-c-htmlman		html
 ./usr/share/man/html3/el_insertstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/el_line.html		comp-c-htmlman		html
 ./usr/share/man/html3/el_parse.html		comp-c-htmlman		html
@@ -13214,6 +13232,15 @@
 ./usr/share/man/html3/el_resize.html		comp-c-htmlman		html
 ./usr/share/man/html3/el_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/el_source.html		comp-c-htmlman		html
+./usr/share/man/html3/el_wdeletestr.html	comp-c-htmlman		html
+./usr/share/man/html3/el_wget.html		comp-c-htmlman		html
+./usr/share/man/html3/el_wgetc.html		comp-c-htmlman		html
+./usr/share/man/html3/el_wgets.html		comp-c-htmlman		html
+./usr/share/man/html3/el_winsertstr.html	comp-c-htmlman		html
+./usr/share/man/html3/el_wline.html		comp-c-htmlman		html
+./usr/share/man/html3/el_wparse.html		comp-c-htmlman		html
+./usr/share/man/html3/el_wpush.html		comp-c-htmlman		html
+./usr/share/man/html3/el_wset.html		comp-c-htmlman		html
 ./usr/share/man/html3/elf.html			comp-c-htmlman		html
 ./usr/share/man/html3/elf32_checksum.html	comp-c-htmlman		html
 ./usr/share/man/html3/elf32_fsize.html		comp-c-htmlman		html
@@ -13871,6 +13898,9 @@
 ./usr/share/man/html3/history.html		comp-c-htmlman		html
 ./usr/share/man/html3/history_end.html		comp-c-htmlman		html
 ./usr/share/man/html3/history_init.html		comp-c-htmlman		html
+./usr/share/man/html3/history_w.html		comp-c-htmlman		html
+./usr/share/man/html3/history_wend.html		comp-c-htmlman		html
+./usr/share/man/html3/history_winit.html	comp-c-htmlman		html
 ./usr/share/man/html3/hline.html		comp-c-htmlman		html
 ./usr/share/man/html3/hostalias.html		comp-c-htmlman		html
 ./usr/share/man/html3/hosts_access.html		comp-c-htmlman		html
@@ -16384,6 +16414,11 @@
 ./usr/share/man/html3/tok_line.html		comp-c-htmlman		html
 ./usr/share/man/html3/tok_reset.html		comp-c-htmlman		html
 ./usr/share/man/html3/tok_str.html		comp-c-htmlman		html
+./usr/share/man/html3/tok_wend.html		comp-c-htmlman		html
+./usr/share/man/html3/tok_winit.html		comp-c-htmlman		html
+./usr/share/man/html3/tok_wline.html		comp-c-htmlman		html
+./usr/share/man/html3/tok_wreset.html		comp-c-htmlman		html
+./usr/share/man/html3/tok_wstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tolower.html		comp-c-htmlman		html
 ./usr/share/man/html3/top_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/top_row.html		comp-c-htmlman		html
@@ -16743,7 +16778,6 @@
 ./usr/share/man/html9/PSLIST_ENTRY_DESTROY.html	comp-sys-htmlman	html
 ./usr/share/man/html9/PSLIST_ENTRY_INIT.html	comp-sys-htmlman	html
 ./usr/share/man/html9/PSLIST_ENTRY_INITIALIZER.html	comp-sys-htmlman	html
-./usr/share/man/html9/PSLIST_INITIALIZER.html	comp-sys-htmlman	html
 ./usr/share/man/html9/PSLIST_INIT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/PSLIST_INITIALIZER.html	comp-sys-htmlman	html
 ./usr/share/man/html9/PSLIST_READER_FIRST.html	comp-sys-htmlman	html
@@ -20309,6 +20343,7 @@
 ./usr/share/man/man3/el_getc.3			comp-c-man		.man
 ./usr/share/man/man3/el_gets.3			comp-c-man		.man
 ./usr/share/man/man3/el_init.3			comp-c-man		.man
+./usr/share/man/man3/el_init_fd.3		comp-c-man		.man
 ./usr/share/man/man3/el_insertstr.3		comp-c-man		.man
 ./usr/share/man/man3/el_line.3			comp-c-man		.man
 ./usr/share/man/man3/el_parse.3			comp-c-man		.man
@@ -20317,6 +20352,15 @@
 ./usr/share/man/man3/el_resize.3		comp-c-man		.man
 ./usr/share/man/man3/el_set.3			comp-c-man		.man
 ./usr/share/man/man3/el_source.3		comp-c-man		.man
+./usr/share/man/man3/el_wdeletestr.3		comp-c-man		.man
+./usr/share/man/man3/el_wget.3			comp-c-man		.man
+./usr/share/man/man3/el_wgetc.3			comp-c-man		.man
+./usr/share/man/man3/el_wgets.3			comp-c-man		.man
+./usr/share/man/man3/el_winsertstr.3		comp-c-man		.man
+./usr/share/man/man3/el_wline.3			comp-c-man		.man
+./usr/share/man/man3/el_wparse.3		comp-c-man		.man
+./usr/share/man/man3/el_wpush.3			comp-c-man		.man
+./usr/share/man/man3/el_wset.3			comp-c-man		.man
 ./usr/share/man/man3/elf.3			comp-c-man		.man
 ./usr/share/man/man3/elf32_checksum.3		comp-c-man		.man
 ./usr/share/man/man3/elf32_fsize.3		comp-c-man		.man
@@ -20977,6 +21021,9 @@
 ./usr/share/man/man3/history.3			comp-c-man		.man
 ./usr/share/man/man3/history_end.3		comp-c-man		.man
 ./usr/share/man/man3/history_init.3		comp-c-man		.man
+./usr/share/man/man3/history_w.3		comp-c-man		.man
+./usr/share/man/man3/history_wend.3		comp-c-man		.man
+./usr/share/man/man3/history_winit.3		comp-c-man		.man
 ./usr/share/man/man3/hline.3			comp-c-man		.man
 ./usr/share/man/man3/hmac.3			comp-obsolete		obsolete
 ./usr/share/man/man3/hostalias.3		comp-c-man		.man
@@ -23563,6 +23610,11 @@
 ./usr/share/man/man3/tok_line.3			comp-c-man		.man
 ./usr/share/man/man3/tok_reset.3		comp-c-man		.man
 ./usr/share/man/man3/tok_str.3			comp-c-man		.man
+./usr/share/man/man3/tok_wend.3			comp-c-man		.man
+./usr/share/man/man3/tok_winit.3		comp-c-man		.man
+./usr/share/man/man3/tok_wline.3		comp-c-man		.man
+./usr/share/man/man3/tok_wreset.3		comp-c-man		.man
+./usr/share/man/man3/tok_wstr.3			comp-c-man		.man
 ./usr/share/man/man3/tolower.3			comp-c-man		.man
 ./usr/share/man/man3/top_panel.3		comp-c-man		.man
 ./usr/share/man/man3/top_row.3			comp-c-man		.man
@@ -23931,7 +23983,6 @@
 ./usr/share/man/man9/PSLIST_ENTRY_DESTROY.9	comp-sys-man		.man
 ./usr/share/man/man9/PSLIST_ENTRY_INIT.9	comp-sys-man		.man
 ./usr/share/man/man9/PSLIST_ENTRY_INITIALIZER.9	comp-sys-man		.man
-./usr/share/man/man9/PSLIST_INITIALIZER.9	comp-sys-man		.man
 ./usr/share/man/man9/PSLIST_INIT.9		comp-sys-man		.man
 ./usr/share/man/man9/PSLIST_INITIALIZER.9	comp-sys-man		.man
 ./usr/share/man/man9/PSLIST_READER_FIRST.9	comp-sys-man		.man
