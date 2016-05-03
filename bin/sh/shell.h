@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.18 2013/04/28 17:01:28 dholland Exp $	*/
+/*	$NetBSD: shell.h,v 1.19 2016/05/03 13:47:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,9 @@ typedef void *pointer;
 #ifndef NULL
 #define NULL (void *)0
 #endif
+#ifndef STATIC
 #define STATIC	/* empty */
+#endif
 #define MKINIT	/* empty */
 
 #include <sys/cdefs.h>
