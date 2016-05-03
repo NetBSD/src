@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.64 2015/11/15 03:09:39 pgoyette Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.65 2016/05/03 19:15:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.64 2015/11/15 03:09:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.65 2016/05/03 19:15:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -976,17 +976,14 @@ wapbl_end(struct wapbl *wl)
 	      wl->wl_bufbytes, wl->wl_bcount));
 #endif
 
-#ifdef DIAGNOSTIC
 	size_t flushsize = wapbl_transaction_len(wl);
-	if (flushsize > (wl->wl_circ_size - wl->wl_reserved_bytes)) {
-		/*
-		 * XXX this could be handled more gracefully, perhaps place
-		 * only a partial transaction in the log and allow the
-		 * remaining to flush without the protection of the journal.
-		 */
-		panic("wapbl_end: current transaction too big to flush\n");
-	}
-#endif
+	/*
+	 * XXX this could be handled more gracefully, perhaps place
+	 * only a partial transaction in the log and allow the
+	 * remaining to flush without the protection of the journal.
+	 */
+	KASSERTMSG(flushsize <= (wl->wl_circ_size - wl->wl_reserved_bytes),
+	    "wapbl_end: current transaction too big to flush");
 
 	mutex_enter(&wl->wl_mtx);
 	KASSERT(wl->wl_lock_count > 0);
