@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.120 2016/05/02 01:46:31 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.121 2016/05/03 03:12:40 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.120 2016/05/02 01:46:31 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.121 2016/05/03 03:12:40 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1260,10 +1260,14 @@ find_dot_file(char *basename)
 	struct stat statb;
 
 	/* don't try this for absolute or relative paths */
-	if (strchr(basename, '/'))
-		return basename;
-
-	while ((fullname = padvance(&path, basename)) != NULL) {
+	if (strchr(basename, '/')) {
+		if (stat(basename, &statb) == 0) {
+			if (S_ISREG(statb.st_mode))
+				return basename;
+			error("%s: not a regular file", basename);
+			/* NOTREACHED */
+		}
+	} else while ((fullname = padvance(&path, basename)) != NULL) {
 		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode)) {
 			/*
 			 * Don't bother freeing here, since it will
