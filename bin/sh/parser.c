@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.117 2016/05/02 01:46:31 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.118 2016/05/03 03:16:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.117 2016/05/02 01:46:31 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.118 2016/05/03 03:16:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -597,7 +597,7 @@ simplecmd(union node **rpp, union node *redir)
 				synexpect(TRP, 0);
 			funclinno = plinno;
 			rmescapes(n->narg.text);
-			if (!goodname(n->narg.text))
+			if (strchr(n->narg.text, '/'))
 				synerror("Bad function name");
 			n->type = NDEFUN;
 			n->narg.next = command();
