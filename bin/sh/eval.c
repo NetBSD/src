@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.121 2016/05/03 03:12:40 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.122 2016/05/03 13:47:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.121 2016/05/03 03:12:40 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.122 2016/05/03 13:47:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1155,19 +1155,19 @@ prehash(union node *n)
 				     pathval());
 }
 
-STATIC int
+int
 in_function(void)
 {
 	return funcnest;
 }
 
-STATIC enum skipstate
+enum skipstate
 current_skipstate(void)
 {
 	return evalskip;
 }
 
-STATIC void
+void
 stop_skipping(void)
 {
 	evalskip = SKIPNONE;
