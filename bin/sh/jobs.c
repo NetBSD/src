@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.76 2016/05/02 01:46:31 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.77 2016/05/03 20:46:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.76 2016/05/02 01:46:31 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.77 2016/05/03 20:46:35 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ STATIC int waitproc(int, struct job *, int *);
 STATIC void cmdtxt(union node *);
 STATIC void cmdlist(union node *, int);
 STATIC void cmdputs(const char *);
+static void inline cmdputi(int);
 
 #ifdef SYSV
 STATIC int onsigchild(void);
@@ -379,6 +380,15 @@ restartjob(struct job *jp)
 	INTON;
 }
 #endif
+
+static void inline
+cmdputi(int n)
+{
+	char str[20];
+
+	fmtstr(str, sizeof str, "%d", n);
+	cmdputs(str);
+}
 
 static void
 showjob(struct output *out, struct job *jp, int mode)
@@ -1249,7 +1259,6 @@ cmdtxt(union node *n)
 	struct nodelist *lp;
 	const char *p;
 	int i;
-	char s[2];
 
 	if (n == NULL || cmdnleft <= 0)
 		return;
@@ -1354,16 +1363,14 @@ until:
 	case NFROMTO:
 		p = "<>";  i = 0;  goto redir;
 redir:
-		if (n->nfile.fd != i) {
-			s[0] = n->nfile.fd + '0';
-			s[1] = '\0';
-			cmdputs(s);
-		}
+		if (n->nfile.fd != i)
+			cmdputi(n->nfile.fd);
 		cmdputs(p);
 		if (n->type == NTOFD || n->type == NFROMFD) {
-			s[0] = n->ndup.dupfd + '0';
-			s[1] = '\0';
-			cmdputs(s);
+			if (n->ndup.dupfd < 0)
+				cmdputs("-");
+			else
+				cmdputi(n->ndup.dupfd);
 		} else {
 			cmdtxt(n->nfile.fname);
 		}
