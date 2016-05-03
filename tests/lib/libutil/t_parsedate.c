@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.21 2016/05/03 18:10:38 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.22 2016/05/03 18:18:15 kre Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.21 2016/05/03 18:10:38 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.22 2016/05/03 18:18:15 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -244,14 +244,18 @@ ATF_TC_BODY(relative, tc)
 
 #define REL_CHECK(s, now, tm) do {					\
 	time_t p, q;							\
-	char pb[30], qb[30];						\
+	char nb[30], pb[30], qb[30];					\
 	p = parsedate(s, &now, NULL);					\
 	q = mktime(&tm);						\
 	ATF_CHECK_EQ_MSG(p, q,						\
-	    "From \"%s\", obtained %jd (%24.24s); expected %jd (%24.24s)", \
+	    "From %jd (%24.24s) using \"%s\", obtained %jd (%24.24s); expected %jd (%24.24s)", \
+	    now, ctime_r(&now, nb),					\
 	    s, (uintmax_t)p, ctime_r(&p, pb), (uintmax_t)q, 		\
 	    ctime_r(&q, qb));						\
     } while (/*CONSTCOND*/0)
+
+#define isleap(yr) (((yr) & 3) == 0 && (((yr) % 100) != 0 ||		\
+			((1900+(yr)) % 400) == 0))
 
 	ATF_CHECK(parsedate("-1 month", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("last friday", NULL, NULL) != -1);
@@ -328,27 +332,55 @@ ATF_TC_BODY(relative, tc)
 
 		ATF_CHECK(localtime_r(&now, &tm) != NULL);
 		tm.tm_mon++;
+		if (tm.tm_mon == 1 &&
+		    tm.tm_mday > 28 + isleap(tm.tm_year))
+			tm.tm_mday = 28 + isleap(tm.tm_year);
+		else if ((tm.tm_mon == 3 || tm.tm_mon == 5 ||
+		    tm.tm_mon == 8 || tm.tm_mon == 10) && tm.tm_mday == 31)
+			tm.tm_mday = 30;
 		tm.tm_isdst = -1;
 		REL_CHECK("month", now, tm);
 
 		ATF_CHECK(localtime_r(&now, &tm) != NULL);
 		tm.tm_mon += 2;		/* "next" means add 2 ... */
+		if (tm.tm_mon == 13 &&
+		    tm.tm_mday > 28 + isleap(tm.tm_year + 1))
+			tm.tm_mday = 28 + isleap(tm.tm_year + 1);
+		else if (tm.tm_mon == 8 && tm.tm_mday == 31)
+			tm.tm_mday = 30;
 		tm.tm_isdst = -1;
 		REL_CHECK("next month", now, tm);
 
 		ATF_CHECK(localtime_r(&now, &tm) != NULL);
 		tm.tm_mon--;
+		if (tm.tm_mon == 1 &&
+		    tm.tm_mday > 28 + isleap(tm.tm_year))
+			tm.tm_mday = 28 + isleap(tm.tm_year);
+		else if ((tm.tm_mon == 3 || tm.tm_mon == 5 ||
+		    tm.tm_mon == 8 || tm.tm_mon == 10) && tm.tm_mday == 31)
+			tm.tm_mday = 30;
 		tm.tm_isdst = -1;
 		REL_CHECK("last month", now, tm);
 
 		ATF_CHECK(localtime_r(&now, &tm) != NULL);
 		tm.tm_mon += 6;
+		if (tm.tm_mon == 13 &&
+		    tm.tm_mday > 28 + isleap(tm.tm_year + 1))
+			tm.tm_mday = 28 + isleap(tm.tm_year + 1);
+		else if ((tm.tm_mon == 15 || tm.tm_mon == 17 ||
+		    tm.tm_mon == 8 || tm.tm_mon == 10) && tm.tm_mday == 31)
+			tm.tm_mday = 30;
 		tm.tm_mday += 2;
 		tm.tm_isdst = -1;
 		REL_CHECK("+6 months 2 days", now, tm);
 
 		ATF_CHECK(localtime_r(&now, &tm) != NULL);
 		tm.tm_mon -= 9;
+		if (tm.tm_mon == 1 && tm.tm_mday > 28 + isleap(tm.tm_year))
+			tm.tm_mday = tm.tm_mday > 28 + isleap(tm.tm_year);
+		else if ((tm.tm_mon == -9 || tm.tm_mon == -7 ||
+		    tm.tm_mon == -2) && tm.tm_mday == 31)
+			tm.tm_mday = 30;
 		tm.tm_isdst = -1;
 		REL_CHECK("9 months ago", now, tm);
 
