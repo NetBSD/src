@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.29 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.30 2016/05/03 18:17:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.29 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.30 2016/05/03 18:17:28 mlelstv Exp $");
 
 /*
  * kernel include files.
@@ -273,6 +273,18 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 		 */
 		if (cn >= (CLUST_RSRVD & pmp->pm_fatmask))
 			goto hiteof;
+
+		/*
+		 * Also stop when cluster is not in the filesystem
+		 */
+		if (cn < CLUST_FIRST || cn > pmp->pm_maxcluster) {
+			DPRINTF(("%s(cn, %lu not in %lu..%lu)\n", __func__,
+				cn, CLUST_FIRST, pmp->pm_maxcluster));
+			if (bp)
+				brelse(bp, 0);
+			return (EINVAL);
+		}
+
 		byteoffset = FATOFS(pmp, cn);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 		if (bn != bp_bn) {
@@ -383,7 +395,7 @@ fc_purge(struct denode *dep, u_int frcn)
 void
 updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 {
-	int i;
+	int i, error;
 	struct buf *bpn;
 
 	DPRINTF(("%s(pmp %p, bp %p, fatbn %lu)\n", __func__, pmp, bp, fatbn));
@@ -448,9 +460,12 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 			bpn = getblk(pmp->pm_devvp, de_bn2kb(pmp, fatbn),
 			    bp->b_bcount, 0, 0);
 			memcpy(bpn->b_data, bp->b_data, bp->b_bcount);
-			if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
-				bwrite(bpn);
-			else
+			if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT) {
+				error = bwrite(bpn);
+				if (error)
+					printf("%s: copy FAT %d (error=%d)\n",
+						 __func__, i, error);
+			} else
 				bdwrite(bpn);
 		}
 	}
@@ -458,9 +473,12 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 	/*
 	 * Write out the first (or current) FAT last.
 	 */
-	if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
-		bwrite(bp);
-	else
+	if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT) {
+		error =  bwrite(bp);
+		if (error)
+			printf("%s: write FAT (error=%d)\n",
+				__func__, error);
+	} else
 		bdwrite(bp);
 	/*
 	 * Maybe update fsinfo sector here?
