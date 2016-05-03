@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.h,v 1.19 2016/05/02 01:46:31 christos Exp $	*/
+/*	$NetBSD: redir.h,v 1.20 2016/05/03 03:08:21 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,5 +48,3 @@ void clearredir(int);
 int copyfd(int, int, int, int);
 int movefd(int, int);
 int to_upper_fd(int);
-
-extern int big_sh_fd;
