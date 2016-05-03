@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.65 2016/05/03 19:15:29 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.66 2016/05/03 19:17:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.65 2016/05/03 19:15:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.66 2016/05/03 19:17:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1499,7 +1499,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 		 * only a partial transaction in the log and allow the
 		 * remaining to flush without the protection of the journal.
 		 */
-		panic("wapbl_flush: current transaction too big to flush\n");
+		panic("wapbl_flush: current transaction too big to flush");
 	}
 
 	error = wapbl_truncate(wl, flushsize, 0);
@@ -1531,7 +1531,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 #ifdef WAPBL_DEBUG
 	if (head != off) {
 		panic("lost head! head=%"PRIdMAX" tail=%" PRIdMAX
-		      " off=%"PRIdMAX" flush=%zu\n",
+		      " off=%"PRIdMAX" flush=%zu",
 		      (intmax_t)head, (intmax_t)tail, (intmax_t)off,
 		      flushsize);
 	}
@@ -2096,7 +2096,7 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 		 */
 		if (error)
 			panic("wapbl_write_commit: error writing duplicate "
-			      "log header: %d\n", error);
+			      "log header: %d", error);
 	}
 	return 0;
 }
