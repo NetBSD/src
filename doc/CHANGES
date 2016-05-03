@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2156 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2157 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -285,3 +285,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	nvme(4): Add a driver for Non-Volatile Memory Host Controller Interface
 		devices, ported from OpenBSD. [nonaka 20160501]
 	ntp: Import ntp 4.2.8p7. [christos 20160501]
+	openssl: Import openssl 1.0.1t - security fixes [christos 20160503]
