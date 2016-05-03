@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.77 2016/05/03 20:46:35 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.78 2016/05/03 23:55:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.77 2016/05/03 20:46:35 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.78 2016/05/03 23:55:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ STATIC int waitproc(int, struct job *, int *);
 STATIC void cmdtxt(union node *);
 STATIC void cmdlist(union node *, int);
 STATIC void cmdputs(const char *);
-static void inline cmdputi(int);
+inline static void cmdputi(int);
 
 #ifdef SYSV
 STATIC int onsigchild(void);
@@ -381,7 +381,7 @@ restartjob(struct job *jp)
 }
 #endif
 
-static void inline
+inline static void
 cmdputi(int n)
 {
 	char str[20];
