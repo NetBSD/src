@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.5 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.6 2016/05/03 13:14:44 skrll Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.5 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.6 2016/05/03 13:14:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,17 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.5 2016/04/23 10:15:31 skrll Exp $");
 #include <dev/usb/xhcireg.h>
 #include <dev/usb/xhcivar.h>
 
-struct xhci_pci_quirk {
-	pci_vendor_id_t		vendor;
-	pci_product_id_t	product;
-	int			quirks;
-};
-
-static const struct xhci_pci_quirk xhci_pci_quirks[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_M_XHCI,
-	    XHCI_QUIRK_FORCE_INTR },
-};
-
 struct xhci_pci_softc {
 	struct xhci_softc	sc_xhci;
 	pci_chipset_tag_t	sc_pc;
@@ -72,18 +61,6 @@ struct xhci_pci_softc {
 	void			*sc_ih;
 	pci_intr_handle_t	*sc_pihp;
 };
-
-static int
-xhci_pci_has_quirk(pci_vendor_id_t vendor, pci_product_id_t product)
-{
-	int i;
-
-	for (i = 0; i < __arraycount(xhci_pci_quirks); i++)
-		if (vendor == xhci_pci_quirks[i].vendor &&
-		    product == xhci_pci_quirks[i].product)
-			return xhci_pci_quirks[i].quirks;
-	return 0;
-}
 
 static int
 xhci_pci_match(device_t parent, cfdata_t match, void *aux)
@@ -154,8 +131,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_aprint_devinfo(pa, "USB Controller");
 
 	/* Check for quirks */
-	sc->sc_quirks = xhci_pci_has_quirk(PCI_VENDOR(pa->pa_id),
-						PCI_PRODUCT(pa->pa_id));
+	sc->sc_quirks = 0;
 
 	/* check if memory space access is enabled */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
