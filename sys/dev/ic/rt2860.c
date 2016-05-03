@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.6 2016/05/02 17:37:23 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.7 2016/05/03 00:19:32 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.6 2016/05/02 17:37:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.7 2016/05/03 00:19:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1207,8 +1207,9 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	}
 
 	sc->sc_tx_timer = 0;
-	if (ring->queued < RT2860_TX_RING_ONEMORE)
+	if (ring->queued <= RT2860_TX_RING_ONEMORE)
 		sc->qfullmsk &= ~(1 << qid);
+	ifp->if_flags &= ~IFF_OACTIVE;
 	rt2860_start(ifp);
 }
 
@@ -1324,7 +1325,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		/* HW may insert 2 padding bytes after 802.11 header */
 		if (rxd->flags & htole32(RT2860_RX_L2PAD)) {
 			u_int hdrlen = ieee80211_hdrspace(ic, wh);
-			memmove(wh + 2, wh, hdrlen);
+			memmove((char *)wh + 2, wh, hdrlen);
 			m->m_data += 2;
 			wh = mtod(m, struct ieee80211_frame *);
 		}
@@ -1489,8 +1490,9 @@ rt2860_intr(void *arg)
 	if (r & RT2860_MAC_INT_0)	/* TBTT */
 		rt2860_tbtt_intr(sc);
 
-	if (r & RT2860_MAC_INT_3)	/* Auto wakeup */
-		/* TBD wakeup */{};
+	if (r & RT2860_MAC_INT_3) {	/* Auto wakeup */
+		/* TBD wakeup */
+	}
 
 	if (r & RT2860_MAC_INT_4)	/* GP timer */
 		rt2860_gp_intr(sc);
