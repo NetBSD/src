@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.27 2015/12/31 10:52:06 dholland Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.28 2016/05/03 18:14:54 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: parsedate.y,v 1.27 2015/12/31 10:52:06 dholland Exp $");
 #define EPOCH		1970
 #define HOUR(x)		((time_t)((x) * 60))
 #define SECSPERDAY	(24L * 60L * 60L)
+
+#define	MAXREL	16	/* hours mins secs days weeks months years - maybe twice each ...*/
 
 #define USE_LOCAL_TIME	99999 /* special case for Convert() and yyTimezone */
 
@@ -88,8 +90,10 @@ struct dateinfo {
 	time_t	yySeconds;	/* Second of minute [0-60] */
 	time_t	yyYear;		/* Year, see also yyHaveFullYear */
 	MERIDIAN yyMeridian;	/* Interpret yyHour as AM/PM/24 hour clock */
-	time_t	yyRelMonth;
-	time_t	yyRelSeconds;
+	struct {
+		time_t	yyRelVal;
+		int	yyRelMonth;
+	} yyRel[MAXREL];
 };
 %}
 
@@ -309,21 +313,21 @@ date:
 rel:
 	  relunit
 	| relunit tAGO {
-		param->yyRelSeconds = -param->yyRelSeconds;
-		param->yyRelMonth = -param->yyRelMonth;
+		param->yyRel[param->yyHaveRel].yyRelVal =
+		    -param->yyRel[param->yyHaveRel].yyRelVal;
 	  }
 ;
 
 relunit:
-	  tUNUMBER tMINUTE_UNIT	{ param->yyRelSeconds += $1 * $2 * 60L; }
-	| tSNUMBER tMINUTE_UNIT	{ param->yyRelSeconds += $1 * $2 * 60L; }
-	| tMINUTE_UNIT		{ param->yyRelSeconds += $1 * 60L; }
-	| tSNUMBER tSEC_UNIT	{ param->yyRelSeconds += $1; }
-	| tUNUMBER tSEC_UNIT	{ param->yyRelSeconds += $1; }
-	| tSEC_UNIT		{ param->yyRelSeconds++;  }
-	| tSNUMBER tMONTH_UNIT	{ param->yyRelMonth += $1 * $2; }
-	| tUNUMBER tMONTH_UNIT	{ param->yyRelMonth += $1 * $2; }
-	| tMONTH_UNIT		{ param->yyRelMonth += $1; }
+	  tUNUMBER tMINUTE_UNIT	{ RelVal(param, $1 * $2 * 60L, 0); }
+	| tSNUMBER tMINUTE_UNIT	{ RelVal(param, $1 * $2 * 60L, 0); }
+	| tMINUTE_UNIT		{ RelVal(param, $1 * 60L, 0); }
+	| tSNUMBER tSEC_UNIT	{ RelVal(param, $1, 0); }
+	| tUNUMBER tSEC_UNIT	{ RelVal(param, $1, 0); }
+	| tSEC_UNIT		{ RelVal(param, 1L, 0);  }
+	| tSNUMBER tMONTH_UNIT	{ RelVal(param, $1 * $2, 1); }
+	| tUNUMBER tMONTH_UNIT	{ RelVal(param, $1 * $2, 1); }
+	| tMONTH_UNIT		{ RelVal(param, $1, 1); }
 ;
 
 number:
@@ -361,6 +365,17 @@ o_merid:
 ;
 
 %%
+
+static short DaysInMonth[12] = {
+    31, 28, 31, 30, 31, 30,
+    31, 31, 30, 31, 30, 31
+};
+
+/*
+ * works with tm.tm_year (ie: rel to 1900)
+ */
+#define	isleap(yr)  (((yr) & 3) == 0 && (((yr) % 100) != 0 || \
+			((1900+(yr)) % 400) == 0))
 
 /* Month and day table. */
 static const TABLE MonthDayTable[] = {
@@ -571,6 +586,7 @@ static const TABLE TimeNames[] = {
     { "midnight",	tTIME,		 0 },
     { "mn",		tTIME,		 0 },
     { "noon",		tTIME,		12 },
+    { "midday",		tTIME,		12 },
     { "dawn",		tTIME,		 6 },
     { "sunup",		tTIME,		 6 },
     { "sunset",		tTIME,		18 },
@@ -580,12 +596,25 @@ static const TABLE TimeNames[] = {
 
 
 
-
 /* ARGSUSED */
 static int
 yyerror(struct dateinfo *param, const char **inp, const char *s __unused)
 {
   return 0;
+}
+
+/*
+ * Save a relative value, if it fits
+ */
+static void
+RelVal(struct dateinfo *param, time_t v, int type)
+{
+	int i;
+
+	if ((i = param->yyHaveRel) >= MAXREL)
+		return;
+	param->yyRel[i].yyRelMonth = type;
+	param->yyRel[i].yyRelVal = v;
 }
 
 
@@ -729,6 +758,7 @@ RelativeMonth(
     struct tm	tm;
     time_t	Month;
     time_t	Then;
+    int		Day;
 
     if (RelMonth == 0)
 	return 0;
@@ -748,6 +778,9 @@ RelativeMonth(
     Month = 12 * (tm.tm_year + 1900) + tm.tm_mon + RelMonth;
     tm.tm_year = (Month / 12) - 1900;
     tm.tm_mon = Month % 12;
+    if (tm.tm_mday > (Day = DaysInMonth[tm.tm_mon] +
+	((tm.tm_mon==1) ? isleap(tm.tm_year) : 0)))
+	    tm.tm_mday = Day;
     errno = 0;
     Then = mktime(&tm);
     if (Then == -1 && errno != 0)
@@ -939,6 +972,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
     time_t		tod, rm;
     struct dateinfo	param;
     int			saved_errno;
+    int			i;
     
     saved_errno = errno;
     errno = 0;
@@ -972,8 +1006,6 @@ parsedate(const char *p, const time_t *now, const int *zone)
     param.yyMinutes = 0;
     param.yySeconds = 0;
     param.yyMeridian = MER24;
-    param.yyRelSeconds = 0;
-    param.yyRelMonth = 0;
     param.yyHaveDate = 0;
     param.yyHaveFullYear = 0;
     param.yyHaveDay = 0;
@@ -1005,12 +1037,20 @@ parsedate(const char *p, const time_t *now, const int *zone)
 	    Start -= ((tm->tm_hour * 60L + tm->tm_min) * 60L) + tm->tm_sec;
     }
 
-    Start += param.yyRelSeconds;
-    errno = 0;
-    rm = RelativeMonth(Start, param.yyRelMonth, param.yyTimezone);
-    if (rm == -1 && errno != 0)
+    if (param.yyHaveRel > MAXREL) {
+	errno = EINVAL;
 	return -1;
-    Start += rm;
+    }
+    for (i = 0; i < param.yyHaveRel; i++) {
+	if (param.yyRel[i].yyRelMonth) {
+	    errno = 0;
+	    rm = RelativeMonth(Start, param.yyRel[i].yyRelVal, param.yyTimezone);
+	    if (rm == -1 && errno != 0)
+		return -1;
+	    Start += rm;
+	} else
+	    Start += param.yyRel[i].yyRelVal;
+    }
 
     if (param.yyHaveDay && !param.yyHaveDate) {
 	errno = 0;
