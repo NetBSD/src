@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.23 2012/03/15 02:02:20 joerg Exp $	*/
+/*	$NetBSD: exec.h,v 1.24 2016/05/03 13:47:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,7 +70,6 @@ void hashcd(void);
 void changepath(const char *);
 void deletefuncs(void);
 void getcmdentry(char *, struct cmdentry *);
-void addcmdentry(char *, struct cmdentry *);
 void defun(char *, union node *);
 int unsetfunc(char *);
 void hash_special_builtins(void);
