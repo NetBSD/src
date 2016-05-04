@@ -74,7 +74,7 @@ ApIsValidHeader (
     {
         /* Make sure signature is all ASCII and a valid ACPI name */
 
-        if (!AcpiUtValidAcpiName (Table->Signature))
+        if (!AcpiUtValidNameseg (Table->Signature))
         {
             AcpiLogError ("Table signature (0x%8.8X) is invalid\n",
                 *(UINT32 *) Table->Signature);
@@ -326,7 +326,8 @@ ApDumpTableByAddress (
 
     /* Convert argument to an integer physical address */
 
-    Status = AcpiUtStrtoul64 (AsciiAddress, 0, &LongAddress);
+    Status = AcpiUtStrtoul64 (AsciiAddress, ACPI_ANY_BASE,
+        ACPI_MAX64_BYTE_WIDTH, &LongAddress);
     if (ACPI_FAILURE (Status))
     {
         AcpiLogError ("%s: Could not convert to a physical address\n",
@@ -462,6 +463,13 @@ ApDumpTableFromFile (
     if (!Table)
     {
         return (-1);
+    }
+
+    if (!AcpiUtValidNameseg (Table->Signature))
+    {
+        AcpiLogError (
+            "No valid ACPI signature was found in input file %s\n",
+            Pathname);
     }
 
     /* File must be at least as long as the table length */
