@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2016/03/24 00:02:52 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2016/05/04 00:28:23 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -8,6 +8,7 @@ SRCS=		${G_OBJS:.o=.c} ${G_out_file:T} regsub.c
 
 BOTH_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
+HOST_CPPFLAGS+=	-I${HOST_LIBIBERTYOBJ}/libiberty
 HOST_CPPFLAGS+=	${BOTH_CPPFLAGS} -DGENERATOR_FILE
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 CPPFLAGS+=	-I${DIST}/libgcc
@@ -19,6 +20,8 @@ CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\" \
 HOSTPROG_CXX=	1
 
 .include <bsd.own.mk>
+
+HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
 
 # XXX ${G_OBJS:.o=.c} is invalid in GCC 5.3, but work around for now
 BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/wide-int-print.cc wide-int-print.c
