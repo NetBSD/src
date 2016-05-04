@@ -64,6 +64,13 @@ AcpiNsExecModuleCodeList (
 }
 
 ACPI_STATUS
+AcpiNsInitializeObjects (
+    void)
+{
+    return (AE_OK);
+}
+
+ACPI_STATUS
 AcpiHwReadPort (
     ACPI_IO_ADDRESS         Address,
     UINT32                  *Value,
@@ -115,6 +122,13 @@ AcpiDsStoreObjectToLocal (
     UINT32                  Index,
     ACPI_OPERAND_OBJECT     *SrcDesc,
     ACPI_WALK_STATE         *WalkState)
+{
+    return (AE_OK);
+}
+
+ACPI_STATUS
+AcpiEvInstallRegionHandlers (
+    void)
 {
     return (AE_OK);
 }
