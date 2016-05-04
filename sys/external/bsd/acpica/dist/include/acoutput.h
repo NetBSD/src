@@ -357,7 +357,7 @@
 
 #define ACPI_TRACE_ENTRY(Name, Function, Type, Param) \
     ACPI_FUNCTION_NAME (Name) \
-    Function (ACPI_DEBUG_PARAMETERS, (Type) (Param))
+    Function (ACPI_DEBUG_PARAMETERS, (const Type) (Param))
 
 /* The actual entry trace macros */
 
