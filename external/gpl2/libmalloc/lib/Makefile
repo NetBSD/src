@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/05/04 14:39:49 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2016/05/04 17:17:00 christos Exp $
 
 NOMAN=	# defined
 .include <bsd.init.mk>
@@ -12,7 +12,10 @@ SRCS+=  ralloc.c
 
 
 CPPFLAGS+= -I${DIST} -I${.CURDIR} -DSTDC_HEADERS -DHAVE_STDLIB_H -DHAVE_UNISTD_H
+
+.if ${HAVE_GCC:U0} >= 53
 COPTS+=-fno-builtin-malloc
+.endif
 
 .PATH: ${DIST}
 
