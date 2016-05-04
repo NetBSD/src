@@ -99,7 +99,7 @@ AcpiNsGetMaxDepth (
 void
 AcpiNsPrintPathname (
     UINT32                  NumSegments,
-    char                    *Pathname)
+    const char              *Pathname)
 {
     UINT32                  i;
 
@@ -138,6 +138,9 @@ AcpiNsPrintPathname (
     AcpiOsPrintf ("]\n");
 }
 
+
+#ifdef ACPI_OBSOLETE_FUNCTIONS
+/* Not used at this time, perhaps later */
 
 /*******************************************************************************
  *
@@ -179,7 +182,7 @@ AcpiNsDumpPathname (
     AcpiOsPrintf ("\n");
     return_VOID;
 }
-
+#endif
 
 /*******************************************************************************
  *

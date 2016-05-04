@@ -264,7 +264,7 @@ AcpiRsDumpDescriptor (
     UINT8                   *Target = NULL;
     UINT8                   *PreviousTarget;
     const char              *Name;
-    UINT8                    Count;
+    UINT8                   Count;
 
 
     /* First table entry must contain the table length (# of table entries) */
@@ -307,8 +307,7 @@ AcpiRsDumpDescriptor (
 
             if (Table->Pointer)
             {
-                AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                    Table->Pointer [*Target]));
+                AcpiRsOutString (Name, Table->Pointer [*Target]);
             }
             else
             {
@@ -335,20 +334,17 @@ AcpiRsDumpDescriptor (
 
         case ACPI_RSD_1BITFLAG:
 
-            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                Table->Pointer [*Target & 0x01]));
+            AcpiRsOutString (Name, Table->Pointer [*Target & 0x01]);
             break;
 
         case ACPI_RSD_2BITFLAG:
 
-            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                Table->Pointer [*Target & 0x03]));
+            AcpiRsOutString (Name, Table->Pointer [*Target & 0x03]);
             break;
 
         case ACPI_RSD_3BITFLAG:
 
-            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                Table->Pointer [*Target & 0x07]));
+            AcpiRsOutString (Name, Table->Pointer [*Target & 0x07]);
             break;
 
         case ACPI_RSD_SHORTLIST:
