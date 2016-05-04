@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.121 2016/04/28 01:37:17 knakahara Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.122 2016/05/04 18:59:55 roy Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.121 2016/04/28 01:37:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.122 2016/05/04 18:59:55 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1422,6 +1422,14 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	eh = mtod(m, struct ether_header *);
 	sc = ifp->if_bridge;
 
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		if (memcmp(etherbroadcastaddr,
+		    eh->ether_dhost, ETHER_ADDR_LEN) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
+	}
+
 	/*
 	 * If bridge is down, but the original output interface is up,
 	 * go ahead and send out that interface.  Otherwise, the packet
@@ -1437,11 +1445,13 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	 * If the packet is a multicast, or we don't know a better way to
 	 * get there, send to all interfaces.
 	 */
-	if (ETHER_IS_MULTICAST(eh->ether_dhost))
+	if ((m->m_flags & (M_MCAST | M_BCAST)) != 0)
 		dst_if = NULL;
 	else
 		dst_if = bridge_rtlookup(sc, eh->ether_dhost);
 	if (dst_if == NULL) {
+		/* XXX Should call bridge_broadcast, but there are locking
+		 * issues which need resolving first. */
 		struct bridge_iflist *bif;
 		struct mbuf *mc;
 		bool used = false;
@@ -1474,7 +1484,10 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 			}
 
 			if (PSLIST_READER_NEXT(bif, struct bridge_iflist,
-			    bif_next) == NULL) {
+			    bif_next) == NULL &&
+			    ((m->m_flags & (M_MCAST | M_BCAST)) == 0 ||
+			    dst_if == ifp))
+			{
 				used = true;
 				mc = m;
 			} else {
@@ -1492,6 +1505,36 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 #ifndef NET_MPSAFE
 			splx(s);
 #endif
+
+			if ((m->m_flags & (M_MCAST | M_BCAST)) != 0 &&
+			    dst_if != ifp)
+			{
+				if (PSLIST_READER_NEXT(bif,
+				    struct bridge_iflist, bif_next) == NULL)
+				{
+					used = true;
+					mc = m;
+				} else {
+					mc = m_copym(m, 0, M_COPYALL,
+					    M_DONTWAIT);
+					if (mc == NULL) {
+						sc->sc_if.if_oerrors++;
+						goto next;
+					}
+				}
+
+				mc->m_pkthdr.rcvif = dst_if;
+				mc->m_flags &= ~M_PROMISC;
+
+#ifndef NET_MPSAFE
+				s = splnet();
+#endif
+				ether_input(dst_if, mc);
+#ifndef NET_MPSAFE
+				splx(s);
+#endif
+			}
+
 next:
 			BRIDGE_PSZ_RENTER(s);
 			bridge_release_member(sc, bif, &psref);
