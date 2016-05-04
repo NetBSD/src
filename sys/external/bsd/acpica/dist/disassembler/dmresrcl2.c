@@ -504,7 +504,7 @@ AcpiDmI2cSerialBusDescriptor (
     /* SlaveAddress, SlaveMode, ConnectionSpeed, AddressingMode */
 
     AcpiDmIndent (Level);
-    AcpiOsPrintf ("I2cSerialBus (0x%4.4X, %s, 0x%8.8X,\n",
+    AcpiOsPrintf ("I2cSerialBusV2 (0x%4.4X, %s, 0x%8.8X,\n",
         Resource->I2cSerialBus.SlaveAddress,
         AcpiGbl_SmDecode [ACPI_GET_1BIT_FLAG (Resource->I2cSerialBus.Flags)],
         Resource->I2cSerialBus.ConnectionSpeed);
@@ -533,7 +533,11 @@ AcpiDmI2cSerialBusDescriptor (
     /* Insert a descriptor name */
 
     AcpiDmDescriptorName ();
-    AcpiOsPrintf (",\n");
+
+    /* Share */
+
+    AcpiOsPrintf (", %s,\n",
+        AcpiGbl_ShrDecode [ACPI_EXTRACT_1BIT_FLAG (Resource->I2cSerialBus.Flags, 2)]);
 
     /* Dump the vendor data */
 
@@ -574,7 +578,7 @@ AcpiDmSpiSerialBusDescriptor (
     /* DeviceSelection, DeviceSelectionPolarity, WireMode, DataBitLength */
 
     AcpiDmIndent (Level);
-    AcpiOsPrintf ("SpiSerialBus (0x%4.4X, %s, %s, 0x%2.2X,\n",
+    AcpiOsPrintf ("SpiSerialBusV2 (0x%4.4X, %s, %s, 0x%2.2X,\n",
         Resource->SpiSerialBus.DeviceSelection,
         AcpiGbl_DpDecode [ACPI_EXTRACT_1BIT_FLAG (Resource->SpiSerialBus.TypeSpecificFlags, 1)],
         AcpiGbl_WmDecode [ACPI_GET_1BIT_FLAG (Resource->SpiSerialBus.TypeSpecificFlags)],
@@ -612,7 +616,11 @@ AcpiDmSpiSerialBusDescriptor (
     /* Insert a descriptor name */
 
     AcpiDmDescriptorName ();
-    AcpiOsPrintf (",\n");
+
+    /* Share */
+
+    AcpiOsPrintf (", %s,\n",
+        AcpiGbl_ShrDecode [ACPI_EXTRACT_1BIT_FLAG (Resource->SpiSerialBus.Flags, 2)]);
 
     /* Dump the vendor data */
 
@@ -653,7 +661,7 @@ AcpiDmUartSerialBusDescriptor (
     /* ConnectionSpeed, BitsPerByte, StopBits */
 
     AcpiDmIndent (Level);
-    AcpiOsPrintf ("UartSerialBus (0x%8.8X, %s, %s,\n",
+    AcpiOsPrintf ("UartSerialBusV2 (0x%8.8X, %s, %s,\n",
         Resource->UartSerialBus.DefaultBaudRate,
         AcpiGbl_BpbDecode [ACPI_EXTRACT_3BIT_FLAG (Resource->UartSerialBus.TypeSpecificFlags, 4)],
         AcpiGbl_SbDecode [ACPI_EXTRACT_2BIT_FLAG (Resource->UartSerialBus.TypeSpecificFlags, 2)]);
@@ -694,7 +702,11 @@ AcpiDmUartSerialBusDescriptor (
     /* Insert a descriptor name */
 
     AcpiDmDescriptorName ();
-    AcpiOsPrintf (",\n");
+
+    /* Share */
+
+    AcpiOsPrintf (", %s,\n",
+        AcpiGbl_ShrDecode [ACPI_EXTRACT_1BIT_FLAG (Resource->UartSerialBus.Flags, 2)]);
 
     /* Dump the vendor data */
 

@@ -66,7 +66,7 @@ AcpiExOutString (
 static void
 AcpiExOutPointer (
     const char              *Title,
-    void                    *Value);
+    const void              *Value);
 
 static void
 AcpiExDumpObject (
@@ -380,8 +380,7 @@ AcpiExDumpObject (
     ACPI_EXDUMP_INFO        *Info)
 {
     UINT8                   *Target;
-    char                    *Name;
-    const char              *ReferenceName;
+    const char              *Name;
     UINT8                   Count;
     ACPI_OPERAND_OBJECT     *Start;
     ACPI_OPERAND_OBJECT     *Data = NULL;
@@ -472,9 +471,7 @@ AcpiExDumpObject (
 
         case ACPI_EXD_REFERENCE:
 
-            ReferenceName = AcpiUtGetReferenceName (ObjDesc);
-            AcpiExOutString (
-                "Class Name", ACPI_CAST_PTR (char, ReferenceName));
+            AcpiExOutString ("Class Name", AcpiUtGetReferenceName (ObjDesc));
             AcpiExDumpReferenceObj (ObjDesc);
             break;
 
@@ -980,7 +977,7 @@ AcpiExOutString (
 static void
 AcpiExOutPointer (
     const char              *Title,
-    void                    *Value)
+    const void              *Value)
 {
     AcpiOsPrintf ("%20s : %p\n", Title, Value);
 }

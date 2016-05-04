@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.13 2016/01/09 21:44:55 christos Exp $
+# $NetBSD: files.acpica,v 1.14 2016/05/04 19:27:57 christos Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -72,6 +72,7 @@ file	events/evxfgpe.c		acpica
 file	events/evxfregn.c		acpica
 
 # executer/
+file	executer/exconcat.c		acpica
 file	executer/exconfig.c		acpica
 file	executer/exconvrt.c		acpica
 file	executer/excreate.c		acpica
@@ -177,6 +178,7 @@ file	tables/tbxfroot.c		acpica
 # utilities/
 file	utilities/utaddress.c		acpica
 file	utilities/utalloc.c		acpica
+file	utilities/utascii.c		acpica
 file	utilities/utbuffer.c		acpica
 file	utilities/utcache.c		acpica
 file	utilities/utcopy.c		acpica

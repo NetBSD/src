@@ -94,7 +94,7 @@ AcpiNsInitializeObjects (
 
 ACPI_STATUS
 AcpiNsInitializeDevices (
-    void);
+    UINT32                  Flags);
 
 
 /*
@@ -265,7 +265,7 @@ AcpiNsDumpPathname (
 void
 AcpiNsPrintPathname (
     UINT32                  NumSegments,
-    char                    *Pathname);
+    const char              *Pathname);
 
 ACPI_STATUS
 AcpiNsDumpOneObject (
