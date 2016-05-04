@@ -56,7 +56,9 @@ OBJECTS = \
 	$(OBJDIR)/aslbtypes.o\
 	$(OBJDIR)/aslcodegen.o\
 	$(OBJDIR)/aslcompile.o\
+	$(OBJDIR)/asldebug.o\
 	$(OBJDIR)/aslerror.o\
+	$(OBJDIR)/aslexternal.o\
 	$(OBJDIR)/aslfiles.o\
 	$(OBJDIR)/aslfileio.o\
 	$(OBJDIR)/aslfold.o\
@@ -94,12 +96,14 @@ OBJECTS = \
 	$(OBJDIR)/aslrestype2w.o\
 	$(OBJDIR)/aslstartup.o\
 	$(OBJDIR)/aslstubs.o\
+	$(OBJDIR)/aslpld.o\
 	$(OBJDIR)/asltransform.o\
 	$(OBJDIR)/asltree.o\
 	$(OBJDIR)/aslutils.o\
 	$(OBJDIR)/asluuid.o\
 	$(OBJDIR)/aslwalks.o\
 	$(OBJDIR)/aslxref.o\
+	$(OBJDIR)/aslxrefout.o\
 	$(OBJDIR)/cmfsize.o\
 	$(OBJDIR)/dbfileio.o\
 	$(OBJDIR)/dmbuffer.o\
@@ -140,6 +144,7 @@ OBJECTS = \
 	$(OBJDIR)/dttable2.o\
 	$(OBJDIR)/dttemplate.o\
 	$(OBJDIR)/dtutils.o\
+	$(OBJDIR)/exconcat.o\
 	$(OBJDIR)/exconvrt.o\
 	$(OBJDIR)/excreate.o\
 	$(OBJDIR)/exdump.o\
@@ -196,6 +201,7 @@ OBJECTS = \
 	$(OBJDIR)/tbxfload.o\
 	$(OBJDIR)/utaddress.o\
 	$(OBJDIR)/utalloc.o\
+	$(OBJDIR)/utascii.o\
 	$(OBJDIR)/utbuffer.o\
 	$(OBJDIR)/utcache.o\
 	$(OBJDIR)/utcopy.o\
@@ -269,12 +275,14 @@ include ../Makefile.rules
 # Function to safely execute yacc
 #
 safe_yacc = \
-	_f=`echo $(1) | tr '[:upper:]' '[:lower:]'` &&\
-	_d=`mktemp -d $(OBJDIR)/$$_f.XXXXXX` &&\
-	_t=`basename $(3)` &&\
-	$(YACC) $(YFLAGS) -p$(1) -o$$_d/$$_f.c -d $(2) &&\
-	mv $$_d/$$_f.$${_t\#\#*.} $(3);\
-	test -d $$_d && rm -fr $$_d
+	_d=`mktemp -d $(OBJDIR)/$(1).XXXXXX` &&\
+	cd $$_d &&\
+	$(YACC) $(YFLAGS) -d -p$(1) $(abspath $(2)) &&\
+	cd - &&\
+	mv $$_d/y.tab$(suffix $(3)) $(3);\
+	_r=$$?;\
+	rm -fr $$_d;\
+	exit $$_r
 
 #
 # Macro processing for iASL .y files

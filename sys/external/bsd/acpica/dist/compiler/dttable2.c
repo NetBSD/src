@@ -758,6 +758,11 @@ DtCompilePcct (
             InfoTable = AcpiDmTableInfoPcct1;
             break;
 
+        case ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2:
+
+            InfoTable = AcpiDmTableInfoPcct2;
+            break;
+
         default:
 
             DtFatal (ASL_MSG_UNKNOWN_SUBTABLE, SubtableStart, "PCCT");
@@ -976,7 +981,7 @@ DtCompileS3pt (
     DT_FIELD                **PFieldList)
 {
     ACPI_STATUS             Status;
-    ACPI_S3PT_HEADER        *S3ptHeader;
+    ACPI_FPDT_HEADER        *S3ptHeader;
     DT_SUBTABLE             *Subtable;
     DT_SUBTABLE             *ParentTable;
     ACPI_DMTABLE_INFO       *InfoTable;
@@ -1006,7 +1011,7 @@ DtCompileS3pt (
         DtInsertSubtable (ParentTable, Subtable);
         DtPushSubtable (Subtable);
 
-        S3ptHeader = ACPI_CAST_PTR (ACPI_S3PT_HEADER, Subtable->Buffer);
+        S3ptHeader = ACPI_CAST_PTR (ACPI_FPDT_HEADER, Subtable->Buffer);
 
         switch (S3ptHeader->Type)
         {

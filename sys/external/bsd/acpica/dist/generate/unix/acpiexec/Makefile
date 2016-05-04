@@ -106,6 +106,7 @@ OBJECTS = \
 	$(OBJDIR)/evxfgpe.o\
 	$(OBJDIR)/evxfregn.o\
 	$(OBJDIR)/exconfig.o\
+	$(OBJDIR)/exconcat.o\
 	$(OBJDIR)/exconvrt.o\
 	$(OBJDIR)/excreate.o\
 	$(OBJDIR)/exdebug.o\
@@ -200,6 +201,7 @@ OBJECTS = \
 	$(OBJDIR)/tbxfroot.o\
 	$(OBJDIR)/utaddress.o\
 	$(OBJDIR)/utalloc.o\
+	$(OBJDIR)/utascii.o\
 	$(OBJDIR)/utbuffer.o\
 	$(OBJDIR)/utcache.o\
 	$(OBJDIR)/utcopy.o\
@@ -245,10 +247,14 @@ CFLAGS += \
     -DACPI_CHECKSUM_ABORT=TRUE
 endif
 
+ifneq ($(HOST),_QNX)
 LDFLAGS += -lpthread
+endif
 
 ifneq ($(HOST),_APPLE)
+ifneq ($(HOST),_QNX)
 LDFLAGS += -lrt
+endif
 endif
 
 #

@@ -59,6 +59,7 @@ OBJECTS = \
 	$(OBJDIR)/evrgnini.o\
 	$(OBJDIR)/evxface.o\
 	$(OBJDIR)/evxfregn.o\
+	$(OBJDIR)/exconcat.o\
 	$(OBJDIR)/exconfig.o\
 	$(OBJDIR)/exconvrt.o\
 	$(OBJDIR)/excreate.o\
@@ -130,6 +131,7 @@ OBJECTS = \
 	$(OBJDIR)/tbxfroot.o\
 	$(OBJDIR)/utaddress.o\
 	$(OBJDIR)/utalloc.o\
+	$(OBJDIR)/utascii.o\
 	$(OBJDIR)/utbuffer.o\
 	$(OBJDIR)/utcache.o\
 	$(OBJDIR)/utcopy.o\

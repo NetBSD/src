@@ -53,7 +53,7 @@
 
 /* Local prototypes */
 
-void
+static void
 MtCheckNamedObjectInMethod (
     ACPI_PARSE_OBJECT       *Op,
     ASL_METHOD_INFO         *MethodInfo);
@@ -92,6 +92,13 @@ MtMethodAnalysisWalkBegin (
     ACPI_PARSE_OBJECT       *NextParamType;
     UINT8                   ActualArgs = 0;
 
+
+    /* Build cross-reference output file if requested */
+
+    if (Gbl_CrossReferenceOutput)
+    {
+        OtXrefWalkPart1 (Op, Level, MethodInfo);
+    }
 
     switch (Op->Asl.ParseOpcode)
     {
@@ -399,10 +406,8 @@ MtMethodAnalysisWalkBegin (
 
     case PARSEOP_DEVICE:
 
-        Next = Op->Asl.Child;
-
-        if (!ApFindNameInScope (METHOD_NAME__HID, Next) &&
-            !ApFindNameInScope (METHOD_NAME__ADR, Next))
+        if (!ApFindNameInDeviceTree (METHOD_NAME__HID, Op) &&
+            !ApFindNameInDeviceTree (METHOD_NAME__ADR, Op))
         {
             AslError (ASL_WARNING, ASL_MSG_MISSING_DEPENDENCY, Op,
                 "Device object requires a _HID or _ADR in same scope");
@@ -493,7 +498,7 @@ MtMethodAnalysisWalkBegin (
  *
  ******************************************************************************/
 
-void
+static void
 MtCheckNamedObjectInMethod (
     ACPI_PARSE_OBJECT       *Op,
     ASL_METHOD_INFO         *MethodInfo)
