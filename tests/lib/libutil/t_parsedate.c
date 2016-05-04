@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.22 2016/05/03 18:18:15 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.23 2016/05/04 18:36:46 gson Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.22 2016/05/03 18:18:15 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.23 2016/05/04 18:36:46 gson Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -269,10 +269,8 @@ ATF_TC_BODY(relative, tc)
 	 * edges of the time_t range to avert under- or overflow
 	 * of the relative date, and use a prime step for maximum
 	 * coverage of different times of day/week/month/year.
-	 * The step is currently large to limit the size of the
-	 * error log, but can be reduced as bugs are fixed.
 	 */
-	for (now = 0x00FFFFFF; now < 0xFF000000; now += 7424537) {
+	for (now = 0x00FFFFFF; now < 0xFF000000; now += 3777779) {
 		ATF_CHECK(localtime_r(&now, &tm) != NULL);
 		tm.tm_mday--;
 		/* "yesterday" leaves time untouched */
