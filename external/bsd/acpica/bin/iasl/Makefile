@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2016/01/09 21:13:51 christos Exp $
+# $NetBSD: Makefile,v 1.12 2016/05/04 19:28:15 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -32,7 +32,9 @@ SRCS+= \
 	aslcompile.c \
 	aslcompilerlex.c \
 	aslcompilerparse.c \
+	asldebug.c \
 	aslerror.c \
+	aslexternal.c \
 	aslfileio.c \
 	aslfiles.c \
 	aslfold.c \
@@ -55,6 +57,7 @@ SRCS+= \
 	asloperands.c \
 	aslopt.c \
 	asloptions.c \
+	aslpld.c \
 	aslpredef.c \
 	aslprepkg.c \
 	aslprintf.c \
@@ -76,6 +79,7 @@ SRCS+= \
 	asluuid.c \
 	aslwalks.c \
 	aslxref.c \
+	aslxrefout.c \
 	dtcompile.c \
 	dtexpress.c \
 	dtfield.c \
@@ -148,6 +152,7 @@ SRCS+= \
 SRCS+= \
 	exconvrt.c \
 	excreate.c \
+	exconcat.c \
 	exdump.c \
 	exmisc.c \
 	exmutex.c \
@@ -207,6 +212,7 @@ SRCS+= \
 SRCS+= \
 	utaddress.c \
 	utalloc.c \
+	utascii.c \
 	utbuffer.c \
 	utcache.c \
 	utcopy.c \
@@ -215,7 +221,6 @@ SRCS+= \
 	utdelete.c \
 	uterror.c \
 	utexcep.c \
-	utfileio.c \
 	utglobal.c \
 	uthex.c \
 	utinit.c \
