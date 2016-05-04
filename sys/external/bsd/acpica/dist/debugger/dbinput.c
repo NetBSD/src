@@ -720,7 +720,8 @@ AcpiDbMatchCommand (
 
     for (i = CMD_FIRST_VALID; AcpiGbl_DbCommands[i].Name; i++)
     {
-        if (strstr (AcpiGbl_DbCommands[i].Name, UserCommand) ==
+        if (strstr (
+            ACPI_CAST_PTR (char, AcpiGbl_DbCommands[i].Name), UserCommand) ==
             AcpiGbl_DbCommands[i].Name)
         {
             return (i);
