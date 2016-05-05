@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hid.c,v 1.6 2016/05/02 17:24:06 jakllsch Exp $	*/
+/*	$NetBSD: t_hid.c,v 1.7 2016/05/05 16:55:56 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hid.c,v 1.6 2016/05/02 17:24:06 jakllsch Exp $");
+__RCSID("$NetBSD: t_hid.c,v 1.7 2016/05/05 16:55:56 jakllsch Exp $");
 
 #include <machine/types.h>
 #include <stdlib.h>
@@ -104,6 +104,8 @@ ATF_TC_BODY(khid, tc)
 {
 	int ret;
 	struct hid_item hi;
+
+	atf_tc_expect_fail("test case does not use rump correctly");
 
 	uhidevdebug = 0;
 
@@ -238,6 +240,8 @@ ATF_TC_BODY(khid_parse_just_pop, tc)
 {
 	struct hid_data *hdp;
 	struct hid_item hi;
+
+	atf_tc_expect_fail("test case does not use rump correctly");
 
 	rump_init();
 
