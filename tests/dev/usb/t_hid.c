@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hid.c,v 1.7 2016/05/05 16:55:56 jakllsch Exp $	*/
+/*	$NetBSD: t_hid.c,v 1.8 2016/05/05 17:40:26 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hid.c,v 1.7 2016/05/05 16:55:56 jakllsch Exp $");
+__RCSID("$NetBSD: t_hid.c,v 1.8 2016/05/05 17:40:26 jakllsch Exp $");
 
 #include <machine/types.h>
 #include <stdlib.h>
@@ -105,11 +105,11 @@ ATF_TC_BODY(khid, tc)
 	int ret;
 	struct hid_item hi;
 
-	atf_tc_expect_fail("test case does not use rump correctly");
-
 	uhidevdebug = 0;
 
 	rump_init();
+
+	rump_schedule();
 
 	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000003, 0, hid_input,
@@ -225,6 +225,8 @@ ATF_TC_BODY(khid, tc)
 	    &hi.loc), 0xfe);
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_maximum_report,
 	    &hi.loc), 0xff);
+
+	rump_unschedule();
 }
 
 ATF_TC(khid_parse_just_pop);
@@ -241,15 +243,17 @@ ATF_TC_BODY(khid_parse_just_pop, tc)
 	struct hid_data *hdp;
 	struct hid_item hi;
 
-	atf_tc_expect_fail("test case does not use rump correctly");
-
 	rump_init();
+
+	rump_schedule();
 
 	hdp = hid_start_parse(just_pop_report_descriptor,
 	    sizeof just_pop_report_descriptor, hid_none);
 	while (hid_get_item(hdp, &hi) > 0) {
 	}
 	hid_end_parse(hdp);
+
+	rump_unschedule();
 }
 
 ATF_TP_ADD_TCS(tp)
