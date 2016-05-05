@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.6 2015/08/24 14:04:24 uebayasi Exp $
+#	$NetBSD: Makefile.aarch64,v 1.7 2016/05/05 21:14:14 rjs Exp $
 
 # Makefile for NetBSD
 #
@@ -87,6 +87,16 @@ spl.o vectors.o: assym.h
 ##
 ## (7) misc settings
 ##
+
+# define .MAIN _before_ the make() check, so that implicit target
+# would be defined
+.MAIN: all
+
+.if make(depend) || make(all) || make(dependall)
+.BEGIN:
+	@rm -f arm && \
+		ln -s $S/arch/arm/include arm
+.endif
 
 ##
 ## (8) config(8) generated machinery
