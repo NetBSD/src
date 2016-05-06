@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.271 2016/05/06 13:03:06 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.272 2016/05/06 20:12:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.271 2016/05/06 13:03:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.272 2016/05/06 20:12:54 christos Exp $");
 
 #include "opt_usb.h"
 
@@ -1105,7 +1105,7 @@ uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	uhci_soft_qh_t *pqh;
 	uint32_t elink;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(10, "sqh %p", sqh, 0, 0, 0);
@@ -1146,8 +1146,7 @@ uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	pqh->hlink = sqh->hlink;
 	pqh->qh.qh_hlink = sqh->qh.qh_hlink;
 	usb_syncmem(&pqh->dma, pqh->offs + offsetof(uhci_qh_t, qh_hlink),
-	    sizeof(pqh->qh.qh_hlink),
-	    BUS_DMASYNC_PREWRITE);
+	    sizeof(pqh->qh.qh_hlink), BUS_DMASYNC_PREWRITE);
 	delay(UHCI_QH_REMOVE_DELAY);
 	if (sc->sc_hctl_end == sqh)
 		sc->sc_hctl_end = pqh;
@@ -1185,7 +1184,7 @@ uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	uhci_soft_qh_t *pqh;
 	uint32_t elink;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(10, "sqh %p", sqh, 0, 0, 0);
