@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.246 2016/05/06 09:19:15 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.247 2016/05/06 18:50:37 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -13844,4 +13844,85 @@ doc/3RDPARTY					patch
 
 	Update OpenSSL to 1.0.1t.
 	[spz, ticket #1379]
+
+etc/namedb/root.cache				1.19
+
+	Update to 2015120100.
+	* Addresses of H.ROOT-SERVERS.NET has updated.
+	* Make IPv6 address lower case.
+	[taca, ticket #1351]
+
+etc/ssh/ssh_known_hosts				1.9
+
+	Add keys for wip.pkgsrc.org.
+	[wiz, ticket #1362]
+
+sys/dev/pci/if_wm.c				1.281, 1.318, 1.320, 1.324-1.332, 1.334, 1.336, 1.343-1.344, 1.347-1.348, 1.350, 1.376-1.382, 1.386-1.387, 1.389 via patch
+sys/dev/pci/if_wmreg.h				1.68-1.70, 1.73-1.77, 1.79-1.80, 1.82, 1.86-1.88 via patch
+sys/dev/pci/if_wmvar.h				1.22-1.23, 1.25-1.30 via patch
+sys/dev/mii/igphy.c				1.25
+sys/dev/mii/ukphy.c				1.48
+
+	Sync wm(4) as of if_wm.c rev 1.389 except SERDES, MSI/MSI-X, multiqueue
+	and NET_MPSAFE:
+	- Set ICH9 and ICH10's PBA size to 14K if the RX buffer size is more
+	  than 4096. Almost the same as other OSes.
+	- For 82576 and newer devices, the PBA register is deleted. Don't write
+	  PBA for those chips. Also change the calculation of RX packet buffer
+	  size in new way.
+	- Print NVM image version and option ROM version.
+	- Add workaround for I210 Errata 25 and I211 Errata 10 (PLL bug). This
+	  workaround is required if the NVM image version < 3.25.
+	- Fix a bug that wm_detach() didn't unmap the FHASH's area. Now
+	  "drvctl -d wm0" -> "drvctl -r pci0" works on ICH* and PCH*.
+	- Add workaround for 82574 Errata 25 and 82583 Errata 12 "Dropped RX
+	  packets" and for 82573 (unknown). Set GCR_L1_ACT_WITHOUT_L0S_RX bit.
+	  The NVM Image version 2.1.4 and newer have this workaround.
+	- Check PHY type correctly. This change is required to use igphy(4)
+	  device correctly.
+	- Disable LPLU (Low Power Link Up) on D0 state on 82574, 82583 and ICH*
+	  too.
+	- Call wm_get_hw_control() correctly. This change fixes a bug that some
+	  AMT based systems doesn't linkup at 1000BaseT. The problem was
+	  observed on HP Compaq dc7700. A lot of fixes have been done for wm(4)
+	  and igphy(4), so now PR#44893 should be fixed.
+	- Call wm_get_wakeup(sc) before checking WM_F_HAS_AMT. It's required to
+	  check the existence of AMT correctly.
+	- Fix a problem that wm_gate_hw_phy_config_ich8lan() isn't called in
+	  wm_reset() on PCH2.
+	- Clear WMREG_WUC in wm_reset() if the chip >= 82544. This might fix
+	  the behavior on suspend/resume.
+	- Fix logic of wm_check_reset_block() on ICH* and PCH*. This change
+	  might fix a problem that PHY's read/write functions can't get
+	  semaphore.
+	- On ICH8, call wm_gig_downshift_workaround_ich8lan() when link changed
+	  down.
+	- Drop PHY_CTRL_GBE_DIS explicitly in wm_lplu_d0_disable() in case BIOS
+	  sets this bit.
+	- Fix two bugs in wm_kmrn_lock_loss_workaround_ich8lan(). Now the
+	  function checks the status correctly but it causes linkdown up to 10
+	  times, so it's disabled for the time being.
+	- PR/50527: David Binderman: Fix impossible code. Odd offsets need
+	  special treatment.
+	- Fix RAL table's size of PCH2 and PCH_LPT.
+	- PCH_LPT (and newer device) is required to check FWSM_WLOCK_MAC bit to
+	  determine the range of the RAL.
+	- Use sc->sc_itr instead of hard-coded number.
+	- Rename wm_tbi_check_link() to wm_tbi_tick() because this function
+	  acts as mii_tick().
+	- ACK Accelerate Disable in the RFCTL register is not bit 13 but 12.
+	  No binary change because this definition has not used yet.
+	- Add ACK data Disable bit's definition (not used yet).
+	- PHY_CTRL_GBE_DIS is not bit 4 but bit 6. This change has no any
+	  effect by default because WM_WOL is not defined yet and
+	  m_kmrn_lock_loss_workaround_ich8lan() is broken.
+	- Fix wm_check_mng_mode_ich8lan(). This function is used only when
+	  WM_WOL is defined and it's disabled by default.
+	- Rename wm_check_reset_block() to wm_phy_resetisblocked() and make it
+	  returns bool. No functional change.
+	- Reorder function definitions and macro definitions. No functional
+	  change.
+	- Fix comment. Add comment. Update comment.
+	- KNF.
+	[msaitoh, ticket #1366]
 
