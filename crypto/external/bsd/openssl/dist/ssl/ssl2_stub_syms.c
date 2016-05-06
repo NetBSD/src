@@ -7,9 +7,13 @@
 
 #ifdef OPENSSL_NO_SSL2
 
+/*
+ * now in s2_meth.c
 const SSL_METHOD *SSLv2_method(void) { return NULL; }
 const SSL_METHOD *SSLv2_server_method(void) { return NULL; }
 const SSL_METHOD *SSLv2_client_method(void) { return NULL; }
+ *
+ */
 
 const SSL_CIPHER ssl2_ciphers[0];
 const char ssl2_version_str[] = "";
