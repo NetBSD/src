@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.64 2016/05/06 09:20:15 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.65 2016/05/06 18:39:50 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -8190,4 +8190,16 @@ doc/3RDPARTY					patch
 
 	Update OpenSSL to 1.0.1t.
 	[spz, ticket #1379]
+
+etc/namedb/root.cache				1.19
+
+	Update to 2015120100.
+	* Addresses of H.ROOT-SERVERS.NET has updated.
+	* Make IPv6 address lower case.
+	[taca, ticket #1351]
+
+etc/ssh/ssh_known_hosts				1.9
+
+	Add keys for wip.pkgsrc.org.
+	[wiz, ticket #1362]
 
