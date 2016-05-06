@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2013/02/07 12:04:01 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2016/05/06 00:24:45 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.15 2013/02/07 12:04:01 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2016/05/06 00:24:45 khorben Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 		cmdargs.ml_propslen = strlen(propsstr);
 
 		if (prog_modctl(MODCTL_LOAD, &cmdargs)) {
-			err(EXIT_FAILURE, NULL);
+			err(EXIT_FAILURE, "%s", cmdargs.ml_filename);
 		}
 	}
 

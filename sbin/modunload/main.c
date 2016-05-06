@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2010/12/13 20:48:45 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2016/05/06 00:24:45 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2010/12/13 20:48:45 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2016/05/06 00:24:45 khorben Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -57,7 +57,7 @@ main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		if (prog_modctl(MODCTL_UNLOAD, argv[i])) {
-			err(EXIT_FAILURE, NULL);
+			err(EXIT_FAILURE, "%s", argv[i]);
 		}
 	}
 
