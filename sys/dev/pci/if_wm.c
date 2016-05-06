@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.393 2016/05/06 08:57:43 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.394 2016/05/06 10:56:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.393 2016/05/06 08:57:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.394 2016/05/06 10:56:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3835,7 +3835,8 @@ wm_reset(struct wm_softc *sc)
 
 			reg |= CTRL_PHY_RESET;
 			phy_reset = 1;
-		}
+		} else
+			printf("XXX reset is blocked!!!\n");
 		wm_get_swfwhw_semaphore(sc);
 		CSR_WRITE(sc, WMREG_CTRL, reg);
 		/* Don't insert a completion barrier when reset */
@@ -11416,6 +11417,9 @@ wm_gate_hw_phy_config_ich8lan(struct wm_softc *sc, bool gate)
 {
 	uint32_t reg;
 
+	if (sc->sc_type < WM_T_PCH2)
+		return;
+
 	reg = CSR_READ(sc, WMREG_EXTCNFCTR);
 
 	if (gate)
@@ -11429,11 +11433,26 @@ wm_gate_hw_phy_config_ich8lan(struct wm_softc *sc, bool gate)
 static void
 wm_smbustopci(struct wm_softc *sc)
 {
-	uint32_t fwsm;
+	uint32_t fwsm, reg;
+
+	/* Gate automatic PHY configuration by hardware on non-managed 82579 */
+	wm_gate_hw_phy_config_ich8lan(sc, true);
+
+	/* Acquire semaphore */
+	wm_get_swfwhw_semaphore(sc);
 
 	fwsm = CSR_READ(sc, WMREG_FWSM);
 	if (((fwsm & FWSM_FW_VALID) == 0)
 	    && ((wm_phy_resetisblocked(sc) == false))) {
+		if (sc->sc_type >= WM_T_PCH_LPT) {
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg |= CTRL_EXT_FORCE_SMBUS;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+			CSR_WRITE_FLUSH(sc);
+			delay(50*1000);
+		}
+
+		/* Toggle LANPHYPC */
 		sc->sc_ctrl |= CTRL_LANPHYPC_OVERRIDE;
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_VALUE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
@@ -11444,13 +11463,21 @@ wm_smbustopci(struct wm_softc *sc)
 		CSR_WRITE_FLUSH(sc);
 		delay(50*1000);
 
-		/*
-		 * Gate automatic PHY configuration by hardware on non-managed
-		 * 82579
-		 */
-		if (sc->sc_type == WM_T_PCH2)
-			wm_gate_hw_phy_config_ich8lan(sc, 1);
+		if (sc->sc_type >= WM_T_PCH_LPT) {
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg &= ~CTRL_EXT_FORCE_SMBUS;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		}
 	}
+
+	/* Release semaphore */
+	wm_put_swfwhw_semaphore(sc);
+
+	/*
+	 * Ungate automatic PHY configuration by hardware on non-managed 82579
+	 */
+	if ((sc->sc_type == WM_T_PCH2) && ((fwsm & FWSM_FW_VALID) == 0))
+		wm_gate_hw_phy_config_ich8lan(sc, false);
 }
 
 static void
