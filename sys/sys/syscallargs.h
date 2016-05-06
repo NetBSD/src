@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.278 2016/04/23 23:09:27 christos Exp $ */
+/* $NetBSD: syscallargs.h,v 1.279 2016/05/06 10:19:40 pooka Exp $ */
 
 /*
  * System call argument lists.
@@ -11,10 +11,11 @@
 #define	_SYS_SYSCALLARGS_H_
 
 #ifndef RUMP_CLIENT
+#include <sys/idtype.h>
 #include <sys/mount.h>
 #include <sys/sched.h>
 #endif
-#include <sys/idtype.h>
+
 #include <sys/socket.h>
 
 #define	SYS_MAXSYSARGS	8
