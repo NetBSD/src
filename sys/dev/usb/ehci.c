@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.249 2016/04/23 10:15:31 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.250 2016/05/06 13:03:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.249 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.250 2016/05/06 13:03:06 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -159,7 +159,6 @@ Static usbd_status	ehci_open(struct usbd_pipe *);
 Static void		ehci_poll(struct usbd_bus *);
 Static void		ehci_softintr(void *);
 Static int		ehci_intr1(ehci_softc_t *);
-Static void		ehci_waitintr(ehci_softc_t *, struct usbd_xfer *);
 Static void		ehci_check_qh_intr(ehci_softc_t *, struct ehci_xfer *,
 			    ex_completeq_t *);
 Static void		ehci_check_itd_intr(ehci_softc_t *, struct ehci_xfer *,
@@ -1277,48 +1276,6 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 	TAILQ_INSERT_TAIL(cq, ex, ex_next);
 
 	DPRINTF("ex=%p done", ex, 0, 0, 0);
-}
-
-/*
- * Wait here until controller claims to have an interrupt.
- * Then call ehci_intr and return.  Use timeout to avoid waiting
- * too long.
- */
-Static void
-ehci_waitintr(ehci_softc_t *sc, struct usbd_xfer *xfer)
-{
-	int timo;
-	uint32_t intrs;
-
-	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-
-	xfer->ux_status = USBD_IN_PROGRESS;
-	for (timo = xfer->ux_timeout; timo >= 0; timo--) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		if (sc->sc_dying)
-			break;
-		intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS)) &
-			sc->sc_eintrs;
-		DPRINTF("0x%04x", intrs, 0, 0, 0);
-#ifdef EHCI_DEBUG
-		if (ehcidebug >= 15)
-			ehci_dump_regs(sc);
-#endif
-		if (intrs) {
-			mutex_spin_enter(&sc->sc_intr_lock);
-			ehci_intr1(sc);
-			mutex_spin_exit(&sc->sc_intr_lock);
-			if (xfer->ux_status != USBD_IN_PROGRESS)
-				return;
-		}
-	}
-
-	/* Timeout */
-	DPRINTF("timeout", 0, 0, 0, 0);
-	xfer->ux_status = USBD_TIMEOUT;
-	mutex_enter(&sc->sc_lock);
-	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
 }
 
 Static void
@@ -3704,9 +3661,6 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 #endif
 #endif
 
-	if (sc->sc_bus.ub_usepolling)
-		ehci_waitintr(sc, xfer);
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -3908,9 +3862,6 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	ehci_dump_sqtds(exfer->ex_sqtdstart);
 #endif
 #endif
-
-	if (sc->sc_bus.ub_usepolling)
-		ehci_waitintr(sc, xfer);
 
 	return USBD_IN_PROGRESS;
 }
@@ -4122,9 +4073,6 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	ehci_dump_sqtds(exfer->ex_sqtdstart);
 #endif
 #endif
-
-	if (sc->sc_bus.ub_usepolling)
-		ehci_waitintr(sc, xfer);
 
 	return USBD_IN_PROGRESS;
 }
@@ -4508,11 +4456,6 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 	mutex_exit(&sc->sc_lock);
-
-	if (sc->sc_bus.ub_usepolling) {
-		printf("Starting ehci isoc xfer with polling. Bad idea?\n");
-		ehci_waitintr(sc, xfer);
-	}
 
 	return USBD_IN_PROGRESS;
 }
@@ -4907,11 +4850,6 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 	mutex_exit(&sc->sc_lock);
-
-	if (sc->sc_bus.ub_usepolling) {
-		printf("Starting ehci isoc xfer with polling. Bad idea?\n");
-		ehci_waitintr(sc, xfer);
-	}
 
 	return USBD_IN_PROGRESS;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.42 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.43 2016/05/06 13:03:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.42 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.43 2016/05/06 13:03:06 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -82,7 +82,6 @@ int dwc2debug = 0;
 Static usbd_status	dwc2_open(struct usbd_pipe *);
 Static void		dwc2_poll(struct usbd_bus *);
 Static void		dwc2_softintr(void *);
-Static void		dwc2_waitintr(struct dwc2_softc *, struct usbd_xfer *);
 
 Static struct usbd_xfer *
 			dwc2_allocx(struct usbd_bus *, unsigned int);
@@ -311,40 +310,6 @@ dwc2_softintr(void *v)
 		mutex_spin_enter(&hsotg->lock);
 	}
 	mutex_spin_exit(&hsotg->lock);
-}
-
-Static void
-dwc2_waitintr(struct dwc2_softc *sc, struct usbd_xfer *xfer)
-{
-	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
-	uint32_t intrs;
-	int timo;
-
-	xfer->ux_status = USBD_IN_PROGRESS;
-	for (timo = xfer->ux_timeout; timo >= 0; timo--) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		if (sc->sc_dying)
-			break;
-		intrs = dwc2_read_core_intr(hsotg);
-
-		DPRINTFN(15, "0x%08x\n", intrs);
-
-		if (intrs) {
-			mutex_spin_enter(&hsotg->lock);
-			dwc2_interrupt(sc);
-			mutex_spin_exit(&hsotg->lock);
-			if (xfer->ux_status != USBD_IN_PROGRESS)
-				return;
-		}
-	}
-
-	/* Timeout */
-	DPRINTF("timeout\n");
-
-	mutex_enter(&sc->sc_lock);
-	xfer->ux_status = USBD_TIMEOUT;
-	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
 }
 
 Static void
@@ -742,9 +707,6 @@ dwc2_device_ctrl_start(struct usbd_xfer *xfer)
 	if (err)
 		return err;
 
-	if (sc->sc_bus.ub_usepolling)
-		dwc2_waitintr(sc, xfer);
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -863,9 +825,6 @@ dwc2_device_intr_start(struct usbd_xfer *xfer)
 	if (err)
 		return err;
 
-	if (sc->sc_bus.ub_usepolling)
-		dwc2_waitintr(sc, xfer);
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -920,9 +879,6 @@ dwc2_device_isoc_transfer(struct usbd_xfer *xfer)
 	xfer->ux_status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
-
-	if (sc->sc_bus.ub_usepolling)
-		dwc2_waitintr(sc, xfer);
 
 	return err;
 }
