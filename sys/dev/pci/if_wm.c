@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.392 2016/05/06 08:56:20 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.393 2016/05/06 08:57:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.392 2016/05/06 08:56:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.393 2016/05/06 08:57:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3537,8 +3537,10 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		case WM_T_PCH:
 		case WM_T_PCH2:
 		case WM_T_PCH_LPT:
-			/* TARC 0 */
-			if (sc->sc_type == WM_T_ICH8) {
+		case WM_T_PCH_SPT:
+			/* TARC0 */
+			if ((sc->sc_type == WM_T_ICH8)
+			    || (sc->sc_type == WM_T_PCH_SPT)) {
 				/* Set TARC0 bits 29 and 28 */
 				tarc0 |= __BITS(29, 28);
 			}
@@ -3574,6 +3576,12 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 
 			}
 
+			/* IOSFPC */
+			if (sc->sc_type == WM_T_PCH_SPT) {
+				reg = CSR_READ(sc, WMREG_IOSFPC);
+				reg |= RCTL_RDMTS_HEX; /* XXX RTCL bit? */
+				CSR_WRITE(sc, WMREG_IOSFPC, reg);
+			}
 			/*
 			 * Work-around descriptor data corruption issue during
 			 * NFS v2 UDP traffic, just disable the NFS filtering
@@ -5149,6 +5157,45 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 				bus_dmamap_unload(sc->sc_dmat,txs->txs_dmamap);
 				m_freem(txs->txs_mbuf);
 				txs->txs_mbuf = NULL;
+			}
+		}
+		if (sc->sc_type == WM_T_PCH_SPT) {
+			pcireg_t preg;
+			uint32_t reg;
+			int nexttx;
+
+			/* First, disable MULR fix in FEXTNVM11 */
+			reg = CSR_READ(sc, WMREG_FEXTNVM11);
+			reg |= FEXTNVM11_DIS_MULRFIX;
+			CSR_WRITE(sc, WMREG_FEXTNVM11, reg);
+
+			preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+			    WM_PCI_DESCRING_STATUS);
+			if (preg & DESCRING_STATUS_FLUSH_REQ) {
+				/* TX */
+				printf("XXX need TX flush (reg = %08x)\n",
+				    preg);
+				wm_init_tx_descs(sc, txq);
+				wm_init_tx_regs(sc, txq);
+				nexttx = txq->txq_next;
+				wm_set_dma_addr(
+					&txq->txq_descs[nexttx].wtx_addr,
+					WM_CDTXADDR(txq, nexttx));
+				txq->txq_descs[nexttx].wtx_cmdlen
+				    = htole32(WTX_CMD_IFCS | 512);
+				wm_cdtxsync(txq, nexttx, 1,
+				    BUS_DMASYNC_PREREAD |BUS_DMASYNC_PREWRITE);
+				CSR_WRITE(sc, WMREG_TCTL, TCTL_EN);
+				CSR_WRITE(sc, WMREG_TDT(0), nexttx);
+				CSR_WRITE_FLUSH(sc);
+				delay(250);
+				CSR_WRITE(sc, WMREG_TCTL, 0);
+			}
+			preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+			    WM_PCI_DESCRING_STATUS);
+			if (preg & DESCRING_STATUS_FLUSH_REQ) {
+				/* RX */
+				printf("XXX need RX flush\n");
 			}
 		}
 		WM_TX_UNLOCK(txq);
