@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2033 2016/05/02 12:59:30 christos Exp $
+#	$NetBSD: mi,v 1.2034 2016/05/06 09:30:05 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4397,6 +4397,7 @@
 ./usr/share/man/cat3/ERR_set_mark.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_BytesToKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_DigestInit.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_EncodeInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_EncryptInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_OpenInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_new.0		comp-c-catman		crypto,.cat
@@ -4719,6 +4720,7 @@
 ./usr/share/man/cat3/SSL_CTX_set_session_id_context.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_ssl_version.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_timeout.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_tlsext_status_cb.0 comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_tlsext_ticket_key_cb.0 comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_tmp_dh_callback.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_tmp_rsa_callback.0	comp-c-catman		crypto,.cat
@@ -11665,6 +11667,7 @@
 ./usr/share/man/html3/ERR_set_mark.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_BytesToKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_DigestInit.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/EVP_EncodeInit.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_EncryptInit.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_OpenInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_PKEY_new.html		comp-c-htmlman		crypto,html
@@ -11985,6 +11988,7 @@
 ./usr/share/man/html3/SSL_CTX_set_session_id_context.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_ssl_version.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_timeout.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_CTX_set_tlsext_status_cb.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_tlsext_ticket_key_cb.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_tmp_dh_callback.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_tmp_rsa_callback.html comp-c-htmlman		crypto,html
@@ -18728,6 +18732,7 @@
 ./usr/share/man/man3/ERR_set_mark.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_BytesToKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_DigestInit.3		comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_EncodeInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_EncryptInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_OpenInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_PKEY_new.3		comp-c-man		crypto,.man
@@ -19050,6 +19055,7 @@
 ./usr/share/man/man3/SSL_CTX_set_session_id_context.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_ssl_version.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_timeout.3	comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_CTX_set_tlsext_status_cb.3 comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_tlsext_ticket_key_cb.3 comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_tmp_dh_callback.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_tmp_rsa_callback.3	comp-c-man		crypto,.man
