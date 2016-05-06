@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.41 2016/04/30 15:03:55 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.42 2016/05/06 10:24:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.41 2016/04/30 15:03:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.42 2016/05/06 10:24:06 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -603,13 +603,13 @@ xhci_hc_reset(struct xhci_softc * const sc)
 	int i;
 
 	/* Check controller not ready */
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < XHCI_WAIT_CNR; i++) {
 		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
 		if ((usbsts & XHCI_STS_CNR) == 0)
 			break;
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
-	if (i >= 100) {
+	if (i >= XHCI_WAIT_CNR) {
 		aprint_error_dev(sc->sc_dev, "controller not ready timeout\n");
 		return EIO;
 	}
@@ -622,25 +622,25 @@ xhci_hc_reset(struct xhci_softc * const sc)
 	/* Reset controller */
 	usbcmd = XHCI_CMD_HCRST;
 	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < XHCI_WAIT_HCRST; i++) {
 		usbcmd = xhci_op_read_4(sc, XHCI_USBCMD);
 		if ((usbcmd & XHCI_CMD_HCRST) == 0)
 			break;
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
-	if (i >= 100) {
+	if (i >= XHCI_WAIT_HCRST) {
 		aprint_error_dev(sc->sc_dev, "host controller reset timeout\n");
 		return EIO;
 	}
 
 	/* Check controller not ready */
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < XHCI_WAIT_CNR; i++) {
 		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
 		if ((usbsts & XHCI_STS_CNR) == 0)
 			break;
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
-	if (i >= 100) {
+	if (i >= XHCI_WAIT_CNR) {
 		aprint_error_dev(sc->sc_dev,
 		    "controller not ready timeout after reset\n");
 		return EIO;
