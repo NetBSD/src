@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.128 2016/04/18 17:01:19 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.129 2016/05/06 21:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.128 2016/04/18 17:01:19 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.129 2016/05/06 21:01:19 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1592,7 +1592,7 @@ history_set_pos(int pos)
 	int curr_num;
 
 	if (pos >= history_length || pos < 0)
-		return -1;
+		return 0;
 
 	(void)history(h, &ev, H_CURR);
 	curr_num = ev.num;
@@ -1603,9 +1603,9 @@ history_set_pos(int pos)
 	 */
 	if (history(h, &ev, H_DELDATA, pos, (void **)-1)) {
 		(void)history(h, &ev, H_SET, curr_num);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 
@@ -1688,7 +1688,7 @@ history_search_pos(const char *str,
 		return -1;
 	curr_num = ev.num;
 
-	if (history_set_pos(off) != 0 || history(h, &ev, H_CURR) != 0)
+	if (!history_set_pos(off) || history(h, &ev, H_CURR) != 0)
 		return -1;
 
 	for (;;) {
