@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.250 2016/05/06 13:03:06 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.251 2016/05/06 16:30:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.250 2016/05/06 13:03:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.251 2016/05/06 16:30:01 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3905,7 +3905,7 @@ ehci_device_bulk_done(struct usbd_xfer *xfer)
 
 	DPRINTF("xfer=%p, actlen=%d", xfer, xfer->ux_actlen, 0, 0);
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
