@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.42 2016/05/06 10:24:06 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.43 2016/05/06 10:25:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.42 2016/05/06 10:24:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.43 2016/05/06 10:25:56 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2401,14 +2401,6 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		err = usbd_reload_device_desc(dev);
 		if (err)
 			goto bad;
-
-#if 0
-		/* Re-establish the default pipe with the new MPS. */
-		/* In xhci.c xhci_update_ep0_mps() does it instead. */
-		usbd_kill_pipe(dev->ud_pipe0);
-		err = usbd_setup_pipe(dev, 0, &dev->ud_ep0,
-		    USBD_DEFAULT_INTERVAL, &dev->ud_pipe0);
-#endif
 	}
 
 	DPRINTFN(1, "adding unit addr=%d, rev=%02x,",
@@ -3318,17 +3310,6 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	    req->bmRequestType | (req->bRequest << 8), UGETW(req->wValue),
 	    UGETW(req->wIndex), UGETW(req->wLength));
 
-#if 0 /* event handler does this */
-	/* XXX */
-	if (tr->is_halted) {
-		DPRINTFN(1, "ctrl xfer %p halted: slot %u dci %u",
-		    xfer, xs->xs_idx, dci, 0);
-		xhci_reset_endpoint(xfer->ux_pipe);
-		tr->is_halted = false;
-		xhci_set_dequeue(xfer->ux_pipe);
-	}
-#endif
-
 	/* we rely on the bottom bits for extra info */
 	KASSERT(((uintptr_t)xfer & 0x3) == 0x0);
 
@@ -3645,15 +3626,6 @@ xhci_device_intr_done(struct usbd_xfer *xfer)
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-#if 0
-	device_printf(sc->sc_dev, "");
-	for (size_t i = 0; i < xfer->ux_length; i++) {
-		printf(" %02x", ((uint8_t const *)xfer->ux_buffer)[i]);
-	}
-	printf("\n");
-#endif
-
 }
 
 static void
