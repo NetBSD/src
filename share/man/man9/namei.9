@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.35 2016/05/05 17:06:41 salazar Exp $
+.\"     $NetBSD: namei.9,v 1.36 2016/05/06 04:55:10 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,43 +27,42 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 05, 2016
+.Dd May 6, 2016
 .Dt NAMEI 9
 .Os
 .Sh NAME
 .Nm namei ,
-.Nm lookup_for_nfsd ,
-.Nm lookup_for_nfsd_index ,
-.Nm relookup ,
 .Nm NDINIT ,
 .Nm NDAT ,
 .Nm namei_simple_kernel ,
 .Nm namei_simple_user
+.Nm relookup ,
+.Nm lookup_for_nfsd ,
+.Nm lookup_for_nfsd_index ,
 .Nd pathname lookup
 .Sh SYNOPSIS
 .In sys/namei.h
 .In sys/uio.h
 .In sys/vnode.h
-.Ft int
-.Fn namei "struct nameidata *ndp"
-.Ft int
-.Fn lookup_for_nfsd "struct nameidata *ndp" "struct vnode *startdir" \
-"int neverfollow"
-.Ft int
-.Fn lookup_for_nfsd_index "struct nameidata *ndp"
-.Ft int
-.Fn relookup "struct vnode *dvp" "struct vnode **vpp" \
-"struct componentname *cnp"
-.Ft void
 .Fn NDINIT "struct nameidata *ndp" "u_long op" "u_long flags" \
 "struct pathbuf *pathbuf"
 .Fn NDAT "struct nameidata *ndp" "struct vnode *dvp"
+.Ft int
+.Fn namei "struct nameidata *ndp"
 .Ft int
 .Fn namei_simple_kernel "const char *path" "namei_simple_flags_t sflags" \
 "struct vnode **ret"
 .Ft int
 .Fn namei_simple_user "const char *path" "namei_simple_flags_t sflags" \
 "struct vnode **ret"
+.Ft int
+.Fn relookup "struct vnode *dvp" "struct vnode **vpp" \
+"struct componentname *cnp"
+.Ft int
+.Fn lookup_for_nfsd "struct nameidata *ndp" "struct vnode *startdir" \
+"int neverfollow"
+.Ft int
+.Fn lookup_for_nfsd_index "struct nameidata *ndp"
 .Sh DESCRIPTION
 The
 .Nm
@@ -81,39 +80,61 @@ Except for the simple forms, the arguments passed to the functions are
 encapsulated in the
 .Em nameidata
 structure.
-It has the following layout:
-.Bd -literal
-struct nameidata {
-	/*
-	 * Arguments to namei/lookup.
-	 */
-	struct vnode *ni_atdir;		/* startup dir, cwd if null */
-	struct pathbuf *ni_pathbuf;	/* pathname container */
-	char *ni_pnbuf;			/* extra pathname buffer ref (XXX) */
-	/*
-	 * Arguments to lookup.
-	 */
-	struct	vnode *ni_rootdir;	/* logical root directory */
-	struct	vnode *ni_erootdir;	/* emulation root directory */
-	/*
-	 * Results: returned from/manipulated by lookup
-	 */
-	struct	vnode *ni_vp;		/* vnode of result */
-	struct	vnode *ni_dvp;		/* vnode of intermediate directory */
-	/*
-	 * Shared between namei and lookup/commit routines.
-	 */
-	size_t		ni_pathlen;	/* remaining chars in path */
-	const char	*ni_next;	/* next location in pathname */
-	unsigned int	ni_loopcnt;	/* count of symlinks encountered */
-	/*
-	 * Lookup parameters: this structure describes the subset of
-	 * information from the nameidata structure that is passed
-	 * through the VOP interface.
-	 */
-	struct componentname ni_cnd;
-};
-.Ed
+The public interface to this structure is as follows.
+.Bl -offset indent
+.It
+It contains a member
+.Em ni_erootdir
+that may be set to the emulation root directory before the call if
+the
+.Dv EMULROOTSET
+flag is also set and
+.Dv TRYEMULROOT
+is in effect.
+This is only necessary (or allowed) if the emulation root is not yet
+set in the current process.
+.It
+It contains a member
+.Em ni_vp
+that upon successful return contains the result vnode.
+.It
+It contains a member
+.Em ni_dvp
+that upon successful return contains the vnode of the directory
+containing the result vnode or
+.Dv NULL .
+If the
+.Dv LOCKPARENT
+flag is set, the containing vnode is returned; otherwise this field is
+left set to
+.Dv NULL .
+.It
+It contains a member
+.Em ni_cnd
+that is a
+.Em componentname
+structure (described in just a moment).
+This may be used by callers to pass to certain vnode operations that
+operate on pathnames.
+.El
+.Pp
+The other fields in the structure should not be examined or altered
+directly.
+Note that the
+.Xr nfs 4
+code misuses the
+.Em nameidata
+structure and currently has an incestuous relationship with the
+.Nm
+code.
+This is gradually being cleaned up.
+Other code should initialize the
+.Em nameidata
+structure with the
+.Fn NDINIT
+macro and perhaps also the
+.Fn NDAT
+macro.
 .Pp
 The
 .Em componentname
@@ -121,186 +142,288 @@ structure has the following layout:
 .Bd -literal
 struct componentname {
 	/*
-	 * Arguments to lookup.
+	 * Arguments to VOP_LOOKUP and directory VOP routines.
 	 */
 	uint32_t	cn_nameiop;	/* namei operation */
 	uint32_t	cn_flags;	/* flags to namei */
 	kauth_cred_t 	cn_cred;	/* credentials */
-	/*
-	 * Shared between lookup and commit routines.
-	 */
 	const char 	*cn_nameptr;	/* pointer to looked up name */
 	size_t		cn_namelen;	/* length of looked up comp */
+	/*
+	 * Side result from VOP_LOOKUP.
+	 */
 	size_t		cn_consume;	/* chars to consume in lookup */
 };
 .Ed
-.Pp
-The
-.Nm
-interface accesses vnode operations by passing arguments in the
-partially initialised
-.Em componentname
-structure
-.Em ni_cnd .
-This structure describes the subset of information from the nameidata
-structure that is passed through to the vnode operations.
+This structure contains the information about a single directory
+component name, along with certain other information required by vnode
+operations.
 See
 .Xr vnodeops 9
-for more information.
-The details of the componentname structure are not absolutely necessary
-since the members are initialised by the helper macro
-.Fn NDINIT .
-It is useful to know the operations and flags as specified in
-.Xr vnodeops 9 .
+for more information about these vnode operations.
+.Pp
+The members:
+.Bl -tag -offset indent -width cn_consumexx -compact
+.It cn_nameiop
+The type of operation in progress; indicates the basic operating mode
+of namei.
+May be one of
+.Dv LOOKUP ,
+.Dv CREATE ,
+.Dv DELETE ,
+or
+.Dv RENAME .
+These modes are described below.
+.It cn_flags
+Additional flags affecting the operation of namei.
+These are described below as well.
+.It cn_cred
+The credentials to use for the lookup or other operation the
+.Em componentname
+is passed to.
+This may match the credentials of the current process or it may not,
+depending on where the original operation request came from and how it
+has been routed.
+.It cn_nameptr
+The name of this directory component, followed by the rest of the path
+being looked up.
+.It cn_namelen
+The length of the name of this directory component.
+The name is not in general null terminated, although the complete
+string (the full remaining path) always is.
+.It cn_consume
+This field starts at zero; it may be set to a larger value by
+implementations of
+.Xr VOP_LOOKUP 9
+to indicate how many more characters beyond
+.Em cn_namelen
+are being consumed.
+New uses of this feature are discouraged and should be discussed.
+.El
+.Ss Operating modes
+The
+.Dv LOOKUP
+mode is the baseline behavior, for all ordinary lookups that simply
+return a vnode.
+In this mode, if the requested object does not exist,
+.Dv ENOENT
+is returned.
 .Pp
 The
-.Nm
-interface overloads
-.Em ni_cnd.cn_flags
-with some additional flags.
-These flags should be specific to the
-.Nm
-interface and ignored by vnode operations.
-However, due to the historic close relationship between the
-.Nm
-interface and the vnode operations, these flags are sometimes used
-(and set) by vnode operations, particularly
-.Fn VOP_LOOKUP .
-The additional flags are:
+.Dv CREATE
+mode is used when doing the lookup for operations that create names in
+the file system namespace, such as
+.Xr mkdir 2 .
+In this mode, if the requested name already exists,
+.Dv EEXIST
+is returned.
+Otherwise if the requested name does not exist, the lookup succeeds
+and the returned vnode
+.Em ni_vp
+is set to
+.Dv NULL .
 .Pp
+The
+.Dv DELETE
+mode is used when doing the lookup for operations that remove names
+from the file system namespace, such as
+.Xr rmdir 2 ;
+and the
+.Dv RENAME
+mode is used when doing (one of the) lookups for
+.Xr rename 2 .
+.Pp
+The mode may affect both the
+.Xr VOP_LOOKUP 9
+implementation of the file system involved and the internal operation
+of
+.Nm ,
+such as interactions with the
+.Xr namecache 9 .
+In
+.Xr ffs 4 ,
+for example, the
+.Xr VOP_LOOKUP 9
+implementation reacts to
+.Dv CREATE ,
+.Dv DELETE ,
+and
+.Dv RENAME
+by computing additional information needed to operate on directory
+entries.
+This information is consumed by the vnode operations expected to be
+called subsequently.
+If one of these modes is used (and owing to failure or whatever other
+circumstances) the eventual vnode operation is not called,
+.Xr VOP_ABORTOP 9
+should be used to ensure the state involved is cleaned up correctly.
+.Ss Flags
+The following flags may appear.
+Some are set by
+.Nm ;
+some are set by
+.Xr VOP_LOOKUP 9 ;
+some are set by the caller in the
+.Fa flags
+argument of
+.Fn NDINIT .
+Not all possible combinations are sensible or legal.
 .Bl -tag -offset indent -width NOCROSSMOUNT -compact
+.It Dv FOLLOW
+Follow symbolic links encountered as the last path component.
+Used by operations that do not address symbolic links directly, e.g.
+.Xr stat 2 .
+Does not affect symbolic links found in the middle of a path.
+Set by the caller.
+Used internally.
+.It Dv NOFOLLOW
+Do not follow symbolic links encountered as the last path component.
+Used by operations that address symbolic links explicitly, such as
+.Xr lstat 2 .
+Set by the caller.
+Used internally.
+Note: the value of
+.Dv NOFOLLOW is 0 ;
+it exists on the grounds that every
+.Nm
+call should explicitly choose either
+.Dv FOLLOW
+or
+.Dv NOFOLLOW .
+.It Dv LOCKLEAF
+Upon successful completion, the resultant named vnode
+.Em ni_vp
+is to be left locked.
+(Otherwise, the vnode is unlocked before
+.Nm
+returns.)
+Set by the caller; used internally.
+.It Dv LOCKPARENT
+Upon successful completion, the parent directory containing the named
+vnode is left locked and returned in
+.Em ni_dvp
+as described above.
+Otherwise,
+.Em ni_dvp
+is set to
+.Dv NULL .
+Set by the caller; used internally.
+.It Dv TRYEMULROOT
+If set, the path is looked up in emulation root of the current process
+first.
+If that fails, the system root is used.
+Set by the caller; used internally.
+.It Dv EMULROOTSET
+As described above, indicates that the caller has set
+.Em ni_erootdir
+prior to calling
+.Nm .
+This is only useful or permitted when the emulation in the
+current process is partway through being set up.
+Set by the caller; used internally.
+.It Dv NOCHROOT
+Bypass normal
+.Xr chroot 8
+handling for absolute paths.
+Set by the caller and used internally.
 .It Dv NOCROSSMOUNT
-do not cross mount points
+Do not cross mount points.
+Set by the caller and used internally.
 .It Dv RDONLY
-lookup with read-only semantics
-.It Dv ISDOTDOT
-current pathname component is ..
-.It Dv MAKEENTRY
-add entry to the name cache
-.It Dv ISLASTCN
-this is last component of pathname
-.It Dv ISWHITEOUT
-found whiteout
+Enforce read-only behavior.
+Set by the caller and used internally.
+May also be used by file-system-level vnode functions.
 .It Dv DOWHITEOUT
-do whiteouts
+Allow whiteouts to be seen as objects instead of functioning as
+.Dq nothing there .
+Set by the caller; used by vnode functions.
+.It Dv ISWHITEOUT
+The current path component is a whiteout.
+Set by
+.Xr VOP_LOOKUP 9
+implementations and consumed by other vnode functions and the
+.Xr namecache 9 .
+.It Dv ISDOTDOT
+The current pathname component is ``..''.
+Set internally; used by vnode operations.
+.It Dv ISLASTCN
+The current path component is the last component found in the
+pathname.
+Set internally; used by vnode functions.
 .It Dv REQUIREDIR
-must be a directory
+The current object to be looked up must be a directory.
+Set and used internally; any external references are abusive.
 .It Dv CREATEDIR
-trailing slashes are ok
-.It Dv PARAMASK
-mask of parameter descriptors
+Accept slashes after a component name that does not exist.
+This only makes sense in
+.Dv CREATE
+mode and when creating a directory.
+Set by the caller and used internally.
+.It Dv NOCACHE
+The name looked up should not be entered in the
+.Xr namecache 9 .
+Set and used internally.
+(Currently sometimes set by callers, but most likely this is
+improper/incorrect.)
+May also be used by file-system-level vnode functions.
+.It Dv MAKEENTRY
+The current pathname component should be added to the
+.Xr namecache 9 .
+Set and used internally.
+Also abused by the
+.Xr nfs 4
+code.
 .El
 .Pp
+The following additional historic flags have been removed from
+.Nx
+and should be handled as follows if porting code from elsewhere:
+.Bl -tag -offset indent -width NOCROSSMOUNT -compact
+.It Dv INRENAME
+Part of a misbegotten and incorrect locking scheme.
+Any file-system-level code using this is presumptively incorrect.
+File systems should use the
+.Xr genfs_rename 9
+interface to handle locking in
+.Fn VOP_RENAME .
+.It Dv INRELOOKUP
+Used at one point for signaling to
+.Xr puffs 3
+to work around a protocol deficiency that was later rectified.
+.It Dv ISSYMLINK
+Useless internal state.
+.It Dv SAVESTART
+Unclean setting affect vnode reference counting.
+Now effectively never in effect.
+Any code referring to this is suspect.
+.It Dv SAVENAME
+Unclean setting relating to responsibility for freeing pathname buffers
+in the days before the
+.Em pathbuf
+structure.
+Now effectively always in effect; the caller of
+.Nm
+owns the
+.Em pathbuf
+structure and is always responsible for destroying it.
+.It Dv HASBUF
+Related to SAVENAME.
+Any uses can be replaced with
+.Dq true .
+.El
 All access to the
 .Nm
 interface must be in process context.
 Pathname lookups cannot be done in interrupt context.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn namei "ndp"
-Convert a pathname into a pointer to a vnode.
-The nameidata structure pointed to by
-.Fa ndp
-should be initialized with the
-.Fn NDINIT
-macro.
-Direct initialization of members of struct nameidata is
-.Em not
-supported and may break silently in the future.
-.Pp
-The vnode for the pathname is returned in
-.Em ndp-\*[Gt]ni_vp .
-The parent directory is returned locked in
-.Em ndp-\*[Gt]ni_dvp
-iff
-.Dv LOCKPARENT
-is specified.
-.Pp
-If
-.Em ndp-\*[Gt]ni_cnd.cn_flags
-has the
-.Dv FOLLOW
-flag set then symbolic links are followed when they
-occur at the end of the name translation process.
-Symbolic links are always followed for all other pathname components
-other than the last.
-.Pp
-Historically
-.Nm
-had a sub-function called
-.Fn lookup .
-This function processed a pathname until either running out of
-material or encountering a symbolic link.
-.Nm
-worked by first setting up the start directory
-.Em ndp-\*[Gt]ni_startdir
-and then calling
-.Fn lookup
-repeatedly.
-.Pp
-The semantics of
-.Nm
-are altered by the operation specified by
-.Em ndp-\*[Gt]ni_cnd.cn_nameiop .
-When
-.Dv CREATE ,
-.Dv RENAME ,
-or
-.Dv DELETE
-is specified, information usable in
-creating, renaming, or deleting a directory entry may be calculated.
-.Pp
-If the target of the pathname exists and LOCKLEAF is set, the target
-is returned locked in
-.Em ndp-\*[Gt]ni_vp ,
-otherwise it is returned unlocked.
-.Pp
-As of this writing the internal function
-.Fn do_lookup
-is comparable to the historic
-.Fn lookup
-but this code is slated for refactoring.
-.It Fn lookup_for_nfsd "ndp" "startdir" "neverfollow"
-This is a private entry point into
-.Nm
-used by the NFS server code.
-It looks up a path starting from
-.Fa startdir .
-If
-.Fa neverfollow
-is set,
-.Em any
-symbolic link (not just at the end of the path) will cause an error.
-Otherwise, it follows symlinks normally.
-Its semantics are similar to a symlink-following loop around the historic
-.Fn lookup
-function described above.
-It should not be used by new code.
-.It Fn lookup_for_nfsd_index "ndp"
-This is a (second) private entry point into
-.Nm
-used by the NFS server code.
-Its semantics are similar to the historic
-.Fn lookup
-function described above.
-It should not be used by new code.
-.It Fn relookup "dvp" "vpp" "cnp"
-Reacquire a path name component is a directory.
-This is a quicker way to lookup a pathname component when the parent
-directory is known.
-The locked parent directory vnode is specified by
-.Fa dvp
-and the pathname component by
-.Fa cnp .
-The vnode of the pathname is returned in the address specified by
-.Fa vpp .
 .It Fn NDINIT "ndp" "op" "flags" "pathbuf"
 Initialise a nameidata structure pointed to by
 .Fa ndp
 for use by the
 .Nm
 interface.
-The operation and flags are specified by
+The operating mode and flags (as documented above) are specified by
 .Fa op
 and
 .Fa flags
@@ -318,42 +441,14 @@ This routine stores the credentials of the calling thread
 .Va ( curlwp )
 in
 .Fa ndp .
+.Fn NDINIT
+sets the credentials using
+.Xr kauth_cred_get 9 .
 In the rare case that another set of credentials is required for the
 namei operation,
 .Em ndp-\*[Gt]ni_cnd.cn_cred
-must be set manually.
-.Pp
-The following fields of
-.Fa ndp
-are set:
-.Bl -tag -width compact
-.It Fa ni_cnd.cn_nameiop
-is set to
-.Fa op .
-.It Fa ni_cnd.cn_flags
-is set to
-.Fa flags .
-.It Fa ni_startdir
-is set to
-.Dv NULL .
-.It Fa ni_pathbuf
-is set to
-.Fa pathbuf .
-.It Fa ni_cnd.cn_cred
-is set using
-.Xr kauth_cred_get 9 .
-.El
-Other fields of struct nameidata are not
-.Pq normally
-initialized before
-.Nm
-is called.
-Direct assignment of these or other fields other than by using
-.Fn NDINIT
-or
-.Fn NDAT ,
-except as specifically described above, is not supported and may break
-silently in the future.
+must be set manually after
+.Fn NDINIT.
 .It Fn NDAT "ndp" "dvp"
 This macro is used after
 .Fn NDINIT
@@ -363,6 +458,37 @@ initial point of departure for looking up relative paths.
 This mechanism is used by
 .Xr openat 2
 and related calls.
+.It Fn namei "ndp"
+Convert a pathname into a pointer to a vnode.
+The nameidata structure pointed to by
+.Fa ndp
+should be initialized with the
+.Fn NDINIT
+macro, and perhaps also the
+.Fn NDAT
+macro.
+Direct initialization of members of struct nameidata is
+.Em not
+supported and may (will) break silently in the future.
+.Pp
+The vnode for the pathname is returned in
+.Em ndp-\*[Gt]ni_vp .
+The parent directory is returned locked in
+.Em ndp-\*[Gt]ni_dvp
+iff
+.Dv LOCKPARENT
+is specified.
+.Pp
+Any or all of the flags documented above as set by the caller can be
+enabled by passing them (OR'd together) as the
+.Fa flags
+argument of
+.Fn NDINIT .
+As discussed above every such call should explicitly contain either
+.Dv FOLLOW
+or
+.Dv NOFOLLOW
+to control the behavior regarding final symbolic links.
 .It Fn namei_simple_kernel "path" "sflags" "ret"
 Look up the path
 .Fa path
@@ -407,7 +533,282 @@ except that the
 argument shall be a user pointer
 .Pq Dv UIO_USERSPACE
 rather than a kernel pointer.
+.It Fn relookup "dvp" "vpp" "cnp"
+Reacquire a path name component is a directory.
+This is a quicker way to lookup a pathname component when the parent
+directory is known.
+The locked parent directory vnode is specified by
+.Fa dvp
+and the pathname component by
+.Fa cnp .
+The vnode of the pathname is returned in the address specified by
+.Fa vpp .
+Note that one may only use
+.Fn relookup
+to repeat a lookup of a final path component previously done by
+.Nm ,
+and one must use the same
+.Em componentname
+structure that call produced.
+Otherwise the behavior is undefined and likely adverse.
+.It Fn lookup_for_nfsd "ndp" "startdir" "neverfollow"
+This is a private entry point into
+.Nm
+used by the NFS server code.
+It looks up a path starting from
+.Fa startdir .
+If
+.Fa neverfollow
+is set,
+.Em any
+symbolic link (not just at the end of the path) will cause an error.
+Otherwise, it follows symlinks normally.
+It should not be used by new code.
+.It Fn lookup_for_nfsd_index "ndp"
+This is a (second) private entry point into
+.Nm
+used by the NFS server code.
+It looks up a single path component.
+It should not be used by new code.
 .El
+.Sh INTERNALS
+The
+.Em nameidata
+structure has the following layout:
+.Bd -literal
+struct nameidata {
+	/*
+	 * Arguments to namei.
+	 */
+	struct vnode *ni_atdir;		/* startup dir, cwd if null */
+	struct pathbuf *ni_pathbuf;	/* pathname container */
+	char *ni_pnbuf;			/* extra pathname buffer ref (XXX) */
+	/*
+	 * Internal starting state. (But see notes.)
+	 */
+	struct	vnode *ni_rootdir;	/* logical root directory */
+	struct	vnode *ni_erootdir;	/* emulation root directory */
+	/*
+	 * Results from namei.
+	 */
+	struct	vnode *ni_vp;		/* vnode of result */
+	struct	vnode *ni_dvp;		/* vnode of intermediate directory */
+	/*
+	 * Internal current state.
+	 */
+	size_t		ni_pathlen;	/* remaining chars in path */
+	const char	*ni_next;	/* next location in pathname */
+	unsigned int	ni_loopcnt;	/* count of symlinks encountered */
+	/*
+	 * Lookup parameters: this structure describes the subset of
+	 * information from the nameidata structure that is passed
+	 * through the VOP interface.
+	 */
+	struct componentname ni_cnd;
+};
+.Ed
+.Pp
+These fields are:
+.Bl -tag -offset indent -width ni_erootdirx -compact
+.It ni_atdir
+The directory to use for the starting point of relative paths.
+If null, the current process's current directory is used.
+This is initialized to
+.Dv NULL
+by
+.Fn NDINIT
+and set by
+.Fn NDAT .
+.It ni_pathbuf
+The abstract path buffer in use, passed as an argument to
+.Fn NDINIT .
+The name pointers that appear elsewhere, such as in the
+.Em componentname
+structure, point into this buffer.
+It is owned by the caller and must not be destroyed until all
+.Nm
+operations are complete.
+See
+.Xr pathbuf 9 .
+.It ni_pnbuf
+This is the name pointer used during
+.Nm .
+It points into
+.Fa ni_pathbuf .
+It is not initialized until entry into
+.Nm .
+.It ni_rootdir
+The root directory to use as the starting point for absolute paths.
+This is retrieved from the current process's current root directory
+when
+.Nm
+starts up.
+It is not initialized by
+.Fn NDINIT .
+.It ni_erootdir
+The root directory to use as the emulation root, for processes running
+in emulation.
+This is retrieved from the current process's emulation root directory
+when
+.Nm
+starts up and not initialized by
+.Fn NDINIT .
+As described elsewhere, it may be set by the caller if the
+.Dv EMULROOTSET
+flag is used, but this should only be done when the current process's
+emulation root directory is not yet initialized.
+(And ideally in the future things would be tidied so that this is not
+necessary.)
+.It ni_vp
+.It ni_dvp
+Returned vnodes, as described above.
+These only contain valid values if
+.Nm
+returns successfully.
+.It ni_pathlen
+The length of the full current remaining path string in
+.Fa ni_pnbuf .
+This is not initialized by
+.Fn NDINIT
+and is used only internally.
+.It ni_next
+The remaining part of the path, after the current component found in
+the
+.Em componentname
+structure.
+This is not initialized by
+.Fn NDINIT
+and is used only internally.
+.It ni_loopcnt
+The number of symbolic links encountered (and traversed) so far.
+If this exceeds a limit,
+.Nm
+fails with
+.Dv ELOOP .
+This is not initialized by
+.Fn NDINIT
+and is used only internally.
+.It ni_cnd
+The
+.Em componentname
+structure holding the current directory component, and also the
+mode, flags, and credentials.
+The mode, flags, and credentials are initialized by
+.Fn NDINIT ;
+the rest is not initialized until
+.Nm
+runs.
+.El
+.Pp
+There is also a
+.Em namei_state
+structure that is hidden within
+.Pa vfs_lookup.c .
+This contains the following additional state:
+.Bl -tag -offset indent -width attempt_retry -compact
+.It docache
+A flag indicating whether to cache the last pathname component.
+.It rdonly
+The read-only state, initialized from the
+.Dv RDONLY
+flag.
+.It slashes
+The number of trailing slashes found after the current pathname
+component.
+.It attempt_retry
+Set on some error cases (and not others) to indicate that a failure in
+the emulation root should be followed by a retry in the real system
+root.
+.El
+.Pp
+The state in
+.Em namei_state
+is genuinely private to
+.Nm .
+Note that much of the state in
+.Em nameidata
+should also be private, but is currently not because it is misused in
+some fashion by outside code, usually
+.Xr nfs 4 .
+.Pp
+The control flow within the
+.Nm
+portions of
+.Pa vfs_lookup.c
+is as follows.
+.Bl -tag
+.It Fn namei
+does a complete path lookup by calling
+.Fn namei_init ,
+.Fn namei_tryemulroot ,
+and
+.Fn namei_cleanup.
+.It Fn namei_init
+sets up the basic internal state and makes some (precondition-type)
+assertions.
+.It Fn namei_cleanup
+makes some postcondition-type assertions; it currently does nothing
+besides this.
+.It Fn namei_tryemulroot
+handles
+.Dv TRYEMULROOT
+by calling
+.Fn namei_oneroot
+once or twice as needed, and attends to making sure the original
+pathname is preserved for the second try.
+.It Fn namei_oneroot
+does a complete path search from a single root directory.
+It begins with
+.Fn namei_start ,
+then calls
+.Fn lookup_once
+(and if necessary,
+.Fn namei_follow )
+repeatedly until done.
+It also handles returning the result vnode(s) in the requested state.
+.It Fn namei_start
+sets up the initial state and locking; it calls
+.Fn namei_getstartdir .
+.It Fn namei_getstartdir
+initializes the root directory state (both
+.Fa ni_rootdir
+and
+.Fa ni_erootdir )
+and picks the starting directory, consuming the leading slashes of an
+absolute path and handling the magic ``/../'' string for bypassing the
+emulation root.
+A different version
+.Fn namei_getstartdir_for_nfsd
+is used for lookups coming from
+.Xr nfsd 8
+as those are required to have different semantics.
+.It Fn lookup_once
+calls
+.Fn VOP_LOOKUP
+for one path component, also handling any needed crossing of mount
+points (either up or down) and coping with locking requirements.
+.It Fn lookup_parsepath
+is called prior to each
+.Fn lookup_once
+call to examine the pathname and find where the next component
+starts.
+.It Fn namei_follow
+reads the contents of a symbolic link and updates both the path buffer
+and the search directory accordingly.
+.El
+.Pp
+As a final note be advised that the magic return value associated with
+.Dv CREATE
+mode is different for
+.Nm
+than it is for
+.Fn VOP_LOOKUP .
+The latter
+.Dq fails
+with
+.Dv EJUSTRETURN .
+.Nm
+translates this into succeeding and returning a null vnode.
 .Sh CODE REFERENCES
 The name lookup subsystem is implemented within the file
 .Pa sys/kern/vfs_lookup.c .
@@ -418,9 +819,29 @@ The name lookup subsystem is implemented within the file
 .Xr vnode 9 ,
 .Xr vnodeops 9
 .Sh BUGS
-It is unfortunate that much of the
+There should be no such thing as operating modes.
+Only
+.Dv LOOKUP
+is actually needed.
+The behavior where removing an object looks it up within
 .Nm
-interface makes assumptions on the underlying vnode operations.
-These assumptions are an artefact of the introduction of the vfs
-interface to split a file system interface which was historically
-designed as a tightly coupled module.
+and then calls into the file system (which must look it up again
+internally or cache state from
+.Fn VOP_LOOKUP )
+is particularly contorted.
+.Pp
+Most of the flags are equally bogus.
+.Pp
+Most of the contents of the
+.Em nameidata
+structure should be private and hidden within
+.Nm ;
+currently it cannot be because of abuse elsewhere.
+.Pp
+The
+.Dv EMULROOTSET
+flag is messy.
+.Pp
+There is no good way to support file systems that want to use
+a more elaborate pathname schema than the customary slash-delimited
+components.
