@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.169 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.170 2016/05/06 05:19:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.169 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.170 2016/05/06 05:19:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -909,10 +909,6 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	KASSERT(polling || mutex_owned(pipe->up_dev->ud_bus->ub_lock));
 	KASSERT(xfer->ux_state == XFER_ONQU);
 	KASSERT(pipe != NULL);
-
-	/* XXXX */
-	if (polling)
-		pipe->up_running = 0;
 
 	if (!repeat) {
 		/* Remove request from queue. */
