@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.270 2016/04/25 20:06:51 joerg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.271 2016/05/06 13:03:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.270 2016/04/25 20:06:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.271 2016/05/06 13:03:06 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -188,7 +188,6 @@ Static void		uhci_reset_std_chain(uhci_softc_t *, struct usbd_xfer *,
 			    int, int, int *, uhci_soft_td_t **);
 
 Static void		uhci_poll_hub(void *);
-Static void		uhci_waitintr(uhci_softc_t *, struct usbd_xfer *);
 Static void		uhci_check_intr(uhci_softc_t *, struct uhci_xfer *,
 			    ux_completeq_t *);
 Static void		uhci_idone(struct uhci_xfer *, ux_completeq_t *);
@@ -1736,52 +1735,6 @@ uhci_timeout_task(void *addr)
 	mutex_exit(&sc->sc_lock);
 }
 
-/*
- * Wait here until controller claims to have an interrupt.
- * Then call uhci_intr and return.  Use timeout to avoid waiting
- * too long.
- * Only used during boot when interrupts are not enabled yet.
- */
-void
-uhci_waitintr(uhci_softc_t *sc, struct usbd_xfer *xfer)
-{
-	int timo = xfer->ux_timeout;
-	struct uhci_xfer *ux;
-
-	mutex_enter(&sc->sc_lock);
-
-	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(10, "timeout = %dms", timo, 0, 0, 0);
-
-	xfer->ux_status = USBD_IN_PROGRESS;
-	for (; timo >= 0; timo--) {
-		usb_delay_ms_locked(&sc->sc_bus, 1, &sc->sc_lock);
-		DPRINTFN(20, "0x%04x",
-		    UREAD2(sc, UHCI_STS), 0, 0, 0);
-		if (UREAD2(sc, UHCI_STS) & UHCI_STS_USBINT) {
-			mutex_spin_enter(&sc->sc_intr_lock);
-			uhci_intr1(sc);
-			mutex_spin_exit(&sc->sc_intr_lock);
-			if (xfer->ux_status != USBD_IN_PROGRESS)
-				goto done;
-		}
-	}
-
-	/* Timeout */
-	DPRINTF("timeout", 0, 0, 0, 0);
-	TAILQ_FOREACH(ux, &sc->sc_intrhead, ux_list)
-		if (&ux->ux_xfer == xfer)
-			break;
-
-	KASSERT(ux != NULL);
-
-	uhci_idone(ux, NULL);
-	usb_transfer_complete(&ux->ux_xfer);
-
-done:
-	mutex_exit(&sc->sc_lock);
-}
-
 void
 uhci_poll(struct usbd_bus *bus)
 {
@@ -2352,9 +2305,6 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_lock);
 
-	if (sc->sc_bus.ub_usepolling)
-		uhci_waitintr(sc, xfer);
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -2698,9 +2648,6 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 	}
 	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_lock);
-
-	if (sc->sc_bus.ub_usepolling)
-		uhci_waitintr(sc, xfer);
 
 	return USBD_IN_PROGRESS;
 }
