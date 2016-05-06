@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.43 2016/05/06 10:25:56 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.44 2016/05/06 10:27:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.43 2016/05/06 10:25:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.44 2016/05/06 10:27:14 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -674,6 +674,8 @@ hexdump(const char *msg, const void *base, size_t len)
 		if (cnt % 16 == 0)
 			printf("\n");
 	}
+	if (cnt % 16 != 0)
+		printf("\n");
 #endif
 }
 
