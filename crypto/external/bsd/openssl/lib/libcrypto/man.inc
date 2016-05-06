@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.4 2014/08/10 17:07:03 spz Exp $
+#	$NetBSD: man.inc,v 1.5 2016/05/06 09:30:05 snj Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -67,11 +67,12 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	DH_generate_parameters.3 ERR_print_errors.3 lh_stats.3 \
 	openssl_ui_compat.3 X509_NAME_ENTRY_get_object.3 SSL_connect.3 \
 	BIO_s_connect.3 BIO_s_socket.3 BN_set_bit.3 EVP_SealInit.3 \
-	EVP_OpenInit.3 EVP_SignInit.3 EVP_EncryptInit.3 EVP_DigestInit.3 \
-	EVP_VerifyInit.3 SSL_library_init.3 SSL_get_verify_result.3 \
-	SSL_set_verify_result.3 SSL_want.3 RSA_print.3 SSL_accept.3 \
-	BIO_s_accept.3 PKCS7_decrypt.3 PKCS7_encrypt.3 RSA_public_encrypt.3 \
-	RSA_private_encrypt.3 BN_CTX_start.3 SSL_CTX_add_extra_chain_cert.3 \
+	EVP_OpenInit.3 EVP_SignInit.3 EVP_EncodeInit.3 EVP_EncryptInit.3 \
+	EVP_DigestInit.3 EVP_VerifyInit.3 SSL_library_init.3 \
+	SSL_get_verify_result.3 SSL_set_verify_result.3 SSL_want.3 \
+	RSA_print.3 SSL_accept.3 BIO_s_accept.3 PKCS7_decrypt.3 \
+	PKCS7_encrypt.3 RSA_public_encrypt.3 RSA_private_encrypt.3 \
+	BN_CTX_start.3 SSL_CTX_add_extra_chain_cert.3 \
 	SSL_get_client_CA_list.3 SSL_CTX_set_client_CA_list.3 \
 	SSL_CTX_set_cipher_list.3 SSL_CTX_set_max_cert_list.3 \
 	SSL_CTX_set_timeout.3 SSL_get_default_timeout.3 \
@@ -95,7 +96,8 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	X509_STORE_CTX_new.3 X509_STORE_CTX_set_verify_cb.3 \
 	X509_STORE_CTX_set_verify_cb.3 X509_STORE_set_verify_cb_func.3 \
 	X509_VERIFY_PARAM_set_flags.3 X509_verify_cert.3 \
-	EVP_PKEY_verify_recover.3 SSL_CTX_set_tlsext_ticket_key_cb.3
+	EVP_PKEY_verify_recover.3 SSL_CTX_set_tlsext_status_cb.3 \
+	SSL_CTX_set_tlsext_ticket_key_cb.3 
 
 MAN+=	openssl.cnf.5
 
