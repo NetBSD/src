@@ -1,4 +1,4 @@
-# $NetBSD: t_exit.sh,v 1.5 2016/03/01 12:39:35 christos Exp $
+# $NetBSD: t_exit.sh,v 1.6 2016/05/07 23:51:30 kre Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -105,21 +105,6 @@ trap_zero__explicit_exit_body() {
 	# atf_check -s exit:0 -o match:exiting -e empty /bin/ksh helper.sh
 }
 
-# Is return really defined to operate other than in functions (& '.') ??
-atf_test_case trap_zero__explicit_return
-trap_zero__explicit_return_head() {
-	atf_set "descr" "Tests that the trap statement in a subshell in a " \
-			"script works when the subshell executes a return"
-}
-trap_zero__explicit_return_body() {
-	echo '( trap "echo exiting" 0; return; echo NO_NO_NO )' >helper.sh
-	atf_expect_fail "return from a sub-shell not defined and does not work"
-	atf_check -s exit:0 -o match:exiting -o not-match:NO_NO -e empty \
-		${TEST_SH} helper.sh
-	# test ksh by setting TEST_SH to /bin/ksh and run the entire set...
-	# atf_check -s exit:0 -o match:exiting -e empty /bin/ksh helper.sh
-}
-
 atf_test_case simple_exit
 simple_exit_head() {
 	atf_set "descr" "Tests that various values for exit status work"
@@ -166,7 +151,6 @@ atf_init_test_cases() {
 	atf_add_test_case trap_subshell
 	atf_add_test_case trap_zero__implicit_exit
 	atf_add_test_case trap_zero__explicit_exit
-	atf_add_test_case trap_zero__explicit_return
 	atf_add_test_case simple_exit
 	atf_add_test_case subshell_exit
 	atf_add_test_case subshell_background
